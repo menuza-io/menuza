@@ -77,6 +77,11 @@ export type EmailBlockEditorProps = {
 	 * from them. Without it the designer offers the built-in starters only.
 	 */
 	templatesEndpoint?: string
+	/**
+	 * Opens the inspector on a block: set a new `nonce` with the block's id (the
+	 * pre-send check's "Edit" link). A block that is not in the design is ignored.
+	 */
+	focusBlock?: { id: string; nonce: number } | null
 }
 
 function SortableEmailBlockCard({
@@ -377,8 +382,16 @@ export function EmailBlockEditor({
 	menuItems,
 	requestFields,
 	templatesEndpoint,
+	focusBlock,
 }: EmailBlockEditorProps) {
 	const [selectedId, setSelectedId] = useState<string | null>(null)
+	const focusNonce = focusBlock?.nonce
+	const focusId = focusBlock?.id
+	useEffect(() => {
+		if (focusNonce === undefined || !focusId) return
+		if (blocks.some((block) => block.id === focusId)) setSelectedId(focusId)
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per request
+	}, [focusNonce])
 	const [templatesOpen, setTemplatesOpen] = useState(false)
 	const selected = blocks.find((block) => block.id === selectedId) ?? null
 

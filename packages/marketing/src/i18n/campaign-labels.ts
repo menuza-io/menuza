@@ -8,6 +8,8 @@ const STATUS_LABELS: Record<CampaignStatus, ReturnType<typeof msg>> = {
 	Processing: msg`Processing`,
 	Completed: msg`Completed`,
 	Failed: msg`Failed`,
+	Cancelled: msg`Cancelled`,
+	SkippedLate: msg`Not sent: too late`,
 }
 
 const CHANNEL_LABELS: Record<CampaignChannel, ReturnType<typeof msg>> = {

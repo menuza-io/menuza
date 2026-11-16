@@ -1,4 +1,5 @@
 import { render } from '@react-email/components'
+import { type EmailRenderContext } from '@repo/common/email-block-base'
 import {
 	getDefaultEmailBlock,
 	type EmailBlock,
@@ -54,8 +55,8 @@ const COPY = {
 	buttonLabel: 'Use it now',
 }
 
-const ltr = {
-	direction: 'ltr' as const,
+const ltr: EmailRenderContext = {
+	direction: 'ltr',
 	locale: 'en',
 	siteOrigin: 'https://acme.site.test',
 	coupon: COPY,

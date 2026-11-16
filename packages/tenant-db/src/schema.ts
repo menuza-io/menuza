@@ -448,44 +448,103 @@ export const journeyStepExecutions = sqliteTable(
 // ==========================================
 // 5. EXISTING CAMPAIGN TABLES (Preserved & Enhanced)
 // ==========================================
-export const marketingCampaigns = sqliteTable('marketing_campaigns', {
-	id: text('id')
-		.primaryKey()
-		.$defaultFn(() => randomUUID()),
-	name: text('name').notNull(),
-	status: text('status', {
-		enum: ['Draft', 'Scheduled', 'Processing', 'Completed', 'Failed'],
-	})
-		.notNull()
-		.default('Draft'),
-	channel: text('channel', { enum: ['email', 'sms'] })
-		.notNull()
-		.default('email'),
-	subject: text('subject'),
-	content: text('content').notNull().default(''),
-	/** JSON array of email blocks (source of truth for the email designer). */
-	contentBlocks: text('content_blocks'),
-	/** Design-time rendered HTML for email broadcasts. */
-	contentHtml: text('content_html'),
-	/** JSON coupon for `{{couponCode}}` (`marketingOfferSchema`), or null. */
-	discountOffer: text('discount_offer'),
-	targetAudienceCount: integer('target_audience_count').default(0),
-	segmentationRules: text('segmentation_rules', { mode: 'json' }).default(
-		'{"audience": "all"}',
-	),
-	scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
-	/**
-	 * Dispatch attempts in a row that ended in an unexpected error; reset when
-	 * a batch goes out. The campaign is marked `Failed` at the cap.
-	 */
-	dispatchFailures: integer('dispatch_failures').notNull().default(0),
-	createdAt: integer('created_at', { mode: 'timestamp' }).default(
-		sql`(strftime('%s', 'now'))`,
-	),
-	updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
-		sql`(strftime('%s', 'now'))`,
-	),
-})
+export const marketingCampaigns = sqliteTable(
+	'marketing_campaigns',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		name: text('name').notNull(),
+		/**
+		 * `Cancelled`: the operator stopped it before the tick claimed it (#101).
+		 * `SkippedLate`: a scheduled send that could not start inside its window
+		 * (`late_after_minutes`) and was never sent (#232).
+		 */
+		status: text('status', {
+			enum: [
+				'Draft',
+				'Scheduled',
+				'Processing',
+				'Completed',
+				'Failed',
+				'Cancelled',
+				'SkippedLate',
+			],
+		})
+			.notNull()
+			.default('Draft'),
+		channel: text('channel', { enum: ['email', 'sms'] })
+			.notNull()
+			.default('email'),
+		subject: text('subject'),
+		content: text('content').notNull().default(''),
+		/** JSON array of email blocks (source of truth for the email designer). */
+		contentBlocks: text('content_blocks'),
+		/** Design-time rendered HTML for email broadcasts. */
+		contentHtml: text('content_html'),
+		/** JSON coupon for `{{couponCode}}` (`marketingOfferSchema`), or null. */
+		discountOffer: text('discount_offer'),
+		targetAudienceCount: integer('target_audience_count').default(0),
+		segmentationRules: text('segmentation_rules', { mode: 'json' }).default(
+			'{"audience": "all"}',
+		),
+		scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
+		/**
+		 * "Don't send if more than N minutes late" (#232): a scheduled broadcast the
+		 * tick could not start inside this window becomes `SkippedLate`. A send that
+		 * has started is never cut off. Whole hours in the App; default 4 hours.
+		 */
+		lateAfterMinutes: integer('late_after_minutes').notNull().default(240),
+		/**
+		 * The broadcast this one re-sends to non-openers (#101). One re-send per
+		 * original: the unique index refuses a second.
+		 */
+		retargetOfCampaignId: text('retarget_of_campaign_id'),
+		/**
+		 * Dispatch attempts in a row that ended in an unexpected error; reset when
+		 * a batch goes out. The campaign is marked `Failed` at the cap.
+		 */
+		dispatchFailures: integer('dispatch_failures').notNull().default(0),
+		createdAt: integer('created_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		uniqueIndex('uniq_marketing_campaigns_retarget_of')
+			.on(table.retargetOfCampaignId)
+			.where(sql`${table.retargetOfCampaignId} IS NOT NULL`),
+	],
+)
+
+/**
+ * One row per "Send a test" (#101), so the limit of 10 per operator per hour
+ * holds across isolates and restarts. The operator is a control-plane user id,
+ * never an address or a number: the test goes to the operator's own contact,
+ * which is passed in the request and not kept here. Rows older than a day are
+ * pruned when a new one is written.
+ */
+export const marketingTestSends = sqliteTable(
+	'marketing_test_sends',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		operatorId: text('operator_id').notNull(),
+		channel: text('channel', { enum: ['email', 'sms'] }).notNull(),
+		sentAt: integer('sent_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		index('idx_marketing_test_sends_operator').on(
+			table.operatorId,
+			table.sentAt,
+		),
+	],
+)
 
 export const marketingMessages = sqliteTable(
 	'marketing_messages',

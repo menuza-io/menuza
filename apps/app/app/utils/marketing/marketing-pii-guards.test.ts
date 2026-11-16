@@ -71,12 +71,28 @@ function fetchTenantPaths(source: string): string[] {
 	return paths
 }
 
+/**
+ * The call right after a path is a write: `, { method: 'PATCH' }` or
+ * `'DELETE'`. Editing or deleting a broadcast (#101) uses the same URL as the
+ * detail read, but those routes answer `{ success, campaignId, status }` and
+ * never the recipient list (`operator.campaign-actions.test.ts` pins that), so
+ * a write is not a read of guest contacts. A GET, or a call with no method, is
+ * still refused.
+ */
+const WRITE_CALL = /^\s*,\s*\{\s*method:\s*['"](?:PATCH|DELETE)['"]/
+
 /** Every forbidden path named anywhere in `source` (any string, any call). */
 function forbiddenPaths(source: string): string[] {
 	return FORBIDDEN_SERVER_PATHS.flatMap(({ label, pattern }) =>
-		[...source.matchAll(new RegExp(pattern.source, 'g'))].map(
-			(match) => `${label}: ${match[0]}`,
-		),
+		[...source.matchAll(new RegExp(pattern.source, 'g'))]
+			.filter(
+				(match) =>
+					!(
+						label.startsWith('campaign detail') &&
+						WRITE_CALL.test(source.slice(match.index + match[0].length))
+					),
+			)
+			.map((match) => `${label}: ${match[0]}`),
 	)
 }
 
@@ -174,6 +190,27 @@ describe('marketing+ never reads guest contacts on the App server', () => {
 			fetchTenant(path)
 		`
 		expect(violations(before)).toHaveLength(4)
+	})
+
+	it('lets a PATCH or DELETE of a broadcast through, and still refuses a read', () => {
+		const patch =
+			"fetchTenant(`/operator/marketing/campaigns/${encodeURIComponent(id)}`, { method: 'PATCH', body })"
+		const del =
+			"fetchTenant(`/operator/marketing/campaigns/${encodeURIComponent(id)}`, {\n\tmethod: 'DELETE',\n})"
+		expect(violations(patch)).toEqual([])
+		expect(violations(del)).toEqual([])
+		const get =
+			"fetchTenant(`/operator/marketing/campaigns/${encodeURIComponent(id)}`, { method: 'GET' })"
+		const bare =
+			'fetchTenant(`/operator/marketing/campaigns/${encodeURIComponent(id)}`)'
+		expect(violations(get)).toHaveLength(1)
+		expect(violations(bare)).toHaveLength(1)
+		// A POST to another route is judged by that route's own path.
+		expect(
+			violations(
+				'fetchTenant(`/operator/marketing/campaigns/${encodeURIComponent(id)}/message`)',
+			),
+		).toEqual([])
 	})
 
 	it('catches a direct fetch with the token in server code', () => {

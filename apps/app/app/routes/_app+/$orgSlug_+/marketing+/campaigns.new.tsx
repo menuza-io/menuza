@@ -1,11 +1,9 @@
-import { i18n } from '@lingui/core'
-import { msg, t } from '@lingui/macro'
+import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { getDomainUrl } from '@repo/common'
 import {
 	buildEmailTemplateBlocks,
 	type EmailBlock,
-	type EmailBlockTemplateId,
 } from '@repo/common/email-blocks'
 import { db, eq, Organization } from '@repo/database'
 import { parseMarketingOffer } from '@repo/discounts'
@@ -13,10 +11,9 @@ import {
 	CampaignForm,
 	CouponOfferField,
 	type CouponOfferValue,
-	EmailBlockEditor,
 } from '@repo/marketing'
 import { PageHeader } from '@repo/ui/page-header'
-import { useCallback, useRef, useState } from 'react'
+import { useState } from 'react'
 import {
 	Form,
 	redirect,
@@ -26,10 +23,7 @@ import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 } from 'react-router'
-import {
-	MediaLibraryPicker,
-	type MediaLibraryAsset,
-} from '#app/components/media-library/media-library-picker.tsx'
+import { CampaignEmailDesigner } from '#app/components/marketing/campaign-email-designer.tsx'
 import {
 	loadCouponDiscountOptions,
 	readOfferField,
@@ -39,83 +33,12 @@ import {
 	previewEmail,
 } from '#app/utils/email/designer.server.ts'
 import { orgSiteUrl } from '#app/utils/launch/launch.server.ts'
-import { prepareCampaignMessage } from '#app/utils/marketing/campaign-message.server.ts'
+import { submitCampaign } from '#app/utils/marketing/campaign-submit.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
-
-function EmailDesignerField({
-	orgSlug,
-	template = 'welcome',
-	buttonUrl,
-	offer,
-}: {
-	orgSlug: string
-	template?: EmailBlockTemplateId
-	buttonUrl?: string
-	/** The message's coupon: the Coupon block needs it and the preview shows it. */
-	offer: CouponOfferValue | null
-}) {
-	const [blocks, setBlocks] = useState<EmailBlock[]>(() =>
-		buildEmailTemplateBlocks(template, { buttonUrl }),
-	)
-	const [libraryPickerOpen, setLibraryPickerOpen] = useState(false)
-	const onSelectCallbackRef = useRef<
-		((url: string, alt: string) => void) | null
-	>(null)
-
-	const handleChooseImage = useCallback(
-		(onSelect: (url: string, alt: string) => void) => {
-			onSelectCallbackRef.current = onSelect
-			setLibraryPickerOpen(true)
-		},
-		[],
-	)
-
-	const handleAssetSelected = useCallback((asset: MediaLibraryAsset) => {
-		if (onSelectCallbackRef.current) {
-			const baseUrl =
-				typeof window !== 'undefined' ? window.location.origin : ''
-			const resolvedUrl =
-				asset.url.startsWith('http://') || asset.url.startsWith('https://')
-					? asset.url
-					: `${baseUrl}${asset.url.startsWith('/') ? '' : '/'}${asset.url}`
-			onSelectCallbackRef.current(
-				resolvedUrl,
-				asset.altText || asset.fileName || '',
-			)
-			onSelectCallbackRef.current = null
-		}
-	}, [])
-
-	return (
-		<div className="space-y-3">
-			<input type="hidden" name="blocks" value={JSON.stringify(blocks)} />
-			<EmailBlockEditor
-				blocks={blocks}
-				onChange={setBlocks}
-				onChooseImageFromLibrary={orgSlug ? handleChooseImage : undefined}
-				// Sent broadcast emails carry a signed unsubscribe link.
-				unsubscribeLinkPreview
-				menuItems
-				templatesEndpoint={`/${orgSlug}/marketing/templates/designer`}
-				couponAvailable={Boolean(offer)}
-				requestFields={{ discountOffer: offer ? JSON.stringify(offer) : '' }}
-			/>
-			{orgSlug ? (
-				<MediaLibraryPicker
-					orgSlug={orgSlug}
-					open={libraryPickerOpen}
-					onOpenChange={setLibraryPickerOpen}
-					onSelect={handleAssetSelected}
-					trigger={null}
-				/>
-			) : null}
-		</div>
-	)
-}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
@@ -189,39 +112,28 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		})
 	}
 
-	const prepared = await prepareCampaignMessage({
-		formData,
+	const result = await submitCampaign({
+		request,
 		organizationId: orgId,
 		userId,
+		fetchTenant,
+		formData,
 		baseUrl,
 	})
-	if (!prepared.ok) return { error: prepared.error }
-	const { message } = prepared
-
-	const createRes = await fetchTenant('/operator/marketing/campaigns', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			name: formData.get('name'),
-			channel: message.channel,
-			subject: message.subject,
-			content: message.content,
-			contentHtml: message.contentHtml,
-			contentBlocks: message.contentBlocks,
-			discountOffer: message.discountOffer,
-		}),
-	})
-
-	if (!createRes.ok) {
-		const err = await createRes.json().catch(() => ({}))
-		return {
-			error:
-				(err as { error?: string }).error ||
-				i18n._(t`Failed to create and dispatch campaign`),
-		}
+	switch (result.kind) {
+		case 'saved':
+			return redirect(
+				result.intent === 'draft'
+					? `/${orgSlug}/marketing/campaigns/${result.campaignId}`
+					: `/${orgSlug}/marketing/campaigns`,
+			)
+		case 'problems':
+			return { problems: result.problems, blocks: result.blocks }
+		case 'test':
+			return { testResult: result.result }
+		case 'error':
+			return { error: result.error }
 	}
-
-	return redirect(`/${orgSlug}/marketing/campaigns`)
 }
 
 export default function NewCampaignRoute() {
@@ -232,25 +144,53 @@ export default function NewCampaignRoute() {
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
 	const [offer, setOffer] = useState<CouponOfferValue | null>(null)
+	const [blocks, setBlocks] = useState<EmailBlock[]>(() =>
+		buildEmailTemplateBlocks(template ?? 'welcome', {
+			buttonUrl: siteUrl ?? undefined,
+		}),
+	)
+	const [focusBlock, setFocusBlock] = useState<{
+		id: string
+		nonce: number
+	} | null>(null)
 
 	return (
 		<div className="flex flex-col gap-6">
 			<PageHeader
 				title={_(msg`New broadcast`)}
-				description={_(msg`Send a one-time email or SMS to your audience.`)}
+				description={_(
+					msg`Send a one-time email or SMS to your audience, now or later.`,
+				)}
 			/>
 
 			<Form method="post">
 				<CampaignForm
-					error={actionData?.error}
+					scheduling
+					canTestSend
+					error={actionData && 'error' in actionData ? actionData.error : null}
+					problems={
+						actionData && 'problems' in actionData ? actionData.problems : null
+					}
+					blocks={
+						actionData && 'blocks' in actionData ? actionData.blocks : blocks
+					}
+					testResult={
+						actionData && 'testResult' in actionData
+							? actionData.testResult
+							: null
+					}
+					onEditBlock={(id) =>
+						setFocusBlock({ id, nonce: (focusBlock?.nonce ?? 0) + 1 })
+					}
 					isSubmitting={isSubmitting}
 					cancelTo=".."
 					emailDesigner={
-						<EmailDesignerField
+						<CampaignEmailDesigner
 							orgSlug={orgSlug}
-							template={template ?? undefined}
-							buttonUrl={siteUrl ?? undefined}
+							blocks={blocks}
+							onChange={setBlocks}
 							offer={offer}
+							focusBlock={focusBlock}
 						/>
 					}
 					couponField={

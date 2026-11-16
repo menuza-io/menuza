@@ -17,6 +17,7 @@ import {
 import { PageHeader } from '@repo/ui/page-header'
 import { useState } from 'react'
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import { CampaignActions } from '#app/components/marketing/campaign-actions.tsx'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
 import {
@@ -25,7 +26,16 @@ import {
 } from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
-const STATUS_FILTERS = ['all', 'completed', 'processing', 'failed'] as const
+const STATUS_FILTERS = [
+	'all',
+	'draft',
+	'scheduled',
+	'processing',
+	'completed',
+	'failed',
+	'cancelled',
+	'skippedlate',
+] as const
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
@@ -46,10 +56,29 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
-	const data = (await res.json()) as { campaigns?: CampaignListItem[] }
+	const data = (await res.json()) as {
+		campaigns?: Array<
+			CampaignListItem & {
+				updatedAt?: string | null
+				retargetOfCampaignId?: string | null
+			}
+		>
+	}
+	const campaigns = data.campaigns ?? []
+	// Which broadcast was already re-sent: the one a newer broadcast points back to.
+	const retargeted = new Map(
+		campaigns.flatMap((campaign) =>
+			campaign.retargetOfCampaignId
+				? [[campaign.retargetOfCampaignId, campaign.id] as const]
+				: [],
+		),
+	)
 	return {
 		orgSlug,
-		campaigns: data.campaigns ?? [],
+		campaigns: campaigns.map((campaign) => ({
+			...campaign,
+			retargetedByCampaignId: retargeted.get(campaign.id) ?? null,
+		})),
 		error: null,
 	}
 }
@@ -64,9 +93,13 @@ export default function CampaignsIndexRoute() {
 
 	const statusFilterLabels: Record<(typeof STATUS_FILTERS)[number], string> = {
 		all: _(msg`All`),
+		draft: _(msg`Draft`),
+		scheduled: _(msg`Scheduled`),
 		completed: _(msg`Completed`),
 		processing: _(msg`Processing`),
 		failed: _(msg`Failed`),
+		cancelled: _(msg`Cancelled`),
+		skippedlate: _(msg`Not sent`),
 	}
 
 	const filteredCampaigns = campaigns.filter((campaign) => {
@@ -157,12 +190,18 @@ export default function CampaignsIndexRoute() {
 							key={campaign.id}
 							variant="outline"
 							size="sm"
-							render={
-								<Link to={`/${orgSlug}/marketing/campaigns/${campaign.id}`} />
-							}
+							className="relative"
 						>
 							<ItemContent>
-								<ItemTitle>{campaign.name}</ItemTitle>
+								<ItemTitle>
+									{/* A stretched link: the whole row opens it, and the menu sits above. */}
+									<Link
+										to={`/${orgSlug}/marketing/campaigns/${campaign.id}`}
+										className="after:absolute after:inset-0 hover:underline"
+									>
+										{campaign.name}
+									</Link>
+								</ItemTitle>
 								<ItemDescription>
 									<span className="capitalize">{campaign.channel}</span>
 									{' · '}
@@ -172,11 +211,23 @@ export default function CampaignsIndexRoute() {
 										return _(msg`${recipientCount} recipients`)
 									})()}
 									{' · '}
-									{new Date(campaign.createdAt).toLocaleDateString()}
+									{campaign.status === 'Scheduled' && campaign.scheduledAt
+										? (() => {
+												const at = new Date(
+													campaign.scheduledAt,
+												).toLocaleString()
+												return _(msg`Scheduled for ${at}`)
+											})()
+										: new Date(campaign.createdAt).toLocaleDateString()}
 								</ItemDescription>
 							</ItemContent>
-							<ItemActions>
+							<ItemActions className="relative z-10">
 								<CampaignStatusBadge status={campaign.status} />
+								<CampaignActions
+									orgSlug={orgSlug}
+									campaign={campaign}
+									variant="menu"
+								/>
 							</ItemActions>
 						</Item>
 					))}

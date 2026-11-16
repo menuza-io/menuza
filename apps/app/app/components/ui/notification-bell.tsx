@@ -33,6 +33,11 @@ import { useEventSource } from 'remix-utils/sse/react'
 import { BellIcon } from '#app/components/icons/bell-icon.tsx'
 import { inventoryAlertCopy } from '#app/utils/inventory/alert-copy.ts'
 import {
+	CAMPAIGN_ALERT_COPY,
+	campaignAlertKindFromNotificationType,
+	campaignAlertPath,
+} from '#app/utils/marketing/campaign-alerts.ts'
+import {
 	inventoryAlertKindFromNotificationType,
 	inventoryAlertPath,
 } from '#app/utils/inventory/manager-alerts.ts'
@@ -142,7 +147,16 @@ function NotificationItem({
 			}
 		: null
 
+	const campaignKind = campaignAlertKindFromNotificationType(notification.type)
+	const campaignAlert = campaignKind
+		? {
+				subject: _(CAMPAIGN_ALERT_COPY[campaignKind].subject),
+				body: _(CAMPAIGN_ALERT_COPY[campaignKind].body),
+			}
+		: null
+
 	const subject =
+		campaignAlert?.subject ??
 		printAlert?.subject ??
 		staffing?.subject ??
 		reservations?.subject ??
@@ -151,6 +165,7 @@ function NotificationItem({
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
 	const body =
+		campaignAlert?.body ??
 		printAlert?.body ??
 		staffing?.body ??
 		reservations?.body ??
@@ -163,6 +178,14 @@ function NotificationItem({
 			onMarkRead(notification.id)
 		}
 		if (
+			campaignKind &&
+			typeof payload?.orgSlug === 'string' &&
+			typeof payload?.campaignId === 'string'
+		) {
+			void navigate(
+				`/${payload.orgSlug}${campaignAlertPath(payload.campaignId)}`,
+			)
+		} else if (
 			printKind &&
 			typeof payload?.orgSlug === 'string' &&
 			typeof payload?.orderId === 'string'
@@ -212,7 +235,9 @@ function NotificationItem({
 			<div className="flex items-start border-b border-dashed p-2">
 				<Avatar className="mr-2 h-8 w-8">
 					<AvatarFallback>
-						{printKind ? (
+						{campaignKind ? (
+							<Icon name="send" className="h-4 w-4" />
+						) : printKind ? (
 							<Icon name="printer" className="h-4 w-4" />
 						) : inventoryKind ? (
 							<Icon name="shopping-bag" className="h-4 w-4" />

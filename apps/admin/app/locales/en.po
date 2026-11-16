@@ -37,7 +37,7 @@ msgstr "{0} blocks · rendered in your website branding"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:141
+#: ../../packages/marketing/src/components/campaign-detail.tsx:224
 msgid "{0} of {1} targeted"
 msgstr ""
 
@@ -83,6 +83,10 @@ msgstr "{excluded, plural, one {# record is left out of this ratio because it ha
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:362
 msgid "{field}"
 msgstr ""
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:357
+msgid "{hours} hours late"
+msgstr "{hours} hours late"
 
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:160
 msgid "{name}: no longer on the live menu. Updating removes it."
@@ -199,6 +203,10 @@ msgstr ""
 msgid "1 entry"
 msgstr "1 entry"
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:356
+msgid "1 hour late"
+msgstr "1 hour late"
+
 #: app/routes/_admin+/phone-numbers.tsx:406
 msgid "1 number"
 msgstr "1 number"
@@ -215,7 +223,7 @@ msgstr "1 user"
 msgid "1-10 (higher = more permissions)"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:42
+#: ../../packages/marketing/src/components/campaign-detail.tsx:49
 msgid "a discount that is no longer listed"
 msgstr "a discount that is no longer listed"
 
@@ -230,6 +238,10 @@ msgstr "A link styled as a call to action."
 #: ../../packages/marketing/src/components/email/block-meta.ts:34
 msgid "A picture, logo, or product shot."
 msgstr "A picture, logo, or product shot."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:159
+msgid "A re-send to people who did not open or click the first one and are still subscribed."
+msgstr "A re-send to people who did not open or click the first one and are still subscribed."
 
 #: app/routes/_admin+/print-shop.tsx:95
 msgid "A submission or cancellation stopped halfway: check the vendor before retrying"
@@ -453,7 +465,7 @@ msgstr "Add points"
 msgid "Add points to {name}'s current total of {points}."
 msgstr "Add points to {name}'s current total of {points}."
 
-#: ../../packages/marketing-workflow/src/validation.ts:27
+#: ../../packages/marketing-workflow/src/validation.ts:28
 msgid "Add the Coupon code tag to the message so customers see their code."
 msgstr "Add the Coupon code tag to the message so customers see their code."
 
@@ -516,7 +528,7 @@ msgstr ""
 #~ msgid "All plans"
 #~ msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:34
+#: ../../packages/marketing/src/components/campaign-detail.tsx:41
 msgid "All recipients"
 msgstr ""
 
@@ -637,6 +649,10 @@ msgstr "Assigned, not connected"
 msgid "Attribute Mapping (JSON)"
 msgstr ""
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:208
+msgid "Audience"
+msgstr "Audience"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:228
 msgid "Audit Log Retention Policy"
 msgstr ""
@@ -717,7 +733,7 @@ msgstr "Average waitlist wait, last 7 days"
 msgid "Awaiting line verification"
 msgstr "Awaiting line verification"
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:214
+#: ../../packages/marketing/src/components/email/email-templates.tsx:217
 #: app/routes/_admin+/marketing+/campaigns.new.tsx:167
 msgid "Back"
 msgstr ""
@@ -730,7 +746,7 @@ msgstr ""
 msgid "Back to blocks"
 msgstr "Back to blocks"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:31
+#: ../../packages/marketing/src/components/campaign-detail.tsx:38
 msgid "Back to broadcasts"
 msgstr ""
 
@@ -832,6 +848,14 @@ msgstr "Bleed (mm)"
 msgid "Bleed in millimetres, {item}"
 msgstr "Bleed in millimetres, {item}"
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:80
+#~ msgid "Block {0}: {1}"
+#~ msgstr "Block {0}: {1}"
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:82
+msgid "Block {position}: {name}"
+msgstr "Block {position}: {name}"
+
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:90
 msgid "Block types"
 msgstr "Block types"
@@ -840,7 +864,7 @@ msgstr "Block types"
 msgid "blocked"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:279
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:284
 msgid "Blocks"
 msgstr "Blocks"
 
@@ -868,7 +892,7 @@ msgstr "Box"
 msgid "Broadcast not found"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:113
+#: ../../packages/marketing/src/components/campaign-detail.tsx:196
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
@@ -911,12 +935,12 @@ msgstr ""
 msgid "Cache Type:"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:95
+#: ../../packages/marketing/src/components/campaign-form.tsx:226
 msgid "Campaign name"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
-#: ../../packages/marketing/src/components/campaign-form.tsx:173
+#: ../../packages/marketing/src/components/campaign-form.tsx:380
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:317
@@ -937,6 +961,7 @@ msgstr ""
 msgid "Cancellations by who"
 msgstr "Cancellations by who"
 
+#: ../../packages/marketing/src/i18n/campaign-labels.ts:11
 #: app/routes/_admin+/gdpr-requests.tsx:430
 #: app/routes/_admin+/print-shop.tsx:76
 msgid "Cancelled"
@@ -946,6 +971,10 @@ msgstr ""
 msgid "Cancelled by the organization"
 msgstr "Cancelled by the organization"
 
+#: ../../packages/marketing/src/components/campaign-detail.tsx:73
+msgid "Cancelled, not sent"
+msgstr "Cancelled, not sent"
+
 #: app/routes/_admin+/print-shop.tsx:69
 msgid "Cancelling"
 msgstr "Cancelling"
@@ -954,11 +983,15 @@ msgstr "Cancelling"
 msgid "Center"
 msgstr "Center"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:64
+#: ../../packages/marketing/src/components/campaign-form.tsx:176
 msgid "Channel"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:110
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:93
+msgid "Check before it goes out"
+msgstr "Check before it goes out"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:243
 msgid "Check out our new summer menu"
 msgstr ""
 
@@ -1001,7 +1034,7 @@ msgid "Click rate"
 msgstr ""
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:65
+#: ../../packages/marketing/src/components/campaign-detail.tsx:98
 msgid "Clicked {0}"
 msgstr ""
 
@@ -1018,7 +1051,7 @@ msgid "Client Secret"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
-#: ../../packages/marketing/src/components/email/email-templates.tsx:324
+#: ../../packages/marketing/src/components/email/email-templates.tsx:329
 msgid "Close"
 msgstr ""
 
@@ -1077,7 +1110,7 @@ msgstr ""
 msgid "Condition Branch"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:24
+#: ../../packages/marketing-workflow/src/validation.ts:25
 msgid "Condition comparison field is required."
 msgstr ""
 
@@ -1085,7 +1118,7 @@ msgstr ""
 msgid "Condition Logic"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:25
+#: ../../packages/marketing-workflow/src/validation.ts:26
 msgid "Condition operator is required."
 msgstr ""
 
@@ -1167,11 +1200,11 @@ msgstr "Coupon"
 msgid "Coupon card"
 msgstr "Coupon card"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:51
+#: ../../packages/marketing/src/components/campaign-detail.tsx:58
 msgid "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 msgstr "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:47
+#: ../../packages/marketing/src/components/campaign-detail.tsx:54
 msgid "Coupon: {name}, with one shared code for everyone."
 msgstr "Coupon: {name}, with one shared code for everyone."
 
@@ -1179,7 +1212,7 @@ msgstr "Coupon: {name}, with one shared code for everyone."
 #~ msgid "Coupon: {name}, with the code {0} for everyone."
 #~ msgstr "Coupon: {name}, with the code {0} for everyone."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:46
+#: ../../packages/marketing/src/components/campaign-detail.tsx:53
 msgid "Coupon: {name}, with the code {code} for everyone."
 msgstr "Coupon: {name}, with the code {code} for everyone."
 
@@ -1401,11 +1434,11 @@ msgstr ""
 msgid "Default Role"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:17
+#: ../../packages/marketing-workflow/src/validation.ts:18
 msgid "Delay duration must be at least 1."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:18
+#: ../../packages/marketing-workflow/src/validation.ts:19
 msgid "Delay unit is required."
 msgstr ""
 
@@ -1537,6 +1570,10 @@ msgstr ""
 msgid "Does Not Equal"
 msgstr ""
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:345
+msgid "Don't send if more than this late"
+msgstr "Don't send if more than this late"
+
 #: app/components/admin-launch-card.tsx:30
 msgid "Done"
 msgstr "Done"
@@ -1554,7 +1591,11 @@ msgstr ""
 msgid "Draft"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:140
+#: ../../packages/marketing/src/components/campaign-detail.tsx:69
+msgid "Draft, not sent"
+msgstr "Draft, not sent"
+
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:145
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
@@ -1622,6 +1663,8 @@ msgstr "Each day’s published hours and shifts next to the hours worked and the
 msgid "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 msgstr "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:144
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:157
 #: app/components/admin/feature-flags.tsx:433
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
@@ -1656,7 +1699,7 @@ msgid "Effective Value"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
-#: ../../packages/marketing/src/i18n/campaign-labels.ts:14
+#: ../../packages/marketing/src/i18n/campaign-labels.ts:16
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:236
 #: app/routes/_admin+/waitlist.tsx:350
 msgid "Email"
@@ -1667,13 +1710,13 @@ msgstr ""
 msgid "Email Address"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:20
+#: ../../packages/marketing-workflow/src/validation.ts:21
 msgid "Email body content is required."
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:327
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:415
-#: ../../packages/marketing/src/components/campaign-form.tsx:118
+#: ../../packages/marketing/src/components/campaign-form.tsx:251
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
@@ -1687,7 +1730,7 @@ msgstr ""
 msgid "Email preview"
 msgstr "Email preview"
 
-#: ../../packages/marketing-workflow/src/validation.ts:19
+#: ../../packages/marketing-workflow/src/validation.ts:20
 msgid "Email subject line is required."
 msgstr ""
 
@@ -1848,6 +1891,10 @@ msgstr "Every no-show over the last 30 days with its date, service, party size a
 msgid "Everyone gets {code}"
 msgstr "Everyone gets {code}"
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:216
+msgid "Everyone subscribed"
+msgstr "Everyone subscribed"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:558
 msgid "Exactly Equals"
 msgstr ""
@@ -1903,7 +1950,7 @@ msgstr ""
 msgid "Failed to create campaign"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:15
+#: ../../packages/marketing-workflow/src/validation.ts:16
 msgid "Failed to format graph for validation"
 msgstr ""
 
@@ -1980,6 +2027,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:250
 msgid "Fit canvas view"
 msgstr ""
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:91
+msgid "Fix this before it goes out"
+msgstr "Fix this before it goes out"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:208
 msgid "Fix validation errors before publishing"
@@ -2223,6 +2274,10 @@ msgstr "I found nothing, retry"
 msgid "Identity Provider Configuration"
 msgstr ""
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:363
+msgid "If sending cannot start in time, it is not sent and you are told."
+msgstr "If sending cannot start in time, it is not sent and you are told."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:33
 msgid "Image"
 msgstr "Image"
@@ -2246,6 +2301,10 @@ msgstr ""
 #: app/components/admin-launch-card.tsx:160
 msgid "In setup"
 msgstr "In setup"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:340
+msgid "In your time zone."
+msgstr "In your time zone."
 
 #: app/routes/_admin+/cache.tsx:585
 msgid "In-memory LRU cache"
@@ -2657,8 +2716,8 @@ msgstr ""
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:105
-#: ../../packages/marketing/src/components/campaign-form.tsx:124
+#: ../../packages/marketing/src/components/campaign-detail.tsx:188
+#: ../../packages/marketing/src/components/campaign-form.tsx:257
 msgid "Message"
 msgstr ""
 
@@ -2820,7 +2879,7 @@ msgstr ""
 msgid "No connected accounts"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:58
+#: ../../packages/marketing/src/components/campaign-detail.tsx:91
 msgid "No contact on file"
 msgstr ""
 
@@ -2829,7 +2888,7 @@ msgstr ""
 msgid "No coupon"
 msgstr "No coupon"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:149
+#: ../../packages/marketing/src/components/campaign-detail.tsx:232
 msgid "No delivery records yet."
 msgstr ""
 
@@ -2903,7 +2962,7 @@ msgstr ""
 msgid "No recent comments"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:254
+#: ../../packages/marketing/src/components/email/email-templates.tsx:259
 msgid "No saved templates yet. Design an email, then choose Save as template."
 msgstr "No saved templates yet. Design an email, then choose Save as template."
 
@@ -2972,6 +3031,10 @@ msgstr "No-show rate, last 30 days"
 msgid "No-shows & cancellations"
 msgstr "No-shows & cancellations"
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:33
+msgid "Nobody would receive this: no one in the audience is subscribed."
+msgstr "Nobody would receive this: no one in the audience is subscribed."
+
 #: ../../packages/marketing-workflow/src/node-palette.tsx:50
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:289
 msgid "Nodes"
@@ -2983,6 +3046,11 @@ msgstr ""
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:465
 msgid "None"
 msgstr ""
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:75
+#: ../../packages/marketing/src/i18n/campaign-labels.ts:12
+msgid "Not sent: too late"
+msgstr "Not sent: too late"
 
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:61
 msgid "Not set"
@@ -3003,6 +3071,10 @@ msgstr ""
 #: app/components/admin-user-detail.tsx:285
 msgid "Notes Created"
 msgstr ""
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:102
+msgid "Nothing is broken, but you may want to look at this first."
+msgstr "Nothing is broken, but you may want to look at this first."
 
 #: app/routes/_admin+/print-shop.tsx:458
 #~ msgid "Nothing there, retry"
@@ -3078,7 +3150,7 @@ msgid "Open rate"
 msgstr ""
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:68
+#: ../../packages/marketing/src/components/campaign-detail.tsx:101
 msgid "Opened {0}"
 msgstr ""
 
@@ -3349,8 +3421,8 @@ msgstr ""
 msgid "Pick a block to add to your email."
 msgstr "Pick a block to add to your email."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:197
-#: ../../packages/marketing/src/components/email/email-templates.tsx:238
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:202
+#: ../../packages/marketing/src/components/email/email-templates.tsx:243
 msgid "Pick a layout, then customize the blocks."
 msgstr "Pick a layout, then customize the blocks."
 
@@ -3464,7 +3536,7 @@ msgid "Printing"
 msgstr "Printing"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:40
-#: ../../packages/marketing/src/components/campaign-form.tsx:83
+#: ../../packages/marketing/src/components/campaign-form.tsx:196
 msgid "Pro"
 msgstr ""
 
@@ -3604,12 +3676,12 @@ msgstr ""
 msgid "Recently released"
 msgstr "Recently released"
 
-#: ../../packages/marketing/src/components/campaign-list.tsx:81
+#: ../../packages/marketing/src/components/campaign-list.tsx:83
 #: app/routes/_admin+/marketing+/_index.tsx:217
 msgid "recipients"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:137
+#: ../../packages/marketing/src/components/campaign-detail.tsx:220
 msgid "Recipients"
 msgstr ""
 
@@ -3731,7 +3803,7 @@ msgstr ""
 msgid "Remove"
 msgstr "Remove"
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:169
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:174
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:158
 msgid "Remove block"
 msgstr "Remove block"
@@ -4052,7 +4124,7 @@ msgstr "Sales per labor hour"
 msgid "Save"
 msgstr "Save"
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:181
+#: ../../packages/marketing/src/components/email/email-templates.tsx:184
 msgid "Save as template"
 msgstr "Save as template"
 
@@ -4070,6 +4142,7 @@ msgid "Save default"
 msgstr "Save default"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
+#: ../../packages/marketing/src/components/campaign-form.tsx:395
 msgid "Save draft"
 msgstr ""
 
@@ -4085,7 +4158,7 @@ msgstr ""
 msgid "Save retention"
 msgstr "Save retention"
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:221
+#: ../../packages/marketing/src/components/email/email-templates.tsx:226
 msgid "Save template"
 msgstr "Save template"
 
@@ -4093,7 +4166,7 @@ msgstr "Save template"
 msgid "Save the automation first before running test triggers."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:321
+#: ../../packages/marketing/src/components/email/email-templates.tsx:326
 msgid "Save this design as a template"
 msgstr "Save this design as a template"
 
@@ -4109,7 +4182,7 @@ msgstr "Saved: {item}"
 msgid "Saved."
 msgstr "Saved."
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:184
+#: ../../packages/marketing/src/components/email/email-templates.tsx:187
 msgid "Saves this layout for next time. A template keeps the blocks only: no audience, coupon or schedule."
 msgstr "Saves this layout for next time. A template keeps the blocks only: no audience, coupon or schedule."
 
@@ -4127,10 +4200,27 @@ msgstr ""
 msgid "Saving…"
 msgstr "Saving…"
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:425
+msgid "Schedule"
+msgstr "Schedule"
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:162
+msgid "Schedule anyway"
+msgstr "Schedule anyway"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:322
+msgid "Schedule for later"
+msgstr "Schedule for later"
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:71
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
 #: app/routes/_admin+/gdpr-requests.tsx:428
 msgid "Scheduled"
 msgstr ""
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:71
+msgid "Scheduled for {at}"
+msgstr "Scheduled for {at}"
 
 #: ../../packages/reports/src/ui/report-labels.ts:52
 msgid "Scheduled vs actual hours and clock-ins"
@@ -4211,6 +4301,14 @@ msgstr ""
 msgid "Security Events"
 msgstr ""
 
+#: ../../packages/marketing/src/components/campaign-detail.tsx:166
+msgid "See the original"
+msgstr "See the original"
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:180
+msgid "See the re-send"
+msgstr "See the re-send"
+
 #: app/routes/_admin+/roles+/$roleId.tsx:923
 #: app/routes/_admin+/roles+/$roleId.tsx:926
 msgid "Select access level"
@@ -4253,11 +4351,24 @@ msgstr ""
 msgid "Send a one-time message to tenant operators."
 msgstr ""
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:406
+msgid "Send a test"
+msgstr "Send a test"
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:164
+msgid "Send anyway"
+msgstr "Send anyway"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:330
+msgid "Send at"
+msgstr "Send at"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:117
 msgid "Send Email"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:56
+#: ../../packages/marketing/src/components/campaign-form.tsx:156
+#: ../../packages/marketing/src/components/campaign-form.tsx:322
 msgid "Send now"
 msgstr ""
 
@@ -4277,14 +4388,14 @@ msgstr "Sending to the printer"
 msgid "Sending to the vendor failed unexpectedly"
 msgstr "Sending to the vendor failed unexpectedly"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:57
+#: ../../packages/marketing/src/components/campaign-form.tsx:157
 msgid "Sending..."
 msgstr ""
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:96
-#: ../../packages/marketing/src/components/campaign-detail.tsx:165
+#: ../../packages/marketing/src/components/campaign-detail.tsx:77
+#: ../../packages/marketing/src/components/campaign-detail.tsx:248
 msgid "Sent {0}"
 msgstr ""
 
@@ -4405,11 +4516,11 @@ msgid "Smaller, muted supporting copy."
 msgstr "Smaller, muted supporting copy."
 
 #: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:19
-#: ../../packages/marketing/src/i18n/campaign-labels.ts:15
+#: ../../packages/marketing/src/i18n/campaign-labels.ts:17
 msgid "SMS"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:23
+#: ../../packages/marketing-workflow/src/validation.ts:24
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr ""
 
@@ -4417,7 +4528,7 @@ msgstr ""
 msgid "SMS Message Text"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:22
+#: ../../packages/marketing-workflow/src/validation.ts:23
 msgid "SMS message text is required."
 msgstr ""
 
@@ -4516,7 +4627,7 @@ msgstr "Start date"
 #~ msgid "Start Date"
 #~ msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:229
+#: ../../packages/marketing/src/components/email/email-templates.tsx:234
 msgid "Start from a template"
 msgstr "Start from a template"
 
@@ -4524,11 +4635,11 @@ msgstr "Start from a template"
 msgid "Start journey on lifecycle event"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:194
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:199
 msgid "Start with a template"
 msgstr "Start with a template"
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:283
+#: ../../packages/marketing/src/components/email/email-templates.tsx:288
 msgid "Starters"
 msgstr "Starters"
 
@@ -4603,7 +4714,7 @@ msgstr "Stuck in setup for more than 14 days"
 msgid "Style"
 msgstr "Style"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:106
+#: ../../packages/marketing/src/components/campaign-form.tsx:238
 msgid "Subject"
 msgstr ""
 
@@ -4630,11 +4741,11 @@ msgstr ""
 msgid "Subscription Status"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:99
+#: ../../packages/marketing/src/components/campaign-form.tsx:231
 msgid "Summer promo"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:131
+#: ../../packages/marketing/src/components/campaign-form.tsx:264
 msgid "supported"
 msgstr ""
 
@@ -4745,11 +4856,11 @@ msgstr ""
 msgid "Team"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:192
+#: ../../packages/marketing/src/components/email/email-templates.tsx:195
 msgid "Template name"
 msgstr "Template name"
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:293
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:298
 msgid "Templates"
 msgstr "Templates"
 
@@ -4824,6 +4935,14 @@ msgstr ""
 msgid "The cache is empty"
 msgstr ""
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:32
+msgid "The coupon's discount ends before this would go out. Change its end date or choose another coupon."
+msgstr "The coupon's discount ends before this would go out. Change its end date or choose another coupon."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:31
+msgid "The coupon's discount is paused, archived or gone. Resume it or choose another coupon."
+msgstr "The coupon's discount is paused, archived or gone. Resume it or choose another coupon."
+
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:289
@@ -4857,6 +4976,18 @@ msgstr "The main paragraph copy of your email."
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:149
 msgid "The menu has changed since this was saved."
 msgstr "The menu has changed since this was saved."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:25
+msgid "The message is empty."
+msgstr "The message is empty."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:24
+msgid "The message still holds placeholder text such as \"lorem ipsum\"."
+msgstr "The message still holds placeholder text such as \"lorem ipsum\"."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:30
+msgid "The message uses the coupon code tag but has no coupon. Choose a coupon, or remove the tag."
+msgstr "The message uses the coupon code tag but has no coupon. Choose a coupon, or remove the tag."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:49
 msgid "The offer, each guest's code, its terms and a Use it now button."
@@ -4966,7 +5097,47 @@ msgstr ""
 msgid "There is nothing to save yet. Add a block first."
 msgstr "There is nothing to save yet. Add a block first."
 
-#: ../../packages/marketing-workflow/src/validation.ts:26
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:98
+msgid "These problems stop this broadcast. Fix them, then try again."
+msgstr "These problems stop this broadcast. Fix them, then try again."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:23
+msgid "This block still has the text a new block starts with."
+msgstr "This block still has the text a new block starts with."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:151
+msgid "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
+msgstr "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:174
+msgid "This broadcast was re-sent to non-openers."
+msgstr "This broadcast was re-sent to non-openers."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:145
+#~ msgid "This broadcast was scheduled for {0} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
+#~ msgstr "This broadcast was scheduled for {0} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:148
+msgid "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
+msgstr "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:27
+msgid "This button has no link."
+msgstr "This button has no link."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:29
+msgid "This coupon block needs a coupon. Choose one under the message, or remove the block."
+msgstr "This coupon block needs a coupon. Choose one under the message, or remove the block."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:28
+msgid "This dish block has no dish."
+msgstr "This dish block has no dish."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:26
+msgid "This image block has no picture."
+msgstr "This image block has no picture."
+
+#: ../../packages/marketing-workflow/src/validation.ts:27
 msgid "This message uses the Coupon code tag. Choose a coupon, or remove the tag."
 msgstr "This message uses the Coupon code tag. Choose a coupon, or remove the tag."
 
@@ -4990,7 +5161,7 @@ msgstr "This order is changing right now. Refresh and try again."
 msgid "This policy applies to all channels, direct messages, and group chats in this organization. Only platform admins can change it."
 msgstr "This policy applies to all channels, direct messages, and group chats in this organization. Only platform admins can change it."
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:233
+#: ../../packages/marketing/src/components/email/email-templates.tsx:238
 msgid "This replaces the blocks you have now with a copy of the template."
 msgstr "This replaces the blocks you have now with a copy of the template."
 
@@ -5098,7 +5269,7 @@ msgstr ""
 msgid "Trigger Event Type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:16
+#: ../../packages/marketing-workflow/src/validation.ts:17
 msgid "Trigger event type is required."
 msgstr ""
 
@@ -5155,7 +5326,7 @@ msgstr "Unassign {e164}? The organization's agent stops answering it right away.
 msgid "Unblacklist"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:21
+#: ../../packages/marketing-workflow/src/validation.ts:22
 msgid "Unedited boilerplate text detected in email body."
 msgstr ""
 
@@ -5171,7 +5342,7 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:160
+#: ../../packages/marketing/src/components/campaign-detail.tsx:243
 msgid "Unnamed recipient"
 msgstr ""
 
@@ -5347,6 +5518,10 @@ msgstr "Vendors were cancelled for this order: refund it instead of retrying."
 msgid "Verification Status"
 msgstr ""
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:217
+msgid "Verified phone numbers only"
+msgstr "Verified phone numbers only"
+
 #: app/routes/_admin+/marketing+/_index.tsx:186
 msgid "View all"
 msgstr ""
@@ -5445,7 +5620,7 @@ msgstr ""
 msgid "We use cookies to enhance your experience, analyze site traffic and deliver personalized content."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:199
+#: ../../packages/marketing/src/components/email/email-templates.tsx:202
 msgid "Weekly newsletter"
 msgstr "Weekly newsletter"
 
@@ -5464,6 +5639,10 @@ msgstr "WELCOME"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:140
 msgid "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
 msgstr "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:306
+msgid "When"
+msgstr "When"
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:39
 #~ msgid "When someone does <0>{0}</0>"
@@ -5503,7 +5682,11 @@ msgstr "Width"
 msgid "Window sticker"
 msgstr "Window sticker"
 
-#: ../../packages/marketing-workflow/src/validation.ts:14
+#: ../../packages/marketing/src/components/campaign-form.tsx:219
+msgid "Without a verified phone"
+msgstr "Without a verified phone"
+
+#: ../../packages/marketing-workflow/src/validation.ts:15
 msgid "Workflow must contain at least one Trigger node."
 msgstr ""
 
@@ -5511,7 +5694,7 @@ msgstr ""
 msgid "Workflow validation"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:153
+#: ../../packages/marketing/src/components/campaign-form.tsx:286
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "Write your email. Use {NAME_TAG} to personalize."
 
@@ -5519,7 +5702,7 @@ msgstr "Write your email. Use {NAME_TAG} to personalize."
 msgid "Write your message"
 msgstr "Write your message"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:142
+#: ../../packages/marketing/src/components/campaign-form.tsx:275
 msgid "Write your text message"
 msgstr "Write your text message"
 
@@ -5560,10 +5743,10 @@ msgstr "Your email design has changes that haven't been saved. Leaving now will 
 msgid "Your Exclusive Update"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:220
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:225
 msgid "Your saved templates"
 msgstr "Your saved templates"
 
-#: ../../packages/marketing/src/components/email/email-templates.tsx:250
+#: ../../packages/marketing/src/components/email/email-templates.tsx:255
 msgid "Your templates"
 msgstr "Your templates"

@@ -144,6 +144,21 @@
       "import": "./src/email-blocks-restaurant.ts",
       "default": "./src/email-blocks-restaurant.ts"
     },
+    "./email-boilerplate": {
+      "types": "./src/email-boilerplate.ts",
+      "import": "./src/email-boilerplate.ts",
+      "default": "./src/email-boilerplate.ts"
+    },
+    "./broadcast-checks": {
+      "types": "./src/broadcast-checks.ts",
+      "import": "./src/broadcast-checks.ts",
+      "default": "./src/broadcast-checks.ts"
+    },
+    "./marketing-notify": {
+      "types": "./src/marketing-notify.ts",
+      "import": "./src/marketing-notify.ts",
+      "default": "./src/marketing-notify.ts"
+    },
     "./email-unsubscribe": {
       "types": "./src/email-unsubscribe.ts",
       "import": "./src/email-unsubscribe.ts",

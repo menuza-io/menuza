@@ -11,6 +11,7 @@ import {
 	ItemGroup,
 	ItemTitle,
 } from '@repo/ui/item'
+import { type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useCampaignLabels } from '../i18n/campaign-labels.ts'
 import { CampaignStatusBadge } from './campaign-list.tsx'
@@ -20,11 +21,17 @@ export function CampaignDetailView({
 	campaign,
 	backHref,
 	backLabel,
+	actions,
+	getCampaignHref,
 }: {
 	campaign: CampaignDetail
 	/** Optional back link, for apps without a breadcrumb (e.g. Admin). */
 	backHref?: string
 	backLabel?: string
+	/** The broadcast's actions (edit, cancel, duplicate, test, re-send). */
+	actions?: ReactNode
+	/** Where another broadcast lives, for the re-send links. */
+	getCampaignHref?: (campaignId: string) => string
 }) {
 	const { _ } = useLingui()
 	const { channelLabel } = useCampaignLabels()
@@ -51,6 +58,32 @@ export function CampaignDetailView({
 			msg`Coupon: ${name}, with a single-use code for each recipient, valid for ${days} days.`,
 		)
 	}
+
+	/** When the broadcast started, or what happened instead. */
+	function whenText() {
+		const at = campaign.scheduledAt
+			? new Date(campaign.scheduledAt).toLocaleString()
+			: null
+		switch (campaign.status) {
+			case 'Draft':
+				return _(msg`Draft, not sent`)
+			case 'Scheduled':
+				return at ? _(msg`Scheduled for ${at}`) : _(msg`Scheduled`)
+			case 'Cancelled':
+				return _(msg`Cancelled, not sent`)
+			case 'SkippedLate':
+				return _(msg`Not sent: too late`)
+			default:
+				return _(msg`Sent ${new Date(campaign.createdAt).toLocaleString()}`)
+		}
+	}
+
+	const scheduledText = campaign.scheduledAt
+		? new Date(campaign.scheduledAt).toLocaleString()
+		: null
+	const lateHours = campaign.lateAfterMinutes
+		? Math.round(campaign.lateAfterMinutes / 60)
+		: 4
 
 	function recipientContact(recipient: CampaignDetail['recipients'][number]) {
 		if (recipient.email) return recipient.email
@@ -93,12 +126,62 @@ export function CampaignDetailView({
 							{' · '}
 							{formatAudience(campaign.audience)}
 							{' · '}
-							{_(msg`Sent ${new Date(campaign.createdAt).toLocaleString()}`)}
+							{whenText()}
 						</>
 					}
-					actions={<CampaignStatusBadge status={campaign.status} />}
+					actions={
+						<div className="flex flex-wrap items-center gap-2">
+							<CampaignStatusBadge status={campaign.status} />
+							{actions}
+						</div>
+					}
 				/>
 			</div>
+
+			{campaign.status === 'SkippedLate' ? (
+				<p
+					role="status"
+					className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm"
+				>
+					{scheduledText
+						? _(
+								msg`This broadcast was scheduled for ${scheduledText} but could not start within ${lateHours} hours, so it was not sent. Duplicate it to schedule it again.`,
+							)
+						: _(
+								msg`This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again.`,
+							)}
+				</p>
+			) : null}
+
+			{campaign.retargetOfCampaignId ? (
+				<p className="text-muted-foreground text-sm">
+					{_(
+						msg`A re-send to people who did not open or click the first one and are still subscribed.`,
+					)}{' '}
+					{getCampaignHref ? (
+						<Link
+							className="underline"
+							to={getCampaignHref(campaign.retargetOfCampaignId)}
+						>
+							{_(msg`See the original`)}
+						</Link>
+					) : null}
+				</p>
+			) : null}
+
+			{campaign.retargetedByCampaignId ? (
+				<p className="text-muted-foreground text-sm">
+					{_(msg`This broadcast was re-sent to non-openers.`)}{' '}
+					{getCampaignHref ? (
+						<Link
+							className="underline"
+							to={getCampaignHref(campaign.retargetedByCampaignId)}
+						>
+							{_(msg`See the re-send`)}
+						</Link>
+					) : null}
+				</p>
+			) : null}
 
 			<section className="space-y-3" aria-labelledby="campaign-message-heading">
 				<h2 id="campaign-message-heading" className="text-sm font-medium">

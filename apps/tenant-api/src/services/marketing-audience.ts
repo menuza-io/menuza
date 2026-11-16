@@ -2,6 +2,7 @@ import { STAFF_CONSENT_COOLING_OFF_DAYS } from '@repo/common/marketing-consent'
 import {
 	customers,
 	customerSubscriptions,
+	marketingMessages,
 	type Customer,
 	type CustomerConsentMethod,
 	type CustomerSubscriptionChannel,
@@ -52,6 +53,13 @@ export async function loadBroadcastAudience(
 		 * (the ids are bound parameters).
 		 */
 		customerIds?: readonly string[]
+		/**
+		 * Re-send to non-openers (#101): only customers who got this broadcast
+		 * (message `Sent`, not failed or unknown) and neither opened nor clicked
+		 * it. Consent is still judged now, so someone who unsubscribed since is
+		 * not in the audience.
+		 */
+		retargetOf?: string
 	},
 ): Promise<Customer[]> {
 	if (params.customerIds && params.customerIds.length === 0) return []
@@ -76,6 +84,23 @@ export async function loadBroadcastAudience(
 				params.customerIds
 					? // bounded: callers pass one broadcast batch (BROADCAST_BATCH_SIZE)
 						inArray(customers.id, [...params.customerIds])
+					: undefined,
+				params.retargetOf
+					? // bounded: a subquery over the original's messages, not a bound list
+						inArray(
+							customers.id,
+							db
+								.select({ id: marketingMessages.customerId })
+								.from(marketingMessages)
+								.where(
+									and(
+										eq(marketingMessages.campaignId, params.retargetOf),
+										eq(marketingMessages.status, 'Sent'),
+										isNull(marketingMessages.openedAt),
+										isNull(marketingMessages.clickedAt),
+									),
+								),
+						)
 					: undefined,
 			),
 		)

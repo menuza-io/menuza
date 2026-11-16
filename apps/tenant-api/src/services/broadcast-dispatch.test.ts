@@ -18,6 +18,7 @@ import {
 	provisionTenantDb,
 	type TenantDatabase,
 } from '@repo/tenant-db'
+import { postMarketingNotify } from '../lib/marketing-notify.ts'
 import { getBroadcastHourlyCap } from '../lib/rate-limit.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { operatorRoutes } from '../routes/operator.ts'
@@ -49,6 +50,9 @@ vi.mock('../lib/rate-limit.ts', async (importOriginal) => {
 		getBroadcastHourlyCap: vi.fn(actual.getBroadcastHourlyCap),
 	}
 })
+vi.mock('../lib/marketing-notify.ts', () => ({
+	postMarketingNotify: vi.fn().mockResolvedValue({ status: 'delivered' }),
+}))
 vi.mock('../lib/tenant-email.ts', () => ({
 	sendTenantEmail: vi.fn().mockResolvedValue({ status: 'success' }),
 }))
@@ -156,6 +160,7 @@ describe('broadcast dispatch', () => {
 			status: 'success',
 		} as never)
 		vi.mocked(sendSms).mockClear()
+		vi.mocked(postMarketingNotify).mockClear()
 	})
 
 	afterEach(async () => {
@@ -516,5 +521,322 @@ describe('broadcast dispatch', () => {
 
 		const [message] = await messagesOf(db, id)
 		expect(message?.status).toBe('Opened')
+	})
+})
+
+describe('broadcast late cut-off, start check and re-send audience', () => {
+	let tempDir: string
+
+	beforeEach(async () => {
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-bcast-late-'))
+		process.env.TENANT_DB_DIR = tempDir
+		process.env.DATA_REGION = 'us'
+		process.env.AUTH_HMAC_SECRET = 'test-hmac-secret-123456789'
+		process.env.TENANT_OPERATOR_TOKEN = operatorSecret
+		await provisionTenantDb(orgId)
+		vi.mocked(sendTenantEmail).mockReset()
+		vi.mocked(sendTenantEmail).mockResolvedValue({ status: 'success' } as never)
+		vi.mocked(postMarketingNotify).mockClear()
+	})
+
+	afterEach(async () => {
+		await destroyTenantDb(orgId).catch(() => {})
+		fs.rmSync(tempDir, { recursive: true, force: true })
+	})
+
+	const HOUR = 3_600_000
+
+	it('does not send a scheduled broadcast that missed its window, and tells the operator', async () => {
+		const db = await getTenantDb(orgId)
+		await emailCustomers(db, 1)
+		const scheduledAt = new Date(1_800_000_000_000)
+		const id = await campaign(db, { status: 'Scheduled', scheduledAt })
+
+		// 4 hours and a minute late (the default window is 4 hours).
+		const result = await runBroadcastTick(
+			orgId,
+			db,
+			scheduledAt.getTime() + 4 * HOUR + 60_000,
+		)
+
+		expect(result.outcomes).toEqual(['skipped_late'])
+		expect(result.claimed).toBe(0)
+		expect(emailedTo()).toEqual([])
+		expect((await getCampaign(db, id))?.status).toBe('SkippedLate')
+		expect(await messagesOf(db, id)).toEqual([])
+		expect(postMarketingNotify).toHaveBeenCalledWith({
+			orgId,
+			kind: 'broadcast_skipped_late',
+			campaignId: id,
+		})
+	})
+
+	it('still sends one that starts inside the window, exactly at the edge', async () => {
+		const db = await getTenantDb(orgId)
+		await emailCustomers(db, 1)
+		const scheduledAt = new Date(1_800_000_000_000)
+		const id = await campaign(db, { status: 'Scheduled', scheduledAt })
+
+		const result = await runBroadcastTick(
+			orgId,
+			db,
+			scheduledAt.getTime() + 4 * HOUR,
+		)
+
+		expect(result.outcomes).toEqual(['completed'])
+		expect((await getCampaign(db, id))?.status).toBe('Completed')
+		expect(postMarketingNotify).not.toHaveBeenCalled()
+	})
+
+	it('honours the window the operator chose', async () => {
+		const db = await getTenantDb(orgId)
+		await emailCustomers(db, 1)
+		const scheduledAt = new Date(1_800_000_000_000)
+		const id = await campaign(db, {
+			status: 'Scheduled',
+			scheduledAt,
+			lateAfterMinutes: 60,
+		})
+		const result = await runBroadcastTick(
+			orgId,
+			db,
+			scheduledAt.getTime() + 61 * 60_000,
+		)
+		expect(result.outcomes).toEqual(['skipped_late'])
+		expect((await getCampaign(db, id))?.status).toBe('SkippedLate')
+	})
+
+	it('never cuts off a send already in progress, however late the clock says', async () => {
+		const db = await getTenantDb(orgId)
+		const customers = await emailCustomers(db, 3)
+		const scheduledAt = new Date(1_800_000_000_000)
+		// Started on time, interrupted: its lease went stale a day later.
+		const id = await campaign(db, {
+			status: 'Processing',
+			scheduledAt,
+			updatedAt: new Date(scheduledAt.getTime() + 1000),
+		})
+		await db.insert(marketingMessages).values({
+			campaignId: id,
+			customerId: customers[0]!.id,
+			channel: 'email',
+			status: 'Sent',
+		})
+
+		const result = await runBroadcastTick(
+			orgId,
+			db,
+			scheduledAt.getTime() + 24 * HOUR,
+		)
+
+		expect(result.outcomes).toEqual(['completed'])
+		expect(emailedTo().sort()).toEqual(
+			[customers[1]!.email, customers[2]!.email].sort(),
+		)
+		expect((await getCampaign(db, id))?.status).toBe('Completed')
+		expect(postMarketingNotify).not.toHaveBeenCalled()
+	})
+
+	it('never skips a Draft, and a skipped broadcast is not picked up again', async () => {
+		const db = await getTenantDb(orgId)
+		const scheduledAt = new Date(1_800_000_000_000)
+		const draft = await campaign(db, { status: 'Draft', scheduledAt })
+		const late = await campaign(db, { status: 'Scheduled', scheduledAt })
+		const now = scheduledAt.getTime() + 10 * HOUR
+
+		await runBroadcastTick(orgId, db, now)
+		await runBroadcastTick(orgId, db, now + HOUR)
+
+		expect((await getCampaign(db, draft))?.status).toBe('Draft')
+		expect((await getCampaign(db, late))?.status).toBe('SkippedLate')
+		expect(postMarketingNotify).toHaveBeenCalledTimes(1)
+	})
+
+	it('the tick pass notifies a skipped broadcast detached, without holding the tick', async () => {
+		const db = await getTenantDb(orgId)
+		const scheduledAt = new Date(1_800_000_000_000)
+		const id = await campaign(db, { status: 'Scheduled', scheduledAt })
+		const detached: Promise<unknown>[] = []
+
+		const pass = await startBroadcastTickForOrg(orgId, {
+			now: scheduledAt.getTime() + 5 * HOUR,
+			runDetached: (task) => detached.push(task),
+		})
+		await Promise.all(detached)
+
+		expect(pass?.claimed).toBe(0)
+		expect((await getCampaign(db, id))?.status).toBe('SkippedLate')
+		expect(postMarketingNotify).toHaveBeenCalledTimes(1)
+	})
+
+	it('checks the message again when the send starts: a blocking problem fails it', async () => {
+		const db = await getTenantDb(orgId)
+		await emailCustomers(db, 1)
+		const emptyImage = [
+			{
+				id: 'block-img',
+				type: 'image',
+				config: { url: '', alt: '', href: '', width: 100, align: 'center' },
+			},
+		]
+		const id = await campaign(db, {
+			status: 'Processing',
+			contentBlocks: JSON.stringify(emptyImage),
+		})
+		const lease = broadcastLease(Date.now())
+		await db
+			.update(marketingCampaigns)
+			.set({ updatedAt: lease })
+			.where(eq(marketingCampaigns.id, id))
+
+		expect(await dispatchBroadcast(orgId, id, lease)).toBe('failed')
+		expect(emailedTo()).toEqual([])
+		expect((await getCampaign(db, id))?.status).toBe('Failed')
+	})
+
+	it('fails a coupon tag with no coupon, and an audience of zero, instead of sending', async () => {
+		const db = await getTenantDb(orgId)
+		await emailCustomers(db, 1)
+		const lease = broadcastLease(Date.now())
+		const tagged = await campaign(db, {
+			content: 'Your code {{couponCode}}',
+			updatedAt: lease,
+		})
+		expect(await dispatchBroadcast(orgId, tagged, lease)).toBe('failed')
+
+		const nobody = await campaign(db, {
+			// Every address is confirmed by emailCustomers; SMS has no one here.
+			channel: 'sms',
+			updatedAt: lease,
+		})
+		expect(await dispatchBroadcast(orgId, nobody, lease)).toBe('failed')
+		expect(emailedTo()).toEqual([])
+		expect(sendSms).not.toHaveBeenCalled()
+	})
+
+	it('sends despite a warning (starter text): that was the operator\u2019s choice', async () => {
+		const db = await getTenantDb(orgId)
+		const [customer] = await emailCustomers(db, 1)
+		const starter = [
+			{
+				id: 'block-body',
+				type: 'body',
+				config: {
+					text: 'Write your message here. Use {{firstName}} to personalize.',
+					align: 'left',
+				},
+			},
+		]
+		const lease = broadcastLease(Date.now())
+		const id = await campaign(db, {
+			contentBlocks: JSON.stringify(starter),
+			updatedAt: lease,
+		})
+		expect(await dispatchBroadcast(orgId, id, lease)).toBe('completed')
+		expect(emailedTo()).toEqual([customer!.email])
+	})
+
+	it('a re-send reaches only still-subscribed customers who got it and neither opened nor clicked', async () => {
+		const db = await getTenantDb(orgId)
+		const people = await emailCustomers(db, 6)
+		const original = await campaign(db, { status: 'Completed' })
+		const [ignored, opened, clicked, failed, unsubscribed, unknown] = [
+			people[0]!,
+			people[1]!,
+			people[2]!,
+			people[3]!,
+			people[4]!,
+			people[5]!,
+		]
+		await db.insert(marketingMessages).values([
+			{
+				campaignId: original,
+				customerId: ignored.id,
+				channel: 'email',
+				status: 'Sent',
+			},
+			{
+				campaignId: original,
+				customerId: opened.id,
+				channel: 'email',
+				status: 'Opened',
+				openedAt: new Date(),
+			},
+			{
+				campaignId: original,
+				customerId: clicked.id,
+				channel: 'email',
+				status: 'Clicked',
+				openedAt: new Date(),
+				clickedAt: new Date(),
+			},
+			{
+				campaignId: original,
+				customerId: failed.id,
+				channel: 'email',
+				status: 'Failed',
+			},
+			{
+				campaignId: original,
+				customerId: unsubscribed.id,
+				channel: 'email',
+				status: 'Sent',
+			},
+			{
+				campaignId: original,
+				customerId: unknown.id,
+				channel: 'email',
+				status: 'Unknown',
+			},
+		])
+		await setCustomerSubscription(db, {
+			customerId: unsubscribed.id,
+			topic: 'marketing',
+			channel: 'email',
+			subscribed: false,
+			source: 'unsubscribe_link',
+		} as never).catch(async () => {
+			// Fall back to a direct update if the helper's shape differs.
+			await db
+				.update(customerSubscriptions)
+				.set({ unsubscribedAt: new Date() })
+				.where(eq(customerSubscriptions.customerId, unsubscribed.id))
+		})
+
+		const { loadBroadcastAudience } = await import('./marketing-audience.ts')
+		const audience = await loadBroadcastAudience(db, {
+			channel: 'email',
+			audience: 'all',
+			retargetOf: original,
+		})
+		expect(audience.map((c) => c.id)).toEqual([ignored.id])
+
+		// And the dispatcher sends the linked draft to exactly them.
+		const followUp = await campaign(db, {
+			status: 'Processing',
+			retargetOfCampaignId: original,
+		})
+		const lease = broadcastLease(Date.now())
+		await db
+			.update(marketingCampaigns)
+			.set({ updatedAt: lease })
+			.where(eq(marketingCampaigns.id, followUp))
+		expect(await dispatchBroadcast(orgId, followUp, lease)).toBe('completed')
+		expect(emailedTo()).toEqual([ignored.email])
+	})
+
+	it('allows one re-send per original: the link is unique', async () => {
+		const db = await getTenantDb(orgId)
+		const original = await campaign(db, { status: 'Completed' })
+		await campaign(db, { status: 'Draft', retargetOfCampaignId: original })
+		// Drizzle wraps the driver error; the constraint text is on its cause.
+		const error = await campaign(db, {
+			status: 'Draft',
+			retargetOfCampaignId: original,
+		}).then(
+			() => null,
+			(thrown: unknown) => thrown as { cause?: { message?: string } },
+		)
+		expect(error?.cause?.message).toMatch(/UNIQUE constraint failed/i)
 	})
 })
