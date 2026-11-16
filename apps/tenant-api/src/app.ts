@@ -34,6 +34,7 @@ import { timeclockOperatorRoutes } from './routes/timeclock.ts'
 import { kioskRoutes } from './routes/kiosk.ts'
 import { laborRoutes } from './routes/labor.ts'
 import { operatorRoutes } from './routes/operator.ts'
+import { marketingAudienceRoutes } from './routes/operator-marketing-audiences.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
 import { provisionRoutes } from './routes/provision.ts'
 import { publicOrderRoutes } from './routes/orders.ts'
@@ -355,6 +356,7 @@ export function createTenantApiApp() {
 	app.route('/operator/forms', formOperatorRoutes)
 	app.route('/operator/mailbox', mailboxRoutes)
 	app.route('/operator/journeys', journeyOperatorRoutes)
+	app.route('/operator/marketing/audiences', marketingAudienceRoutes)
 	app.route('/operator/orders', operatorOrderRoutes)
 	app.route('/operator/qr', operatorQrRoutes)
 	app.route('/operator/people', operatorPeopleRoutes)

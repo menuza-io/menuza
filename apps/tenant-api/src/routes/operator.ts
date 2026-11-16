@@ -54,6 +54,11 @@ import {
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
 import { findDiscountUsedIn } from '../services/discount-used-in.ts'
 import { loadBroadcastAudience } from '../services/marketing-audience.ts'
+import { audienceOutOfScope } from '../services/marketing-audience-rules.ts'
+import {
+	getAudience,
+	resolveAudienceWhere,
+} from '../services/marketing-audience-service.ts'
 import {
 	erasePerson,
 	PersonErasureError,
@@ -112,6 +117,8 @@ export async function authenticateOperator(
 		/** Marketing test send: the operator's own address / number, server-minted only. */
 		testEmail?: string
 		testPhone?: string
+		/** Location-scoped operators: the only places their audiences may look at. */
+		locationIds?: string[]
 	}
 	try {
 		const secret = new TextEncoder().encode(operatorToken)
@@ -595,6 +602,8 @@ const createCampaignSchema = z.object({
 	name: z.string().trim().min(1, 'Name is required').max(200),
 	channel: z.enum(['email', 'sms']),
 	audience: z.enum(['all', 'verified', 'unverified']).default('all'),
+	/** A saved audience (#98): narrows the consented guests, never widens them. */
+	audienceId: z.string().min(1).max(100).optional().nullable(),
 	subject: z.string().max(300).optional(),
 	content: z.string().min(1, 'Content is required').max(20_000),
 	/** JSON array of email designer blocks (source of truth for re-editing). */
@@ -699,6 +708,15 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 	try {
 		const db = await getTenantDb(orgId)
 		const campaignId = randomUUID()
+		let savedAudience: { id: string; version: number } | null = null
+		if (body.audienceId) {
+			const found = await getAudience(db, body.audienceId)
+			if (!found) return c.json({ error: 'audience_not_found' }, 404)
+			if (audienceOutOfScope(found.definition, auth.locationIds)) {
+				return c.json({ error: 'location_out_of_scope' }, 403)
+			}
+			savedAudience = { id: found.id, version: found.version }
+		}
 		if (scheduledAt && new Date(scheduledAt).getTime() <= Date.now()) {
 			return c.json({ error: 'scheduled_in_past' }, 400)
 		}
@@ -724,7 +742,15 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 			contentHtml: body.contentHtml || null,
 			discountOffer: offer ? JSON.stringify(offer) : null,
 			status,
-			segmentationRules: JSON.stringify({ audience }),
+			segmentationRules: JSON.stringify({
+				audience,
+				...(savedAudience
+					? {
+							audienceId: savedAudience.id,
+							audienceVersion: savedAudience.version,
+						}
+					: {}),
+			}),
 			scheduledAt: isScheduled ? new Date(scheduledAt!) : null,
 			lateAfterMinutes: body.lateAfterMinutes ?? DEFAULT_LATE_AFTER_MINUTES,
 			updatedAt: lease,
@@ -769,6 +795,8 @@ const updateCampaignSchema = z
 	.object({
 		name: z.string().trim().min(1).max(200).optional(),
 		audience: z.enum(['all', 'verified', 'unverified']).optional(),
+		/** A saved audience (#98); null goes back to the audience rule above. */
+		audienceId: z.string().min(1).max(100).nullable().optional(),
 		subject: z.string().max(300).nullable().optional(),
 		content: z.string().min(1).max(20_000).optional(),
 		contentBlocks: createCampaignSchema.shape.contentBlocks,
@@ -850,9 +878,21 @@ operatorRoutes.patch('/marketing/campaigns/:campaignId', async (c) => {
 		})
 		if (pairing) return c.json({ error: pairing }, 400)
 
+		let audienceRef: { id: string; version: number } | null | undefined
+		if (body.audienceId === null) audienceRef = null
+		else if (body.audienceId) {
+			const found = await getAudience(db, body.audienceId)
+			if (!found) return c.json({ error: 'audience_not_found' }, 404)
+			if (audienceOutOfScope(found.definition, auth.locationIds)) {
+				return c.json({ error: 'location_out_of_scope' }, 403)
+			}
+			audienceRef = { id: found.id, version: found.version }
+		}
+
 		const result = await updateCampaign(db, campaignId, {
 			name: body.name,
 			audience: body.audience,
+			audienceRef,
 			subject: body.subject,
 			content: body.content,
 			contentBlocks:
@@ -1014,20 +1054,29 @@ operatorRoutes.get('/marketing/audience-count', async (c) => {
 		.object({
 			channel: z.enum(['email', 'sms']),
 			audience: z.enum(['all', 'verified', 'unverified']).default('all'),
+			audienceId: z.string().min(1).max(100).optional(),
 			retargetOf: z.string().min(1).max(100).optional(),
 		})
 		.safeParse({
 			channel: c.req.query('channel'),
 			audience: c.req.query('audience') || undefined,
+			audienceId: c.req.query('audienceId') || undefined,
 			retargetOf: c.req.query('retargetOf') || undefined,
 		})
 	if (!query.success) return c.json({ error: 'Invalid request' }, 400)
 	try {
 		const db = await getTenantDb(auth.orgId)
+		const resolved = query.data.audienceId
+			? await resolveAudienceWhere(db, query.data.audienceId)
+			: null
+		if (query.data.audienceId && !resolved) {
+			return c.json({ error: 'audience_not_found' }, 404)
+		}
 		const audience = await loadBroadcastAudience(db, {
 			channel: query.data.channel,
 			audience: query.data.audience,
 			retargetOf: query.data.retargetOf,
+			audienceWhere: resolved?.where,
 		})
 		return c.json({ count: audience.length })
 	} catch (error) {

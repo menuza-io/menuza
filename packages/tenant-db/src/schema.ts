@@ -60,6 +60,13 @@ export const customers = sqliteTable('customers', {
 		mode: 'timestamp',
 	}),
 	stripeCustomerId: text('stripe_customer_id').unique(),
+	// Birthday (#151) as `MM-DD`, year never kept. Personal data: cleared by
+	// person erasure, never in an export, a log or a cross-plane payload. A
+	// birthday alone is not marketing consent.
+	birthMonthDay: text('birth_month_day'),
+	// When the birthday was last set (ms). The birthday journey fires once per
+	// guest per year (`birthday_journey_emissions`), so editing never fires again.
+	birthMonthDaySetAt: integer('birth_month_day_set_at'),
 	createdAt: integer('created_at', { mode: 'timestamp' }).default(
 		sql`(strftime('%s', 'now'))`,
 	),
@@ -299,6 +306,11 @@ export const marketingJourneys = sqliteTable(
 				'loyalty_reward_available',
 				'loyalty_near_reward',
 				'loyalty_inactive',
+				'order_first_placed',
+				'order_completed',
+				'guest_lapsed',
+				'birthday_coming_up',
+				'cart_left_behind',
 			],
 		})
 			.notNull()
@@ -312,6 +324,14 @@ export const marketingJourneys = sqliteTable(
 		nodes: text('nodes', { mode: 'json' }).notNull().default('[]'),
 		edges: text('edges', { mode: 'json' }).notNull().default('[]'),
 		version: integer('version').notNull().default(1),
+		// "Stop when the guest places an order" (#99): `order` checks before every
+		// step, including after a delay. Null: no goal.
+		goal: text('goal', { enum: ['order'] }),
+		// The ready-made program this journey was created from (#100) and the
+		// template version it was created at; later template changes never
+		// rewrite it. Null for a journey built by hand.
+		programId: text('program_id'),
+		programVersion: integer('program_version'),
 		publishedAt: integer('published_at', { mode: 'timestamp' }),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
@@ -322,6 +342,12 @@ export const marketingJourneys = sqliteTable(
 	},
 	(table) => [
 		index('idx_marketing_journeys_status').on(table.status),
+		// One journey per program (#100): turning a program on twice is refused.
+		uniqueIndex('uniq_marketing_journeys_program')
+			.on(table.programId)
+			.where(
+				sql`${table.programId} IS NOT NULL AND ${table.status} <> 'archived'`,
+			),
 		index('idx_marketing_journeys_trigger_type').on(table.triggerType),
 	],
 )
@@ -9412,3 +9438,101 @@ export type InvRecipeRow = typeof invRecipes.$inferSelect
 export type InvRecipeLineRow = typeof invRecipeLines.$inferSelect
 export type InvSaleUsageRow = typeof invSaleUsage.$inferSelect
 export type InvOutboxRow = typeof invOutbox.$inferSelect
+
+
+// ==========================================
+// MARKETING AUDIENCES, ORDER / BIRTHDAY / CART JOURNEY TRIGGERS (#98 #99 #100 #151 #150)
+// ==========================================
+
+/**
+ * Saved audiences (#98): rules over orders, visits, loyalty and profile
+ * (`@repo/common/marketing-audiences`). The definition holds numbers and ids
+ * only, never a guest. Membership is evaluated at send time, never stored.
+ * `system_key` marks a ready-made audience so a second first visit adds none.
+ */
+export const marketingAudiences = sqliteTable(
+	'marketing_audiences',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		name: text('name').notNull(),
+		definition: text('definition', { mode: 'json' }).notNull(),
+		// Counts the saves; a broadcast or automation stores the one it used.
+		version: integer('version').notNull().default(1),
+		systemKey: text('system_key'),
+		createdBy: text('created_by'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_marketing_audiences_name').on(sql`lower(${table.name})`),
+		uniqueIndex('uniq_marketing_audiences_system_key')
+			.on(table.systemKey)
+			.where(sql`${table.systemKey} IS NOT NULL`),
+	],
+)
+
+/**
+ * Organization-wide marketing settings, one JSON row per key (`frequency_cap`:
+ * at most N marketing messages per guest per 7 days; `cart_reminder`: the delay
+ * and the smallest cart). No guest data.
+ */
+export const marketingSettings = sqliteTable('marketing_settings', {
+	key: text('key').primaryKey(),
+	value: text('value', { mode: 'json' }).notNull(),
+	updatedAt: integer('updated_at').notNull().default(nowMs),
+})
+
+/**
+ * What an order, birthday or cart trigger already started, so it fires once
+ * (#99 #151 #150). `(customer, trigger, ref)` is the key: `order_first_placed`
+ * ref `first`; `order_completed` ref the order; `guest_lapsed` ref
+ * `<journey>:<last order ms>` (one per quiet spell, re-armed by the next
+ * order); `birthday_coming_up` ref the year; `cart_left_behind` ref the cart's
+ * version. A `pending` row is a claim: promoted to `fired` once the journey
+ * started, retried when stale. No contact data.
+ */
+export const orderJourneyEmissions = sqliteTable(
+	'order_journey_emissions',
+	{
+		customerId: text('customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		trigger: text('trigger').notNull(),
+		ref: text('ref').notNull(),
+		state: text('state', { enum: ['pending', 'fired'] })
+			.notNull()
+			.default('pending'),
+		emittedAt: integer('emitted_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({ columns: [table.customerId, table.trigger, table.ref] }),
+		index('idx_order_journey_emissions_trigger').on(
+			table.trigger,
+			table.emittedAt,
+		),
+	],
+)
+
+/**
+ * The cart a signed-in guest with marketing consent left at checkout (#150):
+ * ids and quantities only, no contact, address or name. One row per customer;
+ * every quote overwrites it, an order or an empty cart clears it, and it is
+ * deleted after 7 days and on person erasure.
+ */
+export const customerCarts = sqliteTable(
+	'customer_carts',
+	{
+		customerId: text('customer_id')
+			.primaryKey()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		locationId: text('location_id').notNull(),
+		currency: text('currency').notNull(),
+		subtotalCents: integer('subtotal_cents').notNull(),
+		items: text('items', { mode: 'json' }).notNull(),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+		remindedAt: integer('reminded_at'),
+	},
+	(table) => [index('idx_customer_carts_updated').on(table.updatedAt)],
+)

@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createTenantApiApp } from '../app.ts'
 import { formOperatorRoutes } from './forms.ts'
 import { journeyOperatorRoutes } from './journeys.ts'
+import { marketingAudienceRoutes } from './operator-marketing-audiences.ts'
 import { operatorRoutes } from './operator.ts'
 
 const orgId = 'clw9x0a12000008l00test78'
@@ -42,6 +43,7 @@ describe('browser operator tokens are bound to the area they were minted for', (
 		app = new Hono()
 		app.route('/operator/forms', formOperatorRoutes)
 		app.route('/operator/journeys', journeyOperatorRoutes)
+		app.route('/operator/marketing/audiences', marketingAudienceRoutes)
 		app.route('/operator', operatorRoutes)
 	})
 
@@ -69,6 +71,8 @@ describe('browser operator tokens are bound to the area they were minted for', (
 		// read:automation:any, which the broadcasts permission does not imply.
 		expect((await get('/journeys/j1/runs', token)).status).toBe(401)
 		expect((await get('/journeys/runs/r1', token)).status).toBe(401)
+		// Saved audiences (#98) are marketing data: counts and definitions only.
+		expect((await get('/marketing/audiences', token)).status).toBe(200)
 	})
 
 	// The Automations Runs page reads a journey's runs and a run's timeline
@@ -86,6 +90,7 @@ describe('browser operator tokens are bound to the area they were minted for', (
 			401,
 		)
 		expect((await get('/marketing/metrics', token)).status).toBe(401)
+		expect((await get('/marketing/audiences', token)).status).toBe(401)
 		expect((await get('/customers', token)).status).toBe(401)
 		expect((await get('/journeys/j1', token)).status).toBe(401)
 		expect((await get('/journeys/j1/runs', token)).status).toBe(200)
