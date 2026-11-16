@@ -8,6 +8,7 @@ import {
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
 import { startBroadcastTickForOrg } from '../services/broadcast-dispatch.ts'
+import { runMarketingJourneyTick } from '../services/marketing-journey-tick.ts'
 import { pruneSmsSendEventsForOrg } from '../services/sms-send-limits.ts'
 import { fanOutStaffTick } from '../services/staff-tick-fanout.ts'
 import { runStaffTickForOrg } from '../services/staff-tick-service.ts'
@@ -87,6 +88,8 @@ staffTickRoutes.post('/tick', async (c) => {
 		await startBroadcastTickForOrg(parsed.data.orgId, {
 			runDetached: runDetached(c),
 		})
+		// Order, birthday and cart journeys (#99 #151 #150): detached, never throws.
+		runDetached(c)(runMarketingJourneyTick(parsed.data.orgId))
 		// Hourly housekeeping (the Workers fan-out lands here per organization;
 		// alarms call the services directly). Detached so it never delays the
 		// response.
@@ -100,6 +103,7 @@ staffTickRoutes.post('/tick', async (c) => {
 		run: async (orgId) => {
 			const result = await runStaffTickForOrg(orgId).catch(() => null)
 			await startBroadcastTickForOrg(orgId, { runDetached: runDetached(c) })
+			runDetached(c)(runMarketingJourneyTick(orgId))
 			// Hourly housekeeping, detached so a slow prune never holds a fan-out
 			// slot that a later organization's broadcasts are waiting for.
 			runDetached(c)(pruneSmsSendEventsForOrg(orgId))

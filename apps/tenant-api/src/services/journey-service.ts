@@ -27,6 +27,8 @@ import {
 	type CompleteRunPayload,
 	type EvaluateConditionPayload,
 	runTenantTransaction,
+	JOURNEY_GOAL_REACHED_REASON,
+	triggerConfigMatches,
 } from '@repo/tenant-db'
 import { withUnsubscribeFooter } from '@repo/common/email-unsubscribe'
 import { parseMarketingOffer } from '@repo/discounts'
@@ -41,6 +43,16 @@ import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { couponCodeForRecipient } from './discount-marketing-codes.ts'
 import { loyaltyMergeValues } from './loyalty-merge-values.ts'
+import {
+	goalReachedForRun,
+	marketingMessageCount,
+	readFrequencyCap,
+} from './journey-guards.ts'
+import {
+	isVirtualConditionField,
+	virtualConditionValue,
+} from './journey-conditions.ts'
+import { customerInAudience } from './marketing-audience-service.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
 export const JOURNEY_LIST_LIMIT = 100
@@ -50,6 +62,15 @@ const ONCE_PER_CUSTOMER_TRIGGERS: ReadonlySet<string> = new Set([
 	'phone_verified',
 	'profile_completed',
 ])
+
+/** Drizzle wraps the driver error: the constraint message may be on `cause`. */
+function isWrappedUniqueError(error: unknown, depth = 0): boolean {
+	if (!(error instanceof Error) || depth > 4) return false
+	return (
+		isSqliteUniqueConstraintError(error) ||
+		isWrappedUniqueError(error.cause, depth + 1)
+	)
+}
 
 function isSqliteUniqueConstraintError(error: unknown) {
 	return (
@@ -150,11 +171,23 @@ async function haltRunIfStopped(
 	run: typeof journeyRuns.$inferSelect,
 ): Promise<string | null> {
 	const journey = await db
-		.select({ status: marketingJourneys.status })
+		.select({ status: marketingJourneys.status, goal: marketingJourneys.goal })
 		.from(marketingJourneys)
 		.where(eq(marketingJourneys.id, run.journeyId))
 		.get()
-	const reason = runHaltReason(run, journey)
+	let reason = runHaltReason(run, journey)
+	// "Stop when the guest places an order" (#99): checked before every step,
+	// a delay included, because a step is only ever run after its delay ended.
+	// An operator's test run never stops for a goal.
+	if (
+		!reason &&
+		journey?.goal === 'order' &&
+		run.status === 'running' &&
+		parseRunContext(run.contextData).isTestRun !== true &&
+		(await goalReachedForRun(db, run))
+	) {
+		reason = JOURNEY_GOAL_REACHED_REASON
+	}
 	if (reason && run.status === 'running') {
 		await db
 			.update(journeyRuns)
@@ -356,7 +389,8 @@ async function skipWithoutReservationConsent(
  * `no_unsubscribe_origin`: an email step with no trusted origin for its
  * unsubscribe link (`TENANT_API_URL` unset in production), so it is not sent.
  */
-export type JourneySkipReason = 'no_consent' | 'no_unsubscribe_origin'
+export type JourneySkipReason =
+	'no_consent' | 'no_unsubscribe_origin' | 'frequency_capped'
 
 /**
  * The provider may have accepted the message (timeout, dropped connection,
@@ -700,6 +734,41 @@ export async function executeJourneyStep(
 			executionId: stepExecutionId,
 			status: 'skipped',
 			reason: 'no_consent',
+		}
+	}
+
+	// The frequency cap (#99): at most N marketing messages per guest per window,
+	// across broadcasts and automations. Transactional messages never count (they
+	// are not in `marketing_messages`). A step over the cap is skipped, the
+	// journey goes on, and the run timeline says why. Not applied to an
+	// operator's own test run.
+	if (contextData.isTestRun !== true) {
+		const cap = await readFrequencyCap(db)
+		if (
+			cap &&
+			(await marketingMessageCount(db, customer.id, cap, Date.now())) >=
+				cap.limit
+		) {
+			await db
+				.update(journeyStepExecutions)
+				.set({
+					status: 'skipped',
+					errorMessage: null,
+					executionDetails: JSON.stringify({
+						skipped: true,
+						skipReason: 'frequency_capped' satisfies JourneySkipReason,
+						channel: stepType,
+						cappedAt: new Date().toISOString(),
+					}),
+					completedAt: new Date(),
+				})
+				.where(eq(journeyStepExecutions.id, stepExecutionId))
+			return {
+				success: true,
+				executionId: stepExecutionId,
+				status: 'skipped',
+				reason: 'frequency_capped',
+			}
 		}
 	}
 
@@ -1283,7 +1352,22 @@ export async function evaluateJourneyCondition(
 		actualValue = customerRecord[field]
 	} else if (field in contextData) {
 		actualValue = contextData[field]
+	} else if (isVirtualConditionField(field)) {
+		// Computed from the guest's orders and reservations as they are now.
+		actualValue = await virtualConditionValue(
+			db,
+			field,
+			payload.customerId,
+			Date.now(),
+		)
 	}
+	// "Guest is in audience X" (#98): the value is the audience's id. An audience
+	// that was deleted answers "no", so a path never opens by accident.
+	const audienceAnswer =
+		field === 'audience'
+			? await customerInAudience(db, value || '', payload.customerId)
+			: null
+	if (field === 'audience') actualValue = audienceAnswer === true
 
 	// Never persist raw PII into the audit trail. Conditions on name/email/phone
 	// record a redacted marker; the boolean result is still authoritative.
@@ -1297,49 +1381,55 @@ export async function evaluateJourneyCondition(
 			: ''
 	const strExpected = (value || '').trim()
 
-	switch (operator) {
-		case 'equals':
-			if (typeof actualValue === 'boolean') {
+	if (field === 'audience') {
+		result =
+			operator === 'not_equals'
+				? audienceAnswer === false
+				: audienceAnswer === true
+	} else
+		switch (operator) {
+			case 'equals':
+				if (typeof actualValue === 'boolean') {
+					result =
+						actualValue ===
+						(strExpected.toLowerCase() === 'true' || strExpected === '1')
+				} else {
+					result = strActual.toLowerCase() === strExpected.toLowerCase()
+				}
+				break
+			case 'not_equals':
+				if (typeof actualValue === 'boolean') {
+					result =
+						actualValue !==
+						(strExpected.toLowerCase() === 'true' || strExpected === '1')
+				} else {
+					result = strActual.toLowerCase() !== strExpected.toLowerCase()
+				}
+				break
+			case 'contains':
+				result = strActual.toLowerCase().includes(strExpected.toLowerCase())
+				break
+			case 'greater_than': {
+				const numActual = Number(actualValue)
+				const numExpected = Number(value)
 				result =
-					actualValue ===
-					(strExpected.toLowerCase() === 'true' || strExpected === '1')
-			} else {
-				result = strActual.toLowerCase() === strExpected.toLowerCase()
+					!isNaN(numActual) && !isNaN(numExpected)
+						? numActual > numExpected
+						: strActual > strExpected
+				break
 			}
-			break
-		case 'not_equals':
-			if (typeof actualValue === 'boolean') {
+			case 'less_than': {
+				const numActual = Number(actualValue)
+				const numExpected = Number(value)
 				result =
-					actualValue !==
-					(strExpected.toLowerCase() === 'true' || strExpected === '1')
-			} else {
-				result = strActual.toLowerCase() !== strExpected.toLowerCase()
+					!isNaN(numActual) && !isNaN(numExpected)
+						? numActual < numExpected
+						: strActual < strExpected
+				break
 			}
-			break
-		case 'contains':
-			result = strActual.toLowerCase().includes(strExpected.toLowerCase())
-			break
-		case 'greater_than': {
-			const numActual = Number(actualValue)
-			const numExpected = Number(value)
-			result =
-				!isNaN(numActual) && !isNaN(numExpected)
-					? numActual > numExpected
-					: strActual > strExpected
-			break
+			default:
+				result = false
 		}
-		case 'less_than': {
-			const numActual = Number(actualValue)
-			const numExpected = Number(value)
-			result =
-				!isNaN(numActual) && !isNaN(numExpected)
-					? numActual < numExpected
-					: strActual < strExpected
-			break
-		}
-		default:
-			result = false
-	}
 
 	const stepExecutionId = randomUUID()
 	await db.insert(journeyStepExecutions).values({
@@ -1442,6 +1532,9 @@ export async function getJourneyDefinition(orgId: string, journeyId: string) {
 			nodes,
 			edges,
 			graphJson: journey.graphJson,
+			goal: journey.goal,
+			programId: journey.programId,
+			programVersion: journey.programVersion,
 			version: journey.version,
 			publishedAt: journey.publishedAt,
 			createdAt: journey.createdAt,
@@ -1460,20 +1553,35 @@ export async function evaluateAndSpawnTriggers(
 	customerId: string,
 	tenantApiUrl?: string,
 	contextData: Record<string, unknown> = {},
+	options: { journeyId?: string } = {},
 ) {
 	const db = await getTenantDb(orgId)
 
-	// 1. Query active journeys configured for this trigger event
-	const activeJourneys = await db
-		.select()
-		.from(marketingJourneys)
-		.where(
-			and(
-				eq(marketingJourneys.status, 'active'),
-				eq(marketingJourneys.triggerType, triggerType as any),
-			),
-		)
-		.all()
+	// 1. Query active journeys configured for this trigger event. A journey
+	// whose own settings do not match the event (a location, "only the 3rd
+	// order") is left out; `journeyId` starts one journey only (a quiet-spell
+	// trigger with its own number of days).
+	const activeJourneys = (
+		await db
+			.select()
+			.from(marketingJourneys)
+			.where(
+				and(
+					eq(marketingJourneys.status, 'active'),
+					eq(marketingJourneys.triggerType, triggerType as any),
+					options.journeyId
+						? eq(marketingJourneys.id, options.journeyId)
+						: undefined,
+				),
+			)
+			.all()
+	).filter((journey) =>
+		triggerConfigMatches(
+			triggerType,
+			parseRunContext(journey.triggerConfig),
+			contextData,
+		),
+	)
 
 	const spawnedRuns: Array<{
 		journeyId: string
@@ -1523,7 +1631,12 @@ export async function evaluateAndSpawnTriggers(
 						journeyId: journey.id,
 						customerId,
 						triggerEvent: triggerType,
-						contextData: JSON.stringify(contextData),
+						// `startedAtMs` is when this run began: the goal ("stop when the
+						// guest orders") counts only orders after it.
+						contextData: JSON.stringify({
+							...contextData,
+							startedAtMs: Date.now(),
+						}),
 						status: 'running',
 						startedAt: new Date(),
 					})
@@ -1742,11 +1855,27 @@ export async function createJourney(orgId: string, input: CreateJourneyInput) {
 		nodes: JSON.stringify(nodes),
 		edges: JSON.stringify(edges),
 		version: 1,
+		goal: input.goal ?? null,
+		programId: input.programId ?? null,
+		programVersion: input.programId ? (input.programVersion ?? 1) : null,
 		createdAt: new Date(),
 		updatedAt: new Date(),
 	}
 
-	await db.insert(marketingJourneys).values(newJourney)
+	try {
+		await db.insert(marketingJourneys).values(newJourney)
+	} catch (error) {
+		// One live journey per ready-made program (#100): the unique index on
+		// `program_id` refuses a second, whatever raced.
+		if (input.programId && isWrappedUniqueError(error)) {
+			return {
+				success: false,
+				error: 'program_already_active',
+				statusCode: 409,
+			}
+		}
+		throw error
+	}
 
 	return {
 		success: true,
@@ -1829,6 +1958,7 @@ export async function updateJourney(
 		updateValues.triggerType = input.triggerType
 	if (input.triggerConfig !== undefined)
 		updateValues.triggerConfig = JSON.stringify(input.triggerConfig)
+	if (input.goal !== undefined) updateValues.goal = input.goal ?? null
 	if (input.nodes !== undefined)
 		updateValues.nodes = JSON.stringify(input.nodes)
 	if (input.edges !== undefined)
@@ -1994,6 +2124,7 @@ const PUBLIC_JOURNEY_ERRORS = new Set([
 	'Invalid email journey configuration',
 	'Invalid coupon configuration',
 	'Journey no longer exists',
+	JOURNEY_GOAL_REACHED_REASON,
 ])
 const PUBLIC_JOURNEY_ERROR_PATTERNS = [
 	/^Journey run is [a-z_]+$/,
@@ -2044,6 +2175,7 @@ const PUBLIC_STEP_DETAIL_KEYS = [
 	'operator',
 	'result',
 	'evaluatedAt',
+	'cappedAt',
 ] as const
 
 function publicStepDetails(raw: unknown): Record<string, unknown> {

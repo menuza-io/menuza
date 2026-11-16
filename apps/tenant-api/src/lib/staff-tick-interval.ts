@@ -2,6 +2,7 @@ import { ENV } from 'varlock/env'
 import { listTenantOrgIds } from '@repo/tenant-db'
 import { fanOutStaffTick } from '../services/staff-tick-fanout.ts'
 import { startBroadcastTickForOrg } from '../services/broadcast-dispatch.ts'
+import { runMarketingJourneyTick } from '../services/marketing-journey-tick.ts'
 import { runStaffTickForOrg } from '../services/staff-tick-service.ts'
 import { syncEnvFromProcess } from './secrets.ts'
 
@@ -59,6 +60,8 @@ export function startStaffTickInterval(
 					// send in the background (the process keeps running them), so a
 					// large campaign does not delay the next pass.
 					await startBroadcastTickForOrg(orgId)
+					// Order, birthday and cart journeys (#99 #151 #150); never throws.
+					await runMarketingJourneyTick(orgId)
 					return result
 				},
 			}))

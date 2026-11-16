@@ -30,6 +30,7 @@ import {
 	fetchTillDiscountRules,
 } from '../services/order-service.ts'
 import { inventorySaleQueue } from '../services/inventory-sales-service.ts'
+import { scheduleOrderJourneys } from '../services/order-journeys.ts'
 import { deviceApps } from '../services/pos-apps-service.ts'
 import {
 	requeueTillSaleLoyalty,
@@ -536,6 +537,8 @@ posRoutes.post('/orders', async (c) => {
 		await touchDevice(pos.db, pos.device)
 		await loyalty.settle()
 		await inventory.settle(pos.orgId)
+		// A paid Station sale linked to a guest counts as an order (#99).
+		if (order.status === 'paid') scheduleOrderJourneys(pos.orgId)
 		if (order.discountApplications.length > 0) {
 			try {
 				if (order.status === 'paid') {

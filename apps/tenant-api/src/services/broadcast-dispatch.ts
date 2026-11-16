@@ -44,6 +44,7 @@ import { getBroadcastHourlyCap } from '../lib/rate-limit.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { couponCodeForRecipient } from './discount-marketing-codes.ts'
 import { BROADCAST_TOPIC, loadBroadcastAudience } from './marketing-audience.ts'
+import { cappedCustomerIds, readFrequencyCap } from './journey-guards.ts'
 import { resolveAudienceWhere } from './marketing-audience-service.ts'
 
 /**
@@ -277,11 +278,7 @@ export async function dispatchBroadcast(
 		const savedAudienceId = audienceIdRule(campaign.segmentationRules)
 		let audienceWhere: SQL | undefined
 		if (savedAudienceId) {
-			const resolved = await resolveAudienceWhere(
-				db,
-				savedAudienceId,
-				clock(),
-			)
+			const resolved = await resolveAudienceWhere(db, savedAudienceId, clock())
 			if (!resolved) {
 				console.error('Broadcast failed: its audience no longer exists', {
 					orgId,
@@ -349,6 +346,7 @@ export async function dispatchBroadcast(
 			.where(eq(marketingCampaigns.id, campaignId))
 
 		const pending = targets.filter((c) => !alreadyMessaged.has(c.id))
+		const frequencyCap = await readFrequencyCap(db)
 		const cap = getBroadcastHourlyCap(channel)
 		let failuresReset = false
 
@@ -377,8 +375,19 @@ export async function dispatchBroadcast(
 				retargetOf,
 				audienceWhere,
 			})
-			const chunk = fresh.slice(0, room)
-			const capReached = fresh.length > room
+			// The frequency cap (#99): a guest who already got N marketing messages
+			// in the window is skipped. Nothing is recorded for them.
+			const capped = frequencyCap
+				? await cappedCustomerIds(
+						db,
+						fresh.map((customer) => customer.id),
+						frequencyCap,
+						clock(),
+					)
+				: new Set<string>()
+			const eligible = fresh.filter((customer) => !capped.has(customer.id))
+			const chunk = eligible.slice(0, room)
+			const capReached = eligible.length > room
 			if (chunk.length === 0) continue
 			const sentAt = new Date(clock())
 

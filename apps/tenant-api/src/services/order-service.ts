@@ -143,6 +143,7 @@ import {
 	recordOrderMarketingConsentInTx,
 	type OrderConsentConfirmation,
 } from './order-marketing-consent.ts'
+import { scheduleOrderJourneys } from './order-journeys.ts'
 import { orderCountsTowardSales } from './report-records.ts'
 import {
 	claimPurchaseIfUnclaimedInTx,
@@ -1385,16 +1386,13 @@ export async function placeOrder(input: {
 						})
 					}
 					const dueCents = totals.totalCents - (gift?.appliedMinor ?? 0)
-					const freeOrder =
-						request.paymentMethod === 'online' && dueCents <= 0
+					const freeOrder = request.paymentMethod === 'online' && dueCents <= 0
 					// A free pickup or delivery order paid at handoff has nothing to
 					// collect either: store it as not_required (like a free online
 					// order) so no "mark paid" step is asked of staff. A table round is
 					// never free this way: its tab is settled once, at close.
 					const freeHandoff =
-						request.paymentMethod === 'handoff' &&
-						dueCents <= 0 &&
-						!tabRow
+						request.paymentMethod === 'handoff' && dueCents <= 0 && !tabRow
 					// Manual acceptance (#107): an order that stands now (pay at
 					// handoff, free) waits as `pending_acceptance`; an online order
 					// that still has to be paid is placed as today and waits from
@@ -1653,6 +1651,9 @@ export async function placeOrder(input: {
 		await loyalty.settle(orgId)
 		await inventory.settle(orgId)
 		messages.deliver(orgId)
+		// A pay-at-pickup order counts at once; an online one counts when its
+		// payment lands (below). Background: the guest never waits for it.
+		scheduleOrderJourneys(orgId)
 		const confirmation = consentConfirmation as OrderConsentConfirmation | null
 		if (placed.ok && placed.data.status === 201 && confirmation) {
 			queueOrderConsentConfirmation(orgId, confirmation)
@@ -1892,6 +1893,8 @@ export async function bindPaymentSession(input: {
 			),
 	)
 	await loyalty.settle(orgId)
+	// The order just became payable: it counts for order journeys now.
+	scheduleOrderJourneys(orgId)
 	return result
 }
 
@@ -2481,6 +2484,8 @@ export async function settleOrderWriteQueues(
 	await queues.loyalty.settle(orgId)
 	await queues.inventory.settle(orgId)
 	queues.messages.deliver(orgId)
+	// A status change (accepted, completed) may make an order count or finish.
+	scheduleOrderJourneys(orgId)
 }
 
 /**
