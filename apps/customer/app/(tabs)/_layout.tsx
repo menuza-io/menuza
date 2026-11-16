@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router'
 import { useEffect } from 'react'
 import { type ColorValue } from 'react-native'
 import { Icon } from '../../components/ui/icon'
-import { useLoyalty } from '../../lib/app/use-app'
+import { useGiftCards, useLoyalty } from '../../lib/app/use-app'
 import { useThemePalette } from '../../lib/theme/use-theme-palette'
 
 function tabIconColor(color: ColorValue | undefined, fallback: string): string {
@@ -13,7 +13,8 @@ function tabIconColor(color: ColorValue | undefined, fallback: string): string {
 /**
  * The signed-in customer's tabs, in the organization's colors. The shell
  * above draws the brand header, so the tabs have no header of their own.
- * Rewards hides itself on a site that runs no rewards program.
+ * Rewards hides itself on a site that runs no rewards program, and Gift cards
+ * on a site that sells none.
  */
 export default function TabsLayout() {
 	const { t } = useLingui()
@@ -24,6 +25,12 @@ export default function TabsLayout() {
 		loyaltyStore?.start()
 	}, [loyaltyStore])
 	const hideRewards = loyalty?.snapshot.status === 'unavailable'
+	const giftCards = useGiftCards()
+	const giftCardsStore = giftCards?.store ?? null
+	useEffect(() => {
+		giftCardsStore?.start()
+	}, [giftCardsStore])
+	const hideGiftCards = giftCards?.snapshot.availability === 'unavailable'
 
 	return (
 		<Tabs
@@ -86,6 +93,20 @@ export default function TabsLayout() {
 					tabBarIcon: ({ color, size }) => (
 						<Icon
 							name="gift-outline"
+							size={size}
+							color={tabIconColor(color, palette.primary)}
+						/>
+					),
+				}}
+			/>
+			<Tabs.Screen
+				name="gift-cards"
+				options={{
+					title: t`Gift cards`,
+					href: hideGiftCards ? null : undefined,
+					tabBarIcon: ({ color, size }) => (
+						<Icon
+							name="wallet-outline"
 							size={size}
 							color={tabIconColor(color, palette.primary)}
 						/>

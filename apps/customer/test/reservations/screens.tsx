@@ -28,6 +28,7 @@ import { ReservationSearchScreen } from '@/components/reservations/search-screen
 import { ReservationWaitlistScreen } from '@/components/reservations/waitlist-screen'
 import { AppProvider } from '@/lib/app/app-provider'
 import { type AppFeatures } from '@/lib/app/features'
+import { GiftCardsStore } from '@/lib/gift-cards/gift-cards-store'
 import { activateLocale, APP_LOCALES, i18n } from '@/lib/i18n/lingui'
 import { LoyaltyStore } from '@/lib/loyalty/loyalty-store'
 import { ReservationsClient } from '@/lib/reservations/reservations-client'
@@ -181,6 +182,10 @@ export async function startReservationsApp(
 				},
 			}),
 			loyalty: new LoyaltyStore({ session: context.session, platform: 'ios' }),
+			giftCards: new GiftCardsStore({
+				session: context.session,
+				platform: 'ios',
+			}),
 		}),
 	})
 	await store.start()

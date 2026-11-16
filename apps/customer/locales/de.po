@@ -94,6 +94,10 @@ msgstr "{price}, vorher {originalPrice}"
 msgid "+1 555 000 0000"
 msgstr "+1 555 000 0000"
 
+#: lib/gift-cards/labels.ts:58
+msgid "A card belongs to one account at a time. Adding it here moves it from any other account."
+msgstr "Ein Gutschein gehört immer nur zu einem Konto. Wenn Sie ihn hier hinzufügen, wird er aus einem anderen Konto verschoben."
+
 #: lib/reservations/messages.ts:62
 msgid "A card is needed to guarantee this booking."
 msgstr "Zur Absicherung dieser Reservierung wird eine Karte benötigt."
@@ -118,9 +122,21 @@ msgstr "Etwa {count} Min."
 msgid "acme or acme.example.com"
 msgstr "acme oder acme.example.com"
 
+#: lib/gift-cards/labels.ts:22
+msgid "Add a card with its code to keep it here. You can still spend a card with only its code."
+msgstr "Fügen Sie einen Gutschein mit seinem Code hinzu, um ihn hier aufzubewahren. Sie können einen Gutschein weiterhin nur mit seinem Code einlösen."
+
+#: lib/gift-cards/labels.ts:51
+msgid "Add a gift card"
+msgstr "Geschenkgutschein hinzufügen"
+
 #: components/profile/messages-section.tsx:154
 msgid "Add an email address first"
 msgstr "Fügen Sie zuerst eine E-Mail-Adresse hinzu"
+
+#: lib/gift-cards/labels.ts:55
+msgid "Add card"
+msgstr "Gutschein hinzufügen"
 
 #: lib/loyalty/labels.ts:113
 msgid "Adjusted by staff"
@@ -186,6 +202,18 @@ msgstr "Zahlung ausstehend"
 msgid "Back"
 msgstr "Zurück"
 
+#: lib/gift-cards/labels.ts:26
+msgid "Balance"
+msgstr "Guthaben"
+
+#: lib/gift-cards/labels.ts:47
+msgid "Balance brought over"
+msgstr "Übernommenes Guthaben"
+
+#: lib/gift-cards/labels.ts:48
+msgid "Balance removed"
+msgstr "Guthaben entfernt"
+
 #: lib/reservations/messages.ts:18
 msgid "Book a table"
 msgstr "Tisch reservieren"
@@ -206,13 +234,26 @@ msgstr "Reservierung stornieren"
 msgid "Cancel this reservation?"
 msgstr "Diese Reservierung stornieren?"
 
+#: lib/gift-cards/labels.ts:34
 #: lib/reservations/messages.ts:105
 msgid "Cancelled"
 msgstr "Storniert"
 
+#: lib/gift-cards/labels.ts:41
+msgid "Card bought"
+msgstr "Gutschein gekauft"
+
+#: lib/gift-cards/labels.ts:46
+msgid "Card cancelled"
+msgstr "Gutschein storniert"
+
 #: lib/reservations/messages.ts:89
 msgid "Change time"
 msgstr "Zeit ändern"
+
+#: lib/gift-cards/labels.ts:45
+msgid "Changed by the business"
+msgstr "Vom Unternehmen geändert"
 
 #: components/ordering/menu-screen.tsx:161
 msgid "Check back later, or open the website menu."
@@ -312,6 +353,7 @@ msgid "Dietary needs"
 msgstr "Ernährungswünsche"
 
 #: components/loyalty/notice-line.tsx:32
+#: lib/gift-cards/labels.ts:59
 msgid "Dismiss"
 msgstr "Ausblenden"
 
@@ -319,7 +361,7 @@ msgstr "Ausblenden"
 msgid "Done"
 msgstr "Fertig"
 
-#: app/(tabs)/_layout.tsx:58
+#: app/(tabs)/_layout.tsx:65
 #: components/ordering/drops-screen.tsx:153
 msgid "Drops"
 msgstr "Aktionen"
@@ -373,9 +415,14 @@ msgstr "Geben Sie Ihre Telefonnummer ein. Wir senden Ihnen einen Bestätigungsco
 msgid "Enter your site address to load its branding."
 msgstr "Geben Sie die Adresse Ihrer Website ein, um ihr Branding zu laden."
 
+#: lib/gift-cards/labels.ts:35
 #: lib/reservations/messages.ts:108
 msgid "Expired"
 msgstr "Abgelaufen"
+
+#: lib/gift-cards/labels.ts:27
+msgid "Expires {date}"
+msgstr "Läuft ab am {date}"
 
 #: lib/loyalty/labels.ts:81
 #: lib/loyalty/labels.ts:92
@@ -414,13 +461,50 @@ msgstr "Kostenlose Lieferung"
 msgid "Free to change until {time}"
 msgstr "Kostenlos änderbar bis {time}"
 
+#: lib/gift-cards/labels.ts:33
+msgid "Frozen"
+msgstr "Gesperrt"
+
+#: lib/gift-cards/labels.ts:65
 #: lib/loyalty/labels.ts:78
 msgid "Get a new code"
 msgstr "Neuen Code anfordern"
 
+#: lib/gift-cards/labels.ts:66
+msgid "Getting a code…"
+msgstr "Code wird abgerufen …"
+
 #: lib/loyalty/labels.ts:79
 msgid "Getting your code…"
 msgstr "Ihr Code wird abgerufen …"
+
+#: lib/gift-cards/labels.ts:53
+msgid "Gift card code"
+msgstr "Gutscheincode"
+
+#: lib/gift-cards/labels.ts:25
+msgid "Gift card ending in {last4}"
+msgstr "Geschenkgutschein mit Endung {last4}"
+
+#: app/(tabs)/_layout.tsx:105
+msgid "Gift cards"
+msgstr "Geschenkgutscheine"
+
+#: lib/gift-cards/labels.ts:81
+msgid "Gift cards are not available on this site."
+msgstr "Geschenkgutscheine sind auf dieser Website nicht verfügbar."
+
+#: lib/gift-cards/labels.ts:16
+msgid "Gift cards are not available right now"
+msgstr "Geschenkgutscheine sind derzeit nicht verfügbar"
+
+#: lib/gift-cards/labels.ts:78
+msgid "Gift cards are not available right now. Please try again later."
+msgstr "Geschenkgutscheine sind derzeit nicht verfügbar. Bitte versuchen Sie es später erneut."
+
+#: lib/gift-cards/labels.ts:69
+msgid "Hide"
+msgstr "Ausblenden"
 
 #: lib/loyalty/labels.ts:104
 msgid "History"
@@ -500,6 +584,10 @@ msgstr "Aktionen werden geladen"
 msgid "Loading the menu"
 msgstr "Menü wird geladen"
 
+#: lib/gift-cards/labels.ts:15
+msgid "Loading your gift cards…"
+msgstr "Ihre Geschenkgutscheine werden geladen …"
+
 #: components/profile/profile-screen.tsx:64
 msgid "Loading your profile…"
 msgstr "Ihr Profil wird geladen…"
@@ -514,7 +602,7 @@ msgstr "Ihre Prämien werden geladen …"
 msgid "Loading…"
 msgstr "Wird geladen …"
 
-#: app/(tabs)/_layout.tsx:45
+#: app/(tabs)/_layout.tsx:52
 #: components/ordering/menu-screen.tsx:141
 msgid "Menu"
 msgstr "Menü"
@@ -522,6 +610,10 @@ msgstr "Menü"
 #: components/profile/messages-section.tsx:172
 msgid "Messages from {name}"
 msgstr "Nachrichten von {name}"
+
+#: lib/gift-cards/labels.ts:42
+msgid "Money added"
+msgstr "Guthaben aufgeladen"
 
 #: components/reservations/parts.tsx:205
 msgid "More guests"
@@ -542,6 +634,7 @@ msgstr "Meine Reservierungen"
 msgid "Name"
 msgstr "Name"
 
+#: lib/gift-cards/labels.ts:75
 #: lib/loyalty/labels.ts:120
 msgid "Network error. Check your connection and try again."
 msgstr "Netzwerkfehler. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
@@ -561,6 +654,10 @@ msgstr "Keine Verbindung. Bitte erneut versuchen."
 #: components/ordering/drops-screen.tsx:160
 msgid "No drops right now."
 msgstr "Derzeit keine Aktionen."
+
+#: lib/gift-cards/labels.ts:21
+msgid "No gift cards saved yet"
+msgstr "Noch keine Geschenkgutscheine gespeichert"
 
 #: lib/reservations/messages.ts:52
 msgid "No preference"
@@ -594,6 +691,10 @@ msgstr "Gebühr bei Nichterscheinen: {amount}"
 msgid "None"
 msgstr "Keiner"
 
+#: lib/gift-cards/labels.ts:36
+msgid "Not activated"
+msgstr "Nicht aktiviert"
+
 #: lib/reservations/messages.ts:35
 msgid "Not taking online reservations on this day."
 msgstr "An diesem Tag gibt es keine Online-Reservierungen."
@@ -613,6 +714,10 @@ msgstr "Angebote und Neuigkeiten"
 #: lib/reservations/messages.ts:25
 msgid "OK"
 msgstr "OK"
+
+#: lib/gift-cards/labels.ts:32
+msgid "On hold"
+msgstr "Pausiert"
 
 #: lib/loyalty/labels.ts:66
 msgid "One item. Paid extras are still charged."
@@ -718,7 +823,7 @@ msgstr "Bitte melden Sie sich erneut an."
 msgid "Preferred time"
 msgstr "Wunschzeit"
 
-#: app/(tabs)/_layout.tsx:98
+#: app/(tabs)/_layout.tsx:119
 #: lib/reservations/messages.ts:23
 msgid "Profile"
 msgstr "Profil"
@@ -738,6 +843,14 @@ msgstr "Fortschritt bis {reward}"
 #: lib/loyalty/labels.ts:49
 msgid "Purchases of at least {amount} qualify."
 msgstr "Einkäufe ab {amount} zählen."
+
+#: lib/gift-cards/labels.ts:70
+msgid "QR code to scan at the till for the card ending in {last4}"
+msgstr "QR-Code zum Scannen an der Kasse für den Gutschein mit Endung {last4}"
+
+#: lib/gift-cards/labels.ts:29
+msgid "Recent activity"
+msgstr "Letzte Aktivität"
 
 #: lib/loyalty/labels.ts:110
 msgid "Redeemed {reward}"
@@ -771,10 +884,14 @@ msgstr "Reservierung"
 msgid "Reservation news"
 msgstr "Neuigkeiten zu Reservierungen"
 
-#: app/(tabs)/_layout.tsx:71
+#: app/(tabs)/_layout.tsx:78
 #: lib/reservations/messages.ts:17
 msgid "Reservations"
 msgstr "Reservierungen"
+
+#: lib/gift-cards/labels.ts:44
+msgid "Returned to the card"
+msgstr "Auf den Gutschein zurückgebucht"
 
 #: lib/reservations/messages.ts:55
 msgid "Review"
@@ -788,7 +905,7 @@ msgstr "Reservierung prüfen"
 msgid "Reward returned"
 msgstr "Prämie zurückgebucht"
 
-#: app/(tabs)/_layout.tsx:84
+#: app/(tabs)/_layout.tsx:91
 #: lib/loyalty/labels.ts:53
 msgid "Rewards"
 msgstr "Prämien"
@@ -817,6 +934,10 @@ msgstr "Ich verspäte mich"
 msgid "Save changes"
 msgstr "Änderungen speichern"
 
+#: lib/gift-cards/labels.ts:56
+msgid "Saved the card ending in {last4}."
+msgstr "Der Gutschein mit Endung {last4} wurde gespeichert."
+
 #: lib/reservations/messages.ts:103
 msgid "Seated"
 msgstr "Platziert"
@@ -841,6 +962,10 @@ msgstr "Code senden"
 msgid "Set price {amount}"
 msgstr "Festpreis {amount}"
 
+#: lib/gift-cards/labels.ts:64
+msgid "Show at the till"
+msgstr "An der Kasse zeigen"
+
 #: lib/loyalty/labels.ts:106
 msgid "Show more"
 msgstr "Mehr anzeigen"
@@ -853,6 +978,10 @@ msgstr "Meinen Code anzeigen"
 msgid "Show this code at the counter so staff can find your points."
 msgstr "Zeigen Sie diesen Code an der Theke, damit das Team Ihre Punkte findet."
 
+#: lib/gift-cards/labels.ts:63
+msgid "Show this code to staff to pay with the card. It works once and stops working soon."
+msgstr "Zeigen Sie dem Personal diesen Code, um mit dem Gutschein zu bezahlen. Er funktioniert nur einmal und läuft bald ab."
+
 #: lib/loyalty/labels.ts:76
 msgid "Showing your code does not spend any points. You approve every reward yourself."
 msgstr "Das Vorzeigen des Codes kostet keine Punkte. Jede Prämie bestätigen Sie selbst."
@@ -862,9 +991,17 @@ msgstr "Das Vorzeigen des Codes kostet keine Punkte. Jede Prämie bestätigen Si
 msgid "Sign in"
 msgstr "Anmelden"
 
+#: lib/gift-cards/labels.ts:18
+msgid "Sign in to see your gift cards"
+msgstr "Melden Sie sich an, um Ihre Geschenkgutscheine zu sehen"
+
 #: lib/loyalty/labels.ts:24
 msgid "Sign in to see your rewards"
 msgstr "Melden Sie sich an, um Ihre Prämien zu sehen"
+
+#: lib/gift-cards/labels.ts:19
+msgid "Sign in with your phone number to keep your gift cards here."
+msgstr "Melden Sie sich mit Ihrer Telefonnummer an, um Ihre Geschenkgutscheine hier aufzubewahren."
 
 #: lib/loyalty/labels.ts:25
 msgid "Sign in with your phone number to see your points and use your rewards."
@@ -882,11 +1019,16 @@ msgstr "Website-Adresse"
 msgid "Sold out"
 msgstr "Ausverkauft"
 
+#: lib/gift-cards/labels.ts:74
 #: lib/i18n/app-error-message.ts:41
 #: lib/loyalty/labels.ts:130
 #: lib/reservations/messages.ts:137
 msgid "Something went wrong. Please try again."
 msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+
+#: lib/gift-cards/labels.ts:54
+msgid "Spaces and dashes do not matter."
+msgstr "Leerzeichen und Bindestriche spielen keine Rolle."
 
 #: lib/reservations/messages.ts:50
 msgid "Special requests"
@@ -895,6 +1037,14 @@ msgstr "Besondere Wünsche"
 #: lib/loyalty/labels.ts:91
 msgid "Spends {points} for {amount} off"
 msgstr "Löst {points} für {amount} Rabatt ein"
+
+#: lib/gift-cards/labels.ts:43
+msgid "Spent"
+msgstr "Eingelöst"
+
+#: lib/gift-cards/labels.ts:67
+msgid "Stops working in {time}"
+msgstr "Läuft ab in {time}"
 
 #: components/profile/profile-screen.tsx:142
 msgid "System default"
@@ -920,6 +1070,14 @@ msgstr "SMS"
 msgid "Text me reminders"
 msgstr "SMS-Erinnerungen senden"
 
+#: lib/gift-cards/labels.ts:79
+msgid "That code did not work. Check it and try again."
+msgstr "Dieser Code hat nicht funktioniert. Prüfen Sie ihn und versuchen Sie es erneut."
+
+#: lib/gift-cards/labels.ts:68
+msgid "That code has expired. Get a new one."
+msgstr "Dieser Code ist abgelaufen. Rufen Sie einen neuen ab."
+
 #: lib/i18n/app-error-message.ts:21
 msgid "That code isn't right or has expired. Try again."
 msgstr "Der Code ist falsch oder abgelaufen. Versuchen Sie es erneut."
@@ -943,6 +1101,10 @@ msgstr "Diese Anfrage wurde bereits bearbeitet."
 #: lib/reservations/messages.ts:122
 msgid "That time was just taken. Pick another."
 msgstr "Diese Zeit wurde gerade vergeben. Bitte wählen Sie eine andere."
+
+#: lib/gift-cards/labels.ts:57
+msgid "The card ending in {last4} is already saved to your account."
+msgstr "Der Gutschein mit Endung {last4} ist bereits in Ihrem Konto gespeichert."
 
 #: components/ordering/menu-screen.tsx:112
 msgid "The menu could not be loaded."
@@ -984,9 +1146,25 @@ msgstr "Die Warteliste ist derzeit voll."
 msgid "This business is not running a rewards program at the moment."
 msgstr "Dieses Unternehmen bietet derzeit kein Prämienprogramm an."
 
+#: lib/gift-cards/labels.ts:17
+msgid "This business is not selling gift cards at the moment."
+msgstr "Dieses Unternehmen verkauft derzeit keine Geschenkgutscheine."
+
+#: lib/gift-cards/labels.ts:80
+msgid "This card cannot be added right now."
+msgstr "Dieser Gutschein kann derzeit nicht hinzugefügt werden."
+
+#: lib/gift-cards/labels.ts:38
+msgid "This card cannot be used right now. Contact the business for help."
+msgstr "Dieser Gutschein kann derzeit nicht verwendet werden. Bitte wenden Sie sich an das Unternehmen."
+
 #: lib/loyalty/labels.ts:82
 msgid "This code has expired. Get a new one."
 msgstr "Dieser Code ist abgelaufen. Fordern Sie einen neuen an."
+
+#: lib/gift-cards/labels.ts:71
+msgid "This is not your card code. It cannot be used after it expires."
+msgstr "Dies ist nicht Ihr Gutscheincode. Nach Ablauf kann er nicht mehr verwendet werden."
 
 #: lib/reservations/messages.ts:132
 msgid "This party size needs a request."
@@ -1016,6 +1194,7 @@ msgstr "Zu viele Versuche. Bitte versuchen Sie es in einigen Minuten erneut."
 msgid "Too many attempts. Please try again later."
 msgstr "Zu viele Versuche. Bitte versuchen Sie es später erneut."
 
+#: lib/gift-cards/labels.ts:76
 #: lib/loyalty/labels.ts:121
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut."
@@ -1024,6 +1203,7 @@ msgstr "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es er
 #: components/ordering/drops-screen.tsx:117
 #: components/ordering/menu-screen.tsx:114
 #: components/ui/error-message.tsx:28
+#: lib/gift-cards/labels.ts:20
 #: lib/loyalty/labels.ts:28
 #: lib/reservations/messages.ts:15
 #: lib/reservations/messages.ts:40
@@ -1037,6 +1217,10 @@ msgstr "Probieren Sie stattdessen eine dieser Zeiten"
 #: components/profile/messages-section.tsx:228
 msgid "Turning a switch off never affects receipts or booking confirmations."
 msgstr "Das Ausschalten eines Schalters betrifft nie Belege oder Buchungsbestätigungen."
+
+#: lib/gift-cards/labels.ts:52
+msgid "Type or paste the code from your email or card."
+msgstr "Geben Sie den Code aus Ihrer E-Mail oder von Ihrem Gutschein ein oder fügen Sie ihn ein."
 
 #: lib/loyalty/labels.ts:58
 msgid "Up to {amount} off"
@@ -1067,6 +1251,10 @@ msgstr "Eine andere Website verwenden"
 msgid "Use a reward when you order, or show your code at the counter."
 msgstr "Lösen Sie eine Prämie bei der Bestellung ein oder zeigen Sie Ihren Code an der Theke."
 
+#: lib/gift-cards/labels.ts:62
+msgid "Use at the till"
+msgstr "An der Kasse verwenden"
+
 #: components/ordering/menu-screen.tsx:213
 msgid "Use code {code}"
 msgstr "Code {code} verwenden"
@@ -1086,6 +1274,10 @@ msgstr "Bestätigen Sie zuerst Ihr Telefon"
 #: lib/reservations/messages.ts:83
 msgid "View reservation"
 msgstr "Reservierung ansehen"
+
+#: lib/gift-cards/labels.ts:37
+msgid "Waiting for payment"
+msgstr "Wartet auf Zahlung"
 
 #: lib/reservations/messages.ts:110
 msgid "Waitlist"
@@ -1195,6 +1387,10 @@ msgstr "Ihr Guthaben liegt wegen einer Erstattung unter null. Neue Einkäufe gle
 msgid "Your balance is too low for this reward."
 msgstr "Ihr Guthaben reicht für diese Prämie nicht aus."
 
+#: lib/gift-cards/labels.ts:28
+msgid "Your card will be delivered soon. It is being prepared."
+msgstr "Ihr Gutschein wird in Kürze zugestellt. Er wird gerade vorbereitet."
+
 #: lib/loyalty/labels.ts:74
 msgid "Your code"
 msgstr "Ihr Code"
@@ -1243,6 +1439,7 @@ msgstr "Ihr Prämienkonto ist pausiert."
 msgid "Your rewards account is on hold. Please contact the business for help."
 msgstr "Ihr Prämienkonto ist pausiert. Bitte wenden Sie sich an das Unternehmen."
 
+#: lib/gift-cards/labels.ts:77
 #: lib/i18n/app-error-message.ts:29
 #: lib/loyalty/labels.ts:128
 msgid "Your session ended. Please sign in again."

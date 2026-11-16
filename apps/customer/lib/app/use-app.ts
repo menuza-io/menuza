@@ -1,5 +1,9 @@
 import { useSyncExternalStore } from 'react'
 import {
+	type GiftCardsSnapshot,
+	type GiftCardsStore,
+} from '../gift-cards/gift-cards-store'
+import {
 	type LoyaltySnapshot,
 	type LoyaltyStore,
 } from '../loyalty/loyalty-store'
@@ -47,6 +51,19 @@ export function useLoyalty(): {
 	snapshot: LoyaltySnapshot
 } | null {
 	const store = useAppSnapshot().features?.loyalty ?? null
+	const snapshot = useSyncExternalStore(
+		store ? store.subscribe : noSubscribe,
+		store ? store.getSnapshot : nullSnapshot,
+	)
+	return store && snapshot ? { store, snapshot } : null
+}
+
+/** The gift card wallet and its snapshot; `null` before the site is ready. */
+export function useGiftCards(): {
+	store: GiftCardsStore
+	snapshot: GiftCardsSnapshot
+} | null {
+	const store = useAppSnapshot().features?.giftCards ?? null
 	const snapshot = useSyncExternalStore(
 		store ? store.subscribe : noSubscribe,
 		store ? store.getSnapshot : nullSnapshot,
