@@ -76,7 +76,7 @@ type Catalog = {
  * operator chooses to use it; nothing is sent or saved from here. A non-empty
  * editor asks before it is replaced.
  */
-export function AiDraftDialog({
+function AiDraftDialogInner({
 	open,
 	onOpenChange,
 	channel,
@@ -86,7 +86,6 @@ export function AiDraftDialog({
 }: AiDraftDialogProps) {
 	const { _ } = useLingui()
 	const config = useAiDraftConfig()
-	const catalog = useFetcher<Catalog>()
 	const [goal, setGoal] = useState(initialGoal ?? '')
 	const [tone, setTone] = useState<Tone>('friendly')
 	const [language, setLanguage] = useState<Language>(
@@ -102,18 +101,6 @@ export function AiDraftDialog({
 	useEffect(() => {
 		if (open && initialGoal) setGoal(initialGoal)
 	}, [open, initialGoal])
-
-	const menuEndpoint = config?.menuItemsEndpoint
-	useEffect(() => {
-		if (!open || channel !== 'email') return
-		// The page's own action answers the dish intent (like the Menu item
-		// block); a host may name another route.
-		catalog.submit(
-			{ intent: 'menu_items', locationId: '' },
-			menuEndpoint ? { method: 'post', action: menuEndpoint } : { method: 'post' },
-		)
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- load once per open
-	}, [open, channel, menuEndpoint])
 
 	if (!config) return null
 
@@ -145,8 +132,6 @@ export function AiDraftDialog({
 		{ value: 'playful', label: _(msg`Playful`) },
 		{ value: 'urgent', label: _(msg`Urgent`) },
 	]
-	const dishes = catalog.data?.items ?? []
-
 	const errorText = (code: AiDraftErrorCode) => {
 		switch (code) {
 			case 'ai_draft_invalid':
@@ -253,36 +238,12 @@ export function AiDraftDialog({
 							/>
 						</div>
 
-						{channel === 'email' && dishes.length > 0 ? (
-							<fieldset className="space-y-2">
-								<legend className="text-sm font-medium">
-									<Trans>Dishes to feature (up to three)</Trans>
-								</legend>
-								<div className="grid max-h-36 gap-1.5 overflow-y-auto sm:grid-cols-2">
-									{dishes.map((dish) => {
-										const checked = itemIds.includes(dish.itemId)
-										return (
-											<label
-												key={dish.itemId}
-												className="flex items-center gap-2 text-sm"
-											>
-												<Checkbox
-													checked={checked}
-													disabled={!checked && itemIds.length >= 3}
-													onCheckedChange={(next) =>
-														setItemIds((current) =>
-															next
-																? [...current, dish.itemId]
-																: current.filter((id) => id !== dish.itemId),
-														)
-													}
-												/>
-												<span className="truncate">{dish.name}</span>
-											</label>
-										)
-									})}
-								</div>
-							</fieldset>
+						{channel === 'email' && open ? (
+							<DishPicker
+								endpoint={config.menuItemsEndpoint}
+								selected={itemIds}
+								onChange={setItemIds}
+							/>
 						) : null}
 
 						<div className="grid gap-4 sm:grid-cols-2">
@@ -439,6 +400,64 @@ export function AiDraftDialog({
 			</AlertDialog>
 		</>
 	)
+}
+
+/** Live dishes the draft may feature (up to three), read through the page's own `menu_items` intent. */
+function DishPicker({
+	endpoint,
+	selected,
+	onChange,
+}: {
+	endpoint?: string
+	selected: string[]
+	onChange: (ids: string[]) => void
+}) {
+	const catalog = useFetcher<Catalog>()
+	useEffect(() => {
+		// The page's own action answers the dish intent (like the Menu item
+		// block); a host may name another route.
+		catalog.submit(
+			{ intent: 'menu_items', locationId: '' },
+			endpoint ? { method: 'post', action: endpoint } : { method: 'post' },
+		)
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- load once per open
+	}, [endpoint])
+	const dishes = catalog.data?.items ?? []
+	if (dishes.length === 0) return null
+	return (
+		<fieldset className="space-y-2">
+			<legend className="text-sm font-medium">
+				<Trans>Dishes to feature (up to three)</Trans>
+			</legend>
+			<div className="grid max-h-36 gap-1.5 overflow-y-auto sm:grid-cols-2">
+				{dishes.map((dish) => {
+					const checked = selected.includes(dish.itemId)
+					return (
+						<label key={dish.itemId} className="flex items-center gap-2 text-sm">
+							<Checkbox
+								checked={checked}
+								disabled={!checked && selected.length >= 3}
+								onCheckedChange={(next) =>
+									onChange(
+										next
+											? [...selected, dish.itemId]
+											: selected.filter((id) => id !== dish.itemId),
+									)
+								}
+							/>
+							<span className="truncate">{dish.name}</span>
+						</label>
+					)
+				})}
+			</div>
+		</fieldset>
+	)
+}
+
+/** Renders nothing where AI drafts are not available (flag off, or no provider). */
+export function AiDraftDialog(props: AiDraftDialogProps) {
+	const config = useAiDraftConfig()
+	return config ? <AiDraftDialogInner {...props} /> : null
 }
 
 /** The "Draft with AI" button: renders nothing where drafts are not available. */

@@ -124,27 +124,34 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
 	)
 
-	// Ready-made programs (#100): only the ones whose trigger is available.
-	const features = await getMarketingFeatures(orgId)
-	const programs = await loadProgramCards({
-		fetchTenant,
-		request,
-		organizationId: orgId,
-		features,
-		language: await programLanguageFor(orgId),
-	}).catch(() => [] as ProgramCardData[])
-	const showSettings = features.orderAutomations || features.cartReminders
-	const couponOptions = programs.some((p) => p.coupon === 'optional')
-		? await loadCouponDiscountOptions(userId, orgId)
-		: null
+	const features = await getMarketingFeatures(orgId).catch(() => null)
+	const showSettings = Boolean(
+		features && (features.orderAutomations || features.cartReminders),
+	)
+	// Ready-made programs (#100), worked out from the journeys loaded below.
+	async function programsFor(journeys: ReadonlyArray<Record<string, unknown>>) {
+		if (!features) return { programs: [] as ProgramCardData[], couponOptions: null }
+		const programs = await loadProgramCards({
+			fetchTenant,
+			request,
+			organizationId: orgId,
+			features,
+			language: await programLanguageFor(orgId).catch(() => 'en' as const),
+			journeys,
+		}).catch(() => [] as ProgramCardData[])
+		const couponOptions = programs.some((p) => p.coupon === 'optional')
+			? await loadCouponDiscountOptions(userId, orgId).catch(() => null)
+			: null
+		return { programs, couponOptions }
+	}
 
 	try {
 		const res = await fetchTenant('/operator/journeys')
 		if (!res.ok) {
 			return {
 				journeys: [] as JourneyListItem[],
-				programs,
-				couponOptions,
+				programs: [] as ProgramCardData[],
+				couponOptions: null,
 				showSettings,
 				orgSlug,
 				error: i18n._(t`Failed to load journeys from regional tenant storage.`),
@@ -166,6 +173,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			createdAt: String(j.createdAt || new Date().toISOString()),
 		}))
 
+		const { programs, couponOptions } = await programsFor(data.journeys ?? [])
 		return {
 			journeys,
 			programs,
@@ -177,8 +185,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	} catch (err) {
 		return {
 			journeys: [] as JourneyListItem[],
-			programs,
-			couponOptions,
+			programs: [] as ProgramCardData[],
+			couponOptions: null,
 			showSettings,
 			orgSlug,
 			error:

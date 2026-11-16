@@ -244,11 +244,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			((triggerNode?.data as any)?.config as Record<string, unknown>) || {}
 		const serializedGraph = JSON.stringify(renderedGraph)
 
-		const marketingError = marketingTriggerError({
+		const marketingFeaturesNow = (await loadAutomationTriggerAccess(orgId))
+			.features
+		let marketingError = marketingTriggerError({
 			triggerType,
-			features: (await loadAutomationTriggerAccess(orgId)).features,
-			currentTriggerType: await currentTriggerType(fetchTenant, journeyId),
+			features: marketingFeaturesNow,
 		})
+		// A journey that already uses this trigger keeps saving with the flag off.
+		if (marketingError) {
+			marketingError = marketingTriggerError({
+				triggerType,
+				features: marketingFeaturesNow,
+				currentTriggerType: await currentTriggerType(fetchTenant, journeyId),
+			})
+		}
 		if (marketingError) return { error: marketingError }
 
 		if (isReservationJourneyTrigger(triggerType)) {

@@ -93,6 +93,8 @@ export async function loadProgramCards(input: {
 	organizationId: string
 	features: MarketingFeatures
 	language: ProgramLanguage
+	/** The journeys the page already loaded (their program, status and version). */
+	journeys: ReadonlyArray<Record<string, unknown>>
 }): Promise<ProgramCardData[]> {
 	const capabilities = await programCapabilities(
 		input.request,
@@ -104,26 +106,25 @@ export async function loadProgramCards(input: {
 	)
 	if (available.length === 0) return []
 
-	const [journeysRes, resultsRes] = await Promise.all([
-		input.fetchTenant('/operator/journeys'),
-		input.fetchTenant('/operator/journeys/program-results?days=30'),
-	])
-	const journeys: JourneyRow[] = journeysRes.ok
-		? (((await journeysRes.json().catch(() => null)) as {
-				journeys?: JourneyRow[]
-			} | null)?.journeys ?? [])
-		: []
-	const results: Record<
+	const journeys = input.journeys as JourneyRow[]
+	// The results are a nicety: if they cannot be read the cards still show.
+	let results: Record<
 		string,
 		{ runs: number; messagesSent: number; ordersByGoal: number }
-	> = resultsRes.ok
-		? (((await resultsRes.json().catch(() => null)) as {
-				results?: Record<
-					string,
-					{ runs: number; messagesSent: number; ordersByGoal: number }
-				>
-			} | null)?.results ?? {})
-		: {}
+	> = {}
+	try {
+		const resultsRes = await input.fetchTenant(
+			'/operator/journeys/program-results?days=30',
+		)
+		if (resultsRes?.ok) {
+			results =
+				((await resultsRes.json().catch(() => null)) as {
+					results?: typeof results
+				} | null)?.results ?? {}
+		}
+	} catch {
+		results = {}
+	}
 
 	return available.map((template) => {
 		// An archived journey does not count; the newest live one stands for the program.

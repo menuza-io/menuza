@@ -148,19 +148,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	if (intent === 'save') {
 		const expectedVersion = Number(form.get('expectedVersion')) || undefined
-		const res = await fetchTenant(
-			audienceId
-				? `/operator/marketing/audiences/${audienceId}`
-				: '/operator/marketing/audiences',
-			{
-				method: audienceId ? 'PUT' : 'POST',
-				body: JSON.stringify({
-					name: String(form.get('name') ?? ''),
-					definition,
-					...(audienceId && expectedVersion ? { expectedVersion } : {}),
-				}),
-			},
-		)
+		const payload = JSON.stringify({
+			name: String(form.get('name') ?? ''),
+			definition,
+			...(audienceId && expectedVersion ? { expectedVersion } : {}),
+		})
+		const res = audienceId
+			? await fetchTenant(`/operator/marketing/audiences/${audienceId}`, {
+					method: 'PUT',
+					body: payload,
+				})
+			: await fetchTenant('/operator/marketing/audiences', {
+					method: 'POST',
+					body: payload,
+				})
 		if (res.ok) return { ok: true as const, intent }
 		const body = (await res.json().catch(() => ({}))) as { error?: string }
 		return { ok: false as const, intent, error: audienceErrorText(body.error) }

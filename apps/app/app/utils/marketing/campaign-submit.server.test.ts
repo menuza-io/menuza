@@ -99,6 +99,19 @@ describe('submitCampaign', () => {
 		])
 	})
 
+	it('sends to a saved audience: the id goes to the check and the save, and clears with an empty value', async () => {
+		await run({ intent: 'send', audienceId: 'aud-1' })
+		expect(vi.mocked(runSendChecks).mock.calls[0]![0]).toMatchObject({
+			audienceId: 'aud-1',
+		})
+		expect(lastBody()).toMatchObject({ audienceId: 'aud-1' })
+		// "All subscribers": no saved audience.
+		await run({ intent: 'draft', audienceId: '' })
+		expect(lastBody().audienceId).toBeNull()
+		await run({ intent: 'draft' })
+		expect(lastBody().audienceId).toBeNull()
+	})
+
 	it('sends now after the checks pass, and audits the create and the send', async () => {
 		const result = await run({ intent: 'send' })
 		expect(result).toMatchObject({ kind: 'saved', intent: 'send' })
