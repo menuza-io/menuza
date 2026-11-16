@@ -445,7 +445,6 @@ export async function bookOrderProviderRefundInTx(
 				kind: 'record',
 				status: 'succeeded',
 				origin: input.origin,
-				settledAt: input.now,
 				updatedAt: input.now,
 			})
 			.returning()

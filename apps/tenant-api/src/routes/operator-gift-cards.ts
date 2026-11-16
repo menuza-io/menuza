@@ -7,7 +7,7 @@ import {
 	effectiveGiftCardStatus,
 } from '@repo/common/gift-cards'
 import { getTenantDb, giftCards, type GiftCardRow } from '@repo/tenant-db'
-import { and, desc, eq, inArray, lt, or, sql, type SQL } from 'drizzle-orm'
+import { and, desc, eq, inArray, lt, ne, or, sql, type SQL } from 'drizzle-orm'
 import { giftCardLocationAllowed } from '../lib/gift-card-auth.ts'
 import { getGiftCardAuth, giftCardGuard } from '../lib/gift-card-guard.ts'
 import {
@@ -162,7 +162,7 @@ operatorGiftCardRoutes.get('/', READ, async (c) => {
 		.where(
 			and(
 				// Unpaid purchases that never started are noise, not cards.
-				sql`${giftCards.status} <> 'pending' or ${giftCards.paymentStatus} = 'review'`,
+				or(ne(giftCards.status, 'pending'), eq(giftCards.paymentStatus, 'review')),
 				scopeCondition(auth.locationIds),
 				q.status ? eq(giftCards.status, q.status) : undefined,
 				q.last4
