@@ -6,16 +6,17 @@ import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
-import { type PosOrder } from '~/lib/db.ts'
+import { type PosOrder, type TenderMethod } from '~/lib/db.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
 import { saleLine } from '~/lib/store.ts'
 import { cn } from '~/ui/primitives.tsx'
 
-const TENDER_LABEL: Record<'cash' | 'card' | 'other', MessageDescriptor> = {
+const TENDER_LABEL: Record<TenderMethod, MessageDescriptor> = {
 	cash: msg`Cash`,
 	card: msg`Card`,
 	other: msg`Other`,
+	gift_card: msg`Gift card`,
 }
 
 /**

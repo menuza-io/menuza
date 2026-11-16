@@ -887,3 +887,29 @@ describe('Fatoora client', () => {
 		expect(summarizeErrors({ errors: ['Invalid OTP'] })).toBe('Invalid OTP')
 	})
 })
+
+describe('gift cards (#110)', () => {
+	it('a sale paid with a gift card keeps the VAT on the food and only names the tender', () => {
+		const paidByCard = sale({
+			payments: [{ method: 'gift_card' }],
+		})
+		const paidByCash = sale({ payments: [{ method: 'cash' }] })
+		// The VAT is the food's, whatever paid for it.
+		expect(figures(paidByCard).taxCents).toBe(figures(paidByCash).taxCents)
+		expect(figures(paidByCard).taxCents).toBeGreaterThan(0)
+		expect(paidByCard.paymentMeans).toEqual(['gift_card'])
+		const xml = hashedForm(paidByCard)
+		expect(xml).toContain('<cbc:PaymentMeansCode>1</cbc:PaymentMeansCode>')
+	})
+
+	it('selling a card is not an invoice line: a sale of only a voucher would carry no VAT', () => {
+		// The card's own sale never reaches `fromSale`: the region ledger records it
+		// and no tax invoice is made for it. A sale with no taxable line has no VAT.
+		const voucher = sale({
+			lines: [],
+			totals: { adjustmentCents: 0, taxCents: 0, tipCents: 0, totalCents: 0 },
+			payments: [{ method: 'cash' }],
+		})
+		expect(figures(voucher).taxCents).toBe(0)
+	})
+})

@@ -8,7 +8,7 @@
  * because a tab rung up in one shift may be paid in the next.
  */
 
-export type PosTender = 'cash' | 'card' | 'other'
+export type PosTender = 'cash' | 'card' | 'other' | 'gift_card'
 
 export type PosSummaryOrder = {
 	status: 'open' | 'paid' | 'void' | 'refunded'
@@ -91,7 +91,7 @@ export type PosSalesSummary = {
 	}
 }
 
-const TENDERS: PosTender[] = ['cash', 'card', 'other']
+const TENDERS: PosTender[] = ['cash', 'card', 'other', 'gift_card']
 
 export function posSalesSummary(input: {
 	orders: PosSummaryOrder[]

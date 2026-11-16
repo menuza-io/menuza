@@ -2523,7 +2523,9 @@ export const posPayments = sqliteTable(
 		approvedByStaffId: text('approved_by_staff_id'),
 		approvedByStaffName: text('approved_by_staff_name'),
 		reason: text('reason'),
-		method: text('method', { enum: ['cash', 'card', 'other'] }).notNull(),
+		method: text('method', {
+			enum: ['cash', 'card', 'other', 'gift_card'],
+		}).notNull(),
 		amountCents: integer('amount_cents').notNull(),
 		tenderedCents: integer('tendered_cents').notNull(),
 		// Card terminal approval code or similar, for matching the processor's statement.

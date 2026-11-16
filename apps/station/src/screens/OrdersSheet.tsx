@@ -53,6 +53,7 @@ const TENDER: Record<TenderMethod, MessageDescriptor> = {
 	cash: msg`Cash`,
 	card: msg`Card`,
 	other: msg`Other`,
+	gift_card: msg`Gift card`,
 }
 type View = 'open' | 'today' | 'phone' | 'others'
 type Translate = I18n['_']
