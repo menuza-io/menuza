@@ -33,6 +33,7 @@ const DISALLOWED_PATHS = [
 	'/menu/success',
 	'/reserve/manage',
 	'/reserve/pay',
+	'/gift-cards/balance',
 	'/shop/',
 ]
 

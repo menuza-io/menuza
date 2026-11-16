@@ -282,6 +282,10 @@ msgstr "Ajoutez {amount} de plus pour atteindre le minimum de livraison de {mini
 msgid "Add {name}"
 msgstr "Ajouter {name}"
 
+#: src/lib/gift-cards/labels.ts:72
+msgid "Add a card"
+msgstr "Ajouter une carte"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add a coupon code"
 msgstr "Ajouter un code promo"
@@ -289,6 +293,10 @@ msgstr "Ajouter un code promo"
 #: src/lib/ordering-labels.ts:210
 msgid "Add a delivery address we deliver to before placing your order."
 msgstr "Ajoutez une adresse que nous livrons avant de passer votre commande."
+
+#: src/lib/gift-cards/labels.ts:32
+msgid "Add a note"
+msgstr "Ajouter un mot"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Add a tip"
@@ -298,9 +306,17 @@ msgstr "Ajouter un pourboire"
 msgid "Add an email address first"
 msgstr "Ajoutez d'abord une adresse e-mail"
 
+#: src/lib/gift-cards/labels.ts:73
+msgid "Add card"
+msgstr "Ajouter la carte"
+
 #: src/lib/ordering-labels.ts:204
 msgid "Add delivery address"
 msgstr "Ajouter une adresse de livraison"
+
+#: src/lib/gift-cards/labels.ts:86
+msgid "Add gift card"
+msgstr "Ajouter une carte cadeau"
 
 #: src/lib/ordering-labels.ts:54
 #: src/pages/menu/checkout.astro.ts:3
@@ -327,6 +343,10 @@ msgstr "Ajouter à la commande"
 #: src/lib/ordering-labels.ts:142
 msgid "Address suggestions"
 msgstr "Suggestions d'adresses"
+
+#: src/lib/gift-cards/labels.ts:84
+msgid "Adjusted"
+msgstr "Ajusté"
 
 #: src/lib/loyalty/labels.ts:245
 msgid "Adjusted by staff"
@@ -365,6 +385,10 @@ msgstr "Tous les sites"
 msgid "All times are in the restaurant's time zone: {zone}."
 msgstr "Toutes les heures sont dans le fuseau horaire du restaurant : {zone}."
 
+#: src/lib/gift-cards/labels.ts:15
+msgid "Amount"
+msgstr "Montant"
+
 #: src/lib/reservations/labels.ts:378
 msgid "Amount due now"
 msgstr "Montant à payer maintenant"
@@ -377,6 +401,10 @@ msgstr "Un autre client a déjà réclamé les récompenses de cette note."
 #: src/pages/menu.astro.ts:3
 msgid "Any dietary preferences, sauce on the side, etc."
 msgstr "Préférences alimentaires, sauce à part, etc."
+
+#: src/lib/gift-cards/labels.ts:38
+msgid "Any location"
+msgstr "N’importe quel établissement"
 
 #: src/lib/loyalty/labels.ts:249
 msgid "App"
@@ -403,6 +431,7 @@ msgid "Applies to your whole order"
 msgstr "Valable sur toute votre commande"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/gift-cards/labels.ts:88
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Apply"
 msgstr "Postuler"
@@ -471,6 +500,10 @@ msgstr "En attente de paiement"
 msgid "Back"
 msgstr "Retour"
 
+#: src/lib/gift-cards/labels.ts:42
+msgid "Back from checkout. Your payment is being confirmed and the card is on its way."
+msgstr "De retour du paiement. Votre paiement est en cours de confirmation et la carte est en route."
+
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Back to drop"
@@ -485,6 +518,10 @@ msgstr "Retour au menu"
 msgid "Back to shop"
 msgstr "Retour à la boutique"
 
+#: src/lib/gift-cards/labels.ts:60
+msgid "Balance: {amount}"
+msgstr "Solde : {amount}"
+
 #: src/pages/drops.astro.ts:3
 msgid "Be first when the next drop opens"
 msgstr "Soyez les premiers à la prochaine offre limitée"
@@ -496,6 +533,10 @@ msgstr "Avant réductions"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Before we send your order"
 msgstr "Avant d’envoyer votre commande"
+
+#: src/lib/gift-cards/labels.ts:65
+msgid "Being prepared. Your card will be delivered within 2 hours."
+msgstr "En préparation. Votre carte sera livrée sous 2 heures."
 
 #: src/lib/reservations/labels.ts:65
 msgid "Book {time}"
@@ -538,6 +579,11 @@ msgstr "Réservation en cours…"
 #: src/pages/profile/orders.astro.ts:3
 msgid "Browse the shop"
 msgstr "Parcourir la boutique"
+
+#: src/lib/gift-cards/labels.ts:13
+#: src/pages/gift-cards/index.astro.ts:3
+msgid "Buy a gift card"
+msgstr "Acheter une carte cadeau"
 
 #: src/pages/shop.astro.ts:3
 msgid "Buy now"
@@ -602,10 +648,24 @@ msgstr "Annulée"
 msgid "Cancelling…"
 msgstr "Annulation…"
 
+#: src/lib/gift-cards/labels.ts:74
+msgid "Card added to your account."
+msgstr "Carte ajoutée à votre compte."
+
+#: src/lib/gift-cards/labels.ts:80
+msgid "Card bought"
+msgstr "Carte achetée"
+
+#: src/lib/gift-cards/labels.ts:61
+msgid "Card ending {last4}"
+msgstr "Carte se terminant par {last4}"
+
 #: src/lib/reservations/labels.ts:393
 msgid "Card guarantee"
 msgstr "Garantie par carte"
 
+#: src/lib/gift-cards/labels.ts:58
+#: src/pages/gift-cards/balance.astro.ts:3
 #: src/pages/shop.astro.ts:3
 msgid "Card number"
 msgstr "Numéro de carte"
@@ -613,6 +673,11 @@ msgstr "Numéro de carte"
 #: src/lib/reservations/labels.ts:432
 msgid "Card on file"
 msgstr "Carte enregistrée"
+
+#: src/lib/gift-cards/labels.ts:70
+#: src/pages/profile/gift-cards.astro.ts:3
+msgid "Cards saved to your account. Anyone with a card's full number can still spend it."
+msgstr "Cartes enregistrées dans votre compte. Toute personne ayant le numéro complet peut les utiliser."
 
 #: src/pages/profile.astro.ts:3
 msgid "Cards used on past shop purchases on this account."
@@ -641,6 +706,11 @@ msgstr "Changer l'horaire"
 msgid "Change time or party size"
 msgstr "Changer l'horaire ou le nombre de personnes"
 
+#: src/lib/gift-cards/labels.ts:44
+#: src/pages/gift-cards/index.astro.ts:3
+msgid "Check a card's balance"
+msgstr "Consulter le solde d’une carte"
+
 #: src/lib/reservations/labels.ts:388
 #: src/pages/menu/success.astro.ts:3
 msgid "Check again"
@@ -653,6 +723,11 @@ msgstr "Revenez bientôt, ou réservez une table classique."
 #: src/pages/careers/index.astro.ts:3
 msgid "Check back soon."
 msgstr "Revenez bientôt."
+
+#: src/lib/gift-cards/labels.ts:59
+#: src/pages/gift-cards/balance.astro.ts:3
+msgid "Check balance"
+msgstr "Consulter le solde"
 
 #: src/lib/loyalty/labels.ts:216
 msgid "Check for requests"
@@ -673,6 +748,11 @@ msgstr "Vérifiez le numéro et l'orthographe, ou choisissez une suggestion dans
 #: src/lib/ordering-labels.ts:177
 msgid "Check your connection and try again."
 msgstr "Vérifiez votre connexion et réessayez."
+
+#: src/lib/gift-cards/labels.ts:56
+#: src/pages/gift-cards/balance.astro.ts:3
+msgid "Check your gift card balance"
+msgstr "Consultez le solde de votre carte cadeau"
 
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Check your inbox to confirm"
@@ -703,6 +783,10 @@ msgstr "Vérification…"
 msgid "Checkout"
 msgstr "Paiement"
 
+#: src/lib/gift-cards/labels.ts:43
+msgid "Checkout was cancelled. No card was sent."
+msgstr "Le paiement a été annulé. Aucune carte n’a été envoyée."
+
 #: src/lib/ordering-labels.ts:74
 msgid "Choose {count}"
 msgstr "Choisissez {count}"
@@ -719,6 +803,10 @@ msgstr "Choisissez 1"
 #: src/lib/ordering-labels.ts:196
 msgid "Choose a day"
 msgstr "Choisissez un jour"
+
+#: src/lib/gift-cards/labels.ts:50
+msgid "Choose a delivery time within the next year."
+msgstr "Choisissez une date de livraison dans l’année à venir."
 
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose a location"
@@ -742,6 +830,10 @@ msgstr "Choisissez une heure"
 #: src/lib/ordering-labels.ts:202
 msgid "Choose a time to continue."
 msgstr "Choisissez une heure pour continuer."
+
+#: src/lib/gift-cards/labels.ts:47
+msgid "Choose an amount between {min} and {max}."
+msgstr "Choisissez un montant entre {min} et {max}."
 
 #: src/lib/ordering-labels.ts:75
 msgid "Choose at least {count}"
@@ -770,6 +862,10 @@ msgstr "Choisissez ce que vous recevez de nous, et comment."
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose your pickup"
 msgstr "Choisissez votre retrait"
+
+#: src/lib/gift-cards/labels.ts:18
+msgid "Classic"
+msgstr "Classique"
 
 #: src/lib/ordering-labels.ts:141
 msgid "Clear address"
@@ -927,6 +1023,7 @@ msgstr "Personnaliser l'article"
 msgid "CVC"
 msgstr "CVC"
 
+#: src/lib/gift-cards/labels.ts:35
 #: src/lib/reservations/labels.ts:37
 #: src/lib/reservations/labels.ts:470
 msgid "Date"
@@ -955,6 +1052,14 @@ msgstr "Diminuer la quantité"
 #: src/lib/ordering-labels.ts:200
 msgid "Deliver here"
 msgstr "Livrer ici"
+
+#: src/lib/gift-cards/labels.ts:34
+msgid "Deliver later"
+msgstr "Livrer plus tard"
+
+#: src/lib/gift-cards/labels.ts:33
+msgid "Deliver now"
+msgstr "Livrer maintenant"
 
 #: src/pages/menu.astro.ts:3
 msgid "Deliver to"
@@ -1018,6 +1123,10 @@ msgstr "Heure de livraison"
 msgid "Deposit"
 msgstr "Acompte"
 
+#: src/lib/gift-cards/labels.ts:17
+msgid "Design"
+msgstr "Design"
+
 #: src/lib/reservations/labels.ts:97
 #: src/lib/reservations/labels.ts:202
 msgid "Dietary needs"
@@ -1071,6 +1180,10 @@ msgstr "Heure la plus tôt"
 #: src/lib/loyalty/labels.ts:240
 msgid "Earned"
 msgstr "Gain"
+
+#: src/lib/gift-cards/labels.ts:22
+msgid "Eid"
+msgstr "Aïd"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/marketing/MessagesSection.astro.ts:3
@@ -1133,6 +1246,7 @@ msgid "Enter a phone number with its country code."
 msgstr "Saisissez un numéro de téléphone avec l'indicatif du pays."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/gift-cards/labels.ts:48
 #: src/lib/reservations/labels.ts:122
 msgid "Enter a valid email address."
 msgstr "Saisissez une adresse e-mail valide."
@@ -1141,6 +1255,15 @@ msgstr "Saisissez une adresse e-mail valide."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Enter an amount, for example 4.50."
 msgstr "Saisissez un montant, par exemple 4,50."
+
+#: src/lib/gift-cards/labels.ts:57
+#: src/pages/gift-cards/balance.astro.ts:3
+msgid "Enter the number on your card. Dashes and spaces do not matter."
+msgstr "Saisissez le numéro de votre carte. Les tirets et espaces n’ont pas d’importance."
+
+#: src/lib/gift-cards/labels.ts:49
+msgid "Enter who the card is for, or choose Send to myself."
+msgstr "Indiquez à qui est destinée la carte, ou choisissez « Me l’envoyer »."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Enter your name and phone number."
@@ -1284,6 +1407,7 @@ msgstr "Annulation gratuite jusqu’à {count} minutes avant votre réservation.
 msgid "Free delivery"
 msgstr "Livraison offerte"
 
+#: src/lib/gift-cards/labels.ts:29
 #: src/lib/ordering-labels.ts:67
 msgid "From"
 msgstr "À partir de"
@@ -1330,6 +1454,23 @@ msgstr "Soyez prévenu quand une table se libère"
 msgid "Getting your code…"
 msgstr "Récupération de votre code…"
 
+#: src/lib/gift-cards/labels.ts:90
+msgid "Gift card ending {last4}: {amount} applied"
+msgstr "Carte cadeau se terminant par {last4} : {amount} appliqués"
+
+#: src/lib/gift-cards/labels.ts:87
+msgid "Gift card number"
+msgstr "Numéro de la carte cadeau"
+
+#: src/lib/gift-cards/labels.ts:69
+#: src/pages/profile/gift-cards.astro.ts:3
+msgid "Gift cards"
+msgstr "Cartes cadeaux"
+
+#: src/lib/gift-cards/labels.ts:45
+msgid "Gift cards are not available right now."
+msgstr "Les cartes cadeaux ne sont pas disponibles pour le moment."
+
 #: src/lib/reservations/labels.ts:294
 msgid "Give a phone number, an email address, or both."
 msgstr "Indiquez un numéro de téléphone, une adresse e-mail, ou les deux."
@@ -1362,6 +1503,14 @@ msgstr "Se marie bien avec"
 #: src/lib/reservations/labels.ts:469
 msgid "Guests"
 msgstr "Personnes"
+
+#: src/lib/gift-cards/labels.ts:19
+msgid "Happy birthday"
+msgstr "Joyeux anniversaire"
+
+#: src/lib/gift-cards/labels.ts:20
+msgid "Happy holidays"
+msgstr "Joyeuses fêtes"
 
 #: src/lib/reservations/labels.ts:70
 #: src/lib/reservations/labels.ts:376
@@ -1593,6 +1742,7 @@ msgstr "Chargement de vos récompenses…"
 msgid "Loading…"
 msgstr "Chargement…"
 
+#: src/lib/gift-cards/labels.ts:37
 #: src/lib/reservations/labels.ts:35
 msgid "Location"
 msgstr "Établissement"
@@ -1680,6 +1830,10 @@ msgstr "Nom"
 msgid "name@example.com"
 msgstr "nom@exemple.fr"
 
+#: src/lib/gift-cards/labels.ts:24
+msgid "National Day"
+msgstr "Fête nationale"
+
 #: src/lib/loyalty/labels.ts:252
 msgid "Network error. Check your connection and try again."
 msgstr "Erreur réseau. Vérifiez votre connexion et réessayez."
@@ -1711,6 +1865,10 @@ msgstr "Non"
 #: src/lib/loyalty/labels.ts:237
 msgid "No activity yet. Your purchases will show up here."
 msgstr "Aucune activité pour le moment. Vos achats apparaîtront ici."
+
+#: src/lib/gift-cards/labels.ts:71
+msgid "No cards saved yet."
+msgstr "Aucune carte enregistrée pour le moment."
 
 #: src/pages/menu.astro.ts:3
 msgid "No dishes match"
@@ -1852,6 +2010,12 @@ msgstr "Une fois confirmée par le restaurant"
 #: src/lib/loyalty/labels.ts:152
 msgid "One item. Paid extras are still charged."
 msgstr "Un article. Les suppléments payants restent facturés."
+
+#: src/lib/gift-cards/labels.ts:41
+#: src/pages/gift-cards/index.astro.ts:3
+#: src/pages/profile/gift-cards.astro.ts:3
+msgid "One moment…"
+msgstr "Un instant…"
 
 #: src/lib/reservations/labels.ts:372
 msgid "One more step: payment"
@@ -2061,6 +2225,10 @@ msgstr "Commandes ouvertes : {title}"
 msgid "Original price"
 msgstr "Prix d’origine"
 
+#: src/lib/gift-cards/labels.ts:16
+msgid "Other amount"
+msgstr "Autre montant"
+
 #: src/lib/reservations/labels.ts:63
 msgid "Other dates with tables"
 msgstr "Autres dates avec des tables"
@@ -2076,6 +2244,10 @@ msgstr "Autres horaires ce jour-là"
 #: src/pages/menu.astro.ts:3
 msgid "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
 msgstr "Notre cuisine prépare de délicieux plats. Revenez bientôt pour notre menu complet en ligne."
+
+#: src/lib/gift-cards/labels.ts:25
+msgid "Our own design"
+msgstr "Notre propre design"
 
 #: src/components/SiteNotFound.astro.ts:3
 msgid "Page not found"
@@ -2116,6 +2288,10 @@ msgstr "Offres passées"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Pay {amount}"
 msgstr "Payer {amount}"
+
+#: src/lib/gift-cards/labels.ts:40
+msgid "Pay and send"
+msgstr "Payer et envoyer"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pay at pickup"
@@ -2405,6 +2581,10 @@ msgstr "Code QR pour {title}"
 msgid "Quantity"
 msgstr "Quantité"
 
+#: src/lib/gift-cards/labels.ts:23
+msgid "Ramadan"
+msgstr "Ramadan"
+
 #: src/components/drops/DropHero.astro.ts:3
 msgid "Read more"
 msgstr "Lire la suite"
@@ -2439,6 +2619,10 @@ msgstr "Les reçus des achats terminés apparaissent ici avec le statut et le mo
 msgid "Received"
 msgstr "Reçue"
 
+#: src/lib/gift-cards/labels.ts:75
+msgid "Recent activity"
+msgstr "Activité récente"
+
 #: src/lib/loyalty/labels.ts:242
 msgid "Redeemed {reward}"
 msgstr "Échange : {reward}"
@@ -2468,6 +2652,7 @@ msgstr "Remboursé"
 msgid "Refunded {amount}"
 msgstr "Remboursé : {amount}"
 
+#: src/lib/gift-cards/labels.ts:89
 #: src/lib/ordering-labels.ts:94
 #: src/lib/ordering-labels.ts:117
 #: src/pages/menu/checkout.astro.ts:3
@@ -2508,6 +2693,10 @@ msgstr "Réserver une table"
 #: src/pages/menu/success.astro.ts:3
 msgid "Return to homepage"
 msgstr "Retour à l'accueil"
+
+#: src/lib/gift-cards/labels.ts:82
+msgid "Returned to the card"
+msgstr "Recrédité sur la carte"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Review your order details and enter your contact information to complete your order."
@@ -2618,6 +2807,11 @@ msgstr "Voir tous les postes ouverts"
 msgid "Select a published form in the page editor."
 msgstr "Sélectionnez un formulaire publié dans l’éditeur de page."
 
+#: src/lib/gift-cards/labels.ts:14
+#: src/pages/gift-cards/index.astro.ts:3
+msgid "Send a gift card by email, or keep it for yourself. It works at every location."
+msgstr "Envoyez une carte cadeau par e-mail ou gardez-la. Elle est valable dans tous les établissements."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Send application"
 msgstr "Envoyer la candidature"
@@ -2633,6 +2827,10 @@ msgstr "Envoyer la demande"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Send to kitchen"
 msgstr "Envoyer en cuisine"
+
+#: src/lib/gift-cards/labels.ts:28
+msgid "Send to myself"
+msgstr "Me l’envoyer"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/drops/DropAlertsSignup.astro.ts:3
@@ -2667,6 +2865,10 @@ msgstr "Partager cette offre"
 msgid "Shop"
 msgstr "Boutique"
 
+#: src/lib/gift-cards/labels.ts:76
+msgid "Show at the till"
+msgstr "Montrer en caisse"
+
 #: src/components/drops/DropHero.astro.ts:3
 msgid "Show less"
 msgstr "Réduire"
@@ -2692,6 +2894,7 @@ msgid "Showing your code does not spend any points. You approve every reward you
 msgstr "Montrer votre code ne dépense aucun point. Vous approuvez vous-même chaque récompense."
 
 #: src/components/SiteHeader.astro.ts:3
+#: src/lib/gift-cards/labels.ts:79
 #: src/lib/loyalty/labels.ts:71
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
@@ -2700,6 +2903,10 @@ msgstr "Connexion"
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Sign in to hear about offers"
 msgstr "Connectez-vous pour recevoir les offres"
+
+#: src/lib/gift-cards/labels.ts:78
+msgid "Sign in to save gift cards to your account."
+msgstr "Connectez-vous pour enregistrer des cartes cadeaux dans votre compte."
 
 #: src/lib/loyalty/labels.ts:67
 msgid "Sign in to see your rewards"
@@ -2750,6 +2957,7 @@ msgstr "Certains prix ont changé depuis votre appel. Votre panier affiche les p
 msgid "Something went wrong."
 msgstr "Une erreur s’est produite."
 
+#: src/lib/gift-cards/labels.ts:54
 #: src/lib/loyalty/labels.ts:268
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
@@ -2771,6 +2979,14 @@ msgstr "Demandes particulières"
 #: src/lib/loyalty/labels.ts:220
 msgid "Spends {points} for {amount} off"
 msgstr "Utilise {points} pour {amount} de réduction"
+
+#: src/lib/gift-cards/labels.ts:81
+msgid "Spent"
+msgstr "Dépensé"
+
+#: src/lib/gift-cards/labels.ts:91
+msgid "Still to pay: {amount}"
+msgstr "Reste à payer : {amount}"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
@@ -2874,6 +3090,10 @@ msgstr "M’envoyer un SMS quand ma table est prête"
 msgid "Texts about this order only: when it's ready, or if the time changes. Not marketing."
 msgstr "Des SMS uniquement pour cette commande : quand elle est prête ou si l'heure change. Pas de publicité."
 
+#: src/lib/gift-cards/labels.ts:21
+msgid "Thank you"
+msgstr "Merci"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
 msgstr "Merci pour votre commande !"
@@ -2961,6 +3181,14 @@ msgstr "Cet horaire vient d'être pris. Veuillez en choisir un autre."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "That tip is too large. Please enter a smaller amount."
 msgstr "Ce pourboire est trop élevé. Saisissez un montant plus petit."
+
+#: src/lib/gift-cards/labels.ts:93
+msgid "The card does not have enough balance."
+msgstr "Le solde de la carte est insuffisant."
+
+#: src/lib/gift-cards/labels.ts:95
+msgid "The gift card amount changed. Review the new total."
+msgstr "Le montant de la carte cadeau a changé. Vérifiez le nouveau total."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "The hold on your order was released. Please place a new order."
@@ -3095,6 +3323,18 @@ msgstr "cet établissement"
 msgid "This business is not running a rewards program at the moment."
 msgstr "Cet établissement ne propose pas de programme de récompenses pour le moment."
 
+#: src/lib/gift-cards/labels.ts:64
+msgid "This card has expired. The balance is 0."
+msgstr "Cette carte a expiré. Le solde est de 0."
+
+#: src/lib/gift-cards/labels.ts:62
+msgid "This card has not been activated."
+msgstr "Cette carte n’a pas été activée."
+
+#: src/lib/gift-cards/labels.ts:63
+msgid "This card is no longer valid. The balance is 0."
+msgstr "Cette carte n’est plus valable. Le solde est de 0."
+
 #: src/lib/ordering-labels.ts:36
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This code can't be used for online orders."
@@ -3153,6 +3393,10 @@ msgstr "Ce code n'est pas encore actif."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This code isn't available at this time."
 msgstr "Ce code n'est pas disponible pour le moment."
+
+#: src/lib/gift-cards/labels.ts:77
+msgid "This code works once and stops working in a few minutes. It is not your card number."
+msgstr "Ce code ne fonctionne qu’une fois et expire en quelques minutes. Ce n’est pas votre numéro de carte."
 
 #: src/lib/ordering-labels.ts:85
 msgid "This combination is sold out. Choose another combination."
@@ -3275,6 +3519,7 @@ msgstr "Le code de cette table ne fonctionne plus. Demandez de l’aide à un me
 msgid "This table has sent many orders. Please ask a team member for help."
 msgstr "Cette table a envoyé beaucoup de commandes. Demandez de l’aide à un membre de l’équipe."
 
+#: src/lib/gift-cards/labels.ts:36
 #: src/lib/reservations/labels.ts:38
 msgid "Time"
 msgstr "Heure"
@@ -3293,6 +3538,14 @@ msgstr "Pourboire"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Tips are not available for this order."
 msgstr "Les pourboires ne sont pas disponibles pour cette commande."
+
+#: src/lib/gift-cards/labels.ts:27
+msgid "To (email)"
+msgstr "À (e-mail)"
+
+#: src/lib/gift-cards/labels.ts:26
+msgid "To (name)"
+msgstr "À (nom)"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "To your door"
@@ -3327,7 +3580,16 @@ msgstr "Trop de tentatives. Réessayez dans un instant."
 msgid "Too many requests. Try again later."
 msgstr "Trop de demandes. Réessayez plus tard."
 
+#: src/lib/gift-cards/labels.ts:53
+msgid "Too many tries. Please wait a moment and try again."
+msgstr "Trop de tentatives. Patientez un instant puis réessayez."
+
+#: src/lib/gift-cards/labels.ts:83
+msgid "Topped up"
+msgstr "Rechargée"
+
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/gift-cards/labels.ts:39
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -3417,6 +3679,10 @@ msgstr "Utiliser une nouvelle carte"
 msgid "Use a reward when you order, or show your code at the counter."
 msgstr "Utilisez une récompense lors de votre commande, ou montrez votre code au comptoir."
 
+#: src/lib/gift-cards/labels.ts:92
+msgid "Use a saved card"
+msgstr "Utiliser une carte enregistrée"
+
 #: src/pages/menu.astro.ts:3
 msgid "Use code {code}"
 msgstr "Utilisez le code {code}"
@@ -3424,6 +3690,10 @@ msgstr "Utilisez le code {code}"
 #: src/lib/loyalty/labels.ts:166
 msgid "Used on {items}"
 msgstr "Appliquée à {items}"
+
+#: src/lib/gift-cards/labels.ts:66
+msgid "Valid until {date}"
+msgstr "Valable jusqu’au {date}"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "VAT number"
@@ -3441,6 +3711,10 @@ msgstr "Code de vérification"
 #: src/pages/verify.astro.ts:3
 msgid "Verification Code"
 msgstr "Code de vérification"
+
+#: src/lib/gift-cards/labels.ts:51
+msgid "Verification failed. Please try again."
+msgstr "La vérification a échoué. Veuillez réessayer."
 
 #: src/pages/verify.astro.ts:3
 msgid "Verify"
@@ -3532,6 +3806,10 @@ msgstr "Nous avons appliqué une meilleure réduction à la place de ce code."
 msgid "We are still confirming your payment. Check your tab again in a minute."
 msgstr "Nous confirmons encore votre paiement. Revenez à votre note dans une minute."
 
+#: src/lib/gift-cards/labels.ts:52
+msgid "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
+msgstr "Nous ne pouvons pas finaliser cet achat. Essayez un montant plus petit ou contactez le restaurant."
+
 #: src/lib/reservations/labels.ts:389
 msgid "We could not check your payment. Trying again…"
 msgstr "Impossible de vérifier votre paiement. Nouvelle tentative…"
@@ -3543,6 +3821,10 @@ msgstr "Nous n'avons pas pu confirmer cette commande."
 #: src/lib/loyalty/labels.ts:181
 msgid "We could not confirm your reward. Try again, or continue without it."
 msgstr "Impossible de confirmer votre récompense. Réessayez ou continuez sans elle."
+
+#: src/lib/gift-cards/labels.ts:67
+msgid "We could not find a card with that number."
+msgstr "Nous n’avons trouvé aucune carte avec ce numéro."
 
 #: src/lib/reservations/labels.ts:500
 msgid "We could not find that reservation. The link may have expired."
@@ -3584,6 +3866,10 @@ msgstr "Nous n'avons pas pu envoyer votre candidature pour le moment. Réessayez
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "We could not send your order. Please try again."
 msgstr "Nous n’avons pas pu envoyer votre commande. Veuillez réessayer."
+
+#: src/lib/gift-cards/labels.ts:94
+msgid "We could not use that gift card."
+msgstr "Nous n’avons pas pu utiliser cette carte cadeau."
 
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -3964,6 +4250,10 @@ msgstr "Votre réduction a changé, nous avons donc mis le total à jour : {tota
 msgid "Your discount changed. Please review your total and place your order again."
 msgstr "Votre réduction a changé. Vérifiez le total et passez à nouveau la commande."
 
+#: src/lib/gift-cards/labels.ts:31
+msgid "Your email (for the receipt)"
+msgstr "Votre e-mail (pour le reçu)"
+
 #: src/lib/reservations/labels.ts:78
 msgid "Your hold expired"
 msgstr "Votre option a expiré"
@@ -3973,6 +4263,7 @@ msgid "Your hold expired. Please choose a time again."
 msgstr "Votre option a expiré. Veuillez choisir un horaire à nouveau."
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/gift-cards/labels.ts:30
 msgid "Your name"
 msgstr "Votre nom"
 

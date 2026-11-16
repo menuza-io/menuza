@@ -1,0 +1,39 @@
+---
+import { msg } from '@lingui/core/macro'
+import AccountShell from '~/components/AccountShell.astro'
+import GiftCardLabels from '~/components/gift-cards/GiftCardLabels.astro'
+import SitePage from '~/components/SitePage.astro'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const title = i18n._(msg`Gift cards`)
+const description = i18n._(
+	msg`Cards saved to your account. Anyone with a card's full number can still spend it.`,
+)
+const loading = i18n._(msg`One moment…`)
+
+// Filled in by the browser from the regional tenant-api; this page renders
+// nothing about a card or a guest (docs/tenant-data-residency.md).
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'profile-gift-cards', title, slug: 'profile/gift-cards', isHomePage: false, sections: [] }}
+	title={`${title} - ${organization.name}`}
+>
+	<AccountShell current="rewards" title={title} description={description}>
+		<GiftCardLabels />
+		<div id="gift-card-wallet-root" class="flex flex-col gap-4">
+			<p class="sr-only" role="status">{loading}</p>
+		</div>
+	</AccountShell>
+
+	<script>
+		import '../../scripts/profile-gift-cards.ts'
+	</script>
+</SitePage>

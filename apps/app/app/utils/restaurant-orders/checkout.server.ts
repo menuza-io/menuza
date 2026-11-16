@@ -18,6 +18,7 @@
  *   locale path; the receipt capability stays in browser sessionStorage.
  */
 
+import { parseGiftCardOrderRef } from '@repo/common/gift-cards'
 import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import {
 	getLocaleHref,
@@ -191,6 +192,14 @@ function buildSitePaymentUrls(
 		defaultLocale,
 	)
 	const cancelPath = getLocaleHref('/menu', locale, locale, defaultLocale)
+	if (parseGiftCardOrderRef(orderId)) {
+		// A gift card purchase returns to the gift card page.
+		const giftPath = getLocaleHref('/gift-cards', locale, locale, defaultLocale)
+		return {
+			successUrl: `${siteBase}${giftPath}?paid=1`,
+			cancelUrl: `${siteBase}${giftPath}?cancelled=1`,
+		}
+	}
 	if (parseTabOrderRef(orderId)) {
 		// A QR table tab returns to the menu, where the tab drawer shows the
 		// receipt (the tab capability lives in the guest's browser storage).

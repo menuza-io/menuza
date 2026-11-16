@@ -146,6 +146,8 @@ export function shouldCachePublishedHtml(
 	if (isDropVisibilityPage(url.pathname)) return false
 	if (isCareersPage(url.pathname)) return false
 	if (isReservationsPage(url.pathname)) return false
+	// Live pages: the options and the balance come from the region.
+	if (isSitesGiftCardsRoute(url.pathname)) return false
 	return true
 }
 
@@ -180,6 +182,11 @@ export function isSitesReservationsRoute(pathname: string) {
 	return slug === 'reserve' || slug.startsWith('reserve/')
 }
 
+export function isSitesGiftCardsRoute(pathname: string) {
+	const slug = pathname.replace(/^\/+|\/+$/g, '')
+	return slug === 'gift-cards' || slug.startsWith('gift-cards/')
+}
+
 export function isSitesExperiencesRoute(pathname: string) {
 	const slug = pathname.replace(/^\/+|\/+$/g, '')
 	return slug === 'experiences' || slug.startsWith('experiences/')
@@ -193,6 +200,7 @@ export function isSitesAppRoute(pathname: string) {
 		isSitesMenuRoute(pathname) ||
 		isSitesCareersRoute(pathname) ||
 		isSitesReservationsRoute(pathname) ||
+		isSitesGiftCardsRoute(pathname) ||
 		isSitesExperiencesRoute(pathname)
 	)
 }

@@ -282,6 +282,10 @@ msgstr "再添加 {amount} 即可达到 {minimum} 的配送起送额。"
 msgid "Add {name}"
 msgstr "添加{name}"
 
+#: src/lib/gift-cards/labels.ts:72
+msgid "Add a card"
+msgstr "添加卡片"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add a coupon code"
 msgstr "添加优惠码"
@@ -289,6 +293,10 @@ msgstr "添加优惠码"
 #: src/lib/ordering-labels.ts:210
 msgid "Add a delivery address we deliver to before placing your order."
 msgstr "请先添加我们可配送的地址，再提交订单。"
+
+#: src/lib/gift-cards/labels.ts:32
+msgid "Add a note"
+msgstr "添加留言"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Add a tip"
@@ -298,9 +306,17 @@ msgstr "添加小费"
 msgid "Add an email address first"
 msgstr "请先添加电子邮件地址"
 
+#: src/lib/gift-cards/labels.ts:73
+msgid "Add card"
+msgstr "添加卡片"
+
 #: src/lib/ordering-labels.ts:204
 msgid "Add delivery address"
 msgstr "添加配送地址"
+
+#: src/lib/gift-cards/labels.ts:86
+msgid "Add gift card"
+msgstr "添加礼品卡"
 
 #: src/lib/ordering-labels.ts:54
 #: src/pages/menu/checkout.astro.ts:3
@@ -327,6 +343,10 @@ msgstr "加入订单"
 #: src/lib/ordering-labels.ts:142
 msgid "Address suggestions"
 msgstr "地址建议"
+
+#: src/lib/gift-cards/labels.ts:84
+msgid "Adjusted"
+msgstr "已调整"
 
 #: src/lib/loyalty/labels.ts:245
 msgid "Adjusted by staff"
@@ -365,6 +385,10 @@ msgstr "所有门店"
 msgid "All times are in the restaurant's time zone: {zone}."
 msgstr "所有时间均为餐厅所在时区：{zone}。"
 
+#: src/lib/gift-cards/labels.ts:15
+msgid "Amount"
+msgstr "金额"
+
 #: src/lib/reservations/labels.ts:378
 msgid "Amount due now"
 msgstr "现需支付金额"
@@ -377,6 +401,10 @@ msgstr "另一位顾客已领取此账单的奖励。"
 #: src/pages/menu.astro.ts:3
 msgid "Any dietary preferences, sauce on the side, etc."
 msgstr "任何饮食偏好、酱料另放等"
+
+#: src/lib/gift-cards/labels.ts:38
+msgid "Any location"
+msgstr "任意门店"
 
 #: src/lib/loyalty/labels.ts:249
 msgid "App"
@@ -403,6 +431,7 @@ msgid "Applies to your whole order"
 msgstr "适用于整笔订单"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/gift-cards/labels.ts:88
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Apply"
 msgstr "申请"
@@ -471,6 +500,10 @@ msgstr "等待付款"
 msgid "Back"
 msgstr "返回"
 
+#: src/lib/gift-cards/labels.ts:42
+msgid "Back from checkout. Your payment is being confirmed and the card is on its way."
+msgstr "已从结账页面返回。付款正在确认，礼品卡即将发出。"
+
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Back to drop"
@@ -485,6 +518,10 @@ msgstr "返回菜单"
 msgid "Back to shop"
 msgstr "返回商店"
 
+#: src/lib/gift-cards/labels.ts:60
+msgid "Balance: {amount}"
+msgstr "余额：{amount}"
+
 #: src/pages/drops.astro.ts:3
 msgid "Be first when the next drop opens"
 msgstr "下一场限量活动开始时抢先知道"
@@ -496,6 +533,10 @@ msgstr "优惠前"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Before we send your order"
 msgstr "在发送您的订单之前"
+
+#: src/lib/gift-cards/labels.ts:65
+msgid "Being prepared. Your card will be delivered within 2 hours."
+msgstr "准备中。您的礼品卡将在 2 小时内送达。"
 
 #: src/lib/reservations/labels.ts:65
 msgid "Book {time}"
@@ -538,6 +579,11 @@ msgstr "正在预订…"
 #: src/pages/profile/orders.astro.ts:3
 msgid "Browse the shop"
 msgstr "浏览商店"
+
+#: src/lib/gift-cards/labels.ts:13
+#: src/pages/gift-cards/index.astro.ts:3
+msgid "Buy a gift card"
+msgstr "购买礼品卡"
 
 #: src/pages/shop.astro.ts:3
 msgid "Buy now"
@@ -602,10 +648,24 @@ msgstr "已取消"
 msgid "Cancelling…"
 msgstr "正在取消…"
 
+#: src/lib/gift-cards/labels.ts:74
+msgid "Card added to your account."
+msgstr "卡片已添加到您的账户。"
+
+#: src/lib/gift-cards/labels.ts:80
+msgid "Card bought"
+msgstr "已购买礼品卡"
+
+#: src/lib/gift-cards/labels.ts:61
+msgid "Card ending {last4}"
+msgstr "尾号 {last4} 的卡"
+
 #: src/lib/reservations/labels.ts:393
 msgid "Card guarantee"
 msgstr "信用卡担保"
 
+#: src/lib/gift-cards/labels.ts:58
+#: src/pages/gift-cards/balance.astro.ts:3
 #: src/pages/shop.astro.ts:3
 msgid "Card number"
 msgstr "卡号"
@@ -613,6 +673,11 @@ msgstr "卡号"
 #: src/lib/reservations/labels.ts:432
 msgid "Card on file"
 msgstr "已保存银行卡"
+
+#: src/lib/gift-cards/labels.ts:70
+#: src/pages/profile/gift-cards.astro.ts:3
+msgid "Cards saved to your account. Anyone with a card's full number can still spend it."
+msgstr "保存到您账户的卡片。任何持有完整卡号的人仍可使用。"
 
 #: src/pages/profile.astro.ts:3
 msgid "Cards used on past shop purchases on this account."
@@ -641,6 +706,11 @@ msgstr "更改时间"
 msgid "Change time or party size"
 msgstr "更改时间或人数"
 
+#: src/lib/gift-cards/labels.ts:44
+#: src/pages/gift-cards/index.astro.ts:3
+msgid "Check a card's balance"
+msgstr "查询卡片余额"
+
 #: src/lib/reservations/labels.ts:388
 #: src/pages/menu/success.astro.ts:3
 msgid "Check again"
@@ -653,6 +723,11 @@ msgstr "请稍后再来，或预订普通餐桌。"
 #: src/pages/careers/index.astro.ts:3
 msgid "Check back soon."
 msgstr "请稍后再来看看。"
+
+#: src/lib/gift-cards/labels.ts:59
+#: src/pages/gift-cards/balance.astro.ts:3
+msgid "Check balance"
+msgstr "查询余额"
 
 #: src/lib/loyalty/labels.ts:216
 msgid "Check for requests"
@@ -673,6 +748,11 @@ msgstr "请检查门牌号和拼写，或从列表中选择一个建议地址。
 #: src/lib/ordering-labels.ts:177
 msgid "Check your connection and try again."
 msgstr "请检查网络连接后重试。"
+
+#: src/lib/gift-cards/labels.ts:56
+#: src/pages/gift-cards/balance.astro.ts:3
+msgid "Check your gift card balance"
+msgstr "查询礼品卡余额"
 
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Check your inbox to confirm"
@@ -703,6 +783,10 @@ msgstr "正在核对…"
 msgid "Checkout"
 msgstr "结账"
 
+#: src/lib/gift-cards/labels.ts:43
+msgid "Checkout was cancelled. No card was sent."
+msgstr "结账已取消，未发送礼品卡。"
+
 #: src/lib/ordering-labels.ts:74
 msgid "Choose {count}"
 msgstr "选择 {count} 项"
@@ -719,6 +803,10 @@ msgstr "选择 1 项"
 #: src/lib/ordering-labels.ts:196
 msgid "Choose a day"
 msgstr "选择日期"
+
+#: src/lib/gift-cards/labels.ts:50
+msgid "Choose a delivery time within the next year."
+msgstr "请选择未来一年内的送达时间。"
 
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose a location"
@@ -742,6 +830,10 @@ msgstr "选择时间"
 #: src/lib/ordering-labels.ts:202
 msgid "Choose a time to continue."
 msgstr "请选择时间以继续。"
+
+#: src/lib/gift-cards/labels.ts:47
+msgid "Choose an amount between {min} and {max}."
+msgstr "请选择 {min} 到 {max} 之间的金额。"
 
 #: src/lib/ordering-labels.ts:75
 msgid "Choose at least {count}"
@@ -770,6 +862,10 @@ msgstr "选择你想收到的消息和接收方式。"
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose your pickup"
 msgstr "选择取货安排"
+
+#: src/lib/gift-cards/labels.ts:18
+msgid "Classic"
+msgstr "经典"
 
 #: src/lib/ordering-labels.ts:141
 msgid "Clear address"
@@ -927,6 +1023,7 @@ msgstr "自定义菜品"
 msgid "CVC"
 msgstr "CVC"
 
+#: src/lib/gift-cards/labels.ts:35
 #: src/lib/reservations/labels.ts:37
 #: src/lib/reservations/labels.ts:470
 msgid "Date"
@@ -955,6 +1052,14 @@ msgstr "减少数量"
 #: src/lib/ordering-labels.ts:200
 msgid "Deliver here"
 msgstr "配送到这里"
+
+#: src/lib/gift-cards/labels.ts:34
+msgid "Deliver later"
+msgstr "稍后送达"
+
+#: src/lib/gift-cards/labels.ts:33
+msgid "Deliver now"
+msgstr "立即送达"
 
 #: src/pages/menu.astro.ts:3
 msgid "Deliver to"
@@ -1018,6 +1123,10 @@ msgstr "配送时间"
 msgid "Deposit"
 msgstr "订金"
 
+#: src/lib/gift-cards/labels.ts:17
+msgid "Design"
+msgstr "设计"
+
 #: src/lib/reservations/labels.ts:97
 #: src/lib/reservations/labels.ts:202
 msgid "Dietary needs"
@@ -1071,6 +1180,10 @@ msgstr "最早时间"
 #: src/lib/loyalty/labels.ts:240
 msgid "Earned"
 msgstr "获得"
+
+#: src/lib/gift-cards/labels.ts:22
+msgid "Eid"
+msgstr "开斋节"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/marketing/MessagesSection.astro.ts:3
@@ -1133,6 +1246,7 @@ msgid "Enter a phone number with its country code."
 msgstr "请输入带国家代码的电话号码。"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/gift-cards/labels.ts:48
 #: src/lib/reservations/labels.ts:122
 msgid "Enter a valid email address."
 msgstr "请输入有效的电子邮箱地址。"
@@ -1141,6 +1255,15 @@ msgstr "请输入有效的电子邮箱地址。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Enter an amount, for example 4.50."
 msgstr "请输入金额，例如 4.50。"
+
+#: src/lib/gift-cards/labels.ts:57
+#: src/pages/gift-cards/balance.astro.ts:3
+msgid "Enter the number on your card. Dashes and spaces do not matter."
+msgstr "请输入卡号。短横线和空格无关紧要。"
+
+#: src/lib/gift-cards/labels.ts:49
+msgid "Enter who the card is for, or choose Send to myself."
+msgstr "请填写收卡人，或选择“发送给自己”。"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Enter your name and phone number."
@@ -1284,6 +1407,7 @@ msgstr "预订前 {count} 分钟内可免费取消。"
 msgid "Free delivery"
 msgstr "免配送费"
 
+#: src/lib/gift-cards/labels.ts:29
 #: src/lib/ordering-labels.ts:67
 msgid "From"
 msgstr "起价"
@@ -1330,6 +1454,23 @@ msgstr "有餐位时通知我"
 msgid "Getting your code…"
 msgstr "正在获取您的会员码…"
 
+#: src/lib/gift-cards/labels.ts:90
+msgid "Gift card ending {last4}: {amount} applied"
+msgstr "尾号 {last4} 的礼品卡：已使用 {amount}"
+
+#: src/lib/gift-cards/labels.ts:87
+msgid "Gift card number"
+msgstr "礼品卡号"
+
+#: src/lib/gift-cards/labels.ts:69
+#: src/pages/profile/gift-cards.astro.ts:3
+msgid "Gift cards"
+msgstr "礼品卡"
+
+#: src/lib/gift-cards/labels.ts:45
+msgid "Gift cards are not available right now."
+msgstr "礼品卡暂不可用。"
+
 #: src/lib/reservations/labels.ts:294
 msgid "Give a phone number, an email address, or both."
 msgstr "请提供电话号码、电子邮箱，或两者都提供。"
@@ -1362,6 +1503,14 @@ msgstr "搭配推荐"
 #: src/lib/reservations/labels.ts:469
 msgid "Guests"
 msgstr "客人"
+
+#: src/lib/gift-cards/labels.ts:19
+msgid "Happy birthday"
+msgstr "生日快乐"
+
+#: src/lib/gift-cards/labels.ts:20
+msgid "Happy holidays"
+msgstr "节日快乐"
 
 #: src/lib/reservations/labels.ts:70
 #: src/lib/reservations/labels.ts:376
@@ -1593,6 +1742,7 @@ msgstr "正在加载您的奖励…"
 msgid "Loading…"
 msgstr "加载中…"
 
+#: src/lib/gift-cards/labels.ts:37
 #: src/lib/reservations/labels.ts:35
 msgid "Location"
 msgstr "门店"
@@ -1680,6 +1830,10 @@ msgstr "姓名"
 msgid "name@example.com"
 msgstr "name@example.com"
 
+#: src/lib/gift-cards/labels.ts:24
+msgid "National Day"
+msgstr "国庆日"
+
 #: src/lib/loyalty/labels.ts:252
 msgid "Network error. Check your connection and try again."
 msgstr "网络错误。请检查网络连接后重试。"
@@ -1711,6 +1865,10 @@ msgstr "否"
 #: src/lib/loyalty/labels.ts:237
 msgid "No activity yet. Your purchases will show up here."
 msgstr "暂无记录。您的消费将显示在这里。"
+
+#: src/lib/gift-cards/labels.ts:71
+msgid "No cards saved yet."
+msgstr "尚未保存任何卡片。"
 
 #: src/pages/menu.astro.ts:3
 msgid "No dishes match"
@@ -1852,6 +2010,12 @@ msgstr "餐厅确认后"
 #: src/lib/loyalty/labels.ts:152
 msgid "One item. Paid extras are still charged."
 msgstr "限一件。付费附加项仍需付款。"
+
+#: src/lib/gift-cards/labels.ts:41
+#: src/pages/gift-cards/index.astro.ts:3
+#: src/pages/profile/gift-cards.astro.ts:3
+msgid "One moment…"
+msgstr "请稍候…"
 
 #: src/lib/reservations/labels.ts:372
 msgid "One more step: payment"
@@ -2061,6 +2225,10 @@ msgstr "开放订购：{title}"
 msgid "Original price"
 msgstr "原价"
 
+#: src/lib/gift-cards/labels.ts:16
+msgid "Other amount"
+msgstr "其他金额"
+
 #: src/lib/reservations/labels.ts:63
 msgid "Other dates with tables"
 msgstr "其他有餐位的日期"
@@ -2076,6 +2244,10 @@ msgstr "当天其他时间"
 #: src/pages/menu.astro.ts:3
 msgid "Our kitchen is preparing delicious dishes. Check back soon for our full online menu."
 msgstr "我们的厨房正在准备美味佳肴。请稍后回来查看完整的在线菜单。"
+
+#: src/lib/gift-cards/labels.ts:25
+msgid "Our own design"
+msgstr "专属设计"
 
 #: src/components/SiteNotFound.astro.ts:3
 msgid "Page not found"
@@ -2116,6 +2288,10 @@ msgstr "往期活动"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Pay {amount}"
 msgstr "支付 {amount}"
+
+#: src/lib/gift-cards/labels.ts:40
+msgid "Pay and send"
+msgstr "付款并发送"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pay at pickup"
@@ -2405,6 +2581,10 @@ msgstr "{title} 的二维码"
 msgid "Quantity"
 msgstr "数量"
 
+#: src/lib/gift-cards/labels.ts:23
+msgid "Ramadan"
+msgstr "斋月"
+
 #: src/components/drops/DropHero.astro.ts:3
 msgid "Read more"
 msgstr "阅读更多"
@@ -2439,6 +2619,10 @@ msgstr "已完成购买的收据将在此显示状态和金额。"
 msgid "Received"
 msgstr "已接单"
 
+#: src/lib/gift-cards/labels.ts:75
+msgid "Recent activity"
+msgstr "近期活动"
+
 #: src/lib/loyalty/labels.ts:242
 msgid "Redeemed {reward}"
 msgstr "兑换 {reward}"
@@ -2468,6 +2652,7 @@ msgstr "已退款"
 msgid "Refunded {amount}"
 msgstr "已退款 {amount}"
 
+#: src/lib/gift-cards/labels.ts:89
 #: src/lib/ordering-labels.ts:94
 #: src/lib/ordering-labels.ts:117
 #: src/pages/menu/checkout.astro.ts:3
@@ -2508,6 +2693,10 @@ msgstr "预订餐位"
 #: src/pages/menu/success.astro.ts:3
 msgid "Return to homepage"
 msgstr "返回首页"
+
+#: src/lib/gift-cards/labels.ts:82
+msgid "Returned to the card"
+msgstr "已退回卡内"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Review your order details and enter your contact information to complete your order."
@@ -2618,6 +2807,11 @@ msgstr "查看所有在招职位"
 msgid "Select a published form in the page editor."
 msgstr "请在页面编辑器中选择已发布的表单。"
 
+#: src/lib/gift-cards/labels.ts:14
+#: src/pages/gift-cards/index.astro.ts:3
+msgid "Send a gift card by email, or keep it for yourself. It works at every location."
+msgstr "通过邮件发送礼品卡，或留给自己。所有门店通用。"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Send application"
 msgstr "提交申请"
@@ -2633,6 +2827,10 @@ msgstr "发送请求"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Send to kitchen"
 msgstr "发送到厨房"
+
+#: src/lib/gift-cards/labels.ts:28
+msgid "Send to myself"
+msgstr "发送给自己"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/drops/DropAlertsSignup.astro.ts:3
@@ -2667,6 +2865,10 @@ msgstr "分享此职位"
 msgid "Shop"
 msgstr "商店"
 
+#: src/lib/gift-cards/labels.ts:76
+msgid "Show at the till"
+msgstr "在收银台出示"
+
 #: src/components/drops/DropHero.astro.ts:3
 msgid "Show less"
 msgstr "收起"
@@ -2692,6 +2894,7 @@ msgid "Showing your code does not spend any points. You approve every reward you
 msgstr "出示会员码不会消耗积分。每次使用奖励都需您本人同意。"
 
 #: src/components/SiteHeader.astro.ts:3
+#: src/lib/gift-cards/labels.ts:79
 #: src/lib/loyalty/labels.ts:71
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
@@ -2700,6 +2903,10 @@ msgstr "登录"
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Sign in to hear about offers"
 msgstr "登录以接收优惠信息"
+
+#: src/lib/gift-cards/labels.ts:78
+msgid "Sign in to save gift cards to your account."
+msgstr "登录后可将礼品卡保存到您的账户。"
 
 #: src/lib/loyalty/labels.ts:67
 msgid "Sign in to see your rewards"
@@ -2750,6 +2957,7 @@ msgstr "自您通话以来部分价格已变动。购物车显示的是当前价
 msgid "Something went wrong."
 msgstr "出了点问题。"
 
+#: src/lib/gift-cards/labels.ts:54
 #: src/lib/loyalty/labels.ts:268
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
@@ -2771,6 +2979,14 @@ msgstr "特殊要求"
 #: src/lib/loyalty/labels.ts:220
 msgid "Spends {points} for {amount} off"
 msgstr "使用 {points} 抵扣 {amount}"
+
+#: src/lib/gift-cards/labels.ts:81
+msgid "Spent"
+msgstr "已使用"
+
+#: src/lib/gift-cards/labels.ts:91
+msgid "Still to pay: {amount}"
+msgstr "待付：{amount}"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
@@ -2874,6 +3090,10 @@ msgstr "餐位准备好时发短信通知我"
 msgid "Texts about this order only: when it's ready, or if the time changes. Not marketing."
 msgstr "仅发送与此订单相关的短信：订单准备好时，或时间有变时。不是营销信息。"
 
+#: src/lib/gift-cards/labels.ts:21
+msgid "Thank you"
+msgstr "谢谢"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
 msgstr "感谢您的订单！"
@@ -2961,6 +3181,14 @@ msgstr "该时间刚刚被订走，请选择其他时间。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "That tip is too large. Please enter a smaller amount."
 msgstr "小费金额过大，请输入较小的金额。"
+
+#: src/lib/gift-cards/labels.ts:93
+msgid "The card does not have enough balance."
+msgstr "卡内余额不足。"
+
+#: src/lib/gift-cards/labels.ts:95
+msgid "The gift card amount changed. Review the new total."
+msgstr "礼品卡金额已变化，请核对新的总额。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "The hold on your order was released. Please place a new order."
@@ -3095,6 +3323,18 @@ msgstr "该商家"
 msgid "This business is not running a rewards program at the moment."
 msgstr "该商家目前没有奖励计划。"
 
+#: src/lib/gift-cards/labels.ts:64
+msgid "This card has expired. The balance is 0."
+msgstr "此卡已过期，余额为 0。"
+
+#: src/lib/gift-cards/labels.ts:62
+msgid "This card has not been activated."
+msgstr "此卡尚未激活。"
+
+#: src/lib/gift-cards/labels.ts:63
+msgid "This card is no longer valid. The balance is 0."
+msgstr "此卡已失效，余额为 0。"
+
 #: src/lib/ordering-labels.ts:36
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This code can't be used for online orders."
@@ -3153,6 +3393,10 @@ msgstr "此优惠码尚未生效。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This code isn't available at this time."
 msgstr "此优惠码当前时段不可用。"
+
+#: src/lib/gift-cards/labels.ts:77
+msgid "This code works once and stops working in a few minutes. It is not your card number."
+msgstr "此代码仅可使用一次，几分钟后失效。它不是您的卡号。"
 
 #: src/lib/ordering-labels.ts:85
 msgid "This combination is sold out. Choose another combination."
@@ -3275,6 +3519,7 @@ msgstr "此桌码已失效。请向工作人员寻求帮助。"
 msgid "This table has sent many orders. Please ask a team member for help."
 msgstr "这张桌子已提交很多订单。请向工作人员寻求帮助。"
 
+#: src/lib/gift-cards/labels.ts:36
 #: src/lib/reservations/labels.ts:38
 msgid "Time"
 msgstr "时间"
@@ -3293,6 +3538,14 @@ msgstr "小费"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Tips are not available for this order."
 msgstr "此订单不支持小费。"
+
+#: src/lib/gift-cards/labels.ts:27
+msgid "To (email)"
+msgstr "收卡人（邮箱）"
+
+#: src/lib/gift-cards/labels.ts:26
+msgid "To (name)"
+msgstr "收卡人（姓名）"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "To your door"
@@ -3327,7 +3580,16 @@ msgstr "尝试次数过多,请稍后再试。"
 msgid "Too many requests. Try again later."
 msgstr "请求过多，请稍后再试。"
 
+#: src/lib/gift-cards/labels.ts:53
+msgid "Too many tries. Please wait a moment and try again."
+msgstr "尝试次数过多，请稍后再试。"
+
+#: src/lib/gift-cards/labels.ts:83
+msgid "Topped up"
+msgstr "已充值"
+
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/gift-cards/labels.ts:39
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -3417,6 +3679,10 @@ msgstr "使用新卡"
 msgid "Use a reward when you order, or show your code at the counter."
 msgstr "下单时即可使用奖励，也可在柜台出示您的专属码。"
 
+#: src/lib/gift-cards/labels.ts:92
+msgid "Use a saved card"
+msgstr "使用已保存的卡片"
+
 #: src/pages/menu.astro.ts:3
 msgid "Use code {code}"
 msgstr "使用优惠码 {code}"
@@ -3424,6 +3690,10 @@ msgstr "使用优惠码 {code}"
 #: src/lib/loyalty/labels.ts:166
 msgid "Used on {items}"
 msgstr "用于 {items}"
+
+#: src/lib/gift-cards/labels.ts:66
+msgid "Valid until {date}"
+msgstr "有效期至 {date}"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "VAT number"
@@ -3441,6 +3711,10 @@ msgstr "验证码"
 #: src/pages/verify.astro.ts:3
 msgid "Verification Code"
 msgstr "验证码"
+
+#: src/lib/gift-cards/labels.ts:51
+msgid "Verification failed. Please try again."
+msgstr "验证失败，请重试。"
 
 #: src/pages/verify.astro.ts:3
 msgid "Verify"
@@ -3532,6 +3806,10 @@ msgstr "我们改用了更划算的优惠，未使用此优惠码。"
 msgid "We are still confirming your payment. Check your tab again in a minute."
 msgstr "我们仍在确认您的付款。请一分钟后再查看账单。"
 
+#: src/lib/gift-cards/labels.ts:52
+msgid "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
+msgstr "无法完成此次购买。请尝试较小的金额或联系餐厅。"
+
 #: src/lib/reservations/labels.ts:389
 msgid "We could not check your payment. Trying again…"
 msgstr "无法核对您的付款，正在重试…"
@@ -3543,6 +3821,10 @@ msgstr "我们无法确认此订单。"
 #: src/lib/loyalty/labels.ts:181
 msgid "We could not confirm your reward. Try again, or continue without it."
 msgstr "无法确认您的奖励。请重试，或不使用奖励继续。"
+
+#: src/lib/gift-cards/labels.ts:67
+msgid "We could not find a card with that number."
+msgstr "未找到该卡号对应的卡片。"
 
 #: src/lib/reservations/labels.ts:500
 msgid "We could not find that reservation. The link may have expired."
@@ -3584,6 +3866,10 @@ msgstr "暂时无法提交您的申请，请稍后重试。"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "We could not send your order. Please try again."
 msgstr "无法发送您的订单。请重试。"
+
+#: src/lib/gift-cards/labels.ts:94
+msgid "We could not use that gift card."
+msgstr "无法使用该礼品卡。"
 
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -3964,6 +4250,10 @@ msgstr "优惠已变化，合计已更新为 {total}。请核对后重新下单�
 msgid "Your discount changed. Please review your total and place your order again."
 msgstr "优惠已变化。请核对合计后重新下单。"
 
+#: src/lib/gift-cards/labels.ts:31
+msgid "Your email (for the receipt)"
+msgstr "您的邮箱（用于接收收据）"
+
 #: src/lib/reservations/labels.ts:78
 msgid "Your hold expired"
 msgstr "保留已过期"
@@ -3973,6 +4263,7 @@ msgid "Your hold expired. Please choose a time again."
 msgstr "保留已过期，请重新选择时间。"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/gift-cards/labels.ts:30
 msgid "Your name"
 msgstr "您的姓名"
 

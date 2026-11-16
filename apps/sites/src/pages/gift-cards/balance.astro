@@ -1,0 +1,66 @@
+---
+import { msg } from '@lingui/core/macro'
+import GiftCardLabels from '~/components/gift-cards/GiftCardLabels.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer, siteSection } from '~/lib/media'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const title = i18n._(msg`Check your gift card balance`)
+const intro = i18n._(msg`Enter the number on your card. Dashes and spaces do not matter.`)
+const cardNumber = i18n._(msg`Card number`)
+const check = i18n._(msg`Check balance`)
+const tenantApiUrl = getTenantApiUrl(organization.dataRegion)
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'gift-cards-balance', title, slug: 'gift-cards/balance', isHomePage: false, sections: [] }}
+	title={`${title} - ${organization.name}`}
+>
+	{
+		turnstileSiteKey && tenantApiUrl ? (
+			<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+		) : null
+	}
+	<section class={siteSection}>
+		<div class={`${siteContainer} flex max-w-md flex-col gap-4`}>
+			<h1 class="text-3xl font-semibold">{title}</h1>
+			<p class="text-muted-foreground">{intro}</p>
+			<GiftCardLabels />
+			<div id="gift-card-balance-root" data-turnstile-site-key={turnstileSiteKey || undefined}>
+				<form class="flex flex-col gap-3" novalidate>
+					<label for="gc-code" class="text-sm font-medium">{cardNumber}</label>
+					<input
+						id="gc-code"
+						name="code"
+						class="h-11 rounded-md border border-input bg-background px-3 text-base"
+						autocomplete="off"
+						autocapitalize="characters"
+						spellcheck="false"
+					/>
+					<div data-gc-challenge></div>
+					<button
+						type="submit"
+						class="h-12 rounded-md bg-primary px-6 text-base font-medium text-primary-foreground"
+					>
+						{check}
+					</button>
+				</form>
+				<p data-gc-error class="mt-3 text-sm text-destructive" role="alert"></p>
+				<div data-gc-result class="mt-3 flex flex-col gap-1" aria-live="polite"></div>
+			</div>
+		</div>
+	</section>
+
+	<script>
+		import '../../scripts/gift-cards-balance.ts'
+	</script>
+</SitePage>
