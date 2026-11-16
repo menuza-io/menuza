@@ -1,3 +1,4 @@
+import { localParts } from '@repo/zoned-time'
 import { describe, expect, it } from 'vitest'
 import {
 	buildScheduleDays,
@@ -5,7 +6,6 @@ import {
 	formatScheduledFor,
 	scheduleLeadMinutes,
 	schedulingSettings,
-	zonedParts,
 } from './schedule.ts'
 
 const week = (start: string, end: string) =>
@@ -186,12 +186,15 @@ describe('findSlot / formatScheduledFor', () => {
 	})
 
 	it('reads wall-clock parts', () => {
-		expect(
-			zonedParts(new Date('2026-10-08T05:00:00Z'), 'America/Chicago'),
-		).toEqual({
-			date: '2026-10-08',
-			time: '00:00',
-		})
+		const p = localParts(
+			new Date('2026-10-08T05:00:00Z').getTime(),
+			'America/Chicago',
+		)
+		expect(p.year).toBe(2026)
+		expect(p.month).toBe(10)
+		expect(p.day).toBe(8)
+		expect(p.hour).toBe(0)
+		expect(p.minute).toBe(0)
 	})
 })
 

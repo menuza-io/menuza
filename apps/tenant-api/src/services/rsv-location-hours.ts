@@ -18,6 +18,7 @@ export function locationHoursFromFacts(
 		// Tolerant of older context payloads: only an explicit `false` closes.
 		isActive: facts.isActive !== false,
 		storeHours: facts.storeHours ?? null,
+		onlineHours: null,
 		specialHours: facts.specialHours ?? null,
 	}
 }

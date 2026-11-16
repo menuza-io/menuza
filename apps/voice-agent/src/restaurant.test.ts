@@ -533,7 +533,12 @@ describe('prepareCall for restaurants', () => {
 
 	it('recomputes store hours at call time instead of trusting a cached snapshot', async () => {
 		const config = restaurantTestConfig()
-		restaurantDataOf(config).location.storeHours = NINE_TO_FIVE
+		const data = restaurantDataOf(config).location
+		data.storeHours = NINE_TO_FIVE
+		data.onlineHours = NINE_TO_FIVE.map((day) => ({
+			...day,
+			slots: [{ start: '09:00', end: '23:00' }],
+		}))
 		const plan = await prepare(config, {
 			// 22:00 in New York, long after closing; the snapshot says open.
 			now: new Date('2025-01-15T22:00:00-05:00'),

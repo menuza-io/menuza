@@ -101,6 +101,7 @@
     "@repo/marketing-workflow": "*",
     "@repo/notifications": "*",
     "@repo/observability": "*",
+    "@repo/opening-hours": "*",
     "@repo/payments": "*",
     "@repo/phone-agent": "*",
     "@repo/phone-agent-restaurant": "*",

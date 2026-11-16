@@ -43,6 +43,7 @@ function hours(over: Partial<LocationHours> = {}): LocationHours {
 		timeZone: 'America/New_York',
 		isActive: true,
 		storeHours: week(),
+		onlineHours: null,
 		specialHours: null,
 		...over,
 	}

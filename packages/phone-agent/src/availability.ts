@@ -1,8 +1,17 @@
 import {
+	HOURS_SCHEDULE_PRIMARY,
+	type HoursScheduleKind,
+	type LocationHours,
+	isLocationOpenAt,
+	locationLocalClock,
+	nextOpening,
+	parseLocationHours,
+} from '@repo/opening-hours'
+
+import {
 	type Availability,
 	type PhoneAgentRuntimeConfig,
 	type ScheduleDay,
-	type ScheduleSlot,
 	type SpecialHours,
 } from './config.ts'
 import { type PhoneAgentVertical } from './vertical.ts'
@@ -16,48 +25,6 @@ export type ScheduleInput = {
 	isActive?: boolean | null
 }
 
-const WEEKDAYS = [
-	'sunday',
-	'monday',
-	'tuesday',
-	'wednesday',
-	'thursday',
-	'friday',
-	'saturday',
-]
-
-function localClock(timezone: string, now: Date) {
-	const read = (timeZone: string) => {
-		const parts: Record<string, string> = {}
-		const formatter = new Intl.DateTimeFormat('en-US', {
-			timeZone,
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			hourCycle: 'h23',
-			weekday: 'long',
-		})
-		for (const part of formatter.formatToParts(now)) {
-			parts[part.type] = part.value
-		}
-		return parts
-	}
-	let parts: Record<string, string>
-	try {
-		parts = read(timezone || 'UTC')
-	} catch {
-		parts = read('UTC')
-	}
-	const day = parts.weekday?.toLowerCase() ?? ''
-	return {
-		date: `${parts.year}-${parts.month}-${parts.day}`,
-		time: `${parts.hour}:${parts.minute}`,
-		day: WEEKDAYS.includes(day) ? day : 'monday',
-	}
-}
-
 function formatOpeningTime(value: string) {
 	const [hour = 0, minute = 0] = value.split(':').map(Number)
 	const period = hour >= 12 ? 'PM' : 'AM'
@@ -65,8 +32,40 @@ function formatOpeningTime(value: string) {
 	return `${display}:${minute.toString().padStart(2, '0')} ${period}`
 }
 
-function inSlot(slots: readonly ScheduleSlot[] | undefined, time: string) {
-	return Boolean(slots?.some((slot) => slot.start <= time && time <= slot.end))
+function scheduleToHours(schedule: ScheduleInput): LocationHours {
+	return parseLocationHours(
+		{
+			timeZone: schedule.timezone,
+			isActive: schedule.isActive,
+			storeHours: schedule.hours,
+			specialHours: schedule.specialHours,
+		},
+		{ malformedPolicy: 'open' },
+	).hours
+}
+
+/**
+ * Open/closed state from parsed hours at `instantMs`. Special hours for today
+ * replace the weekly hours; `nextOpen` is only set when a later slot today opens.
+ */
+export function availabilityFromParsedHours(
+	hours: LocationHours,
+	instantMs: number,
+	kind: HoursScheduleKind = HOURS_SCHEDULE_PRIMARY,
+): Availability {
+	const result = isLocationOpenAt(hours, instantMs, kind)
+	if (result.open) {
+		return { isOpen: true, nextOpen: null }
+	}
+	const { date } = locationLocalClock(instantMs, hours.timeZone)
+	const next = nextOpening(hours, instantMs, kind)
+	if (next && next.localDate === date) {
+		return {
+			isOpen: false,
+			nextOpen: `Opens today at ${formatOpeningTime(next.localTime)}`,
+		}
+	}
+	return { isOpen: false, nextOpen: null }
 }
 
 /**
@@ -78,31 +77,34 @@ export function availabilityFromSchedule(
 	schedule: ScheduleInput,
 	now: Date = new Date(),
 ): Availability {
-	const closed = { isOpen: false, nextOpen: null }
-	if (schedule.isActive === false) return closed
-	const clock = localClock(schedule.timezone, now)
-	const special = schedule.specialHours?.find(
-		(entry) => entry.date === clock.date,
+	return availabilityFromParsedHours(
+		scheduleToHours(schedule),
+		now.getTime(),
+		HOURS_SCHEDULE_PRIMARY,
 	)
-	if (special) {
-		return special.isOpen && inSlot(special.slots, clock.time)
-			? { isOpen: true, nextOpen: null }
-			: closed
-	}
-	const hours = schedule.hours
-	if (!hours?.length) return { isOpen: true, nextOpen: null }
-	const today = hours.find((entry) => entry.day === clock.day)
-	if (!today?.isOpen || !today.slots?.length) return closed
-	if (inSlot(today.slots, clock.time)) return { isOpen: true, nextOpen: null }
-	const later = [...today.slots]
-		.sort((a, b) => a.start.localeCompare(b.start))
-		.find((slot) => slot.start > clock.time)
-	return later
-		? {
-				isOpen: false,
-				nextOpen: `Opens today at ${formatOpeningTime(later.start)}`,
-			}
-		: closed
+}
+
+/**
+ * Parsed hours for availability helpers (`malformed` values fail open,
+ * matching unpublished hours).
+ */
+export function parsedHoursFromScheduleFields(raw: {
+	timezone: string
+	storeHours?: readonly ScheduleDay[] | null
+	onlineHours?: readonly ScheduleDay[] | null
+	specialHours?: readonly SpecialHours[] | null
+	isActive?: boolean | null
+}): LocationHours {
+	return parseLocationHours(
+		{
+			timeZone: raw.timezone,
+			isActive: raw.isActive,
+			storeHours: raw.storeHours,
+			onlineHours: raw.onlineHours,
+			specialHours: raw.specialHours,
+		},
+		{ malformedPolicy: 'open' },
+	).hours
 }
 
 /**

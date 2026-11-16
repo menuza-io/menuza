@@ -69,6 +69,10 @@ export type LocationOrderingControl = {
 	busyExtraPrepMinutes: number
 	busyUntil: string | null
 	prepTime: number
+	/** Variable prep schedule minutes in force right now, when set. */
+	variablePrepMinutes: number | null
+	/** When the current prep row ends (location TZ), or null. */
+	variablePrepUntil: string | null
 }
 
 type HoursRow = {

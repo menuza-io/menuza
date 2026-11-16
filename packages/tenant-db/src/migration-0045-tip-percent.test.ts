@@ -31,7 +31,11 @@ function migrationsUpTo(tempDir: string, lastIdx: number) {
 	return folder
 }
 
-const insertOrder = (id: string, tipCents: number, tipPercent: number | null) => ({
+const insertOrder = (
+	id: string,
+	tipCents: number,
+	tipPercent: number | null,
+) => ({
 	sql: `INSERT INTO restaurant_orders (
 		id, org_id, number, payment_method, payment_status, fulfillment,
 		location_id, location_name, contact_name, contact_phone, currency,
@@ -68,7 +72,9 @@ describe('migration 0045 (tip percent and service fee)', () => {
 			)
 		).rows.map((row) => String(row.name))
 
-		await migrate(drizzle(client), { migrationsFolder: drizzleDir })
+		await migrate(drizzle(client), {
+			migrationsFolder: migrationsUpTo(tempDir, 45),
+		})
 
 		const rows = (
 			await client.execute(
@@ -113,7 +119,9 @@ describe('migration 0045 (tip percent and service fee)', () => {
 	})
 
 	it('adds the fee columns to tabs and refunds with zero defaults', async () => {
-		await migrate(drizzle(client), { migrationsFolder: drizzleDir })
+		await migrate(drizzle(client), {
+			migrationsFolder: migrationsUpTo(tempDir, 45),
+		})
 		for (const [table, column] of [
 			['qr_tabs', 'service_fee_cents'],
 			['qr_tabs', 'service_fee_tax_cents'],

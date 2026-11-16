@@ -24,6 +24,8 @@
     "@lingui/core": "^5.8.0",
     "@lingui/message-utils": "^5.8.0",
     "@repo/common": "*",
+    "@repo/opening-hours": "*",
+    "@repo/zoned-time": "*",
     "@repo/discounts": "*",
     "@repo/loyalty": "*",
     "@repo/payments": "*",

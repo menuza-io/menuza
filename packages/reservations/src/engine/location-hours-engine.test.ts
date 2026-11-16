@@ -101,6 +101,7 @@ const hoursOf = (over: Partial<LocationHours>): LocationHours => ({
 		isOpen: true,
 		slots: [{ start: '16:00', end: '23:00' }],
 	})),
+	onlineHours: null,
 	specialHours: null,
 	...over,
 })

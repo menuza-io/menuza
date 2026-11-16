@@ -43,6 +43,7 @@ import {
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -171,10 +172,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		if (item.allergens) allergens = JSON.parse(item.allergens) as string[]
 	} catch {}
 
+	const slotLimits = await buildSlotLimitsContext(organization.id)
+
 	return {
 		organization,
 		defaultLocale,
 		supportedLocales,
+		slotLimitsEnabled: slotLimits.enabled,
 		item: {
 			id: item.id,
 			displayName: item.displayName,
@@ -204,6 +208,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			applySalesTax: item.applySalesTax,
 			excludeFromOverride: item.excludeFromOverride,
 			excludeFromDiscounts: item.excludeFromDiscounts,
+			excludeFromOrderLimits: item.excludeFromOrderLimits,
 			isPopular: item.isPopular,
 			isUpsell: item.isUpsell,
 			availabilityStatus: item.availabilityStatus as
@@ -282,6 +287,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			key === 'applySalesTax' ||
 			key === 'excludeFromOverride' ||
 			key === 'excludeFromDiscounts' ||
+			key === 'excludeFromOrderLimits' ||
 			key === 'isPopular' ||
 			key === 'isUpsell'
 		) {
@@ -362,6 +368,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				applySalesTax: data.applySalesTax,
 				excludeFromOverride: data.excludeFromOverride,
 				excludeFromDiscounts: data.excludeFromDiscounts,
+				excludeFromOrderLimits: data.excludeFromOrderLimits,
 				isPopular: data.isPopular,
 				isUpsell: data.isUpsell,
 				availabilityStatus: data.availabilityStatus,
@@ -458,6 +465,7 @@ export default function EditItemRoute() {
 		allCategories,
 		allModifierGroups,
 		allLocations,
+		slotLimitsEnabled,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -475,6 +483,7 @@ export default function EditItemRoute() {
 				allCategories={allCategories}
 				allModifierGroups={allModifierGroups}
 				allLocations={allLocations}
+				slotLimitsEnabled={slotLimitsEnabled}
 				isSubmitting={isSubmitting}
 			/>
 		</div>

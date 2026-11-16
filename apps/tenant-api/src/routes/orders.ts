@@ -86,10 +86,7 @@ import {
 	tabCheckoutView,
 	withTabDiscounts,
 } from '../services/qr-tab-service.ts'
-import {
-	CART_TOKEN_HEADER,
-	verifyCartToken,
-} from '../lib/cart-link.ts'
+import { CART_TOKEN_HEADER, verifyCartToken } from '../lib/cart-link.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import {
 	clearCartSnapshot,
@@ -831,6 +828,51 @@ publicOrderRoutes.get('/options', async (c) => {
 			noStoreHeaders(),
 		)
 	}
+})
+
+const availableTimesQuerySchema = z.object({
+	slug: z.string().trim().min(1).max(100).optional(),
+	host: z.string().trim().min(1).max(253).optional(),
+	locationId: z.string().trim().min(1).max(100),
+	fulfillment: z.enum(['pickup', 'delivery']),
+	date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
+
+publicOrderRoutes.get('/available-times', async (c) => {
+	const parsed = availableTimesQuerySchema.safeParse(c.req.query())
+	if (!parsed.success) {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, {
+		slug: parsed.data.slug,
+		host: parsed.data.host,
+	})
+	if ('error' in organization) return organization.error
+
+	const contextResult = await fetchOrderContext(
+		organization.organization.id,
+		parsed.data.locationId,
+		null,
+	)
+	if (!contextResult.ok) return orderFailureResponse(contextResult.failure)
+
+	const { buildAvailableTimes } =
+		await import('../services/order-available-times.ts')
+	const body = await buildAvailableTimes(
+		organization.organization.id,
+		contextResult.data,
+		parsed.data.locationId,
+		parsed.data.fulfillment,
+		parsed.data.date,
+	)
+	if (!body) {
+		return c.json({ error: 'slot_limits_disabled' }, 503, {
+			'Cache-Control': 'public, max-age=30',
+		})
+	}
+	return c.json(body, 200, {
+		'Cache-Control': 'public, max-age=30',
+	})
 })
 
 // ---------------------------------------------------------------------------

@@ -387,6 +387,8 @@ interface LocationHoursSectionProps {
 	onlineHours: WeeklySchedule
 	onStoreHoursChange: (hours: WeeklySchedule) => void
 	onOnlineHoursChange: (hours: WeeklySchedule) => void
+	syncOnlineWithStore: boolean
+	onSyncOnlineWithStoreChange: (checked: boolean) => void
 	className?: string
 }
 
@@ -395,12 +397,12 @@ export function LocationHoursSection({
 	onlineHours,
 	onStoreHoursChange,
 	onOnlineHoursChange,
+	syncOnlineWithStore,
+	onSyncOnlineWithStoreChange,
 	className,
 }: LocationHoursSectionProps) {
-	const [syncOnlineWithStore, setSyncOnlineWithStore] = useState(false)
-
 	const handleSyncToggle = (checked: boolean) => {
-		setSyncOnlineWithStore(checked)
+		onSyncOnlineWithStoreChange(checked)
 		if (checked) {
 			onOnlineHoursChange(
 				JSON.parse(JSON.stringify(storeHours)) as WeeklySchedule,

@@ -34,6 +34,7 @@ import {
 	assertValidParentCategoryInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -77,10 +78,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		],
 	})
 
+	const slotLimits = await buildSlotLimitsContext(organization.id)
+
 	return {
 		organization,
 		defaultLocale,
 		supportedLocales,
+		slotLimitsEnabled: slotLimits.enabled,
 		allItems: allItems.map((i) => ({
 			id: i.id,
 			displayName: i.displayName,
@@ -137,7 +141,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			} catch {
 				rawData[key] = {}
 			}
-		} else if (key === 'excludeFromOverride') {
+		} else if (
+			key === 'excludeFromOverride' ||
+			key === 'excludeFromOrderLimits'
+		) {
 			rawData[key] = value === 'true'
 		} else {
 			rawData[key] = value
@@ -197,6 +204,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						: null,
 				availabilityHours: data.availabilityHours || null,
 				excludeFromOverride: data.excludeFromOverride,
+				excludeFromOrderLimits: data.excludeFromOrderLimits,
 				upsellCategoryIds: JSON.stringify(data.upsellCategoryIds),
 				parentId: data.parentId || null,
 			})
@@ -258,6 +266,7 @@ export default function CreateCategoryRoute() {
 		allMenus,
 		allCategories,
 		allLocations,
+		slotLimitsEnabled,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -273,6 +282,7 @@ export default function CreateCategoryRoute() {
 				allMenus={allMenus}
 				allCategories={allCategories}
 				allLocations={allLocations}
+				slotLimitsEnabled={slotLimitsEnabled}
 				isSubmitting={isSubmitting}
 			/>
 		</div>

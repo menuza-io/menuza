@@ -19,6 +19,14 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import {
+	defaultPrayerPauseForm,
+	defaultSlotLimitForm,
+	defaultOnlineOrderingForm,
+	parseOrderingSettingsFields,
+} from '#app/utils/orders/ordering-settings.ts'
+import { isPrayerPauseEnabled } from '#app/utils/orders/prayer-pause.server.ts'
+import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 const LocationInputSchema = z.object({
@@ -49,6 +57,7 @@ const LocationInputSchema = z.object({
 	scheduling: z.string().optional(),
 	deliveryConfig: z.string().optional(),
 	deliveryZones: z.string().optional(),
+	orderingSettings: z.string().optional(),
 })
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -73,9 +82,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	const isFirstLocation = (countResult?.total ?? 0) === 0
 
+	const [slotLimitsFlag, prayerPauseFlag] = await Promise.all([
+		buildSlotLimitsContext(organization.id).then((ctx) => ctx.enabled),
+		isPrayerPauseEnabled(organization.id),
+	])
+
 	return {
 		organization,
 		isFirstLocation,
+		orderingSettings: {
+			slotLimitsEnabled: slotLimitsFlag,
+			prayerPauseEnabled: prayerPauseFlag,
+			initial: {
+				online: defaultOnlineOrderingForm(),
+				slot: defaultSlotLimitForm(),
+				prep: [],
+				prayer: defaultPrayerPauseForm(),
+			},
+		},
 	}
 }
 
@@ -127,6 +151,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	// coordinates (missing or 0,0 → geocode server-side; best effort).
 	const geocoded = await ensureLocationCoordinates(data.address)
 
+	const [slotLimitsFlag, prayerPauseFlag] = await Promise.all([
+		buildSlotLimitsContext(organization.id).then((ctx) => ctx.enabled),
+		isPrayerPauseEnabled(organization.id),
+	])
+	const ordering = parseOrderingSettingsFields(rawData, {
+		slotLimits: slotLimitsFlag,
+		prayerPause: prayerPauseFlag,
+	})
+	if (!ordering.ok) {
+		return { error: ordering.error }
+	}
+
 	const newLocationId = await db.transaction(async (tx) => {
 		if (data.isDefault) {
 			await tx
@@ -161,6 +197,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				scheduling: data.scheduling || null,
 				deliveryConfig: data.deliveryConfig || null,
 				deliveryZones: data.deliveryZones || null,
+				...ordering.patch,
 			})
 			.returning({ id: OrganizationLocation.id })
 
@@ -185,7 +222,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function NewLocationRoute() {
-	const { organization, isFirstLocation } = useLoaderData<typeof loader>()
+	const { organization, isFirstLocation, orderingSettings } =
+		useLoaderData<typeof loader>()
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -224,6 +262,7 @@ export default function NewLocationRoute() {
 					isDefault: isFirstLocation,
 					isActive: true,
 				}}
+				orderingSettings={orderingSettings}
 			/>
 		</div>
 	)

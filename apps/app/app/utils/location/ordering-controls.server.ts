@@ -1,4 +1,6 @@
 import { auditService, AuditAction } from '@repo/audit'
+import { parsePrepSchedule } from '@repo/common/location-settings'
+import { prepRowInForce } from '@repo/common/prep-schedule'
 import {
 	type SpecialHour,
 	type WeeklySchedule,
@@ -36,6 +38,7 @@ export async function loadOrderingControls(
 			orderingPausedUntil: OrganizationLocation.orderingPausedUntil,
 			busyExtraPrepMinutes: OrganizationLocation.busyExtraPrepMinutes,
 			busyUntil: OrganizationLocation.busyUntil,
+			prepSchedule: OrganizationLocation.prepSchedule,
 		})
 		.from(OrganizationLocation)
 		.where(
@@ -50,10 +53,20 @@ export async function loadOrderingControls(
 		)
 	return rows.map((row) => {
 		const { orderingPause, busyMode } = publicOrderingControls(row, now)
+		const timeZone = row.timezone || 'UTC'
+		const schedule = parsePrepSchedule(parseJson(row.prepSchedule))
+		const inForce = prepRowInForce(
+			schedule,
+			row.prepTime,
+			now.getTime(),
+			timeZone,
+		)
+		const hasVariableSchedule = (schedule?.length ?? 0) > 0
+		const variablePrepMinutes = hasVariableSchedule ? inForce.minutes : null
 		return {
 			id: row.id,
 			name: row.name,
-			timezone: row.timezone || 'UTC',
+			timezone: timeZone,
 			prepTime: row.prepTime,
 			pausedAt: orderingPause
 				? (row.orderingPausedAt?.toISOString() ?? null)
@@ -61,6 +74,10 @@ export async function loadOrderingControls(
 			pausedUntil: orderingPause?.until ?? null,
 			busyExtraPrepMinutes: busyMode?.extraPrepMinutes ?? 0,
 			busyUntil: busyMode?.until ?? null,
+			variablePrepMinutes,
+			variablePrepUntil: inForce.untilMs
+				? new Date(inForce.untilMs).toISOString()
+				: null,
 		}
 	})
 }

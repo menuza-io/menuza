@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@repo/common": "*",
+    "@repo/opening-hours": "*",
     "@repo/phone-agent": "*",
     "zod": "^4.6.7"
   },

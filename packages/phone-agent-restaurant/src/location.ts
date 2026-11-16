@@ -1,9 +1,15 @@
 import {
+	HOURS_SCHEDULE_ONLINE,
+	HOURS_SCHEDULE_PRIMARY,
+	onlineAvailabilityAt,
+} from '@repo/opening-hours'
+import {
 	type Availability,
-	availabilityFromSchedule,
+	availabilityFromParsedHours,
 	type BusinessProfile,
 	defaultPriceFormatter,
 	describeBusiness,
+	parsedHoursFromScheduleFields,
 	type PriceFormatter,
 	type ScheduleDay,
 	type SpecialHours,
@@ -106,22 +112,34 @@ export function restaurantAvailability(
 	location: AvailabilityLocation,
 	now: Date = new Date(),
 ): RestaurantAvailability {
-	const base = {
+	const ms = now.getTime()
+	const hours = parsedHoursFromScheduleFields({
 		timezone: location.timezone,
+		storeHours: location.storeHours,
+		onlineHours: location.onlineHours,
 		specialHours: location.specialHours,
 		isActive: location.isActive,
-	}
-	const ordering = availabilityFromSchedule(
-		{ ...base, hours: location.onlineHours ?? location.storeHours },
-		now,
-	)
-	const store = location.storeHours?.length
-		? availabilityFromSchedule({ ...base, hours: location.storeHours }, now)
-		: ordering
+	})
+	const storeKind = location.storeHours?.length
+		? HOURS_SCHEDULE_PRIMARY
+		: HOURS_SCHEDULE_ONLINE
+	const store = availabilityFromParsedHours(hours, ms, storeKind)
+	const orderingOpen =
+		onlineAvailabilityAt(
+			{
+				timeZone: location.timezone,
+				isActive: location.isActive,
+				storeHours: location.storeHours,
+				onlineHours: location.onlineHours,
+				specialHours: location.specialHours,
+			},
+			ms,
+			'online',
+		).open && !orderingPausedAt(location, now)
 	return {
 		isOpen: store.isOpen,
 		nextOpen: store.nextOpen,
-		orderingOpen: ordering.isOpen && !orderingPausedAt(location, now),
+		orderingOpen,
 	}
 }
 

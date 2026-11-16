@@ -5,12 +5,22 @@ import {
 	type OrderingPause,
 } from '@repo/common/location-availability'
 import {
-	type DayOfWeek,
-	type SpecialHour,
-	type TimeSlot,
-	type WeeklySchedule,
-	DAYS_OF_WEEK,
-} from '@repo/common/location-types'
+	buildOnlineHours,
+	localDateInZone,
+	type AvailableTimeSlot,
+} from '@repo/common/available-times'
+import { parseSlotLimitSettings } from '@repo/common/location-settings'
+import { locationOpenIntervals, rangesForDate } from '@repo/opening-hours'
+import {
+	addDays,
+	daysBetween,
+	localMinutesSinceMidnight,
+	localParts,
+	parseDate,
+	zonedLocalToUtc,
+} from '@repo/zoned-time'
+
+import { getBrowserTenantApiUrl } from '../client-auth.ts'
 import { type FulfillmentMode } from './types.ts'
 
 /**
@@ -21,10 +31,14 @@ import { type FulfillmentMode } from './types.ts'
  */
 
 export type ScheduleLocation = {
+	id?: string
 	timezone?: string | null
 	onlineHours?: unknown
 	storeHours?: unknown
 	specialHours?: unknown
+	onlineOrderingSettings?: unknown
+	slotLimitSettings?: unknown
+	isActive?: boolean | null
 	prepTime?: number | null
 	scheduling?: unknown
 	/** Operator pause: no slots before it ends (none at all when open-ended). */
@@ -58,16 +72,48 @@ export const SCHEDULE_SLOT_MINUTES = 15
 const DEFAULT_PREP_MINUTES = 15
 const MAX_ADVANCE_DAYS = 30
 
-function asArray<T>(value: unknown): T[] | null {
-	if (!value) return null
-	if (typeof value === 'string') {
-		try {
-			return asArray<T>(JSON.parse(value))
-		} catch {
-			return null
-		}
+export type AvailableTimesResponse = {
+	slots: AvailableTimeSlot[]
+	earliest: string | null
+}
+
+function formatHm(hour: number, minute: number): string {
+	return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
+/** Minute ranges for one date; mirrors `locationOpenIntervals` with 15-minute slot alignment. */
+function minuteRangesForDate(
+	hours: ReturnType<typeof buildOnlineHours>,
+	date: string,
+): Array<[number, number]> {
+	const intervals = locationOpenIntervals(hours, date, date, 'online')
+	if (intervals === null) {
+		const { ranges, rule } = rangesForDate(hours, date, 'online')
+		if (rule.kind === 'unrestricted') return [[0, 24 * 60 - 1]]
+		return ranges
 	}
-	return Array.isArray(value) ? (value as T[]) : null
+	if (!intervals.length) return []
+	return intervals.map((iv) => {
+		const from = localMinutesSinceMidnight(iv.startMs, hours.timeZone)
+		const to = Math.max(
+			from,
+			localMinutesSinceMidnight(iv.endMs - 60_000, hours.timeZone),
+		)
+		return [from, to] as [number, number]
+	})
+}
+
+function wallClockMatchesInstant(
+	ms: number,
+	date: string,
+	localTime: string,
+	timeZone: string,
+): boolean {
+	const p = localParts(ms, timeZone)
+	const hhmm = formatHm(p.hour, p.minute)
+	if (hhmm !== localTime) return false
+	const expected = localDateInZone(ms, timeZone)
+	return expected === date
 }
 
 export function schedulingSettings(location: ScheduleLocation): {
@@ -99,99 +145,72 @@ export function schedulingSettings(location: ScheduleLocation): {
 	}
 }
 
-/** Wall-clock date/time of `instant` in `timezone`. */
-export function zonedParts(
-	instant: Date,
-	timezone: string,
-): { date: string; time: string } {
-	const parts: Record<string, string> = {}
-	try {
-		for (const part of new Intl.DateTimeFormat('en-US', {
-			timeZone: timezone,
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			hourCycle: 'h23',
-		}).formatToParts(instant)) {
-			parts[part.type] = part.value
-		}
-	} catch {
-		const iso = instant.toISOString()
-		return { date: iso.slice(0, 10), time: iso.slice(11, 16) }
-	}
-	return {
-		date: `${parts.year}-${parts.month}-${parts.day}`,
-		time: `${parts.hour === '24' ? '00' : parts.hour}:${parts.minute}`,
-	}
-}
-
-/** Offset (ms) of `timezone` from UTC at `instant`. */
-function zoneOffset(instant: Date, timezone: string): number {
-	const { date, time } = zonedParts(instant, timezone)
-	const wall = Date.parse(`${date}T${time}:00Z`)
-	return wall - Math.floor(instant.getTime() / 60_000) * 60_000
+/** True when org and location slot limits are on (browser may call available-times). */
+export function slotLimitsActive(
+	location: ScheduleLocation,
+	orgSlotLimitsEnabled?: boolean,
+): boolean {
+	if (!orgSlotLimitsEnabled) return false
+	return parseSlotLimitSettings(location.slotLimitSettings)?.enabled === true
 }
 
 /**
- * Local wall-clock time → UTC instant. Two passes so times right after a DST
- * change resolve with the offset in force at that moment.
+ * Per-date slot capacity from the regional tenant-api (`GET /orders/available-times`).
+ * Returns `null` when limits are off or the node refuses the route.
  */
-export function zonedTimeToUtc(
-	date: string,
-	time: string,
-	timezone: string,
-): Date {
-	const wall = Date.parse(`${date}T${time}:00Z`)
-	const guess = wall - zoneOffset(new Date(wall), timezone)
-	return new Date(wall - zoneOffset(new Date(guess), timezone))
-}
-
-function addDays(date: string, days: number): { date: string; day: DayOfWeek } {
-	const base = new Date(`${date}T00:00:00Z`)
-	base.setUTCDate(base.getUTCDate() + days)
-	// getUTCDay: 0 = Sunday; DAYS_OF_WEEK starts on Monday.
-	const index = (base.getUTCDay() + 6) % 7
-	return {
-		date: base.toISOString().slice(0, 10),
-		day: DAYS_OF_WEEK[index] ?? 'monday',
+export async function fetchAvailableTimes(options: {
+	locationId: string
+	fulfillment: FulfillmentMode
+	date: string
+	orgSlug?: string | null
+	host?: string | null
+	tenantApiUrl?: string
+	signal?: AbortSignal
+}): Promise<AvailableTimesResponse | null> {
+	let base: string
+	try {
+		base = (options.tenantApiUrl ?? getBrowserTenantApiUrl()).replace(/\/$/, '')
+	} catch {
+		return null
 	}
-}
-
-const toMinutes = (time: string): number => {
-	const [h = 0, m = 0] = time.split(':').map(Number)
-	return h * 60 + m
-}
-const fromMinutes = (minutes: number): string =>
-	`${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
-
-/** Open intervals (minutes since local midnight) for one local date. */
-function openIntervals(
-	date: string,
-	day: DayOfWeek,
-	schedule: WeeklySchedule | null,
-	special: SpecialHour[],
-): Array<[number, number]> {
-	const override = special.find((entry) => entry.date === date)
-	let slots: TimeSlot[]
-	if (override) {
-		slots = override.isOpen ? (override.slots ?? []) : []
-	} else if (!schedule || schedule.length === 0) {
-		// Same rule as `isLocationOpenForOrdering`: no schedule means open.
-		return [[0, 24 * 60 - 1]]
-	} else {
-		const entry = schedule.find((candidate) => candidate.day === day)
-		slots = entry?.isOpen ? (entry.slots ?? []) : []
+	const params = new URLSearchParams({
+		locationId: options.locationId,
+		fulfillment: options.fulfillment,
+		date: options.date,
+	})
+	const slug =
+		options.orgSlug ?? document.documentElement.dataset.orgSlug ?? null
+	if (slug) params.set('slug', slug)
+	else if (options.host) params.set('host', options.host)
+	else return null
+	const response = await fetch(
+		`${base}/orders/available-times?${params.toString()}`,
+		{ signal: options.signal, credentials: 'omit' },
+	)
+	if (response.status === 503 || !response.ok) return null
+	const body: unknown = await response.json().catch(() => null)
+	if (
+		!body ||
+		typeof body !== 'object' ||
+		!Array.isArray((body as AvailableTimesResponse).slots)
+	) {
+		return null
 	}
-	return slots
-		.map((slot): [number, number] => {
-			const start = toMinutes(slot.start)
-			const end = toMinutes(slot.end)
-			// Overnight slots ("18:00"–"02:00") are offered until midnight.
-			return [start, end <= start ? 24 * 60 - 1 : end]
-		})
-		.sort((a, b) => a[0] - b[0])
+	return body as AvailableTimesResponse
+}
+
+/** Drop slots that are full when slot-limit data is present. */
+export function applyAvailableTimes(
+	day: ScheduleDay,
+	available: AvailableTimesResponse | null,
+): ScheduleDay {
+	if (!available) return day
+	const open = new Set(
+		available.slots.filter((slot) => slot.available).map((slot) => slot.at),
+	)
+	const slots = day.slots.filter((slot) => open.has(slot.iso))
+	if (slots.length === day.slots.length) return day
+	return { ...day, slots }
 }
 
 /**
@@ -230,22 +249,26 @@ export function buildScheduleDays(
 	const timezone = location.timezone || 'UTC'
 	const now = options.now ?? new Date()
 	const step = options.slotMinutes ?? SCHEDULE_SLOT_MINUTES
-	const schedule =
-		asArray<WeeklySchedule[number]>(location.onlineHours) ??
-		asArray<WeeklySchedule[number]>(location.storeHours)
-	const special = asArray<SpecialHour>(location.specialHours) ?? []
+	const hours = buildOnlineHours({
+		timezone,
+		isActive: location.isActive,
+		// `locationOpenIntervals` only runs when store hours exist; mirror online hours.
+		storeHours: location.storeHours ?? location.onlineHours,
+		onlineHours: location.onlineHours,
+		specialHours: location.specialHours,
+		onlineOrderingSettings: location.onlineOrderingSettings,
+	})
 	let earliest =
 		now.getTime() +
 		scheduleLeadMinutes(location, options.mode, options.deliveryEtaMin, now) *
 			60_000
 	if (isOrderingPaused(location, now)) {
-		// Open-ended pause: nothing can be scheduled until it is lifted.
 		const until = location.orderingPause?.until
 		if (!until) return []
 		earliest = Math.max(earliest, new Date(until).getTime())
 	}
 
-	const today = zonedParts(now, timezone).date
+	const today = localDateInZone(now.getTime(), timezone)
 	let timeFormat: Intl.DateTimeFormat
 	let weekdayFormat: Intl.DateTimeFormat
 	let dayMonthFormat: Intl.DateTimeFormat
@@ -283,19 +306,27 @@ export function buildScheduleDays(
 
 	const days: ScheduleDay[] = []
 	for (let offset = 0; offset < settings.advanceOrderDays; offset += 1) {
-		const { date, day } = addDays(today, offset)
+		const date = addDays(today, offset)
 		const slots: ScheduleSlot[] = []
 		const seen = new Set<string>()
-		for (const [start, end] of openIntervals(date, day, schedule, special)) {
-			const first = Math.ceil(start / step) * step
-			for (let minute = first; minute <= end; minute += step) {
-				const localTime = fromMinutes(minute)
+		const { year, month, day } = parseDate(date)
+		for (const [from, to] of minuteRangesForDate(hours, date)) {
+			const first = Math.ceil(from / step) * step
+			for (let minute = first; minute <= to; minute += step) {
+				const localTime = formatHm(Math.floor(minute / 60), minute % 60)
 				if (seen.has(localTime)) continue
-				const instant = zonedTimeToUtc(date, localTime, timezone)
-				if (instant.getTime() < earliest) continue
-				// Skip wall-clock times that do not exist (DST spring-forward).
-				if (zonedParts(instant, timezone).time !== localTime) continue
+				const t = zonedLocalToUtc(
+					year,
+					month,
+					day,
+					Math.floor(minute / 60),
+					minute % 60,
+					timezone,
+				)
+				if (t < earliest) continue
+				if (!wallClockMatchesInstant(t, date, localTime, timezone)) continue
 				seen.add(localTime)
+				const instant = new Date(t)
 				slots.push({
 					iso: instant.toISOString(),
 					localTime,
@@ -344,12 +375,9 @@ export function formatScheduledFor(
 	const at = new Date(iso)
 	if (Number.isNaN(at.getTime())) return null
 	const zone = timezone || 'UTC'
-	const target = zonedParts(at, zone).date
-	const today = zonedParts(now, zone).date
-	const offset = Math.round(
-		(Date.parse(`${target}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) /
-			86_400_000,
-	)
+	const target = localDateInZone(at.getTime(), zone)
+	const today = localDateInZone(now.getTime(), zone)
+	const offset = daysBetween(today, target)
 	try {
 		return {
 			offset,
@@ -366,4 +394,30 @@ export function formatScheduledFor(
 	} catch {
 		return { offset, weekday: '', time: at.toISOString().slice(11, 16) }
 	}
+}
+
+/** Browser schedule days with regional capacity when slot limits are on. */
+export async function buildScheduleDaysWithLimits(
+	location: ScheduleLocation,
+	options: Parameters<typeof buildScheduleDays>[1],
+	orgSlotLimitsEnabled?: boolean,
+	orgSlug?: string | null,
+): Promise<ScheduleDay[]> {
+	const days = buildScheduleDays(location, options)
+	if (!location.id || !slotLimitsActive(location, orgSlotLimitsEnabled)) {
+		return days
+	}
+	const fulfillment =
+		options.mode === 'delivery' ? ('delivery' as const) : 'pickup'
+	return Promise.all(
+		days.map(async (day) => {
+			const available = await fetchAvailableTimes({
+				locationId: location.id!,
+				fulfillment,
+				date: day.date,
+				orgSlug,
+			})
+			return applyAvailableTimes(day, available)
+		}),
+	)
 }

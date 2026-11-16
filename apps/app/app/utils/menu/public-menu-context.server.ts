@@ -61,6 +61,7 @@ import {
 	type PublicMenuPromotion,
 } from '#app/utils/discounts/order-context.server.ts'
 import { isUpsellEnabled } from '#app/utils/orders/upsell-flag.server.ts'
+import { isSlotLimitsEnabled } from '#app/utils/orders/slot-limits.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import {
 	applyOptionAssignment,
@@ -117,7 +118,7 @@ export interface PublicSiteMenuPayload {
 	 * `ordering.upsell` flag. Absent on a cached menu from before it, which
 	 * Sites reads as off.
 	 */
-	features?: { upsell: boolean }
+	features?: { upsell: boolean; slotLimits?: boolean }
 	/**
 	 * Not part of the public response. Till rules are loaded by a paired
 	 * terminal. The field stays so an older snapshot still type-checks.
@@ -172,15 +173,14 @@ export async function buildPublicSiteMenuPayload(
 
 	// Ready texts need an SMS route: the US data region only (KSA waits for an
 	// in-kingdom provider), so a KSA organization never shows the field.
+	const orgRegionRow = await db
+		.select({ dataRegion: Organization.dataRegion })
+		.from(Organization)
+		.where(eq(Organization.id, orgId))
+		.limit(1)
+	const dataRegion = orgRegionRow[0]?.dataRegion ?? 'us'
 	const textsGuests =
-		rawLocations.some((loc) => loc.readyTextEnabled) &&
-		(
-			await db
-				.select({ dataRegion: Organization.dataRegion })
-				.from(Organization)
-				.where(eq(Organization.id, orgId))
-				.limit(1)
-		)[0]?.dataRegion === 'us'
+		rawLocations.some((loc) => loc.readyTextEnabled) && dataRegion === 'us'
 
 	const locations: PublicLocationData[] = rawLocations.map((loc) => {
 		const parsedAddress = safeJsonParse<LocationAddress | null>(
@@ -230,6 +230,11 @@ export async function buildPublicSiteMenuPayload(
 			isDefault: Boolean(loc.isDefault),
 			readyText: textsGuests && Boolean(loc.readyTextEnabled),
 			...publicOrderingControls(loc, new Date()),
+			onlineOrderingSettings: safeJsonParse(loc.onlineOrderingSettings, null),
+			slotLimitSettings: safeJsonParse(loc.slotLimitSettings, null),
+			prepSchedule: safeJsonParse(loc.prepSchedule, null),
+			prayerPauseSettings: safeJsonParse(loc.prayerPauseSettings, null),
+			prayerPauseRegion: dataRegion === 'ksa',
 		}
 	})
 
@@ -541,6 +546,7 @@ export async function buildPublicSiteMenuPayload(
 					now,
 				),
 				position: cat.position,
+				excludeFromOrderLimits: Boolean(cat.excludeFromOrderLimits),
 				items: itemsByCategoryId.get(cat.id) ?? [],
 			} satisfies PublicMenuCategoryData,
 		]),
@@ -602,7 +608,10 @@ export async function buildPublicSiteMenuPayload(
 		menus: structuredMenus,
 		locationOverrides: locationOverridesMap,
 		promotions: menuDiscounts.promotions,
-		features: { upsell: await isUpsellEnabled(org.id) },
+		features: {
+			upsell: await isUpsellEnabled(org.id),
+			slotLimits: await isSlotLimitsEnabled(org.id),
+		},
 	}
 
 	const secondsUntilVariationReturn =

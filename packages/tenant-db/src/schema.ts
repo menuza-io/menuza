@@ -985,6 +985,10 @@ export const restaurantOrders = sqliteTable(
 		deliveryLng: real('delivery_lng'),
 		// Customer-chosen fulfilment time; null = ASAP.
 		scheduledFor: integer('scheduled_for', { mode: 'timestamp' }),
+		// Kitchen-ready instant used for per-slot capacity (#108); null until set.
+		readySlotAt: integer('ready_slot_at', { mode: 'timestamp' }),
+		/** Dish- or order-units charged against the slot limit at placement. */
+		readySlotUnits: integer('ready_slot_units'),
 		// When the restaurant says the order will be ready (pickup) or start
 		// arriving (delivery), and for delivery the end of that range. Null until
 		// set; `promised_version` counts the changes. Not personal data.
@@ -1132,6 +1136,11 @@ export const restaurantOrders = sqliteTable(
 		index('idx_restaurant_orders_slot').on(
 			table.pickupWindowId,
 			table.pickupTime,
+			table.status,
+		),
+		index('idx_restaurant_orders_location_ready_slot').on(
+			table.locationId,
+			table.readySlotAt,
 			table.status,
 		),
 		index('idx_restaurant_orders_customer').on(table.customerId),
@@ -7497,7 +7506,10 @@ export const giftCardBatches = sqliteTable(
 	},
 	(table) => [
 		index('idx_gift_card_batches_location').on(table.locationId),
-		check('chk_gift_card_batches_count', sql`${table.count} between 1 and 1000`),
+		check(
+			'chk_gift_card_batches_count',
+			sql`${table.count} between 1 and 1000`,
+		),
 	],
 )
 
@@ -7607,7 +7619,10 @@ export const giftCards = sqliteTable(
 	(table) => [
 		uniqueIndex('gift_cards_code_hash_unique').on(table.codeHash),
 		uniqueIndex('gift_cards_external_hash_unique').on(table.externalNumberHash),
-		uniqueIndex('gift_cards_batch_seq_unique').on(table.batchId, table.batchSeq),
+		uniqueIndex('gift_cards_batch_seq_unique').on(
+			table.batchId,
+			table.batchSeq,
+		),
 		index('idx_gift_cards_status').on(table.status),
 		index('idx_gift_cards_location').on(table.locationId),
 		index('idx_gift_cards_holder').on(table.holderCustomerId),
@@ -7666,7 +7681,10 @@ export const giftCardLedger = sqliteTable(
 		index('idx_gift_card_ledger_source').on(table.sourceType, table.sourceId),
 		index('idx_gift_card_ledger_location_at').on(table.locationId, table.at),
 		index('idx_gift_card_ledger_kind_at').on(table.kind, table.at),
-		check('chk_gift_card_ledger_kind', oneOf(table.kind, GIFT_CARD_LEDGER_KINDS)),
+		check(
+			'chk_gift_card_ledger_kind',
+			oneOf(table.kind, GIFT_CARD_LEDGER_KINDS),
+		),
 		check(
 			'chk_gift_card_ledger_channel',
 			oneOf(table.channel, GIFT_CARD_CHANNELS),
@@ -7720,9 +7738,18 @@ export const giftCardPurchaseAttempts = sqliteTable(
 	},
 	(table) => [
 		index('idx_gift_card_purchase_attempts_at').on(table.at),
-		index('idx_gift_card_purchase_attempts_payment').on(table.paymentHash, table.at),
-		index('idx_gift_card_purchase_attempts_email').on(table.emailHash, table.at),
-		index('idx_gift_card_purchase_attempts_device').on(table.deviceHash, table.at),
+		index('idx_gift_card_purchase_attempts_payment').on(
+			table.paymentHash,
+			table.at,
+		),
+		index('idx_gift_card_purchase_attempts_email').on(
+			table.emailHash,
+			table.at,
+		),
+		index('idx_gift_card_purchase_attempts_device').on(
+			table.deviceHash,
+			table.at,
+		),
 		index('idx_gift_card_purchase_attempts_card').on(table.cardId),
 	],
 )
@@ -9438,7 +9465,6 @@ export type InvRecipeRow = typeof invRecipes.$inferSelect
 export type InvRecipeLineRow = typeof invRecipeLines.$inferSelect
 export type InvSaleUsageRow = typeof invSaleUsage.$inferSelect
 export type InvOutboxRow = typeof invOutbox.$inferSelect
-
 
 // ==========================================
 // MARKETING AUDIENCES, ORDER / BIRTHDAY / CART JOURNEY TRIGGERS (#98 #99 #100 #151 #150)

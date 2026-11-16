@@ -60,7 +60,13 @@ import {
 	isGuestCancelEnabled,
 	isManualAcceptanceEnabled,
 } from '#app/utils/orders/order-policies.server.ts'
+import {
+	orderingSettingsFormFromRecord,
+	parseOrderingSettingsFields,
+} from '#app/utils/orders/ordering-settings.ts'
+import { isPrayerPauseEnabled } from '#app/utils/orders/prayer-pause.server.ts'
 import { parseOrderPolicyFields } from '#app/utils/orders/order-policy-settings.ts'
+import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -102,6 +108,7 @@ const LocationInputSchema = z.object({
 	scheduling: z.string().optional(),
 	deliveryConfig: z.string().optional(),
 	deliveryZones: z.string().optional(),
+	orderingSettings: z.string().optional(),
 })
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -255,6 +262,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		fee: feeFormFromSettings(savedFee, checkoutCurrency),
 	}
 
+	const [slotLimitsFlag, prayerPauseFlag] = await Promise.all([
+		buildSlotLimitsContext(organization.id).then((ctx) => ctx.enabled),
+		isPrayerPauseEnabled(organization.id),
+	])
+	const orderingSettings = {
+		slotLimitsEnabled: slotLimitsFlag,
+		prayerPauseEnabled: prayerPauseFlag,
+		initial: orderingSettingsFormFromRecord({
+			onlineOrderingSettings: parseJson(record.onlineOrderingSettings),
+			slotLimitSettings: parseJson(record.slotLimitSettings),
+			prepSchedule: parseJson(record.prepSchedule),
+			prayerPauseSettings: parseJson(record.prayerPauseSettings),
+		}),
+	}
+
 	const allLocations = await db
 		.select({
 			id: OrganizationLocation.id,
@@ -271,6 +293,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		allLocations,
 		orderPolicies,
 		checkoutSettings,
+		orderingSettings,
 	}
 }
 
@@ -401,6 +424,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { error: checkout.error, checkoutIssue: checkout.issue }
 	}
 
+	const ordering = parseOrderingSettingsFields(rawData, {
+		slotLimits: await buildSlotLimitsContext(organization.id).then(
+			(ctx) => ctx.enabled,
+		),
+		prayerPause: await isPrayerPauseEnabled(organization.id),
+	})
+	if (!ordering.ok) {
+		return { error: ordering.error }
+	}
+
 	// Check if another location has this slug
 	const [existingWithSlug] = await db
 		.select({ id: OrganizationLocation.id })
@@ -457,6 +490,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				deliveryZones: data.deliveryZones || null,
 				...policy.patch,
 				...checkout.patch,
+				...ordering.patch,
 			})
 			.where(
 				and(
@@ -484,6 +518,7 @@ export default function EditLocationRoute() {
 		allLocations,
 		orderPolicies,
 		checkoutSettings,
+		orderingSettings,
 	} = useLoaderData<typeof loader>()
 	const deleteFetcher = useFetcher<{
 		error?: string
@@ -629,6 +664,7 @@ export default function EditLocationRoute() {
 				initialData={location}
 				orderPolicies={orderPolicies}
 				checkoutSettings={checkoutSettings}
+				orderingSettings={orderingSettings}
 			/>
 
 			<AlertDialog

@@ -24,6 +24,12 @@ import {
 	localDateAndTimeToUtc,
 	type LocationOrderingAvailability,
 } from './location-availability.ts'
+import { parsePrepSchedule } from './location-settings.ts'
+import { prepMinutesAt } from './prep-schedule.ts'
+import {
+	computeReadySlotCapacity,
+	type ReadySlotCapacitySpec,
+} from './ready-slot-capacity.ts'
 import { generatePickupSlots, getDropDisplayStatus } from './menu-types.ts'
 import { orderMarketingConsentSchema } from './marketing-consent.ts'
 import {
@@ -371,7 +377,12 @@ const restaurantOrderObjectSchema = z.strictObject({
 	 * `service_fee_changed`; it is never trusted as a price. A missing value
 	 * reads as 0, so a client that predates the fee is refused where one is due.
 	 */
-	expectedServiceFeeMinor: z.number().int().min(0).max(1_000_000_000).optional(),
+	expectedServiceFeeMinor: z
+		.number()
+		.int()
+		.min(0)
+		.max(1_000_000_000)
+		.optional(),
 	lines: z.array(restaurantOrderLineSchema).min(1).max(RESTAURANT_MAX_LINES),
 	turnstileToken: z.string().min(1).max(2048).optional(),
 })
@@ -695,6 +706,20 @@ export const operatorOrderPatchSchema = z.union([
 
 export type OperatorOrderPatch = z.infer<typeof operatorOrderPatchSchema>
 
+/** POST /operator/orders/limits/reset (#108). */
+export const operatorSlotLimitsResetSchema = z.strictObject({
+	locationId: z.string().min(1).max(100),
+})
+
+export type OperatorSlotLimitsReset = z.infer<
+	typeof operatorSlotLimitsResetSchema
+>
+
+export const operatorSlotLimitsTodayQuerySchema = z.strictObject({
+	locationId: z.string().min(1).max(100),
+	fulfillment: z.enum(['pickup', 'delivery']),
+})
+
 /**
  * Money an operator records as returned for a paid online order
  * (POST /operator/orders/:id/refunds, with an `Idempotency-Key`). It is a
@@ -928,6 +953,8 @@ export type PublicMenuItemContext = {
 	applySalesTax?: boolean
 	/** True: the item never receives a discount. Missing reads as false. */
 	excludeFromDiscounts?: boolean
+	/** True: the item does not count toward slot limits (#256). */
+	excludeFromOrderLimits?: boolean
 	variations?: {
 		groups?: Array<{
 			id: string
@@ -957,6 +984,7 @@ const publicMenuItemContextSchema: z.ZodType<PublicMenuItemContext> = z.lazy(
 				availabilityStatus: availabilityStatusSchema,
 				applySalesTax: z.boolean().optional(),
 				excludeFromDiscounts: z.boolean().optional(),
+				excludeFromOrderLimits: z.boolean().optional(),
 				variations: z
 					.object({
 						groups: z
@@ -992,6 +1020,7 @@ export type PublicMenuCategoryContext = {
 	id: string
 	displayName: string
 	availabilityStatus: string
+	excludeFromOrderLimits?: boolean
 	items?: PublicMenuItemContext[]
 	subcategories?: PublicMenuCategoryContext[]
 	[key: string]: unknown
@@ -1186,6 +1215,12 @@ export const publicLocationContextSchema = z
 			})
 			.nullable()
 			.optional(),
+		onlineOrderingSettings: z.unknown().optional(),
+		slotLimitSettings: z.unknown().optional(),
+		prepSchedule: z.unknown().optional(),
+		prayerPauseSettings: z.unknown().optional(),
+		/** KSA (or other enabled region): prayer pauses may apply. */
+		prayerPauseRegion: z.boolean().optional(),
 	})
 	.loose()
 
@@ -1341,6 +1376,8 @@ export const restaurantOrderContextSchema = z
 		 * that is on and cannot be read refuses the order (never dropped).
 		 */
 		serviceFee: z.unknown().optional(),
+		/** Per-slot capacity (`ordering.slot_limits`, #108). */
+		slotLimits: z.object({ enabled: z.boolean().default(false) }).optional(),
 	})
 	.loose()
 
@@ -1657,6 +1694,8 @@ export type PricedRestaurantOrder = {
 	scheduledFor: string | null
 	holdMinutes: number
 	capacity: OrderCapacitySpec | null
+	/** Regular-menu ready-time slot (#108), null for drops/tabs or when off. */
+	readySlotCapacity: ReadySlotCapacitySpec | null
 }
 
 // ---------------------------------------------------------------------------
@@ -1941,6 +1980,7 @@ export function validateScheduledFor(
 		| 'specialHours'
 		| 'orderingPause'
 		| 'busyMode'
+		| 'prepSchedule'
 	>,
 	scheduledFor: string,
 	now: Date,
@@ -1961,9 +2001,14 @@ export function validateScheduledFor(
 	}
 	const when = new Date(scheduledFor)
 	if (Number.isNaN(when.getTime())) return fail('Choose a valid time.')
+	const timeZone = location.timezone || 'UTC'
 	const prepMinutes =
-		Math.max(0, location.prepTime ?? 15) +
-		activeBusyExtraPrepMinutes(location, now)
+		prepMinutesAt(
+			parsePrepSchedule(location.prepSchedule),
+			location.prepTime ?? 15,
+			now.getTime(),
+			timeZone,
+		) + activeBusyExtraPrepMinutes(location, now)
 	const earliest =
 		now.getTime() + (prepMinutes - SCHEDULE_GRACE_MINUTES) * 60 * 1000
 	if (when.getTime() < earliest) {
@@ -2620,6 +2665,7 @@ export function priceRestaurantOrder(
 		? undefined
 		: (context.menu.locationOverrides?.[location.id] ?? undefined)
 	const catalog: ResolvedCatalog = new Map()
+	const categoryExempt = new Set<string>()
 	let dropInfo: PricedRestaurantOrder['drop'] = null
 	let pickupInfo: PricedRestaurantOrder['pickup'] = null
 	let holdMinutes = RESTAURANT_ONLINE_HOLD_MINUTES
@@ -2746,6 +2792,9 @@ export function priceRestaurantOrder(
 		// Published catalog membership for a drop is the drop's own categories.
 		for (const category of dropData.categories) {
 			if (category.availabilityStatus !== 'available') continue
+			if (category.excludeFromOrderLimits === true) {
+				categoryExempt.add(category.id)
+			}
 			for (const item of category.items ?? []) {
 				const existing = catalog.get(item.id)
 				const categoryIds = new Set(existing?.categoryIds ?? [])
@@ -2796,6 +2845,9 @@ export function priceRestaurantOrder(
 				menu.categories ?? [],
 				locationOverrides,
 				(category) => {
+					if (category.excludeFromOrderLimits === true) {
+						categoryExempt.add(category.id)
+					}
 					for (const item of category.items ?? []) {
 						const itemOverride = entityOverride(locationOverrides, item.id)
 						if (itemOverride?.isEnabled === false) continue
@@ -3195,6 +3247,21 @@ export function priceRestaurantOrder(
 		deliveryFeeCents +
 		serviceFee.feeCents
 
+	const readySlotCapacity = computeReadySlotCapacity({
+		slotLimitsEnabled: context.slotLimits?.enabled === true,
+		location,
+		fulfillment: request.fulfillment,
+		scheduledFor,
+		now,
+		catalog,
+		categoryExempt,
+		lines: pricedLines.map((line) => ({
+			itemId: line.itemId,
+			quantity: line.quantity,
+			categoryIds: line.categoryIds,
+		})),
+	})
+
 	return {
 		ok: true,
 		result: {
@@ -3223,6 +3290,7 @@ export function priceRestaurantOrder(
 			scheduledFor,
 			holdMinutes,
 			capacity,
+			readySlotCapacity,
 		},
 	}
 }
@@ -3618,3 +3686,28 @@ export function buildPublicOrderingOptions(
 
 	return { ok: true, options }
 }
+
+export {
+	type OrderLimitExempt,
+	type SlotUsageInput,
+	type SlotUsageLine,
+	slotLimitForFulfillment,
+	slotUsageUnits,
+	wouldExceedSlotLimit,
+} from './slot-usage.ts'
+export {
+	kitchenStartInstantMs,
+	prepMinutesAt,
+	prepRowInForce,
+} from './prep-schedule.ts'
+export {
+	computeReadySlotCapacity,
+	readyInstantMs,
+	type ReadySlotCapacitySpec,
+} from './ready-slot-capacity.ts'
+export { orderLimitExemptFromCatalog } from './order-limit-exempt.ts'
+export {
+	buildOrderLimitCatalog,
+	readySlotUnitsForOrder,
+	slotUsageLinesFromStored,
+} from './order-limit-catalog.ts'

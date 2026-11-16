@@ -79,6 +79,7 @@ export interface ItemFormData {
 	applySalesTax: boolean
 	excludeFromOverride: boolean
 	excludeFromDiscounts?: boolean
+	excludeFromOrderLimits?: boolean
 	isPopular: boolean
 	isUpsell: boolean
 	availabilityStatus:
@@ -117,6 +118,8 @@ interface ItemFormProps {
 		selectionType: string
 	}>
 	allLocations: LocationItem[]
+	/** Org flag `ordering.slot_limits`; hides the slot-limit exemption switch when off. */
+	slotLimitsEnabled?: boolean
 	isSubmitting: boolean
 	pageTitle: string
 }
@@ -149,6 +152,7 @@ function ItemFormBody({
 	allCategories,
 	allModifierGroups,
 	allLocations,
+	slotLimitsEnabled = false,
 	isSubmitting,
 	pageTitle,
 	onDiscard,
@@ -233,6 +237,9 @@ function ItemFormBody({
 	)
 	const [excludeFromDiscounts, setExcludeFromDiscounts] = useState(
 		initialData?.excludeFromDiscounts ?? false,
+	)
+	const [excludeFromOrderLimits, setExcludeFromOrderLimits] = useState(
+		initialData?.excludeFromOrderLimits ?? false,
 	)
 	const [excludeFromOverride, setExcludeFromOverride] = useState(
 		initialData?.excludeFromOverride ?? false,
@@ -395,6 +402,11 @@ function ItemFormBody({
 						type="hidden"
 						name="excludeFromDiscounts"
 						value={String(excludeFromDiscounts)}
+					/>
+					<input
+						type="hidden"
+						name="excludeFromOrderLimits"
+						value={String(excludeFromOrderLimits)}
 					/>
 					<input type="hidden" name="isPopular" value={String(isPopular)} />
 					<input type="hidden" name="isUpsell" value={String(isUpsell)} />
@@ -937,6 +949,28 @@ function ItemFormBody({
 											onCheckedChange={setExcludeFromDiscounts}
 										/>
 									</FramePanel>
+									{slotLimitsEnabled ? (
+										<FramePanel className="flex items-center justify-between px-5 py-3.5">
+											<Label
+												htmlFor="order-limits-switch"
+												className="block min-w-0 cursor-pointer space-y-0.5 pr-4 font-normal"
+											>
+												<div className="text-foreground text-sm">
+													<Trans>Exclude from slot limits</Trans>
+												</div>
+												<p className="text-muted-foreground text-xs">
+													<Trans>
+														Does not count toward per-slot order or dish caps.
+													</Trans>
+												</p>
+											</Label>
+											<Switch
+												id="order-limits-switch"
+												checked={excludeFromOrderLimits}
+												onCheckedChange={setExcludeFromOrderLimits}
+											/>
+										</FramePanel>
+									) : null}
 								</Frame>
 
 								{/* Location Availability & Price Overrides Card */}

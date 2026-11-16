@@ -1,5 +1,16 @@
 import crypto from 'node:crypto'
-import { and, count, desc, eq, gte, inArray, lt, sum } from 'drizzle-orm'
+import {
+	and,
+	count,
+	desc,
+	eq,
+	gte,
+	inArray,
+	isNotNull,
+	lt,
+	sql,
+	sum,
+} from 'drizzle-orm'
 import { ENV } from 'varlock/env'
 
 import {
@@ -25,6 +36,7 @@ import {
 	type PricedOrderLine,
 	type PricedRestaurantOrder,
 	type PublicOrderingOptions,
+	type ReadySlotCapacitySpec,
 	type RestaurantOrderContext,
 	type OrderLoyaltySelection,
 	type OrderProviderRefund,
@@ -35,6 +47,7 @@ import {
 	type RestaurantOrderRequest,
 	type VerifiedDeliveryQuote,
 } from '@repo/common/restaurant-orders'
+import { wouldExceedSlotLimit } from '@repo/common/slot-usage'
 import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent'
 import { readQrOrderingFeatures } from '@repo/common/qr-ordering'
 import {
@@ -552,6 +565,43 @@ export async function sweepExpiredHolds(orgId: string, now = new Date()) {
 // ---------------------------------------------------------------------------
 // Capacity assertions (run inside the placement transaction, after sweeping)
 // ---------------------------------------------------------------------------
+
+async function assertReadySlotCapacity(
+	tx: OrderTx,
+	spec: ReadySlotCapacitySpec,
+): Promise<OrderServiceFailure | null> {
+	if (spec.units <= 0) return null
+	const slotAt = new Date(spec.readySlotAtMs)
+	const [row] = await tx
+		.select({ value: sum(restaurantOrders.readySlotUnits) })
+		.from(restaurantOrders)
+		.where(
+			and(
+				eq(restaurantOrders.locationId, spec.locationId),
+				eq(restaurantOrders.readySlotAt, slotAt),
+				isNotNull(restaurantOrders.readySlotUnits),
+				inArray(restaurantOrders.status, [...RESTAURANT_ORDER_ACTIVE_STATUSES]),
+				sql`${restaurantOrders.dropId} IS NULL`,
+			),
+		)
+	const used = Number(row?.value ?? 0)
+	if (
+		wouldExceedSlotLimit({
+			used,
+			incoming: spec.units,
+			limit: spec.limit,
+			allowOneLargeOrderPerSlot: spec.allowOneLargeOrderPerSlot,
+		})
+	) {
+		return {
+			status: 409,
+			code: 'slot_full',
+			message:
+				'That time is fully booked. Please choose another pickup or delivery time.',
+		}
+	}
+	return null
+}
 
 async function assertSlotCapacity(
 	tx: OrderTx,
@@ -1245,6 +1295,13 @@ export async function placeOrder(input: {
 						)
 						if (entityFailure) return { ok: false, failure: entityFailure }
 					}
+					if (result.readySlotCapacity) {
+						const readyFailure = await assertReadySlotCapacity(
+							tx,
+							result.readySlotCapacity,
+						)
+						if (readyFailure) return { ok: false, failure: readyFailure }
+					}
 
 					const preparedResult = await prepareOrderDiscounts(tx, {
 						priced: result,
@@ -1473,6 +1530,10 @@ export async function placeOrder(input: {
 									scheduledFor: result.scheduledFor
 										? new Date(result.scheduledFor)
 										: null,
+									readySlotAt: result.readySlotCapacity
+										? new Date(result.readySlotCapacity.readySlotAtMs)
+										: null,
+									readySlotUnits: result.readySlotCapacity?.units ?? null,
 									promisedAt: promised.promisedAt,
 									promisedUntil: promised.promisedUntil,
 									locationTimezone: promiseLocation?.timezone || null,

@@ -51,6 +51,10 @@ import {
 	type ServiceFeeContext,
 } from '#app/utils/orders/service-fee.server.ts'
 import {
+	buildSlotLimitsContext,
+	type SlotLimitsContext,
+} from '#app/utils/orders/slot-limits.server.ts'
+import {
 	resolveRestaurantOnlinePayment,
 	type RestaurantOnlinePayment,
 } from '#app/utils/restaurant-orders/payment-config.server.ts'
@@ -101,6 +105,7 @@ export type OrderContextResponse = {
 	 * refuses orders at a listed location whose fee it cannot read.
 	 */
 	serviceFee: ServiceFeeContext
+	slotLimits: SlotLimitsContext
 }
 
 async function readQrOrderingFeatures(
@@ -214,6 +219,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			org.id,
 			parsed.data.locationId ?? null,
 		),
+		slotLimits: await buildSlotLimitsContext(org.id),
 	}
 
 	return Response.json(response, {

@@ -37,6 +37,7 @@ import {
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -79,10 +80,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		],
 	})
 
+	const slotLimits = await buildSlotLimitsContext(organization.id)
+
 	return {
 		organization,
 		defaultLocale,
 		supportedLocales,
+		slotLimitsEnabled: slotLimits.enabled,
 		initialCategoryId,
 		allCategories: allCategories.map((c) => ({
 			id: c.id,
@@ -147,6 +151,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			key === 'applySalesTax' ||
 			key === 'excludeFromOverride' ||
 			key === 'excludeFromDiscounts' ||
+			key === 'excludeFromOrderLimits' ||
 			key === 'isPopular' ||
 			key === 'isUpsell'
 		) {
@@ -228,6 +233,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				applySalesTax: data.applySalesTax,
 				excludeFromOverride: data.excludeFromOverride,
 				excludeFromDiscounts: data.excludeFromDiscounts,
+				excludeFromOrderLimits: data.excludeFromOrderLimits,
 				isPopular: data.isPopular,
 				isUpsell: data.isUpsell,
 				availabilityStatus: data.availabilityStatus,
@@ -311,6 +317,7 @@ export default function CreateItemRoute() {
 		allCategories,
 		allModifierGroups,
 		allLocations,
+		slotLimitsEnabled,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -330,6 +337,7 @@ export default function CreateItemRoute() {
 				allCategories={allCategories}
 				allModifierGroups={allModifierGroups}
 				allLocations={allLocations}
+				slotLimitsEnabled={slotLimitsEnabled}
 				isSubmitting={isSubmitting}
 			/>
 		</div>

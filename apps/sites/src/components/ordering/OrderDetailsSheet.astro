@@ -30,6 +30,8 @@ interface Props {
 	labels?: OrderDetailsLabels
 	/** Navigate with `?location=` when the customer picks another location. */
 	navigateOnLocationChange?: boolean
+	/** Org flag `ordering.slot_limits` — fetches regional capacity for slots. */
+	slotLimitsEnabled?: boolean
 }
 
 const {
@@ -42,6 +44,7 @@ const {
 	defaultLocale = 'en',
 	labels = buildOrderDetailsLabels(Astro.locals.i18n),
 	navigateOnLocationChange = true,
+	slotLimitsEnabled = false,
 } = Astro.props
 
 function asJson(value: unknown): unknown {
@@ -67,6 +70,9 @@ const sheetLocations = locations.map((location) => {
 		storeHours: asJson(location.storeHours),
 		specialHours: asJson(location.specialHours),
 		prepTime: location.prepTime,
+		isActive: location.isActive ?? true,
+		onlineOrderingSettings: location.onlineOrderingSettings ?? null,
+		slotLimitSettings: location.slotLimitSettings ?? null,
 		orderingPause: location.orderingPause ?? null,
 		busyMode: location.busyMode ?? null,
 		scheduling: asJson(location.scheduling),
@@ -212,6 +218,8 @@ const truckIcon =
 		navigateOnLocationChange,
 		locations: sheetLocations,
 		labels,
+		slotLimitsEnabled,
+		orgSlug: null,
 	}).replace(/</g, '\\u003c')}
 />
 
@@ -346,7 +354,7 @@ const truckIcon =
 		type OrderDetailsTab,
 	} from '~/lib/ordering/order-details'
 	import {
-		buildScheduleDays,
+		buildScheduleDaysWithLimits,
 		findSlot,
 		schedulingSettings,
 		type ScheduleDay,
@@ -379,6 +387,8 @@ const truckIcon =
 		navigateOnLocationChange: boolean
 		locations: SheetLocation[]
 		labels: OrderDetailsLabels
+		slotLimitsEnabled: boolean
+		orgSlug: string | null
 	}
 
 	type QuoteView =
@@ -497,14 +507,28 @@ const truckIcon =
 			return loc ? schedulingSettings(loc).enabled : false
 		}
 
-		function scheduleDays(): ScheduleDay[] {
+		let cachedScheduleDays: ScheduleDay[] = []
+		let scheduleLoad = 0
+
+		async function loadScheduleDays(): Promise<ScheduleDay[]> {
 			const loc = location()
 			if (!loc) return []
-			return buildScheduleDays(loc, {
-				locale: data.locale,
-				mode,
-				deliveryEtaMin: mode === 'delivery' ? deliveryEta().min : 0,
-			})
+			const loadId = ++scheduleLoad
+			const days = await buildScheduleDaysWithLimits(
+				loc,
+				{
+					locale: data.locale,
+					mode,
+					deliveryEtaMin: mode === 'delivery' ? deliveryEta().min : 0,
+				},
+				data.slotLimitsEnabled,
+				data.orgSlug ??
+					document.documentElement.dataset.orgSlug ??
+					null,
+			)
+			if (loadId !== scheduleLoad) return cachedScheduleDays
+			cachedScheduleDays = days
+			return days
 		}
 
 		/** Prep estimate now: the location's prep time plus any busy minutes. */
@@ -685,8 +709,18 @@ const truckIcon =
 
 		function renderTime() {
 			const enabled = schedulingEnabled()
-			const days = enabled ? scheduleDays() : []
 			const open = openNow()
+			void (async () => {
+				const days = enabled ? await loadScheduleDays() : []
+				renderTimeWithDays(enabled, open, days)
+			})()
+		}
+
+		function renderTimeWithDays(
+			enabled: boolean,
+			open: boolean,
+			days: ScheduleDay[],
+		) {
 			timeSection.classList.toggle('hidden', !enabled)
 			if (!enabled) {
 				whenMode = 'asap'

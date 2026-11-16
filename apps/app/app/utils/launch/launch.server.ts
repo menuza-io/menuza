@@ -19,11 +19,11 @@ import {
 	OrganizationMenuItemCategoryAssignment,
 	OrganizationMenuLocationOverride,
 } from '@repo/database'
+import { weeklyScheduleHasOpenDay } from '@repo/opening-hours'
 import { ENV } from 'varlock/env'
 import {
 	channelsOff,
 	PAY_AT_PICKUP_ONLY_FLAG,
-	scheduleHasHours,
 } from '#app/utils/dashboards/attention.server.ts'
 import {
 	loadLaunchFacts,
@@ -383,8 +383,8 @@ export async function loadLaunchChecklist({
 			...organizationFacts,
 			hasAddress: Boolean(location.address?.trim()),
 			hasHours:
-				scheduleHasHours(location.storeHours) ||
-				scheduleHasHours(location.onlineHours),
+				weeklyScheduleHasOpenDay(location.storeHours) ||
+				weeklyScheduleHasOpenDay(location.onlineHours),
 			hasChannel,
 			prepTimeSet: location.prepTime > 0,
 			terminalPaired: facts
