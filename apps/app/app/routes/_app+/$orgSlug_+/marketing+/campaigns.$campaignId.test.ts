@@ -1,10 +1,10 @@
+import { i18n } from '@lingui/core'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { describeCampaignCoupon } from '#app/utils/discounts/marketing-offers.server.ts'
-import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
-import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
-import { i18n } from '@lingui/core'
 import { auditCampaign } from '#app/utils/marketing/campaign-audit.server.ts'
 import { sendTestBroadcast } from '#app/utils/marketing/campaign-test-send.server.ts'
+import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
+import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
 import { action, loader } from './campaigns.$campaignId.tsx'
 
 vi.mock('#app/utils/marketing/campaign-audit.server.ts', () => ({

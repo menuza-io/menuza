@@ -794,6 +794,53 @@ in the org's website branding.
   without saving, so nothing hits the journey implicitly.
 - Details: `docs/platform-marketing-email.md`
 
+**Broadcast designer blocks, templates, actions and checks (#153, #154, #101,
+#232, #236):**
+
+- The generic block core (`packages/common/src/email-blocks.ts`) names no menu
+  words. The restaurant vertical (`email-blocks-restaurant.ts`, renderer in
+  `packages/email/src/marketing/components/restaurant-blocks.tsx`) adds the
+  `menu_item` (one to three dishes, one location's price, Order link to
+  `/menu?item=<id>`) and `coupon` blocks, registered in one place. Dishes are
+  re-read from the live menu **when the email is saved** and frozen into the
+  stored HTML (`item_not_available` refuses a dish that left the menu); the
+  inspector flags a changed price. The coupon block's words come from the print
+  shop's `couponCopy`, its button is `/menu?coupon={{couponCode}}`. A render
+  takes a context (`EmailRenderContext`: language, direction, site origin,
+  image-transform host, coupon words), never stored in the blocks.
+- Saved templates: control-plane `MarketingEmailTemplate` (blocks only, 100 per
+  organization, unique names). Starting from one copies it and refreshes dish
+  snapshots; deleting a media asset a template uses keeps the stored file.
+- Broadcast actions live in tenant-api (`services/campaign-actions.ts`): every
+  status change is one compare-and-set UPDATE on the expected status, so it
+  cannot race the tick; a `Processing` campaign cannot be edited, cancelled or
+  deleted (`campaign_already_sending`), and there is no mid-send stop. Statuses
+  add `Cancelled` and `SkippedLate`. Test send: the operator's own address is
+  passed in the request and never stored in the region; 10 per operator per hour
+  (`marketing_test_sends`, ids and times only); email only in the App (the
+  control plane keeps no operator phone). Re-send to non-openers: email only,
+  once (unique `retarget_of_campaign_id`), 48 hours after finishing; the
+  dispatcher picks the audience when it sends. Mutations are audited in the
+  control plane with ids only (`utils/marketing/campaign-audit.server.ts`).
+- Pre-send checks are one pure function (`@repo/common/broadcast-checks`) run in
+  the App on Send or Schedule and again by the dispatcher when the send starts
+  (blocking problems fail it; warnings such as starter text are the operator's
+  choice). The coupon's paused or ended state is only known to the App. A
+  scheduled send that cannot **start** within `late_after_minutes` (default 240)
+  becomes `SkippedLate` and the operator is notified through
+  `POST /resources/marketing/notify` (ids only, plain-English email); a send
+  already in progress is never cut off. The boilerplate phrase check is shared
+  with automations (`@repo/common/email-boilerplate`).
+- A discount's "Used in" is read from the region by ids and names only
+  (`GET /operator/discounts/used-in`, discounts token; the App's server uses the
+  same lookup behind the server-side operator token). Pausing, archiving,
+  shortening the end date or changing the code or amount shows what would break
+  and offers to pause those automations and cancel those scheduled broadcasts in
+  the same action; the server asks the region again and checks the member's
+  permission per kind. What was paused is recorded in the discount's status
+  audit entry (ids only) so a resume can offer it back. Note the audit writer's
+  sanitizer stores an array as an index-keyed object: read both shapes.
+
 ## PR & Commit Guidelines
 
 **Pre-commit Checks**:
@@ -1220,30 +1267,30 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `GET /orders/options` (`tipChoices`) and the table tab view. An order or tab
   payment sends `tip: { percent } | { amountMinor }` (`tipPercent` stays for old
   clients). A percentage is a share of the subtotal before discounts and tax
-  (`docs/discounts-plan.md`); an exact amount is capped at the larger of half the
-  subtotal or the currency cap (422 `tip_too_large`) and stored with a null
+  (`docs/discounts-plan.md`); an exact amount is capped at the larger of half
+  the subtotal or the currency cap (422 `tip_too_large`) and stored with a null
   `tip_percent` (tenant migration `0045` swaps the column instead of rebuilding
   `restaurant_orders`). Station keeps its own tip settings.
 - Service fee: flag `ordering.service_fee`, `OrganizationLocation.serviceFee`
   (JSON), priced by `computeServiceFee` (`@repo/common/service-fee`, re-exported
-  from `restaurant-orders`) on the subtotal after discounts and rewards, never on
-  the tip. The App sends `context.serviceFee = { version, locations }` (only
+  from `restaurant-orders`) on the subtotal after discounts and rewards, never
+  on the tip. The App sends `context.serviceFee = { version, locations }` (only
   locations that have it on); the browser sends `expectedServiceFeeMinor` (409
   `service_fee_changed`); a fee on that this node cannot read is 503
-  `service_fee_unavailable`, never dropped. The fee's tax is part of `tax_cents`.
-  Stored on the order (`service_fee_cents`, `service_fee_tax_cents`,
-  `service_fee_label`) and, for a tab paid from the phone, on `qr_tabs`. A table
-  round and Station sales carry none. A full refund includes it; a partial one
-  only with `includeServiceFee` (`restaurant_order_refunds.service_fee_cents`).
-  Contract: `docs/restaurant-ordering-contract.md#tips-and-the-service-fee-118-123`.
+  `service_fee_unavailable`, never dropped. The fee's tax is part of
+  `tax_cents`. Stored on the order (`service_fee_cents`,
+  `service_fee_tax_cents`, `service_fee_label`) and, for a tab paid from the
+  phone, on `qr_tabs`. A table round and Station sales carry none. A full refund
+  includes it; a partial one only with `includeServiceFee`
+  (`restaurant_order_refunds.service_fee_cents`). Contract:
+  `docs/restaurant-ordering-contract.md#tips-and-the-service-fee-118-123`.
 - Cart upsells: flag `ordering.upsell` reaches Sites in the public menu payload
   (`features.upsell`). One ranking, `pickUpsells` in `@repo/common/upsell`, used
-  by Sites (`lib/ordering/upsell.ts`) and the phone agent
-  (`suggestUpsells`): upsell categories of what is in the cart, then flagged
-  dishes, in menu order. Sites shows "Goes well with" in the cart drawer and at
-  checkout (checkout only offers dishes that go straight in). Counts of shown
-  and added dishes (dish id only) stay in the browser and fire a `menuza:upsell`
-  event; nothing is sent.
+  by Sites (`lib/ordering/upsell.ts`) and the phone agent (`suggestUpsells`):
+  upsell categories of what is in the cart, then flagged dishes, in menu order.
+  Sites shows "Goes well with" in the cart drawer and at checkout (checkout only
+  offers dishes that go straight in). Counts of shown and added dishes (dish id
+  only) stay in the browser and fire a `menuza:upsell` event; nothing is sent.
 
 **Loyalty Rewards (points, rewards, member codes):**
 

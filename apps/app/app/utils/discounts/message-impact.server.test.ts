@@ -2,9 +2,9 @@ import { AuditAction } from '@repo/audit'
 import { userHasOrganizationPermission } from '@repo/auth'
 import { AuditLog, db } from '@repo/database'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { setupTestOrgWithUser } from '#tests/test-utils.ts'
 import { auditCampaign } from '#app/utils/marketing/campaign-audit.server.ts'
 import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
+import { setupTestOrgWithUser } from '#tests/test-utils.ts'
 import {
 	cascadeOnPause,
 	describePairedAutomations,

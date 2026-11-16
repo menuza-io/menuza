@@ -8,12 +8,12 @@ import { StaffingAlertEmail, sendEmail } from '@repo/email'
 import { type ActionFunctionArgs } from 'react-router'
 import { ENV } from 'varlock/env'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
+import { resolveCampaignAlertRecipients } from '#app/utils/marketing/campaign-alerts.server.ts'
 import {
 	CAMPAIGN_ALERT_TYPE,
 	campaignAlertEmailCopy,
 	campaignAlertPath,
 } from '#app/utils/marketing/campaign-alerts.ts'
-import { resolveCampaignAlertRecipients } from '#app/utils/marketing/campaign-alerts.server.ts'
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' }
 

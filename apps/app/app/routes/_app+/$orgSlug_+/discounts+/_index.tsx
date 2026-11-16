@@ -63,8 +63,8 @@ import {
 } from '#app/utils/discounts/location-scope.server.ts'
 import { pairedAutomationIdsByDiscount } from '#app/utils/discounts/message-impact.server.ts'
 import { saveDiscountEditor } from '#app/utils/discounts/save.server.ts'
-import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { createDiscountUsageClient } from '#app/utils/discounts/usage-client.ts'
+import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requireDiscountsAccess(request, params.orgSlug)

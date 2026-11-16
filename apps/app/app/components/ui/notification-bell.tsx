@@ -33,14 +33,14 @@ import { useEventSource } from 'remix-utils/sse/react'
 import { BellIcon } from '#app/components/icons/bell-icon.tsx'
 import { inventoryAlertCopy } from '#app/utils/inventory/alert-copy.ts'
 import {
+	inventoryAlertKindFromNotificationType,
+	inventoryAlertPath,
+} from '#app/utils/inventory/manager-alerts.ts'
+import {
 	CAMPAIGN_ALERT_COPY,
 	campaignAlertKindFromNotificationType,
 	campaignAlertPath,
 } from '#app/utils/marketing/campaign-alerts.ts'
-import {
-	inventoryAlertKindFromNotificationType,
-	inventoryAlertPath,
-} from '#app/utils/inventory/manager-alerts.ts'
 import {
 	PRINT_ALERT_COPY,
 	printAlertKindFromNotificationType,

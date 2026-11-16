@@ -7,16 +7,6 @@ import {
 	useEmailTemplateErrors,
 	type SavedEmailTemplate,
 } from '@repo/marketing'
-import { Button } from '@repo/ui/button'
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from '@repo/ui/dialog'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -27,6 +17,16 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@repo/ui/alert-dialog'
+import { Button } from '@repo/ui/button'
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@repo/ui/dialog'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { PageHeader } from '@repo/ui/page-header'
@@ -176,7 +176,7 @@ function TemplateCard({
 					variant="outline"
 					onClick={() => {
 						setPreviewOpen(true)
-						previewFetcher.submit(
+						void previewFetcher.submit(
 							{
 								intent: 'email_preview',
 								blocks: JSON.stringify(template.blocks),

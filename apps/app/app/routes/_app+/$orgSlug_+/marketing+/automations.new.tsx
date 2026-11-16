@@ -26,12 +26,12 @@ import {
 	useAIPanelHotkey,
 } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
-import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import {
 	handleMenuItemIntent,
 	previewEmail,
 } from '#app/utils/email/designer.server.ts'
 import { renderJourneyEmailNodes } from '#app/utils/email/journey-render.server.ts'
+import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import {
 	loyaltyTriggerBlocked,
 	loyaltyTriggersEnabled,

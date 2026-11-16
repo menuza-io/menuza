@@ -1,12 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
 import { type EmailBlock } from '@repo/common/email-blocks'
+import { describe, expect, it, vi } from 'vitest'
+import { type PublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
 import {
 	collectPickableMenuItems,
 	refreshMenuItemBlocks,
 	resolveMenuItemBlocks,
 	type PickableMenuItems,
 } from './menu-items.server.ts'
-import { type PublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
 
 const item = (id: string, over: Record<string, unknown> = {}) => ({
 	id,

@@ -20,15 +20,15 @@ import {
 } from 'react-router'
 import { ArchiveDiscountDialog } from '#app/components/discounts/archive-discount-button.tsx'
 import {
+	DiscountForm,
+	UNSAVED_CHANGES_NOTE_ID,
+} from '#app/components/discounts/discount-form.tsx'
+import {
 	type ImpactChoice,
 	ResumeWithAutomationsDialog,
 	UsedInPanel,
 	useMessageImpact,
 } from '#app/components/discounts/message-impact.tsx'
-import {
-	DiscountForm,
-	UNSAVED_CHANGES_NOTE_ID,
-} from '#app/components/discounts/discount-form.tsx'
 import { requireDiscountsAccess } from '#app/utils/discounts/access.server.ts'
 import {
 	getDiscount,
@@ -246,7 +246,6 @@ export default function EditDiscountRoute() {
 	}
 
 	const initial = data.initial
-	const nextStatus = data.status === 'active' ? 'paused' : 'active'
 	return (
 		<>
 			<form id="discount-status" method="post" className="hidden">

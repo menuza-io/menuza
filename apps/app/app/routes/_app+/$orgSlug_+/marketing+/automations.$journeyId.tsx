@@ -33,12 +33,12 @@ import {
 	checkJourneyOffers,
 	loadCouponDiscountOptions,
 } from '#app/utils/discounts/marketing-offers.server.ts'
-import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import {
 	handleMenuItemIntent,
 	previewEmail,
 } from '#app/utils/email/designer.server.ts'
 import { renderJourneyEmailNodes } from '#app/utils/email/journey-render.server.ts'
+import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import {
 	loyaltyTriggerBlocked,
 	loyaltyTriggersEnabled,

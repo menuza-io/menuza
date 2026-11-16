@@ -21,11 +21,11 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { CampaignEmailDesigner } from '#app/components/marketing/campaign-email-designer.tsx'
+import { loadCouponDiscountOptions } from '#app/utils/discounts/marketing-offers.server.ts'
 import {
 	handleMenuItemIntent,
 	previewEmail,
 } from '#app/utils/email/designer.server.ts'
-import { loadCouponDiscountOptions } from '#app/utils/discounts/marketing-offers.server.ts'
 import { submitCampaign } from '#app/utils/marketing/campaign-submit.server.ts'
 import {
 	ORG_PERMISSIONS,

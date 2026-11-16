@@ -1,8 +1,8 @@
+import { type EmailBlock } from '@repo/common/email-blocks'
 import {
 	type EmailMenuItemBlock,
 	type EmailMenuItemSnapshotItem,
 } from '@repo/common/email-blocks-restaurant'
-import { type EmailBlock } from '@repo/common/email-blocks'
 import { db, eq, Organization } from '@repo/database'
 import {
 	buildPublicSiteMenuPayload,
