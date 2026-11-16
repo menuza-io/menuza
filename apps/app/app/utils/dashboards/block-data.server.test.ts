@@ -16,7 +16,10 @@ import {
 	STAFFING_REPORT_SUBJECTS,
 	type ReportDefinition,
 } from '@repo/reports'
-import { ORG_WIDE_REPORT_SUBJECTS } from '@repo/reports/token'
+import {
+	GIFT_CARD_REPORT_SUBJECTS,
+	ORG_WIDE_REPORT_SUBJECTS,
+} from '@repo/reports/token'
 import { describe, expect, it } from 'vitest'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
@@ -605,6 +608,7 @@ describe('loadBlockPicker', () => {
 			STAFF_PAY_REPORT_PERMISSION,
 			...STAFFING_REPORT_SUBJECTS,
 			...RESERVATIONS_REPORT_SUBJECTS,
+			...GIFT_CARD_REPORT_SUBJECTS,
 		]
 		const picker = await loadBlockPicker({
 			userId: viewer.id,
