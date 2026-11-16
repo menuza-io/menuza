@@ -13,6 +13,10 @@ import {
 	sql,
 } from '@repo/database'
 import { refreshMenuItemBlocks } from '#app/utils/email/menu-items.server.ts'
+import {
+	EMAIL_TEMPLATE_LIMIT,
+	EMAIL_TEMPLATE_NAME_MAX,
+} from './email-template-limits.ts'
 
 /**
  * A restaurant's own saved email layouts (#154). Control plane only: a template
@@ -22,8 +26,7 @@ import { refreshMenuItemBlocks } from '#app/utils/email/menu-items.server.ts'
  * changes a message already saved or sent.
  */
 
-export const EMAIL_TEMPLATE_LIMIT = 100
-export const EMAIL_TEMPLATE_NAME_MAX = 80
+export { EMAIL_TEMPLATE_LIMIT, EMAIL_TEMPLATE_NAME_MAX }
 
 export type EmailTemplateError =
 	| 'template_limit_reached'

@@ -41,10 +41,10 @@ import {
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
 import { previewEmail } from '#app/utils/email/designer.server.ts'
+import { EMAIL_TEMPLATE_LIMIT } from '#app/utils/marketing/email-template-limits.ts'
 import {
 	deleteEmailTemplate,
 	duplicateEmailTemplate,
-	EMAIL_TEMPLATE_LIMIT,
 	listEmailTemplates,
 	renameEmailTemplate,
 } from '#app/utils/marketing/email-templates.server.ts'
