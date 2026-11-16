@@ -5,10 +5,15 @@ import {
 	templatesForGrants,
 } from './access.ts'
 import { getField, getSubject, organizationCatalog } from './catalog.ts'
+import {
+	GIFT_CARD_REPORT_SUBJECTS,
+	isGiftCardReportSubject,
+} from './catalog-gift-cards.ts'
 import { staffingSubjects, withScopeWording } from './catalog-staffing.ts'
 import { referencedFieldIds, validateReportDefinition } from './engine.ts'
 import {
 	isStaffingReportSubject,
+	mintOperatorAnalyticsToken,
 	operatorTokenAllowsSubject,
 	RESTRICTED_REPORT_SUBJECTS,
 	STAFF_PAY_REPORT_PERMISSION,
@@ -206,13 +211,14 @@ describe('what a person is offered', () => {
 				STAFF_TEMPLATE_CATEGORIES.has(template.category),
 			),
 		).toEqual([])
-		// Everything else is untouched, except the Reservations templates, which
-		// need their own grant.
+		// Everything else is untouched, except the Reservations and Gift cards
+		// templates, which need their own grant.
 		expect(offered.length).toBe(
 			organizationTemplates().filter(
 				(template) =>
 					!STAFF_TEMPLATE_CATEGORIES.has(template.category) &&
-					template.category !== 'Reservations',
+					template.category !== 'Reservations' &&
+					template.category !== 'Gift cards',
 			).length,
 		)
 	})
@@ -257,5 +263,40 @@ describe('withScopeWording', () => {
 		expect(reworded.map((subject) => subject.id)).toEqual(
 			staffingSubjects.map((subject) => subject.id),
 		)
+	})
+})
+
+describe('gift card report subjects', () => {
+	it('are restricted: absent without the grant, present with it', () => {
+		const withoutGrant = catalogForGrants(organizationCatalog, [...ORG_WIDE_REPORT_SUBJECTS])
+		for (const id of GIFT_CARD_REPORT_SUBJECTS) {
+			expect(withoutGrant.subjects.some((subject) => subject.id === id)).toBe(false)
+		}
+		const withGrant = catalogForGrants(organizationCatalog, [...GIFT_CARD_REPORT_SUBJECTS])
+		for (const id of GIFT_CARD_REPORT_SUBJECTS) {
+			expect(withGrant.subjects.some((subject) => subject.id === id)).toBe(true)
+		}
+	})
+
+	it('carry no code, name or email field', () => {
+		for (const subject of organizationCatalog.subjects.filter((entry) =>
+			isGiftCardReportSubject(entry.id),
+		)) {
+			for (const field of subject.fields) {
+				expect(field.id).not.toMatch(/code|name|email|phone|recipient|purchaser/i)
+			}
+		}
+	})
+
+	it('a token granting them needs a scope, like the other restricted subjects', async () => {
+		await expect(
+			mintOperatorAnalyticsToken({
+				signingSecret: 'a-signing-secret-long-enough-0123456789',
+				userId: 'u',
+				orgId: 'o',
+				role: 'operator',
+				subjects: ['gift_card_sales'],
+			}),
+		).rejects.toThrow()
 	})
 })

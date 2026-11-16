@@ -8,6 +8,10 @@ import {
 	isReservationsReportSubject,
 	RESERVATIONS_REPORT_SUBJECTS,
 } from './catalog-reservations.ts'
+import {
+	GIFT_CARD_REPORT_SUBJECTS,
+	isGiftCardReportSubject,
+} from './catalog-gift-cards.ts'
 import { ENV } from './package-env.js'
 
 export {
@@ -23,6 +27,12 @@ export {
 	STAFFING_REPORT_SUBJECTS,
 	type StaffingReportSubject,
 } from './catalog-staffing.ts'
+
+export {
+	GIFT_CARD_REPORT_SUBJECTS,
+	isGiftCardReportSubject,
+	type GiftCardReportSubject,
+} from './catalog-gift-cards.ts'
 
 export {
 	isReservationsReportSubject,
@@ -60,6 +70,7 @@ export const RESTRICTED_REPORT_SUBJECTS = [
 	'labor_daily',
 	'applications',
 	...RESERVATIONS_REPORT_SUBJECTS,
+	...GIFT_CARD_REPORT_SUBJECTS,
 	'staff_pay',
 ] as const
 
@@ -168,6 +179,7 @@ export async function mintOperatorAnalyticsToken(options: {
 		(subject) =>
 			isStaffingReportSubject(subject) ||
 			isReservationsReportSubject(subject) ||
+			isGiftCardReportSubject(subject) ||
 			subject === STAFF_PAY_REPORT_PERMISSION,
 	)
 	if (staffGranted && options.scopeIds === undefined) {

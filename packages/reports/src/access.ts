@@ -1,4 +1,5 @@
 import { type ReportCatalog, type ReportSubject, getField } from './catalog.ts'
+import { isGiftCardReportSubject } from './catalog-gift-cards.ts'
 import { isReservationsReportSubject } from './catalog-reservations.ts'
 import {
 	STAFF_PAY_REPORT_PERMISSION,
@@ -30,6 +31,7 @@ function isGatedSubject(subject: string) {
 	return (
 		isStaffingReportSubject(subject) ||
 		isReservationsReportSubject(subject) ||
+		isGiftCardReportSubject(subject) ||
 		isOrgWideReportSubject(subject) ||
 		isPermissionGatedReportSubject(subject)
 	)
