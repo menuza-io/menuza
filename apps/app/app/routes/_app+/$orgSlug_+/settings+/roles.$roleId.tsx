@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { ReadOnlyRoleView } from '#app/components/roles/tenant-role-access-manager.tsx'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+import { isGiftCardFeatureEnabled } from '#app/utils/gift-cards/access.server.ts'
 import { isInventoryFeatureEnabled } from '#app/utils/inventory/access.server.ts'
 import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
@@ -34,11 +35,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reservationsEnabled,
 		loyaltyEnabled,
 		inventoryEnabled,
+		giftCardsEnabled,
 	] = await Promise.all([
 		isStaffingFeatureEnabled(organization.organizationId),
 		isReservationsFeatureEnabled(organization.organizationId),
 		isLoyaltyFeatureEnabled(organization.organizationId),
 		isInventoryFeatureEnabled(organization.organizationId),
+		isGiftCardFeatureEnabled(organization.organizationId),
 	])
 
 	return {
@@ -53,6 +56,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reservationsEnabled,
 		loyaltyEnabled,
 		inventoryEnabled,
+		giftCardsEnabled,
 	}
 }
 
@@ -65,6 +69,7 @@ export default function ViewRoleRoute() {
 		reservationsEnabled,
 		loyaltyEnabled,
 		inventoryEnabled,
+		giftCardsEnabled,
 	} = useLoaderData<typeof loader>()
 	const basePath = `/${organization.slug}/settings/roles`
 
@@ -77,6 +82,7 @@ export default function ViewRoleRoute() {
 			reservationsEnabled={reservationsEnabled}
 			loyaltyEnabled={loyaltyEnabled}
 			inventoryEnabled={inventoryEnabled}
+			giftCardsEnabled={giftCardsEnabled}
 		/>
 	)
 }

@@ -273,6 +273,14 @@ export const ORG_PERMISSIONS = {
 	UPDATE_INVENTORY_PURCHASING_ANY: 'update:inventory_purchasing:any' as const,
 	UPDATE_INVENTORY_RECIPE_ANY: 'update:inventory_recipe:any' as const,
 
+	// Gift cards: cards, balances, adjusting, voiding, charging from the App. Every
+	// gift card surface is also behind the org-level gift_cards.* feature flags
+	// (see apps/app utils/gift-cards/access.server.ts). Keep in sync with
+	// GIFT_CARD_PERMISSIONS in @repo/common/gift-cards.
+	READ_GIFT_CARD_ANY: 'read:gift_card:any' as const,
+	UPDATE_GIFT_CARD_ANY: 'update:gift_card:any' as const,
+	UPDATE_GIFT_CARD_CHARGE_ANY: 'update:gift_card_charge:any' as const,
+
 	// Recording a guest's marketing consent on their behalf (Customers, person
 	// profile). Acts only with READ_SETTINGS_ANY (the customers facet) and never
 	// while impersonating.

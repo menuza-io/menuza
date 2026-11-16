@@ -54,6 +54,7 @@ import { HttpError, notFound } from '../lib/http.ts'
 import { legacyPhoneForms } from '../lib/phone.ts'
 import { type LoyaltyTx } from '../lib/loyalty-write.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
+import { eraseGiftCardsInTx } from './gift-card-erasure.ts'
 import { eraseLoyaltyMembersInTx } from './loyalty-erasure.ts'
 import { erasePosHeldUploads } from './pos-service.ts'
 import { handleCancellationPayments } from './rsv-payment-refunds.ts'
@@ -145,6 +146,8 @@ export type ErasePersonResult = {
 	posOrdersScrubbed?: number
 	/** Present only when a loyalty member was erased with the person. */
 	loyaltyMembersErased?: number
+	/** Present only when gift cards named the person (their data was removed from them). */
+	giftCardsErased?: number
 	waitlistEntriesScrubbed: number
 	notifyRequestsScrubbed: number
 	voice: {
@@ -1130,6 +1133,15 @@ export async function erasePerson(
 					{ customerIds, now },
 				)
 
+				// ---- Gift cards ----------------------------------------------------------
+				// The cards stay as the organization's money record; the person's
+				// links, names, emails, notes and QR tokens go.
+				const giftCardErasure = await eraseGiftCardsInTx(tx, {
+					customerIds,
+					emails: identity.emails,
+					now,
+				})
+
 				// ---- Customer rows and everything keyed by them ----------------------
 				// Deleted explicitly, not only by FK cascade, so a missing foreign-key
 				// pragma can never leave a token, subscription or journey behind.
@@ -1187,6 +1199,7 @@ export async function erasePerson(
 					existing.length > 0 ||
 					restaurantOrdersScrubbed > 0 ||
 					qrTabsScrubbed > 0 ||
+					giftCardErasure.cardsErased > 0 ||
 					posOrdersScrubbed > 0 ||
 					posHeldScrubbed > 0 ||
 					waitlistIds.length > 0 ||
@@ -1214,6 +1227,9 @@ export async function erasePerson(
 						...(posOrdersScrubbed > 0 ? { posOrdersScrubbed } : {}),
 						...(loyalty.membersErased > 0
 							? { loyaltyMembersErased: loyalty.membersErased }
+							: {}),
+						...(giftCardErasure.cardsErased > 0
+							? { giftCardsErased: giftCardErasure.cardsErased }
 							: {}),
 						...voiceCounts(),
 					}
@@ -1275,6 +1291,9 @@ export async function erasePerson(
 					...(qrTabsScrubbed > 0 ? { qrTabsScrubbed } : {}),
 					...(loyalty.membersErased > 0
 						? { loyaltyMembersErased: loyalty.membersErased }
+						: {}),
+					...(giftCardErasure.cardsErased > 0
+						? { giftCardsErased: giftCardErasure.cardsErased }
 						: {}),
 					waitlistEntriesScrubbed: waitlistIds.length,
 					notifyRequestsScrubbed: notifyIds.length,

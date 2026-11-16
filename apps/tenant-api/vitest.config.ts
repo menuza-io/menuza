@@ -8,5 +8,7 @@ export default defineConfig({
 		// Suites provision real SQLite databases; 5s is too tight when every
 		// workspace's tests run in parallel.
 		testTimeout: 15000,
+		// Hooks do that provisioning: give them the same room (the default is 10s).
+		hookTimeout: 15000,
 	},
 })

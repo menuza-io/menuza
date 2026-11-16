@@ -10,6 +10,8 @@ import {
 	orderDiscountsRequestSchema,
 } from '@repo/discounts'
 import { z } from 'zod'
+import { giftCardCheckoutInputSchema } from './gift-card-contract.ts'
+import { giftCardPaymentRiskSchema } from './gift-cards.ts'
 import {
 	DAYS_OF_WEEK,
 	DEFAULT_SCHEDULING,
@@ -308,6 +310,14 @@ const restaurantOrderObjectSchema = z.strictObject({
 	 */
 	loyalty: orderLoyaltySelectionSchema.optional(),
 	/**
+	 * A gift card applied after discounts and loyalty (#110): a typed code or a
+	 * card saved to the guest's account, and the amount the page showed. The
+	 * region takes at most the balance and at most what is left to pay and
+	 * refuses a different amount with 409 `gift_card_changed`. Refused on a
+	 * table round (a tab pays at the table).
+	 */
+	giftCard: giftCardCheckoutInputSchema.optional(),
+	/**
 	 * A coupon code and the total discount the customer was shown. The region
 	 * re-evaluates every discount; `expectedDiscountMinor` is only compared
 	 * (409 `discount_changed`), never trusted.
@@ -601,6 +611,12 @@ export const orderPaymentStatusRequestSchema = z.strictObject({
 	currency: z.string().length(3),
 	/** One payment's provider id (Checkout.com shares the session per order). */
 	paymentId: z.string().min(1).max(200).optional(),
+	/**
+	 * What the provider said about the payment's risk (gift card purchases
+	 * only; ids and flags, never card data). Additive: an App that predates it
+	 * sends none and the purchase is judged on the region's own rules.
+	 */
+	risk: giftCardPaymentRiskSchema.optional(),
 })
 
 /**
@@ -786,6 +802,7 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		...(request.source ? { source: request.source } : {}),
 		...(request.loyalty ? { loyalty: request.loyalty } : {}),
 		...(request.discounts ? { discounts: request.discounts } : {}),
+		...(request.giftCard ? { giftCard: request.giftCard } : {}),
 		...(request.smsUpdates ? { smsUpdates: true } : {}),
 		...(request.expectedServiceFeeMinor !== undefined
 			? { expectedServiceFeeMinor: request.expectedServiceFeeMinor }

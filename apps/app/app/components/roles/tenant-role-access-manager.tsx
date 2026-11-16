@@ -70,6 +70,8 @@ export type PermissionGroup = {
 	loyalty?: boolean
 	/** Inventory module group: shown only when the organization has Inventory turned on. */
 	inventory?: boolean
+	/** Gift cards group: shown only when the organization has Gift cards turned on. */
+	giftCards?: boolean
 }
 
 export function getPermissionGroups(): PermissionGroup[] {
@@ -569,6 +571,30 @@ export function getPermissionGroups(): PermissionGroup[] {
 				},
 			],
 		},
+		{
+			title: t`Gift cards`,
+			giftCards: true,
+			description: t`Cards guests buy online and at the till. Only applies when Gift cards are turned on for your organization.`,
+			permissions: [
+				{
+					id: 'org_perm_read_gift_card_any',
+					label: t`View gift cards`,
+					description: t`See cards, their balances and history, and the gift card reports.`,
+				},
+				{
+					id: 'org_perm_update_gift_card_any',
+					label: t`Manage gift cards`,
+					description: t`Adjust balances, void cards, review held purchases, manage card stock and import cards. Includes View gift cards.`,
+					warning: t`Changes money owed to guests`,
+				},
+				{
+					id: 'org_perm_update_gift_card_charge_any',
+					label: t`Charge gift cards`,
+					description: t`Take a payment from a card for a phone, catering or invoice order, without being able to adjust balances. Includes View gift cards.`,
+					warning: t`Spends a guest's money`,
+				},
+			],
+		},
 	]
 }
 
@@ -791,6 +817,7 @@ export function RoleAccessForm({
 	reservationsEnabled = false,
 	loyaltyEnabled = false,
 	inventoryEnabled = false,
+	giftCardsEnabled = false,
 }: {
 	role?: TenantRole
 	cancelHref: string
@@ -805,6 +832,8 @@ export function RoleAccessForm({
 	loyaltyEnabled?: boolean
 	/** Whether Inventory is turned on for this organization. */
 	inventoryEnabled?: boolean
+	/** Whether Gift cards are turned on for this organization. */
+	giftCardsEnabled?: boolean
 }) {
 	const navigation = useNavigation()
 	// Editing saves through a fetcher so the save bar's redirect to the list is
@@ -835,7 +864,8 @@ export function RoleAccessForm({
 			(staffingEnabled || !group.staffing) &&
 			(reservationsEnabled || !group.reservations) &&
 			(loyaltyEnabled || !group.loyalty) &&
-			(inventoryEnabled || !group.inventory),
+			(inventoryEnabled || !group.inventory) &&
+			(giftCardsEnabled || !group.giftCards),
 	)
 	const rawPresets = getPresets().filter(
 		(preset) =>
@@ -866,7 +896,8 @@ export function RoleAccessForm({
 					(group.staffing && !staffingEnabled) ||
 					(group.reservations && !reservationsEnabled) ||
 					(group.loyalty && !loyaltyEnabled) ||
-					(group.inventory && !inventoryEnabled),
+					(group.inventory && !inventoryEnabled) ||
+					(group.giftCards && !giftCardsEnabled),
 			)
 			.flatMap((group) => group.permissions.map((p) => p.id)),
 	)
@@ -1207,6 +1238,7 @@ export function ReadOnlyRoleView({
 	reservationsEnabled = false,
 	loyaltyEnabled = false,
 	inventoryEnabled = false,
+	giftCardsEnabled = false,
 }: {
 	role: TenantRole
 	editHref?: string
@@ -1219,6 +1251,8 @@ export function ReadOnlyRoleView({
 	loyaltyEnabled?: boolean
 	/** Whether Inventory is turned on for this organization. */
 	inventoryEnabled?: boolean
+	/** Whether Gift cards are turned on for this organization. */
+	giftCardsEnabled?: boolean
 }) {
 	const { roleName, roleDescription } = useRoleLabels()
 	const permissionGroups = getPermissionGroups().filter(
@@ -1226,7 +1260,8 @@ export function ReadOnlyRoleView({
 			(staffingEnabled || !group.staffing) &&
 			(reservationsEnabled || !group.reservations) &&
 			(loyaltyEnabled || !group.loyalty) &&
-			(inventoryEnabled || !group.inventory),
+			(inventoryEnabled || !group.inventory) &&
+			(giftCardsEnabled || !group.giftCards),
 	)
 	const visibleIds = new Set(
 		permissionGroups.flatMap((group) => group.permissions.map((p) => p.id)),

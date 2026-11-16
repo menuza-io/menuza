@@ -62,11 +62,14 @@ export type ZatcaLine = {
 	category: 'S' | 'O'
 }
 
-export type ZatcaPaymentMeans = 'cash' | 'card' | 'other'
+export type ZatcaPaymentMeans = 'cash' | 'card' | 'other' | 'gift_card'
 const PAYMENT_MEANS_CODE: Record<ZatcaPaymentMeans, string> = {
 	cash: '10',
 	card: '48',
 	other: '1',
+	// A gift card is a payment method on redemption (instrument not defined):
+	// the VAT is on the food it paid for, never on the sale of the card.
+	gift_card: '1',
 }
 
 export type ZatcaDocumentInput = {

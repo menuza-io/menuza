@@ -19,6 +19,23 @@ import { createUser } from './db-utils.ts'
 
 import { convertSetCookieToCookie } from './utils.ts'
 
+/**
+ * One real hash per password per test process. bcrypt at the production cost
+ * takes about 200 ms in pure JavaScript (seconds on a busy CI runner), and most
+ * tests create several users with the same default password: hashing each one
+ * was close to half of the suite's test time. The cost factor is unchanged, so
+ * a test that signs in still verifies against a production-strength hash.
+ */
+const passwordHashes = new Map<string, Promise<string>>()
+function testPasswordHash(password: string): Promise<string> {
+	let hash = passwordHashes.get(password)
+	if (!hash) {
+		hash = getPasswordHash(password)
+		passwordHashes.set(password, hash)
+	}
+	return hash
+}
+
 export async function createTestUser({
 	username,
 	email,
@@ -37,7 +54,7 @@ export async function createTestUser({
 	const finalEmail = (email ?? `${finalUsername}@example.com`).toLowerCase()
 	const finalName = name ?? userData.name
 
-	const hashedPassword = await getPasswordHash(password)
+	const hashedPassword = await testPasswordHash(password)
 
 	const [user] = await db
 		.insert(User)

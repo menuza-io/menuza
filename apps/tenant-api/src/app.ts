@@ -65,11 +65,15 @@ import { reservationsPaymentsInternalRoutes } from './routes/reservations-paymen
 import { reservationsPublicRoutes } from './routes/reservations-public.ts'
 import { inventoryTickRoutes } from './routes/inventory-tick.ts'
 import { orderMessagesTickRoutes } from './routes/order-messages-tick.ts'
+import { giftCardRoutes } from './routes/gift-cards.ts'
+import { giftCardTickRoutes } from './routes/gift-cards-tick.ts'
 import { loyaltyTickRoutes } from './routes/loyalty-tick.ts'
 import { loyaltyRoutes } from './routes/loyalty.ts'
 import { operatorDiscountRoutes } from './routes/operator-discounts.ts'
+import { operatorGiftCardRoutes } from './routes/operator-gift-cards.ts'
 import { operatorInventoryRoutes } from './routes/operator-inventory.ts'
 import { operatorLoyaltyRoutes } from './routes/operator-loyalty.ts'
+import { posGiftCardRoutes } from './routes/pos-gift-cards.ts'
 import { posLoyaltyRoutes } from './routes/pos-loyalty.ts'
 
 import { rateLimit } from './lib/rate-limit.ts'
@@ -312,6 +316,23 @@ export function createTenantApiApp() {
 			: loyaltyReadRateLimit(c, next),
 	)
 
+	// Gift cards: a balance check and a purchase are the guessable or abusable
+	// calls, so they get their own tighter burst limit on top of the durable
+	// per-address, per-customer and per-organization guess limits.
+	const giftCardSensitiveRateLimit = rateLimit('gift-cards-sensitive', {
+		windowMs: 60 * 1000,
+		maxRequests: 30,
+	})
+	const giftCardReadRateLimit = rateLimit('gift-cards-reads', {
+		windowMs: 60 * 1000,
+		maxRequests: 240,
+	})
+	app.use('/gift-cards/*', (c, next) =>
+		c.req.method === 'POST'
+			? giftCardSensitiveRateLimit(c, next)
+			: giftCardReadRateLimit(c, next),
+	)
+
 	app.get('/health', healthHandler)
 	app.get('/api/health', healthHandler)
 
@@ -361,6 +382,7 @@ export function createTenantApiApp() {
 	app.route('/api/reservations/payments', reservationsPaymentsInternalRoutes)
 	app.route('/api/reservations', reservationsTickRoutes)
 	app.route('/api/loyalty', loyaltyTickRoutes)
+	app.route('/api/gift-cards', giftCardTickRoutes)
 	app.route('/api/inventory', inventoryTickRoutes)
 	app.route('/api/order-messages', orderMessagesTickRoutes)
 	app.route('/loyalty', loyaltyRoutes)
@@ -368,6 +390,9 @@ export function createTenantApiApp() {
 	app.route('/operator/discounts', operatorDiscountRoutes)
 	app.route('/operator/inventory', operatorInventoryRoutes)
 	app.route('/pos/loyalty', posLoyaltyRoutes)
+	app.route('/gift-cards', giftCardRoutes)
+	app.route('/operator/gift-cards', operatorGiftCardRoutes)
+	app.route('/pos/gift-cards', posGiftCardRoutes)
 	app.route('/api/voice/actions', reservationsVoiceActionRoutes)
 
 	app.notFound((c) => {

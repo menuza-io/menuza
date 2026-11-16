@@ -8,6 +8,7 @@ import {
 	Gift,
 	Send,
 	Utensils,
+	Wallet,
 	type LucideIcon,
 } from 'lucide-react-native'
 import { type ColorValue } from 'react-native'
@@ -15,6 +16,7 @@ import { type ColorValue } from 'react-native'
 export type CustomerIconName =
 	| 'calendar-outline'
 	| 'gift-outline'
+	| 'wallet-outline'
 	| 'person-circle-outline'
 	| 'chevron-back'
 	| 'chevron-forward'
@@ -26,6 +28,7 @@ export type CustomerIconName =
 const ICONS: Record<CustomerIconName, LucideIcon> = {
 	'calendar-outline': Calendar,
 	'gift-outline': Gift,
+	'wallet-outline': Wallet,
 	'person-circle-outline': CircleUser,
 	'chevron-back': ChevronLeft,
 	'chevron-forward': ChevronRight,

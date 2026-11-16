@@ -98,9 +98,11 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * `discountApplications` (optional, default empty) so a contract 5 upload
  * still parses. Version 7 added `readyTextPhone` (optional, default null) on
  * counter orders and `readyTextOptIn` (optional, default false) on phone
- * orders.
+ * orders. Version 8 added the `gift_card` payment method (a card redeemed at
+ * the till through `/pos/gift-cards/redeem`; the amount is a tender, the VAT
+ * stays on the food it paid for).
  */
-export const POS_CONTRACT_VERSION = 7
+export const POS_CONTRACT_VERSION = 8
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -110,7 +112,12 @@ export const POS_ORDER_STATUS_VALUES = [
 	'refunded',
 ] as const
 export type PosOrderStatus = (typeof POS_ORDER_STATUS_VALUES)[number]
-export const POS_PAYMENT_METHOD_VALUES = ['cash', 'card', 'other'] as const
+export const POS_PAYMENT_METHOD_VALUES = [
+	'cash',
+	'card',
+	'other',
+	'gift_card',
+] as const
 export const POS_ORDER_TYPE_VALUES = ['dine_in', 'takeaway'] as const
 export const POS_ORDER_SOURCE_VALUES = ['counter', 'phone'] as const
 export type PosOrderSource = (typeof POS_ORDER_SOURCE_VALUES)[number]

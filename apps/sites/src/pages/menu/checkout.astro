@@ -2,6 +2,7 @@
 import { msg } from '@lingui/core/macro'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
+import GiftCardLabels from '~/components/gift-cards/GiftCardLabels.astro'
 import LoyaltyLabels from '~/components/loyalty/LoyaltyLabels.astro'
 import MarketingConsentBoxes from '~/components/marketing/MarketingConsentBoxes.astro'
 import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
@@ -781,6 +782,9 @@ const inputClass =
 						</p>
 					</div>
 
+					{/* Gift card: applied after discounts and loyalty; filled in by the browser. */}
+					<div id="gift-card-block" class="mt-1 flex flex-col gap-2 border-t border-border pt-2" hidden></div>
+
 					{/* Breakdown (estimate — the receipt is authoritative) */}
 					<dl id="co-breakdown" class="mt-2 space-y-2 border-t border-border pt-4">
 						<div class={rowClass}>
@@ -892,6 +896,7 @@ const inputClass =
 	) : null}
 
 	<LoyaltyLabels />
+	<GiftCardLabels />
 
 	<script
 		id="checkout-meta"
@@ -937,6 +942,8 @@ const inputClass =
 			flagEmailConfirmationPending,
 		} from '~/lib/marketing-consent-client'
 		import { createLoyaltyClient } from '~/lib/loyalty-client'
+		import { createGiftCardCheckout, type GiftCardCheckout } from '~/lib/gift-cards/checkout'
+		import { readGiftCardLabels } from '~/lib/gift-cards/read-labels'
 		import { readLoyaltyLabels } from '~/lib/loyalty/read-labels'
 		import { orderLineName } from '~/lib/loyalty/reward-picker'
 		import {
@@ -1160,6 +1167,8 @@ const inputClass =
 			defaultLocale: document.documentElement.dataset.defaultLocale || 'en',
 		}
 		let discounts: DiscountQuotes | null = null
+		let giftCardCheckout: GiftCardCheckout | null = null
+		let giftCardRefreshTimer: ReturnType<typeof setTimeout> | undefined
 		// A coupon link (`?coupon=`) is kept like a typed code, unless this tab
 		// already let that code go (removed, replaced or refused for good). It
 		// then leaves the address bar, so a reload does not send it again.
@@ -1348,6 +1357,11 @@ const inputClass =
 		}
 
 		function renderCheckout() {
+			// An applied gift card is priced again after the order changes.
+			if (giftCardCheckout?.applied()) {
+				clearTimeout(giftCardRefreshTimer)
+				giftCardRefreshTimer = setTimeout(() => void giftCardCheckout?.refresh(), 400)
+			}
 			settleCoupon()
 			const totals = computeTotals()
 			const { subtotal, tax, deliveryFee, tip, total } = totals
@@ -2674,6 +2688,14 @@ const inputClass =
 				}
 				return
 			}
+			// A gift card goes out only as the region just priced it: a different
+			// amount stops here and the guest sees the new total.
+			if (giftCardCheckout && !(await giftCardCheckout.confirm())) {
+				setBusy(false)
+				renderCheckout()
+				showCheckoutError(readGiftCardLabels().giftCardChanged)
+				return
+			}
 			try {
 				const corePayload = checkoutOrderPayload(priced, {
 					contact: {
@@ -2690,6 +2712,7 @@ const inputClass =
 					},
 					// The fee on screen; the region prices it and refuses another.
 					expectedServiceFeeMinor: Math.round(computeTotals().serviceFee * 100),
+					giftCard: giftCardCheckout?.payload() ?? null,
 				})
 				// smsUpdates is part of the core payload: the region hashes it into
 				// the order, so a changed box must get a new attempt key.
@@ -2865,6 +2888,17 @@ const inputClass =
 				},
 				onChange: () => renderCheckout(),
 				coversTotalMessage: loyaltyLabels.pickerCoversOrder,
+			})
+		}
+
+		const giftCardMount = document.getElementById('gift-card-block')
+		if (giftCardMount && cart.length > 0) {
+			giftCardCheckout = createGiftCardCheckout({
+				mount: giftCardMount,
+				labels: readGiftCardLabels(),
+				currency: meta.currency || 'USD',
+				pricedOrder: loyaltyOrder,
+				onChange: () => renderCheckout(),
 			})
 		}
 

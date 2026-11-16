@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono'
 
+import { giftCardOrderRef as giftCardOrderRefOf, parseGiftCardOrderRef } from '@repo/common/gift-cards'
 import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import {
 	orderDisputeStatusRequestSchema,
@@ -12,6 +13,8 @@ import {
 } from '@repo/common/restaurant-orders'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 
+import { getGiftCardFlagState } from '../lib/gift-card-context.ts'
+import { isGiftCardsKillSwitchOn } from '../lib/gift-card-switches.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { isQrDineInDisabled } from '../lib/qr-tokens.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
@@ -31,6 +34,12 @@ import {
 	bindPaymentSession,
 	getOrderQuote,
 } from '../services/order-service.ts'
+import {
+	applyGiftCardDispute,
+	applyGiftCardPaymentEvent,
+	bindGiftCardPaymentSession,
+	getGiftCardQuote,
+} from '../services/gift-card-purchase-service.ts'
 import {
 	applyTabPaymentEvent,
 	bindTabPaymentSession,
@@ -144,9 +153,19 @@ orderSystemRoutes.post('/quote', async (c) => {
 
 	const tab = tabRef(c, parsed.data.orderId)
 	if (tab.denied) return tab.denied
+	const giftCardId = parseGiftCardOrderRef(parsed.data.orderId)
+	if (giftCardId && isGiftCardsKillSwitchOn()) {
+		return c.json({ error: 'unavailable' }, 503)
+	}
 
 	try {
-		const result = tab.tabId
+		const result = giftCardId
+			? await getGiftCardQuote(
+					parsed.data.orgId,
+					giftCardId,
+					parsed.data.paymentToken,
+				)
+			: tab.tabId
 			? await getTabQuote(
 					parsed.data.orgId,
 					tab.tabId,
@@ -190,9 +209,20 @@ orderSystemRoutes.post('/payment-session', async (c) => {
 
 	const tab = tabRef(c, parsed.data.orderId)
 	if (tab.denied) return tab.denied
+	const giftCardId = parseGiftCardOrderRef(parsed.data.orderId)
+	if (giftCardId && isGiftCardsKillSwitchOn()) {
+		return c.json({ error: 'unavailable' }, 503)
+	}
 
 	try {
-		const result = tab.tabId
+		const result = giftCardId
+			? await bindGiftCardPaymentSession({
+					orgId: parsed.data.orgId,
+					cardId: giftCardId,
+					sessionId: parsed.data.sessionId,
+					processor: parsed.data.processor,
+				})
+			: tab.tabId
 			? await bindTabPaymentSession({
 					orgId: parsed.data.orgId,
 					tabId: tab.tabId,
@@ -238,9 +268,23 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 	// Payment events are never dropped by the kill switch: money that already
 	// moved must still settle (or land in review).
 	const tabId = parseTabOrderRef(parsed.data.orderId)
+	const giftCardId = parseGiftCardOrderRef(parsed.data.orderId)
 
 	try {
-		const result = tabId
+		const result = giftCardId
+			? await applyGiftCardPaymentEvent({
+					orgId: parsed.data.orgId,
+					cardId: giftCardId,
+					sessionId: parsed.data.sessionId,
+					processor: parsed.data.processor,
+					status: parsed.data.status,
+					amountCents: parsed.data.amountCents,
+					currency: parsed.data.currency,
+					paymentId: parsed.data.paymentId,
+					risk: parsed.data.risk,
+					settings: (await getGiftCardFlagState(parsed.data.orgId)).settings,
+				})
+			: tabId
 			? await applyTabPaymentEvent({
 					orgId: parsed.data.orgId,
 					tabId,
@@ -425,6 +469,33 @@ orderSystemRoutes.post('/dispute-status', async (c) => {
 	if ('error' in request) return request.error
 	const body = request.data
 	try {
+		// A disputed gift card purchase freezes its card at once, whatever the
+		// kill switch says: money already moved must stay protected.
+		const giftCardId = body.orderId ? parseGiftCardOrderRef(body.orderId) : null
+		if (giftCardId || (!body.orderId && body.sessionId)) {
+			const frozen = await applyGiftCardDispute({
+				orgId: body.orgId,
+				cardId: giftCardId ?? undefined,
+				sessionId: giftCardId ? undefined : body.sessionId,
+				processor: body.processor,
+				status: body.status,
+			})
+			if (frozen.ok) {
+				return c.json({
+					orderId: giftCardOrderRefOf(frozen.cardId),
+					disputeStatus: body.status,
+					disputed: body.status === 'open' || body.status === 'lost',
+					applied: frozen.changed,
+				})
+			}
+			if (giftCardId) {
+				return failureResponse(c, {
+					status: 404,
+					code: 'order_not_found',
+					message: 'Order not found.',
+				})
+			}
+		}
 		const result = await applyDisputeStatus({
 			orgId: body.orgId,
 			orderId: body.orderId,

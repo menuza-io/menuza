@@ -2,7 +2,7 @@ import { type MessageDescriptor } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Icon } from '@repo/ui/icon'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
 import { quickCashAmounts } from '~/lib/cash.ts'
@@ -17,7 +17,9 @@ import {
 	type OrderDraft,
 } from '~/lib/orders.ts'
 import { computeTotals, lineTotalCents } from '~/lib/pricing.ts'
-import { shownLine } from '~/lib/store.ts'
+import { createGiftCardApi, GiftCardApiError } from '~/lib/gift-cards.ts'
+import { shownLine, usePos } from '~/lib/store.ts'
+import { giftCardErrorMessage, LabeledInput } from './GiftCardSheet.tsx'
 import { Keypad } from '~/ui/Keypad.tsx'
 import {
 	Input,
@@ -37,6 +39,7 @@ const METHOD_LABEL: Record<TenderMethod, MessageDescriptor> = {
 	cash: msg`Cash`,
 	card: msg`Card`,
 	other: msg`Other`,
+	gift_card: msg`Gift card`,
 }
 
 type Mode =
@@ -85,6 +88,11 @@ export function Checkout({
 	const [cashDigits, setCashDigits] = useState('')
 	/** Approval code from the card terminal, so the sale can be matched to the processor's statement. */
 	const [reference, setReference] = useState('')
+	/** The gift card number typed or scanned for a gift card tender. */
+	const [giftCode, setGiftCode] = useState('')
+	/** One request id per attempt: a retry after a failed save replays the same redemption. */
+	const giftRequestId = useRef(crypto.randomUUID())
+	const online = usePos((s) => s.online)
 	const [saving, setSaving] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [done, setDone] = useState<PosOrder | null>(null)
@@ -125,7 +133,8 @@ export function Checkout({
 	const quick = useMemo(() => quickCashAmounts(applied), [applied])
 	// A bill that comes to nothing has no payment to take: it is simply closed.
 	const free = totals.totalCents === 0 && !hasPayments
-	const canConfirm = !saving && (free || (applied > 0 && !short))
+	const giftReady = method !== 'gift_card' || (online && giftCode.trim().length >= 8)
+	const canConfirm = !saving && giftReady && (free || (applied > 0 && !short))
 
 	// After a payment the next one starts fresh, but a chosen split carries on:
 	// the next guest pays their share, not the whole remaining balance.
@@ -163,13 +172,38 @@ export function Checkout({
 				setDone(closed)
 				return
 			}
-			const payment = {
+			let payment = {
 				method,
 				amountCents: applied,
 				tenderedCents: tendered,
 				changeCents: change,
 				staff,
 				reference: method === 'cash' ? null : reference.trim() || null,
+			}
+			if (method === 'gift_card') {
+				// Online only and never queued: take the money off the card first
+				// (at most the balance), then record the tender with its reference.
+				const api = createGiftCardApi({
+					settings: () => usePos.getState().settings,
+					session: () => usePos.getState().session,
+				})
+				const view = await api.lookup(giftCode.trim())
+				const amount = Math.min(applied, view.balanceMinor)
+				if (amount <= 0) throw new GiftCardApiError(409, 'gift_card_balance_low')
+				const redeemed = await api.redeem({
+					code: giftCode.trim(),
+					amountMinor: amount,
+					saleId: current?.id ?? giftRequestId.current,
+					clientRequestId: giftRequestId.current,
+				})
+				payment = {
+					method,
+					amountCents: redeemed.redeemedMinor,
+					tenderedCents: redeemed.redeemedMinor,
+					changeCents: 0,
+					staff,
+					reference: redeemed.reference,
+				}
 			}
 			const next = current
 				? await addPayment(
@@ -181,6 +215,8 @@ export function Checkout({
 			setCurrent(next)
 			onSaved()
 			resetEntry()
+			setGiftCode('')
+			giftRequestId.current = crypto.randomUUID()
 			// Change is for the payment just taken; say so now, while the guest is still there.
 			setGiveChange(
 				next.status !== 'paid' && payment.changeCents > 0
@@ -190,7 +226,11 @@ export function Checkout({
 			if (next.status === 'paid') setDone(next)
 		} catch (e) {
 			setError(
-				e instanceof Error ? e.message : _(t`Could not save the payment`),
+				e instanceof GiftCardApiError
+					? giftCardErrorMessage(e, (m) => _(m))
+					: e instanceof Error
+						? e.message
+						: _(t`Could not save the payment`),
 			)
 		} finally {
 			setSaving(false)
@@ -493,8 +533,31 @@ export function Checkout({
 								label: _(METHOD_LABEL.other),
 								icon: <Icon name="wallet" className="size-5" />,
 							},
+							{
+								value: 'gift_card',
+								label: _(METHOD_LABEL.gift_card),
+								icon: <Icon name="credit-card" className="size-5" />,
+							},
 						]}
 					/>
+
+					{method === 'gift_card' ? (
+						<div className="flex flex-col gap-2">
+							{!online ? (
+								<p role="alert" className="notice-warning px-3 py-2 text-sm">
+									{_(t`Gift cards need the internet. Take another payment, or try again when the till is back online.`)}
+								</p>
+							) : null}
+							<LabeledInput
+								label={_(t`Gift card number or scan`)}
+								value={giftCode}
+								onChange={(event) => setGiftCode(event.target.value)}
+								autoComplete="off"
+								autoCapitalize="characters"
+								dir="ltr"
+							/>
+						</div>
+					) : null}
 
 					<div className="grid items-stretch gap-3 sm:grid-cols-2">
 						<Readout

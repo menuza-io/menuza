@@ -24,9 +24,11 @@ import {
 	readAlarmOrgId,
 	registerOrgTickModule,
 } from '../src/lib/org-alarm.ts'
+import { createGiftCardTickModule } from '../src/lib/gift-card-alarm.ts'
 import { createLoyaltyTickModule } from '../src/lib/loyalty-alarm.ts'
 import { createReservationsTickModule } from '../src/lib/reservations-alarm.ts'
 import { createStaffTickModule } from '../src/lib/staff-alarm.ts'
+import { runGiftCardTickForOrg } from '../src/services/gift-card-tick-service.ts'
 import { runLoyaltyTickForOrg } from '../src/services/loyalty-tick-service.ts'
 import { runReservationsTickForOrg } from '../src/services/rsv-tick-service.ts'
 import {
@@ -48,6 +50,9 @@ registerOrgTickModule(
 )
 registerOrgTickModule(
 	createLoyaltyTickModule((orgId, now) => runLoyaltyTickForOrg(orgId, { now })),
+)
+registerOrgTickModule(
+	createGiftCardTickModule((orgId, now) => runGiftCardTickForOrg(orgId, { now })),
 )
 
 /**
@@ -178,6 +183,7 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 				pathname === '/api/staff/tick' ||
 				pathname === '/api/reservations/tick' ||
 				pathname === '/api/loyalty/tick' ||
+				pathname === '/api/gift-cards/tick' ||
 				pathname === '/api/inventory/tick' ||
 				pathname === '/api/order-messages/tick'
 			const body = isTick

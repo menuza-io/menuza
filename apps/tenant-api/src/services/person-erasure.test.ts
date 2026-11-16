@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { defaultGiftCardSettings } from '@repo/common/gift-cards'
 import {
 	customerPaymentMethods,
 	customerRefreshTokens,
@@ -8,6 +9,11 @@ import {
 	customerSubscriptions,
 	destroyTenantDb,
 	getTenantDb,
+	giftCardIdempotencyKeys,
+	giftCardLedger,
+	giftCardPurchaseAttempts,
+	giftCardShowTokens,
+	giftCards,
 	journeyRuns,
 	journeyStepExecutions,
 	marketingCampaigns,
@@ -30,6 +36,12 @@ import {
 } from '@repo/tenant-db'
 import { eq, sql } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { giftCardFingerprint } from '../lib/gift-card-secret.ts'
+import { syncEnvFromProcess } from '../lib/secrets.ts'
+import { claimGiftCard, createShowToken } from './gift-card-account-service.ts'
+import { createGiftCardPurchase } from './gift-card-purchase-service.ts'
+import { sellGiftCard } from './gift-card-service.ts'
+import { giftCardBalance } from './gift-card-store.ts'
 import { containsAsToken, erasePerson } from './person-erasure-service.ts'
 
 const orgA = 'clw9x0a12000008l00erase1'
@@ -799,5 +811,233 @@ describe('person erasure', () => {
 		await expect(
 			erasePerson(a, { customerId: '' }, { actorId: 'user_1' }),
 		).rejects.toMatchObject({ code: 'invalid_erase_call' })
+	})
+})
+
+describe('person erasure of gift cards', () => {
+	let tempDir: string
+	let db: TenantDatabase
+	let n = 0
+	const rid = () => `req-erase-${Date.now().toString(36)}-${(n += 1)}`
+	const settings = defaultGiftCardSettings()
+	const actor = { id: 'user_manager', name: 'Pat Manager' }
+
+	beforeEach(async () => {
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-erase-gift-'))
+		process.env.TENANT_DB_DIR = tempDir
+		process.env.DATA_REGION = 'us'
+		process.env.AUTH_HMAC_SECRET = 'erase-gift-hmac-secret-0123456789abcdef'
+		syncEnvFromProcess()
+		await provisionTenantDb(orgA)
+		db = await getTenantDb(orgA)
+	})
+
+	afterEach(async () => {
+		await destroyTenantDb(orgA).catch(() => {})
+		fs.rmSync(tempDir, { recursive: true, force: true })
+	})
+
+	function purchase(
+		overrides: Partial<Parameters<typeof createGiftCardPurchase>[0]> = {},
+	) {
+		return createGiftCardPurchase({
+			orgId: orgA,
+			settings,
+			currency: 'USD',
+			locationId: 'loc_a',
+			amountMinor: 5000,
+			designKey: 'classic',
+			recipient: {
+				name: 'Friend Person',
+				email: `friend-${rid()}@example.test`,
+			},
+			sendToSelf: false,
+			senderName: 'Buyer Person',
+			message: 'Enjoy the meal',
+			deliverAt: null,
+			purchaser: {
+				customerId: null,
+				name: 'Buyer Person',
+				email: `buyer-${rid()}@example.test`,
+			},
+			locale: 'en',
+			deviceId: `device-${rid()}`,
+			...overrides,
+		})
+	}
+
+	async function till(amountMinor: number) {
+		return sellGiftCard({
+			orgId: orgA,
+			amountMinor,
+			currency: 'USD',
+			locationId: 'loc_a',
+			actor,
+			deviceId: 'dev_1',
+			clientRequestId: rid(),
+			paymentMethod: 'cash',
+			settings,
+		})
+	}
+
+	const cardRow = (id: string) =>
+		db.select().from(giftCards).where(eq(giftCards.id, id)).get()
+
+	it('removes the person from every card that names them and keeps the money record', async () => {
+		const id = await seedPerson(db, { name: NAME, phone: PHONE, email: EMAIL })
+		const other = await seedPerson(db, {
+			name: 'Olive Other',
+			phone: OTHER_PHONE,
+			email: 'olive.other@example.test',
+		})
+
+		// 1. A card the person bought online (account and name and email), still undelivered.
+		const bought = await purchase({
+			purchaser: { customerId: id, name: NAME, email: EMAIL },
+			senderName: NAME,
+			message: 'Happy birthday',
+		})
+		// 2. A till card the person saved to their account, with a QR token and a note naming them.
+		const sold = await till(3000)
+		await claimGiftCard({ orgId: orgA, customerId: id, code: sold.code! })
+		await createShowToken({ orgId: orgA, customerId: id, cardId: sold.cardId })
+		await db
+			.update(giftCardLedger)
+			.set({ note: `Refunded ${NAME} by hand` })
+			.where(eq(giftCardLedger.cardId, sold.cardId))
+		// 3. A card someone else bought for the person's email.
+		const received = await purchase({
+			recipient: { name: NAME, email: EMAIL.toUpperCase() },
+			message: 'For you',
+		})
+		// 4. A card that is another person's, and must not change.
+		const theirs = await till(2000)
+		await claimGiftCard({ orgId: orgA, customerId: other, code: theirs.code! })
+		const theirsBefore = JSON.stringify(await cardRow(theirs.cardId))
+		const balances = {
+			sold: await giftCardBalance(db, sold.cardId),
+			theirs: await giftCardBalance(db, theirs.cardId),
+		}
+		expect(
+			(await db.select().from(giftCardPurchaseAttempts)).some(
+				(row) => row.emailHash === giftCardFingerprint('email', EMAIL),
+			),
+		).toBe(true)
+
+		const result = await erasePerson(
+			db,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(result).toMatchObject({ erased: true, giftCardsErased: 3 })
+
+		// The dump scan: the person's name and email appear in no table.
+		expect(await tablesContaining(db, [EMAIL, NAME])).toEqual([])
+
+		// The purchaser is gone from the card they bought; the recipient is not theirs to erase.
+		const afterBought = await cardRow(bought.cardId)
+		expect(afterBought).toMatchObject({
+			purchaserCustomerId: null,
+			purchaserName: null,
+			purchaserEmail: null,
+			senderName: null,
+			erasedAt: expect.any(Number),
+		})
+		expect(afterBought?.receiptSentAt).not.toBeNull()
+		expect(afterBought?.recipientEmail).toMatch(/^friend-/)
+		// Undelivered, so the note is kept for the delivery the buyer paid for.
+		expect(afterBought?.message).toBe('Happy birthday')
+
+		// The saved card is unlinked, with its balance and its ledger kept.
+		expect(await cardRow(sold.cardId)).toMatchObject({
+			holderCustomerId: null,
+			heldAt: null,
+			erasedAt: expect.any(Number),
+		})
+		expect(await giftCardBalance(db, sold.cardId)).toBe(balances.sold)
+		const ledger = await db
+			.select()
+			.from(giftCardLedger)
+			.where(eq(giftCardLedger.cardId, sold.cardId))
+		expect(ledger.length).toBeGreaterThan(0)
+		expect(ledger.every((row) => row.note === null)).toBe(true)
+
+		// The recipient (matched by email in any case) is gone, and so is the note.
+		expect(await cardRow(received.cardId)).toMatchObject({
+			recipientName: null,
+			recipientEmail: null,
+			message: null,
+			erasedAt: expect.any(Number),
+		})
+
+		// Tokens and the person's limit fingerprints.
+		expect(
+			await db
+				.select()
+				.from(giftCardShowTokens)
+				.where(eq(giftCardShowTokens.customerId, id)),
+		).toEqual([])
+		expect(
+			(await db.select().from(giftCardPurchaseAttempts)).some(
+				(row) => row.emailHash === giftCardFingerprint('email', EMAIL),
+			),
+		).toBe(false)
+
+		// Another person's card is byte for byte the same.
+		expect(JSON.stringify(await cardRow(theirs.cardId))).toBe(theirsBefore)
+		expect(await giftCardBalance(db, theirs.cardId)).toBe(balances.theirs)
+		expect((await cardRow(theirs.cardId))?.holderCustomerId).toBe(other)
+
+		// The record names no one: counts only.
+		const [log] = await db.select().from(personErasureLog)
+		expect(log?.counts).toMatchObject({ giftCardsErased: 3 })
+		expect(JSON.stringify(log)).not.toContain(EMAIL)
+	})
+
+	it('is idempotent and touches nothing when no card names the person', async () => {
+		const id = await seedPerson(db, { name: NAME, phone: PHONE, email: EMAIL })
+		const sold = await till(1000)
+		const before = JSON.stringify(await cardRow(sold.cardId))
+		const result = await erasePerson(
+			db,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(result.giftCardsErased).toBeUndefined()
+		expect(JSON.stringify(await cardRow(sold.cardId))).toBe(before)
+		const again = await erasePerson(
+			db,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(again.giftCardsErased).toBeUndefined()
+	})
+
+	it('also removes a delivered card note of an erased purchaser and the stored responses of their cards', async () => {
+		const id = await seedPerson(db, { name: NAME, phone: PHONE, email: EMAIL })
+		const bought = await purchase({
+			purchaser: { customerId: id, name: NAME, email: EMAIL },
+			idempotency: {
+				scope: `purchase:${orgA}`,
+				key: `key-${rid()}`,
+				requestHash: 'h',
+			},
+		})
+		// Delivered already: the note goes with the purchaser.
+		await db
+			.update(giftCards)
+			.set({ deliveredAt: Date.now(), sealedCode: null })
+			.where(eq(giftCards.id, bought.cardId))
+		expect(
+			(await db.select().from(giftCardIdempotencyKeys)).length,
+		).toBeGreaterThan(0)
+		await erasePerson(db, { customerId: id }, { actorId: 'user_1' })
+		expect((await cardRow(bought.cardId))?.message).toBeNull()
+		expect(
+			await db
+				.select()
+				.from(giftCardIdempotencyKeys)
+				.where(eq(giftCardIdempotencyKeys.cardId, bought.cardId)),
+		).toEqual([])
 	})
 })

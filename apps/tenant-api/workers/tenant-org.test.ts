@@ -45,6 +45,12 @@ vi.mock('../src/services/rsv-tick-service.ts', () => ({
 vi.mock('../src/services/loyalty-tick-service.ts', () => ({
 	runLoyaltyTickForOrg: vi.fn(async () => ({ needsFollowUp: false })),
 }))
+vi.mock('../src/services/gift-card-tick-service.ts', () => ({
+	runGiftCardTickForOrg: vi.fn(async () => ({
+		needsFollowUp: false,
+		nextDueAt: null,
+	})),
+}))
 
 import { ORG_ALARM_ORG_KEY } from '../src/lib/org-alarm.ts'
 import { STAFF_ALARM_ORG_KEY } from '../src/lib/staff-alarm.ts'

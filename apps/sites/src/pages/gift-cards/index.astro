@@ -1,0 +1,57 @@
+---
+import { msg } from '@lingui/core/macro'
+import GiftCardLabels from '~/components/gift-cards/GiftCardLabels.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer, siteSection } from '~/lib/media'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const title = i18n._(msg`Buy a gift card`)
+const intro = i18n._(
+	msg`Send a gift card by email, or keep it for yourself. It works at every location.`,
+)
+const balanceLabel = i18n._(msg`Check a card's balance`)
+const loading = i18n._(msg`One moment…`)
+const tenantApiUrl = getTenantApiUrl(organization.dataRegion)
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
+const balanceHref = '/gift-cards/balance'
+
+// The page renders nothing about any card or person: the form is built by the
+// browser from the regional tenant-api (docs/tenant-data-residency.md).
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'gift-cards', title, slug: 'gift-cards', isHomePage: false, sections: [] }}
+	title={`${title} - ${organization.name}`}
+>
+	{
+		turnstileSiteKey && tenantApiUrl ? (
+			<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+		) : null
+	}
+	<section class={siteSection}>
+		<div class={`${siteContainer} flex max-w-xl flex-col gap-6`}>
+			<header class="flex flex-col gap-2">
+				<h1 class="text-3xl font-semibold">{title}</h1>
+				<p class="text-muted-foreground">{intro}</p>
+			</header>
+			<GiftCardLabels />
+			<div id="gift-card-buy-root" data-turnstile-site-key={turnstileSiteKey || undefined}>
+				<p role="status" data-gc-status class="text-sm text-muted-foreground">{loading}</p>
+				<div data-gc-form></div>
+			</div>
+			<a href={balanceHref} class="text-sm underline">{balanceLabel}</a>
+		</div>
+	</section>
+
+	<script>
+		import '../../scripts/gift-cards-page.ts'
+	</script>
+</SitePage>

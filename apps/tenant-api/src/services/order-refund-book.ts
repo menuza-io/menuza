@@ -24,6 +24,7 @@ import {
 } from '@repo/tenant-db'
 
 import { type OrderTx } from './order-service.ts'
+import { refundGiftShareInTx } from './gift-card-orders.ts'
 
 /**
  * The one place that decides what an order (or a tab payment) can still give
@@ -74,9 +75,15 @@ export async function orderCarriesLoyalty(
 
 /** What was captured for the order: its total once paid, else nothing. */
 export function orderPaidCents(
-	order: Pick<RestaurantOrder, 'paymentStatus' | 'totalCents'>,
+	order: Pick<RestaurantOrder, 'paymentStatus' | 'totalCents'> & {
+		giftCardCents?: number
+	},
 ): number {
-	return order.paymentStatus === 'paid' ? order.totalCents : 0
+	if (order.paymentStatus === 'paid') return order.totalCents
+	// An order a gift card paid in full took nothing from the provider, but the
+	// card's part is real money to give back.
+	if (order.paymentStatus === 'not_required') return order.giftCardCents ?? 0
+	return 0
 }
 
 /**
@@ -95,7 +102,7 @@ export function orderRefundableCents(
 	order: Pick<
 		RestaurantOrder,
 		'paymentStatus' | 'totalCents' | 'refundedCents' | 'refundReversedCents'
-	>,
+	> & { giftCardCents?: number },
 	pendingCents: number,
 ): number {
 	return refundableAmountCents({
@@ -325,7 +332,13 @@ export async function bookOrderProviderRefundInTx(
 		)
 		.limit(1)
 	if (previous) {
-		if (previous.kind !== 'provider' || previous.requestHash !== requestHash) {
+		// A refund a gift card covered whole is stored as a record row (no
+		// provider call), under the same key.
+		const giftOnly = previous.kind === 'record' && order.giftCardCents > 0
+		if (
+			(previous.kind !== 'provider' && !giftOnly) ||
+			previous.requestHash !== requestHash
+		) {
 			return bookFailure(
 				409,
 				'idempotency_conflict',
@@ -335,12 +348,20 @@ export async function bookOrderProviderRefundInTx(
 		return { ok: true, refund: previous, replayed: true }
 	}
 
+	// An order a gift card paid in full has no provider session: its refund is
+	// the card's alone.
+	const giftPaidInFull =
+		order.paymentMethod === 'online' &&
+		order.paymentStatus === 'not_required' &&
+		order.giftCardCents > 0 &&
+		!order.tabId
 	if (
-		order.paymentMethod !== 'online' ||
-		order.paymentStatus !== 'paid' ||
-		order.tabId ||
-		!order.paymentSessionId ||
-		!order.paymentProcessor
+		!giftPaidInFull &&
+		(order.paymentMethod !== 'online' ||
+			order.paymentStatus !== 'paid' ||
+			order.tabId ||
+			!order.paymentSessionId ||
+			!order.paymentProcessor)
 	) {
 		return bookFailure(
 			409,
@@ -389,14 +410,65 @@ export async function bookOrderProviderRefundInTx(
 		)
 	}
 
+	// Gift card first: whatever the card paid of this order goes back to the
+	// card, never more than that redemption took; only the rest goes through
+	// the provider. A refund the card covers whole is a settled record row.
+	const giftBackCents =
+		order.giftCardCents > 0
+			? await refundGiftShareInTx(tx, {
+					orderId: order.id,
+					wantMinor: amountCents,
+					key: input.idempotencyKey,
+					reason: 'order refunded',
+					actorId: input.actorId,
+					now: input.now,
+				})
+			: 0
+	const providerCents = amountCents - giftBackCents
+	if (giftBackCents > 0) {
+		const [giftRefund] = await tx
+			.insert(restaurantOrderRefunds)
+			.values({
+				orderId: order.id,
+				amountCents: giftBackCents,
+				serviceFeeCents: providerCents > 0 ? 0 : serviceFeeCents,
+				currency: order.currency,
+				full:
+					providerCents === 0 &&
+					orderRefundedNetCents(order) + giftBackCents >= order.totalCents,
+				note: input.note,
+				actorId: input.actorId,
+				idempotencyKey:
+					providerCents > 0 ? `${input.idempotencyKey}:gift` : input.idempotencyKey,
+				requestHash,
+				createdAt: input.now,
+				kind: 'record',
+				status: 'succeeded',
+				origin: input.origin,
+				updatedAt: input.now,
+			})
+			.returning()
+		await tx
+			.update(restaurantOrders)
+			.set({
+				refundedCents: order.refundedCents + giftBackCents,
+				updatedAt: new Date(input.now),
+			})
+			.where(eq(restaurantOrders.id, order.id))
+		if (providerCents === 0) {
+			return { ok: true, refund: giftRefund!, replayed: false }
+		}
+	}
 	const [refund] = await tx
 		.insert(restaurantOrderRefunds)
 		.values({
 			orderId: order.id,
-			amountCents,
+			amountCents: providerCents,
 			serviceFeeCents,
 			currency: order.currency,
-			full: orderRefundedNetCents(order) + amountCents >= order.totalCents,
+			full:
+				orderRefundedNetCents(order) + giftBackCents + providerCents >=
+				order.totalCents,
 			note: input.note,
 			actorId: input.actorId,
 			idempotencyKey: input.idempotencyKey,

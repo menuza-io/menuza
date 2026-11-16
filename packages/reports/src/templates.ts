@@ -986,6 +986,65 @@ const BOOKED_PARTIES: FilterCondition[] = [
  * (`templatesForGrants`). Date ranges stay short: a busy venue can hold more
  * rows than one report reads, so none of them runs over all time.
  */
+function giftCardTemplates(): ReportTemplate[] {
+	return [
+		template('organization', {
+			category: 'Gift cards',
+			subject: 'gift_card_sales',
+			id: 'gift-card-sales-by-day',
+			title: 'Gift card sales by day',
+			description:
+				'Cards sold and topped up each day over the last 30 days. Not food revenue.',
+			groupBy: ['businessDate'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'amount',
+			timeframePreset: 'last_30_days',
+			sortBy: 'label',
+		}),
+		template('organization', {
+			category: 'Gift cards',
+			subject: 'gift_card_redemptions',
+			id: 'gift-card-spent-by-location',
+			title: 'Gift card money spent by location',
+			description:
+				'Gift card money taken as payment at each location over the last 30 days.',
+			groupBy: ['location'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'amount',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			category: 'Gift cards',
+			subject: 'gift_card_balances',
+			id: 'gift-card-outstanding-by-age',
+			title: 'Outstanding gift card balance by age',
+			description:
+				'Money still owed to guests, split by how long ago the cards were issued.',
+			groupBy: ['ageBucket'],
+			chartStyle: 'pie',
+			measure: 'sum',
+			valueField: 'balance',
+			timeframePreset: 'all_time',
+			timeframeField: 'issuedAt',
+		}),
+		template('organization', {
+			category: 'Gift cards',
+			subject: 'gift_card_settlement',
+			id: 'gift-card-between-locations',
+			title: 'Gift cards between locations',
+			description:
+				'What each location owes or is owed over the last 30 days for cards sold at one place and spent at another. A report only: no money moves.',
+			groupBy: ['location'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'net',
+			timeframePreset: 'last_30_days',
+		}),
+	]
+}
+
 function reservationTemplates(): ReportTemplate[] {
 	const bookings = { category: 'Reservations', subject: 'bookings' } as const
 	return [
@@ -1206,6 +1265,7 @@ export function organizationTemplates(): ReportTemplate[] {
 		...laborTemplates(),
 		...hiringTemplates(),
 		...reservationTemplates(),
+		...giftCardTemplates(),
 		template('organization', {
 			id: 'phone-calls-by-week',
 			category: 'Phone calls',

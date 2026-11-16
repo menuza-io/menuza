@@ -27,6 +27,8 @@ export function checkoutOrderPayload(
 		 * different fee with 409 `service_fee_changed`.
 		 */
 		expectedServiceFeeMinor?: number
+		/** A gift card applied after discounts and loyalty (#110): `{code | savedCardId, expectedAmountMinor}`. */
+		giftCard?: Record<string, unknown> | null
 	},
 ): Record<string, unknown> {
 	const notes = extra.deliveryNotes?.trim()
@@ -38,6 +40,7 @@ export function checkoutOrderPayload(
 			: {}),
 		...(extra.reward ? { loyalty: extra.reward } : {}),
 		...(extra.discounts ? { discounts: extra.discounts } : {}),
+		...(extra.giftCard ? { giftCard: extra.giftCard } : {}),
 		...(wantsSmsUpdates(priced, extra) ? { smsUpdates: true } : {}),
 		...(extra.expectedServiceFeeMinor && extra.expectedServiceFeeMinor > 0
 			? { expectedServiceFeeMinor: extra.expectedServiceFeeMinor }

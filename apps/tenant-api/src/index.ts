@@ -18,6 +18,7 @@ import { assertZatcaSealKey } from './lib/zatca-seal.ts'
 import { startInventoryTickInterval } from './lib/inventory-tick-interval.ts'
 import { startOrderAcceptanceTickInterval } from './lib/order-acceptance-tick-interval.ts'
 import { startOrderMessagesTickInterval } from './lib/order-messages-tick-interval.ts'
+import { startGiftCardTickInterval } from './lib/gift-card-tick-interval.ts'
 import { startLoyaltyTickInterval } from './lib/loyalty-tick-interval.ts'
 import { startReservationsTickInterval } from './lib/reservations-tick-interval.ts'
 import { startStaffTickInterval } from './lib/staff-tick-interval.ts'
@@ -63,6 +64,9 @@ startReservationsTickInterval()
 
 // Sub-hourly loyalty tick (expired holds, approvals, reconciliation retries).
 startLoyaltyTickInterval()
+
+// Sub-hourly gift card tick (timed holds, lapsed purchases, due emails).
+startGiftCardTickInterval()
 
 // Sub-hourly inventory tick (retries alerts the App could not take) on this node.
 startInventoryTickInterval()

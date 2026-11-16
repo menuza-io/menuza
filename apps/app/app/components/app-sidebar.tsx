@@ -43,6 +43,10 @@ import {
 	type DiscountsNavAccess,
 } from '#app/utils/discounts/nav.ts'
 import {
+	HIDDEN_GIFT_CARD_NAV,
+	type GiftCardNavAccess,
+} from '#app/utils/gift-cards/nav.ts'
+import {
 	HIDDEN_INVENTORY_NAV,
 	type InventoryNavAccess,
 } from '#app/utils/inventory/nav.ts'
@@ -290,6 +294,8 @@ function OrganizationSidebar({
 		rootData?.loyaltyNav ?? HIDDEN_LOYALTY_NAV
 	const discountsNav: DiscountsNavAccess =
 		rootData?.discountsNav ?? HIDDEN_DISCOUNTS_NAV
+	const giftCardsNav: GiftCardNavAccess =
+		rootData?.giftCardsNav ?? HIDDEN_GIFT_CARD_NAV
 	const inventoryNav: InventoryNavAccess =
 		rootData?.inventoryNav ?? HIDDEN_INVENTORY_NAV
 	const printShopNav: PrintShopNavAccess =
@@ -410,6 +416,12 @@ function OrganizationSidebar({
 			url: `/${orgSlug}/discounts`,
 			isActive: location.pathname.startsWith(`/${orgSlug}/discounts`),
 			icon: DiscountIcon,
+		},
+		{
+			title: _(msg`Gift cards`),
+			url: `/${orgSlug}/gift-cards`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/gift-cards`),
+			icon: ReceiptIcon,
 		},
 		{
 			title: _(msg`Inventory`),
@@ -811,6 +823,9 @@ function OrganizationSidebar({
 			}
 			if (item.url === `/${orgSlug}/discounts`) {
 				return discountsNav.visible
+			}
+			if (item.url === `/${orgSlug}/gift-cards`) {
+				return giftCardsNav.visible
 			}
 			if (item.url === `/${orgSlug}/reservations`) {
 				return reservationsNav.visible

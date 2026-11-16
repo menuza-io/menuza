@@ -4,6 +4,7 @@ import { ORG_ALARM_LEGACY_ORG_KEY, ORG_ALARM_ORG_KEY } from './org-alarm.ts'
 const rsvTick = vi.hoisted(() => vi.fn())
 const staffTick = vi.hoisted(() => vi.fn())
 const loyaltyTick = vi.hoisted(() => vi.fn())
+const giftCardTick = vi.hoisted(() => vi.fn())
 const appFetch = vi.hoisted(() => vi.fn())
 const migrate = vi.hoisted(() => vi.fn(async () => {}))
 
@@ -40,6 +41,12 @@ vi.mock('../services/loyalty-tick-service.ts', async (importOriginal) => ({
 		typeof import('../services/loyalty-tick-service.ts')
 	>()),
 	runLoyaltyTickForOrg: loyaltyTick,
+}))
+vi.mock('../services/gift-card-tick-service.ts', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../services/gift-card-tick-service.ts')
+	>()),
+	runGiftCardTickForOrg: giftCardTick,
 }))
 
 const { TenantOrg, TENANT_ORG_HEADER } =
@@ -103,12 +110,14 @@ describe('TenantOrg alarm wiring', () => {
 		rsvTick.mockReset()
 		staffTick.mockReset()
 		loyaltyTick.mockReset()
+		giftCardTick.mockReset()
 		appFetch.mockReset()
 		migrate.mockClear()
 		appFetch.mockImplementation(async () => Response.json({ ok: true }))
 		rsvTick.mockResolvedValue({ needsFollowUp: false, nextDueAt: null })
 		staffTick.mockResolvedValue({ needsFollowUp: false, nextDueAt: null })
 		loyaltyTick.mockResolvedValue({ needsFollowUp: false, nextDueAt: null })
+		giftCardTick.mockResolvedValue({ needsFollowUp: false, nextDueAt: null })
 	})
 	afterEach(() => {
 		vi.useRealTimers()
@@ -240,6 +249,7 @@ describe('TenantOrg alarm wiring', () => {
 			expect(rsvTick).not.toHaveBeenCalled()
 			expect(staffTick).not.toHaveBeenCalled()
 			expect(loyaltyTick).not.toHaveBeenCalled()
+			expect(giftCardTick).not.toHaveBeenCalled()
 		})
 
 		it('runs every registered module for the stored organization with the current time', async () => {
@@ -253,6 +263,7 @@ describe('TenantOrg alarm wiring', () => {
 			expect(deps.deps.now()).toBe(NOW)
 			expect(staffTick).toHaveBeenCalledWith(ORG)
 			expect(loyaltyTick).toHaveBeenCalledWith(ORG, { now: NOW })
+			expect(giftCardTick).toHaveBeenCalledWith(ORG, { now: NOW })
 		})
 
 		it('still reads an organization stored under the legacy staffing key', async () => {
@@ -283,6 +294,16 @@ describe('TenantOrg alarm wiring', () => {
 			const { org, state } = makeOrg({ [ORG_ALARM_ORG_KEY]: ORG })
 			await org.alarm()
 			expect(state.alarm).toBe(NOW + 3 * 60 * 1000)
+		})
+
+		it('re-arms for the gift card module alone when only it has work', async () => {
+			giftCardTick.mockResolvedValue({
+				needsFollowUp: true,
+				nextDueAt: NOW + 2 * 60 * 1000,
+			})
+			const { org, state } = makeOrg({ [ORG_ALARM_ORG_KEY]: ORG })
+			await org.alarm()
+			expect(state.alarm).toBe(NOW + 2 * 60 * 1000)
 		})
 
 		it('does not re-arm when nothing needs a follow-up', async () => {

@@ -79,6 +79,16 @@
       "import": "./src/user-permissions.ts",
       "default": "./src/user-permissions.ts"
     },
+    "./gift-card-contract": {
+      "types": "./src/gift-card-contract.ts",
+      "import": "./src/gift-card-contract.ts",
+      "default": "./src/gift-card-contract.ts"
+    },
+    "./gift-cards": {
+      "types": "./src/gift-cards.ts",
+      "import": "./src/gift-cards.ts",
+      "default": "./src/gift-cards.ts"
+    },
     "./discounts-flags": {
       "types": "./src/discounts-flags.ts",
       "import": "./src/discounts-flags.ts",

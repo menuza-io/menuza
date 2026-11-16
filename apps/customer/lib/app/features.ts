@@ -1,4 +1,5 @@
 import { Platform } from 'react-native'
+import { GiftCardsStore } from '../gift-cards/gift-cards-store'
 import { LoyaltyStore } from '../loyalty/loyalty-store'
 import {
 	ReservationsClient,
@@ -15,6 +16,7 @@ import { type FeatureContext } from '../state/app-store'
 export type AppFeatures = {
 	readonly reservations: ReservationsStore
 	readonly loyalty: LoyaltyStore
+	readonly giftCards: GiftCardsStore
 }
 
 /** What tenant-api records as the channel (`native` for both). */
@@ -23,7 +25,7 @@ export function nativeClientPlatform(): ReservationsClientPlatform {
 }
 
 export type CustomerFeatureOptions = {
-	/** Loyalty learned the session is dead (revoked, another organization): sign out app-wide. */
+	/** Loyalty or gift cards learned the session is dead (revoked, another organization): sign out app-wide. */
 	readonly onSessionEnded?: () => void
 	/** Test seam; defaults to secure storage keyed by the organization. */
 	readonly reservationTokens?: (orgId: string) => ReservationTokenStore
@@ -37,12 +39,17 @@ export function createCustomerFeatures(
 	return {
 		reservations: new ReservationsStore({
 			client: new ReservationsClient(context.session, { platform }),
-			tokens: (
-				options.reservationTokens ?? createSecureReservationTokenStore
-			)(context.organization.id),
+			tokens: (options.reservationTokens ?? createSecureReservationTokenStore)(
+				context.organization.id,
+			),
 			localeCode: context.language().code,
 		}),
 		loyalty: new LoyaltyStore({
+			session: context.session,
+			platform,
+			onSessionEnded: options.onSessionEnded,
+		}),
+		giftCards: new GiftCardsStore({
 			session: context.session,
 			platform,
 			onSessionEnded: options.onSessionEnded,

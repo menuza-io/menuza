@@ -215,9 +215,40 @@ jobs:
           INTEGRATIONS_OAUTH_STATE_SECRET: test-oauth-state-secret-32-chars
           TRUST_PROXY: true
 
-  vitest:
-    name: ⚡ Vitest
+  # The unit tests run as eight parallel jobs: the App suite (700+ files) in
+  # four shards, the tenant-api suite (about 300 files that provision real
+  # SQLite databases) in three, and every other workspace in one. In one job
+  # the App suite alone took 25 to 60 minutes whenever it missed the Turbo
+  # cache, and a cold cache starved tenant-api until its hooks timed out. Each
+  # shard goes through Turbo, and the arguments after `--` are part of the task
+  # hash, so every shard is cached on its own.
+  #
+  # No `--coverage` here: nothing in CI reads or uploads the report, and
+  # instrumenting every file slowed each run. `npm run coverage -w app` gives
+  # the report locally.
+  vitest-run:
+    name: ⚡ Vitest (${{ matrix.name }})
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: packages
+            command: npx turbo run test --filter=!app --filter=!tenant-api
+          - name: tenant-api 1/3
+            command: npx turbo run test --filter=tenant-api -- --shard=1/3
+          - name: tenant-api 2/3
+            command: npx turbo run test --filter=tenant-api -- --shard=2/3
+          - name: tenant-api 3/3
+            command: npx turbo run test --filter=tenant-api -- --shard=3/3
+          - name: app 1/4
+            command: npx turbo run test --filter=app -- --shard=1/4
+          - name: app 2/4
+            command: npx turbo run test --filter=app -- --shard=2/4
+          - name: app 3/4
+            command: npx turbo run test --filter=app -- --shard=3/4
+          - name: app 4/4
+            command: npx turbo run test --filter=app -- --shard=4/4
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -257,7 +288,7 @@ jobs:
         run: npm run db:migrate:deploy && npm run db:generate
 
       - name: ⚡ Run vitest
-        run: npm run test -- -- --coverage
+        run: ${{ matrix.command }}
         env:
           BASE_URL: http://localhost:3001
           NODE_ENV: test
@@ -266,6 +297,21 @@ jobs:
           INTEGRATION_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           INTEGRATIONS_OAUTH_STATE_SECRET: test-oauth-state-secret-32-chars
           TRUST_PROXY: true
+
+  # One result for the jobs above. The deploy jobs and branch protection depend
+  # on this name, so it keeps the old job's id and title.
+  vitest:
+    name: ⚡ Vitest
+    runs-on: ubuntu-22.04
+    needs: [vitest-run]
+    if: always()
+    steps:
+      - name: ⚡ All unit test jobs passed
+        run: |
+          if [ "${{ needs.vitest-run.result }}" != "success" ]; then
+            echo "Unit tests: ${{ needs.vitest-run.result }}"
+            exit 1
+          fi
 
   playwright:
     name: 🎭 Playwright

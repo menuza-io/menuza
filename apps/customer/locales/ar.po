@@ -94,6 +94,10 @@ msgstr "{price}، كان {originalPrice}"
 msgid "+1 555 000 0000"
 msgstr "+1 555 000 0000"
 
+#: lib/gift-cards/labels.ts:58
+msgid "A card belongs to one account at a time. Adding it here moves it from any other account."
+msgstr "تنتمي البطاقة إلى حساب واحد في كل مرة. إضافتها هنا تنقلها من أي حساب آخر."
+
 #: lib/reservations/messages.ts:62
 msgid "A card is needed to guarantee this booking."
 msgstr "يلزم بطاقة لضمان هذا الحجز."
@@ -118,9 +122,21 @@ msgstr "حوالي {count} دقيقة"
 msgid "acme or acme.example.com"
 msgstr "acme أو acme.example.com"
 
+#: lib/gift-cards/labels.ts:22
+msgid "Add a card with its code to keep it here. You can still spend a card with only its code."
+msgstr "أضف بطاقة برمزها لتحتفظ بها هنا. ما زال بإمكانك استخدام البطاقة برمزها فقط."
+
+#: lib/gift-cards/labels.ts:51
+msgid "Add a gift card"
+msgstr "إضافة بطاقة هدايا"
+
 #: components/profile/messages-section.tsx:154
 msgid "Add an email address first"
 msgstr "أضف عنوان بريد إلكتروني أولاً"
+
+#: lib/gift-cards/labels.ts:55
+msgid "Add card"
+msgstr "إضافة البطاقة"
 
 #: lib/loyalty/labels.ts:113
 msgid "Adjusted by staff"
@@ -186,6 +202,18 @@ msgstr "بانتظار الدفع"
 msgid "Back"
 msgstr "رجوع"
 
+#: lib/gift-cards/labels.ts:26
+msgid "Balance"
+msgstr "الرصيد"
+
+#: lib/gift-cards/labels.ts:47
+msgid "Balance brought over"
+msgstr "رصيد منقول"
+
+#: lib/gift-cards/labels.ts:48
+msgid "Balance removed"
+msgstr "تمت إزالة الرصيد"
+
 #: lib/reservations/messages.ts:18
 msgid "Book a table"
 msgstr "احجز طاولة"
@@ -206,13 +234,26 @@ msgstr "إلغاء الحجز"
 msgid "Cancel this reservation?"
 msgstr "هل تريد إلغاء هذا الحجز؟"
 
+#: lib/gift-cards/labels.ts:34
 #: lib/reservations/messages.ts:105
 msgid "Cancelled"
 msgstr "ملغاة"
 
+#: lib/gift-cards/labels.ts:41
+msgid "Card bought"
+msgstr "تم شراء البطاقة"
+
+#: lib/gift-cards/labels.ts:46
+msgid "Card cancelled"
+msgstr "أُلغيت البطاقة"
+
 #: lib/reservations/messages.ts:89
 msgid "Change time"
 msgstr "تغيير الوقت"
+
+#: lib/gift-cards/labels.ts:45
+msgid "Changed by the business"
+msgstr "عدّله النشاط التجاري"
 
 #: components/ordering/menu-screen.tsx:161
 msgid "Check back later, or open the website menu."
@@ -312,6 +353,7 @@ msgid "Dietary needs"
 msgstr "الاحتياجات الغذائية"
 
 #: components/loyalty/notice-line.tsx:32
+#: lib/gift-cards/labels.ts:59
 msgid "Dismiss"
 msgstr "إغلاق"
 
@@ -319,7 +361,7 @@ msgstr "إغلاق"
 msgid "Done"
 msgstr "تم"
 
-#: app/(tabs)/_layout.tsx:58
+#: app/(tabs)/_layout.tsx:65
 #: components/ordering/drops-screen.tsx:153
 msgid "Drops"
 msgstr "الطروحات"
@@ -373,9 +415,14 @@ msgstr "أدخل رقم هاتفك. سنرسل إليك رمز تحقق."
 msgid "Enter your site address to load its branding."
 msgstr "أدخل عنوان موقعك لتحميل هويته."
 
+#: lib/gift-cards/labels.ts:35
 #: lib/reservations/messages.ts:108
 msgid "Expired"
 msgstr "منتهية الصلاحية"
+
+#: lib/gift-cards/labels.ts:27
+msgid "Expires {date}"
+msgstr "تنتهي الصلاحية في {date}"
 
 #: lib/loyalty/labels.ts:81
 #: lib/loyalty/labels.ts:92
@@ -414,13 +461,50 @@ msgstr "توصيل مجاني"
 msgid "Free to change until {time}"
 msgstr "التعديل مجاني حتى {time}"
 
+#: lib/gift-cards/labels.ts:33
+msgid "Frozen"
+msgstr "مجمّدة"
+
+#: lib/gift-cards/labels.ts:65
 #: lib/loyalty/labels.ts:78
 msgid "Get a new code"
 msgstr "الحصول على رمز جديد"
 
+#: lib/gift-cards/labels.ts:66
+msgid "Getting a code…"
+msgstr "جارٍ الحصول على رمز…"
+
 #: lib/loyalty/labels.ts:79
 msgid "Getting your code…"
 msgstr "جارٍ الحصول على رمزك…"
+
+#: lib/gift-cards/labels.ts:53
+msgid "Gift card code"
+msgstr "رمز بطاقة الهدايا"
+
+#: lib/gift-cards/labels.ts:25
+msgid "Gift card ending in {last4}"
+msgstr "بطاقة الهدايا المنتهية بـ {last4}"
+
+#: app/(tabs)/_layout.tsx:105
+msgid "Gift cards"
+msgstr "بطاقات الهدايا"
+
+#: lib/gift-cards/labels.ts:81
+msgid "Gift cards are not available on this site."
+msgstr "بطاقات الهدايا غير متاحة على هذا الموقع."
+
+#: lib/gift-cards/labels.ts:16
+msgid "Gift cards are not available right now"
+msgstr "بطاقات الهدايا غير متاحة حاليًا"
+
+#: lib/gift-cards/labels.ts:78
+msgid "Gift cards are not available right now. Please try again later."
+msgstr "بطاقات الهدايا غير متاحة حاليًا. يرجى المحاولة لاحقًا."
+
+#: lib/gift-cards/labels.ts:69
+msgid "Hide"
+msgstr "إخفاء"
 
 #: lib/loyalty/labels.ts:104
 msgid "History"
@@ -500,6 +584,10 @@ msgstr "جارٍ تحميل الطروحات"
 msgid "Loading the menu"
 msgstr "جارٍ تحميل القائمة"
 
+#: lib/gift-cards/labels.ts:15
+msgid "Loading your gift cards…"
+msgstr "جارٍ تحميل بطاقات الهدايا…"
+
 #: components/profile/profile-screen.tsx:64
 msgid "Loading your profile…"
 msgstr "جارٍ تحميل ملفك الشخصي…"
@@ -514,7 +602,7 @@ msgstr "جارٍ تحميل مكافآتك…"
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
 
-#: app/(tabs)/_layout.tsx:45
+#: app/(tabs)/_layout.tsx:52
 #: components/ordering/menu-screen.tsx:141
 msgid "Menu"
 msgstr "القائمة"
@@ -522,6 +610,10 @@ msgstr "القائمة"
 #: components/profile/messages-section.tsx:172
 msgid "Messages from {name}"
 msgstr "رسائل من {name}"
+
+#: lib/gift-cards/labels.ts:42
+msgid "Money added"
+msgstr "تمت إضافة مبلغ"
 
 #: components/reservations/parts.tsx:205
 msgid "More guests"
@@ -542,6 +634,7 @@ msgstr "حجوزاتي"
 msgid "Name"
 msgstr "الاسم"
 
+#: lib/gift-cards/labels.ts:75
 #: lib/loyalty/labels.ts:120
 msgid "Network error. Check your connection and try again."
 msgstr "خطأ في الشبكة. تحقق من اتصالك وحاول مرة أخرى."
@@ -561,6 +654,10 @@ msgstr "لا يوجد اتصال. حاول مرة أخرى."
 #: components/ordering/drops-screen.tsx:160
 msgid "No drops right now."
 msgstr "لا توجد طروحات حاليًا."
+
+#: lib/gift-cards/labels.ts:21
+msgid "No gift cards saved yet"
+msgstr "لا توجد بطاقات هدايا محفوظة بعد"
 
 #: lib/reservations/messages.ts:52
 msgid "No preference"
@@ -594,6 +691,10 @@ msgstr "رسوم عدم الحضور: {amount}"
 msgid "None"
 msgstr "بدون"
 
+#: lib/gift-cards/labels.ts:36
+msgid "Not activated"
+msgstr "غير مفعّلة"
+
 #: lib/reservations/messages.ts:35
 msgid "Not taking online reservations on this day."
 msgstr "لا يوجد حجز عبر الإنترنت في هذا اليوم."
@@ -613,6 +714,10 @@ msgstr "العروض والأخبار"
 #: lib/reservations/messages.ts:25
 msgid "OK"
 msgstr "حسنًا"
+
+#: lib/gift-cards/labels.ts:32
+msgid "On hold"
+msgstr "معلّقة"
 
 #: lib/loyalty/labels.ts:66
 msgid "One item. Paid extras are still charged."
@@ -718,7 +823,7 @@ msgstr "يرجى تسجيل الدخول مرة أخرى."
 msgid "Preferred time"
 msgstr "الوقت المفضل"
 
-#: app/(tabs)/_layout.tsx:98
+#: app/(tabs)/_layout.tsx:119
 #: lib/reservations/messages.ts:23
 msgid "Profile"
 msgstr "الملف الشخصي"
@@ -738,6 +843,14 @@ msgstr "التقدم نحو {reward}"
 #: lib/loyalty/labels.ts:49
 msgid "Purchases of at least {amount} qualify."
 msgstr "تُحتسب المشتريات التي لا تقل عن {amount}."
+
+#: lib/gift-cards/labels.ts:70
+msgid "QR code to scan at the till for the card ending in {last4}"
+msgstr "رمز QR لمسحه عند الصندوق للبطاقة المنتهية بـ {last4}"
+
+#: lib/gift-cards/labels.ts:29
+msgid "Recent activity"
+msgstr "النشاط الأخير"
 
 #: lib/loyalty/labels.ts:110
 msgid "Redeemed {reward}"
@@ -771,10 +884,14 @@ msgstr "الحجز"
 msgid "Reservation news"
 msgstr "أخبار الحجوزات"
 
-#: app/(tabs)/_layout.tsx:71
+#: app/(tabs)/_layout.tsx:78
 #: lib/reservations/messages.ts:17
 msgid "Reservations"
 msgstr "الحجوزات"
+
+#: lib/gift-cards/labels.ts:44
+msgid "Returned to the card"
+msgstr "أُعيد إلى البطاقة"
 
 #: lib/reservations/messages.ts:55
 msgid "Review"
@@ -788,7 +905,7 @@ msgstr "راجع حجزك"
 msgid "Reward returned"
 msgstr "إرجاع المكافأة"
 
-#: app/(tabs)/_layout.tsx:84
+#: app/(tabs)/_layout.tsx:91
 #: lib/loyalty/labels.ts:53
 msgid "Rewards"
 msgstr "المكافآت"
@@ -817,6 +934,10 @@ msgstr "سأتأخر"
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
+#: lib/gift-cards/labels.ts:56
+msgid "Saved the card ending in {last4}."
+msgstr "تم حفظ البطاقة المنتهية بـ {last4}."
+
 #: lib/reservations/messages.ts:103
 msgid "Seated"
 msgstr "جالسة"
@@ -841,6 +962,10 @@ msgstr "إرسال الرمز"
 msgid "Set price {amount}"
 msgstr "سعر ثابت {amount}"
 
+#: lib/gift-cards/labels.ts:64
+msgid "Show at the till"
+msgstr "اعرضه عند الصندوق"
+
 #: lib/loyalty/labels.ts:106
 msgid "Show more"
 msgstr "عرض المزيد"
@@ -853,6 +978,10 @@ msgstr "عرض رمزي"
 msgid "Show this code at the counter so staff can find your points."
 msgstr "أظهر هذا الرمز عند الكاونتر ليتمكن فريق العمل من العثور على نقاطك."
 
+#: lib/gift-cards/labels.ts:63
+msgid "Show this code to staff to pay with the card. It works once and stops working soon."
+msgstr "اعرض هذا الرمز على الموظف للدفع بالبطاقة. يعمل مرة واحدة فقط ويتوقف عن العمل قريبًا."
+
 #: lib/loyalty/labels.ts:76
 msgid "Showing your code does not spend any points. You approve every reward yourself."
 msgstr "عرض رمزك لا يستهلك أي نقاط. أنت من يوافق على كل مكافأة."
@@ -862,9 +991,17 @@ msgstr "عرض رمزك لا يستهلك أي نقاط. أنت من يوافق 
 msgid "Sign in"
 msgstr "تسجيل الدخول"
 
+#: lib/gift-cards/labels.ts:18
+msgid "Sign in to see your gift cards"
+msgstr "سجّل الدخول لعرض بطاقات الهدايا"
+
 #: lib/loyalty/labels.ts:24
 msgid "Sign in to see your rewards"
 msgstr "سجّل الدخول لعرض مكافآتك"
+
+#: lib/gift-cards/labels.ts:19
+msgid "Sign in with your phone number to keep your gift cards here."
+msgstr "سجّل الدخول برقم هاتفك لتحتفظ ببطاقات الهدايا هنا."
 
 #: lib/loyalty/labels.ts:25
 msgid "Sign in with your phone number to see your points and use your rewards."
@@ -882,11 +1019,16 @@ msgstr "عنوان الموقع"
 msgid "Sold out"
 msgstr "نفد المخزون"
 
+#: lib/gift-cards/labels.ts:74
 #: lib/i18n/app-error-message.ts:41
 #: lib/loyalty/labels.ts:130
 #: lib/reservations/messages.ts:137
 msgid "Something went wrong. Please try again."
 msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+
+#: lib/gift-cards/labels.ts:54
+msgid "Spaces and dashes do not matter."
+msgstr "المسافات والشرطات لا تهم."
 
 #: lib/reservations/messages.ts:50
 msgid "Special requests"
@@ -895,6 +1037,14 @@ msgstr "طلبات خاصة"
 #: lib/loyalty/labels.ts:91
 msgid "Spends {points} for {amount} off"
 msgstr "يستخدم {points} مقابل خصم {amount}"
+
+#: lib/gift-cards/labels.ts:43
+msgid "Spent"
+msgstr "مُستخدم"
+
+#: lib/gift-cards/labels.ts:67
+msgid "Stops working in {time}"
+msgstr "يتوقف عن العمل خلال {time}"
 
 #: components/profile/profile-screen.tsx:142
 msgid "System default"
@@ -920,6 +1070,14 @@ msgstr "رسالة نصية"
 msgid "Text me reminders"
 msgstr "أرسل لي تذكيرات نصية"
 
+#: lib/gift-cards/labels.ts:79
+msgid "That code did not work. Check it and try again."
+msgstr "لم يعمل هذا الرمز. تحقق منه وحاول مرة أخرى."
+
+#: lib/gift-cards/labels.ts:68
+msgid "That code has expired. Get a new one."
+msgstr "انتهت صلاحية هذا الرمز. احصل على رمز جديد."
+
 #: lib/i18n/app-error-message.ts:21
 msgid "That code isn't right or has expired. Try again."
 msgstr "هذا الرمز غير صحيح أو منتهي الصلاحية. حاول مرة أخرى."
@@ -943,6 +1101,10 @@ msgstr "تمت معالجة هذا الطلب بالفعل."
 #: lib/reservations/messages.ts:122
 msgid "That time was just taken. Pick another."
 msgstr "تم حجز هذا الوقت للتو. اختر وقتًا آخر."
+
+#: lib/gift-cards/labels.ts:57
+msgid "The card ending in {last4} is already saved to your account."
+msgstr "البطاقة المنتهية بـ {last4} محفوظة بالفعل في حسابك."
 
 #: components/ordering/menu-screen.tsx:112
 msgid "The menu could not be loaded."
@@ -984,9 +1146,25 @@ msgstr "قائمة الانتظار ممتلئة حاليًا."
 msgid "This business is not running a rewards program at the moment."
 msgstr "لا يقدّم هذا النشاط التجاري برنامج مكافآت في الوقت الحالي."
 
+#: lib/gift-cards/labels.ts:17
+msgid "This business is not selling gift cards at the moment."
+msgstr "لا يبيع هذا النشاط التجاري بطاقات الهدايا في الوقت الحالي."
+
+#: lib/gift-cards/labels.ts:80
+msgid "This card cannot be added right now."
+msgstr "لا يمكن إضافة هذه البطاقة حاليًا."
+
+#: lib/gift-cards/labels.ts:38
+msgid "This card cannot be used right now. Contact the business for help."
+msgstr "لا يمكن استخدام هذه البطاقة حاليًا. يُرجى التواصل مع النشاط التجاري للمساعدة."
+
 #: lib/loyalty/labels.ts:82
 msgid "This code has expired. Get a new one."
 msgstr "انتهت صلاحية هذا الرمز. احصل على رمز جديد."
+
+#: lib/gift-cards/labels.ts:71
+msgid "This is not your card code. It cannot be used after it expires."
+msgstr "هذا ليس رمز بطاقتك. لا يمكن استخدامه بعد انتهاء صلاحيته."
 
 #: lib/reservations/messages.ts:132
 msgid "This party size needs a request."
@@ -1016,6 +1194,7 @@ msgstr "محاولات كثيرة. حاول مرة أخرى بعد دقائق."
 msgid "Too many attempts. Please try again later."
 msgstr "محاولات كثيرة جدًا. يرجى المحاولة لاحقًا."
 
+#: lib/gift-cards/labels.ts:76
 #: lib/loyalty/labels.ts:121
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلًا ثم المحاولة مرة أخرى."
@@ -1024,6 +1203,7 @@ msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلً
 #: components/ordering/drops-screen.tsx:117
 #: components/ordering/menu-screen.tsx:114
 #: components/ui/error-message.tsx:28
+#: lib/gift-cards/labels.ts:20
 #: lib/loyalty/labels.ts:28
 #: lib/reservations/messages.ts:15
 #: lib/reservations/messages.ts:40
@@ -1037,6 +1217,10 @@ msgstr "جرّب أحد هذه الأوقات"
 #: components/profile/messages-section.tsx:228
 msgid "Turning a switch off never affects receipts or booking confirmations."
 msgstr "إيقاف أي مفتاح لا يؤثر أبداً على الإيصالات أو تأكيدات الحجز."
+
+#: lib/gift-cards/labels.ts:52
+msgid "Type or paste the code from your email or card."
+msgstr "اكتب الرمز الموجود في بريدك الإلكتروني أو على البطاقة أو الصقه."
 
 #: lib/loyalty/labels.ts:58
 msgid "Up to {amount} off"
@@ -1067,6 +1251,10 @@ msgstr "استخدم موقعًا آخر"
 msgid "Use a reward when you order, or show your code at the counter."
 msgstr "استخدم مكافأة عند الطلب، أو أظهر رمزك عند الكاونتر."
 
+#: lib/gift-cards/labels.ts:62
+msgid "Use at the till"
+msgstr "الاستخدام عند الصندوق"
+
 #: components/ordering/menu-screen.tsx:213
 msgid "Use code {code}"
 msgstr "استخدم الرمز {code}"
@@ -1086,6 +1274,10 @@ msgstr "تحقق من هاتفك أولاً"
 #: lib/reservations/messages.ts:83
 msgid "View reservation"
 msgstr "عرض الحجز"
+
+#: lib/gift-cards/labels.ts:37
+msgid "Waiting for payment"
+msgstr "في انتظار الدفع"
 
 #: lib/reservations/messages.ts:110
 msgid "Waitlist"
@@ -1195,6 +1387,10 @@ msgstr "رصيدك أقل من الصفر بسبب استرداد. سترفعه 
 msgid "Your balance is too low for this reward."
 msgstr "رصيدك غير كافٍ لهذه المكافأة."
 
+#: lib/gift-cards/labels.ts:28
+msgid "Your card will be delivered soon. It is being prepared."
+msgstr "ستُسلَّم بطاقتك قريبًا. جارٍ تجهيزها."
+
 #: lib/loyalty/labels.ts:74
 msgid "Your code"
 msgstr "رمزك"
@@ -1243,6 +1439,7 @@ msgstr "حسابك في برنامج المكافآت معلّق."
 msgid "Your rewards account is on hold. Please contact the business for help."
 msgstr "حسابك في برنامج المكافآت معلّق. يُرجى التواصل مع النشاط التجاري للمساعدة."
 
+#: lib/gift-cards/labels.ts:77
 #: lib/i18n/app-error-message.ts:29
 #: lib/loyalty/labels.ts:128
 msgid "Your session ended. Please sign in again."

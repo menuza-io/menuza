@@ -4778,6 +4778,31 @@ export const DiscountCode = sqliteTable(
 )
 
 /**
+ * Gift card settings (#110, #214, #218): presets, bounds, expiry, designs and
+ * purchase limits, one row per organization. Settings only: no card, code,
+ * balance or person lives in the control plane (they stay in the region). The
+ * JSON is `giftCardSettingsSchema` in `@repo/common/gift-cards`; an
+ * organization with no row uses the defaults.
+ */
+export const GiftCardSettings = sqliteTable('GiftCardSettings', {
+	organizationId: text()
+		.primaryKey()
+		.references(() => Organization.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+	settings: text().notNull(),
+	updatedById: text().references(() => User.id, {
+		onDelete: 'set null',
+		onUpdate: 'cascade',
+	}),
+	updatedAt: integer({ mode: 'timestamp_ms' })
+		.$defaultFn(() => new Date())
+		.$onUpdate(() => new Date())
+		.notNull(),
+})
+
+/**
  * A restaurant's own saved email layout (#154): a name and the designer's
  * blocks, nothing else. No audience, no coupon, no schedule: merge tags stay as
  * tags, and starting from a template copies it, so editing one later never

@@ -1,3 +1,4 @@
+import { giftCardSubjects } from './catalog-gift-cards.ts'
 import { reservationsSubjects } from './catalog-reservations.ts'
 import { staffingSubjects } from './catalog-staffing.ts'
 import { type Measure, type ValueMeasure, isRatioMeasure } from './dsl.ts'
@@ -1120,6 +1121,7 @@ export const organizationCatalog: ReportCatalog = {
 		},
 		...staffingSubjects,
 		...reservationsSubjects,
+		...giftCardSubjects,
 		{
 			id: 'notes',
 			label: 'Notes',

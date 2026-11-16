@@ -7,7 +7,7 @@ import { type Adjustment, type CartLine, type Totals } from './pricing.ts'
 import { type CatalogSnapshot } from './types.ts'
 
 export type OrderType = 'dine_in' | 'takeaway'
-export type TenderMethod = 'cash' | 'card' | 'other'
+export type TenderMethod = 'cash' | 'card' | 'other' | 'gift_card'
 export type SyncState = 'pending' | 'syncing' | 'synced' | 'rejected'
 
 export type OrderStatus = 'open' | 'paid' | 'void' | 'refunded'

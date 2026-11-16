@@ -1,0 +1,16 @@
+---
+import { buildGiftCardLabels } from '~/lib/gift-cards/labels'
+
+/**
+ * Emits the translated interface strings for the gift card client modules.
+ * Read with `readGiftCardLabels()` from `~/lib/gift-cards/read-labels`.
+ */
+const labels = buildGiftCardLabels(Astro.locals.i18n)
+---
+
+<script
+	id="gift-card-labels"
+	type="application/json"
+	is:inline
+	set:html={JSON.stringify(labels).replace(/</g, '\\u003c')}
+/>

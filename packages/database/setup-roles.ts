@@ -626,6 +626,35 @@ const ORG_PERMISSIONS = [
 		context: 'organization',
 		description: 'Edit dish recipes, typed costs, and sold out settings',
 	},
+	// Gift cards (#110, #215). Keep in sync with GIFT_CARD_PERMISSIONS in
+	// @repo/common/gift-cards and the control-plane migration 0050_gift_cards.
+	{
+		id: 'org_perm_read_gift_card_any',
+		action: 'read',
+		entity: 'gift_card',
+		access: 'any',
+		context: 'organization',
+		description:
+			'View gift cards, their balances and history, and the gift card reports',
+	},
+	{
+		id: 'org_perm_update_gift_card_any',
+		action: 'update',
+		entity: 'gift_card',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Adjust and void gift cards, review held purchases, manage card stock and import cards',
+	},
+	{
+		id: 'org_perm_update_gift_card_charge_any',
+		action: 'update',
+		entity: 'gift_card_charge',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Charge a gift card from the App for a phone, catering or invoice payment',
+	},
 	// Marketing consent recorded by staff on a guest's behalf. Keep in sync
 	// with 0044_marketing_consent_permission. Admins only by default.
 	{

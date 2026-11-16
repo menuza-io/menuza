@@ -60,6 +60,15 @@ import {
 	type StaffReportContext,
 } from '../services/staffing-report-records.ts'
 import {
+	GIFT_CARD_REPORT_MAX_ROWS,
+	loadGiftCardReportRecords,
+} from '../services/gift-card-report-records.ts'
+import { getReservationsContext } from '../lib/reservations-context.ts'
+import {
+	isGiftCardReportSubject,
+	type GiftCardReportSubject,
+} from '@repo/reports/token'
+import {
 	loadTodayTotals,
 	TODAY_MAX_LOCATIONS,
 } from '../services/today-totals.ts'
@@ -87,6 +96,10 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'bookings',
 	'waitlist_entries',
 	'pacing_slots',
+	'gift_card_sales',
+	'gift_card_redemptions',
+	'gift_card_balances',
+	'gift_card_settlement',
 ])
 
 const REPEAT_CALLER_WINDOW_MS = 30 * 86_400_000
@@ -477,6 +490,38 @@ analyticsRoutes.post('/query', async (c) => {
 		records = loaded.records
 		sourceTruncated = loaded.truncated
 		sourceRowLimit = records.length
+	} else if (isGiftCardReportSubject(definition.subject)) {
+		// Money facts only; limited to the token's locations. A report run on a
+		// kill-switched node still works: it reads, it never sells.
+		let loaded
+		try {
+			const names = new Map<string, string>()
+			try {
+				const context = await getReservationsContext(claims.orgId)
+				for (const location of context?.locations ?? []) names.set(location.id, location.name)
+			} catch {
+				// Names are a courtesy: the id stands in.
+			}
+			loaded = await loadGiftCardReportRecords(
+				{
+					db,
+					locationIds: claims.scopeIds,
+					now: now.getTime(),
+					timeZone,
+					locationNames: names,
+				},
+				definition.subject as GiftCardReportSubject,
+			)
+		} catch (error) {
+			console.error('Gift card report failed', describeStaffError(error))
+			return c.json(
+				{ error: 'report_failed', message: 'The report could not be run.' },
+				500,
+			)
+		}
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = GIFT_CARD_REPORT_MAX_ROWS
 	} else if (definition.subject === 'customers') {
 		records = await loadCustomerRecords(db, claims.orgId, subject, definition)
 	} else if (definition.subject === 'text_subscribers') {

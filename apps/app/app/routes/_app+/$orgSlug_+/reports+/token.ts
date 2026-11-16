@@ -14,6 +14,7 @@ import {
 import { isInsecureSecret, isProductionLike } from '@repo/security'
 import { data } from 'react-router'
 import { ENV } from 'varlock/env'
+import { resolveGiftCardReportAccess } from '#app/utils/gift-cards/report-access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import {
@@ -75,19 +76,36 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		userId,
 		organizationId: organization.id,
 	})
+	// Gift card reports follow the gift_cards.enabled flag and
+	// `read:gift_card:any`, limited to the person's locations.
+	const giftCards = await resolveGiftCardReportAccess({
+		request,
+		userId,
+		organizationId: organization.id,
+	})
 	if (
 		!hasAdminAccess &&
 		staff.subjects.length === 0 &&
-		reservations.subjects.length === 0
+		reservations.subjects.length === 0 &&
+		giftCards.subjects.length === 0
 	) {
 		throw createForbiddenResponse(REPORT_ADMIN_PERMISSIONS.join(' or '))
 	}
+	// Each module that grants subjects limits the token to its own scopes; the
+	// token carries the narrowest of them. With none granted, staff's (empty).
+	const scoped = [staff, reservations, giftCards].filter(
+		(module) => module.subjects.length > 0,
+	)
 	const scopeIds =
-		staff.subjects.length > 0 && reservations.subjects.length > 0
-			? intersectScopeIds(staff.scopeIds, reservations.scopeIds)
-			: reservations.subjects.length > 0
-				? reservations.scopeIds
-				: staff.scopeIds
+		scoped.length === 0
+			? staff.scopeIds
+			: scoped
+					.map((module) => module.scopeIds)
+					.reduce<string[] | null>(
+						(narrow, next, index) =>
+							index === 0 ? next : intersectScopeIds(narrow, next),
+						null,
+					)
 	const subjects: RestrictedReportSubject[] = [
 		// A module-only grant never lists the organization-wide subjects.
 		...(hasAdminAccess ? ORG_WIDE_REPORT_SUBJECTS : []),
@@ -95,6 +113,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
 		...staff.subjects,
 		...reservations.subjects,
+		...giftCards.subjects,
 	]
 
 	// A production build on localhost (E2E, build + preview) may keep the schema
