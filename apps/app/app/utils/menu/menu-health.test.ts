@@ -992,7 +992,11 @@ describe('dismissals', () => {
 })
 
 describe('performance', () => {
-	test('2,000 dishes, 200 groups and 100 dismissals in under 50 ms', () => {
+	// Guards against an accidental quadratic pass, not against a slow machine:
+	// this takes a few milliseconds, and a quadratic version takes seconds. The
+	// budget is wide and the best of several runs counts, so a loaded CI runner
+	// with coverage on cannot fail it (50 ms did, at 75 ms).
+	test('2,000 dishes, 200 groups and 100 dismissals stay fast', () => {
 		const items = Array.from({ length: 2000 }, (_, i) =>
 			item({
 				id: `i${i}`,
@@ -1029,12 +1033,12 @@ describe('performance', () => {
 		const full = { ...input, dismissals }
 		run(full) // warm-up
 		let best = Infinity
-		for (let i = 0; i < 3; i++) {
+		for (let i = 0; i < 5; i++) {
 			const start = performance.now()
 			run(full)
 			best = Math.min(best, performance.now() - start)
 		}
-		expect(best).toBeLessThan(50)
+		expect(best).toBeLessThan(250)
 	})
 })
 
