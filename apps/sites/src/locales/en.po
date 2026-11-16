@@ -538,6 +538,10 @@ msgstr "Before we send your order"
 msgid "Being prepared. Your card will be delivered within 2 hours."
 msgstr "Being prepared. Your card will be delivered within 2 hours."
 
+#: src/components/BirthdayField.astro.ts:3
+msgid "Birthday (optional)"
+msgstr "Birthday (optional)"
+
 #: src/lib/reservations/labels.ts:65
 msgid "Book {time}"
 msgstr "Book {time}"
@@ -821,6 +825,11 @@ msgstr "Choose a new time"
 msgid "Choose a pickup time to continue"
 msgstr "Choose a pickup time to continue"
 
+#: src/pages/complete-name.astro.ts:3
+#: src/pages/profile.astro.ts:3
+msgid "Choose a real month and day."
+msgstr "Choose a real month and day."
+
 #: src/components/drops/PickupPicker.astro.ts:3
 #: src/lib/ordering-labels.ts:197
 #: src/lib/reservations/labels.ts:33
@@ -1028,6 +1037,10 @@ msgstr "CVC"
 #: src/lib/reservations/labels.ts:470
 msgid "Date"
 msgstr "Date"
+
+#: src/components/BirthdayField.astro.ts:3
+msgid "Day"
+msgstr "Day"
 
 #: src/lib/loyalty/labels.ts:226
 msgid "Decline"
@@ -1808,6 +1821,14 @@ msgstr "Mobile"
 msgid "month"
 msgstr "month"
 
+#: src/components/BirthdayField.astro.ts:3
+msgid "Month"
+msgstr "Month"
+
+#: src/components/BirthdayField.astro.ts:3
+msgid "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
+msgstr "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
+
 #: src/pages/drop/[slug].astro.ts:3
 msgid "More drops"
 msgstr "More drops"
@@ -1976,6 +1997,10 @@ msgstr "Not available for this order"
 #: src/lib/ordering-labels.ts:222
 msgid "Not available right now"
 msgstr "Not available right now"
+
+#: src/components/BirthdayField.astro.ts:3
+msgid "Not set"
+msgstr "Not set"
 
 #: src/lib/reservations/labels.ts:379
 msgid "Nothing is charged now"
@@ -2926,6 +2951,14 @@ msgstr "Sign in with your phone number to see your points and use your rewards."
 msgid "Sold out"
 msgstr "Sold out"
 
+#: src/pages/menu.astro.ts:3
+msgid "Some items are no longer available and were left out:"
+msgstr "Some items are no longer available and were left out:"
+
+#: src/pages/menu.astro.ts:3
+msgid "Some items are no longer available and were left out."
+msgstr "Some items are no longer available and were left out."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items are no longer available and were removed from your order."
 msgstr "Some items are no longer available and were removed from your order."
@@ -2949,6 +2982,10 @@ msgstr "Some of the items you ordered ran out."
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed since your call. Your cart shows the current prices."
 msgstr "Some prices changed since your call. Your cart shows the current prices."
+
+#: src/pages/menu.astro.ts:3
+msgid "Some prices changed. Your cart shows the current prices."
+msgstr "Some prices changed. Your cart shows the current prices."
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/complete-name.astro.ts:3
@@ -3198,6 +3235,10 @@ msgstr "The hold on your order was released. Please place a new order."
 msgid "The items from your call are no longer available. You can still order from the menu."
 msgstr "The items from your call are no longer available. You can still order from the menu."
 
+#: src/pages/menu.astro.ts:3
+msgid "The items in your saved cart are no longer available. You can still order from the menu."
+msgstr "The items in your saved cart are no longer available. You can still order from the menu."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The kitchen has already started your order, so it can't be cancelled here."
 msgstr "The kitchen has already started your order, so it can't be cancelled here."
@@ -3442,6 +3483,10 @@ msgstr "This job is no longer taking applications."
 #: src/pages/menu/success.astro.ts:3
 msgid "This link has expired or isn't valid."
 msgstr "This link has expired or isn't valid."
+
+#: src/pages/menu.astro.ts:3
+msgid "This link has expired."
+msgstr "This link has expired."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
@@ -3912,6 +3957,10 @@ msgstr "We couldn't load your phone order."
 msgid "We couldn't load your receipt"
 msgstr "We couldn't load your receipt"
 
+#: src/pages/menu.astro.ts:3
+msgid "We couldn't restore your cart."
+msgstr "We couldn't restore your cart."
+
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "We couldn't save that. Try again."
 msgstr "We couldn't save that. Try again."
@@ -3959,6 +4008,10 @@ msgstr "We know you are on your way"
 #: src/pages/menu.astro.ts:3
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "We loaded your order from your call. Review it and check out."
+
+#: src/pages/menu.astro.ts:3
+msgid "We restored your cart. Review it and check out."
+msgstr "We restored your cart. Review it and check out."
 
 #: src/lib/reservations/labels.ts:93
 msgid "We send your confirmation here."

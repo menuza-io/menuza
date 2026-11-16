@@ -214,6 +214,10 @@ msgstr "Balance brought over"
 msgid "Balance removed"
 msgstr "Balance removed"
 
+#: components/profile/profile-screen.tsx:127
+msgid "Birthday (optional)"
+msgstr "Birthday (optional)"
+
 #: lib/reservations/messages.ts:18
 msgid "Book a table"
 msgstr "Book a table"
@@ -283,6 +287,10 @@ msgstr "Checkout"
 msgid "Choose a location"
 msgstr "Choose a location"
 
+#: lib/i18n/app-error-message.ts:29
+msgid "Choose a real month and day for your birthday."
+msgstr "Choose a real month and day for your birthday."
+
 #: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "Choose what you hear from us, and how."
@@ -332,6 +340,10 @@ msgstr "Cost"
 msgid "Date"
 msgstr "Date"
 
+#: components/profile/profile-screen.tsx:140
+msgid "Day"
+msgstr "Day"
+
 #: lib/loyalty/labels.ts:94
 msgid "Decline"
 msgstr "Decline"
@@ -379,7 +391,7 @@ msgid "Edit details"
 msgstr "Edit details"
 
 #: components/profile/messages-section.tsx:107
-#: components/profile/profile-screen.tsx:92
+#: components/profile/profile-screen.tsx:116
 msgid "Email"
 msgstr "Email"
 
@@ -531,7 +543,7 @@ msgid "In store"
 msgstr "In store"
 
 #: components/auth/complete-name-screen.tsx:26
-#: components/profile/profile-screen.tsx:84
+#: components/profile/profile-screen.tsx:108
 msgid "Jane Doe"
 msgstr "Jane Doe"
 
@@ -548,7 +560,7 @@ msgstr "Join the waitlist"
 msgid "Keep it"
 msgstr "Keep it"
 
-#: components/profile/profile-screen.tsx:152
+#: components/profile/profile-screen.tsx:202
 msgid "Language"
 msgstr "Language"
 
@@ -588,7 +600,7 @@ msgstr "Loading the menu"
 msgid "Loading your gift cards…"
 msgstr "Loading your gift cards…"
 
-#: components/profile/profile-screen.tsx:64
+#: components/profile/profile-screen.tsx:78
 msgid "Loading your profile…"
 msgstr "Loading your profile…"
 
@@ -615,6 +627,14 @@ msgstr "Messages from {name}"
 msgid "Money added"
 msgstr "Money added"
 
+#: components/profile/profile-screen.tsx:131
+msgid "Month"
+msgstr "Month"
+
+#: components/profile/profile-screen.tsx:149
+msgid "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
+msgstr "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
+
 #: components/reservations/parts.tsx:205
 msgid "More guests"
 msgstr "More guests"
@@ -628,7 +648,7 @@ msgid "My reservations"
 msgstr "My reservations"
 
 #: components/auth/complete-name-screen.tsx:25
-#: components/profile/profile-screen.tsx:83
+#: components/profile/profile-screen.tsx:107
 #: lib/reservations/messages.ts:60
 #: lib/reservations/messages.ts:112
 msgid "Name"
@@ -639,7 +659,7 @@ msgstr "Name"
 msgid "Network error. Check your connection and try again."
 msgstr "Network error. Check your connection and try again."
 
-#: lib/i18n/app-error-message.ts:33
+#: lib/i18n/app-error-message.ts:35
 msgid "Network error. Please try again."
 msgstr "Network error. Please try again."
 
@@ -802,7 +822,7 @@ msgid "Payments aren't available right now."
 msgstr "Payments aren't available right now."
 
 #: components/auth/login-screen.tsx:24
-#: components/profile/profile-screen.tsx:103
+#: components/profile/profile-screen.tsx:153
 #: lib/reservations/messages.ts:16
 msgid "Phone number"
 msgstr "Phone number"
@@ -828,7 +848,7 @@ msgstr "Preferred time"
 msgid "Profile"
 msgstr "Profile"
 
-#: components/profile/profile-screen.tsx:111
+#: components/profile/profile-screen.tsx:161
 msgid "Profile saved."
 msgstr "Profile saved."
 
@@ -930,7 +950,7 @@ msgstr "Rewards cannot be used right now."
 msgid "Running late"
 msgstr "Running late"
 
-#: components/profile/profile-screen.tsx:115
+#: components/profile/profile-screen.tsx:165
 msgid "Save changes"
 msgstr "Save changes"
 
@@ -1007,7 +1027,7 @@ msgstr "Sign in with your phone number to keep your gift cards here."
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "Sign in with your phone number to see your points and use your rewards."
 
-#: components/profile/profile-screen.tsx:124
+#: components/profile/profile-screen.tsx:174
 msgid "Sign out"
 msgstr "Sign out"
 
@@ -1020,7 +1040,7 @@ msgid "Sold out"
 msgstr "Sold out"
 
 #: lib/gift-cards/labels.ts:74
-#: lib/i18n/app-error-message.ts:41
+#: lib/i18n/app-error-message.ts:43
 #: lib/loyalty/labels.ts:130
 #: lib/reservations/messages.ts:137
 msgid "Something went wrong. Please try again."
@@ -1046,7 +1066,7 @@ msgstr "Spent"
 msgid "Stops working in {time}"
 msgstr "Stops working in {time}"
 
-#: components/profile/profile-screen.tsx:142
+#: components/profile/profile-screen.tsx:192
 msgid "System default"
 msgstr "System default"
 
@@ -1134,7 +1154,7 @@ msgstr "The restaurant will confirm your request soon."
 msgid "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
 msgstr "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
 
-#: lib/i18n/app-error-message.ts:36
+#: lib/i18n/app-error-message.ts:38
 msgid "The service is unavailable right now. Please try again later."
 msgstr "The service is unavailable right now. Please try again later."
 
@@ -1190,7 +1210,7 @@ msgstr "This waitlist link no longer works."
 msgid "Too many attempts. Please try again in a few minutes."
 msgstr "Too many attempts. Please try again in a few minutes."
 
-#: lib/i18n/app-error-message.ts:31
+#: lib/i18n/app-error-message.ts:33
 msgid "Too many attempts. Please try again later."
 msgstr "Too many attempts. Please try again later."
 
@@ -1226,7 +1246,7 @@ msgstr "Type or paste the code from your email or card."
 msgid "Up to {amount} off"
 msgstr "Up to {amount} off"
 
-#: components/profile/profile-screen.tsx:80
+#: components/profile/profile-screen.tsx:104
 msgid "Update your basic details below."
 msgstr "Update your basic details below."
 
@@ -1243,7 +1263,7 @@ msgid "Use a different number"
 msgstr "Use a different number"
 
 #: components/auth/site-unavailable-screen.tsx:34
-#: components/profile/profile-screen.tsx:128
+#: components/profile/profile-screen.tsx:178
 msgid "Use a different site"
 msgstr "Use a different site"
 
@@ -1419,7 +1439,7 @@ msgstr "Your new code is ready."
 msgid "Your payment is being checked. We'll confirm shortly."
 msgstr "Your payment is being checked. We'll confirm shortly."
 
-#: components/profile/profile-screen.tsx:106
+#: components/profile/profile-screen.tsx:156
 msgid "Your phone number can't be changed here."
 msgstr "Your phone number can't be changed here."
 
@@ -1427,7 +1447,7 @@ msgstr "Your phone number can't be changed here."
 msgid "Your points"
 msgstr "Your points"
 
-#: components/profile/profile-screen.tsx:78
+#: components/profile/profile-screen.tsx:102
 msgid "Your profile"
 msgstr "Your profile"
 
@@ -1440,7 +1460,7 @@ msgid "Your rewards account is on hold. Please contact the business for help."
 msgstr "Your rewards account is on hold. Please contact the business for help."
 
 #: lib/gift-cards/labels.ts:77
-#: lib/i18n/app-error-message.ts:29
+#: lib/i18n/app-error-message.ts:31
 #: lib/loyalty/labels.ts:128
 msgid "Your session ended. Please sign in again."
 msgstr "Your session ended. Please sign in again."

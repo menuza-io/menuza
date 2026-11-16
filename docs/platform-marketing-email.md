@@ -300,6 +300,57 @@ What this means when you design a journey:
 - Messages a customer must get whatever their marketing choice (receipts,
   sign-in codes) are not journeys; send them from the code path that needs them.
 
+## AI drafts (#155)
+
+**Draft with AI** on the broadcast composer and on an automation's email and
+text steps writes a first version so an owner is not facing a blank page. The
+owner picks a goal (a preset or their own words), up to three dishes, a tone and
+a language (the organization's default site language first; English or Arabic).
+The model returns three subject lines plus designer blocks (heading, paragraphs,
+a dish block, a button), or one text message. **Rewrite** on a selected block
+makes it shorter, warmer, or translates it to Arabic or English.
+
+**It only fills the editor.** The draft is shown first; nothing is sent or saved
+until the owner uses it and then sends or saves as usual. If the editor already
+has content, using a draft asks before replacing it (the same rule as the
+mailbox: AI never silently replaces what a person wrote).
+
+- Route: `POST /resources/marketing/ai-draft` (App), `action: 'draft'` or
+  `'rewrite'`. Needs `update:campaign:any` or `update:automation:any`, and the
+  organization flag `ai.marketing_drafts` (default off; the route answers 404
+  while it is off). The model call is `generateObject` from `@repo/ai`.
+- **What the model receives** (built by one pure function,
+  `utils/marketing/ai-draft-context.ts`, from a closed list of fields): the
+  organization's name and site description, live menu items (name, short
+  description, price), the attached coupon's words, and aggregated best-seller
+  item ids with counts (read in the browser; the server accepts ids and counts
+  only and drops any other field), plus the owner's own goal, tone and language.
+- **What it never receives:** any guest data. No names, phone numbers, emails,
+  orders, tags or allergy notes: the context builder copies only the fields
+  above, and a unit test feeds it customer-looking objects and checks they never
+  reach the context or the prompt. Because the prompt has no personal data, the
+  US-hosted model is acceptable for organizations in KSA.
+- **What is checked before the owner sees it** (`ai-draft-sanitize.ts`): the
+  blocks must pass `emailBlocksSchema` (otherwise `ai_draft_invalid`); only the
+  known merge tags stay (`{{couponCode}}` only when a coupon is attached), any
+  other `{{tag}}` is removed; links stay only if they point at the
+  organization's own site (a button link is the site or its `/menu`, otherwise
+  left empty for the owner to fill); prices not on the menu, percentages the
+  coupon does not state and free-offer phrases are removed; dishes must be real
+  ids on the live menu (their prices are frozen later, at save, from the live
+  menu, like any dish block). A text message is trimmed so its opt-out footer
+  still fits in 160 characters.
+- **Limits:** 20 drafts per operator per hour and 200 per organization per day
+  (drafts and rewrites share them), the DB-backed sliding window limiter of
+  `rate-limit.server.ts`. Over the limit: HTTP 429 `ai_draft_limit`.
+- **Errors:** `ai_draft_invalid` (422, the answer could not be used, try again),
+  `ai_draft_limit` (429), `ai_not_configured` (503, no model key), `not_found`
+  (404, flag off), `ai_draft_failed` (502; logs the error name only, never the
+  prompt).
+- **Later:** the dialog takes an `initialGoal`, so a marketing calendar's
+  occasion card (#152) can open it with the occasion filled in. Per-recipient
+  language (#102) is separate; a draft is written once, in one language.
+
 ## Migration archives
 
 Two migrations remove duplicate rows before they add the unique indexes that

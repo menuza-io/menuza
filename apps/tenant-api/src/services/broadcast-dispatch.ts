@@ -10,6 +10,7 @@ import {
 	min,
 	or,
 	sql,
+	type SQL,
 } from 'drizzle-orm'
 import {
 	checkBroadcast,
@@ -43,6 +44,8 @@ import { getBroadcastHourlyCap } from '../lib/rate-limit.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { couponCodeForRecipient } from './discount-marketing-codes.ts'
 import { BROADCAST_TOPIC, loadBroadcastAudience } from './marketing-audience.ts'
+import { cappedCustomerIds, readFrequencyCap } from './journey-guards.ts'
+import { resolveAudienceWhere } from './marketing-audience-service.ts'
 
 /**
  * Broadcast dispatch, resumable and safe to drive from more than one place.
@@ -115,6 +118,26 @@ export function audienceRule(segmentationRules: unknown): string | undefined {
 				? (JSON.parse(segmentationRules) as { audience?: string })
 				: (segmentationRules as { audience?: string })
 		return rules?.audience
+	} catch {
+		return undefined
+	}
+}
+
+/**
+ * The saved audience a campaign targets (#98), or undefined. `segmentation_rules`
+ * keeps `{ audience, audienceId, audienceVersion }`; membership is looked up
+ * when the send starts, never stored.
+ */
+export function audienceIdRule(segmentationRules: unknown): string | undefined {
+	if (!segmentationRules) return undefined
+	try {
+		const rules =
+			typeof segmentationRules === 'string'
+				? (JSON.parse(segmentationRules) as { audienceId?: unknown })
+				: (segmentationRules as { audienceId?: unknown })
+		return typeof rules?.audienceId === 'string' && rules.audienceId
+			? rules.audienceId
+			: undefined
 	} catch {
 		return undefined
 	}
@@ -249,10 +272,28 @@ export async function dispatchBroadcast(
 		}
 
 		const retargetOf = campaign.retargetOfCampaignId ?? undefined
+		// A saved audience narrows consent, never widens it. One that was deleted
+		// since the send was scheduled fails the send: it is never widened to
+		// "everyone".
+		const savedAudienceId = audienceIdRule(campaign.segmentationRules)
+		let audienceWhere: SQL | undefined
+		if (savedAudienceId) {
+			const resolved = await resolveAudienceWhere(db, savedAudienceId, clock())
+			if (!resolved) {
+				console.error('Broadcast failed: its audience no longer exists', {
+					orgId,
+					campaignId,
+				})
+				await finish(db, campaignId, currentLease, 'Failed')
+				return 'failed'
+			}
+			audienceWhere = resolved.where
+		}
 		const targets = await loadBroadcastAudience(db, {
 			channel,
 			audience,
 			retargetOf,
+			audienceWhere,
 		})
 		const alreadyMessaged = new Set(
 			(
@@ -305,6 +346,7 @@ export async function dispatchBroadcast(
 			.where(eq(marketingCampaigns.id, campaignId))
 
 		const pending = targets.filter((c) => !alreadyMessaged.has(c.id))
+		const frequencyCap = await readFrequencyCap(db)
 		const cap = getBroadcastHourlyCap(channel)
 		let failuresReset = false
 
@@ -331,9 +373,21 @@ export async function dispatchBroadcast(
 				audience,
 				customerIds: batchIds,
 				retargetOf,
+				audienceWhere,
 			})
-			const chunk = fresh.slice(0, room)
-			const capReached = fresh.length > room
+			// The frequency cap (#99): a guest who already got N marketing messages
+			// in the window is skipped. Nothing is recorded for them.
+			const capped = frequencyCap
+				? await cappedCustomerIds(
+						db,
+						fresh.map((customer) => customer.id),
+						frequencyCap,
+						clock(),
+					)
+				: new Set<string>()
+			const eligible = fresh.filter((customer) => !capped.has(customer.id))
+			const chunk = eligible.slice(0, room)
+			const capReached = eligible.length > room
 			if (chunk.length === 0) continue
 			const sentAt = new Date(clock())
 

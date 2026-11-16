@@ -30,6 +30,7 @@ import {
 	getJourneyRunTimeline,
 	triggerTestJourney,
 } from '../services/journey-service.ts'
+import { journeyResults } from '../services/journey-program-results.ts'
 import { authenticateOperator, requireOperatorClaim } from './operator.ts'
 
 // =========================================================================
@@ -289,6 +290,30 @@ journeyOperatorRoutes.post('/', async (c) => {
 	} catch (error) {
 		console.error('Error creating journey:', error)
 		return c.json({ error: 'Internal Server Error' }, 500)
+	}
+})
+
+/**
+ * The last N days of every automation (#100 program cards): runs, messages
+ * delivered and orders by goal. Counts only. Server-side operator token only
+ * (a token bound to an area is refused).
+ */
+journeyOperatorRoutes.get('/program-results', async (c) => {
+	let auth
+	try {
+		auth = await authenticateOperator(c)
+	} catch (response) {
+		return response as Response
+	}
+	const days = Number(c.req.query('days') ?? 30)
+	try {
+		return c.json({
+			days: Number.isFinite(days) ? days : 30,
+			results: await journeyResults(auth.orgId, { days }),
+		})
+	} catch (error) {
+		console.error('Error reading program results:', error)
+		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })
 

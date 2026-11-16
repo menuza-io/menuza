@@ -75,6 +75,12 @@ export async function submitCampaign(input: {
 			error: i18n._(msg`Texts can only go to customers with a verified phone.`),
 		}
 	}
+	// A saved audience (#98): "Send to" is everyone subscribed, or one of them.
+	// Empty clears it. Membership is worked out when the send starts.
+	const audienceId =
+		typeof formData.get('audienceId') === 'string'
+			? String(formData.get('audienceId')).trim().slice(0, 100)
+			: ''
 
 	const posted = formData.get('discountOffer')
 	const unchangedOffer = Boolean(
@@ -125,6 +131,7 @@ export async function submitCampaign(input: {
 			organizationId: input.organizationId,
 			message,
 			audience,
+			audienceId: audienceId || null,
 			sendAtMs: later ? schedule.scheduledAt!.getTime() : Date.now(),
 			fetchTenant: input.fetchTenant,
 			retargetOf: existing?.retargetOfCampaignId,
@@ -139,6 +146,8 @@ export async function submitCampaign(input: {
 	const shared = {
 		name: formData.get('name'),
 		audience,
+		// null clears a saved audience on an edit; a new broadcast ignores it.
+		audienceId: audienceId || null,
 		subject: message.subject || null,
 		content: message.content,
 		contentHtml: message.contentHtml,

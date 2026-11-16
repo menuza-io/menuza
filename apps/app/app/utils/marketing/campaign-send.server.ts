@@ -119,6 +119,8 @@ export async function countAudience(
 	input: {
 		channel: 'email' | 'sms'
 		audience: string
+		/** A saved audience (#98): narrows the consented guests. */
+		audienceId?: string | null
 		retargetOf?: string | null
 	},
 ): Promise<number | null> {
@@ -126,6 +128,7 @@ export async function countAudience(
 		channel: input.channel,
 		audience: input.audience,
 	})
+	if (input.audienceId) query.set('audienceId', input.audienceId)
 	if (input.retargetOf) query.set('retargetOf', input.retargetOf)
 	try {
 		const res = await fetchTenant(
@@ -144,6 +147,7 @@ export async function runSendChecks(input: {
 	organizationId: string
 	message: PreparedCampaignMessage
 	audience: string
+	audienceId?: string | null
 	/** When it would start: the scheduled time, or now. */
 	sendAtMs: number
 	fetchTenant: FetchTenant
@@ -154,6 +158,7 @@ export async function runSendChecks(input: {
 		countAudience(input.fetchTenant, {
 			channel: message.channel,
 			audience: input.audience,
+			audienceId: input.audienceId,
 			retargetOf: input.retargetOf,
 		}),
 		message.discountOffer

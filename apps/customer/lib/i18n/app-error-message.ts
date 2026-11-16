@@ -25,6 +25,8 @@ export function appErrorMessage(i18n: I18n, error: AppError): string {
 			return i18n._(msg`That name is too long.`)
 		case 'invalidEmail':
 			return i18n._(msg`Enter a valid email address.`)
+		case 'invalidBirthday':
+			return i18n._(msg`Choose a real month and day for your birthday.`)
 		case 'signedOut':
 			return i18n._(msg`Your session ended. Please sign in again.`)
 		case 'rateLimited':

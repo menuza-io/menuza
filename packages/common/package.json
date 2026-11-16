@@ -159,6 +159,16 @@
       "import": "./src/email-boilerplate.ts",
       "default": "./src/email-boilerplate.ts"
     },
+    "./birthday": {
+      "types": "./src/birthday.ts",
+      "import": "./src/birthday.ts",
+      "default": "./src/birthday.ts"
+    },
+    "./marketing-audiences": {
+      "types": "./src/marketing-audiences.ts",
+      "import": "./src/marketing-audiences.ts",
+      "default": "./src/marketing-audiences.ts"
+    },
     "./broadcast-checks": {
       "types": "./src/broadcast-checks.ts",
       "import": "./src/broadcast-checks.ts",

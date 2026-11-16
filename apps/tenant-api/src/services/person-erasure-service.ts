@@ -1,6 +1,8 @@
 import {
+	customerCarts,
 	customerPaymentMethods,
 	discountIssuedCodes,
+	orderJourneyEmissions,
 	discountRedemptions,
 	customerRefreshTokens,
 	customers,
@@ -1161,6 +1163,15 @@ export async function erasePerson(
 					await tx
 						.delete(customerRefreshTokens)
 						.where(inArray(customerRefreshTokens.customerId, chunk))
+					// The left-behind cart (#150) and what order, birthday and cart
+					// journeys already started (#99 #151). The customer row itself
+					// carries the birthday and is deleted below.
+					await tx
+						.delete(customerCarts)
+						.where(inArray(customerCarts.customerId, chunk))
+					await tx
+						.delete(orderJourneyEmissions)
+						.where(inArray(orderJourneyEmissions.customerId, chunk))
 					await tx
 						.delete(customerPaymentMethods)
 						.where(inArray(customerPaymentMethods.customerId, chunk))

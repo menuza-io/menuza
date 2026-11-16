@@ -11,6 +11,7 @@ import {
 	CampaignForm,
 	CouponOfferField,
 	type CouponOfferValue,
+	AiDraftProvider,
 } from '@repo/marketing'
 import { PageHeader } from '@repo/ui/page-header'
 import { useState } from 'react'
@@ -24,6 +25,7 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { CampaignEmailDesigner } from '#app/components/marketing/campaign-email-designer.tsx'
+import { SavedAudienceField } from '#app/components/marketing/saved-audience-field.tsx'
 import {
 	loadCouponDiscountOptions,
 	readOfferField,
@@ -33,8 +35,11 @@ import {
 	previewEmail,
 } from '#app/utils/email/designer.server.ts'
 import { orgSiteUrl } from '#app/utils/launch/launch.server.ts'
+import { loadAiDraftConfig } from '#app/utils/marketing/ai-draft-config.server.ts'
+import { loadAudienceOptions } from '#app/utils/marketing/audiences.server.ts'
 import { submitCampaign } from '#app/utils/marketing/campaign-submit.server.ts'
 import { testSendClientFor } from '#app/utils/marketing/campaign-test-send.server.ts'
+import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
@@ -43,7 +48,7 @@ import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { orgId } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 
 	const userId = await requireUserWithOrganizationPermission(
 		request,
@@ -68,7 +73,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return {
 		orgSlug,
+		audienceOptions: (await getMarketingFeatures(orgId)).audiences
+			? ((await loadAudienceOptions(fetchTenant)) ?? null)
+			: null,
 		couponOptions: await loadCouponDiscountOptions(userId, orgId),
+		aiDraft: await loadAiDraftConfig(orgId, orgSlug),
 		template: launch ? ('launch' as const) : null,
 		siteUrl: site ? orgSiteUrl(site) : null,
 	}
@@ -140,7 +149,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function NewCampaignRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, couponOptions, template, siteUrl } =
+	const { orgSlug, audienceOptions, couponOptions, template, siteUrl, aiDraft } =
 		useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const navigation = useNavigation()
@@ -165,48 +174,61 @@ export default function NewCampaignRoute() {
 				)}
 			/>
 
-			<Form method="post">
-				<CampaignForm
-					scheduling
-					canTestSend
-					error={actionData && 'error' in actionData ? actionData.error : null}
-					problems={
-						actionData && 'problems' in actionData ? actionData.problems : null
-					}
-					blocks={
-						actionData && 'blocks' in actionData ? actionData.blocks : blocks
-					}
-					testResult={
-						actionData && 'testResult' in actionData
-							? actionData.testResult
-							: null
-					}
-					onEditBlock={(id) =>
-						setFocusBlock({ id, nonce: (focusBlock?.nonce ?? 0) + 1 })
-					}
-					isSubmitting={isSubmitting}
-					cancelTo=".."
-					emailDesigner={
-						<CampaignEmailDesigner
-							orgSlug={orgSlug}
-							blocks={blocks}
-							onChange={setBlocks}
-							offer={offer}
-							focusBlock={focusBlock}
-						/>
-					}
-					couponField={
-						couponOptions ? (
-							<CouponOfferField
-								name="discountOffer"
-								options={couponOptions}
-								value={offer}
-								onChange={setOffer}
+			<AiDraftProvider config={aiDraft ? { ...aiDraft, offer } : null}>
+				<Form method="post">
+					<CampaignForm
+						onAiDraftBlocks={aiDraft ? setBlocks : undefined}
+						hasEmailBlocks={blocks.length > 0}
+						scheduling
+						canTestSend
+						audienceField={
+							audienceOptions ? (
+								<SavedAudienceField options={audienceOptions} orgSlug={orgSlug} />
+							) : null
+						}
+						error={
+							actionData && 'error' in actionData ? actionData.error : null
+						}
+						problems={
+							actionData && 'problems' in actionData
+								? actionData.problems
+								: null
+						}
+						blocks={
+							actionData && 'blocks' in actionData ? actionData.blocks : blocks
+						}
+						testResult={
+							actionData && 'testResult' in actionData
+								? actionData.testResult
+								: null
+						}
+						onEditBlock={(id) =>
+							setFocusBlock({ id, nonce: (focusBlock?.nonce ?? 0) + 1 })
+						}
+						isSubmitting={isSubmitting}
+						cancelTo=".."
+						emailDesigner={
+							<CampaignEmailDesigner
+								orgSlug={orgSlug}
+								blocks={blocks}
+								onChange={setBlocks}
+								offer={offer}
+								focusBlock={focusBlock}
 							/>
-						) : null
-					}
-				/>
-			</Form>
+						}
+						couponField={
+							couponOptions ? (
+								<CouponOfferField
+									name="discountOffer"
+									options={couponOptions}
+									value={offer}
+									onChange={setOffer}
+								/>
+							) : null
+						}
+					/>
+				</Form>
+			</AiDraftProvider>
 		</div>
 	)
 }

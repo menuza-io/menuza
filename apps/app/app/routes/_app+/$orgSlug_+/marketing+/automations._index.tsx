@@ -1,6 +1,9 @@
 import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { getDomainUrl } from '@repo/common'
+import { db, eq, Organization } from '@repo/database'
+import { programLanguage } from '@repo/marketing-workflow'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -31,7 +34,15 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { ProgramsSection } from '#app/components/marketing/programs-section.tsx'
 import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
+import { loadCouponDiscountOptions } from '#app/utils/discounts/marketing-offers.server.ts'
+import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
+import {
+	loadProgramCards,
+	turnOnProgram,
+	type ProgramCardData,
+} from '#app/utils/marketing/programs.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
@@ -85,21 +96,63 @@ function formatTriggerType(triggerType: string) {
 	return triggerType.replaceAll('_', ' ')
 }
 
+async function programLanguageFor(orgId: string) {
+	const [org] = await db
+		.select({ locale: Organization.siteDefaultLocale })
+		.from(Organization)
+		.where(eq(Organization.id, orgId))
+		.limit(1)
+	return programLanguage(org?.locale)
+}
+
+async function organizationTimeZone(orgId: string) {
+	const [org] = await db
+		.select({ zone: Organization.staffingTimeZone })
+		.from(Organization)
+		.where(eq(Organization.id, orgId))
+		.limit(1)
+	return org?.zone ?? null
+}
+
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		orgId,
 		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
 	)
+
+	const features = await getMarketingFeatures(orgId).catch(() => null)
+	const showSettings = Boolean(
+		features && (features.orderAutomations || features.cartReminders),
+	)
+	// Ready-made programs (#100), worked out from the journeys loaded below.
+	async function programsFor(journeys: ReadonlyArray<Record<string, unknown>>) {
+		if (!features) return { programs: [] as ProgramCardData[], couponOptions: null }
+		const programs = await loadProgramCards({
+			fetchTenant,
+			request,
+			organizationId: orgId,
+			features,
+			language: await programLanguageFor(orgId).catch(() => 'en' as const),
+			journeys,
+		}).catch(() => [] as ProgramCardData[])
+		const couponOptions = programs.some((p) => p.coupon === 'optional')
+			? await loadCouponDiscountOptions(userId, orgId).catch(() => null)
+			: null
+		return { programs, couponOptions }
+	}
 
 	try {
 		const res = await fetchTenant('/operator/journeys')
 		if (!res.ok) {
 			return {
 				journeys: [] as JourneyListItem[],
+				programs: [] as ProgramCardData[],
+				couponOptions: null,
+				showSettings,
 				orgSlug,
 				error: i18n._(t`Failed to load journeys from regional tenant storage.`),
 			}
@@ -120,14 +173,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			createdAt: String(j.createdAt || new Date().toISOString()),
 		}))
 
+		const { programs, couponOptions } = await programsFor(data.journeys ?? [])
 		return {
 			journeys,
+			programs,
+			couponOptions,
+			showSettings,
 			orgSlug,
 			error: null,
 		}
 	} catch (err) {
 		return {
 			journeys: [] as JourneyListItem[],
+			programs: [] as ProgramCardData[],
+			couponOptions: null,
+			showSettings,
 			orgSlug,
 			error:
 				err instanceof Error
@@ -153,6 +213,45 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const formData = await request.formData()
 	const intent = formData.get('intent')
+
+	// "Turn on" and "Customize" on a program card (#100).
+	if (intent === 'program_turn_on' || intent === 'program_customize') {
+		const userId = await requireUserWithOrganizationPermission(
+			request,
+			orgId,
+			ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
+		)
+		const channel = formData.get('channel') === 'sms' ? 'sms' : 'email'
+		const offerField = formData.get('discountOffer')
+		const reviewField = formData.get('reviewUrl')
+		let discountOffer: unknown = null
+		if (typeof offerField === 'string' && offerField) {
+			try {
+				discountOffer = JSON.parse(offerField)
+			} catch {
+				return { ok: false as const, error: i18n._(t`The coupon is not valid.`) }
+			}
+		}
+		const result = await turnOnProgram({
+			fetchTenant,
+			request,
+			organizationId: orgId,
+			userId,
+			baseUrl: getDomainUrl(request),
+			programId: String(formData.get('programId') ?? ''),
+			channel,
+			discountOffer,
+			reviewUrl: typeof reviewField === 'string' ? reviewField : null,
+			publish: intent === 'program_turn_on',
+			timeZone: await organizationTimeZone(orgId),
+		})
+		if (!result.ok) return { ok: false as const, error: result.message }
+		if (intent === 'program_customize') {
+			return redirect(`/${orgSlug}/marketing/automations/${result.journeyId}`)
+		}
+		return { ok: true as const, journeyId: result.journeyId, intent }
+	}
+
 	const journeyId = formData.get('journeyId')
 
 	if (typeof journeyId !== 'string' || !journeyId) {
@@ -251,7 +350,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function JourneysList() {
 	const { _ } = useLingui()
-	const { journeys, orgSlug, error } = useLoaderData<typeof loader>()
+	const { journeys, programs, couponOptions, showSettings, orgSlug, error } =
+		useLoaderData<typeof loader>()
 	const hasPermission = useHasPermission()
 	const canManage = hasPermission('update:automation:any')
 	const fetcher = useFetcher()
@@ -285,16 +385,34 @@ export default function JourneysList() {
 					msg`Event-driven workflows with triggers, delays, and actions.`,
 				)}
 				actions={
-					canManage ? (
-						<Button
-							render={<Link to={`/${orgSlug}/marketing/automations/new`} />}
-							className="shrink-0 gap-2"
-						>
-							<Icon name="plus" className="size-4" />
-							{_(msg`New automation`)}
-						</Button>
-					) : null
+					<div className="flex items-center gap-2">
+						{showSettings ? (
+							<Button
+								render={<Link to={`/${orgSlug}/marketing/settings`} />}
+								variant="outline"
+								className="shrink-0"
+							>
+								{_(msg`Settings`)}
+							</Button>
+						) : null}
+						{canManage ? (
+							<Button
+								render={<Link to={`/${orgSlug}/marketing/automations/new`} />}
+								className="shrink-0 gap-2"
+							>
+								<Icon name="plus" className="size-4" />
+								{_(msg`New automation`)}
+							</Button>
+						) : null}
+					</div>
 				}
+			/>
+
+			<ProgramsSection
+				orgSlug={orgSlug}
+				programs={programs}
+				couponOptions={couponOptions}
+				canManage={canManage}
 			/>
 
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

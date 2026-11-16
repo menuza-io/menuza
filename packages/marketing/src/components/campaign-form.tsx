@@ -12,6 +12,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useCampaignLabels } from '../i18n/campaign-labels.ts'
 import { type CampaignChannel } from '../types/campaign.ts'
+import { AiDraftButton, AiDraftDialog } from './ai/ai-draft-dialog.tsx'
+import { RewriteWithAi } from './ai/rewrite-with-ai.tsx'
 import { BroadcastCheckDialog } from './broadcast-check-dialog.tsx'
 
 /** Merge tags are passed as values: Lingui reads literal braces as a placeholder. */
@@ -75,6 +77,14 @@ export interface CampaignFormProps {
 	testResult?: { ok: boolean; message: string } | null
 	/** Extra words above the form (for a re-send to non-openers). */
 	notice?: ReactNode
+	/**
+	 * AI drafts (#155): the host puts a drafted email design into its designer
+	 * state (the form fills the subject itself). Without it only text messages
+	 * can be drafted. `hasEmailBlocks`: the design already has content, so a
+	 * draft asks before replacing it.
+	 */
+	onAiDraftBlocks?: (blocks: EmailBlock[]) => void
+	hasEmailBlocks?: boolean
 }
 
 export function CampaignForm({
@@ -96,6 +106,8 @@ export function CampaignForm({
 	onEditBlock,
 	testResult,
 	notice,
+	onAiDraftBlocks,
+	hasEmailBlocks = false,
 }: CampaignFormProps) {
 	const { _ } = useLingui()
 	const { channelLabel } = useCampaignLabels()
@@ -123,6 +135,8 @@ export function CampaignForm({
 	const [acknowledged, setAcknowledged] = useState(false)
 	const [checkOpen, setCheckOpen] = useState(false)
 	const formRoot = useRef<HTMLDivElement>(null)
+	const subjectInput = useRef<HTMLInputElement>(null)
+	const [aiOpen, setAiOpen] = useState(false)
 	const primaryButton = useRef<HTMLButtonElement>(null)
 
 	// A new answer from the pre-send check opens the dialog; the next submit
@@ -245,8 +259,14 @@ export function CampaignForm({
 
 				{channel === 'email' ? (
 					<div className="space-y-2">
-						<Label htmlFor="subject">{_(msg`Subject`)}</Label>
+						<div className="flex items-center justify-between gap-4">
+							<Label htmlFor="subject">{_(msg`Subject`)}</Label>
+							{onAiDraftBlocks ? (
+								<AiDraftButton onClick={() => setAiOpen(true)} />
+							) : null}
+						</div>
 						<Input
+							ref={subjectInput}
 							id="subject"
 							name="subject"
 							defaultValue={defaults?.subject ?? undefined}
@@ -265,6 +285,9 @@ export function CampaignForm({
 					<div className="space-y-2">
 						<div className="flex items-center justify-between gap-4">
 							<Label htmlFor="content">{_(msg`Message`)}</Label>
+							{channel === 'sms' ? (
+								<AiDraftButton onClick={() => setAiOpen(true)} />
+							) : null}
 							{channel === 'sms' ? (
 								<span className="text-muted-foreground text-xs">
 									{smsContent.length} / 1600
@@ -299,10 +322,39 @@ export function CampaignForm({
 								required
 							/>
 						)}
+						{channel === 'sms' ? (
+							<RewriteWithAi
+								sms
+								text={smsContent}
+								onRewrite={(text) => setSmsContent(text.slice(0, 1600))}
+							/>
+						) : null}
 					</div>
 				)}
 
 				{couponField}
+
+				<AiDraftDialog
+					open={aiOpen}
+					onOpenChange={setAiOpen}
+					channel={channel}
+					hasContent={
+						channel === 'sms'
+							? smsContent.trim().length > 0
+							: hasEmailBlocks ||
+								(subjectInput.current?.value.trim().length ?? 0) > 0
+					}
+					onApply={(draft) => {
+						if (draft.channel === 'sms') {
+							setSmsContent(draft.message.slice(0, 1600))
+						} else {
+							if (subjectInput.current) {
+								subjectInput.current.value = draft.subject
+							}
+							onAiDraftBlocks?.(draft.blocks)
+						}
+					}}
+				/>
 			</div>
 
 			{scheduling ? (

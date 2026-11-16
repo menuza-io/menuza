@@ -207,6 +207,18 @@ const voiceOrderLabels = {
 		msg`Some prices changed since your call. Your cart shows the current prices.`,
 	),
 }
+// "Back to your order" (#150): shown after a cart reminder link is opened.
+const cartRestoreLabels = {
+	loaded: i18n._(msg`We restored your cart. Review it and check out.`),
+	expired: i18n._(msg`This link has expired.`),
+	error: i18n._(msg`We couldn't restore your cart.`),
+	unavailable: i18n._(
+		msg`The items in your saved cart are no longer available. You can still order from the menu.`,
+	),
+	removed: i18n._(msg`Some items are no longer available and were left out:`),
+	repriced: i18n._(msg`Some prices changed. Your cart shows the current prices.`),
+	removedCount: i18n._(msg`Some items are no longer available and were left out.`),
+}
 const dietaryLabels = {
 	vegetarian: vegetarianLabel,
 	glutenFree: glutenFreeLabel,
@@ -644,6 +656,7 @@ const clientMenuData = {
 	allowedModes,
 	categories,
 	voiceOrderLabels,
+	cartRestoreLabels,
 	timeLabels: {
 		today: orderDetailsLabels.today,
 		tomorrow: orderDetailsLabels.tomorrow,
@@ -1024,6 +1037,15 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			stripHandoffParam,
 			type HandoffCartItem,
 		} from '../scripts/voice-order-handoff'
+		import {
+			fetchSavedCart,
+			getCartToken,
+			hasCartParam,
+			restoreCart,
+			stripCartParam,
+			type SavedCartLine,
+		} from '../scripts/cart-restore'
+		import { getAccessToken } from '~/lib/client-auth'
 		import { mountTableOrdering } from '../scripts/table-ordering'
 
 		type MenuData = {
@@ -1057,6 +1079,16 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			upsell?: boolean
 			voiceOrderLabels: Record<
 				'loaded' | 'expired' | 'error' | 'unavailable' | 'removed' | 'repriced',
+				string
+			>
+			cartRestoreLabels: Record<
+				| 'loaded'
+				| 'expired'
+				| 'error'
+				| 'unavailable'
+				| 'removed'
+				| 'repriced'
+				| 'removedCount',
 				string
 			>
 			timeLabels: { today: string; tomorrow: string; minutesRange: string }
@@ -1581,6 +1613,11 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 				'M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384',
 			],
 			alert: ['M12 8v4', 'M12 16h.01', 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0'],
+			cart: [
+				'M8 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+				'M19 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+				'M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12',
+			],
 		}
 		function voiceIcon(name: keyof typeof VOICE_ICON_PATHS): SVGSVGElement {
 			const ns = 'http://www.w3.org/2000/svg'
@@ -1706,6 +1743,126 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 
 			applyVoiceCart(result.cart, true)
 		}
+
+		// Cart reminder link (#cart=TOKEN). Fragment only: the server never sees it.
+		const CART_NOTICE_KEY = 'menuza_cart_restore_notice'
+		function showCartNotice(
+			kind: 'loaded' | 'expired' | 'error' | 'unavailable',
+			changes?: { removed: string[]; dropped: number; pricesChanged: boolean },
+		) {
+			const region = document.getElementById('voice-order-notice')
+			if (!region) return
+			const cartLabels = data.cartRestoreLabels
+			const notice = el(
+				'div',
+				`mt-4 flex items-start gap-3 rounded-lg border p-3 text-sm sm:p-4 ${kind === 'error' ? 'tone-danger' : 'tone-neutral'}`,
+			)
+			const icon = voiceIcon(kind === 'loaded' ? 'cart' : 'alert')
+			const body = el('div', 'min-w-0 space-y-1')
+			body.appendChild(el('p', 'font-semibold text-foreground', cartLabels[kind]))
+			if (changes?.removed.length) {
+				body.appendChild(
+					el('p', 'text-muted-foreground', `${cartLabels.removed} ${changes.removed.join(', ')}`),
+				)
+			} else if (changes?.dropped) {
+				body.appendChild(el('p', 'text-muted-foreground', cartLabels.removedCount))
+			}
+			if (changes?.pricesChanged) {
+				body.appendChild(el('p', 'text-muted-foreground', cartLabels.repriced))
+			}
+			notice.append(icon, body)
+			region.replaceChildren(notice)
+		}
+
+		function applySavedCart(lines: SavedCartLine[]) {
+			const restored = restoreCart(lines, [{ categories: data.categories ?? [] }])
+			if (!restored.cart.length) {
+				showCartNotice('unavailable')
+				return
+			}
+			store.save(restored.cart)
+			showCartNotice('loaded', {
+				removed: restored.removedNames,
+				dropped: restored.droppedCount,
+				pricesChanged: false,
+			})
+			cartUi.open()
+		}
+
+		async function importSavedCart(token: string) {
+			// Drop the token from the address bar before anything else.
+			history.replaceState(history.state, '', stripCartParam(window.location.href))
+			let tenantApiUrl: string
+			try {
+				tenantApiUrl = getBrowserTenantApiUrl()
+			} catch {
+				showCartNotice('error')
+				return
+			}
+			const result = await fetchSavedCart({ tenantApiUrl, token, binding: getOrgBinding() })
+			// An expired link changes nothing: the guest's own cart stays as it is.
+			if (result.status !== 'loaded') {
+				showCartNotice(result.status)
+				return
+			}
+			const { cart } = result
+			const canSwitchLocation =
+				cart.locationId !== data.activeLocationId &&
+				data.locationIds.includes(cart.locationId)
+			if (canSwitchLocation) {
+				// The menu, tax and fee are per location: reload on it, then rebuild
+				// the cart from that location's menu.
+				sessionStorage.setItem(CART_NOTICE_KEY, JSON.stringify(cart.lines))
+				const url = new URL(window.location.href)
+				url.searchParams.set('location', cart.locationId)
+				window.location.href = url.toString()
+				return
+			}
+			applySavedCart(cart.lines)
+		}
+
+		// The layout moved `#cart=…` into this tab's session storage before
+		// analytics loaded; a direct hash (script order, no layout) still works.
+		const earlyCartToken = readSession('menuza_cart_token')
+		if (earlyCartToken) writeSession('menuza_cart_token', null)
+		const cartLinkToken =
+			(earlyCartToken && getCartToken(`/menu#cart=${earlyCartToken}`)) ||
+			getCartToken(window.location.href)
+		if (cartLinkToken) {
+			void importSavedCart(cartLinkToken)
+		} else if (earlyCartToken || hasCartParam(window.location.href)) {
+			history.replaceState(history.state, '', stripCartParam(window.location.href))
+			showCartNotice('expired')
+		} else {
+			const pending = readSession(CART_NOTICE_KEY)
+			if (pending) {
+				writeSession(CART_NOTICE_KEY, null)
+				try {
+					applySavedCart(JSON.parse(pending) as SavedCartLine[])
+				} catch {}
+			}
+		}
+
+		// A signed-in guest who empties the cart forgets the saved reminder cart
+		// (fire-and-forget, only with a customer token).
+		let hadLines = store.count() > 0
+		store.subscribe((lines) => {
+			const has = lines.length > 0
+			if (hadLines && !has && getAccessToken()) {
+				try {
+					const binding = getOrgBinding()
+					const params = new URLSearchParams()
+					if (binding.host) params.set('host', binding.host)
+					if (binding.slug) params.set('slug', binding.slug)
+					void fetch(`${getBrowserTenantApiUrl()}/orders/cart/clear?${params}`, {
+						method: 'POST',
+						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						credentials: 'omit',
+					}).catch(() => {})
+				} catch {}
+			}
+			hadLines = has
+		})
 
 		const voiceOrderToken = getHandoffToken(window.location.href)
 		if (voiceOrderToken) {

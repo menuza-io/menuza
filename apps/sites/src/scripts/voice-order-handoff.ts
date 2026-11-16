@@ -5,6 +5,8 @@ export type HandoffCartOption = {
 	optionName: string
 	priceDelta: number
 	half?: 'whole' | 'left' | 'right'
+	/** Quantity of a quantity-style option (cart restore keeps it; `priceDelta` is already multiplied). */
+	quantity?: number
 	/** Size/variant echo for display; the order API prices it from `variantId`. */
 	variation?: boolean
 }
@@ -105,6 +107,13 @@ function normalizeOption(raw: unknown): HandoffCartOption | null {
 	}
 	if (o.half === 'whole' || o.half === 'left' || o.half === 'right') {
 		option.half = o.half
+	}
+	if (
+		typeof o.quantity === 'number' &&
+		Number.isSafeInteger(o.quantity) &&
+		o.quantity > 1
+	) {
+		option.quantity = o.quantity
 	}
 	return option
 }
@@ -319,6 +328,11 @@ function resolveGroups(
 				priceDelta: optionPrice(option, choice.half, pizza),
 			}
 			if (choice.half) next.half = choice.half
+			// A quantity option keeps its count; its price is per unit chosen.
+			if (choice.quantity && choice.quantity > 1) {
+				next.quantity = choice.quantity
+				next.priceDelta *= choice.quantity
+			}
 			resolved.push(next)
 			const nested = resolveGroups(
 				option.nestedModifierGroups ?? [],

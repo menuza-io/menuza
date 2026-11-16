@@ -30,6 +30,8 @@ const COVERED: Record<string, string> = {
 	'customers.phone_verification_expires_at': 'row deleted',
 	'customers.refresh_token_hash': 'row deleted',
 	'customers.stripe_customer_id': 'row deleted',
+	'customers.birth_month_day': 'row deleted (#151); never exported or logged',
+	'customers.birth_month_day_set_at': 'row deleted',
 	'customer_subscriptions.confirmed_email_hash':
 		'HMAC of the address, deleted with the subscription by customer id',
 	'customer_refresh_tokens.token_hash': 'deleted by customer id',
@@ -161,6 +163,7 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 		'purpose-prefixed keyed HMAC of the requesting IP, used only for send-code limits and pruned by the regional tick after 24 hours',
 	'marketing_campaigns.name': 'campaign title written by the operator',
 	'marketing_journeys.name': 'journey title written by the operator',
+	'marketing_audiences.name': 'audience title written by the operator',
 	'website_forms.name': 'form title written by the operator',
 	'restaurant_orders.payment_method':
 		'cash or card, not personal data; the order totals are kept',
@@ -303,6 +306,10 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 			'customer_refresh_tokens',
 			'customer_subscriptions',
 			'customer_payment_methods',
+			// The left-behind cart and what order, birthday and cart journeys
+			// started: deleted by customer id (#99 #151 #150).
+			'customer_carts',
+			'order_journey_emissions',
 			'discount_redemptions',
 			'discount_issued_codes',
 			'gift_card_show_tokens',

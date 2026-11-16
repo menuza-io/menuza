@@ -214,6 +214,10 @@ msgstr "رصيد منقول"
 msgid "Balance removed"
 msgstr "تمت إزالة الرصيد"
 
+#: components/profile/profile-screen.tsx:127
+msgid "Birthday (optional)"
+msgstr "تاريخ الميلاد (اختياري)"
+
 #: lib/reservations/messages.ts:18
 msgid "Book a table"
 msgstr "احجز طاولة"
@@ -283,6 +287,10 @@ msgstr "إتمام الطلب"
 msgid "Choose a location"
 msgstr "اختر الفرع"
 
+#: lib/i18n/app-error-message.ts:29
+msgid "Choose a real month and day for your birthday."
+msgstr "اختر شهراً ويوماً صحيحين لعيد ميلادك."
+
 #: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "اختر ما تتلقاه منا وكيف."
@@ -332,6 +340,10 @@ msgstr "التكلفة"
 msgid "Date"
 msgstr "التاريخ"
 
+#: components/profile/profile-screen.tsx:140
+msgid "Day"
+msgstr "اليوم"
+
 #: lib/loyalty/labels.ts:94
 msgid "Decline"
 msgstr "رفض"
@@ -379,7 +391,7 @@ msgid "Edit details"
 msgstr "تعديل البيانات"
 
 #: components/profile/messages-section.tsx:107
-#: components/profile/profile-screen.tsx:92
+#: components/profile/profile-screen.tsx:116
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
@@ -531,7 +543,7 @@ msgid "In store"
 msgstr "في المتجر"
 
 #: components/auth/complete-name-screen.tsx:26
-#: components/profile/profile-screen.tsx:84
+#: components/profile/profile-screen.tsx:108
 msgid "Jane Doe"
 msgstr "سارة أحمد"
 
@@ -548,7 +560,7 @@ msgstr "انضم إلى قائمة الانتظار"
 msgid "Keep it"
 msgstr "الاحتفاظ به"
 
-#: components/profile/profile-screen.tsx:152
+#: components/profile/profile-screen.tsx:202
 msgid "Language"
 msgstr "اللغة"
 
@@ -588,7 +600,7 @@ msgstr "جارٍ تحميل القائمة"
 msgid "Loading your gift cards…"
 msgstr "جارٍ تحميل بطاقات الهدايا…"
 
-#: components/profile/profile-screen.tsx:64
+#: components/profile/profile-screen.tsx:78
 msgid "Loading your profile…"
 msgstr "جارٍ تحميل ملفك الشخصي…"
 
@@ -615,6 +627,14 @@ msgstr "رسائل من {name}"
 msgid "Money added"
 msgstr "تمت إضافة مبلغ"
 
+#: components/profile/profile-screen.tsx:131
+msgid "Month"
+msgstr "الشهر"
+
+#: components/profile/profile-screen.tsx:149
+msgid "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
+msgstr "الشهر واليوم فقط. نستخدمه لنرسل لك هدية عيد ميلاد إذا وافقت على تلقي رسائلنا."
+
 #: components/reservations/parts.tsx:205
 msgid "More guests"
 msgstr "عدد أكبر من الأشخاص"
@@ -628,7 +648,7 @@ msgid "My reservations"
 msgstr "حجوزاتي"
 
 #: components/auth/complete-name-screen.tsx:25
-#: components/profile/profile-screen.tsx:83
+#: components/profile/profile-screen.tsx:107
 #: lib/reservations/messages.ts:60
 #: lib/reservations/messages.ts:112
 msgid "Name"
@@ -639,7 +659,7 @@ msgstr "الاسم"
 msgid "Network error. Check your connection and try again."
 msgstr "خطأ في الشبكة. تحقق من اتصالك وحاول مرة أخرى."
 
-#: lib/i18n/app-error-message.ts:33
+#: lib/i18n/app-error-message.ts:35
 msgid "Network error. Please try again."
 msgstr "خطأ في الشبكة. يرجى المحاولة مرة أخرى."
 
@@ -802,7 +822,7 @@ msgid "Payments aren't available right now."
 msgstr "الدفع غير متاح حاليًا."
 
 #: components/auth/login-screen.tsx:24
-#: components/profile/profile-screen.tsx:103
+#: components/profile/profile-screen.tsx:153
 #: lib/reservations/messages.ts:16
 msgid "Phone number"
 msgstr "رقم الهاتف"
@@ -828,7 +848,7 @@ msgstr "الوقت المفضل"
 msgid "Profile"
 msgstr "الملف الشخصي"
 
-#: components/profile/profile-screen.tsx:111
+#: components/profile/profile-screen.tsx:161
 msgid "Profile saved."
 msgstr "تم حفظ الملف الشخصي."
 
@@ -930,7 +950,7 @@ msgstr "لا يمكن استخدام المكافآت حاليًا."
 msgid "Running late"
 msgstr "سأتأخر"
 
-#: components/profile/profile-screen.tsx:115
+#: components/profile/profile-screen.tsx:165
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
@@ -1007,7 +1027,7 @@ msgstr "سجّل الدخول برقم هاتفك لتحتفظ ببطاقات ا
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "سجّل الدخول برقم هاتفك لمعرفة نقاطك واستخدام مكافآتك."
 
-#: components/profile/profile-screen.tsx:124
+#: components/profile/profile-screen.tsx:174
 msgid "Sign out"
 msgstr "تسجيل الخروج"
 
@@ -1020,7 +1040,7 @@ msgid "Sold out"
 msgstr "نفد المخزون"
 
 #: lib/gift-cards/labels.ts:74
-#: lib/i18n/app-error-message.ts:41
+#: lib/i18n/app-error-message.ts:43
 #: lib/loyalty/labels.ts:130
 #: lib/reservations/messages.ts:137
 msgid "Something went wrong. Please try again."
@@ -1046,7 +1066,7 @@ msgstr "مُستخدم"
 msgid "Stops working in {time}"
 msgstr "يتوقف عن العمل خلال {time}"
 
-#: components/profile/profile-screen.tsx:142
+#: components/profile/profile-screen.tsx:192
 msgid "System default"
 msgstr "افتراضي النظام"
 
@@ -1134,7 +1154,7 @@ msgstr "سيؤكد المطعم طلبك قريبًا."
 msgid "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
 msgstr "برنامج المكافآت متوقف مؤقتًا. رصيدك محفوظ، لكن لا يمكنك الكسب أو الاستبدال حاليًا."
 
-#: lib/i18n/app-error-message.ts:36
+#: lib/i18n/app-error-message.ts:38
 msgid "The service is unavailable right now. Please try again later."
 msgstr "الخدمة غير متاحة حاليًا. يرجى المحاولة لاحقًا."
 
@@ -1190,7 +1210,7 @@ msgstr "هذا الرابط لم يعد صالحًا."
 msgid "Too many attempts. Please try again in a few minutes."
 msgstr "محاولات كثيرة. حاول مرة أخرى بعد دقائق."
 
-#: lib/i18n/app-error-message.ts:31
+#: lib/i18n/app-error-message.ts:33
 msgid "Too many attempts. Please try again later."
 msgstr "محاولات كثيرة جدًا. يرجى المحاولة لاحقًا."
 
@@ -1226,7 +1246,7 @@ msgstr "اكتب الرمز الموجود في بريدك الإلكتروني 
 msgid "Up to {amount} off"
 msgstr "خصم حتى {amount}"
 
-#: components/profile/profile-screen.tsx:80
+#: components/profile/profile-screen.tsx:104
 msgid "Update your basic details below."
 msgstr "حدّث بياناتك الأساسية أدناه."
 
@@ -1243,7 +1263,7 @@ msgid "Use a different number"
 msgstr "استخدم رقمًا آخر"
 
 #: components/auth/site-unavailable-screen.tsx:34
-#: components/profile/profile-screen.tsx:128
+#: components/profile/profile-screen.tsx:178
 msgid "Use a different site"
 msgstr "استخدم موقعًا آخر"
 
@@ -1419,7 +1439,7 @@ msgstr "رمزك الجديد جاهز."
 msgid "Your payment is being checked. We'll confirm shortly."
 msgstr "يجري التحقق من دفعتك وسنؤكد قريبًا."
 
-#: components/profile/profile-screen.tsx:106
+#: components/profile/profile-screen.tsx:156
 msgid "Your phone number can't be changed here."
 msgstr "لا يمكن تغيير رقم هاتفك هنا."
 
@@ -1427,7 +1447,7 @@ msgstr "لا يمكن تغيير رقم هاتفك هنا."
 msgid "Your points"
 msgstr "نقاطك"
 
-#: components/profile/profile-screen.tsx:78
+#: components/profile/profile-screen.tsx:102
 msgid "Your profile"
 msgstr "ملفك الشخصي"
 
@@ -1440,7 +1460,7 @@ msgid "Your rewards account is on hold. Please contact the business for help."
 msgstr "حسابك في برنامج المكافآت معلّق. يُرجى التواصل مع النشاط التجاري للمساعدة."
 
 #: lib/gift-cards/labels.ts:77
-#: lib/i18n/app-error-message.ts:29
+#: lib/i18n/app-error-message.ts:31
 #: lib/loyalty/labels.ts:128
 msgid "Your session ended. Please sign in again."
 msgstr "انتهت جلستك. يُرجى تسجيل الدخول مرة أخرى."

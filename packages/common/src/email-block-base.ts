@@ -20,11 +20,21 @@ export const emailAlignmentSchema = z
 	.enum(EMAIL_BLOCK_ALIGNMENTS)
 	.default('left')
 
+/**
+ * Merge tags that stand for a whole URL (a cart reminder's "Back to your
+ * order" link, #150). Filled when the message is sent, and checked there like
+ * any merge tag in a `href`: only http, https, mailto and tel survive.
+ */
+export const URL_MERGE_TAGS = ['{{cartLink}}'] as const
+
 export const emailUrlSchema = z
 	.string()
 	.max(2_000)
 	.refine(
-		(value) => !value.trim() || /^https?:\/\//i.test(value.trim()),
+		(value) =>
+			!value.trim() ||
+			/^https?:\/\//i.test(value.trim()) ||
+			(URL_MERGE_TAGS as readonly string[]).includes(value.trim()),
 		'URL must use HTTP or HTTPS',
 	)
 

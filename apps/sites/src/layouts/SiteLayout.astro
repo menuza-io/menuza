@@ -175,6 +175,32 @@ const htmlClass =
 				} catch (error) {}
 			})()
 		</script>
+		{/*
+			A cart reminder link (`#cart=…`, #150) is a capability too: move it out of
+			the address bar before any analytics tag can read the page URL. The menu
+			script reads it from this tab's session storage (never a query string).
+		*/}
+		<script is:inline>
+			;(function () {
+				try {
+					var hash = window.location.hash
+					if (hash.indexOf('cart=') === -1) return
+					var params = new URLSearchParams(hash.slice(1))
+					var token = params.get('cart')
+					if (!token) return
+					params.delete('cart')
+					var rest = params.toString()
+					sessionStorage.setItem('menuza_cart_token', token)
+					history.replaceState(
+						history.state,
+						'',
+						window.location.pathname +
+							window.location.search +
+							(rest ? '#' + rest : ''),
+					)
+				} catch (error) {}
+			})()
+		</script>
 		<SiteAnalyticsIntegrations
 			facebookPixelId={facebookPixelId}
 			googleTagManagerId={googleTagManagerId}

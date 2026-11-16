@@ -1,3 +1,7 @@
+import {
+	BIRTHDAY_ERROR,
+	birthMonthDayFieldSchema,
+} from '@repo/common/birthday'
 import { STAFF_CONSENT_METHODS } from '@repo/common/marketing-consent'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono, type Context } from 'hono'
@@ -302,6 +306,8 @@ const patchSchema = z
 			.pipe(z.string().email().nullable()),
 		phone: z.string().trim().max(32).nullable().optional(),
 		allergyNotes: z.string().max(1000).nullable().optional(),
+		/** `MM-DD` (#151), or null to clear. A bad value is refused without echoing it. */
+		birthMonthDay: birthMonthDayFieldSchema.optional(),
 		expectedVersion: z.number().int().min(1).optional(),
 	})
 	.strict()
@@ -320,6 +326,9 @@ operatorPeopleRoutes.patch('/:key', async (c) => {
 		raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
 	const parsed = patchSchema.safeParse(raw)
 	if (!parsed.success) {
+		if (parsed.error.issues.some((issue) => issue.path[0] === 'birthMonthDay')) {
+			return json({ error: BIRTHDAY_ERROR }, 400)
+		}
 		return json(
 			{
 				error: 'validation_error',
@@ -338,6 +347,9 @@ operatorPeopleRoutes.patch('/:key', async (c) => {
 		...(data.phone !== undefined ? { phone: data.phone } : {}),
 		...(data.allergyNotes !== undefined
 			? { allergyNotes: data.allergyNotes }
+			: {}),
+		...(data.birthMonthDay !== undefined
+			? { birthMonthDay: data.birthMonthDay }
 			: {}),
 		...(data.expectedVersion !== undefined
 			? { expectedVersion: data.expectedVersion }

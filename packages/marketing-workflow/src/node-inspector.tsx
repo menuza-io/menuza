@@ -2,10 +2,13 @@ import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type EmailBlock } from '@repo/common/email-blocks'
 import {
+	AiDraftButton,
+	AiDraftDialog,
 	CouponOfferField,
 	type CouponOfferValue,
 	EmailDesignOverlay,
 	MergeTagField,
+	RewriteWithAi,
 } from '@repo/marketing'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
@@ -13,6 +16,7 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { ScrollArea } from '@repo/ui/scroll-area'
+import { Switch } from '@repo/ui/switch'
 import {
 	Select,
 	SelectContent,
@@ -30,6 +34,19 @@ import { useWorkflowUiLabels } from './workflow-labels.ts'
 /** Merge tags are passed as values: Lingui reads literal braces as a placeholder. */
 const FIRST_NAME_TAG = '{{firstName}}'
 const NAME_TAG = '{{name}}'
+
+/** Condition fields computed from a guest's history (numbers) or reservations (yes / no). */
+const NUMERIC_CONDITION_FIELDS: string[] = [
+	'orders_last_30_days',
+	'orders_last_90_days',
+	'days_since_last_order',
+	'lifetime_spend',
+]
+const BOOLEAN_BEHAVIOR_FIELDS: string[] = ['has_upcoming_reservation']
+const BOOLEAN_CONDITION_FIELDS: string[] = [
+	'phoneVerified',
+	...BOOLEAN_BEHAVIOR_FIELDS,
+]
 
 interface NodeInspectorProps {
 	node: Node | null
@@ -75,9 +92,11 @@ export function NodeInspector({
 		couponOptions,
 		emailMenuItems,
 		emailTemplatesEndpoint,
+		audienceOptions,
 	} = useWorkflowConfig()
 	const { conditionFieldLabel, delayUnitLabel } = useWorkflowUiLabels()
 	const [designerOpen, setDesignerOpen] = useState(false)
+	const [aiDraftOpen, setAiDraftOpen] = useState(false)
 
 	if (!node) return null
 
@@ -213,6 +232,123 @@ export function NodeInspector({
 								</p>
 							</div>
 
+							{data.triggerType !== 'manual' &&
+							data.triggerType !== 'custom_event' ? (
+								<div className="flex items-start justify-between gap-3 rounded-lg border p-3">
+									<div className="space-y-1">
+										<Label
+											htmlFor="goalOrder"
+											className="text-xs font-medium"
+										>
+											<Trans>Stop when the guest places an order</Trans>
+										</Label>
+										<p className="text-muted-foreground text-[11px]">
+											<Trans>
+												Checked before every step, including after a delay. Guests
+												who order are not sent the rest of this automation.
+											</Trans>
+										</p>
+									</div>
+									<Switch
+										id="goalOrder"
+										checked={data.config?.goal === 'order'}
+										onCheckedChange={(checked) =>
+											handleConfigChange('goal', checked ? 'order' : undefined)
+										}
+									/>
+								</div>
+							) : null}
+
+							{data.triggerType === 'order_completed' && (
+								<div className="space-y-1.5">
+									<Label htmlFor="nth" className="text-xs font-medium">
+										<Trans>Only the Nth order</Trans>
+									</Label>
+									<Input
+										id="nth"
+										type="number"
+										min="1"
+										max="1000"
+										placeholder={_(msg`Every order`)}
+										value={data.config?.nth ?? ''}
+										onChange={(e) => {
+											const n = parseInt(e.target.value)
+											handleConfigChange(
+												'nth',
+												Number.isFinite(n) && n >= 1 ? Math.min(n, 1000) : undefined,
+											)
+										}}
+										className="h-11"
+									/>
+									<p className="text-muted-foreground text-[11px]">
+										<Trans>
+											Leave empty to run for every completed order, or enter 3 to
+											run only for a guest's third order.
+										</Trans>
+									</p>
+								</div>
+							)}
+
+							{data.triggerType === 'guest_lapsed' && (
+								<div className="space-y-1.5">
+									<Label htmlFor="lapsedDays" className="text-xs font-medium">
+										<Trans>Days without an order</Trans>
+									</Label>
+									<Select
+										value={String(data.config?.days ?? 60)}
+										onValueChange={(val) =>
+											handleConfigChange('days', parseInt(val ?? '') || 60)
+										}
+									>
+										<SelectTrigger id="lapsedDays" className="h-11">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											{[30, 60, 90, 120, 180].map((days) => (
+												<SelectItem key={days} value={String(days)}>
+													{days}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<p className="text-muted-foreground text-[11px]">
+										<Trans>
+											Runs once per quiet spell, for a guest who ordered at least
+											once. It starts again after their next order.
+										</Trans>
+									</p>
+								</div>
+							)}
+
+							{data.triggerType === 'birthday_coming_up' && (
+								<div className="space-y-1.5">
+									<Label htmlFor="daysBefore" className="text-xs font-medium">
+										<Trans>Days before the birthday</Trans>
+									</Label>
+									<Input
+										id="daysBefore"
+										type="number"
+										min="0"
+										max="60"
+										value={data.config?.daysBefore ?? 7}
+										onChange={(e) =>
+											handleConfigChange(
+												'daysBefore',
+												Math.min(60, Math.max(0, parseInt(e.target.value) || 0)),
+											)
+										}
+										className="h-11"
+									/>
+									<p className="text-muted-foreground text-[11px]">
+										<Trans>
+											Starts at 10:00 local time, once a year. A birthday alone is
+											not consent: guests who did not agree to hear from you get
+											nothing.
+										</Trans>
+									</p>
+								</div>
+							)}
+
 							{data.triggerType === 'custom_event' && (
 								<div className="space-y-1.5">
 									<Label htmlFor="eventName" className="text-xs font-medium">
@@ -340,6 +476,7 @@ export function NodeInspector({
 											<Trans>Design email</Trans>
 										)}
 									</Button>
+									<AiDraftButton onClick={() => setAiDraftOpen(true)} />
 									{emailBlocks.length > 0 ? (
 										<Button
 											type="button"
@@ -408,6 +545,27 @@ export function NodeInspector({
 
 							{couponField}
 
+							{/* AI only FILLS the step (subject and design); the author reviews
+							    it in the designer and saves the automation as usual. */}
+							<AiDraftDialog
+								open={aiDraftOpen}
+								onOpenChange={setAiDraftOpen}
+								channel="email"
+								hasContent={
+									emailBlocks.length > 0 ||
+									Boolean(data.bodyHtml && data.bodyHtml.trim().length > 7)
+								}
+								onApply={(draft) => {
+									if (draft.channel !== 'email') return
+									onUpdateNodeData(node.id, {
+										...data,
+										subject: draft.subject,
+										blocks: draft.blocks,
+										emailFormat: 'designed',
+									})
+								}}
+							/>
+
 							<EmailDesignOverlay
 								open={designerOpen}
 								onOpenChange={setDesignerOpen}
@@ -466,6 +624,32 @@ export function NodeInspector({
 									}
 									className="text-xs"
 								/>
+								<div className="flex flex-wrap items-center gap-1">
+									<AiDraftButton onClick={() => setAiDraftOpen(true)} />
+									<RewriteWithAi
+										sms
+										text={data.messageText || ''}
+										onRewrite={(value) =>
+											handleChange(
+												'messageText',
+												truncateSmsMergeTags(value, 1600),
+											)
+										}
+									/>
+								</div>
+								<AiDraftDialog
+									open={aiDraftOpen}
+									onOpenChange={setAiDraftOpen}
+									channel="sms"
+									hasContent={(data.messageText || '').trim().length > 0}
+									onApply={(draft) => {
+										if (draft.channel !== 'sms') return
+										handleChange(
+											'messageText',
+											truncateSmsMergeTags(draft.message, 1600),
+										)
+									}}
+								/>
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>
 										SMS messages over 160 characters will be segmented according
@@ -486,14 +670,20 @@ export function NodeInspector({
 								<Select
 									value={data.field || 'email'}
 									onValueChange={(val: string) => {
-										handleChange('field', val)
-										if (val === 'phoneVerified') {
-											handleChange('operator', 'equals')
-											handleChange('value', 'true')
-										} else {
-											handleChange('operator', 'contains')
-											handleChange('value', '')
-										}
+										onUpdateNodeData(node.id, {
+											...data,
+											field: val,
+											...(BOOLEAN_CONDITION_FIELDS.includes(val)
+												? { operator: 'equals', value: 'true' }
+												: NUMERIC_CONDITION_FIELDS.includes(val)
+													? { operator: 'greater_than', value: '0' }
+													: val === 'audience'
+														? {
+																operator: 'equals',
+																value: audienceOptions?.[0]?.id ?? '',
+															}
+														: { operator: 'contains', value: '' }),
+										})
 									}}
 								>
 									<SelectTrigger id="field" className="h-11">
@@ -512,11 +702,130 @@ export function NodeInspector({
 										<SelectItem value="name">
 											<Trans>Name</Trans>
 										</SelectItem>
+										{(
+											[
+												...NUMERIC_CONDITION_FIELDS,
+												...BOOLEAN_BEHAVIOR_FIELDS,
+												...(audienceOptions ? ['audience'] : []),
+											] as string[]
+										).map((field) => (
+											<SelectItem key={field} value={field}>
+												{conditionFieldLabel(field)}
+											</SelectItem>
+										))}
 									</SelectContent>
 								</Select>
 							</div>
 
-							{data.field === 'phoneVerified' ? (
+							{data.field === 'audience' ? (
+								<div className="space-y-1.5">
+									<Label htmlFor="audienceId" className="text-xs font-medium">
+										<Trans>Saved audience</Trans>
+									</Label>
+									<Select
+										value={data.value || ''}
+										onValueChange={(val: string) => handleChange('value', val)}
+									>
+										<SelectTrigger id="audienceId" className="h-11">
+											<SelectValue placeholder={_(msg`Choose an audience`)}>
+												{audienceOptions?.find((a) => a.id === data.value)?.name}
+											</SelectValue>
+										</SelectTrigger>
+										<SelectContent>
+											{(audienceOptions ?? []).map((audience) => (
+												<SelectItem key={audience.id} value={audience.id}>
+													{audience.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<Select
+										value={data.operator === 'not_equals' ? 'not_equals' : 'equals'}
+										onValueChange={(val) =>
+											handleChange('operator', val ?? 'equals')
+										}
+									>
+										<SelectTrigger id="audienceOperator" className="h-11">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="equals">
+												<Trans>Guest is in the audience</Trans>
+											</SelectItem>
+											<SelectItem value="not_equals">
+												<Trans>Guest is not in the audience</Trans>
+											</SelectItem>
+										</SelectContent>
+									</Select>
+									<p className="text-muted-foreground text-[11px]">
+										<Trans>
+											Checked when the guest reaches this step, never stored.
+										</Trans>
+									</p>
+								</div>
+							) : NUMERIC_CONDITION_FIELDS.includes(data.field) ? (
+								<div className="grid grid-cols-2 gap-3">
+									<div className="space-y-1.5">
+										<Label htmlFor="numericOperator" className="text-xs font-medium">
+											<Trans>Condition Logic</Trans>
+										</Label>
+										<Select
+											value={data.operator || 'greater_than'}
+											onValueChange={(val: string) => handleChange('operator', val)}
+										>
+											<SelectTrigger id="numericOperator" className="h-11">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="greater_than">
+													<Trans>Is more than</Trans>
+												</SelectItem>
+												<SelectItem value="less_than">
+													<Trans>Is less than</Trans>
+												</SelectItem>
+												<SelectItem value="equals">
+													<Trans>Is exactly</Trans>
+												</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+									<div className="space-y-1.5">
+										<Label htmlFor="numericValue" className="text-xs font-medium">
+											<Trans>Target Value</Trans>
+										</Label>
+										<Input
+											id="numericValue"
+											type="number"
+											min="0"
+											value={data.value ?? ''}
+											onChange={(e) => handleChange('value', e.target.value)}
+											className="h-11"
+										/>
+									</div>
+								</div>
+							) : data.field === 'has_upcoming_reservation' ? (
+								<div className="space-y-1.5">
+									<Label htmlFor="upcomingValue" className="text-xs font-medium">
+										<Trans>Upcoming reservation</Trans>
+									</Label>
+									<Select
+										value={data.value || 'true'}
+										onValueChange={(val: string) => handleChange('value', val)}
+									>
+										<SelectTrigger id="upcomingValue" className="h-11">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="true">
+												<Trans>Has one (True)</Trans>
+											</SelectItem>
+											<SelectItem value="false">
+												<Trans>Has none (False)</Trans>
+											</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
+							) : data.field === 'phoneVerified' ? (
 								<div className="space-y-1.5">
 									<Label htmlFor="booleanValue" className="text-xs font-medium">
 										<Trans>Verification Status</Trans>

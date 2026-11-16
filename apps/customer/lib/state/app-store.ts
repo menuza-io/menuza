@@ -1,3 +1,4 @@
+import { parseBirthMonthDay } from '@repo/common/birthday'
 import { ApiError, regionUnavailableError } from '../api/api-error'
 import { fetchTransport, type HttpTransport } from '../api/http'
 import {
@@ -607,7 +608,15 @@ export class AppStore<Features extends CustomerFeatures = CustomerFeatures> {
 	}
 
 	/** An empty email clears the stored one. */
-	async saveProfile(name: string, email: string): Promise<void> {
+	/**
+	 * `birthMonthDay` is `MM-DD`, null to clear it, undefined to leave it alone
+	 * (not given, or only half of it). Month and day only: never a year.
+	 */
+	async saveProfile(
+		name: string,
+		email: string,
+		birthMonthDay?: string | null,
+	): Promise<void> {
 		const session = this.#snapshot.session
 		if (
 			!session ||
@@ -627,10 +636,21 @@ export class AppStore<Features extends CustomerFeatures = CustomerFeatures> {
 			this.#update({ error: { reason: 'invalidEmail' }, didSaveProfile: false })
 			return
 		}
+		if (
+			birthMonthDay !== undefined &&
+			birthMonthDay !== null &&
+			parseBirthMonthDay(birthMonthDay) === null
+		) {
+			this.#update({ error: { reason: 'invalidBirthday' }, didSaveProfile: false })
+			return
+		}
 		const attempt = this.#authAttempt
 		this.#update({ isSavingProfile: true, error: null, didSaveProfile: false })
 		try {
-			const profile = await session.updateProfile(name, trimmedEmail)
+			const profile =
+				birthMonthDay === undefined
+					? await session.updateProfile(name, trimmedEmail)
+					: await session.updateProfile(name, trimmedEmail, birthMonthDay)
 			if (attempt !== this.#authAttempt) return
 			this.#update({
 				isSavingProfile: false,

@@ -858,6 +858,22 @@ in the org's website branding.
   audit entry (ids only) so a resume can offer it back. Note the audit writer's
   sanitizer stores an array as an index-keyed object: read both shapes.
 
+**Marketing audiences, order triggers and ready-made programs (#98, #99, #100,
+#150, #151):**
+
+- Saved audiences (`@repo/common/marketing-audiences`, compiled to SQL in
+  tenant-api, `/operator/marketing/audiences`) only ever narrow consent. Order
+  triggers, the "stop when the guest orders" goal and the frequency cap live in
+  `services/order-journeys.ts`, `journey-guards.ts`; birthdays in
+  `birthday-journeys.ts` (`customers.birth_month_day`); cart reminders in
+  `cart-reminders.ts` (`customer_carts`, ids and quantities only, the restore token
+  rides in the URL fragment). Programs are templates in
+  `packages/marketing-workflow/src/programs.ts`; "Turn on" is
+  `apps/app/app/utils/marketing/programs.server.ts`. Flags (default off):
+  `marketing.audiences`, `.order_automations`, `.birthdays`, `.cart_reminders`,
+  `ai.marketing_drafts`. Guest data never reaches the App Worker or a model.
+  Details: `docs/marketing-programs.md`.
+
 ## PR & Commit Guidelines
 
 **Pre-commit Checks**:

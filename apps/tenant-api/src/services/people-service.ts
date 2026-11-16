@@ -858,6 +858,8 @@ export async function getPersonProfile(
 		phone: string | null
 		phoneVerified: boolean
 		createdAt: number
+		/** `MM-DD` (#151); null when not given. Personal: never exported or logged. */
+		birthMonthDay: string | null
 		orders: { count: number; lastOrderAt: number | null }
 	} | null = null
 	if (customer && access.customers) {
@@ -868,6 +870,7 @@ export async function getPersonProfile(
 			phone: customer.phone,
 			phoneVerified: Boolean(customer.phoneVerified),
 			createdAt: (customer.createdAt?.getTime() ?? 0) || 0,
+			birthMonthDay: customer.birthMonthDay ?? null,
 			orders: await ordersSummary(db, customer.id),
 		}
 	}
@@ -1032,6 +1035,8 @@ export type PersonPatch = {
 	email?: string | null
 	phone?: string | null
 	allergyNotes?: string | null
+	/** `MM-DD`, or null to clear (#151). Needs the customer grant. */
+	birthMonthDay?: string | null
 	expectedVersion?: number
 }
 
@@ -1053,10 +1058,11 @@ export async function updatePerson(
 		patch.name !== undefined ||
 		patch.email !== undefined ||
 		patch.phone !== undefined
+	const editsBirthday = patch.birthMonthDay !== undefined
 
 	if (customer) {
 		if (!access.canUpdateCustomers) {
-			if (editsContact) {
+			if (editsContact || editsBirthday) {
 				throw forbidden(
 					'insufficient_permissions',
 					'Updating customers is not allowed',
@@ -1082,6 +1088,10 @@ export async function updatePerson(
 			)
 		}
 	}
+	// A birthday lives on the customer row: a guest with no customer has none.
+	if (!customer && editsBirthday) {
+		throw conflict('no_customer_profile', 'This person has no customer profile')
+	}
 	// A guest with no customer is edited under the guest grant.
 	if (!customer && editsContact) requireDiningWrite(access)
 	if (!customer && !guest) throw notFound('Person not found')
@@ -1089,12 +1099,18 @@ export async function updatePerson(
 	// One write: a rejected dining update (stale version, merged guest) must
 	// not leave the customer's name or email already changed.
 	await withSetupWrite(db, async (tx) => {
-		if (customer && editsContact && access.canUpdateCustomers) {
+		if (customer && (editsContact || editsBirthday) && access.canUpdateCustomers) {
 			await tx
 				.update(customers)
 				.set({
 					...(patch.name !== undefined ? { name: patch.name } : {}),
 					...(patch.email !== undefined ? { email: patch.email } : {}),
+					...(editsBirthday
+						? {
+								birthMonthDay: patch.birthMonthDay ?? null,
+								birthMonthDaySetAt: patch.birthMonthDay ? Date.now() : null,
+							}
+						: {}),
 					updatedAt: new Date(),
 				})
 				.where(eq(customers.id, customer.id))

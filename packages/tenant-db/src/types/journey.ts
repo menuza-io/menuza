@@ -32,8 +32,92 @@ export const JOURNEY_TRIGGER_TYPES = [
 	'loyalty_reward_available',
 	'loyalty_near_reward',
 	'loyalty_inactive',
+	'order_first_placed',
+	'order_completed',
+	'guest_lapsed',
+	'birthday_coming_up',
+	'cart_left_behind',
 ] as const
 export type JourneyTriggerType = (typeof JOURNEY_TRIGGER_TYPES)[number]
+
+/**
+ * Order triggers (#99): a guest's first order, an order that is completed (only
+ * the Nth, optionally), and a guest who has gone quiet. They are offered in the
+ * editor only while restaurant ordering is available, and fire once per order
+ * or per quiet spell (`order_journey_emissions`).
+ */
+export const ORDER_JOURNEY_TRIGGER_TYPES = [
+	'order_first_placed',
+	'order_completed',
+	'guest_lapsed',
+] as const
+export type OrderJourneyTriggerType =
+	(typeof ORDER_JOURNEY_TRIGGER_TYPES)[number]
+export function isOrderJourneyTrigger(
+	value: unknown,
+): value is OrderJourneyTriggerType {
+	return (ORDER_JOURNEY_TRIGGER_TYPES as readonly unknown[]).includes(value)
+}
+
+/** Birthday (#151) and cart (#150) triggers, started by the regional tick. */
+export const GUEST_MOMENT_JOURNEY_TRIGGER_TYPES = [
+	'birthday_coming_up',
+	'cart_left_behind',
+] as const
+export type GuestMomentJourneyTriggerType =
+	(typeof GUEST_MOMENT_JOURNEY_TRIGGER_TYPES)[number]
+export function isGuestMomentJourneyTrigger(
+	value: unknown,
+): value is GuestMomentJourneyTriggerType {
+	return (GUEST_MOMENT_JOURNEY_TRIGGER_TYPES as readonly unknown[]).includes(
+		value,
+	)
+}
+
+/**
+ * "Stop when the guest places an order" (#99). Checked before every step,
+ * including after a delay.
+ */
+export const JOURNEY_GOALS = ['order'] as const
+export type JourneyGoal = (typeof JOURNEY_GOALS)[number]
+export const journeyGoalSchema = z.enum(JOURNEY_GOALS)
+
+/** Why a run ended early, stored in the run's `errorMessage` and shown in its timeline. */
+export const JOURNEY_GOAL_REACHED_REASON =
+	'Goal reached: the guest placed an order'
+
+/**
+ * Whether an event matches one journey's trigger settings. Order triggers may
+ * name locations and (for `order_completed`) which order of the guest's it is
+ * ("only the 3rd"); other triggers have no settings here and always match.
+ */
+export function triggerConfigMatches(
+	triggerType: string,
+	rawConfig: unknown,
+	event: { locationId?: unknown; orderSequence?: unknown },
+): boolean {
+	if (!isOrderJourneyTrigger(triggerType)) return true
+	const config =
+		rawConfig && typeof rawConfig === 'object'
+			? (rawConfig as { locationIds?: unknown; nth?: unknown })
+			: {}
+	if (
+		Array.isArray(config.locationIds) &&
+		config.locationIds.length > 0 &&
+		triggerType !== 'guest_lapsed'
+	) {
+		if (
+			typeof event.locationId !== 'string' ||
+			!config.locationIds.includes(event.locationId)
+		) {
+			return false
+		}
+	}
+	if (triggerType === 'order_completed' && typeof config.nth === 'number') {
+		return event.orderSequence === config.nth
+	}
+	return true
+}
 
 /**
  * Triggers fired by the Reservations module. Offered in the editor only while
@@ -298,6 +382,11 @@ export const createJourneySchema = z.object({
 	nodes: z.array(z.record(z.string(), z.unknown())).optional().default([]),
 	edges: z.array(z.record(z.string(), z.unknown())).optional().default([]),
 	graphJson: z.string().optional(),
+	/** Stop the run when the guest places an order (#99). */
+	goal: journeyGoalSchema.nullish(),
+	/** The ready-made program this journey came from (#100). */
+	programId: z.string().min(1).max(60).nullish(),
+	programVersion: z.number().int().min(1).nullish(),
 })
 export type CreateJourneyInput = z.infer<typeof createJourneySchema>
 
@@ -310,6 +399,7 @@ export const updateJourneySchema = z.object({
 	nodes: z.array(z.record(z.string(), z.unknown())).optional(),
 	edges: z.array(z.record(z.string(), z.unknown())).optional(),
 	graphJson: z.string().optional(),
+	goal: journeyGoalSchema.nullish(),
 })
 export type UpdateJourneyInput = z.infer<typeof updateJourneySchema>
 

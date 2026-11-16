@@ -13,7 +13,7 @@ import {
 	type TenantTransaction,
 } from '@repo/tenant-db'
 import { hmacHash } from '../lib/secrets.ts'
-import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, type SQL } from 'drizzle-orm'
 
 export type BroadcastChannel = CustomerSubscriptionChannel
 export type BroadcastAudience = 'all' | 'verified' | 'unverified'
@@ -60,6 +60,11 @@ export async function loadBroadcastAudience(
 		 * not in the audience.
 		 */
 		retargetOf?: string
+		/**
+		 * A saved audience's condition on `customers` (`compileAudience`, #98). It
+		 * is ANDed with the consent rules above: an audience narrows, never widens.
+		 */
+		audienceWhere?: SQL
 	},
 ): Promise<Customer[]> {
 	if (params.customerIds && params.customerIds.length === 0) return []
@@ -80,6 +85,7 @@ export async function loadBroadcastAudience(
 				isNull(customerSubscriptions.unsubscribedAt),
 				// bounded: marketing topics are a small closed enum
 				inArray(customerSubscriptions.topic, topics),
+				params.audienceWhere,
 				params.customerId ? eq(customers.id, params.customerId) : undefined,
 				params.customerIds
 					? // bounded: callers pass one broadcast batch (BROADCAST_BATCH_SIZE)

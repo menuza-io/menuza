@@ -161,3 +161,35 @@ describe('ProfileScreen', () => {
 		).toBeNull()
 	})
 })
+
+describe('ProfileScreen birthday (#151)', () => {
+	it('sends the birthday as month-day, and refuses a date that does not exist', async () => {
+		const { transport } = await signedInProfile({
+			'/auth/profile': {
+				json: {
+					success: true,
+					accessToken: makeAccessToken({ name: 'Ada Lovelace' }),
+					refreshToken: 'refresh-2',
+				},
+			},
+		})
+		fireEvent.changeText(await screen.findByLabelText('Month'), '2')
+		fireEvent.changeText(screen.getByLabelText('Day'), '30')
+		fireEvent.press(screen.getByText('Save changes'))
+		expect(
+			await screen.findByText('Choose a real month and day for your birthday.'),
+		).toBeTruthy()
+		expect(
+			transport.recorded.find((entry) => entry.url.pathname === '/auth/profile'),
+		).toBeUndefined()
+
+		fireEvent.changeText(screen.getByLabelText('Day'), '29')
+		fireEvent.press(screen.getByText('Save changes'))
+		await waitFor(() =>
+			expect(
+				transport.recorded.find((entry) => entry.url.pathname === '/auth/profile')
+					?.body,
+			).toMatchObject({ birthMonthDay: '02-29' }),
+		)
+	})
+})

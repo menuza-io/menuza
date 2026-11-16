@@ -217,6 +217,8 @@ function storedRules(value: unknown): Record<string, unknown> {
 export type CampaignPatch = {
 	name?: string
 	audience?: 'all' | 'verified' | 'unverified'
+	/** A saved audience (#98); `null` clears it, `undefined` leaves it. */
+	audienceRef?: { id: string; version: number } | null
 	subject?: string | null
 	content?: string
 	contentBlocks?: string | null
@@ -293,13 +295,19 @@ export async function updateCampaign(
 	if (patch.lateAfterMinutes !== undefined) {
 		set.lateAfterMinutes = patch.lateAfterMinutes
 	}
-	if (patch.audience !== undefined) {
+	if (patch.audience !== undefined || patch.audienceRef !== undefined) {
 		// A JSON column: write the object, not a string of it. Keep any other
 		// keys already stored (the create path once stored a string of JSON).
-		set.segmentationRules = {
-			...storedRules(row.segmentationRules),
-			audience: patch.audience,
+		const rules: Record<string, unknown> = { ...storedRules(row.segmentationRules) }
+		if (patch.audience !== undefined) rules.audience = patch.audience
+		if (patch.audienceRef === null) {
+			delete rules.audienceId
+			delete rules.audienceVersion
+		} else if (patch.audienceRef) {
+			rules.audienceId = patch.audienceRef.id
+			rules.audienceVersion = patch.audienceRef.version
 		}
+		set.segmentationRules = rules
 	}
 	if (patch.sendNow) set.scheduledAt = null
 	else if (patch.scheduledAt !== undefined) set.scheduledAt = patch.scheduledAt

@@ -337,6 +337,13 @@
 			"when": 1794807049183,
 			"tag": "0047_gift_cards",
 			"breakpoints": true
+		},
+		{
+			"idx": 48,
+			"version": "6",
+			"when": 1794893449000,
+			"tag": "0048_marketing_programs_and_drafts",
+			"breakpoints": true
 		}
 	]
 }

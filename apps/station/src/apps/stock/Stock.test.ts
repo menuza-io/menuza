@@ -47,6 +47,7 @@ beforeEach(async () => {
 })
 afterEach(async () => {
 	await page.unmount()
+	await resetStock()
 	try {
 		expect(issues).toEqual([])
 	} finally {
@@ -703,7 +704,7 @@ describe('Waste', () => {
 		await vi.waitFor(() => expect(hasButton(dialog(), /^Undo/)).toBe(true))
 		await click(button(dialog(), /^Undo/))
 		await vi.waitFor(() => expect(text(dialog())).toContain('Undone'))
-		expect(await stockRows(ORIGIN)).toEqual([])
+		await vi.waitFor(async () => expect(await stockRows(ORIGIN)).toEqual([]))
 		expect(api.writes(/waste/)).toEqual([])
 	})
 

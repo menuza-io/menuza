@@ -187,6 +187,7 @@ export class CustomerSession {
 	async updateProfile(
 		name: string,
 		email?: string | null,
+		birthMonthDay?: string | null,
 	): Promise<CustomerProfile> {
 		const trimmedName = name.trim()
 		if (Array.from(trimmedName).length < 2) {
@@ -195,7 +196,7 @@ export class CustomerSession {
 		const trimmedEmail = email == null ? undefined : email.trim()
 		const generation = this.#generation
 		const next = await this.authorized((token) =>
-			this.client.updateProfile(trimmedName, trimmedEmail, token),
+			this.client.updateProfile(trimmedName, trimmedEmail, token, birthMonthDay),
 		)
 		// /auth/profile re-issues only the access token (its name claim changed)
 		// and keeps the refresh token, so the customer's other devices stay

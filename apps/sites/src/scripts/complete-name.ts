@@ -5,6 +5,7 @@ import {
 	tenantErrorMessage,
 	tenantFetch,
 } from '~/lib/client-auth'
+import { BIRTHDAY_ERROR, readBirthdayField } from '~/lib/birthday-field'
 import { browserLocaleHref } from '~/lib/locale'
 import {
 	readConsentChoice,
@@ -66,11 +67,16 @@ export function initCompleteNamePage() {
 		submitButton.textContent = savingLabel
 
 		const name = new FormData(form).get('name')?.toString().trim() || ''
+		// Optional: only sent when a full month and day were chosen.
+		const birthMonthDay = readBirthdayField(form)
 
 		try {
 			const { session, response: res } = await tenantFetch('/auth/profile', {
 				method: 'POST',
-				body: JSON.stringify({ name }),
+				body: JSON.stringify({
+					name,
+					...(typeof birthMonthDay === 'string' ? { birthMonthDay } : {}),
+				}),
 			})
 			if (session === 'signed_out') {
 				redirectToLogin()
@@ -101,7 +107,11 @@ export function initCompleteNamePage() {
 				)
 				window.location.href = browserLocaleHref('/')
 			} else {
-				showError(tenantErrorMessage(data, errorLabel))
+				showError(
+					data.error === BIRTHDAY_ERROR
+						? form.dataset.invalidBirthday || errorLabel
+						: tenantErrorMessage(data, errorLabel),
+				)
 			}
 		} catch {
 			showError(networkLabel)

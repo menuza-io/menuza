@@ -122,7 +122,8 @@ export function MergeTagField({
 	className,
 	disabled,
 }: MergeTagFieldProps) {
-	const tokens = mergeTokensFor({ loyalty: useMergeTagScope().loyalty })
+	const scope = useMergeTagScope()
+	const tokens = mergeTokensFor({ loyalty: scope.loyalty, cart: scope.cart })
 	const { _ } = useLingui()
 	const fallbackInputId = useId()
 	const editorRef = useRef<HTMLDivElement>(null)

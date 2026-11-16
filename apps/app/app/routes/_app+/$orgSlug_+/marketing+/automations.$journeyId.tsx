@@ -3,6 +3,7 @@ import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { getDomainUrl } from '@repo/common'
 import { parseMarketingOffer } from '@repo/discounts'
+import { AiDraftProvider } from '@repo/marketing'
 import {
 	WorkflowCanvas,
 	type WorkflowGraph,
@@ -39,6 +40,13 @@ import {
 } from '#app/utils/email/designer.server.ts'
 import { renderJourneyEmailNodes } from '#app/utils/email/journey-render.server.ts'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
+import { loadAiDraftConfig } from '#app/utils/marketing/ai-draft-config.server.ts'
+import { loadAudienceOptions } from '#app/utils/marketing/audiences.server.ts'
+import {
+	goalFromTriggerConfig,
+	loadAutomationTriggerAccess,
+	marketingTriggerError,
+} from '#app/utils/marketing/automation-triggers.server.ts'
 import {
 	loyaltyTriggerBlocked,
 	loyaltyTriggersEnabled,
@@ -81,10 +89,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const nodes = Array.isArray(journey.nodes) ? journey.nodes : []
 	const edges = Array.isArray(journey.edges) ? journey.edges : []
 
+	const access = await loadAutomationTriggerAccess(orgId)
 	return {
 		orgSlug,
+		aiDraft: await loadAiDraftConfig(orgId, orgSlug),
 		reservationTriggers: await reservationTriggersEnabled(orgId),
 		loyaltyTriggers: await loyaltyTriggersEnabled(request, orgId),
+		orderTriggers: access.orderTriggers,
+		birthdayTriggers: access.birthdayTriggers,
+		cartTriggers: access.cartTriggers,
+		audienceOptions: access.features.audiences
+			? await loadAudienceOptions(fetchTenant)
+			: undefined,
 		couponOptions: await loadCouponDiscountOptions(userId, orgId),
 		journey: {
 			id: String(journey.id),
@@ -228,6 +244,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			((triggerNode?.data as any)?.config as Record<string, unknown>) || {}
 		const serializedGraph = JSON.stringify(renderedGraph)
 
+		const marketingFeaturesNow = (await loadAutomationTriggerAccess(orgId))
+			.features
+		let marketingError = marketingTriggerError({
+			triggerType,
+			features: marketingFeaturesNow,
+		})
+		// A journey that already uses this trigger keeps saving with the flag off.
+		if (marketingError) {
+			marketingError = marketingTriggerError({
+				triggerType,
+				features: marketingFeaturesNow,
+				currentTriggerType: await currentTriggerType(fetchTenant, journeyId),
+			})
+		}
+		if (marketingError) return { error: marketingError }
+
 		if (isReservationJourneyTrigger(triggerType)) {
 			const enabled = await reservationTriggersEnabled(orgId)
 			if (
@@ -263,6 +295,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				name: name ? String(name) : undefined,
 				triggerType,
 				triggerConfig,
+				goal: goalFromTriggerConfig(triggerConfig),
 				nodes: renderedGraph.nodes,
 				edges: renderedGraph.edges,
 				graphJson: serializedGraph,
@@ -372,7 +405,12 @@ export default function JourneyBuilderRoute() {
 		journey,
 		reservationTriggers,
 		loyaltyTriggers,
+		orderTriggers,
+		birthdayTriggers,
+		cartTriggers,
+		audienceOptions,
 		couponOptions,
+		aiDraft,
 	} = useLoaderData<typeof loader>()
 	const navigate = useNavigate()
 	const fetcher = useFetcher<typeof action>()
@@ -448,29 +486,35 @@ export default function JourneyBuilderRoute() {
 	}
 
 	return (
-		<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
-			<WorkflowCanvas
-				initialGraph={initialGraph}
-				journeyName={journey.name}
-				journeyStatus={journey.status}
-				reservationTriggers={reservationTriggers}
-				loyaltyTriggers={loyaltyTriggers}
-				couponOptions={couponOptions ?? undefined}
-				emailMenuItems
-				emailTemplatesEndpoint={`/${orgSlug}/marketing/templates/designer`}
-				headerExtras={<GlobalAIToggle />}
-				onSave={handleSave}
-				onPublish={handlePublish}
-				onPause={handlePause}
-				onTestRun={handleTestRun}
-				onBack={() => navigate(`/${orgSlug}/marketing/automations`)}
-				onViewRuns={() =>
-					navigate(`/${orgSlug}/marketing/automations/${journey.id}/runs`)
-				}
-				reserveAiPanelWidth={isAIPanelOpen && !isAIPanelExpanded && isLg}
-				isSaving={isSubmitting}
-				isPublishing={isSubmitting}
-			/>
-		</div>
+		<AiDraftProvider config={aiDraft}>
+			<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
+				<WorkflowCanvas
+					initialGraph={initialGraph}
+					journeyName={journey.name}
+					journeyStatus={journey.status}
+					reservationTriggers={reservationTriggers}
+					loyaltyTriggers={loyaltyTriggers}
+					orderTriggers={orderTriggers}
+					birthdayTriggers={birthdayTriggers}
+					cartTriggers={cartTriggers}
+					audienceOptions={audienceOptions}
+					couponOptions={couponOptions ?? undefined}
+					emailMenuItems
+					emailTemplatesEndpoint={`/${orgSlug}/marketing/templates/designer`}
+					headerExtras={<GlobalAIToggle />}
+					onSave={handleSave}
+					onPublish={handlePublish}
+					onPause={handlePause}
+					onTestRun={handleTestRun}
+					onBack={() => navigate(`/${orgSlug}/marketing/automations`)}
+					onViewRuns={() =>
+						navigate(`/${orgSlug}/marketing/automations/${journey.id}/runs`)
+					}
+					reserveAiPanelWidth={isAIPanelOpen && !isAIPanelExpanded && isLg}
+					isSaving={isSubmitting}
+					isPublishing={isSubmitting}
+				/>
+			</div>
+		</AiDraftProvider>
 	)
 }
