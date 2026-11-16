@@ -5,7 +5,9 @@ export { createChatStream, type ChatStreamOptions } from './chat.js'
 export {
 	generateContent,
 	generateNoteContent,
+	generateObject,
 	type GenerateContentOptions,
+	type GenerateStructuredOptions,
 } from './generate.js'
 
 // Image generation and editing

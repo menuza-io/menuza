@@ -17,6 +17,7 @@ import { ScrollArea } from '@repo/ui/scroll-area'
 import { type ReactNode } from 'react'
 
 import { useEmailBlockTypes } from './block-meta.ts'
+import { RewriteWithAi } from '../ai/rewrite-with-ai.tsx'
 import { MenuItemInspector } from './menu-item-inspector.tsx'
 import { MergeTagField } from './merge-tag-field.tsx'
 
@@ -203,6 +204,10 @@ export function EmailBlockInspector({
 									onChange={(text) => onUpdate({ text })}
 									placeholder={_(msg`Add a heading`)}
 								/>
+								<RewriteWithAi
+									text={block.config.text}
+									onRewrite={(text) => onUpdate({ text })}
+								/>
 							</Field>
 							<Field label={<Trans>Size</Trans>}>
 								<Segmented<EmailHeadingLevel>
@@ -236,6 +241,10 @@ export function EmailBlockInspector({
 									value={block.config.text}
 									onChange={(text) => onUpdate({ text })}
 									placeholder={_(msg`Write your message`)}
+								/>
+								<RewriteWithAi
+									text={block.config.text}
+									onRewrite={(text) => onUpdate({ text })}
 								/>
 							</Field>
 							{block.type === 'body' || block.type === 'paragraph' ? (
@@ -336,6 +345,10 @@ export function EmailBlockInspector({
 									value={block.config.label}
 									onChange={(label) => onUpdate({ label })}
 									placeholder={_(msg`Button label`)}
+								/>
+								<RewriteWithAi
+									text={block.config.label}
+									onRewrite={(label) => onUpdate({ label })}
 								/>
 							</Field>
 							<Field label={<Trans>Link</Trans>} htmlFor="block-button-url">

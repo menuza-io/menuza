@@ -538,6 +538,10 @@ msgstr "قبل أن نرسل طلبك"
 msgid "Being prepared. Your card will be delivered within 2 hours."
 msgstr "قيد التجهيز. ستصل بطاقتك خلال ساعتين."
 
+#: src/components/BirthdayField.astro.ts:3
+msgid "Birthday (optional)"
+msgstr "تاريخ الميلاد (اختياري)"
+
 #: src/lib/reservations/labels.ts:65
 msgid "Book {time}"
 msgstr "احجز الساعة {time}"
@@ -821,6 +825,11 @@ msgstr "اختر وقتًا جديدًا"
 msgid "Choose a pickup time to continue"
 msgstr "اختر وقت الاستلام للمتابعة"
 
+#: src/pages/complete-name.astro.ts:3
+#: src/pages/profile.astro.ts:3
+msgid "Choose a real month and day."
+msgstr "اختر شهراً ويوماً صحيحين."
+
 #: src/components/drops/PickupPicker.astro.ts:3
 #: src/lib/ordering-labels.ts:197
 #: src/lib/reservations/labels.ts:33
@@ -1028,6 +1037,10 @@ msgstr "CVC"
 #: src/lib/reservations/labels.ts:470
 msgid "Date"
 msgstr "التاريخ"
+
+#: src/components/BirthdayField.astro.ts:3
+msgid "Day"
+msgstr "اليوم"
 
 #: src/lib/loyalty/labels.ts:226
 msgid "Decline"
@@ -1808,6 +1821,14 @@ msgstr "الجوال"
 msgid "month"
 msgstr "شهر"
 
+#: src/components/BirthdayField.astro.ts:3
+msgid "Month"
+msgstr "الشهر"
+
+#: src/components/BirthdayField.astro.ts:3
+msgid "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
+msgstr "الشهر واليوم فقط. نستخدمه لنرسل لك هدية عيد ميلاد إذا وافقت على تلقي رسائلنا."
+
 #: src/pages/drop/[slug].astro.ts:3
 msgid "More drops"
 msgstr "طروحات أخرى"
@@ -1976,6 +1997,10 @@ msgstr "غير متاحة لهذا الطلب"
 #: src/lib/ordering-labels.ts:222
 msgid "Not available right now"
 msgstr "غير متاح حاليًا"
+
+#: src/components/BirthdayField.astro.ts:3
+msgid "Not set"
+msgstr "غير محدد"
 
 #: src/lib/reservations/labels.ts:379
 msgid "Nothing is charged now"
@@ -2926,6 +2951,14 @@ msgstr "سجّل الدخول برقم هاتفك لعرض نقاطك واستخ
 msgid "Sold out"
 msgstr "نفد المخزون"
 
+#: src/pages/menu.astro.ts:3
+msgid "Some items are no longer available and were left out:"
+msgstr "بعض الأصناف لم تعد متاحة وتم استبعادها:"
+
+#: src/pages/menu.astro.ts:3
+msgid "Some items are no longer available and were left out."
+msgstr "بعض الأصناف لم تعد متاحة وتم استبعادها."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Some items are no longer available and were removed from your order."
 msgstr "لم تعد بعض الأصناف متوفرة وتمت إزالتها من طلبك."
@@ -2949,6 +2982,10 @@ msgstr "نفدت بعض العناصر التي طلبتها."
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed since your call. Your cart shows the current prices."
 msgstr "تغيّرت بعض الأسعار منذ مكالمتك. تعرض سلتك الأسعار الحالية."
+
+#: src/pages/menu.astro.ts:3
+msgid "Some prices changed. Your cart shows the current prices."
+msgstr "تغيرت بعض الأسعار. تعرض سلتك الأسعار الحالية."
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/complete-name.astro.ts:3
@@ -3198,6 +3235,10 @@ msgstr "انتهت مهلة حجز طلبك. يرجى تقديم طلب جديد
 msgid "The items from your call are no longer available. You can still order from the menu."
 msgstr "الأصناف من مكالمتك لم تعد متوفرة. لا يزال بإمكانك الطلب من القائمة."
 
+#: src/pages/menu.astro.ts:3
+msgid "The items in your saved cart are no longer available. You can still order from the menu."
+msgstr "الأصناف في سلتك المحفوظة لم تعد متاحة. يمكنك الطلب من القائمة."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The kitchen has already started your order, so it can't be cancelled here."
 msgstr "بدأ المطبخ بتحضير طلبك بالفعل، لذا لا يمكن إلغاؤه من هنا."
@@ -3442,6 +3483,10 @@ msgstr "لم تعد هذه الوظيفة تستقبل طلبات."
 #: src/pages/menu/success.astro.ts:3
 msgid "This link has expired or isn't valid."
 msgstr "انتهت صلاحية هذا الرابط أو أنه غير صالح."
+
+#: src/pages/menu.astro.ts:3
+msgid "This link has expired."
+msgstr "انتهت صلاحية هذا الرابط."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
@@ -3912,6 +3957,10 @@ msgstr "تعذّر تحميل طلبك الهاتفي."
 msgid "We couldn't load your receipt"
 msgstr "تعذّر تحميل إيصالك"
 
+#: src/pages/menu.astro.ts:3
+msgid "We couldn't restore your cart."
+msgstr "تعذر استعادة سلتك."
+
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "We couldn't save that. Try again."
 msgstr "تعذّر الحفظ. حاول مرة أخرى."
@@ -3959,6 +4008,10 @@ msgstr "نعلم أنك في الطريق"
 #: src/pages/menu.astro.ts:3
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "حمّلنا طلبك من مكالمتك. راجعه ثم أكمل الدفع."
+
+#: src/pages/menu.astro.ts:3
+msgid "We restored your cart. Review it and check out."
+msgstr "استعدنا سلتك. راجعها وأكمل الدفع."
 
 #: src/lib/reservations/labels.ts:93
 msgid "We send your confirmation here."

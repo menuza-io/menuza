@@ -38,6 +38,7 @@ import { errorLogFields } from '../lib/error-log.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import {
+	audienceIdRule,
 	audienceRule,
 	broadcastLease,
 	dispatchBroadcast,
@@ -500,6 +501,7 @@ operatorRoutes.get('/marketing/campaigns/:campaignId/message', async (c) => {
 				contentHtml: campaign.contentHtml,
 				discountOffer: parseMarketingOffer(campaign.discountOffer),
 				audience: audienceRule(campaign.segmentationRules) ?? 'all',
+				audienceId: audienceIdRule(campaign.segmentationRules) ?? null,
 				scheduledAt: campaign.scheduledAt,
 				lateAfterMinutes: campaign.lateAfterMinutes,
 				retargetOfCampaignId: campaign.retargetOfCampaignId,
@@ -578,6 +580,7 @@ operatorRoutes.get('/marketing/campaigns/:campaignId', async (c) => {
 				discountOffer: parseMarketingOffer(campaign.discountOffer),
 				targetAudienceCount: campaign.targetAudienceCount,
 				audience: audienceRule(campaign.segmentationRules) ?? 'all',
+				audienceId: audienceIdRule(campaign.segmentationRules) ?? null,
 				createdAt: campaign.createdAt,
 				scheduledAt: campaign.scheduledAt,
 				lateAfterMinutes: campaign.lateAfterMinutes,

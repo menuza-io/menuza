@@ -31,7 +31,7 @@ const everything: ProgramCapabilities = {
 	loyalty: true,
 	birthdays: true,
 	cart: true,
-	reviewUrl: 'https://g.page/r/olive/review',
+	reviewLink: 'ask',
 }
 
 /** The App renders each email's blocks to HTML before saving: stand-in for it. */
@@ -100,9 +100,10 @@ describe('ready-made programs (#100)', () => {
 		expect(available({ birthdays: false })).not.toContain('birthday_treat')
 		expect(available({ loyalty: false })).not.toContain('loyalty_reward')
 		expect(available({ reservations: false })).not.toContain('no_show_follow_up')
-		// The review request is left out when no Google listing is connected.
-		expect(available({ reviewUrl: null })).not.toContain('after_visit')
-		expect(available({ reviewUrl: null })).toContain('no_show_follow_up')
+		// The review request is left out when there is no review page to point at.
+		expect(available({ reviewLink: 'none' })).not.toContain('after_visit')
+		expect(available({ reviewLink: 'none' })).toContain('no_show_follow_up')
+		expect(available({ reviewLink: 'connected' })).toContain('after_visit')
 	})
 
 	it('wires the coupon only on the steps that take one, and only when chosen', () => {

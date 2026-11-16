@@ -49,6 +49,8 @@ export const customerProfileSchema = z.object({
 	name: optionalText,
 	email: optionalText,
 	phone: optionalText,
+	/** `MM-DD` (#151): month and day only, never a year. */
+	birthMonthDay: optionalText,
 	needsName: z.boolean().nullish(),
 })
 

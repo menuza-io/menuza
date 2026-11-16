@@ -2,10 +2,13 @@ import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type EmailBlock } from '@repo/common/email-blocks'
 import {
+	AiDraftButton,
+	AiDraftDialog,
 	CouponOfferField,
 	type CouponOfferValue,
 	EmailDesignOverlay,
 	MergeTagField,
+	RewriteWithAi,
 } from '@repo/marketing'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
@@ -13,6 +16,7 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { ScrollArea } from '@repo/ui/scroll-area'
+import { Switch } from '@repo/ui/switch'
 import {
 	Select,
 	SelectContent,
@@ -92,6 +96,7 @@ export function NodeInspector({
 	} = useWorkflowConfig()
 	const { conditionFieldLabel, delayUnitLabel } = useWorkflowUiLabels()
 	const [designerOpen, setDesignerOpen] = useState(false)
+	const [aiDraftOpen, setAiDraftOpen] = useState(false)
 
 	if (!node) return null
 
@@ -226,6 +231,33 @@ export function NodeInspector({
 									</Trans>
 								</p>
 							</div>
+
+							{data.triggerType !== 'manual' &&
+							data.triggerType !== 'custom_event' ? (
+								<div className="flex items-start justify-between gap-3 rounded-lg border p-3">
+									<div className="space-y-1">
+										<Label
+											htmlFor="goalOrder"
+											className="text-xs font-medium"
+										>
+											<Trans>Stop when the guest places an order</Trans>
+										</Label>
+										<p className="text-muted-foreground text-[11px]">
+											<Trans>
+												Checked before every step, including after a delay. Guests
+												who order are not sent the rest of this automation.
+											</Trans>
+										</p>
+									</div>
+									<Switch
+										id="goalOrder"
+										checked={data.config?.goal === 'order'}
+										onCheckedChange={(checked) =>
+											handleConfigChange('goal', checked ? 'order' : undefined)
+										}
+									/>
+								</div>
+							) : null}
 
 							{data.triggerType === 'order_completed' && (
 								<div className="space-y-1.5">
@@ -444,6 +476,7 @@ export function NodeInspector({
 											<Trans>Design email</Trans>
 										)}
 									</Button>
+									<AiDraftButton onClick={() => setAiDraftOpen(true)} />
 									{emailBlocks.length > 0 ? (
 										<Button
 											type="button"
@@ -512,6 +545,27 @@ export function NodeInspector({
 
 							{couponField}
 
+							{/* AI only FILLS the step (subject and design); the author reviews
+							    it in the designer and saves the automation as usual. */}
+							<AiDraftDialog
+								open={aiDraftOpen}
+								onOpenChange={setAiDraftOpen}
+								channel="email"
+								hasContent={
+									emailBlocks.length > 0 ||
+									Boolean(data.bodyHtml && data.bodyHtml.trim().length > 7)
+								}
+								onApply={(draft) => {
+									if (draft.channel !== 'email') return
+									onUpdateNodeData(node.id, {
+										...data,
+										subject: draft.subject,
+										blocks: draft.blocks,
+										emailFormat: 'designed',
+									})
+								}}
+							/>
+
 							<EmailDesignOverlay
 								open={designerOpen}
 								onOpenChange={setDesignerOpen}
@@ -569,6 +623,32 @@ export function NodeInspector({
 										)
 									}
 									className="text-xs"
+								/>
+								<div className="flex flex-wrap items-center gap-1">
+									<AiDraftButton onClick={() => setAiDraftOpen(true)} />
+									<RewriteWithAi
+										sms
+										text={data.messageText || ''}
+										onRewrite={(value) =>
+											handleChange(
+												'messageText',
+												truncateSmsMergeTags(value, 1600),
+											)
+										}
+									/>
+								</div>
+								<AiDraftDialog
+									open={aiDraftOpen}
+									onOpenChange={setAiDraftOpen}
+									channel="sms"
+									hasContent={(data.messageText || '').trim().length > 0}
+									onApply={(draft) => {
+										if (draft.channel !== 'sms') return
+										handleChange(
+											'messageText',
+											truncateSmsMergeTags(draft.message, 1600),
+										)
+									}}
 								/>
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>

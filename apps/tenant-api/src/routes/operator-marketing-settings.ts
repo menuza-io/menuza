@@ -1,4 +1,5 @@
 import { getTenantDb, marketingSettings } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { errorLogFields } from '../lib/error-log.ts'
@@ -50,8 +51,15 @@ marketingSettingsRoutes.get('/', async (c) => {
 	}
 	try {
 		const db = await getTenantDb(auth.orgId)
+		const stored = await db
+			.select({ key: marketingSettings.key })
+			.from(marketingSettings)
+			.where(eq(marketingSettings.key, FREQUENCY_CAP_KEY))
+			.get()
 		return c.json({
 			frequencyCap: await readFrequencyCap(db),
+			/** A cap was ever saved (also "no limit"); without one, none applies. */
+			frequencyCapConfigured: Boolean(stored),
 			defaultFrequencyCap: DEFAULT_FREQUENCY_CAP,
 			cartReminder: await readCartSettings(db),
 			defaultCartReminder: DEFAULT_CART_SETTINGS,

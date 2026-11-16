@@ -1,0 +1,51 @@
+---
+import { msg } from '@lingui/core/macro'
+
+/**
+ * Optional birthday (#151): a month and a day, no year, with "Not set" to clear
+ * it. Read and written by the browser (`~/lib/birthday-field`) straight to
+ * tenant-api; nothing about a guest is rendered here.
+ */
+interface Props {
+	class?: string
+}
+
+const { class: className } = Astro.props
+const i18n = Astro.locals.i18n
+const locale = Astro.locals.requestedLocale || 'en'
+const label = i18n._(msg`Birthday (optional)`)
+const monthLabel = i18n._(msg`Month`)
+const dayLabel = i18n._(msg`Day`)
+const notSet = i18n._(msg`Not set`)
+const hint = i18n._(
+	msg`Month and day only. We use it to send you a birthday treat if you agreed to hear from us.`,
+)
+
+let monthNames: string[]
+try {
+	const format = new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' })
+	monthNames = Array.from({ length: 12 }, (_unused, index) =>
+		format.format(new Date(Date.UTC(2024, index, 1))),
+	)
+} catch {
+	monthNames = Array.from({ length: 12 }, (_unused, index) => String(index + 1))
+}
+const days = Array.from({ length: 31 }, (_unused, index) => index + 1)
+const selectClass =
+	'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+---
+
+<fieldset data-birthday-field class:list={['space-y-2', className]}>
+	<legend class="text-sm font-medium leading-none text-foreground">{label}</legend>
+	<div class="grid grid-cols-2 gap-3">
+		<select data-birthday-month aria-label={monthLabel} class={selectClass}>
+			<option value="">{monthLabel}: {notSet}</option>
+			{monthNames.map((name, index) => <option value={String(index + 1)}>{name}</option>)}
+		</select>
+		<select data-birthday-day aria-label={dayLabel} class={selectClass}>
+			<option value="">{dayLabel}: {notSet}</option>
+			{days.map((day) => <option value={String(day)}>{day}</option>)}
+		</select>
+	</div>
+	<p class="text-xs text-muted-foreground">{hint}</p>
+</fieldset>

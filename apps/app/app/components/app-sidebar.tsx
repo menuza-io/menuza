@@ -302,6 +302,7 @@ function OrganizationSidebar({
 		rootData?.printShopNav ?? HIDDEN_PRINT_SHOP_NAV
 	const qrOrderingNav: QrOrderingNavAccess =
 		rootData?.qrOrderingNav ?? HIDDEN_QR_ORDERING_NAV
+	const showAudiencesNav = rootData?.marketingNav?.audiences === true
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -501,6 +502,13 @@ function OrganizationSidebar({
 					url: `/${orgSlug}/marketing/automations`,
 					isActive: location.pathname.includes(
 						`/${orgSlug}/marketing/automations`,
+					),
+				},
+				{
+					title: _(msg`Audiences`),
+					url: `/${orgSlug}/marketing/audiences`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/marketing/audiences`,
 					),
 				},
 				{
@@ -857,6 +865,9 @@ function OrganizationSidebar({
 						}
 						if (subItem.url.includes('/marketing/automations')) {
 							return canReadAutomations
+						}
+						if (subItem.url.includes('/marketing/audiences')) {
+							return showAudiencesNav && canReadCampaigns
 						}
 						if (subItem.url.includes('/marketing/templates')) {
 							return canReadCampaigns || canReadAutomations

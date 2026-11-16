@@ -214,6 +214,10 @@ msgstr "已转入余额"
 msgid "Balance removed"
 msgstr "余额已移除"
 
+#: components/profile/profile-screen.tsx:127
+msgid "Birthday (optional)"
+msgstr "生日（选填）"
+
 #: lib/reservations/messages.ts:18
 msgid "Book a table"
 msgstr "预订餐桌"
@@ -283,6 +287,10 @@ msgstr "结账"
 msgid "Choose a location"
 msgstr "选择门店"
 
+#: lib/i18n/app-error-message.ts:29
+msgid "Choose a real month and day for your birthday."
+msgstr "请为您的生日选择有效的月份和日期。"
+
 #: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "选择你想收到的消息和接收方式。"
@@ -332,6 +340,10 @@ msgstr "所需"
 msgid "Date"
 msgstr "日期"
 
+#: components/profile/profile-screen.tsx:140
+msgid "Day"
+msgstr "日"
+
 #: lib/loyalty/labels.ts:94
 msgid "Decline"
 msgstr "拒绝"
@@ -379,7 +391,7 @@ msgid "Edit details"
 msgstr "修改信息"
 
 #: components/profile/messages-section.tsx:107
-#: components/profile/profile-screen.tsx:92
+#: components/profile/profile-screen.tsx:116
 msgid "Email"
 msgstr "电子邮件"
 
@@ -531,7 +543,7 @@ msgid "In store"
 msgstr "到店"
 
 #: components/auth/complete-name-screen.tsx:26
-#: components/profile/profile-screen.tsx:84
+#: components/profile/profile-screen.tsx:108
 msgid "Jane Doe"
 msgstr "张三"
 
@@ -548,7 +560,7 @@ msgstr "加入候位"
 msgid "Keep it"
 msgstr "保留"
 
-#: components/profile/profile-screen.tsx:152
+#: components/profile/profile-screen.tsx:202
 msgid "Language"
 msgstr "语言"
 
@@ -588,7 +600,7 @@ msgstr "正在加载菜单"
 msgid "Loading your gift cards…"
 msgstr "正在加载您的礼品卡…"
 
-#: components/profile/profile-screen.tsx:64
+#: components/profile/profile-screen.tsx:78
 msgid "Loading your profile…"
 msgstr "正在加载您的个人资料…"
 
@@ -615,6 +627,14 @@ msgstr "来自 {name} 的消息"
 msgid "Money added"
 msgstr "已充值"
 
+#: components/profile/profile-screen.tsx:131
+msgid "Month"
+msgstr "月"
+
+#: components/profile/profile-screen.tsx:149
+msgid "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
+msgstr "仅需月份和日期。如果您同意接收我们的消息，我们会用它为您送上生日惊喜。"
+
 #: components/reservations/parts.tsx:205
 msgid "More guests"
 msgstr "增加人数"
@@ -628,7 +648,7 @@ msgid "My reservations"
 msgstr "我的预订"
 
 #: components/auth/complete-name-screen.tsx:25
-#: components/profile/profile-screen.tsx:83
+#: components/profile/profile-screen.tsx:107
 #: lib/reservations/messages.ts:60
 #: lib/reservations/messages.ts:112
 msgid "Name"
@@ -639,7 +659,7 @@ msgstr "姓名"
 msgid "Network error. Check your connection and try again."
 msgstr "网络错误。请检查网络连接后重试。"
 
-#: lib/i18n/app-error-message.ts:33
+#: lib/i18n/app-error-message.ts:35
 msgid "Network error. Please try again."
 msgstr "网络错误，请重试。"
 
@@ -802,7 +822,7 @@ msgid "Payments aren't available right now."
 msgstr "暂时无法付款。"
 
 #: components/auth/login-screen.tsx:24
-#: components/profile/profile-screen.tsx:103
+#: components/profile/profile-screen.tsx:153
 #: lib/reservations/messages.ts:16
 msgid "Phone number"
 msgstr "手机号码"
@@ -828,7 +848,7 @@ msgstr "期望时间"
 msgid "Profile"
 msgstr "个人资料"
 
-#: components/profile/profile-screen.tsx:111
+#: components/profile/profile-screen.tsx:161
 msgid "Profile saved."
 msgstr "个人资料已保存。"
 
@@ -930,7 +950,7 @@ msgstr "目前无法使用奖励。"
 msgid "Running late"
 msgstr "我会迟到"
 
-#: components/profile/profile-screen.tsx:115
+#: components/profile/profile-screen.tsx:165
 msgid "Save changes"
 msgstr "保存更改"
 
@@ -1007,7 +1027,7 @@ msgstr "使用手机号登录，即可在此保存您的礼品卡。"
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "使用手机号码登录，即可查看积分并使用奖励。"
 
-#: components/profile/profile-screen.tsx:124
+#: components/profile/profile-screen.tsx:174
 msgid "Sign out"
 msgstr "退出登录"
 
@@ -1020,7 +1040,7 @@ msgid "Sold out"
 msgstr "已售罄"
 
 #: lib/gift-cards/labels.ts:74
-#: lib/i18n/app-error-message.ts:41
+#: lib/i18n/app-error-message.ts:43
 #: lib/loyalty/labels.ts:130
 #: lib/reservations/messages.ts:137
 msgid "Something went wrong. Please try again."
@@ -1046,7 +1066,7 @@ msgstr "已使用"
 msgid "Stops working in {time}"
 msgstr "{time} 后失效"
 
-#: components/profile/profile-screen.tsx:142
+#: components/profile/profile-screen.tsx:192
 msgid "System default"
 msgstr "系统默认"
 
@@ -1134,7 +1154,7 @@ msgstr "餐厅将尽快确认您的申请。"
 msgid "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
 msgstr "奖励计划已暂停。您的余额不受影响，但目前无法累积或兑换。"
 
-#: lib/i18n/app-error-message.ts:36
+#: lib/i18n/app-error-message.ts:38
 msgid "The service is unavailable right now. Please try again later."
 msgstr "服务暂时不可用，请稍后重试。"
 
@@ -1190,7 +1210,7 @@ msgstr "此候位链接已失效。"
 msgid "Too many attempts. Please try again in a few minutes."
 msgstr "尝试次数过多，请几分钟后再试。"
 
-#: lib/i18n/app-error-message.ts:31
+#: lib/i18n/app-error-message.ts:33
 msgid "Too many attempts. Please try again later."
 msgstr "尝试次数过多，请稍后重试。"
 
@@ -1226,7 +1246,7 @@ msgstr "输入或粘贴邮件或卡片上的代码。"
 msgid "Up to {amount} off"
 msgstr "最多优惠 {amount}"
 
-#: components/profile/profile-screen.tsx:80
+#: components/profile/profile-screen.tsx:104
 msgid "Update your basic details below."
 msgstr "在下方更新您的基本信息。"
 
@@ -1243,7 +1263,7 @@ msgid "Use a different number"
 msgstr "使用其他号码"
 
 #: components/auth/site-unavailable-screen.tsx:34
-#: components/profile/profile-screen.tsx:128
+#: components/profile/profile-screen.tsx:178
 msgid "Use a different site"
 msgstr "使用其他网站"
 
@@ -1419,7 +1439,7 @@ msgstr "您的新码已就绪。"
 msgid "Your payment is being checked. We'll confirm shortly."
 msgstr "您的付款正在审核，稍后确认。"
 
-#: components/profile/profile-screen.tsx:106
+#: components/profile/profile-screen.tsx:156
 msgid "Your phone number can't be changed here."
 msgstr "无法在此更改您的电话号码。"
 
@@ -1427,7 +1447,7 @@ msgstr "无法在此更改您的电话号码。"
 msgid "Your points"
 msgstr "您的积分"
 
-#: components/profile/profile-screen.tsx:78
+#: components/profile/profile-screen.tsx:102
 msgid "Your profile"
 msgstr "您的个人资料"
 
@@ -1440,7 +1460,7 @@ msgid "Your rewards account is on hold. Please contact the business for help."
 msgstr "您的奖励账户已暂停。如需帮助，请联系商家。"
 
 #: lib/gift-cards/labels.ts:77
-#: lib/i18n/app-error-message.ts:29
+#: lib/i18n/app-error-message.ts:31
 #: lib/loyalty/labels.ts:128
 msgid "Your session ended. Please sign in again."
 msgstr "您的会话已结束。请重新登录。"

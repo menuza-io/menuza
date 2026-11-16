@@ -2,6 +2,7 @@
 import { msg } from '@lingui/core/macro'
 import { getLocaleHref } from '@repo/common/site-locales'
 import MessagesSection from '~/components/marketing/MessagesSection.astro'
+import BirthdayField from '~/components/BirthdayField.astro'
 import SitePage from '~/components/SitePage.astro'
 import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
 import UpcomingReservations from '~/components/reservations/UpcomingReservations.astro'
@@ -20,6 +21,7 @@ const saving = i18n._(msg`Saving...`)
 const profileUpdated = i18n._(msg`Profile updated successfully!`)
 const somethingWentWrong = i18n._(msg`Something went wrong.`)
 const networkError = i18n._(msg`Network error. Please try again.`)
+const invalidBirthday = i18n._(msg`Choose a real month and day.`)
 const orderHistory = i18n._(msg`Order history`)
 const orderHistoryHint = i18n._(msg`Purchases from the shop while signed in.`)
 const noOrders = i18n._(msg`No orders yet.`)
@@ -81,6 +83,7 @@ const reservationsGate = await fetchPublishedReservations({
 				data-saving={saving}
 				data-error={somethingWentWrong}
 				data-network={networkError}
+				data-invalid-birthday={invalidBirthday}
 			>
 				<div class="space-y-2">
 					<label for="name" class="text-sm font-medium leading-none text-foreground">
@@ -108,6 +111,8 @@ const reservationsGate = await fetchPublishedReservations({
 						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 					/>
 				</div>
+
+				<BirthdayField />
 
 				<div class="space-y-2">
 					<label for="phone" class="text-sm font-medium leading-none text-foreground">

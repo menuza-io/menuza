@@ -47,8 +47,12 @@ export type ProgramCapabilities = {
 	birthdays: boolean
 	/** Flag `marketing.cart_reminders` (needs ordering automations too). */
 	cart: boolean
-	/** The organization has a connected Google review page. */
-	reviewUrl: string | null
+	/**
+	 * Where a review request points. `connected`: the organization's Google
+	 * review page is known. `ask`: the owner pastes the link when turning the
+	 * program on (no listing is stored yet). `none`: the program is left out.
+	 */
+	reviewLink: 'connected' | 'ask' | 'none'
 }
 
 export const PROGRAM_LANGUAGES = ['en', 'ar'] as const
@@ -532,7 +536,7 @@ export function programAvailable(
 			case 'cart':
 				return capabilities.cart && capabilities.ordering
 			case 'review_link':
-				return Boolean(capabilities.reviewUrl)
+				return capabilities.reviewLink !== 'none'
 		}
 	})
 }

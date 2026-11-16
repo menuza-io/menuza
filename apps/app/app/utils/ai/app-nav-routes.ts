@@ -99,6 +99,14 @@ export const APP_NAV_ROUTES: readonly AppNavRoute[] = [
 		requiresOrg: true,
 	},
 	{
+		id: 'marketing-audiences',
+		title: 'Audiences',
+		aliases: ['saved audiences', 'segments', 'guest groups'],
+		description: 'Saved groups of guests for broadcasts and automations',
+		path: '/:orgSlug/marketing/audiences',
+		requiresOrg: true,
+	},
+	{
 		id: 'marketing-templates',
 		title: 'Email templates',
 		aliases: ['templates', 'saved templates', 'marketing templates'],

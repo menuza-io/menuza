@@ -159,6 +159,22 @@ export const CHANGE_EMAIL_RECIPIENT_RATE_LIMIT: RateLimitConfig = {
 	windowMs: 60 * 60 * 1000, // 1 hour
 }
 
+/**
+ * AI marketing drafts (#155): each draft or rewrite is a model call. 20 per
+ * operator per hour and 200 per organization per day (`ai_draft_limit`).
+ */
+export const AI_DRAFT_OPERATOR_RATE_LIMIT: RateLimitConfig = {
+	scope: 'ai-marketing-draft-operator',
+	maxRequests: 20,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
+export const AI_DRAFT_ORGANIZATION_RATE_LIMIT: RateLimitConfig = {
+	scope: 'ai-marketing-draft-organization',
+	maxRequests: 200,
+	windowMs: 24 * 60 * 60 * 1000, // 1 day
+}
+
 export const AI_REQUEST_RATE_LIMIT: RateLimitConfig = {
 	scope: 'ai-request',
 	maxRequests: isDev ? 1000 : 30,

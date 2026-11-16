@@ -13,6 +13,7 @@ import {
 import { isLoyaltyJourneyTrigger } from '@repo/tenant-db/types/journey'
 import {
 	LOYALTY_JOURNEY_TRIGGER_TYPES,
+	ORDER_JOURNEY_TRIGGER_TYPES,
 	RESERVATION_JOURNEY_TRIGGER_TYPES,
 } from '@repo/tenant-db/types/journey'
 import { cn } from '@repo/ui'
@@ -72,6 +73,14 @@ interface WorkflowCanvasProps {
 	reservationTriggers?: boolean
 	/** Offer the `loyalty_*` triggers (Loyalty is on and the member may read it). */
 	loyaltyTriggers?: boolean
+	/** Offer the order triggers: first order, order completed, guest lapsed (#99). */
+	orderTriggers?: boolean
+	/** Offer the birthday trigger (#151). */
+	birthdayTriggers?: boolean
+	/** Offer the cart-left-behind trigger (#150). */
+	cartTriggers?: boolean
+	/** Saved audiences for the "Guest is in audience" condition (#98). */
+	audienceOptions?: Array<{ id: string; name: string }>
 	/** Coupon discounts for email and text steps; undefined hides the picker. */
 	couponOptions?: CouponDiscountOption[]
 	/** Email steps may add Menu item blocks (the host answers the dish intents). */
@@ -115,6 +124,10 @@ function WorkflowCanvasInner({
 	| 'couponOptions'
 	| 'emailMenuItems'
 	| 'emailTemplatesEndpoint'
+	| 'orderTriggers'
+	| 'birthdayTriggers'
+	| 'cartTriggers'
+	| 'audienceOptions'
 >) {
 	const { _ } = useLingui()
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
@@ -145,6 +158,17 @@ function WorkflowCanvasInner({
 					isLoyaltyJourneyTrigger(
 						(node.data as { triggerType?: unknown } | undefined)?.triggerType,
 					),
+			),
+		[nodes],
+	)
+	// `{{cartLink}}` only has a value when the automation starts from a cart.
+	const cartAutomation = useMemo(
+		() =>
+			nodes.some(
+				(node) =>
+					node.type === 'trigger' &&
+					(node.data as { triggerType?: unknown } | undefined)?.triggerType ===
+						'cart_left_behind',
 			),
 		[nodes],
 	)
@@ -332,7 +356,10 @@ function WorkflowCanvasInner({
 					autoSaveId="marketing-automation-builder"
 					sidebar={
 						selectedNode ? (
-							<MergeTagScopeProvider loyalty={loyaltyAutomation}>
+							<MergeTagScopeProvider
+								loyalty={loyaltyAutomation}
+								cart={cartAutomation}
+							>
 								<NodeInspector
 									node={selectedNode}
 									onUpdateNodeData={handleUpdateNodeData}
@@ -405,6 +432,10 @@ export function WorkflowCanvas({
 	workflowConfig: workflowConfigProp,
 	reservationTriggers = false,
 	loyaltyTriggers = false,
+	orderTriggers = false,
+	birthdayTriggers = false,
+	cartTriggers = false,
+	audienceOptions,
 	couponOptions,
 	emailMenuItems,
 	emailTemplatesEndpoint,
@@ -426,12 +457,16 @@ export function WorkflowCanvas({
 						...(couponOptions ? { couponOptions } : null),
 						...(emailMenuItems ? { emailMenuItems } : null),
 						...(emailTemplatesEndpoint ? { emailTemplatesEndpoint } : null),
+						...(audienceOptions ? { audienceOptions } : null),
 					}
 				: resolved
 		if (withCoupons.audience !== 'tenant') return withCoupons
 		const hidden = [
 			...(reservationTriggers ? [] : RESERVATION_JOURNEY_TRIGGER_TYPES),
 			...(loyaltyTriggers ? [] : LOYALTY_JOURNEY_TRIGGER_TYPES),
+			...(orderTriggers ? [] : ORDER_JOURNEY_TRIGGER_TYPES),
+			...(birthdayTriggers ? [] : ['birthday_coming_up']),
+			...(cartTriggers ? [] : ['cart_left_behind']),
 		]
 		if (hidden.length === 0) return withCoupons
 		return {
@@ -447,6 +482,10 @@ export function WorkflowCanvas({
 		localizedPlatform,
 		reservationTriggers,
 		loyaltyTriggers,
+		orderTriggers,
+		birthdayTriggers,
+		cartTriggers,
+		audienceOptions,
 		couponOptions,
 		emailMenuItems,
 		emailTemplatesEndpoint,

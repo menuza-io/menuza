@@ -40,16 +40,24 @@ import {
 	reservationTriggerBlocked,
 	reservationTriggersEnabled,
 } from '#app/utils/marketing/reservation-triggers.server.ts'
+import {
+	goalFromTriggerConfig,
+	loadAutomationTriggerAccess,
+	marketingTriggerError,
+} from '#app/utils/marketing/automation-triggers.server.ts'
+import { loadAudienceOptions } from '#app/utils/marketing/audiences.server.ts'
 import { useMinWidthMediaQuery } from '#app/utils/navigation-guards.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import { AiDraftProvider } from '@repo/marketing'
+import { loadAiDraftConfig } from '#app/utils/marketing/ai-draft-config.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { orgId } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 
 	// This route is the automation builder, so it requires write access.
 	await requireUserWithOrganizationPermission(
@@ -58,10 +66,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
 	)
 
+	const access = await loadAutomationTriggerAccess(orgId)
 	return {
 		orgSlug,
+		aiDraft: await loadAiDraftConfig(orgId, orgSlug),
 		reservationTriggers: await reservationTriggersEnabled(orgId),
 		loyaltyTriggers: await loyaltyTriggersEnabled(request, orgId),
+		orderTriggers: access.orderTriggers,
+		birthdayTriggers: access.birthdayTriggers,
+		cartTriggers: access.cartTriggers,
+		audienceOptions: access.features.audiences
+			? await loadAudienceOptions(fetchTenant)
+			: undefined,
 	}
 }
 
@@ -144,6 +160,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	) {
 		return { error: i18n._(t`Turn on Loyalty to use this trigger`) }
 	}
+	const triggerError = marketingTriggerError({
+		triggerType,
+		features: (await loadAutomationTriggerAccess(orgId)).features,
+	})
+	if (triggerError) return { error: triggerError }
 	const branding = await resolveEmailBrandingForOrg(orgId)
 	const rendered = await renderJourneyEmailNodes(
 		orgId,
@@ -171,6 +192,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			),
 			triggerType,
 			triggerConfig,
+			goal: goalFromTriggerConfig(triggerConfig),
 			nodes,
 			edges: parsedGraph.edges,
 			graphJson: JSON.stringify(resolvedGraph),
@@ -198,8 +220,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function NewJourneyRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, reservationTriggers, loyaltyTriggers } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		reservationTriggers,
+		loyaltyTriggers,
+		orderTriggers,
+		birthdayTriggers,
+		cartTriggers,
+		audienceOptions,
+		aiDraft,
+	} = useLoaderData<typeof loader>()
 	const navigate = useNavigate()
 	const fetcher = useFetcher()
 
@@ -235,28 +265,34 @@ export default function NewJourneyRoute() {
 	}
 
 	return (
-		<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
-			<WorkflowCanvas
-				emailMenuItems
-				emailTemplatesEndpoint={`/${orgSlug}/marketing/templates/designer`}
-				initialGraph={initialGraph}
-				journeyName={_(msg`New Customer Journey`)}
-				journeyStatus="draft"
-				reservationTriggers={reservationTriggers}
-				loyaltyTriggers={loyaltyTriggers}
-				headerExtras={<GlobalAIToggle />}
-				onSave={handleSave}
-				onPublish={handlePublish}
-				onTestRun={() => {
-					toast.info(
-						_(msg`Save the journey first before running test triggers.`),
-					)
-				}}
-				onBack={() => navigate(`/${orgSlug}/marketing/automations`)}
-				reserveAiPanelWidth={isAIPanelOpen && !isAIPanelExpanded && isLg}
-				isSaving={isSubmitting}
-				isPublishing={isSubmitting}
-			/>
-		</div>
+		<AiDraftProvider config={aiDraft}>
+			<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
+				<WorkflowCanvas
+					emailMenuItems
+					emailTemplatesEndpoint={`/${orgSlug}/marketing/templates/designer`}
+					initialGraph={initialGraph}
+					journeyName={_(msg`New Customer Journey`)}
+					journeyStatus="draft"
+					reservationTriggers={reservationTriggers}
+					loyaltyTriggers={loyaltyTriggers}
+					orderTriggers={orderTriggers}
+					birthdayTriggers={birthdayTriggers}
+					cartTriggers={cartTriggers}
+					audienceOptions={audienceOptions}
+					headerExtras={<GlobalAIToggle />}
+					onSave={handleSave}
+					onPublish={handlePublish}
+					onTestRun={() => {
+						toast.info(
+							_(msg`Save the journey first before running test triggers.`),
+						)
+					}}
+					onBack={() => navigate(`/${orgSlug}/marketing/automations`)}
+					reserveAiPanelWidth={isAIPanelOpen && !isAIPanelExpanded && isLg}
+					isSaving={isSubmitting}
+					isPublishing={isSubmitting}
+				/>
+			</div>
+		</AiDraftProvider>
 	)
 }

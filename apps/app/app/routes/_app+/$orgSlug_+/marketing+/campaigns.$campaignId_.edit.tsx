@@ -7,6 +7,7 @@ import {
 	CampaignForm,
 	CouponOfferField,
 	type CouponOfferValue,
+	AiDraftProvider,
 } from '@repo/marketing'
 import { PageHeader } from '@repo/ui/page-header'
 import { useState } from 'react'
@@ -21,6 +22,9 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { CampaignEmailDesigner } from '#app/components/marketing/campaign-email-designer.tsx'
+import { SavedAudienceField } from '#app/components/marketing/saved-audience-field.tsx'
+import { loadAudienceOptions } from '#app/utils/marketing/audiences.server.ts'
+import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import { loadCouponDiscountOptions } from '#app/utils/discounts/marketing-offers.server.ts'
 import {
 	handleMenuItemIntent,
@@ -32,6 +36,7 @@ import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import { loadAiDraftConfig } from '#app/utils/marketing/ai-draft-config.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 /**
@@ -51,6 +56,7 @@ type StoredMessage = {
 	contentBlocks: string | null
 	discountOffer: unknown
 	audience: string
+	audienceId?: string | null
 	scheduledAt: string | null
 	lateAfterMinutes: number
 	retargetOfCampaignId: string | null
@@ -87,6 +93,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return {
 		orgSlug,
+		audienceOptions: (await getMarketingFeatures(orgId)).audiences
+			? ((await loadAudienceOptions(fetchTenant)) ?? null)
+			: null,
 		campaign: {
 			id: campaign.id,
 			name: campaign.name,
@@ -95,6 +104,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			subject: campaign.subject,
 			content: campaign.content,
 			audience: campaign.audience,
+			audienceId: campaign.audienceId ?? null,
 			scheduledAt: campaign.scheduledAt
 				? new Date(campaign.scheduledAt).toISOString()
 				: null,
@@ -104,6 +114,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		blocks: parseEmailBlocks(campaign.contentBlocks),
 		offer: parseMarketingOffer(campaign.discountOffer),
 		couponOptions: await loadCouponDiscountOptions(userId, orgId),
+		aiDraft: await loadAiDraftConfig(orgId, orgSlug),
 	}
 }
 
@@ -176,10 +187,12 @@ export default function EditCampaignRoute() {
 	const { _ } = useLingui()
 	const {
 		orgSlug,
+		audienceOptions,
 		campaign,
 		blocks: storedBlocks,
 		offer: storedOffer,
 		couponOptions,
+		aiDraft,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const navigation = useNavigation()
@@ -206,81 +219,98 @@ export default function EditCampaignRoute() {
 				}
 			/>
 
-			<Form method="post">
-				<CampaignForm
-					scheduling
-					canTestSend
-					lockChannel
-					defaults={{
-						name: campaign.name,
-						channel: campaign.channel,
-						subject: campaign.subject,
-						content: campaign.content,
-						audience: campaign.audience,
-						scheduledAt: campaign.scheduledAt,
-						lateAfterMinutes: campaign.lateAfterMinutes,
-					}}
-					notice={
-						campaign.retargetOfCampaignId ? (
-							<div
-								role="note"
-								className="bg-muted/50 space-y-1 rounded-lg border p-4 text-sm"
-							>
-								<p className="font-medium">
-									{_(msg`A re-send to people who did not open it`)}
-								</p>
-								<p className="text-muted-foreground">
-									{_(
-										msg`It goes to people who got the first broadcast, did not open or click it, and are still subscribed when this is sent. Opens are not always counted: some mail apps open messages automatically or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read the first one may get this too.`,
-									)}
-								</p>
-								<Link
-									className="text-sm underline"
-									to={`/${orgSlug}/marketing/campaigns/${campaign.retargetOfCampaignId}`}
+			<AiDraftProvider config={aiDraft ? { ...aiDraft, offer } : null}>
+				<Form method="post">
+					<CampaignForm
+						onAiDraftBlocks={aiDraft ? setBlocks : undefined}
+						hasEmailBlocks={blocks.length > 0}
+						scheduling
+						canTestSend
+						audienceField={
+							audienceOptions ? (
+								<SavedAudienceField
+									options={audienceOptions}
+									defaultValue={campaign.audienceId}
+									orgSlug={orgSlug}
+								/>
+							) : null
+						}
+						lockChannel
+						defaults={{
+							name: campaign.name,
+							channel: campaign.channel,
+							subject: campaign.subject,
+							content: campaign.content,
+							audience: campaign.audience,
+							scheduledAt: campaign.scheduledAt,
+							lateAfterMinutes: campaign.lateAfterMinutes,
+						}}
+						notice={
+							campaign.retargetOfCampaignId ? (
+								<div
+									role="note"
+									className="bg-muted/50 space-y-1 rounded-lg border p-4 text-sm"
 								>
-									{_(msg`See the original broadcast`)}
-								</Link>
-							</div>
-						) : null
-					}
-					error={actionData && 'error' in actionData ? actionData.error : null}
-					problems={
-						actionData && 'problems' in actionData ? actionData.problems : null
-					}
-					blocks={
-						actionData && 'blocks' in actionData ? actionData.blocks : blocks
-					}
-					testResult={
-						actionData && 'testResult' in actionData
-							? actionData.testResult
-							: null
-					}
-					onEditBlock={(id) =>
-						setFocusBlock({ id, nonce: (focusBlock?.nonce ?? 0) + 1 })
-					}
-					isSubmitting={isSubmitting}
-					cancelTo={`/${orgSlug}/marketing/campaigns/${campaign.id}`}
-					emailDesigner={
-						<CampaignEmailDesigner
-							orgSlug={orgSlug}
-							blocks={blocks}
-							onChange={setBlocks}
-							offer={offer}
-							focusBlock={focusBlock}
-						/>
-					}
-					couponField={
-						couponOptions || offer ? (
-							<CouponOfferField
-								name="discountOffer"
-								options={couponOptions ?? []}
-								value={offer}
-								onChange={setOffer}
+									<p className="font-medium">
+										{_(msg`A re-send to people who did not open it`)}
+									</p>
+									<p className="text-muted-foreground">
+										{_(
+											msg`It goes to people who got the first broadcast, did not open or click it, and are still subscribed when this is sent. Opens are not always counted: some mail apps open messages automatically or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read the first one may get this too.`,
+										)}
+									</p>
+									<Link
+										className="text-sm underline"
+										to={`/${orgSlug}/marketing/campaigns/${campaign.retargetOfCampaignId}`}
+									>
+										{_(msg`See the original broadcast`)}
+									</Link>
+								</div>
+							) : null
+						}
+						error={
+							actionData && 'error' in actionData ? actionData.error : null
+						}
+						problems={
+							actionData && 'problems' in actionData
+								? actionData.problems
+								: null
+						}
+						blocks={
+							actionData && 'blocks' in actionData ? actionData.blocks : blocks
+						}
+						testResult={
+							actionData && 'testResult' in actionData
+								? actionData.testResult
+								: null
+						}
+						onEditBlock={(id) =>
+							setFocusBlock({ id, nonce: (focusBlock?.nonce ?? 0) + 1 })
+						}
+						isSubmitting={isSubmitting}
+						cancelTo={`/${orgSlug}/marketing/campaigns/${campaign.id}`}
+						emailDesigner={
+							<CampaignEmailDesigner
+								orgSlug={orgSlug}
+								blocks={blocks}
+								onChange={setBlocks}
+								offer={offer}
+								focusBlock={focusBlock}
 							/>
-						) : null
-					}
-				/>
-			</Form>
+						}
+						couponField={
+							couponOptions || offer ? (
+								<CouponOfferField
+									name="discountOffer"
+									options={couponOptions ?? []}
+									value={offer}
+									onChange={setOffer}
+								/>
+							) : null
+						}
+					/>
+				</Form>
+			</AiDraftProvider>
 		</div>
 	)
 }

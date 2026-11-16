@@ -163,6 +163,7 @@ export class TenantApiClient {
 
 	/**
 	 * `email` undefined leaves the stored email alone; an empty string clears it.
+	 * `birthMonthDay` undefined leaves the birthday alone; null clears it.
 	 * tenant-api re-issues only the access token (its `name` claim changed):
 	 * rotating the refresh token would sign the customer out of their other
 	 * devices. A refresh token is returned only if the server ever sends one.
@@ -171,6 +172,7 @@ export class TenantApiClient {
 		name: string,
 		email: string | undefined,
 		accessToken: string,
+		birthMonthDay?: string | null,
 	): Promise<{ accessToken: string; refreshToken?: string }> {
 		const path = '/auth/profile'
 		const response = await this.#perform({
@@ -180,7 +182,13 @@ export class TenantApiClient {
 				Accept: 'application/json',
 				Authorization: `Bearer ${accessToken}`,
 			},
-			json: email === undefined ? { name } : { name, email },
+			// `birthMonthDay` (`MM-DD`, or null to clear) is sent only when the
+			// customer set it; undefined leaves the stored birthday alone.
+			json: {
+				name,
+				...(email === undefined ? {} : { email }),
+				...(birthMonthDay === undefined ? {} : { birthMonthDay }),
+			},
 		})
 		const payload = decodeResponse(response, verifyResultSchema, path)
 		if (!payload.accessToken) {

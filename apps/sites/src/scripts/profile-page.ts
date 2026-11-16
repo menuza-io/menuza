@@ -1,3 +1,4 @@
+import { BIRTHDAY_ERROR, readBirthdayField, writeBirthdayField } from '~/lib/birthday-field'
 import {
 	redirectToLogin,
 	setSessionTokens,
@@ -153,9 +154,10 @@ async function loadProfile(options: {
 	nameInput: HTMLElement | null
 	emailInput: HTMLElement | null
 	phoneInput: HTMLElement | null
+	birthdayRoot: ParentNode | null
 	onTransient: () => void
 }) {
-	const { nameInput, emailInput, phoneInput, onTransient } = options
+	const { nameInput, emailInput, phoneInput, birthdayRoot, onTransient } = options
 
 	try {
 		const { session, response: res } = await tenantFetch('/auth/me')
@@ -169,9 +171,15 @@ async function loadProfile(options: {
 		}
 		if (res.ok) {
 			const data = (await res.json()) as {
-				customer?: { name?: string; email?: string; phone?: string }
+				customer?: {
+					name?: string
+					email?: string
+					phone?: string
+					birthMonthDay?: string | null
+				}
 			}
 			if (data.customer) {
+				writeBirthdayField(birthdayRoot, data.customer.birthMonthDay)
 				if (data.customer.name && nameInput instanceof HTMLInputElement) {
 					nameInput.value = data.customer.name
 				}
@@ -223,6 +231,7 @@ export function initProfilePage() {
 		nameInput,
 		emailInput,
 		phoneInput,
+		birthdayRoot: form,
 		onTransient: () => showError(networkLabel),
 	})
 	void loadShopAccountData({
@@ -245,6 +254,8 @@ export function initProfilePage() {
 		const formData = new FormData(form)
 		const name = formData.get('name')?.toString() || ''
 		const email = formData.get('email')?.toString() || ''
+		// `null` clears it ("Not set" in both), `undefined` (one half chosen) leaves it.
+		const birthMonthDay = readBirthdayField(form)
 
 		errorMessage?.classList.add('hidden')
 		successMessage?.classList.add('hidden')
@@ -255,7 +266,11 @@ export function initProfilePage() {
 		try {
 			const { session, response: res } = await tenantFetch('/auth/profile', {
 				method: 'POST',
-				body: JSON.stringify({ name, email }),
+				body: JSON.stringify({
+					name,
+					email,
+					...(birthMonthDay !== undefined ? { birthMonthDay } : {}),
+				}),
 			})
 			if (session === 'signed_out') {
 				redirectToLogin()
@@ -282,7 +297,11 @@ export function initProfilePage() {
 				})
 				successMessage?.classList.remove('hidden')
 			} else {
-				showError(data.error || errorLabel)
+				showError(
+					data.error === BIRTHDAY_ERROR
+						? form.dataset.invalidBirthday || errorLabel
+						: data.error || errorLabel,
+				)
 			}
 		} catch {
 			showError(networkLabel)

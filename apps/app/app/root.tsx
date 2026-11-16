@@ -536,6 +536,32 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 	}
 
+	// Marketing's flag-gated tabs (#98 Audiences): shown only while the flag is on.
+	let marketingNav = { audiences: false }
+	if (currentOrgId && userId) {
+		const marketingFlags = await import(
+			'./utils/marketing/marketing-flags.server.ts'
+		)
+		marketingNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `marketing-nav:${currentOrgId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: async () => ({
+							audiences: (await marketingFlags.getMarketingFeatures(currentOrgId))
+								.audiences,
+						}),
+					})
+				} catch {
+					return { audiences: false }
+				}
+			},
+			{ timings, type: 'marketing nav', desc: 'marketing nav flags' },
+		)
+	}
+
 	let qrOrderingNav: QrOrderingNavAccess = HIDDEN_QR_ORDERING_NAV
 	if (currentOrgId && userId) {
 		const qrAccess = await import('./utils/qr/access.server.ts')
@@ -681,6 +707,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			reservationsNav,
 			loyaltyNav,
 			printShopNav,
+			marketingNav,
 			qrOrderingNav,
 			discountsNav,
 			giftCardsNav,

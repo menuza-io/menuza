@@ -1,6 +1,7 @@
 ---
 import { msg } from '@lingui/core/macro'
 import MarketingConsentBoxes from '~/components/marketing/MarketingConsentBoxes.astro'
+import BirthdayField from '~/components/BirthdayField.astro'
 import SitePage from '~/components/SitePage.astro'
 
 const organization = Astro.locals.organization
@@ -12,6 +13,7 @@ const continueLabel = i18n._(msg`Continue`)
 const saving = i18n._(msg`Saving...`)
 const somethingWentWrong = i18n._(msg`Something went wrong.`)
 const networkError = i18n._(msg`Network error. Please try again.`)
+const invalidBirthday = i18n._(msg`Choose a real month and day.`)
 
 if (!organization) {
 	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
@@ -41,6 +43,7 @@ if (!organization) {
 				data-saving={saving}
 				data-error={somethingWentWrong}
 				data-network={networkError}
+				data-invalid-birthday={invalidBirthday}
 			>
 				<div class="space-y-2">
 					<label for="name" class="text-sm font-medium leading-none text-foreground">
@@ -57,6 +60,9 @@ if (!organization) {
 						class="field"
 					/>
 				</div>
+
+				{/* Optional: never blocks the step. */}
+				<BirthdayField />
 
 				{/* This step collects no email, so only the text box is offered. */}
 				<MarketingConsentBoxes channels={['sms']} />

@@ -15,6 +15,7 @@ export type AppError =
 				| 'nameRequired'
 				| 'nameTooLong'
 				| 'invalidEmail'
+				| 'invalidBirthday'
 				| 'signedOut'
 				| 'rateLimited'
 				| 'network'
@@ -35,6 +36,7 @@ const PROFILE_MESSAGES: Readonly<
 	'Name is required': 'nameRequired',
 	'Name is too long': 'nameTooLong',
 	'Invalid email address': 'invalidEmail',
+	invalid_birthday: 'invalidBirthday',
 }
 
 function reasonOnly(reason: Exclude<AppErrorReason, 'server'>): AppError {

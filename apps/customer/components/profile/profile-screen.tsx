@@ -4,6 +4,11 @@ import { Pressable, View } from 'react-native'
 import { useAppSnapshot, useAppStore } from '../../lib/app/use-app'
 import { localeLabel } from '../../lib/i18n/site-locale'
 import { displayPhone } from '../../lib/support/phone-number'
+import {
+	birthMonthDayFromFields,
+	INVALID_BIRTHDAY,
+	splitBirthMonthDay,
+} from '../../lib/support/birthday-fields'
 import { isAcceptableName } from '../auth/complete-name-screen'
 import {
 	Button,
@@ -34,12 +39,21 @@ export function ProfileScreen() {
 	} = useAppSnapshot()
 	const [name, setName] = useState(profile?.name ?? '')
 	const [email, setEmail] = useState(profile?.email ?? '')
+	const [birthMonth, setBirthMonth] = useState(
+		splitBirthMonthDay(profile?.birthMonthDay).month,
+	)
+	const [birthDay, setBirthDay] = useState(
+		splitBirthMonthDay(profile?.birthMonthDay).day,
+	)
 
 	// A fresh copy from the server (load, save) replaces what the fields show.
 	useEffect(() => {
 		if (!profile) return
 		setName(profile.name ?? '')
 		setEmail(profile.email ?? '')
+		const birthday = splitBirthMonthDay(profile.birthMonthDay)
+		setBirthMonth(birthday.month)
+		setBirthDay(birthday.day)
 	}, [profile])
 
 	// "Saved" and the last error describe what the fields held; typing replaces both.
@@ -66,7 +80,17 @@ export function ProfileScreen() {
 
 	const canSave = isAcceptableName(name) && !isSavingProfile
 	const save = () => {
-		if (canSave) void store.saveProfile(name, email)
+		if (!canSave) return
+		const hasMonth = birthMonth.trim() !== ''
+		const hasDay = birthDay.trim() !== ''
+		const parsed = birthMonthDayFromFields(birthMonth, birthDay)
+		// Both filled but not a real date: the store refuses it with its own
+		// message. One half only: the stored birthday is left as it was.
+		let birthMonthDay =
+			parsed === undefined && hasMonth && hasDay ? INVALID_BIRTHDAY : parsed
+		// Empty fields clear a stored birthday; with none stored there is nothing to send.
+		if (birthMonthDay === null && !profile?.birthMonthDay) birthMonthDay = undefined
+		void store.saveProfile(name, email, birthMonthDay)
 	}
 
 	return (
@@ -99,6 +123,32 @@ export function ProfileScreen() {
 						autoCapitalize="none"
 						autoCorrect={false}
 					/>
+					<View className="gap-1.5">
+						<Text variant="label">{t`Birthday (optional)`}</Text>
+						<View className="flex-row gap-3">
+							<TextField
+								containerClassName="flex-1"
+								label={t`Month`}
+								placeholder="1–12"
+								value={birthMonth}
+								onChangeText={edit(setBirthMonth)}
+								keyboardType="number-pad"
+								maxLength={2}
+							/>
+							<TextField
+								containerClassName="flex-1"
+								label={t`Day`}
+								placeholder="1–31"
+								value={birthDay}
+								onChangeText={edit(setBirthDay)}
+								keyboardType="number-pad"
+								maxLength={2}
+							/>
+						</View>
+						<Text variant="muted">
+							{t`Month and day only. We use it to send you a birthday treat if you agreed to hear from us.`}
+						</Text>
+					</View>
 					<TextField
 						label={t`Phone number`}
 						value={displayPhone(profile.phone ?? '')}
