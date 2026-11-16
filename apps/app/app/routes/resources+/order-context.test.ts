@@ -193,6 +193,7 @@ describe('internal restaurant order context', () => {
 			acceptance: {},
 			// The service fee flag defaults off too: no location is listed.
 			serviceFee: { version: 1, locations: {} },
+			slotLimits: { enabled: false },
 			// Discount flags default off too: nothing to evaluate.
 			discounts: {
 				features: { automatic: false, coupons: false },
@@ -567,7 +568,9 @@ describe('order context: service fee', () => {
 		taxable: false,
 	})
 
-	async function withFees(rows: Array<{ id: string; serviceFee: string | null }>) {
+	async function withFees(
+		rows: Array<{ id: string; serviceFee: string | null }>,
+	) {
 		const { OrganizationLocation } = await import('@repo/database')
 		selectRows(
 			new Map([
@@ -589,7 +592,9 @@ describe('order context: service fee', () => {
 			key === 'ordering.service_fee' ? true : null,
 		)
 
-	type Fee = { serviceFee: { version: number; locations: Record<string, unknown> } }
+	type Fee = {
+		serviceFee: { version: number; locations: Record<string, unknown> }
+	}
 
 	it('lists no location while the flag is off, whatever is saved', async () => {
 		await withFees([{ id: 'loc_a', serviceFee: ON }])
@@ -601,7 +606,13 @@ describe('order context: service fee', () => {
 		flagOn()
 		await withFees([
 			{ id: 'loc_on', serviceFee: ON },
-			{ id: 'loc_off', serviceFee: JSON.stringify({ ...(JSON.parse(ON) as Record<string, unknown>), enabled: false }) },
+			{
+				id: 'loc_off',
+				serviceFee: JSON.stringify({
+					...(JSON.parse(ON) as Record<string, unknown>),
+					enabled: false,
+				}),
+			},
 			{ id: 'loc_none', serviceFee: null },
 		])
 		const payload = (await loadContext()) as unknown as Fee
