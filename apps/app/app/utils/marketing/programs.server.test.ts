@@ -92,12 +92,22 @@ describe('ready-made programs on the server (#100)', () => {
 			...over,
 		})
 
-	const created = () =>
+	type CreatedJourney = {
+		programId?: string
+		programVersion?: number
+		triggerType?: string
+		goal?: string
+		nodes: Array<{ type: string; data: { discountOffer?: unknown } }>
+	}
+
+	const created = (): CreatedJourney =>
 		JSON.parse(
-			fetchTenant.mock.calls.find(
-				([path, init]) => path === '/operator/journeys' && init?.method === 'POST',
-			)![1].body as string,
-		)
+			(
+				fetchTenant.mock.calls.find(
+					([path, init]) => path === '/operator/journeys' && init?.method === 'POST',
+				)![1] as RequestInit
+			).body as string,
+		) as CreatedJourney
 
 	it('shows a card only when its trigger is available, with status and 30-day results', async () => {
 		const cards = await loadProgramCards({

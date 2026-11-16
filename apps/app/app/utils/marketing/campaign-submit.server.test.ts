@@ -69,8 +69,11 @@ describe('submitCampaign', () => {
 			baseUrl: 'http://localhost',
 			existing,
 		})
-	const lastBody = () =>
-		JSON.parse(fetchTenant.mock.calls.at(-1)![1].body as string)
+	const lastBody = (): Record<string, unknown> =>
+		JSON.parse(fetchTenant.mock.calls.at(-1)![1].body as string) as Record<
+			string,
+			unknown
+		>
 
 	beforeEach(() => {
 		fetchTenant

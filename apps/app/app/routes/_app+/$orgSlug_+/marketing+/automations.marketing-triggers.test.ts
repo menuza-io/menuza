@@ -77,13 +77,18 @@ describe('order, birthday and cart triggers in the automation editor (#99 #151 #
 		['guest_lapsed', {}, 'order'],
 		['birthday_coming_up', {}, 'birthday'],
 		['cart_left_behind', {}, 'cart'],
-	] as const)('refuses %s while its flag is off', async (trigger) => {
-		const result = (await newAction(
-			args(post({ name: 'X', graphJson: graph(trigger) })),
-		)) as { error?: string }
-		expect(result.error).toMatch(/Turn on/)
-		expect(fetchTenant).not.toHaveBeenCalled()
-	})
+	] as const)(
+		'refuses %s while its flag is off',
+		async (trigger, _config, _kind) => {
+			void _config
+			void _kind
+			const result = (await newAction(
+				args(post({ name: 'X', graphJson: graph(trigger) })),
+			)) as { error?: string }
+			expect(result.error).toMatch(/Turn on/)
+			expect(fetchTenant).not.toHaveBeenCalled()
+		},
+	)
 
 	it('cart reminders need order automations too', async () => {
 		// The helper folds this: cartReminders is only true with orderAutomations.
@@ -118,7 +123,10 @@ describe('order, birthday and cart triggers in the automation editor (#99 #151 #
 		await newAction(
 			args(post({ name: 'Plain', graphJson: graph('guest_lapsed', { days: 30 }) })),
 		)
-		expect(JSON.parse(fetchTenant.mock.calls[1]![1].body as string).goal).toBeNull()
+		const secondBody = JSON.parse(
+			(fetchTenant.mock.calls[1]![1] as RequestInit).body as string,
+		) as { goal: string | null }
+		expect(secondBody.goal).toBeNull()
 	})
 
 	it('a journey that already uses a trigger keeps saving with its flag off', async () => {
