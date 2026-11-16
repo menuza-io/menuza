@@ -1821,10 +1821,16 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			applySavedCart(cart.lines)
 		}
 
-		const cartLinkToken = getCartToken(window.location.href)
+		// The layout moved `#cart=…` into this tab's session storage before
+		// analytics loaded; a direct hash (script order, no layout) still works.
+		const earlyCartToken = readSession('menuza_cart_token')
+		if (earlyCartToken) writeSession('menuza_cart_token', null)
+		const cartLinkToken =
+			(earlyCartToken && getCartToken(`/menu#cart=${earlyCartToken}`)) ||
+			getCartToken(window.location.href)
 		if (cartLinkToken) {
 			void importSavedCart(cartLinkToken)
-		} else if (hasCartParam(window.location.href)) {
+		} else if (earlyCartToken || hasCartParam(window.location.href)) {
 			history.replaceState(history.state, '', stripCartParam(window.location.href))
 			showCartNotice('expired')
 		} else {
