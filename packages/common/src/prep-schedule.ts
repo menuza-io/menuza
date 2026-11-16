@@ -122,7 +122,7 @@ export function prepRowInForce(
 
 export function parsePrepSchedule(raw: unknown): PrepSchedule | null {
 	if (raw == null) return null
-	let value = raw
+	let value: unknown = raw
 	if (typeof raw === 'string') {
 		try {
 			value = JSON.parse(raw) as unknown

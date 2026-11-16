@@ -21,6 +21,7 @@ function hours(over: Partial<LocationHours> = {}): LocationHours {
 			isOpen: day !== 'monday',
 			slots: day === 'monday' ? [] : [{ start: '17:00', end: '22:00' }],
 		})),
+		onlineHours: null,
 		specialHours: null,
 		...over,
 	}
