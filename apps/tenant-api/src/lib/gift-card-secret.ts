@@ -25,7 +25,9 @@ export function giftCardFingerprint(
 	kind: 'payment' | 'email' | 'device',
 	value: string,
 ): string {
-	return hmacHash(`gift-card-fingerprint:v1:${kind}:${value.trim().toLowerCase()}`)
+	return hmacHash(
+		`gift-card-fingerprint:v1:${kind}:${value.trim().toLowerCase()}`,
+	)
 }
 
 export function giftCardShowTokenHash(token: string): string {
@@ -36,7 +38,10 @@ function sealKey(): Buffer {
 	syncEnvFromProcess()
 	const secret = ENV.AUTH_HMAC_SECRET || ''
 	if (secret.length < 16) throw new Error('AUTH_HMAC_SECRET is not configured')
-	return crypto.createHmac('sha256', secret).update('gift-card-seal:v1').digest()
+	return crypto
+		.createHmac('sha256', secret)
+		.update('gift-card-seal:v1')
+		.digest()
 }
 
 /** AES-256-GCM: `v1.<iv>.<tag>.<cipher>` in base64url. */
@@ -45,9 +50,11 @@ export function sealGiftCardCode(code: string): string {
 	const cipher = crypto.createCipheriv('aes-256-gcm', sealKey(), iv)
 	const body = Buffer.concat([cipher.update(code, 'utf8'), cipher.final()])
 	const tag = cipher.getAuthTag()
-	return ['v1', iv, tag, body].map((part, index) =>
-		index === 0 ? part : (part as Buffer).toString('base64url'),
-	).join('.')
+	return ['v1', iv, tag, body]
+		.map((part, index) =>
+			index === 0 ? part : (part as Buffer).toString('base64url'),
+		)
+		.join('.')
 }
 
 export function openGiftCardCode(sealed: string): string | null {

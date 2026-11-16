@@ -39,7 +39,10 @@ export const giftCardPurchaseRequestSchema = z.strictObject({
 	message: z.string().trim().max(500).optional(),
 	/** When to deliver (ms since epoch); omitted means now. */
 	deliverAt: z.number().int().positive().optional(),
-	purchaser: z.strictObject({ name: nameSchema.optional(), email: emailSchema }),
+	purchaser: z.strictObject({
+		name: nameSchema.optional(),
+		email: emailSchema,
+	}),
 	locationId: z
 		.string()
 		.min(1)
@@ -51,7 +54,9 @@ export const giftCardPurchaseRequestSchema = z.strictObject({
 	deviceId: z.string().min(8).max(100).optional(),
 	turnstileToken: z.string().max(4096).optional(),
 })
-export type GiftCardPurchaseRequest = z.infer<typeof giftCardPurchaseRequestSchema>
+export type GiftCardPurchaseRequest = z.infer<
+	typeof giftCardPurchaseRequestSchema
+>
 
 export const giftCardPurchaseResponseSchema = z.object({
 	cardId: z.string(),
@@ -63,7 +68,9 @@ export const giftCardPurchaseResponseSchema = z.object({
 	currency: z.string(),
 	holdExpiresAt: z.number().int(),
 })
-export type GiftCardPurchaseResponse = z.infer<typeof giftCardPurchaseResponseSchema>
+export type GiftCardPurchaseResponse = z.infer<
+	typeof giftCardPurchaseResponseSchema
+>
 
 export const giftCardBalanceRequestSchema = z.strictObject({
 	...binding,
@@ -132,7 +139,11 @@ export const giftCardOptionsSchema = z.object({
 	),
 	defaultDesign: z.enum(GIFT_CARD_DESIGN_KEYS),
 	locations: z.array(
-		z.object({ id: z.string(), name: z.string().nullable(), timeZone: z.string().nullable() }),
+		z.object({
+			id: z.string(),
+			name: z.string().nullable(),
+			timeZone: z.string().nullable(),
+		}),
 	),
 	maxDeliverAheadDays: z.number().int(),
 })

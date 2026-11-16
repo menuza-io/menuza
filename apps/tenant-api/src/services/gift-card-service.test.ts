@@ -15,19 +15,31 @@ import {
 	provisionTenantDb,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest'
 import { clearGiftCardContextCache } from '../lib/gift-card-context.ts'
 import { openGiftCardCode } from '../lib/gift-card-secret.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 
-const sent = vi.hoisted(() => [] as Array<{ to: string; subject: string; html: string }>)
+const sent = vi.hoisted(
+	() => [] as Array<{ to: string; subject: string; html: string }>,
+)
 
 vi.mock('../lib/tenant-email.ts', () => ({
 	canSendTenantEmail: () => true,
-	sendTenantEmail: vi.fn(async (input: { to: string; subject: string; html: string }) => {
-		sent.push({ to: input.to, subject: input.subject, html: input.html })
-		return { status: 'sent' as const }
-	}),
+	sendTenantEmail: vi.fn(
+		async (input: { to: string; subject: string; html: string }) => {
+			sent.push({ to: input.to, subject: input.subject, html: input.html })
+			return { status: 'sent' as const }
+		},
+	),
 }))
 vi.mock('../lib/reservations-context.ts', () => ({
 	getReservationsContext: vi.fn(async () => ({
@@ -198,7 +210,11 @@ describe('selling and redeeming at the till', () => {
 		const db = await getTenantDb(ORG)
 		expect(await giftCardBalance(db, first.cardId)).toBe(5000)
 		// Only the hash and the last four are kept.
-		const row = await db.select().from(giftCards).where(eq(giftCards.id, first.cardId)).get()
+		const row = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, first.cardId))
+			.get()
 		expect(row?.codeHash).toMatch(/^[0-9a-f]{64}$/)
 		expect(row?.last4).toBe(first.code!.slice(-4))
 		expect(JSON.stringify(row)).not.toContain(first.code!)
@@ -222,7 +238,10 @@ describe('selling and redeeming at the till', () => {
 		const requestId = rid()
 		const first = await redeem(sold.code!, 3000, requestId)
 		expect(first.balanceMinor).toBe(2000)
-		const error = await expectCode(redeem(sold.code!, 2500), 'gift_card_balance_low')
+		const error = await expectCode(
+			redeem(sold.code!, 2500),
+			'gift_card_balance_low',
+		)
 		expect(error.details.balanceMinor).toBe(2000)
 		const replay = await redeem(sold.code!, 3000, requestId)
 		expect(replay.reference).toBe(first.reference)
@@ -242,7 +261,9 @@ describe('selling and redeeming at the till', () => {
 		expect(ok).toHaveLength(3)
 		expect(refused).toHaveLength(5)
 		for (const r of refused) {
-			expect((r.reason as GiftCardDomainError).code).toBe('gift_card_balance_low')
+			expect((r.reason as GiftCardDomainError).code).toBe(
+				'gift_card_balance_low',
+			)
 		}
 		const db = await getTenantDb(ORG)
 		expect(await giftCardBalance(db, sold.cardId)).toBe(1000)
@@ -358,10 +379,20 @@ describe('adjust, void, charge', () => {
 
 	it('voids a card: the balance goes, it cannot be spent, a second void is a no-op', async () => {
 		const sold = await sell(5000)
-		const voided = await voidGiftCard({ orgId: ORG, cardId: sold.cardId, reason: 'lost', actor })
+		const voided = await voidGiftCard({
+			orgId: ORG,
+			cardId: sold.cardId,
+			reason: 'lost',
+			actor,
+		})
 		expect(voided.removedMinor).toBe(5000)
 		await expectCode(redeem(sold.code!, 100), 'gift_card_voided')
-		const again = await voidGiftCard({ orgId: ORG, cardId: sold.cardId, reason: 'lost', actor })
+		const again = await voidGiftCard({
+			orgId: ORG,
+			cardId: sold.cardId,
+			reason: 'lost',
+			actor,
+		})
 		expect(again.removedMinor).toBe(0)
 		const db = await getTenantDb(ORG)
 		expect(await giftCardBalance(db, sold.cardId)).toBe(0)
@@ -441,7 +472,9 @@ describe('adjust, void, charge', () => {
 			.select()
 			.from(giftCardLedger)
 			.where(eq(giftCardLedger.cardId, sold.cardId))
-		const entry = history.find((r) => r.sourceType === 'manual_charge' && r.kind === 'redeem')
+		const entry = history.find(
+			(r) => r.sourceType === 'manual_charge' && r.kind === 'redeem',
+		)
 		expect(entry?.channel).toBe('app')
 		expect(entry?.note).toBe('catering deposit')
 		expect(entry?.actorName).toBe('Pat Manager')
@@ -489,9 +522,15 @@ describe('printed (inactive) cards', () => {
 })
 
 describe('online purchases', () => {
-	const purchaser = { customerId: null, name: 'Buyer', email: 'buyer@example.test' }
+	const purchaser = {
+		customerId: null,
+		name: 'Buyer',
+		email: 'buyer@example.test',
+	}
 
-	async function start(overrides: Partial<Parameters<typeof createGiftCardPurchase>[0]> = {}) {
+	async function start(
+		overrides: Partial<Parameters<typeof createGiftCardPurchase>[0]> = {},
+	) {
 		return createGiftCardPurchase({
 			orgId: ORG,
 			settings,
@@ -515,7 +554,10 @@ describe('online purchases', () => {
 		started: Awaited<ReturnType<typeof start>>,
 		options: {
 			settings?: GiftCardSettings
-			risk?: { level: 'normal' | 'elevated' | 'highest'; paymentFingerprint?: string }
+			risk?: {
+				level: 'normal' | 'elevated' | 'highest'
+				paymentFingerprint?: string
+			}
 		} = {},
 	) {
 		const sessionId = `cs_${rid()}`
@@ -539,25 +581,39 @@ describe('online purchases', () => {
 			risk: options.risk,
 		}
 		const result = await applyGiftCardPaymentEvent(event)
-		return Object.assign(result, { replay: () => applyGiftCardPaymentEvent(event) })
+		return Object.assign(result, {
+			replay: () => applyGiftCardPaymentEvent(event),
+		})
 	}
 
 	it('is a pending card, quoted and paid through the gc: bridge, then active and delivered', async () => {
 		const started = await start()
 		expect(started.orderRef).toBe(`gc:${started.cardId}`)
-		const quote = await getGiftCardQuote(ORG, started.cardId, started.paymentToken)
+		const quote = await getGiftCardQuote(
+			ORG,
+			started.cardId,
+			started.paymentToken,
+		)
 		expect(quote.ok && quote.data.totalCents).toBe(5000)
 		const forged = await getGiftCardQuote(ORG, started.cardId, 'x'.repeat(64))
 		expect(forged.ok).toBe(false)
 		// Not spendable before it is paid.
 		const db = await getTenantDb(ORG)
-		const row = await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get()
+		const row = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, started.cardId))
+			.get()
 		expect(row?.status).toBe('pending')
 		expect(row?.sealedCode).toBeTruthy()
 
 		const paid = await pay(started)
 		expect(paid.ok).toBe(true)
-		const after = await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get()
+		const after = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, started.cardId))
+			.get()
 		expect(after?.status).toBe('active')
 		expect(await giftCardBalance(db, started.cardId)).toBe(5000)
 		// A redelivered event changes nothing and issues nothing twice.
@@ -566,12 +622,18 @@ describe('online purchases', () => {
 		expect(await giftCardBalance(db, started.cardId)).toBe(5000)
 
 		// Receipt to the buyer, card to the recipient, the seal cleared.
-		const delivered = await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get()
+		const delivered = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, started.cardId))
+			.get()
 		expect(delivered?.deliveredAt).not.toBeNull()
 		expect(delivered?.sealedCode).toBeNull()
 		expect(sent.some((m) => m.to.startsWith('buyer-'))).toBe(true)
 		const toRecipient = sent.find((m) => m.to.startsWith('friend-'))
-		expect(toRecipient?.html).toMatch(/[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}/)
+		expect(toRecipient?.html).toMatch(
+			/[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}/,
+		)
 		// The delivery email is the only place the code appears.
 		expect(sent.find((m) => m.to.startsWith('buyer-'))?.html).not.toMatch(
 			/[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}/,
@@ -589,7 +651,12 @@ describe('online purchases', () => {
 	it('refuses a payment of the wrong amount into review, never into a balance', async () => {
 		const started = await start()
 		const sessionId = `cs_${rid()}`
-		await bindGiftCardPaymentSession({ orgId: ORG, cardId: started.cardId, sessionId, processor: 'connect' })
+		await bindGiftCardPaymentSession({
+			orgId: ORG,
+			cardId: started.cardId,
+			sessionId,
+			processor: 'connect',
+		})
 		const result = await applyGiftCardPaymentEvent({
 			orgId: ORG,
 			cardId: started.cardId,
@@ -609,21 +676,47 @@ describe('online purchases', () => {
 		const tight: GiftCardSettings = {
 			...settings,
 			maxAmountMinor: 1_000_000,
-			limits: { ...settings.limits, maxCardMajor: 100, maxPerPurchaseMajor: 100, maxPurchasesPer24h: 2 },
+			limits: {
+				...settings.limits,
+				maxCardMajor: 100,
+				maxPerPurchaseMajor: 100,
+				maxPurchasesPer24h: 2,
+			},
 		}
-		const error = await expectCode(start({ settings: tight, amountMinor: 20_000 }), 'purchase_limit')
+		const error = await expectCode(
+			start({ settings: tight, amountMinor: 20_000 }),
+			'purchase_limit',
+		)
 		expect(JSON.stringify(error.details)).toBe('{}')
 		const email = `repeat-${rid()}@example.test`
 		const device = `device-${rid()}`
-		await start({ settings: tight, amountMinor: 1000, purchaser: { ...purchaser, email }, deviceId: device })
-		await start({ settings: tight, amountMinor: 1000, purchaser: { ...purchaser, email }, deviceId: `d-${rid()}` })
+		await start({
+			settings: tight,
+			amountMinor: 1000,
+			purchaser: { ...purchaser, email },
+			deviceId: device,
+		})
+		await start({
+			settings: tight,
+			amountMinor: 1000,
+			purchaser: { ...purchaser, email },
+			deviceId: `d-${rid()}`,
+		})
 		await expectCode(
-			start({ settings: tight, amountMinor: 1000, purchaser: { ...purchaser, email }, deviceId: `d-${rid()}` }),
+			start({
+				settings: tight,
+				amountMinor: 1000,
+				purchaser: { ...purchaser, email },
+				deviceId: `d-${rid()}`,
+			}),
 			'purchase_limit',
 		)
 		// The same device is limited on its own, with another email.
 		await start({ settings: tight, amountMinor: 1000, deviceId: device })
-		await expectCode(start({ settings: tight, amountMinor: 1000, deviceId: device }), 'purchase_limit')
+		await expectCode(
+			start({ settings: tight, amountMinor: 1000, deviceId: device }),
+			'purchase_limit',
+		)
 	})
 
 	it('holds a first-time buyer’s immediate high-value card, and the tick releases it after the delay', async () => {
@@ -631,7 +724,11 @@ describe('online purchases', () => {
 		const first = await pay(started)
 		expect(first.ok).toBe(true)
 		const db = await getTenantDb(ORG)
-		const held = await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get()
+		const held = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, started.cardId))
+			.get()
 		expect(held?.status).toBe('held')
 		expect(held?.holdReason).toBe('first_buyer')
 		expect(held?.holdUntil).toBeGreaterThan(Date.now())
@@ -641,11 +738,25 @@ describe('online purchases', () => {
 		expect(sent.find((m) => m.to.startsWith('friend-'))).toBeUndefined()
 		// Not released early.
 		await runGiftCardTick(ORG, { now: Date.now() + 60 * 60_000 })
-		expect((await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get())?.status).toBe('held')
+		expect(
+			(
+				await db
+					.select()
+					.from(giftCards)
+					.where(eq(giftCards.id, started.cardId))
+					.get()
+			)?.status,
+		).toBe('held')
 		// Released after the delay, and delivered then.
-		const totals = await runGiftCardTick(ORG, { now: Date.now() + 2 * 60 * 60_000 + 1000 })
+		const totals = await runGiftCardTick(ORG, {
+			now: Date.now() + 2 * 60 * 60_000 + 1000,
+		})
 		expect(totals.released).toBeGreaterThanOrEqual(1)
-		const released = await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get()
+		const released = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, started.cardId))
+			.get()
 		expect(released?.status).toBe('active')
 		expect(sent.find((m) => m.to.startsWith('friend-'))).toBeDefined()
 	})
@@ -661,8 +772,24 @@ describe('online purchases', () => {
 		const small = await start({ amountMinor: 2000 })
 		await pay(small)
 		const db = await getTenantDb(ORG)
-		expect((await db.select().from(giftCards).where(eq(giftCards.id, later.cardId)).get())?.status).toBe('active')
-		expect((await db.select().from(giftCards).where(eq(giftCards.id, small.cardId)).get())?.status).toBe('active')
+		expect(
+			(
+				await db
+					.select()
+					.from(giftCards)
+					.where(eq(giftCards.id, later.cardId))
+					.get()
+			)?.status,
+		).toBe('active')
+		expect(
+			(
+				await db
+					.select()
+					.from(giftCards)
+					.where(eq(giftCards.id, small.cardId))
+					.get()
+			)?.status,
+		).toBe('active')
 		// The scheduled card waits for its date.
 		expect(sent.find((m) => m.to === laterEmail)).toBeUndefined()
 		// Until its date: then the tick sends it.
@@ -672,17 +799,42 @@ describe('online purchases', () => {
 
 	it('holds an elevated-risk payment for review until approved, and review is not timed', async () => {
 		const started = await start({ amountMinor: 2000 })
-		await pay(started, { risk: { level: 'elevated', paymentFingerprint: 'fp_1' } })
+		await pay(started, {
+			risk: { level: 'elevated', paymentFingerprint: 'fp_1' },
+		})
 		const db = await getTenantDb(ORG)
-		const held = await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get()
+		const held = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, started.cardId))
+			.get()
 		expect(held?.status).toBe('held')
 		expect(held?.holdReason).toBe('provider_risk')
 		expect(held?.holdUntil).toBeNull()
 		await runGiftCardTick(ORG, { now: Date.now() + 48 * 60 * 60_000 })
-		expect((await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get())?.status).toBe('held')
+		expect(
+			(
+				await db
+					.select()
+					.from(giftCards)
+					.where(eq(giftCards.id, started.cardId))
+					.get()
+			)?.status,
+		).toBe('held')
 		await approveHeldGiftCard({ orgId: ORG, cardId: started.cardId, actor })
-		expect((await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get())?.status).toBe('active')
-		await expectCode(approveHeldGiftCard({ orgId: ORG, cardId: started.cardId, actor }), 'not_held')
+		expect(
+			(
+				await db
+					.select()
+					.from(giftCards)
+					.where(eq(giftCards.id, started.cardId))
+					.get()
+			)?.status,
+		).toBe('active')
+		await expectCode(
+			approveHeldGiftCard({ orgId: ORG, cardId: started.cardId, actor }),
+			'not_held',
+		)
 	})
 
 	it('holds a payment card that bought too many in a day', async () => {
@@ -693,12 +845,22 @@ describe('online purchases', () => {
 		const fingerprint = `fp_${rid()}`
 		for (let i = 0; i < 2; i += 1) {
 			const started = await start({ settings: tight, amountMinor: 1000 })
-			await pay(started, { settings: tight, risk: { level: 'normal', paymentFingerprint: fingerprint } })
+			await pay(started, {
+				settings: tight,
+				risk: { level: 'normal', paymentFingerprint: fingerprint },
+			})
 		}
 		const third = await start({ settings: tight, amountMinor: 1000 })
-		await pay(third, { settings: tight, risk: { level: 'normal', paymentFingerprint: fingerprint } })
+		await pay(third, {
+			settings: tight,
+			risk: { level: 'normal', paymentFingerprint: fingerprint },
+		})
 		const db = await getTenantDb(ORG)
-		const row = await db.select().from(giftCards).where(eq(giftCards.id, third.cardId)).get()
+		const row = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, third.cardId))
+			.get()
 		expect(row?.status).toBe('held')
 		expect(row?.holdReason).toBe('manual')
 	})
@@ -707,38 +869,74 @@ describe('online purchases', () => {
 		const started = await start({ amountMinor: 2000 })
 		await pay(started)
 		const db = await getTenantDb(ORG)
-		const row = await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get()
+		const row = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, started.cardId))
+			.get()
 		const code = openGiftCardCode(row!.sealedCode ?? '') // already delivered: sealed is gone
 		expect(code).toBeNull()
 		// Spend 500 before the dispute, using the code from the delivery email.
 		const emailed = sent.find((m) => m.to.startsWith('friend-'))!
-		const codeText = emailed.html.match(/[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}/)![0]
+		const codeText = emailed.html.match(
+			/[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}/,
+		)![0]
 		await redeem(codeText, 500)
 
-		const frozen = await applyGiftCardDispute({ orgId: ORG, cardId: started.cardId, status: 'open' })
+		const frozen = await applyGiftCardDispute({
+			orgId: ORG,
+			cardId: started.cardId,
+			status: 'open',
+		})
 		expect(frozen.ok && frozen.status).toBe('frozen')
 		await expectCode(redeem(codeText, 100), 'gift_card_frozen')
 		// Idempotent.
-		const again = await applyGiftCardDispute({ orgId: ORG, cardId: started.cardId, status: 'open' })
+		const again = await applyGiftCardDispute({
+			orgId: ORG,
+			cardId: started.cardId,
+			status: 'open',
+		})
 		expect(again.ok && again.changed).toBe(false)
-		const history = await db.select().from(giftCardLedger).where(eq(giftCardLedger.cardId, started.cardId))
-		expect(history.some((h) => h.kind === 'event' && /frozen: dispute/.test(h.reason ?? ''))).toBe(true)
+		const history = await db
+			.select()
+			.from(giftCardLedger)
+			.where(eq(giftCardLedger.cardId, started.cardId))
+		expect(
+			history.some(
+				(h) => h.kind === 'event' && /frozen: dispute/.test(h.reason ?? ''),
+			),
+		).toBe(true)
 
-		const lost = await applyGiftCardDispute({ orgId: ORG, cardId: started.cardId, status: 'lost' })
+		const lost = await applyGiftCardDispute({
+			orgId: ORG,
+			cardId: started.cardId,
+			status: 'lost',
+		})
 		expect(lost.ok && lost.status).toBe('voided')
 		expect(await giftCardBalance(db, started.cardId)).toBe(0)
 		expect(
-			(await db.select().from(giftCardLedger).where(eq(giftCardLedger.cardId, started.cardId))).some(
-				(h) => h.kind === 'dispute_removal',
-			),
+			(
+				await db
+					.select()
+					.from(giftCardLedger)
+					.where(eq(giftCardLedger.cardId, started.cardId))
+			).some((h) => h.kind === 'dispute_removal'),
 		).toBe(true)
 	})
 
 	it('lifts the freeze when the dispute is won', async () => {
 		const started = await start({ amountMinor: 2000 })
 		await pay(started)
-		await applyGiftCardDispute({ orgId: ORG, cardId: started.cardId, status: 'open' })
-		const won = await applyGiftCardDispute({ orgId: ORG, cardId: started.cardId, status: 'won' })
+		await applyGiftCardDispute({
+			orgId: ORG,
+			cardId: started.cardId,
+			status: 'open',
+		})
+		const won = await applyGiftCardDispute({
+			orgId: ORG,
+			cardId: started.cardId,
+			status: 'won',
+		})
 		expect(won.ok && won.status).toBe('active')
 	})
 
@@ -747,14 +945,25 @@ describe('online purchases', () => {
 		await pay(started)
 		const db = await getTenantDb(ORG)
 		const emailed = sent.find((m) => m.to.startsWith('friend-'))!
-		const codeText = emailed.html.match(/[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}/)![0]
+		const codeText = emailed.html.match(
+			/[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}/,
+		)![0]
 		await redeem(codeText, 1000)
 		const error = await expectCode(
-			bookGiftCardPurchaseRefund({ orgId: ORG, cardId: started.cardId, amountMinor: 2500, actor }),
+			bookGiftCardPurchaseRefund({
+				orgId: ORG,
+				cardId: started.cardId,
+				amountMinor: 2500,
+				actor,
+			}),
 			'refund_exceeds_unspent',
 		)
 		expect(error.details.unspentMinor).toBe(2000)
-		const booked = await bookGiftCardPurchaseRefund({ orgId: ORG, cardId: started.cardId, actor })
+		const booked = await bookGiftCardPurchaseRefund({
+			orgId: ORG,
+			cardId: started.cardId,
+			actor,
+		})
 		expect(booked.refundMinor).toBe(2000)
 		expect(booked.voided).toBe(true)
 		expect(await giftCardBalance(db, started.cardId)).toBe(0)
@@ -767,7 +976,11 @@ describe('online purchases', () => {
 	it('never delays or holds a till sale', async () => {
 		const sold = await sell(40_000)
 		const db = await getTenantDb(ORG)
-		const row = await db.select().from(giftCards).where(eq(giftCards.id, sold.cardId)).get()
+		const row = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, sold.cardId))
+			.get()
 		expect(row?.status).toBe('active')
 		expect((await redeem(sold.code!, 100)).balanceMinor).toBe(39_900)
 	})
@@ -776,10 +989,23 @@ describe('online purchases', () => {
 		const started = await start({ amountMinor: 1500 })
 		await runGiftCardTick(ORG, { now: Date.now() + 2 * 60 * 60_000 })
 		const db = await getTenantDb(ORG)
-		expect((await db.select().from(giftCards).where(eq(giftCards.id, started.cardId)).get())?.status).toBe('voided')
+		expect(
+			(
+				await db
+					.select()
+					.from(giftCards)
+					.where(eq(giftCards.id, started.cardId))
+					.get()
+			)?.status,
+		).toBe('voided')
 		const sessionId = `cs_${rid()}`
 		// A session bound after the window cannot attach to a voided purchase.
-		const bound = await bindGiftCardPaymentSession({ orgId: ORG, cardId: started.cardId, sessionId, processor: 'connect' })
+		const bound = await bindGiftCardPaymentSession({
+			orgId: ORG,
+			cardId: started.cardId,
+			sessionId,
+			processor: 'connect',
+		})
 		expect(bound.ok).toBe(false)
 		const late = await applyGiftCardPaymentEvent({
 			orgId: ORG,
@@ -799,7 +1025,10 @@ describe('online purchases', () => {
 describe("a guest's account", () => {
 	async function customer(name: string) {
 		const db = await getTenantDb(ORG)
-		const [row] = await db.insert(customers).values({ name, email: `${name}@example.test` }).returning()
+		const [row] = await db
+			.insert(customers)
+			.values({ name, email: `${name}@example.test` })
+			.returning()
 		return row!.id
 	}
 
@@ -807,14 +1036,28 @@ describe("a guest's account", () => {
 		const sold = await sell(5000)
 		const alice = await customer(`alice-${rid()}`)
 		const bob = await customer(`bob-${rid()}`)
-		const mine = await claimGiftCard({ orgId: ORG, customerId: alice, code: sold.code! })
+		const mine = await claimGiftCard({
+			orgId: ORG,
+			customerId: alice,
+			code: sold.code!,
+		})
 		expect(mine.alreadyMine).toBe(false)
-		expect((await claimGiftCard({ orgId: ORG, customerId: alice, code: sold.code! })).alreadyMine).toBe(true)
+		expect(
+			(await claimGiftCard({ orgId: ORG, customerId: alice, code: sold.code! }))
+				.alreadyMine,
+		).toBe(true)
 		expect((await listSavedGiftCards(ORG, alice))[0]?.balanceMinor).toBe(5000)
 		// A wrong code saves nothing.
-		await expectCode(claimGiftCard({ orgId: ORG, customerId: bob, code: 'ZZZZZZZZZZZZZZZZ' }), 'code_invalid')
+		await expectCode(
+			claimGiftCard({ orgId: ORG, customerId: bob, code: 'ZZZZZZZZZZZZZZZZ' }),
+			'code_invalid',
+		)
 		// Another account saving it needs the full code and takes it over.
-		const moved = await claimGiftCard({ orgId: ORG, customerId: bob, code: sold.code! })
+		const moved = await claimGiftCard({
+			orgId: ORG,
+			customerId: bob,
+			code: sold.code!,
+		})
 		expect(moved.movedFrom).toBe(alice)
 		expect(await listSavedGiftCards(ORG, alice)).toHaveLength(0)
 		expect(await listSavedGiftCards(ORG, bob)).toHaveLength(1)
@@ -823,7 +1066,11 @@ describe("a guest's account", () => {
 		// Erasing the person unlinks the card and keeps the balance.
 		const db = await getTenantDb(ORG)
 		await db.delete(customers).where(eq(customers.id, bob))
-		const row = await db.select().from(giftCards).where(eq(giftCards.id, sold.cardId)).get()
+		const row = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, sold.cardId))
+			.get()
 		expect(row?.holderCustomerId).toBeNull()
 		expect(await giftCardBalance(db, sold.cardId)).toBe(4000)
 	})
@@ -833,8 +1080,15 @@ describe("a guest's account", () => {
 		const carol = await customer(`carol-${rid()}`)
 		await claimGiftCard({ orgId: ORG, customerId: carol, code: sold.code! })
 		const dave = await customer(`dave-${rid()}`)
-		await expectCode(createShowToken({ orgId: ORG, customerId: dave, cardId: sold.cardId }), 'not_found')
-		const { token, expiresAt } = await createShowToken({ orgId: ORG, customerId: carol, cardId: sold.cardId })
+		await expectCode(
+			createShowToken({ orgId: ORG, customerId: dave, cardId: sold.cardId }),
+			'not_found',
+		)
+		const { token, expiresAt } = await createShowToken({
+			orgId: ORG,
+			customerId: carol,
+			cardId: sold.cardId,
+		})
 		expect(token).not.toContain(sold.code!)
 		expect(expiresAt).toBeGreaterThan(Date.now())
 		const first = await redeem(token, 1500)
@@ -842,11 +1096,24 @@ describe("a guest's account", () => {
 		// Replaying the same token is refused.
 		await expectCode(redeem(token, 100), 'code_invalid')
 		// An expired token is refused.
-		const second = await createShowToken({ orgId: ORG, customerId: carol, cardId: sold.cardId, now: Date.now() - 10 * 60_000 })
+		const second = await createShowToken({
+			orgId: ORG,
+			customerId: carol,
+			cardId: sold.cardId,
+			now: Date.now() - 10 * 60_000,
+		})
 		await expectCode(redeem(second.token, 100), 'code_invalid')
 		// A new token supersedes the older one.
-		const a = await createShowToken({ orgId: ORG, customerId: carol, cardId: sold.cardId })
-		const b = await createShowToken({ orgId: ORG, customerId: carol, cardId: sold.cardId })
+		const a = await createShowToken({
+			orgId: ORG,
+			customerId: carol,
+			cardId: sold.cardId,
+		})
+		const b = await createShowToken({
+			orgId: ORG,
+			customerId: carol,
+			cardId: sold.cardId,
+		})
 		await expectCode(redeem(a.token, 100), 'code_invalid')
 		expect((await redeem(b.token, 100)).balanceMinor).toBe(3400)
 	})
@@ -876,45 +1143,83 @@ describe('orders: giving the card its part back', () => {
 		const orderId = `order-${rid()}`
 		const { sold, db } = await redeemForOrder(3000, orderId)
 		const first = await runTenantTransaction(db, (tx) =>
-			refundGiftShareInTx(tx, { orderId, wantMinor: 2000, key: 'k1', reason: 'order refunded', now: Date.now() }),
+			refundGiftShareInTx(tx, {
+				orderId,
+				wantMinor: 2000,
+				key: 'k1',
+				reason: 'order refunded',
+				now: Date.now(),
+			}),
 		)
 		expect(first).toBe(2000)
 		// A replay of the same key returns the same amount and books nothing more.
 		expect(
 			await runTenantTransaction(db, (tx) =>
-				refundGiftShareInTx(tx, { orderId, wantMinor: 2000, key: 'k1', reason: 'order refunded', now: Date.now() }),
+				refundGiftShareInTx(tx, {
+					orderId,
+					wantMinor: 2000,
+					key: 'k1',
+					reason: 'order refunded',
+					now: Date.now(),
+				}),
 			),
 		).toBe(2000)
 		// Only 1000 of the redemption is left to give back.
 		expect(
 			await runTenantTransaction(db, (tx) =>
-				refundGiftShareInTx(tx, { orderId, wantMinor: 5000, key: 'k2', reason: 'order refunded', now: Date.now() }),
+				refundGiftShareInTx(tx, {
+					orderId,
+					wantMinor: 5000,
+					key: 'k2',
+					reason: 'order refunded',
+					now: Date.now(),
+				}),
 			),
 		).toBe(1000)
 		expect(
 			await runTenantTransaction(db, (tx) =>
-				refundGiftShareInTx(tx, { orderId, wantMinor: 5000, key: 'k3', reason: 'order refunded', now: Date.now() }),
+				refundGiftShareInTx(tx, {
+					orderId,
+					wantMinor: 5000,
+					key: 'k3',
+					reason: 'order refunded',
+					now: Date.now(),
+				}),
 			),
 		).toBe(0)
 		expect(await giftCardBalance(db, sold.cardId)).toBe(5000)
 		const share = await giftShareOfOrder(db, orderId)
-		expect(share).toMatchObject({ redeemedMinor: 3000, refundedMinor: 3000, remainingMinor: 0 })
+		expect(share).toMatchObject({
+			redeemedMinor: 3000,
+			refundedMinor: 3000,
+			remainingMinor: 0,
+		})
 	})
 
 	it('restores the whole part of an order that never completed, once', async () => {
 		const orderId = `order-${rid()}`
 		const { sold, db } = await redeemForOrder(1800, orderId)
-		await runTenantTransaction(db, (tx) => restoreOrderGiftCardsInTx(tx, [orderId], Date.now()))
-		await runTenantTransaction(db, (tx) => restoreOrderGiftCardsInTx(tx, [orderId], Date.now()))
+		await runTenantTransaction(db, (tx) =>
+			restoreOrderGiftCardsInTx(tx, [orderId], Date.now()),
+		)
+		await runTenantTransaction(db, (tx) =>
+			restoreOrderGiftCardsInTx(tx, [orderId], Date.now()),
+		)
 		expect(await giftCardBalance(db, sold.cardId)).toBe(5000)
 	})
 
 	it('refunds to a voided card without stranding the money', async () => {
 		const orderId = `order-${rid()}`
 		const { sold, db } = await redeemForOrder(1000, orderId)
-		await voidGiftCard({ orgId: ORG, cardId: sold.cardId, reason: 'lost', actor })
-		await runTenantTransaction(db, (tx) => restoreOrderGiftCardsInTx(tx, [orderId], Date.now()))
+		await voidGiftCard({
+			orgId: ORG,
+			cardId: sold.cardId,
+			reason: 'lost',
+			actor,
+		})
+		await runTenantTransaction(db, (tx) =>
+			restoreOrderGiftCardsInTx(tx, [orderId], Date.now()),
+		)
 		expect(await giftCardBalance(db, sold.cardId)).toBe(1000)
 	})
 })
-

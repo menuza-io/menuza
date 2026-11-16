@@ -21,7 +21,11 @@ import { giftCardBalance } from './gift-card-store.ts'
 
 export const GIFT_CARD_MAX_DELIVERY_ATTEMPTS = 6
 
-export type GiftCardMessageTotals = { delivered: number; failed: number; receipts: number }
+export type GiftCardMessageTotals = {
+	delivered: number
+	failed: number
+	receipts: number
+}
 
 function safeUrlJoin(origin: string | null, path: string): string | null {
 	if (!origin) return null
@@ -32,7 +36,10 @@ function safeUrlJoin(origin: string | null, path: string): string | null {
 	}
 }
 
-function imageUrlFor(origin: string | null, key: string | null | undefined): string | null {
+function imageUrlFor(
+	origin: string | null,
+	key: string | null | undefined,
+): string | null {
 	if (!key) return null
 	if (/^https?:\/\//.test(key)) return key
 	return safeUrlJoin(origin, key.startsWith('/') ? key : `/${key}`)
@@ -76,7 +83,11 @@ export async function sendGiftCardMessages(
 			.returning({ id: giftCards.id })
 		if (claimed.length === 0) continue
 		const timing: 'now' | 'later' | 'held' =
-			card.status === 'held' ? 'held' : card.deliverAt && card.deliverAt > now + 5 * 60_000 ? 'later' : 'now'
+			card.status === 'held'
+				? 'held'
+				: card.deliverAt && card.deliverAt > now + 5 * 60_000
+					? 'later'
+					: 'now'
 		const rendered = renderGiftCardEmail({
 			kind: 'receipt',
 			locale: card.locale ?? context?.organization.defaultLocale ?? 'en',
@@ -102,7 +113,10 @@ export async function sendGiftCardMessages(
 		}).catch(() => ({ status: 'error' as const }))
 		if (sent.status === 'error') {
 			// Let the next pass try again.
-			await db.update(giftCards).set({ receiptSentAt: null }).where(eq(giftCards.id, card.id))
+			await db
+				.update(giftCards)
+				.set({ receiptSentAt: null })
+				.where(eq(giftCards.id, card.id))
 		} else {
 			totals.receipts += 1
 		}
@@ -196,4 +210,3 @@ function zoneFor(
 	const location = context?.locations.find((l) => l.id === card.locationId)
 	return location?.timeZone ?? null
 }
-

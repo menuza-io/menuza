@@ -10,10 +10,7 @@ import {
 	type GiftCardRow,
 } from '@repo/tenant-db'
 import { and, asc, eq, gt, isNull, lt } from 'drizzle-orm'
-import {
-	giftCardShowTokenHash,
-	newShowToken,
-} from '../lib/gift-card-secret.ts'
+import { giftCardShowTokenHash, newShowToken } from '../lib/gift-card-secret.ts'
 import { getReservationsContext } from '../lib/reservations-context.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { withGiftCardWrite, type GiftCardTx } from '../lib/gift-card-write.ts'
@@ -120,7 +117,9 @@ export async function claimGiftCard(input: {
 				sourceType: 'system',
 				channel: 'online',
 				locationId: card.locationId,
-				reason: previousHolder ? 'moved to another account' : 'saved to an account',
+				reason: previousHolder
+					? 'moved to another account'
+					: 'saved to an account',
 				idempotencyKey: `claim:${card.id}:${input.customerId}:${ctx.now}`,
 				at: ctx.now,
 			})
@@ -133,9 +132,11 @@ export async function claimGiftCard(input: {
 		},
 	)
 	if (result.movedFrom) {
-		void notifyPreviousHolder(input.orgId, result.movedFrom, result.card.last4).catch(
-			() => undefined,
-		)
+		void notifyPreviousHolder(
+			input.orgId,
+			result.movedFrom,
+			result.card.last4,
+		).catch(() => undefined)
 	}
 	return result
 }
@@ -157,10 +158,16 @@ async function notifyPreviousHolder(
 	// A short plain notice: the card ending in `last4` was saved to another account.
 	await sendTenantEmail({
 		to: holder.email,
-		subject: name ? `A gift card was saved to another account (${name})` : 'A gift card was saved to another account',
+		subject: name
+			? `A gift card was saved to another account (${name})`
+			: 'A gift card was saved to another account',
 		html: `<p>A gift card ending in ${last4.replace(/[^A-Z0-9]/gi, '')} was saved to another account. If this was not you, you can still use the card with its code.</p>`,
 		text: `A gift card ending in ${last4.replace(/[^A-Z0-9]/gi, '')} was saved to another account. If this was not you, you can still use the card with its code.`,
-		capture: { orgId, messageKind: 'gift_card_moved', messageId: `${customerId}:${last4}` },
+		capture: {
+			orgId,
+			messageKind: 'gift_card_moved',
+			messageId: `${customerId}:${last4}`,
+		},
 	})
 }
 
@@ -170,10 +177,15 @@ export async function saveToPurchaser(
 	card: GiftCardRow,
 	now: number,
 ): Promise<void> {
-	if (!card.purchaserCustomerId || !card.sendToSelf || card.holderCustomerId) return
+	if (!card.purchaserCustomerId || !card.sendToSelf || card.holderCustomerId)
+		return
 	await tx
 		.update(giftCards)
-		.set({ holderCustomerId: card.purchaserCustomerId, heldAt: now, updatedAt: now })
+		.set({
+			holderCustomerId: card.purchaserCustomerId,
+			heldAt: now,
+			updatedAt: now,
+		})
 		.where(and(eq(giftCards.id, card.id), isNull(giftCards.holderCustomerId)))
 }
 
@@ -187,29 +199,37 @@ export async function createShowToken(input: {
 	cardId: string
 	now?: number
 }): Promise<{ token: string; expiresAt: number }> {
-	return withGiftCardWrite({ orgId: input.orgId, now: input.now }, async (tx, ctx) => {
-		const card = await getGiftCard(tx, input.cardId)
-		if (!card || card.holderCustomerId !== input.customerId) {
-			throw new GiftCardDomainError('not_found')
-		}
-		await tx.delete(giftCardShowTokens).where(lt(giftCardShowTokens.expiresAt, ctx.now))
-		await tx
-			.update(giftCardShowTokens)
-			.set({ usedAt: ctx.now })
-			.where(
-				and(eq(giftCardShowTokens.cardId, card.id), isNull(giftCardShowTokens.usedAt)),
-			)
-		const token = newShowToken()
-		const expiresAt = ctx.now + GIFT_CARD_SHOW_TOKEN_TTL_MS
-		await tx.insert(giftCardShowTokens).values({
-			tokenHash: giftCardShowTokenHash(token),
-			cardId: card.id,
-			customerId: input.customerId,
-			expiresAt,
-			createdAt: ctx.now,
-		})
-		return { token, expiresAt }
-	})
+	return withGiftCardWrite(
+		{ orgId: input.orgId, now: input.now },
+		async (tx, ctx) => {
+			const card = await getGiftCard(tx, input.cardId)
+			if (!card || card.holderCustomerId !== input.customerId) {
+				throw new GiftCardDomainError('not_found')
+			}
+			await tx
+				.delete(giftCardShowTokens)
+				.where(lt(giftCardShowTokens.expiresAt, ctx.now))
+			await tx
+				.update(giftCardShowTokens)
+				.set({ usedAt: ctx.now })
+				.where(
+					and(
+						eq(giftCardShowTokens.cardId, card.id),
+						isNull(giftCardShowTokens.usedAt),
+					),
+				)
+			const token = newShowToken()
+			const expiresAt = ctx.now + GIFT_CARD_SHOW_TOKEN_TTL_MS
+			await tx.insert(giftCardShowTokens).values({
+				tokenHash: giftCardShowTokenHash(token),
+				cardId: card.id,
+				customerId: input.customerId,
+				expiresAt,
+				createdAt: ctx.now,
+			})
+			return { token, expiresAt }
+		},
+	)
 }
 
 /**

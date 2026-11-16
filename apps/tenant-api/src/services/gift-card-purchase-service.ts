@@ -16,7 +16,10 @@ import {
 	type GiftCardRow,
 } from '@repo/tenant-db'
 import { and, eq, inArray, isNotNull, lte, sql } from 'drizzle-orm'
-import { giftCardFingerprint, sealGiftCardCode } from '../lib/gift-card-secret.ts'
+import {
+	giftCardFingerprint,
+	sealGiftCardCode,
+} from '../lib/gift-card-secret.ts'
 import { postGiftCardNotify } from '../lib/gift-card-notify.ts'
 import {
 	withGiftCardWrite,
@@ -29,7 +32,11 @@ import {
 	getGiftCard,
 	giftCardBalance,
 } from './gift-card-store.ts'
-import { assertAmountWithinSettings, expiryFor, insertGiftCard } from './gift-card-service.ts'
+import {
+	assertAmountWithinSettings,
+	expiryFor,
+	insertGiftCard,
+} from './gift-card-service.ts'
 import {
 	assertPurchaseWithinLimits,
 	decideActivation,
@@ -48,7 +55,12 @@ import {
 
 type Fail = {
 	ok: false
-	failure: { status: number; code: string; message: string; details?: Record<string, unknown> }
+	failure: {
+		status: number
+		code: string
+		message: string
+		details?: Record<string, unknown>
+	}
 }
 const fail = (status: number, code: string, message: string): Fail => ({
 	ok: false,
@@ -93,7 +105,9 @@ export async function createGiftCardPurchase(
 	input: PurchaseInput,
 ): Promise<PurchaseStarted> {
 	const feeMinor = input.feeMinor ?? 0
-	assertAmountWithinSettings(input.amountMinor, input.settings, { custom: true })
+	assertAmountWithinSettings(input.amountMinor, input.settings, {
+		custom: true,
+	})
 	if (
 		input.designKey !== 'custom' &&
 		!input.settings.designs.some((d) => d.key === input.designKey && d.enabled)
@@ -113,70 +127,73 @@ export async function createGiftCardPurchase(
 		throw new GiftCardDomainError('invalid_request')
 	}
 	const emailHash = giftCardFingerprint('email', input.purchaser.email)
-	const deviceHash = input.deviceId ? giftCardFingerprint('device', input.deviceId) : null
+	const deviceHash = input.deviceId
+		? giftCardFingerprint('device', input.deviceId)
+		: null
 
 	let burst = 0
 	const started = await withGiftCardWrite(
 		{ orgId: input.orgId, now, idempotency: input.idempotency },
 		async (tx, ctx): Promise<PurchaseStarted> => {
-		await assertPurchaseWithinLimits(tx, {
-			settings: input.settings,
-			amountMinor: input.amountMinor,
-			emailHash,
-			deviceHash,
-			now: ctx.now,
-		})
-		const code = generateGiftCardCode()
-		const { card } = await insertGiftCard(tx, {
-			status: 'pending',
-			source: 'online',
-			currency: input.currency,
-			now: ctx.now,
-			expiresAt: null,
-			locationId: input.locationId ?? input.settings.defaultLocationId,
-			designKey: input.designKey,
-			code,
-			extra: {
-				purchaserCustomerId: input.purchaser.customerId,
-				purchaserName: input.purchaser.name,
-				purchaserEmail: input.purchaser.email,
-				recipientName: recipient.name,
-				recipientEmail: recipient.email,
-				senderName: input.senderName,
-				message: input.message,
-				sendToSelf: input.sendToSelf,
-				sealedCode: sealGiftCardCode(code),
-				locale: input.locale,
-				deliverAt: input.deliverAt,
-				purchaseAmountMinor: input.amountMinor,
+			await assertPurchaseWithinLimits(tx, {
+				settings: input.settings,
+				amountMinor: input.amountMinor,
+				emailHash,
+				deviceHash,
+				now: ctx.now,
+			})
+			const code = generateGiftCardCode()
+			const { card } = await insertGiftCard(tx, {
+				status: 'pending',
+				source: 'online',
+				currency: input.currency,
+				now: ctx.now,
+				expiresAt: null,
+				locationId: input.locationId ?? input.settings.defaultLocationId,
+				designKey: input.designKey,
+				code,
+				extra: {
+					purchaserCustomerId: input.purchaser.customerId,
+					purchaserName: input.purchaser.name,
+					purchaserEmail: input.purchaser.email,
+					recipientName: recipient.name,
+					recipientEmail: recipient.email,
+					senderName: input.senderName,
+					message: input.message,
+					sendToSelf: input.sendToSelf,
+					sealedCode: sealGiftCardCode(code),
+					locale: input.locale,
+					deliverAt: input.deliverAt,
+					purchaseAmountMinor: input.amountMinor,
+					feeMinor,
+					paymentStatus: 'pending',
+					paymentHoldExpiresAt: ctx.now + GIFT_CARD_PAYMENT_HOLD_MS,
+				},
+			})
+			await tx.insert(giftCardPurchaseAttempts).values({
+				cardId: card.id,
+				emailHash,
+				deviceHash,
+				amountMinor: input.amountMinor,
+				at: ctx.now,
+			})
+			ctx.linkCard(card.id)
+			if (deviceHash) {
+				burst = await devicePurchasesLastHour(tx, deviceHash, ctx.now)
+			}
+			const orderRef = giftCardOrderRef(card.id)
+			return {
+				cardId: card.id,
+				orderRef,
+				paymentToken: derivePaymentToken(input.orgId, orderRef),
+				amountMinor: input.amountMinor,
 				feeMinor,
-				paymentStatus: 'pending',
-				paymentHoldExpiresAt: ctx.now + GIFT_CARD_PAYMENT_HOLD_MS,
-			},
-		})
-		await tx.insert(giftCardPurchaseAttempts).values({
-			cardId: card.id,
-			emailHash,
-			deviceHash,
-			amountMinor: input.amountMinor,
-			at: ctx.now,
-		})
-		ctx.linkCard(card.id)
-		if (deviceHash) {
-			burst = await devicePurchasesLastHour(tx, deviceHash, ctx.now)
-		}
-		const orderRef = giftCardOrderRef(card.id)
-		return {
-			cardId: card.id,
-			orderRef,
-			paymentToken: derivePaymentToken(input.orgId, orderRef),
-			amountMinor: input.amountMinor,
-			feeMinor,
-			totalMinor: input.amountMinor + feeMinor,
-			currency: input.currency,
-			holdExpiresAt: card.paymentHoldExpiresAt!,
-		}
-	})
+				totalMinor: input.amountMinor + feeMinor,
+				currency: input.currency,
+				holdExpiresAt: card.paymentHoldExpiresAt!,
+			}
+		},
+	)
 	if (burst === input.settings.limits.burstPerHour) {
 		void postGiftCardNotify({ orgId: input.orgId, kind: 'burst', count: burst })
 	}
@@ -239,7 +256,11 @@ export async function bindGiftCardPaymentSession(input: {
 }) {
 	return withGiftCardWrite({ orgId: input.orgId }, async (tx, ctx) => {
 		const card = await getGiftCard(tx, input.cardId)
-		if (!card || card.source !== 'online' || card.purchaseAmountMinor === null) {
+		if (
+			!card ||
+			card.source !== 'online' ||
+			card.purchaseAmountMinor === null
+		) {
 			return fail(404, 'order_not_found', 'Order not found.')
 		}
 		if (card.paymentStatus === 'paid' || card.paymentStatus === 'review') {
@@ -249,7 +270,11 @@ export async function bindGiftCardPaymentSession(input: {
 			return fail(409, 'hold_expired', 'This purchase has expired.')
 		}
 		if (card.paymentSessionId && card.paymentSessionId !== input.sessionId) {
-			return fail(409, 'session_conflict', 'This purchase already has a payment session.')
+			return fail(
+				409,
+				'session_conflict',
+				'This purchase already has a payment session.',
+			)
 		}
 		if (card.paymentSessionId !== input.sessionId) {
 			await tx
@@ -353,7 +378,11 @@ export async function applyGiftCardPaymentEvent(input: GiftCardPaymentEvent) {
 				// Money moved for an amount or session we did not expect: keep it for review.
 				await tx
 					.update(giftCards)
-					.set({ paymentStatus: 'review', paymentEventAt: ctx.now, updatedAt: ctx.now })
+					.set({
+						paymentStatus: 'review',
+						paymentEventAt: ctx.now,
+						updatedAt: ctx.now,
+					})
 					.where(eq(giftCards.id, card.id))
 				return result('review')
 			}
@@ -390,11 +419,19 @@ export async function applyGiftCardPaymentEvent(input: GiftCardPaymentEvent) {
 				amountMinor: card.purchaseAmountMinor ?? 0,
 				deliverAt: card.deliverAt,
 				now: ctx.now,
-				firstTimeBuyer: await isFirstTimeBuyer(tx, attempt?.emailHash ?? null, card.id),
+				firstTimeBuyer: await isFirstTimeBuyer(
+					tx,
+					attempt?.emailHash ?? null,
+					card.id,
+				),
 				risk: input.risk ?? null,
 				paymentCardOverLimit: paymentHash
-					? (await paymentCardPurchasesLastDay(tx, paymentHash, card.id, ctx.now)) >=
-						input.settings.limits.maxPurchasesPer24h
+					? (await paymentCardPurchasesLastDay(
+							tx,
+							paymentHash,
+							card.id,
+							ctx.now,
+						)) >= input.settings.limits.maxPurchasesPer24h
 					: false,
 			})
 			await tx
@@ -442,7 +479,8 @@ export async function applyGiftCardPaymentEvent(input: GiftCardPaymentEvent) {
 				})
 			}
 			ctx.linkCard(card.id)
-			const reviewHeld = decision.status === 'held' && decision.holdUntil === null
+			const reviewHeld =
+				decision.status === 'held' && decision.holdUntil === null
 			return {
 				...result('paid'),
 				status: decision.status,
@@ -453,7 +491,11 @@ export async function applyGiftCardPaymentEvent(input: GiftCardPaymentEvent) {
 	)
 	if (outcome.ok) {
 		if ('reviewHeld' in outcome && outcome.reviewHeld) {
-			void postGiftCardNotify({ orgId: input.orgId, kind: 'needs_review', count: 1 })
+			void postGiftCardNotify({
+				orgId: input.orgId,
+				kind: 'needs_review',
+				count: 1,
+			})
 		}
 		// The buyer's receipt (and the card, when it is already due) go out after commit.
 		if ('deliver' in outcome && outcome.deliver) {
@@ -508,7 +550,12 @@ export async function applyGiftCardDispute(input: {
 			const status = input.status
 			if (status === 'open') {
 				if (card.status === 'frozen' || card.status === 'voided') {
-					return { ok: true as const, cardId: card.id, status: card.status, changed: false }
+					return {
+						ok: true as const,
+						cardId: card.id,
+						status: card.status,
+						changed: false,
+					}
 				}
 				const spent = await spentBefore(tx, card.id)
 				await tx
@@ -531,10 +578,20 @@ export async function applyGiftCardDispute(input: {
 					idempotencyKey: `freeze:${card.id}:${ctx.now}`,
 					at: ctx.now,
 				})
-				return { ok: true as const, cardId: card.id, status: 'frozen', changed: true }
+				return {
+					ok: true as const,
+					cardId: card.id,
+					status: 'frozen',
+					changed: true,
+				}
 			}
 			if (card.status !== 'frozen') {
-				return { ok: true as const, cardId: card.id, status: card.status, changed: false }
+				return {
+					ok: true as const,
+					cardId: card.id,
+					status: card.status,
+					changed: false,
+				}
 			}
 			if (status === 'lost') {
 				const balance = await giftCardBalance(tx, card.id)
@@ -555,12 +612,22 @@ export async function applyGiftCardDispute(input: {
 						at: ctx.now,
 					})
 				}
-				return { ok: true as const, cardId: card.id, status: 'voided', changed: true }
+				return {
+					ok: true as const,
+					cardId: card.id,
+					status: 'voided',
+					changed: true,
+				}
 			}
 			// Won or closed in our favor: lift the freeze.
 			await tx
 				.update(giftCards)
-				.set({ status: 'active', frozenAt: null, freezeReason: null, updatedAt: ctx.now })
+				.set({
+					status: 'active',
+					frozenAt: null,
+					freezeReason: null,
+					updatedAt: ctx.now,
+				})
 				.where(eq(giftCards.id, card.id))
 			await appendGiftCardEntry(tx, {
 				cardId: card.id,
@@ -573,7 +640,12 @@ export async function applyGiftCardDispute(input: {
 				idempotencyKey: `unfreeze:${card.id}:${ctx.now}`,
 				at: ctx.now,
 			})
-			return { ok: true as const, cardId: card.id, status: 'active', changed: true }
+			return {
+				ok: true as const,
+				cardId: card.id,
+				status: 'active',
+				changed: true,
+			}
 		},
 	)
 	if (outcome.ok && outcome.changed && outcome.status === 'frozen') {
@@ -638,7 +710,9 @@ export async function approveHeldGiftCard(input: {
 		},
 	)
 	const { sendGiftCardMessages } = await import('./gift-card-messages.ts')
-	await sendGiftCardMessages(input.orgId, { cardId: input.cardId }).catch(() => undefined)
+	await sendGiftCardMessages(input.orgId, { cardId: input.cardId }).catch(
+		() => undefined,
+	)
 	return outcome
 }
 
@@ -658,51 +732,59 @@ export async function bookGiftCardPurchaseRefund(input: {
 	idempotency?: GiftCardIdempotency
 	now?: number
 }) {
-	return withGiftCardWrite({ orgId: input.orgId, now: input.now, idempotency: input.idempotency }, async (tx, ctx) => {
-		const card = await getGiftCard(tx, input.cardId)
-		if (!card || card.source !== 'online') throw new GiftCardDomainError('not_found')
-		if (card.paymentStatus !== 'paid' && card.paymentStatus !== 'review') {
-			throw new GiftCardDomainError('invalid_request')
-		}
-		ctx.linkCard(card.id)
-		const unspent = await giftCardBalance(tx, card.id)
-		const amount = input.amountMinor ?? unspent
-		if (!Number.isSafeInteger(amount) || amount <= 0) {
-			throw new GiftCardDomainError('refund_exceeds_unspent', { unspentMinor: unspent })
-		}
-		if (amount > unspent) {
-			throw new GiftCardDomainError('refund_exceeds_unspent', { unspentMinor: unspent })
-		}
-		await appendGiftCardEntry(tx, {
-			cardId: card.id,
-			kind: 'void',
-			amountMinor: -amount,
-			sourceType: 'purchase',
-			sourceId: card.paymentId,
-			channel: 'app',
-			locationId: card.locationId,
-			actor: input.actor,
-			reason: 'purchase refunded',
-			idempotencyKey: `purchase_refund:${card.id}:${amount}:${unspent}`,
-			at: ctx.now,
-		})
-		// A refund that leaves a balance keeps the card; a full one voids it.
-		if (amount === unspent) {
-			await tx
-				.update(giftCards)
-				.set({ status: 'voided', updatedAt: ctx.now })
-				.where(eq(giftCards.id, card.id))
-		}
-		return {
-			cardId: card.id,
-			refundMinor: amount,
-			currency: card.currency,
-			sessionId: card.paymentSessionId,
-			processor: card.paymentProcessor,
-			paymentId: card.paymentId,
-			voided: amount === unspent,
-		}
-	})
+	return withGiftCardWrite(
+		{ orgId: input.orgId, now: input.now, idempotency: input.idempotency },
+		async (tx, ctx) => {
+			const card = await getGiftCard(tx, input.cardId)
+			if (!card || card.source !== 'online')
+				throw new GiftCardDomainError('not_found')
+			if (card.paymentStatus !== 'paid' && card.paymentStatus !== 'review') {
+				throw new GiftCardDomainError('invalid_request')
+			}
+			ctx.linkCard(card.id)
+			const unspent = await giftCardBalance(tx, card.id)
+			const amount = input.amountMinor ?? unspent
+			if (!Number.isSafeInteger(amount) || amount <= 0) {
+				throw new GiftCardDomainError('refund_exceeds_unspent', {
+					unspentMinor: unspent,
+				})
+			}
+			if (amount > unspent) {
+				throw new GiftCardDomainError('refund_exceeds_unspent', {
+					unspentMinor: unspent,
+				})
+			}
+			await appendGiftCardEntry(tx, {
+				cardId: card.id,
+				kind: 'void',
+				amountMinor: -amount,
+				sourceType: 'purchase',
+				sourceId: card.paymentId,
+				channel: 'app',
+				locationId: card.locationId,
+				actor: input.actor,
+				reason: 'purchase refunded',
+				idempotencyKey: `purchase_refund:${card.id}:${amount}:${unspent}`,
+				at: ctx.now,
+			})
+			// A refund that leaves a balance keeps the card; a full one voids it.
+			if (amount === unspent) {
+				await tx
+					.update(giftCards)
+					.set({ status: 'voided', updatedAt: ctx.now })
+					.where(eq(giftCards.id, card.id))
+			}
+			return {
+				cardId: card.id,
+				refundMinor: amount,
+				currency: card.currency,
+				sessionId: card.paymentSessionId,
+				processor: card.paymentProcessor,
+				paymentId: card.paymentId,
+				voided: amount === unspent,
+			}
+		},
+	)
 }
 
 export type GiftCardTickTotals = {
@@ -722,7 +804,12 @@ export async function runGiftCardTick(
 	options: { now?: number } = {},
 ): Promise<GiftCardTickTotals> {
 	const now = options.now ?? Date.now()
-	const totals: GiftCardTickTotals = { released: 0, expired: 0, delivered: 0, failed: 0 }
+	const totals: GiftCardTickTotals = {
+		released: 0,
+		expired: 0,
+		delivered: 0,
+		failed: 0,
+	}
 	const db = await getTenantDb(orgId)
 
 	const due = await db
@@ -738,32 +825,40 @@ export async function runGiftCardTick(
 		)
 		.limit(100)
 	for (const row of due) {
-		const released = await withGiftCardWrite({ orgId, now }, async (tx, ctx) => {
-			const card = await getGiftCard(tx, row.id)
-			if (!card || card.status !== 'held' || card.holdReason !== 'first_buyer') return false
-			await tx
-				.update(giftCards)
-				.set({
-					status: 'active',
-					holdReason: null,
-					holdUntil: null,
-					activatedAt: ctx.now,
-					updatedAt: ctx.now,
+		const released = await withGiftCardWrite(
+			{ orgId, now },
+			async (tx, ctx) => {
+				const card = await getGiftCard(tx, row.id)
+				if (
+					!card ||
+					card.status !== 'held' ||
+					card.holdReason !== 'first_buyer'
+				)
+					return false
+				await tx
+					.update(giftCards)
+					.set({
+						status: 'active',
+						holdReason: null,
+						holdUntil: null,
+						activatedAt: ctx.now,
+						updatedAt: ctx.now,
+					})
+					.where(and(eq(giftCards.id, card.id), eq(giftCards.status, 'held')))
+				await appendGiftCardEntry(tx, {
+					cardId: card.id,
+					kind: 'event',
+					amountMinor: 0,
+					sourceType: 'system',
+					channel: 'system',
+					locationId: card.locationId,
+					reason: 'released after the delivery delay',
+					idempotencyKey: `release:${card.id}`,
+					at: ctx.now,
 				})
-				.where(and(eq(giftCards.id, card.id), eq(giftCards.status, 'held')))
-			await appendGiftCardEntry(tx, {
-				cardId: card.id,
-				kind: 'event',
-				amountMinor: 0,
-				sourceType: 'system',
-				channel: 'system',
-				locationId: card.locationId,
-				reason: 'released after the delivery delay',
-				idempotencyKey: `release:${card.id}`,
-				at: ctx.now,
-			})
-			return true
-		})
+				return true
+			},
+		)
 		if (released) totals.released += 1
 	}
 
@@ -795,4 +890,3 @@ export async function runGiftCardTick(
 	totals.failed = sent.failed
 	return totals
 }
-

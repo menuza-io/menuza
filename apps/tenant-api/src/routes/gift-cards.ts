@@ -70,7 +70,11 @@ async function publicOrg(
 	identity: { slug?: string; host?: string },
 	need: 'enabled' | 'online',
 ): Promise<
-	| { orgId: string; state: GiftCardFlagState; organization: { id: string; dataRegion: string } }
+	| {
+			orgId: string
+			state: GiftCardFlagState
+			organization: { id: string; dataRegion: string }
+	  }
 	| { error: Response }
 > {
 	const resolved = await resolveOrderingOrganization(c, identity)
@@ -83,10 +87,21 @@ async function publicOrg(
 	}
 	if (state.status === 'stopped') {
 		// The kill switch stops new sales; balance reads and wallets keep working.
-		if (need === 'online') return { error: giftCardDeny(503, 'gift_cards_unavailable') }
-		return { orgId, state: { ...state, features: { enabled: true, online: false, pos: false } }, organization: resolved.organization }
+		if (need === 'online')
+			return { error: giftCardDeny(503, 'gift_cards_unavailable') }
+		return {
+			orgId,
+			state: {
+				...state,
+				features: { enabled: true, online: false, pos: false },
+			},
+			organization: resolved.organization,
+		}
 	}
-	if (!state.features.enabled || (need === 'online' && !state.features.online)) {
+	if (
+		!state.features.enabled ||
+		(need === 'online' && !state.features.online)
+	) {
 		return { error: giftCardDeny(404, 'not_found') }
 	}
 	return { orgId, state, organization: resolved.organization }
@@ -122,7 +137,9 @@ function optionsBody(state: GiftCardFlagState, settings: GiftCardSettings) {
 			name: location.name ?? null,
 			timeZone: location.timeZone ?? null,
 		})),
-		maxDeliverAheadDays: Math.floor(GIFT_CARD_MAX_DELIVER_AHEAD_MS / 86_400_000),
+		maxDeliverAheadDays: Math.floor(
+			GIFT_CARD_MAX_DELIVER_AHEAD_MS / 86_400_000,
+		),
 	}
 }
 
@@ -137,7 +154,8 @@ async function optionalCustomer(
 	c: Context,
 	orgId: string,
 ): Promise<{ customerId: string | null } | { error: Response }> {
-	if (!getBearerToken(c.req.header('Authorization'))) return { customerId: null }
+	if (!getBearerToken(c.req.header('Authorization')))
+		return { customerId: null }
 	try {
 		const auth = await authenticateCustomer(c)
 		if (auth.organization.id !== orgId) {
@@ -167,11 +185,19 @@ giftCardRoutes.post('/purchase', async (c) => {
 	const body = await readJsonBody(c, giftCardPurchaseRequestSchema)
 	if ('error' in body) return body.error
 	const request = body.data
-	const org = await publicOrg(c, { slug: request.slug, host: request.host }, 'online')
+	const org = await publicOrg(
+		c,
+		{ slug: request.slug, host: request.host },
+		'online',
+	)
 	if ('error' in org) return org.error
 	const customer = await optionalCustomer(c, org.orgId)
 	if ('error' in customer) return customer.error
-	if (!(await verifyPublicChallenge(c, request.turnstileToken, { hasCustomer: customer.customerId !== null }))) {
+	if (
+		!(await verifyPublicChallenge(c, request.turnstileToken, {
+			hasCustomer: customer.customerId !== null,
+		}))
+	) {
 		return verificationFailedResponse()
 	}
 	try {
@@ -179,7 +205,12 @@ giftCardRoutes.post('/purchase', async (c) => {
 		if (killed) return killed
 		const db = await getTenantDb(org.orgId)
 		await enforceGiftCardPurchaseLimit(db, org.orgId, bucketOf(c))
-		const { slug: ignoredSlug, host: ignoredHost, turnstileToken: ignoredToken, ...rest } = request
+		const {
+			slug: ignoredSlug,
+			host: ignoredHost,
+			turnstileToken: ignoredToken,
+			...rest
+		} = request
 		const idem = giftCardIdempotency(c, `purchase:${org.orgId}`, rest)
 		if ('error' in idem) return idem.error
 		const currency = org.state.currency
@@ -187,33 +218,38 @@ giftCardRoutes.post('/purchase', async (c) => {
 		const settings = org.state.settings
 		if (
 			request.locationId &&
-			!org.state.locations.some((location) => location.id === request.locationId)
+			!org.state.locations.some(
+				(location) => location.id === request.locationId,
+			)
 		) {
 			throw new GiftCardDomainError('invalid_request')
 		}
 		const started = await createGiftCardPurchase({
-				orgId: org.orgId,
-				idempotency: idem.idempotency,
-				settings,
-				currency,
-				locationId: request.locationId ?? null,
-				amountMinor: request.amountMinor,
-				designKey: request.designKey ?? settings.defaultDesign,
-				recipient: request.recipient
-					? { name: request.recipient.name ?? null, email: request.recipient.email }
-					: null,
-				sendToSelf: request.sendToSelf,
-				senderName: request.senderName ?? null,
-				message: request.message ?? null,
-				deliverAt: request.deliverAt ?? null,
-				purchaser: {
-					customerId: customer.customerId,
-					name: request.purchaser.name ?? null,
-					email: request.purchaser.email,
-				},
-				locale: request.locale ?? null,
-				deviceId: request.deviceId ?? null,
-			})
+			orgId: org.orgId,
+			idempotency: idem.idempotency,
+			settings,
+			currency,
+			locationId: request.locationId ?? null,
+			amountMinor: request.amountMinor,
+			designKey: request.designKey ?? settings.defaultDesign,
+			recipient: request.recipient
+				? {
+						name: request.recipient.name ?? null,
+						email: request.recipient.email,
+					}
+				: null,
+			sendToSelf: request.sendToSelf,
+			senderName: request.senderName ?? null,
+			message: request.message ?? null,
+			deliverAt: request.deliverAt ?? null,
+			purchaser: {
+				customerId: customer.customerId,
+				name: request.purchaser.name ?? null,
+				email: request.purchaser.email,
+			},
+			locale: request.locale ?? null,
+			deviceId: request.deviceId ?? null,
+		})
 		return giftCardDeny(201, 'ok', started)
 	} catch (error) {
 		return giftCardErrorResponse(error)
@@ -224,20 +260,35 @@ giftCardRoutes.post('/purchase', async (c) => {
 giftCardRoutes.post('/balance', async (c) => {
 	const body = await readJsonBody(c, giftCardBalanceRequestSchema)
 	if ('error' in body) return body.error
-	const org = await publicOrg(c, { slug: body.data.slug, host: body.data.host }, 'enabled')
+	const org = await publicOrg(
+		c,
+		{ slug: body.data.slug, host: body.data.host },
+		'enabled',
+	)
 	if ('error' in org) return org.error
-	if (!(await verifyPublicChallenge(c, body.data.turnstileToken, { hasCustomer: false }))) {
+	if (
+		!(await verifyPublicChallenge(c, body.data.turnstileToken, {
+			hasCustomer: false,
+		}))
+	) {
 		return verificationFailedResponse()
 	}
 	try {
 		const db = await getTenantDb(org.orgId)
-		const subject: GiftCardGuessSubject = { kind: 'guest', address: bucketOf(c) }
+		const subject: GiftCardGuessSubject = {
+			kind: 'guest',
+			address: bucketOf(c),
+		}
 		const charge = await chargeGiftCardGuess(db, { orgId: org.orgId, subject })
 		const card = await findGiftCardByCode(db, body.data.code)
 		const known = card && card.status !== 'pending'
 		await settleGiftCardGuess(db, charge, known ? 'right' : 'wrong')
 		if (!card || !known) throw new GiftCardDomainError('code_invalid')
-		const view = guestViewOf(card, await giftCardBalance(db, card.id), Date.now())
+		const view = guestViewOf(
+			card,
+			await giftCardBalance(db, card.id),
+			Date.now(),
+		)
 		return giftCardDeny(200, 'ok', view)
 	} catch (error) {
 		return giftCardErrorResponse(error)
@@ -262,7 +313,11 @@ giftCardRoutes.get('/mine', async (c) => {
 giftCardRoutes.post('/claim', async (c) => {
 	const body = await readJsonBody(c, giftCardClaimRequestSchema)
 	if ('error' in body) return body.error
-	const org = await publicOrg(c, { slug: body.data.slug, host: body.data.host }, 'online')
+	const org = await publicOrg(
+		c,
+		{ slug: body.data.slug, host: body.data.host },
+		'online',
+	)
 	if ('error' in org) return org.error
 	const customer = await requiredCustomer(c, org.orgId)
 	if ('error' in customer) return customer.error
@@ -270,7 +325,11 @@ giftCardRoutes.post('/claim', async (c) => {
 		const db = await getTenantDb(org.orgId)
 		const charge = await chargeGiftCardGuess(db, {
 			orgId: org.orgId,
-			subject: { kind: 'customer', customerId: customer.customerId, address: bucketOf(c) },
+			subject: {
+				kind: 'customer',
+				customerId: customer.customerId,
+				address: bucketOf(c),
+			},
 		})
 		let result
 		try {
@@ -280,7 +339,10 @@ giftCardRoutes.post('/claim', async (c) => {
 				code: body.data.code,
 			})
 		} catch (error) {
-			if (error instanceof GiftCardDomainError && error.code === 'code_invalid') {
+			if (
+				error instanceof GiftCardDomainError &&
+				error.code === 'code_invalid'
+			) {
 				await settleGiftCardGuess(db, charge, 'wrong')
 			} else {
 				await settleGiftCardGuess(db, charge, 'right')
@@ -288,7 +350,10 @@ giftCardRoutes.post('/claim', async (c) => {
 			throw error
 		}
 		await settleGiftCardGuess(db, charge, 'right')
-		return giftCardDeny(200, 'ok', { card: result.card, alreadyMine: result.alreadyMine })
+		return giftCardDeny(200, 'ok', {
+			card: result.card,
+			alreadyMine: result.alreadyMine,
+		})
 	} catch (error) {
 		return giftCardErrorResponse(error)
 	}
@@ -298,7 +363,11 @@ giftCardRoutes.post('/claim', async (c) => {
 giftCardRoutes.post('/:id/show-token', async (c) => {
 	const body = await readJsonBody(c, giftCardShowTokenRequestSchema)
 	if ('error' in body) return body.error
-	const org = await publicOrg(c, { slug: body.data.slug, host: body.data.host }, 'online')
+	const org = await publicOrg(
+		c,
+		{ slug: body.data.slug, host: body.data.host },
+		'online',
+	)
 	if ('error' in org) return org.error
 	const customer = await requiredCustomer(c, org.orgId)
 	if ('error' in customer) return customer.error

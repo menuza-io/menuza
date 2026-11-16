@@ -78,7 +78,10 @@ async function increment(
 	return {
 		ok: count <= max,
 		ref: { bucket, subjectHash, windowStart },
-		retryAfterSeconds: Math.max(1, Math.ceil((windowStart + windowMs - now) / 1000)),
+		retryAfterSeconds: Math.max(
+			1,
+			Math.ceil((windowStart + windowMs - now) / 1000),
+		),
 	}
 }
 
@@ -112,7 +115,12 @@ function bucketsFor(
 		return [
 			{ bucket: 'guessCustomer', subject: `${orgId}:${subject.customerId}` },
 			...(subject.address
-				? [{ bucket: 'guessIp' as const, subject: `${orgId}:${subject.address}` }]
+				? [
+						{
+							bucket: 'guessIp' as const,
+							subject: `${orgId}:${subject.address}`,
+						},
+					]
 				: []),
 		]
 	}
@@ -169,7 +177,12 @@ export async function enforceGiftCardPurchaseLimit(
 	address: string | null,
 	now = Date.now(),
 ): Promise<void> {
-	const counted = await increment(db, 'purchaseIp', `${orgId}:${address ?? 'unknown'}`, now)
+	const counted = await increment(
+		db,
+		'purchaseIp',
+		`${orgId}:${address ?? 'unknown'}`,
+		now,
+	)
 	if (!counted.ok) {
 		throw new GiftCardDomainError('rate_limited', {
 			retryAfterSeconds: counted.retryAfterSeconds,
