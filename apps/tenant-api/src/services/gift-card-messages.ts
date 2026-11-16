@@ -151,8 +151,36 @@ export async function sendGiftCardMessages(
 			)
 			.returning({ id: giftCards.id })
 		if (claimed.length === 0) continue
-		const code = card.sealedCode ? openGiftCardCode(card.sealedCode) : null
+		let code: string | null
+		try {
+			code = card.sealedCode ? openGiftCardCode(card.sealedCode) : null
+		} catch (error) {
+			// Configuration (a missing or changed key), not this card: every card
+			// would fail the same way. Give the attempt back so it is not burned,
+			// and stop this pass.
+			await db
+				.update(giftCards)
+				.set({ deliveryAttempts: card.deliveryAttempts })
+				.where(
+					and(
+						eq(giftCards.id, card.id),
+						eq(giftCards.deliveryAttempts, card.deliveryAttempts + 1),
+					),
+				)
+			console.error('Gift card codes cannot be opened', {
+				orgId,
+				cardId: card.id,
+				reason: error instanceof Error ? error.message : 'unknown',
+			})
+			totals.failed += 1
+			break
+		}
 		if (!code) {
+			// Corrupt or tampered sealed value (never logs the value).
+			console.error('Gift card sealed code is unreadable', {
+				orgId,
+				cardId: card.id,
+			})
 			totals.failed += 1
 			continue
 		}

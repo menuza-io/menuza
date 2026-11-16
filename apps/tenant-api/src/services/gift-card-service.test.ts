@@ -1075,6 +1075,41 @@ describe("a guest's account", () => {
 		expect(await giftCardBalance(db, sold.cardId)).toBe(4000)
 	})
 
+	it('reports a card as found only once it positively is, so a guess is never refunded for free', async () => {
+		const sold = await sell(5000)
+		const erin = await customer(`erin-${rid()}`)
+		let resolved = 0
+		const onResolved = () => {
+			resolved += 1
+		}
+		// A wrong code, and a card that is not usable yet, are never "found".
+		await expectCode(
+			claimGiftCard({
+				orgId: ORG,
+				customerId: erin,
+				code: 'ZZZZZZZZZZZZZZZZ',
+				onResolved,
+			}),
+			'code_invalid',
+		)
+		expect(resolved).toBe(0)
+		// A right code is, whether it is saved now or already saved.
+		await claimGiftCard({
+			orgId: ORG,
+			customerId: erin,
+			code: sold.code!,
+			onResolved,
+		})
+		expect(resolved).toBe(1)
+		await claimGiftCard({
+			orgId: ORG,
+			customerId: erin,
+			code: sold.code!,
+			onResolved,
+		})
+		expect(resolved).toBe(2)
+	})
+
 	it('shows a one-use QR token that is not the code, expires, and spends once', async () => {
 		const sold = await sell(5000)
 		const carol = await customer(`carol-${rid()}`)

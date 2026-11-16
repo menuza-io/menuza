@@ -18,6 +18,9 @@ const binding = {
 	host: z.string().min(1).max(255).optional(),
 }
 
+/** The organization hints a public call may carry (a query string on a read). */
+export const giftCardBindingSchema = z.object(binding)
+
 const emailSchema = z.string().trim().toLowerCase().email().max(254)
 const nameSchema = z.string().trim().min(1).max(100)
 const minorSchema = z.number().int().min(1).max(10_000_000)

@@ -84,6 +84,8 @@ export async function claimGiftCard(input: {
 	customerId: string
 	code: string
 	now?: number
+	/** Called once the card is positively found (the caller may give a guess back). */
+	onResolved?: () => void
 }): Promise<ClaimResult> {
 	let previousHolder: string | null = null
 	const result = await withGiftCardWrite(
@@ -93,6 +95,7 @@ export async function claimGiftCard(input: {
 			if (!card || card.status === 'pending' || card.status === 'inactive') {
 				throw new GiftCardDomainError('code_invalid')
 			}
+			input.onResolved?.()
 			ctx.linkCard(card.id)
 			if (card.holderCustomerId === input.customerId) {
 				return {

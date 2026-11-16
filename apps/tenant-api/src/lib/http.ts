@@ -44,13 +44,62 @@ export function validationResponse(error: z.ZodError) {
 	})
 }
 
+/**
+ * Reads at most `maxBytes` of the request body. The `content-length` header is
+ * only a hint (a chunked body carries none), so the stream itself is counted
+ * and cancelled the moment it passes the cap.
+ */
+async function readCappedText(
+	c: Context,
+	maxBytes: number,
+): Promise<string | null> {
+	const declared = Number(c.req.header('content-length') ?? 0)
+	if (Number.isFinite(declared) && declared > maxBytes) return null
+	const stream = c.req.raw.body
+	if (!stream) return ''
+	const reader = stream.getReader()
+	const chunks: Uint8Array[] = []
+	let total = 0
+	for (;;) {
+		const { done, value } = await reader.read()
+		if (done) break
+		total += value.byteLength
+		if (total > maxBytes) {
+			await reader.cancel().catch(() => undefined)
+			return null
+		}
+		chunks.push(value)
+	}
+	const bytes = new Uint8Array(total)
+	let offset = 0
+	for (const chunk of chunks) {
+		bytes.set(chunk, offset)
+		offset += chunk.byteLength
+	}
+	return new TextDecoder().decode(bytes)
+}
+
 export async function readJsonBody<S extends ZodTypeAny>(
 	c: Context,
 	schema: S,
+	options: { maxBytes?: number } = {},
 ): Promise<{ data: z.infer<S> } | { error: Response }> {
 	let raw: unknown
 	try {
-		raw = await c.req.json()
+		if (options.maxBytes !== undefined) {
+			const text = await readCappedText(c, options.maxBytes)
+			if (text === null) {
+				return {
+					error: Response.json(
+						{ error: 'Request body too large' },
+						{ status: 413, headers: NO_STORE },
+					),
+				}
+			}
+			raw = JSON.parse(text)
+		} else {
+			raw = await c.req.json()
+		}
 	} catch {
 		return {
 			error: Response.json(

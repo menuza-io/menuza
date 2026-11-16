@@ -5,7 +5,7 @@ import {
 	type TenantTransaction,
 } from '@repo/tenant-db'
 import { and, eq, lt, sql } from 'drizzle-orm'
-import { hmacHash } from './secrets.ts'
+import { giftCardHmac } from './gift-card-secret.ts'
 import { retryOnSqliteBusy } from './sqlite-retry.ts'
 
 /**
@@ -14,6 +14,11 @@ import { retryOnSqliteBusy } from './sqlite-retry.ts'
  * terminal, the organization) is stored only as a keyed hash. A guess is
  * counted before the code is compared; a code that turns out right is given
  * back, so only wrong guesses use up a budget.
+ *
+ * Windows are fixed, so a client can spend up to twice a budget across a
+ * window boundary. At 20 wrong guesses per 10 minutes against 80-bit codes that
+ * is not exploitable. Guests whose address cannot be resolved share one
+ * `unknown` bucket per organization; the balance check also needs Turnstile.
  */
 
 type Limit = { max: number; windowMs: number }
@@ -32,6 +37,11 @@ export const GIFT_CARD_RATE_LIMITS = {
 	guessOrg: { max: 10_000, windowMs: 10 * 60_000 },
 	/** Purchases started from one address (each makes a pending card row). */
 	purchaseIp: { max: 30, windowMs: 60 * 60_000 },
+	/**
+	 * Purchases started by one signed-in customer: a bearer token skips
+	 * Turnstile, so this is what stops one account flooding pending cards.
+	 */
+	purchaseCustomer: { max: 10, windowMs: 60 * 60_000 },
 } as const satisfies Record<string, Limit>
 
 export type GiftCardRateBucket = keyof typeof GIFT_CARD_RATE_LIMITS
@@ -59,7 +69,7 @@ async function increment(
 ): Promise<{ ok: boolean; ref: GiftCardLimitRef; retryAfterSeconds: number }> {
 	const { max, windowMs } = GIFT_CARD_RATE_LIMITS[bucket]
 	const windowStart = windowStartOf(windowMs, now)
-	const subjectHash = hmacHash(`gift-card-rate:${bucket}:${subject}`)
+	const subjectHash = giftCardHmac(`gift-card-rate:${bucket}:${subject}`)
 	const count = await retryOnSqliteBusy(async () => {
 		const [row] = await db
 			.insert(giftCardAttempts)
@@ -143,9 +153,6 @@ export async function chargeGiftCardGuess(
 	input: { orgId: string; subject: GiftCardGuessSubject },
 	now = Date.now(),
 ): Promise<GiftCardGuessCharge> {
-	await db
-		.delete(giftCardAttempts)
-		.where(lt(giftCardAttempts.windowStart, now - ROW_TTL_MS))
 	const refs: GiftCardLimitRef[] = []
 	for (const entry of bucketsFor(input.orgId, input.subject)) {
 		const counted = await increment(db, entry.bucket, entry.subject, now)
@@ -170,22 +177,49 @@ export async function settleGiftCardGuess(
 	for (const ref of charge.refs) await giveBack(db, ref)
 }
 
-/** Counts one started purchase from an address; over the limit throws 429. */
+/**
+ * Counts one started purchase from an address and, when signed in, from the
+ * customer; over either limit throws 429 (the address count is kept).
+ */
 export async function enforceGiftCardPurchaseLimit(
 	db: Db,
 	orgId: string,
-	address: string | null,
+	subject: { address: string | null; customerId?: string | null },
 	now = Date.now(),
 ): Promise<void> {
-	const counted = await increment(
-		db,
-		'purchaseIp',
-		`${orgId}:${address ?? 'unknown'}`,
-		now,
-	)
-	if (!counted.ok) {
-		throw new GiftCardDomainError('rate_limited', {
-			retryAfterSeconds: counted.retryAfterSeconds,
-		})
+	const buckets: { bucket: GiftCardRateBucket; subject: string }[] = [
+		{
+			bucket: 'purchaseIp',
+			subject: `${orgId}:${subject.address ?? 'unknown'}`,
+		},
+		...(subject.customerId
+			? [
+					{
+						bucket: 'purchaseCustomer' as const,
+						subject: `${orgId}:${subject.customerId}`,
+					},
+				]
+			: []),
+	]
+	for (const entry of buckets) {
+		const counted = await increment(db, entry.bucket, entry.subject, now)
+		if (!counted.ok) {
+			throw new GiftCardDomainError('rate_limited', {
+				retryAfterSeconds: counted.retryAfterSeconds,
+			})
+		}
 	}
+}
+
+/**
+ * Removes attempt rows whose window ended long ago. Runs in the regional tick,
+ * not on the guess path, so an unauthenticated request never pays for a purge.
+ */
+export async function purgeGiftCardAttempts(
+	db: Db,
+	now = Date.now(),
+): Promise<void> {
+	await db
+		.delete(giftCardAttempts)
+		.where(lt(giftCardAttempts.windowStart, now - ROW_TTL_MS))
 }

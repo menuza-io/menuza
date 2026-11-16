@@ -16,6 +16,7 @@ import {
 	type GiftCardRow,
 } from '@repo/tenant-db'
 import { and, eq, inArray, isNotNull, lte, sql } from 'drizzle-orm'
+import { purgeGiftCardAttempts } from '../lib/gift-card-rate-limit.ts'
 import {
 	giftCardFingerprint,
 	sealGiftCardCode,
@@ -811,6 +812,8 @@ export async function runGiftCardTick(
 		failed: 0,
 	}
 	const db = await getTenantDb(orgId)
+	// Old guess and purchase windows go here, never on the public request path.
+	await purgeGiftCardAttempts(db, now)
 
 	const due = await db
 		.select({ id: giftCards.id })

@@ -7,6 +7,7 @@ import {
 } from '@repo/common/gift-cards'
 import {
 	giftCardBalanceRequestSchema,
+	giftCardBindingSchema,
 	giftCardClaimRequestSchema,
 	giftCardPurchaseRequestSchema,
 	giftCardShowTokenRequestSchema,
@@ -29,7 +30,7 @@ import {
 	settleGiftCardGuess,
 	type GiftCardGuessSubject,
 } from '../lib/gift-card-rate-limit.ts'
-import { readJsonBody } from '../lib/http.ts'
+import { readJsonBody, readQuery } from '../lib/http.ts'
 import {
 	verificationFailedResponse,
 	verifyPublicChallenge,
@@ -58,7 +59,9 @@ import { resolveOrderingOrganization } from './orders.ts'
  */
 export const giftCardRoutes = new Hono()
 
+/** Counted on the stream itself, so a chunked body cannot skip the cap. */
 const MAX_BODY_BYTES = 20_000
+const BODY_LIMIT = { maxBytes: MAX_BODY_BYTES }
 
 function bucketOf(c: Context): string | null {
 	const address = clientAddress(c)
@@ -107,11 +110,11 @@ async function publicOrg(
 	return { orgId, state, organization: resolved.organization }
 }
 
-function identityOf(c: Context): { slug?: string; host?: string } {
-	const url = new URL(c.req.url)
-	const slug = url.searchParams.get('slug') ?? undefined
-	const host = url.searchParams.get('host') ?? undefined
-	return { slug, host }
+/** The organization hints of a read, with the bounds a POST body's carry. */
+function identityOf(
+	c: Context,
+): { data: { slug?: string; host?: string } } | { error: Response } {
+	return readQuery(c, giftCardBindingSchema)
 }
 
 function optionsBody(state: GiftCardFlagState, settings: GiftCardSettings) {
@@ -145,7 +148,9 @@ function optionsBody(state: GiftCardFlagState, settings: GiftCardSettings) {
 
 /** What the purchase page shows: presets, bounds, designs, locations. */
 giftCardRoutes.get('/options', async (c) => {
-	const org = await publicOrg(c, identityOf(c), 'enabled')
+	const identity = identityOf(c)
+	if ('error' in identity) return identity.error
+	const org = await publicOrg(c, identity.data, 'enabled')
 	if ('error' in org) return org.error
 	return giftCardDeny(200, 'ok', optionsBody(org.state, org.state.settings))
 })
@@ -179,10 +184,7 @@ async function requiredCustomer(
 
 /** `POST /gift-cards/purchase`: starts an online purchase; the browser pays through the hosted checkout. */
 giftCardRoutes.post('/purchase', async (c) => {
-	if (Number(c.req.header('content-length') ?? 0) > MAX_BODY_BYTES) {
-		return giftCardDeny(413, 'invalid_request')
-	}
-	const body = await readJsonBody(c, giftCardPurchaseRequestSchema)
+	const body = await readJsonBody(c, giftCardPurchaseRequestSchema, BODY_LIMIT)
 	if ('error' in body) return body.error
 	const request = body.data
 	const org = await publicOrg(
@@ -204,7 +206,10 @@ giftCardRoutes.post('/purchase', async (c) => {
 		const killed = giftCardKillSwitchResponse()
 		if (killed) return killed
 		const db = await getTenantDb(org.orgId)
-		await enforceGiftCardPurchaseLimit(db, org.orgId, bucketOf(c))
+		await enforceGiftCardPurchaseLimit(db, org.orgId, {
+			address: bucketOf(c),
+			customerId: customer.customerId,
+		})
 		const {
 			slug: ignoredSlug,
 			host: ignoredHost,
@@ -258,7 +263,7 @@ giftCardRoutes.post('/purchase', async (c) => {
 
 /** `POST /gift-cards/balance`: the balance of a card by its code (Turnstile protected). */
 giftCardRoutes.post('/balance', async (c) => {
-	const body = await readJsonBody(c, giftCardBalanceRequestSchema)
+	const body = await readJsonBody(c, giftCardBalanceRequestSchema, BODY_LIMIT)
 	if ('error' in body) return body.error
 	const org = await publicOrg(
 		c,
@@ -297,7 +302,9 @@ giftCardRoutes.post('/balance', async (c) => {
 
 /** `GET /gift-cards/mine`: the signed-in guest's saved cards. */
 giftCardRoutes.get('/mine', async (c) => {
-	const org = await publicOrg(c, identityOf(c), 'enabled')
+	const identity = identityOf(c)
+	if ('error' in identity) return identity.error
+	const org = await publicOrg(c, identity.data, 'enabled')
 	if ('error' in org) return org.error
 	const customer = await requiredCustomer(c, org.orgId)
 	if ('error' in customer) return customer.error
@@ -311,7 +318,7 @@ giftCardRoutes.get('/mine', async (c) => {
 
 /** `POST /gift-cards/claim`: saves a card to the guest's account by its full code. */
 giftCardRoutes.post('/claim', async (c) => {
-	const body = await readJsonBody(c, giftCardClaimRequestSchema)
+	const body = await readJsonBody(c, giftCardClaimRequestSchema, BODY_LIMIT)
 	if ('error' in body) return body.error
 	const org = await publicOrg(
 		c,
@@ -331,22 +338,22 @@ giftCardRoutes.post('/claim', async (c) => {
 				address: bucketOf(c),
 			},
 		})
+		// A guess is given back only once the service has positively found the
+		// card. Any other failure (a refusal, a busy database) counts as wrong, so
+		// a new error path can never hand attempts back for free.
+		let resolved = false
 		let result
 		try {
 			result = await claimGiftCard({
 				orgId: org.orgId,
 				customerId: customer.customerId,
 				code: body.data.code,
+				onResolved: () => {
+					resolved = true
+				},
 			})
 		} catch (error) {
-			if (
-				error instanceof GiftCardDomainError &&
-				error.code === 'code_invalid'
-			) {
-				await settleGiftCardGuess(db, charge, 'wrong')
-			} else {
-				await settleGiftCardGuess(db, charge, 'right')
-			}
+			await settleGiftCardGuess(db, charge, resolved ? 'right' : 'wrong')
 			throw error
 		}
 		await settleGiftCardGuess(db, charge, 'right')
@@ -361,7 +368,7 @@ giftCardRoutes.post('/claim', async (c) => {
 
 /** `POST /gift-cards/:id/show-token`: a short-lived QR token for the till (not the code). */
 giftCardRoutes.post('/:id/show-token', async (c) => {
-	const body = await readJsonBody(c, giftCardShowTokenRequestSchema)
+	const body = await readJsonBody(c, giftCardShowTokenRequestSchema, BODY_LIMIT)
 	if ('error' in body) return body.error
 	const org = await publicOrg(
 		c,
