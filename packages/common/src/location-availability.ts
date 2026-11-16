@@ -8,12 +8,11 @@ import {
 	onlineAvailabilityAt,
 	prayerPauseWindowsForDay,
 } from '@repo/opening-hours'
-import { localParts, zonedLocalToUtc } from '@repo/zoned-time'
+import { zonedLocalToUtc } from '@repo/zoned-time'
 
 import {
 	type DayOfWeek,
 	type DeliveryConfig,
-	type LocationAddress,
 	type SpecialHour,
 	type WeeklySchedule,
 	DEFAULT_WEEKLY_SCHEDULE,
@@ -579,13 +578,6 @@ function continuesPastMidnight(
 		slots = daySchedule?.isOpen ? (daySchedule.slots ?? []) : []
 	}
 	return slots.some((slot) => slot.start === START_OF_DAY)
-}
-
-function checkClosingSoon(currentTime: string, endTime: string): boolean {
-	const [currH = 0, currM = 0] = currentTime.split(':').map(Number)
-	const [endH = 0, endM = 0] = endTime.split(':').map(Number)
-	const diffMinutes = endH * 60 + endM - (currH * 60 + currM)
-	return diffMinutes > 0 && diffMinutes <= 30
 }
 
 export function formatTimeDisplay(timeStr: string): string {

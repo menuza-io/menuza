@@ -59,7 +59,7 @@ export function prayerPauseWindowsForDay(
 	config: PrayerPauseConfig,
 	coords: { lat: number; lng: number },
 	localDate: string,
-	timeZone: string,
+	_timeZone: string,
 ): PrayerPauseWindow[] {
 	if (!config.enabled) return []
 	const [y, m, d] = localDate.split('-').map(Number) as [number, number, number]

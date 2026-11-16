@@ -2,7 +2,6 @@ import { localParts, zonedLocalToUtc } from '@repo/zoned-time'
 
 import {
 	type DayOfWeek,
-	DAYS_OF_WEEK,
 	type PrepSchedule,
 	type PrepScheduleRow,
 } from './location-types.ts'

@@ -115,7 +115,7 @@ export function SlotLimitsPanel({
 		}
 	}, [load, resetFetcher.data, resetFetcher.state])
 
-	if (locations.length === 0) return null
+	if (locations.length === 0 || !location) return null
 
 	const resetPending = resetFetcher.state !== 'idle'
 
