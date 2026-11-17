@@ -101,6 +101,7 @@ export function toWireOrder(order: PosOrder) {
 		readyTextOptIn:
 			order.orderSource === 'phone' && order.readyTextOptIn === true,
 		tableLabel: order.tableLabel || null,
+		driveThroughNote: order.driveThroughNote || null,
 		staff: order.staff ?? null,
 		signIn: order.signIn ?? null,
 		voidedBy: staffOrNull(order.voidedBy),
@@ -113,6 +114,21 @@ export function toWireOrder(order: PosOrder) {
 			...(l.sentAt ? { sentAt: new Date(l.sentAt).toISOString() } : {}),
 			itemId: l.itemId,
 			name: l.name,
+			...(l.kitchenName ? { kitchenName: l.kitchenName } : {}),
+			...(l.kitchenHighlight ? { kitchenHighlight: l.kitchenHighlight } : {}),
+			...(l.courseId
+				? {
+						courseId: l.courseId,
+						...(l.courseName ? { courseName: l.courseName } : {}),
+						...(l.coursePosition != null
+							? { coursePosition: l.coursePosition }
+							: {}),
+						courseHeld: l.courseHeld === true,
+						...(l.courseFiredAt
+							? { courseFiredAt: new Date(l.courseFiredAt).toISOString() }
+							: {}),
+					}
+				: {}),
 			variantId: l.variantId,
 			variantLabel: l.variantLabel,
 			quantity: l.quantity,
@@ -123,6 +139,8 @@ export function toWireOrder(order: PosOrder) {
 				groupName: o.groupName,
 				optionId: o.optionId,
 				optionName: o.optionName,
+				...(o.kitchenName ? { kitchenName: o.kitchenName } : {}),
+				...(o.kitchenHighlight ? { kitchenHighlight: o.kitchenHighlight } : {}),
 				quantity: o.quantity,
 				unitCents: o.unitCents,
 				taxable: o.taxable,

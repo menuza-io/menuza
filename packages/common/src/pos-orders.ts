@@ -100,9 +100,14 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * counter orders and `readyTextOptIn` (optional, default false) on phone
  * orders. Version 8 added the `gift_card` payment method (a card redeemed at
  * the till through `/pos/gift-cards/redeem`; the amount is a tender, the VAT
- * stays on the food it paid for).
+ * stays on the food it paid for). Version 9 added the `drive_through`
+ * order type and optional kitchen fields on each line (kitchen name,
+ * highlight, course). Every new field is optional, so a contract 8 upload
+ * still parses. An older node cannot read `drive_through` and holds that
+ * upload, which is how an old terminal fails safe: it never sends the type,
+ * and a node that does not know it does not apply the sale.
  */
-export const POS_CONTRACT_VERSION = 8
+export const POS_CONTRACT_VERSION = 9
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -118,7 +123,11 @@ export const POS_PAYMENT_METHOD_VALUES = [
 	'other',
 	'gift_card',
 ] as const
-export const POS_ORDER_TYPE_VALUES = ['dine_in', 'takeaway'] as const
+export const POS_ORDER_TYPE_VALUES = [
+	'dine_in',
+	'takeaway',
+	'drive_through',
+] as const
 export const POS_ORDER_SOURCE_VALUES = ['counter', 'phone'] as const
 export type PosOrderSource = (typeof POS_ORDER_SOURCE_VALUES)[number]
 
@@ -193,6 +202,13 @@ const signedText = (max: number) =>
 		.transform((v) => v.replace(XML_ILLEGAL, ''))
 		.pipe(z.string().min(1).max(max))
 
+const kitchenHighlightValue = z.enum([
+	'none',
+	'allergy',
+	'attention',
+	'long_prep',
+])
+
 export const posOrderOptionSchema = z.strictObject({
 	groupId: z.string().min(1).max(100),
 	groupName: z.string().max(200),
@@ -201,6 +217,10 @@ export const posOrderOptionSchema = z.strictObject({
 	quantity: z.number().int().min(1).max(50),
 	unitCents: cents,
 	taxable: z.boolean(),
+	/** Localized kitchen name. Omitted: the guest name is used. */
+	kitchenName: z.string().max(500).optional(),
+	/** Omitted: the kitchen applies the removal default. `none` is explicit. */
+	kitchenHighlight: kitchenHighlightValue.optional(),
 })
 
 export const posOrderLineSchema = z.strictObject({
@@ -224,6 +244,15 @@ export const posOrderLineSchema = z.strictObject({
 	options: z.array(posOrderOptionSchema).max(50),
 	/** When the till sent the line to the kitchen: its round on a tab (contract 4). */
 	sentAt: instant.optional(),
+	/** Localized kitchen name (contract 9). Guest receipts keep `name`. */
+	kitchenName: z.string().max(500).optional(),
+	kitchenHighlight: kitchenHighlightValue.optional(),
+	/** Dine-in course (contract 9). Absent on takeaway, delivery and drive-through. */
+	courseId: z.string().max(40).optional(),
+	courseName: z.string().max(60).optional(),
+	coursePosition: z.number().int().min(0).max(20).optional(),
+	courseHeld: z.boolean().optional(),
+	courseFiredAt: instant.optional(),
 })
 
 /**
@@ -443,6 +472,11 @@ export const posOrderRequestSchema = z
 		/** The cash drawer shift it was rung up in (terminals that track shifts). */
 		shiftId: uuid.nullable().default(null),
 		orderType: z.enum(POS_ORDER_TYPE_VALUES),
+		/**
+		 * Contract 9. Lane or vehicle for a drive-through order. Missing means
+		 * none, so a contract 8 upload still parses.
+		 */
+		driveThroughNote: z.string().trim().max(80).nullable().default(null),
 		orderSource: z.enum(POS_ORDER_SOURCE_VALUES).default('counter'),
 		customerPhone: posCustomerPhoneSchema.nullable().default(null),
 		/** Null means ASAP; otherwise an absolute instant in the restaurant's time zone. */
@@ -500,6 +534,10 @@ export const posOrderRequestSchema = z
 	.superRefine((order, ctx) => {
 		const issue = (message: string, path: (string | number)[] = []) =>
 			ctx.addIssue({ code: z.ZodIssueCode.custom, message, path })
+		if (order.orderType === 'drive_through' && order.tableLabel)
+			issue('drive-through uses a lane note, not a table', ['tableLabel'])
+		if (order.orderType !== 'drive_through' && order.driveThroughNote)
+			issue('a lane note belongs to drive-through', ['driveThroughNote'])
 		if (order.orderSource === 'phone') {
 			if (order.orderType !== 'takeaway' || order.tableLabel)
 				issue('phone orders are pickup only', ['orderType'])

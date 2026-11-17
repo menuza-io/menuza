@@ -174,6 +174,10 @@ export function buildLine(
 				groupName: group.name,
 				optionId: option.id,
 				optionName: option.displayName,
+				...(option.kitchenName ? { kitchenName: option.kitchenName } : {}),
+				...(option.kitchenHighlight
+					? { kitchenHighlight: option.kitchenHighlight }
+					: {}),
 				quantity: qty,
 				// The server prices a whole choice with `priceWhole ?? price` (the base
 				// being the location override), so the till does too.
@@ -185,6 +189,10 @@ export function buildLine(
 	return {
 		itemId: item.id,
 		name: item.displayName,
+		...(item.kitchenName ? { kitchenName: item.kitchenName } : {}),
+		...(item.kitchenHighlight
+			? { kitchenHighlight: item.kitchenHighlight }
+			: {}),
 		variantId: variant?.id ?? null,
 		variantLabel: variantLabel || null,
 		quantity,

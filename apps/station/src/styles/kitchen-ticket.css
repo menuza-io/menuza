@@ -1,0 +1,52 @@
+/* Order-type header colour. The written type is always shown beside it. */
+[data-kitchen-ticket][data-color-order][data-order-type='dine_in']
+	.kitchen-ticket-head {
+	background: color-mix(in oklab, var(--primary) 16%, var(--card));
+	border-inline-start: 0.25rem solid var(--primary);
+}
+[data-kitchen-ticket][data-color-order][data-order-type='delivery']
+	.kitchen-ticket-head {
+	background: color-mix(in oklab, var(--destructive) 14%, var(--card));
+	border-inline-start: 0.25rem solid var(--destructive);
+}
+[data-kitchen-ticket][data-color-order][data-order-type='drive_through']
+	.kitchen-ticket-head {
+	background: color-mix(in oklab, var(--warning) 18%, var(--card));
+	border-inline-start: 0.25rem solid var(--warning);
+}
+[data-kitchen-ticket][data-color-order][data-order-type='takeaway']
+	.kitchen-ticket-head {
+	background: color-mix(in oklab, var(--muted-foreground) 12%, var(--card));
+	border-inline-start: 0.25rem solid var(--muted-foreground);
+}
+
+.kitchen-mark {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-inline-start: 0.375rem;
+	border: 1px solid var(--border);
+	border-radius: var(--station-inset-radius);
+	background: var(--card);
+	padding: 0.0625rem 0.375rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: var(--foreground);
+}
+
+[data-highlight='allergy'] {
+	border-inline-start: 0.25rem solid var(--destructive);
+}
+
+[data-kitchen-ticket] [data-held] {
+	opacity: 0.55;
+}
+
+@media print {
+	.kitchen-mark,
+	[data-highlight] {
+		border: 2px solid var(--foreground);
+		background: var(--card);
+		color: var(--foreground);
+	}
+}

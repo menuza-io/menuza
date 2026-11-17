@@ -137,6 +137,7 @@ const salesFields: ReportField[] = [
 			{ value: 'delivery', label: 'Delivery' },
 			{ value: 'dine_in', label: 'Dine-in' },
 			{ value: 'takeaway', label: 'Takeaway' },
+			{ value: 'drive_through', label: 'Drive-through' },
 		],
 	},
 	{

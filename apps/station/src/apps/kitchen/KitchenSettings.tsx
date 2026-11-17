@@ -1,6 +1,12 @@
-import { t, Trans } from '@lingui/macro'
+import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { kdsConfigSchema, type KdsConfig } from '@repo/common/kds'
+import {
+	KDS_CHANNELS,
+	KDS_FULFILLMENTS,
+	kdsConfigSchema,
+	kdsCoverageGaps,
+	type KdsConfig,
+} from '@repo/common/kds'
 import { Icon } from '@repo/ui/icon'
 import { useEffect, useMemo, useState } from 'react'
 import { holdLock } from '~/lib/activity.ts'
@@ -52,12 +58,14 @@ export function KitchenSettings({
 		setDraft((current) => ({ ...current, ...patch }))
 	const save = async () => {
 		const parsed = kdsConfigSchema.safeParse(draft)
-		setProblem(!parsed.success)
-		if (parsed.success) await onSave(parsed.data)
+		const uncovered = parsed.success && kdsCoverageGaps(parsed.data).length > 0
+		setProblem(!parsed.success || uncovered)
+		if (parsed.success && !uncovered) await onSave(parsed.data)
 	}
 	// If another screen changed setup while this draft was open, do not save
 	// against a newer version silently. Closing and reopening starts a fresh draft.
 	const changed = version !== originalVersion
+	const gaps = kdsCoverageGaps(draft)
 	return (
 		<Modal
 			open
@@ -130,6 +138,39 @@ export function KitchenSettings({
 							<Trans>Use a Preparing step before Ready</Trans>
 						</span>
 					</label>
+					<label className="flex min-h-11 items-center gap-3">
+						<Checkbox
+							checked={draft.showPaymentStatus === true}
+							onChange={(event) =>
+								update({ showPaymentStatus: event.target.checked })
+							}
+						/>
+						<span>
+							<Trans>Show paid or unpaid</Trans>
+						</span>
+					</label>
+					<label className="flex min-h-11 items-center gap-3">
+						<Checkbox
+							checked={draft.showOrderTypeColor === true}
+							onChange={(event) =>
+								update({ showOrderTypeColor: event.target.checked })
+							}
+						/>
+						<span>
+							<Trans>Colour the header by order type</Trans>
+						</span>
+					</label>
+					<label className="flex min-h-11 items-center gap-3">
+						<Checkbox
+							checked={draft.showModifierGroups === true}
+							onChange={(event) =>
+								update({ showModifierGroups: event.target.checked })
+							}
+						/>
+						<span>
+							<Trans>Show modifier group names</Trans>
+						</span>
+					</label>
 					<p className="text-muted-foreground text-sm">
 						<Trans>
 							Turn off the Preparing step for quick service. Individual items
@@ -152,7 +193,7 @@ export function KitchenSettings({
 					{draft.stations.map((station) => (
 						<div
 							key={station.id}
-							className="border-border flex items-end gap-2 border-b pb-4"
+							className="border-border flex flex-col gap-3 border-b pb-4"
 						>
 							<label className="min-w-0 flex-1 space-y-2 text-sm font-semibold">
 								<span>
@@ -182,6 +223,16 @@ export function KitchenSettings({
 								/>
 								<Trans>Default</Trans>
 							</label>
+							<OrderFilters
+								station={station}
+								onChange={(patch) =>
+									update({
+										stations: draft.stations.map((entry) =>
+											entry.id === station.id ? { ...entry, ...patch } : entry,
+										),
+									})
+								}
+							/>
 							<IconButton
 								label={_(t`Remove station`)}
 								disabled={
@@ -219,6 +270,15 @@ export function KitchenSettings({
 						<Icon name="plus" className="size-4" />
 						<Trans>Add station</Trans>
 					</Button>
+					{gaps.length ? (
+						<p role="alert" className="text-warning text-sm font-semibold">
+							<Trans>
+								Some orders are not shown on any station. Tick them on at least
+								one station. The default station still catches an order nothing
+								else takes, so it cannot disappear.
+							</Trans>
+						</p>
+					) : null}
 				</section>
 				<section className="space-y-3">
 					<h3 className="text-base font-semibold">
@@ -314,5 +374,96 @@ export function KitchenSettings({
 				</section>
 			</div>
 		</Modal>
+	)
+}
+
+const FULFILLMENT_LABEL = {
+	dine_in: msg`Dine in`,
+	takeaway: msg`Takeaway`,
+	delivery: msg`Delivery`,
+	drive_through: msg`Drive-through`,
+} as const
+const CHANNEL_LABEL = {
+	counter: msg`Counter`,
+	phone: msg`Phone`,
+	online: msg`Online orders`,
+	qr: msg`QR table`,
+} as const
+
+function toggleValue<T extends string>(
+	current: readonly T[] | undefined,
+	all: readonly T[],
+	value: T,
+	on: boolean,
+): T[] | undefined {
+	const base = current ? [...current] : [...all]
+	const next = on
+		? [...new Set([...base, value])]
+		: base.filter((entry) => entry !== value)
+	return next.length === all.length ? undefined : next
+}
+
+function OrderFilters({
+	station,
+	onChange,
+}: {
+	station: KdsConfig['stations'][number]
+	onChange: (patch: Partial<KdsConfig['stations'][number]>) => void
+}) {
+	const { _ } = useLingui()
+	return (
+		<div className="space-y-2">
+			<label className="flex min-h-11 items-center gap-3 text-sm">
+				<Checkbox
+					checked={station.allItems === true}
+					onChange={(event) => onChange({ allItems: event.target.checked })}
+				/>
+				<span>
+					<Trans>All dishes for these orders</Trans>
+				</span>
+			</label>
+			<div className="flex flex-wrap gap-x-4 gap-y-2">
+				{KDS_FULFILLMENTS.map((value) => (
+					<label key={value} className="flex min-h-11 items-center gap-2 text-sm">
+						<Checkbox
+							checked={
+								!station.fulfillments || station.fulfillments.includes(value)
+							}
+							onChange={(event) =>
+								onChange({
+									fulfillments: toggleValue(
+										station.fulfillments,
+										KDS_FULFILLMENTS,
+										value,
+										event.target.checked,
+									),
+								})
+							}
+						/>
+						<span>{_(FULFILLMENT_LABEL[value])}</span>
+					</label>
+				))}
+			</div>
+			<div className="flex flex-wrap gap-x-4 gap-y-2">
+				{KDS_CHANNELS.map((value) => (
+					<label key={value} className="flex min-h-11 items-center gap-2 text-sm">
+						<Checkbox
+							checked={!station.channels || station.channels.includes(value)}
+							onChange={(event) =>
+								onChange({
+									channels: toggleValue(
+										station.channels,
+										KDS_CHANNELS,
+										value,
+										event.target.checked,
+									),
+								})
+							}
+						/>
+						<span>{_(CHANNEL_LABEL[value])}</span>
+					</label>
+				))}
+			</div>
+		</div>
 	)
 }

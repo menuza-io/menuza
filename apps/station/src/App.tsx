@@ -366,6 +366,7 @@ export function App() {
 							: '',
 					readyTextOptIn: s.location.readyText ? s.readyTextOptIn : false,
 					tableLabel: s.tableLabel,
+					driveThroughNote: s.driveThroughNote,
 					lines: s.lines,
 					adjustments: s.adjustments,
 					tipCents: 0,
@@ -601,6 +602,9 @@ export function App() {
 			onPhoneOrder={s.setPhoneOrder}
 			onCounterOrder={s.setCounterOrder}
 			tableLabel={s.tableLabel}
+			driveThroughNote={s.driveThroughNote}
+			onDriveThroughNote={s.setDriveThroughNote}
+			onFireCourses={s.fireCourses}
 			money={money}
 			onOrderType={s.setOrderType}
 			onCustomer={s.setCustomerName}

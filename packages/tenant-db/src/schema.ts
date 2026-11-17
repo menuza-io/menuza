@@ -2431,7 +2431,7 @@ export const kdsTickets = sqliteTable(
 		version: integer('version').notNull(),
 		// Each dish's stage by id, plus `served:<id>`: when a ready dish left the pass.
 		progress: text('progress', { mode: 'json' })
-			.$type<Record<string, 'new' | 'preparing' | 'ready' | number>>()
+			.$type<Record<string, string | number>>()
 			.notNull(),
 		completedAt: integer('completed_at'),
 		updatedAt: integer('updated_at').notNull(),
@@ -2532,7 +2532,11 @@ export const posOrders = sqliteTable(
 		// revision change nothing.
 		revision: integer('revision').notNull(),
 		status: text('status', { enum: [...POS_ORDER_STATUSES] }).notNull(),
-		orderType: text('order_type', { enum: ['dine_in', 'takeaway'] }).notNull(),
+		orderType: text('order_type', {
+			enum: ['dine_in', 'takeaway', 'drive_through'],
+		}).notNull(),
+		/** Lane or vehicle for a drive-through order (#404). Not a guest name. */
+		driveThroughNote: text('drive_through_note'),
 		orderSource: text('order_source', { enum: ['counter', 'phone'] })
 			.notNull()
 			.default('counter'),
@@ -2739,6 +2743,11 @@ export const posOrderLines = sqliteTable(
 		quantity: integer('quantity').notNull(),
 		unitCents: integer('unit_cents').notNull(),
 		totalCents: integer('total_cents').notNull(),
+		/** Dine-in course (#290). Null when the location does not use courses. */
+		courseId: text('course_id'),
+		courseName: text('course_name'),
+		/** held | fired. Null when the line has no course. */
+		courseState: text('course_state'),
 	},
 	(table) => [
 		primaryKey({ columns: [table.orderId, table.lineIndex] }),

@@ -154,6 +154,20 @@ export function getLocalizedMenuValue(
 	return val
 }
 
+/** Empty localized text stores as null. A JSON map with no text is empty. */
+export function storedKitchenName(value: string | undefined): string | null {
+	if (!value || !getLocalizedMenuValue(value)) return null
+	return value
+}
+
+/** `none` and an empty choice store as null so the kitchen can apply its default. */
+export function storedKitchenHighlight(
+	value: string | undefined,
+): string | null {
+	if (!value || value === 'none') return null
+	return value
+}
+
 // Schemas
 export const AllergenSchema = z.enum(ALLERGENS)
 export const DietaryFlagSchema = z.enum(DIETARY_FLAGS)
@@ -375,10 +389,16 @@ const LocationOverrideInputSchema = z.object({
 	unavailableUntil: OptionalDateInputSchema,
 })
 
+export const kitchenHighlightInput = z
+	.enum(['none', 'allergy', 'attention', 'long_prep'])
+	.optional()
+
 export const ModifierOptionInputSchema = z.object({
 	id: z.string().optional(),
 	displayName: z.string().min(1, 'Display name is required'),
 	internalName: z.string().optional(),
+	kitchenName: z.string().optional(),
+	kitchenHighlight: kitchenHighlightInput,
 	description: z.string().optional(),
 	imageKey: z.string().optional().nullable(),
 	price: z.coerce.number().finite().min(0).default(0),
@@ -408,6 +428,8 @@ export const MenuOptionInputSchema = z.object({
 	id: z.string().optional(),
 	displayName: z.string().min(1, 'Display name is required'),
 	internalName: z.string().optional(),
+	kitchenName: z.string().optional(),
+	kitchenHighlight: kitchenHighlightInput,
 	description: z.string().optional(),
 	imageKey: z.string().optional().nullable(),
 	imageUrl: z.string().optional().nullable(),
@@ -462,6 +484,8 @@ export const MenuItemInputSchema = z.object({
 	id: z.string().optional(),
 	displayName: z.string().min(1, 'Display name is required'),
 	internalName: z.string().optional(),
+	kitchenName: z.string().optional(),
+	kitchenHighlight: kitchenHighlightInput,
 	description: z.string().optional(),
 	price: z.coerce.number().finite().min(0, 'Price must be positive'),
 	imageKey: z.string().optional().nullable(),
@@ -530,6 +554,7 @@ export const MenuCategoryInputSchema = z.object({
 	displayName: z.string().min(1, 'Display name is required'),
 	internalName: z.string().optional(),
 	description: z.string().optional(),
+	defaultCourseId: z.string().max(40).optional(),
 	upsellCategoryIds: z.array(z.string()).max(100).default([]),
 	availabilityHours: z.string().optional().nullable(),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),

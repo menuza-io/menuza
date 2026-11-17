@@ -272,6 +272,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			.set({
 				displayName: data.displayName,
 				internalName: data.internalName || null,
+				defaultCourseId: data.defaultCourseId || null,
 				description: data.description || null,
 				availabilityStatus: data.availabilityStatus,
 				unavailableUntil:

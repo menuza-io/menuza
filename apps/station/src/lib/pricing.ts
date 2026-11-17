@@ -15,6 +15,9 @@ export type CartOption = {
 	groupName: string
 	optionId: string
 	optionName: string
+	/** Localized kitchen name. Receipts keep `optionName`. */
+	kitchenName?: string
+	kitchenHighlight?: string
 	quantity: number
 	/** Cents for one unit of this option. */
 	unitCents: number
@@ -26,6 +29,14 @@ export type CartLine = {
 	id: string
 	itemId: string
 	name: string
+	/** Localized kitchen name. Receipts keep `name`. */
+	kitchenName?: string
+	kitchenHighlight?: string
+	courseId?: string
+	courseName?: string
+	coursePosition?: number
+	courseHeld?: boolean
+	courseFiredAt?: number | null
 	variantId: string | null
 	variantLabel: string | null
 	quantity: number

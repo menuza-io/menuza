@@ -7,6 +7,7 @@ import { i18n } from './i18n.ts'
 import { requestPersistentStorage } from './lib/storage.ts'
 import { setUpdater } from './lib/update.ts'
 import './styles/app.css'
+import './styles/kitchen-ticket.css'
 
 // Precache the app shell so the till opens with no network at all. A new version
 // is fetched in the background and applied only when the till is idle.

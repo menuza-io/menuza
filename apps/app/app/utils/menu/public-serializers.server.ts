@@ -63,6 +63,12 @@ export interface PublicLocationData {
 	 * and phone orders when Kitchen marks them ready (US organizations only).
 	 */
 	readyText: boolean
+	/** Table-service courses (#290). Null when off. */
+	courses?: {
+		enabled: boolean
+		autoFireMinutes?: number | null
+		courses: Array<{ id: string; name: string }>
+	} | null
 	/** Active "pause online orders" (web and QR), or null. */
 	orderingPause: OrderingPause | null
 	/** Active busy mode (extra prep minutes), or null. */
@@ -78,6 +84,8 @@ export interface PublicMenuOptionData {
 	id: string
 	displayName: string
 	internalName: string | null
+	kitchenName?: string | null
+	kitchenHighlight?: string | null
 	description: string | null
 	imageKey: string | null
 	imageUrl: string | null
@@ -117,6 +125,8 @@ export interface PublicMenuItemData {
 	id: string
 	displayName: string
 	internalName: string | null
+	kitchenName?: string | null
+	kitchenHighlight?: string | null
 	description: string | null
 	price: number
 	imageKey: string | null
@@ -160,6 +170,7 @@ export interface PublicMenuCategoryData {
 	displayName: string
 	internalName: string | null
 	description: string | null
+	defaultCourseId?: string | null
 	parentId?: string | null
 	subcategories?: PublicMenuCategoryData[]
 	upsellCategoryIds: string[]
@@ -229,6 +240,8 @@ export function serializePublicOption(
 		id: opt.id,
 		displayName: opt.displayName,
 		internalName: opt.internalName,
+		kitchenName: opt.kitchenName,
+		kitchenHighlight: opt.kitchenHighlight,
 		description: opt.description,
 		imageKey: opt.imageKey,
 		imageUrl: opt.imageKey ? (mediaMap.get(opt.imageKey) ?? null) : null,
@@ -367,6 +380,8 @@ export function serializePublicMenuItem(
 		id: item.id,
 		displayName: item.displayName,
 		internalName: item.internalName,
+		kitchenName: item.kitchenName,
+		kitchenHighlight: item.kitchenHighlight,
 		description: item.description,
 		price: availableVariants.length
 			? Math.min(...availableVariants.map((variant) => variant.price))

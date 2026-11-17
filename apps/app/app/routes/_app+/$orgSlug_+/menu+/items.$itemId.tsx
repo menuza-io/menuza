@@ -4,6 +4,8 @@ import {
 	MenuItemInputSchema,
 	parseMenuVariations,
 	parseMenuItemImageKeys,
+	storedKitchenHighlight,
+	storedKitchenName,
 } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
@@ -191,6 +193,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			id: item.id,
 			displayName: item.displayName,
 			internalName: item.internalName ?? '',
+			kitchenName:
+				item.kitchenName ?? JSON.stringify({ [defaultLocale]: '' }),
+			kitchenHighlight: item.kitchenHighlight ?? 'none',
 			description: item.description ?? '',
 			price: item.price,
 			imageKey: item.imageKey,
@@ -363,6 +368,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			.set({
 				displayName: data.displayName,
 				internalName: data.internalName || null,
+				kitchenName: storedKitchenName(data.kitchenName),
+				kitchenHighlight: storedKitchenHighlight(data.kitchenHighlight),
 				description: data.description || null,
 				price: data.variations.variants.length
 					? Math.min(
