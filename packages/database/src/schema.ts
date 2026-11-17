@@ -1361,6 +1361,8 @@ export const UserOrganization = sqliteTable(
 		// location, the default) or 'selected' (only the UserOrganizationLocation
 		// rows; none means no staffing access). Permissions elsewhere stay org-wide.
 		locationScope: text().default('all').notNull(),
+		/** Gross or net sales for reports and the dashboard Today tile (#331). */
+		reportSalesBasis: text().default('net').notNull(),
 	},
 	(table) => [
 		index('UserOrganization_organizationRoleId_idx').on(

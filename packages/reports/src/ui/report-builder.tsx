@@ -38,7 +38,13 @@ import {
 	isListReport,
 	measuresAValueField,
 } from '../dsl.ts'
-import { timeBucketLabel, timeframePresetLabel } from '../engine.ts'
+import { SALES_BASIS_DEFINITIONS } from '../catalog-sales.ts'
+import {
+	isCyclicTimeBucket,
+	presetFollowsIncludeToday,
+	timeBucketLabel,
+	timeframePresetLabel,
+} from '../engine.ts'
 import { FilterEditor } from './filter-editor.tsx'
 import { ReportNotices, ReportVisualization } from './report-chart.tsx'
 import { ReportExportMenu } from './report-export.tsx'
@@ -624,12 +630,20 @@ export function ReportBuilder({
 													{(
 														[
 															'today',
+															'yesterday',
 															'last_7_days',
+															'last_14_days',
+															'last_21_days',
+															'last_28_days',
 															'last_30_days',
 															'last_3_months',
 															'last_6_months',
 															'last_12_months',
+															'last_complete_week',
+															'last_complete_month',
+															'month_to_date',
 															'all_time',
+															'custom',
 														] as const
 													).map((preset) => (
 														<SelectItem key={preset} value={preset}>
@@ -1025,12 +1039,18 @@ export function ReportBuilder({
 															<SelectItem value="day">Daily</SelectItem>
 															<SelectItem value="week">Weekly</SelectItem>
 															<SelectItem value="month">Monthly</SelectItem>
+															<SelectItem value="hour_of_day">
+																{timeBucketLabel('hour_of_day')}
+															</SelectItem>
+															<SelectItem value="day_of_week">
+																{timeBucketLabel('day_of_week')}
+															</SelectItem>
 														</SelectContent>
 													</Select>
 													<p className="text-muted-foreground text-xs leading-relaxed">
-														Bucket dates into calendar days, weeks
-														(Monday–Sunday) or months, in the report&apos;s time
-														zone.
+														{isCyclicTimeBucket(definition.timeBucket)
+															? 'Every hour or weekday is folded together across the range, in each workplace’s time zone.'
+															: 'Bucket dates into calendar days, weeks (Monday–Sunday) or months, in the report’s time zone.'}
 													</p>
 												</div>
 											) : null}
@@ -1110,6 +1130,147 @@ export function ReportBuilder({
 												</p>
 											) : null}
 										</div>
+										{presetFollowsIncludeToday(definition.timeframe.preset) ? (
+											<div className="flex items-center justify-between gap-3">
+												<div className="space-y-0.5">
+													<Label htmlFor="report-include-today">
+														Include today
+													</Label>
+													<p className="text-muted-foreground text-xs leading-relaxed">
+														When off, rolling ranges end with yesterday so every
+														day in the range is complete.
+													</p>
+												</div>
+												<Checkbox
+													id="report-include-today"
+													checked={definition.settings.includeToday}
+													onCheckedChange={(checked) =>
+														update({
+															settings: {
+																...definition.settings,
+																includeToday: checked === true,
+															},
+														})
+													}
+												/>
+											</div>
+										) : null}
+										<div className="flex items-center justify-between gap-3">
+											<div className="space-y-0.5">
+												<Label htmlFor="report-hide-partial">
+													Hide incomplete periods
+												</Label>
+												<p className="text-muted-foreground text-xs leading-relaxed">
+													Leave today and other partial buckets off charts over
+													time. The result still says how many were left out.
+												</p>
+											</div>
+											<Checkbox
+												id="report-hide-partial"
+												checked={definition.settings.hidePartial}
+												onCheckedChange={(checked) =>
+													update({
+														settings: {
+															...definition.settings,
+															hidePartial: checked === true,
+														},
+													})
+												}
+											/>
+										</div>
+										{!listMode ? (
+											<div className="space-y-2">
+												<Label>Compare to</Label>
+												<Select
+													value={definition.compare}
+													onValueChange={(value) => {
+														if (!value) return
+														update({
+															compare: value as ReportDefinition['compare'],
+														})
+													}}
+												>
+													<SelectTrigger className="w-full">
+														<SelectValue>
+															{
+																{
+																	none: 'No comparison',
+																	previous_period: 'Previous period',
+																	previous_year: 'Same period last year',
+																}[definition.compare]
+															}
+														</SelectValue>
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="none">No comparison</SelectItem>
+														<SelectItem value="previous_period">
+															Previous period
+														</SelectItem>
+														<SelectItem value="previous_year">
+															Same period last year
+														</SelectItem>
+													</SelectContent>
+												</Select>
+											</div>
+										) : null}
+										{subject?.timeBasisFields ? (
+											<div className="space-y-2">
+												<Label>Count orders by</Label>
+												<Select
+													value={definition.timeBasis}
+													onValueChange={(value) => {
+														if (!value) return
+														update({
+															timeBasis: value as ReportDefinition['timeBasis'],
+														})
+													}}
+												>
+													<SelectTrigger className="w-full">
+														<SelectValue>
+															{definition.timeBasis === 'fulfillment'
+																? 'Fulfilment time'
+																: 'Placed time'}
+														</SelectValue>
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="placed">Placed time</SelectItem>
+														<SelectItem value="fulfillment">
+															Fulfilment time
+														</SelectItem>
+													</SelectContent>
+												</Select>
+											</div>
+										) : null}
+										{subject?.salesBasisField ? (
+											<div className="space-y-2">
+												<Label>Sales figure</Label>
+												<Select
+													value={definition.salesBasis}
+													onValueChange={(value) => {
+														if (!value) return
+														update({
+															salesBasis:
+																value as ReportDefinition['salesBasis'],
+														})
+													}}
+												>
+													<SelectTrigger className="w-full">
+														<SelectValue>
+															{definition.salesBasis === 'gross'
+																? 'Gross sales'
+																: 'Net sales'}
+														</SelectValue>
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="gross">Gross sales</SelectItem>
+														<SelectItem value="net">Net sales</SelectItem>
+													</SelectContent>
+												</Select>
+												<p className="text-muted-foreground text-xs leading-relaxed">
+													{SALES_BASIS_DEFINITIONS[definition.salesBasis]}
+												</p>
+											</div>
+										) : null}
 									</>
 								) : null}
 							</div>

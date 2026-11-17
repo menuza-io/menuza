@@ -1,0 +1,1 @@
+ALTER TABLE `UserOrganization` ADD `reportSalesBasis` text DEFAULT 'net' NOT NULL;

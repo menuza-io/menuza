@@ -151,12 +151,16 @@ export function segmentPercent(
  */
 export function segmentTableColumns(
 	hideCounts: boolean,
-	result: Pick<ReportResult, 'valueInfo'>,
+	result: Pick<ReportResult, 'valueInfo' | 'compare'>,
 ) {
 	const info = shownValueInfo(result)
+	const comparing = result.compare != null
 	return {
 		count: !hideCounts,
 		value: info,
-		percent: info?.measure !== 'average' && info?.measure !== 'ratio',
+		percent:
+			!comparing && info?.measure !== 'average' && info?.measure !== 'ratio',
+		previous: comparing,
+		change: comparing,
 	}
 }

@@ -1,5 +1,9 @@
 import { type ReportCatalog, type ReportSubject, getField } from './catalog.ts'
 import { isGiftCardReportSubject } from './catalog-gift-cards.ts'
+import {
+	isSalesReportSubject,
+	SALES_STAFF_FIELD_PERMISSION,
+} from './catalog-sales.ts'
 import { isReservationsReportSubject } from './catalog-reservations.ts'
 import {
 	STAFF_PAY_REPORT_PERMISSION,
@@ -32,18 +36,29 @@ function isGatedSubject(subject: string) {
 		isStaffingReportSubject(subject) ||
 		isReservationsReportSubject(subject) ||
 		isGiftCardReportSubject(subject) ||
+		isSalesReportSubject(subject) ||
 		isOrgWideReportSubject(subject) ||
 		isPermissionGatedReportSubject(subject)
 	)
 }
 
+/**
+ * Field permissions that take the field away when they are not granted: one
+ * person's pay, the staff name on a Station sale, and (on the sales subjects)
+ * the guest's name. Other `requiresSubject` fields stay listed and are refused
+ * when the report runs, as they always were.
+ */
 function fieldAvailable(
+	subjectId: string,
 	field: { requiresSubject?: string },
 	granted: ReadonlySet<string>,
 ) {
-	return (
-		field.requiresSubject !== STAFF_PAY_REPORT_PERMISSION ||
-		granted.has(STAFF_PAY_REPORT_PERMISSION)
+	const requires = field.requiresSubject
+	if (!requires || granted.has(requires)) return true
+	return !(
+		requires === STAFF_PAY_REPORT_PERMISSION ||
+		requires === SALES_STAFF_FIELD_PERMISSION ||
+		isSalesReportSubject(subjectId)
 	)
 }
 
@@ -58,7 +73,9 @@ export function catalogForGrants(
 		if (isGatedSubject(subject.id) && !set.has(subject.id)) continue
 		subjects.push({
 			...subject,
-			fields: subject.fields.filter((field) => fieldAvailable(field, set)),
+			fields: subject.fields.filter((field) =>
+				fieldAvailable(subject.id, field, set),
+			),
 		})
 	}
 	return { ...catalog, subjects }
@@ -83,7 +100,7 @@ export function definitionAllowed(
 	if (isGatedSubject(subject.id) && !set.has(subject.id)) return false
 	for (const id of referencedFieldIds(subject, definition)) {
 		const field = getField(subject, id)
-		if (field && !fieldAvailable(field, set)) return false
+		if (field && !fieldAvailable(subject.id, field, set)) return false
 	}
 	return true
 }

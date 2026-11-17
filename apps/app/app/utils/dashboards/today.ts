@@ -1,3 +1,4 @@
+import { SALES_BASIS_VALUES } from '@repo/common/sales-report-facts'
 import { z } from 'zod'
 
 /** A location the Today block can show, with the zone its business day follows. */
@@ -19,6 +20,9 @@ export type TodayAccess = {
 	coverLocationIds: string[]
 	tokenUrl: string
 	tenantApiUrl: string | null
+	/** The viewer's saved gross or net preference (#331). */
+	reportSalesBasis: (typeof SALES_BASIS_VALUES)[number]
+	reportSalesBasisUrl: string
 }
 
 export const NO_TODAY_ACCESS: TodayAccess = {
@@ -29,6 +33,8 @@ export const NO_TODAY_ACCESS: TodayAccess = {
 	coverLocationIds: [],
 	tokenUrl: '',
 	tenantApiUrl: null,
+	reportSalesBasis: 'net',
+	reportSalesBasisUrl: '',
 }
 
 const currencyTotalsSchema = z.object({
@@ -110,9 +116,13 @@ export function totalOrders(rows: readonly CurrencyTotals[]): number {
  * The query for `GET /analytics/today`: each location with its own zone, so
  * the region counts each location's own business day.
  */
-export function todayQuery(locations: readonly HomeLocation[]): string {
+export function todayQuery(
+	locations: readonly HomeLocation[],
+	salesBasis: (typeof SALES_BASIS_VALUES)[number] = 'net',
+): string {
 	return new URLSearchParams({
 		locationIds: locations.map((location) => location.id).join(','),
 		timeZones: locations.map((location) => location.timeZone).join(','),
+		salesBasis,
 	}).toString()
 }

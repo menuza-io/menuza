@@ -1,5 +1,7 @@
 import {
 	addDays,
+	daysBetween,
+	dayOfWeek,
 	formatDate,
 	isValidTimeZone,
 	localParts,
@@ -130,16 +132,53 @@ function subtractMonths(date: string, months: number): string {
 	return formatDate(targetYear, targetMonth, Math.min(day, lastDay))
 }
 
+/** Whether rolling presets include the current day, and where weeks start. */
+export type TimeframeOptions = {
+	/** Off, rolling ranges end with yesterday. On when left out. */
+	includeToday?: boolean
+	/** 0 (Sunday) to 6. Monday when left out, as weeks always were in reports. */
+	weekStart?: number
+}
+
+const ROLLING_DAYS: Partial<Record<TimeframePreset, number>> = {
+	last_7_days: 7,
+	last_14_days: 14,
+	last_21_days: 21,
+	last_28_days: 28,
+	last_30_days: 30,
+}
+
+const ROLLING_MONTHS: Partial<Record<TimeframePreset, number>> = {
+	last_3_months: 3,
+	last_6_months: 6,
+	last_12_months: 12,
+}
+
+function weekStartOf(options?: { weekStart?: number }) {
+	const day = options?.weekStart
+	return typeof day === 'number' &&
+		Number.isInteger(day) &&
+		day >= 0 &&
+		day <= 6
+		? day
+		: 1
+}
+
 /**
  * The instants a timeframe preset covers. Presets are whole local days in
  * `timeZone` (UTC unless given), so "today" starts at the zone's midnight even
  * when that day is 23 or 25 hours long. Custom ranges are absolute instants.
+ *
+ * Presets that end on a complete period (yesterday, last complete week or
+ * month, and any rolling preset with `includeToday` off) end one millisecond
+ * before the next local day begins, so that day's records are never in them.
  */
 export function resolveTimeframeRange(
 	preset: TimeframePreset,
 	now = new Date(),
 	custom?: { start?: string; end?: string },
 	timeZone: string = DEFAULT_REPORT_TIME_ZONE,
+	options: TimeframeOptions = {},
 ): { start: Date | null; end: Date } {
 	const end = new Date(now)
 	if (preset === 'all_time') return { start: null, end }
@@ -152,13 +191,193 @@ export function resolveTimeframeRange(
 
 	const zone = isValidTimeZone(timeZone) ? timeZone : DEFAULT_REPORT_TIME_ZONE
 	const today = localDateIn(now, zone)
-	let firstDay = today
-	if (preset === 'last_7_days') firstDay = addDays(today, -6)
-	else if (preset === 'last_30_days') firstDay = addDays(today, -29)
-	else if (preset === 'last_3_months') firstDay = subtractMonths(today, 3)
-	else if (preset === 'last_6_months') firstDay = subtractMonths(today, 6)
-	else if (preset === 'last_12_months') firstDay = subtractMonths(today, 12)
-	return { start: startOfLocalDay(firstDay, zone), end }
+	const includeToday = options.includeToday !== false
+	const endBefore = (date: string) =>
+		new Date(startOfLocalDay(date, zone).getTime() - 1)
+	const from = (date: string, last = end) => ({
+		start: startOfLocalDay(date, zone),
+		end: last,
+	})
+	const rollingEnd = includeToday ? end : endBefore(today)
+
+	if (preset === 'today') return from(today)
+	if (preset === 'yesterday') return from(addDays(today, -1), endBefore(today))
+	if (preset === 'last_complete_week') {
+		const thisWeek = weekStartFor(today, weekStartOf(options))
+		return from(addDays(thisWeek, -7), endBefore(thisWeek))
+	}
+	if (preset === 'last_complete_month') {
+		const thisMonth = `${monthKey(today)}-01`
+		return from(subtractMonths(thisMonth, 1), endBefore(thisMonth))
+	}
+	if (preset === 'month_to_date') {
+		return from(`${monthKey(today)}-01`, rollingEnd)
+	}
+	const days = ROLLING_DAYS[preset]
+	if (days) {
+		// With today left out the range still holds `days` whole days.
+		return from(addDays(today, includeToday ? 1 - days : -days), rollingEnd)
+	}
+	const months = ROLLING_MONTHS[preset]
+	if (months) return from(subtractMonths(today, months), rollingEnd)
+	return from(today)
+}
+
+/** The range a definition's timeframe covers in `timeZone`. */
+export function definitionRange(
+	definition: Pick<ReportDefinition, 'timeframe' | 'settings'>,
+	now: Date,
+	timeZone: string,
+	options: { weekStart?: number } = {},
+) {
+	return resolveTimeframeRange(
+		definition.timeframe.preset,
+		now,
+		definition.timeframe,
+		timeZone,
+		{
+			includeToday: definition.settings.includeToday,
+			weekStart: options.weekStart,
+		},
+	)
+}
+
+const DAY_MS = 86_400_000
+
+/** `date` moved by whole local days in `zone`, keeping its local time of day. */
+function shiftLocalDays(date: Date, days: number, zone: string): Date {
+	const parts = localParts(date.getTime(), zone)
+	const { year, month, day } = parseDate(
+		addDays(formatDate(parts.year, parts.month, parts.day), days),
+	)
+	const minute = zonedLocalToUtc(
+		year,
+		month,
+		day,
+		parts.hour,
+		parts.minute,
+		zone,
+	)
+	// Seconds and milliseconds ride along (zone offsets are whole minutes here).
+	return new Date(minute + (((date.getTime() % 60_000) + 60_000) % 60_000))
+}
+
+/** `date` moved back by calendar months in `zone`, keeping its local time of day. */
+function shiftLocalMonths(date: Date, months: number, zone: string): Date {
+	const parts = localParts(date.getTime(), zone)
+	const { year, month, day } = parseDate(
+		subtractMonths(formatDate(parts.year, parts.month, parts.day), months),
+	)
+	const minute = zonedLocalToUtc(
+		year,
+		month,
+		day,
+		parts.hour,
+		parts.minute,
+		zone,
+	)
+	return new Date(minute + (((date.getTime() % 60_000) + 60_000) % 60_000))
+}
+
+/** A year back is 52 weeks, so weekdays line up. */
+const PREVIOUS_YEAR_DAYS = 364
+
+/**
+ * The earlier range a comparison reads, or null when the report compares
+ * nothing or its range has no start.
+ *
+ * - Previous period: the same length immediately before the range. Calendar
+ *   month presets step back one calendar month instead (October against
+ *   September, not against the 31 days before October).
+ * - Previous year: both ends moved back 52 weeks.
+ *
+ * Shifts are whole local days in `timeZone`, so a daylight-saving change in
+ * between does not move the edges by an hour.
+ */
+export function comparisonRange(
+	definition: Pick<ReportDefinition, 'timeframe' | 'compare'>,
+	range: { start: Date | null; end: Date },
+	timeZone: string,
+): { start: Date; end: Date } | null {
+	if (definition.compare === 'none' || !range.start) return null
+	const zone = isValidTimeZone(timeZone) ? timeZone : DEFAULT_REPORT_TIME_ZONE
+	if (definition.compare === 'previous_year') {
+		return {
+			start: shiftLocalDays(range.start, -PREVIOUS_YEAR_DAYS, zone),
+			end: shiftLocalDays(range.end, -PREVIOUS_YEAR_DAYS, zone),
+		}
+	}
+	const justBefore = new Date(range.start.getTime() - 1)
+	const preset = definition.timeframe.preset
+	if (preset === 'last_complete_month') {
+		return { start: shiftLocalMonths(range.start, 1, zone), end: justBefore }
+	}
+	if (preset === 'month_to_date') {
+		const shifted = shiftLocalMonths(range.end, 1, zone)
+		return {
+			start: shiftLocalMonths(range.start, 1, zone),
+			end: shifted < justBefore ? shifted : justBefore,
+		}
+	}
+	if (preset === 'custom') {
+		const length = Math.max(0, range.end.getTime() - range.start.getTime())
+		return { start: new Date(justBefore.getTime() - length), end: justBefore }
+	}
+	const days =
+		daysBetween(localDateIn(range.start, zone), localDateIn(range.end, zone)) +
+		1
+	return {
+		start: shiftLocalDays(range.start, -days, zone),
+		end: shiftLocalDays(range.end, -days, zone),
+	}
+}
+
+/** Longest range a report with a comparison may cover: it reads two ranges. */
+export const COMPARE_MAX_RANGE_DAYS = 200
+
+/** A range's length in days (fractions kept). */
+function rangeDays(range: { start: Date; end: Date }) {
+	return (range.end.getTime() - range.start.getTime()) / DAY_MS
+}
+
+/**
+ * Refuses a range a run may not cover: a comparison needs a start and at most
+ * {@link COMPARE_MAX_RANGE_DAYS} days, and a subject may cap its own range
+ * (`maxRangeDays`). A day of slack covers the partial current day.
+ */
+function rangeError(
+	subject: ReportSubject,
+	definition: ReportDefinition,
+	now: Date,
+): ReportRunError | null {
+	if (isListReport(definition) && !subject.maxRangeDays) return null
+	const range = definitionRange(definition, now, DEFAULT_REPORT_TIME_ZONE)
+	const comparing = definition.compare !== 'none' && !isListReport(definition)
+	if (comparing && !range.start) {
+		return {
+			error: 'invalid_definition',
+			message: 'Choose a time range with a start date to compare periods.',
+		}
+	}
+	const limits = [
+		...(comparing ? [COMPARE_MAX_RANGE_DAYS] : []),
+		...(subject.maxRangeDays ? [subject.maxRangeDays] : []),
+	]
+	if (limits.length === 0) return null
+	const limit = Math.min(...limits)
+	if (
+		!range.start ||
+		rangeDays({ start: range.start, end: range.end }) > limit + 1
+	) {
+		return {
+			error: 'report_range_too_long',
+			message:
+				comparing && limit === COMPARE_MAX_RANGE_DAYS
+					? `Comparing periods works for ranges of up to ${COMPARE_MAX_RANGE_DAYS} days. Choose a shorter range or turn the comparison off.`
+					: `This report can cover up to ${limit} days at a time. Choose a shorter range.`,
+		}
+	}
+	return null
 }
 
 /** No zone is more than this far from UTC. */
@@ -173,8 +392,9 @@ export function timeframeLoadWindow(
 	preset: TimeframePreset,
 	now = new Date(),
 	custom?: { start?: string; end?: string },
+	options: TimeframeOptions = {},
 ): { start: Date | null; end: Date } {
-	const range = resolveTimeframeRange(preset, now, custom, 'UTC')
+	const range = resolveTimeframeRange(preset, now, custom, 'UTC', options)
 	if (preset === 'custom') return range
 	return {
 		start: range.start
@@ -184,30 +404,89 @@ export function timeframeLoadWindow(
 	}
 }
 
-export function timeframePresetLabel(preset: TimeframePreset): string {
-	switch (preset) {
-		case 'today':
-			return 'Today'
-		case 'last_7_days':
-			return 'Last 7 days'
-		case 'last_30_days':
-			return 'Last 30 days'
-		case 'last_3_months':
-			return 'Last 3 months'
-		case 'last_6_months':
-			return 'Last 6 months'
-		case 'last_12_months':
-			return 'Last 12 months'
-		case 'all_time':
-			return 'All time'
-		case 'custom':
-			return 'Custom range'
+/**
+ * The definition a data loader should be handed: the same report with its
+ * timeframe replaced by one absolute window that covers everything the run
+ * reads, in any zone. That is the report's own range and, when it compares
+ * periods, the earlier range too. Loaders only narrow by the timeframe, so
+ * they need to know nothing about presets, "include today" or comparisons;
+ * the engine cuts the exact ranges from what they return.
+ *
+ * Ranges without a start (all time) are returned unchanged.
+ */
+export function definitionForLoading(
+	definition: ReportDefinition,
+	now = new Date(),
+	options: { weekStart?: number } = {},
+): ReportDefinition {
+	const range = definitionRange(definition, now, 'UTC', options)
+	if (!range.start) return definition
+	const earlier = isListReport(definition)
+		? null
+		: comparisonRange(definition, range, 'UTC')
+	// Custom ranges are absolute instants, so they need no room for zones.
+	const pad = definition.timeframe.preset === 'custom' ? 0 : MAX_ZONE_OFFSET_MS
+	const start = earlier ? earlier.start : range.start
+	return {
+		...definition,
+		timeframe: {
+			field: definition.timeframe.field,
+			preset: 'custom',
+			start: new Date(start.getTime() - pad).toISOString(),
+			end: new Date(range.end.getTime() + pad).toISOString(),
+		},
 	}
 }
 
+const PRESET_LABELS: Record<TimeframePreset, string> = {
+	today: 'Today',
+	yesterday: 'Yesterday',
+	last_7_days: 'Last 7 days',
+	last_14_days: 'Last 14 days',
+	last_21_days: 'Last 21 days',
+	last_28_days: 'Last 28 days',
+	last_30_days: 'Last 30 days',
+	last_3_months: 'Last 3 months',
+	last_6_months: 'Last 6 months',
+	last_12_months: 'Last 12 months',
+	last_complete_week: 'Last complete week',
+	last_complete_month: 'Last complete month',
+	month_to_date: 'Month to date',
+	all_time: 'All time',
+	custom: 'Custom range',
+}
+
+export function timeframePresetLabel(preset: TimeframePreset): string {
+	return PRESET_LABELS[preset]
+}
+
+/** Rolling presets, which "include today" changes. */
+export function presetFollowsIncludeToday(preset: TimeframePreset) {
+	return (
+		preset in ROLLING_DAYS ||
+		preset in ROLLING_MONTHS ||
+		preset === 'month_to_date'
+	)
+}
+
 export function timeBucketLabel(bucket: TimeBucket): string {
-	if (bucket === 'day') return 'Daily'
-	return bucket === 'week' ? 'Weekly' : 'Monthly'
+	switch (bucket) {
+		case 'day':
+			return 'Daily'
+		case 'week':
+			return 'Weekly'
+		case 'month':
+			return 'Monthly'
+		case 'hour_of_day':
+			return 'Hour of day'
+		case 'day_of_week':
+			return 'Day of week'
+	}
+}
+
+/** Buckets that fold time (every Monday together), not a timeline. */
+export function isCyclicTimeBucket(bucket: TimeBucket) {
+	return bucket === 'hour_of_day' || bucket === 'day_of_week'
 }
 
 /**
@@ -217,6 +496,40 @@ export function timeBucketLabel(bucket: TimeBucket): string {
 type ZoneContext = {
 	subject: ReportSubject
 	reportZone: string
+	weekStart: number
+}
+
+/**
+ * The record field a datetime field is read from. On an order subject counted
+ * by fulfilment time, the placed-time field stands for the fulfilment time
+ * (#310), in the timeframe and in every grouping alike, so a comparison uses
+ * one basis for both periods.
+ */
+export function timeBasisFieldId(
+	subject: ReportSubject,
+	definition: Pick<ReportDefinition, 'timeBasis'>,
+	fieldId: string,
+): string {
+	const basis = subject.timeBasisFields
+	return basis &&
+		definition.timeBasis === 'fulfillment' &&
+		fieldId === basis.placed
+		? basis.fulfillment
+		: fieldId
+}
+
+/**
+ * The field a measured field id stands for: the one "Sales" figure reads the
+ * gross or the net field, as the definition's `salesBasis` says (#331).
+ */
+export function salesBasisFieldId(
+	subject: ReportSubject,
+	definition: Pick<ReportDefinition, 'salesBasis'>,
+	fieldId: string,
+): string {
+	const basis = subject.salesBasisField
+	if (!basis || fieldId !== basis.field) return fieldId
+	return definition.salesBasis === 'gross' ? basis.gross : basis.net
 }
 
 /**
@@ -245,29 +558,51 @@ function zoneOf(record: ReportRecord, zones: ZoneContext): string {
 	return zones.reportZone
 }
 
-function inTimeframe(
-	record: ReportRecord,
+type Range = { start: Date | null; end: Date }
+
+/** The report's range and the earlier one it compares with, per zone. */
+type ZoneRanges = { current: Range; previous: Range | null }
+
+function rangesFor(
+	zone: string,
 	definition: ReportDefinition,
 	now: Date,
 	zones: ZoneContext,
-	ranges: Map<string, { start: Date | null; end: Date }>,
-): boolean {
-	const value = asDate(record[definition.timeframe.field])
-	if (!value) return false
-	const zone = zoneOf(record, zones)
-	let range = ranges.get(zone)
-	if (!range) {
-		range = resolveTimeframeRange(
-			definition.timeframe.preset,
-			now,
-			definition.timeframe,
-			zone,
-		)
-		ranges.set(zone, range)
+	cache: Map<string, ZoneRanges>,
+): ZoneRanges {
+	let ranges = cache.get(zone)
+	if (!ranges) {
+		const current = definitionRange(definition, now, zone, zones)
+		ranges = {
+			current,
+			previous: isListReport(definition)
+				? null
+				: comparisonRange(definition, current, zone),
+		}
+		cache.set(zone, ranges)
 	}
-	if (range.start && value < range.start) return false
-	if (value > range.end) return false
-	return true
+	return ranges
+}
+
+function inRange(value: Date, range: Range) {
+	return !(range.start && value < range.start) && !(value > range.end)
+}
+
+/** Which of a run's two periods a record falls in, if either. */
+function periodOf(
+	record: ReportRecord,
+	timeField: string,
+	definition: ReportDefinition,
+	now: Date,
+	zones: ZoneContext,
+	cache: Map<string, ZoneRanges>,
+): 'current' | 'previous' | null {
+	const value = asDate(record[timeField])
+	if (!value) return null
+	const ranges = rangesFor(zoneOf(record, zones), definition, now, zones, cache)
+	if (inRange(value, ranges.current)) return 'current'
+	if (ranges.previous && inRange(value, ranges.previous)) return 'previous'
+	return null
 }
 
 function matchesCondition(
@@ -336,9 +671,9 @@ function monthKey(date: string): string {
 	return date.slice(0, 7)
 }
 
-/** Weeks start on Monday, as they always have in reports. */
-function weekKey(date: string): string {
-	return weekStartFor(date, 1)
+/** Weeks start on Monday unless the caller says otherwise. */
+function weekKey(date: string, weekStart = 1): string {
+	return weekStartFor(date, weekStart)
 }
 
 function formatMonthLabel(date: string): string {
@@ -358,8 +693,8 @@ function formatDayLabel(date: string): string {
 	})
 }
 
-function formatWeekLabel(date: string): string {
-	const first = weekKey(date)
+function formatWeekLabel(date: string, weekStart = 1): string {
+	const first = weekKey(date, weekStart)
 	const start = calendarDate(first)
 	const end = calendarDate(addDays(first, 6))
 	const sameYear = start.getUTCFullYear() === end.getUTCFullYear()
@@ -378,14 +713,48 @@ function formatWeekLabel(date: string): string {
 	return `${startLabel} – ${endLabel}`
 }
 
+const WEEKDAY_NAMES = [
+	'Sunday',
+	'Monday',
+	'Tuesday',
+	'Wednesday',
+	'Thursday',
+	'Friday',
+	'Saturday',
+]
+
+/** Hour-of-day bucket: the key sorts as text, the label is the 24-hour clock. */
+function hourBucket(hour: number) {
+	const text = String(hour).padStart(2, '0')
+	return { key: text, label: `${text}:00` }
+}
+
+/**
+ * Day-of-week bucket. The key is the day's place in the week (1 is the day
+ * the week starts on), so the segments sort in week order.
+ */
+function weekdayBucket(weekday: number, weekStart: number) {
+	return {
+		key: String(((weekday - weekStart + 7) % 7) + 1),
+		label: WEEKDAY_NAMES[weekday] ?? 'Unspecified',
+	}
+}
+
 /** The bucket a local calendar date belongs to. */
 function bucketOfDate(
 	date: string,
 	timeBucket: TimeBucket,
+	weekStart = 1,
 ): { key: string; label: string } {
 	if (timeBucket === 'day') return { key: date, label: formatDayLabel(date) }
 	if (timeBucket === 'week') {
-		return { key: weekKey(date), label: formatWeekLabel(date) }
+		return {
+			key: weekKey(date, weekStart),
+			label: formatWeekLabel(date, weekStart),
+		}
+	}
+	if (timeBucket === 'day_of_week') {
+		return weekdayBucket(dayOfWeek(date), weekStart)
 	}
 	return { key: monthKey(date), label: formatMonthLabel(date) }
 }
@@ -394,10 +763,29 @@ function datetimeBucket(
 	value: unknown,
 	timeBucket: TimeBucket,
 	timeZone: string,
+	weekStart = 1,
 ): { key: string; label: string } {
 	const date = asDate(value)
 	if (!date) return { key: 'unspecified', label: 'Unspecified' }
-	return bucketOfDate(localDateIn(date, timeZone), timeBucket)
+	if (timeBucket === 'hour_of_day') {
+		return hourBucket(localParts(date.getTime(), timeZone).hour)
+	}
+	return bucketOfDate(localDateIn(date, timeZone), timeBucket, weekStart)
+}
+
+/** The first and last local day a timeline bucket covers. */
+function bucketDays(
+	key: string,
+	timeBucket: TimeBucket,
+): { first: string; last: string } | null {
+	if (timeBucket === 'day') return { first: key, last: key }
+	if (timeBucket === 'week') return { first: key, last: addDays(key, 6) }
+	if (timeBucket === 'month') {
+		const { year, month } = parseDate(`${key}-01`)
+		const days = new Date(Date.UTC(year, month, 0)).getUTCDate()
+		return { first: `${key}-01`, last: formatDate(year, month, days) }
+	}
+	return null
 }
 
 /**
@@ -417,10 +805,13 @@ function segmentValue(
 	field: ReportField,
 	timeBucket: TimeBucket,
 	timeZone: string,
+	/** The record field to read, when another stands in for `field` (#310). */
+	readId = field.id,
+	weekStart = 1,
 ): { key: string; label: string } {
-	const raw = record[field.id]
+	const raw = record[readId]
 	if (field.type === 'datetime') {
-		return datetimeBucket(raw, timeBucket, timeZone)
+		return datetimeBucket(raw, timeBucket, timeZone, weekStart)
 	}
 	if (field.type === 'boolean') {
 		const key = asString(raw) || 'unspecified'
@@ -511,8 +902,18 @@ function iterateTimeBuckets(
 	startDate: string,
 	endDate: string,
 	timeBucket: TimeBucket,
+	weekStart = 1,
 ): Array<{ key: string; label: string }> {
 	const buckets: Array<{ key: string; label: string }> = []
+	// Folded time has the same slots whatever the range.
+	if (timeBucket === 'hour_of_day') {
+		return Array.from({ length: 24 }, (_unused, hour) => hourBucket(hour))
+	}
+	if (timeBucket === 'day_of_week') {
+		return Array.from({ length: 7 }, (_unused, index) =>
+			weekdayBucket((weekStart + index) % 7, weekStart),
+		)
+	}
 	if (startDate > endDate) return buckets
 	if (timeBucket === 'month') {
 		let cursor = `${monthKey(startDate)}-01`
@@ -528,10 +929,10 @@ function iterateTimeBuckets(
 		return buckets
 	}
 	const step = timeBucket === 'week' ? 7 : 1
-	let cursor = timeBucket === 'week' ? weekKey(startDate) : startDate
-	const last = timeBucket === 'week' ? weekKey(endDate) : endDate
+	let cursor = timeBucket === 'week' ? weekKey(startDate, weekStart) : startDate
+	const last = timeBucket === 'week' ? weekKey(endDate, weekStart) : endDate
 	while (cursor <= last) {
-		buckets.push(bucketOfDate(cursor, timeBucket))
+		buckets.push(bucketOfDate(cursor, timeBucket, weekStart))
 		if (buckets.length > MAX_FILLED_BUCKETS) return []
 		cursor = addDays(cursor, step)
 	}
@@ -561,9 +962,27 @@ function ratioParts(subject: ReportSubject, field: ReportField) {
 	return { numerator, denominator, unit: field.ratio.unit }
 }
 
+/** `ratioParts` with the "Sales" figure resolved to gross or net. */
+function resolvedRatioParts(
+	subject: ReportSubject,
+	definition: Pick<ReportDefinition, 'salesBasis'>,
+	field: ReportField,
+) {
+	const parts = ratioParts(subject, field)
+	if (!parts) return null
+	const resolve = (part: ReportField) =>
+		getField(subject, salesBasisFieldId(subject, definition, part.id)) ?? part
+	return {
+		...parts,
+		numerator: resolve(parts.numerator),
+		denominator: resolve(parts.denominator),
+	}
+}
+
 export function validateReportDefinition(
 	catalog: ReportCatalog,
 	definition: ReportDefinition,
+	now = new Date(),
 ): ReportRunError | null {
 	const subject = getSubject(catalog, definition.subject)
 	if (!subject) {
@@ -594,7 +1013,9 @@ export function validateReportDefinition(
 	}
 	const { measure, valueField } = definition.visualization
 	if (measuresAValueField(measure) && !isListReport(definition)) {
-		const field = valueField ? getField(subject, valueField) : null
+		const field = valueField
+			? getField(subject, salesBasisFieldId(subject, definition, valueField))
+			: null
 		const usable =
 			field !== null &&
 			valueMeasureLabel(measure as ValueMeasure | 'ratio', field) !== null &&
@@ -627,7 +1048,7 @@ export function validateReportDefinition(
 			message: "Select at least one 'Group Results By' field to see results.",
 		}
 	}
-	return null
+	return rangeError(subject, definition, now)
 }
 
 /**
@@ -644,6 +1065,8 @@ export function referencedFieldIds(
 		definition.timeframe.field,
 		...definition.groupBy,
 	])
+	// Counted by fulfilment time, the placed-time field reads the fulfilment one.
+	for (const id of [...ids]) ids.add(timeBasisFieldId(subject, definition, id))
 	for (const condition of flattenFilterConditions(definition.filters)) {
 		ids.add(condition.field)
 	}
@@ -659,10 +1082,13 @@ export function referencedFieldIds(
 	) {
 		const valueField = definition.visualization.valueField
 		ids.add(valueField)
+		ids.add(salesBasisFieldId(subject, definition, valueField))
 		const field = getField(subject, valueField)
 		if (field?.type === 'ratio' && field.ratio) {
-			ids.add(field.ratio.numerator)
-			ids.add(field.ratio.denominator)
+			for (const part of [field.ratio.numerator, field.ratio.denominator]) {
+				ids.add(part)
+				ids.add(salesBasisFieldId(subject, definition, part))
+			}
 		}
 	}
 	return ids
@@ -684,9 +1110,14 @@ function listResult(
 		.filter((field): field is ReportField => Boolean(field))
 		.map((field) => ({ id: field.id, label: field.label }))
 
+	const timeField = timeBasisFieldId(
+		subject,
+		definition,
+		definition.timeframe.field,
+	)
 	const sorted = [...matched].sort((a, b) => {
-		const left = asDate(a[definition.timeframe.field])?.getTime() ?? 0
-		const right = asDate(b[definition.timeframe.field])?.getTime() ?? 0
+		const left = asDate(a[timeField])?.getTime() ?? 0
+		const right = asDate(b[timeField])?.getTime() ?? 0
 		return right - left
 	})
 	const truncated = sorted.length > MAX_LIST_ROWS
@@ -711,6 +1142,7 @@ function listResult(
 		truncated,
 		refreshedAt: now.toISOString(),
 		timeZone: zones.reportZone,
+		...(subject.timeBasisFields ? { timeBasis: definition.timeBasis } : {}),
 	}
 }
 
@@ -720,6 +1152,87 @@ export type RunReportOptions = {
 	 * {@link resolveReportTimeZone}). UTC when omitted.
 	 */
 	timeZone?: string
+	/** The day weeks start on, 0 (Sunday) to 6. Monday when omitted. */
+	weekStart?: number
+}
+
+type Bucket = { label: string; tally: ValueTally; currency?: string }
+
+/** One period's records, tallied overall and per group. */
+function tallyPeriod(
+	records: readonly ReportRecord[],
+	groups: ReadonlyArray<{ field: ReportField; readId: string }>,
+	definition: ReportDefinition,
+	zones: ZoneContext,
+	valued: Measured | null,
+	/** Set when each currency gets its own segments. */
+	currencySubject: ReportSubject | null,
+) {
+	const overall = emptyTally()
+	const buckets = new Map<string, Bucket>()
+	for (const record of records) {
+		addToTally(overall, record, valued)
+		if (groups.length === 0) continue
+		const zone = zoneOf(record, zones)
+		const parts = groups.map(({ field, readId }) =>
+			segmentValue(
+				record,
+				field,
+				definition.timeBucket,
+				zone,
+				readId,
+				zones.weekStart,
+			),
+		)
+		const currency = currencySubject
+			? recordCurrency(record, currencySubject)
+			: ''
+		if (currencySubject) {
+			parts.push({ key: currency || 'unspecified', label: currency || '—' })
+		}
+		const key = parts.map((part) => part.key).join(' / ')
+		let bucket = buckets.get(key)
+		if (!bucket) {
+			bucket = {
+				label: parts.map((part) => part.label).join(' / '),
+				tally: emptyTally(),
+				...(currency ? { currency } : {}),
+			}
+			buckets.set(key, bucket)
+		}
+		addToTally(bucket.tally, record, valued)
+	}
+	return { overall, buckets }
+}
+
+/** The change from `previous` to `current`, in a number and in words. */
+export function describeChange(
+	current: number | undefined,
+	previous: number | undefined,
+): { changePercent?: number; changeLabel?: string } {
+	// Nothing to divide by: a change from zero is shown as no percentage.
+	if (current === undefined || previous === undefined || previous === 0) {
+		return {}
+	}
+	const changePercent = ((current - previous) / Math.abs(previous)) * 100
+	const amount = `${formatNumber(Math.abs(changePercent), { locale: 'en-US' })}%`
+	const rounded = Math.round(changePercent * 10) / 10
+	return {
+		changePercent,
+		changeLabel:
+			rounded === 0
+				? 'No change'
+				: rounded > 0
+					? `Up ${amount}`
+					: `Down ${amount}`,
+	}
+}
+
+function periodOfRange(range: Range) {
+	return {
+		start: range.start ? range.start.toISOString() : null,
+		end: range.end.toISOString(),
+	}
 }
 
 export function runReport(
@@ -729,118 +1242,268 @@ export function runReport(
 	now = new Date(),
 	options: RunReportOptions = {},
 ): ReportResult | ReportRunError {
-	const error = validateReportDefinition(catalog, definition)
+	const error = validateReportDefinition(catalog, definition, now)
 	if (error) return error
 	const subject = getSubject(catalog, definition.subject) as ReportSubject
 	const reportZone =
 		options.timeZone && isValidTimeZone(options.timeZone)
 			? options.timeZone
 			: DEFAULT_REPORT_TIME_ZONE
-	const zones: ZoneContext = { subject, reportZone }
-	const ranges = new Map<string, { start: Date | null; end: Date }>()
-
-	const matched = records.filter(
-		(record) =>
-			inTimeframe(record, definition, now, zones, ranges) &&
-			matchesGroup(record, definition.filters),
+	const zones: ZoneContext = {
+		subject,
+		reportZone,
+		weekStart: weekStartOf(options),
+	}
+	const rangeCache = new Map<string, ZoneRanges>()
+	const timeField = timeBasisFieldId(
+		subject,
+		definition,
+		definition.timeframe.field,
 	)
+
+	const matched: ReportRecord[] = []
+	const earlier: ReportRecord[] = []
+	for (const record of records) {
+		const period = periodOf(
+			record,
+			timeField,
+			definition,
+			now,
+			zones,
+			rangeCache,
+		)
+		if (!period || !matchesGroup(record, definition.filters)) continue
+		;(period === 'current' ? matched : earlier).push(record)
+	}
 
 	if (isListReport(definition)) {
 		return listResult(subject, definition, matched, now, zones)
 	}
 
-	const measured = measuredValue(subject, definition, matched)
-	// Amounts in different currencies can't be added together, so a mixed
-	// result keeps its value info for the notice but measures nothing.
+	const ranges = rangesFor(reportZone, definition, now, zones, rangeCache)
+	const comparing = ranges.previous !== null
+	// Currencies are looked for across both periods: a comparison of amounts in
+	// two currencies is as meaningless as their sum.
+	const measured = measuredValue(
+		subject,
+		definition,
+		comparing ? [...matched, ...earlier] : matched,
+		matched,
+	)
+	const ungrouped =
+		definition.visualization.chartStyle === 'single_number' ||
+		definition.groupBy.length === 0
+	// Several currencies can't be added together. On a subject that splits
+	// them, a grouped report gives each currency its own segments; otherwise
+	// the result keeps its value info for the notice and measures nothing.
+	const splitCurrencies = Boolean(
+		measured?.info.mixedCurrencies &&
+		!ungrouped &&
+		subject.splitCurrencies &&
+		subject.currencyField,
+	)
+	if (measured && splitCurrencies) {
+		delete measured.info.mixedCurrencies
+		measured.info.currencySplit = true
+	}
 	const valued = measured?.info.mixedCurrencies ? null : measured
 	const valueOf = (tally: ValueTally) =>
 		valued ? tallyValue(tally, valued) : undefined
+	/** The figure a comparison sets side by side: the measured value, else the count. */
+	const metricOf = (tally: ValueTally) =>
+		valued ? tallyValue(tally, valued) : tally.count
 
-	if (
-		definition.visualization.chartStyle === 'single_number' ||
-		definition.groupBy.length === 0
-	) {
-		const tally = emptyTally()
-		for (const record of matched) addToTally(tally, record, valued)
-		const value = valueOf(tally)
+	const groupFields = ungrouped
+		? []
+		: definition.groupBy
+				.map((id) => getField(subject, id))
+				.filter((field): field is ReportField => Boolean(field))
+				.map((field) => ({
+					field,
+					readId: timeBasisFieldId(subject, definition, field.id),
+				}))
+	const currencySubject = splitCurrencies ? subject : null
+	const current = tallyPeriod(
+		matched,
+		groupFields,
+		definition,
+		zones,
+		valued,
+		currencySubject,
+	)
+	const previous = comparing
+		? tallyPeriod(
+				earlier,
+				groupFields,
+				definition,
+				zones,
+				valued,
+				currencySubject,
+			)
+		: null
+
+	const shared = {
+		...(measured ? { valueInfo: measured.info } : {}),
+		refreshedAt: now.toISOString(),
+		timeZone: reportZone,
+		period: periodOfRange(ranges.current),
+		...(ranges.previous && definition.compare !== 'none'
+			? {
+					previousPeriod: periodOfRange(ranges.previous),
+					compare: definition.compare,
+				}
+			: {}),
+		...(subject.timeBasisFields ? { timeBasis: definition.timeBasis } : {}),
+		...(measured?.salesBasis ? { salesBasis: measured.salesBasis } : {}),
+	} satisfies Partial<ReportResult>
+	const total = matched.length
+	const overallValue = splitCurrencies ? undefined : valueOf(current.overall)
+	const overallChange = previous
+		? (() => {
+				const before = splitCurrencies ? undefined : metricOf(previous.overall)
+				return {
+					...(before === undefined ? {} : { previousValue: before }),
+					...describeChange(
+						splitCurrencies ? undefined : metricOf(current.overall),
+						before,
+					),
+				}
+			})()
+		: {}
+
+	if (ungrouped) {
 		return {
-			total: matched.length,
-			...(measured ? { valueInfo: measured.info } : {}),
-			...(valued ? { value } : {}),
+			total,
+			...(valued ? { value: overallValue } : {}),
+			...overallChange,
 			segments: [
 				{
 					key: 'total',
 					label: subject.label,
-					count: matched.length,
+					count: total,
 					percent: 100,
-					...(valued ? { value } : {}),
+					...(valued ? { value: overallValue } : {}),
+					...overallChange,
 				},
 			],
-			refreshedAt: now.toISOString(),
-			timeZone: reportZone,
+			...shared,
 		}
 	}
 
-	const groupFields = definition.groupBy
-		.map((id) => getField(subject, id))
-		.filter((field): field is ReportField => Boolean(field))
 	const timeGrouped =
-		groupFields.length === 1 && groupFields[0]?.type === 'datetime'
+		groupFields.length === 1 &&
+		groupFields[0]?.field.type === 'datetime' &&
+		!splitCurrencies
+	const cyclic = isCyclicTimeBucket(definition.timeBucket)
+	/** A timeline: buckets are periods in order, so they can be incomplete. */
+	const timeline = timeGrouped && !cyclic
 
-	const overall = emptyTally()
-	const buckets = new Map<string, { label: string; tally: ValueTally }>()
-	for (const record of matched) {
-		const zone = zoneOf(record, zones)
-		const parts = groupFields.map((field) =>
-			segmentValue(record, field, definition.timeBucket, zone),
-		)
-		const key = parts.map((part) => part.key).join(' / ')
-		const label = parts.map((part) => part.label).join(' / ')
-		let bucket = buckets.get(key)
-		if (!bucket) {
-			bucket = { label, tally: emptyTally() }
-			buckets.set(key, bucket)
+	const fillFrom = (range: Range, records: readonly ReportRecord[]) => {
+		const readId = groupFields[0]?.readId ?? ''
+		let earliest: Date | null = null
+		for (const record of records) {
+			const date = asDate(record[readId])
+			if (date && (!earliest || date < earliest)) earliest = date
 		}
-		addToTally(bucket.tally, record, valued)
-		addToTally(overall, record, valued)
+		const first = range.start ?? earliest
+		return first
+			? iterateTimeBuckets(
+					localDateIn(first, reportZone),
+					localDateIn(range.end, reportZone),
+					definition.timeBucket,
+					zones.weekStart,
+				)
+			: []
 	}
-
-	if (timeGrouped && matched.length > 0) {
-		const range =
-			ranges.get(reportZone) ??
-			resolveTimeframeRange(
-				definition.timeframe.preset,
-				now,
-				definition.timeframe,
-				reportZone,
-			)
-		const earliest =
-			matched
-				.map((record) => asDate(record[definition.groupBy[0] ?? '']))
-				.filter((date): date is Date => Boolean(date))
-				.sort((a, b) => a.getTime() - b.getTime())[0] ?? now
-		const fillStart = localDateIn(range.start ?? earliest, reportZone)
-		const fillEnd = localDateIn(range.end, reportZone)
-		for (const slot of iterateTimeBuckets(
-			fillStart,
-			fillEnd,
-			definition.timeBucket,
-		)) {
-			if (!buckets.has(slot.key)) {
-				buckets.set(slot.key, { label: slot.label, tally: emptyTally() })
+	if (
+		timeGrouped &&
+		(matched.length > 0 || (comparing && earlier.length > 0))
+	) {
+		for (const slot of fillFrom(ranges.current, matched)) {
+			if (!current.buckets.has(slot.key)) {
+				current.buckets.set(slot.key, {
+					label: slot.label,
+					tally: emptyTally(),
+				})
 			}
 		}
 	}
 
-	const total = matched.length
+	// Which earlier bucket each bucket is set against. Timelines pair the
+	// periods in order (the third day with the third day); everything else
+	// pairs by key (Monday with Monday, a channel with itself).
+	const earlierOf = new Map<string, Bucket & { key: string }>()
+	if (previous && ranges.previous) {
+		if (timeline) {
+			const slots = fillFrom(ranges.previous, earlier)
+			const keys = [...current.buckets.keys()].sort((a, b) =>
+				a.localeCompare(b),
+			)
+			keys.forEach((key, index) => {
+				const slot = slots[index]
+				if (!slot) return
+				const bucket = previous.buckets.get(slot.key)
+				earlierOf.set(key, {
+					key: slot.key,
+					label: slot.label,
+					tally: bucket?.tally ?? emptyTally(),
+				})
+			})
+		} else {
+			for (const [key, bucket] of previous.buckets) {
+				earlierOf.set(key, { key, ...bucket })
+				// A group that sold before and not now still shows, as a drop.
+				if (!current.buckets.has(key)) {
+					current.buckets.set(key, {
+						label: bucket.label,
+						tally: emptyTally(),
+						...(bucket.currency ? { currency: bucket.currency } : {}),
+					})
+				}
+			}
+		}
+	}
+
+	const today = localDateIn(now, reportZone)
+	const firstDay = ranges.current.start
+		? localDateIn(ranges.current.start, reportZone)
+		: null
+	const isPartial = (key: string) => {
+		if (!timeline) return false
+		const days = bucketDays(key, definition.timeBucket)
+		if (!days) return false
+		// Not over yet, or cut short by where the range begins.
+		return days.last >= today || (firstDay !== null && days.first < firstDay)
+	}
+
+	const all = [...current.buckets.entries()].map(
+		([key, bucket]): ReportSegment => {
+			const before = earlierOf.get(key)
+			const value = valueOf(bucket.tally)
+			const previousValue = before ? metricOf(before.tally) : undefined
+			return {
+				key,
+				label: bucket.label,
+				count: bucket.tally.count,
+				percent: total === 0 ? 0 : (bucket.tally.count / total) * 100,
+				...(valued ? { value } : {}),
+				...(bucket.currency ? { currency: bucket.currency } : {}),
+				...(previous
+					? {
+							...(previousValue === undefined ? {} : { previousValue }),
+							...(timeline && before ? { previousLabel: before.label } : {}),
+							...describeChange(metricOf(bucket.tally), previousValue),
+						}
+					: {}),
+				...(isPartial(key) ? { partial: true } : {}),
+			}
+		},
+	)
+	const hidden = definition.settings.hidePartial
+		? all.filter((segment) => segment.partial).length
+		: 0
 	const segments = sortSegments(
-		[...buckets.entries()].map(([key, bucket]) => ({
-			key,
-			label: bucket.label,
-			count: bucket.tally.count,
-			percent: total === 0 ? 0 : (bucket.tally.count / total) * 100,
-			...(valued ? { value: valueOf(bucket.tally) } : {}),
-		})),
+		hidden > 0 ? all.filter((segment) => !segment.partial) : all,
 		definition.visualization.sortBy,
 		timeGrouped,
 		Boolean(valued),
@@ -848,11 +1511,11 @@ export function runReport(
 
 	return {
 		total,
-		...(measured ? { valueInfo: measured.info } : {}),
-		...(valued ? { value: valueOf(overall) } : {}),
+		...(valued && !splitCurrencies ? { value: overallValue } : {}),
+		...overallChange,
 		segments,
-		refreshedAt: now.toISOString(),
-		timeZone: reportZone,
+		...(hidden > 0 ? { partialHidden: hidden } : {}),
+		...shared,
 	}
 }
 
@@ -881,7 +1544,7 @@ function emptyTally(): ValueTally {
 }
 
 /** What a report measures: a sum or average of a field, or a ratio of two sums. */
-type Measured =
+type Measured = (
 	| {
 			kind: 'value'
 			measure: ValueMeasure
@@ -893,9 +1556,13 @@ type Measured =
 			field: ReportField
 			numerator: ReportField
 			denominator: ReportField
-			unit: 'percent' | 'per_hour'
+			unit: 'percent' | 'per_hour' | 'each'
 			info: ReportValueInfo
 	  }
+) & {
+	/** Set when the measured figure is the gross-or-net "Sales" figure. */
+	salesBasis?: ReportDefinition['salesBasis']
+}
 
 /** Money adds up in minor units so sums don't pick up float drift. */
 function scaled(field: ReportField, amount: number) {
@@ -934,6 +1601,7 @@ function tallyValue(tally: ValueTally, measured: Measured): number | undefined {
 		const denominator = unscaled(measured.denominator, tally.denominator)
 		if (!(denominator > 0)) return undefined
 		const numerator = unscaled(measured.numerator, tally.numerator)
+		if (measured.unit === 'each') return numerator / denominator
 		return measured.unit === 'percent'
 			? (numerator / denominator) * 100
 			: numerator / (denominator / 60)
@@ -961,19 +1629,32 @@ function currencyOf(
 	return { mixed: currencies.size > 1 }
 }
 
+/**
+ * What the report measures. `records` is everything the run reads (both
+ * periods of a comparison), where currencies are looked for; `current` is the
+ * report's own period, which the excluded count is about.
+ */
 function measuredValue(
 	subject: ReportSubject,
 	definition: ReportDefinition,
 	matched: ReportRecord[],
+	current: ReportRecord[] = matched,
 ): Measured | null {
 	const { measure, valueField } = definition.visualization
 	if (!measuresAValueField(measure) || !valueField) return null
-	const field = getField(subject, valueField)
+	const basis = subject.salesBasisField
+	const field = getField(
+		subject,
+		salesBasisFieldId(subject, definition, valueField),
+	)
 	if (!field) return null
 
 	if (isRatioMeasure(measure)) {
-		const parts = ratioParts(subject, field)
+		const parts = resolvedRatioParts(subject, definition, field)
 		if (!parts) return null
+		const onSalesBasis =
+			basis !== undefined &&
+			[field.ratio?.numerator, field.ratio?.denominator].includes(basis.field)
 		const info: ReportValueInfo = {
 			measure: 'ratio',
 			field: field.id,
@@ -990,7 +1671,7 @@ function measuredValue(
 		const both = (record: ReportRecord) =>
 			asNumber(record[parts.numerator.id]) !== null &&
 			asNumber(record[parts.denominator.id]) !== null
-		info.excluded = matched.filter((record) => !both(record)).length
+		info.excluded = current.filter((record) => !both(record)).length
 		if (
 			parts.numerator.type === 'currency' ||
 			parts.denominator.type === 'currency'
@@ -999,11 +1680,17 @@ function measuredValue(
 			// one currency's records may be in a ratio.
 			const currency = currencyOf(matched, subject, both)
 			if (currency.mixed) info.mixedCurrencies = true
-			else if (currency.currency && parts.unit === 'per_hour') {
+			else if (currency.currency && parts.unit !== 'percent') {
 				info.currency = currency.currency
 			}
 		}
-		return { kind: 'ratio', field, ...parts, info }
+		return {
+			kind: 'ratio',
+			field,
+			...parts,
+			info,
+			...(onSalesBasis ? { salesBasis: definition.salesBasis } : {}),
+		}
 	}
 
 	const label = valueMeasureLabel(measure, field)
@@ -1028,7 +1715,15 @@ function measuredValue(
 		if (currency.mixed) info.mixedCurrencies = true
 		else if (currency.currency) info.currency = currency.currency
 	}
-	return { kind: 'value', measure, field, info }
+	return {
+		kind: 'value',
+		measure,
+		field,
+		info,
+		...(basis && valueField === basis.field
+			? { salesBasis: definition.salesBasis }
+			: {}),
+	}
 }
 
 export function isReportRunError(

@@ -20,6 +20,8 @@ const ACCESS: TodayAccess = {
 	coverLocationIds: [],
 	tokenUrl: '/acme/reports/token',
 	tenantApiUrl: 'http://tenant.test',
+	reportSalesBasis: 'net',
+	reportSalesBasisUrl: '/resources/report-sales-basis',
 }
 
 const TOTALS = {

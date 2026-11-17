@@ -8,6 +8,7 @@ import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { resolveReservationsLocationIds } from '#app/utils/reservations/access.server.ts'
 import { hasAdminReportAccess } from '#app/utils/staffing/report-grants.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
+import { getReportSalesBasis } from '#app/utils/reports/sales-basis.server.ts'
 import { type BookingsTodayAccess } from './bookings-today.ts'
 import {
 	type HomeLocation,
@@ -87,7 +88,10 @@ export async function loadTodayAccess({
 	bookingsToday: BookingsTodayAccess
 	locations: HomeLocation[]
 }): Promise<TodayAccess> {
-	const orders = await canReadOrderTotals(userId, organization.id)
+	const [orders, reportSalesBasis] = await Promise.all([
+		canReadOrderTotals(userId, organization.id),
+		getReportSalesBasis(userId, organization.id),
+	])
 	const covers = bookingsToday.available
 	if (locations.length === 0 || (!orders && !covers)) return NO_TODAY_ACCESS
 	return {
@@ -100,5 +104,7 @@ export async function loadTodayAccess({
 		tenantApiUrl: orders
 			? resolveRegionalTenantApiUrls(organization.dataRegion).tenantApiUrl
 			: null,
+		reportSalesBasis,
+		reportSalesBasisUrl: '/resources/report-sales-basis',
 	}
 }

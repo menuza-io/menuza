@@ -1,8 +1,13 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import {
+	type SalesBasis,
+	SALES_BASIS_VALUES,
+} from '@repo/common/sales-report-facts'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent } from '@repo/ui/card'
 import { Skeleton } from '@repo/ui/skeleton'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import {
 	type ReactNode,
 	useCallback,
@@ -80,6 +85,9 @@ export function TodayBlock({
 }) {
 	const { _ } = useLingui()
 	const [selection, setSelection] = useHomeLocation(locationStorageKey)
+	const [salesBasis, setSalesBasis] = useState<SalesBasis>(
+		access.reportSalesBasis,
+	)
 	const [state, setState] = useState<State>({ kind: 'loading' })
 	const [attempt, setAttempt] = useState(0)
 	const providedPool = useContext(ReservationsClientContext)
@@ -94,7 +102,10 @@ export function TodayBlock({
 		() => selectedLocations(access.locations, selection),
 		[access.locations, selection],
 	)
-	const query = useMemo(() => todayQuery(locations), [locations])
+	const query = useMemo(
+		() => todayQuery(locations, salesBasis),
+		[locations, salesBasis],
+	)
 	const coverIds = useMemo(
 		() =>
 			locations
@@ -154,6 +165,23 @@ export function TodayBlock({
 		}
 	}, [orders, tokenUrl, tenantApiUrl, bookingsClient, coverIds, query, attempt])
 
+	const persistSalesBasis = useCallback(
+		async (next: SalesBasis) => {
+			setSalesBasis(next)
+			setState({ kind: 'loading' })
+			try {
+				await fetch(access.reportSalesBasisUrl, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ orgSlug, basis: next }),
+				})
+			} catch {
+				// The tile still reloads with the chosen basis when the region answers.
+			}
+		},
+		[access.reportSalesBasisUrl, orgSlug],
+	)
+
 	const retry = useCallback(() => {
 		setState({ kind: 'loading' })
 		setAttempt((value) => value + 1)
@@ -166,28 +194,54 @@ export function TodayBlock({
 					<h3 className="text-sm font-semibold">
 						<Trans>Today</Trans>
 					</h3>
-					{access.locations.length > 1 ? (
-						<FilterSelect
-							label={_(msg`Location`)}
-							options={[
-								{ value: ALL_LOCATIONS, label: _(msg`All locations`) },
-								...access.locations.map((location) => ({
-									value: location.id,
-									label: location.name,
-								})),
-							]}
-							value={
-								locations.length === 1 && access.locations.length > 1
-									? locations[0]!.id
-									: ALL_LOCATIONS
-							}
-							onValueChange={(next) => {
-								setState({ kind: 'loading' })
-								setSelection(next)
-							}}
-							testId="today-location"
-						/>
-					) : null}
+					<div className="flex flex-wrap items-center gap-2">
+						{access.orders ? (
+							<ToggleGroup
+								type="single"
+								value={salesBasis}
+								onValueChange={(value) => {
+									if (
+										value &&
+										(SALES_BASIS_VALUES as readonly string[]).includes(value)
+									) {
+										void persistSalesBasis(value as SalesBasis)
+									}
+								}}
+								aria-label={_(msg`Sales basis`)}
+								variant="outline"
+								size="sm"
+							>
+								<ToggleGroupItem value="gross" type="button">
+									<Trans>Gross</Trans>
+								</ToggleGroupItem>
+								<ToggleGroupItem value="net" type="button">
+									<Trans>Net</Trans>
+								</ToggleGroupItem>
+							</ToggleGroup>
+						) : null}
+						{access.locations.length > 1 ? (
+							<FilterSelect
+								label={_(msg`Location`)}
+								options={[
+									{ value: ALL_LOCATIONS, label: _(msg`All locations`) },
+									...access.locations.map((location) => ({
+										value: location.id,
+										label: location.name,
+									})),
+								]}
+								value={
+									locations.length === 1 && access.locations.length > 1
+										? locations[0]!.id
+										: ALL_LOCATIONS
+								}
+								onValueChange={(next) => {
+									setState({ kind: 'loading' })
+									setSelection(next)
+								}}
+								testId="today-location"
+							/>
+						) : null}
+					</div>
 				</div>
 				{state.kind === 'loading' ? (
 					<Skeleton className="h-24 rounded-lg" aria-hidden="true" />

@@ -39,15 +39,35 @@ export type SortBy = z.infer<typeof sortBySchema>
 
 export const timeframePresetSchema = z.enum([
 	'today',
+	'yesterday',
 	'last_7_days',
+	'last_14_days',
+	'last_21_days',
+	'last_28_days',
 	'last_30_days',
 	'last_3_months',
 	'last_6_months',
 	'last_12_months',
+	'last_complete_week',
+	'last_complete_month',
+	'month_to_date',
 	'all_time',
 	'custom',
 ])
 export type TimeframePreset = z.infer<typeof timeframePresetSchema>
+
+export const compareSchema = z.enum([
+	'none',
+	'previous_period',
+	'previous_year',
+])
+export type ReportCompare = z.infer<typeof compareSchema>
+
+export const timeBasisSchema = z.enum(['placed', 'fulfillment'])
+export type TimeBasis = z.infer<typeof timeBasisSchema>
+
+export const salesBasisSchema = z.enum(['gross', 'net'])
+export type SalesBasis = z.infer<typeof salesBasisSchema>
 
 export const filterOperatorSchema = z.enum([
 	'eq',
@@ -91,7 +111,13 @@ export const timeframeSchema = z.object({
 })
 export type ReportTimeframe = z.infer<typeof timeframeSchema>
 
-export const timeBucketSchema = z.enum(['day', 'week', 'month'])
+export const timeBucketSchema = z.enum([
+	'day',
+	'week',
+	'month',
+	'hour_of_day',
+	'day_of_week',
+])
 export type TimeBucket = z.infer<typeof timeBucketSchema>
 
 export const visualizationSchema = z.object({
@@ -108,6 +134,17 @@ export const reportSettingsSchema = z.object({
 	title: z.string().min(1).max(120),
 	notes: z.string().max(4000).default(''),
 	timezone: z.string().min(1).default('user'),
+	/**
+	 * Rolling ranges ("last 7 days", "month to date") include the current local
+	 * day. Off, they end with yesterday, so every day in the range is complete.
+	 */
+	includeToday: z.boolean().default(true),
+	/**
+	 * Leave periods that are not complete (the current day, a week cut by the
+	 * range) off a chart over time. The result still says how many were left
+	 * out: partial data is labelled, never silently dropped.
+	 */
+	hidePartial: z.boolean().default(false),
 })
 export type ReportSettings = z.infer<typeof reportSettingsSchema>
 
@@ -122,6 +159,18 @@ export const reportDefinitionSchema = z.object({
 	advancedFilters: z.boolean().default(false),
 	visualization: visualizationSchema,
 	settings: reportSettingsSchema,
+	/** Run the same report over an earlier period and show the change (#120). */
+	compare: compareSchema.default('none'),
+	/**
+	 * Order subjects: date orders by when they were placed or when they were
+	 * fulfilled (#310). Subjects without the choice ignore it.
+	 */
+	timeBasis: timeBasisSchema.default('placed'),
+	/**
+	 * Sales subject: whether the "Sales" figure is gross or net (#331). Reports
+	 * that measure another field ignore it.
+	 */
+	salesBasis: salesBasisSchema.default('net'),
 })
 export type ReportDefinition = z.infer<typeof reportDefinitionSchema>
 
@@ -167,10 +216,12 @@ export function countFilterConditions(group: FilterGroup): number {
 	)
 }
 
+type ReportDefinitionInput = z.input<typeof reportDefinitionSchema>
+
 export function createReportDefinition(
-	partial: Partial<ReportDefinition> &
+	partial: Partial<ReportDefinitionInput> &
 		Pick<
-			ReportDefinition,
+			ReportDefinitionInput,
 			'subject' | 'timeframe' | 'visualization' | 'settings'
 		>,
 ): ReportDefinition {
@@ -181,6 +232,9 @@ export function createReportDefinition(
 		columns: [],
 		filters: emptyFilterGroup(),
 		advancedFilters: false,
+		compare: 'none',
+		timeBasis: 'placed',
+		salesBasis: 'net',
 		...partial,
 	})
 }
@@ -192,7 +246,25 @@ export type ReportSegment = {
 	percent: number
 	/** Sum or average of the value field, set when the report measures one. */
 	value?: number
+	/**
+	 * Comparison runs: the same figure (the measured value, else the count) in
+	 * the earlier period. Left out when that period has no such bucket.
+	 */
+	previousValue?: number
+	/** Comparison runs over time: the earlier period's bucket this one is set against. */
+	previousLabel?: string
+	/** Percent change from the earlier period. Left out when that value was 0 or unknown. */
+	changePercent?: number
+	/** The change in words ("Up 12.5%", "Down 3%", "No change"), so it never rests on color. */
+	changeLabel?: string
+	/** Over time: the period is not complete (today, or a week or month the range cuts). */
+	partial?: boolean
+	/** Set when amounts in several currencies were split into one segment each. */
+	currency?: string
 }
+
+/** A range of instants a run covered, as ISO strings (`start` null: no lower bound). */
+export type ReportPeriod = { start: string | null; end: string }
 
 export type ReportColumn = {
 	id: string
@@ -219,6 +291,12 @@ export type ReportValueInfo = {
 	/** The ratio is per hour (for example sales per labor hour). */
 	perHour?: boolean
 	/**
+	 * Amounts were in more than one currency and the report is grouped, so each
+	 * currency got its own segments (`segment.currency`); there is no overall
+	 * value.
+	 */
+	currencySplit?: boolean
+	/**
 	 * Ratio only: matched records left out because they lacked the numerator
 	 * or the denominator (a day with wages and no sales).
 	 */
@@ -231,6 +309,17 @@ export type ReportResult = {
 	total: number
 	/** Sum, average or ratio of the value field over every matched record. */
 	value?: number
+	/** Comparison runs: the headline figure (measured value, else the count) in the earlier period. */
+	previousValue?: number
+	changePercent?: number
+	changeLabel?: string
+	/** The period the run covered, and the earlier one it was compared with. */
+	period?: ReportPeriod
+	previousPeriod?: ReportPeriod
+	/** Which comparison ran. */
+	compare?: Exclude<ReportCompare, 'none'>
+	/** Incomplete periods left off because the report hides them. */
+	partialHidden?: number
 	valueInfo?: ReportValueInfo
 	segments: ReportSegment[]
 	columns?: ReportColumn[]
@@ -245,6 +334,10 @@ export type ReportResult = {
 	refreshedAt: string
 	/** The time zone days, weeks and months were cut in (IANA name). */
 	timeZone?: string
+	/** Order subjects: which time the orders were dated by. */
+	timeBasis?: TimeBasis
+	/** Set when the measured figure was the gross-or-net "Sales" figure. */
+	salesBasis?: SalesBasis
 }
 
 export type ReportRunErrorCode =
@@ -254,6 +347,7 @@ export type ReportRunErrorCode =
 	| 'tenant_not_provisioned'
 	| 'unauthorized'
 	| 'region_mismatch'
+	| 'report_range_too_long'
 
 export type ReportRunError = {
 	error: ReportRunErrorCode

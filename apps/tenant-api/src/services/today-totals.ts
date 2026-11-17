@@ -1,4 +1,11 @@
-import { and, eq, gte, lte, sql, type SQL } from 'drizzle-orm'
+import {
+	posOrderCountsAsSale,
+	posSaleMoney,
+	restaurantSaleMoney,
+	saleAmountMinor,
+	type SalesBasis,
+} from '@repo/common/sales-report-facts'
+import { and, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm'
 import {
 	addDays,
 	businessDateOf,
@@ -7,7 +14,11 @@ import {
 	startOfLocalDay,
 	zonedLocalToUtc,
 } from '@repo/zoned-time'
-import { restaurantOrders, type TenantDatabase } from '@repo/tenant-db'
+import {
+	posOrders,
+	restaurantOrders,
+	type TenantDatabase,
+} from '@repo/tenant-db'
 import {
 	countedOrderCondition,
 	customerIdsByPhone,
@@ -95,36 +106,123 @@ function windowCondition(
 	)
 }
 
+function posWindowCondition(
+	locations: readonly TodayLocation[],
+	pick: (windows: TodayWindows) => TodayWindow,
+	windows: ReadonlyMap<string, TodayWindows>,
+): SQL {
+	const perLocation = locations.map((location) => {
+		const window = pick(windows.get(location.id)!)
+		return and(
+			eq(posOrders.locationId, location.id),
+			inArray(posOrders.status, ['paid', 'refunded']),
+			gte(posOrders.paidAt, window.start),
+			lte(posOrders.paidAt, window.end),
+		)!
+	})
+	return sql.join(
+		perLocation.map((condition) => sql`(${condition})`),
+		sql` or `,
+	)
+}
+
+function addCurrencyTotals(
+	merged: Map<string, CurrencyTotals>,
+	currency: string,
+	salesMinor: number,
+	orders: number,
+) {
+	const key = currency.toUpperCase()
+	const entry = merged.get(key) ?? { currency: key, salesMinor: 0, orders: 0 }
+	entry.salesMinor += salesMinor
+	entry.orders += orders
+	merged.set(key, entry)
+}
+
 async function totalsByCurrency(
 	db: TenantDatabase,
 	orgId: string,
 	locations: readonly TodayLocation[],
 	windows: ReadonlyMap<string, TodayWindows>,
 	pick: (windows: TodayWindows) => TodayWindow,
+	salesBasis: SalesBasis,
 ): Promise<CurrencyTotals[]> {
-	const rows = await db
-		.select({
-			currency: restaurantOrders.currency,
-			salesMinor: sql<number>`coalesce(sum(${restaurantOrders.totalCents}), 0)`,
-			orders: sql<number>`count(*)`,
-		})
-		.from(restaurantOrders)
-		.where(
-			and(
-				eq(restaurantOrders.orgId, orgId),
-				countedOrderCondition(),
-				sql`(${windowCondition(locations, pick, windows)})`,
+	const [webRows, posRows] = await Promise.all([
+		db
+			.select({
+				currency: restaurantOrders.currency,
+				subtotalCents: restaurantOrders.subtotalCents,
+				discountCents: restaurantOrders.discountCents,
+				loyaltyDiscountCents: restaurantOrders.loyaltyDiscountCents,
+				taxCents: restaurantOrders.taxCents,
+				tipCents: restaurantOrders.tipCents,
+				deliveryFeeCents: restaurantOrders.deliveryFeeCents,
+				deliveryDiscountCents: restaurantOrders.deliveryDiscountCents,
+				totalCents: restaurantOrders.totalCents,
+				serviceFeeCents: restaurantOrders.serviceFeeCents,
+				serviceFeeTaxCents: restaurantOrders.serviceFeeTaxCents,
+			})
+			.from(restaurantOrders)
+			.where(
+				and(
+					eq(restaurantOrders.orgId, orgId),
+					countedOrderCondition(),
+					sql`(${windowCondition(locations, pick, windows)})`,
+				),
 			),
-		)
-		.groupBy(restaurantOrders.currency)
-	// Currencies are compared case-insensitively, like the reports do.
+		db
+			.select({
+				currency: posOrders.currency,
+				subtotalCents: posOrders.subtotalCents,
+				adjustmentCents: posOrders.adjustmentCents,
+				taxCents: posOrders.taxCents,
+				tipCents: posOrders.tipCents,
+				totalCents: posOrders.totalCents,
+				taxInclusive: posOrders.taxInclusive,
+				adjustments: posOrders.adjustments,
+				status: posOrders.status,
+			})
+			.from(posOrders)
+			.where(sql`(${posWindowCondition(locations, pick, windows)})`),
+	])
 	const merged = new Map<string, CurrencyTotals>()
-	for (const row of rows) {
-		const currency = row.currency.toUpperCase()
-		const entry = merged.get(currency) ?? { currency, salesMinor: 0, orders: 0 }
-		entry.salesMinor += Number(row.salesMinor)
-		entry.orders += Number(row.orders)
-		merged.set(currency, entry)
+	for (const row of webRows) {
+		const money = restaurantSaleMoney({
+			subtotalCents: row.subtotalCents,
+			discountCents: row.discountCents,
+			loyaltyDiscountCents: row.loyaltyDiscountCents,
+			taxCents: row.taxCents,
+			tipCents: row.tipCents ?? 0,
+			deliveryFeeCents: row.deliveryFeeCents,
+			deliveryDiscountCents: row.deliveryDiscountCents,
+			totalCents: row.totalCents,
+			serviceFeeCents: row.serviceFeeCents ?? undefined,
+			serviceFeeTaxCents: row.serviceFeeTaxCents ?? undefined,
+		})
+		addCurrencyTotals(
+			merged,
+			row.currency,
+			saleAmountMinor(money, salesBasis),
+			1,
+		)
+	}
+	for (const row of posRows) {
+		if (!posOrderCountsAsSale(row.status)) continue
+		const money = posSaleMoney({
+			subtotalCents: row.subtotalCents,
+			adjustmentCents: row.adjustmentCents,
+			taxCents: row.taxCents,
+			tipCents: row.tipCents,
+			totalCents: row.totalCents,
+			taxInclusive: row.taxInclusive,
+			adjustments: row.adjustments,
+		})
+		addCurrencyTotals(
+			merged,
+			row.currency,
+			saleAmountMinor(money, salesBasis),
+			1,
+		)
 	}
 	return [...merged.values()].sort((a, b) =>
 		a.currency.localeCompare(b.currency),
@@ -144,6 +242,7 @@ export async function loadTodayTotals(
 	orgId: string,
 	locations: readonly TodayLocation[],
 	now: number,
+	salesBasis: SalesBasis = 'net',
 ): Promise<TodayTotals> {
 	const empty: TodayTotals = {
 		today: [],
@@ -159,9 +258,23 @@ export async function loadTodayTotals(
 		]),
 	)
 	const [today, yesterday, lastWeek, todayOrders] = await Promise.all([
-		totalsByCurrency(db, orgId, locations, windows, (w) => w.today),
-		totalsByCurrency(db, orgId, locations, windows, (w) => w.yesterday),
-		totalsByCurrency(db, orgId, locations, windows, (w) => w.lastWeek),
+		totalsByCurrency(db, orgId, locations, windows, (w) => w.today, salesBasis),
+		totalsByCurrency(
+			db,
+			orgId,
+			locations,
+			windows,
+			(w) => w.yesterday,
+			salesBasis,
+		),
+		totalsByCurrency(
+			db,
+			orgId,
+			locations,
+			windows,
+			(w) => w.lastWeek,
+			salesBasis,
+		),
 		db
 			.select({
 				customerId: restaurantOrders.customerId,

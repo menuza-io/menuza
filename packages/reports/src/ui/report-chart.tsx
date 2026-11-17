@@ -174,6 +174,30 @@ export function ReportNotices({ result }: { result: ReportResult | null }) {
 			'There is more data than one report can read, so results only cover the most recent part of this timeframe. Choose a shorter timeframe to include everything.',
 		)
 	}
+	if ((result.partialHidden ?? 0) > 0) {
+		notices.push(
+			plural(result.partialHidden!, {
+				one: '# incomplete period is left off this chart because it is still in progress.',
+				other:
+					'# incomplete periods are left off this chart because they are still in progress.',
+			}),
+		)
+	}
+	if (result.timeBasis === 'fulfillment') {
+		notices.push(
+			'Orders are counted by fulfilment time, not when they were placed.',
+		)
+	}
+	if (result.salesBasis === 'gross') {
+		notices.push(
+			'Gross sales: items and fees before discounts and refunds. Tax and tips are not included.',
+		)
+	}
+	if (result.salesBasis === 'net') {
+		notices.push(
+			'Net sales: items and fees after discounts, loyalty rewards and refunds. Tax and tips are not included.',
+		)
+	}
 	if (notices.length === 0) return null
 	return (
 		<div className="space-y-1 border-b px-4 py-2">
@@ -311,6 +335,14 @@ function SegmentTable({
 					{valueInfo ? (
 						<TableHead className="text-right">{valueInfo.label}</TableHead>
 					) : null}
+					{columns.previous && valueInfo ? (
+						<TableHead className="text-right">
+							Previous {valueInfo.label}
+						</TableHead>
+					) : null}
+					{columns.change ? (
+						<TableHead className="text-right">Change</TableHead>
+					) : null}
 					{columns.percent ? (
 						<TableHead className="text-right">Percent</TableHead>
 					) : null}
@@ -319,7 +351,14 @@ function SegmentTable({
 			<TableBody>
 				{result.segments.map((segment) => (
 					<TableRow key={segment.key}>
-						<TableCell className="font-medium">{segment.label}</TableCell>
+						<TableCell className="font-medium">
+							{segment.label}
+							{segment.partial ? (
+								<span className="text-muted-foreground ms-1 text-xs font-normal">
+									(partial)
+								</span>
+							) : null}
+						</TableCell>
 						{columns.count ? (
 							<TableCell className="text-right tabular-nums">
 								{segment.count.toLocaleString()}
@@ -328,6 +367,16 @@ function SegmentTable({
 						{valueInfo ? (
 							<TableCell className="text-right tabular-nums">
 								{formatOptionalValue(segment.value, valueInfo)}
+							</TableCell>
+						) : null}
+						{columns.previous && valueInfo ? (
+							<TableCell className="text-right tabular-nums">
+								{formatOptionalValue(segment.previousValue, valueInfo)}
+							</TableCell>
+						) : null}
+						{columns.change ? (
+							<TableCell className="text-right tabular-nums">
+								{segment.changeLabel ?? '—'}
 							</TableCell>
 						) : null}
 						{columns.percent ? (
@@ -522,6 +571,16 @@ export function ReportVisualization({
 				<p className="text-foreground text-6xl tabular-nums">
 					{formatResultHeadline(result)}
 				</p>
+				{result.changeLabel ? (
+					<p className="text-muted-foreground text-sm tabular-nums">
+						{result.changeLabel}
+						{result.previousValue !== undefined && shownValueInfo(result)
+							? ` (${formatOptionalValue(result.previousValue, shownValueInfo(result)!)} before)`
+							: result.previousValue !== undefined
+								? ` (${formatNumber(result.previousValue)} before)`
+								: null}
+					</p>
+				) : null}
 			</div>
 		)
 	}

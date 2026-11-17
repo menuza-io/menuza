@@ -9,6 +9,18 @@ import {
 } from './dsl.ts'
 import { segmentPercent, segmentTableColumns } from './format.ts'
 
+/** File basename for an export: title plus basis when the run names one. */
+export function reportExportBasename(
+	definition: ReportDefinition,
+	result: ReportResult | null,
+): string {
+	const parts = [definition.settings.title.trim() || 'report']
+	if (result?.timeBasis === 'fulfillment') parts.push('fulfillment-time')
+	if (result?.salesBasis === 'gross') parts.push('gross-sales')
+	if (result?.salesBasis === 'net') parts.push('net-sales')
+	return parts.join(' — ')
+}
+
 export function slugFilename(title: string, extension: string): string {
 	const slug = title
 		.normalize('NFKD')
@@ -63,6 +75,8 @@ export function reportToCsv(
 		'Segment',
 		...(columns.count ? ['Count'] : []),
 		...(info ? [valueHeader(info)] : []),
+		...(columns.previous && info ? [`Previous ${info.label}`] : []),
+		...(columns.change ? ['Change'] : []),
 		...(columns.percent ? ['Percent'] : []),
 	]
 	const segments: ReportSegment[] =
@@ -78,9 +92,13 @@ export function reportToCsv(
 					},
 				]
 	const body = segments.map((segment) => [
-		segment.label,
+		segment.partial ? `${segment.label} (partial)` : segment.label,
 		...(columns.count ? [String(segment.count)] : []),
 		...(info ? [csvValue(segment.value, info)] : []),
+		...(columns.previous && info
+			? [csvValue(segment.previousValue, info)]
+			: []),
+		...(columns.change ? [segment.changeLabel ?? ''] : []),
 		...(columns.percent
 			? [`${segmentPercent(segment, result).toFixed(1)}%`]
 			: []),

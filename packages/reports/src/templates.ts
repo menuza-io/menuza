@@ -33,6 +33,11 @@ function template(
 		/** Conditions that must all match. */
 		filters?: FilterCondition[]
 		title?: string
+		compare?: ReportDefinition['compare']
+		timeBasis?: ReportDefinition['timeBasis']
+		salesBasis?: ReportDefinition['salesBasis']
+		includeToday?: boolean
+		hidePartial?: boolean
 	},
 ): ReportTemplate {
 	const catalog = getCatalog(scope)
@@ -70,13 +75,193 @@ function template(
 				sortBy: input.sortBy ?? 'value_desc',
 				hideCounts: false,
 			},
+			compare: input.compare,
+			timeBasis: input.timeBasis,
+			salesBasis: input.salesBasis,
 			settings: {
 				title: input.title,
 				notes: input.description,
 				timezone: 'user',
+				...(input.includeToday === undefined
+					? {}
+					: { includeToday: input.includeToday }),
+				...(input.hidePartial === undefined
+					? {}
+					: { hidePartial: input.hidePartial }),
 			},
 		}),
 	}
+}
+
+/** Sales across web, QR and Station (#84, #120, #228). */
+function unifiedSalesTemplates(): ReportTemplate[] {
+	const sales = {
+		category: 'Sales',
+		subject: 'sales',
+	} as const
+	const occurredAt = 'occurredAt'
+	return [
+		template('organization', {
+			...sales,
+			id: 'channel-sales-by-channel',
+			title: 'Sales by channel',
+			description:
+				'Online menu, drops, QR and Station sales over the last 30 days.',
+			groupBy: ['channel'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'sales',
+			timeframePreset: 'last_30_days',
+			timeframeField: occurredAt,
+		}),
+		template('organization', {
+			...sales,
+			id: 'channel-sales-by-tender',
+			title: 'Sales by tender',
+			description: 'How guests paid over the last 30 days.',
+			groupBy: ['tender'],
+			chartStyle: 'pie',
+			measure: 'sum',
+			valueField: 'sales',
+			timeframePreset: 'last_30_days',
+			timeframeField: occurredAt,
+		}),
+		template('organization', {
+			...sales,
+			id: 'channel-sales-by-staff',
+			title: 'Sales by staff member',
+			description:
+				'Station sales rung up by each team member over the last 30 days.',
+			groupBy: ['staffName'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'sales',
+			timeframePreset: 'last_30_days',
+			timeframeField: occurredAt,
+		}),
+		template('organization', {
+			...sales,
+			id: 'channel-sales-voided',
+			title: 'Voided sales',
+			description:
+				'Voided sales over the last 30 days, not in any sales total.',
+			groupBy: [],
+			chartStyle: 'table',
+			measure: 'sum',
+			valueField: 'voidAmount',
+			timeframePreset: 'last_30_days',
+			timeframeField: occurredAt,
+			columns: ['occurredAt', 'location', 'channel', 'staffName', 'voidAmount'],
+			filters: [{ field: 'status', operator: 'eq', value: 'voided' }],
+		}),
+		template('organization', {
+			...sales,
+			id: 'channel-sales-by-location',
+			title: 'Net sales by location',
+			description: 'Net sales at each location over the last 30 days.',
+			groupBy: ['location'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'sales',
+			salesBasis: 'net',
+			timeframePreset: 'last_30_days',
+			timeframeField: occurredAt,
+		}),
+		template('organization', {
+			...sales,
+			id: 'channel-sales-by-hour',
+			title: 'Sales by hour of day',
+			description:
+				'When sales happen through the day over the last 30 days, in each workplace’s time zone.',
+			groupBy: [occurredAt],
+			timeBucket: 'hour_of_day',
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'sales',
+			timeframePreset: 'last_30_days',
+			timeframeField: occurredAt,
+		}),
+		template('organization', {
+			...sales,
+			id: 'channel-sales-by-weekday',
+			title: 'Sales by day of week',
+			description: 'Sales on each day of the week over the last 12 months.',
+			groupBy: [occurredAt],
+			timeBucket: 'day_of_week',
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'sales',
+			timeframePreset: 'last_12_months',
+			timeframeField: occurredAt,
+		}),
+		template('organization', {
+			...sales,
+			id: 'channel-sales-vs-last-month',
+			title: 'Sales vs last month',
+			description:
+				'This month compared with the month before, with the percentage change.',
+			groupBy: [occurredAt],
+			timeBucket: 'month',
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'sales',
+			compare: 'previous_period',
+			timeframePreset: 'last_3_months',
+			timeframeField: occurredAt,
+		}),
+		template('organization', {
+			category: 'Sales',
+			subject: 'order_refunds',
+			id: 'refunds-by-reason',
+			title: 'Refunds by reason',
+			description: 'Refunds over the last 30 days with the reason recorded.',
+			groupBy: ['reason'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'amount',
+			timeframePreset: 'last_30_days',
+			timeframeField: 'refundedAt',
+		}),
+		template('organization', {
+			category: 'Sales',
+			subject: 'order_refunds',
+			id: 'refunds-list',
+			title: 'Refund list',
+			description: 'Every refund over the last 30 days with who gave it.',
+			groupBy: [],
+			chartStyle: 'table',
+			measure: 'sum',
+			valueField: 'amount',
+			timeframePreset: 'last_30_days',
+			timeframeField: 'refundedAt',
+			columns: ['refundedAt', 'orderNumber', 'amount', 'reason', 'refundedBy'],
+		}),
+		template('organization', {
+			category: 'Sales',
+			subject: 'cancelled_orders',
+			id: 'cancelled-by-reason',
+			title: 'Cancellations by reason',
+			description:
+				'Cancelled and voided orders grouped by reason over the last 30 days.',
+			groupBy: ['reasonGroup'],
+			chartStyle: 'bar',
+			measure: 'count',
+			timeframePreset: 'last_30_days',
+			timeframeField: 'placedAt',
+		}),
+		template('organization', {
+			category: 'Sales',
+			subject: 'cancelled_orders',
+			id: 'cancelled-list',
+			title: 'Cancelled and voided list',
+			description: 'Every cancellation and till void over the last 30 days.',
+			groupBy: [],
+			chartStyle: 'table',
+			measure: 'count',
+			timeframePreset: 'last_30_days',
+			timeframeField: 'placedAt',
+		}),
+	]
 }
 
 /** Orders that count toward sales; see the `countsTowardSales` field. */
@@ -292,7 +477,12 @@ function salesTemplates(): ReportTemplate[] {
 }
 
 function orderTemplates(): ReportTemplate[] {
-	const orders = { category: 'Orders', subject: 'orders' } as const
+	/** Operational order counts use fulfillment time (#310). */
+	const orders = {
+		category: 'Orders',
+		subject: 'orders',
+		timeBasis: 'fulfillment',
+	} as const
 	return [
 		template('organization', {
 			...orders,
@@ -1257,6 +1447,7 @@ function reservationTemplates(): ReportTemplate[] {
 export function organizationTemplates(): ReportTemplate[] {
 	return [
 		...salesTemplates(),
+		...unifiedSalesTemplates(),
 		...orderTemplates(),
 		...menuTemplates(),
 		...customerTemplates(),
