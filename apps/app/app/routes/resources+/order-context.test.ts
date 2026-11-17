@@ -194,6 +194,13 @@ describe('internal restaurant order context', () => {
 			// The service fee flag defaults off too: no location is listed.
 			serviceFee: { version: 1, locations: {} },
 			slotLimits: { enabled: false },
+			// Checkout rules (#251, #257, #408, #409, #422): nothing is set up, so the
+			// region reads every location as having none, and daily limits are off.
+			packagingFee: { version: 1, locations: {} },
+			orderCaps: { locations: {} },
+			pickupInstructions: {},
+			utensils: {},
+			dailyDishLimits: { enabled: false, entries: [] },
 			// Discount flags default off too: nothing to evaluate.
 			discounts: {
 				features: { automatic: false, coupons: false },
@@ -631,5 +638,276 @@ describe('order context: service fee', () => {
 			loc_junk: { enabled: true },
 			loc_odd: { percentBp: 'x' },
 		})
+	})
+})
+
+describe('order context: checkout rules', () => {
+	beforeEach(() => {
+		resetMockDb()
+		findOrg.mockReset().mockResolvedValue(orgRow())
+		buildMenu.mockReset().mockResolvedValue({
+			payload: MENU_PAYLOAD,
+			secondsUntilVariationReturn: null,
+		})
+		buildDrop.mockReset().mockResolvedValue(null)
+		featureFlag.mockReset().mockResolvedValue(null)
+	})
+
+	type Rules = {
+		packagingFee: { version: number; locations: Record<string, unknown> }
+		orderCaps: { locations: Record<string, unknown> }
+		pickupInstructions: Record<string, string>
+		utensils: Record<string, { enabled: boolean; defaultRequested: boolean }>
+		largeOrder: Record<string, unknown>
+		dailyDishLimits: {
+			enabled: boolean
+			entries: Array<{
+				kind: string
+				id: string
+				name: string
+				config: unknown
+			}>
+		}
+		menu: unknown
+	}
+
+	const flagsOn = (...keys: string[]) =>
+		featureFlag.mockImplementation(async (key: string) =>
+			keys.includes(key) ? true : null,
+		)
+
+	const online = (extra: Record<string, unknown>) =>
+		JSON.stringify({
+			buffers: { openingBufferMinutes: 0, closingBufferMinutes: 0 },
+			pickup: 'follow_online',
+			delivery: 'follow_online',
+			catering: 'follow_online',
+			syncOnlineWithStore: true,
+			...extra,
+		})
+
+	async function withLocations(
+		rows: Array<Record<string, unknown>>,
+		more: Array<[unknown, unknown[]]> = [],
+	) {
+		const { OrganizationLocation } = await import('@repo/database')
+		selectRows(
+			new Map<unknown, unknown[]>([
+				[
+					OrganizationLocation,
+					rows.map((row) => ({
+						largeOrderThreshold: null,
+						largeOrderThresholdType: 'dollars',
+						largeOrderExtraPrepTime: 0,
+						...row,
+					})),
+				],
+				...more,
+			]),
+		)
+	}
+
+	it("carries each location's pickup text as saved, and none for an empty one", async () => {
+		await withLocations([
+			{ id: 'loc_a', pickupInstructions: JSON.stringify({ en: 'Side door' }) },
+			{ id: 'loc_b', pickupInstructions: '   ' },
+			{ id: 'loc_c', pickupInstructions: null },
+		])
+		const payload = (await loadContext()) as unknown as Rules
+		expect(payload.pickupInstructions).toEqual({
+			loc_a: JSON.stringify({ en: 'Side door' }),
+		})
+	})
+
+	it('lists only locations that ask about utensils, with the default answer', async () => {
+		await withLocations([
+			{
+				id: 'loc_ask',
+				onlineOrderingSettings: online({
+					utensils: { enabled: true, defaultRequested: true },
+				}),
+			},
+			{
+				id: 'loc_off',
+				onlineOrderingSettings: online({
+					utensils: { enabled: false, defaultRequested: true },
+				}),
+			},
+			{ id: 'loc_none', onlineOrderingSettings: null },
+		])
+		const payload = (await loadContext()) as unknown as Rules
+		expect(payload.utensils).toEqual({
+			loc_ask: { enabled: true, defaultRequested: true },
+		})
+	})
+
+	it('carries the order size caps as stored, skipping a value it cannot read', async () => {
+		await withLocations([
+			{
+				id: 'loc_a',
+				orderCaps: JSON.stringify({ pickup: { maxSubtotalMinor: 25_000 } }),
+			},
+			{ id: 'loc_junk', orderCaps: '{not json' },
+			{ id: 'loc_none', orderCaps: null },
+		])
+		const payload = (await loadContext()) as unknown as Rules
+		expect(payload.orderCaps.locations).toEqual({
+			loc_a: { pickup: { maxSubtotalMinor: 25_000 } },
+		})
+	})
+
+	it('lists no packaging fee while the flag is off, whatever is saved', async () => {
+		await withLocations([
+			{
+				id: 'loc_a',
+				packagingFee: JSON.stringify({ enabled: true, amountMinor: 100 }),
+			},
+		])
+		const payload = (await loadContext()) as unknown as Rules
+		expect(payload.packagingFee).toEqual({ version: 1, locations: {} })
+	})
+
+	it('lists the packaging fee of a location while the flag is on', async () => {
+		flagsOn('ordering.packaging_fee')
+		const fee = {
+			enabled: true,
+			mode: 'per_order',
+			amountMinor: 100,
+			fulfillments: ['pickup'],
+			label: 'Bag fee',
+			taxable: false,
+		}
+		await withLocations([
+			{ id: 'loc_a', packagingFee: JSON.stringify(fee) },
+			{ id: 'loc_none', packagingFee: null },
+		])
+		const payload = (await loadContext()) as unknown as Rules
+		expect(payload.packagingFee).toEqual({
+			version: 1,
+			locations: { loc_a: fee },
+		})
+	})
+
+	it('prefers the saved two-threshold large-order rule to the old columns', async () => {
+		await withLocations([
+			{
+				id: 'loc_new',
+				largeOrderThreshold: 100,
+				largeOrderThresholdType: 'dollars',
+				largeOrderExtraPrepTime: 15,
+				onlineOrderingSettings: online({
+					largeOrder: {
+						itemThreshold: 12,
+						amountMinor: 30_000,
+						extraMinutes: 20,
+					},
+				}),
+			},
+			{
+				id: 'loc_off',
+				largeOrderThreshold: 100,
+				largeOrderThresholdType: 'dollars',
+				largeOrderExtraPrepTime: 15,
+				onlineOrderingSettings: online({
+					largeOrder: {
+						itemThreshold: null,
+						amountMinor: null,
+						extraMinutes: 0,
+					},
+				}),
+			},
+			{
+				id: 'loc_old',
+				largeOrderThreshold: 8,
+				largeOrderThresholdType: 'items',
+				largeOrderExtraPrepTime: 10,
+				onlineOrderingSettings: null,
+			},
+		])
+		const payload = (await loadContext()) as unknown as Rules
+		expect(payload.largeOrder).toEqual({
+			loc_new: {
+				threshold: 12,
+				thresholdType: 'items',
+				extraPrepMinutes: 20,
+				itemThreshold: 12,
+				amountThresholdMinor: 30_000,
+			},
+			loc_old: { threshold: 8, thresholdType: 'items', extraPrepMinutes: 10 },
+		})
+	})
+
+	it('lists no daily limit while the flag is off, whatever is saved', async () => {
+		const { OrganizationMenuItem } = await import('@repo/database')
+		await withLocations(
+			[],
+			[
+				[
+					OrganizationMenuItem,
+					[
+						{
+							id: 'item_1',
+							name: 'Special',
+							dailySaleLimit: JSON.stringify({ limit: 20 }),
+						},
+					],
+				],
+			],
+		)
+		const payload = (await loadContext()) as unknown as Rules
+		expect(payload.dailyDishLimits).toEqual({ enabled: false, entries: [] })
+	})
+
+	it('hands the region every capped dish and option, and keeps the cap out of the public menu', async () => {
+		flagsOn('ordering.daily_dish_limits')
+		const { OrganizationMenuItem, OrganizationMenuOption } =
+			await import('@repo/database')
+		await withLocations(
+			[],
+			[
+				[
+					OrganizationMenuItem,
+					[
+						{
+							id: 'item_1',
+							name: 'Special',
+							dailySaleLimit: JSON.stringify({
+								limit: 20,
+								showRemaining: true,
+							}),
+						},
+						{ id: 'item_junk', name: 'Junk', dailySaleLimit: '{not json' },
+					],
+				],
+				[
+					OrganizationMenuOption,
+					[
+						{
+							id: 'opt_1',
+							name: 'Dessert',
+							dailySaleLimit: JSON.stringify({ limit: 12 }),
+						},
+					],
+				],
+			],
+		)
+		const payload = (await loadContext()) as unknown as Rules
+		expect(payload.dailyDishLimits.enabled).toBe(true)
+		expect(payload.dailyDishLimits.entries).toEqual([
+			{
+				kind: 'item',
+				id: 'item_1',
+				name: 'Special',
+				config: { limit: 20, showRemaining: true },
+			},
+			{
+				kind: 'option',
+				id: 'opt_1',
+				name: 'Dessert',
+				config: { limit: 12, showRemaining: false },
+			},
+		])
+		// The menu part is the public one: no cap anywhere in it.
+		expect(JSON.stringify(payload.menu)).not.toContain('dailySaleLimit')
 	})
 })

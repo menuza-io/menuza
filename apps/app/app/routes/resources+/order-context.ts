@@ -12,6 +12,7 @@
  * refuse orders against it.
  */
 
+import { type DailyDishLimitsContext } from '@repo/common/daily-dish-limits'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import {
 	foldQrOrderingFeatures,
@@ -45,20 +46,21 @@ import {
 	buildPublicSiteMenuPayload,
 	type PublicSiteMenuPayload,
 } from '#app/utils/menu/public-menu-context.server.ts'
-import { buildOrderPolicyContext } from '#app/utils/orders/order-policies.server.ts'
-import {
-	buildServiceFeeContext,
-	type ServiceFeeContext,
-} from '#app/utils/orders/service-fee.server.ts'
 import {
 	buildPickupInstructionsContext,
 	buildUtensilsContext,
 } from '#app/utils/orders/checkout-extras.server.ts'
+import { buildDailyDishLimitsContext } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { buildOrderCapsContext } from '#app/utils/orders/order-caps.server.ts'
+import { buildOrderPolicyContext } from '#app/utils/orders/order-policies.server.ts'
 import {
 	buildPackagingFeeContext,
 	type PackagingFeeContext,
 } from '#app/utils/orders/packaging-fee.server.ts'
+import {
+	buildServiceFeeContext,
+	type ServiceFeeContext,
+} from '#app/utils/orders/service-fee.server.ts'
 import {
 	buildSlotLimitsContext,
 	type SlotLimitsContext,
@@ -119,6 +121,7 @@ export type OrderContextResponse = {
 	pickupInstructions: Record<string, string>
 	utensils: Awaited<ReturnType<typeof buildUtensilsContext>>
 	slotLimits: SlotLimitsContext
+	dailyDishLimits: DailyDishLimitsContext
 }
 
 async function readQrOrderingFeatures(
@@ -249,6 +252,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			parsed.data.locationId ?? null,
 		),
 		slotLimits: await buildSlotLimitsContext(org.id),
+		dailyDishLimits: await buildDailyDishLimitsContext(org.id),
 	}
 
 	return Response.json(response, {

@@ -17,7 +17,10 @@ import {
 	DEFAULT_PREP_MINUTES,
 	localDateAndTimeToUtc,
 } from '@repo/common/location-availability'
-import { parseUtensilsSettings } from '@repo/common/checkout-utensils'
+import {
+	foldUtensilsRequested,
+	parseUtensilsSettings,
+} from '@repo/common/checkout-utensils'
 import { resolvePickupInstructions } from '@repo/common/pickup-instructions'
 import { largeOrderExtraMinutes } from '@repo/common/promised-time'
 import {
@@ -139,6 +142,11 @@ import {
 	queueOrderPlacedMessages,
 	queueOrderStatusMessages,
 } from './order-messages.ts'
+import {
+	assertDailyDishCapacity,
+	readDailyDishAvailability,
+	recordDailyDishClaims,
+} from './order-dish-daily-service.ts'
 import { applyPromisedDelay } from './order-promised-time.ts'
 import {
 	bookOrderProviderRefundInTx,
@@ -234,7 +242,12 @@ export function orderFailure(
 }
 
 function fromEngineError(error: RestaurantOrderError): OrderServiceFailure {
-	return { status: error.status, code: error.code, message: error.message }
+	return {
+		status: error.status,
+		code: error.code,
+		message: error.message,
+		...(error.details ? { details: error.details } : {}),
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1157,16 +1170,17 @@ export async function placeOrder(input: {
 	const utensilsSettings = parseUtensilsSettings(
 		utensilsContext?.[request.locationId],
 	)
-	const utensilsRequested =
-		request.fulfillment === 'dine_in' || !utensilsSettings.enabled
-			? null
-			: typeof request.utensilsRequested === 'boolean'
-				? request.utensilsRequested
-				: utensilsSettings.defaultRequested
+	const utensilsRequested = foldUtensilsRequested(
+		utensilsSettings,
+		request.fulfillment,
+		request.utensilsRequested,
+	)
 	const pickupRaw = (context as { pickupInstructions?: Record<string, string> })
 		.pickupInstructions?.[request.locationId]
+	// A drop order has its own pickup location and windows: those win over the
+	// location's instructions, so none is stored for it.
 	const pickupInstructionsCopy =
-		request.fulfillment === 'pickup' && pickupRaw
+		request.fulfillment === 'pickup' && !context.drop && pickupRaw
 			? resolvePickupInstructions(
 					pickupRaw,
 					request.locale,
@@ -1347,6 +1361,18 @@ export async function placeOrder(input: {
 						)
 						if (readyFailure) return { ok: false, failure: readyFailure }
 					}
+					// Daily dish caps (#409): sold plus held stock may not pass the cap.
+					const dailyCapacity = await assertDailyDishCapacity({
+						db: tx,
+						context,
+						locationId: request.locationId,
+						lines: result.lines,
+						now,
+					})
+					if (!dailyCapacity.ok) {
+						const { status, code, message, details } = dailyCapacity.failure
+						return orderFailure(status, code, message, { details })
+					}
 
 					const preparedResult = await prepareOrderDiscounts(tx, {
 						priced: result,
@@ -1423,6 +1449,8 @@ export async function placeOrder(input: {
 									lineDiscounts,
 									deliveryDiscountMinor:
 										prepared?.evaluation.deliveryDiscountMinor,
+									packagingWaived:
+										prepared?.evaluation.packagingWaived === true,
 								},
 							)
 						: {
@@ -1442,6 +1470,7 @@ export async function placeOrder(input: {
 							taxMinor: totals.taxCents,
 							totalMinor: totals.totalCents,
 							serviceFeeMinor: totals.serviceFeeCents,
+							packagingFeeMinor: totals.packagingFeeCents,
 						})
 						const decision = interpretPlacement(
 							request.discounts,
@@ -1652,6 +1681,8 @@ export async function placeOrder(input: {
 							'We could not place this order. Please try again.',
 						)
 					}
+
+					await recordDailyDishClaims({ tx, context, order: inserted, now })
 
 					if (result.capacity && result.capacity.entities.length > 0) {
 						await insertRowsInChunks(
@@ -3258,6 +3289,10 @@ export async function buildOrderingOptionsWithContext(
 		counts: { slotOrders, entityUsed },
 		now,
 		geocoderAvailable: isGeocodingAvailable(),
+		dailyAvailability:
+			context.dailyDishLimits?.enabled === true
+				? await readDailyDishAvailability(db, context, input.locationId, now)
+				: undefined,
 	})
 	if (!built.ok) return { ok: false, failure: fromEngineError(built.error) }
 	return { ok: true, data: { options: built.options, context } }

@@ -12,6 +12,7 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type OrdersApi, OrdersError } from './api.ts'
+import { DailyLimitsSection } from './DailyLimits.tsx'
 import { isAvailable } from '~/lib/availability.ts'
 import { categoryItems } from '~/lib/catalog.ts'
 import { menuText } from '~/lib/menu-text.ts'
@@ -94,7 +95,8 @@ function failureText(
 
 /**
  * Mid-service manager controls for this location: pause online ordering with
- * the App's presets, and mark dishes and options sold out (and back). Every
+ * the App's presets, mark dishes and options sold out (and back), and top up
+ * dishes that have a daily limit (#409). Every
  * change goes to the region at once; offline nothing is offered and nothing
  * is kept to send later.
  */
@@ -107,7 +109,10 @@ export function ControlsSheet({
 }: {
 	open: boolean
 	onClose: () => void
-	api: Pick<OrdersApi, 'controls' | 'pause' | 'availability'>
+	api: Pick<
+		OrdersApi,
+		'controls' | 'pause' | 'availability' | 'dailyLimits' | 'topUpDailyLimit'
+	>
 	online: boolean
 	timeZone?: string
 }) {
@@ -324,6 +329,7 @@ export function ControlsSheet({
 							</>
 						)}
 					</section>
+					<DailyLimitsSection open={open} online={online} api={api} />
 					<section
 						aria-labelledby="controls-sold-out"
 						className="flex flex-col gap-3"

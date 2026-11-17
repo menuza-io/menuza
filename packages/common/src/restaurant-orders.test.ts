@@ -1445,6 +1445,28 @@ describe('guest order messages in the request and the context', () => {
 		)
 	})
 
+	it('hashes the checkout rule fields only when sent, so a changed retry conflicts', () => {
+		const base = canonicalOrderRequest(makeRequest())
+		for (const field of [
+			{ expectedPackagingFeeMinor: 0 },
+			{ utensilsRequested: false },
+			{ guestCount: 2 },
+		]) {
+			// Sent: it is part of the request, so it changes the hash.
+			expect(canonicalOrderRequest(makeRequest(field))).not.toBe(base)
+		}
+		expect(
+			canonicalOrderRequest(makeRequest({ utensilsRequested: true })),
+		).not.toBe(canonicalOrderRequest(makeRequest({ utensilsRequested: false })))
+		expect(
+			canonicalOrderRequest(makeRequest({ expectedPackagingFeeMinor: 100 })),
+		).not.toBe(
+			canonicalOrderRequest(makeRequest({ expectedPackagingFeeMinor: 50 })),
+		)
+		// Left out: the same hash as before this existed.
+		expect(canonicalOrderRequest(makeRequest({}))).toBe(base)
+	})
+
 	it('reads the context policy fail closed and never rejects the context', () => {
 		const on = { enabled: true, receipt: true, ready: false, cancelled: true }
 		expect(readGuestMessagesPolicy(on)).toEqual(on)

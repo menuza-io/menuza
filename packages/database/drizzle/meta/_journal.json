@@ -376,8 +376,15 @@
 		{
 			"idx": 53,
 			"version": "6",
-			"when": 1794889174682,
+			"when": 1795000003000,
 			"tag": "0053_checkout_rules_control",
+			"breakpoints": true
+		},
+		{
+			"idx": 54,
+			"version": "6",
+			"when": 1795000004000,
+			"tag": "0054_checkout_rules_option_limit_and_waive",
 			"breakpoints": true
 		}
 	]

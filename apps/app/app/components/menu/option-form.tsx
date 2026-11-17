@@ -1,5 +1,6 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { type DailySaleLimit } from '@repo/common/daily-dish-limits'
 import {
 	findBlockedNestedGroups,
 	getLocalizedMenuValue,
@@ -49,6 +50,12 @@ import {
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
 import {
+	dailyLimitFormFromConfig,
+	dailyLimitFormToJson,
+	type DailyLimitFormState,
+} from '#app/utils/menu/daily-limit-form.ts'
+import { DailyLimitCard } from './daily-limit-fields.tsx'
+import {
 	LocationOverridesCard,
 	type LocationItem,
 	type LocationOverrideState,
@@ -86,6 +93,8 @@ export interface OptionFormData {
 	modifierGroupIds: string[]
 	nestedModifierGroupIds?: string[]
 	locationOverrides?: Record<string, LocationOverrideState>
+	/** Daily quantity cap (#409), parsed; null or absent when there is none. */
+	dailySaleLimit?: DailySaleLimit | null
 }
 
 interface OptionFormProps {
@@ -112,6 +121,8 @@ interface OptionFormProps {
 	 * would loop or nest too deep (the server refuses them as well).
 	 */
 	modifierGraph?: ModifierGraph
+	/** Org flag `ordering.daily_dish_limits`; hides the daily limit card when off. */
+	dailyLimitsEnabled?: boolean
 }
 
 /** Stand-in id for an option that is not saved yet, as the server uses. */
@@ -136,6 +147,7 @@ function OptionFormBody({
 	pageTitle,
 	actionError,
 	modifierGraph,
+	dailyLimitsEnabled = false,
 	onDiscard,
 }: OptionFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
@@ -240,6 +252,10 @@ function OptionFormBody({
 	const [locationOverrides, setLocationOverrides] = useState<
 		Record<string, LocationOverrideState>
 	>(initialData?.locationOverrides ?? {})
+
+	const [dailyLimit, setDailyLimit] = useState<DailyLimitFormState>(() =>
+		dailyLimitFormFromConfig(initialData?.dailySaleLimit),
+	)
 
 	const toggleAllergen = (allergen: Allergen) => {
 		setAllergens((prev) =>
@@ -395,6 +411,18 @@ function OptionFormBody({
 						name="locationOverrides"
 						value={JSON.stringify(locationOverrides)}
 					/>
+					{/* Posted only while the feature is on, so a save never clears a
+					    stored limit the form did not show. */}
+					{dailyLimitsEnabled ? (
+						<input
+							type="hidden"
+							name="dailySaleLimit"
+							value={dailyLimitFormToJson(
+								dailyLimit,
+								locations.map((location) => location.id),
+							)}
+						/>
+					) : null}
 
 					{/* Minimal Sticky Full-Width Header */}
 					<MenuFormHeader
@@ -1032,6 +1060,16 @@ function OptionFormBody({
 										) : null}
 									</FramePanel>
 								</Frame>
+
+								{dailyLimitsEnabled ? (
+									<DailyLimitCard
+										subject="option"
+										idPrefix="option-daily-limit"
+										state={dailyLimit}
+										onChange={setDailyLimit}
+										locations={locations}
+									/>
+								) : null}
 
 								<OptionRecipePanel
 									orgSlug={orgSlug}

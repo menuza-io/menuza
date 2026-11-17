@@ -256,3 +256,76 @@ describe('demo online orders', () => {
 		})
 	})
 })
+
+describe('demo daily limits (#409)', () => {
+	it('lists the capped dishes with what is left', async () => {
+		const demo = createDemoOrders()
+		const status = await demo.dailyLimits()
+		expect(status.enabled).toBe(true)
+		const lamb = status.rows.find((row) => row.key === 'item:i-lamb-shank')!
+		expect(lamb).toMatchObject({ limit: 20, soldUnits: 14, heldUnits: 2 })
+		// The cap plus top-ups, less sold and held.
+		expect(lamb.remaining).toBe(4)
+		expect(status.rows.find((row) => row.kind === 'option')!.remaining).toBe(0)
+	})
+
+	it('adds units, and sets the amount left like the region does', async () => {
+		const demo = createDemoOrders()
+		const added = await demo.topUpDailyLimit({
+			key: 'item:i-lamb-shank',
+			addUnits: 5,
+		})
+		expect(added).toMatchObject({ toppedUpUnits: 5, remaining: 9 })
+		const set = await demo.topUpDailyLimit({
+			key: 'item:i-lamb-shank',
+			amountLeft: 2,
+		})
+		expect(set.remaining).toBe(2)
+		expect(set.limit).toBe(20)
+		expect(
+			(await demo.dailyLimits()).rows.find(
+				(r) => r.key === 'item:i-lamb-shank',
+			)!.remaining,
+		).toBe(2)
+		const gone = await demo.topUpDailyLimit({
+			key: 'item:i-lamb-shank',
+			amountLeft: 0,
+		})
+		expect(gone.remaining).toBe(0)
+	})
+
+	it('makes a sold-out option available again with a top-up', async () => {
+		const demo = createDemoOrders()
+		const back = await demo.topUpDailyLimit({
+			key: 'option:o-baklava',
+			addUnits: 3,
+		})
+		expect(back.remaining).toBe(3)
+	})
+
+	it('refuses a dish with no daily limit', async () => {
+		const demo = createDemoOrders()
+		await expect(
+			demo.topUpDailyLimit({ key: 'item:nope', addUnits: 5 }),
+		).rejects.toMatchObject({ code: 'daily_limit_not_found' })
+	})
+
+	it('shows the packaging fee, utensils answer and pickup text on a sample order, totals adding up', async () => {
+		const demo = createDemoOrders()
+		const { order } = await demo.detail('demo-1041')
+		expect(order).toMatchObject({
+			packagingFeeCents: 100,
+			utensilsRequested: false,
+		})
+		expect(order.pickupInstructions).toContain('side lot')
+		expect(
+			order.subtotalCents +
+				order.taxCents +
+				order.deliveryFeeCents +
+				order.tipCents +
+				(order.packagingFeeCents ?? 0) -
+				order.discountCents -
+				order.loyaltyDiscountCents,
+		).toBe(order.totalCents)
+	})
+})

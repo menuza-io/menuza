@@ -17,6 +17,7 @@ import {
 	type PosOnlineOrderDetail,
 	type PosOnlineOrderSummary,
 } from '@repo/common/pos-online-orders'
+import { DEFAULT_PACKAGING_FEE_LABEL } from '@repo/common/packaging-fee'
 import { posStationControlsAllowed } from '@repo/common/pos-station-controls'
 import {
 	Empty,
@@ -1313,6 +1314,40 @@ function OrderDetailBody({
 					) : null}
 				</section>
 			) : null}
+			{detail.utensilsRequested != null ||
+			(detail.largeOrderExtraMinutes ?? 0) > 0 ? (
+				<section
+					aria-label={_(t`Packing`)}
+					className="flex flex-col gap-1 text-sm font-medium"
+				>
+					{detail.utensilsRequested === true ? (
+						<p>
+							<Trans>Utensils: yes</Trans>
+						</p>
+					) : detail.utensilsRequested === false ? (
+						<p>
+							<Trans>No utensils</Trans>
+						</p>
+					) : null}
+					{(detail.largeOrderExtraMinutes ?? 0) > 0 ? (
+						<p>
+							<Trans>Large order +{detail.largeOrderExtraMinutes} min</Trans>
+						</p>
+					) : null}
+				</section>
+			) : null}
+			{detail.pickupInstructions?.trim() && detail.fulfillment === 'pickup' ? (
+				<section aria-label={_(t`Pickup instructions`)} className="text-sm">
+					<h3 className="font-semibold">
+						<Trans>Pickup instructions</Trans>
+					</h3>
+					{/* The restaurant's own text, shown as the guest saw it: plain
+					    text (React escapes it) with its line breaks kept. */}
+					<p className="text-muted-foreground whitespace-pre-line">
+						<bdi>{detail.pickupInstructions.trim()}</bdi>
+					</p>
+				</section>
+			) : null}
 			<section aria-label={_(t`Items`)}>
 				<ul className="divide-border divide-y">
 					{detail.lines.map((line, index) => (
@@ -1386,6 +1421,21 @@ function OrderDetailBody({
 							</dt>
 							<dd className="tnum text-end">
 								{money(detail.serviceFeeCents ?? 0)}
+							</dd>
+						</>
+					) : null}
+					{(detail.packagingFeeCents ?? 0) > 0 ? (
+						<>
+							<dt>
+								{detail.packagingFeeLabel &&
+								detail.packagingFeeLabel !== DEFAULT_PACKAGING_FEE_LABEL ? (
+									<bdi>{detail.packagingFeeLabel}</bdi>
+								) : (
+									<Trans>Packaging fee</Trans>
+								)}
+							</dt>
+							<dd className="tnum text-end">
+								{money(detail.packagingFeeCents ?? 0)}
 							</dd>
 						</>
 					) : null}
@@ -2157,6 +2207,16 @@ function PrintedTicket({
 				<div className="text-center">
 					<bdi>{detail.guestName}</bdi> ·{' '}
 					<bdi dir="ltr">{detail.phoneMasked}</bdi>
+				</div>
+			) : null}
+			{kind === 'kitchen' && detail.utensilsRequested != null ? (
+				<div className="text-center font-semibold">
+					{detail.utensilsRequested ? _(t`Utensils: yes`) : _(t`No utensils`)}
+				</div>
+			) : null}
+			{kind === 'kitchen' && (detail.largeOrderExtraMinutes ?? 0) > 0 ? (
+				<div className="text-center">
+					<Trans>Large order +{detail.largeOrderExtraMinutes} min</Trans>
 				</div>
 			) : null}
 			<hr className="my-1.5 border-dashed border-black" />

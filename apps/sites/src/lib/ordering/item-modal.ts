@@ -94,6 +94,22 @@ function isUnavailable(option: ModifierOption): boolean {
 
 export function createItemModal(options: ItemModalOptions): ItemModal {
 	const { root, labels, formatMoney, getItem } = options
+
+	/**
+	 * "Only N left" next to an option whose daily limit (#409) is nearly used up,
+	 * when the restaurant lets guests see it. A sold-out option already reads as
+	 * unavailable and says "Sold out" instead.
+	 */
+	function leftBadge(option: ModifierOption): HTMLElement | null {
+		const left = option.dailyRemaining
+		if (typeof left !== 'number' || left <= 0 || isUnavailable(option))
+			return null
+		return el(
+			'span',
+			'badge tone-warning shrink-0',
+			fillTemplate(labels.onlyNLeft, { count: left }),
+		)
+	}
 	const syncUrl = options.syncUrl !== false
 	const cartLines = options.cartLines ?? (() => [])
 	const q = <T extends HTMLElement>(id: string) =>
@@ -518,6 +534,8 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 				? el('span', 'badge tone-neutral shrink-0', labels.soldOut)
 				: priceSuffix(option.price)
 			if (suffix) label.appendChild(suffix)
+			const leftNote = leftBadge(option)
+			if (leftNote) label.appendChild(leftNote)
 			row.appendChild(label)
 			const nested = renderNested(option, depth)
 			if (nested) row.appendChild(nested)
@@ -648,6 +666,8 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 				? el('span', 'badge tone-neutral shrink-0', labels.soldOut)
 				: priceSuffix(option.price)
 			if (suffix) row.appendChild(suffix)
+			const leftNote = leftBadge(option)
+			if (leftNote) row.appendChild(leftNote)
 			const stepper = el('div', 'flex shrink-0 items-center gap-2')
 			stepper.setAttribute('role', 'group')
 			stepper.setAttribute('aria-label', option.displayName)
@@ -770,6 +790,8 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 				? el('span', 'badge tone-neutral shrink-0', labels.soldOut)
 				: priceSuffix(halfPrice(option, 'whole'))
 			if (suffix) row.appendChild(suffix)
+			const leftNote = leftBadge(option)
+			if (leftNote) row.appendChild(leftNote)
 			const segmented = el('div', 'segmented shrink-0 gap-0.5 p-0.5')
 			segmented.setAttribute('role', 'radiogroup')
 			segmented.setAttribute('aria-label', option.displayName)

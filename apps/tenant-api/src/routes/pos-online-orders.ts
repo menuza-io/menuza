@@ -1,4 +1,5 @@
 import { Hono, type Context } from 'hono'
+import { dailyDishChangeBodySchema } from '@repo/common/daily-dish-limits'
 import {
 	posOnlineOrderCommandSchema,
 	posOnlineOrderRefundSchema,
@@ -14,6 +15,10 @@ import { authenticatePosDevice, posError } from '../lib/pos-auth.ts'
 import { verifyPosStaffSession } from '../lib/pos-staff-session.ts'
 import { HttpError, json, readJsonBody } from '../lib/http.ts'
 import { readIdempotencyKey } from '../lib/reservations-public-auth.ts'
+import {
+	adjustDailyDish,
+	getOperatorDailyDishStatus,
+} from '../services/order-dish-daily-operator.ts'
 import { ordersGate } from '../services/pos-apps-service.ts'
 import {
 	onlineOrderCommand,
@@ -175,6 +180,41 @@ posOnlineOrdersRoutes.post('/controls/availability', async (c) => {
 	if ('error' in body) return body.error
 	const result = await stationAvailability(auth.db, auth.actor, body.data)
 	return result.ok ? json(result.data) : controlsFailure(result.failure)
+})
+
+/**
+ * Daily dish limits at this terminal's location (#409): what is left of each
+ * capped dish today, and the manager's top-up. Counts live in the region, so
+ * nothing is sent to the App. Manager only, like the other controls.
+ */
+posOnlineOrdersRoutes.get('/controls/daily-limits', async (c) => {
+	const auth = await authorizeControls(c)
+	if ('error' in auth) return auth.error
+	const result = await getOperatorDailyDishStatus({
+		orgId: auth.actor.orgId,
+		locationId: auth.actor.locationId,
+	})
+	if (!result.ok) return posError(result.failure.status, result.failure.code)
+	return json(result.data)
+})
+
+posOnlineOrdersRoutes.post('/controls/daily-limits/top-up', async (c) => {
+	const auth = await authorizeControls(c)
+	if ('error' in auth) return auth.error
+	const body = await readJsonBody(c, dailyDishChangeBodySchema)
+	if ('error' in body) return body.error
+	const result = await adjustDailyDish({
+		orgId: auth.actor.orgId,
+		locationId: auth.actor.locationId,
+		key: body.data.key,
+		change:
+			body.data.addUnits !== undefined
+				? { addUnits: body.data.addUnits }
+				: { amountLeft: body.data.amountLeft! },
+		userId: `staff:${auth.actor.staffId}`,
+	})
+	if (!result.ok) return posError(result.failure.status, result.failure.code)
+	return json({ row: result.data })
 })
 
 async function detailResponse(

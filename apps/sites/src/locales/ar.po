@@ -1269,6 +1269,10 @@ msgstr "أدخل عنوان بريد إلكتروني صالحًا."
 msgid "Enter an amount, for example 4.50."
 msgstr "أدخل مبلغًا، مثل 4.50."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Enter how many people are at your table."
+msgstr "أدخل عدد الأشخاص على طاولتك."
+
 #: src/lib/gift-cards/labels.ts:57
 #: src/pages/gift-cards/balance.astro.ts:3
 msgid "Enter the number on your card. Dashes and spaces do not matter."
@@ -1542,6 +1546,10 @@ msgstr "السجل"
 msgid "hour"
 msgstr "ساعة"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "How many are at your table?"
+msgstr "كم عدد الأشخاص على طاولتك؟"
+
 #: src/lib/loyalty/labels.ts:100
 msgid "How you earn"
 msgstr "كيف تكسب"
@@ -1578,6 +1586,10 @@ msgstr "خلال {t}"
 #: src/lib/loyalty/labels.ts:247
 msgid "In store"
 msgstr "في المتجر"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Include utensils and napkins"
+msgstr "إضافة أدوات المائدة والمناديل"
 
 #: src/lib/reservations/labels.ts:89
 msgid "Include your country code, for example {example}."
@@ -1978,6 +1990,10 @@ msgstr "بدون إكرامية"
 msgid "No upcoming seatings"
 msgstr "لا توجد مواعيد قادمة"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "No utensils"
+msgstr "بدون أدوات مائدة"
+
 #: src/lib/reservations/labels.ts:170
 msgid "No-show"
 msgstr "لم يحضر"
@@ -1997,6 +2013,10 @@ msgstr "غير متاحة لهذا الطلب"
 #: src/lib/ordering-labels.ts:222
 msgid "Not available right now"
 msgstr "غير متاح حاليًا"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Not enough left today"
+msgstr "الكمية المتبقية اليوم غير كافية"
 
 #: src/components/BirthdayField.astro.ts:3
 msgid "Not set"
@@ -2113,6 +2133,15 @@ msgstr "بقي {count} فقط"
 #: src/lib/ordering-labels.ts:98
 msgid "Only {count} left in {category}"
 msgstr "بقي {count} فقط في {category}"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Only {count} left today"
+msgstr "بقي {count} فقط اليوم"
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Only {count} of {name} left today. Please go back to the menu to lower the quantity."
+msgstr "بقي {count} فقط من {name} اليوم. يرجى العودة إلى القائمة لتقليل الكمية."
 
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
@@ -2274,6 +2303,11 @@ msgstr "يقوم مطبخنا بإعداد أطباق شهية. تابعنا ق�
 msgid "Our own design"
 msgstr "تصميمنا الخاص"
 
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Packaging fee"
+msgstr "رسوم التغليف"
+
 #: src/components/SiteNotFound.astro.ts:3
 msgid "Page not found"
 msgstr "الصفحة غير موجودة"
@@ -2422,6 +2456,11 @@ msgstr "استلام"
 #: src/components/drops/DropCard.astro.ts:3
 msgid "Pickup {when}"
 msgstr "استلام {when}"
+
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Pickup instructions"
+msgstr "تعليمات الاستلام"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pickup is not available for this order."
@@ -2951,6 +2990,10 @@ msgstr "سجّل الدخول برقم هاتفك لعرض نقاطك واستخ
 msgid "Sold out"
 msgstr "نفد المخزون"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Sold out for today"
+msgstr "نفد اليوم"
+
 #: src/pages/menu.astro.ts:3
 msgid "Some items are no longer available and were left out:"
 msgstr "بعض الأصناف لم تعد متاحة وتم استبعادها:"
@@ -2986,6 +3029,11 @@ msgstr "تغيّرت بعض الأسعار منذ مكالمتك. تعرض سل�
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed. Your cart shows the current prices."
 msgstr "تغيرت بعض الأسعار. تعرض سلتك الأسعار الحالية."
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Something in your order isn't available in that amount today. Please go back to the menu to change your order."
+msgstr "بعض عناصر طلبك غير متوفرة بهذه الكمية اليوم. يرجى العودة إلى القائمة لتعديل طلبك."
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/complete-name.astro.ts:3
@@ -3263,6 +3311,10 @@ msgstr "قد يكون الرابط غير مكتمل أو منتهي الصلا�
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "قد يكون الرابط غير مكتمل. يمكنك بدء طلب جديد من القائمة."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "The packaging fee changed. Please review your total and place your order again."
+msgstr "تغيّرت رسوم التغليف. يرجى مراجعة المجموع ثم تقديم الطلب مرة أخرى."
+
 #: src/components/SiteNotFound.astro.ts:3
 msgid "The page you are looking for does not exist or has moved."
 msgstr "الصفحة التي تبحث عنها غير موجودة أو تم نقلها."
@@ -3351,6 +3403,16 @@ msgstr "قائمة الانتظار غير متاحة حاليًا. يرجى ا�
 #: src/lib/reservations/labels.ts:474
 msgid "There are no upcoming seatings to book right now."
 msgstr "لا توجد مواعيد قادمة للحجز حاليًا."
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "There isn't enough {name} left today. Please go back to the menu to change your order."
+msgstr "لا تتوفر كمية كافية من {name} اليوم. يرجى العودة إلى القائمة لتعديل طلبك."
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
+msgstr "لا تتوفر كمية كافية اليوم من: {names}. يرجى العودة إلى القائمة لتعديل طلبك."
 
 #: src/lib/reservations/labels.ts:515
 msgid "This booking includes a payment, so the party size cannot be changed online. Please call the restaurant."
@@ -3459,6 +3521,11 @@ msgstr "هذا الطرح لم يعد يستقبل الطلبات."
 msgid "This form is currently unavailable."
 msgstr "هذا النموذج غير متاح حاليًا."
 
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This group is too large to order from the table. Please ask a member of the team."
+msgstr "هذه المجموعة كبيرة جدًا للطلب من الطاولة. يرجى سؤال أحد أفراد الفريق."
+
 #: src/lib/reservations/labels.ts:427
 msgid "This has already been paid."
 msgstr "تم دفع هذا المبلغ بالفعل."
@@ -3504,6 +3571,16 @@ msgstr "هذا الطلب أقل من الحد الأدنى للتوصيل."
 msgid "This order is complete."
 msgstr "اكتمل هذا الطلب."
 
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This order is too large for online checkout. Please call the restaurant or ask about a catering order."
+msgstr "هذا الطلب كبير جدًا للدفع عبر الإنترنت. يرجى الاتصال بالمطعم أو الاستفسار عن طلبات التموين."
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This order is too large for online checkout. Please call us on {phone} or ask about a catering order."
+msgstr "هذا الطلب كبير جدًا للدفع عبر الإنترنت. يرجى الاتصال بنا على {phone} أو الاستفسار عن طلبات التموين."
+
 #: src/pages/menu.astro.ts:3
 msgid "This order link has expired. You can still order from the menu."
 msgstr "انتهت صلاحية رابط الطلب هذا. لا يزال بإمكانك الطلب من القائمة."
@@ -3532,6 +3609,7 @@ msgstr "رقم الهاتف هذا موجود بالفعل في قائمة ال�
 msgid "This receipt is only available on the device used to place the order."
 msgstr "هذا الإيصال متاح فقط على الجهاز الذي أُنشئ منه الطلب."
 
+#: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This restaurant can't take online orders right now. Please try again later."
 msgstr "لا يستطيع هذا المطعم استقبال الطلبات عبر الإنترنت الآن. يرجى المحاولة لاحقًا."
@@ -3735,6 +3813,14 @@ msgstr "استخدم الرمز {code}"
 #: src/lib/loyalty/labels.ts:166
 msgid "Used on {items}"
 msgstr "تُستخدم على {items}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Utensils and napkins"
+msgstr "أدوات المائدة والمناديل"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Utensils: yes"
+msgstr "أدوات المائدة: نعم"
 
 #: src/lib/gift-cards/labels.ts:66
 msgid "Valid until {date}"

@@ -1,3 +1,5 @@
+import { fillTemplate } from './money.ts'
+
 /**
  * Maps regional ordering error codes (`POST /orders` failures) to checkout
  * label keys. The server is authoritative; this only chooses which localized
@@ -31,6 +33,24 @@ export type OrderErrorLabels = {
 	serviceFeeChanged: string
 	/** service_fee_unavailable: the node cannot read the location's fee */
 	serviceFeeUnavailable: string
+	/** packaging_fee_changed: the page shows its own message once it has the new fee */
+	packagingFeeChanged: string
+	/** packaging_fee_unavailable: the node cannot read the location's packaging fee */
+	packagingFeeUnavailable: string
+	/** order_too_large (amount): over the location's size limit; call or ask about catering */
+	orderTooLarge: string
+	/** order_too_large (amount) when the location has a phone: `{phone}` */
+	orderTooLargeCall: string
+	/** order_too_large (guests): a table past the head-count limit */
+	orderTooLargeGuests: string
+	/** daily_dish_sold_out without a dish the page can name */
+	dailyDishSoldOut: string
+	/** daily_dish_sold_out, one named dish or option: `{name}` */
+	dishSoldOut: string
+	/** daily_dish_sold_out, several named: `{names}` */
+	dishesSoldOut: string
+	/** daily_dish_sold_out when the restaurant shows how many are left: `{name}`, `{count}` */
+	dishOnlyLeft: string
 	/** item / variant / option / modifier availability and shape problems */
 	itemsChanged: string
 	/** instructions_not_allowed, invalid_quantity, invalid_request */
@@ -81,6 +101,10 @@ const CODE_TO_LABEL: Record<string, OrderErrorLabelKey> = {
 	tip_too_large: 'tipTooLarge',
 	service_fee_changed: 'serviceFeeChanged',
 	service_fee_unavailable: 'serviceFeeUnavailable',
+	packaging_fee_changed: 'packagingFeeChanged',
+	packaging_fee_unavailable: 'packagingFeeUnavailable',
+	order_too_large: 'orderTooLarge',
+	daily_dish_sold_out: 'dailyDishSoldOut',
 	unknown_item: 'itemsChanged',
 	item_unavailable: 'itemsChanged',
 	variant_required: 'itemsChanged',
@@ -123,4 +147,133 @@ export function orderErrorMessage(
 	labels: OrderErrorLabels,
 ): string {
 	return labels[orderErrorLabelKey(code)]
+}
+
+function detailsOf(body: unknown): Record<string, unknown> | null {
+	if (!body || typeof body !== 'object' || Array.isArray(body)) return null
+	const details = (body as { details?: unknown }).details
+	return details && typeof details === 'object' && !Array.isArray(details)
+		? (details as Record<string, unknown>)
+		: null
+}
+
+/** Which limit `order_too_large` hit: an order amount, or a table's head count. */
+export function orderTooLargeKind(body: unknown): 'amount' | 'guests' {
+	return detailsOf(body)?.kind === 'guests' ? 'guests' : 'amount'
+}
+
+/**
+ * `order_too_large` (#422): points a big order to the restaurant's phone or to
+ * catering, and a big table to a team member. It never says what the limit is:
+ * the region does not send it and the page would not repeat it.
+ */
+export function orderTooLargeMessage(
+	body: unknown,
+	labels: Pick<
+		OrderErrorLabels,
+		'orderTooLarge' | 'orderTooLargeCall' | 'orderTooLargeGuests'
+	>,
+	phone: string | null = null,
+): string {
+	if (orderTooLargeKind(body) === 'guests') return labels.orderTooLargeGuests
+	const number = phone?.trim()
+	return number
+		? fillTemplate(labels.orderTooLargeCall, { phone: number })
+		: labels.orderTooLarge
+}
+
+/** A dish or option that cannot cover the order today, as the region names it. */
+export type SoldOutDish = {
+	/** `item:<id>` or `option:<id>` */
+	key: string
+	kind: 'item' | 'option'
+	id: string
+	/** Only when the restaurant lets guests see "Only N left"; never otherwise. */
+	remaining: number | null
+}
+
+/** The `details.short` list of `daily_dish_sold_out`, read defensively. */
+export function soldOutDishes(body: unknown): SoldOutDish[] {
+	const short = detailsOf(body)?.short
+	if (!Array.isArray(short)) return []
+	const out: SoldOutDish[] = []
+	for (const entry of short) {
+		if (!entry || typeof entry !== 'object') continue
+		const { key, kind, id, remaining } = entry as Record<string, unknown>
+		if (
+			typeof key !== 'string' ||
+			typeof id !== 'string' ||
+			(kind !== 'item' && kind !== 'option')
+		) {
+			continue
+		}
+		out.push({
+			key,
+			kind,
+			id,
+			remaining:
+				typeof remaining === 'number' &&
+				Number.isInteger(remaining) &&
+				remaining > 0
+					? remaining
+					: null,
+		})
+	}
+	return out
+}
+
+/**
+ * `daily_dish_sold_out` (#409): names the dish from the cart's own names (the
+ * region sends ids), and the number left only when the region sent one.
+ */
+export function dailySoldOutMessage(
+	body: unknown,
+	nameOf: (dish: SoldOutDish) => string | null,
+	labels: Pick<
+		OrderErrorLabels,
+		'dailyDishSoldOut' | 'dishSoldOut' | 'dishesSoldOut' | 'dishOnlyLeft'
+	>,
+): string {
+	const named = soldOutDishes(body)
+		.map((dish) => ({ dish, name: nameOf(dish) }))
+		.filter((entry): entry is { dish: SoldOutDish; name: string } =>
+			Boolean(entry.name),
+		)
+	const first = named[0]
+	if (!first) return labels.dailyDishSoldOut
+	if (named.length > 1) {
+		return fillTemplate(labels.dishesSoldOut, {
+			names: named.map((entry) => entry.name).join(', '),
+		})
+	}
+	return first.dish.remaining !== null
+		? fillTemplate(labels.dishOnlyLeft, {
+				name: first.name,
+				count: String(first.dish.remaining),
+			})
+		: fillTemplate(labels.dishSoldOut, { name: first.name })
+}
+
+/**
+ * The message for a failed order or quote: the plain code mapping, except the
+ * two codes whose words depend on what the region sent along.
+ */
+export function orderErrorMessageFor(
+	code: string | null | undefined,
+	body: unknown,
+	labels: OrderErrorLabels,
+	context: {
+		/** The location's phone, for "call us". */
+		phone?: string | null
+		/** The cart's own name for a dish or option id. */
+		nameOf?: (dish: SoldOutDish) => string | null
+	} = {},
+): string {
+	if (code === 'order_too_large') {
+		return orderTooLargeMessage(body, labels, context.phone ?? null)
+	}
+	if (code === 'daily_dish_sold_out') {
+		return dailySoldOutMessage(body, context.nameOf ?? (() => null), labels)
+	}
+	return orderErrorMessage(code, labels)
 }

@@ -1,4 +1,11 @@
 import {
+	type DailyDishChangeBody,
+	type DailyDishStatusData,
+	type DailyDishStatusRowData,
+	dailyDishStatusRowSchema,
+	dailyDishStatusSchema,
+} from '@repo/common/daily-dish-limits'
+import {
 	posOnlineOrderContactSchema,
 	posOnlineOrderDetailSchema,
 	posOnlineOrdersFeedSchema,
@@ -18,7 +25,7 @@ import {
 	type PosPauseCommand,
 	type PosStationControls,
 } from '@repo/common/pos-station-controls'
-import { type ZodType } from 'zod'
+import { z, type ZodType } from 'zod'
 import { noteServerDate } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { serversProblem } from '~/lib/pairing.ts'
@@ -55,7 +62,18 @@ export type OrdersApi = {
 	controls: () => Promise<PosStationControls>
 	pause: (command: PosPauseCommand) => Promise<PosStationControls>
 	availability: (command: PosAvailabilityCommand) => Promise<PosStationControls>
+	/**
+	 * What is left today of each dish or option with a daily limit (#409), at
+	 * this terminal's location. Manager only; empty while the feature is off.
+	 */
+	dailyLimits: () => Promise<DailyDishStatusData>
+	/** Adds units to, or sets the amount left of, one capped dish or option. */
+	topUpDailyLimit: (
+		change: DailyDishChangeBody,
+	) => Promise<DailyDishStatusRowData>
 }
+
+const dailyLimitRowAnswerSchema = z.object({ row: dailyDishStatusRowSchema })
 
 /**
  * The region's `/pos/online-orders` routes, straight from the tablet: guest
@@ -154,5 +172,16 @@ export function createOrdersApi(
 			call('POST', '/controls/pause', posStationControlsSchema, command),
 		availability: (command) =>
 			call('POST', '/controls/availability', posStationControlsSchema, command),
+		dailyLimits: () =>
+			call('GET', '/controls/daily-limits', dailyDishStatusSchema),
+		topUpDailyLimit: async (change) =>
+			(
+				await call(
+					'POST',
+					'/controls/daily-limits/top-up',
+					dailyLimitRowAnswerSchema,
+					change,
+				)
+			).row,
 	}
 }

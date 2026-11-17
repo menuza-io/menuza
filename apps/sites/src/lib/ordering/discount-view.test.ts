@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { discountLines, receiptDiscounts } from './discount-view.ts'
+import {
+	discountLines,
+	receiptDiscounts,
+	totalsFromQuote,
+} from './discount-view.ts'
 
 const labels = {
 	discount: 'Discount',
@@ -152,5 +156,37 @@ describe('discount names in the page language', () => {
 			{ locale: 'fr', defaultLocale: 'en' },
 		)
 		expect(french.lines[0]?.label).toBe('Lunch')
+	})
+})
+
+describe('totalsFromQuote (#408)', () => {
+	const quote = {
+		currency: 'USD',
+		subtotalMinor: 2000,
+		discounts: [],
+		totalDiscountMinor: 200,
+		loyaltyDiscountMinor: 0,
+		taxMinor: 0,
+		tipMinor: 0,
+		deliveryFeeMinor: 0,
+		deliveryDiscountMinor: 0,
+		totalMinor: 1900,
+		paymentRequired: true,
+		coupon: null,
+	}
+
+	it('reads the packaging fee the region priced, after a discount that waives it', () => {
+		expect(
+			totalsFromQuote({ ...quote, packagingFeeMinor: 100 } as never)
+				.packagingFeeMinor,
+		).toBe(100)
+		expect(
+			totalsFromQuote({ ...quote, packagingFeeMinor: 0 } as never)
+				.packagingFeeMinor,
+		).toBe(0)
+	})
+
+	it('reads an older region that sends none as no packaging fee', () => {
+		expect(totalsFromQuote(quote as never).packagingFeeMinor).toBe(0)
 	})
 })

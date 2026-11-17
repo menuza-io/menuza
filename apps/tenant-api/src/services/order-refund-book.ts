@@ -170,6 +170,7 @@ export function orderServiceFeeChargeCents(
 		RestaurantOrder,
 		| 'serviceFeeCents'
 		| 'serviceFeeTaxCents'
+		| 'packagingFeeCents'
 		| 'taxCents'
 		| 'totalCents'
 		| 'subtotalCents'
@@ -190,7 +191,8 @@ export function orderServiceFeeChargeCents(
 				order.tipCents +
 				order.deliveryFeeCents -
 				order.deliveryDiscountCents +
-				order.serviceFeeCents
+				order.serviceFeeCents +
+				order.packagingFeeCents
 	return order.serviceFeeCents + (inclusive ? 0 : order.serviceFeeTaxCents)
 }
 
@@ -439,7 +441,9 @@ export async function bookOrderProviderRefundInTx(
 				note: input.note,
 				actorId: input.actorId,
 				idempotencyKey:
-					providerCents > 0 ? `${input.idempotencyKey}:gift` : input.idempotencyKey,
+					providerCents > 0
+						? `${input.idempotencyKey}:gift`
+						: input.idempotencyKey,
 				requestHash,
 				createdAt: input.now,
 				kind: 'record',

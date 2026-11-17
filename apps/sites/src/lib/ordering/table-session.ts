@@ -1,3 +1,4 @@
+import { toAsciiDigits } from '@repo/common/ascii-digits'
 import { createdOrderSchema } from '@repo/common/order-receipt'
 import {
 	QR_TAB_TOKEN_HEADER,
@@ -340,6 +341,12 @@ export function tableHeaders(
 export type TableContext = {
 	table: { label: string; locationId: string }
 	dineIn: TablePolicy & { enabled: boolean }
+	/**
+	 * The most guests one table may order for from the phone (#422), or null
+	 * when there is no such limit. Where it is set the page asks how many are at
+	 * the table; the region enforces it.
+	 */
+	maxGuests: number | null
 	openTab: {
 		id: string
 		tabToken: string
@@ -386,7 +393,91 @@ export function readTableContext(value: unknown): TableContext | null {
 	return {
 		table: { label: value.table.label, locationId: value.table.locationId },
 		dineIn: { ...policy, enabled: value.dineIn.enabled },
+		maxGuests: readMaxGuests(value.dineInMaxGuests),
 		openTab,
+	}
+}
+
+export const GUEST_COUNT_MIN = 1
+export const GUEST_COUNT_MAX = 500
+
+/** The options' `dineInMaxGuests`: a whole number from 1 to 500, else no limit. */
+function readMaxGuests(value: unknown): number | null {
+	return typeof value === 'number' &&
+		Number.isInteger(value) &&
+		value >= GUEST_COUNT_MIN &&
+		value <= GUEST_COUNT_MAX
+		? value
+		: null
+}
+
+/** "How many are at your table?": a whole number from 1 to 500 (any digits), else null. */
+export function parseGuestCount(text: string): number | null {
+	const normalized = toAsciiDigits(text).replace(/[‎‏؜\s]/g, '')
+	if (!/^\d{1,3}$/.test(normalized)) return null
+	const count = Number(normalized)
+	return count >= GUEST_COUNT_MIN && count <= GUEST_COUNT_MAX ? count : null
+}
+
+const guestsKey = (orgId: string) => `menuza_qr_guests_${orgId}`
+
+/**
+ * The head count the guest gave for this table, kept for the tab session in
+ * `sessionStorage` (it is not contact data, and it leaves with the tab). A
+ * different table asks again.
+ */
+export function loadGuestCount(
+	orgId: string,
+	tableToken: string,
+	storage: Pick<Storage, 'getItem'> | null = safeSessionStorage(),
+): number | null {
+	if (!storage) return null
+	try {
+		const raw = storage.getItem(guestsKey(orgId))
+		if (!raw) return null
+		const saved = JSON.parse(raw) as { table?: unknown; count?: unknown }
+		return saved.table === tableToken.slice(0, 12) &&
+			typeof saved.count === 'number' &&
+			parseGuestCount(String(saved.count)) === saved.count
+			? saved.count
+			: null
+	} catch {
+		return null
+	}
+}
+
+export function saveGuestCount(
+	orgId: string,
+	tableToken: string,
+	count: number,
+	storage: Pick<Storage, 'setItem'> | null = safeSessionStorage(),
+) {
+	try {
+		storage?.setItem(
+			guestsKey(orgId),
+			JSON.stringify({ table: tableToken.slice(0, 12), count }),
+		)
+	} catch {
+		// Asked again on the next round; nothing is lost.
+	}
+}
+
+export function clearGuestCount(
+	orgId: string,
+	storage: Pick<Storage, 'removeItem'> | null = safeSessionStorage(),
+) {
+	try {
+		storage?.removeItem(guestsKey(orgId))
+	} catch {
+		// Nothing stored.
+	}
+}
+
+function safeSessionStorage(): Storage | null {
+	try {
+		return window.sessionStorage
+	} catch {
+		return null
 	}
 }
 
@@ -559,7 +650,10 @@ export async function startTabPayment(
 ): Promise<TabPaymentStart> {
 	if (!session.tabToken) throw new TableRequestError('tab_not_found', 404)
 	const tabToken = session.tabToken
-	const send = (expectedDiscountMinor: number, expectedServiceFeeMinor: number) =>
+	const send = (
+		expectedDiscountMinor: number,
+		expectedServiceFeeMinor: number,
+	) =>
 		sendAsCustomer(
 			'/orders/tab/pay',
 			{
@@ -601,7 +695,9 @@ export async function startTabPayment(
 			const discount =
 				error.code === 'discount_changed' ? discountMinorOf(error.body) : null
 			const fee =
-				error.code === 'service_fee_changed' ? serviceFeeMinorOf(error.body) : null
+				error.code === 'service_fee_changed'
+					? serviceFeeMinorOf(error.body)
+					: null
 			if (discount === null && fee === null) throw error
 			if (discount !== null) expectedDiscount = discount
 			if (fee !== null) expectedFee = fee

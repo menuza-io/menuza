@@ -258,6 +258,8 @@ export async function quoteCheckout(input: {
 		? applyLoyaltyDiscountToTotals(result, chosen.lines, chosen.discountMinor, {
 				lineDiscounts,
 				deliveryDiscountMinor,
+				packagingWaived:
+					prepared.ok && prepared.prepared?.evaluation.packagingWaived === true,
 			})
 		: {
 				loyaltyDiscountCents: 0,
@@ -429,9 +431,7 @@ export async function quoteTab(input: {
 			totals: {
 				subtotalMinor: totals.subtotalCents,
 				discountMinor: rewarded?.loyaltyDiscountCents ?? 0,
-				taxMinor:
-					(rewarded?.taxCents ?? totals.taxCents) +
-					serviceFee.taxCents,
+				taxMinor: (rewarded?.taxCents ?? totals.taxCents) + serviceFee.taxCents,
 				taxInclusive: totals.taxInclusive,
 				tipMinor: tipCents,
 				deliveryFeeMinor: 0,

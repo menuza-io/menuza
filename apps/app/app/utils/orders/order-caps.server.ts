@@ -3,7 +3,7 @@ import { and, db, eq, OrganizationLocation } from '@repo/database'
 export async function buildOrderCapsContext(
 	organizationId: string,
 	locationId?: string | null,
-): Promise<Record<string, unknown>> {
+): Promise<{ locations: Record<string, unknown> }> {
 	const rows = await db
 		.select({
 			id: OrganizationLocation.id,

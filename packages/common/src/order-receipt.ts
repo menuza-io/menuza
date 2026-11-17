@@ -19,6 +19,22 @@ export const orderSummarySchema = z.object({
 	serviceFeeTaxCents: cents.optional(),
 	/** The name the guest saw for the fee. */
 	serviceFeeLabel: z.string().nullable().optional(),
+	/**
+	 * The packaging or bag fee (#408) before its tax (the tax is in `taxCents`),
+	 * and the name the guest saw. Absent on older nodes, which never charge one.
+	 */
+	packagingFeeCents: cents.optional(),
+	packagingFeeTaxCents: cents.optional(),
+	packagingFeeLabel: z.string().nullable().optional(),
+	/** The guest's answer to the utensils question (#257); null when not asked. */
+	utensilsRequested: z.boolean().nullable().optional(),
+	/** Extra prep minutes a large order added to its promised time (#355). */
+	largeOrderExtraMinutes: z.number().int().nonnegative().optional(),
+	/**
+	 * The pickup instructions the guest saw at checkout (#251), kept with the
+	 * order so a later edit never rewrites it. Plain text: escape it.
+	 */
+	pickupInstructions: z.string().nullable().optional(),
 	totalCents: cents,
 	holdExpiresAt: z.string().datetime().nullable(),
 	/** When the order should be ready / start arriving; absent on older nodes. */

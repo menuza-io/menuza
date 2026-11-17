@@ -444,6 +444,22 @@ export const OnlineOrderingUtensilsSchema = z.strictObject({
 	defaultRequested: z.boolean().default(false),
 })
 
+/**
+ * Large orders (#355): "more than N items or over AMOUNT, add M minutes". Both
+ * thresholds are optional, whichever is reached first applies. Present (even
+ * with both empty, meaning no rule) it replaces the single threshold the
+ * location columns held before.
+ */
+export const OnlineOrderingLargeOrderSchema = z.strictObject({
+	itemThreshold: z.number().int().positive().max(1000).nullable(),
+	/** Minor units of the location's currency. */
+	amountMinor: z.number().int().positive().max(1_000_000_000).nullable(),
+	extraMinutes: z.number().int().min(0).max(240),
+})
+export type OnlineOrderingLargeOrder = z.infer<
+	typeof OnlineOrderingLargeOrderSchema
+>
+
 export const OnlineOrderingSettingsSchema = z.strictObject({
 	buffers: OnlineOrderingBuffersSchema,
 	pickup: FulfillmentHoursModeSchema.default('follow_online'),
@@ -453,6 +469,8 @@ export const OnlineOrderingSettingsSchema = z.strictObject({
 	syncOnlineWithStore: z.boolean().default(true),
 	/** Ask for utensils on pickup and delivery (#257). */
 	utensils: OnlineOrderingUtensilsSchema.optional(),
+	/** The large-order extra time rule (#355). */
+	largeOrder: OnlineOrderingLargeOrderSchema.optional(),
 })
 export type OnlineOrderingSettings = z.infer<
 	typeof OnlineOrderingSettingsSchema

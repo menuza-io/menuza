@@ -13,6 +13,7 @@ import {
 	tipViewOf,
 	type TipSelection,
 } from '~/lib/ordering/checkout-extras'
+import { cartNameOf } from '~/lib/ordering/daily-availability'
 import {
 	cleanTypedCode,
 	isPlausibleCode,
@@ -27,15 +28,24 @@ import {
 	saveOrderCapability,
 } from '~/lib/ordering/order-client'
 import {
+	dailySoldOutMessage,
+	orderTooLargeKind,
+	orderTooLargeMessage,
+} from '~/lib/ordering/order-errors'
+import {
 	checkTabPayment,
+	clearGuestCount,
 	clearTabPayment,
 	clearTableSession,
 	fetchTab,
 	fetchTableContext,
 	isDeadTableError,
+	loadGuestCount,
 	loadTableSession,
+	parseGuestCount,
 	readTableFragment,
 	rememberPosterVisit,
+	saveGuestCount,
 	saveTableSession,
 	startTabPayment,
 	stripTableFragment,
@@ -80,6 +90,15 @@ type Labels = Record<
 	| 'errorDiscountChanged'
 	| 'errorServiceFeeChanged'
 	| 'errorTipTooLarge'
+	| 'guestsTitle'
+	| 'guestsInvalid'
+	| 'orderTooLarge'
+	| 'orderTooLargeCall'
+	| 'orderTooLargeGuests'
+	| 'dailyDishSoldOut'
+	| 'dishSoldOut'
+	| 'dishesSoldOut'
+	| 'dishOnlyLeft'
 	| 'noTip'
 	| 'customTip'
 	| 'customTipInvalid'
@@ -198,6 +217,9 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 	const orderBar = document.getElementById('order-bar')
 	let session: TableSession | null = null
 	let sending = false
+	// The most guests one table may order for (#422), from the table's options;
+	// null when there is no such limit and nobody is asked.
+	let maxGuests: number | null = null
 
 	// Posters: remember the visit so a pickup order is tagged for attribution.
 	if (new URL(window.location.href).searchParams.get('src') === 'qr') {
@@ -264,6 +286,15 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		}
 		if (code === 'tip_too_large') {
 			return labels.errorTipTooLarge ?? labels.errorGeneric
+		}
+		// A table past the head-count limit (#422): ask a team member.
+		if (code === 'order_too_large' && labels.orderTooLargeGuests) {
+			return orderTooLargeMessage(body, labels)
+		}
+		// A dish or option ran out for today (#409): named from the cart.
+		if (code === 'daily_dish_sold_out' && labels.dailyDishSoldOut) {
+			const cart = deps.store.lines()
+			return dailySoldOutMessage(body, (dish) => cartNameOf(cart, dish), labels)
 		}
 		if (code === 'coupon_refused') {
 			const refusal = parseDiscountOrderRefusal(code, body)
@@ -755,6 +786,92 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		finishContact(null)
 	})
 
+	// ---- How many are at the table (#422) -----------------------------------
+
+	const guestsBackdrop = document.getElementById('table-guests-backdrop')
+	const guestsForm = document.getElementById(
+		'table-guests',
+	) as HTMLFormElement | null
+	const guestsMotion =
+		guestsBackdrop && guestsForm
+			? createOverlayMotion(guestsBackdrop, guestsForm)
+			: null
+	let releaseGuests: (() => void) | null = null
+	let guestsOpener: HTMLElement | null = null
+	let pendingGuests: ((count: number | null) => void) | null = null
+
+	function askGuests() {
+		return new Promise<number | null>((resolve) => {
+			if (!guestsMotion || !guestsForm) return resolve(null)
+			pendingGuests = resolve
+			guestsOpener =
+				document.activeElement instanceof HTMLElement
+					? document.activeElement
+					: null
+			const input = guestsForm.elements.namedItem('guests') as HTMLInputElement
+			input.value = ''
+			setInvalid(input, false, 'table-guests-error')
+			const error = document.getElementById('table-guests-error')
+			if (error) {
+				error.textContent = ''
+				error.classList.add('hidden')
+			}
+			guestsMotion.open()
+			const releaseScroll = lockScroll()
+			const releaseTrap = trapFocus(guestsForm)
+			releaseGuests = () => {
+				releaseScroll()
+				releaseTrap()
+			}
+			input.focus({ preventScroll: true })
+		})
+	}
+
+	function finishGuests(count: number | null) {
+		releaseGuests?.()
+		releaseGuests = null
+		guestsMotion?.close()
+		if (guestsOpener?.isConnected) guestsOpener.focus({ preventScroll: true })
+		guestsOpener = null
+		pendingGuests?.(count)
+		pendingGuests = null
+	}
+
+	document
+		.getElementById('table-guests-close')
+		?.addEventListener('click', () => finishGuests(null))
+	guestsForm?.addEventListener('submit', (event) => {
+		event.preventDefault()
+		const input = guestsForm.elements.namedItem('guests') as HTMLInputElement
+		const error = document.getElementById('table-guests-error')
+		const count = parseGuestCount(input.value)
+		// The limit is public on purpose (the stepper's own ceiling): a bigger
+		// group hears so here, with no round trip, in the words the region uses.
+		const tooMany = count !== null && maxGuests !== null && count > maxGuests
+		const bad = count === null || tooMany
+		setInvalid(input, bad, 'table-guests-error')
+		if (bad) {
+			if (error) {
+				showAlert(
+					error,
+					tooMany
+						? (labels.orderTooLargeGuests ?? labels.errorGeneric)
+						: (labels.guestsInvalid ?? labels.errorGeneric),
+				)
+			}
+			input.focus()
+			return
+		}
+		error?.classList.add('hidden')
+		finishGuests(count)
+	})
+	guestsForm?.addEventListener('keydown', (event) => {
+		if (event.key !== 'Escape') return
+		// Only this sheet closes; the cart drawer underneath stays open.
+		event.stopPropagation()
+		finishGuests(null)
+	})
+
 	// ---- Paying from the phone ----------------------------------------------
 
 	const payBackdrop = document.getElementById('tab-pay-backdrop')
@@ -820,7 +937,12 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		const enabled = tab.tipChoices?.enabled !== false
 		fieldset?.classList.toggle('hidden', !enabled)
 		const view = tipViewOf(tab.tipChoices?.settings, 'qrTab', tabCurrency(tab))
-		const key = JSON.stringify([enabled, view.choices, view.allowCustom, tab.id])
+		const key = JSON.stringify([
+			enabled,
+			view.choices,
+			view.allowCustom,
+			tab.id,
+		])
 		if (!enabled) {
 			tipSelection = { kind: 'none' }
 			tipCustomOpen = false
@@ -846,7 +968,13 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 						},
 			),
 			...(view.allowCustom
-				? [{ selection: 'custom', label: labels.customTip, percent: null } as TipEntry]
+				? [
+						{
+							selection: 'custom',
+							label: labels.customTip,
+							percent: null,
+						} as TipEntry,
+					]
 				: []),
 		]
 		tipSelection = view.initial
@@ -968,7 +1096,9 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 	/** What the pay button adds for the fee when no reward is picked. */
 	function feeChargeMinor(): number {
 		const line = feeLine(0)
-		return line ? serviceFeeChargeMinor(line, payTab?.totals.taxInclusive ?? false) : 0
+		return line
+			? serviceFeeChargeMinor(line, payTab?.totals.taxInclusive ?? false)
+			: 0
 	}
 
 	function paintFee() {
@@ -1368,6 +1498,18 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		if (!session || sending) return
 		const cart = deps.store.lines()
 		if (cart.length === 0) return
+		// Where the restaurant limits a table's head count, the first round asks
+		// how many are at the table; the answer is kept for the tab session and
+		// goes with every round. Closing the sheet sends nothing.
+		let guestCount: number | null = null
+		if (maxGuests !== null) {
+			guestCount = loadGuestCount(orgId, session.tableToken)
+			if (guestCount === null) {
+				guestCount = await askGuests()
+				if (guestCount === null) return
+				saveGuestCount(orgId, session.tableToken, guestCount)
+			}
+		}
 		sending = true
 		if (checkoutText) checkoutText.textContent = labels.sending
 		checkoutBtn?.setAttribute('aria-busy', 'true')
@@ -1379,6 +1521,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				paymentMethod: 'handoff',
 				contact,
 				tipPercent: 0,
+				...(guestCount !== null ? { guestCount } : {}),
 				lines: orderLines(cart),
 			}
 			const idempotencyKey = await checkoutAttemptKey(orgId, {
@@ -1432,8 +1575,22 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				say(errorText(code), 'danger')
 				deps.cart.close()
 			} else {
+				// A group the region says is too big: ask again next time.
+				if (
+					code === 'order_too_large' &&
+					orderTooLargeKind(
+						error instanceof TableRequestError ? error.body : null,
+					) === 'guests'
+				) {
+					clearGuestCount(orgId)
+				}
 				// Worth retrying: keep the cart (and its button) and say it there.
-				cartError(errorText(code))
+				cartError(
+					errorText(
+						code,
+						error instanceof TableRequestError ? error.body : undefined,
+					),
+				)
 			}
 		} finally {
 			sending = false
@@ -1504,6 +1661,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				say(labels.errorUnavailable, 'danger')
 				return
 			}
+			maxGuests = context.maxGuests ?? null
 			const sameTable = stored && stored.tableToken === tableToken
 			session = {
 				orgId,

@@ -1,10 +1,10 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { DEFAULT_PACKAGING_FEE_LABEL } from '@repo/common/packaging-fee'
 import {
 	ORDER_CANCEL_REASONS,
 	type OrderRejectReason,
 } from '@repo/common/restaurant-orders'
-import { DEFAULT_PACKAGING_FEE_LABEL } from '@repo/common/packaging-fee'
 import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 import {
 	AlertDialog,
@@ -322,6 +322,7 @@ export function OrderDetail({
 	const promisedTo = order.promisedUntil
 		? promisedClock(order.promisedUntil, locale, orderZone)
 		: ''
+	const largeOrderExtraMinutes = order.largeOrderExtraMinutes ?? 0
 	const promisedLabel = !promisedFrom
 		? null
 		: promisedTo
@@ -769,9 +770,7 @@ export function OrderDetail({
 								) : null}
 								{order.largeOrderExtraMinutes ? (
 									<p className="font-medium" data-testid="order-large-order">
-										<Trans>
-											Large order +{order.largeOrderExtraMinutes} min
-										</Trans>
+										<Trans>Large order +{largeOrderExtraMinutes} min</Trans>
 									</p>
 								) : null}
 								{order.utensilsRequested === true ? (
@@ -785,6 +784,7 @@ export function OrderDetail({
 								) : null}
 								{order.pickupInstructions ? (
 									<p
+										dir="auto"
 										className="text-muted-foreground whitespace-pre-wrap"
 										data-testid="order-pickup-instructions"
 									>

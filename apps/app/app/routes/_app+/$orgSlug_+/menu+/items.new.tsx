@@ -29,6 +29,10 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import {
+	dailyLimitColumn,
+	dailyLimitLocationIds,
+} from '#app/utils/menu/daily-limit-save.ts'
 import { autoTranslateNewItem } from '#app/utils/menu/menu-auto-translate.server.ts'
 import {
 	assertCategoryIdsInOrganization,
@@ -36,8 +40,9 @@ import {
 	assertMediaKeysInOrganization,
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
-import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -81,12 +86,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 
 	const slotLimits = await buildSlotLimitsContext(organization.id)
+	const dailyLimitsEnabled = await isDailyDishLimitsEnabled(organization.id)
 
 	return {
 		organization,
 		defaultLocale,
 		supportedLocales,
 		slotLimitsEnabled: slotLimits.enabled,
+		dailyLimitsEnabled,
 		initialCategoryId,
 		allCategories: allCategories.map((c) => ({
 			id: c.id,
@@ -206,6 +213,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				.filter((id): id is string => typeof id === 'string'),
 			tx,
 		)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			dailyLimitLocationIds(data.dailySaleLimit),
+			tx,
+		)
 
 		// Create Item
 		const [newItem] = await tx
@@ -234,6 +246,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				excludeFromOverride: data.excludeFromOverride,
 				excludeFromDiscounts: data.excludeFromDiscounts,
 				excludeFromOrderLimits: data.excludeFromOrderLimits,
+				...dailyLimitColumn(
+					formData.has('dailySaleLimit'),
+					data.dailySaleLimit,
+				),
 				isPopular: data.isPopular,
 				isUpsell: data.isUpsell,
 				availabilityStatus: data.availabilityStatus,
@@ -318,6 +334,7 @@ export default function CreateItemRoute() {
 		allModifierGroups,
 		allLocations,
 		slotLimitsEnabled,
+		dailyLimitsEnabled,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -338,6 +355,7 @@ export default function CreateItemRoute() {
 				allModifierGroups={allModifierGroups}
 				allLocations={allLocations}
 				slotLimitsEnabled={slotLimitsEnabled}
+				dailyLimitsEnabled={dailyLimitsEnabled}
 				isSubmitting={isSubmitting}
 			/>
 		</div>

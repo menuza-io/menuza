@@ -305,6 +305,21 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 		 * Absent from an older node: none was charged.
 		 */
 		serviceFeeCents: z.number().int().optional(),
+		/**
+		 * The packaging or bag fee (#408) before its tax (the tax is in `taxCents`),
+		 * and the name the guest saw. Absent from an older node: none was charged.
+		 */
+		packagingFeeCents: z.number().int().optional(),
+		packagingFeeLabel: z.string().max(80).nullable().optional(),
+		/** The guest's utensils answer (#257); null when it was not asked. */
+		utensilsRequested: z.boolean().nullable().optional(),
+		/**
+		 * The pickup instructions the guest saw (#251): the restaurant's own text,
+		 * not personal data. Plain text, escape it and keep the line breaks.
+		 */
+		pickupInstructions: z.string().max(400).nullable().optional(),
+		/** Extra minutes a large order added to its promised time (#355). */
+		largeOrderExtraMinutes: z.number().int().nonnegative().optional(),
 		discountCents: z.number().int(),
 		loyaltyDiscountCents: z.number().int(),
 		paidAt: z.number().int().nullable(),

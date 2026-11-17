@@ -81,6 +81,11 @@ const vatNumberText = i18n._(msg`VAT number`)
 const deliveryFeeText = i18n._(msg`Delivery fee`)
 const tipText = i18n._(msg`Tip`)
 const serviceFeeText = i18n._(msg`Service fee`)
+const packagingFeeText = i18n._(msg`Packaging fee`)
+const pickupInstructionsText = i18n._(msg`Pickup instructions`)
+const utensilsTitleText = i18n._(msg`Utensils and napkins`)
+const utensilsYesText = i18n._(msg`Utensils: yes`)
+const utensilsNoText = i18n._(msg`No utensils`)
 const totalText = i18n._(msg`Total`)
 const totalPaidText = i18n._(msg`Total paid`)
 const backToMenuLabel = i18n._(msg`Back to menu`)
@@ -125,6 +130,9 @@ const completePaymentLabel = i18n._(msg`Complete payment`)
 
 const successLabels = {
 	serviceFee: serviceFeeText,
+	packagingFee: packagingFeeText,
+	utensilsYes: utensilsYesText,
+	utensilsNo: utensilsNoText,
 	locale: requestedLocale,
 	organizationId: organization.id,
 	currency: menuPayload?.organization?.currency || 'USD',
@@ -463,6 +471,29 @@ const valueClass = 'price font-medium text-foreground'
 								</a>
 							</div>
 						</div>
+
+						{/* The pickup instructions the guest saw at checkout (#251), kept with
+						    the order. Plain text set with textContent; line breaks by CSS. */}
+						<div id="order-pickup-instructions" class="hidden gap-3 sm:col-span-2 [&:not(.hidden)]:flex">
+							<span class={factIconClass} aria-hidden="true">
+								<svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+							</span>
+							<div class="min-w-0 flex-1">
+								<dt class="text-xs text-muted-foreground">{pickupInstructionsText}</dt>
+								<dd id="order-pickup-instructions-text" dir="auto" class="mt-0.5 whitespace-pre-line text-sm text-pretty text-foreground [text-align:match-parent]"></dd>
+							</div>
+						</div>
+
+						{/* What the guest chose about utensils (#257); only when it was asked. */}
+						<div id="order-utensils" class="hidden gap-3 sm:col-span-2 [&:not(.hidden)]:flex">
+							<span class={factIconClass} aria-hidden="true">
+								<svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+							</span>
+							<div class="min-w-0 flex-1 self-center">
+								<dt class="sr-only">{utensilsTitleText}</dt>
+								<dd id="order-utensils-text" class="text-sm font-semibold text-foreground"></dd>
+							</div>
+						</div>
 					</dl>
 
 					{/* Receipt breakdown (authoritative, from the regional order) */}
@@ -498,6 +529,11 @@ const valueClass = 'price font-medium text-foreground'
 							<div id="order-fee-row" class:list={[rowClass, 'hidden']}>
 								<dt id="order-fee-label" class="min-w-0">{serviceFeeText}</dt>
 								<dd id="order-fee" class={valueClass}></dd>
+							</div>
+							{/* The packaging or bag fee (#408), under the name the guest saw. */}
+							<div id="order-packaging-row" class:list={[rowClass, 'hidden']}>
+								<dt id="order-packaging-label" dir="auto" class="min-w-0">{packagingFeeText}</dt>
+								<dd id="order-packaging" class={valueClass}></dd>
 							</div>
 							<div class={rowClass}>
 								<dt>{tipText}</dt>
@@ -617,7 +653,14 @@ const valueClass = 'price font-medium text-foreground'
 		} from '~/lib/ordering/hold-timer'
 		import { receiptDiscounts } from '~/lib/ordering/discount-view'
 		import { formatPickupAddress, formatSlot } from '~/lib/ordering/pickup'
-		import { receiptLineNote, receiptRecipientText } from '~/lib/ordering/order-view'
+		import {
+			receiptLineNote,
+			receiptPackagingLine,
+			receiptPickupInstructions,
+			receiptRecipientText,
+			receiptTaxIncluded,
+			receiptUtensilsText,
+		} from '~/lib/ordering/order-view'
 		import { zonedTimeToUtc } from '~/lib/drops/format'
 		import { getOrgBinding } from '~/lib/client-auth'
 
@@ -675,6 +718,13 @@ const valueClass = 'price font-medium text-foreground'
 			/** The guest service fee before its tax, and the name the guest saw. Absent on older nodes. */
 			serviceFeeCents?: number
 			serviceFeeLabel?: string | null
+			/** The packaging or bag fee before its tax, and the name the guest saw. Absent on older nodes. */
+			packagingFeeCents?: number
+			packagingFeeLabel?: string | null
+			/** The utensils answer; null when it was not asked, absent on older nodes. */
+			utensilsRequested?: boolean | null
+			/** The pickup text the guest saw at checkout; plain text. */
+			pickupInstructions?: string | null
 			totalCents: number
 			holdExpiresAt: string | null
 			tipPercent: number | null
@@ -1018,15 +1068,17 @@ const valueClass = 'price font-medium text-foreground'
 				0,
 				order.deliveryFeeCents - savings.deliveryCents,
 			)
-			const taxIncluded =
-				order.taxCents > 0 &&
-				order.totalCents ===
-					order.subtotalCents -
-						savings.itemsCents -
-						loyaltyCents +
-						netDelivery +
-						order.tipCents +
-						(order.serviceFeeCents ?? 0)
+			const taxIncluded = receiptTaxIncluded({
+				taxCents: order.taxCents,
+				totalCents: order.totalCents,
+				subtotalCents: order.subtotalCents,
+				itemSavingCents: savings.itemsCents,
+				loyaltyCents,
+				deliveryNetCents: netDelivery,
+				tipCents: order.tipCents,
+				serviceFeeCents: order.serviceFeeCents,
+				packagingFeeCents: order.packagingFeeCents,
+			})
 			const taxLabelEl = document.getElementById('order-tax-label')
 			const taxLabelText = taxIncluded
 				? taxLabelEl?.dataset.inclusiveLabel
@@ -1064,6 +1116,29 @@ const valueClass = 'price font-medium text-foreground'
 				}
 				if (feeEl) feeEl.textContent = formatCents(feeCents)
 			}
+			// The packaging fee as its own line, under the name the guest saw (#408).
+			const packaging = receiptPackagingLine(order, labels.packagingFee as string)
+			const packagingRow = document.getElementById('order-packaging-row')
+			packagingRow?.classList.toggle('hidden', !packaging)
+			if (packaging) {
+				const packagingLabelEl = document.getElementById('order-packaging-label')
+				const packagingEl = document.getElementById('order-packaging')
+				if (packagingLabelEl) packagingLabelEl.textContent = packaging.label
+				if (packagingEl) packagingEl.textContent = formatCents(packaging.cents)
+			}
+			// Where to go (#251) and the utensils answer (#257), as the guest saw them
+			// at checkout. textContent only: line breaks come from CSS, never markup.
+			const pickupText = receiptPickupInstructions(order)
+			const pickupTextEl = document.getElementById('order-pickup-instructions-text')
+			if (pickupTextEl) pickupTextEl.textContent = pickupText ?? ''
+			document.getElementById('order-pickup-instructions')?.classList.toggle('hidden', !pickupText)
+			const utensilsText = receiptUtensilsText(order, {
+				yes: labels.utensilsYes as string,
+				no: labels.utensilsNo as string,
+			})
+			const utensilsTextEl = document.getElementById('order-utensils-text')
+			if (utensilsTextEl) utensilsTextEl.textContent = utensilsText ?? ''
+			document.getElementById('order-utensils')?.classList.toggle('hidden', !utensilsText)
 			if (totalEl) totalEl.textContent = formatCents(order.totalCents)
 
 			latestOrder = order

@@ -1265,7 +1265,6 @@ export const restaurantOrderRefunds = sqliteTable(
 		// operator ticked "include service fee". Lets the next refund see how much
 		// of the fee is already back. Zero for every row from before 0045.
 		serviceFeeCents: integer('service_fee_cents').notNull().default(0),
-		packagingFeeCents: integer('packaging_fee_cents').notNull().default(0),
 	},
 	(table) => [
 		uniqueIndex('restaurant_order_refunds_idempotency_unique').on(
@@ -1292,38 +1291,71 @@ export const restaurantOrderRefunds = sqliteTable(
 	],
 )
 
-/** Daily dish sales and holds (#409), one row per org, location, day and catalog key. */
-export const orderDishDailyCounts = sqliteTable(
-	'order_dish_daily_counts',
+/**
+ * What an order claims of a daily-capped dish or option (#409): one row per
+ * order and counter key (`item:<id>` / `option:<id>`). The state is derived
+ * from the order itself (`dailyDishClaimState` in `@repo/common`) and only
+ * ever moves `held` -> `sold` or to `released`, which is final, so a repeated
+ * payment event, a late cancel or a lapsed hold cannot count twice. Ids and
+ * counts only, no guest data.
+ */
+export const orderDishDailyClaims = sqliteTable(
+	'order_dish_daily_claims',
 	{
 		id: text('id')
 			.primaryKey()
 			.$defaultFn(() => randomUUID()),
-		orgId: text('org_id').notNull(),
-		locationId: text('location_id').notNull(),
-		/** Local business date `YYYY-MM-DD` in the location time zone. */
-		businessDate: text('business_date').notNull(),
-		/** Menu item id, or `item:variantId` / `item:optionId` when capped. */
-		catalogKey: text('catalog_key').notNull(),
-		limitUnits: integer('limit_units').notNull(),
-		soldUnits: integer('sold_units').notNull().default(0),
-		heldUnits: integer('held_units').notNull().default(0),
-		/** Cumulative top-ups; the ceiling is `limit_units + topped_up_units`. */
-		toppedUpUnits: integer('topped_up_units').notNull().default(0),
-		updatedAt: integer('updated_at')
+		orderId: text('order_id')
 			.notNull()
-			.default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
+			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
+		locationId: text('location_id').notNull(),
+		/** The location's business date (`YYYY-MM-DD`) when the order was placed. */
+		businessDate: text('business_date').notNull(),
+		catalogKey: text('catalog_key').notNull(),
+		units: integer('units').notNull(),
+		state: text('state', { enum: ['held', 'sold', 'released'] }).notNull(),
+		createdAt: integer('created_at').notNull(),
+		updatedAt: integer('updated_at').notNull(),
 	},
 	(table) => [
-		uniqueIndex('order_dish_daily_counts_key').on(
-			table.orgId,
+		uniqueIndex('order_dish_daily_claims_order_key').on(
+			table.orderId,
+			table.catalogKey,
+		),
+		index('idx_order_dish_daily_claims_day').on(
 			table.locationId,
 			table.businessDate,
 			table.catalogKey,
+			table.state,
 		),
-		index('idx_order_dish_daily_counts_location_day').on(
+	],
+)
+
+/**
+ * A manager's adjustment to one capped dish or option for one business date
+ * (#409): units added (or taken away, when negative) to the day's allowance.
+ * The allowance is the configured limit plus this, so a limit edited mid-day
+ * takes effect at once and the next business date starts again at the limit.
+ */
+export const orderDishDailyTopups = sqliteTable(
+	'order_dish_daily_topups',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		businessDate: text('business_date').notNull(),
+		catalogKey: text('catalog_key').notNull(),
+		toppedUpUnits: integer('topped_up_units').notNull().default(0),
+		/** Control-plane user id of the last editor (an id, never a name). */
+		updatedBy: text('updated_by'),
+		updatedAt: integer('updated_at').notNull(),
+	},
+	(table) => [
+		uniqueIndex('order_dish_daily_topups_key').on(
 			table.locationId,
 			table.businessDate,
+			table.catalogKey,
 		),
 	],
 )

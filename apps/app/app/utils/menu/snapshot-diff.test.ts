@@ -46,6 +46,7 @@ describe('diffMenuSnapshots', () => {
 				excludeFromOverride: false,
 				excludeFromDiscounts: false,
 				excludeFromOrderLimits: false,
+				dailySaleLimit: null,
 				isPopular: false,
 				isUpsell: false,
 				availabilityStatus: 'available',

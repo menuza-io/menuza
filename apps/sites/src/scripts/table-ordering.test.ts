@@ -75,6 +75,7 @@ function tableContext(): TableContext {
 			requireGuestPhone: false,
 			onlineTabPayAvailable: true,
 		},
+		maxGuests: null,
 		openTab: {
 			id: 'tab-1',
 			tabToken,
@@ -250,12 +251,12 @@ function mount() {
 		coupon: form.elements.namedItem('coupon') as HTMLInputElement,
 		/** The tip radios, by their labels. */
 		tipRadios: () =>
-			[...form.querySelectorAll<HTMLInputElement>('input[name="tipChoice"]')].map(
-				(input) => ({
-					input,
-					label: input.closest('label')?.textContent ?? '',
-				}),
-			),
+			[
+				...form.querySelectorAll<HTMLInputElement>('input[name="tipChoice"]'),
+			].map((input) => ({
+				input,
+				label: input.closest('label')?.textContent ?? '',
+			})),
 		typeCustomTip(text: string) {
 			const input = byId('tab-tip-custom-input') as HTMLInputElement
 			input.value = text
@@ -626,7 +627,6 @@ describe('paying the tab from the phone', () => {
 	})
 })
 
-
 describe('tip choices and the service fee on the pay sheet', () => {
 	const choices = (patch = {}) => ({
 		enabled: true,
@@ -766,7 +766,9 @@ describe('tip choices and the service fee on the pay sheet', () => {
 		const t = await open({
 			serviceFee: fee({ explanation: 'Covers card and ordering costs.' }),
 		})
-		const label = document.getElementById('tab-pay-fee-label') as HTMLButtonElement
+		const label = document.getElementById(
+			'tab-pay-fee-label',
+		) as HTMLButtonElement
 		expect(label).toHaveTextContent('serviceFee')
 		expect(label).toBeEnabled()
 		const explanation = document.getElementById('tab-pay-fee-explanation')!

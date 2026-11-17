@@ -4,6 +4,10 @@ import { and, eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import {
+	operatorDailyDishChangeSchema,
+	operatorDailyDishStatusQuerySchema,
+} from '@repo/common/daily-dish-limits'
+import {
 	operatorOrderPatchSchema,
 	operatorOrderRefundRequestSchema,
 	operatorSlotLimitsResetSchema,
@@ -35,6 +39,10 @@ import {
 	operatorOrder,
 	updateOperatorOrderWithRefund,
 } from '../services/order-service.ts'
+import {
+	adjustDailyDish,
+	getOperatorDailyDishStatus,
+} from '../services/order-dish-daily-operator.ts'
 import {
 	getOperatorSlotLimitsToday,
 	resetOperatorSlotLimits,
@@ -482,6 +490,106 @@ operatorOrderRoutes.post('/limits/reset', async (c) => {
 	} catch (error) {
 		console.error(
 			`Failed to reset slot limits for org ${auth.auth.orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'Tenant Database unavailable' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+/**
+ * Daily dish limits (#409): today's figures for every capped dish and option
+ * at one location, and the manager's top-up. Ids and counts only. Registered
+ * before `/:id`.
+ */
+operatorOrderRoutes.get('/daily-limits', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:read')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	const parsed = operatorDailyDishStatusQuerySchema.safeParse(c.req.query())
+	if (!parsed.success) {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	if (!orderVisible(auth.auth, parsed.data.locationId)) {
+		return c.json({ error: 'location_not_found' }, 404, noStoreHeaders())
+	}
+	try {
+		const result = await getOperatorDailyDishStatus({
+			orgId: auth.auth.orgId,
+			locationId: parsed.data.locationId,
+		})
+		if (!result.ok) {
+			return c.json(
+				{ error: result.failure.code, message: result.failure.message },
+				result.failure.status,
+				noStoreHeaders(),
+			)
+		}
+		return c.json(result.data, 200, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to load daily dish limits for org ${auth.auth.orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'Tenant Database unavailable' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+operatorOrderRoutes.post('/daily-limits/top-up', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:write')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	if (auth.auth.impersonated) {
+		return c.json(
+			{ error: 'forbidden', message: 'Not allowed while impersonating.' },
+			403,
+			noStoreHeaders(),
+		)
+	}
+	let body: unknown
+	try {
+		body = await c.req.json()
+	} catch {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	const parsed = operatorDailyDishChangeSchema.safeParse(body)
+	if (!parsed.success) {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	if (!orderVisible(auth.auth, parsed.data.locationId)) {
+		return c.json({ error: 'location_not_found' }, 404, noStoreHeaders())
+	}
+	try {
+		const result = await adjustDailyDish({
+			orgId: auth.auth.orgId,
+			locationId: parsed.data.locationId,
+			key: parsed.data.key,
+			change:
+				parsed.data.addUnits !== undefined
+					? { addUnits: parsed.data.addUnits }
+					: { amountLeft: parsed.data.amountLeft! },
+			userId: auth.auth.userId,
+		})
+		if (!result.ok) {
+			return c.json(
+				{ error: result.failure.code, message: result.failure.message },
+				result.failure.status,
+				noStoreHeaders(),
+			)
+		}
+		return c.json({ ok: true, row: result.data }, 200, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to top up a daily dish limit for org ${auth.auth.orgId}:`,
 			error instanceof Error ? error.message : error,
 		)
 		return c.json(

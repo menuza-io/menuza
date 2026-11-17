@@ -142,6 +142,8 @@ export const editorStateSchema = z.object({
 	priority: typed,
 	promoteOnMenu: z.boolean(),
 	requireApproval: z.boolean(),
+	// A form open before this field existed posts none: that reads as off.
+	waivesPackagingFee: z.boolean().default(false),
 }) satisfies z.ZodType<EditorState>
 
 /** The most characters of posted editor state the server reads. */

@@ -532,6 +532,8 @@ export type PublicMenuItemData = {
 	isPopular: boolean
 	isUpsell: boolean
 	excludeFromDiscounts?: boolean
+	/** Does not count toward order limits (#256), so not toward item counts (#355, #408). */
+	excludeFromOrderLimits?: boolean
 	availabilityStatus: string
 	position: number
 	modifierGroups: PublicModifierGroupData[]
@@ -547,6 +549,8 @@ export type PublicMenuCategoryData = {
 	subcategories?: PublicMenuCategoryData[]
 	availabilityStatus: string
 	position: number
+	/** Every dish in it is left out of order limits (#256). */
+	excludeFromOrderLimits?: boolean
 	items: PublicMenuItemData[]
 }
 
@@ -615,9 +619,15 @@ export type PublicSiteMenuPayload = {
 	promotions?: PublicMenuPromotion[]
 	/**
 	 * Site features the menu page reads: `upsell` is the `ordering.upsell` flag
-	 * (#114). Absent on a payload cached before it: off.
+	 * (#114). Absent on a payload cached before it: off. `dailyDishLimits`
+	 * (#409) is a hint that spares the menu page a call: `false` means no daily
+	 * limits, anything else (including absent) means ask the region.
 	 */
-	features?: { upsell?: boolean; slotLimits?: boolean }
+	features?: {
+		upsell?: boolean
+		slotLimits?: boolean
+		dailyDishLimits?: boolean
+	}
 }
 
 export async function fetchPublishedSiteMenu(options: {

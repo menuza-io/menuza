@@ -279,6 +279,11 @@
       "import": "./src/daily-dish-limits.ts",
       "default": "./src/daily-dish-limits.ts"
     },
+    "./daily-dish-catalog": {
+      "types": "./src/daily-dish-catalog.ts",
+      "import": "./src/daily-dish-catalog.ts",
+      "default": "./src/daily-dish-catalog.ts"
+    },
     "./order-caps": {
       "types": "./src/order-caps.ts",
       "import": "./src/order-caps.ts",
@@ -358,6 +363,16 @@
       "types": "./src/sales-report-facts.ts",
       "import": "./src/sales-report-facts.ts",
       "default": "./src/sales-report-facts.ts"
+    },
+    "./order-limit-catalog": {
+      "types": "./src/order-limit-catalog.ts",
+      "import": "./src/order-limit-catalog.ts",
+      "default": "./src/order-limit-catalog.ts"
+    },
+    "./order-limit-exempt": {
+      "types": "./src/order-limit-exempt.ts",
+      "import": "./src/order-limit-exempt.ts",
+      "default": "./src/order-limit-exempt.ts"
     }
   },
   "scripts": {

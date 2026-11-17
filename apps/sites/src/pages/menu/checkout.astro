@@ -11,6 +11,7 @@ import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { buildOrderDetailsLabels, translate } from '~/lib/ordering-labels'
 import { formatMoney } from '~/lib/ordering/money'
+import { orderLimitMetaFromMenus } from '~/lib/ordering/order-limits'
 import { type FulfillmentMode } from '~/lib/ordering/types'
 import {
 	fetchPublishedDrop,
@@ -145,6 +146,13 @@ const activeLocation: PublicLocationData | undefined =
 	locations.find((l) => l.isDefault) ||
 	locations[0]
 
+// Which dishes count toward a cart's item count (#256): the large-order extra
+// time (#355) and a per-item packaging fee (#408) both leave the others out,
+// as the region does. Ids only; the browser reads it from the page meta.
+const orderLimits = orderLimitMetaFromMenus(menuPayload?.menus ?? [])
+// "Call us" when an order is too large (#422): the active location's phone.
+const locationPhone = activeLocation?.phone ?? null
+
 // Sales tax is stored as a percent (e.g. 8.25), never a fraction.
 // The delivery fee and minimum come from the verified address quote (the
 // regional tenant-api resolves the zone), never from a guessed zone here.
@@ -196,6 +204,9 @@ const noTipLabel = i18n._(msg`No tip`)
 const customTipLabel = i18n._(msg`Custom`)
 const customTipFieldLabel = i18n._(msg`Custom tip amount`)
 const serviceFeeDefaultLabel = i18n._(msg`Service fee`)
+const packagingFeeDefaultLabel = i18n._(msg`Packaging fee`)
+const pickupInstructionsTitle = i18n._(msg`Pickup instructions`)
+const utensilsLabel = i18n._(msg`Include utensils and napkins`)
 const paymentTitle = i18n._(msg`Payment`)
 const payOnlineLabel = i18n._(msg`Pay online`)
 const payOnlineHint = i18n._(msg`Pay securely now`)
@@ -347,6 +358,13 @@ const checkoutLabels = {
 		tooLarge: i18n._(msg`That tip is too large. Please enter a smaller amount.`),
 	},
 	serviceFee: serviceFeeDefaultLabel,
+	packagingFee: packagingFeeDefaultLabel,
+	// A cart line the restaurant can no longer make today (#409).
+	dailyLine: {
+		soldOut: i18n._(msg`Sold out for today`),
+		onlyLeft: translate(i18n, msg`Only {count} left today`, { count: '{count}' }),
+		notEnough: i18n._(msg`Not enough left today`),
+	},
 	upsell: {
 		heading: i18n._(msg`Goes well with`),
 		add: i18n._(msg`Add`),
@@ -379,6 +397,41 @@ const checkoutLabels = {
 		),
 		serviceFeeUnavailable: i18n._(
 			msg`This restaurant can't take online orders right now. Please try again later.`,
+		),
+		packagingFeeChanged: i18n._(
+			msg`The packaging fee changed. Please review your total and place your order again.`,
+		),
+		packagingFeeUnavailable: i18n._(
+			msg`This restaurant can't take online orders right now. Please try again later.`,
+		),
+		orderTooLarge: i18n._(
+			msg`This order is too large for online checkout. Please call the restaurant or ask about a catering order.`,
+		),
+		orderTooLargeCall: translate(
+			i18n,
+			msg`This order is too large for online checkout. Please call us on {phone} or ask about a catering order.`,
+			{ phone: '{phone}' },
+		),
+		orderTooLargeGuests: i18n._(
+			msg`This group is too large to order from the table. Please ask a member of the team.`,
+		),
+		dailyDishSoldOut: i18n._(
+			msg`Something in your order isn't available in that amount today. Please go back to the menu to change your order.`,
+		),
+		dishSoldOut: translate(
+			i18n,
+			msg`There isn't enough {name} left today. Please go back to the menu to change your order.`,
+			{ name: '{name}' },
+		),
+		dishesSoldOut: translate(
+			i18n,
+			msg`There isn't enough left today of: {names}. Please go back to the menu to change your order.`,
+			{ names: '{names}' },
+		),
+		dishOnlyLeft: translate(
+			i18n,
+			msg`Only {count} of {name} left today. Please go back to the menu to lower the quantity.`,
+			{ count: '{count}', name: '{name}' },
 		),
 		itemsChanged: i18n._(
 			msg`Some items in your order changed or sold out. Please review your cart and try again.`,
@@ -542,6 +595,12 @@ const inputClass =
 							<a id="drop-pickup-change" href={dropHref} class="focus-ring mt-3 inline-flex rounded-sm text-sm font-semibold text-foreground underline-offset-4 hover:underline">
 								{changePickupLabel}
 							</a>
+							{/* A drop is a pickup: the same utensils question (#257). The drop's
+							    own pickup place is above; the location's text is not shown. */}
+							<label id="utensils-row" class="mt-4 hidden min-h-11 items-center gap-3 border-t border-border pt-4 text-sm font-medium text-foreground [&:not(.hidden)]:flex">
+								<input type="checkbox" id="utensils" autocomplete="off" class="size-5 shrink-0 accent-primary" />
+								<span class="min-w-0 flex-1">{utensilsLabel}</span>
+							</label>
 						</section>
 					) : (
 						/* Fulfillment */
@@ -588,6 +647,17 @@ const inputClass =
 							</span>
 							<button type="button" class="btn-secondary min-h-10 shrink-0 px-4" data-open-order-details data-order-details-tab="time">{odLabels.change}</button>
 						</div>
+						{/* Where to go for a pickup (#251). Plain text set with textContent:
+						    line breaks kept by CSS, nothing parsed as HTML. */}
+						<div id="co-pickup-instructions" class="mt-4 hidden border-t border-border pt-4 [&:not(.hidden)]:block">
+							<p class="text-xs text-muted-foreground">{pickupInstructionsTitle}</p>
+							<p id="co-pickup-instructions-text" dir="auto" class="mt-1 whitespace-pre-line text-sm text-pretty text-foreground [text-align:match-parent]"></p>
+						</div>
+						{/* Utensils and napkins (#257): shown only where the location asks. */}
+						<label id="utensils-row" class="mt-4 hidden min-h-11 items-center gap-3 border-t border-border pt-4 text-sm font-medium text-foreground [&:not(.hidden)]:flex">
+							<input type="checkbox" id="utensils" autocomplete="off" class="size-5 shrink-0 accent-primary" />
+							<span class="min-w-0 flex-1">{utensilsLabel}</span>
+						</label>
 					</section>
 					)}
 
@@ -816,6 +886,11 @@ const inputClass =
 							<dd id="co-fee" class={valueClass}></dd>
 							<dd id="co-fee-explanation" class="hidden basis-full text-xs text-muted-foreground"></dd>
 						</div>
+						{/* The packaging or bag fee (#408), its own line with the restaurant's name for it. */}
+						<div id="co-packaging-row" class:list={[rowClass, 'hidden']}>
+							<dt id="co-packaging-label" dir="auto" class="min-w-0 truncate">{packagingFeeDefaultLabel}</dt>
+							<dd id="co-packaging" class={valueClass}></dd>
+						</div>
 						<div class={rowClass}>
 							<dt>{tipText}</dt>
 							<dd id="co-tip" class={valueClass}>{price(0)}</dd>
@@ -915,6 +990,9 @@ const inputClass =
 			allowedModes,
 			orderDetailsLabels: odLabels,
 			unavailableVariantIds: [...unavailableVariantIds],
+			orderLimits,
+			locationPhone,
+			defaultLocale,
 			labels: checkoutLabels,
 			tipClasses: { button: tipBtnClass, on: tipOn, off: tipOff },
 			upsell: upsellOn ? { categories: upsellCategories } : null,
@@ -954,7 +1032,13 @@ const inputClass =
 		} from '~/lib/loyalty/reward-quotes'
 		import { formatRemaining, startCountdown } from '~/lib/ordering/countdown'
 		import { checkoutOrderPayload, checkoutOrderRequest } from '~/lib/ordering/checkout-payload'
-		import { orderErrorMessage } from '~/lib/ordering/order-errors'
+		import {
+			dailySoldOutMessage,
+			orderErrorMessage,
+			orderErrorMessageFor,
+			soldOutDishes,
+			type SoldOutDish,
+		} from '~/lib/ordering/order-errors'
 		import {
 			adoptCouponFromUrl,
 			cleanTypedCode,
@@ -997,15 +1081,25 @@ const inputClass =
 		import { buildUpsellRow } from '~/lib/ordering/upsell-row'
 		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
 		import {
+			packagingFeeFor,
 			parseCustomTip,
+			pickupInstructionsFor,
 			sameTipSelection,
 			serviceFeeFor,
 			tipOrderTypeOf,
 			tipPayload,
 			tipSelectionMinor,
 			tipViewFor,
+			utensilsView,
 			type TipSelection,
 		} from '~/lib/ordering/checkout-extras'
+		import { countedDishUnits, type OrderLimitMeta } from '~/lib/ordering/order-limits'
+		import {
+			cartNameOf,
+			dailyCartIssues,
+			readDailyAvailability,
+			type DailyAvailability,
+		} from '~/lib/ordering/daily-availability'
 		import {
 			OrderRequestError,
 			checkoutAttemptKey,
@@ -1095,6 +1189,8 @@ const inputClass =
 			discounts: DiscountLabels
 			tip: { custom: string; noTip: string; invalid: string; tooLarge: string }
 			serviceFee: string
+			packagingFee: string
+			dailyLine: { soldOut: string; onlyLeft: string; notEnough: string }
 			upsell: { heading: string; add: string; addNamed: string }
 			validation: { name: string; phone: string; email: string; address: string }
 			errors: OrderErrorLabels
@@ -1112,6 +1208,10 @@ const inputClass =
 		const odLabels = (meta.orderDetailsLabels ?? {}) as OrderDetailsLabels
 		const allowedModes = (meta.allowedModes ?? ['pickup', 'delivery']) as FulfillmentMode[]
 		const activeLocation = (meta.locations ?? []).find((l: any) => l.id === meta.locationId) ?? null
+		// Which dishes count toward an item count (#256), and the languages to
+		// read the location's pickup text in (#251).
+		const orderLimits = (meta.orderLimits ?? null) as OrderLimitMeta | null
+		const siteDefaultLocale: string = meta.defaultLocale || 'en'
 
 		let cart: CartItem[] = []
 		try {
@@ -1234,6 +1334,8 @@ const inputClass =
 			tip: number
 			/** The guest service fee before its tax; 0 when there is none. */
 			serviceFee: number
+			/** The packaging or bag fee before its tax (#408); 0 when there is none. */
+			packagingFee: number
 			/** What discounts take off the items (never delivery). */
 			discount: number
 			/** A loyalty reward's saving. */
@@ -1250,6 +1352,29 @@ const inputClass =
 		// when the region cannot be asked (and while discounts are off): the
 		// server re-prices everything and the authoritative totals render on the
 		// success page from the receipt.
+		/**
+		 * The packaging fee as the page estimates it (#408): the dishes that count
+		 * toward order limits, as the region counts them. A table never has one.
+		 */
+		function packagingLine() {
+			return packagingFeeFor(orderingOptions, {
+				fulfillment: isDrop ? 'pickup' : mode,
+				itemUnits: countedDishUnits(cart, orderLimits),
+				taxRatePercent: taxRate(),
+				taxInclusive: taxInclusive(),
+				defaultLabel: labels.packagingFee,
+			})
+		}
+		/**
+		 * The fee while the region prices the order: its discount quote has the last
+		 * word (a discount can waive the fee); a reward's totals do not carry it,
+		 * so without a discount quote the estimate stands.
+		 */
+		function packagingMinorFor(quote: { packagingFeeMinor?: number } | null): number {
+			if (quote && typeof quote.packagingFeeMinor === 'number') return quote.packagingFeeMinor
+			return packagingLine()?.feeCents ?? 0
+		}
+
 		function computeTotals(): Totals {
 			const rewardQuote = loyalty?.freshQuote()
 			const rewardTotals = rewardQuote?.selectedRewardId ? rewardQuote.totals : null
@@ -1263,6 +1388,7 @@ const inputClass =
 					deliveryDiscount: (discountQuote?.deliveryDiscountMinor ?? 0) / 100,
 					tip: rewardTotals.tipMinor / 100,
 					serviceFee: (rewardTotals.serviceFeeMinor ?? 0) / 100,
+					packagingFee: packagingMinorFor(discountQuote) / 100,
 					discount: discountQuote
 						? (discountQuote.totalDiscountMinor - discountQuote.deliveryDiscountMinor) / 100
 						: 0,
@@ -1281,6 +1407,7 @@ const inputClass =
 					deliveryDiscount: t.deliveryDiscountMinor / 100,
 					tip: t.tipMinor / 100,
 					serviceFee: t.serviceFeeMinor / 100,
+					packagingFee: t.packagingFeeMinor / 100,
 					discount: t.discountMinor / 100,
 					loyaltyDiscount: t.loyaltyMinor / 100,
 					total: t.totalMinor / 100,
@@ -1297,6 +1424,7 @@ const inputClass =
 					deliveryDiscount: 0,
 					tip: quoted.tipMinor / 100,
 					serviceFee: (quoted.serviceFeeMinor ?? 0) / 100,
+					packagingFee: packagingMinorFor(null) / 100,
 					discount: 0,
 					loyaltyDiscount: quoted.discountMinor / 100,
 					total: quoted.totalMinor / 100,
@@ -1338,10 +1466,23 @@ const inputClass =
 			})
 			const serviceFee = (feeLine?.feeCents ?? 0) / 100
 			const feeTax = (feeLine?.taxCents ?? 0) / 100
-			const tax = itemTax + feeTax
-			const added = itemAdded + (taxInclusive() ? 0 : feeTax)
+			// The packaging fee is a flat amount on the dishes that count, not a
+			// share of what discounts left; its tax joins the order's tax too.
+			const packagingView = packagingLine()
+			const packagingFee = (packagingView?.feeCents ?? 0) / 100
+			const packagingTax = (packagingView?.taxCents ?? 0) / 100
+			const tax = itemTax + feeTax + packagingTax
+			const added = itemAdded + (taxInclusive() ? 0 : feeTax + packagingTax)
 			const total =
-				subtotal - discount - loyaltyDiscount + added + fee - deliveryDiscount + tip + serviceFee
+				subtotal -
+				discount -
+				loyaltyDiscount +
+				added +
+				fee -
+				deliveryDiscount +
+				tip +
+				serviceFee +
+				packagingFee
 			return {
 				subtotal,
 				tax,
@@ -1349,6 +1490,7 @@ const inputClass =
 				deliveryDiscount,
 				tip,
 				serviceFee,
+				packagingFee,
 				discount,
 				loyaltyDiscount,
 				total,
@@ -1382,6 +1524,9 @@ const inputClass =
 					)
 					const body = createEl('div', 'min-w-0 flex-1')
 					body.appendChild(createEl('p', 'text-sm font-semibold leading-snug text-foreground', it.name))
+					// A dish or option the restaurant cannot make today (#409): said on its line.
+					const flag = dailyLineFlag(it)
+					if (flag) body.appendChild(createEl('p', 'mt-0.5 text-xs font-semibold text-destructive', flag))
 					const optionNames = (it.options ?? [])
 						.map((o: any) => o.optionName)
 						.filter(Boolean)
@@ -1444,6 +1589,7 @@ const inputClass =
 			}
 			if (coTip) coTip.textContent = formatCurrency(tip)
 			renderServiceFee(totals.serviceFee)
+			renderPackagingFee(totals.packagingFee)
 			renderTipButtons(subtotal)
 			renderUpsell()
 			if (coTotal) coTotal.textContent = formatCurrency(total)
@@ -1462,6 +1608,7 @@ const inputClass =
 			}
 			renderDeliveryDetails()
 			renderWhen()
+			renderFulfillmentExtras()
 			renderBlockReason()
 			renderCoupon()
 			loyalty?.sync()
@@ -1535,7 +1682,8 @@ const inputClass =
 				travel,
 				largeOrder: orderingOptions?.ordering?.largeOrder ?? null,
 				subtotal: cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0),
-				itemCount: cart.reduce((acc, it) => acc + it.quantity, 0),
+				// Only the dishes that count toward order limits (#256), as the region.
+				itemCount: countedDishUnits(cart, orderLimits),
 			})
 		}
 		const deliveryWindow = (travel: { min: number; max: number } | null | undefined) =>
@@ -1625,7 +1773,17 @@ const inputClass =
 
 		/** Why the order cannot be placed yet (delivery address / minimum / time). */
 		function blockReason(): string | null {
-			if (isDrop || cart.length === 0) return null
+			if (cart.length === 0) return null
+			// Today's availability already says the order cannot be placed (#409).
+			const sold = dailyCartIssues(cart, dailyAvail)
+			if (sold.length > 0) {
+				return dailySoldOutMessage(
+					{ details: { short: sold } },
+					(dish) => cartNameOf(cart, dish),
+					labels.errors,
+				)
+			}
+			if (isDrop) return null
 			if (mode === 'delivery') {
 				const delivery = validDelivery()
 				if (!delivery) return odLabels.blockNoQuote
@@ -2023,6 +2181,20 @@ const inputClass =
 			}
 		}
 
+		const packagingRow = document.getElementById('co-packaging-row')
+		const packagingLabelEl = document.getElementById('co-packaging-label')
+		const packagingValueEl = document.getElementById('co-packaging')
+
+		/** The packaging or bag fee as its own line, under the restaurant's name for it (#408). */
+		function renderPackagingFee(fee: number) {
+			if (!packagingRow || !packagingLabelEl || !packagingValueEl) return
+			const shown = fee > 0
+			packagingRow.classList.toggle('hidden', !shown)
+			if (!shown) return
+			packagingLabelEl.textContent = packagingLine()?.label ?? labels.packagingFee
+			packagingValueEl.textContent = formatCurrency(fee)
+		}
+
 		// Wire fulfillment mode radios
 		const radioPickup = document.getElementById('radio-pickup') as HTMLInputElement
 		const radioDelivery = document.getElementById('radio-delivery') as HTMLInputElement
@@ -2092,7 +2264,105 @@ const inputClass =
 
 		let orderingOptions: PublicOrderingOptions | null = null
 
+		// ---------- daily limits (#409) ----------
+
+		/** Sold-out and low-stock dishes the region listed (never a number it did not choose to show). */
+		let dailyAvail: DailyAvailability = {}
+		/** What the region refused at placement, for as long as the cart is the one it judged. */
+		let regionShort: { signature: string; dishes: SoldOutDish[] } | null = null
+
+		function cartSignature(): string {
+			return cart
+				.map((line) =>
+					[
+						line.itemId,
+						line.quantity,
+						(line.options ?? []).map((o) => `${o.optionId}:${o.quantity ?? 1}`).join(','),
+					].join('|'),
+				)
+				.join(';')
+		}
+
+		/** Availability says it, or the region just refused it for this very cart. */
+		function dailyIssues(): SoldOutDish[] {
+			const seen = new Set<string>()
+			const out: SoldOutDish[] = []
+			const refused = regionShort && regionShort.signature === cartSignature() ? regionShort.dishes : []
+			for (const dish of [...dailyCartIssues(cart, dailyAvail), ...refused]) {
+				if (seen.has(dish.key)) continue
+				seen.add(dish.key)
+				out.push(dish)
+			}
+			return out
+		}
+
+		/**
+		 * When the region refused the price check itself because of what the order is
+		 * (#422, #409), its words for that; null for any other reason. The quote
+		 * answers with the code only, so a sold-out message names no dish here.
+		 */
+		function quoteRefusalMessage(): string | null {
+			const state = discounts?.state()
+			if (!state || state.status !== 'error') return null
+			if (state.code !== 'order_too_large' && state.code !== 'daily_dish_sold_out') return null
+			return orderErrorMessageFor(state.code, null, labels.errors, {
+				phone: isDrop ? (pickupLocation?.phone ?? null) : (meta.locationPhone ?? null),
+				nameOf: (dish) => cartNameOf(cart, dish),
+			})
+		}
+
+		/** The words on a cart line the restaurant cannot make today, or null. */
+		function dailyLineFlag(line: CartItem): string | null {
+			const issues = dailyIssues().filter(
+				(dish) =>
+					(dish.kind === 'item' && dish.id === line.itemId) ||
+					(dish.kind === 'option' &&
+						(line.options ?? []).some((o) => o.optionId === dish.id && !o.variation)),
+			)
+			if (issues.length === 0) return null
+			if (issues.some((dish) => dailyAvail[dish.key]?.remaining === 0)) return labels.dailyLine.soldOut
+			const low = issues.find((dish) => dish.remaining !== null)
+			return low
+				? fillTemplate(labels.dailyLine.onlyLeft, { count: low.remaining! })
+				: labels.dailyLine.notEnough
+		}
+
+		// ---------- pickup text and utensils (#251, #257) ----------
+
+		const pickupBox = document.getElementById('co-pickup-instructions')
+		const pickupTextEl = document.getElementById('co-pickup-instructions-text')
+		const utensilsRow = document.getElementById('utensils-row')
+		const utensilsBox = document.getElementById('utensils') as HTMLInputElement | null
+		let utensilsTouched = false
+		utensilsBox?.addEventListener('change', () => {
+			utensilsTouched = true
+		})
+
+		const fulfillmentNow = (): 'pickup' | 'delivery' => (isDrop ? 'pickup' : mode)
+
+		/** The location's pickup text for a pickup, and the utensils box where it is asked. */
+		function renderFulfillmentExtras() {
+			const text = pickupInstructionsFor(
+				orderingOptions,
+				meta.locale || 'en',
+				siteDefaultLocale,
+				fulfillmentNow(),
+			)
+			// textContent only: the text is the restaurant's, never parsed as HTML.
+			if (pickupTextEl) pickupTextEl.textContent = text ?? ''
+			pickupBox?.classList.toggle('hidden', !text)
+			const utensils = utensilsView(orderingOptions, fulfillmentNow())
+			utensilsRow?.classList.toggle('hidden', !utensils)
+			if (utensils && utensilsBox && !utensilsTouched) utensilsBox.checked = utensils.defaultRequested
+		}
+
+		/** The guest's answer, or null when the question is not shown (the region ignores it then). */
+		function utensilsAnswer(): boolean | null {
+			return utensilsView(orderingOptions, fulfillmentNow()) ? utensilsBox?.checked === true : null
+		}
+
 		function applyOrderingOptions(options: PublicOrderingOptions) {
+			dailyAvail = readDailyAvailability(options)
 			// "Text me order updates": the region decides (US node + flag on);
 			// a missing field (older node) means hidden. Never pre-ticked.
 			smsUpdatesOffered = options.guestMessages?.smsUpdates === true
@@ -2158,6 +2428,8 @@ const inputClass =
 				// The large-order rule arrives with the options: refresh the times.
 				renderWhen()
 				renderDeliveryDetails()
+				// The fees, the pickup text and today's availability arrive with them too.
+				renderCheckout()
 			} catch {
 				// The region is unreachable or options are malformed: stay quiet,
 				// keep handoff as the only choice, and let the server judge the
@@ -2571,6 +2843,8 @@ const inputClass =
 		async function placeOrder() {
 			hideCheckoutError()
 			if (!orderingOpen) return
+			// A new attempt judges the cart afresh (a manager may have topped a dish up).
+			regionShort = null
 
 			// Drop orders revalidate the pickup chosen on the drop page: the slot
 			// can sell out or fall inside the lead time while checkout sits open.
@@ -2667,7 +2941,9 @@ const inputClass =
 			if (!placedDiscounts.ok) {
 				setBusy(false)
 				renderCheckout()
-				showCheckoutError(discountLabels.totalUnconfirmed)
+				// The quote may have been refused for what the order is, not for a
+				// hiccup: say that (too large, sold out today) instead of "couldn't confirm".
+				showCheckoutError(quoteRefusalMessage() ?? discountLabels.totalUnconfirmed)
 				return
 			}
 			const sentDiscounts = placedDiscounts.discounts
@@ -2713,6 +2989,9 @@ const inputClass =
 					},
 					// The fee on screen; the region prices it and refuses another.
 					expectedServiceFeeMinor: Math.round(computeTotals().serviceFee * 100),
+					// Likewise the packaging fee (#408) and the utensils answer (#257).
+					expectedPackagingFeeMinor: Math.round(computeTotals().packagingFee * 100),
+					utensilsRequested: utensilsAnswer(),
 					giftCard: giftCardCheckout?.payload() ?? null,
 				})
 				// smsUpdates is part of the core payload: the region hashes it into
@@ -2793,13 +3072,42 @@ const inputClass =
 					discounts?.refresh()
 					renderCheckout()
 					showCheckoutError(labels.errors.serviceFeeChanged)
+				} else if (code === 'packaging_fee_changed') {
+					// The fee was set again since the page loaded: same as the service fee.
+					await loadOrderingOptions()
+					discounts?.refresh()
+					renderCheckout()
+					showCheckoutError(labels.errors.packagingFeeChanged)
+				} else if (code === 'daily_dish_sold_out') {
+					// A dish or option ran out for today while the page was open (#409):
+					// keep the cart, flag the lines, read today's availability again.
+					const body = error instanceof OrderRequestError ? error.body : null
+					regionShort = { signature: cartSignature(), dishes: soldOutDishes(body) }
+					await loadOrderingOptions()
+					renderCheckout()
+					showCheckoutError(
+						orderErrorMessageFor(code, body, labels.errors, {
+							nameOf: (dish) => cartNameOf(cart, dish),
+						}),
+					)
 				} else if (code === 'schedule_unavailable') {
 					details = updateOrderDetails(orgId, details, { scheduledFor: null })
 					renderCheckout()
 					showCheckoutError(odLabels.scheduleExpired)
 					openOrderDetails('time')
 				} else {
-					showCheckoutError(orderErrorMessage(code, labels.errors))
+					showCheckoutError(
+						orderErrorMessageFor(
+							code,
+							error instanceof OrderRequestError ? error.body : null,
+							labels.errors,
+							{
+								// "Call us" on a too-large order: the location the order is for.
+								phone: isDrop ? (pickupLocation?.phone ?? null) : (meta.locationPhone ?? null),
+								nameOf: (dish) => cartNameOf(cart, dish),
+							},
+						),
+					)
 				}
 				setBusy(false)
 			}

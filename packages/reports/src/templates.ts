@@ -428,6 +428,18 @@ function salesTemplates(): ReportTemplate[] {
 		}),
 		template('organization', {
 			...sales,
+			id: 'packaging-fees-total',
+			title: 'Packaging fees',
+			description:
+				'Packaging or bag fees guests paid on takeaway and delivery orders.',
+			groupBy: [],
+			chartStyle: 'single_number',
+			measure: 'sum',
+			valueField: 'packagingFee',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			...sales,
 			id: 'taxes-total',
 			title: 'Taxes collected',
 			description: 'Sales tax charged on orders that count toward sales.',

@@ -43,15 +43,110 @@ describe('checkoutOrderPayload', () => {
 		}
 	})
 
+	it('sends the packaging fee the page showed, only when there is one', () => {
+		const priced = { fulfillment: 'pickup', tipPercent: 0 }
+		expect(
+			checkoutOrderPayload(priced, {
+				contact,
+				reward: null,
+				expectedPackagingFeeMinor: 100,
+			}).expectedPackagingFeeMinor,
+		).toBe(100)
+		for (const none of [0, undefined]) {
+			expect(
+				checkoutOrderPayload(priced, {
+					contact,
+					reward: null,
+					expectedPackagingFeeMinor: none,
+				}),
+			).not.toHaveProperty('expectedPackagingFeeMinor')
+		}
+	})
+
+	it('sends both fees side by side without one overwriting the other', () => {
+		const body = checkoutOrderPayload(
+			{ fulfillment: 'delivery', tipPercent: 0 },
+			{
+				contact,
+				reward: null,
+				expectedServiceFeeMinor: 60,
+				expectedPackagingFeeMinor: 100,
+			},
+		)
+		expect(body).toMatchObject({
+			expectedServiceFeeMinor: 60,
+			expectedPackagingFeeMinor: 100,
+		})
+	})
+
+	it('sends the utensils answer only when the question was shown', () => {
+		const pickup = { fulfillment: 'pickup', tipPercent: 0 }
+		expect(
+			checkoutOrderPayload(pickup, {
+				contact,
+				reward: null,
+				utensilsRequested: true,
+			}),
+		).toMatchObject({ utensilsRequested: true })
+		// A "no" is an answer too, not a missing value.
+		expect(
+			checkoutOrderPayload(pickup, {
+				contact,
+				reward: null,
+				utensilsRequested: false,
+			}),
+		).toMatchObject({ utensilsRequested: false })
+		for (const unasked of [null, undefined]) {
+			expect(
+				checkoutOrderPayload(pickup, {
+					contact,
+					reward: null,
+					utensilsRequested: unasked,
+				}),
+			).not.toHaveProperty('utensilsRequested')
+		}
+	})
+
+	it('never sends utensils or a packaging fee for a table round', () => {
+		const table = { fulfillment: 'dine_in', tipPercent: 0 }
+		expect(
+			checkoutOrderPayload(table, {
+				contact,
+				reward: null,
+				utensilsRequested: true,
+			}),
+		).not.toHaveProperty('utensilsRequested')
+	})
+
+	it('changes the attempt key when the guest changes the utensils box', async () => {
+		vi.stubGlobal('sessionStorage', {
+			setItem: () => {},
+			removeItem: () => {},
+			getItem: () => null,
+		})
+		const priced = { fulfillment: 'pickup', tipPercent: 0, lines: [] }
+		const key = (utensilsRequested: boolean) =>
+			checkoutAttemptKey(
+				'org',
+				checkoutOrderPayload(priced, {
+					contact,
+					reward: null,
+					utensilsRequested,
+				}),
+			)
+		expect(await key(true)).not.toBe(await key(false))
+		vi.unstubAllGlobals()
+	})
+
 	it('carries an exact tip amount untouched, next to a zero percent', () => {
 		const priced = {
 			fulfillment: 'pickup',
 			tipPercent: 0,
 			tip: { amountMinor: 437 },
 		}
-		expect(checkoutOrderPayload(priced, { contact, reward: null })).toMatchObject(
-			{ tipPercent: 0, tip: { amountMinor: 437 } },
-		)
+		expect(
+			checkoutOrderPayload(priced, { contact, reward: null }),
+		).toMatchObject({ tipPercent: 0, tip: { amountMinor: 437 } })
 	})
 
 	it('adds delivery notes to the priced address without touching the quote', () => {

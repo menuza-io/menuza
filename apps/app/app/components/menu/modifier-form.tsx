@@ -16,6 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { type DailySaleLimit } from '@repo/common/daily-dish-limits'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
@@ -58,15 +59,23 @@ import {
 	LocalizedInput,
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import {
+	dailyLimitFormErrors,
+	dailyLimitFormFromConfig,
+	dailyLimitFormToConfig,
+	emptyDailyLimitForm,
+	type DailyLimitFormState,
+} from '#app/utils/menu/daily-limit-form.ts'
 import { AssignedSortableList } from './assigned-sortable-list.tsx'
+import { DailyLimitFields } from './daily-limit-fields.tsx'
 import {
 	LocationOverridesCard,
 	type LocationItem,
 	type LocationOverrideState,
 } from './location-overrides-card.tsx'
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
-import { MenuFormHeader } from './menu-form-header.tsx'
 import { MenuDuplicateTrigger } from './menu-duplicate-trigger.tsx'
+import { MenuFormHeader } from './menu-form-header.tsx'
 import { ModifierGuestPreview } from './modifier-guest-preview.tsx'
 import {
 	ModifierRequiredSelectionField,
@@ -91,6 +100,8 @@ export interface ModifierOptionData {
 	isDefault?: boolean
 	nestedModifierGroupIds?: string[]
 	availabilityStatus?: string
+	/** Daily quantity cap (#409), parsed; null when there is none. */
+	dailySaleLimit?: DailySaleLimit | null
 }
 
 function SortableOptionRow({
@@ -215,6 +226,11 @@ function SortableOptionRow({
 							21+
 						</span>
 					)}
+					{option.dailySaleLimit ? (
+						<span className="border-primary/20 bg-primary/10 text-primary inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium">
+							<Trans>Daily limit</Trans>
+						</span>
+					) : null}
 				</div>
 				{option.internalName ? (
 					<p className="text-muted-foreground mt-0.5 truncate text-xs">
@@ -397,7 +413,10 @@ interface ModifierFormProps {
 		isAlcohol?: boolean
 		isTopping?: boolean
 		imageKey?: string | null
+		dailySaleLimit?: DailySaleLimit | null
 	}>
+	/** Org flag `ordering.daily_dish_limits`; hides the daily limit fields when off. */
+	dailyLimitsEnabled?: boolean
 	allItems: Array<{
 		id: string
 		displayName: string
@@ -430,6 +449,7 @@ function ModifierFormBody({
 	defaultLocale,
 	supportedLocales = [defaultLocale],
 	availableOptions = [],
+	dailyLimitsEnabled = false,
 	allItems,
 	allLocations,
 	initialParentOptionIds = [],
@@ -573,6 +593,14 @@ function ModifierFormBody({
 	const [modalIsDefault, setModalIsDefault] = useState(false)
 	const [modalNestedModifierGroupIds, setModalNestedModifierGroupIds] =
 		useState<string[]>([])
+	const [modalDailyLimit, setModalDailyLimit] =
+		useState<DailyLimitFormState>(emptyDailyLimitForm)
+	const locationIds = allLocations.map((location) => location.id)
+	const modalLimitErrors = dailyLimitFormErrors(modalDailyLimit)
+	// A typed limit that is not a whole number holds the dialog's Save back.
+	const modalLimitInvalid =
+		dailyLimitsEnabled &&
+		(modalLimitErrors.limit || modalLimitErrors.locations.length > 0)
 
 	const eligibleModifierGroups = useMemo(() => {
 		const currentGroupId = initialData?.id
@@ -606,6 +634,7 @@ function ModifierFormBody({
 		isVegetarian?: boolean
 		isAlcohol?: boolean
 		isTopping?: boolean
+		dailySaleLimit?: DailySaleLimit | null
 	}) => {
 		setOptions((prev) => [
 			...prev,
@@ -625,6 +654,8 @@ function ModifierFormBody({
 				isAlcohol: opt.isAlcohol ?? false,
 				isTopping: opt.isTopping ?? selectionType === 'pizza',
 				isDefault: false,
+				// Carried through so saving the group never clears it.
+				dailySaleLimit: opt.dailySaleLimit ?? null,
 			},
 		])
 	}
@@ -723,6 +754,7 @@ function ModifierFormBody({
 			setModalIsVegetarian(false)
 			setModalIsAlcohol(false)
 			setModalIsDefault(false)
+			setModalDailyLimit(emptyDailyLimitForm())
 			setDialogMode('create')
 		} else {
 			setDialogMode('pick')
@@ -742,6 +774,7 @@ function ModifierFormBody({
 		setModalIsAlcohol(false)
 		setModalIsDefault(false)
 		setModalNestedModifierGroupIds([])
+		setModalDailyLimit(emptyDailyLimitForm())
 		setDialogMode('create')
 	}
 
@@ -769,6 +802,9 @@ function ModifierFormBody({
 			isTopping: isPizza,
 			isDefault: modalIsDefault,
 			nestedModifierGroupIds: modalNestedModifierGroupIds,
+			dailySaleLimit: dailyLimitsEnabled
+				? dailyLimitFormToConfig(modalDailyLimit, locationIds)
+				: null,
 		}
 
 		if (modalIsDefault && selectionType === 'single') {
@@ -799,6 +835,7 @@ function ModifierFormBody({
 		setModalIsAlcohol(option.isAlcohol ?? false)
 		setModalIsDefault(option.isDefault ?? false)
 		setModalNestedModifierGroupIds(option.nestedModifierGroupIds ?? [])
+		setModalDailyLimit(dailyLimitFormFromConfig(option.dailySaleLimit))
 	}
 
 	const handleSaveEditOption = () => {
@@ -818,6 +855,11 @@ function ModifierFormBody({
 			isTopping: isPizza || editingOption.isTopping,
 			isDefault: modalIsDefault,
 			nestedModifierGroupIds: modalNestedModifierGroupIds,
+			// While the feature is off the dialog does not show the limit, so the
+			// option keeps the one it has.
+			dailySaleLimit: dailyLimitsEnabled
+				? dailyLimitFormToConfig(modalDailyLimit, locationIds)
+				: (editingOption.dailySaleLimit ?? null),
 		}
 
 		setOptions((currentOptions) =>
@@ -1622,6 +1664,26 @@ function ModifierFormBody({
 										</div>
 									</div>
 
+									{dailyLimitsEnabled ? (
+										<div className="border-border/70 bg-muted/20 space-y-2 rounded-lg border p-3">
+											<Label className="text-xs font-semibold">
+												<Trans>Daily limit</Trans>
+											</Label>
+											<p className="text-muted-foreground text-[11px]">
+												<Trans>
+													Stop taking this option once this many are chosen in a
+													day. The count starts again each business day.
+												</Trans>
+											</p>
+											<DailyLimitFields
+												idPrefix="modal-create-daily-limit"
+												state={modalDailyLimit}
+												onChange={setModalDailyLimit}
+												locations={allLocations}
+											/>
+										</div>
+									) : null}
+
 									<div className="border-border/70 bg-muted/20 space-y-2 rounded-lg border p-3">
 										<div className="flex items-center gap-1.5">
 											<Label className="text-xs font-semibold">
@@ -1705,7 +1767,11 @@ function ModifierFormBody({
 												<Trans>Back to list</Trans>
 											</Button>
 										)}
-										<Button type="button" onClick={handleSaveNewOption}>
+										<Button
+											type="button"
+											onClick={handleSaveNewOption}
+											disabled={modalLimitInvalid}
+										>
 											<Trans>Add Option</Trans>
 										</Button>
 									</DialogFooter>
@@ -1977,6 +2043,26 @@ function ModifierFormBody({
 									</div>
 								</div>
 
+								{dailyLimitsEnabled ? (
+									<div className="border-border/70 bg-muted/20 space-y-2 rounded-lg border p-3">
+										<Label className="text-xs font-semibold">
+											<Trans>Daily limit</Trans>
+										</Label>
+										<p className="text-muted-foreground text-[11px]">
+											<Trans>
+												Stop taking this option once this many are chosen in a
+												day. The count starts again each business day.
+											</Trans>
+										</p>
+										<DailyLimitFields
+											idPrefix="modal-edit-daily-limit"
+											state={modalDailyLimit}
+											onChange={setModalDailyLimit}
+											locations={allLocations}
+										/>
+									</div>
+								) : null}
+
 								<div className="border-border/70 bg-muted/20 space-y-2 rounded-lg border p-3">
 									<div className="flex items-center gap-1.5">
 										<Label className="text-xs font-semibold">
@@ -2056,7 +2142,11 @@ function ModifierFormBody({
 									>
 										<Trans>Cancel</Trans>
 									</Button>
-									<Button type="button" onClick={handleSaveEditOption}>
+									<Button
+										type="button"
+										onClick={handleSaveEditOption}
+										disabled={modalLimitInvalid}
+									>
 										<Trans>Save Changes</Trans>
 									</Button>
 								</DialogFooter>

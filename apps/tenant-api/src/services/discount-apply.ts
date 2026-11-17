@@ -483,6 +483,8 @@ export function buildDiscountQuote(input: {
 	totalMinor: number
 	/** The fee on the discounted subtotal; defaults to the undiscounted one. */
 	serviceFeeMinor?: number
+	/** The packaging fee after any waiver; defaults to the undiscounted one. */
+	packagingFeeMinor?: number
 	couponsEnabled?: boolean
 }): DiscountQuote {
 	const evaluation = input.prepared?.evaluation
@@ -507,6 +509,8 @@ export function buildDiscountQuote(input: {
 		tipMinor: input.priced.tipCents,
 		deliveryFeeMinor: input.priced.deliveryFeeCents,
 		serviceFeeMinor: input.serviceFeeMinor ?? input.priced.serviceFeeCents,
+		packagingFeeMinor:
+			input.packagingFeeMinor ?? input.priced.packagingFeeCents,
 		deliveryDiscountMinor: evaluation?.deliveryDiscountMinor ?? 0,
 		totalMinor: input.totalMinor,
 		paymentRequired: input.totalMinor > 0,
@@ -866,6 +870,7 @@ export function totalsAfterDiscounts(
 		priced,
 		prepared?.evaluation.lineDiscounts ?? {},
 		prepared?.evaluation.deliveryDiscountMinor ?? 0,
+		prepared?.evaluation.packagingWaived === true,
 	)
 }
 

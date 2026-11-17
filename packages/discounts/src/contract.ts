@@ -230,6 +230,12 @@ export const discountQuoteSchema = z.object({
 	 * its tax (the tax is in `taxMinor`). Missing from an older region reads as 0.
 	 */
 	serviceFeeMinor: minorSchema.optional(),
+	/**
+	 * The packaging or bag fee (#408) before its tax (the tax is in `taxMinor`);
+	 * 0 when none applies or a discount waived it. Missing from an older region
+	 * reads as "no packaging fee".
+	 */
+	packagingFeeMinor: minorSchema.optional(),
 	deliveryDiscountMinor: minorSchema,
 	totalMinor: minorSchema,
 	/** False when the total is 0: the order skips payment. */

@@ -357,6 +357,8 @@ async function addRestaurantOrders(
 			deliveryDiscountCents: restaurantOrders.deliveryDiscountCents,
 			serviceFeeCents: restaurantOrders.serviceFeeCents,
 			serviceFeeTaxCents: restaurantOrders.serviceFeeTaxCents,
+			packagingFeeCents: restaurantOrders.packagingFeeCents,
+			packagingFeeTaxCents: restaurantOrders.packagingFeeTaxCents,
 			totalCents: restaurantOrders.totalCents,
 			pickupTimezone: restaurantOrders.pickupTimezone,
 			createdAt: restaurantOrders.createdAt,

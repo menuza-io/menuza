@@ -18,6 +18,13 @@ export type ModifierOption = {
 	maxSelections?: number | null
 	isDefault?: boolean
 	availabilityStatus?: string
+	/**
+	 * Daily limit (#409): how many are left today, set only while the
+	 * restaurant lets guests see "Only N left".
+	 */
+	dailyRemaining?: number | null
+	/** The availability the menu published, kept while a daily sell-out overrides it. */
+	publishedAvailability?: string
 	nestedModifierGroups?: ModifierGroup[]
 }
 
@@ -68,6 +75,10 @@ export type OrderingItem = {
 	isUpsell?: boolean
 	excludeFromDiscounts?: boolean
 	availabilityStatus?: string
+	/** Daily limit (#409): how many are left today, when guests may see it. */
+	dailyRemaining?: number | null
+	/** The availability the menu published, kept while a daily sell-out overrides it. */
+	publishedAvailability?: string
 	/** `false` when the owning menu disables the special instructions field. */
 	specialInstructions?: boolean
 }

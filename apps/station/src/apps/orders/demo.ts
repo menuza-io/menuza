@@ -1,4 +1,10 @@
 import {
+	DAILY_DISH_MAX_UNITS,
+	type DailyDishStatusData,
+	type DailyDishStatusRowData,
+	dailyDishRemaining,
+} from '@repo/common/daily-dish-limits'
+import {
 	handoffNeedsPayment,
 	onlineOrderInInbox,
 	onlineOrdersSearchSince,
@@ -168,6 +174,13 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 				paymentMethod: 'handoff',
 				paymentStatus: 'unpaid',
 				paidAt: null,
+				// 24.00 + 6.50 of items and a 1.00 bag fee.
+				totalCents: 3150,
+				packagingFeeCents: 100,
+				packagingFeeLabel: 'Packaging fee',
+				utensilsRequested: false,
+				pickupInstructions:
+					'Park in the side lot.\nAsk at the bar for online orders.',
 				lines: [
 					line('Classic Burger', 2, 2400, {
 						options: ['Cheddar'],
@@ -523,6 +536,37 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 		heldByStock,
 		serverNow: Date.now(),
 	})
+	// Daily limits (#409): two capped dishes with what is sold and held today.
+	const limits: Array<
+		Omit<DailyDishStatusRowData, 'remaining'> & { key: string }
+	> = [
+		{
+			key: 'item:i-lamb-shank',
+			kind: 'item',
+			id: 'i-lamb-shank',
+			name: 'Lamb shank special',
+			limit: 20,
+			showRemaining: true,
+			toppedUpUnits: 0,
+			soldUnits: 14,
+			heldUnits: 2,
+		},
+		{
+			key: 'option:o-baklava',
+			kind: 'option',
+			id: 'o-baklava',
+			name: 'Baklava',
+			limit: 12,
+			showRemaining: false,
+			toppedUpUnits: 0,
+			soldUnits: 12,
+			heldUnits: 0,
+		},
+	]
+	const limitRow = (row: (typeof limits)[number]): DailyDishStatusRowData => ({
+		...row,
+		remaining: dailyDishRemaining(row),
+	})
 	const PAUSE_MS: Record<OrderingPauseDuration, number | null> = {
 		'15m': 15 * MIN,
 		'30m': 30 * MIN,
@@ -580,6 +624,26 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 				heldByStock = heldByStock.filter((entry) => entry !== held)
 			}
 			return { ...controlsNow(), changed: true }
+		},
+		dailyLimits: async (): Promise<DailyDishStatusData> => ({
+			enabled: true,
+			businessDate: new Date().toISOString().slice(0, 10),
+			rows: limits.map(limitRow),
+		}),
+		topUpDailyLimit: async (change) => {
+			const row = limits.find((entry) => entry.key === change.key)
+			if (!row) throw new OrdersError('daily_limit_not_found', 404)
+			// The region's rule: add units, or state the amount left (which sets
+			// the day's adjustment so sold, held and the amount left add up).
+			const next =
+				change.addUnits !== undefined
+					? row.toppedUpUnits + change.addUnits
+					: (change.amountLeft ?? 0) + row.soldUnits + row.heldUnits - row.limit
+			row.toppedUpUnits = Math.max(
+				-DAILY_DISH_MAX_UNITS,
+				Math.min(DAILY_DISH_MAX_UNITS, next),
+			)
+			return limitRow(row)
 		},
 		search: async (query) => {
 			const now = Date.now()

@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "45a50257-e456-45a3-9992-e29767b04f3f",
+	"id": "3515e861-1e8b-430c-94e1-9159c7d9a051",
 	"prevId": "e8642694-a652-481f-bb4f-a5cfba6690a0",
 	"tables": {
 		"customer_carts": {
@@ -11282,8 +11282,8 @@
 			"uniqueConstraints": {},
 			"checkConstraints": {}
 		},
-		"order_dish_daily_counts": {
-			"name": "order_dish_daily_counts",
+		"order_dish_daily_claims": {
+			"name": "order_dish_daily_claims",
 			"columns": {
 				"id": {
 					"name": "id",
@@ -11292,8 +11292,8 @@
 					"notNull": true,
 					"autoincrement": false
 				},
-				"org_id": {
-					"name": "org_id",
+				"order_id": {
+					"name": "order_id",
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true,
@@ -11320,28 +11320,92 @@
 					"notNull": true,
 					"autoincrement": false
 				},
-				"limit_units": {
-					"name": "limit_units",
+				"units": {
+					"name": "units",
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
 					"autoincrement": false
 				},
-				"sold_units": {
-					"name": "sold_units",
-					"type": "integer",
+				"state": {
+					"name": "state",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true,
-					"autoincrement": false,
-					"default": 0
+					"autoincrement": false
 				},
-				"held_units": {
-					"name": "held_units",
+				"created_at": {
+					"name": "created_at",
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"autoincrement": false,
-					"default": 0
+					"autoincrement": false
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				}
+			},
+			"indexes": {
+				"order_dish_daily_claims_order_key": {
+					"name": "order_dish_daily_claims_order_key",
+					"columns": ["order_id", "catalog_key"],
+					"isUnique": true
+				},
+				"idx_order_dish_daily_claims_day": {
+					"name": "idx_order_dish_daily_claims_day",
+					"columns": ["location_id", "business_date", "catalog_key", "state"],
+					"isUnique": false
+				}
+			},
+			"foreignKeys": {
+				"order_dish_daily_claims_order_id_restaurant_orders_id_fk": {
+					"name": "order_dish_daily_claims_order_id_restaurant_orders_id_fk",
+					"tableFrom": "order_dish_daily_claims",
+					"tableTo": "restaurant_orders",
+					"columnsFrom": ["order_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"order_dish_daily_topups": {
+			"name": "order_dish_daily_topups",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"location_id": {
+					"name": "location_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"business_date": {
+					"name": "business_date",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"catalog_key": {
+					"name": "catalog_key",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
 				},
 				"topped_up_units": {
 					"name": "topped_up_units",
@@ -11351,25 +11415,26 @@
 					"autoincrement": false,
 					"default": 0
 				},
+				"updated_by": {
+					"name": "updated_by",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
 				"updated_at": {
 					"name": "updated_at",
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"autoincrement": false,
-					"default": "(cast(strftime('%s', 'now') as integer) * 1000)"
+					"autoincrement": false
 				}
 			},
 			"indexes": {
-				"order_dish_daily_counts_key": {
-					"name": "order_dish_daily_counts_key",
-					"columns": ["org_id", "location_id", "business_date", "catalog_key"],
+				"order_dish_daily_topups_key": {
+					"name": "order_dish_daily_topups_key",
+					"columns": ["location_id", "business_date", "catalog_key"],
 					"isUnique": true
-				},
-				"idx_order_dish_daily_counts_location_day": {
-					"name": "idx_order_dish_daily_counts_location_day",
-					"columns": ["location_id", "business_date"],
-					"isUnique": false
 				}
 			},
 			"foreignKeys": {},
@@ -14761,14 +14826,6 @@
 				},
 				"service_fee_cents": {
 					"name": "service_fee_cents",
-					"type": "integer",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false,
-					"default": 0
-				},
-				"packaging_fee_cents": {
-					"name": "packaging_fee_cents",
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,

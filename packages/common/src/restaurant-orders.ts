@@ -26,6 +26,11 @@ import {
 } from './location-availability.ts'
 import { parsePrepSchedule } from './location-settings.ts'
 import { prepMinutesAt } from './prep-schedule.ts'
+import { parseUtensilsSettings } from './checkout-utensils.ts'
+import {
+	type DailyDishAvailability,
+	dailyDishLimitsContextSchema,
+} from './daily-dish-limits.ts'
 import { orderLimitExemptFromCatalog } from './order-limit-exempt.ts'
 import { orderDishUnits } from './slot-usage.ts'
 import {
@@ -67,7 +72,6 @@ import {
 import {
 	computePackagingFee,
 	readPackagingFeePolicy,
-	PACKAGING_FEE_CHANGED_CODE,
 	PACKAGING_FEE_UNAVAILABLE_CODE,
 	type PackagingFeeFulfillment,
 	type PackagingFeeSettings,
@@ -248,6 +252,8 @@ export type RestaurantOrderError = {
 	status: 400 | 403 | 404 | 422 | 503
 	code: RestaurantOrderErrorCode
 	message: string
+	/** Machine-readable context for the client, never personal data. */
+	details?: Record<string, unknown>
 }
 
 export type PriceRestaurantOrderResult =
@@ -859,6 +865,18 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		...(request.expectedServiceFeeMinor !== undefined
 			? { expectedServiceFeeMinor: request.expectedServiceFeeMinor }
 			: {}),
+		// The checkout rules (#408, #257, #422), only when sent, so a request
+		// without them hashes as before and a retry that changes one conflicts
+		// instead of replaying the first order.
+		...(request.expectedPackagingFeeMinor !== undefined
+			? { expectedPackagingFeeMinor: request.expectedPackagingFeeMinor }
+			: {}),
+		...(request.utensilsRequested !== undefined
+			? { utensilsRequested: request.utensilsRequested }
+			: {}),
+		...(request.guestCount !== undefined
+			? { guestCount: request.guestCount }
+			: {}),
 		delivery: request.delivery
 			? {
 					address: request.delivery.address ?? null,
@@ -1419,6 +1437,8 @@ export const restaurantOrderContextSchema = z
 			.optional(),
 		/** Per-slot capacity (`ordering.slot_limits`, #108). */
 		slotLimits: z.object({ enabled: z.boolean().default(false) }).optional(),
+		/** Daily dish quantity caps (`ordering.daily_dish_limits`, #409). */
+		dailyDishLimits: dailyDishLimitsContextSchema.optional(),
 	})
 	.loose()
 
@@ -2559,8 +2579,11 @@ function orderError(
 	status: RestaurantOrderError['status'],
 	code: RestaurantOrderErrorCode,
 	message: string,
+	details?: Record<string, unknown>,
 ): RestaurantOrderError {
-	return { status, code, message }
+	return details
+		? { status, code, message, details }
+		: { status, code, message }
 }
 
 /**
@@ -3225,10 +3248,15 @@ export function priceRestaurantOrder(
 	if (capViolation && !walkIn) {
 		return {
 			ok: false,
+			// Says which limit was hit so the page can point to catering or the phone
+			// (amount) or to a team member (a big table), never the number itself.
 			error: orderError(
 				422,
 				ORDER_TOO_LARGE_CODE,
-				'This order is too large for online checkout. Please call the restaurant or place a catering order.',
+				capViolation.kind === 'guests'
+					? 'This group is too large to order from the table. Please ask a member of the team.'
+					: 'This order is too large for online checkout. Please call the restaurant or place a catering order.',
+				{ kind: capViolation.kind, fulfillment: capViolation.fulfillment },
 			),
 		}
 	}
@@ -3463,6 +3491,8 @@ export function applyOrderDiscounts(
 	>,
 	lineDiscounts: Readonly<Record<string, number>>,
 	deliveryDiscountMinor = 0,
+	/** An applied discount waives the packaging fee (#408). */
+	packagingWaived = false,
 ): OrderDiscountTotals {
 	// One shared calculation with the till and the ZATCA invoice. The discount
 	// comes off the taxed and untaxed parts of a line in proportion, and a
@@ -3495,7 +3525,9 @@ export function applyOrderDiscounts(
 		taxInclusive: priced.taxInclusive,
 	})
 	const packagingFee = computePackagingFee({
-		settings: priced.packagingFeeRule?.settings ?? null,
+		settings: packagingWaived
+			? null
+			: (priced.packagingFeeRule?.settings ?? null),
 		fulfillment: priced.packagingFeeRule?.fulfillment ?? 'pickup',
 		itemUnits: priced.packagingFeeRule?.itemUnits ?? 0,
 		taxRatePercent: priced.taxRatePercent,
@@ -3606,6 +3638,35 @@ export type PublicOrderingOptions = {
 	 * off. Sites shows it with `computeServiceFee`; the region re-prices it.
 	 */
 	serviceFee?: ServiceFeeSettings | null
+	/**
+	 * The packaging or bag fee (#408) of this location while it is on; null when
+	 * off. Sites shows it with `computePackagingFee`; the region re-prices it.
+	 */
+	packagingFee?: PackagingFeeSettings | null
+	/**
+	 * The most guests one table may order for from the phone (#422), or null
+	 * when there is no such limit. Sites asks "How many are at your table?" only
+	 * where this is set and sends `guestCount`; the region enforces it.
+	 */
+	dineInMaxGuests?: number | null
+	/**
+	 * Whether checkout asks about utensils and napkins at this location (#257),
+	 * and the checkbox's default. Null when it does not ask. Pickup and
+	 * delivery only: Sites never shows it for a table.
+	 */
+	utensils?: { enabled: boolean; defaultRequested: boolean } | null
+	/**
+	 * The location's pickup instructions (#251) as the operator saved them (plain
+	 * text, or a localized JSON map): Sites picks the guest's language with
+	 * `resolvePickupInstructions`. Null when empty.
+	 */
+	pickupInstructions?: string | null
+	/**
+	 * Daily limits (#409), ids and counts only: a dish or option that is sold out
+	 * for today, and a low number where the operator allows "Only N left". A
+	 * cap that is not shown never appears. Keys are `item:<id>` / `option:<id>`.
+	 */
+	dailyAvailability?: DailyDishAvailability
 	delivery: { available: boolean }
 	/**
 	 * Whether the checkout may offer "Text me order updates": the guest
@@ -3648,6 +3709,8 @@ export function buildPublicOrderingOptions(
 		now: Date
 		/** Whether this node can geocode addresses (radius/polygon zones). */
 		geocoderAvailable?: boolean
+		/** Today's sold-out and low-stock capped dishes (region read, #409). */
+		dailyAvailability?: DailyDishAvailability
 	},
 ):
 	| { ok: true; options: PublicOrderingOptions }
@@ -3705,6 +3768,25 @@ export function buildPublicOrderingOptions(
 			const policy = readServiceFeePolicy(context.serviceFee, location.id)
 			return policy.kind === 'on' ? policy.settings : null
 		})(),
+		packagingFee: (() => {
+			const policy = readPackagingFeePolicy(context.packagingFee, location.id)
+			return policy.kind === 'on' ? policy.settings : null
+		})(),
+		dineInMaxGuests:
+			readOrderCapsForLocation(context.orderCaps, location.id)?.dineIn
+				?.maxGuests ?? null,
+		utensils: (() => {
+			const settings = parseUtensilsSettings(context.utensils?.[location.id])
+			return settings.enabled ? settings : null
+		})(),
+		// A drop has its own pickup location and windows, which win (#251).
+		pickupInstructions: input.dropSlug
+			? null
+			: context.pickupInstructions?.[location.id]?.trim() || null,
+		...(input.dailyAvailability &&
+		Object.keys(input.dailyAvailability).length > 0
+			? { dailyAvailability: input.dailyAvailability }
+			: {}),
 		delivery: {
 			available:
 				Boolean(location.fulfillmentOptions.delivery) &&

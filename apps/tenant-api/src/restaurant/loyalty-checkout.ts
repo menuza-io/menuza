@@ -38,6 +38,8 @@ export type OtherOrderDiscounts = {
 	/** Total discount per line id. */
 	lineDiscounts?: Readonly<Record<string, number>>
 	deliveryDiscountMinor?: number
+	/** An applied discount waives the packaging fee (#408). */
+	packagingWaived?: boolean
 }
 
 /**
@@ -68,6 +70,7 @@ export function applyLoyaltyDiscountToTotals(
 		priced,
 		lineDiscounts,
 		others.deliveryDiscountMinor ?? 0,
+		others.packagingWaived === true,
 	)
 	return {
 		loyaltyDiscountCents: Math.min(

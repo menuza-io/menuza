@@ -124,6 +124,9 @@ export function restaurantOrderNetMinor(order: {
 	/** The guest service fee and its tax (#123); items never include them. */
 	serviceFeeCents?: number
 	serviceFeeTaxCents?: number
+	/** The packaging fee and its tax (#408); items never include them either. */
+	packagingFeeCents?: number
+	packagingFeeTaxCents?: number
 }): number {
 	const afterDiscounts =
 		order.subtotalCents -
@@ -133,9 +136,16 @@ export function restaurantOrderNetMinor(order: {
 	const inclusive =
 		order.taxCents > 0 &&
 		order.totalCents ===
-			afterDiscounts + order.tipCents + delivery + (order.serviceFeeCents ?? 0)
-	// The tax on the service fee is not tax on the items.
-	const itemTax = order.taxCents - (order.serviceFeeTaxCents ?? 0)
+			afterDiscounts +
+				order.tipCents +
+				delivery +
+				(order.serviceFeeCents ?? 0) +
+				(order.packagingFeeCents ?? 0)
+	// The tax on a fee is not tax on the items.
+	const itemTax =
+		order.taxCents -
+		(order.serviceFeeTaxCents ?? 0) -
+		(order.packagingFeeTaxCents ?? 0)
 	return Math.max(0, afterDiscounts - (inclusive ? itemTax : 0))
 }
 
@@ -155,8 +165,8 @@ export function posOrderNetMinor(order: {
 }
 
 /**
- * The money of a web or QR order. Fees (delivery after its discount, and the
- * guest service fee) are sales; tax and tips are not.
+ * The money of a web or QR order. Fees (delivery after its discount, the guest
+ * service fee and the packaging fee) are sales; tax and tips are not.
  */
 export function restaurantSaleMoney(order: {
 	subtotalCents: number
@@ -169,10 +179,13 @@ export function restaurantSaleMoney(order: {
 	totalCents: number
 	serviceFeeCents?: number
 	serviceFeeTaxCents?: number
+	packagingFeeCents?: number
+	packagingFeeTaxCents?: number
 }): SaleMoney {
 	const fees =
 		Math.max(0, order.deliveryFeeCents - order.deliveryDiscountCents) +
-		(order.serviceFeeCents ?? 0)
+		(order.serviceFeeCents ?? 0) +
+		(order.packagingFeeCents ?? 0)
 	const netMinor = restaurantOrderNetMinor(order) + fees
 	const discountMinor = order.discountCents + order.deliveryDiscountCents
 	const loyaltyMinor = order.loyaltyDiscountCents ?? 0

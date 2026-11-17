@@ -94,6 +94,18 @@ beforeEach(async () => {
 })
 
 describe('demo kitchen', () => {
+	it('carries the utensils answer and the large-order minutes of an online sample (#257, #355)', async () => {
+		const feed = await kitchen().feed()
+		expect(kdsFeedSchema.parse(feed)).toEqual(feed)
+		const web = feed.tickets.find((ticket) => ticket.id === 'demo-web-18')!
+		expect(web.utensilsRequested).toBe(false)
+		expect(web.largeOrderExtraMinutes).toBe(10)
+		// Tickets that were not asked, or never ran long, carry neither.
+		const till = feed.tickets.find((ticket) => ticket.id === 'demo-till-47')!
+		expect(till.utensilsRequested).toBeUndefined()
+		expect(till.largeOrderExtraMinutes).toBeUndefined()
+	})
+
 	it('opens on a rush: every column, scheduled pickups, history and a cancellation', async () => {
 		const feed = await kitchen().feed()
 		expect(kdsFeedSchema.parse(feed)).toEqual(feed)

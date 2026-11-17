@@ -51,8 +51,53 @@ export const largeOrderRuleSchema = z.object({
 	threshold: z.number().finite().positive(),
 	thresholdType: z.enum(['amount', 'items']),
 	extraPrepMinutes: z.number().int().positive().max(240),
+	/**
+	 * Both thresholds (#355), whichever is reached first: more than this many
+	 * dishes, or an item subtotal over this amount in MINOR units. Either may be
+	 * missing. When either is present they decide and `threshold` / `thresholdType`
+	 * (the one threshold an older region reads) only mirror the first of them.
+	 */
+	itemThreshold: z.number().int().positive().optional(),
+	amountThresholdMinor: z.number().int().positive().optional(),
 })
 export type LargeOrderRule = z.infer<typeof largeOrderRuleSchema>
+
+/**
+ * A rule from the two optional thresholds of the location form ("more than N
+ * items or over AMOUNT, add M minutes"). Null when neither threshold or no
+ * extra time is set. The one threshold an older region reads is filled in too,
+ * so a deploy that reaches the region first still applies something sensible.
+ */
+export function largeOrderRuleFrom(input: {
+	itemThreshold: number | null | undefined
+	amountThresholdMinor: number | null | undefined
+	extraPrepMinutes: number | null | undefined
+}): LargeOrderRule | null {
+	const items =
+		typeof input.itemThreshold === 'number' &&
+		Number.isInteger(input.itemThreshold) &&
+		input.itemThreshold > 0
+			? input.itemThreshold
+			: undefined
+	const amount =
+		typeof input.amountThresholdMinor === 'number' &&
+		Number.isInteger(input.amountThresholdMinor) &&
+		input.amountThresholdMinor > 0
+			? input.amountThresholdMinor
+			: undefined
+	const minutes = Math.round(input.extraPrepMinutes ?? 0)
+	if ((items === undefined && amount === undefined) || !(minutes > 0)) {
+		return null
+	}
+	const parsed = largeOrderRuleSchema.safeParse({
+		threshold: items ?? (amount as number) / 100,
+		thresholdType: items !== undefined ? 'items' : 'amount',
+		extraPrepMinutes: minutes,
+		...(items !== undefined ? { itemThreshold: items } : {}),
+		...(amount !== undefined ? { amountThresholdMinor: amount } : {}),
+	})
+	return parsed.success ? parsed.data : null
+}
 
 /**
  * Reads the rule for one location from the order context's `largeOrder`.
@@ -81,6 +126,17 @@ export function isLargeOrder(
 	order: { subtotalCents: number; itemCount: number },
 ): boolean {
 	if (!rule) return false
+	if (
+		rule.itemThreshold !== undefined ||
+		rule.amountThresholdMinor !== undefined
+	) {
+		return (
+			(rule.itemThreshold !== undefined &&
+				order.itemCount > rule.itemThreshold) ||
+			(rule.amountThresholdMinor !== undefined &&
+				order.subtotalCents > rule.amountThresholdMinor)
+		)
+	}
 	if (rule.thresholdType === 'items') return order.itemCount > rule.threshold
 	return order.subtotalCents > Math.round(rule.threshold * 100)
 }

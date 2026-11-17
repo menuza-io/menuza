@@ -139,6 +139,8 @@ export function definitionFromRow(row: DiscountRow): DiscountDefinition | null {
 		combinesWith: parseJson(row.combinesWith) ?? undefined,
 		tiers: parseJson(row.tiers),
 		maxDeliveryFeeMinor: row.maxDeliveryFeeMinor,
+		// Left out unless set, so a region that predates it reads every record.
+		...(row.waivesPackagingFee ? { waivesPackagingFee: true } : {}),
 		priority: row.priority,
 		promoteOnMenu: row.promoteOnMenu,
 		requireApproval: row.requireApproval,
@@ -190,6 +192,7 @@ function columnsFor(definition: DiscountDefinition) {
 			: null,
 		tiers: jsonOrNull(definition.tiers ?? null),
 		maxDeliveryFeeMinor: definition.maxDeliveryFeeMinor ?? null,
+		waivesPackagingFee: definition.waivesPackagingFee === true,
 		priority: definition.priority,
 		promoteOnMenu: definition.promoteOnMenu,
 		requireApproval: definition.requireApproval,

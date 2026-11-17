@@ -590,3 +590,180 @@ describe('Station online orders screen', () => {
 		})
 	})
 })
+
+describe('order detail: packaging fee, utensils, pickup text and large order (#251, #257, #355, #408)', () => {
+	const payment = () =>
+		document.querySelector('section[aria-label="Payment"]')!.textContent ?? ''
+	const notes = () => document.querySelector('section[aria-label="Packing"]')
+	const pickupSection = () =>
+		document.querySelector('section[aria-label="Pickup instructions"]')
+	const open = (values: Partial<PosOnlineOrderDetail>) =>
+		draw({ selected: 'o1', detail: detailOf(values) })
+
+	it('lists the packaging fee as its own line, so the shown lines add up to the total', () => {
+		// 15.00 of items + a 1.00 bag fee.
+		open({ packagingFeeCents: 100, totalCents: 1600 })
+		const text = payment()
+		expect(text).toContain('Packaging fee')
+		expect(text).toContain('$1.00')
+		expect(text).toContain('$15.00')
+		expect(text).toContain('$16.00')
+		// The row sits with the other fees, before tax and tip.
+		expect(text.indexOf('Packaging fee')).toBeLessThan(text.indexOf('Total'))
+	})
+
+	it('shows the name the restaurant gave the fee, and the default in the staff language', () => {
+		open({
+			packagingFeeCents: 100,
+			packagingFeeLabel: 'Bag <b>fee</b>',
+			totalCents: 1600,
+		})
+		expect(payment()).toContain('Bag <b>fee</b>')
+		expect(document.querySelector('section[aria-label="Payment"] b')).toBeNull()
+		expect(payment()).not.toContain('Packaging fee')
+		open({
+			packagingFeeCents: 100,
+			packagingFeeLabel: 'Packaging fee',
+			totalCents: 1600,
+		})
+		expect(payment()).toContain('Packaging fee')
+	})
+
+	it('shows no packaging line for an order without one, or from an older node', () => {
+		open({})
+		expect(payment()).not.toContain('Packaging')
+		open({ packagingFeeCents: 0, totalCents: 1500 })
+		expect(payment()).not.toContain('Packaging')
+	})
+
+	it('says "Utensils: yes" or "No utensils" as a clear line, and nothing when not asked', () => {
+		open({ utensilsRequested: true })
+		expect(notes()!.textContent).toContain('Utensils: yes')
+		open({ utensilsRequested: false })
+		expect(notes()!.textContent).toContain('No utensils')
+		open({ utensilsRequested: null })
+		expect(notes()).toBeNull()
+		open({})
+		expect(notes()).toBeNull()
+	})
+
+	it('says "Large order +N min" only when a large order added time', () => {
+		open({ largeOrderExtraMinutes: 15 })
+		expect(notes()!.textContent).toContain('Large order +15 min')
+		open({ largeOrderExtraMinutes: 0 })
+		expect(notes()).toBeNull()
+	})
+
+	it('shows the pickup text escaped, with its line breaks, for a pickup order only', () => {
+		open({ pickupInstructions: 'Use the <b>side</b> door.\nRing the bell.' })
+		const section = pickupSection()!
+		expect(section.textContent).toContain('Pickup instructions')
+		expect(section.textContent).toContain(
+			'Use the <b>side</b> door.\nRing the bell.',
+		)
+		// Text, never markup: nothing was made bold.
+		expect(section.querySelector('b')).toBeNull()
+		expect(section.querySelector('p')!.className).toContain(
+			'whitespace-pre-line',
+		)
+		open({
+			fulfillment: 'delivery',
+			pickupInstructions: 'Use the side door.',
+		})
+		expect(pickupSection()).toBeNull()
+	})
+
+	it('shows nothing for empty or missing pickup text', () => {
+		open({ pickupInstructions: '  \n ' })
+		expect(pickupSection()).toBeNull()
+		open({ pickupInstructions: null })
+		expect(pickupSection()).toBeNull()
+		open({})
+		expect(pickupSection()).toBeNull()
+	})
+
+	it('puts the utensils answer and the large-order note on the printed kitchen ticket, not the guest ticket', () => {
+		vi.stubGlobal('print', vi.fn())
+		open({ utensilsRequested: false, largeOrderExtraMinutes: 15 })
+		act(() => button('Kitchen ticket').click())
+		const kitchen = document.getElementById('receipt')!.textContent ?? ''
+		expect(kitchen).toContain('No utensils')
+		expect(kitchen).toContain('Large order +15 min')
+		act(() => button('Guest ticket').click())
+		const guest = document.getElementById('receipt')?.textContent ?? ''
+		expect(guest).not.toContain('No utensils')
+		expect(guest).not.toContain('Large order')
+	})
+})
+
+describe('daily limits are a manager control (#409)', () => {
+	const api = (rows = true) => ({
+		...demoApi,
+		controls: vi.fn(async () => ({
+			locationId: 'loc',
+			pause: null,
+			heldByStock: [],
+			serverNow: NOW,
+		})),
+		dailyLimits: vi.fn(async () => ({
+			enabled: true,
+			businessDate: '2026-03-10',
+			rows: rows
+				? [
+						{
+							key: 'item:i-lamb',
+							kind: 'item' as const,
+							id: 'i-lamb',
+							name: 'Lamb shank special',
+							limit: 20,
+							showRemaining: true,
+							toppedUpUnits: 0,
+							soldUnits: 16,
+							heldUnits: 0,
+							remaining: 4,
+						},
+					]
+				: [],
+		})),
+	})
+	const openControls = async () => {
+		await act(async () =>
+			(
+				document.querySelector(
+					'button[aria-label="Pause and sold out"]',
+				) as HTMLButtonElement
+			).click(),
+		)
+	}
+
+	it('gives a signed-in manager the section in the controls sheet', async () => {
+		const mine = api()
+		draw({ api: mine }, [summary()], MANAGER, 'manager')
+		await openControls()
+		expect(mine.dailyLimits).toHaveBeenCalledTimes(1)
+		const section = document.querySelector(
+			'section[aria-labelledby="controls-daily-limits"]',
+		)
+		expect(section?.textContent).toContain('Lamb shank special')
+		expect(section?.textContent).toContain('Left: 4')
+	})
+
+	it('never mounts the controls for a cashier or a signed-out tablet, so nothing is read', async () => {
+		for (const role of ['cashier', null] as const) {
+			const mine = api()
+			draw({ api: mine }, [summary()], CASHIER, role)
+			expect(
+				document.querySelector('button[aria-label="Pause and sold out"]'),
+			).toBeNull()
+			expect(mine.dailyLimits).not.toHaveBeenCalled()
+			expect(document.body.textContent).not.toContain('Daily limits')
+		}
+	})
+
+	it('leaves the sheet as it was when no dish has a limit', async () => {
+		draw({ api: api(false) }, [summary()], MANAGER, 'manager')
+		await openControls()
+		expect(document.body.textContent).toContain('Online ordering here')
+		expect(document.body.textContent).not.toContain('Daily limits')
+	})
+})

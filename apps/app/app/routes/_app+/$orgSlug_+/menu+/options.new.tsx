@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { serializeDailySaleLimit } from '@repo/common/daily-dish-limits'
 import { MenuOptionInputSchema } from '@repo/common/menu-types'
 import {
 	db,
@@ -26,15 +27,17 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { dailyLimitLocationIds } from '#app/utils/menu/daily-limit-save.ts'
+import {
+	checkModifierGraphChange,
+	modifierGraphErrorResponse,
+} from '#app/utils/menu/modifier-graph.server.ts'
 import {
 	assertLocationIdsInOrganization,
 	assertMediaKeysInOrganization,
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
-import {
-	checkModifierGraphChange,
-	modifierGraphErrorResponse,
-} from '#app/utils/menu/modifier-graph.server.ts'
+import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -99,6 +102,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		})),
 		supportedLocales,
 		defaultLocale,
+		dailyLimitsEnabled: await isDailyDishLimitsEnabled(organization.id),
 	}
 }
 
@@ -187,6 +191,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			Object.keys(data.locationOverrides ?? {}),
 			tx,
 		)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			dailyLimitLocationIds(data.dailySaleLimit),
+			tx,
+		)
 		// Refuse loops and over-deep nesting before anything is written.
 		const failure = await checkModifierGraphChange(
 			organization.id,
@@ -225,6 +234,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				isTopping,
 				allergens: JSON.stringify(data.allergens),
 				applySalesTax: data.applySalesTax,
+				dailySaleLimit: serializeDailySaleLimit(data.dailySaleLimit),
 				nestedModifierGroupIds: JSON.stringify(
 					data.nestedModifierGroupIds ?? [],
 				),
@@ -313,6 +323,7 @@ export default function NewOptionRoute() {
 		locations,
 		supportedLocales,
 		defaultLocale,
+		dailyLimitsEnabled,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const actionData = useActionData<{ error?: Record<string, string[]> }>()
@@ -326,6 +337,7 @@ export default function NewOptionRoute() {
 				locations={locations}
 				supportedLocales={supportedLocales}
 				defaultLocale={defaultLocale}
+				dailyLimitsEnabled={dailyLimitsEnabled}
 				isSubmitting={isSubmitting}
 				pageTitle="Create Option"
 				actionError={actionData?.error}

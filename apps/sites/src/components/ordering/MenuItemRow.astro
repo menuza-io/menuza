@@ -23,6 +23,8 @@ interface Props {
 	originalPriceSrLabel?: string
 	salePriceSrLabel?: string
 	soldOut: boolean
+	/** "Sold out", shown in place of the price when a daily limit runs out (#409). */
+	soldOutLabel?: string
 	imageUrl?: string | null
 	calories?: string | null
 	popularLabel?: string | null
@@ -48,6 +50,7 @@ const {
 	originalPriceSrLabel,
 	salePriceSrLabel,
 	soldOut,
+	soldOutLabel = '',
 	imageUrl,
 	calories,
 	popularLabel,
@@ -124,17 +127,23 @@ const hasMeta = Boolean(
 			{soldOut ? (
 				<span class="badge tone-solid">{priceLabel}</span>
 			) : (
-				<span class="inline-flex items-baseline gap-1.5">
-					{fromLabel ? <span class="text-sm text-muted-foreground">{fromLabel}</span> : null}
-					<del class="js-price-was bidi-isolate text-sm text-muted-foreground" hidden={!originalPriceLabel}>
-						<span class="sr-only">{originalPriceSrLabel}</span>
-						<span class="js-price-was-text">{originalPriceLabel}</span>
-					</del>
-					<span class="price font-heading text-lg leading-none text-foreground">
-						<span class="js-price-now-sr sr-only" hidden={!originalPriceLabel}>{salePriceSrLabel}</span>
-						<span class="js-price-now">{priceLabel}</span>
+				<>
+					<span class="js-price-block inline-flex items-baseline gap-1.5">
+						{fromLabel ? <span class="text-sm text-muted-foreground">{fromLabel}</span> : null}
+						<del class="js-price-was bidi-isolate text-sm text-muted-foreground" hidden={!originalPriceLabel}>
+							<span class="sr-only">{originalPriceSrLabel}</span>
+							<span class="js-price-was-text">{originalPriceLabel}</span>
+						</del>
+						<span class="price font-heading text-lg leading-none text-foreground">
+							<span class="js-price-now-sr sr-only" hidden={!originalPriceLabel}>{salePriceSrLabel}</span>
+							<span class="js-price-now">{priceLabel}</span>
+						</span>
 					</span>
-				</span>
+					{/* Today's daily limit (#409): the menu script shows these two while the
+					    region says so. Hidden here, so a dish with no limit looks as before. */}
+					<span class="js-sold-out-badge badge tone-solid" hidden>{soldOutLabel}</span>
+					<span class="js-daily-left badge tone-warning" hidden></span>
+				</>
 			)}
 			{!imageUrl && !soldOut ? (
 				<span class="add-btn" aria-hidden="true">
