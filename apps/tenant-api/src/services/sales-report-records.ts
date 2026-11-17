@@ -115,7 +115,11 @@ function locationCondition(
 	column: typeof restaurantOrders.locationId | typeof posOrders.locationId,
 	locationIds: readonly string[] | null,
 ): SQL[] {
-	return locationIds === null ? [] : [inArray(column, [...locationIds])]
+	if (locationIds === null) return []
+	return [
+		// bounded: analytics token locationIds mirror control-plane locations (well under 100).
+		inArray(column, [...locationIds]),
+	]
 }
 
 /** A token limited to no location reads nothing. */
@@ -580,9 +584,7 @@ export async function loadSalesRecords(
 					isNull(qrTabRefunds.reversedAt),
 					eq(qrTabs.rungUpOnStation, false),
 					...inWindow(tabRefundTime, window, 1),
-					...(locationIds === null
-						? []
-						: [inArray(qrTabs.locationId, [...locationIds])]),
+					...locationCondition(qrTabs.locationId, locationIds),
 				),
 			)
 			.orderBy(desc(tabRefundTime))
@@ -886,9 +888,7 @@ export async function loadOrderRefundRecords(
 					eq(qrTabRefunds.status, 'succeeded'),
 					isNull(qrTabRefunds.reversedAt),
 					...inWindow(tabRefundTime, window, 1),
-					...(locationIds === null
-						? []
-						: [inArray(qrTabs.locationId, [...locationIds])]),
+					...locationCondition(qrTabs.locationId, locationIds),
 				),
 			)
 			.orderBy(desc(tabRefundTime))

@@ -1589,6 +1589,11 @@ describe('Today with purchasing', () => {
 	}
 
 	it('counts what to order, and asks for an order whose cut-off is today', async () => {
+		// Hold the clock so “today” and the next delivery day do not drift with CI time.
+		vi.useFakeTimers({
+			now: new Date('2026-06-10T15:30:00Z'),
+			toFake: ['Date'],
+		})
 		const today = await view()
 		expect(today.metrics).toMatchObject({
 			toOrderItems: 1,
@@ -1610,6 +1615,7 @@ describe('Today with purchasing', () => {
 		})
 		// The same cards are not a surprise to a token without the cost grant.
 		expect((await view(noCost)).metrics).toMatchObject({ toOrderItems: 1 })
+		vi.useRealTimers()
 	})
 
 	it('shows nothing about orders while the purchasing flag is off', async () => {
