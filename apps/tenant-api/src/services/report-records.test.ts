@@ -463,9 +463,42 @@ describe('report record loaders', () => {
 				tip: 3,
 				tipPercent: 15,
 				serviceFee: 0,
+				packagingFee: 0,
 				deliveryFee: 0,
 				discount: 0,
 			})
+		})
+
+		it('reports the packaging fee as its own measure, apart from the service fee (#408)', async () => {
+			await insertOrders(
+				{
+					number: 'P1',
+					createdAt: ago(3),
+					subtotalCents: 2000,
+					taxCents: 175,
+					serviceFeeCents: 60,
+					packagingFeeCents: 100,
+					packagingFeeTaxCents: 10,
+					packagingFeeLabel: 'Bag fee',
+					totalCents: 2000 + 60 + 100 + 175,
+				},
+				{ number: 'P2', createdAt: ago(2) },
+			)
+			const { records } = await loadOrderRecords(
+				db,
+				orgId,
+				orderSubject,
+				listDefinition('orders'),
+				now,
+			)
+			const byNumber = new Map(
+				records.map((record) => [record.orderNumber, record]),
+			)
+			expect(byNumber.get('P1')).toMatchObject({
+				packagingFee: 1,
+				serviceFee: 0.6,
+			})
+			expect(byNumber.get('P2')).toMatchObject({ packagingFee: 0 })
 		})
 
 		it('reports the service fee as its own measure, with a custom tip as no percent', async () => {

@@ -1,5 +1,6 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { type DailySaleLimit } from '@repo/common/daily-dish-limits'
 import {
 	getLocalizedMenuValue,
 	type MenuVariations,
@@ -34,16 +35,22 @@ import {
 	type MediaLibraryAsset,
 } from '#app/components/media-library/media-library-picker.tsx'
 import {
+	useDiscardKey,
+	useFormSnapshotSaveBar,
+} from '#app/components/use-native-form-save-bar.ts'
+import {
 	LocaleContext,
 	LocalizedInput,
 	LocalizedTextarea,
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
 import {
-	useDiscardKey,
-	useFormSnapshotSaveBar,
-} from '#app/components/use-native-form-save-bar.ts'
+	dailyLimitFormFromConfig,
+	dailyLimitFormToJson,
+	type DailyLimitFormState,
+} from '#app/utils/menu/daily-limit-form.ts'
 import { AssignedSortableList } from './assigned-sortable-list.tsx'
+import { DailyLimitCard } from './daily-limit-fields.tsx'
 import { ItemVariations } from './item-variations.tsx'
 import {
 	LocationOverridesCard,
@@ -80,6 +87,8 @@ export interface ItemFormData {
 	excludeFromOverride: boolean
 	excludeFromDiscounts?: boolean
 	excludeFromOrderLimits?: boolean
+	/** Daily quantity cap (#409), parsed; null or absent when there is none. */
+	dailySaleLimit?: DailySaleLimit | null
 	isPopular: boolean
 	isUpsell: boolean
 	availabilityStatus:
@@ -120,6 +129,8 @@ interface ItemFormProps {
 	allLocations: LocationItem[]
 	/** Org flag `ordering.slot_limits`; hides the slot-limit exemption switch when off. */
 	slotLimitsEnabled?: boolean
+	/** Org flag `ordering.daily_dish_limits`; hides the daily limit card when off. */
+	dailyLimitsEnabled?: boolean
 	isSubmitting: boolean
 	pageTitle: string
 }
@@ -153,6 +164,7 @@ function ItemFormBody({
 	allModifierGroups,
 	allLocations,
 	slotLimitsEnabled = false,
+	dailyLimitsEnabled = false,
 	isSubmitting,
 	pageTitle,
 	onDiscard,
@@ -240,6 +252,9 @@ function ItemFormBody({
 	)
 	const [excludeFromOrderLimits, setExcludeFromOrderLimits] = useState(
 		initialData?.excludeFromOrderLimits ?? false,
+	)
+	const [dailyLimit, setDailyLimit] = useState<DailyLimitFormState>(() =>
+		dailyLimitFormFromConfig(initialData?.dailySaleLimit),
 	)
 	const [excludeFromOverride, setExcludeFromOverride] = useState(
 		initialData?.excludeFromOverride ?? false,
@@ -408,6 +423,18 @@ function ItemFormBody({
 						name="excludeFromOrderLimits"
 						value={String(excludeFromOrderLimits)}
 					/>
+					{/* Posted only while the feature is on, so a save never clears a
+					    stored limit the form did not show. */}
+					{dailyLimitsEnabled ? (
+						<input
+							type="hidden"
+							name="dailySaleLimit"
+							value={dailyLimitFormToJson(
+								dailyLimit,
+								allLocations.map((location) => location.id),
+							)}
+						/>
+					) : null}
 					<input type="hidden" name="isPopular" value={String(isPopular)} />
 					<input type="hidden" name="isUpsell" value={String(isUpsell)} />
 					<input
@@ -972,6 +999,15 @@ function ItemFormBody({
 										</FramePanel>
 									) : null}
 								</Frame>
+
+								{dailyLimitsEnabled ? (
+									<DailyLimitCard
+										idPrefix="item-daily-limit"
+										state={dailyLimit}
+										onChange={setDailyLimit}
+										locations={allLocations}
+									/>
+								) : null}
 
 								{/* Location Availability & Price Overrides Card */}
 								<LocationOverridesCard

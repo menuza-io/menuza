@@ -153,6 +153,14 @@ export function linkReceiptOrder(
 		serviceFeeCents: full.serviceFeeCents,
 		serviceFeeTaxCents: full.serviceFeeTaxCents,
 		serviceFeeLabel: full.serviceFeeLabel,
+		packagingFeeCents: full.packagingFeeCents,
+		packagingFeeTaxCents: full.packagingFeeTaxCents,
+		packagingFeeLabel: full.packagingFeeLabel,
+		// Business data and a yes/no, never about who the guest is: the pickup
+		// text is the restaurant's own (#251) and the utensils answer is a boolean.
+		pickupInstructions: full.pickupInstructions,
+		utensilsRequested: full.utensilsRequested,
+		largeOrderExtraMinutes: full.largeOrderExtraMinutes,
 		loyaltyDiscountCents: full.loyaltyDiscountCents,
 		discountCents: full.discountCents,
 		deliveryDiscountCents: full.deliveryDiscountCents,

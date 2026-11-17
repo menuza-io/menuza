@@ -160,6 +160,11 @@ export type DiscountEvaluation = {
 	lineDiscounts: Record<string, number>
 	deliveryDiscountMinor: number
 	totalDiscountMinor: number
+	/**
+	 * True when an applied discount waives the packaging fee (#408). Absent
+	 * reads as false.
+	 */
+	packagingWaived?: boolean
 	/** Null when no code was typed. */
 	code: DiscountCodeOutcome | null
 }
@@ -1592,12 +1597,20 @@ export function evaluateDiscounts(
 		if (discounted > 0) lineDiscounts[line.lineId] = discounted
 	}
 	const deliveryDiscountMinor = deliveryFee - best.state.deliveryRemaining
+	const waivers = new Set(
+		input.discounts
+			.filter((entry) => entry.waivesPackagingFee === true)
+			.map((entry) => entry.id),
+	)
 	return {
 		applied: best.applied,
 		lineDiscounts,
 		deliveryDiscountMinor,
 		totalDiscountMinor:
 			sumMinor(Object.values(lineDiscounts)) + deliveryDiscountMinor,
+		...(best.applied.some((entry) => waivers.has(entry.discountId))
+			? { packagingWaived: true }
+			: {}),
 		code: outcome,
 	}
 }

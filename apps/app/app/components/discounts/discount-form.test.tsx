@@ -636,3 +636,65 @@ describe('DiscountForm option filter', () => {
 		expect(within(alert).getByText(/^Only these options: /)).toBeTruthy()
 	})
 })
+
+describe('DiscountForm: waive the packaging fee (#408)', () => {
+	const waiveSwitch = () =>
+		screen.queryByRole('switch', { name: /waive the packaging fee/i })
+
+	it('offers the switch for an automatic discount while packaging fees are on', () => {
+		renderStaff(form({ packagingFeeEnabled: true }))
+		expect(waiveSwitch()).toBeInTheDocument()
+		expect(
+			screen.getByText(/the packaging or bag fee is not charged/i),
+		).toBeInTheDocument()
+	})
+
+	it('offers it for a code discount too', () => {
+		renderStaff(
+			form({
+				packagingFeeEnabled: true,
+				state: {
+					application: 'code',
+					codes: [{ key: 'c1', id: null, code: 'BAGFREE', maxUses: '' }],
+				},
+			}),
+		)
+		expect(waiveSwitch()).toBeInTheDocument()
+	})
+
+	it('hides it while packaging fees are off, so nobody meets a setting that does nothing', () => {
+		renderStaff(form({ packagingFeeEnabled: false }))
+		expect(waiveSwitch()).toBeNull()
+		renderStaff(form())
+		expect(waiveSwitch()).toBeNull()
+	})
+
+	it('hides it for a till discount, which has no packaging fee', () => {
+		renderStaff(
+			form({
+				packagingFeeEnabled: true,
+				state: { application: 'manual' },
+			}),
+		)
+		expect(waiveSwitch()).toBeNull()
+	})
+
+	it('shows a saved waiver as on, and posts the change with the editor state', async () => {
+		renderStaff(
+			form({
+				packagingFeeEnabled: true,
+				state: { waivesPackagingFee: true },
+			}),
+		)
+		const toggle = screen.getByRole('switch', {
+			name: /waive the packaging fee/i,
+		})
+		expect(toggle).toBeChecked()
+		await userEvent.setup().click(toggle)
+		expect(toggle).not.toBeChecked()
+		const posted = document.querySelector<HTMLInputElement>(
+			'input[name="state"]',
+		)
+		expect((JSON.parse(posted!.value) as any).waivesPackagingFee).toBe(false)
+	})
+})

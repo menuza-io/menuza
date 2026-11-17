@@ -27,6 +27,18 @@ export function checkoutOrderPayload(
 		 * different fee with 409 `service_fee_changed`.
 		 */
 		expectedServiceFeeMinor?: number
+		/**
+		 * The packaging fee (#408) the page showed, minor units, sent only when
+		 * there is one (a missing value reads as 0 at the region, which refuses a
+		 * different fee with 409 `packaging_fee_changed`).
+		 */
+		expectedPackagingFeeMinor?: number
+		/**
+		 * The utensils and napkins checkbox (#257): `null` when the question was
+		 * not shown (the key is left out and the region ignores it anyway), else
+		 * what the guest chose.
+		 */
+		utensilsRequested?: boolean | null
 		/** A gift card applied after discounts and loyalty (#110): `{code | savedCardId, expectedAmountMinor}`. */
 		giftCard?: Record<string, unknown> | null
 	},
@@ -44,6 +56,14 @@ export function checkoutOrderPayload(
 		...(wantsSmsUpdates(priced, extra) ? { smsUpdates: true } : {}),
 		...(extra.expectedServiceFeeMinor && extra.expectedServiceFeeMinor > 0
 			? { expectedServiceFeeMinor: extra.expectedServiceFeeMinor }
+			: {}),
+		...(extra.expectedPackagingFeeMinor && extra.expectedPackagingFeeMinor > 0
+			? { expectedPackagingFeeMinor: extra.expectedPackagingFeeMinor }
+			: {}),
+		// Only an order the box was shown for (pickup or delivery, never a table).
+		...(typeof extra.utensilsRequested === 'boolean' &&
+		priced.fulfillment !== 'dine_in'
+			? { utensilsRequested: extra.utensilsRequested }
 			: {}),
 	}
 }

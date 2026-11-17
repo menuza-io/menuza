@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { dailySaleLimitInputSchema } from './daily-dish-limits.ts'
 import { parseLocalizedString } from './site-locales.ts'
 
 export const ALLERGENS = [
@@ -395,6 +396,8 @@ export const ModifierOptionInputSchema = z.object({
 	applySalesTax: z.boolean().default(true),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
+	/** Daily quantity cap (#409). */
+	dailySaleLimit: dailySaleLimitInputSchema,
 	nestedModifierGroupIds: z.array(z.string()).max(50).default([]),
 	position: z.number().default(0),
 })
@@ -423,6 +426,8 @@ export const MenuOptionInputSchema = z.object({
 	applySalesTax: z.boolean().default(true),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),
 	unavailableUntil: OptionalDateInputSchema,
+	/** Daily quantity cap (#409): JSON `DailySaleLimit` from the form, or empty. */
+	dailySaleLimit: dailySaleLimitInputSchema,
 	modifierGroupIds: z.array(z.string()).max(200).default([]),
 	nestedModifierGroupIds: z.array(z.string()).max(50).default([]),
 	locationOverrides: z
@@ -473,6 +478,8 @@ export const MenuItemInputSchema = z.object({
 	excludeFromOverride: z.boolean().default(false),
 	excludeFromDiscounts: z.boolean().default(false),
 	excludeFromOrderLimits: z.boolean().default(false),
+	/** Daily quantity cap (#409): JSON `DailySaleLimit` from the form, or empty. */
+	dailySaleLimit: dailySaleLimitInputSchema,
 	isPopular: z.boolean().default(false),
 	isUpsell: z.boolean().default(false),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),

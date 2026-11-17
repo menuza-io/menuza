@@ -17,6 +17,7 @@ import {
 } from '@repo/database'
 import { loadLoyaltyCatalog } from '#app/utils/loyalty/catalog.server.ts'
 import { type LoyaltyCatalog } from '#app/utils/loyalty/catalog.ts'
+import { isPackagingFeeEnabled } from '#app/utils/orders/packaging-fee.server.ts'
 import { buildDiscountChoices } from './editor-choices.ts'
 import {
 	type DiscountChoiceCatalog,
@@ -30,6 +31,8 @@ export type DiscountEditorData = {
 	locations: DiscountLocationChoice[]
 	/** The website's languages, for the guest-facing name and description. */
 	siteLocales: SiteLocalesConfig
+	/** Org flag `ordering.packaging_fee`: offers "Also waive the packaging fee". */
+	packagingFeeEnabled: boolean
 }
 
 /**
@@ -126,6 +129,7 @@ export async function loadDiscountEditorData(
 		assignments,
 		itemVariations,
 		siteLocales,
+		packagingFeeEnabled,
 	] = await Promise.all([
 		loadLoyaltyCatalog(organizationId),
 		loadDiscountLocations(organizationId),
@@ -172,11 +176,13 @@ export async function loadDiscountEditorData(
 			.from(OrganizationMenuItem)
 			.where(eq(OrganizationMenuItem.organizationId, organizationId)),
 		loadDiscountSiteLocales(organizationId),
+		isPackagingFeeEnabled(organizationId),
 	])
 	return {
 		catalog,
 		locations,
 		siteLocales,
+		packagingFeeEnabled,
 		choices: buildDiscountChoices({
 			groups,
 			options,

@@ -460,6 +460,7 @@ function rowProps(item: OrderingItem, categoryIds: string[]) {
 			? { priceLabel: sale.saleLabel, originalPriceLabel: sale.originalLabel }
 			: {}),
 		soldOut: isItemSoldOut(item),
+		soldOutLabel: labels.soldOut,
 		popularLabel: item.isPopular ? popularLabel : null,
 		offerLabels: isItemSoldOut(item) ? [] : offersFor(item, categoryIds),
 		imageUrl: item.imageUrl,
@@ -506,6 +507,7 @@ const popularCards = allItems
 		...salePartsFor(item),
 		imageUrl: item.imageUrl,
 		soldOut: isItemSoldOut(item),
+		soldOutLabel: labels.soldOut,
 	}))
 
 const navItems = categories.map((category) => ({
@@ -618,6 +620,11 @@ const orderBarLabels = {
 const clientMenuData = {
 	/** `ordering.upsell` (#114): "Goes well with" next to the cart. */
 	upsell: menuPayload?.features?.upsell === true,
+	/**
+	 * Daily limits (#409): `false` only when the menu says there are none, so a
+	 * page cached before the hint existed still asks the region.
+	 */
+	dailyDishLimits: menuPayload?.features?.dailyDishLimits !== false,
 	organizationId: organization.id,
 	currency,
 	locale: requestedLocale,
@@ -1004,7 +1011,17 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
 		import { el } from '~/lib/ordering/dom'
 		import { createMoneyFormatter } from '~/lib/ordering/money'
-		import { orderLines, postDiscountQuote } from '~/lib/ordering/order-client'
+		import {
+			fetchOrderingOptions,
+			orderLines,
+			postDiscountQuote,
+		} from '~/lib/ordering/order-client'
+		import {
+			applyDailyAvailability,
+			applyDailyConstraints,
+			readDailyAvailability,
+		} from '~/lib/ordering/daily-availability'
+		import { paintDailyCards } from '~/lib/ordering/daily-cards'
 		import {
 			hasValidDeliveryQuote,
 			loadOrderDetails,
@@ -1078,6 +1095,8 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			categories: OrderingCategory[]
 			/** The "Goes well with" row is on (`ordering.upsell`). */
 			upsell?: boolean
+			/** Ask the region for today's daily limits (#409); `false` skips the call. */
+			dailyDishLimits?: boolean
 			voiceOrderLabels: Record<
 				'loaded' | 'expired' | 'error' | 'unavailable' | 'removed' | 'repriced',
 				string
@@ -1123,6 +1142,14 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			allowedModes: data.allowedModes,
 		})
 
+		// Today's daily limits (#409): what is sold out, and where the restaurant
+		// shows it how many are left. The item modal and the cart read this object
+		// as they open, so it is filled in place when the answer arrives.
+		const dailyConstraints: { items: Record<string, { inventory: number }>; showInventory: boolean } = {
+			items: {},
+			showInventory: true,
+		}
+
 		// Dishes whose modal was opened from "Goes well with", so their add is counted.
 		const upsellOpened = new Set<string>()
 		const modalRoot = document.getElementById('item-modal-backdrop')
@@ -1132,6 +1159,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 					getItem: (id) => catalog.items.get(id),
 					labels,
 					formatMoney: money,
+					constraints: dailyConstraints,
 					cartLines: () => store.lines(),
 					onAdd: (line) => {
 						store.add(line)
@@ -1260,6 +1288,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			store,
 			labels,
 			formatMoney: money,
+			constraints: dailyConstraints,
 			locale: data.locale,
 			renderUpsell,
 			defaultLocale: document.documentElement.dataset.defaultLocale || 'en',
@@ -1507,6 +1536,34 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		paintOffers()
 		paintPrices()
 		cartUi.refresh()
+
+		// Daily limits (#409): read today's availability once the page is up, and
+		// again when the guest comes back to the tab (at most once a minute): the
+		// menu has no polling and gets none. A sold-out dish stops being offered, a
+		// shown "Only N left" appears, and a top-up gives a dish back. The region
+		// judges every order anyway; this only keeps the page from offering what it
+		// would refuse.
+		let dailyCheckedAt = 0
+		async function refreshDailyAvailability() {
+			if (data.dailyDishLimits === false || !data.activeLocationId) return
+			dailyCheckedAt = Date.now()
+			try {
+				const options = await fetchOrderingOptions({ locationId: data.activeLocationId })
+				const availability = readDailyAvailability(options)
+				applyDailyAvailability(data.categories ?? [], availability)
+				applyDailyConstraints(dailyConstraints, availability)
+				paintDailyCards(document, availability, { onlyNLeft: labels.onlyNLeft })
+				cartUi.refresh()
+			} catch {
+				// The region is unreachable: leave the menu as it was published.
+			}
+		}
+		void refreshDailyAvailability()
+		document.addEventListener('visibilitychange', () => {
+			if (document.visibilityState === 'visible' && Date.now() - dailyCheckedAt > 60_000) {
+				void refreshDailyAvailability()
+			}
+		})
 
 		mountTableOrdering({
 			orgId,

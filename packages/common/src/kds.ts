@@ -164,6 +164,10 @@ export const kdsTicketSchema = z.object({
 	promisedAt: z.number().nullable().optional(),
 	promisedUntil: z.number().nullable().optional(),
 	promisedVersion: z.number().int().nonnegative().optional(),
+	/** Guest utensils answer (#257). */
+	utensilsRequested: z.boolean().nullable().optional(),
+	/** Extra prep minutes snapshot (#355). */
+	largeOrderExtraMinutes: z.number().int().nonnegative().optional(),
 })
 export type KdsTicket = z.infer<typeof kdsTicketSchema>
 export const kdsFeedSchema = z.object({

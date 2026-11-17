@@ -157,6 +157,13 @@ function project(
 		version: fingerprint([order, configVersion, saved?.revision ?? 0]),
 		completedAt: complete ? (saved?.completedAt ?? null) : null,
 		cancelled: order.cancelled,
+		// What the guest answered and what a large order added (#257, #355).
+		...(order.utensilsRequested !== undefined
+			? { utensilsRequested: order.utensilsRequested }
+			: {}),
+		...(order.largeOrderExtraMinutes
+			? { largeOrderExtraMinutes: order.largeOrderExtraMinutes }
+			: {}),
 		lines,
 	}
 }
@@ -224,6 +231,9 @@ function samples(t0: number): Sample[] {
 			fulfillment: 'takeaway',
 			createdAt: ago(4),
 			promised: { at: ahead(18) },
+			// The guest asked for no cutlery; a large order added 10 minutes.
+			utensilsRequested: false,
+			largeOrderExtraMinutes: 10,
 			lines: [
 				dish('i-marg', 'Margherita', 1, {
 					variant: 'Large',

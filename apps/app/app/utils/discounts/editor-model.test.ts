@@ -1443,3 +1443,65 @@ describe('currency follows the locations a discount applies to', () => {
 		if (!result.ok) expect(result.errors.valueType).toBe('amounts_unavailable')
 	})
 })
+
+describe('waiving the packaging fee (#408)', () => {
+	it('leaves the key out of a discount that does not waive it', () => {
+		const result = convert({})
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect('waivesPackagingFee' in result.definition).toBe(false)
+	})
+
+	it('carries the switch into the definition', () => {
+		const result = convert({ waivesPackagingFee: true })
+		expect(result.ok && result.definition).toMatchObject({
+			waivesPackagingFee: true,
+		})
+	})
+
+	it('works for a code discount and for free delivery', () => {
+		const code = convert({
+			application: 'code',
+			codes: [{ key: 'k', id: null, code: 'BAGFREE', maxUses: '' }],
+			waivesPackagingFee: true,
+		})
+		expect(code.ok && code.definition).toMatchObject({
+			waivesPackagingFee: true,
+		})
+		const delivery = convert({
+			valueType: 'free_delivery',
+			percent: '',
+			waivesPackagingFee: true,
+		})
+		expect(delivery.ok && delivery.definition).toMatchObject({
+			waivesPackagingFee: true,
+		})
+	})
+
+	it('never waives it for a till discount: the till has no packaging fee', () => {
+		const result = convert({
+			application: 'manual',
+			waivesPackagingFee: true,
+		})
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect('waivesPackagingFee' in result.definition).toBe(false)
+	})
+
+	it('round-trips through the saved definition', () => {
+		const result = convert({ waivesPackagingFee: true })
+		if (!result.ok) throw new Error('expected a definition')
+		const back = stateFromDefinition(result.definition, [], 'USD', EN)
+		expect(back.waivesPackagingFee).toBe(true)
+		const plain = convert({})
+		if (!plain.ok) throw new Error('expected a definition')
+		expect(
+			stateFromDefinition(plain.definition, [], 'USD', EN).waivesPackagingFee,
+		).toBe(false)
+	})
+
+	it('starts off', () => {
+		expect(emptyEditorState().waivesPackagingFee).toBe(false)
+		expect(emptyEditorState('code').waivesPackagingFee).toBe(false)
+	})
+})

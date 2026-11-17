@@ -1,12 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+	GUEST_COUNT_MAX,
+	GUEST_COUNT_MIN,
 	checkTabPayment,
+	clearGuestCount,
 	clearTableSession,
 	fetchTab,
 	fetchTableContext,
+	loadGuestCount,
 	loadTableSession,
+	parseGuestCount,
 	readTableContext,
 	readTableFragment,
+	saveGuestCount,
 	saveTableSession,
 	startTabPayment,
 	stripTableFragment,
@@ -120,6 +126,27 @@ describe('table sessions', () => {
 				openTab: null,
 			})?.dineIn.requireGuestName,
 		).toBe(true)
+	})
+
+	it('reads the table head-count limit from the options, and no limit when it is absent or odd (#422)', () => {
+		const context = (extra: Record<string, unknown>) =>
+			readTableContext({
+				table: { label: 'T4', locationId: 'loc-1' },
+				dineIn: {
+					enabled: true,
+					requireGuestName: false,
+					requireGuestPhone: false,
+					onlineTabPayAvailable: false,
+				},
+				openTab: null,
+				...extra,
+			})
+		expect(context({ dineInMaxGuests: 6 })?.maxGuests).toBe(6)
+		expect(context({ dineInMaxGuests: null })?.maxGuests).toBeNull()
+		expect(context({})?.maxGuests).toBeNull()
+		for (const odd of [0, -2, 2.5, 501, '6', {}]) {
+			expect(context({ dineInMaxGuests: odd })?.maxGuests).toBeNull()
+		}
 	})
 
 	it('posts rounds with the capability header and never a price', async () => {
@@ -847,5 +874,70 @@ describe('signed-in members at the table', () => {
 			expect(localStorage.getItem('tenant_access_token')).toBeNull()
 			expect(fetchMock).toHaveBeenCalledTimes(2)
 		})
+	})
+})
+
+describe('how many are at the table (#422)', () => {
+	it('reads a whole number from 1 to 500 in any digits', () => {
+		expect(parseGuestCount('4')).toBe(4)
+		expect(parseGuestCount(' 12 ')).toBe(12)
+		expect(parseGuestCount('٤')).toBe(4)
+		expect(parseGuestCount(String(GUEST_COUNT_MAX))).toBe(GUEST_COUNT_MAX)
+		expect(parseGuestCount(String(GUEST_COUNT_MIN))).toBe(GUEST_COUNT_MIN)
+	})
+
+	it('refuses anything else', () => {
+		for (const bad of [
+			'',
+			'0',
+			'-1',
+			'501',
+			'4.5',
+			'four',
+			'4 guests',
+			'1e2',
+			'0004x',
+		]) {
+			expect(parseGuestCount(bad), bad).toBeNull()
+		}
+	})
+
+	it('remembers the count for this table for the tab session', () => {
+		const store = storage()
+		saveGuestCount('org-1', token, 5, store)
+		expect(loadGuestCount('org-1', token, store)).toBe(5)
+	})
+
+	it('asks again at another table, for another restaurant, or after it was cleared', () => {
+		const store = storage()
+		saveGuestCount('org-1', token, 5, store)
+		expect(
+			loadGuestCount('org-1', `tbl-2.2.${'c'.repeat(64)}`, store),
+		).toBeNull()
+		expect(loadGuestCount('org-2', token, store)).toBeNull()
+		clearGuestCount('org-1', store)
+		expect(loadGuestCount('org-1', token, store)).toBeNull()
+	})
+
+	it('ignores a stored value that is not a valid count, and storage that throws', () => {
+		const store = storage()
+		store.setItem(
+			'menuza_qr_guests_org-1',
+			JSON.stringify({ table: token.slice(0, 12), count: 9000 }),
+		)
+		expect(loadGuestCount('org-1', token, store)).toBeNull()
+		store.setItem('menuza_qr_guests_org-1', 'not json')
+		expect(loadGuestCount('org-1', token, store)).toBeNull()
+		const broken = {
+			getItem: () => {
+				throw new Error('blocked')
+			},
+			setItem: () => {
+				throw new Error('blocked')
+			},
+		}
+		expect(loadGuestCount('org-1', token, broken)).toBeNull()
+		expect(() => saveGuestCount('org-1', token, 3, broken)).not.toThrow()
+		expect(loadGuestCount('org-1', token, null)).toBeNull()
 	})
 })

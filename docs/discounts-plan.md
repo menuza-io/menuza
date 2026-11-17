@@ -125,6 +125,7 @@ same whichever way a discount applies. How it applies is one field.
 | `combinesWith`                          | JSON or null: the kinds it may stack with (`item`, `order`, `delivery`). Null: `combinable` decides. Added in `0032`                                                                                            |
 | `tiers`                                 | JSON or null: a spend or quantity ladder. Added in `0032`                                                                                                                                                       |
 | `maxDeliveryFeeMinor`                   | Free delivery only: the largest delivery fee it applies to. Added in `0032`                                                                                                                                     |
+| `waivesPackagingFee`                    | Boolean: when this discount applies to an order, the packaging or bag fee (#408) is waived. Added in `0054`; sent to the region only when true, so an older region still parses every record                    |
 | `priority`                              | Tie-break; lower first                                                                                                                                                                                          |
 | `promoteOnMenu`                         | Stored now, used in phase 2                                                                                                                                                                                     |
 | `requireApproval`                       | Stored now, used in phase 3 (till)                                                                                                                                                                              |
@@ -459,6 +460,13 @@ receipt and the ZATCA document read in one language.
   no quantity rule. Not for deals, modifier discounts or till discounts.
 - A coupon with a ladder that has not reached its first step is refused with
   `minimum_not_met` (or `quantity_not_met`).
+
+**Waiving the packaging fee** (`waivesPackagingFee`, #408). Any applied discount
+that has it makes `evaluateDiscounts` return `packagingWaived: true`;
+`applyOrderDiscounts` then prices the packaging fee as 0 for the quote, the
+placement total and the amount the page must send as
+`expectedPackagingFeeMinor`. It does not change what the discount takes off the
+items. A discount that is refused, replaced or not applicable waives nothing.
 
 **Free delivery fee limit** (`maxDeliveryFeeMinor`). Free delivery applies only
 when the delivery fee is at most this, so a long-distance fee isn't waived. Over

@@ -982,6 +982,97 @@ describe('order email rendering', () => {
 		expect(cancelled('too_busy').text).toContain('المبلغ المسترد')
 	})
 
+	describe('pickup instructions, utensils and the packaging fee (#251, #257, #408)', () => {
+		const pickup = {
+			...order,
+			fulfillment: 'pickup' as const,
+			deliveryFeeCents: 0,
+			promisedUntil: null,
+			pickupInstructions:
+				'Park in the side lot.\nAsk for <b>Sam</b> at the bar.',
+			utensilsRequested: false,
+			packagingFeeCents: 100,
+			packagingFeeLabel: 'Packaging fee',
+			totalCents: 2000 + 165 + 100,
+		}
+		const render = (
+			kind: 'receipt' | 'accepted' | 'ready' | 'cancelled' | 'eta_changed',
+			overrides: Record<string, unknown> = {},
+			locale = 'en',
+		) =>
+			renderOrderEmail({
+				kind,
+				locale,
+				theme: null,
+				restaurantName: 'Acme',
+				order: { ...pickup, ...overrides } as never,
+				timeZone: 'UTC',
+				linkUrl: null,
+			})
+
+		it('shows the pickup text escaped, with line breaks kept, in the confirmation and status messages', () => {
+			for (const kind of [
+				'receipt',
+				'accepted',
+				'ready',
+				'eta_changed',
+			] as const) {
+				const rendered = render(kind)
+				expect(rendered.html, kind).toContain('Pickup instructions')
+				expect(rendered.html, kind).toContain('&lt;b&gt;Sam&lt;/b&gt;')
+				expect(rendered.html, kind).not.toContain('<b>Sam</b>')
+				expect(rendered.html, kind).toContain('white-space:pre-line')
+				expect(rendered.text, kind).toContain(
+					'Pickup instructions: Park in the side lot.\nAsk for <b>Sam</b> at the bar.',
+				)
+			}
+		})
+
+		it('shows nothing for empty text, for delivery, and in a cancellation', () => {
+			expect(
+				render('receipt', { pickupInstructions: null }).html,
+			).not.toContain('Pickup instructions')
+			expect(
+				render('receipt', { pickupInstructions: '  \n ' }).html,
+			).not.toContain('Pickup instructions')
+			expect(render('receipt', { fulfillment: 'delivery' }).html).not.toContain(
+				'Pickup instructions',
+			)
+			expect(render('cancelled').html).not.toContain('Pickup instructions')
+		})
+
+		it('says what the guest chose about utensils, and says nothing when it was not asked', () => {
+			expect(render('receipt', { utensilsRequested: false }).text).toContain(
+				'Utensils and napkins: Not needed',
+			)
+			expect(render('receipt', { utensilsRequested: true }).text).toContain(
+				'Utensils and napkins: Included',
+			)
+			expect(render('receipt', { utensilsRequested: null }).text).not.toContain(
+				'Utensils',
+			)
+			// Status messages stay short: the answer is on the receipt only.
+			expect(render('ready').text).not.toContain('Utensils')
+		})
+
+		it('lists the packaging fee as its own total line, under the name the restaurant gave it', () => {
+			expect(render('receipt').text).toContain('Packaging fee: $1.00')
+			const custom = render('receipt', { packagingFeeLabel: 'Bag fee' })
+			expect(custom.text).toContain('Bag fee: $1.00')
+			expect(custom.text).not.toContain('Packaging fee')
+			expect(render('receipt', { packagingFeeCents: 0 }).text).not.toContain(
+				'Packaging fee',
+			)
+		})
+
+		it('reads the default packaging name in the guest language', () => {
+			expect(render('receipt', {}, 'de').text).toContain('Verpackungsgebühr')
+			expect(render('receipt', {}, 'ar').text).toContain('رسوم التغليف')
+			expect(render('receipt', {}, 'zh').text).toContain('包装费')
+			expect(render('receipt', {}, 'ar').html).toContain('dir="rtl"')
+		})
+	})
+
 	it('reads "Ready around" for a pickup with a promised time', () => {
 		const rendered = renderOrderEmail({
 			kind: 'receipt',

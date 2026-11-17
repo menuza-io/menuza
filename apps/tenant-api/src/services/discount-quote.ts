@@ -22,6 +22,7 @@ import {
 	totalsAfterDiscounts,
 } from './discount-apply.ts'
 import { prepareGiftCardForOrder } from './gift-card-orders.ts'
+import { assertDailyDishCapacity } from './order-dish-daily-service.ts'
 import { memberForCustomerInTx } from './loyalty-member-service.ts'
 import {
 	fetchOrderContext,
@@ -41,7 +42,9 @@ export async function quoteOrderDiscounts(input: {
 	request: RestaurantOrderDiscountQuoteRequest
 	customerId: string | null
 	now?: Date
-}): Promise<OrderServiceResult<DiscountQuote & { giftCard?: GiftCardCheckoutQuote }>> {
+}): Promise<
+	OrderServiceResult<DiscountQuote & { giftCard?: GiftCardCheckoutQuote }>
+> {
 	const { organization, request, customerId } = input
 	const now = input.now ?? new Date()
 	const orgId = organization.id
@@ -72,7 +75,11 @@ export async function quoteOrderDiscounts(input: {
 			'Discounts are not available.',
 		)
 	}
-	if (isDiscountsKillSwitchOn() && !request.discounts?.code && !request.giftCard) {
+	if (
+		isDiscountsKillSwitchOn() &&
+		!request.discounts?.code &&
+		!request.giftCard
+	) {
 		return orderFailure(
 			404,
 			'discounts_disabled',
@@ -109,9 +116,23 @@ export async function quoteOrderDiscounts(input: {
 
 	const priced = priceRestaurantOrder(context, request, { now, deliveryQuote })
 	if (!priced.ok) {
-		const { status, code, message } = priced.error
-		return { ok: false, failure: { status, code, message } }
+		const { status, code, message, details } = priced.error
+		return {
+			ok: false,
+			failure: { status, code, message, ...(details ? { details } : {}) },
+		}
 	}
+
+	// A dish or option that has sold out for today (#409) shows at quote time,
+	// not only when the guest places the order. Placement checks again.
+	const dailyCapacity = await assertDailyDishCapacity({
+		db: await getTenantDb(orgId),
+		context,
+		locationId: request.locationId,
+		lines: priced.result.lines,
+		now,
+	})
+	if (!dailyCapacity.ok) return { ok: false, failure: dailyCapacity.failure }
 
 	const prepared = await prepareOrderDiscounts(await getTenantDb(orgId), {
 		priced: priced.result,
@@ -140,6 +161,7 @@ export async function quoteOrderDiscounts(input: {
 	let taxMinor = after.taxCents
 	let totalMinor = after.totalCents
 	let serviceFeeMinor = after.serviceFeeCents
+	let packagingFeeMinor = after.packagingFeeCents
 	if (request.loyalty && customerId && request.fulfillment !== 'dine_in') {
 		try {
 			const db = await getTenantDb(orgId)
@@ -165,12 +187,15 @@ export async function quoteOrderDiscounts(input: {
 					lineDiscounts: prepared.prepared?.evaluation.lineDiscounts,
 					deliveryDiscountMinor:
 						prepared.prepared?.evaluation.deliveryDiscountMinor,
+					packagingWaived:
+						prepared.prepared?.evaluation.packagingWaived === true,
 				},
 			)
 			loyaltyDiscountMinor = withReward.loyaltyDiscountCents
 			taxMinor = withReward.taxCents
 			totalMinor = withReward.totalCents
 			serviceFeeMinor = withReward.serviceFeeCents
+			packagingFeeMinor = withReward.packagingFeeCents
 		} catch (error) {
 			if (error instanceof LoyaltyDomainError) {
 				return { ok: false, failure: loyaltyFailure(error) }
@@ -186,6 +211,7 @@ export async function quoteOrderDiscounts(input: {
 		taxMinor,
 		totalMinor,
 		serviceFeeMinor,
+		packagingFeeMinor,
 		couponsEnabled: discountFeatures?.coupons === true,
 	})
 	if (!request.giftCard || request.fulfillment === 'dine_in') {

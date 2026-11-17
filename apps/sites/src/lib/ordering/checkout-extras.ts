@@ -1,6 +1,8 @@
 /**
  * What a guest pays on top of the items at online checkout and at a table
- * tab: the tip buttons (#118) and the service fee line (#123). Pure helpers
+ * tab: the tip buttons (#118), the service fee line (#123), the packaging fee
+ * line (#408), and the two small questions of a takeaway order: utensils
+ * (#257) and where to collect it (#251). Pure helpers
  * shared by the checkout page and the table page; the region prices both and
  * refuses a different amount, so this only decides what to show and what to
  * send.
@@ -15,6 +17,13 @@ import {
 	type TipSettings,
 } from '@repo/common/location-types'
 import { maxTipMinor } from '@repo/common/order-tips'
+import {
+	DEFAULT_PACKAGING_FEE_LABEL,
+	computePackagingFee,
+	type PackagingFeeResult,
+	type PackagingFeeSettings,
+} from '@repo/common/packaging-fee'
+import { resolvePickupInstructions } from '@repo/common/pickup-instructions'
 import {
 	DEFAULT_SERVICE_FEE_LABEL,
 	computeServiceFee,
@@ -41,6 +50,9 @@ export type TipView = {
 export type CheckoutOptions = {
 	tipChoices?: { currency: string; settings: TipSettings }
 	serviceFee?: ServiceFeeSettings | null
+	packagingFee?: PackagingFeeSettings | null
+	utensils?: { enabled: boolean; defaultRequested: boolean } | null
+	pickupInstructions?: string | null
 } | null
 
 const toSelection = (choice: TipChoice): TipSelection =>
@@ -89,7 +101,8 @@ export function tipViewOf(
 
 export function sameTipSelection(a: TipSelection, b: TipSelection): boolean {
 	if (a.kind !== b.kind) return false
-	if (a.kind === 'percent' && b.kind === 'percent') return a.percent === b.percent
+	if (a.kind === 'percent' && b.kind === 'percent')
+		return a.percent === b.percent
 	if (a.kind === 'amount' && b.kind === 'amount') {
 		return a.amountMinor === b.amountMinor
 	}
@@ -113,7 +126,9 @@ export function tipSelectionMinor(
  */
 export function tipPayload(
 	selection: TipSelection,
-): { tipPercent: number } | { tipPercent: number; tip: { amountMinor: number } } {
+):
+	| { tipPercent: number }
+	| { tipPercent: number; tip: { amountMinor: number } } {
 	if (selection.kind === 'amount') {
 		return { tipPercent: 0, tip: { amountMinor: selection.amountMinor } }
 	}
@@ -154,9 +169,9 @@ export function tipOrderTypeOf(mode: 'pickup' | 'delivery'): TipOrderType {
 }
 
 export type ServiceFeeView = ServiceFeeResult & {
-  /** The name to show: the default reads in the guest's language. */
-  label: string
-  explanation: string | null
+	/** The name to show: the default reads in the guest's language. */
+	label: string
+	explanation: string | null
 }
 
 /**
@@ -203,4 +218,95 @@ export function serviceFeeChargeMinor(
 	taxInclusive: boolean,
 ): number {
 	return fee.feeCents + (taxInclusive ? 0 : fee.taxCents)
+}
+
+export type PackagingFeeView = PackagingFeeResult & {
+	/** The name to show: the default reads in the guest's language. */
+	label: string
+}
+
+/**
+ * The packaging or bag fee line for an order, or null when the location has
+ * none for it (#408). A table never has one. A per-item fee counts `itemUnits`:
+ * the dishes that count toward order limits, as the region counts them. A
+ * discount that waives the fee is the region's word: while a quote is on its
+ * way this is the estimate, and the quote's `packagingFeeMinor` replaces it.
+ */
+export function packagingFeeFor(
+	options: CheckoutOptions,
+	input: {
+		fulfillment: 'pickup' | 'delivery' | 'dine_in'
+		/** Dish units after the order-limit exemptions. */
+		itemUnits: number
+		taxRatePercent: number
+		taxInclusive: boolean
+		/** What "Packaging fee" is called in the guest's language. */
+		defaultLabel: string
+	},
+): PackagingFeeView | null {
+	const settings = options?.packagingFee
+	if (!settings || input.fulfillment === 'dine_in') return null
+	const result = computePackagingFee({
+		settings,
+		fulfillment: input.fulfillment,
+		itemUnits: input.itemUnits,
+		taxRatePercent: input.taxRatePercent,
+		taxInclusive: input.taxInclusive,
+	})
+	if (result.feeCents <= 0) return null
+	return {
+		...result,
+		label:
+			settings.label === DEFAULT_PACKAGING_FEE_LABEL
+				? input.defaultLabel
+				: settings.label,
+	}
+}
+
+/** The total the guest owes for the packaging line: its tax too, unless prices include tax. */
+export function packagingFeeChargeMinor(
+	fee: PackagingFeeResult,
+	taxInclusive: boolean,
+): number {
+	return fee.feeCents + (taxInclusive ? 0 : fee.taxCents)
+}
+
+export type UtensilsView = {
+	/** Whether the box starts ticked. */
+	defaultRequested: boolean
+}
+
+/**
+ * "Include utensils and napkins" (#257): asked only for pickup and delivery,
+ * and only where the location asks. Never for a table.
+ */
+export function utensilsView(
+	options: CheckoutOptions,
+	fulfillment: 'pickup' | 'delivery' | 'dine_in',
+): UtensilsView | null {
+	const utensils = options?.utensils
+	if (!utensils?.enabled || fulfillment === 'dine_in') return null
+	return { defaultRequested: utensils.defaultRequested === true }
+}
+
+/**
+ * The location's pickup instructions (#251) in the guest's language, as plain
+ * text to show with `textContent` and `white-space: pre-line`. Null when there
+ * is none, or when the order is not a pickup (the location's text is for guests
+ * collecting at its door; a drop has its own pickup place, and the region sends
+ * none for it).
+ */
+export function pickupInstructionsFor(
+	options: CheckoutOptions,
+	locale: string,
+	defaultLocale: string,
+	fulfillment: 'pickup' | 'delivery' | 'dine_in' = 'pickup',
+): string | null {
+	if (fulfillment !== 'pickup') return null
+	const text = resolvePickupInstructions(
+		options?.pickupInstructions ?? null,
+		locale,
+		defaultLocale,
+	)
+	return text === '' ? null : text
 }

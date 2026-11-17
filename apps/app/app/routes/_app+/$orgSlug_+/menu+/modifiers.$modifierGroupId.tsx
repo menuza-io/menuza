@@ -1,4 +1,8 @@
 import { requireUserId } from '@repo/auth'
+import {
+	parseDailySaleLimit,
+	serializeDailySaleLimit,
+} from '@repo/common/daily-dish-limits'
 import { ModifierGroupInputSchema } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
@@ -30,15 +34,21 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import {
+	dailyLimitColumn,
+	optionLimitLocationIds,
+	optionsCarryingDailyLimit,
+} from '#app/utils/menu/daily-limit-save.ts'
+import {
+	checkModifierGraphChange,
+	modifierGraphErrorResponse,
+} from '#app/utils/menu/modifier-graph.server.ts'
+import {
 	assertItemIdsInOrganization,
 	assertLocationIdsInOrganization,
 	assertModifierGroupIdsInOrganization,
 	assertModifierGroupInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
-import {
-	checkModifierGraphChange,
-	modifierGraphErrorResponse,
-} from '#app/utils/menu/modifier-graph.server.ts'
+import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -87,6 +97,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			isVegetarian: OrganizationMenuOption.isVegetarian,
 			isAlcohol: OrganizationMenuOption.isAlcohol,
 			isTopping: OrganizationMenuOption.isTopping,
+			dailySaleLimit: OrganizationMenuOption.dailySaleLimit,
 			nestedModifierGroupIds: OrganizationMenuOption.nestedModifierGroupIds,
 			isDefault: OrganizationMenuModifierGroupOptionAssignment.isDefault,
 		})
@@ -167,6 +178,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			isVegetarian: OrganizationMenuOption.isVegetarian,
 			isAlcohol: OrganizationMenuOption.isAlcohol,
 			isTopping: OrganizationMenuOption.isTopping,
+			dailySaleLimit: OrganizationMenuOption.dailySaleLimit,
 			imageKey: OrganizationMenuOption.imageKey,
 		})
 		.from(OrganizationMenuOption)
@@ -217,7 +229,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		availableParentOptions,
 		defaultLocale,
 		supportedLocales,
-		availableOptions,
+		availableOptions: availableOptions.map((option) => ({
+			...option,
+			dailySaleLimit: parseDailySaleLimit(option.dailySaleLimit),
+		})),
+		dailyLimitsEnabled: await isDailyDishLimitsEnabled(organization.id),
 		group: {
 			id: group.id,
 			name: group.name,
@@ -240,6 +256,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				isVegetarian: opt.isVegetarian,
 				isAlcohol: opt.isAlcohol,
 				isTopping: opt.isTopping,
+				dailySaleLimit: parseDailySaleLimit(opt.dailySaleLimit),
 				isDefault: opt.isDefault,
 				nestedModifierGroupIds: (() => {
 					try {
@@ -324,6 +341,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+	const limitPosted = optionsCarryingDailyLimit(rawData.options)
 
 	const { options, assignedItemIds, selectionType, availabilityStatus, name } =
 		data
@@ -351,6 +369,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			overrideEntries
 				.map((entry) => entry.locationId)
 				.filter((id): id is string => typeof id === 'string'),
+			tx,
+		)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			optionLimitLocationIds(options),
 			tx,
 		)
 		await assertModifierGroupIdsInOrganization(
@@ -441,6 +464,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							dailySaleLimit: serializeDailySaleLimit(opt.dailySaleLimit),
 							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							position: i,
 						})
@@ -461,6 +485,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							// Only when the form sent it: never clear a limit it did not show.
+							...dailyLimitColumn(limitPosted[i] ?? false, opt.dailySaleLimit),
 							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							updatedAt: new Date(),
 						})
@@ -566,6 +592,7 @@ export default function EditModifierGroupRoute() {
 		defaultLocale,
 		supportedLocales,
 		availableOptions,
+		dailyLimitsEnabled,
 		availableModifierGroups,
 		initialParentOptionIds,
 		availableParentOptions,
@@ -586,6 +613,7 @@ export default function EditModifierGroupRoute() {
 				defaultLocale={defaultLocale}
 				supportedLocales={supportedLocales}
 				availableOptions={availableOptions}
+				dailyLimitsEnabled={dailyLimitsEnabled}
 				allItems={allItems}
 				allLocations={allLocations}
 				isSubmitting={isSubmitting}

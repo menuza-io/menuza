@@ -80,6 +80,7 @@ export async function buildLargeOrderContext(
 			largeOrderThreshold: OrganizationLocation.largeOrderThreshold,
 			largeOrderThresholdType: OrganizationLocation.largeOrderThresholdType,
 			largeOrderExtraPrepTime: OrganizationLocation.largeOrderExtraPrepTime,
+			onlineOrderingSettings: OrganizationLocation.onlineOrderingSettings,
 		})
 		.from(OrganizationLocation)
 		.where(

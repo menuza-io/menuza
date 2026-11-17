@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { parseDailySaleLimit } from '@repo/common/daily-dish-limits'
 import { MenuOptionInputSchema } from '@repo/common/menu-types'
 import {
 	db,
@@ -30,15 +31,20 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import {
+	dailyLimitColumn,
+	dailyLimitLocationIds,
+} from '#app/utils/menu/daily-limit-save.ts'
+import {
+	checkModifierGraphChange,
+	modifierGraphErrorResponse,
+} from '#app/utils/menu/modifier-graph.server.ts'
+import {
 	assertLocationIdsInOrganization,
 	assertMediaKeysInOrganization,
 	assertModifierGroupIdsInOrganization,
 	assertOptionIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
-import {
-	checkModifierGraphChange,
-	modifierGraphErrorResponse,
-} from '#app/utils/menu/modifier-graph.server.ts'
+import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -187,6 +193,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		dataRegion: organization.dataRegion,
 		defaultLocale,
 		supportedLocales,
+		dailyLimitsEnabled: await isDailyDishLimitsEnabled(organization.id),
 		availableModifierGroups,
 		locations: locations.map((loc) => ({
 			id: loc.id,
@@ -225,6 +232,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			modifierGroupIds,
 			nestedModifierGroupIds,
 			locationOverrides: locationOverridesMap,
+			dailySaleLimit: parseDailySaleLimit(option.dailySaleLimit),
 		},
 	}
 }
@@ -319,6 +327,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			Object.keys(data.locationOverrides ?? {}),
 			tx,
 		)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			dailyLimitLocationIds(data.dailySaleLimit),
+			tx,
+		)
 		// Refuse loops and over-deep nesting before anything is written.
 		const failure = await checkModifierGraphChange(
 			organization.id,
@@ -356,6 +369,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				isTopping,
 				allergens: JSON.stringify(data.allergens),
 				applySalesTax: data.applySalesTax,
+				// Only when the form posted it: never clear a limit it did not show.
+				...dailyLimitColumn(
+					formData.has('dailySaleLimit'),
+					data.dailySaleLimit,
+				),
 				nestedModifierGroupIds: JSON.stringify(
 					data.nestedModifierGroupIds ?? [],
 				),
@@ -442,6 +460,7 @@ export default function EditOptionRoute() {
 		locations,
 		supportedLocales,
 		defaultLocale,
+		dailyLimitsEnabled,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const actionData = useActionData<{ error?: Record<string, string[]> }>()
@@ -458,6 +477,7 @@ export default function EditOptionRoute() {
 				locations={locations}
 				supportedLocales={supportedLocales}
 				defaultLocale={defaultLocale}
+				dailyLimitsEnabled={dailyLimitsEnabled}
 				isSubmitting={isSubmitting}
 				pageTitle="Edit Option"
 				actionError={actionData?.error}

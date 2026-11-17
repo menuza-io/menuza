@@ -29,6 +29,8 @@ export type LoyaltyDiscountedTotals = {
 	serviceFeeCents: number
 	/** The part of `taxCents` that is on the fee. */
 	serviceFeeTaxCents: number
+	packagingFeeCents: number
+	packagingFeeTaxCents: number
 }
 
 /** Discounts and coupons applied before the reward (the engine's output). */
@@ -36,6 +38,8 @@ export type OtherOrderDiscounts = {
 	/** Total discount per line id. */
 	lineDiscounts?: Readonly<Record<string, number>>
 	deliveryDiscountMinor?: number
+	/** An applied discount waives the packaging fee (#408). */
+	packagingWaived?: boolean
 }
 
 /**
@@ -66,6 +70,7 @@ export function applyLoyaltyDiscountToTotals(
 		priced,
 		lineDiscounts,
 		others.deliveryDiscountMinor ?? 0,
+		others.packagingWaived === true,
 	)
 	return {
 		loyaltyDiscountCents: Math.min(
@@ -76,6 +81,8 @@ export function applyLoyaltyDiscountToTotals(
 		totalCents: totals.totalCents,
 		serviceFeeCents: totals.serviceFeeCents,
 		serviceFeeTaxCents: totals.serviceFeeTaxCents,
+		packagingFeeCents: totals.packagingFeeCents,
+		packagingFeeTaxCents: totals.packagingFeeTaxCents,
 	}
 }
 

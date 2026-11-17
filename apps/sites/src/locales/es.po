@@ -1269,6 +1269,10 @@ msgstr "Introduce un correo electrónico válido."
 msgid "Enter an amount, for example 4.50."
 msgstr "Introduce un importe, por ejemplo 4,50."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Enter how many people are at your table."
+msgstr "Indica cuántas personas hay en tu mesa."
+
 #: src/lib/gift-cards/labels.ts:57
 #: src/pages/gift-cards/balance.astro.ts:3
 msgid "Enter the number on your card. Dashes and spaces do not matter."
@@ -1542,6 +1546,10 @@ msgstr "Historial"
 msgid "hour"
 msgstr "hora"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "How many are at your table?"
+msgstr "¿Cuántas personas hay en tu mesa?"
+
 #: src/lib/loyalty/labels.ts:100
 msgid "How you earn"
 msgstr "Cómo acumular"
@@ -1578,6 +1586,10 @@ msgstr "en {t}"
 #: src/lib/loyalty/labels.ts:247
 msgid "In store"
 msgstr "En el local"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Include utensils and napkins"
+msgstr "Incluir cubiertos y servilletas"
 
 #: src/lib/reservations/labels.ts:89
 msgid "Include your country code, for example {example}."
@@ -1978,6 +1990,10 @@ msgstr "Sin propina"
 msgid "No upcoming seatings"
 msgstr "No hay turnos próximos"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "No utensils"
+msgstr "Sin cubiertos"
+
 #: src/lib/reservations/labels.ts:170
 msgid "No-show"
 msgstr "No se presentó"
@@ -1997,6 +2013,10 @@ msgstr "No disponible para este pedido"
 #: src/lib/ordering-labels.ts:222
 msgid "Not available right now"
 msgstr "No disponible ahora"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Not enough left today"
+msgstr "Hoy no queda suficiente"
 
 #: src/components/BirthdayField.astro.ts:3
 msgid "Not set"
@@ -2113,6 +2133,15 @@ msgstr "Solo quedan {count}"
 #: src/lib/ordering-labels.ts:98
 msgid "Only {count} left in {category}"
 msgstr "Solo quedan {count} en {category}"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Only {count} left today"
+msgstr "Hoy solo quedan {count}"
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Only {count} of {name} left today. Please go back to the menu to lower the quantity."
+msgstr "Hoy solo quedan {count} de {name}. Vuelve al menú para reducir la cantidad."
 
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
@@ -2274,6 +2303,11 @@ msgstr "Nuestra cocina está preparando platos deliciosos. Vuelve pronto para ve
 msgid "Our own design"
 msgstr "Nuestro propio diseño"
 
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Packaging fee"
+msgstr "Tarifa de embalaje"
+
 #: src/components/SiteNotFound.astro.ts:3
 msgid "Page not found"
 msgstr "Página no encontrada"
@@ -2422,6 +2456,11 @@ msgstr "Recogida"
 #: src/components/drops/DropCard.astro.ts:3
 msgid "Pickup {when}"
 msgstr "Recogida {when}"
+
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Pickup instructions"
+msgstr "Instrucciones de recogida"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pickup is not available for this order."
@@ -2951,6 +2990,10 @@ msgstr "Inicia sesión con tu número de teléfono para ver tus puntos y usar tu
 msgid "Sold out"
 msgstr "Agotado"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Sold out for today"
+msgstr "Agotado por hoy"
+
 #: src/pages/menu.astro.ts:3
 msgid "Some items are no longer available and were left out:"
 msgstr "Algunos artículos ya no están disponibles y se quitaron:"
@@ -2986,6 +3029,11 @@ msgstr "Algunos precios cambiaron desde su llamada. Su carrito muestra los preci
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed. Your cart shows the current prices."
 msgstr "Algunos precios cambiaron. Tu carrito muestra los precios actuales."
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Something in your order isn't available in that amount today. Please go back to the menu to change your order."
+msgstr "Algo de tu pedido no está disponible en esa cantidad hoy. Vuelve al menú para modificar tu pedido."
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/complete-name.astro.ts:3
@@ -3263,6 +3311,10 @@ msgstr "Puede que el enlace esté incompleto o haya caducado."
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "El enlace puede estar incompleto. Puedes iniciar un nuevo pedido desde el menú."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "The packaging fee changed. Please review your total and place your order again."
+msgstr "La tarifa de embalaje cambió. Revisa tu total y vuelve a hacer el pedido."
+
 #: src/components/SiteNotFound.astro.ts:3
 msgid "The page you are looking for does not exist or has moved."
 msgstr "La página que buscas no existe o se ha movido."
@@ -3351,6 +3403,16 @@ msgstr "La lista de espera no está disponible ahora. Llama al restaurante."
 #: src/lib/reservations/labels.ts:474
 msgid "There are no upcoming seatings to book right now."
 msgstr "Ahora mismo no hay turnos próximos para reservar."
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "There isn't enough {name} left today. Please go back to the menu to change your order."
+msgstr "Hoy no queda suficiente {name}. Vuelve al menú para modificar tu pedido."
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
+msgstr "Hoy no queda suficiente de: {names}. Vuelve al menú para modificar tu pedido."
 
 #: src/lib/reservations/labels.ts:515
 msgid "This booking includes a payment, so the party size cannot be changed online. Please call the restaurant."
@@ -3459,6 +3521,11 @@ msgstr "Este drop ya no acepta pedidos."
 msgid "This form is currently unavailable."
 msgstr "Este formulario no está disponible actualmente."
 
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This group is too large to order from the table. Please ask a member of the team."
+msgstr "Este grupo es demasiado grande para pedir desde la mesa. Pregunta a alguien del equipo."
+
 #: src/lib/reservations/labels.ts:427
 msgid "This has already been paid."
 msgstr "Esto ya se ha pagado."
@@ -3504,6 +3571,16 @@ msgstr "Este pedido está por debajo del mínimo para entrega a domicilio."
 msgid "This order is complete."
 msgstr "Este pedido está completado."
 
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This order is too large for online checkout. Please call the restaurant or ask about a catering order."
+msgstr "Este pedido es demasiado grande para pagar en línea. Llama al restaurante o pregunta por un pedido de catering."
+
+#: src/components/ordering/TableTab.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This order is too large for online checkout. Please call us on {phone} or ask about a catering order."
+msgstr "Este pedido es demasiado grande para pagar en línea. Llámanos al {phone} o pregunta por un pedido de catering."
+
 #: src/pages/menu.astro.ts:3
 msgid "This order link has expired. You can still order from the menu."
 msgstr "Este enlace de pedido ha caducado. Aún puede ordenar desde el menú."
@@ -3532,6 +3609,7 @@ msgstr "Este número de teléfono ya está en la lista de espera hoy."
 msgid "This receipt is only available on the device used to place the order."
 msgstr "Este recibo solo está disponible en el dispositivo utilizado para realizar el pedido."
 
+#: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This restaurant can't take online orders right now. Please try again later."
 msgstr "Este restaurante no puede recibir pedidos en línea ahora mismo. Inténtalo de nuevo más tarde."
@@ -3735,6 +3813,14 @@ msgstr "Usa el código {code}"
 #: src/lib/loyalty/labels.ts:166
 msgid "Used on {items}"
 msgstr "Se aplica a {items}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Utensils and napkins"
+msgstr "Cubiertos y servilletas"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Utensils: yes"
+msgstr "Cubiertos: sí"
 
 #: src/lib/gift-cards/labels.ts:66
 msgid "Valid until {date}"

@@ -193,6 +193,11 @@ export type EditorState = {
 	priority: string
 	promoteOnMenu: boolean
 	requireApproval: boolean
+	/**
+	 * When this discount applies to an order, the packaging or bag fee (#408) is
+	 * waived too. Not for a till discount: the till has no packaging fee.
+	 */
+	waivesPackagingFee: boolean
 }
 
 /** A whole number that has to fall between two limits: `range:1:1000`. */
@@ -510,6 +515,7 @@ export function emptyEditorState(
 		priority: '0',
 		promoteOnMenu: false,
 		requireApproval: false,
+		waivesPackagingFee: false,
 	}
 }
 
@@ -680,6 +686,7 @@ export function stateFromDefinition(
 		priority: String(definition.priority),
 		promoteOnMenu: definition.promoteOnMenu,
 		requireApproval: definition.requireApproval,
+		waivesPackagingFee: definition.waivesPackagingFee === true,
 	}
 }
 
@@ -1319,6 +1326,10 @@ export function stateToDefinition(
 		combinesWith: state.combinesWith,
 		...(tiers ? { tiers } : {}),
 		...(maxDeliveryFeeMinor !== null ? { maxDeliveryFeeMinor } : {}),
+		// Left out unless on, so a region that predates it reads every record.
+		...(state.waivesPackagingFee && state.application !== 'manual'
+			? { waivesPackagingFee: true }
+			: {}),
 		priority: priority ?? 0,
 		promoteOnMenu: state.promoteOnMenu && promoteOnMenuAllowed(state),
 		requireApproval: state.requireApproval,

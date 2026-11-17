@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { parseDailySaleLimit } from '@repo/common/daily-dish-limits'
 import { ModifierGroupInputSchema } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
@@ -23,8 +24,10 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { optionsCarryingDailyLimit } from '#app/utils/menu/daily-limit-save.ts'
 import { modifierGraphErrorResponse } from '#app/utils/menu/modifier-graph.server.ts'
 import { createModifierGroup } from '#app/utils/menu/modifier-groups.server.ts'
+import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -79,6 +82,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			isAlcohol: OrganizationMenuOption.isAlcohol,
 			isTopping: OrganizationMenuOption.isTopping,
 			imageKey: OrganizationMenuOption.imageKey,
+			dailySaleLimit: OrganizationMenuOption.dailySaleLimit,
 		})
 		.from(OrganizationMenuOption)
 		.where(eq(OrganizationMenuOption.organizationId, organization.id))
@@ -111,7 +115,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		availableParentOptions,
 		defaultLocale,
 		supportedLocales,
-		availableOptions,
+		availableOptions: availableOptions.map((option) => ({
+			...option,
+			dailySaleLimit: parseDailySaleLimit(option.dailySaleLimit),
+		})),
+		dailyLimitsEnabled: await isDailyDishLimitsEnabled(organization.id),
 		allItems: allItems.map((i) => ({
 			id: i.id,
 			displayName: i.displayName,
@@ -176,7 +184,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
-	const result = await createModifierGroup(organization.id, data)
+	const result = await createModifierGroup(organization.id, data, {
+		dailyLimitPosted: optionsCarryingDailyLimit(rawData.options),
+	})
 	if (!result.ok) return modifierGraphErrorResponse(result.failure)
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
@@ -190,6 +200,7 @@ export default function CreateModifierGroupRoute() {
 		defaultLocale,
 		supportedLocales,
 		availableOptions,
+		dailyLimitsEnabled,
 		availableModifierGroups,
 		initialParentOptionIds,
 		availableParentOptions,
@@ -208,6 +219,7 @@ export default function CreateModifierGroupRoute() {
 				defaultLocale={defaultLocale}
 				supportedLocales={supportedLocales}
 				availableOptions={availableOptions}
+				dailyLimitsEnabled={dailyLimitsEnabled}
 				allItems={allItems}
 				allLocations={allLocations}
 				isSubmitting={isSubmitting}

@@ -25,6 +25,11 @@ export const orderSchema = z.object({
 	serviceFeeCents: z.number().int().optional().catch(undefined),
 	serviceFeeLabel: z.string().nullable().optional().catch(undefined),
 	serviceFeeChargeCents: z.number().int().optional().catch(undefined),
+	packagingFeeCents: z.number().int().optional().catch(undefined),
+	packagingFeeLabel: z.string().nullable().optional().catch(undefined),
+	utensilsRequested: z.boolean().nullable().optional().catch(undefined),
+	largeOrderExtraMinutes: z.number().int().optional().catch(undefined),
+	pickupInstructions: z.string().nullable().optional().catch(undefined),
 	/** A loyalty reward's discount, taken off the subtotal before tax. */
 	loyaltyDiscountCents: z.number().int(),
 	/** Non-loyalty discounts on the lines, in cents (missing means none). */

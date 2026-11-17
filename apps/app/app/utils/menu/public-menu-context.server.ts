@@ -60,9 +60,10 @@ import {
 	buildPublicMenuDiscounts,
 	type PublicMenuPromotion,
 } from '#app/utils/discounts/order-context.server.ts'
-import { isUpsellEnabled } from '#app/utils/orders/upsell-flag.server.ts'
-import { isSlotLimitsEnabled } from '#app/utils/orders/slot-limits.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
+import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
+import { isSlotLimitsEnabled } from '#app/utils/orders/slot-limits.server.ts'
+import { isUpsellEnabled } from '#app/utils/orders/upsell-flag.server.ts'
 import {
 	applyOptionAssignment,
 	attachNestedModifierGroups,
@@ -118,7 +119,16 @@ export interface PublicSiteMenuPayload {
 	 * `ordering.upsell` flag. Absent on a cached menu from before it, which
 	 * Sites reads as off.
 	 */
-	features?: { upsell: boolean; slotLimits?: boolean }
+	features?: {
+		upsell: boolean
+		slotLimits?: boolean
+		/**
+		 * `ordering.daily_dish_limits` (#409): a hint only, so a menu page of an
+		 * organization without daily limits skips the call that reads them. The
+		 * cap itself is never in this payload.
+		 */
+		dailyDishLimits?: boolean
+	}
 	/**
 	 * Not part of the public response. Till rules are loaded by a paired
 	 * terminal. The field stays so an older snapshot still type-checks.
@@ -611,6 +621,7 @@ export async function buildPublicSiteMenuPayload(
 		features: {
 			upsell: await isUpsellEnabled(org.id),
 			slotLimits: await isSlotLimitsEnabled(org.id),
+			dailyDishLimits: await isDailyDishLimitsEnabled(org.id),
 		},
 	}
 

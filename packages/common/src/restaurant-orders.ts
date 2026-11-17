@@ -26,6 +26,13 @@ import {
 } from './location-availability.ts'
 import { parsePrepSchedule } from './location-settings.ts'
 import { prepMinutesAt } from './prep-schedule.ts'
+import { parseUtensilsSettings } from './checkout-utensils.ts'
+import {
+	type DailyDishAvailability,
+	dailyDishLimitsContextSchema,
+} from './daily-dish-limits.ts'
+import { orderLimitExemptFromCatalog } from './order-limit-exempt.ts'
+import { orderDishUnits } from './slot-usage.ts'
 import {
 	computeReadySlotCapacity,
 	type ReadySlotCapacitySpec,
@@ -57,6 +64,18 @@ import {
 	requestsTip,
 	TIP_TOO_LARGE_CODE,
 } from './order-tips.ts'
+import {
+	checkOrderCaps,
+	ORDER_TOO_LARGE_CODE,
+	readOrderCapsForLocation,
+} from './order-caps.ts'
+import {
+	computePackagingFee,
+	readPackagingFeePolicy,
+	PACKAGING_FEE_UNAVAILABLE_CODE,
+	type PackagingFeeFulfillment,
+	type PackagingFeeSettings,
+} from './packaging-fee.ts'
 import {
 	computeServiceFee,
 	readServiceFeePolicy,
@@ -226,11 +245,15 @@ export type RestaurantOrderErrorCode =
 	| 'dine_in_not_allowed'
 	| 'tip_too_large'
 	| 'service_fee_unavailable'
+	| 'order_too_large'
+	| 'packaging_fee_unavailable'
 
 export type RestaurantOrderError = {
 	status: 400 | 403 | 404 | 422 | 503
 	code: RestaurantOrderErrorCode
 	message: string
+	/** Machine-readable context for the client, never personal data. */
+	details?: Record<string, unknown>
 }
 
 export type PriceRestaurantOrderResult =
@@ -383,6 +406,16 @@ const restaurantOrderObjectSchema = z.strictObject({
 		.min(0)
 		.max(1_000_000_000)
 		.optional(),
+	expectedPackagingFeeMinor: z
+		.number()
+		.int()
+		.min(0)
+		.max(1_000_000_000)
+		.optional(),
+	/** When the location asks (#257); ignored unless utensils are on. */
+	utensilsRequested: z.boolean().optional(),
+	/** Dine-in cap by head count (#422). */
+	guestCount: z.number().int().min(1).max(500).optional(),
 	lines: z.array(restaurantOrderLineSchema).min(1).max(RESTAURANT_MAX_LINES),
 	turnstileToken: z.string().min(1).max(2048).optional(),
 })
@@ -831,6 +864,18 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		...(request.smsUpdates ? { smsUpdates: true } : {}),
 		...(request.expectedServiceFeeMinor !== undefined
 			? { expectedServiceFeeMinor: request.expectedServiceFeeMinor }
+			: {}),
+		// The checkout rules (#408, #257, #422), only when sent, so a request
+		// without them hashes as before and a retry that changes one conflicts
+		// instead of replaying the first order.
+		...(request.expectedPackagingFeeMinor !== undefined
+			? { expectedPackagingFeeMinor: request.expectedPackagingFeeMinor }
+			: {}),
+		...(request.utensilsRequested !== undefined
+			? { utensilsRequested: request.utensilsRequested }
+			: {}),
+		...(request.guestCount !== undefined
+			? { guestCount: request.guestCount }
 			: {}),
 		delivery: request.delivery
 			? {
@@ -1376,8 +1421,24 @@ export const restaurantOrderContextSchema = z
 		 * that is on and cannot be read refuses the order (never dropped).
 		 */
 		serviceFee: z.unknown().optional(),
+		packagingFee: z.unknown().optional(),
+		orderCaps: z.unknown().optional(),
+		/** Pickup instructions per location id (#251). Localized JSON string. */
+		pickupInstructions: z.record(z.string(), z.string()).optional(),
+		/** Utensils question per location id (#257). */
+		utensils: z
+			.record(
+				z.string(),
+				z.object({
+					enabled: z.boolean(),
+					defaultRequested: z.boolean(),
+				}),
+			)
+			.optional(),
 		/** Per-slot capacity (`ordering.slot_limits`, #108). */
 		slotLimits: z.object({ enabled: z.boolean().default(false) }).optional(),
+		/** Daily dish quantity caps (`ordering.daily_dish_limits`, #409). */
+		dailyDishLimits: dailyDishLimitsContextSchema.optional(),
 	})
 	.loose()
 
@@ -1669,6 +1730,14 @@ export type PricedRestaurantOrder = {
 	serviceFeeRule: {
 		settings: ServiceFeeSettings
 		fulfillment: ServiceFeeFulfillment
+	} | null
+	packagingFeeCents: number
+	packagingFeeTaxCents: number
+	packagingFeeLabel: string | null
+	packagingFeeRule: {
+		settings: PackagingFeeSettings
+		fulfillment: PackagingFeeFulfillment
+		itemUnits: number
 	} | null
 	totalCents: number
 	location: { id: string; name: string; timezone: string }
@@ -2510,8 +2579,11 @@ function orderError(
 	status: RestaurantOrderError['status'],
 	code: RestaurantOrderErrorCode,
 	message: string,
+	details?: Record<string, unknown>,
 ): RestaurantOrderError {
-	return { status, code, message }
+	return details
+		? { status, code, message, details }
+		: { status, code, message }
 }
 
 /**
@@ -3166,6 +3238,28 @@ export function priceRestaurantOrder(
 		(sum, line) => sum + line.totalCents,
 		0,
 	)
+	const capSettings = readOrderCapsForLocation(context.orderCaps, location.id)
+	const capViolation = checkOrderCaps({
+		settings: capSettings,
+		fulfillment: request.fulfillment,
+		subtotalCents,
+		guestCount: request.guestCount,
+	})
+	if (capViolation && !walkIn) {
+		return {
+			ok: false,
+			// Says which limit was hit so the page can point to catering or the phone
+			// (amount) or to a team member (a big table), never the number itself.
+			error: orderError(
+				422,
+				ORDER_TOO_LARGE_CODE,
+				capViolation.kind === 'guests'
+					? 'This group is too large to order from the table. Please ask a member of the team.'
+					: 'This order is too large for online checkout. Please call the restaurant or place a catering order.',
+				{ kind: capViolation.kind, fulfillment: capViolation.fulfillment },
+			),
+		}
+	}
 	if (
 		deliveryInfo &&
 		zoneMinimumOrderCents(subtotalCents, location, deliveryInfo.zoneId)
@@ -3238,14 +3332,54 @@ export function priceRestaurantOrder(
 		taxRatePercent,
 		taxInclusive,
 	})
-	const orderTaxCents = taxCents + serviceFee.taxCents
+	const packagingPolicy =
+		walkIn || request.fulfillment === 'dine_in'
+			? ({ kind: 'off' } as const)
+			: readPackagingFeePolicy(context.packagingFee, location.id)
+	if (packagingPolicy.kind === 'unreadable') {
+		return {
+			ok: false,
+			error: orderError(
+				503,
+				PACKAGING_FEE_UNAVAILABLE_CODE,
+				'This restaurant cannot take online orders right now. Please try again later.',
+			),
+		}
+	}
+	const packagingItemUnits = orderDishUnits(
+		pricedLines.map((line) => ({
+			itemId: line.itemId,
+			quantity: line.quantity,
+			categoryIds: line.categoryIds,
+		})),
+		orderLimitExemptFromCatalog(catalog, categoryExempt),
+	)
+	const packagingFeeRule =
+		packagingPolicy.kind === 'on' &&
+		request.fulfillment !== 'dine_in' &&
+		packagingPolicy.settings.fulfillments.includes(request.fulfillment)
+			? {
+					settings: packagingPolicy.settings,
+					fulfillment: request.fulfillment,
+					itemUnits: packagingItemUnits,
+				}
+			: null
+	const packagingFee = computePackagingFee({
+		settings: packagingFeeRule?.settings ?? null,
+		fulfillment: request.fulfillment,
+		itemUnits: packagingItemUnits,
+		taxRatePercent,
+		taxInclusive,
+	})
+	const orderTaxCents = taxCents + serviceFee.taxCents + packagingFee.taxCents
 	// Inclusive prices already carry the tax: it is reported, not added.
 	const totalCents =
 		subtotalCents +
 		(taxInclusive ? 0 : orderTaxCents) +
 		tipCents +
 		deliveryFeeCents +
-		serviceFee.feeCents
+		serviceFee.feeCents +
+		packagingFee.feeCents
 
 	const readySlotCapacity = computeReadySlotCapacity({
 		slotLimitsEnabled: context.slotLimits?.enabled === true,
@@ -3278,6 +3412,12 @@ export function priceRestaurantOrder(
 			serviceFeeTaxCents: serviceFee.taxCents,
 			serviceFeeLabel: serviceFeeRule ? serviceFeeRule.settings.label : null,
 			serviceFeeRule,
+			packagingFeeCents: packagingFee.feeCents,
+			packagingFeeTaxCents: packagingFee.taxCents,
+			packagingFeeLabel: packagingFeeRule
+				? packagingFeeRule.settings.label
+				: null,
+			packagingFeeRule,
 			totalCents,
 			location: {
 				id: location.id,
@@ -3320,6 +3460,8 @@ export type OrderDiscountTotals = {
 	serviceFeeCents: number
 	/** The part of `taxCents` that is on the fee. */
 	serviceFeeTaxCents: number
+	packagingFeeCents: number
+	packagingFeeTaxCents: number
 }
 
 /**
@@ -3344,9 +3486,13 @@ export function applyOrderDiscounts(
 		| 'tipCents'
 		| 'deliveryFeeCents'
 		| 'serviceFeeRule'
+		| 'packagingFeeCents'
+		| 'packagingFeeRule'
 	>,
 	lineDiscounts: Readonly<Record<string, number>>,
 	deliveryDiscountMinor = 0,
+	/** An applied discount waives the packaging fee (#408). */
+	packagingWaived = false,
 ): OrderDiscountTotals {
 	// One shared calculation with the till and the ZATCA invoice. The discount
 	// comes off the taxed and untaxed parts of a line in proportion, and a
@@ -3378,14 +3524,24 @@ export function applyOrderDiscounts(
 		taxRatePercent: priced.taxRatePercent,
 		taxInclusive: priced.taxInclusive,
 	})
-	const taxCents = itemTaxCents + serviceFee.taxCents
+	const packagingFee = computePackagingFee({
+		settings: packagingWaived
+			? null
+			: (priced.packagingFeeRule?.settings ?? null),
+		fulfillment: priced.packagingFeeRule?.fulfillment ?? 'pickup',
+		itemUnits: priced.packagingFeeRule?.itemUnits ?? 0,
+		taxRatePercent: priced.taxRatePercent,
+		taxInclusive: priced.taxInclusive,
+	})
+	const taxCents = itemTaxCents + serviceFee.taxCents + packagingFee.taxCents
 	const totalCents =
 		priced.subtotalCents -
 		discountCents +
 		(priced.taxInclusive ? 0 : taxCents) +
 		priced.tipCents +
 		(priced.deliveryFeeCents - deliveryDiscountCents) +
-		serviceFee.feeCents
+		serviceFee.feeCents +
+		packagingFee.feeCents
 	return {
 		discountCents,
 		deliveryDiscountCents,
@@ -3393,6 +3549,8 @@ export function applyOrderDiscounts(
 		totalCents,
 		serviceFeeCents: serviceFee.feeCents,
 		serviceFeeTaxCents: serviceFee.taxCents,
+		packagingFeeCents: packagingFee.feeCents,
+		packagingFeeTaxCents: packagingFee.taxCents,
 	}
 }
 
@@ -3480,6 +3638,35 @@ export type PublicOrderingOptions = {
 	 * off. Sites shows it with `computeServiceFee`; the region re-prices it.
 	 */
 	serviceFee?: ServiceFeeSettings | null
+	/**
+	 * The packaging or bag fee (#408) of this location while it is on; null when
+	 * off. Sites shows it with `computePackagingFee`; the region re-prices it.
+	 */
+	packagingFee?: PackagingFeeSettings | null
+	/**
+	 * The most guests one table may order for from the phone (#422), or null
+	 * when there is no such limit. Sites asks "How many are at your table?" only
+	 * where this is set and sends `guestCount`; the region enforces it.
+	 */
+	dineInMaxGuests?: number | null
+	/**
+	 * Whether checkout asks about utensils and napkins at this location (#257),
+	 * and the checkbox's default. Null when it does not ask. Pickup and
+	 * delivery only: Sites never shows it for a table.
+	 */
+	utensils?: { enabled: boolean; defaultRequested: boolean } | null
+	/**
+	 * The location's pickup instructions (#251) as the operator saved them (plain
+	 * text, or a localized JSON map): Sites picks the guest's language with
+	 * `resolvePickupInstructions`. Null when empty.
+	 */
+	pickupInstructions?: string | null
+	/**
+	 * Daily limits (#409), ids and counts only: a dish or option that is sold out
+	 * for today, and a low number where the operator allows "Only N left". A
+	 * cap that is not shown never appears. Keys are `item:<id>` / `option:<id>`.
+	 */
+	dailyAvailability?: DailyDishAvailability
 	delivery: { available: boolean }
 	/**
 	 * Whether the checkout may offer "Text me order updates": the guest
@@ -3522,6 +3709,8 @@ export function buildPublicOrderingOptions(
 		now: Date
 		/** Whether this node can geocode addresses (radius/polygon zones). */
 		geocoderAvailable?: boolean
+		/** Today's sold-out and low-stock capped dishes (region read, #409). */
+		dailyAvailability?: DailyDishAvailability
 	},
 ):
 	| { ok: true; options: PublicOrderingOptions }
@@ -3579,6 +3768,25 @@ export function buildPublicOrderingOptions(
 			const policy = readServiceFeePolicy(context.serviceFee, location.id)
 			return policy.kind === 'on' ? policy.settings : null
 		})(),
+		packagingFee: (() => {
+			const policy = readPackagingFeePolicy(context.packagingFee, location.id)
+			return policy.kind === 'on' ? policy.settings : null
+		})(),
+		dineInMaxGuests:
+			readOrderCapsForLocation(context.orderCaps, location.id)?.dineIn
+				?.maxGuests ?? null,
+		utensils: (() => {
+			const settings = parseUtensilsSettings(context.utensils?.[location.id])
+			return settings.enabled ? settings : null
+		})(),
+		// A drop has its own pickup location and windows, which win (#251).
+		pickupInstructions: input.dropSlug
+			? null
+			: context.pickupInstructions?.[location.id]?.trim() || null,
+		...(input.dailyAvailability &&
+		Object.keys(input.dailyAvailability).length > 0
+			? { dailyAvailability: input.dailyAvailability }
+			: {}),
 		delivery: {
 			available:
 				Boolean(location.fulfillmentOptions.delivery) &&
@@ -3691,6 +3899,7 @@ export {
 	type OrderLimitExempt,
 	type SlotUsageInput,
 	type SlotUsageLine,
+	orderDishUnits,
 	slotLimitForFulfillment,
 	slotUsageUnits,
 	wouldExceedSlotLimit,

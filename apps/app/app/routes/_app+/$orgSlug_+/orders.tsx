@@ -16,6 +16,7 @@ import {
 	useNavigate,
 } from 'react-router'
 import { z } from 'zod'
+import { DailyLimitsPanel } from '#app/components/orders/daily-limits-panel.tsx'
 import {
 	OrderStatusLabel,
 	PaymentStatusLabel,
@@ -27,10 +28,10 @@ import { WaitingLane } from '#app/components/orders/waiting-lane.tsx'
 import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { loadOrderingControls } from '#app/utils/location/ordering-controls.server.ts'
-import { loadSlotLimitLocations } from '#app/utils/orders/slot-limits.server.ts'
 import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
+import { loadDailyLimitLocations } from '#app/utils/orders/daily-dish-limits.server.ts'
 import {
 	formatMoney,
 	type Order,
@@ -40,6 +41,7 @@ import {
 	relativeTime,
 } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
+import { loadSlotLimitLocations } from '#app/utils/orders/slot-limits.server.ts'
 import {
 	readSoundChoice,
 	shouldPollOrders,
@@ -75,10 +77,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		))
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
 	const qr = await getQrOrderingFeatures(organization.id)
-	const [orderingControls, slotLimitLocations] = await Promise.all([
-		loadOrderingControls(organization.id),
-		loadSlotLimitLocations(organization.id),
-	])
+	const [orderingControls, slotLimitLocations, dailyLimitLocations] =
+		await Promise.all([
+			loadOrderingControls(organization.id),
+			loadSlotLimitLocations(organization.id),
+			loadDailyLimitLocations(organization.id),
+		])
 	const loyaltyEnabled = qr.enabled
 		? await isLoyaltyFeatureEnabled(organization.id)
 		: false
@@ -96,6 +100,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			canViewCustomers: link.linkCustomers || link.linkGuests,
 			orderingControls,
 			slotLimitLocations,
+			dailyLimitLocations,
 		},
 		{
 			headers: { 'Cache-Control': 'private, no-store' },
@@ -112,6 +117,7 @@ export default function OrdersInbox() {
 		loyaltyEnabled,
 		orderingControls,
 		slotLimitLocations,
+		dailyLimitLocations,
 	} = useLoaderData<typeof loader>()
 	const [refreshKey, setRefreshKey] = useState(0)
 	const navigate = useNavigate()
@@ -212,6 +218,14 @@ export default function OrdersInbox() {
 				<SlotLimitsPanel
 					orgSlug={orgSlug}
 					locations={slotLimitLocations}
+					canWrite={canWrite}
+					request={request}
+				/>
+			) : null}
+			{dailyLimitLocations.length > 0 ? (
+				<DailyLimitsPanel
+					orgSlug={orgSlug}
+					locations={dailyLimitLocations}
 					canWrite={canWrite}
 					request={request}
 				/>

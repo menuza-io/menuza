@@ -18,12 +18,21 @@ import {
 	localDateAndTimeToUtc,
 } from '@repo/common/location-availability'
 import {
+	foldUtensilsRequested,
+	parseUtensilsSettings,
+} from '@repo/common/checkout-utensils'
+import { resolvePickupInstructions } from '@repo/common/pickup-instructions'
+import { largeOrderExtraMinutes } from '@repo/common/promised-time'
+import {
 	acceptanceDeadline,
+	buildOrderLimitCatalog,
 	buildPublicOrderingOptions,
 	canonicalOrderRequest,
 	computePromisedTime,
 	disputeBlocksRefund,
 	guestVisibleCancelReason,
+	orderDishUnits,
+	orderLimitExemptFromCatalog,
 	ORDER_ACCEPTANCE_TIMEOUT_CHOICES,
 	orderNeedsAcceptance,
 	priceRestaurantOrder,
@@ -133,6 +142,11 @@ import {
 	queueOrderPlacedMessages,
 	queueOrderStatusMessages,
 } from './order-messages.ts'
+import {
+	assertDailyDishCapacity,
+	readDailyDishAvailability,
+	recordDailyDishClaims,
+} from './order-dish-daily-service.ts'
 import { applyPromisedDelay } from './order-promised-time.ts'
 import {
 	bookOrderProviderRefundInTx,
@@ -228,7 +242,12 @@ export function orderFailure(
 }
 
 function fromEngineError(error: RestaurantOrderError): OrderServiceFailure {
-	return { status: error.status, code: error.code, message: error.message }
+	return {
+		status: error.status,
+		code: error.code,
+		message: error.message,
+		...(error.details ? { details: error.details } : {}),
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1113,6 +1132,24 @@ export async function placeOrder(input: {
 	const promiseLocation = context.menu.locations.find(
 		(location) => location.id === request.locationId,
 	)
+	const limitCatalog = buildOrderLimitCatalog(context)
+	const { catalog, categoryExempt } = limitCatalog
+	const largeRule = readLargeOrderRule(
+		(context as { largeOrder?: unknown }).largeOrder,
+		request.locationId,
+	)
+	const limitItemCount = orderDishUnits(
+		result.lines.map((line) => ({
+			itemId: line.itemId,
+			quantity: line.quantity,
+			categoryIds: line.categoryIds,
+		})),
+		orderLimitExemptFromCatalog(catalog, categoryExempt),
+	)
+	const largeOrderExtra = largeOrderExtraMinutes(largeRule, {
+		subtotalCents: result.subtotalCents,
+		itemCount: limitItemCount,
+	})
 	const promised = promiseLocation
 		? computePromisedTime({
 				now,
@@ -1120,14 +1157,36 @@ export async function placeOrder(input: {
 				scheduledFor: result.scheduledFor,
 				drop: Boolean(result.drop),
 				location: promiseLocation,
-				largeOrder: readLargeOrderRule(
-					(context as { largeOrder?: unknown }).largeOrder,
-					request.locationId,
-				),
+				largeOrder: largeRule,
 				subtotalCents: result.subtotalCents,
-				itemCount: result.lines.reduce((sum, line) => sum + line.quantity, 0),
+				itemCount: limitItemCount,
 			})
 		: { promisedAt: null, promisedUntil: null }
+	const utensilsContext = (
+		context as {
+			utensils?: Record<string, { enabled: boolean; defaultRequested: boolean }>
+		}
+	).utensils
+	const utensilsSettings = parseUtensilsSettings(
+		utensilsContext?.[request.locationId],
+	)
+	const utensilsRequested = foldUtensilsRequested(
+		utensilsSettings,
+		request.fulfillment,
+		request.utensilsRequested,
+	)
+	const pickupRaw = (context as { pickupInstructions?: Record<string, string> })
+		.pickupInstructions?.[request.locationId]
+	// A drop order has its own pickup location and windows: those win over the
+	// location's instructions, so none is stored for it.
+	const pickupInstructionsCopy =
+		request.fulfillment === 'pickup' && !context.drop && pickupRaw
+			? resolvePickupInstructions(
+					pickupRaw,
+					request.locale,
+					context.menu.organization.defaultLocale ?? 'en',
+				)
+			: null
 
 	const loyalty = loyaltySettleQueue()
 	const inventory = inventorySaleQueue()
@@ -1302,6 +1361,18 @@ export async function placeOrder(input: {
 						)
 						if (readyFailure) return { ok: false, failure: readyFailure }
 					}
+					// Daily dish caps (#409): sold plus held stock may not pass the cap.
+					const dailyCapacity = await assertDailyDishCapacity({
+						db: tx,
+						context,
+						locationId: request.locationId,
+						lines: result.lines,
+						now,
+					})
+					if (!dailyCapacity.ok) {
+						const { status, code, message, details } = dailyCapacity.failure
+						return orderFailure(status, code, message, { details })
+					}
 
 					const preparedResult = await prepareOrderDiscounts(tx, {
 						priced: result,
@@ -1378,6 +1449,8 @@ export async function placeOrder(input: {
 									lineDiscounts,
 									deliveryDiscountMinor:
 										prepared?.evaluation.deliveryDiscountMinor,
+									packagingWaived:
+										prepared?.evaluation.packagingWaived === true,
 								},
 							)
 						: {
@@ -1386,6 +1459,8 @@ export async function placeOrder(input: {
 								totalCents: discounted.totalCents,
 								serviceFeeCents: discounted.serviceFeeCents,
 								serviceFeeTaxCents: discounted.serviceFeeTaxCents,
+								packagingFeeCents: discounted.packagingFeeCents,
+								packagingFeeTaxCents: discounted.packagingFeeTaxCents,
 							}
 					if (prepared && request.discounts) {
 						const quote = buildDiscountQuote({
@@ -1395,6 +1470,7 @@ export async function placeOrder(input: {
 							taxMinor: totals.taxCents,
 							totalMinor: totals.totalCents,
 							serviceFeeMinor: totals.serviceFeeCents,
+							packagingFeeMinor: totals.packagingFeeCents,
 						})
 						const decision = interpretPlacement(
 							request.discounts,
@@ -1426,6 +1502,22 @@ export async function placeOrder(input: {
 							'service_fee_changed',
 							'The service fee changed. Review the new total and place the order again.',
 							{ details: { serviceFeeMinor: totals.serviceFeeCents } },
+						)
+					}
+					if (
+						!isDineIn &&
+						(request.expectedPackagingFeeMinor ?? 0) !==
+							totals.packagingFeeCents
+					) {
+						return orderFailure(
+							409,
+							'packaging_fee_changed',
+							'The packaging fee changed. Review the new total and place the order again.',
+							{
+								details: {
+									packagingFeeMinor: totals.packagingFeeCents,
+								},
+							},
 						)
 					}
 					// The gift card (#110) pays after discounts and loyalty: at most its
@@ -1551,6 +1643,15 @@ export async function placeOrder(input: {
 										totals.serviceFeeCents > 0
 											? (result.serviceFeeLabel ?? null)
 											: null,
+									packagingFeeCents: totals.packagingFeeCents,
+									packagingFeeTaxCents: totals.packagingFeeTaxCents,
+									packagingFeeLabel:
+										totals.packagingFeeCents > 0
+											? (result.packagingFeeLabel ?? null)
+											: null,
+									pickupInstructions: pickupInstructionsCopy,
+									utensilsRequested,
+									largeOrderExtraMinutes: largeOrderExtra,
 									totalCents: totals.totalCents,
 									giftCardCents: gift?.appliedMinor ?? 0,
 									loyaltyDiscountCents: totals.loyaltyDiscountCents,
@@ -1580,6 +1681,8 @@ export async function placeOrder(input: {
 							'We could not place this order. Please try again.',
 						)
 					}
+
+					await recordDailyDishClaims({ tx, context, order: inserted, now })
 
 					if (result.capacity && result.capacity.entities.length > 0) {
 						await insertRowsInChunks(
@@ -3186,6 +3289,10 @@ export async function buildOrderingOptionsWithContext(
 		counts: { slotOrders, entityUsed },
 		now,
 		geocoderAvailable: isGeocodingAvailable(),
+		dailyAvailability:
+			context.dailyDishLimits?.enabled === true
+				? await readDailyDishAvailability(db, context, input.locationId, now)
+				: undefined,
 	})
 	if (!built.ok) return { ok: false, failure: fromEngineError(built.error) }
 	return { ok: true, data: { options: built.options, context } }
@@ -3214,6 +3321,12 @@ export function publicOrderSummary(order: RestaurantOrder) {
 		serviceFeeCents: order.serviceFeeCents,
 		serviceFeeTaxCents: order.serviceFeeTaxCents,
 		serviceFeeLabel: order.serviceFeeLabel,
+		packagingFeeCents: order.packagingFeeCents,
+		packagingFeeTaxCents: order.packagingFeeTaxCents,
+		packagingFeeLabel: order.packagingFeeLabel,
+		utensilsRequested: order.utensilsRequested,
+		largeOrderExtraMinutes: order.largeOrderExtraMinutes,
+		pickupInstructions: order.pickupInstructions,
 		/** A loyalty reward's discount, taken off the subtotal before tax. */
 		loyaltyDiscountCents: order.loyaltyDiscountCents,
 		/** Coupons and automatic discounts on the items, in cents. */

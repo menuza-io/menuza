@@ -23,6 +23,14 @@ export type OrderCopyLabels = {
 	deliveryFee: string
 	tip: string
 	serviceFee: string
+	/** The packaging or bag fee line (#408). */
+	packagingFee: string
+	/** Where to go for a pickup order (#251), shown above the text the restaurant wrote. */
+	pickupInstructions: string
+	/** The utensils and napkins answer (#257) and its two values. */
+	utensils: string
+	utensilsYes: string
+	utensilsNo: string
 	tax: string
 	total: string
 	refunded: string

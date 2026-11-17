@@ -877,3 +877,85 @@ describe('OrderDetail provider refunds', () => {
 		})
 	})
 })
+
+describe('OrderDetail checkout rules (#251, #257, #355, #408)', () => {
+	it('shows the packaging fee as its own row, under the name the guest saw', () => {
+		show(
+			order({
+				packagingFeeCents: 100,
+				packagingFeeLabel: 'Bag fee',
+				totalCents: 4683,
+			}),
+		)
+		const row = screen.getByTestId('order-packaging-fee-row')
+		expect(row).toHaveTextContent('Bag fee')
+		expect(row).toHaveTextContent('1.00')
+	})
+
+	it('reads the default packaging name in the operator language', () => {
+		show(
+			order({
+				packagingFeeCents: 100,
+				packagingFeeLabel: 'Packaging fee',
+				totalCents: 4683,
+			}),
+		)
+		expect(screen.getByTestId('order-packaging-fee-row')).toHaveTextContent(
+			'Packaging fee',
+		)
+	})
+
+	it('shows no packaging row when none was charged', () => {
+		show(order())
+		expect(screen.queryByTestId('order-packaging-fee-row')).toBeNull()
+		show(order({ packagingFeeCents: 0 }))
+		expect(screen.queryByTestId('order-packaging-fee-row')).toBeNull()
+	})
+
+	it('says what the guest chose about utensils, and nothing when it was not asked', () => {
+		const { unmount } = renderStaff(
+			<OrderDetail
+				order={order({ utensilsRequested: true })}
+				orgSlug="acme"
+				canWrite
+				canViewCustomers
+				busy={false}
+				backHref="/acme/orders"
+				onUpdate={vi.fn()}
+			/>,
+		)
+		expect(screen.getByTestId('order-utensils')).toHaveTextContent(
+			'Utensils: yes',
+		)
+		unmount()
+		show(order({ utensilsRequested: false }))
+		expect(screen.getByTestId('order-utensils')).toHaveTextContent(
+			'No utensils',
+		)
+	})
+
+	it('shows no utensils line when the question was not asked', () => {
+		show(order({ utensilsRequested: null }))
+		expect(screen.queryByTestId('order-utensils')).toBeNull()
+	})
+
+	it('keeps the pickup text the guest saw, with its line breaks, as plain text', () => {
+		show(
+			order({
+				pickupInstructions: 'Park in the side lot.\nAsk for <b>Sam</b>.',
+			}),
+		)
+		const text = screen.getByTestId('order-pickup-instructions')
+		expect(text).toHaveTextContent('Park in the side lot.')
+		expect(text.textContent).toContain('<b>Sam</b>')
+		expect(text.querySelector('b')).toBeNull()
+		expect(text).toHaveAttribute('dir', 'auto')
+	})
+
+	it('labels a large order with its extra minutes', () => {
+		show(order({ largeOrderExtraMinutes: 15 }))
+		expect(screen.getByTestId('order-large-order')).toHaveTextContent(
+			'Large order +15 min',
+		)
+	})
+})

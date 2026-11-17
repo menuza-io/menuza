@@ -53,13 +53,30 @@ import {
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
 import {
+	type CheckoutRulesBundle,
+	packagingFeeFormFromRecord,
+} from '#app/utils/orders/checkout-rules-settings.ts'
+import {
 	type CheckoutSettingsIssue,
 	type FeeFormValues,
 	type TipFormValues,
 } from '#app/utils/orders/checkout-settings.ts'
 import { type OrderPolicyError } from '#app/utils/orders/order-policy-settings.ts'
+import {
+	type OrderingSettingsFormBundle,
+	defaultOnlineOrderingForm,
+	defaultPrayerPauseForm,
+	defaultSlotLimitForm,
+} from '#app/utils/orders/ordering-settings.ts'
 import { AddressAutocomplete } from './address-autocomplete'
 import { LocationHoursSection } from './availability-picker'
+import {
+	LargeOrderFields,
+	OrderCapsCard,
+	PackagingFeeCard,
+	PickupInstructionsCard,
+	UtensilsCheckoutCard,
+} from './checkout-rules-cards.tsx'
 import {
 	ServiceFeeCard,
 	TipChoicesCard,
@@ -80,12 +97,6 @@ import {
 	SlotLimitsCard,
 } from './ordering-settings-cards'
 import { SpecialHoursPicker } from './special-hours-picker'
-import {
-	type OrderingSettingsFormBundle,
-	defaultOnlineOrderingForm,
-	defaultPrayerPauseForm,
-	defaultSlotLimitForm,
-} from '#app/utils/orders/ordering-settings.ts'
 
 const TIMEZONE_OPTIONS = [
 	{ value: 'America/New_York', label: 'Eastern Time (US & Canada)' },
@@ -154,6 +165,13 @@ interface LocationFormProps {
 		prayerPauseEnabled: boolean
 		initial: OrderingSettingsFormBundle
 	}
+	checkoutRules?: {
+		packagingFeeEnabled: boolean
+		currency: string
+		locales: string[]
+		defaultLocale: string
+		initial: CheckoutRulesBundle
+	}
 }
 
 export function LocationForm(props: LocationFormProps) {
@@ -171,6 +189,7 @@ function LocationFormBody({
 	orderPolicies,
 	checkoutSettings,
 	orderingSettings,
+	checkoutRules,
 	onDiscard,
 }: LocationFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
@@ -208,6 +227,20 @@ function LocationFormBody({
 	)
 	const [activeLocale, setActiveLocale] = useState<string>(
 		localesConfig.defaultLocale,
+	)
+	const [pickupInstructions, setPickupInstructions] = useState(
+		checkoutRules?.initial.pickupInstructions ?? {},
+	)
+	const [orderCaps, setOrderCaps] = useState(
+		checkoutRules?.initial.orderCaps ?? {
+			pickupMaxSubtotal: '',
+			deliveryMaxSubtotal: '',
+			dineInMaxGuests: '',
+		},
+	)
+	const [packagingFee, setPackagingFee] = useState(
+		checkoutRules?.initial.packagingFee ??
+			packagingFeeFormFromRecord(null, checkoutRules?.currency ?? 'USD'),
 	)
 
 	// State
@@ -278,15 +311,13 @@ function LocationFormBody({
 		checkoutSettings?.fee ?? null,
 	)
 	const [prepTime, setPrepTime] = useState(initialData?.prepTime ?? 15)
-	const [largeOrderThreshold, setLargeOrderThreshold] = useState(
-		initialData?.largeOrderThreshold ?? 100,
-	)
-	const [largeOrderThresholdType, setLargeOrderThresholdType] = useState<
-		'dollars' | 'items'
-	>((initialData?.largeOrderThresholdType as any) || 'dollars')
-	const [largeOrderExtraPrepTime, setLargeOrderExtraPrepTime] = useState(
-		initialData?.largeOrderExtraPrepTime ?? 15,
-	)
+	// The old single large-order threshold (#355 moved the rule into the online
+	// ordering settings): no longer edited, posted back unchanged so saving never
+	// rewrites those columns.
+	const largeOrderThreshold = initialData?.largeOrderThreshold ?? 100
+	const largeOrderThresholdType =
+		initialData?.largeOrderThresholdType ?? 'dollars'
+	const largeOrderExtraPrepTime = initialData?.largeOrderExtraPrepTime ?? 15
 
 	// Fulfillment Options
 	const [fulfillment, setFulfillment] = useState<FulfillmentOptions>(() => ({
@@ -401,6 +432,15 @@ function LocationFormBody({
 						prep: prepScheduleRows,
 						prayer: prayerPauseForm,
 					}),
+				}
+			: {}),
+		...(checkoutRules
+			? {
+					checkoutRules: JSON.stringify({
+						pickupInstructions,
+						orderCaps,
+						packagingFee,
+					} satisfies CheckoutRulesBundle),
 				}
 			: {}),
 	}
@@ -752,6 +792,32 @@ function LocationFormBody({
 										/>
 									) : null}
 
+									{orderingSettings ? (
+										<UtensilsCheckoutCard
+											enabled={onlineOrderingForm.utensilsEnabled}
+											defaultRequested={
+												onlineOrderingForm.utensilsDefaultRequested
+											}
+											onChange={({ enabled, defaultRequested }) =>
+												setOnlineOrderingForm((prev) => ({
+													...prev,
+													utensilsEnabled: enabled,
+													utensilsDefaultRequested: defaultRequested,
+												}))
+											}
+										/>
+									) : null}
+
+									{checkoutRules ? (
+										<PickupInstructionsCard
+											locales={checkoutRules.locales}
+											activeLocale={activeLocale}
+											onLocaleChange={setActiveLocale}
+											values={pickupInstructions}
+											onChange={setPickupInstructions}
+										/>
+									) : null}
+
 									<SpecialHoursPicker
 										specialHours={specialHours}
 										onChange={setSpecialHours}
@@ -792,88 +858,17 @@ function LocationFormBody({
 												required
 											/>
 										</div>
-
-										<div className="space-y-1.5">
-											<Label htmlFor="loc-extra-prep">
-												<Trans>Large Order Extra Prep Time (minutes)</Trans>
-											</Label>
-											<Input
-												id="loc-extra-prep"
-												type="number"
-												min="0"
-												value={largeOrderExtraPrepTime}
-												onChange={(e) =>
-													setLargeOrderExtraPrepTime(
-														parseInt(e.target.value) || 0,
-													)
-												}
-											/>
-										</div>
 									</div>
 
-									<div className="bg-muted/30 rounded-md border p-3">
-										<Label className="mb-2 block text-xs uppercase">
-											<Trans>Large Order Threshold Rule</Trans>
-										</Label>
-										<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-											<div>
-												<Label className="mb-1 block text-xs">
-													<Trans>Threshold Unit</Trans>
-												</Label>
-												<Select
-													value={largeOrderThresholdType}
-													items={{
-														dollars: 'Order Total Amount ($)',
-														items: 'Number of Items Count',
-													}}
-													onValueChange={(val) =>
-														val &&
-														setLargeOrderThresholdType(
-															val as 'dollars' | 'items',
-														)
-													}
-												>
-													<SelectTrigger>
-														<SelectValue />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value="dollars">
-															Order Total Amount ($)
-														</SelectItem>
-														<SelectItem value="items">
-															Number of Items Count
-														</SelectItem>
-													</SelectContent>
-												</Select>
-											</div>
-
-											<div>
-												{(() => {
-													const thresholdUnit =
-														largeOrderThresholdType === 'dollars'
-															? '$'
-															: 'items'
-													return (
-														<Label className="mb-1 block text-xs">
-															<Trans>
-																Trigger when order exceeds ({thresholdUnit})
-															</Trans>
-														</Label>
-													)
-												})()}
-												<Input
-													type="number"
-													min="1"
-													value={largeOrderThreshold}
-													onChange={(e) =>
-														setLargeOrderThreshold(
-															parseFloat(e.target.value) || 1,
-														)
-													}
-												/>
-											</div>
-										</div>
-									</div>
+									{orderingSettings ? (
+										<LargeOrderFields
+											values={onlineOrderingForm}
+											currency={checkoutRules?.currency ?? null}
+											onChange={(next) =>
+												setOnlineOrderingForm((prev) => ({ ...prev, ...next }))
+											}
+										/>
+									) : null}
 								</CardContent>
 							</Card>
 
@@ -1119,6 +1114,22 @@ function LocationFormBody({
 									values={feeValues}
 									onChange={setFeeValues}
 									issue={checkoutIssue}
+								/>
+							) : null}
+
+							{checkoutRules ? (
+								<OrderCapsCard
+									currency={checkoutRules.currency}
+									values={orderCaps}
+									onChange={setOrderCaps}
+								/>
+							) : null}
+
+							{checkoutRules?.packagingFeeEnabled ? (
+								<PackagingFeeCard
+									currency={checkoutRules.currency}
+									values={packagingFee}
+									onChange={setPackagingFee}
 								/>
 							) : null}
 						</TabsContent>

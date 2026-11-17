@@ -218,6 +218,8 @@ const webSaleColumns = {
 	tipCents: restaurantOrders.tipCents,
 	serviceFeeCents: restaurantOrders.serviceFeeCents,
 	serviceFeeTaxCents: restaurantOrders.serviceFeeTaxCents,
+	packagingFeeCents: restaurantOrders.packagingFeeCents,
+	packagingFeeTaxCents: restaurantOrders.packagingFeeTaxCents,
 	totalCents: restaurantOrders.totalCents,
 	discountCents: restaurantOrders.discountCents,
 	deliveryDiscountCents: restaurantOrders.deliveryDiscountCents,

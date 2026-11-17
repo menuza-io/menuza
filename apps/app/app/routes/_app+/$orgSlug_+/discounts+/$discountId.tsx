@@ -317,6 +317,7 @@ export default function EditDiscountRoute() {
 				locations={data.editor.locations}
 				choices={data.editor.choices}
 				siteLocales={data.editor.siteLocales}
+				packagingFeeEnabled={data.editor.packagingFeeEnabled}
 				initial={initial}
 				version={data.version}
 				status={data.status}

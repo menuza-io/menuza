@@ -866,8 +866,8 @@ in the org's website branding.
   triggers, the "stop when the guest orders" goal and the frequency cap live in
   `services/order-journeys.ts`, `journey-guards.ts`; birthdays in
   `birthday-journeys.ts` (`customers.birth_month_day`); cart reminders in
-  `cart-reminders.ts` (`customer_carts`, ids and quantities only, the restore token
-  rides in the URL fragment). Programs are templates in
+  `cart-reminders.ts` (`customer_carts`, ids and quantities only, the restore
+  token rides in the URL fragment). Programs are templates in
   `packages/marketing-workflow/src/programs.ts`; "Turn on" is
   `apps/app/app/utils/marketing/programs.server.ts`. Flags (default off):
   `marketing.audiences`, `.order_automations`, `.birthdays`, `.cart_reminders`,
@@ -1325,6 +1325,49 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   Sites shows "Goes well with" in the cart drawer and at checkout (checkout only
   offers dishes that go straight in). Counts of shown and added dishes (dish id
   only) stay in the browser and fire a `menuza:upsell` event; nothing is sent.
+
+**Checkout rules (pickup instructions, utensils, large orders, size cap,
+packaging fee, daily dish limits; #251, #257, #355, #422, #408, #409):**
+
+- Contract:
+  `docs/restaurant-ordering-contract.md#checkout-rules-251-257-355-408-409-422`.
+  Control-plane columns (`0053` and `0054`):
+  `OrganizationLocation.pickupInstructions` / `orderCaps` / `packagingFee`,
+  `OrganizationMenuItem` and `OrganizationMenuOption` `.dailySaleLimit`,
+  `Discount.waivesPackagingFee`; utensils and the large-order rule live in
+  `onlineOrderingSettings` JSON (`utensils`, `largeOrder`). Regional (`0050`):
+  order columns (`pickup_instructions`, `utensils_requested`,
+  `large_order_extra_minutes`, `packaging_fee_*`), `order_dish_daily_claims` and
+  `order_dish_daily_topups`.
+- Shared domain code in `@repo/common`: `pickup-instructions`,
+  `checkout-utensils`, `order-caps`, `packaging-fee`, `daily-dish-limits` /
+  `daily-dish-catalog`, and the large-order rule in `promised-time`
+  (`largeOrderRuleFrom`, both thresholds). One dish-count function
+  (`buildOrderLimitCatalogFromMenus` + `orderDishUnits`) is the count for the
+  large-order rule, per-item packaging and slot limits on every channel.
+- Flags (default off): `ordering.packaging_fee`, `ordering.daily_dish_limits`.
+  The rest have no flag (a location setting that is empty does nothing).
+- Everything is checked again at placement. The order body is strict, so deploy
+  App, then tenant-api, then Sites (Station follows). A new strict-schema key
+  must be sent only when set (`waivesPackagingFee`), or an older region drops
+  the whole record.
+- Daily dish limits: the cap rides in the order context
+  (`dailyDishLimits.entries`), never in the public menu. A claim's state (`held`
+  / `sold` / `released`) follows its order through the
+  `order_dish_daily_claims_sync` trigger (hand-written in `0050`: regenerating
+  that migration with drizzle-kit loses it), and `dailyDishClaimState` is the
+  same rule in TypeScript (a test keeps them equal). The day is the location's
+  business day. Guests learn only sold out, or a low number the operator allowed
+  (`dailyAvailability` in `GET /orders/options`). Manager top-up: App Orders
+  page and Station Controls; tests in `routes/orders-daily-dish-limits.test.ts`
+  and `routes/orders-checkout-rules.test.ts`.
+- The packaging fee is a fee line like the service fee: inside `tax_cents` and
+  the total, waivable by a discount, and every "prices include tax" test that
+  reads the totals must count it (`restaurantOrderNetMinor`,
+  `orderTaxInclusive`, `orderServiceFeeChargeCents`).
+- Plain text only for pickup instructions: escape them and keep line breaks,
+  never `innerHTML`, never links. A drop order shows its own pickup location
+  instead.
 
 **Loyalty Rewards (points, rewards, member codes):**
 

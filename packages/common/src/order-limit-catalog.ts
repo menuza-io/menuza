@@ -1,7 +1,4 @@
-import type {
-	PublicMenuCategoryContext,
-	RestaurantOrderContext,
-} from './restaurant-orders.ts'
+import type { RestaurantOrderContext } from './restaurant-orders.ts'
 import {
 	type OrderLimitCatalogEntry,
 	orderLimitExemptFromCatalog,
@@ -9,30 +6,56 @@ import {
 import { parseSlotLimitSettings } from './location-settings.ts'
 import { slotUsageUnits, type SlotUsageLine } from './slot-usage.ts'
 
-function collectMenuCategories(
-	categories: PublicMenuCategoryContext[],
-	visit: (category: PublicMenuCategoryContext) => void,
+/** The part of a menu the exemption rules read: Sites' public menu has it too. */
+export type OrderLimitMenu = {
+	menuType?: string
+	availabilityStatus?: string
+	categories?: OrderLimitCategory[]
+}
+export type OrderLimitCategory = {
+	id: string
+	availabilityStatus?: string
+	excludeFromOrderLimits?: boolean
+	items?: Array<{
+		id: string
+		availabilityStatus?: string
+		excludeFromOrderLimits?: boolean
+	}>
+	subcategories?: OrderLimitCategory[]
+}
+
+function collectLimitCategories(
+	categories: readonly OrderLimitCategory[],
+	visit: (category: OrderLimitCategory) => void,
 ): void {
 	for (const category of categories) {
 		if (category.availabilityStatus !== 'available') continue
 		visit(category)
 		if (category.subcategories?.length) {
-			collectMenuCategories(category.subcategories, visit)
+			collectLimitCategories(category.subcategories, visit)
 		}
 	}
 }
 
-export function buildOrderLimitCatalog(context: RestaurantOrderContext): {
+/**
+ * Which dishes and categories are left out of order limits (#256), from any
+ * menu payload: the region's order context and the public menu Sites reads
+ * both pass. The one reading, so a cart's item count is the same everywhere
+ * (slot limits, packaging per item, the large-order extra time).
+ */
+export function buildOrderLimitCatalogFromMenus(
+	menus: readonly OrderLimitMenu[],
+): {
 	catalog: Map<string, OrderLimitCatalogEntry>
 	categoryExempt: Set<string>
 } {
 	const catalog = new Map<string, OrderLimitCatalogEntry>()
 	const categoryExempt = new Set<string>()
-	for (const menu of context.menu.menus) {
+	for (const menu of menus) {
 		if (menu.menuType === 'drop' || menu.availabilityStatus !== 'available') {
 			continue
 		}
-		collectMenuCategories(menu.categories ?? [], (category) => {
+		collectLimitCategories(menu.categories ?? [], (category) => {
 			if (category.excludeFromOrderLimits === true) {
 				categoryExempt.add(category.id)
 			}
@@ -52,6 +75,15 @@ export function buildOrderLimitCatalog(context: RestaurantOrderContext): {
 		})
 	}
 	return { catalog, categoryExempt }
+}
+
+export function buildOrderLimitCatalog(context: RestaurantOrderContext): {
+	catalog: Map<string, OrderLimitCatalogEntry>
+	categoryExempt: Set<string>
+} {
+	return buildOrderLimitCatalogFromMenus(
+		context.menu.menus as unknown as OrderLimitMenu[],
+	)
 }
 
 export function slotUsageLinesFromStored(

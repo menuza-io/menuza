@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { parseDailySaleLimit } from '@repo/common/daily-dish-limits'
 import {
 	MenuItemInputSchema,
 	parseMenuVariations,
@@ -34,6 +35,10 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import {
+	dailyLimitColumn,
+	dailyLimitLocationIds,
+} from '#app/utils/menu/daily-limit-save.ts'
 import { recordMenuChange } from '#app/utils/menu/menu-updates.server.ts'
 import {
 	assertCategoryIdsInOrganization,
@@ -42,8 +47,9 @@ import {
 	assertMediaKeysInOrganization,
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
-import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -173,12 +179,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	} catch {}
 
 	const slotLimits = await buildSlotLimitsContext(organization.id)
+	const dailyLimitsEnabled = await isDailyDishLimitsEnabled(organization.id)
 
 	return {
 		organization,
 		defaultLocale,
 		supportedLocales,
 		slotLimitsEnabled: slotLimits.enabled,
+		dailyLimitsEnabled,
 		item: {
 			id: item.id,
 			displayName: item.displayName,
@@ -209,6 +217,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			excludeFromOverride: item.excludeFromOverride,
 			excludeFromDiscounts: item.excludeFromDiscounts,
 			excludeFromOrderLimits: item.excludeFromOrderLimits,
+			dailySaleLimit: parseDailySaleLimit(item.dailySaleLimit),
 			isPopular: item.isPopular,
 			isUpsell: item.isUpsell,
 			availabilityStatus: item.availabilityStatus as
@@ -342,6 +351,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				.filter((id): id is string => typeof id === 'string'),
 			tx,
 		)
+		await assertLocationIdsInOrganization(
+			organization.id,
+			dailyLimitLocationIds(data.dailySaleLimit),
+			tx,
+		)
 
 		// Update Item
 		await tx
@@ -369,6 +383,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				excludeFromOverride: data.excludeFromOverride,
 				excludeFromDiscounts: data.excludeFromDiscounts,
 				excludeFromOrderLimits: data.excludeFromOrderLimits,
+				...dailyLimitColumn(
+					formData.has('dailySaleLimit'),
+					data.dailySaleLimit,
+				),
 				isPopular: data.isPopular,
 				isUpsell: data.isUpsell,
 				availabilityStatus: data.availabilityStatus,
@@ -466,6 +484,7 @@ export default function EditItemRoute() {
 		allModifierGroups,
 		allLocations,
 		slotLimitsEnabled,
+		dailyLimitsEnabled,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -484,6 +503,7 @@ export default function EditItemRoute() {
 				allModifierGroups={allModifierGroups}
 				allLocations={allLocations}
 				slotLimitsEnabled={slotLimitsEnabled}
+				dailyLimitsEnabled={dailyLimitsEnabled}
 				isSubmitting={isSubmitting}
 			/>
 		</div>

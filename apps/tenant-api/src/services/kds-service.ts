@@ -118,6 +118,8 @@ type SourceOrder = {
 	 * tickets keep their fingerprints). A push-back changes the fingerprint.
 	 */
 	promised?: { at: number; until: number | null; version: number }
+	utensilsRequested?: boolean | null
+	largeOrderExtraMinutes?: number
 }
 
 async function settings(db: KitchenDb, locationId: string) {
@@ -214,6 +216,12 @@ function project(
 					promisedUntil: order.promised.until,
 					promisedVersion: order.promised.version,
 				}
+			: {}),
+		...(order.utensilsRequested !== undefined
+			? { utensilsRequested: order.utensilsRequested }
+			: {}),
+		...(order.largeOrderExtraMinutes
+			? { largeOrderExtraMinutes: order.largeOrderExtraMinutes }
 			: {}),
 	}
 }
@@ -315,6 +323,8 @@ function onlineSource(row: typeof restaurantOrders.$inferSelect): SourceOrder {
 					},
 				}
 			: {}),
+		utensilsRequested: row.utensilsRequested ?? null,
+		largeOrderExtraMinutes: row.largeOrderExtraMinutes ?? 0,
 	}
 }
 

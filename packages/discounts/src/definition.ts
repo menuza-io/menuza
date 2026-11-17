@@ -398,6 +398,12 @@ export const discountDefinitionSchema = z
 		 * long-distance fee isn't waived by "free delivery".
 		 */
 		maxDeliveryFeeMinor: minorSchema.min(1).nullable().optional(),
+		/**
+		 * When this discount applies to an order, the packaging or bag fee (#408) is
+		 * waived. Left out unless true, so a region that predates it still reads
+		 * every other record.
+		 */
+		waivesPackagingFee: z.boolean().optional(),
 		/** Lower runs first and wins ties. */
 		priority: z.number().int().min(0).max(1000),
 		promoteOnMenu: z.boolean(),

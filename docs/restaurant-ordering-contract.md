@@ -80,23 +80,24 @@ only the cap and the switches are enforced.
 
 **Service fee.** Flag `ordering.service_fee` (default off). The settings are
 `OrganizationLocation.serviceFee` (`serviceFeeSettingsSchema` in
-`@repo/common/service-fee`) and reach the region as `context.serviceFee =
-{ version: 1, locations: { [locationId]: settings } }`, listing only locations
-whose fee is on. `computeServiceFee` prices it: a percentage of the subtotal
-after discounts and rewards (before tax and tip, never on the tip) plus a fixed
-amount, capped afterwards; below the small-order limit the small-order fee is
-charged instead; nothing on a base of 0 (a free order) or for an order type the
-fee does not cover. With `taxable`, tax follows the location's rate: added on
-top when prices exclude tax, carved out of the fee when they include it. Either
-way the fee's tax is part of `tax_cents`, so every existing total still adds up
-(`total = subtotal - discounts + tax (exclusive only) + tip + delivery - delivery
-discount + fee`). The browser sends `expectedServiceFeeMinor`; a different
-amount is 409 `service_fee_changed` with `details: { serviceFeeMinor }` and
-nothing is placed. A fee on but unreadable at this node (a settings value that
-does not parse, or a `version` newer than the node knows) is 503
-`service_fee_unavailable`: the region refuses the order rather than place it
-without its fee. Nodes that predate the fee refuse `tip` and
-`expectedServiceFeeMinor` (strict body), so deploy tenant-api before Sites.
+`@repo/common/service-fee`) and reach the region as
+`context.serviceFee = { version: 1, locations: { [locationId]: settings } }`,
+listing only locations whose fee is on. `computeServiceFee` prices it: a
+percentage of the subtotal after discounts and rewards (before tax and tip,
+never on the tip) plus a fixed amount, capped afterwards; below the small-order
+limit the small-order fee is charged instead; nothing on a base of 0 (a free
+order) or for an order type the fee does not cover. With `taxable`, tax follows
+the location's rate: added on top when prices exclude tax, carved out of the fee
+when they include it. Either way the fee's tax is part of `tax_cents`, so every
+existing total still adds up
+(`total = subtotal - discounts + tax (exclusive only) + tip + delivery - delivery discount + fee`).
+The browser sends `expectedServiceFeeMinor`; a different amount is 409
+`service_fee_changed` with `details: { serviceFeeMinor }` and nothing is placed.
+A fee on but unreadable at this node (a settings value that does not parse, or a
+`version` newer than the node knows) is 503 `service_fee_unavailable`: the
+region refuses the order rather than place it without its fee. Nodes that
+predate the fee refuse `tip` and `expectedServiceFeeMinor` (strict body), so
+deploy tenant-api before Sites.
 
 Rollout: a client that does not send `expectedServiceFeeMinor` (a cached Sites
 page, an older build) is refused with 409 where a fee is due, and cannot act on
@@ -124,6 +125,132 @@ Table-tab refunds have no separate tick (a full refund includes the fee).
 
 **Reports.** The `orders` report has a Service fee measure (`serviceFee`), the
 tab's fee riding on its latest round like the tab's discount.
+
+### Checkout rules (#251, #257, #355, #408, #409, #422)
+
+Six location and menu rules that shape one order. All of them reach the region
+through the order context, all of them are checked again at placement (the page
+is never trusted), and every field a browser sends is optional so an older
+client keeps working. The strict order body refuses the new fields on an older
+node, so deploy **App, then tenant-api, then Sites** (Station and the customer
+app, which opens the website's checkout, follow).
+
+`GET /orders/options` carries what a guest page needs, with older nodes simply
+omitting it: `packagingFee` (the location's settings while the fee is on, else
+null), `utensils` (`{ enabled, defaultRequested }` or null),
+`pickupInstructions` (the text as the operator saved it, plain or a localized
+JSON map; null on a drop, whose own pickup location and windows win),
+`dineInMaxGuests` (see the size cap) and `dailyAvailability` (see daily limits).
+The order and receipt carry `packagingFeeCents` / `packagingFeeTaxCents` /
+`packagingFeeLabel`, `utensilsRequested`, `pickupInstructions` and
+`largeOrderExtraMinutes`, the link receipt too (none of it is personal data).
+`POST /orders/quote` carries `packagingFeeMinor`.
+
+**Pickup instructions (#251).** `OrganizationLocation.pickupInstructions`, a
+localized value like menu copy, at most 300 characters, plain text (escape it
+everywhere, keep line breaks, never make links clickable). The order stores the
+copy the guest saw (`restaurant_orders.pickup_instructions`, in the order's
+language with the default as fallback), so editing the text never rewrites a
+placed order. Pickup orders only; none for a drop order. Shown on the checkout
+and confirmation pages and in the receipt, accepted, ready and changed-time
+emails (never in a cancellation).
+
+**Utensils (#257).**
+`onlineOrderingSettings.utensils = { enabled, defaultRequested }`, reaching the
+region as `context.utensils[locationId]`. `utensilsRequested` is read for pickup
+and delivery only and ignored while the location does not ask; a missing answer
+reads the default. Stored on the order (`utensils_requested`, nullable: null
+means it was not asked), shown on the Kitchen ticket, the Orders detail, the
+Station detail and the receipt email.
+
+**Large orders (#355).** The rule is "more than N items or over AMOUNT, add M
+minutes":
+`onlineOrderingSettings.largeOrder = { itemThreshold, amountMinor, extraMinutes }`,
+either threshold optional, whichever is reached first (a rule saved before keeps
+working from the old location columns until it is saved again; saved but empty
+means off). `largeOrder[locationId]` of the context is a `LargeOrderRule`
+(`@repo/common/promised-time`: `itemThreshold`, `amountThresholdMinor`, plus the
+old single `threshold` / `thresholdType` an older region reads). The item count
+is dish quantities minus dishes and categories marked "Don't count toward order
+limits" (#256), from one function: `buildOrderLimitCatalogFromMenus` +
+`orderDishUnits`, used by placement, Sites and the per-item packaging fee, so
+every channel computes the same `promisedAt`. The extra time is stored on the
+order (`large_order_extra_minutes`) and shown as "Large order +N min". The phone
+agent quotes only the location's base wait (it has no cart), and table rounds
+are never affected.
+
+**Order size cap (#422).** `OrganizationLocation.orderCaps`, per order type a
+maximum item subtotal (before discounts and tips) and, for dine-in, a maximum
+head count; it reaches the region as `context.orderCaps = { locations }`. An
+order over the cap is 422 `order_too_large` with
+`details: { kind: 'amount' | 'guests', fulfillment }`: the message points to
+catering or the phone, or to a team member for a big table, and never names the
+number. It is applied by the pricing engine, so the quote and placement both
+refuse it (the quote endpoint itself answers 404 while the organization has no
+discounts, so the checkout page may only learn it when placing). Station and
+other walk-in sales are never refused. A table has no head count of its own, so
+Sites asks "How many are at your table?" only where `dineInMaxGuests` is set and
+sends `guestCount`.
+
+**Packaging fee (#408).** Flag `ordering.packaging_fee` (default off).
+`OrganizationLocation.packagingFee` (`packagingFeeSettingsSchema` in
+`@repo/common/packaging-fee`): a fixed amount per order or per dish, for pickup
+and delivery, never dine-in, with its own label and optional tax at the
+location's rate. It reaches the region as
+`context.packagingFee = { version: 1, locations }` and is priced like the
+service fee: the fee's tax is part of `tax_cents`, the browser sends
+`expectedPackagingFeeMinor` and a different amount is 409
+`packaging_fee_changed` with `details: { packagingFeeMinor }`, a fee that is on
+but unreadable is 503 `packaging_fee_unavailable`. Per-dish mode counts the same
+dishes as the large-order rule. A discount can waive it:
+`Discount.waivesPackagingFee` (`DiscountDefinition.waivesPackagingFee`, sent to
+the region only when true) makes `evaluateDiscounts` return `packagingWaived`,
+and the quote and placement price the fee as 0. Placed orders keep what was
+charged (`packaging_fee_cents`, `packaging_fee_tax_cents`,
+`packaging_fee_label`). A full refund includes it (it is inside the total) and a
+partial refund is the amount the operator types, so there is no separate tick.
+Reports have a Packaging fee measure (`packagingFee`) and a "Packaging fees"
+template, and every place that reads whether prices include tax from the totals
+counts the fee (`restaurantOrderNetMinor`, `orderTaxInclusive`,
+`orderServiceFeeChargeCents`).
+
+**Daily dish limits (#409).** Flag `ordering.daily_dish_limits` (default off).
+`OrganizationMenuItem.dailySaleLimit` and
+`OrganizationMenuOption.dailySaleLimit` (JSON `DailySaleLimit` in
+`@repo/common/daily-dish-limits`): a limit, an optional per-location override
+(`null` lifts it there) and whether guests may see "Only N left". The cap rides
+in `context.dailyDishLimits = { enabled, entries }` (id, name, config of every
+capped dish or option), never in the public menu. Every order claims its units
+in `order_dish_daily_claims` (one row per order and counter key, `item:<id>` or
+`option:<id>`; an option counts its quantity times the line's): `held` while an
+online order waits for payment (an open cart), `sold` once it counts, `released`
+when it is cancelled, rejected, expired or in payment review. The claim state
+follows the order through the `order_dish_daily_claims_sync` trigger (tenant-db
+migration 0050, hand-written), so no path that changes an order can forget it,
+and a repeated event cannot count twice (`dailyDishClaimState` is the same rule
+in TypeScript, and a test keeps the two equal). The allowance is the configured
+limit (read live, so editing it takes effect at once) plus the day's top-up
+(`order_dish_daily_topups`), minus claims that are held or sold. The day is the
+location's business day (its time zone and day start, 04:00 by default) so a
+late-night order belongs to the dinner shift, and the next day starts again at
+the limit. Placement checks and records inside the org lock and the placement
+transaction, so two guests cannot both take the last unit: 422
+`daily_dish_sold_out` with `details.short` (the keys that cannot be covered;
+`remaining` only when the operator allows "Only N left"). The cart quote checks
+too. A guest page reads `dailyAvailability` from the options: only sold out
+(`remaining: 0`) and, where allowed, a low number (5 or fewer), so a cap that is
+not shown never leaves the region. Orders placed before the flag was turned on,
+and Station sales, are not counted; a manager corrects the day with a top-up.
+
+- `GET /operator/orders/daily-limits?locationId=` (`orders:read`): today's
+  figures for every capped dish and option (`DailyDishStatusData`).
+- `POST /operator/orders/daily-limits/top-up` (`orders:write`, not while
+  impersonating): `{ locationId, key, addUnits }` (a fresh batch) or
+  `{ locationId, key, amountLeft }` (a count at the pass), exactly one; the
+  allowance moves, the configured limit does not. The App audits it.
+- Station: `GET /pos/online-orders/controls/daily-limits` and
+  `POST .../controls/daily-limits/top-up` (`{ key, addUnits | amountLeft }`),
+  manager only like the other controls.
 
 ### Order link ("View your order")
 
@@ -506,10 +633,11 @@ pickup and delivery requests are unchanged.
 - `GET /orders/tab?slug=…` with `X-Tab-Token` returns `{ tab: QrPublicTab }`
   (`@repo/common/qr-ordering`): rounds with their statuses and lines, totals,
   `roundsPending`, and `serviceFee` (the location's settings and tax rate while
-  the fee is on for tables) and `tipChoices` (`{ enabled, currency, settings }`).
-  No contact fields.
+  the fee is on for tables) and `tipChoices`
+  (`{ enabled, currency, settings }`). No contact fields.
 - `POST /orders/tab/pay` with `X-Tab-Token` and
-  `{ slug?, host?, tipPercent | tip, expectedServiceFeeMinor?, contact: { name, phone }, loyalty? }` returns
+  `{ slug?, host?, tipPercent | tip, expectedServiceFeeMinor?, contact: { name, phone }, loyalty? }`
+  returns
   `{ orderRef: 'tab:<id>', tabPaymentToken, amountCents, tipCents, serviceFeeCents, loyaltyDiscountCents, currency }`.
   The browser then uses the hosted-payment calls below with `orderId = orderRef`
   and `paymentToken = tabPaymentToken`. `loyalty` (the same selection as

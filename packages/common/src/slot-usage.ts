@@ -35,6 +35,19 @@ export function slotUsageUnits(input: SlotUsageInput): number {
 	return dishes
 }
 
+/** Dish quantities that count toward order limits (#256), reused for packaging per-item (#408). */
+export function orderDishUnits(
+	lines: readonly SlotUsageLine[],
+	exempt: OrderLimitExempt,
+): number {
+	let dishes = 0
+	for (const line of lines) {
+		if (!lineCountsTowardLimit(line, exempt)) continue
+		dishes += line.quantity
+	}
+	return dishes
+}
+
 function lineCountsTowardLimit(
 	line: SlotUsageLine,
 	exempt: OrderLimitExempt,

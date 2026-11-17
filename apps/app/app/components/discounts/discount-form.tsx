@@ -403,6 +403,7 @@ function DiscountFormBody({
 	history = [],
 	createdAt = null,
 	sharedWithOtherLocations = false,
+	packagingFeeEnabled = false,
 	confirmBeforeSave,
 }: {
 	orgSlug: string
@@ -437,6 +438,8 @@ function DiscountFormBody({
 	 * outside theirs, so it is read-only for them (`discountEditableInScope`).
 	 */
 	sharedWithOtherLocations?: boolean
+	/** Org flag `ordering.packaging_fee`: offers "Also waive the packaging fee". */
+	packagingFeeEnabled?: boolean
 	/**
 	 * Called on a save of a saved discount. Return true to hold the save while
 	 * the page asks something (messages that promise this discount); call
@@ -2034,6 +2037,21 @@ function DiscountFormBody({
 								disabled={!promoteOnMenuAllowed(state)}
 								onCheckedChange={(promoteOnMenu) => patch({ promoteOnMenu })}
 							/>
+							{packagingFeeEnabled && state.application !== 'manual' ? (
+								<SwitchRow
+									label={<Trans>Also waive the packaging fee</Trans>}
+									description={
+										<Trans>
+											When this discount applies to an order, the packaging or
+											bag fee is not charged.
+										</Trans>
+									}
+									checked={state.waivesPackagingFee}
+									onCheckedChange={(waivesPackagingFee) =>
+										patch({ waivesPackagingFee })
+									}
+								/>
+							) : null}
 							<SwitchRow
 								label={<Trans>Require a manager at the till</Trans>}
 								description={

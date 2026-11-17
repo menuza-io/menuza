@@ -327,3 +327,53 @@ describe('promised time and push-back on a ticket', () => {
 		)
 	})
 })
+
+describe('utensils and large order on a ticket (#257, #355)', () => {
+	const online = (patch: Partial<KdsTicket> = {}): KdsTicket => ({
+		...ticket,
+		id: 'web',
+		source: 'online',
+		channel: 'online',
+		fulfillment: 'takeaway',
+		tableLabel: null,
+		number: 'W-1',
+		...patch,
+	})
+	const feedOf = (tickets: KdsTicket[]): KdsFeed => ({
+		config: DEFAULT_KDS_CONFIG,
+		configVersion: 1,
+		tickets,
+		serverNow: NOW,
+		truncated: false,
+	})
+	const utensils = () => host.querySelector('[data-kitchen-utensils]')
+	const largeOrder = () => host.querySelector('[data-kitchen-large-order]')
+
+	it('says "Utensils: yes" or "No utensils" as its own line, not in the notes', () => {
+		draw({ feed: feedOf([online({ utensilsRequested: true })]) })
+		expect(utensils()!.textContent).toBe('Utensils: yes')
+		draw({ feed: feedOf([online({ utensilsRequested: false })]) })
+		expect(utensils()!.textContent).toBe('No utensils')
+		// A dish note stays a dish note: the answer is never inside it.
+		expect(host.textContent).toContain('No salt')
+		expect(utensils()!.closest('li')).toBeNull()
+	})
+
+	it('shows nothing when the guest was not asked, or the node is older', () => {
+		draw({ feed: feedOf([online({ utensilsRequested: null })]) })
+		expect(utensils()).toBeNull()
+		draw({ feed: feedOf([online()]) })
+		expect(utensils()).toBeNull()
+		draw({ feed: feedOf([ticket]) })
+		expect(utensils()).toBeNull()
+	})
+
+	it('says why the time is later for a large order, and nothing for a normal one', () => {
+		draw({ feed: feedOf([online({ largeOrderExtraMinutes: 15 })]) })
+		expect(largeOrder()!.textContent).toBe('Large order +15 min')
+		draw({ feed: feedOf([online({ largeOrderExtraMinutes: 0 })]) })
+		expect(largeOrder()).toBeNull()
+		draw({ feed: feedOf([online()]) })
+		expect(largeOrder()).toBeNull()
+	})
+})

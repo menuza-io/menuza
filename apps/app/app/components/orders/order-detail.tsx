@@ -1,5 +1,6 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { DEFAULT_PACKAGING_FEE_LABEL } from '@repo/common/packaging-fee'
 import {
 	ORDER_CANCEL_REASONS,
 	type OrderRejectReason,
@@ -321,6 +322,7 @@ export function OrderDetail({
 	const promisedTo = order.promisedUntil
 		? promisedClock(order.promisedUntil, locale, orderZone)
 		: ''
+	const largeOrderExtraMinutes = order.largeOrderExtraMinutes ?? 0
 	const promisedLabel = !promisedFrom
 		? null
 		: promisedTo
@@ -766,6 +768,29 @@ export function OrderDetail({
 										{promisedLabel}
 									</p>
 								) : null}
+								{order.largeOrderExtraMinutes ? (
+									<p className="font-medium" data-testid="order-large-order">
+										<Trans>Large order +{largeOrderExtraMinutes} min</Trans>
+									</p>
+								) : null}
+								{order.utensilsRequested === true ? (
+									<p data-testid="order-utensils">
+										<Trans>Utensils: yes</Trans>
+									</p>
+								) : order.utensilsRequested === false ? (
+									<p data-testid="order-utensils">
+										<Trans>No utensils</Trans>
+									</p>
+								) : null}
+								{order.pickupInstructions ? (
+									<p
+										dir="auto"
+										className="text-muted-foreground whitespace-pre-wrap"
+										data-testid="order-pickup-instructions"
+									>
+										{order.pickupInstructions}
+									</p>
+								) : null}
 								{canPushBack ? (
 									<div
 										className="flex flex-col gap-2 pt-1"
@@ -968,6 +993,20 @@ export function OrderDetail({
 													testId="order-service-fee-row"
 												>
 													{money(order.serviceFeeCents)}
+												</TotalRow>
+											) : null}
+											{order.packagingFeeCents ? (
+												<TotalRow
+													label={
+														order.packagingFeeLabel &&
+														order.packagingFeeLabel !==
+															DEFAULT_PACKAGING_FEE_LABEL
+															? order.packagingFeeLabel
+															: _(msg`Packaging fee`)
+													}
+													testId="order-packaging-fee-row"
+												>
+													{money(order.packagingFeeCents)}
 												</TotalRow>
 											) : null}
 											{order.taxCents ? (

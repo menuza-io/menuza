@@ -167,7 +167,10 @@ export function orderTaxInclusive(
 		Partial<
 			Pick<
 				RestaurantOrder,
-				'discountCents' | 'deliveryDiscountCents' | 'serviceFeeCents'
+				| 'discountCents'
+				| 'deliveryDiscountCents'
+				| 'serviceFeeCents'
+				| 'packagingFeeCents'
 			>
 		>,
 ): boolean {
@@ -180,7 +183,8 @@ export function orderTaxInclusive(
 				order.tipCents +
 				order.deliveryFeeCents -
 				(order.deliveryDiscountCents ?? 0) +
-				(order.serviceFeeCents ?? 0)
+				(order.serviceFeeCents ?? 0) +
+				(order.packagingFeeCents ?? 0)
 	)
 }
 

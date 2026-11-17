@@ -70,6 +70,16 @@ const labels = {
 	serviceFee: i18n._(msg`Service fee`),
 	errorServiceFeeChanged: i18n._(msg`The service fee changed, so the total changed. Check it and pay again.`),
 	errorTipTooLarge: i18n._(msg`That tip is too large. Please enter a smaller amount.`),
+	guestsTitle: i18n._(msg`How many are at your table?`),
+	guestsInvalid: i18n._(msg`Enter how many people are at your table.`),
+	// Same words as checkout, so one translation serves both (#422, #409).
+	orderTooLarge: i18n._(msg`This order is too large for online checkout. Please call the restaurant or ask about a catering order.`),
+	orderTooLargeCall: i18n._(msg`This order is too large for online checkout. Please call us on {phone} or ask about a catering order.`),
+	orderTooLargeGuests: i18n._(msg`This group is too large to order from the table. Please ask a member of the team.`),
+	dailyDishSoldOut: i18n._(msg`Something in your order isn't available in that amount today. Please go back to the menu to change your order.`),
+	dishSoldOut: i18n._(msg`There isn't enough {name} left today. Please go back to the menu to change your order.`),
+	dishesSoldOut: i18n._(msg`There isn't enough left today of: {names}. Please go back to the menu to change your order.`),
+	dishOnlyLeft: i18n._(msg`Only {count} of {name} left today. Please go back to the menu to lower the quantity.`),
 	payAmount: i18n._(msg`Pay {amount}`),
 	payAmountChanged: i18n._(msg`The total is now {amount}. Check it, then pay to continue.`),
 	paying: i18n._(msg`Opening secure payment…`),
@@ -236,6 +246,50 @@ const labels = {
 			<input name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" class="field" dir="ltr" />
 		</label>
 		<p id="table-contact-error" class="hidden text-sm font-medium text-destructive" role="alert"></p>
+		<button type="submit" class="btn-cta w-full">{labels.sendToKitchen}</button>
+	</form>
+</div>
+
+{/* How many are at the table (#422): asked once per visit where the restaurant
+    limits a table's head count; the script fills the error and keeps the answer. */}
+<div
+	id="table-guests-backdrop"
+	class="site-overlay site-drawer-overlay fixed inset-0 z-50 hidden bg-foreground/40 backdrop-blur-xs dark:bg-background/80"
+>
+	<form
+		id="table-guests"
+		class="site-drawer surface-overlay fixed inset-x-0 bottom-0 mx-auto flex max-h-dvh w-full max-w-md flex-col gap-4 overflow-y-auto overscroll-contain rounded-t-2xl p-5 pb-safe outline-none sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="table-guests-title"
+		aria-describedby="table-guests-intro"
+		tabindex="-1"
+		novalidate
+	>
+		<div class="flex items-start justify-between gap-3">
+			<div>
+				<h2 id="table-guests-title" class="text-lg font-bold text-foreground">{labels.guestsTitle}</h2>
+				<p id="table-guests-intro" class="text-sm text-muted-foreground">{labels.contactIntro}</p>
+			</div>
+			<button type="button" id="table-guests-close" class="icon-btn size-9" aria-label={labels.close}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="size-4"
+					aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg
+				>
+			</button>
+		</div>
+		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+			<span class="sr-only">{labels.guestsTitle}</span>
+			<input name="guests" type="number" inputmode="numeric" min="1" max="500" step="1" autocomplete="off" class="field" dir="ltr" />
+		</label>
+		<p id="table-guests-error" class="hidden text-sm font-medium text-destructive" role="alert"></p>
 		<button type="submit" class="btn-cta w-full">{labels.sendToKitchen}</button>
 	</form>
 </div>

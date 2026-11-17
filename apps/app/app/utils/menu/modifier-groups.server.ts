@@ -1,3 +1,4 @@
+import { serializeDailySaleLimit } from '@repo/common/daily-dish-limits'
 import { type ModifierGroupInput } from '@repo/common/menu-types'
 import {
 	and,
@@ -9,6 +10,7 @@ import {
 	OrganizationMenuModifierGroupOptionAssignment,
 	OrganizationMenuOption,
 } from '@repo/database'
+import { dailyLimitColumn, optionLimitLocationIds } from './daily-limit-save.ts'
 import {
 	checkModifierGraphChange,
 	type ModifierGraphFailure,
@@ -41,7 +43,18 @@ export type CreateModifierGroupResult =
 export async function createModifierGroup(
 	organizationId: string,
 	data: ModifierGroupInput,
-	{ id }: { id?: string } = {},
+	{
+		id,
+		dailyLimitPosted = [],
+	}: {
+		id?: string
+		/**
+		 * Per option position, whether the request carried its `dailySaleLimit`
+		 * (`optionsCarryingDailyLimit`). A linked existing option whose limit was
+		 * not sent keeps the one it has.
+		 */
+		dailyLimitPosted?: readonly boolean[]
+	} = {},
 ): Promise<CreateModifierGroupResult> {
 	const { options, assignedItemIds, selectionType, availabilityStatus, name } =
 		data
@@ -98,6 +111,11 @@ export async function createModifierGroup(
 			overrideEntries
 				.map((entry) => entry.locationId)
 				.filter((id): id is string => typeof id === 'string'),
+			tx,
+		)
+		await assertLocationIdsInOrganization(
+			organizationId,
+			optionLimitLocationIds(options),
 			tx,
 		)
 		await assertModifierGroupIdsInOrganization(
@@ -180,6 +198,7 @@ export async function createModifierGroup(
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							dailySaleLimit: serializeDailySaleLimit(opt.dailySaleLimit),
 							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							position: i,
 						})
@@ -199,6 +218,10 @@ export async function createModifierGroup(
 							isVegetarian: opt.isVegetarian ?? false,
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
+							...dailyLimitColumn(
+								dailyLimitPosted[i] ?? false,
+								opt.dailySaleLimit,
+							),
 							nestedModifierGroupIds: JSON.stringify(nestedIds),
 							updatedAt: new Date(),
 						})

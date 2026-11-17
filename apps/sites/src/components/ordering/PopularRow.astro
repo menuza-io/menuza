@@ -23,6 +23,8 @@ interface Props {
 		salePriceSrLabel?: string
 		imageUrl?: string | null
 		soldOut: boolean
+		/** "Sold out", shown in place of the price when a daily limit runs out (#409). */
+		soldOutLabel?: string
 	}>
 }
 
@@ -105,17 +107,22 @@ const cardBase =
 								{card.soldOut ? (
 									<span class="badge tone-solid">{card.priceLabel}</span>
 								) : (
-									<span class="inline-flex items-baseline gap-1.5">
-										{card.fromLabel ? <span class="text-sm text-muted-foreground">{card.fromLabel}</span> : null}
-										<del class="js-price-was bidi-isolate text-sm text-muted-foreground" hidden={!card.originalPriceLabel}>
-											<span class="sr-only">{card.originalPriceSrLabel}</span>
-											<span class="js-price-was-text">{card.originalPriceLabel}</span>
-										</del>
-										<span class="price font-heading text-lg leading-none text-foreground">
-											<span class="js-price-now-sr sr-only" hidden={!card.originalPriceLabel}>{card.salePriceSrLabel}</span>
-											<span class="js-price-now">{card.priceLabel}</span>
+									<>
+										<span class="js-price-block inline-flex items-baseline gap-1.5">
+											{card.fromLabel ? <span class="text-sm text-muted-foreground">{card.fromLabel}</span> : null}
+											<del class="js-price-was bidi-isolate text-sm text-muted-foreground" hidden={!card.originalPriceLabel}>
+												<span class="sr-only">{card.originalPriceSrLabel}</span>
+												<span class="js-price-was-text">{card.originalPriceLabel}</span>
+											</del>
+											<span class="price font-heading text-lg leading-none text-foreground">
+												<span class="js-price-now-sr sr-only" hidden={!card.originalPriceLabel}>{card.salePriceSrLabel}</span>
+												<span class="js-price-now">{card.priceLabel}</span>
+											</span>
 										</span>
-									</span>
+										{/* Today's daily limit (#409), shown by the menu script. */}
+										<span class="js-sold-out-badge badge tone-solid" hidden>{card.soldOutLabel ?? ''}</span>
+										<span class="js-daily-left badge tone-warning" hidden></span>
+									</>
 								)}
 								{card.soldOut ? null : (
 									<span class="add-btn" aria-hidden="true">

@@ -2659,6 +2659,18 @@ export const OrganizationLocation = sqliteTable(
 		 * JSON `PrayerPauseSettings`.
 		 */
 		prayerPauseSettings: text(),
+		/**
+		 * Localized pickup instructions for guests (#251). JSON map like menu copy.
+		 */
+		pickupInstructions: text(),
+		/**
+		 * Maximum regular order size per type (#422). JSON `OrderCapsSettings`.
+		 */
+		orderCaps: text(),
+		/**
+		 * Packaging / bag fee (#408). JSON `PackagingFeeSettings`.
+		 */
+		packagingFee: text(),
 		scheduling: text(),
 		deliveryConfig: text(),
 		deliveryZones: text(),
@@ -3150,6 +3162,8 @@ export const OrganizationMenuItem = sqliteTable(
 		excludeFromOrderLimits: integer({ mode: 'boolean' })
 			.default(false)
 			.notNull(),
+		/** Daily quantity cap per location (#409). JSON `DailySaleLimit`. */
+		dailySaleLimit: text(),
 		isPopular: integer({ mode: 'boolean' }).default(false).notNull(),
 		isUpsell: integer({ mode: 'boolean' }).default(false).notNull(),
 		availabilityStatus: text().default('available').notNull(),
@@ -3309,6 +3323,8 @@ export const OrganizationMenuOption = sqliteTable(
 		applySalesTax: integer({ mode: 'boolean' }).default(true).notNull(),
 		availabilityStatus: text().default('available').notNull(),
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		/** Daily quantity cap per location (#409). JSON `DailySaleLimit`. */
+		dailySaleLimit: text(),
 		nestedModifierGroupIds: text().default('[]').notNull(),
 		position: integer().default(0).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
@@ -4743,6 +4759,8 @@ export const Discount = sqliteTable(
 		tiers: text(),
 		// Free delivery only: the largest delivery fee it waives.
 		maxDeliveryFeeMinor: integer(),
+		// When this discount applies to an order, the packaging fee (#408) is waived.
+		waivesPackagingFee: integer({ mode: 'boolean' }).default(false).notNull(),
 		priority: integer().default(0).notNull(),
 		promoteOnMenu: integer({ mode: 'boolean' }).default(false).notNull(),
 		requireApproval: integer({ mode: 'boolean' }).default(false).notNull(),

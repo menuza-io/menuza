@@ -827,6 +827,12 @@ const orderFields: ReportField[] = [
 		sumLabel: 'Service fees',
 	},
 	{
+		id: 'packagingFee',
+		label: 'Packaging fee',
+		type: 'currency',
+		sumLabel: 'Packaging fees',
+	},
+	{
 		id: 'deliveryFee',
 		label: 'Delivery fee',
 		type: 'currency',

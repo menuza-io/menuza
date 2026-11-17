@@ -189,6 +189,7 @@ const orderColumns = {
 	tipCents: restaurantOrders.tipCents,
 	tipPercent: restaurantOrders.tipPercent,
 	serviceFeeCents: restaurantOrders.serviceFeeCents,
+	packagingFeeCents: restaurantOrders.packagingFeeCents,
 	totalCents: restaurantOrders.totalCents,
 	discountCents: restaurantOrders.discountCents,
 	deliveryDiscountCents: restaurantOrders.deliveryDiscountCents,
@@ -649,6 +650,8 @@ export async function loadOrderRecords(
 			// Online orders carry their own fee; a tab's rides on its latest round.
 			serviceFee:
 				(row.serviceFeeCents + (tabServiceFeeByOrderId.get(row.id) ?? 0)) / 100,
+			// The packaging or bag fee (#408), its own line: a tab round has none.
+			packagingFee: row.packagingFeeCents / 100,
 			deliveryFee: row.deliveryFeeCents / 100,
 			// Items, delivery and loyalty on the order, plus a tab's close discount
 			// on its latest round (tab redemptions, not round rows).

@@ -161,6 +161,8 @@ async function totalsByCurrency(
 				totalCents: restaurantOrders.totalCents,
 				serviceFeeCents: restaurantOrders.serviceFeeCents,
 				serviceFeeTaxCents: restaurantOrders.serviceFeeTaxCents,
+				packagingFeeCents: restaurantOrders.packagingFeeCents,
+				packagingFeeTaxCents: restaurantOrders.packagingFeeTaxCents,
 			})
 			.from(restaurantOrders)
 			.where(
@@ -198,6 +200,8 @@ async function totalsByCurrency(
 			totalCents: row.totalCents,
 			serviceFeeCents: row.serviceFeeCents ?? undefined,
 			serviceFeeTaxCents: row.serviceFeeTaxCents ?? undefined,
+			packagingFeeCents: row.packagingFeeCents ?? undefined,
+			packagingFeeTaxCents: row.packagingFeeTaxCents ?? undefined,
 		})
 		addCurrencyTotals(
 			merged,

@@ -1,4 +1,5 @@
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { DEFAULT_PACKAGING_FEE_LABEL } from '@repo/common/packaging-fee'
 import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 import {
 	guestVisibleCancelReason,
@@ -41,6 +42,10 @@ export type OrderEmailOrder = Pick<
 	| 'tipCents'
 	| 'serviceFeeCents'
 	| 'serviceFeeLabel'
+	| 'packagingFeeCents'
+	| 'packagingFeeLabel'
+	| 'pickupInstructions'
+	| 'utensilsRequested'
 	| 'totalCents'
 	| 'discountCents'
 	| 'loyaltyDiscountCents'
@@ -228,6 +233,28 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 		const time = orderTimeLine(order, input.timeZone, locale)
 		rows.push([time.label, time.value])
 	}
+	// Where to go (#251): the text the guest saw at checkout, kept with the
+	// order. Plain text, escaped like every other value; line breaks stay.
+	const pickupText = order.pickupInstructions?.trim()
+	if (
+		pickupText &&
+		order.fulfillment === 'pickup' &&
+		(input.kind === 'receipt' ||
+			input.kind === 'accepted' ||
+			input.kind === 'ready' ||
+			input.kind === 'eta_changed')
+	) {
+		rows.push([labels.pickupInstructions, pickupText])
+	}
+	if (
+		input.kind === 'receipt' &&
+		typeof order.utensilsRequested === 'boolean'
+	) {
+		rows.push([
+			labels.utensils,
+			order.utensilsRequested ? labels.utensilsYes : labels.utensilsNo,
+		])
+	}
 	if (input.kind === 'cancelled') {
 		// Only the reasons a guest may see; every other one stays internal.
 		const reason = guestVisibleCancelReason(order.cancelReason)
@@ -278,6 +305,14 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 					: labels.serviceFee
 			totals.push([feeLabel, money(order.serviceFeeCents)])
 		}
+		if (order.packagingFeeCents > 0) {
+			const feeLabel =
+				order.packagingFeeLabel &&
+				order.packagingFeeLabel !== DEFAULT_PACKAGING_FEE_LABEL
+					? order.packagingFeeLabel
+					: labels.packagingFee
+			totals.push([feeLabel, money(order.packagingFeeCents)])
+		}
 		totals.push([labels.tax, money(order.taxCents)])
 		totals.push([labels.total, money(order.totalCents)])
 	}
@@ -303,7 +338,7 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 	const detailRows = rows
 		.map(
 			([label, value]) =>
-				`<tr><td style="padding:6px 0;color:${muted};font-size:13px;text-align:${align};width:38%;vertical-align:top">${escapeHtml(label)}</td><td style="padding:6px 0;color:${foreground};font-size:15px;text-align:${align}" dir="auto">${escapeHtml(value)}</td></tr>`,
+				`<tr><td style="padding:6px 0;color:${muted};font-size:13px;text-align:${align};width:38%;vertical-align:top">${escapeHtml(label)}</td><td style="padding:6px 0;color:${foreground};font-size:15px;text-align:${align};white-space:pre-line" dir="auto">${escapeHtml(value)}</td></tr>`,
 		)
 		.join('')
 

@@ -3,6 +3,11 @@
  * and the large-order fields of the order context. Policy only, no PII: the
  * guest's email and number live in the regional database.
  */
+import { parseOnlineOrderingSettings } from '@repo/common/location-settings'
+import {
+	type LargeOrderRule,
+	largeOrderRuleFrom,
+} from '@repo/common/promised-time'
 import { z } from 'zod'
 
 /** Org flag, default off, only a literal `true` counts. */
@@ -78,20 +83,19 @@ export function foldGuestMessages(
  * currency units for `amount` (exactly as stored: 100 is 100.00) and a count of
  * items for `items`.
  */
-export type LargeOrderContext = Record<
-	string,
-	{
-		threshold: number
-		thresholdType: 'amount' | 'items'
-		extraPrepMinutes: number
-	}
->
+export type LargeOrderContext = Record<string, LargeOrderRule>
 
 type LocationLargeOrderRow = {
 	id: string
 	largeOrderThreshold: number | null
 	largeOrderThresholdType: string | null
 	largeOrderExtraPrepTime: number | null
+	/**
+	 * `onlineOrderingSettings` JSON. Its `largeOrder` (#355: both thresholds)
+	 * replaces the single threshold above, even when it holds no threshold at all
+	 * (the operator turned the rule off).
+	 */
+	onlineOrderingSettings?: string | null
 }
 
 /**
@@ -104,6 +108,18 @@ export function foldLargeOrder(
 ): LargeOrderContext {
 	const out: LargeOrderContext = {}
 	for (const row of rows) {
+		const saved = parseOnlineOrderingSettings(
+			row.onlineOrderingSettings,
+		)?.largeOrder
+		if (saved) {
+			const rule = largeOrderRuleFrom({
+				itemThreshold: saved.itemThreshold,
+				amountThresholdMinor: saved.amountMinor,
+				extraPrepMinutes: saved.extraMinutes,
+			})
+			if (rule) out[row.id] = rule
+			continue
+		}
 		const threshold = row.largeOrderThreshold
 		const minutes = row.largeOrderExtraPrepTime
 		if (

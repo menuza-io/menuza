@@ -1,5 +1,6 @@
 import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
+import { getLocationCurrency } from '@repo/common/location-currency'
 import {
 	type DeliveryProvider,
 	type DeliveryZone,
@@ -7,11 +8,11 @@ import {
 	DEFAULT_DELIVERY_ZONE,
 	resolveTipSettings,
 } from '@repo/common/location-types'
-import { getLocationCurrency } from '@repo/common/location-currency'
 import {
 	defaultServiceFeeSettings,
 	serviceFeeSettingsSchema,
 } from '@repo/common/service-fee'
+import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import { redirectWithToast } from '@repo/common/toast'
 import { and, asc, db, eq, ne, OrganizationLocation } from '@repo/database'
 import {
@@ -49,23 +50,31 @@ import {
 import { type OrderPolicyValues } from '#app/components/locations/order-policies-card.tsx'
 import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
+import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
+import {
+	type CheckoutRulesBundle,
+	orderCapsFormFromRecord,
+	packagingFeeFormFromRecord,
+	parseCheckoutRulesFields,
+	pickupInstructionsFromRecord,
+} from '#app/utils/orders/checkout-rules-settings.ts'
 import {
 	feeFormFromSettings,
 	parseCheckoutSettingsFields,
 	tipFormFromSettings,
 } from '#app/utils/orders/checkout-settings.ts'
-import { isServiceFeeEnabled } from '#app/utils/orders/service-fee.server.ts'
-import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
 import {
 	isGuestCancelEnabled,
 	isManualAcceptanceEnabled,
 } from '#app/utils/orders/order-policies.server.ts'
+import { parseOrderPolicyFields } from '#app/utils/orders/order-policy-settings.ts'
 import {
 	orderingSettingsFormFromRecord,
 	parseOrderingSettingsFields,
 } from '#app/utils/orders/ordering-settings.ts'
+import { isPackagingFeeEnabled } from '#app/utils/orders/packaging-fee.server.ts'
 import { isPrayerPauseEnabled } from '#app/utils/orders/prayer-pause.server.ts'
-import { parseOrderPolicyFields } from '#app/utils/orders/order-policy-settings.ts'
+import { isServiceFeeEnabled } from '#app/utils/orders/service-fee.server.ts'
 import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
@@ -274,7 +283,37 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			slotLimitSettings: parseJson(record.slotLimitSettings),
 			prepSchedule: parseJson(record.prepSchedule),
 			prayerPauseSettings: parseJson(record.prayerPauseSettings),
+			// A location that never saved the new large-order settings starts
+			// from its old single threshold.
+			legacyLargeOrder: {
+				largeOrderThreshold: record.largeOrderThreshold,
+				largeOrderThresholdType: record.largeOrderThresholdType,
+				largeOrderExtraPrepTime: record.largeOrderExtraPrepTime,
+			},
 		}),
+	}
+
+	const siteLocales = parseSiteLocalesConfig(
+		organization.siteLocales,
+		organization.siteDefaultLocale,
+	)
+	const packagingFeeEnabled = await isPackagingFeeEnabled(organization.id)
+	const checkoutRules = {
+		packagingFeeEnabled,
+		currency: checkoutCurrency,
+		locales: siteLocales.locales,
+		defaultLocale: siteLocales.defaultLocale,
+		initial: {
+			pickupInstructions: pickupInstructionsFromRecord(
+				record.pickupInstructions,
+				siteLocales.defaultLocale,
+			),
+			orderCaps: orderCapsFormFromRecord(parseJson(record.orderCaps)),
+			packagingFee: packagingFeeFormFromRecord(
+				parseJson(record.packagingFee),
+				checkoutCurrency,
+			),
+		} satisfies CheckoutRulesBundle,
 	}
 
 	const allLocations = await db
@@ -294,6 +333,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orderPolicies,
 		checkoutSettings,
 		orderingSettings,
+		checkoutRules,
 	}
 }
 
@@ -304,6 +344,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 		dataRegion: true,
 		hasProvisionedDb: true,
+		// The default language is the fallback of the pickup instructions.
+		siteLocales: true,
+		siteDefaultLocale: true,
 	})
 
 	await requireUserWithOrganizationPermission(
@@ -434,6 +477,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { error: ordering.error }
 	}
 
+	const siteLocales = parseSiteLocalesConfig(
+		organization.siteLocales,
+		organization.siteDefaultLocale,
+	)
+	const checkoutRulesResult = parseCheckoutRulesFields(rawData, {
+		currency:
+			organization.dataRegion === 'ksa'
+				? 'SAR'
+				: getLocationCurrency(data.address ?? currentLocation?.address),
+		defaultLocale: siteLocales.defaultLocale,
+		packagingFeeEnabled: await isPackagingFeeEnabled(organization.id),
+	})
+	if (!checkoutRulesResult.ok) {
+		return { error: checkoutRulesResult.error }
+	}
+
 	// Check if another location has this slug
 	const [existingWithSlug] = await db
 		.select({ id: OrganizationLocation.id })
@@ -491,6 +550,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				...policy.patch,
 				...checkout.patch,
 				...ordering.patch,
+				...checkoutRulesResult.patch,
 			})
 			.where(
 				and(
@@ -519,6 +579,7 @@ export default function EditLocationRoute() {
 		orderPolicies,
 		checkoutSettings,
 		orderingSettings,
+		checkoutRules,
 	} = useLoaderData<typeof loader>()
 	const deleteFetcher = useFetcher<{
 		error?: string
@@ -665,6 +726,7 @@ export default function EditLocationRoute() {
 				orderPolicies={orderPolicies}
 				checkoutSettings={checkoutSettings}
 				orderingSettings={orderingSettings}
+				checkoutRules={checkoutRules}
 			/>
 
 			<AlertDialog

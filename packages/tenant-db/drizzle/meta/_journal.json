@@ -351,6 +351,13 @@
 			"when": 1795000001000,
 			"tag": "0049_ordering_slot_limits",
 			"breakpoints": true
+		},
+		{
+			"idx": 50,
+			"version": "6",
+			"when": 1795000002000,
+			"tag": "0050_checkout_rules_tenant",
+			"breakpoints": true
 		}
 	]
 }
