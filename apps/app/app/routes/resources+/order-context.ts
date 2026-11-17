@@ -51,6 +51,15 @@ import {
 	type ServiceFeeContext,
 } from '#app/utils/orders/service-fee.server.ts'
 import {
+	buildPickupInstructionsContext,
+	buildUtensilsContext,
+} from '#app/utils/orders/checkout-extras.server.ts'
+import { buildOrderCapsContext } from '#app/utils/orders/order-caps.server.ts'
+import {
+	buildPackagingFeeContext,
+	type PackagingFeeContext,
+} from '#app/utils/orders/packaging-fee.server.ts'
+import {
 	buildSlotLimitsContext,
 	type SlotLimitsContext,
 } from '#app/utils/orders/slot-limits.server.ts'
@@ -105,6 +114,10 @@ export type OrderContextResponse = {
 	 * refuses orders at a listed location whose fee it cannot read.
 	 */
 	serviceFee: ServiceFeeContext
+	packagingFee: PackagingFeeContext
+	orderCaps: { locations: Record<string, unknown> }
+	pickupInstructions: Record<string, string>
+	utensils: Awaited<ReturnType<typeof buildUtensilsContext>>
 	slotLimits: SlotLimitsContext
 }
 
@@ -216,6 +229,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		guestCancel: orderPolicies.guestCancel,
 		acceptance: orderPolicies.acceptance,
 		serviceFee: await buildServiceFeeContext(
+			org.id,
+			parsed.data.locationId ?? null,
+		),
+		packagingFee: await buildPackagingFeeContext(
+			org.id,
+			parsed.data.locationId ?? null,
+		),
+		orderCaps: await buildOrderCapsContext(
+			org.id,
+			parsed.data.locationId ?? null,
+		),
+		pickupInstructions: await buildPickupInstructionsContext(
+			org.id,
+			parsed.data.locationId ?? null,
+		),
+		utensils: await buildUtensilsContext(
 			org.id,
 			parsed.data.locationId ?? null,
 		),

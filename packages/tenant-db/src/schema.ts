@@ -1031,6 +1031,19 @@ export const restaurantOrders = sqliteTable(
 		serviceFeeCents: integer('service_fee_cents').notNull().default(0),
 		serviceFeeTaxCents: integer('service_fee_tax_cents').notNull().default(0),
 		serviceFeeLabel: text('service_fee_label'),
+		packagingFeeCents: integer('packaging_fee_cents').notNull().default(0),
+		packagingFeeTaxCents: integer('packaging_fee_tax_cents')
+			.notNull()
+			.default(0),
+		packagingFeeLabel: text('packaging_fee_label'),
+		/** Snapshot shown at pickup checkout (#251). */
+		pickupInstructions: text('pickup_instructions'),
+		/** Nullable: null when not asked (#257). */
+		utensilsRequested: integer('utensils_requested', { mode: 'boolean' }),
+		/** Extra prep minutes applied at placement (#355). */
+		largeOrderExtraMinutes: integer('large_order_extra_minutes')
+			.notNull()
+			.default(0),
 		totalCents: integer('total_cents').notNull(),
 		// A loyalty reward's discount, taken off the subtotal before tax. The
 		// redemption (`loyalty_redemptions`, source `restaurant_order`) holds how
@@ -1252,6 +1265,7 @@ export const restaurantOrderRefunds = sqliteTable(
 		// operator ticked "include service fee". Lets the next refund see how much
 		// of the fee is already back. Zero for every row from before 0045.
 		serviceFeeCents: integer('service_fee_cents').notNull().default(0),
+		packagingFeeCents: integer('packaging_fee_cents').notNull().default(0),
 	},
 	(table) => [
 		uniqueIndex('restaurant_order_refunds_idempotency_unique').on(
@@ -1275,6 +1289,42 @@ export const restaurantOrderRefunds = sqliteTable(
 		),
 		index('idx_restaurant_order_refunds_created').on(table.createdAt),
 		check('chk_restaurant_order_refunds_amount', sql`${table.amountCents} > 0`),
+	],
+)
+
+/** Daily dish sales and holds (#409), one row per org, location, day and catalog key. */
+export const orderDishDailyCounts = sqliteTable(
+	'order_dish_daily_counts',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orgId: text('org_id').notNull(),
+		locationId: text('location_id').notNull(),
+		/** Local business date `YYYY-MM-DD` in the location time zone. */
+		businessDate: text('business_date').notNull(),
+		/** Menu item id, or `item:variantId` / `item:optionId` when capped. */
+		catalogKey: text('catalog_key').notNull(),
+		limitUnits: integer('limit_units').notNull(),
+		soldUnits: integer('sold_units').notNull().default(0),
+		heldUnits: integer('held_units').notNull().default(0),
+		/** Cumulative top-ups; the ceiling is `limit_units + topped_up_units`. */
+		toppedUpUnits: integer('topped_up_units').notNull().default(0),
+		updatedAt: integer('updated_at')
+			.notNull()
+			.default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
+	},
+	(table) => [
+		uniqueIndex('order_dish_daily_counts_key').on(
+			table.orgId,
+			table.locationId,
+			table.businessDate,
+			table.catalogKey,
+		),
+		index('idx_order_dish_daily_counts_location_day').on(
+			table.locationId,
+			table.businessDate,
+		),
 	],
 )
 

@@ -29,6 +29,8 @@ export type LoyaltyDiscountedTotals = {
 	serviceFeeCents: number
 	/** The part of `taxCents` that is on the fee. */
 	serviceFeeTaxCents: number
+	packagingFeeCents: number
+	packagingFeeTaxCents: number
 }
 
 /** Discounts and coupons applied before the reward (the engine's output). */
@@ -76,6 +78,8 @@ export function applyLoyaltyDiscountToTotals(
 		totalCents: totals.totalCents,
 		serviceFeeCents: totals.serviceFeeCents,
 		serviceFeeTaxCents: totals.serviceFeeTaxCents,
+		packagingFeeCents: totals.packagingFeeCents,
+		packagingFeeTaxCents: totals.packagingFeeTaxCents,
 	}
 }
 

@@ -269,6 +269,31 @@
       "import": "./src/order-tips.ts",
       "default": "./src/order-tips.ts"
     },
+    "./checkout-utensils": {
+      "types": "./src/checkout-utensils.ts",
+      "import": "./src/checkout-utensils.ts",
+      "default": "./src/checkout-utensils.ts"
+    },
+    "./daily-dish-limits": {
+      "types": "./src/daily-dish-limits.ts",
+      "import": "./src/daily-dish-limits.ts",
+      "default": "./src/daily-dish-limits.ts"
+    },
+    "./order-caps": {
+      "types": "./src/order-caps.ts",
+      "import": "./src/order-caps.ts",
+      "default": "./src/order-caps.ts"
+    },
+    "./packaging-fee": {
+      "types": "./src/packaging-fee.ts",
+      "import": "./src/packaging-fee.ts",
+      "default": "./src/packaging-fee.ts"
+    },
+    "./pickup-instructions": {
+      "types": "./src/pickup-instructions.ts",
+      "import": "./src/pickup-instructions.ts",
+      "default": "./src/pickup-instructions.ts"
+    },
     "./service-fee": {
       "types": "./src/service-fee.ts",
       "import": "./src/service-fee.ts",

@@ -899,6 +899,20 @@ function Ticket({
 							{promisedLabel}
 						</p>
 					) : null}
+					{ticket.largeOrderExtraMinutes ? (
+						<p className="mt-1 text-sm font-semibold">
+							<Trans>Large order +{ticket.largeOrderExtraMinutes} min</Trans>
+						</p>
+					) : null}
+					{ticket.utensilsRequested === true ? (
+						<p className="mt-1 text-sm">
+							<Trans>Utensils: yes</Trans>
+						</p>
+					) : ticket.utensilsRequested === false ? (
+						<p className="mt-1 text-sm">
+							<Trans>No utensils</Trans>
+						</p>
+					) : null}
 				</div>
 			</header>
 			{ticket.cancelled ? (

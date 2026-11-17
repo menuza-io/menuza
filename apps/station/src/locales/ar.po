@@ -1198,7 +1198,7 @@ msgstr "إضافة إلى قائمة الانتظار"
 #~ msgid "Added"
 #~ msgstr "مُضاف"
 
-#: src/apps/kitchen/Kitchen.tsx:955
+#: src/apps/kitchen/Kitchen.tsx:969
 msgid "Added {addedTime}"
 msgstr "أُضيف {addedTime}"
 
@@ -1746,7 +1746,7 @@ msgstr "ملغى"
 msgid "Cancelled · items taken off"
 msgstr "ملغاة · أصناف محذوفة"
 
-#: src/apps/kitchen/Kitchen.tsx:906
+#: src/apps/kitchen/Kitchen.tsx:920
 msgid "Cancelled · stop preparing"
 msgstr "ملغى · أوقف التحضير"
 
@@ -2562,7 +2562,7 @@ msgstr "متنازع عليه"
 msgid "Done"
 msgstr "تم"
 
-#: src/apps/kitchen/Kitchen.tsx:1057
+#: src/apps/kitchen/Kitchen.tsx:1071
 msgid "Done · clear ticket"
 msgstr "تم · إخلاء التذكرة"
 
@@ -3189,7 +3189,7 @@ msgstr "تم دفعه عبر الإنترنت. سيتوقف المطبخ عن ت
 msgid "It was too late to undo this waste."
 msgstr "فات وقت التراجع عن هذا الهدر."
 
-#: src/apps/kitchen/Kitchen.tsx:1027
+#: src/apps/kitchen/Kitchen.tsx:1041
 msgid "Item ready"
 msgstr "الصنف جاهز"
 
@@ -3345,6 +3345,11 @@ msgstr "اللغة"
 msgid "Large"
 msgstr "كبيرة"
 
+#. placeholder {0}: ticket.largeOrderExtraMinutes
+#: src/apps/kitchen/Kitchen.tsx:904
+msgid "Large order +{0} min"
+msgstr "طلب كبير +{0} د"
+
 #: src/apps/reservations/BookPanel.tsx:1322
 #: src/apps/reservations/Timeline.tsx:324
 #: src/apps/reservations/Timeline.tsx:879
@@ -3402,7 +3407,7 @@ msgstr "متأخر أو تجاوز الوقت"
 msgid "left"
 msgstr "متبقٍ"
 
-#: src/apps/kitchen/Kitchen.tsx:975
+#: src/apps/kitchen/Kitchen.tsx:989
 msgid "Left half"
 msgstr "النصف الأيسر"
 
@@ -3986,6 +3991,10 @@ msgstr "لا توجد تذاكر"
 #: src/apps/reservations/sheets.tsx:407
 msgid "No times left for {size} on this day."
 msgstr "لا أوقات متبقية لـ {size} في هذا اليوم."
+
+#: src/apps/kitchen/Kitchen.tsx:913
+msgid "No utensils"
+msgstr "بدون أدوات"
 
 #: src/apps/reservations/AddSheets.tsx:332
 msgid "No wait estimate right now."
@@ -4897,7 +4906,7 @@ msgid "Preparation workflow"
 msgstr "سير التحضير"
 
 #: src/apps/kitchen/Kitchen.tsx:807
-#: src/apps/kitchen/Kitchen.tsx:1022
+#: src/apps/kitchen/Kitchen.tsx:1036
 msgid "Prepare again"
 msgstr "إعادة التحضير"
 
@@ -4951,8 +4960,8 @@ msgstr "بصمات لم تُسجَّل"
 msgid "Punches saved on this terminal have not gone out yet, so this may be out of date. If you already punched here, ask a manager before punching again."
 msgstr "لم تُرسل بعد بصمات محفوظة على هذا الجهاز، لذا قد لا تكون هذه الحالة محدثة. إن كنت قد بصمت هنا من قبل، فاسأل المدير قبل البصم مرة أخرى."
 
-#: src/apps/kitchen/Kitchen.tsx:1077
-#: src/apps/kitchen/Kitchen.tsx:1082
+#: src/apps/kitchen/Kitchen.tsx:1091
+#: src/apps/kitchen/Kitchen.tsx:1096
 msgid "Push time back"
 msgstr "تأخير الوقت"
 
@@ -5008,7 +5017,7 @@ msgstr "جاهز {readyCount}"
 msgid "Ready around {0}"
 msgstr "جاهز تقريبًا {0}"
 
-#: src/apps/kitchen/Kitchen.tsx:1061
+#: src/apps/kitchen/Kitchen.tsx:1075
 msgid "Ready for the pass"
 msgstr "جاهز للتسليم"
 
@@ -5021,7 +5030,7 @@ msgstr "الوزن الفعلي من الميزان"
 msgid "Reason"
 msgstr "السبب"
 
-#: src/apps/kitchen/Kitchen.tsx:1046
+#: src/apps/kitchen/Kitchen.tsx:1060
 msgid "Recall ticket"
 msgstr "استرجاع التذكرة"
 
@@ -5260,7 +5269,7 @@ msgstr "الحجوزات متوقفة على هذا الجهاز"
 msgid "Reservations need a connection"
 msgstr "تحتاج الحجوزات إلى اتصال"
 
-#: src/apps/kitchen/Kitchen.tsx:1110
+#: src/apps/kitchen/Kitchen.tsx:1124
 msgid "Reset preparation"
 msgstr "إعادة ضبط التحضير"
 
@@ -5318,7 +5327,7 @@ msgstr "المكافآت"
 msgid "Rewards are not switched on for this restaurant."
 msgstr "المكافآت غير مفعّلة لهذا المطعم."
 
-#: src/apps/kitchen/Kitchen.tsx:977
+#: src/apps/kitchen/Kitchen.tsx:991
 msgid "Right half"
 msgstr "النصف الأيمن"
 
@@ -5680,7 +5689,7 @@ msgstr "أُرسل {time}"
 msgid "Served"
 msgstr "قُدِّم"
 
-#: src/apps/kitchen/Kitchen.tsx:950
+#: src/apps/kitchen/Kitchen.tsx:964
 #: src/screens/KitchenRounds.tsx:89
 msgid "Served {servedTime}"
 msgstr "قُدِّم {servedTime}"
@@ -6012,7 +6021,7 @@ msgstr "البدء قبل الاستلام (دقيقة)"
 msgid "Start break"
 msgstr "بدء الاستراحة"
 
-#: src/apps/kitchen/Kitchen.tsx:1025
+#: src/apps/kitchen/Kitchen.tsx:1039
 msgid "Start item"
 msgstr "بدء تحضير الصنف"
 
@@ -7910,7 +7919,11 @@ msgstr "استخدم قائمة نموذجية لتجربة نقطة البيع.
 msgid "Use these details"
 msgstr "استخدام هذه التفاصيل"
 
-#: src/apps/kitchen/Kitchen.tsx:964
+#: src/apps/kitchen/Kitchen.tsx:909
+msgid "Utensils: yes"
+msgstr "أدوات: نعم"
+
+#: src/apps/kitchen/Kitchen.tsx:978
 msgid "Variant unavailable · check the order"
 msgstr "الخيار غير متاح · راجع الطلب"
 

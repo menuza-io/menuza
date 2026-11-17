@@ -1198,7 +1198,7 @@ msgstr "Add to the waitlist"
 #~ msgid "Added"
 #~ msgstr "Added"
 
-#: src/apps/kitchen/Kitchen.tsx:955
+#: src/apps/kitchen/Kitchen.tsx:969
 msgid "Added {addedTime}"
 msgstr "Added {addedTime}"
 
@@ -1746,7 +1746,7 @@ msgstr "Cancelled"
 msgid "Cancelled · items taken off"
 msgstr "Cancelled · items taken off"
 
-#: src/apps/kitchen/Kitchen.tsx:906
+#: src/apps/kitchen/Kitchen.tsx:920
 msgid "Cancelled · stop preparing"
 msgstr "Cancelled · stop preparing"
 
@@ -2562,7 +2562,7 @@ msgstr "Disputed"
 msgid "Done"
 msgstr "Done"
 
-#: src/apps/kitchen/Kitchen.tsx:1057
+#: src/apps/kitchen/Kitchen.tsx:1071
 msgid "Done · clear ticket"
 msgstr "Done · clear ticket"
 
@@ -3189,7 +3189,7 @@ msgstr "It was paid online. The kitchen stops preparing it and it cannot be reop
 msgid "It was too late to undo this waste."
 msgstr "It was too late to undo this waste."
 
-#: src/apps/kitchen/Kitchen.tsx:1027
+#: src/apps/kitchen/Kitchen.tsx:1041
 msgid "Item ready"
 msgstr "Item ready"
 
@@ -3345,6 +3345,11 @@ msgstr "Language"
 msgid "Large"
 msgstr "Large"
 
+#. placeholder {0}: ticket.largeOrderExtraMinutes
+#: src/apps/kitchen/Kitchen.tsx:904
+msgid "Large order +{0} min"
+msgstr "Large order +{0} min"
+
 #: src/apps/reservations/BookPanel.tsx:1322
 #: src/apps/reservations/Timeline.tsx:324
 #: src/apps/reservations/Timeline.tsx:879
@@ -3402,7 +3407,7 @@ msgstr "Late or over time"
 msgid "left"
 msgstr "left"
 
-#: src/apps/kitchen/Kitchen.tsx:975
+#: src/apps/kitchen/Kitchen.tsx:989
 msgid "Left half"
 msgstr "Left half"
 
@@ -3986,6 +3991,10 @@ msgstr "No tickets"
 #: src/apps/reservations/sheets.tsx:407
 msgid "No times left for {size} on this day."
 msgstr "No times left for {size} on this day."
+
+#: src/apps/kitchen/Kitchen.tsx:913
+msgid "No utensils"
+msgstr "No utensils"
 
 #: src/apps/reservations/AddSheets.tsx:332
 msgid "No wait estimate right now."
@@ -4897,7 +4906,7 @@ msgid "Preparation workflow"
 msgstr "Preparation workflow"
 
 #: src/apps/kitchen/Kitchen.tsx:807
-#: src/apps/kitchen/Kitchen.tsx:1022
+#: src/apps/kitchen/Kitchen.tsx:1036
 msgid "Prepare again"
 msgstr "Prepare again"
 
@@ -4951,8 +4960,8 @@ msgstr "Punches not recorded"
 msgid "Punches saved on this terminal have not gone out yet, so this may be out of date. If you already punched here, ask a manager before punching again."
 msgstr "Punches saved on this terminal have not gone out yet, so this may be out of date. If you already punched here, ask a manager before punching again."
 
-#: src/apps/kitchen/Kitchen.tsx:1077
-#: src/apps/kitchen/Kitchen.tsx:1082
+#: src/apps/kitchen/Kitchen.tsx:1091
+#: src/apps/kitchen/Kitchen.tsx:1096
 msgid "Push time back"
 msgstr "Push time back"
 
@@ -5008,7 +5017,7 @@ msgstr "Ready {readyCount}"
 msgid "Ready around {0}"
 msgstr "Ready around {0}"
 
-#: src/apps/kitchen/Kitchen.tsx:1061
+#: src/apps/kitchen/Kitchen.tsx:1075
 msgid "Ready for the pass"
 msgstr "Ready for the pass"
 
@@ -5021,7 +5030,7 @@ msgstr "Real weight from the scale"
 msgid "Reason"
 msgstr "Reason"
 
-#: src/apps/kitchen/Kitchen.tsx:1046
+#: src/apps/kitchen/Kitchen.tsx:1060
 msgid "Recall ticket"
 msgstr "Recall ticket"
 
@@ -5260,7 +5269,7 @@ msgstr "Reservations are off on this terminal"
 msgid "Reservations need a connection"
 msgstr "Reservations need a connection"
 
-#: src/apps/kitchen/Kitchen.tsx:1110
+#: src/apps/kitchen/Kitchen.tsx:1124
 msgid "Reset preparation"
 msgstr "Reset preparation"
 
@@ -5318,7 +5327,7 @@ msgstr "Rewards"
 msgid "Rewards are not switched on for this restaurant."
 msgstr "Rewards are not switched on for this restaurant."
 
-#: src/apps/kitchen/Kitchen.tsx:977
+#: src/apps/kitchen/Kitchen.tsx:991
 msgid "Right half"
 msgstr "Right half"
 
@@ -5680,7 +5689,7 @@ msgstr "Sent {time}"
 msgid "Served"
 msgstr "Served"
 
-#: src/apps/kitchen/Kitchen.tsx:950
+#: src/apps/kitchen/Kitchen.tsx:964
 #: src/screens/KitchenRounds.tsx:89
 msgid "Served {servedTime}"
 msgstr "Served {servedTime}"
@@ -6012,7 +6021,7 @@ msgstr "Start before pickup (min)"
 msgid "Start break"
 msgstr "Start break"
 
-#: src/apps/kitchen/Kitchen.tsx:1025
+#: src/apps/kitchen/Kitchen.tsx:1039
 msgid "Start item"
 msgstr "Start item"
 
@@ -7910,7 +7919,11 @@ msgstr "Use a sample menu to try the till."
 msgid "Use these details"
 msgstr "Use these details"
 
-#: src/apps/kitchen/Kitchen.tsx:964
+#: src/apps/kitchen/Kitchen.tsx:909
+msgid "Utensils: yes"
+msgstr "Utensils: yes"
+
+#: src/apps/kitchen/Kitchen.tsx:978
 msgid "Variant unavailable · check the order"
 msgstr "Variant unavailable · check the order"
 

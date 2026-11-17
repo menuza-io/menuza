@@ -17,13 +17,19 @@ import {
 	DEFAULT_PREP_MINUTES,
 	localDateAndTimeToUtc,
 } from '@repo/common/location-availability'
+import { parseUtensilsSettings } from '@repo/common/checkout-utensils'
+import { resolvePickupInstructions } from '@repo/common/pickup-instructions'
+import { largeOrderExtraMinutes } from '@repo/common/promised-time'
 import {
 	acceptanceDeadline,
+	buildOrderLimitCatalog,
 	buildPublicOrderingOptions,
 	canonicalOrderRequest,
 	computePromisedTime,
 	disputeBlocksRefund,
 	guestVisibleCancelReason,
+	orderDishUnits,
+	orderLimitExemptFromCatalog,
 	ORDER_ACCEPTANCE_TIMEOUT_CHOICES,
 	orderNeedsAcceptance,
 	priceRestaurantOrder,
@@ -1113,6 +1119,24 @@ export async function placeOrder(input: {
 	const promiseLocation = context.menu.locations.find(
 		(location) => location.id === request.locationId,
 	)
+	const limitCatalog = buildOrderLimitCatalog(context)
+	const { catalog, categoryExempt } = limitCatalog
+	const largeRule = readLargeOrderRule(
+		(context as { largeOrder?: unknown }).largeOrder,
+		request.locationId,
+	)
+	const limitItemCount = orderDishUnits(
+		result.lines.map((line) => ({
+			itemId: line.itemId,
+			quantity: line.quantity,
+			categoryIds: line.categoryIds,
+		})),
+		orderLimitExemptFromCatalog(catalog, categoryExempt),
+	)
+	const largeOrderExtra = largeOrderExtraMinutes(largeRule, {
+		subtotalCents: result.subtotalCents,
+		itemCount: limitItemCount,
+	})
 	const promised = promiseLocation
 		? computePromisedTime({
 				now,
@@ -1120,14 +1144,35 @@ export async function placeOrder(input: {
 				scheduledFor: result.scheduledFor,
 				drop: Boolean(result.drop),
 				location: promiseLocation,
-				largeOrder: readLargeOrderRule(
-					(context as { largeOrder?: unknown }).largeOrder,
-					request.locationId,
-				),
+				largeOrder: largeRule,
 				subtotalCents: result.subtotalCents,
-				itemCount: result.lines.reduce((sum, line) => sum + line.quantity, 0),
+				itemCount: limitItemCount,
 			})
 		: { promisedAt: null, promisedUntil: null }
+	const utensilsContext = (
+		context as {
+			utensils?: Record<string, { enabled: boolean; defaultRequested: boolean }>
+		}
+	).utensils
+	const utensilsSettings = parseUtensilsSettings(
+		utensilsContext?.[request.locationId],
+	)
+	const utensilsRequested =
+		request.fulfillment === 'dine_in' || !utensilsSettings.enabled
+			? null
+			: typeof request.utensilsRequested === 'boolean'
+				? request.utensilsRequested
+				: utensilsSettings.defaultRequested
+	const pickupRaw = (context as { pickupInstructions?: Record<string, string> })
+		.pickupInstructions?.[request.locationId]
+	const pickupInstructionsCopy =
+		request.fulfillment === 'pickup' && pickupRaw
+			? resolvePickupInstructions(
+					pickupRaw,
+					request.locale,
+					context.menu.organization.defaultLocale ?? 'en',
+				)
+			: null
 
 	const loyalty = loyaltySettleQueue()
 	const inventory = inventorySaleQueue()
@@ -1386,6 +1431,8 @@ export async function placeOrder(input: {
 								totalCents: discounted.totalCents,
 								serviceFeeCents: discounted.serviceFeeCents,
 								serviceFeeTaxCents: discounted.serviceFeeTaxCents,
+								packagingFeeCents: discounted.packagingFeeCents,
+								packagingFeeTaxCents: discounted.packagingFeeTaxCents,
 							}
 					if (prepared && request.discounts) {
 						const quote = buildDiscountQuote({
@@ -1426,6 +1473,22 @@ export async function placeOrder(input: {
 							'service_fee_changed',
 							'The service fee changed. Review the new total and place the order again.',
 							{ details: { serviceFeeMinor: totals.serviceFeeCents } },
+						)
+					}
+					if (
+						!isDineIn &&
+						(request.expectedPackagingFeeMinor ?? 0) !==
+							totals.packagingFeeCents
+					) {
+						return orderFailure(
+							409,
+							'packaging_fee_changed',
+							'The packaging fee changed. Review the new total and place the order again.',
+							{
+								details: {
+									packagingFeeMinor: totals.packagingFeeCents,
+								},
+							},
 						)
 					}
 					// The gift card (#110) pays after discounts and loyalty: at most its
@@ -1551,6 +1614,15 @@ export async function placeOrder(input: {
 										totals.serviceFeeCents > 0
 											? (result.serviceFeeLabel ?? null)
 											: null,
+									packagingFeeCents: totals.packagingFeeCents,
+									packagingFeeTaxCents: totals.packagingFeeTaxCents,
+									packagingFeeLabel:
+										totals.packagingFeeCents > 0
+											? (result.packagingFeeLabel ?? null)
+											: null,
+									pickupInstructions: pickupInstructionsCopy,
+									utensilsRequested,
+									largeOrderExtraMinutes: largeOrderExtra,
 									totalCents: totals.totalCents,
 									giftCardCents: gift?.appliedMinor ?? 0,
 									loyaltyDiscountCents: totals.loyaltyDiscountCents,
@@ -3214,6 +3286,12 @@ export function publicOrderSummary(order: RestaurantOrder) {
 		serviceFeeCents: order.serviceFeeCents,
 		serviceFeeTaxCents: order.serviceFeeTaxCents,
 		serviceFeeLabel: order.serviceFeeLabel,
+		packagingFeeCents: order.packagingFeeCents,
+		packagingFeeTaxCents: order.packagingFeeTaxCents,
+		packagingFeeLabel: order.packagingFeeLabel,
+		utensilsRequested: order.utensilsRequested,
+		largeOrderExtraMinutes: order.largeOrderExtraMinutes,
+		pickupInstructions: order.pickupInstructions,
 		/** A loyalty reward's discount, taken off the subtotal before tax. */
 		loyaltyDiscountCents: order.loyaltyDiscountCents,
 		/** Coupons and automatic discounts on the items, in cents. */

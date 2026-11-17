@@ -439,6 +439,11 @@ export const FulfillmentHoursModeSchema = z.enum([
 ])
 export type FulfillmentHoursMode = z.infer<typeof FulfillmentHoursModeSchema>
 
+export const OnlineOrderingUtensilsSchema = z.strictObject({
+	enabled: z.boolean().default(false),
+	defaultRequested: z.boolean().default(false),
+})
+
 export const OnlineOrderingSettingsSchema = z.strictObject({
 	buffers: OnlineOrderingBuffersSchema,
 	pickup: FulfillmentHoursModeSchema.default('follow_online'),
@@ -446,6 +451,8 @@ export const OnlineOrderingSettingsSchema = z.strictObject({
 	catering: FulfillmentHoursModeSchema.default('follow_online'),
 	/** When true, `onlineHours` on the location follows `storeHours`. */
 	syncOnlineWithStore: z.boolean().default(true),
+	/** Ask for utensils on pickup and delivery (#257). */
+	utensils: OnlineOrderingUtensilsSchema.optional(),
 })
 export type OnlineOrderingSettings = z.infer<
 	typeof OnlineOrderingSettingsSchema

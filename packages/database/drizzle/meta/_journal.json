@@ -372,6 +372,13 @@
 			"when": 1794882137613,
 			"tag": "0052_report_sales_basis",
 			"breakpoints": true
+		},
+		{
+			"idx": 53,
+			"version": "6",
+			"when": 1794889174682,
+			"tag": "0053_checkout_rules_control",
+			"breakpoints": true
 		}
 	]
 }

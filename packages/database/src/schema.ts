@@ -2659,6 +2659,18 @@ export const OrganizationLocation = sqliteTable(
 		 * JSON `PrayerPauseSettings`.
 		 */
 		prayerPauseSettings: text(),
+		/**
+		 * Localized pickup instructions for guests (#251). JSON map like menu copy.
+		 */
+		pickupInstructions: text(),
+		/**
+		 * Maximum regular order size per type (#422). JSON `OrderCapsSettings`.
+		 */
+		orderCaps: text(),
+		/**
+		 * Packaging / bag fee (#408). JSON `PackagingFeeSettings`.
+		 */
+		packagingFee: text(),
 		scheduling: text(),
 		deliveryConfig: text(),
 		deliveryZones: text(),
@@ -3150,6 +3162,8 @@ export const OrganizationMenuItem = sqliteTable(
 		excludeFromOrderLimits: integer({ mode: 'boolean' })
 			.default(false)
 			.notNull(),
+		/** Daily quantity cap per location (#409). JSON `DailySaleLimit`. */
+		dailySaleLimit: text(),
 		isPopular: integer({ mode: 'boolean' }).default(false).notNull(),
 		isUpsell: integer({ mode: 'boolean' }).default(false).notNull(),
 		availabilityStatus: text().default('available').notNull(),
