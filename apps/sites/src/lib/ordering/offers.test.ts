@@ -5,6 +5,7 @@ import {
 	isPromotionLive,
 	localStamp,
 	localizePromotion,
+	offerLimits,
 	offersForItem,
 	promotionsForLocation,
 	worksForMode,
@@ -218,5 +219,22 @@ describe('localizePromotion', () => {
 
 	it('keeps the other fields', () => {
 		expect(localizePromotion(offer, 'ar').id).toBe('p1')
+	})
+})
+
+describe('offerLimits (#273)', () => {
+	it('reads only positive whole limits the App sent', () => {
+		expect(offerLimits({ maxDiscountMinor: 1500, maxUnits: 2 })).toEqual({
+			maxDiscountMinor: 1500,
+			maxUnits: 2,
+		})
+		expect(offerLimits({})).toEqual({ maxDiscountMinor: null, maxUnits: null })
+		expect(offerLimits({ maxDiscountMinor: 0, maxUnits: -1 })).toEqual({
+			maxDiscountMinor: null,
+			maxUnits: null,
+		})
+		expect(
+			offerLimits({ maxDiscountMinor: Number.NaN, maxUnits: null }),
+		).toEqual({ maxDiscountMinor: null, maxUnits: null })
 	})
 })

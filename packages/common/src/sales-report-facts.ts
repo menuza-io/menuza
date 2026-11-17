@@ -89,9 +89,14 @@ export function posTender(method: string): SalesTender {
 /** The money of one sale, in minor units. `net + tax + tip` is what was paid. */
 export type SaleMoney = {
 	grossMinor: number
-	/** Discounts and coupons, delivery discounts included. Never a loyalty reward. */
+	/** Discounts and coupons, delivery discounts included. Never a loyalty reward or a cash discount. */
 	discountMinor: number
 	loyaltyMinor: number
+	/**
+	 * What a cash-payment discount (#375) took off, its own figure: a Station sale
+	 * paid entirely in cash. Never in `discountMinor`, always part of the gross.
+	 */
+	cashDiscountMinor: number
 	taxMinor: number
 	tipMinor: number
 	netMinor: number
@@ -193,6 +198,7 @@ export function restaurantSaleMoney(order: {
 		grossMinor: netMinor + discountMinor + loyaltyMinor,
 		discountMinor,
 		loyaltyMinor,
+		cashDiscountMinor: 0,
 		taxMinor: order.taxCents,
 		tipMinor: order.tipCents,
 		netMinor,
@@ -201,8 +207,9 @@ export function restaurantSaleMoney(order: {
 }
 
 /**
- * The money of a Station sale. `adjustmentCents` holds discounts and loyalty
- * rewards together; `adjustments` (the stored list) tells them apart.
+ * The money of a Station sale. `adjustmentCents` holds discounts, loyalty
+ * rewards and a cash discount (#375) together; `adjustments` (the stored list)
+ * tells them apart.
  */
 export function posSaleMoney(order: {
 	subtotalCents: number
@@ -216,25 +223,30 @@ export function posSaleMoney(order: {
 	const netMinor = posOrderNetMinor(order)
 	const taken = Math.max(0, order.adjustmentCents)
 	let loyalty = 0
+	let cash = 0
 	if (Array.isArray(order.adjustments)) {
 		for (const entry of order.adjustments) {
 			if (!entry || typeof entry !== 'object') continue
 			const adjustment = entry as { kind?: unknown; amountCents?: unknown }
 			if (
-				adjustment.kind === 'loyalty' &&
-				typeof adjustment.amountCents === 'number' &&
-				Number.isFinite(adjustment.amountCents)
+				typeof adjustment.amountCents !== 'number' ||
+				!Number.isFinite(adjustment.amountCents)
 			) {
-				loyalty += Math.max(0, Math.trunc(adjustment.amountCents))
+				continue
 			}
+			const amount = Math.max(0, Math.trunc(adjustment.amountCents))
+			if (adjustment.kind === 'loyalty') loyalty += amount
+			else if (adjustment.kind === 'cash_discount') cash += amount
 		}
 	}
 	// The list can add up to more than the sale; the total actually taken wins.
 	const loyaltyMinor = Math.min(loyalty, taken)
+	const cashDiscountMinor = Math.min(cash, taken - loyaltyMinor)
 	return {
 		grossMinor: netMinor + taken,
-		discountMinor: taken - loyaltyMinor,
+		discountMinor: taken - loyaltyMinor - cashDiscountMinor,
 		loyaltyMinor,
+		cashDiscountMinor,
 		taxMinor: order.taxCents,
 		tipMinor: order.tipCents,
 		netMinor,

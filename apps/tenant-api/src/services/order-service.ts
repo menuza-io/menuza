@@ -122,9 +122,11 @@ import {
 	loyaltyCartForPricedOrder,
 	type LoyaltyDiscountedTotals,
 } from '../restaurant/loyalty-checkout.ts'
+import { notifyDiscountBudgets } from '../lib/discount-notify.ts'
 import {
 	buildDiscountQuote,
 	consumeDiscountRedemptions,
+	type DiscountBudgetCrossing,
 	interpretPlacement,
 	orderDiscountSnapshots,
 	prepareOrderDiscounts,
@@ -1257,11 +1259,15 @@ export async function placeOrder(input: {
 	const messages = orderMessageBatch()
 	// Set only by the attempt that inserted the order (a busy retry resets it).
 	let consentConfirmation: OrderConsentConfirmation | null = null
+	// The weekly budgets (#392) this order's discount use spent; the owner is told
+	// once it has committed. Reset by a busy retry like the consent above.
+	let budgetCrossings: DiscountBudgetCrossing[] = []
 	try {
 		const placed: PlaceOrderResult = await runExclusive(orgId, () =>
 			retryOnSqliteBusy(() =>
 				runTenantTransaction(db, async (tx) => {
 					consentConfirmation = null
+					budgetCrossings = []
 					const [existingInTx] = await tx
 						.select()
 						.from(restaurantOrders)
@@ -1786,7 +1792,7 @@ export async function placeOrder(input: {
 					// handoff, free); an online order waits for its payment.
 					await queueOrderPlacedMessages(tx, inserted, messages.context(at))
 					if (prepared) {
-						await reserveOrderDiscounts(tx, {
+						budgetCrossings = await reserveOrderDiscounts(tx, {
 							orderId: inserted.id,
 							customerId,
 							prepared,
@@ -1901,6 +1907,9 @@ export async function placeOrder(input: {
 		const confirmation = consentConfirmation as OrderConsentConfirmation | null
 		if (placed.ok && placed.data.status === 201 && confirmation) {
 			queueOrderConsentConfirmation(orgId, confirmation)
+		}
+		if (placed.ok && placed.data.status === 201) {
+			notifyDiscountBudgets(orgId, budgetCrossings)
 		}
 		return placed
 	} catch (error) {

@@ -33,7 +33,12 @@ export const DISCOUNT_STATUS_LABELS: Record<DiscountStatus, MessageDescriptor> =
  * one that has not started, has ended or has used up its limit.
  */
 export type DiscountDisplayState =
-	DiscountStatus | 'scheduled' | 'ended' | 'limit_reached'
+	| DiscountStatus
+	| 'scheduled'
+	| 'ended'
+	| 'limit_reached'
+	/** The weekly budget (#392) is spent: it applies again next week. */
+	| 'budget_reached'
 
 export const DISCOUNT_DISPLAY_STATE_LABELS: Record<
 	DiscountDisplayState,
@@ -45,6 +50,7 @@ export const DISCOUNT_DISPLAY_STATE_LABELS: Record<
 	scheduled: msg`Scheduled`,
 	ended: msg`Ended`,
 	limit_reached: msg`Limit reached`,
+	budget_reached: msg`Paused: budget reached`,
 }
 
 /**
@@ -61,6 +67,9 @@ export function discountDisplayState(
 		endsAt: string | null
 		totalLimit: number | null
 		uses: number | null
+		/** The weekly budget and what this week has given against it (#392). */
+		weeklyBudgetMinor?: number | null
+		weekGivenMinor?: number | null
 	},
 	nowLocal: string | readonly string[] | null,
 ): DiscountDisplayState | string {
@@ -84,6 +93,13 @@ export function discountDisplayState(
 		input.uses >= input.totalLimit
 	) {
 		return 'limit_reached'
+	}
+	if (
+		input.weeklyBudgetMinor != null &&
+		input.weekGivenMinor != null &&
+		input.weekGivenMinor >= input.weeklyBudgetMinor
+	) {
+		return 'budget_reached'
 	}
 	return 'active'
 }

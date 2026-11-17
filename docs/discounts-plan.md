@@ -29,12 +29,17 @@ with the code, the offer and its terms written from the discount, and a QR to
 a coupon (`{{couponCode}}`), either one shared code or a single-use code minted
 per recipient (see "Coupons in marketing messages" below).
 
-**Not built:** a redemption report; customer segments and specific customers as
-an audience; loyalty tiers as groups; an in-app customer cart with discounts; a
-cap on how much free delivery waives, and an amount off delivery; the "2-topping
-pizza for a set price" rule; a per-discount ZATCA allowance reason code (the
-document's allowance reason is the discount name); location-scoped operators for
-discounts (see "Caps and known limits").
+**Built since (#273, #395, #392, #415, #390):** the cap and item limit in the
+guest's words, which item an item limit covers first, a weekly budget that
+pauses a discount, a saved audience as who can use it, and per-discount
+performance (see "Caps, budgets, audiences and performance" below).
+
+**Not built:** customer segments other than saved audiences, and specific
+customers, as an audience; loyalty tiers as groups; an in-app customer cart with
+discounts; a cap on how much free delivery waives, and an amount off delivery;
+the "2-topping pizza for a set price" rule; a per-discount ZATCA allowance
+reason code (the document's allowance reason is the discount name);
+location-scoped operators for discounts (see "Caps and known limits").
 
 ## Goal
 
@@ -519,6 +524,134 @@ doesn't land on every item.
 5. Discounts in an in-app customer cart (the app only shows menu promotions
    today and hands checkout to the website).
 
+### Caps, budgets, audiences and performance
+
+Built in `@repo/discounts` (`rules-273-395-392-415.test.ts` and the property
+test), tenant-api (`discounts-rules-273-395-392-415-390.test.ts`) and the App.
+Every new definition field is **optional and left out unless set**, so an older
+stored discount still parses and an older region reads every other record (the
+definition schema is strict: a region that predates a field drops a record that
+has it, logged by id, and the discount does not apply there; deploy App, then
+tenant-api). One control-plane migration, `0057`, adds three nullable `Discount`
+columns (`itemChoice`, `weeklyBudgetMinor`, `audienceId`). No regional
+migration: spend and cap hits are read from `discount_redemptions`, which
+already freezes each use's rule in `snapshot`.
+
+**A cap and an item limit (#273).** `maxDiscountMinor` (percentages) and
+`maxDiscountedUnits` (item and category discounts) were already in the engine
+and the editor. What was missing is that the guest is told and the owner can see
+it working:
+
+- The public menu promotion carries `maxDiscountMinor` and `maxUnits` (only when
+  set, and only where the menu can say it truthfully: a cap on a plain
+  percentage, a limit on a plain item or category discount). Sites shows "Up to
+  15.00 off per order" and "Applies to up to 2 items per order" under the offer
+  in the banner; the customer app puts the limit next to the offer's name.
+- The quote's `discounts[]` entries carry the same two numbers, and checkout
+  names the discount "Twenty off (up to $15.00 off and limit 2 per order)". The
+  receipt (stored snapshot) is unchanged.
+- `GET /operator/discounts/usage` adds `capReached`: counted uses (reserved and
+  consumed) of a percentage whose cut came to its maximum
+  (`amount_minor >= snapshot.maxDiscountMinor`), read from the rule frozen on
+  the use. The discounts list says "Cap reached on 3 orders".
+- A coupon inherits the cap (it is the discount's own field).
+
+**Which item an item limit covers (#395).**
+`itemChoice: 'dearest' | 'cheapest'`. Missing means `dearest`, **what the engine
+always did** (units are sorted dearest first and the limit keeps the first N),
+so no stored discount changes. `cheapest` sorts the other way. It needs an item
+limit and a plain item or category target with the `none`, `minimum` or `exact`
+rule; a buy-one-get-one or a deal has its own pairing, and the editor and the
+schema refuse the setting there. Ties between equal-priced units are broken by
+line id, then unit, never by where a line sits in the cart (the engine has no
+menu position on a cart line; the line id is the cart index on every channel, so
+a quote, a placement and the till agree). The editor writes the field only for
+`cheapest`.
+
+**A weekly budget (#392).** `weeklyBudgetMinor`, in the discount's currency, for
+automatic and code discounts (a till discount has no budget: the till cannot
+read the week's spend). Spend is the sum of item plus delivery discount of
+counted redemptions (reserved and consumed) of that discount whose `local_week`
+is the order's week, across customers (`DiscountUsage.weekGivenMinor`, loaded
+with the other usage counts). The week is the ISO week (Monday start) at the
+order's pickup time in the location's zone, the same key per-customer weekly
+limits use. Rules:
+
+- Once the week has given at least the budget, the engine refuses the discount
+  with `limit_reached` (a typed code hears "limit reached"; an automatic
+  discount simply does not apply). It resumes by itself when the week turns,
+  because the new week's spend starts from nothing.
+- The order that **crosses** the budget keeps its whole discount, so a week can
+  overspend by less than one order's discount. Orders already placed keep what
+  they were quoted; a quote that is stale when placed is `discount_changed`,
+  like a last use of a total limit.
+- The check runs at quote, at placement and when a tab is priced, in the same
+  transaction as the other limits (`runExclusive`), so two orders racing for the
+  last of the budget cannot both take it.
+- The till never applies a discount with a budget by itself (`isLimitedDiscount`
+  in Station), and the upload is checked like any use-limited rule.
+- The owner is told through the existing region-to-App path: tenant-api posts
+  `{orgId, kind: 'budget_reached', discountId, week}` (strict, no amount and no
+  guest) to `POST /resources/discounts/notify` (internal token) when a placed
+  order's use crosses the budget; the App sends an in-app notification and an
+  email to members with `update:discount:any`, once per discount and week (the
+  notification row is the claim). Orders and counter closes of a tab notify; a
+  phone tab payment reserves its use before it is paid and does not, so there
+  the discount's page is the source. A lost notice changes nothing: the pause
+  follows the counts.
+- The discounts list shows **Paused: budget reached** and "spent of budget this
+  week" from `weekGivenMinor` (`?week=` on the usage read, the browser's week
+  key on the first location's clock).
+
+**A saved audience (#415).** `audienceId` (a `marketing_audiences` id) next to
+`eligibility`. The schema requires a signed-in eligibility with it (the editor
+sets `signed_in` when an audience is chosen and clears the audience when
+"Everyone" is chosen), and refuses it on a till discount. The enum is not
+widened, so an old definition parses.
+
+- Membership is read **in the region**, per request, never cached:
+  `customerInAudience` for each distinct audience the candidate discounts name
+  (at most 25 per request; one past that counts as not a member), handed to the
+  engine as `context.customer.audienceIds`. A guest with no identity is in none;
+  an audience that is gone or cannot be read is "not a member", never everyone.
+  No guest list or membership reaches the control plane.
+- A non-member hears `not_found` for a code, the same as a code that does not
+  exist, so a code never reveals who is in an audience.
+- The till has no signed-in guest, so it never applies an audience discount by
+  itself (`isLimitedDiscount`); the upload is checked like any use-limited rule.
+- Deleting an audience is **refused while a discount that is not archived uses
+  it** (`discountsUsingAudience` in the audiences action, before the region is
+  asked), naming the discount. The issue's "fall back to everyone with a
+  warning" is replaced by this refusal. Audience pickers show only when the
+  organization has `marketing.audiences` on and the member may read campaigns;
+  an audience the member cannot see stays on the discount and is shown as "not
+  available to you".
+
+**Performance (#390).**
+`GET /operator/discounts/performance?ids=&from=&to=&tz=&basis=` (discounts
+token, `read:discount:any`, the same location scope as usage). Per discount:
+orders, sales and discount given; plus every sale in the period and how many
+used any discount, till discounts included. The App adds the return (sales for
+each unit given) and names. Rules:
+
+- A use counts once its sale stands: a **consumed** redemption (reserved,
+  released and refunded uses are not performance), by the time the use was
+  recorded, in a period of whole local days read on `tz` (at most 366 days).
+- `salesMinor` is the whole sale the use belongs to (not just the discounted
+  part), by the reports' `salesBasis` rule through the shared
+  `restaurantSaleMoney` and `posSaleMoney` (`net` after discounts and rewards,
+  without tax and tips; `gross` before). A table tab holds its items before
+  discounts, so its net takes this discount and any reward off.
+- The share of orders is every counted web or QR order that is not a table
+  round, every table tab closed in the period that was not rung up on a till,
+  and every Station sale paid or refunded, over those with at least one consumed
+  use.
+- A discount under **10 orders** in the period
+  (`DISCOUNT_PERFORMANCE_MIN_ORDERS`) shows its figures and "Not enough data"
+  for the return: a few orders do not say whether it pays.
+- Manual (till) discounts are listed in their own table. Ids and amounts only
+  leave the region.
+
 ### Tax and totals
 
 `priceRestaurantOrder` stays as it is. A new
@@ -965,3 +1098,6 @@ only the discount, never the order.
 | Sites                | App              | The menu shows no promotions (the old App sends none). Quotes and placement still come from the region. Nothing breaks.                                                               |
 | Station (contract 6) | tenant-api       | The old region refuses the upload (`discountApplications` is unknown to it). The till keeps the sale in its outbox and retries until tenant-api is deployed. Deploy tenant-api first. |
 | tenant-api           | Station          | An old till sends contract 5 with no applications and holds no rules, so it applies nothing and uploads as before.                                                                    |
+| App                  | tenant-api       | A discount with an item choice, a weekly budget or an audience is dropped by the old region (strict schema, logged by id) and does not apply there. Nothing breaks.                   |
+| tenant-api           | App              | No `itemChoice`, budget or audience in any record: behaves as before. The notice route is missing, so a spent budget sends no notification (the discounts list still shows it).       |
+| Station              | tenant-api       | A till that cached a rule with the new fields from an updated App keeps ignoring it until its next download; it never applies a budget or audience rule by itself.                    |

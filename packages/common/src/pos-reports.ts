@@ -28,6 +28,12 @@ export type PosSummaryOrder = {
 	discountCents?: number
 	/** Optional. What a loyalty reward took off (its `loyalty` adjustments); missing reads as 0. */
 	loyaltyDiscountCents?: number
+	/**
+	 * Optional. What the cash-payment discount (#375, its `cash_discount`
+	 * adjustment) took off: its own figure, neither a discount nor a loyalty
+	 * reward. Missing reads as 0.
+	 */
+	cashDiscountCents?: number
 	lineVoids: Array<{ quantity: number; unitCents: number }>
 }
 
@@ -66,6 +72,11 @@ export type PosSalesSummary = {
 	discountCents?: number
 	/** Optional, like `grossBeforeDiscountsCents`: what loyalty rewards took off closed sales. */
 	loyaltyDiscountCents?: number
+	/**
+	 * Optional, like `grossBeforeDiscountsCents`: what the cash-payment discount
+	 * (#375) took off closed sales, counted apart from discounts and rewards.
+	 */
+	cashDiscountCents?: number
 	refundsCents: number
 	/** Gross sales less refunds. */
 	netSalesCents: number
@@ -115,6 +126,7 @@ export function posSalesSummary(input: {
 	let grossBeforeDiscountsCents = 0
 	let discountCents = 0
 	let loyaltyDiscountCents = 0
+	let cashDiscountCents = 0
 	let discountsKnown = true
 	let taxCents = 0
 	let tipsCents = 0
@@ -143,6 +155,8 @@ export function posSalesSummary(input: {
 				discountCents += order.discountCents!
 				const loyalty = order.loyaltyDiscountCents ?? 0
 				if (Number.isFinite(loyalty)) loyaltyDiscountCents += loyalty
+				const cash = order.cashDiscountCents ?? 0
+				if (Number.isFinite(cash)) cashDiscountCents += cash
 			} else discountsKnown = false
 			taxCents += order.totals.taxCents
 			tipsCents += order.totals.tipCents
@@ -167,7 +181,12 @@ export function posSalesSummary(input: {
 		orders,
 		grossSalesCents,
 		...(discountsKnown
-			? { grossBeforeDiscountsCents, discountCents, loyaltyDiscountCents }
+			? {
+					grossBeforeDiscountsCents,
+					discountCents,
+					loyaltyDiscountCents,
+					...(cashDiscountCents > 0 ? { cashDiscountCents } : {}),
+				}
 			: {}),
 		refundsCents,
 		netSalesCents: grossSalesCents - refundsCents,

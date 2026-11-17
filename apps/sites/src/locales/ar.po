@@ -52,6 +52,10 @@ msgstr "تم تطبيق {code}"
 msgid "{count, plural, one {and # more offer} other {and # more offers}}"
 msgstr "{count, plural, zero {و# عرض آخر} one {وعرض واحد آخر} two {وعرضان آخران} few {و# عروض أخرى} many {و# عرضًا آخر} other {و# عرض آخر}}"
 
+#: src/pages/menu.astro.ts:3
+msgid "{count, plural, one {Applies to up to # item per order} other {Applies to up to # items per order}}"
+msgstr "{count, plural, one {ينطبق على صنف واحد كحد أقصى لكل طلب} two {ينطبق على صنفين كحد أقصى لكل طلب} few {ينطبق على # أصناف كحد أقصى لكل طلب} many {ينطبق على # صنفًا كحد أقصى لكل طلب} other {ينطبق على # صنف كحد أقصى لكل طلب}}"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "{count} Cal"
@@ -122,6 +126,10 @@ msgstr "{n} طروحات متاحة للطلب الآن"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "{n} min"
 msgstr "{n} دقيقة"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "{name} ({limits})"
+msgstr "{name} ({limits})"
 
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
@@ -1730,6 +1738,10 @@ msgstr "النصف الأيسر"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "less than a minute"
 msgstr "أقل من دقيقة"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "limit {count} per order"
+msgstr "بحد أقصى {count} لكل طلب"
 
 #: src/lib/ordering-labels.ts:102
 msgid "Limit {count} per order"
@@ -3765,9 +3777,17 @@ msgstr "تعذّر إرسال النموذج. يُرجى المحاولة مرة
 msgid "Under review"
 msgstr "قيد المراجعة"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "up to {amount} off"
+msgstr "خصم يصل إلى {amount}"
+
 #: src/lib/loyalty/labels.ts:140
 msgid "Up to {amount} off"
 msgstr "خصم حتى {amount}"
+
+#: src/pages/menu.astro.ts:3
+msgid "Up to {amount} off per order"
+msgstr "خصم يصل إلى {amount} لكل طلب"
 
 #: src/lib/ordering-labels.ts:77
 msgid "Up to {count}"

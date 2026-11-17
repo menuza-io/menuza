@@ -142,6 +142,10 @@ export const editorStateSchema = z.object({
 	priority: typed,
 	promoteOnMenu: z.boolean(),
 	requireApproval: z.boolean(),
+	// Forms open before these fields existed post none: that reads as unset.
+	itemChoice: z.enum(['dearest', 'cheapest']).default('dearest'),
+	weeklyBudget: typed.default(''),
+	audienceId: id.or(z.literal('')).default(''),
 	// A form open before this field existed posts none: that reads as off.
 	waivesPackagingFee: z.boolean().default(false),
 }) satisfies z.ZodType<EditorState>

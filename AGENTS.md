@@ -1457,6 +1457,25 @@ packaging fee, daily dish limits; #251, #257, #355, #422, #408, #409):**
   action awaits `requireDiscountsAccess` first). A new discounts route must pass
   both. Deploy App, then tenant-api, then Station and Sites. Docs:
   `docs/discounts-plan.md` (spec, limits, version skew).
+- Rules added later (#273, #395, #392, #415, #390; all optional on the
+  definition, control-plane migration `0057`): `itemChoice` (`cheapest`; missing
+  is the dearest item first, as always), `weeklyBudgetMinor` (a weekly spend
+  limit counted from `discount_redemptions.local_week`, refused as
+  `limit_reached`, the crossing order keeps its discount, the owner is told
+  through `POST /resources/discounts/notify`, the till never applies it) and
+  `audienceId` (a saved audience, needs a signed-in eligibility, membership read
+  in the region with `customerInAudience`, a discount in use blocks deleting the
+  audience). A cap and an item limit reach the guest through the menu promotion
+  and the quote (`maxDiscountMinor`, `maxUnits`). Performance per discount is
+  `GET /operator/discounts/performance` (consumed uses, the reports' gross or
+  net rule, "not enough data" under 10 orders). Docs: `docs/discounts-plan.md`
+  ("Caps, budgets, audiences and performance").
+- Cash-payment discount (#375, POS contract 11): a per-location rate in
+  `stationSettings.cashDiscountBp`, US only (`PAYMENT_PRICING_RULES` in
+  `@repo/common/cash-discount`, shared with a later card surcharge), taken at
+  the till for a bill paid entirely in cash as its own `cash_discount`
+  adjustment and reported as its own figure (`cashDiscounts`,
+  `cashDiscountCents`). See `docs/pos.md`.
 - Marketing coupons: broadcasts and automation email or text steps can carry a
   coupon (`discountOffer`, `marketingOfferSchema` in `@repo/discounts`) that
   fills `{{couponCode}}`: one shared code, or a single-use code the region mints

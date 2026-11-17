@@ -29,6 +29,11 @@ const discountParams = fc.record({
 	n: fc.integer({ min: 1, max: 4 }),
 	cap: fc.option(fc.integer({ min: 1, max: 5 }), { nil: null }),
 	maxMinor: fc.option(fc.integer({ min: 1, max: 20_000 }), { nil: null }),
+	choice: fc.constantFrom<'cheapest' | 'dearest' | undefined>(
+		'cheapest',
+		'dearest',
+		undefined,
+	),
 })
 
 function buildDiscount(
@@ -57,6 +62,10 @@ function buildDiscount(
 						? { kind: 'bogo', buyQuantity: value.n, getQuantity: 1 }
 						: { kind: value.rule, quantity: value.n },
 			maxDiscountedUnits: scope === 'items' ? value.cap : null,
+			// The item choice never goes with a buy-one-get-one rule.
+			...(value.rule !== 'bogo' && value.choice
+				? { itemChoice: value.choice }
+				: {}),
 		})
 	}
 }

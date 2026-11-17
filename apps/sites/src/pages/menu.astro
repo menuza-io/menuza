@@ -40,6 +40,7 @@ import {
 	MAX_BANNER_OFFERS,
 	MAX_ITEM_BADGES,
 	localizePromotion,
+	offerLimits,
 	offersForItem,
 	promotionsForLocation,
 	worksForMode,
@@ -380,6 +381,35 @@ function offerText(promotion: (typeof promotions)[number]): string {
 		return translate(i18n, msg`Free delivery`, {})
 	}
 	return promotion.name
+}
+
+// What an offer's limits say (#273): "Up to $15.00 off per order" and "Applies to
+// up to 2 items per order". The name carries the headline; these carry the
+// fine print the guest should see before ordering.
+function limitNotes(promotion: (typeof promotions)[number]): string[] {
+	const limits = offerLimits(promotion)
+	const notes: string[] = []
+	if (limits.maxDiscountMinor) {
+		notes.push(
+			translate(i18n, msg`Up to {amount} off per order`, {
+				amount: formatMoney(
+					limits.maxDiscountMinor / 100,
+					promotion.currency ?? currency,
+					requestedLocale,
+				),
+			}),
+		)
+	}
+	if (limits.maxUnits) {
+		notes.push(
+			translate(
+				i18n,
+				msg`{count, plural, one {Applies to up to # item per order} other {Applies to up to # items per order}}`,
+				{ count: limits.maxUnits },
+			),
+		)
+	}
+	return notes
 }
 
 /**
@@ -755,6 +785,9 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 									{promotion.description ? (
 										<p class="text-sm leading-relaxed text-muted-foreground">{promotion.description}</p>
 									) : null}
+									{limitNotes(promotion).map((note) => (
+										<p class="text-sm leading-relaxed text-muted-foreground">{note}</p>
+									))}
 									{promotion.code ? (
 										<p class="mt-0.5 text-sm font-medium text-foreground">{offerCodeText(promotion.code)}</p>
 									) : null}

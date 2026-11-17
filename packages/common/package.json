@@ -349,6 +349,11 @@
       "import": "./src/pos-orders.ts",
       "default": "./src/pos-orders.ts"
     },
+    "./cash-discount": {
+      "types": "./src/cash-discount.ts",
+      "import": "./src/cash-discount.ts",
+      "default": "./src/cash-discount.ts"
+    },
     "./pos-discount-base": {
       "types": "./src/pos-discount-base.ts",
       "import": "./src/pos-discount-base.ts",

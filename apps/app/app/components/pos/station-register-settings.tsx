@@ -1,5 +1,6 @@
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { CASH_DISCOUNT_MAX_BP } from '@repo/common/cash-discount'
 import {
 	POS_CUSTOM_ITEMS_MODES,
 	POS_GUEST_DETAILS_MODES,
@@ -27,6 +28,10 @@ import {
 import { Switch } from '@repo/ui/switch'
 import { useState } from 'react'
 import { useFetcher } from 'react-router'
+import {
+	bpToPercentInput,
+	parsePercentToBp,
+} from '#app/utils/loyalty/loyalty-view.ts'
 import { minorToMajorText, parseMoneyToMinor } from '#app/utils/money-input.ts'
 
 export type RegisterSettingsLocation = {
@@ -39,17 +44,23 @@ export type RegisterSettingsLocation = {
 /**
  * Settings, Terminals: per-location Station register rules (#372 guest
  * details & dish notes, #171 open-price custom items, #380 variance flag
- * threshold). Stored in the control plane as policy only; guest details live in
- * the regional database.
+ * threshold, #375 cash discount). Stored in the control plane as policy only;
+ * guest details live in the regional database.
  */
 export function StationRegisterSettings({
 	orgSlug,
 	canWrite,
 	locations,
+	cashDiscountAllowed = false,
 }: {
 	orgSlug: string
 	canWrite: boolean
 	locations: RegisterSettingsLocation[]
+	/**
+	 * Whether the organization's data region allows a cash-payment discount
+	 * (`cashDiscountAllowedIn`). Where it does not, the setting is not shown.
+	 */
+	cashDiscountAllowed?: boolean
 }) {
 	const { _ } = useLingui()
 	if (locations.length === 0) return null
@@ -78,6 +89,7 @@ export function StationRegisterSettings({
 						orgSlug={orgSlug}
 						canWrite={canWrite}
 						location={location}
+						cashDiscountAllowed={cashDiscountAllowed}
 					/>
 				))}
 			</CardContent>
@@ -89,10 +101,12 @@ function LocationRegisterForm({
 	orgSlug,
 	canWrite,
 	location,
+	cashDiscountAllowed,
 }: {
 	orgSlug: string
 	canWrite: boolean
 	location: RegisterSettingsLocation
+	cashDiscountAllowed: boolean
 }) {
 	const { _ } = useLingui()
 	const fetcher = useFetcher<{
@@ -119,6 +133,9 @@ function LocationRegisterForm({
 		saved.cashVarianceFlagCents !== null
 			? minorToMajorText(saved.cashVarianceFlagCents, location.currency)
 			: '',
+	)
+	const [cashDiscountText, setCashDiscountText] = useState<string>(() =>
+		bpToPercentInput(saved.cashDiscountBp),
 	)
 	const [validationError, setValidationError] = useState<string | null>(null)
 
@@ -169,6 +186,18 @@ function LocationRegisterForm({
 			}
 			varianceCents = String(parsed)
 		}
+		let cashDiscountPercent = ''
+		if (cashDiscountAllowed && cashDiscountText.trim()) {
+			const bp = parsePercentToBp(cashDiscountText)
+			if (bp === null || bp > CASH_DISCOUNT_MAX_BP) {
+				const most = bpToPercentInput(CASH_DISCOUNT_MAX_BP)
+				setValidationError(
+					_(t`Enter a cash discount of ${most}% or less, or leave it blank.`),
+				)
+				return
+			}
+			cashDiscountPercent = cashDiscountText.trim()
+		}
 		setValidationError(null)
 		void fetcher.submit(
 			{
@@ -178,6 +207,7 @@ function LocationRegisterForm({
 				customItems,
 				customItemMaxCents: String(maxCents),
 				cashVarianceFlagCents: varianceCents,
+				...(cashDiscountAllowed ? { cashDiscountPercent } : {}),
 			},
 			{
 				method: 'POST',
@@ -190,6 +220,7 @@ function LocationRegisterForm({
 	const customSelectId = `custom-items-${location.id}`
 	const maxPriceId = `custom-max-${location.id}`
 	const varianceId = `variance-flag-${location.id}`
+	const cashDiscountId = `cash-discount-${location.id}`
 	const locationCurrency = location.currency
 
 	return (
@@ -284,6 +315,36 @@ function LocationRegisterForm({
 						className="h-11 md:h-9"
 					/>
 				</div>
+
+				{cashDiscountAllowed ? (
+					<div className="flex flex-col gap-1.5">
+						<FieldLabel htmlFor={cashDiscountId}>
+							<Trans>Cash discount (%)</Trans>
+						</FieldLabel>
+						<Input
+							id={cashDiscountId}
+							type="text"
+							inputMode="decimal"
+							dir="ltr"
+							placeholder={_(t`Off`)}
+							aria-describedby={`${cashDiscountId}-hint`}
+							value={cashDiscountText}
+							onChange={(e) => setCashDiscountText(e.target.value)}
+							disabled={!canWrite}
+							className="h-11 md:h-9"
+						/>
+						<p
+							id={`${cashDiscountId}-hint`}
+							className="text-muted-foreground text-xs"
+						>
+							<Trans>
+								Taken off a bill paid entirely in cash and shown as its own line
+								on the receipt and in reports. Check that your state and card
+								agreements allow it.
+							</Trans>
+						</p>
+					</div>
+				) : null}
 			</div>
 
 			<label className="flex min-h-11 items-center justify-between gap-4">

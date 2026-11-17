@@ -4934,6 +4934,159 @@ describe('POS terminals: pairing, upload and sync', () => {
 				expect(await reviewOf(r2)).toBeNull()
 			})
 
+			describe('the cash-payment discount (#375)', () => {
+				/** A burger sale paid in one payment, with a cash discount of `bp` basis points. */
+				function cashSale(
+					bp: number,
+					extra: {
+						method?: 'cash' | 'card'
+						adjustments?: Array<Record<string, unknown>>
+						amount?: number
+					} = {},
+				) {
+					const o = wireOrder()
+					const amount =
+						extra.amount ?? Math.floor((o.totals.subtotalCents * bp) / 10_000)
+					const totals = discountedTotals(o.totals, amount)
+					return {
+						...o,
+						status: 'paid' as const,
+						adjustments: extra.adjustments ?? [
+							{
+								id: 'cash-discount',
+								kind: 'cash_discount',
+								label: 'Cash discount (3%)',
+								amountCents: amount,
+							},
+						],
+						totals,
+						payments: [
+							{
+								id: crypto.randomUUID(),
+								method: extra.method ?? 'cash',
+								amountCents: totals.totalCents,
+								tenderedCents: totals.totalCents,
+								at: new Date().toISOString(),
+								staff: null,
+							},
+						],
+					}
+				}
+
+				it('keeps a sale paid entirely in cash with its own line, unflagged', async () => {
+					const { deviceSecret } = await pair()
+					const sale = cashSale(300)
+					const r = await upload(deviceSecret, sale)
+					expect(await reviewOf(r)).toBeNull()
+					const db = await getTenantDb(ORG_A)
+					const [row] = await db
+						.select()
+						.from(posOrders)
+						.where(eq(posOrders.id, sale.id))
+					const kinds = (row!.adjustments as Array<{ kind: string }>).map(
+						(entry) => entry.kind,
+					)
+					expect(kinds).toEqual(['cash_discount'])
+					expect(row!.adjustmentCents).toBe(sale.totals.adjustmentCents)
+				})
+
+				it('flags a cash discount on a sale paid by card, and keeps the sale', async () => {
+					const { deviceSecret } = await pair()
+					const r = await upload(
+						deviceSecret,
+						cashSale(300, { method: 'card' }),
+					)
+					expect(await reviewOf(r)).toBe('cash_discount_invalid')
+				})
+
+				it('flags a cash discount above the highest rate, and a second one', async () => {
+					const { deviceSecret } = await pair()
+					const big = cashSale(2500)
+					expect(await reviewOf(await upload(deviceSecret, big))).toBe(
+						'cash_discount_invalid',
+					)
+					const twice = cashSale(300)
+					const amount = twice.adjustments[0]!.amountCents as number
+					const second = {
+						...twice,
+						number: 'T1-0002',
+						id: crypto.randomUUID(),
+						adjustments: [
+							{
+								id: 'cash-discount',
+								kind: 'cash_discount',
+								label: 'Cash discount',
+								amountCents: Math.floor(amount / 2),
+							},
+							{
+								id: 'cash-discount-2',
+								kind: 'cash_discount',
+								label: 'Cash discount',
+								amountCents: amount - Math.floor(amount / 2),
+							},
+						],
+					}
+					expect(await reviewOf(await upload(deviceSecret, second))).toBe(
+						'cash_discount_invalid',
+					)
+				})
+
+				it('is never a manual discount: a small cash discount is not unexplained, and a big one is not a large discount', async () => {
+					const { deviceSecret } = await pair()
+					expect(
+						await reviewOf(await upload(deviceSecret, cashSale(300))),
+					).toBeNull()
+					// A manual discount with no application is unexplained; the cash
+					// discount line is not one.
+					const manual = cashSale(300, {
+						adjustments: [
+							{
+								id: 'adj-9',
+								kind: 'discount',
+								label: 'Mystery',
+								amountCents: 50,
+							},
+						],
+						amount: 50,
+					})
+					expect(
+						await reviewOf(
+							await upload(deviceSecret, {
+								...manual,
+								id: crypto.randomUUID(),
+								number: 'T1-0003',
+							}),
+						),
+					).toBe('discount_unexplained')
+				})
+
+				it('shows in the shift summary as its own figure', async () => {
+					const { deviceSecret } = await pair()
+					await upload(deviceSecret, cashSale(300))
+					const db = await getTenantDb(ORG_A)
+					const [row] = await db.select().from(posOrders)
+					const { cashDiscountReason } =
+						await import('../services/pos-service.ts')
+					expect(
+						cashDiscountReason(
+							{
+								adjustments: row!.adjustments as never,
+								payments: row!.payments as never,
+								totals: {
+									subtotalCents: row!.subtotalCents,
+									adjustmentCents: row!.adjustmentCents,
+									taxCents: row!.taxCents,
+									tipCents: row!.tipCents,
+									totalCents: row!.totalCents,
+								},
+								lines: row!.lines as never,
+							},
+							'ksa',
+						),
+					).toBe('cash_discount_invalid')
+				})
+			})
+
 			/** A sale discounted by a `loyalty` line worth 60% of its subtotal. */
 			function loyaltyLabelled(o: ReturnType<typeof wireOrder>) {
 				const amount = Math.ceil(o.totals.subtotalCents * 0.6)

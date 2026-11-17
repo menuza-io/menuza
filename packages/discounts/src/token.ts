@@ -117,6 +117,18 @@ export const discountUsageEntrySchema = z
 		refunded: z.number().int().min(0),
 		/** Item plus delivery discount of uses that count (reserved and consumed). */
 		discountMinor: z.number().int().min(0),
+		/**
+		 * How many counted uses took the discount's whole cap (#273): a percentage
+		 * with a maximum whose cut came to that maximum. Missing from an older
+		 * region.
+		 */
+		capReached: z.number().int().min(0).optional(),
+		/**
+		 * What the discount gave in the week asked for (`week=YYYY-Www`), counted
+		 * uses only (#392). Missing when no week was asked for, or from an older
+		 * region.
+		 */
+		weekGivenMinor: z.number().int().min(0).optional(),
 	})
 	.strict()
 export const discountUsageResponseSchema = z
@@ -132,3 +144,6 @@ export const DISCOUNT_REDEMPTION_STATES = [
 ] as const
 export type DiscountRedemptionState =
 	(typeof DISCOUNT_REDEMPTION_STATES)[number]
+
+/** `YYYY-Www`, the ISO week key (`isoWeekKey`) a weekly budget is counted in. */
+export const discountWeekKeySchema = z.string().regex(/^\d{4}-W\d{2}$/)

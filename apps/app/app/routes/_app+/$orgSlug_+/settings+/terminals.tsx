@@ -1,4 +1,5 @@
 import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
+import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
 import {
 	getLocationCurrency,
 	type LocationAddress,
@@ -114,6 +115,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				locations: readyText,
 			},
 			registerLocations,
+			// The cash-payment discount (#375) is offered only where the
+			// organization's data region allows it.
+			cashDiscountAllowed: cashDiscountAllowedIn(organization.dataRegion),
 			orgSlug: params.orgSlug || '',
 			canWrite,
 			canCloseShifts,
@@ -138,6 +142,7 @@ export default function TerminalsPage() {
 		stationGrants,
 		readyText,
 		registerLocations,
+		cashDiscountAllowed,
 	} = useLoaderData<typeof loader>()
 	return (
 		<div className="flex min-w-0 flex-col gap-8">
@@ -154,6 +159,7 @@ export default function TerminalsPage() {
 				orgSlug={orgSlug}
 				canWrite={canWrite}
 				locations={registerLocations}
+				cashDiscountAllowed={cashDiscountAllowed}
 			/>
 			<ReadyTextSettings
 				orgSlug={orgSlug}

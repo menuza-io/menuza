@@ -52,6 +52,10 @@ msgstr "{code} applied"
 msgid "{count, plural, one {and # more offer} other {and # more offers}}"
 msgstr "{count, plural, one {and # more offer} other {and # more offers}}"
 
+#: src/pages/menu.astro.ts:3
+msgid "{count, plural, one {Applies to up to # item per order} other {Applies to up to # items per order}}"
+msgstr "{count, plural, one {Applies to up to # item per order} other {Applies to up to # items per order}}"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "{count} Cal"
@@ -122,6 +126,10 @@ msgstr "{n} drops ordering now"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "{n} min"
 msgstr "{n} min"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "{name} ({limits})"
+msgstr "{name} ({limits})"
 
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
@@ -1730,6 +1738,10 @@ msgstr "Left"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "less than a minute"
 msgstr "less than a minute"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "limit {count} per order"
+msgstr "limit {count} per order"
 
 #: src/lib/ordering-labels.ts:102
 msgid "Limit {count} per order"
@@ -3765,9 +3777,17 @@ msgstr "Unable to submit the form. Please try again."
 msgid "Under review"
 msgstr "Under review"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "up to {amount} off"
+msgstr "up to {amount} off"
+
 #: src/lib/loyalty/labels.ts:140
 msgid "Up to {amount} off"
 msgstr "Up to {amount} off"
+
+#: src/pages/menu.astro.ts:3
+msgid "Up to {amount} off per order"
+msgstr "Up to {amount} off per order"
 
 #: src/lib/ordering-labels.ts:77
 msgid "Up to {count}"

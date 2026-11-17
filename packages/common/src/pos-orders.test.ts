@@ -765,8 +765,8 @@ describe('contract v7: ready text', () => {
 })
 
 describe('contract v10: custom items, counter guest phone & location config (#171, #372, #371)', () => {
-	it('bumps POS_CONTRACT_VERSION to 10', () => {
-		expect(POS_CONTRACT_VERSION).toBe(10)
+	it('is at least contract 10 (contract 11 added the cash discount, see cash-discount.test.ts)', () => {
+		expect(POS_CONTRACT_VERSION).toBeGreaterThanOrEqual(10)
 	})
 
 	it('accepts custom items (taxed and untaxed) and enforces custom item constraints', () => {
@@ -858,6 +858,7 @@ describe('contract v10: custom items, counter guest phone & location config (#17
 			customItems: 'off',
 			customItemMaxCents: 50_000,
 			cashVarianceFlagCents: null,
+			cashDiscountBp: null,
 		})
 		expect(parseOrderNumberFormat(null)).toEqual({
 			prefix: '',

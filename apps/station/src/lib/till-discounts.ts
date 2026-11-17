@@ -136,10 +136,17 @@ export function tillRulesStatus(
 
 /**
  * A discount with a use limit needs a count of uses the till cannot have
- * offline, so it never applies by itself at the till.
+ * offline, so it never applies by itself at the till. A weekly budget (#392) is
+ * the same: the week's spend lives in the region. A saved audience (#415) is
+ * a signed-in rule, and the till has no signed-in guest, so it never applies
+ * by itself either; naming it here keeps it out of the automatic list rather
+ * than relying on the engine's refusal, and the upload is still checked.
  */
 export const isLimitedDiscount = (rule: DiscountRecord): boolean =>
-	rule.totalLimit !== null || rule.perCustomerLimit !== null
+	rule.totalLimit !== null ||
+	rule.perCustomerLimit !== null ||
+	rule.weeklyBudgetMinor != null ||
+	rule.audienceId != null
 
 /** Automatic rules the till skips for their use limits (they still apply online). */
 export function limitedAutomaticRules(rules: unknown): DiscountRecord[] {

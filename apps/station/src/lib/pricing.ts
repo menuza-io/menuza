@@ -71,7 +71,12 @@ export type CartLine = {
  */
 export type Adjustment = {
 	id: string
-	kind: 'discount' | 'loyalty'
+	/**
+	 * `cash_discount` (#375) is the percentage taken off a bill paid entirely in
+	 * cash: at most one per sale, added at the first payment and never kept when
+	 * the bill is paid another way.
+	 */
+	kind: 'discount' | 'loyalty' | 'cash_discount'
 	label: string
 	amountCents: number
 	approvedByStaffId?: string

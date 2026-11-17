@@ -150,6 +150,13 @@ export function summarize(
 					.filter((a) => a.kind === 'discount')
 					.reduce((sum, a) => sum + a.amountCents, 0),
 			),
+			// The cash discount (#375) is its own figure.
+			cashDiscountCents: Math.min(
+				o.totals.adjustmentCents,
+				(o.adjustments ?? [])
+					.filter((a) => a.kind === 'cash_discount')
+					.reduce((sum, a) => sum + a.amountCents, 0),
+			),
 			lineVoids: o.lineVoids ?? [],
 		})),
 		payments: payments.map((p) => ({

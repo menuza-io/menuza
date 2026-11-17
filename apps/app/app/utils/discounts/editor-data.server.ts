@@ -1,3 +1,4 @@
+import { userHasOrganizationPermission } from '@repo/auth'
 import { getLocationCurrency } from '@repo/common/location-currency'
 import {
 	parseSiteLocalesConfig,
@@ -17,7 +18,11 @@ import {
 } from '@repo/database'
 import { loadLoyaltyCatalog } from '#app/utils/loyalty/catalog.server.ts'
 import { type LoyaltyCatalog } from '#app/utils/loyalty/catalog.ts'
+import { loadAudienceOptions } from '#app/utils/marketing/audiences.server.ts'
+import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import { isPackagingFeeEnabled } from '#app/utils/orders/packaging-fee.server.ts'
+import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
+import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 import { buildDiscountChoices } from './editor-choices.ts'
 import {
 	type DiscountChoiceCatalog,
@@ -212,4 +217,37 @@ export async function loadDiscountSiteLocales(
 		organization?.siteLocales,
 		organization?.siteDefaultLocale,
 	)
+}
+
+/**
+ * The saved audiences (#415) the editor may offer, as names and ids. Null when
+ * the organization has the audiences feature off, the member may not read
+ * campaigns (audiences belong to marketing), or the region could not answer:
+ * the editor then hides the picker and keeps any audience already chosen.
+ * Run it after `requireDiscountsAccess`.
+ */
+export async function loadDiscountAudienceChoices(input: {
+	request: Request
+	orgSlug: string
+	organizationId: string
+	userId: string
+}): Promise<Array<{ id: string; name: string }> | null> {
+	if (!(await getMarketingFeatures(input.organizationId)).audiences) {
+		return null
+	}
+	const canRead = await userHasOrganizationPermission(
+		input.userId,
+		input.organizationId,
+		ORG_PERMISSIONS.READ_CAMPAIGN_ANY,
+	)
+	if (!canRead) return null
+	try {
+		const { fetchTenant } = await getOperatorTenantClient(
+			input.request,
+			input.orgSlug,
+		)
+		return (await loadAudienceOptions(fetchTenant)) ?? null
+	} catch {
+		return null
+	}
 }

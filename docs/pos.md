@@ -66,6 +66,35 @@ already took money for.
   totals are all unchanged, but the discount checks run again on any revision
   whose `discountApplications` differ from the previous revision's (for example
   applications added when the sale is paid).
+- **Contract 11.** `POS_CONTRACT_VERSION` is 11. An adjustment may be
+  `kind: 'cash_discount'` (#375): the percentage a location takes off a bill
+  paid entirely in cash, as its own line. An older node cannot read the kind and
+  holds that upload, and an older terminal never sends it, so deploy tenant-api
+  before Station.
+  - **Rate and region.** `stationSettings.cashDiscountBp` (basis points, 1 to
+    1000, null is off) is a register setting at Settings, Terminals. The rule
+    for where it is allowed is one table, `PAYMENT_PRICING_RULES` in
+    `@repo/common/cash-discount` (US yes, KSA no), which a later card surcharge
+    (#264) reads too. The App neither shows nor saves it for a KSA organization,
+    and publishes a rate to the till only where the region allows it. A bill
+    that carries a card surcharge never also gets a cash discount
+    (`cashDiscountBlock`); nothing makes a surcharge yet.
+  - **At the till.** While the cashier has Cash and Full selected and no payment
+    exists, the checkout adds `{id: 'cash-discount', kind: 'cash_discount'}`:
+    the rate of what the bill costs after its other discounts, rounded down,
+    with tax shrinking as for any discount and the tip staying on the full bill.
+    Choosing another tender, a split or a part payment takes it off again. It is
+    saved only with the first payment, which must be the whole bill in cash. The
+    receipt prints it as its own line.
+  - **Upload and reports.** The sale is flagged `cash_discount_invalid` (kept,
+    still earns loyalty points) when the node's region does not allow one, there
+    is more than one, a payment is not cash, or it is above the highest rate
+    (`CASH_DISCOUNT_MAX_BP` of the subtotal plus a cent per line). It is neither
+    a rule's discount (no `discountApplications` row, no `discount_unexplained`)
+    nor part of the large-discount share. Reports carry `cashDiscounts` as their
+    own field (`SaleMoney.cashDiscountMinor`; not in `discounts`, always in
+    gross), and the Z and day reports add `cashDiscountCents`. Loyalty earns on
+    what the guest paid, so the cash discount counts with the discounts there.
 - **Contract 10.** `POS_CONTRACT_VERSION` is 10. Additions are optional on the
   wire so Contract 9 uploads still parse cleanly (deploy tenant-api before
   Station):

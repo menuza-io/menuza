@@ -34,7 +34,10 @@ import {
 	getDiscount,
 	getDiscountCreatedBy,
 } from '#app/utils/discounts/discounts.server.ts'
-import { loadDiscountEditorData } from '#app/utils/discounts/editor-data.server.ts'
+import {
+	loadDiscountAudienceChoices,
+	loadDiscountEditorData,
+} from '#app/utils/discounts/editor-data.server.ts'
 import { stateFromDefinition } from '#app/utils/discounts/editor-model.ts'
 import { listDiscountHistory } from '#app/utils/discounts/history.server.ts'
 import {
@@ -66,7 +69,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		throw new Response('Not Found', { status: 404 })
 	}
 	const editableHere = discountEditableInScope(locationIds, access.locationIds)
-	const editor = await loadDiscountEditorData(access.organization.id)
+	const [editor, audiences] = await Promise.all([
+		loadDiscountEditorData(access.organization.id),
+		loadDiscountAudienceChoices({
+			request,
+			orgSlug: access.organization.slug,
+			organizationId: access.organization.id,
+			userId: access.userId,
+		}),
+	])
 	const status = asStatus(loaded.row.status)
 	const storedCurrency = loaded.row.currency ?? access.currency
 	const stored = loaded.stored
@@ -130,6 +141,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		// A coupon card for this discount, when the Print shop can make one.
 		printHref,
 		editor,
+		audiences,
 		discountId,
 		permissions: {
 			canChangeAutomations: Boolean(canChangeAutomations),
@@ -318,6 +330,7 @@ export default function EditDiscountRoute() {
 				choices={data.editor.choices}
 				siteLocales={data.editor.siteLocales}
 				packagingFeeEnabled={data.editor.packagingFeeEnabled}
+				audiences={data.audiences}
 				initial={initial}
 				version={data.version}
 				status={data.status}

@@ -76,6 +76,9 @@ const promotionSchema = z.object({
 	startsAt: z.string().nullish().catch(null),
 	endsAt: z.string().nullish().catch(null),
 	code: z.string().nullish().catch(null),
+	// The limits of the offer (#273); a malformed value reads as none.
+	maxDiscountMinor: z.number().int().positive().optional().catch(undefined),
+	maxUnits: z.number().int().positive().optional().catch(undefined),
 })
 
 const locationSchema = z.object({
@@ -140,6 +143,10 @@ export type MenuPromotionView = {
 	schedule?: { day: number; start: string; end: string }[]
 	excludeItemIds: string[]
 	excludeCategoryIds: string[]
+	/** The most a percentage takes off one order, in `currency` (#273). */
+	maxDiscountMinor?: number
+	/** The most items an offer covers in one order (#273). */
+	maxUnits?: number
 	/** Null means every location. */
 	locationIds: string[] | null
 	/** Null means every order type. */
@@ -258,6 +265,10 @@ export function presentMenu(
 					: undefined,
 				excludeItemIds: parsed.data.excludeItemIds ?? [],
 				excludeCategoryIds: parsed.data.excludeCategoryIds ?? [],
+				...(parsed.data.maxDiscountMinor
+					? { maxDiscountMinor: parsed.data.maxDiscountMinor }
+					: {}),
+				...(parsed.data.maxUnits ? { maxUnits: parsed.data.maxUnits } : {}),
 				locationIds: parsed.data.locationIds ?? null,
 				fulfillments: parsed.data.fulfillments
 					? parsed.data.fulfillments.filter((mode): mode is OfferMode =>

@@ -187,6 +187,41 @@ describe('MenuScreen offers', () => {
 		expect(screen.queryByText('20% off')).toBeNull()
 	})
 
+	it('says the cap and the item limit of an offer next to its name (#273)', async () => {
+		await renderOrdering(
+			<MenuScreen
+				loadMenu={async () =>
+					payload([
+						offer('1', {
+							name: 'Twenty off',
+							showName: true,
+							currency: 'USD',
+							maxDiscountMinor: 1500,
+						}),
+					])
+				}
+			/>,
+		)
+		expect(
+			await screen.findAllByText('Twenty off (up to $15.00 off)'),
+		).toHaveLength(2)
+	})
+
+	it('says the item limit when there is no cap (#273)', async () => {
+		await renderOrdering(
+			<MenuScreen
+				loadMenu={async () =>
+					payload([
+						offer('1', { name: 'Half price', showName: true, maxUnits: 2 }),
+					])
+				}
+			/>,
+		)
+		expect(
+			await screen.findAllByText('Half price (limit 2 per order)'),
+		).toHaveLength(2)
+	})
+
 	it('shows a set price and the code of a promoted code offer', async () => {
 		await renderOrdering(
 			<MenuScreen

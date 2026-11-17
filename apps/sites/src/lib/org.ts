@@ -603,6 +603,10 @@ export type PublicMenuPromotion = {
 	code?: string | null
 	excludeItemIds?: string[]
 	excludeCategoryIds?: string[]
+	/** The most a percentage takes off one order (#273), in `currency`. Missing: no cap. */
+	maxDiscountMinor?: number
+	/** The most items an item offer covers in one order (#273). Missing: unlimited. */
+	maxUnits?: number
 }
 
 export type PublicSiteMenuPayload = {

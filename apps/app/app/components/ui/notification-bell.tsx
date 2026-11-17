@@ -31,6 +31,11 @@ import { useNavigate, useFetcher, useParams } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { BellIcon } from '#app/components/icons/bell-icon.tsx'
+import {
+	DISCOUNT_ALERT_COPY,
+	discountAlertKindFromNotificationType,
+	discountAlertPath,
+} from '#app/utils/discounts/discount-alerts.ts'
 import { inventoryAlertCopy } from '#app/utils/inventory/alert-copy.ts'
 import {
 	inventoryAlertKindFromNotificationType,
@@ -155,7 +160,16 @@ function NotificationItem({
 			}
 		: null
 
+	const discountKind = discountAlertKindFromNotificationType(notification.type)
+	const discountAlert = discountKind
+		? {
+				subject: _(DISCOUNT_ALERT_COPY[discountKind].subject),
+				body: _(DISCOUNT_ALERT_COPY[discountKind].body),
+			}
+		: null
+
 	const subject =
+		discountAlert?.subject ??
 		campaignAlert?.subject ??
 		printAlert?.subject ??
 		staffing?.subject ??
@@ -165,6 +179,7 @@ function NotificationItem({
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
 	const body =
+		discountAlert?.body ??
 		campaignAlert?.body ??
 		printAlert?.body ??
 		staffing?.body ??
@@ -178,6 +193,14 @@ function NotificationItem({
 			onMarkRead(notification.id)
 		}
 		if (
+			discountKind &&
+			typeof payload?.orgSlug === 'string' &&
+			typeof payload?.discountId === 'string'
+		) {
+			void navigate(
+				`/${payload.orgSlug}${discountAlertPath(payload.discountId)}`,
+			)
+		} else if (
 			campaignKind &&
 			typeof payload?.orgSlug === 'string' &&
 			typeof payload?.campaignId === 'string'
@@ -235,7 +258,9 @@ function NotificationItem({
 			<div className="flex items-start border-b border-dashed p-2">
 				<Avatar className="mr-2 h-8 w-8">
 					<AvatarFallback>
-						{campaignKind ? (
+						{discountKind ? (
+							<Icon name="tag" className="h-4 w-4" />
+						) : campaignKind ? (
 							<Icon name="send" className="h-4 w-4" />
 						) : printKind ? (
 							<Icon name="printer" className="h-4 w-4" />

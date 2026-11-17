@@ -59,6 +59,10 @@ const EARNING_FLAGS = new Set([
 	// the charge is in doubt, so a person looks, but the sale still earns.
 	'discount_unexplained',
 	'discount_amount_mismatch',
+	// The cash-payment discount (#375) is in doubt (a region that does not
+	// allow it, a card payment, a size above the rate): a person looks, and
+	// the sale still earns.
+	'cash_discount_invalid',
 ])
 const EARNING_FLAG_PREFIXES = ['catalog:', 'stale_catalog:']
 
@@ -82,13 +86,20 @@ function storedLines(sale: PosOrderRow): PosOrderLine[] {
 	return Array.isArray(sale.lines) ? (sale.lines as PosOrderLine[]) : []
 }
 
+/**
+ * What the sale's adjustments of one kind took off. A cash discount (#375)
+ * counts with the discounts: points are earned on what the guest paid after
+ * every discount, and it names no line, so it is spread like any other
+ * discount that does not.
+ */
 function adjustmentTotal(sale: PosOrderRow, kind: 'discount' | 'loyalty') {
 	const adjustments = Array.isArray(sale.adjustments)
 		? (sale.adjustments as Array<{ kind?: unknown; amountCents?: unknown }>)
 		: []
 	return adjustments.reduce(
 		(sum, adjustment) =>
-			adjustment.kind === kind &&
+			(adjustment.kind === kind ||
+				(kind === 'discount' && adjustment.kind === 'cash_discount')) &&
 			typeof adjustment.amountCents === 'number' &&
 			Number.isSafeInteger(adjustment.amountCents) &&
 			adjustment.amountCents > 0

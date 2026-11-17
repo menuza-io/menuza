@@ -52,6 +52,10 @@ msgstr "已使用 {code}"
 msgid "{count, plural, one {and # more offer} other {and # more offers}}"
 msgstr "{count, plural, other {以及另外 # 个优惠}}"
 
+#: src/pages/menu.astro.ts:3
+msgid "{count, plural, one {Applies to up to # item per order} other {Applies to up to # items per order}}"
+msgstr "{count, plural, other {每份订单最多适用于 # 件商品}}"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "{count} Cal"
@@ -122,6 +126,10 @@ msgstr "{n} 个限量活动正在接受下单"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "{n} min"
 msgstr "{n}分钟"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "{name} ({limits})"
+msgstr "{name}（{limits}）"
 
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
@@ -1730,6 +1738,10 @@ msgstr "左半"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "less than a minute"
 msgstr "不到一分钟"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "limit {count} per order"
+msgstr "每单限 {count} 件"
 
 #: src/lib/ordering-labels.ts:102
 msgid "Limit {count} per order"
@@ -3765,9 +3777,17 @@ msgstr "无法提交表单。请重试。"
 msgid "Under review"
 msgstr "审核中"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "up to {amount} off"
+msgstr "最高减 {amount}"
+
 #: src/lib/loyalty/labels.ts:140
 msgid "Up to {amount} off"
 msgstr "最多优惠 {amount}"
+
+#: src/pages/menu.astro.ts:3
+msgid "Up to {amount} off per order"
+msgstr "每单最高优惠 {amount}"
 
 #: src/lib/ordering-labels.ts:77
 msgid "Up to {count}"

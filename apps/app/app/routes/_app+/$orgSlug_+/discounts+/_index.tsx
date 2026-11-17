@@ -1,7 +1,7 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { userHasOrganizationPermission } from '@repo/auth'
 import { db, eq, OrganizationLocation } from '@repo/database'
-import { type DiscountUsageEntry } from '@repo/discounts'
+import { type DiscountUsageEntry, isoWeekKey } from '@repo/discounts'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Frame } from '@repo/ui/frame'
@@ -26,6 +26,10 @@ import {
 	useSearchParams,
 } from 'react-router'
 import { ArchiveDiscountButton } from '#app/components/discounts/archive-discount-button.tsx'
+import {
+	DiscountPerformance,
+	defaultPerformancePeriod,
+} from '#app/components/discounts/discount-performance.tsx'
 import { LimitNotice } from '#app/components/discounts/fields.tsx'
 import {
 	type ImpactChoice,
@@ -205,6 +209,20 @@ export default function DiscountsIndexRoute() {
 	)
 	// A count for a date range says nothing about a lifetime limit.
 	const dateRange = Boolean(usageFrom || usageTo)
+	// The week a weekly budget (#392) is spent in: today's calendar week on the
+	// first location's clock (the browser's when none is known). Asked for only
+	// when some discount has a budget.
+	const clockDay = useMemo(() => {
+		if (!now) return null
+		const stamp =
+			(allZones[0] ? zonedNowText(now, allZones[0]) : null) ?? localNowText(now)
+		return stamp.slice(0, 10)
+	}, [now, allZones])
+	const week = clockDay ? isoWeekKey(clockDay) : null
+	const hasBudget = discounts.some(
+		(discount) => discount.definition?.weeklyBudgetMinor != null,
+	)
+	const weekToAsk = hasBudget ? week : null
 
 	useEffect(() => {
 		const client = createDiscountUsageClient({ orgSlug })
@@ -213,6 +231,7 @@ export default function DiscountsIndexRoute() {
 			.fetchUsage(ids, controller.signal, {
 				from: usageFrom || undefined,
 				to: usageTo || undefined,
+				week: weekToAsk ?? undefined,
 			})
 			.then((result) => {
 				if (controller.signal.aborted) return
@@ -220,7 +239,23 @@ export default function DiscountsIndexRoute() {
 				setUsageFailed(result === null)
 			})
 		return () => controller.abort()
-	}, [orgSlug, ids, usageFrom, usageTo])
+	}, [orgSlug, ids, usageFrom, usageTo, weekToAsk])
+
+	// The performance panel reads the period of the "Uses from / to" filters,
+	// or the last 30 days. Archived discounts that were used still count.
+	const performanceDiscounts = useMemo(
+		() =>
+			discounts.map((discount) => ({
+				id: discount.id,
+				name: discount.name,
+				application: discount.application,
+			})),
+		[discounts],
+	)
+	const performancePeriod = (today: string) => {
+		const fallback = defaultPerformancePeriod(today)
+		return { from: usageFrom || fallback.from, to: usageTo || today }
+	}
 
 	const isShown = (discount: { application: string; status: string }) => {
 		if (kindFilter !== 'all' && discount.application !== kindFilter) {
@@ -456,6 +491,16 @@ export default function DiscountsIndexRoute() {
 							</Table>
 						</Frame>
 					)}
+					{clockDay ? (
+						<DiscountPerformance
+							orgSlug={orgSlug}
+							currency={currency}
+							locale={i18n.locale}
+							discounts={performanceDiscounts}
+							{...performancePeriod(clockDay)}
+							timeZone={allZones[0]}
+						/>
+					) : null}
 				</>
 			)}
 			{impact.render}
@@ -602,6 +647,12 @@ function DiscountRow({
 			endsAt: definition?.endsAt ?? null,
 			totalLimit: limit ?? null,
 			uses: usageReady && !dateRange ? (usage?.uses ?? 0) : null,
+			weeklyBudgetMinor: definition?.weeklyBudgetMinor ?? null,
+			// Only once this week's spend has been read.
+			weekGivenMinor:
+				usageReady && usage?.weekGivenMinor !== undefined
+					? usage.weekGivenMinor
+					: null,
 		},
 		nowLocal,
 	)
@@ -659,6 +710,56 @@ function DiscountRow({
 							<span className="text-muted-foreground">
 								{' '}
 								· {formatMoney(usage.discountMinor, currency, locale)}
+							</span>
+						) : null}
+						{definition?.weeklyBudgetMinor != null &&
+						usage?.weekGivenMinor !== undefined ? (
+							<span
+								data-testid={`discount-budget-${discount.id}`}
+								className="text-muted-foreground block text-xs"
+							>
+								{(() => {
+									const spent = formatMoney(
+										usage.weekGivenMinor,
+										currency,
+										locale,
+									)
+									const budget = formatMoney(
+										definition.weeklyBudgetMinor,
+										currency,
+										locale,
+									)
+									return usage.weekGivenMinor >=
+										definition.weeklyBudgetMinor ? (
+										<Trans>
+											Weekly budget spent: {spent} of {budget}. It starts again
+											next week.
+										</Trans>
+									) : (
+										<Trans>
+											{spent} of {budget} weekly budget
+										</Trans>
+									)
+								})()}
+							</span>
+						) : null}
+						{definition?.maxDiscountMinor != null &&
+						(usage?.capReached ?? 0) > 0 ? (
+							<span
+								data-testid={`discount-cap-${discount.id}`}
+								className="text-muted-foreground block text-xs"
+							>
+								{(() => {
+									const count = usage?.capReached ?? 0
+									const reached = numberText(count, locale)
+									return (
+										<Plural
+											value={count}
+											one={`Cap reached on ${reached} order`}
+											other={`Cap reached on ${reached} orders`}
+										/>
+									)
+								})()}
 							</span>
 						) : null}
 					</span>
@@ -772,6 +873,7 @@ const STATE_VARIANTS = {
 	scheduled: 'default',
 	ended: 'secondary',
 	limit_reached: 'warning',
+	budget_reached: 'warning',
 } as const
 
 function StatusBadge({ status }: { status: DiscountDisplayState | string }) {

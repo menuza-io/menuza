@@ -503,6 +503,15 @@ export async function createOrder(
 			syncedAt: null,
 			serverNumber: null,
 		}
+		// A cash discount (#375) is for a bill paid entirely in cash, in one payment.
+		if (
+			order.adjustments.some((row) => row.kind === 'cash_discount') &&
+			(!payment ||
+				payment.method !== 'cash' ||
+				payment.amountCents !== order.totals.totalCents)
+		) {
+			throw new Error(t`A cash discount needs the whole bill paid in cash`)
+		}
 		if (payment) order = applyPayment(order, payment, now, shiftId)
 		else if (options.closeIfFree) {
 			if (order.totals.totalCents !== 0)
@@ -592,6 +601,14 @@ export async function addPayment(
 	id: string,
 	payment: NewPayment,
 	tipCents?: number,
+	options: {
+		/**
+		 * The cash discount (#375) for a bill paid entirely in cash by this
+		 * payment: added to the tab before its first payment, replacing any earlier
+		 * one. Ignored once a payment exists (the bill is frozen then).
+		 */
+		cashDiscount?: Adjustment | null
+	} = {},
 ): Promise<PosOrder> {
 	const now = Date.now()
 	return db.transaction('rw', db.orders, db.meta, db.shifts, async () => {
@@ -605,18 +622,51 @@ export async function addPayment(
 				t`This tab was taken over by terminal ${order.transferredTo}`,
 			)
 		let base = order
+		// Before the first payment the bill can still take a cash discount (#375);
+		// after it, it is frozen at what it was.
+		if (order.payments.length === 0 && options.cashDiscount) {
+			if (payment.method !== 'cash') {
+				throw new Error(t`A cash discount needs the whole bill paid in cash`)
+			}
+			base = {
+				...order,
+				adjustments: [
+					...order.adjustments.filter((row) => row.kind !== 'cash_discount'),
+					options.cashDiscount,
+				],
+			}
+		}
 		// The tip is fixed before the first payment so shares never drift.
 		if (tipCents !== undefined && order.payments.length === 0) {
 			base = {
-				...order,
+				...base,
 				totals: computeTotals({
-					lines: order.lines,
-					taxRatePercent: order.taxRatePercent,
-					taxInclusive: order.taxInclusive,
+					lines: base.lines,
+					taxRatePercent: base.taxRatePercent,
+					taxInclusive: base.taxInclusive,
 					tipCents,
-					adjustments: order.adjustments,
+					adjustments: base.adjustments,
 				}),
 			}
+		} else if (base !== order) {
+			base = {
+				...base,
+				totals: computeTotals({
+					lines: base.lines,
+					taxRatePercent: base.taxRatePercent,
+					taxInclusive: base.taxInclusive,
+					tipCents: base.totals.tipCents,
+					adjustments: base.adjustments,
+				}),
+			}
+		}
+		// A cash discount is for a bill paid entirely in cash, in this one payment.
+		if (
+			options.cashDiscount &&
+			order.payments.length === 0 &&
+			payment.amountCents !== base.totals.totalCents
+		) {
+			throw new Error(t`A cash discount needs the whole bill paid in cash`)
 		}
 		const saved = await withInvoiceIfClosed(
 			{ ...applyPayment(base, payment, now, shiftId), ...touched(order, now) },

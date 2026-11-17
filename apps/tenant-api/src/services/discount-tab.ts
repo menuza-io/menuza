@@ -24,6 +24,8 @@ import { QR_ROUND_VOID_STATUSES } from './qr-dine-in.ts'
 import {
 	discountCustomerFacts,
 	loadDiscountUsageCounts,
+	memberAudienceIds,
+	weekGivenOf,
 	type DiscountApplyFailure,
 	publicRefusalReason,
 	type PreparedDiscounts,
@@ -107,6 +109,12 @@ export async function evaluateTabDiscounts(
 	)
 	const periods = discountPeriodKeys(localNow)
 	const customer = await discountCustomerFacts(db, input.customerId, input.now)
+	const audienceIds = await memberAudienceIds(
+		db,
+		records,
+		customer.customerId,
+		input.now,
+	)
 	const { usage, codeUsage } = await loadDiscountUsageCounts(
 		db,
 		records.map((record) => record.id),
@@ -137,6 +145,7 @@ export async function evaluateTabDiscounts(
 				signedIn: customer.signedIn,
 				isNewCustomer: customer.isNewCustomer,
 				isLoyaltyMember: customer.isLoyaltyMember,
+				audienceIds,
 			},
 		},
 		discounts: records,
@@ -154,7 +163,14 @@ export async function evaluateTabDiscounts(
 	return {
 		ok: true,
 		quote: {
-			prepared: { evaluation, typedCode, periods, records, codes },
+			prepared: {
+				evaluation,
+				typedCode,
+				periods,
+				records,
+				codes,
+				weekGiven: weekGivenOf(usage),
+			},
 			allocation,
 			discountCents: evaluation.totalDiscountMinor,
 		},
