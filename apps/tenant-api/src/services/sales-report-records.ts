@@ -112,7 +112,10 @@ function inWindow(expression: SQL, window: Window, unitMs: number): SQL[] {
 
 /** A location limit as a WHERE clause; no clause when every location is allowed. */
 function locationCondition(
-	column: typeof restaurantOrders.locationId | typeof posOrders.locationId,
+	column:
+		| typeof restaurantOrders.locationId
+		| typeof posOrders.locationId
+		| typeof qrTabs.locationId,
 	locationIds: readonly string[] | null,
 ): SQL[] {
 	if (locationIds === null) return []
