@@ -65,6 +65,9 @@ export function Cart({
 	onPhoneOrder,
 	onCounterOrder,
 	tableLabel,
+	driveThroughNote = '',
+	onDriveThroughNote,
+	onFireCourses,
 	money,
 	onOrderType,
 	onCustomer,
@@ -117,6 +120,9 @@ export function Cart({
 		optIn: boolean
 	}
 	onTable: (label: string) => void
+	driveThroughNote?: string
+	onDriveThroughNote?: (note: string) => void
+	onFireCourses?: () => void
 	onQuantity: (id: string, quantity: number) => void
 	onEdit: (line: CartLine) => void
 	onRemove: (id: string) => void
@@ -163,15 +169,24 @@ export function Cart({
 	useEffect(() => {
 		seen.current = new Set(lines.map((l) => l.id))
 	}, [lines])
-	const detail = orderType === 'dine_in' ? tableLabel : customerName
+	const detail =
+		orderType === 'dine_in'
+			? tableLabel
+			: orderType === 'drive_through'
+				? driveThroughNote
+				: customerName
 	const detailText =
 		orderType === 'dine_in'
 			? detail
 				? _(t`Table: ${detail}`)
 				: _(t`Add table`)
-			: detail
-				? _(t`Name: ${detail}`)
-				: _(t`Add name`)
+			: orderType === 'drive_through'
+				? detail
+					? _(t`Lane: ${detail}`)
+					: _(t`Add lane or vehicle`)
+				: detail
+					? _(t`Name: ${detail}`)
+					: _(t`Add name`)
 	const taxLabel = taxInclusive
 		? taxRatePercent
 			? _(t`Includes tax (${taxRatePercent}%)`)
@@ -223,6 +238,11 @@ export function Cart({
 									value: 'takeaway',
 									label: _(t`Takeaway`),
 									icon: <Icon name="shopping-bag" className="size-4" />,
+								},
+								{
+									value: 'drive_through',
+									label: _(t`Drive-through`),
+									icon: <Icon name="arrow-right" className="size-4" />,
 								},
 							]}
 						/>
@@ -397,6 +417,11 @@ export function Cart({
 						{error}
 					</p>
 				</Reveal>
+				{onFireCourses && lines.some((line) => line.courseHeld) ? (
+					<Button variant="outline" size="lg" onClick={onFireCourses}>
+						<Trans>Fire next course</Trans>
+					</Button>
+				) : null}
 				<div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
 					<Button
 						variant="outline"
@@ -456,7 +481,13 @@ export function Cart({
 			<Modal
 				open={naming}
 				onClose={() => setNaming(false)}
-				title={orderType === 'dine_in' ? _(t`Table`) : _(t`Customer name`)}
+				title={
+					orderType === 'dine_in'
+						? _(t`Table`)
+						: orderType === 'drive_through'
+							? _(t`Lane or vehicle`)
+							: _(t`Customer name`)
+				}
 			>
 				<form
 					className="space-y-4 p-5"
@@ -474,13 +505,19 @@ export function Cart({
 					<Input
 						autoFocus
 						aria-label={
-							orderType === 'dine_in' ? _(t`Table`) : _(t`Customer name`)
+							orderType === 'dine_in'
+								? _(t`Table`)
+								: orderType === 'drive_through'
+									? _(t`Lane or vehicle`)
+									: _(t`Customer name`)
 						}
 						value={detail}
 						onChange={(e) =>
 							orderType === 'dine_in'
 								? onTable(e.target.value)
-								: onCustomer(e.target.value)
+								: orderType === 'drive_through'
+									? onDriveThroughNote?.(e.target.value)
+									: onCustomer(e.target.value)
 						}
 						maxLength={orderType === 'dine_in' ? 20 : 60}
 						placeholder={

@@ -276,8 +276,20 @@ const lineSchema = z.strictObject({
 			name: menuText,
 			quantity: z.number().int(),
 			half: z.enum(['whole', 'left', 'right']).nullable(),
+			/** Kitchen name and highlight. Omitted when unset, so an older till still reads the line. */
+			kitchenName: menuText.optional(),
+			groupName: menuText.optional(),
+			highlight: z
+				.enum(['none', 'allergy', 'attention', 'long_prep'])
+				.optional(),
 		}),
 	),
+	kitchenName: menuText.optional(),
+	highlight: z.enum(['none', 'allergy', 'attention', 'long_prep']).optional(),
+	courseId: z.string().max(40).optional(),
+	courseName: menuText.optional(),
+	coursePosition: z.number().int().optional(),
+	held: z.boolean().optional(),
 })
 export type PosOnlineOrderLine = z.infer<typeof lineSchema>
 

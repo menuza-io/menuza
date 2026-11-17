@@ -627,6 +627,7 @@ const orderFulfillmentField: ReportField = {
 		{ value: 'pickup', label: 'Pickup' },
 		{ value: 'delivery', label: 'Delivery' },
 		{ value: 'dine_in', label: 'Dine-in' },
+		{ value: 'drive_through', label: 'Drive-through' },
 	],
 }
 

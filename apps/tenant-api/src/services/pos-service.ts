@@ -2000,9 +2000,12 @@ async function writeOrderLines(tx: Tx, order: PosOrderRequest) {
 		quantity: line.quantity,
 		unitCents: posLineTotalCents(line) / line.quantity,
 		totalCents: posLineTotalCents(line),
+		courseId: line.courseId ?? null,
+		courseName: line.courseName ?? null,
+		courseState: line.courseId ? (line.courseHeld ? 'held' : 'fired') : null,
 	}))
-	// 8 columns a row against Durable Object SQLite's 100 bound parameters.
-	for (const chunk of chunkIds(rows, 12))
+	// 11 columns a row against Durable Object SQLite's 100 bound parameters.
+	for (const chunk of chunkIds(rows, 8))
 		await tx.insert(posOrderLines).values(chunk)
 }
 
@@ -2350,6 +2353,7 @@ export async function upsertPosOrder(
 						revision: order.revision,
 						status: order.status,
 						orderType: order.orderType,
+						driveThroughNote: order.driveThroughNote,
 						orderSource: order.orderSource,
 						customerPhone: contactRedacted ? null : order.customerPhone,
 						...readyText,

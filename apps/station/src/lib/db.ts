@@ -6,7 +6,7 @@ import { type SaleLoyalty } from './loyalty.ts'
 import { type Adjustment, type CartLine, type Totals } from './pricing.ts'
 import { type CatalogSnapshot } from './types.ts'
 
-export type OrderType = 'dine_in' | 'takeaway'
+export type OrderType = 'dine_in' | 'takeaway' | 'drive_through'
 export type TenderMethod = 'cash' | 'card' | 'other' | 'gift_card'
 export type SyncState = 'pending' | 'syncing' | 'synced' | 'rejected'
 
@@ -114,6 +114,8 @@ export type PosOrder = {
 	/** Contract 7: a phone order's caller agreed to the ready text. */
 	readyTextOptIn?: boolean
 	tableLabel: string
+	/** Lane or vehicle. Only for drive-through. */
+	driveThroughNote?: string | null
 	locationId: string
 	currency: string
 	taxRatePercent: number

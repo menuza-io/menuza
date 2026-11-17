@@ -10,6 +10,9 @@ export type SelectionType = 'single' | 'multiple' | 'quantity' | 'pizza'
 export type MenuOption = {
 	id: string
 	displayName: string
+	/** Localized kitchen name. Absent on a menu published before it. */
+	kitchenName?: string | null
+	kitchenHighlight?: string | null
 	price: number
 	/**
 	 * What the whole topping costs on a pizza when it differs from `price`. The
@@ -54,6 +57,10 @@ export type Variant = {
 export type MenuItem = {
 	id: string
 	displayName: string
+	kitchenName?: string | null
+	kitchenHighlight?: string | null
+	/** From the dish's category when the location uses courses. */
+	defaultCourseId?: string | null
 	description: string | null
 	price: number
 	imageUrl: string | null
@@ -73,6 +80,7 @@ export type MenuItem = {
 export type MenuCategory = {
 	id: string
 	displayName: string
+	defaultCourseId?: string | null
 	parentId?: string | null
 	subcategories?: MenuCategory[]
 	availabilityStatus: string
@@ -96,6 +104,12 @@ export type MenuLocation = {
 	inHouseTips?: { pickupTips?: boolean; dineInTips?: boolean }
 	/** "Text me when it's ready" is offered at checkout. Absent in older payloads: off. */
 	readyText?: boolean
+	/** Table-service courses. Absent means off. */
+	courses?: {
+		enabled: boolean
+		autoFireMinutes?: number | null
+		courses: Array<{ id: string; name: string }>
+	} | null
 }
 
 export type MenuPayload = {

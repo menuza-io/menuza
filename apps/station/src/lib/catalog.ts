@@ -203,6 +203,10 @@ export function buildCategories(
 		const items = (cat.items ?? [])
 			.map(applyItem)
 			.filter((i): i is MenuItem => i !== null)
+			.map((item) => ({
+				...item,
+				defaultCourseId: item.defaultCourseId ?? cat.defaultCourseId ?? null,
+			}))
 			.sort((a, b) => a.position - b.position)
 		if (items.length === 0 && subcategories.length === 0) return null
 		return { ...cat, items, subcategories }

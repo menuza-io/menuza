@@ -1,7 +1,11 @@
 'use client'
 
-import { Trans, msg } from '@lingui/macro'
+import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import {
+	courseSettingsSchema,
+	DEFAULT_COURSES,
+} from '@repo/common/kitchen-ticket'
 import {
 	type DeliveryConfig,
 	type DeliveryZone,
@@ -98,6 +102,35 @@ import {
 } from './ordering-settings-cards'
 import { SpecialHoursPicker } from './special-hours-picker'
 
+function courseAutoFireMinutes(raw: string): number | null {
+	const minutes = Number(raw.trim())
+	if (!Number.isInteger(minutes) || minutes < 1 || minutes > 180) return null
+	return minutes
+}
+
+function readStoredCourses(raw: string | null | undefined) {
+	const fallback = {
+		enabled: false,
+		autoFireMinutes: '',
+		courses: DEFAULT_COURSES.map((course) => ({ ...course })),
+	}
+	if (!raw) return fallback
+	try {
+		const parsed = courseSettingsSchema.safeParse(JSON.parse(raw))
+		if (!parsed.success) return fallback
+		return {
+			enabled: parsed.data.enabled,
+			autoFireMinutes: parsed.data.autoFireMinutes
+				? String(parsed.data.autoFireMinutes)
+				: '',
+			courses:
+				parsed.data.courses.length > 0 ? parsed.data.courses : fallback.courses,
+		}
+	} catch {
+		return fallback
+	}
+}
+
 const TIMEZONE_OPTIONS = [
 	{ value: 'America/New_York', label: 'Eastern Time (US & Canada)' },
 	{ value: 'America/Chicago', label: 'Central Time (US & Canada)' },
@@ -133,6 +166,7 @@ export interface InitialLocationData {
 	scheduling?: SchedulingOptions | null
 	deliveryConfig?: DeliveryConfig | null
 	deliveryZones?: DeliveryZone[] | null
+	courseSettings?: string | null
 	isActive?: boolean
 	isDefault?: boolean
 }
@@ -355,6 +389,12 @@ function LocationFormBody({
 				DEFAULT_DELIVERY_CONFIG.estimatedDeliveryTimeMax,
 		}
 	})
+	const storedCourses = readStoredCourses(initialData?.courseSettings)
+	const [coursesEnabled, setCoursesEnabled] = useState(storedCourses.enabled)
+	const [autoFireMinutes, setAutoFireMinutes] = useState(
+		storedCourses.autoFireMinutes,
+	)
+	const [courseNames, setCourseNames] = useState(storedCourses.courses)
 	const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>(() => {
 		if (
 			Array.isArray(initialData?.deliveryZones) &&
@@ -413,6 +453,17 @@ function LocationFormBody({
 		scheduling: JSON.stringify(scheduling),
 		deliveryConfig: JSON.stringify(deliveryConfig),
 		deliveryZones: JSON.stringify(deliveryZones),
+		courseSettings: JSON.stringify({
+			enabled: coursesEnabled,
+			autoFireMinutes: courseAutoFireMinutes(autoFireMinutes),
+			courses: courseNames.map((course) => ({
+				id: course.id,
+				name:
+					course.name.trim() ||
+					DEFAULT_COURSES.find((item) => item.id === course.id)?.name ||
+					course.id,
+			})),
+		}),
 		...(orderPolicies && policyValues ? policyValues : {}),
 		// Typed text as JSON; the action reads it into the shared settings.
 		...(checkoutSettings && tipValues
@@ -1279,6 +1330,78 @@ function LocationFormBody({
 							</Card>
 						</TabsContent>
 					</Tabs>
+
+					<Card>
+						<CardHeader>
+							<CardTitle>
+								<Trans>Courses</Trans>
+							</CardTitle>
+							<CardDescription>
+								<Trans>
+									Dine-in tickets can hold later courses until the kitchen fires
+									them. Takeaway, delivery and drive-through send everything at
+									once.
+								</Trans>
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="flex items-center justify-between gap-3">
+								<Label htmlFor="loc-courses">
+									<Trans>Fire courses one at a time</Trans>
+								</Label>
+								<Switch
+									id="loc-courses"
+									checked={coursesEnabled}
+									onCheckedChange={setCoursesEnabled}
+								/>
+							</div>
+							<div className="grid gap-3 sm:grid-cols-3">
+								{courseNames.map((course, index) => (
+									<div key={course.id} className="space-y-2">
+										<Label htmlFor={`loc-course-${course.id}`}>
+											{course.id === 'starter'
+												? _(t`Starter`)
+												: course.id === 'main'
+													? _(t`Main`)
+													: course.id === 'dessert'
+														? _(t`Dessert`)
+														: course.id}
+										</Label>
+										<Input
+											id={`loc-course-${course.id}`}
+											value={course.name}
+											onChange={(event) =>
+												setCourseNames((current) =>
+													current.map((item, itemIndex) =>
+														itemIndex === index
+															? { ...item, name: event.target.value }
+															: item,
+													),
+												)
+											}
+										/>
+									</div>
+								))}
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="loc-course-autofire">
+									<Trans>Fire the next course after (minutes)</Trans>
+								</Label>
+								<Input
+									id="loc-course-autofire"
+									inputMode="numeric"
+									value={autoFireMinutes}
+									onChange={(event) => setAutoFireMinutes(event.target.value)}
+									placeholder={_(t`Leave empty to fire by hand`)}
+								/>
+								<p className="text-muted-foreground text-xs">
+									<Trans>
+										Starts when every dish in the previous course is ready.
+									</Trans>
+								</p>
+							</div>
+						</CardContent>
+					</Card>
 
 					{/* Bottom Actions Bar */}
 					<div className="border-border flex items-center justify-end gap-3 border-t pt-4">

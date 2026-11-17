@@ -66,6 +66,14 @@ already took money for.
   totals are all unchanged, but the discount checks run again on any revision
   whose `discountApplications` differ from the previous revision's (for example
   applications added when the sale is paid).
+- **Contract 9.** `POS_CONTRACT_VERSION` is 9. A sale may be
+  `drive_through` and a line may carry a kitchen name, a kitchen highlight
+  and a dine-in course. Every new field is optional, so a contract 8 upload
+  still parses. An older node cannot read `drive_through` and holds that
+  upload. Deploy tenant-api before Station. On the kitchen feed,
+  drive-through stays `fulfillment: takeaway` plus `driveThrough: true`, and
+  a QR table round stays `channel: online` plus `service: qr`, so an older
+  kitchen screen still shows those tickets.
 - **Contract 6.** `POS_CONTRACT_VERSION` is 6. A sale may include
   `discountApplications` (optional; omitted uploads still parse as none, so a
   contract 5 till keeps working). An adjustment may carry `lineAmounts` (the

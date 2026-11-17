@@ -329,6 +329,11 @@
       "import": "./src/kds.ts",
       "default": "./src/kds.ts"
     },
+    "./kitchen-ticket": {
+      "types": "./src/kitchen-ticket.ts",
+      "import": "./src/kitchen-ticket.ts",
+      "default": "./src/kitchen-ticket.ts"
+    },
     "./pos-online-orders": {
       "types": "./src/pos-online-orders.ts",
       "import": "./src/pos-online-orders.ts",

@@ -2671,6 +2671,11 @@ export const OrganizationLocation = sqliteTable(
 		 * Packaging / bag fee (#408). JSON `PackagingFeeSettings`.
 		 */
 		packagingFee: text(),
+		/**
+		 * Table-service courses (#290). JSON `{ enabled, autoFireMinutes, courses }`.
+		 * Null is off. Course names are operator text, not guest data.
+		 */
+		courseSettings: text(),
 		scheduling: text(),
 		deliveryConfig: text(),
 		deliveryZones: text(),
@@ -3070,6 +3075,8 @@ export const OrganizationMenuCategory = sqliteTable(
 		excludeFromOrderLimits: integer({ mode: 'boolean' })
 			.default(false)
 			.notNull(),
+		/** Course id from the location's course list (#290). Null: the first course. */
+		defaultCourseId: text(),
 		parentId: text().references((): any => OrganizationMenuCategory.id, {
 			onDelete: 'cascade',
 			onUpdate: 'cascade',
@@ -3164,6 +3171,10 @@ export const OrganizationMenuItem = sqliteTable(
 			.notNull(),
 		/** Daily quantity cap per location (#409). JSON `DailySaleLimit`. */
 		dailySaleLimit: text(),
+		/** Localized kitchen ticket name (#413). Same JSON shape as displayName. */
+		kitchenName: text(),
+		/** none | allergy | attention | long_prep. Null uses the removal default. */
+		kitchenHighlight: text(),
 		isPopular: integer({ mode: 'boolean' }).default(false).notNull(),
 		isUpsell: integer({ mode: 'boolean' }).default(false).notNull(),
 		availabilityStatus: text().default('available').notNull(),
@@ -3325,6 +3336,10 @@ export const OrganizationMenuOption = sqliteTable(
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
 		/** Daily quantity cap per location (#409). JSON `DailySaleLimit`. */
 		dailySaleLimit: text(),
+		/** Localized kitchen ticket name (#413). Same JSON shape as displayName. */
+		kitchenName: text(),
+		/** none | allergy | attention | long_prep. Null uses the removal default. */
+		kitchenHighlight: text(),
 		nestedModifierGroupIds: text().default('[]').notNull(),
 		position: integer().default(0).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })

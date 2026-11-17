@@ -5,15 +5,20 @@ import { localDateAndTimeToUtc } from '@repo/common/location-availability'
 import {
 	DEFAULT_KDS_CONFIG,
 	kdsConfigSchema,
-	kdsStationFor,
+	kdsCoverageGaps,
+	kdsPrimaryStation,
+	kdsStationsFor,
 	kdsTicketStage,
+	type KdsChannel,
 	type KdsCommand,
 	type KdsConfig,
 	type KdsFeed,
+	type KdsFulfillment,
 	type KdsLine,
 	type KdsSource,
 	type KdsTicket,
 } from '@repo/common/kds'
+import { effectiveHighlight } from '@repo/common/kitchen-ticket'
 import {
 	kdsEvents,
 	kdsLocationSettings,
@@ -40,16 +45,26 @@ const hash = (value: unknown) =>
 	createHash('sha256').update(JSON.stringify(value)).digest('hex')
 const DAY = 86_400_000
 const LIMIT = 500
+const highlightSchema = z
+	.enum(['none', 'allergy', 'attention', 'long_prep'])
+	.optional()
 const optionSchema = z.object({
 	optionName: z.string(),
+	name: z.string().optional(),
 	quantity: z.number().optional(),
 	half: z.enum(['whole', 'left', 'right']).nullable().optional(),
+	groupName: z.string().optional(),
+	kitchenName: z.string().optional(),
+	kitchenHighlight: highlightSchema,
+	highlight: highlightSchema,
 })
 const sourceLineSchema = z.object({
 	id: z.string().optional(),
 	itemId: z.string(),
 	name: z.string().optional(),
 	itemName: z.string().optional(),
+	kitchenName: z.string().optional(),
+	kitchenHighlight: highlightSchema,
 	variantLabel: z.string().nullable().optional(),
 	/** The variant's value names ("Large"), on lines priced by the website. */
 	variantNames: z.array(z.string()).optional(),
@@ -59,6 +74,12 @@ const sourceLineSchema = z.object({
 	options: z.array(optionSchema).default([]),
 	/** When the till sent it (contract 4): its round on a tab, by the till's clock. */
 	sentAt: z.string().optional(),
+	courseId: z.string().optional(),
+	courseName: z.string().optional(),
+	coursePosition: z.number().int().optional(),
+	courseHeld: z.boolean().optional(),
+	held: z.boolean().optional(),
+	courseFiredAt: z.string().optional(),
 })
 
 type KitchenDb = TenantDatabase
@@ -72,9 +93,12 @@ type SourceLine = z.infer<typeof sourceLineSchema>
  */
 type Progress = StoredTicket['progress']
 const SERVED = 'served:'
+const STAGES = new Set(['new', 'preparing', 'ready'])
 const stageIn = (progress: Progress, id: string) => {
 	const value = progress[id]
-	return typeof value === 'string' ? value : undefined
+	return typeof value === 'string' && STAGES.has(value)
+		? (value as KdsLine['stage'])
+		: undefined
 }
 const servedIn = (progress: Progress, id: string) => {
 	const value = progress[SERVED + id]
@@ -105,7 +129,15 @@ type SourceOrder = {
 	number: string
 	channel: KdsTicket['channel']
 	fulfillment: KdsTicket['fulfillment']
+	/** Routing order type. Drive-through stays `takeaway` on `fulfillment`. */
+	routeFulfillment: KdsFulfillment
+	/** Routing channel. QR table rounds stay `online` on `channel`. */
+	routeChannel: KdsChannel
 	tableLabel: string | null
+	paid?: boolean
+	driveThrough?: boolean
+	driveThroughNote?: string | null
+	service?: 'qr'
 	createdAt: number
 	dueAt: number | null
 	/** When the source last changed: the latest dishes arrived by then. */
@@ -156,12 +188,21 @@ function project(
 	if (!parsed.success)
 		console.error('Kitchen could not read an order', order.source, order.id)
 	const sourceLines = parsed.success ? parsed.data : []
+	const courses =
+		order.fulfillment === 'dine_in' && !order.driveThrough && order.service !== 'qr'
 	const lines: KdsLine[] = sourceLines.map((line, index) => {
-		const stationId = kdsStationFor(config, line.itemId)
 		const { content, id } = lineContent(line, index)
 		const stage =
 			(saved && stageIn(saved.progress, id)) ??
 			(saved ? 'new' : order.initialStage)
+		// A config change moves the dish, including one already started. The
+		// stage stored below is what stays.
+		const stationIds = kdsStationsFor(config, {
+			itemId: line.itemId,
+			fulfillment: order.routeFulfillment,
+			channel: order.routeChannel,
+		})
+		const stationId = kdsPrimaryStation(config, stationIds)
 		const received =
 			firstSeen?.get(id) ??
 			(saved && stageIn(saved.progress, id) === undefined
@@ -170,28 +211,64 @@ function project(
 		// The till's own time for the round (rounds saved offline stay apart), but
 		// never later than the server had it: a fast till clock is not the future.
 		const sentAt = line.sentAt ? Date.parse(line.sentAt) : Number.NaN
-		const firedAt = Number.isFinite(sentAt)
-			? Math.min(sentAt, received ?? order.updatedAt)
-			: received
+		const courseFired = line.courseFiredAt
+			? Date.parse(line.courseFiredAt)
+			: Number.NaN
+		const held = courses && (line.courseHeld === true || line.held === true)
+		const started = Number.isFinite(courseFired)
+			? courseFired
+			: Number.isFinite(sentAt)
+				? sentAt
+				: undefined
+		const firedAt = held
+			? undefined
+			: started !== undefined
+				? Math.min(started, received ?? order.updatedAt)
+				: received
 		const servedAt =
 			saved && stage === 'ready' ? servedIn(saved.progress, id) : undefined
+		const guestName = content.name
+		const highlight = effectiveHighlight(line.kitchenHighlight, guestName)
 		return {
 			id,
 			...(firedAt !== undefined ? { firedAt } : {}),
 			...(servedAt !== undefined ? { servedAt } : {}),
 			itemId: line.itemId,
-			name: content.name,
+			name: guestName,
+			...(line.kitchenName ? { kitchenName: line.kitchenName } : {}),
+			...(highlight ? { highlight } : {}),
 			variant: line.variantLabel ?? null,
 			variantId: line.variantId ?? null,
 			quantity: line.quantity,
 			instructions: content.instructions,
-			options: line.options.map((option) => ({
-				name: option.optionName,
-				quantity: option.quantity ?? 1,
-				half: option.half ?? null,
-			})),
+			options: line.options.map((option) => {
+				const optionGuest = option.optionName || option.name || ''
+				const optionHighlight = effectiveHighlight(
+					option.kitchenHighlight ?? option.highlight,
+					optionGuest,
+				)
+				return {
+					name: optionGuest,
+					...(option.kitchenName ? { kitchenName: option.kitchenName } : {}),
+					...(option.groupName ? { groupName: option.groupName } : {}),
+					...(optionHighlight ? { highlight: optionHighlight } : {}),
+					quantity: option.quantity ?? 1,
+					half: option.half ?? null,
+				}
+			}),
 			stationId,
+			...(stationIds.length > 1 ? { stationIds } : {}),
 			stage,
+			...(courses && line.courseId
+				? {
+						courseId: line.courseId,
+						...(line.courseName ? { courseName: line.courseName } : {}),
+						...(line.coursePosition != null
+							? { coursePosition: line.coursePosition }
+							: {}),
+						held,
+					}
+				: {}),
 		}
 	})
 	const complete =
@@ -223,6 +300,12 @@ function project(
 		...(order.largeOrderExtraMinutes
 			? { largeOrderExtraMinutes: order.largeOrderExtraMinutes }
 			: {}),
+		...(order.driveThrough ? { driveThrough: true } : {}),
+		...(order.driveThroughNote
+			? { driveThroughNote: order.driveThroughNote }
+			: {}),
+		...(order.paid !== undefined ? { paid: order.paid } : {}),
+		...(order.service ? { service: order.service } : {}),
 	}
 }
 
@@ -271,8 +354,14 @@ function posSource(row: typeof posOrders.$inferSelect): SourceOrder {
 		source: 'pos',
 		number: row.number,
 		channel: row.orderSource,
-		fulfillment: row.orderType,
+		fulfillment: row.orderType === 'drive_through' ? 'takeaway' : row.orderType,
+		routeFulfillment:
+			row.orderType === 'drive_through' ? 'drive_through' : row.orderType,
+		routeChannel: row.orderSource,
 		tableLabel: row.tableLabel,
+		paid: row.status === 'paid' || row.status === 'refunded',
+		driveThrough: row.orderType === 'drive_through',
+		driveThroughNote: row.driveThroughNote,
 		createdAt: row.rungUpAt,
 		dueAt: row.pickupAt,
 		updatedAt: row.updatedAt,
@@ -287,14 +376,24 @@ function onlineSource(row: typeof restaurantOrders.$inferSelect): SourceOrder {
 		source: 'online',
 		number: row.number,
 		channel: 'online',
-		// A QR table round is cooked for the table it came from.
+		// A QR table round is cooked for the table it came from. It stays
+		// channel `online` on the wire; routing reads `service: 'qr'`.
 		fulfillment:
 			row.fulfillment === 'delivery'
 				? 'delivery'
 				: row.fulfillment === 'dine_in'
 					? 'dine_in'
 					: 'takeaway',
+		routeFulfillment:
+			row.fulfillment === 'delivery'
+				? 'delivery'
+				: row.fulfillment === 'dine_in'
+					? 'dine_in'
+					: 'takeaway',
+		routeChannel: row.source === 'qr_table' ? 'qr' : 'online',
+		service: row.source === 'qr_table' ? 'qr' : undefined,
 		tableLabel: row.fulfillment === 'dine_in' ? (row.tableLabel ?? null) : null,
+		paid: row.paymentStatus === 'paid' || row.paymentStatus === 'not_required',
 		createdAt: row.createdAt?.getTime() ?? 0,
 		updatedAt: row.updatedAt?.getTime() ?? row.createdAt?.getTime() ?? 0,
 		dueAt:
@@ -747,6 +846,8 @@ export async function configureKitchen(
 				const current = await settings(tx, actor.locationId)
 				if (current.version !== expectedVersion)
 					throw new HttpError(409, 'stale_settings')
+				if (kdsCoverageGaps(config).length)
+					throw new HttpError(422, 'kitchen_uncovered')
 				const now = Date.now()
 				await tx
 					.insert(kdsLocationSettings)

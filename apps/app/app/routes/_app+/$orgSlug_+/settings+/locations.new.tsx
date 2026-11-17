@@ -1,5 +1,6 @@
 import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
+import { courseSettingsJson } from '@repo/common/kitchen-ticket'
 import { redirectWithToast } from '@repo/common/toast'
 import { and, count, db, eq, OrganizationLocation } from '@repo/database'
 import { Button } from '@repo/ui/button'
@@ -57,6 +58,7 @@ const LocationInputSchema = z.object({
 	scheduling: z.string().optional(),
 	deliveryConfig: z.string().optional(),
 	deliveryZones: z.string().optional(),
+	courseSettings: z.string().optional(),
 	orderingSettings: z.string().optional(),
 })
 
@@ -197,6 +199,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				scheduling: data.scheduling || null,
 				deliveryConfig: data.deliveryConfig || null,
 				deliveryZones: data.deliveryZones || null,
+				...(data.courseSettings !== undefined
+					? { courseSettings: courseSettingsJson(data.courseSettings) }
+					: {}),
 				...ordering.patch,
 			})
 			.returning({ id: OrganizationLocation.id })

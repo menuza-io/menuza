@@ -75,6 +75,7 @@ function placeLabel(
 		tableLabel: string | null
 		customerName: string | null
 		orderSource?: string
+		driveThroughNote?: string | null
 	},
 ) {
 	const table = order.tableLabel
@@ -82,6 +83,10 @@ function placeLabel(
 		return `${_(t`Phone`)} · ${order.customerName || _(t`Pickup`)}`
 	if (order.orderType === 'dine_in')
 		return table ? _(t`Table ${table}`) : _(t`Dine in`)
+	if (order.orderType === 'drive_through')
+		return order.driveThroughNote
+			? `${_(t`Drive-through`)} · ${order.driveThroughNote}`
+			: _(t`Drive-through`)
 	return order.customerName || _(t`Takeaway`)
 }
 

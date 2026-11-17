@@ -358,6 +358,13 @@
 			"when": 1795000002000,
 			"tag": "0050_checkout_rules_tenant",
 			"breakpoints": true
+		},
+		{
+			"idx": 51,
+			"version": "6",
+			"when": 1795000005000,
+			"tag": "0051_kitchen_courses",
+			"breakpoints": true
 		}
 	]
 }

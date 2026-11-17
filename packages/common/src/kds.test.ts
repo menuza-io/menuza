@@ -3,9 +3,12 @@ import {
 	DEFAULT_KDS_CONFIG,
 	kdsCommandSchema,
 	kdsConfigSchema,
+	kdsCoverageGaps,
 	kdsFireAt,
 	kdsStationFor,
+	kdsStationsFor,
 	kdsTicketStage,
+	type KdsConfig,
 } from './kds.ts'
 
 describe('kitchen contract', () => {
@@ -56,6 +59,100 @@ describe('kitchen contract', () => {
 		expect(kdsTicketStage([{ stage: 'ready' }, { stage: 'ready' }])).toBe(
 			'ready',
 		)
+	})
+	it('reads a config saved before routing and ticket switches', () => {
+		const legacy = {
+			stations: [{ id: 'kitchen', name: 'Kitchen', itemIds: ['burger'] }],
+			defaultStationId: 'kitchen',
+			workflow: 'ticket',
+			showPreparing: true,
+			warningMinutes: 10,
+			lateMinutes: 20,
+			fireAheadMinutes: 30,
+		}
+		const parsed = kdsConfigSchema.parse(legacy)
+		expect(parsed.showPaymentStatus).toBeUndefined()
+		expect(parsed.stations[0]?.fulfillments).toBeUndefined()
+		expect(kdsCoverageGaps(parsed)).toEqual([])
+		expect(
+			kdsStationsFor(parsed, {
+				itemId: 'burger',
+				fulfillment: 'dine_in',
+				channel: 'counter',
+			}),
+		).toEqual(['kitchen'])
+		expect(
+			kdsStationsFor(parsed, {
+				itemId: 'salad',
+				fulfillment: 'drive_through',
+				channel: 'qr',
+			}),
+		).toEqual(['kitchen'])
+	})
+	it('routes by order type and channel, and keeps an all-dishes station', () => {
+		const config: KdsConfig = {
+			...DEFAULT_KDS_CONFIG,
+			stations: [
+				{
+					id: 'kitchen',
+					name: 'Kitchen',
+					itemIds: [],
+					fulfillments: ['dine_in', 'takeaway'],
+					channels: ['counter', 'phone', 'online', 'qr'],
+				},
+				{
+					id: 'pack',
+					name: 'Pack',
+					itemIds: [],
+					allItems: true,
+					fulfillments: ['delivery'],
+					channels: ['online'],
+				},
+				{
+					id: 'grill',
+					name: 'Grill',
+					itemIds: ['burger'],
+					fulfillments: ['dine_in', 'takeaway', 'delivery', 'drive_through'],
+					channels: ['counter', 'phone', 'online', 'qr'],
+				},
+			],
+			defaultStationId: 'kitchen',
+		}
+		expect(
+			kdsStationsFor(config, {
+				itemId: 'burger',
+				fulfillment: 'dine_in',
+				channel: 'counter',
+			}),
+		).toEqual(['grill'])
+		expect(
+			kdsStationsFor(config, {
+				itemId: 'burger',
+				fulfillment: 'delivery',
+				channel: 'online',
+			}),
+		).toEqual(['pack', 'grill'])
+		expect(
+			kdsStationsFor(config, {
+				itemId: 'salad',
+				fulfillment: 'delivery',
+				channel: 'counter',
+			}),
+		).toEqual(['kitchen'])
+		expect(
+			kdsCoverageGaps({
+				stations: [
+					{
+						id: 'pack',
+						itemIds: [],
+						fulfillments: ['delivery'],
+						channels: ['online'],
+					},
+				],
+			}).some(
+				(gap) => gap.fulfillment === 'dine_in' && gap.channel === 'counter',
+			),
+		).toBe(true)
 	})
 	it('starts scheduled-order timers when preparation is due', () => {
 		expect(

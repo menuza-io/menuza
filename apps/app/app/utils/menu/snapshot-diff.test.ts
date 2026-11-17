@@ -47,6 +47,8 @@ describe('diffMenuSnapshots', () => {
 				excludeFromDiscounts: false,
 				excludeFromOrderLimits: false,
 				dailySaleLimit: null,
+				kitchenName: null,
+				kitchenHighlight: null,
 				isPopular: false,
 				isUpsell: false,
 				availabilityStatus: 'available',

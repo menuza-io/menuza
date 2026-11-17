@@ -1,4 +1,5 @@
 import { t } from '@lingui/macro'
+import { fireNextCourse, holdLaterCourses } from '@repo/common/kitchen-ticket'
 import {
 	posCustomerPhoneSchema,
 	posPickupTimeZoneSchema,
@@ -94,6 +95,7 @@ export type OrderDraft = {
 	/** A phone order's caller agreed to one text on the callback number. */
 	readyTextOptIn?: boolean
 	tableLabel: string
+	driveThroughNote?: string | null
 	lines: CartLine[]
 	adjustments: Adjustment[]
 	tipCents: number
@@ -279,8 +281,39 @@ export async function markCleared(
  * Saving sends what was not sent yet: every line without a time gets this
  * save's time, so one save is one round to the kitchen.
  */
+/** Replaces the lines of an open tab and queues the upload. */
+export async function replaceOpenLines(
+	id: string,
+	lines: PosOrder['lines'],
+	now: number = Date.now(),
+): Promise<void> {
+	await db.transaction('rw', db.orders, async () => {
+		const order = await db.orders.get(id)
+		if (!order || order.status !== 'open') return
+		await db.orders.update(id, { lines, ...touched(order, now) })
+	})
+}
+
+/** Fires the next held course on an open dine-in tab and queues the upload. */
+export async function fireHeldCourse(
+	id: string,
+	now: number = Date.now(),
+): Promise<void> {
+	await db.transaction('rw', db.orders, async () => {
+		const order = await db.orders.get(id)
+		if (!order || order.status !== 'open' || order.orderType !== 'dine_in')
+			return
+		const lines = fireNextCourse(order.lines, now)
+		if (lines.every((line, index) => line === order.lines[index])) return
+		await db.orders.update(id, { lines, ...touched(order, now) })
+	})
+}
+
 export const sendLines = (lines: CartLine[], now: number): CartLine[] =>
-	lines.map((line) => (line.sentAt ? line : { ...line, sentAt: now }))
+	holdLaterCourses(
+		lines.map((line) => (line.sentAt ? line : { ...line, sentAt: now })),
+		now,
+	)
 
 /**
  * A tab saved from the cart keeps what was marked served meanwhile (in Orders):
@@ -376,6 +409,7 @@ export async function createOrder(
 			...contactDetails(draft),
 			customerName: draft.customerName.trim(),
 			tableLabel: draft.tableLabel.trim(),
+			driveThroughNote: draft.driveThroughNote?.trim() || null,
 			locationId: draft.locationId,
 			currency: draft.currency,
 			taxRatePercent: draft.taxRatePercent,
@@ -474,6 +508,7 @@ export async function updateTab(
 			...contactDetails(draft),
 			customerName: draft.customerName.trim(),
 			tableLabel: draft.tableLabel.trim(),
+			driveThroughNote: draft.driveThroughNote?.trim() || null,
 			lines: keepServed(sendLines(draft.lines, now), order.lines),
 			// A member identified later in the tab's life is kept for the rest of it.
 			loyalty: draft.loyalty ?? order.loyalty ?? null,
@@ -765,9 +800,13 @@ export type ServerTab = {
 	signIn: SignInMode | null
 	/** As uploaded: the till's id for the line and when it was sent, from a contract 4 till. */
 	lines: Array<
-		Omit<CartLine, 'id' | 'sentAt' | 'servedAt' | 'sentQuantity'> & {
+		Omit<
+			CartLine,
+			'id' | 'sentAt' | 'servedAt' | 'sentQuantity' | 'courseFiredAt'
+		> & {
 			id?: string
 			sentAt?: string
+			courseFiredAt?: string
 		}
 	>
 	lineVoids: Array<Omit<LineVoid, 'at'> & { at: string }>
@@ -818,11 +857,16 @@ export async function adoptTab(
 		catalogFetchedAt: null,
 		// Everything on it was sent by the terminal that had it: the same ids (the
 		// kitchen keeps its progress) and rounds, or the tab's opening for an older till's.
-		lines: tab.lines.map((l) => ({
-			...l,
-			id: l.id ?? crypto.randomUUID(),
-			sentAt: l.sentAt ? Date.parse(l.sentAt) : Date.parse(tab.createdAt),
-		})),
+		lines: tab.lines.map((l) => {
+			const { courseFiredAt, sentAt, id, ...rest } = l
+			const fired = courseFiredAt ? Date.parse(courseFiredAt) : Number.NaN
+			return {
+				...rest,
+				id: id ?? crypto.randomUUID(),
+				sentAt: sentAt ? Date.parse(sentAt) : Date.parse(tab.createdAt),
+				...(Number.isFinite(fired) ? { courseFiredAt: fired } : {}),
+			}
+		}),
 		lineVoids: tab.lineVoids.map((v) => ({ ...v, at: Date.parse(v.at) })),
 		adjustments: tab.adjustments,
 		totals: tab.totals,

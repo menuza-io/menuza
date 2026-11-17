@@ -1642,6 +1642,9 @@ export type PricedOptionLine = {
 	groupName: string
 	optionId: string
 	optionName: string
+	/** Localized kitchen name. Guest views keep `optionName`. */
+	kitchenName?: string
+	kitchenHighlight?: string
 	half: 'whole' | 'left' | 'right' | null
 	quantity: number
 	priceCents: number
@@ -1651,6 +1654,9 @@ export type PricedOptionLine = {
 export type PricedOrderLine = {
 	itemId: string
 	itemName: string
+	/** Localized kitchen name. Guest views keep `itemName`. */
+	kitchenName?: string
+	kitchenHighlight?: string
 	variantId: string | null
 	quantity: number
 	unitPriceCents: number
@@ -2222,6 +2228,31 @@ type ModifierResult =
 	  }
 	| { ok: false; error: RestaurantOrderError }
 
+function kitchenFields(entity: object): {
+	kitchenName?: string
+	kitchenHighlight?: string
+} {
+	const record = entity as {
+		kitchenName?: unknown
+		kitchenHighlight?: unknown
+	}
+	const kitchenName =
+		typeof record.kitchenName === 'string' && record.kitchenName
+			? record.kitchenName
+			: undefined
+	const kitchenHighlight =
+		record.kitchenHighlight === 'none' ||
+		record.kitchenHighlight === 'allergy' ||
+		record.kitchenHighlight === 'attention' ||
+		record.kitchenHighlight === 'long_prep'
+			? record.kitchenHighlight
+			: undefined
+	return {
+		...(kitchenName ? { kitchenName } : {}),
+		...(kitchenHighlight ? { kitchenHighlight } : {}),
+	}
+}
+
 function priceModifierSelections(
 	item: PublicMenuItemContext,
 	selections: Array<{
@@ -2410,6 +2441,7 @@ function priceModifierSelections(
 					groupName: group.name,
 					optionId: selection.option.id,
 					optionName: selection.option.displayName,
+					...kitchenFields(selection.option),
 					half: null,
 					quantity: 1,
 					priceCents,
@@ -2469,6 +2501,7 @@ function priceModifierSelections(
 					groupName: group.name,
 					optionId: selection.option.id,
 					optionName: selection.option.displayName,
+					...kitchenFields(selection.option),
 					half: null,
 					quantity,
 					priceCents,
@@ -2536,6 +2569,7 @@ function priceModifierSelections(
 				groupName: group.name,
 				optionId: selection.option.id,
 				optionName: selection.option.displayName,
+				...kitchenFields(selection.option),
 				half,
 				quantity: 1,
 				priceCents,
@@ -3060,6 +3094,7 @@ export function priceRestaurantOrder(
 		pricedLines.push({
 			itemId: entry.item.id,
 			itemName: entry.item.displayName,
+			...kitchenFields(entry.item),
 			variantId: variant ? variant.id : null,
 			quantity: line.quantity,
 			unitPriceCents: unitCents,

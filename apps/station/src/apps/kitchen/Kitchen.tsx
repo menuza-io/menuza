@@ -2,10 +2,18 @@ import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	kdsTicketStage,
+	lineOnStation,
 	type KdsCommand,
 	type KdsStage,
 	type KdsTicket,
+	type KitchenHighlight,
 } from '@repo/common/kds'
+import {
+	groupLinesByCourse,
+	kitchenLineName,
+	kitchenOrderType,
+	KITCHEN_HIGHLIGHT_ICON,
+} from '@repo/common/kitchen-ticket'
 import {
 	Empty,
 	EmptyHeader,
@@ -37,6 +45,7 @@ import { useKitchen } from './useKitchen.ts'
 import { usePrep } from './usePrep.ts'
 import { categoryItems } from '~/lib/catalog.ts'
 import { type PosSettings } from '~/lib/config.ts'
+import { i18n } from '@lingui/core'
 import { menuText } from '~/lib/menu-text.ts'
 import { type Session } from '~/lib/signin.ts'
 import { type MenuCategory, type MenuItem } from '~/lib/types.ts'
@@ -780,8 +789,14 @@ function Ticket({
 	wasteAction?: React.ReactNode
 }) {
 	const { _ } = useLingui()
-	const lines = ticket.lines.filter(
-		(line) => !stationId || line.stationId === stationId,
+	const lines = ticket.lines.filter((line) => lineOnStation(line, stationId))
+	const courseGroups = groupLinesByCourse(lines)
+	const orderedLines = courseGroups.flatMap((group) => group.lines)
+	const courseHeads = new Set(
+		courseGroups
+			.filter((group) => group.courseName)
+			.map((group) => group.lines[0]?.id)
+			.filter((id): id is string => Boolean(id)),
 	)
 	const stage = stationStage(ticket, stationId)
 	const allReady = kdsTicketStage(ticket.lines) === 'ready'
@@ -812,12 +827,15 @@ function Ticket({
 			: ticket.channel === 'phone'
 				? _(t`Phone`)
 				: _(t`Counter`)
+	const orderType = kitchenOrderType(ticket)
 	const fulfillment =
-		ticket.fulfillment === 'dine_in'
+		orderType === 'dine_in'
 			? _(t`Dine in`)
-			: ticket.fulfillment === 'delivery'
+			: orderType === 'delivery'
 				? _(t`Delivery`)
-				: _(t`Takeaway`)
+				: orderType === 'drive_through'
+					? _(t`Drive-through`)
+					: _(t`Takeaway`)
 	const number = ticket.number
 	// Online tickets with a promised time only: when the guest was told it is ready.
 	const promised = promisedTime(ticket)
@@ -841,6 +859,8 @@ function Ticket({
 			className="border-border bg-card min-w-0 overflow-hidden border-b"
 			data-kitchen-ticket
 			data-age={age}
+			data-order-type={orderType}
+			data-color-order={feed.config.showOrderTypeColor || undefined}
 			data-fresh={fresh || undefined}
 		>
 			<header
@@ -855,7 +875,20 @@ function Ticket({
 					</h4>
 					<p className="text-muted-foreground mt-1 text-sm font-medium">
 						{source} · {fulfillment}
+						{feed.config.showPaymentStatus && ticket.paid != null ? (
+							<>
+								{' · '}
+								<span className="text-foreground font-semibold">
+									{ticket.paid ? _(t`Paid`) : _(t`Unpaid`)}
+								</span>
+							</>
+						) : null}
 					</p>
+					{ticket.driveThroughNote ? (
+						<p className="mt-1 text-sm font-semibold break-words">
+							<Trans>Lane {ticket.driveThroughNote}</Trans>
+						</p>
+					) : null}
 					{ticket.tableLabel ? (
 						<p className="mt-1 text-base font-semibold break-words">
 							<Trans>Table {ticket.tableLabel}</Trans>
@@ -922,7 +955,7 @@ function Ticket({
 			) : null}
 			{ticket.cancelled ? wasteAction : null}
 			<ul className="divide-border divide-y">
-				{lines.map((line) => {
+				{orderedLines.map((line) => {
 					const item = items.get(line.itemId)
 					const added = addedAt(line)
 					const addedTime = added ? time.format(added) : ''
@@ -947,6 +980,8 @@ function Ticket({
 							key={line.id}
 							className="py-1"
 							data-served={served ? true : undefined}
+							data-held={line.held || undefined}
+							data-highlight={line.highlight || undefined}
 						>
 							<Item size="xs">
 								<ItemMedia className="self-start">
@@ -955,9 +990,20 @@ function Ticket({
 									</span>
 								</ItemMedia>
 								<ItemContent className="min-w-0">
+									{courseHeads.has(line.id) ? (
+										<p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+											{line.courseName}
+											{line.held ? ` · ${_(t`Held`)}` : ''}
+										</p>
+									) : null}
 									<p className="text-base leading-snug font-medium [overflow-wrap:anywhere]">
-										{menuText(line.name)}
+										{kitchenLineName(
+											menuText(line.name),
+											line.kitchenName,
+											i18n.locale,
+										)}
 									</p>
+									<KitchenMark highlight={line.highlight} />
 									{served ? (
 										<p className="kitchen-served">
 											<Icon name="check" aria-hidden className="size-3.5" />
@@ -982,14 +1028,25 @@ function Ticket({
 										<p
 											key={index}
 											className="mt-1 text-sm [overflow-wrap:anywhere]"
+											data-highlight={option.highlight || undefined}
 										>
+											{feed.config.showModifierGroups && option.groupName ? (
+												<span className="text-muted-foreground">
+													{menuText(option.groupName)}:{' '}
+												</span>
+											) : null}
 											{option.quantity > 1 ? `${option.quantity} × ` : ''}
-											{menuText(option.name)}
+											{kitchenLineName(
+												menuText(option.guestName ?? option.name),
+												option.kitchenName,
+												i18n.locale,
+											)}
 											{option.half === 'left'
 												? ` · ${_(t`Left half`)}`
 												: option.half === 'right'
 													? ` · ${_(t`Right half`)}`
 													: ''}
+											<KitchenMark highlight={option.highlight} />
 										</p>
 									))}
 									{line.instructions ? (
@@ -1127,5 +1184,30 @@ function Ticket({
 				</footer>
 			) : null}
 		</article>
+	)
+}
+
+function KitchenMark({
+	highlight,
+}: {
+	highlight?: KitchenHighlight | null
+}) {
+	const { _ } = useLingui()
+	if (!highlight || highlight === 'none') return null
+	const label =
+		highlight === 'allergy'
+			? _(t`Allergy`)
+			: highlight === 'long_prep'
+				? _(t`Long prep`)
+				: _(t`Attention`)
+	return (
+		<span className="kitchen-mark" data-highlight={highlight}>
+			<Icon
+				name={KITCHEN_HIGHLIGHT_ICON[highlight]}
+				className="size-3.5"
+				aria-hidden
+			/>
+			{label}
+		</span>
 	)
 }

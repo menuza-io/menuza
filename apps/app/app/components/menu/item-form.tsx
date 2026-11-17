@@ -70,6 +70,8 @@ import {
 export interface ItemFormData {
 	displayName: string
 	internalName: string
+	kitchenName?: string
+	kitchenHighlight?: string
 	description: string
 	price: number
 	imageKey: string | null
@@ -208,6 +210,12 @@ function ItemFormBody({
 	)
 	const [internalName, setInternalName] = useState(
 		initialData?.internalName ?? '',
+	)
+	const [kitchenName, setKitchenName] = useState(
+		initialData?.kitchenName ?? JSON.stringify({ [defaultLocale]: '' }),
+	)
+	const [kitchenHighlight, setKitchenHighlight] = useState(
+		initialData?.kitchenHighlight || 'none',
 	)
 	const [description, setDescription] = useState(
 		initialData?.description ?? JSON.stringify({ [defaultLocale]: '' }),
@@ -586,6 +594,44 @@ function ItemFormBody({
 												placeholder="e.g. Truffle Mushroom Risotto, Aperol Spritz"
 												required
 											/>
+										</div>
+
+										<div className="space-y-2">
+											<Label className="text-xs">
+												<Trans>Kitchen name (optional)</Trans>
+											</Label>
+											<LocalizedInput
+												value={kitchenName}
+												onChange={setKitchenName}
+												placeholder="Short name for the kitchen ticket"
+											/>
+											<input type="hidden" name="kitchenName" value={kitchenName} />
+											<p className="text-muted-foreground text-xs">
+												<Trans>
+													Shown on the kitchen screen and kitchen tickets.
+													Guest receipts keep the full name. Leave blank to use
+													the guest name.
+												</Trans>
+											</p>
+										</div>
+										<div className="space-y-2">
+											<Label className="text-xs" htmlFor="kitchen-highlight">
+												<Trans>Kitchen highlight</Trans>
+											</Label>
+											<select
+												id="kitchen-highlight"
+												name="kitchenHighlight"
+												className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+												value={kitchenHighlight}
+												onChange={(event) =>
+													setKitchenHighlight(event.target.value)
+												}
+											>
+												<option value="none">{_(t`None`)}</option>
+												<option value="allergy">{_(t`Allergy`)}</option>
+												<option value="attention">{_(t`Attention`)}</option>
+												<option value="long_prep">{_(t`Long prep`)}</option>
+											</select>
 										</div>
 
 										<div className="space-y-2">

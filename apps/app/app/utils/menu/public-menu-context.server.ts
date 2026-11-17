@@ -9,6 +9,7 @@
  * Contains no customer PII: only public org, location, menu, and pricing data.
  */
 
+import { readCourseSettings } from '@repo/common/kitchen-ticket'
 import {
 	DEFAULT_DELIVERY_CONFIG,
 	DEFAULT_FULFILLMENT_OPTIONS,
@@ -239,6 +240,7 @@ export async function buildPublicSiteMenuPayload(
 			deliveryZones: safeJsonParse<DeliveryZone[]>(loc.deliveryZones, []),
 			isDefault: Boolean(loc.isDefault),
 			readyText: textsGuests && Boolean(loc.readyTextEnabled),
+			courses: readCourseSettings(safeJsonParse(loc.courseSettings, null)),
 			...publicOrderingControls(loc, new Date()),
 			onlineOrderingSettings: safeJsonParse(loc.onlineOrderingSettings, null),
 			slotLimitSettings: safeJsonParse(loc.slotLimitSettings, null),
@@ -546,6 +548,7 @@ export async function buildPublicSiteMenuPayload(
 				id: cat.id,
 				displayName: cat.displayName,
 				internalName: cat.internalName,
+				defaultCourseId: cat.defaultCourseId,
 				description: cat.description,
 				parentId: cat.parentId ?? null,
 				subcategories: [] as PublicMenuCategoryData[],

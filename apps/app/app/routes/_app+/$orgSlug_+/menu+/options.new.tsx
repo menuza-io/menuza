@@ -1,6 +1,10 @@
 import { requireUserId } from '@repo/auth'
 import { serializeDailySaleLimit } from '@repo/common/daily-dish-limits'
-import { MenuOptionInputSchema } from '@repo/common/menu-types'
+import {
+	MenuOptionInputSchema,
+	storedKitchenHighlight,
+	storedKitchenName,
+} from '@repo/common/menu-types'
 import {
 	db,
 	eq,
@@ -219,6 +223,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				organizationId: organization.id,
 				displayName: data.displayName,
 				internalName: data.internalName || null,
+				kitchenName: storedKitchenName(data.kitchenName),
+				kitchenHighlight: storedKitchenHighlight(data.kitchenHighlight),
 				description: data.description || null,
 				imageKey: data.imageKey || null,
 				price: data.price,

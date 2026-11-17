@@ -401,7 +401,9 @@ function fromSale(order: PosOrder): DemoOrder {
 		source: 'pos',
 		number: order.serverNumber ?? order.number,
 		channel: order.orderSource ?? 'counter',
-		fulfillment: order.orderType,
+		fulfillment:
+			order.orderType === 'drive_through' ? 'takeaway' : order.orderType,
+		driveThrough: order.orderType === 'drive_through' || undefined,
 		tableLabel: order.tableLabel || null,
 		createdAt: order.createdAt,
 		dueAt: order.pickupAt ?? null,

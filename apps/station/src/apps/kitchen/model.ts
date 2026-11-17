@@ -1,17 +1,19 @@
 import {
 	kdsFireAt,
 	kdsTicketStage,
+	lineOnStation,
 	type KdsCommand,
 	type KdsConfig,
 	type KdsLine,
 	type KdsTicket,
 	type KdsStage,
 } from '@repo/common/kds'
+import { kitchenWorkStarted } from '@repo/common/kitchen-ticket'
 
 export type KitchenView = 'active' | 'scheduled' | 'done'
 
 const stationLines = (ticket: KdsTicket, stationId: string | null) =>
-	ticket.lines.filter((line) => !stationId || line.stationId === stationId)
+	ticket.lines.filter((line) => lineOnStation(line, stationId))
 
 /**
  * The dishes a table added after the kitchen made the earlier ones: every dish
@@ -45,9 +47,11 @@ export function workFiredAt(
 ): number {
 	const fired = kdsFireAt(ticket, config)
 	const round = laterRound(ticket, stationId)
-	return round
+	const started = round
 		? Math.max(fired, ...round.map((line) => line.firedAt ?? fired))
 		: fired
+	// A held course never counts as late. Its timer starts when it is fired.
+	return kitchenWorkStarted(stationLines(ticket, stationId), started)
 }
 
 export function visibleTickets(
@@ -61,7 +65,9 @@ export function visibleTickets(
 			(ticket) =>
 				(filter.channel === 'all' || ticket.channel === filter.channel) &&
 				(!filter.stationId ||
-					ticket.lines.some((line) => line.stationId === filter.stationId)) &&
+					ticket.lines.some((line) =>
+						lineOnStation(line, filter.stationId),
+					)) &&
 				(filter.view === 'done'
 					? ticket.completedAt !== null
 					: ticket.completedAt === null &&

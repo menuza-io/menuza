@@ -1,4 +1,5 @@
 import { t } from '@lingui/macro'
+import { fireNextCourse } from '@repo/common/kitchen-ticket'
 import { NO_POS_DEVICE_APPS } from '@repo/common/pos-orders'
 import { create } from 'zustand'
 import { wipeStock } from '../apps/stock/queue.ts'
@@ -31,6 +32,7 @@ import { localizeMenu, menuText, recordLocale } from './menu-text.ts'
 import {
 	adoptTab,
 	canAdoptTab,
+	fireHeldCourse,
 	markTransferredAway,
 	type ServerTab,
 } from './orders.ts'
@@ -127,6 +129,7 @@ export type PosState = {
 	/** A phone order's caller agreed to the ready text. */
 	readyTextOptIn: boolean
 	tableLabel: string
+	driveThroughNote: string
 	lines: CartLine[]
 	/** Set while the cart is an open tab being added to, rather than a new order. */
 	activeOrderId: string | null
@@ -169,6 +172,8 @@ export type PosState = {
 	setCustomerName: (name: string) => void
 	setReadyTextPhone: (phone: string) => void
 	setTableLabel: (label: string) => void
+	setDriveThroughNote: (note: string) => void
+	fireCourses: () => void
 	addLine: (line: Omit<CartLine, 'id'>) => void
 	setQuantity: (lineId: string, quantity: number) => void
 	replaceLine: (lineId: string, line: Omit<CartLine, 'id'>) => void
@@ -332,6 +337,30 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 		shownItems: itemsById(menu),
 		catalogStatus: (categories.length > 0 ? 'ready' : 'empty') as CatalogStatus,
 		catalogError: null,
+	}
+}
+
+function courseFor<T extends { itemId: string; courseId?: string }>(
+	state: {
+		orderType: string
+		location: { courses?: MenuLocation['courses'] } | null
+		shownItems: Map<string, { defaultCourseId?: string | null }>
+	},
+	line: T,
+): T {
+	if (line.courseId || state.orderType !== 'dine_in') return line
+	const settings = state.location?.courses
+	if (!settings?.enabled || !settings.courses.length) return line
+	const item = state.shownItems.get(line.itemId)
+	const found =
+		settings.courses.find((course) => course.id === item?.defaultCourseId) ??
+		settings.courses[0]
+	if (!found) return line
+	return {
+		...line,
+		courseId: found.id,
+		courseName: found.name,
+		coursePosition: Math.max(0, settings.courses.indexOf(found)),
 	}
 }
 
@@ -619,6 +648,7 @@ export const usePos = create<PosState>((set, get) => ({
 	readyTextPhone: '',
 	readyTextOptIn: false,
 	tableLabel: '',
+	driveThroughNote: '',
 	lines: [],
 	activeOrderId: null,
 	activeTax: null,
@@ -1035,9 +1065,29 @@ export const usePos = create<PosState>((set, get) => ({
 	setOrderType: (orderType) =>
 		set((s) => {
 			const nextType = s.orderSource === 'phone' ? 'takeaway' : orderType
-			return withAutomaticDiscounts({ ...s, orderType: nextType }, s.lines, {
-				orderType: nextType,
-			})
+			const lines =
+				nextType === 'dine_in'
+					? s.lines
+					: s.lines.map(
+							({
+								courseId: _id,
+								courseName: _name,
+								coursePosition: _position,
+								courseHeld: _held,
+								courseFiredAt: _fired,
+								...line
+							}) => line,
+						)
+			return {
+				...withAutomaticDiscounts(
+					{ ...s, orderType: nextType },
+					lines,
+					{ orderType: nextType },
+				),
+				tableLabel: nextType === 'dine_in' ? s.tableLabel : '',
+				driveThroughNote:
+					nextType === 'drive_through' ? s.driveThroughNote : '',
+			}
 		}),
 	setPhoneOrder: (details) =>
 		set({
@@ -1060,12 +1110,22 @@ export const usePos = create<PosState>((set, get) => ({
 	setCustomerName: (customerName) => set({ customerName }),
 	setReadyTextPhone: (readyTextPhone) => set({ readyTextPhone }),
 	setTableLabel: (tableLabel) => set({ tableLabel }),
+	setDriveThroughNote: (driveThroughNote) => set({ driveThroughNote }),
+	fireCourses: () => {
+		const now = Date.now()
+		set((s) => ({ lines: fireNextCourse(s.lines, now) }))
+		const id = get().activeOrderId
+		if (id) void fireHeldCourse(id, now)
+	},
 
 	addLine(added) {
 		set((s) =>
 			withAutomaticDiscounts(
 				s,
-				withUnsent(s.lines, renameLine(added, s.recordItems.get(added.itemId))),
+				withUnsent(
+					s.lines,
+					renameLine(courseFor(s, added), s.recordItems.get(added.itemId)),
+				),
 			),
 		)
 	},
