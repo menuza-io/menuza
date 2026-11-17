@@ -199,6 +199,18 @@ export async function loadCashDrawerShiftRecords(
 
 	const locationIdHint = rows.find((r) => r.locationId)?.locationId ?? 'default'
 
+	const movementsPromise = queryInChunks(shiftIds, (chunk) =>
+		ctx.db
+			.select()
+			.from(posCashMovements)
+			.where(inArray(posCashMovements.shiftId, chunk)),
+	)
+	const moneyRowsPromise = queryInChunks(shiftIds, (chunk) =>
+		ctx.db
+			.select()
+			.from(posPayments)
+			.where(inArray(posPayments.shiftId, chunk)),
+	)
 	const [
 		{ defaultCurrency, locations },
 		movements,
@@ -206,18 +218,8 @@ export async function loadCashDrawerShiftRecords(
 		deviceCurrencies,
 	] = await Promise.all([
 		loadLocationMeta(ctx, locationIdHint),
-		queryInChunks(shiftIds, (chunk) =>
-			ctx.db
-				.select()
-				.from(posCashMovements)
-				.where(inArray(posCashMovements.shiftId, chunk)),
-		),
-		queryInChunks(shiftIds, (chunk) =>
-			ctx.db
-				.select()
-				.from(posPayments)
-				.where(inArray(posPayments.shiftId, chunk)),
-		),
+		movementsPromise,
+		moneyRowsPromise,
 		loadDeviceCurrencies(ctx.db, deviceIds),
 	])
 
