@@ -12,6 +12,7 @@ import {
 	applyOrderingControl,
 	loadOrderingControls,
 } from '#app/utils/location/ordering-controls.server.ts'
+import { recordManualAvailabilityEvent } from '#app/utils/menu/availability-events.server.ts'
 import { applyMenuAvailability } from '#app/utils/menu/location-availability.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -81,7 +82,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			eq(Organization.active, true),
 			eq(Organization.hasProvisionedDb, true),
 		),
-		columns: { id: true, slug: true },
+		columns: { id: true, slug: true, dataRegion: true },
 	})
 	if (!organization) return failure(404, 'org_not_found')
 	const location = await db.query.OrganizationLocation.findFirst({
@@ -127,6 +128,11 @@ export async function action({ request }: ActionFunctionArgs) {
 					available: input.available,
 				},
 				by: 'hand',
+				recordManualEvent: recordManualAvailabilityEvent({
+					orgId: organization.id,
+					dataRegion: organization.dataRegion,
+					locationId: location.id,
+				}),
 			})
 			if (changed) {
 				await purgeOrganizationSiteCache(organization.id, organization.slug)

@@ -16,6 +16,7 @@ import {
 } from './org-wide-subjects.ts'
 import { referencedFieldIds } from './engine.ts'
 import { type ReportTemplate } from './templates.ts'
+import { isMenuInsightsReportSubject } from './catalog-menu-insights.ts'
 
 /**
  * What a person is offered in the Reports screens. Staff subjects (time cards,
@@ -37,6 +38,7 @@ function isGatedSubject(subject: string) {
 		isReservationsReportSubject(subject) ||
 		isGiftCardReportSubject(subject) ||
 		isSalesReportSubject(subject) ||
+		isMenuInsightsReportSubject(subject) ||
 		isOrgWideReportSubject(subject) ||
 		isPermissionGatedReportSubject(subject)
 	)

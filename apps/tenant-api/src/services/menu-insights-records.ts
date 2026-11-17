@@ -280,7 +280,7 @@ async function loadSales(
 			}
 		}
 		sales.push({
-			occurredAt: row.rungUpAt,
+			occurredAt: new Date(row.rungUpAt),
 			locationId: row.locationId,
 			channel: posSalesChannel(row.orderSource),
 			currency: row.currency.toUpperCase(),

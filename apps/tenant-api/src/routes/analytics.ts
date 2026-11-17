@@ -1,5 +1,5 @@
 import { SALES_BASIS_VALUES } from '@repo/common/sales-report-facts'
-import { Hono } from 'hono'
+import { type Context, Hono } from 'hono'
 import { and, desc, eq, gte, isNotNull, lt, lte, type SQL } from 'drizzle-orm'
 import { z } from 'zod'
 import { isValidTimeZone } from '@repo/zoned-time'
@@ -17,6 +17,7 @@ import {
 	isReportRunError,
 	type ReportDefinition,
 	reportDefinitionSchema,
+	timeframePresetSchema,
 	definitionForLoading,
 	referencedFieldIds,
 	resolveReportTimeZone,
@@ -95,6 +96,8 @@ import {
 	MENU_INSIGHTS_MAX_ROWS,
 } from '../services/menu-insights-records.ts'
 import { loadSoldOutHistoryRecords } from '../services/sold-out-report-records.ts'
+import { loadFinancialPeriodSummary } from '../services/financial-summary-records.ts'
+import { loadLocationScorecard } from '../services/location-scorecard-records.ts'
 
 export const analyticsRoutes = new Hono()
 
@@ -805,6 +808,169 @@ analyticsRoutes.get('/today', async (c) => {
 	return c.json({
 		...totals,
 		asOf: new Date(now).toISOString(),
+		salesBasis: parsed.data.salesBasis,
+	})
+})
+
+const summaryPresetSchema = z.object({
+	preset: timeframePresetSchema.default('last_30_days'),
+	salesBasis: z.enum(SALES_BASIS_VALUES).default('net'),
+})
+
+async function requireSalesAnalytics(c: Context) {
+	const token = getBearerToken(c.req.header('Authorization'))
+	if (!token) {
+		return {
+			error: c.json(
+				{ error: 'unauthorized', message: 'Missing bearer token' },
+				401,
+			),
+		}
+	}
+	const claims = await verifyOperatorAnalyticsToken({
+		signingSecret: getOperatorAnalyticsToken(),
+		token,
+	})
+	if (!claims || !TENANT_ORG_ID_PATTERN.test(claims.orgId)) {
+		return {
+			error: c.json(
+				{ error: 'unauthorized', message: 'Invalid operator token' },
+				401,
+			),
+		}
+	}
+	if (!operatorTokenAllowsSubject(claims, 'orders')) {
+		return {
+			error: c.json(
+				{
+					error: 'forbidden_subject',
+					message: 'You do not have permission to report on order data.',
+				},
+				403,
+			),
+		}
+	}
+	const organization = await findActiveOrganizationById(claims.orgId)
+	if (!organization) {
+		return {
+			error: c.json(
+				{ error: 'unauthorized', message: 'Organization not found' },
+				401,
+			),
+		}
+	}
+	if (!orgMatchesNodeRegion(organization.dataRegion)) {
+		return {
+			error: c.json(
+				{
+					error: 'region_mismatch',
+					message: `Organization dataRegion "${organization.dataRegion}" does not match this node ("${getNodeRegion()}")`,
+				},
+				409,
+			),
+		}
+	}
+	let db: TenantDatabase
+	try {
+		if (!organization.hasProvisionedDb) throw new Error('not provisioned')
+		db = await getTenantDb(claims.orgId)
+	} catch {
+		return {
+			error: c.json(
+				{
+					error: 'tenant_not_provisioned',
+					message: 'This organization has not provisioned a customer database.',
+				},
+				409,
+			),
+		}
+	}
+	return { claims, db, now: new Date() }
+}
+
+analyticsRoutes.get('/financial-summary', async (c) => {
+	const auth = await requireSalesAnalytics(c)
+	if ('error' in auth) return auth.error
+	const parsed = summaryPresetSchema.safeParse({
+		preset: c.req.query('preset'),
+		salesBasis: c.req.query('salesBasis'),
+	})
+	if (!parsed.success) {
+		return c.json(
+			{
+				error: 'invalid_request',
+				message: 'Invalid timeframe or sales basis.',
+			},
+			400,
+		)
+	}
+	const summary = await loadFinancialPeriodSummary(
+		{
+			db: auth.db,
+			orgId: auth.claims.orgId,
+			locationIds: auth.claims.locationIds,
+			now: auth.now,
+		},
+		parsed.data.preset,
+		parsed.data.salesBasis,
+	)
+	return c.json({ summary, salesBasis: parsed.data.salesBasis })
+})
+
+analyticsRoutes.get('/location-scorecard', async (c) => {
+	const auth = await requireSalesAnalytics(c)
+	if ('error' in auth) return auth.error
+	const parsed = summaryPresetSchema.safeParse({
+		preset: c.req.query('preset'),
+		salesBasis: c.req.query('salesBasis'),
+	})
+	if (!parsed.success) {
+		return c.json(
+			{
+				error: 'invalid_request',
+				message: 'Invalid timeframe or sales basis.',
+			},
+			400,
+		)
+	}
+	const rows = await loadLocationScorecard(
+		{
+			db: auth.db,
+			orgId: auth.claims.orgId,
+			locationIds: auth.claims.locationIds,
+			now: auth.now,
+		},
+		parsed.data.preset,
+		parsed.data.salesBasis,
+	)
+	return c.json({ rows, salesBasis: parsed.data.salesBasis })
+})
+
+analyticsRoutes.get('/month-sales', async (c) => {
+	const auth = await requireSalesAnalytics(c)
+	if ('error' in auth) return auth.error
+	const parsed = z
+		.object({ salesBasis: z.enum(SALES_BASIS_VALUES).default('net') })
+		.safeParse({ salesBasis: c.req.query('salesBasis') })
+	if (!parsed.success) {
+		return c.json(
+			{ error: 'invalid_request', message: 'Invalid sales basis.' },
+			400,
+		)
+	}
+	const { loadMonthToDateSalesByLocation } =
+		await import('../services/location-scorecard-records.ts')
+	const byLocation = await loadMonthToDateSalesByLocation(
+		{
+			db: auth.db,
+			orgId: auth.claims.orgId,
+			locationIds: auth.claims.locationIds,
+			now: auth.now,
+		},
+		parsed.data.salesBasis,
+	)
+	return c.json({
+		byLocation: Object.fromEntries(byLocation),
 		salesBasis: parsed.data.salesBasis,
 	})
 })

@@ -29,11 +29,24 @@ type Occurrence = {
 
 function locationFilter(
 	locationIds: readonly string[] | null,
-	column: typeof invSoldOut.locationId,
+	column:
+		typeof invSoldOut.locationId | typeof menuAvailabilityEvents.locationId,
 ): SQL[] {
 	if (locationIds === null) return []
 	if (locationIds.length === 0) return [sql`0`]
 	return [inArray(column, [...locationIds])]
+}
+
+function windowOf(definition: ReportDefinition, now: Date) {
+	const range = resolveTimeframeRange(
+		definition.timeframe.preset,
+		now,
+		definition.timeframe,
+	)
+	return {
+		startMs: range.start ? range.start.getTime() : null,
+		endMs: range.end.getTime(),
+	}
 }
 
 function estimateLostSales(
@@ -53,11 +66,7 @@ export async function loadSoldOutHistoryRecords(
 	includeCost: boolean,
 ): Promise<{ records: ReportRecord[]; truncated: boolean }> {
 	const fields = referencedFieldIds(subject, definition)
-	const range = resolveTimeframeRange(
-		definition.timeframe.preset,
-		ctx.now,
-		definition.timeframe,
-	)
+	const window = windowOf(definition, ctx.now)
 	const occurrences: Occurrence[] = []
 
 	const invRows = await ctx.db
@@ -66,8 +75,10 @@ export async function loadSoldOutHistoryRecords(
 		.where(
 			and(
 				...locationFilter(ctx.locationIds, invSoldOut.locationId),
-				lte(invSoldOut.soldAt, range.end),
-				range.start ? gte(invSoldOut.soldAt, range.start) : undefined,
+				lte(invSoldOut.soldAt, window.endMs),
+				window.startMs !== null
+					? gte(invSoldOut.soldAt, window.startMs)
+					: undefined,
 			),
 		)
 
@@ -95,9 +106,9 @@ export async function loadSoldOutHistoryRecords(
 		.where(
 			and(
 				...locationFilter(ctx.locationIds, menuAvailabilityEvents.locationId),
-				lte(menuAvailabilityEvents.occurredAt, range.end),
-				range.start
-					? gte(menuAvailabilityEvents.occurredAt, range.start)
+				lte(menuAvailabilityEvents.occurredAt, new Date(window.endMs)),
+				window.startMs !== null
+					? gte(menuAvailabilityEvents.occurredAt, new Date(window.startMs))
 					: undefined,
 			),
 		)
@@ -139,9 +150,9 @@ export async function loadSoldOutHistoryRecords(
 		})
 	}
 
-	const lookbackEnd = range.end.toISOString().slice(0, 10)
+	const lookbackEnd = new Date(window.endMs).toISOString().slice(0, 10)
 	const lookbackStart = new Date(
-		range.end.getTime() - SOLD_OUT_LOST_SALES_LOOKBACK_DAYS * 86_400_000,
+		window.endMs - SOLD_OUT_LOST_SALES_LOOKBACK_DAYS * 86_400_000,
 	)
 		.toISOString()
 		.slice(0, 10)

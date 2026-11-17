@@ -17,6 +17,7 @@ import {
 	SALES_STAFF_FIELD_PERMISSION,
 	isSalesReportSubject,
 } from './catalog-sales.ts'
+import { MENU_INSIGHTS_REPORT_SUBJECTS } from './catalog-menu-insights.ts'
 import { ENV } from './package-env.js'
 
 export {
@@ -87,6 +88,7 @@ export const RESTRICTED_REPORT_SUBJECTS = [
 	...RESERVATIONS_REPORT_SUBJECTS,
 	...GIFT_CARD_REPORT_SUBJECTS,
 	'staff_pay',
+	...MENU_INSIGHTS_REPORT_SUBJECTS,
 ] as const
 
 /** Restricted subjects that menu access (which covers orders) grants. */
