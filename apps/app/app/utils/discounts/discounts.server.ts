@@ -139,8 +139,15 @@ export function definitionFromRow(row: DiscountRow): DiscountDefinition | null {
 		combinesWith: parseJson(row.combinesWith) ?? undefined,
 		tiers: parseJson(row.tiers),
 		maxDeliveryFeeMinor: row.maxDeliveryFeeMinor,
-		// Left out unless set, so a region that predates it reads every record.
+		// Left out unless set, so a region that predates them reads every record.
 		...(row.waivesPackagingFee ? { waivesPackagingFee: true } : {}),
+		...(row.itemChoice === 'cheapest' || row.itemChoice === 'dearest'
+			? { itemChoice: row.itemChoice }
+			: {}),
+		...(row.weeklyBudgetMinor != null
+			? { weeklyBudgetMinor: row.weeklyBudgetMinor }
+			: {}),
+		...(row.audienceId ? { audienceId: row.audienceId } : {}),
 		priority: row.priority,
 		promoteOnMenu: row.promoteOnMenu,
 		requireApproval: row.requireApproval,
@@ -193,6 +200,9 @@ function columnsFor(definition: DiscountDefinition) {
 		tiers: jsonOrNull(definition.tiers ?? null),
 		maxDeliveryFeeMinor: definition.maxDeliveryFeeMinor ?? null,
 		waivesPackagingFee: definition.waivesPackagingFee === true,
+		itemChoice: definition.itemChoice ?? null,
+		weeklyBudgetMinor: definition.weeklyBudgetMinor ?? null,
+		audienceId: definition.audienceId ?? null,
 		priority: definition.priority,
 		promoteOnMenu: definition.promoteOnMenu,
 		requireApproval: definition.requireApproval,

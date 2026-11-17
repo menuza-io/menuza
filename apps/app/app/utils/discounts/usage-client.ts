@@ -1,7 +1,10 @@
 import {
 	DISCOUNT_USAGE_MAX_IDS,
+	type DiscountPerformanceBasis,
+	type DiscountPerformanceResponse,
 	type DiscountUsageEntry,
 	type DiscountUsedIn,
+	discountPerformanceResponseSchema,
 	discountUsageResponseSchema,
 	discountUsedInResponseSchema,
 } from '@repo/discounts'
@@ -27,8 +30,23 @@ export type DiscountUsageClient = {
 	fetchUsage(
 		ids: readonly string[],
 		signal?: AbortSignal,
-		range?: { from?: string; to?: string },
+		range?: { from?: string; to?: string; week?: string },
 	): Promise<Record<string, DiscountUsageEntry> | null>
+	/**
+	 * Orders, sales and discount given for each discount over a period (#390),
+	 * by the reports' gross or net rule. Ids and amounts only. Null when the
+	 * region could not be reached.
+	 */
+	fetchPerformance(
+		query: {
+			ids: readonly string[]
+			from: string
+			to: string
+			tz?: string
+			basis: DiscountPerformanceBasis
+		},
+		signal?: AbortSignal,
+	): Promise<DiscountPerformanceResponse | null>
 	/**
 	 * Where a discount is promised (#236): the broadcasts waiting to go out or
 	 * sending and the automations running that offer it. Ids and names only.
@@ -91,6 +109,36 @@ export function createDiscountUsageClient({
 				return null
 			}
 		},
+		async fetchPerformance(query, signal) {
+			const ids = [...new Set(query.ids)]
+			if (ids.length > DISCOUNT_USAGE_MAX_IDS) return null
+			try {
+				const { jwt, tenantApiUrl } = await token()
+				const url = new URL(
+					`${tenantApiUrl.replace(/\/+$/, '')}/operator/discounts/performance`,
+				)
+				url.searchParams.set('ids', ids.join(','))
+				url.searchParams.set('from', query.from)
+				url.searchParams.set('to', query.to)
+				url.searchParams.set('basis', query.basis)
+				if (query.tz) url.searchParams.set('tz', query.tz)
+				const response = await fetchImpl(url.toString(), {
+					headers: {
+						Accept: 'application/json',
+						Authorization: `Bearer ${jwt}`,
+					},
+					cache: 'no-store',
+					signal,
+				})
+				if (!response.ok) {
+					if (response.status === 401) cached = null
+					return null
+				}
+				return discountPerformanceResponseSchema.parse(await response.json())
+			} catch {
+				return null
+			}
+		},
 		async fetchUsage(ids, signal, range) {
 			const unique = [...new Set(ids)]
 			if (unique.length === 0) return {}
@@ -117,6 +165,7 @@ export function createDiscountUsageClient({
 				url.searchParams.set('ids', unique.join(','))
 				if (range?.from) url.searchParams.set('from', range.from)
 				if (range?.to) url.searchParams.set('to', range.to)
+				if (range?.week) url.searchParams.set('week', range.week)
 				const response = await fetchImpl(url.toString(), {
 					headers: {
 						Accept: 'application/json',

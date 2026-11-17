@@ -79,6 +79,12 @@ export type DiscountContext = {
 		signedIn: boolean
 		isNewCustomer: boolean
 		isLoyaltyMember: boolean
+		/**
+		 * The saved audiences (#415) the customer is in, among those the
+		 * candidate discounts name. Missing reads as none, so a till that cannot
+		 * identify the guest never applies an audience discount.
+		 */
+		audienceIds?: readonly string[]
 	}
 }
 
@@ -90,6 +96,12 @@ export type DiscountUsage = {
 	customerDay: number
 	/** This customer's uses in `localNow`'s week (Monday start). */
 	customerWeek: number
+	/**
+	 * What the discount gave in `localNow`'s week, across all customers (item
+	 * plus delivery, reserved and consumed): what a weekly budget (#392) is
+	 * spent against. Missing reads as 0.
+	 */
+	weekGivenMinor?: number
 }
 
 export type DiscountEvaluationInput = {
@@ -412,10 +424,28 @@ function refusalFor(
 	if (discount.eligibility === 'loyalty_member' && !customer.isLoyaltyMember) {
 		return 'members_only'
 	}
+	// A saved audience (#415). A guest who is not in it hears the same
+	// `not_found` as for a code that does not exist, so a code never reveals
+	// who is in an audience.
+	if (
+		discount.audienceId != null &&
+		!customer.audienceIds?.includes(discount.audienceId)
+	) {
+		return 'not_found'
+	}
 	const usage = input.usage[discount.id]
 	if (
 		discount.totalLimit !== null &&
 		(usage?.total ?? 0) >= discount.totalLimit
+	) {
+		return 'limit_reached'
+	}
+	// The weekly budget (#392) is spent: it stops applying until next week. The
+	// order that crossed it kept its full discount, so this compares what was
+	// given before this order.
+	if (
+		discount.weeklyBudgetMinor != null &&
+		(usage?.weekGivenMinor ?? 0) >= discount.weeklyBudgetMinor
 	) {
 		return 'limit_reached'
 	}
@@ -433,6 +463,7 @@ function refusalFor(
 	if (
 		discount.maxDiscountMinor !== null ||
 		discount.minSubtotalMinor !== null ||
+		discount.weeklyBudgetMinor != null ||
 		discount.maxDeliveryFeeMinor != null ||
 		discount.tiers?.basis === 'spend' ||
 		(discount.quantityRule.kind === 'buy_get' &&
@@ -562,8 +593,14 @@ function byUnitKey(a: Unit, b: Unit): number {
 	return a.lineIndex - b.lineIndex || a.unitIndex - b.unitIndex
 }
 
-/** Units of the lines the discount may touch, highest value first. */
+/**
+ * Units of the lines the discount may touch, highest value first, or lowest
+ * first when the discount covers the cheapest item first (#395). Everything
+ * that takes the first N units of this list (an item limit, an exact group)
+ * follows that order.
+ */
 function eligibleUnits(discount: DiscountRecord, state: State): Unit[] {
+	const cheapest = discount.itemChoice === 'cheapest'
 	const eligible: Unit[] = []
 	state.lines.forEach((line, lineIndex) => {
 		if (!lineMatchesTarget(discount, line) || line.remaining <= 0) return
@@ -571,16 +608,19 @@ function eligibleUnits(discount: DiscountRecord, state: State): Unit[] {
 			if (unit.value > 0) eligible.push(unit)
 		}
 	})
-	if (discount.valueType !== 'fixed_price') return eligible.sort(byValueDesc)
+	if (discount.valueType !== 'fixed_price') {
+		return eligible.sort(cheapest ? byValueAsc : byValueDesc)
+	}
 	// A set price takes from the base only, so units worth the same in all can
 	// still differ in base: the one with the bigger base goes first, or the
 	// result would depend on which line the guest added first. Each base is
 	// worked out once, not on every comparison.
 	const bases = new Map<Unit, number>()
 	for (const unit of eligible) bases.set(unit, priceBasis(unit, state))
-	return eligible.sort(
-		(a, b) =>
-			b.value - a.value || bases.get(b)! - bases.get(a)! || byUnitKey(a, b),
+	return eligible.sort((a, b) =>
+		cheapest
+			? a.value - b.value || bases.get(a)! - bases.get(b)! || byUnitKey(a, b)
+			: b.value - a.value || bases.get(b)! - bases.get(a)! || byUnitKey(a, b),
 	)
 }
 

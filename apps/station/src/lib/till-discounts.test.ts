@@ -4,6 +4,7 @@ import {
 	automaticTillAdjustments,
 	categoryIdsByItem,
 	keptButNotOffered,
+	limitedAutomaticRules,
 	parseTillRules,
 	quoteTillManualDiscount,
 	settleTillDiscounts,
@@ -654,6 +655,81 @@ describe('limited discounts', () => {
 				}),
 			).toEqual([])
 		}
+	})
+})
+
+describe('rules added for budgets, audiences, caps and item choice', () => {
+	it('never applies a discount with a weekly budget or a saved audience by itself', () => {
+		for (const limit of [
+			{ weeklyBudgetMinor: 5000, currency: 'USD' },
+			{ eligibility: 'signed_in', audienceId: 'aud1' },
+		]) {
+			expect(
+				automaticTillAdjustments({
+					...common,
+					lines: [line()],
+					rules: [rule(limit)],
+				}),
+			).toEqual([])
+		}
+		expect(
+			limitedAutomaticRules([
+				rule({ weeklyBudgetMinor: 5000, currency: 'USD' }),
+				rule({ id: 'd2', eligibility: 'signed_in', audienceId: 'aud1' }),
+				rule({ id: 'd3' }),
+			]).map((entry) => entry.id),
+		).toEqual(['d1', 'd2'])
+	})
+
+	it('still reads a stored rule that has none of the new fields, and one that has them', () => {
+		expect(parseTillRules([rule()])).toHaveLength(1)
+		expect(
+			parseTillRules([
+				rule({
+					target: { ...target, scope: 'items', itemIds: ['i1', 'i2'] },
+					maxDiscountedUnits: 1,
+					itemChoice: 'cheapest',
+				}),
+			]),
+		).toHaveLength(1)
+	})
+
+	it('discounts the cheapest or the dearest item when an item limit applies, like the server', () => {
+		const lines = [
+			line({ id: 'a', itemId: 'i1', baseCents: 3000 }),
+			line({ id: 'b', itemId: 'i2', baseCents: 1000 }),
+		]
+		const limited = (itemChoice?: string) =>
+			rule({
+				percentBp: 10_000,
+				target: { ...target, scope: 'items', itemIds: ['i1', 'i2'] },
+				maxDiscountedUnits: 1,
+				...(itemChoice ? { itemChoice } : {}),
+			})
+		const take = (itemChoice?: string) =>
+			automaticTillAdjustments({
+				...common,
+				lines,
+				rules: [limited(itemChoice)],
+			})[0]
+		expect(take()?.lineAmounts).toEqual({ a: 3000 })
+		expect(take('dearest')?.lineAmounts).toEqual({ a: 3000 })
+		expect(take('cheapest')?.lineAmounts).toEqual({ b: 1000 })
+	})
+
+	it('takes a percentage up to its cap, as the server does', () => {
+		const rows = automaticTillAdjustments({
+			...common,
+			lines: [line({ baseCents: 20_000 })],
+			rules: [
+				rule({
+					percentBp: 2000,
+					maxDiscountMinor: 1500,
+					currency: 'USD',
+				}),
+			],
+		})
+		expect(rows[0]?.amountCents).toBe(1500)
 	})
 })
 

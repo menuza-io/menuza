@@ -39,6 +39,7 @@ import {
 	loadAudiences,
 	type AudienceListItem,
 } from '#app/utils/marketing/audiences.server.ts'
+import { discountsUsingAudience } from '#app/utils/discounts/audience-usage.server.ts'
 import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -116,6 +117,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const audienceId = String(form.get('audienceId') ?? '')
 
 	if (intent === 'delete') {
+		// A discount limited to this audience (#415) would be left with nobody to
+		// give it to: refuse, and say which one, before the region is asked.
+		const discounts = await discountsUsingAudience(orgId, audienceId)
+		if (discounts.length > 0) {
+			const names = discounts.map((discount) => discount.name).join(', ')
+			return {
+				ok: false as const,
+				intent,
+				error: i18n._(
+					t`This audience limits a discount (${names}). Remove it there first.`,
+				),
+			}
+		}
 		const res = await fetchTenant(`/operator/marketing/audiences/${audienceId}`, {
 			method: 'DELETE',
 		})

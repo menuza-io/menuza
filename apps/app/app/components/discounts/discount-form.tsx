@@ -127,6 +127,7 @@ function sectionOfField(field: string): string {
 		case 'buyQuantity':
 		case 'getQuantity':
 		case 'maxUnits':
+		case 'itemChoice':
 		case 'buyGroup':
 		case 'getGroup':
 		case 'slots':
@@ -140,6 +141,8 @@ function sectionOfField(field: string): string {
 		case 'fulfillments':
 			return 'discount-section-where'
 		case 'eligibility':
+		case 'audienceId':
+		case 'weeklyBudget':
 		case 'totalLimit':
 		case 'totalLimitCustom':
 		case 'minSubtotal':
@@ -404,6 +407,7 @@ function DiscountFormBody({
 	createdAt = null,
 	sharedWithOtherLocations = false,
 	packagingFeeEnabled = false,
+	audiences = null,
 	confirmBeforeSave,
 }: {
 	orgSlug: string
@@ -441,6 +445,12 @@ function DiscountFormBody({
 	/** Org flag `ordering.packaging_fee`: offers "Also waive the packaging fee". */
 	packagingFeeEnabled?: boolean
 	/**
+	 * The saved audiences (#415) a discount may be limited to, or null when the
+	 * organization has none to offer (the feature is off, or the member may not
+	 * read audiences). Names and ids only.
+	 */
+	audiences?: ReadonlyArray<{ id: string; name: string }> | null
+	/**
 	 * Called on a save of a saved discount. Return true to hold the save while
 	 * the page asks something (messages that promise this discount); call
 	 * `submit` when the answer is in, with extra form fields for the server.
@@ -475,6 +485,16 @@ function DiscountFormBody({
 		!freeDelivery &&
 		(state.quantityKind === 'buy_get' || state.quantityKind === 'bundle')
 	const itemScope = !freeDelivery && (setRule || state.scope !== 'order')
+	// The choice of which items an item limit covers first (#395): a plain item
+	// or category discount, with a limit, and no deal or buy-one-get-one rule.
+	const itemChoiceApplies =
+		!freeDelivery &&
+		!setRule &&
+		(state.scope === 'items' || state.scope === 'categories') &&
+		(state.quantityKind === 'none' ||
+			state.quantityKind === 'minimum' ||
+			state.quantityKind === 'exact') &&
+		state.maxUnits.trim() !== ''
 	// A ladder replaces the single value on a plain item or order discount.
 	const tiered = tiersApply(state)
 	const canTier = tiersApply({ ...state, tiersOn: true })
@@ -500,6 +520,57 @@ function DiscountFormBody({
 	const noAmounts = !amountsSupported(amountsCurrency)
 	// This sits outside the provider below, so it is given the currency itself.
 	const errorText = useEditorErrorText(amountsCurrency)
+	// A saved audience (#415) limits who gets the discount to the guests in it.
+	// Their membership is read in the guest's own region when the order is
+	// priced; the editor only ever sees the audience's name and id.
+	const audiencePicker =
+		audiences && state.application !== 'manual' ? (
+			<Field>
+				<FieldLabel htmlFor={fieldDomId('audienceId')}>
+					<Trans>Saved audience</Trans>
+				</FieldLabel>
+				<select
+					id={fieldDomId('audienceId')}
+					className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary/12 aria-invalid:border-destructive h-8 w-full rounded-md border px-2.5 text-sm transition-colors outline-none focus-visible:ring-3 sm:max-w-sm"
+					value={state.audienceId}
+					aria-invalid={errors.audienceId ? true : undefined}
+					aria-describedby={`${fieldDomId('audienceId')}-hint`}
+					onChange={(event) => {
+						const audienceId = event.currentTarget.value
+						patch(
+							audienceId && state.eligibility === 'everyone'
+								? { audienceId, eligibility: 'signed_in' }
+								: { audienceId },
+						)
+					}}
+				>
+					<option value="">{t`No audience limit`}</option>
+					{audiences.map((audience) => (
+						<option key={audience.id} value={audience.id}>
+							{audience.name}
+						</option>
+					))}
+					{state.audienceId &&
+					!audiences.some((audience) => audience.id === state.audienceId) ? (
+						<option value={state.audienceId}>
+							{t`A saved audience (not available to you)`}
+						</option>
+					) : null}
+				</select>
+				<FieldDescription id={`${fieldDomId('audienceId')}-hint`}>
+					<Trans>
+						Only signed-in guests in this audience get the discount. Who is in
+						an audience is worked out when the order is priced and never leaves
+						your guests' region. A guest who is not signed in never qualifies.
+					</Trans>
+				</FieldDescription>
+				{errors.audienceId ? (
+					<FieldErrorText id={`${fieldDomId('audienceId')}-error`}>
+						{errorText(errors.audienceId)}
+					</FieldErrorText>
+				) : null}
+			</Field>
+		) : null
 	const errorKey = Object.keys(errors).join('\n')
 	const hasErrors = errorKey.length > 0
 	// "Saved." is about the last save: an error or a new edit makes it stale.
@@ -573,6 +644,12 @@ function DiscountFormBody({
 				return t`Discounted quantity`
 			case 'maxUnits':
 				return t`Items discounted per use`
+			case 'itemChoice':
+				return t`Items discounted first`
+			case 'audienceId':
+				return t`Saved audience`
+			case 'weeklyBudget':
+				return t`Weekly budget`
 			case 'tiers':
 				return t`Tiers`
 			case 'maxDeliveryFee':
@@ -1682,10 +1759,18 @@ function DiscountFormBody({
 												expensive first.
 											</Trans>
 										) : itemScope ? (
-											<Trans>
-												Optional. The most expensive matching items are
-												discounted first.
-											</Trans>
+											state.itemChoice === 'cheapest' &&
+											itemChoiceApplies ? (
+												<Trans>
+													Optional. The cheapest matching items are discounted
+													first.
+												</Trans>
+											) : (
+												<Trans>
+													Optional. The most expensive matching items are
+													discounted first.
+												</Trans>
+											)
 										) : (
 											<Trans>Only for a discount on items or categories.</Trans>
 										)
@@ -1697,6 +1782,35 @@ function DiscountFormBody({
 									disabled={!itemScope}
 									onChange={(maxUnits) => patch({ maxUnits })}
 								/>
+								{itemChoiceApplies ? (
+									<ChoiceGroup
+										field="itemChoice"
+										legend={<Trans>Which items are discounted first</Trans>}
+										hint={
+											<Trans>
+												Used when more items qualify than the limit allows.
+												Items at the same price are picked in a fixed order, so
+												the total never changes between checkout and the till.
+											</Trans>
+										}
+										error={
+											errors.itemChoice ? errorText(errors.itemChoice) : null
+										}
+										columns={2}
+										value={state.itemChoice}
+										onChange={(itemChoice) => patch({ itemChoice })}
+										choices={[
+											{
+												value: 'dearest' as const,
+												label: t`Most expensive first`,
+											},
+											{
+												value: 'cheapest' as const,
+												label: t`Cheapest first`,
+											},
+										]}
+									/>
+								) : null}
 							</EditorSection>
 						) : null}
 
@@ -1841,7 +1955,14 @@ function DiscountFormBody({
 								legend={<Trans>Customers</Trans>}
 								columns={2}
 								value={state.eligibility}
-								onChange={(eligibility) => patch({ eligibility })}
+								onChange={(eligibility) =>
+									// "Everyone" and a saved audience contradict each other.
+									patch(
+										eligibility === 'everyone'
+											? { eligibility, audienceId: '' }
+											: { eligibility },
+									)
+								}
 								choices={(
 									[
 										'everyone',
@@ -1854,6 +1975,7 @@ function DiscountFormBody({
 									label: i18n._(DISCOUNT_ELIGIBILITY_LABELS[value]),
 								}))}
 							/>
+							{audiencePicker}
 							<div className="grid items-start gap-4 sm:grid-cols-2">
 								<div className="flex flex-col gap-4">
 									<Field>
@@ -1918,6 +2040,24 @@ function DiscountFormBody({
 									suffix={mixedCurrencies ? undefined : amountsCurrency}
 									onChange={(minSubtotal) => patch({ minSubtotal })}
 								/>
+								{state.application !== 'manual' ? (
+									<TextField
+										field="weeklyBudget"
+										label={<Trans>Weekly budget</Trans>}
+										hint={
+											<Trans>
+												Optional. The most this discount gives in a week
+												(Monday to Sunday), in <bdi>{currency}</bdi>. It pauses
+												by itself when it is spent and starts again next week.
+											</Trans>
+										}
+										value={state.weeklyBudget}
+										error={errors.weeklyBudget}
+										inputMode="decimal"
+										suffix={mixedCurrencies ? undefined : amountsCurrency}
+										onChange={(weeklyBudget) => patch({ weeklyBudget })}
+									/>
+								) : null}
 							</div>
 							<SwitchRow
 								label={<Trans>Limit uses per customer</Trans>}

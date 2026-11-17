@@ -2676,6 +2676,13 @@ export const OrganizationLocation = sqliteTable(
 		 * Null is off. Course names are operator text, not guest data.
 		 */
 		courseSettings: text(),
+		/**
+		 * Cash-payment discount at the till (#375), in basis points (1 to 2000).
+		 * Null is off. US organizations only: the App never offers or reads it
+		 * for another data region. A percentage taken off a cash sale and shown as
+		 * its own line.
+		 */
+		cashDiscountBp: integer(),
 		scheduling: text(),
 		deliveryConfig: text(),
 		deliveryZones: text(),
@@ -4785,6 +4792,14 @@ export const Discount = sqliteTable(
 		tiers: text(),
 		// Free delivery only: the largest delivery fee it waives.
 		maxDeliveryFeeMinor: integer(),
+		// 'cheapest' when the item limit covers the cheapest eligible item first
+		// (#395); null is the dearest first, as it always was.
+		itemChoice: text(),
+		// Weekly spend limit (#392), minor units of `currency`. Null is none.
+		weeklyBudgetMinor: integer(),
+		// Saved audience (#415): a `marketing_audiences` id in the region. Only the
+		// id is kept here; membership is read in the guest's region.
+		audienceId: text(),
 		// When this discount applies to an order, the packaging fee (#408) is waived.
 		waivesPackagingFee: integer({ mode: 'boolean' }).default(false).notNull(),
 		priority: integer().default(0).notNull(),

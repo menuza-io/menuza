@@ -29,6 +29,25 @@ export type OfferPromotion = {
 
 export type OfferMode = 'pickup' | 'delivery' | 'dine_in'
 
+/**
+ * The limits an offer carries that a guest should read before ordering (#273):
+ * "up to 15.00 off" and "up to 2 items". Only what the App sent; an offer
+ * from before they existed has none.
+ */
+export function offerLimits(promotion: {
+	maxDiscountMinor?: number | null
+	maxUnits?: number | null
+}): { maxDiscountMinor: number | null; maxUnits: number | null } {
+	const positive = (value: number | null | undefined) =>
+		typeof value === 'number' && Number.isFinite(value) && value > 0
+			? Math.round(value)
+			: null
+	return {
+		maxDiscountMinor: positive(promotion.maxDiscountMinor),
+		maxUnits: positive(promotion.maxUnits),
+	}
+}
+
 /** A wall-clock "YYYY-MM-DDTHH:mm" as shown by a clock in `timeZone`. */
 export function localStamp(timeZone: string, date: Date = new Date()): string {
 	let parts: Record<string, string> = {}

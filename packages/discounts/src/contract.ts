@@ -217,6 +217,14 @@ export const discountQuoteSchema = z.object({
 			amountMinor: minorSchema,
 			deliveryAmountMinor: minorSchema,
 			lineIds: z.array(z.string()),
+			/**
+			 * The most a percentage discount takes off one order (#273), so
+			 * checkout can say "20% off, up to 15.00". Missing: no cap, or an
+			 * older region.
+			 */
+			maxDiscountMinor: minorSchema.nullable().optional(),
+			/** The most items an item discount covers in one order (#273). */
+			maxUnits: z.number().int().min(1).nullable().optional(),
 		}),
 	),
 	/** Items plus delivery, what `expectedDiscountMinor` must equal. */

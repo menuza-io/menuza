@@ -203,7 +203,10 @@ function OfferLine({
 	return (
 		<View className="bg-muted gap-1 rounded-xl px-3 py-2">
 			<View className="flex-row flex-wrap items-center gap-2">
-				<Text variant="label">{promotion.name}</Text>
+				{/* A capped or limited offer says its limit next to its name (#273). */}
+				<Text variant="label">
+					{promotion.showName ? offerLabel(promotion) : promotion.name}
+				</Text>
 				{/* An offer shown by name has no value badge: the name says it. */}
 				{promotion.showName ? null : <Badge>{offerLabel(promotion)}</Badge>}
 			</View>
@@ -315,7 +318,23 @@ function useOfferLabeler(
 ): (promotion: MenuPromotionView) => string {
 	const { t } = useLingui()
 	return (promotion) => {
-		if (promotion.showName) return promotion.name
+		if (promotion.showName) {
+			// A capped offer says its limit next to its name (#273).
+			const name = promotion.name
+			if (promotion.maxDiscountMinor) {
+				const amount = formatMenuPrice(
+					promotion.maxDiscountMinor / 100,
+					promotion.currency || currency,
+					locale,
+				)
+				return t`${name} (up to ${amount} off)`
+			}
+			if (promotion.maxUnits) {
+				const count = promotion.maxUnits
+				return t`${name} (limit ${count} per order)`
+			}
+			return name
+		}
 		if (promotion.valueType === 'percent' && promotion.percentBp) {
 			const percentText = new Intl.NumberFormat(locale, {
 				style: 'percent',

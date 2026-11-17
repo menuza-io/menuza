@@ -31,6 +31,16 @@ export type DiscountLabels = {
 	estimate: string
 	/** "{name} (delivery)" */
 	deliveryDiscount: string
+	/**
+	 * What a guest is told about the limits on a discount (#273): "{name}
+	 * ({limits})", where the limits are "up to {amount} off" and "limit {count}
+	 * per order" joined by a list. Missing (an older page): the name alone.
+	 */
+	limited?: string
+	/** "up to {amount} off" */
+	limitAmount?: string
+	/** "limit {count} per order" */
+	limitItems?: string
 	/** "Your discount changed, so we updated your total to {total}. ..." */
 	discountChanged: string
 	/** A refused order whose reason could not be read. */
@@ -69,6 +79,39 @@ export type DiscountTextLanguage = {
 	defaultLocale?: string | null
 }
 
+/** "Ten percent (up to $15.00 off, up to 2 items)": the limits a guest should know before ordering. */
+function withLimits(
+	name: string,
+	discount: { maxDiscountMinor?: number | null; maxUnits?: number | null },
+	labels: Pick<DiscountLabels, 'limited' | 'limitAmount' | 'limitItems'>,
+	language: DiscountTextLanguage,
+	formatMinor: ((minor: number) => string) | undefined,
+): string {
+	if (!labels.limited) return name
+	const parts: string[] = []
+	if (discount.maxDiscountMinor && labels.limitAmount && formatMinor) {
+		parts.push(
+			fillTemplate(labels.limitAmount, {
+				amount: formatMinor(discount.maxDiscountMinor),
+			}),
+		)
+	}
+	if (discount.maxUnits && labels.limitItems) {
+		parts.push(fillTemplate(labels.limitItems, { count: discount.maxUnits }))
+	}
+	if (parts.length === 0) return name
+	let limits: string
+	try {
+		limits = new Intl.ListFormat(language.locale ?? undefined, {
+			style: 'long',
+			type: 'conjunction',
+		}).format(parts)
+	} catch {
+		limits = parts.join(', ')
+	}
+	return fillTemplate(labels.limited, { name, limits })
+}
+
 /**
  * The discount lines of a quote, in the region's order. A discount that takes
  * something off both the items and delivery shows as two lines, so each sum
@@ -76,17 +119,23 @@ export type DiscountTextLanguage = {
  */
 export function discountLines(
 	quote: Pick<DiscountQuote, 'discounts'>,
-	labels: Pick<DiscountLabels, 'deliveryDiscount'>,
+	labels: Pick<
+		DiscountLabels,
+		'deliveryDiscount' | 'limited' | 'limitAmount' | 'limitItems'
+	>,
 	language: DiscountTextLanguage = {},
+	/** Formats minor units for the limits ("up to $15.00 off"); without it limits are not shown. */
+	formatMinor?: (minor: number) => string,
 ): DiscountLine[] {
 	const lines: DiscountLine[] = []
 	for (const discount of quote.discounts) {
-		const name = localizedDiscountText(
+		const baseName = localizedDiscountText(
 			discount.nameI18n,
 			discount.name,
 			language.locale,
 			language.defaultLocale,
 		)
+		const name = withLimits(baseName, discount, labels, language, formatMinor)
 		if (discount.amountMinor > 0) {
 			lines.push({
 				key: `${discount.discountId}:items`,

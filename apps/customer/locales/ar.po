@@ -25,7 +25,7 @@ msgstr "تحتاج إلى {amount} إضافية"
 msgid "{amount} more to unlock {reward}"
 msgstr "{amount} إضافية للحصول على {reward}"
 
-#: components/ordering/menu-screen.tsx:332
+#: components/ordering/menu-screen.tsx:348
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "خصم {amount}"
@@ -54,11 +54,19 @@ msgstr "{n, plural, zero {{count} نقطة} one {نقطة واحدة} two {نق�
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, zero {{count} نجمة} one {نجمة واحدة} two {نجمتان} few {{count} نجوم} many {{count} نجمة} other {{count} نجمة}}"
 
+#: components/ordering/menu-screen.tsx:331
+msgid "{name} (limit {count} per order)"
+msgstr "{name} (بحد أقصى {count} لكل طلب)"
+
+#: components/ordering/menu-screen.tsx:327
+msgid "{name} (up to {amount} off)"
+msgstr "{name} (خصم يصل إلى {amount})"
+
 #: lib/loyalty/labels.ts:57
 msgid "{percent} off"
 msgstr "خصم {percent}"
 
-#: components/ordering/menu-screen.tsx:324
+#: components/ordering/menu-screen.tsx:340
 msgid "{percentText} off"
 msgstr "خصم {percentText}"
 
@@ -465,7 +473,7 @@ msgstr "لهذا العدد من الأشخاص، يرجى الاتصال على
 msgid "Free {item}"
 msgstr "{item} مجانًا"
 
-#: components/ordering/menu-screen.tsx:342
+#: components/ordering/menu-screen.tsx:358
 msgid "Free delivery"
 msgstr "توصيل مجاني"
 
@@ -978,7 +986,7 @@ msgstr "أرسل طلبًا"
 msgid "Send code"
 msgstr "إرسال الرمز"
 
-#: components/ordering/menu-screen.tsx:340
+#: components/ordering/menu-screen.tsx:356
 msgid "Set price {amount}"
 msgstr "سعر ثابت {amount}"
 

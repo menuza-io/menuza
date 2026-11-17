@@ -14,6 +14,7 @@ import {
 	marketingJourneys,
 	marketingSettings,
 	type TenantDatabase,
+	type TenantTransaction,
 } from '@repo/tenant-db'
 import { and, count, eq, inArray, ne, sql } from 'drizzle-orm'
 import { loadBroadcastAudience } from './marketing-audience.ts'
@@ -113,7 +114,7 @@ export async function listAudiences(db: TenantDatabase) {
 }
 
 export async function getAudience(
-	db: TenantDatabase,
+	db: TenantDatabase | TenantTransaction,
 	id: string,
 ): Promise<AudienceRecord | null> {
 	const row = await db
@@ -306,7 +307,7 @@ export async function countAudience(
  * sent to it (the caller fails the send rather than widening it to everyone).
  */
 export async function resolveAudienceWhere(
-	db: TenantDatabase,
+	db: TenantDatabase | TenantTransaction,
 	audienceId: string,
 	now: number = Date.now(),
 ) {
@@ -317,7 +318,7 @@ export async function resolveAudienceWhere(
 
 /** Whether one guest is in a saved audience now (the automation condition). */
 export async function customerInAudience(
-	db: TenantDatabase,
+	db: TenantDatabase | TenantTransaction,
 	audienceId: string,
 	customerId: string,
 	now: number = Date.now(),

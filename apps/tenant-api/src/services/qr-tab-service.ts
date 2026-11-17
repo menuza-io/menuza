@@ -62,7 +62,11 @@ import {
 	discountedTabTotals,
 	type DiscountedTabTotals,
 } from '../restaurant/loyalty-checkout.ts'
-import { reserveOrderDiscounts } from './discount-apply.ts'
+import { notifyDiscountBudgets } from '../lib/discount-notify.ts'
+import {
+	type DiscountBudgetCrossing,
+	reserveOrderDiscounts,
+} from './discount-apply.ts'
 import {
 	consumeTabDiscounts,
 	evaluateTabDiscounts,
@@ -1167,8 +1171,11 @@ export async function closeTabAtCounter(
 				? await tabContext(orgId, locationId, { fresh: true })
 				: null
 	let result: QrResult<ReleasedTabPayment>
+	// The weekly budgets (#392) this close spent; the owner is told after commit.
+	let budgetCrossings: DiscountBudgetCrossing[] = []
 	try {
 		result = await writeTx(orgId, async (tx) => {
+			budgetCrossings = []
 			const loaded = await loadOpenTab(tx, tabId, {
 				acknowledgeReview: input.acknowledgeReview,
 			})
@@ -1207,7 +1214,7 @@ export async function closeTabAtCounter(
 			const discounted =
 				pricing && input.rungUpOnStation !== true ? pricing : null
 			if (discounted) {
-				await reserveOrderDiscounts(tx, {
+				budgetCrossings = await reserveOrderDiscounts(tx, {
 					orderId: tabDiscountSourceId(tab.id, now.getTime()),
 					customerId: null,
 					prepared: discounted.quote.prepared,
@@ -1270,6 +1277,7 @@ export async function closeTabAtCounter(
 	}
 	await loyalty.settle(orgId)
 	await inventory.settle(orgId)
+	if (result.ok) notifyDiscountBudgets(orgId, budgetCrossings)
 	return result
 }
 

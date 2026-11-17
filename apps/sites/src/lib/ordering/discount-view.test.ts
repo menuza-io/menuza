@@ -190,3 +190,84 @@ describe('totalsFromQuote (#408)', () => {
 		expect(totalsFromQuote(quote as never).packagingFeeMinor).toBe(0)
 	})
 })
+
+describe('limits a guest is told about (#273)', () => {
+	const limitLabels = {
+		deliveryDiscount: '{name} (delivery)',
+		limited: '{name} ({limits})',
+		limitAmount: 'up to {amount} off',
+		limitItems: 'limit {count} per order',
+	}
+	const money = (minor: number) => `$${(minor / 100).toFixed(2)}`
+	const discount = (extra: Record<string, unknown> = {}) => ({
+		discountId: 'd1',
+		version: 1,
+		name: 'Twenty off',
+		code: null,
+		amountMinor: 1500,
+		deliveryAmountMinor: 0,
+		lineIds: ['0'],
+		...extra,
+	})
+
+	it('says a capped percentage plainly: "20% off, up to 15.00"', () => {
+		const [line] = discountLines(
+			{ discounts: [discount({ maxDiscountMinor: 1500 })] },
+			limitLabels,
+			{ locale: 'en' },
+			money,
+		)
+		expect(line?.label).toBe('Twenty off (up to $15.00 off)')
+	})
+
+	it('says the item limit, and both together', () => {
+		expect(
+			discountLines(
+				{ discounts: [discount({ maxUnits: 2 })] },
+				limitLabels,
+				{ locale: 'en' },
+				money,
+			)[0]?.label,
+		).toBe('Twenty off (limit 2 per order)')
+		expect(
+			discountLines(
+				{ discounts: [discount({ maxDiscountMinor: 1500, maxUnits: 2 })] },
+				limitLabels,
+				{ locale: 'en' },
+				money,
+			)[0]?.label,
+		).toBe('Twenty off (up to $15.00 off and limit 2 per order)')
+	})
+
+	it('leaves the name alone with no limits, no labels or no way to format money', () => {
+		const plain = { discounts: [discount()] }
+		expect(discountLines(plain, limitLabels, {}, money)[0]?.label).toBe(
+			'Twenty off',
+		)
+		const capped = { discounts: [discount({ maxDiscountMinor: 1500 })] }
+		// An older page has no limit labels.
+		expect(
+			discountLines(capped, { deliveryDiscount: '{name} (delivery)' }, {}, money)[0]
+				?.label,
+		).toBe('Twenty off')
+		// A cap without a money formatter is not promised.
+		expect(discountLines(capped, limitLabels, {})[0]?.label).toBe('Twenty off')
+	})
+
+	it('puts the limits on the delivery line too, once', () => {
+		const lines = discountLines(
+			{
+				discounts: [
+					discount({ maxUnits: 1, amountMinor: 500, deliveryAmountMinor: 300 }),
+				],
+			},
+			limitLabels,
+			{},
+			money,
+		)
+		expect(lines.map((line) => line.label)).toEqual([
+			'Twenty off (limit 1 per order)',
+			'Twenty off (limit 1 per order) (delivery)',
+		])
+	})
+})

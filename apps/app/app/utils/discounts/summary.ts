@@ -343,6 +343,19 @@ export function buildDiscountSummary({
 				msg`${plural(units, { one: 'Up to # item', other: 'Up to # items' })}`,
 			)
 			add('units', tx(msg`Items discounted per use`), cap)
+			if (
+				state.itemChoice === 'cheapest' &&
+				(state.scope === 'items' || state.scope === 'categories') &&
+				!setRule &&
+				state.quantityKind !== 'bogo' &&
+				state.quantityKind !== 'per_item'
+			) {
+				add(
+					'itemChoice',
+					tx(msg`Discounted first`),
+					tx(msg`The cheapest matching items`),
+				)
+			}
 		}
 	}
 
@@ -458,7 +471,19 @@ export function buildDiscountSummary({
 		const amount = formatMoney(minSpend, currency, locale)
 		who.push(tx(msg`Minimum spend ${amount}`))
 	}
+	if (state.audienceId.trim()) who.push(tx(msg`In a saved audience`))
 	add('who', tx(msg`Who can use it`), listText(who, locale))
+	if (state.weeklyBudget.trim() && state.application !== 'manual') {
+		const budget = parseMoneyToMinor(state.weeklyBudget, { currency, min: 1 })
+		if (budget !== null) {
+			const amount = formatMoney(budget, currency, locale)
+			add(
+				'weeklyBudget',
+				tx(msg`Weekly budget`),
+				tx(msg`Pauses after ${amount} is given in a week`),
+			)
+		}
+	}
 	if (state.perCustomerOn) {
 		const count = Number(state.perCustomerCount)
 		if (Number.isInteger(count) && count > 0) {

@@ -25,7 +25,7 @@ msgstr "还差 {amount}"
 msgid "{amount} more to unlock {reward}"
 msgstr "再获得 {amount} 即可兑换 {reward}"
 
-#: components/ordering/menu-screen.tsx:332
+#: components/ordering/menu-screen.tsx:348
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "立减 {amount}"
@@ -54,11 +54,19 @@ msgstr "{n, plural, other {{count} 积分}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, other {{count} 颗星}}"
 
+#: components/ordering/menu-screen.tsx:331
+msgid "{name} (limit {count} per order)"
+msgstr "{name}（每单限 {count} 件）"
+
+#: components/ordering/menu-screen.tsx:327
+msgid "{name} (up to {amount} off)"
+msgstr "{name}（最高减 {amount}）"
+
 #: lib/loyalty/labels.ts:57
 msgid "{percent} off"
 msgstr "优惠 {percent}"
 
-#: components/ordering/menu-screen.tsx:324
+#: components/ordering/menu-screen.tsx:340
 msgid "{percentText} off"
 msgstr "优惠 {percentText}"
 
@@ -465,7 +473,7 @@ msgstr "如此人数的团体，请致电 {phone}。"
 msgid "Free {item}"
 msgstr "免费 {item}"
 
-#: components/ordering/menu-screen.tsx:342
+#: components/ordering/menu-screen.tsx:358
 msgid "Free delivery"
 msgstr "免配送费"
 
@@ -978,7 +986,7 @@ msgstr "提交申请"
 msgid "Send code"
 msgstr "发送验证码"
 
-#: components/ordering/menu-screen.tsx:340
+#: components/ordering/menu-screen.tsx:356
 msgid "Set price {amount}"
 msgstr "固定价 {amount}"
 

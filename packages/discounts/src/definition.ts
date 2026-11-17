@@ -74,6 +74,16 @@ export type DiscountCombineClass =
 export const DISCOUNT_TIER_BASIS_VALUES = ['spend', 'quantity'] as const
 export type DiscountTierBasis = (typeof DISCOUNT_TIER_BASIS_VALUES)[number]
 
+/**
+ * Which eligible items an item limit ("Discounted items per order") covers
+ * first (#395). `dearest` is what discounts always did, so a stored discount
+ * without the field keeps its behaviour; `cheapest` is the merchant-safe
+ * choice. Equal-priced items are told apart by their line id and unit, the
+ * same on a quote, a placement and the till, never by cart position.
+ */
+export const DISCOUNT_ITEM_CHOICE_VALUES = ['dearest', 'cheapest'] as const
+export type DiscountItemChoice = (typeof DISCOUNT_ITEM_CHOICE_VALUES)[number]
+
 /** Owner.com's "maximum use" presets; any positive whole number is allowed. */
 export const DISCOUNT_TOTAL_LIMIT_PRESETS = [
 	1, 10, 25, 50, 100, 250, 500,
@@ -364,6 +374,28 @@ export const discountDefinitionSchema = z
 			.min(1)
 			.max(DISCOUNT_MAX_UNITS)
 			.nullable(),
+		/**
+		 * Which eligible items the item limit covers first (#395). Needs
+		 * `maxDiscountedUnits`; missing means `dearest`, as before the setting.
+		 * Written only when it is `cheapest`, so a region that predates it still
+		 * reads every other record.
+		 */
+		itemChoice: z.enum(DISCOUNT_ITEM_CHOICE_VALUES).optional(),
+		/**
+		 * A weekly spend limit (#392): the most this discount gives in one
+		 * calendar week (Monday start, in the location's zone), counted in
+		 * `discount_redemptions`. Once the week's spend reaches it the discount
+		 * stops applying until next week; the order that crosses it keeps its
+		 * full discount. Automatic and code discounts; needs `currency`.
+		 */
+		weeklyBudgetMinor: minorSchema.min(1).nullable().optional(),
+		/**
+		 * Limit to a saved audience (#415): the id of a `marketing_audiences` row
+		 * in the guest's regional database. Membership is read there at quote and
+		 * placement; the control plane keeps only the id. Needs a signed-in
+		 * eligibility, since a guest with no identity is never a member.
+		 */
+		audienceId: z.string().min(1).max(100).nullable().optional(),
 		minSubtotalMinor: minorSchema.min(1).nullable(),
 		/** Null means every location. */
 		locationIds: z.array(catalogIdSchema).min(1).max(200).nullable(),
@@ -610,6 +642,36 @@ export const discountDefinitionSchema = z
 			})
 		}
 
+		if (value.itemChoice !== undefined) {
+			const choosable =
+				(value.target.scope === 'items' ||
+					value.target.scope === 'categories') &&
+				(value.quantityRule.kind === 'none' ||
+					value.quantityRule.kind === 'minimum' ||
+					value.quantityRule.kind === 'exact')
+			if (!choosable) {
+				issue(
+					'itemChoice',
+					'Choosing the cheapest or dearest item needs an item or category discount without a buy-and-get or deal rule',
+				)
+			} else if (value.maxDiscountedUnits === null) {
+				issue('itemChoice', 'Set how many items are discounted first')
+			}
+		}
+		if (value.weeklyBudgetMinor != null) {
+			if (value.application === 'manual') {
+				issue('weeklyBudgetMinor', 'A till discount has no weekly budget')
+			}
+			if (value.currency === null) issue('currency', 'Choose a currency')
+		}
+		if (value.audienceId != null) {
+			if (value.application === 'manual') {
+				issue('audienceId', 'A till discount cannot be limited to an audience')
+			}
+			if (value.eligibility === 'everyone') {
+				issue('eligibility', 'A saved audience is for signed-in guests')
+			}
+		}
 		if (value.maxDeliveryFeeMinor != null) {
 			if (value.valueType !== 'free_delivery') {
 				issue('maxDeliveryFeeMinor', 'Only free delivery has a fee limit')

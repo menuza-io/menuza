@@ -171,6 +171,13 @@ export type EditorState = {
 	buyQuantity: string
 	getQuantity: string
 	maxUnits: string
+	/**
+	 * Which eligible items the item limit covers first (#395). Only `cheapest`
+	 * is stored; `dearest` is what a discount always did.
+	 */
+	itemChoice: 'dearest' | 'cheapest'
+	/** Weekly spend limit (#392); empty is none. */
+	weeklyBudget: string
 	minSubtotal: string
 	allLocations: boolean
 	locationIds: string[]
@@ -182,6 +189,8 @@ export type EditorState = {
 	hoursOn: boolean
 	schedule: ScheduleRow[]
 	eligibility: DiscountEligibility
+	/** A saved audience the discount is limited to (#415); empty is none. */
+	audienceId: string
 	totalLimit: TotalLimitChoice
 	totalLimitCustom: string
 	perCustomerOn: boolean
@@ -424,9 +433,9 @@ export function tiersApply(
  * does not stop a promotion.
  */
 export function promoteOnMenuAllowed(
-	state: Pick<EditorState, 'eligibility'>,
+	state: Pick<EditorState, 'eligibility'> & { audienceId?: string },
 ): boolean {
-	return state.eligibility === 'everyone'
+	return state.eligibility === 'everyone' && !state.audienceId?.trim()
 }
 
 export function newSlot(quantity = '1'): SlotState {
@@ -494,6 +503,8 @@ export function emptyEditorState(
 		buyQuantity: '1',
 		getQuantity: '1',
 		maxUnits: '',
+		itemChoice: 'dearest',
+		weeklyBudget: '',
 		minSubtotal: '',
 		allLocations: true,
 		locationIds: [],
@@ -505,6 +516,7 @@ export function emptyEditorState(
 		hoursOn: false,
 		schedule: [],
 		eligibility: 'everyone',
+		audienceId: '',
 		totalLimit: 'unlimited',
 		totalLimitCustom: '',
 		perCustomerOn: false,
@@ -652,6 +664,11 @@ export function stateFromDefinition(
 			definition.maxDiscountedUnits === null
 				? ''
 				: String(definition.maxDiscountedUnits),
+		itemChoice: definition.itemChoice === 'cheapest' ? 'cheapest' : 'dearest',
+		weeklyBudget: minorToMoneyInput(
+			definition.weeklyBudgetMinor ?? null,
+			currency,
+		),
 		minSubtotal: minorToMoneyInput(definition.minSubtotalMinor, currency),
 		allLocations: definition.locationIds === null,
 		locationIds: [...(definition.locationIds ?? [])],
@@ -663,6 +680,7 @@ export function stateFromDefinition(
 		hoursOn: definition.schedule !== null,
 		schedule: (definition.schedule ?? []).map((window) => ({ ...window })),
 		eligibility: definition.eligibility,
+		audienceId: definition.audienceId ?? '',
 		totalLimit:
 			definition.totalLimit === null
 				? 'unlimited'
@@ -715,6 +733,10 @@ const PATH_TO_FIELD: Record<string, string> = {
 	requirement: 'requirement',
 	quantityRule: 'quantityKind',
 	maxDiscountedUnits: 'maxUnits',
+	itemChoice: 'itemChoice',
+	weeklyBudgetMinor: 'weeklyBudget',
+	audienceId: 'audienceId',
+	eligibility: 'audienceId',
 	minSubtotalMinor: 'minSubtotal',
 	locationIds: 'locations',
 	channels: 'channels',
@@ -743,9 +765,11 @@ export function currencyIssueField(
 		minSubtotal: boolean
 		maxDeliveryFee: boolean
 		tiers: boolean
+		weeklyBudget?: boolean
 	},
 ): string {
 	if (has.maxDiscount) return 'maxDiscount'
+	if (has.weeklyBudget) return 'weeklyBudget'
 	if (has.minSubtotal) return 'minSubtotal'
 	if (has.maxDeliveryFee) return 'maxDeliveryFee'
 	if (has.tiers) return 'tiers'
@@ -1174,6 +1198,27 @@ export function stateToDefinition(
 	) {
 		maxDiscountedUnits = whole(state.maxUnits, 'maxUnits')
 	}
+	// The cheapest-first choice only means something with an item limit on a
+	// plain item or category discount; otherwise it is not stored.
+	const itemChoice =
+		state.itemChoice === 'cheapest' &&
+		maxDiscountedUnits !== null &&
+		(scope === 'items' || scope === 'categories') &&
+		(state.quantityKind === 'none' ||
+			state.quantityKind === 'minimum' ||
+			state.quantityKind === 'exact')
+			? ('cheapest' as const)
+			: null
+	// A weekly budget is for discounts that apply by themselves or by a code.
+	let weeklyBudgetMinor: number | null = null
+	if (state.application !== 'manual' && state.weeklyBudget.trim()) {
+		weeklyBudgetMinor = moneyField(state.weeklyBudget, 'weeklyBudget')
+	}
+	// A saved audience is for guests who signed in, and never for the till.
+	const audienceId =
+		state.application !== 'manual' && state.audienceId.trim()
+			? state.audienceId.trim()
+			: null
 
 	if (
 		state.startsAt &&
@@ -1282,6 +1327,7 @@ export function stateToDefinition(
 			maxDiscountMinor !== null ||
 			minSubtotalMinor !== null ||
 			maxDeliveryFeeMinor !== null ||
+			weeklyBudgetMinor !== null ||
 			(tiers !== null && tiers.basis === 'spend') ||
 			(state.quantityKind === 'buy_get' && state.buyGroup.by === 'spend')
 				? currency
@@ -1319,19 +1365,27 @@ export function stateToDefinition(
 		schedule,
 		startsAt: state.startsAt || null,
 		endsAt: state.endsAt || null,
-		eligibility: state.eligibility,
+		eligibility:
+			audienceId !== null && state.eligibility === 'everyone'
+				? 'signed_in'
+				: state.eligibility,
 		totalLimit,
 		perCustomerLimit,
 		combinable: state.combinesWith.length > 0,
 		combinesWith: state.combinesWith,
 		...(tiers ? { tiers } : {}),
 		...(maxDeliveryFeeMinor !== null ? { maxDeliveryFeeMinor } : {}),
+		// Left out unless set, so a region that predates them reads every record.
+		...(itemChoice ? { itemChoice } : {}),
+		...(weeklyBudgetMinor !== null ? { weeklyBudgetMinor } : {}),
+		...(audienceId ? { audienceId } : {}),
 		// Left out unless on, so a region that predates it reads every record.
 		...(state.waivesPackagingFee && state.application !== 'manual'
 			? { waivesPackagingFee: true }
 			: {}),
 		priority: priority ?? 0,
-		promoteOnMenu: state.promoteOnMenu && promoteOnMenuAllowed(state),
+		promoteOnMenu:
+			state.promoteOnMenu && promoteOnMenuAllowed(state) && audienceId === null,
 		requireApproval: state.requireApproval,
 	}
 	// The discount holds money but its locations use several currencies, so no
@@ -1346,6 +1400,7 @@ export function stateToDefinition(
 					minSubtotal: minSubtotalMinor !== null,
 					maxDeliveryFee: maxDeliveryFeeMinor !== null,
 					tiers: tiers !== null,
+					weeklyBudget: weeklyBudgetMinor !== null,
 				})]: 'mixed_currencies',
 			},
 		}
@@ -1361,6 +1416,7 @@ export function stateToDefinition(
 							minSubtotal: minSubtotalMinor !== null,
 							maxDeliveryFee: maxDeliveryFeeMinor !== null,
 							tiers: tiers !== null,
+							weeklyBudget: weeklyBudgetMinor !== null,
 						})
 					: fieldForIssuePath(issue.path)
 			schemaErrors[field] ??= 'invalid'

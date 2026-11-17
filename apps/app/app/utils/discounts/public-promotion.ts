@@ -67,6 +67,13 @@ export type PublicMenuPromotion = {
 	code: string | null
 	excludeItemIds: string[]
 	excludeCategoryIds: string[]
+	/**
+	 * The most a percentage takes off one order (#273), in `currency`, so the menu
+	 * can say "20% off, up to $15.00". Left out when there is no cap.
+	 */
+	maxDiscountMinor?: number
+	/** The most items an item discount covers in one order (#273). Left out when unlimited. */
+	maxUnits?: number
 }
 
 function nonEmpty(
@@ -172,5 +179,20 @@ export function publicPromotionFor(
 		code: discount.application === 'code' ? (options.code ?? null) : null,
 		excludeItemIds: target.excludeItemIds,
 		excludeCategoryIds: target.excludeCategoryIds,
+		// Only what the menu can state truthfully: a cap on a percentage and an
+		// item limit on a plain item or category discount. Left out otherwise, so
+		// a menu cached before they existed reads the same.
+		...(valueType === 'percent' &&
+		!discount.tiers &&
+		discount.maxDiscountMinor !== null &&
+		discount.currency
+			? { maxDiscountMinor: discount.maxDiscountMinor }
+			: {}),
+		...(!deal &&
+		!modifiers &&
+		!freeDelivery &&
+		discount.maxDiscountedUnits !== null
+			? { maxUnits: discount.maxDiscountedUnits }
+			: {}),
 	}
 }

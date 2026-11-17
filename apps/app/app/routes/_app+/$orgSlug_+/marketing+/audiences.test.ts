@@ -1,4 +1,6 @@
+import { db, Discount, eq } from '@repo/database'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { setupTestOrgWithUser } from '#tests/test-utils.ts'
 import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import type * as PermissionsModule from '#app/utils/organization/permissions.server.ts'
 import {
@@ -137,5 +139,55 @@ describe('Audiences route (#98)', () => {
 		)) as { ok: boolean; error?: string }
 		expect(removed.ok).toBe(false)
 		expect(removed.error).toMatch(/broadcast|automation/i)
+	})
+	it('refuses to delete an audience a discount is limited to (#415), naming it, and lets go once that discount is archived', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		vi.spyOn(tenantApiServer, 'getOperatorTenantClient').mockResolvedValue({
+			orgId: organization.id,
+			orgSlug: 'acme',
+			dataRegion: 'us',
+			jwt: 'jwt',
+			tenantApiUrl: 'http://localhost:3007',
+			fetchTenant: fetchTenant as never,
+		})
+		const [discount] = await db
+			.insert(Discount)
+			.values({
+				organizationId: organization.id,
+				name: 'Lapsed regulars 10%',
+				application: 'automatic',
+				valueType: 'percent',
+				percentBp: 1000,
+				eligibility: 'signed_in',
+				audienceId: 'aud_lapsed',
+				target: '{}',
+			})
+			.returning({ id: Discount.id })
+
+		const refused = (await action(
+			args(post({ intent: 'delete', audienceId: 'aud_lapsed' })),
+		)) as { ok: boolean; error?: string }
+		expect(refused.ok).toBe(false)
+		expect(refused.error).toContain('Lapsed regulars 10%')
+		// The region is never asked.
+		expect(fetchTenant).not.toHaveBeenCalled()
+
+		// Another audience is not held by it.
+		fetchTenant.mockResolvedValueOnce(Response.json({ success: true }))
+		const free = (await action(
+			args(post({ intent: 'delete', audienceId: 'aud_other' })),
+		)) as { ok: boolean }
+		expect(free.ok).toBe(true)
+
+		// An archived discount no longer applies, so it holds nothing.
+		await db
+			.update(Discount)
+			.set({ status: 'archived' })
+			.where(eq(Discount.id, discount!.id))
+		fetchTenant.mockResolvedValueOnce(Response.json({ success: true }))
+		const released = (await action(
+			args(post({ intent: 'delete', audienceId: 'aud_lapsed' })),
+		)) as { ok: boolean }
+		expect(released.ok).toBe(true)
 	})
 })

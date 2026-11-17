@@ -25,7 +25,7 @@ msgstr "{amount} more needed"
 msgid "{amount} more to unlock {reward}"
 msgstr "{amount} more to unlock {reward}"
 
-#: components/ordering/menu-screen.tsx:332
+#: components/ordering/menu-screen.tsx:348
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "{amount} off"
@@ -54,11 +54,19 @@ msgstr "{n, plural, one {{count} point} other {{count} points}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, one {{count} star} other {{count} stars}}"
 
+#: components/ordering/menu-screen.tsx:331
+msgid "{name} (limit {count} per order)"
+msgstr "{name} (limit {count} per order)"
+
+#: components/ordering/menu-screen.tsx:327
+msgid "{name} (up to {amount} off)"
+msgstr "{name} (up to {amount} off)"
+
 #: lib/loyalty/labels.ts:57
 msgid "{percent} off"
 msgstr "{percent} off"
 
-#: components/ordering/menu-screen.tsx:324
+#: components/ordering/menu-screen.tsx:340
 msgid "{percentText} off"
 msgstr "{percentText} off"
 
@@ -465,7 +473,7 @@ msgstr "For a group this size, please call {phone}."
 msgid "Free {item}"
 msgstr "Free {item}"
 
-#: components/ordering/menu-screen.tsx:342
+#: components/ordering/menu-screen.tsx:358
 msgid "Free delivery"
 msgstr "Free delivery"
 
@@ -978,7 +986,7 @@ msgstr "Send a request"
 msgid "Send code"
 msgstr "Send code"
 
-#: components/ordering/menu-screen.tsx:340
+#: components/ordering/menu-screen.tsx:356
 msgid "Set price {amount}"
 msgstr "Set price {amount}"
 

@@ -7,7 +7,10 @@ import {
 } from 'react-router'
 import { DiscountForm } from '#app/components/discounts/discount-form.tsx'
 import { requireDiscountsAccess } from '#app/utils/discounts/access.server.ts'
-import { loadDiscountEditorData } from '#app/utils/discounts/editor-data.server.ts'
+import {
+	loadDiscountAudienceChoices,
+	loadDiscountEditorData,
+} from '#app/utils/discounts/editor-data.server.ts'
 import { emptyEditorState } from '#app/utils/discounts/editor-model.ts'
 import {
 	type DiscountEditorActionData,
@@ -16,7 +19,15 @@ import {
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requireDiscountsAccess(request, params.orgSlug)
-	const editor = await loadDiscountEditorData(access.organization.id)
+	const [editor, audiences] = await Promise.all([
+		loadDiscountEditorData(access.organization.id),
+		loadDiscountAudienceChoices({
+			request,
+			orgSlug: access.organization.slug,
+			organizationId: access.organization.id,
+			userId: access.userId,
+		}),
+	])
 	const application = access.features.automatic
 		? 'automatic'
 		: access.features.coupons
@@ -28,6 +39,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		features: access.features,
 		canWrite: access.canWrite,
 		editor,
+		audiences,
 		initial: emptyEditorState(application),
 	}
 }
@@ -54,6 +66,7 @@ export default function NewDiscountRoute() {
 			choices={data.editor.choices}
 			siteLocales={data.editor.siteLocales}
 			packagingFeeEnabled={data.editor.packagingFeeEnabled}
+			audiences={data.audiences}
 			initial={data.initial}
 			version={null}
 			status="paused"

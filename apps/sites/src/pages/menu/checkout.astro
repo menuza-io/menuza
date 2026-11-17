@@ -336,6 +336,12 @@ const checkoutLabels = {
 			msg`Estimated total. We couldn't update it just now, so the final amount may differ.`,
 		),
 		deliveryDiscount: translate(i18n, msg`{name} (delivery)`, { name: '{name}' }),
+		limited: translate(i18n, msg`{name} ({limits})`, {
+			name: '{name}',
+			limits: '{limits}',
+		}),
+		limitAmount: translate(i18n, msg`up to {amount} off`, { amount: '{amount}' }),
+		limitItems: translate(i18n, msg`limit {count} per order`, { count: '{count}' }),
 		discountChanged: translate(
 			i18n,
 			msg`Your discount changed, so we updated your total to {total}. Please review it and place your order again.`,
@@ -1394,7 +1400,7 @@ const inputClass =
 						: 0,
 					loyaltyDiscount: rewardTotals.discountMinor / 100,
 					total: rewardTotals.totalMinor / 100,
-					lines: discountQuote ? discountLines(discountQuote, discountLabels, discountLanguage) : [],
+					lines: discountQuote ? discountLines(discountQuote, discountLabels, discountLanguage, (minor) => formatCurrency(minor / 100)) : [],
 					priced: true,
 				}
 			}
@@ -1411,7 +1417,7 @@ const inputClass =
 					discount: t.discountMinor / 100,
 					loyaltyDiscount: t.loyaltyMinor / 100,
 					total: t.totalMinor / 100,
-					lines: discountLines(discountQuote, discountLabels, discountLanguage),
+					lines: discountLines(discountQuote, discountLabels, discountLanguage, (minor) => formatCurrency(minor / 100)),
 					priced: true,
 				}
 			}
@@ -1435,7 +1441,7 @@ const inputClass =
 			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
 			// While a quote is on its way, keep the saving the last one priced.
 			const carried = discounts?.lastQuote() ?? null
-			const lines = carried ? discountLines(carried, discountLabels, discountLanguage) : []
+			const lines = carried ? discountLines(carried, discountLabels, discountLanguage, (minor) => formatCurrency(minor / 100)) : []
 			const discount = Math.min(
 				subtotal,
 				carried ? (carried.totalDiscountMinor - carried.deliveryDiscountMinor) / 100 : 0,

@@ -698,3 +698,108 @@ describe('DiscountForm: waive the packaging fee (#408)', () => {
 		expect((JSON.parse(posted!.value) as any).waivesPackagingFee).toBe(false)
 	})
 })
+
+describe('DiscountForm item choice, weekly budget and saved audience (#395, #392, #415)', () => {
+	it('offers which items are discounted first only with an item limit', () => {
+		const first = renderStaff(
+			form({ state: { scope: 'items', itemIds: ['pizza'], maxUnits: '' } }),
+		)
+		expect(screen.queryByRole('radio', { name: /Cheapest first/ })).toBeNull()
+		first.unmount()
+		const second = renderStaff(
+			form({ state: { scope: 'items', itemIds: ['pizza'], maxUnits: '2' } }),
+		)
+		expect(radio(/Most expensive first/)).toBeChecked()
+		expect(radio(/Cheapest first/)).not.toBeChecked()
+		second.unmount()
+		// A whole-order discount has no item limit to order.
+		renderStaff(form({ state: { scope: 'order', maxUnits: '2' } }))
+		expect(screen.queryByRole('radio', { name: /Cheapest first/ })).toBeNull()
+	})
+
+	it('shows the saved choice and lets the owner change it', async () => {
+		renderStaff(
+			form({
+				state: {
+					scope: 'items',
+					itemIds: ['pizza'],
+					maxUnits: '1',
+					itemChoice: 'cheapest',
+				},
+			}),
+		)
+		expect(radio(/Cheapest first/)).toBeChecked()
+		expect(
+			screen.getByText(/The cheapest matching items are discounted first/),
+		).toBeInTheDocument()
+		await userEvent.click(radio(/Most expensive first/))
+		expect(radio(/Most expensive first/)).toBeChecked()
+		expect(
+			screen.getByText(/The most expensive matching items are discounted first/),
+		).toBeInTheDocument()
+	})
+
+	it('has a weekly budget field for a discount that applies by itself, not for a till discount', () => {
+		const first = renderStaff(form({ state: { weeklyBudget: '100' } }))
+		expect(screen.getByLabelText(/Weekly budget/)).toHaveValue('100')
+		first.unmount()
+		renderStaff(
+			form({ state: { application: 'manual', valueType: 'variable_percent' } }),
+		)
+		expect(screen.queryByLabelText(/Weekly budget/)).toBeNull()
+	})
+
+	it('offers saved audiences only when there are some to offer', () => {
+		const first = renderStaff(form({ audiences: null }))
+		expect(screen.queryByLabelText(/Saved audience/)).toBeNull()
+		first.unmount()
+		renderStaff(
+			form({
+				audiences: [
+					{ id: 'aud1', name: 'Lapsed regulars' },
+					{ id: 'aud2', name: 'Top spenders' },
+				],
+			}),
+		)
+		const select = screen.getByLabelText(/Saved audience/)
+		expect(
+			within(select).getByRole('option', { name: 'Lapsed regulars' }),
+		).toBeInTheDocument()
+		expect(
+			within(select).getByRole('option', { name: 'Top spenders' }),
+		).toBeInTheDocument()
+	})
+
+	it('keeps an audience the member cannot see, instead of dropping it', () => {
+		renderStaff(
+			form({
+				audiences: [{ id: 'aud2', name: 'Top spenders' }],
+				state: { eligibility: 'signed_in', audienceId: 'aud_hidden' },
+			}),
+		)
+		const select = screen.getByLabelText(/Saved audience/) as HTMLSelectElement
+		expect(select.value).toBe('aud_hidden')
+		expect(
+			within(select).getByRole('option', { name: /not available to you/ }),
+		).toBeInTheDocument()
+	})
+
+	it('choosing an audience makes the discount for signed-in guests', async () => {
+		renderStaff(
+			form({
+				audiences: [{ id: 'aud1', name: 'Lapsed regulars' }],
+				state: { eligibility: 'everyone' },
+			}),
+		)
+		await userEvent.selectOptions(
+			screen.getByLabelText(/Saved audience/),
+			'Lapsed regulars',
+		)
+		expect(radio(/Signed in customers/)).toBeChecked()
+		// Going back to everyone clears the audience.
+		await userEvent.click(radio(/^Everyone/))
+		expect(
+			(screen.getByLabelText(/Saved audience/) as HTMLSelectElement).value,
+		).toBe('')
+	})
+})

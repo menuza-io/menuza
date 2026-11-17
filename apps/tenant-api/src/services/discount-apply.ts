@@ -39,6 +39,7 @@ import {
 import { inJsonList } from '../lib/chunked-in.ts'
 import { codesWithIssuedCode } from './discount-marketing-codes.ts'
 import { memberForCustomerInTx } from './loyalty-member-service.ts'
+import { customerInAudience } from './marketing-audience-service.ts'
 import { QR_TAB_SESSION_HOLD_MS } from './qr-dine-in.ts'
 
 type DiscountDb = TenantDatabase | TenantTransaction
@@ -94,6 +95,56 @@ export type PreparedDiscounts = {
 	records: readonly DiscountRecord[]
 	/** The coupon codes the evaluation saw (a code's `maxUses` is kept on its use). */
 	codes: readonly { id: string; maxUses: number | null }[]
+	/**
+	 * What each discount had given in this week before this order (#392), so
+	 * the use that spends a weekly budget can be told from the ones before it.
+	 */
+	weekGiven?: Readonly<Record<string, number>>
+}
+
+/** A discount whose weekly budget (#392) this order's use spent. */
+export type DiscountBudgetCrossing = { discountId: string; week: string }
+
+/**
+ * The most saved audiences read for one request. A cart is priced against at
+ * most this many distinct audiences; one past it counts as not a member
+ * (failing closed), so a crafted set of discounts cannot make pricing slow.
+ */
+export const MAX_DISCOUNT_AUDIENCE_CHECKS = 25
+
+/**
+ * The saved audiences (#415) among the candidate discounts that `customerId`
+ * is in right now. Read in the region, per request, never cached: membership
+ * is evaluated against the guest's own data and only the audience ids that
+ * matched are handed to the engine. A guest with no identity is in none, an
+ * audience that is gone or cannot be read counts as not a member.
+ */
+export async function memberAudienceIds(
+	db: DiscountDb,
+	records: readonly Pick<DiscountRecord, 'audienceId'>[],
+	customerId: string | null,
+	now: Date,
+): Promise<string[]> {
+	if (!customerId) return []
+	const wanted = [
+		...new Set(
+			records.flatMap((record) => (record.audienceId ? [record.audienceId] : [])),
+		),
+	].slice(0, MAX_DISCOUNT_AUDIENCE_CHECKS)
+	const member: string[] = []
+	for (const audienceId of wanted) {
+		try {
+			if (
+				(await customerInAudience(db, audienceId, customerId, now.getTime())) ===
+				true
+			) {
+				member.push(audienceId)
+			}
+		} catch {
+			// An audience that cannot be read does not widen who gets a discount.
+		}
+	}
+	return member
 }
 
 /** Refusals the customer can fix by changing the cart, so they are not probes. */
@@ -202,6 +253,12 @@ export async function prepareOrderDiscounts(
 	const localNow = discountLocalNow(priced, input.now)
 	const periods = discountPeriodKeys(localNow)
 	const customer = await discountCustomerFacts(db, input.customerId, input.now)
+	const audienceIds = await memberAudienceIds(
+		db,
+		records,
+		customer.customerId,
+		input.now,
+	)
 	const { usage, codeUsage } = await loadDiscountUsageCounts(
 		db,
 		records.map((record) => record.id),
@@ -240,6 +297,7 @@ export async function prepareOrderDiscounts(
 				signedIn: customer.signedIn,
 				isNewCustomer: customer.isNewCustomer,
 				isLoyaltyMember: customer.isLoyaltyMember,
+				audienceIds,
 			},
 		},
 		discounts: records,
@@ -250,7 +308,14 @@ export async function prepareOrderDiscounts(
 	})
 	return {
 		ok: true,
-		prepared: { evaluation, typedCode, periods, records, codes },
+		prepared: {
+			evaluation,
+			typedCode,
+			periods,
+			records,
+			codes,
+			weekGiven: weekGivenOf(usage),
+		},
 	}
 }
 
@@ -310,6 +375,17 @@ function lapsedHold(now: Date) {
 		eq(restaurantOrders.paymentStatus, 'pending'),
 		sql`${restaurantOrders.holdExpiresAt} is not null and ${restaurantOrders.holdExpiresAt} < ${Math.floor(now.getTime() / 1000)}`,
 	)
+}
+
+/** What each discount gave this week before the order being priced (#392). */
+export function weekGivenOf(
+	usage: Readonly<Record<string, DiscountUsage | undefined>>,
+): Record<string, number> {
+	const given: Record<string, number> = {}
+	for (const [id, entry] of Object.entries(usage)) {
+		if (entry?.weekGivenMinor) given[id] = entry.weekGivenMinor
+	}
+	return given
 }
 
 export async function discountCustomerFacts(
@@ -416,6 +492,7 @@ export async function loadDiscountUsageCounts(
 			localWeek: discountRedemptions.localWeek,
 			codeId: discountRedemptions.codeId,
 			n: count(),
+			given: sql<number>`coalesce(sum(${discountRedemptions.amountMinor} + ${discountRedemptions.deliveryAmountMinor}), 0)`,
 		})
 		.from(discountRedemptions)
 		.leftJoin(
@@ -463,6 +540,10 @@ export async function loadDiscountUsageCounts(
 			customerWeek: 0,
 		}
 		current.total += n
+		// A weekly budget (#392) counts everyone's uses in the week asked for.
+		if (row.localWeek === periods.week) {
+			current.weekGivenMinor = (current.weekGivenMinor ?? 0) + Number(row.given)
+		}
 		if (customerId && row.customerId === customerId) {
 			current.customerLifetime += n
 			if (row.localDay === periods.day) current.customerDay += n
@@ -472,6 +553,31 @@ export async function loadDiscountUsageCounts(
 		if (row.codeId) codeUsage[row.codeId] = (codeUsage[row.codeId] ?? 0) + n
 	}
 	return { usage, codeUsage }
+}
+
+/**
+ * The limits worth telling a guest about a discount that applied: a cap on a
+ * percentage and an item limit on a plain item or category discount. A cap in
+ * another currency than the order's is not applied by the engine, so it is
+ * never promised here either (the quote's `currency` is the order's).
+ */
+function limitsOfRecord(
+	record: DiscountRecord | undefined,
+): { maxDiscountMinor?: number; maxUnits?: number } {
+	if (!record) return {}
+	const plainItems =
+		(record.target.scope === 'items' || record.target.scope === 'categories') &&
+		(record.quantityRule.kind === 'none' ||
+			record.quantityRule.kind === 'minimum' ||
+			record.quantityRule.kind === 'exact')
+	return {
+		...(record.valueType === 'percent' && record.maxDiscountMinor !== null
+			? { maxDiscountMinor: record.maxDiscountMinor }
+			: {}),
+		...(plainItems && record.maxDiscountedUnits !== null
+			? { maxUnits: record.maxDiscountedUnits }
+			: {}),
+	}
 }
 
 /** The quote body, after loyalty has been applied on what discounts left. */
@@ -493,16 +599,24 @@ export function buildDiscountQuote(input: {
 	return {
 		currency: input.priced.currency,
 		subtotalMinor: input.priced.subtotalCents,
-		discounts: (evaluation?.applied ?? []).map((applied) => ({
-			discountId: applied.discountId,
-			version: applied.version,
-			name: applied.name,
-			...(applied.nameI18n ? { nameI18n: applied.nameI18n } : {}),
-			code: applied.codeId ? typedCode : null,
-			amountMinor: applied.amountMinor,
-			deliveryAmountMinor: applied.deliveryAmountMinor,
-			lineIds: applied.lines.map((line) => line.lineId),
-		})),
+		discounts: (evaluation?.applied ?? []).map((applied) => {
+			const record = input.prepared?.records.find(
+				(entry) => entry.id === applied.discountId,
+			)
+			return {
+				discountId: applied.discountId,
+				version: applied.version,
+				name: applied.name,
+				...(applied.nameI18n ? { nameI18n: applied.nameI18n } : {}),
+				code: applied.codeId ? typedCode : null,
+				amountMinor: applied.amountMinor,
+				deliveryAmountMinor: applied.deliveryAmountMinor,
+				lineIds: applied.lines.map((line) => line.lineId),
+				// What the guest is told about the limits (#273): a cap on a
+				// percentage, and how many items an item discount covers.
+				...limitsOfRecord(record),
+			}
+		}),
 		totalDiscountMinor: evaluation?.totalDiscountMinor ?? 0,
 		loyaltyDiscountMinor: input.loyaltyDiscountMinor,
 		taxMinor: input.taxMinor,
@@ -610,9 +724,9 @@ export async function reserveOrderDiscounts(
 		/** Defaults to an online order. Tab payment and the till pass their own. */
 		sourceType?: 'order' | 'tab' | 'pos'
 	},
-): Promise<void> {
+): Promise<DiscountBudgetCrossing[]> {
 	const { prepared } = input
-	if (prepared.evaluation.applied.length === 0) return
+	if (prepared.evaluation.applied.length === 0) return []
 	const byId = new Map(prepared.records.map((record) => [record.id, record]))
 	const rows = prepared.evaluation.applied.map((applied) => ({
 		discountId: applied.discountId,
@@ -653,6 +767,25 @@ export async function reserveOrderDiscounts(
 			.insert(discountRedemptions)
 			.values(rows.slice(index, index + rowsPerStatement))
 	}
+	// The use that spends a weekly budget (#392): what the week had given before
+	// this order was under it, and with this order it is not. The caller tells
+	// the owner once the order has committed.
+	const crossings: DiscountBudgetCrossing[] = []
+	for (const applied of prepared.evaluation.applied) {
+		const budget = byId.get(applied.discountId)?.weeklyBudgetMinor
+		if (budget == null) continue
+		const before = prepared.weekGiven?.[applied.discountId] ?? 0
+		if (
+			before < budget &&
+			before + applied.amountMinor + applied.deliveryAmountMinor >= budget
+		) {
+			crossings.push({
+				discountId: applied.discountId,
+				week: prepared.periods.week,
+			})
+		}
+	}
+	return crossings
 }
 
 async function moveRedemptions(
@@ -876,11 +1009,58 @@ export function totalsAfterDiscounts(
 
 /** Counts for the operator list. No customer data. */
 const LOCAL_DAY = /^\d{4}-\d{2}-\d{2}$/
+const WEEK_KEY = /^\d{4}-W\d{2}$/
+
+/** A late copy of a source (`<id>:late`) belongs to the same sale. */
+export function baseRedemptionSourceId() {
+	return sql<string>`case when ${discountRedemptions.sourceId} like ${`%${LATE_SOURCE_SUFFIX}`} then substr(${discountRedemptions.sourceId}, 1, length(${discountRedemptions.sourceId}) - ${LATE_SOURCE_SUFFIX.length}) else ${discountRedemptions.sourceId} end`
+}
+
+/** The tab id of a tab redemption, whose source id is `<tabId>:<time>`. */
+export function tabIdOfRedemption() {
+	return sql<string>`substr(${discountRedemptions.sourceId}, 1, instr(${discountRedemptions.sourceId} || ':', ':') - 1)`
+}
+
+/**
+ * Keeps redemptions of sales at these locations (`null` = every location).
+ * Orders, table tabs and till sales each carry their own location.
+ */
+export function redemptionLocationScope(
+	db: DiscountDb,
+	locationIds: readonly string[] | null,
+) {
+	if (locationIds === null) return undefined
+	const baseSourceId = baseRedemptionSourceId()
+	return or(
+		and(
+			eq(discountRedemptions.sourceType, 'order'),
+			sql`${baseSourceId} in (${db
+				.select({ id: restaurantOrders.id })
+				.from(restaurantOrders)
+				.where(inJsonList(restaurantOrders.locationId, [...locationIds]))})`,
+		),
+		and(
+			eq(discountRedemptions.sourceType, 'tab'),
+			// A tab's use is recorded under `<tabId>:<time>`.
+			sql`${tabIdOfRedemption()} in (${db
+				.select({ id: qrTabs.id })
+				.from(qrTabs)
+				.where(inJsonList(qrTabs.locationId, [...locationIds]))})`,
+		),
+		and(
+			eq(discountRedemptions.sourceType, 'pos'),
+			sql`${baseSourceId} in (${db
+				.select({ id: posOrders.id })
+				.from(posOrders)
+				.where(inJsonList(posOrders.locationId, [...locationIds]))})`,
+		),
+	)
+}
 
 export async function readDiscountUsage(
 	db: DiscountDb,
 	ids: readonly string[],
-	range?: { from?: string; to?: string },
+	range?: { from?: string; to?: string; week?: string },
 	/** `null` = every location; a list keeps only sales at those locations. */
 	locationIds: readonly string[] | null = null,
 ): Promise<
@@ -891,6 +1071,10 @@ export async function readDiscountUsage(
 		consumed: number
 		refunded: number
 		discountMinor: number
+		/** Counted uses that took the whole cap of a percentage with a maximum (#273). */
+		capReached: number
+		/** Given in `range.week` by counted uses; only when a week was asked for (#392). */
+		weekGivenMinor?: number
 	}>
 > {
 	const unique = [...new Set(ids)]
@@ -900,6 +1084,8 @@ export async function readDiscountUsage(
 		consumed: 0,
 		refunded: 0,
 		discountMinor: 0,
+		capReached: 0,
+		...(range?.week ? { weekGivenMinor: 0 } : {}),
 	})
 	const byId = new Map(unique.map((id) => [id, blank()]))
 	if (unique.length === 0) return []
@@ -907,35 +1093,7 @@ export async function readDiscountUsage(
 	if (scoped && locationIds.length === 0) {
 		return unique.map((discountId) => ({ discountId, ...blank() }))
 	}
-	// A late copy of a source (`<id>:late`) belongs to the same location.
-	const baseSourceId = sql<string>`case when ${discountRedemptions.sourceId} like ${`%${LATE_SOURCE_SUFFIX}`} then substr(${discountRedemptions.sourceId}, 1, length(${discountRedemptions.sourceId}) - ${LATE_SOURCE_SUFFIX.length}) else ${discountRedemptions.sourceId} end`
-	const inScope = scoped
-		? or(
-				and(
-					eq(discountRedemptions.sourceType, 'order'),
-					sql`${baseSourceId} in (${db
-						.select({ id: restaurantOrders.id })
-						.from(restaurantOrders)
-						.where(
-							inJsonList(restaurantOrders.locationId, [...locationIds]),
-						)})`,
-				),
-				and(
-					eq(discountRedemptions.sourceType, 'tab'),
-					sql`${baseSourceId} in (${db
-						.select({ id: qrTabs.id })
-						.from(qrTabs)
-						.where(inJsonList(qrTabs.locationId, [...locationIds]))})`,
-				),
-				and(
-					eq(discountRedemptions.sourceType, 'pos'),
-					sql`${baseSourceId} in (${db
-						.select({ id: posOrders.id })
-						.from(posOrders)
-						.where(inJsonList(posOrders.locationId, [...locationIds]))})`,
-				),
-			)
-		: undefined
+	const inScope = redemptionLocationScope(db, locationIds)
 	const from = range?.from && LOCAL_DAY.test(range.from) ? range.from : null
 	const to = range?.to && LOCAL_DAY.test(range.to) ? range.to : null
 	const rows = await db
@@ -945,6 +1103,10 @@ export async function readDiscountUsage(
 			n: count(),
 			amount: sum(discountRedemptions.amountMinor),
 			delivery: sum(discountRedemptions.deliveryAmountMinor),
+			// A percentage with a maximum whose cut came to that maximum: the cap
+			// was reached. Read from the rule frozen on the use, so it still holds
+			// after the discount is edited.
+			capped: sql<number>`coalesce(sum(case when json_extract(${discountRedemptions.snapshot}, '$.valueType') = 'percent' and json_extract(${discountRedemptions.snapshot}, '$.maxDiscountMinor') is not null and ${discountRedemptions.amountMinor} >= json_extract(${discountRedemptions.snapshot}, '$.maxDiscountMinor') then 1 else 0 end), 0)`,
 		})
 		.from(discountRedemptions)
 		.where(
@@ -965,12 +1127,38 @@ export async function readDiscountUsage(
 			entry.reserved += n
 			entry.uses += n
 			entry.discountMinor += money
+			entry.capReached += Number(row.capped ?? 0)
 		} else if (row.state === 'consumed') {
 			entry.consumed += n
 			entry.uses += n
 			entry.discountMinor += money
+			entry.capReached += Number(row.capped ?? 0)
 		} else if (row.state === 'refunded') {
 			entry.refunded += n
+		}
+	}
+	// What the discounts gave in one week, for a weekly budget (#392): counted
+	// uses only, whatever the date range, in the same location scope.
+	const week = range?.week && WEEK_KEY.test(range.week) ? range.week : null
+	if (week) {
+		const weekRows = await db
+			.select({
+				discountId: discountRedemptions.discountId,
+				given: sql<number>`coalesce(sum(${discountRedemptions.amountMinor} + ${discountRedemptions.deliveryAmountMinor}), 0)`,
+			})
+			.from(discountRedemptions)
+			.where(
+				and(
+					inJsonList(discountRedemptions.discountId, unique),
+					eq(discountRedemptions.localWeek, week),
+					inArray(discountRedemptions.state, [...COUNTING_STATES]),
+					inScope,
+				),
+			)
+			.groupBy(discountRedemptions.discountId)
+		for (const row of weekRows) {
+			const entry = byId.get(row.discountId)
+			if (entry) entry.weekGivenMinor = Number(row.given)
 		}
 	}
 	return unique.map((discountId) => ({ discountId, ...byId.get(discountId)! }))
