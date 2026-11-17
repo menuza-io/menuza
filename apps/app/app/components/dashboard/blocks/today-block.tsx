@@ -197,14 +197,14 @@ export function TodayBlock({
 					<div className="flex flex-wrap items-center gap-2">
 						{access.orders ? (
 							<ToggleGroup
-								type="single"
-								value={salesBasis}
-								onValueChange={(value) => {
+								value={[salesBasis]}
+								onValueChange={(values) => {
+									const next = values[0]
 									if (
-										value &&
-										(SALES_BASIS_VALUES as readonly string[]).includes(value)
+										next &&
+										(SALES_BASIS_VALUES as readonly string[]).includes(next)
 									) {
-										void persistSalesBasis(value as SalesBasis)
+										void persistSalesBasis(next as SalesBasis)
 									}
 								}}
 								aria-label={_(msg`Sales basis`)}
