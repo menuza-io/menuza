@@ -9617,6 +9617,10 @@ msgstr "معرّف صوت Cartesia. اتركه فارغًا لاستخدام ا�
 msgid "Cash"
 msgstr "نقدًا"
 
+#: app/components/pos/station-register-settings.tsx:322
+msgid "Cash discount (%)"
+msgstr "خصم الدفع النقدي (٪)"
+
 #: ../../packages/reports/src/ui/report-labels.ts:152
 msgid "Cash drawer log"
 msgstr "سجل درج النقدية"
@@ -10928,7 +10932,7 @@ msgstr "اختر صلاحية العرض أو التعديل."
 msgid "Choose voice"
 msgstr "اختيار الصوت"
 
-#: app/components/pos/station-register-settings.tsx:67
+#: app/components/pos/station-register-settings.tsx:78
 msgid "Choose what cashiers must enter at the till, whether dishes show a notes field, who may ring up open-price custom items, and when cash drawer variances are flagged in reports."
 msgstr "حدّد ما يجب على الكاشير إدخاله عند نقطة البيع، وما إذا كان حقل الملاحظات يظهر للأصناف، ومن يحق له تسجيل أصناف مخصصة بسعر مفتوح، ومتى تُميّز فروقات درج النقدية في التقارير."
 
@@ -12806,7 +12810,7 @@ msgstr "تعذّر حل تعارض الطاولة."
 msgid "Could not save — enter again"
 msgstr "تعذر الحفظ — أدخل القيمة مرة أخرى"
 
-#: app/components/pos/station-register-settings.tsx:142
+#: app/components/pos/station-register-settings.tsx:159
 msgid "Could not save register settings."
 msgstr "تعذّر حفظ إعدادات الكاشير."
 
@@ -13893,7 +13897,7 @@ msgstr "صنف مخصّص"
 #~ msgid "Custom item limit ({0})"
 #~ msgstr "الحد الأقصى للصنف المخصّص ({0})"
 
-#: app/components/pos/station-register-settings.tsx:257
+#: app/components/pos/station-register-settings.tsx:288
 msgid "Custom item limit ({locationCurrency})"
 msgstr "الحد الأقصى للصنف المخصّص ({locationCurrency})"
 
@@ -17264,6 +17268,10 @@ msgstr "أدخل الأصناف غير المتوفرة أو تنبيهات كب
 msgid "Enter a 5-digit ZIP code"
 msgstr "أدخل رمزًا بريديًا من 5 أرقام"
 
+#: app/components/pos/station-register-settings.tsx:195
+msgid "Enter a cash discount of {most}% or less, or leave it blank."
+msgstr "أدخل خصم دفع نقدي بنسبة {most}٪ أو أقل، أو اتركه فارغًا."
+
 #: app/components/print/print-form-errors.ts:14
 msgid "Enter a city"
 msgstr "أدخل مدينة"
@@ -17415,7 +17423,7 @@ msgstr "أدخل رقم هاتف لشركة الشحن"
 #~ msgid "Enter a phone number."
 #~ msgstr "أدخل رقم الهاتف."
 
-#: app/components/pos/station-register-settings.tsx:154
+#: app/components/pos/station-register-settings.tsx:171
 msgid "Enter a positive maximum price for custom items."
 msgstr "أدخل حدًا أقصى موجبًا لسعر الأصناف المخصّصة."
 
@@ -17484,7 +17492,7 @@ msgstr "أدخل وقتًا، مثل 15:00."
 msgid "Enter a time, like 17:00."
 msgstr "أدخل وقتًا، مثل 17:00."
 
-#: app/components/pos/station-register-settings.tsx:166
+#: app/components/pos/station-register-settings.tsx:183
 msgid "Enter a valid cash variance threshold or leave it blank."
 msgstr "أدخل حدًا صالحًا لفرق النقدية أو اتركه فارغًا."
 
@@ -18243,7 +18251,7 @@ msgstr "كل أسبوع"
 msgid "Everyone"
 msgstr "الجميع"
 
-#: app/components/pos/station-register-settings.tsx:134
+#: app/components/pos/station-register-settings.tsx:151
 msgid "Everyone at the till"
 msgstr "الجميع على الكاشير"
 
@@ -19479,7 +19487,7 @@ msgstr "يتم تمييز المتقدمين الذين يجيبون بشكل م
 #~ msgid "Flag cash variance over ({0})"
 #~ msgstr "تمييز فرق النقدية الذي يتجاوز ({0})"
 
-#: app/components/pos/station-register-settings.tsx:273
+#: app/components/pos/station-register-settings.tsx:304
 msgid "Flag cash variance over ({locationCurrency})"
 msgstr "تمييز فرق النقدية الذي يتجاوز ({locationCurrency})"
 
@@ -20471,7 +20479,7 @@ msgstr "الدفع كضيف"
 #~ msgid "Guest CRM Profile"
 #~ msgstr "ملف الضيف (CRM)"
 
-#: app/components/pos/station-register-settings.tsx:209
+#: app/components/pos/station-register-settings.tsx:240
 msgid "Guest details at checkout"
 msgstr "بيانات الضيف عند الدفع"
 
@@ -20544,7 +20552,7 @@ msgstr "اسم الضيف"
 #~ msgid "Guest name and phone number are required."
 #~ msgstr "اسم الضيف ورقم الهاتف مطلوبان."
 
-#: app/components/pos/station-register-settings.tsx:127
+#: app/components/pos/station-register-settings.tsx:144
 msgid "Guest name required"
 msgstr "اسم الضيف مطلوب"
 
@@ -25233,7 +25241,7 @@ msgstr "مدير"
 msgid "manager@example.com"
 msgstr "manager@example.com"
 
-#: app/components/pos/station-register-settings.tsx:133
+#: app/components/pos/station-register-settings.tsx:150
 msgid "Managers only"
 msgstr "المديرون فقط"
 
@@ -26641,7 +26649,7 @@ msgstr "الاسم (يظهر للضيف)"
 msgid "Name and extra price. Drag to reorder."
 msgstr "الاسم والسعر الإضافي. اسحب لإعادة الترتيب."
 
-#: app/components/pos/station-register-settings.tsx:129
+#: app/components/pos/station-register-settings.tsx:146
 msgid "Name and phone number required"
 msgstr "الاسم ورقم الهاتف مطلوبان"
 
@@ -29911,8 +29919,9 @@ msgstr "من {totalUsers} شخص"
 #: app/components/locations/order-policies-card.tsx:85
 #: app/components/marketing/programs-section.tsx:55
 #: app/components/phone-agent/settings-nav.tsx:82
-#: app/components/pos/station-register-settings.tsx:132
-#: app/components/pos/station-register-settings.tsx:280
+#: app/components/pos/station-register-settings.tsx:149
+#: app/components/pos/station-register-settings.tsx:311
+#: app/components/pos/station-register-settings.tsx:329
 msgid "Off"
 msgstr "إيقاف"
 
@@ -30987,7 +30996,7 @@ msgstr "مفتوح بساعات مخصصة"
 msgid "Open your schedule from your email"
 msgstr "افتح جدولك من بريدك الإلكتروني"
 
-#: app/components/pos/station-register-settings.tsx:233
+#: app/components/pos/station-register-settings.tsx:264
 msgid "Open-price custom items"
 msgstr "أصناف مخصّصة بسعر مفتوح"
 
@@ -31130,7 +31139,7 @@ msgstr "تمت إزالة نوع الخيار"
 msgid "Optional"
 msgstr "اختياري"
 
-#: app/components/pos/station-register-settings.tsx:126
+#: app/components/pos/station-register-settings.tsx:143
 msgid "Optional (one-tap quick service)"
 msgstr "اختياري (خدمة سريعة بنقرة واحدة)"
 
@@ -33109,7 +33118,7 @@ msgstr "رقم الهاتف"
 msgid "Phone Number"
 msgstr "رقم الهاتف"
 
-#: app/components/pos/station-register-settings.tsx:128
+#: app/components/pos/station-register-settings.tsx:145
 msgid "Phone number required"
 msgstr "رقم الهاتف مطلوب"
 
@@ -35910,8 +35919,8 @@ msgstr "عملية بيع في نقطة البيع"
 msgid "Register sale flagged for review"
 msgstr "عملية بيع في نقطة البيع بانتظار المراجعة"
 
-#: app/components/pos/station-register-settings.tsx:59
-#: app/components/pos/station-register-settings.tsx:64
+#: app/components/pos/station-register-settings.tsx:70
+#: app/components/pos/station-register-settings.tsx:75
 msgid "Register settings"
 msgstr "إعدادات الكاشير"
 
@@ -38203,7 +38212,7 @@ msgstr "حفظ الأجر"
 #~ msgid "Save ratings"
 #~ msgstr "حفظ التقييمات"
 
-#: app/components/pos/station-register-settings.tsx:315
+#: app/components/pos/station-register-settings.tsx:376
 msgid "Save register settings"
 msgstr "حفظ إعدادات الكاشير"
 
@@ -38293,7 +38302,7 @@ msgstr "حفظ المنطقة"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:166
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/inventory/counting-screen.tsx:661
-#: app/components/pos/station-register-settings.tsx:201
+#: app/components/pos/station-register-settings.tsx:232
 #: app/components/reservations/floor-plan-canvas.tsx:773
 msgid "Saved"
 msgstr "تم الحفظ"
@@ -38451,7 +38460,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/mailbox/reviews-tab.tsx:734
 #: app/components/orders/record-order-refund-dialog.tsx:350
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:493
-#: app/components/pos/station-register-settings.tsx:313
+#: app/components/pos/station-register-settings.tsx:374
 #: app/components/pos/zatca-settings.tsx:347
 #: app/components/reservations/experiences/experience-editor.tsx:545
 #: app/components/reservations/experiences/schedule-sheet.tsx:183
@@ -40842,7 +40851,7 @@ msgstr "إظهار عنوان النموذج"
 msgid "Show keypad"
 msgstr "إظهار لوحة المفاتيح"
 
-#: app/components/pos/station-register-settings.tsx:291
+#: app/components/pos/station-register-settings.tsx:352
 msgid "Show kitchen note field on dishes at the till"
 msgstr "إظهار حقل ملاحظات المطبخ للأصناف على الكاشير"
 
@@ -43317,6 +43326,10 @@ msgstr "التقاط لقطة"
 #: app/utils/inventory/starter-lists.ts:309
 msgid "Takeaway boxes"
 msgstr "علب الطلبات الخارجية"
+
+#: app/components/pos/station-register-settings.tsx:340
+msgid "Taken off a bill paid entirely in cash and shown as its own line on the receipt and in reports. Check that your state and card agreements allow it."
+msgstr "يُخصم من الفاتورة التي تُدفع بالكامل نقدًا ويظهر كسطر مستقل في الإيصال والتقارير. تأكد من أن قوانين ولايتك واتفاقيات البطاقات لديك تسمح به."
 
 #: app/components/discounts/discount-form.tsx:181
 msgid "Takes a fixed amount off."
@@ -46806,7 +46819,7 @@ msgid "This location is no longer available."
 msgstr "هذا الموقع لم يعد متاحاً."
 
 #: app/components/pos/ready-text-settings.tsx:93
-#: app/components/pos/station-register-settings.tsx:141
+#: app/components/pos/station-register-settings.tsx:158
 msgid "This location no longer exists. Reload the page."
 msgstr "هذا الفرع لم يعد موجودًا. أعد تحميل الصفحة."
 

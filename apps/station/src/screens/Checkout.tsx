@@ -16,6 +16,11 @@ import {
 	paidCents,
 	type OrderDraft,
 } from '~/lib/orders.ts'
+import {
+	cashDiscountAdjustment,
+	cashDiscountPercentText,
+	withoutCashDiscount,
+} from '~/lib/cash-discount.ts'
 import { computeTotals, lineTotalCents } from '~/lib/pricing.ts'
 import { createGiftCardApi, GiftCardApiError } from '~/lib/gift-cards.ts'
 import { shownLine, usePos } from '~/lib/store.ts'
@@ -60,6 +65,7 @@ export function Checkout({
 	tipsEnabled,
 	staff,
 	vatNumber = null,
+	cashDiscountBp = null,
 	onSaved,
 	onClose,
 }: {
@@ -73,6 +79,11 @@ export function Checkout({
 	staff: StaffRef | null
 	/** The seller's VAT number, for the receipt. */
 	vatNumber?: string | null
+	/**
+	 * The location's cash discount in basis points (#375), or null for none. It
+	 * applies when the whole bill is taken in cash, in one payment.
+	 */
+	cashDiscountBp?: number | null
 	/** Called each time a payment is safely stored, so it can start sending at once. */
 	onSaved: () => void
 	/** `finished` is true when the bill was fully paid. */
@@ -100,6 +111,28 @@ export function Checkout({
 	const [giveChange, setGiveChange] = useState<number | null>(null)
 
 	const hasPayments = (current?.payments.length ?? 0) > 0
+	// The cash discount (#375): offered while the cashier is set to take the
+	// whole bill in cash, in one payment, and no payment has been taken yet.
+	// Choosing a card, another tender, a split or a part payment takes it off
+	// again, and the total goes back to the full price.
+	const cashAdjustment = useMemo(
+		() =>
+			!hasPayments && method === 'cash' && mode.kind === 'full'
+				? cashDiscountAdjustment({
+						lines: draft.lines,
+						others: draft.adjustments,
+						percentBp: cashDiscountBp,
+					})
+				: null,
+		[hasPayments, method, mode.kind, draft, cashDiscountBp],
+	)
+	const billAdjustments = useMemo(
+		() =>
+			cashAdjustment
+				? [...withoutCashDiscount(draft.adjustments), cashAdjustment]
+				: withoutCashDiscount(draft.adjustments),
+		[draft.adjustments, cashAdjustment],
+	)
 	// Once a payment exists the bill is frozen at what it was. Before that, the
 	// totals follow the tip being chosen, including for a saved tab being paid.
 	const totals = useMemo(
@@ -111,9 +144,9 @@ export function Checkout({
 						taxRatePercent: draft.taxRatePercent,
 						taxInclusive: draft.taxInclusive,
 						tipPercent,
-						adjustments: draft.adjustments,
+						adjustments: billAdjustments,
 					}),
-		[current, hasPayments, draft, tipPercent],
+		[current, hasPayments, draft, tipPercent, billAdjustments],
 	)
 	// Tips are chosen once, before the first payment, so shares never drift.
 	const tipLocked = hasPayments
@@ -205,13 +238,26 @@ export function Checkout({
 					reference: redeemed.reference,
 				}
 			}
+			// Only a whole bill paid in cash, in this one payment, keeps the discount.
+			const cashDiscount =
+				cashAdjustment && payment.method === 'cash' ? cashAdjustment : null
 			const next = current
 				? await addPayment(
 						current.id,
 						payment,
 						tipLocked ? undefined : totals.tipCents,
+						{ cashDiscount },
 					)
-				: await createOrder({ ...draft, tipCents: totals.tipCents }, payment)
+				: await createOrder(
+						{
+							...draft,
+							adjustments: cashDiscount
+								? billAdjustments
+								: withoutCashDiscount(draft.adjustments),
+							tipCents: totals.tipCents,
+						},
+						payment,
+					)
 			setCurrent(next)
 			onSaved()
 			resetEntry()
@@ -397,7 +443,10 @@ export function Checkout({
 					</ul>
 					<dl className="tnum text-muted-foreground space-y-2 text-sm">
 						<Row label={_(t`Subtotal`)} value={money(totals.subtotalCents)} />
-						{(current?.adjustments ?? draft.adjustments).map((a) => (
+						{(current && hasPayments
+							? current.adjustments
+							: [...(current?.adjustments ?? draft.adjustments).filter((a) => a.kind !== 'cash_discount'), ...(cashAdjustment ? [cashAdjustment] : [])]
+						).map((a) => (
 							<Row key={a.id} label={a.label} value={money(-a.amountCents)} />
 						))}
 						<Row
@@ -540,6 +589,19 @@ export function Checkout({
 							},
 						]}
 					/>
+
+					{cashDiscountBp && !hasPayments && !cashAdjustment && !free ? (
+						<p className="tnum text-muted-foreground text-sm" role="note">
+							{(() => {
+								const rate = cashDiscountPercentText(cashDiscountBp)
+								return (
+									<Trans>
+										Take the whole bill in cash, in one payment, to save {rate}.
+									</Trans>
+								)
+							})()}
+						</p>
+					) : null}
 
 					{method === 'gift_card' ? (
 						<div className="flex flex-col gap-2">

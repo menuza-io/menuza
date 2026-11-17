@@ -496,13 +496,21 @@ function SummaryTable({
 			title: null,
 			rows: [
 				// Sales is what was charged, discounts already off: show them apart.
-				...((summary.discountCents ?? 0) > 0
+				...((summary.discountCents ?? 0) > 0 ||
+				(summary.cashDiscountCents ?? 0) > 0
 					? ([
 							[
 								_(t`Items before discounts`),
 								summary.grossBeforeDiscountsCents ?? 0,
 							],
-							[_(t`Discounts`), -(summary.discountCents ?? 0)],
+							...((summary.discountCents ?? 0) > 0
+								? ([[_(t`Discounts`), -(summary.discountCents ?? 0)]] as Row[])
+								: []),
+							...((summary.cashDiscountCents ?? 0) > 0
+								? ([
+										[_(t`Cash discounts`), -(summary.cashDiscountCents ?? 0)],
+									] as Row[])
+								: []),
 						] as Row[])
 					: []),
 				[_(t`Sales`), summary.grossSalesCents],
@@ -617,16 +625,25 @@ function ZReport({
 				label={<Trans>Paid orders</Trans>}
 				value={String(summary.orders.paid + summary.orders.refunded)}
 			/>
-			{(summary.discountCents ?? 0) > 0 ? (
+			{(summary.discountCents ?? 0) > 0 ||
+			(summary.cashDiscountCents ?? 0) > 0 ? (
 				<>
 					<Line
 						label={<Trans>Items before discounts</Trans>}
 						value={money(summary.grossBeforeDiscountsCents ?? 0)}
 					/>
-					<Line
-						label={<Trans>Discounts</Trans>}
-						value={`-${money(summary.discountCents ?? 0)}`}
-					/>
+					{(summary.discountCents ?? 0) > 0 ? (
+						<Line
+							label={<Trans>Discounts</Trans>}
+							value={`-${money(summary.discountCents ?? 0)}`}
+						/>
+					) : null}
+					{(summary.cashDiscountCents ?? 0) > 0 ? (
+						<Line
+							label={<Trans>Cash discounts</Trans>}
+							value={`-${money(summary.cashDiscountCents ?? 0)}`}
+						/>
+					) : null}
 				</>
 			) : null}
 			<Line

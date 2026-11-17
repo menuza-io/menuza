@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { CASH_DISCOUNT_MAX_BP } from './cash-discount.ts'
 import { POS_FISCAL_KINDS, posRefundTaxCents } from './pos-fiscal.ts'
 
 /**
@@ -105,9 +106,13 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * highlight, course). Every new field is optional, so a contract 8 upload
  * still parses. An older node cannot read `drive_through` and holds that
  * upload, which is how an old terminal fails safe: it never sends the type,
- * and a node that does not know it does not apply the sale.
+ * and a node that does not know it does not apply the sale. Version 11 added
+ * the `cash_discount` adjustment kind (#375): a percentage taken off a bill
+ * paid entirely in cash, as its own line. An older node cannot read the kind
+ * and holds that upload, which is how an old region fails safe; an old
+ * terminal never sends it. Deploy tenant-api before Station.
  */
-export const POS_CONTRACT_VERSION = 10
+export const POS_CONTRACT_VERSION = 11
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -361,7 +366,12 @@ export const posFiscalDocumentSchema = z.strictObject({
 
 export const posAdjustmentSchema = z.strictObject({
 	id: z.string().min(1).max(100),
-	kind: z.enum(['discount', 'loyalty']),
+	/**
+	 * `cash_discount` (contract 11, #375) is the percentage a location takes off
+	 * a bill paid entirely in cash: at most one per sale, never a rule's discount
+	 * and never a loyalty reward, so reports can show it as its own figure.
+	 */
+	kind: z.enum(['discount', 'loyalty', 'cash_discount']),
 	label: z.string().max(120),
 	amountCents: cents.min(1),
 	/**
@@ -949,6 +959,21 @@ export const posLocationStationSettingsSchema = z.object({
 		.max(100_000_000)
 		.nullable()
 		.default(null),
+	/**
+	 * Cash discount (#375), in basis points: taken off a bill paid entirely in
+	 * cash and shown as its own line. Null is off. US organizations only
+	 * (`PAYMENT_PRICING_RULES` in `./cash-discount.ts`): the App never saves or
+	 * serves it for another data region. A value out of range reads as off, so a
+	 * stored setting from before the field existed, or a bad one, is never applied.
+	 */
+	cashDiscountBp: z
+		.number()
+		.int()
+		.min(1)
+		.max(CASH_DISCOUNT_MAX_BP)
+		.nullable()
+		.default(null)
+		.catch(null),
 })
 
 export type PosLocationStationSettings = z.infer<
@@ -962,6 +987,7 @@ export const DEFAULT_POS_LOCATION_STATION_SETTINGS: PosLocationStationSettings =
 		customItems: 'off',
 		customItemMaxCents: DEFAULT_POS_CUSTOM_ITEM_MAX_CENTS,
 		cashVarianceFlagCents: null,
+		cashDiscountBp: null,
 	}
 
 function parseJsonOrObject<T>(

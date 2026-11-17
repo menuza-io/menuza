@@ -1,4 +1,4 @@
-import { db, eq, OrganizationLocation } from '@repo/database'
+import { db, eq, Organization, OrganizationLocation } from '@repo/database'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildPublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
@@ -69,6 +69,7 @@ describe('Station register settings route (#372, #171, #380)', () => {
 			customItems: 'off',
 			customItemMaxCents: 50_000,
 			cashVarianceFlagCents: null,
+			cashDiscountBp: null,
 		})
 
 		const result = await post(organization.slug, cookie, {
@@ -89,6 +90,7 @@ describe('Station register settings route (#372, #171, #380)', () => {
 			customItems: 'managers',
 			customItemMaxCents: 75_000,
 			cashVarianceFlagCents: 500,
+			cashDiscountBp: null,
 		})
 		const [row] = await db
 			.select({ stationSettings: OrganizationLocation.stationSettings })
@@ -120,5 +122,113 @@ describe('Station register settings route (#372, #171, #380)', () => {
 			cashVarianceFlagCents: '',
 		})
 		expect(getResponseStatus(bad)).toBe(400)
+	})
+})
+
+describe('the cash-payment discount setting (#375)', () => {
+	const base = (locationId: string) => ({
+		locationId,
+		guestDetails: 'none',
+		dishNotes: 'true',
+		customItems: 'off',
+		customItemMaxCents: '50000',
+		cashVarianceFlagCents: '',
+	})
+
+	async function region(organizationId: string, dataRegion: 'us' | 'ksa') {
+		await db
+			.update(Organization)
+			.set({ dataRegion })
+			.where(eq(Organization.id, organizationId))
+	}
+
+	it('saves a percentage for a US organization and publishes it to the till', async () => {
+		const { organization, location, cookie } = await setup('admin')
+		await region(organization.id, 'us')
+		const result = await post(organization.slug, cookie, {
+			...base(location.id),
+			cashDiscountPercent: '3.5',
+		})
+		expect(getResponseStatus(result)).toBe(200)
+		const [loc] = await published(organization)
+		expect(loc?.stationSettings?.cashDiscountBp).toBe(350)
+		// A blank field turns it off.
+		await post(organization.slug, cookie, {
+			...base(location.id),
+			cashDiscountPercent: '',
+		})
+		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp)
+			.toBeNull()
+	})
+
+	it('refuses a percentage that is not one, or over the highest rate', async () => {
+		const { organization, location, cookie } = await setup('admin')
+		await region(organization.id, 'us')
+		for (const bad of ['abc', '10.5', '0', '-1', '3,5']) {
+			const result = await post(organization.slug, cookie, {
+				...base(location.id),
+				cashDiscountPercent: bad,
+			})
+			expect(getResponseStatus(result)).toBe(400)
+		}
+		const edge = await post(organization.slug, cookie, {
+			...base(location.id),
+			cashDiscountPercent: '10',
+		})
+		expect(getResponseStatus(edge)).toBe(200)
+		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp).toBe(
+			1000,
+		)
+	})
+
+	it('keeps the saved rate when a form open before the field existed posts none', async () => {
+		const { organization, location, cookie } = await setup('admin')
+		await region(organization.id, 'us')
+		await post(organization.slug, cookie, {
+			...base(location.id),
+			cashDiscountPercent: '3',
+		})
+		const result = await post(organization.slug, cookie, {
+			...base(location.id),
+			dishNotes: 'false',
+		})
+		expect(getResponseStatus(result)).toBe(200)
+		const [loc] = await published(organization)
+		expect(loc?.stationSettings).toMatchObject({
+			dishNotes: false,
+			cashDiscountBp: 300,
+		})
+	})
+
+	it('drops it for a KSA organization, whatever the form says', async () => {
+		const { organization, location, cookie } = await setup('admin')
+		await region(organization.id, 'ksa')
+		const result = await post(organization.slug, cookie, {
+			...base(location.id),
+			cashDiscountPercent: '3',
+		})
+		expect(getResponseStatus(result)).toBe(200)
+		const [row] = await db
+			.select({ stationSettings: OrganizationLocation.stationSettings })
+			.from(OrganizationLocation)
+			.where(eq(OrganizationLocation.id, location.id))
+		expect(JSON.parse(String(row?.stationSettings)).cashDiscountBp).toBeNull()
+		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp)
+			.toBeNull()
+	})
+
+	it('never publishes a rate saved before the organization moved to KSA', async () => {
+		const { organization, location, cookie } = await setup('admin')
+		await region(organization.id, 'us')
+		await post(organization.slug, cookie, {
+			...base(location.id),
+			cashDiscountPercent: '3',
+		})
+		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp).toBe(
+			300,
+		)
+		await region(organization.id, 'ksa')
+		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp)
+			.toBeNull()
 	})
 })

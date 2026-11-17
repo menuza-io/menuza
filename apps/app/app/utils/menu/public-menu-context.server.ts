@@ -31,9 +31,11 @@ import {
 	parseMenuItemImageKeys,
 	parseMenuVariations,
 } from '@repo/common/menu-types'
+import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
 import {
 	parseOrderNumberFormat,
 	parsePosLocationStationSettings,
+	type PosLocationStationSettings,
 } from '@repo/common/pos-orders'
 import {
 	and,
@@ -85,6 +87,22 @@ import {
 	type PublicMenuOptionData,
 	type PublicModifierGroupData,
 } from './public-serializers.server.ts'
+
+/**
+ * A location's Station settings as the till reads them. The cash-payment
+ * discount (#375) is part of them only where the organization's data region
+ * allows it: elsewhere the till never sees a rate, even one saved before the
+ * organization moved region.
+ */
+export function tillStationSettings(
+	raw: unknown,
+	dataRegion: string | null | undefined,
+): PosLocationStationSettings {
+	const settings = parsePosLocationStationSettings(raw)
+	return cashDiscountAllowedIn(dataRegion)
+		? settings
+		: { ...settings, cashDiscountBp: null }
+}
 
 export type { PublicMenuPromotion } from '#app/utils/discounts/order-context.server.ts'
 export type {
@@ -251,7 +269,7 @@ export async function buildPublicSiteMenuPayload(
 			prepSchedule: safeJsonParse(loc.prepSchedule, null),
 			prayerPauseSettings: safeJsonParse(loc.prayerPauseSettings, null),
 			prayerPauseRegion: dataRegion === 'ksa',
-			stationSettings: parsePosLocationStationSettings(loc.stationSettings),
+			stationSettings: tillStationSettings(loc.stationSettings, dataRegion),
 			...(loc.orderNumberFormat
 				? { orderNumberFormat: parseOrderNumberFormat(loc.orderNumberFormat) }
 				: {}),

@@ -242,6 +242,15 @@ const salesFields: ReportField[] = [
 		averageLabel: false,
 	},
 	{
+		id: 'cashDiscounts',
+		label: 'Cash discounts',
+		type: 'currency',
+		sumLabel: 'Cash discounts',
+		averageLabel: false,
+		description:
+			'What the cash-payment discount took off Station sales paid in cash. Counted apart from discounts and loyalty rewards, and included in gross sales.',
+	},
+	{
 		id: 'tax',
 		label: 'Tax',
 		type: 'currency',

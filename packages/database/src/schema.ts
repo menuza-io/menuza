@@ -2676,13 +2676,6 @@ export const OrganizationLocation = sqliteTable(
 		 * Null is off. Course names are operator text, not guest data.
 		 */
 		courseSettings: text(),
-		/**
-		 * Cash-payment discount at the till (#375), in basis points (1 to 2000).
-		 * Null is off. US organizations only: the App never offers or reads it
-		 * for another data region. A percentage taken off a cash sale and shown as
-		 * its own line.
-		 */
-		cashDiscountBp: integer(),
 		scheduling: text(),
 		deliveryConfig: text(),
 		deliveryZones: text(),

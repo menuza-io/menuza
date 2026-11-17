@@ -9622,6 +9622,10 @@ msgstr "Cartesia voice ID. Leave empty for the default voice."
 msgid "Cash"
 msgstr "Cash"
 
+#: app/components/pos/station-register-settings.tsx:322
+msgid "Cash discount (%)"
+msgstr "Cash discount (%)"
+
 #: ../../packages/reports/src/ui/report-labels.ts:152
 msgid "Cash drawer log"
 msgstr "Cash drawer log"
@@ -10933,7 +10937,7 @@ msgstr "Choose View or Edit access."
 msgid "Choose voice"
 msgstr "Choose voice"
 
-#: app/components/pos/station-register-settings.tsx:67
+#: app/components/pos/station-register-settings.tsx:78
 msgid "Choose what cashiers must enter at the till, whether dishes show a notes field, who may ring up open-price custom items, and when cash drawer variances are flagged in reports."
 msgstr "Choose what cashiers must enter at the till, whether dishes show a notes field, who may ring up open-price custom items, and when cash drawer variances are flagged in reports."
 
@@ -12814,7 +12818,7 @@ msgstr "Could not resolve the table conflict."
 msgid "Could not save — enter again"
 msgstr "Could not save — enter again"
 
-#: app/components/pos/station-register-settings.tsx:142
+#: app/components/pos/station-register-settings.tsx:159
 msgid "Could not save register settings."
 msgstr "Could not save register settings."
 
@@ -13901,7 +13905,7 @@ msgstr "Custom item"
 #~ msgid "Custom item limit ({0})"
 #~ msgstr "Custom item limit ({0})"
 
-#: app/components/pos/station-register-settings.tsx:257
+#: app/components/pos/station-register-settings.tsx:288
 msgid "Custom item limit ({locationCurrency})"
 msgstr "Custom item limit ({locationCurrency})"
 
@@ -17272,6 +17276,10 @@ msgstr "Enter 86'd items, VIP table callouts, or pre-shift notes for {activeServ
 msgid "Enter a 5-digit ZIP code"
 msgstr "Enter a 5-digit ZIP code"
 
+#: app/components/pos/station-register-settings.tsx:195
+msgid "Enter a cash discount of {most}% or less, or leave it blank."
+msgstr "Enter a cash discount of {most}% or less, or leave it blank."
+
 #: app/components/print/print-form-errors.ts:14
 msgid "Enter a city"
 msgstr "Enter a city"
@@ -17423,7 +17431,7 @@ msgstr "Enter a phone number for the carrier"
 #~ msgid "Enter a phone number."
 #~ msgstr "Enter a phone number."
 
-#: app/components/pos/station-register-settings.tsx:154
+#: app/components/pos/station-register-settings.tsx:171
 msgid "Enter a positive maximum price for custom items."
 msgstr "Enter a positive maximum price for custom items."
 
@@ -17492,7 +17500,7 @@ msgstr "Enter a time, like 15:00."
 msgid "Enter a time, like 17:00."
 msgstr "Enter a time, like 17:00."
 
-#: app/components/pos/station-register-settings.tsx:166
+#: app/components/pos/station-register-settings.tsx:183
 msgid "Enter a valid cash variance threshold or leave it blank."
 msgstr "Enter a valid cash variance threshold or leave it blank."
 
@@ -18251,7 +18259,7 @@ msgstr "Every week"
 msgid "Everyone"
 msgstr "Everyone"
 
-#: app/components/pos/station-register-settings.tsx:134
+#: app/components/pos/station-register-settings.tsx:151
 msgid "Everyone at the till"
 msgstr "Everyone at the till"
 
@@ -19487,7 +19495,7 @@ msgstr "Flag applicants who answer differently. You still decide who to talk to.
 #~ msgid "Flag cash variance over ({0})"
 #~ msgstr "Flag cash variance over ({0})"
 
-#: app/components/pos/station-register-settings.tsx:273
+#: app/components/pos/station-register-settings.tsx:304
 msgid "Flag cash variance over ({locationCurrency})"
 msgstr "Flag cash variance over ({locationCurrency})"
 
@@ -20479,7 +20487,7 @@ msgstr ""
 #~ msgid "Guest CRM Profile"
 #~ msgstr "Guest CRM Profile"
 
-#: app/components/pos/station-register-settings.tsx:209
+#: app/components/pos/station-register-settings.tsx:240
 msgid "Guest details at checkout"
 msgstr "Guest details at checkout"
 
@@ -20552,7 +20560,7 @@ msgstr "Guest Name"
 #~ msgid "Guest name and phone number are required."
 #~ msgstr "Guest name and phone number are required."
 
-#: app/components/pos/station-register-settings.tsx:127
+#: app/components/pos/station-register-settings.tsx:144
 msgid "Guest name required"
 msgstr "Guest name required"
 
@@ -25241,7 +25249,7 @@ msgstr "Manager"
 msgid "manager@example.com"
 msgstr "manager@example.com"
 
-#: app/components/pos/station-register-settings.tsx:133
+#: app/components/pos/station-register-settings.tsx:150
 msgid "Managers only"
 msgstr "Managers only"
 
@@ -26649,7 +26657,7 @@ msgstr "Name (guest-facing)"
 msgid "Name and extra price. Drag to reorder."
 msgstr "Name and extra price. Drag to reorder."
 
-#: app/components/pos/station-register-settings.tsx:129
+#: app/components/pos/station-register-settings.tsx:146
 msgid "Name and phone number required"
 msgstr "Name and phone number required"
 
@@ -29919,8 +29927,9 @@ msgstr ""
 #: app/components/locations/order-policies-card.tsx:85
 #: app/components/marketing/programs-section.tsx:55
 #: app/components/phone-agent/settings-nav.tsx:82
-#: app/components/pos/station-register-settings.tsx:132
-#: app/components/pos/station-register-settings.tsx:280
+#: app/components/pos/station-register-settings.tsx:149
+#: app/components/pos/station-register-settings.tsx:311
+#: app/components/pos/station-register-settings.tsx:329
 msgid "Off"
 msgstr "Off"
 
@@ -30995,7 +31004,7 @@ msgstr "Open with custom hours"
 msgid "Open your schedule from your email"
 msgstr "Open your schedule from your email"
 
-#: app/components/pos/station-register-settings.tsx:233
+#: app/components/pos/station-register-settings.tsx:264
 msgid "Open-price custom items"
 msgstr "Open-price custom items"
 
@@ -31138,7 +31147,7 @@ msgstr "Option type removed"
 msgid "Optional"
 msgstr "Optional"
 
-#: app/components/pos/station-register-settings.tsx:126
+#: app/components/pos/station-register-settings.tsx:143
 msgid "Optional (one-tap quick service)"
 msgstr "Optional (one-tap quick service)"
 
@@ -33117,7 +33126,7 @@ msgstr "Phone number"
 msgid "Phone Number"
 msgstr ""
 
-#: app/components/pos/station-register-settings.tsx:128
+#: app/components/pos/station-register-settings.tsx:145
 msgid "Phone number required"
 msgstr "Phone number required"
 
@@ -35918,8 +35927,8 @@ msgstr "Register sale"
 msgid "Register sale flagged for review"
 msgstr "Register sale flagged for review"
 
-#: app/components/pos/station-register-settings.tsx:59
-#: app/components/pos/station-register-settings.tsx:64
+#: app/components/pos/station-register-settings.tsx:70
+#: app/components/pos/station-register-settings.tsx:75
 msgid "Register settings"
 msgstr "Register settings"
 
@@ -38211,7 +38220,7 @@ msgstr "Save rate"
 #~ msgid "Save ratings"
 #~ msgstr "Save ratings"
 
-#: app/components/pos/station-register-settings.tsx:315
+#: app/components/pos/station-register-settings.tsx:376
 msgid "Save register settings"
 msgstr "Save register settings"
 
@@ -38301,7 +38310,7 @@ msgstr "Save zone"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:166
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/inventory/counting-screen.tsx:661
-#: app/components/pos/station-register-settings.tsx:201
+#: app/components/pos/station-register-settings.tsx:232
 #: app/components/reservations/floor-plan-canvas.tsx:773
 msgid "Saved"
 msgstr "Saved"
@@ -38459,7 +38468,7 @@ msgstr ""
 #: app/components/mailbox/reviews-tab.tsx:734
 #: app/components/orders/record-order-refund-dialog.tsx:350
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:493
-#: app/components/pos/station-register-settings.tsx:313
+#: app/components/pos/station-register-settings.tsx:374
 #: app/components/pos/zatca-settings.tsx:347
 #: app/components/reservations/experiences/experience-editor.tsx:545
 #: app/components/reservations/experiences/schedule-sheet.tsx:183
@@ -40850,7 +40859,7 @@ msgstr "Show form title"
 msgid "Show keypad"
 msgstr "Show keypad"
 
-#: app/components/pos/station-register-settings.tsx:291
+#: app/components/pos/station-register-settings.tsx:352
 msgid "Show kitchen note field on dishes at the till"
 msgstr "Show kitchen note field on dishes at the till"
 
@@ -43325,6 +43334,10 @@ msgstr "Take snapshot"
 #: app/utils/inventory/starter-lists.ts:309
 msgid "Takeaway boxes"
 msgstr "Takeaway boxes"
+
+#: app/components/pos/station-register-settings.tsx:340
+msgid "Taken off a bill paid entirely in cash and shown as its own line on the receipt and in reports. Check that your state and card agreements allow it."
+msgstr "Taken off a bill paid entirely in cash and shown as its own line on the receipt and in reports. Check that your state and card agreements allow it."
 
 #: app/components/discounts/discount-form.tsx:181
 msgid "Takes a fixed amount off."
@@ -46814,7 +46827,7 @@ msgid "This location is no longer available."
 msgstr "This location is no longer available."
 
 #: app/components/pos/ready-text-settings.tsx:93
-#: app/components/pos/station-register-settings.tsx:141
+#: app/components/pos/station-register-settings.tsx:158
 msgid "This location no longer exists. Reload the page."
 msgstr "This location no longer exists. Reload the page."
 

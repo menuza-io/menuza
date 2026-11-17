@@ -12,6 +12,7 @@ import { discountRecordSchema, type DiscountRecord } from '@repo/discounts'
 import { getTenantDb, type TenantDatabase } from '@repo/tenant-db'
 import { z } from 'zod'
 import { isDiscountsKillSwitchOn } from '../lib/discount-switches.ts'
+import { getNodeRegion } from '../lib/region.ts'
 import {
 	authenticatePosDevice,
 	isPosEnabled,
@@ -58,6 +59,7 @@ import {
 	verifyPosPin,
 	withClockCheck,
 	withDiscountCheck,
+	withCashDiscountCheck,
 	withDiscountRuleCheck,
 	withShiftCheck,
 	withStaffCheck,
@@ -506,6 +508,9 @@ posRoutes.post('/orders', async (c) => {
 			(await withStaffCheck(pos.db, pos.device, order, cleanReview))
 				.reviewReason,
 			(await withShiftCheck(pos.db, order, cleanReview)).reviewReason,
+			// The cash-payment discount (#375): where it is allowed, that it is
+			// the only one, that the bill was paid in cash and its size.
+			withCashDiscountCheck(cleanReview, order, getNodeRegion()).reviewReason,
 			checkDiscountRules
 				? withDiscountRuleCheck(cleanReview, order, tillRules).reviewReason
 				: null,

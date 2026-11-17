@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "841db909-f5a6-47b3-94bb-f264e5b57d01",
+	"id": "c91280cd-bd38-4524-8c4a-96d12e70d37f",
 	"prevId": "4ea9d675-3d0e-44d8-98da-4ef98935551b",
 	"tables": {
 		"ApiKey": {
@@ -6147,13 +6147,6 @@
 				"courseSettings": {
 					"name": "courseSettings",
 					"type": "text",
-					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false
-				},
-				"cashDiscountBp": {
-					"name": "cashDiscountBp",
-					"type": "integer",
 					"primaryKey": false,
 					"notNull": false,
 					"autoincrement": false

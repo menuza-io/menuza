@@ -22,6 +22,10 @@ import {
 	pinBackoffRemainingSeconds,
 	type PinBackoffState,
 } from '@repo/staffing'
+import {
+	cashDiscountAllowedIn,
+	cashDiscountCeilingCents,
+} from '@repo/common/cash-discount'
 import { POS_FISCAL_GENESIS_HASH, posFiscalHash } from '@repo/common/pos-fiscal'
 import {
 	formatPosDeviceSecret,
@@ -1436,6 +1440,8 @@ export function withDiscountCheck(
 		let loyalty = 0
 		for (const adjustment of order.adjustments) {
 			if (adjustment.kind === 'loyalty') loyalty += adjustment.amountCents
+			// A cash discount (#375) is a set percentage, checked on its own.
+			else if (adjustment.kind === 'cash_discount') continue
 			else manual += adjustment.amountCents
 		}
 		discountCents = manual + Math.max(0, loyalty - rewardBackedCents)
@@ -1677,6 +1683,52 @@ export function discountRuleReason(
 	return (
 		POS_DISCOUNT_REVIEW_REASONS.find((reason) => reasons.has(reason)) ?? null
 	)
+}
+
+/**
+ * The cash-payment discount (#375) on an uploaded sale, against what it may be.
+ * It is flagged `cash_discount_invalid` (the sale is kept, a person looks, and
+ * it still earns loyalty points) when: this node's data region does not allow
+ * one (`PAYMENT_PRICING_RULES`); the sale carries more than one; any payment on
+ * a sale that has them is not cash (it applies only to a bill paid entirely in
+ * cash); or the amount is above the most the rate allows
+ * (`CASH_DISCOUNT_MAX_BP` of the subtotal, one cent more per line). The rate a
+ * location configured is a control-plane setting this node does not hold, so
+ * the check bounds the amount by the highest rate permitted at all.
+ */
+export const POS_CASH_DISCOUNT_REVIEW_REASON = 'cash_discount_invalid' as const
+
+export function cashDiscountReason(
+	order: Pick<PosOrderRequest, 'adjustments' | 'payments' | 'totals' | 'lines'>,
+	dataRegion: string | null | undefined,
+): typeof POS_CASH_DISCOUNT_REVIEW_REASON | null {
+	const cash = order.adjustments.filter(
+		(adjustment) => adjustment.kind === 'cash_discount',
+	)
+	if (cash.length === 0) return null
+	if (cash.length > 1) return POS_CASH_DISCOUNT_REVIEW_REASON
+	if (!cashDiscountAllowedIn(dataRegion)) return POS_CASH_DISCOUNT_REVIEW_REASON
+	if (order.payments.some((payment) => payment.method !== 'cash')) {
+		return POS_CASH_DISCOUNT_REVIEW_REASON
+	}
+	const catalogLines = order.lines.filter((line) => line.kind !== 'custom')
+	const ceiling = cashDiscountCeilingCents({
+		subtotalCents: order.totals.subtotalCents,
+		lineCount: catalogLines.length,
+	})
+	if (cash[0]!.amountCents > ceiling) return POS_CASH_DISCOUNT_REVIEW_REASON
+	return null
+}
+
+/** Flags `cashDiscountReason` on a review that has no reason yet. */
+export function withCashDiscountCheck(
+	review: PosReview,
+	order: Parameters<typeof cashDiscountReason>[0],
+	dataRegion: string | null | undefined,
+): PosReview {
+	if (review.reviewReason) return review
+	const reason = cashDiscountReason(order, dataRegion)
+	return reason ? { ...review, reviewReason: reason } : review
 }
 
 /** Flags `discountRuleReason` on a review that has no reason yet. */

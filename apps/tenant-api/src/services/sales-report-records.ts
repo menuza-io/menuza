@@ -281,6 +281,7 @@ const ZERO_MONEY = {
 	grossSales: 0,
 	discounts: 0,
 	loyaltyRewards: 0,
+	cashDiscounts: 0,
 	tax: 0,
 	tips: 0,
 	refunds: 0,
@@ -308,6 +309,7 @@ function saleRows(
 	const gross = share(money.grossMinor)
 	const discount = share(money.discountMinor)
 	const loyalty = share(money.loyaltyMinor)
+	const cashDiscount = share(money.cashDiscountMinor)
 	const tax = share(money.taxMinor)
 	const tip = share(money.tipMinor)
 	const net = share(money.netMinor)
@@ -321,6 +323,7 @@ function saleRows(
 		grossSales: major(gross[index] ?? 0),
 		discounts: major(discount[index] ?? 0),
 		loyaltyRewards: major(loyalty[index] ?? 0),
+		cashDiscounts: major(cashDiscount[index] ?? 0),
 		tax: major(tax[index] ?? 0),
 		tips: major(tip[index] ?? 0),
 		netSales: major(net[index] ?? 0),
@@ -759,6 +762,7 @@ export async function loadSalesRecords(
 					grossMinor: 0,
 					discountMinor: 0,
 					loyaltyMinor: 0,
+					cashDiscountMinor: 0,
 					totalMinor: row.totalCents,
 				},
 			),

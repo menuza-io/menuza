@@ -19,6 +19,7 @@ import { Stock } from './apps/stock/Stock.tsx'
 import { TimeClock } from './apps/timeclock/TimeClock.tsx'
 import { applyLocale, effectiveLocale } from './i18n.ts'
 import { idleMs, lockHeld, shouldLock, touch } from '~/lib/activity.ts'
+import { cashDiscountRate } from '~/lib/cash-discount.ts'
 import { categoryItems, isSoldOut } from '~/lib/catalog.ts'
 import { clockIsOff, skewMinutes, useClock } from '~/lib/clock.ts'
 import { isConfigured, shownApp } from '~/lib/config.ts'
@@ -1063,6 +1064,7 @@ export function App() {
 						tipsEnabled={tipsAllowed(s.location, checkout.draft.orderType)}
 						staff={s.session?.staff ?? null}
 						vatNumber={s.location?.vatNumber ?? null}
+						cashDiscountBp={cashDiscountRate(s.location)}
 						onSaved={() => void s.sync()}
 						onClose={({ order, finished }) => {
 							setCheckout(null)

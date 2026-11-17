@@ -155,24 +155,33 @@ export async function upsertShift(
 	)
 }
 
-/** What a closed sale's adjustments took off, split into discounts and loyalty rewards. */
+/**
+ * What a closed sale's adjustments took off, split into discounts, loyalty
+ * rewards and the cash-payment discount (#375), which is its own figure.
+ */
 function adjustmentSplit(row: PosOrderRow) {
 	let discountCents = 0
 	let loyaltyDiscountCents = 0
+	let cashDiscountCents = 0
 	const adjustments = Array.isArray(row.adjustments)
 		? (row.adjustments as Array<{ kind?: unknown; amountCents?: unknown }>)
 		: []
 	if (adjustments.length === 0) {
 		// A till that sent no adjustment lines: its total is all discount.
-		return { discountCents: row.adjustmentCents, loyaltyDiscountCents }
+		return {
+			discountCents: row.adjustmentCents,
+			loyaltyDiscountCents,
+			cashDiscountCents,
+		}
 	}
 	for (const adjustment of adjustments) {
 		const amount = adjustment.amountCents
 		if (typeof amount !== 'number' || !Number.isSafeInteger(amount)) continue
 		if (adjustment.kind === 'loyalty') loyaltyDiscountCents += amount
+		else if (adjustment.kind === 'cash_discount') cashDiscountCents += amount
 		else discountCents += amount
 	}
-	return { discountCents, loyaltyDiscountCents }
+	return { discountCents, loyaltyDiscountCents, cashDiscountCents }
 }
 
 /** A stored sale as the shared summary reads it, discount figures included. */
