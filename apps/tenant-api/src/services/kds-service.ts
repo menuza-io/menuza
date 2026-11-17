@@ -4,10 +4,8 @@ import { z } from 'zod'
 import { localDateAndTimeToUtc } from '@repo/common/location-availability'
 import {
 	DEFAULT_KDS_CONFIG,
-	KDS_STATION_PIN,
 	kdsConfigSchema,
 	kdsCoverageGaps,
-	kdsPinnedStations,
 	kdsPrimaryStation,
 	kdsStationsFor,
 	kdsTicketStage,
@@ -197,14 +195,13 @@ function project(
 		const stage =
 			(saved && stageIn(saved.progress, id)) ??
 			(saved ? 'new' : order.initialStage)
-		const routed = kdsStationsFor(config, {
+		// A config change moves the dish, including one already started. The
+		// stage stored below is what stays.
+		const stationIds = kdsStationsFor(config, {
 			itemId: line.itemId,
 			fulfillment: order.routeFulfillment,
 			channel: order.routeChannel,
 		})
-		const pinned =
-			stage !== 'new' && saved ? kdsPinnedStations(saved.progress, id) : null
-		const stationIds = pinned ?? routed
 		const stationId = kdsPrimaryStation(config, stationIds)
 		const received =
 			firstSeen?.get(id) ??
@@ -695,13 +692,6 @@ function kitchenCommandInTx(
 				const progress: Progress = {}
 				for (const line of ticket.lines) {
 					progress[line.id] = line.stage
-					// A started dish keeps the stations it had when it left New.
-					if (line.stage !== 'new') {
-						const existing =
-							saved && kdsPinnedStations(saved.progress, line.id)
-						const ids = existing ?? line.stationIds ?? [line.stationId]
-						progress[KDS_STATION_PIN + line.id] = ids.join(',')
-					}
 					// A tab's earlier round keeps the time it went out.
 					const served =
 						command.action === 'done'

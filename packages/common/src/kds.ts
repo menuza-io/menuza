@@ -375,19 +375,6 @@ export function kdsCoverageGaps(config: {
 	return gaps
 }
 
-/** Progress key for the stations a started dish stays on. */
-export const KDS_STATION_PIN = 'pin:'
-
-export function kdsPinnedStations(
-	progress: Readonly<Record<string, unknown>>,
-	lineId: string,
-): string[] | null {
-	const value = progress[KDS_STATION_PIN + lineId]
-	if (typeof value !== 'string' || !value) return null
-	const ids = value.split(',').filter(Boolean)
-	return ids.length ? ids : null
-}
-
 export function lineOnStation(
 	line: { stationId: string; stationIds?: readonly string[] },
 	stationId: string | null,
