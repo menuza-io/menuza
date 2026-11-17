@@ -103,6 +103,16 @@ export function Receipt({
 								</>
 							) : null}
 						</>
+					) : order.orderType === 'drive_through' ? (
+						<>
+							{_(t`Drive-through`)}
+							{order.driveThroughNote ? (
+								<>
+									{' · '}
+									<bdi>{order.driveThroughNote}</bdi>
+								</>
+							) : null}
+						</>
 					) : (
 						<>
 							{_(t`Takeaway`)}

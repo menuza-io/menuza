@@ -44,6 +44,53 @@ export const courseSettingsSchema = z.object({
 		.max(8),
 })
 
+export const DEFAULT_COURSES = [
+	{ id: 'starter', name: 'Starter' },
+	{ id: 'main', name: 'Main' },
+	{ id: 'dessert', name: 'Dessert' },
+] as const
+
+/** Stored JSON for a location, or null when the posted value cannot be read. */
+export function courseSettingsJson(raw: string | undefined): string | null {
+	if (!raw) return null
+	try {
+		const parsed = courseSettingsSchema.safeParse(JSON.parse(raw))
+		return parsed.success ? JSON.stringify(parsed.data) : null
+	} catch {
+		return null
+	}
+}
+
+/** Course names a category can pick. Locations that already named courses win. */
+export function courseChoicesFromLocations(
+	locations: readonly { courseSettings?: unknown }[],
+): Array<{ id: string; name: string }> {
+	const seen = new Map<string, string>()
+	for (const location of locations) {
+		const raw = location.courseSettings
+		const parsed =
+			typeof raw === 'string'
+				? courseSettingsSchema.safeParse(safeJson(raw))
+				: courseSettingsSchema.safeParse(raw)
+		if (!parsed.success) continue
+		for (const course of parsed.data.courses) {
+			if (!seen.has(course.id)) seen.set(course.id, course.name)
+		}
+	}
+	if (seen.size === 0) {
+		for (const course of DEFAULT_COURSES) seen.set(course.id, course.name)
+	}
+	return [...seen].map(([id, name]) => ({ id, name }))
+}
+
+function safeJson(raw: string): unknown {
+	try {
+		return JSON.parse(raw)
+	} catch {
+		return null
+	}
+}
+
 /** Null when courses are off or the stored value cannot be read. */
 export function readCourseSettings(value: unknown) {
 	const parsed = courseSettingsSchema.safeParse(value)

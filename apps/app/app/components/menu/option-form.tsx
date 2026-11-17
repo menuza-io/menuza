@@ -1,6 +1,7 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type DailySaleLimit } from '@repo/common/daily-dish-limits'
+import { defaultKitchenHighlight } from '@repo/common/kitchen-ticket'
 import {
 	findBlockedNestedGroups,
 	getLocalizedMenuValue,
@@ -72,6 +73,8 @@ import {
 export interface OptionFormData {
 	displayName: string
 	internalName: string
+	kitchenName?: string
+	kitchenHighlight?: string
 	description: string
 	price: number
 	priceWhole: number | null
@@ -165,6 +168,13 @@ function OptionFormBody({
 	const [displayName, setDisplayName] = useState(initialData?.displayName ?? '')
 	const [internalName, setInternalName] = useState(
 		initialData?.internalName ?? '',
+	)
+	const [kitchenName, setKitchenName] = useState(
+		initialData?.kitchenName ?? JSON.stringify({ [defaultLocale]: '' }),
+	)
+	const [kitchenHighlight, setKitchenHighlight] = useState(
+		initialData?.kitchenHighlight ||
+			defaultKitchenHighlight(initialData?.displayName),
 	)
 	const [description, setDescription] = useState(initialData?.description ?? '')
 	const [price, setPrice] = useState<number>(() => {
@@ -553,6 +563,55 @@ function OptionFormBody({
 											/>
 										</div>
 
+										<div className="space-y-2">
+											<Label className="text-xs">
+												<Trans>Kitchen name (optional)</Trans>
+											</Label>
+											<LocalizedInput
+												value={kitchenName}
+												onChange={setKitchenName}
+												placeholder="Short name for the kitchen ticket"
+											/>
+											<input
+												type="hidden"
+												name="kitchenName"
+												value={kitchenName}
+											/>
+											<p className="text-muted-foreground text-xs">
+												<Trans>
+													Shown on the kitchen screen and kitchen tickets. Guest
+													receipts keep the full name.
+												</Trans>
+											</p>
+										</div>
+										<div className="space-y-2">
+											<Label
+												className="text-xs"
+												htmlFor="option-kitchen-highlight"
+											>
+												<Trans>Kitchen highlight</Trans>
+											</Label>
+											<select
+												id="option-kitchen-highlight"
+												name="kitchenHighlight"
+												className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+												value={kitchenHighlight}
+												onChange={(event) =>
+													setKitchenHighlight(event.target.value)
+												}
+											>
+												<option value="none">{_(t`None`)}</option>
+												<option value="allergy">{_(t`Allergy`)}</option>
+												<option value="attention">{_(t`Attention`)}</option>
+												<option value="long_prep">{_(t`Long prep`)}</option>
+											</select>
+											<p className="text-muted-foreground text-xs">
+												<Trans>
+													A name that removes something, such as “No onions”,
+													starts as Attention. Choose None to leave it plain.
+												</Trans>
+											</p>
+										</div>
 										<div className="space-y-2">
 											<Label className="text-xs">
 												<Trans>Internal Reference / SKU (Optional)</Trans>

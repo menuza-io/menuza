@@ -2,6 +2,12 @@ import { type MessageDescriptor } from '@lingui/core'
 import { msg, plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { toAsciiDigits } from '@repo/common/ascii-digits'
+import { type KdsConfig } from '@repo/common/kds'
+import {
+	groupLinesByCourse,
+	KITCHEN_HIGHLIGHT_ICON,
+} from '@repo/common/kitchen-ticket'
+import { DEFAULT_PACKAGING_FEE_LABEL } from '@repo/common/packaging-fee'
 import {
 	handoffNeedsPayment,
 	onlineOrderInInbox,
@@ -17,7 +23,6 @@ import {
 	type PosOnlineOrderDetail,
 	type PosOnlineOrderSummary,
 } from '@repo/common/pos-online-orders'
-import { DEFAULT_PACKAGING_FEE_LABEL } from '@repo/common/packaging-fee'
 import { posStationControlsAllowed } from '@repo/common/pos-station-controls'
 import {
 	Empty,
@@ -45,6 +50,8 @@ import {
 	type OrderFilter,
 } from './model.ts'
 import { useOrders, type OrdersState } from './useOrders.ts'
+import { createKitchenApi } from '~/apps/kitchen/api.ts'
+import { demoKitchen } from '~/apps/kitchen/demo.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { menuText } from '~/lib/menu-text.ts'
 import { moneyFormatter } from '~/lib/money.ts'
@@ -141,6 +148,7 @@ export function Orders({
 	onSignIn: () => void
 }) {
 	const { _, i18n } = useLingui()
+	const kitchenSwitches = useKitchenPrintSwitches(settings, session)
 	const reachable = online || settings.demo
 	const orders = useOrders(settings, session, reachable)
 	const { feed, error, stale, busy, now } = orders
@@ -581,6 +589,7 @@ export function Orders({
 				stale={stale}
 				time={time}
 				businessName={businessName}
+				kitchenSwitches={kitchenSwitches}
 			/>
 		</main>
 	)
@@ -891,16 +900,57 @@ function rejectOutcomeMessage(
 	}
 }
 
+type KitchenPrintSwitches = Pick<
+	KdsConfig,
+	'showPaymentStatus' | 'showOrderTypeColor' | 'showModifierGroups'
+>
+
+function useKitchenPrintSwitches(
+	settings: PosSettings,
+	session: Session | null,
+): KitchenPrintSwitches {
+	const [switches, setSwitches] = useState<KitchenPrintSwitches>({
+		showPaymentStatus: false,
+		showOrderTypeColor: false,
+		showModifierGroups: false,
+	})
+	useEffect(() => {
+		let cancelled = false
+		const api = settings.demo
+			? demoKitchen
+			: createKitchenApi(settings, session)
+		void api.feed().then(
+			(feed) => {
+				if (cancelled) return
+				setSwitches({
+					showPaymentStatus: feed.config.showPaymentStatus === true,
+					showOrderTypeColor: feed.config.showOrderTypeColor === true,
+					showModifierGroups: feed.config.showModifierGroups === true,
+				})
+			},
+			() => {
+				/* A missed kitchen config leaves the switches off. */
+			},
+		)
+		return () => {
+			cancelled = true
+		}
+	}, [settings, session])
+	return switches
+}
+
 function OrderSheet({
 	orders,
 	stale,
 	time,
 	businessName,
+	kitchenSwitches,
 }: {
 	orders: OrdersState
 	stale: boolean
 	time: Intl.DateTimeFormat
 	businessName: string
+	kitchenSwitches: KitchenPrintSwitches
 }) {
 	const { _ } = useLingui()
 	const {
@@ -1206,6 +1256,7 @@ function OrderSheet({
 					detail={detail}
 					businessName={businessName}
 					time={time}
+					kitchenSwitches={kitchenSwitches}
 				/>
 			) : null}
 		</Modal>
@@ -2162,6 +2213,35 @@ function RefundDialog({
 	)
 }
 
+function PrintHighlight({ highlight }: { highlight?: string }) {
+	const { _ } = useLingui()
+	if (
+		highlight !== 'allergy' &&
+		highlight !== 'attention' &&
+		highlight !== 'long_prep'
+	)
+		return null
+	const label =
+		highlight === 'allergy'
+			? _(t`Allergy`)
+			: highlight === 'long_prep'
+				? _(t`Long prep`)
+				: _(t`Attention`)
+	return (
+		<span
+			className="ms-1 inline-flex items-center gap-1 border px-1.5 text-xs font-semibold"
+			data-highlight={highlight}
+		>
+			<Icon
+				name={KITCHEN_HIGHLIGHT_ICON[highlight]}
+				className="size-3.5"
+				aria-hidden
+			/>
+			{label}
+		</span>
+	)
+}
+
 /**
  * The ticket `window.print()` shows: the guest ticket with items and prices,
  * or the kitchen ticket with food only. The phone is printed masked, never in
@@ -2172,16 +2252,32 @@ function PrintedTicket({
 	detail,
 	businessName,
 	time,
+	kitchenSwitches,
 }: {
 	kind: 'guest' | 'kitchen'
 	detail: PosOnlineOrderDetail
 	businessName: string
 	time: Intl.DateTimeFormat
+	kitchenSwitches: KitchenPrintSwitches
 }) {
 	const { _ } = useLingui()
 	const money = moneyFormatter(detail.currency)
 	return createPortal(
-		<div id="receipt" className="hidden print:block" aria-hidden>
+		<div
+			id="receipt"
+			className="hidden print:block"
+			aria-hidden
+			{...(kind === 'kitchen'
+				? {
+						'data-kitchen-ticket': '',
+						'data-order-type':
+							detail.fulfillment === 'pickup' ? 'takeaway' : detail.fulfillment,
+						...(kitchenSwitches.showOrderTypeColor
+							? { 'data-color-order': '' }
+							: {}),
+					}
+				: {})}
+		>
 			{kind === 'guest' ? (
 				<div className="text-center text-sm font-semibold">{businessName}</div>
 			) : (
@@ -2219,28 +2315,75 @@ function PrintedTicket({
 					<Trans>Large order +{detail.largeOrderExtraMinutes} min</Trans>
 				</div>
 			) : null}
+			{kind === 'kitchen' && kitchenSwitches.showPaymentStatus ? (
+				<div className="text-center font-semibold" data-order-head>
+					{detail.paymentStatus === 'paid' ||
+					detail.paymentStatus === 'not_required'
+						? _(t`Paid`)
+						: _(t`Unpaid`)}
+				</div>
+			) : null}
 			<hr className="my-1.5 border-dashed border-black" />
-			{detail.lines.map((line, index) => (
-				<div key={index} className="mb-1">
-					<div className="flex justify-between gap-2">
-						<span>
-							{line.quantity}× {menuText(line.name)}
-							{line.variantNames.length > 0
-								? ` · ${line.variantNames.map((name) => menuText(name)).join(', ')}`
-								: ''}
-						</span>
-						{kind === 'guest' ? <span>{money(line.totalCents)}</span> : null}
-					</div>
-					{line.options.map((option, optionIndex) => (
-						<div key={optionIndex} className="ps-3">
-							+ {menuText(option.name)}
-						</div>
-					))}
-					{line.instructions ? (
-						<div className="ps-3">
-							<bdi>{line.instructions}</bdi>
+			{(kind === 'kitchen'
+				? groupLinesByCourse(detail.lines)
+				: [
+						{
+							courseId: null,
+							courseName: null,
+							held: false,
+							lines: detail.lines,
+						},
+					]
+			).map((group) => (
+				<div key={group.courseId ?? 'all'}>
+					{kind === 'kitchen' && group.courseId ? (
+						<div className="mt-1 font-semibold">
+							{group.courseName}
+							{group.held ? ` · ${_(t`Held`)}` : ''}
 						</div>
 					) : null}
+					{group.lines.map((line, index) => (
+						<div key={index} className="mb-1">
+							<div className="flex justify-between gap-2">
+								<span>
+									{line.quantity}×{' '}
+									{kind === 'kitchen'
+										? menuText(line.kitchenName || line.name)
+										: menuText(line.name)}
+									{line.variantNames.length > 0
+										? ` · ${line.variantNames.map((name) => menuText(name)).join(', ')}`
+										: ''}
+									{kind === 'kitchen' ? (
+										<PrintHighlight highlight={line.highlight} />
+									) : null}
+								</span>
+								{kind === 'guest' ? (
+									<span>{money(line.totalCents)}</span>
+								) : null}
+							</div>
+							{line.options.map((option, optionIndex) => (
+								<div key={optionIndex} className="ps-3">
+									+{' '}
+									{kind === 'kitchen' &&
+									kitchenSwitches.showModifierGroups &&
+									option.groupName
+										? `${menuText(option.groupName)}: `
+										: ''}
+									{kind === 'kitchen'
+										? menuText(option.kitchenName || option.name)
+										: menuText(option.name)}
+									{kind === 'kitchen' ? (
+										<PrintHighlight highlight={option.highlight} />
+									) : null}
+								</div>
+							))}
+							{line.instructions ? (
+								<div className="ps-3">
+									<bdi>{line.instructions}</bdi>
+								</div>
+							) : null}
+						</div>
+					))}
 				</div>
 			))}
 			{kind === 'guest' ? (

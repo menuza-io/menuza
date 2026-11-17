@@ -1,5 +1,6 @@
 import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
+import { courseSettingsJson } from '@repo/common/kitchen-ticket'
 import { getLocationCurrency } from '@repo/common/location-currency'
 import {
 	type DeliveryProvider,
@@ -117,6 +118,7 @@ const LocationInputSchema = z.object({
 	scheduling: z.string().optional(),
 	deliveryConfig: z.string().optional(),
 	deliveryZones: z.string().optional(),
+	courseSettings: z.string().optional(),
 	orderingSettings: z.string().optional(),
 })
 
@@ -201,6 +203,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					DEFAULT_DELIVERY_CONFIG.estimatedDeliveryTimeMax,
 			}
 		})(),
+		courseSettings: record.courseSettings,
 		deliveryZones: (() => {
 			const parsed = parseJson<DeliveryZone[]>(record.deliveryZones)
 			return Array.isArray(parsed) && parsed.length > 0
@@ -547,6 +550,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				scheduling: data.scheduling || null,
 				deliveryConfig: data.deliveryConfig || null,
 				deliveryZones: data.deliveryZones || null,
+				...(data.courseSettings !== undefined
+					? { courseSettings: courseSettingsJson(data.courseSettings) }
+					: {}),
 				...policy.patch,
 				...checkout.patch,
 				...ordering.patch,

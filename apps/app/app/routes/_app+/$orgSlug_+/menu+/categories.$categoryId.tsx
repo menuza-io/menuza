@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { courseChoicesFromLocations } from '@repo/common/kitchen-ticket'
 import { MenuCategoryInputSchema } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
@@ -144,6 +145,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			id: category.id,
 			displayName: category.displayName,
 			internalName: category.internalName ?? '',
+			defaultCourseId: category.defaultCourseId ?? '',
 			description: category.description ?? '',
 			availabilityStatus: category.availabilityStatus as
 				'available' | 'unavailable_until_tomorrow' | 'unavailable',
@@ -171,6 +173,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			displayName: c.displayName,
 			parentId: c.parentId ?? null,
 		})),
+		courseChoices: courseChoicesFromLocations(allLocations),
 		allLocations: allLocations.map((l) => ({
 			id: l.id,
 			name: l.name,
@@ -373,6 +376,7 @@ export default function EditCategoryRoute() {
 		allMenus,
 		allCategories,
 		allLocations,
+		courseChoices,
 		slotLimitsEnabled,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
@@ -391,6 +395,7 @@ export default function EditCategoryRoute() {
 				allMenus={allMenus}
 				allCategories={allCategories}
 				allLocations={allLocations}
+				courseChoices={courseChoices}
 				slotLimitsEnabled={slotLimitsEnabled}
 				isSubmitting={isSubmitting}
 			/>

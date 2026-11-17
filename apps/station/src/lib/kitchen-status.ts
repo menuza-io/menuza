@@ -1,6 +1,7 @@
 import { type KdsTicket } from '@repo/common/kds'
+import { autoFireDueCourses } from '@repo/common/kitchen-ticket'
 import { useEffect, useSyncExternalStore } from 'react'
-import { markCleared, openTabs } from './orders.ts'
+import { markCleared, openTabs, replaceOpenLines } from './orders.ts'
 import { type CartLine } from './pricing.ts'
 import { usePos } from './store.ts'
 import { createKitchenApi } from '~/apps/kitchen/api.ts'
@@ -64,7 +65,10 @@ function poll(generation: number) {
 						)
 					: null,
 			)
-			if (inUse) void noteCleared(feed.tickets)
+			if (inUse) {
+				void noteCleared(feed.tickets)
+				void autoFireReadyCourses(feed.tickets)
+			}
 			// A restaurant that does not use the kitchen screen is asked far less often.
 			again(inUse ? POLL_MS : IDLE_POLL_MS)
 		},
@@ -74,6 +78,63 @@ function poll(generation: number) {
 			again(IDLE_POLL_MS)
 		},
 	)
+}
+
+const courseReadySince = new Map<string, number>()
+
+/**
+ * When a course has been ready for the location's wait, fire the next one.
+ * The time starts the first time this till sees every dish in that course ready.
+ */
+async function autoFireReadyCourses(tickets: readonly KdsTicket[]) {
+	const { location } = usePos.getState()
+	const minutes = location?.courses?.autoFireMinutes
+	if (!location?.courses?.enabled || !minutes) return
+	const now = Date.now()
+	const open = await openTabs()
+	for (const order of open) {
+		if (order.orderType !== 'dine_in') continue
+		const ticket = tickets.find(
+			(item) => item.source === 'pos' && item.id === order.id,
+		)
+		if (!ticket) continue
+		const byCourse = new Map<string, typeof ticket.lines>()
+		for (const line of ticket.lines) {
+			if (!line.courseId) continue
+			const list = byCourse.get(line.courseId) ?? []
+			list.push(line)
+			byCourse.set(line.courseId, list)
+		}
+		const readyAt = new Map<string, number>()
+		for (const [courseId, courseLines] of byCourse) {
+			const key = `${order.id}:${courseId}`
+			if (
+				courseLines.length > 0 &&
+				courseLines.every((line) => line.stage === 'ready' && !line.held)
+			) {
+				const at = courseReadySince.get(key) ?? now
+				courseReadySince.set(key, at)
+				readyAt.set(courseId, at)
+			} else {
+				courseReadySince.delete(key)
+			}
+		}
+		const next = autoFireDueCourses(order.lines, readyAt, minutes, now)
+		if (next.every((line, index) => line === order.lines[index])) continue
+		await replaceOpenLines(order.id, next, now)
+		if (usePos.getState().activeOrderId !== order.id) continue
+		usePos.setState((state) => ({
+			lines: state.lines.map((line) => {
+				const updated = next.find((item) => item.id === line.id)
+				if (!updated || line.courseHeld === updated.courseHeld) return line
+				return {
+					...line,
+					courseHeld: updated.courseHeld,
+					courseFiredAt: updated.courseFiredAt,
+				}
+			}),
+		}))
+	}
 }
 
 /** Tickets the kitchen cleared: their open tabs on this till record those dishes as served. */

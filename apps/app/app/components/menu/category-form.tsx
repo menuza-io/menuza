@@ -1,4 +1,6 @@
-import { Trans } from '@lingui/macro'
+import { t, Trans } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
+import { DEFAULT_COURSES } from '@repo/common/kitchen-ticket'
 import {
 	getLocalizedMenuValue,
 	getCategoryDepth,
@@ -53,6 +55,7 @@ export interface CategoryFormData {
 	parentId?: string | null
 	displayName: string
 	internalName: string
+	defaultCourseId?: string | null
 	description: string
 	availabilityStatus:
 		| 'available'
@@ -91,6 +94,7 @@ interface CategoryFormProps {
 		parentId?: string | null
 	}>
 	allLocations: LocationItem[]
+	courseChoices?: Array<{ id: string; name: string }>
 	slotLimitsEnabled?: boolean
 	isSubmitting: boolean
 	pageTitle: string
@@ -113,10 +117,12 @@ function CategoryFormBody({
 	allMenus,
 	allCategories,
 	allLocations,
+	courseChoices = [...DEFAULT_COURSES],
 	slotLimitsEnabled = false,
 	isSubmitting,
 	pageTitle,
 }: CategoryFormProps & { onDiscard: () => void }) {
+	const { _ } = useLingui()
 	const formRef = useRef<HTMLFormElement>(null)
 	const navigation = useNavigation()
 	const actionData = useActionData()
@@ -185,6 +191,9 @@ function CategoryFormBody({
 	)
 	const [internalName, setInternalName] = useState(
 		initialData?.internalName ?? '',
+	)
+	const [defaultCourseId, setDefaultCourseId] = useState(
+		initialData?.defaultCourseId ?? '',
 	)
 	const [description, setDescription] = useState(
 		initialData?.description ?? JSON.stringify({ [defaultLocale]: '' }),
@@ -411,6 +420,37 @@ function CategoryFormBody({
 												placeholder="e.g. Starters, Wood-Fired Pizza, Craft Cocktails"
 												required
 											/>
+										</div>
+
+										<div className="space-y-2">
+											<Label
+												className="text-xs"
+												htmlFor="category-default-course"
+											>
+												<Trans>Default course</Trans>
+											</Label>
+											<select
+												id="category-default-course"
+												name="defaultCourseId"
+												className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+												value={defaultCourseId}
+												onChange={(event) =>
+													setDefaultCourseId(event.target.value)
+												}
+											>
+												<option value="">{_(t`None`)}</option>
+												{courseChoices.map((course) => (
+													<option key={course.id} value={course.id}>
+														{course.name}
+													</option>
+												))}
+											</select>
+											<p className="text-muted-foreground text-xs">
+												<Trans>
+													Dishes in this category start in this course on a
+													dine-in ticket. The location chooses the course names.
+												</Trans>
+											</p>
 										</div>
 
 										<div className="space-y-2">

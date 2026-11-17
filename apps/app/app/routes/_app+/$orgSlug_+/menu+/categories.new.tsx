@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { courseChoicesFromLocations } from '@repo/common/kitchen-ticket'
 import { MenuCategoryInputSchema } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
@@ -99,6 +100,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			id: c.id,
 			displayName: c.displayName,
 		})),
+		courseChoices: courseChoicesFromLocations(allLocations),
 		allLocations: allLocations.map((l) => ({
 			id: l.id,
 			name: l.name,
@@ -267,6 +269,7 @@ export default function CreateCategoryRoute() {
 		allMenus,
 		allCategories,
 		allLocations,
+		courseChoices,
 		slotLimitsEnabled,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
@@ -283,6 +286,7 @@ export default function CreateCategoryRoute() {
 				allMenus={allMenus}
 				allCategories={allCategories}
 				allLocations={allLocations}
+				courseChoices={courseChoices}
 				slotLimitsEnabled={slotLimitsEnabled}
 				isSubmitting={isSubmitting}
 			/>

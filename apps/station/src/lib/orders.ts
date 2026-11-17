@@ -281,6 +281,19 @@ export async function markCleared(
  * Saving sends what was not sent yet: every line without a time gets this
  * save's time, so one save is one round to the kitchen.
  */
+/** Replaces the lines of an open tab and queues the upload. */
+export async function replaceOpenLines(
+	id: string,
+	lines: PosOrder['lines'],
+	now: number = Date.now(),
+): Promise<void> {
+	await db.transaction('rw', db.orders, async () => {
+		const order = await db.orders.get(id)
+		if (!order || order.status !== 'open') return
+		await db.orders.update(id, { lines, ...touched(order, now) })
+	})
+}
+
 /** Fires the next held course on an open dine-in tab and queues the upload. */
 export async function fireHeldCourse(
 	id: string,
@@ -288,7 +301,8 @@ export async function fireHeldCourse(
 ): Promise<void> {
 	await db.transaction('rw', db.orders, async () => {
 		const order = await db.orders.get(id)
-		if (!order || order.status !== 'open' || order.orderType !== 'dine_in') return
+		if (!order || order.status !== 'open' || order.orderType !== 'dine_in')
+			return
 		const lines = fireNextCourse(order.lines, now)
 		if (lines.every((line, index) => line === order.lines[index])) return
 		await db.orders.update(id, { lines, ...touched(order, now) })

@@ -1,21 +1,21 @@
 /* Order-type header colour. The written type is always shown beside it. */
 [data-kitchen-ticket][data-color-order][data-order-type='dine_in']
-	.kitchen-ticket-head {
+	:is(.kitchen-ticket-head, [data-order-head]) {
 	background: color-mix(in oklab, var(--primary) 16%, var(--card));
 	border-inline-start: 0.25rem solid var(--primary);
 }
 [data-kitchen-ticket][data-color-order][data-order-type='delivery']
-	.kitchen-ticket-head {
+	:is(.kitchen-ticket-head, [data-order-head]) {
 	background: color-mix(in oklab, var(--destructive) 14%, var(--card));
 	border-inline-start: 0.25rem solid var(--destructive);
 }
 [data-kitchen-ticket][data-color-order][data-order-type='drive_through']
-	.kitchen-ticket-head {
+	:is(.kitchen-ticket-head, [data-order-head]) {
 	background: color-mix(in oklab, var(--warning) 18%, var(--card));
 	border-inline-start: 0.25rem solid var(--warning);
 }
 [data-kitchen-ticket][data-color-order][data-order-type='takeaway']
-	.kitchen-ticket-head {
+	:is(.kitchen-ticket-head, [data-order-head]) {
 	background: color-mix(in oklab, var(--muted-foreground) 12%, var(--card));
 	border-inline-start: 0.25rem solid var(--muted-foreground);
 }

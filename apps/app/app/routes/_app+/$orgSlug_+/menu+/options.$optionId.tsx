@@ -213,6 +213,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		initialData: {
 			displayName: option.displayName,
 			internalName: option.internalName ?? '',
+			kitchenName:
+				option.kitchenName ?? JSON.stringify({ [defaultLocale]: '' }),
+			kitchenHighlight: option.kitchenHighlight ?? '',
 			description: option.description ?? '',
 			price: option.price,
 			priceWhole: option.priceWhole,

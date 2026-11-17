@@ -457,6 +457,13 @@ export async function onlineOrdersSearch(
 	}
 }
 
+const KITCHEN_MARKS = ['allergy', 'attention', 'long_prep'] as const
+
+/** A quiet or unknown highlight stays off the wire so an older till still reads the order. */
+function kitchenMark(value: string | undefined) {
+	return KITCHEN_MARKS.find((mark) => mark === value)
+}
+
 const NOT_FOUND = () => orderFailure(404, 'order_not_found', 'Order not found.')
 const STALE = () =>
 	orderFailure(
@@ -511,6 +518,12 @@ export async function onlineOrderDetail(
 		...summary(order, opened.get(order.id) ?? null, refunds),
 		lines: lines.map((line) => ({
 			name: clip(line.itemName, MENU_TEXT_MAX),
+			...(line.kitchenName
+				? { kitchenName: clip(line.kitchenName, MENU_TEXT_MAX) }
+				: {}),
+			...(kitchenMark(line.kitchenHighlight)
+				? { highlight: kitchenMark(line.kitchenHighlight) }
+				: {}),
 			variantNames: (line.variantNames ?? []).map((name) =>
 				clip(name, MENU_TEXT_MAX),
 			),
@@ -521,6 +534,15 @@ export async function onlineOrderDetail(
 				name: clip(option.optionName, MENU_TEXT_MAX),
 				quantity: option.quantity,
 				half: option.half,
+				...(option.kitchenName
+					? { kitchenName: clip(option.kitchenName, MENU_TEXT_MAX) }
+					: {}),
+				...(option.groupName
+					? { groupName: clip(option.groupName, MENU_TEXT_MAX) }
+					: {}),
+				...(kitchenMark(option.kitchenHighlight)
+					? { highlight: kitchenMark(option.kitchenHighlight) }
+					: {}),
 			})),
 		})),
 		phoneMasked: maskPhone(order.contactPhone),
