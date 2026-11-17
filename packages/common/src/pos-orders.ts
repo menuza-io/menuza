@@ -107,7 +107,7 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * upload, which is how an old terminal fails safe: it never sends the type,
  * and a node that does not know it does not apply the sale.
  */
-export const POS_CONTRACT_VERSION = 9
+export const POS_CONTRACT_VERSION = 10
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -253,6 +253,12 @@ export const posOrderLineSchema = z.strictObject({
 	coursePosition: z.number().int().min(0).max(20).optional(),
 	courseHeld: z.boolean().optional(),
 	courseFiredAt: instant.optional(),
+	/** Open-price custom item support (contract 10, #171). */
+	kind: z.enum(['catalog', 'custom']).optional(),
+	/** Defaults to `true`. `false` excludes base price from VAT. */
+	taxable: z.boolean().optional(),
+	/** Optional Kitchen station id for custom lines (`null` = no kitchen ticket). */
+	kitchenStationId: z.string().trim().min(1).max(100).nullable().optional(),
 })
 
 /**
@@ -403,7 +409,7 @@ export const posLineTotalCents = (line: PosOrderLine): number =>
 
 /** The part of a line that is taxed: the base always, an option when it says so. */
 export const posLineTaxableCents = (line: PosOrderLine): number =>
-	(line.baseCents +
+	((line.taxable === false ? 0 : line.baseCents) +
 		line.options.reduce(
 			(sum, o) => sum + (o.taxable ? o.unitCents * o.quantity : 0),
 			0,
@@ -551,13 +557,36 @@ export const posOrderRequestSchema = z
 				issue('phone orders are texted on their callback number', [
 					'readyTextPhone',
 				])
-		} else if (order.customerPhone || order.pickupAt || order.pickupTimeZone) {
+		} else if (order.pickupAt || order.pickupTimeZone) {
 			issue('pickup contact details belong to phone orders', ['orderSource'])
 		}
 		if (order.orderSource !== 'phone' && order.readyTextOptIn)
 			issue('only phone orders agree to a text on their callback number', [
 				'readyTextOptIn',
 			])
+		for (const [index, line] of order.lines.entries()) {
+			if (line.kind !== 'custom') continue
+			if (line.variantId !== null) {
+				issue('custom items do not have variants', [
+					'lines',
+					index,
+					'variantId',
+				])
+			}
+			if (line.options.length > 0) {
+				issue('custom items do not have options', ['lines', index, 'options'])
+			}
+			if (line.baseCents <= 0) {
+				issue('custom items need a positive price', [
+					'lines',
+					index,
+					'baseCents',
+				])
+			}
+			if (line.name.trim().length > 60) {
+				issue('custom item name is too long', ['lines', index, 'name'])
+			}
+		}
 		const subtotal = order.lines.reduce((s, l) => s + posLineTotalCents(l), 0)
 		if (subtotal !== order.totals.subtotalCents) {
 			issue('subtotal does not match the lines', ['totals', 'subtotalCents'])
@@ -719,7 +748,7 @@ export type PosOrderRequest = z.infer<typeof posOrderRequestSchema>
 // ---------------------------------------------------------------------------
 
 export const POS_SHIFT_STATUS_VALUES = ['open', 'closed'] as const
-export const POS_CASH_MOVEMENT_KINDS = ['pay_in', 'pay_out'] as const
+export const POS_CASH_MOVEMENT_KINDS = ['pay_in', 'pay_out', 'drop'] as const
 export const POS_MAX_CASH_MOVEMENTS = 200
 
 /** Cash put into or taken out of the drawer for something other than a sale. Append-only. */
@@ -884,4 +913,243 @@ export function posStaffDisplayName(first: string, last: string): string {
 		`${first.trim()}${initial ? ` ${initial.toUpperCase()}.` : ''}`.trim() ||
 		'Staff'
 	)
+}
+
+// ---------------------------------------------------------------------------
+// Per-location register settings (#372, #171, #380) & order numbering (#371)
+// ---------------------------------------------------------------------------
+
+export const POS_GUEST_DETAILS_MODES = [
+	'none',
+	'name',
+	'phone',
+	'both',
+] as const
+export type PosGuestDetailsMode = (typeof POS_GUEST_DETAILS_MODES)[number]
+
+export const POS_CUSTOM_ITEMS_MODES = ['off', 'managers', 'everyone'] as const
+export type PosCustomItemsMode = (typeof POS_CUSTOM_ITEMS_MODES)[number]
+
+export const DEFAULT_POS_CUSTOM_ITEM_MAX_CENTS = 50_000
+
+export const posLocationStationSettingsSchema = z.object({
+	guestDetails: z.enum(POS_GUEST_DETAILS_MODES).default('none'),
+	dishNotes: z.boolean().default(true),
+	customItems: z.enum(POS_CUSTOM_ITEMS_MODES).default('off'),
+	customItemMaxCents: z
+		.number()
+		.int()
+		.min(1)
+		.max(100_000_000)
+		.default(DEFAULT_POS_CUSTOM_ITEM_MAX_CENTS),
+	cashVarianceFlagCents: z
+		.number()
+		.int()
+		.min(0)
+		.max(100_000_000)
+		.nullable()
+		.default(null),
+})
+
+export type PosLocationStationSettings = z.infer<
+	typeof posLocationStationSettingsSchema
+>
+
+export const DEFAULT_POS_LOCATION_STATION_SETTINGS: PosLocationStationSettings =
+	{
+		guestDetails: 'none',
+		dishNotes: true,
+		customItems: 'off',
+		customItemMaxCents: DEFAULT_POS_CUSTOM_ITEM_MAX_CENTS,
+		cashVarianceFlagCents: null,
+	}
+
+function parseJsonOrObject<T>(
+	raw: unknown,
+	schema: z.ZodType<T>,
+	fallback: T,
+): T {
+	if (!raw) return { ...fallback }
+	try {
+		const value = typeof raw === 'string' ? JSON.parse(raw) : raw
+		const parsed = schema.safeParse(value)
+		return parsed.success ? parsed.data : { ...fallback }
+	} catch {
+		return { ...fallback }
+	}
+}
+
+export function parsePosLocationStationSettings(
+	raw: unknown,
+): PosLocationStationSettings {
+	return parseJsonOrObject(
+		raw,
+		posLocationStationSettingsSchema,
+		DEFAULT_POS_LOCATION_STATION_SETTINGS,
+	)
+}
+
+export const ORDER_NUMBER_PREFIX_REGEX = /^[A-Za-z0-9]{0,4}$/
+export const ORDER_NUMBER_RESET_TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/
+
+export const orderNumberFormatSchema = z.object({
+	prefix: z.string().trim().regex(ORDER_NUMBER_PREFIX_REGEX).default(''),
+	digits: z.number().int().min(2).max(6).default(4),
+	resetTime: z
+		.string()
+		.trim()
+		.regex(ORDER_NUMBER_RESET_TIME_REGEX)
+		.default('04:00'),
+})
+
+export type OrderNumberFormat = z.infer<typeof orderNumberFormatSchema>
+
+export const DEFAULT_ORDER_NUMBER_FORMAT: OrderNumberFormat = {
+	prefix: '',
+	digits: 4,
+	resetTime: '04:00',
+}
+
+export function parseOrderNumberFormat(raw: unknown): OrderNumberFormat {
+	return parseJsonOrObject(
+		raw,
+		orderNumberFormatSchema,
+		DEFAULT_ORDER_NUMBER_FORMAT,
+	)
+}
+
+export function parseStrictOrderNumberFormat(
+	raw: unknown,
+):
+	{ ok: true; value: OrderNumberFormat | null } | { ok: false; error: string } {
+	if (raw === undefined || raw === null || raw === '') {
+		return { ok: true, value: null }
+	}
+	let candidate: unknown = raw
+	if (typeof raw === 'string') {
+		try {
+			candidate = JSON.parse(raw)
+		} catch {
+			return { ok: false, error: 'Invalid order number format.' }
+		}
+	}
+	const parsed = orderNumberFormatSchema.safeParse(candidate)
+	if (!parsed.success) {
+		return {
+			ok: false,
+			error: parsed.error.issues[0]?.message ?? 'Invalid order number format.',
+		}
+	}
+	return { ok: true, value: parsed.data }
+}
+
+export function formatAllocatedOrderNumber(
+	seq: number,
+	format: Pick<OrderNumberFormat, 'prefix' | 'digits'>,
+	fallbackPrefix = '',
+): string {
+	const prefix = format.prefix || fallbackPrefix
+	const digits = Math.max(2, Math.min(6, Math.trunc(format.digits || 4)))
+	const num = String(Math.max(1, Math.trunc(seq))).padStart(digits, '0')
+	return prefix ? `${prefix}${num}` : num
+}
+
+export function resetTimeMinutes(resetTime: string): number {
+	const match = ORDER_NUMBER_RESET_TIME_REGEX.exec(resetTime.trim())
+	if (!match) return 240
+	const [hours, minutes] = resetTime.trim().split(':').map(Number)
+	return (hours ?? 4) * 60 + (minutes ?? 0)
+}
+
+function zonedDateParts(instant: Date, timeZone: string) {
+	let tz = timeZone
+	const read = (zone: string) =>
+		new Intl.DateTimeFormat('en-CA', {
+			timeZone: zone,
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			hourCycle: 'h23',
+		}).formatToParts(instant)
+	let parts: Intl.DateTimeFormatPart[]
+	try {
+		parts = read(tz)
+	} catch {
+		tz = 'UTC'
+		parts = read(tz)
+	}
+	const get = (type: Intl.DateTimeFormatPartTypes) =>
+		Number(parts.find((p) => p.type === type)?.value ?? 0)
+	return {
+		year: get('year'),
+		month: get('month'),
+		day: get('day'),
+		hour: get('hour') === 24 ? 0 : get('hour'),
+		minute: get('minute'),
+		second: get('second'),
+		timeZone: tz,
+	}
+}
+
+function shiftCalendarDate(
+	year: number,
+	month: number,
+	day: number,
+	deltaDays: number,
+): { year: number; month: number; day: number } {
+	const d = new Date(Date.UTC(year, month - 1, day + deltaDays))
+	return {
+		year: d.getUTCFullYear(),
+		month: d.getUTCMonth() + 1,
+		day: d.getUTCDate(),
+	}
+}
+
+export function businessDayDate(
+	now: Date,
+	timeZone: string,
+	resetTime = '04:00',
+): string {
+	const local = zonedDateParts(now, timeZone)
+	const localMinutes = local.hour * 60 + local.minute
+	const resetMins = resetTimeMinutes(resetTime)
+	const cal =
+		localMinutes < resetMins
+			? shiftCalendarDate(local.year, local.month, local.day, -1)
+			: { year: local.year, month: local.month, day: local.day }
+	return `${cal.year}-${String(cal.month).padStart(2, '0')}-${String(cal.day).padStart(2, '0')}`
+}
+
+function tzOffsetMs(instant: Date, timeZone: string): number {
+	const p = zonedDateParts(instant, timeZone)
+	return (
+		Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) -
+		instant.getTime()
+	)
+}
+
+export function businessDayStartUtc(
+	now: Date,
+	timeZone: string,
+	resetTime = '04:00',
+): Date {
+	const bDate = businessDayDate(now, timeZone, resetTime)
+	const [year, month, day] = bDate.split('-').map(Number)
+	const resetMins = resetTimeMinutes(resetTime)
+	const resetHour = Math.floor(resetMins / 60)
+	const resetMin = resetMins % 60
+	const utcGuess = Date.UTC(year!, month! - 1, day!, resetHour, resetMin, 0, 0)
+	let tz = timeZone
+	try {
+		new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(now)
+	} catch {
+		tz = 'UTC'
+	}
+	const offset1 = tzOffsetMs(new Date(utcGuess), tz)
+	const firstPass = new Date(utcGuess - offset1)
+	const offset2 = tzOffsetMs(firstPass, tz)
+	return new Date(utcGuess - offset2)
 }

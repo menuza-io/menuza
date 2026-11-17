@@ -57,6 +57,13 @@ import {
 	type VerifiedDeliveryQuote,
 } from '@repo/common/restaurant-orders'
 import { wouldExceedSlotLimit } from '@repo/common/slot-usage'
+import {
+	businessDayDate,
+	businessDayStartUtc,
+	formatAllocatedOrderNumber,
+	parseOrderNumberFormat,
+	type OrderNumberFormat,
+} from '@repo/common/pos-orders'
 import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent'
 import { readQrOrderingFeatures } from '@repo/common/qr-ordering'
 import {
@@ -69,6 +76,7 @@ import {
 } from '@repo/loyalty'
 import {
 	getTenantDb,
+	posOrders,
 	qrTabs,
 	RESTAURANT_ORDER_ACTIVE_STATUSES,
 	runTenantTransaction,
@@ -727,7 +735,61 @@ async function nextOrderNumber(
 	tx: OrderTx,
 	now: Date,
 	usedKeys: Set<string>,
+	options: {
+		locationId?: string | null
+		timeZone?: string | null
+		orderNumberFormat?: OrderNumberFormat | null
+	} = {},
 ): Promise<string> {
+	if (options.orderNumberFormat) {
+		const fmt = options.orderNumberFormat
+		const tz = options.timeZone || 'UTC'
+		const dayStart = businessDayStartUtc(now, tz, fmt.resetTime)
+		const bDate = businessDayDate(now, tz, fmt.resetTime)
+		const webRows = await tx
+			.select({ number: restaurantOrders.number })
+			.from(restaurantOrders)
+			.where(
+				options.locationId
+					? and(
+							eq(restaurantOrders.locationId, options.locationId),
+							gte(restaurantOrders.createdAt, dayStart),
+						)
+					: gte(restaurantOrders.createdAt, dayStart),
+			)
+		const posRows = options.locationId
+			? await tx
+					.select({ number: posOrders.number })
+					.from(posOrders)
+					.where(
+						and(
+							eq(posOrders.locationId, options.locationId),
+							eq(posOrders.businessDate, bDate),
+						),
+					)
+			: []
+		const taken = new Set([
+			...webRows.map((r) => r.number),
+			...posRows.map((r) => r.number),
+		])
+		const escapedPrefix = fmt.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+		const seqPattern = new RegExp(`^${escapedPrefix}(\\d+)$`)
+		let highest = 0
+		for (const num of taken) {
+			const match = seqPattern.exec(num)
+			if (match) highest = Math.max(highest, Number(match[1]))
+		}
+		for (let attempt = 0; attempt < 200; attempt += 1) {
+			const candidate = formatAllocatedOrderNumber(highest + 1 + attempt, fmt)
+			if (!usedKeys.has(candidate) && !taken.has(candidate)) {
+				usedKeys.add(candidate)
+				return candidate
+			}
+		}
+		const candidate = `${fmt.prefix}${crypto.randomUUID().slice(0, 8)}`
+		usedKeys.add(candidate)
+		return candidate
+	}
 	const dayStart = new Date(
 		Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
 	)
@@ -747,6 +809,8 @@ async function nextOrderNumber(
 	usedKeys.add(candidate)
 	return candidate
 }
+
+export const allocateNextOrderNumber = nextOrderNumber
 
 function isUniqueConstraintError(error: unknown): boolean {
 	return (
@@ -1563,10 +1627,17 @@ export async function placeOrder(input: {
 						acceptance.deadline !== null &&
 						(request.paymentMethod !== 'online' || freeOrder)
 
+					const numberFormat = promiseLocation?.orderNumberFormat
+						? parseOrderNumberFormat(promiseLocation.orderNumberFormat)
+						: null
 					const usedNumbers = new Set<string>()
 					let inserted: RestaurantOrder | null = null
 					for (let attempt = 0; attempt < 5 && !inserted; attempt += 1) {
-						const number = await nextOrderNumber(tx, now, usedNumbers)
+						const number = await nextOrderNumber(tx, now, usedNumbers, {
+							locationId: request.locationId,
+							timeZone: promiseLocation?.timezone ?? null,
+							orderNumberFormat: numberFormat,
+						})
 						const holdExpiresAt =
 							request.paymentMethod === 'online' && !freeOrder
 								? new Date(now.getTime() + result.holdMinutes * 60 * 1000)
@@ -1666,6 +1737,8 @@ export async function placeOrder(input: {
 										? sha256Hex(paymentToken)
 										: null,
 									holdExpiresAt,
+									createdAt: now,
+									updatedAt: now,
 								})
 								.returning()
 							inserted = row ?? null

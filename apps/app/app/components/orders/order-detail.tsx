@@ -894,8 +894,13 @@ export function OrderDetail({
 												{line.quantity}
 											</td>
 											<td className="py-3 pe-3 align-top">
-												<p className="wrap-anywhere">
-													{localizedName(line.itemName, locale)}
+												<p className="flex flex-wrap items-center gap-2 wrap-anywhere">
+													<span>{localizedName(line.itemName, locale)}</span>
+													{line.kind === 'custom' ? (
+														<Badge variant="outline">
+															<Trans>Custom item</Trans>
+														</Badge>
+													) : null}
 												</p>
 												{line.options.length || line.variantNames?.length ? (
 													<p className="text-muted-foreground text-xs">

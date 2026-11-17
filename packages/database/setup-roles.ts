@@ -676,6 +676,16 @@ const ORG_PERMISSIONS = [
 		context: 'organization',
 		description: 'Refund online orders through the payment provider',
 	},
+	// Remote cash drawer shift close from the App (#403). Keep in sync with
+	// 0056_station_register_and_order_numbers.
+	{
+		id: 'org_perm_update_pos_shift_any',
+		action: 'update',
+		entity: 'pos_shift',
+		access: 'any',
+		context: 'organization',
+		description: 'Close an open cash drawer shift from the App',
+	},
 ] as const
 
 const SYSTEM_PERMISSIONS = [

@@ -235,3 +235,45 @@ export async function requeueRejectedShifts(): Promise<number> {
 		.equals('rejected')
 		.modify({ sync: 'pending', nextAttemptAt: 0, lastError: null })
 }
+
+export type RemoteShiftClosure = {
+	id: string
+	revision: number
+	closedAt: number | null
+	countedCashCents: number | null
+	closedRemotelyBy: StaffRef | null
+	remoteCloseReason: string | null
+}
+
+/**
+ * Applies remote shift closures reported by `/pos/me` (#403) so the terminal
+ * stops treating a manager-closed shift as open and clears active shift state.
+ */
+export async function applyRemoteShiftClosures(
+	closures: readonly RemoteShiftClosure[],
+): Promise<boolean> {
+	if (closures.length === 0) return false
+	let changed = false
+	await db.transaction('rw', db.shifts, db.orders, async () => {
+		const orders = await db.orders.toArray()
+		for (const closure of closures) {
+			const existing = await db.shifts.get(closure.id)
+			if (!existing || existing.status !== 'open') continue
+			const summary = summarize(existing, orders)
+			await db.shifts.put({
+				...existing,
+				status: 'closed',
+				closedAt: closure.closedAt ?? Date.now(),
+				countedCashCents: closure.countedCashCents,
+				expectedCashCents: summary.cash.expectedCents,
+				closedRemotelyBy: closure.closedRemotelyBy,
+				remoteCloseReason: closure.remoteCloseReason,
+				revision: Math.max(existing.revision, closure.revision),
+				sync: 'synced',
+				lastError: null,
+			})
+			changed = true
+		}
+	})
+	return changed
+}

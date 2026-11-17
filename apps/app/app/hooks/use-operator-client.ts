@@ -15,8 +15,12 @@ export function operatorTokenUrl(
 	orgSlug: string,
 	tokenRoute: OperatorTokenRoute,
 	write: boolean,
+	tokenQuery?: string,
 ): string {
 	const base = `/${encodeURIComponent(orgSlug)}/${tokenRoute}`
+	if (tokenQuery) {
+		return `${base}?${tokenQuery}`
+	}
 	// The inventory token takes a scope; orders and QR take `write=1`.
 	if (tokenRoute === 'inventory-token') {
 		return `${base}?scope=${write ? 'write' : 'read'}`
@@ -29,7 +33,10 @@ export function operatorTokenUrl(
  * (a POST that asks for costs): it then uses the read token, so a member
  * without any write grant is not refused.
  */
-export type OperatorRequestInit = RequestInit & { readOnly?: boolean }
+export type OperatorRequestInit = RequestInit & {
+	readOnly?: boolean
+	tokenQuery?: string
+}
 
 /**
  * Calls the organization's regional tenant-api straight from the browser with a
@@ -51,12 +58,12 @@ export function useOperatorClient(
 	)
 
 	const credentialsFor = useCallback(
-		(write: boolean) => {
-			const key = `${tokenRoute}:${orgSlug}:${write ? 'write' : 'read'}`
+		(write: boolean, tokenQuery?: string) => {
+			const key = `${tokenRoute}:${orgSlug}:${tokenQuery || (write ? 'write' : 'read')}`
 			let entry = cached.current.get(key)
 			if (!entry || entry.expires <= Date.now()) {
 				const credentials = fetch(
-					operatorTokenUrl(orgSlug, tokenRoute, write),
+					operatorTokenUrl(orgSlug, tokenRoute, write, tokenQuery),
 					{ headers: { Accept: 'application/json' } },
 				).then(async (response) => {
 					if (!response.ok) throw new Error('Unable to authorize this request.')
@@ -75,13 +82,13 @@ export function useOperatorClient(
 		async (path: string, init: OperatorRequestInit = {}) => {
 			const write =
 				!init.readOnly && init.method !== undefined && init.method !== 'GET'
+			const { readOnly: ignoredReadOnly, tokenQuery, ...fetchInit } = init
 			const send = async () => {
-				const { credentials } = credentialsFor(write)
+				const { credentials } = credentialsFor(write, tokenQuery)
 				const { jwt, tenantApiUrl } = await credentials
 				const headers = new Headers(init.headers)
 				headers.set('Authorization', `Bearer ${jwt}`)
 				if (init.body) headers.set('Content-Type', 'application/json')
-				const { readOnly: ignoredReadOnly, ...fetchInit } = init
 				return fetch(`${tenantApiUrl}${base}${path}`, {
 					...fetchInit,
 					headers,
@@ -90,7 +97,7 @@ export function useOperatorClient(
 			const sentAt = Date.now()
 			let response = await send()
 			if (response.status === 401) {
-				cached.current.delete(credentialsFor(write).key)
+				cached.current.delete(credentialsFor(write, tokenQuery).key)
 				response = await send()
 			}
 			if (!response.ok) {

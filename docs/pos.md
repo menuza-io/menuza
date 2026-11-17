@@ -66,14 +66,49 @@ already took money for.
   totals are all unchanged, but the discount checks run again on any revision
   whose `discountApplications` differ from the previous revision's (for example
   applications added when the sale is paid).
-- **Contract 9.** `POS_CONTRACT_VERSION` is 9. A sale may be
-  `drive_through` and a line may carry a kitchen name, a kitchen highlight
-  and a dine-in course. Every new field is optional, so a contract 8 upload
-  still parses. An older node cannot read `drive_through` and holds that
-  upload. Deploy tenant-api before Station. On the kitchen feed,
-  drive-through stays `fulfillment: takeaway` plus `driveThrough: true`, and
-  a QR table round stays `channel: online` plus `service: qr`, so an older
-  kitchen screen still shows those tickets.
+- **Contract 10.** `POS_CONTRACT_VERSION` is 10. Additions are optional on the
+  wire so Contract 9 uploads still parse cleanly (deploy tenant-api before
+  Station):
+  - **Custom open-price items (#171).** A line may set `kind: 'custom'`
+    (`itemId: 'custom:<id>'`), an optional `taxable` flag (standard VAT vs
+    exempt/O), and an optional `kitchenStationId`. Custom lines never count
+    toward inventory or recipes, never earn discounts, still generate ZATCA VAT
+    lines, route to KDS when a kitchen station is set, and flag the order with
+    `review_reason: custom_item` without refusing the sale.
+  - **Guest details on counter orders (#372).** Counter orders may include
+    `customerPhone`. When a location requires guest name and/or phone, Station
+    blocks checkout locally with a clear error; uploaded orders missing required
+    fields are flagged `missing_guest_details` rather than refused. Phone
+    numbers never auto-subscribe guests to marketing.
+  - **Remote shift close & drawer drops (#403, #380).** Cash movements include
+    `drop`. An operator with `update:pos_shift:any` can close an open shift
+    directly against regional tenant-api
+    (`POST /operator/pos/shifts/:id/close`), recording `closedRemotelyByUserId`
+    / `closedRemotelyByName` / `remoteCloseReason`
+    (`review_reason: remote_shift_close`). `/pos/me` sends `closedShifts` so
+    terminals close local stale shifts and `POST /pos/orders` or `/pos/shifts`
+    returns `shift_closed` (`202` held) instead of accepting new sales into a
+    closed shift silently.
+  - **Location order number format & offline Station merge (#371).** Web/QR
+    (`allocateNextOrderNumber` inside `runExclusive`) and Station
+    (`createOrder`) share `OrderNumberFormat` (`prefix`, `digits`,
+    timezone-aware `resetTime` via `businessDayDate` / `businessDayStartUtc`).
+    Web/QR scans both `restaurant_orders` and `pos_orders` on that business day
+    to skip numbers taken by offline terminals. Station allocates offline from
+    per-day `seq:<businessDate>` in IndexedDB (falling back to `<terminalCode>-`
+    when `prefix` is empty so multi-terminal tills never collide offline); if
+    two terminals with a shared prefix pick the same offline number before
+    syncing, `(device_id, business_date, number)` stays distinct per terminal in
+    `pos_orders` or `number_conflict` returns `409 { nextNumber }` from
+    `nextFreeNumber` and Station stores `serverNumber`.
+- **Contract 9.** `POS_CONTRACT_VERSION` is 9. A sale may be `drive_through` and
+  a line may carry a kitchen name, a kitchen highlight and a dine-in course.
+  Every new field is optional, so a contract 8 upload still parses. An older
+  node cannot read `drive_through` and holds that upload. Deploy tenant-api
+  before Station. On the kitchen feed, drive-through stays
+  `fulfillment: takeaway` plus `driveThrough: true`, and a QR table round stays
+  `channel: online` plus `service: qr`, so an older kitchen screen still shows
+  those tickets.
 - **Contract 6.** `POS_CONTRACT_VERSION` is 6. A sale may include
   `discountApplications` (optional; omitted uploads still parse as none, so a
   contract 5 till keeps working). An adjustment may carry `lineAmounts` (the
@@ -245,8 +280,14 @@ person counting is shown the expected figure only after confirming.
   included), `grossBeforeDiscountsCents` (`grossSalesCents + discountCents`) and
   `subtotalCents` (items before discounts); the till's own summary should add
   the same three.
-- **Append-only.** Shifts can't be deleted and cash movements can't be changed
-  (triggers). A closed shift never changes.
+- **Append-only & remote close.** Shifts can't be deleted and cash movements
+  can't be changed (triggers), and a closed shift never changes (`drop` moves
+  cash out safely into a drop record). Managers with `update:pos_shift:any` can
+  close an abandoned shift browser-direct against regional `tenant-api`
+  (`POST /operator/pos/shifts/:id/close`), recording who closed it and why.
+  Regional cash drawer variance and cash movement reports (`cash_drawer_shifts`,
+  `cash_drawer_movements`) surface expected vs counted differences and keep
+  cashier names behind `sales_staff`.
 
 ## Fiscal chain
 

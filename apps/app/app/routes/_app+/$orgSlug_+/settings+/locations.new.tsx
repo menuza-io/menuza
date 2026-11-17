@@ -1,6 +1,7 @@
 import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { courseSettingsJson } from '@repo/common/kitchen-ticket'
+import { parseStrictOrderNumberFormat } from '@repo/common/pos-orders'
 import { redirectWithToast } from '@repo/common/toast'
 import { and, count, db, eq, OrganizationLocation } from '@repo/database'
 import { Button } from '@repo/ui/button'
@@ -15,11 +16,6 @@ import { z } from 'zod'
 import { LocationForm } from '#app/components/locations/location-form.tsx'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
 import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
-import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import {
-	requireUserWithOrganizationPermission,
-	ORG_PERMISSIONS,
-} from '#app/utils/organization/permissions.server.ts'
 import {
 	defaultPrayerPauseForm,
 	defaultSlotLimitForm,
@@ -28,6 +24,11 @@ import {
 } from '#app/utils/orders/ordering-settings.ts'
 import { isPrayerPauseEnabled } from '#app/utils/orders/prayer-pause.server.ts'
 import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import {
+	requireUserWithOrganizationPermission,
+	ORG_PERMISSIONS,
+} from '#app/utils/organization/permissions.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 const LocationInputSchema = z.object({
@@ -59,6 +60,7 @@ const LocationInputSchema = z.object({
 	deliveryConfig: z.string().optional(),
 	deliveryZones: z.string().optional(),
 	courseSettings: z.string().optional(),
+	orderNumberFormat: z.string().optional(),
 	orderingSettings: z.string().optional(),
 })
 
@@ -165,6 +167,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { error: ordering.error }
 	}
 
+	const orderNumberFormatResult = parseStrictOrderNumberFormat(
+		data.orderNumberFormat,
+	)
+	if (!orderNumberFormatResult.ok) {
+		return { error: orderNumberFormatResult.error }
+	}
+
 	const newLocationId = await db.transaction(async (tx) => {
 		if (data.isDefault) {
 			await tx
@@ -201,6 +210,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				deliveryZones: data.deliveryZones || null,
 				...(data.courseSettings !== undefined
 					? { courseSettings: courseSettingsJson(data.courseSettings) }
+					: {}),
+				...(data.orderNumberFormat !== undefined
+					? {
+							orderNumberFormat: orderNumberFormatResult.value
+								? JSON.stringify(orderNumberFormatResult.value)
+								: null,
+						}
 					: {}),
 				...ordering.patch,
 			})

@@ -4,7 +4,12 @@ import { Icon } from '@repo/ui/icon'
 import { Item, ItemMedia, ItemContent } from '@repo/ui/item'
 import { useState } from 'react'
 import { IDLE_LOCK_CHOICES } from '~/lib/activity.ts'
-import { type PosSettings } from '~/lib/config.ts'
+import {
+	menuGridColumnsClass,
+	type MenuColumns,
+	type MenuDensity,
+	type PosSettings,
+} from '~/lib/config.ts'
 import {
 	pairingHosts,
 	parsePairingInput,
@@ -18,6 +23,7 @@ import {
 	Checkbox,
 	Modal,
 	Reveal,
+	Segmented,
 	cn,
 	fieldClass,
 	Select,
@@ -124,6 +130,8 @@ export function SettingsSheet({
 								: draft.terminalCode.trim().toUpperCase().slice(0, 6) || 'T1',
 							locationId: draft.locationId,
 							idleLockSeconds: draft.idleLockSeconds,
+							menuColumns: draft.menuColumns,
+							menuDensity: draft.menuDensity,
 							demo: draft.demo,
 							...(paired
 								? {}
@@ -166,6 +174,72 @@ export function SettingsSheet({
 						</Select>
 					</span>
 				</Field>
+				{!required ? (
+					<section
+						aria-label={_(t`Menu layout`)}
+						className="border-border space-y-3 border-t pt-5"
+					>
+						<div>
+							<h3 className="text-sm font-semibold">
+								<Trans>Menu layout</Trans>
+							</h3>
+							<p className="text-muted-foreground text-sm">
+								<Trans>For this terminal only. Changes apply right away.</Trans>
+							</p>
+						</div>
+						<div className="space-y-1.5">
+							<span className="text-sm font-medium">
+								<Trans>Columns</Trans>
+							</span>
+							<Segmented
+								label={_(t`Menu columns`)}
+								value={
+									String(draft.menuColumns ?? 'auto') as
+										'auto' | '2' | '3' | '4'
+								}
+								onChange={(next) => {
+									const menuColumns: MenuColumns =
+										next === '2'
+											? 2
+											: next === '3'
+												? 3
+												: next === '4'
+													? 4
+													: 'auto'
+									set('menuColumns', menuColumns)
+									void onSave({ menuColumns })
+								}}
+								options={[
+									{ value: 'auto', label: _(t`Auto`) },
+									{ value: '2', label: '2' },
+									{ value: '3', label: '3' },
+									{ value: '4', label: '4' },
+								]}
+							/>
+						</div>
+						<div className="space-y-1.5">
+							<span className="text-sm font-medium">
+								<Trans>Density</Trans>
+							</span>
+							<Segmented
+								label={_(t`Menu density`)}
+								value={draft.menuDensity ?? 'comfortable'}
+								onChange={(menuDensity: MenuDensity) => {
+									set('menuDensity', menuDensity)
+									void onSave({ menuDensity })
+								}}
+								options={[
+									{ value: 'comfortable', label: _(t`Comfortable`) },
+									{ value: 'compact', label: _(t`Compact`) },
+								]}
+							/>
+						</div>
+						<MenuLayoutPreview
+							columns={draft.menuColumns ?? 'auto'}
+							density={draft.menuDensity ?? 'comfortable'}
+						/>
+					</section>
+				) : null}
 				<section aria-label={_(t`Pairing`)} className="space-y-3">
 					{paired ? (
 						<Item size="sm">
@@ -516,5 +590,68 @@ function Field({
 				<span className="text-muted-foreground block text-sm">{hint}</span>
 			) : null}
 		</label>
+	)
+}
+
+function MenuLayoutPreview({
+	columns,
+	density,
+}: {
+	columns: MenuColumns
+	density: MenuDensity
+}) {
+	const { _ } = useLingui()
+	const compact = density === 'compact'
+	const sampleTitles = [
+		_(t`Latte`),
+		_(t`Croissant`),
+		_(t`Matcha`),
+		_(t`Flat white`),
+		_(t`Bagel`),
+		_(t`Espresso`),
+	]
+	return (
+		<div
+			data-testid="menu-layout-preview"
+			data-menu-columns={String(columns)}
+			data-menu-density={density}
+			className="border-border bg-muted/40 space-y-2 rounded-(--station-panel-radius) border p-3"
+		>
+			<div className="flex items-center justify-between text-xs font-medium">
+				<span className="text-muted-foreground">
+					<Trans>Live preview</Trans>
+				</span>
+				<span className="text-muted-foreground">
+					{columns === 'auto'
+						? _(t`Auto`)
+						: _(plural(columns, { one: '# col', other: '# cols' }))}{' '}
+					· {compact ? _(t`Compact`) : _(t`Comfortable`)}
+				</span>
+			</div>
+			<div
+				className={cn(
+					'grid',
+					menuGridColumnsClass(columns, density),
+					compact ? 'gap-1.5' : 'gap-2',
+				)}
+			>
+				{sampleTitles.map((title) => (
+					<div
+						key={title}
+						className={cn(
+							'border-border bg-card flex flex-col justify-between rounded-xl border',
+							compact ? 'min-h-11 p-1.5 text-xs' : 'min-h-16 p-2.5 text-sm',
+						)}
+					>
+						<span className="truncate font-semibold">{title}</span>
+						{!compact ? (
+							<span className="text-muted-foreground truncate text-xs">
+								<Trans>Description</Trans>
+							</span>
+						) : null}
+					</div>
+				))}
+			</div>
+		</div>
 	)
 }

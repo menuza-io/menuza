@@ -13,12 +13,32 @@ const mocks = vi.hoisted(() => ({
 	grants: vi.fn(),
 	impersonating: vi.fn(),
 	permission: vi.fn(),
+	operatorName: vi.fn(),
 }))
 vi.mock('@repo/auth', () => ({
 	isImpersonating: mocks.impersonating,
 	userHasOrganizationPermission: mocks.permission,
-	ORG_PERMISSIONS: { UPDATE_ORDER_REFUND_ANY: 'update:order_refund:any' },
+	ORG_PERMISSIONS: {
+		UPDATE_ORDER_REFUND_ANY: 'update:order_refund:any',
+		UPDATE_POS_SHIFT_ANY: 'update:pos_shift:any',
+	},
 }))
+vi.mock('@repo/database', async (importOriginal) => {
+	const actual = await importOriginal<
+		{ db: Record<string, unknown> } & Record<string, unknown>
+	>()
+	return {
+		...actual,
+		db: {
+			...actual.db,
+			select: () => ({
+				from: () => ({
+					where: () => Promise.resolve(mocks.operatorName()),
+				}),
+			}),
+		},
+	}
+})
 vi.mock('#app/utils/loyalty/access.server.ts', () => ({
 	getUserLoyaltyGrants: mocks.grants,
 	resolveLoyaltyLocationIds: mocks.locations,
@@ -52,6 +72,7 @@ describe('order credentials', () => {
 		mocks.grants.mockResolvedValue([])
 		mocks.impersonating.mockResolvedValue(false)
 		mocks.permission.mockResolvedValue(false)
+		mocks.operatorName.mockResolvedValue([{ name: 'Manager Maya' }])
 		mocks.client.mockResolvedValue({
 			jwt: 'scoped-credential',
 			tenantApiUrl: 'https://regional.example',
@@ -206,7 +227,9 @@ describe('order credentials', () => {
 	})
 
 	it('lets write credentials cancel with a provider refund only for holders of the order refund permission', async () => {
-		mocks.permission.mockResolvedValue(true)
+		mocks.permission.mockImplementation(
+			async (_u, _o, permission) => permission === 'update:order_refund:any',
+		)
 		await run('?write=1')
 		expect(mocks.permission).toHaveBeenCalledWith(
 			'operator',
@@ -244,5 +267,40 @@ describe('order credentials', () => {
 			scope: 'orders:write',
 			claims: { locationIds: null },
 		})
+	})
+
+	it('mints closeShifts and operatorName for holders of update:pos_shift:any, never when impersonating', async () => {
+		mocks.permission.mockImplementation(
+			async (_u, _o, permission) => permission === 'update:pos_shift:any',
+		)
+		await run('?shift=1')
+		expect(mocks.read).toHaveBeenCalled()
+		expect(mocks.write).not.toHaveBeenCalled()
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:read',
+			claims: {
+				locationIds: null,
+				closeShifts: true,
+				operatorName: 'Manager Maya',
+			},
+		})
+
+		mocks.client.mockClear()
+		await run('?write=1')
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:write',
+			claims: {
+				locationIds: null,
+				closeShifts: true,
+				operatorName: 'Manager Maya',
+			},
+		})
+
+		mocks.impersonating.mockResolvedValue(true)
+		await expect(run('?shift=1')).rejects.toMatchObject({ status: 403 })
+
+		mocks.impersonating.mockResolvedValue(false)
+		mocks.permission.mockResolvedValue(false)
+		await expect(run('?shift=1')).rejects.toMatchObject({ status: 403 })
 	})
 })

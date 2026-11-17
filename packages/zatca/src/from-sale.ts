@@ -29,6 +29,8 @@ export type SaleForZatca = {
 		variantLabel: string | null
 		quantity: number
 		baseCents: number
+		/** Defaults to `true`. `false` moves the line's base amount to VAT category `O`. */
+		taxable?: boolean
 		options: Array<{ unitCents: number; quantity: number; taxable: boolean }>
 	}>
 	taxRatePercent: number
@@ -85,16 +87,19 @@ function split(sale: SaleForZatca) {
 		{ lineAmounts: sale.otherLineAmounts },
 	])
 	const pricing = sale.lines.map((line) => {
+		const baseTaxable = line.taxable !== false
 		const taxed =
-			(line.baseCents +
+			((baseTaxable ? line.baseCents : 0) +
 				line.options
 					.filter((o) => o.taxable)
 					.reduce((s, o) => s + o.unitCents * o.quantity, 0)) *
 			line.quantity
 		const notTaxed =
-			line.options
-				.filter((o) => !o.taxable)
-				.reduce((s, o) => s + o.unitCents * o.quantity, 0) * line.quantity
+			((baseTaxable ? 0 : line.baseCents) +
+				line.options
+					.filter((o) => !o.taxable)
+					.reduce((s, o) => s + o.unitCents * o.quantity, 0)) *
+			line.quantity
 		standardGross += taxed
 		untaxed += notTaxed
 		return {
@@ -184,27 +189,32 @@ export function fromSale(sale: SaleForZatca, meta: Meta): ZatcaDocumentInput {
 		const name = line.variantLabel
 			? `${line.name} (${line.variantLabel})`
 			: line.name
+		const baseTaxable = line.taxable !== false
 		const taxed =
-			line.baseCents +
+			(baseTaxable ? line.baseCents : 0) +
 			line.options
 				.filter((o) => o.taxable)
 				.reduce((s, o) => s + o.unitCents * o.quantity, 0)
-		const untaxed = line.options
-			.filter((o) => !o.taxable)
-			.reduce((s, o) => s + o.unitCents * o.quantity, 0)
+		const untaxed =
+			(baseTaxable ? 0 : line.baseCents) +
+			line.options
+				.filter((o) => !o.taxable)
+				.reduce((s, o) => s + o.unitCents * o.quantity, 0)
 		// The line's net is its unit price times its quantity (BR-KSA-EN16931-11);
 		// rounding a VAT-inclusive unit price is evened out once, for the whole
 		// document, below.
-		lines.push({
-			name,
-			quantity: line.quantity,
-			unitNetCents: net(taxed),
-			category: 'S',
-		})
-		standardLinesNet += net(taxed) * line.quantity
+		if (taxed > 0 || untaxed === 0) {
+			lines.push({
+				name,
+				quantity: line.quantity,
+				unitNetCents: net(taxed),
+				category: 'S',
+			})
+			standardLinesNet += net(taxed) * line.quantity
+		}
 		if (untaxed > 0)
 			lines.push({
-				name: `${name}: not subject to VAT`,
+				name: taxed > 0 ? `${name}: not subject to VAT` : name,
 				quantity: line.quantity,
 				unitNetCents: untaxed,
 				category: 'O',

@@ -45,6 +45,7 @@ import {
 } from './pairing.ts'
 import { type PhonePickup } from './pickup.ts'
 import { lineSignature, type Adjustment, type CartLine } from './pricing.ts'
+import { applyRemoteShiftClosures } from './shifts.ts'
 import {
 	approveAsManager,
 	attemptSignIn,
@@ -65,6 +66,7 @@ import {
 } from './till-discounts.ts'
 import {
 	type CatalogSnapshot,
+	type KdsStationSummary,
 	type MenuCategory,
 	type MenuItem,
 	type MenuLocation,
@@ -105,6 +107,8 @@ export type PosState = {
 	/** Menu items in this till's language: what it shows. */
 	shownItems: Map<string, MenuItem>
 	location: MenuLocation | null
+	/** Kitchen stations at the paired terminal's location (#171). */
+	kdsStations: KdsStationSummary[]
 	catalogStatus: CatalogStatus
 	catalogError: string | null
 	refreshing: boolean
@@ -170,6 +174,7 @@ export type PosState = {
 	setPhoneOrder: (details: PhonePickup) => void
 	setCounterOrder: () => void
 	setCustomerName: (name: string) => void
+	setCustomerPhone: (phone: string) => void
 	setReadyTextPhone: (phone: string) => void
 	setTableLabel: (label: string) => void
 	setDriveThroughNote: (note: string) => void
@@ -627,6 +632,7 @@ export const usePos = create<PosState>((set, get) => ({
 	recordItems: new Map(),
 	shownItems: new Map(),
 	location: null,
+	kdsStations: [],
 	catalogStatus: 'loading',
 	catalogError: null,
 	refreshing: false,
@@ -823,11 +829,23 @@ export const usePos = create<PosState>((set, get) => ({
 	},
 
 	async verifyPairing() {
-		const { verdict, device, apps, transfers, fiscalChains, zatca } =
-			await checkDeviceDetailed(get().settings)
+		const {
+			verdict,
+			device,
+			apps,
+			transfers,
+			fiscalChains,
+			kdsStations,
+			closedShifts,
+			zatca,
+		} = await checkDeviceDetailed(get().settings)
 		if (verdict === 'ok') {
 			if (get().unrecognisedStrikes > 0 || get().pairingLost)
 				set({ unrecognisedStrikes: 0, pairingLost: false })
+			if (kdsStations !== undefined) set({ kdsStations })
+			if (closedShifts?.length) {
+				await applyRemoteShiftClosures(closedShifts)
+			}
 			// A manager may have changed sign-in or the end of the business day in the Menuza app.
 			const current = get().settings
 			if (
@@ -1079,11 +1097,9 @@ export const usePos = create<PosState>((set, get) => ({
 							}) => line,
 						)
 			return {
-				...withAutomaticDiscounts(
-					{ ...s, orderType: nextType },
-					lines,
-					{ orderType: nextType },
-				),
+				...withAutomaticDiscounts({ ...s, orderType: nextType }, lines, {
+					orderType: nextType,
+				}),
 				tableLabel: nextType === 'dine_in' ? s.tableLabel : '',
 				driveThroughNote:
 					nextType === 'drive_through' ? s.driveThroughNote : '',
@@ -1108,6 +1124,7 @@ export const usePos = create<PosState>((set, get) => ({
 			readyTextOptIn: false,
 		}),
 	setCustomerName: (customerName) => set({ customerName }),
+	setCustomerPhone: (customerPhone) => set({ customerPhone }),
 	setReadyTextPhone: (readyTextPhone) => set({ readyTextPhone }),
 	setTableLabel: (tableLabel) => set({ tableLabel }),
 	setDriveThroughNote: (driveThroughNote) => set({ driveThroughNote }),

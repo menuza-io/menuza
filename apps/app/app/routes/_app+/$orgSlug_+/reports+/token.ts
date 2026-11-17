@@ -9,6 +9,7 @@ import {
 	ORDER_REPORT_SUBJECTS,
 	ORG_WIDE_REPORT_SUBJECTS,
 	resolveOperatorAnalyticsSecret,
+	SALES_STAFF_FIELD_PERMISSION,
 	type RestrictedReportSubject,
 } from '@repo/reports/token'
 import { isInsecureSecret, isProductionLike } from '@repo/security'
@@ -24,6 +25,7 @@ import {
 } from '#app/utils/reservations/report-access.server.ts'
 import { resolveStaffReportAccess } from '#app/utils/staffing/report-access.server.ts'
 import {
+	canReadSalesStaffFields,
 	hasAdminReportAccess,
 	REPORT_ADMIN_PERMISSIONS,
 } from '#app/utils/staffing/report-grants.server.ts'
@@ -45,6 +47,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	// Reservations) below can be granted, each by its own permission and limited
 	// to the person's scopes or locations, so a manager holding only module
 	// report grants still gets a token. A person with none gets a 403.
+	const impersonated = await isImpersonating(request)
 	const hasAdminAccess = await hasAdminReportAccess(userId, organization.id)
 	// Call reports include caller numbers, so they also need call access.
 	// Order reports follow the orders page, which menu access covers (and, as
@@ -63,12 +66,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				ORG_PERMISSIONS.READ_MENU_ANY,
 			),
 	])
+	const canReadSalesStaff =
+		canReadOrders &&
+		(await canReadSalesStaffFields(userId, organization.id, impersonated))
 	// Staff reports (time cards, shifts, daily labor, applications) follow the
 	// staffing flags, the staffing permissions, and the person's scope grants.
 	const staff = await resolveStaffReportAccess({
 		userId,
 		organizationId: organization.id,
-		impersonated: await isImpersonating(request),
+		impersonated,
 	})
 	// Bookings, waitlist and pacing reports need the reservation report grant
 	// and the master Reservations flag, limited to the person's locations.
@@ -112,6 +118,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		...(hasAdminAccess ? ORG_WIDE_REPORT_SUBJECTS : []),
 		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
+		...(canReadSalesStaff ? [SALES_STAFF_FIELD_PERMISSION] : []),
 		...staff.subjects,
 		...reservations.subjects,
 		...giftCards.subjects,

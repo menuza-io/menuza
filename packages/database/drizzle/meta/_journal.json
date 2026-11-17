@@ -393,6 +393,13 @@
 			"when": 1795000005000,
 			"tag": "0055_kitchen_tickets",
 			"breakpoints": true
+		},
+		{
+			"idx": 56,
+			"version": "6",
+			"when": 1795000006000,
+			"tag": "0056_station_register_and_order_numbers",
+			"breakpoints": true
 		}
 	]
 }

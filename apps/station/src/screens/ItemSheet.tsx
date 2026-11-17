@@ -40,12 +40,15 @@ function selectionsFromLine(line: CartLine): Selections {
 export function ItemSheet({
 	item,
 	editing,
+	showNotes = true,
 	money,
 	onClose,
 	onSubmit,
 }: {
 	item: MenuItem | null
 	editing?: CartLine | null
+	/** Show optional kitchen notes field (#372). Defaults to `true`. */
+	showNotes?: boolean
 	money: MoneyFormatter
 	onClose: () => void
 	onSubmit: (line: Omit<CartLine, 'id'>) => void
@@ -69,6 +72,7 @@ export function ItemSheet({
 			open={item !== null}
 			item={shown.item}
 			editing={shown.editing}
+			showNotes={showNotes}
 			money={money}
 			onClose={onClose}
 			onSubmit={onSubmit}
@@ -80,6 +84,7 @@ function ItemSheetBody({
 	open,
 	item,
 	editing,
+	showNotes = true,
 	money,
 	onClose,
 	onSubmit,
@@ -87,6 +92,7 @@ function ItemSheetBody({
 	open: boolean
 	item: MenuItem
 	editing: CartLine | null
+	showNotes?: boolean
 	money: MoneyFormatter
 	onClose: () => void
 	onSubmit: (line: Omit<CartLine, 'id'>) => void
@@ -326,18 +332,20 @@ function ItemSheetBody({
 					)
 				})}
 
-				<section aria-label={_(t`Kitchen note`)}>
-					<SectionTitle title={_(t`Kitchen note`)} hint={_(t`Optional`)} />
-					<textarea
-						aria-label={_(t`Kitchen note`)}
-						value={note}
-						onChange={(e) => setNote(e.target.value)}
-						maxLength={280}
-						rows={2}
-						placeholder={_(t`Allergies, no onions, sauce on the side…`)}
-						className={cn(fieldClass, 'h-auto resize-none p-3')}
-					/>
-				</section>
+				{showNotes ? (
+					<section aria-label={_(t`Kitchen note`)}>
+						<SectionTitle title={_(t`Kitchen note`)} hint={_(t`Optional`)} />
+						<textarea
+							aria-label={_(t`Kitchen note`)}
+							value={note}
+							onChange={(e) => setNote(e.target.value)}
+							maxLength={280}
+							rows={2}
+							placeholder={_(t`Allergies, no onions, sauce on the side…`)}
+							className={cn(fieldClass, 'h-auto resize-none p-3')}
+						/>
+					</section>
+				) : null}
 			</div>
 		</Modal>
 	)

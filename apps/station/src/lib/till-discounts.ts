@@ -220,6 +220,7 @@ function cartLines(
 				totalMinor: option.unitCents * option.quantity,
 			})),
 			excluded:
+				line.kind === 'custom' ||
 				item?.excludeFromDiscounts === true ||
 				variant?.excludeFromDiscounts === true,
 		}

@@ -14,6 +14,7 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	kdsEvents,
+	kdsLocationSettings,
 	orderMessages,
 	posManagers,
 	posDevices,
@@ -999,6 +1000,127 @@ describe('Station kitchen API', () => {
 			await db.insert(posManagers).values({ staffId, addedBy: 'operator' })
 			expect((await delay(ticket, 10, 0, session.token)).status).toBe(200)
 			expect((await stored(id)).promisedVersion).toBe(1)
+		})
+	})
+
+	describe('custom items routing (#171)', () => {
+		it('routes a custom line with a station id to that station and omits custom lines with no kitchen', async () => {
+			const db = await getTenantDb(ORG_A)
+			await db
+				.insert(kdsLocationSettings)
+				.values({
+					locationId: 'loc-1',
+					version: 1,
+					config: {
+						...DEFAULT_KDS_CONFIG,
+						stations: [
+							{ id: 'hot', name: 'Hot', itemIds: ['burger'] },
+							{ id: 'bar', name: 'Bar', itemIds: [] },
+						],
+						defaultStationId: 'hot',
+					},
+					updatedAt: Date.now(),
+				})
+				.onConflictDoUpdate({
+					target: kdsLocationSettings.locationId,
+					set: {
+						version: 1,
+						config: {
+							...DEFAULT_KDS_CONFIG,
+							stations: [
+								{ id: 'hot', name: 'Hot', itemIds: ['burger'] },
+								{ id: 'bar', name: 'Bar', itemIds: [] },
+							],
+							defaultStationId: 'hot',
+						},
+						updatedAt: Date.now(),
+					},
+				})
+			const customOrderId = crypto.randomUUID()
+			await db.insert(posOrders).values({
+				id: customOrderId,
+				deviceId,
+				number: 'T1-0099',
+				businessDate: '2026-10-23',
+				revision: 1,
+				status: 'paid',
+				orderType: 'dine_in',
+				locationId: 'loc-1',
+				guestName: null,
+				customerPhone: null,
+				staffName: null,
+				tableLabel: '7',
+				currency: 'USD',
+				subtotalCents: 2500,
+				taxCents: 0,
+				totalCents: 2500,
+				lines: [
+					{
+						id: crypto.randomUUID(),
+						kind: 'custom',
+						itemId: 'custom:1',
+						name: 'Special cocktail',
+						quantity: 1,
+						instructions: '',
+						options: [],
+						kitchenStationId: 'bar',
+					},
+					{
+						id: crypto.randomUUID(),
+						kind: 'custom',
+						itemId: 'custom:2',
+						name: 'Corkage fee',
+						quantity: 1,
+						instructions: '',
+						options: [],
+						kitchenStationId: null,
+					},
+				],
+				adjustments: [],
+				rungUpAt: Date.now(),
+			})
+			const onlyNoKitchenId = crypto.randomUUID()
+			await db.insert(posOrders).values({
+				id: onlyNoKitchenId,
+				deviceId,
+				number: 'T1-0100',
+				businessDate: '2026-10-23',
+				revision: 1,
+				status: 'paid',
+				orderType: 'takeaway',
+				locationId: 'loc-1',
+				guestName: null,
+				customerPhone: null,
+				staffName: null,
+				tableLabel: null,
+				currency: 'USD',
+				subtotalCents: 1000,
+				taxCents: 0,
+				totalCents: 1000,
+				lines: [
+					{
+						id: crypto.randomUUID(),
+						kind: 'custom',
+						itemId: 'custom:3',
+						name: 'Gift wrap',
+						quantity: 1,
+						instructions: '',
+						options: [],
+						kitchenStationId: null,
+					},
+				],
+				adjustments: [],
+				rungUpAt: Date.now(),
+			})
+
+			const res = await request('GET')
+			expect(res.status).toBe(200)
+			const body = (await res.json()) as KdsFeed
+			const ticket = body.tickets.find((t) => t.id === customOrderId)!
+			expect(ticket.lines).toHaveLength(1)
+			expect(ticket.lines[0]?.name).toBe('Special cocktail')
+			expect(ticket.lines[0]?.stationId).toBe('bar')
+			expect(body.tickets.find((t) => t.id === onlyNoKitchenId)).toBeUndefined()
 		})
 	})
 })

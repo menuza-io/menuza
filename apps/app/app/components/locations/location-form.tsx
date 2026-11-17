@@ -22,6 +22,11 @@ import {
 	DEFAULT_SCHEDULING,
 	DEFAULT_WEEKLY_SCHEDULE,
 } from '@repo/common/location-types'
+import {
+	formatAllocatedOrderNumber,
+	ORDER_NUMBER_PREFIX_REGEX,
+	parseOrderNumberFormat,
+} from '@repo/common/pos-orders'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import { Button } from '@repo/ui/button'
 import {
@@ -167,6 +172,7 @@ export interface InitialLocationData {
 	deliveryConfig?: DeliveryConfig | null
 	deliveryZones?: DeliveryZone[] | null
 	courseSettings?: string | null
+	orderNumberFormat?: string | null
 	isActive?: boolean
 	isDefault?: boolean
 }
@@ -395,6 +401,16 @@ function LocationFormBody({
 		storedCourses.autoFireMinutes,
 	)
 	const [courseNames, setCourseNames] = useState(storedCourses.courses)
+	const storedOrderNumberFormat = parseOrderNumberFormat(
+		initialData?.orderNumberFormat,
+	)
+	const [orderPrefix, setOrderPrefix] = useState(storedOrderNumberFormat.prefix)
+	const [orderDigits, setOrderDigits] = useState(
+		String(storedOrderNumberFormat.digits),
+	)
+	const [orderResetTime, setOrderResetTime] = useState(
+		storedOrderNumberFormat.resetTime,
+	)
 	const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>(() => {
 		if (
 			Array.isArray(initialData?.deliveryZones) &&
@@ -464,6 +480,15 @@ function LocationFormBody({
 					course.id,
 			})),
 		}),
+		orderNumberFormat: JSON.stringify(
+			parseOrderNumberFormat({
+				prefix: ORDER_NUMBER_PREFIX_REGEX.test(orderPrefix.trim())
+					? orderPrefix.trim()
+					: '',
+				digits: Math.max(2, Math.min(6, Number(orderDigits) || 4)),
+				resetTime: orderResetTime || '04:00',
+			}),
+		),
 		...(orderPolicies && policyValues ? policyValues : {}),
 		// Typed text as JSON; the action reads it into the shared settings.
 		...(checkoutSettings && tipValues
@@ -1400,6 +1425,83 @@ function LocationFormBody({
 									</Trans>
 								</p>
 							</div>
+						</CardContent>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<CardTitle>
+								<Trans>Order numbers</Trans>
+							</CardTitle>
+							<CardDescription>
+								<Trans>
+									Format and daily reset time for new web, QR and Station order
+									numbers at this location. Existing orders keep their numbers.
+								</Trans>
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="grid gap-3 sm:grid-cols-3">
+								<div className="space-y-2">
+									<Label htmlFor="loc-order-prefix">
+										<Trans>Prefix</Trans>
+									</Label>
+									<Input
+										id="loc-order-prefix"
+										maxLength={4}
+										dir="ltr"
+										placeholder={_(t`None (e.g. A)`)}
+										value={orderPrefix}
+										onChange={(event) =>
+											setOrderPrefix(
+												event.target.value
+													.replace(/[^A-Za-z0-9]/g, '')
+													.slice(0, 4),
+											)
+										}
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="loc-order-digits">
+										<Trans>Digits</Trans>
+									</Label>
+									<Input
+										id="loc-order-digits"
+										type="number"
+										min={2}
+										max={6}
+										dir="ltr"
+										value={orderDigits}
+										onChange={(event) => setOrderDigits(event.target.value)}
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="loc-order-reset-time">
+										<Trans>Daily reset time</Trans>
+									</Label>
+									<Input
+										id="loc-order-reset-time"
+										type="time"
+										dir="ltr"
+										value={orderResetTime}
+										onChange={(event) => setOrderResetTime(event.target.value)}
+									/>
+								</div>
+							</div>
+							<p className="text-muted-foreground text-xs">
+								{(() => {
+									const previewNumber = formatAllocatedOrderNumber(1, {
+										prefix: orderPrefix.trim(),
+										digits: Math.max(2, Math.min(6, Number(orderDigits) || 4)),
+									})
+									return (
+										<Trans>
+											First order of the business day:{' '}
+											<bdi dir="ltr">{previewNumber}</bdi>
+										</Trans>
+									)
+								})()}
+							</p>
 						</CardContent>
 					</Card>
 

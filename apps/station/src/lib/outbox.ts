@@ -9,7 +9,7 @@ import { type PosSettings } from './config.ts'
 import { db, type PosOrder } from './db.ts'
 import { toWireLoyalty } from './loyalty.ts'
 import { isSendable } from './orders.ts'
-import { toWireShift } from './shifts.ts'
+import { type RemoteShiftClosure, toWireShift } from './shifts.ts'
 
 /**
  * Upload queue. Orders already sit in IndexedDB (see `placeOrder`); this only
@@ -112,6 +112,13 @@ export function toWireOrder(order: PosOrder) {
 			// The kitchen's key for the dish and its round; local marks (served) stay here.
 			id: l.id,
 			...(l.sentAt ? { sentAt: new Date(l.sentAt).toISOString() } : {}),
+			...(l.kind === 'custom'
+				? {
+						kind: 'custom' as const,
+						taxable: l.taxable ?? true,
+						kitchenStationId: l.kitchenStationId ?? null,
+					}
+				: {}),
 			itemId: l.itemId,
 			name: l.name,
 			...(l.kitchenName ? { kitchenName: l.kitchenName } : {}),
@@ -557,12 +564,18 @@ async function flushShifts(
 					sync: 'synced',
 					lastError: null,
 					heldReason: outcome.held,
+					...(outcome.held === 'shift_closed' && current.status === 'open'
+						? { status: 'closed' as const, closedAt: Date.now() }
+						: {}),
 				})
 			else if (outcome.kind === 'rejected')
 				await db.shifts.update(shift.id, {
 					sync: 'rejected',
 					attempts: current.attempts + 1,
 					lastError: outcome.error,
+					...(outcome.error === 'shift_closed' && current.status === 'open'
+						? { status: 'closed' as const, closedAt: Date.now() }
+						: {}),
 				})
 			else if (outcome.kind === 'retry') {
 				const attempts = current.attempts + 1
@@ -639,6 +652,10 @@ export type DeviceCheck = {
 	transfers?: Array<{ orderId: string; terminalCode: string }>
 	/** This terminal's fiscal chains as the server has them. */
 	fiscalChains?: PosFiscalChainHead[]
+	/** KDS kitchen stations configured at this location (#171). */
+	kdsStations?: Array<{ id: string; name: string }>
+	/** Remotely closed shifts reported by `/pos/me` (#403). */
+	closedShifts?: RemoteShiftClosure[]
 	/** This terminal as a ZATCA EGS unit, when onboarded. */
 	zatca?: {
 		status: string
@@ -683,6 +700,8 @@ export async function checkDeviceDetailed(
 				apps?: { timeclock?: boolean; reservations?: boolean }
 				transfers?: Array<{ orderId: string; terminalCode: string }>
 				fiscalChains?: PosFiscalChainHead[]
+				kdsStations?: Array<{ id: string; name: string }>
+				closedShifts?: RemoteShiftClosure[]
 				zatca?: {
 					status: string
 					environment: string
@@ -708,6 +727,10 @@ export async function checkDeviceDetailed(
 				apps: readApps(body.apps),
 				transfers: Array.isArray(body.transfers) ? body.transfers : [],
 				fiscalChains: Array.isArray(body.fiscalChains) ? body.fiscalChains : [],
+				kdsStations: Array.isArray(body.kdsStations)
+					? body.kdsStations
+					: undefined,
+				closedShifts: Array.isArray(body.closedShifts) ? body.closedShifts : [],
 				zatca: body.zatca ?? null,
 			}
 		}

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
+	POS_CONTRACT_VERSION,
 	posSignInRequestSchema,
 	posStaffDisplayName,
+	posLineTaxableCents,
+	formatAllocatedOrderNumber,
+	businessDayDate,
+	businessDayStartUtc,
+	parseOrderNumberFormat,
+	parsePosLocationStationSettings,
 	formatPosDeviceSecret,
 	formatPosPairingCode,
 	parsePosDeviceSecret,
@@ -176,9 +183,10 @@ describe('posOrderRequestSchema', () => {
 	})
 
 	it('rejects unknown fields so nothing rides along', () => {
-		expect(parse({ ...base(), customerPhone: '+15551234567' }).success).toBe(
-			false,
-		)
+		expect(
+			parse({ ...base(), pickupAt: '2026-10-21T13:00:00.000Z' }).success,
+		).toBe(false)
+		expect(parse({ ...base(), unexpectedField: 'nope' }).success).toBe(false)
 		expect(
 			parse({ ...base(), lines: [{ ...line, discount: 5 }] }).success,
 		).toBe(false)
@@ -753,5 +761,127 @@ describe('contract v7: ready text', () => {
 		expect(message({ ...base(), readyTextOptIn: true })).toContain(
 			'only phone orders',
 		)
+	})
+})
+
+describe('contract v10: custom items, counter guest phone & location config (#171, #372, #371)', () => {
+	it('bumps POS_CONTRACT_VERSION to 10', () => {
+		expect(POS_CONTRACT_VERSION).toBe(10)
+	})
+
+	it('accepts custom items (taxed and untaxed) and enforces custom item constraints', () => {
+		const customLine = {
+			kind: 'custom' as const,
+			itemId: 'custom:1',
+			name: 'Corkage fee',
+			variantId: null,
+			variantLabel: null,
+			quantity: 1,
+			baseCents: 1500,
+			taxable: false,
+			kitchenStationId: 'station-bar',
+			instructions: '',
+			options: [],
+		}
+		const ok = parse({
+			...base(),
+			lines: [customLine],
+			totals: {
+				subtotalCents: 1500,
+				adjustmentCents: 0,
+				taxCents: 0,
+				tipCents: 0,
+				totalCents: 1500,
+			},
+		})
+		expect(ok.success).toBe(true)
+		expect(posLineTaxableCents(customLine)).toBe(0)
+		expect(posLineTaxableCents({ ...customLine, taxable: true })).toBe(1500)
+		expect(
+			message({
+				...base(),
+				lines: [{ ...customLine, variantId: 'v-1' }],
+				totals: {
+					subtotalCents: 1500,
+					adjustmentCents: 0,
+					taxCents: 0,
+					tipCents: 0,
+					totalCents: 1500,
+				},
+			}),
+		).toBe('custom items do not have variants')
+		expect(
+			message({
+				...base(),
+				lines: [{ ...customLine, baseCents: 0 }],
+				totals: {
+					subtotalCents: 0,
+					adjustmentCents: 0,
+					taxCents: 0,
+					tipCents: 0,
+					totalCents: 0,
+				},
+			}),
+		).toBe('custom items need a positive price')
+		expect(
+			message({
+				...base(),
+				lines: [{ ...customLine, name: 'x'.repeat(61) }],
+				totals: {
+					subtotalCents: 1500,
+					adjustmentCents: 0,
+					taxCents: 0,
+					tipCents: 0,
+					totalCents: 1500,
+				},
+			}),
+		).toBe('custom item name is too long')
+	})
+
+	it('allows optional customerPhone on counter orders without pickup fields', () => {
+		const ok = parse({
+			...base(),
+			customerName: 'Nadia',
+			customerPhone: '+966 55 123 4567',
+		})
+		expect(ok.success).toBe(true)
+		expect(ok.data?.customerPhone).toBe('+966551234567')
+		expect(message({ ...base(), pickupTimeZone: 'Asia/Riyadh' })).toBe(
+			'pickup contact details belong to phone orders',
+		)
+	})
+
+	it('parses station settings, order number formats, and computes timezone-aware business days', () => {
+		expect(parsePosLocationStationSettings(null)).toEqual({
+			guestDetails: 'none',
+			dishNotes: true,
+			customItems: 'off',
+			customItemMaxCents: 50_000,
+			cashVarianceFlagCents: null,
+		})
+		expect(parseOrderNumberFormat(null)).toEqual({
+			prefix: '',
+			digits: 4,
+			resetTime: '04:00',
+		})
+		expect(formatAllocatedOrderNumber(1, { prefix: 'A', digits: 3 })).toBe(
+			'A001',
+		)
+		// 00:30Z is 03:30 AST (UTC+3), still before 04:00 reset -> previous day!
+		const beforeReset = new Date('2026-11-17T00:30:00.000Z')
+		expect(businessDayDate(beforeReset, 'Asia/Riyadh', '04:00')).toBe(
+			'2026-11-16',
+		)
+		expect(
+			businessDayStartUtc(beforeReset, 'Asia/Riyadh', '04:00').toISOString(),
+		).toBe('2026-11-16T01:00:00.000Z')
+		// 01:05Z is 04:05 AST -> new business day!
+		const afterReset = new Date('2026-11-17T01:05:00.000Z')
+		expect(businessDayDate(afterReset, 'Asia/Riyadh', '04:00')).toBe(
+			'2026-11-17',
+		)
+		expect(
+			businessDayStartUtc(afterReset, 'Asia/Riyadh', '04:00').toISOString(),
+		).toBe('2026-11-17T01:00:00.000Z')
 	})
 })

@@ -1020,6 +1020,18 @@ msgstr "جارٍ الإلغاء"
 msgid "Cart Left Behind"
 msgstr "سلة متروكة"
 
+#: ../../packages/reports/src/ui/report-labels.ts:152
+msgid "Cash drawer log"
+msgstr "سجل درج النقدية"
+
+#: ../../packages/reports/src/ui/report-labels.ts:148
+msgid "Cash drawer variance by cashier"
+msgstr "فروقات درج النقدية حسب الكاشير"
+
+#: ../../packages/reports/src/ui/report-labels.ts:144
+msgid "Cash drawer variance by shift"
+msgstr "فروقات درج النقدية حسب الوردية"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:99
 msgid "Center"
 msgstr "وسط"
@@ -1991,6 +2003,10 @@ msgstr "كل حالات عدم الحضور خلال آخر 30 يومًا مع �
 msgid "Every order"
 msgstr "كل طلب"
 
+#: ../../packages/reports/src/ui/report-labels.ts:153
+msgid "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
+msgstr "كل عملية إيداع أو سحب أو تسليم للخزنة مسجّلة في ورديات الكاشير خلال آخر 30 يومًا."
+
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
 msgid "Everyone gets {code}"
 msgstr "يحصل الجميع على {code}"
@@ -2002,6 +2018,10 @@ msgstr "جميع المشتركين"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:867
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
+
+#: ../../packages/reports/src/ui/report-labels.ts:145
+msgid "Expected against counted cash for every closed and open till shift over the last 30 days."
+msgstr "المبلغ النقدي المتوقع مقابل المعدود لكل وردية كاشير مفتوحة أو مغلقة خلال آخر 30 يومًا."
 
 #: app/routes/_admin+/gdpr-requests.tsx:681
 msgid "Expedite Now"
@@ -2338,7 +2358,7 @@ msgstr "مرحباً {NAME_TAG}، منظمتك {ORGANIZATION_NAME_TAG} جاهز�
 msgid "Higher level roles can manage lower level roles"
 msgstr "الأدوار ذات المستوى الأعلى يمكنها إدارة الأدوار ذات المستوى الأقل"
 
-#: ../../packages/reports/src/ui/report-labels.ts:147
+#: ../../packages/reports/src/ui/report-labels.ts:159
 msgid "Hiring"
 msgstr "التوظيف"
 
@@ -2605,7 +2625,7 @@ msgstr "التسمية"
 msgid "Label (optional)"
 msgstr "التسمية (اختياري)"
 
-#: ../../packages/reports/src/ui/report-labels.ts:146
+#: ../../packages/reports/src/ui/report-labels.ts:158
 msgid "Labor"
 msgstr "العمالة"
 
@@ -3458,6 +3478,10 @@ msgstr "ستظهر المؤسسات هنا بمجرد إنشائها."
 msgid "Outline"
 msgstr "محدد"
 
+#: ../../packages/reports/src/ui/report-labels.ts:149
+msgid "Over or short cash totals grouped by cashier over the last 30 days."
+msgstr "إجمالي الزيادة أو العجز النقدي مجمّعًا حسب الكاشير خلال آخر 30 يومًا."
+
 #: app/components/admin/feature-flags.tsx:315
 #: app/components/admin/feature-flags.tsx:324
 msgid "Override Value"
@@ -4114,7 +4138,7 @@ msgstr "اكتملت الزيارة"
 msgid "Reservation No-Show"
 msgstr "لم يحضر صاحب الحجز"
 
-#: ../../packages/reports/src/ui/report-labels.ts:148
+#: ../../packages/reports/src/ui/report-labels.ts:160
 msgid "Reservations"
 msgstr "الحجوزات"
 

@@ -60,11 +60,13 @@ const optionSchema = z.object({
 })
 const sourceLineSchema = z.object({
 	id: z.string().optional(),
+	kind: z.enum(['catalog', 'custom']).optional(),
 	itemId: z.string(),
 	name: z.string().optional(),
 	itemName: z.string().optional(),
 	kitchenName: z.string().optional(),
 	kitchenHighlight: highlightSchema,
+	kitchenStationId: z.string().nullable().optional(),
 	variantLabel: z.string().nullable().optional(),
 	/** The variant's value names ("Large"), on lines priced by the website. */
 	variantNames: z.array(z.string()).optional(),
@@ -168,6 +170,17 @@ async function settings(db: KitchenDb, locationId: string) {
 	}
 }
 
+export async function listKdsStations(
+	db: KitchenDb,
+	locationId: string,
+): Promise<Array<{ id: string; name: string }>> {
+	const { config } = await settings(db, locationId)
+	return config.stations.map((station) => ({
+		id: station.id,
+		name: station.name,
+	}))
+}
+
 /** Fingerprints ignore money and guest details, but include every preparation instruction.
  * A changed or added line is new work; unchanged dishes keep their progress.
  * Each dish says when it was sent (`firstSeen`: the first revision that held
@@ -189,19 +202,29 @@ function project(
 		console.error('Kitchen could not read an order', order.source, order.id)
 	const sourceLines = parsed.success ? parsed.data : []
 	const courses =
-		order.fulfillment === 'dine_in' && !order.driveThrough && order.service !== 'qr'
-	const lines: KdsLine[] = sourceLines.map((line, index) => {
+		order.fulfillment === 'dine_in' &&
+		!order.driveThrough &&
+		order.service !== 'qr'
+	const lines: KdsLine[] = sourceLines.flatMap((line, index) => {
+		const isCustom = line.kind === 'custom'
+		if (isCustom && !line.kitchenStationId) return []
 		const { content, id } = lineContent(line, index)
 		const stage =
 			(saved && stageIn(saved.progress, id)) ??
 			(saved ? 'new' : order.initialStage)
 		// A config change moves the dish, including one already started. The
 		// stage stored below is what stays.
-		const stationIds = kdsStationsFor(config, {
-			itemId: line.itemId,
-			fulfillment: order.routeFulfillment,
-			channel: order.routeChannel,
-		})
+		const stationIds =
+			isCustom && line.kitchenStationId
+				? config.stations.some((s) => s.id === line.kitchenStationId)
+					? [line.kitchenStationId]
+					: []
+				: kdsStationsFor(config, {
+						itemId: line.itemId,
+						fulfillment: order.routeFulfillment,
+						channel: order.routeChannel,
+					})
+		if (isCustom && stationIds.length === 0) return []
 		const stationId = kdsPrimaryStation(config, stationIds)
 		const received =
 			firstSeen?.get(id) ??
@@ -229,47 +252,49 @@ function project(
 			saved && stage === 'ready' ? servedIn(saved.progress, id) : undefined
 		const guestName = content.name
 		const highlight = effectiveHighlight(line.kitchenHighlight, guestName)
-		return {
-			id,
-			...(firedAt !== undefined ? { firedAt } : {}),
-			...(servedAt !== undefined ? { servedAt } : {}),
-			itemId: line.itemId,
-			name: guestName,
-			...(line.kitchenName ? { kitchenName: line.kitchenName } : {}),
-			...(highlight ? { highlight } : {}),
-			variant: line.variantLabel ?? null,
-			variantId: line.variantId ?? null,
-			quantity: line.quantity,
-			instructions: content.instructions,
-			options: line.options.map((option) => {
-				const optionGuest = option.optionName || option.name || ''
-				const optionHighlight = effectiveHighlight(
-					option.kitchenHighlight ?? option.highlight,
-					optionGuest,
-				)
-				return {
-					name: optionGuest,
-					...(option.kitchenName ? { kitchenName: option.kitchenName } : {}),
-					...(option.groupName ? { groupName: option.groupName } : {}),
-					...(optionHighlight ? { highlight: optionHighlight } : {}),
-					quantity: option.quantity ?? 1,
-					half: option.half ?? null,
-				}
-			}),
-			stationId,
-			...(stationIds.length > 1 ? { stationIds } : {}),
-			stage,
-			...(courses && line.courseId
-				? {
-						courseId: line.courseId,
-						...(line.courseName ? { courseName: line.courseName } : {}),
-						...(line.coursePosition != null
-							? { coursePosition: line.coursePosition }
-							: {}),
-						held,
+		return [
+			{
+				id,
+				...(firedAt !== undefined ? { firedAt } : {}),
+				...(servedAt !== undefined ? { servedAt } : {}),
+				itemId: line.itemId,
+				name: guestName,
+				...(line.kitchenName ? { kitchenName: line.kitchenName } : {}),
+				...(highlight ? { highlight } : {}),
+				variant: line.variantLabel ?? null,
+				variantId: line.variantId ?? null,
+				quantity: line.quantity,
+				instructions: content.instructions,
+				options: line.options.map((option) => {
+					const optionGuest = option.optionName || option.name || ''
+					const optionHighlight = effectiveHighlight(
+						option.kitchenHighlight ?? option.highlight,
+						optionGuest,
+					)
+					return {
+						name: optionGuest,
+						...(option.kitchenName ? { kitchenName: option.kitchenName } : {}),
+						...(option.groupName ? { groupName: option.groupName } : {}),
+						...(optionHighlight ? { highlight: optionHighlight } : {}),
+						quantity: option.quantity ?? 1,
+						half: option.half ?? null,
 					}
-				: {}),
-		}
+				}),
+				stationId,
+				...(stationIds.length > 1 ? { stationIds } : {}),
+				stage,
+				...(courses && line.courseId
+					? {
+							courseId: line.courseId,
+							...(line.courseName ? { courseName: line.courseName } : {}),
+							...(line.coursePosition != null
+								? { coursePosition: line.coursePosition }
+								: {}),
+							held,
+						}
+					: {}),
+			},
+		]
 	})
 	const complete =
 		lines.length > 0 && lines.every((line) => line.stage === 'ready')

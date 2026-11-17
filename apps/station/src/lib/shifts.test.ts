@@ -11,6 +11,7 @@ import {
 import { toWireOrder } from './outbox.ts'
 import {
 	addCashMovement,
+	applyRemoteShiftClosures,
 	closeShift,
 	openShift,
 	startShift,
@@ -189,5 +190,32 @@ describe('cash drawer shifts', () => {
 				approvedBy: null,
 			}),
 		).rejects.toThrow(/closed/)
+	})
+
+	it('marks a remotely closed shift as closed on sync so new orders do not attach to it', async () => {
+		const shift = await startShift({ openingFloatCents: 5000, by: lina })
+		expect((await openShift())?.id).toBe(shift.id)
+
+		const changed = await applyRemoteShiftClosures([
+			{
+				id: shift.id,
+				revision: 2,
+				closedAt: Date.now(),
+				countedCashCents: 5000,
+				closedRemotelyBy: { id: 'mgr_1', name: 'Manager Maya' },
+				remoteCloseReason: 'Forgot to close before leaving',
+			},
+		])
+		expect(changed).toBe(true)
+		expect(await openShift()).toBeUndefined()
+		const stored = await db.shifts.get(shift.id)
+		expect(stored?.status).toBe('closed')
+		expect(stored?.closedRemotelyBy).toEqual({
+			id: 'mgr_1',
+			name: 'Manager Maya',
+		})
+		expect(stored?.remoteCloseReason).toBe('Forgot to close before leaving')
+		const after = await createOrder(draft, cash(1100))
+		expect(after.shiftId).toBeNull()
 	})
 })

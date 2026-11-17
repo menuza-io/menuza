@@ -23,6 +23,8 @@ export const SALES_REPORT_SUBJECTS = [
 	'sales',
 	'order_refunds',
 	'cancelled_orders',
+	'cash_drawer_shifts',
+	'cash_drawer_movements',
 ] as const
 export type SalesReportSubject = (typeof SALES_REPORT_SUBJECTS)[number]
 
@@ -577,8 +579,256 @@ export const cancelledOrdersSubject: ReportSubject = {
 	splitCurrencies: true,
 }
 
+const cashDrawerShiftFields: ReportField[] = [
+	{
+		id: 'closedAt',
+		label: 'Shift date',
+		type: 'datetime',
+		timeframe: true,
+		groupable: true,
+		showTime: true,
+		description:
+			'When the shift closed, or when it opened for a shift still open.',
+	},
+	{
+		id: 'openedAt',
+		label: 'Opened at',
+		type: 'datetime',
+		showTime: true,
+	},
+	{
+		id: 'businessDate',
+		label: 'Business day',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+	},
+	locationField,
+	...hiddenFields,
+	{
+		id: 'terminal',
+		label: 'Terminal',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+	},
+	{
+		id: 'status',
+		label: 'Status',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: 'open', label: 'Open' },
+			{ value: 'closed', label: 'Closed' },
+		],
+	},
+	{
+		id: 'cashierName',
+		label: 'Cashier',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		description: 'Who opened the cash drawer shift.',
+		requiresSubject: SALES_STAFF_FIELD_PERMISSION,
+	},
+	{
+		id: 'closedByName',
+		label: 'Closed by',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		description: 'Who closed the shift on the terminal.',
+		requiresSubject: SALES_STAFF_FIELD_PERMISSION,
+	},
+	{
+		id: 'closedRemotely',
+		label: 'Closed remotely',
+		type: 'boolean',
+		filterable: true,
+		groupable: true,
+	},
+	{
+		id: 'remoteCloserName',
+		label: 'Remote closer',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		description: 'Manager who closed the shift remotely from the dashboard.',
+		requiresSubject: SALES_STAFF_FIELD_PERMISSION,
+	},
+	{
+		id: 'remoteCloseReason',
+		label: 'Remote close reason',
+		type: 'string',
+		filterable: true,
+	},
+	{
+		id: 'openingFloat',
+		label: 'Opening float',
+		type: 'currency',
+		sumLabel: 'Opening float',
+		averageLabel: false,
+	},
+	{
+		id: 'expectedCash',
+		label: 'Expected cash',
+		type: 'currency',
+		sumLabel: 'Expected cash',
+		averageLabel: false,
+	},
+	{
+		id: 'countedCash',
+		label: 'Counted cash',
+		type: 'currency',
+		sumLabel: 'Counted cash',
+		averageLabel: false,
+	},
+	{
+		id: 'variance',
+		label: 'Over / short',
+		type: 'currency',
+		sumLabel: 'Variance',
+		averageLabel: 'Average variance',
+		description: 'Counted cash minus expected cash (negative is short).',
+	},
+	{
+		id: 'varianceFlagged',
+		label: 'Flagged variance',
+		type: 'boolean',
+		filterable: true,
+		groupable: true,
+		description:
+			'True when the absolute difference between counted and expected cash exceeds the location threshold.',
+	},
+	currencyField,
+]
+
+export const cashDrawerShiftsSubject: ReportSubject = {
+	id: 'cash_drawer_shifts',
+	label: 'Cash drawer variance',
+	description:
+		'Expected against counted cash for every Station shift, with differences by terminal and cashier.',
+	scope: 'organization',
+	source: 'tenant-api',
+	fields: cashDrawerShiftFields,
+	currencyField: 'currency',
+	timeZoneField: 'locationTimeZone',
+	defaultColumns: [
+		'closedAt',
+		'terminal',
+		'location',
+		'expectedCash',
+		'countedCash',
+		'variance',
+		'varianceFlagged',
+	],
+	maxRangeDays: SALES_REPORT_MAX_RANGE_DAYS,
+	splitCurrencies: true,
+}
+
+const cashDrawerMovementFields: ReportField[] = [
+	{
+		id: 'occurredAt',
+		label: 'Time',
+		type: 'datetime',
+		timeframe: true,
+		groupable: true,
+		showTime: true,
+	},
+	{
+		id: 'businessDate',
+		label: 'Business day',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+	},
+	locationField,
+	...hiddenFields,
+	{
+		id: 'terminal',
+		label: 'Terminal',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+	},
+	{
+		id: 'shiftId',
+		label: 'Shift',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+	},
+	{
+		id: 'kind',
+		label: 'Movement',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: 'pay_in', label: 'Pay-in' },
+			{ value: 'pay_out', label: 'Pay-out' },
+			{ value: 'drop', label: 'Safe drop' },
+		],
+	},
+	{
+		id: 'amount',
+		label: 'Amount',
+		type: 'currency',
+		sumLabel: 'Total moved',
+		averageLabel: 'Average movement',
+	},
+	{
+		id: 'signedAmount',
+		label: 'Drawer effect',
+		type: 'currency',
+		sumLabel: 'Net drawer effect',
+		averageLabel: false,
+	},
+	{
+		id: 'note',
+		label: 'Reason',
+		type: 'string',
+		filterable: true,
+	},
+	{
+		id: 'staffName',
+		label: 'Staff member',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		requiresSubject: SALES_STAFF_FIELD_PERMISSION,
+	},
+	{
+		id: 'approvedByName',
+		label: 'Approved by',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		requiresSubject: SALES_STAFF_FIELD_PERMISSION,
+	},
+	currencyField,
+]
+
+export const cashDrawerMovementsSubject: ReportSubject = {
+	id: 'cash_drawer_movements',
+	label: 'Cash drawer log',
+	description:
+		'Pay-ins, pay-outs and safe drops recorded in Station cash drawers.',
+	scope: 'organization',
+	source: 'tenant-api',
+	fields: cashDrawerMovementFields,
+	currencyField: 'currency',
+	timeZoneField: 'locationTimeZone',
+	defaultColumns: ['occurredAt', 'terminal', 'kind', 'amount', 'note'],
+	maxRangeDays: SALES_REPORT_MAX_RANGE_DAYS,
+	splitCurrencies: true,
+}
+
 export const salesReportSubjects: ReportSubject[] = [
 	salesSubject,
 	orderRefundsSubject,
 	cancelledOrdersSubject,
+	cashDrawerShiftsSubject,
+	cashDrawerMovementsSubject,
 ]

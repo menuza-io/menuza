@@ -291,6 +291,9 @@ export const ORG_PERMISSIONS = {
 	// while impersonating. The record-only refund of handoff orders keeps the
 	// menu write grant.
 	UPDATE_ORDER_REFUND_ANY: 'update:order_refund:any' as const,
+
+	// Closing an open cash drawer shift remotely from the App (#403).
+	UPDATE_POS_SHIFT_ANY: 'update:pos_shift:any' as const,
 } as const
 
 /**

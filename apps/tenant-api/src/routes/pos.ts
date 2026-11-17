@@ -30,6 +30,7 @@ import {
 	fetchTillDiscountRules,
 } from '../services/order-service.ts'
 import { inventorySaleQueue } from '../services/inventory-sales-service.ts'
+import { listKdsStations } from '../services/kds-service.ts'
 import { scheduleOrderJourneys } from '../services/order-journeys.ts'
 import { deviceApps } from '../services/pos-apps-service.ts'
 import {
@@ -58,10 +59,15 @@ import {
 	withClockCheck,
 	withDiscountCheck,
 	withDiscountRuleCheck,
+	withShiftCheck,
 	withStaffCheck,
 	type PosReview,
 } from '../services/pos-service.ts'
-import { serializeShift, upsertShift } from '../services/pos-shift-service.ts'
+import {
+	listRemotelyClosedShiftsForDevice,
+	serializeShift,
+	upsertShift,
+} from '../services/pos-shift-service.ts'
 import {
 	queueZatcaDocuments,
 	reportDueZatca,
@@ -234,12 +240,17 @@ posRoutes.get('/me', async (c) => {
 	if ('error' in auth) return auth.error
 	const { db, device } = auth.pos
 	await touchDevice(db, device)
-	const [transfers, fiscalChains, zatca, apps] = await Promise.all([
-		recentTransfersAway(db, device.id),
-		fiscalChainHeads(db, device.id),
-		unitStatus(db, device.id),
-		deviceApps(auth.pos.orgId, device),
-	])
+	const [transfers, fiscalChains, zatca, apps, kdsStations, closedShifts] =
+		await Promise.all([
+			recentTransfersAway(db, device.id),
+			fiscalChainHeads(db, device.id),
+			unitStatus(db, device.id),
+			deviceApps(auth.pos.orgId, device),
+			device.locationId
+				? listKdsStations(db, device.locationId)
+				: Promise.resolve([]),
+			listRemotelyClosedShiftsForDevice(db, device.id),
+		])
 	return c.json({
 		device: {
 			id: device.id,
@@ -255,6 +266,8 @@ posRoutes.get('/me', async (c) => {
 		apps,
 		transfers,
 		fiscalChains,
+		kdsStations,
+		closedShifts,
 		// When active, the till fetches its signing key and certificate from /pos/zatca.
 		zatca,
 	})
@@ -492,6 +505,7 @@ posRoutes.post('/orders', async (c) => {
 			withDiscountCheck(cleanReview, order, rewardBackedCents).reviewReason,
 			(await withStaffCheck(pos.db, pos.device, order, cleanReview))
 				.reviewReason,
+			(await withShiftCheck(pos.db, order, cleanReview)).reviewReason,
 			checkDiscountRules
 				? withDiscountRuleCheck(cleanReview, order, tillRules).reviewReason
 				: null,

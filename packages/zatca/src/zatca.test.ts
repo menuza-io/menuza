@@ -913,3 +913,106 @@ describe('gift cards (#110)', () => {
 		expect(figures(voucher).taxCents).toBe(0)
 	})
 })
+
+describe('custom items (#171)', () => {
+	it('invoices a standard-rated custom line under VAT category S and an untaxed one under category O', () => {
+		const mixed = sale({
+			lines: [
+				{
+					name: 'Corkage fee',
+					variantLabel: null,
+					quantity: 2,
+					baseCents: 1000,
+					taxable: true,
+					options: [],
+				},
+				{
+					name: 'Gift deposit',
+					variantLabel: null,
+					quantity: 1,
+					baseCents: 500,
+					taxable: false,
+					options: [],
+				},
+			],
+			taxRatePercent: 15,
+			taxInclusive: false,
+			totals: {
+				adjustmentCents: 0,
+				taxCents: 300,
+				tipCents: 0,
+				totalCents: 2800,
+			},
+			payments: [{ method: 'card' }],
+		})
+		expect(mixed.lines).toEqual([
+			{ name: 'Corkage fee', quantity: 2, unitNetCents: 1000, category: 'S' },
+			{ name: 'Gift deposit', quantity: 1, unitNetCents: 500, category: 'O' },
+		])
+		expect(figures(mixed).taxCents).toBe(300)
+		expect(figures(mixed).outOfScopeCents).toBe(500)
+		expect(figures(mixed).taxInclusiveCents).toBe(2800)
+		expect(
+			outOfScopeCents({
+				lines: [
+					{
+						name: 'Gift deposit',
+						variantLabel: null,
+						quantity: 1,
+						baseCents: 500,
+						taxable: false,
+						options: [],
+					},
+				],
+				taxRatePercent: 15,
+				taxInclusive: false,
+				totals: {
+					adjustmentCents: 0,
+					taxCents: 0,
+					tipCents: 0,
+					totalCents: 500,
+				},
+				payments: [{ method: 'cash' }],
+			}),
+		).toBe(500)
+		const xml = hashedForm(mixed)
+		expect(xml).toContain('Corkage fee')
+		expect(xml).toContain('Gift deposit')
+		expect(xml).toContain('VATEX-SA-OOS')
+	})
+
+	it('produces zero VAT when an order contains only an untaxed custom item', () => {
+		const untaxedOnly = sale({
+			lines: [
+				{
+					name: 'Untaxed custom item',
+					variantLabel: null,
+					quantity: 1,
+					baseCents: 1200,
+					taxable: false,
+					options: [],
+				},
+			],
+			taxRatePercent: 15,
+			taxInclusive: true,
+			totals: {
+				adjustmentCents: 0,
+				taxCents: 0,
+				tipCents: 0,
+				totalCents: 1200,
+			},
+			payments: [{ method: 'cash' }],
+		})
+		expect(untaxedOnly.lines).toEqual([
+			{
+				name: 'Untaxed custom item',
+				quantity: 1,
+				unitNetCents: 1200,
+				category: 'O',
+			},
+		])
+		expect(figures(untaxedOnly).taxCents).toBe(0)
+		expect(figures(untaxedOnly).outOfScopeCents).toBe(1200)
+		expect(figures(untaxedOnly).taxInclusiveCents).toBe(1200)
+	})
+})
