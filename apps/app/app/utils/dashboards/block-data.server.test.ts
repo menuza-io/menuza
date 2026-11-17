@@ -621,7 +621,7 @@ describe('loadBlockPicker', () => {
 			grants,
 		})
 		expect(picker.savedReports).toEqual([])
-		expect(picker.templateGroups).toEqual(reportTemplateGroups())
+		expect(picker.templateGroups).toEqual(reportTemplateGroups(grants))
 	})
 
 	it('leaves out templates and saved reports the grants do not cover', async () => {

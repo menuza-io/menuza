@@ -17,6 +17,7 @@ import { ENV } from 'varlock/env'
 import { resolveGiftCardReportAccess } from '#app/utils/gift-cards/report-access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
+import { resolveReservationsLocationIds } from '#app/utils/reservations/access.server.ts'
 import {
 	intersectScopeIds,
 	resolveReservationsReportAccess,
@@ -134,6 +135,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			{ status: 503 },
 		)
 	}
+	// Sales subjects need a location limit on the token (same ids as Reservations).
+	const locationIds = canReadOrders
+		? await resolveReservationsLocationIds(userId, organization.id)
+		: undefined
 	const minted = await mintOperatorAnalyticsToken({
 		signingSecret,
 		userId,
@@ -141,6 +146,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		role: 'operator',
 		subjects,
 		scopeIds,
+		...(locationIds !== undefined ? { locationIds } : {}),
 	})
 
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls(organization.dataRegion)
