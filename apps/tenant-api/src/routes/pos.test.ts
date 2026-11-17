@@ -9,6 +9,7 @@ import {
 	type PosFiscalChainHead,
 	posRefundTaxCents,
 } from '@repo/common/pos-fiscal'
+import { DEFAULT_KDS_CONFIG } from '@repo/common/kds'
 import { formatPosPairingCode, randomPosToken } from '@repo/common/pos-orders'
 import { makeDiscount } from '../../../../packages/discounts/src/test-fixtures.ts'
 import { brand } from '@repo/config/brand'
@@ -29,6 +30,7 @@ import {
 	invOutbox,
 	invRecipeLines,
 	invRecipes,
+	kdsLocationSettings,
 	loyaltyPurchases,
 	posDevices,
 	posManagers,
@@ -1663,7 +1665,7 @@ describe('POS terminals: pairing, upload and sync', () => {
 				},
 				{ ...good, totals: { ...good.totals, subtotalCents: 1 } },
 				{ ...good, status: 'paid' },
-				{ ...good, customerPhone: '+15551234567' },
+				{ ...good, futureField: '+15551234567' },
 				{ ...good, id: 'not-a-uuid' },
 				{ ...good, lines: [] },
 				'{',
@@ -1677,7 +1679,7 @@ describe('POS terminals: pairing, upload and sync', () => {
 			// Kept verbatim (an unknown field may be a newer till's), never dropped.
 			const held = await db.select().from(posHeldUploads)
 			expect(held.length).toBeGreaterThanOrEqual(cases.length - 1)
-			expect(held.some((h) => h.payload.includes('customerPhone'))).toBe(true)
+			expect(held.some((h) => h.payload.includes('futureField'))).toBe(true)
 		})
 
 		it('refuses an oversized body', async () => {
@@ -5369,6 +5371,403 @@ describe('POS terminals: pairing, upload and sync', () => {
 			const db = await getTenantDb(ORG_A)
 			expect(await db.select().from(loyaltyPurchases).all()).toHaveLength(0)
 			expect((await balanceOf(ORG_A, memberId)).points).toBe(0)
+		})
+	})
+
+	describe('Station register features (#171, #372)', () => {
+		it('accepts custom items with mixed taxability, flags review, skips discounts, and routes kitchen stations', async () => {
+			const { deviceSecret } = await pair({ locationId: 'loc-1' })
+			const base = wireOrder({ status: 'paid' })
+			const customTaxable = {
+				id: crypto.randomUUID(),
+				kind: 'custom' as const,
+				itemId: 'custom:1',
+				name: 'Special soup',
+				variantId: null,
+				variantLabel: null,
+				quantity: 1,
+				baseCents: 1200,
+				taxable: true,
+				kitchenStationId: 'hot',
+				instructions: '',
+				options: [],
+			}
+			const customExempt = {
+				id: crypto.randomUUID(),
+				kind: 'custom' as const,
+				itemId: 'custom:2',
+				name: 'Corkage fee',
+				variantId: null,
+				variantLabel: null,
+				quantity: 1,
+				baseCents: 500,
+				taxable: false,
+				kitchenStationId: null,
+				instructions: '',
+				options: [],
+			}
+			const subtotalCents = 1700
+			const taxCents = Math.round((1200 * TAX) / 100)
+			const totalCents = subtotalCents + taxCents
+			const res = await upload(deviceSecret, {
+				...base,
+				locationId: 'loc-1',
+				lines: [customTaxable, customExempt],
+				totals: {
+					subtotalCents,
+					adjustmentCents: 0,
+					taxCents,
+					tipCents: 0,
+					totalCents,
+				},
+				payments: [
+					{
+						id: crypto.randomUUID(),
+						method: 'cash',
+						amountCents: totalCents,
+						tenderedCents: totalCents,
+						at: new Date().toISOString(),
+						staff: null,
+					},
+				],
+			})
+			expect(res.status).toBe(201)
+			const db = await getTenantDb(ORG_A)
+			const [saved] = await db
+				.select()
+				.from(posOrders)
+				.where(eq(posOrders.id, base.id))
+			expect(saved?.reviewReason).toBe('custom_item')
+			expect(saved?.serverTotalCents).toBe(totalCents)
+			const savedLines = await db
+				.select()
+				.from(posOrderLines)
+				.where(eq(posOrderLines.orderId, base.id))
+			expect(savedLines).toHaveLength(2)
+			expect(savedLines.find((l) => l.name === 'Special soup')).toMatchObject({
+				kind: 'custom',
+				taxable: true,
+				kitchenStationId: 'hot',
+			})
+			expect(savedLines.find((l) => l.name === 'Corkage fee')).toMatchObject({
+				kind: 'custom',
+				taxable: false,
+				kitchenStationId: null,
+			})
+			expect(await db.select().from(invMovements)).toHaveLength(0)
+
+			// A manual discount applied on a custom-only sale is flagged (never earns discounts).
+			const discountedBase = wireOrder({ status: 'open', number: 'T1-0002' })
+			const discountAmount = 100
+			const discountedPayload = {
+				...discountedBase,
+				locationId: 'loc-1',
+				lines: [customExempt],
+				adjustments: [
+					{
+						id: 'disc-1',
+						kind: 'discount' as const,
+						label: 'Staff comp',
+						amountCents: discountAmount,
+					},
+				],
+				discountApplications: [
+					{
+						discountId: 'manual',
+						name: 'Manual',
+						amountCents: discountAmount,
+					},
+				],
+				totals: {
+					subtotalCents: 500,
+					adjustmentCents: discountAmount,
+					taxCents: 0,
+					tipCents: 0,
+					totalCents: 400,
+				},
+			}
+			expect(
+				discountRuleReason(discountedPayload, [
+					{
+						id: 'manual',
+						version: 1,
+						requireApproval: false,
+						valueType: 'percent',
+						percentBp: 2000,
+					},
+				]),
+			).toBe('discount_amount_mismatch')
+			const resDisc = await upload(deviceSecret, discountedPayload)
+			expect(resDisc.status).toBe(201)
+			const [discSaved] = await db
+				.select()
+				.from(posOrders)
+				.where(eq(posOrders.id, discountedBase.id))
+			expect(discSaved?.reviewReason).toBe('custom_item')
+		})
+
+		it('returns kdsStations on /pos/me, flags missing guest details on upload without refusing, and stores counter phone without subscribing', async () => {
+			contextFor = (orgId) => {
+				const ctx = menuContext(orgId) as {
+					menu: { locations: Array<Record<string, unknown>> }
+				}
+				ctx.menu.locations[0] = {
+					...ctx.menu.locations[0],
+					stationSettings: {
+						guestDetails: 'phone',
+						dishNotes: true,
+						customItems: 'everyone',
+						customItemMaxPriceCents: 50_000,
+					},
+				}
+				return ctx
+			}
+			const db = await getTenantDb(ORG_A)
+			await db.insert(kdsLocationSettings).values({
+				locationId: 'loc-1',
+				version: 1,
+				config: {
+					...DEFAULT_KDS_CONFIG,
+					stations: [
+						{ id: 'hot', name: 'Hot Grill', itemIds: [] },
+						{ id: 'bar', name: 'Espresso Bar', itemIds: [] },
+					],
+					defaultStationId: 'hot',
+				},
+				updatedAt: Date.now(),
+			})
+
+			const { deviceSecret } = await pair({ locationId: 'loc-1' })
+			const meRes = await app.request('/pos/me', {
+				headers: { authorization: `Bearer ${deviceSecret}` },
+			})
+			expect(meRes.status).toBe(200)
+			const meBody = (await meRes.json()) as {
+				kdsStations: Array<{ id: string; name: string }>
+			}
+			expect(meBody.kdsStations).toEqual([
+				{ id: 'hot', name: 'Hot Grill' },
+				{ id: 'bar', name: 'Espresso Bar' },
+			])
+
+			// Counter order missing required phone is accepted but flagged for review.
+			const missing = wireOrder({ number: 'T1-0010', locationId: 'loc-1' })
+			const r1 = await upload(deviceSecret, { ...missing, locationId: 'loc-1' })
+			expect(r1.status).toBe(201)
+			const [saved1] = await db
+				.select()
+				.from(posOrders)
+				.where(eq(posOrders.id, missing.id))
+			expect(saved1?.reviewReason).toBe('missing_guest_details')
+
+			// Counter order with phone clears the flag, keeps phone regionally, and does not create a customer/marketing row.
+			const withPhone = wireOrder({ number: 'T1-0011', locationId: 'loc-1' })
+			const r2 = await upload(deviceSecret, {
+				...withPhone,
+				locationId: 'loc-1',
+				customerPhone: '+15557654321',
+			})
+			expect(r2.status).toBe(201)
+			const [saved2] = await db
+				.select()
+				.from(posOrders)
+				.where(eq(posOrders.id, withPhone.id))
+			expect(saved2?.reviewReason).toBeNull()
+			expect(saved2?.customerPhone).toBe('+15557654321')
+			expect(await db.select().from(customers)).toHaveLength(0)
+		})
+	})
+
+	describe('remote shift close (#403)', () => {
+		async function mintShiftToken(options: {
+			scope?: 'orders:read' | 'orders:write'
+			closeShifts?: boolean
+			impersonated?: boolean
+			operatorName?: string
+			sub?: string
+		}) {
+			return new SignJWT({
+				orgId: ORG_A,
+				role: 'operator',
+				scope: options.scope ?? 'orders:read',
+				...(options.closeShifts ? { closeShifts: true } : {}),
+				...(options.impersonated ? { impersonated: true } : {}),
+				...(options.operatorName ? { operatorName: options.operatorName } : {}),
+			})
+				.setSubject(options.sub ?? 'user_mgr_1')
+				.setProtectedHeader({ alg: 'HS256' })
+				.setAudience('tenant-api-operator')
+				.setIssuer(brand.shortName)
+				.setExpirationTime('15m')
+				.sign(new TextEncoder().encode(operatorToken))
+		}
+
+		it('allows a permitted manager to close an open shift remotely, refuses replay/members without permission, informs the terminal, and flags subsequent sales', async () => {
+			const { deviceSecret } = await pair({ locationId: 'loc-1' })
+			const shiftId = crypto.randomUUID()
+			const openedAt = new Date(Date.now() - 60 * 60_000).toISOString()
+			const openShiftRes = await post(
+				'/shifts',
+				{
+					id: shiftId,
+					revision: 1,
+					status: 'open',
+					businessDate: '2026-10-21',
+					openedAt,
+					openedBy: null,
+					openingFloatCents: 1000,
+					movements: [],
+					closedAt: null,
+					closedBy: null,
+					countedCashCents: null,
+					expectedCashCents: null,
+				},
+				deviceSecret,
+			)
+			expect(openShiftRes.status).toBe(201)
+
+			// Member without permission (even with orders:write) or impersonating gets 403.
+			const noPermToken = await mintShiftToken({ scope: 'orders:write' })
+			const noPermRes = await app.request(
+				`/operator/pos/shifts/${shiftId}/close`,
+				{
+					method: 'POST',
+					headers: {
+						authorization: `Bearer ${noPermToken}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({ countedCashCents: 1000, reason: 'Forgot' }),
+				},
+			)
+			expect(noPermRes.status).toBe(403)
+
+			const impToken = await mintShiftToken({
+				scope: 'orders:write',
+				closeShifts: true,
+				impersonated: true,
+				operatorName: 'Admin',
+			})
+			const impRes = await app.request(
+				`/operator/pos/shifts/${shiftId}/close`,
+				{
+					method: 'POST',
+					headers: {
+						authorization: `Bearer ${impToken}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({ countedCashCents: 1000, reason: 'Forgot' }),
+				},
+			)
+			expect(impRes.status).toBe(403)
+
+			// Permitted manager closes remotely and shift report reflects closer + reason.
+			const closeToken = await mintShiftToken({
+				scope: 'orders:read',
+				closeShifts: true,
+				operatorName: 'Manager Maya',
+				sub: 'mgr_maya',
+			})
+			const closeRes = await app.request(
+				`/operator/pos/shifts/${shiftId}/close`,
+				{
+					method: 'POST',
+					headers: {
+						authorization: `Bearer ${closeToken}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({
+						countedCashCents: 500,
+						reason: 'Cashier forgot before leaving',
+					}),
+				},
+			)
+			expect(closeRes.status).toBe(200)
+			const closedBody = (await closeRes.json()) as {
+				shift: {
+					status: string
+					countedCashCents: number
+					closedRemotelyBy: { id: string; name: string } | null
+					remoteCloseReason: string | null
+				}
+				overShortCents: number
+			}
+			expect(closedBody.shift).toMatchObject({
+				status: 'closed',
+				countedCashCents: 500,
+				closedRemotelyBy: { id: 'mgr_maya', name: 'Manager Maya' },
+				remoteCloseReason: 'Cashier forgot before leaving',
+			})
+			expect(closedBody.overShortCents).toBe(-500)
+
+			// Cannot close twice.
+			const againRes = await app.request(
+				`/operator/pos/shifts/${shiftId}/close`,
+				{
+					method: 'POST',
+					headers: {
+						authorization: `Bearer ${closeToken}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({ countedCashCents: 500, reason: 'Retry' }),
+				},
+			)
+			expect(againRes.status).toBe(409)
+
+			// /pos/me tells the terminal the shift was closed remotely.
+			const meRes = await app.request('/pos/me', {
+				headers: { authorization: `Bearer ${deviceSecret}` },
+			})
+			expect(meRes.status).toBe(200)
+			const meBody = (await meRes.json()) as {
+				closedShifts: Array<{
+					id: string
+					closedRemotelyBy: { id: string; name: string } | null
+					remoteCloseReason: string | null
+				}>
+			}
+			expect(meBody.closedShifts).toEqual([
+				expect.objectContaining({
+					id: shiftId,
+					closedRemotelyBy: { id: 'mgr_maya', name: 'Manager Maya' },
+					remoteCloseReason: 'Cashier forgot before leaving',
+				}),
+			])
+
+			// Stale terminal trying to update the closed shift is held as `shift_closed` without changing the closed shift.
+			const staleShiftRes = await post(
+				'/shifts',
+				{
+					id: shiftId,
+					revision: 5,
+					status: 'open',
+					businessDate: '2026-10-21',
+					openedAt,
+					openedBy: null,
+					openingFloatCents: 1000,
+					movements: [],
+					closedAt: null,
+					closedBy: null,
+					countedCashCents: null,
+					expectedCashCents: null,
+				},
+				deviceSecret,
+			)
+			await expectHeld(staleShiftRes, 'shift_closed')
+
+			// A sale created after remote close onto that shift is kept, never silently posted, and flagged `closed_shift`.
+			const lateOrder = wireOrder({ number: 'T1-0099' })
+			const lateRes = await upload(deviceSecret, {
+				...lateOrder,
+				shiftId,
+				createdAt: new Date(Date.now() + 5000).toISOString(),
+			})
+			expect(lateRes.status).toBe(201)
+			const db = await getTenantDb(ORG_A)
+			const [saved] = await db
+				.select()
+				.from(posOrders)
+				.where(eq(posOrders.id, lateOrder.id))
+			expect(saved?.reviewReason).toBe('closed_shift')
 		})
 	})
 })

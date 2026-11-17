@@ -36,6 +36,7 @@ import { requeueTillSaleLoyalty } from '../services/pos-loyalty-service.ts'
 import { getStaffingFeatures, hasScope } from '../lib/scope-context.ts'
 import { writeOperatorAudit } from '../services/staff-audit.ts'
 import {
+	closeShiftRemotely,
 	dayReport,
 	listShifts,
 	shiftReport,
@@ -527,6 +528,47 @@ operatorPosRoutes.get('/shifts/:id', async (c) => {
 	const report = await shiftReport(g.db, c.req.param('id'))
 	if (!report) return posError(404, 'not_found')
 	return c.json(report, 200, noStore)
+})
+
+const remoteCloseShiftSchema = z.strictObject({
+	countedCashCents: z.number().int().min(0).max(100_000_000),
+	reason: z.string().trim().min(1).max(280),
+})
+
+/** Remotely closes an open cash drawer shift with the manager's counted amount (#403). */
+operatorPosRoutes.post('/shifts/:id/close', async (c) => {
+	const g = await guard(c, 'orders:read', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	if (!g.auth.closeShifts || g.auth.impersonated) {
+		return posError(403, 'forbidden')
+	}
+	const parsed = remoteCloseShiftSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const result = await closeShiftRemotely(g.db, {
+		shiftId: c.req.param('id'),
+		locationIds: g.auth.locationIds,
+		countedCashCents: parsed.data.countedCashCents,
+		reason: parsed.data.reason,
+		closedBy: {
+			id: g.auth.userId,
+			name: g.auth.operatorName ?? g.auth.userId,
+		},
+	})
+	if (!result.ok) {
+		return posError(result.status, result.error)
+	}
+	await writeOperatorAudit(g.db, g.auth.userId, null, {
+		action: 'pos.shift.closed_remotely',
+		entityType: 'pos_shift',
+		entityId: result.value.shift.id,
+		changes: {
+			countedCashCents: parsed.data.countedCashCents,
+			reason: parsed.data.reason,
+		},
+	})
+	return c.json(result.value, 200, noStore)
 })
 
 /** Everything sold on one business day, across terminals, with that day's shifts. */

@@ -19,6 +19,10 @@ import {
 	type MenuVariations,
 } from '@repo/common/menu-types'
 import {
+	type OrderNumberFormat,
+	type PosLocationStationSettings,
+} from '@repo/common/pos-orders'
+import {
 	type OrganizationMenuItem,
 	type OrganizationMenuModifierGroup,
 	type OrganizationMenuModifierGroupOptionAssignment,
@@ -78,6 +82,10 @@ export interface PublicLocationData {
 	prepSchedule?: unknown
 	prayerPauseSettings?: unknown
 	prayerPauseRegion?: boolean
+	/** Per-location Station register policy (#372, #171, #380). */
+	stationSettings?: PosLocationStationSettings
+	/** Per-location order number format and daily reset (#371). */
+	orderNumberFormat?: OrderNumberFormat
 }
 
 export interface PublicMenuOptionData {

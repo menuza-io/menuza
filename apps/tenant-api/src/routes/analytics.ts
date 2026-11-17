@@ -19,7 +19,6 @@ import {
 	reportDefinitionSchema,
 	definitionForLoading,
 	referencedFieldIds,
-	resolveTimeframeRange,
 	resolveReportTimeZone,
 	timeframeLoadWindow,
 	runReport,
@@ -75,13 +74,20 @@ import {
 	TODAY_MAX_LOCATIONS,
 } from '../services/today-totals.ts'
 import {
+	loadCashDrawerMovementRecords,
+	loadCashDrawerShiftRecords,
+} from '../services/cash-drawer-report-records.ts'
+import {
 	loadCancelledOrderRecords,
 	loadOrderRefundRecords,
 	loadSalesRecords,
 	SALES_REPORT_MAX_ROWS,
 	type SalesReportContext,
 } from '../services/sales-report-records.ts'
-import { isSalesReportSubject } from '@repo/reports/token'
+import {
+	isSalesReportSubject,
+	SALES_STAFF_FIELD_PERMISSION,
+} from '@repo/reports/token'
 
 export const analyticsRoutes = new Hono()
 
@@ -113,6 +119,8 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'sales',
 	'order_refunds',
 	'cancelled_orders',
+	'cash_drawer_shifts',
+	'cash_drawer_movements',
 ])
 
 const REPEAT_CALLER_WINDOW_MS = 30 * 86_400_000
@@ -548,6 +556,13 @@ analyticsRoutes.post('/query', async (c) => {
 			locationIds: claims.locationIds,
 			now,
 		}
+		const cashCtx = {
+			...salesCtx,
+			includeStaffNames: operatorTokenAllowsSubject(
+				claims,
+				SALES_STAFF_FIELD_PERMISSION,
+			),
+		}
 		let loaded
 		try {
 			loaded =
@@ -555,7 +570,11 @@ analyticsRoutes.post('/query', async (c) => {
 					? await loadSalesRecords(salesCtx, subject, loading)
 					: definition.subject === 'order_refunds'
 						? await loadOrderRefundRecords(salesCtx, loading)
-						: await loadCancelledOrderRecords(salesCtx, subject, loading)
+						: definition.subject === 'cancelled_orders'
+							? await loadCancelledOrderRecords(salesCtx, subject, loading)
+							: definition.subject === 'cash_drawer_shifts'
+								? await loadCashDrawerShiftRecords(cashCtx, loading)
+								: await loadCashDrawerMovementRecords(cashCtx, loading)
 		} catch (error) {
 			// A Drizzle error message quotes every bound value: never log it.
 			console.error('Sales report failed', describeStaffError(error))

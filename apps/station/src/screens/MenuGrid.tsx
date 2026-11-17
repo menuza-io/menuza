@@ -11,6 +11,7 @@ import { Icon } from '@repo/ui/icon'
 import { Item, ItemContent } from '@repo/ui/item'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { categoryItems, isSoldOut } from '~/lib/catalog.ts'
+import { menuGridColumnsClass } from '~/lib/config.ts'
 import { lowestPriceCents } from '~/lib/menu-display.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
 import { usePos } from '~/lib/store.ts'
@@ -39,15 +40,23 @@ export function MenuGrid({
 	categories,
 	money,
 	counts,
+	customItemAllowed = false,
+	onCustomItem,
 	onPick,
 }: {
 	categories: MenuCategory[]
 	money: MoneyFormatter
 	/** itemId -> quantity already in the cart. */
 	counts: Map<string, number>
+	/** Location allows ringing up open-price custom items (#171). */
+	customItemAllowed?: boolean
+	onCustomItem?: () => void
 	onPick: (item: MenuItem) => void
 }) {
 	const { _ } = useLingui()
+	const menuColumns = usePos((s) => s.settings.menuColumns) ?? 'auto'
+	const menuDensity = usePos((s) => s.settings.menuDensity) ?? 'comfortable'
+	const dense = menuDensity === 'compact'
 	// `path` is the chosen category, then sub-category, then its sub-category…
 	const [path, setPath] = useState<string[]>(() =>
 		categories[0] ? [categories[0].id] : [POPULAR],
@@ -250,13 +259,26 @@ export function MenuGrid({
 				<h2 className="min-w-0 text-base font-semibold break-words">
 					{heading}
 				</h2>
-				<p
-					className="text-muted-foreground shrink-0 text-sm"
-					role="status"
-					aria-atomic="true"
-				>
-					{plural(itemCount, { one: '# item', other: '# items' })}
-				</p>
+				<div className="flex shrink-0 items-center gap-3">
+					{customItemAllowed && onCustomItem ? (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={onCustomItem}
+							className="h-9 px-3 text-sm"
+						>
+							<Icon name="plus" className="size-4" />
+							<Trans>Custom item</Trans>
+						</Button>
+					) : null}
+					<p
+						className="text-muted-foreground shrink-0 text-sm"
+						role="status"
+						aria-atomic="true"
+					>
+						{plural(itemCount, { one: '# item', other: '# items' })}
+					</p>
+				</div>
 			</div>
 			<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-4 sm:px-4">
 				{items.length === 0 ? (
@@ -285,8 +307,15 @@ export function MenuGrid({
 					<ul
 						// A new category rises in; typing a search does not replay it.
 						key={deferredQuery ? 'search' : [topId, ...path.slice(1)].join('/')}
-						// As many tiles as fit: two on a phone, more as the menu widens.
-						className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] sm:gap-3"
+						data-testid="menu-grid"
+						data-menu-columns={String(menuColumns)}
+						data-menu-density={menuDensity}
+						// As many tiles as fit: auto responsive, or the manager's column count.
+						className={cn(
+							'grid',
+							menuGridColumnsClass(menuColumns, menuDensity),
+							dense ? 'gap-2' : 'gap-2.5 sm:gap-3',
+						)}
 					>
 						{items.map((item) => (
 							<li key={item.id}>
@@ -294,6 +323,7 @@ export function MenuGrid({
 									item={item}
 									money={money}
 									inCart={counts.get(item.id) ?? 0}
+									dense={dense}
 									onPick={onPick}
 								/>
 							</li>
@@ -309,11 +339,13 @@ function ItemCard({
 	item,
 	money,
 	inCart,
+	dense = false,
 	onPick,
 }: {
 	item: MenuItem
 	money: MoneyFormatter
 	inCart: number
+	dense?: boolean
 	onPick: (item: MenuItem) => void
 }) {
 	const { _ } = useLingui()
@@ -349,9 +381,13 @@ function ItemCard({
 						aria-label={label}
 					/>
 				}
-				className="group h-full min-h-36 flex-col flex-nowrap items-stretch text-start disabled:cursor-not-allowed"
+				size={dense ? 'sm' : 'default'}
+				className={cn(
+					'group h-full flex-col flex-nowrap items-stretch text-start disabled:cursor-not-allowed',
+					dense ? 'min-h-24' : 'min-h-36',
+				)}
 			>
-				{item.imageUrl ? (
+				{item.imageUrl && !dense ? (
 					<img
 						src={item.imageUrl}
 						alt=""
@@ -363,10 +399,15 @@ function ItemCard({
 					<span
 						className={cn(
 							'flex items-start gap-2',
-							inCart > 0 && !item.imageUrl && 'pe-8',
+							inCart > 0 && (!item.imageUrl || dense) && 'pe-8',
 						)}
 					>
-						<span className="line-clamp-2 min-w-0 flex-1 text-base leading-snug font-semibold">
+						<span
+							className={cn(
+								'line-clamp-2 min-w-0 flex-1 leading-snug font-semibold',
+								dense ? 'text-sm' : 'text-base',
+							)}
+						>
 							{item.displayName}
 						</span>
 						{item.isVegetarian ? (
@@ -377,12 +418,17 @@ function ItemCard({
 							/>
 						) : null}
 					</span>
-					{item.description && !item.imageUrl ? (
+					{item.description && !item.imageUrl && !dense ? (
 						<span className="text-muted-foreground line-clamp-2 text-sm">
 							{item.description}
 						</span>
 					) : null}
-					<span className="mt-auto flex items-center justify-between gap-2 pt-3">
+					<span
+						className={cn(
+							'mt-auto flex items-center justify-between gap-2',
+							dense ? 'pt-1.5' : 'pt-3',
+						)}
+					>
 						<span
 							className={cn(
 								'tnum text-sm font-medium',

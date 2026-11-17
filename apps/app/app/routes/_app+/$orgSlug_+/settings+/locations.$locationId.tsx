@@ -9,6 +9,7 @@ import {
 	DEFAULT_DELIVERY_ZONE,
 	resolveTipSettings,
 } from '@repo/common/location-types'
+import { parseStrictOrderNumberFormat } from '@repo/common/pos-orders'
 import {
 	defaultServiceFeeSettings,
 	serviceFeeSettingsSchema,
@@ -119,6 +120,7 @@ const LocationInputSchema = z.object({
 	deliveryConfig: z.string().optional(),
 	deliveryZones: z.string().optional(),
 	courseSettings: z.string().optional(),
+	orderNumberFormat: z.string().optional(),
 	orderingSettings: z.string().optional(),
 })
 
@@ -204,6 +206,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			}
 		})(),
 		courseSettings: record.courseSettings,
+		orderNumberFormat: record.orderNumberFormat,
 		deliveryZones: (() => {
 			const parsed = parseJson<DeliveryZone[]>(record.deliveryZones)
 			return Array.isArray(parsed) && parsed.length > 0
@@ -496,6 +499,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { error: checkoutRulesResult.error }
 	}
 
+	const orderNumberFormatResult = parseStrictOrderNumberFormat(
+		data.orderNumberFormat,
+	)
+	if (!orderNumberFormatResult.ok) {
+		return { error: orderNumberFormatResult.error }
+	}
+
 	// Check if another location has this slug
 	const [existingWithSlug] = await db
 		.select({ id: OrganizationLocation.id })
@@ -552,6 +562,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				deliveryZones: data.deliveryZones || null,
 				...(data.courseSettings !== undefined
 					? { courseSettings: courseSettingsJson(data.courseSettings) }
+					: {}),
+				...(data.orderNumberFormat !== undefined
+					? {
+							orderNumberFormat: orderNumberFormatResult.value
+								? JSON.stringify(orderNumberFormatResult.value)
+								: null,
+						}
 					: {}),
 				...policy.patch,
 				...checkout.patch,

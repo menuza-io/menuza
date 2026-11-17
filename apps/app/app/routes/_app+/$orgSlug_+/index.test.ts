@@ -10,7 +10,11 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import { organizationTemplates, type ReportDefinition } from '@repo/reports'
-import { ORG_WIDE_REPORT_SUBJECTS } from '@repo/reports/token'
+import {
+	ORDER_REPORT_SUBJECTS,
+	ORG_WIDE_REPORT_SUBJECTS,
+	SALES_STAFF_FIELD_PERMISSION,
+} from '@repo/reports/token'
 import { describe, expect, it } from 'vitest'
 import {
 	defaultHomeConfig,
@@ -356,6 +360,8 @@ describe('Home dashboard loader', () => {
 		expect(offered).toEqual(
 			reportTemplateGroups([
 				...ORG_WIDE_REPORT_SUBJECTS,
+				...ORDER_REPORT_SUBJECTS,
+				SALES_STAFF_FIELD_PERMISSION,
 				'members',
 				'notes',
 			]).flatMap((group) => group.templates.map((template) => template.id)),

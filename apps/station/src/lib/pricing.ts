@@ -27,6 +27,8 @@ export type CartOption = {
 export type CartLine = {
 	/** Local line id; never sent to the server. */
 	id: string
+	/** Default `'catalog'`; `'custom'` for open-price till items (#171). */
+	kind?: 'catalog' | 'custom'
 	itemId: string
 	name: string
 	/** Localized kitchen name. Receipts keep `name`. */
@@ -41,6 +43,10 @@ export type CartLine = {
 	variantLabel: string | null
 	quantity: number
 	baseCents: number
+	/** Whether base price carries location tax (defaults to `true`). */
+	taxable?: boolean
+	/** Custom item destination KDS station id (`null` / omitted = no kitchen). */
+	kitchenStationId?: string | null
 	instructions: string
 	options: CartOption[]
 	/**
@@ -99,7 +105,7 @@ export const lineTotalCents = (line: CartLine): number =>
 	lineUnitCents(line) * line.quantity
 
 const lineTaxableCents = (line: CartLine): number =>
-	(line.baseCents +
+	((line.taxable === false ? 0 : line.baseCents) +
 		line.options.reduce(
 			(sum, o) => sum + (o.taxable ? o.unitCents * o.quantity : 0),
 			0,
@@ -158,13 +164,18 @@ export function computeTotals(input: {
 	}
 }
 
-/** Lines that are identical (same item, variant, options, note) merge. */
+/** Lines that are identical (same kind, item, variant, custom details, options, note) merge. */
 export const lineSignature = (
 	line: Omit<CartLine, 'id' | 'quantity'>,
 ): string =>
 	JSON.stringify([
+		line.kind ?? 'catalog',
 		line.itemId,
 		line.variantId,
+		line.kind === 'custom' ? line.name.trim() : null,
+		line.kind === 'custom' ? line.baseCents : null,
+		line.kind === 'custom' ? (line.taxable ?? true) : null,
+		line.kind === 'custom' ? (line.kitchenStationId ?? null) : null,
 		line.instructions.trim(),
 		line.options
 			.map((o) => [o.groupId, o.optionId, o.quantity])

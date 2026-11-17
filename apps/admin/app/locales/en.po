@@ -1020,6 +1020,18 @@ msgstr "Cancelling"
 msgid "Cart Left Behind"
 msgstr "Cart Left Behind"
 
+#: ../../packages/reports/src/ui/report-labels.ts:152
+msgid "Cash drawer log"
+msgstr "Cash drawer log"
+
+#: ../../packages/reports/src/ui/report-labels.ts:148
+msgid "Cash drawer variance by cashier"
+msgstr "Cash drawer variance by cashier"
+
+#: ../../packages/reports/src/ui/report-labels.ts:144
+msgid "Cash drawer variance by shift"
+msgstr "Cash drawer variance by shift"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:99
 msgid "Center"
 msgstr "Center"
@@ -1991,6 +2003,10 @@ msgstr "Every no-show over the last 30 days with its date, service, party size a
 msgid "Every order"
 msgstr "Every order"
 
+#: ../../packages/reports/src/ui/report-labels.ts:153
+msgid "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
+msgstr "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
+
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
 msgid "Everyone gets {code}"
 msgstr "Everyone gets {code}"
@@ -2002,6 +2018,10 @@ msgstr "Everyone subscribed"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:867
 msgid "Exactly Equals"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:145
+msgid "Expected against counted cash for every closed and open till shift over the last 30 days."
+msgstr "Expected against counted cash for every closed and open till shift over the last 30 days."
 
 #: app/routes/_admin+/gdpr-requests.tsx:681
 msgid "Expedite Now"
@@ -2338,7 +2358,7 @@ msgstr "Hi {NAME_TAG}, Your organization {ORGANIZATION_NAME_TAG} is ready."
 msgid "Higher level roles can manage lower level roles"
 msgstr ""
 
-#: ../../packages/reports/src/ui/report-labels.ts:147
+#: ../../packages/reports/src/ui/report-labels.ts:159
 msgid "Hiring"
 msgstr "Hiring"
 
@@ -2605,7 +2625,7 @@ msgstr "Label"
 msgid "Label (optional)"
 msgstr "Label (optional)"
 
-#: ../../packages/reports/src/ui/report-labels.ts:146
+#: ../../packages/reports/src/ui/report-labels.ts:158
 msgid "Labor"
 msgstr "Labor"
 
@@ -3458,6 +3478,10 @@ msgstr "Organizations will appear here once they are created."
 msgid "Outline"
 msgstr "Outline"
 
+#: ../../packages/reports/src/ui/report-labels.ts:149
+msgid "Over or short cash totals grouped by cashier over the last 30 days."
+msgstr "Over or short cash totals grouped by cashier over the last 30 days."
+
 #: app/components/admin/feature-flags.tsx:315
 #: app/components/admin/feature-flags.tsx:324
 msgid "Override Value"
@@ -4114,7 +4138,7 @@ msgstr "Reservation Completed"
 msgid "Reservation No-Show"
 msgstr "Reservation No-Show"
 
-#: ../../packages/reports/src/ui/report-labels.ts:148
+#: ../../packages/reports/src/ui/report-labels.ts:160
 msgid "Reservations"
 msgstr "Reservations"
 

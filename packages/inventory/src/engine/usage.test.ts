@@ -395,4 +395,26 @@ describe('dishes without a recipe', () => {
 			{ itemId: 'soup', quantity: 2, netSalesMinor: null },
 		])
 	})
+
+	test('custom POS lines never use stock and are not flagged as missing recipes (#171)', () => {
+		const result = desired({
+			kind: 'pos_order',
+			status: 'paid',
+			lines: [
+				...burgers(1),
+				{
+					kind: 'custom',
+					itemId: 'burger',
+					quantity: 3,
+				},
+			],
+		})
+		// Only the catalog burger uses beef and bun; the custom line uses nothing
+		// even if it shares an id, and is never listed as needing a recipe.
+		expect(result.sale).toEqual([
+			{ itemId: 'beef', locationId: 'main', quantity: 150_000 },
+			{ itemId: 'bun', locationId: 'main', quantity: 1000 },
+		])
+		expect(result.unrecipedLines).toEqual([])
+	})
 })

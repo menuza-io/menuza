@@ -2390,7 +2390,7 @@ msgstr "{referenceCount, plural, one {# place} other {# places}}"
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:1099
+#: app/components/orders/order-detail.tsx:1104
 msgid "{refundedMoney} of {totalMoney}"
 msgstr "{refundedMoney} of {totalMoney}"
 
@@ -2640,7 +2640,7 @@ msgstr "{total} submissions"
 msgid "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 msgstr "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 
-#: app/components/orders/order-detail.tsx:1307
+#: app/components/orders/order-detail.tsx:1312
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: give the money back at the counter, then record the refund on this order."
 msgstr "{totalMoney} was received for this order. Cancelling does not refund it: give the money back at the counter, then record the refund on this order."
 
@@ -2652,11 +2652,11 @@ msgstr "{totalMoney} was received for this order. Cancelling does not refund it:
 #~ msgid "{totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order."
 #~ msgstr "{totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order."
 
-#: app/components/orders/order-detail.tsx:1303
+#: app/components/orders/order-detail.tsx:1308
 msgid "{totalMoney} was received for this order. Cancelling does not refund it. The order moves to Cancelled and cannot be reopened."
 msgstr "{totalMoney} was received for this order. Cancelling does not refund it. The order moves to Cancelled and cannot be reopened."
 
-#: app/components/orders/order-detail.tsx:1299
+#: app/components/orders/order-detail.tsx:1304
 msgid "{totalMoney} was received for this order. The order is cancelled right away. Choose whether the guest gets their money back."
 msgstr "{totalMoney} was received for this order. The order is cancelled right away. Choose whether the guest gets their money back."
 
@@ -3582,7 +3582,7 @@ msgstr "A manager will approve or decline it."
 msgid "A name and a color are enough. The rest is optional."
 msgstr "A name and a color are enough. The rest is optional."
 
-#: app/components/menu/option-form.tsx:606
+#: app/components/menu/option-form.tsx:609
 msgid "A name that removes something, such as “No onions”, starts as Attention. Choose None to leave it plain."
 msgstr "A name that removes something, such as “No onions”, starts as Attention. Choose None to leave it plain."
 
@@ -3982,7 +3982,7 @@ msgstr "Accept one at a time"
 msgid "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
 msgstr "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
 
-#: app/components/locations/location-form.tsx:738
+#: app/components/locations/location-form.tsx:761
 msgid "Accept orders and show this location on the website."
 msgstr "Accept orders and show this location on the website."
 
@@ -4003,7 +4003,7 @@ msgid "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media libra
 msgstr "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
 
 #: app/components/dashboard/share-dashboard-dialog.tsx:209
-#: app/components/roles/tenant-role-access-manager.tsx:1685
+#: app/components/roles/tenant-role-access-manager.tsx:1691
 #: app/components/staff/staff-profile-page.tsx:105
 msgid "Access"
 msgstr "Access"
@@ -4078,7 +4078,7 @@ msgstr "Action"
 #: app/components/phone-agent/flow-editor/node-palette.tsx:106
 #: app/components/reservations/experiences/experience-editor.tsx:898
 #: app/components/reservations/policies/policies-screen.tsx:370
-#: app/components/roles/tenant-role-access-manager.tsx:1506
+#: app/components/roles/tenant-role-access-manager.tsx:1512
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:428
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:491
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:629
@@ -4176,13 +4176,13 @@ msgstr "Active customers"
 msgid "Active holds: {holdsCount}"
 msgstr "Active holds: {holdsCount}"
 
-#: app/components/locations/location-form.tsx:735
+#: app/components/locations/location-form.tsx:758
 msgid "Active Location"
 msgstr "Active Location"
 
 #: app/components/app-sidebar.tsx:621
 #: app/components/loyalty/loyalty-chrome.tsx:72
-#: app/components/orders/order-detail.tsx:1199
+#: app/components/orders/order-detail.tsx:1204
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 msgid "Activity"
 msgstr ""
@@ -4380,7 +4380,7 @@ msgstr "Add a location to set up the waitlist."
 msgid "Add a location to start your launch checklist."
 msgstr "Add a location to start your launch checklist."
 
-#: app/components/menu/category-form.tsx:655
+#: app/components/menu/category-form.tsx:658
 msgid "Add a menu"
 msgstr "Add a menu"
 
@@ -4593,7 +4593,7 @@ msgstr "Add an emergency contact"
 #: app/components/inventory/record-delivery-screen.tsx:597
 #: app/components/inventory/review-order-screen.tsx:540
 #: app/components/inventory/supplier-products.tsx:112
-#: app/components/menu/category-form.tsx:485
+#: app/components/menu/category-form.tsx:488
 #: app/components/menu/modifier-form.tsx:1353
 msgid "Add an item"
 msgstr "Add an item"
@@ -4606,11 +4606,11 @@ msgstr "Add an item that is not in Stock yet. You can fill in the rest later."
 msgid "Add an Option"
 msgstr "Add an Option"
 
-#: app/components/roles/tenant-role-access-manager.tsx:328
+#: app/components/roles/tenant-role-access-manager.tsx:334
 msgid "Add and edit staff, reset time clock PINs, and terminate or rehire people. Includes View staff."
 msgstr "Add and edit staff, reset time clock PINs, and terminate or rehire people. Includes View staff."
 
-#: app/components/roles/tenant-role-access-manager.tsx:390
+#: app/components/roles/tenant-role-access-manager.tsx:396
 msgid "Add and edit time cards and export hours. Includes View time cards."
 msgstr "Add and edit time cards and export hours. Includes View time cards."
 
@@ -4833,7 +4833,7 @@ msgstr "Add ingredient"
 #: app/components/inventory/item-form.tsx:267
 #: app/components/inventory/record-delivery-screen.tsx:1534
 #: app/components/inventory/transfer-dialogs.tsx:269
-#: app/components/menu/category-form.tsx:484
+#: app/components/menu/category-form.tsx:487
 #: app/components/menu/menu-sortable-category.tsx:179
 #: app/components/menu/modifier-form.tsx:1352
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:209
@@ -4841,7 +4841,7 @@ msgstr "Add ingredient"
 msgid "Add item"
 msgstr "Add item"
 
-#: app/components/roles/tenant-role-access-manager.tsx:553
+#: app/components/roles/tenant-role-access-manager.tsx:559
 msgid "Add items and storage areas, count stock, log waste, and record deliveries. Includes View stock."
 msgstr "Add items and storage areas, count stock, log waste, and record deliveries. Includes View stock."
 
@@ -4852,7 +4852,7 @@ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:561
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:590
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:248
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:264
 msgid "Add Location"
 msgstr "Add Location"
 
@@ -4875,7 +4875,7 @@ msgstr ""
 msgid "Add Members"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:654
+#: app/components/menu/category-form.tsx:657
 msgid "Add menu"
 msgstr "Add menu"
 
@@ -5468,7 +5468,7 @@ msgstr ""
 msgid "Adds it to stock and takes the ingredients out. The plan is filled in for you."
 msgstr "Adds it to stock and takes the ingredients out. The plan is filled in for you."
 
-#: app/components/roles/tenant-role-access-manager.tsx:260
+#: app/components/roles/tenant-role-access-manager.tsx:266
 msgid "Adds people to marketing lists"
 msgstr "Adds people to marketing lists"
 
@@ -5493,15 +5493,15 @@ msgstr "Adjust at most {most} points at a time."
 msgid "Adjust balance"
 msgstr "Adjust balance"
 
-#: app/components/roles/tenant-role-access-manager.tsx:587
+#: app/components/roles/tenant-role-access-manager.tsx:593
 msgid "Adjust balances, void cards, review held purchases, manage card stock and import cards. Includes View gift cards."
 msgstr "Adjust balances, void cards, review held purchases, manage card stock and import cards. Includes View gift cards."
 
-#: app/components/roles/tenant-role-access-manager.tsx:506
+#: app/components/roles/tenant-role-access-manager.tsx:512
 msgid "Adjust loyalty points"
 msgstr "Adjust loyalty points"
 
-#: app/components/roles/tenant-role-access-manager.tsx:507
+#: app/components/roles/tenant-role-access-manager.tsx:513
 msgid "Adjust member points with a recorded reason. Includes View loyalty members."
 msgstr "Adjust member points with a recorded reason. Includes View loyalty members."
 
@@ -5533,7 +5533,7 @@ msgstr ""
 msgid "Admin impersonation active"
 msgstr "Admin impersonation active"
 
-#: app/components/locations/location-form.tsx:1111
+#: app/components/locations/location-form.tsx:1134
 msgid "Advance Scheduled Orders"
 msgstr "Advance Scheduled Orders"
 
@@ -5553,8 +5553,8 @@ msgstr "Advanced settings"
 msgid "Advanced: late arrivals, cancellation and limits per time slot"
 msgstr "Advanced: late arrivals, cancellation and limits per time slot"
 
-#: app/components/roles/tenant-role-access-manager.tsx:391
 #: app/components/roles/tenant-role-access-manager.tsx:397
+#: app/components/roles/tenant-role-access-manager.tsx:403
 msgid "Affects pay"
 msgstr "Affects pay"
 
@@ -5676,7 +5676,7 @@ msgstr "AI drafts use your business details and training rules, and only fill em
 #~ msgid "AI is thinking..."
 #~ msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:265
+#: app/components/roles/tenant-role-access-manager.tsx:271
 msgid "AI phone agent"
 msgstr "AI phone agent"
 
@@ -5711,7 +5711,7 @@ msgid "Alcohol service permit"
 msgstr "Alcohol service permit"
 
 #: app/components/menu/item-form.tsx:838
-#: app/components/menu/option-form.tsx:857
+#: app/components/menu/option-form.tsx:860
 msgid "Alcoholic"
 msgstr "Alcoholic"
 
@@ -5920,7 +5920,7 @@ msgstr "All reasons"
 msgid "All recipients"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:759
+#: app/components/roles/tenant-role-access-manager.tsx:765
 msgid "All reservations, guestbook, setup & payments"
 msgstr "All reservations, guestbook, setup & payments"
 
@@ -6030,7 +6030,7 @@ msgstr "Allergies:"
 
 #: app/components/customers/people-list-screen.tsx:523
 #: app/components/menu/item-form.tsx:631
-#: app/components/menu/option-form.tsx:601
+#: app/components/menu/option-form.tsx:604
 #: app/components/reservations/guest-flags.tsx:119
 #: app/components/reservations/guest-flags.tsx:120
 #: app/utils/reservations/labels.ts:93
@@ -6065,7 +6065,7 @@ msgstr "Allow browsing items before launch"
 msgid "Allow clock-in without a scheduled shift"
 msgstr "Allow clock-in without a scheduled shift"
 
-#: app/components/locations/location-form.tsx:1114
+#: app/components/locations/location-form.tsx:1137
 msgid "Allow customers to schedule orders for future dates."
 msgstr "Allow customers to schedule orders for future dates."
 
@@ -6124,7 +6124,7 @@ msgid "Allow walk-in and remote waitlist quotes when tables are full."
 msgstr "Allow walk-in and remote waitlist quotes when tables are full."
 
 #: app/components/locations/delivery-zones-manager.tsx:222
-#: app/components/roles/tenant-role-access-manager.tsx:1372
+#: app/components/roles/tenant-role-access-manager.tsx:1378
 msgid "Allowed"
 msgstr "Allowed"
 
@@ -6644,7 +6644,7 @@ msgstr "App login"
 msgid "Appearance"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:226
+#: app/components/roles/tenant-role-access-manager.tsx:232
 msgid "Appears on the public site"
 msgstr "Appears on the public site"
 
@@ -6663,8 +6663,8 @@ msgstr "Applicant"
 msgid "Applicant funnel"
 msgstr "Applicant funnel"
 
-#: app/components/roles/tenant-role-access-manager.tsx:427
 #: app/components/roles/tenant-role-access-manager.tsx:433
+#: app/components/roles/tenant-role-access-manager.tsx:439
 msgid "Applicant personal data"
 msgstr "Applicant personal data"
 
@@ -6747,7 +6747,7 @@ msgid "Apply automatically"
 msgstr "Apply automatically"
 
 #: app/components/menu/item-form.tsx:710
-#: app/components/menu/option-form.tsx:789
+#: app/components/menu/option-form.tsx:792
 msgid "Apply Sales Tax"
 msgstr "Apply Sales Tax"
 
@@ -6815,11 +6815,11 @@ msgstr "Approve the proof to order prints."
 msgid "Approve this count?"
 msgstr "Approve this count?"
 
-#: app/components/roles/tenant-role-access-manager.tsx:395
+#: app/components/roles/tenant-role-access-manager.tsx:401
 msgid "Approve time cards"
 msgstr "Approve time cards"
 
-#: app/components/roles/tenant-role-access-manager.tsx:396
+#: app/components/roles/tenant-role-access-manager.tsx:402
 msgid "Approve, lock, and unlock time cards. Includes View time cards."
 msgstr "Approve, lock, and unlock time cards. Includes View time cards."
 
@@ -6990,7 +6990,7 @@ msgstr "Are you open right now?"
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:753
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:770
 msgid "Are you sure you want to delete \"{locationName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "Are you sure you want to delete \"{locationName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 
@@ -6998,7 +6998,7 @@ msgstr "Are you sure you want to delete \"{locationName}\"? This action cannot b
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1748
+#: app/components/roles/tenant-role-access-manager.tsx:1754
 msgid "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 msgstr "Are you sure you want to delete “{roleNameToDelete}”? This action cannot be undone."
 
@@ -7285,16 +7285,16 @@ msgstr "Assigned Categories"
 msgid "Assigned Groups"
 msgstr "Assigned Groups"
 
-#: app/components/menu/category-form.tsx:480
+#: app/components/menu/category-form.tsx:483
 #: app/components/menu/modifier-form.tsx:1348
 msgid "Assigned Items"
 msgstr "Assigned Items"
 
-#: app/components/menu/category-form.tsx:652
+#: app/components/menu/category-form.tsx:655
 msgid "Assigned Menus"
 msgstr "Assigned Menus"
 
-#: app/components/menu/option-form.tsx:900
+#: app/components/menu/option-form.tsx:903
 msgid "Assigned Modifier Groups"
 msgstr "Assigned Modifier Groups"
 
@@ -7364,7 +7364,7 @@ msgstr "Attach an image"
 msgid "Attach at most {SOCIAL_MAX_MEDIA} images."
 msgstr "Attach at most {SOCIAL_MAX_MEDIA} images."
 
-#: app/components/menu/option-form.tsx:1012
+#: app/components/menu/option-form.tsx:1015
 msgid "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 msgstr "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 
@@ -7381,7 +7381,7 @@ msgid "Attempts"
 msgstr "Attempts"
 
 #: app/components/menu/item-form.tsx:632
-#: app/components/menu/option-form.tsx:602
+#: app/components/menu/option-form.tsx:605
 msgid "Attention"
 msgstr "Attention"
 
@@ -7680,8 +7680,8 @@ msgstr "B&W"
 #: app/components/website/create-page-dialog.tsx:197
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:185
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:332
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:614
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:243
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:631
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:259
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:192
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:218
@@ -7868,7 +7868,7 @@ msgstr "Balance"
 msgid "Balance removed"
 msgstr "Balance removed"
 
-#: app/components/pos/pos-day-report.tsx:295
+#: app/components/pos/pos-day-report.tsx:376
 msgid "Balanced"
 msgstr "Balanced"
 
@@ -7890,7 +7890,7 @@ msgstr "Bar seat"
 msgid "Base it on"
 msgstr "Base it on"
 
-#: app/components/locations/location-form.tsx:901
+#: app/components/locations/location-form.tsx:924
 msgid "Base Preparation Time (minutes)"
 msgstr "Base Preparation Time (minutes)"
 
@@ -7902,11 +7902,11 @@ msgstr "Base price"
 msgid "Base Price ($)"
 msgstr "Base Price ($)"
 
-#: app/components/menu/option-form.tsx:661
+#: app/components/menu/option-form.tsx:664
 msgid "Base Price Delta ($)"
 msgstr "Base Price Delta ($)"
 
-#: app/components/locations/location-form.tsx:591
+#: app/components/locations/location-form.tsx:614
 msgid "Basic identifiers, URL slug, and regional settings."
 msgstr "Basic identifiers, URL slug, and regional settings."
 
@@ -8017,7 +8017,7 @@ msgstr "Birthday Coming Up"
 msgid "Birthdays, large groups, catering, and holidays."
 msgstr "Birthdays, large groups, catering, and holidays."
 
-#: app/components/roles/tenant-role-access-manager.tsx:805
+#: app/components/roles/tenant-role-access-manager.tsx:811
 msgid "Blank"
 msgstr "Blank"
 
@@ -8164,11 +8164,11 @@ msgstr "Book tables by phone"
 msgid "Book up to (days ahead)"
 msgstr "Book up to (days ahead)"
 
-#: app/components/roles/tenant-role-access-manager.tsx:704
+#: app/components/roles/tenant-role-access-manager.tsx:710
 msgid "Book, guestbook & reports"
 msgstr "Book, guestbook & reports"
 
-#: app/components/roles/tenant-role-access-manager.tsx:695
+#: app/components/roles/tenant-role-access-manager.tsx:701
 msgid "Book, waitlist & table status"
 msgstr "Book, waitlist & table status"
 
@@ -8452,7 +8452,7 @@ msgstr "Broadcast preview"
 msgid "Broadcasts"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:632
+#: app/components/roles/tenant-role-access-manager.tsx:638
 msgid "Broadcasts & automations"
 msgstr "Broadcasts & automations"
 
@@ -8515,7 +8515,7 @@ msgstr "Builder panels"
 msgid "Building number"
 msgstr "Building number"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1285
+#: app/components/roles/tenant-role-access-manager.tsx:1291
 msgid "Built-in"
 msgstr "Built-in"
 
@@ -8523,7 +8523,7 @@ msgstr "Built-in"
 msgid "Built-in blocks"
 msgstr "Built-in blocks"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1662
+#: app/components/roles/tenant-role-access-manager.tsx:1668
 msgid "Built-in Roles"
 msgstr "Built-in Roles"
 
@@ -8570,7 +8570,7 @@ msgstr "Busiest around {peak}"
 msgid "Business category"
 msgstr "Business category"
 
-#: app/components/roles/tenant-role-access-manager.tsx:559
+#: app/components/roles/tenant-role-access-manager.tsx:565
 msgid "Business costs"
 msgstr "Business costs"
 
@@ -8578,7 +8578,7 @@ msgstr "Business costs"
 msgid "Business date"
 msgstr "Business date"
 
-#: app/components/pos/pos-day-report.tsx:137
+#: app/components/pos/pos-day-report.tsx:164
 #: app/components/pos/terminals-manager.tsx:586
 #: app/components/pos/terminals-manager.tsx:1527
 msgid "Business day"
@@ -8962,7 +8962,7 @@ msgid "Calls your agent answers will appear here. Try a test call from your brow
 msgstr "Calls your agent answers will appear here. Try a test call from your browser to see how it sounds."
 
 #: app/components/menu/item-form.tsx:851
-#: app/components/menu/option-form.tsx:870
+#: app/components/menu/option-form.tsx:873
 msgid "Calories (kCal)"
 msgstr "Calories (kCal)"
 
@@ -9012,11 +9012,11 @@ msgstr "Can get texts"
 msgid "Can ship"
 msgstr "Can ship"
 
-#: app/components/menu/option-form.tsx:1076
+#: app/components/menu/option-form.tsx:1079
 msgid "Can't nest: choices would go more than {MAX_NESTED_MODIFIER_DEPTH} levels deep."
 msgstr "Can't nest: choices would go more than {MAX_NESTED_MODIFIER_DEPTH} levels deep."
 
-#: app/components/menu/option-form.tsx:1071
+#: app/components/menu/option-form.tsx:1074
 msgid "Can't nest: it would loop back to this option."
 msgstr "Can't nest: it would loop back to this option."
 
@@ -9071,7 +9071,7 @@ msgstr "Can't text that number"
 #: app/components/inventory/transfers-panel.tsx:263
 #: app/components/kiosk/kiosk-screens.tsx:631
 #: app/components/locations/delivery-zones-manager.tsx:564
-#: app/components/locations/location-form.tsx:1415
+#: app/components/locations/location-form.tsx:1513
 #: app/components/locations/special-hours-picker.tsx:225
 #: app/components/loyalty/adjust-dialog.tsx:274
 #: app/components/loyalty/promotion-dialog.tsx:908
@@ -9112,6 +9112,7 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
 #: app/components/phone-agent/training-rules-section.tsx:639
 #: app/components/phone-agent/training-rules-section.tsx:691
+#: app/components/pos/pos-day-report.tsx:508
 #: app/components/pos/terminals-manager.tsx:695
 #: app/components/pos/terminals-manager.tsx:1662
 #: app/components/pos/zatca-settings.tsx:562
@@ -9134,8 +9135,8 @@ msgstr "Can't text that number"
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:255
 #: app/components/reservations/waitlist/seat-dialog.tsx:253
 #: app/components/reservations/walk-in-dialog.tsx:373
-#: app/components/roles/tenant-role-access-manager.tsx:1215
-#: app/components/roles/tenant-role-access-manager.tsx:1756
+#: app/components/roles/tenant-role-access-manager.tsx:1221
+#: app/components/roles/tenant-role-access-manager.tsx:1762
 #: app/components/settings/cards/organization/announcement-sheet.tsx:547
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
@@ -9211,7 +9212,7 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:831
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:764
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:781
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:455
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:130
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:153
@@ -9262,7 +9263,7 @@ msgstr "Cancel interview"
 
 #: app/components/inventory/review-order-screen.tsx:775
 #: app/components/inventory/review-order-screen.tsx:840
-#: app/components/orders/order-detail.tsx:1257
+#: app/components/orders/order-detail.tsx:1262
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:399
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:429
 msgid "Cancel order"
@@ -9271,7 +9272,7 @@ msgstr "Cancel order"
 #~ msgid "Cancel order {0}?"
 #~ msgstr "Cancel order {0}?"
 
-#: app/components/orders/order-detail.tsx:1294
+#: app/components/orders/order-detail.tsx:1299
 msgid "Cancel order {orderNumber}?"
 msgstr "Cancel order {orderNumber}?"
 
@@ -9380,7 +9381,7 @@ msgstr "Cancelled by the restaurant"
 msgid "Cancelled moving {cancelledGuestName}."
 msgstr "Cancelled moving {cancelledGuestName}."
 
-#: app/components/pos/pos-day-report.tsx:212
+#: app/components/pos/pos-day-report.tsx:265
 msgid "Cancelled orders"
 msgstr "Cancelled orders"
 
@@ -9396,7 +9397,7 @@ msgstr "Cancelled."
 msgid "Cancelling"
 msgstr "Cancelling"
 
-#: app/components/roles/tenant-role-access-manager.tsx:294
+#: app/components/roles/tenant-role-access-manager.tsx:300
 msgid "Cannot be undone"
 msgstr "Cannot be undone"
 
@@ -9484,7 +9485,7 @@ msgstr "Capitals read like shouting. Use normal case."
 msgid "Caption"
 msgstr ""
 
-#: app/components/pos/pos-day-report.tsx:209
+#: app/components/pos/pos-day-report.tsx:262
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:146
 msgid "Card"
 msgstr "Card"
@@ -9560,7 +9561,7 @@ msgstr "Cards appear here when people clock in on a tablet. You can also add one
 msgid "Cards guests buy online and at the till, spend on orders, and you can charge from here. Balances and codes stay in your data region."
 msgstr "Cards guests buy online and at the till, spend on orders, and you can charge from here. Balances and codes stay in your data region."
 
-#: app/components/roles/tenant-role-access-manager.tsx:577
+#: app/components/roles/tenant-role-access-manager.tsx:583
 msgid "Cards guests buy online and at the till. Only applies when Gift cards are turned on for your organization."
 msgstr "Cards guests buy online and at the till. Only applies when Gift cards are turned on for your organization."
 
@@ -9589,14 +9590,26 @@ msgstr "Cart reminder"
 msgid "Cartesia voice ID. Leave empty for the default voice."
 msgstr "Cartesia voice ID. Leave empty for the default voice."
 
-#: app/components/pos/pos-day-report.tsx:208
+#: app/components/pos/pos-day-report.tsx:261
 msgid "Cash"
 msgstr "Cash"
 
-#: app/components/pos/pos-day-report.tsx:264
+#: ../../packages/reports/src/ui/report-labels.ts:152
+msgid "Cash drawer log"
+msgstr "Cash drawer log"
+
+#: app/components/pos/pos-day-report.tsx:317
 #: app/components/pos/terminals-manager.tsx:549
 msgid "Cash drawer shifts"
 msgstr "Cash drawer shifts"
+
+#: ../../packages/reports/src/ui/report-labels.ts:148
+msgid "Cash drawer variance by cashier"
+msgstr "Cash drawer variance by cashier"
+
+#: ../../packages/reports/src/ui/report-labels.ts:144
+msgid "Cash drawer variance by shift"
+msgstr "Cash drawer variance by shift"
 
 #: app/components/staff/timesheets/card-fields.tsx:188
 #: app/components/staff/timesheets/payroll-summary.tsx:179
@@ -9610,6 +9623,10 @@ msgstr "Cash tips have no card fee. Up to 10 percent."
 #: app/components/staff/timesheets/card-history.tsx:98
 msgid "Cash tips: {from} to {to}"
 msgstr "Cash tips: {from} to {to}"
+
+#: app/components/pos/pos-day-report.tsx:490
+msgid "Cashier left without closing the drawer"
+msgstr "Cashier left without closing the drawer"
 
 #: app/utils/inventory/starter-lists.ts:34
 msgid "Casual dining"
@@ -9774,7 +9791,7 @@ msgstr "Change how much of <0>{itemName}</0> you have. The reason is kept in its
 #~ msgid "Change in Setup"
 #~ msgstr "Change in Setup"
 
-#: app/components/roles/tenant-role-access-manager.tsx:340
+#: app/components/roles/tenant-role-access-manager.tsx:346
 msgid "Change individual pay rates and salary details. Includes View pay rates."
 msgstr "Change individual pay rates and salary details. Includes View pay rates."
 
@@ -9782,7 +9799,7 @@ msgstr "Change individual pay rates and salary details. Includes View pay rates.
 msgid "Change interview"
 msgstr "Change interview"
 
-#: app/components/roles/tenant-role-access-manager.tsx:413
+#: app/components/roles/tenant-role-access-manager.tsx:419
 msgid "Change labor rules, pair time clock devices, and set pay periods. Includes View labor policy."
 msgstr "Change labor rules, pair time clock devices, and set pay periods. Includes View labor policy."
 
@@ -9793,7 +9810,7 @@ msgstr "Change labor rules, pair time clock devices, and set pay periods. Includ
 msgid "Change Password"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:339
+#: app/components/roles/tenant-role-access-manager.tsx:345
 msgid "Change pay rates"
 msgstr "Change pay rates"
 
@@ -9818,7 +9835,7 @@ msgstr "Change rate"
 msgid "Change rules"
 msgstr "Change rules"
 
-#: app/components/roles/tenant-role-access-manager.tsx:276
+#: app/components/roles/tenant-role-access-manager.tsx:282
 msgid "Change settings, publish call flows, manage numbers, and edit training rules."
 msgstr "Change settings, publish call flows, manage numbers, and edit training rules."
 
@@ -9889,7 +9906,7 @@ msgstr "Changes apply to the profile only, not to past bookings or orders."
 msgid "Changes here affect the whole profile and cannot be undone."
 msgstr "Changes here affect the whole profile and cannot be undone."
 
-#: app/components/roles/tenant-role-access-manager.tsx:588
+#: app/components/roles/tenant-role-access-manager.tsx:594
 msgid "Changes money owed to guests"
 msgstr "Changes money owed to guests"
 
@@ -9909,11 +9926,11 @@ msgstr "Changes undone"
 msgid "Changes undone."
 msgstr "Changes undone."
 
-#: app/components/roles/tenant-role-access-manager.tsx:502
+#: app/components/roles/tenant-role-access-manager.tsx:508
 msgid "Changes what customers earn"
 msgstr "Changes what customers earn"
 
-#: app/components/roles/tenant-role-access-manager.tsx:536
+#: app/components/roles/tenant-role-access-manager.tsx:542
 msgid "Changes what customers pay"
 msgstr "Changes what customers pay"
 
@@ -9959,7 +9976,7 @@ msgstr "Charge a packaging fee"
 msgid "Charge a service fee"
 msgstr "Charge a service fee"
 
-#: app/components/roles/tenant-role-access-manager.tsx:483
+#: app/components/roles/tenant-role-access-manager.tsx:489
 msgid "Charge cancellation or no-show fees and issue reservation refunds. Includes View reservation book & waitlist and View reservation reports."
 msgstr "Charge cancellation or no-show fees and issue reservation refunds. Includes View reservation book & waitlist and View reservation reports."
 
@@ -9973,11 +9990,11 @@ msgstr "Charge card"
 msgid "Charge fee"
 msgstr "Charge fee"
 
-#: app/components/roles/tenant-role-access-manager.tsx:482
+#: app/components/roles/tenant-role-access-manager.tsx:488
 msgid "Charge fees & refund reservation payments"
 msgstr "Charge fees & refund reservation payments"
 
-#: app/components/roles/tenant-role-access-manager.tsx:592
+#: app/components/roles/tenant-role-access-manager.tsx:598
 msgid "Charge gift cards"
 msgstr "Charge gift cards"
 
@@ -9989,7 +10006,7 @@ msgstr "Charge late-cancel fee"
 msgid "Charge no-show fee"
 msgstr "Charge no-show fee"
 
-#: app/components/menu/option-form.tsx:792
+#: app/components/menu/option-form.tsx:795
 msgid "Charge sales tax on this option at checkout."
 msgstr "Charge sales tax on this option at checkout."
 
@@ -10026,7 +10043,7 @@ msgstr "Charged per guest"
 msgid "Charges"
 msgstr "Charges"
 
-#: app/components/roles/tenant-role-access-manager.tsx:484
+#: app/components/roles/tenant-role-access-manager.tsx:490
 msgid "Charges & refunds"
 msgstr "Charges & refunds"
 
@@ -10469,7 +10486,7 @@ msgid "Choose a position."
 msgstr "Choose a position."
 
 #: app/components/orders/acceptance.tsx:113
-#: app/components/orders/order-detail.tsx:1325
+#: app/components/orders/order-detail.tsx:1330
 msgid "Choose a reason"
 msgstr "Choose a reason"
 
@@ -10784,7 +10801,7 @@ msgstr "Choose photo for {name}"
 msgid "Choose something for at least one day."
 msgstr "Choose something for at least one day."
 
-#: app/components/locations/location-form.tsx:1198
+#: app/components/locations/location-form.tsx:1221
 msgid "Choose supported delivery channels and estimated transit times."
 msgstr "Choose supported delivery channels and estimated transit times."
 
@@ -10883,6 +10900,10 @@ msgstr "Choose View or Edit access."
 #: app/components/phone-agent/voice-picker.tsx:679
 msgid "Choose voice"
 msgstr "Choose voice"
+
+#: app/components/pos/station-register-settings.tsx:67
+msgid "Choose what cashiers must enter at the till, whether dishes show a notes field, who may ring up open-price custom items, and when cash drawer variances are flagged in reports."
+msgstr "Choose what cashiers must enter at the till, whether dishes show a notes field, who may ring up open-price custom items, and when cash drawer variances are flagged in reports."
 
 #: app/components/reservations/policies/policies-screen.tsx:266
 msgid "Choose what guests pay or guarantee to book, and what happens when they cancel or do not show."
@@ -11172,7 +11193,7 @@ msgstr "Clock people out automatically"
 msgid "Clock was off"
 msgstr "Clock was off"
 
-#: app/components/roles/tenant-role-access-manager.tsx:380
+#: app/components/roles/tenant-role-access-manager.tsx:386
 msgid "Clock yourself in and out. Only useful for people who also work shifts."
 msgstr "Clock yourself in and out. Only useful for people who also work shifts."
 
@@ -11273,6 +11294,14 @@ msgstr "Close it once the guest has paid the total below."
 #~ msgid "Close order details"
 #~ msgstr "Close order details"
 
+#: app/components/pos/pos-day-report.tsx:370
+msgid "Close shift"
+msgstr "Close shift"
+
+#: app/components/pos/pos-day-report.tsx:427
+msgid "Close shift remotely"
+msgstr "Close shift remotely"
+
 #: app/components/qr/open-tabs.tsx:881
 msgid "Close tab"
 msgstr "Close tab"
@@ -11312,6 +11341,10 @@ msgstr "Close this window and open the party again to see the latest details."
 #: app/components/chat/chat-view.tsx:820
 msgid "Close thread"
 msgstr "Close thread"
+
+#: app/components/roles/tenant-role-access-manager.tsx:173
+msgid "Close till shifts remotely"
+msgstr "Close till shifts remotely"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:56
 msgid "Close to a Reward"
@@ -11370,6 +11403,14 @@ msgstr "Closed on this date ({dayName}). No times are offered."
 msgid "Closed on this date. No times are offered."
 msgstr "Closed on this date. No times are offered."
 
+#: app/components/pos/pos-day-report.tsx:343
+#~ msgid "Closed remotely by {0}"
+#~ msgstr "Closed remotely by {0}"
+
+#: app/components/pos/pos-day-report.tsx:345
+msgid "Closed remotely by {remoteCloserName}"
+msgstr "Closed remotely by {remoteCloserName}"
+
 #: app/components/hiring/job-summary.tsx:62
 msgid "Closes"
 msgstr "Closes"
@@ -11377,6 +11418,10 @@ msgstr "Closes"
 #: app/components/staff/labor-policy-editor.tsx:732
 msgid "Closes a forgotten shift and marks it for a manager to fix. Off by default."
 msgstr "Closes a forgotten shift and marks it for a manager to fix. Off by default."
+
+#: app/components/roles/tenant-role-access-manager.tsx:175
+msgid "Closes cash drawer shifts"
+msgstr "Closes cash drawer shifts"
 
 #: app/components/hiring/job-editor.tsx:784
 msgid "Closes on"
@@ -11625,7 +11670,7 @@ msgstr "Complete & Clear Table"
 msgid "Complete a form"
 msgstr "Complete a form"
 
-#: app/components/roles/tenant-role-access-manager.tsx:288
+#: app/components/roles/tenant-role-access-manager.tsx:294
 msgid "Complete and reopen calls and requests, and tag calls. Needs View calls."
 msgstr "Complete and reopen calls and requests, and tag calls. Needs View calls."
 
@@ -11731,7 +11776,7 @@ msgstr ""
 #~ msgid "Configuration valid"
 #~ msgstr "Configuration valid"
 
-#: app/components/locations/location-form.tsx:1318
+#: app/components/locations/location-form.tsx:1341
 msgid "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn Polygons."
 msgstr "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn Polygons."
 
@@ -11742,7 +11787,7 @@ msgstr "Configure delivery rules, pricing, provider, and boundary areas."
 #~ msgid "Configure dining areas, floor plan tables, service periods, turn times, and cancellation policies."
 #~ msgstr "Configure dining areas, floor plan tables, service periods, turn times, and cancellation policies."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:660
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:677
 msgid "Configure dining areas, floor plan tables, service periods, turn times, and online booking rules for this location."
 msgstr "Configure dining areas, floor plan tables, service periods, turn times, and online booking rules for this location."
 
@@ -11760,11 +11805,11 @@ msgstr "Configure how guests interact with these options."
 msgid "Configure the report"
 msgstr "Configure the report"
 
-#: app/components/locations/location-form.tsx:813
+#: app/components/locations/location-form.tsx:836
 msgid "Configure weekly opening times for dine-in store hours and online ordering."
 msgstr "Configure weekly opening times for dine-in store hours and online ordering."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:251
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:267
 msgid "Configure your new restaurant location details, operating hours, and delivery settings."
 msgstr "Configure your new restaurant location details, operating hours, and delivery settings."
 
@@ -11784,15 +11829,19 @@ msgstr ""
 msgid "Confirm accepting all translations"
 msgstr "Confirm accepting all translations"
 
-#: app/components/orders/order-detail.tsx:1376
+#: app/components/orders/order-detail.tsx:1381
 msgid "Confirm cancellation"
 msgstr "Confirm cancellation"
+
+#: app/components/pos/pos-day-report.tsx:511
+msgid "Confirm close"
+msgstr "Confirm close"
 
 #: app/components/staff/onboarding/onboarding-labels.ts:39
 msgid "Confirm contact details"
 msgstr "Confirm contact details"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:771
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:788
 msgid "Confirm Delete"
 msgstr "Confirm Delete"
 
@@ -12184,7 +12233,7 @@ msgstr ""
 msgid "Content"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:616
+#: app/components/roles/tenant-role-access-manager.tsx:622
 msgid "Content editor"
 msgstr "Content editor"
 
@@ -12411,7 +12460,7 @@ msgid "Copy order number"
 msgstr "Copy order number"
 
 #: app/components/menu/copy-location-overrides-dialog.tsx:127
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:713
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:730
 msgid "Copy overrides"
 msgstr "Copy overrides"
 
@@ -12436,7 +12485,7 @@ msgstr "Copy shifts"
 msgid "Copy the text"
 msgstr "Copy the text"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:701
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:718
 msgid "Copy this location's menu prices and availability overrides to another location."
 msgstr "Copy this location's menu prices and availability overrides to another location."
 
@@ -12571,6 +12620,10 @@ msgstr "Could not check where this is used."
 msgid "Could not check which messages use this discount."
 msgstr "Could not check which messages use this discount."
 
+#: app/components/pos/pos-day-report.tsx:469
+msgid "Could not close the shift."
+msgstr "Could not close the shift."
+
 #: app/components/pos/zatca-settings.tsx:512
 msgid "Could not connect the terminal."
 msgstr "Could not connect the terminal."
@@ -12665,7 +12718,7 @@ msgstr "Could not load the monthly calendar."
 msgid "Could not load the pre-service overview."
 msgstr "Could not load the pre-service overview."
 
-#: app/components/pos/pos-day-report.tsx:106
+#: app/components/pos/pos-day-report.tsx:133
 msgid "Could not load the report."
 msgstr "Could not load the report."
 
@@ -12728,6 +12781,10 @@ msgstr "Could not resolve the table conflict."
 #: app/components/inventory/counting-screen.tsx:671
 msgid "Could not save — enter again"
 msgstr "Could not save — enter again"
+
+#: app/components/pos/station-register-settings.tsx:141
+msgid "Could not save register settings."
+msgstr "Could not save register settings."
 
 #: app/components/reservations/waitlist/use-waitlist.ts:49
 msgid "Could not save the changes."
@@ -12912,7 +12969,7 @@ msgstr "Couldn't undo. Reload the page and try again."
 msgid "Count"
 msgstr "Count"
 
-#: app/components/roles/tenant-role-access-manager.tsx:552
+#: app/components/roles/tenant-role-access-manager.tsx:558
 msgid "Count and manage stock"
 msgstr "Count and manage stock"
 
@@ -12955,7 +13012,7 @@ msgstr "Count overtime at each workplace"
 msgid "Count paid online orders as sales. The share is shown but never judged against a target, because walk-in sales are missing."
 msgstr "Count paid online orders as sales. The share is shown but never judged against a target, because walk-in sales are missing."
 
-#: app/components/roles/tenant-role-access-manager.tsx:774
+#: app/components/roles/tenant-role-access-manager.tsx:780
 msgid "Count stock, log waste & deliveries"
 msgstr "Count stock, log waste & deliveries"
 
@@ -12974,6 +13031,10 @@ msgstr "Counted"
 #: app/components/inventory/count-review-screen.tsx:733
 msgid "Counted <0>{counted}</0>"
 msgstr "Counted <0>{counted}</0>"
+
+#: app/components/pos/pos-day-report.tsx:476
+msgid "Counted cash"
+msgstr "Counted cash"
 
 #: app/components/inventory/count-review-screen.tsx:504
 msgid "Counted more than a fifth away from what you should have. Check these before you approve."
@@ -13069,7 +13130,7 @@ msgstr "Course Progression"
 msgid "Course stage:"
 msgstr "Course stage:"
 
-#: app/components/locations/location-form.tsx:1339
+#: app/components/locations/location-form.tsx:1362
 msgid "Courses"
 msgstr "Courses"
 
@@ -13184,7 +13245,7 @@ msgstr "Create a channel"
 msgid "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
 msgstr "Create a channel to start talking with your team. You can limit a channel to certain roles or people."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1483
+#: app/components/roles/tenant-role-access-manager.tsx:1489
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "Create a custom role to assign specific permissions to teammates."
 
@@ -13259,11 +13320,11 @@ msgstr "Create a prepaid or ticketed dining experience, give it seating times, a
 msgid "Create a print"
 msgstr "Create a print"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1570
+#: app/components/roles/tenant-role-access-manager.tsx:1576
 msgid "Create a ready-made role for the people who run your team. Each one becomes a normal custom role that you can rename, edit, or delete."
 msgstr "Create a ready-made role for the people who run your team. Each one becomes a normal custom role that you can rename, edit, or delete."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1618
+#: app/components/roles/tenant-role-access-manager.tsx:1624
 msgid "Create a ready-made role for your host stand, shift leads, reservations team, guestbook, or finance. Each one becomes a normal custom role that you can rename, edit, or delete."
 msgstr "Create a ready-made role for your host stand, shift leads, reservations team, guestbook, or finance. Each one becomes a normal custom role that you can rename, edit, or delete."
 
@@ -13309,7 +13370,7 @@ msgstr "Create an item to start building your menu."
 msgid "Create and customize"
 msgstr "Create and customize"
 
-#: app/components/roles/tenant-role-access-manager.tsx:186
+#: app/components/roles/tenant-role-access-manager.tsx:192
 msgid "Create and enhance images with AI, which uses paid model credits. Needs Manage media."
 msgstr "Create and enhance images with AI, which uses paid model credits. Needs Manage media."
 
@@ -13333,7 +13394,7 @@ msgstr "Create and manage your menus for dine-in, online ordering, POS, and cate
 msgid "Create and publish a form from Website → Forms first."
 msgstr "Create and publish a form from Website → Forms first."
 
-#: app/components/roles/tenant-role-access-manager.tsx:242
+#: app/components/roles/tenant-role-access-manager.tsx:248
 msgid "Create and send one-time email and SMS campaigns."
 msgstr "Create and send one-time email and SMS campaigns."
 
@@ -13384,7 +13445,7 @@ msgstr "Create combination"
 msgid "Create custom options, toppings, crusts, temperatures, and choices for your dishes."
 msgstr "Create custom options, toppings, crusts, temperatures, and choices for your dishes."
 
-#: app/components/roles/tenant-role-access-manager.tsx:968
+#: app/components/roles/tenant-role-access-manager.tsx:974
 msgid "Create Custom Role"
 msgstr "Create Custom Role"
 
@@ -13419,7 +13480,7 @@ msgstr "Create form"
 msgid "Create group"
 msgstr "Create group"
 
-#: app/components/roles/tenant-role-access-manager.tsx:310
+#: app/components/roles/tenant-role-access-manager.tsx:316
 msgid "Create group chats"
 msgstr "Create group chats"
 
@@ -13435,7 +13496,7 @@ msgstr "Create layout"
 msgid "Create Link"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:1426
+#: app/components/locations/location-form.tsx:1524
 msgid "Create Location"
 msgstr "Create Location"
 
@@ -13456,7 +13517,7 @@ msgid "Create new"
 msgstr "Create new"
 
 #: app/components/menu/item-form.tsx:783
-#: app/components/menu/option-form.tsx:1114
+#: app/components/menu/option-form.tsx:1117
 #: app/components/menu/quick-modifier-group-sheet.tsx:300
 msgid "Create new group"
 msgstr "Create new group"
@@ -13532,10 +13593,10 @@ msgstr "Create reusable forms, then place them on any website page with a Form b
 msgid "Create reward"
 msgstr "Create reward"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1222
-#: app/components/roles/tenant-role-access-manager.tsx:1472
-#: app/components/roles/tenant-role-access-manager.tsx:1601
-#: app/components/roles/tenant-role-access-manager.tsx:1649
+#: app/components/roles/tenant-role-access-manager.tsx:1228
+#: app/components/roles/tenant-role-access-manager.tsx:1478
+#: app/components/roles/tenant-role-access-manager.tsx:1607
+#: app/components/roles/tenant-role-access-manager.tsx:1655
 msgid "Create role"
 msgstr "Create role"
 
@@ -13587,40 +13648,40 @@ msgstr ""
 msgid "Create your first page to start building your website."
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:305
+#: app/components/roles/tenant-role-access-manager.tsx:311
 msgid "Create, edit, and delete channels, choose which roles and members can access them, and remove messages in channels they can open. Does not grant access to restricted channels."
 msgstr "Create, edit, and delete channels, choose which roles and members can access them, and remove messages in channels they can open. Does not grant access to restricted channels."
 
-#: app/components/roles/tenant-role-access-manager.tsx:370
+#: app/components/roles/tenant-role-access-manager.tsx:376
 msgid "Create, edit, and publish shifts, and decide availability and time-off requests. Includes View team schedule."
 msgstr "Create, edit, and publish shifts, and decide availability and time-off requests. Includes View team schedule."
 
-#: app/components/roles/tenant-role-access-manager.tsx:225
+#: app/components/roles/tenant-role-access-manager.tsx:231
 msgid "Create, edit, enable, and delete announcement banners."
 msgstr "Create, edit, enable, and delete announcement banners."
 
-#: app/components/roles/tenant-role-access-manager.tsx:535
+#: app/components/roles/tenant-role-access-manager.tsx:541
 msgid "Create, edit, pause, and archive discounts and coupon codes. Includes View discounts."
 msgstr "Create, edit, pause, and archive discounts and coupon codes. Includes View discounts."
 
-#: app/components/roles/tenant-role-access-manager.tsx:253
+#: app/components/roles/tenant-role-access-manager.tsx:259
 msgid "Create, edit, publish, pause, and delete automated journeys."
 msgstr "Create, edit, publish, pause, and delete automated journeys."
 
-#: app/components/roles/tenant-role-access-manager.tsx:450
+#: app/components/roles/tenant-role-access-manager.tsx:456
 msgid "Create, edit, seat, and manage reservations, walk-ins, waitlist entries, service notes, and section assignments. Includes View reservation book & waitlist."
 msgstr "Create, edit, seat, and manage reservations, walk-ins, waitlist entries, service notes, and section assignments. Includes View reservation book & waitlist."
 
 #~ msgid "Create, update, and publish web pages and announcements."
 #~ msgstr "Create, update, and publish web pages and announcements."
 
-#: app/components/roles/tenant-role-access-manager.tsx:214
+#: app/components/roles/tenant-role-access-manager.tsx:220
 msgid "Create, update, and publish web pages, forms, and redirects."
 msgstr "Create, update, and publish web pages, forms, and redirects."
 
 #: app/components/discounts/discount-history.tsx:42
-#: app/components/roles/tenant-role-access-manager.tsx:1597
-#: app/components/roles/tenant-role-access-manager.tsx:1645
+#: app/components/roles/tenant-role-access-manager.tsx:1603
+#: app/components/roles/tenant-role-access-manager.tsx:1651
 #: app/utils/reservations/labels.ts:179
 msgid "Created"
 msgstr "Created"
@@ -13691,7 +13752,7 @@ msgstr "Cucumbers"
 msgid "Curbside"
 msgstr "Curbside"
 
-#: app/components/locations/location-form.tsx:1033
+#: app/components/locations/location-form.tsx:1056
 msgid "Curbside Pickup"
 msgstr "Curbside Pickup"
 
@@ -13759,7 +13820,7 @@ msgid "Cursor Setup"
 msgstr ""
 
 #: app/components/discounts/discount-form.tsx:1886
-#: app/components/roles/tenant-role-access-manager.tsx:1285
+#: app/components/roles/tenant-role-access-manager.tsx:1291
 msgid "Custom"
 msgstr "Custom"
 
@@ -13800,6 +13861,18 @@ msgstr "Custom form"
 msgid "Custom Hours"
 msgstr "Custom Hours"
 
+#: app/components/orders/order-detail.tsx:901
+msgid "Custom item"
+msgstr "Custom item"
+
+#: app/components/pos/station-register-settings.tsx:257
+#~ msgid "Custom item limit ({0})"
+#~ msgstr "Custom item limit ({0})"
+
+#: app/components/pos/station-register-settings.tsx:258
+msgid "Custom item limit ({locationCurrency})"
+msgstr "Custom item limit ({locationCurrency})"
+
 #: app/components/discounts/discount-form.tsx:605
 #: app/components/discounts/discount-form.tsx:1897
 msgid "Custom maximum"
@@ -13813,7 +13886,7 @@ msgstr "Custom notes"
 msgid "Custom options, toppings, sides, and choices offered with this item."
 msgstr "Custom options, toppings, sides, and choices offered with this item."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1457
+#: app/components/roles/tenant-role-access-manager.tsx:1463
 msgid "Custom Roles"
 msgstr "Custom Roles"
 
@@ -13858,7 +13931,7 @@ msgstr "Customer"
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:198
+#: app/components/roles/tenant-role-access-manager.tsx:204
 msgid "Customer and business data"
 msgstr "Customer and business data"
 
@@ -13899,7 +13972,7 @@ msgstr ""
 #~ msgid "Customer limits"
 #~ msgstr "Customer limits"
 
-#: app/components/roles/tenant-role-access-manager.tsx:283
+#: app/components/roles/tenant-role-access-manager.tsx:289
 msgid "Customer personal data"
 msgstr "Customer personal data"
 
@@ -13964,7 +14037,7 @@ msgstr "Customers merged."
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr ""
 
-#: app/components/locations/location-form.tsx:980
+#: app/components/locations/location-form.tsx:1003
 msgid "Customers pick up orders in-store."
 msgstr "Customers pick up orders in-store."
 
@@ -14034,6 +14107,10 @@ msgstr "Daily overtime off · Week starts {weekStart}"
 #: app/components/staff/labor-policy-editor.tsx:484
 msgid "Daily overtime on · Week starts {weekStart}"
 msgstr "Daily overtime on · Week starts {weekStart}"
+
+#: app/components/locations/location-form.tsx:1478
+msgid "Daily reset time"
+msgstr "Daily reset time"
 
 #: ../../packages/reports/src/ui/report-labels.ts:80
 msgid "Daily summary"
@@ -14153,8 +14230,8 @@ msgstr "Day controls"
 msgid "Day ends {time}"
 msgstr "Day ends {time}"
 
-#: app/components/pos/pos-day-report.tsx:127
-#: app/components/pos/pos-day-report.tsx:133
+#: app/components/pos/pos-day-report.tsx:154
+#: app/components/pos/pos-day-report.tsx:160
 msgid "Day report"
 msgstr "Day report"
 
@@ -14371,7 +14448,7 @@ msgstr "Default {defaultTurnMin} min"
 msgid "Default checkbox"
 msgstr "Default checkbox"
 
-#: app/components/menu/category-form.tsx:427
+#: app/components/menu/category-form.tsx:430
 msgid "Default course"
 msgstr "Default course"
 
@@ -14439,7 +14516,7 @@ msgstr "Define allowed and restricted delivery areas by radius, zip codes, or po
 #~ msgid "Define expected dining duration by party size (in 15-minute increments). Must contiguously cover party sizes 1 through {onlinePartyMax}."
 #~ msgstr "Define expected dining duration by party size (in 15-minute increments). Must contiguously cover party sizes 1 through {onlinePartyMax}."
 
-#: app/components/roles/tenant-role-access-manager.tsx:974
+#: app/components/roles/tenant-role-access-manager.tsx:980
 msgid "Define role details and select what permissions members receive."
 msgstr "Define role details and select what permissions members receive."
 
@@ -14465,8 +14542,8 @@ msgstr ""
 #: app/components/note/comment-item.tsx:239
 #: app/components/reservations/floor-plan-canvas.tsx:1229
 #: app/components/reservations/floor-plan-canvas.tsx:1487
-#: app/components/roles/tenant-role-access-manager.tsx:1551
-#: app/components/roles/tenant-role-access-manager.tsx:1763
+#: app/components/roles/tenant-role-access-manager.tsx:1557
+#: app/components/roles/tenant-role-access-manager.tsx:1769
 #: app/components/settings/passkey-manager.tsx:220
 #: app/components/staff/notes-tab.tsx:165
 #: app/components/staff/notes-tab.tsx:207
@@ -14565,7 +14642,7 @@ msgstr "Delete area"
 msgid "Delete call"
 msgstr "Delete call"
 
-#: app/components/roles/tenant-role-access-manager.tsx:292
+#: app/components/roles/tenant-role-access-manager.tsx:298
 msgid "Delete calls"
 msgstr "Delete calls"
 
@@ -14603,7 +14680,7 @@ msgstr "Delete combination {comboLabel}?"
 msgid "Delete connection"
 msgstr "Delete connection"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1745
+#: app/components/roles/tenant-role-access-manager.tsx:1751
 msgid "Delete custom role"
 msgstr "Delete custom role"
 
@@ -14656,7 +14733,7 @@ msgid "Delete link"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:834
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:637
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:654
 msgid "Delete Location"
 msgstr "Delete Location"
 
@@ -14738,7 +14815,7 @@ msgid "Delete restaurant"
 msgstr "Delete restaurant"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:814
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:747
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:764
 msgid "Delete restaurant location?"
 msgstr "Delete restaurant location?"
 
@@ -14861,7 +14938,7 @@ msgstr "Deleted training rule \"{title}\""
 
 #: app/components/hiring/erase-dialog.tsx:89
 #: app/components/phone-agent/call-detail-sheet.tsx:598
-#: app/components/roles/tenant-role-access-manager.tsx:1763
+#: app/components/roles/tenant-role-access-manager.tsx:1769
 #: app/components/staff/notes-tab.tsx:205
 #: app/components/staff/timesheets/card-sheet.tsx:437
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:836
@@ -14907,7 +14984,7 @@ msgstr "Delivers on"
 #: app/components/locations/checkout-rules-cards.tsx:298
 #: app/components/locations/checkout-settings-cards.tsx:53
 #: app/components/locations/checkout-settings-cards.tsx:358
-#: app/components/locations/location-form.tsx:995
+#: app/components/locations/location-form.tsx:1018
 #: app/components/orders/order-detail.tsx:729
 #: app/components/orders/slot-limits-panel.tsx:172
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
@@ -14928,7 +15005,7 @@ msgstr "Delivery"
 msgid "Delivery · {supplier}"
 msgstr "Delivery · {supplier}"
 
-#: app/components/locations/location-form.tsx:577
+#: app/components/locations/location-form.tsx:600
 msgid "Delivery & Zones"
 msgstr "Delivery & Zones"
 
@@ -14948,8 +15025,8 @@ msgstr "Delivery areas, fees, and pickup alternatives."
 msgid "Delivery cancelled."
 msgstr "Delivery cancelled."
 
-#: app/components/orders/order-detail.tsx:964
-#: app/components/orders/order-detail.tsx:1436
+#: app/components/orders/order-detail.tsx:969
+#: app/components/orders/order-detail.tsx:1441
 msgid "Delivery discount"
 msgstr "Delivery discount"
 
@@ -14957,7 +15034,7 @@ msgstr "Delivery discount"
 msgid "Delivery discounts"
 msgstr "Delivery discounts"
 
-#: app/components/orders/order-detail.tsx:981
+#: app/components/orders/order-detail.tsx:986
 #: app/utils/discounts/labels.ts:354
 #: app/utils/discounts/summary.ts:222
 msgid "Delivery fee"
@@ -14999,7 +15076,7 @@ msgstr "Delivery radius"
 msgid "Delivery recorded."
 msgstr "Delivery recorded."
 
-#: app/components/locations/location-form.tsx:1195
+#: app/components/locations/location-form.tsx:1218
 msgid "Delivery Settings & Providers"
 msgstr "Delivery Settings & Providers"
 
@@ -15007,7 +15084,7 @@ msgstr "Delivery Settings & Providers"
 msgid "delivery tips"
 msgstr "delivery tips"
 
-#: app/components/locations/location-form.tsx:1089
+#: app/components/locations/location-form.tsx:1112
 msgid "Delivery Tips"
 msgstr "Delivery Tips"
 
@@ -15015,7 +15092,7 @@ msgstr "Delivery Tips"
 msgid "Delivery Zones"
 msgstr "Delivery Zones"
 
-#: app/components/locations/location-form.tsx:1315
+#: app/components/locations/location-form.tsx:1338
 msgid "Delivery Zones & Geo-Fencing"
 msgstr "Delivery Zones & Geo-Fencing"
 
@@ -15043,7 +15120,7 @@ msgstr "Deposit paid"
 msgid "Deposit paid {summaryAmount}"
 msgstr "Deposit paid {summaryAmount}"
 
-#: app/components/roles/tenant-role-access-manager.tsx:749
+#: app/components/roles/tenant-role-access-manager.tsx:755
 msgid "Deposit reports, charges & refunds"
 msgstr "Deposit reports, charges & refunds"
 
@@ -15072,11 +15149,11 @@ msgstr "Describe when the agent should transfer to a specific contact. For examp
 #: app/components/discounts/discount-form.tsx:949
 #: app/components/hiring/job-editor.tsx:670
 #: app/components/loyalty/reward-dialog.tsx:444
-#: app/components/roles/tenant-role-access-manager.tsx:1008
-#: app/components/roles/tenant-role-access-manager.tsx:1126
-#: app/components/roles/tenant-role-access-manager.tsx:1338
-#: app/components/roles/tenant-role-access-manager.tsx:1497
-#: app/components/roles/tenant-role-access-manager.tsx:1679
+#: app/components/roles/tenant-role-access-manager.tsx:1014
+#: app/components/roles/tenant-role-access-manager.tsx:1132
+#: app/components/roles/tenant-role-access-manager.tsx:1344
+#: app/components/roles/tenant-role-access-manager.tsx:1503
+#: app/components/roles/tenant-role-access-manager.tsx:1685
 #: app/components/settings/cards/organization/shop-card.tsx:345
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
@@ -15092,9 +15169,9 @@ msgstr ""
 msgid "Description (guest-facing)"
 msgstr "Description (guest-facing)"
 
-#: app/components/menu/category-form.tsx:467
+#: app/components/menu/category-form.tsx:470
 #: app/components/menu/item-form.tsx:651
-#: app/components/menu/option-form.tsx:626
+#: app/components/menu/option-form.tsx:629
 msgid "Description (Guest-Facing)"
 msgstr "Description (Guest-Facing)"
 
@@ -15102,7 +15179,7 @@ msgstr "Description (Guest-Facing)"
 msgid "Description saved for {dishName}"
 msgstr "Description saved for {dishName}"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1100
+#: app/components/roles/tenant-role-access-manager.tsx:1106
 msgid "Deselect all"
 msgstr "Deselect all"
 
@@ -15142,7 +15219,7 @@ msgstr "Designs guests can choose"
 msgid "Desktop"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:1369
+#: app/components/locations/location-form.tsx:1392
 #: app/components/reservations/detail-sheet.tsx:101
 #: app/components/reservations/floor-table.tsx:105
 #: app/components/reservations/floor-table.tsx:106
@@ -15198,7 +15275,7 @@ msgstr ""
 msgid "Details"
 msgstr "Details"
 
-#: app/components/locations/location-form.tsx:568
+#: app/components/locations/location-form.tsx:591
 msgid "Details & Address"
 msgstr "Details & Address"
 
@@ -15293,7 +15370,7 @@ msgid "Dietary Tags"
 msgstr "Dietary Tags"
 
 #: app/components/menu/item-form.tsx:790
-#: app/components/menu/option-form.tsx:809
+#: app/components/menu/option-form.tsx:812
 msgid "Dietary, Allergens & Calories"
 msgstr "Dietary, Allergens & Calories"
 
@@ -15309,6 +15386,10 @@ msgstr "Difference"
 msgid "Different limit at a location"
 msgstr "Different limit at a location"
 
+#: app/components/locations/location-form.tsx:1464
+msgid "Digits"
+msgstr "Digits"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1650
 msgid "Dimensions:"
 msgstr "Dimensions:"
@@ -15321,7 +15402,7 @@ msgstr "Dine in"
 msgid "Dine-in"
 msgstr "Dine-in"
 
-#: app/components/locations/location-form.tsx:1015
+#: app/components/locations/location-form.tsx:1038
 msgid "Dine-In / In-House"
 msgstr "Dine-In / In-House"
 
@@ -15329,11 +15410,11 @@ msgstr "Dine-In / In-House"
 msgid "Dine-in max guests"
 msgstr "Dine-in max guests"
 
-#: app/components/locations/location-form.tsx:1342
+#: app/components/locations/location-form.tsx:1365
 msgid "Dine-in tickets can hold later courses until the kitchen fires them. Takeaway, delivery and drive-through send everything at once."
 msgstr "Dine-in tickets can hold later courses until the kitchen fires them. Takeaway, delivery and drive-through send everything at once."
 
-#: app/components/locations/location-form.tsx:1101
+#: app/components/locations/location-form.tsx:1124
 msgid "Dine-In Tips"
 msgstr "Dine-In Tips"
 
@@ -15499,8 +15580,8 @@ msgstr "Disconnect Canva"
 #: app/components/discounts/discount-form.tsx:1053
 #: app/components/discounts/discount-form.tsx:1636
 #: app/components/loyalty/reward-dialog.tsx:482
-#: app/components/orders/order-detail.tsx:956
-#: app/components/orders/order-detail.tsx:1438
+#: app/components/orders/order-detail.tsx:961
+#: app/components/orders/order-detail.tsx:1443
 #: app/components/print/restaurant/vertical-ui.tsx:143
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:418
 msgid "Discount"
@@ -15533,7 +15614,7 @@ msgstr "Discounted quantity"
 #: app/components/app-sidebar.tsx:416
 #: app/components/menu/delete-effects.tsx:269
 #: app/components/menu/menu-review-card.tsx:107
-#: app/components/roles/tenant-role-access-manager.tsx:524
+#: app/components/roles/tenant-role-access-manager.tsx:530
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:308
 msgid "Discounts"
 msgstr "Discounts"
@@ -15542,7 +15623,7 @@ msgstr "Discounts"
 #~ msgid "Discounts, coupon codes and how often they were used."
 #~ msgstr "Discounts, coupon codes and how often they were used."
 
-#: app/components/roles/tenant-role-access-manager.tsx:525
+#: app/components/roles/tenant-role-access-manager.tsx:531
 msgid "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 msgstr "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 
@@ -15572,7 +15653,7 @@ msgstr "Dishes"
 msgid "Dishes above this percentage are highlighted in Recipes & menu cost."
 msgstr "Dishes above this percentage are highlighted in Recipes & menu cost."
 
-#: app/components/menu/category-form.tsx:482
+#: app/components/menu/category-form.tsx:485
 msgid "Dishes and beverages in this category."
 msgstr "Dishes and beverages in this category."
 
@@ -15580,7 +15661,7 @@ msgstr "Dishes and beverages in this category."
 msgid "Dishes can't be picked in this editor."
 msgstr "Dishes can't be picked in this editor."
 
-#: app/components/menu/category-form.tsx:446
+#: app/components/menu/category-form.tsx:449
 msgid "Dishes in this category start in this course on a dine-in ticket. The location chooses the course names."
 msgstr "Dishes in this category start in this course on a dine-in ticket. The location chooses the course names."
 
@@ -15798,7 +15879,7 @@ msgstr "Done. The dishes are back on the menu."
 msgid "Door"
 msgstr "Door"
 
-#: app/components/locations/location-form.tsx:1259
+#: app/components/locations/location-form.tsx:1282
 msgid "DoorDash Drive"
 msgstr "DoorDash Drive"
 
@@ -16241,7 +16322,7 @@ msgstr "e.g. Dinner 3-server"
 msgid "e.g. Downtown Express, Zone 1"
 msgstr "e.g. Downtown Express, Zone 1"
 
-#: app/components/locations/location-form.tsx:609
+#: app/components/locations/location-form.tsx:632
 msgid "e.g. Downtown Flagship"
 msgstr "e.g. Downtown Flagship"
 
@@ -16476,7 +16557,7 @@ msgstr "Earning reversed"
 #: app/components/phone-agent/summary-card.tsx:55
 #: app/components/reservations/experiences/experience-editor.tsx:940
 #: app/components/reservations/policies/policies-screen.tsx:428
-#: app/components/roles/tenant-role-access-manager.tsx:1541
+#: app/components/roles/tenant-role-access-manager.tsx:1547
 #: app/components/staff/kiosk-manager.tsx:447
 #: app/components/staff/onboarding/certificates-tab.tsx:278
 #: app/components/staff/onboarding/templates-page.tsx:213
@@ -16561,11 +16642,11 @@ msgstr "Edit comment..."
 msgid "Edit count list"
 msgstr "Edit count list"
 
-#: app/components/roles/tenant-role-access-manager.tsx:966
+#: app/components/roles/tenant-role-access-manager.tsx:972
 msgid "Edit Custom Role"
 msgstr "Edit Custom Role"
 
-#: app/components/roles/tenant-role-access-manager.tsx:352
+#: app/components/roles/tenant-role-access-manager.tsx:358
 msgid "Edit dates of birth, home addresses, and emergency contacts. Includes View private details."
 msgstr "Edit dates of birth, home addresses, and emergency contacts. Includes View private details."
 
@@ -16591,7 +16672,7 @@ msgstr "Edit Details"
 msgid "Edit dining area"
 msgstr "Edit dining area"
 
-#: app/components/roles/tenant-role-access-manager.tsx:460
+#: app/components/roles/tenant-role-access-manager.tsx:466
 msgid "Edit dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences. Includes View reservation settings & experiences."
 msgstr "Edit dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences. Includes View reservation settings & experiences."
 
@@ -16602,7 +16683,7 @@ msgstr "Edit Drop"
 #~ msgid "Edit guest details"
 #~ msgstr "Edit guest details"
 
-#: app/components/roles/tenant-role-access-manager.tsx:472
+#: app/components/roles/tenant-role-access-manager.tsx:478
 msgid "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
 msgstr "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
 
@@ -16625,7 +16706,7 @@ msgstr "Edit item"
 msgid "Edit layout"
 msgstr "Edit layout"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:619
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:636
 msgid "Edit Location"
 msgstr "Edit Location"
 
@@ -16676,7 +16757,7 @@ msgstr "Edit position"
 msgid "Edit post"
 msgstr "Edit post"
 
-#: app/components/roles/tenant-role-access-manager.tsx:351
+#: app/components/roles/tenant-role-access-manager.tsx:357
 msgid "Edit private details"
 msgstr "Edit private details"
 
@@ -16700,7 +16781,7 @@ msgstr "Edit Reminder"
 msgid "Edit reward"
 msgstr "Edit reward"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1305
+#: app/components/roles/tenant-role-access-manager.tsx:1311
 msgid "Edit role"
 msgstr "Edit role"
 
@@ -16752,19 +16833,19 @@ msgstr "Edit team notes"
 msgid "Edit template"
 msgstr "Edit template"
 
-#: app/components/roles/tenant-role-access-manager.tsx:501
+#: app/components/roles/tenant-role-access-manager.tsx:507
 msgid "Edit the loyalty program and its rewards. Includes View loyalty members."
 msgstr "Edit the loyalty program and its rewards. Includes View loyalty members."
 
-#: app/components/roles/tenant-role-access-manager.tsx:389
+#: app/components/roles/tenant-role-access-manager.tsx:395
 msgid "Edit time cards"
 msgstr "Edit time cards"
 
-#: app/components/roles/tenant-role-access-manager.tsx:213
+#: app/components/roles/tenant-role-access-manager.tsx:219
 msgid "Edit website content"
 msgstr "Edit website content"
 
-#: app/components/roles/tenant-role-access-manager.tsx:570
+#: app/components/roles/tenant-role-access-manager.tsx:576
 msgid "Edit what goes into each dish, typed costs, and when dishes sell out on their own. Includes View stock."
 msgstr "Edit what goes into each dish, typed costs, and when dishes sell out on their own. Includes View stock."
 
@@ -16985,7 +17066,7 @@ msgstr "Enable gift card redemptions on this drop"
 msgid "Enable hosted checkout"
 msgstr "Enable hosted checkout"
 
-#: app/components/locations/location-form.tsx:966
+#: app/components/locations/location-form.tsx:989
 msgid "Enable or disable available fulfillment channels for this location."
 msgstr "Enable or disable available fulfillment channels for this location."
 
@@ -17130,7 +17211,7 @@ msgstr "Enhanced"
 msgid "Enter 0 or more copies"
 msgstr "Enter 0 or more copies"
 
-#: app/components/menu/option-form.tsx:687
+#: app/components/menu/option-form.tsx:690
 msgid "Enter 0.00 for no extra charge (e.g. Free choice)."
 msgstr "Enter 0.00 for no extra charge (e.g. Free choice)."
 
@@ -17297,6 +17378,10 @@ msgstr "Enter a phone number for the carrier"
 #~ msgid "Enter a phone number."
 #~ msgstr "Enter a phone number."
 
+#: app/components/pos/station-register-settings.tsx:154
+msgid "Enter a positive maximum price for custom items."
+msgstr "Enter a positive maximum price for custom items."
+
 #: app/utils/reservations/experiences-view.ts:217
 msgid "Enter a price like 75.00, or leave it empty."
 msgstr "Enter a price like 75.00, or leave it empty."
@@ -17309,6 +17394,10 @@ msgstr "Enter a program name."
 #: app/components/loyalty/promotion-dialog.tsx:391
 msgid "Enter a real date and time."
 msgstr "Enter a real date and time."
+
+#: app/components/pos/pos-day-report.tsx:458
+msgid "Enter a reason for closing this shift remotely."
+msgstr "Enter a reason for closing this shift remotely."
 
 #: app/components/reservations/payment-panel.tsx:367
 msgid "Enter a reason for the refund."
@@ -17357,6 +17446,14 @@ msgstr "Enter a time, like 15:00."
 #: app/components/loyalty/promotion-dialog.tsx:407
 msgid "Enter a time, like 17:00."
 msgstr "Enter a time, like 17:00."
+
+#: app/components/pos/station-register-settings.tsx:167
+msgid "Enter a valid cash variance threshold or leave it blank."
+msgstr "Enter a valid cash variance threshold or leave it blank."
+
+#: app/components/pos/pos-day-report.tsx:453
+msgid "Enter a valid counted cash amount."
+msgstr "Enter a valid counted cash amount."
 
 #: app/components/phone-agent/settings-page.tsx:133
 #: app/utils/staffing/staff-validation.ts:44
@@ -17543,6 +17640,10 @@ msgstr "Enter between {min} and {max} hours."
 #: app/components/staff/labor-policy-editor.tsx:324
 msgid "Enter between {min} and {max} minutes."
 msgstr "Enter between {min} and {max} minutes."
+
+#: app/components/roles/tenant-role-access-manager.tsx:174
+msgid "Enter counted cash and close an open cash drawer shift from the dashboard when a till is unavailable."
+msgstr "Enter counted cash and close an open cash drawer shift from the dashboard when a till is unavailable."
 
 #: app/components/staff/labor/labor-settings.tsx:143
 msgid "Enter covers per hour from 0.5 to 200, with at most one decimal."
@@ -17909,7 +18010,7 @@ msgstr "Est. labor {labor}"
 msgid "Est. pay"
 msgstr "Est. pay"
 
-#: app/components/locations/location-form.tsx:891
+#: app/components/locations/location-form.tsx:914
 msgid "Estimated kitchen lead time and extra time for high-volume orders."
 msgstr "Estimated kitchen lead time and extra time for high-volume orders."
 
@@ -17918,11 +18019,11 @@ msgstr "Estimated kitchen lead time and extra time for high-volume orders."
 msgid "Estimated labor cost"
 msgstr "Estimated labor cost"
 
-#: app/components/locations/location-form.tsx:1291
+#: app/components/locations/location-form.tsx:1314
 msgid "Estimated Max Delivery Time (minutes)"
 msgstr "Estimated Max Delivery Time (minutes)"
 
-#: app/components/locations/location-form.tsx:1272
+#: app/components/locations/location-form.tsx:1295
 msgid "Estimated Min Delivery Time (minutes)"
 msgstr "Estimated Min Delivery Time (minutes)"
 
@@ -18058,6 +18159,10 @@ msgstr "Every no-show over the last 30 days with its date, service, party size a
 msgid "Every order"
 msgstr "Every order"
 
+#: ../../packages/reports/src/ui/report-labels.ts:153
+msgid "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
+msgstr "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
+
 #: app/components/loyalty/loyalty-chrome.tsx:114
 msgid "Every point movement, plus the queue of redemptions and sales waiting for review."
 msgstr "Every point movement, plus the queue of redemptions and sales waiting for review."
@@ -18100,6 +18205,10 @@ msgstr "Every week"
 #: app/utils/discounts/labels.ts:174
 msgid "Everyone"
 msgstr "Everyone"
+
+#: app/components/pos/station-register-settings.tsx:133
+msgid "Everyone at the till"
+msgstr "Everyone at the till"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:337
 msgid "Everyone else won't see that it exists."
@@ -18221,7 +18330,7 @@ msgstr "Exclude from discounts"
 msgid "Exclude from discounts. Never receives a discount, for example gift cards."
 msgstr "Exclude from discounts. Never receives a discount, for example gift cards."
 
-#: app/components/menu/category-form.tsx:633
+#: app/components/menu/category-form.tsx:636
 #: app/components/menu/item-form.tsx:1032
 msgid "Exclude from slot limits"
 msgstr "Exclude from slot limits"
@@ -18235,7 +18344,7 @@ msgstr "Exclude from Throttling"
 msgid "Exclude items"
 msgstr "Exclude items"
 
-#: app/components/menu/category-form.tsx:598
+#: app/components/menu/category-form.tsx:601
 msgid "Exclude items in this category from kitchen throttling and large order prep time delays (e.g. retail items, bottled drinks)."
 msgstr "Exclude items in this category from kitchen throttling and large order prep time delays (e.g. retail items, bottled drinks)."
 
@@ -18267,7 +18376,7 @@ msgstr "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgid "Exempt from kitchen prep delay calculations."
 msgstr "Exempt from kitchen prep delay calculations."
 
-#: app/components/menu/category-form.tsx:611
+#: app/components/menu/category-form.tsx:614
 msgid "Exempt from Throttling"
 msgstr "Exempt from Throttling"
 
@@ -18283,11 +18392,11 @@ msgstr "Expand service notes"
 msgid "Expected"
 msgstr "Expected"
 
-#: app/components/pos/pos-day-report.tsx:172
+#: app/components/pos/pos-day-report.tsx:221
 msgid "Expected {expected}"
 msgstr "Expected {expected}"
 
-#: app/components/pos/pos-day-report.tsx:174
+#: app/components/pos/pos-day-report.tsx:223
 msgid "Expected {expected}, counted {counted}"
 msgstr "Expected {expected}, counted {counted}"
 
@@ -18298,6 +18407,18 @@ msgstr "Expected <0>{expected}</0>"
 #: app/components/inventory/count-review-screen.tsx:457
 msgid "Expected <0>{expectedText}</0>"
 msgstr "Expected <0>{expectedText}</0>"
+
+#: ../../packages/reports/src/ui/report-labels.ts:145
+msgid "Expected against counted cash for every closed and open till shift over the last 30 days."
+msgstr "Expected against counted cash for every closed and open till shift over the last 30 days."
+
+#: app/components/pos/pos-day-report.tsx:435
+#~ msgid "Expected cash in drawer: {0}. Closing cannot be undone."
+#~ msgstr "Expected cash in drawer: {0}. Closing cannot be undone."
+
+#: app/components/pos/pos-day-report.tsx:436
+msgid "Expected cash in drawer: {expectedCashText}. Closing cannot be undone."
+msgstr "Expected cash in drawer: {expectedCashText}. Closing cannot be undone."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:311
 #~ msgid "Expected covers"
@@ -18449,7 +18570,7 @@ msgstr "Exported {exportedCount} people."
 msgid "Extend turn by 15m"
 msgstr "Extend turn by 15m"
 
-#: app/components/menu/option-form.tsx:682
+#: app/components/menu/option-form.tsx:685
 msgid "Extra charge when this topping is added to the whole pizza."
 msgstr "Extra charge when this topping is added to the whole pizza."
 
@@ -19090,7 +19211,7 @@ msgstr "Filters"
 msgid "Filters: {summary}"
 msgstr "Filters: {summary}"
 
-#: app/components/roles/tenant-role-access-manager.tsx:747
+#: app/components/roles/tenant-role-access-manager.tsx:753
 msgid "Finance"
 msgstr "Finance"
 
@@ -19162,7 +19283,7 @@ msgstr "Finishing"
 #~ msgid "Finishing (<15m)"
 #~ msgstr "Finishing (<15m)"
 
-#: app/components/locations/location-form.tsx:1352
+#: app/components/locations/location-form.tsx:1375
 msgid "Fire courses one at a time"
 msgstr "Fire courses one at a time"
 
@@ -19170,7 +19291,7 @@ msgstr "Fire courses one at a time"
 msgid "Fire safety"
 msgstr "Fire safety"
 
-#: app/components/locations/location-form.tsx:1390
+#: app/components/locations/location-form.tsx:1413
 msgid "Fire the next course after (minutes)"
 msgstr "Fire the next course after (minutes)"
 
@@ -19194,6 +19315,10 @@ msgstr "First day"
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:154
 msgid "First name"
 msgstr "First name"
+
+#: app/components/locations/location-form.tsx:1496
+msgid "First order of the business day: <0>{previewNumber}</0>"
+msgstr "First order of the business day: <0>{previewNumber}</0>"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:64
 msgid "First Order Placed"
@@ -19313,6 +19438,14 @@ msgstr "Flag a shift for review when this break was not taken."
 msgid "Flag applicants who answer differently. You still decide who to talk to."
 msgstr "Flag applicants who answer differently. You still decide who to talk to."
 
+#: app/components/pos/station-register-settings.tsx:273
+#~ msgid "Flag cash variance over ({0})"
+#~ msgstr "Flag cash variance over ({0})"
+
+#: app/components/pos/station-register-settings.tsx:274
+msgid "Flag cash variance over ({locationCurrency})"
+msgstr "Flag cash variance over ({locationCurrency})"
+
 #: app/components/staff/labor-core-rules.tsx:290
 msgid "Flag long shifts for review"
 msgstr "Flag long shifts for review"
@@ -19388,7 +19521,7 @@ msgstr "Flow"
 msgid "Flyer"
 msgstr "Flyer"
 
-#: app/components/roles/tenant-role-access-manager.tsx:287
+#: app/components/roles/tenant-role-access-manager.tsx:293
 msgid "Follow up on calls"
 msgstr "Follow up on calls"
 
@@ -19536,6 +19669,10 @@ msgstr "Form submissions"
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:131
 msgid "Formal"
 msgstr "Formal"
+
+#: app/components/locations/location-form.tsx:1437
+msgid "Format and daily reset time for new web, QR and Station order numbers at this location. Existing orders keep their numbers."
+msgstr "Format and daily reset time for new web, QR and Station order numbers at this location. Existing orders keep their numbers."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1673
 msgid "Format:"
@@ -19784,11 +19921,11 @@ msgstr "Frying oil"
 msgid "Fulfillment"
 msgstr "Fulfillment"
 
-#: app/components/locations/location-form.tsx:574
+#: app/components/locations/location-form.tsx:597
 msgid "Fulfillment & Timing"
 msgstr "Fulfillment & Timing"
 
-#: app/components/locations/location-form.tsx:963
+#: app/components/locations/location-form.tsx:986
 msgid "Fulfillment Options"
 msgstr "Fulfillment Options"
 
@@ -19815,7 +19952,7 @@ msgstr "Full name"
 msgid "Full Name"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:1341
+#: app/components/orders/order-detail.tsx:1346
 msgid "Full refund"
 msgstr "Full refund"
 
@@ -19849,7 +19986,7 @@ msgstr ""
 #~ msgid "General & Policies"
 #~ msgstr "General & Policies"
 
-#: app/components/roles/tenant-role-access-manager.tsx:663
+#: app/components/roles/tenant-role-access-manager.tsx:669
 msgid "General manager"
 msgstr "General manager"
 
@@ -19953,7 +20090,7 @@ msgid "Get your agent answering calls"
 msgstr "Get your agent answering calls"
 
 #: app/components/app-sidebar.tsx:422
-#: app/components/roles/tenant-role-access-manager.tsx:575
+#: app/components/roles/tenant-role-access-manager.tsx:581
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_layout.tsx:71
 msgid "Gift cards"
 msgstr "Gift cards"
@@ -20005,7 +20142,7 @@ msgstr "Give the group a name."
 msgid "Give the job a title."
 msgstr "Give the job a title."
 
-#: app/components/orders/order-detail.tsx:1182
+#: app/components/orders/order-detail.tsx:1187
 msgid "Give the money back at the counter first, then record it here."
 msgstr "Give the money back at the counter first, then record it here."
 
@@ -20046,7 +20183,7 @@ msgstr "Gluten-free"
 #: app/components/menu/item-form.tsx:806
 #: app/components/menu/modifier-form.tsx:1625
 #: app/components/menu/modifier-form.tsx:2004
-#: app/components/menu/option-form.tsx:825
+#: app/components/menu/option-form.tsx:828
 #: app/components/reservations/booking-sheet.tsx:62
 #: app/utils/reservations/labels.ts:103
 msgid "Gluten-Free"
@@ -20297,11 +20434,15 @@ msgstr ""
 #~ msgid "Guest CRM Profile"
 #~ msgstr "Guest CRM Profile"
 
+#: app/components/pos/station-register-settings.tsx:210
+msgid "Guest details at checkout"
+msgstr "Guest details at checkout"
+
 #~ msgid "Guest details saved."
 #~ msgstr "Guest details saved."
 
 #: app/components/menu/item-form.tsx:793
-#: app/components/menu/option-form.tsx:812
+#: app/components/menu/option-form.tsx:815
 msgid "Guest dietary tags and allergen disclosure information."
 msgstr "Guest dietary tags and allergen disclosure information."
 
@@ -20366,6 +20507,10 @@ msgstr "Guest Name"
 #~ msgid "Guest name and phone number are required."
 #~ msgstr "Guest name and phone number are required."
 
+#: app/components/pos/station-register-settings.tsx:126
+msgid "Guest name required"
+msgstr "Guest name required"
+
 #: app/components/reservations/booking-sheet.tsx:405
 msgid "Guest name, phone number and time are required."
 msgstr "Guest name, phone number and time are required."
@@ -20387,15 +20532,15 @@ msgstr "Guest only"
 msgid "Guest order messages"
 msgstr "Guest order messages"
 
-#: app/components/roles/tenant-role-access-manager.tsx:467
 #: app/components/roles/tenant-role-access-manager.tsx:473
+#: app/components/roles/tenant-role-access-manager.tsx:479
 msgid "Guest personal data"
 msgstr "Guest personal data"
 
 #~ msgid "Guest profiles, preferences, visit history, and notes live in your regional database."
 #~ msgstr "Guest profiles, preferences, visit history, and notes live in your regional database."
 
-#: app/components/roles/tenant-role-access-manager.tsx:727
+#: app/components/roles/tenant-role-access-manager.tsx:733
 msgid "Guest relations"
 msgstr "Guest relations"
 
@@ -20427,12 +20572,12 @@ msgstr "Guest-facing name, internal SKU, and description."
 msgid "Guest, no sign-in"
 msgstr "Guest, no sign-in"
 
-#: app/components/roles/tenant-role-access-manager.tsx:737
+#: app/components/roles/tenant-role-access-manager.tsx:743
 msgid "Guestbook manager"
 msgstr "Guestbook manager"
 
-#: app/components/roles/tenant-role-access-manager.tsx:729
-#: app/components/roles/tenant-role-access-manager.tsx:739
+#: app/components/roles/tenant-role-access-manager.tsx:735
+#: app/components/roles/tenant-role-access-manager.tsx:745
 msgid "Guestbook profiles & merges"
 msgstr "Guestbook profiles & merges"
 
@@ -20681,7 +20826,7 @@ msgstr "Half"
 msgid "Half and whole toppings"
 msgstr "Half and whole toppings"
 
-#: app/components/menu/option-form.tsx:715
+#: app/components/menu/option-form.tsx:718
 msgid "Half pizza price ($)"
 msgstr "Half pizza price ($)"
 
@@ -20939,12 +21084,12 @@ msgstr "High contrast"
 #: app/components/roles/tenant-role-access-manager.tsx:118
 #: app/components/roles/tenant-role-access-manager.tsx:140
 #: app/components/roles/tenant-role-access-manager.tsx:157
-#: app/components/roles/tenant-role-access-manager.tsx:215
-#: app/components/roles/tenant-role-access-manager.tsx:254
-#: app/components/roles/tenant-role-access-manager.tsx:306
-#: app/components/roles/tenant-role-access-manager.tsx:329
-#: app/components/roles/tenant-role-access-manager.tsx:414
-#: app/components/roles/tenant-role-access-manager.tsx:461
+#: app/components/roles/tenant-role-access-manager.tsx:221
+#: app/components/roles/tenant-role-access-manager.tsx:260
+#: app/components/roles/tenant-role-access-manager.tsx:312
+#: app/components/roles/tenant-role-access-manager.tsx:335
+#: app/components/roles/tenant-role-access-manager.tsx:420
+#: app/components/roles/tenant-role-access-manager.tsx:467
 msgid "High impact"
 msgstr "High impact"
 
@@ -20989,16 +21134,16 @@ msgstr "Hired on {hiredOn}."
 msgid "Hired."
 msgstr "Hired."
 
-#: ../../packages/reports/src/ui/report-labels.ts:147
+#: ../../packages/reports/src/ui/report-labels.ts:159
 #: app/components/app-sidebar.tsx:654
 #: app/components/command-menu.tsx:148
-#: app/components/roles/tenant-role-access-manager.tsx:419
+#: app/components/roles/tenant-role-access-manager.tsx:425
 #: app/components/workspace-breadcrumb.tsx:38
 #: app/routes/_app+/$orgSlug_+/staff+/hiring.tsx:42
 msgid "Hiring"
 msgstr "Hiring"
 
-#: app/components/roles/tenant-role-access-manager.tsx:683
+#: app/components/roles/tenant-role-access-manager.tsx:689
 msgid "Hiring manager"
 msgstr "Hiring manager"
 
@@ -21091,7 +21236,7 @@ msgstr "Holidays, private events and times when tables are not available."
 msgid "Home"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:693
+#: app/components/roles/tenant-role-access-manager.tsx:699
 msgid "Host"
 msgstr "Host"
 
@@ -21427,7 +21572,7 @@ msgstr "I checked the online payment for this tab in the payment dashboard and w
 msgid "I fixed it myself"
 msgstr "I fixed it myself"
 
-#: app/components/orders/order-detail.tsx:1243
+#: app/components/orders/order-detail.tsx:1248
 msgid "I have received payment at handoff"
 msgstr "I have received payment at handoff"
 
@@ -21721,7 +21866,7 @@ msgstr "In your time zone."
 msgid "In-App"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:1221
+#: app/components/locations/location-form.tsx:1244
 msgid "In-House Delivery"
 msgstr "In-House Delivery"
 
@@ -21729,7 +21874,7 @@ msgstr "In-House Delivery"
 msgid "In-House Delivery Fee ($)"
 msgstr "In-House Delivery Fee ($)"
 
-#: app/components/locations/location-form.tsx:998
+#: app/components/locations/location-form.tsx:1021
 msgid "In-house fleet, Uber Eats, or DoorDash delivery."
 msgstr "In-house fleet, Uber Eats, or DoorDash delivery."
 
@@ -21737,7 +21882,7 @@ msgstr "In-house fleet, Uber Eats, or DoorDash delivery."
 msgid "In-house only"
 msgstr "In-house only"
 
-#: app/components/locations/location-form.tsx:1066
+#: app/components/locations/location-form.tsx:1089
 msgid "In-House Tips"
 msgstr "In-House Tips"
 
@@ -21867,7 +22012,7 @@ msgstr "Insert field here"
 #~ msgid "Insert Merge Tags:"
 #~ msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:1720
+#: app/components/roles/tenant-role-access-manager.tsx:1726
 msgid "Inspect"
 msgstr "Inspect"
 
@@ -21926,7 +22071,7 @@ msgstr "Instantly enable Stripe (mock)"
 msgid "Integrations"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:300
+#: app/components/roles/tenant-role-access-manager.tsx:306
 msgid "Internal channels for your team."
 msgstr "Internal channels for your team."
 
@@ -21944,7 +22089,7 @@ msgstr "Internal name"
 msgid "Internal notes"
 msgstr "Internal notes"
 
-#: app/components/menu/category-form.tsx:455
+#: app/components/menu/category-form.tsx:458
 #: app/components/menu/menu-form.tsx:235
 #: app/components/menu/modifier-form.tsx:988
 #: app/components/menu/modifier-form.tsx:1520
@@ -21953,7 +22098,7 @@ msgid "Internal Reference (Optional)"
 msgstr "Internal Reference (Optional)"
 
 #: app/components/menu/item-form.tsx:639
-#: app/components/menu/option-form.tsx:614
+#: app/components/menu/option-form.tsx:617
 msgid "Internal Reference / SKU (Optional)"
 msgstr "Internal Reference / SKU (Optional)"
 
@@ -22019,7 +22164,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:428
 #: app/components/inventory/inventory-chrome.tsx:39
-#: app/components/roles/tenant-role-access-manager.tsx:541
+#: app/components/roles/tenant-role-access-manager.tsx:547
 #: app/components/workspace-breadcrumb.tsx:91
 msgid "Inventory"
 msgstr "Inventory"
@@ -22436,11 +22581,11 @@ msgstr "Items counted"
 msgid "Items discounted per use"
 msgstr "Items discounted per use"
 
-#: app/components/menu/category-form.tsx:636
+#: app/components/menu/category-form.tsx:639
 msgid "Items in this category do not count toward slot capacity."
 msgstr "Items in this category do not count toward slot capacity."
 
-#: app/components/menu/category-form.tsx:614
+#: app/components/menu/category-form.tsx:617
 msgid "Items in this category will not add preparation delay to orders."
 msgstr "Items in this category will not add preparation delay to orders."
 
@@ -22468,7 +22613,7 @@ msgstr "Items running low, counts that are due and deliveries to pay will show h
 msgid "Items sold together, such as a pizza, a side and a drink."
 msgstr "Items sold together, such as a pizza, a side and a drink."
 
-#: app/components/pos/pos-day-report.tsx:216
+#: app/components/pos/pos-day-report.tsx:269
 msgid "Items taken off tabs"
 msgstr "Items taken off tabs"
 
@@ -22525,11 +22670,11 @@ msgstr "Job applicants: {applicantCount} (not included in the backup)"
 msgid "Job post"
 msgstr "Job post"
 
-#: app/components/roles/tenant-role-access-manager.tsx:685
+#: app/components/roles/tenant-role-access-manager.tsx:691
 msgid "Job posts & applicants"
 msgstr "Job posts & applicants"
 
-#: app/components/roles/tenant-role-access-manager.tsx:421
+#: app/components/roles/tenant-role-access-manager.tsx:427
 msgid "Job posts and applicants. Only applies when Hiring is turned on for your organization."
 msgstr "Job posts and applicants. Only applies when Hiring is turned on for your organization."
 
@@ -22667,7 +22812,7 @@ msgstr "Keep it"
 msgid "Keep mine"
 msgstr "Keep mine"
 
-#: app/components/orders/order-detail.tsx:1362
+#: app/components/orders/order-detail.tsx:1367
 msgid "Keep order"
 msgstr "Keep order"
 
@@ -22890,11 +23035,11 @@ msgid "Kitchen closed"
 msgstr "Kitchen closed"
 
 #: app/components/menu/item-form.tsx:619
-#: app/components/menu/option-form.tsx:589
+#: app/components/menu/option-form.tsx:592
 msgid "Kitchen highlight"
 msgstr "Kitchen highlight"
 
-#: app/components/roles/tenant-role-access-manager.tsx:781
+#: app/components/roles/tenant-role-access-manager.tsx:787
 msgid "Kitchen manager"
 msgstr "Kitchen manager"
 
@@ -22903,11 +23048,11 @@ msgstr "Kitchen manager"
 msgid "Kitchen name (optional)"
 msgstr "Kitchen name (optional)"
 
-#: app/components/roles/tenant-role-access-manager.tsx:772
+#: app/components/roles/tenant-role-access-manager.tsx:778
 msgid "Kitchen team"
 msgstr "Kitchen team"
 
-#: app/components/menu/category-form.tsx:595
+#: app/components/menu/category-form.tsx:598
 msgid "Kitchen Throttling Exemption"
 msgstr "Kitchen Throttling Exemption"
 
@@ -22941,7 +23086,7 @@ msgstr "Label / Reason (Optional)"
 msgid "Label calls to find them later. With automatic tagging on, the agent applies the tag when the description fits the call."
 msgstr "Label calls to find them later. With automatic tagging on, the agent applies the tag when the description fits the call."
 
-#: ../../packages/reports/src/ui/report-labels.ts:146
+#: ../../packages/reports/src/ui/report-labels.ts:158
 #: app/components/app-sidebar.tsx:649
 #: app/components/command-menu.tsx:147
 #: app/components/staff/labor/labor-page.tsx:211
@@ -23217,7 +23362,7 @@ msgstr "Last paid, per unit"
 msgid "Last seating"
 msgstr "Last seating"
 
-#: app/components/orders/order-detail.tsx:1219
+#: app/components/orders/order-detail.tsx:1224
 msgid "Last updated"
 msgstr "Last updated"
 
@@ -23418,7 +23563,7 @@ msgstr "Leave empty to apply to every party size."
 msgid "Leave empty to charge the policy fee. You can only lower it."
 msgstr "Leave empty to charge the policy fee. You can only lower it."
 
-#: app/components/locations/location-form.tsx:1397
+#: app/components/locations/location-form.tsx:1420
 msgid "Leave empty to fire by hand"
 msgstr "Leave empty to fire by hand"
 
@@ -24334,11 +24479,11 @@ msgstr "Location default"
 msgid "Location defaults"
 msgstr "Location defaults"
 
-#: app/components/locations/location-form.tsx:588
+#: app/components/locations/location-form.tsx:611
 msgid "Location Details"
 msgstr "Location Details"
 
-#: app/components/locations/location-form.tsx:603
+#: app/components/locations/location-form.tsx:626
 msgid "Location Name"
 msgstr "Location Name"
 
@@ -24373,7 +24518,7 @@ msgstr "Location Status"
 msgid "Location time zone changed"
 msgstr "Location time zone changed"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:682
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:699
 msgid "Location time zone is used to compute reservation seating slots. Changing the time zone will prompt you to re-derive future reservation times in Reservations Settings."
 msgstr "Location time zone is used to compute reservation seating slots. Changing the time zone will prompt you to re-derive future reservation times in Reservations Settings."
 
@@ -24511,7 +24656,7 @@ msgid "Long names get cut off on small screens."
 msgstr "Long names get cut off on small screens."
 
 #: app/components/menu/item-form.tsx:633
-#: app/components/menu/option-form.tsx:603
+#: app/components/menu/option-form.tsx:606
 msgid "Long prep"
 msgstr "Long prep"
 
@@ -24601,7 +24746,7 @@ msgstr "Lower numbers come first."
 #: app/components/app-sidebar.tsx:600
 #: app/components/loyalty/customer-loyalty-panel.tsx:228
 #: app/components/loyalty/loyalty-chrome.tsx:90
-#: app/components/roles/tenant-role-access-manager.tsx:489
+#: app/components/roles/tenant-role-access-manager.tsx:495
 msgid "Loyalty"
 msgstr "Loyalty"
 
@@ -24630,7 +24775,7 @@ msgstr "Loyalty points"
 msgid "Loyalty program"
 msgstr "Loyalty program"
 
-#: app/components/roles/tenant-role-access-manager.tsx:491
+#: app/components/roles/tenant-role-access-manager.tsx:497
 msgid "Loyalty program, members and points, redemptions waiting for review, and loyalty reports. Only applies when Loyalty is turned on for your organization."
 msgstr "Loyalty program, members and points, redemptions waiting for review, and loyalty reports. Only applies when Loyalty is turned on for your organization."
 
@@ -24638,7 +24783,7 @@ msgstr "Loyalty program, members and points, redemptions waiting for review, and
 msgid "Loyalty promotions"
 msgstr "Loyalty promotions"
 
-#: app/components/orders/order-detail.tsx:976
+#: app/components/orders/order-detail.tsx:981
 msgid "Loyalty reward"
 msgstr "Loyalty reward"
 
@@ -24705,7 +24850,7 @@ msgstr "Mailbox"
 msgid "Mailbox sources"
 msgstr "Mailbox sources"
 
-#: app/components/locations/location-form.tsx:1367
+#: app/components/locations/location-form.tsx:1390
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:129
 msgid "Main"
 msgstr "Main"
@@ -24818,7 +24963,7 @@ msgstr "Make sizes"
 msgid "Make this choice required"
 msgstr "Make this choice required"
 
-#: app/components/locations/location-form.tsx:756
+#: app/components/locations/location-form.tsx:779
 msgid "Make this the primary location for your restaurant."
 msgstr "Make this the primary location for your restaurant."
 
@@ -24833,15 +24978,15 @@ msgstr "Makes a new draft for the people who got this broadcast, did not open or
 #~ msgid "Manage active tables, minimum and maximum covers (1–99), shapes, and online bookability. Table labels are unique per location."
 #~ msgstr "Manage active tables, minimum and maximum covers (1–99), shapes, and online bookability. Table labels are unique per location."
 
-#: app/components/roles/tenant-role-access-manager.tsx:224
+#: app/components/roles/tenant-role-access-manager.tsx:230
 msgid "Manage announcements"
 msgstr "Manage announcements"
 
-#: app/components/roles/tenant-role-access-manager.tsx:252
+#: app/components/roles/tenant-role-access-manager.tsx:258
 msgid "Manage automations"
 msgstr "Manage automations"
 
-#: app/components/roles/tenant-role-access-manager.tsx:241
+#: app/components/roles/tenant-role-access-manager.tsx:247
 msgid "Manage broadcasts"
 msgstr "Manage broadcasts"
 
@@ -24849,30 +24994,30 @@ msgstr "Manage broadcasts"
 msgid "Manage channels"
 msgstr "Manage channels"
 
-#: app/components/roles/tenant-role-access-manager.tsx:304
+#: app/components/roles/tenant-role-access-manager.tsx:310
 msgid "Manage chat channels"
 msgstr "Manage chat channels"
 
-#: app/components/roles/tenant-role-access-manager.tsx:534
+#: app/components/roles/tenant-role-access-manager.tsx:540
 msgid "Manage discounts"
 msgstr "Manage discounts"
 
-#: app/components/roles/tenant-role-access-manager.tsx:569
+#: app/components/roles/tenant-role-access-manager.tsx:575
 msgid "Manage dish recipes"
 msgstr "Manage dish recipes"
 
 #~ msgid "Manage existing server section configurations for this location."
 #~ msgstr "Manage existing server section configurations for this location."
 
-#: app/components/roles/tenant-role-access-manager.tsx:586
+#: app/components/roles/tenant-role-access-manager.tsx:592
 msgid "Manage gift cards"
 msgstr "Manage gift cards"
 
-#: app/components/roles/tenant-role-access-manager.tsx:471
+#: app/components/roles/tenant-role-access-manager.tsx:477
 msgid "Manage guestbook"
 msgstr "Manage guestbook"
 
-#: app/components/roles/tenant-role-access-manager.tsx:431
+#: app/components/roles/tenant-role-access-manager.tsx:437
 msgid "Manage hiring"
 msgstr "Manage hiring"
 
@@ -24880,11 +25025,11 @@ msgstr "Manage hiring"
 msgid "Manage integrations"
 msgstr "Manage integrations"
 
-#: app/components/roles/tenant-role-access-manager.tsx:432
+#: app/components/roles/tenant-role-access-manager.tsx:438
 msgid "Manage job posts, move applicants between stages, and hire. Includes View hiring."
 msgstr "Manage job posts, move applicants between stages, and hire. Includes View hiring."
 
-#: app/components/roles/tenant-role-access-manager.tsx:412
+#: app/components/roles/tenant-role-access-manager.tsx:418
 msgid "Manage labor policy"
 msgstr "Manage labor policy"
 
@@ -24892,11 +25037,11 @@ msgstr "Manage labor policy"
 msgid "Manage locations"
 msgstr "Manage locations"
 
-#: app/components/roles/tenant-role-access-manager.tsx:500
+#: app/components/roles/tenant-role-access-manager.tsx:506
 msgid "Manage loyalty program"
 msgstr "Manage loyalty program"
 
-#: app/components/roles/tenant-role-access-manager.tsx:179
+#: app/components/roles/tenant-role-access-manager.tsx:185
 msgid "Manage media"
 msgstr "Manage media"
 
@@ -24909,23 +25054,23 @@ msgstr "Manage Menu Categories"
 msgid "Manage Passkeys"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:275
+#: app/components/roles/tenant-role-access-manager.tsx:281
 msgid "Manage phone agent"
 msgstr "Manage phone agent"
 
-#: app/components/roles/tenant-role-access-manager.tsx:563
+#: app/components/roles/tenant-role-access-manager.tsx:569
 msgid "Manage purchasing"
 msgstr "Manage purchasing"
 
-#: app/components/roles/tenant-role-access-manager.tsx:449
+#: app/components/roles/tenant-role-access-manager.tsx:455
 msgid "Manage reservation book & waitlist"
 msgstr "Manage reservation book & waitlist"
 
-#: app/components/roles/tenant-role-access-manager.tsx:459
+#: app/components/roles/tenant-role-access-manager.tsx:465
 msgid "Manage reservation settings & experiences"
 msgstr "Manage reservation settings & experiences"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:677
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:694
 msgid "Manage reservations settings"
 msgstr "Manage reservations settings"
 
@@ -24938,11 +25083,11 @@ msgstr "Manage restaurant locations, store hours, fulfillment methods, and deliv
 msgid "Manage roles"
 msgstr "Manage roles"
 
-#: app/components/roles/tenant-role-access-manager.tsx:369
+#: app/components/roles/tenant-role-access-manager.tsx:375
 msgid "Manage schedule"
 msgstr "Manage schedule"
 
-#: app/components/roles/tenant-role-access-manager.tsx:327
+#: app/components/roles/tenant-role-access-manager.tsx:333
 msgid "Manage staff"
 msgstr "Manage staff"
 
@@ -24950,7 +25095,7 @@ msgstr "Manage staff"
 msgid "Manage Subscription"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:564
+#: app/components/roles/tenant-role-access-manager.tsx:570
 msgid "Manage suppliers, prices, and orders, and mark deliveries paid. Includes View stock."
 msgstr "Manage suppliers, prices, and orders, and mark deliveries paid. Includes View stock."
 
@@ -25033,6 +25178,10 @@ msgstr "Manager"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1333
 msgid "manager@example.com"
 msgstr "manager@example.com"
+
+#: app/components/pos/station-register-settings.tsx:132
+msgid "Managers only"
+msgstr "Managers only"
 
 #: app/components/locations/order-policies-card.tsx:93
 msgid "Manual"
@@ -25241,7 +25390,7 @@ msgstr "Marked unavailable"
 
 #: app/components/app-sidebar.tsx:481
 #: app/components/command-menu.tsx:106
-#: app/components/roles/tenant-role-access-manager.tsx:231
+#: app/components/roles/tenant-role-access-manager.tsx:237
 #: app/components/workspace-breadcrumb.tsx:15
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:186
 msgid "Marketing"
@@ -25254,7 +25403,7 @@ msgstr ""
 msgid "Marketing choices and the customer's sign-in."
 msgstr "Marketing choices and the customer's sign-in."
 
-#: app/components/roles/tenant-role-access-manager.tsx:631
+#: app/components/roles/tenant-role-access-manager.tsx:637
 msgid "Marketing manager"
 msgstr "Marketing manager"
 
@@ -25342,7 +25491,7 @@ msgstr "Max per order"
 msgid "Max per pickup slot"
 msgstr "Max per pickup slot"
 
-#: app/components/locations/location-form.tsx:1134
+#: app/components/locations/location-form.tsx:1157
 msgid "Maximum advance ordering window (days)"
 msgstr "Maximum advance ordering window (days)"
 
@@ -25365,7 +25514,7 @@ msgid "Maximum off"
 msgstr "Maximum off"
 
 #: app/components/menu/modifier-selection-fields.tsx:158
-#: app/components/menu/option-form.tsx:766
+#: app/components/menu/option-form.tsx:769
 msgid "Maximum Selections (Optional)"
 msgstr "Maximum Selections (Optional)"
 
@@ -25447,7 +25596,7 @@ msgstr "Media details saved"
 #: app/components/app-sidebar.tsx:353
 #: app/components/command-menu.tsx:97
 #: app/components/media-library/media-library-picker.tsx:229
-#: app/components/roles/tenant-role-access-manager.tsx:174
+#: app/components/roles/tenant-role-access-manager.tsx:180
 #: app/components/workspace-breadcrumb.tsx:21
 #: app/routes/_app+/$orgSlug_+/media.tsx:1067
 msgid "Media library"
@@ -25468,7 +25617,7 @@ msgstr ""
 msgid "Meet other members and share updates in the group. An admin can add community points after you join."
 msgstr "Meet other members and share updates in the group. An admin can add community points after you join."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1295
+#: app/components/roles/tenant-role-access-manager.tsx:1301
 msgid "member"
 msgstr ""
 
@@ -25483,21 +25632,21 @@ msgstr ""
 msgid "Member Went Quiet"
 msgstr "Member Went Quiet"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1295
+#: app/components/roles/tenant-role-access-manager.tsx:1301
 msgid "members"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:732
 #: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:182
-#: app/components/roles/tenant-role-access-manager.tsx:1500
-#: app/components/roles/tenant-role-access-manager.tsx:1682
+#: app/components/roles/tenant-role-access-manager.tsx:1506
+#: app/components/roles/tenant-role-access-manager.tsx:1688
 #: app/components/workspace-breadcrumb.tsx:64
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:294
 msgid "Members"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:642
+#: app/components/roles/tenant-role-access-manager.tsx:648
 msgid "Members & invites"
 msgstr "Members & invites"
 
@@ -25549,7 +25698,7 @@ msgstr "Menu Information"
 msgid "Menu item"
 msgstr "Menu item"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:698
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:715
 msgid "Menu location overrides"
 msgstr "Menu location overrides"
 
@@ -25565,7 +25714,7 @@ msgstr "Menu Options"
 msgid "Menu Overview"
 msgstr "Menu Overview"
 
-#: app/components/locations/location-form.tsx:718
+#: app/components/locations/location-form.tsx:741
 msgid "Menu prices already include tax (VAT), as required in Saudi Arabia, the EU and the UK. Tax is shown on receipts but not added at checkout."
 msgstr "Menu prices already include tax (VAT), as required in Saudi Arabia, the EU and the UK. Tax is shown on receipts but not added at checkout."
 
@@ -25592,7 +25741,7 @@ msgstr "Menu Type & Capabilities"
 msgid "Menus"
 msgstr "Menus"
 
-#: app/components/menu/category-form.tsx:653
+#: app/components/menu/category-form.tsx:656
 msgid "Menus that display this category."
 msgstr "Menus that display this category."
 
@@ -25739,7 +25888,7 @@ msgstr "Meta no longer accepts its access. Posts to it will fail until you conne
 msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
 msgstr "Meta no longer accepts this account’s access. Connect it again, then retry."
 
-#: app/components/orders/order-detail.tsx:1062
+#: app/components/orders/order-detail.tsx:1067
 msgid "Method"
 msgstr "Method"
 
@@ -25810,7 +25959,7 @@ msgid "Minimum qualifying spend"
 msgstr "Minimum qualifying spend"
 
 #: app/components/menu/modifier-selection-fields.tsx:142
-#: app/components/menu/option-form.tsx:751
+#: app/components/menu/option-form.tsx:754
 msgid "Minimum Selections"
 msgstr "Minimum Selections"
 
@@ -26023,8 +26172,12 @@ msgid "Monday"
 msgstr "Monday"
 
 #: app/components/roles/tenant-role-access-manager.tsx:163
-msgid "Money on online orders."
-msgstr "Money on online orders."
+msgid "Money on online orders and point-of-sale shifts."
+msgstr "Money on online orders and point-of-sale shifts."
+
+#: app/components/roles/tenant-role-access-manager.tsx:163
+#~ msgid "Money on online orders."
+#~ msgstr "Money on online orders."
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:218
 msgid "Mono"
@@ -26309,8 +26462,8 @@ msgstr "Moved in"
 msgid "Moved out"
 msgstr "Moved out"
 
-#: app/components/roles/tenant-role-access-manager.tsx:508
 #: app/components/roles/tenant-role-access-manager.tsx:514
+#: app/components/roles/tenant-role-access-manager.tsx:520
 msgid "Moves customer points"
 msgstr "Moves customer points"
 
@@ -26327,7 +26480,7 @@ msgstr "Mozzarella"
 msgid "Multi-factor authentication"
 msgstr ""
 
-#: app/components/menu/option-form.tsx:979
+#: app/components/menu/option-form.tsx:982
 msgid "Multiple"
 msgstr "Multiple"
 
@@ -26429,6 +26582,10 @@ msgstr "Name (guest-facing)"
 #: app/components/menu/quick-modifier-group-sheet.tsx:373
 msgid "Name and extra price. Drag to reorder."
 msgstr "Name and extra price. Drag to reorder."
+
+#: app/components/pos/station-register-settings.tsx:128
+msgid "Name and phone number required"
+msgstr "Name and phone number required"
 
 #: app/components/menu/quick-modifier-group-sheet.tsx:369
 msgid "Name and whole-pizza price. Each half costs half of it."
@@ -26653,7 +26810,7 @@ msgstr "Nested modifier groups:"
 msgid "Nested Modifier Usage"
 msgstr "Nested Modifier Usage"
 
-#: app/components/menu/option-form.tsx:1000
+#: app/components/menu/option-form.tsx:1003
 msgid "Nested Modifiers"
 msgstr "Nested Modifiers"
 
@@ -26665,7 +26822,7 @@ msgstr "Nested under:"
 msgid "Net"
 msgstr "Net"
 
-#: app/components/pos/pos-day-report.tsx:203
+#: app/components/pos/pos-day-report.tsx:256
 msgid "Net sales"
 msgstr "Net sales"
 
@@ -27426,7 +27583,7 @@ msgstr "No coupon"
 msgid "No custom note. This is the default text with sample guest details."
 msgstr "No custom note. This is the default text with sample guest details."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1480
+#: app/components/roles/tenant-role-access-manager.tsx:1486
 msgid "No custom roles created yet."
 msgstr "No custom roles created yet."
 
@@ -27664,7 +27821,7 @@ msgstr "No issues found"
 msgid "No item selected"
 msgstr "No item selected"
 
-#: app/components/menu/category-form.tsx:490
+#: app/components/menu/category-form.tsx:493
 #: app/components/menu/modifier-form.tsx:1358
 msgid "No items assigned yet. Add one to get started."
 msgstr "No items assigned yet. Add one to get started."
@@ -27845,7 +28002,7 @@ msgstr "No members have been given direct access."
 msgid "No menu selected"
 msgstr "No menu selected"
 
-#: app/components/menu/category-form.tsx:660
+#: app/components/menu/category-form.tsx:663
 msgid "No menus assigned yet. Add a menu to make this category visible."
 msgstr "No menus assigned yet. Add a menu to make this category visible."
 
@@ -27893,7 +28050,7 @@ msgstr "No microphone was found. Connect one and try again."
 msgid "No modifier groups assigned yet. Add one to get started."
 msgstr "No modifier groups assigned yet. Add one to get started."
 
-#: app/components/menu/option-form.tsx:918
+#: app/components/menu/option-form.tsx:921
 msgid "No modifier groups found. You can create modifier groups first in the Modifier Groups tab."
 msgstr "No modifier groups found. You can create modifier groups first in the Modifier Groups tab."
 
@@ -28054,7 +28211,7 @@ msgstr "No orders yet."
 msgid "No organization with the slug \"{orgSlug}\" exists"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:532
+#: app/components/menu/category-form.tsx:535
 msgid "No other categories available for upsell."
 msgstr "No other categories available for upsell."
 
@@ -28075,7 +28232,7 @@ msgstr "No other modifier groups available"
 
 #: app/components/menu/modifier-form.tsx:1702
 #: app/components/menu/modifier-form.tsx:2081
-#: app/components/menu/option-form.tsx:1022
+#: app/components/menu/option-form.tsx:1025
 msgid "No other modifier groups available to nest."
 msgstr "No other modifier groups available to nest."
 
@@ -28136,11 +28293,11 @@ msgstr "No pay is set yet."
 msgid "No payment"
 msgstr "No payment"
 
-#: app/components/orders/order-detail.tsx:1310
+#: app/components/orders/order-detail.tsx:1315
 msgid "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 msgstr "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 
-#: app/components/orders/order-detail.tsx:1078
+#: app/components/orders/order-detail.tsx:1083
 #: app/components/orders/order-status.tsx:37
 msgid "No payment needed"
 msgstr "No payment needed"
@@ -28283,7 +28440,7 @@ msgstr "No redirects created yet"
 msgid "No redirects match that search"
 msgstr "No redirects match that search"
 
-#: app/components/orders/order-detail.tsx:1345
+#: app/components/orders/order-detail.tsx:1350
 #: app/utils/reservations/policies-view.ts:40
 msgid "No refund"
 msgstr "No refund"
@@ -28691,7 +28848,7 @@ msgstr "No wait estimate is available yet. They would be number {position} in li
 #~ msgid "No waitlist parties in this range"
 #~ msgstr "No waitlist parties in this range"
 
-#: app/components/pos/pos-day-report.tsx:196
+#: app/components/pos/pos-day-report.tsx:249
 msgid "No walk-in sales on this day."
 msgstr "No walk-in sales on this day."
 
@@ -28873,11 +29030,11 @@ msgstr "none"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
 #: app/components/inventory/count-review-screen.tsx:882
-#: app/components/menu/category-form.tsx:438
+#: app/components/menu/category-form.tsx:441
 #: app/components/menu/item-form.tsx:630
 #: app/components/menu/menu-bulk-edit-sheet.tsx:503
 #: app/components/menu/modifier-form.tsx:283
-#: app/components/menu/option-form.tsx:600
+#: app/components/menu/option-form.tsx:603
 #: app/components/reservations/booking-sheet.tsx:87
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
 #: app/components/staff/empty-value.tsx:14
@@ -28891,6 +29048,10 @@ msgstr "none"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3891
 msgid "None"
 msgstr ""
+
+#: app/components/locations/location-form.tsx:1453
+msgid "None (e.g. A)"
+msgstr "None (e.g. A)"
 
 #: app/components/menu/category-form.tsx:382
 msgid "None (Top-Level Category)"
@@ -28921,7 +29082,7 @@ msgstr "Not activated"
 msgid "Not allocated"
 msgstr "Not allocated"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1376
+#: app/components/roles/tenant-role-access-manager.tsx:1382
 msgid "Not allowed"
 msgstr "Not allowed"
 
@@ -29123,7 +29284,7 @@ msgid "Not updated"
 msgstr "Not updated"
 
 #: app/components/menu/item-form.tsx:772
-#: app/components/menu/option-form.tsx:1085
+#: app/components/menu/option-form.tsx:1088
 msgid "Not used anywhere else yet"
 msgstr "Not used anywhere else yet"
 
@@ -29258,7 +29419,7 @@ msgstr ""
 msgid "Notes & Documents"
 msgstr "Notes & Documents"
 
-#: app/components/roles/tenant-role-access-manager.tsx:617
+#: app/components/roles/tenant-role-access-manager.tsx:623
 msgid "Notes & website"
 msgstr "Notes & website"
 
@@ -29676,6 +29837,8 @@ msgstr ""
 #: app/components/locations/order-policies-card.tsx:85
 #: app/components/marketing/programs-section.tsx:55
 #: app/components/phone-agent/settings-nav.tsx:82
+#: app/components/pos/station-register-settings.tsx:131
+#: app/components/pos/station-register-settings.tsx:281
 msgid "Off"
 msgstr "Off"
 
@@ -29928,7 +30091,7 @@ msgstr "One person per line: name, then phone or email. A header row with Name, 
 msgid "One to three dishes with photo, price and an Order button."
 msgstr "One to three dishes with photo, price and an Order button."
 
-#: app/components/roles/tenant-role-access-manager.tsx:232
+#: app/components/roles/tenant-role-access-manager.tsx:238
 msgid "One-time broadcasts and automated journeys."
 msgstr "One-time broadcasts and automated journeys."
 
@@ -29954,7 +30117,7 @@ msgstr "Onions"
 
 #: app/components/chat/chat-view.tsx:609
 #: app/components/kiosk/kiosk-chrome.tsx:126
-#: app/components/orders/order-detail.tsx:1069
+#: app/components/orders/order-detail.tsx:1074
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:864
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:803
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:982
@@ -29967,7 +30130,7 @@ msgstr "Online"
 #~ msgid "Online ({0})"
 #~ msgstr "Online ({0})"
 
-#: app/components/orders/order-detail.tsx:1068
+#: app/components/orders/order-detail.tsx:1073
 msgid "Online ({processor})"
 msgstr "Online ({processor})"
 
@@ -30036,7 +30199,7 @@ msgstr "Online order"
 msgid "Online order rules"
 msgstr "Online order rules"
 
-#: app/components/locations/location-form.tsx:549
+#: app/components/locations/location-form.tsx:572
 msgid "Online order rules: {orderPolicyMessage}"
 msgstr "Online order rules: {orderPolicyMessage}"
 
@@ -30380,7 +30543,7 @@ msgstr "Only your team sees notes. The applicant never does."
 #: app/components/launch/launch-checklist.tsx:256
 #: app/components/marketing/programs-section.tsx:157
 #: app/components/phone-agent/flow-editor/flow-meta.ts:97
-#: app/components/pos/pos-day-report.tsx:291
+#: app/components/pos/pos-day-report.tsx:356
 #: app/components/staff/timesheets/issue-copy.ts:54
 #: app/components/staff/timesheets/timesheet-table.tsx:325
 #: app/components/staff/timesheets/timesheet-table.tsx:529
@@ -30549,7 +30712,7 @@ msgstr "Open orders"
 #~ msgid "Open pages and themes in the site builder."
 #~ msgstr "Open pages and themes in the site builder."
 
-#: app/components/roles/tenant-role-access-manager.tsx:209
+#: app/components/roles/tenant-role-access-manager.tsx:215
 msgid "Open pages, forms, and themes in the site builder."
 msgstr "Open pages, forms, and themes in the site builder."
 
@@ -30742,6 +30905,10 @@ msgstr "Open with custom hours"
 msgid "Open your schedule from your email"
 msgstr "Open your schedule from your email"
 
+#: app/components/pos/station-register-settings.tsx:234
+msgid "Open-price custom items"
+msgstr "Open-price custom items"
+
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
 #: ../../packages/marketing/src/components/campaign-detail.tsx:101
 msgid "Opened {0}"
@@ -30779,8 +30946,8 @@ msgstr "Opens:"
 msgid "OpenTable"
 msgstr "OpenTable"
 
-#: app/components/locations/location-form.tsx:571
-#: app/components/locations/location-form.tsx:810
+#: app/components/locations/location-form.tsx:594
+#: app/components/locations/location-form.tsx:833
 msgid "Operating Hours"
 msgstr "Operating Hours"
 
@@ -30880,6 +31047,10 @@ msgstr "Option type removed"
 #: app/components/menu/modifier-guest-preview.tsx:216
 msgid "Optional"
 msgstr "Optional"
+
+#: app/components/pos/station-register-settings.tsx:125
+msgid "Optional (one-tap quick service)"
+msgstr "Optional (one-tap quick service)"
 
 #: app/components/menu/modifier-guest-preview.tsx:214
 msgid "Optional • Up to {maxSelections}"
@@ -31210,11 +31381,15 @@ msgstr "Order more when below"
 msgid "Order must include"
 msgstr "Order must include"
 
+#: app/components/locations/location-form.tsx:1434
+msgid "Order numbers"
+msgstr "Order numbers"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:109
 msgid "Order of {date}"
 msgstr "Order of {date}"
 
-#: app/components/locations/location-form.tsx:888
+#: app/components/locations/location-form.tsx:911
 msgid "Order Preparation Time"
 msgstr "Order Preparation Time"
 
@@ -31431,7 +31606,7 @@ msgstr "Organization logo"
 #~ msgid "Organization logo preview"
 #~ msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:192
+#: app/components/roles/tenant-role-access-manager.tsx:198
 msgid "Organization reports such as customers, orders, and calls."
 msgstr "Organization reports such as customers, orders, and calls."
 
@@ -31496,7 +31671,7 @@ msgstr "OT {hours}"
 #: app/components/hiring/job-labels.ts:46
 #: app/components/orders/refund-labels.ts:23
 #: app/components/phone-agent/vertical-labels.ts:18
-#: app/components/pos/pos-day-report.tsx:210
+#: app/components/pos/pos-day-report.tsx:263
 #: app/components/staff/onboarding/onboarding-labels.ts:52
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:119
 #: app/utils/inventory/labels.ts:28
@@ -31586,7 +31761,7 @@ msgstr "Outside these times the agent takes a message instead."
 msgid "Over"
 msgstr "Over"
 
-#: app/components/pos/pos-day-report.tsx:299
+#: app/components/pos/pos-day-report.tsx:380
 msgid "Over {difference}"
 msgstr "Over {difference}"
 
@@ -31609,6 +31784,10 @@ msgstr "Over limit"
 #: app/components/reservations/booking-sheet.tsx:754
 msgid "Over limit times are past their pacing limit. Picking one overbooks the slot."
 msgstr "Over limit times are past their pacing limit. Picking one overbooks the slot."
+
+#: ../../packages/reports/src/ui/report-labels.ts:149
+msgid "Over or short cash totals grouped by cashier over the last 30 days."
+msgstr "Over or short cash totals grouped by cashier over the last 30 days."
 
 #: app/components/reservations/waitlist/waitlist-queue.tsx:223
 msgid "Over quote"
@@ -31766,7 +31945,7 @@ msgstr ""
 msgid "Own ingredients"
 msgstr "Own ingredients"
 
-#: app/components/roles/tenant-role-access-manager.tsx:757
+#: app/components/roles/tenant-role-access-manager.tsx:763
 msgid "Owner"
 msgstr "Owner"
 
@@ -31807,7 +31986,7 @@ msgid "Packaging"
 msgstr "Packaging"
 
 #: app/components/locations/checkout-rules-cards.tsx:234
-#: app/components/orders/order-detail.tsx:1005
+#: app/components/orders/order-detail.tsx:1010
 msgid "Packaging fee"
 msgstr "Packaging fee"
 
@@ -31869,7 +32048,7 @@ msgstr "Paid"
 #~ msgid "Paid {0}"
 #~ msgstr "Paid {0}"
 
-#: app/components/orders/order-detail.tsx:1076
+#: app/components/orders/order-detail.tsx:1081
 msgid "Paid {totalMoney}"
 msgstr "Paid {totalMoney}"
 
@@ -31877,7 +32056,7 @@ msgstr "Paid {totalMoney}"
 msgid "Paid <0>{paid}</0>"
 msgstr "Paid <0>{paid}</0>"
 
-#: app/components/orders/order-detail.tsx:1088
+#: app/components/orders/order-detail.tsx:1093
 msgid "Paid at"
 msgstr "Paid at"
 
@@ -32303,7 +32482,7 @@ msgstr "Pay"
 msgid "Pay and rates"
 msgstr "Pay and rates"
 
-#: app/components/orders/order-detail.tsx:1066
+#: app/components/orders/order-detail.tsx:1071
 msgid "Pay at handoff"
 msgstr "Pay at handoff"
 
@@ -32357,7 +32536,7 @@ msgid "Paying online"
 msgstr "Paying online"
 
 #: app/components/orders/order-detail.tsx:531
-#: app/components/orders/order-detail.tsx:1056
+#: app/components/orders/order-detail.tsx:1061
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
 msgid "Payment"
 msgstr "Payment"
@@ -32382,7 +32561,7 @@ msgstr "Payment expired"
 msgid "Payment failed"
 msgstr "Payment failed"
 
-#: app/components/orders/order-detail.tsx:1080
+#: app/components/orders/order-detail.tsx:1085
 msgid "Payment failed. Nothing was charged."
 msgstr "Payment failed. Nothing was charged."
 
@@ -32413,7 +32592,7 @@ msgstr "Payment needs review"
 msgid "Payment not finished"
 msgstr "Payment not finished"
 
-#: app/components/orders/order-detail.tsx:1083
+#: app/components/orders/order-detail.tsx:1088
 msgid "Payment not yet received"
 msgstr "Payment not yet received"
 
@@ -32452,7 +32631,7 @@ msgstr "Payment uncertain"
 msgid "Payment under review"
 msgstr "Payment under review"
 
-#: app/components/orders/order-detail.tsx:1082
+#: app/components/orders/order-detail.tsx:1087
 msgid "Payment window expired before it was paid."
 msgstr "Payment window expired before it was paid."
 
@@ -32698,7 +32877,7 @@ msgstr "Period"
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 
-#: app/components/roles/tenant-role-access-manager.tsx:293
+#: app/components/roles/tenant-role-access-manager.tsx:299
 msgid "Permanently delete calls, transcripts, and recordings. Needs View calls."
 msgstr "Permanently delete calls, transcripts, and recordings. Needs View calls."
 
@@ -32710,20 +32889,20 @@ msgstr "Permanently delete notes created by any teammate."
 msgid "Permanently delete notes created by this user."
 msgstr "Permanently delete notes created by this user."
 
-#: app/components/roles/tenant-role-access-manager.tsx:1123
-#: app/components/roles/tenant-role-access-manager.tsx:1335
+#: app/components/roles/tenant-role-access-manager.tsx:1129
+#: app/components/roles/tenant-role-access-manager.tsx:1341
 msgid "Permission"
 msgstr "Permission"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1503
+#: app/components/roles/tenant-role-access-manager.tsx:1509
 msgid "Permissions"
 msgstr "Permissions"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1296
+#: app/components/roles/tenant-role-access-manager.tsx:1302
 msgid "permissions granted"
 msgstr "permissions granted"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1207
+#: app/components/roles/tenant-role-access-manager.tsx:1213
 msgid "permissions selected"
 msgstr "permissions selected"
 
@@ -32733,8 +32912,8 @@ msgstr "permissions selected"
 msgid "Person"
 msgstr "Person"
 
-#: app/components/roles/tenant-role-access-manager.tsx:347
 #: app/components/roles/tenant-role-access-manager.tsx:353
+#: app/components/roles/tenant-role-access-manager.tsx:359
 msgid "Personal data"
 msgstr "Personal data"
 
@@ -32822,10 +33001,14 @@ msgstr "Phone number"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:697
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:371
-#: app/components/locations/location-form.tsx:635
+#: app/components/locations/location-form.tsx:658
 #: app/components/reservations/booking-sheet.tsx:966
 msgid "Phone Number"
 msgstr ""
+
+#: app/components/pos/station-register-settings.tsx:127
+msgid "Phone number required"
+msgstr "Phone number required"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:90
 msgid "Phone numbers"
@@ -32906,7 +33089,7 @@ msgstr "Photos help guests choose."
 msgid "Phrases"
 msgstr "Phrases"
 
-#: app/components/locations/location-form.tsx:775
+#: app/components/locations/location-form.tsx:798
 msgid "Physical Address"
 msgstr "Physical Address"
 
@@ -33127,7 +33310,7 @@ msgstr "Pickup Schedule & Fulfillment"
 msgid "pickup tips"
 msgstr "pickup tips"
 
-#: app/components/locations/location-form.tsx:1077
+#: app/components/locations/location-form.tsx:1100
 msgid "Pickup Tips"
 msgstr "Pickup Tips"
 
@@ -33225,7 +33408,7 @@ msgstr "Pizza dough"
 msgid "Pizza sizes"
 msgstr "Pizza sizes"
 
-#: app/components/menu/option-form.tsx:969
+#: app/components/menu/option-form.tsx:972
 msgid "Pizza Topping"
 msgstr "Pizza Topping"
 
@@ -33297,7 +33480,7 @@ msgstr "Plant"
 msgid "Platform"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:1706
+#: app/components/roles/tenant-role-access-manager.tsx:1712
 msgid "Platform-provided role."
 msgstr "Platform-provided role."
 
@@ -33742,6 +33925,10 @@ msgstr "Preferred"
 msgid "Prefetch"
 msgstr ""
 
+#: app/components/locations/location-form.tsx:1447
+msgid "Prefix"
+msgstr "Prefix"
+
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:195
 msgid "Prefix (optional)"
 msgstr "Prefix (optional)"
@@ -34015,7 +34202,7 @@ msgstr "Prices at"
 msgid "Prices confirmed."
 msgstr "Prices confirmed."
 
-#: app/components/locations/location-form.tsx:715
+#: app/components/locations/location-form.tsx:738
 msgid "Prices include tax"
 msgstr "Prices include tax"
 
@@ -34054,7 +34241,7 @@ msgid "Pricing"
 msgstr "Pricing"
 
 #: app/components/menu/item-form.tsx:667
-#: app/components/menu/option-form.tsx:641
+#: app/components/menu/option-form.tsx:644
 msgid "Pricing & Tax"
 msgstr "Pricing & Tax"
 
@@ -34067,7 +34254,7 @@ msgstr ""
 msgid "Primary"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:753
+#: app/components/locations/location-form.tsx:776
 msgid "Primary / Default Location"
 msgstr "Primary / Default Location"
 
@@ -34146,7 +34333,7 @@ msgstr "Print this view"
 msgid "Printed and shipped to your door. You can cancel until production starts."
 msgstr "Printed and shipped to your door. You can cancel until production starts."
 
-#: app/components/locations/location-form.tsx:700
+#: app/components/locations/location-form.tsx:723
 msgid "Printed on receipts. Letters and digits only; leave empty if not registered."
 msgstr "Printed on receipts. Letters and digits only; leave empty if not registered."
 
@@ -34662,7 +34849,7 @@ msgstr "Quantities are in packs, the way the supplier sells them."
 #: app/components/discounts/discount-form.tsx:567
 #: app/components/discounts/discount-form.tsx:1583
 #: app/components/discounts/discount-form.tsx:1605
-#: app/components/menu/option-form.tsx:981
+#: app/components/menu/option-form.tsx:984
 #: app/utils/discounts/summary.ts:292
 msgid "Quantity"
 msgstr "Quantity"
@@ -34873,7 +35060,7 @@ msgstr "Read organization details, verified domain, and storage status."
 msgid "Read page details"
 msgstr "Read page details"
 
-#: app/components/roles/tenant-role-access-manager.tsx:220
+#: app/components/roles/tenant-role-access-manager.tsx:226
 msgid "Read the announcement banners shown on the public site."
 msgstr "Read the announcement banners shown on the public site."
 
@@ -34894,7 +35081,7 @@ msgid "Read the policy"
 msgstr "Read the policy"
 
 #: app/components/reservations/floor-plan-canvas.tsx:754
-#: app/components/roles/tenant-role-access-manager.tsx:794
+#: app/components/roles/tenant-role-access-manager.tsx:800
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:568
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:236
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:868
@@ -34968,6 +35155,7 @@ msgstr "Real weight on the invoice"
 #: app/components/inventory/adjust-stock-dialog.tsx:265
 #: app/components/inventory/log-waste-dialog.tsx:365
 #: app/components/loyalty/adjust-dialog.tsx:243
+#: app/components/pos/pos-day-report.tsx:487
 #: app/components/qr/open-tabs.tsx:948
 #: app/components/reservations/detail-sheet.tsx:1502
 #: app/components/reservations/payment-panel.tsx:690
@@ -35133,7 +35321,7 @@ msgstr "Recommended for SEO"
 #~ msgid "Recommended setup improvements"
 #~ msgstr "Recommended setup improvements"
 
-#: app/components/menu/category-form.tsx:515
+#: app/components/menu/category-form.tsx:518
 msgid "Recommended Upsells & Pairings"
 msgstr "Recommended Upsells & Pairings"
 
@@ -35172,7 +35360,7 @@ msgid "Record a message for your team to follow up."
 msgstr "Record a message for your team to follow up."
 
 #: app/components/loyalty/record-refund-dialog.tsx:205
-#: app/components/orders/order-detail.tsx:1179
+#: app/components/orders/order-detail.tsx:1184
 #: app/components/orders/record-order-refund-dialog.tsx:227
 msgid "Record a refund"
 msgstr "Record a refund"
@@ -35204,7 +35392,7 @@ msgstr "Record consent for text offers"
 msgid "Record delivery"
 msgstr "Record delivery"
 
-#: app/components/roles/tenant-role-access-manager.tsx:258
+#: app/components/roles/tenant-role-access-manager.tsx:264
 msgid "Record marketing consent"
 msgstr "Record marketing consent"
 
@@ -35425,9 +35613,9 @@ msgstr "Refresh. {updated}"
 
 #: app/components/gift-cards/gift-card-dialogs.tsx:496
 #: app/components/loyalty/record-refund-dialog.tsx:252
-#: app/components/orders/order-detail.tsx:1106
-#: app/components/orders/order-detail.tsx:1118
-#: app/components/orders/order-detail.tsx:1156
+#: app/components/orders/order-detail.tsx:1111
+#: app/components/orders/order-detail.tsx:1123
+#: app/components/orders/order-detail.tsx:1161
 #: app/components/orders/provider-refund-dialog.tsx:357
 #: app/components/orders/record-order-refund-dialog.tsx:281
 #: app/components/reservations/payment-panel.tsx:625
@@ -35445,11 +35633,11 @@ msgstr "Refund failed"
 msgid "Refund failed: {amount}"
 msgstr "Refund failed: {amount}"
 
-#: app/components/orders/order-detail.tsx:1124
+#: app/components/orders/order-detail.tsx:1129
 msgid "Refund failed."
 msgstr "Refund failed."
 
-#: app/components/orders/order-detail.tsx:1397
+#: app/components/orders/order-detail.tsx:1402
 msgid "Refund failed. You can try again."
 msgstr "Refund failed. You can try again."
 
@@ -35467,7 +35655,7 @@ msgstr "Refund online orders"
 msgid "Refund pending"
 msgstr "Refund pending"
 
-#: app/components/orders/order-detail.tsx:1110
+#: app/components/orders/order-detail.tsx:1115
 msgid "Refund pending ({refundPendingMoney})"
 msgstr "Refund pending ({refundPendingMoney})"
 
@@ -35475,7 +35663,7 @@ msgstr "Refund pending ({refundPendingMoney})"
 msgid "Refund pending: {amount}"
 msgstr "Refund pending: {amount}"
 
-#: app/components/orders/order-detail.tsx:1395
+#: app/components/orders/order-detail.tsx:1400
 msgid "Refund pending. It is still being processed."
 msgstr "Refund pending. It is still being processed."
 
@@ -35492,7 +35680,7 @@ msgstr "Refund queued"
 msgid "Refund recorded: {amount}"
 msgstr "Refund recorded: {amount}"
 
-#: app/components/orders/order-detail.tsx:1417
+#: app/components/orders/order-detail.tsx:1422
 msgid "Refund recorded."
 msgstr "Refund recorded."
 
@@ -35504,7 +35692,7 @@ msgstr "Refund recorded. No points needed to be taken back."
 msgid "Refund recorded. Points taken back: {taken}."
 msgstr "Refund recorded. Points taken back: {taken}."
 
-#: app/components/orders/order-detail.tsx:1398
+#: app/components/orders/order-detail.tsx:1403
 msgid "Refund sent to the guest's card."
 msgstr "Refund sent to the guest's card."
 
@@ -35512,7 +35700,7 @@ msgstr "Refund sent to the guest's card."
 msgid "Refund the buyer"
 msgstr "Refund the buyer"
 
-#: app/components/orders/order-detail.tsx:1330
+#: app/components/orders/order-detail.tsx:1335
 msgid "Refund the guest?"
 msgstr "Refund the guest?"
 
@@ -35532,7 +35720,7 @@ msgstr "Refund to card"
 msgid "Refund to the card"
 msgstr "Refund to the card"
 
-#: app/components/orders/order-detail.tsx:1096
+#: app/components/orders/order-detail.tsx:1101
 #: app/components/orders/order-status.tsx:39
 #: app/components/print/print-order-labels.ts:21
 #: app/components/settings/cards/organization/shop-card.tsx:51
@@ -35566,7 +35754,7 @@ msgstr "Refunded to card: {amount}"
 msgid "Refunding…"
 msgstr "Refunding…"
 
-#: app/components/pos/pos-day-report.tsx:202
+#: app/components/pos/pos-day-report.tsx:255
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:168
 msgid "Refunds"
 msgstr "Refunds"
@@ -35618,6 +35806,11 @@ msgstr "Register sale"
 #: app/utils/loyalty/loyalty-labels.ts:153
 msgid "Register sale flagged for review"
 msgstr "Register sale flagged for review"
+
+#: app/components/pos/station-register-settings.tsx:59
+#: app/components/pos/station-register-settings.tsx:64
+msgid "Register settings"
+msgstr "Register settings"
 
 #: app/components/settings/passkey-manager.tsx:205
 msgid "Registered {timeAgo} ago"
@@ -36343,7 +36536,7 @@ msgstr "Replace with custom service"
 msgid "Replaced by a newer message"
 msgstr "Replaced by a newer message"
 
-#: app/components/roles/tenant-role-access-manager.tsx:181
+#: app/components/roles/tenant-role-access-manager.tsx:187
 msgid "Replaced files can change published pages"
 msgstr "Replaced files can change published pages"
 
@@ -36421,7 +36614,7 @@ msgstr "Reported {reported}"
 
 #: app/components/app-sidebar.tsx:340
 #: app/components/command-menu.tsx:95
-#: app/components/roles/tenant-role-access-manager.tsx:191
+#: app/components/roles/tenant-role-access-manager.tsx:197
 #: app/components/workspace-breadcrumb.tsx:18
 msgid "Reports"
 msgstr ""
@@ -36572,7 +36765,7 @@ msgstr "Reservation"
 #~ msgid "Reservation book, timeline grid, shift notes, and booking management."
 #~ msgstr "Reservation book, timeline grid, shift notes, and booking management."
 
-#: app/components/roles/tenant-role-access-manager.tsx:440
+#: app/components/roles/tenant-role-access-manager.tsx:446
 msgid "Reservation book, waitlist, guestbook, dining room setup, experiences, reports, and reservation payments. Only applies when Reservations is turned on for your organization."
 msgstr "Reservation book, waitlist, guestbook, dining room setup, experiences, reports, and reservation payments. Only applies when Reservations is turned on for your organization."
 
@@ -36616,15 +36809,15 @@ msgstr "Reservation No-Show"
 msgid "Reservation records will be deleted too"
 msgstr "Reservation records will be deleted too"
 
-#: ../../packages/reports/src/ui/report-labels.ts:148
+#: ../../packages/reports/src/ui/report-labels.ts:160
 #: app/components/app-sidebar.tsx:554
 #: app/components/customers/person-marketing-card.tsx:50
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:40
 #: app/components/pos/terminals-manager.tsx:1603
-#: app/components/roles/tenant-role-access-manager.tsx:438
+#: app/components/roles/tenant-role-access-manager.tsx:444
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 #: app/components/workspace-breadcrumb.tsx:75
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:657
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:674
 msgid "Reservations"
 msgstr "Reservations"
 
@@ -36638,7 +36831,7 @@ msgstr "Reservations are turned off for this organization."
 #~ msgid "Reservations configuration"
 #~ msgstr "Reservations configuration"
 
-#: app/components/roles/tenant-role-access-manager.tsx:713
+#: app/components/roles/tenant-role-access-manager.tsx:719
 msgid "Reservations manager"
 msgstr "Reservations manager"
 
@@ -36665,7 +36858,7 @@ msgstr "Reservations on {label}, on"
 msgid "Reservations open"
 msgstr "Reservations open"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1615
+#: app/components/roles/tenant-role-access-manager.tsx:1621
 msgid "Reservations role presets"
 msgstr "Reservations role presets"
 
@@ -36821,11 +37014,11 @@ msgstr "Resetting…"
 msgid "Resized {itemName} to {nextWidth} by {nextHeight}"
 msgstr "Resized {itemName} to {nextWidth} by {nextHeight}"
 
-#: app/components/roles/tenant-role-access-manager.tsx:512
+#: app/components/roles/tenant-role-access-manager.tsx:518
 msgid "Resolve loyalty reviews & refunds"
 msgstr "Resolve loyalty reviews & refunds"
 
-#: app/components/roles/tenant-role-access-manager.tsx:513
+#: app/components/roles/tenant-role-access-manager.tsx:519
 msgid "Resolve redemptions and purchases waiting for review, record loyalty refunds, and repair balances. Includes View loyalty members."
 msgstr "Resolve redemptions and purchases waiting for review, record loyalty refunds, and repair balances. Includes View loyalty members."
 
@@ -37217,8 +37410,8 @@ msgid "Ring for (seconds)"
 msgstr "Ring for (seconds)"
 
 #: app/components/hiring/job-editor.tsx:200
-#: app/components/roles/tenant-role-access-manager.tsx:1494
-#: app/components/roles/tenant-role-access-manager.tsx:1676
+#: app/components/roles/tenant-role-access-manager.tsx:1500
+#: app/components/roles/tenant-role-access-manager.tsx:1682
 #: app/components/workspace-breadcrumb.tsx:115
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:700
 msgid "Role"
@@ -37228,7 +37421,7 @@ msgstr "Role"
 msgid "Role (optional)"
 msgstr "Role (optional)"
 
-#: app/components/roles/tenant-role-access-manager.tsx:981
+#: app/components/roles/tenant-role-access-manager.tsx:987
 msgid "Role name"
 msgstr "Role name"
 
@@ -37344,7 +37537,7 @@ msgstr ""
 msgid "Run ID: {selectedRunId}"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:197
+#: app/components/roles/tenant-role-access-manager.tsx:203
 msgid "Run organization reports, including customers, orders, and calls when those extra permissions are held."
 msgstr "Run organization reports, including customers, orders, and calls when those extra permissions are held."
 
@@ -37519,7 +37712,7 @@ msgstr "Sale upload missing"
 
 #: app/components/dashboard/blocks/today-block.tsx:343
 #: app/components/dashboard/blocks/today-block.tsx:359
-#: app/components/pos/pos-day-report.tsx:201
+#: app/components/pos/pos-day-report.tsx:254
 #: app/components/staff/labor/labor-overview.tsx:160
 #: app/components/staff/labor/labor-overview.tsx:393
 #: app/components/staff/labor/labor-overview.tsx:562
@@ -37535,7 +37728,7 @@ msgstr "Sales ({currency})"
 msgid "Sales basis"
 msgstr "Sales basis"
 
-#: app/components/pos/pos-day-report.tsx:247
+#: app/components/pos/pos-day-report.tsx:300
 msgid "Sales by terminal"
 msgstr "Sales by terminal"
 
@@ -37582,7 +37775,7 @@ msgstr "Sales per labor hour"
 msgid "Sales tax"
 msgstr "Sales tax"
 
-#: app/components/locations/location-form.tsx:670
+#: app/components/locations/location-form.tsx:693
 msgid "Sales Tax Rate (%)"
 msgstr "Sales Tax Rate (%)"
 
@@ -37614,7 +37807,7 @@ msgstr "Same name as an earlier row."
 msgid "Same phone or email as an earlier row."
 msgstr "Same phone or email as an earlier row."
 
-#: app/components/menu/option-form.tsx:733
+#: app/components/menu/option-form.tsx:736
 msgid "Same price for left or right half."
 msgstr "Same price for left or right half."
 
@@ -37805,7 +37998,7 @@ msgstr "Save card for later charges"
 msgid "Save changes"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:1424
+#: app/components/locations/location-form.tsx:1522
 #: app/components/menu/drop-wizard/drop-drawers.tsx:939
 #: app/components/menu/modifier-form.tsx:2150
 #: app/components/reservations/detail-sheet.tsx:1159
@@ -37902,6 +38095,10 @@ msgstr "Save rate"
 #~ msgid "Save ratings"
 #~ msgstr "Save ratings"
 
+#: app/components/pos/station-register-settings.tsx:316
+msgid "Save register settings"
+msgstr "Save register settings"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:999
 msgid "Save section servers"
 msgstr "Save section servers"
@@ -37988,6 +38185,7 @@ msgstr "Save zone"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:166
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/inventory/counting-screen.tsx:661
+#: app/components/pos/station-register-settings.tsx:202
 #: app/components/reservations/floor-plan-canvas.tsx:773
 msgid "Saved"
 msgstr "Saved"
@@ -38025,7 +38223,7 @@ msgstr "Saved in the audit log with your name."
 msgid "Saved offline and sent more than 12 hours later. Check the times."
 msgstr "Saved offline and sent more than 12 hours later. Check the times."
 
-#: app/components/orders/order-detail.tsx:1318
+#: app/components/orders/order-detail.tsx:1323
 msgid "Saved on the order. The guest is told only when an item ran out or the kitchen is closed."
 msgstr "Saved on the order. The guest is told only when an item ran out or the kitchen is closed."
 
@@ -38143,6 +38341,7 @@ msgstr ""
 #: app/components/mailbox/reviews-tab.tsx:734
 #: app/components/orders/record-order-refund-dialog.tsx:350
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:493
+#: app/components/pos/station-register-settings.tsx:316
 #: app/components/pos/zatca-settings.tsx:347
 #: app/components/reservations/experiences/experience-editor.tsx:545
 #: app/components/reservations/experiences/schedule-sheet.tsx:183
@@ -38150,7 +38349,7 @@ msgstr ""
 #: app/components/reservations/messages/message-settings.tsx:783
 #: app/components/reservations/policies/policy-sheet.tsx:186
 #: app/components/reservations/settings/save-bar.tsx:87
-#: app/components/roles/tenant-role-access-manager.tsx:1220
+#: app/components/roles/tenant-role-access-manager.tsx:1226
 #: app/components/save-bar.tsx:348
 #: app/components/staff/kiosk-manager.tsx:910
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
@@ -38267,11 +38466,11 @@ msgstr "Scan the code with this tablet's camera, or paste the link below."
 msgid "Schedule"
 msgstr "Schedule"
 
-#: app/components/roles/tenant-role-access-manager.tsx:653
+#: app/components/roles/tenant-role-access-manager.tsx:659
 msgid "Schedule & time cards"
 msgstr "Schedule & time cards"
 
-#: app/components/roles/tenant-role-access-manager.tsx:358
+#: app/components/roles/tenant-role-access-manager.tsx:364
 msgid "Schedule & time clock"
 msgstr "Schedule & time clock"
 
@@ -38442,7 +38641,7 @@ msgstr ""
 msgid "Search Address (Google Autocomplete)"
 msgstr "Search Address (Google Autocomplete)"
 
-#: app/components/locations/location-form.tsx:778
+#: app/components/locations/location-form.tsx:801
 msgid "Search and select location address with Google Autocomplete."
 msgstr "Search and select location address with Google Autocomplete."
 
@@ -39011,15 +39210,15 @@ msgstr "See all {total}"
 msgid "See and run online orders on a tablet."
 msgstr "See and run online orders on a tablet."
 
-#: app/components/roles/tenant-role-access-manager.tsx:248
+#: app/components/roles/tenant-role-access-manager.tsx:254
 msgid "See automated journeys and their run history."
 msgstr "See automated journeys and their run history."
 
-#: app/components/roles/tenant-role-access-manager.tsx:282
+#: app/components/roles/tenant-role-access-manager.tsx:288
 msgid "See call history, caller numbers, transcripts, and recordings."
 msgstr "See call history, caller numbers, transcripts, and recordings."
 
-#: app/components/roles/tenant-role-access-manager.tsx:582
+#: app/components/roles/tenant-role-access-manager.tsx:588
 msgid "See cards, their balances and history, and the gift card reports."
 msgstr "See cards, their balances and history, and the gift card reports."
 
@@ -39031,11 +39230,11 @@ msgstr "See count"
 msgid "See counts"
 msgstr "See counts"
 
-#: app/components/roles/tenant-role-access-manager.tsx:478
+#: app/components/roles/tenant-role-access-manager.tsx:484
 msgid "See covers, pacing, no-show, waitlist, channel, deposit, and section reports."
 msgstr "See covers, pacing, no-show, waitlist, channel, deposit, and section reports."
 
-#: app/components/roles/tenant-role-access-manager.tsx:346
+#: app/components/roles/tenant-role-access-manager.tsx:352
 msgid "See dates of birth, home addresses, and emergency contacts."
 msgstr "See dates of birth, home addresses, and emergency contacts."
 
@@ -39045,39 +39244,39 @@ msgstr "See dates of birth, home addresses, and emergency contacts."
 msgid "See delivery"
 msgstr "See delivery"
 
-#: app/components/roles/tenant-role-access-manager.tsx:455
+#: app/components/roles/tenant-role-access-manager.tsx:461
 msgid "See dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences."
 msgstr "See dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences."
 
-#: app/components/roles/tenant-role-access-manager.tsx:530
+#: app/components/roles/tenant-role-access-manager.tsx:536
 msgid "See discounts, coupon codes, and their usage."
 msgstr "See discounts, coupon codes, and their usage."
 
-#: app/components/roles/tenant-role-access-manager.tsx:365
+#: app/components/roles/tenant-role-access-manager.tsx:371
 msgid "See everyone's shifts, availability, and time-off requests."
 msgstr "See everyone's shifts, availability, and time-off requests."
 
-#: app/components/roles/tenant-role-access-manager.tsx:385
+#: app/components/roles/tenant-role-access-manager.tsx:391
 msgid "See everyone's time cards and hours."
 msgstr "See everyone's time cards and hours."
 
-#: app/components/roles/tenant-role-access-manager.tsx:466
+#: app/components/roles/tenant-role-access-manager.tsx:472
 msgid "See guestbook profiles, visit history, notes, and exports."
 msgstr "See guestbook profiles, visit history, notes, and exports."
 
-#: app/components/roles/tenant-role-access-manager.tsx:334
+#: app/components/roles/tenant-role-access-manager.tsx:340
 msgid "See individual pay rates and wage history."
 msgstr "See individual pay rates and wage history."
 
-#: app/components/roles/tenant-role-access-manager.tsx:426
+#: app/components/roles/tenant-role-access-manager.tsx:432
 msgid "See job posts and applicants."
 msgstr "See job posts and applicants."
 
-#: app/components/roles/tenant-role-access-manager.tsx:402
+#: app/components/roles/tenant-role-access-manager.tsx:408
 msgid "See labor cost and labor percentage."
 msgstr "See labor cost and labor percentage."
 
-#: app/components/roles/tenant-role-access-manager.tsx:408
+#: app/components/roles/tenant-role-access-manager.tsx:414
 msgid "See labor rules, time clock devices, and pay periods."
 msgstr "See labor rules, time clock devices, and pay periods."
 
@@ -39085,15 +39284,15 @@ msgstr "See labor rules, time clock devices, and pay periods."
 msgid "See low items"
 msgstr "See low items"
 
-#: app/components/roles/tenant-role-access-manager.tsx:496
+#: app/components/roles/tenant-role-access-manager.tsx:502
 msgid "See loyalty members, balances, point activity, and redemptions."
 msgstr "See loyalty members, balances, point activity, and redemptions."
 
-#: app/components/roles/tenant-role-access-manager.tsx:519
+#: app/components/roles/tenant-role-access-manager.tsx:525
 msgid "See loyalty reports and analytics."
 msgstr "See loyalty reports and analytics."
 
-#: app/components/roles/tenant-role-access-manager.tsx:237
+#: app/components/roles/tenant-role-access-manager.tsx:243
 msgid "See one-time email and SMS campaign history."
 msgstr "See one-time email and SMS campaign history."
 
@@ -39101,7 +39300,7 @@ msgstr "See one-time email and SMS campaign history."
 msgid "See order"
 msgstr "See order"
 
-#: app/components/roles/tenant-role-access-manager.tsx:548
+#: app/components/roles/tenant-role-access-manager.tsx:554
 msgid "See stock, counts, waste, and deliveries. Quantities only, no money."
 msgstr "See stock, counts, waste, and deliveries. Quantities only, no money."
 
@@ -39109,7 +39308,7 @@ msgstr "See stock, counts, waste, and deliveries. Quantities only, no money."
 msgid "See teammate names, emails, and assigned roles."
 msgstr "See teammate names, emails, and assigned roles."
 
-#: app/components/roles/tenant-role-access-manager.tsx:271
+#: app/components/roles/tenant-role-access-manager.tsx:277
 msgid "See the agent's settings, call flow, numbers, and training rules."
 msgstr "See the agent's settings, call flow, numbers, and training rules."
 
@@ -39132,11 +39331,11 @@ msgstr "See the price"
 msgid "See the re-send"
 msgstr "See the re-send"
 
-#: app/components/roles/tenant-role-access-manager.tsx:445
+#: app/components/roles/tenant-role-access-manager.tsx:451
 msgid "See the reservation book, timeline, floor plan, calendar, overview, and waitlist."
 msgstr "See the reservation book, timeline, floor plan, calendar, overview, and waitlist."
 
-#: app/components/roles/tenant-role-access-manager.tsx:323
+#: app/components/roles/tenant-role-access-manager.tsx:329
 msgid "See the staff roster, profiles, and positions. Does not include pay or private details."
 msgstr "See the staff roster, profiles, and positions. Does not include pay or private details."
 
@@ -39152,7 +39351,7 @@ msgstr "See unpaid"
 msgid "See what is off"
 msgstr "See what is off"
 
-#: app/components/roles/tenant-role-access-manager.tsx:558
+#: app/components/roles/tenant-role-access-manager.tsx:564
 msgid "See what stock is worth, item costs, food cost, and the cost of waste. Includes View stock."
 msgstr "See what stock is worth, item costs, food cost, and the cost of waste. Includes View stock."
 
@@ -39160,7 +39359,7 @@ msgstr "See what stock is worth, item costs, food cost, and the cost of waste. I
 msgid "See your jobs"
 msgstr "See your jobs"
 
-#: app/components/roles/tenant-role-access-manager.tsx:375
+#: app/components/roles/tenant-role-access-manager.tsx:381
 msgid "See your own published shifts. Only useful for people who also work shifts."
 msgstr "See your own published shifts. Only useful for people who also work shifts."
 
@@ -39215,7 +39414,7 @@ msgstr "Select a form"
 msgid "Select a location"
 msgstr "Select a location"
 
-#: app/components/menu/category-form.tsx:657
+#: app/components/menu/category-form.tsx:660
 msgid "Select a menu to display this category."
 msgstr "Select a menu to display this category."
 
@@ -39262,7 +39461,7 @@ msgid "Select a website page"
 msgstr "Select a website page"
 
 #: app/components/menu/menu-review-stack.tsx:936
-#: app/components/roles/tenant-role-access-manager.tsx:1102
+#: app/components/roles/tenant-role-access-manager.tsx:1108
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:308
 msgid "Select all"
 msgstr ""
@@ -39271,7 +39470,7 @@ msgstr ""
 msgid "Select all matching filter"
 msgstr "Select all matching filter"
 
-#: app/components/menu/option-form.tsx:903
+#: app/components/menu/option-form.tsx:906
 msgid "Select all modifier groups where this option should appear. Assigning to a Pizza Topping group automatically enables whole/half split pricing."
 msgstr "Select all modifier groups where this option should appear. Assigning to a Pizza Topping group automatically enables whole/half split pricing."
 
@@ -39292,7 +39491,7 @@ msgstr "Select an image from your library or upload a new one."
 msgid "Select an issue to jump to its step."
 msgstr "Select an issue to jump to its step."
 
-#: app/components/menu/category-form.tsx:487
+#: app/components/menu/category-form.tsx:490
 msgid "Select an item to add to this category."
 msgstr "Select an item to add to this category."
 
@@ -39679,13 +39878,13 @@ msgstr ""
 msgid "Sending…"
 msgstr "Sending…"
 
-#: app/components/roles/tenant-role-access-manager.tsx:243
+#: app/components/roles/tenant-role-access-manager.tsx:249
 msgid "Sends to customers"
 msgstr "Sends to customers"
 
-#: app/components/roles/tenant-role-access-manager.tsx:335
 #: app/components/roles/tenant-role-access-manager.tsx:341
-#: app/components/roles/tenant-role-access-manager.tsx:403
+#: app/components/roles/tenant-role-access-manager.tsx:347
+#: app/components/roles/tenant-role-access-manager.tsx:409
 msgid "Sensitive pay data"
 msgstr "Sensitive pay data"
 
@@ -39850,11 +40049,11 @@ msgid "Service ends"
 msgstr "Service ends"
 
 #: app/components/locations/checkout-settings-cards.tsx:287
-#: app/components/orders/order-detail.tsx:991
+#: app/components/orders/order-detail.tsx:996
 msgid "Service fee"
 msgstr "Service fee"
 
-#: app/components/locations/location-form.tsx:552
+#: app/components/locations/location-form.tsx:575
 msgid "Service fee: {checkoutMessage}"
 msgstr "Service fee: {checkoutMessage}"
 
@@ -39984,7 +40183,7 @@ msgstr "Set availability"
 msgid "Set baseline dish price and sales tax settings."
 msgstr "Set baseline dish price and sales tax settings."
 
-#: app/components/menu/option-form.tsx:644
+#: app/components/menu/option-form.tsx:647
 msgid "Set baseline option price delta and sales tax settings."
 msgstr "Set baseline option price delta and sales tax settings."
 
@@ -40205,7 +40404,7 @@ msgstr "Setup progress"
 msgid "Setup step"
 msgstr "Setup step"
 
-#: app/components/roles/tenant-role-access-manager.tsx:715
+#: app/components/roles/tenant-role-access-manager.tsx:721
 msgid "Setup, book, guestbook & reports"
 msgstr "Setup, book, guestbook & reports"
 
@@ -40284,7 +40483,7 @@ msgstr "Shared by {ownerName} · {accessLabel}"
 msgid "Shared cap across all items in this section."
 msgstr "Shared cap across all items in this section."
 
-#: app/components/roles/tenant-role-access-manager.tsx:175
+#: app/components/roles/tenant-role-access-manager.tsx:181
 msgid "Shared images and videos, and the AI photo studio."
 msgstr "Shared images and videos, and the AI photo studio."
 
@@ -40329,8 +40528,8 @@ msgstr "Shift is now open."
 msgid "Shift length {duration}."
 msgstr "Shift length {duration}."
 
-#: app/components/roles/tenant-role-access-manager.tsx:651
-#: app/components/roles/tenant-role-access-manager.tsx:702
+#: app/components/roles/tenant-role-access-manager.tsx:657
+#: app/components/roles/tenant-role-access-manager.tsx:708
 msgid "Shift manager"
 msgstr "Shift manager"
 
@@ -40367,7 +40566,7 @@ msgstr "Shifts that run past midnight belong to the day they began."
 msgid "Shifts, time cards and each labor day follow this time zone."
 msgstr "Shifts, time cards and each labor day follow this time zone."
 
-#: app/components/roles/tenant-role-access-manager.tsx:360
+#: app/components/roles/tenant-role-access-manager.tsx:366
 msgid "Shifts, time cards, and labor cost. Only applies when the matching Staff features are turned on."
 msgstr "Shifts, time cards, and labor cost. Only applies when the matching Staff features are turned on."
 
@@ -40429,7 +40628,7 @@ msgctxt "delivery line"
 msgid "Short"
 msgstr "Short"
 
-#: app/components/pos/pos-day-report.tsx:303
+#: app/components/pos/pos-day-report.tsx:384
 msgid "Short {difference}"
 msgstr "Short {difference}"
 
@@ -40532,6 +40731,10 @@ msgstr "Show form title"
 #: app/components/phone-agent/test-call-phone.tsx:247
 msgid "Show keypad"
 msgstr "Show keypad"
+
+#: app/components/pos/station-register-settings.tsx:292
+msgid "Show kitchen note field on dishes at the till"
+msgstr "Show kitchen note field on dishes at the till"
 
 #: app/components/chat/chat-message.tsx:110
 msgid "Show less"
@@ -40770,7 +40973,7 @@ msgstr "Sick"
 msgid "Sick leave"
 msgstr "Sick leave"
 
-#: app/components/roles/tenant-role-access-manager.tsx:259
+#: app/components/roles/tenant-role-access-manager.tsx:265
 msgid "Sign a guest up for offers or take them off on their behalf, when they agreed in person, on a paper form, or by phone. Needs View organization settings."
 msgstr "Sign a guest up for offers or take them off on their behalf, when they agreed in person, on a paper form, or by phone. Needs View organization settings."
 
@@ -40865,7 +41068,7 @@ msgstr "Since the first record:"
 msgid "Since the last count:"
 msgstr "Since the last count:"
 
-#: app/components/menu/option-form.tsx:977
+#: app/components/menu/option-form.tsx:980
 msgid "Single"
 msgstr "Single"
 
@@ -41427,11 +41630,11 @@ msgstr "Spend at least"
 msgid "Spend on one group, get {getQuantity} from another"
 msgstr "Spend on one group, get {getQuantity} from another"
 
-#: app/components/roles/tenant-role-access-manager.tsx:594
+#: app/components/roles/tenant-role-access-manager.tsx:600
 msgid "Spends a guest's money"
 msgstr "Spends a guest's money"
 
-#: app/components/roles/tenant-role-access-manager.tsx:565
+#: app/components/roles/tenant-role-access-manager.tsx:571
 msgid "Spends money"
 msgstr "Spends money"
 
@@ -41488,7 +41691,7 @@ msgstr ""
 #: app/components/command-menu.tsx:140
 #: app/components/customers/person-marketing-card.tsx:67
 #: app/components/orders/refund-labels.ts:29
-#: app/components/roles/tenant-role-access-manager.tsx:316
+#: app/components/roles/tenant-role-access-manager.tsx:322
 #: app/components/workspace-breadcrumb.tsx:17
 #: app/routes/_app+/$orgSlug_+/staff+/_index.tsx:20
 msgid "Staff"
@@ -41582,7 +41785,7 @@ msgstr "Staff picked up"
 msgid "Staff records will be deleted too"
 msgstr "Staff records will be deleted too"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1567
+#: app/components/roles/tenant-role-access-manager.tsx:1573
 msgid "Staff role presets"
 msgstr "Staff role presets"
 
@@ -41594,7 +41797,7 @@ msgstr "Staff tools are on the way"
 msgid "Staff transfers"
 msgstr "Staff transfers"
 
-#: app/components/roles/tenant-role-access-manager.tsx:665
+#: app/components/roles/tenant-role-access-manager.tsx:671
 msgid "Staff, pay & labor"
 msgstr "Staff, pay & labor"
 
@@ -41625,7 +41828,7 @@ msgstr "Standard"
 msgid "Standard organization member with note access"
 msgstr "Standard organization member with note access"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1665
+#: app/components/roles/tenant-role-access-manager.tsx:1671
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "Standard platform roles. Click any role to review its active permissions."
 
@@ -41641,7 +41844,7 @@ msgstr "Standard restaurant menus for dine-in, takeout, and delivery."
 msgid "Standard starter"
 msgstr "Standard starter"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1291
+#: app/components/roles/tenant-role-access-manager.tsx:1297
 msgid "Standard system role."
 msgstr "Standard system role."
 
@@ -41733,7 +41936,7 @@ msgid "Start from a ready-made list, or paste a list from a spreadsheet."
 msgstr "Start from a ready-made list, or paste a list from a spreadsheet."
 
 #: ../../packages/marketing/src/components/email/email-templates.tsx:234
-#: app/components/roles/tenant-role-access-manager.tsx:1025
+#: app/components/roles/tenant-role-access-manager.tsx:1031
 msgid "Start from a template"
 msgstr "Start from a template"
 
@@ -41753,7 +41956,7 @@ msgstr "Start from scratch"
 msgid "Start from the starter list"
 msgstr "Start from the starter list"
 
-#: app/components/roles/tenant-role-access-manager.tsx:311
+#: app/components/roles/tenant-role-access-manager.tsx:317
 msgid "Start group conversations and add teammates."
 msgstr "Start group conversations and add teammates."
 
@@ -41823,7 +42026,7 @@ msgstr "Started {startedAt} by <0>{by}</0>"
 msgid "Started At"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:1365
+#: app/components/locations/location-form.tsx:1388
 msgid "Starter"
 msgstr "Starter"
 
@@ -41881,7 +42084,7 @@ msgstr "Starts at 10:00 local time, once a year. A birthday alone is not consent
 msgid "Starts on"
 msgstr "Starts on"
 
-#: app/components/locations/location-form.tsx:1400
+#: app/components/locations/location-form.tsx:1423
 msgid "Starts when every dish in the previous course is ready."
 msgstr "Starts when every dish in the previous course is ready."
 
@@ -41923,9 +42126,9 @@ msgstr "Stats"
 #: app/components/customers/person-profile-screen.tsx:779
 #: app/components/inventory/stock-list.tsx:114
 #: app/components/menu/menu-bulk-edit-sheet.tsx:548
-#: app/components/orders/order-detail.tsx:1072
+#: app/components/orders/order-detail.tsx:1077
 #: app/components/reservations/experiences/experiences-screen.tsx:292
-#: app/components/roles/tenant-role-access-manager.tsx:1341
+#: app/components/roles/tenant-role-access-manager.tsx:1347
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/components/staff/details-tab.tsx:259
 #: app/components/staff/staff-roster.tsx:143
@@ -42064,11 +42267,11 @@ msgstr "Stock value"
 #~ msgid "Stock will list every item you buy and use: how much you have at this location, where you keep it and what it is worth. Adding items is coming soon."
 #~ msgstr "Stock will list every item you buy and use: how much you have at this location, where you keep it and what it is worth. Adding items is coming soon."
 
-#: app/components/roles/tenant-role-access-manager.tsx:783
+#: app/components/roles/tenant-role-access-manager.tsx:789
 msgid "Stock, costs, purchasing & recipes"
 msgstr "Stock, costs, purchasing & recipes"
 
-#: app/components/roles/tenant-role-access-manager.tsx:543
+#: app/components/roles/tenant-role-access-manager.tsx:549
 msgid "Stock, counts, waste, deliveries, suppliers and dish recipes. Only applies when Inventory is turned on for your organization."
 msgstr "Stock, counts, waste, deliveries, suppliers and dish recipes. Only applies when Inventory is turned on for your organization."
 
@@ -42159,7 +42362,7 @@ msgstr "Store Hours"
 msgid "Store info"
 msgstr "Store info"
 
-#: app/components/locations/location-form.tsx:977
+#: app/components/locations/location-form.tsx:1000
 msgid "Store Pickup"
 msgstr "Store Pickup"
 
@@ -42329,7 +42532,7 @@ msgstr ""
 msgid "Subscription Started"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:928
+#: app/components/orders/order-detail.tsx:933
 msgid "Subtotal"
 msgstr "Subtotal"
 
@@ -42367,7 +42570,7 @@ msgstr "Suggest from use"
 msgid "Suggest improvements"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:518
+#: app/components/menu/category-form.tsx:521
 msgid "Suggest other categories as add-ons when guests browse this section (e.g. Sides, Wine Pairings)."
 msgstr "Suggest other categories as add-ons when guests browse this section (e.g. Sides, Wine Pairings)."
 
@@ -42483,7 +42686,7 @@ msgstr "Suppliers"
 msgid "supported"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:1207
+#: app/components/locations/location-form.tsx:1230
 msgid "Supported Delivery Providers"
 msgstr "Supported Delivery Providers"
 
@@ -42807,7 +43010,7 @@ msgstr "Table label is required."
 msgid "Table locked"
 msgstr "Table locked"
 
-#: app/components/locations/location-form.tsx:1018
+#: app/components/locations/location-form.tsx:1041
 msgid "Table ordering and in-house steps."
 msgstr "Table ordering and in-house steps."
 
@@ -42916,7 +43119,7 @@ msgstr "Tablets"
 msgid "Tablets accept clock-ins"
 msgstr "Tablets accept clock-ins"
 
-#: app/components/pos/pos-day-report.tsx:219
+#: app/components/pos/pos-day-report.tsx:272
 msgid "Tabs still open"
 msgstr "Tabs still open"
 
@@ -42948,7 +43151,7 @@ msgstr ""
 msgid "Tahini"
 msgstr "Tahini"
 
-#: app/components/roles/tenant-role-access-manager.tsx:1460
+#: app/components/roles/tenant-role-access-manager.tsx:1466
 msgid "Tailored roles specific to your organization with configured permissions."
 msgstr "Tailored roles specific to your organization with configured permissions."
 
@@ -42957,7 +43160,7 @@ msgstr "Tailored roles specific to your organization with configured permissions
 msgid "Take a message"
 msgstr "Take a message"
 
-#: app/components/roles/tenant-role-access-manager.tsx:593
+#: app/components/roles/tenant-role-access-manager.tsx:599
 msgid "Take a payment from a card for a phone, catering or invoice order, without being able to adjust balances. Includes View gift cards."
 msgstr "Take a payment from a card for a phone, catering or invoice order, without being able to adjust balances. Includes View gift cards."
 
@@ -43025,7 +43228,7 @@ msgstr "Talk to your agent from this browser and use the dial pad to press keys.
 msgid "Talk to your agent from this browser before callers do."
 msgstr "Talk to your agent from this browser before callers do."
 
-#: app/components/roles/tenant-role-access-manager.tsx:277
+#: app/components/roles/tenant-role-access-manager.tsx:283
 msgid "Talks to customers"
 msgstr "Talks to customers"
 
@@ -43090,8 +43293,8 @@ msgstr "Tasks"
 msgid "Tasks to finish when someone joins."
 msgstr "Tasks to finish when someone joins."
 
-#: app/components/orders/order-detail.tsx:1013
-#: app/components/pos/pos-day-report.tsx:206
+#: app/components/orders/order-detail.tsx:1018
+#: app/components/pos/pos-day-report.tsx:259
 msgid "Tax"
 msgstr "Tax"
 
@@ -43134,7 +43337,7 @@ msgstr "Team channel"
 
 #: app/components/chat/chat-sidebar-link.tsx:20
 #: app/components/chat/chat-view.tsx:384
-#: app/components/roles/tenant-role-access-manager.tsx:299
+#: app/components/roles/tenant-role-access-manager.tsx:305
 msgid "Team chat"
 msgstr "Team chat"
 
@@ -43142,7 +43345,7 @@ msgstr "Team chat"
 msgid "Team chat isn't running in this environment"
 msgstr "Team chat isn't running in this environment"
 
-#: app/components/roles/tenant-role-access-manager.tsx:641
+#: app/components/roles/tenant-role-access-manager.tsx:647
 msgid "Team manager"
 msgstr "Team manager"
 
@@ -43284,6 +43487,14 @@ msgstr "Temporary (302) keeps original search indexing. Best for short-term prom
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1362
 msgid "Temporary forward"
 msgstr "Temporary forward"
+
+#: app/components/pos/pos-day-report.tsx:429
+#~ msgid "Terminal {terminalLabel}. Expected cash in drawer: {0}. Closing cannot be undone."
+#~ msgstr "Terminal {terminalLabel}. Expected cash in drawer: {0}. Closing cannot be undone."
+
+#: app/components/pos/pos-day-report.tsx:431
+msgid "Terminal {terminalLabel}. Expected cash in drawer: {expectedCashText}. Closing cannot be undone."
+msgstr "Terminal {terminalLabel}. Expected cash in drawer: {expectedCashText}. Closing cannot be undone."
 
 #: app/components/pos/terminals-manager.tsx:1477
 msgid "Terminal code"
@@ -44039,7 +44250,7 @@ msgstr "The assistant couldn't reply. Check your connection and try again."
 msgid "The assistant couldn't reply. Try again."
 msgstr "The assistant couldn't reply. Try again."
 
-#: app/components/roles/tenant-role-access-manager.tsx:266
+#: app/components/roles/tenant-role-access-manager.tsx:272
 msgid "The assistant that answers restaurant calls."
 msgstr "The assistant that answers restaurant calls."
 
@@ -44575,7 +44786,7 @@ msgstr "The guest asked to receive marketing by text"
 #~ msgid "The guest details could not be saved. Try again."
 #~ msgstr "The guest details could not be saved. Try again."
 
-#: app/components/orders/order-detail.tsx:1135
+#: app/components/orders/order-detail.tsx:1140
 msgid "The guest disputed this payment with their card issuer, so it cannot be refunded here until the dispute is settled."
 msgstr "The guest disputed this payment with their card issuer, so it cannot be refunded here until the dispute is settled."
 
@@ -44857,11 +45068,11 @@ msgstr "The Meta emulator refused this post (it contains #fail)."
 msgid "The minimum and maximum don't fit this choice."
 msgstr "The minimum and maximum don't fit this choice."
 
-#: app/components/orders/order-detail.tsx:1160
+#: app/components/orders/order-detail.tsx:1165
 msgid "The money goes back to the guest's card through your payment provider."
 msgstr "The money goes back to the guest's card through your payment provider."
 
-#: app/components/orders/order-detail.tsx:1350
+#: app/components/orders/order-detail.tsx:1355
 #: app/components/orders/provider-refund-dialog.tsx:303
 msgid "The money goes back to the guest's card through your payment provider. Card and payment provider fees are usually not returned to you."
 msgstr "The money goes back to the guest's card through your payment provider. Card and payment provider fees are usually not returned to you."
@@ -45075,7 +45286,7 @@ msgstr "The people who work at your organization: roster, time clock, schedule, 
 msgid "The people who work here, their positions and where they work."
 msgstr "The people who work here, their positions and where they work."
 
-#: app/components/roles/tenant-role-access-manager.tsx:318
+#: app/components/roles/tenant-role-access-manager.tsx:324
 msgid "The people who work here: roster, pay, and private details. Only applies when Staff is turned on for your organization."
 msgstr "The people who work here: roster, pay, and private details. Only applies when Staff is turned on for your organization."
 
@@ -46469,6 +46680,7 @@ msgid "This location is no longer available."
 msgstr "This location is no longer available."
 
 #: app/components/pos/ready-text-settings.tsx:93
+#: app/components/pos/station-register-settings.tsx:140
 msgid "This location no longer exists. Reload the page."
 msgstr "This location no longer exists. Reload the page."
 
@@ -47412,7 +47624,7 @@ msgstr "Timesheet view"
 msgid "Timesheets"
 msgstr "Timesheets"
 
-#: app/components/locations/location-form.tsx:648
+#: app/components/locations/location-form.tsx:671
 msgid "Timezone"
 msgstr "Timezone"
 
@@ -47423,14 +47635,14 @@ msgstr "Timezone"
 msgid "Timing and notes"
 msgstr "Timing and notes"
 
-#: app/components/orders/order-detail.tsx:1022
+#: app/components/orders/order-detail.tsx:1027
 msgid "Tip"
 msgstr "Tip"
 
 #~ msgid "Tip ({0}%)"
 #~ msgstr "Tip ({0}%)"
 
-#: app/components/orders/order-detail.tsx:1021
+#: app/components/orders/order-detail.tsx:1026
 msgid "Tip ({tipPercent}%)"
 msgstr "Tip ({tipPercent}%)"
 
@@ -47442,7 +47654,7 @@ msgstr "Tip ({tipPercent}%)"
 msgid "Tip choices at checkout"
 msgstr "Tip choices at checkout"
 
-#: app/components/locations/location-form.tsx:554
+#: app/components/locations/location-form.tsx:577
 msgid "Tip choices: {checkoutMessage}"
 msgstr "Tip choices: {checkoutMessage}"
 
@@ -47454,7 +47666,7 @@ msgstr "Tip in {currency} (optional)"
 msgid "Tip pool: tips by day"
 msgstr "Tip pool: tips by day"
 
-#: app/components/locations/location-form.tsx:1058
+#: app/components/locations/location-form.tsx:1081
 msgid "Tip prompt options and advance order scheduling rules."
 msgstr "Tip prompt options and advance order scheduling rules."
 
@@ -47474,14 +47686,14 @@ msgstr "Tip shares"
 msgid "Tip: give printed cards a code of their own (for example FLYER10) to see how many orders they bring in."
 msgstr "Tip: give printed cards a code of their own (for example FLYER10) to see how many orders they bring in."
 
-#: app/components/pos/pos-day-report.tsx:207
+#: app/components/pos/pos-day-report.tsx:260
 #: app/components/staff/labor/labor-page.tsx:198
 #: app/components/staff/timesheets/card-fields.tsx:184
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:209
 msgid "Tips"
 msgstr "Tips"
 
-#: app/components/locations/location-form.tsx:1055
+#: app/components/locations/location-form.tsx:1078
 msgid "Tips & Order Scheduling"
 msgstr "Tips & Order Scheduling"
 
@@ -47745,7 +47957,7 @@ msgstr "Toppings, sauces and other choices on an item."
 #: app/components/customers/person-orders-panel.tsx:175
 #: app/components/inventory/review-order-screen.tsx:639
 #: app/components/notes-chart.tsx:69
-#: app/components/orders/order-detail.tsx:1041
+#: app/components/orders/order-detail.tsx:1046
 #: app/components/staff/labor/labor-overview.tsx:219
 #: app/components/staff/labor/labor-tips.tsx:276
 #: app/components/staff/timesheets/payroll-summary.tsx:443
@@ -48126,7 +48338,7 @@ msgstr ""
 #: app/components/menu/delete-effects.tsx:468
 #: app/components/menu/delete-effects.tsx:543
 #: app/components/menu/menu-review-stack.tsx:907
-#: app/components/orders/order-detail.tsx:1154
+#: app/components/orders/order-detail.tsx:1159
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
@@ -48521,7 +48733,7 @@ msgstr "Typical online orders"
 msgid "Typical online orders by hour"
 msgstr "Typical online orders by hour"
 
-#: app/components/locations/location-form.tsx:1240
+#: app/components/locations/location-form.tsx:1263
 msgid "Uber Eats"
 msgstr "Uber Eats"
 
@@ -49085,7 +49297,7 @@ msgstr "Update from Canva"
 msgid "Update from menu"
 msgstr "Update from menu"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:622
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:639
 msgid "Update location details, hours, and fulfillment preferences."
 msgstr "Update location details, hours, and fulfillment preferences."
 
@@ -49117,7 +49329,7 @@ msgstr "Update reply"
 msgid "Update the plan"
 msgstr "Update the plan"
 
-#: app/components/roles/tenant-role-access-manager.tsx:973
+#: app/components/roles/tenant-role-access-manager.tsx:979
 msgid "Update this role’s name, description, and permissions."
 msgstr "Update this role’s name, description, and permissions."
 
@@ -49259,7 +49471,7 @@ msgstr ""
 msgid "Upload your logo"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:180
+#: app/components/roles/tenant-role-access-manager.tsx:186
 msgid "Upload, rename, replace, and delete files in the shared media library. Everyone can browse it."
 msgstr "Upload, rename, replace, and delete files in the shared media library. Everyone can browse it."
 
@@ -49313,7 +49525,7 @@ msgstr "URL copied to clipboard"
 msgid "URL Redirects"
 msgstr "URL Redirects"
 
-#: app/components/locations/location-form.tsx:616
+#: app/components/locations/location-form.tsx:639
 msgid "URL Slug"
 msgstr "URL Slug"
 
@@ -49539,7 +49751,7 @@ msgstr "Use limit for code {number}"
 msgid "Use lowercase letters, numbers and dashes only (up to 64)."
 msgstr "Use lowercase letters, numbers and dashes only (up to 64)."
 
-#: app/components/roles/tenant-role-access-manager.tsx:379
+#: app/components/roles/tenant-role-access-manager.tsx:385
 msgid "Use own time clock"
 msgstr "Use own time clock"
 
@@ -49559,7 +49771,7 @@ msgstr "Use selected"
 msgid "Use suggestion"
 msgstr "Use suggestion"
 
-#: app/components/roles/tenant-role-access-manager.tsx:185
+#: app/components/roles/tenant-role-access-manager.tsx:191
 msgid "Use the AI photo studio"
 msgstr "Use the AI photo studio"
 
@@ -49641,7 +49853,7 @@ msgstr "Used in"
 msgid "Used in the web address of the page. Lowercase letters, numbers and dashes."
 msgstr "Used in the web address of the page. Lowercase letters, numbers and dashes."
 
-#: app/components/locations/location-form.tsx:627
+#: app/components/locations/location-form.tsx:650
 msgid "Used on the public online ordering website."
 msgstr "Used on the public online ordering website."
 
@@ -49808,7 +50020,7 @@ msgstr "VAT ({currency})"
 msgid "VAT number"
 msgstr "VAT number"
 
-#: app/components/locations/location-form.tsx:687
+#: app/components/locations/location-form.tsx:710
 msgid "VAT Registration Number"
 msgstr "VAT Registration Number"
 
@@ -49822,13 +50034,13 @@ msgstr "Vegan"
 #: app/components/menu/menu-bulk-edit-sheet.tsx:593
 #: app/components/menu/modifier-form.tsx:1643
 #: app/components/menu/modifier-form.tsx:2022
-#: app/components/menu/option-form.tsx:841
+#: app/components/menu/option-form.tsx:844
 #: app/components/reservations/booking-sheet.tsx:60
 #: app/utils/reservations/labels.ts:101
 msgid "Vegetarian"
 msgstr "Vegetarian"
 
-#: app/components/locations/location-form.tsx:1036
+#: app/components/locations/location-form.tsx:1059
 msgid "Vehicle pickup with car details."
 msgstr "Vehicle pickup with car details."
 
@@ -49902,7 +50114,7 @@ msgstr "Video thumbnail"
 #: app/components/dashboard/access-labels.ts:19
 #: app/components/inventory/prep-screen.tsx:222
 #: app/components/inventory/recipe-panel.tsx:339
-#: app/components/roles/tenant-role-access-manager.tsx:1533
+#: app/components/roles/tenant-role-access-manager.tsx:1539
 #: app/components/settings/cards/organization/invoices-card.tsx:152
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:251
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
@@ -49925,15 +50137,15 @@ msgstr ""
 msgid "View and manage this session"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:219
+#: app/components/roles/tenant-role-access-manager.tsx:225
 msgid "View announcements"
 msgstr "View announcements"
 
-#: app/components/roles/tenant-role-access-manager.tsx:247
+#: app/components/roles/tenant-role-access-manager.tsx:253
 msgid "View automations"
 msgstr "View automations"
 
-#: app/components/roles/tenant-role-access-manager.tsx:236
+#: app/components/roles/tenant-role-access-manager.tsx:242
 msgid "View broadcasts"
 msgstr "View broadcasts"
 
@@ -49941,7 +50153,7 @@ msgstr "View broadcasts"
 msgid "View call"
 msgstr "View call"
 
-#: app/components/roles/tenant-role-access-manager.tsx:281
+#: app/components/roles/tenant-role-access-manager.tsx:287
 msgid "View calls"
 msgstr "View calls"
 
@@ -49949,7 +50161,7 @@ msgstr "View calls"
 msgid "View customer"
 msgstr "View customer"
 
-#: app/components/roles/tenant-role-access-manager.tsx:529
+#: app/components/roles/tenant-role-access-manager.tsx:535
 msgid "View discounts"
 msgstr "View discounts"
 
@@ -49957,27 +50169,27 @@ msgstr "View discounts"
 msgid "View drop"
 msgstr "View drop"
 
-#: app/components/roles/tenant-role-access-manager.tsx:581
+#: app/components/roles/tenant-role-access-manager.tsx:587
 msgid "View gift cards"
 msgstr "View gift cards"
 
-#: app/components/roles/tenant-role-access-manager.tsx:465
+#: app/components/roles/tenant-role-access-manager.tsx:471
 msgid "View guestbook"
 msgstr "View guestbook"
 
-#: app/components/roles/tenant-role-access-manager.tsx:425
+#: app/components/roles/tenant-role-access-manager.tsx:431
 msgid "View hiring"
 msgstr "View hiring"
 
-#: app/components/roles/tenant-role-access-manager.tsx:557
+#: app/components/roles/tenant-role-access-manager.tsx:563
 msgid "View inventory costs"
 msgstr "View inventory costs"
 
-#: app/components/roles/tenant-role-access-manager.tsx:401
+#: app/components/roles/tenant-role-access-manager.tsx:407
 msgid "View labor cost"
 msgstr "View labor cost"
 
-#: app/components/roles/tenant-role-access-manager.tsx:407
+#: app/components/roles/tenant-role-access-manager.tsx:413
 msgid "View labor policy"
 msgstr "View labor policy"
 
@@ -49985,11 +50197,11 @@ msgstr "View labor policy"
 msgid "View live site"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:495
+#: app/components/roles/tenant-role-access-manager.tsx:501
 msgid "View loyalty members"
 msgstr "View loyalty members"
 
-#: app/components/roles/tenant-role-access-manager.tsx:518
+#: app/components/roles/tenant-role-access-manager.tsx:524
 msgid "View loyalty reports"
 msgstr "View loyalty reports"
 
@@ -50014,35 +50226,35 @@ msgstr "View organization settings"
 msgid "View own notes"
 msgstr "View own notes"
 
-#: app/components/roles/tenant-role-access-manager.tsx:374
+#: app/components/roles/tenant-role-access-manager.tsx:380
 msgid "View own shifts"
 msgstr "View own shifts"
 
-#: app/components/roles/tenant-role-access-manager.tsx:333
+#: app/components/roles/tenant-role-access-manager.tsx:339
 msgid "View pay rates"
 msgstr "View pay rates"
 
-#: app/components/roles/tenant-role-access-manager.tsx:270
+#: app/components/roles/tenant-role-access-manager.tsx:276
 msgid "View phone agent"
 msgstr "View phone agent"
 
-#: app/components/roles/tenant-role-access-manager.tsx:345
+#: app/components/roles/tenant-role-access-manager.tsx:351
 msgid "View private details"
 msgstr "View private details"
 
-#: app/components/roles/tenant-role-access-manager.tsx:196
+#: app/components/roles/tenant-role-access-manager.tsx:202
 msgid "View reports"
 msgstr "View reports"
 
-#: app/components/roles/tenant-role-access-manager.tsx:444
+#: app/components/roles/tenant-role-access-manager.tsx:450
 msgid "View reservation book & waitlist"
 msgstr "View reservation book & waitlist"
 
-#: app/components/roles/tenant-role-access-manager.tsx:477
+#: app/components/roles/tenant-role-access-manager.tsx:483
 msgid "View reservation reports"
 msgstr "View reservation reports"
 
-#: app/components/roles/tenant-role-access-manager.tsx:454
+#: app/components/roles/tenant-role-access-manager.tsx:460
 msgid "View reservation settings & experiences"
 msgstr "View reservation settings & experiences"
 
@@ -50053,11 +50265,11 @@ msgstr "View reservation settings & experiences"
 msgid "View run history"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:322
+#: app/components/roles/tenant-role-access-manager.tsx:328
 msgid "View staff"
 msgstr "View staff"
 
-#: app/components/roles/tenant-role-access-manager.tsx:547
+#: app/components/roles/tenant-role-access-manager.tsx:553
 msgid "View stock"
 msgstr "View stock"
 
@@ -50077,11 +50289,11 @@ msgstr "View team members"
 msgid "View team notes"
 msgstr "View team notes"
 
-#: app/components/roles/tenant-role-access-manager.tsx:364
+#: app/components/roles/tenant-role-access-manager.tsx:370
 msgid "View team schedule"
 msgstr "View team schedule"
 
-#: app/components/roles/tenant-role-access-manager.tsx:384
+#: app/components/roles/tenant-role-access-manager.tsx:390
 msgid "View time cards"
 msgstr "View time cards"
 
@@ -50089,11 +50301,11 @@ msgstr "View time cards"
 msgid "View Timeline →"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:208
+#: app/components/roles/tenant-role-access-manager.tsx:214
 msgid "View website workspace"
 msgstr "View website workspace"
 
-#: app/components/roles/tenant-role-access-manager.tsx:793
+#: app/components/roles/tenant-role-access-manager.tsx:799
 #: app/utils/organization/role-label.ts:17
 msgid "Viewer"
 msgstr "Viewer"
@@ -50876,14 +51088,14 @@ msgstr "Webhooks: {webhookMode}"
 msgid "Website"
 msgstr ""
 
-#: app/components/roles/tenant-role-access-manager.tsx:203
+#: app/components/roles/tenant-role-access-manager.tsx:209
 msgid "Website & Publishing"
 msgstr "Website & Publishing"
 
 #~ msgid "Website editor and public pages."
 #~ msgstr "Website editor and public pages."
 
-#: app/components/roles/tenant-role-access-manager.tsx:204
+#: app/components/roles/tenant-role-access-manager.tsx:210
 msgid "Website editor, announcements, and public pages."
 msgstr "Website editor, announcements, and public pages."
 
@@ -51646,7 +51858,7 @@ msgstr "Who works"
 msgid "Whole"
 msgstr "Whole"
 
-#: app/components/menu/option-form.tsx:741
+#: app/components/menu/option-form.tsx:744
 msgid "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 msgstr "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 
@@ -51670,7 +51882,7 @@ msgstr "Whole order discount"
 msgid "Whole pizza ($)"
 msgstr "Whole pizza ($)"
 
-#: app/components/menu/option-form.tsx:659
+#: app/components/menu/option-form.tsx:662
 msgid "Whole pizza price ($)"
 msgstr "Whole pizza price ($)"
 
@@ -51699,7 +51911,7 @@ msgid "Why are you rejecting it?"
 msgstr "Why are you rejecting it?"
 
 #: app/components/inventory/review-order-screen.tsx:827
-#: app/components/orders/order-detail.tsx:1316
+#: app/components/orders/order-detail.tsx:1321
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:580
 msgid "Why is it cancelled?"
 msgstr "Why is it cancelled?"
@@ -53011,7 +53223,7 @@ msgstr "ZATCA e-invoicing"
 msgid "ZATCA invoice reference"
 msgstr "ZATCA invoice reference"
 
-#: app/components/roles/tenant-role-access-manager.tsx:806
+#: app/components/roles/tenant-role-access-manager.tsx:812
 msgid "Zero permissions"
 msgstr "Zero permissions"
 

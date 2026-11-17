@@ -34,7 +34,7 @@ export type PosSummaryOrder = {
 export type PosSummaryMoney = { method: PosTender; amountCents: number }
 export type PosSummaryRefund = PosSummaryMoney & { taxCents: number }
 export type PosSummaryMovement = {
-	kind: 'pay_in' | 'pay_out'
+	kind: 'pay_in' | 'pay_out' | 'drop'
 	amountCents: number
 }
 
@@ -160,7 +160,7 @@ export function posSalesSummary(input: {
 		.filter((m) => m.kind === 'pay_in')
 		.reduce((s, m) => s + m.amountCents, 0)
 	const payOutsCents = movements
-		.filter((m) => m.kind === 'pay_out')
+		.filter((m) => m.kind === 'pay_out' || m.kind === 'drop')
 		.reduce((s, m) => s + m.amountCents, 0)
 	const openingFloatCents = input.openingFloatCents ?? 0
 	return {

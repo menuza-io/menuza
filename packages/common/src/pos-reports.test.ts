@@ -132,4 +132,26 @@ describe('posSalesSummary', () => {
 		expect(summary).not.toHaveProperty('grossBeforeDiscountsCents')
 		expect(summary.grossSalesCents).toBe(1500)
 	})
+
+	it('treats safe drops alongside pay-outs in expected drawer cash', () => {
+		const summary = posSalesSummary({
+			orders: [order('paid', 1000)],
+			payments: [{ method: 'cash', amountCents: 1000 }],
+			refunds: [],
+			openingFloatCents: 5000,
+			movements: [
+				{ kind: 'pay_in', amountCents: 300 },
+				{ kind: 'pay_out', amountCents: 200 },
+				{ kind: 'drop', amountCents: 1500 },
+			],
+		})
+		expect(summary.cash).toEqual({
+			openingFloatCents: 5000,
+			paymentsCents: 1000,
+			refundsCents: 0,
+			payInsCents: 300,
+			payOutsCents: 1700,
+			expectedCents: 4600,
+		})
+	})
 })

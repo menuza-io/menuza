@@ -320,6 +320,7 @@ export function expandLines(
 	const errors: ExpandError[] = []
 	lines.forEach((line, index) => {
 		assertPositiveInteger(line.quantity, 'line quantity')
+		if (line.kind === 'custom') return
 		const dish = expandDish(store, line, at)
 		if (!dish.ok) {
 			errors.push({ lineIndex: index, ...dish.error })

@@ -413,3 +413,40 @@ describe('order refund permission', () => {
 		expect(memberIds).not.toContain(ID)
 	})
 })
+
+describe('pos shift remote close permission', () => {
+	const ID = 'org_perm_update_pos_shift_any'
+
+	it('is assignable to custom roles and implies nothing', () => {
+		expect(TENANT_ROLE_PERMISSION_IDS).toContain(ID)
+		expect(hasOnlyTenantRolePermissions([ID])).toBe(true)
+		expect(withImpliedTenantRolePermissions([ID])).toEqual([ID])
+	})
+
+	it('ORG_PERMISSIONS, setup-roles.ts and the 0056 migration name the same grant', () => {
+		expect(ORG_PERMISSIONS.UPDATE_POS_SHIFT_ANY).toBe('update:pos_shift:any')
+		expect(permissionId(ORG_PERMISSIONS.UPDATE_POS_SHIFT_ANY)).toBe(ID)
+		const setupRoles = fs.readFileSync(
+			path.join(REPO_ROOT, 'packages/database/setup-roles.ts'),
+			'utf8',
+		)
+		const migration = fs.readFileSync(
+			path.join(
+				REPO_ROOT,
+				'packages/database/drizzle/0056_station_register_and_order_numbers.sql',
+			),
+			'utf8',
+		)
+		expect(setupRoles).toContain(`id: '${ID}'`)
+		expect(migration).toContain(`('${ID}', 'update', 'pos_shift', 'any'`)
+		// Built-in admins (the owner's preset) only.
+		expect(migration).toContain(`('org_role_admin', '${ID}')`)
+		expect(migration).not.toContain('org_role_member')
+		expect(migration).not.toContain('org_role_viewer')
+		const memberIds = setupRoles.slice(
+			setupRoles.indexOf('const MEMBER_PERMISSION_IDS'),
+			setupRoles.indexOf('const VIEWER_PERMISSION_IDS'),
+		)
+		expect(memberIds).not.toContain(ID)
+	})
+})

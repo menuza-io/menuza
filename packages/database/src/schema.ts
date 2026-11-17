@@ -2699,6 +2699,17 @@ export const OrganizationLocation = sqliteTable(
 		 */
 		readyTextEnabled: integer({ mode: 'boolean' }).default(false).notNull(),
 		/**
+		 * Per-location Station register settings (#372, #171, #380): JSON
+		 * `{ guestDetails, dishNotes, customItems, customItemMaxCents, cashVarianceFlagCents }`.
+		 * Policy only; guest details live in the regional database.
+		 */
+		stationSettings: text(),
+		/**
+		 * Per-location order number format & daily reset time (#371): JSON
+		 * `{ prefix, digits, resetTime }`. Policy only; null uses legacy defaults.
+		 */
+		orderNumberFormat: text(),
+		/**
 		 * "Guests can cancel within" (Settings, Locations, Online ordering;
 		 * `ordering.guest_cancel`): minutes after payment (or placement) a guest
 		 * may cancel their own ASAP order, one of 1, 2, 5 or 10. Null or 0 is

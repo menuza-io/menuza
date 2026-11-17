@@ -11,6 +11,7 @@ import {
 	addCashMovement,
 	closeShift,
 	openShift,
+	recentShifts,
 	rejectedShifts,
 	requeueRejectedShifts,
 	startShift,
@@ -156,6 +157,7 @@ export function ShiftSheet({
 		return (
 			<Modal open onClose={onClose} title={_(t`Open a shift`)} size="md">
 				<div key="open" className="t-rise space-y-4 p-5">
+					<RemotelyClosedBanner />
 					<RejectedShifts onRetry={onChanged} />
 					<p className="text-muted-foreground">
 						<Trans>
@@ -410,6 +412,29 @@ export function ShiftSheet({
 	)
 }
 
+function RemotelyClosedBanner() {
+	const recent = useLiveQuery(() => recentShifts(1), [], [])
+	const latest = recent[0]
+	if (!latest || latest.status !== 'closed' || !latest.closedRemotelyBy) {
+		return null
+	}
+	return (
+		<div
+			role="status"
+			className="border-border bg-muted/50 space-y-1 rounded-(--station-control-radius) border p-3 text-sm"
+		>
+			<p className="font-semibold">
+				<Trans>
+					Last shift closed remotely by {latest.closedRemotelyBy.name}
+				</Trans>
+			</p>
+			{latest.remoteCloseReason ? (
+				<p className="text-muted-foreground">{latest.remoteCloseReason}</p>
+			) : null}
+		</div>
+	)
+}
+
 /**
  * Shifts the server refused for good: their Z figures never reached the
  * restaurant. Shown until someone sends them again (after an app update or a
@@ -579,6 +604,12 @@ function ZReport({
 			{shift.closedBy ? (
 				<div className="text-center">
 					<Trans>Closed by {shift.closedBy.name}</Trans>
+				</div>
+			) : null}
+			{shift.closedRemotelyBy ? (
+				<div className="text-center">
+					<Trans>Closed remotely by {shift.closedRemotelyBy.name}</Trans>
+					{shift.remoteCloseReason ? ` — ${shift.remoteCloseReason}` : ''}
 				</div>
 			) : null}
 			<hr />

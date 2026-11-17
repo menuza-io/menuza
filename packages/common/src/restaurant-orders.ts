@@ -38,6 +38,10 @@ import {
 	type ReadySlotCapacitySpec,
 } from './ready-slot-capacity.ts'
 import { generatePickupSlots, getDropDisplayStatus } from './menu-types.ts'
+import {
+	orderNumberFormatSchema,
+	posLocationStationSettingsSchema,
+} from './pos-orders.ts'
 import { orderMarketingConsentSchema } from './marketing-consent.ts'
 import {
 	ORDER_CANCELLED_BY_VALUES,
@@ -1266,6 +1270,10 @@ export const publicLocationContextSchema = z
 		prayerPauseSettings: z.unknown().optional(),
 		/** KSA (or other enabled region): prayer pauses may apply. */
 		prayerPauseRegion: z.boolean().optional(),
+		/** Per-location Station register policy (#372, #171, #380). */
+		stationSettings: posLocationStationSettingsSchema.optional(),
+		/** Per-location order number format and daily reset (#371). */
+		orderNumberFormat: orderNumberFormatSchema.optional(),
 	})
 	.loose()
 

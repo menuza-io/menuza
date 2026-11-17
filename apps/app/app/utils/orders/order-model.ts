@@ -103,6 +103,7 @@ export const orderSchema = z.object({
 	location: z.object({ id: z.string(), name: z.string() }),
 	lines: z.array(
 		z.object({
+			kind: z.enum(['catalog', 'custom']).optional().catch(undefined),
 			itemName: z.string(),
 			quantity: z.number(),
 			unitPriceCents: z.number(),

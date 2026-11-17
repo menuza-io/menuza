@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from './db.ts'
 import {
 	addPayment,
@@ -574,5 +574,125 @@ describe('a ticket the kitchen cleared from the pass', () => {
 			null,
 		])
 		expect(after.revision).toBe(next.revision)
+	})
+})
+
+describe('required guest details on counter orders (#372)', () => {
+	it('refuses a counter order when phone or name is required and missing, and accepts with them', async () => {
+		await expect(
+			createOrder({ ...draft, guestDetailsRequired: 'phone' }),
+		).rejects.toThrow(/phone/)
+		await expect(
+			createOrder({
+				...draft,
+				guestDetailsRequired: 'phone',
+				customerPhone: '123',
+			}),
+		).rejects.toThrow(/valid guest phone/)
+		await expect(
+			createOrder({ ...draft, guestDetailsRequired: 'name', customerName: '' }),
+		).rejects.toThrow(/guest name/)
+		await expect(
+			createOrder({
+				...draft,
+				guestDetailsRequired: 'both',
+				customerName: 'Nadia',
+				customerPhone: '',
+			}),
+		).rejects.toThrow(/phone/)
+
+		const saved = await createOrder({
+			...draft,
+			guestDetailsRequired: 'both',
+			customerName: 'Nadia',
+			customerPhone: '+966 55 123 4567',
+		})
+		expect(saved.customerName).toBe('Nadia')
+		expect(saved.customerPhone).toBe('+966551234567')
+		expect(toWireOrder(saved).customerPhone).toBe('+966551234567')
+	})
+})
+
+describe('custom open-price items (#171)', () => {
+	it('serializes custom item fields onto the wire and validates name and positive price', async () => {
+		const customLine = line({
+			id: 'c1',
+			kind: 'custom',
+			itemId: 'custom:c1',
+			name: 'Corkage fee',
+			baseCents: 1500,
+			taxable: false,
+			kitchenStationId: 'bar',
+		})
+		await expect(
+			createOrder({
+				...draft,
+				lines: [{ ...customLine, name: 'x'.repeat(61) }],
+			}),
+		).rejects.toThrow(/60/)
+		await expect(
+			createOrder({
+				...draft,
+				lines: [{ ...customLine, baseCents: 0 }],
+			}),
+		).rejects.toThrow(/above zero/)
+
+		const order = await createOrder({ ...draft, lines: [customLine] })
+		expect(toWireOrder(order).lines[0]).toMatchObject({
+			kind: 'custom',
+			itemId: 'custom:c1',
+			name: 'Corkage fee',
+			baseCents: 1500,
+			taxable: false,
+			kitchenStationId: 'bar',
+		})
+	})
+})
+
+describe('location order number format and timezone reset (#371)', () => {
+	it('formats prefix and digits (A001, A002) and resets at configured resetTime in the location timezone', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] })
+		try {
+			// 2026-11-17 05:50 Asia/Riyadh (02:50Z) is before 06:00 reset -> business day 2026-11-16
+			vi.setSystemTime(new Date('2026-11-17T02:50:00.000Z'))
+			const format = { prefix: 'A', digits: 3, resetTime: '06:00' }
+			const first = await createOrder({
+				...draft,
+				timeZone: 'Asia/Riyadh',
+				orderNumberFormat: format,
+			})
+			const second = await createOrder({
+				...draft,
+				timeZone: 'Asia/Riyadh',
+				orderNumberFormat: format,
+			})
+			expect(first.number).toBe('A001')
+			expect(first.businessDate).toBe('2026-11-16')
+			expect(second.number).toBe('A002')
+			expect(second.businessDate).toBe('2026-11-16')
+
+			// 2026-11-17 06:05 Asia/Riyadh (03:05Z) -> new business day resets counter to A001
+			vi.setSystemTime(new Date('2026-11-17T03:05:00.000Z'))
+			const afterReset = await createOrder({
+				...draft,
+				timeZone: 'Asia/Riyadh',
+				orderNumberFormat: format,
+			})
+			expect(afterReset.number).toBe('A001')
+			expect(afterReset.businessDate).toBe('2026-11-17')
+			expect((await db.orders.get(first.id))?.number).toBe('A001')
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('keeps terminal prefix when location order number format prefix is empty', async () => {
+		const order = await createOrder({
+			...draft,
+			terminalCode: 'T2',
+			timeZone: 'UTC',
+			orderNumberFormat: { prefix: '', digits: 3, resetTime: '04:00' },
+		})
+		expect(order.number).toBe('T2-001')
 	})
 })

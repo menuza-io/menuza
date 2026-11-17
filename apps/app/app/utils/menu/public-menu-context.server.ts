@@ -32,6 +32,10 @@ import {
 	parseMenuVariations,
 } from '@repo/common/menu-types'
 import {
+	parseOrderNumberFormat,
+	parsePosLocationStationSettings,
+} from '@repo/common/pos-orders'
+import {
 	and,
 	asc,
 	db,
@@ -247,6 +251,10 @@ export async function buildPublicSiteMenuPayload(
 			prepSchedule: safeJsonParse(loc.prepSchedule, null),
 			prayerPauseSettings: safeJsonParse(loc.prayerPauseSettings, null),
 			prayerPauseRegion: dataRegion === 'ksa',
+			stationSettings: parsePosLocationStationSettings(loc.stationSettings),
+			...(loc.orderNumberFormat
+				? { orderNumberFormat: parseOrderNumberFormat(loc.orderNumberFormat) }
+				: {}),
 		}
 	})
 

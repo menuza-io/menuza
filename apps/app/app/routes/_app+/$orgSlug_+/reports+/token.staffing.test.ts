@@ -368,4 +368,26 @@ describe('reports screens hide staff reports', () => {
 			expect(scopeField.label.toLowerCase()).toBe(expected)
 		}
 	})
+
+	it('grants cash drawer subjects to menu-read analytics users and gates sales_staff fields', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const plain = await manager(organization.id, [ANALYTICS, 'read:menu:any'])
+		const plainMint = await mint(organization.slug, plain.cookie)
+		expect(plainMint.subjects).toEqual(
+			expect.arrayContaining(['cash_drawer_shifts', 'cash_drawer_movements']),
+		)
+		expect(plainMint.subjects).not.toContain('sales_staff')
+
+		const withShiftGrant = await manager(organization.id, [
+			ANALYTICS,
+			'read:menu:any',
+			'update:pos_shift:any',
+		])
+		const withGrantMint = await mint(organization.slug, withShiftGrant.cookie)
+		expect(withGrantMint.subjects).toContain('sales_staff')
+
+		impersonating.value = true
+		const impMint = await mint(organization.slug, withShiftGrant.cookie)
+		expect(impMint.subjects).not.toContain('sales_staff')
+	})
 })

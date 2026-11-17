@@ -1,6 +1,10 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { posCustomerPhoneSchema } from '@repo/common/pos-orders'
+import {
+	posCustomerPhoneSchema,
+	type PosGuestDetailsMode,
+} from '@repo/common/pos-orders'
+import { Badge } from '@repo/ui/badge'
 import {
 	Empty,
 	EmptyHeader,
@@ -10,8 +14,8 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Item, ItemContent, ItemActions, ItemFooter } from '@repo/ui/item'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { DishStatusBadge, RoundHeading } from './KitchenRounds.tsx'
 import { GiftCardsButton } from './GiftCardsButton.tsx'
+import { DishStatusBadge, RoundHeading } from './KitchenRounds.tsx'
 import { LoyaltyRewards } from './LoyaltyRewards.tsx'
 import { ManualDiscount } from './ManualDiscount.tsx'
 import { PhoneOrderSheet } from './PhoneOrderSheet.tsx'
@@ -70,7 +74,9 @@ export function Cart({
 	onFireCourses,
 	money,
 	onOrderType,
+	guestDetails = 'none',
 	onCustomer,
+	onCustomerPhone,
 	readyText,
 	onTable,
 	onQuantity,
@@ -108,7 +114,10 @@ export function Cart({
 	tableLabel: string
 	money: MoneyFormatter
 	onOrderType: (type: OrderType) => void
+	/** Required guest details for counter orders (#372). */
+	guestDetails?: PosGuestDetailsMode
 	onCustomer: (name: string) => void
+	onCustomerPhone?: (phone: string) => void
 	/**
 	 * "Text me when it's ready": offered on a counter pickup order where the
 	 * location texts guests. Absent: not offered.
@@ -169,24 +178,52 @@ export function Cart({
 	useEffect(() => {
 		seen.current = new Set(lines.map((l) => l.id))
 	}, [lines])
+	const needName =
+		orderSource !== 'phone' &&
+		(guestDetails === 'name' || guestDetails === 'both')
+	const needPhone =
+		orderSource !== 'phone' &&
+		(guestDetails === 'phone' || guestDetails === 'both')
+	const guestPhoneShown =
+		orderSource === 'counter' && (needPhone || customerPhone.trim().length > 0)
+	const guestPhoneInvalid = Boolean(
+		guestPhoneShown &&
+		customerPhone.trim() &&
+		!posCustomerPhoneSchema.safeParse(customerPhone).success,
+	)
+	const [guestPhoneTried, setGuestPhoneTried] = useState(false)
 	const detail =
 		orderType === 'dine_in'
 			? tableLabel
 			: orderType === 'drive_through'
 				? driveThroughNote
 				: customerName
+	const guestMissing =
+		orderSource !== 'phone' &&
+		((needName && !customerName.trim()) || (needPhone && !customerPhone.trim()))
+	const guestSuffix =
+		orderType !== 'takeaway'
+			? customerName.trim() || customerPhone.trim()
+				? ` · ${[customerName.trim(), customerPhone.trim()].filter(Boolean).join(' · ')}`
+				: guestMissing
+					? ` · ${needPhone && needName ? _(t`Guest details required`) : needPhone ? _(t`Phone required`) : _(t`Name required`)}`
+					: ''
+			: customerPhone.trim()
+				? ` · ${customerPhone.trim()}`
+				: guestMissing
+					? ` · ${needPhone ? _(t`Phone required`) : _(t`Name required`)}`
+					: ''
 	const detailText =
 		orderType === 'dine_in'
-			? detail
-				? _(t`Table: ${detail}`)
-				: _(t`Add table`)
+			? (detail ? _(t`Table: ${detail}`) : _(t`Add table`)) + guestSuffix
 			: orderType === 'drive_through'
-				? detail
-					? _(t`Lane: ${detail}`)
-					: _(t`Add lane or vehicle`)
-				: detail
-					? _(t`Name: ${detail}`)
-					: _(t`Add name`)
+				? (detail ? _(t`Lane: ${detail}`) : _(t`Add lane or vehicle`)) +
+					guestSuffix
+				: (detail
+						? _(t`Name: ${detail}`)
+						: needName || needPhone
+							? _(t`Add guest details`)
+							: _(t`Add name`)) + guestSuffix
 	const taxLabel = taxInclusive
 		? taxRatePercent
 			? _(t`Includes tax (${taxRatePercent}%)`)
@@ -493,11 +530,17 @@ export function Cart({
 					className="space-y-4 p-5"
 					onSubmit={(event) => {
 						event.preventDefault()
+						if (guestPhoneInvalid) {
+							setGuestPhoneTried(true)
+							document.getElementById('counter-guest-phone')?.focus()
+							return
+						}
 						if (readyTextInvalid) {
 							setReadyTextTried(true)
 							document.getElementById('ready-text-phone')?.focus()
 							return
 						}
+						setGuestPhoneTried(false)
 						setReadyTextTried(false)
 						setNaming(false)
 					}}
@@ -527,6 +570,62 @@ export function Cart({
 						}
 						className="h-14 px-4"
 					/>
+					{orderType !== 'takeaway' &&
+					(needName || customerName.trim().length > 0) ? (
+						<div className="space-y-2">
+							<label
+								htmlFor="counter-guest-name"
+								className="block text-sm font-medium"
+							>
+								{needName ? (
+									<Trans>Guest name (required)</Trans>
+								) : (
+									<Trans>Guest name</Trans>
+								)}
+							</label>
+							<Input
+								id="counter-guest-name"
+								value={customerName}
+								onChange={(e) => onCustomer(e.target.value)}
+								maxLength={60}
+								placeholder={_(t`Guest’s name`)}
+								className="h-14 px-4"
+							/>
+						</div>
+					) : null}
+					{guestPhoneShown && onCustomerPhone ? (
+						<div className="space-y-2">
+							<label
+								htmlFor="counter-guest-phone"
+								className="block text-sm font-medium"
+							>
+								{needPhone ? (
+									<Trans>Guest phone (required)</Trans>
+								) : (
+									<Trans>Guest phone</Trans>
+								)}
+							</label>
+							<Input
+								id="counter-guest-phone"
+								type="tel"
+								inputMode="tel"
+								autoComplete="off"
+								value={customerPhone}
+								onChange={(e) => onCustomerPhone(e.target.value)}
+								maxLength={32}
+								placeholder={_(t`Guest’s phone number`)}
+								aria-invalid={
+									(guestPhoneTried && guestPhoneInvalid) || undefined
+								}
+								className="h-14 px-4"
+							/>
+							{guestPhoneTried && guestPhoneInvalid ? (
+								<p role="alert" className="text-destructive text-sm">
+									<Trans>Enter a valid phone number.</Trans>
+								</p>
+							) : null}
+						</div>
+					) : null}
 					{readyText && readyTextShown ? (
 						<div className="space-y-2">
 							<label
@@ -637,7 +736,14 @@ function LineItem({
 						className="min-h-11 min-w-0 text-start"
 						aria-label={_(t`Edit ${shown.name}`)}
 					>
-						<div className="leading-snug font-semibold break-words">{name}</div>
+						<div className="flex flex-wrap items-center gap-1.5 leading-snug font-semibold break-words">
+							<span>{name}</span>
+							{line.kind === 'custom' ? (
+								<Badge variant="outline">
+									<Trans>Custom item</Trans>
+								</Badge>
+							) : null}
+						</div>
 						{status ? (
 							<div className="mt-1">
 								<DishStatusBadge status={status} />

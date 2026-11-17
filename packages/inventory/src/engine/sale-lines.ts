@@ -39,6 +39,7 @@ export function parseSaleLines(
 	for (const entry of toArray(raw)) {
 		if (!entry || typeof entry !== 'object') continue
 		const line = entry as Record<string, unknown>
+		if (line.kind === 'custom') continue
 		const itemId = idOrNull(line.itemId)
 		const quantity = positiveInt(line.quantity)
 		if (!itemId || quantity === 0) continue

@@ -140,6 +140,18 @@ const TEMPLATE_LABELS: Record<string, TemplateLabel> = {
 		title: msg`Average waitlist wait, last 7 days`,
 		description: msg`How long waitlist parties waited before they were seated over the last 7 days.`,
 	},
+	'cash-drawer-variance-by-shift': {
+		title: msg`Cash drawer variance by shift`,
+		description: msg`Expected against counted cash for every closed and open till shift over the last 30 days.`,
+	},
+	'cash-drawer-variance-by-cashier': {
+		title: msg`Cash drawer variance by cashier`,
+		description: msg`Over or short cash totals grouped by cashier over the last 30 days.`,
+	},
+	'cash-drawer-log': {
+		title: msg`Cash drawer log`,
+		description: msg`Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days.`,
+	},
 }
 
 const CATEGORY_LABELS: Record<string, ReturnType<typeof msg>> = {

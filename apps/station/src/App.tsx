@@ -1,5 +1,6 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { resetTimeMinutes } from '@repo/common/pos-orders'
 import {
 	Empty,
 	EmptyHeader,
@@ -53,6 +54,7 @@ import { applyUpdateIfIdle } from '~/lib/update.ts'
 import { AuditSheet } from '~/screens/AuditSheet.tsx'
 import { Cart } from '~/screens/Cart.tsx'
 import { Checkout } from '~/screens/Checkout.tsx'
+import { CustomItemSheet } from '~/screens/CustomItemSheet.tsx'
 import { ItemSheet } from '~/screens/ItemSheet.tsx'
 import { LockScreen } from '~/screens/LockScreen.tsx'
 import { MenuGrid } from '~/screens/MenuGrid.tsx'
@@ -102,6 +104,8 @@ export function App() {
 	useEffect(() => applyLocale(locale), [locale])
 	const [picking, setPicking] = useState<MenuItem | null>(null)
 	const [editing, setEditing] = useState<CartLine | null>(null)
+	const [customOpen, setCustomOpen] = useState(false)
+	const [editingCustom, setEditingCustom] = useState<CartLine | null>(null)
 	const [checkout, setCheckout] = useState<{
 		draft: OrderDraft
 		existing: PosOrder | null
@@ -353,8 +357,11 @@ export function App() {
 					taxInclusive: s.location.taxInclusive ?? false,
 					catalogFetchedAt: s.snapshot?.fetchedAt ?? null,
 					dayStartMinutes: s.settings.dayStartMinutes,
+					orderNumberFormat: s.location.orderNumberFormat,
 					orderType: s.orderType,
 					orderSource: s.orderSource,
+					guestDetailsRequired:
+						s.location?.stationSettings?.guestDetails ?? 'none',
 					customerPhone: s.customerPhone,
 					pickupAt: s.pickupAt,
 					pickupTimeZone: s.pickupTimeZone,
@@ -578,6 +585,10 @@ export function App() {
 				// A dish sold out (or gone from the menu) since is not rung again.
 				const missing: string[] = []
 				for (const { id: _id, sentAt: _sent, ...line } of lines) {
+					if (line.kind === 'custom') {
+						s.addLine(line)
+						continue
+					}
 					const item = itemsById.get(line.itemId)
 					if (!item || isSoldOut(item)) missing.push(line.name)
 					else s.addLine(line)
@@ -607,7 +618,9 @@ export function App() {
 			onFireCourses={s.fireCourses}
 			money={money}
 			onOrderType={s.setOrderType}
+			guestDetails={s.location?.stationSettings?.guestDetails ?? 'none'}
 			onCustomer={s.setCustomerName}
+			onCustomerPhone={s.setCustomerPhone}
 			readyText={
 				s.location?.readyText
 					? {
@@ -620,6 +633,12 @@ export function App() {
 			onTable={s.setTableLabel}
 			onQuantity={s.setQuantity}
 			onEdit={(line) => {
+				if (line.kind === 'custom') {
+					if (s.location?.stationSettings?.customItems === 'off') return
+					setEditingCustom(line)
+					setCustomOpen(true)
+					return
+				}
 				const item = itemsById.get(line.itemId)
 				if (!item) return
 				setEditing(line)
@@ -931,6 +950,14 @@ export function App() {
 											categories={s.categories}
 											money={money}
 											counts={counts}
+											customItemAllowed={
+												(s.location?.stationSettings?.customItems ?? 'off') !==
+												'off'
+											}
+											onCustomItem={() => {
+												setEditingCustom(null)
+												setCustomOpen(true)
+											}}
 											onPick={pick}
 										/>
 									)}
@@ -990,6 +1017,7 @@ export function App() {
 				<ItemSheet
 					item={picking}
 					editing={editing}
+					showNotes={s.location?.stationSettings?.dishNotes ?? true}
 					money={money}
 					onClose={() => {
 						setPicking(null)
@@ -1000,6 +1028,29 @@ export function App() {
 						else s.addLine(line)
 						setPicking(null)
 						setEditing(null)
+					}}
+				/>
+
+				<CustomItemSheet
+					open={customOpen}
+					editing={editingCustom}
+					maxCents={s.location?.stationSettings?.customItemMaxCents ?? 50_000}
+					money={money}
+					kdsStations={s.kdsStations}
+					needsManagerPin={
+						(s.location?.stationSettings?.customItems ?? 'off') ===
+							'managers' && s.needsManager()
+					}
+					onApprove={s.approve}
+					onClose={() => {
+						setCustomOpen(false)
+						setEditingCustom(null)
+					}}
+					onSubmit={(line) => {
+						if (editingCustom) s.replaceLine(editingCustom.id, line)
+						else s.addLine(line)
+						setCustomOpen(false)
+						setEditingCustom(null)
 					}}
 				/>
 
@@ -1030,7 +1081,11 @@ export function App() {
 				{ordersOpen ? (
 					<OrdersSheet
 						timeZone={s.location?.timezone}
-						dayStartMinutes={s.settings.dayStartMinutes}
+						dayStartMinutes={
+							s.location?.orderNumberFormat
+								? resetTimeMinutes(s.location.orderNumberFormat.resetTime)
+								: s.settings.dayStartMinutes
+						}
 						vatNumber={s.location?.vatNumber ?? null}
 						onClose={() => setOrdersOpen(false)}
 						businessName={businessName}

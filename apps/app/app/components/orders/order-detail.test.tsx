@@ -958,4 +958,23 @@ describe('OrderDetail checkout rules (#251, #257, #355, #408)', () => {
 			'Large order +15 min',
 		)
 	})
+
+	it('badges custom open-price items on order lines (#171)', () => {
+		show(
+			order({
+				lines: [
+					{
+						kind: 'custom',
+						itemName: 'Corkage fee',
+						quantity: 1,
+						unitPriceCents: 1500,
+						totalCents: 1500,
+						instructions: null,
+						options: [],
+					},
+				],
+			}),
+		)
+		expect(screen.getByTestId('order-line')).toHaveTextContent('Custom item')
+	})
 })

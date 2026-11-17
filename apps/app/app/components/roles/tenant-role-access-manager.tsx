@@ -160,13 +160,19 @@ export function getPermissionGroups(): PermissionGroup[] {
 		},
 		{
 			title: t`Orders`,
-			description: t`Money on online orders.`,
+			description: t`Money on online orders and point-of-sale shifts.`,
 			permissions: [
 				{
 					id: 'org_perm_update_order_refund_any',
 					label: t`Refund online orders`,
 					description: t`Give money back to the guest's card for an order paid online, in full or in part, including when cancelling it.`,
 					warning: t`Returns money to guests`,
+				},
+				{
+					id: 'org_perm_update_pos_shift_any',
+					label: t`Close till shifts remotely`,
+					description: t`Enter counted cash and close an open cash drawer shift from the dashboard when a till is unavailable.`,
+					warning: t`Closes cash drawer shifts`,
 				},
 			],
 		},

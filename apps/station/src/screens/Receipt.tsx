@@ -139,6 +139,7 @@ export function Receipt({
 						<Row>
 							<span>
 								{line.quantity} × <bdi>{line.name}</bdi>
+								{line.kind === 'custom' ? ` (${_(t`Custom`)})` : null}
 								{line.variantLabel ? (
 									<>
 										{' ('}

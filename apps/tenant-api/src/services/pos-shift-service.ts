@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNotNull } from 'drizzle-orm'
 import { posRefundTaxCents } from '@repo/common/pos-fiscal'
 import { type PosShiftRequest } from '@repo/common/pos-orders'
 import { posSalesSummary, type PosSalesSummary } from '@repo/common/pos-reports'
@@ -263,6 +263,10 @@ export const serializeShift = (
 		: null,
 	countedCashCents: row.countedCashCents,
 	tillExpectedCashCents: row.expectedCashCents,
+	closedRemotelyBy: row.closedRemotelyById
+		? { id: row.closedRemotelyById, name: row.closedRemotelyByName ?? '' }
+		: null,
+	remoteCloseReason: row.remoteCloseReason ?? null,
 	movements: movements.map((m) => ({
 		id: m.id,
 		kind: m.kind,
@@ -431,4 +435,136 @@ export async function dayReport(
 		byTerminal,
 		shifts,
 	}
+}
+
+export type RemoteShiftCloseResult =
+	| PosResult<ShiftReport>
+	| { ok: false; status: 404 | 409; error: string; message: string }
+
+/**
+ * Remotely closes an open cash drawer shift from the App (#403). Never
+ * overwrites an already-closed shift, and records who closed it and why so both
+ * the shift report and the terminal show it clearly.
+ */
+export async function closeShiftRemotely(
+	db: TenantDatabase,
+	input: {
+		shiftId: string
+		locationIds: string[] | null
+		countedCashCents: number
+		reason: string
+		closedBy: { id: string; name: string }
+		now?: number
+	},
+): Promise<RemoteShiftCloseResult> {
+	const now = input.now ?? Date.now()
+	const [row] = await db
+		.select({
+			shift: posShifts,
+			locationId: posDevices.locationId,
+		})
+		.from(posShifts)
+		.leftJoin(posDevices, eq(posDevices.id, posShifts.deviceId))
+		.where(eq(posShifts.id, input.shiftId))
+		.limit(1)
+	if (!row) {
+		return {
+			ok: false,
+			status: 404,
+			error: 'not_found',
+			message: 'Shift not found.',
+		}
+	}
+	if (
+		input.locationIds !== null &&
+		(!row.locationId || !input.locationIds.includes(row.locationId))
+	) {
+		return {
+			ok: false,
+			status: 404,
+			error: 'not_found',
+			message: 'Shift not found.',
+		}
+	}
+	if (row.shift.status === 'closed') {
+		return fail(409, 'shift_closed', 'This shift is already closed.')
+	}
+	const current = await shiftReport(db, input.shiftId)
+	const expectedCashCents =
+		current?.summary.cash.expectedCents ?? row.shift.expectedCashCents ?? 0
+	const closed = await retryOnSqliteBusy(() =>
+		runTenantTransaction(db, async (tx) => {
+			const updated = await tx
+				.update(posShifts)
+				.set({
+					status: 'closed',
+					closedAt: now,
+					countedCashCents: input.countedCashCents,
+					expectedCashCents,
+					closedRemotelyById: input.closedBy.id,
+					closedRemotelyByName: input.closedBy.name,
+					remoteCloseReason: input.reason,
+					revision: row.shift.revision + 1,
+					updatedAt: now,
+				})
+				.where(
+					and(eq(posShifts.id, input.shiftId), eq(posShifts.status, 'open')),
+				)
+				.returning({ id: posShifts.id })
+			return updated.length > 0
+		}),
+	)
+	if (!closed) {
+		return fail(409, 'shift_closed', 'This shift is already closed.')
+	}
+	const report = await shiftReport(db, input.shiftId)
+	if (!report) {
+		return {
+			ok: false,
+			status: 404,
+			error: 'not_found',
+			message: 'Shift not found.',
+		}
+	}
+	return ok(report)
+}
+
+/**
+ * Remotely closed shifts for a terminal, so when it syncs `/pos/me` it learns
+ * a manager closed its open shift and stops ringing new sales onto it.
+ */
+export async function listRemotelyClosedShiftsForDevice(
+	db: TenantDatabase,
+	deviceId: string,
+) {
+	const rows = await db
+		.select({
+			id: posShifts.id,
+			revision: posShifts.revision,
+			closedAt: posShifts.closedAt,
+			countedCashCents: posShifts.countedCashCents,
+			closedRemotelyById: posShifts.closedRemotelyById,
+			closedRemotelyByName: posShifts.closedRemotelyByName,
+			remoteCloseReason: posShifts.remoteCloseReason,
+		})
+		.from(posShifts)
+		.where(
+			and(
+				eq(posShifts.deviceId, deviceId),
+				eq(posShifts.status, 'closed'),
+				isNotNull(posShifts.closedRemotelyById),
+			),
+		)
+		.orderBy(desc(posShifts.closedAt))
+		.limit(20)
+	return rows.map((row) => ({
+		id: row.id,
+		revision: row.revision,
+		closedAt: row.closedAt,
+		countedCashCents: row.countedCashCents,
+		closedRemotelyBy: row.closedRemotelyById
+			? { id: row.closedRemotelyById, name: row.closedRemotelyByName ?? '' }
+			: null,
+		remoteCloseReason: row.remoteCloseReason ?? null,
+	}))
 }

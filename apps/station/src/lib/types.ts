@@ -7,6 +7,13 @@
 
 export type SelectionType = 'single' | 'multiple' | 'quantity' | 'pizza'
 
+import {
+	type OrderNumberFormat,
+	type PosLocationStationSettings,
+} from '@repo/common/pos-orders'
+
+export type KdsStationSummary = { id: string; name: string }
+
 export type MenuOption = {
 	id: string
 	displayName: string
@@ -110,6 +117,10 @@ export type MenuLocation = {
 		autoFireMinutes?: number | null
 		courses: Array<{ id: string; name: string }>
 	} | null
+	/** Per-location register policy (#372, #171, #380). */
+	stationSettings?: PosLocationStationSettings
+	/** Per-location order number format and daily reset (#371). */
+	orderNumberFormat?: OrderNumberFormat
 }
 
 export type MenuPayload = {

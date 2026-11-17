@@ -26,6 +26,7 @@ import { POS_FISCAL_GENESIS_HASH, posFiscalHash } from '@repo/common/pos-fiscal'
 import {
 	formatPosDeviceSecret,
 	formatPosPairingCode,
+	posLineTaxableCents,
 	posLineTotalCents,
 	posStaffDisplayName,
 	type PosStaff,
@@ -1149,8 +1150,15 @@ export function driftMayBeMenuChange(
 export function expectedDiscountedTotals(
 	server: Pick<
 		PricedRestaurantOrder,
-		'lines' | 'subtotalCents' | 'taxInclusive' | 'taxRatePercent'
-	>,
+		'subtotalCents' | 'taxInclusive' | 'taxRatePercent'
+	> & {
+		lines: Array<
+			Pick<
+				PricedRestaurantOrder['lines'][number],
+				'totalCents' | 'taxableCents'
+			>
+		>
+	},
 	order: Pick<PosOrderRequest, 'lines' | 'adjustments'>,
 ): { adjustmentCents: number; taxCents: number; totalCents: number } {
 	const adjustmentCents = Math.min(
@@ -1193,51 +1201,111 @@ export function reviewAgainstMenu(
 	const location = context.menu.locations.find((l) => l.id === order.locationId)
 	const locationName = location?.name ?? null
 	const stale = driftMayBeMenuChange(order, now.getTime())
-	const request = restaurantOrderRequestSchema.safeParse({
-		idempotencyKey: order.id,
-		locale: 'en',
-		locationId: order.locationId,
-		fulfillment: 'pickup',
-		paymentMethod: 'handoff',
-		contact: { name: 'Walk-in', phone: '+10000000000' },
-		tipPercent: 0,
-		lines: order.lines.map((line) => ({
-			itemId: line.itemId,
-			...(line.variantId ? { variantId: line.variantId } : {}),
-			quantity: line.quantity,
-			...(line.instructions ? { instructions: line.instructions } : {}),
-			options: line.options.map((o) => ({
-				groupId: o.groupId,
-				optionId: o.optionId,
-				...(o.quantity > 1 ? { quantity: o.quantity } : {}),
+	const catalogEntries = order.lines
+		.map((line, index) => ({ line, index }))
+		.filter(({ line }) => line.kind !== 'custom')
+	const hasCustom = catalogEntries.length < order.lines.length
+	let catalogResult: PricedRestaurantOrder | null = null
+	if (catalogEntries.length > 0) {
+		const request = restaurantOrderRequestSchema.safeParse({
+			idempotencyKey: order.id,
+			locale: 'en',
+			locationId: order.locationId,
+			fulfillment: 'pickup',
+			paymentMethod: 'handoff',
+			contact: { name: 'Walk-in', phone: '+10000000000' },
+			tipPercent: 0,
+			lines: catalogEntries.map(({ line }) => ({
+				itemId: line.itemId,
+				...(line.variantId ? { variantId: line.variantId } : {}),
+				quantity: line.quantity,
+				...(line.instructions ? { instructions: line.instructions } : {}),
+				options: line.options.map((o) => ({
+					groupId: o.groupId,
+					optionId: o.optionId,
+					...(o.quantity > 1 ? { quantity: o.quantity } : {}),
+				})),
 			})),
-		})),
-	})
-	if (!request.success)
-		return {
-			reviewReason: 'unverifiable',
-			serverTotalCents: null,
-			locationName,
+		})
+		if (!request.success)
+			return {
+				reviewReason: 'unverifiable',
+				serverTotalCents: null,
+				locationName,
+			}
+		const priced = priceRestaurantOrder(context, request.data, {
+			now,
+			walkIn: true,
+		})
+		if (!priced.ok) {
+			return {
+				reviewReason: `${stale ? 'stale_catalog' : 'catalog'}:${priced.error.code}`,
+				serverTotalCents: null,
+				locationName,
+			}
 		}
-	const priced = priceRestaurantOrder(context, request.data, {
-		now,
-		walkIn: true,
-	})
-	if (!priced.ok) {
+		catalogResult = priced.result
+	} else if (!location) {
 		return {
-			reviewReason: `${stale ? 'stale_catalog' : 'catalog'}:${priced.error.code}`,
+			reviewReason: `${stale ? 'stale_catalog' : 'catalog'}:location_not_found`,
 			serverTotalCents: null,
 			locationName,
 		}
 	}
-	const server = priced.result
+
+	const catalogByOrderIndex = new Map<
+		number,
+		{ totalCents: number; taxableCents: number }
+	>()
+	if (catalogResult) {
+		catalogEntries.forEach(({ index }, i) => {
+			const line = catalogResult.lines[i]
+			if (line) catalogByOrderIndex.set(index, line)
+		})
+	}
+	const combinedLines = order.lines.map((line, index) =>
+		line.kind === 'custom'
+			? {
+					totalCents: posLineTotalCents(line),
+					taxableCents: posLineTaxableCents(line),
+				}
+			: (catalogByOrderIndex.get(index) ?? { totalCents: 0, taxableCents: 0 }),
+	)
+	const customSubtotalCents = order.lines
+		.filter((line) => line.kind === 'custom')
+		.reduce((sum, line) => sum + posLineTotalCents(line), 0)
+	const customTaxableCents = order.lines
+		.filter((line) => line.kind === 'custom')
+		.reduce((sum, line) => sum + posLineTaxableCents(line), 0)
+	const taxRatePercent =
+		catalogResult?.taxRatePercent ??
+		Math.max(0, Math.min(100, location?.taxRate ?? 0))
+	const taxInclusive =
+		catalogResult?.taxInclusive ?? Boolean(location?.taxInclusive)
+	const serverSubtotalCents =
+		(catalogResult?.subtotalCents ?? 0) + customSubtotalCents
+	const taxableBaseCents =
+		(catalogResult?.lines.reduce((sum, line) => sum + line.taxableCents, 0) ??
+			0) + customTaxableCents
+	const serverTaxCents = taxInclusive
+		? inclusiveTaxCents(taxableBaseCents, taxRatePercent)
+		: Math.round((taxableBaseCents * taxRatePercent) / 100)
+	const server = {
+		lines: combinedLines,
+		subtotalCents: serverSubtotalCents,
+		taxInclusive,
+		taxRatePercent,
+		taxCents: serverTaxCents,
+		totalCents: serverSubtotalCents + (taxInclusive ? 0 : serverTaxCents),
+	}
+
 	const reasons: string[] = []
 	if (server.subtotalCents !== order.totals.subtotalCents) {
 		reasons.push(stale ? 'stale_price' : 'price_mismatch')
 	}
 	let serverTotalCents: number
 	if (order.adjustments.length === 0) {
-		serverTotalCents = server.totalCents - server.tipCents
+		serverTotalCents = server.totalCents
 		if (reasons.length === 0 && server.taxCents !== order.totals.taxCents) {
 			reasons.push(stale ? 'stale_tax' : 'tax_mismatch')
 		}
@@ -1256,6 +1324,17 @@ export function reviewAgainstMenu(
 		) {
 			reasons.push(stale ? 'stale_tax' : 'tax_mismatch')
 		}
+	}
+	if (hasCustom) reasons.push('custom_item')
+	const guestPolicy = location?.stationSettings?.guestDetails ?? 'none'
+	if (order.orderSource !== 'phone' && guestPolicy !== 'none') {
+		const missingName =
+			(guestPolicy === 'name' || guestPolicy === 'both') &&
+			!order.customerName?.trim()
+		const missingPhone =
+			(guestPolicy === 'phone' || guestPolicy === 'both') &&
+			!order.customerPhone?.trim()
+		if (missingName || missingPhone) reasons.push('missing_guest_details')
 	}
 	return { reviewReason: reasons[0] ?? null, serverTotalCents, locationName }
 }
@@ -1378,6 +1457,7 @@ export function withDiscountCheck(
  */
 export const POS_HOLDING_REVIEW_REASONS: readonly string[] = [
 	'clock_skew',
+	'closed_shift',
 	'missing_staff',
 	'unknown_staff',
 	'inactive_staff',
@@ -1496,8 +1576,10 @@ function fixedRuleCeilingMinor(
 	}
 	if (rule.amountMinor == null) return null
 	if (rule.target?.scope === 'order') return rule.amountMinor
-	const units = order.lines.reduce((sum, line) => sum + line.quantity, 0)
-	return rule.amountMinor * Math.max(1, units)
+	const units = order.lines
+		.filter((line) => line.kind !== 'custom')
+		.reduce((sum, line) => sum + line.quantity, 0)
+	return units > 0 ? rule.amountMinor * units : 0
 }
 
 function rulePercentCeilingBp(rule: TillDiscountRule): number | null {
@@ -1533,7 +1615,15 @@ export function discountRuleReason(
 ): (typeof POS_DISCOUNT_REVIEW_REASONS)[number] | null {
 	const reasons = new Set<string>()
 	const byId = new Map((rules ?? []).map((rule) => [rule.id, rule]))
-	const subtotal = order.totals.subtotalCents
+	// Custom items (#171) never earn discounts. When none are present, keep
+	// `order.totals.subtotalCents` so callers passing synthetic totals keep working.
+	const hasCustomLines = order.lines.some((line) => line.kind === 'custom')
+	const discountableLines = hasCustomLines
+		? order.lines.filter((line) => line.kind !== 'custom')
+		: order.lines
+	const subtotal = hasCustomLines
+		? discountableLines.reduce((sum, line) => sum + posLineTotalCents(line), 0)
+		: order.totals.subtotalCents
 	for (const application of order.discountApplications) {
 		const rule = byId.get(application.discountId)
 		if (rules && !rule) reasons.add('unknown_discount')
@@ -1558,15 +1648,15 @@ export function discountRuleReason(
 			if (
 				rule.valueType === 'percent' &&
 				percentBp != null &&
-				// Each line rounds on its own, so allow one cent of rounding per line.
+				// Each catalog line rounds on its own, so allow one cent of rounding per line.
 				application.amountCents >
-					Math.ceil((subtotal * percentBp) / 10_000) + order.lines.length
+					Math.ceil((subtotal * percentBp) / 10_000) + discountableLines.length
 			)
 				reasons.add('discount_amount_mismatch')
 			const fixedMinor = fixedRuleCeilingMinor(rule, order)
 			if (
 				fixedMinor != null &&
-				application.amountCents > fixedMinor + order.lines.length
+				application.amountCents > fixedMinor + discountableLines.length
 			)
 				reasons.add('discount_amount_mismatch')
 		}
@@ -1664,6 +1754,37 @@ export async function withStaffCheck(
 			return flag('approver_not_manager')
 	}
 	return review
+}
+
+/**
+ * Flags a sale when the terminal kept ringing onto a shift after it was already
+ * closed (most commonly after a manager closed a forgotten shift remotely).
+ * Delayed uploads whose `createdAt` precedes the close are not flagged.
+ */
+export async function withShiftCheck(
+	db: TenantDatabase,
+	order: PosOrderRequest,
+	review: PosReview,
+): Promise<PosReview> {
+	if (review.reviewReason || !order.shiftId) return review
+	const [shift] = await db
+		.select({
+			status: posShifts.status,
+			closedAt: posShifts.closedAt,
+			closedRemotelyById: posShifts.closedRemotelyById,
+		})
+		.from(posShifts)
+		.where(eq(posShifts.id, order.shiftId))
+		.limit(1)
+	if (!shift || shift.status !== 'closed' || shift.closedAt === null) {
+		return review
+	}
+	const rungUp = Date.parse(order.createdAt)
+	const afterClose =
+		shift.closedRemotelyById !== null
+			? rungUp >= shift.closedAt
+			: rungUp > shift.closedAt
+	return afterClose ? { ...review, reviewReason: 'closed_shift' } : review
 }
 
 export type UpsertOutcome = {
@@ -2000,12 +2121,15 @@ async function writeOrderLines(tx: Tx, order: PosOrderRequest) {
 		quantity: line.quantity,
 		unitCents: posLineTotalCents(line) / line.quantity,
 		totalCents: posLineTotalCents(line),
+		kind: line.kind === 'custom' ? ('custom' as const) : ('catalog' as const),
+		taxable: line.taxable !== false,
+		kitchenStationId: line.kitchenStationId ?? null,
 		courseId: line.courseId ?? null,
 		courseName: line.courseName ?? null,
 		courseState: line.courseId ? (line.courseHeld ? 'held' : 'fired') : null,
 	}))
-	// 11 columns a row against Durable Object SQLite's 100 bound parameters.
-	for (const chunk of chunkIds(rows, 8))
+	// 14 columns a row against Durable Object SQLite's 100 bound parameters.
+	for (const chunk of chunkIds(rows, 6))
 		await tx.insert(posOrderLines).values(chunk)
 }
 

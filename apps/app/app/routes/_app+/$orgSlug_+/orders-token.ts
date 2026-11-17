@@ -3,6 +3,7 @@ import {
 	ORG_PERMISSIONS,
 	userHasOrganizationPermission,
 } from '@repo/auth'
+import { db, eq, User } from '@repo/database'
 import { LOYALTY_PERMISSIONS } from '@repo/loyalty'
 import { data, type LoaderFunctionArgs } from 'react-router'
 import {
@@ -24,8 +25,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		params.orgSlug || '',
 		{ id: true },
 	)
+	const url = new URL(request.url)
+	const shiftCloseOnly = url.searchParams.get('shift') === '1'
 	const scope =
-		new URL(request.url).searchParams.get('write') === '1'
+		!shiftCloseOnly && url.searchParams.get('write') === '1'
 			? 'orders:write'
 			: 'orders:read'
 	const userId =
@@ -64,6 +67,27 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			organization.id,
 			ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY,
 		))
+	const wantsShiftClose = shiftCloseOnly || scope === 'orders:write'
+	const closeShifts =
+		wantsShiftClose &&
+		!impersonated &&
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_POS_SHIFT_ANY,
+		))
+	if (shiftCloseOnly && !closeShifts) {
+		throw new Response('Forbidden', { status: 403 })
+	}
+	let operatorName: string | undefined
+	if (closeShifts) {
+		const [operator] = await db
+			.select({ name: User.name, username: User.username, email: User.email })
+			.from(User)
+			.where(eq(User.id, userId))
+		operatorName =
+			operator?.name?.trim() || operator?.username || operator?.email || userId
+	}
 	const claims = {
 		...(link.linkCustomers || link.linkGuests ? link : {}),
 		...(stationApps &&
@@ -74,6 +98,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		...(impersonated ? { impersonated: true } : {}),
 		...(refundLoyalty ? { refundLoyalty: true } : {}),
 		...(refundProvider ? { refundProvider: true } : {}),
+		...(closeShifts ? { closeShifts: true, operatorName } : {}),
 	}
 	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
 		request,

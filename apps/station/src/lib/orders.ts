@@ -1,8 +1,12 @@
 import { t } from '@lingui/macro'
 import { fireNextCourse, holdLaterCourses } from '@repo/common/kitchen-ticket'
 import {
+	businessDayDate,
+	formatAllocatedOrderNumber,
 	posCustomerPhoneSchema,
 	posPickupTimeZoneSchema,
+	type OrderNumberFormat,
+	type PosGuestDetailsMode,
 	type PosOrderSource,
 } from '@repo/common/pos-orders'
 import {
@@ -86,6 +90,8 @@ export type OrderDraft = {
 	catalogFetchedAt?: number | null
 	orderType: OrderType
 	orderSource?: PosOrderSource
+	/** Location requirement for counter orders (#372). Absent defaults to none. */
+	guestDetailsRequired?: PosGuestDetailsMode
 	customerPhone?: string | null
 	pickupAt?: number | null
 	pickupTimeZone?: string | null
@@ -108,6 +114,8 @@ export type OrderDraft = {
 	timeZone?: string
 	/** Minutes after midnight when the business day turns over. */
 	dayStartMinutes?: number
+	/** Location-configured order number format and daily reset (#371). */
+	orderNumberFormat?: OrderNumberFormat
 }
 
 /** Who did something that needs a reason, and who approved it. */
@@ -205,6 +213,18 @@ export function validateOrderDraft(draft: OrderDraft) {
 			t`An order holds at most ${MAX_ORDER_LINES} lines. Take off the newest items, save, then ring them up as a new order.`,
 		)
 	}
+	for (const line of draft.lines) {
+		if (line.kind !== 'custom') continue
+		if (!line.name.trim() || line.name.trim().length > 60) {
+			throw new Error(t`Enter a custom item name (up to 60 characters)`)
+		}
+		if (line.baseCents <= 0) {
+			throw new Error(t`Enter a price above zero`)
+		}
+		if (line.variantId !== null || line.options.length > 0) {
+			throw new Error(t`Custom items cannot carry variants or options`)
+		}
+	}
 	if (draft.orderSource === 'phone') {
 		if (draft.orderType !== 'takeaway' || draft.tableLabel.trim())
 			throw new Error(t`Phone orders are pickup only`)
@@ -219,11 +239,34 @@ export function validateOrderDraft(draft: OrderDraft) {
 			!Number.isFinite(new Date(draft.pickupAt).getTime())
 		)
 			throw new Error(t`Choose a valid pickup time`)
-	} else if (
-		draft.readyTextPhone?.trim() &&
-		!posCustomerPhoneSchema.safeParse(draft.readyTextPhone).success
-	) {
-		throw new Error(t`Enter a valid number to text, or leave it empty`)
+	} else {
+		const needName =
+			draft.guestDetailsRequired === 'name' ||
+			draft.guestDetailsRequired === 'both'
+		const needPhone =
+			draft.guestDetailsRequired === 'phone' ||
+			draft.guestDetailsRequired === 'both'
+		if (needName && !draft.customerName.trim()) {
+			throw new Error(t`Enter a guest name for this order`)
+		}
+		if (draft.customerName.trim().length > 120) {
+			throw new Error(t`Guest name is too long`)
+		}
+		if (needPhone && !draft.customerPhone?.trim()) {
+			throw new Error(t`Enter a guest phone number for this order`)
+		}
+		if (
+			draft.customerPhone?.trim() &&
+			!posCustomerPhoneSchema.safeParse(draft.customerPhone).success
+		) {
+			throw new Error(t`Enter a valid guest phone number`)
+		}
+		if (
+			draft.readyTextPhone?.trim() &&
+			!posCustomerPhoneSchema.safeParse(draft.readyTextPhone).success
+		) {
+			throw new Error(t`Enter a valid number to text, or leave it empty`)
+		}
 	}
 }
 
@@ -232,6 +275,12 @@ function readyTextOf(draft: OrderDraft): string | null {
 	if (draft.orderSource === 'phone' || !draft.readyTextPhone?.trim())
 		return null
 	const parsed = posCustomerPhoneSchema.safeParse(draft.readyTextPhone)
+	return parsed.success ? parsed.data : null
+}
+
+function counterPhoneOf(draft: OrderDraft): string | null {
+	if (draft.orderSource === 'phone' || !draft.customerPhone?.trim()) return null
+	const parsed = posCustomerPhoneSchema.safeParse(draft.customerPhone)
 	return parsed.success ? parsed.data : null
 }
 
@@ -247,7 +296,7 @@ const contactDetails = (draft: OrderDraft) =>
 			}
 		: {
 				orderSource: 'counter' as const,
-				customerPhone: null,
+				customerPhone: counterPhoneOf(draft),
 				pickupAt: null,
 				pickupTimeZone: null,
 				readyTextPhone: readyTextOf(draft),
@@ -388,21 +437,31 @@ export async function createOrder(
 ): Promise<PosOrder> {
 	validateOrderDraft(draft)
 	const now = Date.now()
-	const businessDate = localDate(
-		new Date(now),
-		draft.timeZone,
-		draft.dayStartMinutes ?? DEFAULT_DAY_START_MINUTES,
-	)
+	const fmt = draft.orderNumberFormat
+	const businessDate = fmt
+		? businessDayDate(new Date(now), draft.timeZone ?? 'UTC', fmt.resetTime)
+		: localDate(
+				new Date(now),
+				draft.timeZone,
+				draft.dayStartMinutes ?? DEFAULT_DAY_START_MINUTES,
+			)
 	return db.transaction('rw', db.orders, db.meta, db.shifts, async () => {
 		const shiftId = await openShiftId()
 		const counterKey = `seq:${businessDate}`
 		const row = await db.meta.get(counterKey)
 		const seq = ((row?.value as number | undefined) ?? 0) + 1
 		await db.meta.put({ key: counterKey, value: seq })
+		const number = fmt
+			? formatAllocatedOrderNumber(
+					seq,
+					fmt,
+					fmt.prefix ? '' : `${draft.terminalCode}-`,
+				)
+			: `${draft.terminalCode}-${String(seq).padStart(4, '0')}`
 
 		let order: PosOrder = {
 			id: draft.id ?? crypto.randomUUID(),
-			number: `${draft.terminalCode}-${String(seq).padStart(4, '0')}`,
+			number,
 			businessDate,
 			createdAt: now,
 			orderType: draft.orderType,
@@ -789,6 +848,8 @@ export type ServerTab = {
 	taxInclusive: boolean
 	orderType: OrderType
 	orderSource?: PosOrderSource
+	/** Location requirement for counter orders (#372). Absent defaults to none. */
+	guestDetailsRequired?: PosGuestDetailsMode
 	customerPhone?: string | null
 	pickupAt?: string | null
 	pickupTimeZone?: string | null

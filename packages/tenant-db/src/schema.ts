@@ -1127,7 +1127,7 @@ export const restaurantOrders = sqliteTable(
 		),
 	},
 	(table) => [
-		uniqueIndex('restaurant_orders_number_unique').on(table.number),
+		index('idx_restaurant_orders_number').on(table.number),
 		// The acceptance tick's scan: orders waiting, by deadline.
 		index('idx_restaurant_orders_acceptance_deadline')
 			.on(table.acceptanceDeadlineAt)
@@ -2681,6 +2681,10 @@ export const posShifts = sqliteTable(
 		closedAt: integer('closed_at'),
 		closedByStaffId: text('closed_by_staff_id'),
 		closedByStaffName: text('closed_by_staff_name'),
+		/** App operator who closed this open shift remotely (#403). */
+		closedRemotelyById: text('closed_remotely_by_id'),
+		closedRemotelyByName: text('closed_remotely_by_name'),
+		remoteCloseReason: text('remote_close_reason'),
 		countedCashCents: integer('counted_cash_cents'),
 		// The till's expected figure at the close.
 		expectedCashCents: integer('expected_cash_cents'),
@@ -2701,7 +2705,7 @@ export const posCashMovements = sqliteTable(
 		shiftId: text('shift_id')
 			.notNull()
 			.references(() => posShifts.id, { onDelete: 'restrict' }),
-		kind: text('kind', { enum: ['pay_in', 'pay_out'] }).notNull(),
+		kind: text('kind', { enum: ['pay_in', 'pay_out', 'drop'] }).notNull(),
 		amountCents: integer('amount_cents').notNull(),
 		note: text('note').notNull(),
 		staffId: text('staff_id'),
@@ -2743,6 +2747,14 @@ export const posOrderLines = sqliteTable(
 		quantity: integer('quantity').notNull(),
 		unitCents: integer('unit_cents').notNull(),
 		totalCents: integer('total_cents').notNull(),
+		/** `'catalog'` or `'custom'` (#171). */
+		kind: text('kind', { enum: ['catalog', 'custom'] })
+			.notNull()
+			.default('catalog'),
+		/** Whether line base price carries VAT (#171). */
+		taxable: integer('taxable', { mode: 'boolean' }).notNull().default(true),
+		/** Destination Kitchen station id for custom lines (#171). */
+		kitchenStationId: text('kitchen_station_id'),
 		/** Dine-in course (#290). Null when the location does not use courses. */
 		courseId: text('course_id'),
 		courseName: text('course_name'),

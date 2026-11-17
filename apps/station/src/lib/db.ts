@@ -201,6 +201,8 @@ export type Shift = {
 	closedBy: StaffRef | null
 	countedCashCents: number | null
 	expectedCashCents: number | null
+	closedRemotelyBy?: StaffRef | null
+	remoteCloseReason?: string | null
 	revision: number
 	sync: SyncState
 	attempts: number

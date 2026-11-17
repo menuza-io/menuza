@@ -45,6 +45,7 @@ export type SaleOption = {
 
 /** One sold line: a dish, maybe a size, and its options. */
 export type SaleLine = {
+	kind?: 'catalog' | 'custom'
 	itemId: string
 	variantId?: string | null
 	quantity: number

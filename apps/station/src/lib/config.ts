@@ -1,5 +1,10 @@
 import { NO_POS_DEVICE_APPS, type PosDeviceApps } from '@repo/common/pos-orders'
 
+export const MENU_COLUMNS_VALUES = ['auto', 2, 3, 4] as const
+export type MenuColumns = (typeof MENU_COLUMNS_VALUES)[number]
+export const MENU_DENSITIES = ['comfortable', 'compact'] as const
+export type MenuDensity = (typeof MENU_DENSITIES)[number]
+
 /**
  * Device settings, kept in localStorage so the shell can boot with no network
  * and no IndexedDB round-trip. Nothing here is a secret except `deviceToken`.
@@ -40,6 +45,10 @@ export type PosSettings = {
 	demo: boolean
 	/** Interface language chosen on this device; null follows the restaurant's default. */
 	locale: 'en' | 'ar' | null
+	/** Menu grid columns on this terminal ('auto' or 2, 3, 4). */
+	menuColumns?: MenuColumns
+	/** Menu tile density on this terminal ('comfortable' or 'compact'). */
+	menuDensity?: MenuDensity
 	/** Station apps beside the till, as the server last reported them. */
 	apps: PosDeviceApps
 	/** The app on screen, kept per device so a host stand reopens as a host stand. */
@@ -87,9 +96,39 @@ const defaults = (): PosSettings => ({
 	deviceLabel: null,
 	demo: import.meta.env.VITE_POS_DEMO === '1',
 	locale: null,
+	menuColumns: 'auto',
+	menuDensity: 'comfortable',
 	apps: { ...NO_POS_DEVICE_APPS },
 	activeApp: 'pos',
 })
+
+function parseMenuColumns(raw: unknown): MenuColumns {
+	return raw === 2 || raw === 3 || raw === 4 || raw === 'auto' ? raw : 'auto'
+}
+
+function parseMenuDensity(raw: unknown): MenuDensity {
+	return raw === 'compact' ? 'compact' : 'comfortable'
+}
+
+/** Grid column class shared by the menu grid and the settings live preview. */
+export function menuGridColumnsClass(
+	columns: MenuColumns,
+	density: MenuDensity,
+): string {
+	switch (columns) {
+		case 2:
+			return 'grid-cols-2'
+		case 3:
+			return 'grid-cols-3'
+		case 4:
+			return 'grid-cols-4'
+		case 'auto':
+		default:
+			return density === 'compact'
+				? 'grid-cols-[repeat(auto-fill,minmax(min(100%,8rem),1fr))] sm:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]'
+				: 'grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] sm:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))]'
+	}
+}
 
 export function loadSettings(): PosSettings {
 	try {
@@ -100,6 +139,8 @@ export function loadSettings(): PosSettings {
 			return {
 				...defaults(),
 				...saved,
+				menuColumns: parseMenuColumns(saved.menuColumns),
+				menuDensity: parseMenuDensity(saved.menuDensity),
 				apps: { ...NO_POS_DEVICE_APPS, ...saved.apps },
 			}
 		}

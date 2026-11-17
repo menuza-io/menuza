@@ -1161,3 +1161,44 @@ describe('discount names in the language of record', () => {
 		).toBe('Happy hour')
 	})
 })
+
+describe('custom items never earn discounts (#171)', () => {
+	it('skips custom lines on automatic and manual percentage and fixed discounts', () => {
+		const catalog = line({ id: 'l-cat', itemId: 'i1', baseCents: 1000 })
+		const custom = line({
+			id: 'l-custom',
+			kind: 'custom',
+			itemId: 'custom:1',
+			name: 'Corkage fee',
+			baseCents: 5000,
+		})
+		const autoRows = automaticTillAdjustments({
+			...common,
+			lines: [catalog, custom],
+			rules: [rule({ valueType: 'percent', percentBp: 1000 })],
+		})
+		// 10% of $10.00 catalog item only = $1.00 (100 cents), never $6.00.
+		expect(autoRows).toHaveLength(1)
+		expect(autoRows[0]?.amountCents).toBe(100)
+		expect(autoRows[0]?.lineAmounts).toEqual({ 'l-cat': 100 })
+
+		// An order with only a custom item receives neither automatic nor manual discounts.
+		expect(
+			automaticTillAdjustments({
+				...common,
+				lines: [custom],
+				rules: [rule({ valueType: 'percent', percentBp: 1000 })],
+			}),
+		).toEqual([])
+		const manual = parseTillRules([
+			rule({ id: 'm1', application: 'manual', percentBp: 5000 }),
+		])[0]!
+		expect(
+			quoteTillManualDiscount({
+				...common,
+				discount: manual,
+				lines: [custom],
+			}),
+		).toEqual({ ok: false, reason: 'not_applicable' })
+	})
+})

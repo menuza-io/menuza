@@ -88,6 +88,8 @@ export type OperatorOrderAuth = {
 	 * false (fail closed).
 	 */
 	refundProvider: boolean
+	closeShifts: boolean
+	operatorName: string | null
 	impersonated: boolean
 }
 
@@ -187,6 +189,8 @@ export async function authenticateOrdersOperator(
 		locationIds?: unknown
 		refundLoyalty?: boolean
 		refundProvider?: boolean
+		closeShifts?: boolean
+		operatorName?: unknown
 		impersonated?: boolean
 	}
 	try {
@@ -242,6 +246,13 @@ export async function authenticateOrdersOperator(
 			// Never with impersonation, whatever the token says.
 			refundProvider:
 				decoded.refundProvider === true && decoded.impersonated !== true,
+			closeShifts:
+				decoded.closeShifts === true && decoded.impersonated !== true,
+			operatorName:
+				typeof decoded.operatorName === 'string' &&
+				decoded.operatorName.trim().length > 0
+					? decoded.operatorName.trim()
+					: null,
 			impersonated: decoded.impersonated === true,
 		},
 	}
