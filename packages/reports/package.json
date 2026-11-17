@@ -26,6 +26,11 @@
       "types": "./src/control-plane.server.ts",
       "import": "./src/control-plane.server.ts",
       "default": "./src/control-plane.server.ts"
+    },
+    "./catalog-menu-insights": {
+      "types": "./src/catalog-menu-insights.ts",
+      "import": "./src/catalog-menu-insights.ts",
+      "default": "./src/catalog-menu-insights.ts"
     }
   },
   "scripts": {

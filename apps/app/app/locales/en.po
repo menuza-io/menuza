@@ -853,6 +853,12 @@ msgstr "{0} used"
 #~ msgid "{0} was received for this order. Cancelling does not refund it: refund it separately with your payment processor."
 #~ msgstr "{0} was received for this order. Cancelling does not refund it: refund it separately with your payment processor."
 
+#. placeholder {0}: row.rateBp / 100
+#. placeholder {1}: (row.taxMinor / 100).toFixed(2)
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:53
+msgid "{0}%: {1}"
+msgstr "{0}%: {1}"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:111
 msgid "{added, plural, one {# item added.} other {# items added.}}"
 msgstr "{added, plural, one {# item added.} other {# items added.}}"
@@ -2800,6 +2806,13 @@ msgstr "**Print order refunded**"
 msgid "**Your prints are on the way**"
 msgstr "**Your prints are on the way**"
 
+#. placeholder {0}: index + 1
+#. placeholder {1}: row.locationId
+#. placeholder {2}: row.enoughData ? `${(row.salesMinor / 100).toFixed(0)} sales` : 'not enough data'
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:45
+msgid "#{0} {1} {2}"
+msgstr "#{0} {1} {2}"
+
 #: app/components/marketing/audience-builder.tsx:259
 msgid "% by spend, in the last"
 msgstr "% by spend, in the last"
@@ -4213,6 +4226,13 @@ msgstr "Activity at other locations is hidden."
 
 #~ msgid "Actual (min)"
 #~ msgstr "Actual (min)"
+
+#. placeholder {0}: (row.actualMinor / 100).toFixed(2)
+#. placeholder {1}: (row.goalMinor / 100).toFixed(2)
+#. placeholder {2}: row.currency
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:50
+msgid "Actual {0} / goal {1} {2}"
+msgstr "Actual {0} / goal {1} {2}"
 
 #~ msgid "Actual versus configured, by party size"
 #~ msgstr "Actual versus configured, by party size"
@@ -19268,6 +19288,10 @@ msgstr "Filters: {summary}"
 msgid "Finance"
 msgstr "Finance"
 
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:23
+msgid "Financial summary"
+msgstr "Financial summary"
+
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:99
 msgid "Find"
 msgstr "Find"
@@ -24580,6 +24604,10 @@ msgstr "Location Overrides"
 msgid "Location scope writes an override, not the base dish price."
 msgstr "Location scope writes an override, not the base dish price."
 
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:28
+msgid "Location scorecard"
+msgstr "Location scorecard"
+
 #: app/components/locations/special-hours-picker.tsx:148
 msgid "Location Status"
 msgstr "Location Status"
@@ -26270,6 +26298,10 @@ msgstr ""
 msgid "Monthly Reservation Volume & Special Days"
 msgstr "Monthly Reservation Volume & Special Days"
 
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:32
+msgid "Monthly targets for {month}. Set a goal per location under Settings."
+msgstr "Monthly targets for {month}. Set a goal per location under Settings."
+
 #: app/components/favorite-notes.tsx:89
 #: app/components/inventory/adjust-stock-dialog.tsx:230
 #: app/components/inventory/counting-screen.tsx:803
@@ -26901,6 +26933,7 @@ msgid "Net"
 msgstr "Net"
 
 #: app/components/pos/pos-day-report.tsx:253
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:33
 msgid "Net sales"
 msgstr "Net sales"
 
@@ -29255,6 +29288,10 @@ msgstr "Not eligible for rehire."
 #: app/components/discounts/discount-performance.tsx:323
 msgid "Not enough data"
 msgstr "Not enough data"
+
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:36
+msgid "Not enough data for this period yet."
+msgstr "Not enough data for this period yet."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:379
 msgid "Not enough history yet. Suggestions get better after about two weeks of use, so treat these as a first guess."
@@ -32993,6 +33030,10 @@ msgstr ""
 msgid "Period"
 msgstr "Period"
 
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:25
+msgid "Period totals for accounting: sales, tax by rate, tips, fees, and refunds. Export matches this view."
+msgstr "Period totals for accounting: sales, tax by rate, tips, fees, and refunds. Export matches this view."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1408
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
@@ -35097,6 +35138,10 @@ msgstr "Radius: {radiusValue} {radiusUnit}"
 #~ msgid "ran out."
 #~ msgstr "ran out."
 
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:30
+msgid "Ranks locations by sales, cancellations, ratings, and missed orders."
+msgstr "Ranks locations by sales, cancellations, ratings, and missed orders."
+
 #: app/components/staff/positions-tab.tsx:812
 msgid "Rate updated."
 msgstr "Rate updated."
@@ -35693,6 +35738,7 @@ msgstr "Referrer"
 msgid "Reflow later parties"
 msgstr "Reflow later parties"
 
+#: app/components/dashboard/tile-freshness.tsx:64
 #: app/components/mailbox/reviews-tab.tsx:611
 #: app/components/reservations/host-subnav.tsx:375
 #: app/components/reservations/host-subnav.tsx:395
@@ -37876,6 +37922,10 @@ msgstr "Sales for {label} removed."
 #: app/components/staff/labor/labor-sales.tsx:156
 msgid "Sales for {label} saved."
 msgstr "Sales for {label} saved."
+
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:30
+msgid "Sales goals"
+msgstr "Sales goals"
 
 #: app/components/pos/terminals-manager.tsx:624
 #: app/components/pos/terminals-manager.tsx:628
@@ -40279,6 +40329,10 @@ msgstr "Set a currency for this location or enter prices on the first delivery."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:606
 msgid "Set a guest limit or a party limit for pacing."
 msgstr "Set a guest limit or a party limit for pacing."
+
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:46
+msgid "Set a monthly goal to track progress here."
+msgstr "Set a monthly goal to track progress here."
 
 #~ msgid "Set a pooled inventory limit for all items in this section."
 #~ msgstr "Set a pooled inventory limit for all items in this section."
@@ -43434,6 +43488,7 @@ msgstr "Tasks to finish when someone joins."
 
 #: app/components/orders/order-detail.tsx:1018
 #: app/components/pos/pos-day-report.tsx:256
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:41
 msgid "Tax"
 msgstr "Tax"
 
@@ -49494,6 +49549,10 @@ msgstr ""
 #: app/components/reservations/waitlist/waitlist-clock.tsx:57
 msgid "Updated {ago}"
 msgstr "Updated {ago}"
+
+#: app/components/dashboard/tile-freshness.tsx:48
+msgid "Updated {label}"
+msgstr "Updated {label}"
 
 #~ msgid "Updated {text}"
 #~ msgstr "Updated {text}"

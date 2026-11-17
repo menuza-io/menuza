@@ -94,6 +94,9 @@ export const ORDER_REPORT_SUBJECTS = [
 	'orders',
 	'order_items',
 	'order_options',
+	'item_pairs',
+	'modifier_sales',
+	'sold_out_history',
 	...SALES_REPORT_SUBJECTS,
 ] as const satisfies readonly RestrictedReportSubject[]
 export type RestrictedReportSubject =

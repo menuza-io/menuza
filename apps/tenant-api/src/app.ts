@@ -23,6 +23,7 @@ import {
 	journeyOperatorRoutes,
 	journeySystemRoutes,
 } from './routes/journeys.ts'
+import { menuAvailabilityEventRoutes } from './routes/menu-availability-events.ts'
 import { staffOperatorRoutes } from './routes/staff.ts'
 import { careersRoutes } from './routes/careers.ts'
 import { hiringOperatorRoutes } from './routes/hiring.ts'
@@ -351,6 +352,7 @@ export function createTenantApiApp() {
 	app.route('/api/marketing', engagementSyncRoutes)
 	app.route('/api/staff', staffTickRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
+	app.route('/api/menu', menuAvailabilityEventRoutes)
 	app.route('/api/voice', voiceSystemRoutes)
 	app.route('/voice', publicVoiceRoutes)
 	app.route('/operator', operatorRoutes)

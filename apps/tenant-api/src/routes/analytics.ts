@@ -84,10 +84,17 @@ import {
 	SALES_REPORT_MAX_ROWS,
 	type SalesReportContext,
 } from '../services/sales-report-records.ts'
+import { isMenuInsightsReportSubject } from '@repo/reports/catalog-menu-insights'
 import {
 	isSalesReportSubject,
 	SALES_STAFF_FIELD_PERMISSION,
 } from '@repo/reports/token'
+import {
+	loadItemPairRecords,
+	loadModifierSalesRecords,
+	MENU_INSIGHTS_MAX_ROWS,
+} from '../services/menu-insights-records.ts'
+import { loadSoldOutHistoryRecords } from '../services/sold-out-report-records.ts'
 
 export const analyticsRoutes = new Hono()
 
@@ -121,6 +128,9 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'cancelled_orders',
 	'cash_drawer_shifts',
 	'cash_drawer_movements',
+	'item_pairs',
+	'modifier_sales',
+	'sold_out_history',
 ])
 
 const REPEAT_CALLER_WINDOW_MS = 30 * 86_400_000
@@ -590,6 +600,29 @@ analyticsRoutes.post('/query', async (c) => {
 		records = await loadCustomerRecords(db, claims.orgId, subject, loading)
 	} else if (definition.subject === 'text_subscribers') {
 		records = await loadTextSubscriberRecords(db)
+	} else if (isMenuInsightsReportSubject(definition.subject)) {
+		const salesCtx: SalesReportContext = {
+			db,
+			orgId: claims.orgId,
+			locationIds: claims.locationIds,
+			now,
+		}
+		const loaded =
+			definition.subject === 'item_pairs'
+				? await loadItemPairRecords(salesCtx, subject, loading)
+				: definition.subject === 'modifier_sales'
+					? await loadModifierSalesRecords(salesCtx, subject, loading)
+					: definition.subject === 'sold_out_history'
+						? await loadSoldOutHistoryRecords(
+								salesCtx,
+								subject,
+								loading,
+								referencedFieldIds(subject, loading).has('lostSalesEstimate'),
+							)
+						: { records: [] as ReportRecord[], truncated: false }
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = MENU_INSIGHTS_MAX_ROWS
 	} else if (
 		definition.subject === 'orders' ||
 		definition.subject === 'order_items' ||

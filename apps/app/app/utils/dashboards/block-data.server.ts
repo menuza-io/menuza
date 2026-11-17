@@ -80,6 +80,8 @@ export type LeaderboardEntry = {
 
 /** Data for each built-in block type, or null when no such block is shown. */
 export type BuiltInBlockData = {
+	/** When built-in block payloads were loaded (dashboard freshness, #387). */
+	fetchedAt: number
 	notes: NotesSeries | null
 	onboarding: OnboardingProgressData | null
 	leaderboard: LeaderboardEntry[] | null
@@ -306,7 +308,14 @@ export async function loadBuiltInBlockData({
 			launchOn ? loadHomeLaunch(userId, organization.id, now) : null,
 		],
 	)
-	return { notes, onboarding, leaderboard, attention, launch }
+	return {
+		fetchedAt: now.getTime(),
+		notes,
+		onboarding,
+		leaderboard,
+		attention,
+		launch,
+	}
 }
 
 async function loadHomeLaunch(

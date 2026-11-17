@@ -544,6 +544,7 @@ describe('loadReportBlockData', () => {
 
 describe('loadBlockPicker', () => {
 	const noBlockData = {
+		fetchedAt: 0,
 		notes: null,
 		onboarding: null,
 		leaderboard: null,
