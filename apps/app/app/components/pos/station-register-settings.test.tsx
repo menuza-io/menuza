@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { screen, waitFor } from '@testing-library/react'
+import { DEFAULT_POS_LOCATION_STATION_SETTINGS } from '@repo/common/pos-orders'
+import { screen } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_POS_LOCATION_STATION_SETTINGS } from '@repo/common/pos-orders'
 import { renderStaff } from '#tests/staff-render.tsx'
 import { StationRegisterSettings } from './station-register-settings.tsx'
 
@@ -64,10 +64,8 @@ describe('the cash discount field (#375)', () => {
 		await userEvent.click(
 			screen.getByRole('button', { name: 'Save register settings' }),
 		)
-		await waitFor(() =>
-			expect(
-				screen.getByText(/Enter a cash discount of 10% or less/),
-			).toBeInTheDocument(),
-		)
+		expect(
+			await screen.findByText(/Enter a cash discount of 10% or less/),
+		).toBeInTheDocument()
 	})
 })

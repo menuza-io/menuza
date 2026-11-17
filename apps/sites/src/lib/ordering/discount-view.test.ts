@@ -247,8 +247,12 @@ describe('limits a guest is told about (#273)', () => {
 		const capped = { discounts: [discount({ maxDiscountMinor: 1500 })] }
 		// An older page has no limit labels.
 		expect(
-			discountLines(capped, { deliveryDiscount: '{name} (delivery)' }, {}, money)[0]
-				?.label,
+			discountLines(
+				capped,
+				{ deliveryDiscount: '{name} (delivery)' },
+				{},
+				money,
+			)[0]?.label,
 		).toBe('Twenty off')
 		// A cap without a money formatter is not promised.
 		expect(discountLines(capped, limitLabels, {})[0]?.label).toBe('Twenty off')

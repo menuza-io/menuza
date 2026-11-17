@@ -1759,8 +1759,7 @@ function DiscountFormBody({
 												expensive first.
 											</Trans>
 										) : itemScope ? (
-											state.itemChoice === 'cheapest' &&
-											itemChoiceApplies ? (
+											state.itemChoice === 'cheapest' && itemChoiceApplies ? (
 												<Trans>
 													Optional. The cheapest matching items are discounted
 													first.
@@ -2046,9 +2045,9 @@ function DiscountFormBody({
 										label={<Trans>Weekly budget</Trans>}
 										hint={
 											<Trans>
-												Optional. The most this discount gives in a week
-												(Monday to Sunday), in <bdi>{currency}</bdi>. It pauses
-												by itself when it is spent and starts again next week.
+												Optional. The most this discount gives in a week (Monday
+												to Sunday), in <bdi>{currency}</bdi>. It pauses by
+												itself when it is spent and starts again next week.
 											</Trans>
 										}
 										value={state.weeklyBudget}

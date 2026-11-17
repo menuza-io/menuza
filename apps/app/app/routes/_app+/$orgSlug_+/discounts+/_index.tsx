@@ -719,13 +719,18 @@ function DiscountRow({
 								className="text-muted-foreground block text-xs"
 							>
 								{(() => {
-									const spent = formatMoney(usage.weekGivenMinor, currency, locale)
+									const spent = formatMoney(
+										usage.weekGivenMinor,
+										currency,
+										locale,
+									)
 									const budget = formatMoney(
 										definition.weeklyBudgetMinor,
 										currency,
 										locale,
 									)
-									return usage.weekGivenMinor >= definition.weeklyBudgetMinor ? (
+									return usage.weekGivenMinor >=
+										definition.weeklyBudgetMinor ? (
 										<Trans>
 											Weekly budget spent: {spent} of {budget}. It starts again
 											next week.

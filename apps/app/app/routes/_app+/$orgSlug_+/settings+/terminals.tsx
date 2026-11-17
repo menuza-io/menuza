@@ -1,9 +1,9 @@
 import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
+import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
 import {
 	getLocationCurrency,
 	type LocationAddress,
 } from '@repo/common/location-types'
-import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
 import { parsePosLocationStationSettings } from '@repo/common/pos-orders'
 import { and, asc, db, eq, OrganizationLocation } from '@repo/database'
 import { data, type LoaderFunctionArgs, useLoaderData } from 'react-router'

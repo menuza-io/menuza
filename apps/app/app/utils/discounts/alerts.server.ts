@@ -25,8 +25,9 @@ export async function resolveDiscountAlertRecipients(input: {
 	now?: Date
 }): Promise<DiscountAlertRecipient[]> {
 	const now = input.now ?? new Date()
-	const [action = '', entity = '', access = ''] =
-		'update:discount:any'.split(':')
+	const [action = '', entity = '', access = ''] = 'update:discount:any'.split(
+		':',
+	)
 	const rows = await db
 		.select({
 			userId: UserOrganization.userId,
@@ -64,7 +65,8 @@ export async function resolveDiscountAlertRecipients(input: {
 	for (const row of rows.sort((a, b) => a.userId.localeCompare(b.userId))) {
 		if (seen.has(row.userId) || !row.email) continue
 		const banned =
-			row.bannedAt !== null && (row.banExpiresAt === null || row.banExpiresAt > now)
+			row.bannedAt !== null &&
+			(row.banExpiresAt === null || row.banExpiresAt > now)
 		if (banned) continue
 		seen.add(row.userId)
 		recipients.push({ userId: row.userId, email: row.email })
@@ -72,4 +74,3 @@ export async function resolveDiscountAlertRecipients(input: {
 	}
 	return recipients
 }
-

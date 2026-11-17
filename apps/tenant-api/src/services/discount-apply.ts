@@ -128,15 +128,21 @@ export async function memberAudienceIds(
 	if (!customerId) return []
 	const wanted = [
 		...new Set(
-			records.flatMap((record) => (record.audienceId ? [record.audienceId] : [])),
+			records.flatMap((record) =>
+				record.audienceId ? [record.audienceId] : [],
+			),
 		),
 	].slice(0, MAX_DISCOUNT_AUDIENCE_CHECKS)
 	const member: string[] = []
 	for (const audienceId of wanted) {
 		try {
 			if (
-				(await customerInAudience(db, audienceId, customerId, now.getTime())) ===
-				true
+				(await customerInAudience(
+					db,
+					audienceId,
+					customerId,
+					now.getTime(),
+				)) === true
 			) {
 				member.push(audienceId)
 			}
@@ -561,9 +567,10 @@ export async function loadDiscountUsageCounts(
  * another currency than the order's is not applied by the engine, so it is
  * never promised here either (the quote's `currency` is the order's).
  */
-function limitsOfRecord(
-	record: DiscountRecord | undefined,
-): { maxDiscountMinor?: number; maxUnits?: number } {
+function limitsOfRecord(record: DiscountRecord | undefined): {
+	maxDiscountMinor?: number
+	maxUnits?: number
+} {
 	if (!record) return {}
 	const plainItems =
 		(record.target.scope === 'items' || record.target.scope === 'categories') &&

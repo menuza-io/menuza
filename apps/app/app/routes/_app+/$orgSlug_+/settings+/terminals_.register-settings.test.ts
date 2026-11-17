@@ -157,8 +157,9 @@ describe('the cash-payment discount setting (#375)', () => {
 			...base(location.id),
 			cashDiscountPercent: '',
 		})
-		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp)
-			.toBeNull()
+		expect(
+			(await published(organization))[0]?.stationSettings?.cashDiscountBp,
+		).toBeNull()
 	})
 
 	it('refuses a percentage that is not one, or over the highest rate', async () => {
@@ -176,9 +177,9 @@ describe('the cash-payment discount setting (#375)', () => {
 			cashDiscountPercent: '10',
 		})
 		expect(getResponseStatus(edge)).toBe(200)
-		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp).toBe(
-			1000,
-		)
+		expect(
+			(await published(organization))[0]?.stationSettings?.cashDiscountBp,
+		).toBe(1000)
 	})
 
 	it('keeps the saved rate when a form open before the field existed posts none', async () => {
@@ -212,9 +213,13 @@ describe('the cash-payment discount setting (#375)', () => {
 			.select({ stationSettings: OrganizationLocation.stationSettings })
 			.from(OrganizationLocation)
 			.where(eq(OrganizationLocation.id, location.id))
-		expect(JSON.parse(String(row?.stationSettings)).cashDiscountBp).toBeNull()
-		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp)
-			.toBeNull()
+		const saved = JSON.parse(String(row?.stationSettings)) as {
+			cashDiscountBp: number | null
+		}
+		expect(saved.cashDiscountBp).toBeNull()
+		expect(
+			(await published(organization))[0]?.stationSettings?.cashDiscountBp,
+		).toBeNull()
 	})
 
 	it('never publishes a rate saved before the organization moved to KSA', async () => {
@@ -224,11 +229,12 @@ describe('the cash-payment discount setting (#375)', () => {
 			...base(location.id),
 			cashDiscountPercent: '3',
 		})
-		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp).toBe(
-			300,
-		)
+		expect(
+			(await published(organization))[0]?.stationSettings?.cashDiscountBp,
+		).toBe(300)
 		await region(organization.id, 'ksa')
-		expect((await published(organization))[0]?.stationSettings?.cashDiscountBp)
-			.toBeNull()
+		expect(
+			(await published(organization))[0]?.stationSettings?.cashDiscountBp,
+		).toBeNull()
 	})
 })

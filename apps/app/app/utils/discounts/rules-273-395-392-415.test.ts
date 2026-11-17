@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
 import { type DiscountRecord } from '@repo/discounts'
+import { describe, expect, it, vi } from 'vitest'
 import {
 	discountAlertKindFromNotificationType,
 	discountAlertPath,
@@ -51,7 +51,11 @@ describe('the cap and the item limit (#273)', () => {
 
 describe('which eligible item is discounted first (#395)', () => {
 	it('stores cheapest first only with an item limit, and leaves the default out', () => {
-		const cheapest = convert({ ...ITEMS, maxUnits: '1', itemChoice: 'cheapest' })
+		const cheapest = convert({
+			...ITEMS,
+			maxUnits: '1',
+			itemChoice: 'cheapest',
+		})
 		expect(cheapest.ok && cheapest.definition.itemChoice).toBe('cheapest')
 		const dearest = convert({ ...ITEMS, maxUnits: '1', itemChoice: 'dearest' })
 		expect(dearest.ok && 'itemChoice' in dearest.definition).toBe(false)
@@ -122,9 +126,9 @@ describe('a weekly budget (#392)', () => {
 			uses: 0,
 			weeklyBudgetMinor: 10_000,
 		}
-		expect(discountDisplayState({ ...input, weekGivenMinor: 9_999 }, null)).toBe(
-			'active',
-		)
+		expect(
+			discountDisplayState({ ...input, weekGivenMinor: 9_999 }, null),
+		).toBe('active')
 		expect(
 			discountDisplayState({ ...input, weekGivenMinor: 10_000 }, null),
 		).toBe('budget_reached')
@@ -158,7 +162,10 @@ describe('a saved audience (#415)', () => {
 	})
 
 	it('keeps a stricter eligibility as chosen', () => {
-		const result = convert({ audienceId: 'aud_1', eligibility: 'loyalty_member' })
+		const result = convert({
+			audienceId: 'aud_1',
+			eligibility: 'loyalty_member',
+		})
 		expect(result.ok && result.definition.eligibility).toBe('loyalty_member')
 	})
 
@@ -310,7 +317,12 @@ describe('the discount usage client', () => {
 		const body = {
 			basis: 'gross',
 			entries: [
-				{ discountId: 'd1', orders: 10, salesMinor: 18_000, discountMinor: 2000 },
+				{
+					discountId: 'd1',
+					orders: 10,
+					salesMinor: 18_000,
+					discountMinor: 2000,
+				},
 			],
 			ordersTotal: 40,
 			ordersWithDiscount: 10,
@@ -365,9 +377,9 @@ describe('the discount usage client', () => {
 
 describe('discount alerts', () => {
 	it('reads the notification type and leads to the discount', () => {
-		expect(discountAlertKindFromNotificationType('discount_budget_reached')).toBe(
-			'budget_reached',
-		)
+		expect(
+			discountAlertKindFromNotificationType('discount_budget_reached'),
+		).toBe('budget_reached')
 		expect(discountAlertKindFromNotificationType('mention')).toBeNull()
 		expect(discountAlertPath('abc 1')).toBe('/discounts/abc%201')
 	})

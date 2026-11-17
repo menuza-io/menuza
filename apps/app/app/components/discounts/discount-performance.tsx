@@ -70,7 +70,8 @@ export function DiscountPerformance({
 	const [result, setResult] = useState<DiscountPerformanceResponse | null>(null)
 	const [failed, setFailed] = useState(false)
 	const ids = useMemo(
-		() => discounts.map((discount) => discount.id).slice(0, DISCOUNT_USAGE_MAX_IDS),
+		() =>
+			discounts.map((discount) => discount.id).slice(0, DISCOUNT_USAGE_MAX_IDS),
 		[discounts],
 	)
 	const idsKey = ids.join(',')
@@ -83,7 +84,10 @@ export function DiscountPerformance({
 		}
 		const controller = new AbortController()
 		void createDiscountUsageClient({ orgSlug })
-			.fetchPerformance({ ids, from, to, tz: timeZone, basis }, controller.signal)
+			.fetchPerformance(
+				{ ids, from, to, tz: timeZone, basis },
+				controller.signal,
+			)
 			.then((response) => {
 				if (controller.signal.aborted) return
 				setResult(response)
@@ -118,7 +122,10 @@ export function DiscountPerformance({
 		>
 			<div className="flex flex-wrap items-end justify-between gap-3">
 				<div className="flex flex-col gap-1">
-					<h2 id="discount-performance-title" className="text-base font-semibold">
+					<h2
+						id="discount-performance-title"
+						className="text-base font-semibold"
+					>
 						<Trans>How your discounts are doing</Trans>
 					</h2>
 					<p className="text-muted-foreground max-w-prose text-sm">
@@ -164,7 +171,10 @@ export function DiscountPerformance({
 						<p data-testid="discount-share" className="text-sm">
 							{(() => {
 								const percent = numberText(share, locale)
-								const withDiscount = numberText(result.ordersWithDiscount, locale)
+								const withDiscount = numberText(
+									result.ordersWithDiscount,
+									locale,
+								)
 								const total = numberText(result.ordersTotal, locale)
 								return (
 									<Trans>
@@ -177,7 +187,9 @@ export function DiscountPerformance({
 					) : null}
 					{used.length === 0 ? (
 						<p className="text-muted-foreground text-sm">
-							<Trans>No discount was used on a completed order in this period.</Trans>
+							<Trans>
+								No discount was used on a completed order in this period.
+							</Trans>
 						</p>
 					) : null}
 					{online.length > 0 ? (
@@ -313,11 +325,7 @@ function PerformanceRow({
 				) : figures.returnPerUnit === null ? (
 					<span className="text-muted-foreground">—</span>
 				) : (
-					formatMoney(
-						Math.round(figures.returnPerUnit * 100),
-						currency,
-						locale,
-					)
+					formatMoney(Math.round(figures.returnPerUnit * 100), currency, locale)
 				)}
 			</TableCell>
 		</TableRow>

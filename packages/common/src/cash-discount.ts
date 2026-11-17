@@ -57,10 +57,7 @@ export function readCashDiscountBp(value: unknown): number | null {
  * surcharge yet, so callers pass 0 until it exists.
  */
 export type CashDiscountBlock =
-	| 'not_allowed_here'
-	| 'not_set'
-	| 'not_all_cash'
-	| 'card_surcharge_present'
+	'not_allowed_here' | 'not_set' | 'not_all_cash' | 'card_surcharge_present'
 
 export function cashDiscountBlock(input: {
 	dataRegion: string | null | undefined
@@ -111,7 +108,8 @@ export function cashDiscountCeilingCents(input: {
 	lineCount: number
 }): number {
 	return (
-		Math.ceil((Math.max(0, input.subtotalCents) * CASH_DISCOUNT_MAX_BP) / 10_000) +
-		Math.max(0, input.lineCount)
+		Math.ceil(
+			(Math.max(0, input.subtotalCents) * CASH_DISCOUNT_MAX_BP) / 10_000,
+		) + Math.max(0, input.lineCount)
 	)
 }

@@ -27,10 +27,11 @@ import { compileAudience } from './marketing-audience-rules.ts'
  */
 
 export type AudienceResult<T> =
-	| { ok: true; value: T }
-	| { ok: false; error: AudienceErrorCode }
+	{ ok: true; value: T } | { ok: false; error: AudienceErrorCode }
 
-const fail = (error: AudienceErrorCode): { ok: false; error: AudienceErrorCode } => ({
+const fail = (
+	error: AudienceErrorCode,
+): { ok: false; error: AudienceErrorCode } => ({
 	ok: false,
 	error,
 })
@@ -140,7 +141,8 @@ export async function createAudience(
 	input: { name: string; definition: AudienceDefinition; createdBy?: string },
 ): Promise<AudienceResult<AudienceRecord>> {
 	const [existing] = await db.select({ n: count() }).from(marketingAudiences)
-	if ((existing?.n ?? 0) >= AUDIENCE_LIMITS.audiences) return fail('audience_limit')
+	if ((existing?.n ?? 0) >= AUDIENCE_LIMITS.audiences)
+		return fail('audience_limit')
 	try {
 		const [row] = await db
 			.insert(marketingAudiences)
@@ -253,7 +255,7 @@ export function nodesUseAudience(rawNodes: unknown, id: string): boolean {
 		const nodes = typeof rawNodes === 'string' ? JSON.parse(rawNodes) : rawNodes
 		if (!Array.isArray(nodes)) return false
 		return nodes.some((node) => {
-			const data = (node as { type?: string; data?: Record<string, unknown> })
+			const data = node as { type?: string; data?: Record<string, unknown> }
 			return (
 				data.type === 'condition' &&
 				data.data?.field === 'audience' &&

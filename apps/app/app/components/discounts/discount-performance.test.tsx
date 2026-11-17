@@ -24,7 +24,12 @@ const DISCOUNTS = [
 const RESPONSE = {
 	basis: 'net' as const,
 	entries: [
-		{ discountId: 'd_auto', orders: 10, salesMinor: 18_000, discountMinor: 2000 },
+		{
+			discountId: 'd_auto',
+			orders: 10,
+			salesMinor: 18_000,
+			discountMinor: 2000,
+		},
 		{ discountId: 'd_few', orders: 9, salesMinor: 9000, discountMinor: 900 },
 		{ discountId: 'd_till', orders: 12, salesMinor: 6000, discountMinor: 1200 },
 		{ discountId: 'd_none', orders: 0, salesMinor: 0, discountMinor: 0 },
@@ -54,9 +59,9 @@ beforeEach(() => {
 describe('DiscountPerformance (#390)', () => {
 	it('shows orders, sales, what was given and the return, matching the orders', async () => {
 		renderStaff(panel())
-		const row = (await screen.findByRole('link', { name: 'Happy hour' })).closest(
-			'tr',
-		)!
+		const row = (
+			await screen.findByRole('link', { name: 'Happy hour' })
+		).closest('tr')!
 		const cells = within(row).getAllByRole('cell')
 		expect(cells.map((cell) => cell.textContent)).toEqual([
 			'Happy hour',
@@ -80,9 +85,9 @@ describe('DiscountPerformance (#390)', () => {
 
 	it('says not enough data under ten orders but still shows the figures', async () => {
 		renderStaff(panel())
-		const row = (await screen.findByRole('link', { name: 'Lunch deal' })).closest(
-			'tr',
-		)!
+		const row = (
+			await screen.findByRole('link', { name: 'Lunch deal' })
+		).closest('tr')!
 		expect(within(row).getByText('9')).toBeInTheDocument()
 		expect(within(row).getByText('$90.00')).toBeInTheDocument()
 		expect(within(row).getByText('Not enough data')).toBeInTheDocument()

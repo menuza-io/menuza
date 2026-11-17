@@ -469,7 +469,11 @@ describe('a saved audience (#415)', () => {
 	})
 
 	it('leaves other discounts alone', () => {
-		const plain = makeDiscount({ id: 'plain', percentBp: 500, combinable: true })
+		const plain = makeDiscount({
+			id: 'plain',
+			percentBp: 500,
+			combinable: true,
+		})
 		const result = evaluateDiscounts(
 			makeInput({
 				lines: [makeLine({ unitMinor: 5000 })],

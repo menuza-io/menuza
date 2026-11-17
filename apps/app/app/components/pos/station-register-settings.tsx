@@ -338,9 +338,9 @@ function LocationRegisterForm({
 							className="text-muted-foreground text-xs"
 						>
 							<Trans>
-								Taken off a bill paid entirely in cash and shown as its own
-								line on the receipt and in reports. Check that your state and
-								card agreements allow it.
+								Taken off a bill paid entirely in cash and shown as its own line
+								on the receipt and in reports. Check that your state and card
+								agreements allow it.
 							</Trans>
 						</p>
 					</div>

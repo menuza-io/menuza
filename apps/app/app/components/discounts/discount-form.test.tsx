@@ -735,7 +735,9 @@ describe('DiscountForm item choice, weekly budget and saved audience (#395, #392
 		await userEvent.click(radio(/Most expensive first/))
 		expect(radio(/Most expensive first/)).toBeChecked()
 		expect(
-			screen.getByText(/The most expensive matching items are discounted first/),
+			screen.getByText(
+				/The most expensive matching items are discounted first/,
+			),
 		).toBeInTheDocument()
 	})
 
@@ -777,8 +779,9 @@ describe('DiscountForm item choice, weekly budget and saved audience (#395, #392
 				state: { eligibility: 'signed_in', audienceId: 'aud_hidden' },
 			}),
 		)
-		const select = screen.getByLabelText(/Saved audience/) as HTMLSelectElement
-		expect(select.value).toBe('aud_hidden')
+		const select = screen.getByLabelText(/Saved audience/)
+		const selected = select as unknown as { value: string }
+		expect(selected.value).toBe('aud_hidden')
 		expect(
 			within(select).getByRole('option', { name: /not available to you/ }),
 		).toBeInTheDocument()
@@ -799,7 +802,8 @@ describe('DiscountForm item choice, weekly budget and saved audience (#395, #392
 		// Going back to everyone clears the audience.
 		await userEvent.click(radio(/^Everyone/))
 		expect(
-			(screen.getByLabelText(/Saved audience/) as HTMLSelectElement).value,
+			(screen.getByLabelText(/Saved audience/) as unknown as { value: string })
+				.value,
 		).toBe('')
 	})
 })

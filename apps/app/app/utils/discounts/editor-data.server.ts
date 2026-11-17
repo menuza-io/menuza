@@ -17,12 +17,12 @@ import {
 	OrganizationMenuOption,
 } from '@repo/database'
 import { loadLoyaltyCatalog } from '#app/utils/loyalty/catalog.server.ts'
+import { type LoyaltyCatalog } from '#app/utils/loyalty/catalog.ts'
 import { loadAudienceOptions } from '#app/utils/marketing/audiences.server.ts'
 import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
+import { isPackagingFeeEnabled } from '#app/utils/orders/packaging-fee.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
-import { type LoyaltyCatalog } from '#app/utils/loyalty/catalog.ts'
-import { isPackagingFeeEnabled } from '#app/utils/orders/packaging-fee.server.ts'
 import { buildDiscountChoices } from './editor-choices.ts'
 import {
 	type DiscountChoiceCatalog,

@@ -202,9 +202,9 @@ describe('MenuScreen offers', () => {
 				}
 			/>,
 		)
-		expect(await screen.findAllByText('Twenty off (up to $15.00 off)')).toHaveLength(
-			2,
-		)
+		expect(
+			await screen.findAllByText('Twenty off (up to $15.00 off)'),
+		).toHaveLength(2)
 	})
 
 	it('says the item limit when there is no cap (#273)', async () => {

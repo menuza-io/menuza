@@ -3,10 +3,17 @@ import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Icon } from '@repo/ui/icon'
 import { useMemo, useRef, useState } from 'react'
+import { giftCardErrorMessage, LabeledInput } from './GiftCardSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
+import {
+	cashDiscountAdjustment,
+	cashDiscountPercentText,
+	withoutCashDiscount,
+} from '~/lib/cash-discount.ts'
 import { quickCashAmounts } from '~/lib/cash.ts'
 import { type PosOrder, type StaffRef, type TenderMethod } from '~/lib/db.ts'
+import { createGiftCardApi, GiftCardApiError } from '~/lib/gift-cards.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
 import {
 	addPayment,
@@ -16,15 +23,8 @@ import {
 	paidCents,
 	type OrderDraft,
 } from '~/lib/orders.ts'
-import {
-	cashDiscountAdjustment,
-	cashDiscountPercentText,
-	withoutCashDiscount,
-} from '~/lib/cash-discount.ts'
 import { computeTotals, lineTotalCents } from '~/lib/pricing.ts'
-import { createGiftCardApi, GiftCardApiError } from '~/lib/gift-cards.ts'
 import { shownLine, usePos } from '~/lib/store.ts'
-import { giftCardErrorMessage, LabeledInput } from './GiftCardSheet.tsx'
 import { Keypad } from '~/ui/Keypad.tsx'
 import {
 	Input,
@@ -166,7 +166,8 @@ export function Checkout({
 	const quick = useMemo(() => quickCashAmounts(applied), [applied])
 	// A bill that comes to nothing has no payment to take: it is simply closed.
 	const free = totals.totalCents === 0 && !hasPayments
-	const giftReady = method !== 'gift_card' || (online && giftCode.trim().length >= 8)
+	const giftReady =
+		method !== 'gift_card' || (online && giftCode.trim().length >= 8)
 	const canConfirm = !saving && giftReady && (free || (applied > 0 && !short))
 
 	// After a payment the next one starts fresh, but a chosen split carries on:
@@ -222,7 +223,8 @@ export function Checkout({
 				})
 				const view = await api.lookup(giftCode.trim())
 				const amount = Math.min(applied, view.balanceMinor)
-				if (amount <= 0) throw new GiftCardApiError(409, 'gift_card_balance_low')
+				if (amount <= 0)
+					throw new GiftCardApiError(409, 'gift_card_balance_low')
 				const redeemed = await api.redeem({
 					code: giftCode.trim(),
 					amountMinor: amount,
@@ -445,7 +447,12 @@ export function Checkout({
 						<Row label={_(t`Subtotal`)} value={money(totals.subtotalCents)} />
 						{(current && hasPayments
 							? current.adjustments
-							: [...(current?.adjustments ?? draft.adjustments).filter((a) => a.kind !== 'cash_discount'), ...(cashAdjustment ? [cashAdjustment] : [])]
+							: [
+									...(current?.adjustments ?? draft.adjustments).filter(
+										(a) => a.kind !== 'cash_discount',
+									),
+									...(cashAdjustment ? [cashAdjustment] : []),
+								]
 						).map((a) => (
 							<Row key={a.id} label={a.label} value={money(-a.amountCents)} />
 						))}
@@ -607,7 +614,9 @@ export function Checkout({
 						<div className="flex flex-col gap-2">
 							{!online ? (
 								<p role="alert" className="notice-warning px-3 py-2 text-sm">
-									{_(t`Gift cards need the internet. Take another payment, or try again when the till is back online.`)}
+									{_(
+										t`Gift cards need the internet. Take another payment, or try again when the till is back online.`,
+									)}
 								</p>
 							) : null}
 							<LabeledInput

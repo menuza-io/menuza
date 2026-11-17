@@ -722,7 +722,7 @@ msgstr "{secondsLeft, plural, zero {محاولات خاطئة كثيرة. حاو
 msgid "{short, plural, one {{labels}: seats {seats}, needs # more seat} other {{labels}: seats {seats}, needs # more seats}}"
 msgstr "{short, plural, zero {{labels}: تتسع لـ {seats}، تحتاج # مقعدًا إضافيًا} one {{labels}: تتسع لـ {seats}، تحتاج مقعدًا إضافيًا واحدًا} two {{labels}: تتسع لـ {seats}، تحتاج مقعدين إضافيين} few {{labels}: تتسع لـ {seats}، تحتاج # مقاعد إضافية} many {{labels}: تتسع لـ {seats}، تحتاج # مقعدًا إضافيًا} other {{labels}: تتسع لـ {seats}، تحتاج # مقعد إضافي}}"
 
-#: src/screens/Checkout.tsx:365
+#: src/screens/Checkout.tsx:367
 msgid "{shortBy} short"
 msgstr "ينقص {shortBy}"
 
@@ -1337,7 +1337,7 @@ msgid "Already booked? Seat their booking."
 msgstr "هل لديهم حجز؟ أجلس حجزهم."
 
 #: src/apps/orders/Orders.tsx:2194
-#: src/screens/Checkout.tsx:548
+#: src/screens/Checkout.tsx:555
 #: src/screens/GiftCardSheet.tsx:210
 #: src/screens/ManualDiscount.tsx:322
 #: src/screens/ShiftSheet.tsx:218
@@ -1401,7 +1401,7 @@ msgstr "رابط التطبيق"
 msgid "Apply discount"
 msgstr "تطبيق الخصم"
 
-#: src/screens/Checkout.tsx:688
+#: src/screens/Checkout.tsx:697
 msgid "Approval code from the card terminal (optional)"
 msgstr "رمز الموافقة من جهاز البطاقات (اختياري)"
 
@@ -1560,7 +1560,7 @@ msgstr "بيغل"
 msgid "Bakery"
 msgstr "المخبوزات"
 
-#: src/screens/Checkout.tsx:473
+#: src/screens/Checkout.tsx:480
 msgid "Balance"
 msgstr "المتبقي"
 
@@ -1581,7 +1581,7 @@ msgstr "قيد المراجعة"
 msgid "Best fit"
 msgstr "الأنسب"
 
-#: src/screens/Checkout.tsx:396
+#: src/screens/Checkout.tsx:398
 msgid "Bill"
 msgstr "الفاتورة"
 
@@ -1914,7 +1914,7 @@ msgstr "النقد في الدرج"
 msgid "Cash out"
 msgstr "سحب نقدي"
 
-#: src/screens/Checkout.tsx:633
+#: src/screens/Checkout.tsx:642
 msgid "Cash received"
 msgstr "النقد المستلم"
 
@@ -1938,11 +1938,11 @@ msgstr "احتفال"
 msgid "Change"
 msgstr "الباقي"
 
-#: src/screens/Checkout.tsx:713
+#: src/screens/Checkout.tsx:722
 msgid "Change {changeText}"
 msgstr "الباقي {changeText}"
 
-#: src/screens/Checkout.tsx:324
+#: src/screens/Checkout.tsx:326
 msgid "Change due"
 msgstr "الباقي المستحق"
 
@@ -1975,7 +1975,7 @@ msgid "Changes reach the website and QR menus within seconds and are recorded in
 msgstr "تظهر التغييرات في الموقع وقوائم رمز QR خلال ثوانٍ وتُسجَّل في سجل النشاط."
 
 #: src/screens/Cart.tsx:489
-#: src/screens/Checkout.tsx:380
+#: src/screens/Checkout.tsx:382
 msgid "Charge"
 msgstr "تحصيل"
 
@@ -2166,7 +2166,7 @@ msgstr "تم تسجيل الانصراف"
 msgid "Close"
 msgstr "إغلاق"
 
-#: src/screens/Checkout.tsx:361
+#: src/screens/Checkout.tsx:363
 msgid "Close order · nothing to pay"
 msgstr "إغلاق الطلب · لا يوجد ما يُدفع"
 
@@ -2197,7 +2197,7 @@ msgstr "أُغلقت عن بُعد بواسطة {0}"
 msgid "Closed today. Walk-ins can still be seated."
 msgstr "مغلق اليوم. لا يزال بالإمكان إجلاس الزبائن بدون حجز."
 
-#: src/screens/Checkout.tsx:734
+#: src/screens/Checkout.tsx:743
 msgid "Closing now leaves {remainingText} open on the tab"
 msgstr "الإغلاق الآن يُبقي {remainingText} مستحقًا على الحساب"
 
@@ -2252,11 +2252,11 @@ msgstr "تبقى تذاكر المطبخ المنجزة متاحة للاستر�
 msgid "Confirm"
 msgstr "تأكيد"
 
-#: src/screens/Checkout.tsx:368
+#: src/screens/Checkout.tsx:370
 msgid "Confirm {appliedText}"
 msgstr "تأكيد {appliedText}"
 
-#: src/screens/Checkout.tsx:680
+#: src/screens/Checkout.tsx:689
 msgid "Confirm once this amount has been collected another way."
 msgstr "أكّد بعد تحصيل هذا المبلغ بطريقة أخرى."
 
@@ -2359,7 +2359,7 @@ msgstr "تعذّر تسجيل الاسترداد"
 msgid "Could not save the order"
 msgstr "تعذّر حفظ الطلب"
 
-#: src/screens/Checkout.tsx:279
+#: src/screens/Checkout.tsx:281
 msgid "Could not save the payment"
 msgstr "تعذّر حفظ الدفعة"
 
@@ -2766,7 +2766,7 @@ msgstr "مثال: رسوم خدمة خاصة أو طلب خاص"
 msgid "Each booking is a button. Each table row has a Book this table button. The list beside the grid holds the same bookings."
 msgstr "كل حجز زر. وفي كل صف طاولة زر «احجز هذه الطاولة». والقائمة بجانب الجدول تضم الحجوزات نفسها."
 
-#: src/screens/Checkout.tsx:553
+#: src/screens/Checkout.tsx:560
 msgid "Each share is {shareText}. The last share takes any remainder."
 msgstr "كل حصة {shareText}. تتحمّل الحصة الأخيرة أي فرق متبقٍ."
 
@@ -2869,7 +2869,7 @@ msgstr "أدخل سعرًا صالحًا."
 msgid "Enter a whole number, 0 or more."
 msgstr "أدخل عددًا صحيحًا، 0 أو أكثر."
 
-#: src/screens/Checkout.tsx:363
+#: src/screens/Checkout.tsx:365
 msgid "Enter an amount"
 msgstr "أدخل مبلغًا"
 
@@ -2939,7 +2939,7 @@ msgstr "تم إرسال كل شيء."
 msgid "Everything left"
 msgstr "كل المتبقي"
 
-#: src/screens/Checkout.tsx:651
+#: src/screens/Checkout.tsx:660
 msgid "Exact"
 msgstr "المبلغ تمامًا"
 
@@ -3061,7 +3061,7 @@ msgstr "ابتداءً من {price}"
 msgid "Full"
 msgstr "ممتلئة"
 
-#: src/screens/Checkout.tsx:520
+#: src/screens/Checkout.tsx:527
 msgctxt "Pay the whole balance at once"
 msgid "Full"
 msgstr "كامل"
@@ -3096,7 +3096,7 @@ msgstr "بطاقة هدايا"
 msgid "Gift card action"
 msgstr "إجراء بطاقة الهدايا"
 
-#: src/screens/Checkout.tsx:614
+#: src/screens/Checkout.tsx:623
 msgid "Gift card number or scan"
 msgstr "رقم بطاقة الهدايا أو مسحها"
 
@@ -3117,12 +3117,12 @@ msgstr "بطاقات الهدايا غير مفعّلة."
 msgid "Gift cards are temporarily unavailable."
 msgstr "بطاقات الهدايا غير متاحة مؤقتًا."
 
-#: src/screens/Checkout.tsx:610
+#: src/screens/Checkout.tsx:618
 #: src/screens/GiftCardSheet.tsx:23
 msgid "Gift cards need the internet. Take another payment, or try again when the till is back online."
 msgstr "تحتاج بطاقات الهدايا إلى الإنترنت. استخدم وسيلة دفع أخرى أو حاول عندما يعود الصندوق إلى الاتصال."
 
-#: src/screens/Checkout.tsx:721
+#: src/screens/Checkout.tsx:730
 msgid "Give {giveChangeText} change for that payment"
 msgstr "أعطِ {giveChangeText} باقيًا لتلك الدفعة"
 
@@ -3326,7 +3326,7 @@ msgstr "الكمية المستلمة"
 msgid "How much did you make?"
 msgstr "كم حضّرت؟"
 
-#: src/screens/Checkout.tsx:506
+#: src/screens/Checkout.tsx:513
 msgid "How much now?"
 msgstr "كم المبلغ الآن؟"
 
@@ -3359,7 +3359,7 @@ msgid "In queue"
 msgstr "في الانتظار"
 
 #: src/screens/Cart.tsx:230
-#: src/screens/Checkout.tsx:453
+#: src/screens/Checkout.tsx:460
 #: src/screens/OrdersSheet.tsx:690
 msgid "Includes tax"
 msgstr "شامل الضريبة"
@@ -4039,7 +4039,7 @@ msgstr "حجز جديد"
 #~ msgid "New online booking: {who}, {size} at {time}"
 #~ msgstr "حجز جديد عبر الإنترنت: {who}، {size} الساعة {time}"
 
-#: src/screens/Checkout.tsx:341
+#: src/screens/Checkout.tsx:343
 msgid "New order"
 msgstr "طلب جديد"
 
@@ -4345,7 +4345,7 @@ msgstr "لا أحد جالس الآن."
 msgid "Nobody is waiting."
 msgstr "لا يوجد أحد بالانتظار."
 
-#: src/screens/Checkout.tsx:495
+#: src/screens/Checkout.tsx:502
 #: src/screens/CustomItemSheet.tsx:227
 #: src/screens/ManualDiscount.tsx:304
 msgid "None"
@@ -4728,7 +4728,7 @@ msgstr "الطلب {0} بانتظار قرارك · اقبله أو ارفضه"
 msgid "Order {number}"
 msgstr "الطلب {number}"
 
-#: src/screens/Checkout.tsx:306
+#: src/screens/Checkout.tsx:308
 msgid "Order #{doneNumber}"
 msgstr "الطلب رقم {doneNumber}"
 
@@ -4755,7 +4755,7 @@ msgstr "رقم الطلب أو اسم الضيف"
 msgid "Order number or name"
 msgstr "رقم الطلب أو الاسم"
 
-#: src/screens/Checkout.tsx:400
+#: src/screens/Checkout.tsx:402
 msgid "Order summary"
 msgstr "ملخص الطلب"
 
@@ -4869,8 +4869,8 @@ msgstr "العبوات التي وصلت"
 #: src/apps/orders/Orders.tsx:642
 #: src/apps/orders/Orders.tsx:2322
 #: src/apps/orders/Orders.tsx:2400
-#: src/screens/Checkout.tsx:294
-#: src/screens/Checkout.tsx:465
+#: src/screens/Checkout.tsx:296
+#: src/screens/Checkout.tsx:472
 #: src/screens/OrdersSheet.tsx:717
 #: src/screens/Receipt.tsx:209
 msgid "Paid"
@@ -5039,7 +5039,7 @@ msgstr "متوقف مؤقتًا حتى {0}"
 msgid "Paused until resumed"
 msgstr "متوقف مؤقتًا حتى الاستئناف"
 
-#: src/screens/Checkout.tsx:380
+#: src/screens/Checkout.tsx:382
 msgid "Pay · #{currentNumber}"
 msgstr "دفع · رقم {currentNumber}"
 
@@ -5064,12 +5064,12 @@ msgstr "الدفع لاحقًا"
 msgid "Pay now"
 msgstr "الدفع الآن"
 
-#: src/screens/Checkout.tsx:626
+#: src/screens/Checkout.tsx:635
 msgid "Paying now"
 msgstr "المدفوع الآن"
 
 #: src/apps/orders/Orders.tsx:1442
-#: src/screens/Checkout.tsx:503
+#: src/screens/Checkout.tsx:510
 msgid "Payment"
 msgstr "الدفع"
 
@@ -5077,7 +5077,7 @@ msgstr "الدفع"
 msgid "Payment is more than the balance due"
 msgstr "الدفعة أكبر من الرصيد المستحق"
 
-#: src/screens/Checkout.tsx:562
+#: src/screens/Checkout.tsx:569
 #: src/screens/GiftCardSheet.tsx:219
 msgid "Payment method"
 msgstr "طريقة الدفع"
@@ -5404,7 +5404,7 @@ msgstr "السبب"
 msgid "Recall ticket"
 msgstr "استرجاع التذكرة"
 
-#: src/screens/Checkout.tsx:333
+#: src/screens/Checkout.tsx:335
 msgid "Receipt"
 msgstr "الإيصال"
 
@@ -5453,7 +5453,7 @@ msgstr "سجّل الدفع المستلم عند التسليم أولًا."
 msgid "Recorded at {at}."
 msgstr "سُجّلت الساعة {at}."
 
-#: src/screens/Checkout.tsx:690
+#: src/screens/Checkout.tsx:699
 msgid "Reference (optional)"
 msgstr "المرجع (اختياري)"
 
@@ -5765,7 +5765,7 @@ msgstr "حُفظت على هذا الجهاز وستُرسل في أقرب وق�
 #~ msgstr "حُفظت على هذا الجهاز. تُرسل عند عودة الاتصال."
 
 #: src/screens/AuditSheet.tsx:123
-#: src/screens/Checkout.tsx:359
+#: src/screens/Checkout.tsx:361
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
 
@@ -6373,7 +6373,7 @@ msgstr "المصدر"
 msgid "soy"
 msgstr "الصويا"
 
-#: src/screens/Checkout.tsx:535
+#: src/screens/Checkout.tsx:542
 msgid "Split {n}"
 msgstr "تقسيم على {n}"
 
@@ -6493,7 +6493,7 @@ msgid "Stock took {0} off because {1} ran out. Bringing it back overrides that: 
 msgstr "أزال المخزون {0} لأن {1} نفد. إعادته تتجاوز ذلك: يُبقيه المخزون متوفرًا حتى يُحسب المكوّن في المخزون مرة أخرى."
 
 #: src/apps/orders/Orders.tsx:1445
-#: src/screens/Checkout.tsx:445
+#: src/screens/Checkout.tsx:447
 #: src/screens/OrdersSheet.tsx:674
 #: src/screens/Receipt.tsx:174
 msgid "Subtotal"
@@ -6713,7 +6713,7 @@ msgstr "الأجهزة اللوحية متوقفة الآن. ما حفظته ي�
 msgid "Tabs left open"
 msgstr "حسابات بقيت مفتوحة"
 
-#: src/screens/Checkout.tsx:367
+#: src/screens/Checkout.tsx:369
 msgid "Take {appliedText} · {leftAfter} left"
 msgstr "تحصيل {appliedText} · يتبقى {leftAfter}"
 
@@ -6746,11 +6746,11 @@ msgstr "استلم دفع الطلبات الهاتفية من نقطة البي
 msgid "Take table {0} out"
 msgstr "أخرج الطاولة {0}"
 
-#: src/screens/Checkout.tsx:675
+#: src/screens/Checkout.tsx:684
 msgid "Take the card on your card terminal first, then confirm here. This till does not process cards yet."
 msgstr "حصّل البطاقة على جهاز البطاقات أولًا، ثم أكّد هنا. نقطة البيع هذه لا تعالج البطاقات بعد."
 
-#: src/screens/Checkout.tsx:598
+#: src/screens/Checkout.tsx:605
 msgid "Take the whole bill in cash, in one payment, to save {rate}."
 msgstr "ادفع الفاتورة كاملة نقدًا في دفعة واحدة لتوفير {rate}."
 
@@ -6843,7 +6843,7 @@ msgstr "اضغط لإعادتهم إلى القائمة"
 
 #: src/apps/orders/Orders.tsx:1496
 #: src/screens/Cart.tsx:233
-#: src/screens/Checkout.tsx:453
+#: src/screens/Checkout.tsx:460
 #: src/screens/CustomItemSheet.tsx:219
 #: src/screens/CustomItemSheet.tsx:222
 #: src/screens/OrdersSheet.tsx:692
@@ -8021,8 +8021,8 @@ msgid "Timing"
 msgstr "التوقيت"
 
 #: src/apps/orders/Orders.tsx:1504
-#: src/screens/Checkout.tsx:457
-#: src/screens/Checkout.tsx:483
+#: src/screens/Checkout.tsx:464
+#: src/screens/Checkout.tsx:490
 #: src/screens/OrdersSheet.tsx:700
 #: src/screens/Receipt.tsx:195
 msgid "Tip"
@@ -8160,13 +8160,13 @@ msgstr "تم الشحن. الرصيد الجديد {0}."
 
 #: src/apps/orders/Orders.tsx:1510
 #: src/apps/orders/Orders.tsx:2394
-#: src/screens/Checkout.tsx:460
+#: src/screens/Checkout.tsx:467
 #: src/screens/OrdersSheet.tsx:707
 #: src/screens/Receipt.tsx:202
 msgid "Total"
 msgstr "الإجمالي"
 
-#: src/screens/Checkout.tsx:473
+#: src/screens/Checkout.tsx:480
 msgid "Total due"
 msgstr "الإجمالي المستحق"
 

@@ -722,7 +722,7 @@ msgstr "{secondsLeft, plural, one {Too many wrong PINs. Try again in # second.} 
 msgid "{short, plural, one {{labels}: seats {seats}, needs # more seat} other {{labels}: seats {seats}, needs # more seats}}"
 msgstr "{short, plural, one {{labels}: seats {seats}, needs # more seat} other {{labels}: seats {seats}, needs # more seats}}"
 
-#: src/screens/Checkout.tsx:365
+#: src/screens/Checkout.tsx:367
 msgid "{shortBy} short"
 msgstr "{shortBy} short"
 
@@ -1337,7 +1337,7 @@ msgid "Already booked? Seat their booking."
 msgstr "Already booked? Seat their booking."
 
 #: src/apps/orders/Orders.tsx:2194
-#: src/screens/Checkout.tsx:548
+#: src/screens/Checkout.tsx:555
 #: src/screens/GiftCardSheet.tsx:210
 #: src/screens/ManualDiscount.tsx:322
 #: src/screens/ShiftSheet.tsx:218
@@ -1401,7 +1401,7 @@ msgstr "App URL"
 msgid "Apply discount"
 msgstr "Apply discount"
 
-#: src/screens/Checkout.tsx:688
+#: src/screens/Checkout.tsx:697
 msgid "Approval code from the card terminal (optional)"
 msgstr "Approval code from the card terminal (optional)"
 
@@ -1560,7 +1560,7 @@ msgstr "Bagel"
 msgid "Bakery"
 msgstr "Bakery"
 
-#: src/screens/Checkout.tsx:473
+#: src/screens/Checkout.tsx:480
 msgid "Balance"
 msgstr "Balance"
 
@@ -1581,7 +1581,7 @@ msgstr "Being reviewed"
 msgid "Best fit"
 msgstr "Best fit"
 
-#: src/screens/Checkout.tsx:396
+#: src/screens/Checkout.tsx:398
 msgid "Bill"
 msgstr "Bill"
 
@@ -1914,7 +1914,7 @@ msgstr "Cash in the drawer"
 msgid "Cash out"
 msgstr "Cash out"
 
-#: src/screens/Checkout.tsx:633
+#: src/screens/Checkout.tsx:642
 msgid "Cash received"
 msgstr "Cash received"
 
@@ -1938,11 +1938,11 @@ msgstr "Celebration"
 msgid "Change"
 msgstr "Change"
 
-#: src/screens/Checkout.tsx:713
+#: src/screens/Checkout.tsx:722
 msgid "Change {changeText}"
 msgstr "Change {changeText}"
 
-#: src/screens/Checkout.tsx:324
+#: src/screens/Checkout.tsx:326
 msgid "Change due"
 msgstr "Change due"
 
@@ -1975,7 +1975,7 @@ msgid "Changes reach the website and QR menus within seconds and are recorded in
 msgstr "Changes reach the website and QR menus within seconds and are recorded in the activity log."
 
 #: src/screens/Cart.tsx:489
-#: src/screens/Checkout.tsx:380
+#: src/screens/Checkout.tsx:382
 msgid "Charge"
 msgstr "Charge"
 
@@ -2166,7 +2166,7 @@ msgstr "Clocked out"
 msgid "Close"
 msgstr "Close"
 
-#: src/screens/Checkout.tsx:361
+#: src/screens/Checkout.tsx:363
 msgid "Close order · nothing to pay"
 msgstr "Close order · nothing to pay"
 
@@ -2197,7 +2197,7 @@ msgstr "Closed remotely by {0}"
 msgid "Closed today. Walk-ins can still be seated."
 msgstr "Closed today. Walk-ins can still be seated."
 
-#: src/screens/Checkout.tsx:734
+#: src/screens/Checkout.tsx:743
 msgid "Closing now leaves {remainingText} open on the tab"
 msgstr "Closing now leaves {remainingText} open on the tab"
 
@@ -2252,11 +2252,11 @@ msgstr "Completed kitchen tickets stay available for recall for four hours."
 msgid "Confirm"
 msgstr "Confirm"
 
-#: src/screens/Checkout.tsx:368
+#: src/screens/Checkout.tsx:370
 msgid "Confirm {appliedText}"
 msgstr "Confirm {appliedText}"
 
-#: src/screens/Checkout.tsx:680
+#: src/screens/Checkout.tsx:689
 msgid "Confirm once this amount has been collected another way."
 msgstr "Confirm once this amount has been collected another way."
 
@@ -2359,7 +2359,7 @@ msgstr "Could not record the refund"
 msgid "Could not save the order"
 msgstr "Could not save the order"
 
-#: src/screens/Checkout.tsx:279
+#: src/screens/Checkout.tsx:281
 msgid "Could not save the payment"
 msgstr "Could not save the payment"
 
@@ -2766,7 +2766,7 @@ msgstr "e.g. Corkage fee or Special request"
 msgid "Each booking is a button. Each table row has a Book this table button. The list beside the grid holds the same bookings."
 msgstr "Each booking is a button. Each table row has a Book this table button. The list beside the grid holds the same bookings."
 
-#: src/screens/Checkout.tsx:553
+#: src/screens/Checkout.tsx:560
 msgid "Each share is {shareText}. The last share takes any remainder."
 msgstr "Each share is {shareText}. The last share takes any remainder."
 
@@ -2869,7 +2869,7 @@ msgstr "Enter a valid price."
 msgid "Enter a whole number, 0 or more."
 msgstr "Enter a whole number, 0 or more."
 
-#: src/screens/Checkout.tsx:363
+#: src/screens/Checkout.tsx:365
 msgid "Enter an amount"
 msgstr "Enter an amount"
 
@@ -2939,7 +2939,7 @@ msgstr "Everything has been sent."
 msgid "Everything left"
 msgstr "Everything left"
 
-#: src/screens/Checkout.tsx:651
+#: src/screens/Checkout.tsx:660
 msgid "Exact"
 msgstr "Exact"
 
@@ -3061,7 +3061,7 @@ msgstr "From {price}"
 msgid "Full"
 msgstr "Full"
 
-#: src/screens/Checkout.tsx:520
+#: src/screens/Checkout.tsx:527
 msgctxt "Pay the whole balance at once"
 msgid "Full"
 msgstr "Full"
@@ -3096,7 +3096,7 @@ msgstr "Gift card"
 msgid "Gift card action"
 msgstr "Gift card action"
 
-#: src/screens/Checkout.tsx:614
+#: src/screens/Checkout.tsx:623
 msgid "Gift card number or scan"
 msgstr "Gift card number or scan"
 
@@ -3117,12 +3117,12 @@ msgstr "Gift cards are not turned on."
 msgid "Gift cards are temporarily unavailable."
 msgstr "Gift cards are temporarily unavailable."
 
-#: src/screens/Checkout.tsx:610
+#: src/screens/Checkout.tsx:618
 #: src/screens/GiftCardSheet.tsx:23
 msgid "Gift cards need the internet. Take another payment, or try again when the till is back online."
 msgstr "Gift cards need the internet. Take another payment, or try again when the till is back online."
 
-#: src/screens/Checkout.tsx:721
+#: src/screens/Checkout.tsx:730
 msgid "Give {giveChangeText} change for that payment"
 msgstr "Give {giveChangeText} change for that payment"
 
@@ -3326,7 +3326,7 @@ msgstr "How much came"
 msgid "How much did you make?"
 msgstr "How much did you make?"
 
-#: src/screens/Checkout.tsx:506
+#: src/screens/Checkout.tsx:513
 msgid "How much now?"
 msgstr "How much now?"
 
@@ -3359,7 +3359,7 @@ msgid "In queue"
 msgstr "In queue"
 
 #: src/screens/Cart.tsx:230
-#: src/screens/Checkout.tsx:453
+#: src/screens/Checkout.tsx:460
 #: src/screens/OrdersSheet.tsx:690
 msgid "Includes tax"
 msgstr "Includes tax"
@@ -4039,7 +4039,7 @@ msgstr "New booking"
 #~ msgid "New online booking: {who}, {size} at {time}"
 #~ msgstr "New online booking: {who}, {size} at {time}"
 
-#: src/screens/Checkout.tsx:341
+#: src/screens/Checkout.tsx:343
 msgid "New order"
 msgstr "New order"
 
@@ -4345,7 +4345,7 @@ msgstr "Nobody is seated."
 msgid "Nobody is waiting."
 msgstr "Nobody is waiting."
 
-#: src/screens/Checkout.tsx:495
+#: src/screens/Checkout.tsx:502
 #: src/screens/CustomItemSheet.tsx:227
 #: src/screens/ManualDiscount.tsx:304
 msgid "None"
@@ -4728,7 +4728,7 @@ msgstr "Order {0} is waiting for you · accept or reject it"
 msgid "Order {number}"
 msgstr "Order {number}"
 
-#: src/screens/Checkout.tsx:306
+#: src/screens/Checkout.tsx:308
 msgid "Order #{doneNumber}"
 msgstr "Order #{doneNumber}"
 
@@ -4755,7 +4755,7 @@ msgstr "Order number or guest name"
 msgid "Order number or name"
 msgstr "Order number or name"
 
-#: src/screens/Checkout.tsx:400
+#: src/screens/Checkout.tsx:402
 msgid "Order summary"
 msgstr "Order summary"
 
@@ -4869,8 +4869,8 @@ msgstr "Packs that came"
 #: src/apps/orders/Orders.tsx:642
 #: src/apps/orders/Orders.tsx:2322
 #: src/apps/orders/Orders.tsx:2400
-#: src/screens/Checkout.tsx:294
-#: src/screens/Checkout.tsx:465
+#: src/screens/Checkout.tsx:296
+#: src/screens/Checkout.tsx:472
 #: src/screens/OrdersSheet.tsx:717
 #: src/screens/Receipt.tsx:209
 msgid "Paid"
@@ -5039,7 +5039,7 @@ msgstr "Paused until {0}"
 msgid "Paused until resumed"
 msgstr "Paused until resumed"
 
-#: src/screens/Checkout.tsx:380
+#: src/screens/Checkout.tsx:382
 msgid "Pay · #{currentNumber}"
 msgstr "Pay · #{currentNumber}"
 
@@ -5064,12 +5064,12 @@ msgstr "Pay later"
 msgid "Pay now"
 msgstr "Pay now"
 
-#: src/screens/Checkout.tsx:626
+#: src/screens/Checkout.tsx:635
 msgid "Paying now"
 msgstr "Paying now"
 
 #: src/apps/orders/Orders.tsx:1442
-#: src/screens/Checkout.tsx:503
+#: src/screens/Checkout.tsx:510
 msgid "Payment"
 msgstr "Payment"
 
@@ -5077,7 +5077,7 @@ msgstr "Payment"
 msgid "Payment is more than the balance due"
 msgstr "Payment is more than the balance due"
 
-#: src/screens/Checkout.tsx:562
+#: src/screens/Checkout.tsx:569
 #: src/screens/GiftCardSheet.tsx:219
 msgid "Payment method"
 msgstr "Payment method"
@@ -5404,7 +5404,7 @@ msgstr "Reason"
 msgid "Recall ticket"
 msgstr "Recall ticket"
 
-#: src/screens/Checkout.tsx:333
+#: src/screens/Checkout.tsx:335
 msgid "Receipt"
 msgstr "Receipt"
 
@@ -5453,7 +5453,7 @@ msgstr "Record the payment taken at handoff first."
 msgid "Recorded at {at}."
 msgstr "Recorded at {at}."
 
-#: src/screens/Checkout.tsx:690
+#: src/screens/Checkout.tsx:699
 msgid "Reference (optional)"
 msgstr "Reference (optional)"
 
@@ -5765,7 +5765,7 @@ msgstr "Saved on this terminal. It is sent as soon as it can be."
 #~ msgstr "Saved on this terminal. It is sent when the connection is back."
 
 #: src/screens/AuditSheet.tsx:123
-#: src/screens/Checkout.tsx:359
+#: src/screens/Checkout.tsx:361
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -6373,7 +6373,7 @@ msgstr "Source"
 msgid "soy"
 msgstr "soy"
 
-#: src/screens/Checkout.tsx:535
+#: src/screens/Checkout.tsx:542
 msgid "Split {n}"
 msgstr "Split {n}"
 
@@ -6493,7 +6493,7 @@ msgid "Stock took {0} off because {1} ran out. Bringing it back overrides that: 
 msgstr "Stock took {0} off because {1} ran out. Bringing it back overrides that: stock leaves it on until the ingredient has been counted in stock again."
 
 #: src/apps/orders/Orders.tsx:1445
-#: src/screens/Checkout.tsx:445
+#: src/screens/Checkout.tsx:447
 #: src/screens/OrdersSheet.tsx:674
 #: src/screens/Receipt.tsx:174
 msgid "Subtotal"
@@ -6713,7 +6713,7 @@ msgstr "Tablets are paused for now. What you saved stays here and goes when they
 msgid "Tabs left open"
 msgstr "Tabs left open"
 
-#: src/screens/Checkout.tsx:367
+#: src/screens/Checkout.tsx:369
 msgid "Take {appliedText} · {leftAfter} left"
 msgstr "Take {appliedText} · {leftAfter} left"
 
@@ -6746,11 +6746,11 @@ msgstr "Take payment for phone orders in Register, Orders."
 msgid "Take table {0} out"
 msgstr "Take table {0} out"
 
-#: src/screens/Checkout.tsx:675
+#: src/screens/Checkout.tsx:684
 msgid "Take the card on your card terminal first, then confirm here. This till does not process cards yet."
 msgstr "Take the card on your card terminal first, then confirm here. This till does not process cards yet."
 
-#: src/screens/Checkout.tsx:598
+#: src/screens/Checkout.tsx:605
 msgid "Take the whole bill in cash, in one payment, to save {rate}."
 msgstr "Take the whole bill in cash, in one payment, to save {rate}."
 
@@ -6843,7 +6843,7 @@ msgstr "tap to put back in line"
 
 #: src/apps/orders/Orders.tsx:1496
 #: src/screens/Cart.tsx:233
-#: src/screens/Checkout.tsx:453
+#: src/screens/Checkout.tsx:460
 #: src/screens/CustomItemSheet.tsx:219
 #: src/screens/CustomItemSheet.tsx:222
 #: src/screens/OrdersSheet.tsx:692
@@ -8021,8 +8021,8 @@ msgid "Timing"
 msgstr "Timing"
 
 #: src/apps/orders/Orders.tsx:1504
-#: src/screens/Checkout.tsx:457
-#: src/screens/Checkout.tsx:483
+#: src/screens/Checkout.tsx:464
+#: src/screens/Checkout.tsx:490
 #: src/screens/OrdersSheet.tsx:700
 #: src/screens/Receipt.tsx:195
 msgid "Tip"
@@ -8160,13 +8160,13 @@ msgstr "Topped up. New balance {0}."
 
 #: src/apps/orders/Orders.tsx:1510
 #: src/apps/orders/Orders.tsx:2394
-#: src/screens/Checkout.tsx:460
+#: src/screens/Checkout.tsx:467
 #: src/screens/OrdersSheet.tsx:707
 #: src/screens/Receipt.tsx:202
 msgid "Total"
 msgstr "Total"
 
-#: src/screens/Checkout.tsx:473
+#: src/screens/Checkout.tsx:480
 msgid "Total due"
 msgstr "Total due"
 

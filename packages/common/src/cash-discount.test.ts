@@ -112,13 +112,15 @@ describe('the amount', () => {
 	})
 
 	it('has a ceiling the highest rate cannot pass, with a cent of rounding for each line', () => {
-		expect(cashDiscountCeilingCents({ subtotalCents: 10_000, lineCount: 0 })).toBe(
-			1000,
+		expect(
+			cashDiscountCeilingCents({ subtotalCents: 10_000, lineCount: 0 }),
+		).toBe(1000)
+		expect(
+			cashDiscountCeilingCents({ subtotalCents: 10_000, lineCount: 3 }),
+		).toBe(1003)
+		expect(cashDiscountCeilingCents({ subtotalCents: -5, lineCount: -1 })).toBe(
+			0,
 		)
-		expect(cashDiscountCeilingCents({ subtotalCents: 10_000, lineCount: 3 })).toBe(
-			1003,
-		)
-		expect(cashDiscountCeilingCents({ subtotalCents: -5, lineCount: -1 })).toBe(0)
 	})
 })
 

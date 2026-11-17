@@ -25,7 +25,7 @@ msgstr "تحتاج إلى {amount} إضافية"
 msgid "{amount} more to unlock {reward}"
 msgstr "{amount} إضافية للحصول على {reward}"
 
-#: components/ordering/menu-screen.tsx:348
+#: components/ordering/menu-screen.tsx:351
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "خصم {amount}"
@@ -54,11 +54,11 @@ msgstr "{n, plural, zero {{count} نقطة} one {نقطة واحدة} two {نق�
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, zero {{count} نجمة} one {نجمة واحدة} two {نجمتان} few {{count} نجوم} many {{count} نجمة} other {{count} نجمة}}"
 
-#: components/ordering/menu-screen.tsx:331
+#: components/ordering/menu-screen.tsx:334
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (بحد أقصى {count} لكل طلب)"
 
-#: components/ordering/menu-screen.tsx:327
+#: components/ordering/menu-screen.tsx:330
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (خصم يصل إلى {amount})"
 
@@ -66,7 +66,7 @@ msgstr "{name} (خصم يصل إلى {amount})"
 msgid "{percent} off"
 msgstr "خصم {percent}"
 
-#: components/ordering/menu-screen.tsx:340
+#: components/ordering/menu-screen.tsx:343
 msgid "{percentText} off"
 msgstr "خصم {percentText}"
 
@@ -94,7 +94,7 @@ msgstr "{points} لكل زيارة (مرة واحدة يوميًا)"
 msgid "{points} for every {amount} you spend"
 msgstr "{points} مقابل كل {amount} تنفقها"
 
-#: components/ordering/menu-screen.tsx:261
+#: components/ordering/menu-screen.tsx:264
 msgid "{price}, was {originalPrice}"
 msgstr "{price}، كان {originalPrice}"
 
@@ -473,7 +473,7 @@ msgstr "لهذا العدد من الأشخاص، يرجى الاتصال على
 msgid "Free {item}"
 msgstr "{item} مجانًا"
 
-#: components/ordering/menu-screen.tsx:358
+#: components/ordering/menu-screen.tsx:361
 msgid "Free delivery"
 msgstr "توصيل مجاني"
 
@@ -772,7 +772,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "يفتح في متصفحك. تُطبَّق نقاطك ومكافآتك عند الطلب هناك."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:299
+#: components/ordering/menu-screen.tsx:302
 msgid "Opens the website"
 msgstr "يفتح الموقع"
 
@@ -986,7 +986,7 @@ msgstr "أرسل طلبًا"
 msgid "Send code"
 msgstr "إرسال الرمز"
 
-#: components/ordering/menu-screen.tsx:356
+#: components/ordering/menu-screen.tsx:359
 msgid "Set price {amount}"
 msgstr "سعر ثابت {amount}"
 
@@ -1043,7 +1043,7 @@ msgstr "تسجيل الخروج"
 msgid "Site address"
 msgstr "عنوان الموقع"
 
-#: components/ordering/menu-screen.tsx:274
+#: components/ordering/menu-screen.tsx:277
 msgid "Sold out"
 msgstr "نفد المخزون"
 
@@ -1283,7 +1283,7 @@ msgstr "استخدم مكافأة عند الطلب، أو أظهر رمزك ع�
 msgid "Use at the till"
 msgstr "الاستخدام عند الصندوق"
 
-#: components/ordering/menu-screen.tsx:213
+#: components/ordering/menu-screen.tsx:216
 msgid "Use code {code}"
 msgstr "استخدم الرمز {code}"
 

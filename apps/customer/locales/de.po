@@ -25,7 +25,7 @@ msgstr "Noch {amount} nötig"
 msgid "{amount} more to unlock {reward}"
 msgstr "Noch {amount} bis {reward}"
 
-#: components/ordering/menu-screen.tsx:348
+#: components/ordering/menu-screen.tsx:351
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "{amount} Rabatt"
@@ -54,11 +54,11 @@ msgstr "{n, plural, one {{count} Punkt} other {{count} Punkte}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, one {{count} Stern} other {{count} Sterne}}"
 
-#: components/ordering/menu-screen.tsx:331
+#: components/ordering/menu-screen.tsx:334
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (max. {count} pro Bestellung)"
 
-#: components/ordering/menu-screen.tsx:327
+#: components/ordering/menu-screen.tsx:330
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (bis zu {amount} Rabatt)"
 
@@ -66,7 +66,7 @@ msgstr "{name} (bis zu {amount} Rabatt)"
 msgid "{percent} off"
 msgstr "{percent} Rabatt"
 
-#: components/ordering/menu-screen.tsx:340
+#: components/ordering/menu-screen.tsx:343
 msgid "{percentText} off"
 msgstr "{percentText} Rabatt"
 
@@ -94,7 +94,7 @@ msgstr "{points} pro Besuch (einmal am Tag)"
 msgid "{points} for every {amount} you spend"
 msgstr "{points} für je {amount}, die Sie ausgeben"
 
-#: components/ordering/menu-screen.tsx:261
+#: components/ordering/menu-screen.tsx:264
 msgid "{price}, was {originalPrice}"
 msgstr "{price}, vorher {originalPrice}"
 
@@ -473,7 +473,7 @@ msgstr "Für eine Gruppe dieser Größe rufen Sie bitte {phone} an."
 msgid "Free {item}"
 msgstr "{item} gratis"
 
-#: components/ordering/menu-screen.tsx:358
+#: components/ordering/menu-screen.tsx:361
 msgid "Free delivery"
 msgstr "Kostenlose Lieferung"
 
@@ -772,7 +772,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "Öffnet sich in Ihrem Browser. Ihre Punkte und Prämien gelten, wenn Sie dort bestellen."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:299
+#: components/ordering/menu-screen.tsx:302
 msgid "Opens the website"
 msgstr "Öffnet die Website"
 
@@ -986,7 +986,7 @@ msgstr "Anfrage senden"
 msgid "Send code"
 msgstr "Code senden"
 
-#: components/ordering/menu-screen.tsx:356
+#: components/ordering/menu-screen.tsx:359
 msgid "Set price {amount}"
 msgstr "Festpreis {amount}"
 
@@ -1043,7 +1043,7 @@ msgstr "Abmelden"
 msgid "Site address"
 msgstr "Website-Adresse"
 
-#: components/ordering/menu-screen.tsx:274
+#: components/ordering/menu-screen.tsx:277
 msgid "Sold out"
 msgstr "Ausverkauft"
 
@@ -1283,7 +1283,7 @@ msgstr "Lösen Sie eine Prämie bei der Bestellung ein oder zeigen Sie Ihren Cod
 msgid "Use at the till"
 msgstr "An der Kasse verwenden"
 
-#: components/ordering/menu-screen.tsx:213
+#: components/ordering/menu-screen.tsx:216
 msgid "Use code {code}"
 msgstr "Code {code} verwenden"
 

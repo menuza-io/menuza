@@ -85,7 +85,13 @@ export async function readDiscountPerformance(
 	>(
 		ids.map((discountId) => [
 			discountId,
-			{ discountId, orders: 0, salesMinor: 0, discountMinor: 0, seen: new Set() },
+			{
+				discountId,
+				orders: 0,
+				salesMinor: 0,
+				discountMinor: 0,
+				seen: new Set(),
+			},
 		]),
 	)
 	if (ids.length > 0) {
@@ -194,10 +200,7 @@ export async function readDiscountPerformance(
 				)
 			} else if (row.sourceType === 'tab' && row.tabRow) {
 				const gross = (row.tSubtotal ?? 0) + (row.tServiceFee ?? 0)
-				const net = Math.max(
-					0,
-					gross - row.amountMinor - (row.tLoyalty ?? 0),
-				)
+				const net = Math.max(0, gross - row.amountMinor - (row.tLoyalty ?? 0))
 				sale = basis === 'gross' ? gross : net
 			}
 			entry.orders += 1

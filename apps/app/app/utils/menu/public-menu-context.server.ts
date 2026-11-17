@@ -9,6 +9,7 @@
  * Contains no customer PII: only public org, location, menu, and pricing data.
  */
 
+import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
 import { readCourseSettings } from '@repo/common/kitchen-ticket'
 import {
 	DEFAULT_DELIVERY_CONFIG,
@@ -31,7 +32,6 @@ import {
 	parseMenuItemImageKeys,
 	parseMenuVariations,
 } from '@repo/common/menu-types'
-import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
 import {
 	parseOrderNumberFormat,
 	parsePosLocationStationSettings,

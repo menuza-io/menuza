@@ -17,8 +17,8 @@ import {
 import { and, db, eq, OrganizationLocation } from '@repo/database'
 import { data, type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
-import { requireMenuWrite } from '#app/utils/menu/access.server.ts'
 import { parsePercentToBp } from '#app/utils/loyalty/loyalty-view.ts'
+import { requireMenuWrite } from '#app/utils/menu/access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 

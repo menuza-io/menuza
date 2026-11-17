@@ -193,7 +193,10 @@ describe('discount rules 273 395 392 415 390', () => {
 	let context: Record<string, unknown>
 	let notices: Array<Record<string, unknown>>
 
-	const request = (pathname: string, init: RequestInit & { json?: unknown } = {}) =>
+	const request = (
+		pathname: string,
+		init: RequestInit & { json?: unknown } = {},
+	) =>
 		app.request(pathname, {
 			...init,
 			headers: {
@@ -238,7 +241,9 @@ describe('discount rules 273 395 392 415 390', () => {
 					return Response.json(context)
 				}
 				if (url.endsWith('/resources/discounts/notify')) {
-					notices.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
+					notices.push(
+						JSON.parse(String(init?.body)) as Record<string, unknown>,
+					)
 					return Response.json({ inApp: 1 })
 				}
 				return new Response('not found', { status: 404 })
@@ -301,11 +306,8 @@ describe('discount rules 273 395 392 415 390', () => {
 			context = menuContext([capped()])
 			// 20.00 order: 20% is 4.00, under the cap. 200.00 order: capped.
 			expect(
-				(
-					await place(
-						orderBody({ discounts: { expectedDiscountMinor: 400 } }),
-					)
-				).status,
+				(await place(orderBody({ discounts: { expectedDiscountMinor: 400 } })))
+					.status,
 			).toBe(201)
 			const big = [{ itemId: 'item-burger', quantity: 20, options: [] }]
 			expect(
@@ -318,10 +320,9 @@ describe('discount rules 273 395 392 415 390', () => {
 					)
 				).status,
 			).toBe(201)
-			const response = await request(
-				'/operator/discounts/usage?ids=disc_cap',
-				{ headers: { authorization: `Bearer ${await discountsToken()}` } },
-			)
+			const response = await request('/operator/discounts/usage?ids=disc_cap', {
+				headers: { authorization: `Bearer ${await discountsToken()}` },
+			})
 			expect(response.status).toBe(200)
 			const { usage } = await response.json()
 			expect(usage[0]).toMatchObject({
@@ -483,7 +484,7 @@ describe('discount rules 273 395 392 415 390', () => {
 			// The first moment of next week (Monday) in the location's zone.
 			const nextWeek = new Date()
 			nextWeek.setUTCDate(
-				nextWeek.getUTCDate() + (((8 - nextWeek.getUTCDay()) % 7) || 7),
+				nextWeek.getUTCDate() + ((8 - nextWeek.getUTCDay()) % 7 || 7),
 			)
 			nextWeek.setUTCHours(12, 0, 0, 0)
 			const later = await quote(
@@ -511,10 +512,12 @@ describe('discount rules 273 395 392 415 390', () => {
 			context = menuContext([budgeted()])
 			await orderWith(200)
 			const week = (
-				(await (await request('/orders/quote', {
-					method: 'POST',
-					json: { ...orderBody(), discounts: {} },
-				})).json()) as { totalDiscountMinor: number }
+				(await (
+					await request('/orders/quote', {
+						method: 'POST',
+						json: { ...orderBody(), discounts: {} },
+					})
+				).json()) as { totalDiscountMinor: number }
 			).totalDiscountMinor
 			expect(week).toBe(200)
 			const db = await getTenantDb(orgId)
@@ -577,16 +580,25 @@ describe('discount rules 273 395 392 415 390', () => {
 					audienceId: audience.value.id,
 				}),
 			])
-			return { db, audience: audience.value, member: member!, outsider: outsider! }
+			return {
+				db,
+				audience: audience.value,
+				member: member!,
+				outsider: outsider!,
+			}
 		}
 
 		async function priceFor(
 			db: Awaited<ReturnType<typeof getTenantDb>>,
 			customerId: string | null,
 		) {
-			const priced = priceRestaurantOrder(context as never, orderBody() as never, {
-				now: new Date(),
-			})
+			const priced = priceRestaurantOrder(
+				context as never,
+				orderBody() as never,
+				{
+					now: new Date(),
+				},
+			)
 			if (!priced.ok) throw new Error('price')
 			const prepared = await prepareOrderDiscounts(db, {
 				priced: priced.result,
@@ -648,7 +660,9 @@ describe('discount rules 273 395 392 415 390', () => {
 			token?: string,
 		): Promise<Response> =>
 			request(`/operator/discounts/performance?${query}`, {
-				headers: { authorization: `Bearer ${token ?? (await discountsToken())}` },
+				headers: {
+					authorization: `Bearer ${token ?? (await discountsToken())}`,
+				},
 			})
 		const today = () => new Date().toISOString().slice(0, 10)
 		const params = (ids: string, extra = '') =>
@@ -766,11 +780,8 @@ describe('discount rules 273 395 392 415 390', () => {
 				(await performance('ids=a&from=2024-01-01&to=2026-01-01')).status,
 			).toBe(400)
 			expect(
-				(
-					await performance(
-						'ids=a&from=2026-01-01&to=2026-01-02&tz=Not/AZone',
-					)
-				).status,
+				(await performance('ids=a&from=2026-01-01&to=2026-01-02&tz=Not/AZone'))
+					.status,
 			).toBe(400)
 			const unsigned = await request(
 				`/operator/discounts/performance?${params('a')}`,

@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto'
+import { posOrderRequestSchema } from '@repo/common/pos-orders'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
 	cashDiscountAdjustment,
@@ -10,7 +11,6 @@ import { db } from './db.ts'
 import { addPayment, createOrder, type OrderDraft } from './orders.ts'
 import { toWireOrder } from './outbox.ts'
 import { computeTotals, type Adjustment, type CartLine } from './pricing.ts'
-import { posOrderRequestSchema } from '@repo/common/pos-orders'
 
 const line = (over: Partial<CartLine> = {}): CartLine => ({
 	id: 'l1',
@@ -87,7 +87,11 @@ describe('the adjustment', () => {
 
 	it('is nothing when there is no rate, or no amount', () => {
 		expect(
-			cashDiscountAdjustment({ lines: draft.lines, others: [], percentBp: null }),
+			cashDiscountAdjustment({
+				lines: draft.lines,
+				others: [],
+				percentBp: null,
+			}),
 		).toBeNull()
 		expect(
 			cashDiscountAdjustment({ lines: [], others: [], percentBp: 300 }),

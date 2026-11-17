@@ -103,7 +103,6 @@ const click = (label: string) => {
 		(node) => node.textContent?.trim() === label,
 	)
 	if (!button) throw new Error(`No button "${label}"`)
-	// eslint-disable-next-line testing-library/no-unnecessary-act
 	act(() => button.click())
 }
 
