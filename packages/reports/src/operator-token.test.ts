@@ -34,6 +34,8 @@ describe('operator analytics token', () => {
 			scope: 'analytics',
 			subjects: [],
 			scopeIds: null,
+			// No claim was minted, so the sales subjects get no location.
+			locationIds: [],
 		})
 	})
 

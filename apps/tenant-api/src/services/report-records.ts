@@ -29,6 +29,7 @@ import {
 	restaurantOrders,
 	type TenantDatabase,
 } from '@repo/tenant-db'
+import { isValidTimeZone } from '@repo/reservations'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { isPayableOrder, payableOrderCondition } from './order-payable.ts'
 
@@ -194,6 +195,8 @@ const orderColumns = {
 	loyaltyDiscountCents: restaurantOrders.loyaltyDiscountCents,
 	tabId: restaurantOrders.tabId,
 	holdExpiresAt: restaurantOrders.holdExpiresAt,
+	locationTimezone: restaurantOrders.locationTimezone,
+	pickupTimezone: restaurantOrders.pickupTimezone,
 	createdAt: restaurantOrders.createdAt,
 	completedAt: restaurantOrders.completedAt,
 }
@@ -214,20 +217,30 @@ async function loadOrderRows(
 	now: Date,
 	options: { onlyCounted: boolean; withLines: boolean; maxRows: number },
 ): Promise<{ rows: OrderReportRow[]; truncated: boolean }> {
+	// Counted by fulfilment time (#310), "Ordered at" reads the fulfilment time,
+	// so the window has to be cut on it too: an order placed on Friday for
+	// Sunday is in Sunday's report.
 	const timeColumn =
 		definition.timeframe.field === 'completedAt'
-			? restaurantOrders.completedAt
-			: restaurantOrders.createdAt
+			? sql`${restaurantOrders.completedAt}`
+			: definition.timeBasis === 'fulfillment'
+				? ORDER_FULFILLED_AT
+				: sql`${restaurantOrders.createdAt}`
 	const range = resolveTimeframeRange(
 		definition.timeframe.preset,
 		now,
 		definition.timeframe,
 	)
+	// The columns hold epoch seconds.
 	const conditions: SQL[] = [
 		eq(restaurantOrders.orgId, orgId),
-		lte(timeColumn, range.end),
+		sql`${timeColumn} <= ${Math.floor(range.end.getTime() / 1000)}`,
 	]
-	if (range.start) conditions.push(gte(timeColumn, range.start))
+	if (range.start) {
+		conditions.push(
+			sql`${timeColumn} >= ${Math.floor(range.start.getTime() / 1000)}`,
+		)
+	}
 	if (options.onlyCounted) conditions.push(countedOrderCondition())
 	const where = and(...conditions)
 	const limit = options.maxRows + 1
@@ -252,10 +265,44 @@ async function loadOrderRows(
 	}
 }
 
+/**
+ * When an order was fulfilled (#310): the scheduled time of a scheduled
+ * order, else when it was completed, else when it was placed. Cancelled and
+ * expired orders follow the placed time on both bases.
+ */
+export function orderFulfilledAt(row: {
+	status: string
+	scheduledFor: Date | null
+	completedAt: Date | null
+	createdAt: Date | null
+}): Date | null {
+	if (row.status === 'cancelled' || row.status === 'expired') {
+		return row.createdAt
+	}
+	return row.scheduledFor ?? row.completedAt ?? row.createdAt
+}
+
+/** The same rule as {@link orderFulfilledAt}, in SQL (epoch seconds). */
+const ORDER_FULFILLED_AT = sql`case when ${restaurantOrders.status} in ('cancelled', 'expired') then ${restaurantOrders.createdAt} else coalesce(${restaurantOrders.scheduledFor}, ${restaurantOrders.completedAt}, ${restaurantOrders.createdAt}) end`
+
+/** The location's own zone, when the order carries one the runtime knows. */
+function orderTimeZone(row: {
+	locationTimezone: string | null
+	pickupTimezone: string | null
+}): string {
+	for (const zone of [row.locationTimezone, row.pickupTimezone]) {
+		if (zone && isValidTimeZone(zone)) return zone
+	}
+	return ''
+}
+
 /** Fields shared by order, item, and option records. */
 function orderContext(row: OrderReportRow) {
 	return {
 		createdAt: row.createdAt,
+		fulfilledAt: orderFulfilledAt(row),
+		// Days and hours are the location's own; without a zone, the report's.
+		locationTimeZone: orderTimeZone(row),
 		orderNumber: row.number,
 		location: localized(row.locationName),
 		fulfillment: row.fulfillment,
@@ -434,7 +481,7 @@ export function attributedChannel(
 }
 
 /** Consumed tab discounts keyed by tab id (minor units, items plus delivery). */
-async function loadTabDiscountCentsByTabId(
+export async function loadTabDiscountCentsByTabId(
 	db: TenantDatabase,
 	tabIds: readonly string[],
 ): Promise<Map<string, number>> {
@@ -472,7 +519,7 @@ async function loadTabDiscountCentsByTabId(
  * units, before tax). A tab's rounds carry none: the fee is priced when the
  * guest pays the tab, so it is stored on the tab.
  */
-async function loadTabServiceFeeCentsByTabId(
+export async function loadTabServiceFeeCentsByTabId(
 	db: TenantDatabase,
 	tabIds: readonly string[],
 ): Promise<Map<string, number>> {
@@ -494,12 +541,14 @@ async function loadTabServiceFeeCentsByTabId(
 	return fees
 }
 
+type TabRoundRow = Pick<OrderReportRow, 'id' | 'tabId' | 'createdAt'>
+
 /** One order row per tab gets the tab's close discount in order reports. */
-function tabDiscountCentsByOrderId(
-	rows: readonly OrderReportRow[],
+export function tabDiscountCentsByOrderId(
+	rows: readonly TabRoundRow[],
 	tabDiscounts: ReadonlyMap<string, number>,
 ): Map<string, number> {
-	const latestByTab = new Map<string, OrderReportRow>()
+	const latestByTab = new Map<string, TabRoundRow>()
 	for (const row of rows) {
 		if (!row.tabId) continue
 		const previous = latestByTab.get(row.tabId)
@@ -599,8 +648,7 @@ export async function loadOrderRecords(
 			tipPercent: row.tipPercent,
 			// Online orders carry their own fee; a tab's rides on its latest round.
 			serviceFee:
-				(row.serviceFeeCents + (tabServiceFeeByOrderId.get(row.id) ?? 0)) /
-				100,
+				(row.serviceFeeCents + (tabServiceFeeByOrderId.get(row.id) ?? 0)) / 100,
 			deliveryFee: row.deliveryFeeCents / 100,
 			// Items, delivery and loyalty on the order, plus a tab's close discount
 			// on its latest round (tab redemptions, not round rows).

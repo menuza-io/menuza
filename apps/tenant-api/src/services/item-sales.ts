@@ -1,3 +1,8 @@
+import {
+	POS_SALE_STATUSES,
+	posOrderNetMinor,
+	restaurantOrderNetMinor,
+} from '@repo/common/sales-report-facts'
 import { allocateProportionally } from '@repo/inventory'
 import { currentBusinessDate, isValidTimeZone } from '@repo/reservations'
 import {
@@ -206,54 +211,9 @@ export function allocateSaleNet(
 	)
 }
 
-/**
- * Net item sales of a web/QR order: subtotal less item discounts and the
- * loyalty reward, less tax when prices include it (read from the totals).
- */
-export function restaurantOrderNetMinor(order: {
-	subtotalCents: number
-	discountCents: number
-	loyaltyDiscountCents: number | null
-	taxCents: number
-	tipCents: number
-	deliveryFeeCents: number
-	deliveryDiscountCents: number
-	totalCents: number
-	/** The guest service fee and its tax (#123); items never include them. */
-	serviceFeeCents?: number
-	serviceFeeTaxCents?: number
-}): number {
-	const afterDiscounts =
-		order.subtotalCents -
-		order.discountCents -
-		(order.loyaltyDiscountCents ?? 0)
-	const delivery = order.deliveryFeeCents - order.deliveryDiscountCents
-	const inclusive =
-		order.taxCents > 0 &&
-		order.totalCents ===
-			afterDiscounts +
-				order.tipCents +
-				delivery +
-				(order.serviceFeeCents ?? 0)
-	// The tax on the service fee is not tax on the items.
-	const itemTax = order.taxCents - (order.serviceFeeTaxCents ?? 0)
-	return Math.max(0, afterDiscounts - (inclusive ? itemTax : 0))
-}
-
-/** Net item sales of a Station sale (adjustments hold discounts and rewards). */
-export function posOrderNetMinor(order: {
-	subtotalCents: number
-	adjustmentCents: number
-	taxCents: number
-	taxInclusive: boolean
-}): number {
-	return Math.max(
-		0,
-		order.subtotalCents -
-			order.adjustmentCents -
-			(order.taxInclusive ? order.taxCents : 0),
-	)
-}
+// The net-sales rules live with the other sale rules, shared with the sales
+// report (`@repo/common/sales-report-facts`).
+export { posOrderNetMinor, restaurantOrderNetMinor }
 
 function addDays(date: string, days: number): string {
 	const [y, m, d] = date.split('-').map(Number) as [number, number, number]
@@ -453,7 +413,7 @@ async function addPosOrders(
 	sales: SalesAccumulator,
 ): Promise<boolean> {
 	const conditions: SQL[] = [
-		inArray(posOrders.status, ['paid', 'refunded']),
+		inArray(posOrders.status, [...POS_SALE_STATUSES]),
 		gte(posOrders.businessDate, query.fromDate),
 		lte(posOrders.businessDate, query.toDate),
 	]

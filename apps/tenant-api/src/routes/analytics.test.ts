@@ -4,6 +4,7 @@ import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	createReportDefinition,
+	isSalesReportSubject,
 	organizationTemplates,
 	type ReportDefinition,
 	type TimeframePreset,
@@ -366,13 +367,17 @@ describe('POST /query order reports', () => {
 		definition: ReportDefinition,
 		subjects: readonly RestrictedReportSubject[] = [],
 	) {
+		const granted = [...ORG_WIDE_REPORT_SUBJECTS, ...subjects]
 		const { token } = await mintOperatorAnalyticsToken({
 			signingSecret: internalCommandToken,
 			userId: 'user_1',
 			orgId,
 			role: 'operator',
 			// An analytics-access token always lists the organization-wide subjects.
-			subjects: [...ORG_WIDE_REPORT_SUBJECTS, ...subjects],
+			subjects: granted,
+			...(granted.some((subject) => isSalesReportSubject(subject))
+				? { locationIds: null as const }
+				: {}),
 		})
 		const res = await analyticsRoutes.request('/query', {
 			method: 'POST',
@@ -400,6 +405,16 @@ describe('POST /query order reports', () => {
 			.returning({ id: customers.id })
 		return { db, adaId: ada!.id }
 	}
+
+	it.each([
+		'channel-sales-by-channel',
+		'refunds-by-reason',
+		'cancelled-by-reason',
+	])('refuses the %s sales report without menu access', async (id) => {
+		const { status, body } = await query(templateDefinition(id))
+		expect(status).toBe(403)
+		expect(body).toMatchObject({ error: 'forbidden_subject' })
+	})
 
 	it.each(['sales-total', 'items-top-sellers', 'option-group-sales'])(
 		'refuses the %s report without menu access',
@@ -549,6 +564,9 @@ describe('GET /today', () => {
 			orgId: tokenOrgId,
 			role: 'operator',
 			subjects: [...subjects],
+			...(subjects.some((subject) => isSalesReportSubject(subject))
+				? { locationIds: null as const }
+				: {}),
 		})
 		return token
 	}
@@ -556,10 +574,12 @@ describe('GET /today', () => {
 	async function today(
 		locations: Array<[string, string]>,
 		token?: string,
+		salesBasis: 'gross' | 'net' = 'net',
 	): Promise<{ status: number; body: Record<string, any> }> {
 		const query = new URLSearchParams({
 			locationIds: locations.map(([id]) => id).join(','),
 			timeZones: locations.map(([, zone]) => zone).join(','),
+			salesBasis,
 		})
 		const res = await analyticsRoutes.request(`/today?${query}`, {
 			headers: {
@@ -615,6 +635,7 @@ describe('GET /today', () => {
 			orgId,
 			role: 'operator',
 			subjects: [...ORDER_REPORT_SUBJECTS],
+			locationIds: null,
 		})
 		const { status } = await today([['loc_ny', 'America/New_York']], token)
 		expect(status).toBe(401)
@@ -635,11 +656,12 @@ describe('GET /today', () => {
 		expect(bad.status).toBe(400)
 	})
 
-	it('matches the sales-total report for the same day and location', async () => {
+	it('matches net sales from counted orders for the same day and location', async () => {
 		const db = await getTenantDb(orgId)
 		await db.insert(restaurantOrders).values([
-			order({ totalCents: 1250 }),
+			order({ subtotalCents: 1250, totalCents: 1250 }),
 			order({
+				subtotalCents: 2000,
 				totalCents: 2000,
 				paymentMethod: 'online',
 				paymentStatus: 'paid',
@@ -655,7 +677,11 @@ describe('GET /today', () => {
 				holdExpiresAt: new Date(now.getTime() + 600_000),
 			}),
 			// Yesterday in New York.
-			order({ totalCents: 500, createdAt: new Date(now.getTime() - day) }),
+			order({
+				subtotalCents: 500,
+				totalCents: 500,
+				createdAt: new Date(now.getTime() - day),
+			}),
 		])
 
 		const { status, body } = await today([['loc_ny', 'America/New_York']])
@@ -667,31 +693,14 @@ describe('GET /today', () => {
 			{ currency: 'USD', salesMinor: 500, orders: 1 },
 		])
 		expect(body.lastWeek).toEqual([])
+		expect(body.salesBasis).toBe('net')
 
-		const definition = createReportDefinition({
-			...organizationTemplates().find(
-				(template) => template.id === 'sales-total',
-			)!.definition,
-			timeframe: { field: 'createdAt', preset: 'today' },
-		})
-		const { token } = await mintOperatorAnalyticsToken({
-			signingSecret: internalCommandToken,
-			userId: 'user_1',
-			orgId,
-			role: 'operator',
-			subjects: [...ORDER_REPORT_SUBJECTS],
-		})
-		const res = await analyticsRoutes.request('/query', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${token}`,
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ definition, timeZone: 'America/New_York' }),
-		})
-		const report = (await res.json()) as { value: number; total: number }
-		expect(report.value * 100).toBe(body.today[0].salesMinor)
-		expect(report.total).toBe(body.today[0].orders)
+		const gross = await today(
+			[['loc_ny', 'America/New_York']],
+			undefined,
+			'gross',
+		)
+		expect(gross.body.today[0].salesMinor).toBe(3250)
 	})
 
 	it('counts each location over its own business day', async () => {
@@ -701,24 +710,28 @@ describe('GET /today', () => {
 			order({
 				locationId: 'loc_ruh',
 				currency: 'sar',
+				subtotalCents: 4000,
 				totalCents: 4000,
 				createdAt: new Date('2026-06-09T22:00:00Z'),
 			}),
 			// Not today in New York, and after 15:30 yesterday: in neither.
 			order({
 				locationId: 'loc_ny',
+				subtotalCents: 700,
 				totalCents: 700,
 				createdAt: new Date('2026-06-09T22:00:00Z'),
 			}),
 			// 12:00 yesterday in New York: yesterday up to this time.
 			order({
 				locationId: 'loc_ny',
+				subtotalCents: 1500,
 				totalCents: 1500,
 				createdAt: new Date('2026-06-09T16:00:00Z'),
 			}),
 			// 06:00 in New York today, 13:00 in Riyadh today.
 			order({
 				locationId: 'loc_ny',
+				subtotalCents: 2500,
 				totalCents: 2500,
 				createdAt: new Date('2026-06-10T10:00:00Z'),
 			}),

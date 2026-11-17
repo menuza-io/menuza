@@ -21,6 +21,11 @@ msgstr ""
 msgid "(Expired)"
 msgstr ""
 
+#. placeholder {0}: result.partialHidden!
+#: ../../packages/reports/src/ui/report-chart.tsx:179
+msgid "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
+msgstr "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
+
 #. placeholder {0}: data.messageText?.length || 0
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:608
 msgid "{0} / 1600 chars"

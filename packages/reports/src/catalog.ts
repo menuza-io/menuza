@@ -1,5 +1,6 @@
 import { giftCardSubjects } from './catalog-gift-cards.ts'
 import { reservationsSubjects } from './catalog-reservations.ts'
+import { salesReportSubjects } from './catalog-sales.ts'
 import { staffingSubjects } from './catalog-staffing.ts'
 import { type Measure, type ValueMeasure, isRatioMeasure } from './dsl.ts'
 
@@ -29,12 +30,12 @@ export type ReportFieldType =
  * over the whole group and divides the sums, so a share over a week is never an
  * average of daily shares. `percent` shows the quotient as a percentage;
  * `per_hour` divides a number or amount by a duration field (sales per labor
- * hour).
+ * hour); `each` is the plain quotient (sales per sale: an average sale).
  */
 export type ReportRatio = {
 	numerator: string
 	denominator: string
-	unit: 'percent' | 'per_hour'
+	unit: 'percent' | 'per_hour' | 'each'
 }
 
 export type ReportField = {
@@ -83,6 +84,24 @@ export type ReportSubject = {
 	timeZoneField?: string
 	/** List columns used when a list report picks none. */
 	defaultColumns?: string[]
+	/**
+	 * When a grouped report's amounts are in more than one currency, give each
+	 * currency its own segments instead of measuring nothing.
+	 */
+	splitCurrencies?: boolean
+	/** Longest range one run may cover, in days. A run past it is refused. */
+	maxRangeDays?: number
+	/**
+	 * Order subjects (#310): the datetime field orders are dated by when the
+	 * report counts them by placed time, and the one that stands in for it when
+	 * the report counts by fulfilment time.
+	 */
+	timeBasisFields?: { placed: string; fulfillment: string }
+	/**
+	 * Sales (#331): `field` is the one "Sales" figure. A report measuring it
+	 * reads `gross` or `net`, as the definition's `salesBasis` says.
+	 */
+	salesBasisField?: { field: string; gross: string; net: string }
 }
 
 export type ReportCatalog = {
@@ -554,6 +573,35 @@ const orderedAtField: ReportField = {
 	description: 'When the customer placed the order.',
 }
 
+/**
+ * What stands in for "Ordered at" when a report counts orders by fulfilment
+ * time (#310): the scheduled time of a scheduled order, else when it was
+ * completed, else when it was placed. Cancelled and expired orders keep the
+ * placed time on both bases.
+ */
+const orderFulfilledAtField: ReportField = {
+	id: 'fulfilledAt',
+	label: 'Fulfilment time',
+	type: 'datetime',
+	showTime: true,
+	description:
+		'The scheduled time of a scheduled order, otherwise when it was completed, otherwise when it was placed.',
+}
+
+/** The location's IANA zone, so days and hours are the location's own. */
+const orderTimeZoneField: ReportField = {
+	id: 'locationTimeZone',
+	label: 'Location time zone',
+	type: 'string',
+	listable: false,
+}
+
+/** What the three order subjects share for dating orders. */
+const orderTimeBasis = {
+	timeZoneField: 'locationTimeZone',
+	timeBasisFields: { placed: 'createdAt', fulfillment: 'fulfilledAt' },
+} as const
+
 const orderNumberField: ReportField = {
 	id: 'orderNumber',
 	label: 'Order number',
@@ -578,6 +626,7 @@ const orderFulfillmentField: ReportField = {
 	options: [
 		{ value: 'pickup', label: 'Pickup' },
 		{ value: 'delivery', label: 'Delivery' },
+		{ value: 'dine_in', label: 'Dine-in' },
 	],
 }
 
@@ -614,6 +663,8 @@ const orderCurrencyField: ReportField = {
 
 const orderFields: ReportField[] = [
 	orderedAtField,
+	orderFulfilledAtField,
+	orderTimeZoneField,
 	{
 		id: 'completedAt',
 		label: 'Completed at',
@@ -802,6 +853,8 @@ const orderFields: ReportField[] = [
 
 const orderItemFields: ReportField[] = [
 	orderedAtField,
+	orderFulfilledAtField,
+	orderTimeZoneField,
 	{
 		id: 'itemName',
 		label: 'Item',
@@ -833,6 +886,8 @@ const orderItemFields: ReportField[] = [
 
 const orderOptionFields: ReportField[] = [
 	orderedAtField,
+	orderFulfilledAtField,
+	orderTimeZoneField,
 	{
 		id: 'groupName',
 		label: 'Option group',
@@ -1019,6 +1074,7 @@ export const organizationCatalog: ReportCatalog = {
 			source: 'tenant-api',
 			fields: orderFields,
 			currencyField: 'currency',
+			...orderTimeBasis,
 			defaultColumns: [
 				'orderNumber',
 				'customerName',
@@ -1036,6 +1092,7 @@ export const organizationCatalog: ReportCatalog = {
 			source: 'tenant-api',
 			fields: orderItemFields,
 			currencyField: 'currency',
+			...orderTimeBasis,
 			defaultColumns: [
 				'itemName',
 				'quantity',
@@ -1053,6 +1110,7 @@ export const organizationCatalog: ReportCatalog = {
 			source: 'tenant-api',
 			fields: orderOptionFields,
 			currencyField: 'currency',
+			...orderTimeBasis,
 			defaultColumns: [
 				'groupName',
 				'optionName',
@@ -1062,6 +1120,7 @@ export const organizationCatalog: ReportCatalog = {
 				'createdAt',
 			],
 		},
+		...salesReportSubjects,
 		{
 			id: 'customers',
 			label: 'Customers',

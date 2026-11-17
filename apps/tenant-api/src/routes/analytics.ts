@@ -1,3 +1,4 @@
+import { SALES_BASIS_VALUES } from '@repo/common/sales-report-facts'
 import { Hono } from 'hono'
 import { and, desc, eq, gte, isNotNull, lt, lte, type SQL } from 'drizzle-orm'
 import { z } from 'zod'
@@ -16,6 +17,7 @@ import {
 	isReportRunError,
 	type ReportDefinition,
 	reportDefinitionSchema,
+	definitionForLoading,
 	referencedFieldIds,
 	resolveTimeframeRange,
 	resolveReportTimeZone,
@@ -72,6 +74,14 @@ import {
 	loadTodayTotals,
 	TODAY_MAX_LOCATIONS,
 } from '../services/today-totals.ts'
+import {
+	loadCancelledOrderRecords,
+	loadOrderRefundRecords,
+	loadSalesRecords,
+	SALES_REPORT_MAX_ROWS,
+	type SalesReportContext,
+} from '../services/sales-report-records.ts'
+import { isSalesReportSubject } from '@repo/reports/token'
 
 export const analyticsRoutes = new Hono()
 
@@ -100,6 +110,9 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'gift_card_redemptions',
 	'gift_card_balances',
 	'gift_card_settlement',
+	'sales',
+	'order_refunds',
+	'cancelled_orders',
 ])
 
 const REPEAT_CALLER_WINDOW_MS = 30 * 86_400_000
@@ -418,6 +431,9 @@ analyticsRoutes.post('/query', async (c) => {
 		definition.settings.timezone,
 		parsed.data.timeZone,
 	)
+	// Loaders read one absolute window that covers the report's range and,
+	// when it compares periods, the earlier one too; the engine cuts both.
+	const loading = definitionForLoading(definition, now)
 	let records: ReportRecord[]
 	let sourceTruncated = false
 	let sourceRowLimit = 0
@@ -436,12 +452,12 @@ analyticsRoutes.post('/query', async (c) => {
 		try {
 			loaded =
 				definition.subject === 'time_entries'
-					? await loadTimeEntryRecords(staffCtx, definition)
+					? await loadTimeEntryRecords(staffCtx, loading)
 					: definition.subject === 'shifts'
-						? await loadShiftRecords(staffCtx, definition)
+						? await loadShiftRecords(staffCtx, loading)
 						: definition.subject === 'labor_daily'
-							? await loadLaborDailyRecords(staffCtx, subject, definition)
-							: await loadApplicationRecords(staffCtx, definition)
+							? await loadLaborDailyRecords(staffCtx, subject, loading)
+							: await loadApplicationRecords(staffCtx, loading)
 			await auditStaffReportRun(staffCtx, {
 				subject: definition.subject,
 				rows: loaded.records.length,
@@ -471,10 +487,10 @@ analyticsRoutes.post('/query', async (c) => {
 		try {
 			loaded =
 				definition.subject === 'bookings'
-					? await loadBookingRecords(rsvCtx, definition)
+					? await loadBookingRecords(rsvCtx, loading)
 					: definition.subject === 'pacing_slots'
-						? await loadPacingSlotRecords(rsvCtx, definition)
-						: await loadWaitlistRecords(rsvCtx, definition)
+						? await loadPacingSlotRecords(rsvCtx, loading)
+						: await loadWaitlistRecords(rsvCtx, loading)
 			await auditRsvReportRun(rsvCtx, {
 				subject: definition.subject,
 				rows: loaded.records.length,
@@ -498,7 +514,8 @@ analyticsRoutes.post('/query', async (c) => {
 			const names = new Map<string, string>()
 			try {
 				const context = await getReservationsContext(claims.orgId)
-				for (const location of context?.locations ?? []) names.set(location.id, location.name)
+				for (const location of context?.locations ?? [])
+					names.set(location.id, location.name)
 			} catch {
 				// Names are a courtesy: the id stands in.
 			}
@@ -522,8 +539,36 @@ analyticsRoutes.post('/query', async (c) => {
 		records = loaded.records
 		sourceTruncated = loaded.truncated
 		sourceRowLimit = GIFT_CARD_REPORT_MAX_ROWS
+	} else if (isSalesReportSubject(definition.subject)) {
+		// Sales, refunds and cancelled orders from every channel, limited to
+		// the token's locations.
+		const salesCtx: SalesReportContext = {
+			db,
+			orgId: claims.orgId,
+			locationIds: claims.locationIds,
+			now,
+		}
+		let loaded
+		try {
+			loaded =
+				definition.subject === 'sales'
+					? await loadSalesRecords(salesCtx, subject, loading)
+					: definition.subject === 'order_refunds'
+						? await loadOrderRefundRecords(salesCtx, loading)
+						: await loadCancelledOrderRecords(salesCtx, subject, loading)
+		} catch (error) {
+			// A Drizzle error message quotes every bound value: never log it.
+			console.error('Sales report failed', describeStaffError(error))
+			return c.json(
+				{ error: 'report_failed', message: 'The report could not be run.' },
+				500,
+			)
+		}
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = SALES_REPORT_MAX_ROWS
 	} else if (definition.subject === 'customers') {
-		records = await loadCustomerRecords(db, claims.orgId, subject, definition)
+		records = await loadCustomerRecords(db, claims.orgId, subject, loading)
 	} else if (definition.subject === 'text_subscribers') {
 		records = await loadTextSubscriberRecords(db)
 	} else if (
@@ -533,15 +578,15 @@ analyticsRoutes.post('/query', async (c) => {
 	) {
 		const loaded =
 			definition.subject === 'orders'
-				? await loadOrderRecords(db, claims.orgId, subject, definition, now)
+				? await loadOrderRecords(db, claims.orgId, subject, loading, now)
 				: definition.subject === 'order_items'
-					? await loadOrderItemRecords(db, claims.orgId, definition, now)
-					: await loadOrderOptionRecords(db, claims.orgId, definition, now)
+					? await loadOrderItemRecords(db, claims.orgId, loading, now)
+					: await loadOrderOptionRecords(db, claims.orgId, loading, now)
 		records = loaded.records
 		sourceTruncated = loaded.truncated
 		sourceRowLimit = ORDER_REPORT_MAX_ROWS
 	} else if (definition.subject === 'phone_calls') {
-		const loaded = await loadPhoneCallRecords(db, definition, now)
+		const loaded = await loadPhoneCallRecords(db, loading, now)
 		records = loaded.records
 		sourceTruncated = loaded.truncated
 		sourceRowLimit = PHONE_CALL_REPORT_MAX_ROWS
@@ -606,6 +651,7 @@ const todayQuerySchema = z.object({
 				.min(1)
 				.max(TODAY_MAX_LOCATIONS),
 		),
+	salesBasis: z.enum(SALES_BASIS_VALUES).default('net'),
 })
 
 /**
@@ -645,6 +691,7 @@ analyticsRoutes.get('/today', async (c) => {
 	const parsed = todayQuerySchema.safeParse({
 		locationIds: c.req.query('locationIds') ?? '',
 		timeZones: c.req.query('timeZones') ?? '',
+		salesBasis: c.req.query('salesBasis') ?? 'net',
 	})
 	if (
 		!parsed.success ||
@@ -696,6 +743,16 @@ analyticsRoutes.get('/today', async (c) => {
 		).values(),
 	]
 	const now = Date.now()
-	const totals = await loadTodayTotals(db, claims.orgId, locations, now)
-	return c.json({ ...totals, asOf: new Date(now).toISOString() })
+	const totals = await loadTodayTotals(
+		db,
+		claims.orgId,
+		locations,
+		now,
+		parsed.data.salesBasis,
+	)
+	return c.json({
+		...totals,
+		asOf: new Date(now).toISOString(),
+		salesBasis: parsed.data.salesBasis,
+	})
 })

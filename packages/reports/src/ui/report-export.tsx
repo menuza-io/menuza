@@ -33,6 +33,7 @@ import {
 	exportKind,
 	jpegToPdf,
 	parseExportSize,
+	reportExportBasename,
 	reportToCsv,
 	slugFilename,
 } from '../export.ts'
@@ -227,7 +228,7 @@ export function ReportExportMenu({
 	const [exportError, setExportError] = useState<string | null>(null)
 	const enabled = canExportReport(definition, result, error) && !busy
 	const kind = exportKind(definition)
-	const title = definition.settings.title || 'report'
+	const title = reportExportBasename(definition, result) || 'report'
 	const parsedWidth = parseExportSize(width)
 	const parsedHeight = parseExportSize(height)
 	const showLayoutOptions = format !== 'csv'

@@ -12,6 +12,11 @@ import {
 	GIFT_CARD_REPORT_SUBJECTS,
 	isGiftCardReportSubject,
 } from './catalog-gift-cards.ts'
+import {
+	SALES_REPORT_SUBJECTS,
+	SALES_STAFF_FIELD_PERMISSION,
+	isSalesReportSubject,
+} from './catalog-sales.ts'
 import { ENV } from './package-env.js'
 
 export {
@@ -33,6 +38,13 @@ export {
 	isGiftCardReportSubject,
 	type GiftCardReportSubject,
 } from './catalog-gift-cards.ts'
+
+export {
+	SALES_REPORT_SUBJECTS,
+	isSalesReportSubject,
+	SALES_STAFF_FIELD_PERMISSION,
+	type SalesReportSubject,
+} from './catalog-sales.ts'
 
 export {
 	isReservationsReportSubject,
@@ -65,6 +77,9 @@ export const RESTRICTED_REPORT_SUBJECTS = [
 	'orders',
 	'order_items',
 	'order_options',
+	...SALES_REPORT_SUBJECTS,
+	// Not a subject: the staff name on Station sales (see catalog-sales.ts).
+	SALES_STAFF_FIELD_PERMISSION,
 	'time_entries',
 	'shifts',
 	'labor_daily',
@@ -79,6 +94,7 @@ export const ORDER_REPORT_SUBJECTS = [
 	'orders',
 	'order_items',
 	'order_options',
+	...SALES_REPORT_SUBJECTS,
 ] as const satisfies readonly RestrictedReportSubject[]
 export type RestrictedReportSubject =
 	(typeof RESTRICTED_REPORT_SUBJECTS)[number]
@@ -101,6 +117,12 @@ export type OperatorAnalyticsClaims = {
 	 * none, so it can never widen by omission.
 	 */
 	scopeIds: string[] | null
+	/**
+	 * Locations the sales subjects (sales, refunds, cancelled orders) are
+	 * limited to: `null` for every location, otherwise the list. A token
+	 * without the claim gets none.
+	 */
+	locationIds: string[] | null
 }
 
 /** Whether a verified token may run reports on `subject`. */
@@ -172,6 +194,12 @@ export async function mintOperatorAnalyticsToken(options: {
 	 * can't forget to limit one.
 	 */
 	scopeIds?: readonly string[] | null
+	/**
+	 * The locations the sales subjects are limited to (`null` for all).
+	 * Required whenever one of them is granted, so a caller can't forget to
+	 * limit a person who only works at some locations.
+	 */
+	locationIds?: readonly string[] | null
 }): Promise<{ token: string; expiresAt: string }> {
 	const key = signingKey(options.signingSecret)
 	const subjects = [...new Set(options.subjects ?? [])]
@@ -185,6 +213,12 @@ export async function mintOperatorAnalyticsToken(options: {
 	if (staffGranted && options.scopeIds === undefined) {
 		throw new Error('Staff and reservations report subjects need a scope')
 	}
+	if (
+		subjects.some((subject) => isSalesReportSubject(subject)) &&
+		options.locationIds === undefined
+	) {
+		throw new Error('Sales report subjects need a location limit')
+	}
 	const pay = subjects.includes(STAFF_PAY_REPORT_PERMISSION)
 	const expiresAt = new Date(
 		Date.now() + (pay ? PAY_TOKEN_MAX_SECONDS : TOKEN_MAX_SECONDS) * 1000,
@@ -195,6 +229,14 @@ export async function mintOperatorAnalyticsToken(options: {
 		scope: 'analytics',
 		subjects,
 		scopeIds: options.scopeIds ? [...new Set(options.scopeIds)] : null,
+		// Left out entirely unless given, so it is never widened by omission.
+		...(options.locationIds === undefined
+			? {}
+			: {
+					locationIds: options.locationIds
+						? [...new Set(options.locationIds)]
+						: null,
+				}),
 	})
 		.setProtectedHeader({ alg: 'HS256' })
 		.setSubject(options.userId)
@@ -256,7 +298,23 @@ export async function verifyOperatorAnalyticsToken(options: {
 							(id): id is string => typeof id === 'string' && id.length > 0,
 						)
 					: []
-		return { userId, orgId, role, scope: 'analytics', subjects, scopeIds }
+		const locationIds =
+			payload.locationIds === null
+				? null
+				: Array.isArray(payload.locationIds)
+					? payload.locationIds.filter(
+							(id): id is string => typeof id === 'string' && id.length > 0,
+						)
+					: []
+		return {
+			userId,
+			orgId,
+			role,
+			scope: 'analytics',
+			subjects,
+			scopeIds,
+			locationIds,
+		}
 	} catch {
 		return null
 	}

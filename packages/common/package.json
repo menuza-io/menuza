@@ -328,6 +328,11 @@
       "types": "./src/pos-reports.ts",
       "import": "./src/pos-reports.ts",
       "default": "./src/pos-reports.ts"
+    },
+    "./sales-report-facts": {
+      "types": "./src/sales-report-facts.ts",
+      "import": "./src/sales-report-facts.ts",
+      "default": "./src/sales-report-facts.ts"
     }
   },
   "scripts": {

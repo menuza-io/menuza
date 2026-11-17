@@ -441,6 +441,8 @@ describe('report record loaders', () => {
 			expect(records[4]).toEqual({
 				createdAt: ago(5),
 				completedAt: new Date(ago(5).getTime() + 3_600_000),
+				fulfilledAt: ago(4),
+				locationTimeZone: '',
 				orderNumber: 'A100',
 				location: 'Downtown',
 				fulfillment: 'pickup',
@@ -488,7 +490,9 @@ describe('report record loaders', () => {
 				listDefinition('orders'),
 				now,
 			)
-			const byNumber = new Map(records.map((record) => [record.orderNumber, record]))
+			const byNumber = new Map(
+				records.map((record) => [record.orderNumber, record]),
+			)
 			expect(byNumber.get('F1')).toMatchObject({
 				serviceFee: 0.6,
 				tip: 4.37,
@@ -518,8 +522,18 @@ describe('report record loaders', () => {
 				serviceFeeTaxCents: 2,
 			})
 			await insertOrders(
-				{ number: 'T-1', createdAt: ago(3), tabId: 'tab_fee', fulfillment: 'dine_in' },
-				{ number: 'T-2', createdAt: ago(2), tabId: 'tab_fee', fulfillment: 'dine_in' },
+				{
+					number: 'T-1',
+					createdAt: ago(3),
+					tabId: 'tab_fee',
+					fulfillment: 'dine_in',
+				},
+				{
+					number: 'T-2',
+					createdAt: ago(2),
+					tabId: 'tab_fee',
+					fulfillment: 'dine_in',
+				},
 			)
 			const { records } = await loadOrderRecords(
 				db,
@@ -785,6 +799,8 @@ describe('report record loaders', () => {
 
 			const context = {
 				createdAt: ago(2),
+				fulfilledAt: ago(2),
+				locationTimeZone: '',
 				orderNumber: 'A1',
 				location: 'Downtown',
 				fulfillment: 'pickup',

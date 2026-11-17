@@ -11,6 +11,7 @@ import {
 } from './catalog-gift-cards.ts'
 import { staffingSubjects, withScopeWording } from './catalog-staffing.ts'
 import { referencedFieldIds, validateReportDefinition } from './engine.ts'
+import { isSalesReportSubject } from './catalog-sales.ts'
 import {
 	isStaffingReportSubject,
 	mintOperatorAnalyticsToken,
@@ -218,7 +219,8 @@ describe('what a person is offered', () => {
 				(template) =>
 					!STAFF_TEMPLATE_CATEGORIES.has(template.category) &&
 					template.category !== 'Reservations' &&
-					template.category !== 'Gift cards',
+					template.category !== 'Gift cards' &&
+					!isSalesReportSubject(template.definition.subject),
 			).length,
 		)
 	})
@@ -268,11 +270,17 @@ describe('withScopeWording', () => {
 
 describe('gift card report subjects', () => {
 	it('are restricted: absent without the grant, present with it', () => {
-		const withoutGrant = catalogForGrants(organizationCatalog, [...ORG_WIDE_REPORT_SUBJECTS])
+		const withoutGrant = catalogForGrants(organizationCatalog, [
+			...ORG_WIDE_REPORT_SUBJECTS,
+		])
 		for (const id of GIFT_CARD_REPORT_SUBJECTS) {
-			expect(withoutGrant.subjects.some((subject) => subject.id === id)).toBe(false)
+			expect(withoutGrant.subjects.some((subject) => subject.id === id)).toBe(
+				false,
+			)
 		}
-		const withGrant = catalogForGrants(organizationCatalog, [...GIFT_CARD_REPORT_SUBJECTS])
+		const withGrant = catalogForGrants(organizationCatalog, [
+			...GIFT_CARD_REPORT_SUBJECTS,
+		])
 		for (const id of GIFT_CARD_REPORT_SUBJECTS) {
 			expect(withGrant.subjects.some((subject) => subject.id === id)).toBe(true)
 		}
@@ -283,7 +291,9 @@ describe('gift card report subjects', () => {
 			isGiftCardReportSubject(entry.id),
 		)) {
 			for (const field of subject.fields) {
-				expect(field.id).not.toMatch(/code|name|email|phone|recipient|purchaser/i)
+				expect(field.id).not.toMatch(
+					/code|name|email|phone|recipient|purchaser/i,
+				)
 			}
 		}
 	})

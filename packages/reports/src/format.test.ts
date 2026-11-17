@@ -111,16 +111,22 @@ describe('segmentTableColumns', () => {
 			count: true,
 			value: null,
 			percent: true,
+			previous: false,
+			change: false,
 		})
 		expect(segmentTableColumns(true, { valueInfo: sales })).toEqual({
 			count: false,
 			value: sales,
 			percent: true,
+			previous: false,
+			change: false,
 		})
 		expect(segmentTableColumns(false, { valueInfo: averageRating })).toEqual({
 			count: true,
 			value: averageRating,
 			percent: false,
+			previous: false,
+			change: false,
 		})
 	})
 
@@ -129,6 +135,8 @@ describe('segmentTableColumns', () => {
 			count: true,
 			value: null,
 			percent: true,
+			previous: false,
+			change: false,
 		})
 	})
 })
