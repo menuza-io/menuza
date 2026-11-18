@@ -1040,6 +1040,10 @@ msgstr "Customize item"
 msgid "CVC"
 msgstr "CVC"
 
+#: src/pages/menu.astro.ts:3
+msgid "Dairy-free"
+msgstr "Dairy-free"
+
 #: src/lib/gift-cards/labels.ts:35
 #: src/lib/reservations/labels.ts:37
 #: src/lib/reservations/labels.ts:470
@@ -1152,6 +1156,14 @@ msgstr "Design"
 #: src/lib/reservations/labels.ts:202
 msgid "Dietary needs"
 msgstr "Dietary needs"
+
+#: src/pages/menu.astro.ts:3
+msgid "Dietary preferences"
+msgstr "Dietary preferences"
+
+#: src/pages/menu.astro.ts:3
+msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
+msgstr "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
 
 #: src/components/drops/LocationList.astro.ts:3
 msgid "Directions"
@@ -1528,6 +1540,10 @@ msgstr "Goes well with"
 #: src/lib/reservations/labels.ts:469
 msgid "Guests"
 msgstr "Guests"
+
+#: src/pages/menu.astro.ts:3
+msgid "Halal"
+msgstr "Halal"
 
 #: src/lib/gift-cards/labels.ts:19
 msgid "Happy birthday"
@@ -2045,6 +2061,10 @@ msgstr "Nothing on your tab yet. Add dishes and send them to the kitchen."
 #: src/lib/reservations/labels.ts:295
 msgid "Notify me"
 msgstr "Notify me"
+
+#: src/pages/menu.astro.ts:3
+msgid "Nut-free"
+msgstr "Nut-free"
 
 #: src/lib/reservations/labels.ts:95
 #: src/lib/reservations/labels.ts:200
@@ -3081,6 +3101,10 @@ msgstr "Spends {points} for {amount} off"
 msgid "Spent"
 msgstr "Spent"
 
+#: src/pages/menu.astro.ts:3
+msgid "Spicy"
+msgstr "Spicy"
+
 #: src/lib/gift-cards/labels.ts:91
 msgid "Still to pay: {amount}"
 msgstr "Still to pay: {amount}"
@@ -3849,6 +3873,10 @@ msgstr "Valid until {date}"
 #: src/pages/menu/success.astro.ts:3
 msgid "VAT number"
 msgstr "VAT number"
+
+#: src/pages/menu.astro.ts:3
+msgid "Vegan"
+msgstr "Vegan"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3

@@ -477,6 +477,10 @@ export type PublicMenuOptionData = {
 	isAlcohol: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean
+	/** Dietary tags (#335); read with `dietaryTagsOf` (unknown values dropped). */
+	dietaryTags?: string[]
+	/** Prices per order type (#412); read with `parseOrderTypePrices`. */
+	orderTypePrices?: unknown
 	isTopping: boolean
 	isDefault: boolean
 	allergens: string[]
@@ -526,6 +530,10 @@ export type PublicMenuItemData = {
 	isAlcohol: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean
+	/** Dietary tags (#335); read with `dietaryTagsOf` (unknown values dropped). */
+	dietaryTags?: string[]
+	/** Prices per order type (#412); read with `parseOrderTypePrices`. */
+	orderTypePrices?: unknown
 	allergens: string[]
 	calorieMin: number | null
 	calorieMax: number | null
@@ -620,6 +628,19 @@ export type PublicSiteMenuPayload = {
 	}
 	locations: PublicLocationData[]
 	menus: PublicMenuData[]
+	/** Fixed per-location prices and availability, by location id. */
+	locationOverrides?: Record<
+		string,
+		Array<{
+			entityType: string
+			entityId: string
+			isEnabled?: boolean | null
+			price?: number | null
+			availabilityStatus?: string | null
+		}>
+	>
+	/** Live pricing rules (#388); read with `parseMenuPricingRules`. */
+	pricingRules?: unknown
 	promotions?: PublicMenuPromotion[]
 	/**
 	 * Site features the menu page reads: `upsell` is the `ordering.upsell` flag

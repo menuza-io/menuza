@@ -6,7 +6,7 @@ import {
 	type LocationOrderingAvailability,
 } from '@repo/common/location-types'
 import { menuItemSalePrice } from '@repo/discounts'
-import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { dietaryTagsOf, getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
 import DropNudge from '~/components/drops/DropNudge.astro'
@@ -35,7 +35,9 @@ import {
 	itemHasPriceRange,
 	lowestAvailablePrice,
 } from '~/lib/ordering/catalog'
+import { dietaryTagsInMenu } from '~/lib/ordering/dietary-filter'
 import { formatMoney } from '~/lib/ordering/money'
+import { applyPriceBook, buildPriceBook } from '~/lib/ordering/price-book'
 import {
 	MAX_BANNER_OFFERS,
 	MAX_ITEM_BADGES,
@@ -220,11 +222,25 @@ const cartRestoreLabels = {
 	repriced: i18n._(msg`Some prices changed. Your cart shows the current prices.`),
 	removedCount: i18n._(msg`Some items are no longer available and were left out.`),
 }
+const dietTagLabels = {
+	halal: i18n._(msg`Halal`),
+	vegan: i18n._(msg`Vegan`),
+	vegetarian: vegetarianLabel,
+	gluten_free: glutenFreeLabel,
+	dairy_free: i18n._(msg`Dairy-free`),
+	nut_free: i18n._(msg`Nut-free`),
+	spicy: i18n._(msg`Spicy`),
+}
 const dietaryLabels = {
 	vegetarian: vegetarianLabel,
 	glutenFree: glutenFreeLabel,
 	alcohol: alcoholLabel,
+	tags: dietTagLabels,
 }
+const dietFilterLabel = i18n._(msg`Dietary preferences`)
+const dietDisclaimer = i18n._(
+	msg`Dietary tags are the restaurant's own description. Ask staff if you have an allergy.`,
+)
 
 // ---------- catalog ----------
 
@@ -281,6 +297,7 @@ function localizeItem(item: PublicMenuItemData, menu: PublicMenuData): OrderingI
 		isVegetarian: item.isVegetarian,
 		isGlutenFree: item.isGlutenFree,
 		isAlcohol: item.isAlcohol,
+		dietaryTags: dietaryTagsOf(item),
 		allergens: item.allergens ?? [],
 		calorieMin: item.calorieMin,
 		calorieMax: item.calorieMax,
@@ -333,7 +350,18 @@ for (const menu of menus) {
 	}
 }
 
+// #412 / #388: this location's prices per order type, from the same resolver
+// the region charges with. The page renders the first order type's prices; the
+// script switches them (and reprices the cart) when the guest switches.
+const priceBook = buildPriceBook(menuPayload ?? { menus: [] }, activeLocation?.id ?? null)
+const firstFulfillment = (activeLocation?.fulfillmentOptions ?? {}) as { pickup?: boolean; delivery?: boolean }
+const initialPriceMode =
+	firstFulfillment.pickup === false && firstFulfillment.delivery !== false ? 'delivery' : 'pickup'
+applyPriceBook(categories, priceBook, initialPriceMode)
+
 const allItems = flattenItems(categories)
+// #335: the dietary filter offers the tags dishes on this menu carry.
+const dietTagsInMenu = dietaryTagsInMenu(allItems)
 
 /**
  * Price split for display: the amount (or the sold-out label) plus a muted
@@ -498,6 +526,7 @@ function rowProps(item: OrderingItem, categoryIds: string[]) {
 		isVegetarian: item.isVegetarian,
 		isGlutenFree: item.isGlutenFree,
 		isAlcohol: item.isAlcohol,
+		dietaryTags: item.dietaryTags ?? [],
 		labels: dietaryLabels,
 	}
 }
@@ -660,6 +689,8 @@ const clientMenuData = {
 	locale: requestedLocale,
 	activeLocationId: activeLocation?.id ?? '',
 	locationIds: locations.map((location) => location.id),
+	/** #412 / #388: prices that differ by order type here (see price-book.ts). */
+	priceBook,
 	timezone: activeLocation?.timezone || 'UTC',
 	saleItems: [...saleInputById.values()],
 	offers: promotions
@@ -886,6 +917,23 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 					</script>
 
 					<div class="min-w-0">
+						{dietTagsInMenu.length > 0 ? (
+							<div id="menu-diet-filter" class="mb-6 flex flex-col gap-2">
+								<div class="flex flex-wrap gap-2" role="group" aria-label={dietFilterLabel}>
+									{dietTagsInMenu.map((tag) => (
+										<button
+											type="button"
+											class="js-diet-chip focus-ring min-h-9 rounded-full border border-border bg-background px-3 text-sm text-foreground aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+											data-diet-tag={tag}
+											aria-pressed="false"
+										>
+											{dietTagLabels[tag]}
+										</button>
+									))}
+								</div>
+								<p class="text-xs text-muted-foreground">{dietDisclaimer}</p>
+							</div>
+						) : null}
 						<div id="menu-search-empty" class="surface mb-6 flex hidden flex-col items-center gap-3 px-6 py-12 text-center" role="status">
 							<span class="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true" set:html={icons.search} />
@@ -1015,6 +1063,15 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 	<script>
 		import { getBrowserTenantApiUrl, getOrgBinding } from '~/lib/client-auth'
 		import { indexCatalog } from '~/lib/ordering/catalog'
+		import { cardMatches } from '~/lib/ordering/dietary-filter'
+		import {
+			applyPriceBook,
+			bookItemMinor,
+			EMPTY_PRICE_BOOK,
+			priceModeOf,
+			repriceCartForMode,
+			type PriceBook,
+		} from '~/lib/ordering/price-book'
 		import {
 			cartDiscountView,
 			createQuoteBudget,
@@ -1105,6 +1162,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			locale: string
 			activeLocationId: string
 			locationIds: string[]
+			priceBook?: PriceBook
 			timezone: string
 			saleItems: {
 				id: string
@@ -1526,6 +1584,20 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			)
 		}
 		const saleInputs = new Map((data.saleItems ?? []).map((input) => [input.id, input]))
+		// #412 / #388: the price for the current order type (a table is dine-in).
+		const priceBook = data.priceBook ?? EMPTY_PRICE_BOOK
+		const priceMode = () => priceModeOf(details.mode, atTable())
+		/** Switches the page's catalog and the saved cart to the current order type. */
+		function applyOrderTypePrices() {
+			const mode = priceMode()
+			applyPriceBook(data.categories ?? [], priceBook, mode)
+			for (const input of data.saleItems ?? []) {
+				const minor = bookItemMinor(priceBook, input.id, mode)
+				if (minor !== null) input.priceMinor = minor
+			}
+			const repriced = repriceCartForMode(store.lines(), priceBook, mode)
+			if (repriced.changed) store.save(repriced.lines)
+		}
 		function paintPrices() {
 			const live = liveOffers()
 			for (const input of data.saleItems ?? []) {
@@ -1548,6 +1620,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			}
 		}
 		new MutationObserver(() => {
+			applyOrderTypePrices()
 			paintOffers()
 			paintPrices()
 		}).observe(document.documentElement, {
@@ -1560,11 +1633,13 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			// fees are resolved server-side), so this page keeps its own location.
 			if (!next || next.locationId !== data.activeLocationId) return
 			details = next
+			applyOrderTypePrices()
 			paintOrderBar(true)
 			paintOffers()
 			paintPrices()
 			cartUi.refresh()
 		})
+		applyOrderTypePrices()
 		paintOrderBar(false)
 		paintOffers()
 		paintPrices()
@@ -1656,11 +1731,28 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		const search = document.getElementById('menu-search') as HTMLInputElement | null
 		const clearBtn = document.getElementById('menu-search-clear')
 		const emptyState = document.getElementById('menu-search-empty')
+		// #335: dietary chips narrow the menu together with the search box.
+		const dietSelected = new Set<string>()
+		document.querySelectorAll<HTMLButtonElement>('.js-diet-chip').forEach((chip) => {
+			chip.addEventListener('click', () => {
+				const tag = chip.dataset.dietTag ?? ''
+				if (dietSelected.has(tag)) dietSelected.delete(tag)
+				else dietSelected.add(tag)
+				chip.setAttribute('aria-pressed', String(dietSelected.has(tag)))
+				applySearch(search?.value ?? '')
+			})
+		})
 		function applySearch(raw: string) {
 			const query = raw.trim().toLocaleLowerCase()
+			const selected = [...dietSelected]
+			const filtering = Boolean(query) || selected.length > 0
 			let anyVisible = false
 			document.querySelectorAll<HTMLElement>('.js-item-card').forEach((row) => {
-				const hit = !query || (row.dataset.search ?? '').includes(query)
+				const hit = cardMatches(
+					{ search: row.dataset.search, diet: row.dataset.diet },
+					query,
+					selected,
+				)
 				row.classList.toggle('hidden', !hit)
 				if (hit) anyVisible = true
 			})
@@ -1678,14 +1770,20 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			}
 			document
 				.querySelectorAll<HTMLElement>('[data-search-hide]')
-				.forEach((node) => node.classList.toggle('hidden', Boolean(query)))
-			emptyState?.classList.toggle('hidden', anyVisible || !query)
+				.forEach((node) => node.classList.toggle('hidden', filtering))
+			emptyState?.classList.toggle('hidden', anyVisible || !filtering)
 			clearBtn?.classList.toggle('hidden', !query)
 		}
 		search?.addEventListener('input', () => applySearch(search.value))
-		document
-			.getElementById('menu-search-reset')
-			?.addEventListener('click', () => clearBtn?.click())
+		document.getElementById('menu-search-reset')?.addEventListener('click', () => {
+			// The empty state clears the dietary chips too.
+			dietSelected.clear()
+			document
+				.querySelectorAll<HTMLButtonElement>('.js-diet-chip')
+				.forEach((chip) => chip.setAttribute('aria-pressed', 'false'))
+			if (search?.value) clearBtn?.click()
+			else applySearch('')
+		})
 		clearBtn?.addEventListener('click', () => {
 			if (!search) return
 			search.value = ''

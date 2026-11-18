@@ -11,6 +11,7 @@ import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { buildOrderDetailsLabels, translate } from '~/lib/ordering-labels'
 import { formatMoney } from '~/lib/ordering/money'
+import { buildPriceBook, EMPTY_PRICE_BOOK } from '~/lib/ordering/price-book'
 import { orderLimitMetaFromMenus } from '~/lib/ordering/order-limits'
 import { type FulfillmentMode } from '~/lib/ordering/types'
 import {
@@ -991,6 +992,8 @@ const inputClass =
 			successUrl: successHref,
 			locationId: activeLocation?.id ?? null,
 			locations,
+			// #412 / #388: prices per order type here; a drop keeps its own prices.
+			priceBook: dropMode ? EMPTY_PRICE_BOOK : buildPriceBook(menuPayload ?? { menus: [] }, activeLocation?.id ?? null),
 			taxRate,
 			taxInclusive,
 			allowedModes,
@@ -1083,6 +1086,12 @@ const inputClass =
 		import { estimateTax } from '~/lib/ordering/tax'
 		import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 		import { createCartStore } from '~/lib/ordering/cart-store'
+		import {
+			EMPTY_PRICE_BOOK,
+			priceModeOf,
+			repriceCartForMode,
+			type PriceBook,
+		} from '~/lib/ordering/price-book'
 		import { addSuggestion, suggestForCart } from '~/lib/ordering/upsell'
 		import { buildUpsellRow } from '~/lib/ordering/upsell-row'
 		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
@@ -1250,6 +1259,17 @@ const inputClass =
 			allowedModes,
 		})
 		let mode: 'pickup' | 'delivery' = !isDrop && details.mode === 'delivery' ? 'delivery' : 'pickup'
+		// #412: the cart follows the order type, as the region prices it.
+		const priceBook = (meta.priceBook ?? EMPTY_PRICE_BOOK) as PriceBook
+		function repriceCartForCurrentMode() {
+			const repriced = repriceCartForMode(cart, priceBook, priceModeOf(isDrop ? 'pickup' : mode))
+			if (!repriced.changed) return
+			cart = repriced.lines
+			try {
+				localStorage.setItem(storageKey, JSON.stringify(cart))
+			} catch {}
+		}
+		repriceCartForCurrentMode()
 		let deliveryAvailable = allowedModes.includes('delivery')
 		// The tip the guest picked (#118). Until they pick, it is the location's
 		// own default for the order type: the buttons come from the ordering
@@ -2213,6 +2233,7 @@ const inputClass =
 
 		function setMode(next: 'pickup' | 'delivery') {
 			mode = next
+			repriceCartForCurrentMode()
 			if (radioPickup) radioPickup.checked = next === 'pickup'
 			if (radioDelivery) radioDelivery.checked = next === 'delivery'
 			updateHandoffLabel()
