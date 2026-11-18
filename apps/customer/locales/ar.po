@@ -25,7 +25,7 @@ msgstr "تحتاج إلى {amount} إضافية"
 msgid "{amount} more to unlock {reward}"
 msgstr "{amount} إضافية للحصول على {reward}"
 
-#: components/ordering/menu-screen.tsx:351
+#: components/ordering/menu-screen.tsx:415
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "خصم {amount}"
@@ -54,11 +54,11 @@ msgstr "{n, plural, zero {{count} نقطة} one {نقطة واحدة} two {نق�
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, zero {{count} نجمة} one {نجمة واحدة} two {نجمتان} few {{count} نجوم} many {{count} نجمة} other {{count} نجمة}}"
 
-#: components/ordering/menu-screen.tsx:334
+#: components/ordering/menu-screen.tsx:398
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (بحد أقصى {count} لكل طلب)"
 
-#: components/ordering/menu-screen.tsx:330
+#: components/ordering/menu-screen.tsx:394
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (خصم يصل إلى {amount})"
 
@@ -66,7 +66,7 @@ msgstr "{name} (خصم يصل إلى {amount})"
 msgid "{percent} off"
 msgstr "خصم {percent}"
 
-#: components/ordering/menu-screen.tsx:343
+#: components/ordering/menu-screen.tsx:407
 msgid "{percentText} off"
 msgstr "خصم {percentText}"
 
@@ -94,7 +94,7 @@ msgstr "{points} لكل زيارة (مرة واحدة يوميًا)"
 msgid "{points} for every {amount} you spend"
 msgstr "{points} مقابل كل {amount} تنفقها"
 
-#: components/ordering/menu-screen.tsx:264
+#: components/ordering/menu-screen.tsx:316
 msgid "{price}, was {originalPrice}"
 msgstr "{price}، كان {originalPrice}"
 
@@ -267,7 +267,7 @@ msgstr "تغيير الوقت"
 msgid "Changed by the business"
 msgstr "عدّله النشاط التجاري"
 
-#: components/ordering/menu-screen.tsx:161
+#: components/ordering/menu-screen.tsx:208
 msgid "Check back later, or open the website menu."
 msgstr "عُد لاحقًا، أو افتح قائمة الموقع."
 
@@ -302,6 +302,10 @@ msgstr "اختر شهراً ويوماً صحيحين لعيد ميلادك."
 #: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "اختر ما تتلقاه منا وكيف."
+
+#: components/ordering/menu-screen.tsx:203
+msgid "Clear a choice to see more of the menu."
+msgstr "ألغِ أحد الاختيارات لترى المزيد من القائمة."
 
 #: components/ordering/drops-screen.tsx:136
 #: components/ordering/drops-screen.tsx:215
@@ -344,6 +348,10 @@ msgstr "المتابعة إلى الدفع"
 msgid "Cost"
 msgstr "التكلفة"
 
+#: components/ordering/menu-screen.tsx:444
+msgid "Dairy-free"
+msgstr "خالٍ من الألبان"
+
 #: lib/reservations/messages.ts:30
 msgid "Date"
 msgstr "التاريخ"
@@ -368,9 +376,22 @@ msgstr "مرفوضة"
 msgid "Declined: {reward}."
 msgstr "تم الرفض: {reward}."
 
+#: components/ordering/menu-screen.tsx:318
+#: components/ordering/menu-screen.tsx:343
+msgid "Delivery price {deliveryPriceText}"
+msgstr "سعر التوصيل {deliveryPriceText}"
+
 #: lib/reservations/messages.ts:49
 msgid "Dietary needs"
 msgstr "الاحتياجات الغذائية"
+
+#: components/ordering/menu-screen.tsx:184
+msgid "Dietary preferences"
+msgstr "التفضيلات الغذائية"
+
+#: components/ordering/menu-screen.tsx:196
+msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
+msgstr "الوسوم الغذائية وصف المطعم نفسه. اسأل الموظفين إن كانت لديك حساسية."
 
 #: components/loyalty/notice-line.tsx:32
 #: lib/gift-cards/labels.ts:59
@@ -473,7 +494,7 @@ msgstr "لهذا العدد من الأشخاص، يرجى الاتصال على
 msgid "Free {item}"
 msgstr "{item} مجانًا"
 
-#: components/ordering/menu-screen.tsx:361
+#: components/ordering/menu-screen.tsx:425
 msgid "Free delivery"
 msgstr "توصيل مجاني"
 
@@ -521,6 +542,14 @@ msgstr "بطاقات الهدايا غير متاحة حاليًا"
 #: lib/gift-cards/labels.ts:78
 msgid "Gift cards are not available right now. Please try again later."
 msgstr "بطاقات الهدايا غير متاحة حاليًا. يرجى المحاولة لاحقًا."
+
+#: components/ordering/menu-screen.tsx:442
+msgid "Gluten-free"
+msgstr "خالٍ من الغلوتين"
+
+#: components/ordering/menu-screen.tsx:436
+msgid "Halal"
+msgstr "حلال"
 
 #: lib/gift-cards/labels.ts:69
 msgid "Hide"
@@ -600,7 +629,7 @@ msgstr "قوائم محدودة تطلبها مسبقًا لاستلامها ف�
 msgid "Loading drops"
 msgstr "جارٍ تحميل الطروحات"
 
-#: components/ordering/menu-screen.tsx:106
+#: components/ordering/menu-screen.tsx:120
 msgid "Loading the menu"
 msgstr "جارٍ تحميل القائمة"
 
@@ -623,7 +652,7 @@ msgid "Loading…"
 msgstr "جارٍ التحميل…"
 
 #: app/(tabs)/_layout.tsx:52
-#: components/ordering/menu-screen.tsx:141
+#: components/ordering/menu-screen.tsx:163
 msgid "Menu"
 msgstr "القائمة"
 
@@ -679,6 +708,10 @@ msgstr "لا يوجد نشاط بعد. ستظهر مشترياتك هنا."
 msgid "No connection. Please try again."
 msgstr "لا يوجد اتصال. حاول مرة أخرى."
 
+#: components/ordering/menu-screen.tsx:202
+msgid "No dishes match these choices."
+msgstr "لا توجد أطباق تطابق هذه الاختيارات."
+
 #: components/ordering/drops-screen.tsx:160
 msgid "No drops right now."
 msgstr "لا توجد طروحات حاليًا."
@@ -727,9 +760,13 @@ msgstr "غير مفعّلة"
 msgid "Not taking online reservations on this day."
 msgstr "لا يوجد حجز عبر الإنترنت في هذا اليوم."
 
-#: components/ordering/menu-screen.tsx:160
+#: components/ordering/menu-screen.tsx:207
 msgid "Nothing on the menu right now."
 msgstr "لا يوجد شيء في القائمة حاليًا."
+
+#: components/ordering/menu-screen.tsx:446
+msgid "Nut-free"
+msgstr "خالٍ من المكسرات"
 
 #: lib/reservations/messages.ts:47
 msgid "Occasion"
@@ -772,7 +809,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "يفتح في متصفحك. تُطبَّق نقاطك ومكافآتك عند الطلب هناك."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:302
+#: components/ordering/menu-screen.tsx:366
 msgid "Opens the website"
 msgstr "يفتح الموقع"
 
@@ -986,7 +1023,7 @@ msgstr "أرسل طلبًا"
 msgid "Send code"
 msgstr "إرسال الرمز"
 
-#: components/ordering/menu-screen.tsx:359
+#: components/ordering/menu-screen.tsx:423
 msgid "Set price {amount}"
 msgstr "سعر ثابت {amount}"
 
@@ -1043,7 +1080,7 @@ msgstr "تسجيل الخروج"
 msgid "Site address"
 msgstr "عنوان الموقع"
 
-#: components/ordering/menu-screen.tsx:277
+#: components/ordering/menu-screen.tsx:331
 msgid "Sold out"
 msgstr "نفد المخزون"
 
@@ -1069,6 +1106,10 @@ msgstr "يستخدم {points} مقابل خصم {amount}"
 #: lib/gift-cards/labels.ts:43
 msgid "Spent"
 msgstr "مُستخدم"
+
+#: components/ordering/menu-screen.tsx:448
+msgid "Spicy"
+msgstr "حار"
 
 #: lib/gift-cards/labels.ts:67
 msgid "Stops working in {time}"
@@ -1134,7 +1175,7 @@ msgstr "تم حجز هذا الوقت للتو. اختر وقتًا آخر."
 msgid "The card ending in {last4} is already saved to your account."
 msgstr "البطاقة المنتهية بـ {last4} محفوظة بالفعل في حسابك."
 
-#: components/ordering/menu-screen.tsx:112
+#: components/ordering/menu-screen.tsx:126
 msgid "The menu could not be loaded."
 msgstr "تعذر تحميل القائمة."
 
@@ -1229,7 +1270,7 @@ msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلً
 
 #: components/auth/site-unavailable-screen.tsx:26
 #: components/ordering/drops-screen.tsx:117
-#: components/ordering/menu-screen.tsx:114
+#: components/ordering/menu-screen.tsx:128
 #: components/ui/error-message.tsx:28
 #: lib/gift-cards/labels.ts:20
 #: lib/loyalty/labels.ts:28
@@ -1283,9 +1324,17 @@ msgstr "استخدم مكافأة عند الطلب، أو أظهر رمزك ع�
 msgid "Use at the till"
 msgstr "الاستخدام عند الصندوق"
 
-#: components/ordering/menu-screen.tsx:216
+#: components/ordering/menu-screen.tsx:263
 msgid "Use code {code}"
 msgstr "استخدم الرمز {code}"
+
+#: components/ordering/menu-screen.tsx:438
+msgid "Vegan"
+msgstr "نباتي صرف"
+
+#: components/ordering/menu-screen.tsx:440
+msgid "Vegetarian"
+msgstr "نباتي"
 
 #: components/auth/verify-screen.tsx:43
 msgid "Verification code"
@@ -1347,7 +1396,7 @@ msgstr "سنستخدم الرقم {phone} من حسابك."
 msgid "We're holding your table for {time}"
 msgstr "نحجز طاولتك لمدة {time}"
 
-#: components/ordering/menu-screen.tsx:143
+#: components/ordering/menu-screen.tsx:165
 msgid "What is on the menu today. Checkout is on the website."
 msgstr "ما هو موجود في القائمة اليوم. إتمام الطلب يتم على الموقع."
 

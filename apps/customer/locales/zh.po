@@ -25,7 +25,7 @@ msgstr "还差 {amount}"
 msgid "{amount} more to unlock {reward}"
 msgstr "再获得 {amount} 即可兑换 {reward}"
 
-#: components/ordering/menu-screen.tsx:351
+#: components/ordering/menu-screen.tsx:415
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "立减 {amount}"
@@ -54,11 +54,11 @@ msgstr "{n, plural, other {{count} 积分}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, other {{count} 颗星}}"
 
-#: components/ordering/menu-screen.tsx:334
+#: components/ordering/menu-screen.tsx:398
 msgid "{name} (limit {count} per order)"
 msgstr "{name}（每单限 {count} 件）"
 
-#: components/ordering/menu-screen.tsx:330
+#: components/ordering/menu-screen.tsx:394
 msgid "{name} (up to {amount} off)"
 msgstr "{name}（最高减 {amount}）"
 
@@ -66,7 +66,7 @@ msgstr "{name}（最高减 {amount}）"
 msgid "{percent} off"
 msgstr "优惠 {percent}"
 
-#: components/ordering/menu-screen.tsx:343
+#: components/ordering/menu-screen.tsx:407
 msgid "{percentText} off"
 msgstr "优惠 {percentText}"
 
@@ -94,7 +94,7 @@ msgstr "每次光临可获得 {points}（每天限一次）"
 msgid "{points} for every {amount} you spend"
 msgstr "每消费 {amount} 可获得 {points}"
 
-#: components/ordering/menu-screen.tsx:264
+#: components/ordering/menu-screen.tsx:316
 msgid "{price}, was {originalPrice}"
 msgstr "{price}，原价 {originalPrice}"
 
@@ -267,7 +267,7 @@ msgstr "修改时间"
 msgid "Changed by the business"
 msgstr "由商家调整"
 
-#: components/ordering/menu-screen.tsx:161
+#: components/ordering/menu-screen.tsx:208
 msgid "Check back later, or open the website menu."
 msgstr "请稍后再来，或打开网站上的菜单。"
 
@@ -302,6 +302,10 @@ msgstr "请为您的生日选择有效的月份和日期。"
 #: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "选择你想收到的消息和接收方式。"
+
+#: components/ordering/menu-screen.tsx:203
+msgid "Clear a choice to see more of the menu."
+msgstr "取消一个选项以查看更多菜品。"
 
 #: components/ordering/drops-screen.tsx:136
 #: components/ordering/drops-screen.tsx:215
@@ -344,6 +348,10 @@ msgstr "继续付款"
 msgid "Cost"
 msgstr "所需"
 
+#: components/ordering/menu-screen.tsx:444
+msgid "Dairy-free"
+msgstr "不含乳制品"
+
 #: lib/reservations/messages.ts:30
 msgid "Date"
 msgstr "日期"
@@ -368,9 +376,22 @@ msgstr "已拒绝"
 msgid "Declined: {reward}."
 msgstr "已拒绝：{reward}。"
 
+#: components/ordering/menu-screen.tsx:318
+#: components/ordering/menu-screen.tsx:343
+msgid "Delivery price {deliveryPriceText}"
+msgstr "外送价格 {deliveryPriceText}"
+
 #: lib/reservations/messages.ts:49
 msgid "Dietary needs"
 msgstr "饮食需求"
+
+#: components/ordering/menu-screen.tsx:184
+msgid "Dietary preferences"
+msgstr "饮食偏好"
+
+#: components/ordering/menu-screen.tsx:196
+msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
+msgstr "饮食标签由餐厅自行提供。如有过敏，请咨询店员。"
 
 #: components/loyalty/notice-line.tsx:32
 #: lib/gift-cards/labels.ts:59
@@ -473,7 +494,7 @@ msgstr "如此人数的团体，请致电 {phone}。"
 msgid "Free {item}"
 msgstr "免费 {item}"
 
-#: components/ordering/menu-screen.tsx:361
+#: components/ordering/menu-screen.tsx:425
 msgid "Free delivery"
 msgstr "免配送费"
 
@@ -521,6 +542,14 @@ msgstr "礼品卡暂不可用"
 #: lib/gift-cards/labels.ts:78
 msgid "Gift cards are not available right now. Please try again later."
 msgstr "礼品卡暂不可用，请稍后再试。"
+
+#: components/ordering/menu-screen.tsx:442
+msgid "Gluten-free"
+msgstr "无麸质"
+
+#: components/ordering/menu-screen.tsx:436
+msgid "Halal"
+msgstr "清真"
 
 #: lib/gift-cards/labels.ts:69
 msgid "Hide"
@@ -600,7 +629,7 @@ msgstr "限量菜单，预订后在指定时段自取。"
 msgid "Loading drops"
 msgstr "正在加载限量活动"
 
-#: components/ordering/menu-screen.tsx:106
+#: components/ordering/menu-screen.tsx:120
 msgid "Loading the menu"
 msgstr "正在加载菜单"
 
@@ -623,7 +652,7 @@ msgid "Loading…"
 msgstr "加载中…"
 
 #: app/(tabs)/_layout.tsx:52
-#: components/ordering/menu-screen.tsx:141
+#: components/ordering/menu-screen.tsx:163
 msgid "Menu"
 msgstr "菜单"
 
@@ -679,6 +708,10 @@ msgstr "暂无记录。您的消费将显示在这里。"
 msgid "No connection. Please try again."
 msgstr "无网络连接，请重试。"
 
+#: components/ordering/menu-screen.tsx:202
+msgid "No dishes match these choices."
+msgstr "没有符合这些选项的菜品。"
+
 #: components/ordering/drops-screen.tsx:160
 msgid "No drops right now."
 msgstr "目前没有限量活动。"
@@ -727,9 +760,13 @@ msgstr "未激活"
 msgid "Not taking online reservations on this day."
 msgstr "当天不接受在线预订。"
 
-#: components/ordering/menu-screen.tsx:160
+#: components/ordering/menu-screen.tsx:207
 msgid "Nothing on the menu right now."
 msgstr "菜单上现在没有内容。"
+
+#: components/ordering/menu-screen.tsx:446
+msgid "Nut-free"
+msgstr "不含坚果"
 
 #: lib/reservations/messages.ts:47
 msgid "Occasion"
@@ -772,7 +809,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "将在浏览器中打开。在那里下单时可使用您的积分和奖励。"
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:302
+#: components/ordering/menu-screen.tsx:366
 msgid "Opens the website"
 msgstr "打开网站"
 
@@ -986,7 +1023,7 @@ msgstr "提交申请"
 msgid "Send code"
 msgstr "发送验证码"
 
-#: components/ordering/menu-screen.tsx:359
+#: components/ordering/menu-screen.tsx:423
 msgid "Set price {amount}"
 msgstr "固定价 {amount}"
 
@@ -1043,7 +1080,7 @@ msgstr "退出登录"
 msgid "Site address"
 msgstr "网站地址"
 
-#: components/ordering/menu-screen.tsx:277
+#: components/ordering/menu-screen.tsx:331
 msgid "Sold out"
 msgstr "已售罄"
 
@@ -1069,6 +1106,10 @@ msgstr "使用 {points} 抵扣 {amount}"
 #: lib/gift-cards/labels.ts:43
 msgid "Spent"
 msgstr "已使用"
+
+#: components/ordering/menu-screen.tsx:448
+msgid "Spicy"
+msgstr "辣"
 
 #: lib/gift-cards/labels.ts:67
 msgid "Stops working in {time}"
@@ -1134,7 +1175,7 @@ msgstr "该时间刚被订走，请选择其他时间。"
 msgid "The card ending in {last4} is already saved to your account."
 msgstr "尾号 {last4} 的礼品卡已保存在您的账户中。"
 
-#: components/ordering/menu-screen.tsx:112
+#: components/ordering/menu-screen.tsx:126
 msgid "The menu could not be loaded."
 msgstr "无法加载菜单。"
 
@@ -1229,7 +1270,7 @@ msgstr "尝试次数过多，请稍候再试。"
 
 #: components/auth/site-unavailable-screen.tsx:26
 #: components/ordering/drops-screen.tsx:117
-#: components/ordering/menu-screen.tsx:114
+#: components/ordering/menu-screen.tsx:128
 #: components/ui/error-message.tsx:28
 #: lib/gift-cards/labels.ts:20
 #: lib/loyalty/labels.ts:28
@@ -1283,9 +1324,17 @@ msgstr "下单时即可使用奖励，也可在柜台出示您的码。"
 msgid "Use at the till"
 msgstr "在收银台使用"
 
-#: components/ordering/menu-screen.tsx:216
+#: components/ordering/menu-screen.tsx:263
 msgid "Use code {code}"
 msgstr "使用优惠码 {code}"
+
+#: components/ordering/menu-screen.tsx:438
+msgid "Vegan"
+msgstr "纯素"
+
+#: components/ordering/menu-screen.tsx:440
+msgid "Vegetarian"
+msgstr "素食"
 
 #: components/auth/verify-screen.tsx:43
 msgid "Verification code"
@@ -1347,7 +1396,7 @@ msgstr "将使用您账户中的号码 {phone}。"
 msgid "We're holding your table for {time}"
 msgstr "已为您保留餐桌 {time}"
 
-#: components/ordering/menu-screen.tsx:143
+#: components/ordering/menu-screen.tsx:165
 msgid "What is on the menu today. Checkout is on the website."
 msgstr "这是今天的菜单。结账在网站上完成。"
 
