@@ -89,6 +89,11 @@ export default function MenuLayout() {
 				location.pathname.startsWith(`/${orgSlug}/menu/drops/`),
 		},
 		{
+			label: _(t`Pricing rules`),
+			href: `/${orgSlug}/menu/pricing-rules`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/menu/pricing-rules`),
+		},
+		{
 			label: _(t`Translations`),
 			href: `/${orgSlug}/menu/translations`,
 			isActive: location.pathname.startsWith(`/${orgSlug}/menu/translations`),

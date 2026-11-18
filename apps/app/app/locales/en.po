@@ -1050,6 +1050,10 @@ msgstr "{change, plural, one {+# in the last 30 days} other {+# in the last 30 d
 msgid "{changed, plural, one {# changed} other {# changed}}"
 msgstr "{changed, plural, one {# changed} other {# changed}}"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:643
+msgid "{changedCount} of {totalCount} prices change."
+msgstr "{changedCount} of {totalCount} prices change."
+
 #: app/components/dashboard/blocks/attention-block.tsx:240
 msgid "{channels} switched off at {location}"
 msgstr "{channels} switched off at {location}"
@@ -4133,6 +4137,7 @@ msgstr "Action"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:323
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:409
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:462
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:730
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:472
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:481
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:822
@@ -9713,6 +9718,7 @@ msgstr "categories"
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:281
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:520
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:313
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:456
 msgid "Categories"
 msgstr "Categories"
 
@@ -9827,6 +9833,10 @@ msgstr "Certification"
 #: app/components/website/branding-panel.tsx:304
 msgid "Change"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:419
+msgid "Change (%)"
+msgstr "Change (%)"
 
 #: app/components/discounts/message-impact.tsx:190
 msgid "Change {discountName}?"
@@ -10834,6 +10844,14 @@ msgstr "Choose how to seat {guest} ({size}) at table {tableLabel}."
 #: app/components/loyalty/reward-dialog.tsx:553
 msgid "Choose items"
 msgstr "Choose items"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:513
+msgid "Choose no location to cover every location."
+msgstr "Choose no location to cover every location."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:481
+msgid "Choose no menu and no category to cover every dish."
+msgstr "Choose no menu and no category to cover every dish."
 
 #: app/components/phone-agent/test-call-panel.tsx:519
 msgid "Choose one"
@@ -13240,6 +13258,7 @@ msgstr "Coverage compares the orders you usually get each hour with who is sched
 
 #: app/components/customers/person-profile-screen.tsx:518
 #: app/components/dashboard/blocks/bookings-today-block.tsx:195
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:723
 msgid "Covers"
 msgstr "Covers"
 
@@ -14406,6 +14425,11 @@ msgstr "Decides the local day for visit rewards."
 #: app/components/kiosk/pin-pad.tsx:117
 msgid "Decimal point"
 msgstr "Decimal point"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:546
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:555
+msgid "Decimals"
+msgstr "Decimals"
 
 #: app/components/staff/labor/labor-tips.tsx:229
 msgid "Declared cash tips"
@@ -15736,6 +15760,7 @@ msgstr "Discounts the cashier applies at the till"
 msgid "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 msgstr "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:651
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:126
 msgid "Dish"
 msgstr "Dish"
@@ -17238,6 +17263,10 @@ msgstr "End of day"
 #~ msgid "End of the call"
 #~ msgstr "End of the call"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:775
+msgid "End rule"
+msgstr "End rule"
+
 #: app/components/reservations/detail-sheet.tsx:1399
 msgid "End this booking"
 msgstr "End this booking"
@@ -17254,6 +17283,7 @@ msgid "End time must be after start time"
 msgstr "End time must be after start time"
 
 #: app/components/hiring/job-labels.ts:52
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:758
 #: app/utils/discounts/labels.ts:51
 #: app/utils/loyalty/promotions.ts:49
 msgid "Ended"
@@ -17475,6 +17505,10 @@ msgstr "Enter a party size from 1 to 99."
 msgid "Enter a pay amount, or choose not to show pay."
 msgstr "Enter a pay amount, or choose not to show pay."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:288
+msgid "Enter a percentage between -90 and 500, not zero (for example 8 or -5)."
+msgstr "Enter a percentage between -90 and 500, not zero (for example 8 or -5)."
+
 #: app/components/loyalty/reward-dialog.tsx:244
 msgid "Enter a percentage between 1 and 100."
 msgstr "Enter a percentage between 1 and 100."
@@ -17525,6 +17559,10 @@ msgstr "Enter a reason for the refund."
 #: app/components/loyalty/reward-dialog.tsx:197
 msgid "Enter a reward name."
 msgstr "Enter a reward name."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:289
+msgid "Enter a round-up amount between 0.01 and 100."
+msgstr "Enter a round-up amount between 0.01 and 100."
 
 #: app/components/print/print-form-errors.ts:13
 msgid "Enter a street address"
@@ -17814,6 +17852,10 @@ msgstr "Enter PIN"
 #: app/components/locations/delivery-zones-manager.tsx:482
 msgid "Enter postal or zip codes where this delivery zone applies."
 msgstr "Enter postal or zip codes where this delivery zone applies."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:290
+msgid "Enter prices for the range to skip, with the lower one first."
+msgstr "Enter prices for the range to skip, with the lower one first."
 
 #~ msgid "Enter replacement service name and valid seating times."
 #~ msgstr "Enter replacement service name and valid seating times."
@@ -18226,6 +18268,10 @@ msgstr "Every day: <0>{usual}</0>"
 msgid "Every delivery here is marked as paid."
 msgstr "Every delivery here is marked as paid."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:748
+msgid "Every dish"
+msgstr "Every dish"
+
 #: app/components/menu/menu-health-card.tsx:630
 msgid "Every dish has a photo, a description and a price. Nice work."
 msgstr "Every dish has a photo, a description and a price. Nice work."
@@ -18261,6 +18307,10 @@ msgstr "Every item you keep at this location."
 #: app/components/inventory/inventory-chrome.tsx:44
 msgid "Every item, how much you have, where you keep it and what it is worth."
 msgstr "Every item, how much you have, where you keep it and what it is worth."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:749
+msgid "Every location"
+msgstr "Every location"
 
 #: app/components/discounts/discount-form.tsx:207
 msgid "Every matching choice"
@@ -20275,6 +20325,10 @@ msgstr "Give the job a title."
 msgid "Give the money back at the counter first, then record it here."
 msgstr "Give the money back at the counter first, then record it here."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:287
+msgid "Give the rule a name."
+msgstr "Give the rule a name."
+
 #: app/components/staff/kiosk-manager.tsx:514
 msgid "Give the tablet a name, like “Front counter”."
 msgstr "Give the tablet a name, like “Front counter”."
@@ -21298,7 +21352,7 @@ msgstr "Hiring…"
 #: app/components/staff/timesheets/card-history.tsx:133
 #: app/routes/_app+/$orgSlug_+/gift-cards+/$cardId.tsx:224
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:548
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:99
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:104
 #: app/routes/_app+/$orgSlug_+/menu+/history.tsx:130
 msgid "History"
 msgstr "History"
@@ -24616,6 +24670,7 @@ msgstr "Local emulator"
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:151
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:161
 #: app/routes/_app+/$orgSlug_+/media.tsx:1737
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:654
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:611
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4223
 msgid "Location"
@@ -24696,6 +24751,7 @@ msgstr "Location: {locationName}"
 #: app/components/loyalty/promotion-dialog.tsx:812
 #: app/components/member-location-scope.tsx:160
 #: app/components/team-switcher.tsx:182
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:488
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
 msgid "Locations"
 msgstr "Locations"
@@ -25281,7 +25337,7 @@ msgstr ""
 #~ msgid "Manage your menus, categories, items, and modifier groups."
 #~ msgstr "Manage your menus, categories, items, and modifier groups."
 
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:124
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:129
 msgid "Manage your menus, categories, items, drops, and modifier groups."
 msgstr "Manage your menus, categories, items, drops, and modifier groups."
 
@@ -25822,7 +25878,7 @@ msgstr "Members who created the most notes."
 #: app/components/menu/drop-wizard/drop-form.tsx:744
 #: app/components/menu/drop-wizard/drop-form.tsx:760
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:38
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:122
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:127
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:307
 msgid "Menu"
 msgstr "Menu"
@@ -25901,6 +25957,7 @@ msgstr "Menu Type & Capabilities"
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:344
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:257
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:433
 msgid "Menus"
 msgstr "Menus"
 
@@ -26761,6 +26818,7 @@ msgstr "My schedule link"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:423
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:214
 #: app/routes/_app+/$orgSlug_+/menu+/history.$snapshotId.tsx:117
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:408
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:132
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:682
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:683
@@ -27291,6 +27349,10 @@ msgstr "New post"
 #: app/components/social/social-calendar.tsx:177
 msgid "New post on {label}"
 msgstr "New post on {label}"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:394
+msgid "New pricing rule"
+msgstr "New pricing rule"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:82
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:135
@@ -28623,6 +28685,10 @@ msgstr "No preference"
 msgid "No price yet"
 msgstr "No price yet"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:713
+msgid "No pricing rules yet."
+msgstr "No pricing rules yet."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:77
 msgid "No print orders yet"
 msgstr "No print orders yet"
@@ -28727,6 +28793,10 @@ msgstr "No reviews match the selected filter."
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:239
 msgid "No rewards yet"
 msgstr "No rewards yet"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:376
+msgid "No rounding"
+msgstr "No rounding"
 
 #: app/components/staff/labor/labor-tips.tsx:67
 msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
@@ -29996,6 +30066,7 @@ msgid "now"
 msgstr "now"
 
 #: app/components/menu/menu-review-card.tsx:302
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:657
 msgid "Now"
 msgstr "Now"
 
@@ -30149,6 +30220,7 @@ msgid "Olive oil"
 msgstr "Olive oil"
 
 #: app/components/marketing/programs-section.tsx:56
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:754
 msgid "On"
 msgstr "On"
 
@@ -30296,6 +30368,10 @@ msgstr "One card per table, so guests order and pay from their phone."
 msgid "One date"
 msgstr "One date"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:382
+msgid "One decimal (10.90)"
+msgstr "One decimal (10.90)"
+
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:273
 msgid "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
 msgstr "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
@@ -30327,6 +30403,10 @@ msgstr "One pack holds"
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:266
 msgid "One person per line: name, then phone or email. A header row with Name, Phone and Email also works."
 msgstr "One person per line: name, then phone or email. A header row with Name, Phone and Email also works."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:704
+msgid "One rule prices a dish: a category rule first, then a menu rule, then a rule for every dish. Ending a rule returns prices to base."
+msgstr "One rule prices a dish: a category rule first, then a menu rule, then a rule for every dish. Ending a rule returns prices to base."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:44
 msgid "One to three dishes with photo, price and an Order button."
@@ -32207,6 +32287,10 @@ msgstr ""
 #: app/components/inventory/recipe-section.tsx:422
 msgid "Own ingredients"
 msgstr "Own ingredients"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:680
+msgid "Own location price"
+msgstr "Own location price"
 
 #: app/components/roles/tenant-role-access-manager.tsx:763
 msgid "Owner"
@@ -34352,6 +34436,10 @@ msgstr "Preview Menu in Advance"
 msgid "Preview of the first days"
 msgstr "Preview of the first days"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:627
+msgid "Preview prices"
+msgstr "Preview prices"
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:466
 msgid "Previous"
 msgstr "Previous"
@@ -34531,6 +34619,10 @@ msgstr "Pricing & Tax"
 #: app/components/settings/cards/organization/billing-card.tsx:393
 msgid "Pricing not available"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:92
+msgid "Pricing rules"
+msgstr "Pricing rules"
 
 #: app/components/menu/item-form.tsx:552
 #: app/components/website/link-inspector.tsx:394
@@ -35255,6 +35347,10 @@ msgstr "Radius Distance ({radiusValue} {radiusUnit})"
 #: app/components/locations/delivery-zone-map.tsx:353
 msgid "Radius: {radiusValue} {radiusUnit}"
 msgstr "Radius: {radiusValue} {radiusUnit}"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:397
+msgid "Raise or lower prices by a percentage on chosen menus or categories. Dishes added later follow the rule. A dish with its own location price keeps that price."
+msgstr "Raise or lower prices by a percentage on chosen menus or categories. Dishes added later follow the rule. A dish with its own location price keeps that price."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:766
 #~ msgid "ran out."
@@ -37770,12 +37866,26 @@ msgstr "Round"
 msgid "Round hours"
 msgstr "Round hours"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:571
+msgid "Round up to"
+msgstr "Round up to"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:378
+msgid "Round up to an amount"
+msgstr "Round up to an amount"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:377
+msgid "Round up to decimals"
+msgstr "Round up to decimals"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3629
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3869
 msgid "Rounded"
 msgstr ""
 
 #: app/components/staff/labor-policy-editor.tsx:925
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:520
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:531
 msgid "Rounding"
 msgstr "Rounding"
 
@@ -37800,7 +37910,12 @@ msgstr ""
 msgid "Row {rowNumber}"
 msgstr "Row {rowNumber}"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:720
+msgid "Rule"
+msgstr "Rule"
+
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:402
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:701
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:377
 msgid "Rules"
 msgstr "Rules"
@@ -38415,6 +38530,10 @@ msgstr "Save rate"
 #: app/components/pos/station-register-settings.tsx:376
 msgid "Save register settings"
 msgstr "Save register settings"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:633
+msgid "Save rule"
+msgstr "Save rule"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:999
 msgid "Save section servers"
@@ -41460,6 +41579,14 @@ msgstr "Skip"
 msgid "Skip for now"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:589
+msgid "Skip prices from"
+msgstr "Skip prices from"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:600
+msgid "Skip prices up to"
+msgstr "Skip prices up to"
+
 #: app/components/menu/menu-review-stack.tsx:992
 msgid "Skip selected"
 msgstr "Skip selected"
@@ -41477,6 +41604,10 @@ msgstr "Skip this task"
 #: app/components/staff/onboarding/task-row.tsx:285
 msgid "Skipped"
 msgstr "Skipped"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:684
+msgid "Skipped price range"
+msgstr "Skipped price range"
 
 #: app/components/launch/launch-checklist.tsx:247
 msgid "Skipped: {skipReason}"
@@ -41830,6 +41961,10 @@ msgstr "Something went wrong while publishing."
 #: app/components/chat/chat-view.tsx:243
 msgid "Something went wrong."
 msgstr "Something went wrong."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:292
+msgid "Something went wrong. Check the form and try again."
+msgstr "Something went wrong. Check the form and try again."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:76
 #: app/utils/kiosk/kiosk-messages.ts:23
@@ -42496,6 +42631,7 @@ msgstr "Stats"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:319
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:405
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:459
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:726
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:514
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:469
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:623
@@ -48518,7 +48654,7 @@ msgstr "Translate to English"
 msgid "Translation saved for {dishName}"
 msgstr "Translation saved for {dishName}"
 
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:92
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:97
 msgid "Translations"
 msgstr "Translations"
 
@@ -52287,6 +52423,10 @@ msgstr "Whole pizza price ($)"
 msgid "Whole pizza, left half, or right half pricing."
 msgstr "Whole pizza, left half, or right half pricing."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:381
+msgid "Whole units (11.00)"
+msgstr "Whole units (11.00)"
+
 #: app/utils/discounts/labels.ts:163
 msgid "Whole-order discounts"
 msgstr "Whole-order discounts"
@@ -52362,6 +52502,10 @@ msgstr "With Manual, new online orders wait for you to press Accept before the k
 #: app/routes/organizations+/create.tsx:1529
 msgid "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
 msgstr "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:660
+msgid "With the rule"
+msgstr "With the rule"
 
 #: app/components/pos/zatca-settings.tsx:420
 msgid "With warnings {withWarnings}"
@@ -53125,6 +53269,10 @@ msgstr "You have reached the limit of {count} discounts. Archive some you no lon
 #: app/utils/staffing/onboarding-errors.ts:16
 msgid "You have reached the limit of templates. Archive one you no longer use."
 msgstr "You have reached the limit of templates. Archive one you no longer use."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:291
+msgid "You have the most rules that can be on at once. End one first."
+msgstr "You have the most rules that can be on at once. End one first."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:355
 msgid "You have unsaved changes below. Turn the agent on there and save."

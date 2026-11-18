@@ -1,4 +1,7 @@
 import {
+	fixedOverridePrice,
+	priceExcludedByRule,
+	resolveMenuItemPrice,
 	type MenuPricingRule,
 	type PricingRounding,
 } from '@repo/common/menu-pricing'
@@ -145,4 +148,124 @@ export function secondsUntilNextRuleChange(
 	return next === null
 		? null
 		: Math.max(1, Math.ceil((next - now.getTime()) / 1000))
+}
+
+// ---------------------------------------------------------------------------
+// Preview (#388): what a draft rule does to each dish, before it is saved.
+// ---------------------------------------------------------------------------
+
+export type PricingRuleDraft = {
+	percentBp: number
+	menuIds: string[]
+	categoryIds: string[]
+	locationIds: string[]
+	rounding: PricingRounding
+	excludeMinPrice: number | null
+	excludeMaxPrice: number | null
+}
+
+export type PreviewDish = {
+	id: string
+	name: string
+	price: number
+	orderTypePrices?: unknown
+	/** Every category the dish is listed under. */
+	categoryIds: string[]
+	/** Variation prices; the rule applies to each. */
+	variantPrices?: number[]
+}
+
+export type PreviewRow = {
+	itemId: string
+	name: string
+	locationId: string
+	before: number
+	after: number
+	/** Why the price stays: a fixed location price or the excluded range. */
+	unchanged?: 'fixed_price' | 'excluded_range'
+}
+
+/**
+ * The pickup price of every covered dish at every chosen location, before and
+ * after the draft rule, with the same resolver every channel prices with.
+ * Dishes with a fixed location price stay as they are.
+ */
+export function previewPricingRule(
+	draft: PricingRuleDraft,
+	input: {
+		dishes: readonly PreviewDish[]
+		locationIds: readonly string[]
+		structure: MenuStructure
+		/** Location id to its fixed prices by dish id. */
+		overrides: ReadonlyMap<string, ReadonlyMap<string, number>>
+	},
+): PreviewRow[] {
+	const allDishes = draft.menuIds.length === 0 && draft.categoryIds.length === 0
+	const covered = new Set(
+		allDishes
+			? []
+			: expandRuleCategories(draft.menuIds, draft.categoryIds, input.structure),
+	)
+	const rule: MenuPricingRule = {
+		id: 'preview',
+		percentBp: draft.percentBp,
+		allDishes,
+		categoryIds: [...covered],
+		locationIds: draft.locationIds,
+		rounding: draft.rounding,
+		excludeMinPrice: draft.excludeMinPrice,
+		excludeMaxPrice: draft.excludeMaxPrice,
+	}
+	const locations = draft.locationIds.length
+		? draft.locationIds
+		: input.locationIds
+	const rows: PreviewRow[] = []
+	for (const locationId of locations) {
+		for (const dish of input.dishes) {
+			if (!allDishes && !dish.categoryIds.some((id) => covered.has(id)))
+				continue
+			const fixed = fixedOverridePrice(
+				input.overrides.get(locationId)?.get(dish.id),
+			)
+			const context = { orderType: 'pickup' as const, locationId }
+			const before = resolveMenuItemPrice(dish, context, {
+				overridePrice: fixed,
+			})
+			const after = resolveMenuItemPrice(
+				dish,
+				{ ...context, rules: [rule] },
+				{ overridePrice: fixed },
+			)
+			const variantNote =
+				dish.variantPrices && dish.variantPrices.length > 0
+					? {
+							before: Math.min(...dish.variantPrices),
+							after: Math.min(
+								...dish.variantPrices.map((price) =>
+									resolveMenuItemPrice(
+										dish,
+										{ ...context, rules: [rule] },
+										{ variantPrice: price, overridePrice: fixed },
+									),
+								),
+							),
+						}
+					: null
+			const unchanged =
+				fixed !== null
+					? ('fixed_price' as const)
+					: priceExcludedByRule(variantNote?.before ?? before, rule)
+						? ('excluded_range' as const)
+						: undefined
+			rows.push({
+				itemId: dish.id,
+				name: dish.name,
+				locationId,
+				before: variantNote?.before ?? before,
+				after: variantNote?.after ?? after,
+				...(unchanged ? { unchanged } : {}),
+			})
+		}
+	}
+	return rows
 }

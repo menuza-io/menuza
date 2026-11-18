@@ -1048,6 +1048,10 @@ msgstr "{change, plural, one {+# في آخر 30 يومًا} other {+# في آخ�
 msgid "{changed, plural, one {# changed} other {# changed}}"
 msgstr "{changed, plural, one {# معدّلة} two {# معدّلتان} few {# معدّلة} many {# معدّلة} other {# معدّلة}}"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:643
+msgid "{changedCount} of {totalCount} prices change."
+msgstr "يتغير {changedCount} من أصل {totalCount} من الأسعار."
+
 #: app/components/dashboard/blocks/attention-block.tsx:240
 msgid "{channels} switched off at {location}"
 msgstr "{channels} متوقف في {location}"
@@ -4128,6 +4132,7 @@ msgstr "إجراء"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:323
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:409
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:462
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:730
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:472
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:481
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:822
@@ -9708,6 +9713,7 @@ msgstr "تصنيفات"
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:281
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:520
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:313
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:456
 msgid "Categories"
 msgstr "التصنيفات"
 
@@ -9822,6 +9828,10 @@ msgstr "الشهادات"
 #: app/components/website/branding-panel.tsx:304
 msgid "Change"
 msgstr "تغيير"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:419
+msgid "Change (%)"
+msgstr "التغيير (%)"
 
 #: app/components/discounts/message-impact.tsx:190
 msgid "Change {discountName}?"
@@ -10829,6 +10839,14 @@ msgstr "اختر كيف تُجلس {guest} ({size}) على الطاولة {table
 #: app/components/loyalty/reward-dialog.tsx:553
 msgid "Choose items"
 msgstr "اختر العناصر"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:513
+msgid "Choose no location to cover every location."
+msgstr "لا تختر أي فرع ليشمل كل الفروع."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:481
+msgid "Choose no menu and no category to cover every dish."
+msgstr "لا تختر أي قائمة أو فئة ليشمل كل الأطباق."
 
 #: app/components/phone-agent/test-call-panel.tsx:519
 msgid "Choose one"
@@ -13232,6 +13250,7 @@ msgstr "تقارن التغطية الطلبات التي تصلك عادة كل
 
 #: app/components/customers/person-profile-screen.tsx:518
 #: app/components/dashboard/blocks/bookings-today-block.tsx:195
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:723
 msgid "Covers"
 msgstr "عدد الضيوف"
 
@@ -14398,6 +14417,11 @@ msgstr "تحدد اليوم المحلي لاحتساب نقاط الزيارا�
 #: app/components/kiosk/pin-pad.tsx:117
 msgid "Decimal point"
 msgstr "الفاصلة العشرية"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:546
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:555
+msgid "Decimals"
+msgstr "المنازل العشرية"
 
 #: app/components/staff/labor/labor-tips.tsx:229
 msgid "Declared cash tips"
@@ -15728,6 +15752,7 @@ msgstr "خصومات يطبّقها الكاشير عند نقطة البيع"
 msgid "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 msgstr "الخصومات ورموز القسائم وعدد مرات استخدامها. لا ينطبق إلا عند تفعيل الخصومات لمؤسستك."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:651
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:126
 msgid "Dish"
 msgstr "طبق"
@@ -17230,6 +17255,10 @@ msgstr "نهاية اليوم"
 #~ msgid "End of the call"
 #~ msgstr "نهاية المكالمة"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:775
+msgid "End rule"
+msgstr "إنهاء القاعدة"
+
 #: app/components/reservations/detail-sheet.tsx:1399
 msgid "End this booking"
 msgstr "إنهاء هذا الحجز"
@@ -17246,6 +17275,7 @@ msgid "End time must be after start time"
 msgstr "يجب أن يكون وقت الانتهاء بعد وقت البدء"
 
 #: app/components/hiring/job-labels.ts:52
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:758
 #: app/utils/discounts/labels.ts:51
 #: app/utils/loyalty/promotions.ts:49
 msgid "Ended"
@@ -17467,6 +17497,10 @@ msgstr "أدخل حجم مجموعة من 1 إلى 99."
 msgid "Enter a pay amount, or choose not to show pay."
 msgstr "أدخل مبلغ الأجر، أو اختر عدم إظهاره."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:288
+msgid "Enter a percentage between -90 and 500, not zero (for example 8 or -5)."
+msgstr "أدخل نسبة بين ‎-90 و500 لا تساوي صفرًا (مثل 8 أو ‎-5)."
+
 #: app/components/loyalty/reward-dialog.tsx:244
 msgid "Enter a percentage between 1 and 100."
 msgstr "أدخل نسبة بين 1 و100."
@@ -17517,6 +17551,10 @@ msgstr "أدخل سببًا للاسترداد."
 #: app/components/loyalty/reward-dialog.tsx:197
 msgid "Enter a reward name."
 msgstr "أدخل اسم المكافأة."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:289
+msgid "Enter a round-up amount between 0.01 and 100."
+msgstr "أدخل مبلغ تقريب بين 0.01 و100."
 
 #: app/components/print/print-form-errors.ts:13
 msgid "Enter a street address"
@@ -17806,6 +17844,10 @@ msgstr "إدخال الرقم السري"
 #: app/components/locations/delivery-zones-manager.tsx:482
 msgid "Enter postal or zip codes where this delivery zone applies."
 msgstr "أدخل الرموز البريدية التي تنطبق عليها منطقة التوصيل هذه."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:290
+msgid "Enter prices for the range to skip, with the lower one first."
+msgstr "أدخل أسعار النطاق المستثنى، الأقل أولًا."
 
 #~ msgid "Enter replacement service name and valid seating times."
 #~ msgstr "أدخل اسم فترة الخدمة البديلة وأوقات جلوس صالحة."
@@ -18218,6 +18260,10 @@ msgstr "كل يوم: <0>{usual}</0>"
 msgid "Every delivery here is marked as paid."
 msgstr "كل الشحنات هنا مسجّلة كمدفوعة."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:748
+msgid "Every dish"
+msgstr "كل الأطباق"
+
 #: app/components/menu/menu-health-card.tsx:630
 msgid "Every dish has a photo, a description and a price. Nice work."
 msgstr "لكل طبق صورة ووصف وسعر. أحسنت."
@@ -18253,6 +18299,10 @@ msgstr "كل عنصر تحتفظ به في هذا الموقع."
 #: app/components/inventory/inventory-chrome.tsx:44
 msgid "Every item, how much you have, where you keep it and what it is worth."
 msgstr "كل صنف، وكم لديك منه، وأين تحفظه، وكم قيمته."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:749
+msgid "Every location"
+msgstr "كل الفروع"
 
 #: app/components/discounts/discount-form.tsx:207
 msgid "Every matching choice"
@@ -20267,6 +20317,10 @@ msgstr "أعطِ الوظيفة مسمى."
 msgid "Give the money back at the counter first, then record it here."
 msgstr "أعد المال للضيف عند الكاشير أولًا، ثم سجّله هنا."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:287
+msgid "Give the rule a name."
+msgstr "أعطِ القاعدة اسمًا."
+
 #: app/components/staff/kiosk-manager.tsx:514
 msgid "Give the tablet a name, like “Front counter”."
 msgstr "أعطِ الجهاز اسمًا، مثل «الكاونتر الأمامي»."
@@ -21290,7 +21344,7 @@ msgstr "جارٍ التوظيف…"
 #: app/components/staff/timesheets/card-history.tsx:133
 #: app/routes/_app+/$orgSlug_+/gift-cards+/$cardId.tsx:224
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:548
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:99
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:104
 #: app/routes/_app+/$orgSlug_+/menu+/history.tsx:130
 msgid "History"
 msgstr "السجل"
@@ -24608,6 +24662,7 @@ msgstr "محاكي محلي"
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:151
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:161
 #: app/routes/_app+/$orgSlug_+/media.tsx:1737
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:654
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:611
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4223
 msgid "Location"
@@ -24688,6 +24743,7 @@ msgstr "الموقع: {locationName}"
 #: app/components/loyalty/promotion-dialog.tsx:812
 #: app/components/member-location-scope.tsx:160
 #: app/components/team-switcher.tsx:182
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:488
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
 msgid "Locations"
 msgstr "الفروع"
@@ -25273,7 +25329,7 @@ msgstr "إدارة حساباتك المتصلة هنا."
 #~ msgid "Manage your menus, categories, items, and modifier groups."
 #~ msgstr "أدر قوائمك وتصنيفاتك وعناصرك ومجموعات الإضافات."
 
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:124
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:129
 msgid "Manage your menus, categories, items, drops, and modifier groups."
 msgstr "إدارة القوائم والفئات والعناصر والطروحات ومجموعات المعدلات."
 
@@ -25814,7 +25870,7 @@ msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاح
 #: app/components/menu/drop-wizard/drop-form.tsx:744
 #: app/components/menu/drop-wizard/drop-form.tsx:760
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:38
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:122
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:127
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:307
 msgid "Menu"
 msgstr "القائمة"
@@ -25893,6 +25949,7 @@ msgstr "نوع القائمة والإمكانات"
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:49
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:344
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:257
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:433
 msgid "Menus"
 msgstr "القوائم"
 
@@ -26753,6 +26810,7 @@ msgstr "رابط جدولي"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:423
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:214
 #: app/routes/_app+/$orgSlug_+/menu+/history.$snapshotId.tsx:117
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:408
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:132
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:682
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:683
@@ -27283,6 +27341,10 @@ msgstr "منشور جديد"
 #: app/components/social/social-calendar.tsx:177
 msgid "New post on {label}"
 msgstr "منشور جديد في {label}"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:394
+msgid "New pricing rule"
+msgstr "قاعدة تسعير جديدة"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:82
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:135
@@ -28615,6 +28677,10 @@ msgstr "بلا تفضيل"
 msgid "No price yet"
 msgstr "لا يوجد سعر بعد"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:713
+msgid "No pricing rules yet."
+msgstr "لا توجد قواعد تسعير بعد."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:77
 msgid "No print orders yet"
 msgstr "لا توجد طلبات طباعة بعد"
@@ -28719,6 +28785,10 @@ msgstr "لا توجد تقييمات تطابق الفلتر المحدد."
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:239
 msgid "No rewards yet"
 msgstr "لا توجد مكافآت بعد"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:376
+msgid "No rounding"
+msgstr "بدون تقريب"
 
 #: app/components/staff/labor/labor-tips.tsx:67
 msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
@@ -29988,6 +30058,7 @@ msgid "now"
 msgstr "الآن"
 
 #: app/components/menu/menu-review-card.tsx:302
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:657
 msgid "Now"
 msgstr "الآن"
 
@@ -30141,6 +30212,7 @@ msgid "Olive oil"
 msgstr "زيت الزيتون"
 
 #: app/components/marketing/programs-section.tsx:56
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:754
 msgid "On"
 msgstr "تشغيل"
 
@@ -30288,6 +30360,10 @@ msgstr "بطاقة لكل طاولة، ليطلب الضيوف ويدفعوا م
 msgid "One date"
 msgstr "تاريخ واحد"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:382
+msgid "One decimal (10.90)"
+msgstr "منزلة عشرية واحدة (10.90)"
+
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:273
 msgid "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
 msgstr "متجر DoorDash واحد لكل اتصال. استخدم معرّف المتجر الذي تعيّنه DoorDash بعد الإعداد (SSIO أو إعداد المتجر)."
@@ -30319,6 +30395,10 @@ msgstr "تتّسع العبوة الواحدة لـ"
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:266
 msgid "One person per line: name, then phone or email. A header row with Name, Phone and Email also works."
 msgstr "شخص واحد في كل سطر: الاسم ثم الهاتف أو البريد الإلكتروني. كما يمكن استخدام صف عناوين يضم الاسم والهاتف والبريد الإلكتروني."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:704
+msgid "One rule prices a dish: a category rule first, then a menu rule, then a rule for every dish. Ending a rule returns prices to base."
+msgstr "قاعدة واحدة تسعّر الطبق: قاعدة الفئة أولًا، ثم قاعدة القائمة، ثم قاعدة كل الأطباق. إنهاء القاعدة يعيد الأسعار إلى الأساس."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:44
 msgid "One to three dishes with photo, price and an Order button."
@@ -32199,6 +32279,10 @@ msgstr "نظرة عامة"
 #: app/components/inventory/recipe-section.tsx:422
 msgid "Own ingredients"
 msgstr "مكوّنات خاصة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:680
+msgid "Own location price"
+msgstr "سعر خاص بالفرع"
 
 #: app/components/roles/tenant-role-access-manager.tsx:763
 msgid "Owner"
@@ -34344,6 +34428,10 @@ msgstr "معاينة القائمة مسبقًا"
 msgid "Preview of the first days"
 msgstr "معاينة الأيام الأولى"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:627
+msgid "Preview prices"
+msgstr "معاينة الأسعار"
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:466
 msgid "Previous"
 msgstr "السابق"
@@ -34523,6 +34611,10 @@ msgstr "التسعير والضريبة"
 #: app/components/settings/cards/organization/billing-card.tsx:393
 msgid "Pricing not available"
 msgstr "الأسعار غير متاحة"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:92
+msgid "Pricing rules"
+msgstr "قواعد التسعير"
 
 #: app/components/menu/item-form.tsx:552
 #: app/components/website/link-inspector.tsx:394
@@ -35247,6 +35339,10 @@ msgstr "مسافة النطاق ({radiusValue} {radiusUnit})"
 #: app/components/locations/delivery-zone-map.tsx:353
 msgid "Radius: {radiusValue} {radiusUnit}"
 msgstr "النطاق: {radiusValue} {radiusUnit}"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:397
+msgid "Raise or lower prices by a percentage on chosen menus or categories. Dishes added later follow the rule. A dish with its own location price keeps that price."
+msgstr "ارفع الأسعار أو اخفضها بنسبة على قوائم أو فئات تختارها. الأطباق المضافة لاحقًا تتبع القاعدة. الطبق الذي له سعر خاص بالفرع يحتفظ بسعره."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:766
 #~ msgid "ran out."
@@ -37762,12 +37858,26 @@ msgstr "دائرية"
 msgid "Round hours"
 msgstr "تقريب الساعات"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:571
+msgid "Round up to"
+msgstr "التقريب للأعلى إلى"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:378
+msgid "Round up to an amount"
+msgstr "التقريب للأعلى إلى مبلغ"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:377
+msgid "Round up to decimals"
+msgstr "التقريب للأعلى إلى منازل عشرية"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3629
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3869
 msgid "Rounded"
 msgstr "مستدير"
 
 #: app/components/staff/labor-policy-editor.tsx:925
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:520
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:531
 msgid "Rounding"
 msgstr "التقريب"
 
@@ -37792,7 +37902,12 @@ msgstr "منطق التوجيه:"
 msgid "Row {rowNumber}"
 msgstr "الصف {rowNumber}"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:720
+msgid "Rule"
+msgstr "القاعدة"
+
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:402
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:701
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:377
 msgid "Rules"
 msgstr "القواعد"
@@ -38407,6 +38522,10 @@ msgstr "حفظ الأجر"
 #: app/components/pos/station-register-settings.tsx:376
 msgid "Save register settings"
 msgstr "حفظ إعدادات الكاشير"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:633
+msgid "Save rule"
+msgstr "حفظ القاعدة"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:999
 msgid "Save section servers"
@@ -41452,6 +41571,14 @@ msgstr "تخطَّ"
 msgid "Skip for now"
 msgstr "تخطي الآن"
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:589
+msgid "Skip prices from"
+msgstr "استثناء الأسعار من"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:600
+msgid "Skip prices up to"
+msgstr "استثناء الأسعار حتى"
+
 #: app/components/menu/menu-review-stack.tsx:992
 msgid "Skip selected"
 msgstr "تخطي المحدد"
@@ -41469,6 +41596,10 @@ msgstr "تخطي هذه المهمة"
 #: app/components/staff/onboarding/task-row.tsx:285
 msgid "Skipped"
 msgstr "تم تخطيها"
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:684
+msgid "Skipped price range"
+msgstr "نطاق سعر مستثنى"
 
 #: app/components/launch/launch-checklist.tsx:247
 msgid "Skipped: {skipReason}"
@@ -41822,6 +41953,10 @@ msgstr "حدث خطأ أثناء النشر."
 #: app/components/chat/chat-view.tsx:243
 msgid "Something went wrong."
 msgstr "حدث خطأ ما."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:292
+msgid "Something went wrong. Check the form and try again."
+msgstr "حدث خطأ. راجع النموذج وحاول مرة أخرى."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:76
 #: app/utils/kiosk/kiosk-messages.ts:23
@@ -42488,6 +42623,7 @@ msgstr "الإحصائيات"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:319
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:405
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:459
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:726
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:514
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:469
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:623
@@ -48510,7 +48646,7 @@ msgstr "الترجمة إلى الإنجليزية"
 msgid "Translation saved for {dishName}"
 msgstr "حُفظت ترجمة {dishName}"
 
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:92
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:97
 msgid "Translations"
 msgstr "الترجمات"
 
@@ -52279,6 +52415,10 @@ msgstr "سعر البيتزا كاملة ($)"
 msgid "Whole pizza, left half, or right half pricing."
 msgstr "تسعير البيتزا كاملة أو النصف الأيسر أو الأيمن."
 
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:381
+msgid "Whole units (11.00)"
+msgstr "وحدات كاملة (11.00)"
+
 #: app/utils/discounts/labels.ts:163
 msgid "Whole-order discounts"
 msgstr "خصومات الطلب كاملًا"
@@ -52354,6 +52494,10 @@ msgstr "مع الوضع اليدوي، تنتظر الطلبات الجديدة 
 #: app/routes/organizations+/create.tsx:1529
 msgid "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
 msgstr "عند إعداد بيانات اعتماد المنصة، يربط OAuth متجرك الفعلي. وبدونها، تتوفر بيئة الاختبار المحلية فقط."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:660
+msgid "With the rule"
+msgstr "مع القاعدة"
 
 #: app/components/pos/zatca-settings.tsx:420
 msgid "With warnings {withWarnings}"
@@ -53117,6 +53261,10 @@ msgstr "لقد وصلت إلى الحد الأقصى وهو {count} خصم. أر
 #: app/utils/staffing/onboarding-errors.ts:16
 msgid "You have reached the limit of templates. Archive one you no longer use."
 msgstr "وصلت إلى الحد الأقصى من القوالب. أرشِف قالبًا لم تعد تستخدمه."
+
+#: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:291
+msgid "You have the most rules that can be on at once. End one first."
+msgstr "وصلت إلى أقصى عدد من القواعد المفعّلة. أنهِ واحدة أولًا."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:355
 msgid "You have unsaved changes below. Turn the agent on there and save."
