@@ -1,10 +1,17 @@
+// @vitest-environment jsdom
+
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TileFreshness } from './tile-freshness.tsx'
 
 describe('TileFreshness', () => {
+	beforeEach(() => {
+		i18n.load('en', {})
+		i18n.activate('en')
+	})
+
 	it('shows update time on every tile', () => {
 		const updatedAt = Date.now() - 60_000
 		render(

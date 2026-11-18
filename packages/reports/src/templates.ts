@@ -745,7 +745,7 @@ function menuTemplates(): ReportTemplate[] {
 			subject: 'modifier_sales',
 			groupBy: ['optionName', 'parentItemName'],
 			chartStyle: 'table',
-			measure: 'average',
+			measure: 'ratio',
 			valueField: 'attachRate',
 			timeframePreset: 'last_30_days',
 		}),

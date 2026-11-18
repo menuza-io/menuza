@@ -385,6 +385,7 @@ describe('loadBuiltInBlockData', () => {
 				blocks: [],
 			}),
 		).toEqual({
+			fetchedAt: expect.any(Number),
 			notes: null,
 			onboarding: null,
 			leaderboard: null,
@@ -426,6 +427,7 @@ describe('loadBuiltInBlockData', () => {
 			],
 		})
 		expect(data).toEqual({
+			fetchedAt: expect.any(Number),
 			notes: null,
 			onboarding: null,
 			leaderboard: null,

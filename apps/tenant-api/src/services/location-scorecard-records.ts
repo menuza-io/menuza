@@ -39,6 +39,7 @@ function locationCondition(
 ): SQL[] {
 	if (locationIds === null) return []
 	if (locationIds.length === 0) return [sql`0`]
+	// bounded: analytics token locationIds mirror control-plane locations (well under 100).
 	return [inArray(column, [...locationIds])]
 }
 
