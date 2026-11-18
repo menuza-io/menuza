@@ -63,6 +63,7 @@ import {
 	INTERVIEW_INVITE_OUTBOX_KIND,
 	purgeExpiredApplications,
 } from './hiring-service.ts'
+import { rollupDeviceHealth } from './pos-health-service.ts'
 import { purgePosGuestNames } from './pos-service.ts'
 import {
 	hasPendingZatca,
@@ -1549,6 +1550,8 @@ async function runTick(
 		// schedule even when POS is off or no terminal checks in any more.
 		try {
 			await purgePosGuestNames(db, now)
+			// Connection history (#356): minutes older than 30 days become a daily summary.
+			await rollupDeviceHealth(db, now)
 		} catch (error) {
 			console.error(
 				'POS retention purge failed',

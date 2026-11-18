@@ -120,9 +120,12 @@ export function Segmented<T extends string>({
 	size = 'md',
 	wrap = true,
 	iconsOnPhone = false,
+	disabled = false,
 }: {
 	value: T
 	onChange: (value: T) => void
+	/** Locked by a setting the server owns: shown, not changeable. */
+	disabled?: boolean
 	options: Array<{ value: T; label: string; icon?: ReactNode }>
 	label: string
 	size?: 'md' | 'lg'
@@ -183,8 +186,10 @@ export function Segmented<T extends string>({
 			ref={barRef}
 			role="radiogroup"
 			aria-label={label}
+			aria-disabled={disabled || undefined}
 			className="bg-muted relative isolate flex min-w-0 gap-1 rounded-(--station-group-radius) px-1"
 			onKeyDown={(event) => {
+				if (disabled) return
 				const keys = [
 					'ArrowLeft',
 					'ArrowRight',
@@ -232,6 +237,7 @@ export function Segmented<T extends string>({
 						key={option.value}
 						type="button"
 						role="radio"
+						disabled={disabled}
 						aria-checked={active}
 						tabIndex={active ? 0 : -1}
 						onClick={() => onChange(option.value)}

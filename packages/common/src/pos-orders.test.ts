@@ -859,6 +859,7 @@ describe('contract v10: custom items, counter guest phone & location config (#17
 			customItemMaxCents: 50_000,
 			cashVarianceFlagCents: null,
 			cashDiscountBp: null,
+			tickets: {},
 		})
 		expect(parseOrderNumberFormat(null)).toEqual({
 			prefix: '',

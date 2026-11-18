@@ -161,6 +161,8 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 		"opaque id of the gift card; stored responses of an erased person's cards are deleted",
 	'sms_send_events.ip_hash':
 		'purpose-prefixed keyed HMAC of the requesting IP, used only for send-code limits and pruned by the regional tick after 24 hours',
+	'pos_terminal_profiles.name':
+		'terminal profile title written by the operator',
 	'marketing_campaigns.name': 'campaign title written by the operator',
 	'marketing_journeys.name': 'journey title written by the operator',
 	'marketing_audiences.name': 'audience title written by the operator',

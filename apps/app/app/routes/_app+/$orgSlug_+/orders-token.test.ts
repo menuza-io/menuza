@@ -226,6 +226,17 @@ describe('order credentials', () => {
 		})
 	})
 
+	it('lets support who is impersonating read terminals and their connection history (#356)', async () => {
+		// The Health panel is read-only and reads with the plain read credentials,
+		// so the support impersonation path shows it exactly as the owner sees it.
+		mocks.impersonating.mockResolvedValue(true)
+		await run()
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:read',
+			claims: { locationIds: null, impersonated: true },
+		})
+	})
+
 	it('lets write credentials cancel with a provider refund only for holders of the order refund permission', async () => {
 		mocks.permission.mockImplementation(
 			async (_u, _o, permission) => permission === 'update:order_refund:any',

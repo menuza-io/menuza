@@ -50,6 +50,19 @@ import {
 	useOperatorClient,
 } from '#app/hooks/use-operator-client.ts'
 import { buildPosPairingUrl } from '#app/utils/pos/pairing.ts'
+import {
+	OfflineThisWeek,
+	TerminalHealthPanel,
+	useHealthSummary,
+	type HealthWindows,
+} from './terminal-health.tsx'
+import {
+	OverrideBadge,
+	TerminalProfilesPanel,
+	TerminalProfileSection,
+	terminalProfilesSchema,
+	type TerminalProfile,
+} from './terminal-profiles.tsx'
 
 const terminalSchema = z.object({
 	id: z.string(),
@@ -68,6 +81,36 @@ const terminalSchema = z.object({
 	reservationsEnabled: z.boolean().default(false),
 	inventoryEnabled: z.boolean().default(false),
 	ordersEnabled: z.boolean().default(false),
+	// Terminal profiles (#373) and the settings a profile bundles beyond the
+	// ones above. Older servers send none: no profile, the defaults.
+	profileId: z.string().nullable().default(null),
+	overrides: z
+		.array(
+			z.enum([
+				'signInRequired',
+				'shiftsRequired',
+				'dayStartMinutes',
+				'timeclockEnabled',
+				'reservationsEnabled',
+				'inventoryEnabled',
+				'ordersEnabled',
+				'idleLockSeconds',
+				'kdsStationId',
+				'menuColumns',
+				'menuDensity',
+				'guestDisplayEnabled',
+				'guestDisplayImageUrl',
+			]),
+		)
+		.default([]),
+	idleLockSeconds: z.number().default(120),
+	kdsStationId: z.string().nullable().default(null),
+	menuColumns: z
+		.union([z.literal('auto'), z.literal(2), z.literal(3), z.literal(4)])
+		.default('auto'),
+	menuDensity: z.enum(['comfortable', 'compact']).default('comfortable'),
+	guestDisplayEnabled: z.boolean().default(false),
+	guestDisplayImageUrl: z.string().nullable().default(null),
 	pairedAt: z.number(),
 	lastSeenAt: z.number().nullable(),
 	revokedAt: z.number().nullable(),
@@ -154,6 +197,7 @@ export function TerminalsManager({
 	locations = [],
 	stationFeatures = { timeclock: false, reservations: false, inventory: false },
 	stationGrants = NO_GRANTS,
+	healthWindows = null,
 }: {
 	orgSlug: string
 	canWrite: boolean
@@ -163,6 +207,11 @@ export function TerminalsManager({
 	stationFeatures?: StationFeatures
 	/** Whether this member may switch each Station app on. */
 	stationGrants?: StationGrants
+	/**
+	 * Connection history (#356): the days and opening hours per location, or
+	 * null while the organization does not have it.
+	 */
+	healthWindows?: HealthWindows | null
 }) {
 	const { _ } = useLingui()
 	const { request, tenantApiUrl } = useOperatorClient(orgSlug, '/operator/pos')
@@ -176,11 +225,23 @@ export function TerminalsManager({
 	const [removing, setRemoving] = useState<Terminal | null>(null)
 	const [showRemoved, setShowRemoved] = useState(false)
 	const [held, setHeld] = useState<Held[]>([])
+	const [profiles, setProfiles] = useState<TerminalProfile[]>([])
+	// Counts reloads, so connection history follows the list while it is open.
+	const [loads, setLoads] = useState(0)
 
 	const load = useCallback(async () => {
 		try {
 			const parsed = listSchema.parse(await request('/terminals'))
 			setState({ status: 'ready', data: parsed })
+			setLoads((n) => n + 1)
+			// Profiles are a convenience: a node that predates them still lists terminals.
+			try {
+				setProfiles(
+					terminalProfilesSchema.parse(await request('/profiles')).profiles,
+				)
+			} catch {
+				setProfiles([])
+			}
 			// Uploads the server kept for a person to settle (only fetched when there are some).
 			if (parsed.heldUploads > 0) {
 				try {
@@ -220,6 +281,7 @@ export function TerminalsManager({
 		return () => clearInterval(timer)
 	}, [load])
 
+	const healthSummary = useHealthSummary(request, healthWindows !== null, loads)
 	const active =
 		state.status === 'ready'
 			? state.data.devices.filter((d) => d.revokedAt === null)
@@ -488,6 +550,13 @@ export function TerminalsManager({
 											<p className="text-muted-foreground text-sm">
 												<LastSeen at={device.lastSeenAt} />
 											</p>
+											{healthWindows ? (
+												<OfflineThisWeek
+													device={device}
+													summary={healthSummary}
+													windows={healthWindows}
+												/>
+											) : null}
 										</div>
 										{canWrite ? (
 											<Button
@@ -506,6 +575,12 @@ export function TerminalsManager({
 										<div className="flex min-w-0 items-center justify-between gap-3 @lg:flex-col @lg:items-start @lg:gap-2">
 											<span className="text-muted-foreground text-xs font-medium">
 												<Trans>Require a staff PIN</Trans>
+												<OverrideBadge
+													overridden={
+														device.profileId !== null &&
+														device.overrides.includes('signInRequired')
+													}
+												/>
 											</span>
 											{canWrite ? (
 												<Button
@@ -547,6 +622,12 @@ export function TerminalsManager({
 										<div className="flex min-w-0 items-center justify-between gap-3 @lg:flex-col @lg:items-start @lg:gap-2">
 											<span className="text-muted-foreground text-xs font-medium">
 												<Trans>Cash drawer shifts</Trans>
+												<OverrideBadge
+													overridden={
+														device.profileId !== null &&
+														device.overrides.includes('shiftsRequired')
+													}
+												/>
 											</span>
 											{canWrite ? (
 												<Button
@@ -584,6 +665,12 @@ export function TerminalsManager({
 										<div className="flex min-w-0 items-center justify-between gap-3 @lg:flex-col @lg:items-start @lg:gap-2">
 											<span className="text-muted-foreground text-xs font-medium">
 												<Trans>Business day</Trans>
+												<OverrideBadge
+													overridden={
+														device.profileId !== null &&
+														device.overrides.includes('dayStartMinutes')
+													}
+												/>
 											</span>
 											{canWrite ? (
 												<DayStartSelect
@@ -612,11 +699,35 @@ export function TerminalsManager({
 										}
 										onChange={(patch) => void setStationApp(device, patch)}
 									/>
+									<TerminalProfileSection
+										device={device}
+										profiles={profiles}
+										canWrite={canWrite}
+										request={request}
+										reload={() => void load()}
+									/>
+									{healthWindows ? (
+										<TerminalHealthPanel
+											device={device}
+											windows={healthWindows}
+											request={request}
+										/>
+									) : null}
 								</CardFooter>
 							</Card>
 						</li>
 					))}
 				</ul>
+			) : null}
+
+			{state.status === 'ready' && (profiles.length > 0 || canWrite) ? (
+				<TerminalProfilesPanel
+					canWrite={canWrite}
+					profiles={profiles}
+					locations={locations}
+					request={request}
+					reload={() => void load()}
+				/>
 			) : null}
 
 			{held.length > 0 ? (
@@ -803,6 +914,13 @@ export function TerminalsManager({
 								>
 									<span>{device.label}</span>
 									<Badge variant="outline">{device.terminalCode}</Badge>
+									{healthWindows ? (
+										<TerminalHealthPanel
+											device={device}
+											windows={healthWindows}
+											request={request}
+										/>
+									) : null}
 								</li>
 							))}
 						</ul>
@@ -812,6 +930,7 @@ export function TerminalsManager({
 
 			<PairDialog
 				open={pairing}
+				profiles={profiles}
 				onClose={() => {
 					setPairing(false)
 					void load()
@@ -1063,6 +1182,19 @@ function StationApps({
 		<div className="border-border flex w-full min-w-0 flex-col gap-3 border-t pt-4">
 			<span className="text-muted-foreground text-xs font-medium">
 				<Trans>Station apps</Trans>
+				<OverrideBadge
+					overridden={
+						device.profileId !== null &&
+						device.overrides.some((key) =>
+							[
+								'timeclockEnabled',
+								'reservationsEnabled',
+								'inventoryEnabled',
+								'ordersEnabled',
+							].includes(key),
+						)
+					}
+				/>
 			</span>
 			<div className="flex flex-wrap items-center gap-2">
 				{features.timeclock
@@ -1314,10 +1446,13 @@ function PairDialog({
 	stockLocationIds = null,
 	clockScopeIds = null,
 	suggestedCode,
+	profiles = [],
 }: {
 	open: boolean
 	onClose: () => void
 	request: (path: string, init?: RequestInit) => Promise<unknown>
+	/** Profiles a new terminal can start on (#373). */
+	profiles?: TerminalProfile[]
 	tenantApiUrl: () => Promise<string>
 	posUrl: string
 	appUrl: string
@@ -1348,6 +1483,9 @@ function PairDialog({
 	const [created, setCreated] = useState<Created | null>(null)
 	const [apiUrl, setApiUrl] = useState<string | null>(null)
 	const [paired, setPaired] = useState(false)
+	// A profile decides the settings below, so they are not asked again.
+	const [profileId, setProfileId] = useState('')
+	const profile = profiles.find((p) => p.id === profileId) ?? null
 	// Where staff work by location, the clock needs the terminal's own (its workplace).
 	const timeclockAllowed =
 		stationFeatures.timeclock &&
@@ -1379,6 +1517,7 @@ function PairDialog({
 			setTimeclockEnabled(false)
 			setReservationsEnabled(false)
 			setInventoryEnabled(false)
+			setProfileId('')
 			setPaired(false)
 		}
 		// Re-seed only when the dialog opens.
@@ -1399,6 +1538,7 @@ function PairDialog({
 						signInRequired,
 						dayStartMinutes,
 						locationId: locationId === NO_LOCATION ? null : locationId,
+						...(profile ? { profileId: profile.id } : {}),
 						timeclockEnabled: timeclockAllowed && timeclockEnabled,
 						reservationsEnabled: reservationsAllowed && reservationsEnabled,
 						...(inventoryAllowed && inventoryEnabled
@@ -1522,131 +1662,179 @@ function PairDialog({
 								</span>
 							</div>
 						) : null}
-						<div className="flex flex-col gap-1 text-sm">
-							<span className="font-medium">
-								<Trans>Business day</Trans>
-							</span>
-							<DayStartSelect
-								value={dayStartMinutes}
-								label={_(t`When the business day ends`)}
-								onChange={setDayStartMinutes}
-							/>
-							<span className="text-muted-foreground">
-								<Trans>
-									Orders after midnight count towards the previous day until
-									then, so a late service keeps one day's numbers and takings.
-								</Trans>
-							</span>
-						</div>
-						<label className="flex items-start gap-3 text-sm">
-							<Checkbox
-								checked={signInRequired}
-								onCheckedChange={(checked) =>
-									setSignInRequired(checked === true)
-								}
-							/>
-							<span>
-								<span className="block font-medium">
-									<Trans>Require a staff PIN</Trans>
+						{profiles.length > 0 ? (
+							<div className="flex flex-col gap-1 text-sm">
+								<span className="font-medium">
+									<Trans>Profile</Trans>
 								</span>
+								<Select
+									value={profileId}
+									onValueChange={(next) => setProfileId(next ?? '')}
+								>
+									<SelectTrigger
+										className="h-11 w-fit max-w-full md:h-8"
+										aria-label={_(t`Profile`)}
+									>
+										<SelectValue>
+											{profile?.name ?? _(t`No profile`)}
+										</SelectValue>
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="">
+											<Trans>No profile</Trans>
+										</SelectItem>
+										{profiles.map((p) => (
+											<SelectItem key={p.id} value={p.id}>
+												{p.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
 								<span className="text-muted-foreground">
-									<Trans>
-										The terminal locks when idle and each order records who took
-										it. Staff need a PIN set under Staff.
-									</Trans>
+									{profile ? (
+										<Trans>
+											The terminal starts with this profile's apps, PIN, shift
+											and display settings. You can override one later.
+										</Trans>
+									) : (
+										<Trans>
+											Pick a profile to start from its settings instead of
+											choosing them one by one.
+										</Trans>
+									)}
 								</span>
-							</span>
-						</label>
-						{stationFeatures.timeclock ? (
-							<label className="flex items-start gap-3 text-sm">
-								<Checkbox
-									checked={timeclockAllowed && timeclockEnabled}
-									disabled={!timeclockAllowed}
-									onCheckedChange={(checked) =>
-										setTimeclockEnabled(checked === true)
-									}
-								/>
-								<span>
-									<span className="block font-medium">
-										<Trans>Time clock</Trans>
-									</span>
-									<span className="text-muted-foreground">
-										{timeclockAllowed ? (
-											<Trans>
-												Staff clock in and out on this terminal with their PIN,
-												even while it is locked.
-											</Trans>
-										) : locationId === NO_LOCATION ? (
-											_(
-												t`Choose the terminal's location to use the time clock.`,
-											)
-										) : (
-											_(
-												t`You can turn on the time clock only at your own locations.`,
-											)
-										)}
-									</span>
-								</span>
-							</label>
+							</div>
 						) : null}
-						{stationFeatures.reservations ? (
-							<label className="flex items-start gap-3 text-sm">
-								<Checkbox
-									checked={reservationsAllowed && reservationsEnabled}
-									disabled={!reservationsAllowed}
-									onCheckedChange={(checked) =>
-										setReservationsEnabled(checked === true)
-									}
-								/>
-								<span>
-									<span className="block font-medium">
-										<Trans>Reservations</Trans>
+						{profile ? null : (
+							<>
+								<div className="flex flex-col gap-1 text-sm">
+									<span className="font-medium">
+										<Trans>Business day</Trans>
 									</span>
+									<DayStartSelect
+										value={dayStartMinutes}
+										label={_(t`When the business day ends`)}
+										onChange={setDayStartMinutes}
+									/>
 									<span className="text-muted-foreground">
-										{reservationsAllowed ? (
-											<Trans>
-												The host stand for this location: today’s floor,
-												arrivals, walk-ins and the waitlist.
-											</Trans>
-										) : (
-											<Trans>
-												Needs a location and a staff PIN, so guests’ details
-												only open for someone signed in.
-											</Trans>
-										)}
+										<Trans>
+											Orders after midnight count towards the previous day until
+											then, so a late service keeps one day's numbers and
+											takings.
+										</Trans>
 									</span>
-								</span>
-							</label>
-						) : null}
-						{stationFeatures.inventory ? (
-							<label className="flex items-start gap-3 text-sm">
-								<Checkbox
-									checked={inventoryAllowed && inventoryEnabled}
-									disabled={!inventoryAllowed}
-									onCheckedChange={(checked) =>
-										setInventoryEnabled(checked === true)
-									}
-								/>
-								<span>
-									<span className="block font-medium">
-										<Trans>Stock</Trans>
-									</span>
-									<span className="text-muted-foreground">
-										{inventoryAllowed ? (
+								</div>
+								<label className="flex items-start gap-3 text-sm">
+									<Checkbox
+										checked={signInRequired}
+										onCheckedChange={(checked) =>
+											setSignInRequired(checked === true)
+										}
+									/>
+									<span>
+										<span className="block font-medium">
+											<Trans>Require a staff PIN</Trans>
+										</span>
+										<span className="text-muted-foreground">
 											<Trans>
-												Count stock, log waste and receive deliveries on this
-												terminal.
+												The terminal locks when idle and each order records who
+												took it. Staff need a PIN set under Staff.
 											</Trans>
-										) : (
-											<Trans>
-												Needs a location and a staff PIN, so every count and
-												waste entry records who made it.
-											</Trans>
-										)}
+										</span>
 									</span>
-								</span>
-							</label>
-						) : null}
+								</label>
+								{stationFeatures.timeclock ? (
+									<label className="flex items-start gap-3 text-sm">
+										<Checkbox
+											checked={timeclockAllowed && timeclockEnabled}
+											disabled={!timeclockAllowed}
+											onCheckedChange={(checked) =>
+												setTimeclockEnabled(checked === true)
+											}
+										/>
+										<span>
+											<span className="block font-medium">
+												<Trans>Time clock</Trans>
+											</span>
+											<span className="text-muted-foreground">
+												{timeclockAllowed ? (
+													<Trans>
+														Staff clock in and out on this terminal with their
+														PIN, even while it is locked.
+													</Trans>
+												) : locationId === NO_LOCATION ? (
+													_(
+														t`Choose the terminal's location to use the time clock.`,
+													)
+												) : (
+													_(
+														t`You can turn on the time clock only at your own locations.`,
+													)
+												)}
+											</span>
+										</span>
+									</label>
+								) : null}
+								{stationFeatures.reservations ? (
+									<label className="flex items-start gap-3 text-sm">
+										<Checkbox
+											checked={reservationsAllowed && reservationsEnabled}
+											disabled={!reservationsAllowed}
+											onCheckedChange={(checked) =>
+												setReservationsEnabled(checked === true)
+											}
+										/>
+										<span>
+											<span className="block font-medium">
+												<Trans>Reservations</Trans>
+											</span>
+											<span className="text-muted-foreground">
+												{reservationsAllowed ? (
+													<Trans>
+														The host stand for this location: today’s floor,
+														arrivals, walk-ins and the waitlist.
+													</Trans>
+												) : (
+													<Trans>
+														Needs a location and a staff PIN, so guests’ details
+														only open for someone signed in.
+													</Trans>
+												)}
+											</span>
+										</span>
+									</label>
+								) : null}
+								{stationFeatures.inventory ? (
+									<label className="flex items-start gap-3 text-sm">
+										<Checkbox
+											checked={inventoryAllowed && inventoryEnabled}
+											disabled={!inventoryAllowed}
+											onCheckedChange={(checked) =>
+												setInventoryEnabled(checked === true)
+											}
+										/>
+										<span>
+											<span className="block font-medium">
+												<Trans>Stock</Trans>
+											</span>
+											<span className="text-muted-foreground">
+												{inventoryAllowed ? (
+													<Trans>
+														Count stock, log waste and receive deliveries on
+														this terminal.
+													</Trans>
+												) : (
+													<Trans>
+														Needs a location and a staff PIN, so every count and
+														waste entry records who made it.
+													</Trans>
+												)}
+											</span>
+										</span>
+									</label>
+								) : null}
+							</>
+						)}
 						{error ? (
 							<Alert variant="destructive">
 								<AlertDescription>{error}</AlertDescription>

@@ -37,6 +37,7 @@ import {
 } from '~/lib/pricing.ts'
 import { roundsOf, servedOf } from '~/lib/rounds.ts'
 import { shownLine } from '~/lib/store.ts'
+import { isTrainingMode } from '~/lib/training-flag.ts'
 import {
 	Button,
 	IconButton,
@@ -426,8 +427,13 @@ export function Cart({
 				</p>
 			) : null}
 			<div className="border-border bg-card sticky bottom-0 z-10 shrink-0 space-y-3 border-t p-4">
-				<LoyaltyRewards money={money} />
-				<GiftCardsButton money={money} />
+				{/* Members' points and gift card balances are real: not in training. */}
+				{isTrainingMode() ? null : (
+					<>
+						<LoyaltyRewards money={money} />
+						<GiftCardsButton money={money} />
+					</>
+				)}
 				<ManualDiscount disabled={lines.length === 0} money={money} />
 				<dl className="tnum space-y-1 text-sm">
 					<Row

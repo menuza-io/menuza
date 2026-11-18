@@ -12,11 +12,16 @@ import { PosDayReport } from '#app/components/pos/pos-day-report.tsx'
 import { ReadyTextSettings } from '#app/components/pos/ready-text-settings.tsx'
 import { StationRegisterSettings } from '#app/components/pos/station-register-settings.tsx'
 import { TerminalsManager } from '#app/components/pos/terminals-manager.tsx'
+import { TicketSettings } from '#app/components/pos/ticket-settings.tsx'
 import { ZatcaSettings } from '#app/components/pos/zatca-settings.tsx'
 import { getInventoryFeatureState } from '#app/utils/inventory/access.server.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
+import {
+	buildHealthWindow,
+	isDeviceHealthOn,
+} from '#app/utils/pos/device-health.server.ts'
 import { getStationAppGrants } from '#app/utils/pos/station-apps.server.ts'
 import { resolvePosUrl } from '#app/utils/pos/url.server.ts'
 import { getReservationsFeatureState } from '#app/utils/reservations/access.server.ts'
@@ -38,6 +43,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		staffing,
 		reservations,
 		inventory,
+		deviceHealthOn,
 		locationRows,
 	] = await Promise.all([
 		userHasOrganizationPermission(
@@ -55,6 +61,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		getStaffingFeatureState(organization.id),
 		getReservationsFeatureState(organization.id),
 		getInventoryFeatureState(organization.id),
+		isDeviceHealthOn(organization.id),
 		db
 			.select({
 				id: OrganizationLocation.id,
@@ -62,6 +69,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				address: OrganizationLocation.address,
 				enabled: OrganizationLocation.readyTextEnabled,
 				stationSettings: OrganizationLocation.stationSettings,
+				timezone: OrganizationLocation.timezone,
+				isActive: OrganizationLocation.isActive,
+				storeHours: OrganizationLocation.storeHours,
+				onlineHours: OrganizationLocation.onlineHours,
+				specialHours: OrganizationLocation.specialHours,
 			})
 			.from(OrganizationLocation)
 			.where(
@@ -97,10 +109,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			settings: parsePosLocationStationSettings(row.stationSettings),
 		}
 	})
+	// Connection history (#356): the days the Health panel draws and when each
+	// location was open, so a gap outside opening hours is never called an outage.
+	const nowMs = Date.now()
+	const healthWindows = deviceHealthOn
+		? {
+				none: buildHealthWindow(null, nowMs),
+				...Object.fromEntries(
+					locationRows.map((row) => [row.id, buildHealthWindow(row, nowMs)]),
+				),
+			}
+		: null
 	return data(
 		{
 			// A terminal bound to a location sells there and can run its host stand.
 			locations,
+			// Null while the organization does not have connection history.
+			healthWindows,
 			// Station apps a terminal can offer, as the organization has them.
 			stationFeatures: {
 				timeclock: staffing.timeclock,
@@ -143,6 +168,7 @@ export default function TerminalsPage() {
 		readyText,
 		registerLocations,
 		cashDiscountAllowed,
+		healthWindows,
 	} = useLoaderData<typeof loader>()
 	return (
 		<div className="flex min-w-0 flex-col gap-8">
@@ -154,12 +180,22 @@ export default function TerminalsPage() {
 				locations={locations}
 				stationFeatures={stationFeatures}
 				stationGrants={stationGrants}
+				healthWindows={healthWindows}
 			/>
 			<StationRegisterSettings
 				orgSlug={orgSlug}
 				canWrite={canWrite}
 				locations={registerLocations}
 				cashDiscountAllowed={cashDiscountAllowed}
+			/>
+			<TicketSettings
+				orgSlug={orgSlug}
+				canWrite={canWrite}
+				locations={registerLocations.map((location) => ({
+					id: location.id,
+					name: location.name,
+					tickets: location.settings.tickets,
+				}))}
 			/>
 			<ReadyTextSettings
 				orgSlug={orgSlug}

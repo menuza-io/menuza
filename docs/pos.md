@@ -960,6 +960,127 @@ nothing leaves the tab.
 `e2e/stock.spec.ts` stands a recording region in front of the page until the
 harness serves `/pos/inventory/*`.
 
+## Station devices: profiles, connection history, training, guest screen and tickets
+
+One migration (tenant `0054_station_devices`), no change to the POS contract
+(`POS_CONTRACT_VERSION` stays 11). Deploy order: tenant-api, then App, then
+Station; every new field is optional, and a till that has not updated simply
+reports and receives nothing new.
+
+### Terminal profiles (#373)
+
+- A profile (`pos_terminal_profiles`) bundles every per-terminal setting that
+  exists: the apps (`timeclock`, `reservations`, `inventory`, `orders`), staff
+  sign-in, cash drawer shifts, the business-day start, the lock timeout, the
+  Kitchen station a screen shows, the menu columns and tile size, and the guest
+  screen. The registry and the inheritance rules are one module:
+  `packages/common/src/terminal-profiles.ts`.
+- A terminal keeps the **effective value** of every setting on its own row (the
+  seven columns that already existed, plus `device_settings` JSON for the rest),
+  and a list of the keys it overrides (`profile_overrides`). A profile change
+  writes the new value to every terminal that does not override that key, so all
+  existing code that reads `device.signInRequired` and friends is unchanged.
+  Changing a terminal's own setting marks the key overridden when it differs from
+  the profile, and clears the mark when it matches again. "Use the profile's
+  values" (`PATCH /terminals/:id { resetOverrides }`) sets it back.
+- A profile change is checked against every terminal it reaches first (the same
+  `planDeviceSettings` rules as a manager's own edit, and the same permission to
+  switch a Station app on, per terminal and location). If any one is refused,
+  nothing is written and the answer (`422 profile_conflict`) names the terminals.
+- A profile in use is never deleted: `409 profile_in_use` while a terminal
+  inherits it or a pairing code waiting to start one names it. Removed terminals
+  do not count and are detached.
+- `GET /pos/me` reports only the settings a terminal has stored (lock timeout,
+  kitchen station, menu layout, guest screen) and the profile's name, so a till
+  with none keeps its own local choices. Station shows a managed setting locked.
+- Routes: `GET|POST /operator/pos/profiles`, `PUT|DELETE /operator/pos/profiles/:id`,
+  `PATCH /operator/pos/terminals/:id` (`profileId`, `resetOverrides`, and the new
+  settings), `POST /operator/pos/pairing-codes` (`profileId`),
+  `GET /operator/pos/kds-stations?locationId=`. Tests:
+  `routes/pos-profiles.test.ts`.
+- Replacing a tablet (#173) is not built; pairing the new one with the same
+  profile gives it the same settings.
+
+### Connection history (#356)
+
+- Flag `pos.device_health` (organization, default off, only a literal `true`),
+  read by tenant-api from App's `GET /resources/pos/flags?orgId=` (internal
+  token; cached 5 minutes, off when App cannot be reached). Node kill switch
+  `POS_DEVICE_HEALTH_ENABLED=false`.
+- Station sends `POST /pos/heartbeat` at most once a minute while it is open and
+  paired (every ten minutes while the region says history is off, never in
+  training or demo mode). The body is technical only (app version, browser,
+  battery, storage, how many orders wait to upload, when it last delivered, the
+  open shift id). No staff names, no order contents; the schema is strict.
+- A **browser cannot read a receipt printer or the cash drawer**, so Station
+  reports neither. The columns (`printer_state`, `drawer_opened_at`) exist and the
+  App shows those rows only when a till reports them; the panel always shows the
+  last cash drawer *shift* opened, which the region knows.
+- One row per terminal per minute (`pos_device_heartbeats`) for 30 days, then a
+  daily summary (`pos_device_health_daily`, kept 400 days); the regional tick
+  (`rollupDeviceHealth`, from the staff tick) summarizes and purges. A terminal
+  removed over 30 days ago keeps nothing; one removed less than 30 days ago keeps
+  its history read-only.
+- The region answers check-in intervals (`GET /operator/pos/health`,
+  `/health/:id`); the App turns them into outages with the location's opening
+  hours (`@repo/opening-hours`). An outage is a gap of at least three minutes
+  during opening hours after the terminal's first check-in. With no opening hours
+  nothing is called an outage ("Set the opening hours to see offline time"). The
+  maths is `packages/common/src/device-health.ts`.
+- Support sees the same panel through the App's impersonation path: the read
+  token is issued while impersonating (`orders-token.test.ts`).
+
+### Training mode (#383)
+
+Switching it on or off **reloads the till**, so the page opens one store for its
+whole life: `pos` normally, `pos-training` (a separate IndexedDB database) in
+training. A training order, shift or sign-in is therefore never in the real store
+and never uploaded (`flushOutbox` returns at once), so it cannot reach reports,
+loyalty, inventory or the kitchen. Starting copies only the menu, the people who
+may sign in and the PIN salt; the ZATCA key, the fiscal chain and other terminals'
+tabs are never read in training. Only the till is offered (every other app acts on
+real data), loyalty and gift cards are hidden, a training receipt says so and is
+never a tax invoice, and a banner (`TrainingShell`, outside the app shell) sits
+above every screen. Turning it off deletes the training database and the flag.
+Reaching Settings already takes a manager's PIN where staff sign in.
+
+### Guest second screen (#367)
+
+Per terminal (and so per profile): `guestDisplayEnabled` and an optional
+`guestDisplayImageUrl` (https only). The till shows an "Open the guest screen"
+button that opens this same app with `?guest-display=<channel>`; the two windows
+talk over a `BroadcastChannel`, so it works offline. **It needs both windows on
+one device**: a separate spare tablet would need a relay, which is not built. What
+travels is the order on screen only (dish names, sizes and options, prices,
+totals, the tip choices and the guest's own loyalty sign-in), never a staff name,
+a dish note, a customer name or phone, a table, or another order
+(`lib/guest-display.ts`). A tip tapped on the screen is applied to the payment
+sheet like a tap there (only the offered percentages). With no order open it shows
+the idle image, or the business name.
+
+### Ticket contents (#363)
+
+`stationSettings.tickets` on the location (control plane JSON, no migration;
+`packages/common/src/ticket-config.ts`): per ticket type (guest receipt, kitchen
+station ticket, assembly ticket, item label) which fields show and which are bold
+or larger, when tickets print (receipt: by hand or when a tab closes; kitchen: by
+hand, on acceptance or when ready), leave dine-in out, print only changes of an
+adjusted order, strike served dishes, and print a cancellation slip. Nothing set
+prints what Station always printed (`screens/print-golden.test.ts` holds snapshots
+of that output). Fields the law or the totals need (VAT number, invoice lines,
+items, tax, total, QR code) cannot be hidden. The App's live preview and the
+till read the same field registry.
+
+Print paths in Station today: the **guest receipt** (till and online orders) and
+the **kitchen station ticket** (online orders, reprint; till orders for changes
+and cancellations). The **assembly ticket** and **item label** have settings and a
+preview only; there is no printer path for them until cloud printers (#117). The
+kitchen ticket's paid/unpaid line, modifier group names and order-type colour stay
+in Kitchen setup (#420). "Adjusted" means a till tab sent to the kitchen in more
+than one round (online orders cannot be edited after they are placed). "Dine-in
+left out" skips kitchen tickets and automatic prints; a guest can still get a
+receipt by hand.
+
 ## Personal data
 
 - **Guest names** (a first name or note typed by the cashier) and callback

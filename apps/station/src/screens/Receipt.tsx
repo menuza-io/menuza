@@ -10,6 +10,8 @@ import { type PosOrder, type TenderMethod } from '~/lib/db.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
 import { saleLine } from '~/lib/store.ts'
+import { fieldOf, useTickets } from '~/lib/tickets.ts'
+import { isTrainingMode } from '~/lib/training-flag.ts'
 import { cn } from '~/ui/primitives.tsx'
 
 const TENDER_LABEL: Record<TenderMethod, MessageDescriptor> = {
@@ -27,13 +29,19 @@ const TENDER_LABEL: Record<TenderMethod, MessageDescriptor> = {
 export function Receipt({
 	order,
 	businessName,
-	vatNumber = null,
+	vatNumber: realVatNumber = null,
 }: {
 	order: PosOrder
 	businessName: string
 	vatNumber?: string | null
 }) {
 	const { _, i18n } = useLingui()
+	const tickets = useTickets()
+	/** How one field of the guest receipt prints (#363). */
+	const f = (key: string) => fieldOf(tickets, 'receipt', key)
+	// A training receipt is never a tax invoice (#383).
+	const training = isTrainingMode()
+	const vatNumber = training ? null : realVatNumber
 	const money = moneyFormatter(order.currency)
 	const when = new Date(order.createdAt).toLocaleString(i18n.locale)
 	const change = order.payments.reduce((s, p) => s + p.changeCents, 0)
@@ -67,32 +75,55 @@ export function Receipt({
 	// Portalled to <body>: a <dialog> clips and offsets anything printed inside it.
 	return createPortal(
 		<div id="receipt" className="hidden print:block" aria-hidden>
-			<div className="text-center text-sm font-semibold">{businessName}</div>
+			{training ? (
+				<div className="text-center font-semibold">
+					<Trans>TRAINING: NOT A REAL RECEIPT</Trans>
+				</div>
+			) : null}
+			{f('businessName').show ? (
+				<div
+					className={cn(
+						'text-center text-sm font-semibold',
+						f('businessName').cls,
+					)}
+				>
+					{businessName}
+				</div>
+			) : null}
 			{vatNumber ? (
-				<div className="text-center">
+				<div className={cn('text-center', f('vatNumber').cls)}>
 					<Trans>VAT No. {vatNumber}</Trans>
 				</div>
 			) : null}
 			{(vatNumber || signed) && invoice ? (
-				<div className="text-center font-semibold">
+				<div className={cn('text-center font-semibold', f('invoiceTitle').cls)}>
 					<Trans>Simplified tax invoice</Trans>
 				</div>
 			) : null}
-			<div className="text-center">{when}</div>
-			<div className="my-1.5 text-center text-base font-semibold">
-				#{order.number}
-			</div>
+			{f('dateTime').show ? (
+				<div className={cn('text-center', f('dateTime').cls)}>{when}</div>
+			) : null}
+			{f('orderNumber').show ? (
+				<div
+					className={cn(
+						'my-1.5 text-center text-base font-semibold',
+						f('orderNumber').cls,
+					)}
+				>
+					#{order.number}
+				</div>
+			) : null}
 			{invoice ? (
-				<div className="text-center">
+				<div className={cn('text-center', f('invoiceNumber').cls)}>
 					<Trans>Invoice {invoiceNumber}</Trans>
 				</div>
 			) : null}
-			{order.orderSource === 'phone' ? (
-				<div className="text-center">
+			{!f('orderType').show ? null : order.orderSource === 'phone' ? (
+				<div className={cn('text-center', f('orderType').cls)}>
 					<PhonePickupDetails order={order} printed />
 				</div>
 			) : (
-				<div className="text-center">
+				<div className={cn('text-center', f('orderType').cls)}>
 					{order.orderType === 'dine_in' ? (
 						<>
 							{_(t`Dine in`)}
@@ -126,8 +157,8 @@ export function Receipt({
 					)}
 				</div>
 			)}
-			{servedBy ? (
-				<div className="text-center">
+			{servedBy && f('servedBy').show ? (
+				<div className={cn('text-center', f('servedBy').cls)}>
 					<Trans>Served by {servedBy}</Trans>
 				</div>
 			) : null}
@@ -135,7 +166,7 @@ export function Receipt({
 			{order.lines
 				.map((line) => saleLine(line, order.status === 'open'))
 				.map((line) => (
-					<div key={line.id} className="mb-1">
+					<div key={line.id} className={cn('mb-1', f('items').cls)}>
 						<Row>
 							<span>
 								{line.quantity} × <bdi>{line.name}</bdi>
@@ -150,8 +181,11 @@ export function Receipt({
 							</span>
 							<span>{money(lineTotalCents(line))}</span>
 						</Row>
-						{line.options.map((o) => (
-							<Row key={o.groupId + o.optionId} className="ps-2.5">
+						{(f('itemOptions').show ? line.options : []).map((o) => (
+							<Row
+								key={o.groupId + o.optionId}
+								className={cn('ps-2.5', f('itemOptions').cls)}
+							>
 								<span>
 									+ {o.quantity > 1 ? `${o.quantity} × ` : ''}
 									<bdi>{o.optionName}</bdi>
@@ -161,27 +195,29 @@ export function Receipt({
 								) : null}
 							</Row>
 						))}
-						{line.instructions ? (
-							<div className="ps-2.5 italic">
+						{line.instructions && f('itemNotes').show ? (
+							<div className={cn('ps-2.5 italic', f('itemNotes').cls)}>
 								“<bdi>{line.instructions}</bdi>”
 							</div>
 						) : null}
 					</div>
 				))}
 			<hr />
-			<Row>
-				<span>
-					<Trans>Subtotal</Trans>
-				</span>
-				<span>{money(order.totals.subtotalCents)}</span>
-			</Row>
-			{order.adjustments.map((a) => (
-				<Row key={a.id}>
+			{f('subtotal').show ? (
+				<Row className={f('subtotal').cls}>
+					<span>
+						<Trans>Subtotal</Trans>
+					</span>
+					<span>{money(order.totals.subtotalCents)}</span>
+				</Row>
+			) : null}
+			{(f('discounts').show ? order.adjustments : []).map((a) => (
+				<Row key={a.id} className={f('discounts').cls}>
 					<span>{a.label}</span>
 					<span>{money(-a.amountCents)}</span>
 				</Row>
 			))}
-			<Row>
+			<Row className={f('tax').cls}>
 				<span>
 					{order.taxInclusive ? _(t`VAT included`) : _(t`Tax`)}
 					{order.taxRatePercent ? ` (${order.taxRatePercent}%)` : ''}
@@ -189,22 +225,22 @@ export function Receipt({
 				{/* The VAT on the signed invoice (and its QR code), when there is one. */}
 				<span>{money(signed ? signed.taxCents : order.totals.taxCents)}</span>
 			</Row>
-			{order.totals.tipCents > 0 ? (
-				<Row>
+			{order.totals.tipCents > 0 && f('tip').show ? (
+				<Row className={f('tip').cls}>
 					<span>
 						<Trans>Tip</Trans>
 					</span>
 					<span>{money(order.totals.tipCents)}</span>
 				</Row>
 			) : null}
-			<Row className="text-sm font-semibold">
+			<Row className={cn('text-sm font-semibold', f('total').cls)}>
 				<span>
 					<Trans>Total</Trans>
 				</span>
 				<span>{money(order.totals.totalCents)}</span>
 			</Row>
-			{order.payments.map((p) => (
-				<Row key={p.id}>
+			{(f('payments').show ? order.payments : []).map((p) => (
+				<Row key={p.id} className={f('payments').cls}>
 					<span>
 						{_(t`Paid`)} · {_(TENDER_LABEL[p.method])}
 						{p.reference ? (
@@ -217,24 +253,24 @@ export function Receipt({
 					<span>{money(p.tenderedCents)}</span>
 				</Row>
 			))}
-			{change > 0 ? (
-				<Row>
+			{change > 0 && f('change').show ? (
+				<Row className={f('change').cls}>
 					<span>
 						<Trans>Change</Trans>
 					</span>
 					<span>{money(change)}</span>
 				</Row>
 			) : null}
-			{(order.refunds ?? []).map((r) => (
-				<Row key={r.id}>
+			{(f('refunds').show ? (order.refunds ?? []) : []).map((r) => (
+				<Row key={r.id} className={f('refunds').cls}>
 					<span>
 						{_(t`Refunded`)} · {_(TENDER_LABEL[r.method])}
 					</span>
 					<span>{money(-r.amountCents)}</span>
 				</Row>
 			))}
-			{balance > 0 ? (
-				<Row className="text-sm font-semibold">
+			{balance > 0 && f('balanceDue').show ? (
+				<Row className={cn('text-sm font-semibold', f('balanceDue').cls)}>
 					<span>
 						<Trans>Balance due</Trans>
 					</span>
@@ -242,9 +278,11 @@ export function Receipt({
 				</Row>
 			) : null}
 			{qr ? <img src={qr} alt="" className="mx-auto mt-2 size-32" /> : null}
-			<div className="mt-2.5 text-center">
-				<Trans>Thank you!</Trans>
-			</div>
+			{f('thankYou').show ? (
+				<div className={cn('mt-2.5 text-center', f('thankYou').cls)}>
+					<Trans>Thank you!</Trans>
+				</div>
+			) : null}
 		</div>,
 		document.body,
 	)

@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/no-unnecessary-act */
 // @vitest-environment jsdom
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
@@ -15,6 +16,7 @@ import { createDemoOrders } from './demo.ts'
 import { Orders } from './Orders.tsx'
 import { useOrders } from './useOrders.ts'
 import { loadSettings } from '~/lib/config.ts'
+import { usePos } from '~/lib/store.ts'
 
 vi.mock('./useOrders.ts', () => ({ useOrders: vi.fn() }))
 vi.mock('../kitchen/chime.ts', () => ({
@@ -175,7 +177,7 @@ function draw(
 		revealing: false,
 		...over,
 	})
-	// eslint-disable-next-line testing-library/no-unnecessary-act
+	 
 	act(() =>
 		root.render(
 			h(
@@ -765,5 +767,104 @@ describe('daily limits are a manager control (#409)', () => {
 		await openControls()
 		expect(document.body.textContent).toContain('Online ordering here')
 		expect(document.body.textContent).not.toContain('Daily limits')
+	})
+})
+
+describe('automatic kitchen printing (#363)', () => {
+	const live = (values: Partial<PosOnlineOrderSummary> = {}) =>
+		summary({
+			id: 'p1',
+			number: 'W-7',
+			status: 'pending_acceptance',
+			openedAt: null,
+			paymentMethod: 'online',
+			paymentStatus: 'paid',
+			acceptanceDeadlineAt: NOW + 192_000,
+			...values,
+		})
+	const useTickets = (tickets: Record<string, unknown>) =>
+		usePos.setState({
+			location: { id: 'loc', stationSettings: { tickets } } as never,
+		})
+	// The command resolves, the ticket renders, and the next animation frame prints it.
+	const settle = async () => {
+		for (let i = 0; i < 3; i++)
+			await act(async () => {
+				await new Promise((resolve) => setTimeout(resolve, 40))
+			})
+	}
+	afterEach(() => usePos.setState({ location: null }))
+
+	it('prints nothing by itself by default', async () => {
+		const print = vi.fn()
+		vi.stubGlobal('print', print)
+		draw({ selected: 'p1', detail: detailOf(live()) }, [live()])
+		act(() => button('Accept order').click())
+		await settle()
+		expect(command).toHaveBeenCalled()
+		expect(print).not.toHaveBeenCalled()
+	})
+
+	it('prints the kitchen ticket once the order is accepted, when the owner chose acceptance', async () => {
+		useTickets({ when: { kitchen: 'on_acceptance' } })
+		const print = vi.fn()
+		vi.stubGlobal('print', print)
+		draw({ selected: 'p1', detail: detailOf(live()) }, [live()])
+		act(() => button('Accept order').click())
+		await settle()
+		expect(print).toHaveBeenCalledTimes(1)
+	})
+
+	it('prints it when the order is marked ready, when the owner chose that', async () => {
+		useTickets({ when: { kitchen: 'when_ready' } })
+		const print = vi.fn()
+		vi.stubGlobal('print', print)
+		const accepted = live({ status: 'accepted' })
+		draw({ selected: 'p1', detail: detailOf(accepted) }, [accepted])
+		act(() => button('Mark ready').click())
+		await settle()
+		expect(print).toHaveBeenCalledTimes(1)
+		// Not on acceptance when the owner chose ready.
+		print.mockClear()
+		draw({ selected: 'p1', detail: detailOf(live()) }, [live()])
+		act(() => button('Accept order').click())
+		await settle()
+		expect(print).not.toHaveBeenCalled()
+	})
+
+	it('leaves dine-in out of automatic printing when asked', async () => {
+		useTickets({ when: { kitchen: 'on_acceptance' }, excludeDineIn: true })
+		const print = vi.fn()
+		vi.stubGlobal('print', print)
+		const dineIn = live({ fulfillment: 'dine_in', tableLabel: '4' })
+		draw({ selected: 'p1', detail: detailOf(dineIn) }, [dineIn])
+		act(() => button('Accept order').click())
+		await settle()
+		expect(print).not.toHaveBeenCalled()
+	})
+
+	it('prints a cancellation slip when an order is rejected, if enabled', async () => {
+		useTickets({ cancellationSlip: true })
+		// What is on the paper at the moment the tablet prints.
+		const onPaper: string[] = []
+		const print = vi.fn(() => {
+			onPaper.push(document.getElementById('receipt')?.textContent ?? '')
+		})
+		vi.stubGlobal('print', print)
+		draw(
+			{ selected: 'p1', grants: MANAGER, detail: detailOf(live()) },
+			[live()],
+			MANAGER,
+			'manager',
+		)
+		act(() => button('Reject').click())
+		act(() => button('Kitchen closed').click())
+		act(() => button('Reject order').click())
+		await settle()
+		expect(command).toHaveBeenCalledWith(
+			expect.objectContaining({ action: 'reject' }),
+		)
+		expect(print).toHaveBeenCalledTimes(1)
+		expect(onPaper[0]).toContain('CANCELLED')
 	})
 })

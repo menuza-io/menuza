@@ -374,6 +374,21 @@
       "import": "./src/pos-station-controls.ts",
       "default": "./src/pos-station-controls.ts"
     },
+    "./device-health": {
+      "types": "./src/device-health.ts",
+      "import": "./src/device-health.ts",
+      "default": "./src/device-health.ts"
+    },
+    "./ticket-config": {
+      "types": "./src/ticket-config.ts",
+      "import": "./src/ticket-config.ts",
+      "default": "./src/ticket-config.ts"
+    },
+    "./terminal-profiles": {
+      "types": "./src/terminal-profiles.ts",
+      "import": "./src/terminal-profiles.ts",
+      "default": "./src/terminal-profiles.ts"
+    },
     "./pos-orders": {
       "types": "./src/pos-orders.ts",
       "import": "./src/pos-orders.ts",

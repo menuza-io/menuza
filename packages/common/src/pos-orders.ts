@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { CASH_DISCOUNT_MAX_BP } from './cash-discount.ts'
 import { POS_FISCAL_KINDS, posRefundTaxCents } from './pos-fiscal.ts'
+import { ticketsConfigSchema } from './ticket-config.ts'
 
 /**
  * Point-of-sale contract, shared by the regional tenant-api and its tests.
@@ -974,6 +975,11 @@ export const posLocationStationSettingsSchema = z.object({
 		.nullable()
 		.default(null)
 		.catch(null),
+	/**
+	 * What prints on each ticket type, and when (#363). Empty means what Station
+	 * printed before it existed. Edited at Settings, Terminals, Tickets.
+	 */
+	tickets: ticketsConfigSchema.catch({}).default({}),
 })
 
 export type PosLocationStationSettings = z.infer<
@@ -988,6 +994,7 @@ export const DEFAULT_POS_LOCATION_STATION_SETTINGS: PosLocationStationSettings =
 		customItemMaxCents: DEFAULT_POS_CUSTOM_ITEM_MAX_CENTS,
 		cashVarianceFlagCents: null,
 		cashDiscountBp: null,
+		tickets: {},
 	}
 
 function parseJsonOrObject<T>(

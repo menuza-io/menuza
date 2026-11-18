@@ -83,25 +83,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			{ status: 400 },
 		)
 	}
+	// The saved settings: the cash discount stays when the form sends none, and
+	// the ticket settings (edited elsewhere, #363) are never touched by this form.
+	const [saved] = await db
+		.select({ stationSettings: OrganizationLocation.stationSettings })
+		.from(OrganizationLocation)
+		.where(
+			and(
+				eq(OrganizationLocation.organizationId, organization.id),
+				eq(OrganizationLocation.id, parsed.data.locationId),
+			),
+		)
+		.limit(1)
+	const savedSettings = parsePosLocationStationSettings(saved?.stationSettings)
 	let cashDiscountBp: number | null
 	if (!cashDiscountAllowedIn(organization.dataRegion)) {
 		// Only where the data region allows it (US). Elsewhere the value is
 		// dropped whatever the form says, so a hand-made post cannot turn it on.
 		cashDiscountBp = null
 	} else if (parsed.data.cashDiscountPercent === undefined) {
-		const [saved] = await db
-			.select({ stationSettings: OrganizationLocation.stationSettings })
-			.from(OrganizationLocation)
-			.where(
-				and(
-					eq(OrganizationLocation.organizationId, organization.id),
-					eq(OrganizationLocation.id, parsed.data.locationId),
-				),
-			)
-			.limit(1)
-		cashDiscountBp = parsePosLocationStationSettings(
-			saved?.stationSettings,
-		).cashDiscountBp
+		cashDiscountBp = savedSettings.cashDiscountBp
 	} else {
 		const bp = readCashDiscountPercent(parsed.data.cashDiscountPercent)
 		if (bp === undefined) {
@@ -119,6 +120,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		customItemMaxCents: parsed.data.customItemMaxCents,
 		cashVarianceFlagCents: parsed.data.cashVarianceFlagCents,
 		cashDiscountBp,
+		tickets: savedSettings.tickets,
 	})
 	const updated = await db
 		.update(OrganizationLocation)

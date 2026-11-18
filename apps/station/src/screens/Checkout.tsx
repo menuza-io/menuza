@@ -1,8 +1,9 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { printAllowed } from '@repo/common/ticket-config'
 import { Icon } from '@repo/ui/icon'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { giftCardErrorMessage, LabeledInput } from './GiftCardSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
@@ -14,6 +15,11 @@ import {
 import { quickCashAmounts } from '~/lib/cash.ts'
 import { type PosOrder, type StaffRef, type TenderMethod } from '~/lib/db.ts'
 import { createGiftCardApi, GiftCardApiError } from '~/lib/gift-cards.ts'
+import {
+	clearGuestCheckout,
+	setGuestCheckout,
+	useGuestCheckout,
+} from '~/lib/guest-display-host.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
 import {
 	addPayment,
@@ -25,6 +31,7 @@ import {
 } from '~/lib/orders.ts'
 import { computeTotals, lineTotalCents } from '~/lib/pricing.ts'
 import { shownLine, usePos } from '~/lib/store.ts'
+import { useTickets } from '~/lib/tickets.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
 import {
 	Input,
@@ -152,6 +159,46 @@ export function Checkout({
 	const tipLocked = hasPayments
 	const paid = current ? paidCents(current) : 0
 	const remaining = Math.max(0, totals.totalCents - paid)
+
+	// "When a tab closes" (#363): the receipt prints by itself when the owner
+	// chose that, once the receipt is on screen to be printed. Dine-in can be left out.
+	const ticketSettings = useTickets()
+	useEffect(() => {
+		if (
+			!done ||
+			ticketSettings.when.receipt !== 'on_close' ||
+			!printAllowed(ticketSettings, done.orderType)
+		)
+			return
+		const frame = window.requestAnimationFrame(() => window.print())
+		return () => window.cancelAnimationFrame(frame)
+		// Once, when the bill is closed.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [done?.id])
+
+	// The guest's second screen (#367) shows this bill and its tip prompt, and
+	// the tip the guest taps there is applied here like a tap on the sheet.
+	const tipOffered = tipsEnabled && !tipLocked
+	useEffect(() => {
+		if (done) {
+			clearGuestCheckout()
+			return
+		}
+		setGuestCheckout({
+			lines: draft.lines,
+			totals,
+			taxInclusive: draft.taxInclusive ?? false,
+			tip: tipOffered ? { choices: TIP_PRESETS, selected: tipPercent } : null,
+		})
+	}, [done, draft.lines, draft.taxInclusive, totals, tipOffered, tipPercent])
+	useEffect(() => clearGuestCheckout, [])
+	const guestTip = useGuestCheckout((g) => g.requested)
+	useEffect(() => {
+		if (guestTip && tipOffered && TIP_PRESETS.includes(guestTip.percent))
+			setTipPercent(guestTip.percent)
+		// A new tap changes `n`; the same percent twice still arrives.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [guestTip?.n])
 
 	const applied =
 		mode.kind === 'full'

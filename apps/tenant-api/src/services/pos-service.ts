@@ -27,6 +27,18 @@ import {
 	cashDiscountCeilingCents,
 } from '@repo/common/cash-discount'
 import { menuOrderTypeFor } from '@repo/common/menu-pricing'
+import {
+	explicitTerminalJsonSettings,
+	overridesAfter,
+	parseOverrides,
+	parseTerminalJsonSettings,
+	TERMINAL_JSON_SETTING_KEYS,
+	TERMINAL_SETTING_KEYS,
+	terminalSettingsSchema,
+	type TerminalJsonSettings,
+	type TerminalSettingKey,
+	type TerminalSettings,
+} from '@repo/common/terminal-profiles'
 import { POS_FISCAL_GENESIS_HASH, posFiscalHash } from '@repo/common/pos-fiscal'
 import {
 	formatPosDeviceSecret,
@@ -67,6 +79,7 @@ import {
 	posPayments,
 	posPinAttempts,
 	posShifts,
+	posTerminalProfiles,
 	runTenantTransaction,
 	staffMembers,
 	staffScopeAssignments,
@@ -225,6 +238,11 @@ export async function createPairingCode(
 		reservationsEnabled?: boolean
 		/** Offer the Stock app (counts, waste, receiving) on this terminal. Default off. */
 		inventoryEnabled?: boolean
+		/**
+		 * The terminal profile the new terminal inherits (#373). Its settings
+		 * replace the ones above, which are ignored when a profile is chosen.
+		 */
+		profileId?: string
 	},
 	now = Date.now(),
 ): Promise<
@@ -242,21 +260,54 @@ export async function createPairingCode(
 	const scopeId = input.scopeId?.trim() || DEFAULT_SCOPE_ID
 	if (!/^[A-Za-z0-9_-]{1,64}$/.test(scopeId))
 		return fail(422, 'invalid_scope', 'That workplace is not valid.')
+	let profileSettings: TerminalSettings | null = null
+	if (input.profileId) {
+		const [profile] = await db
+			.select({ settings: posTerminalProfiles.settings })
+			.from(posTerminalProfiles)
+			.where(eq(posTerminalProfiles.id, input.profileId))
+			.limit(1)
+		profileSettings = profile ? profileSettingsOrNull(profile.settings) : null
+		if (!profileSettings)
+			return fail(422, 'profile_not_found', 'That profile does not exist.')
+	}
+	const signInRequired =
+		profileSettings?.signInRequired ?? input.signInRequired ?? true
+	const shiftsRequired =
+		profileSettings?.shiftsRequired ?? input.shiftsRequired ?? false
+	const timeclockEnabled =
+		profileSettings?.timeclockEnabled ?? input.timeclockEnabled ?? false
+	const reservationsEnabled =
+		profileSettings?.reservationsEnabled ?? input.reservationsEnabled ?? false
+	const inventoryEnabled =
+		profileSettings?.inventoryEnabled ?? input.inventoryEnabled ?? false
 	const reservationsProblem = stationReservationsProblem({
-		reservationsEnabled: input.reservationsEnabled ?? false,
+		reservationsEnabled,
 		locationId: input.locationId,
-		signInRequired: input.signInRequired ?? true,
+		signInRequired,
 	})
 	if (reservationsProblem)
 		return fail(422, reservationsProblem.code, reservationsProblem.message)
 	const inventoryProblem = stationInventoryProblem({
-		inventoryEnabled: input.inventoryEnabled ?? false,
+		inventoryEnabled,
 		locationId: input.locationId,
-		signInRequired: input.signInRequired ?? true,
+		signInRequired,
 	})
 	if (inventoryProblem)
 		return fail(422, inventoryProblem.code, inventoryProblem.message)
-	const dayStartMinutes = input.dayStartMinutes ?? POS_DEFAULT_DAY_START_MINUTES
+	if (profileSettings?.ordersEnabled) {
+		const ordersProblem = stationOrdersProblem({
+			ordersEnabled: true,
+			locationId: input.locationId,
+			signInRequired,
+		})
+		if (ordersProblem)
+			return fail(422, ordersProblem.code, ordersProblem.message)
+	}
+	const dayStartMinutes =
+		profileSettings?.dayStartMinutes ??
+		input.dayStartMinutes ??
+		POS_DEFAULT_DAY_START_MINUTES
 	if (!isValidDayStart(dayStartMinutes)) {
 		return fail(
 			422,
@@ -332,12 +383,13 @@ export async function createPairingCode(
 			terminalCode,
 			locationId: input.locationId,
 			scopeId,
-			signInRequired: input.signInRequired ?? true,
+			signInRequired,
 			dayStartMinutes,
-			shiftsRequired: input.shiftsRequired ?? false,
-			timeclockEnabled: input.timeclockEnabled ?? false,
-			reservationsEnabled: input.reservationsEnabled ?? false,
-			inventoryEnabled: input.inventoryEnabled ?? false,
+			shiftsRequired,
+			timeclockEnabled,
+			reservationsEnabled,
+			inventoryEnabled,
+			profileId: input.profileId ?? null,
 			createdBy: input.createdBy,
 			expiresAt,
 			createdAt: now,
@@ -401,19 +453,62 @@ export async function redeemPairingCode(
 					)
 					.returning({ id: posPairingCodes.id })
 				if (spent.length !== 1) throw REDEEM_FAILED
+				// A code made for a profile starts the terminal on the profile as it is
+				// now (it may have changed since the code was made). A profile deleted
+				// in between cannot happen (it is in use), but is read as none.
+				let inherited: TerminalSettings | null = null
+				let profileId: string | null = null
+				if (row.profileId) {
+					const [profile] = await tx
+						.select({
+							id: posTerminalProfiles.id,
+							settings: posTerminalProfiles.settings,
+						})
+						.from(posTerminalProfiles)
+						.where(eq(posTerminalProfiles.id, row.profileId))
+						.limit(1)
+					inherited = profile ? profileSettingsOrNull(profile.settings) : null
+					profileId = inherited && profile ? profile.id : null
+				}
+				const start = inherited ?? {
+					...terminalSettingsOf({
+						signInRequired: row.signInRequired,
+						shiftsRequired: row.shiftsRequired,
+						dayStartMinutes: row.dayStartMinutes,
+						timeclockEnabled: row.timeclockEnabled,
+						reservationsEnabled: row.reservationsEnabled,
+						inventoryEnabled: row.inventoryEnabled,
+						ordersEnabled: false,
+						deviceSettings: '{}',
+					}),
+				}
 				await tx.insert(posDevices).values({
 					id: deviceId,
 					label: row.label,
 					terminalCode: row.terminalCode,
 					locationId: row.locationId,
 					scopeId: row.scopeId,
-					signInRequired: row.signInRequired,
-					signInRequiredSince: row.signInRequired ? now : null,
-					dayStartMinutes: row.dayStartMinutes,
-					shiftsRequired: row.shiftsRequired,
-					timeclockEnabled: row.timeclockEnabled,
-					reservationsEnabled: row.reservationsEnabled,
-					inventoryEnabled: row.inventoryEnabled,
+					signInRequired: start.signInRequired,
+					signInRequiredSince: start.signInRequired ? now : null,
+					dayStartMinutes: start.dayStartMinutes,
+					shiftsRequired: start.shiftsRequired,
+					timeclockEnabled: start.timeclockEnabled,
+					reservationsEnabled: start.reservationsEnabled,
+					inventoryEnabled: start.inventoryEnabled,
+					ordersEnabled: start.ordersEnabled,
+					profileId,
+					// Only a terminal that starts on a profile stores these: without one
+					// the till keeps its own local choices.
+					deviceSettings: inherited
+						? JSON.stringify({
+								idleLockSeconds: inherited.idleLockSeconds,
+								kdsStationId: inherited.kdsStationId,
+								menuColumns: inherited.menuColumns,
+								menuDensity: inherited.menuDensity,
+								guestDisplayEnabled: inherited.guestDisplayEnabled,
+								guestDisplayImageUrl: inherited.guestDisplayImageUrl,
+							})
+						: '{}',
 					secretHash: hashPosSecret(secret),
 					pairedBy: row.createdBy,
 					pairedAt: now,
@@ -428,12 +523,12 @@ export async function redeemPairingCode(
 						terminalCode: row.terminalCode,
 						locationId: row.locationId,
 						scopeId: posStaffScopeId(row),
-						signInRequired: row.signInRequired,
-						dayStartMinutes: row.dayStartMinutes,
-						shiftsRequired: row.shiftsRequired,
-						timeclockEnabled: row.timeclockEnabled,
-						reservationsEnabled: row.reservationsEnabled,
-						inventoryEnabled: row.inventoryEnabled,
+						signInRequired: start.signInRequired,
+						dayStartMinutes: start.dayStartMinutes,
+						shiftsRequired: start.shiftsRequired,
+						timeclockEnabled: start.timeclockEnabled,
+						reservationsEnabled: start.reservationsEnabled,
+						inventoryEnabled: start.inventoryEnabled,
 					},
 				}
 			}),
@@ -459,6 +554,10 @@ export const serializeDevice = (row: PosDevice) => ({
 	reservationsEnabled: row.reservationsEnabled,
 	inventoryEnabled: row.inventoryEnabled,
 	ordersEnabled: row.ordersEnabled,
+	// The profile this terminal inherits and the settings it overrides (#373).
+	profileId: row.profileId,
+	overrides: parseOverrides(row.profileOverrides),
+	...parseTerminalJsonSettings(row.deviceSettings),
 	pairedAt: row.pairedAt,
 	lastSeenAt: row.lastSeenAt,
 	revokedAt: row.revokedAt,
@@ -926,17 +1025,78 @@ export type DeviceSettingsPatch = {
 	 * would move its tabs, taxes and numbers, so it is paired again instead.
 	 */
 	locationId?: string
+} & Partial<TerminalJsonSettings>
+
+/** The columns of a terminal the settings rules read. */
+export type DeviceSettingsRow = Pick<
+	PosDevice,
+	| 'signInRequired'
+	| 'locationId'
+	| 'reservationsEnabled'
+	| 'timeclockEnabled'
+	| 'inventoryEnabled'
+	| 'ordersEnabled'
+	| 'deviceSettings'
+>
+
+/** The settings a terminal has now, as one object (`@repo/common/terminal-profiles`). */
+export function terminalSettingsOf(
+	row: Pick<
+		PosDevice,
+		| 'signInRequired'
+		| 'shiftsRequired'
+		| 'dayStartMinutes'
+		| 'timeclockEnabled'
+		| 'reservationsEnabled'
+		| 'inventoryEnabled'
+		| 'ordersEnabled'
+		| 'deviceSettings'
+	>,
+): TerminalSettings {
+	return {
+		signInRequired: row.signInRequired,
+		shiftsRequired: row.shiftsRequired,
+		dayStartMinutes: row.dayStartMinutes,
+		timeclockEnabled: row.timeclockEnabled,
+		reservationsEnabled: row.reservationsEnabled,
+		inventoryEnabled: row.inventoryEnabled,
+		ordersEnabled: row.ordersEnabled,
+		...parseTerminalJsonSettings(row.deviceSettings),
+	}
 }
 
-/** A manager changes how an existing terminal behaves; the till learns on its next check-in. */
-export async function updateDeviceSettings(
-	db: TenantDatabase,
-	id: string,
+/**
+ * What a terminal has stored, for deciding what a profile still has to write:
+ * a settings key it never stored is absent (so the profile's value is written,
+ * even when it equals the default).
+ */
+export function storedTerminalSettings(
+	row: Parameters<typeof terminalSettingsOf>[0],
+): Partial<TerminalSettings> {
+	return {
+		signInRequired: row.signInRequired,
+		shiftsRequired: row.shiftsRequired,
+		dayStartMinutes: row.dayStartMinutes,
+		timeclockEnabled: row.timeclockEnabled,
+		reservationsEnabled: row.reservationsEnabled,
+		inventoryEnabled: row.inventoryEnabled,
+		ordersEnabled: row.ordersEnabled,
+		...explicitTerminalJsonSettings(row.deviceSettings),
+	}
+}
+
+const JSON_PATCH_KEYS = TERMINAL_JSON_SETTING_KEYS
+
+/**
+ * What a settings change writes to a terminal, or why it is refused. Pure: the
+ * same rules for a manager's edit and for a profile change that reaches many
+ * terminals, so the two can never disagree.
+ */
+export function planDeviceSettings(
+	device: DeviceSettingsRow,
 	patch: DeviceSettingsPatch,
-	now = Date.now(),
-	/** The operator making the change, for the audit trail. */
-	changedBy = 'unknown',
-): Promise<PosResult<true>> {
+	now: number,
+): PosResult<Partial<typeof posDevices.$inferInsert>> {
 	if (Object.values(patch).every((value) => value === undefined)) {
 		return fail(400, 'invalid_request')
 	}
@@ -945,19 +1105,6 @@ export async function updateDeviceSettings(
 		!isValidDayStart(patch.dayStartMinutes)
 	)
 		return fail(422, 'invalid_day_start')
-	const [device] = await db
-		.select({
-			signInRequired: posDevices.signInRequired,
-			locationId: posDevices.locationId,
-			reservationsEnabled: posDevices.reservationsEnabled,
-			timeclockEnabled: posDevices.timeclockEnabled,
-			inventoryEnabled: posDevices.inventoryEnabled,
-			ordersEnabled: posDevices.ordersEnabled,
-		})
-		.from(posDevices)
-		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
-		.limit(1)
-	if (!device) return fail(404, 'not_found')
 	if (patch.locationId !== undefined) {
 		if (device.locationId !== null && device.locationId !== patch.locationId)
 			return fail(
@@ -1019,24 +1166,103 @@ export async function updateDeviceSettings(
 		set.locationId = patch.locationId
 		set.locationBoundAt = now
 	}
+	if (JSON_PATCH_KEYS.some((key) => patch[key] !== undefined)) {
+		const merged: Record<string, unknown> = {
+			...parseTerminalJsonSettings(device.deviceSettings),
+		}
+		for (const key of JSON_PATCH_KEYS)
+			if (patch[key] !== undefined) merged[key] = patch[key]
+		set.deviceSettings = JSON.stringify(merged)
+	}
+	return ok(set)
+}
+
+/** What the audit trail records about a terminal's settings. */
+function auditedSettings(
+	row: Pick<
+		PosDevice,
+		| 'signInRequired'
+		| 'timeclockEnabled'
+		| 'reservationsEnabled'
+		| 'inventoryEnabled'
+		| 'ordersEnabled'
+		| 'locationId'
+		| 'deviceSettings'
+	>,
+): Record<string, unknown> {
+	return {
+		signInRequired: row.signInRequired,
+		timeclockEnabled: row.timeclockEnabled,
+		reservationsEnabled: row.reservationsEnabled,
+		inventoryEnabled: row.inventoryEnabled,
+		ordersEnabled: row.ordersEnabled,
+		locationId: row.locationId,
+		...parseTerminalJsonSettings(row.deviceSettings),
+	}
+}
+
+const profileSettingsOrNull = (raw: string): TerminalSettings | null => {
+	try {
+		const parsed = terminalSettingsSchema.safeParse(JSON.parse(raw))
+		return parsed.success ? parsed.data : null
+	} catch {
+		return null
+	}
+}
+export { profileSettingsOrNull }
+
+/** A manager changes how an existing terminal behaves; the till learns on its next check-in. */
+export async function updateDeviceSettings(
+	db: TenantDatabase,
+	id: string,
+	patch: DeviceSettingsPatch,
+	now = Date.now(),
+	/** The operator making the change, for the audit trail. */
+	changedBy = 'unknown',
+): Promise<PosResult<true>> {
+	const [device] = await db
+		.select()
+		.from(posDevices)
+		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
+		.limit(1)
+	if (!device) {
+		if (Object.values(patch).every((value) => value === undefined))
+			return fail(400, 'invalid_request')
+		return fail(404, 'not_found')
+	}
+	const planned = planDeviceSettings(device, patch, now)
+	if (!planned.ok) return planned
+	const set = planned.value
+	// A terminal that inherits a profile keeps track of what it now overrides:
+	// a value different from the profile's is an override, the profile's own
+	// value is not.
+	if (device.profileId) {
+		const [profile] = await db
+			.select({ settings: posTerminalProfiles.settings })
+			.from(posTerminalProfiles)
+			.where(eq(posTerminalProfiles.id, device.profileId))
+			.limit(1)
+		const settings = profile ? profileSettingsOrNull(profile.settings) : null
+		if (settings) {
+			const after = terminalSettingsOf({ ...device, ...set })
+			const touched: Partial<TerminalSettings> = {}
+			for (const key of TERMINAL_SETTING_KEYS) {
+				if (patchTouches(patch, key))
+					(touched as Record<string, unknown>)[key] = after[key]
+			}
+			const next = overridesAfter(
+				settings,
+				parseOverrides(device.profileOverrides),
+				touched,
+			)
+			if (JSON.stringify(next) !== device.profileOverrides)
+				set.profileOverrides = JSON.stringify(next)
+		}
+	}
 	await db.update(posDevices).set(set).where(eq(posDevices.id, id))
 	const changes = diffFields(
-		{
-			signInRequired: device.signInRequired,
-			timeclockEnabled: device.timeclockEnabled,
-			reservationsEnabled: device.reservationsEnabled,
-			inventoryEnabled: device.inventoryEnabled,
-			ordersEnabled: device.ordersEnabled,
-			locationId: device.locationId,
-		} as Record<string, unknown>,
-		{
-			signInRequired: set.signInRequired,
-			timeclockEnabled: set.timeclockEnabled,
-			reservationsEnabled: set.reservationsEnabled,
-			inventoryEnabled: set.inventoryEnabled,
-			ordersEnabled: set.ordersEnabled,
-			locationId: set.locationId,
-		},
+		auditedSettings(device) as Record<string, unknown>,
+		auditedSettings({ ...device, ...set }) as Record<string, unknown>,
 	)
 	if (Object.keys(changes).length > 0)
 		await writeOperatorAudit(db, changedBy, null, {
@@ -1046,6 +1272,10 @@ export async function updateDeviceSettings(
 			changes,
 		})
 	return ok(true)
+}
+
+function patchTouches(patch: DeviceSettingsPatch, key: TerminalSettingKey) {
+	return (patch as Record<string, unknown>)[key] !== undefined
 }
 
 const LAST_SEEN_THROTTLE_MS = 60_000

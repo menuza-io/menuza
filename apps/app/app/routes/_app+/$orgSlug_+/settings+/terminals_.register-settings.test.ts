@@ -70,6 +70,7 @@ describe('Station register settings route (#372, #171, #380)', () => {
 			customItemMaxCents: 50_000,
 			cashVarianceFlagCents: null,
 			cashDiscountBp: null,
+			tickets: {},
 		})
 
 		const result = await post(organization.slug, cookie, {
@@ -91,6 +92,7 @@ describe('Station register settings route (#372, #171, #380)', () => {
 			customItemMaxCents: 75_000,
 			cashVarianceFlagCents: 500,
 			cashDiscountBp: null,
+			tickets: {},
 		})
 		const [row] = await db
 			.select({ stationSettings: OrganizationLocation.stationSettings })
