@@ -95,6 +95,7 @@ export function DashboardEditor({
 		const byAccess = inaccessibleBuiltInBlockIds(blocks, {
 			bookingsToday: picker.bookingsToday.available,
 			today: picker.today.available,
+			salesGoals: picker.salesGoals.available,
 		})
 		return [...fromData, ...byType, ...byAccess]
 	}, [
@@ -103,6 +104,7 @@ export function DashboardEditor({
 		hiddenBlockTypes,
 		picker.bookingsToday.available,
 		picker.today.available,
+		picker.salesGoals.available,
 		picker.onboardingAvailable,
 	])
 

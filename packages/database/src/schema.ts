@@ -2757,6 +2757,51 @@ export const OrganizationLocation = sqliteTable(
 	],
 )
 
+/** Monthly net sales goal per location (#377), business data in the control plane. */
+export const OrganizationSalesGoal = sqliteTable(
+	'OrganizationSalesGoal',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		locationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** First day of month, `YYYY-MM`. */
+		month: text().notNull(),
+		goalMinor: integer().notNull(),
+		currency: text().notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('OrganizationSalesGoal_org_location_month_key').on(
+			table.organizationId,
+			table.locationId,
+			table.month,
+		),
+		index('OrganizationSalesGoal_organizationId_month_idx').on(
+			table.organizationId,
+			table.month,
+		),
+	],
+)
+
 /**
  * Locations a member's staffing access is limited to while
  * `UserOrganization.locationScope` is 'selected'. The ids are opaque to the

@@ -723,6 +723,32 @@ function menuTemplates(): ReportTemplate[] {
 			valueField: 'sales',
 			timeframePreset: 'last_30_days',
 		}),
+		template('organization', {
+			id: 'item-pairs-top',
+			category: 'Menu',
+			title: 'Top item pairs',
+			description:
+				'Dishes ordered together most often, counted once per order.',
+			subject: 'item_pairs',
+			groupBy: ['itemAName', 'itemBName'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'pairIncluded',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'modifier-attach-rates',
+			category: 'Menu',
+			title: 'Modifier attach rates',
+			description:
+				'How often each modifier is chosen on items that were ordered.',
+			subject: 'modifier_sales',
+			groupBy: ['optionName', 'parentItemName'],
+			chartStyle: 'table',
+			measure: 'ratio',
+			valueField: 'attachRate',
+			timeframePreset: 'last_30_days',
+		}),
 	]
 }
 

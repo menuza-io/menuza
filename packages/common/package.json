@@ -374,6 +374,36 @@
       "import": "./src/sales-report-facts.ts",
       "default": "./src/sales-report-facts.ts"
     },
+    "./item-pairs": {
+      "types": "./src/item-pairs.ts",
+      "import": "./src/item-pairs.ts",
+      "default": "./src/item-pairs.ts"
+    },
+    "./modifier-attach": {
+      "types": "./src/modifier-attach.ts",
+      "import": "./src/modifier-attach.ts",
+      "default": "./src/modifier-attach.ts"
+    },
+    "./sales-goal-projection": {
+      "types": "./src/sales-goal-projection.ts",
+      "import": "./src/sales-goal-projection.ts",
+      "default": "./src/sales-goal-projection.ts"
+    },
+    "./location-scorecard": {
+      "types": "./src/location-scorecard.ts",
+      "import": "./src/location-scorecard.ts",
+      "default": "./src/location-scorecard.ts"
+    },
+    "./financial-period-summary": {
+      "types": "./src/financial-period-summary.ts",
+      "import": "./src/financial-period-summary.ts",
+      "default": "./src/financial-period-summary.ts"
+    },
+    "./financial-period-csv": {
+      "types": "./src/financial-period-csv.ts",
+      "import": "./src/financial-period-csv.ts",
+      "default": "./src/financial-period-csv.ts"
+    },
     "./order-limit-catalog": {
       "types": "./src/order-limit-catalog.ts",
       "import": "./src/order-limit-catalog.ts",

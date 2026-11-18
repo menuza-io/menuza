@@ -41,15 +41,22 @@ export async function applyMenuAvailability(input: {
 	locationId: string | null
 	change: MenuAvailabilityChange
 	by: 'stock' | 'hand'
+	/** When set, manual changes are mirrored to the regional availability log. */
+	recordManualEvent?: (change: MenuAvailabilityChange) => Promise<void>
 }): Promise<boolean> {
-	return input.locationId === null
-		? applyToEntity(input.organizationId, input.change, input.by)
-		: applyToOverride(
-				input.organizationId,
-				input.locationId,
-				input.change,
-				input.by,
-			)
+	const changed =
+		input.locationId === null
+			? await applyToEntity(input.organizationId, input.change, input.by)
+			: await applyToOverride(
+					input.organizationId,
+					input.locationId,
+					input.change,
+					input.by,
+				)
+	if (changed && input.by === 'hand' && input.recordManualEvent) {
+		void input.recordManualEvent(input.change)
+	}
+	return changed
 }
 
 /** Whether a restore is still ours: nobody touched the row since the region took it off. */

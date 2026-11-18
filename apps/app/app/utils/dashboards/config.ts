@@ -15,6 +15,7 @@ export const BUILT_IN_BLOCK_TYPES = [
 	'leaderboard',
 	'bookings-today',
 	'today',
+	'sales-goals',
 	'attention',
 ] as const
 export const BLOCK_TYPES = [...BUILT_IN_BLOCK_TYPES, 'report'] as const
@@ -119,6 +120,14 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 		description: msg`Sales, orders, guests and covers so far today, with yesterday and last week.`,
 		defaultSize: { lg: { w: 12, h: 5 }, md: { w: 8, h: 6 } },
 		minSize: { lg: { w: 6, h: 4 }, md: { w: 4, h: 4 } },
+		maxInstances: 1,
+	},
+	'sales-goals': {
+		type: 'sales-goals',
+		title: msg`Sales goals`,
+		description: msg`Monthly sales goal progress by location.`,
+		defaultSize: { lg: { w: 6, h: 4 }, md: { w: 4, h: 4 } },
+		minSize: { lg: { w: 4, h: 3 }, md: { w: 4, h: 3 } },
 		maxInstances: 1,
 	},
 	attention: {
@@ -426,21 +435,51 @@ export function defaultHomeConfig(): DashboardConfig {
  */
 export function defaultRestaurantHomeConfig({
 	bookingsToday = false,
-}: { bookingsToday?: boolean } = {}): DashboardConfig {
+	salesGoals = false,
+}: { bookingsToday?: boolean; salesGoals?: boolean } = {}): DashboardConfig {
 	const blocks: DashboardBlock[] = [
 		{ id: 'today', type: 'today' },
+		...(salesGoals
+			? [{ id: 'sales-goals', type: 'sales-goals' as const }]
+			: []),
 		{ id: 'attention', type: 'attention' },
 		{ id: 'onboarding', type: 'onboarding' },
 	]
 	const lg: GridItem[] = [
 		{ i: 'today', x: 0, y: 0, w: 12, h: 5 },
-		{ i: 'attention', x: 0, y: 5, w: 6, h: 10 },
-		{ i: 'onboarding', x: 6, y: 5, w: 6, h: 10 },
+		...(salesGoals ? [{ i: 'sales-goals', x: 0, y: 5, w: 6, h: 4 }] : []),
+		{
+			i: 'attention',
+			x: 0,
+			y: salesGoals ? 9 : 5,
+			w: 6,
+			h: 10,
+		},
+		{
+			i: 'onboarding',
+			x: 6,
+			y: salesGoals ? 5 : 5,
+			w: 6,
+			h: salesGoals ? 9 : 10,
+		},
 	]
 	const md: GridItem[] = [
 		{ i: 'today', x: 0, y: 0, w: 8, h: 6 },
-		{ i: 'attention', x: 0, y: 6, w: 4, h: 10 },
-		{ i: 'onboarding', x: 4, y: 6, w: 4, h: 10 },
+		...(salesGoals ? [{ i: 'sales-goals', x: 0, y: 6, w: 4, h: 4 }] : []),
+		{
+			i: 'attention',
+			x: 0,
+			y: salesGoals ? 10 : 6,
+			w: 4,
+			h: 10,
+		},
+		{
+			i: 'onboarding',
+			x: 4,
+			y: salesGoals ? 6 : 6,
+			w: 4,
+			h: salesGoals ? 10 : 10,
+		},
 	]
 	if (bookingsToday) {
 		blocks.push({ id: 'bookings-today', type: 'bookings-today' })
@@ -484,11 +523,13 @@ export function addableBuiltInBlockTypes(
 		onboardingAvailable,
 		bookingsTodayAvailable,
 		todayAvailable = false,
+		salesGoalsAvailable = false,
 		attentionAvailable = false,
 	}: {
 		onboardingAvailable: boolean
 		bookingsTodayAvailable: boolean
 		todayAvailable?: boolean
+		salesGoalsAvailable?: boolean
 		attentionAvailable?: boolean
 	},
 ): BuiltInBlockType[] {
@@ -498,6 +539,7 @@ export function addableBuiltInBlockTypes(
 			(type !== 'onboarding' || onboardingAvailable) &&
 			(type !== 'bookings-today' || bookingsTodayAvailable) &&
 			(type !== 'today' || todayAvailable) &&
+			(type !== 'sales-goals' || salesGoalsAvailable) &&
 			(type !== 'attention' || attentionAvailable),
 	)
 }

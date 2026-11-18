@@ -4,7 +4,9 @@ import { I18nProvider } from '@lingui/react'
 import { render, screen } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { createRoutesStub } from 'react-router'
+import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { server } from '#tests/mocks/index.ts'
 import {
 	emptyEditorState,
 	stateToDefinition,
@@ -33,10 +35,19 @@ beforeEach(() => {
 			disconnect() {}
 		},
 	)
-	// The usage counts are not under test: a failed fetch shows dashes.
-	vi.stubGlobal(
-		'fetch',
-		vi.fn(async () => new Response('no', { status: 500 })),
+	// Usage counts are not under test: a failed region read shows dashes.
+	server.use(
+		http.get(/\/discounts-token$/, () =>
+			HttpResponse.json({
+				jwt: 'dsc.jwt',
+				tenantApiUrl: 'https://acme.tenant.test',
+				expiresAt: Date.now() + 3_600_000,
+			}),
+		),
+		http.get(
+			'https://acme.tenant.test/operator/discounts/usage',
+			() => new HttpResponse('no', { status: 500 }),
+		),
 	)
 	Element.prototype.scrollIntoView = vi.fn()
 })

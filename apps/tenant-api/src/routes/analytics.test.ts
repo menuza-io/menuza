@@ -19,6 +19,7 @@ import {
 	customers,
 	destroyTenantDb,
 	getTenantDb,
+	menuAvailabilityEvents,
 	provisionTenantDb,
 	restaurantOrders,
 	voiceCalls,
@@ -519,6 +520,50 @@ describe('POST /query order reports', () => {
 		)
 		expect(spend.status).toBe(200)
 		expect(spend.body).toMatchObject({ total: 1, value: 31 })
+	})
+
+	it('returns two sold-out rows when the same dish sold out twice', async () => {
+		const db = await getTenantDb(orgId)
+		const base = now.getTime()
+		await db.insert(menuAvailabilityEvents).values([
+			{
+				locationId: 'loc_1',
+				entityType: 'item',
+				entityId: 'dish-burger',
+				event: 'unavailable',
+				occurredAt: new Date(base - 5 * day),
+			},
+			{
+				locationId: 'loc_1',
+				entityType: 'item',
+				entityId: 'dish-burger',
+				event: 'available',
+				occurredAt: new Date(base - 4 * day),
+			},
+			{
+				locationId: 'loc_1',
+				entityType: 'item',
+				entityId: 'dish-burger',
+				event: 'unavailable',
+				occurredAt: new Date(base - 2 * day),
+			},
+			{
+				locationId: 'loc_1',
+				entityType: 'item',
+				entityId: 'dish-burger',
+				event: 'available',
+				occurredAt: new Date(base - 1 * day),
+			},
+		])
+		const definition = createReportDefinition({
+			subject: 'sold_out_history',
+			timeframe: { field: 'startedAt', preset: 'last_30_days' },
+			visualization: { chartStyle: 'table' },
+			settings: { title: 'Sold out', timezone: 'organization' },
+		})
+		const { status, body } = await query(definition, ORDER_REPORT_SUBJECTS)
+		expect(status).toBe(200)
+		expect(body).toMatchObject({ total: 2 })
 	})
 })
 

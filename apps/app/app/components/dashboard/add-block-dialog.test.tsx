@@ -33,6 +33,7 @@ const picker: DashboardBlockPicker = {
 	onboardingAvailable: true,
 	bookingsToday: { available: false, locations: [] },
 	today: NO_TODAY_ACCESS,
+	salesGoals: { available: false },
 	locationStorageKey: 'home-location:test',
 	savedReports: [],
 	templateGroups: [],

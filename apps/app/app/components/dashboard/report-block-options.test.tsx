@@ -14,6 +14,7 @@ import {
 	type SavedReportOption,
 } from '#app/utils/dashboards/reports.ts'
 import { NO_TODAY_ACCESS } from '#app/utils/dashboards/today.ts'
+import { type SalesGoalsAccess } from '#app/utils/goals/goals.ts'
 import { AddBlockDialog } from './add-block-dialog.tsx'
 import { ReportBlockOptions } from './report-block-options.tsx'
 
@@ -31,6 +32,7 @@ async function openDialog({
 		onboardingAvailable: false,
 		bookingsToday: { available: false, locations: [] },
 		today: NO_TODAY_ACCESS,
+		salesGoals: { available: false } satisfies SalesGoalsAccess,
 		locationStorageKey: 'home-location:test',
 		savedReports: reports,
 		templateGroups: reportTemplateGroups(),

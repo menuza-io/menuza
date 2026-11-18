@@ -10,6 +10,7 @@ import {
 } from '@repo/database'
 import { getInventoryFeatureState } from '#app/utils/inventory/access.server.ts'
 import { orgDefaultLocale } from '#app/utils/location-name.server.ts'
+import { recordManualAvailabilityEvent } from '#app/utils/menu/availability-events.server.ts'
 import { applyMenuAvailability } from '#app/utils/menu/location-availability.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { soldOutItemIds } from './attention.server.ts'
@@ -177,6 +178,14 @@ export async function restoreDishes({
 			locationId,
 			change: { entityType: 'item', entityId: id, available: true },
 			by: 'hand',
+			recordManualEvent:
+				organization.dataRegion === null
+					? undefined
+					: recordManualAvailabilityEvent({
+							orgId: organization.id,
+							dataRegion: organization.dataRegion,
+							locationId,
+						}),
 		})
 		if (changed) restored += 1
 	}

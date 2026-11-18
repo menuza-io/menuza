@@ -42,6 +42,8 @@ import {
 	type SavedReportBlockData,
 	type SavedReportOption,
 } from './reports.ts'
+import { loadSalesGoalsAccess } from '#app/utils/goals/goals-access.server.ts'
+import { type SalesGoalsAccess } from '#app/utils/goals/goals.ts'
 import { loadHomeLocations, loadTodayAccess } from './today.server.ts'
 import {
 	type HomeLocation,
@@ -80,6 +82,8 @@ export type LeaderboardEntry = {
 
 /** Data for each built-in block type, or null when no such block is shown. */
 export type BuiltInBlockData = {
+	/** When built-in block payloads were loaded (dashboard freshness, #387). */
+	fetchedAt: number
 	notes: NotesSeries | null
 	onboarding: OnboardingProgressData | null
 	leaderboard: LeaderboardEntry[] | null
@@ -99,6 +103,7 @@ export type DashboardBlockPicker = {
 	bookingsToday: BookingsTodayAccess
 	/** Which Today tiles the viewer may see, and the locations they cover. */
 	today: TodayAccess
+	salesGoals: SalesGoalsAccess
 	/** Key the home location picker is remembered under (per user and organization). */
 	locationStorageKey: string
 	savedReports: SavedReportOption[]
@@ -306,7 +311,14 @@ export async function loadBuiltInBlockData({
 			launchOn ? loadHomeLaunch(userId, organization.id, now) : null,
 		],
 	)
-	return { notes, onboarding, leaderboard, attention, launch }
+	return {
+		fetchedAt: now.getTime(),
+		notes,
+		onboarding,
+		leaderboard,
+		attention,
+		launch,
+	}
 }
 
 async function loadHomeLaunch(
@@ -456,17 +468,26 @@ export async function loadBlockPicker({
 			knownBookingsToday ?? loadBookingsTodayAccess({ userId, organizationId }),
 			knownLocations ?? loadHomeLocations(userId, organizationId),
 		])
-	const today = await loadTodayAccess({
-		userId,
-		organization,
-		bookingsToday,
-		locations,
-	})
+	const [today, salesGoals] = await Promise.all([
+		loadTodayAccess({
+			userId,
+			organization,
+			bookingsToday,
+			locations,
+		}),
+		loadSalesGoalsAccess({
+			userId,
+			organizationId,
+			orgSlug: organization.slug,
+			dataRegion: organization.dataRegion,
+		}),
+	])
 	return {
 		// The launch checklist stays on Home (it ends in "You're live").
 		onboardingAvailable: launchOn || isOnboardingVisible(onboarding),
 		bookingsToday,
 		today,
+		salesGoals,
 		locationStorageKey: homeLocationStorageKey(userId, organizationId),
 		savedReports,
 		templateGroups: reportTemplateGroups(grants),

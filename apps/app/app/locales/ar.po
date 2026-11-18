@@ -851,6 +851,12 @@ msgstr "{0} used"
 #~ msgid "{0} was received for this order. Cancelling does not refund it: refund it separately with your payment processor."
 #~ msgstr "تم استلام {0} لهذا الطلب. إلغاء الطلب لا يسترد المبلغ: استرده بشكل منفصل عبر معالج الدفع."
 
+#. placeholder {0}: row.rateBp / 100
+#. placeholder {1}: (row.taxMinor / 100).toFixed(2)
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:146
+msgid "{0}%: {1}"
+msgstr "{0}%: {1}"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:111
 msgid "{added, plural, one {# item added.} other {# items added.}}"
 msgstr "{added, plural, zero {تمت إضافة # صنف.} one {تمت إضافة صنف واحد (#).} two {تمت إضافة صنفين (#).} few {تمت إضافة # أصناف.} many {تمت إضافة # صنفاً.} other {تمت إضافة # صنف.}}"
@@ -2798,6 +2804,13 @@ msgstr "**تم استرداد مبلغ طلب الطباعة**"
 msgid "**Your prints are on the way**"
 msgstr "**مطبوعاتك في الطريق**"
 
+#. placeholder {0}: index + 1
+#. placeholder {1}: names.get(row.locationId) ?? row.locationId
+#. placeholder {2}: row.enoughData ? `${(row.salesMinor / 100).toFixed(0)} sales` : 'not enough data'
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:123
+msgid "#{0} {1} {2}"
+msgstr "#{0} {1} {2}"
+
 #: app/components/marketing/audience-builder.tsx:259
 msgid "% by spend, in the last"
 msgstr "٪ حسب الإنفاق، خلال آخر"
@@ -3758,7 +3771,7 @@ msgstr "رسالة نموذجية ببيانات ضيف وهمية، مبنية 
 msgid "A saved audience (not available to you)"
 msgstr "جمهور محفوظ (غير متاح لك)"
 
-#: app/utils/dashboards/config.ts:135
+#: app/utils/dashboards/config.ts:144
 msgid "A saved report or a report template."
 msgstr "تقرير محفوظ أو قالب تقرير."
 
@@ -4080,8 +4093,8 @@ msgstr "acme"
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:226
-#: app/routes/_app+/$orgSlug_+/index.tsx:252
+#: app/routes/_app+/$orgSlug_+/index.tsx:235
+#: app/routes/_app+/$orgSlug_+/index.tsx:261
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
@@ -4208,6 +4221,13 @@ msgstr "النشاط في الفروع الأخرى مخفي."
 
 #~ msgid "Actual (min)"
 #~ msgstr "الفعلي (دقيقة)"
+
+#. placeholder {0}: (row.actualMinor / 100).toFixed(2)
+#. placeholder {1}: (row.goalMinor / 100).toFixed(2)
+#. placeholder {2}: row.currency
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:208
+msgid "Actual {0} / goal {1} {2}"
+msgstr "الفعلي {0} / الهدف {1} {2}"
 
 #~ msgid "Actual versus configured, by party size"
 #~ msgstr "الفعلي مقابل المضبوط حسب عدد الأشخاص"
@@ -4725,8 +4745,8 @@ msgstr "إضافة توفر"
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:76
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:82
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:143
-#: app/components/dashboard/add-block-dialog.tsx:124
-#: app/components/dashboard/add-block-dialog.tsx:129
+#: app/components/dashboard/add-block-dialog.tsx:125
+#: app/components/dashboard/add-block-dialog.tsx:130
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:886
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1209
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1226
@@ -5797,7 +5817,7 @@ msgstr "جميع المناطق"
 #~ msgid "All assigned"
 #~ msgstr "جميعهم معينون"
 
-#: app/components/dashboard/add-block-dialog.tsx:161
+#: app/components/dashboard/add-block-dialog.tsx:162
 msgid "All built-in blocks are already on this dashboard."
 msgstr "جميع الكتل المدمجة موجودة بالفعل في لوحة التحكم هذه."
 
@@ -7664,7 +7684,7 @@ msgstr "متوسط قيمة الطلب"
 msgid "Average waitlist wait, last 7 days"
 msgstr "متوسط الانتظار في قائمة الانتظار، آخر 7 أيام"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:229
+#: app/routes/_app+/$orgSlug_+/index.tsx:238
 msgid "Avg per day"
 msgstr "المتوسط اليومي"
 
@@ -7995,6 +8015,11 @@ msgstr "أقل من الكمية التي تطلب عندها"
 msgid "Below the minimum order of <0>{minimum}</0>"
 msgstr "أقل من الحد الأدنى للطلب البالغ <0>{minimum}</0>"
 
+#. placeholder {0}: (GOAL_BENCHMARK_CANCELLATION_RATE * 100).toFixed(0)
+#: app/components/dashboard/blocks/sales-goals-block.tsx:120
+msgid "Benchmark: keep cancellations under {0}%."
+msgstr "معيار: حافظ على الإلغاءات دون {0}%."
+
 #: app/components/inventory/missing-recipes-panel.tsx:87
 msgid "Best sellers of the last 30 days first. Add a recipe to see what each one costs and to take stock off when it sells."
 msgstr "الأكثر مبيعًا في آخر 30 يومًا أولًا. أضف وصفة لتعرف تكلفة كل طبق ولخصم المخزون عند بيعه."
@@ -8310,7 +8335,7 @@ msgid "Bookings cancelled after the free-cancellation window over the last 30 da
 msgstr "الحجوزات الملغاة بعد انتهاء فترة الإلغاء المجاني خلال آخر 30 يومًا."
 
 #: app/components/dashboard/blocks/bookings-today-block.tsx:134
-#: app/utils/dashboards/config.ts:110
+#: app/utils/dashboards/config.ts:111
 msgid "Bookings today"
 msgstr "حجوزات اليوم"
 
@@ -8542,7 +8567,7 @@ msgstr "رقم المبنى"
 msgid "Built-in"
 msgstr "مدمج"
 
-#: app/components/dashboard/add-block-dialog.tsx:146
+#: app/components/dashboard/add-block-dialog.tsx:147
 msgid "Built-in blocks"
 msgstr "الكتل المدمجة"
 
@@ -12322,7 +12347,7 @@ msgstr "متعاقد"
 msgid "Contrast"
 msgstr "التباين"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:250
+#: app/routes/_app+/$orgSlug_+/index.tsx:259
 msgid "Contributors"
 msgstr "المساهمون"
 
@@ -12717,6 +12742,14 @@ msgstr "تعذّر إنهاء الحجز."
 msgid "Could not load"
 msgstr "تعذّر التحميل"
 
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:108
+msgid "Could not load figures from your region."
+msgstr "تعذّر تحميل الأرقام من منطقتك."
+
+#: app/components/dashboard/blocks/sales-goals-block.tsx:96
+msgid "Could not load goal progress."
+msgstr "تعذّر تحميل تقدّم الهدف."
+
 #: app/components/chat/chat-view.tsx:136
 #: app/components/chat/chat-view.tsx:210
 msgid "Could not load messages."
@@ -12729,6 +12762,10 @@ msgstr "تعذّر تحميل الردود."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:229
 msgid "Could not load reservation settings"
 msgstr "تعذر تحميل إعدادات الحجوزات"
+
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:105
+msgid "Could not load scorecard from your region."
+msgstr "تعذّر تحميل بطاقة الأداء من منطقتك."
 
 #: app/components/orders/slot-limits-panel.tsx:101
 msgid "Could not load slot limits."
@@ -18581,6 +18618,7 @@ msgstr "تصدير"
 msgid "Export (CSV)"
 msgstr "تصدير (CSV)"
 
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:103
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:344
 msgid "Export CSV"
 msgstr "تصدير CSV"
@@ -19259,6 +19297,10 @@ msgstr "عوامل التصفية: {summary}"
 #: app/components/roles/tenant-role-access-manager.tsx:753
 msgid "Finance"
 msgstr "المالية"
+
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:86
+msgid "Financial summary"
+msgstr "الملخص المالي"
 
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:99
 msgid "Find"
@@ -20274,6 +20316,10 @@ msgstr "الانتقال إلى البرنامج"
 
 #~ msgid "Go-live checklist"
 #~ msgstr "قائمة التحقق قبل الإطلاق"
+
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:170
+msgid "Goal"
+msgstr "الهدف"
 
 #: app/utils/reservations/labels.ts:119
 msgid "Gold"
@@ -23331,7 +23377,7 @@ msgid "Last {days} days"
 msgstr "آخر {days} يوم"
 
 #: app/components/notes-chart.tsx:63
-#: app/routes/_app+/$orgSlug_+/index.tsx:232
+#: app/routes/_app+/$orgSlug_+/index.tsx:241
 msgid "Last {daysShown} days"
 msgstr "آخر {daysShown} يوم"
 
@@ -24483,6 +24529,7 @@ msgstr "جارٍ تحميل مخزونك"
 msgid "Loading your items"
 msgstr "جارٍ تحميل عناصرك"
 
+#: app/components/dashboard/blocks/sales-goals-block.tsx:100
 #: app/components/discounts/discount-performance.tsx:166
 #: app/components/hiring/hire-dialog.tsx:233
 #: app/components/inventory/item-picker.tsx:152
@@ -24493,6 +24540,8 @@ msgstr "جارٍ تحميل عناصرك"
 #: app/components/staff/schedule/availability-sheet.tsx:217
 #: app/components/staff/schedule/time-off-sheet.tsx:190
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:672
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:156
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:110
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1440
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
@@ -24518,6 +24567,7 @@ msgstr "محاكي محلي"
 #: app/components/qr/tables-manager.tsx:174
 #: app/components/reservations/header-controls.tsx:39
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:151
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:156
 #: app/routes/_app+/$orgSlug_+/media.tsx:1737
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:611
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4223
@@ -24571,6 +24621,10 @@ msgstr "تجاوزات الفرع"
 #: app/components/menu/menu-bulk-edit-sheet.tsx:710
 msgid "Location scope writes an override, not the base dish price."
 msgstr "نطاق الموقع يكتب تجاوزاً، وليس سعر الطبق الأساسي."
+
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:102
+msgid "Location scorecard"
+msgstr "بطاقة أداء المواقع"
 
 #: app/components/locations/special-hours-picker.tsx:148
 msgid "Location Status"
@@ -25712,7 +25766,7 @@ msgstr "الأعضاء"
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
-#: app/utils/dashboards/config.ts:103
+#: app/utils/dashboards/config.ts:104
 msgid "Members who created the most notes."
 msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاحظات."
 
@@ -26253,6 +26307,12 @@ msgstr "شهر"
 msgid "Month"
 msgstr "الشهر"
 
+#. placeholder {0}: (orgTotal.actual / 100).toFixed(0)
+#. placeholder {1}: (orgTotal.goal / 100).toFixed(0)
+#: app/components/dashboard/blocks/sales-goals-block.tsx:114
+msgid "Month to date: {0} / {1}"
+msgstr "منذ بداية الشهر: {0} / {1}"
+
 #: app/components/settings/cards/organization/billing-card.tsx:232
 #: app/routes/organizations+/create.tsx:1168
 msgid "Monthly"
@@ -26261,6 +26321,18 @@ msgstr "شهري"
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:351
 msgid "Monthly Reservation Volume & Special Days"
 msgstr "حجم الحجوزات الشهري والأيام الخاصة"
+
+#: app/utils/dashboards/config.ts:128
+msgid "Monthly sales goal progress by location."
+msgstr "تقدّم هدف المبيعات الشهري حسب الموقع."
+
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:150
+msgid "Monthly targets for {month}."
+msgstr "أهداف شهرية لـ {month}."
+
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:32
+#~ msgid "Monthly targets for {month}. Set a goal per location under Settings."
+#~ msgstr "أهداف شهرية لـ {month}. عيّن هدفاً لكل موقع من الإعدادات."
 
 #: app/components/favorite-notes.tsx:89
 #: app/components/inventory/adjust-stock-dialog.tsx:230
@@ -26791,7 +26863,7 @@ msgstr "يحتاج إلى {minimum} طلبات على الأقل"
 #: app/components/staff/staff-profile-page.tsx:36
 #: app/components/staff/timeclock-today.tsx:125
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:305
-#: app/utils/dashboards/config.ts:126
+#: app/utils/dashboards/config.ts:135
 msgid "Needs attention"
 msgstr "يحتاج إلى انتباه"
 
@@ -26893,6 +26965,7 @@ msgid "Net"
 msgstr "صافي"
 
 #: app/components/pos/pos-day-report.tsx:253
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:116
 msgid "Net sales"
 msgstr "صافي المبيعات"
 
@@ -26960,7 +27033,7 @@ msgstr "جمهور جديد"
 msgid "New automation"
 msgstr "أتمتة جديدة"
 
-#: app/components/dashboard/add-block-dialog.tsx:138
+#: app/components/dashboard/add-block-dialog.tsx:139
 msgid "New blocks are added at the bottom of the dashboard."
 msgstr "تُضاف الكتل الجديدة في أسفل لوحة التحكم."
 
@@ -27376,7 +27449,7 @@ msgid "No active tables yet. Add tables under Floor first."
 msgstr "لا توجد طاولات نشطة بعد. أضف الطاولات من قسم الصالة أولاً."
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:232
+#: app/routes/_app+/$orgSlug_+/index.tsx:241
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:180
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
@@ -29248,6 +29321,10 @@ msgstr "غير مؤهل لإعادة التوظيف."
 msgid "Not enough data"
 msgstr "لا توجد بيانات كافية"
 
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:114
+msgid "Not enough data for this period yet."
+msgstr "لا توجد بيانات كافية لهذه الفترة بعد."
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:379
 msgid "Not enough history yet. Suggestions get better after about two weeks of use, so treat these as a first guess."
 msgstr "لا يوجد سجل كافٍ بعد. تتحسن الاقتراحات بعد نحو أسبوعين من الاستخدام، لذا اعتبرها تخمينًا أوليًا."
@@ -29513,11 +29590,11 @@ msgstr "الملاحظات مرئية للمديرين فقط."
 msgid "Notes can be up to 500 characters."
 msgstr "يمكن أن تصل الملاحظات إلى 500 حرف."
 
-#: app/utils/dashboards/config.ts:86
+#: app/utils/dashboards/config.ts:87
 msgid "Notes chart"
 msgstr "مخطط الملاحظات"
 
-#: app/utils/dashboards/config.ts:87
+#: app/utils/dashboards/config.ts:88
 msgid "Notes created each day."
 msgstr "الملاحظات المنشأة كل يوم."
 
@@ -30108,7 +30185,7 @@ msgstr "التهيئة {complete}/{total}"
 msgid "Onboarding {complete}/{total}, late"
 msgstr "التهيئة {complete}/{total}، متأخرة"
 
-#: app/utils/dashboards/config.ts:94
+#: app/utils/dashboards/config.ts:95
 msgid "Onboarding checklist"
 msgstr "قائمة خطوات البدء"
 
@@ -32985,6 +33062,10 @@ msgstr "مقاييس الأداء"
 msgid "Period"
 msgstr "الفترة"
 
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:25
+#~ msgid "Period totals for accounting: sales, tax by rate, tips, fees, and refunds. Export matches this view."
+#~ msgstr "إجماليات الفترة للمحاسبة: المبيعات، الضريبة حسب المعدل، الإكراميات، الرسوم والمبالغ المستردة. يطابق التصدير هذا العرض."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1408
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "تشير إعادة التوجيه الدائمة (301) لمحركات البحث (مثل Google) إلى أن الصفحة انتقلت نهائياً، مع نقل الترتيب والروابط الخلفية."
@@ -34496,7 +34577,7 @@ msgstr "قائمة بسعر ثابت"
 msgid "Pro"
 msgstr "احترافي"
 
-#: app/utils/dashboards/config.ts:127
+#: app/utils/dashboards/config.ts:136
 msgid "Problems that cost you orders, most urgent first, each with a way to fix it."
 msgstr "مشكلات تكلفك طلبات، الأكثر إلحاحًا أولًا، ولكل منها طريقة لإصلاحها."
 
@@ -35088,6 +35169,10 @@ msgstr "النطاق: {radiusValue} {radiusUnit}"
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:766
 #~ msgid "ran out."
 #~ msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:30
+#~ msgid "Ranks locations by sales, cancellations, ratings, and missed orders."
+#~ msgstr "يصنّف المواقع حسب المبيعات ومعدل الإلغاء والتقييم والطلبات الفائتة."
 
 #: app/components/staff/positions-tab.tsx:812
 msgid "Rate updated."
@@ -35685,6 +35770,7 @@ msgstr "المُحيل"
 msgid "Reflow later parties"
 msgstr "إعادة توزيع الحجوزات اللاحقة"
 
+#: app/components/dashboard/tile-freshness.tsx:64
 #: app/components/mailbox/reviews-tab.tsx:611
 #: app/components/reservations/host-subnav.tsx:375
 #: app/components/reservations/host-subnav.tsx:395
@@ -35694,6 +35780,7 @@ msgstr "إعادة توزيع الحجوزات اللاحقة"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:247
 #: app/routes/_app+/$orgSlug_+/orders.tsx:196
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:347
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:94
 msgid "Refresh"
 msgstr "تحديث"
 
@@ -35867,6 +35954,7 @@ msgid "Refunding…"
 msgstr "جارٍ الاسترداد…"
 
 #: app/components/pos/pos-day-report.tsx:252
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:132
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:168
 msgid "Refunds"
 msgstr "المبالغ المستردة"
@@ -36698,7 +36786,7 @@ msgstr "رد…"
 #~ msgstr "الرد على التعليق"
 
 #: app/components/workspace-breadcrumb.tsx:109
-#: app/utils/dashboards/config.ts:134
+#: app/utils/dashboards/config.ts:143
 msgid "Report"
 msgstr "تقرير"
 
@@ -37869,6 +37957,12 @@ msgstr "تمت إزالة مبيعات {label}."
 msgid "Sales for {label} saved."
 msgstr "تم حفظ مبيعات {label}."
 
+#: app/components/dashboard/blocks/sales-goals-block.tsx:90
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:148
+#: app/utils/dashboards/config.ts:127
+msgid "Sales goals"
+msgstr "أهداف المبيعات"
+
 #: app/components/pos/terminals-manager.tsx:624
 #: app/components/pos/terminals-manager.tsx:628
 msgid "Sales held for review"
@@ -37896,7 +37990,7 @@ msgstr "ضريبة المبيعات"
 msgid "Sales Tax Rate (%)"
 msgstr "نسبة ضريبة المبيعات (%)"
 
-#: app/utils/dashboards/config.ts:119
+#: app/utils/dashboards/config.ts:120
 msgid "Sales, orders, guests and covers so far today, with yesterday and last week."
 msgstr "المبيعات والطلبات والضيوف والمقاعد حتى الآن اليوم، مقارنةً بالأمس والأسبوع الماضي."
 
@@ -38153,6 +38247,10 @@ msgstr "احفظ أولًا لتظهر تغييراتك في البروفة قب
 
 #~ msgid "Save follow-up settings"
 #~ msgstr "حفظ إعدادات المتابعة"
+
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:182
+msgid "Save goal"
+msgstr "حفظ الهدف"
 
 #: app/components/inventory/recipe-section.tsx:632
 msgid "Save ingredients"
@@ -40272,6 +40370,14 @@ msgstr "حدد عملة لهذا الفرع أو أدخل الأسعار في أ
 msgid "Set a guest limit or a party limit for pacing."
 msgstr "حدد حدًا للضيوف أو حدًا للمجموعات لتنظيم الحجوزات."
 
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:204
+msgid "Set a monthly goal to track progress here."
+msgstr "عيّن هدفاً شهرياً لمتابعة التقدّم هنا."
+
+#: app/components/dashboard/blocks/sales-goals-block.tsx:104
+msgid "Set a monthly sales goal per location to track progress. <0>Open goals</0>"
+msgstr "عيّن هدف مبيعات شهرياً لكل موقع لتتبع التقدّم. <0>فتح الأهداف</0>"
+
 #~ msgid "Set a pooled inventory limit for all items in this section."
 #~ msgstr "حدد حداً مجمعاً للمخزون لجميع الأصناف في هذا القسم."
 
@@ -42244,7 +42350,7 @@ msgstr "تطبيقات المحطة"
 msgid "Station terminals"
 msgstr "أجهزة Station"
 
-#: app/utils/dashboards/config.ts:78
+#: app/utils/dashboards/config.ts:79
 msgid "Stats"
 msgstr "الإحصائيات"
 
@@ -43426,6 +43532,7 @@ msgstr "مهام يجب إنجازها عند انضمام شخص جديد."
 
 #: app/components/orders/order-detail.tsx:1018
 #: app/components/pos/pos-day-report.tsx:256
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:124
 msgid "Tax"
 msgstr "الضريبة"
 
@@ -46560,7 +46667,7 @@ msgstr "تم دمج هذا العميل في ملف آخر."
 msgid "This dashboard does not exist or you do not have access to it."
 msgstr "لوحة التحكم هذه غير موجودة أو ليس لديك صلاحية الوصول إليها."
 
-#: app/components/dashboard/add-block-dialog.tsx:133
+#: app/components/dashboard/add-block-dialog.tsx:134
 msgid "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
 msgstr "تحتوي لوحة التحكم هذه على {MAX_DASHBOARD_BLOCKS} كتلة، وهو الحد الأقصى. أزل كتلة لإضافة كتلة أخرى."
 
@@ -47955,7 +48062,7 @@ msgstr "إلى: {recipient}"
 #: app/components/workspace-breadcrumb.tsx:76
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:219
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
-#: app/utils/dashboards/config.ts:118
+#: app/utils/dashboards/config.ts:119
 msgid "Today"
 msgstr "اليوم"
 
@@ -47967,7 +48074,7 @@ msgstr "تعذّر تحميل حجوزات اليوم."
 msgid "Today's dish limits"
 msgstr "حدود الأطباق لليوم"
 
-#: app/utils/dashboards/config.ts:111
+#: app/utils/dashboards/config.ts:112
 msgid "Today's reservations by status, covers by service, and the next arrivals."
 msgstr "حجوزات اليوم حسب الحالة وعدد الضيوف حسب الخدمة والوصول القادم."
 
@@ -48057,7 +48164,7 @@ msgstr "أرقام سرية خاطئة كثيرة. حاول مرة أخرى بع
 msgid "Too old to send"
 msgstr "أصبحت قديمة للإرسال"
 
-#: app/utils/dashboards/config.ts:102
+#: app/utils/dashboards/config.ts:103
 msgid "Top contributors"
 msgstr "أفضل المساهمين"
 
@@ -48121,11 +48228,11 @@ msgstr "الإجمالي قبل ضريبة المبيعات"
 #~ msgid "Total Covers"
 #~ msgstr "إجمالي الضيوف"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:224
+#: app/routes/_app+/$orgSlug_+/index.tsx:233
 msgid "Total notes"
 msgstr "إجمالي الملاحظات"
 
-#: app/utils/dashboards/config.ts:79
+#: app/utils/dashboards/config.ts:80
 msgid "Total notes, the daily average and the trend."
 msgstr "إجمالي الملاحظات والمتوسط اليومي والاتجاه."
 
@@ -48301,7 +48408,7 @@ msgstr "حُفظت ترجمة {dishName}"
 msgid "Transport"
 msgstr "المواصلات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:236
+#: app/routes/_app+/$orgSlug_+/index.tsx:245
 msgid "Trend"
 msgstr "الاتجاه"
 
@@ -49487,6 +49594,10 @@ msgstr "تم التحديث"
 msgid "Updated {ago}"
 msgstr "تم التحديث {ago}"
 
+#: app/components/dashboard/tile-freshness.tsx:48
+msgid "Updated {label}"
+msgstr "تم التحديث {label}"
+
 #~ msgid "Updated {text}"
 #~ msgstr "آخر تحديث {text}"
 
@@ -50606,7 +50717,7 @@ msgstr "مقارنة بآخر سعر"
 msgid "vs last week"
 msgstr "مقارنةً بالأسبوع الماضي"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:247
+#: app/routes/_app+/$orgSlug_+/index.tsx:256
 msgid "Vs prior period"
 msgstr "مقارنة بالفترة السابقة"
 
@@ -53293,7 +53404,7 @@ msgstr "ستسري خدماتك المعتادة مجددا في تلك التو
 msgid "Your regular services apply every day until you add an exception."
 msgstr "تسري خدماتك المعتادة كل يوم إلى أن تضيف استثناءً."
 
-#: app/utils/dashboards/config.ts:95
+#: app/utils/dashboards/config.ts:96
 msgid "Your remaining setup steps."
 msgstr "خطوات الإعداد المتبقية."
 

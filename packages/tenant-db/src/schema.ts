@@ -9324,6 +9324,38 @@ export const invSoldOut = sqliteTable(
 	],
 )
 
+/** Append-only manual availability changes for sold-out history (#368). Ids only. */
+export const MENU_AVAILABILITY_EVENT_VALUES = [
+	'unavailable',
+	'available',
+] as const
+export const menuAvailabilityEvents = sqliteTable(
+	'menu_availability_events',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		entityType: text('entity_type', {
+			enum: INV_SOLD_OUT_ENTITY_VALUES,
+		}).notNull(),
+		entityId: text('entity_id').notNull(),
+		event: text('event', {
+			enum: MENU_AVAILABILITY_EVENT_VALUES,
+		}).notNull(),
+		occurredAt: integer('occurred_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(table) => [
+		index('idx_menu_availability_events_lookup').on(
+			table.locationId,
+			table.entityId,
+			table.occurredAt,
+		),
+	],
+)
+
 // ── Phase 4: prep ───────────────────────────────────────────────────────────
 
 export const INV_PREP_STATUS_VALUES = [

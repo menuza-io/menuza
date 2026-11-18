@@ -345,7 +345,7 @@ describe('CountingScreen', () => {
 		setup(request)
 		await screen.findByTestId('counting-screen')
 		const field = screen.getByTestId('count-input-i1|a1')
-		expect(field).toHaveValue('2')
+		await waitFor(() => expect(field).toHaveValue('2'))
 		await userEvent.clear(field)
 		await userEvent.click(screen.getByRole('heading', { level: 1 }))
 		await waitFor(() => expect(entryCalls(request)).toHaveLength(1))

@@ -21,4 +21,6 @@ export const handlers: Array<HttpHandler> = [
 			region: body.dataRegion || 'us',
 		})
 	}),
+	// Manual sold-out toggles mirror to the region (ids only); tests fire this async.
+	http.post('*/api/menu/availability-events', () => json({ ok: true })),
 ]
