@@ -212,6 +212,7 @@ describe('addableBuiltInBlockTypes', () => {
 				...options,
 				bookingsTodayAvailable: true,
 				todayAvailable: true,
+				salesGoalsAvailable: true,
 				attentionAvailable: true,
 			}),
 		).toEqual(BUILT_IN_BLOCK_TYPES)

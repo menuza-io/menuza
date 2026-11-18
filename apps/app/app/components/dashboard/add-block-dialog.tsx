@@ -109,6 +109,7 @@ export function AddBlockDialog({
 		onboardingAvailable: picker.onboardingAvailable,
 		bookingsTodayAvailable: picker.bookingsToday.available,
 		todayAvailable: picker.today.available,
+		salesGoalsAvailable: picker.salesGoals.available,
 		attentionAvailable: true,
 	}).filter((type) => !excludeTypes.includes(type))
 

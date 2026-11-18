@@ -399,6 +399,11 @@
       "import": "./src/financial-period-summary.ts",
       "default": "./src/financial-period-summary.ts"
     },
+    "./financial-period-csv": {
+      "types": "./src/financial-period-csv.ts",
+      "import": "./src/financial-period-csv.ts",
+      "default": "./src/financial-period-csv.ts"
+    },
     "./order-limit-catalog": {
       "types": "./src/order-limit-catalog.ts",
       "import": "./src/order-limit-catalog.ts",

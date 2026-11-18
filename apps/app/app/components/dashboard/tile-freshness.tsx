@@ -1,9 +1,9 @@
 import { useLingui } from '@lingui/react'
 import { Trans } from '@lingui/react/macro'
-import { RefreshCwIcon } from 'lucide-react'
+import { cn } from 'cn'
 import { useMemo } from 'react'
 import { Button } from '@repo/ui/button'
-import { cn } from '@repo/ui/cn'
+import { Icon } from '@repo/ui/icon'
 
 /** When a tile should show the stale warning (15 minutes). */
 export const TILE_STALE_MS = 15 * 60 * 1000
@@ -57,7 +57,8 @@ export function TileFreshness({
 					disabled={refreshing}
 					data-testid="tile-refresh"
 				>
-					<RefreshCwIcon
+					<Icon
+						name="refresh-cw"
 						className={cn('size-3.5', refreshing && 'animate-spin')}
 					/>
 					<span className="sr-only">

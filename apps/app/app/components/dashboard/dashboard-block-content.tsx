@@ -16,7 +16,9 @@ import { BookingsTodayBlock } from './blocks/bookings-today-block.tsx'
 import { NotesChartBlock } from './blocks/notes-chart-block.tsx'
 import { ReportBlock } from './blocks/report-block.tsx'
 import { StatsBlock } from './blocks/stats-block.tsx'
+import { SalesGoalsBlock } from './blocks/sales-goals-block.tsx'
 import { TodayBlock } from './blocks/today-block.tsx'
+import { type SalesGoalsAccess } from '#app/utils/goals/goals.ts'
 import { TileFreshness } from './tile-freshness.tsx'
 
 export type DashboardBlockOrganization = {
@@ -54,6 +56,7 @@ export function DashboardBlockContent({
 	savedReportOptions,
 	bookingsToday,
 	today,
+	salesGoals,
 	locationStorageKey = '',
 	organization,
 	editable,
@@ -64,6 +67,7 @@ export function DashboardBlockContent({
 	savedReportOptions?: readonly SavedReportOption[]
 	bookingsToday?: BookingsTodayAccess
 	today?: TodayAccess
+	salesGoals?: SalesGoalsAccess
 	/** Where the home location picker is remembered. */
 	locationStorageKey?: string
 	organization: DashboardBlockOrganization
@@ -137,6 +141,12 @@ export function DashboardBlockContent({
 							access={today}
 							locationStorageKey={locationStorageKey}
 						/>,
+					)
+				: null
+		case 'sales-goals':
+			return salesGoals?.available
+				? wrap(
+						<SalesGoalsBlock orgSlug={organization.slug} access={salesGoals} />,
 					)
 				: null
 		case 'attention':

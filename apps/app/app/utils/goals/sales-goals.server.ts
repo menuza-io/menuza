@@ -1,31 +1,84 @@
+import { createId } from '@paralleldrive/cuid2'
 import { projectMonthlySales } from '@repo/common/sales-goal-projection'
 import {
 	and,
 	db,
 	eq,
+	inArray,
 	OrganizationLocation,
 	OrganizationSalesGoal,
+	sql,
 } from '@repo/database'
 
-export type LocationGoalProgress = {
+import {
+	type LocationGoalProgress,
+	GOAL_BENCHMARK_CANCELLATION_RATE,
+} from './goals.ts'
+
+export type { LocationGoalProgress }
+export { GOAL_BENCHMARK_CANCELLATION_RATE }
+
+export async function upsertSalesGoal(input: {
+	organizationId: string
 	locationId: string
-	locationName: string
-	goalMinor: number | null
-	actualMinor: number
+	month: string
+	goalMinor: number
 	currency: string
-	projection: ReturnType<typeof projectMonthlySales>
+}) {
+	const now = new Date()
+	const existing = await db.query.OrganizationSalesGoal.findFirst({
+		where: and(
+			eq(OrganizationSalesGoal.organizationId, input.organizationId),
+			eq(OrganizationSalesGoal.locationId, input.locationId),
+			eq(OrganizationSalesGoal.month, input.month),
+		),
+		columns: { id: true },
+	})
+	if (existing) {
+		await db
+			.update(OrganizationSalesGoal)
+			.set({
+				goalMinor: input.goalMinor,
+				currency: input.currency,
+				updatedAt: now,
+			})
+			.where(eq(OrganizationSalesGoal.id, existing.id))
+		return existing.id
+	}
+	const id = createId()
+	await db.insert(OrganizationSalesGoal).values({
+		id,
+		organizationId: input.organizationId,
+		locationId: input.locationId,
+		month: input.month,
+		goalMinor: input.goalMinor,
+		currency: input.currency,
+		createdAt: now,
+		updatedAt: now,
+	})
+	return id
 }
 
 export async function loadLocationGoalProgress(input: {
 	organizationId: string
 	month: string
 	actualByLocation: ReadonlyMap<string, number>
+	locationIds?: readonly string[] | null
 }): Promise<LocationGoalProgress[]> {
+	const locationFilter =
+		input.locationIds === null || input.locationIds === undefined
+			? eq(OrganizationLocation.organizationId, input.organizationId)
+			: and(
+					eq(OrganizationLocation.organizationId, input.organizationId),
+					...(input.locationIds.length === 0
+						? [sql`0`]
+						: [inArray(OrganizationLocation.id, [...input.locationIds])]),
+				)
 	const [locations, goals] = await Promise.all([
 		db
 			.select({ id: OrganizationLocation.id, name: OrganizationLocation.name })
 			.from(OrganizationLocation)
-			.where(eq(OrganizationLocation.organizationId, input.organizationId)),
+			.where(locationFilter),
 		db
 			.select()
 			.from(OrganizationSalesGoal)

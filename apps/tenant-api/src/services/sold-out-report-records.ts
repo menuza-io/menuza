@@ -18,13 +18,64 @@ import { type SalesReportContext } from './sales-report-records.ts'
 export const SOLD_OUT_LOST_SALES_MIN_ORDERS = 10
 export const SOLD_OUT_LOST_SALES_LOOKBACK_DAYS = 14
 
-type Occurrence = {
+export type SoldOutOccurrence = {
 	locationId: string
 	entityType: string
 	entityId: string
 	source: 'automatic' | 'manual'
 	startedAt: Date
 	endedAt: Date | null
+}
+
+export type ManualAvailabilityEventRow = {
+	locationId: string
+	entityType: string
+	entityId: string
+	event: 'unavailable' | 'available'
+	occurredAt: Date
+}
+
+/** Pairs manual unavailable/available events into sold-out windows. */
+export function manualSoldOutOccurrencesFromEvents(
+	eventRows: readonly ManualAvailabilityEventRow[],
+): SoldOutOccurrence[] {
+	const occurrences: SoldOutOccurrence[] = []
+	const openManual = new Map<string, Date>()
+	for (const event of eventRows) {
+		const key = `${event.locationId}\0${event.entityType}\0${event.entityId}`
+		if (event.event === 'unavailable') {
+			openManual.set(key, event.occurredAt)
+		} else if (event.event === 'available') {
+			const start = openManual.get(key)
+			if (start) {
+				occurrences.push({
+					locationId: event.locationId,
+					entityType: event.entityType,
+					entityId: event.entityId,
+					source: 'manual',
+					startedAt: start,
+					endedAt: event.occurredAt,
+				})
+				openManual.delete(key)
+			}
+		}
+	}
+	for (const [key, startedAt] of openManual) {
+		const [locationId, entityType, entityId] = key.split('\0') as [
+			string,
+			string,
+			string,
+		]
+		occurrences.push({
+			locationId,
+			entityType,
+			entityId,
+			source: 'manual',
+			startedAt,
+			endedAt: null,
+		})
+	}
+	return occurrences
 }
 
 function locationFilter(
@@ -67,7 +118,7 @@ export async function loadSoldOutHistoryRecords(
 ): Promise<{ records: ReportRecord[]; truncated: boolean }> {
 	const fields = referencedFieldIds(subject, definition)
 	const window = windowOf(definition, ctx.now)
-	const occurrences: Occurrence[] = []
+	const occurrences: SoldOutOccurrence[] = []
 
 	const invRows = await ctx.db
 		.select()
@@ -114,41 +165,17 @@ export async function loadSoldOutHistoryRecords(
 		)
 		.orderBy(menuAvailabilityEvents.occurredAt)
 
-	const openManual = new Map<string, Date>()
-	for (const event of eventRows) {
-		const key = `${event.locationId}\0${event.entityType}\0${event.entityId}`
-		if (event.event === 'unavailable') {
-			openManual.set(key, event.occurredAt)
-		} else if (event.event === 'available') {
-			const start = openManual.get(key)
-			if (start) {
-				occurrences.push({
-					locationId: event.locationId,
-					entityType: event.entityType,
-					entityId: event.entityId,
-					source: 'manual',
-					startedAt: start,
-					endedAt: event.occurredAt,
-				})
-				openManual.delete(key)
-			}
-		}
-	}
-	for (const [key, startedAt] of openManual) {
-		const [locationId, entityType, entityId] = key.split('\0') as [
-			string,
-			string,
-			string,
-		]
-		occurrences.push({
-			locationId,
-			entityType,
-			entityId,
-			source: 'manual',
-			startedAt,
-			endedAt: null,
-		})
-	}
+	occurrences.push(
+		...manualSoldOutOccurrencesFromEvents(
+			eventRows.map((event) => ({
+				locationId: event.locationId,
+				entityType: event.entityType,
+				entityId: event.entityId,
+				event: event.event,
+				occurredAt: event.occurredAt,
+			})),
+		),
+	)
 
 	const lookbackEnd = new Date(window.endMs).toISOString().slice(0, 10)
 	const lookbackStart = new Date(

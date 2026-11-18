@@ -855,7 +855,7 @@ msgstr "{0} used"
 
 #. placeholder {0}: row.rateBp / 100
 #. placeholder {1}: (row.taxMinor / 100).toFixed(2)
-#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:53
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:146
 msgid "{0}%: {1}"
 msgstr "{0}%: {1}"
 
@@ -2807,9 +2807,9 @@ msgid "**Your prints are on the way**"
 msgstr "**Your prints are on the way**"
 
 #. placeholder {0}: index + 1
-#. placeholder {1}: row.locationId
+#. placeholder {1}: names.get(row.locationId) ?? row.locationId
 #. placeholder {2}: row.enoughData ? `${(row.salesMinor / 100).toFixed(0)} sales` : 'not enough data'
-#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:45
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:123
 msgid "#{0} {1} {2}"
 msgstr "#{0} {1} {2}"
 
@@ -3776,7 +3776,7 @@ msgstr "A sample message with made-up guest details, built from the saved settin
 msgid "A saved audience (not available to you)"
 msgstr "A saved audience (not available to you)"
 
-#: app/utils/dashboards/config.ts:135
+#: app/utils/dashboards/config.ts:144
 msgid "A saved report or a report template."
 msgstr "A saved report or a report template."
 
@@ -4098,8 +4098,8 @@ msgstr ""
 msgid "Acme Inc."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:226
-#: app/routes/_app+/$orgSlug_+/index.tsx:252
+#: app/routes/_app+/$orgSlug_+/index.tsx:235
+#: app/routes/_app+/$orgSlug_+/index.tsx:261
 msgid "Across your organization"
 msgstr "Across your organization"
 
@@ -4230,7 +4230,7 @@ msgstr "Activity at other locations is hidden."
 #. placeholder {0}: (row.actualMinor / 100).toFixed(2)
 #. placeholder {1}: (row.goalMinor / 100).toFixed(2)
 #. placeholder {2}: row.currency
-#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:50
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:208
 msgid "Actual {0} / goal {1} {2}"
 msgstr "Actual {0} / goal {1} {2}"
 
@@ -4750,8 +4750,8 @@ msgstr "Add availability"
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:76
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:82
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:143
-#: app/components/dashboard/add-block-dialog.tsx:124
-#: app/components/dashboard/add-block-dialog.tsx:129
+#: app/components/dashboard/add-block-dialog.tsx:125
+#: app/components/dashboard/add-block-dialog.tsx:130
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:886
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1209
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1226
@@ -5822,7 +5822,7 @@ msgstr "All areas"
 #~ msgid "All assigned"
 #~ msgstr ""
 
-#: app/components/dashboard/add-block-dialog.tsx:161
+#: app/components/dashboard/add-block-dialog.tsx:162
 msgid "All built-in blocks are already on this dashboard."
 msgstr "All built-in blocks are already on this dashboard."
 
@@ -7689,7 +7689,7 @@ msgstr "Average order value"
 msgid "Average waitlist wait, last 7 days"
 msgstr "Average waitlist wait, last 7 days"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:229
+#: app/routes/_app+/$orgSlug_+/index.tsx:238
 msgid "Avg per day"
 msgstr "Avg per day"
 
@@ -8020,6 +8020,11 @@ msgstr "Below the amount you order at"
 msgid "Below the minimum order of <0>{minimum}</0>"
 msgstr "Below the minimum order of <0>{minimum}</0>"
 
+#. placeholder {0}: (GOAL_BENCHMARK_CANCELLATION_RATE * 100).toFixed(0)
+#: app/components/dashboard/blocks/sales-goals-block.tsx:120
+msgid "Benchmark: keep cancellations under {0}%."
+msgstr "Benchmark: keep cancellations under {0}%."
+
 #: app/components/inventory/missing-recipes-panel.tsx:87
 msgid "Best sellers of the last 30 days first. Add a recipe to see what each one costs and to take stock off when it sells."
 msgstr "Best sellers of the last 30 days first. Add a recipe to see what each one costs and to take stock off when it sells."
@@ -8335,7 +8340,7 @@ msgid "Bookings cancelled after the free-cancellation window over the last 30 da
 msgstr "Bookings cancelled after the free-cancellation window over the last 30 days."
 
 #: app/components/dashboard/blocks/bookings-today-block.tsx:134
-#: app/utils/dashboards/config.ts:110
+#: app/utils/dashboards/config.ts:111
 msgid "Bookings today"
 msgstr "Bookings today"
 
@@ -8567,7 +8572,7 @@ msgstr "Building number"
 msgid "Built-in"
 msgstr "Built-in"
 
-#: app/components/dashboard/add-block-dialog.tsx:146
+#: app/components/dashboard/add-block-dialog.tsx:147
 msgid "Built-in blocks"
 msgstr "Built-in blocks"
 
@@ -12350,7 +12355,7 @@ msgstr "Contractor"
 msgid "Contrast"
 msgstr "Contrast"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:250
+#: app/routes/_app+/$orgSlug_+/index.tsx:259
 msgid "Contributors"
 msgstr "Contributors"
 
@@ -12745,6 +12750,14 @@ msgstr "Could not finish the reservation."
 msgid "Could not load"
 msgstr "Could not load"
 
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:108
+msgid "Could not load figures from your region."
+msgstr "Could not load figures from your region."
+
+#: app/components/dashboard/blocks/sales-goals-block.tsx:96
+msgid "Could not load goal progress."
+msgstr "Could not load goal progress."
+
 #: app/components/chat/chat-view.tsx:136
 #: app/components/chat/chat-view.tsx:210
 msgid "Could not load messages."
@@ -12757,6 +12770,10 @@ msgstr "Could not load replies."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:229
 msgid "Could not load reservation settings"
 msgstr "Could not load reservation settings"
+
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:105
+msgid "Could not load scorecard from your region."
+msgstr "Could not load scorecard from your region."
 
 #: app/components/orders/slot-limits-panel.tsx:101
 msgid "Could not load slot limits."
@@ -18609,6 +18626,7 @@ msgstr "Export"
 msgid "Export (CSV)"
 msgstr "Export (CSV)"
 
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:103
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:344
 msgid "Export CSV"
 msgstr "Export CSV"
@@ -19288,7 +19306,7 @@ msgstr "Filters: {summary}"
 msgid "Finance"
 msgstr "Finance"
 
-#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:23
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:86
 msgid "Financial summary"
 msgstr "Financial summary"
 
@@ -20306,6 +20324,10 @@ msgstr "Go to the program"
 
 #~ msgid "Go-live checklist"
 #~ msgstr "Go-live checklist"
+
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:170
+msgid "Goal"
+msgstr "Goal"
 
 #: app/utils/reservations/labels.ts:119
 msgid "Gold"
@@ -23363,7 +23385,7 @@ msgid "Last {days} days"
 msgstr "Last {days} days"
 
 #: app/components/notes-chart.tsx:63
-#: app/routes/_app+/$orgSlug_+/index.tsx:232
+#: app/routes/_app+/$orgSlug_+/index.tsx:241
 msgid "Last {daysShown} days"
 msgstr ""
 
@@ -24515,6 +24537,7 @@ msgstr "Loading your inventory"
 msgid "Loading your items"
 msgstr "Loading your items"
 
+#: app/components/dashboard/blocks/sales-goals-block.tsx:100
 #: app/components/discounts/discount-performance.tsx:166
 #: app/components/hiring/hire-dialog.tsx:233
 #: app/components/inventory/item-picker.tsx:152
@@ -24525,6 +24548,8 @@ msgstr "Loading your items"
 #: app/components/staff/schedule/availability-sheet.tsx:217
 #: app/components/staff/schedule/time-off-sheet.tsx:190
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:672
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:156
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:110
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1440
 msgid "Loading…"
 msgstr "Loading…"
@@ -24550,6 +24575,7 @@ msgstr "Local emulator"
 #: app/components/qr/tables-manager.tsx:174
 #: app/components/reservations/header-controls.tsx:39
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:151
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:156
 #: app/routes/_app+/$orgSlug_+/media.tsx:1737
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:611
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4223
@@ -24604,7 +24630,7 @@ msgstr "Location Overrides"
 msgid "Location scope writes an override, not the base dish price."
 msgstr "Location scope writes an override, not the base dish price."
 
-#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:28
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:102
 msgid "Location scorecard"
 msgstr "Location scorecard"
 
@@ -25748,7 +25774,7 @@ msgstr ""
 msgid "Members & invites"
 msgstr "Members & invites"
 
-#: app/utils/dashboards/config.ts:103
+#: app/utils/dashboards/config.ts:104
 msgid "Members who created the most notes."
 msgstr "Members who created the most notes."
 
@@ -26289,6 +26315,12 @@ msgstr "month"
 msgid "Month"
 msgstr "Month"
 
+#. placeholder {0}: (orgTotal.actual / 100).toFixed(0)
+#. placeholder {1}: (orgTotal.goal / 100).toFixed(0)
+#: app/components/dashboard/blocks/sales-goals-block.tsx:114
+msgid "Month to date: {0} / {1}"
+msgstr "Month to date: {0} / {1}"
+
 #: app/components/settings/cards/organization/billing-card.tsx:232
 #: app/routes/organizations+/create.tsx:1168
 msgid "Monthly"
@@ -26298,9 +26330,17 @@ msgstr ""
 msgid "Monthly Reservation Volume & Special Days"
 msgstr "Monthly Reservation Volume & Special Days"
 
+#: app/utils/dashboards/config.ts:128
+msgid "Monthly sales goal progress by location."
+msgstr "Monthly sales goal progress by location."
+
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:150
+msgid "Monthly targets for {month}."
+msgstr "Monthly targets for {month}."
+
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:32
-msgid "Monthly targets for {month}. Set a goal per location under Settings."
-msgstr "Monthly targets for {month}. Set a goal per location under Settings."
+#~ msgid "Monthly targets for {month}. Set a goal per location under Settings."
+#~ msgstr "Monthly targets for {month}. Set a goal per location under Settings."
 
 #: app/components/favorite-notes.tsx:89
 #: app/components/inventory/adjust-stock-dialog.tsx:230
@@ -26831,7 +26871,7 @@ msgstr "Needs at least {minimum} orders"
 #: app/components/staff/staff-profile-page.tsx:36
 #: app/components/staff/timeclock-today.tsx:125
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:305
-#: app/utils/dashboards/config.ts:126
+#: app/utils/dashboards/config.ts:135
 msgid "Needs attention"
 msgstr "Needs attention"
 
@@ -26933,7 +26973,7 @@ msgid "Net"
 msgstr "Net"
 
 #: app/components/pos/pos-day-report.tsx:253
-#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:33
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:116
 msgid "Net sales"
 msgstr "Net sales"
 
@@ -27001,7 +27041,7 @@ msgstr "New audience"
 msgid "New automation"
 msgstr ""
 
-#: app/components/dashboard/add-block-dialog.tsx:138
+#: app/components/dashboard/add-block-dialog.tsx:139
 msgid "New blocks are added at the bottom of the dashboard."
 msgstr "New blocks are added at the bottom of the dashboard."
 
@@ -27417,7 +27457,7 @@ msgid "No active tables yet. Add tables under Floor first."
 msgstr "No active tables yet. Add tables under Floor first."
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:232
+#: app/routes/_app+/$orgSlug_+/index.tsx:241
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:180
 msgid "No activity yet"
 msgstr ""
@@ -29289,7 +29329,7 @@ msgstr "Not eligible for rehire."
 msgid "Not enough data"
 msgstr "Not enough data"
 
-#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:36
+#: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:114
 msgid "Not enough data for this period yet."
 msgstr "Not enough data for this period yet."
 
@@ -29558,11 +29598,11 @@ msgstr "Notes are only visible to managers."
 msgid "Notes can be up to 500 characters."
 msgstr "Notes can be up to 500 characters."
 
-#: app/utils/dashboards/config.ts:86
+#: app/utils/dashboards/config.ts:87
 msgid "Notes chart"
 msgstr "Notes chart"
 
-#: app/utils/dashboards/config.ts:87
+#: app/utils/dashboards/config.ts:88
 msgid "Notes created each day."
 msgstr "Notes created each day."
 
@@ -30153,7 +30193,7 @@ msgstr "Onboarding {complete}/{total}"
 msgid "Onboarding {complete}/{total}, late"
 msgstr "Onboarding {complete}/{total}, late"
 
-#: app/utils/dashboards/config.ts:94
+#: app/utils/dashboards/config.ts:95
 msgid "Onboarding checklist"
 msgstr "Onboarding checklist"
 
@@ -33031,8 +33071,8 @@ msgid "Period"
 msgstr "Period"
 
 #: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:25
-msgid "Period totals for accounting: sales, tax by rate, tips, fees, and refunds. Export matches this view."
-msgstr "Period totals for accounting: sales, tax by rate, tips, fees, and refunds. Export matches this view."
+#~ msgid "Period totals for accounting: sales, tax by rate, tips, fees, and refunds. Export matches this view."
+#~ msgstr "Period totals for accounting: sales, tax by rate, tips, fees, and refunds. Export matches this view."
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1408
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
@@ -34545,7 +34585,7 @@ msgstr "Prix fixe menu"
 msgid "Pro"
 msgstr ""
 
-#: app/utils/dashboards/config.ts:127
+#: app/utils/dashboards/config.ts:136
 msgid "Problems that cost you orders, most urgent first, each with a way to fix it."
 msgstr "Problems that cost you orders, most urgent first, each with a way to fix it."
 
@@ -35139,8 +35179,8 @@ msgstr "Radius: {radiusValue} {radiusUnit}"
 #~ msgstr "ran out."
 
 #: app/routes/_app+/$orgSlug_+/reports+/scorecard.tsx:30
-msgid "Ranks locations by sales, cancellations, ratings, and missed orders."
-msgstr "Ranks locations by sales, cancellations, ratings, and missed orders."
+#~ msgid "Ranks locations by sales, cancellations, ratings, and missed orders."
+#~ msgstr "Ranks locations by sales, cancellations, ratings, and missed orders."
 
 #: app/components/staff/positions-tab.tsx:812
 msgid "Rate updated."
@@ -35748,6 +35788,7 @@ msgstr "Reflow later parties"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:247
 #: app/routes/_app+/$orgSlug_+/orders.tsx:196
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:347
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:94
 msgid "Refresh"
 msgstr "Refresh"
 
@@ -35921,6 +35962,7 @@ msgid "Refunding…"
 msgstr "Refunding…"
 
 #: app/components/pos/pos-day-report.tsx:252
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:132
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:168
 msgid "Refunds"
 msgstr "Refunds"
@@ -36752,7 +36794,7 @@ msgstr "Reply…"
 #~ msgstr ""
 
 #: app/components/workspace-breadcrumb.tsx:109
-#: app/utils/dashboards/config.ts:134
+#: app/utils/dashboards/config.ts:143
 msgid "Report"
 msgstr "Report"
 
@@ -37923,7 +37965,9 @@ msgstr "Sales for {label} removed."
 msgid "Sales for {label} saved."
 msgstr "Sales for {label} saved."
 
-#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:30
+#: app/components/dashboard/blocks/sales-goals-block.tsx:90
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:148
+#: app/utils/dashboards/config.ts:127
 msgid "Sales goals"
 msgstr "Sales goals"
 
@@ -37954,7 +37998,7 @@ msgstr "Sales tax"
 msgid "Sales Tax Rate (%)"
 msgstr "Sales Tax Rate (%)"
 
-#: app/utils/dashboards/config.ts:119
+#: app/utils/dashboards/config.ts:120
 msgid "Sales, orders, guests and covers so far today, with yesterday and last week."
 msgstr "Sales, orders, guests and covers so far today, with yesterday and last week."
 
@@ -38211,6 +38255,10 @@ msgstr "Save first, so the proof shows your changes before you approve it."
 
 #~ msgid "Save follow-up settings"
 #~ msgstr "Save follow-up settings"
+
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:182
+msgid "Save goal"
+msgstr "Save goal"
 
 #: app/components/inventory/recipe-section.tsx:632
 msgid "Save ingredients"
@@ -40330,9 +40378,13 @@ msgstr "Set a currency for this location or enter prices on the first delivery."
 msgid "Set a guest limit or a party limit for pacing."
 msgstr "Set a guest limit or a party limit for pacing."
 
-#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:46
+#: app/routes/_app+/$orgSlug_+/goals+/index.tsx:204
 msgid "Set a monthly goal to track progress here."
 msgstr "Set a monthly goal to track progress here."
+
+#: app/components/dashboard/blocks/sales-goals-block.tsx:104
+msgid "Set a monthly sales goal per location to track progress. <0>Open goals</0>"
+msgstr "Set a monthly sales goal per location to track progress. <0>Open goals</0>"
 
 #~ msgid "Set a pooled inventory limit for all items in this section."
 #~ msgstr "Set a pooled inventory limit for all items in this section."
@@ -42306,7 +42358,7 @@ msgstr "Station apps"
 msgid "Station terminals"
 msgstr "Station terminals"
 
-#: app/utils/dashboards/config.ts:78
+#: app/utils/dashboards/config.ts:79
 msgid "Stats"
 msgstr "Stats"
 
@@ -43488,7 +43540,7 @@ msgstr "Tasks to finish when someone joins."
 
 #: app/components/orders/order-detail.tsx:1018
 #: app/components/pos/pos-day-report.tsx:256
-#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:41
+#: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:124
 msgid "Tax"
 msgstr "Tax"
 
@@ -46623,7 +46675,7 @@ msgstr "This customer was merged into another profile."
 msgid "This dashboard does not exist or you do not have access to it."
 msgstr "This dashboard does not exist or you do not have access to it."
 
-#: app/components/dashboard/add-block-dialog.tsx:133
+#: app/components/dashboard/add-block-dialog.tsx:134
 msgid "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
 msgstr "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
 
@@ -48018,7 +48070,7 @@ msgstr "To: {recipient}"
 #: app/components/workspace-breadcrumb.tsx:76
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:219
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
-#: app/utils/dashboards/config.ts:118
+#: app/utils/dashboards/config.ts:119
 msgid "Today"
 msgstr "Today"
 
@@ -48030,7 +48082,7 @@ msgstr "Today's bookings could not be loaded."
 msgid "Today's dish limits"
 msgstr "Today's dish limits"
 
-#: app/utils/dashboards/config.ts:111
+#: app/utils/dashboards/config.ts:112
 msgid "Today's reservations by status, covers by service, and the next arrivals."
 msgstr "Today's reservations by status, covers by service, and the next arrivals."
 
@@ -48120,7 +48172,7 @@ msgstr "Too many wrong PINs. Try again in {seconds} seconds."
 msgid "Too old to send"
 msgstr "Too old to send"
 
-#: app/utils/dashboards/config.ts:102
+#: app/utils/dashboards/config.ts:103
 msgid "Top contributors"
 msgstr "Top contributors"
 
@@ -48184,11 +48236,11 @@ msgstr "Total before sales tax"
 #~ msgid "Total Covers"
 #~ msgstr "Total Covers"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:224
+#: app/routes/_app+/$orgSlug_+/index.tsx:233
 msgid "Total notes"
 msgstr "Total notes"
 
-#: app/utils/dashboards/config.ts:79
+#: app/utils/dashboards/config.ts:80
 msgid "Total notes, the daily average and the trend."
 msgstr "Total notes, the daily average and the trend."
 
@@ -48364,7 +48416,7 @@ msgstr "Translation saved for {dishName}"
 msgid "Transport"
 msgstr "Transport"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:236
+#: app/routes/_app+/$orgSlug_+/index.tsx:245
 msgid "Trend"
 msgstr "Trend"
 
@@ -50673,7 +50725,7 @@ msgstr "vs last price"
 msgid "vs last week"
 msgstr "vs last week"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:247
+#: app/routes/_app+/$orgSlug_+/index.tsx:256
 msgid "Vs prior period"
 msgstr "Vs prior period"
 
@@ -53360,7 +53412,7 @@ msgstr "Your regular services apply again on those dates."
 msgid "Your regular services apply every day until you add an exception."
 msgstr "Your regular services apply every day until you add an exception."
 
-#: app/utils/dashboards/config.ts:95
+#: app/utils/dashboards/config.ts:96
 msgid "Your remaining setup steps."
 msgstr "Your remaining setup steps."
 

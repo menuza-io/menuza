@@ -31,7 +31,10 @@ import {
 	listDashboardsForSwitcher,
 } from '#app/utils/dashboards/queries.server.ts'
 import { resolveReportBlock } from '#app/utils/dashboards/reports.ts'
-import { loadHomeLocations } from '#app/utils/dashboards/today.server.ts'
+import {
+	canReadOrderTotals,
+	loadHomeLocations,
+} from '#app/utils/dashboards/today.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { setUserDefaultOrganization } from '#app/utils/organization/organizations.server.ts'
 import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
@@ -60,9 +63,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	// Until the viewer saves their own Home, they get the restaurant default:
 	// Today, Needs attention, the setup checklist and (when they can see it)
 	// Bookings today. A saved Home is never replaced, notes blocks and all.
+	const salesGoalsDefault = await canReadOrderTotals(userId, organization.id)
 	const config = home.id
 		? home.config
-		: defaultRestaurantHomeConfig({ bookingsToday: bookingsToday.available })
+		: defaultRestaurantHomeConfig({
+				bookingsToday: bookingsToday.available,
+				salesGoals: salesGoalsDefault,
+			})
 	const blocks = config.blocks
 	// The KPI row stands in for a saved Home's stats block.
 	const showsNotesKpis = blocks.some((block) => block.type === 'stats')
@@ -180,6 +187,7 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 				savedReportOptions={picker.savedReports}
 				bookingsToday={picker.bookingsToday}
 				today={picker.today}
+				salesGoals={picker.salesGoals}
 				locationStorageKey={picker.locationStorageKey}
 				organization={organization}
 			/>
@@ -207,10 +215,14 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 	)
 
 	const bookingsTodayAvailable = picker.bookingsToday.available
+	const salesGoalsAvailable = picker.salesGoals.available
 	const resetConfig = useCallback(
 		() =>
-			defaultRestaurantHomeConfig({ bookingsToday: bookingsTodayAvailable }),
-		[bookingsTodayAvailable],
+			defaultRestaurantHomeConfig({
+				bookingsToday: bookingsTodayAvailable,
+				salesGoals: salesGoalsAvailable,
+			}),
+		[bookingsTodayAvailable, salesGoalsAvailable],
 	)
 
 	return (
