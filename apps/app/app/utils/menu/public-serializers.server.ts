@@ -13,9 +13,15 @@ import {
 	type WeeklySchedule,
 } from '@repo/common/location-types'
 import {
+	parseOrderTypePrices,
+	type OrderTypePrices,
+} from '@repo/common/menu-pricing'
+import {
+	dietaryTagsOf,
 	isUnavailableUntilExpired,
 	parseMenuItemImageKeys,
 	parseMenuVariations,
+	type DietaryTag,
 	type MenuVariations,
 } from '@repo/common/menu-types'
 import {
@@ -107,6 +113,10 @@ export interface PublicMenuOptionData {
 	isAlcohol: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean
+	/** Dietary tags (#335). Older readers keep using the flags. */
+	dietaryTags?: DietaryTag[]
+	/** Prices per order type (#412); absent when none is set. */
+	orderTypePrices?: OrderTypePrices
 	isTopping: boolean
 	isDefault: boolean
 	allergens: string[]
@@ -159,6 +169,13 @@ export interface PublicMenuItemData {
 	isAlcohol: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean
+	/** Dietary tags (#335). Older readers keep using the flags. */
+	dietaryTags?: DietaryTag[]
+	/**
+	 * Prices per order type (#412); absent when none is set. Dishes with
+	 * variations price from their variation instead.
+	 */
+	orderTypePrices?: OrderTypePrices
 	/** Never receives any discount (read defensively by the regional engine). */
 	excludeFromDiscounts?: boolean
 	/** Does not count toward order slot limits (#256). */
@@ -217,6 +234,14 @@ export type MenuItemRow = InferSelectModel<typeof OrganizationMenuItem>
 /** Maps media asset ids and object keys to public image URLs. */
 export type MediaUrlMap = ReadonlyMap<string, string>
 
+/** `{ orderTypePrices }` only when one is set, so the payload stays small. */
+function orderTypePricesField(raw: string | null | undefined): {
+	orderTypePrices?: OrderTypePrices
+} {
+	const prices = parseOrderTypePrices(raw)
+	return prices ? { orderTypePrices: prices } : {}
+}
+
 export function safeJsonParse<T>(
 	raw: string | null | undefined,
 	fallback: T,
@@ -263,6 +288,8 @@ export function serializePublicOption(
 		isAlcohol: Boolean(opt.isAlcohol),
 		isGlutenFree: Boolean(opt.isGlutenFree),
 		isVegetarian: Boolean(opt.isVegetarian),
+		dietaryTags: dietaryTagsOf(opt),
+		...orderTypePricesField(opt.orderTypePrices),
 		isTopping: Boolean(opt.isTopping),
 		isDefault: false,
 		nestedModifierGroupIds: safeJsonParse<string[]>(
@@ -285,8 +312,13 @@ export function applyOptionAssignment(
 	option: PublicMenuOptionData,
 	assignment: MenuOptionAssignmentRow,
 ): PublicMenuOptionData {
+	// A group's own price for the option is fixed: the option's order-type
+	// prices (#412) do not apply inside that group.
+	const { orderTypePrices, ...rest } = option
 	return {
-		...option,
+		...(assignment.priceOverride != null
+			? rest
+			: { ...rest, ...(orderTypePrices ? { orderTypePrices } : {}) }),
 		price: assignment.priceOverride ?? option.price,
 		priceWhole: assignment.priceWholeOverride ?? option.priceWhole,
 		priceLeft: assignment.priceLeftOverride ?? option.priceLeft,
@@ -414,6 +446,10 @@ export function serializePublicMenuItem(
 		isAlcohol: Boolean(item.isAlcohol),
 		isGlutenFree: Boolean(item.isGlutenFree),
 		isVegetarian: Boolean(item.isVegetarian),
+		dietaryTags: dietaryTagsOf(item),
+		...(variations.variants.length > 0
+			? {}
+			: orderTypePricesField(item.orderTypePrices)),
 		excludeFromDiscounts: Boolean(item.excludeFromDiscounts),
 		excludeFromOrderLimits: Boolean(item.excludeFromOrderLimits),
 		allergens: safeJsonParse<string[]>(item.allergens, []),

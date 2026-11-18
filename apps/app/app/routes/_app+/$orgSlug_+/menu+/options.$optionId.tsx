@@ -1,6 +1,8 @@
 import { requireUserId } from '@repo/auth'
 import { parseDailySaleLimit } from '@repo/common/daily-dish-limits'
+import { parseOrderTypePrices } from '@repo/common/menu-pricing'
 import {
+	dietaryTagsOf,
 	MenuOptionInputSchema,
 	storedKitchenHighlight,
 	storedKitchenName,
@@ -38,6 +40,11 @@ import {
 	dailyLimitColumn,
 	dailyLimitLocationIds,
 } from '#app/utils/menu/daily-limit-save.ts'
+import {
+	dietaryAndOrderTypeColumns,
+	MENU_JSON_FORM_KEYS,
+	parseMenuJsonFormValue,
+} from '#app/utils/menu/menu-write-columns.ts'
 import {
 	checkModifierGraphChange,
 	modifierGraphErrorResponse,
@@ -227,6 +234,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			isAlcohol: Boolean(option.isAlcohol),
 			isGlutenFree: Boolean(option.isGlutenFree),
 			isVegetarian: Boolean(option.isVegetarian),
+			dietaryTags: dietaryTagsOf(option),
+			orderTypePrices: parseOrderTypePrices(option.orderTypePrices),
 			isTopping: Boolean(option.isTopping),
 			allergens: parsedAllergens,
 			applySalesTax: Boolean(option.applySalesTax),
@@ -264,7 +273,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const rawData: Record<string, unknown> = {}
 
 	for (const [key, value] of formData.entries()) {
-		if (
+		if ((MENU_JSON_FORM_KEYS as readonly string[]).includes(key)) {
+			rawData[key] = parseMenuJsonFormValue(value)
+		} else if (
 			key === 'allergens' ||
 			key === 'modifierGroupIds' ||
 			key === 'nestedModifierGroupIds' ||
@@ -373,8 +384,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				minSelections: data.minSelections,
 				maxSelections: data.maxSelections ?? null,
 				isAlcohol: data.isAlcohol,
-				isGlutenFree: data.isGlutenFree,
-				isVegetarian: data.isVegetarian,
+				...(await dietaryAndOrderTypeColumns(data, async () => {
+					const [current] = await tx
+						.select({ dietaryTags: OrganizationMenuOption.dietaryTags })
+						.from(OrganizationMenuOption)
+						.where(eq(OrganizationMenuOption.id, params.optionId ?? ''))
+					return current?.dietaryTags
+				})),
 				isTopping,
 				allergens: JSON.stringify(data.allergens),
 				applySalesTax: data.applySalesTax,

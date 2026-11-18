@@ -33,6 +33,11 @@ import {
 } from '#app/utils/menu/access.server.ts'
 import { dailyLimitLocationIds } from '#app/utils/menu/daily-limit-save.ts'
 import {
+	dietaryAndOrderTypeColumns,
+	MENU_JSON_FORM_KEYS,
+	parseMenuJsonFormValue,
+} from '#app/utils/menu/menu-write-columns.ts'
+import {
 	checkModifierGraphChange,
 	modifierGraphErrorResponse,
 } from '#app/utils/menu/modifier-graph.server.ts'
@@ -123,7 +128,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const rawData: Record<string, unknown> = {}
 
 	for (const [key, value] of formData.entries()) {
-		if (
+		if ((MENU_JSON_FORM_KEYS as readonly string[]).includes(key)) {
+			rawData[key] = parseMenuJsonFormValue(value)
+		} else if (
 			key === 'allergens' ||
 			key === 'modifierGroupIds' ||
 			key === 'nestedModifierGroupIds' ||
@@ -235,8 +242,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				minSelections: data.minSelections,
 				maxSelections: data.maxSelections ?? null,
 				isAlcohol: data.isAlcohol,
-				isGlutenFree: data.isGlutenFree,
-				isVegetarian: data.isVegetarian,
+				...(await dietaryAndOrderTypeColumns(data)),
 				isTopping,
 				allergens: JSON.stringify(data.allergens),
 				applySalesTax: data.applySalesTax,

@@ -88,6 +88,11 @@ export default function MenuLayout() {
 				location.pathname === `/${orgSlug}/menu/drops/` ||
 				location.pathname.startsWith(`/${orgSlug}/menu/drops/`),
 		},
+		{
+			label: _(t`Translations`),
+			href: `/${orgSlug}/menu/translations`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/menu/translations`),
+		},
 		...(menuHistoryEnabled
 			? [
 					{

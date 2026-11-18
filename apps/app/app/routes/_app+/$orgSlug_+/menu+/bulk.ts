@@ -1,24 +1,5 @@
 import { requireUserId } from '@repo/auth'
-import { z } from 'zod'
-import { type ActionFunctionArgs } from 'react-router'
-import { requireMenuWrite } from '#app/utils/menu/access.server.ts'
-import {
-	applyBulkItemEdit,
-	applyBulkOptionEdit,
-	currencyCodeForDataRegion,
-	currencyExponentFor,
-} from '#app/utils/menu/bulk-apply.server.ts'
-import {
-	BULK_EDIT_MAX_ROWS,
-	planBulkEditItem,
-	planBulkEditOption,
-	type BulkItemOperation,
-	type BulkOptionOperation,
-} from '#app/utils/menu/bulk-edit.ts'
-import { isMenuBulkEditKillSwitchOn } from '#app/utils/menu/bulk-edit-switch.server.ts'
-import { requireMenuBulkEditAccess } from '#app/utils/menu/menu-feature-access.server.ts'
-import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { loadModifierGraph } from '#app/utils/menu/modifier-graph.server.ts'
+import { dietaryTagsOf } from '@repo/common/menu-types'
 import {
 	and,
 	db,
@@ -29,6 +10,27 @@ import {
 	OrganizationMenuItemModifierGroupAssignment,
 	OrganizationMenuOption,
 } from '@repo/database'
+import { type ActionFunctionArgs } from 'react-router'
+import { z } from 'zod'
+import { requireMenuWrite } from '#app/utils/menu/access.server.ts'
+import {
+	applyBulkItemEdit,
+	applyBulkOptionEdit,
+	currencyCodeForDataRegion,
+	currencyExponentFor,
+} from '#app/utils/menu/bulk-apply.server.ts'
+import { isMenuBulkEditKillSwitchOn } from '#app/utils/menu/bulk-edit-switch.server.ts'
+import {
+	BULK_DIETARY_FLAGS,
+	BULK_EDIT_MAX_ROWS,
+	planBulkEditItem,
+	planBulkEditOption,
+	type BulkItemOperation,
+	type BulkOptionOperation,
+} from '#app/utils/menu/bulk-edit.ts'
+import { requireMenuBulkEditAccess } from '#app/utils/menu/menu-feature-access.server.ts'
+import { loadModifierGraph } from '#app/utils/menu/modifier-graph.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 
 const PriceChangeSchema = z.discriminatedUnion('kind', [
 	z.object({ kind: z.literal('percent'), value: z.number() }),
@@ -61,15 +63,24 @@ const ItemOperationSchema = z.discriminatedUnion('type', [
 	z.object({ type: z.literal('apply_sales_tax'), enabled: z.boolean() }),
 	z.object({
 		type: z.literal('dietary'),
-		flag: z.enum(['vegetarian', 'gluten_free', 'alcohol']),
+		flag: z.enum(BULK_DIETARY_FLAGS),
 		enabled: z.boolean(),
 	}),
 	z.object({ type: z.literal('popular'), enabled: z.boolean() }),
 	z.object({ type: z.literal('upsell'), enabled: z.boolean() }),
 	z.object({ type: z.literal('add_category'), categoryId: z.string().min(1) }),
-	z.object({ type: z.literal('remove_category'), categoryId: z.string().min(1) }),
-	z.object({ type: z.literal('add_modifier_group'), modifierGroupId: z.string().min(1) }),
-	z.object({ type: z.literal('remove_modifier_group'), modifierGroupId: z.string().min(1) }),
+	z.object({
+		type: z.literal('remove_category'),
+		categoryId: z.string().min(1),
+	}),
+	z.object({
+		type: z.literal('add_modifier_group'),
+		modifierGroupId: z.string().min(1),
+	}),
+	z.object({
+		type: z.literal('remove_modifier_group'),
+		modifierGroupId: z.string().min(1),
+	}),
 ])
 
 const OptionOperationSchema = z.discriminatedUnion('type', [
@@ -91,7 +102,7 @@ const OptionOperationSchema = z.discriminatedUnion('type', [
 	}),
 	z.object({
 		type: z.literal('dietary'),
-		flag: z.enum(['vegetarian', 'gluten_free', 'alcohol']),
+		flag: z.enum(BULK_DIETARY_FLAGS),
 		enabled: z.boolean(),
 	}),
 ])
@@ -115,7 +126,11 @@ const BodySchema = z.discriminatedUnion('intent', [
 ])
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	if (isMenuBulkEditKillSwitchOn(process.env as { MENU_BULK_EDIT_ENABLED?: string })) {
+	if (
+		isMenuBulkEditKillSwitchOn(
+			process.env as { MENU_BULK_EDIT_ENABLED?: string },
+		)
+	) {
 		return Response.json({ error: 'bulk_edit_disabled' }, { status: 503 })
 	}
 
@@ -189,6 +204,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					isVegetarian: row.isVegetarian,
 					isGlutenFree: row.isGlutenFree,
 					isAlcohol: row.isAlcohol,
+					dietaryTags: dietaryTagsOf(row),
 					isPopular: row.isPopular,
 					isUpsell: row.isUpsell,
 					categoryIds: categoryByItem.get(row.id) ?? [],
@@ -200,7 +216,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			if (operation.type === 'add_modifier_group') {
 				await loadModifierGraph(organization.id)
 				for (const plan of plans) {
-					if (!plan.after.modifierGroupIds.includes(operation.modifierGroupId)) {
+					if (
+						!plan.after.modifierGroupIds.includes(operation.modifierGroupId)
+					) {
 						plan.skipped = 'modifier_graph'
 					}
 				}
@@ -231,6 +249,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				isVegetarian: row.isVegetarian,
 				isGlutenFree: row.isGlutenFree,
 				isAlcohol: row.isAlcohol,
+				dietaryTags: dietaryTagsOf(row),
 			})),
 			operation: operation as BulkOptionOperation,
 			currencyExponent: exponent,

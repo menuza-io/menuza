@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { dailySaleLimitInputSchema } from './daily-dish-limits.ts'
+import { orderTypePricesSchema } from './menu-pricing.ts'
 import { parseLocalizedString } from './site-locales.ts'
 
 export const ALLERGENS = [
@@ -132,6 +133,28 @@ export function matchesDietaryFilter(
 	const have = new Set(tags)
 	if (have.has('vegan')) have.add('vegetarian')
 	return selected.every((tag) => have.has(tag))
+}
+
+/**
+ * Columns to write from a form or API input. With `dietaryTags` the list is
+ * the source; without it (an older caller that only sends the two flags) the
+ * flags are merged into the record's current tags, so other tags survive.
+ */
+export function dietaryColumnsFromInput(
+	input: {
+		dietaryTags?: readonly string[] | null
+		isVegetarian?: boolean | null
+		isGlutenFree?: boolean | null
+	},
+	currentTags?: unknown,
+) {
+	if (input.dietaryTags) return dietaryColumns(input.dietaryTags)
+	const tags = new Set<string>(parseDietaryTags(currentTags))
+	if (input.isVegetarian) tags.add('vegetarian')
+	else tags.delete('vegetarian')
+	if (input.isGlutenFree) tags.add('gluten_free')
+	else tags.delete('gluten_free')
+	return dietaryColumns([...tags])
 }
 
 export const AVAILABILITY_STATUSES = [
@@ -506,6 +529,8 @@ export const ModifierOptionInputSchema = z.object({
 	isAlcohol: z.boolean().default(false),
 	isGlutenFree: z.boolean().default(false),
 	isVegetarian: z.boolean().default(false),
+	/** Dietary tags (#335); when sent, the flags above follow them. */
+	dietaryTags: z.array(z.string()).max(20).optional(),
 	isTopping: z.boolean().default(false),
 	isDefault: z.boolean().default(false),
 	allergens: z.array(AllergenSchema).default([]),
@@ -539,6 +564,10 @@ export const MenuOptionInputSchema = z.object({
 	isAlcohol: z.boolean().default(false),
 	isGlutenFree: z.boolean().default(false),
 	isVegetarian: z.boolean().default(false),
+	/** Dietary tags (#335); when sent, the flags above follow them. */
+	dietaryTags: z.array(z.string()).max(20).optional(),
+	/** Prices per order type (#412); null clears them. */
+	orderTypePrices: orderTypePricesSchema.nullable().optional(),
 	isTopping: z.boolean().default(false),
 	allergens: z.array(AllergenSchema).default([]),
 	applySalesTax: z.boolean().default(true),
@@ -591,6 +620,10 @@ export const MenuItemInputSchema = z.object({
 	isAlcohol: z.boolean().default(false),
 	isGlutenFree: z.boolean().default(false),
 	isVegetarian: z.boolean().default(false),
+	/** Dietary tags (#335); when sent, the flags above follow them. */
+	dietaryTags: z.array(z.string()).max(20).optional(),
+	/** Prices per order type (#412); null clears them. */
+	orderTypePrices: orderTypePricesSchema.nullable().optional(),
 	allergens: z.array(AllergenSchema).default([]),
 	calorieMin: OptionalCountInputSchema,
 	calorieMax: OptionalCountInputSchema,

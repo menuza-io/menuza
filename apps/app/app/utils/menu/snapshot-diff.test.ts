@@ -37,6 +37,8 @@ describe('diffMenuSnapshots', () => {
 				imageKeys: '[]',
 				variations: '{"groups":[],"variants":[]}',
 				isAlcohol: false,
+				dietaryTags: '[]',
+				orderTypePrices: null,
 				isGlutenFree: false,
 				isVegetarian: false,
 				allergens: '[]',

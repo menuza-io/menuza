@@ -2,6 +2,7 @@ import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import {
+	dietaryTagsOf,
 	getLocalizedMenuValue,
 	parseMenuVariations,
 } from '@repo/common/menu-types'
@@ -65,6 +66,7 @@ import {
 	FoodCostProvider,
 } from '#app/components/inventory/food-cost-column.tsx'
 import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
+import { DIETARY_TAG_MESSAGES } from '#app/components/menu/dietary-tag-switches.tsx'
 import { MenuBulkBar } from '#app/components/menu/menu-bulk-bar.tsx'
 import { MenuBulkEditSheet } from '#app/components/menu/menu-bulk-edit-sheet.tsx'
 import {
@@ -291,7 +293,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		})),
 		bulkCategories: bulkCategories.map((row) => ({
 			id: row.id,
-			label: getLocalizedMenuValue(row.displayName, defaultLocale, defaultLocale),
+			label: getLocalizedMenuValue(
+				row.displayName,
+				defaultLocale,
+				defaultLocale,
+			),
 		})),
 		bulkModifierGroups: bulkModifierGroups.map((row) => ({
 			id: row.id,
@@ -313,6 +319,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				isAlcohol: i.isAlcohol,
 				isGlutenFree: i.isGlutenFree,
 				isVegetarian: i.isVegetarian,
+				dietaryTags: dietaryTagsOf(i),
 				isPopular: i.isPopular,
 				isUpsell: i.isUpsell,
 				allergens,
@@ -365,9 +372,8 @@ function ItemsIndexContent() {
 	const deleteFetcher = useFetcher()
 	const revalidator = useRevalidator()
 	const [bulkOpen, setBulkOpen] = useState(false)
-	const [duplicateEntity, setDuplicateEntity] = useState<MenuDuplicateEntity | null>(
-		null,
-	)
+	const [duplicateEntity, setDuplicateEntity] =
+		useState<MenuDuplicateEntity | null>(null)
 	const items = useMemo(() => {
 		if (!healthFilter) return allItems
 		const ids = new Set(healthFilter.itemIds)
@@ -393,6 +399,9 @@ function ItemsIndexContent() {
 						...(item.isUpsell ? ['upsell'] : []),
 						...(item.isVegetarian ? ['vegetarian'] : []),
 						...(item.isGlutenFree ? ['gluten_free'] : []),
+						...item.dietaryTags.filter(
+							(tag) => tag !== 'vegetarian' && tag !== 'gluten_free',
+						),
 						...(item.isAlcohol ? ['alcohol'] : []),
 					]
 				default:
@@ -634,6 +643,19 @@ function ItemsIndexContent() {
 																V
 															</span>
 														)}
+														{item.dietaryTags
+															.filter(
+																(tag) =>
+																	tag !== 'vegetarian' && tag !== 'gluten_free',
+															)
+															.map((tag) => (
+																<span
+																	key={tag}
+																	className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]"
+																>
+																	{_(DIETARY_TAG_MESSAGES[tag])}
+																</span>
+															))}
 														{item.isAlcohol && (
 															<span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]">
 																21+
@@ -646,7 +668,8 @@ function ItemsIndexContent() {
 																	` +${item.allergens.length - 2}`}
 															</span>
 														)}
-														{!item.isGlutenFree &&
+														{item.dietaryTags.length === 0 &&
+															!item.isGlutenFree &&
 															!item.isVegetarian &&
 															!item.isAlcohol &&
 															item.allergens.length === 0 && (
@@ -772,7 +795,9 @@ function ItemsIndexContent() {
 							updatedAt: row.updatedAt,
 						}))}
 					onUndoSnapshot={
-						menuHistoryEnabled ? (snapshotId) => void undoBulkSnapshot(snapshotId) : undefined
+						menuHistoryEnabled
+							? (snapshotId) => void undoBulkSnapshot(snapshotId)
+							: undefined
 					}
 				/>
 			) : null}

@@ -35,7 +35,10 @@ import {
 } from '@repo/ui/table'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { DIETARY_TAG_MESSAGES } from '#app/components/menu/dietary-tag-switches.tsx'
 import {
+	BULK_DIETARY_FLAGS,
+	type BulkDietaryFlag,
 	type BulkItemOperation,
 	type BulkOptionOperation,
 } from '#app/utils/menu/bulk-edit.ts'
@@ -85,7 +88,12 @@ export function MenuBulkEditSheet({
 	onOpenChange: (open: boolean) => void
 	targetType: BulkTarget
 	selectedIds: string[]
-	rows: Array<{ id: string; displayName: string; price: number; updatedAt: string }>
+	rows: Array<{
+		id: string
+		displayName: string
+		price: number
+		updatedAt: string
+	}>
 	locations?: CatalogItem[]
 	categories?: CatalogItem[]
 	modifierGroups?: CatalogItem[]
@@ -96,21 +104,25 @@ export function MenuBulkEditSheet({
 	const { _ } = useLingui()
 	const [itemAction, setItemAction] = useState<ItemActionKey>('price')
 	const [optionAction, setOptionAction] = useState<OptionActionKey>('price')
-	const [priceKind, setPriceKind] = useState<'percent' | 'amount' | 'set'>('percent')
-	const [priceValue, setPriceValue] = useState('5')
-	const [priceEnding, setPriceEnding] = useState<'none' | '00' | '50' | '95' | '99'>(
-		'none',
+	const [priceKind, setPriceKind] = useState<'percent' | 'amount' | 'set'>(
+		'percent',
 	)
+	const [priceValue, setPriceValue] = useState('5')
+	const [priceEnding, setPriceEnding] = useState<
+		'none' | '00' | '50' | '95' | '99'
+	>('none')
 	const [endingDirection, setEndingDirection] = useState<
 		'up' | 'down' | 'nearest'
 	>('up')
 	const [availabilityStatus, setAvailabilityStatus] = useState<
 		'available' | 'unavailable' | 'hidden'
 	>('unavailable')
-	const [dietaryFlag, setDietaryFlag] = useState<
-		'vegetarian' | 'gluten_free' | 'alcohol'
-	>('vegetarian')
+	const [dietaryFlag, setDietaryFlag] = useState<BulkDietaryFlag>('vegetarian')
 	const [dietaryEnabled, setDietaryEnabled] = useState(true)
+	const dietaryFlagItems = BULK_DIETARY_FLAGS.map((flag) => ({
+		value: flag,
+		label: flag === 'alcohol' ? _(t`Alcohol`) : _(DIETARY_TAG_MESSAGES[flag]),
+	}))
 	const [toggleEnabled, setToggleEnabled] = useState(true)
 	const [categoryId, setCategoryId] = useState('')
 	const [modifierGroupId, setModifierGroupId] = useState('')
@@ -133,10 +145,19 @@ export function MenuBulkEditSheet({
 			if (optionAction === 'price') {
 				const change =
 					priceKind === 'percent'
-						? { kind: 'percent' as const, value: Number.parseFloat(priceValue) || 0 }
+						? {
+								kind: 'percent' as const,
+								value: Number.parseFloat(priceValue) || 0,
+							}
 						: priceKind === 'amount'
-							? { kind: 'amount' as const, value: Number.parseFloat(priceValue) || 0 }
-							: { kind: 'set' as const, value: Number.parseFloat(priceValue) || 0 }
+							? {
+									kind: 'amount' as const,
+									value: Number.parseFloat(priceValue) || 0,
+								}
+							: {
+									kind: 'set' as const,
+									value: Number.parseFloat(priceValue) || 0,
+								}
 				const ending =
 					currencyExponent === 2 && priceEnding !== 'none'
 						? { to: priceEnding, direction: endingDirection }
@@ -157,10 +178,19 @@ export function MenuBulkEditSheet({
 			case 'price': {
 				const change =
 					priceKind === 'percent'
-						? { kind: 'percent' as const, value: Number.parseFloat(priceValue) || 0 }
+						? {
+								kind: 'percent' as const,
+								value: Number.parseFloat(priceValue) || 0,
+							}
 						: priceKind === 'amount'
-							? { kind: 'amount' as const, value: Number.parseFloat(priceValue) || 0 }
-							: { kind: 'set' as const, value: Number.parseFloat(priceValue) || 0 }
+							? {
+									kind: 'amount' as const,
+									value: Number.parseFloat(priceValue) || 0,
+								}
+							: {
+									kind: 'set' as const,
+									value: Number.parseFloat(priceValue) || 0,
+								}
 				const ending =
 					currencyExponent === 2 && priceEnding !== 'none'
 						? { to: priceEnding, direction: endingDirection }
@@ -207,7 +237,9 @@ export function MenuBulkEditSheet({
 				}),
 			})
 			if (!response.ok) {
-				const data = (await response.json().catch(() => ({}))) as { error?: string }
+				const data = (await response.json().catch(() => ({}))) as {
+					error?: string
+				}
 				toast.error(data.error ?? _('Could not build preview'))
 				return
 			}
@@ -298,11 +330,11 @@ export function MenuBulkEditSheet({
 			return row.applySalesTax ? _(t`Tax on`) : _(t`Tax off`)
 		}
 		if (actionKey === 'dietary') {
-			if (dietaryFlag === 'vegetarian')
-				return row.isVegetarian ? _(t`Vegetarian`) : '—'
-			if (dietaryFlag === 'gluten_free')
-				return row.isGlutenFree ? _(t`Gluten-free`) : '—'
-			return row.isAlcohol ? _(t`Alcohol`) : '—'
+			if (dietaryFlag === 'alcohol') return row.isAlcohol ? _(t`Alcohol`) : '—'
+			const tags = (row.dietaryTags as string[] | undefined) ?? []
+			return tags.includes(dietaryFlag)
+				? _(DIETARY_TAG_MESSAGES[dietaryFlag])
+				: '—'
 		}
 		if (actionKey === 'popular') {
 			return row.isPopular ? _(t`Popular`) : '—'
@@ -310,10 +342,7 @@ export function MenuBulkEditSheet({
 		if (actionKey === 'upsell') {
 			return row.isUpsell ? _(t`Upsell`) : '—'
 		}
-		if (
-			actionKey === 'add_category' ||
-			actionKey === 'remove_category'
-		) {
+		if (actionKey === 'add_category' || actionKey === 'remove_category') {
 			const ids = row.categoryIds as string[] | undefined
 			return ids?.length ? String(ids.length) : '0'
 		}
@@ -366,8 +395,7 @@ export function MenuBulkEditSheet({
 				<div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
 					<div className="flex flex-wrap items-center gap-2">
 						<Badge variant="secondary">
-							{selectedIds.length}{' '}
-							<Trans>selected</Trans>
+							{selectedIds.length} <Trans>selected</Trans>
 						</Badge>
 						{scopeLocation ? (
 							<Badge variant="outline">
@@ -550,9 +578,7 @@ export function MenuBulkEditSheet({
 								<Select
 									value={availabilityStatus}
 									onValueChange={(value) =>
-										setAvailabilityStatus(
-											value as typeof availabilityStatus,
-										)
+										setAvailabilityStatus(value as typeof availabilityStatus)
 									}
 								>
 									<SelectTrigger>
@@ -581,23 +607,20 @@ export function MenuBulkEditSheet({
 									</Label>
 									<Select
 										value={dietaryFlag}
+										items={dietaryFlagItems}
 										onValueChange={(value) =>
-											setDietaryFlag(value as typeof dietaryFlag)
+											setDietaryFlag(value as BulkDietaryFlag)
 										}
 									>
 										<SelectTrigger>
 											<SelectValue />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="vegetarian">
-												<Trans>Vegetarian</Trans>
-											</SelectItem>
-											<SelectItem value="gluten_free">
-												<Trans>Gluten-free</Trans>
-											</SelectItem>
-											<SelectItem value="alcohol">
-												<Trans>Alcohol</Trans>
-											</SelectItem>
+											{dietaryFlagItems.map((item) => (
+												<SelectItem key={item.value} value={item.value}>
+													{item.label}
+												</SelectItem>
+											))}
 										</SelectContent>
 									</Select>
 								</div>

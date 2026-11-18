@@ -2625,3 +2625,230 @@ describe('large-order rules in the context', () => {
 			).toBe(true)
 	})
 })
+
+// ---------------------------------------------------------------------------
+// Order-type prices (#412) and pricing rules (#388)
+// ---------------------------------------------------------------------------
+
+describe('menu price resolution in the order engine', () => {
+	const soup = {
+		id: 'item-soup',
+		displayName: 'Soup',
+		price: 10,
+		orderTypePrices: { delivery: 12, dine_in: 9 },
+		availabilityStatus: 'available',
+		modifierGroups: [
+			{
+				id: 'grp-extra',
+				name: 'Extra',
+				selectionType: 'multiple',
+				minSelections: 0,
+				availabilityStatus: 'available',
+				options: [
+					{
+						id: 'opt-bread',
+						displayName: 'Bread',
+						price: 1,
+						orderTypePrices: { delivery: 1.5 },
+						availabilityStatus: 'available',
+					},
+				],
+			},
+		],
+	}
+	const plain = {
+		id: 'item-plain',
+		displayName: 'Plain',
+		price: 20,
+		availabilityStatus: 'available',
+	}
+	const menu = (extra: Record<string, unknown> = {}) => ({
+		...makeMenu([soup, plain]),
+		...extra,
+	})
+	const line = (itemId: string, options: unknown[] = []) => ({
+		itemId,
+		quantity: 1,
+		options,
+	})
+	const deliveryRequest = (lines: unknown[]) =>
+		makeRequest({
+			fulfillment: 'delivery',
+			delivery: { address: '100 Congress Ave 78701', city: 'Austin' },
+			// Two of each clears the zone's 15.00 minimum; unit prices are compared.
+			lines: lines.map((entry) => ({ ...(entry as object), quantity: 2 })),
+		})
+	const unitPrices = (result: ReturnType<typeof priceRestaurantOrder>) => {
+		if (!result.ok) throw new Error(result.error.code)
+		return result.result.lines.map((entry) => entry.unitPriceCents)
+	}
+
+	it('charges the delivery price only for delivery orders', () => {
+		const context = makeContext({ menu: menu() })
+		const lines = [
+			line('item-soup', [{ groupId: 'grp-extra', optionId: 'opt-bread' }]),
+		]
+		expect(
+			unitPrices(
+				priceRestaurantOrder(context, deliveryRequest(lines), { now: NOW }),
+			),
+		).toEqual([1350])
+		// The same cart switched to pickup is repriced at the base prices.
+		expect(
+			unitPrices(
+				priceRestaurantOrder(context, makeRequest({ lines }), { now: NOW }),
+			),
+		).toEqual([1100])
+	})
+
+	it('prices QR table rounds and the till as dine-in, drive-through as pickup', () => {
+		const context = makeContext({ menu: menu() })
+		const qr = makeRequest({
+			fulfillment: 'dine_in',
+			lines: [line('item-soup')],
+		})
+		expect(unitPrices(priceRestaurantOrder(context, qr, { now: NOW }))).toEqual(
+			[900],
+		)
+		const walkIn = makeRequest({ lines: [line('item-soup')] })
+		expect(
+			unitPrices(
+				priceRestaurantOrder(context, walkIn, {
+					now: NOW,
+					walkIn: true,
+					priceAs: 'dine_in',
+				}),
+			),
+		).toEqual([900])
+		expect(
+			unitPrices(
+				priceRestaurantOrder(context, walkIn, {
+					now: NOW,
+					walkIn: true,
+					priceAs: 'pickup',
+				}),
+			),
+		).toEqual([1000])
+	})
+
+	it('falls back to the base price when no order-type price is set', () => {
+		const context = makeContext({ menu: menu() })
+		expect(
+			unitPrices(
+				priceRestaurantOrder(context, deliveryRequest([line('item-plain')]), {
+					now: NOW,
+				}),
+			),
+		).toEqual([2000])
+	})
+
+	it('lets a fixed location price win over order-type prices and rules', () => {
+		const context = makeContext({
+			menu: menu({
+				locationOverrides: {
+					[LOCATION_ID]: [
+						{ entityType: 'item', entityId: 'item-soup', price: 11 },
+					],
+				},
+				pricingRules: [
+					{
+						id: 'r1',
+						percentBp: 1000,
+						allDishes: true,
+						categoryIds: [],
+						locationIds: [],
+						rounding: { mode: 'none' },
+					},
+				],
+			}),
+		})
+		expect(
+			unitPrices(
+				priceRestaurantOrder(context, deliveryRequest([line('item-soup')]), {
+					now: NOW,
+				}),
+			),
+		).toEqual([1100])
+		// The plain dish has no override, so the rule applies.
+		expect(
+			unitPrices(
+				priceRestaurantOrder(context, deliveryRequest([line('item-plain')]), {
+					now: NOW,
+				}),
+			),
+		).toEqual([2200])
+	})
+
+	it('applies a +10% round-up rule on the order-type price, for any dish in the category', () => {
+		const rule = {
+			id: 'r1',
+			percentBp: 1000,
+			allDishes: false,
+			categoryIds: ['cat-food'],
+			locationIds: [LOCATION_ID],
+			rounding: { mode: 'decimals', decimals: 0 },
+		}
+		const context = makeContext({ menu: menu({ pricingRules: [rule] }) })
+		// Delivery 12 + 10% = 13.20, rounded up to 14.
+		expect(
+			unitPrices(
+				priceRestaurantOrder(context, deliveryRequest([line('item-soup')]), {
+					now: NOW,
+				}),
+			),
+		).toEqual([1400])
+		// Pickup 10 + 10% = 11.
+		expect(
+			unitPrices(
+				priceRestaurantOrder(
+					context,
+					makeRequest({ lines: [line('item-plain')] }),
+					{ now: NOW },
+				),
+			),
+		).toEqual([2200])
+		// Another location: no rule.
+		const elsewhere = makeContext({
+			menu: menu({ pricingRules: [{ ...rule, locationIds: ['loc-2'] }] }),
+		})
+		expect(
+			unitPrices(
+				priceRestaurantOrder(
+					elsewhere,
+					makeRequest({ lines: [line('item-plain')] }),
+					{ now: NOW },
+				),
+			),
+		).toEqual([2000])
+		// An ended rule: back to base.
+		const ended = makeContext({
+			menu: menu({
+				pricingRules: [{ ...rule, endsAt: '2025-06-01T00:00:00.000Z' }],
+			}),
+		})
+		expect(
+			unitPrices(
+				priceRestaurantOrder(
+					ended,
+					makeRequest({ lines: [line('item-plain')] }),
+					{ now: NOW },
+				),
+			),
+		).toEqual([2000])
+	})
+
+	it('ignores a malformed rule instead of failing the order', () => {
+		const context = makeContext({
+			menu: menu({ pricingRules: [{ id: 'bad' }, 'x'] }),
+		})
+		expect(
+			unitPrices(
+				priceRestaurantOrder(
+					context,
+					makeRequest({ lines: [line('item-plain')] }),
+					{ now: NOW },
+				),
+			),
+		).toEqual([2000])
+	})
+})

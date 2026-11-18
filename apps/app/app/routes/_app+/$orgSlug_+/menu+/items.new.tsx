@@ -37,6 +37,11 @@ import {
 } from '#app/utils/menu/daily-limit-save.ts'
 import { autoTranslateNewItem } from '#app/utils/menu/menu-auto-translate.server.ts'
 import {
+	dietaryAndOrderTypeColumns,
+	MENU_JSON_FORM_KEYS,
+	parseMenuJsonFormValue,
+} from '#app/utils/menu/menu-write-columns.ts'
+import {
 	assertCategoryIdsInOrganization,
 	assertLocationIdsInOrganization,
 	assertMediaKeysInOrganization,
@@ -135,7 +140,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const rawData: Record<string, unknown> = {}
 
 	for (const [key, value] of formData.entries()) {
-		if (
+		if ((MENU_JSON_FORM_KEYS as readonly string[]).includes(key)) {
+			rawData[key] = parseMenuJsonFormValue(value)
+		} else if (
 			key === 'allergens' ||
 			key === 'imageKeys' ||
 			key === 'variations' ||
@@ -241,8 +248,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				imageUrl: primaryImageKey ? data.imageUrl || null : null,
 				imageKeys: JSON.stringify(imageKeys),
 				isAlcohol: data.isAlcohol,
-				isGlutenFree: data.isGlutenFree,
-				isVegetarian: data.isVegetarian,
+				...(await dietaryAndOrderTypeColumns(data)),
 				allergens: JSON.stringify(data.allergens),
 				calorieMin: data.calorieMin ?? null,
 				calorieMax: data.calorieMax ?? null,
