@@ -1,6 +1,9 @@
 import { Trans, plural, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { type LocationSettingId } from '@repo/common/location-settings-registry'
+import {
+	MAX_LOCK_REASON_LENGTH,
+	type LocationSettingId,
+} from '@repo/common/location-settings-registry'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -34,7 +37,6 @@ import {
 	applyChainDefaultIntent,
 	chainDefaultInputSchema,
 	loadChainDefaults,
-	MAX_LOCK_REASON_LENGTH,
 	type ChainDefaultRow,
 } from '#app/utils/location/chain-defaults.server.ts'
 import { requireHeadOffice } from '#app/utils/location/location-access.server.ts'

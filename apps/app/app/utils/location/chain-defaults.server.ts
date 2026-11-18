@@ -5,6 +5,7 @@ import {
 	settingValuesEqual,
 	type LocationSettingId,
 	LOCATION_SETTING_IDS,
+	MAX_LOCK_REASON_LENGTH,
 } from '@repo/common/location-settings-registry'
 import {
 	and,
@@ -41,7 +42,6 @@ import {
  * value keep it (listed as overrides) unless head office resets them.
  */
 
-export const MAX_LOCK_REASON_LENGTH = 200
 
 const idSchema = z.string().trim().min(1).max(64)
 const settingIdSchema = z.enum(LOCATION_SETTING_IDS)

@@ -96,6 +96,9 @@ export type LocationSettingContext = {
 	currency: string
 }
 
+/** Longest reason head office can give for a lock; shown to people at the location. */
+export const MAX_LOCK_REASON_LENGTH = 200
+
 export const LOCATION_SETTING_IDS = [
 	'storeHours',
 	'onlineHours',
