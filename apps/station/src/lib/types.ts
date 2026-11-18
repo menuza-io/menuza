@@ -27,6 +27,10 @@ export type MenuOption = {
 	 * does too. Halves are not offered at the till.
 	 */
 	priceWhole?: number | null
+	/** Prices per order type (#412); absent on older menus. */
+	orderTypePrices?: unknown
+	/** Dietary tags (#335); absent on older menus. */
+	dietaryTags?: string[]
 	minSelections: number
 	maxSelections: number | null
 	isDefault: boolean
@@ -75,6 +79,10 @@ export type MenuItem = {
 	isVegetarian: boolean
 	isGlutenFree: boolean
 	isAlcohol: boolean
+	/** Dietary tags (#335); absent on older menus (the flags above then). */
+	dietaryTags?: string[]
+	/** Prices per order type (#412); absent on older menus. */
+	orderTypePrices?: unknown
 	allergens: string[]
 	isPopular: boolean
 	/** Left out of every discount. Absent on a menu published before the flag. */
@@ -140,6 +148,8 @@ export type MenuPayload = {
 		position: number
 		categories: MenuCategory[]
 	}>
+	/** Live pricing rules (#388); read with `parseMenuPricingRules`. */
+	pricingRules?: unknown
 	locationOverrides: Record<
 		string,
 		Array<{

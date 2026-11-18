@@ -1,5 +1,6 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { dietaryTagsOf, type DietaryTag } from '@repo/common/menu-types'
 import { Icon } from '@repo/ui/icon'
 import { useMemo, useState } from 'react'
 import { isAvailable } from '~/lib/availability.ts'
@@ -35,6 +36,26 @@ function selectionsFromLine(line: CartLine): Selections {
 	for (const o of line.options)
 		(selections[o.groupId] ??= {})[o.optionId] = o.quantity
 	return selections
+}
+
+/** Words for the dietary tags (#335) beyond the two with their own badge. */
+function dietaryTagLabel(tag: DietaryTag): string {
+	switch (tag) {
+		case 'halal':
+			return t`Halal`
+		case 'vegan':
+			return t`Vegan`
+		case 'dairy_free':
+			return t`Dairy free`
+		case 'nut_free':
+			return t`Nut free`
+		case 'spicy':
+			return t`Spicy`
+		case 'vegetarian':
+			return t`Vegetarian`
+		case 'gluten_free':
+			return t`Gluten free`
+	}
 }
 
 export function ItemSheet({
@@ -179,18 +200,23 @@ function ItemSheetBody({
 					<p className="text-muted-foreground">{item.description}</p>
 				) : null}
 				<div className="flex flex-wrap gap-2">
-					{item.isVegetarian ? (
+					{dietaryTagsOf(item).includes('vegetarian') ? (
 						<Badge tone="success">
 							<Icon name="salad" className="size-3.5" />{' '}
 							<Trans>Vegetarian</Trans>
 						</Badge>
 					) : null}
-					{item.isGlutenFree ? (
+					{dietaryTagsOf(item).includes('gluten_free') ? (
 						<Badge tone="warning">
 							<Icon name="wheat" className="size-3.5" />{' '}
 							<Trans>Gluten free</Trans>
 						</Badge>
 					) : null}
+					{dietaryTagsOf(item)
+						.filter((tag) => tag !== 'vegetarian' && tag !== 'gluten_free')
+						.map((tag) => (
+							<Badge key={tag}>{dietaryTagLabel(tag)}</Badge>
+						))}
 					{item.allergens.map((a) => (
 						<Badge key={a}>{a}</Badge>
 					))}
