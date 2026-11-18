@@ -259,6 +259,16 @@
       "import": "./src/prep-schedule.ts",
       "default": "./src/prep-schedule.ts"
     },
+    "./menu-pricing": {
+      "types": "./src/menu-pricing.ts",
+      "import": "./src/menu-pricing.ts",
+      "default": "./src/menu-pricing.ts"
+    },
+    "./translation-status": {
+      "types": "./src/translation-status.ts",
+      "import": "./src/translation-status.ts",
+      "default": "./src/translation-status.ts"
+    },
     "./upsell": {
       "types": "./src/upsell.ts",
       "import": "./src/upsell.ts",

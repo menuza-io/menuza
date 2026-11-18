@@ -39,6 +39,101 @@ export const DIETARY_FLAG_LABELS: Record<DietaryFlag, string> = {
 	vegetarian: 'Vegetarian',
 }
 
+/**
+ * Dietary tags (#335): claims the restaurant makes about a dish or option.
+ * Allergens stay a separate list. `alcohol` stays its own flag (not a diet).
+ * `isVegetarian` and `isGlutenFree` mirror the matching tags on every write so
+ * readers that only know the three flags keep working.
+ */
+export const DIETARY_TAGS = [
+	'halal',
+	'vegan',
+	'vegetarian',
+	'gluten_free',
+	'dairy_free',
+	'nut_free',
+	'spicy',
+] as const
+export type DietaryTag = (typeof DIETARY_TAGS)[number]
+
+export const DIETARY_TAG_LABELS: Record<DietaryTag, string> = {
+	halal: 'Halal',
+	vegan: 'Vegan',
+	vegetarian: 'Vegetarian',
+	gluten_free: 'Gluten-Free',
+	dairy_free: 'Dairy-Free',
+	nut_free: 'Nut-Free',
+	spicy: 'Spicy',
+}
+
+export function isDietaryTag(value: unknown): value is DietaryTag {
+	return (
+		typeof value === 'string' &&
+		(DIETARY_TAGS as readonly string[]).includes(value)
+	)
+}
+
+/**
+ * Tags from a stored JSON string or a published array, in the canonical order.
+ * Unknown values (a newer App's tag) are dropped, never thrown on.
+ */
+export function parseDietaryTags(raw: unknown): DietaryTag[] {
+	let value: unknown = raw
+	if (typeof raw === 'string') {
+		try {
+			value = JSON.parse(raw)
+		} catch {
+			return []
+		}
+	}
+	if (!Array.isArray(value)) return []
+	const set = new Set(value.filter(isDietaryTag))
+	return DIETARY_TAGS.filter((tag) => set.has(tag))
+}
+
+/**
+ * The tags of a row or published record: its tag list plus the legacy flags,
+ * so a record written by an older path (only `isVegetarian`) still reads right.
+ */
+export function dietaryTagsOf(record: {
+	dietaryTags?: unknown
+	isVegetarian?: boolean | null
+	isGlutenFree?: boolean | null
+}): DietaryTag[] {
+	const tags = new Set(parseDietaryTags(record.dietaryTags))
+	if (record.isVegetarian) tags.add('vegetarian')
+	if (record.isGlutenFree) tags.add('gluten_free')
+	return DIETARY_TAGS.filter((tag) => tags.has(tag))
+}
+
+/** Storage values for a tag list: the JSON column and the mirrored flags. */
+export function dietaryColumns(tags: readonly string[]): {
+	dietaryTags: string
+	isVegetarian: boolean
+	isGlutenFree: boolean
+} {
+	const clean = parseDietaryTags([...tags])
+	return {
+		dietaryTags: JSON.stringify(clean),
+		isVegetarian: clean.includes('vegetarian'),
+		isGlutenFree: clean.includes('gluten_free'),
+	}
+}
+
+/**
+ * Guest filter: a dish passes when it has every chosen tag. A vegan dish also
+ * counts as vegetarian.
+ */
+export function matchesDietaryFilter(
+	tags: readonly string[],
+	selected: readonly string[],
+): boolean {
+	if (selected.length === 0) return true
+	const have = new Set(tags)
+	if (have.has('vegan')) have.add('vegetarian')
+	return selected.every((tag) => have.has(tag))
+}
+
 export const AVAILABILITY_STATUSES = [
 	'available',
 	'unavailable_until',
@@ -171,6 +266,7 @@ export function storedKitchenHighlight(
 // Schemas
 export const AllergenSchema = z.enum(ALLERGENS)
 export const DietaryFlagSchema = z.enum(DIETARY_FLAGS)
+export const DietaryTagSchema = z.enum(DIETARY_TAGS)
 export const AvailabilityStatusSchema = z.enum(AVAILABILITY_STATUSES)
 export const MenuTypeSchema = z.enum(MENU_TYPES)
 export const ModifierSelectionTypeSchema = z.enum(MODIFIER_SELECTION_TYPES)

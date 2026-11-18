@@ -414,6 +414,13 @@
 			"when": 1795000008000,
 			"tag": "0058_sales_goals",
 			"breakpoints": true
+		},
+		{
+			"idx": 59,
+			"version": "6",
+			"when": 1795000009000,
+			"tag": "0059_menu_rules",
+			"breakpoints": true
 		}
 	]
 }

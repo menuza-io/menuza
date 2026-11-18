@@ -3214,6 +3214,14 @@ export const OrganizationMenuItem = sqliteTable(
 		isAlcohol: integer({ mode: 'boolean' }).default(false).notNull(),
 		isGlutenFree: integer({ mode: 'boolean' }).default(false).notNull(),
 		isVegetarian: integer({ mode: 'boolean' }).default(false).notNull(),
+		/**
+		 * Dietary tags (#335), JSON `DietaryTag[]`. Source of truth for the
+		 * dietary claims; `isVegetarian` and `isGlutenFree` are kept equal to
+		 * it on every write so older readers keep working.
+		 */
+		dietaryTags: text().default('[]').notNull(),
+		/** Prices per order type (#412), JSON `OrderTypePrices`. Null: base price. */
+		orderTypePrices: text(),
 		allergens: text().default('[]').notNull(),
 		calorieMin: integer(),
 		calorieMax: integer(),
@@ -3386,6 +3394,10 @@ export const OrganizationMenuOption = sqliteTable(
 		isGlutenFree: integer({ mode: 'boolean' }).default(false).notNull(),
 		isVegetarian: integer({ mode: 'boolean' }).default(false).notNull(),
 		isTopping: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** Dietary tags (#335); see OrganizationMenuItem.dietaryTags. */
+		dietaryTags: text().default('[]').notNull(),
+		/** Prices per order type (#412), JSON `OrderTypePrices`. Null: base price. */
+		orderTypePrices: text(),
 		allergens: text().default('[]').notNull(),
 		applySalesTax: integer({ mode: 'boolean' }).default(true).notNull(),
 		availabilityStatus: text().default('available').notNull(),
@@ -3528,6 +3540,57 @@ export const OrganizationMenuLocationOverride = sqliteTable(
 			table.locationId,
 			table.entityType,
 			table.entityId,
+		),
+	],
+)
+
+/**
+ * Percentage pricing rule (#388): +N% (or -N%) on the dishes of chosen menus
+ * or categories at chosen locations, rounded up, optionally skipping a price
+ * range. Covers dishes added later. A fixed per-location price override wins.
+ * Business data only. `endedAt` set: the rule no longer applies.
+ */
+export const OrganizationMenuPricingRule = sqliteTable(
+	'OrganizationMenuPricingRule',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		name: text().notNull(),
+		/** Basis points: 1000 is +10%, -500 is -5%. */
+		percentBp: integer().notNull(),
+		/** JSON string[]; empty with empty categoryIds means every dish. */
+		menuIds: text().default('[]').notNull(),
+		categoryIds: text().default('[]').notNull(),
+		/** JSON string[]; empty means every location. */
+		locationIds: text().default('[]').notNull(),
+		/** none | decimals | amount */
+		roundingMode: text().default('none').notNull(),
+		/** decimals: 0 or 1; amount: minor units (25 is 0.25). */
+		roundingValue: integer().default(0).notNull(),
+		/** Prices from this (major units, inclusive) are left alone. */
+		excludeMinPrice: real(),
+		excludeMaxPrice: real(),
+		startsAt: integer({ mode: 'timestamp_ms' }),
+		endedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationMenuPricingRule_organizationId_idx').on(
+			table.organizationId,
 		),
 	],
 )
