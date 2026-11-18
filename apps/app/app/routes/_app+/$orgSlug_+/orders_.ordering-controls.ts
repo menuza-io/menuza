@@ -29,10 +29,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	// A member limited to some locations pauses only those, here and in bulk.
 	const scope = await resolveMemberLocationIds(userId, organization.id)
 	if (scope !== null && !scope.includes(parsed.data.locationId)) {
-		return data(
-			{ ok: false, error: 'location_not_allowed' },
-			{ status: 403 },
-		)
+		return data({ ok: false, error: 'location_not_allowed' }, { status: 403 })
 	}
 	const result = await applyOrderingControl({
 		organization,

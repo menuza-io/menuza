@@ -25,7 +25,9 @@ import { listLocationTags } from './tags.server.ts'
 /** Rows per insert: D1 allows 100 bound parameters per statement. */
 const INSERT_CHUNK = 30
 
-async function loadCsvLocations(organizationId: string): Promise<CsvLocation[]> {
+async function loadCsvLocations(
+	organizationId: string,
+): Promise<CsvLocation[]> {
 	const [rows, tags] = await Promise.all([
 		db
 			.select({
@@ -63,7 +65,13 @@ export type LocationsCsvResult =
 	  }
 	| {
 			ok: false
-			error: 'too_large' | 'empty' | 'not_template' | 'too_many_rows' | 'tag_limit' | 'import_failed'
+			error:
+				| 'too_large'
+				| 'empty'
+				| 'not_template'
+				| 'too_many_rows'
+				| 'tag_limit'
+				| 'import_failed'
 	  }
 
 /**
@@ -96,7 +104,9 @@ export async function importLocationsCsv(input: {
 		return { ok: true, applied: false, plan }
 	}
 
-	const tagIds = new Map(tags.map((tag) => [locationTagNameKey(tag.name), tag.id]))
+	const tagIds = new Map(
+		tags.map((tag) => [locationTagNameKey(tag.name), tag.id]),
+	)
 	const statements: unknown[] = []
 	for (const name of plan.newTags) {
 		const id = createId()
@@ -142,7 +152,9 @@ export async function importLocationsCsv(input: {
 		}
 	}
 	try {
-		await db.batch(statements as unknown as [(typeof statements)[number] & never])
+		await db.batch(
+			statements as unknown as [(typeof statements)[number] & never],
+		)
 	} catch (error) {
 		console.error('locations csv import failed', {
 			organizationId: organization.id,

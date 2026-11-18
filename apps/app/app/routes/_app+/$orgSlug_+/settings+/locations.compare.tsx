@@ -54,7 +54,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const settingId: LocationSettingId =
 		isLocationSettingId(requested) && settings.includes(requested as never)
 			? requested
-			: (settings.includes('prepTime') ? 'prepTime' : settings[0]!)
+			: settings.includes('prepTime')
+				? 'prepTime'
+				: settings[0]!
 
 	const compare = await loadCompareRows({
 		organization: manager.organization,
@@ -81,7 +83,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	if (intent !== 'preview-edit' && intent !== 'apply-edit') {
-		return data({ ok: false as const, error: 'invalid_request' }, { status: 400 })
+		return data(
+			{ ok: false as const, error: 'invalid_request' },
+			{ status: 400 },
+		)
 	}
 	const raw = formData.get('payload')
 	let body
@@ -94,7 +99,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		body = null
 	}
 	if (!body) {
-		return data({ ok: false as const, error: 'invalid_request' }, { status: 400 })
+		return data(
+			{ ok: false as const, error: 'invalid_request' },
+			{ status: 400 },
+		)
 	}
 	const result = await editLocationSettingBulk({
 		organization: manager.organization,
@@ -106,7 +114,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 	return result.ok
 		? data({ ok: true as const, edit: result })
-		: data({ ok: false as const, error: result.error }, { status: result.status })
+		: data(
+				{ ok: false as const, error: result.error },
+				{ status: result.status },
+			)
 }
 
 type EditResponse =
@@ -204,7 +215,10 @@ export default function CompareLocationSettingsRoute() {
 								editor?.kind === 'number'
 									? Number(numberValue)
 									: Object.fromEntries(
-											FULFILLMENT_KEYS.map((key) => [key, toggles[key] === true]),
+											FULFILLMENT_KEYS.map((key) => [
+												key,
+												toggles[key] === true,
+											]),
 										),
 						}
 		return JSON.stringify({ settingId, locationIds: selectedIds, change })
@@ -221,7 +235,9 @@ export default function CompareLocationSettingsRoute() {
 			? numberValue.trim() !== '' && Number.isFinite(Number(numberValue))
 			: true)
 	const canPreview =
-		selectedIds.length > 0 && valueReady && (mode !== 'match' || sourceId !== '')
+		selectedIds.length > 0 &&
+		valueReady &&
+		(mode !== 'match' || sourceId !== '')
 	const previewReady = lastIntent === 'preview-edit' && edit && !edit.applied
 	const applied = lastIntent === 'apply-edit' && edit?.applied
 
@@ -244,8 +260,8 @@ export default function CompareLocationSettingsRoute() {
 					</h2>
 					<p className="text-muted-foreground text-sm">
 						<Trans>
-							See one setting at every location, choose several, and change
-							them together.
+							See one setting at every location, choose several, and change them
+							together.
 						</Trans>
 					</p>
 				</div>
@@ -532,7 +548,7 @@ export default function CompareLocationSettingsRoute() {
 					) : (
 						<Button
 							type="button"
-							disabled={busy || !canPreview || (applied === true)}
+							disabled={busy || !canPreview || applied === true}
 							onClick={() => submit('preview-edit')}
 						>
 							{busy ? <Spinner /> : null}

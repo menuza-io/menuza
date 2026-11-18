@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { BulkOrderingDialog } from './bulk-ordering-dialog.tsx'
@@ -63,9 +63,7 @@ describe('BulkOrderingDialog (#365)', () => {
 			</I18nProvider>,
 		)
 		fireEvent.click(screen.getByRole('button', { name: 'Pause ordering' }))
-		await waitFor(() =>
-			expect(screen.getByTestId('bulk-progress')).toBeInTheDocument(),
-		)
+		expect(await screen.findByTestId('bulk-progress')).toBeInTheDocument()
 		expect(screen.getByTestId('bulk-progress')).toHaveTextContent(
 			'1 of 3 paused',
 		)

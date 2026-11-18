@@ -170,9 +170,9 @@ describe('resolveMemberLocationIds with tags (#374)', () => {
 			value: { scope: 'selected', locationIds: [], tagIds: [theirTag] },
 		})
 		expect(refused).toEqual({ ok: false, reason: 'unknown_tag' })
-		expect(await resolveMemberLocationIds(userId, mine.organization.id)).toEqual(
-			[],
-		)
+		expect(
+			await resolveMemberLocationIds(userId, mine.organization.id),
+		).toEqual([])
 	})
 
 	it('deleting a tag removes the access it gave', async () => {
@@ -187,7 +187,9 @@ describe('resolveMemberLocationIds with tags (#374)', () => {
 			value: { scope: 'selected', locationIds: [], tagIds: [group] },
 		})
 		expect(await resolveMemberLocationIds(userId, organization.id)).toEqual([a])
-		expect(await deleteLocationTag(organization.id, group)).toEqual({ ok: true })
+		expect(await deleteLocationTag(organization.id, group)).toEqual({
+			ok: true,
+		})
 		expect(await resolveMemberLocationIds(userId, organization.id)).toEqual([])
 		expect(await listLocationTags(organization.id)).toEqual([])
 	})
@@ -205,9 +207,17 @@ describe('resolveMemberLocationIds with tags (#374)', () => {
 			value: { scope: 'selected', locationIds: [b], tagIds: [group] },
 		})
 		const expected = [a, b].sort()
-		expect(await resolveLocationGrantIds(userId, organization.id)).toEqual(expected)
-		expect(await resolveReservationsLocationIds(userId, organization.id)).toEqual(expected)
-		expect(await resolveLoyaltyLocationIds(userId, organization.id)).toEqual(expected)
-		expect(await resolveDiscountLocationIds(userId, organization.id)).toEqual(expected)
+		expect(await resolveLocationGrantIds(userId, organization.id)).toEqual(
+			expected,
+		)
+		expect(
+			await resolveReservationsLocationIds(userId, organization.id),
+		).toEqual(expected)
+		expect(await resolveLoyaltyLocationIds(userId, organization.id)).toEqual(
+			expected,
+		)
+		expect(await resolveDiscountLocationIds(userId, organization.id)).toEqual(
+			expected,
+		)
 	})
 })

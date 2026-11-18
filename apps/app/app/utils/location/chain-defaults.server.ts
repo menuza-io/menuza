@@ -42,7 +42,6 @@ import {
  * value keep it (listed as overrides) unless head office resets them.
  */
 
-
 const idSchema = z.string().trim().min(1).max(64)
 const settingIdSchema = z.enum(LOCATION_SETTING_IDS)
 const reasonSchema = z.string().trim().max(MAX_LOCK_REASON_LENGTH).optional()
@@ -144,7 +143,10 @@ export async function applyChainDefaultIntent(input: {
 	}
 	const previous = policies.get(settingId)
 	const audit: SettingAuditEntry[] = []
-	const settingResource = { type: 'organization_location_setting', id: settingId }
+	const settingResource = {
+		type: 'organization_location_setting',
+		id: settingId,
+	}
 
 	if (body.intent === 'remove-default') {
 		if (!previous) return { ok: false, status: 404, error: 'no_default' }
@@ -202,7 +204,9 @@ export async function applyChainDefaultIntent(input: {
 					metadata: {
 						setting: settingId,
 						locked: body.locked,
-						...(body.locked && body.lockReason ? { reason: body.lockReason } : {}),
+						...(body.locked && body.lockReason
+							? { reason: body.lockReason }
+							: {}),
 					},
 				},
 			],
@@ -281,9 +285,19 @@ export async function applyChainDefaultIntent(input: {
 		locationId: '',
 		resource: settingResource,
 		details: `Set the chain default for ${definition.label}`,
-		metadata: { setting: settingId, summary: definition.summarize(value, records[0]?.ctx ?? { currency: 'USD' }) },
+		metadata: {
+			setting: settingId,
+			summary: definition.summarize(
+				value,
+				records[0]?.ctx ?? { currency: 'USD' },
+			),
+		},
 	})
-	if (!previous || previous.locked !== body.locked || previous.lockReason !== lockReason) {
+	if (
+		!previous ||
+		previous.locked !== body.locked ||
+		previous.lockReason !== lockReason
+	) {
 		audit.push({
 			action: AuditAction.LOCATION_SETTING_LOCK_CHANGED,
 			locationId: '',
@@ -311,7 +325,9 @@ function withPatches(
 	records: readonly LocationRecord[],
 	entries: readonly LocationPatchEntry[],
 ): LocationRecord[] {
-	const patches = new Map(entries.map((entry) => [entry.locationId, entry.patch]))
+	const patches = new Map(
+		entries.map((entry) => [entry.locationId, entry.patch]),
+	)
 	return records.map((record) =>
 		patches.has(record.id)
 			? { ...record, row: { ...record.row, ...patches.get(record.id)! } }
@@ -337,10 +353,18 @@ function overridesList(
 }
 
 async function commitDefaultWrites(args: {
-	input: { organization: OrganizationForSettings; userId: string; request: Request }
+	input: {
+		organization: OrganizationForSettings
+		userId: string
+		request: Request
+	}
 	settingId: LocationSettingId
 	entries: LocationPatchEntry[]
-	policyWrite: { value: unknown; locked: boolean; lockReason: string | null } | null
+	policyWrite: {
+		value: unknown
+		locked: boolean
+		lockReason: string | null
+	} | null
 	overridesAfter: Array<{ locationId: string; name: string }>
 	audit: SettingAuditEntry[]
 	auditDetails: string
@@ -466,7 +490,9 @@ export async function loadChainDefaults(
 	return {
 		locationCount: records.length,
 		rows: listLocationSettings()
-			.filter((definition) => definition.chainDefault && enabled.has(definition.id))
+			.filter(
+				(definition) => definition.chainDefault && enabled.has(definition.id),
+			)
 			.map((definition) => {
 				const policy = policies.get(definition.id)
 				const overrides = policy

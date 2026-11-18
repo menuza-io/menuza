@@ -93,7 +93,9 @@ export async function tagsByLocation(
 export async function createLocationTag(
 	organizationId: string,
 	rawName: string,
-): Promise<{ ok: true; id: string; name: string } | { ok: false; error: TagError }> {
+): Promise<
+	{ ok: true; id: string; name: string } | { ok: false; error: TagError }
+> {
 	const parsed = validateLocationTagName(rawName)
 	if (!parsed.ok) return parsed
 	const existing = await db
@@ -166,7 +168,9 @@ export async function deleteLocationTag(
 			),
 		)
 		.returning({ id: OrganizationLocationTag.id })
-	return deleted.length > 0 ? { ok: true } : { ok: false, error: 'tag_not_found' }
+	return deleted.length > 0
+		? { ok: true }
+		: { ok: false, error: 'tag_not_found' }
 }
 
 /**
@@ -207,11 +211,13 @@ export async function setTagLocations(
 			.delete(OrganizationLocationTagLink)
 			.where(eq(OrganizationLocationTagLink.tagId, tagId))
 		for (let i = 0; i < wanted.length; i += INSERT_CHUNK) {
-			await tx.insert(OrganizationLocationTagLink).values(
-				wanted
-					.slice(i, i + INSERT_CHUNK)
-					.map((locationId) => ({ locationId, tagId })),
-			)
+			await tx
+				.insert(OrganizationLocationTagLink)
+				.values(
+					wanted
+						.slice(i, i + INSERT_CHUNK)
+						.map((locationId) => ({ locationId, tagId })),
+				)
 		}
 	})
 	return { ok: true }

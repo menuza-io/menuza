@@ -22,21 +22,23 @@ export const SETTING_LABELS: Record<LocationSettingId, MessageDescriptor> = {
 	packagingFee: msg`Packaging fee`,
 }
 
-export const SETTING_DESCRIPTIONS: Record<LocationSettingId, MessageDescriptor> =
-	{
-		storeHours: msg`The weekly opening hours of the restaurant.`,
-		onlineHours: msg`When guests can place online orders.`,
-		specialHours: msg`Closed or short days such as holidays.`,
-		prepTime: msg`Minutes to get an order ready.`,
-		largeOrder: msg`Extra time for large orders.`,
-		fulfillment: msg`Pickup, delivery, dine-in and curbside.`,
-		tips: msg`Tip buttons at checkout and in-house tips.`,
-		scheduling: msg`Whether guests can order ahead and how far.`,
-		delivery: msg`Delivery providers and estimated times. Delivery zones are not included.`,
-		orderCaps: msg`The largest order a guest can place.`,
-		serviceFee: msg`The service fee guests pay at checkout.`,
-		packagingFee: msg`The packaging or bag fee.`,
-	}
+export const SETTING_DESCRIPTIONS: Record<
+	LocationSettingId,
+	MessageDescriptor
+> = {
+	storeHours: msg`The weekly opening hours of the restaurant.`,
+	onlineHours: msg`When guests can place online orders.`,
+	specialHours: msg`Closed or short days such as holidays.`,
+	prepTime: msg`Minutes to get an order ready.`,
+	largeOrder: msg`Extra time for large orders.`,
+	fulfillment: msg`Pickup, delivery, dine-in and curbside.`,
+	tips: msg`Tip buttons at checkout and in-house tips.`,
+	scheduling: msg`Whether guests can order ahead and how far.`,
+	delivery: msg`Delivery providers and estimated times. Delivery zones are not included.`,
+	orderCaps: msg`The largest order a guest can place.`,
+	serviceFee: msg`The service fee guests pay at checkout.`,
+	packagingFee: msg`The packaging or bag fee.`,
+}
 
 export const COPY_NOTE_LABELS: Record<CopyNote, MessageDescriptor> = {
 	timezone_differs: msg`Different time zone: the same local times apply (11:00 stays 11:00 there).`,

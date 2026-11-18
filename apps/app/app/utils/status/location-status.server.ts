@@ -115,7 +115,12 @@ export async function loadLocationStatus(input: {
 				customDomain: organization.customDomain,
 				customDomainStatus: organization.customDomainStatus,
 			},
-			hasActiveMenu: hasActiveMenu(menu.menus, menu.overrides, location.id, now),
+			hasActiveMenu: hasActiveMenu(
+				menu.menus,
+				menu.overrides,
+				location.id,
+				now,
+			),
 			// A connection tied to this location, or one for the whole business.
 			connections: integrations
 				.filter(

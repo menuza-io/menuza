@@ -45,7 +45,9 @@ describe('location scope guards', () => {
 			.filter((file) => {
 				const text = readFileSync(join(APP_ROOT, file), 'utf8')
 				return (
-					/locationScope === 'selected'|locationScope !== 'selected'/.test(text) &&
+					/locationScope === 'selected'|locationScope !== 'selected'/.test(
+						text,
+					) &&
 					file !== 'utils/location/member-scope.server.ts' &&
 					!unrelated.has(file)
 				)

@@ -12,7 +12,9 @@ import {
 describe('location tag names', () => {
 	it('trims and collapses spaces, and ignores case for sameness', () => {
 		expect(normalizeLocationTagName('  North   Texas ')).toBe('North Texas')
-		expect(locationTagNameKey('North  TEXAS')).toBe(locationTagNameKey('north texas'))
+		expect(locationTagNameKey('North  TEXAS')).toBe(
+			locationTagNameKey('north texas'),
+		)
 	})
 
 	it('refuses empty and over-long names', () => {
@@ -31,7 +33,10 @@ describe('location tag names', () => {
 	})
 
 	it('counts the limit by distinct names', () => {
-		const existing = Array.from({ length: MAX_LOCATION_TAGS }, (_, i) => `t${i}`)
+		const existing = Array.from(
+			{ length: MAX_LOCATION_TAGS },
+			(_, i) => `t${i}`,
+		)
 		expect(tagLimitAllows(existing, ['t1'])).toBe(true)
 		expect(tagLimitAllows(existing, ['brand new'])).toBe(false)
 	})

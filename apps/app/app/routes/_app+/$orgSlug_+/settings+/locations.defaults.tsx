@@ -73,7 +73,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		body = null
 	}
 	if (!body) {
-		return data({ ok: false as const, error: 'invalid_request' }, { status: 400 })
+		return data(
+			{ ok: false as const, error: 'invalid_request' },
+			{ status: 400 },
+		)
 	}
 	const result = await applyChainDefaultIntent({
 		organization: manager.organization,
@@ -83,7 +86,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 	return result.ok
 		? data({ ok: true as const, result })
-		: data({ ok: false as const, error: result.error }, { status: result.status })
+		: data(
+				{ ok: false as const, error: result.error },
+				{ status: result.status },
+			)
 }
 
 type Response_ =
@@ -141,9 +147,8 @@ export default function ChainDefaultsRoute() {
 					</h2>
 					<p className="text-muted-foreground text-sm">
 						<Trans>
-							Set a default once for every location. Lock it so locations
-							cannot change it, or leave it open and see which locations
-							override it.
+							Set a default once for every location. Lock it so locations cannot
+							change it, or leave it open and see which locations override it.
 						</Trans>
 					</p>
 				</div>
@@ -235,7 +240,11 @@ function DefaultCard({
 						</Badge>
 					)}
 					<Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-						{row.hasDefault ? <Trans>Change</Trans> : <Trans>Set default</Trans>}
+						{row.hasDefault ? (
+							<Trans>Change</Trans>
+						) : (
+							<Trans>Set default</Trans>
+						)}
 					</Button>
 				</div>
 			</div>
@@ -395,7 +404,9 @@ function SetDefaultDialog({
 	const fetcher = useFetcher<Response_>()
 	const settingId = row.settingId as LocationSettingId
 	const editor = row.editor
-	const [mode, setMode] = useState<'value' | 'location'>(editor ? 'value' : 'location')
+	const [mode, setMode] = useState<'value' | 'location'>(
+		editor ? 'value' : 'location',
+	)
 	const [numberValue, setNumberValue] = useState(
 		typeof row.defaultRaw === 'number' ? String(row.defaultRaw) : '',
 	)
@@ -449,8 +460,7 @@ function SetDefaultDialog({
 					<DialogTitle>{_(SETTING_LABELS[settingId])}</DialogTitle>
 					<DialogDescription>
 						<Trans>
-							Locations that use the current default will switch to the new
-							one.
+							Locations that use the current default will switch to the new one.
 						</Trans>
 					</DialogDescription>
 				</DialogHeader>
@@ -591,7 +601,9 @@ function SetDefaultDialog({
 						)}
 						{failure ? (
 							<Alert variant="destructive">
-								<AlertDescription>{errorText(failure.error, _)}</AlertDescription>
+								<AlertDescription>
+									{errorText(failure.error, _)}
+								</AlertDescription>
 							</Alert>
 						) : null}
 					</div>

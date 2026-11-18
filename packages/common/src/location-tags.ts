@@ -21,7 +21,9 @@ export function locationTagNameKey(name: string): string {
 
 export function validateLocationTagName(
 	name: string,
-): { ok: true; name: string; key: string } | { ok: false; error: LocationTagNameError } {
+):
+	| { ok: true; name: string; key: string }
+	| { ok: false; error: LocationTagNameError } {
 	const normalized = normalizeLocationTagName(name)
 	if (normalized.length === 0) return { ok: false, error: 'name_required' }
 	if (normalized.length > LOCATION_TAG_NAME_MAX_LENGTH)

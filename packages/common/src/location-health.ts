@@ -55,9 +55,7 @@ export type HealthCheck = {
 }
 
 export type HealthSummary =
-	| 'taking_orders'
-	| 'taking_orders_with_problems'
-	| 'not_taking_orders'
+	'taking_orders' | 'taking_orders_with_problems' | 'not_taking_orders'
 
 export type LocationHealthInput = {
 	now: Date
@@ -108,7 +106,9 @@ const BROKEN_DOMAIN = new Set(['error', 'blocked', 'moved', 'deleted'])
 /** A connection that has not synced for this long is reported. */
 export const STALE_SYNC_MS = 48 * 60 * 60 * 1000
 
-function parseSchedule(value: string | WeeklySchedule | null): WeeklySchedule | null {
+function parseSchedule(
+	value: string | WeeklySchedule | null,
+): WeeklySchedule | null {
 	if (!value) return null
 	let raw: unknown = value
 	if (typeof value === 'string') {
@@ -122,7 +122,9 @@ function parseSchedule(value: string | WeeklySchedule | null): WeeklySchedule | 
 	return parsed.success ? (parsed.data as WeeklySchedule) : null
 }
 
-function parseSpecial(value: string | SpecialHour[] | null): SpecialHour[] | null {
+function parseSpecial(
+	value: string | SpecialHour[] | null,
+): SpecialHour[] | null {
 	if (!value) return null
 	if (Array.isArray(value)) return value
 	try {
@@ -133,7 +135,9 @@ function parseSpecial(value: string | SpecialHour[] | null): SpecialHour[] | nul
 	}
 }
 
-export function summarizeStatuses(statuses: readonly HealthStatus[]): HealthSummary {
+export function summarizeStatuses(
+	statuses: readonly HealthStatus[],
+): HealthSummary {
 	if (statuses.includes('blocking')) return 'not_taking_orders'
 	if (statuses.includes('warning')) return 'taking_orders_with_problems'
 	return 'taking_orders'
@@ -169,7 +173,8 @@ export function getLocationHealth(input: LocationHealthInput): LocationHealth {
 					id: 'ordering',
 					status: 'blocking',
 					code: 'ordering_paused',
-					message: 'Online ordering is paused. Guests cannot order until it is resumed.',
+					message:
+						'Online ordering is paused. Guests cannot order until it is resumed.',
 					href: '/orders',
 					...(pauseEnd ? { params: { until: pauseEnd.toISOString() } } : {}),
 				}
@@ -191,17 +196,21 @@ export function getLocationHealth(input: LocationHealthInput): LocationHealth {
 			id: 'hours',
 			status: 'warning',
 			code: 'no_hours',
-			message: 'No opening hours are set, so guests cannot tell when you are open.',
+			message:
+				'No opening hours are set, so guests cannot tell when you are open.',
 			href: editLocation,
 		})
 	}
-	const availability = isLocationOpenForOrdering({
-		timezone: location.timezone,
-		storeHours,
-		onlineHours,
-		specialHours,
-		isActive: true,
-	}, now)
+	const availability = isLocationOpenForOrdering(
+		{
+			timezone: location.timezone,
+			storeHours,
+			onlineHours,
+			specialHours,
+			isActive: true,
+		},
+		now,
+	)
 	const closedNow = hasHours && !availability.isOpen
 	if (hasHours) {
 		checks.push(
@@ -268,7 +277,8 @@ export function getLocationHealth(input: LocationHealthInput): LocationHealth {
 					id: 'menu',
 					status: 'blocking',
 					code: 'no_active_menu',
-					message: 'No menu is on sale at this location, so there is nothing to order.',
+					message:
+						'No menu is on sale at this location, so there is nothing to order.',
 					href: '/menu/menus',
 				},
 	)
@@ -287,7 +297,8 @@ export function getLocationHealth(input: LocationHealthInput): LocationHealth {
 					id: 'website',
 					status: 'blocking',
 					code: 'site_unpublished',
-					message: 'The website is not published, so guests cannot reach your menu.',
+					message:
+						'The website is not published, so guests cannot reach your menu.',
 					href: '/website',
 				},
 	)

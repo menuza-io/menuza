@@ -29,7 +29,10 @@ import {
 } from '#app/utils/launch/launch.server.ts'
 import { type LaunchChecklist } from '#app/utils/launch/launch.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
-import { loadLocationStatus, type LocationStatusData } from '#app/utils/status/location-status.server.ts'
+import {
+	loadLocationStatus,
+	type LocationStatusData,
+} from '#app/utils/status/location-status.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { loadAttention, loadPermissionChecker } from './attention.server.ts'
 import { type AttentionData } from './attention.ts'
@@ -314,7 +317,9 @@ export async function loadBuiltInBlockData({
 				? loadAttention({ userId, organization, request, now })
 				: null,
 			launchOn ? loadHomeLaunch(userId, organization.id, now) : null,
-			types.has('status') ? loadStatusForViewer(userId, organization.id, now) : null,
+			types.has('status')
+				? loadStatusForViewer(userId, organization.id, now)
+				: null,
 		])
 	return {
 		fetchedAt: now.getTime(),

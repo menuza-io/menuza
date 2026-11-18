@@ -43,7 +43,10 @@ describe('multi-location route guards', () => {
 	for (const route of ROUTES) {
 		for (const name of route.exports) {
 			it(`${route.file} ${name} checks access before anything else`, () => {
-				const text = readFileSync(join(import.meta.dirname, '..', route.file), 'utf8')
+				const text = readFileSync(
+					join(import.meta.dirname, '..', route.file),
+					'utf8',
+				)
 				const fn = body(text, name)
 				const firstGuard = fn.search(route.guard)
 				expect(firstGuard).toBeGreaterThan(-1)

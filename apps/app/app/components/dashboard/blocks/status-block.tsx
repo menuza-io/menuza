@@ -39,7 +39,10 @@ export function StatusBlock({
 						<Trans>No locations to check.</Trans>
 					</p>
 				) : problems.length === 0 ? (
-					<p className="text-muted-foreground text-sm" data-testid="status-all-clear">
+					<p
+						className="text-muted-foreground text-sm"
+						data-testid="status-all-clear"
+					>
 						<Trans>All checks passed at every location.</Trans>
 					</p>
 				) : (

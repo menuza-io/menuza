@@ -24,7 +24,9 @@ import {
 
 const ctx: LocationSettingContext = { currency: 'USD' }
 
-function row(overrides: Partial<LocationSettingsRow> = {}): LocationSettingsRow {
+function row(
+	overrides: Partial<LocationSettingsRow> = {},
+): LocationSettingsRow {
 	return {
 		timezone: 'America/New_York',
 		storeHours: null,
@@ -110,7 +112,11 @@ describe('location settings registry', () => {
 				curbside: true,
 			},
 			tips: {
-				inHouseTips: { pickupTips: true, deliveryTips: false, dineInTips: true },
+				inHouseTips: {
+					pickupTips: true,
+					deliveryTips: false,
+					dineInTips: true,
+				},
 				tipSettings: getLocationSetting('tips').systemDefault(ctx).tipSettings,
 			},
 			scheduling: { scheduledOrdersEnabled: true, advanceOrderDays: 5 },
@@ -134,7 +140,12 @@ describe('location settings registry', () => {
 				`${id} round trip`,
 			).toBe(canonicalSettingString(definition.read(written, ctx)))
 			// Reading what we wrote and writing it again changes nothing.
-			const again = applySettingValue(id, written, definition.read(written, ctx), ctx)
+			const again = applySettingValue(
+				id,
+				written,
+				definition.read(written, ctx),
+				ctx,
+			)
 			expect(changedLocationSettings(written, again.row, ctx)).toEqual([])
 			// And the value we read equals the sample (canonical form).
 			expect(
@@ -153,11 +164,7 @@ describe('location settings registry', () => {
 	it('a write only touches the columns the setting owns', () => {
 		for (const id of LOCATION_SETTING_IDS) {
 			const definition = getLocationSetting(id)
-			const patch = definition.write(
-				row(),
-				definition.systemDefault(ctx),
-				ctx,
-			)
+			const patch = definition.write(row(), definition.systemDefault(ctx), ctx)
 			for (const column of Object.keys(patch)) {
 				expect(definition.columns).toContain(column)
 			}
@@ -172,9 +179,7 @@ describe('location settings registry', () => {
 			getLocationSetting('tips').systemDefault(ctx),
 			ctx,
 		).row
-		expect(
-			locationSettingsMatch('tips', stored, ctx, explicit, ctx),
-		).toBe(true)
+		expect(locationSettingsMatch('tips', stored, ctx, explicit, ctx)).toBe(true)
 		expect(
 			locationSettingsMatch(
 				'fulfillment',
@@ -262,7 +267,10 @@ describe('location settings registry', () => {
 			},
 			ctx,
 		)
-		const next = JSON.parse(patch.onlineOrderingSettings!) as Record<string, unknown>
+		const next = JSON.parse(patch.onlineOrderingSettings!) as Record<
+			string,
+			unknown
+		>
 		expect(next.buffers).toEqual({
 			openingBufferMinutes: 10,
 			closingBufferMinutes: 5,
@@ -281,23 +289,21 @@ describe('location settings registry', () => {
 		expect(getLocationSetting('prepTime').parse(-1).ok).toBe(false)
 		expect(getLocationSetting('prepTime').parse(1.5).ok).toBe(false)
 		expect(getLocationSetting('prepTime').parse(99999).ok).toBe(false)
-		expect(getLocationSetting('fulfillment').parse({ pickup: true }).ok).toBe(false)
+		expect(getLocationSetting('fulfillment').parse({ pickup: true }).ok).toBe(
+			false,
+		)
 		expect(getLocationSetting('scheduling').parse({}).ok).toBe(false)
 	})
 
 	it('summarises hours in plain words', () => {
 		expect(summarizeWeeklySchedule(null)).toBe('Not set')
-		const week = [
-			'monday',
-			'tuesday',
-			'wednesday',
-			'thursday',
-			'friday',
-		].map((day) => ({
-			day,
-			isOpen: true,
-			slots: [{ start: '09:00', end: '17:00' }],
-		}))
+		const week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].map(
+			(day) => ({
+				day,
+				isOpen: true,
+				slots: [{ start: '09:00', end: '17:00' }],
+			}),
+		)
 		const text = summarizeWeeklySchedule([
 			...week,
 			{ day: 'saturday', isOpen: false, slots: [] },

@@ -89,7 +89,9 @@ export async function loadLocationRecords(
 				scheduling: row.scheduling,
 				deliveryConfig: row.deliveryConfig,
 			},
-			ctx: { currency: currencyForLocation(organization.dataRegion, row.address) },
+			ctx: {
+				currency: currencyForLocation(organization.dataRegion, row.address),
+			},
 		}))
 		.sort(
 			(a, b) =>
@@ -180,7 +182,8 @@ export function overridesOf(
 	const result: LocationSettingId[] = []
 	for (const [settingId, policy] of policies) {
 		const current = getLocationSetting(settingId).read(record.row, record.ctx)
-		if (!settingValuesEqual(current, policy.defaultValue)) result.push(settingId)
+		if (!settingValuesEqual(current, policy.defaultValue))
+			result.push(settingId)
 	}
 	return LOCATION_SETTING_IDS.filter((id) => result.includes(id))
 }

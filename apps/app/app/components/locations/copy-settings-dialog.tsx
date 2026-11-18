@@ -295,7 +295,10 @@ export function CopySettingsDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)}>
+				<Tabs
+					value={tab}
+					onValueChange={(value) => setTab(value as typeof tab)}
+				>
 					<TabsList>
 						<TabsTrigger value="copy">
 							<Trans>Copy settings</Trans>
@@ -365,8 +368,8 @@ export function CopySettingsDialog({
 										<RadioGroupItem value="add" id={`${idPrefix}-add`} />
 										<FieldLabel htmlFor={`${idPrefix}-add`}>
 											<Trans>
-												Add: keep each location&apos;s own entries and skip dates
-												it already has
+												Add: keep each location&apos;s own entries and skip
+												dates it already has
 											</Trans>
 										</FieldLabel>
 									</Field>

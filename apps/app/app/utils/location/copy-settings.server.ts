@@ -301,7 +301,12 @@ export async function addHolidayToLocations(input: {
 	const records = new Map(
 		(await loadLocationRecords(organization)).map((r) => [r.id, r]),
 	)
-	const { targets, skipped } = splitTargets(records, input.scope, body.targetIds, '')
+	const { targets, skipped } = splitTargets(
+		records,
+		input.scope,
+		body.targetIds,
+		'',
+	)
 	const holiday = {
 		date: body.date,
 		isOpen: body.isOpen,

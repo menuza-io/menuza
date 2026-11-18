@@ -74,7 +74,10 @@ import {
 import { enabledSettingIds } from '#app/utils/location/location-settings.server.ts'
 import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
-import { listLocationTags, tagsByLocation } from '#app/utils/location/tags.server.ts'
+import {
+	listLocationTags,
+	tagsByLocation,
+} from '#app/utils/location/tags.server.ts'
 import { requireMenuWrite } from '#app/utils/menu/access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
@@ -415,7 +418,11 @@ const MAX_PAYLOAD_LENGTH = 50_000
 /** Reads the JSON `payload` field of a form post through a Zod schema. */
 function parsePayload<T>(
 	formData: FormData,
-	schema: { safeParse: (value: unknown) => { success: true; data: T } | { success: false } },
+	schema: {
+		safeParse: (
+			value: unknown,
+		) => { success: true; data: T } | { success: false }
+	},
 ): T | null {
 	const raw = formData.get('payload')
 	if (typeof raw !== 'string' || raw.length > MAX_PAYLOAD_LENGTH) return null
@@ -491,7 +498,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			})
 			return result.ok
 				? data({ ok: true as const, holiday: result })
-				: data({ ok: false as const, error: result.error }, { status: result.status })
+				: data(
+						{ ok: false as const, error: result.error },
+						{ status: result.status },
+					)
 		}
 		const body = parsePayload(formData, copySettingsInputSchema)
 		if (!body) return invalidRequest()
@@ -817,7 +827,9 @@ export default function LocationsIndexRoute() {
 						</DropdownMenuContent>
 					</DropdownMenu>
 					<Button
-						render={<Link to={`/${organization.slug}/settings/locations/new`} />}
+						render={
+							<Link to={`/${organization.slug}/settings/locations/new`} />
+						}
 					>
 						<Icon name="plus" className="size-4" />
 						<Trans>Add Location</Trans>

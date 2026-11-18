@@ -28,10 +28,7 @@ export const memberLocationScopeInputSchema = z
 			.max(STAFFING_MAX_SCOPED_LOCATIONS)
 			.default([]),
 		/** Location tags granted as a group (#374); resolved to locations when read. */
-		tagIds: z
-			.array(locationIdSchema)
-			.max(STAFFING_MAX_SCOPED_TAGS)
-			.default([]),
+		tagIds: z.array(locationIdSchema).max(STAFFING_MAX_SCOPED_TAGS).default([]),
 	})
 	.strict()
 	.transform((value) => ({

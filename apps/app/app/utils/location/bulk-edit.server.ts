@@ -149,7 +149,8 @@ export async function editLocationSettingBulk(input: {
 	]
 
 	const views: BulkEditTargetView[] = []
-	const patches: Array<{ locationId: string; patch: Record<string, unknown> }> = []
+	const patches: Array<{ locationId: string; patch: Record<string, unknown> }> =
+		[]
 	for (const id of allowed) {
 		const target = byId.get(id)!
 		const before = definition.read(target.row, target.ctx)

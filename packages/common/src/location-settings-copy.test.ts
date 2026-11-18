@@ -13,7 +13,9 @@ import {
 let counter = 0
 const makeId = () => `new_${++counter}`
 
-function row(overrides: Partial<LocationSettingsRow> = {}): LocationSettingsRow {
+function row(
+	overrides: Partial<LocationSettingsRow> = {},
+): LocationSettingsRow {
 	return {
 		timezone: 'America/New_York',
 		storeHours: null,
@@ -84,7 +86,10 @@ describe('mergeLocationSettings', () => {
 		})
 		expect(result.changed).toBe(false)
 		expect(result.patch).toEqual({})
-		expect(result.changes[0]).toMatchObject({ part: 'prepTime', changed: false })
+		expect(result.changes[0]).toMatchObject({
+			part: 'prepTime',
+			changed: false,
+		})
 	})
 
 	it('parts that are not selected stay untouched, every column of the patch belongs to a chosen part', () => {
@@ -202,8 +207,8 @@ describe('mergeLocationSettings', () => {
 			}),
 		})
 		expect(
-			mergeLocationSettings(source, off, ['onlineHours'], { makeId }).changes[0]!
-				.notes,
+			mergeLocationSettings(source, off, ['onlineHours'], { makeId })
+				.changes[0]!.notes,
 		).not.toContain('online_hours_follow_store')
 	})
 
@@ -265,7 +270,12 @@ describe('addHolidayToLocation', () => {
 	it('skips a location that already has the date and leaves it untouched', () => {
 		const existing = loc('b', {
 			specialHours: JSON.stringify([
-				{ id: 'x', date: '2027-12-25', isOpen: true, slots: [{ start: '10:00', end: '14:00' }] },
+				{
+					id: 'x',
+					date: '2027-12-25',
+					isOpen: true,
+					slots: [{ start: '10:00', end: '14:00' }],
+				},
 			]),
 		})
 		const result = addHolidayToLocation(existing, holiday, makeId)

@@ -130,7 +130,9 @@ export function planLocationsCsv(
 	const rows = parseDelimited(text)
 	if (rows.length === 0) return { ok: false, error: 'empty' }
 	const header = rows[0]!.map((value) =>
-		cell(value).toLowerCase().replace(/[\s-]+/g, '_'),
+		cell(value)
+			.toLowerCase()
+			.replace(/[\s-]+/g, '_'),
 	)
 	const known = new Set<string>(LOCATIONS_CSV_COLUMNS)
 	const named = header.filter(Boolean)
@@ -224,7 +226,13 @@ export function planLocationsCsv(
 				}
 				const validated = validateLocationTagName(raw)
 				if (!validated.ok) {
-					problems.push({ row, id, problem: 'bad_tag', column: 'tags', value: raw })
+					problems.push({
+						row,
+						id,
+						problem: 'bad_tag',
+						column: 'tags',
+						value: raw,
+					})
 					bad = true
 					continue
 				}

@@ -151,9 +151,9 @@ export function DashboardBlockContent({
 					)
 				: null
 		case 'status':
-			return data.status ? (
-				wrap(<StatusBlock orgSlug={organization.slug} data={data.status} />)
-			) : null
+			return data.status
+				? wrap(<StatusBlock orgSlug={organization.slug} data={data.status} />)
+				: null
 		case 'attention':
 			return data.attention ? (
 				wrap(

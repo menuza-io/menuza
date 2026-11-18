@@ -32,7 +32,11 @@ const week = JSON.stringify(
 		'friday',
 		'saturday',
 		'sunday',
-	].map((day) => ({ day, isOpen: true, slots: [{ start: '00:00', end: '23:59' }] })),
+	].map((day) => ({
+		day,
+		isOpen: true,
+		slots: [{ start: '00:00', end: '23:59' }],
+	})),
 )
 
 async function createLocation(organizationId: string, name: string) {
@@ -68,7 +72,11 @@ async function makeHealthy(organizationId: string) {
 
 async function open(orgSlug: string, cookie: string) {
 	return (await loader({
-		request: createAuthenticatedRequest(`https://app.test/${orgSlug}/status`, {}, cookie),
+		request: createAuthenticatedRequest(
+			`https://app.test/${orgSlug}/status`,
+			{},
+			cookie,
+		),
 		params: { orgSlug },
 		context: new RouterContextProvider(),
 	} as never)) as any
@@ -82,11 +90,15 @@ describe('Status (#332)', () => {
 			.update(Organization)
 			.set({ sitePublished: true })
 			.where(eq(Organization.id, organization.id))
-		await db.insert(OrganizationMenu).values({ organizationId: organization.id, displayName: 'Menu' })
+		await db
+			.insert(OrganizationMenu)
+			.values({ organizationId: organization.id, displayName: 'Menu' })
 
 		const { status } = await open(organization.slug, cookie)
 		expect(status.summary).toBe('not_taking_orders')
-		const payments = status.locations[0].checks.find((c: any) => c.id === 'payments')
+		const payments = status.locations[0].checks.find(
+			(c: any) => c.id === 'payments',
+		)
 		expect(payments).toMatchObject({
 			status: 'blocking',
 			code: 'payments_disabled',
@@ -101,7 +113,9 @@ describe('Status (#332)', () => {
 		const { status } = await open(organization.slug, cookie)
 		expect(status.summary).toBe('taking_orders')
 		expect(status.locations[0].allPassed).toBe(true)
-		expect(status.locations[0].checks.every((c: any) => c.status === 'ok')).toBe(true)
+		expect(
+			status.locations[0].checks.every((c: any) => c.status === 'ok'),
+		).toBe(true)
 	})
 
 	it('a manager sees only their own locations', async () => {
@@ -128,11 +142,16 @@ describe('Status (#332)', () => {
 		await createLocation(organization.id, 'B')
 		await db
 			.update(OrganizationLocation)
-			.set({ orderingPausedAt: new Date(Date.now() - 1000), orderingPausedUntil: null })
+			.set({
+				orderingPausedAt: new Date(Date.now() - 1000),
+				orderingPausedUntil: null,
+			})
 			.where(eq(OrganizationLocation.id, a.id))
 		const { status } = await open(organization.slug, cookie)
 		expect(status.summary).toBe('not_taking_orders')
-		expect(Object.fromEntries(status.locations.map((l: any) => [l.name, l.summary]))).toEqual({
+		expect(
+			Object.fromEntries(status.locations.map((l: any) => [l.name, l.summary])),
+		).toEqual({
 			A: 'not_taking_orders',
 			B: 'taking_orders',
 		})
@@ -143,7 +162,11 @@ describe('Status (#332)', () => {
 		await createLocation(organization.id, 'Main')
 		const data = await loadBuiltInBlockData({
 			userId: user.id,
-			organization: { id: organization.id, slug: organization.slug, createdAt: new Date() } as never,
+			organization: {
+				id: organization.id,
+				slug: organization.slug,
+				createdAt: new Date(),
+			} as never,
 			blocks: [{ id: 'status', type: 'status' }],
 		})
 		expect(data.status?.locations).toHaveLength(1)
@@ -152,7 +175,11 @@ describe('Status (#332)', () => {
 		await addOrganizationMember(guest.id, organization.id, 'org_role_guest')
 		const hidden = await loadBuiltInBlockData({
 			userId: guest.id,
-			organization: { id: organization.id, slug: organization.slug, createdAt: new Date() } as never,
+			organization: {
+				id: organization.id,
+				slug: organization.slug,
+				createdAt: new Date(),
+			} as never,
 			blocks: [{ id: 'status', type: 'status' }],
 		})
 		expect(hidden.status).toBeNull()

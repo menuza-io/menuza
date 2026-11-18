@@ -1,5 +1,10 @@
 import { AuditAction, auditService } from '@repo/audit'
-import { db, eq, getLockedLocationSettingIds, OrganizationLocation } from '@repo/database'
+import {
+	db,
+	eq,
+	getLockedLocationSettingIds,
+	OrganizationLocation,
+} from '@repo/database'
 import { RouterContextProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { applyChainDefaultsToNewLocation } from '#app/utils/location/chain-defaults.server.ts'
@@ -13,8 +18,14 @@ import {
 	getResponseStatus,
 	setupTestOrgWithUser,
 } from '#tests/test-utils.ts'
-import { action as editAction, loader as editLoader } from './locations.$locationId.tsx'
-import { action as compareAction, loader as compareLoader } from './locations.compare.tsx'
+import {
+	action as editAction,
+	loader as editLoader,
+} from './locations.$locationId.tsx'
+import {
+	action as compareAction,
+	loader as compareLoader,
+} from './locations.compare.tsx'
 import {
 	action as defaultsAction,
 	loader as defaultsLoader,
@@ -58,8 +69,15 @@ async function read(id: string) {
 	return row!
 }
 
-function args(orgSlug: string, cookie: string, init: RequestInit = {}, extra = '') {
-	const url = new URL(`https://app.test/${orgSlug}/settings/locations/x${extra}`)
+function args(
+	orgSlug: string,
+	cookie: string,
+	init: RequestInit = {},
+	extra = '',
+) {
+	const url = new URL(
+		`https://app.test/${orgSlug}/settings/locations/x${extra}`,
+	)
 	return {
 		request: createAuthenticatedRequest(url.toString(), init, cookie),
 		params: { orgSlug },
@@ -77,7 +95,9 @@ function postPayload(intent: string | null, payload: unknown) {
 }
 
 const defaults = (orgSlug: string, cookie: string, payload: unknown) =>
-	defaultsAction(args(orgSlug, cookie, postPayload(null, payload))) as Promise<any>
+	defaultsAction(
+		args(orgSlug, cookie, postPayload(null, payload)),
+	) as Promise<any>
 
 const compare = (
 	orgSlug: string,
@@ -85,7 +105,9 @@ const compare = (
 	intent: 'preview-edit' | 'apply-edit',
 	payload: unknown,
 ) =>
-	compareAction(args(orgSlug, cookie, postPayload(intent, payload))) as Promise<any>
+	compareAction(
+		args(orgSlug, cookie, postPayload(intent, payload)),
+	) as Promise<any>
 
 const body = (result: any) => result?.data ?? result
 
@@ -113,9 +135,7 @@ function editArgs(
 	return {
 		request: createAuthenticatedRequest(
 			url.toString(),
-			fields
-				? { method: 'POST', body: new URLSearchParams(fields) }
-				: {},
+			fields ? { method: 'POST', body: new URLSearchParams(fields) } : {},
 			cookie,
 		),
 		params: { orgSlug: organization.slug, locationId },
@@ -125,7 +145,10 @@ function editArgs(
 	} as never
 }
 
-function formFields(location: { name: string; slug: string }, prepTime: number) {
+function formFields(
+	location: { name: string; slug: string },
+	prepTime: number,
+) {
 	return {
 		name: location.name,
 		slug: location.slug,
@@ -173,7 +196,9 @@ describe('chain defaults and locks (#417)', () => {
 		expect((await read(b.id)).prepTime).toBe(25)
 		// The override is kept as it was.
 		expect((await read(c.id)).prepTime).toBe(30)
-		expect(second.result.overrides.map((o: any) => o.locationId)).toEqual([c.id])
+		expect(second.result.overrides.map((o: any) => o.locationId)).toEqual([
+			c.id,
+		])
 		expect(purgeOrganizationSiteCache).toHaveBeenCalled()
 	})
 
@@ -188,7 +213,9 @@ describe('chain defaults and locks (#417)', () => {
 			locked: false,
 		})
 
-		const overview = (await defaultsLoader(args(organization.slug, cookie))) as any
+		const overview = (await defaultsLoader(
+			args(organization.slug, cookie),
+		)) as any
 		const row = overview.rows.find((r: any) => r.settingId === 'prepTime')
 		expect(row).toMatchObject({
 			hasDefault: true,
@@ -200,9 +227,13 @@ describe('chain defaults and locks (#417)', () => {
 			expect.objectContaining({ locationId: c.id, value: '45 min' }),
 		])
 
-		const viewOfC = (await editLoader(editArgs(organization, c.id, cookie))) as any
+		const viewOfC = (await editLoader(
+			editArgs(organization, c.id, cookie),
+		)) as any
 		expect(viewOfC.policy.overrides).toEqual(['prepTime'])
-		const viewOfA = (await editLoader(editArgs(organization, a.id, cookie))) as any
+		const viewOfA = (await editLoader(
+			editArgs(organization, a.id, cookie),
+		)) as any
 		expect(viewOfA.policy.overrides).toEqual([])
 
 		const table = (await compareLoader(
@@ -316,7 +347,9 @@ describe('chain defaults and locks (#417)', () => {
 			locked: true,
 		})
 		// A's 45 predates the lock: kept, and listed.
-		const overview = (await defaultsLoader(args(organization.slug, cookie))) as any
+		const overview = (await defaultsLoader(
+			args(organization.slug, cookie),
+		)) as any
 		expect(
 			overview.rows.find((r: any) => r.settingId === 'prepTime').overrides,
 		).toHaveLength(1)
@@ -357,7 +390,9 @@ describe('chain defaults and locks (#417)', () => {
 		})
 		// Locations keep their own values.
 		expect((await read(a.id)).prepTime).toBe(20)
-		const overview = (await defaultsLoader(args(organization.slug, cookie))) as any
+		const overview = (await defaultsLoader(
+			args(organization.slug, cookie),
+		)) as any
 		expect(
 			overview.rows.find((r: any) => r.settingId === 'prepTime').hasDefault,
 		).toBe(false)
@@ -401,7 +436,9 @@ describe('chain defaults and locks (#417)', () => {
 		await expect(
 			defaultsLoader(args(organization.slug, cookie)),
 		).rejects.toMatchObject({ status: 403 })
-		expect(await getLockedLocationSettingIds(organization.id)).toEqual(new Set())
+		expect(await getLockedLocationSettingIds(organization.id)).toEqual(
+			new Set(),
+		)
 	})
 
 	it('rejects a value the setting does not accept, and a setting with no default support', async () => {
@@ -450,14 +487,18 @@ describe('chain defaults and locks (#417)', () => {
 	it('integration imports skip a locked setting', async () => {
 		const { organization, cookie } = await setupTestOrgWithUser('admin')
 		await createLocation(organization.id, { prepTime: 20 })
-		expect((await getLockedLocationSettingIds(organization.id)).has('storeHours')).toBe(false)
+		expect(
+			(await getLockedLocationSettingIds(organization.id)).has('storeHours'),
+		).toBe(false)
 		await defaults(organization.slug, cookie, {
 			intent: 'set-default',
 			settingId: 'storeHours',
 			value: [],
 			locked: true,
 		})
-		expect((await getLockedLocationSettingIds(organization.id)).has('storeHours')).toBe(true)
+		expect(
+			(await getLockedLocationSettingIds(organization.id)).has('storeHours'),
+		).toBe(true)
 	})
 })
 
@@ -478,7 +519,9 @@ describe('compare and edit several locations (#418)', () => {
 		expect(result.ok).toBe(true)
 		expect(result.edit.changedLocationIds.sort()).toEqual([...chosen].sort())
 		for (const row of rows) {
-			expect((await read(row.id)).prepTime).toBe(chosen.includes(row.id) ? 35 : 10)
+			expect((await read(row.id)).prepTime).toBe(
+				chosen.includes(row.id) ? 35 : 10,
+			)
 		}
 	})
 
@@ -515,7 +558,10 @@ describe('compare and edit several locations (#418)', () => {
 		)
 		expect(result.edit.changedLocationIds).toEqual([inside.id])
 		expect(result.edit.skipped).toEqual([
-			expect.objectContaining({ locationId: outside.id, reason: 'not_manageable' }),
+			expect.objectContaining({
+				locationId: outside.id,
+				reason: 'not_manageable',
+			}),
 		])
 		expect((await read(outside.id)).prepTime).toBe(10)
 		expect((await read(inside.id)).prepTime).toBe(40)
@@ -584,8 +630,16 @@ describe('compare and edit several locations (#418)', () => {
 		log.mockRestore()
 
 		for (const payload of [
-			{ settingId: 'prepTime', locationIds: [a.id], change: { kind: 'value', value: 'x' } },
-			{ settingId: 'specialHours', locationIds: [a.id], change: { kind: 'clear' } },
+			{
+				settingId: 'prepTime',
+				locationIds: [a.id],
+				change: { kind: 'value', value: 'x' },
+			},
+			{
+				settingId: 'specialHours',
+				locationIds: [a.id],
+				change: { kind: 'clear' },
+			},
 			{ settingId: 'prepTime', locationIds: [], change: { kind: 'clear' } },
 		]) {
 			expect(
@@ -606,7 +660,12 @@ describe('compare and edit several locations (#418)', () => {
 				locationIds: [a.id, b.id],
 				change: {
 					kind: 'value',
-					value: { pickup: true, delivery: false, dineIn: false, curbside: true },
+					value: {
+						pickup: true,
+						delivery: false,
+						dineIn: false,
+						curbside: true,
+					},
 				},
 			}),
 		)

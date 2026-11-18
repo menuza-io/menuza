@@ -35,7 +35,10 @@ import {
 	type TipSettings,
 	type WeeklySchedule,
 } from './location-types.ts'
-import { orderCapsSettingsSchema, type OrderCapsSettings } from './order-caps.ts'
+import {
+	orderCapsSettingsSchema,
+	type OrderCapsSettings,
+} from './order-caps.ts'
 import {
 	packagingFeeSettingsSchema,
 	type PackagingFeeSettings,
@@ -115,7 +118,9 @@ export const LOCATION_SETTING_IDS = [
 ] as const
 export type LocationSettingId = (typeof LOCATION_SETTING_IDS)[number]
 
-export function isLocationSettingId(value: unknown): value is LocationSettingId {
+export function isLocationSettingId(
+	value: unknown,
+): value is LocationSettingId {
 	return (
 		typeof value === 'string' &&
 		(LOCATION_SETTING_IDS as readonly string[]).includes(value)
@@ -129,7 +134,8 @@ export type LocationSettingEditor =
 	| { kind: 'number'; min: number; max: number; unit: 'minutes' }
 	| { kind: 'toggles'; keys: readonly string[] }
 
-export type ParseResult<V> = { ok: true; value: V } | { ok: false; error: string }
+export type ParseResult<V> =
+	{ ok: true; value: V } | { ok: false; error: string }
 
 export type LocationSettingDefinition<V = unknown> = {
 	id: LocationSettingId
@@ -248,7 +254,8 @@ export function summarizeWeeklySchedule(
 		if (last && last.text === line.text) last.to = line.day
 		else groups.push({ from: line.day, to: line.day, text: line.text })
 	}
-	if (groups.length === 1 && groups[0]!.text === 'closed') return 'Closed all week'
+	if (groups.length === 1 && groups[0]!.text === 'closed')
+		return 'Closed all week'
 	return groups
 		.map((group) => {
 			const from = SHORT_DAY_LABELS[group.from as keyof typeof SHORT_DAY_LABELS]
@@ -289,7 +296,9 @@ const specialHourValueSchema = z.object({
 /** Special hours without ids, sorted by date: what "the same" means. */
 export type SpecialHoursValue = Array<Omit<SpecialHour, 'id'> & { id?: string }>
 
-function normalizeSpecialHours(list: readonly SpecialHour[]): SpecialHoursValue {
+function normalizeSpecialHours(
+	list: readonly SpecialHour[],
+): SpecialHoursValue {
 	return [...list]
 		.map(({ date, isOpen, slots, note }) => ({
 			date,
@@ -340,7 +349,10 @@ export function mergeSpecialHours(
 		inRange(entry.date, options.from, options.to),
 	)
 	const target = readSpecialHours(targetText)
-	const fresh = (entry: SpecialHour): SpecialHour => ({ ...entry, id: makeId() })
+	const fresh = (entry: SpecialHour): SpecialHour => ({
+		...entry,
+		id: makeId(),
+	})
 	if (options.mode === 'replace') {
 		const kept = target.filter(
 			(entry) => !inRange(entry.date, options.from, options.to),
@@ -393,7 +405,9 @@ const weeklyDefinition = (
 	editor: null,
 	systemDefault: () => null,
 	parse: (value) =>
-		value === null ? { ok: true, value: null } : zodParse(WeeklyScheduleSchema, value),
+		value === null
+			? { ok: true, value: null }
+			: zodParse(WeeklyScheduleSchema, value),
 	read: (row) => parseOrNull(WeeklyScheduleSchema, row[id]),
 	readForForm: (row) =>
 		parseOrNull(WeeklyScheduleSchema, row[id]) ?? DEFAULT_WEEKLY_SCHEDULE,
@@ -476,7 +490,10 @@ export const LOCATION_SETTINGS_REGISTRY: {
 		}),
 		summarize: (value: SpecialHoursValue) =>
 			summarizeSpecialHours(
-				value.map((entry, index) => ({ ...entry, id: entry.id ?? String(index) })),
+				value.map((entry, index) => ({
+					...entry,
+					id: entry.id ?? String(index),
+				})),
 			),
 	} satisfies LocationSettingDefinition<SpecialHoursValue>,
 
@@ -568,7 +585,9 @@ export const LOCATION_SETTINGS_REGISTRY: {
 				if (value.rule.itemThreshold)
 					parts.push(`over ${value.rule.itemThreshold} items`)
 				if (value.rule.amountMinor)
-					parts.push(`over ${describeAmount(value.rule.amountMinor, ctx.currency)}`)
+					parts.push(
+						`over ${describeAmount(value.rule.amountMinor, ctx.currency)}`,
+					)
 				return parts.length === 0
 					? 'No large-order rule'
 					: `${parts.join(' or ')}: +${value.rule.extraMinutes} min`
@@ -587,8 +606,13 @@ export const LOCATION_SETTINGS_REGISTRY: {
 		flag: null,
 		currencySensitive: false,
 		chainDefault: true,
-		editor: { kind: 'toggles', keys: ['pickup', 'delivery', 'dineIn', 'curbside'] },
-		systemDefault: (): FulfillmentOptions => ({ ...DEFAULT_FULFILLMENT_OPTIONS }),
+		editor: {
+			kind: 'toggles',
+			keys: ['pickup', 'delivery', 'dineIn', 'curbside'],
+		},
+		systemDefault: (): FulfillmentOptions => ({
+			...DEFAULT_FULFILLMENT_OPTIONS,
+		}),
 		parse: (value) => zodParse(FulfillmentOptionsSchema, value),
 		read: (row): FulfillmentOptions => {
 			// A location that never saved options shows the edit form's defaults.
@@ -631,7 +655,8 @@ export const LOCATION_SETTINGS_REGISTRY: {
 		}),
 		readForForm: (row, ctx): TipsValue => ({
 			inHouseTips:
-				parseOrNull(InHouseTipsSchema, row.inHouseTips) ?? DEFAULT_IN_HOUSE_TIPS,
+				parseOrNull(InHouseTipsSchema, row.inHouseTips) ??
+				DEFAULT_IN_HOUSE_TIPS,
 			tipSettings: resolveTipSettings(row.tipSettings, ctx.currency),
 		}),
 		write: (_row, value: TipsValue) => ({
@@ -661,7 +686,8 @@ export const LOCATION_SETTINGS_REGISTRY: {
 				: zodParse(SchedulingOptionsSchema, value),
 		read: (row) => parseOrNull(SchedulingOptionsSchema, row.scheduling),
 		readForForm: (row) =>
-			parseOrNull(SchedulingOptionsSchema, row.scheduling) ?? DEFAULT_SCHEDULING,
+			parseOrNull(SchedulingOptionsSchema, row.scheduling) ??
+			DEFAULT_SCHEDULING,
 		write: (_row, value: SchedulingOptions | null) => ({
 			scheduling: stringify(value),
 		}),
@@ -742,9 +768,13 @@ export const LOCATION_SETTINGS_REGISTRY: {
 			if (!value) return 'No caps'
 			const parts: string[] = []
 			if (value.pickup?.maxSubtotalMinor)
-				parts.push(`pickup up to ${describeAmount(value.pickup.maxSubtotalMinor, ctx.currency)}`)
+				parts.push(
+					`pickup up to ${describeAmount(value.pickup.maxSubtotalMinor, ctx.currency)}`,
+				)
 			if (value.delivery?.maxSubtotalMinor)
-				parts.push(`delivery up to ${describeAmount(value.delivery.maxSubtotalMinor, ctx.currency)}`)
+				parts.push(
+					`delivery up to ${describeAmount(value.delivery.maxSubtotalMinor, ctx.currency)}`,
+				)
 			if (value.dineIn?.maxGuests)
 				parts.push(`dine-in up to ${value.dineIn.maxGuests} guests`)
 			return parts.length > 0 ? parts.join('; ') : 'No caps'

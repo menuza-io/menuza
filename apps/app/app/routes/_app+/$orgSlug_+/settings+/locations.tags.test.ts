@@ -26,7 +26,11 @@ vi.mock('#app/utils/reservations/access.server.ts', async (importOriginal) => ({
 async function createLocation(organizationId: string, name: string) {
 	const [row] = await db
 		.insert(OrganizationLocation)
-		.values({ organizationId, name, slug: `l-${crypto.randomUUID().slice(0, 8)}` })
+		.values({
+			organizationId,
+			name,
+			slug: `l-${crypto.randomUUID().slice(0, 8)}`,
+		})
 		.returning()
 	return row!
 }
@@ -46,7 +50,11 @@ function call(
 	}
 	const url = new URL(`https://app.test/${orgSlug}/settings/locations/tags`)
 	return action({
-		request: createAuthenticatedRequest(url.toString(), { method: 'POST', body: form }, cookie),
+		request: createAuthenticatedRequest(
+			url.toString(),
+			{ method: 'POST', body: form },
+			cookie,
+		),
 		params: { orgSlug },
 		context: new RouterContextProvider(),
 		url,
@@ -73,28 +81,53 @@ describe('location tags page (#374)', () => {
 	it('creates, renames, assigns and deletes tags, refusing duplicates and the limit', async () => {
 		const { organization, cookie } = await setupTestOrgWithUser('admin')
 		const a = await createLocation(organization.id, 'Austin')
-		const created = body(await call(organization.slug, cookie, { intent: 'create-tag', name: ' Texas ' }))
+		const created = body(
+			await call(organization.slug, cookie, {
+				intent: 'create-tag',
+				name: ' Texas ',
+			}),
+		)
 		expect(created.ok).toBe(true)
 		const [tag] = await listLocationTags(organization.id)
 		expect(tag!.name).toBe('Texas')
 		expect(
-			getResponseStatus(await call(organization.slug, cookie, { intent: 'create-tag', name: 'texas' })),
+			getResponseStatus(
+				await call(organization.slug, cookie, {
+					intent: 'create-tag',
+					name: 'texas',
+				}),
+			),
 		).toBe(409)
 		await call(organization.slug, cookie, {
 			intent: 'set-tag-locations',
 			tagId: tag!.id,
 			locationIds: [a.id],
 		})
-		expect((await listLocationTags(organization.id))[0]!.locationIds).toEqual([a.id])
-		await call(organization.slug, cookie, { intent: 'rename-tag', tagId: tag!.id, name: 'TX' })
+		expect((await listLocationTags(organization.id))[0]!.locationIds).toEqual([
+			a.id,
+		])
+		await call(organization.slug, cookie, {
+			intent: 'rename-tag',
+			tagId: tag!.id,
+			name: 'TX',
+		})
 		expect((await listLocationTags(organization.id))[0]!.name).toBe('TX')
-		await call(organization.slug, cookie, { intent: 'delete-tag', tagId: tag!.id })
+		await call(organization.slug, cookie, {
+			intent: 'delete-tag',
+			tagId: tag!.id,
+		})
 		expect(await listLocationTags(organization.id)).toEqual([])
 
 		for (let i = 0; i < 50; i++) {
-			await call(organization.slug, cookie, { intent: 'create-tag', name: `tag ${i}` })
+			await call(organization.slug, cookie, {
+				intent: 'create-tag',
+				name: `tag ${i}`,
+			})
 		}
-		const over = await call(organization.slug, cookie, { intent: 'create-tag', name: 'one too many' })
+		const over = await call(organization.slug, cookie, {
+			intent: 'create-tag',
+			name: 'one too many',
+		})
 		expect(getResponseStatus(over)).toBe(400)
 		expect(body(over).error).toBe('limit_reached')
 	})
@@ -103,7 +136,10 @@ describe('location tags page (#374)', () => {
 		const { organization, cookie } = await setupTestOrgWithUser('admin')
 		const a = await createLocation(organization.id, 'Austin')
 		const b = await createLocation(organization.id, 'Boston')
-		await call(organization.slug, cookie, { intent: 'create-tag', name: 'Mine' })
+		await call(organization.slug, cookie, {
+			intent: 'create-tag',
+			name: 'Mine',
+		})
 		const [tag] = await listLocationTags(organization.id)
 		const scoped = await scopedCookie(organization.id, [a.id])
 		const refused = await call(organization.slug, scoped, {
@@ -112,7 +148,9 @@ describe('location tags page (#374)', () => {
 			locationIds: [a.id, b.id],
 		}).catch((error: Response) => error)
 		expect((refused as Response).status).toBe(403)
-		expect((await listLocationTags(organization.id))[0]!.locationIds).toEqual([])
+		expect((await listLocationTags(organization.id))[0]!.locationIds).toEqual(
+			[],
+		)
 		await expect(
 			loader({
 				request: createAuthenticatedRequest(
@@ -136,17 +174,30 @@ describe('location tags page (#374)', () => {
 			`${b.id},Boston,${b.slug},not a phone!,yes,Texas`,
 		].join('\n')
 
-		const preview = body(await call(organization.slug, cookie, { intent: 'preview-csv', file: csvFile(csv) }))
+		const preview = body(
+			await call(organization.slug, cookie, {
+				intent: 'preview-csv',
+				file: csvFile(csv),
+			}),
+		)
 		expect(preview.csv.plan.problems).toEqual([
 			expect.objectContaining({ row: 3, problem: 'bad_phone' }),
 		])
-		const applied = body(await call(organization.slug, cookie, { intent: 'apply-csv', file: csvFile(csv) }))
+		const applied = body(
+			await call(organization.slug, cookie, {
+				intent: 'apply-csv',
+				file: csvFile(csv),
+			}),
+		)
 		expect(applied.csv.applied).toBe(false)
 		expect(applied.csv.plan.problems).toHaveLength(1)
 
 		// Nothing happened: no tag, no phone, no link.
 		expect(await listLocationTags(organization.id)).toEqual([])
-		const [rowA] = await db.select().from(OrganizationLocation).where(eq(OrganizationLocation.id, a.id))
+		const [rowA] = await db
+			.select()
+			.from(OrganizationLocation)
+			.where(eq(OrganizationLocation.id, a.id))
 		expect(rowA!.phone).toBeNull()
 	})
 
@@ -159,14 +210,27 @@ describe('location tags page (#374)', () => {
 			`${a.id},Austin,${a.slug},555-0100,yes,Texas`,
 			`${b.id},Boston,${b.slug},,no,"Texas; East"`,
 		].join('\n')
-		const result = body(await call(organization.slug, cookie, { intent: 'apply-csv', file: csvFile(csv) }))
+		const result = body(
+			await call(organization.slug, cookie, {
+				intent: 'apply-csv',
+				file: csvFile(csv),
+			}),
+		)
 		expect(result.csv.applied).toBe(true)
 		const tags = await listLocationTags(organization.id)
 		expect(tags.map((t) => t.name).sort()).toEqual(['East', 'Texas'])
-		expect(tags.find((t) => t.name === 'Texas')!.locationIds.sort()).toEqual([a.id, b.id].sort())
-		const [rowB] = await db.select().from(OrganizationLocation).where(eq(OrganizationLocation.id, b.id))
+		expect(tags.find((t) => t.name === 'Texas')!.locationIds.sort()).toEqual(
+			[a.id, b.id].sort(),
+		)
+		const [rowB] = await db
+			.select()
+			.from(OrganizationLocation)
+			.where(eq(OrganizationLocation.id, b.id))
 		expect(rowB!.isActive).toBe(false)
-		const [rowA] = await db.select().from(OrganizationLocation).where(eq(OrganizationLocation.id, a.id))
+		const [rowA] = await db
+			.select()
+			.from(OrganizationLocation)
+			.where(eq(OrganizationLocation.id, a.id))
 		expect(rowA!.phone).toBe('555-0100')
 
 		// The download reads back as no change.
@@ -181,7 +245,10 @@ describe('location tags page (#374)', () => {
 		} as never)) as Response
 		expect(download.headers.get('content-type')).toContain('text/csv')
 		const again = body(
-			await call(organization.slug, cookie, { intent: 'preview-csv', file: csvFile(await download.text()) }),
+			await call(organization.slug, cookie, {
+				intent: 'preview-csv',
+				file: csvFile(await download.text()),
+			}),
 		)
 		expect(again.csv.plan.changes).toEqual([])
 	})
@@ -191,7 +258,10 @@ describe('location tags page (#374)', () => {
 		const a = await createLocation(organization.id, 'Austin')
 		const b = await createLocation(organization.id, 'Boston')
 		const c = await createLocation(organization.id, 'Cairo')
-		await call(organization.slug, cookie, { intent: 'create-tag', name: 'Group' })
+		await call(organization.slug, cookie, {
+			intent: 'create-tag',
+			name: 'Group',
+		})
 		const [tag] = await listLocationTags(organization.id)
 		await call(organization.slug, cookie, {
 			intent: 'set-tag-locations',
@@ -211,7 +281,10 @@ describe('location tags page (#374)', () => {
 		const locationCondition = (loaded: any) =>
 			JSON.stringify(loaded.definition.filters)
 
-		const filtered = await open(cookie, `template=sales-by-location&tag=${tag!.id}`)
+		const filtered = await open(
+			cookie,
+			`template=sales-by-location&tag=${tag!.id}`,
+		)
 		expect(locationCondition(filtered)).toContain('"operator":"in"')
 		expect(locationCondition(filtered)).toContain('Austin')
 		expect(locationCondition(filtered)).toContain('Boston')
@@ -219,7 +292,10 @@ describe('location tags page (#374)', () => {
 
 		// A manager who sees only Austin gets only Austin from the same tag.
 		const scoped = await scopedCookie(organization.id, [a.id, c.id])
-		const limited = await open(scoped, `template=sales-by-location&tag=${tag!.id}`)
+		const limited = await open(
+			scoped,
+			`template=sales-by-location&tag=${tag!.id}`,
+		)
 		expect(locationCondition(limited)).toContain('Austin')
 		expect(locationCondition(limited)).not.toContain('Boston')
 

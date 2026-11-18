@@ -40,7 +40,8 @@ const MESSAGES: Record<string, (params: Params) => MessageDescriptor> = {
 	sync_ok: ({ provider = '' }) => msg`${provider} is connected.`,
 	sync_disconnected: ({ provider = '' }) =>
 		msg`${provider} is disconnected, so its orders and menu are not syncing.`,
-	sync_stale: ({ provider = '' }) => msg`${provider} has not synced for over two days.`,
+	sync_stale: ({ provider = '' }) =>
+		msg`${provider} has not synced for over two days.`,
 	phone_agent_ready: () => msg`The phone agent is on and has an active line.`,
 	phone_line_inactive: () =>
 		msg`The phone agent is on but has no active phone line for this location.`,
@@ -54,8 +55,15 @@ export function useHealthMessage() {
 	}
 }
 
-const STATUS_ICON: Record<HealthStatus, 'check' | 'info' | 'alert-triangle' | 'circle-x'> =
-	{ ok: 'check', info: 'info', warning: 'alert-triangle', blocking: 'circle-x' }
+const STATUS_ICON: Record<
+	HealthStatus,
+	'check' | 'info' | 'alert-triangle' | 'circle-x'
+> = {
+	ok: 'check',
+	info: 'info',
+	warning: 'alert-triangle',
+	blocking: 'circle-x',
+}
 
 export function HealthSummaryBadge({ summary }: { summary: HealthSummary }) {
 	switch (summary) {
@@ -118,7 +126,10 @@ export function LocationHealthCard({
 				</div>
 			</div>
 			{health.allPassed && !compact ? (
-				<p className="text-muted-foreground text-sm" data-testid="all-checks-passed">
+				<p
+					className="text-muted-foreground text-sm"
+					data-testid="all-checks-passed"
+				>
 					<Trans>All checks passed.</Trans>
 				</p>
 			) : null}
@@ -131,7 +142,10 @@ export function LocationHealthCard({
 							data-check={check.code}
 							data-status={check.status}
 						>
-							<Icon name={STATUS_ICON[check.status]} className="mt-0.5 size-4 shrink-0" />
+							<Icon
+								name={STATUS_ICON[check.status]}
+								className="mt-0.5 size-4 shrink-0"
+							/>
 							<span className="min-w-0 flex-1 wrap-anywhere">
 								{message(check)}
 							</span>

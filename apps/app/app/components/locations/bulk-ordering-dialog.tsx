@@ -33,8 +33,7 @@ type BulkResult = {
 }
 
 type BulkResponse =
-	| { ok: true; bulk: BulkResult }
-	| { ok: false; error: string }
+	{ ok: true; bulk: BulkResult } | { ok: false; error: string }
 
 /** The pause durations the Orders page offers, as people read them. */
 function useDurationOptions() {

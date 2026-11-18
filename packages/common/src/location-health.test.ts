@@ -21,10 +21,16 @@ const week = (open: string, close: string) =>
 			'friday',
 			'saturday',
 			'sunday',
-		].map((day) => ({ day, isOpen: true, slots: [{ start: open, end: close }] })),
+		].map((day) => ({
+			day,
+			isOpen: true,
+			slots: [{ start: open, end: close }],
+		})),
 	)
 
-function healthy(overrides: Partial<LocationHealthInput> = {}): LocationHealthInput {
+function healthy(
+	overrides: Partial<LocationHealthInput> = {},
+): LocationHealthInput {
 	return {
 		now: NOW,
 		location: {
@@ -145,7 +151,10 @@ describe('getLocationHealth', () => {
 			healthy({ now: new Date('2027-03-10T09:00:00Z') }), // 05:00 local
 		)
 		expect(late.closedNow).toBe(true)
-		expect(check(late, 'hours')[0]).toMatchObject({ status: 'info', code: 'closed_now' })
+		expect(check(late, 'hours')[0]).toMatchObject({
+			status: 'info',
+			code: 'closed_now',
+		})
 		expect(late.summary).toBe('taking_orders')
 		expect(late.allPassed).toBe(true)
 	})
@@ -167,7 +176,11 @@ describe('getLocationHealth', () => {
 	it('no hours at all is a warning that links to the location', () => {
 		const health = getLocationHealth(
 			healthy({
-				location: { ...healthy().location, storeHours: null, onlineHours: null },
+				location: {
+					...healthy().location,
+					storeHours: null,
+					onlineHours: null,
+				},
 			}),
 		)
 		expect(health.summary).toBe('taking_orders_with_problems')
@@ -185,8 +198,14 @@ describe('getLocationHealth', () => {
 			}),
 		)
 		expect(health.summary).toBe('not_taking_orders')
-		expect(check(health, 'menu')[0]).toMatchObject({ code: 'no_active_menu', href: '/menu/menus' })
-		expect(check(health, 'website')[0]).toMatchObject({ code: 'site_unpublished', href: '/website' })
+		expect(check(health, 'menu')[0]).toMatchObject({
+			code: 'no_active_menu',
+			href: '/menu/menus',
+		})
+		expect(check(health, 'website')[0]).toMatchObject({
+			code: 'site_unpublished',
+			href: '/website',
+		})
 	})
 
 	it('a broken custom domain is a warning; a healthy one passes; none is left out', () => {
@@ -200,7 +219,10 @@ describe('getLocationHealth', () => {
 			}),
 		)
 		expect(broken.summary).toBe('taking_orders_with_problems')
-		expect(check(broken, 'domain')[0]).toMatchObject({ code: 'domain_error', href: '/website' })
+		expect(check(broken, 'domain')[0]).toMatchObject({
+			code: 'domain_error',
+			href: '/website',
+		})
 		const fine = getLocationHealth(
 			healthy({
 				organization: {
@@ -242,15 +264,43 @@ describe('getLocationHealth', () => {
 	})
 
 	it('the phone agent is checked only when it is on', () => {
-		expect(check(getLocationHealth(healthy({ phoneAgent: { enabled: false, hasActiveLine: false } })), 'phone_agent')).toEqual([])
-		expect(check(getLocationHealth(healthy({ phoneAgent: { enabled: true, hasActiveLine: true } })), 'phone_agent')[0]!.status).toBe('ok')
-		const noLine = getLocationHealth(healthy({ phoneAgent: { enabled: true, hasActiveLine: false } }))
-		expect(check(noLine, 'phone_agent')[0]).toMatchObject({ code: 'phone_line_inactive', href: '/phone-agent' })
+		expect(
+			check(
+				getLocationHealth(
+					healthy({ phoneAgent: { enabled: false, hasActiveLine: false } }),
+				),
+				'phone_agent',
+			),
+		).toEqual([])
+		expect(
+			check(
+				getLocationHealth(
+					healthy({ phoneAgent: { enabled: true, hasActiveLine: true } }),
+				),
+				'phone_agent',
+			)[0]!.status,
+		).toBe('ok')
+		const noLine = getLocationHealth(
+			healthy({ phoneAgent: { enabled: true, hasActiveLine: false } }),
+		)
+		expect(check(noLine, 'phone_agent')[0]).toMatchObject({
+			code: 'phone_line_inactive',
+			href: '/phone-agent',
+		})
 	})
 
 	it('the restaurant summary is the worst state of any location', () => {
 		const ok = getLocationHealth(healthy())
-		const warn = getLocationHealth(healthy({ location: { ...healthy().location, id: 'b', storeHours: null, onlineHours: null } }))
+		const warn = getLocationHealth(
+			healthy({
+				location: {
+					...healthy().location,
+					id: 'b',
+					storeHours: null,
+					onlineHours: null,
+				},
+			}),
+		)
 		const bad = getLocationHealth(healthy({ hasActiveMenu: false }))
 		expect(summarizeLocations([ok])).toBe('taking_orders')
 		expect(summarizeLocations([ok, warn])).toBe('taking_orders_with_problems')
@@ -259,19 +309,26 @@ describe('getLocationHealth', () => {
 	})
 
 	it('says plainly which check it cannot run', () => {
-		expect(UNSUPPORTED_HEALTH_CHECKS.map((c) => c.id)).toEqual(['kitchen_device'])
+		expect(UNSUPPORTED_HEALTH_CHECKS.map((c) => c.id)).toEqual([
+			'kitchen_device',
+		])
 	})
 
 	it('every check has words and a link only when there is something to fix', () => {
 		const bad = getLocationHealth(
 			healthy({
 				hasActiveMenu: false,
-				organization: { ...healthy().organization, onlinePaymentsEnabled: false, sitePublished: false },
+				organization: {
+					...healthy().organization,
+					onlinePaymentsEnabled: false,
+					sitePublished: false,
+				},
 			}),
 		)
 		for (const c of bad.checks) {
 			expect(c.message.length).toBeGreaterThan(10)
-			if (c.status === 'blocking' || c.status === 'warning') expect(c.href).toBeTruthy()
+			if (c.status === 'blocking' || c.status === 'warning')
+				expect(c.href).toBeTruthy()
 		}
 	})
 })

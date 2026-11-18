@@ -233,26 +233,36 @@ describe('withLocationsFilter (location tags)', () => {
 			[timeField]: new Date().toISOString(),
 		}))
 		const total = (definition: typeof template.definition) => {
-			const result = runReport(
-				catalog,
-				definition,
-				records as never,
-			) as { total?: number }
+			const result = runReport(catalog, definition, records as never) as {
+				total?: number
+			}
 			return result.total
 		}
 		expect(total(template.definition)).toBe(3)
 		expect(
-			total(withLocationsFilter('organization', template.definition, ['Austin', 'Dallas'])),
+			total(
+				withLocationsFilter('organization', template.definition, [
+					'Austin',
+					'Dallas',
+				]),
+			),
 		).toBe(2)
 		expect(
-			total(withLocationsFilter('organization', template.definition, ['Houston'])),
+			total(
+				withLocationsFilter('organization', template.definition, ['Houston']),
+			),
 		).toBe(1)
-		expect(total(withLocationsFilter('organization', template.definition, []))).toBe(0)
+		expect(
+			total(withLocationsFilter('organization', template.definition, [])),
+		).toBe(0)
 	})
 
 	it('leaves a subject without a location field alone', () => {
 		const other = organizationTemplates().find(
-			(item) => !getSubject(catalog, item.definition.subject)?.fields.some((f) => f.id === 'location' && f.filterable),
+			(item) =>
+				!getSubject(catalog, item.definition.subject)?.fields.some(
+					(f) => f.id === 'location' && f.filterable,
+				),
 		)!
 		expect(withLocationsFilter('organization', other.definition, ['A'])).toBe(
 			other.definition,

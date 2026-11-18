@@ -21,7 +21,13 @@ import { loadLocationStatus } from '#app/utils/status/location-status.server.ts'
  * App already has when the page loads; a member limited to some locations sees
  * only those.
  */
-export async function loader({ request, params }: { request: Request; params: { orgSlug?: string } }) {
+export async function loader({
+	request,
+	params,
+}: {
+	request: Request
+	params: { orgSlug?: string }
+}) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
@@ -68,7 +74,8 @@ export default function StatusRoute() {
 						<span className="text-muted-foreground text-sm">
 							{plural(status.locations.length, {
 								one: '# location checked. The worst one decides the summary.',
-								other: '# locations checked. The worst one decides the summary.',
+								other:
+									'# locations checked. The worst one decides the summary.',
 							})}
 						</span>
 					</div>

@@ -74,7 +74,9 @@ export async function importRemoteLocationForIntegration(
 				: {
 						specialHours:
 							location.specialHours ||
-							(remote.specialHours ? JSON.stringify(remote.specialHours) : null),
+							(remote.specialHours
+								? JSON.stringify(remote.specialHours)
+								: null),
 					}),
 		})
 		.where(

@@ -6,9 +6,30 @@ import {
 } from './locations-csv.ts'
 
 const locations: CsvLocation[] = [
-	{ id: 'a', name: 'Austin', slug: 'austin', phone: '555-0100', isActive: true, tags: ['Texas'] },
-	{ id: 'b', name: 'Boston', slug: 'boston', phone: null, isActive: true, tags: [] },
-	{ id: 'c', name: 'Cairo', slug: 'cairo', phone: null, isActive: false, tags: ['Texas', 'North'] },
+	{
+		id: 'a',
+		name: 'Austin',
+		slug: 'austin',
+		phone: '555-0100',
+		isActive: true,
+		tags: ['Texas'],
+	},
+	{
+		id: 'b',
+		name: 'Boston',
+		slug: 'boston',
+		phone: null,
+		isActive: true,
+		tags: [],
+	},
+	{
+		id: 'c',
+		name: 'Cairo',
+		slug: 'cairo',
+		phone: null,
+		isActive: false,
+		tags: ['Texas', 'North'],
+	},
 ]
 const byId = new Map(locations.map((l) => [l.id, l]))
 const tagNames = ['Texas', 'North']
@@ -16,7 +37,12 @@ const tagNames = ['Texas', 'North']
 describe('locations CSV', () => {
 	it('round trips: the download read back is no change', () => {
 		const plan = planLocationsCsv(buildLocationsCsv(locations), byId, tagNames)
-		expect(plan).toMatchObject({ ok: true, problems: [], changes: [], newTags: [] })
+		expect(plan).toMatchObject({
+			ok: true,
+			problems: [],
+			changes: [],
+			newTags: [],
+		})
 	})
 
 	it('reads edits to phone, active and tags and lists new tags', () => {
@@ -76,7 +102,10 @@ describe('locations CSV', () => {
 	})
 
 	it('refuses a file that is not the template, an empty file, and one that breaks the tag limit', () => {
-		expect(planLocationsCsv('', byId, tagNames)).toEqual({ ok: false, error: 'empty' })
+		expect(planLocationsCsv('', byId, tagNames)).toEqual({
+			ok: false,
+			error: 'empty',
+		})
 		expect(planLocationsCsv('name,phone\nx,y', byId, tagNames)).toEqual({
 			ok: false,
 			error: 'not_template',
@@ -97,11 +126,7 @@ describe('locations CSV', () => {
 			{ ...locations[0]!, name: '=HYPERLINK("x")', tags: ['+cmd'] },
 		])
 		expect(csv).toContain("'=HYPERLINK")
-		const plan = planLocationsCsv(
-			"id,phone\na,'555-0100",
-			byId,
-			tagNames,
-		)
+		const plan = planLocationsCsv("id,phone\na,'555-0100", byId, tagNames)
 		if (!plan.ok) throw new Error()
 		// A guarded cell reads back as it was written.
 		expect(plan.changes).toEqual([])
