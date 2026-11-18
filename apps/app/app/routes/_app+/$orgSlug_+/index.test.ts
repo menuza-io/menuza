@@ -457,7 +457,9 @@ describe('Home dashboard loader', () => {
 		const data = await loadHome(organization.slug, cookie)
 
 		expect(data.dashboard.id).toBeNull()
-		expect(data.dashboard.config).toEqual(defaultRestaurantHomeConfig())
+		expect(data.dashboard.config).toEqual(
+			defaultRestaurantHomeConfig({ salesGoals: true }),
+		)
 	})
 
 	it('lists the custom dashboards of this organization for the switcher', async () => {
@@ -591,7 +593,9 @@ describe('Home dashboard action', () => {
 			defaultRestaurantHomeConfig(),
 		)
 		const otherHome = await loadHome(otherOrganization.slug, cookie)
-		expect(otherHome.dashboard.config).toEqual(defaultRestaurantHomeConfig())
+		expect(otherHome.dashboard.config).toEqual(
+			defaultRestaurantHomeConfig({ salesGoals: true }),
+		)
 		const ownHome = await loadHome(organization.slug, cookie)
 		expect(ownHome.dashboard.config.blocks.map((block) => block.id)).toEqual([
 			'notes-chart',
@@ -801,7 +805,9 @@ describe('Home dashboard action', () => {
 		expect(await homeRowCount(user.id, organization.id)).toBe(0)
 
 		const data = await loadHome(organization.slug, cookie)
-		expect(data.dashboard.config).toEqual(defaultRestaurantHomeConfig())
+		expect(data.dashboard.config).toEqual(
+			defaultRestaurantHomeConfig({ salesGoals: true }),
+		)
 	})
 
 	it('resets Home to the default layout by removing the saved row', async () => {
@@ -823,7 +829,7 @@ describe('Home dashboard action', () => {
 		const data = await loadHome(organization.slug, cookie)
 		expect(data.dashboard).toMatchObject({
 			id: null,
-			config: defaultRestaurantHomeConfig(),
+			config: defaultRestaurantHomeConfig({ salesGoals: true }),
 		})
 	})
 
