@@ -974,6 +974,10 @@ msgstr "{answered} answered"
 msgid "{answered} answered, {draftCount} drafted and not saved"
 msgstr "{answered} answered, {draftCount} drafted and not saved"
 
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:290
+msgid "{appliedCount} dishes updated."
+msgstr "{appliedCount} dishes updated."
+
 #: app/utils/discounts/summary.ts:324
 msgid "{at} or more items: {value}"
 msgstr "{at} or more items: {value}"
@@ -1045,6 +1049,10 @@ msgstr "{categoryName} is hidden from your menu"
 #: app/components/customers/people-summary-row.tsx:19
 msgid "{change, plural, one {+# in the last 30 days} other {+# in the last 30 days}}"
 msgstr "{change, plural, one {+# in the last 30 days} other {+# in the last 30 days}}"
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:303
+msgid "{changeCount} changes and {problemCount} problems in {rowCount} rows."
+msgstr "{changeCount} changes and {problemCount} problems in {rowCount} rows."
 
 #: app/components/staff/schedule/publication-history.tsx:223
 msgid "{changed, plural, one {# changed} other {# changed}}"
@@ -6802,6 +6810,10 @@ msgstr "Applies when a customer enters a code."
 #~ msgid "Apply {0} changes"
 #~ msgstr "Apply {0} changes"
 
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:394
+msgid "Apply {changeCount} changes"
+msgstr "Apply {changeCount} changes"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1570
 msgid "Apply automatically"
 msgstr "Apply automatically"
@@ -7612,6 +7624,7 @@ msgstr ""
 #: app/components/menu/item-variations.tsx:511
 #: app/components/my-schedule/requests-view.tsx:226
 #: app/components/workspace-breadcrumb.tsx:36
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:179
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:40
 msgid "Availability"
 msgstr "Availability"
@@ -7650,6 +7663,7 @@ msgstr "Availability Status"
 #: app/components/reservations/status-style.tsx:169
 #: app/components/staff/schedule/availability-page.tsx:256
 #: app/components/staff/schedule/availability-sheet.tsx:301
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:183
 #: app/utils/reservations/labels.ts:125
 #: app/utils/reservations/labels.ts:126
 msgid "Available"
@@ -7955,6 +7969,7 @@ msgid "Base Preparation Time (minutes)"
 msgstr "Base Preparation Time (minutes)"
 
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:189
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:236
 msgid "Base price"
 msgstr "Base price"
 
@@ -8609,6 +8624,10 @@ msgstr "Bulk add finished"
 #: app/components/menu/menu-bulk-edit-sheet.tsx:303
 msgid "Bulk changes applied"
 msgstr "Bulk changes applied"
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:159
+msgid "Bulk changes are switched off right now."
+msgstr "Bulk changes are switched off right now."
 
 #: app/components/menu/menu-bulk-bar.tsx:47
 #: app/components/menu/menu-bulk-edit-sheet.tsx:384
@@ -9714,7 +9733,7 @@ msgstr "categories"
 #: app/components/discounts/discount-form.tsx:1438
 #: app/components/loyalty/promotion-dialog.tsx:688
 #: app/components/menu/menu-review-card.tsx:102
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:56
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:57
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:281
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:520
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:313
@@ -9753,6 +9772,7 @@ msgstr "category"
 #: app/components/menu/menu-sortable-category.tsx:132
 #: app/components/phone-agent/training-rules-section.tsx:491
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:341
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:174
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:129
 msgid "Category"
 msgstr "Category"
@@ -9831,6 +9851,7 @@ msgstr "Certification"
 #: app/components/settings/cards/profile-card.tsx:171
 #: app/components/staff/labor/labor-overview.tsx:341
 #: app/components/website/branding-panel.tsx:304
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:352
 msgid "Change"
 msgstr ""
 
@@ -11621,6 +11642,10 @@ msgstr "Collect a valid email address."
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:403
 msgid "Color"
 msgstr "Color"
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:318
+msgid "Column"
+msgstr "Column"
 
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:857
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:900
@@ -15176,6 +15201,7 @@ msgid "Delivery orders"
 msgstr "Delivery orders"
 
 #: app/components/menu/order-type-price-fields.tsx:15
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:178
 msgid "Delivery price"
 msgstr "Delivery price"
 
@@ -15527,6 +15553,7 @@ msgid "Dine-in max guests"
 msgstr "Dine-in max guests"
 
 #: app/components/menu/order-type-price-fields.tsx:13
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:176
 msgid "Dine-in price"
 msgstr "Dine-in price"
 
@@ -15761,6 +15788,8 @@ msgid "Discounts, coupon codes and how often they were used. Only applies when D
 msgstr "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:651
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:173
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:349
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:126
 msgid "Dish"
 msgstr "Dish"
@@ -16073,9 +16102,17 @@ msgstr "Download QR code"
 msgid "Download staff backup"
 msgstr "Download staff backup"
 
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:263
+msgid "Download template"
+msgstr "Download template"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1106
 msgid "Download the PDF"
 msgstr "Download the PDF"
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:247
+msgid "Download the template, change prices or availability in Excel or any spreadsheet app, and upload it. Blank cells change nothing. A dash (-) in a dine-in, pickup or delivery price removes it. You see every change before it is applied."
+msgstr "Download the template, change prices or availability in Excel or any spreadsheet app, and upload it. Blank cells change nothing. A dash (-) in a dine-in, pickup or delivery price removes it. You see every change before it is applied."
 
 #: app/components/settings/cards/privacy-card.tsx:46
 msgid "Download your data"
@@ -16320,7 +16357,7 @@ msgstr "Dropped. Nothing changed."
 #: app/components/customers/person-marketing-card.tsx:49
 #: app/components/menu/delete-effects.tsx:270
 #: app/components/menu/menu-review-card.tsx:108
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:84
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:85
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:201
 msgid "Drops"
 msgstr "Drops"
@@ -19574,6 +19611,10 @@ msgstr "Fix the issues in the call flow before publishing."
 #~ msgid "Fix the issues in the phone menu before publishing."
 #~ msgstr "Fix the issues in the phone menu before publishing."
 
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:157
+msgid "Fix the rows listed below first. Nothing was changed."
+msgstr "Fix the rows listed below first. Nothing was changed."
+
 #: app/components/dashboard/blocks/attention-block.tsx:234
 msgid "Fix the top issues to reach 60 or more."
 msgstr "Fix the top issues to reach 60 or more."
@@ -21198,6 +21239,7 @@ msgstr "Hi, {userName}"
 #: app/components/menu/menu-review-card.tsx:88
 #: app/components/menu/menu-status-badge.tsx:55
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:379
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:185
 msgid "Hidden"
 msgstr "Hidden"
 
@@ -21352,7 +21394,7 @@ msgstr "Hiring…"
 #: app/components/staff/timesheets/card-history.tsx:133
 #: app/routes/_app+/$orgSlug_+/gift-cards+/$cardId.tsx:224
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:548
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:104
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:116
 #: app/routes/_app+/$orgSlug_+/menu+/history.tsx:130
 msgid "History"
 msgstr "History"
@@ -21777,6 +21819,10 @@ msgstr "I'll not be able to access the restaurant and its data anymore"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:611
 msgid "I've Copied the Key"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:172
+msgid "Id"
+msgstr "Id"
 
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:86
 msgid "ID"
@@ -22752,7 +22798,7 @@ msgstr "items"
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:322
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:370
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:357
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:63
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:64
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:347
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:448
 msgid "Items"
@@ -25337,7 +25383,7 @@ msgstr ""
 #~ msgid "Manage your menus, categories, items, and modifier groups."
 #~ msgstr "Manage your menus, categories, items, and modifier groups."
 
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:129
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:141
 msgid "Manage your menus, categories, items, drops, and modifier groups."
 msgstr "Manage your menus, categories, items, drops, and modifier groups."
 
@@ -25878,7 +25924,7 @@ msgstr "Members who created the most notes."
 #: app/components/menu/drop-wizard/drop-form.tsx:744
 #: app/components/menu/drop-wizard/drop-form.tsx:760
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:38
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:127
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:139
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:307
 msgid "Menu"
 msgstr "Menu"
@@ -25954,7 +26000,7 @@ msgid "Menu Type & Capabilities"
 msgstr "Menu Type & Capabilities"
 
 #: app/components/app-sidebar.tsx:378
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:49
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:50
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:344
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:257
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:433
@@ -26373,7 +26419,7 @@ msgstr "Modifier groups"
 
 #: app/components/app-sidebar.tsx:393
 #: app/components/menu/item-form.tsx:789
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:70
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:71
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:333
 msgid "Modifier Groups"
 msgstr "Modifier Groups"
@@ -27959,6 +28005,10 @@ msgstr "No dish has a description"
 #: app/components/menu/menu-health-card.tsx:108
 msgid "No dish has a photo"
 msgstr "No dish has a photo"
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:164
+msgid "No dish has this id."
+msgstr "No dish has this id."
 
 #: app/components/menu/menu-health-card.tsx:142
 msgid "No dish lists allergens or calories"
@@ -31530,7 +31580,7 @@ msgstr "Optional. The most this discount gives in a week (Monday to Sunday), in 
 #: app/components/menu/menu-review-card.tsx:104
 #: app/components/menu/quick-modifier-group-sheet.tsx:365
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:259
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:77
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:78
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:399
 msgid "Options"
 msgstr "Options"
@@ -32279,7 +32329,7 @@ msgstr "Overtime rules used to estimate hours and cost. Leave them off if you do
 #: app/components/reservations/reservations-chrome.tsx:139
 #: app/components/staff/labor/labor-page.tsx:196
 #: app/components/workspace-breadcrumb.tsx:81
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:42
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:43
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:688
 msgid "Overview"
 msgstr ""
@@ -33666,6 +33716,7 @@ msgid "Pickup orders"
 msgstr "Pickup orders"
 
 #: app/components/menu/order-type-price-fields.tsx:14
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:177
 msgid "Pickup price"
 msgstr "Pickup price"
 
@@ -34419,6 +34470,7 @@ msgstr "Prev"
 #: app/components/social/post-composer.tsx:361
 #: app/components/staff/schedule/recommend-dialog.tsx:241
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:188
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:300
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:549
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6124
 msgid "Preview"
@@ -34469,6 +34521,7 @@ msgstr "Previous week"
 #: app/components/orders/order-detail.tsx:882
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:516
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:175
 msgid "Price"
 msgstr "Price"
 
@@ -34620,7 +34673,7 @@ msgstr "Pricing & Tax"
 msgid "Pricing not available"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:92
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:93
 msgid "Pricing rules"
 msgstr "Pricing rules"
 
@@ -34758,6 +34811,10 @@ msgstr "Prix fixe menu"
 #: ../../packages/marketing/src/components/campaign-form.tsx:212
 msgid "Pro"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:321
+msgid "Problem"
+msgstr "Problem"
 
 #: app/utils/dashboards/config.ts:136
 msgid "Problems that cost you orders, most urgent first, each with a way to fix it."
@@ -37904,6 +37961,10 @@ msgstr "Route incoming traffic from an old path to a new destination."
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:896
 msgid "Routing Logic:"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:315
+msgid "Row"
+msgstr "Row"
 
 #: app/components/inventory/bulk-review-rows.tsx:56
 #: app/components/staff/review-rows.tsx:58
@@ -41720,6 +41781,7 @@ msgid "Soft gray"
 msgstr "Soft gray"
 
 #: app/components/orders/daily-limits-panel.tsx:217
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:184
 msgid "Sold out"
 msgstr "Sold out"
 
@@ -41750,6 +41812,10 @@ msgstr "Some answers differ"
 #: app/components/hiring/job-editor.tsx:493
 msgid "Some details need fixing. Check each step."
 msgstr "Some details need fixing. Check each step."
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:158
+msgid "Some dishes changed since the preview. Check the file again."
+msgstr "Some dishes changed since the preview. Check the file again."
 
 #: app/components/inventory/counting-screen.tsx:324
 msgid "Some entries have not reached the server yet. Check your connection and try Finish again; nothing is lost."
@@ -42151,6 +42217,10 @@ msgstr "Split your tables into colored sections, one per server. Hosts see them 
 #: app/utils/inventory/labels.ts:54
 msgid "Spoiled"
 msgstr "Spoiled"
+
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:105
+msgid "Spreadsheet"
+msgstr "Spreadsheet"
 
 #: app/components/reservations/floor-plan-canvas.tsx:112
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:98
@@ -45196,13 +45266,26 @@ msgstr "The fee was charged."
 msgid "The fewest guests cannot be more than the most guests."
 msgstr "The fewest guests cannot be more than the most guests."
 
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:160
+msgid "The file could not be read."
+msgstr "The file could not be read."
+
 #: app/utils/staffing/labor-errors.ts:44
 msgid "The file has more than a year of days. Split it up."
 msgstr "The file has more than a year of days. Split it up."
 
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:156
+msgid "The file has too many rows (2,000 at most)."
+msgstr "The file has too many rows (2,000 at most)."
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:155
 #: app/utils/staffing/labor-errors.ts:33
 msgid "The file is empty."
 msgstr "The file is empty."
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:204
+msgid "The file is too large (1 MB at most)."
+msgstr "The file is too large (1 MB at most)."
 
 #: app/utils/staffing/labor-errors.ts:34
 msgid "The file is too large. Split it into smaller files."
@@ -47020,9 +47103,17 @@ msgstr "This dish block has no dish."
 msgid "This dish costs nothing, so guests can order it for free."
 msgstr "This dish costs nothing, so guests can order it for free."
 
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:168
+msgid "This dish has variations: change its prices on the dish page."
+msgstr "This dish has variations: change its prices on the dish page."
+
 #: app/components/menu/menu-review-card.tsx:51
 msgid "This dish is free"
 msgstr "This dish is free"
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:165
+msgid "This dish is in the file twice."
+msgstr "This dish is in the file twice."
 
 #: app/components/orders/daily-limits-panel.tsx:153
 msgid "This dish no longer has a daily limit here."
@@ -47048,6 +47139,10 @@ msgstr "This experience no longer exists."
 #: app/utils/reservations/payments-view.ts:120
 msgid "This fee is already being charged or was charged."
 msgstr "This fee is already being charged or was charged."
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:154
+msgid "This file does not match the template. Download the template, change only the price and availability columns, and upload it again."
+msgstr "This file does not match the template. Download the template, change only the price and availability columns, and upload it again."
 
 #: app/components/reservations/floor-plan-canvas.tsx:841
 msgid "This floor plan was changed by someone else"
@@ -47102,6 +47197,10 @@ msgstr "This is needed."
 #: app/components/loyalty/catalog-picker.tsx:273
 msgid "This is no longer on the menu. Choose another."
 msgstr "This is no longer on the menu. Choose another."
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:166
+msgid "This is not a price."
+msgstr "This is not a price."
 
 #: app/utils/kiosk/kiosk-messages.ts:53
 msgid "This is not available on this tablet."
@@ -48654,7 +48753,7 @@ msgstr "Translate to English"
 msgid "Translation saved for {dishName}"
 msgstr "Translation saved for {dishName}"
 
-#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:97
+#: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:98
 msgid "Translations"
 msgstr "Translations"
 
@@ -49818,6 +49917,10 @@ msgstr ""
 msgid "Update organization name, slug, and general preferences."
 msgstr "Update organization name, slug, and general preferences."
 
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:244
+msgid "Update prices from a spreadsheet"
+msgstr "Update prices from a spreadsheet"
+
 #: app/components/settings/cards/profile-photo.tsx:25
 msgid "Update Profile Photo"
 msgstr ""
@@ -49971,6 +50074,10 @@ msgstr "Upload new"
 #: app/components/settings/base-photo-upload.tsx:64
 msgid "Upload photo"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:268
+msgid "Upload the edited file (CSV)"
+msgstr "Upload the edited file (CSV)"
 
 #: app/routes/organizations+/create.tsx:960
 msgid "Upload your logo"
@@ -50222,6 +50329,10 @@ msgstr "Use at most 48 seatings in one schedule."
 #: app/routes/_auth+/verify.tsx:191
 msgid "Use authenticator app instead"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:167
+msgid "Use available, sold out or hidden."
+msgstr "Use available, sold out or hidden."
 
 #: app/components/phone-agent/phrase-fields.tsx:430
 #: app/components/phone-agent/voice-picker.tsx:662
