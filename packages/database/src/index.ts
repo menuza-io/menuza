@@ -41,5 +41,6 @@ export {
 	countSsoConfigurations,
 	countSsoSessions,
 	countUsers,
+	getLockedLocationSettingIds,
 	pingControlPlane,
 } from './queries.ts'

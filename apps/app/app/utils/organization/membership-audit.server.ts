@@ -209,8 +209,16 @@ export async function auditMemberLocationsChanged({
 	organizationId: string
 	memberUserId: string
 	actorId: string
-	previous: { scope: string; locationIds: readonly string[] }
-	next: { scope: string; locationIds: readonly string[] }
+	previous: {
+		scope: string
+		locationIds: readonly string[]
+		tagIds?: readonly string[]
+	}
+	next: {
+		scope: string
+		locationIds: readonly string[]
+		tagIds?: readonly string[]
+	}
 	request?: Request
 }) {
 	// Ids only: location ids are control-plane identifiers, never staff data.
@@ -227,6 +235,8 @@ export async function auditMemberLocationsChanged({
 			oldLocationIds: previous.locationIds.join(','),
 			newScope: next.scope,
 			newLocationIds: next.locationIds.join(','),
+			oldTagIds: (previous.tagIds ?? []).join(','),
+			newTagIds: (next.tagIds ?? []).join(','),
 		},
 		request,
 	})

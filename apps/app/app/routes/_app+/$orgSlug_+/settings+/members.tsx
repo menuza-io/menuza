@@ -32,6 +32,7 @@ import { MembersCard } from '#app/components/settings/cards/organization/members
 
 import { notifyChat } from '#app/utils/chat/namespace.server.ts'
 import { hasPendingErasure } from '#app/utils/gdpr.server.ts'
+import { listLocationTags } from '#app/utils/location/tags.server.ts'
 import {
 	createOrganizationInvitation,
 	validateOrganizationInviteRoles,
@@ -133,8 +134,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	// The Locations control exists only while the Staff module is on, only for
 	// built-in admins (the same people who can change roles), and only for
 	// organizations that have restaurant locations.
+	// It also exists once the organization has location tags (#374): a tag is a
+	// way to give a person a group of locations.
 	const staffingLocations =
-		canManageRoles && (await isStaffingFeatureEnabled(organization.id))
+		canManageRoles && (await locationAccessControlEnabled(organization.id))
 			? await loadStaffingLocationControl(organization.id)
 			: null
 
@@ -153,13 +156,27 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 }
 
+async function locationAccessControlEnabled(organizationId: string) {
+	if (await isStaffingFeatureEnabled(organizationId)) return true
+	return (await listLocationTags(organizationId)).length > 0
+}
+
 async function loadStaffingLocationControl(organizationId: string) {
-	const [locations, access] = await Promise.all([
+	const [locations, access, tags] = await Promise.all([
 		listScopableLocations(organizationId),
 		listMemberLocationAccess(organizationId),
+		listLocationTags(organizationId),
 	])
 	if (locations.length === 0) return null
-	return { locations, access: Object.fromEntries(access) }
+	return {
+		locations,
+		access: Object.fromEntries(access),
+		tags: tags.map((tag) => ({
+			id: tag.id,
+			name: tag.name,
+			locationCount: tag.locationIds.length,
+		})),
+	}
 }
 
 // Get available roles from the database
@@ -720,7 +737,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 		// A module that is off should look like it does not exist.
-		if (!(await isStaffingFeatureEnabled(organization.id))) {
+		if (!(await locationAccessControlEnabled(organization.id))) {
 			return Response.json({ error: 'Not found' }, { status: 404 })
 		}
 
@@ -737,6 +754,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const parsed = memberLocationScopeInputSchema.safeParse({
 			scope: formData.get('scope'),
 			locationIds: formData.getAll('locationIds'),
+			tagIds: formData.getAll('tagIds'),
 		})
 		if (!parsed.success) {
 			return Response.json(
@@ -757,7 +775,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						error:
 							result.reason === 'member_not_found'
 								? 'Member not found'
-								: 'One or more locations were not found',
+								: result.reason === 'unknown_tag'
+									? 'One or more tags were not found'
+									: 'One or more locations were not found',
 					},
 					{ status: result.reason === 'member_not_found' ? 404 : 400 },
 				)

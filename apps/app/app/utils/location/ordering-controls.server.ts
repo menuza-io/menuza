@@ -1,10 +1,10 @@
 import { auditService, AuditAction } from '@repo/audit'
 import { parsePrepSchedule } from '@repo/common/location-settings'
-import { prepRowInForce } from '@repo/common/prep-schedule'
 import {
 	type SpecialHour,
 	type WeeklySchedule,
 } from '@repo/common/location-types'
+import { prepRowInForce } from '@repo/common/prep-schedule'
 import { and, asc, db, desc, eq, OrganizationLocation } from '@repo/database'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
@@ -100,6 +100,10 @@ export async function applyOrderingControl(input: {
 	control: OrderingControlInput
 	request: Request
 	now?: Date
+	/** Bulk callers purge the site cache once after the last location. */
+	skipPurge?: boolean
+	/** Set by the bulk action: how many locations the one action covers. */
+	bulk?: { size: number }
 }): Promise<ApplyOrderingControlResult> {
 	const now = input.now ?? new Date()
 	const { control, organization } = input
@@ -142,6 +146,7 @@ export async function applyOrderingControl(input: {
 			metadata = {
 				duration: control.duration,
 				until: until?.toISOString() ?? null,
+				...(control.reason ? { reason: control.reason } : {}),
 			}
 			break
 		}
@@ -180,7 +185,10 @@ export async function applyOrderingControl(input: {
 				eq(OrganizationLocation.id, location.id),
 			),
 		)
-	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	if (!input.skipPurge) {
+		await purgeOrganizationSiteCache(organization.id, organization.slug)
+	}
+	if (input.bulk) metadata = { ...metadata, bulkSize: input.bulk.size }
 	if (input.source) {
 		details = `${details} from Station`
 		metadata = { ...metadata, source: input.source }

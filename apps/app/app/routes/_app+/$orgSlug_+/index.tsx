@@ -19,6 +19,7 @@ import {
 	loadBuiltInBlockData,
 	loadContributorCount,
 	loadReportBlockData,
+	canSeeStatus,
 } from '#app/utils/dashboards/block-data.server.ts'
 import { loadBookingsTodayAccess } from '#app/utils/dashboards/bookings-today.server.ts'
 import {
@@ -64,11 +65,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	// Today, Needs attention, the setup checklist and (when they can see it)
 	// Bookings today. A saved Home is never replaced, notes blocks and all.
 	const salesGoalsDefault = await canReadOrderTotals(userId, organization.id)
+	const statusDefault = await canSeeStatus(userId, organization.id)
 	const config = home.id
 		? home.config
 		: defaultRestaurantHomeConfig({
 				bookingsToday: bookingsToday.available,
 				salesGoals: salesGoalsDefault,
+				status: statusDefault,
 			})
 	const blocks = config.blocks
 	// The KPI row stands in for a saved Home's stats block.
@@ -216,13 +219,15 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 
 	const bookingsTodayAvailable = picker.bookingsToday.available
 	const salesGoalsAvailable = picker.salesGoals.available
+	const statusAvailable = picker.statusAvailable === true
 	const resetConfig = useCallback(
 		() =>
 			defaultRestaurantHomeConfig({
 				bookingsToday: bookingsTodayAvailable,
 				salesGoals: salesGoalsAvailable,
+				status: statusAvailable,
 			}),
-		[bookingsTodayAvailable, salesGoalsAvailable],
+		[bookingsTodayAvailable, salesGoalsAvailable, statusAvailable],
 	)
 
 	return (

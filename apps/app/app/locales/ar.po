@@ -374,6 +374,38 @@ msgstr "{0, plural, zero {لا بنود} one {بند واحد} two {بندان} 
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, zero {لا روابط} one {رابط واحد (#)} two {رابطان (#)} few {# روابط} many {# رابطًا} other {# رابط}}"
 
+#. placeholder {0}: status.locations.length
+#: app/routes/_app+/$orgSlug_+/status.tsx:69
+msgid "{0, plural, one {# location checked. The worst one decides the summary.} other {# locations checked. The worst one decides the summary.}}"
+msgstr "{0, plural, one {تم فحص موقع واحد. أسوأ موقع يحدد الملخص.} two {تم فحص موقعين. أسوأ موقع يحدد الملخص.} few {تم فحص # مواقع. أسوأ موقع يحدد الملخص.} many {تم فحص # موقعًا. أسوأ موقع يحدد الملخص.} other {تم فحص # موقعًا. أسوأ موقع يحدد الملخص.}}"
+
+#. placeholder {0}: count + tagCount
+#: app/components/member-location-scope.tsx:115
+msgid "{0, plural, one {# location or tag} other {# locations or tags}}"
+msgstr "{0, plural, one {# موقع أو وسم} two {# موقعان أو وسمان} few {# مواقع أو وسوم} many {# موقعًا أو وسمًا} other {# موقعًا أو وسمًا}}"
+
+#. placeholder {0}: selectedIds.length
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:852
+msgid "{0, plural, one {# location selected} other {# locations selected}}"
+msgstr "{0, plural, one {تم تحديد # موقع} two {تم تحديد موقعين} few {تم تحديد # مواقع} many {تم تحديد # موقعًا} other {تم تحديد # موقعًا}}"
+
+#. placeholder {0}: row.inheritingCount
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:255
+msgid "{0, plural, one {# location uses the default} other {# locations use the default}}"
+msgstr "{0, plural, one {# موقع يستخدم الافتراضي} two {موقعان يستخدمان الافتراضي} few {# مواقع تستخدم الافتراضي} many {# موقعًا يستخدم الافتراضي} other {# موقعًا يستخدم الافتراضي}}"
+
+#. placeholder {0}: csv.plan.changes.length
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:636
+msgid "{0, plural, one {# location will change.} other {# locations will change.}}"
+msgstr "{0, plural, one {سيتغيّر # موقع.} two {سيتغيّر موقعان.} few {ستتغيّر # مواقع.} many {سيتغيّر # موقعًا.} other {سيتغيّر # موقعًا.}}"
+
+#. placeholder {0}: tag.locationCount
+#. placeholder {0}: tag.locationIds.length
+#: app/components/member-location-scope.tsx:212
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:402
+msgid "{0, plural, one {# location} other {# locations}}"
+msgstr "{0, plural, one {# موقع} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقعًا}}"
+
 #. placeholder {0}: shift.unpaidBreakMinutes
 #: app/components/my-schedule/shifts-view.tsx:218
 msgid "{0, plural, one {# minute unpaid break} other {# minutes unpaid break}}"
@@ -429,6 +461,11 @@ msgstr "{0, plural, one {# شاغرة} two {# شاغرتان} few {# شاغرة}
 msgid "{0, plural, one {# order} other {# orders}}"
 msgstr "{0, plural, one {طلب واحد} two {طلبان} few {# طلبات} many {# طلبًا} other {# طلب}}"
 
+#. placeholder {0}: row.overrides.length
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:260
+msgid "{0, plural, one {# override} other {# overrides}}"
+msgstr "{0, plural, one {# تخصيص} two {تخصيصان} few {# تخصيصات} many {# تخصيصًا} other {# تخصيصًا}}"
+
 #. placeholder {0}: notification.notReached.length
 #: app/components/staff/schedule/publish-dialog.tsx:345
 msgid "{0, plural, one {# person could not be emailed. Add an email address to their profile, then resend from the publish history.} other {# people could not be emailed. Add email addresses to their profiles, then resend from the publish history.}}"
@@ -455,6 +492,11 @@ msgstr "{0, plural, one {شخص واحد} two {شخصان} few {# أشخاص} ma
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:469
 msgid "{0, plural, one {# point} other {# points}}"
 msgstr "{0, plural, zero {# نقطة} one {نقطة واحدة} two {نقطتان} few {# نقاط} many {# نقطة} other {# نقطة}}"
+
+#. placeholder {0}: csv.plan.problems.length
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:607
+msgid "{0, plural, one {# problem found. Nothing was changed.} other {# problems found. Nothing was changed.}}"
+msgstr "{0, plural, one {تم العثور على # مشكلة. لم يتغيّر شيء.} two {تم العثور على مشكلتين. لم يتغيّر شيء.} few {تم العثور على # مشكلات. لم يتغيّر شيء.} many {تم العثور على # مشكلة. لم يتغيّر شيء.} other {تم العثور على # مشكلة. لم يتغيّر شيء.}}"
 
 #. placeholder {0}: recipes.count
 #: app/components/menu/delete-effects.tsx:380
@@ -618,6 +660,11 @@ msgstr "{0, plural, one {إضافة عنصر واحد} two {إضافة عنصر�
 msgid "{0, plural, one {Added # table} other {Added # tables}}"
 msgstr "{0, plural, zero {لم تُضف أي طاولة} one {أُضيفت طاولة واحدة} two {أُضيفت طاولتان} few {أُضيفت # طاولات} many {أُضيفت # طاولة} other {أُضيفت # طاولة}}"
 
+#. placeholder {0}: holidayResponse.added.length
+#: app/components/locations/copy-settings-dialog.tsx:582
+msgid "{0, plural, one {Added to # location.} other {Added to # locations.}}"
+msgstr "{0, plural, one {تمت الإضافة إلى # موقع.} two {تمت الإضافة إلى موقعين.} few {تمت الإضافة إلى # مواقع.} many {تمت الإضافة إلى # موقعًا.} other {تمت الإضافة إلى # موقعًا.}}"
+
 #. placeholder {0}: item.more
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:841
 msgid "{0, plural, one {And # more dish.} other {And # more dishes.}}"
@@ -657,6 +704,16 @@ msgstr "{0, plural, one {الموافقة على بطاقة جاهزة} two {ا�
 #: app/components/staff/schedule/availability-page.tsx:300
 msgid "{0, plural, one {Approve} other {Approve all}}"
 msgstr "{0, plural, one {موافقة} two {موافقة على الاثنين} few {موافقة على الكل} many {موافقة على الكل} other {موافقة على الكل}}"
+
+#. placeholder {0}: selectedIds.length
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:369
+msgid "{0, plural, one {Change # selected location} other {Change # selected locations}}"
+msgstr "{0, plural, one {تغيير # موقع محدد} two {تغيير الموقعين المحددين} few {تغيير # مواقع محددة} many {تغيير # موقعًا محددًا} other {تغيير # موقعًا محددًا}}"
+
+#. placeholder {0}: copyResponse.changedLocationIds.length
+#: app/components/locations/copy-settings-dialog.tsx:426
+msgid "{0, plural, one {Copied to # location.} other {Copied to # locations.}}"
+msgstr "{0, plural, one {تم النسخ إلى # موقع.} two {تم النسخ إلى موقعين.} few {تم النسخ إلى # مواقع.} many {تم النسخ إلى # موقعًا.} other {تم النسخ إلى # موقعًا.}}"
 
 #. placeholder {0}: notification.queued
 #: app/components/staff/schedule/publish-dialog.tsx:333
@@ -727,6 +784,15 @@ msgstr "{0, plural, one {يضيف هذا وردية واحدة.} two {يضيف �
 #: app/components/staff/timesheets/timesheets-page.tsx:959
 msgid "{0, plural, one {Unlock # card?} other {Unlock # cards?}}"
 msgstr "{0, plural, one {فتح قفل بطاقة واحدة؟} two {فتح قفل بطاقتين؟} few {فتح قفل # بطاقات؟} many {فتح قفل # بطاقة؟} other {فتح قفل # بطاقة؟}}"
+
+#. placeholder {0}: csv.plan.changes.length
+#. placeholder {0}: edit.changedLocationIds.length
+#. placeholder {0}: result.updatedLocationIds.length
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:487
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:460
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:627
+msgid "{0, plural, one {Updated # location.} other {Updated # locations.}}"
+msgstr "{0, plural, one {تم تحديث # موقع.} two {تم تحديث موقعين.} few {تم تحديث # مواقع.} many {تم تحديث # موقعًا.} other {تم تحديث # موقعًا.}}"
 
 #. placeholder {0}: done.onboardingTasks
 #: app/components/hiring/hire-dialog.tsx:139
@@ -806,6 +872,14 @@ msgstr "{0} مجموعات إضافات"
 #~ msgid "{0} moved to position {position} of {total}."
 #~ msgstr "تم نقل {0} إلى الترتيب {position} من {total}."
 
+#: app/components/locations/bulk-ordering-dialog.tsx:179
+#~ msgid "{0} of {1} paused"
+#~ msgstr "تم إيقاف {0} من {1}"
+
+#: app/components/locations/bulk-ordering-dialog.tsx:180
+#~ msgid "{0} of {1} resumed"
+#~ msgstr "تم استئناف {0} من {1}"
+
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
 #: ../../packages/marketing/src/components/campaign-detail.tsx:224
@@ -815,6 +889,10 @@ msgstr "{0} من {1} مستهدف"
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:343
 #~ msgid "{0} of {EMAIL_TEMPLATE_LIMIT} templates"
 #~ msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:317
+#~ msgid "{0} of {maxTags} tags used"
+#~ msgstr "{0} من {maxTags} وسمًا مستخدمًا"
 
 #~ msgid "{0} recipients"
 #~ msgstr "{0} مستلم"
@@ -1145,7 +1223,6 @@ msgstr "{count, plural, zero {# عناصر} one {عنصر واحد} two {عنص�
 msgid "{count, plural, one {# location chosen} other {# locations chosen}}"
 msgstr "{count, plural, one {تم اختيار فرع واحد} two {تم اختيار فرعين} few {تم اختيار # فروع} many {تم اختيار # فرعًا} other {تم اختيار # فرع}}"
 
-#: app/components/member-location-scope.tsx:89
 #: app/utils/discounts/summary.ts:417
 msgid "{count, plural, one {# location} other {# locations}}"
 msgstr "{count, plural, one {فرع واحد} two {فرعان} few {# فروع} many {# فرعًا} other {# فرع}}"
@@ -1298,7 +1375,7 @@ msgstr "{count, plural, two {تُضاف طاولتان: {list}.} few {تُضاف
 msgid "{count, plural, other {Adds # tables.}}"
 msgstr "{count, plural, two {تُضاف طاولتان.} few {تُضاف # طاولات.} other {تُضاف # طاولة.}}"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:791
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1168
 msgid "{count} locations"
 msgstr "{count} فروع"
 
@@ -1529,6 +1606,14 @@ msgstr "اكتمل {doneCount} من {total}"
 msgid "{doneCount} of {total} steps done"
 msgstr "اكتملت {doneCount} من {total} خطوات"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:181
+msgid "{doneCount} of {totalCount} paused"
+msgstr "تم إيقاف {doneCount} من {totalCount}"
+
+#: app/components/locations/bulk-ordering-dialog.tsx:182
+msgid "{doneCount} of {totalCount} resumed"
+msgstr "تم استئناف {doneCount} من {totalCount}"
+
 #: app/components/phone-agent/training-rules-section.tsx:154
 msgid "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 msgstr "{droppedCount, plural, zero {لم تُستبعد أي قاعدة.} one {تم استبعاد قاعدة واحدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} two {تم استبعاد قاعدتين لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} few {تم استبعاد # قواعد لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} many {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} other {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.}}"
@@ -1649,6 +1734,10 @@ msgstr "{hidden, plural, zero {} one {و# أخرى} two {و# أخريين} few {
 #: app/components/print/restaurant/vertical-ui.tsx:115
 msgid "{hidden, plural, one {One active discount is not listed: it ended, has no code yet, or works only at the till, so a printed QR could not use it.} other {# active discounts are not listed: they ended, have no code yet, or work only at the till, so a printed QR could not use them.}}"
 msgstr "{hidden, plural, zero {لا توجد خصومات مخفية.} one {خصم نشط واحد غير مدرج: انتهى أو ليس له رمز بعد أو يعمل في نقطة البيع فقط، فلا يمكن لرمز QR مطبوع استخدامه.} two {خصمان نشطان غير مدرجين: انتهيا أو ليس لهما رمز بعد أو يعملان في نقطة البيع فقط، فلا يمكن لرمز QR مطبوع استخدامهما.} few {# خصومات نشطة غير مدرجة: انتهت أو ليس لها رمز بعد أو تعمل في نقطة البيع فقط، فلا يمكن لرمز QR مطبوع استخدامها.} many {# خصمًا نشطًا غير مدرج: انتهت أو ليس لها رمز بعد أو تعمل في نقطة البيع فقط، فلا يمكن لرمز QR مطبوع استخدامها.} other {# خصم نشط غير مدرج: انتهت أو ليس لها رمز بعد أو تعمل في نقطة البيع فقط، فلا يمكن لرمز QR مطبوع استخدامها.}}"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:286
+msgid "{hiddenCount, plural, one {# other location is outside your access and is not shown.} other {# other locations are outside your access and are not shown.}}"
+msgstr "{hiddenCount, plural, one {هناك # موقع آخر خارج صلاحياتك ولا يظهر.} two {هناك موقعان آخران خارج صلاحياتك ولا يظهران.} few {هناك # مواقع أخرى خارج صلاحياتك ولا تظهر.} many {هناك # موقعًا آخر خارج صلاحياتك ولا يظهر.} other {هناك # موقعًا آخر خارج صلاحياتك ولا يظهر.}}"
 
 #: app/components/reservations/waitlist/waitlist-clock.tsx:67
 msgid "{hours} h {minutes} min"
@@ -1793,6 +1882,14 @@ msgstr "لا توجد قائمة متاحة للبيع في {location}"
 #: app/components/dashboard/blocks/attention-block.tsx:227
 msgid "{location} has no opening hours"
 msgstr "لا توجد ساعات عمل لـ {location}"
+
+#: app/components/locations/bulk-ordering-dialog.tsx:123
+msgid "{locationCount, plural, one {Guests cannot order online from # selected location until it is resumed or the time you choose has passed.} other {Guests cannot order online from # selected locations until they are resumed or the time you choose has passed.}}"
+msgstr "{locationCount, plural, one {لن يتمكن الضيوف من الطلب عبر الإنترنت من # موقع محدد إلى أن يُستأنف أو ينقضي الوقت الذي تختاره.} two {لن يتمكن الضيوف من الطلب عبر الإنترنت من الموقعين المحددين إلى أن يُستأنفا أو ينقضي الوقت الذي تختاره.} few {لن يتمكن الضيوف من الطلب عبر الإنترنت من # مواقع محددة إلى أن تُستأنف أو ينقضي الوقت الذي تختاره.} many {لن يتمكن الضيوف من الطلب عبر الإنترنت من # موقعًا محددًا إلى أن تُستأنف أو ينقضي الوقت الذي تختاره.} other {لن يتمكن الضيوف من الطلب عبر الإنترنت من # موقعًا محددًا إلى أن تُستأنف أو ينقضي الوقت الذي تختاره.}}"
+
+#: app/components/locations/bulk-ordering-dialog.tsx:128
+msgid "{locationCount, plural, one {Online ordering opens again at # selected location, within its normal hours.} other {Online ordering opens again at # selected locations, within their normal hours.}}"
+msgstr "{locationCount, plural, one {سيُفتح الطلب عبر الإنترنت من جديد في # موقع محدد ضمن ساعاته المعتادة.} two {سيُفتح الطلب عبر الإنترنت من جديد في الموقعين المحددين ضمن ساعاتهما المعتادة.} few {سيُفتح الطلب عبر الإنترنت من جديد في # مواقع محددة ضمن ساعاتها المعتادة.} many {سيُفتح الطلب عبر الإنترنت من جديد في # موقعًا محددًا ضمن ساعاته المعتادة.} other {سيُفتح الطلب عبر الإنترنت من جديد في # موقعًا محددًا ضمن ساعاته المعتادة.}}"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:297
 msgid "{lockedGuestName} is locked to its table. Confirm Unlock and move to proceed."
@@ -2351,6 +2448,18 @@ msgstr "تمت استعادة {positionName}."
 msgid "{processedObjects} of {totalObjects} files copied{failedObjectsText}"
 msgstr "تم نسخ {processedObjects} من {totalObjects} ملف{failedObjectsText}"
 
+#: app/components/status/location-status-view.tsx:43
+msgid "{provider} has not synced for over two days."
+msgstr "لم تتم المزامنة مع {provider} منذ أكثر من يومين."
+
+#: app/components/status/location-status-view.tsx:40
+msgid "{provider} is connected."
+msgstr "{provider} متصل."
+
+#: app/components/status/location-status-view.tsx:42
+msgid "{provider} is disconnected, so its orders and menu are not syncing."
+msgstr "{provider} غير متصل، لذلك لا تتم مزامنة طلباته وقائمته."
+
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:478
 msgid "{purchaseCount, plural, one {# purchase} other {# purchases}}"
 msgstr "{purchaseCount, plural, zero {لا توجد مشتريات} one {عملية شراء واحدة} two {عمليتا شراء} few {# عمليات شراء} many {# عملية شراء} other {# عملية شراء}}"
@@ -2590,6 +2699,14 @@ msgstr "{tableCount} طاولات · {seatedCovers} ضيوف"
 #: app/components/reservations/floor-plan-canvas.tsx:1191
 msgid "{tableMinCovers}–{tableMaxCovers}p"
 msgstr "{tableMinCovers}–{tableMaxCovers} ض"
+
+#: app/components/member-location-scope.tsx:114
+msgid "{tagCount, plural, one {# tag} other {# tags}}"
+msgstr "{tagCount, plural, one {# وسم} two {وسمان} few {# وسوم} many {# وسمًا} other {# وسمًا}}"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:344
+msgid "{tagCount} of {maxTags} tags used"
+msgstr "{tagCount} من {maxTags} وسمًا مستخدمًا"
 
 #: app/components/staff/schedule/week-grid.tsx:638
 msgid "{text} overtime"
@@ -3101,6 +3218,7 @@ msgstr "طرح واحد"
 msgid "1 form"
 msgstr "نموذج واحد"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:45
 #: app/components/orders/ordering-controls.tsx:117
 msgid "1 hour"
 msgstr "ساعة واحدة"
@@ -3122,7 +3240,7 @@ msgstr "عنصر واحد"
 #~ msgid "1 item added."
 #~ msgstr "تمت إضافة عنصر واحد."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:789
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1166
 msgid "1 location"
 msgstr "فرع واحد"
 
@@ -3192,6 +3310,7 @@ msgstr "قبل 12 ساعة"
 msgid "15 min"
 msgstr "١٥ دقيقة"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:43
 #: app/components/orders/ordering-controls.tsx:115
 msgid "15 minutes"
 msgstr "15 دقيقة"
@@ -3243,6 +3362,7 @@ msgstr "قبل 24 ساعة"
 msgid "30 min"
 msgstr "٣٠ دقيقة"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:44
 #: app/components/orders/ordering-controls.tsx:116
 msgid "30 minutes"
 msgstr "30 دقيقة"
@@ -3385,9 +3505,13 @@ msgstr "حدّ أقصى لما يمكن أن تحصل عليه عملية شرا
 #~ msgid "A card with a discount code and a QR that opens your menu with the code ready. Print it yourself."
 #~ msgstr "بطاقة تحمل رمز خصم ورمز QR يفتح قائمتك مع الرمز جاهزًا. اطبعها بنفسك."
 
+#: app/components/member-location-scope.tsx:268
+msgid "A change applies the next time their session refreshes, within 15 minutes."
+msgstr "يُطبَّق التغيير عند تحديث جلستهم في المرة القادمة، خلال 15 دقيقة."
+
 #: app/components/member-location-scope.tsx:197
-msgid "A change applies the next time their Staff session refreshes, within 15 minutes."
-msgstr "يسري التغيير عند تحديث جلسة الموظفين الخاصة بهم في المرة القادمة، خلال 15 دقيقة."
+#~ msgid "A change applies the next time their Staff session refreshes, within 15 minutes."
+#~ msgstr "يسري التغيير عند تحديث جلسة الموظفين الخاصة بهم في المرة القادمة، خلال 15 دقيقة."
 
 #: app/components/pos/terminals-manager.tsx:1236
 msgid "A change to a bill that was already settled"
@@ -3622,6 +3746,10 @@ msgstr "يعتمد هذا الجرد مدير يمكنه الاطلاع على �
 msgid "A manager will approve or decline it."
 msgstr "سيوافق عليه أحد المديرين أو يرفضه."
 
+#: app/components/status/location-status-view.tsx:31
+msgid "A menu is on sale here."
+msgstr "هناك قائمة معروضة للبيع هنا."
+
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:381
 msgid "A name and a color are enough. The rest is optional."
 msgstr "يكفي اسم ولون. الباقي اختياري."
@@ -3791,7 +3919,7 @@ msgstr "رسالة نموذجية ببيانات ضيف وهمية، مبنية 
 msgid "A saved audience (not available to you)"
 msgstr "جمهور محفوظ (غير متاح لك)"
 
-#: app/utils/dashboards/config.ts:144
+#: app/utils/dashboards/config.ts:153
 msgid "A saved report or a report template."
 msgstr "تقرير محفوظ أو قالب تقرير."
 
@@ -3919,6 +4047,15 @@ msgstr "طاولة حدّها الأدنى للمقاعد أعلى من حدّه
 msgid "A tablet at the entrance or the front desk lets people clock in with a PIN. Pair it once and it stays signed in until you remove it."
 msgstr "جهاز لوحي عند المدخل أو مكتب الاستقبال يتيح للجميع تسجيل الحضور برمز سري. اقرنه مرة واحدة ويبقى مسجّلًا للدخول حتى تزيله."
 
+#: app/components/member-location-scope.tsx:192
+msgid "A tag gives access to every location that has it, including locations added to it later."
+msgstr "يمنح الوسم الوصول إلى كل موقع يحمله، بما في ذلك المواقع التي تُضاف إليه لاحقًا."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:547
+msgid "A tag name is too long."
+msgstr "اسم وسم طويل جدًا."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:251
 #: app/utils/people/people-errors.ts:7
 msgid "A tag with this name already exists."
 msgstr "يوجد وسم بهذا الاسم بالفعل."
@@ -4030,7 +4167,7 @@ msgstr "قبول واحد في كل مرة"
 msgid "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
 msgstr "اقبل المدفوعات عبر الإنترنت لطلباتك. تتم معالجة المدفوعات عبر Checkout.com ويتم تحويلها إليك."
 
-#: app/components/locations/location-form.tsx:761
+#: app/components/locations/location-form.tsx:777
 msgid "Accept orders and show this location on the website."
 msgstr "استقبال الطلبات وإظهار هذا الفرع على الموقع."
 
@@ -4113,8 +4250,8 @@ msgstr "acme"
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:238
-#: app/routes/_app+/$orgSlug_+/index.tsx:264
+#: app/routes/_app+/$orgSlug_+/index.tsx:243
+#: app/routes/_app+/$orgSlug_+/index.tsx:269
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
@@ -4152,8 +4289,8 @@ msgstr "إجراء"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:777
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:951
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1097
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:627
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:729
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:972
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1106
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:640
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:217
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:635
@@ -4198,7 +4335,7 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:339
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1006
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:707
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1079
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:248
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:268
 #: app/utils/discounts/labels.ts:26
@@ -4225,9 +4362,13 @@ msgstr "العملاء النشطون"
 msgid "Active holds: {holdsCount}"
 msgstr "الحجوزات المؤقتة النشطة: {holdsCount}"
 
-#: app/components/locations/location-form.tsx:758
+#: app/components/locations/location-form.tsx:774
 msgid "Active Location"
 msgstr "فرع نشط"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:541
+msgid "Active must be yes or no."
+msgstr "يجب أن تكون قيمة «نشط» نعم أو لا."
 
 #: app/components/app-sidebar.tsx:621
 #: app/components/loyalty/loyalty-chrome.tsx:72
@@ -4420,6 +4561,10 @@ msgstr "إضافة رابط"
 msgid "Add a location before you add tables."
 msgstr "أضف موقعًا قبل إضافة الطاولات."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:161
+msgid "Add a location first."
+msgstr "أضف موقعًا أولًا."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.messages.tsx:28
 msgid "Add a location to set up guest messages."
 msgstr "أضف موقعاً لإعداد رسائل الضيوف."
@@ -4435,6 +4580,10 @@ msgstr "أضف موقعًا لإعداد قائمة الانتظار."
 #: app/components/launch/launch-checklist.tsx:364
 msgid "Add a location to start your launch checklist."
 msgstr "أضف فرعًا لبدء قائمة الإطلاق."
+
+#: app/routes/_app+/$orgSlug_+/status.tsx:61
+msgid "Add a location, or ask an admin for access to one, to see its status."
+msgstr "أضف موقعًا، أو اطلب من المسؤول الوصول إلى موقع، لترى حالته."
 
 #: app/components/menu/category-form.tsx:658
 msgid "Add a menu"
@@ -4770,8 +4919,8 @@ msgstr "إضافة توفر"
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:76
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:82
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:143
-#: app/components/dashboard/add-block-dialog.tsx:125
-#: app/components/dashboard/add-block-dialog.tsx:130
+#: app/components/dashboard/add-block-dialog.tsx:126
+#: app/components/dashboard/add-block-dialog.tsx:131
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:886
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1209
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1226
@@ -4864,6 +5013,15 @@ msgstr "إضافة حقل"
 msgid "Add group"
 msgstr "إضافة مجموعة"
 
+#: app/components/locations/copy-settings-dialog.tsx:614
+msgid "Add holiday"
+msgstr "إضافة العطلة"
+
+#: app/components/locations/copy-settings-dialog.tsx:304
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:778
+msgid "Add holiday to locations"
+msgstr "إضافة عطلة إلى المواقع"
+
 #: app/components/discounts/weekly-hours.tsx:153
 msgid "Add hours"
 msgstr "أضف ساعات"
@@ -4910,9 +5068,9 @@ msgstr "إضافة الأصناف وأماكن التخزين، وجرد الم�
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:561
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:590
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:264
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:823
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:918
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:276
 msgid "Add Location"
 msgstr "إضافة فرع"
 
@@ -5225,6 +5383,7 @@ msgstr "إضافة طاولات"
 #~ msgstr "أضف الطاولات في الطلب عبر QR أولًا. لكل طاولة بطاقتها الخاصة."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1607
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:340
 msgid "Add tag"
 msgstr "إضافة وسم"
 
@@ -5410,7 +5569,7 @@ msgstr "أضف الثلاجات والمجمدات والرفوف ليسير ا�
 msgid "Add your items"
 msgstr "أضف أصنافك"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:587
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:915
 msgid "Add your restaurant's first location to configure operating hours, menu availability, and delivery zones."
 msgstr "أضف أول فرع لمطعمك لضبط ساعات العمل وتوفر القائمة ومناطق التوصيل."
 
@@ -5425,6 +5584,10 @@ msgstr "اقتراحات الإضافات متوقفة في الإعدادات �
 #: app/components/website/create-form-dialog.tsx:141
 msgid "Add, name, and order each field."
 msgstr "أضف كل حقل وسمّه ورتّبه."
+
+#: app/components/locations/copy-settings-dialog.tsx:367
+msgid "Add: keep each location's own entries and skip dates it already has"
+msgstr "إضافة: احتفظ بإدخالات كل موقع وتخطَّ التواريخ الموجودة لديه"
 
 #: app/components/menu/menu-review-card.tsx:85
 #: app/routes/_app+/$orgSlug_+/menu+/history.$snapshotId.tsx:103
@@ -5504,7 +5667,7 @@ msgstr "مستخدمون إضافيون: ${monthlyPrice}/مستخدم/شهر"
 #: app/components/phone-agent/business-details-section.tsx:137
 #: app/components/pos/zatca-settings.tsx:318
 #: app/components/staff/details-tab.tsx:409
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:614
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:959
 msgid "Address"
 msgstr "العنوان"
 
@@ -5593,7 +5756,7 @@ msgstr "مسؤول"
 msgid "Admin impersonation active"
 msgstr "انتحال شخصية المسؤول نشط"
 
-#: app/components/locations/location-form.tsx:1134
+#: app/components/locations/location-form.tsx:1174
 msgid "Advance Scheduled Orders"
 msgstr "الطلبات المجدولة مسبقًا"
 
@@ -5841,7 +6004,7 @@ msgstr "جميع المناطق"
 #~ msgid "All assigned"
 #~ msgstr "جميعهم معينون"
 
-#: app/components/dashboard/add-block-dialog.tsx:162
+#: app/components/dashboard/add-block-dialog.tsx:163
 msgid "All built-in blocks are already on this dashboard."
 msgstr "جميع الكتل المدمجة موجودة بالفعل في لوحة التحكم هذه."
 
@@ -5866,6 +6029,14 @@ msgstr "كل التصنيفات"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1219
 msgid "All channels"
 msgstr "جميع القنوات"
+
+#: app/components/dashboard/blocks/status-block.tsx:43
+msgid "All checks passed at every location."
+msgstr "اجتازت كل الفحوصات في كل موقع."
+
+#: app/components/status/location-status-view.tsx:122
+msgid "All checks passed."
+msgstr "اجتازت كل الفحوصات."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:348
 msgid "All checks passed. This workflow is ready to publish."
@@ -5918,11 +6089,13 @@ msgstr "كل الوظائف"
 #: app/components/hiring/job-summary.tsx:55
 #: app/components/hiring/location-picker.tsx:85
 #: app/components/loyalty/promotion-dialog.tsx:816
-#: app/components/member-location-scope.tsx:86
-#: app/components/member-location-scope.tsx:133
+#: app/components/member-location-scope.tsx:110
+#: app/components/member-location-scope.tsx:162
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:44
 #: app/components/team-switcher.tsx:126
 #: app/components/team-switcher.tsx:198
+#: app/routes/_app+/$orgSlug_+/reports+/_index.tsx:111
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:760
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:164
 #: app/utils/loyalty/promotions.ts:267
 msgid "All locations"
@@ -6128,7 +6301,7 @@ msgstr "السماح بتصفح العناصر قبل الإطلاق"
 msgid "Allow clock-in without a scheduled shift"
 msgstr "السماح بتسجيل الحضور دون وردية مجدولة"
 
-#: app/components/locations/location-form.tsx:1137
+#: app/components/locations/location-form.tsx:1177
 msgid "Allow customers to schedule orders for future dates."
 msgstr "السماح للعملاء بجدولة الطلبات لتواريخ مستقبلية."
 
@@ -6203,6 +6376,10 @@ msgstr "محجوز مسبقًا"
 msgid "Already exists."
 msgstr "موجود بالفعل."
 
+#: app/components/locations/copy-settings-dialog.tsx:590
+msgid "Already had this date, left as it was:"
+msgstr "كان لديه هذا التاريخ بالفعل، وبقي كما هو:"
+
 #: app/routes/_auth+/signup.tsx:300
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
@@ -6226,9 +6403,21 @@ msgstr "استُلم سابقًا <0>{earlierText}</0>"
 msgid "Already refunded"
 msgstr "تم استرداده مسبقًا"
 
+#: app/components/locations/copy-settings-dialog.tsx:460
+msgid "Already the same"
+msgstr "مطابق بالفعل"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:504
+msgid "already this value"
+msgstr "هذه هي القيمة بالفعل"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:765
 msgid "Already working then"
 msgstr "يعمل في ذلك الوقت"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:577
+msgid "Also change locations that override the current default"
+msgstr "غيّر أيضًا المواقع التي تخصّص الافتراضي الحالي"
 
 #: app/components/inventory/counting-screen.tsx:814
 msgid "Also counted:"
@@ -6813,10 +7002,18 @@ msgstr "تطبيق {changeCount} تغييرات"
 msgid "Apply automatically"
 msgstr "تطبيق تلقائي"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:530
+msgid "Apply changes"
+msgstr "تطبيق التغييرات"
+
 #: app/components/menu/item-form.tsx:755
 #: app/components/menu/option-form.tsx:831
 msgid "Apply Sales Tax"
 msgstr "تطبيق ضريبة المبيعات"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:648
+msgid "Apply the file"
+msgstr "تطبيق الملف"
 
 #: app/components/locations/availability-picker.tsx:144
 msgid "Apply to {selectedCount} days"
@@ -7057,11 +7254,11 @@ msgstr "هل أنت مفتوح الآن؟"
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr "هل أنت متأكد أنك تريد حذف \"{journeyName}\"؟"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:770
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:811
 msgid "Are you sure you want to delete \"{locationName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "هل أنت متأكد أنك تريد حذف \"{locationName}\"؟ لا يمكن التراجع عن هذا الإجراء وسيؤدي إلى إزالة ساعات العمل ومناطق التوصيل."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:820
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1221
 msgid "Are you sure you want to delete \"{locToDeleteName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "هل أنت متأكد من حذف \"{locToDeleteName}\"؟ لا يمكن التراجع عن هذا الإجراء وسيؤدي إلى حذف ساعات العمل ومناطق التوصيل."
 
@@ -7714,7 +7911,7 @@ msgstr "متوسط قيمة الطلب"
 msgid "Average waitlist wait, last 7 days"
 msgstr "متوسط الانتظار في قائمة الانتظار، آخر 7 أيام"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:241
+#: app/routes/_app+/$orgSlug_+/index.tsx:246
 msgid "Avg per day"
 msgstr "المتوسط اليومي"
 
@@ -7749,8 +7946,11 @@ msgstr "أبيض وأسود"
 #: app/components/website/create-page-dialog.tsx:197
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:185
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:332
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:631
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:259
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:671
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:238
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:133
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:271
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:302
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:192
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:218
@@ -7959,7 +8159,7 @@ msgstr "مقعد بار"
 msgid "Base it on"
 msgstr "اعتمد على"
 
-#: app/components/locations/location-form.tsx:924
+#: app/components/locations/location-form.tsx:948
 msgid "Base Preparation Time (minutes)"
 msgstr "وقت التحضير الأساسي (دقائق)"
 
@@ -7976,7 +8176,7 @@ msgstr "السعر الأساسي ($)"
 msgid "Base Price Delta ($)"
 msgstr "فرق السعر الأساسي ($)"
 
-#: app/components/locations/location-form.tsx:614
+#: app/components/locations/location-form.tsx:627
 msgid "Basic identifiers, URL slug, and regional settings."
 msgstr "المعرّفات الأساسية والرابط والإعدادات الإقليمية."
 
@@ -8366,7 +8566,7 @@ msgid "Bookings cancelled after the free-cancellation window over the last 30 da
 msgstr "الحجوزات الملغاة بعد انتهاء فترة الإلغاء المجاني خلال آخر 30 يومًا."
 
 #: app/components/dashboard/blocks/bookings-today-block.tsx:134
-#: app/utils/dashboards/config.ts:111
+#: app/utils/dashboards/config.ts:112
 msgid "Bookings today"
 msgstr "حجوزات اليوم"
 
@@ -8598,7 +8798,7 @@ msgstr "رقم المبنى"
 msgid "Built-in"
 msgstr "مدمج"
 
-#: app/components/dashboard/add-block-dialog.tsx:147
+#: app/components/dashboard/add-block-dialog.tsx:148
 msgid "Built-in blocks"
 msgstr "الكتل المدمجة"
 
@@ -9075,6 +9275,10 @@ msgstr "يمكن دمجه مع"
 #~ msgid "Can combine with other discounts"
 #~ msgstr "يمكن دمجه مع خصومات أخرى"
 
+#: app/routes/_app+/$orgSlug_+/status.tsx:54
+msgid "Can each location take orders right now? What is wrong is listed with a link to fix it."
+msgstr "هل يستطيع كل موقع استقبال الطلبات الآن؟ يُذكر ما هو خاطئ مع رابط لإصلاحه."
+
 #: app/components/dashboard/access-labels.ts:11
 msgid "Can edit"
 msgstr "يمكن التعديل"
@@ -9153,8 +9357,10 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/inventory/transfer-dialogs.tsx:650
 #: app/components/inventory/transfers-panel.tsx:263
 #: app/components/kiosk/kiosk-screens.tsx:631
+#: app/components/locations/bulk-ordering-dialog.tsx:217
+#: app/components/locations/copy-settings-dialog.tsx:487
 #: app/components/locations/delivery-zones-manager.tsx:564
-#: app/components/locations/location-form.tsx:1515
+#: app/components/locations/location-form.tsx:1583
 #: app/components/locations/special-hours-picker.tsx:225
 #: app/components/loyalty/adjust-dialog.tsx:274
 #: app/components/loyalty/promotion-dialog.tsx:908
@@ -9166,7 +9372,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/media-library/media-library-picker.tsx:342
 #: app/components/media-library/photo-studio-dialog.tsx:961
 #: app/components/media-library/photo-studio-dialog.tsx:988
-#: app/components/member-location-scope.tsx:215
+#: app/components/member-location-scope.tsx:286
 #: app/components/menu/copy-location-overrides-dialog.tsx:124
 #: app/components/menu/drop-wizard/drop-drawers.tsx:396
 #: app/components/menu/drop-wizard/drop-drawers.tsx:590
@@ -9294,8 +9500,9 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:904
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:831
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:781
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1232
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:822
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:600
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:455
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:130
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:153
@@ -9842,11 +10049,25 @@ msgstr "الشهادات"
 msgid "Certification"
 msgstr "الشهادات"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:318
+msgid "Chain default"
+msgstr "الافتراضي للسلسلة"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:280
+msgid "Chain default:"
+msgstr "الافتراضي للسلسلة:"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:803
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:138
+msgid "Chain defaults and locks"
+msgstr "افتراضيات السلسلة والأقفال"
+
 #: app/components/settings/cards/organization/site-icon-card.tsx:215
 #: app/components/settings/cards/profile-card.tsx:171
 #: app/components/staff/labor/labor-overview.tsx:341
 #: app/components/website/branding-panel.tsx:304
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:352
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:236
 msgid "Change"
 msgstr "تغيير"
 
@@ -10028,6 +10249,10 @@ msgstr "يغيّر ما يكسبه العملاء"
 #: app/components/roles/tenant-role-access-manager.tsx:542
 msgid "Changes what customers pay"
 msgstr "يغيّر ما يدفعه العملاء"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:151
+msgid "Changing a default updates the locations that use it. Locations that already have a different value keep it and are listed as overrides. A locked setting is read-only at every location."
+msgstr "تغيير الافتراضي يحدّث المواقع التي تستخدمه. المواقع التي لها قيمة مختلفة بالفعل تحتفظ بها وتُدرج كتخصيصات. الإعداد المقفل للقراءة فقط في كل موقع."
 
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:100
 msgid "Changing the party size can change the wait you quoted."
@@ -10257,6 +10482,10 @@ msgstr "تحقق من تفاصيل الطرح وحاول الحفظ مرة أخ�
 msgid "Check the fields and try again."
 msgstr "راجع الحقول وحاول مرة أخرى."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:591
+msgid "Check the file"
+msgstr "فحص الملف"
+
 #: app/components/phone-agent/settings-page.tsx:139
 msgid "Check the format of this value."
 msgstr "تحقق من تنسيق هذه القيمة."
@@ -10348,6 +10577,10 @@ msgstr "يجري الفحص كل بضع دقائق أثناء وجود أشخا�
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:761
 msgid "Checked when the guest reaches this step, never stored."
 msgstr "يُتحقق منه عند وصول الضيف إلى هذه الخطوة، ولا يُخزَّن أبداً."
+
+#: app/routes/_app+/$orgSlug_+/status.tsx:86
+msgid "Checked when this page opened. Kitchen screens and printers are not part of this check yet."
+msgstr "تم الفحص عند فتح هذه الصفحة. شاشات المطبخ والطابعات ليست جزءًا من هذا الفحص بعد."
 
 #: app/components/reservations/region-reservations-guard.tsx:36
 msgid "Checking for reservation records…"
@@ -10861,6 +11094,10 @@ msgstr "اختر كيف تُجلس {guest} ({size}) على الطاولة {table
 msgid "Choose items"
 msgstr "اختر العناصر"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:414
+msgid "Choose locations"
+msgstr "اختيار المواقع"
+
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:513
 msgid "Choose no location to cover every location."
 msgstr "لا تختر أي فرع ليشمل كل الفروع."
@@ -10908,7 +11145,7 @@ msgstr "اختر صورة لـ {name}"
 msgid "Choose something for at least one day."
 msgstr "اختر شيئًا ليوم واحد على الأقل."
 
-#: app/components/locations/location-form.tsx:1221
+#: app/components/locations/location-form.tsx:1278
 msgid "Choose supported delivery channels and estimated transit times."
 msgstr "اختر قنوات التوصيل المدعومة وأوقات التنقل المقدرة."
 
@@ -11020,6 +11257,10 @@ msgstr "اختر ما يدفعه الضيوف أو يضمنونه للحجز، �
 msgid "Choose what the QR codes are for."
 msgstr "اختر الغرض من رموز QR."
 
+#: app/components/locations/copy-settings-dialog.tsx:291
+msgid "Choose what to copy and where. You see what changes at each location before anything is saved."
+msgstr "اختر ما تريد نسخه وإلى أين. سترى ما سيتغيّر في كل موقع قبل حفظ أي شيء."
+
 #: app/components/inventory/start-count-dialog.tsx:125
 msgid "Choose what to count. You walk your storage areas in order and enter what is there."
 msgstr "اختر ما تريد جرده. تمرّ على مناطق التخزين بالترتيب وتدخل ما هو موجود."
@@ -11064,8 +11305,12 @@ msgid "Choose which languages your public website supports, and which one visito
 msgstr "اختر اللغات التي يدعمها موقعك العام، واللغة التي يراها الزوار افتراضياً."
 
 #: app/components/member-location-scope.tsx:111
-msgid "Choose which locations {memberName} can see and manage in Staff: the roster, schedules, and time cards. Their other permissions do not change."
-msgstr "اختر الفروع التي يمكن لـ {memberName} عرضها وإدارتها في الموظفين: قائمة الفريق والجداول وبطاقات الوقت. لا تتغير صلاحياته الأخرى."
+#~ msgid "Choose which locations {memberName} can see and manage in Staff: the roster, schedules, and time cards. Their other permissions do not change."
+#~ msgstr "اختر الفروع التي يمكن لـ {memberName} عرضها وإدارتها في الموظفين: قائمة الفريق والجداول وبطاقات الوقت. لا تتغير صلاحياته الأخرى."
+
+#: app/components/member-location-scope.tsx:140
+msgid "Choose which locations {memberName} can see and manage: staff, reservations, loyalty, discounts, orders and reports. Their other permissions do not change."
+msgstr "اختر المواقع التي يمكن لـ {memberName} رؤيتها وإدارتها: الموظفون والحجوزات والولاء والخصومات والطلبات والتقارير. لا تتغيّر صلاحياته الأخرى."
 
 #: app/utils/staffing/timesheet-form.ts:185
 msgid "Choose which position they worked."
@@ -11108,9 +11353,13 @@ msgstr "اختر خطتك"
 msgid "Choose…"
 msgstr "اختر…"
 
+#: app/components/member-location-scope.tsx:178
+msgid "Choosing none gives no access to locations."
+msgstr "اختيار لا شيء لا يمنح أي وصول إلى المواقع."
+
 #: app/components/member-location-scope.tsx:149
-msgid "Choosing none gives no access to Staff."
-msgstr "عدم اختيار أي فرع يعني عدم الوصول إلى الموظفين."
+#~ msgid "Choosing none gives no access to Staff."
+#~ msgstr "عدم اختيار أي فرع يعني عدم الوصول إلى الموظفين."
 
 #: app/components/loyalty/catalog-picker.tsx:215
 msgid "Chosen"
@@ -11155,6 +11404,10 @@ msgstr "تنظيف"
 msgid "Clear"
 msgstr "مسح"
 
+#: app/components/locations/copy-settings-dialog.tsx:250
+msgid "Clear all"
+msgstr "مسح الكل"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1570
 msgid "Clear all 404 history?"
 msgstr "هل تريد مسح كل سجل 404؟"
@@ -11188,6 +11441,10 @@ msgstr "مسح السجل"
 msgid "Clear hours"
 msgstr "مسح الساعات"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:401
+msgid "Clear override (back to the default)"
+msgstr "مسح التخصيص (العودة إلى الافتراضي)"
+
 #: app/components/inventory/recipe-section.tsx:642
 #: app/components/inventory/recipe-section.tsx:681
 msgid "Clear recipe"
@@ -11197,6 +11454,10 @@ msgstr "مسح الوصفة"
 #: app/components/chat/chat-view.tsx:435
 msgid "Clear search"
 msgstr "مسح البحث"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:906
+msgid "Clear selection"
+msgstr "مسح التحديد"
 
 #: app/components/inventory/recipe-section.tsx:662
 msgid "Clear this recipe?"
@@ -11367,6 +11628,9 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 #: app/components/hiring/job-editor.tsx:974
 #: app/components/inventory/recipe-panel.tsx:335
 #: app/components/kiosk/kiosk-chrome.tsx:255
+#: app/components/locations/bulk-ordering-dialog.tsx:217
+#: app/components/locations/copy-settings-dialog.tsx:487
+#: app/components/locations/copy-settings-dialog.tsx:606
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/phone-agent/voice-picker.tsx:559
 #: app/components/pos/terminals-manager.tsx:1856
@@ -11375,6 +11639,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:248
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:245
 #: app/routes/_app+/$orgSlug_+/media.tsx:1907
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:600
 msgid "Close"
 msgstr "إغلاق"
 
@@ -11481,6 +11746,7 @@ msgstr "مغلق"
 msgid "Closed (all day)"
 msgstr "مغلق (طوال اليوم)"
 
+#: app/components/locations/copy-settings-dialog.tsx:529
 #: app/components/locations/special-hours-picker.tsx:153
 msgid "Closed all day"
 msgstr "مغلق طوال اليوم"
@@ -11492,6 +11758,10 @@ msgstr "الحجز عبر الإنترنت مغلق في هذا التاريخ. 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1185
 msgid "Closed for private event"
 msgstr "مغلق لمناسبة خاصة"
+
+#: app/components/status/location-status-view.tsx:114
+msgid "Closed now"
+msgstr "مغلق الآن"
 
 #~ msgid "Closed on this date ({dayName}). No slots are offered. Turn on the override below to book anyway."
 #~ msgstr "مغلق في هذا التاريخ ({dayName}). لا توجد أوقات متاحة. فعّل التجاوز أدناه للحجز رغم ذلك."
@@ -11507,6 +11777,14 @@ msgstr "مغلق في هذا التاريخ ({dayName}). لا توجد أوقا�
 msgid "Closed on this date. No times are offered."
 msgstr "مغلق في هذا التاريخ. لا توجد أوقات متاحة."
 
+#: app/components/locations/copy-settings-dialog.tsx:524
+msgid "Closed or short day"
+msgstr "يوم مغلق أو قصير"
+
+#: app/components/locations/location-setting-labels.ts:29
+msgid "Closed or short days such as holidays."
+msgstr "أيام مغلقة أو قصيرة مثل العطل."
+
 #: app/components/pos/pos-day-report.tsx:343
 #~ msgid "Closed remotely by {0}"
 #~ msgstr "أُغلقت عن بُعد بواسطة {0}"
@@ -11515,7 +11793,12 @@ msgstr "مغلق في هذا التاريخ. لا توجد أوقات متاحة
 msgid "Closed remotely by {remoteCloserName}"
 msgstr "أُغلقت عن بُعد بواسطة {remoteCloserName}"
 
+#: app/components/status/location-status-view.tsx:23
+msgid "Closed right now by its opening hours."
+msgstr "مغلق الآن حسب ساعات العمل."
+
 #: app/components/hiring/job-summary.tsx:62
+#: app/components/locations/copy-settings-dialog.tsx:548
 msgid "Closes"
 msgstr "تُغلق"
 
@@ -11738,6 +12021,15 @@ msgstr "المجتمع"
 msgid "Compare"
 msgstr "مقارنة"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:897
+msgid "Compare and edit"
+msgstr "مقارنة وتعديل"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:788
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:243
+msgid "Compare and edit a setting"
+msgstr "مقارنة إعداد وتعديله"
+
 #: app/components/media-library/before-after-slider.tsx:80
 msgid "Compare before and after"
 msgstr "مقارنة قبل وبعد"
@@ -11884,7 +12176,7 @@ msgstr "الإعداد مطلوب"
 #~ msgid "Configuration valid"
 #~ msgstr "الإعدادات صالحة"
 
-#: app/components/locations/location-form.tsx:1341
+#: app/components/locations/location-form.tsx:1403
 msgid "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn Polygons."
 msgstr "اضبط المناطق المسموح بها والممنوعة عبر النطاق أو الرموز البريدية أو المضلعات المرسومة."
 
@@ -11895,7 +12187,7 @@ msgstr "اضبط قواعد التوصيل والأسعار ومزود الخد�
 #~ msgid "Configure dining areas, floor plan tables, service periods, turn times, and cancellation policies."
 #~ msgstr "قم بإعداد مناطق الطعام وطاولات الصالة وفترات الخدمة وأوقات الدوران وسياسات الإلغاء."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:677
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:717
 msgid "Configure dining areas, floor plan tables, service periods, turn times, and online booking rules for this location."
 msgstr "إعداد مناطق الطعام وطاولات مخطط الصالة وفترات الخدمة وأوقات الدوران وقواعد الحجز عبر الإنترنت لهذا الفرع."
 
@@ -11913,11 +12205,11 @@ msgstr "اضبط كيفية تفاعل العملاء مع هذه الخيارا
 msgid "Configure the report"
 msgstr "اضبط إعدادات التقرير"
 
-#: app/components/locations/location-form.tsx:836
+#: app/components/locations/location-form.tsx:858
 msgid "Configure weekly opening times for dine-in store hours and online ordering."
 msgstr "اضبط أوقات العمل الأسبوعية لساعات المطعم والطلب عبر الإنترنت."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:267
+#: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:279
 msgid "Configure your new restaurant location details, operating hours, and delivery settings."
 msgstr "اضبط تفاصيل فرع مطعمك الجديد وساعات العمل وإعدادات التوصيل."
 
@@ -11949,7 +12241,7 @@ msgstr "تأكيد الإغلاق"
 msgid "Confirm contact details"
 msgstr "تأكيد بيانات التواصل"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:788
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:829
 msgid "Confirm Delete"
 msgstr "تأكيد الحذف"
 
@@ -12402,7 +12694,7 @@ msgstr "متعاقد"
 msgid "Contrast"
 msgstr "التباين"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:262
+#: app/routes/_app+/$orgSlug_+/index.tsx:267
 msgid "Contributors"
 msgstr "المساهمون"
 
@@ -12543,6 +12835,7 @@ msgstr "نسخ الكود"
 msgid "Copy email address"
 msgstr "نسخ البريد الإلكتروني"
 
+#: app/components/locations/copy-settings-dialog.tsx:310
 #: app/components/staff/schedule/copy-week-dialog.tsx:194
 msgid "Copy from"
 msgstr "النسخ من"
@@ -12568,7 +12861,7 @@ msgid "Copy order number"
 msgstr "نسخ رقم الطلب"
 
 #: app/components/menu/copy-location-overrides-dialog.tsx:127
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:730
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:770
 msgid "Copy overrides"
 msgstr "نسخ التجاوزات"
 
@@ -12584,6 +12877,20 @@ msgstr "نسخ رقم الهاتف"
 msgid "Copy PIN"
 msgstr "نسخ الرمز"
 
+#: app/components/locations/copy-settings-dialog.tsx:301
+#: app/components/locations/copy-settings-dialog.tsx:499
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:774
+msgid "Copy settings"
+msgstr "نسخ الإعدادات"
+
+#: app/components/locations/copy-settings-dialog.tsx:288
+msgid "Copy settings between locations"
+msgstr "نسخ الإعدادات بين المواقع"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:885
+msgid "Copy settings to these"
+msgstr "نسخ الإعدادات إلى هذه المواقع"
+
 #: app/components/staff/schedule/copy-week-dialog.tsx:234
 msgid "Copy shifts"
 msgstr "نسخ الورديات"
@@ -12593,7 +12900,7 @@ msgstr "نسخ الورديات"
 msgid "Copy the text"
 msgstr "نسخ النص"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:718
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:758
 msgid "Copy this location's menu prices and availability overrides to another location."
 msgstr "انسخ أسعار القائمة وتجاوزات التوفر من هذا الموقع إلى موقع آخر."
 
@@ -12679,6 +12986,10 @@ msgstr "تعذّرت الموافقة على الطلب."
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:461
 msgid "Could not assign the table."
 msgstr "تعذّر تعيين الطاولة."
+
+#: app/components/locations/location-setting-labels.ts:60
+msgid "Could not be changed"
+msgstr "تعذّر تغييره"
 
 #: app/components/staff/schedule/notice-lists.tsx:31
 #: app/components/staff/schedule/publication-history.tsx:313
@@ -13250,7 +13561,7 @@ msgstr "تقدم الأطباق"
 msgid "Course stage:"
 msgstr "مرحلة الطبق:"
 
-#: app/components/locations/location-form.tsx:1362
+#: app/components/locations/location-form.tsx:1424
 msgid "Courses"
 msgstr "الوجبات"
 
@@ -13617,7 +13928,7 @@ msgstr "إنشاء التخطيط"
 msgid "Create Link"
 msgstr "إنشاء رابط"
 
-#: app/components/locations/location-form.tsx:1526
+#: app/components/locations/location-form.tsx:1594
 msgid "Create Location"
 msgstr "إنشاء فرع"
 
@@ -13869,11 +14180,13 @@ msgstr "Ctrl أو Cmd مع C ينسخ الوردية. ومع V يلصقها في
 msgid "Cucumbers"
 msgstr "خيار"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:690
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1062
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:436
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:525
 msgid "Curbside"
 msgstr "عند الرصيف"
 
-#: app/components/locations/location-form.tsx:1056
+#: app/components/locations/location-form.tsx:1091
 msgid "Curbside Pickup"
 msgstr "استلام عند الرصيف"
 
@@ -13932,6 +14245,10 @@ msgstr "الاشتراك الحالي"
 #: app/components/kiosk/kiosk-chrome.tsx:78
 msgid "Current time {time}, {date}"
 msgstr "الوقت الحالي {time}، {date}"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:315
+msgid "Current value"
+msgstr "القيمة الحالية"
 
 #~ msgid "Currently Seated"
 #~ msgstr "جالسون حالياً"
@@ -14158,7 +14475,7 @@ msgstr "تم دمج العملاء."
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr "يدفع العملاء هذا المبلغ. تستلم {orgSharePercent}% بعد رسوم المنصة."
 
-#: app/components/locations/location-form.tsx:1003
+#: app/components/locations/location-form.tsx:1032
 msgid "Customers pick up orders in-store."
 msgstr "يستلم العملاء الطلبات من المطعم."
 
@@ -14229,7 +14546,7 @@ msgstr "الساعات الإضافية اليومية متوقفة · يبدأ 
 msgid "Daily overtime on · Week starts {weekStart}"
 msgstr "الساعات الإضافية اليومية مفعّلة · يبدأ الأسبوع {weekStart}"
 
-#: app/components/locations/location-form.tsx:1480
+#: app/components/locations/location-form.tsx:1543
 msgid "Daily reset time"
 msgstr "وقت إعادة التعيين اليومي"
 
@@ -14292,6 +14609,7 @@ msgstr "خطأ في الاتصال بقاعدة البيانات"
 #: app/components/customers/person-orders-panel.tsx:163
 #: app/components/customers/person-profile-screen.tsx:764
 #: app/components/hiring/interview-dialog.tsx:185
+#: app/components/locations/copy-settings-dialog.tsx:516
 #: app/components/locations/special-hours-picker.tsx:122
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
 #: app/components/menu/menu-availability-card.tsx:341
@@ -14564,9 +14882,13 @@ msgstr "خلفية سوداء عميقة وإضاءة جانبية موحية"
 #: app/components/website/link-inspector.tsx:628
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:191
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:680
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:657
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1016
 msgid "Default"
 msgstr "افتراضي"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:497
+msgid "Default (minutes)"
+msgstr "الافتراضي (بالدقائق)"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:935
 msgid "Default {defaultTurnMin} min"
@@ -14628,6 +14950,10 @@ msgstr "حجم المجموعة الافتراضي"
 #: app/components/phone-agent/voice-picker.tsx:620
 msgid "Default voice"
 msgstr "الصوت الافتراضي"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:245
+msgid "Default:"
+msgstr "الافتراضي:"
 
 #: app/components/menu/menu-review-card.tsx:602
 msgid "Default: {defaultLabel}"
@@ -14706,7 +15032,8 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:641
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:650
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:774
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1151
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:427
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:490
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:527
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:485
@@ -14860,8 +15187,8 @@ msgstr "حذف التخطيط"
 msgid "Delete link"
 msgstr "حذف الرابط"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:834
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:654
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1235
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:694
 msgid "Delete Location"
 msgstr "حذف الفرع"
 
@@ -14942,8 +15269,8 @@ msgstr "هل تريد حذف قاعدة إعادة التوجيه؟"
 msgid "Delete restaurant"
 msgstr "حذف المطعم"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:814
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:764
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1215
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:805
 msgid "Delete restaurant location?"
 msgstr "حذف فرع المطعم؟"
 
@@ -15112,7 +15439,7 @@ msgstr "يسلّم في"
 #: app/components/locations/checkout-rules-cards.tsx:298
 #: app/components/locations/checkout-settings-cards.tsx:53
 #: app/components/locations/checkout-settings-cards.tsx:358
-#: app/components/locations/location-form.tsx:1018
+#: app/components/locations/location-form.tsx:1050
 #: app/components/orders/order-detail.tsx:729
 #: app/components/orders/slot-limits-panel.tsx:172
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
@@ -15123,7 +15450,9 @@ msgstr "يسلّم في"
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:164
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:940
 #: app/routes/_app+/$orgSlug_+/orders.tsx:330
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:680
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1052
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:432
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:521
 #: app/routes/mock-payments+/dashboard.tsx:158
 #: app/utils/discounts/labels.ts:182
 msgid "Delivery"
@@ -15133,7 +15462,7 @@ msgstr "التوصيل"
 msgid "Delivery · {supplier}"
 msgstr "شحنة · {supplier}"
 
-#: app/components/locations/location-form.tsx:600
+#: app/components/locations/location-form.tsx:613
 msgid "Delivery & Zones"
 msgstr "التوصيل والمناطق"
 
@@ -15201,6 +15530,10 @@ msgstr "سعر التوصيل"
 msgid "Delivery Provider"
 msgstr "مزود التوصيل"
 
+#: app/components/locations/location-setting-labels.ts:35
+msgid "Delivery providers and estimated times. Delivery zones are not included."
+msgstr "مزودو التوصيل والأوقات المقدّرة. مناطق التوصيل غير مشمولة."
+
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:66
 msgid "Delivery radius"
 msgstr "نطاق التوصيل"
@@ -15209,7 +15542,11 @@ msgstr "نطاق التوصيل"
 msgid "Delivery recorded."
 msgstr "تم تسجيل الشحنة."
 
-#: app/components/locations/location-form.tsx:1218
+#: app/components/locations/location-setting-labels.ts:19
+msgid "Delivery settings (providers and times)"
+msgstr "إعدادات التوصيل (المزودون والأوقات)"
+
+#: app/components/locations/location-form.tsx:1275
 msgid "Delivery Settings & Providers"
 msgstr "إعدادات التوصيل والمزودون"
 
@@ -15217,7 +15554,7 @@ msgstr "إعدادات التوصيل والمزودون"
 msgid "delivery tips"
 msgstr "إكراميات التوصيل"
 
-#: app/components/locations/location-form.tsx:1112
+#: app/components/locations/location-form.tsx:1149
 msgid "Delivery Tips"
 msgstr "بقشيش التوصيل"
 
@@ -15225,7 +15562,7 @@ msgstr "بقشيش التوصيل"
 msgid "Delivery Zones"
 msgstr "مناطق التوصيل"
 
-#: app/components/locations/location-form.tsx:1338
+#: app/components/locations/location-form.tsx:1400
 msgid "Delivery Zones & Geo-Fencing"
 msgstr "مناطق التوصيل والنطاق الجغرافي"
 
@@ -15353,7 +15690,7 @@ msgstr "التصاميم التي يمكن للضيوف اختيارها"
 msgid "Desktop"
 msgstr "سطح المكتب"
 
-#: app/components/locations/location-form.tsx:1392
+#: app/components/locations/location-form.tsx:1454
 #: app/components/reservations/detail-sheet.tsx:101
 #: app/components/reservations/floor-table.tsx:105
 #: app/components/reservations/floor-table.tsx:106
@@ -15409,7 +15746,7 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيت�
 msgid "Details"
 msgstr "التفاصيل"
 
-#: app/components/locations/location-form.tsx:591
+#: app/components/locations/location-form.tsx:604
 msgid "Details & Address"
 msgstr "التفاصيل والعنوان"
 
@@ -15520,7 +15857,11 @@ msgstr "الفرق"
 msgid "Different limit at a location"
 msgstr "حد مختلف في أحد الفروع"
 
-#: app/components/locations/location-form.tsx:1466
+#: app/components/locations/location-setting-labels.ts:42
+msgid "Different time zone: the same local times apply (11:00 stays 11:00 there)."
+msgstr "منطقة زمنية مختلفة: تُطبَّق الأوقات المحلية نفسها (11:00 تبقى 11:00 هناك)."
+
+#: app/components/locations/location-form.tsx:1529
 msgid "Digits"
 msgstr "عدد الخانات"
 
@@ -15532,11 +15873,13 @@ msgstr "الأبعاد:"
 msgid "Dine in"
 msgstr "تناول في المطعم"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:685
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1057
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:434
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:523
 msgid "Dine-in"
 msgstr "تناول في المطعم"
 
-#: app/components/locations/location-form.tsx:1038
+#: app/components/locations/location-form.tsx:1070
 msgid "Dine-In / In-House"
 msgstr "تناول في المطعم / داخلي"
 
@@ -15549,11 +15892,11 @@ msgstr "الحد الأقصى للضيوف داخل المطعم"
 msgid "Dine-in price"
 msgstr "سعر الأكل في المطعم"
 
-#: app/components/locations/location-form.tsx:1365
+#: app/components/locations/location-form.tsx:1427
 msgid "Dine-in tickets can hold later courses until the kitchen fires them. Takeaway, delivery and drive-through send everything at once."
 msgstr "يمكن لتذاكر الصالة إبقاء الوجبات اللاحقة حتى يطلقها المطبخ. الطلبات الخارجية والتوصيل وطلب السيارة تُرسل كلها دفعة واحدة."
 
-#: app/components/locations/location-form.tsx:1124
+#: app/components/locations/location-form.tsx:1161
 msgid "Dine-In Tips"
 msgstr "بقشيش تناول الطعام في المطعم"
 
@@ -16038,7 +16381,7 @@ msgstr "تم. عادت الأطباق إلى القائمة."
 msgid "Door"
 msgstr "باب"
 
-#: app/components/locations/location-form.tsx:1282
+#: app/components/locations/location-form.tsx:1339
 msgid "DoorDash Drive"
 msgstr "دوورداش درايف"
 
@@ -16086,6 +16429,14 @@ msgstr "قم بتنزيل نسخة من جميع بياناتك الشخصية،
 msgid "Download again"
 msgstr "تنزيل مرة أخرى"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:556
+msgid "Download and edit as a file"
+msgstr "نزّل وعدّل كملف"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:576
+msgid "Download locations"
+msgstr "تنزيل المواقع"
+
 #: app/components/hiring/job-share-panel.tsx:95
 msgid "Download QR code"
 msgstr "تنزيل رمز QR"
@@ -16109,6 +16460,10 @@ msgstr "نزّل القالب، وغيّر الأسعار أو التوفر في
 #: app/components/settings/cards/privacy-card.tsx:46
 msgid "Download your data"
 msgstr "تنزيل بياناتك"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:559
+msgid "Download your locations, change the phone, active and tags columns, and upload the file. Every row is checked first: if one row has a problem nothing is changed."
+msgstr "نزّل مواقعك، وغيّر أعمدة الهاتف والنشط والوسوم، ثم ارفع الملف. يُفحص كل صف أولًا: إذا كان في صف مشكلة فلن يتغيّر شيء."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:363
 msgid "draft"
@@ -16489,7 +16844,7 @@ msgstr "مثال: عشاء 3 نادلين"
 msgid "e.g. Downtown Express, Zone 1"
 msgstr "مثال: وسط المدينة السريع، المنطقة 1"
 
-#: app/components/locations/location-form.tsx:632
+#: app/components/locations/location-form.tsx:645
 msgid "e.g. Downtown Flagship"
 msgstr "مثال: الفرع الرئيسي في وسط المدينة"
 
@@ -16614,6 +16969,10 @@ msgstr "يمكن أن يظهر كل صنف في القائمة مرة واحدة
 msgid "Each line starts at what is still to come. Change it to what really arrived."
 msgstr "يبدأ كل بند بما لم يصل بعد. غيّره إلى ما وصل فعلًا."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:360
+msgid "Each of your {locationCount} locations has its own value today."
+msgstr "لدى كل من مواقعك الـ {locationCount} قيمته الخاصة اليوم."
+
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:262
 msgid "Each option gets its own connection on the canvas. Callers can press the key or say the option or one of its words."
 msgstr "يحصل كل خيار على اتصال خاص به في اللوحة. يمكن للمتصلين الضغط على المفتاح أو نطق الخيار أو إحدى كلماته."
@@ -16621,6 +16980,10 @@ msgstr "يحصل كل خيار على اتصال خاص به في اللوحة. 
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:347
 msgid "Each qualifying visit earns <0>{earnPoints}</0> {unitName}, at most once a day."
 msgstr "كل زيارة مؤهلة تكسب <0>{earnPoints}</0> {unitName}، مرة واحدة في اليوم كحد أقصى."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:457
+msgid "Each selected location returns to the chain default: {defaultText}."
+msgstr "يعود كل موقع محدد إلى افتراضي السلسلة: {defaultText}."
 
 #: app/components/staff/schedule/availability-sheet.tsx:157
 msgid "Each set of hours has to end after it starts."
@@ -16833,7 +17196,7 @@ msgid "Edit details"
 msgstr "تعديل التفاصيل"
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:692
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:741
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1118
 msgid "Edit Details"
 msgstr "تعديل التفاصيل"
 
@@ -16875,7 +17238,7 @@ msgstr "تعديل العنصر"
 msgid "Edit layout"
 msgstr "تعديل التخطيط"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:636
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:676
 msgid "Edit Location"
 msgstr "تعديل الفرع"
 
@@ -17235,7 +17598,7 @@ msgstr "تفعيل استرداد بطاقات الهدايا في هذا الط
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
 
-#: app/components/locations/location-form.tsx:989
+#: app/components/locations/location-form.tsx:1018
 msgid "Enable or disable available fulfillment channels for this location."
 msgstr "فعّل أو عطّل قنوات التنفيذ المتاحة لهذا الفرع."
 
@@ -17597,6 +17960,7 @@ msgstr "أدخل مبلغ تقريب بين 0.01 و100."
 msgid "Enter a street address"
 msgstr "أدخل عنوان الشارع"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:247
 #: app/utils/people/people-errors.ts:8
 msgid "Enter a tag name."
 msgstr "أدخل اسم الوسم."
@@ -18200,7 +18564,7 @@ msgstr "تكلفة العمل التقديرية {labor}"
 msgid "Est. pay"
 msgstr "الأجر التقديري"
 
-#: app/components/locations/location-form.tsx:914
+#: app/components/locations/location-form.tsx:938
 msgid "Estimated kitchen lead time and extra time for high-volume orders."
 msgstr "وقت التحضير المتوقع في المطبخ والوقت الإضافي للطلبات الكبيرة."
 
@@ -18209,11 +18573,11 @@ msgstr "وقت التحضير المتوقع في المطبخ والوقت ال
 msgid "Estimated labor cost"
 msgstr "تكلفة العمالة التقديرية"
 
-#: app/components/locations/location-form.tsx:1314
+#: app/components/locations/location-form.tsx:1373
 msgid "Estimated Max Delivery Time (minutes)"
 msgstr "أقصى وقت توصيل متوقع (دقائق)"
 
-#: app/components/locations/location-form.tsx:1295
+#: app/components/locations/location-form.tsx:1352
 msgid "Estimated Min Delivery Time (minutes)"
 msgstr "أدنى وقت توصيل متوقع (دقائق)"
 
@@ -18782,6 +19146,10 @@ msgstr "رسوم إضافية عند إضافة هذه الإضافة إلى ا�
 msgid "Extra direction (optional)"
 msgstr "توجيه إضافي (اختياري)"
 
+#: app/components/locations/location-setting-labels.ts:31
+msgid "Extra time for large orders."
+msgstr "وقت إضافي للطلبات الكبيرة."
+
 #: app/components/reservations/booking-sheet.tsx:1020
 msgid "Extras"
 msgstr "إضافات"
@@ -18817,6 +19185,10 @@ msgstr "التلاشي للأعلى"
 #: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:104
 msgid "Fail authentication"
 msgstr "فشل المصادقة"
+
+#: app/components/locations/bulk-ordering-dialog.tsx:199
+msgid "failed"
+msgstr "فشل"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
@@ -19491,7 +19863,7 @@ msgstr "على وشك الانتهاء"
 #~ msgid "Finishing (<15m)"
 #~ msgstr "على وشك الانتهاء (<15د)"
 
-#: app/components/locations/location-form.tsx:1375
+#: app/components/locations/location-form.tsx:1437
 msgid "Fire courses one at a time"
 msgstr "إطلاق الوجبات واحدة تلو الأخرى"
 
@@ -19499,7 +19871,7 @@ msgstr "إطلاق الوجبات واحدة تلو الأخرى"
 msgid "Fire safety"
 msgstr "السلامة من الحرائق"
 
-#: app/components/locations/location-form.tsx:1413
+#: app/components/locations/location-form.tsx:1475
 msgid "Fire the next course after (minutes)"
 msgstr "إطلاق الوجبة التالية بعد (دقائق)"
 
@@ -19524,7 +19896,7 @@ msgstr "اليوم الأول"
 msgid "First name"
 msgstr "الاسم الأول"
 
-#: app/components/locations/location-form.tsx:1498
+#: app/components/locations/location-form.tsx:1566
 msgid "First order of the business day: <0>{previewNumber}</0>"
 msgstr "أول طلب في يوم العمل: <0>{previewNumber}</0>"
 
@@ -19564,6 +19936,7 @@ msgid "Five tasks for the first week: confirm contact details, add an emergency 
 msgstr "خمس مهام للأسبوع الأول: تأكيد بيانات التواصل، وإضافة جهة اتصال للطوارئ، ومشاركة قواعد المطعم، وإعداد رمز الحضور، وإضافتهم إلى الجدول. أنشئ قالبًا لاستخدام مهامك الخاصة."
 
 #: app/components/reservations/settings/setup-diagnostics.tsx:79
+#: app/components/status/location-status-view.tsx:143
 msgid "Fix"
 msgstr "إصلاح"
 
@@ -19820,6 +20193,14 @@ msgstr "مثال: قائمة الغداء الجديدة تبدأ يوم الا�
 msgid "For example: spilled a box, counted twice"
 msgstr "مثلًا: انسكب صندوق، جُرد مرتين"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:153
+msgid "For example: supplier delay"
+msgstr "مثال: تأخر المورّد"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:334
+msgid "For example: Texas"
+msgstr "مثال: تكساس"
+
 #: app/components/qr/open-tabs.tsx:959
 msgid "For example: the guest left"
 msgstr "مثال: غادر الضيف"
@@ -19882,7 +20263,7 @@ msgstr "ردود النماذج"
 msgid "Formal"
 msgstr "رسمي"
 
-#: app/components/locations/location-form.tsx:1437
+#: app/components/locations/location-form.tsx:1499
 msgid "Format and daily reset time for new web, QR and Station order numbers at this location. Existing orders keep their numbers."
 msgstr "تنسيق أرقام الطلبات الجديدة عبر الموقع وQR ونقطة البيع ووقت إعادة التعيين اليومي لهذا الفرع. تحتفظ الطلبات الحالية بأرقامها."
 
@@ -20049,6 +20430,10 @@ msgstr "أصدقاء الشيف، مشروب ترحيبي مجاني..."
 msgid "From"
 msgstr "ابتداءً من"
 
+#: app/components/locations/copy-settings-dialog.tsx:388
+msgid "From (optional)"
+msgstr "من (اختياري)"
+
 #: app/components/staff/positions-tab.tsx:708
 #: app/utils/discounts/labels.ts:535
 msgid "From {from}"
@@ -20129,15 +20514,19 @@ msgstr "زيت القلي"
 
 #: app/components/customers/person-orders-panel.tsx:169
 #: app/components/orders/order-detail.tsx:717
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:620
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:965
 msgid "Fulfillment"
 msgstr "التنفيذ"
 
-#: app/components/locations/location-form.tsx:597
+#: app/components/locations/location-form.tsx:610
 msgid "Fulfillment & Timing"
 msgstr "التنفيذ والتوقيت"
 
-#: app/components/locations/location-form.tsx:986
+#: app/components/locations/location-setting-labels.ts:16
+msgid "Fulfillment options"
+msgstr "خيارات التنفيذ"
+
+#: app/components/locations/location-form.tsx:1015
 msgid "Fulfillment Options"
 msgstr "خيارات التنفيذ"
 
@@ -20580,6 +20969,10 @@ msgstr "تجميع حسب المنصب"
 msgid "Group conversation"
 msgstr "محادثة جماعية"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:310
+msgid "Group locations (a region, a franchisee) to give a team member access to the whole group, filter reports, and edit many locations from a file."
+msgstr "جمّع المواقع (منطقة أو صاحب امتياز) لمنح أحد أعضاء الفريق وصولًا إلى المجموعة كلها، وتصفية التقارير، وتعديل مواقع كثيرة من ملف."
+
 #: app/components/chat/chat-compose-dialog.tsx:297
 #: app/components/menu/quick-modifier-group-sheet.tsx:321
 msgid "Group name"
@@ -20949,6 +21342,10 @@ msgstr "يدفع الضيوف {amount} عن كل ضيف للحجز."
 msgid "Guests pay a deposit to hold the table."
 msgstr "يدفع الضيوف وديعة لحجز الطاولة."
 
+#: app/components/status/location-status-view.tsx:28
+msgid "Guests pay at pickup (online payments are off on purpose)."
+msgstr "يدفع الضيوف عند الاستلام (الدفع عبر الإنترنت متوقف عمدًا)."
+
 #: app/utils/reservations/policies-view.ts:31
 msgid "Guests pay in full to book."
 msgstr "يدفع الضيوف المبلغ كاملًا عند الحجز."
@@ -21106,6 +21503,14 @@ msgstr "لديه (صحيح)"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1005
 msgid "Have it printed"
 msgstr "اطلب طباعتها"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:270
+msgid "Head office has locked this setting, so it cannot be changed at a location."
+msgstr "قفلت الإدارة العليا هذا الإعداد، لذا لا يمكن تغييره في الموقع."
+
+#: app/components/locations/location-setting-labels.ts:55
+msgid "Head office has locked this setting. Change the chain default instead."
+msgstr "قفلت الإدارة العليا هذا الإعداد. غيّر افتراضي السلسلة بدلًا من ذلك."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:18
 #: app/components/hiring/description-editor.tsx:115
@@ -21277,6 +21682,10 @@ msgstr "إخفاء عن محركات البحث"
 #: app/components/menu/menu-health-card.tsx:230
 msgid "Hide it or bring it back."
 msgstr "أخفِه أو أعده."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:305
+msgid "Hide overrides"
+msgstr "إخفاء التخصيصات"
 
 #: app/components/pos/terminals-manager.tsx:792
 msgid "Hide removed terminals"
@@ -21640,6 +22049,10 @@ msgstr "طريقة التطبيق"
 msgid "How it went:"
 msgstr "كيف سارت:"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:139
+msgid "How long"
+msgstr "المدة"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:493
 msgid "How long a party keeps a table and how new bookings find one."
 msgstr "المدة التي تحتفظ فيها المجموعة بالطاولة وكيف تجد الحجوزات الجديدة طاولة."
@@ -21755,6 +22168,10 @@ msgstr "كيف يقسّم تقرير الإكراميات الإكراميات �
 #: app/components/inventory/recipe-section.tsx:400
 msgid "How this size is made"
 msgstr "كيف يُحضَّر هذا الحجم"
+
+#: app/components/locations/copy-settings-dialog.tsx:362
+msgid "How to copy special hours"
+msgstr "كيفية نسخ الساعات الخاصة"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:523
 msgid "How to send the code"
@@ -22099,7 +22516,7 @@ msgstr "بتوقيت منطقتك الزمنية."
 msgid "In-App"
 msgstr "داخل التطبيق"
 
-#: app/components/locations/location-form.tsx:1244
+#: app/components/locations/location-form.tsx:1301
 msgid "In-House Delivery"
 msgstr "توصيل داخلي"
 
@@ -22107,7 +22524,7 @@ msgstr "توصيل داخلي"
 msgid "In-House Delivery Fee ($)"
 msgstr "رسوم التوصيل الداخلي ($)"
 
-#: app/components/locations/location-form.tsx:1021
+#: app/components/locations/location-form.tsx:1053
 msgid "In-house fleet, Uber Eats, or DoorDash delivery."
 msgstr "أسطول داخلي أو أوبر إيتس أو دوورداش للتوصيل."
 
@@ -22115,11 +22532,13 @@ msgstr "أسطول داخلي أو أوبر إيتس أو دوورداش للت�
 msgid "In-house only"
 msgstr "داخلي فقط"
 
-#: app/components/locations/location-form.tsx:1089
+#: app/components/locations/location-form.tsx:1126
 msgid "In-House Tips"
 msgstr "بقشيش التوصيل الداخلي"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:709
+#: app/components/locations/copy-settings-dialog.tsx:272
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1081
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:343
 msgid "Inactive"
 msgstr "غير نشط"
 
@@ -22179,7 +22598,7 @@ msgstr "يتضمن {seats} مقعد مستخدم"
 msgid "Includes your saved custom note."
 msgstr "يتضمن ملاحظتك المخصصة المحفوظة."
 
-#: app/components/member-location-scope.tsx:136
+#: app/components/member-location-scope.tsx:165
 msgid "Including locations you add later."
 msgstr "بما في ذلك الفروع التي تضيفها لاحقًا."
 
@@ -22222,6 +22641,10 @@ msgstr "مكوّنات {label}"
 #: app/components/inventory/recipe-section.tsx:316
 msgid "Ingredients saved."
 msgstr "تم حفظ المكوّنات."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:357
+msgid "Inherits"
+msgstr "يرث"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4277
 msgid "Inline"
@@ -23203,6 +23626,10 @@ msgstr "يحافظ على الفهرسة الأصلية"
 msgid "Keeps this party on the table when the board reshuffles."
 msgstr "يُبقي هذه المجموعة على الطاولة عند إعادة ترتيب اللوحة."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:468
+msgid "Kept as overrides:"
+msgstr "بقيت كتخصيصات:"
+
 #: app/components/inventory/item-form.tsx:521
 msgid "Kept in"
 msgstr "يُحفظ في"
@@ -23459,6 +23886,10 @@ msgstr "رسالة المجموعات الكبيرة (تظهر للضيف)"
 msgid "Large register earnings for the day"
 msgstr "أرباح نقاط كبيرة على الصندوق في اليوم"
 
+#: app/components/locations/location-setting-labels.ts:15
+msgid "Large-order rules"
+msgstr "قواعد الطلبات الكبيرة"
+
 #: app/components/reservations/messages/message-labels.ts:12
 msgid "Large-party request approved"
 msgstr "الموافقة على طلب مجموعة كبيرة"
@@ -23512,7 +23943,7 @@ msgid "Last {days} days"
 msgstr "آخر {days} يوم"
 
 #: app/components/notes-chart.tsx:63
-#: app/routes/_app+/$orgSlug_+/index.tsx:244
+#: app/routes/_app+/$orgSlug_+/index.tsx:249
 msgid "Last {daysShown} days"
 msgstr "آخر {daysShown} يوم"
 
@@ -23809,7 +24240,7 @@ msgstr "اتركه فارغًا لتطبيقه على كل أحجام المجم
 msgid "Leave empty to charge the policy fee. You can only lower it."
 msgstr "اتركه فارغًا لتحصيل رسوم السياسة. يمكنك تخفيضها فقط."
 
-#: app/components/locations/location-form.tsx:1420
+#: app/components/locations/location-form.tsx:1482
 msgid "Leave empty to fire by hand"
 msgstr "اتركه فارغًا للإطلاق يدويًا"
 
@@ -24709,12 +25140,13 @@ msgstr "محاكي محلي"
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:161
 #: app/routes/_app+/$orgSlug_+/media.tsx:1737
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:654
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:611
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:956
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:312
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4223
 msgid "Location"
 msgstr "الموقع"
 
-#: app/components/member-location-scope.tsx:127
+#: app/components/member-location-scope.tsx:156
 msgid "Location access"
 msgstr "الوصول إلى الفروع"
 
@@ -24731,13 +25163,17 @@ msgstr "السياسة الافتراضية للموقع"
 msgid "Location defaults"
 msgstr "إعدادات الفرع الافتراضية"
 
-#: app/components/locations/location-form.tsx:611
+#: app/components/locations/location-form.tsx:624
 msgid "Location Details"
 msgstr "تفاصيل الفرع"
 
-#: app/components/locations/location-form.tsx:626
+#: app/components/locations/location-form.tsx:639
 msgid "Location Name"
 msgstr "اسم الفرع"
+
+#: app/components/locations/location-setting-labels.ts:59
+msgid "Location not found"
+msgstr "الموقع غير موجود"
 
 #: app/components/pos/terminals-manager.tsx:1127
 msgid "Location of {label}"
@@ -24770,11 +25206,19 @@ msgstr "بطاقة أداء المواقع"
 msgid "Location Status"
 msgstr "حالة الفرع"
 
+#: app/routes/_app+/$orgSlug_+/reports+/_index.tsx:98
+msgid "Location tag"
+msgstr "وسم الموقع"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:307
+msgid "Location tags and import"
+msgstr "وسوم المواقع والاستيراد"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:558
 msgid "Location time zone changed"
 msgstr "تغيرت المنطقة الزمنية للفرع"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:699
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:739
 msgid "Location time zone is used to compute reservation seating slots. Changing the time zone will prompt you to re-derive future reservation times in Reservations Settings."
 msgstr "تُستخدم المنطقة الزمنية للفرع لحساب فترات الجلوس للحجوزات. سيؤدي تغيير المنطقة الزمنية إلى مطالبتك بإعادة احتساب أوقات الحجوزات المستقبلية في إعدادات الحجوزات."
 
@@ -24787,12 +25231,37 @@ msgstr "الموقع: {locationName}"
 #: app/components/discounts/discount-form.tsx:674
 #: app/components/discounts/discount-form.tsx:1884
 #: app/components/loyalty/promotion-dialog.tsx:812
-#: app/components/member-location-scope.tsx:160
+#: app/components/member-location-scope.tsx:137
+#: app/components/member-location-scope.tsx:231
 #: app/components/team-switcher.tsx:182
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:488
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:747
 msgid "Locations"
 msgstr "الفروع"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:553
+msgid "Locations cannot change it, and it is read-only in their settings."
+msgstr "لا تستطيع المواقع تغييره، وهو للقراءة فقط في إعداداتها."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:581
+msgid "Locations file"
+msgstr "ملف المواقع"
+
+#: app/components/member-location-scope.tsx:128
+msgid "Locations for {memberName}: {summary}"
+msgstr "المواقع الخاصة بـ {memberName}: {summary}"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:584
+msgid "Locations that already have a different value keep it and are listed as overrides."
+msgstr "المواقع التي لها قيمة مختلفة بالفعل تحتفظ بها وتُدرج كتخصيصات."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:449
+msgid "Locations that use the current default will switch to the new one."
+msgstr "ستنتقل المواقع التي تستخدم الافتراضي الحالي إلى الجديد."
+
+#: app/components/locations/copy-settings-dialog.tsx:235
+msgid "Locations to change"
+msgstr "المواقع المراد تغييرها"
 
 #: app/components/discounts/discount-form.tsx:1874
 msgid "Locations, channels and order types."
@@ -24800,6 +25269,7 @@ msgstr "الفروع والقنوات وأنواع الطلبات."
 
 #: app/components/qr/open-tabs.tsx:478
 #: app/components/staff/timesheets/timesheets-page.tsx:948
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:286
 msgid "Lock"
 msgstr "قفل"
 
@@ -24825,6 +25295,10 @@ msgstr "قفل الحساب {number} (الطاولة {label})؟"
 msgid "Lock table assignment"
 msgstr "قفل تعيين الطاولة"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:550
+msgid "Lock this setting"
+msgstr "قفل هذا الإعداد"
+
 #: app/components/qr/open-tabs.tsx:402
 #~ msgid "Lock this tab?"
 #~ msgstr "قفل هذا الحساب؟"
@@ -24837,8 +25311,13 @@ msgstr "قفل، الحساب {number}، الطاولة {label}"
 #: app/components/qr/open-tabs.tsx:390
 #: app/components/staff/timesheets/card-history.tsx:52
 #: app/components/staff/timesheets/issue-copy.ts:58
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:222
 msgid "Locked"
 msgstr "مقفلة"
+
+#: app/components/locations/lockable-section.tsx:86
+msgid "Locked by head office"
+msgstr "مقفل من الإدارة العليا"
 
 #: app/components/staff/timesheets/timesheets-page.tsx:922
 msgid "Locked cards cannot be edited by anyone until they are unlocked, and the unlock is logged."
@@ -25107,7 +25586,7 @@ msgstr "صندوق الوارد"
 msgid "Mailbox sources"
 msgstr "مصادر صندوق الوارد"
 
-#: app/components/locations/location-form.tsx:1390
+#: app/components/locations/location-form.tsx:1452
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:129
 msgid "Main"
 msgstr "طبق رئيسي"
@@ -25220,7 +25699,7 @@ msgstr "إنشاء أحجام"
 msgid "Make this choice required"
 msgstr "جعل هذا الخيار إلزاميًا"
 
-#: app/components/locations/location-form.tsx:779
+#: app/components/locations/location-form.tsx:799
 msgid "Make this the primary location for your restaurant."
 msgstr "اجعل هذا الفرع الرئيسي لمطعمك."
 
@@ -25327,16 +25806,16 @@ msgstr "إدارة دفتر الحجوزات وقائمة الانتظار"
 msgid "Manage reservation settings & experiences"
 msgstr "إدارة إعدادات الحجوزات والتجارب"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:694
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:734
 msgid "Manage reservations settings"
 msgstr "إدارة إعدادات الحجوزات"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:551
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:750
 msgid "Manage restaurant locations, store hours, fulfillment methods, and delivery zones."
 msgstr "أدر فروع المطعم وساعات العمل وطرق التنفيذ ومناطق التوصيل."
 
 #: app/components/organization-invitations.tsx:280
-#: app/components/organization-members.tsx:195
+#: app/components/organization-members.tsx:200
 msgid "Manage roles"
 msgstr "إدارة الأدوار"
 
@@ -25415,7 +25894,7 @@ msgstr "إدارة موقع مؤسستك العام ومظهره."
 msgid "Manage your restaurant settings and preferences."
 msgstr "أدر إعدادات مطعمك وتفضيلاتك."
 
-#: app/components/organization-members.tsx:185
+#: app/components/organization-members.tsx:190
 msgid "Manage your restaurant's members."
 msgstr "أدر أعضاء مطعمك."
 
@@ -25470,7 +25949,7 @@ msgstr "تسجيل {guestFirstName} كعدم حضور؟"
 msgid "Mark {reviewableCount} as reviewed"
 msgstr "تحديد {reviewableCount} كمراجَعة"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:763
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1140
 msgid "Mark Active"
 msgstr "تعيين كـنشط"
 
@@ -25543,7 +26022,7 @@ msgstr "وضع علامة منجز"
 msgid "Mark done: {title}"
 msgstr "وضع علامة منجزة: {title}"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:761
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1138
 msgid "Mark Inactive"
 msgstr "تعيين كغير نشط"
 
@@ -25692,6 +26171,10 @@ msgstr "جارٍ التحديد…"
 msgid "Masculine"
 msgstr "ذكوري"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:393
+msgid "Match another location"
+msgstr "مطابقة موقع آخر"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:207
 msgid "Matches {size} · email {email} · text {text}"
 msgstr "يطابق {size} · البريد {email} · الرسائل {text}"
@@ -25748,7 +26231,7 @@ msgstr "الحد الأقصى لكل طلب"
 msgid "Max per pickup slot"
 msgstr "الحد الأقصى لكل فترة استلام"
 
-#: app/components/locations/location-form.tsx:1157
+#: app/components/locations/location-form.tsx:1201
 msgid "Maximum advance ordering window (days)"
 msgstr "أقصى نافذة للطلب المسبق (أيام)"
 
@@ -25895,7 +26378,7 @@ msgstr "أعضاء"
 
 #: app/components/app-sidebar.tsx:732
 #: app/components/chat/chat-group-settings-dialog.tsx:83
-#: app/components/organization-members.tsx:182
+#: app/components/organization-members.tsx:187
 #: app/components/roles/tenant-role-access-manager.tsx:1506
 #: app/components/roles/tenant-role-access-manager.tsx:1688
 #: app/components/workspace-breadcrumb.tsx:64
@@ -25907,7 +26390,7 @@ msgstr "الأعضاء"
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
-#: app/utils/dashboards/config.ts:104
+#: app/utils/dashboards/config.ts:105
 msgid "Members who created the most notes."
 msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاحظات."
 
@@ -25955,7 +26438,7 @@ msgstr "معلومات القائمة"
 msgid "Menu item"
 msgstr "عنصر القائمة"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:715
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:755
 msgid "Menu location overrides"
 msgstr "تجاوزات موقع القائمة"
 
@@ -25971,7 +26454,7 @@ msgstr "خيارات القائمة"
 msgid "Menu Overview"
 msgstr "نظرة عامة على القائمة"
 
-#: app/components/locations/location-form.tsx:741
+#: app/components/locations/location-form.tsx:754
 msgid "Menu prices already include tax (VAT), as required in Saudi Arabia, the EU and the UK. Tax is shown on receipts but not added at checkout."
 msgstr "أسعار القائمة تشمل الضريبة (ضريبة القيمة المضافة) كما هو مطلوب في المملكة العربية السعودية والاتحاد الأوروبي والمملكة المتحدة. تظهر الضريبة في الإيصالات ولا تُضاف عند الدفع."
 
@@ -26256,6 +26739,10 @@ msgstr "الدقائق على الطاولة"
 msgid "Minutes past the start of a shift before a clock-in is marked late."
 msgstr "الدقائق بعد بدء الوردية قبل أن يُعلَّم تسجيل الحضور متأخرًا."
 
+#: app/components/locations/location-setting-labels.ts:30
+msgid "Minutes to get an order ready."
+msgstr "دقائق تجهيز الطلب."
+
 #: app/components/staff/timesheets/issue-copy.ts:17
 msgid "Missed break"
 msgstr "استراحة فائتة"
@@ -26485,7 +26972,7 @@ msgstr "شهري"
 msgid "Monthly Reservation Volume & Special Days"
 msgstr "حجم الحجوزات الشهري والأيام الخاصة"
 
-#: app/utils/dashboards/config.ts:128
+#: app/utils/dashboards/config.ts:129
 msgid "Monthly sales goal progress by location."
 msgstr "تقدّم هدف المبيعات الشهري حسب الموقع."
 
@@ -27032,7 +27519,7 @@ msgstr "يحتاج إلى {minimum} طلبات على الأقل"
 #: app/components/staff/staff-profile-page.tsx:36
 #: app/components/staff/timeclock-today.tsx:125
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:305
-#: app/utils/dashboards/config.ts:135
+#: app/utils/dashboards/config.ts:136
 msgid "Needs attention"
 msgstr "يحتاج إلى انتباه"
 
@@ -27202,7 +27689,7 @@ msgstr "جمهور جديد"
 msgid "New automation"
 msgstr "أتمتة جديدة"
 
-#: app/components/dashboard/add-block-dialog.tsx:139
+#: app/components/dashboard/add-block-dialog.tsx:140
 msgid "New blocks are added at the bottom of the dashboard."
 msgstr "تُضاف الكتل الجديدة في أسفل لوحة التحكم."
 
@@ -27426,6 +27913,10 @@ msgstr "إعادة توجيه جديدة"
 msgid "New report"
 msgstr "تقرير جديد"
 
+#: app/routes/_app+/$orgSlug_+/reports+/_index.tsx:119
+msgid "New reports show only the locations with this tag."
+msgstr "تعرض التقارير الجديدة المواقع التي تحمل هذا الوسم فقط."
+
 #: app/components/customers/people-list-screen.tsx:220
 #: app/components/reservations/booking-sheet.tsx:551
 #: app/components/reservations/host-subnav.tsx:195
@@ -27469,8 +27960,17 @@ msgid "New table combination"
 msgstr "دمج طاولات جديد"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1494
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:321
 msgid "New tag"
 msgstr "وسم جديد"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:587
+#~ msgid "New tags: {0}."
+#~ msgstr "وسوم جديدة: {0}."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:641
+msgid "New tags: {newTagNames}."
+msgstr "وسوم جديدة: {newTagNames}."
 
 #: app/components/staff/onboarding/template-editor.tsx:74
 #: app/components/staff/onboarding/templates-page.tsx:113
@@ -27480,6 +27980,10 @@ msgstr "قالب جديد"
 #: app/components/menu/menu-review-card.tsx:432
 msgid "New text"
 msgstr "النص الجديد"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:408
+msgid "New value (minutes)"
+msgstr "القيمة الجديدة (بالدقائق)"
 
 #: app/components/staff/positions-tab.tsx:828
 msgid "New yearly salary"
@@ -27622,7 +28126,7 @@ msgid "No active tables yet. Add tables under Floor first."
 msgstr "لا توجد طاولات نشطة بعد. أضف الطاولات من قسم الصالة أولاً."
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:244
+#: app/routes/_app+/$orgSlug_+/index.tsx:249
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:180
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
@@ -27922,6 +28426,10 @@ msgstr "لا يوجد عملاء بعد"
 #: app/components/social/social-calendar.tsx:269
 msgid "No date"
 msgstr "بلا تاريخ"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:232
+msgid "No default"
+msgstr "لا افتراضي"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:488
 msgid "No deliveries in this period."
@@ -28229,15 +28737,23 @@ msgstr "تعذّرت قراءة أي بنود من هذه الصورة."
 msgid "No link is active. They get one in the next schedule email, as long as they have an email address."
 msgstr "لا يوجد رابط فعّال. سيصلهم رابط في رسالة الجدول القادمة ما دام لديهم عنوان بريد إلكتروني."
 
-#: app/components/member-location-scope.tsx:88
+#: app/components/member-location-scope.tsx:112
 msgid "No locations"
 msgstr "لا فروع"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:602
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:930
 msgid "No locations found."
 msgstr "لم يتم العثور على أي فروع."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:585
+#: app/routes/_app+/$orgSlug_+/status.tsx:59
+msgid "No locations to check"
+msgstr "لا مواقع للفحص"
+
+#: app/components/dashboard/blocks/status-block.tsx:39
+msgid "No locations to check."
+msgstr "لا مواقع للفحص."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:913
 msgid "No locations yet"
 msgstr "لا توجد فروع بعد"
 
@@ -28286,7 +28802,7 @@ msgstr "لا توجد مكالمات مطابقة"
 msgid "No matching images"
 msgstr "لا توجد صور مطابقة"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:596
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:924
 msgid "No matching locations"
 msgstr "لا توجد فروع مطابقة"
 
@@ -28318,13 +28834,17 @@ msgstr "لا توجد وسائط حتى الآن. قم بتحميل صورة ل�
 msgid "No members found"
 msgstr "لم يتم العثور على أعضاء"
 
-#: app/components/organization-members.tsx:171
+#: app/components/organization-members.tsx:176
 msgid "No members found."
 msgstr "لم يتم العثور على أعضاء."
 
 #: app/components/note/share-note-button.tsx:214
 msgid "No members have been given direct access."
 msgstr "لم تُمنح صلاحية الوصول المباشر لأي عضو."
+
+#: app/components/status/location-status-view.tsx:33
+msgid "No menu is on sale at this location, so there is nothing to order."
+msgstr "لا توجد قائمة معروضة للبيع في هذا الموقع، لذلك لا شيء يمكن طلبه."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1026
 msgid "No menu selected"
@@ -28503,6 +29023,10 @@ msgstr "No open slots right now."
 #: app/components/reservations/booking-sheet.tsx:746
 msgid "No open times for this date and party size. Enter another time below, or change the date."
 msgstr "لا توجد أوقات متاحة لهذا التاريخ وعدد الضيوف. أدخل وقتًا آخر أدناه أو غيّر التاريخ."
+
+#: app/components/status/location-status-view.tsx:25
+msgid "No opening hours are set, so guests cannot tell when you are open."
+msgstr "لم تُحدَّد ساعات عمل، لذلك لا يعرف الضيوف متى تفتحون."
 
 #: app/components/menu/modifier-form.tsx:1055
 msgid "No options added yet. Click “Add option” to get started."
@@ -29064,6 +29588,10 @@ msgstr "لا توجد طاولات بعد. أضف الطاولات التي يم
 msgid "No tablets paired yet"
 msgstr "لا توجد أجهزة لوحية مرتبطة بعد"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:359
+msgid "No tags yet."
+msgstr "لا وسوم بعد."
+
 #: app/components/chat/chat-compose-dialog.tsx:209
 msgid "No teammates available"
 msgstr "لا يوجد زملاء متاحون"
@@ -29385,7 +29913,7 @@ msgstr "لا شيء"
 msgid "None"
 msgstr "بلا"
 
-#: app/components/locations/location-form.tsx:1453
+#: app/components/locations/location-form.tsx:1516
 msgid "None (e.g. A)"
 msgstr "بدون (مثال: A)"
 
@@ -29469,6 +29997,14 @@ msgstr "غير متاح مع المستويات. أوقف المستويات أ�
 #: app/components/discounts/discount-form.tsx:1166
 msgid "Not available yet for <0>{currency}</0>. Use a percentage."
 msgstr "غير متاح بعد بعملة <0>{currency}</0>. استخدم نسبة مئوية."
+
+#: app/components/locations/copy-settings-dialog.tsx:631
+msgid "Not changed (you cannot manage these locations):"
+msgstr "لم يتغيّر (لا يمكنك إدارة هذه المواقع):"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:512
+msgid "Not changed (you cannot manage these):"
+msgstr "لم يتغيّر (لا يمكنك إدارة هذه):"
 
 #: app/components/pos/zatca-settings.tsx:382
 #: app/components/pos/zatca-settings.tsx:386
@@ -29611,6 +30147,10 @@ msgstr "لم يبدأ"
 msgid "Not subscribed"
 msgstr "غير مشترك"
 
+#: app/components/status/location-status-view.tsx:80
+msgid "Not taking orders"
+msgstr "لا يستقبل الطلبات"
+
 #: app/components/hiring/applicant-labels.ts:53
 msgid "Not the right fit"
 msgstr "غير مناسب"
@@ -29684,6 +30224,10 @@ msgstr "ملاحظة"
 #: app/utils/gift-cards/labels.ts:25
 msgid "Note"
 msgstr "ملاحظة"
+
+#: app/components/locations/copy-settings-dialog.tsx:557
+msgid "Note (optional)"
+msgstr "ملاحظة (اختياري)"
 
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1006
 msgid "Note actions"
@@ -29775,11 +30319,11 @@ msgstr "الملاحظات مرئية للمديرين فقط."
 msgid "Notes can be up to 500 characters."
 msgstr "يمكن أن تصل الملاحظات إلى 500 حرف."
 
-#: app/utils/dashboards/config.ts:87
+#: app/utils/dashboards/config.ts:88
 msgid "Notes chart"
 msgstr "مخطط الملاحظات"
 
-#: app/utils/dashboards/config.ts:88
+#: app/utils/dashboards/config.ts:89
 msgid "Notes created each day."
 msgstr "الملاحظات المنشأة كل يوم."
 
@@ -29961,6 +30505,10 @@ msgstr "لم يُستلم شيء بعد"
 msgid "Nothing scheduled this week"
 msgstr "لا شيء مجدول لهذا الأسبوع"
 
+#: app/components/locations/copy-settings-dialog.tsx:440
+msgid "Nothing to change"
+msgstr "لا شيء لتغييره"
+
 #: app/components/staff/timesheets/bulk-bar.tsx:99
 msgid "Nothing to do with these."
 msgstr "لا إجراء ممكن على هذه."
@@ -30000,6 +30548,11 @@ msgstr "لا شيء غير مدفوع"
 #: app/components/my-schedule/requests-view.tsx:239
 msgid "Nothing waiting for a manager."
 msgstr "لا شيء بانتظار المدير."
+
+#: app/components/locations/location-setting-labels.ts:57
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:276
+msgid "Nothing was changed. Something went wrong, please try again."
+msgstr "لم يتغيّر شيء. حدث خطأ، يُرجى المحاولة مرة أخرى."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:266
 msgid "Nothing was charged. Start a new order whenever you are ready."
@@ -30380,7 +30933,7 @@ msgstr "التهيئة {complete}/{total}"
 msgid "Onboarding {complete}/{total}, late"
 msgstr "التهيئة {complete}/{total}، متأخرة"
 
-#: app/utils/dashboards/config.ts:95
+#: app/utils/dashboards/config.ts:96
 msgid "Onboarding checklist"
 msgstr "قائمة خطوات البدء"
 
@@ -30433,6 +30986,10 @@ msgstr "إحدى الوحدات لا تصلح لقياس مكوّنها. اخت�
 #: app/components/loyalty/reward-dialog.tsx:580
 msgid "One of this item, free. The customer picks the size or variant; paid extras are still charged."
 msgstr "قطعة واحدة من هذا الصنف مجانًا. يختار العميل الحجم أو النوع؛ وتبقى الإضافات المدفوعة محسوبة."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:259
+msgid "One of those locations was not found."
+msgstr "لم يتم العثور على أحد هذه المواقع."
 
 #: app/utils/staffing/labor-errors.ts:14
 msgid "One of those positions no longer exists. Reload and try again."
@@ -30566,7 +31123,7 @@ msgstr "طلب إلكتروني"
 msgid "Online order rules"
 msgstr "قواعد الطلبات عبر الإنترنت"
 
-#: app/components/locations/location-form.tsx:572
+#: app/components/locations/location-form.tsx:585
 msgid "Online order rules: {orderPolicyMessage}"
 msgstr "قواعد الطلبات عبر الإنترنت: {orderPolicyMessage}"
 
@@ -30582,9 +31139,21 @@ msgstr "إكراميات الطلبات عبر الإنترنت التي تدخ�
 msgid "Online ordering"
 msgstr "الطلب عبر الإنترنت"
 
+#: app/components/locations/location-setting-labels.ts:12
+msgid "Online ordering hours"
+msgstr "ساعات الطلب عبر الإنترنت"
+
+#: app/components/status/location-status-view.tsx:19
+msgid "Online ordering is on."
+msgstr "الطلب عبر الإنترنت مفعّل."
+
 #: app/components/dashboard/blocks/attention-block.tsx:204
 msgid "Online ordering is paused at {location}"
 msgstr "الطلب عبر الإنترنت متوقف مؤقتًا في {location}"
+
+#: app/components/status/location-status-view.tsx:21
+msgid "Online ordering is paused. Guests cannot order until it is resumed."
+msgstr "الطلب عبر الإنترنت متوقف مؤقتًا. لا يستطيع الضيوف الطلب إلى أن يُستأنف."
 
 #: app/components/locations/ordering-settings-cards.tsx:65
 msgid "Online ordering windows"
@@ -31067,6 +31636,10 @@ msgstr "فتح لوحة المدفوعات الوهمية"
 msgid "Open my reports"
 msgstr "افتح تقاريري"
 
+#: app/components/status/location-status-view.tsx:22
+msgid "Open now by its opening hours."
+msgstr "مفتوح الآن حسب ساعات العمل."
+
 #. placeholder {0}: selected.providerDisplayName
 #: app/components/mailbox/reviews-tab.tsx:601
 msgid "Open on {0}"
@@ -31305,6 +31878,10 @@ msgstr "Opening buffer (minutes)"
 msgid "Opening hours"
 msgstr "ساعات العمل"
 
+#: app/components/locations/copy-settings-dialog.tsx:542
+msgid "Opens"
+msgstr "يفتح"
+
 #: app/components/marketing/campaign-actions.tsx:308
 msgid "Opens are not always counted. Some mail apps open messages by themselves or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read it may get it again. A broadcast can be re-sent once."
 msgstr "لا تُحتسب عمليات الفتح دائمًا. بعض تطبيقات البريد تفتح الرسائل من تلقاء نفسها أو تُخفي الفتح عن المرسلين (مثل حماية خصوصية Apple Mail)، لذا قد يتلقى بعض من قرأها الرسالة مرة أخرى. يمكن إعادة إرسال الرسالة الجماعية مرة واحدة فقط."
@@ -31317,8 +31894,8 @@ msgstr "يفتح:"
 msgid "OpenTable"
 msgstr "OpenTable"
 
-#: app/components/locations/location-form.tsx:594
-#: app/components/locations/location-form.tsx:833
+#: app/components/locations/location-form.tsx:607
+#: app/components/locations/location-form.tsx:855
 msgid "Operating Hours"
 msgstr "ساعات العمل"
 
@@ -31765,7 +32342,7 @@ msgstr "اطلب المزيد عند أقل من"
 msgid "Order must include"
 msgstr "يجب أن يتضمن الطلب"
 
-#: app/components/locations/location-form.tsx:1434
+#: app/components/locations/location-form.tsx:1496
 msgid "Order numbers"
 msgstr "أرقام الطلبات"
 
@@ -31773,7 +32350,7 @@ msgstr "أرقام الطلبات"
 msgid "Order of {date}"
 msgstr "طلب بتاريخ {date}"
 
-#: app/components/locations/location-form.tsx:911
+#: app/components/locations/location-form.tsx:935
 msgid "Order Preparation Time"
 msgstr "وقت تحضير الطلب"
 
@@ -31809,6 +32386,10 @@ msgstr "تم رفض الطلب. الاسترداد قيد المعالجة: يُ
 #: app/components/inventory/send-order-dialog.tsx:102
 msgid "Order sent"
 msgstr "تم إرسال الطلب"
+
+#: app/components/locations/location-setting-labels.ts:20
+msgid "Order size caps"
+msgstr "حدود حجم الطلب"
 
 #: app/components/locations/checkout-rules-cards.tsx:170
 msgid "Order size limits"
@@ -31847,6 +32428,10 @@ msgstr "الطلبات متاحة الآن"
 #: app/routes/_app+/$orgSlug_+/settings+/qr-tables.tsx:69
 msgid "Ordering options"
 msgstr "خيارات الطلب"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1086
+msgid "Ordering paused"
+msgstr "الطلب متوقف مؤقتًا"
 
 #: app/components/print/print-order-labels.ts:51
 #~ msgid "Ordering table cards also needs permission to edit the menu."
@@ -32234,6 +32819,14 @@ msgstr "يتداخل مع وردية أخرى لهذا الشخص"
 msgid "Overlaps with another booking on {tableNames}"
 msgstr "يتداخل مع حجز آخر على {tableNames}"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:227
+msgid "Overridable"
+msgstr "قابل للتخصيص"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:353
+msgid "Override"
+msgstr "تخصيص"
+
 #: app/components/locations/ordering-settings-cards.tsx:313
 msgid "Override base prep minutes during specific windows (15-minute steps)."
 msgstr "Override base prep minutes during specific windows (15-minute steps)."
@@ -32259,6 +32852,10 @@ msgstr "تجاوز ساعات العمل المعتادة في الأعياد أ
 
 #~ msgid "Override whether specific dining areas, tables, or combinations are available online, staff-only, walk-in only, or unavailable during a given service."
 #~ msgstr "تجاوز ما إذا كانت مناطق طعام أو طاولات أو مجموعات محددة متاحة عبر الإنترنت أو للموظفين فقط أو للحضور المباشر فقط أو غير متاحة خلال فترة خدمة معينة."
+
+#: app/components/locations/lockable-section.tsx:117
+msgid "Overrides the chain default"
+msgstr "يخصّص افتراضي السلسلة"
 
 #: app/components/reservations/status-style.tsx:186
 #: app/components/staff/timesheets/payroll-summary.tsx:170
@@ -32375,6 +32972,7 @@ msgid "Packaging"
 msgstr "تغليف"
 
 #: app/components/locations/checkout-rules-cards.tsx:234
+#: app/components/locations/location-setting-labels.ts:22
 #: app/components/orders/order-detail.tsx:1010
 msgid "Packaging fee"
 msgstr "رسوم التغليف"
@@ -32794,6 +33392,10 @@ msgstr "هل تريد إيقاف {discountName}؟"
 msgid "Pause {name}"
 msgstr "إيقاف {name} مؤقتًا"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:116
+msgid "Pause online ordering"
+msgstr "إيقاف الطلب عبر الإنترنت مؤقتًا"
+
 #: app/components/locations/ordering-settings-cards.tsx:458
 msgid "Pause online ordering around daily prayers using the store address coordinates."
 msgstr "Pause online ordering around daily prayers using the store address coordinates."
@@ -32801,6 +33403,11 @@ msgstr "Pause online ordering around daily prayers using the store address coord
 #: app/components/orders/ordering-controls.tsx:245
 msgid "Pause online orders for"
 msgstr "إيقاف الطلبات عبر الإنترنت مؤقتًا لمدة"
+
+#: app/components/locations/bulk-ordering-dialog.tsx:223
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:865
+msgid "Pause ordering"
+msgstr "إيقاف الطلب مؤقتًا"
 
 #: app/components/orders/ordering-controls.tsx:238
 msgid "Pause orders"
@@ -33350,7 +33957,7 @@ msgstr "رابط الدعوة الشخصي"
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:239
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:305
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:718
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:617
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:962
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:173
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:238
 #: app/utils/reservations/labels.ts:48
@@ -33406,7 +34013,7 @@ msgstr "رقم الهاتف"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:697
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:371
-#: app/components/locations/location-form.tsx:658
+#: app/components/locations/location-form.tsx:671
 #: app/components/reservations/booking-sheet.tsx:966
 msgid "Phone Number"
 msgstr "رقم الهاتف"
@@ -33494,7 +34101,7 @@ msgstr "الصور تساعد الضيوف على الاختيار."
 msgid "Phrases"
 msgstr "العبارات"
 
-#: app/components/locations/location-form.tsx:798
+#: app/components/locations/location-form.tsx:819
 msgid "Physical Address"
 msgstr "العنوان الفعلي"
 
@@ -33682,7 +34289,9 @@ msgstr "مخللات"
 #: app/components/orders/order-detail.tsx:732
 #: app/components/orders/slot-limits-panel.tsx:164
 #: app/routes/_app+/$orgSlug_+/orders.tsx:338
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:675
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1047
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:430
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:519
 #: app/utils/discounts/labels.ts:181
 msgid "Pickup"
 msgstr "الاستلام"
@@ -33720,7 +34329,7 @@ msgstr "جدول الاستلام والتنفيذ"
 msgid "pickup tips"
 msgstr "إكراميات الاستلام"
 
-#: app/components/locations/location-form.tsx:1100
+#: app/components/locations/location-form.tsx:1137
 msgid "Pickup Tips"
 msgstr "بقشيش الاستلام"
 
@@ -33730,6 +34339,10 @@ msgstr "نافذة الاستلام"
 
 #~ msgid "Pickup window settings"
 #~ msgstr "إعدادات نافذة الاستلام"
+
+#: app/components/locations/location-setting-labels.ts:32
+msgid "Pickup, delivery, dine-in and curbside."
+msgstr "الاستلام والتوصيل وتناول الطعام في المطعم والاستلام من السيارة."
 
 #: app/components/customers/person-notes-panel.tsx:156
 msgid "Pin"
@@ -34335,7 +34948,7 @@ msgstr "المفضّلة"
 msgid "Prefetch"
 msgstr "الجلب المسبق"
 
-#: app/components/locations/location-form.tsx:1447
+#: app/components/locations/location-form.tsx:1510
 msgid "Prefix"
 msgstr "البادئة"
 
@@ -34361,6 +34974,10 @@ msgstr "مرشّحات التحضير"
 #: app/routes/_app+/$orgSlug_+/inventory+/prep.tsx:55
 msgid "Prep is not switched on for this organization."
 msgstr "التحضير غير مفعّل لهذه المنشأة."
+
+#: app/components/locations/location-setting-labels.ts:14
+msgid "Prep time"
+msgstr "وقت التجهيز"
 
 #: app/utils/reservations/payments-view.ts:32
 msgid "Prepaid"
@@ -34467,6 +35084,11 @@ msgstr "السابق"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6124
 msgid "Preview"
 msgstr "معاينة"
+
+#: app/components/locations/copy-settings-dialog.tsx:508
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:539
+msgid "Preview changes"
+msgstr "معاينة التغييرات"
 
 #: app/components/menu/menu-bulk-edit-sheet.tsx:387
 msgid "Preview changes on the server, untick rows you do not want, then apply in one batch."
@@ -34618,7 +35240,7 @@ msgstr "الأسعار في"
 msgid "Prices confirmed."
 msgstr "تم تأكيد الأسعار."
 
-#: app/components/locations/location-form.tsx:738
+#: app/components/locations/location-form.tsx:751
 msgid "Prices include tax"
 msgstr "الأسعار شاملة الضريبة"
 
@@ -34674,7 +35296,7 @@ msgstr "قواعد التسعير"
 msgid "Primary"
 msgstr "أساسي"
 
-#: app/components/locations/location-form.tsx:776
+#: app/components/locations/location-form.tsx:796
 msgid "Primary / Default Location"
 msgstr "الفرع الرئيسي / الافتراضي"
 
@@ -34753,7 +35375,7 @@ msgstr "طباعة هذا العرض"
 msgid "Printed and shipped to your door. You can cancel until production starts."
 msgstr "تُطبع وتُشحن حتى بابك. يمكنك الإلغاء حتى يبدأ الإنتاج."
 
-#: app/components/locations/location-form.tsx:723
+#: app/components/locations/location-form.tsx:736
 msgid "Printed on receipts. Letters and digits only; leave empty if not registered."
 msgstr "يُطبع على الإيصالات. حروف وأرقام فقط؛ اتركه فارغًا إذا لم تكن مسجلًا."
 
@@ -34808,7 +35430,7 @@ msgstr "احترافي"
 msgid "Problem"
 msgstr "المشكلة"
 
-#: app/utils/dashboards/config.ts:136
+#: app/utils/dashboards/config.ts:137
 msgid "Problems that cost you orders, most urgent first, each with a way to fix it."
 msgstr "مشكلات تكلفك طلبات، الأكثر إلحاحًا أولًا، ولكل منها طريقة لإصلاحها."
 
@@ -35610,9 +36232,18 @@ msgstr "السبب (أنت وحدك ترى هذا)"
 
 #: app/components/launch/launch-checklist.tsx:200
 #: app/components/launch/launch-checklist.tsx:201
+#: app/components/locations/bulk-ordering-dialog.tsx:146
 #: app/components/reservations/requests-panel.tsx:191
 msgid "Reason (optional)"
 msgstr "السبب (اختياري)"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:562
+msgid "Reason shown to locations (optional)"
+msgstr "السبب المعروض للمواقع (اختياري)"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:251
+msgid "Reason shown to locations:"
+msgstr "السبب المعروض للمواقع:"
 
 #: app/components/my-schedule/time-cards-view.tsx:262
 msgid "Reason: {reason}"
@@ -36542,6 +37173,10 @@ msgstr "أزل الرمز {typedCode}"
 msgid "Remove contact"
 msgstr "إزالة جهة الاتصال"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:296
+msgid "Remove default"
+msgstr "إزالة الافتراضي"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:494
 msgid "Remove design"
 msgstr "إزالة التصميم"
@@ -36607,7 +37242,7 @@ msgstr "إزالة المدير"
 msgid "Remove media"
 msgstr "إزالة الوسائط"
 
-#: app/components/organization-members.tsx:260
+#: app/components/organization-members.tsx:267
 msgid "Remove member"
 msgstr "إزالة العضو"
 
@@ -36857,6 +37492,7 @@ msgstr "جارٍ الإزالة…"
 #: app/components/qr/tables-manager.tsx:405
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:201
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:284
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:421
 msgid "Rename"
 msgstr "إعادة تسمية"
 
@@ -36979,6 +37615,10 @@ msgstr "استبدال ما لديك؟"
 msgid "Replace with custom service"
 msgstr "استبدال بفترة خدمة مخصصة"
 
+#: app/components/locations/copy-settings-dialog.tsx:379
+msgid "Replace: swap the entries in the date range below"
+msgstr "استبدال: بدّل الإدخالات في نطاق التاريخ أدناه"
+
 #: app/components/staff/schedule/notice-lists.tsx:23
 msgid "Replaced by a newer message"
 msgstr "استُبدلت برسالة أحدث"
@@ -37033,7 +37673,7 @@ msgstr "رد…"
 #~ msgstr "الرد على التعليق"
 
 #: app/components/workspace-breadcrumb.tsx:109
-#: app/utils/dashboards/config.ts:143
+#: app/utils/dashboards/config.ts:152
 msgid "Report"
 msgstr "تقرير"
 
@@ -37264,7 +37904,7 @@ msgstr "سيتم حذف سجلات الحجوزات أيضاً"
 #: app/components/roles/tenant-role-access-manager.tsx:444
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 #: app/components/workspace-breadcrumb.tsx:75
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:674
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:714
 msgid "Reservations"
 msgstr "الحجوزات"
 
@@ -37498,6 +38138,7 @@ msgstr "راحة (مدفوعة)"
 msgid "Rest break"
 msgstr "استراحة قصيرة"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:46
 #: app/components/orders/ordering-controls.tsx:118
 msgid "Rest of today"
 msgstr "بقية اليوم"
@@ -37603,9 +38244,18 @@ msgstr "استئناف {name}"
 msgid "Resume it"
 msgstr "استئنافه"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:118
+msgid "Resume online ordering"
+msgstr "استئناف الطلب عبر الإنترنت"
+
 #: app/components/discounts/message-impact.tsx:520
 msgid "Resume only the discount"
 msgstr "استئناف الخصم فقط"
+
+#: app/components/locations/bulk-ordering-dialog.tsx:225
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:873
+msgid "Resume ordering"
+msgstr "استئناف الطلب"
 
 #: app/components/orders/ordering-controls.tsx:225
 msgid "Resume orders"
@@ -37958,6 +38608,14 @@ msgstr "منطق التوجيه:"
 msgid "Row"
 msgstr "الصف"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:564
+#~ msgid "Row {0}:"
+#~ msgstr "الصف {0}:"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:617
+msgid "Row {row}:"
+msgstr "الصف {row}:"
+
 #: app/components/inventory/bulk-review-rows.tsx:56
 #: app/components/staff/review-rows.tsx:58
 msgid "Row {rowNumber}"
@@ -38229,7 +38887,7 @@ msgstr "تم حفظ مبيعات {label}."
 
 #: app/components/dashboard/blocks/sales-goals-block.tsx:85
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:152
-#: app/utils/dashboards/config.ts:127
+#: app/utils/dashboards/config.ts:128
 msgid "Sales goals"
 msgstr "أهداف المبيعات"
 
@@ -38256,11 +38914,11 @@ msgstr "المبيعات لكل ساعة عمل"
 msgid "Sales tax"
 msgstr "ضريبة المبيعات"
 
-#: app/components/locations/location-form.tsx:693
+#: app/components/locations/location-form.tsx:706
 msgid "Sales Tax Rate (%)"
 msgstr "نسبة ضريبة المبيعات (%)"
 
-#: app/utils/dashboards/config.ts:120
+#: app/utils/dashboards/config.ts:121
 msgid "Sales, orders, guests and covers so far today, with yesterday and last week."
 msgstr "المبيعات والطلبات والضيوف والمقاعد حتى الآن اليوم، مقارنةً بالأمس والأسبوع الماضي."
 
@@ -38363,12 +39021,12 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/inventory/item-form.tsx:291
 #: app/components/inventory/supplier-form.tsx:389
 #: app/components/inventory/supplier-products.tsx:523
-#: app/components/member-location-scope.tsx:219
+#: app/components/member-location-scope.tsx:290
 #: app/components/menu/drop-wizard/drop-drawers.tsx:399
 #: app/components/menu/drop-wizard/drop-drawers.tsx:593
 #: app/components/menu/drop-wizard/drop-drawers.tsx:780
 #: app/components/note/comment-input.tsx:192
-#: app/components/organization-members.tsx:145
+#: app/components/organization-members.tsx:150
 #: app/components/qr/tables-manager.tsx:368
 #: app/components/reservations/experiences/schedule-sheet.tsx:183
 #: app/components/reservations/floor-plan-canvas.tsx:799
@@ -38479,12 +39137,16 @@ msgstr "حفظ البطاقة للمعاملات اللاحقة"
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
-#: app/components/locations/location-form.tsx:1524
+#: app/components/locations/location-form.tsx:1592
 #: app/components/menu/drop-wizard/drop-drawers.tsx:939
 #: app/components/menu/modifier-form.tsx:2150
 #: app/components/reservations/detail-sheet.tsx:1159
 msgid "Save Changes"
 msgstr "حفظ التغييرات"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:605
+msgid "Save default"
+msgstr "حفظ الافتراضي"
 
 #: app/components/inventory/record-delivery-screen.tsx:464
 msgid "Save delivery"
@@ -38534,6 +39196,10 @@ msgstr "حفظ المكوّنات"
 msgid "Save levels"
 msgstr "حفظ المستويات"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:488
+msgid "Save locations"
+msgstr "حفظ المواقع"
+
 #: app/components/menu/modifier-form.tsx:942
 msgid "Save Modifier Group"
 msgstr "حفظ مجموعة الإضافات"
@@ -38541,6 +39207,10 @@ msgstr "حفظ مجموعة الإضافات"
 #: app/components/reservations/experiences/experience-editor.tsx:598
 msgid "Save my changes on top"
 msgstr "حفظ تغييراتي فوق نسخته"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:449
+msgid "Save name"
+msgstr "حفظ الاسم"
 
 #: app/components/menu/option-form.tsx:471
 msgid "Save Option"
@@ -38705,6 +39375,10 @@ msgstr "تم الحفظ لـ {activeServiceName} (إصدار {0})"
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:369
 msgid "Saved groups of guests, by what they ordered, visited or earned. Use them to send a broadcast or to branch an automation."
 msgstr "مجموعات محفوظة من الضيوف، حسب ما طلبوه أو زاروه أو اكتسبوه. استخدمها لإرسال بث أو لتفريع أتمتة."
+
+#: app/components/locations/bulk-ordering-dialog.tsx:156
+msgid "Saved in the activity log with your name and the time, for every location."
+msgstr "يُحفظ في سجل النشاط مع اسمك والوقت، لكل موقع."
 
 #: app/components/loyalty/record-refund-dialog.tsx:278
 msgid "Saved in the audit log with your name."
@@ -39047,6 +39721,10 @@ msgstr "مجدولة"
 msgid "Scheduled"
 msgstr "مجدول"
 
+#: app/components/locations/location-setting-labels.ts:18
+msgid "Scheduled (advance) orders"
+msgstr "الطلبات المجدولة (مسبقًا)"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/settings.tsx:298
 msgid "Scheduled count day"
 msgstr "يوم الجرد المجدول"
@@ -39132,7 +39810,7 @@ msgstr "بحث"
 msgid "Search Address (Google Autocomplete)"
 msgstr "البحث عن عنوان (الإكمال التلقائي من Google)"
 
-#: app/components/locations/location-form.tsx:801
+#: app/components/locations/location-form.tsx:822
 msgid "Search and select location address with Google Autocomplete."
 msgstr "ابحث واختر عنوان الفرع باستخدام الإكمال التلقائي من Google."
 
@@ -39743,6 +40421,10 @@ msgstr "اطلع على مناطق الطعام والطاولات والدمج 
 msgid "See discounts, coupon codes, and their usage."
 msgstr "عرض الخصومات ورموز القسائم واستخدامها."
 
+#: app/components/dashboard/blocks/status-block.tsx:59
+msgid "See every check"
+msgstr "عرض كل الفحوصات"
+
 #: app/components/menu/menu-health-card.tsx:498
 msgid "See every missing name and description, for options and categories too"
 msgstr "اعرض كل اسم ووصف ناقص، للخيارات والفئات أيضًا"
@@ -39786,6 +40468,10 @@ msgstr "اطّلع على أعضاء الولاء والأرصدة وحركة ا
 #: app/components/roles/tenant-role-access-manager.tsx:525
 msgid "See loyalty reports and analytics."
 msgstr "اطّلع على تقارير الولاء وتحليلاتها."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:246
+msgid "See one setting at every location, choose several, and change them together."
+msgstr "اطّلع على إعداد واحد في كل موقع، واختر عدة مواقع، وغيّرها معًا."
 
 #: app/components/roles/tenant-role-access-manager.tsx:243
 msgid "See one-time email and SMS campaign history."
@@ -39876,8 +40562,15 @@ msgstr "شوهد الآن"
 msgid "Select"
 msgstr "تحديد"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1002
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:326
+#~ msgid "Select {0}"
+#~ msgstr "تحديد {0}"
+
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:555
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:483
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:694
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:177
 msgid "Select {name}"
 msgstr "تحديد {name}"
 
@@ -39955,11 +40648,20 @@ msgstr "حدد طاولة أو منطقة طعام لحظرها."
 msgid "Select a website page"
 msgstr "اختر صفحة موقع ويب"
 
+#: app/components/locations/copy-settings-dialog.tsx:252
 #: app/components/menu/menu-review-stack.tsx:936
 #: app/components/roles/tenant-role-access-manager.tsx:1108
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:308
 msgid "Select all"
 msgstr "تحديد الكل"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:300
+msgid "Select all locations"
+msgstr "تحديد كل المواقع"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:940
+msgid "Select all locations you can manage"
+msgstr "تحديد كل المواقع التي يمكنك إدارتها"
 
 #: app/components/menu/menu-bulk-bar.tsx:35
 msgid "Select all matching filter"
@@ -40133,7 +40835,7 @@ msgstr "عناصر مختارة"
 
 #: app/components/hiring/location-picker.tsx:100
 #: app/components/loyalty/promotion-dialog.tsx:817
-#: app/components/member-location-scope.tsx:146
+#: app/components/member-location-scope.tsx:175
 msgid "Selected locations"
 msgstr "فروع محددة"
 
@@ -40544,11 +41246,12 @@ msgid "Service ends"
 msgstr "تنتهي الخدمة"
 
 #: app/components/locations/checkout-settings-cards.tsx:287
+#: app/components/locations/location-setting-labels.ts:21
 #: app/components/orders/order-detail.tsx:996
 msgid "Service fee"
 msgstr "رسوم الخدمة"
 
-#: app/components/locations/location-form.tsx:575
+#: app/components/locations/location-form.tsx:588
 msgid "Service fee: {checkoutMessage}"
 msgstr "رسوم الخدمة: {checkoutMessage}"
 
@@ -40644,6 +41347,10 @@ msgstr "حدّد مستوى «املأ حتى» للأشياء التي تُحض
 msgid "Set a currency for this location or enter prices on the first delivery."
 msgstr "حدد عملة لهذا الفرع أو أدخل الأسعار في أول عملية استلام."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:141
+msgid "Set a default once for every location. Lock it so locations cannot change it, or leave it open and see which locations override it."
+msgstr "حدّد افتراضيًا مرة واحدة لكل موقع. اقفله كي لا تستطيع المواقع تغييره، أو اتركه مفتوحًا وانظر أي المواقع تخصّصه."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:606
 msgid "Set a guest limit or a party limit for pacing."
 msgstr "حدد حدًا للضيوف أو حدًا للمجموعات لتنظيم الحجوزات."
@@ -40666,11 +41373,15 @@ msgstr "اضبط رقم هاتف الفريق في التعامل مع المك�
 #~ msgid "Set a staff phone number in Setup"
 #~ msgstr "اضبط رقم هاتف الفريق في الإعداد"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:383
+msgid "Set a value"
+msgstr "تحديد قيمة"
+
 #: app/components/orders/daily-limits-panel.tsx:274
 msgid "Set amount left"
 msgstr "حدّد الكمية المتبقية"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:749
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1126
 msgid "Set as Default"
 msgstr "تعيين كافتراضي"
 
@@ -40701,6 +41412,10 @@ msgstr "حدّد ساعات مخصصة أو اجعل المطعم مغلقًا �
 #: ../../packages/ai/src/components/ai-chat.tsx:493
 msgid "Set deadlines"
 msgstr "تعيين المواعيد النهائية"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:236
+msgid "Set default"
+msgstr "تحديد افتراضي"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:440
 msgid "Set expiration date (optional)"
@@ -40831,6 +41546,10 @@ msgstr "جهّز طاولاتك الآن. يبدأ الطلب من الطاول�
 #: app/components/locations/availability-picker.tsx:466
 msgid "Set when online ordering, pickup, and delivery are accepted for this location."
 msgstr "حدّد وقت قبول الطلب عبر الإنترنت والاستلام والتوصيل لهذا الفرع."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:256
+msgid "Setting"
+msgstr "الإعداد"
 
 #~ msgid "Setting a limit helps you pace preparation and avoid crowding."
 #~ msgstr "يساعد وضع حد على تنظيم التحضير وتجنب الازدحام."
@@ -41147,6 +41866,10 @@ msgstr "نقص {short} ساعة عمل للأفراد مقابل الطلبات 
 msgid "Short by {short} person-hours and {over} over, against the orders you usually get"
 msgstr "نقص {short} ساعة عمل للأفراد وزيادة {over}، مقابل الطلبات التي تصلك عادة"
 
+#: app/components/locations/copy-settings-dialog.tsx:535
+msgid "Short day with these hours"
+msgstr "يوم قصير بهذه الساعات"
+
 #: app/components/staff/schedule/time-off-page.tsx:317
 msgid "Short notice."
 msgstr "مهلة قصيرة."
@@ -41258,6 +41981,10 @@ msgstr "عرض المزيد"
 #: app/components/menu/drop-wizard/drop-form.tsx:1396
 msgid "Show opening date"
 msgstr "إظهار تاريخ الفتح"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:307
+msgid "Show overrides"
+msgstr "عرض التخصيصات"
 
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:259
 msgid "Show price"
@@ -41652,11 +42379,19 @@ msgstr "تخطَّ الخطوة"
 msgid "Skip this task"
 msgstr "تخطي هذه المهمة"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:197
+msgid "skipped"
+msgstr "تم التخطي"
+
 #: app/components/inventory/prep-screen.tsx:431
 #: app/components/launch/launch-checklist.tsx:90
 #: app/components/staff/onboarding/task-row.tsx:285
 msgid "Skipped"
 msgstr "تم تخطيها"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:500
+msgid "skipped (different currency)"
+msgstr "تم التخطي (عملة مختلفة)"
 
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:684
 msgid "Skipped price range"
@@ -41665,6 +42400,10 @@ msgstr "نطاق سعر مستثنى"
 #: app/components/launch/launch-checklist.tsx:247
 msgid "Skipped: {skipReason}"
 msgstr "تم التخطي: {skipReason}"
+
+#: app/components/locations/location-setting-labels.ts:47
+msgid "Skipped: this location uses a different currency."
+msgstr "تم التخطي: يستخدم هذا الموقع عملة مختلفة."
 
 #. placeholder {0}: pendingConflictMove.message
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:878
@@ -42025,6 +42764,7 @@ msgid "Something went wrong. Check the form and try again."
 msgstr "حدث خطأ. راجع النموذج وحاول مرة أخرى."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:76
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:279
 #: app/utils/kiosk/kiosk-messages.ts:23
 msgid "Something went wrong. Please try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
@@ -42118,6 +42858,10 @@ msgstr "الأيام الخاصة وجداول العطلات"
 #: app/components/dashboard/blocks/attention-block.tsx:263
 msgid "Special hours"
 msgstr "ساعات خاصة"
+
+#: app/components/locations/location-setting-labels.ts:13
+msgid "Special hours (holidays)"
+msgstr "الساعات الخاصة (العطل)"
 
 #: app/components/locations/special-hours-picker.tsx:88
 msgid "Special Hours & Holiday Overrides"
@@ -42266,12 +43010,12 @@ msgid "Staff email is switched off, so nothing can be sent."
 msgstr "بريد الموظفين متوقف، لذا لا يمكن إرسال شيء."
 
 #: app/components/member-location-scope.tsx:108
-msgid "Staff locations"
-msgstr "فروع الموظفين"
+#~ msgid "Staff locations"
+#~ msgstr "فروع الموظفين"
 
 #: app/components/member-location-scope.tsx:99
-msgid "Staff locations for {memberName}: {summary}"
-msgstr "فروع الموظفين لدى {memberName}: {summary}"
+#~ msgid "Staff locations for {memberName}: {summary}"
+#~ msgstr "فروع الموظفين لدى {memberName}: {summary}"
 
 #: app/utils/inventory/labels.ts:58
 msgid "Staff meal"
@@ -42566,7 +43310,7 @@ msgstr "بدأ {startedAt} بواسطة <0>{by}</0>"
 msgid "Started At"
 msgstr "بدأ في"
 
-#: app/components/locations/location-form.tsx:1388
+#: app/components/locations/location-form.tsx:1450
 msgid "Starter"
 msgstr "المقبلات"
 
@@ -42624,7 +43368,7 @@ msgstr "يبدأ عند الساعة 10:00 بالتوقيت المحلي، مر�
 msgid "Starts on"
 msgstr "يبدأ في"
 
-#: app/components/locations/location-form.tsx:1423
+#: app/components/locations/location-form.tsx:1485
 msgid "Starts when every dish in the previous course is ready."
 msgstr "يبدأ عندما يصبح كل طبق في الوجبة السابقة جاهزًا."
 
@@ -42657,13 +43401,14 @@ msgstr "تطبيقات المحطة"
 msgid "Station terminals"
 msgstr "أجهزة Station"
 
-#: app/utils/dashboards/config.ts:79
+#: app/utils/dashboards/config.ts:80
 msgid "Stats"
 msgstr "الإحصائيات"
 
 #: app/components/customers/person-marketing-card.tsx:212
 #: app/components/customers/person-orders-panel.tsx:166
 #: app/components/customers/person-profile-screen.tsx:779
+#: app/components/dashboard/blocks/status-block.tsx:30
 #: app/components/inventory/stock-list.tsx:114
 #: app/components/menu/menu-bulk-edit-sheet.tsx:576
 #: app/components/orders/order-detail.tsx:1077
@@ -42696,12 +43441,14 @@ msgstr "الإحصائيات"
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:726
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:514
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:469
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:623
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:968
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:236
+#: app/routes/_app+/$orgSlug_+/status.tsx:52
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:207
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:628
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:122
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:222
+#: app/utils/dashboards/config.ts:144
 msgid "Status"
 msgstr "الحالة"
 
@@ -42725,6 +43472,10 @@ msgstr "فشل تغيير الحالة."
 
 #~ msgid "Status update failed."
 #~ msgstr "فشل تحديث الحالة."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:768
+msgid "Status: can each location take orders?"
+msgstr "الحالة: هل يستطيع كل موقع استقبال الطلبات؟"
 
 #: app/components/leave-page-dialog.tsx:38
 msgid "Stay"
@@ -42895,6 +43646,10 @@ msgstr "مناطق التخزين وقوائم الجرد"
 msgid "Storage migration"
 msgstr "ترحيل التخزين"
 
+#: app/components/locations/location-setting-labels.ts:11
+msgid "Store hours"
+msgstr "ساعات المتجر"
+
 #: app/components/locations/availability-picker.tsx:419
 msgid "Store Hours"
 msgstr "ساعات المطعم"
@@ -42903,7 +43658,7 @@ msgstr "ساعات المطعم"
 msgid "Store info"
 msgstr "معلومات المتجر"
 
-#: app/components/locations/location-form.tsx:1000
+#: app/components/locations/location-form.tsx:1029
 msgid "Store Pickup"
 msgstr "الاستلام من المطعم"
 
@@ -43227,7 +43982,7 @@ msgstr "الموردون"
 msgid "supported"
 msgstr "مدعوم"
 
-#: app/components/locations/location-form.tsx:1230
+#: app/components/locations/location-form.tsx:1287
 msgid "Supported Delivery Providers"
 msgstr "مزودو التوصيل المدعومون"
 
@@ -43551,7 +44306,7 @@ msgstr "تسمية الطاولة مطلوبة."
 msgid "Table locked"
 msgstr "تم قفل الطاولة"
 
-#: app/components/locations/location-form.tsx:1041
+#: app/components/locations/location-form.tsx:1073
 msgid "Table ordering and in-house steps."
 msgstr "الطلب من الطاولة وخطوات الخدمة الداخلية."
 
@@ -43665,6 +44420,7 @@ msgid "Tabs still open"
 msgstr "حسابات لا تزال مفتوحة"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:400
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:655
 msgid "Tag"
 msgstr "الوسم"
 
@@ -43674,11 +44430,14 @@ msgstr "الوسم"
 #: app/components/customers/person-profile-screen.tsx:687
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1498
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1499
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:331
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:443
 msgid "Tag name"
 msgstr "اسم الوسم"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:374
 #: app/components/customers/person-profile-screen.tsx:624
+#: app/components/member-location-scope.tsx:189
 #: app/components/phone-agent/agent-details.tsx:57
 #: app/components/phone-agent/call-follow-up.tsx:206
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1473
@@ -43687,6 +44446,10 @@ msgstr "الوسوم"
 
 #~ msgid "Tags & Notes"
 #~ msgstr "الوسوم والملاحظات"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:813
+msgid "Tags and import"
+msgstr "الوسوم والاستيراد"
 
 #: app/components/menu/dietary-tag-switches.tsx:84
 msgid "Tags are your own claims. Guests can filter the menu by them; allergens stay listed separately."
@@ -43741,6 +44504,10 @@ msgstr "خذني إلى الصفحة التي يمكنني منها دعوة أ�
 msgid "Take snapshot"
 msgstr "التقاط لقطة"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:533
+msgid "Take the value from"
+msgstr "خذ القيمة من"
+
 #: app/utils/inventory/starter-lists.ts:309
 msgid "Takeaway boxes"
 msgstr "علب الطلبات الخارجية"
@@ -43764,6 +44531,14 @@ msgstr "يخصم رسوم التوصيل."
 #: app/components/orders/ordering-controls.tsx:145
 msgid "Taking online orders"
 msgstr "يستقبل الطلبات عبر الإنترنت"
+
+#: app/components/status/location-status-view.tsx:66
+msgid "Taking orders"
+msgstr "يستقبل الطلبات"
+
+#: app/components/status/location-status-view.tsx:73
+msgid "Taking orders with problems"
+msgstr "يستقبل الطلبات مع وجود مشكلات"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:308
 msgid "Taking reservations"
@@ -44394,6 +45169,10 @@ msgstr "لم ينجح ذلك"
 msgid "That did not work. Try again."
 msgstr "لم تنجح العملية. حاول مرة أخرى."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:270
+msgid "That does not look like the locations file. Download it, edit it, and upload it again."
+msgstr "هذا لا يبدو ملف المواقع. نزّله وعدّله وارفعه مرة أخرى."
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:138
 msgid "That draft could not be used. Please try again."
 msgstr "تعذر استخدام هذه المسودة. يرجى المحاولة مرة أخرى."
@@ -44409,6 +45188,18 @@ msgstr "هذا البريد الإلكتروني غير صالح."
 #: app/utils/staffing/timesheet-form.ts:204
 msgid "That end time has not happened yet."
 msgstr "وقت الانتهاء هذا لم يحدث بعد."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:273
+msgid "That file has too many rows."
+msgstr "عدد صفوف هذا الملف كبير جدًا."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:267
+msgid "That file is empty."
+msgstr "هذا الملف فارغ."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:265
+msgid "That file is too large."
+msgstr "هذا الملف كبير جدًا."
 
 #: app/components/staff/labor/sales-import-dialog.tsx:79
 msgid "That file is too large. Split it into smaller files."
@@ -44566,6 +45357,10 @@ msgstr "في هذه الفترة بطاقات وقت أكثر من أن تُصد
 msgid "That report is not available in this organization."
 msgstr "هذا التقرير غير متاح في هذه المؤسسة."
 
+#: app/components/locations/location-setting-labels.ts:52
+msgid "That request was not valid. Check the form and try again."
+msgstr "لم يكن هذا الطلب صالحًا. تحقق من النموذج وحاول مرة أخرى."
+
 #: ../../packages/marketing/src/components/ai/rewrite-with-ai.tsx:92
 msgid "That rewrite could not be used. Please try again."
 msgstr "تعذر استخدام إعادة الصياغة هذه. يرجى المحاولة مرة أخرى."
@@ -44628,6 +45423,10 @@ msgstr "هذه الطاولة مشغولة في وقت هذه المجموعة. 
 msgid "That tablet has already been removed."
 msgstr "تمت إزالة هذا الجهاز اللوحي بالفعل."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:257
+msgid "That tag no longer exists."
+msgstr "هذا الوسم لم يعد موجودًا."
+
 #: ../../packages/marketing/src/components/email/email-templates.tsx:53
 msgid "That template no longer exists."
 msgstr "هذا القالب لم يعد موجودًا."
@@ -44652,6 +45451,11 @@ msgstr "هذا الوقت يتداخل مع وردية أخرى. اطلب من �
 #: app/utils/inventory/inventory-errors.ts:38
 msgid "That unit cannot measure this item. Pick another unit."
 msgstr "لا يمكن استخدام هذه الوحدة لقياس هذا الصنف. اختر وحدة أخرى."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:476
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:106
+msgid "That value is not allowed for this setting."
+msgstr "هذه القيمة غير مسموح بها لهذا الإعداد."
 
 #: app/utils/my-schedule/my-schedule-messages.ts:15
 msgid "That was too many requests at once. Try again in a few minutes."
@@ -45019,6 +45823,10 @@ msgstr "عملة فروعك"
 #: app/components/staff/access-tab.tsx:245
 msgid "The current PIN stops working right away. You will see the new one once."
 msgstr "يتوقف رمز PIN الحالي عن العمل فورًا. سترى الرمز الجديد مرة واحدة فقط."
+
+#: app/components/status/location-status-view.tsx:37
+msgid "The custom domain works."
+msgstr "النطاق المخصص يعمل."
 
 #~ msgid "The customer could not be erased. Try again; erasing again is safe."
 #~ msgstr "تعذّر محو العميل. حاول مرة أخرى؛ المحو مجددًا آمن."
@@ -45513,6 +46321,10 @@ msgstr "ما زال المطبخ يعمل على جزء من هذا الحساب
 msgid "The labor share only counts online orders, so it is higher than it really is and is not judged against your target."
 msgstr "تحتسب نسبة العمالة الطلبات عبر الإنترنت فقط، لذا هي أعلى مما هي عليه فعلًا ولا تُقيَّم مقابل هدفك."
 
+#: app/components/locations/location-setting-labels.ts:36
+msgid "The largest order a guest can place."
+msgstr "أكبر طلب يمكن للضيف تقديمه."
+
 #: app/utils/reservations/experiences-view.ts:228
 msgid "The largest party cannot be smaller than the smallest."
 msgstr "لا يمكن أن تكون أكبر مجموعة أصغر من أصغر مجموعة."
@@ -45565,6 +46377,10 @@ msgstr "تعذر تحديث القائمة. قد يكون ما تراه قديم
 #: app/components/reservations/booking-sheet.tsx:410
 msgid "The location is closed on this date. Turn on the closed-day override to book anyway."
 msgstr "الموقع مغلق في هذا التاريخ. فعّل تجاوز اليوم المغلق للحجز رغم ذلك."
+
+#: app/components/locations/location-setting-labels.ts:54
+msgid "The location to copy from was not found."
+msgstr "لم يتم العثور على الموقع المراد النسخ منه."
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:126
 msgid "The loyalty overview could not be loaded."
@@ -45764,6 +46580,10 @@ msgstr "تم نسخ نص الطلب."
 msgid "The pack you usually buy"
 msgstr "العبوة التي تشتريها عادةً"
 
+#: app/components/locations/location-setting-labels.ts:38
+msgid "The packaging or bag fee."
+msgstr "رسوم التغليف أو الأكياس."
+
 #: app/components/hiring/job-editor.tsx:771
 msgid "The page will not mention pay. Showing a range tends to bring more applications."
 msgstr "لن تذكر الصفحة الأجر. إظهار نطاق للأجر يجلب عادةً طلبات أكثر."
@@ -45841,6 +46661,14 @@ msgstr "لم تردّ خدمة الدفع. لم يضع شيء؛ حاول مرة 
 msgid "The payment was already refunded."
 msgstr "سبق استرداد هذه الدفعة."
 
+#: app/components/status/location-status-view.tsx:26
+msgid "The payments account can take card payments."
+msgstr "حساب المدفوعات يمكنه قبول الدفع بالبطاقة."
+
+#: app/components/status/location-status-view.tsx:30
+msgid "The payments account is not active, so guests cannot pay online. Finish connecting it."
+msgstr "حساب المدفوعات غير نشط، لذلك لا يستطيع الضيوف الدفع عبر الإنترنت. أكمل ربطه."
+
 #: app/components/reservations/payment-panel.tsx:167
 msgid "The payments for this booking could not be loaded."
 msgstr "تعذّر تحميل مدفوعات هذا الحجز."
@@ -45860,6 +46688,14 @@ msgstr "الأشخاص الذين يعملون هنا: قائمة الموظفي
 #: app/components/staff/labor/tip-settings-dialog.tsx:125
 msgid "The percentages need to add up to 100."
 msgstr "يجب أن يكون مجموع النسب 100."
+
+#: app/components/status/location-status-view.tsx:44
+msgid "The phone agent is on and has an active line."
+msgstr "وكيل الهاتف مفعّل ولديه خط نشط."
+
+#: app/components/status/location-status-view.tsx:46
+msgid "The phone agent is on but has no active phone line for this location."
+msgstr "وكيل الهاتف مفعّل لكن لا يوجد خط هاتف نشط لهذا الموقع."
 
 #: app/components/customers/person-profile-screen.tsx:1073
 msgid "The phone number is managed through sign-in."
@@ -46143,6 +46979,10 @@ msgstr "لم يتمكن الخادم من تطبيقه"
 msgid "The service could not accept this row."
 msgstr "تعذّر على الخدمة قبول هذا الصف."
 
+#: app/components/locations/location-setting-labels.ts:37
+msgid "The service fee guests pay at checkout."
+msgstr "رسوم الخدمة التي يدفعها الضيوف عند الدفع."
+
 #: app/utils/reservations/host-errors.ts:17
 msgid "The service is closed at that time."
 msgstr "الخدمة مغلقة في ذلك الوقت."
@@ -46368,6 +47208,18 @@ msgstr "تعذّر تحميل قائمة الانتظار. تحقق من اتص�
 msgid "The waitlist is full. Raise the party limit in Waitlist settings to add more."
 msgstr "قائمة الانتظار ممتلئة. ارفع الحد الأقصى للمجموعات في إعدادات قائمة الانتظار لإضافة المزيد."
 
+#: app/components/status/location-status-view.tsx:36
+msgid "The website is not published, so guests cannot reach your menu."
+msgstr "الموقع الإلكتروني غير منشور، لذلك لا يستطيع الضيوف الوصول إلى قائمتك."
+
+#: app/components/status/location-status-view.tsx:34
+msgid "The website is published."
+msgstr "الموقع الإلكتروني منشور."
+
+#: app/components/locations/location-setting-labels.ts:27
+msgid "The weekly opening hours of the restaurant."
+msgstr "ساعات العمل الأسبوعية للمطعم."
+
 #: app/components/staff/labor/tip-settings-dialog.tsx:94
 msgid "The whole date range together"
 msgstr "الفترة كاملة معًا"
@@ -46448,6 +47300,10 @@ msgstr "لا توجد ورديات لحفظها. أضف بعض الورديات 
 #: app/utils/staffing/schedule-errors.ts:30
 msgid "There is already a request waiting on this shift."
 msgstr "يوجد طلب بانتظار القرار على هذه الوردية بالفعل."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:462
+msgid "There is no chain default for this setting, so each selected location returns to the standard value."
+msgstr "لا يوجد افتراضي للسلسلة لهذا الإعداد، لذلك يعود كل موقع محدد إلى القيمة القياسية."
 
 #: app/utils/staffing/labor-errors.ts:36
 msgid "There is no Date column."
@@ -46992,7 +47848,7 @@ msgstr "تم دمج هذا العميل في ملف آخر."
 msgid "This dashboard does not exist or you do not have access to it."
 msgstr "لوحة التحكم هذه غير موجودة أو ليس لديك صلاحية الوصول إليها."
 
-#: app/components/dashboard/add-block-dialog.tsx:134
+#: app/components/dashboard/add-block-dialog.tsx:135
 msgid "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
 msgstr "تحتوي لوحة التحكم هذه على {MAX_DASHBOARD_BLOCKS} كتلة، وهو الحد الأقصى. أزل كتلة لإضافة كتلة أخرى."
 
@@ -47136,6 +47992,10 @@ msgstr "هذه الرسوم قيد التحصيل بالفعل أو سبق تح�
 msgid "This file does not match the template. Download the template, change only the price and availability columns, and upload it again."
 msgstr "هذا الملف لا يطابق القالب. نزّل القالب وغيّر أعمدة السعر والتوفر فقط، ثم ارفعه مرة أخرى."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:262
+msgid "This file would create more than {MAX_LOCATION_TAGS} tags. Nothing was changed."
+msgstr "سينشئ هذا الملف أكثر من {MAX_LOCATION_TAGS} وسمًا. لم يتغيّر شيء."
+
 #: app/components/reservations/floor-plan-canvas.tsx:841
 msgid "This floor plan was changed by someone else"
 msgstr "تم تغيير مخطط الصالة هذا بواسطة شخص آخر"
@@ -47262,6 +48122,14 @@ msgstr "انتهت صلاحية هذا الرابط"
 msgid "This link was turned off"
 msgstr "تم إيقاف هذا الرابط"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:539
+msgid "This location appears twice in the file."
+msgstr "يظهر هذا الموقع مرتين في الملف."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:537
+msgid "This location id does not exist."
+msgstr "معرّف هذا الموقع غير موجود."
+
 #: app/utils/reservations/host-errors.ts:23
 msgid "This location is no longer available."
 msgstr "هذا الموقع لم يعد متاحاً."
@@ -47270,6 +48138,10 @@ msgstr "هذا الموقع لم يعد متاحاً."
 #: app/components/pos/station-register-settings.tsx:158
 msgid "This location no longer exists. Reload the page."
 msgstr "هذا الفرع لم يعد موجودًا. أعد تحميل الصفحة."
+
+#: app/components/locations/location-setting-labels.ts:43
+msgid "This location's online hours are set to follow its store hours. The copied hours apply until its store hours are changed."
+msgstr "ساعات الطلب عبر الإنترنت في هذا الموقع مضبوطة لتتبع ساعات المتجر. تُطبَّق الساعات المنسوخة إلى أن تتغيّر ساعات المتجر."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:894
 msgid "This menu has no categories assigned yet. Go to Menus to add categories and items."
@@ -47499,6 +48371,10 @@ msgstr "يشغل هذا الشخص عدة مناصب هنا. اختر المنص
 msgid "This person is not set up for that position here. You can still schedule them."
 msgstr "هذا الشخص غير مهيأ لهذا المنصب هنا. ما زال بإمكانك جدولته."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:543
+msgid "This phone number is not valid."
+msgstr "رقم الهاتف هذا غير صالح."
+
 #: app/utils/kiosk/kiosk-messages.ts:48
 msgid "This PIN is paused for a few minutes. Ask a manager."
 msgstr "هذا الرقم السري متوقف مؤقتًا لبضع دقائق. اسأل مديرًا."
@@ -47665,7 +48541,7 @@ msgstr "يتعارض هذا الطلب مع طلب سابق. أعد التحمي
 msgid "This request was already decided."
 msgstr "تم البتّ في هذا الطلب مسبقًا."
 
-#: app/components/member-location-scope.tsx:164
+#: app/components/member-location-scope.tsx:235
 msgid "This restaurant has no active locations yet."
 msgstr "لا توجد فروع نشطة لهذا المطعم بعد."
 
@@ -47703,6 +48579,18 @@ msgstr "تم تعديل هذه الخدمة بواسطة شخص آخر. حمّل
 
 #~ msgid "This service was updated by another operator. Reloading latest services."
 #~ msgstr "تم تحديث فترة الخدمة هذه بواسطة مشغل آخر. جارٍ إعادة تحميل أحدث فترات الخدمة."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:112
+msgid "This setting cannot have a chain default."
+msgstr "لا يمكن أن يكون لهذا الإعداد افتراضي للسلسلة."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:114
+msgid "This setting has no chain default yet."
+msgstr "ليس لهذا الإعداد افتراضي للسلسلة بعد."
+
+#: app/components/locations/location-setting-labels.ts:56
+msgid "This setting is not available for your restaurant yet."
+msgstr "هذا الإعداد غير متاح لمطعمك بعد."
 
 #: app/utils/staffing/schedule-errors.ts:31
 msgid "This shift changed after the request was made. Ask the person to request again."
@@ -47770,6 +48658,10 @@ msgstr "هذا الجهاز اللوحي غير جاهز بعد. اسأل مدي
 #: app/components/kiosk/kiosk-pair.tsx:28
 msgid "This tablet was disconnected"
 msgstr "تم فصل هذا الجهاز اللوحي"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:545
+msgid "This tag name is not valid."
+msgstr "اسم الوسم هذا غير صالح."
 
 #: app/utils/discounts/labels.ts:214
 msgid "This time is outside the weekly hours."
@@ -48211,7 +49103,7 @@ msgstr "عرض سجلات الدوام"
 msgid "Timesheets"
 msgstr "سجلات الدوام"
 
-#: app/components/locations/location-form.tsx:671
+#: app/components/locations/location-form.tsx:684
 msgid "Timezone"
 msgstr "المنطقة الزمنية"
 
@@ -48237,11 +49129,15 @@ msgstr "البقشيش ({tipPercent}%)"
 #~ msgid "Tip (optional)"
 #~ msgstr "إكرامية (اختياري)"
 
+#: app/components/locations/location-setting-labels.ts:33
+msgid "Tip buttons at checkout and in-house tips."
+msgstr "أزرار الإكرامية عند الدفع والإكراميات في المطعم."
+
 #: app/components/locations/checkout-settings-cards.tsx:78
 msgid "Tip choices at checkout"
 msgstr "خيارات الإكرامية عند الدفع"
 
-#: app/components/locations/location-form.tsx:577
+#: app/components/locations/location-form.tsx:590
 msgid "Tip choices: {checkoutMessage}"
 msgstr "خيارات الإكرامية: {checkoutMessage}"
 
@@ -48253,7 +49149,7 @@ msgstr "الإكرامية بعملة {currency} (اختياري)"
 msgid "Tip pool: tips by day"
 msgstr "صندوق البقشيش: البقشيش حسب اليوم"
 
-#: app/components/locations/location-form.tsx:1081
+#: app/components/locations/location-form.tsx:1118
 msgid "Tip prompt options and advance order scheduling rules."
 msgstr "خيارات طلب البقشيش وقواعد جدولة الطلبات المسبقة."
 
@@ -48273,6 +49169,7 @@ msgstr "حصص الإكراميات"
 msgid "Tip: give printed cards a code of their own (for example FLYER10) to see how many orders they bring in."
 msgstr "نصيحة: خصّص للبطاقات المطبوعة رمزًا خاصًا بها (مثل FLYER10) لتعرف عدد الطلبات التي تجلبها."
 
+#: app/components/locations/location-setting-labels.ts:17
 #: app/components/pos/pos-day-report.tsx:257
 #: app/components/staff/labor/labor-page.tsx:198
 #: app/components/staff/timesheets/card-fields.tsx:184
@@ -48280,7 +49177,7 @@ msgstr "نصيحة: خصّص للبطاقات المطبوعة رمزًا خاص
 msgid "Tips"
 msgstr "الإكراميات"
 
-#: app/components/locations/location-form.tsx:1078
+#: app/components/locations/location-form.tsx:1115
 msgid "Tips & Order Scheduling"
 msgstr "البقشيش وجدولة الطلبات"
 
@@ -48317,6 +49214,10 @@ msgstr "إلى"
 msgid "To"
 msgstr "إلى"
 
+#: app/components/locations/copy-settings-dialog.tsx:394
+msgid "To (optional)"
+msgstr "إلى (اختياري)"
+
 #: app/components/inventory/transfers-panel.tsx:207
 msgid "To <0>{other}</0>"
 msgstr "إلى <0>{other}</0>"
@@ -48324,6 +49225,10 @@ msgstr "إلى <0>{other}</0>"
 #: app/components/staff/timesheets/payroll-summary.tsx:174
 msgid "To approve"
 msgstr "بانتظار الموافقة"
+
+#: app/components/locations/lockable-section.tsx:104
+msgid "To change it, ask head office to change the chain default."
+msgstr "لتغييره، اطلب من الإدارة العليا تغيير افتراضي السلسلة."
 
 #: app/components/staff/labor/labor-tips.tsx:232
 msgid "To divide"
@@ -48403,7 +49308,7 @@ msgstr "إلى: {recipient}"
 #: app/components/workspace-breadcrumb.tsx:76
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:219
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
-#: app/utils/dashboards/config.ts:119
+#: app/utils/dashboards/config.ts:120
 msgid "Today"
 msgstr "اليوم"
 
@@ -48415,7 +49320,7 @@ msgstr "تعذّر تحميل حجوزات اليوم."
 msgid "Today's dish limits"
 msgstr "حدود الأطباق لليوم"
 
-#: app/utils/dashboards/config.ts:112
+#: app/utils/dashboards/config.ts:113
 msgid "Today's reservations by status, covers by service, and the next arrivals."
 msgstr "حجوزات اليوم حسب الحالة وعدد الضيوف حسب الخدمة والوصول القادم."
 
@@ -48505,7 +49410,7 @@ msgstr "أرقام سرية خاطئة كثيرة. حاول مرة أخرى بع
 msgid "Too old to send"
 msgstr "أصبحت قديمة للإرسال"
 
-#: app/utils/dashboards/config.ts:103
+#: app/utils/dashboards/config.ts:104
 msgid "Top contributors"
 msgstr "أفضل المساهمين"
 
@@ -48569,11 +49474,11 @@ msgstr "الإجمالي قبل ضريبة المبيعات"
 #~ msgid "Total Covers"
 #~ msgstr "إجمالي الضيوف"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:236
+#: app/routes/_app+/$orgSlug_+/index.tsx:241
 msgid "Total notes"
 msgstr "إجمالي الملاحظات"
 
-#: app/utils/dashboards/config.ts:80
+#: app/utils/dashboards/config.ts:81
 msgid "Total notes, the daily average and the trend."
 msgstr "إجمالي الملاحظات والمتوسط اليومي والاتجاه."
 
@@ -48753,7 +49658,7 @@ msgstr "الترجمات"
 msgid "Transport"
 msgstr "المواصلات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:248
+#: app/routes/_app+/$orgSlug_+/index.tsx:253
 msgid "Trend"
 msgstr "الاتجاه"
 
@@ -48893,7 +49798,7 @@ msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل مجم�
 msgid "Try adjusting your filters or clear them to see all options."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل الخيارات."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:600
+#: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:928
 msgid "Try adjusting your filters or clear them to see all restaurant locations."
 msgstr "جرّب تعديل الفلاتر أو مسحها لعرض كل فروع المطعم."
 
@@ -49281,6 +50186,10 @@ msgstr "اكتب <0>{orgSlug}</0> للتأكيد"
 msgid "Type a cost instead"
 msgstr "أدخل تكلفة بدلًا من ذلك"
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:483
+msgid "Type a value"
+msgstr "اكتب قيمة"
+
 #: app/utils/staffing/labor-view.ts:130
 msgid "Type in each day's sales, or upload a file from your register. The share is judged against your target."
 msgstr "اكتب مبيعات كل يوم، أو ارفع ملفًا من صندوقك. تُقيَّم النسبة مقابل هدفك."
@@ -49325,7 +50234,7 @@ msgstr "الطلبات النموذجية عبر الإنترنت"
 msgid "Typical online orders by hour"
 msgstr "الطلبات النموذجية عبر الإنترنت حسب الساعة"
 
-#: app/components/locations/location-form.tsx:1263
+#: app/components/locations/location-form.tsx:1320
 msgid "Uber Eats"
 msgstr "أوبر إيتس"
 
@@ -49629,6 +50538,7 @@ msgstr "غير مدرج"
 
 #: app/components/staff/timesheets/card-sheet.tsx:467
 #: app/components/staff/timesheets/timesheets-page.tsx:982
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:281
 msgid "Unlock"
 msgstr "فتح القفل"
 
@@ -49774,6 +50684,10 @@ msgstr "حتى {returnTime}"
 msgid "Until {until}"
 msgstr "حتى {until}"
 
+#: app/components/locations/bulk-ordering-dialog.tsx:47
+msgid "Until I resume it"
+msgstr "حتى أستأنفه"
+
 #: app/components/orders/ordering-controls.tsx:119
 msgid "Until I turn it back on"
 msgstr "حتى أعيد تشغيله"
@@ -49889,7 +50803,7 @@ msgstr "التحديث من Canva"
 msgid "Update from menu"
 msgstr "التحديث من القائمة"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:639
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:679
 msgid "Update location details, hours, and fulfillment preferences."
 msgstr "حدّث تفاصيل الفرع وساعاته وتفضيلات التنفيذ."
 
@@ -50129,7 +51043,7 @@ msgstr "تم نسخ الرابط إلى الحافظة"
 msgid "URL Redirects"
 msgstr "عمليات إعادة توجيه عناوين URL"
 
-#: app/components/locations/location-form.tsx:639
+#: app/components/locations/location-form.tsx:652
 msgid "URL Slug"
 msgstr "المعرّف في الرابط"
 
@@ -50172,6 +51086,10 @@ msgstr "استخدم {count} أو أكثر."
 #: app/components/dashboard/dashboard-name-dialog.tsx:47
 msgid "Use {DASHBOARD_NAME_MAX_LENGTH} characters or fewer."
 msgstr "استخدم {DASHBOARD_NAME_MAX_LENGTH} حرفًا أو أقل."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:249
+msgid "Use {LOCATION_TAG_NAME_MAX_LENGTH} characters or fewer."
+msgstr "استخدم {LOCATION_TAG_NAME_MAX_LENGTH} حرفًا أو أقل."
 
 #: app/components/menu/menu-review-card.tsx:165
 msgid "Use {subject}"
@@ -50251,6 +51169,10 @@ msgstr "استخدم رابطًا كاملًا يبدأ بـ https://"
 msgid "Use a JPEG, PNG, or WebP photo up to 10 MB."
 msgstr "استخدم صورة بصيغة JPEG أو PNG أو WebP بحجم يصل إلى 10 ميغابايت."
 
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:492
+msgid "Use a location's value"
+msgstr "استخدم قيمة موقع"
+
 #: app/components/hiring/job-editor.tsx:477
 msgid "Use a number like 18 or 18.50."
 msgstr "استخدم رقمًا مثل 18 أو 18.50."
@@ -50328,6 +51250,7 @@ msgstr "استخدم: متاح أو نفد أو مخفي."
 
 #: app/components/phone-agent/phrase-fields.tsx:430
 #: app/components/phone-agent/voice-picker.tsx:662
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:337
 msgid "Use default"
 msgstr "استخدام الافتراضي"
 
@@ -50391,12 +51314,24 @@ msgstr "استخدم زاوية صورتك وتأطيرها بدلًا من زا
 msgid "Use the country code, like +14155550123."
 msgstr "استخدم رمز الدولة، مثل ‎+14155550123."
 
+#: app/components/locations/lockable-section.tsx:124
+msgid "Use the default again"
+msgstr "استخدم الافتراضي مرة أخرى"
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:353
+msgid "Use the default at every location"
+msgstr "استخدم الافتراضي في كل موقع"
+
 #: app/components/qr/open-tabs.tsx:1250
 msgid "Use the new total"
 msgstr "استخدم الإجمالي الجديد"
 
 #~ msgid "Use the switch in Agent settings."
 #~ msgstr "استخدم المفتاح في إعدادات الوكيل."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:445
+msgid "Use the value of"
+msgstr "استخدم قيمة"
 
 #: app/components/reservations/experiences/experience-editor.tsx:586
 msgid "Use their version"
@@ -50461,7 +51396,7 @@ msgstr "مستخدم في"
 msgid "Used in the web address of the page. Lowercase letters, numbers and dashes."
 msgstr "يُستخدم في عنوان الصفحة على الويب. أحرف إنجليزية صغيرة وأرقام وشرطات."
 
-#: app/components/locations/location-form.tsx:650
+#: app/components/locations/location-form.tsx:663
 msgid "Used on the public online ordering website."
 msgstr "يُستخدم في موقع الطلب عبر الإنترنت العام."
 
@@ -50632,7 +51567,7 @@ msgstr "ضريبة القيمة المضافة ({currency})"
 msgid "VAT number"
 msgstr "الرقم الضريبي"
 
-#: app/components/locations/location-form.tsx:710
+#: app/components/locations/location-form.tsx:723
 msgid "VAT Registration Number"
 msgstr "الرقم الضريبي (ضريبة القيمة المضافة)"
 
@@ -50650,7 +51585,7 @@ msgstr "نباتي صرف"
 msgid "Vegetarian"
 msgstr "نباتي"
 
-#: app/components/locations/location-form.tsx:1059
+#: app/components/locations/location-form.tsx:1094
 msgid "Vehicle pickup with car details."
 msgstr "استلام بالسيارة مع بيانات المركبة."
 
@@ -51073,7 +52008,7 @@ msgstr "مقارنة بآخر سعر"
 msgid "vs last week"
 msgstr "مقارنةً بالأسبوع الماضي"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:259
+#: app/routes/_app+/$orgSlug_+/index.tsx:264
 msgid "Vs prior period"
 msgstr "مقارنة بالفترة السابقة"
 
@@ -52026,6 +52961,10 @@ msgstr "وظيفة هذا الخيار"
 msgid "What this person agreed to receive. This is the only place consent is recorded; broadcasts and automations follow it."
 msgstr "ما وافق هذا الشخص على تلقيه. هذا هو المكان الوحيد الذي تُسجَّل فيه الموافقة، وتلتزم به الحملات والأتمتة."
 
+#: app/components/locations/copy-settings-dialog.tsx:325
+msgid "What to copy"
+msgstr "ما الذي تنسخه"
+
 #: app/components/inventory/start-count-dialog.tsx:185
 msgid "What to count"
 msgstr "ما سيتم جرده"
@@ -52160,6 +53099,10 @@ msgstr "متى وأين يستلم العملاء طلباتهم."
 #: app/utils/discounts/summary.ts:286
 msgid "When buying {quantity} or more"
 msgstr "عند شراء {quantity} أو أكثر"
+
+#: app/components/locations/location-setting-labels.ts:28
+msgid "When guests can place online orders."
+msgstr "متى يمكن للضيوف تقديم الطلبات عبر الإنترنت."
 
 #: app/components/reservations/experiences/experience-editor.tsx:834
 msgid "When it runs. To change the seatings on certain dates, add a schedule limited to those dates."
@@ -52352,6 +53295,14 @@ msgstr "مكان الوظيفة"
 #: app/components/hiring/interview-dialog.tsx:239
 msgid "Where to go, who to ask for, or the call-in details or meeting link."
 msgstr "أين يذهب، وعمّن يسأل، أو تفاصيل الاتصال أو رابط الاجتماع."
+
+#: app/utils/dashboards/config.ts:145
+msgid "Whether each location can take orders right now, and what is blocking it."
+msgstr "هل يستطيع كل موقع استقبال الطلبات الآن، وما الذي يمنعه."
+
+#: app/components/locations/location-setting-labels.ts:34
+msgid "Whether guests can order ahead and how far."
+msgstr "هل يمكن للضيوف الطلب مسبقًا وإلى أي مدى."
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:208
 msgid "Whether online tips may be shared depends on where you operate. Delivery tips often belong to the driver, so they are left out unless you choose them."
@@ -52931,7 +53882,7 @@ msgstr "أمس"
 #~ msgstr "أنت"
 
 #: app/components/hiring/candidate-parts.tsx:374
-#: app/components/organization-members.tsx:223
+#: app/components/organization-members.tsx:228
 #: app/components/phone-agent/test-call-panel.tsx:681
 msgid "You"
 msgstr "أنت"
@@ -53061,6 +54012,10 @@ msgstr "يمكنك إنشاء ملاحظات لمنظمتك هنا."
 #: app/components/marketing/campaign-actions.tsx:318
 msgid "You can do this from {readyAtText}, 48 hours after it finished."
 msgstr "يمكنك فعل ذلك ابتداءً من {readyAtText}، أي بعد 48 ساعة من انتهائها."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:254
+msgid "You can have at most {MAX_LOCATION_TAGS} tags. Delete one you no longer use first."
+msgstr "يمكنك امتلاك {MAX_LOCATION_TAGS} وسمًا كحد أقصى. احذف وسمًا لا تستخدمه أولًا."
 
 #: ../../packages/marketing/src/components/email/email-templates.tsx:48
 msgid "You can keep up to 100 templates. Delete one to save another."
@@ -53222,6 +54177,10 @@ msgstr "ليس لديك صلاحية الوصول إلى سياسات الدفع
 msgid "You do not have access to reservations for this location."
 msgstr "ليس لديك صلاحية الوصول إلى حجوزات هذا الموقع."
 
+#: app/components/locations/location-setting-labels.ts:53
+msgid "You do not have access to that location."
+msgstr "ليس لديك صلاحية الوصول إلى هذا الموقع."
+
 #: app/utils/staffing/staff-errors.ts:12
 msgid "You do not have access to that workplace."
 msgstr "لا تملك صلاحية الوصول إلى مكان العمل ذلك."
@@ -53303,6 +54262,10 @@ msgstr "ليست لديك صلاحية استرداد مبلغ هذا الطلب
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1207
 msgid "You do not have permission to view this note"
 msgstr "ليس لديك إذن لعرض هذه الملاحظة"
+
+#: app/components/locations/location-setting-labels.ts:58
+msgid "You do not manage this location"
+msgstr "أنت لا تدير هذا الموقع"
 
 #: app/components/chat/chat-view.tsx:274
 msgid "You don't have access to any channels yet. Ask an admin to add you to one."
@@ -53609,6 +54572,10 @@ msgstr "تم حفظ تغييراتك، لكن تعذّر تحميل رموز QR 
 msgid "Your custom domain has a problem"
 msgstr "توجد مشكلة في نطاقك الخاص"
 
+#: app/components/status/location-status-view.tsx:39
+msgid "Your custom domain has a problem. Guests can still reach the site on its Menuza address."
+msgstr "لدى نطاقك المخصص مشكلة. لا يزال بإمكان الضيوف الوصول إلى الموقع عبر عنوانه على Menuza."
+
 #: app/components/settings/cards/organization/shop-card.tsx:399
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك المنشور بعد تفعيل المدفوعات."
@@ -53648,6 +54615,10 @@ msgstr "ساعات العمل والهاتف والعنوان. يذكرها ال
 #: app/components/settings/cards/guest-messages-card.tsx:53
 msgid "Your items, the total and the pickup or delivery details."
 msgstr "أصناف طلبك والإجمالي وتفاصيل الاستلام أو التوصيل."
+
+#: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:109
+msgid "Your locations use different currencies, so one amount cannot be the default. Set it on each location instead."
+msgstr "تستخدم مواقعك عملات مختلفة، لذلك لا يمكن أن يكون مبلغ واحد هو الافتراضي. اضبطه على كل موقع بدلًا من ذلك."
 
 #: app/components/discounts/discount-form.tsx:1907
 #: app/components/discounts/fields.tsx:487
@@ -53776,7 +54747,7 @@ msgstr "ستسري خدماتك المعتادة مجددا في تلك التو
 msgid "Your regular services apply every day until you add an exception."
 msgstr "تسري خدماتك المعتادة كل يوم إلى أن تضيف استثناءً."
 
-#: app/utils/dashboards/config.ts:96
+#: app/utils/dashboards/config.ts:97
 msgid "Your remaining setup steps."
 msgstr "خطوات الإعداد المتبقية."
 

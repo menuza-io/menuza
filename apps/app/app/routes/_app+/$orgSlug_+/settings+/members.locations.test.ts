@@ -313,6 +313,7 @@ describe('members loader: staff location control', () => {
 		expect(result.staffingLocations?.access[target.id]).toEqual({
 			scope: 'selected',
 			locationIds: [a],
+			tagIds: [],
 		})
 	})
 

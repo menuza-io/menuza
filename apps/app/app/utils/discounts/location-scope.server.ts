@@ -1,12 +1,5 @@
-import {
-	and,
-	db,
-	eq,
-	OrganizationLocation,
-	UserOrganization,
-	UserOrganizationLocation,
-} from '@repo/database'
 import { z } from 'zod'
+import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
 
 /**
  * Location scoping for discount operators (`null` = every location; `[]` = none).
@@ -16,40 +9,7 @@ export async function resolveDiscountLocationIds(
 	userId: string,
 	organizationId: string,
 ): Promise<string[] | null> {
-	const [membership] = await db
-		.select({
-			locationScope: UserOrganization.locationScope,
-			active: UserOrganization.active,
-		})
-		.from(UserOrganization)
-		.where(
-			and(
-				eq(UserOrganization.userId, userId),
-				eq(UserOrganization.organizationId, organizationId),
-			),
-		)
-		.limit(1)
-	if (!membership?.active) return []
-	if (membership.locationScope === 'all') return null
-	if (membership.locationScope !== 'selected') return []
-
-	const rows = await db
-		.select({ locationId: UserOrganizationLocation.locationId })
-		.from(UserOrganizationLocation)
-		.innerJoin(
-			OrganizationLocation,
-			and(
-				eq(OrganizationLocation.id, UserOrganizationLocation.locationId),
-				eq(OrganizationLocation.organizationId, organizationId),
-			),
-		)
-		.where(
-			and(
-				eq(UserOrganizationLocation.userId, userId),
-				eq(UserOrganizationLocation.organizationId, organizationId),
-			),
-		)
-	return [...new Set(rows.map((row) => row.locationId))].sort()
+	return resolveMemberLocationIds(userId, organizationId)
 }
 
 /**

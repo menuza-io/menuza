@@ -32,14 +32,20 @@ export function hiddenBlockIds(
  */
 export function inaccessibleBuiltInBlockIds(
 	blocks: readonly DashboardBlock[],
-	access: { bookingsToday: boolean; today: boolean; salesGoals: boolean },
+	access: {
+		bookingsToday: boolean
+		today: boolean
+		salesGoals: boolean
+		status?: boolean
+	},
 ): string[] {
 	return blocks
 		.filter(
 			(block) =>
 				(block.type === 'bookings-today' && !access.bookingsToday) ||
 				(block.type === 'today' && !access.today) ||
-				(block.type === 'sales-goals' && !access.salesGoals),
+				(block.type === 'sales-goals' && !access.salesGoals) ||
+				(block.type === 'status' && !access.status),
 		)
 		.map((block) => block.id)
 }

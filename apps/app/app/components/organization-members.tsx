@@ -33,6 +33,7 @@ import {
 	MemberLocationScopeEditor,
 	type MemberLocationAccess,
 	type MemberLocationOption,
+	type MemberLocationTagOption,
 } from '#app/components/member-location-scope.tsx'
 import { useRoleLabels } from '#app/utils/organization/role-label.ts'
 
@@ -43,10 +44,14 @@ export interface OrganizationRoleOption {
 	isBuiltIn: boolean
 }
 
-/** Present only for admins while the Staff module is on and the org has locations. */
+/**
+ * Present only for admins, while the Staff module is on or the organization has
+ * location tags, and the org has locations.
+ */
 export interface StaffingLocationControl {
 	locations: MemberLocationOption[]
 	access: Record<string, MemberLocationAccess>
+	tags: MemberLocationTagOption[]
 }
 
 interface OrganizationMember {
@@ -237,9 +242,11 @@ export function OrganizationMembers({
 											staffingLocations.access[member.userId] ?? {
 												scope: 'all',
 												locationIds: [],
+												tagIds: [],
 											}
 										}
 										locations={staffingLocations.locations}
+										tags={staffingLocations.tags}
 									/>
 								) : null}
 								<OrganizationMemberRoleEditor

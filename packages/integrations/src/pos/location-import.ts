@@ -3,7 +3,14 @@
  * location fields.
  */
 
-import { OrganizationLocation, and, count, db, eq } from '@repo/database'
+import {
+	OrganizationLocation,
+	and,
+	count,
+	db,
+	eq,
+	getLockedLocationSettingIds,
+} from '@repo/database'
 import { type Integration } from '../database-types'
 import { integrationManager } from '../integration-manager.ts'
 import { readRemoteLocation } from './location-fetch.ts'
@@ -36,7 +43,9 @@ export async function importRemoteLocationForIntegration(
 	if (!remote) return null
 
 	// The connection already has a selected location. Fill missing profile
-	// fields without replacing details the operator entered.
+	// fields without replacing details the operator entered. Settings head
+	// office locked (#417) are not filled in either.
+	const locked = await getLockedLocationSettingIds(organizationId)
 	await db
 		.update(OrganizationLocation)
 		.set({
@@ -44,17 +53,31 @@ export async function importRemoteLocationForIntegration(
 			address:
 				location.address ||
 				(remote.address ? JSON.stringify(remote.address) : null),
-			storeHours:
-				location.storeHours ||
-				(remote.storeHours ? JSON.stringify(remote.storeHours) : null),
-			onlineHours:
-				location.onlineHours ||
-				(remote.onlineHours || remote.storeHours
-					? JSON.stringify(remote.onlineHours ?? remote.storeHours)
-					: null),
-			specialHours:
-				location.specialHours ||
-				(remote.specialHours ? JSON.stringify(remote.specialHours) : null),
+			...(locked.has('storeHours')
+				? {}
+				: {
+						storeHours:
+							location.storeHours ||
+							(remote.storeHours ? JSON.stringify(remote.storeHours) : null),
+					}),
+			...(locked.has('onlineHours')
+				? {}
+				: {
+						onlineHours:
+							location.onlineHours ||
+							(remote.onlineHours || remote.storeHours
+								? JSON.stringify(remote.onlineHours ?? remote.storeHours)
+								: null),
+					}),
+			...(locked.has('specialHours')
+				? {}
+				: {
+						specialHours:
+							location.specialHours ||
+							(remote.specialHours
+								? JSON.stringify(remote.specialHours)
+								: null),
+					}),
 		})
 		.where(
 			and(

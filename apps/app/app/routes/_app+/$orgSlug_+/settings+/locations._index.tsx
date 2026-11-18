@@ -1,6 +1,7 @@
-import { Trans, t } from '@lingui/macro'
+import { Trans, plural, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { requireUserId } from '@repo/auth'
+import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
+import { type LocationSettingId } from '@repo/common/location-settings-registry'
 import {
 	type FulfillmentOptions,
 	type LocationAddress,
@@ -20,6 +21,7 @@ import {
 } from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -50,12 +52,33 @@ import { useMemo, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
+	data,
 	Link,
 	useFetcher,
 	useLoaderData,
 	useNavigate,
 } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { BulkOrderingDialog } from '#app/components/locations/bulk-ordering-dialog.tsx'
+import { CopySettingsDialog } from '#app/components/locations/copy-settings-dialog.tsx'
+import {
+	bulkOrderingControl,
+	bulkOrderingInputSchema,
+} from '#app/utils/location/bulk-ordering.server.ts'
+import {
+	addHolidayInputSchema,
+	addHolidayToLocations,
+	copyLocationSettings,
+	copySettingsInputSchema,
+} from '#app/utils/location/copy-settings.server.ts'
+import { enabledSettingIds } from '#app/utils/location/location-settings.server.ts'
+import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
+import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
+import {
+	listLocationTags,
+	tagsByLocation,
+} from '#app/utils/location/tags.server.ts'
+import { requireMenuWrite } from '#app/utils/menu/access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -76,6 +99,11 @@ interface LocationListItem {
 	formattedAddress: string
 	isActive: boolean
 	isDefault: boolean
+	/** Inside the person's location scope: they can change it in bulk. */
+	manageable: boolean
+	/** Online ordering is paused right now. */
+	paused: boolean
+	tags: Array<{ id: string; name: string }>
 	fulfillment: {
 		pickup: boolean
 		delivery: boolean
@@ -106,7 +134,7 @@ function Swatch({ className }: { className: string }) {
 	)
 }
 
-const LOCATION_FILTER_FIELDS: FilterField[] = [
+const BASE_LOCATION_FILTER_FIELDS: FilterField[] = [
 	{
 		id: 'status',
 		label: 'Status',
@@ -257,6 +285,9 @@ function matchesLocationCondition(
 		case 'city':
 			value = location.city || location.formattedAddress
 			break
+		case 'tag':
+			value = location.tags.map((tag) => tag.id)
+			break
 		case 'fulfillment': {
 			const enabled: string[] = []
 			if (location.fulfillment.pickup) enabled.push('pickup')
@@ -271,7 +302,9 @@ function matchesLocationCondition(
 	}
 
 	const matches =
-		condition.field === 'status' || condition.field === 'fulfillment'
+		condition.field === 'status' ||
+		condition.field === 'fulfillment' ||
+		condition.field === 'tag'
 			? matchesSelectOperator(value, condition.operator, condition.values)
 			: matchesTextOperator(
 					value as string,
@@ -291,13 +324,31 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteDefaultLocale: true,
 	})
 
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
 		ORG_PERMISSIONS.READ_SETTINGS_ANY,
 	)
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
+	const [scope, tagMap, canUpdateSettings, canUpdateMenu, enabled, tagList] =
+		await Promise.all([
+			resolveMemberLocationIds(userId, organization.id),
+			tagsByLocation(organization.id),
+			userHasOrganizationPermission(
+				userId,
+				organization.id,
+				ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+			),
+			userHasOrganizationPermission(
+				userId,
+				organization.id,
+				ORG_PERMISSIONS.UPDATE_MENU_ANY,
+			),
+			enabledSettingIds(organization.id),
+			listLocationTags(organization.id),
+		])
+	const now = new Date()
 
 	const dbLocations = await db.query.OrganizationLocation.findMany({
 		where: eq(OrganizationLocation.organizationId, organization.id),
@@ -343,6 +394,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			formattedAddress,
 			isActive: loc.isActive,
 			isDefault: loc.isDefault,
+			manageable: scope === null || scope.includes(loc.id),
+			paused: publicOrderingControls(loc, now).orderingPause !== null,
+			tags: tagMap.get(loc.id) ?? [],
 			fulfillment,
 		}
 	})
@@ -350,7 +404,38 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		organization,
 		locations,
+		tags: tagList.map((tag) => ({ id: tag.id, name: tag.name })),
+		enabledSettings: [...enabled] as LocationSettingId[],
+		// Head office: every location in scope. Tags and chain defaults are theirs.
+		isHeadOffice: scope === null,
+		canUpdateSettings,
+		canPause: canUpdateMenu,
 	}
+}
+
+const MAX_PAYLOAD_LENGTH = 50_000
+
+/** Reads the JSON `payload` field of a form post through a Zod schema. */
+function parsePayload<T>(
+	formData: FormData,
+	schema: {
+		safeParse: (
+			value: unknown,
+		) => { success: true; data: T } | { success: false }
+	},
+): T | null {
+	const raw = formData.get('payload')
+	if (typeof raw !== 'string' || raw.length > MAX_PAYLOAD_LENGTH) return null
+	try {
+		const parsed = schema.safeParse(JSON.parse(raw))
+		return parsed.success ? parsed.data : null
+	} catch {
+		return null
+	}
+}
+
+function invalidRequest() {
+	return data({ ok: false as const, error: 'invalid_request' }, { status: 400 })
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -362,14 +447,83 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		hasProvisionedDb: true,
 	})
 
+	const formData = await request.formData()
+	const intent = formData.get('intent')
+
+	// Pause or resume at many locations: the same permission as the Orders
+	// page (menu write); the writer is the one the Orders page uses.
+	if (intent === 'bulk-ordering') {
+		const actingUserId = await requireMenuWrite(request, organization.id)
+		const body = parsePayload(formData, bulkOrderingInputSchema)
+		if (!body) return invalidRequest()
+		const scope = await resolveMemberLocationIds(actingUserId, organization.id)
+		const result = await bulkOrderingControl({
+			organization,
+			userId: actingUserId,
+			scope,
+			request,
+			body,
+		})
+		return data({ ok: true as const, bulk: result })
+	}
+
 	await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
 		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
 	)
 
-	const formData = await request.formData()
-	const intent = formData.get('intent')
+	// Copy settings between locations, with a preview, and the holiday shortcut.
+	// The person's location scope is read on the server and applied to every id.
+	if (
+		intent === 'preview-copy' ||
+		intent === 'copy-settings' ||
+		intent === 'add-holiday'
+	) {
+		const scope = await resolveMemberLocationIds(userId, organization.id)
+		const organizationForSettings = {
+			id: organization.id,
+			slug: organization.slug,
+			dataRegion: organization.dataRegion || 'us',
+		}
+		if (intent === 'add-holiday') {
+			const body = parsePayload(formData, addHolidayInputSchema)
+			if (!body) return invalidRequest()
+			const result = await addHolidayToLocations({
+				organization: organizationForSettings,
+				userId,
+				scope,
+				request,
+				body,
+			})
+			return result.ok
+				? data({ ok: true as const, holiday: result })
+				: data(
+						{ ok: false as const, error: result.error },
+						{ status: result.status },
+					)
+		}
+		const body = parsePayload(formData, copySettingsInputSchema)
+		if (!body) return invalidRequest()
+		const result = await copyLocationSettings({
+			organization: organizationForSettings,
+			userId,
+			scope,
+			request,
+			body,
+			apply: intent === 'copy-settings',
+		})
+		return result.ok
+			? data({ ok: true as const, copy: result })
+			: data(
+					{
+						ok: false as const,
+						error: result.error,
+						settings: result.settings,
+					},
+					{ status: result.status },
+				)
+	}
 
 	if (intent === 'toggle-active') {
 		const locationId = formData.get('locationId')
@@ -482,13 +636,47 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function LocationsIndexRoute() {
 	const { _ } = useLingui()
-	const { organization, locations } = useLoaderData<typeof loader>()
+	const {
+		organization,
+		locations,
+		tags,
+		enabledSettings,
+		isHeadOffice,
+		canUpdateSettings,
+		canPause,
+	} = useLoaderData<typeof loader>()
 	const fetcher = useFetcher<{ error?: string; futureReservations?: number }>()
 	const navigate = useNavigate()
 
 	const [filterQuery, setFilterQuery] = useState(createFilterQuery())
 	const [locationToDelete, setLocationToDelete] =
 		useState<LocationListItem | null>(null)
+	const [selected, setSelected] = useState<Set<string>>(new Set())
+	const [bulkAction, setBulkAction] = useState<'pause' | 'resume' | null>(null)
+	const [copyDialog, setCopyDialog] = useState<'copy' | 'holiday' | null>(null)
+
+	const filterFields = useMemo<FilterField[]>(
+		() => [
+			...BASE_LOCATION_FILTER_FIELDS,
+			...(tags.length > 0
+				? [
+						{
+							id: 'tag',
+							label: _(t`Tag`),
+							type: 'multiselect',
+							defaultOperator: 'is_any_of',
+							searchable: false,
+							icon: <Icon name="tag" className="size-3.5" />,
+							options: tags.map((tag) => ({
+								value: tag.id,
+								label: tag.name,
+							})),
+						} as FilterField,
+					]
+				: []),
+		],
+		[tags, _],
+	)
 
 	const filterConditions = useMemo(
 		() => flattenFilterConditions(filterQuery),
@@ -506,6 +694,27 @@ export default function LocationsIndexRoute() {
 	)
 
 	const hasFilters = filterConditions.length > 0
+	const manageableVisible = filteredLocations.filter((l) => l.manageable)
+	const selectedIds = locations
+		.filter((location) => selected.has(location.id) && location.manageable)
+		.map((location) => location.id)
+	const allVisibleSelected =
+		manageableVisible.length > 0 &&
+		manageableVisible.every((location) => selected.has(location.id))
+	const selectLabel = (name: string) => t`Select ${name}`
+	const toggleSelected = (id: string, checked: boolean) =>
+		setSelected((current) => {
+			const next = new Set(current)
+			if (checked) next.add(id)
+			else next.delete(id)
+			return next
+		})
+	const copyLocations = locations.map((location) => ({
+		id: location.id,
+		name: location.name,
+		isActive: location.isActive,
+		manageable: location.manageable,
+	}))
 
 	const handleToggleActive = (loc: LocationListItem) => {
 		void fetcher.submit(
@@ -554,12 +763,78 @@ export default function LocationsIndexRoute() {
 						</Trans>
 					</p>
 				</div>
-				<Button
-					render={<Link to={`/${organization.slug}/settings/locations/new`} />}
-				>
-					<Icon name="plus" className="size-4" />
-					<Trans>Add Location</Trans>
-				</Button>
+				<div className="flex flex-wrap items-center gap-2">
+					<DropdownMenu>
+						<DropdownMenuTrigger render={<Button variant="outline" />}>
+							<Icon name="layers" className="size-4" />
+							<Trans>All locations</Trans>
+							<Icon name="chevron-down" className="size-4" />
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem
+								render={<Link to={`/${organization.slug}/status`} />}
+							>
+								<Icon name="activity" className="size-4" />
+								<Trans>Status: can each location take orders?</Trans>
+							</DropdownMenuItem>
+							{canUpdateSettings ? (
+								<>
+									<DropdownMenuItem onClick={() => setCopyDialog('copy')}>
+										<Icon name="copy" className="size-4" />
+										<Trans>Copy settings</Trans>
+									</DropdownMenuItem>
+									<DropdownMenuItem onClick={() => setCopyDialog('holiday')}>
+										<Icon name="calendar-plus" className="size-4" />
+										<Trans>Add holiday to locations</Trans>
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										render={
+											<Link
+												to={`/${organization.slug}/settings/locations/compare`}
+											/>
+										}
+									>
+										<Icon name="sliders-horizontal" className="size-4" />
+										<Trans>Compare and edit a setting</Trans>
+									</DropdownMenuItem>
+								</>
+							) : null}
+							{isHeadOffice && canUpdateSettings ? (
+								<>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem
+										render={
+											<Link
+												to={`/${organization.slug}/settings/locations/defaults`}
+											/>
+										}
+									>
+										<Icon name="lock" className="size-4" />
+										<Trans>Chain defaults and locks</Trans>
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										render={
+											<Link
+												to={`/${organization.slug}/settings/locations/tags`}
+											/>
+										}
+									>
+										<Icon name="tag" className="size-4" />
+										<Trans>Tags and import</Trans>
+									</DropdownMenuItem>
+								</>
+							) : null}
+						</DropdownMenuContent>
+					</DropdownMenu>
+					<Button
+						render={
+							<Link to={`/${organization.slug}/settings/locations/new`} />
+						}
+					>
+						<Icon name="plus" className="size-4" />
+						<Trans>Add Location</Trans>
+					</Button>
+				</div>
 			</div>
 
 			<div className="space-y-4">
@@ -574,11 +849,76 @@ export default function LocationsIndexRoute() {
 				) : null}
 
 				<Filters
-					fields={LOCATION_FILTER_FIELDS}
+					fields={filterFields}
 					query={filterQuery}
 					onQueryChange={setFilterQuery}
 					showClear
 				/>
+
+				{selectedIds.length > 0 ? (
+					<div
+						className="bg-muted/40 flex flex-wrap items-center gap-2 rounded-md border p-2"
+						data-testid="locations-bulk-toolbar"
+					>
+						<span className="text-sm font-medium">
+							{plural(selectedIds.length, {
+								one: '# location selected',
+								other: '# locations selected',
+							})}
+						</span>
+						{canPause ? (
+							<>
+								<Button
+									size="sm"
+									variant="outline"
+									onClick={() => setBulkAction('pause')}
+								>
+									<Icon name="stop" className="size-4" />
+									<Trans>Pause ordering</Trans>
+								</Button>
+								<Button
+									size="sm"
+									variant="outline"
+									onClick={() => setBulkAction('resume')}
+								>
+									<Icon name="play" className="size-4" />
+									<Trans>Resume ordering</Trans>
+								</Button>
+							</>
+						) : null}
+						{canUpdateSettings ? (
+							<>
+								<Button
+									size="sm"
+									variant="outline"
+									onClick={() => setCopyDialog('copy')}
+								>
+									<Icon name="copy" className="size-4" />
+									<Trans>Copy settings to these</Trans>
+								</Button>
+								<Button
+									size="sm"
+									variant="outline"
+									render={
+										<Link
+											to={`/${organization.slug}/settings/locations/compare?locations=${selectedIds.join(',')}`}
+										/>
+									}
+								>
+									<Icon name="sliders-horizontal" className="size-4" />
+									<Trans>Compare and edit</Trans>
+								</Button>
+							</>
+						) : null}
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={() => setSelected(new Set())}
+						>
+							<Trans>Clear selection</Trans>
+						</Button>
+					</div>
+				) : null}
 
 				{locations.length === 0 ? (
 					<EmptyState
@@ -607,6 +947,23 @@ export default function LocationsIndexRoute() {
 						<Table variant="card">
 							<TableHeader>
 								<TableRow>
+									<TableHead className="w-10">
+										<Checkbox
+											aria-label={t`Select all locations you can manage`}
+											checked={allVisibleSelected}
+											disabled={manageableVisible.length === 0}
+											onCheckedChange={(value) =>
+												setSelected((current) => {
+													const next = new Set(current)
+													for (const location of manageableVisible) {
+														if (value === true) next.add(location.id)
+														else next.delete(location.id)
+													}
+													return next
+												})
+											}
+										/>
+									</TableHead>
 									<TableHead>
 										<Trans>Location</Trans>
 									</TableHead>
@@ -649,8 +1006,22 @@ export default function LocationsIndexRoute() {
 											}
 										}}
 									>
+										<TableCell
+											className="w-10"
+											onClick={(e) => e.stopPropagation()}
+											onKeyDown={(e) => e.stopPropagation()}
+										>
+											<Checkbox
+												aria-label={selectLabel(loc.name)}
+												checked={selected.has(loc.id)}
+												disabled={!loc.manageable}
+												onCheckedChange={(value) =>
+													toggleSelected(loc.id, value === true)
+												}
+											/>
+										</TableCell>
 										<TableCell className="font-medium">
-											<div className="flex items-center gap-2">
+											<div className="flex flex-wrap items-center gap-2">
 												<span>{loc.name}</span>
 												{loc.isDefault ? (
 													<Badge variant="secondary" className="text-[10px]">
@@ -661,6 +1032,19 @@ export default function LocationsIndexRoute() {
 											<div className="text-muted-foreground text-xs font-normal">
 												/{loc.slug}
 											</div>
+											{loc.tags.length > 0 ? (
+												<div className="mt-1 flex flex-wrap gap-1">
+													{loc.tags.map((tag) => (
+														<Badge
+															key={tag.id}
+															variant="outline"
+															className="text-[10px]"
+														>
+															{tag.name}
+														</Badge>
+													))}
+												</div>
+											) : null}
 										</TableCell>
 										<TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
 											{loc.formattedAddress || loc.city || '—'}
@@ -709,6 +1093,11 @@ export default function LocationsIndexRoute() {
 													<Trans>Inactive</Trans>
 												)}
 											</Badge>
+											{loc.paused ? (
+												<Badge variant="outline" className="ms-1">
+													<Trans>Ordering paused</Trans>
+												</Badge>
+											) : null}
 										</TableCell>
 										<TableCell
 											className="text-right"
@@ -784,7 +1173,7 @@ export default function LocationsIndexRoute() {
 									{(() => {
 										const count = filteredLocations.length
 										return (
-											<TableCell colSpan={5}>
+											<TableCell colSpan={6}>
 												{count === 1 ? (
 													<Trans>1 location</Trans>
 												) : (
@@ -800,6 +1189,30 @@ export default function LocationsIndexRoute() {
 					</Frame>
 				)}
 			</div>
+
+			{bulkAction ? (
+				<BulkOrderingDialog
+					open
+					onOpenChange={(open) => {
+						if (!open) setBulkAction(null)
+					}}
+					action={bulkAction}
+					locationIds={selectedIds}
+					locationCount={selectedIds.length}
+				/>
+			) : null}
+			{copyDialog ? (
+				<CopySettingsDialog
+					open
+					onOpenChange={(open) => {
+						if (!open) setCopyDialog(null)
+					}}
+					locations={copyLocations}
+					enabledSettings={enabledSettings}
+					initialTab={copyDialog}
+					initialTargetIds={selectedIds}
+				/>
+			) : null}
 
 			{/* Delete Location Confirmation Dialog */}
 			<AlertDialog

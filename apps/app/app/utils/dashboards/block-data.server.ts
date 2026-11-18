@@ -21,12 +21,18 @@ import {
 } from '@repo/database'
 import { definitionAllowed, type ReportDefinition } from '@repo/reports'
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
+import { loadSalesGoalsAccess } from '#app/utils/goals/goals-access.server.ts'
+import { type SalesGoalsAccess } from '#app/utils/goals/goals.ts'
 import {
 	isLaunchChecklistOn,
 	loadLaunchChecklist,
 } from '#app/utils/launch/launch.server.ts'
 import { type LaunchChecklist } from '#app/utils/launch/launch.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
+import {
+	loadLocationStatus,
+	type LocationStatusData,
+} from '#app/utils/status/location-status.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { loadAttention, loadPermissionChecker } from './attention.server.ts'
 import { type AttentionData } from './attention.ts'
@@ -42,8 +48,6 @@ import {
 	type SavedReportBlockData,
 	type SavedReportOption,
 } from './reports.ts'
-import { loadSalesGoalsAccess } from '#app/utils/goals/goals-access.server.ts'
-import { type SalesGoalsAccess } from '#app/utils/goals/goals.ts'
 import { loadHomeLocations, loadTodayAccess } from './today.server.ts'
 import {
 	type HomeLocation,
@@ -89,6 +93,8 @@ export type BuiltInBlockData = {
 	leaderboard: LeaderboardEntry[] | null
 	/** Needs attention items computed for the viewer; null without the block. */
 	attention: AttentionData | null
+	/** Location status for the viewer (#332); null without the block or access. */
+	status?: LocationStatusData | null
 	/**
 	 * The launch checklist the onboarding block shows while `launch.checklist`
 	 * is on (instead of the template steps); null otherwise.
@@ -104,6 +110,8 @@ export type DashboardBlockPicker = {
 	/** Which Today tiles the viewer may see, and the locations they cover. */
 	today: TodayAccess
 	salesGoals: SalesGoalsAccess
+	/** The viewer may see the Status block (#332). */
+	statusAvailable?: boolean
 	/** Key the home location picker is remembered under (per user and organization). */
 	locationStorageKey: string
 	savedReports: SavedReportOption[]
@@ -296,8 +304,8 @@ export async function loadBuiltInBlockData({
 	const launchOn = types.has('onboarding')
 		? await isLaunchChecklistOn(organization.id)
 		: false
-	const [notes, onboarding, leaderboard, attention, launch] = await Promise.all(
-		[
+	const [notes, onboarding, leaderboard, attention, launch, status] =
+		await Promise.all([
 			types.has('stats') || types.has('notes-chart')
 				? loadNotesSeries(organization, now)
 				: null,
@@ -309,8 +317,10 @@ export async function loadBuiltInBlockData({
 				? loadAttention({ userId, organization, request, now })
 				: null,
 			launchOn ? loadHomeLaunch(userId, organization.id, now) : null,
-		],
-	)
+			types.has('status')
+				? loadStatusForViewer(userId, organization.id, now)
+				: null,
+		])
 	return {
 		fetchedAt: now.getTime(),
 		notes,
@@ -318,7 +328,25 @@ export async function loadBuiltInBlockData({
 		leaderboard,
 		attention,
 		launch,
+		status,
 	}
+}
+
+/** Whether the viewer may open Status: settings or menu read, like its page. */
+export async function canSeeStatus(userId: string, organizationId: string) {
+	const has = await loadPermissionChecker(userId, organizationId)
+	return (
+		has(ORG_PERMISSIONS.READ_SETTINGS_ANY) || has(ORG_PERMISSIONS.READ_MENU_ANY)
+	)
+}
+
+async function loadStatusForViewer(
+	userId: string,
+	organizationId: string,
+	now: Date,
+): Promise<LocationStatusData | null> {
+	if (!(await canSeeStatus(userId, organizationId))) return null
+	return loadLocationStatus({ userId, organizationId, now })
 }
 
 async function loadHomeLaunch(
@@ -468,7 +496,7 @@ export async function loadBlockPicker({
 			knownBookingsToday ?? loadBookingsTodayAccess({ userId, organizationId }),
 			knownLocations ?? loadHomeLocations(userId, organizationId),
 		])
-	const [today, salesGoals] = await Promise.all([
+	const [today, salesGoals, statusAvailable] = await Promise.all([
 		loadTodayAccess({
 			userId,
 			organization,
@@ -481,6 +509,7 @@ export async function loadBlockPicker({
 			orgSlug: organization.slug,
 			dataRegion: organization.dataRegion,
 		}),
+		canSeeStatus(userId, organizationId),
 	])
 	return {
 		// The launch checklist stays on Home (it ends in "You're live").
@@ -488,6 +517,7 @@ export async function loadBlockPicker({
 		bookingsToday,
 		today,
 		salesGoals,
+		statusAvailable,
 		locationStorageKey: homeLocationStorageKey(userId, organizationId),
 		savedReports,
 		templateGroups: reportTemplateGroups(grants),

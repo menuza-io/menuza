@@ -27,6 +27,8 @@ export const BUSY_MODE_DURATIONS = [
 ] as const
 export type BusyModeDuration = (typeof BUSY_MODE_DURATIONS)[number]
 
+export const PAUSE_REASON_MAX_LENGTH = 200
+
 const busyMinutesSchema = z.coerce
 	.number()
 	.int()
@@ -39,6 +41,8 @@ export const orderingControlSchema = z.discriminatedUnion('intent', [
 		intent: z.literal('pause'),
 		locationId: z.string().min(1).max(64),
 		duration: z.enum(ORDERING_PAUSE_DURATIONS),
+		/** Why ordering was paused; kept in the activity log only (#365). */
+		reason: z.string().trim().max(PAUSE_REASON_MAX_LENGTH).optional(),
 	}),
 	z.object({
 		intent: z.literal('resume'),

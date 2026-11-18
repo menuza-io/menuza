@@ -111,6 +111,7 @@ export function AddBlockDialog({
 		todayAvailable: picker.today.available,
 		salesGoalsAvailable: picker.salesGoals.available,
 		attentionAvailable: true,
+		statusAvailable: picker.statusAvailable === true,
 	}).filter((type) => !excludeTypes.includes(type))
 
 	const select = (block: NewDashboardBlock) => {
