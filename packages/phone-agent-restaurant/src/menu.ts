@@ -1,3 +1,9 @@
+import {
+	DIETARY_TAGS,
+	dietaryTagsOf,
+	matchesDietaryFilter,
+	type DietaryTag,
+} from '@repo/common/menu-types'
 import { pickUpsells } from '@repo/common/upsell'
 import { z } from 'zod'
 import {
@@ -21,6 +27,10 @@ export interface AgentMenuOption {
 	isDefault?: boolean
 	isVegetarian?: boolean
 	isGlutenFree?: boolean
+	/** Dietary tags (#335). */
+	dietaryTags?: string[]
+	/** Set by `priceAgentMenus` when delivery costs more or less (#412). */
+	deliveryPrice?: number
 	allergens?: string[]
 	nestedModifierGroups?: AgentModifierGroup[]
 }
@@ -56,6 +66,12 @@ export interface AgentMenuItem {
 	isAlcohol?: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean
+	/** Dietary tags (#335); the two flags above are read too. */
+	dietaryTags?: string[]
+	/** Prices per order type (#412), as published; `priceAgentMenus` reads them. */
+	orderTypePrices?: unknown
+	/** Set by `priceAgentMenus` when delivery costs more or less (#412). */
+	deliveryPrice?: number
 	allergens: string[]
 	calorieMin?: number | null
 	calorieMax?: number | null
@@ -291,9 +307,157 @@ export function searchMenuItems(
 	query: string,
 	limit = 5,
 ): IndexedMenuItem[] {
+	// "What is halal?", "anything vegan and spicy": answer from the tags the
+	// restaurant set (#335), never from a guess about the dish.
+	const diet = dietaryTagsInQuery(query)
+	if (diet.tags.length > 0) {
+		const tagged = flattenMenuItems(menus).filter(({ item }) =>
+			matchesDietaryFilter(dietaryTagsOf(item), diet.tags),
+		)
+		if (!diet.rest) return tagged.slice(0, Math.max(limit, 10))
+		const ids = new Set(tagged.map(({ item }) => item.id))
+		const ranked = scoreMenuItems(menus, diet.rest)
+			.filter(({ entry }) => ids.has(entry.item.id))
+			.map(({ entry }) => entry)
+		return (ranked.length ? ranked : tagged).slice(0, limit)
+	}
 	return scoreMenuItems(menus, query)
 		.slice(0, limit)
 		.map(({ entry }) => entry)
+}
+
+/** Spoken words for each dietary tag, folded like the rest of the search. */
+const DIETARY_WORDS: Record<DietaryTag, string[]> = {
+	halal: ['halal', 'حلال'],
+	vegan: [
+		'vegan',
+		'plant based',
+		'vegano',
+		'vegana',
+		'نباتي صرف',
+		'نباتي بالكامل',
+		'فيجان',
+	],
+	vegetarian: [
+		'vegetarian',
+		'veggie',
+		'vegetariano',
+		'vegetariana',
+		'نباتي',
+		'نباتيه',
+	],
+	gluten_free: [
+		'gluten free',
+		'no gluten',
+		'sin gluten',
+		'خالي من الغلوتين',
+		'بدون غلوتين',
+		'خالي من الجلوتين',
+	],
+	dairy_free: [
+		'dairy free',
+		'no dairy',
+		'lactose free',
+		'sin lacteos',
+		'خالي من الالبان',
+		'بدون حليب',
+		'بدون البان',
+	],
+	nut_free: [
+		'nut free',
+		'no nuts',
+		'sin nueces',
+		'خالي من المكسرات',
+		'بدون مكسرات',
+	],
+	// Not "hot": hot tea is not spicy.
+	spicy: ['spicy', 'picante', 'حار', 'حاره'],
+}
+
+/** Filler around a dietary question: "what is halal", "do you have vegan food". */
+const DIETARY_FILLER = new Set([
+	'what',
+	'whats',
+	'which',
+	'is',
+	'are',
+	'do',
+	'you',
+	'have',
+	'any',
+	'anything',
+	'something',
+	'dishes',
+	'dish',
+	'food',
+	'foods',
+	'options',
+	'option',
+	'menu',
+	'items',
+	'item',
+	'and',
+	'or',
+	'on',
+	'the',
+	'a',
+	'an',
+	'there',
+	'your',
+	'we',
+	'can',
+	'i',
+	'get',
+	'eat',
+	'que',
+	'hay',
+	'tienen',
+	'ما',
+	'هل',
+	'عندكم',
+	'عندك',
+	'ايش',
+	'وش',
+	'اطباق',
+	'طبق',
+	'اكل',
+	'في',
+	'و',
+])
+
+/**
+ * The dietary tags a query asks for, and the words left once those and the
+ * filler are taken out (null when nothing is left).
+ */
+export function dietaryTagsInQuery(query: string): {
+	tags: DietaryTag[]
+	rest: string | null
+} {
+	let text = ` ${normalize(query)} `
+	const found = new Set<DietaryTag>()
+	// Longer phrases first, so "gluten free" wins over a bare word.
+	const phrases = (
+		Object.entries(DIETARY_WORDS) as Array<[DietaryTag, string[]]>
+	)
+		.flatMap(([tag, words]) =>
+			words.map((word) => ({ tag, word: normalize(word) })),
+		)
+		.sort((a, b) => b.word.length - a.word.length)
+	for (const { tag, word } of phrases) {
+		const needle = ` ${word} `
+		if (text.includes(needle)) {
+			found.add(tag)
+			text = text.split(needle).join(' ')
+		}
+	}
+	const rest = text
+		.split(' ')
+		.filter((word) => word && !DIETARY_FILLER.has(word))
+		.join(' ')
+	return {
+		tags: DIETARY_TAGS.filter((tag) => found.has(tag)),
+		rest: rest || null,
+	}
 }
 
 export type MenuItemResolution =
@@ -387,6 +551,8 @@ export type DescribedChoiceGroup = {
 		optionId: string
 		name: string
 		price?: string
+		/** The option's delivery price, when it differs (#412). */
+		deliveryPrice?: string
 		/** Follow-up choices that apply only when this option is picked. */
 		choices?: DescribedChoiceGroup[]
 	}>
@@ -421,10 +587,24 @@ function describeChoiceGroups(
 						name: option.displayName,
 						price:
 							option.price > 0 ? `+${formatPrice(option.price)}` : undefined,
+						...(option.deliveryPrice !== undefined
+							? { deliveryPrice: `+${formatPrice(option.deliveryPrice)}` }
+							: {}),
 						...(nested.length ? { choices: nested } : {}),
 					}
 				}),
 		}))
+}
+
+/** The words the model reads for each dietary tag (#335). */
+const DIETARY_TAG_WORDS: Record<DietaryTag, string> = {
+	halal: 'halal',
+	vegan: 'vegan',
+	vegetarian: 'vegetarian',
+	gluten_free: 'gluten-free',
+	dairy_free: 'dairy-free',
+	nut_free: 'nut-free',
+	spicy: 'spicy',
 }
 
 /** Compact, model-friendly description of a single item. */
@@ -435,8 +615,7 @@ export function describeMenuItem(
 	const { item } = entry
 	const soldOut = itemIsSoldOut(item)
 	const tags = [
-		item.isVegetarian ? 'vegetarian' : null,
-		item.isGlutenFree ? 'gluten-free' : null,
+		...dietaryTagsOf(item).map((tag) => DIETARY_TAG_WORDS[tag]),
 		item.isAlcohol ? 'contains alcohol' : null,
 		item.isPopular ? 'popular' : null,
 	].filter(Boolean)
@@ -449,6 +628,10 @@ export function describeMenuItem(
 		price: item.variations.variants.length
 			? undefined
 			: formatPrice(item.price),
+		// #412: the price above is for pickup; delivery costs this instead.
+		...(item.deliveryPrice !== undefined && !item.variations.variants.length
+			? { deliveryPrice: formatPrice(item.deliveryPrice) }
+			: {}),
 		sizes: item.variations.variants
 			.filter((variant) => variant.availabilityStatus === 'available')
 			.map((variant) => ({

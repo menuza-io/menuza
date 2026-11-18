@@ -13,6 +13,7 @@ import {
 	suggestUpsells,
 	summarizeCart,
 } from './menu.ts'
+import { priceAgentMenus } from './pricing.ts'
 
 const menus: AgentMenu[] = [
 	{
@@ -581,9 +582,11 @@ describe('size labels', () => {
 	})
 })
 
-
 describe('suggestUpsells', () => {
-	const dish = (id: string, extra: Partial<AgentMenuItem> = {}): AgentMenuItem => ({
+	const dish = (
+		id: string,
+		extra: Partial<AgentMenuItem> = {},
+	): AgentMenuItem => ({
 		id,
 		displayName: id,
 		description: null,
@@ -626,7 +629,10 @@ describe('suggestUpsells', () => {
 					description: null,
 					upsellCategoryIds: [],
 					availabilityStatus: 'available',
-					items: [dish('cola'), dish('shake', { availabilityStatus: 'unavailable' })],
+					items: [
+						dish('cola'),
+						dish('shake', { availabilityStatus: 'unavailable' }),
+					],
 				},
 			],
 		},
@@ -641,11 +647,92 @@ describe('suggestUpsells', () => {
 	})
 
 	it('skips what is ordered or sold out and respects the limit', () => {
-		expect(suggestUpsells(shopMenus, ['burger', 'cola']).map((p) => p.item.id)).toEqual([
-			'fries',
-		])
-		expect(suggestUpsells(shopMenus, ['burger'], 1).map((p) => p.item.id)).toEqual([
-			'cola',
-		])
+		expect(
+			suggestUpsells(shopMenus, ['burger', 'cola']).map((p) => p.item.id),
+		).toEqual(['fries'])
+		expect(
+			suggestUpsells(shopMenus, ['burger'], 1).map((p) => p.item.id),
+		).toEqual(['cola'])
+	})
+})
+
+describe('prices the agent quotes (#412, #388)', () => {
+	it('quotes pickup prices, adds the delivery price, and applies rules and fixed prices', () => {
+		const base = [
+			{
+				id: 'm',
+				displayName: 'Main',
+				availabilityStatus: 'available',
+				categories: [
+					{
+						id: 'mains',
+						displayName: 'Mains',
+						description: null,
+						upsellCategoryIds: [],
+						availabilityStatus: 'available',
+						items: [
+							{
+								id: 'soup',
+								displayName: 'Soup',
+								description: null,
+								price: 10,
+								orderTypePrices: { delivery: 12 },
+								variations: { groups: [], variants: [] },
+								isGlutenFree: false,
+								isVegetarian: false,
+								allergens: [],
+								isPopular: false,
+								isUpsell: false,
+								availabilityStatus: 'available',
+								modifierGroups: [],
+							},
+							{
+								id: 'tea',
+								displayName: 'Tea',
+								description: null,
+								price: 3,
+								variations: { groups: [], variants: [] },
+								isGlutenFree: false,
+								isVegetarian: false,
+								allergens: [],
+								isPopular: false,
+								isUpsell: false,
+								availabilityStatus: 'available',
+								modifierGroups: [],
+							},
+						],
+					},
+				],
+			},
+		] as unknown as AgentMenu[]
+		const priced = priceAgentMenus(base, {
+			locationId: 'loc',
+			overrides: [{ entityId: 'tea', price: 2.5 }],
+			pricingRules: [
+				{
+					id: 'r',
+					percentBp: 1000,
+					allDishes: true,
+					categoryIds: [],
+					locationIds: [],
+					rounding: { mode: 'decimals', decimals: 0 },
+				},
+			],
+		})
+		const [soup, tea] = priced[0]!.categories[0]!.items
+		expect(soup).toMatchObject({ price: 11, deliveryPrice: 14 })
+		expect(tea!.price).toBe(2.5)
+		expect(tea!.deliveryPrice).toBeUndefined()
+		const described = describeMenuItem({
+			item: soup!,
+			categoryId: 'mains',
+			categoryName: 'Mains',
+		})
+		expect(described).toMatchObject({
+			price: '$11.00',
+			deliveryPrice: '$14.00',
+		})
+		// The original menu is left as it was.
+		expect(base[0]!.categories[0]!.items[0]!.price).toBe(10)
 	})
 })
