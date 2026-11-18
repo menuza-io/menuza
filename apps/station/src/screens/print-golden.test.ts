@@ -144,9 +144,11 @@ const order = (over: Partial<PosOrder> = {}): PosOrder =>
 	}) as PosOrder
 
 const draw = (node: ReturnType<typeof h>) => {
-	 
 	act(() => root.render(h(I18nProvider, { i18n }, node)))
-	return document.getElementById('receipt')!.outerHTML
+	// The icon sprite's address depends on where the repository is checked out.
+	return document
+		.getElementById('receipt')!
+		.outerHTML.replace(/href="[^"]*sprite\.svg#/g, 'href="SPRITE#')
 }
 
 describe('the till receipt as it prints today', () => {
