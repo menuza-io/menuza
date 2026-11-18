@@ -20,10 +20,11 @@ import {
 import {
 	isConfigured,
 	loadSettings,
+	managedSettingsPatch,
 	saveSettings,
 	type PosSettings,
 } from './config.ts'
-import { type OrderType, type PosOrder } from './db.ts'
+import { isTrainingMode, type OrderType, type PosOrder } from './db.ts'
 import { adoptServerChain } from './fiscal.ts'
 import { repriceLinesFor } from './item-config.ts'
 import { decodedLine, renameLine } from './line-names.ts'
@@ -868,12 +869,17 @@ export const usePos = create<PosState>((set, get) => ({
 			kdsStations,
 			closedShifts,
 			zatca,
+			managed,
+			profileName,
 		} = await checkDeviceDetailed(get().settings)
 		if (verdict === 'ok') {
 			if (get().unrecognisedStrikes > 0 || get().pairingLost)
 				set({ unrecognisedStrikes: 0, pairingLost: false })
 			if (kdsStations !== undefined) set({ kdsStations })
-			if (closedShifts?.length) {
+			// A real shift closed remotely, the real fiscal chain and the ZATCA key
+			// belong to the real till, not to a training one (#383).
+			const training = isTrainingMode()
+			if (!training && closedShifts?.length) {
 				await applyRemoteShiftClosures(closedShifts)
 			}
 			// A manager may have changed sign-in or the end of the business day in the Menuza app.
@@ -898,6 +904,19 @@ export const usePos = create<PosState>((set, get) => ({
 				saveSettings(settings)
 				set({ settings })
 			}
+			// A profile or a manager may have set the lock timeout, menu layout,
+			// kitchen station or guest screen for this terminal (#373).
+			if (managed !== undefined) {
+				const next = managedSettingsPatch(
+					get().settings,
+					managed,
+					profileName ?? null,
+				)
+				if (next) {
+					saveSettings(next)
+					set({ settings: next })
+				}
+			}
 			// A manager may have turned the time clock or the host stand on or off.
 			const before = get().settings.apps
 			const after = { ...before, ...apps }
@@ -915,10 +934,10 @@ export const usePos = create<PosState>((set, get) => ({
 			if (transfers && transfers.length > 0)
 				await markTransferredAway(transfers)
 			// A till whose storage was lost continues its fiscal chain rather than restarting it.
-			if (fiscalChains && fiscalChains.length > 0)
+			if (!training && fiscalChains && fiscalChains.length > 0)
 				await adoptServerChain(fiscalChains)
 			// An onboarded ZATCA unit signs its invoices here, offline if need be.
-			await syncZatcaUnit(get().settings, zatca ?? null)
+			if (!training) await syncZatcaUnit(get().settings, zatca ?? null)
 			return
 		}
 		if (verdict === 'unrecognised') return get().noteUnrecognised()
@@ -937,6 +956,9 @@ export const usePos = create<PosState>((set, get) => ({
 
 	async otherTabs() {
 		const { settings, online } = get()
+		// Other terminals' tabs are real: a training till never reads or claims them.
+		if (isTrainingMode())
+			return { ok: false, error: t`Not available in training mode.` }
 		if (settings.demo || !settings.deviceToken || !settings.tenantApiUrl) {
 			return {
 				ok: false,
@@ -964,6 +986,7 @@ export const usePos = create<PosState>((set, get) => ({
 
 	async takeOverTab(tab) {
 		const { settings, session } = get()
+		if (isTrainingMode()) return t`Not available in training mode.`
 		if (!settings.deviceToken)
 			return t`This terminal is not paired with a restaurant.`
 		// Refuse before claiming: a claimed tab this till cannot bill would be stranded.

@@ -24,6 +24,7 @@ import {
 	type PosOnlineOrderSummary,
 } from '@repo/common/pos-online-orders'
 import { posStationControlsAllowed } from '@repo/common/pos-station-controls'
+import { printAllowed } from '@repo/common/ticket-config'
 import {
 	Empty,
 	EmptyDescription,
@@ -56,6 +57,7 @@ import { type PosSettings } from '~/lib/config.ts'
 import { menuText } from '~/lib/menu-text.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import { type Session } from '~/lib/signin.ts'
+import { fieldOf, useTickets } from '~/lib/tickets.ts'
 import {
 	Badge,
 	Button,
@@ -900,7 +902,7 @@ function rejectOutcomeMessage(
 	}
 }
 
-type KitchenPrintSwitches = Pick<
+export type KitchenPrintSwitches = Pick<
 	KdsConfig,
 	'showPaymentStatus' | 'showOrderTypeColor' | 'showModifierGroups'
 >
@@ -968,7 +970,29 @@ function OrderSheet({
 	const [cancelling, setCancelling] = useState(false)
 	const [rejecting, setRejecting] = useState(false)
 	const [refunding, setRefunding] = useState(false)
-	const [printing, setPrinting] = useState<'guest' | 'kitchen' | null>(null)
+	const [printing, setPrinting] = useState<
+		'guest' | 'kitchen' | 'cancelled' | null
+	>(null)
+	// What this location prints, and when (#363).
+	const ticketSettings = useTickets()
+	/** Prints the kitchen ticket by itself when the owner chose this moment for it. */
+	const autoPrint = (moment: 'on_acceptance' | 'when_ready') => {
+		if (
+			detail &&
+			ticketSettings.when.kitchen === moment &&
+			printAllowed(ticketSettings, detail.fulfillment)
+		)
+			setPrinting('kitchen')
+	}
+	/** A cancelled or rejected order prints its slip at once when the owner asked. */
+	const autoPrintSlip = () => {
+		if (
+			detail &&
+			ticketSettings.cancellationSlip &&
+			printAllowed(ticketSettings, detail.fulfillment)
+		)
+			setPrinting('cancelled')
+	}
 	// Each order starts unticked: payment is confirmed for this order, not the last.
 	useEffect(() => {
 		setMarkPaid(false)
@@ -982,7 +1006,7 @@ function OrderSheet({
 		if (!printing) return
 		const frame = window.requestAnimationFrame(() => {
 			window.print()
-			recordReprint.current(printing)
+			recordReprint.current(printing === 'cancelled' ? 'kitchen' : printing)
 			setPrinting(null)
 		})
 		return () => window.cancelAnimationFrame(frame)
@@ -1098,10 +1122,12 @@ function OrderSheet({
 									variant="primary"
 									disabled={locked}
 									onClick={() =>
-										void orders.command({
-											action: 'accept',
-											expectedVersion: detail.version,
-										})
+										void orders
+											.command({
+												action: 'accept',
+												expectedVersion: detail.version,
+											})
+											.then((ok) => ok && autoPrint('on_acceptance'))
 									}
 								>
 									<Trans>Accept order</Trans>
@@ -1116,10 +1142,12 @@ function OrderSheet({
 									variant="outline"
 									disabled={locked}
 									onClick={() =>
-										void orders.command({
-											action: 'ready',
-											expectedVersion: detail.version,
-										})
+										void orders
+											.command({
+												action: 'ready',
+												expectedVersion: detail.version,
+											})
+											.then((ok) => ok && autoPrint('when_ready'))
 									}
 								>
 									<Trans>Mark ready</Trans>
@@ -1204,7 +1232,10 @@ function OrderSheet({
 								expectedVersion: detail.version,
 								reason,
 							})
-							if (ok) setRejecting(false)
+							if (ok) {
+								setRejecting(false)
+								autoPrintSlip()
+							}
 						}}
 					/>
 					<CancelDialog
@@ -1230,7 +1261,10 @@ function OrderSheet({
 								reason,
 								...(refund ? { refund } : {}),
 							})
-							if (ok) setCancelling(false)
+							if (ok) {
+								setCancelling(false)
+								autoPrintSlip()
+							}
 						}}
 					/>
 					<RefundDialog
@@ -1252,7 +1286,8 @@ function OrderSheet({
 			) : null}
 			{printing && detail ? (
 				<PrintedTicket
-					kind={printing}
+					kind={printing === 'guest' ? 'guest' : 'kitchen'}
+					cancelled={printing === 'cancelled'}
 					detail={detail}
 					businessName={businessName}
 					time={time}
@@ -2247,14 +2282,17 @@ function PrintHighlight({ highlight }: { highlight?: string }) {
  * or the kitchen ticket with food only. The phone is printed masked, never in
  * full, and an email never.
  */
-function PrintedTicket({
+export function PrintedTicket({
 	kind,
 	detail,
 	businessName,
 	time,
 	kitchenSwitches,
+	cancelled = false,
 }: {
 	kind: 'guest' | 'kitchen'
+	/** The order was just cancelled: print the slip even before the screen shows it. */
+	cancelled?: boolean
 	detail: PosOnlineOrderDetail
 	businessName: string
 	time: Intl.DateTimeFormat
@@ -2262,6 +2300,16 @@ function PrintedTicket({
 }) {
 	const { _ } = useLingui()
 	const money = moneyFormatter(detail.currency)
+	// What this ticket type prints (#363): the guest ticket is the receipt type.
+	const tickets = useTickets()
+	const type = kind === 'guest' ? 'receipt' : 'kitchen'
+	const f = (key: string) => fieldOf(tickets, type, key)
+	// A cancelled order's kitchen ticket is a cancellation slip when the owner
+	// asked for it, and it always says so (the title cannot be hidden then).
+	const slip =
+		kind === 'kitchen' &&
+		tickets.cancellationSlip &&
+		(cancelled || detail.status === 'cancelled')
 	return createPortal(
 		<div
 			id="receipt"
@@ -2279,39 +2327,69 @@ function PrintedTicket({
 				: {})}
 		>
 			{kind === 'guest' ? (
-				<div className="text-center text-sm font-semibold">{businessName}</div>
-			) : (
-				<div className="text-center font-semibold">
+				f('businessName').show ? (
+					<div
+						className={cn(
+							'text-center text-sm font-semibold',
+							f('businessName').cls,
+						)}
+					>
+						{businessName}
+					</div>
+				) : null
+			) : slip ? (
+				<div className={cn('text-center font-semibold', f('ticketTitle').cls)}>
+					<Trans>CANCELLED</Trans>
+				</div>
+			) : f('ticketTitle').show ? (
+				<div className={cn('text-center font-semibold', f('ticketTitle').cls)}>
 					<Trans>Kitchen ticket</Trans>
 				</div>
-			)}
-			<div className="text-center">{time.format(detail.createdAt)}</div>
-			<div className="my-1.5 text-center text-base font-semibold">
-				#{detail.number}
-			</div>
-			<div className="text-center">
-				{detail.fulfillment === 'delivery'
-					? _(t`Delivery`)
-					: detail.fulfillment === 'dine_in'
-						? detail.tableLabel
-							? _(t`Table ${detail.tableLabel}`)
-							: _(t`Dine in`)
-						: _(t`Pickup`)}
-				{detail.dueAt ? ` · ${time.format(detail.dueAt)}` : ''}
-			</div>
-			{kind === 'guest' ? (
-				<div className="text-center">
+			) : null}
+			{f('dateTime').show ? (
+				<div className={cn('text-center', f('dateTime').cls)}>
+					{time.format(detail.createdAt)}
+				</div>
+			) : null}
+			{f('orderNumber').show ? (
+				<div
+					className={cn(
+						'my-1.5 text-center text-base font-semibold',
+						f('orderNumber').cls,
+					)}
+				>
+					#{detail.number}
+				</div>
+			) : null}
+			{f('orderType').show ? (
+				<div className={cn('text-center', f('orderType').cls)}>
+					{detail.fulfillment === 'delivery'
+						? _(t`Delivery`)
+						: detail.fulfillment === 'dine_in'
+							? detail.tableLabel
+								? _(t`Table ${detail.tableLabel}`)
+								: _(t`Dine in`)
+							: _(t`Pickup`)}
+					{detail.dueAt ? ` · ${time.format(detail.dueAt)}` : ''}
+				</div>
+			) : null}
+			{kind === 'guest' && f('guestContact').show ? (
+				<div className={cn('text-center', f('guestContact').cls)}>
 					<bdi>{detail.guestName}</bdi> ·{' '}
 					<bdi dir="ltr">{detail.phoneMasked}</bdi>
 				</div>
 			) : null}
-			{kind === 'kitchen' && detail.utensilsRequested != null ? (
-				<div className="text-center font-semibold">
+			{kind === 'kitchen' &&
+			detail.utensilsRequested != null &&
+			f('utensils').show ? (
+				<div className={cn('text-center font-semibold', f('utensils').cls)}>
 					{detail.utensilsRequested ? _(t`Utensils: yes`) : _(t`No utensils`)}
 				</div>
 			) : null}
-			{kind === 'kitchen' && (detail.largeOrderExtraMinutes ?? 0) > 0 ? (
-				<div className="text-center">
+			{kind === 'kitchen' &&
+			(detail.largeOrderExtraMinutes ?? 0) > 0 &&
+			f('largeOrder').show ? (
+				<div className={cn('text-center', f('largeOrder').cls)}>
 					<Trans>Large order +{detail.largeOrderExtraMinutes} min</Trans>
 				</div>
 			) : null}
@@ -2336,14 +2414,14 @@ function PrintedTicket({
 					]
 			).map((group) => (
 				<div key={group.courseId ?? 'all'}>
-					{kind === 'kitchen' && group.courseId ? (
-						<div className="mt-1 font-semibold">
+					{kind === 'kitchen' && group.courseId && f('courses').show ? (
+						<div className={cn('mt-1 font-semibold', f('courses').cls)}>
 							{group.courseName}
 							{group.held ? ` · ${_(t`Held`)}` : ''}
 						</div>
 					) : null}
 					{group.lines.map((line, index) => (
-						<div key={index} className="mb-1">
+						<div key={index} className={cn('mb-1', f('items').cls)}>
 							<div className="flex justify-between gap-2">
 								<span>
 									{line.quantity}×{' '}
@@ -2353,7 +2431,7 @@ function PrintedTicket({
 									{line.variantNames.length > 0
 										? ` · ${line.variantNames.map((name) => menuText(name)).join(', ')}`
 										: ''}
-									{kind === 'kitchen' ? (
+									{kind === 'kitchen' && f('highlights').show ? (
 										<PrintHighlight highlight={line.highlight} />
 									) : null}
 								</span>
@@ -2361,24 +2439,29 @@ function PrintedTicket({
 									<span>{money(line.totalCents)}</span>
 								) : null}
 							</div>
-							{line.options.map((option, optionIndex) => (
-								<div key={optionIndex} className="ps-3">
-									+{' '}
-									{kind === 'kitchen' &&
-									kitchenSwitches.showModifierGroups &&
-									option.groupName
-										? `${menuText(option.groupName)}: `
-										: ''}
-									{kind === 'kitchen'
-										? menuText(option.kitchenName || option.name)
-										: menuText(option.name)}
-									{kind === 'kitchen' ? (
-										<PrintHighlight highlight={option.highlight} />
-									) : null}
-								</div>
-							))}
-							{line.instructions ? (
-								<div className="ps-3">
+							{(f('itemOptions').show ? line.options : []).map(
+								(option, optionIndex) => (
+									<div
+										key={optionIndex}
+										className={cn('ps-3', f('itemOptions').cls)}
+									>
+										+{' '}
+										{kind === 'kitchen' &&
+										kitchenSwitches.showModifierGroups &&
+										option.groupName
+											? `${menuText(option.groupName)}: `
+											: ''}
+										{kind === 'kitchen'
+											? menuText(option.kitchenName || option.name)
+											: menuText(option.name)}
+										{kind === 'kitchen' && f('highlights').show ? (
+											<PrintHighlight highlight={option.highlight} />
+										) : null}
+									</div>
+								),
+							)}
+							{line.instructions && f('itemNotes').show ? (
+								<div className={cn('ps-3', f('itemNotes').cls)}>
 									<bdi>{line.instructions}</bdi>
 								</div>
 							) : null}
@@ -2389,19 +2472,23 @@ function PrintedTicket({
 			{kind === 'guest' ? (
 				<>
 					<hr className="my-1.5 border-dashed border-black" />
-					<div className="flex justify-between font-semibold">
+					<div
+						className={cn('flex justify-between font-semibold', f('total').cls)}
+					>
 						<span>
 							<Trans>Total</Trans>
 						</span>
 						<span>{money(detail.totalCents)}</span>
 					</div>
-					<div className="text-center">
-						{detail.paymentStatus === 'paid'
-							? _(t`Paid`)
-							: detail.onTab
-								? _(t`On the tab`)
-								: _(t`Pay at handoff`)}
-					</div>
+					{f('payments').show ? (
+						<div className={cn('text-center', f('payments').cls)}>
+							{detail.paymentStatus === 'paid'
+								? _(t`Paid`)
+								: detail.onTab
+									? _(t`On the tab`)
+									: _(t`Pay at handoff`)}
+						</div>
+					) : null}
 				</>
 			) : null}
 		</div>,

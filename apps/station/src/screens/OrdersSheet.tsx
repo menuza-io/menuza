@@ -8,8 +8,9 @@ import { useDeferredValue, useEffect, useState } from 'react'
 import { AuditSheet, useReasonLabel } from './AuditSheet.tsx'
 import { DishStatusBadge, RoundHeading } from './KitchenRounds.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
+import { PrintedKitchenTicket } from './PrintedKitchenTicket.tsx'
 import { Receipt } from './Receipt.tsx'
-import { type PosOrder, type TenderMethod } from '~/lib/db.ts'
+import { db, type PosOrder, type TenderMethod } from '~/lib/db.ts'
 import { shortDuration } from '~/lib/duration.ts'
 import {
 	dishStatuses,
@@ -34,6 +35,11 @@ import { formatPickupAt } from '~/lib/pickup.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
 import { roundsOf, servedOf } from '~/lib/rounds.ts'
 import { saleLine, shownItemName, usePos, type OtherTab } from '~/lib/store.ts'
+import {
+	kitchenTicketPlan,
+	useTickets,
+	type KitchenTicketPlan,
+} from '~/lib/tickets.ts'
 import { useIsTablet, useNow } from '~/ui/hooks.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
 import {
@@ -127,6 +133,21 @@ export function OrdersSheet({
 	const [error, setError] = useState<string | null>(null)
 	const [cancelling, setCancelling] = useState<PosOrder | null>(null)
 	const [refunding, setRefunding] = useState<PosOrder | null>(null)
+	// The kitchen ticket being printed for a till order (#363): the changes of an
+	// adjusted order, or the slip of a cancelled one.
+	const ticketSettings = useTickets()
+	const [kitchenPrint, setKitchenPrint] = useState<{
+		order: PosOrder
+		plan: KitchenTicketPlan
+	} | null>(null)
+	useEffect(() => {
+		if (!kitchenPrint) return
+		const frame = window.requestAnimationFrame(() => {
+			window.print()
+			setKitchenPrint(null)
+		})
+		return () => window.cancelAnimationFrame(frame)
+	}, [kitchenPrint])
 	const settings = usePos((s) => s.settings)
 	const me = usePos((s) => s.session?.staff ?? null)
 	const needsManager = usePos((s) => s.needsManager)
@@ -747,11 +768,13 @@ export function OrdersSheet({
 										</div>
 									) : null}
 								</dl>
-								<Receipt
-									order={selected}
-									businessName={businessName}
-									vatNumber={vatNumber}
-								/>
+								{kitchenPrint ? null : (
+									<Receipt
+										order={selected}
+										businessName={businessName}
+										vatNumber={vatNumber}
+									/>
+								)}
 							</div>
 							<div className="border-border bg-card shrink-0 space-y-3 border-t p-4">
 								<Reveal open={Boolean(error)}>
@@ -808,6 +831,25 @@ export function OrdersSheet({
 											<Trans>Print receipt</Trans>
 										)}
 									</Button>
+									{(() => {
+										// Only the new kinds: a plain order prints no kitchen ticket here, as before.
+										const plan = kitchenTicketPlan(selected, ticketSettings)
+										return plan && plan.kind !== 'full' ? (
+											<Button
+												variant="outline"
+												onClick={() =>
+													setKitchenPrint({ order: selected, plan })
+												}
+											>
+												<Icon name="printer" className="size-4" />{' '}
+												{plan.kind === 'cancelled' ? (
+													<Trans>Print cancellation slip</Trans>
+												) : (
+													<Trans>Print changes</Trans>
+												)}
+											</Button>
+										) : null
+									})()}
 									{selected.sync !== 'synced' &&
 									isSendable(selected, settings) ? (
 										<Button
@@ -852,6 +894,13 @@ export function OrdersSheet({
 					onConfirm={async (audit) => {
 						try {
 							await voidTab(cancelling.id, audit)
+							// A cancelled order prints its slip at once when the owner asked.
+							const voided = await db.orders.get(cancelling.id)
+							const plan = voided
+								? kitchenTicketPlan(voided, ticketSettings)
+								: null
+							if (voided && plan?.kind === 'cancelled')
+								setKitchenPrint({ order: voided, plan })
 							setCancelling(null)
 							setSelectedId(null)
 							setError(null)
@@ -863,6 +912,12 @@ export function OrdersSheet({
 								: _(t`Could not cancel the tab`)
 						}
 					}}
+				/>
+			) : null}
+			{kitchenPrint ? (
+				<PrintedKitchenTicket
+					order={kitchenPrint.order}
+					plan={kitchenPrint.plan}
 				/>
 			) : null}
 			{refunding ? (

@@ -3,9 +3,12 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { App } from './App.tsx'
-import { i18n } from './i18n.ts'
+import { applyLocale, i18n } from './i18n.ts'
+import { guestDisplayChannel } from './lib/guest-display.ts'
 import { requestPersistentStorage } from './lib/storage.ts'
 import { setUpdater } from './lib/update.ts'
+import { GuestDisplay } from './screens/GuestDisplay.tsx'
+import { TrainingShell } from './screens/TrainingBanner.tsx'
 import './styles/app.css'
 import './styles/kitchen-ticket.css'
 
@@ -20,10 +23,20 @@ const updateSW = registerSW({
 // refusal is shown as a banner (see App) until it is granted.
 void requestPersistentStorage()
 
+// The guest's second screen is this same app opened on another display with
+// `?guest-display=<channel>`: it shows the till's order and holds none of its own.
+const guestChannel = guestDisplayChannel(window.location.search)
+
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
 		<I18nProvider i18n={i18n}>
-			<App />
+			{guestChannel ? (
+				<GuestDisplay channelName={guestChannel} onLocale={applyLocale} />
+			) : (
+				<TrainingShell>
+					<App />
+				</TrainingShell>
+			)}
 		</I18nProvider>
 	</StrictMode>,
 )

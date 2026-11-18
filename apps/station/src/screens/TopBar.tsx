@@ -27,6 +27,7 @@ export function TopBar({
 	onLock,
 	onShift,
 	shiftOpen,
+	onGuestScreen,
 	app = 'pos',
 	apps,
 	onApp,
@@ -47,6 +48,8 @@ export function TopBar({
 	/** Opens the cash drawer shift; `shiftOpen` marks the button while one is running. */
 	onShift: () => void
 	shiftOpen: boolean
+	/** Opens the guest's second screen (#367); absent unless this terminal has one. */
+	onGuestScreen?: () => void
 	/** The Station app on screen, the ones this terminal offers, and the switch. */
 	app?: StationApp
 	apps?: PosDeviceApps
@@ -233,6 +236,14 @@ export function TopBar({
 									/>
 								</IconButton>
 							</span>
+							{onGuestScreen ? (
+								<IconButton
+									label={_(t`Open the guest screen`)}
+									onClick={onGuestScreen}
+								>
+									<Icon name="monitor" className="size-5" />
+								</IconButton>
+							) : null}
 							<IconButton
 								label={shiftOpen ? _(t`Shift (open)`) : _(t`Shift`)}
 								onClick={onShift}

@@ -98,6 +98,12 @@ export default defineConfig(({ mode }) => {
 	const origins = trustedOrigins(env)
 	return {
 		build: { target: browserTargets },
+		// Shown in the App's connection history (Settings, Terminals).
+		define: {
+			__STATION_VERSION__: JSON.stringify(
+				env.VITE_BUILD_ID?.trim() || process.env.npm_package_version || '0.0.1',
+			),
+		},
 		optimizeDeps: { esbuildOptions: { target: browserTargets } },
 		resolve: {
 			alias: { '~': fileURLToPath(new URL('./src', import.meta.url)) },

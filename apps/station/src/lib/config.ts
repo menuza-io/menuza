@@ -1,4 +1,6 @@
 import { NO_POS_DEVICE_APPS, type PosDeviceApps } from '@repo/common/pos-orders'
+import { type TerminalJsonSettings } from '@repo/common/terminal-profiles'
+import { isTrainingMode } from './training-flag.ts'
 
 export const MENU_COLUMNS_VALUES = ['auto', 2, 3, 4] as const
 export type MenuColumns = (typeof MENU_COLUMNS_VALUES)[number]
@@ -53,6 +55,14 @@ export type PosSettings = {
 	apps: PosDeviceApps
 	/** The app on screen, kept per device so a host stand reopens as a host stand. */
 	activeApp: StationApp
+	/**
+	 * Settings the server set for this terminal (its profile, or a manager in the
+	 * App): the till follows them and shows them locked. A setting not listed is
+	 * the till's own choice.
+	 */
+	managed?: Partial<TerminalJsonSettings>
+	/** The terminal profile this terminal follows, by name. */
+	profileName?: string | null
 }
 
 /** The apps a Station tablet can show: the till, the time clock, the host stand, the kitchen, Stock, Orders. */
@@ -67,6 +77,8 @@ export type StationApp =
 export function shownApp(
 	s: Pick<PosSettings, 'apps' | 'activeApp' | 'signInRequired'>,
 ): StationApp {
+	// A training till only sells: every other app acts on real data (#383).
+	if (isTrainingMode()) return 'pos'
 	if (s.activeApp === 'timeclock' && s.apps.timeclock && !s.signInRequired)
 		return 'timeclock'
 	if (s.activeApp === 'reservations' && s.apps.reservations)
@@ -100,6 +112,8 @@ const defaults = (): PosSettings => ({
 	menuDensity: 'comfortable',
 	apps: { ...NO_POS_DEVICE_APPS },
 	activeApp: 'pos',
+	managed: {},
+	profileName: null,
 })
 
 function parseMenuColumns(raw: unknown): MenuColumns {
@@ -142,6 +156,7 @@ export function loadSettings(): PosSettings {
 				menuColumns: parseMenuColumns(saved.menuColumns),
 				menuDensity: parseMenuDensity(saved.menuDensity),
 				apps: { ...NO_POS_DEVICE_APPS, ...saved.apps },
+				managed: { ...saved.managed },
 			}
 		}
 	} catch {
@@ -160,3 +175,32 @@ export function saveSettings(next: PosSettings): void {
 
 export const isConfigured = (s: PosSettings): boolean =>
 	s.demo || Boolean(s.appUrl && s.slug)
+
+/**
+ * The settings after the server's managed values are applied, or null when
+ * nothing changed. The lock timeout and menu layout take the server's value;
+ * the kitchen station and guest screen are read from `managed` where they are
+ * used. A setting the server stopped managing keeps its last value as the
+ * till's own.
+ */
+export function managedSettingsPatch(
+	current: PosSettings,
+	managed: Partial<TerminalJsonSettings>,
+	profileName: string | null,
+): PosSettings | null {
+	const next: PosSettings = {
+		...current,
+		managed,
+		profileName,
+		idleLockSeconds: managed.idleLockSeconds ?? current.idleLockSeconds,
+		menuColumns: managed.menuColumns ?? current.menuColumns,
+		menuDensity: managed.menuDensity ?? current.menuDensity,
+	}
+	const same =
+		JSON.stringify(current.managed ?? {}) === JSON.stringify(managed) &&
+		(current.profileName ?? null) === profileName &&
+		next.idleLockSeconds === current.idleLockSeconds &&
+		next.menuColumns === current.menuColumns &&
+		next.menuDensity === current.menuDensity
+	return same ? null : next
+}

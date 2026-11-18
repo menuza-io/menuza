@@ -1,6 +1,6 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { resetTimeMinutes } from '@repo/common/pos-orders'
+import { NO_POS_DEVICE_APPS, resetTimeMinutes } from '@repo/common/pos-orders'
 import {
 	Empty,
 	EmptyHeader,
@@ -24,6 +24,9 @@ import { categoryItems, isSoldOut } from '~/lib/catalog.ts'
 import { clockIsOff, skewMinutes, useClock } from '~/lib/clock.ts'
 import { isConfigured, shownApp } from '~/lib/config.ts'
 import { db, type PosOrder } from '~/lib/db.ts'
+import { startGuestDisplayHost } from '~/lib/guest-display-host.ts'
+import { guestDisplayUrl } from '~/lib/guest-display.ts'
+import { startHeartbeat } from '~/lib/heartbeat.ts'
 import {
 	buildLine,
 	canQuickAdd,
@@ -50,6 +53,7 @@ import { usePos } from '~/lib/store.ts'
 import { tabForTable } from '~/lib/tabs.ts'
 import { categoryIdsByItem } from '~/lib/till-discounts.ts'
 import { tipsAllowed } from '~/lib/tips.ts'
+import { isTrainingMode } from '~/lib/training-flag.ts'
 import { type MenuItem } from '~/lib/types.ts'
 import { applyUpdateIfIdle } from '~/lib/update.ts'
 import { AuditSheet } from '~/screens/AuditSheet.tsx'
@@ -232,6 +236,28 @@ export function App() {
 	useEffect(() => {
 		listenToCart()
 	}, [])
+
+	// The guest's second screen (#367) mirrors the till while this terminal has one.
+	const guestScreenOn = s.settings.managed?.guestDisplayEnabled === true
+	const guestSlug = s.settings.slug
+	const guestTerminal = s.settings.terminalCode
+	useEffect(() => {
+		if (!guestScreenOn) return
+		return startGuestDisplayHost({
+			slug: guestSlug,
+			terminalCode: guestTerminal,
+		})
+	}, [guestScreenOn, guestSlug, guestTerminal])
+
+	// Connection history (#356): a heartbeat at most once a minute while the app
+	// is open and paired. A training till sends none.
+	useEffect(
+		() =>
+			startHeartbeat(() => usePos.getState().settings, {
+				isTraining: isTrainingMode,
+			}),
+		[],
+	)
 
 	const currency =
 		s.location?.currency ?? s.snapshot?.menu.organization.currency ?? 'USD'
@@ -797,8 +823,22 @@ export function App() {
 				onLock={s.settings.signInRequired ? s.lock : undefined}
 				onShift={() => setShiftOpen(true)}
 				shiftOpen={Boolean(currentShift)}
+				onGuestScreen={
+					guestScreenOn
+						? () =>
+								window.open(
+									guestDisplayUrl(
+										s.settings.slug,
+										s.settings.terminalCode,
+										window.location.origin,
+									),
+									'station-guest-display',
+									'popup,width=1024,height=768',
+								)
+						: undefined
+				}
 				app={app}
-				apps={s.settings.apps}
+				apps={isTrainingMode() ? NO_POS_DEVICE_APPS : s.settings.apps}
 				onApp={(next) => {
 					// Punching happens at the lock, never inside someone's session.
 					if (next === 'timeclock' && s.settings.signInRequired) {
@@ -1252,7 +1292,9 @@ export function App() {
 					demo={s.settings.demo}
 					onSignIn={s.signIn}
 					onClockIn={
-						s.settings.apps.timeclock ? () => setClockOverLock(true) : undefined
+						s.settings.apps.timeclock && !isTrainingMode()
+							? () => setClockOverLock(true)
+							: undefined
 					}
 				/>
 			) : null}

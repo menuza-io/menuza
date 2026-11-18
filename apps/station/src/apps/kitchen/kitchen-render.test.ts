@@ -377,3 +377,46 @@ describe('utensils and large order on a ticket (#257, #355)', () => {
 		expect(largeOrder()).toBeNull()
 	})
 })
+
+describe('the kitchen station a terminal profile sets (#373)', () => {
+	const twoStations = {
+		...DEFAULT_KDS_CONFIG,
+		stations: [
+			{ id: 'kitchen', name: 'Kitchen', itemIds: [] },
+			{ id: 'bar', name: 'Bar', itemIds: [] },
+		],
+	}
+	const select = () =>
+		host.querySelector<HTMLSelectElement>('select[aria-label="Prep station"]')!
+	const feed = (): KdsFeed => ({
+		config: twoStations,
+		configVersion: 1,
+		tickets: [ticket],
+		serverNow: NOW,
+		truncated: false,
+	})
+
+	it('shows only that station, and the screen cannot choose another', () => {
+		draw(
+			{ feed: feed() },
+			{ settings: { ...loadSettings(), managed: { kdsStationId: 'bar' } } },
+		)
+		expect(select().value).toBe('bar')
+		expect(select().disabled).toBe(true)
+	})
+
+	it('leaves the screen its own choice when nothing sets it', () => {
+		localStorage.clear()
+		draw({ feed: feed() })
+		expect(select().disabled).toBe(false)
+		expect(select().value).toBe('')
+	})
+
+	it('ignores a station this location does not have', () => {
+		draw(
+			{ feed: feed() },
+			{ settings: { ...loadSettings(), managed: { kdsStationId: 'gone' } } },
+		)
+		expect(select().value).toBe('')
+	})
+})

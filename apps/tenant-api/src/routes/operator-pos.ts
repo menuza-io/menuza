@@ -1,6 +1,13 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import { z } from 'zod'
+import {
+	terminalProfileInputSchema,
+	terminalProfileUpdateSchema,
+	TERMINAL_SETTING_KEYS,
+	terminalSettingsSchema,
+	type TerminalSettingKey,
+} from '@repo/common/terminal-profiles'
 import { DEFAULT_SCOPE_ID } from '@repo/staffing'
 import { getTenantDb, posDevices } from '@repo/tenant-db'
 import {
@@ -32,7 +39,20 @@ import {
 	setManager,
 	updateDeviceSettings,
 } from '../services/pos-service.ts'
+import { listKdsStations } from '../services/kds-service.ts'
+import { deviceHealthEnabled } from '../lib/pos-device-health.ts'
+import { deviceHealth, healthSummary } from '../services/pos-health-service.ts'
 import { requeueTillSaleLoyalty } from '../services/pos-loyalty-service.ts'
+import {
+	assignProfile,
+	createProfile,
+	deleteProfile,
+	getProfileSettings,
+	listProfiles,
+	resetOverrides,
+	updateProfile,
+	type TerminalChangeCheck,
+} from '../services/pos-profiles-service.ts'
 import { getStaffingFeatures, hasScope } from '../lib/scope-context.ts'
 import { writeOperatorAudit } from '../services/staff-audit.ts'
 import {
@@ -94,6 +114,8 @@ const createCodeSchema = z.strictObject({
 	timeclockEnabled: z.boolean().optional(),
 	reservationsEnabled: z.boolean().optional(),
 	inventoryEnabled: z.boolean().optional(),
+	/** The profile the terminal inherits (#373); its settings replace the ones above. */
+	profileId: z.string().trim().min(1).max(100).optional(),
 })
 
 operatorPosRoutes.get('/terminals', async (c) => {
@@ -114,9 +136,27 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 		await c.req.json().catch(() => null),
 	)
 	if (!parsed.success) return posError(400, 'invalid_request')
+	// A profile's settings replace the ones sent, so they are what is checked.
+	let apps: {
+		timeclockEnabled?: boolean
+		reservationsEnabled?: boolean
+		inventoryEnabled?: boolean
+	} = parsed.data
+	if (parsed.data.profileId) {
+		const profile = await getProfileSettings(g.db, parsed.data.profileId)
+		if (!profile) return posError(422, 'profile_not_found')
+		apps = profile
+		if (
+			profile.ordersEnabled &&
+			g.auth.locationIds !== null &&
+			(!parsed.data.locationId ||
+				!g.auth.locationIds.includes(parsed.data.locationId))
+		)
+			return posError(403, 'location_not_allowed')
+	}
 	const denied = await stationAppsDenied(
 		g.auth,
-		parsed.data,
+		apps,
 		parsed.data.locationId ?? null,
 		posStaffScopeId({
 			scopeId: parsed.data.scopeId ?? DEFAULT_SCOPE_ID,
@@ -137,6 +177,7 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 			timeclockEnabled: parsed.data.timeclockEnabled,
 			reservationsEnabled: parsed.data.reservationsEnabled,
 			inventoryEnabled: parsed.data.inventoryEnabled,
+			profileId: parsed.data.profileId,
 			createdBy: g.auth.userId,
 		})
 	} catch (error) {
@@ -271,7 +312,7 @@ operatorPosRoutes.post('/held/:id/resolve', async (c) => {
  * clock also needs the organization's staffing flag when this node can read it,
  * and a workplace the member manages that the organization really has.
  */
-async function stationAppsDenied(
+async function stationAppsRefusal(
 	auth: { orgId: string; stationApps: StationAppClaims },
 	patch: {
 		timeclockEnabled?: boolean
@@ -282,50 +323,91 @@ async function stationAppsDenied(
 	hostLocationId: string | null,
 	/** Its staffing workplace once this change is made (`posStaffScopeId`). */
 	workplace: string,
-): Promise<Response | null> {
+): Promise<Refusal | null> {
 	if (patch.timeclockEnabled === true) {
 		if (!auth.stationApps.timeclock)
-			return posError(403, 'timeclock_permission_required')
+			return refuse(403, 'timeclock_permission_required')
 		// A member limited to some workplaces turns the clock on only there.
 		const allowed = auth.stationApps.scopeIds
 		if (allowed !== null && !allowed.includes(workplace))
-			return posError(403, 'scope_not_allowed')
+			return refuse(403, 'scope_not_allowed')
 		const flags = await getStaffingFeatures(auth.orgId).catch(() => null)
 		if (flags && (!flags.features.enabled || !flags.features.timeclock))
-			return posError(422, 'timeclock_disabled')
+			return refuse(422, 'timeclock_disabled')
 		// Where people work by location, a till with none has nobody to clock in.
 		if ((await hasScope(auth.orgId, workplace).catch(() => null)) === false)
 			return workplace === DEFAULT_SCOPE_ID
-				? posError(422, 'timeclock_needs_location', {
-						message: 'Choose the terminal’s location to use the time clock.',
-					})
-				: posError(422, 'invalid_scope', {
-						message: 'That workplace cannot use the time clock.',
-					})
+				? refuse(
+						422,
+						'timeclock_needs_location',
+						'Choose the terminal’s location to use the time clock.',
+					)
+				: refuse(
+						422,
+						'invalid_scope',
+						'That workplace cannot use the time clock.',
+					)
 	}
 	if (patch.reservationsEnabled === true) {
 		if (!auth.stationApps.reservations)
-			return posError(403, 'reservations_permission_required')
+			return refuse(403, 'reservations_permission_required')
 		// A member limited to some locations opens the host stand only there.
 		const allowed = auth.stationApps.locationIds
 		if (
 			allowed !== null &&
 			(hostLocationId === null || !allowed.includes(hostLocationId))
 		)
-			return posError(403, 'location_not_allowed')
+			return refuse(403, 'location_not_allowed')
 	}
 	if (patch.inventoryEnabled === true) {
 		if (!auth.stationApps.inventory)
-			return posError(403, 'inventory_permission_required')
+			return refuse(403, 'inventory_permission_required')
 		// A member limited to some locations opens Stock only there.
 		const allowed = auth.stationApps.inventoryLocationIds
 		if (
 			allowed !== null &&
 			(hostLocationId === null || !allowed.includes(hostLocationId))
 		)
-			return posError(403, 'location_not_allowed')
+			return refuse(403, 'location_not_allowed')
 	}
 	return null
+}
+
+type Refusal = {
+	status: 403 | 422
+	error: string
+	message?: string
+}
+const refuse = (
+	status: Refusal['status'],
+	error: string,
+	message?: string,
+): Refusal => ({ status, error, ...(message ? { message } : {}) })
+
+/** `stationAppsRefusal` as the HTTP answer. */
+async function stationAppsDenied(
+	auth: { orgId: string; stationApps: StationAppClaims },
+	patch: {
+		timeclockEnabled?: boolean
+		reservationsEnabled?: boolean
+		inventoryEnabled?: boolean
+	},
+	hostLocationId: string | null,
+	workplace: string,
+): Promise<Response | null> {
+	const refusal = await stationAppsRefusal(
+		auth,
+		patch,
+		hostLocationId,
+		workplace,
+	)
+	return refusal
+		? posError(
+				refusal.status,
+				refusal.error,
+				refusal.message ? { message: refusal.message } : {},
+			)
+		: null
 }
 
 const patchTerminalSchema = z
@@ -338,8 +420,68 @@ const patchTerminalSchema = z
 		inventoryEnabled: z.boolean().optional(),
 		ordersEnabled: z.boolean().optional(),
 		locationId: z.string().trim().min(1).max(100).optional(),
+		// The settings that have no column of their own (#373, #367).
+		idleLockSeconds: terminalSettingsSchema.shape.idleLockSeconds.optional(),
+		kdsStationId: terminalSettingsSchema.shape.kdsStationId.optional(),
+		menuColumns: terminalSettingsSchema.shape.menuColumns.optional(),
+		menuDensity: terminalSettingsSchema.shape.menuDensity.optional(),
+		guestDisplayEnabled:
+			terminalSettingsSchema.shape.guestDisplayEnabled.optional(),
+		guestDisplayImageUrl:
+			terminalSettingsSchema.shape.guestDisplayImageUrl.optional(),
+		/** Put the terminal on a profile (null: detach it, keeping its values). */
+		profileId: z.string().trim().min(1).max(100).nullable().optional(),
+		/** Take overridden settings back to the profile's values. */
+		resetOverrides: z
+			.union([
+				z.literal('all'),
+				z
+					.array(z.enum(TERMINAL_SETTING_KEYS as [string, ...string[]]))
+					.min(1)
+					.max(20),
+			])
+			.optional(),
 	})
 	.refine((p) => Object.values(p).some((value) => value !== undefined))
+
+/**
+ * The permission rules for switching Station apps on, run for the terminals a
+ * profile change reaches (each with the settings it will have).
+ */
+function profileChangeCheck(auth: {
+	orgId: string
+	stationApps: StationAppClaims
+	locationIds: string[] | null
+}): TerminalChangeCheck {
+	return async (device, patch) => {
+		const workplace = posStaffScopeId({
+			scopeId: device.scopeId,
+			locationId: device.locationId,
+		})
+		const refusal = await stationAppsRefusal(
+			auth,
+			patch,
+			device.locationId,
+			workplace,
+		)
+		if (refusal)
+			return {
+				ok: false,
+				status: refusal.status,
+				error: refusal.error,
+				...(refusal.message ? { message: refusal.message } : {}),
+			}
+		// Orders shows that location's guests: only where the member's scope reaches.
+		if (
+			patch.ordersEnabled === true &&
+			auth.locationIds !== null &&
+			(device.locationId === null ||
+				!auth.locationIds.includes(device.locationId))
+		)
+			return { ok: false, status: 403, error: 'location_not_allowed' }
+		return null
+	}
+}
 
 operatorPosRoutes.patch('/terminals/:id', async (c) => {
 	const g = await guard(c, 'orders:write')
@@ -350,13 +492,47 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 	if (!parsed.success) return posError(400, 'invalid_request')
 	const current = await deviceStationState(g.db, c.req.param('id'))
 	if (!current) return posError(404, 'not_found')
-	const hostLocationId = current.locationId ?? parsed.data.locationId ?? null
+	const { profileId, resetOverrides: resetKeys, ...settings } = parsed.data
+	const check = profileChangeCheck(g.auth)
+	// Profile first (it sets every setting), then a reset, then single edits.
+	if (profileId !== undefined) {
+		const assigned = await assignProfile(
+			g.db,
+			c.req.param('id'),
+			profileId,
+			g.auth.userId,
+			{ check },
+		)
+		if (!assigned.ok)
+			return posError(assigned.status, assigned.error, {
+				...(assigned.message ? { message: assigned.message } : {}),
+				...assigned.extra,
+			})
+	}
+	if (resetKeys !== undefined) {
+		const reset = await resetOverrides(
+			g.db,
+			c.req.param('id'),
+			resetKeys === 'all' ? 'all' : (resetKeys as TerminalSettingKey[]),
+			g.auth.userId,
+			{ check },
+		)
+		if (!reset.ok)
+			return posError(reset.status, reset.error, {
+				...(reset.message ? { message: reset.message } : {}),
+				...reset.extra,
+			})
+	}
+	if (Object.values(settings).every((value) => value === undefined))
+		return c.json({ ok: true }, 200, noStore)
+	const patch = settings
+	const hostLocationId = current.locationId ?? patch.locationId ?? null
 	// Binding a location to a till whose host stand is on is opening it there.
 	const opensHostStand =
-		parsed.data.reservationsEnabled === true ||
+		patch.reservationsEnabled === true ||
 		(current.reservationsEnabled &&
-			parsed.data.reservationsEnabled !== false &&
-			parsed.data.locationId !== undefined &&
+			patch.reservationsEnabled !== false &&
+			patch.locationId !== undefined &&
 			current.locationId === null)
 	const workplace = posStaffScopeId({
 		scopeId: current.scopeId,
@@ -364,26 +540,24 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 	})
 	// Binding a location to a till whose Stock app is on is opening it there.
 	const opensInventory =
-		parsed.data.inventoryEnabled === true ||
+		patch.inventoryEnabled === true ||
 		(current.inventoryEnabled &&
-			parsed.data.inventoryEnabled !== false &&
-			parsed.data.locationId !== undefined &&
+			patch.inventoryEnabled !== false &&
+			patch.locationId !== undefined &&
 			current.locationId === null)
 	// Binding can also move a till's time clock to that location's people.
 	const opensTimeclock =
-		parsed.data.timeclockEnabled === true ||
+		patch.timeclockEnabled === true ||
 		(current.timeclockEnabled &&
-			parsed.data.timeclockEnabled !== false &&
+			patch.timeclockEnabled !== false &&
 			workplace !== posStaffScopeId(current))
 	const denied = await stationAppsDenied(
 		g.auth,
 		{
-			...parsed.data,
-			timeclockEnabled: opensTimeclock ? true : parsed.data.timeclockEnabled,
-			reservationsEnabled: opensHostStand
-				? true
-				: parsed.data.reservationsEnabled,
-			inventoryEnabled: opensInventory ? true : parsed.data.inventoryEnabled,
+			...patch,
+			timeclockEnabled: opensTimeclock ? true : patch.timeclockEnabled,
+			reservationsEnabled: opensHostStand ? true : patch.reservationsEnabled,
+			inventoryEnabled: opensInventory ? true : patch.inventoryEnabled,
 		},
 		hostLocationId,
 		workplace,
@@ -392,10 +566,10 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 	// Orders shows that location's guests: a member limited to some locations
 	// may switch it on (or bind a till with it on) only at theirs.
 	const opensOrders =
-		parsed.data.ordersEnabled === true ||
+		patch.ordersEnabled === true ||
 		(current.ordersEnabled &&
-			parsed.data.ordersEnabled !== false &&
-			parsed.data.locationId !== undefined &&
+			patch.ordersEnabled !== false &&
+			patch.locationId !== undefined &&
 			current.locationId === null)
 	if (
 		opensOrders &&
@@ -403,16 +577,16 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 		(hostLocationId === null || !g.auth.locationIds.includes(hostLocationId))
 	)
 		return posError(403, 'location_not_allowed')
-	if (parsed.data.locationId !== undefined) {
+	if (patch.locationId !== undefined) {
 		// Binding is permanent: it waits for App to confirm the location exists.
-		const found = await checkLocation(g.auth.orgId, parsed.data.locationId)
+		const found = await checkLocation(g.auth.orgId, patch.locationId)
 		if (found === 'unavailable') return posError(503, 'service_unavailable')
 		if (found === 'unknown') return posError(422, 'invalid_location')
 	}
 	const result = await updateDeviceSettings(
 		g.db,
 		c.req.param('id'),
-		parsed.data,
+		patch,
 		Date.now(),
 		g.auth.userId,
 	)
@@ -424,6 +598,140 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 		)
 	}
 	return c.json({ ok: true }, 200, noStore)
+})
+
+// ---------------------------------------------------------------------------
+// Terminal profiles (#373)
+// ---------------------------------------------------------------------------
+
+operatorPosRoutes.get('/profiles', async (c) => {
+	const g = await guard(c, 'orders:read', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	return c.json({ profiles: await listProfiles(g.db) }, 200, noStore)
+})
+
+operatorPosRoutes.post('/profiles', async (c) => {
+	const g = await guard(c, 'orders:write')
+	if ('error' in g) return g.error
+	const parsed = terminalProfileInputSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) return posError(400, 'invalid_request')
+	// A profile only stores settings: the permission to switch an app on is
+	// checked for each terminal that takes the profile (assigning it, changing
+	// it, or pairing with it), with that terminal's location.
+	const result = await createProfile(g.db, parsed.data, g.auth.userId)
+	if (!result.ok)
+		return posError(
+			result.status,
+			result.error,
+			result.message ? { message: result.message } : {},
+		)
+	return c.json({ profile: result.value }, 201, noStore)
+})
+
+operatorPosRoutes.put('/profiles/:id', async (c) => {
+	const g = await guard(c, 'orders:write')
+	if ('error' in g) return g.error
+	const parsed = terminalProfileUpdateSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const { expectedVersion, ...input } = parsed.data
+	const result = await updateProfile(
+		g.db,
+		c.req.param('id'),
+		{ ...input, expectedVersion },
+		g.auth.userId,
+		{ check: profileChangeCheck(g.auth) },
+	)
+	if (!result.ok)
+		return posError(result.status, result.error, {
+			...(result.message ? { message: result.message } : {}),
+			...result.extra,
+		})
+	return c.json(result.value, 200, noStore)
+})
+
+operatorPosRoutes.delete('/profiles/:id', async (c) => {
+	const g = await guard(c, 'orders:write', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	const result = await deleteProfile(g.db, c.req.param('id'), g.auth.userId)
+	if (!result.ok)
+		return posError(result.status, result.error, {
+			...(result.message ? { message: result.message } : {}),
+			...result.extra,
+		})
+	return c.json({ ok: true }, 200, noStore)
+})
+
+/**
+ * The kitchen stations a location has, to choose the one a terminal's Kitchen
+ * screen shows (names and ids only). A member limited to some locations sees
+ * only theirs.
+ */
+operatorPosRoutes.get('/kds-stations', async (c) => {
+	const g = await guard(c, 'orders:read', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	const location = z
+		.string()
+		.regex(/^[A-Za-z0-9_-]{1,100}$/)
+		.safeParse(c.req.query('locationId'))
+	if (!location.success) return posError(400, 'invalid_request')
+	if (
+		g.auth.locationIds !== null &&
+		!g.auth.locationIds.includes(location.data)
+	)
+		return posError(404, 'not_found')
+	return c.json(
+		{ stations: await listKdsStations(g.db, location.data) },
+		200,
+		noStore,
+	)
+})
+
+// ---------------------------------------------------------------------------
+// Connection history (#356)
+// ---------------------------------------------------------------------------
+
+/**
+ * Every terminal's last week as check-in intervals, for the Terminals list. The
+ * App adds the location's opening hours to say what was an outage. Off (empty,
+ * `enabled: false`) unless the organization has `pos.device_health`.
+ */
+operatorPosRoutes.get('/health', async (c) => {
+	const g = await guard(c, 'orders:read', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	if (!(await deviceHealthEnabled(g.auth.orgId)))
+		return c.json({ enabled: false, devices: [] }, 200, noStore)
+	const summary = await healthSummary(g.db)
+	const visible =
+		g.auth.locationIds === null
+			? summary.devices
+			: summary.devices.filter(
+					(device) =>
+						device.locationId !== null &&
+						g.auth.locationIds!.includes(device.locationId),
+				)
+	return c.json({ enabled: true, ...summary, devices: visible }, 200, noStore)
+})
+
+/** One terminal's connection history and what it last reported about itself. */
+operatorPosRoutes.get('/health/:id', async (c) => {
+	const g = await guard(c, 'orders:read', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	if (!(await deviceHealthEnabled(g.auth.orgId)))
+		return c.json({ enabled: false }, 200, noStore)
+	const detail = await deviceHealth(g.db, c.req.param('id'))
+	if (!detail) return posError(404, 'not_found')
+	// A member limited to some locations sees only terminals at those.
+	if (
+		g.auth.locationIds !== null &&
+		(detail.device.locationId === null ||
+			!g.auth.locationIds.includes(detail.device.locationId))
+	)
+		return posError(404, 'not_found')
+	return c.json({ enabled: true, ...detail }, 200, noStore)
 })
 
 /**

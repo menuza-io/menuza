@@ -34,6 +34,11 @@ import { inventorySaleQueue } from '../services/inventory-sales-service.ts'
 import { listKdsStations } from '../services/kds-service.ts'
 import { scheduleOrderJourneys } from '../services/order-journeys.ts'
 import { deviceApps } from '../services/pos-apps-service.ts'
+import { profileSummaryFor } from '../services/pos-profiles-service.ts'
+import { heartbeatSchema } from '@repo/common/device-health'
+import { deviceHealthEnabled } from '../lib/pos-device-health.ts'
+import { recordHeartbeat } from '../services/pos-health-service.ts'
+import { explicitTerminalJsonSettings } from '@repo/common/terminal-profiles'
 import {
 	requeueTillSaleLoyalty,
 	tillLoyaltyUpload,
@@ -242,17 +247,25 @@ posRoutes.get('/me', async (c) => {
 	if ('error' in auth) return auth.error
 	const { db, device } = auth.pos
 	await touchDevice(db, device)
-	const [transfers, fiscalChains, zatca, apps, kdsStations, closedShifts] =
-		await Promise.all([
-			recentTransfersAway(db, device.id),
-			fiscalChainHeads(db, device.id),
-			unitStatus(db, device.id),
-			deviceApps(auth.pos.orgId, device),
-			device.locationId
-				? listKdsStations(db, device.locationId)
-				: Promise.resolve([]),
-			listRemotelyClosedShiftsForDevice(db, device.id),
-		])
+	const [
+		transfers,
+		fiscalChains,
+		zatca,
+		apps,
+		kdsStations,
+		closedShifts,
+		profile,
+	] = await Promise.all([
+		recentTransfersAway(db, device.id),
+		fiscalChainHeads(db, device.id),
+		unitStatus(db, device.id),
+		deviceApps(auth.pos.orgId, device),
+		device.locationId
+			? listKdsStations(db, device.locationId)
+			: Promise.resolve([]),
+		listRemotelyClosedShiftsForDevice(db, device.id),
+		profileSummaryFor(db, device),
+	])
 	return c.json({
 		device: {
 			id: device.id,
@@ -263,7 +276,13 @@ posRoutes.get('/me', async (c) => {
 			signInRequired: device.signInRequired,
 			dayStartMinutes: device.dayStartMinutes,
 			shiftsRequired: device.shiftsRequired,
+			// Settings a manager (or the terminal's profile) set for this terminal:
+			// lock timeout, kitchen station, menu layout, guest second screen. Only
+			// the ones that were set, so a till keeps its own choice for the rest.
+			...explicitTerminalJsonSettings(device.deviceSettings),
 		},
+		// The profile this terminal inherits from, by name (#373).
+		profile,
 		// Station apps beside the till (time clock, host stand).
 		apps,
 		transfers,
@@ -273,6 +292,28 @@ posRoutes.get('/me', async (c) => {
 		// When active, the till fetches its signing key and certificate from /pos/zatca.
 		zatca,
 	})
+})
+
+/**
+ * A terminal's heartbeat (#356): at most one a minute while it is open. Technical
+ * facts only (version, battery, storage, how many orders wait to upload). Where
+ * the organization does not collect connection history it answers
+ * `enabled: false` and the terminal asks again later; nothing is stored.
+ */
+posRoutes.post('/heartbeat', async (c) => {
+	const auth = await authenticatePosDevice(c)
+	if ('error' in auth) return auth.error
+	const body = await readBody(c)
+	if ('error' in body) return body.error
+	const parsed = heartbeatSchema.safeParse(body.raw ?? {})
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const { db, device, orgId } = auth.pos
+	const headers = { 'Cache-Control': 'private, no-store' }
+	if (!(await deviceHealthEnabled(orgId)))
+		return c.json({ enabled: false }, 200, headers)
+	await touchDevice(db, device)
+	await recordHeartbeat(db, device, parsed.data)
+	return c.json({ enabled: true }, 200, headers)
 })
 
 /**

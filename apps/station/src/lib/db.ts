@@ -4,6 +4,7 @@ import { type StationOutboxItem } from '@repo/inventory'
 import Dexie, { type EntityTable } from 'dexie'
 import { type SaleLoyalty } from './loyalty.ts'
 import { type Adjustment, type CartLine, type Totals } from './pricing.ts'
+import { isTrainingMode, TRAINING_DB_NAME } from './training-flag.ts'
 import { type CatalogSnapshot } from './types.ts'
 
 export type OrderType = 'dine_in' | 'takeaway' | 'drive_through'
@@ -265,7 +266,7 @@ export type StockKeyValue = { key: string; value: unknown; savedAt: number }
 /** An invoice photo waiting for its delivery to reach the server. */
 export type StockBlob = { key: string; blob: Blob; savedAt: number }
 
-class PosDatabase extends Dexie {
+export class PosDatabase extends Dexie {
 	orders!: EntityTable<PosOrder, 'id'>
 	catalog!: EntityTable<CatalogSnapshot, 'key'>
 	meta!: EntityTable<KeyValue, 'key'>
@@ -276,8 +277,8 @@ class PosDatabase extends Dexie {
 	stockQueue!: EntityTable<StockRow, 'id'>
 	stockBlobs!: EntityTable<StockBlob, 'key'>
 
-	constructor() {
-		super('pos')
+	constructor(name = 'pos') {
+		super(name)
 		this.version(1).stores({
 			orders: 'id, sync, createdAt, businessDate, nextAttemptAt',
 			catalog: 'key',
@@ -350,7 +351,14 @@ class PosDatabase extends Dexie {
 	}
 }
 
-export const db = new PosDatabase()
+/**
+ * Training mode (#383) is fixed for the life of the page (switching reloads it):
+ * a training till opens a separate database, so a training order, shift or
+ * sign-in can never be read, sent or counted as a real one.
+ */
+export { isTrainingMode }
+
+export const db = new PosDatabase(isTrainingMode() ? TRAINING_DB_NAME : 'pos')
 
 export async function getMeta<T>(key: string): Promise<T | undefined> {
 	return (await db.meta.get(key))?.value as T | undefined

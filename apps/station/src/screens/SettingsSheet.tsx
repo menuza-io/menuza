@@ -16,6 +16,8 @@ import {
 	serversProblem,
 } from '~/lib/pairing.ts'
 import { DEMO_PIN } from '~/lib/signin.ts'
+import { isTrainingMode } from '~/lib/training-flag.ts'
+import { enterTraining, leaveTraining } from '~/lib/training.ts'
 import { type MenuLocation } from '~/lib/types.ts'
 import {
 	Input,
@@ -28,6 +30,97 @@ import {
 	fieldClass,
 	Select,
 } from '~/ui/primitives.tsx'
+
+/**
+ * Training mode (#383). Starting it opens an empty practice till on this
+ * device: orders made there stay here, are never sent, counted or kept as
+ * records, and turning it off deletes them. Reaching this sheet already takes a
+ * manager's PIN where staff sign in, the same gate as every other setting here.
+ */
+function TrainingSection({ waitingOrders }: { waitingOrders: number }) {
+	const { _ } = useLingui()
+	const training = isTrainingMode()
+	const [busy, setBusy] = useState(false)
+	const [confirming, setConfirming] = useState(false)
+	const run = async (action: () => Promise<void>) => {
+		setBusy(true)
+		try {
+			await action()
+		} finally {
+			setBusy(false)
+		}
+	}
+	return (
+		<section aria-label={_(t`Training mode`)} className="space-y-3">
+			<div className="space-y-1">
+				<h3 className="text-base font-semibold">
+					<Trans>Training mode</Trans>
+				</h3>
+				<p className="text-muted-foreground text-sm">
+					{training ? (
+						<Trans>
+							This terminal is in training mode. Turning it off deletes
+							everything made in training and returns to the real till.
+						</Trans>
+					) : (
+						<Trans>
+							Let new staff practise on this terminal. Orders made in training
+							are never sent, counted in reports or stock, or shown to the
+							kitchen, and are deleted when you turn it off.
+						</Trans>
+					)}
+				</p>
+				{!training && waitingOrders > 0 ? (
+					<p className="text-muted-foreground text-sm">
+						<Trans>
+							Real orders still waiting to send stay safe on this device and go
+							out when training ends.
+						</Trans>
+					</p>
+				) : null}
+			</div>
+			{training ? (
+				confirming ? (
+					<div className="flex flex-wrap gap-3">
+						<Button
+							variant="primary"
+							size="lg"
+							disabled={busy}
+							onClick={() => void run(() => leaveTraining())}
+						>
+							<Trans>Delete training data and go back</Trans>
+						</Button>
+						<Button
+							variant="outline"
+							size="lg"
+							disabled={busy}
+							onClick={() => setConfirming(false)}
+						>
+							<Trans>Keep training</Trans>
+						</Button>
+					</div>
+				) : (
+					<Button
+						variant="outline"
+						size="lg"
+						onClick={() => setConfirming(true)}
+					>
+						<Trans>Turn off training mode</Trans>
+					</Button>
+				)
+			) : (
+				<Button
+					variant="outline"
+					size="lg"
+					disabled={busy}
+					onClick={() => void run(() => enterTraining())}
+				>
+					<Trans>Start training mode</Trans>
+				</Button>
+			)}
+		</section>
+	)
+}
 
 export function SettingsSheet({
 	open,
@@ -186,12 +279,22 @@ export function SettingsSheet({
 							<p className="text-muted-foreground text-sm">
 								<Trans>For this terminal only. Changes apply right away.</Trans>
 							</p>
+							{settings.managed?.menuColumns !== undefined ||
+							settings.managed?.menuDensity !== undefined ? (
+								<p className="text-muted-foreground text-sm">
+									<Trans>
+										Some of these are set for this terminal in the Menuza app
+										and cannot be changed here.
+									</Trans>
+								</p>
+							) : null}
 						</div>
 						<div className="space-y-1.5">
 							<span className="text-sm font-medium">
 								<Trans>Columns</Trans>
 							</span>
 							<Segmented
+								disabled={settings.managed?.menuColumns !== undefined}
 								label={_(t`Menu columns`)}
 								value={
 									String(draft.menuColumns ?? 'auto') as
@@ -222,6 +325,7 @@ export function SettingsSheet({
 								<Trans>Density</Trans>
 							</span>
 							<Segmented
+								disabled={settings.managed?.menuDensity !== undefined}
 								label={_(t`Menu density`)}
 								value={draft.menuDensity ?? 'comfortable'}
 								onChange={(menuDensity: MenuDensity) => {
@@ -239,6 +343,9 @@ export function SettingsSheet({
 							density={draft.menuDensity ?? 'comfortable'}
 						/>
 					</section>
+				) : null}
+				{paired && !settings.demo ? (
+					<TrainingSection waitingOrders={waitingOrders} />
 				) : null}
 				<section aria-label={_(t`Pairing`)} className="space-y-3">
 					{paired ? (
@@ -457,6 +564,7 @@ export function SettingsSheet({
 							>
 								<Select
 									value={draft.idleLockSeconds}
+									disabled={settings.managed?.idleLockSeconds !== undefined}
 									onChange={(e) =>
 										set('idleLockSeconds', Number(e.target.value))
 									}

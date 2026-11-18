@@ -2355,6 +2355,16 @@ export const posDevices = sqliteTable(
 		ordersEnabled: integer('orders_enabled', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// The terminal profile this terminal inherits its settings from (#373), and
+		// the settings it overrides (a JSON array of setting keys). The effective
+		// value of every setting is kept on the terminal itself; a profile change
+		// writes the new value to each terminal that does not override that key.
+		profileId: text('profile_id'),
+		profileOverrides: text('profile_overrides').notNull().default('[]'),
+		// The settings that have no column of their own (lock timeout, kitchen
+		// station, menu layout, guest second screen), as JSON. See
+		// `@repo/common/terminal-profiles`.
+		deviceSettings: text('device_settings').notNull().default('{}'),
 		// Keyed hash of the device secret. The secret itself is never stored.
 		secretHash: text('secret_hash').notNull(),
 		pairedBy: text('paired_by').notNull(),
@@ -2403,6 +2413,8 @@ export const posPairingCodes = sqliteTable(
 		inventoryEnabled: integer('inventory_enabled', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// The profile the new terminal will inherit (#373).
+		profileId: text('profile_id'),
 		createdBy: text('created_by').notNull(),
 		expiresAt: integer('expires_at').notNull(),
 		usedAt: integer('used_at'),
@@ -2410,6 +2422,83 @@ export const posPairingCodes = sqliteTable(
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [uniqueIndex('uniq_pos_pairing_codes_hash').on(table.codeHash)],
+)
+
+/**
+ * Reusable terminal settings (#373): the Station apps, sign-in and drawer
+ * rules, kitchen station, lock timeout, menu layout and guest second screen a
+ * terminal starts with. `settings` is JSON checked by `terminalSettingsSchema`
+ * in `@repo/common/terminal-profiles`. Settings only, no personal data. A
+ * profile is deleted only while no terminal and no pairing code uses it
+ * (enforced by the service; revoked terminals do not count).
+ */
+export const posTerminalProfiles = sqliteTable(
+	'pos_terminal_profiles',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		name: text('name').notNull(),
+		settings: text('settings').notNull(),
+		version: integer('version').notNull().default(1),
+		createdBy: text('created_by').notNull(),
+		updatedBy: text('updated_by').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [uniqueIndex('uniq_pos_terminal_profiles_name').on(table.name)],
+)
+
+/**
+ * One row per terminal per minute it checked in (#356), kept 30 days and then
+ * rolled into `pos_device_health_daily`. Technical facts only: no staff, no
+ * orders, no guests. `last_upload_at` is when the till last delivered an order
+ * or shift; the drawer and printer columns are filled only when the till can
+ * really report them (a browser cannot read either today).
+ */
+export const posDeviceHeartbeats = sqliteTable(
+	'pos_device_heartbeats',
+	{
+		deviceId: text('device_id')
+			.notNull()
+			.references(() => posDevices.id, { onDelete: 'cascade' }),
+		/** Epoch milliseconds floored to the minute. */
+		minuteBucket: integer('minute_bucket').notNull(),
+		appVersion: text('app_version'),
+		browser: text('browser'),
+		batteryPct: integer('battery_pct'),
+		charging: integer('charging', { mode: 'boolean' }),
+		storageUsedMb: integer('storage_used_mb'),
+		storageQuotaMb: integer('storage_quota_mb'),
+		pendingUploads: integer('pending_uploads'),
+		lastUploadAt: integer('last_upload_at'),
+		printerState: text('printer_state'),
+		drawerOpenedAt: integer('drawer_opened_at'),
+		drawerShiftId: text('drawer_shift_id'),
+	},
+	(table) => [
+		primaryKey({ columns: [table.deviceId, table.minuteBucket] }),
+		index('idx_pos_device_heartbeats_bucket').on(table.minuteBucket),
+	],
+)
+
+/** A day of heartbeats summarized once the minutes are older than 30 days. */
+export const posDeviceHealthDaily = sqliteTable(
+	'pos_device_health_daily',
+	{
+		deviceId: text('device_id')
+			.notNull()
+			.references(() => posDevices.id, { onDelete: 'cascade' }),
+		/** The UTC calendar day, `YYYY-MM-DD`. */
+		day: text('day').notNull(),
+		heartbeats: integer('heartbeats').notNull(),
+		firstAt: integer('first_at').notNull(),
+		lastAt: integer('last_at').notNull(),
+		appVersion: text('app_version'),
+		minBatteryPct: integer('min_battery_pct'),
+		maxPendingUploads: integer('max_pending_uploads'),
+	},
+	(table) => [primaryKey({ columns: [table.deviceId, table.day] })],
 )
 
 export const POS_ORDER_STATUSES = ['open', 'paid', 'void', 'refunded'] as const
@@ -7254,6 +7343,8 @@ export type NewStaffAuditLogEntry = typeof staffAuditLog.$inferInsert
 
 export type LaborPolicyRow = typeof laborPolicies.$inferSelect
 export type PosDevice = typeof posDevices.$inferSelect
+export type PosTerminalProfile = typeof posTerminalProfiles.$inferSelect
+export type PosDeviceHeartbeat = typeof posDeviceHeartbeats.$inferSelect
 export type PosPairingCode = typeof posPairingCodes.$inferSelect
 export type PosOrderRow = typeof posOrders.$inferSelect
 export type PosPaymentRow = typeof posPayments.$inferSelect

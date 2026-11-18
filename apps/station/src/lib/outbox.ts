@@ -4,9 +4,13 @@ import {
 	POS_CONTRACT_VERSION,
 	type PosDeviceApps,
 } from '@repo/common/pos-orders'
+import {
+	explicitTerminalJsonSettings,
+	type TerminalJsonSettings,
+} from '@repo/common/terminal-profiles'
 import { noteServerDate } from './clock.ts'
 import { type PosSettings } from './config.ts'
-import { db, type PosOrder } from './db.ts'
+import { db, isTrainingMode, setMeta, type PosOrder } from './db.ts'
 import { toWireLoyalty } from './loyalty.ts'
 import { isSendable } from './orders.ts'
 import { type RemoteShiftClosure, toWireShift } from './shifts.ts'
@@ -37,6 +41,9 @@ const PERMANENT_REFUSALS = new Set([
 
 /** The contract this till speaks (`POS_CONTRACT_VERSION` in @repo/common/pos-orders). */
 export const CONTRACT_VERSION = POS_CONTRACT_VERSION
+
+/** `db.meta` key: when an order last reached the server (epoch ms). */
+export const LAST_UPLOAD_KEY = 'lastUploadAt'
 
 const staffOrNull = (who: { id: string; name: string } | null | undefined) =>
 	who ? { id: who.id, name: who.name } : null
@@ -374,6 +381,8 @@ export async function flushOutbox(
 	settings: PosSettings,
 	options: FlushOptions = {},
 ): Promise<number> {
+	// Nothing a training till makes ever leaves it (#383).
+	if (isTrainingMode()) return 0
 	if (
 		running ||
 		(typeof navigator !== 'undefined' && navigator.onLine === false)
@@ -496,6 +505,9 @@ export async function flushOutbox(
 	} finally {
 		running = false
 	}
+	// When this till last delivered something: the connection history shows it.
+	if (sent > 0)
+		await setMeta(LAST_UPLOAD_KEY, Date.now()).catch(() => undefined)
 	return sent
 }
 
@@ -633,6 +645,13 @@ export const pendingCount = (): Promise<number> =>
 
 export type DeviceCheck = {
 	verdict: 'ok' | 'removed' | 'unrecognised' | 'unknown'
+	/**
+	 * Settings the server set for this terminal (profile or manager): only the
+	 * ones it stored. Absent on a node that predates terminal profiles.
+	 */
+	managed?: Partial<TerminalJsonSettings>
+	/** The profile this terminal follows, by name (null: none). */
+	profileName?: string | null
 	/** What the server says about this terminal, when it answered. */
 	device?: {
 		signInRequired: boolean
@@ -698,6 +717,7 @@ export async function checkDeviceDetailed(
 					shiftsRequired?: boolean
 				}
 				apps?: { timeclock?: boolean; reservations?: boolean }
+				profile?: { id?: string; name?: string } | null
 				transfers?: Array<{ orderId: string; terminalCode: string }>
 				fiscalChains?: PosFiscalChainHead[]
 				kdsStations?: Array<{ id: string; name: string }>
@@ -711,6 +731,11 @@ export async function checkDeviceDetailed(
 			const d = body.device
 			return {
 				verdict: 'ok',
+				managed: d ? explicitTerminalJsonSettings(d) : undefined,
+				profileName:
+					body.profile && typeof body.profile.name === 'string'
+						? body.profile.name
+						: null,
 				device: d
 					? {
 							signInRequired: d.signInRequired === true,

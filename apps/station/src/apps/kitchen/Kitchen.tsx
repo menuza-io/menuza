@@ -164,10 +164,14 @@ export function Kitchen({
 			/* device-local preference only */
 		}
 	}
+	// A terminal profile (or a manager in the App) can fix the station this
+	// screen shows; it then wins over the screen's own choice.
+	const managedStation = settings.managed?.kdsStationId ?? null
+	const wantedStation = managedStation ?? preference.stationId
 	const stationId = feed?.config.stations.some(
-		(station) => station.id === preference.stationId,
+		(station) => station.id === wantedStation,
 	)
-		? preference.stationId
+		? wantedStation
 		: null
 	const prep = usePrep(settings, session, reachable, stationId)
 	const showPrep = section === 'prep' && prep.available === true
@@ -382,6 +386,12 @@ export function Kitchen({
 								className="h-11"
 								containerClassName="w-44"
 								value={stationId ?? ''}
+								disabled={managedStation !== null}
+								title={
+									managedStation !== null
+										? _(t`Set for this terminal in the Menuza app.`)
+										: undefined
+								}
 								onChange={(event) =>
 									select({ stationId: event.target.value || null })
 								}

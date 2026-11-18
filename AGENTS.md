@@ -635,6 +635,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   on that node; revoking a device always still works. A paired tablet keeps its
   device secret locally, so no organization flag can stop it. Runbook: revoke
   devices first, then use the switch. See `docs/staffing.md`.
+- `POS_DEVICE_HEALTH_ENABLED` - Tenant-api only, optional (unset or `true` is
+  on). Kill switch for Station connection history (#356): `false` (also `0`,
+  `off`, `no`, `disabled`) drops terminal heartbeats and answers the Health panel
+  as off; stored history is kept. Collection also needs the organization flag
+  `pos.device_health` (default off). See `docs/pos.md`.
 - `POS_ENABLED` / `POS_ORIGINS` - Tenant-api only. Kill switch for the walk-in
   POS (`false` answers 503 on `/pos/*`; revoking a terminal always works) and
   the comma-separated POS web origins allowed to call `/pos/*` from a browser.
