@@ -106,7 +106,7 @@ export const restaurantServerVertical: PhoneAgentServerVertical = {
 				// #412 / #388: quote what the order will cost at this location.
 				menus: priceAgentMenus(payload.menus, {
 					locationId: location.id,
-					overrides: payload.locationOverrides[location.id] ?? [],
+					overrides: payload.locationOverrides?.[location.id] ?? [],
 					pricingRules: payload.pricingRules,
 					now,
 				}),
