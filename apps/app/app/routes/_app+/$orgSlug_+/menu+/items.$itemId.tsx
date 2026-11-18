@@ -1,6 +1,8 @@
 import { requireUserId } from '@repo/auth'
 import { parseDailySaleLimit } from '@repo/common/daily-dish-limits'
+import { parseOrderTypePrices } from '@repo/common/menu-pricing'
 import {
+	dietaryTagsOf,
 	MenuItemInputSchema,
 	parseMenuVariations,
 	parseMenuItemImageKeys,
@@ -42,6 +44,11 @@ import {
 	dailyLimitLocationIds,
 } from '#app/utils/menu/daily-limit-save.ts'
 import { recordMenuChange } from '#app/utils/menu/menu-updates.server.ts'
+import {
+	dietaryAndOrderTypeColumns,
+	MENU_JSON_FORM_KEYS,
+	parseMenuJsonFormValue,
+} from '#app/utils/menu/menu-write-columns.ts'
 import {
 	assertCategoryIdsInOrganization,
 	assertItemInOrganization,
@@ -193,8 +200,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			id: item.id,
 			displayName: item.displayName,
 			internalName: item.internalName ?? '',
-			kitchenName:
-				item.kitchenName ?? JSON.stringify({ [defaultLocale]: '' }),
+			kitchenName: item.kitchenName ?? JSON.stringify({ [defaultLocale]: '' }),
 			kitchenHighlight: item.kitchenHighlight ?? 'none',
 			description: item.description ?? '',
 			price: item.price,
@@ -215,6 +221,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			isAlcohol: item.isAlcohol,
 			isGlutenFree: item.isGlutenFree,
 			isVegetarian: item.isVegetarian,
+			dietaryTags: dietaryTagsOf(item),
+			orderTypePrices: parseOrderTypePrices(item.orderTypePrices),
 			allergens,
 			calorieMin: item.calorieMin,
 			calorieMax: item.calorieMax,
@@ -276,7 +284,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const rawData: Record<string, unknown> = {}
 
 	for (const [key, value] of formData.entries()) {
-		if (
+		if ((MENU_JSON_FORM_KEYS as readonly string[]).includes(key)) {
+			rawData[key] = parseMenuJsonFormValue(value)
+		} else if (
 			key === 'allergens' ||
 			key === 'imageKeys' ||
 			key === 'variations' ||
@@ -381,8 +391,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				imageUrl: primaryImageKey ? data.imageUrl || null : null,
 				imageKeys: JSON.stringify(imageKeys),
 				isAlcohol: data.isAlcohol,
-				isGlutenFree: data.isGlutenFree,
-				isVegetarian: data.isVegetarian,
+				...(await dietaryAndOrderTypeColumns(data, async () => {
+					const [current] = await tx
+						.select({ dietaryTags: OrganizationMenuItem.dietaryTags })
+						.from(OrganizationMenuItem)
+						.where(eq(OrganizationMenuItem.id, params.itemId ?? ''))
+					return current?.dietaryTags
+				})),
 				allergens: JSON.stringify(data.allergens),
 				calorieMin: data.calorieMin ?? null,
 				calorieMax: data.calorieMax ?? null,

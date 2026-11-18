@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { BULK_EDIT_MAX_ROWS, planBulkEditItem, planBulkEditOption } from './bulk-edit.ts'
+import {
+	BULK_EDIT_MAX_ROWS,
+	planBulkEditItem,
+	planBulkEditOption,
+} from './bulk-edit.ts'
 
 const baseItem = {
 	id: 'item1',
@@ -12,6 +16,7 @@ const baseItem = {
 	isVegetarian: false,
 	isGlutenFree: false,
 	isAlcohol: false,
+	dietaryTags: [] as Array<'vegetarian' | 'gluten_free' | 'vegan' | 'halal'>,
 	isPopular: false,
 	isUpsell: false,
 	categoryIds: ['cat1'],
@@ -70,11 +75,66 @@ describe('planBulkEditOption', () => {
 					isVegetarian: true,
 					isGlutenFree: false,
 					isAlcohol: false,
+					dietaryTags: ['vegetarian'],
 				},
 			],
 			currencyExponent: 0,
 			operation: { type: 'price', change: { kind: 'percent', value: 10 } },
 		})
 		expect(plan?.after.price).toBe(5)
+	})
+})
+
+describe('dietary tags in bulk edit (#335)', () => {
+	it('adds a new tag and keeps the others and the flags in sync', () => {
+		const [plan] = planBulkEditItem({
+			rows: [{ ...baseItem, isVegetarian: true, dietaryTags: ['vegetarian'] }],
+			currencyExponent: 2,
+			operation: { type: 'dietary', flag: 'vegan', enabled: true },
+		})
+		expect(plan?.after.dietaryTags).toEqual(['vegan', 'vegetarian'])
+		expect(plan?.after.isVegetarian).toBe(true)
+	})
+
+	it('removes vegetarian and clears the old flag', () => {
+		const [plan] = planBulkEditItem({
+			rows: [
+				{
+					...baseItem,
+					isVegetarian: true,
+					dietaryTags: ['halal', 'vegetarian'],
+				},
+			],
+			currencyExponent: 2,
+			operation: { type: 'dietary', flag: 'vegetarian', enabled: false },
+		})
+		expect(plan?.after.dietaryTags).toEqual(['halal'])
+		expect(plan?.after.isVegetarian).toBe(false)
+	})
+
+	it('keeps alcohol as its own flag', () => {
+		const [plan] = planBulkEditOption({
+			rows: [
+				{
+					id: 'opt1',
+					updatedAt: new Date(),
+					displayName: 'Wine',
+					price: 4,
+					availabilityStatus: 'available',
+					unavailableUntil: null,
+					isVegetarian: false,
+					isGlutenFree: true,
+					isAlcohol: false,
+					dietaryTags: ['gluten_free'],
+				},
+			],
+			currencyExponent: 2,
+			operation: { type: 'dietary', flag: 'alcohol', enabled: true },
+		})
+		expect(plan?.after).toMatchObject({
+			isAlcohol: true,
+			dietaryTags: ['gluten_free'],
+			isGlutenFree: true,
+		})
 	})
 })

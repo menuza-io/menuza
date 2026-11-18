@@ -67,6 +67,8 @@ export type OrderingItem = {
 	isVegetarian?: boolean
 	isGlutenFree?: boolean
 	isAlcohol?: boolean
+	/** Dietary tags (#335), unknown values already dropped. */
+	dietaryTags?: string[]
 	allergens?: string[]
 	calorieMin?: number | null
 	calorieMax?: number | null

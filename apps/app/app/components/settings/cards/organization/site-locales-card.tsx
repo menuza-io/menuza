@@ -1,6 +1,6 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
-import { Trans, msg } from '@lingui/macro'
+import { Trans, msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	SITE_CONTENT_LOCALES,
@@ -39,6 +39,11 @@ import { convertErrorsToFieldFormat } from '#app/components/forms.tsx'
 import { useSaveBar } from '#app/components/save-bar.tsx'
 
 export const siteLocalesActionIntent = 'update-site-locales'
+
+/** Field error code: removing a language would leave menu names empty (#410). */
+export const LOCALE_NAMES_LEFT_BLANK = 'menu_names_left_blank'
+
+type BlankNames = { count: number; examples: string[] }
 
 export const SiteLocalesSchema = z
 	.object({
@@ -83,8 +88,18 @@ export function SiteLocalesCard({
 	actionData?: { result?: unknown }
 }) {
 	const { _ } = useLingui()
-	const fetcher = useFetcher()
+	const fetcher = useFetcher<{ result?: unknown; blankNames?: BlankNames }>()
 	const isSubmitting = fetcher.state !== 'idle'
+	const blankNames = fetcher.data?.blankNames
+	const localeErrors = (errors: string[] | undefined) =>
+		errors?.map((error) => {
+			if (error !== LOCALE_NAMES_LEFT_BLANK) return error
+			const count = blankNames?.count ?? 0
+			const examples = blankNames?.examples.join(', ') ?? ''
+			return _(
+				t`Removing this language would leave ${count} menu names empty (${examples}). Add those names in another language first. Menu, Translations lists them.`,
+			)
+		})
 
 	const [selectedLocales, setSelectedLocales] = useState<SiteContentLocale[]>(
 		localesConfig.locales,
@@ -248,7 +263,9 @@ export function SiteLocalesCard({
 							</DropdownMenuContent>
 						</DropdownMenu>
 						<FieldError
-							errors={convertErrorsToFieldFormat(fields.locales.errors)}
+							errors={convertErrorsToFieldFormat(
+								localeErrors(fields.locales.errors),
+							)}
 						/>
 					</Field>
 

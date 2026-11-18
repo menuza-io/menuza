@@ -3,6 +3,7 @@ import { type PhoneAgentVertical } from '@repo/phone-agent'
 import {
 	describeRestaurantLocation,
 	listMenuCategories,
+	priceAgentMenus,
 	restaurantConfigParts,
 	restaurantDataOf,
 	restaurantVertical,
@@ -102,7 +103,13 @@ export const restaurantServerVertical: PhoneAgentServerVertical = {
 			parts: restaurantConfigParts({
 				businessName: organization.name,
 				location,
-				menus: payload.menus,
+				// #412 / #388: quote what the order will cost at this location.
+				menus: priceAgentMenus(payload.menus, {
+					locationId: location.id,
+					overrides: payload.locationOverrides?.[location.id] ?? [],
+					pricingRules: payload.pricingRules,
+					now,
+				}),
 				reservationsAvailable,
 				now,
 			}),

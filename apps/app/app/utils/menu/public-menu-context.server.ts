@@ -27,6 +27,7 @@ import {
 	type SpecialHour,
 	type WeeklySchedule,
 } from '@repo/common/location-types'
+import { type MenuPricingRule } from '@repo/common/menu-pricing'
 import {
 	isUnavailableUntilExpired,
 	parseMenuItemImageKeys,
@@ -71,6 +72,8 @@ import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { isSlotLimitsEnabled } from '#app/utils/orders/slot-limits.server.ts'
 import { isUpsellEnabled } from '#app/utils/orders/upsell-flag.server.ts'
+import { loadPublishedPricingRules } from './pricing-rules.server.ts'
+import { secondsUntilNextRuleChange } from './pricing-rules.ts'
 import {
 	applyOptionAssignment,
 	attachNestedModifierGroups,
@@ -137,6 +140,12 @@ export interface PublicSiteMenuPayload {
 	>
 	/** Banners and item badges. Absent on a cached menu from before discounts. */
 	promotions?: PublicMenuPromotion[]
+	/**
+	 * Live percentage pricing rules (#388), in priority order. Every channel
+	 * prices a dish with `resolveMenuItemPrice` from `@repo/common/menu-pricing`.
+	 * Absent when the organization has none (and on older cached menus).
+	 */
+	pricingRules?: MenuPricingRule[]
 	/**
 	 * Site features the menu page reads (#114): `upsell` is the
 	 * `ordering.upsell` flag. Absent on a cached menu from before it, which
@@ -634,6 +643,7 @@ export async function buildPublicSiteMenuPayload(
 		locations[0]
 
 	const menuDiscounts = await buildPublicMenuDiscounts(org.id)
+	const pricingRules = await loadPublishedPricingRules(org.id, now)
 	const payload: PublicSiteMenuPayload = {
 		organization: {
 			id: org.id,
@@ -647,6 +657,7 @@ export async function buildPublicSiteMenuPayload(
 		menus: structuredMenus,
 		locationOverrides: locationOverridesMap,
 		promotions: menuDiscounts.promotions,
+		...(pricingRules.length > 0 ? { pricingRules } : {}),
 		features: {
 			upsell: await isUpsellEnabled(org.id),
 			slotLimits: await isSlotLimitsEnabled(org.id),
@@ -654,10 +665,18 @@ export async function buildPublicSiteMenuPayload(
 		},
 	}
 
-	const secondsUntilVariationReturn =
+	const variationSeconds =
 		nextVariationExpiry === null
 			? null
 			: Math.ceil((nextVariationExpiry - now.getTime()) / 1000)
+	// A pricing rule that starts or ends later shortens the cache the same way.
+	const ruleSeconds = secondsUntilNextRuleChange(pricingRules, now)
+	const secondsUntilVariationReturn =
+		variationSeconds === null
+			? ruleSeconds
+			: ruleSeconds === null
+				? variationSeconds
+				: Math.min(variationSeconds, ruleSeconds)
 
 	return { payload, secondsUntilVariationReturn }
 }

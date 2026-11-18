@@ -590,11 +590,11 @@ msgstr "{name}: {text} {unit}"
 msgid "{name}: {why}"
 msgstr "{name}: {why}"
 
-#: src/lib/item-config.ts:147
+#: src/lib/item-config.ts:152
 msgid "{name}: choose at least {min}"
 msgstr "{name}: اختر {min} على الأقل"
 
-#: src/lib/item-config.ts:148
+#: src/lib/item-config.ts:153
 msgid "{name}: choose at most {max}"
 msgstr "{name}: اختر {max} كحد أقصى"
 
@@ -1129,7 +1129,7 @@ msgstr "اقبل خلال {0}"
 msgid "Accepted"
 msgstr "مقبول"
 
-#: src/screens/ItemSheet.tsx:169
+#: src/screens/ItemSheet.tsx:191
 msgid "Add"
 msgstr "إضافة"
 
@@ -1138,7 +1138,7 @@ msgid "Add “<0>{typed}</0>” to the waitlist"
 msgstr "أضف “<0>{typed}</0>” إلى قائمة الانتظار"
 
 #. placeholder {0}: option.displayName
-#: src/screens/ItemSheet.tsx:305
+#: src/screens/ItemSheet.tsx:332
 msgid "Add {0}"
 msgstr "إضافة {0}"
 
@@ -1294,7 +1294,7 @@ msgstr "كل المحطات"
 msgid "All types"
 msgstr "كل الأنواع"
 
-#: src/screens/ItemSheet.tsx:344
+#: src/screens/ItemSheet.tsx:371
 msgid "Allergies, no onions, sauce on the side…"
 msgstr "حساسية، بدون بصل، الصلصة جانبًا…"
 
@@ -2034,19 +2034,19 @@ msgstr "جارٍ التحقق…"
 msgid "Chime for new tickets"
 msgstr "تنبيه صوتي للطلبات الجديدة"
 
-#: src/screens/ItemSheet.tsx:245
+#: src/screens/ItemSheet.tsx:272
 msgid "Choose {min}"
 msgstr "اختر {min}"
 
-#: src/screens/ItemSheet.tsx:244
+#: src/screens/ItemSheet.tsx:271
 msgid "Choose {min}–{max}"
 msgstr "اختر من {min} إلى {max}"
 
-#: src/lib/item-config.ts:133
+#: src/lib/item-config.ts:138
 msgid "Choose {missing}"
 msgstr "اختر {missing}"
 
-#: src/lib/item-config.ts:147
+#: src/lib/item-config.ts:152
 msgid "Choose {name}"
 msgstr "اختر {name}"
 
@@ -2054,7 +2054,7 @@ msgstr "اختر {name}"
 msgid "Choose a future pickup time in the restaurant’s time zone"
 msgstr "اختر وقت استلام لاحقًا حسب المنطقة الزمنية للمطعم"
 
-#: src/lib/item-config.ts:133
+#: src/lib/item-config.ts:138
 msgid "Choose a size"
 msgstr "اختر حجمًا"
 
@@ -2274,7 +2274,7 @@ msgstr "مؤكد"
 #~ msgid "Confirmed by phone"
 #~ msgstr "تم التأكيد هاتفيًا"
 
-#: src/lib/store.ts:919
+#: src/lib/store.ts:949
 msgid "Connect to the internet to see other terminals’ tabs."
 msgstr "اتصل بالإنترنت لرؤية حسابات نقاط البيع الأخرى."
 
@@ -2339,7 +2339,7 @@ msgstr "تعذّر فتح هذا اليوم."
 msgid "Could not pair this terminal. Try again."
 msgstr "تعذّر ربط هذا الجهاز. حاول مرة أخرى."
 
-#: src/lib/store.ts:931
+#: src/lib/store.ts:961
 msgid "Could not reach the server."
 msgstr "تعذّر الوصول إلى الخادم."
 
@@ -2347,7 +2347,7 @@ msgstr "تعذّر الوصول إلى الخادم."
 msgid "Could not reach the server. Check the connection and try again."
 msgstr "تعذّر الوصول إلى الخادم. تحقق من الاتصال وحاول مرة أخرى."
 
-#: src/lib/store.ts:969
+#: src/lib/store.ts:999
 msgid "Could not reach the server. The tab stays where it is."
 msgstr "تعذّر الوصول إلى الخادم. يبقى الحساب حيث هو."
 
@@ -2480,6 +2480,7 @@ msgid "Dairy"
 msgstr "الألبان"
 
 #: src/apps/reservations/guest.ts:48
+#: src/screens/ItemSheet.tsx:50
 msgid "Dairy free"
 msgstr "خالٍ من الألبان"
 
@@ -2688,7 +2689,7 @@ msgstr "متنازع عليه"
 #: src/apps/timeclock/TimeClock.tsx:1376
 #: src/screens/Cart.tsx:672
 #: src/screens/GiftCardSheet.tsx:160
-#: src/screens/ItemSheet.tsx:377
+#: src/screens/ItemSheet.tsx:404
 #: src/screens/LoyaltySheet.tsx:283
 #: src/screens/ShiftSheet.tsx:142
 msgid "Done"
@@ -2964,7 +2965,7 @@ msgstr "منتهي الصلاحية"
 msgid "Far"
 msgstr "بعيدة"
 
-#: src/screens/ItemSheet.tsx:139
+#: src/screens/ItemSheet.tsx:161
 msgid "Fewer"
 msgstr "أقل"
 
@@ -3127,7 +3128,8 @@ msgid "Give {giveChangeText} change for that payment"
 msgstr "أعطِ {giveChangeText} باقيًا لتلك الدفعة"
 
 #: src/apps/reservations/guest.ts:45
-#: src/screens/ItemSheet.tsx:191
+#: src/screens/ItemSheet.tsx:58
+#: src/screens/ItemSheet.tsx:213
 msgid "Gluten free"
 msgstr "خالٍ من الغلوتين"
 
@@ -3232,6 +3234,7 @@ msgid "Guests’ bookings open for the person signed in at this terminal, and on
 msgstr "تُفتح حجوزات الضيوف للشخص المسجّل دخوله على هذا الجهاز، وبعد تسجيل دخول متصل بالإنترنت فقط."
 
 #: src/apps/reservations/guest.ts:46
+#: src/screens/ItemSheet.tsx:46
 msgid "Halal"
 msgstr "حلال"
 
@@ -3552,9 +3555,9 @@ msgstr "المطبخ مغلق"
 msgid "Kitchen display"
 msgstr "شاشة المطبخ"
 
-#: src/screens/ItemSheet.tsx:336
-#: src/screens/ItemSheet.tsx:337
-#: src/screens/ItemSheet.tsx:339
+#: src/screens/ItemSheet.tsx:363
+#: src/screens/ItemSheet.tsx:364
+#: src/screens/ItemSheet.tsx:366
 msgid "Kitchen note"
 msgstr "ملاحظة للمطبخ"
 
@@ -3940,7 +3943,7 @@ msgstr "طاولاتي · {0}"
 msgid "Money goes back the way it was paid ({tenders}). Card refunds are made on the card terminal first; this records them."
 msgstr "يُعاد المال بطريقة الدفع نفسها ({tenders}). يتم استرداد البطاقات على جهاز البطاقات أولًا، وهنا يُسجَّل ذلك."
 
-#: src/screens/ItemSheet.tsx:152
+#: src/screens/ItemSheet.tsx:174
 msgid "More"
 msgstr "أكثر"
 
@@ -4465,6 +4468,10 @@ msgstr "عدد الدفعات (الخطة معبّأة لك)."
 msgid "Number or name"
 msgstr "الرقم أو الاسم"
 
+#: src/screens/ItemSheet.tsx:52
+msgid "Nut free"
+msgstr "خالٍ من المكسرات"
+
 #: src/apps/reservations/feed.ts:802
 msgid "Occasion"
 msgstr "مناسبة"
@@ -4690,8 +4697,8 @@ msgstr "خيار"
 msgid "Option · {0}"
 msgstr "خيار · {0}"
 
-#: src/screens/ItemSheet.tsx:248
-#: src/screens/ItemSheet.tsx:337
+#: src/screens/ItemSheet.tsx:275
+#: src/screens/ItemSheet.tsx:364
 msgid "Optional"
 msgstr "اختياري"
 
@@ -5578,7 +5585,7 @@ msgid "Remove"
 msgstr "إزالة"
 
 #. placeholder {0}: option.displayName
-#: src/screens/ItemSheet.tsx:289
+#: src/screens/ItemSheet.tsx:316
 msgid "Remove {0}"
 msgstr "إزالة {0}"
 
@@ -5622,7 +5629,7 @@ msgstr "أُعيدت الطباعة"
 msgid "Request"
 msgstr "طلب"
 
-#: src/screens/ItemSheet.tsx:201
+#: src/screens/ItemSheet.tsx:228
 msgid "Required"
 msgstr "مطلوب"
 
@@ -6283,7 +6290,7 @@ msgstr "صغيرة"
 #: src/apps/orders/Controls.tsx:378
 #: src/apps/orders/Controls.tsx:400
 #: src/apps/orders/DailyLimits.tsx:159
-#: src/screens/ItemSheet.tsx:218
+#: src/screens/ItemSheet.tsx:245
 #: src/screens/MenuGrid.tsx:439
 msgid "Sold out"
 msgstr "نفد"
@@ -6372,6 +6379,10 @@ msgstr "المصدر"
 #: src/apps/reservations/guest.ts:37
 msgid "soy"
 msgstr "الصويا"
+
+#: src/screens/ItemSheet.tsx:54
+msgid "Spicy"
+msgstr "حار"
 
 #: src/screens/Checkout.tsx:542
 msgid "Split {n}"
@@ -6958,7 +6969,7 @@ msgstr "هذا المبلغ خارج ما يسمح به المطعم للبطا�
 msgid "That cannot be done to this booking now. Here is the latest."
 msgstr "لا يمكن فعل ذلك لهذا الحجز الآن. هذه أحدث حالة."
 
-#: src/lib/item-config.ts:136
+#: src/lib/item-config.ts:141
 msgid "That choice is sold out"
 msgstr "هذا الخيار نفد"
 
@@ -7010,7 +7021,7 @@ msgstr "هذا الخصم غير متاح الآن."
 msgid "That dish no longer has a daily limit here."
 msgstr "لم يعد لهذا الطبق حد يومي هنا."
 
-#: src/lib/store.ts:1034
+#: src/lib/store.ts:1064
 msgid "That does not look like a pairing code or link."
 msgstr "لا يبدو هذا رمز ربط أو رابطًا."
 
@@ -7376,7 +7387,7 @@ msgid "the server already had this order closed"
 msgstr "كان الطلب مغلقًا لدى الخادم"
 
 #. placeholder {0}: response.status
-#: src/lib/store.ts:927
+#: src/lib/store.ts:957
 msgid "The server answered {0}."
 msgstr "ردّ الخادم بـ {0}."
 
@@ -7385,7 +7396,7 @@ msgstr "ردّ الخادم بـ {0}."
 msgid "The server answered {0}. Try again."
 msgstr "ردّ الخادم بـ {0}. حاول مرة أخرى."
 
-#: src/lib/store.ts:966
+#: src/lib/store.ts:996
 msgid "The server answered {status}."
 msgstr "ردّ الخادم بـ {status}."
 
@@ -7452,7 +7463,7 @@ msgstr "لم تُحمَّل قائمة المخزون بعد. ستُحمَّل �
 msgid "The tab is kept, marked cancelled, with who cancelled it and why."
 msgstr "يُحتفظ بالحساب مُعلَّمًا كملغى، مع من ألغاه ولماذا."
 
-#: src/lib/store.ts:977
+#: src/lib/store.ts:1007
 msgid "The tab was taken over but could not be saved on this device."
 msgstr "نُقلت الفاتورة المفتوحة إلى هنا لكن تعذّر حفظها على هذا الجهاز."
 
@@ -7854,7 +7865,7 @@ msgid "This supplier has no items set up yet. Search for any item below."
 msgstr "لم تُعدّ أصناف لهذا المورّد بعد. ابحث عن أي صنف أدناه."
 
 #: src/lib/orders.ts:946
-#: src/lib/store.ts:941
+#: src/lib/store.ts:971
 msgid "This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it."
 msgstr "لا توجد نسبة ضريبة لهذه الفاتورة المفتوحة على الخادم، لذا لا يمكن تحصيلها هنا. سوّها على الجهاز الذي فتحها."
 
@@ -7937,8 +7948,8 @@ msgstr "لا يمكن لهذا الجهاز حفظ البصمات دون اتص�
 msgid "This terminal is no longer paired. Ask a manager to pair it again."
 msgstr "لم يعد هذا الجهاز مقترنًا. اطلب من المدير إقرانه مجددًا."
 
-#: src/lib/store.ts:913
-#: src/lib/store.ts:938
+#: src/lib/store.ts:943
+#: src/lib/store.ts:968
 msgid "This terminal is not paired with a restaurant."
 msgstr "نقطة البيع هذه غير مرتبطة بمطعم."
 
@@ -8292,7 +8303,7 @@ msgstr "التالي"
 msgid "Up to {0} can be refunded."
 msgstr "يمكن استرداد حتى {0}."
 
-#: src/screens/ItemSheet.tsx:247
+#: src/screens/ItemSheet.tsx:274
 msgid "Up to {max}"
 msgstr "حتى {max}"
 
@@ -8300,7 +8311,7 @@ msgstr "حتى {max}"
 msgid "Up to {maxLimitText}. Not saved to the menu."
 msgstr "حتى {maxLimitText}. لا يُحفظ في القائمة."
 
-#: src/screens/ItemSheet.tsx:169
+#: src/screens/ItemSheet.tsx:191
 msgid "Update"
 msgstr "تحديث"
 
@@ -8360,11 +8371,13 @@ msgid "VAT No. {vatNumber}"
 msgstr "الرقم الضريبي {vatNumber}"
 
 #: src/apps/reservations/guest.ts:44
+#: src/screens/ItemSheet.tsx:48
 msgid "Vegan"
 msgstr "نباتي"
 
 #: src/apps/reservations/guest.ts:43
-#: src/screens/ItemSheet.tsx:185
+#: src/screens/ItemSheet.tsx:56
+#: src/screens/ItemSheet.tsx:207
 #: src/screens/MenuGrid.tsx:416
 msgid "Vegetarian"
 msgstr "نباتي"

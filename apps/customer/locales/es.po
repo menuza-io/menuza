@@ -25,7 +25,7 @@ msgstr "Te faltan {amount}"
 msgid "{amount} more to unlock {reward}"
 msgstr "Te faltan {amount} para {reward}"
 
-#: components/ordering/menu-screen.tsx:351
+#: components/ordering/menu-screen.tsx:415
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "{amount} de descuento"
@@ -54,11 +54,11 @@ msgstr "{n, plural, one {{count} punto} other {{count} puntos}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, one {{count} estrella} other {{count} estrellas}}"
 
-#: components/ordering/menu-screen.tsx:334
+#: components/ordering/menu-screen.tsx:398
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (límite de {count} por pedido)"
 
-#: components/ordering/menu-screen.tsx:330
+#: components/ordering/menu-screen.tsx:394
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (hasta {amount} de descuento)"
 
@@ -66,7 +66,7 @@ msgstr "{name} (hasta {amount} de descuento)"
 msgid "{percent} off"
 msgstr "{percent} de descuento"
 
-#: components/ordering/menu-screen.tsx:343
+#: components/ordering/menu-screen.tsx:407
 msgid "{percentText} off"
 msgstr "{percentText} de descuento"
 
@@ -94,7 +94,7 @@ msgstr "{points} por cada visita (una vez al día)"
 msgid "{points} for every {amount} you spend"
 msgstr "{points} por cada {amount} que gastes"
 
-#: components/ordering/menu-screen.tsx:264
+#: components/ordering/menu-screen.tsx:316
 msgid "{price}, was {originalPrice}"
 msgstr "{price}, antes {originalPrice}"
 
@@ -267,7 +267,7 @@ msgstr "Cambiar la hora"
 msgid "Changed by the business"
 msgstr "Cambiado por el negocio"
 
-#: components/ordering/menu-screen.tsx:161
+#: components/ordering/menu-screen.tsx:208
 msgid "Check back later, or open the website menu."
 msgstr "Vuelve más tarde o abre el menú del sitio web."
 
@@ -302,6 +302,10 @@ msgstr "Elige un mes y un día válidos para tu cumpleaños."
 #: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "Elige qué recibes de nosotros y cómo."
+
+#: components/ordering/menu-screen.tsx:203
+msgid "Clear a choice to see more of the menu."
+msgstr "Quita una opción para ver más del menú."
 
 #: components/ordering/drops-screen.tsx:136
 #: components/ordering/drops-screen.tsx:215
@@ -344,6 +348,10 @@ msgstr "Continuar al pago"
 msgid "Cost"
 msgstr "Coste"
 
+#: components/ordering/menu-screen.tsx:444
+msgid "Dairy-free"
+msgstr "Sin lácteos"
+
 #: lib/reservations/messages.ts:30
 msgid "Date"
 msgstr "Fecha"
@@ -368,9 +376,22 @@ msgstr "Rechazada"
 msgid "Declined: {reward}."
 msgstr "Rechazado: {reward}."
 
+#: components/ordering/menu-screen.tsx:318
+#: components/ordering/menu-screen.tsx:343
+msgid "Delivery price {deliveryPriceText}"
+msgstr "Precio a domicilio {deliveryPriceText}"
+
 #: lib/reservations/messages.ts:49
 msgid "Dietary needs"
 msgstr "Necesidades dietéticas"
+
+#: components/ordering/menu-screen.tsx:184
+msgid "Dietary preferences"
+msgstr "Preferencias alimentarias"
+
+#: components/ordering/menu-screen.tsx:196
+msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
+msgstr "Las etiquetas alimentarias son la descripción del propio restaurante. Pregunta al personal si tienes alguna alergia."
 
 #: components/loyalty/notice-line.tsx:32
 #: lib/gift-cards/labels.ts:59
@@ -473,7 +494,7 @@ msgstr "Para un grupo de este tamaño, llama al {phone}."
 msgid "Free {item}"
 msgstr "{item} gratis"
 
-#: components/ordering/menu-screen.tsx:361
+#: components/ordering/menu-screen.tsx:425
 msgid "Free delivery"
 msgstr "Envío gratis"
 
@@ -521,6 +542,14 @@ msgstr "Las tarjetas regalo no están disponibles ahora"
 #: lib/gift-cards/labels.ts:78
 msgid "Gift cards are not available right now. Please try again later."
 msgstr "Las tarjetas regalo no están disponibles ahora. Inténtalo de nuevo más tarde."
+
+#: components/ordering/menu-screen.tsx:442
+msgid "Gluten-free"
+msgstr "Sin gluten"
+
+#: components/ordering/menu-screen.tsx:436
+msgid "Halal"
+msgstr "Halal"
 
 #: lib/gift-cards/labels.ts:69
 msgid "Hide"
@@ -600,7 +629,7 @@ msgstr "Menús limitados que reservas para recoger en un horario concreto."
 msgid "Loading drops"
 msgstr "Cargando lanzamientos"
 
-#: components/ordering/menu-screen.tsx:106
+#: components/ordering/menu-screen.tsx:120
 msgid "Loading the menu"
 msgstr "Cargando el menú"
 
@@ -623,7 +652,7 @@ msgid "Loading…"
 msgstr "Cargando…"
 
 #: app/(tabs)/_layout.tsx:52
-#: components/ordering/menu-screen.tsx:141
+#: components/ordering/menu-screen.tsx:163
 msgid "Menu"
 msgstr "Menú"
 
@@ -679,6 +708,10 @@ msgstr "Aún no hay actividad. Tus compras aparecerán aquí."
 msgid "No connection. Please try again."
 msgstr "Sin conexión. Inténtalo de nuevo."
 
+#: components/ordering/menu-screen.tsx:202
+msgid "No dishes match these choices."
+msgstr "Ningún plato coincide con estas opciones."
+
 #: components/ordering/drops-screen.tsx:160
 msgid "No drops right now."
 msgstr "No hay lanzamientos ahora mismo."
@@ -727,9 +760,13 @@ msgstr "No activada"
 msgid "Not taking online reservations on this day."
 msgstr "No se aceptan reservas en línea este día."
 
-#: components/ordering/menu-screen.tsx:160
+#: components/ordering/menu-screen.tsx:207
 msgid "Nothing on the menu right now."
 msgstr "Ahora mismo no hay nada en el menú."
+
+#: components/ordering/menu-screen.tsx:446
+msgid "Nut-free"
+msgstr "Sin frutos secos"
 
 #: lib/reservations/messages.ts:47
 msgid "Occasion"
@@ -772,7 +809,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "Se abre en tu navegador. Tus puntos y recompensas se aplican cuando pides allí."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:302
+#: components/ordering/menu-screen.tsx:366
 msgid "Opens the website"
 msgstr "Abre el sitio web"
 
@@ -986,7 +1023,7 @@ msgstr "Enviar solicitud"
 msgid "Send code"
 msgstr "Enviar código"
 
-#: components/ordering/menu-screen.tsx:359
+#: components/ordering/menu-screen.tsx:423
 msgid "Set price {amount}"
 msgstr "Precio fijo {amount}"
 
@@ -1043,7 +1080,7 @@ msgstr "Cerrar sesión"
 msgid "Site address"
 msgstr "Dirección del sitio"
 
-#: components/ordering/menu-screen.tsx:277
+#: components/ordering/menu-screen.tsx:331
 msgid "Sold out"
 msgstr "Agotado"
 
@@ -1069,6 +1106,10 @@ msgstr "Usa {points} para {amount} de descuento"
 #: lib/gift-cards/labels.ts:43
 msgid "Spent"
 msgstr "Gastado"
+
+#: components/ordering/menu-screen.tsx:448
+msgid "Spicy"
+msgstr "Picante"
 
 #: lib/gift-cards/labels.ts:67
 msgid "Stops working in {time}"
@@ -1134,7 +1175,7 @@ msgstr "Esa hora acaba de ocuparse. Elige otra."
 msgid "The card ending in {last4} is already saved to your account."
 msgstr "La tarjeta terminada en {last4} ya está guardada en tu cuenta."
 
-#: components/ordering/menu-screen.tsx:112
+#: components/ordering/menu-screen.tsx:126
 msgid "The menu could not be loaded."
 msgstr "No se pudo cargar el menú."
 
@@ -1229,7 +1270,7 @@ msgstr "Demasiados intentos. Espera un momento e inténtalo de nuevo."
 
 #: components/auth/site-unavailable-screen.tsx:26
 #: components/ordering/drops-screen.tsx:117
-#: components/ordering/menu-screen.tsx:114
+#: components/ordering/menu-screen.tsx:128
 #: components/ui/error-message.tsx:28
 #: lib/gift-cards/labels.ts:20
 #: lib/loyalty/labels.ts:28
@@ -1283,9 +1324,17 @@ msgstr "Usa una recompensa al hacer tu pedido o muestra tu código en el mostrad
 msgid "Use at the till"
 msgstr "Usar en caja"
 
-#: components/ordering/menu-screen.tsx:216
+#: components/ordering/menu-screen.tsx:263
 msgid "Use code {code}"
 msgstr "Usa el código {code}"
+
+#: components/ordering/menu-screen.tsx:438
+msgid "Vegan"
+msgstr "Vegano"
+
+#: components/ordering/menu-screen.tsx:440
+msgid "Vegetarian"
+msgstr "Vegetariano"
 
 #: components/auth/verify-screen.tsx:43
 msgid "Verification code"
@@ -1347,7 +1396,7 @@ msgstr "Usaremos el {phone} de tu cuenta."
 msgid "We're holding your table for {time}"
 msgstr "Guardamos tu mesa durante {time}"
 
-#: components/ordering/menu-screen.tsx:143
+#: components/ordering/menu-screen.tsx:165
 msgid "What is on the menu today. Checkout is on the website."
 msgstr "Esto es lo que hay en el menú hoy. El pago es en el sitio web."
 

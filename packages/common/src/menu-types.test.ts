@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
 	ALLERGENS,
+	dietaryColumns,
+	dietaryTagsOf,
+	matchesDietaryFilter,
+	parseDietaryTags,
 	ALLERGEN_LABELS,
 	DIETARY_FLAGS,
 	MENU_TYPES,
@@ -783,5 +787,43 @@ describe('findBlockedNestedGroups', () => {
 				options: [{ id: 'new', nestedGroupIds: ['sauce'], groupIds: ['c'] }],
 			}).groupOptions.c,
 		).toEqual(['c1', 'new'])
+	})
+})
+
+describe('dietary tags (#335)', () => {
+	it('reads tags in canonical order and drops unknown values', () => {
+		expect(parseDietaryTags('["spicy","halal","keto"]')).toEqual([
+			'halal',
+			'spicy',
+		])
+		expect(parseDietaryTags('not json')).toEqual([])
+		expect(parseDietaryTags(null)).toEqual([])
+	})
+
+	it('keeps the old flags readable and in sync', () => {
+		expect(
+			dietaryTagsOf({
+				dietaryTags: '[]',
+				isVegetarian: true,
+				isGlutenFree: true,
+			}),
+		).toEqual(['vegetarian', 'gluten_free'])
+		expect(dietaryColumns(['vegan', 'gluten_free', 'bogus'])).toEqual({
+			dietaryTags: '["vegan","gluten_free"]',
+			isVegetarian: false,
+			isGlutenFree: true,
+		})
+	})
+
+	it('filters dishes that have every chosen tag', () => {
+		expect(matchesDietaryFilter(['vegan'], ['vegan'])).toBe(true)
+		expect(matchesDietaryFilter(['vegetarian'], ['vegan'])).toBe(false)
+		expect(matchesDietaryFilter(['vegan', 'halal'], ['vegan', 'halal'])).toBe(
+			true,
+		)
+		expect(matchesDietaryFilter(['vegan'], ['vegan', 'halal'])).toBe(false)
+		// A vegan dish is vegetarian too.
+		expect(matchesDietaryFilter(['vegan'], ['vegetarian'])).toBe(true)
+		expect(matchesDietaryFilter([], [])).toBe(true)
 	})
 })

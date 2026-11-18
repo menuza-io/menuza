@@ -1,4 +1,16 @@
-import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import {
+	fixedOverridePrice,
+	parseMenuPricingRules,
+	resolveMenuItemPrice,
+	type MenuOrderType,
+	type MenuPricingRule,
+} from '@repo/common/menu-pricing'
+import {
+	dietaryTagsOf,
+	getLocalizedMenuValue,
+	matchesDietaryFilter,
+	type DietaryTag,
+} from '@repo/common/menu-types'
 import { localizedDiscountText } from '@repo/discounts'
 import { z } from 'zod'
 import { ApiError, notBoundToTenantError } from '../api/api-error'
@@ -15,11 +27,18 @@ const itemSchema = z.object({
 	price: z.number(),
 	availabilityStatus: z.string().optional(),
 	excludeFromDiscounts: z.boolean().optional().catch(undefined),
+	// #335 and #412: read defensively, an older or newer menu never breaks the list.
+	dietaryTags: z.array(z.string()).optional().catch(undefined),
+	isVegetarian: z.boolean().optional().catch(undefined),
+	isGlutenFree: z.boolean().optional().catch(undefined),
+	orderTypePrices: z.unknown().optional(),
 	variations: z
 		.object({
 			variants: z
 				.array(
 					z.object({
+						id: z.string().optional().catch(undefined),
+						price: z.number().optional().catch(undefined),
 						availabilityStatus: z.string().optional(),
 						excludeFromDiscounts: z.boolean().optional().catch(undefined),
 					}),
@@ -103,6 +122,16 @@ const menuEnvelopeSchema = z.object({
 	locations: z.array(z.unknown()).optional(),
 	menus: z.array(z.unknown()).optional(),
 	promotions: z.array(z.unknown()).optional(),
+	locationOverrides: z
+		.record(
+			z.string(),
+			z.array(
+				z.object({ entityId: z.string(), price: z.number().nullish() }).loose(),
+			),
+		)
+		.optional()
+		.catch(undefined),
+	pricingRules: z.unknown().optional(),
 })
 
 const dropSchema = z.object({
@@ -162,11 +191,16 @@ export type MenuItemView = {
 	id: string
 	name: string
 	description: string | null
+	/** The price for the website's first order type at its location (#412, #388). */
 	price: number
+	/** The delivery price, when delivery is offered and it differs (#412). */
+	deliveryPrice?: number
 	soldOut: boolean
 	categoryIds: string[]
 	/** The item, or a variant that can be ordered, never gets a discount. */
 	excludeFromDiscounts: boolean
+	/** Dietary tags (#335); unknown values dropped. */
+	dietaryTags: DietaryTag[]
 }
 
 export type MenuSectionView = {
@@ -281,6 +315,15 @@ export function presentMenu(
 			},
 		]
 	})
+	const offerScope = offerScopeOf(envelope.data.locations ?? [])
+	const pricing: PricingScope = {
+		locationId: offerScope.locationId,
+		modes: offerScope.modes,
+		rules: parseMenuPricingRules(envelope.data.pricingRules),
+		overrides: offerScope.locationId
+			? (envelope.data.locationOverrides?.[offerScope.locationId] ?? [])
+			: [],
+	}
 	const sections: MenuSectionView[] = []
 	const menuCount = (envelope.data.menus ?? []).length
 	for (const menuValue of envelope.data.menus ?? []) {
@@ -294,14 +337,10 @@ export function presentMenu(
 			locale,
 			defaultLocale,
 			sections,
+			pricing,
 		)
 	}
-	return {
-		currency,
-		sections,
-		promotions,
-		offerScope: offerScopeOf(envelope.data.locations ?? []),
-	}
+	return { currency, sections, promotions, offerScope }
 }
 
 /**
@@ -394,6 +433,75 @@ function textOf(value: string, locale: string, defaultLocale: string): string {
 	return getLocalizedMenuValue(value, locale, defaultLocale)
 }
 
+type PricingScope = {
+	locationId: string | null
+	modes: readonly OfferMode[]
+	rules: MenuPricingRule[]
+	overrides: Array<{ entityId: string; price?: number | null }>
+}
+
+/** The price shown for one order type, with the resolver the region charges with. */
+function priceFor(
+	item: z.infer<typeof itemSchema>,
+	categoryIds: string[],
+	pricing: PricingScope,
+	orderType: MenuOrderType,
+): number {
+	const overridePrice = fixedOverridePrice(
+		pricing.overrides.find((entry) => entry.entityId === item.id)?.price,
+	)
+	const context = {
+		orderType,
+		locationId: pricing.locationId,
+		rules: pricing.rules,
+	}
+	const scope = { ...item, categoryIds }
+	const variants = (item.variations?.variants ?? []).filter(
+		(variant) => typeof variant.price === 'number',
+	)
+	if (variants.length > 0) {
+		const orderable = variants.filter(
+			(variant) => variant.availabilityStatus !== 'unavailable',
+		)
+		return Math.min(
+			...(orderable.length ? orderable : variants).map((variant) =>
+				resolveMenuItemPrice(scope, context, {
+					variantPrice: variant.price,
+					overridePrice,
+				}),
+			),
+		)
+	}
+	return resolveMenuItemPrice(scope, context, { overridePrice })
+}
+
+/**
+ * Sections narrowed to dishes with every chosen dietary tag (#335); a vegan
+ * dish counts as vegetarian. Sections left empty are dropped.
+ */
+export function filterSectionsByDiet(
+	sections: MenuSectionView[],
+	selected: readonly string[],
+): MenuSectionView[] {
+	if (selected.length === 0) return sections
+	return sections.flatMap((section) => {
+		const items = section.items.filter((item) =>
+			matchesDietaryFilter(item.dietaryTags, selected),
+		)
+		return items.length > 0 ? [{ ...section, items }] : []
+	})
+}
+
+/** Tags at least one dish carries, in the canonical order (the filter's chips). */
+export function dietaryTagsOnMenu(sections: MenuSectionView[]): DietaryTag[] {
+	const used = new Set<DietaryTag>()
+	for (const section of sections)
+		for (const item of section.items)
+			for (const tag of item.dietaryTags) used.add(tag)
+	if (used.has('vegan')) used.add('vegetarian')
+	return dietaryTagsOf({ dietaryTags: [...used] })
+}
+
 function walkCategories(
 	values: unknown[],
 	parentIds: string[],
@@ -401,6 +509,7 @@ function walkCategories(
 	locale: string,
 	defaultLocale: string,
 	sections: MenuSectionView[],
+	pricing: PricingScope,
 ) {
 	for (const value of values) {
 		const category = categorySchema.safeParse(value)
@@ -425,9 +534,10 @@ function walkCategories(
 					description: item.data.description
 						? textOf(item.data.description, locale, defaultLocale)
 						: null,
-					price: item.data.price,
+					...prices(item.data, categoryIds, pricing),
 					soldOut,
 					categoryIds,
+					dietaryTags: dietaryTagsOf(item.data),
 					excludeFromDiscounts:
 						item.data.excludeFromDiscounts === true ||
 						variants.some(
@@ -452,6 +562,22 @@ function walkCategories(
 			locale,
 			defaultLocale,
 			sections,
+			pricing,
 		)
 	}
+}
+
+function prices(
+	item: z.infer<typeof itemSchema>,
+	categoryIds: string[],
+	pricing: PricingScope,
+): { price: number; deliveryPrice?: number } {
+	const first: MenuOrderType = pricing.modes[0] ?? 'pickup'
+	const price = priceFor(item, categoryIds, pricing, first)
+	if (first === 'delivery' || !pricing.modes.includes('delivery'))
+		return { price }
+	const delivery = priceFor(item, categoryIds, pricing, 'delivery')
+	return Math.abs(delivery - price) >= 0.005
+		? { price, deliveryPrice: delivery }
+		: { price }
 }

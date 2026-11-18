@@ -37,6 +37,13 @@ import {
 	computeReadySlotCapacity,
 	type ReadySlotCapacitySpec,
 } from './ready-slot-capacity.ts'
+import {
+	menuOrderTypeFor,
+	parseMenuPricingRules,
+	resolveMenuItemPrice,
+	resolveMenuOptionPrice,
+	type MenuOrderType,
+} from './menu-pricing.ts'
 import { generatePickupSlots, getDropDisplayStatus } from './menu-types.ts'
 import {
 	orderNumberFormatSchema,
@@ -1300,6 +1307,11 @@ export const restaurantOrderContextSchema = z
 				locationOverrides: z
 					.record(z.string(), z.array(locationOverrideSchema))
 					.optional(),
+				/**
+				 * Live pricing rules (#388). Read with `parseMenuPricingRules`, which
+				 * drops a malformed rule instead of failing the context.
+				 */
+				pricingRules: z.unknown().optional(),
 			})
 			.loose(),
 		drop: z
@@ -2153,13 +2165,16 @@ function optionEffectiveStatus(
 function optionPriceCents(
 	option: PublicMenuOptionContext,
 	overrides: LocationOverride[] | undefined,
+	orderType: MenuOrderType | null,
 	half?: 'whole' | 'left' | 'right' | null,
 ): number {
 	const override = entityOverride(overrides, option.id)
-	const base =
-		override?.price != null && override.price > 0
-			? override.price
-			: option.price
+	// #412: a fixed location price, else this order type's price, else base.
+	const base = resolveMenuOptionPrice(
+		orderType ? option : { price: option.price },
+		{ orderType: orderType ?? 'pickup' },
+		{ overridePrice: override?.price },
+	)
 	if (!half || half === 'whole') {
 		return dollarsToCents(option.priceWhole ?? base)
 	}
@@ -2178,6 +2193,10 @@ function optionDisabled(
 type CatalogEntry = {
 	item: PublicMenuItemContext
 	categoryIds: string[]
+	/** The location's override price for the dish (wins when above zero). */
+	overridePrice?: number | null
+	/** Drops keep their own published prices: no order-type price, no rule. */
+	plainPricing?: boolean
 	specialInstructions: boolean
 }
 
@@ -2270,6 +2289,8 @@ function priceModifierSelections(
 		quantity?: number
 	}>,
 	overrides: LocationOverride[] | undefined,
+	/** Null: published prices only (drops). */
+	orderType: MenuOrderType | null,
 ): ModifierResult {
 	const fail = (error: RestaurantOrderError): ModifierResult => ({
 		ok: false,
@@ -2441,7 +2462,11 @@ function priceModifierSelections(
 				})
 			}
 			for (const selection of selections) {
-				const priceCents = optionPriceCents(selection.option, overrides)
+				const priceCents = optionPriceCents(
+					selection.option,
+					overrides,
+					orderType,
+				)
 				optionCents += priceCents
 				if (selection.option.applySalesTax !== false) taxableCents += priceCents
 				pricedOptions.push({
@@ -2500,7 +2525,11 @@ function priceModifierSelections(
 			}
 			for (const selection of selections) {
 				const quantity = selection.quantity ?? 1
-				const priceCents = optionPriceCents(selection.option, overrides)
+				const priceCents = optionPriceCents(
+					selection.option,
+					overrides,
+					orderType,
+				)
 				const total = priceCents * quantity
 				optionCents += total
 				if (selection.option.applySalesTax !== false) taxableCents += total
@@ -2569,7 +2598,12 @@ function priceModifierSelections(
 		}
 		for (const selection of selections) {
 			const half = selection.half ?? 'whole'
-			const priceCents = optionPriceCents(selection.option, overrides, half)
+			const priceCents = optionPriceCents(
+				selection.option,
+				overrides,
+				orderType,
+				half,
+			)
 			optionCents += priceCents
 			if (selection.option.applySalesTax !== false) taxableCents += priceCents
 			pricedOptions.push({
@@ -2647,6 +2681,12 @@ export function priceRestaurantOrder(
 		 * caller's `request` must be a plain pickup order with no drop.
 		 */
 		walkIn?: boolean
+		/**
+		 * Price as this order type (#412) instead of the request's fulfillment:
+		 * the till review sends its own order type (dine-in, or takeaway and
+		 * drive-through as pickup).
+		 */
+		priceAs?: MenuOrderType
 	},
 ): PriceRestaurantOrderResult {
 	const { now } = options
@@ -2665,6 +2705,14 @@ export function priceRestaurantOrder(
 				'This location is not available for ordering.',
 			),
 		}
+	}
+
+	// Tab and QR table rounds are dine-in; the till passes its own type.
+	const priceContext = {
+		orderType: options.priceAs ?? menuOrderTypeFor(request.fulfillment),
+		locationId: location.id,
+		rules: parseMenuPricingRules(context.menu.pricingRules),
+		now,
 	}
 
 	const dropSlug = request.dropSlug ?? null
@@ -2917,6 +2965,7 @@ export function priceRestaurantOrder(
 					item,
 					categoryIds: [...categoryIds],
 					specialInstructions: dropData.drop.menu.specialInstructions ?? true,
+					plainPricing: true,
 				})
 			}
 		}
@@ -2968,15 +3017,12 @@ export function priceRestaurantOrder(
 						const status =
 							itemOverride?.availabilityStatus ?? item.availabilityStatus
 						if (status !== 'available') continue
-						const effectiveItem =
-							itemOverride?.price != null && itemOverride.price > 0
-								? { ...item, price: itemOverride.price }
-								: item
 						const existing = catalog.get(item.id)
 						const categoryIds = new Set(existing?.categoryIds ?? [])
 						categoryIds.add(category.id)
 						catalog.set(item.id, {
-							item: effectiveItem,
+							item,
+							overridePrice: itemOverride?.price ?? null,
 							categoryIds: [...categoryIds],
 							specialInstructions:
 								menu.specialInstructions ||
@@ -3086,10 +3132,29 @@ export function priceRestaurantOrder(
 			entry.item,
 			line.options,
 			locationOverrides,
+			entry.plainPricing ? null : priceContext.orderType,
 		)
 		if (!modifierResult.ok) return { ok: false, error: modifierResult.error }
 
-		const baseCents = dollarsToCents(variant ? variant.price : entry.item.price)
+		// #412 / #388: one resolver for every channel (see menu-pricing.ts).
+		const baseCents = dollarsToCents(
+			entry.plainPricing
+				? variant
+					? variant.price
+					: entry.item.price
+				: resolveMenuItemPrice(
+						{
+							price: entry.item.price,
+							orderTypePrices: entry.item.orderTypePrices,
+							categoryIds: entry.categoryIds,
+						},
+						priceContext,
+						{
+							variantPrice: variant ? variant.price : null,
+							overridePrice: entry.overridePrice,
+						},
+					),
+		)
 		const unitCents = baseCents + modifierResult.optionCents
 		const lineTotal = unitCents * line.quantity
 		// The item's own price is taxed unless the item says otherwise (options

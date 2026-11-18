@@ -1,18 +1,36 @@
 ---
+import { dietaryTagsOf } from '@repo/common/menu-types'
+
 interface Props {
 	isVegetarian?: boolean
 	isGlutenFree?: boolean
 	isAlcohol?: boolean
+	/** Dietary tags (#335); vegetarian and gluten-free keep their icons. */
+	dietaryTags?: string[]
 	labels: {
 		vegetarian: string
 		glutenFree: string
 		alcohol: string
+		/** Words for the other tags; a tag without words is not shown. */
+		tags?: Partial<Record<'halal' | 'vegan' | 'dairy_free' | 'nut_free' | 'spicy', string>>
 	}
 	class?: string
 }
 
-const { isVegetarian, isGlutenFree, isAlcohol, labels, class: className } = Astro.props
-const show = Boolean(isVegetarian || isGlutenFree || isAlcohol)
+const { isAlcohol, labels, class: className } = Astro.props
+const allTags = dietaryTagsOf({
+	dietaryTags: Astro.props.dietaryTags,
+	isVegetarian: Astro.props.isVegetarian,
+	isGlutenFree: Astro.props.isGlutenFree,
+})
+const isVegetarian = allTags.includes('vegetarian')
+const isGlutenFree = allTags.includes('gluten_free')
+const otherTags = allTags.flatMap((tag) => {
+	if (tag === 'vegetarian' || tag === 'gluten_free') return []
+	const label = labels.tags?.[tag]
+	return label ? [{ tag, label }] : []
+})
+const show = Boolean(isVegetarian || isGlutenFree || isAlcohol || otherTags.length)
 const badgeClass = 'badge tone-neutral min-h-5 gap-1 px-1.5 font-medium'
 ---
 
@@ -32,6 +50,14 @@ const badgeClass = 'badge tone-neutral min-h-5 gap-1 px-1.5 font-medium'
 				<span>{labels.glutenFree}</span>
 			</span>
 		) : null}
+		{otherTags.map(({ tag, label }) => (
+			<span class={badgeClass} data-diet-badge={tag}>
+				{tag === 'spicy' ? (
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+				) : null}
+				<span>{label}</span>
+			</span>
+		))}
 		{isAlcohol ? (
 			<span class={badgeClass}>
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3" aria-hidden="true"><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/></svg>

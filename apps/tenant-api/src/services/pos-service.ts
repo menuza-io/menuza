@@ -26,6 +26,7 @@ import {
 	cashDiscountAllowedIn,
 	cashDiscountCeilingCents,
 } from '@repo/common/cash-discount'
+import { menuOrderTypeFor } from '@repo/common/menu-pricing'
 import { POS_FISCAL_GENESIS_HASH, posFiscalHash } from '@repo/common/pos-fiscal'
 import {
 	formatPosDeviceSecret,
@@ -1240,6 +1241,8 @@ export function reviewAgainstMenu(
 		const priced = priceRestaurantOrder(context, request.data, {
 			now,
 			walkIn: true,
+			// #412: dine-in, or takeaway and drive-through as pickup.
+			priceAs: menuOrderTypeFor(order.orderType),
 		})
 		if (!priced.ok) {
 			return {

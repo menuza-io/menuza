@@ -836,3 +836,69 @@ describe('restaurant phone menu and messages', () => {
 		])
 	})
 })
+
+describe('dietary questions (#335)', () => {
+	const tagged = (
+		id: string,
+		name: string,
+		dietaryTags: string[],
+		extra: object = {},
+	) => ({
+		...item(id, name, 10),
+		isVegetarian: false,
+		dietaryTags,
+		...extra,
+	})
+	const dietMenus = [
+		{
+			id: 'main',
+			displayName: 'Main',
+			availabilityStatus: 'available',
+			categories: [
+				{
+					id: 'mains',
+					displayName: 'Mains',
+					description: null,
+					upsellCategoryIds: [],
+					availabilityStatus: 'available',
+					items: [
+						tagged('shawarma', 'Chicken Shawarma', ['halal', 'spicy']),
+						tagged('falafel', 'Falafel Wrap', ['halal', 'vegan']),
+						tagged('pork', 'Pork Ribs', []),
+						tagged('tea', 'Hot Tea', ['vegan']),
+					],
+				},
+			],
+		},
+	] as unknown as AgentMenu[]
+
+	const search = (query: string) => {
+		const base = contextAt('12:00')
+		const { context } = toolContext('12:00', {
+			data: { ...base.data, menus: dietMenus },
+		})
+		return toolNamed(context, 'search_menu').execute({ query }, context) as {
+			results: Array<{ id: string; tags: string[] }>
+		}
+	}
+
+	it('answers "what is halal?" from the tags the restaurant set', () => {
+		const { results } = search('what is halal?')
+		expect(results.map((entry) => entry.id)).toEqual(['shawarma', 'falafel'])
+		expect(results[0]!.tags).toContain('halal')
+	})
+
+	it('understands Arabic and combined needs, and never treats "hot" as spicy', () => {
+		expect(search('عندكم أكل حلال؟').results.map((entry) => entry.id)).toEqual([
+			'shawarma',
+			'falafel',
+		])
+		expect(
+			search('anything vegan and halal').results.map((entry) => entry.id),
+		).toEqual(['falafel'])
+		expect(
+			search('spicy halal chicken').results.map((entry) => entry.id),
+		).toEqual(['shawarma'])
+		expect(search('hot tea').results.map((entry) => entry.id)).toEqual(['tea'])
+	})
+})

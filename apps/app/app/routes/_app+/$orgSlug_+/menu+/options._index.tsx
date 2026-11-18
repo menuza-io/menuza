@@ -2,6 +2,7 @@ import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import {
+	dietaryTagsOf,
 	ALLERGEN_LABELS,
 	getLocalizedMenuValue,
 	type Allergen,
@@ -60,11 +61,12 @@ import {
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
-import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
+import { DIETARY_TAG_MESSAGES } from '#app/components/menu/dietary-tag-switches.tsx'
 import { MenuBulkBar } from '#app/components/menu/menu-bulk-bar.tsx'
 import { MenuBulkEditSheet } from '#app/components/menu/menu-bulk-edit-sheet.tsx'
-import { useMenuListSelection } from '#app/components/menu/use-menu-list-selection.ts'
+import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
+import { useMenuListSelection } from '#app/components/menu/use-menu-list-selection.ts'
 import {
 	requireMenuRead,
 	requireMenuWrite,
@@ -73,11 +75,11 @@ import {
 	currencyCodeForDataRegion,
 	currencyExponentFor,
 } from '#app/utils/menu/bulk-apply.server.ts'
+import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
 import {
 	getMenuBulkEditEnabled,
 	getMenuHistoryEnabled,
 } from '#app/utils/menu/menu-feature-access.server.ts'
-import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -268,6 +270,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			...opt,
 			imageUrl: opt.imageKey ? (mediaMap.get(opt.imageKey) ?? null) : null,
 			allergensList: parsedAllergens,
+			dietaryTags: dietaryTagsOf(opt),
 			assignedGroups,
 			nestedGroups,
 		}
@@ -325,6 +328,9 @@ export default function OptionsIndexRoute() {
 						...(option.isTopping ? ['topping'] : []),
 						...(option.isVegetarian ? ['vegetarian'] : []),
 						...(option.isGlutenFree ? ['gluten_free'] : []),
+						...option.dietaryTags.filter(
+							(tag) => tag !== 'vegetarian' && tag !== 'gluten_free',
+						),
 						...(option.isAlcohol ? ['alcohol'] : []),
 					]
 				default:
@@ -553,6 +559,20 @@ export default function OptionsIndexRoute() {
 														VEG
 													</Badge>
 												)}
+												{option.dietaryTags
+													.filter(
+														(tag) =>
+															tag !== 'vegetarian' && tag !== 'gluten_free',
+													)
+													.map((tag) => (
+														<Badge
+															key={tag}
+															variant="secondary"
+															className="px-1.5 py-0 text-[10px]"
+														>
+															{_(DIETARY_TAG_MESSAGES[tag])}
+														</Badge>
+													))}
 												{option.isAlcohol && (
 													<Badge
 														variant="outline"
@@ -578,7 +598,8 @@ export default function OptionsIndexRoute() {
 														{ALLERGEN_LABELS[alg as Allergen] ?? alg}
 													</Badge>
 												))}
-												{!option.isGlutenFree &&
+												{option.dietaryTags.length === 0 &&
+													!option.isGlutenFree &&
 													!option.isVegetarian &&
 													!option.isAlcohol &&
 													!option.isTopping &&
@@ -739,7 +760,9 @@ export default function OptionsIndexRoute() {
 							updatedAt: row.updatedAt.toISOString(),
 						}))}
 					onUndoSnapshot={
-						menuHistoryEnabled ? (snapshotId) => void undoBulkSnapshot(snapshotId) : undefined
+						menuHistoryEnabled
+							? (snapshotId) => void undoBulkSnapshot(snapshotId)
+							: undefined
 					}
 				/>
 			) : null}

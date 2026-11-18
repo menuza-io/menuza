@@ -1,8 +1,11 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type DailySaleLimit } from '@repo/common/daily-dish-limits'
+import { type OrderTypePrices } from '@repo/common/menu-pricing'
 import {
+	dietaryTagsOf,
 	getLocalizedMenuValue,
+	type DietaryTag,
 	type MenuVariations,
 } from '@repo/common/menu-types'
 import { Button } from '@repo/ui/button'
@@ -51,6 +54,7 @@ import {
 } from '#app/utils/menu/daily-limit-form.ts'
 import { AssignedSortableList } from './assigned-sortable-list.tsx'
 import { DailyLimitCard } from './daily-limit-fields.tsx'
+import { DietaryTagSwitches } from './dietary-tag-switches.tsx'
 import { ItemVariations } from './item-variations.tsx'
 import {
 	LocationOverridesCard,
@@ -61,6 +65,11 @@ import { MenuAllergenSelector } from './menu-allergen-selector.tsx'
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuDuplicateTrigger } from './menu-duplicate-trigger.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
+import {
+	OrderTypePriceFields,
+	orderTypePriceDraft,
+	orderTypePricesFromDraft,
+} from './order-type-price-fields.tsx'
 import {
 	QuickModifierGroupSheet,
 	useCanCreateModifierGroup,
@@ -82,6 +91,10 @@ export interface ItemFormData {
 	isAlcohol: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean
+	/** Dietary tags (#335); when absent the two flags above are read. */
+	dietaryTags?: DietaryTag[]
+	/** Prices per order type (#412). */
+	orderTypePrices?: OrderTypePrices | null
 	allergens: string[]
 	calorieMin?: number | null
 	calorieMax?: number | null
@@ -233,11 +246,15 @@ function ItemFormBody({
 	const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
 
 	const [isAlcohol, setIsAlcohol] = useState(initialData?.isAlcohol ?? false)
-	const [isGlutenFree, setIsGlutenFree] = useState(
-		initialData?.isGlutenFree ?? false,
+	const [dietaryTags, setDietaryTags] = useState<DietaryTag[]>(() =>
+		dietaryTagsOf({
+			dietaryTags: initialData?.dietaryTags,
+			isVegetarian: initialData?.isVegetarian,
+			isGlutenFree: initialData?.isGlutenFree,
+		}),
 	)
-	const [isVegetarian, setIsVegetarian] = useState(
-		initialData?.isVegetarian ?? false,
+	const [orderTypePrices, setOrderTypePrices] = useState(() =>
+		orderTypePriceDraft(initialData?.orderTypePrices),
 	)
 	const [allergens, setAllergens] = useState<Set<string>>(
 		new Set(initialData?.allergens ?? []),
@@ -399,12 +416,26 @@ function ItemFormBody({
 					<input
 						type="hidden"
 						name="isGlutenFree"
-						value={String(isGlutenFree)}
+						value={String(dietaryTags.includes('gluten_free'))}
 					/>
 					<input
 						type="hidden"
 						name="isVegetarian"
-						value={String(isVegetarian)}
+						value={String(dietaryTags.includes('vegetarian'))}
+					/>
+					<input
+						type="hidden"
+						name="dietaryTags"
+						value={JSON.stringify(dietaryTags)}
+					/>
+					<input
+						type="hidden"
+						name="orderTypePrices"
+						value={JSON.stringify(
+							variations.groups.length
+								? null
+								: orderTypePricesFromDraft(orderTypePrices),
+						)}
 					/>
 					<input
 						type="hidden"
@@ -605,12 +636,16 @@ function ItemFormBody({
 												onChange={setKitchenName}
 												placeholder="Short name for the kitchen ticket"
 											/>
-											<input type="hidden" name="kitchenName" value={kitchenName} />
+											<input
+												type="hidden"
+												name="kitchenName"
+												value={kitchenName}
+											/>
 											<p className="text-muted-foreground text-xs">
 												<Trans>
-													Shown on the kitchen screen and kitchen tickets.
-													Guest receipts keep the full name. Leave blank to use
-													the guest name.
+													Shown on the kitchen screen and kitchen tickets. Guest
+													receipts keep the full name. Leave blank to use the
+													guest name.
 												</Trans>
 											</p>
 										</div>
@@ -699,6 +734,16 @@ function ItemFormBody({
 													required
 												/>
 											</div>
+										</FramePanel>
+									)}
+									{variations.groups.length === 0 && (
+										<FramePanel className="p-5">
+											<OrderTypePriceFields
+												idPrefix="item-order-type-price"
+												value={orderTypePrices}
+												onChange={setOrderTypePrices}
+												basePrice={price}
+											/>
 										</FramePanel>
 									)}
 									<FramePanel className="flex items-center justify-between px-5 py-3.5">
@@ -796,56 +841,13 @@ function ItemFormBody({
 										</FrameDescription>
 									</FrameHeader>
 									<FramePanel className="flex flex-col gap-3.5 py-3.5">
-										<div className="divide-border/60 bg-background divide-y overflow-hidden rounded-md border">
-											<div className="flex items-center justify-between gap-3 px-3 py-2.5">
-												<Label
-													htmlFor="dietary-gf-switch"
-													className="min-w-0 flex-1 cursor-pointer font-normal"
-												>
-													<span className="text-foreground text-sm font-medium">
-														<Trans>Gluten-Free</Trans>
-													</span>
-												</Label>
-												<Switch
-													id="dietary-gf-switch"
-													checked={isGlutenFree}
-													onCheckedChange={setIsGlutenFree}
-													className="shrink-0"
-												/>
-											</div>
-											<div className="flex items-center justify-between gap-3 px-3 py-2.5">
-												<Label
-													htmlFor="dietary-veg-switch"
-													className="min-w-0 flex-1 cursor-pointer font-normal"
-												>
-													<span className="text-foreground text-sm font-medium">
-														<Trans>Vegetarian</Trans>
-													</span>
-												</Label>
-												<Switch
-													id="dietary-veg-switch"
-													checked={isVegetarian}
-													onCheckedChange={setIsVegetarian}
-													className="shrink-0"
-												/>
-											</div>
-											<div className="flex items-center justify-between gap-3 px-3 py-2.5">
-												<Label
-													htmlFor="dietary-alc-switch"
-													className="min-w-0 flex-1 cursor-pointer font-normal"
-												>
-													<span className="text-foreground text-sm font-medium">
-														<Trans>Alcoholic</Trans>
-													</span>
-												</Label>
-												<Switch
-													id="dietary-alc-switch"
-													checked={isAlcohol}
-													onCheckedChange={setIsAlcohol}
-													className="shrink-0"
-												/>
-											</div>
-										</div>
+										<DietaryTagSwitches
+											idPrefix="dietary"
+											tags={dietaryTags}
+											onTagsChange={setDietaryTags}
+											isAlcohol={isAlcohol}
+											onAlcoholChange={setIsAlcohol}
+										/>
 										<div className="flex flex-col gap-2">
 											<Label className="text-xs">
 												<Trans>Calories (kCal)</Trans>

@@ -1,5 +1,6 @@
 import { t } from '@lingui/macro'
 import { fireNextCourse } from '@repo/common/kitchen-ticket'
+import { menuOrderTypeFor } from '@repo/common/menu-pricing'
 import { NO_POS_DEVICE_APPS } from '@repo/common/pos-orders'
 import { create } from 'zustand'
 import { wipeStock } from '../apps/stock/queue.ts'
@@ -24,6 +25,7 @@ import {
 } from './config.ts'
 import { type OrderType, type PosOrder } from './db.ts'
 import { adoptServerChain } from './fiscal.ts'
+import { repriceLinesFor } from './item-config.ts'
 import { decodedLine, renameLine } from './line-names.ts'
 import { effectiveLocale } from './locale.ts'
 import { orderCleared, rewardDropped } from './loyalty-hooks.ts'
@@ -101,7 +103,10 @@ export type DiscountNotice =
 export type PosState = {
 	settings: PosSettings
 	snapshot: CatalogSnapshot | null
+	/** The menu priced for the current order type (#412). */
 	categories: MenuCategory[]
+	/** The menu priced as dine-in and as pickup (takeaway, drive-through). */
+	pricedCategories: Record<'dine_in' | 'pickup', MenuCategory[]>
 	/** Menu items in the restaurant's default language: what order lines record. */
 	recordItems: Map<string, MenuItem>
 	/** Menu items in this till's language: what it shows. */
@@ -305,7 +310,16 @@ export function shownItemName(itemId: string, recorded: string): string {
 	)
 }
 
-function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
+/** Station order types price as dine-in, or as pickup (takeaway, drive-through). */
+function pricingTypeOf(orderType: string): 'dine_in' | 'pickup' {
+	return menuOrderTypeFor(orderType) === 'dine_in' ? 'dine_in' : 'pickup'
+}
+
+function adopt(
+	snapshot: CatalogSnapshot,
+	settings: PosSettings,
+	orderType: string,
+) {
 	// Names and descriptions in the till's language: the published menu keeps
 	// every translation (`{"en":…,"ar":…}`). The snapshot itself stays as
 	// published, so a language switch only reads it again.
@@ -326,7 +340,13 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 	const location = locationMissing
 		? null
 		: (bound ?? pickLocation(menu, settings.locationId) ?? null)
-	const categories = location ? buildCategories(menu, location.id) : []
+	// #412 / #388: the same menu priced both ways, so switching the order type
+	// needs no rebuild; the server reprices the sale with the same resolver.
+	const pricedCategories = {
+		dine_in: location ? buildCategories(menu, location.id, 'dine_in') : [],
+		pickup: location ? buildCategories(menu, location.id, 'pickup') : [],
+	}
+	const categories = pricedCategories[pricingTypeOf(orderType)]
 	const record = localizeMenu(
 		snapshot.menu,
 		recordLocale(snapshot.menu, location),
@@ -338,6 +358,7 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 		location,
 		locationMissing,
 		categories,
+		pricedCategories,
 		recordItems: itemsById(record),
 		shownItems: itemsById(menu),
 		catalogStatus: (categories.length > 0 ? 'ready' : 'empty') as CatalogStatus,
@@ -629,6 +650,7 @@ export const usePos = create<PosState>((set, get) => ({
 	settings: withDemoApps(loadSettings()),
 	snapshot: null,
 	categories: [],
+	pricedCategories: { dine_in: [], pickup: [] },
 	recordItems: new Map(),
 	shownItems: new Map(),
 	location: null,
@@ -669,7 +691,7 @@ export const usePos = create<PosState>((set, get) => ({
 			(settings.demo ||
 				cached.organization.slug === settings.slug.trim().toLowerCase())
 		) {
-			set(adopt(cached, settings))
+			set(adopt(cached, settings, get().orderType))
 		} else if (!isConfigured(settings)) {
 			set({ catalogStatus: 'empty' })
 			return
@@ -686,7 +708,10 @@ export const usePos = create<PosState>((set, get) => ({
 		set({ refreshing: true })
 		const result = await refreshCatalog(settings)
 		if (result.ok) {
-			set({ ...adopt(result.snapshot, settings), refreshing: false })
+			set({
+				...adopt(result.snapshot, settings, get().orderType),
+				refreshing: false,
+			})
 		} else {
 			// Keep selling from the copy on the device; only say so when there is none.
 			set((s) => ({
@@ -758,13 +783,18 @@ export const usePos = create<PosState>((set, get) => ({
 			patch.appUrl !== undefined ||
 			patch.demo !== undefined
 		if (slugChanged) {
-			set({ snapshot: null, categories: [], catalogStatus: 'loading' })
+			set({
+				snapshot: null,
+				categories: [],
+				pricedCategories: { dine_in: [], pickup: [] },
+				catalogStatus: 'loading',
+			})
 			applyTheme(null)
 			await get().refresh()
 		} else if (patch.locationId !== undefined || patch.locale !== undefined) {
 			// Another location, or another language for the menu's names.
 			const { snapshot } = get()
-			if (snapshot) set(adopt(snapshot, settings))
+			if (snapshot) set(adopt(snapshot, settings, get().orderType))
 		}
 		void get().sync()
 	},
@@ -1096,10 +1126,18 @@ export const usePos = create<PosState>((set, get) => ({
 								...line
 							}) => line,
 						)
+			// #412: the bill is priced for the new type, like the server will.
+			const categories = s.pricedCategories[pricingTypeOf(nextType)]
+			const priced = categories.length
+				? repriceLinesFor(lines, categories)
+				: lines
 			return {
-				...withAutomaticDiscounts({ ...s, orderType: nextType }, lines, {
-					orderType: nextType,
-				}),
+				...withAutomaticDiscounts(
+					{ ...s, orderType: nextType, categories },
+					priced,
+					{ orderType: nextType },
+				),
+				categories: categories.length ? categories : s.categories,
 				tableLabel: nextType === 'dine_in' ? s.tableLabel : '',
 				driveThroughNote:
 					nextType === 'drive_through' ? s.driveThroughNote : '',

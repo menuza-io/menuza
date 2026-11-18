@@ -1,5 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import { auditService, AuditAction } from '@repo/audit'
+import { dietaryColumns, dietaryTagsOf } from '@repo/common/menu-types'
 import {
 	and,
 	db,
@@ -11,23 +12,30 @@ import {
 	OrganizationMenuLocationOverride,
 	OrganizationMenuOption,
 } from '@repo/database'
-import { checkModifierGraphChange } from './modifier-graph.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
 	planBulkEditItem,
 	planBulkEditOption,
 	type BulkItemOperation,
 	type BulkOptionOperation,
 } from './bulk-edit.ts'
+import { checkModifierGraphChange } from './modifier-graph.server.ts'
+import {
+	assertCategoryIdsInOrganization,
+	assertItemIdsInOrganization,
+	assertModifierGroupIdsInOrganization,
+	assertOptionIdsInOrganization,
+} from './ownership.server.ts'
 import { createMenuSnapshot } from './snapshot.server.ts'
-import { assertCategoryIdsInOrganization, assertItemIdsInOrganization, assertModifierGroupIdsInOrganization, assertOptionIdsInOrganization } from './ownership.server.ts'
-import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export function currencyExponentFor(currency: string) {
 	const zero = new Set(['JPY', 'KRW', 'VND', 'CLP', 'XAF', 'XOF'])
 	return zero.has(currency.toUpperCase()) ? 0 : 2
 }
 
-export function currencyCodeForDataRegion(dataRegion: string | null | undefined) {
+export function currencyCodeForDataRegion(
+	dataRegion: string | null | undefined,
+) {
 	return dataRegion === 'ksa' ? 'SAR' : 'USD'
 }
 
@@ -51,10 +59,18 @@ export async function applyBulkItemEdit({
 	expectedUpdatedAt: Record<string, string>
 }) {
 	await assertItemIdsInOrganization(organizationId, itemIds)
-	if (operation.type === 'add_category' || operation.type === 'remove_category') {
-		await assertCategoryIdsInOrganization(organizationId, [operation.categoryId])
+	if (
+		operation.type === 'add_category' ||
+		operation.type === 'remove_category'
+	) {
+		await assertCategoryIdsInOrganization(organizationId, [
+			operation.categoryId,
+		])
 	}
-	if (operation.type === 'add_modifier_group' || operation.type === 'remove_modifier_group') {
+	if (
+		operation.type === 'add_modifier_group' ||
+		operation.type === 'remove_modifier_group'
+	) {
 		await assertModifierGroupIdsInOrganization(organizationId, [
 			operation.modifierGroupId,
 		])
@@ -110,7 +126,9 @@ export async function applyBulkItemEdit({
 		where: (fields, { eq: equals }) => equals(fields.id, organizationId),
 		columns: { dataRegion: true },
 	})
-	const exponent = currencyExponentFor(currencyCodeForDataRegion(org?.dataRegion))
+	const exponent = currencyExponentFor(
+		currencyCodeForDataRegion(org?.dataRegion),
+	)
 
 	const rowInputs = items.map((row) => ({
 		id: row.id,
@@ -123,6 +141,7 @@ export async function applyBulkItemEdit({
 		isVegetarian: row.isVegetarian,
 		isGlutenFree: row.isGlutenFree,
 		isAlcohol: row.isAlcohol,
+		dietaryTags: dietaryTagsOf(row),
 		isPopular: row.isPopular,
 		isUpsell: row.isUpsell,
 		categoryIds: categoryByItem.get(row.id) ?? [],
@@ -163,7 +182,10 @@ export async function applyBulkItemEdit({
 		for (const plan of plans) {
 			if (plan.skipped) continue
 			const after = plan.after
-			if (locationId && (operation.type === 'price' || operation.type === 'availability')) {
+			if (
+				locationId &&
+				(operation.type === 'price' || operation.type === 'availability')
+			) {
 				if (operation.type === 'price') {
 					await tx
 						.insert(OrganizationMenuLocationOverride)
@@ -223,8 +245,7 @@ export async function applyBulkItemEdit({
 					availabilityStatus: after.availabilityStatus,
 					unavailableUntil: after.unavailableUntil,
 					applySalesTax: after.applySalesTax,
-					isVegetarian: after.isVegetarian,
-					isGlutenFree: after.isGlutenFree,
+					...dietaryColumns(after.dietaryTags),
 					isAlcohol: after.isAlcohol,
 					isPopular: after.isPopular,
 					isUpsell: after.isUpsell,
@@ -247,7 +268,10 @@ export async function applyBulkItemEdit({
 					.where(
 						and(
 							eq(OrganizationMenuItemCategoryAssignment.itemId, after.id),
-							eq(OrganizationMenuItemCategoryAssignment.categoryId, operation.categoryId),
+							eq(
+								OrganizationMenuItemCategoryAssignment.categoryId,
+								operation.categoryId,
+							),
 						),
 					)
 			}
@@ -284,7 +308,11 @@ export async function applyBulkItemEdit({
 		resourceType: 'menu_bulk_edit',
 		resourceId: snapshotId,
 		details: `Bulk updated ${applied} menu items`,
-		metadata: { itemIds, operation: operation.type, undoSnapshotId: snapshotId },
+		metadata: {
+			itemIds,
+			operation: operation.type,
+			undoSnapshotId: snapshotId,
+		},
 		request,
 	})
 	await purgeOrganizationSiteCache(organizationId, organizationSlug)
@@ -342,7 +370,9 @@ export async function applyBulkOptionEdit({
 		where: (fields, { eq: equals }) => equals(fields.id, organizationId),
 		columns: { dataRegion: true },
 	})
-	const exponent = currencyExponentFor(currencyCodeForDataRegion(org?.dataRegion))
+	const exponent = currencyExponentFor(
+		currencyCodeForDataRegion(org?.dataRegion),
+	)
 	const rows = options.map((row) => ({
 		id: row.id,
 		updatedAt: row.updatedAt,
@@ -353,6 +383,7 @@ export async function applyBulkOptionEdit({
 		isVegetarian: row.isVegetarian,
 		isGlutenFree: row.isGlutenFree,
 		isAlcohol: row.isAlcohol,
+		dietaryTags: dietaryTagsOf(row),
 	}))
 
 	const plans = planBulkEditOption({
@@ -372,7 +403,10 @@ export async function applyBulkOptionEdit({
 		for (const plan of plans) {
 			if (plan.skipped) continue
 			const after = plan.after
-			if (locationId && (operation.type === 'price' || operation.type === 'availability')) {
+			if (
+				locationId &&
+				(operation.type === 'price' || operation.type === 'availability')
+			) {
 				await tx
 					.insert(OrganizationMenuLocationOverride)
 					.values({
@@ -387,7 +421,9 @@ export async function applyBulkOptionEdit({
 								? after.availabilityStatus
 								: undefined,
 						unavailableUntil:
-							operation.type === 'availability' ? after.unavailableUntil : undefined,
+							operation.type === 'availability'
+								? after.unavailableUntil
+								: undefined,
 						createdAt: new Date(),
 						updatedAt: new Date(),
 					})
@@ -404,7 +440,9 @@ export async function applyBulkOptionEdit({
 									? after.availabilityStatus
 									: undefined,
 							unavailableUntil:
-								operation.type === 'availability' ? after.unavailableUntil : undefined,
+								operation.type === 'availability'
+									? after.unavailableUntil
+									: undefined,
 							updatedAt: new Date(),
 						},
 					})
@@ -415,8 +453,7 @@ export async function applyBulkOptionEdit({
 						price: after.price,
 						availabilityStatus: after.availabilityStatus,
 						unavailableUntil: after.unavailableUntil,
-						isVegetarian: after.isVegetarian,
-						isGlutenFree: after.isGlutenFree,
+						...dietaryColumns(after.dietaryTags),
 						isAlcohol: after.isAlcohol,
 						updatedAt: new Date(),
 					})
@@ -433,7 +470,11 @@ export async function applyBulkOptionEdit({
 		resourceType: 'menu_bulk_edit',
 		resourceId: snapshotId,
 		details: `Bulk updated ${applied} menu options`,
-		metadata: { optionIds, operation: operation.type, undoSnapshotId: snapshotId },
+		metadata: {
+			optionIds,
+			operation: operation.type,
+			undoSnapshotId: snapshotId,
+		},
 		request,
 	})
 

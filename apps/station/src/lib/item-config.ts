@@ -2,7 +2,12 @@ import { t } from '@lingui/macro'
 import { isAvailable } from './availability.ts'
 import { toCents } from './money.ts'
 import { type CartLine, type CartOption } from './pricing.ts'
-import { type MenuItem, type MenuOption, type ModifierGroup } from './types.ts'
+import {
+	type MenuCategory,
+	type MenuItem,
+	type MenuOption,
+	type ModifierGroup,
+} from './types.ts'
 
 /** groupId -> optionId -> quantity (1 for single/multiple groups). */
 export type Selections = Record<string, Record<string, number>>
@@ -218,3 +223,68 @@ export const canQuickAdd = (item: MenuItem): boolean =>
 	!itemNeedsChoices(item) &&
 	validateConfig(item, defaultVariantPicks(item), defaultSelections(item)) ===
 		null
+
+function findOption(
+	groups: readonly ModifierGroup[],
+	groupId: string,
+	optionId: string,
+): MenuOption | null {
+	for (const group of groups) {
+		for (const option of group.options) {
+			if (group.id === groupId && option.id === optionId) return option
+			const nested = findOption(
+				option.nestedModifierGroups ?? [],
+				groupId,
+				optionId,
+			)
+			if (nested) return nested
+		}
+	}
+	return null
+}
+
+/**
+ * Reprices cart lines from categories priced for another order type (#412):
+ * the cashier switched dine-in to takeaway (or back). Every catalog line takes
+ * the price the server will check the sale against; a dish or option no
+ * longer on the menu, and custom items, keep their price.
+ */
+export function repriceLinesFor<T extends CartLine>(
+	lines: readonly T[],
+	categories: readonly MenuCategory[],
+): T[] {
+	const items = new Map<string, MenuItem>()
+	const walk = (category: MenuCategory) => {
+		for (const item of category.items)
+			if (!items.has(item.id)) items.set(item.id, item)
+		category.subcategories?.forEach(walk)
+	}
+	categories.forEach(walk)
+	return lines.map((line) => {
+		if (line.kind === 'custom') return line
+		const item = items.get(line.itemId)
+		if (!item) return line
+		const variant = line.variantId
+			? item.variations.variants.find((entry) => entry.id === line.variantId)
+			: null
+		const baseCents = line.variantId
+			? variant
+				? toCents(variant.price)
+				: line.baseCents
+			: toCents(item.price)
+		let changed = baseCents !== line.baseCents
+		const options = line.options.map((entry) => {
+			const option = findOption(
+				item.modifierGroups,
+				entry.groupId,
+				entry.optionId,
+			)
+			if (!option) return entry
+			const unitCents = toCents(option.priceWhole ?? option.price)
+			if (unitCents === entry.unitCents) return entry
+			changed = true
+			return { ...entry, unitCents }
+		})
+		return changed ? { ...line, baseCents, options } : line
+	})
+}

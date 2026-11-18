@@ -7,6 +7,7 @@ import {
 	type SiteContentLocale,
 } from '@repo/common/site-locales'
 import { redirectWithToast } from '@repo/common/toast'
+import { namesLeftBlank } from '@repo/common/translation-status'
 import { and, db, eq, ne, Organization } from '@repo/database'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import {
@@ -31,8 +32,10 @@ import {
 import {
 	SiteLocalesCard,
 	SiteLocalesSchema,
+	LOCALE_NAMES_LEFT_BLANK,
 	siteLocalesActionIntent,
 } from '#app/components/settings/cards/organization/site-locales-card.tsx'
+import { loadTranslatableRecords } from '#app/utils/menu/translation-status.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -577,6 +580,24 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		const { locales, defaultLocale } = submission.value
+
+		// #410: never remove a language that holds the only name of a dish,
+		// option, option group or category.
+		const blankNames = namesLeftBlank(
+			await loadTranslatableRecords(organization.id),
+			{ nextLocales: locales, defaultLocale },
+		)
+		if (blankNames.length > 0) {
+			return Response.json({
+				result: submission.reply({
+					fieldErrors: { locales: [LOCALE_NAMES_LEFT_BLANK] },
+				}),
+				blankNames: {
+					count: blankNames.length,
+					examples: blankNames.slice(0, 5).map((record) => record.label),
+				},
+			})
+		}
 
 		try {
 			await db

@@ -317,3 +317,77 @@ describe('DropsScreen', () => {
 		)
 	})
 })
+
+describe('MenuScreen dietary filter and order-type prices (#335, #412)', () => {
+	const dietPayload = {
+		organization: { currency: 'USD' },
+		locations: [
+			{
+				id: 'loc_1',
+				isDefault: true,
+				timezone: 'UTC',
+				fulfillmentOptions: { pickup: true, delivery: true },
+			},
+		],
+		menus: [
+			{
+				id: 'menu_1',
+				displayName: 'All day',
+				categories: [
+					{
+						id: 'cat_1',
+						displayName: 'Mains',
+						items: [
+							{
+								id: 'falafel',
+								displayName: 'Falafel',
+								price: 8,
+								dietaryTags: ['vegan', 'halal'],
+								availabilityStatus: 'available',
+							},
+							{
+								id: 'omelette',
+								displayName: 'Omelette',
+								price: 7,
+								isVegetarian: true,
+								availabilityStatus: 'available',
+							},
+							{
+								id: 'kebab',
+								displayName: 'Kebab',
+								price: 12,
+								orderTypePrices: { delivery: 14 },
+								dietaryTags: ['halal', 'a_future_tag'],
+								availabilityStatus: 'available',
+							},
+						],
+					},
+				],
+			},
+		],
+	}
+
+	it('shows only vegan dishes once Vegan is chosen, with the disclaimer', async () => {
+		await renderOrdering(
+			<MenuScreen loadMenu={async () => dietPayload} openPage={jest.fn()} />,
+		)
+		expect(await screen.findByText('Kebab')).toBeTruthy()
+		expect(screen.getByText(/restaurant's own description/)).toBeTruthy()
+		fireEvent.press(screen.getByRole('button', { name: 'Vegan' }))
+		expect(screen.getByText('Falafel')).toBeTruthy()
+		expect(screen.queryByText('Omelette')).toBeNull()
+		expect(screen.queryByText('Kebab')).toBeNull()
+		// Unchoosing brings the whole menu back.
+		fireEvent.press(screen.getByRole('button', { name: 'Vegan' }))
+		expect(screen.getByText('Omelette')).toBeTruthy()
+	})
+
+	it('shows the pickup price and says the delivery price when it differs', async () => {
+		await renderOrdering(
+			<MenuScreen loadMenu={async () => dietPayload} openPage={jest.fn()} />,
+		)
+		expect(await screen.findByText('$12.00')).toBeTruthy()
+		expect(screen.getByText('Delivery price $14.00')).toBeTruthy()
+		expect(screen.getAllByText(/Delivery price/)).toHaveLength(1)
+	})
+})

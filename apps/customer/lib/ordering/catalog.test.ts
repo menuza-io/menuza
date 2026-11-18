@@ -1,5 +1,7 @@
 import {
+	dietaryTagsOnMenu,
 	fetchPublishedDrops,
+	filterSectionsByDiet,
 	fetchPublishedMenu,
 	presentDrops,
 	presentMenu,
@@ -98,6 +100,7 @@ describe('presentMenu', () => {
 				soldOut: false,
 				categoryIds: ['cat_1'],
 				excludeFromDiscounts: false,
+				dietaryTags: [],
 			},
 			{
 				id: 'item_2',
@@ -107,6 +110,7 @@ describe('presentMenu', () => {
 				soldOut: true,
 				categoryIds: ['cat_1'],
 				excludeFromDiscounts: false,
+				dietaryTags: [],
 			},
 		])
 		expect(menu.sections[1]?.items[0]?.soldOut).toBe(true)
@@ -330,5 +334,97 @@ describe('catalog fetches', () => {
 			'/resources/sites/drops',
 		])
 		expect(transport.recorded[0]?.url.searchParams.get('slug')).toBe('acme')
+	})
+})
+
+describe('presentMenu prices and dietary tags (#412, #388, #335)', () => {
+	const payload = (extra: Record<string, unknown> = {}) => ({
+		organization: { currency: 'USD' },
+		locations: [
+			{
+				id: 'loc_1',
+				isDefault: true,
+				fulfillmentOptions: { pickup: true, delivery: true },
+			},
+		],
+		menus: [
+			{
+				id: 'menu_1',
+				displayName: 'Lunch',
+				categories: [
+					{
+						id: 'cat_1',
+						displayName: 'Mains',
+						items: [
+							{
+								id: 'soup',
+								displayName: 'Soup',
+								price: 10,
+								orderTypePrices: { delivery: 12 },
+								dietaryTags: ['vegan', 'keto'],
+							},
+							{ id: 'tea', displayName: 'Tea', price: 3, isGlutenFree: true },
+						],
+					},
+				],
+			},
+		],
+		...extra,
+	})
+
+	it('prices for pickup, adds the delivery price only when it differs, and reads tags safely', () => {
+		const [section] = presentMenu(payload(), 'en', 'en').sections
+		expect(section!.items[0]).toMatchObject({
+			price: 10,
+			deliveryPrice: 12,
+			dietaryTags: ['vegan'],
+		})
+		expect(section!.items[1]).toMatchObject({
+			price: 3,
+			dietaryTags: ['gluten_free'],
+		})
+		expect(section!.items[1]!.deliveryPrice).toBeUndefined()
+	})
+
+	it('applies pricing rules and fixed location prices', () => {
+		const ruled = presentMenu(
+			payload({
+				pricingRules: [
+					{
+						id: 'r',
+						percentBp: 1000,
+						allDishes: true,
+						categoryIds: [],
+						locationIds: ['loc_1'],
+						rounding: { mode: 'decimals', decimals: 0 },
+					},
+				],
+				locationOverrides: {
+					loc_1: [{ entityType: 'item', entityId: 'tea', price: 2.5 }],
+				},
+			}),
+			'en',
+			'en',
+		)
+		expect(ruled.sections[0]!.items[0]).toMatchObject({
+			price: 11,
+			deliveryPrice: 14,
+		})
+		expect(ruled.sections[0]!.items[1]!.price).toBe(2.5)
+	})
+
+	it('filters sections by every chosen tag', () => {
+		const { sections } = presentMenu(payload(), 'en', 'en')
+		expect(dietaryTagsOnMenu(sections)).toEqual([
+			'vegan',
+			'vegetarian',
+			'gluten_free',
+		])
+		expect(
+			filterSectionsByDiet(sections, ['vegan'])[0]!.items.map(
+				(item) => item.id,
+			),
+		).toEqual(['soup'])
+		expect(filterSectionsByDiet(sections, ['halal'])).toEqual([])
 	})
 })

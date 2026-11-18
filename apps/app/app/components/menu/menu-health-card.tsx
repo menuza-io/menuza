@@ -25,7 +25,14 @@ import {
 	ItemTitle,
 } from '@repo/ui/item'
 import { Progress } from '@repo/ui/progress'
-import { createContext, useContext, useEffect, useId, useRef, useState } from 'react'
+import {
+	createContext,
+	useContext,
+	useEffect,
+	useId,
+	useRef,
+	useState,
+} from 'react'
 import { Link, useFetcher, useRevalidator } from 'react-router'
 import { toast } from 'sonner'
 import { MenuReviewStack } from '#app/components/menu/menu-review-stack.tsx'
@@ -346,7 +353,8 @@ function RecordRow({
 					onClick={(event) => {
 						if (focusAfter) {
 							const row = event.currentTarget.closest('li')
-							const neighbour = row?.nextElementSibling ?? row?.previousElementSibling
+							const neighbour =
+								row?.nextElementSibling ?? row?.previousElementSibling
 							const neighbourId = neighbour
 								?.querySelector('[data-focus-id]')
 								?.getAttribute('data-focus-id')
@@ -480,6 +488,17 @@ function CheckRow({
 							className="text-primary text-sm hover:underline"
 						>
 							<Trans>See all {total}</Trans>
+						</Link>
+					) : null}
+					{check.key === 'missing_translation' ? (
+						<Link
+							to={`/${orgSlug}/menu/translations`}
+							className="text-primary block text-sm hover:underline"
+						>
+							<Trans>
+								See every missing name and description, for options and
+								categories too
+							</Trans>
 						</Link>
 					) : null}
 					<DismissedList orgSlug={orgSlug} check={check} canEdit={canEdit} />
@@ -640,48 +659,52 @@ export function MenuHealthCard({
 				className="space-y-3 outline-none"
 			>
 				<FocusAfterActionContext.Provider value={focusAfter}>
-				<Progress value={health.score} aria-label={_(t`Menu health score`)} />
-				{canReview ? (
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => setReviewOpen(true)}
-					>
-						<Icon name="sparkles" className="size-4" />
-						<Trans>Review suggestions</Trans>
-					</Button>
-				) : null}
-				{fixes.length === 0 ? (
-					<Item variant="muted" size="sm">
-						<ItemMedia variant="icon">
-							<Icon name="circle-check" className="text-success" />
-						</ItemMedia>
-						<ItemContent>
-							<ItemTitle>
-								<Trans>Nothing left to fix</Trans>
-							</ItemTitle>
-						</ItemContent>
-					</Item>
-				) : (
-					<div className="space-y-1">
-						{fixes.map((check) => (
-							<CheckRow
-								key={check.key}
+					<Progress value={health.score} aria-label={_(t`Menu health score`)} />
+					{canReview ? (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => setReviewOpen(true)}
+						>
+							<Icon name="sparkles" className="size-4" />
+							<Trans>Review suggestions</Trans>
+						</Button>
+					) : null}
+					{fixes.length === 0 ? (
+						<Item variant="muted" size="sm">
+							<ItemMedia variant="icon">
+								<Icon name="circle-check" className="text-success" />
+							</ItemMedia>
+							<ItemContent>
+								<ItemTitle>
+									<Trans>Nothing left to fix</Trans>
+								</ItemTitle>
+							</ItemContent>
+						</Item>
+					) : (
+						<div className="space-y-1">
+							{fixes.map((check) => (
+								<CheckRow
+									key={check.key}
+									orgSlug={orgSlug}
+									check={check}
+									canEdit={canEdit}
+								/>
+							))}
+						</div>
+					)}
+					{dismissedOnly.map((check) => (
+						<div key={check.key}>
+							<p className="text-muted-foreground text-xs">
+								{_(CHECK_TITLES[check.key])}
+							</p>
+							<DismissedList
 								orgSlug={orgSlug}
 								check={check}
 								canEdit={canEdit}
 							/>
-						))}
-					</div>
-				)}
-				{dismissedOnly.map((check) => (
-					<div key={check.key}>
-						<p className="text-muted-foreground text-xs">
-							{_(CHECK_TITLES[check.key])}
-						</p>
-						<DismissedList orgSlug={orgSlug} check={check} canEdit={canEdit} />
-					</div>
-				))}
+						</div>
+					))}
 				</FocusAfterActionContext.Provider>
 			</CardContent>
 			{canReview && review ? (

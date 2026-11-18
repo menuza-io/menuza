@@ -35,7 +35,8 @@ export default function MenuLayout() {
 	const location = useLocation()
 	const params = useParams()
 	const orgSlug = params.orgSlug
-	const { menuHistoryEnabled } = useLoaderData<typeof loader>()
+	const { menuHistoryEnabled, menuBulkEditEnabled } =
+		useLoaderData<typeof loader>()
 
 	const tabs = [
 		{
@@ -88,6 +89,27 @@ export default function MenuLayout() {
 				location.pathname === `/${orgSlug}/menu/drops/` ||
 				location.pathname.startsWith(`/${orgSlug}/menu/drops/`),
 		},
+		{
+			label: _(t`Pricing rules`),
+			href: `/${orgSlug}/menu/pricing-rules`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/menu/pricing-rules`),
+		},
+		{
+			label: _(t`Translations`),
+			href: `/${orgSlug}/menu/translations`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/menu/translations`),
+		},
+		...(menuBulkEditEnabled
+			? [
+					{
+						label: _(t`Spreadsheet`),
+						href: `/${orgSlug}/menu/spreadsheet`,
+						isActive: location.pathname.startsWith(
+							`/${orgSlug}/menu/spreadsheet`,
+						),
+					},
+				]
+			: []),
 		...(menuHistoryEnabled
 			? [
 					{

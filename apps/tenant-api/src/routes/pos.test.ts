@@ -1812,6 +1812,41 @@ describe('POS terminals: pairing, upload and sync', () => {
 	// -----------------------------------------------------------------------
 
 	describe('menu drift', () => {
+		it('reprices a dine-in sale at the dine-in price (#412) and flags a till that ignored it', async () => {
+			contextFor = (orgId) => {
+				const ctx = menuContext(orgId) as {
+					menu: {
+						menus: Array<{
+							categories: Array<{ items: Array<Record<string, unknown>> }>
+						}>
+					}
+				}
+				const items = ctx.menu.menus[0]!.categories[0]!.items
+				items[0] = {
+					...items[0],
+					orderTypePrices: { dine_in: 9, delivery: 12 },
+				}
+				return ctx
+			}
+			const { deviceSecret } = await pair()
+			// The till charged 9.00 for a dine-in burger: matches the live menu.
+			const right = wireOrder({ lines: [{ ...BURGER, baseCents: 900 }] })
+			const ok = await upload(deviceSecret, right)
+			expect(ok.status).toBe(201)
+			expect(
+				((await ok.json()) as { order: { reviewReason: string | null } }).order
+					.reviewReason,
+			).toBeNull()
+			// An older till that still charged the base price is kept and flagged.
+			const old = wireOrder({ number: 'T1-0002', lines: [BURGER] })
+			const flagged = await upload(deviceSecret, old)
+			expect(flagged.status).toBe(201)
+			expect(
+				((await flagged.json()) as { order: { reviewReason: string | null } })
+					.order.reviewReason,
+			).toBe('price_mismatch')
+		})
+
 		it('keeps the sale and flags it when the menu price changed since the till cached it', async () => {
 			const { deviceSecret } = await pair()
 			const stale = wireOrder({

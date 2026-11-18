@@ -1,5 +1,8 @@
 import { serializeDailySaleLimit } from '@repo/common/daily-dish-limits'
-import { type ModifierGroupInput } from '@repo/common/menu-types'
+import {
+	dietaryColumnsFromInput,
+	type ModifierGroupInput,
+} from '@repo/common/menu-types'
 import {
 	and,
 	db,
@@ -194,8 +197,7 @@ export async function createModifierGroup(
 							priceWhole,
 							priceLeft,
 							priceRight,
-							isGlutenFree: opt.isGlutenFree ?? false,
-							isVegetarian: opt.isVegetarian ?? false,
+							...dietaryColumnsFromInput(opt),
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
 							dailySaleLimit: serializeDailySaleLimit(opt.dailySaleLimit),
@@ -205,6 +207,12 @@ export async function createModifierGroup(
 						.returning()
 					targetOptionId = created?.id
 				} else {
+					// The group editor only knows the two old flags: keep the option's
+					// other dietary tags (#335).
+					const [currentTags] = await tx
+						.select({ dietaryTags: OrganizationMenuOption.dietaryTags })
+						.from(OrganizationMenuOption)
+						.where(eq(OrganizationMenuOption.id, targetOptionId))
 					await tx
 						.update(OrganizationMenuOption)
 						.set({
@@ -214,8 +222,7 @@ export async function createModifierGroup(
 							priceWhole,
 							priceLeft,
 							priceRight,
-							isGlutenFree: opt.isGlutenFree ?? false,
-							isVegetarian: opt.isVegetarian ?? false,
+							...dietaryColumnsFromInput(opt, currentTags?.dietaryTags),
 							isAlcohol: opt.isAlcohol ?? false,
 							isTopping: isPizzaGroup || (opt.isTopping ?? false),
 							...dailyLimitColumn(

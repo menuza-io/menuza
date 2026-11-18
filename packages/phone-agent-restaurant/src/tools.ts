@@ -118,7 +118,7 @@ function tool<TParams extends z.ZodObject>(
 const searchMenu = tool({
 	name: 'search_menu',
 	description:
-		'Search the menu by dish name, ingredient, or category. Use this before saying an item is not available.',
+		'Search the menu by dish name, ingredient, or category, or by a dietary need such as halal, vegan, vegetarian, gluten free, dairy free, nut free or spicy (answers from the tags the restaurant set). Use this before saying an item is not available. Prices are for pickup; deliveryPrice is shown when delivery costs a different amount.',
 	parameters: z.object({
 		query: z.string().describe('What the caller asked for, in their words'),
 	}),

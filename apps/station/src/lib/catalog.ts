@@ -1,3 +1,9 @@
+import {
+	parseMenuPricingRules,
+	resolveMenuItemPrice,
+	resolveMenuOptionPrice,
+	type MenuOrderType,
+} from '@repo/common/menu-pricing'
 import { isAvailable, isHiddenStatus } from './availability.ts'
 import { type PosSettings } from './config.ts'
 import { db } from './db.ts'
@@ -147,15 +153,37 @@ const categoryOff = (status: string | null | undefined) =>
 export function buildCategories(
 	menu: MenuPayload,
 	locationId: string,
+	/**
+	 * The order type to price for (#412): dine-in, or pickup for takeaway and
+	 * drive-through. Prices come from `@repo/common/menu-pricing`, the resolver
+	 * the server reprices the sale with, so the till and the review agree.
+	 */
+	orderType: MenuOrderType = 'pickup',
+	now: Date = new Date(),
 ): MenuCategory[] {
 	const overrides = menu.locationOverrides?.[locationId] ?? []
 	const byId = new Map(overrides.map((o) => [o.entityId, o]))
 	const statusOf = (id: string, base: string) =>
 		byId.get(id)?.availabilityStatus ?? base
-	const priceOf = (id: string, base: number) => {
-		const price = byId.get(id)?.price
-		return price != null && price > 0 ? price : base
+	const rules = parseMenuPricingRules(menu.pricingRules)
+	const context = { orderType, locationId, rules, now }
+	// Every category a dish is listed under, for pricing rules (#388).
+	const categoriesOf = new Map<string, string[]>()
+	const index = (cat: MenuCategory) => {
+		for (const item of cat.items ?? []) {
+			const list = categoriesOf.get(item.id) ?? []
+			if (!list.includes(cat.id)) list.push(cat.id)
+			categoriesOf.set(item.id, list)
+		}
+		cat.subcategories?.forEach(index)
 	}
+	for (const m of menu.menus) m.categories.forEach(index)
+	const itemPrice = (item: MenuItem, variantPrice?: number) =>
+		resolveMenuItemPrice(
+			{ ...item, categoryIds: categoriesOf.get(item.id) ?? [] },
+			context,
+			{ variantPrice, overridePrice: byId.get(item.id)?.price },
+		)
 	const off = (id: string, status: string) =>
 		byId.get(id)?.isEnabled === false || isHiddenStatus(statusOf(id, status))
 
@@ -163,7 +191,9 @@ export function buildCategories(
 		if (off(option.id, option.availabilityStatus)) return null
 		return {
 			...option,
-			price: priceOf(option.id, option.price),
+			price: resolveMenuOptionPrice(option, context, {
+				overridePrice: byId.get(option.id)?.price,
+			}),
 			availabilityStatus: statusOf(option.id, option.availabilityStatus),
 			nestedModifierGroups: option.nestedModifierGroups
 				?.map(applyGroup)
@@ -182,9 +212,19 @@ export function buildCategories(
 	}
 	const applyItem = (item: MenuItem): MenuItem | null => {
 		if (off(item.id, item.availabilityStatus)) return null
+		const variants = item.variations.variants.map((variant) => ({
+			...variant,
+			price: itemPrice(item, variant.price),
+		}))
+		const forSale = variants.filter((variant) =>
+			isAvailable(variant.availabilityStatus),
+		)
 		return {
 			...item,
-			price: priceOf(item.id, item.price),
+			variations: { ...item.variations, variants },
+			price: variants.length
+				? Math.min(...(forSale.length ? forSale : variants).map((v) => v.price))
+				: itemPrice(item),
 			availabilityStatus: statusOf(item.id, item.availabilityStatus),
 			modifierGroups: item.modifierGroups
 				.map(applyGroup)

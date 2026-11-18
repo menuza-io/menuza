@@ -1,11 +1,14 @@
 import { useLingui } from '@lingui/react/macro'
+import { type DietaryTag } from '@repo/common/menu-types'
 import { menuItemSalePrice } from '@repo/discounts'
 import { useEffect, useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, View } from 'react-native'
 import { useAppSnapshot } from '../../lib/app/use-app'
 import { websitePageUrl } from '../../lib/loyalty/website-link'
 import {
+	dietaryTagsOnMenu,
 	fetchPublishedMenu,
+	filterSectionsByDiet,
 	formatMenuPrice,
 	isMissingCatalog,
 	type MenuItemView,
@@ -19,7 +22,15 @@ import {
 	promotionsForScope,
 } from '../../lib/ordering/offers'
 import { openWebsitePage } from '../../lib/ordering/open-site'
-import { Badge, Button, EmptyState, LoadingView, Screen, Text } from '../ui'
+import {
+	Badge,
+	Button,
+	Chip,
+	EmptyState,
+	LoadingView,
+	Screen,
+	Text,
+} from '../ui'
 import { SiteCheckoutBar } from './site-checkout'
 
 type LoadMenu = typeof fetchPublishedMenu
@@ -42,6 +53,9 @@ export function MenuScreen({
 		'loading',
 	)
 	const [pulling, setPulling] = useState(false)
+	// #335: the guest's dietary choices; a dish shows only with every one.
+	const [diet, setDiet] = useState<DietaryTag[]>([])
+	const dietLabel = useDietaryLabel()
 	const locale = language.code
 	const defaultLocale = organization?.defaultLocale || 'en'
 
@@ -118,7 +132,15 @@ export function MenuScreen({
 		)
 	}
 
-	const sections = menu?.sections ?? []
+	const allSections = menu?.sections ?? []
+	const dietOptions = dietaryTagsOnMenu(allSections)
+	const sections = filterSectionsByDiet(allSections, diet)
+	const toggleDiet = (tag: DietaryTag) =>
+		setDiet((current) =>
+			current.includes(tag)
+				? current.filter((entry) => entry !== tag)
+				: [...current, tag],
+		)
 	// The offers that work at the website's location now; a page left open
 	// re-checks the time on its next render.
 	const livePromotions = menu
@@ -155,7 +177,32 @@ export function MenuScreen({
 							))}
 						</View>
 					) : null}
-					{sections.length === 0 ? (
+					{dietOptions.length > 0 ? (
+						<View className="gap-2">
+							<View
+								className="flex-row flex-wrap gap-2"
+								accessibilityLabel={t`Dietary preferences`}
+							>
+								{dietOptions.map((tag) => (
+									<Chip
+										key={tag}
+										label={dietLabel(tag)}
+										selected={diet.includes(tag)}
+										onPress={() => toggleDiet(tag)}
+									/>
+								))}
+							</View>
+							<Text variant="caption">
+								{t`Dietary tags are the restaurant's own description. Ask staff if you have an allergy.`}
+							</Text>
+						</View>
+					) : null}
+					{sections.length === 0 && diet.length > 0 ? (
+						<EmptyState
+							title={t`No dishes match these choices.`}
+							body={t`Clear a choice to see more of the menu.`}
+						/>
+					) : sections.length === 0 ? (
 						<EmptyState
 							title={t`Nothing on the menu right now.`}
 							body={t`Check back later, or open the website menu.`}
@@ -257,12 +304,21 @@ function MenuItemRow({
 		? formatMenuPrice(sale.saleMinor / 100, currency, locale)
 		: originalPrice
 	const name = item.name
+	const dietLabel = useDietaryLabel()
+	const deliveryPriceText =
+		item.deliveryPrice !== undefined
+			? formatMenuPrice(item.deliveryPrice, currency, locale)
+			: ''
 	// What a screen reader says for the row: the name alone would hide the
 	// price, the offer and the description that sit inside it.
 	const spoken = [
 		name,
 		sale ? t`${price}, was ${originalPrice}` : price,
 		...offers.map(offerLabel),
+		item.deliveryPrice !== undefined
+			? t`Delivery price ${deliveryPriceText}`
+			: null,
+		...item.dietaryTags.map(dietLabel),
 		item.description,
 	]
 		.filter(Boolean)
@@ -284,6 +340,16 @@ function MenuItemRow({
 			</View>
 			{item.description ? (
 				<Text variant="caption">{item.description}</Text>
+			) : null}
+			{item.deliveryPrice !== undefined && !item.soldOut ? (
+				<Text variant="caption">{t`Delivery price ${deliveryPriceText}`}</Text>
+			) : null}
+			{item.dietaryTags.length > 0 ? (
+				<View className="flex-row flex-wrap gap-2">
+					{item.dietaryTags.map((tag) => (
+						<Badge key={tag}>{dietLabel(tag)}</Badge>
+					))}
+				</View>
 			) : null}
 			{offers.length > 0 ? (
 				<View className="flex-row flex-wrap gap-2">
@@ -360,5 +426,28 @@ function useOfferLabeler(
 		}
 		if (promotion.valueType === 'free_delivery') return t`Free delivery`
 		return promotion.name
+	}
+}
+
+/** Words for a dietary tag (#335). */
+function useDietaryLabel(): (tag: DietaryTag) => string {
+	const { t } = useLingui()
+	return (tag) => {
+		switch (tag) {
+			case 'halal':
+				return t`Halal`
+			case 'vegan':
+				return t`Vegan`
+			case 'vegetarian':
+				return t`Vegetarian`
+			case 'gluten_free':
+				return t`Gluten-free`
+			case 'dairy_free':
+				return t`Dairy-free`
+			case 'nut_free':
+				return t`Nut-free`
+			case 'spicy':
+				return t`Spicy`
+		}
 	}
 }

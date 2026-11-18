@@ -590,11 +590,11 @@ msgstr "{name}: {text} {unit}"
 msgid "{name}: {why}"
 msgstr "{name}: {why}"
 
-#: src/lib/item-config.ts:147
+#: src/lib/item-config.ts:152
 msgid "{name}: choose at least {min}"
 msgstr "{name}: choose at least {min}"
 
-#: src/lib/item-config.ts:148
+#: src/lib/item-config.ts:153
 msgid "{name}: choose at most {max}"
 msgstr "{name}: choose at most {max}"
 
@@ -1129,7 +1129,7 @@ msgstr "Accept within {0}"
 msgid "Accepted"
 msgstr "Accepted"
 
-#: src/screens/ItemSheet.tsx:169
+#: src/screens/ItemSheet.tsx:191
 msgid "Add"
 msgstr "Add"
 
@@ -1138,7 +1138,7 @@ msgid "Add “<0>{typed}</0>” to the waitlist"
 msgstr "Add “<0>{typed}</0>” to the waitlist"
 
 #. placeholder {0}: option.displayName
-#: src/screens/ItemSheet.tsx:305
+#: src/screens/ItemSheet.tsx:332
 msgid "Add {0}"
 msgstr "Add {0}"
 
@@ -1294,7 +1294,7 @@ msgstr "All stations"
 msgid "All types"
 msgstr "All types"
 
-#: src/screens/ItemSheet.tsx:344
+#: src/screens/ItemSheet.tsx:371
 msgid "Allergies, no onions, sauce on the side…"
 msgstr "Allergies, no onions, sauce on the side…"
 
@@ -2034,19 +2034,19 @@ msgstr "Checking…"
 msgid "Chime for new tickets"
 msgstr "Chime for new tickets"
 
-#: src/screens/ItemSheet.tsx:245
+#: src/screens/ItemSheet.tsx:272
 msgid "Choose {min}"
 msgstr "Choose {min}"
 
-#: src/screens/ItemSheet.tsx:244
+#: src/screens/ItemSheet.tsx:271
 msgid "Choose {min}–{max}"
 msgstr "Choose {min}–{max}"
 
-#: src/lib/item-config.ts:133
+#: src/lib/item-config.ts:138
 msgid "Choose {missing}"
 msgstr "Choose {missing}"
 
-#: src/lib/item-config.ts:147
+#: src/lib/item-config.ts:152
 msgid "Choose {name}"
 msgstr "Choose {name}"
 
@@ -2054,7 +2054,7 @@ msgstr "Choose {name}"
 msgid "Choose a future pickup time in the restaurant’s time zone"
 msgstr "Choose a future pickup time in the restaurant’s time zone"
 
-#: src/lib/item-config.ts:133
+#: src/lib/item-config.ts:138
 msgid "Choose a size"
 msgstr "Choose a size"
 
@@ -2274,7 +2274,7 @@ msgstr "Confirmed"
 #~ msgid "Confirmed by phone"
 #~ msgstr "Confirmed by phone"
 
-#: src/lib/store.ts:919
+#: src/lib/store.ts:949
 msgid "Connect to the internet to see other terminals’ tabs."
 msgstr "Connect to the internet to see other terminals’ tabs."
 
@@ -2339,7 +2339,7 @@ msgstr "Could not open this day."
 msgid "Could not pair this terminal. Try again."
 msgstr "Could not pair this terminal. Try again."
 
-#: src/lib/store.ts:931
+#: src/lib/store.ts:961
 msgid "Could not reach the server."
 msgstr "Could not reach the server."
 
@@ -2347,7 +2347,7 @@ msgstr "Could not reach the server."
 msgid "Could not reach the server. Check the connection and try again."
 msgstr "Could not reach the server. Check the connection and try again."
 
-#: src/lib/store.ts:969
+#: src/lib/store.ts:999
 msgid "Could not reach the server. The tab stays where it is."
 msgstr "Could not reach the server. The tab stays where it is."
 
@@ -2480,6 +2480,7 @@ msgid "Dairy"
 msgstr "Dairy"
 
 #: src/apps/reservations/guest.ts:48
+#: src/screens/ItemSheet.tsx:50
 msgid "Dairy free"
 msgstr "Dairy free"
 
@@ -2688,7 +2689,7 @@ msgstr "Disputed"
 #: src/apps/timeclock/TimeClock.tsx:1376
 #: src/screens/Cart.tsx:672
 #: src/screens/GiftCardSheet.tsx:160
-#: src/screens/ItemSheet.tsx:377
+#: src/screens/ItemSheet.tsx:404
 #: src/screens/LoyaltySheet.tsx:283
 #: src/screens/ShiftSheet.tsx:142
 msgid "Done"
@@ -2964,7 +2965,7 @@ msgstr "Expired"
 msgid "Far"
 msgstr "Far"
 
-#: src/screens/ItemSheet.tsx:139
+#: src/screens/ItemSheet.tsx:161
 msgid "Fewer"
 msgstr "Fewer"
 
@@ -3127,7 +3128,8 @@ msgid "Give {giveChangeText} change for that payment"
 msgstr "Give {giveChangeText} change for that payment"
 
 #: src/apps/reservations/guest.ts:45
-#: src/screens/ItemSheet.tsx:191
+#: src/screens/ItemSheet.tsx:58
+#: src/screens/ItemSheet.tsx:213
 msgid "Gluten free"
 msgstr "Gluten free"
 
@@ -3232,6 +3234,7 @@ msgid "Guests’ bookings open for the person signed in at this terminal, and on
 msgstr "Guests’ bookings open for the person signed in at this terminal, and only after an online sign-in."
 
 #: src/apps/reservations/guest.ts:46
+#: src/screens/ItemSheet.tsx:46
 msgid "Halal"
 msgstr "Halal"
 
@@ -3552,9 +3555,9 @@ msgstr "Kitchen closed"
 msgid "Kitchen display"
 msgstr "Kitchen display"
 
-#: src/screens/ItemSheet.tsx:336
-#: src/screens/ItemSheet.tsx:337
-#: src/screens/ItemSheet.tsx:339
+#: src/screens/ItemSheet.tsx:363
+#: src/screens/ItemSheet.tsx:364
+#: src/screens/ItemSheet.tsx:366
 msgid "Kitchen note"
 msgstr "Kitchen note"
 
@@ -3940,7 +3943,7 @@ msgstr "Mine · {0}"
 msgid "Money goes back the way it was paid ({tenders}). Card refunds are made on the card terminal first; this records them."
 msgstr "Money goes back the way it was paid ({tenders}). Card refunds are made on the card terminal first; this records them."
 
-#: src/screens/ItemSheet.tsx:152
+#: src/screens/ItemSheet.tsx:174
 msgid "More"
 msgstr "More"
 
@@ -4465,6 +4468,10 @@ msgstr "Number of batches (the plan is filled in)."
 msgid "Number or name"
 msgstr "Number or name"
 
+#: src/screens/ItemSheet.tsx:52
+msgid "Nut free"
+msgstr "Nut free"
+
 #: src/apps/reservations/feed.ts:802
 msgid "Occasion"
 msgstr "Occasion"
@@ -4690,8 +4697,8 @@ msgstr "Option"
 msgid "Option · {0}"
 msgstr "Option · {0}"
 
-#: src/screens/ItemSheet.tsx:248
-#: src/screens/ItemSheet.tsx:337
+#: src/screens/ItemSheet.tsx:275
+#: src/screens/ItemSheet.tsx:364
 msgid "Optional"
 msgstr "Optional"
 
@@ -5578,7 +5585,7 @@ msgid "Remove"
 msgstr "Remove"
 
 #. placeholder {0}: option.displayName
-#: src/screens/ItemSheet.tsx:289
+#: src/screens/ItemSheet.tsx:316
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
@@ -5622,7 +5629,7 @@ msgstr "Reprinted"
 msgid "Request"
 msgstr "Request"
 
-#: src/screens/ItemSheet.tsx:201
+#: src/screens/ItemSheet.tsx:228
 msgid "Required"
 msgstr "Required"
 
@@ -6283,7 +6290,7 @@ msgstr "Small"
 #: src/apps/orders/Controls.tsx:378
 #: src/apps/orders/Controls.tsx:400
 #: src/apps/orders/DailyLimits.tsx:159
-#: src/screens/ItemSheet.tsx:218
+#: src/screens/ItemSheet.tsx:245
 #: src/screens/MenuGrid.tsx:439
 msgid "Sold out"
 msgstr "Sold out"
@@ -6372,6 +6379,10 @@ msgstr "Source"
 #: src/apps/reservations/guest.ts:37
 msgid "soy"
 msgstr "soy"
+
+#: src/screens/ItemSheet.tsx:54
+msgid "Spicy"
+msgstr "Spicy"
 
 #: src/screens/Checkout.tsx:542
 msgid "Split {n}"
@@ -6958,7 +6969,7 @@ msgstr "That amount is outside what the restaurant allows for a card."
 msgid "That cannot be done to this booking now. Here is the latest."
 msgstr "That cannot be done to this booking now. Here is the latest."
 
-#: src/lib/item-config.ts:136
+#: src/lib/item-config.ts:141
 msgid "That choice is sold out"
 msgstr "That choice is sold out"
 
@@ -7010,7 +7021,7 @@ msgstr "That discount is not available right now."
 msgid "That dish no longer has a daily limit here."
 msgstr "That dish no longer has a daily limit here."
 
-#: src/lib/store.ts:1034
+#: src/lib/store.ts:1064
 msgid "That does not look like a pairing code or link."
 msgstr "That does not look like a pairing code or link."
 
@@ -7376,7 +7387,7 @@ msgid "the server already had this order closed"
 msgstr "the server already had this order closed"
 
 #. placeholder {0}: response.status
-#: src/lib/store.ts:927
+#: src/lib/store.ts:957
 msgid "The server answered {0}."
 msgstr "The server answered {0}."
 
@@ -7385,7 +7396,7 @@ msgstr "The server answered {0}."
 msgid "The server answered {0}. Try again."
 msgstr "The server answered {0}. Try again."
 
-#: src/lib/store.ts:966
+#: src/lib/store.ts:996
 msgid "The server answered {status}."
 msgstr "The server answered {status}."
 
@@ -7452,7 +7463,7 @@ msgstr "The stock list has not loaded yet. It will load in a moment."
 msgid "The tab is kept, marked cancelled, with who cancelled it and why."
 msgstr "The tab is kept, marked cancelled, with who cancelled it and why."
 
-#: src/lib/store.ts:977
+#: src/lib/store.ts:1007
 msgid "The tab was taken over but could not be saved on this device."
 msgstr "The tab was taken over but could not be saved on this device."
 
@@ -7854,7 +7865,7 @@ msgid "This supplier has no items set up yet. Search for any item below."
 msgstr "This supplier has no items set up yet. Search for any item below."
 
 #: src/lib/orders.ts:946
-#: src/lib/store.ts:941
+#: src/lib/store.ts:971
 msgid "This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it."
 msgstr "This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it."
 
@@ -7937,8 +7948,8 @@ msgstr "This terminal cannot save punches without a connection. Try again when i
 msgid "This terminal is no longer paired. Ask a manager to pair it again."
 msgstr "This terminal is no longer paired. Ask a manager to pair it again."
 
-#: src/lib/store.ts:913
-#: src/lib/store.ts:938
+#: src/lib/store.ts:943
+#: src/lib/store.ts:968
 msgid "This terminal is not paired with a restaurant."
 msgstr "This terminal is not paired with a restaurant."
 
@@ -8292,7 +8303,7 @@ msgstr "Up next"
 msgid "Up to {0} can be refunded."
 msgstr "Up to {0} can be refunded."
 
-#: src/screens/ItemSheet.tsx:247
+#: src/screens/ItemSheet.tsx:274
 msgid "Up to {max}"
 msgstr "Up to {max}"
 
@@ -8300,7 +8311,7 @@ msgstr "Up to {max}"
 msgid "Up to {maxLimitText}. Not saved to the menu."
 msgstr "Up to {maxLimitText}. Not saved to the menu."
 
-#: src/screens/ItemSheet.tsx:169
+#: src/screens/ItemSheet.tsx:191
 msgid "Update"
 msgstr "Update"
 
@@ -8360,11 +8371,13 @@ msgid "VAT No. {vatNumber}"
 msgstr "VAT No. {vatNumber}"
 
 #: src/apps/reservations/guest.ts:44
+#: src/screens/ItemSheet.tsx:48
 msgid "Vegan"
 msgstr "Vegan"
 
 #: src/apps/reservations/guest.ts:43
-#: src/screens/ItemSheet.tsx:185
+#: src/screens/ItemSheet.tsx:56
+#: src/screens/ItemSheet.tsx:207
 #: src/screens/MenuGrid.tsx:416
 msgid "Vegetarian"
 msgstr "Vegetarian"

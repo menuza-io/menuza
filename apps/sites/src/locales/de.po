@@ -1040,6 +1040,10 @@ msgstr "Artikel anpassen"
 msgid "CVC"
 msgstr "CVC"
 
+#: src/pages/menu.astro.ts:3
+msgid "Dairy-free"
+msgstr "Milchfrei"
+
 #: src/lib/gift-cards/labels.ts:35
 #: src/lib/reservations/labels.ts:37
 #: src/lib/reservations/labels.ts:470
@@ -1152,6 +1156,14 @@ msgstr "Design"
 #: src/lib/reservations/labels.ts:202
 msgid "Dietary needs"
 msgstr "Ernährungsbedürfnisse"
+
+#: src/pages/menu.astro.ts:3
+msgid "Dietary preferences"
+msgstr "Ernährungsvorlieben"
+
+#: src/pages/menu.astro.ts:3
+msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
+msgstr "Die Ernährungshinweise sind die Angaben des Restaurants. Fragen Sie das Personal, wenn Sie eine Allergie haben."
 
 #: src/components/drops/LocationList.astro.ts:3
 msgid "Directions"
@@ -1528,6 +1540,10 @@ msgstr "Passt dazu"
 #: src/lib/reservations/labels.ts:469
 msgid "Guests"
 msgstr "Gäste"
+
+#: src/pages/menu.astro.ts:3
+msgid "Halal"
+msgstr "Halal"
 
 #: src/lib/gift-cards/labels.ts:19
 msgid "Happy birthday"
@@ -2045,6 +2061,10 @@ msgstr "Noch nichts auf Ihrer Rechnung. Wählen Sie Gerichte und senden Sie sie 
 #: src/lib/reservations/labels.ts:295
 msgid "Notify me"
 msgstr "Benachrichtigen"
+
+#: src/pages/menu.astro.ts:3
+msgid "Nut-free"
+msgstr "Nussfrei"
 
 #: src/lib/reservations/labels.ts:95
 #: src/lib/reservations/labels.ts:200
@@ -3081,6 +3101,10 @@ msgstr "Löst {points} für {amount} Rabatt ein"
 msgid "Spent"
 msgstr "Eingelöst"
 
+#: src/pages/menu.astro.ts:3
+msgid "Spicy"
+msgstr "Scharf"
+
 #: src/lib/gift-cards/labels.ts:91
 msgid "Still to pay: {amount}"
 msgstr "Noch zu zahlen: {amount}"
@@ -3849,6 +3873,10 @@ msgstr "Gültig bis {date}"
 #: src/pages/menu/success.astro.ts:3
 msgid "VAT number"
 msgstr "USt-IdNr."
+
+#: src/pages/menu.astro.ts:3
+msgid "Vegan"
+msgstr "Vegan"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3

@@ -25,7 +25,7 @@ msgstr "{amount} more needed"
 msgid "{amount} more to unlock {reward}"
 msgstr "{amount} more to unlock {reward}"
 
-#: components/ordering/menu-screen.tsx:351
+#: components/ordering/menu-screen.tsx:415
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "{amount} off"
@@ -54,11 +54,11 @@ msgstr "{n, plural, one {{count} point} other {{count} points}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, one {{count} star} other {{count} stars}}"
 
-#: components/ordering/menu-screen.tsx:334
+#: components/ordering/menu-screen.tsx:398
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (limit {count} per order)"
 
-#: components/ordering/menu-screen.tsx:330
+#: components/ordering/menu-screen.tsx:394
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (up to {amount} off)"
 
@@ -66,7 +66,7 @@ msgstr "{name} (up to {amount} off)"
 msgid "{percent} off"
 msgstr "{percent} off"
 
-#: components/ordering/menu-screen.tsx:343
+#: components/ordering/menu-screen.tsx:407
 msgid "{percentText} off"
 msgstr "{percentText} off"
 
@@ -94,7 +94,7 @@ msgstr "{points} for each visit (once a day)"
 msgid "{points} for every {amount} you spend"
 msgstr "{points} for every {amount} you spend"
 
-#: components/ordering/menu-screen.tsx:264
+#: components/ordering/menu-screen.tsx:316
 msgid "{price}, was {originalPrice}"
 msgstr "{price}, was {originalPrice}"
 
@@ -267,7 +267,7 @@ msgstr "Change time"
 msgid "Changed by the business"
 msgstr "Changed by the business"
 
-#: components/ordering/menu-screen.tsx:161
+#: components/ordering/menu-screen.tsx:208
 msgid "Check back later, or open the website menu."
 msgstr "Check back later, or open the website menu."
 
@@ -302,6 +302,10 @@ msgstr "Choose a real month and day for your birthday."
 #: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "Choose what you hear from us, and how."
+
+#: components/ordering/menu-screen.tsx:203
+msgid "Clear a choice to see more of the menu."
+msgstr "Clear a choice to see more of the menu."
 
 #: components/ordering/drops-screen.tsx:136
 #: components/ordering/drops-screen.tsx:215
@@ -344,6 +348,10 @@ msgstr "Continue to payment"
 msgid "Cost"
 msgstr "Cost"
 
+#: components/ordering/menu-screen.tsx:444
+msgid "Dairy-free"
+msgstr "Dairy-free"
+
 #: lib/reservations/messages.ts:30
 msgid "Date"
 msgstr "Date"
@@ -368,9 +376,22 @@ msgstr "Declined"
 msgid "Declined: {reward}."
 msgstr "Declined: {reward}."
 
+#: components/ordering/menu-screen.tsx:318
+#: components/ordering/menu-screen.tsx:343
+msgid "Delivery price {deliveryPriceText}"
+msgstr "Delivery price {deliveryPriceText}"
+
 #: lib/reservations/messages.ts:49
 msgid "Dietary needs"
 msgstr "Dietary needs"
+
+#: components/ordering/menu-screen.tsx:184
+msgid "Dietary preferences"
+msgstr "Dietary preferences"
+
+#: components/ordering/menu-screen.tsx:196
+msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
+msgstr "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
 
 #: components/loyalty/notice-line.tsx:32
 #: lib/gift-cards/labels.ts:59
@@ -473,7 +494,7 @@ msgstr "For a group this size, please call {phone}."
 msgid "Free {item}"
 msgstr "Free {item}"
 
-#: components/ordering/menu-screen.tsx:361
+#: components/ordering/menu-screen.tsx:425
 msgid "Free delivery"
 msgstr "Free delivery"
 
@@ -521,6 +542,14 @@ msgstr "Gift cards are not available right now"
 #: lib/gift-cards/labels.ts:78
 msgid "Gift cards are not available right now. Please try again later."
 msgstr "Gift cards are not available right now. Please try again later."
+
+#: components/ordering/menu-screen.tsx:442
+msgid "Gluten-free"
+msgstr "Gluten-free"
+
+#: components/ordering/menu-screen.tsx:436
+msgid "Halal"
+msgstr "Halal"
 
 #: lib/gift-cards/labels.ts:69
 msgid "Hide"
@@ -600,7 +629,7 @@ msgstr "Limited menus you pre-order for a pickup window."
 msgid "Loading drops"
 msgstr "Loading drops"
 
-#: components/ordering/menu-screen.tsx:106
+#: components/ordering/menu-screen.tsx:120
 msgid "Loading the menu"
 msgstr "Loading the menu"
 
@@ -623,7 +652,7 @@ msgid "Loading…"
 msgstr "Loading…"
 
 #: app/(tabs)/_layout.tsx:52
-#: components/ordering/menu-screen.tsx:141
+#: components/ordering/menu-screen.tsx:163
 msgid "Menu"
 msgstr "Menu"
 
@@ -679,6 +708,10 @@ msgstr "No activity yet. Your purchases will show up here."
 msgid "No connection. Please try again."
 msgstr "No connection. Please try again."
 
+#: components/ordering/menu-screen.tsx:202
+msgid "No dishes match these choices."
+msgstr "No dishes match these choices."
+
 #: components/ordering/drops-screen.tsx:160
 msgid "No drops right now."
 msgstr "No drops right now."
@@ -727,9 +760,13 @@ msgstr "Not activated"
 msgid "Not taking online reservations on this day."
 msgstr "Not taking online reservations on this day."
 
-#: components/ordering/menu-screen.tsx:160
+#: components/ordering/menu-screen.tsx:207
 msgid "Nothing on the menu right now."
 msgstr "Nothing on the menu right now."
+
+#: components/ordering/menu-screen.tsx:446
+msgid "Nut-free"
+msgstr "Nut-free"
 
 #: lib/reservations/messages.ts:47
 msgid "Occasion"
@@ -772,7 +809,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "Opens in your browser. Your points and rewards apply when you order there."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:302
+#: components/ordering/menu-screen.tsx:366
 msgid "Opens the website"
 msgstr "Opens the website"
 
@@ -986,7 +1023,7 @@ msgstr "Send a request"
 msgid "Send code"
 msgstr "Send code"
 
-#: components/ordering/menu-screen.tsx:359
+#: components/ordering/menu-screen.tsx:423
 msgid "Set price {amount}"
 msgstr "Set price {amount}"
 
@@ -1043,7 +1080,7 @@ msgstr "Sign out"
 msgid "Site address"
 msgstr "Site address"
 
-#: components/ordering/menu-screen.tsx:277
+#: components/ordering/menu-screen.tsx:331
 msgid "Sold out"
 msgstr "Sold out"
 
@@ -1069,6 +1106,10 @@ msgstr "Spends {points} for {amount} off"
 #: lib/gift-cards/labels.ts:43
 msgid "Spent"
 msgstr "Spent"
+
+#: components/ordering/menu-screen.tsx:448
+msgid "Spicy"
+msgstr "Spicy"
 
 #: lib/gift-cards/labels.ts:67
 msgid "Stops working in {time}"
@@ -1134,7 +1175,7 @@ msgstr "That time was just taken. Pick another."
 msgid "The card ending in {last4} is already saved to your account."
 msgstr "The card ending in {last4} is already saved to your account."
 
-#: components/ordering/menu-screen.tsx:112
+#: components/ordering/menu-screen.tsx:126
 msgid "The menu could not be loaded."
 msgstr "The menu could not be loaded."
 
@@ -1229,7 +1270,7 @@ msgstr "Too many attempts. Please wait a moment and try again."
 
 #: components/auth/site-unavailable-screen.tsx:26
 #: components/ordering/drops-screen.tsx:117
-#: components/ordering/menu-screen.tsx:114
+#: components/ordering/menu-screen.tsx:128
 #: components/ui/error-message.tsx:28
 #: lib/gift-cards/labels.ts:20
 #: lib/loyalty/labels.ts:28
@@ -1283,9 +1324,17 @@ msgstr "Use a reward when you order, or show your code at the counter."
 msgid "Use at the till"
 msgstr "Use at the till"
 
-#: components/ordering/menu-screen.tsx:216
+#: components/ordering/menu-screen.tsx:263
 msgid "Use code {code}"
 msgstr "Use code {code}"
+
+#: components/ordering/menu-screen.tsx:438
+msgid "Vegan"
+msgstr "Vegan"
+
+#: components/ordering/menu-screen.tsx:440
+msgid "Vegetarian"
+msgstr "Vegetarian"
 
 #: components/auth/verify-screen.tsx:43
 msgid "Verification code"
@@ -1347,7 +1396,7 @@ msgstr "We'll use {phone} from your account."
 msgid "We're holding your table for {time}"
 msgstr "We're holding your table for {time}"
 
-#: components/ordering/menu-screen.tsx:143
+#: components/ordering/menu-screen.tsx:165
 msgid "What is on the menu today. Checkout is on the website."
 msgstr "What is on the menu today. Checkout is on the website."
 
