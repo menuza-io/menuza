@@ -66,6 +66,13 @@ already took money for.
   totals are all unchanged, but the discount checks run again on any revision
   whose `discountApplications` differ from the previous revision's (for example
   applications added when the sale is paid).
+- **Order-type prices and pricing rules (#412, #388).** The till prices a
+  dine-in bill with dine-in prices and takeaway and drive-through as pickup,
+  through the shared resolver in `@repo/common/menu-pricing`; switching the
+  order type reprices the bill. The review reprices with the sale's order type
+  (`priceAs`). The wire is unchanged, so the contract stays 11: an older till
+  that ignores these prices keeps selling and its sale is flagged
+  `price_mismatch`. See `docs/menu-pricing.md`.
 - **Contract 11.** `POS_CONTRACT_VERSION` is 11. An adjustment may be
   `kind: 'cash_discount'` (#375): the percentage a location takes off a bill
   paid entirely in cash, as its own line. An older node cannot read the kind and

@@ -1369,6 +1369,25 @@ packaging fee, daily dish limits; #251, #257, #355, #422, #408, #409):**
   never `innerHTML`, never links. A drop order shows its own pickup location
   instead.
 
+**Menu prices, dietary tags, translations and spreadsheet (#410, #335, #412,
+#388, #411):**
+
+- One price resolver, `resolveMenuItemPrice` / `resolveMenuOptionPrice` in
+  `@repo/common/menu-pricing`: a fixed location price wins, else the order-type
+  price (`orderTypePrices`, dine-in / pickup / delivery) or the base, then the
+  first pricing rule that covers the dish (`OrganizationMenuPricingRule`,
+  published as `pricingRules` in the menu payload with menus expanded to
+  categories). The region engine, the till review (`priceAs`), Station, Sites
+  (`price-book.ts`), the customer app and the phone agent all call it; never
+  price a dish another way. POS contract unchanged.
+- Dietary tags: `dietaryTags` on dishes and options; `isVegetarian` /
+  `isGlutenFree` mirror them on every write (`dietaryColumns`). Read with
+  `dietaryTagsOf`.
+- Menu > Translations (`@repo/common/translation-status`) and the language guard
+  on website settings; Menu > Pricing rules; Menu > Spreadsheet (bulk edit
+  flag). Docs: `docs/menu-pricing.md`. One control-plane migration,
+  `0059_menu_rules`.
+
 **Loyalty Rewards (points, rewards, member codes):**
 
 - One program and one balance per organization, integer points. A customer is

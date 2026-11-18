@@ -368,13 +368,3 @@ export function resolveMenuOptionPrice(
 		option.price
 	)
 }
-
-/**
- * Whether any published price depends on the order type: a set order-type
- * price somewhere. Clients use it to skip repricing work.
- */
-export function hasOrderTypePrices(value: {
-	orderTypePrices?: unknown
-}): boolean {
-	return parseOrderTypePrices(value.orderTypePrices) !== null
-}
