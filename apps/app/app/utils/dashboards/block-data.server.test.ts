@@ -390,6 +390,7 @@ describe('loadBuiltInBlockData', () => {
 			onboarding: null,
 			leaderboard: null,
 			attention: null,
+			status: null,
 			launch: null,
 		})
 
@@ -432,6 +433,7 @@ describe('loadBuiltInBlockData', () => {
 			onboarding: null,
 			leaderboard: null,
 			attention: null,
+			status: null,
 			launch: null,
 		})
 	})

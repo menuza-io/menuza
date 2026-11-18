@@ -5,14 +5,6 @@ import {
 } from '@repo/auth'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import {
-	and,
-	db,
-	eq,
-	OrganizationLocation,
-	UserOrganization,
-	UserOrganizationLocation,
-} from '@repo/database'
-import {
 	expandLoyaltyGrants,
 	foldLoyaltyFeatures,
 	isLoyaltyFlagOn,
@@ -21,6 +13,7 @@ import {
 	type LoyaltyFeatures,
 	type LoyaltyPermission,
 } from '@repo/loyalty'
+import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
 import {
 	computeLoyaltyCapabilities,
 	type LoyaltyCapabilities,
@@ -97,40 +90,7 @@ export async function resolveLoyaltyLocationIds(
 	userId: string,
 	organizationId: string,
 ): Promise<string[] | null> {
-	const [membership] = await db
-		.select({
-			locationScope: UserOrganization.locationScope,
-			active: UserOrganization.active,
-		})
-		.from(UserOrganization)
-		.where(
-			and(
-				eq(UserOrganization.userId, userId),
-				eq(UserOrganization.organizationId, organizationId),
-			),
-		)
-		.limit(1)
-	if (!membership?.active) return []
-	if (membership.locationScope === 'all') return null
-	if (membership.locationScope !== 'selected') return []
-
-	const rows = await db
-		.select({ locationId: UserOrganizationLocation.locationId })
-		.from(UserOrganizationLocation)
-		.innerJoin(
-			OrganizationLocation,
-			and(
-				eq(OrganizationLocation.id, UserOrganizationLocation.locationId),
-				eq(OrganizationLocation.organizationId, organizationId),
-			),
-		)
-		.where(
-			and(
-				eq(UserOrganizationLocation.userId, userId),
-				eq(UserOrganizationLocation.organizationId, organizationId),
-			),
-		)
-	return [...new Set(rows.map((r) => r.locationId))].sort()
+	return resolveMemberLocationIds(userId, organizationId)
 }
 
 export type LoyaltyAccessOptions = {

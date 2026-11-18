@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react'
 import { Skeleton } from '@repo/ui/skeleton'
+import { type ReactNode } from 'react'
 import { LaunchChecklistView } from '#app/components/launch/launch-checklist.tsx'
 import { LeadershipCard } from '#app/components/leadership-card.tsx'
 import { OnboardingChecklist } from '#app/components/onboarding-checklist.tsx'
@@ -11,14 +11,15 @@ import {
 	type SavedReportOption,
 } from '#app/utils/dashboards/reports.ts'
 import { type TodayAccess } from '#app/utils/dashboards/today.ts'
+import { type SalesGoalsAccess } from '#app/utils/goals/goals.ts'
 import { AttentionBlock } from './blocks/attention-block.tsx'
 import { BookingsTodayBlock } from './blocks/bookings-today-block.tsx'
 import { NotesChartBlock } from './blocks/notes-chart-block.tsx'
 import { ReportBlock } from './blocks/report-block.tsx'
-import { StatsBlock } from './blocks/stats-block.tsx'
 import { SalesGoalsBlock } from './blocks/sales-goals-block.tsx'
+import { StatsBlock } from './blocks/stats-block.tsx'
+import { StatusBlock } from './blocks/status-block.tsx'
 import { TodayBlock } from './blocks/today-block.tsx'
-import { type SalesGoalsAccess } from '#app/utils/goals/goals.ts'
 import { TileFreshness } from './tile-freshness.tsx'
 
 export type DashboardBlockOrganization = {
@@ -149,6 +150,10 @@ export function DashboardBlockContent({
 						<SalesGoalsBlock orgSlug={organization.slug} access={salesGoals} />,
 					)
 				: null
+		case 'status':
+			return data.status ? (
+				wrap(<StatusBlock orgSlug={organization.slug} data={data.status} />)
+			) : null
 		case 'attention':
 			return data.attention ? (
 				wrap(

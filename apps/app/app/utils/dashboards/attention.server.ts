@@ -238,7 +238,7 @@ export function hasActiveMenu(
 	})
 }
 
-async function loadMenuAvailability(organizationId: string) {
+export async function loadMenuAvailability(organizationId: string) {
 	const [menus, items, overrides] = await Promise.all([
 		db
 			.select({

@@ -7,11 +7,14 @@ import {
 	definitionForNewReport,
 	getCatalog,
 	withLocationFilter,
+	withLocationsFilter,
 } from '@repo/reports'
 import { parseDefinition, saveReport } from '@repo/reports/server'
 import { redirect, useLoaderData } from 'react-router'
 import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
 import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
+import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
+import { locationNamesForTag } from '#app/utils/location/tags.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
 import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
@@ -66,8 +69,24 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		organization.id,
 		url.searchParams.get('location'),
 	)
+	// A link or the tag picker on Reports can limit the report to a location tag
+	// (#374). Only the person's own locations are named; an unknown tag changes
+	// nothing.
+	const tagId = url.searchParams.get('tag')
+	const tagLocationNames =
+		tagId && tagId.length <= 64
+			? await locationNamesForTag(
+					organization.id,
+					tagId,
+					await resolveMemberLocationIds(userId, organization.id),
+				)
+			: null
 	const definition = allowed
-		? withLocationFilter('organization', requested, locationName)
+		? withLocationsFilter(
+				'organization',
+				withLocationFilter('organization', requested, locationName),
+				tagLocationNames,
+			)
 		: blankReportDefinition('organization')
 
 	return {

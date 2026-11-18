@@ -32,8 +32,9 @@ describe('memberLocationScopeInputSchema', () => {
 			memberLocationScopeInputSchema.parse({
 				scope: 'all',
 				locationIds: ['a', 'b'],
+				tagIds: ['t'],
 			}),
-		).toEqual({ scope: 'all', locationIds: [] })
+		).toEqual({ scope: 'all', locationIds: [], tagIds: [] })
 	})
 
 	it('trims, de-duplicates and sorts selected ids', () => {
@@ -42,7 +43,16 @@ describe('memberLocationScopeInputSchema', () => {
 				scope: 'selected',
 				locationIds: [' b ', 'a', 'b'],
 			}),
-		).toEqual({ scope: 'selected', locationIds: ['a', 'b'] })
+		).toEqual({ scope: 'selected', locationIds: ['a', 'b'], tagIds: [] })
+	})
+
+	it('keeps granted tags, de-duplicated and sorted, with selected', () => {
+		expect(
+			memberLocationScopeInputSchema.parse({
+				scope: 'selected',
+				tagIds: ['t2', 't1', 't2'],
+			}),
+		).toEqual({ scope: 'selected', locationIds: [], tagIds: ['t1', 't2'] })
 	})
 
 	it('allows selected with no locations (no staffing access)', () => {
@@ -50,6 +60,7 @@ describe('memberLocationScopeInputSchema', () => {
 			{
 				scope: 'selected',
 				locationIds: [],
+				tagIds: [],
 			},
 		)
 	})

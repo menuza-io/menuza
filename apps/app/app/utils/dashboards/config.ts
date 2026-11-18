@@ -17,6 +17,7 @@ export const BUILT_IN_BLOCK_TYPES = [
 	'today',
 	'sales-goals',
 	'attention',
+	'status',
 ] as const
 export const BLOCK_TYPES = [...BUILT_IN_BLOCK_TYPES, 'report'] as const
 export type BuiltInBlockType = (typeof BUILT_IN_BLOCK_TYPES)[number]
@@ -136,6 +137,14 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 		description: msg`Problems that cost you orders, most urgent first, each with a way to fix it.`,
 		defaultSize: { lg: { w: 6, h: 10 }, md: { w: 4, h: 10 } },
 		minSize: { lg: { w: 4, h: 6 }, md: { w: 4, h: 6 } },
+		maxInstances: 1,
+	},
+	status: {
+		type: 'status',
+		title: msg`Status`,
+		description: msg`Whether each location can take orders right now, and what is blocking it.`,
+		defaultSize: { lg: { w: 6, h: 8 }, md: { w: 4, h: 8 } },
+		minSize: { lg: { w: 4, h: 5 }, md: { w: 4, h: 5 } },
 		maxInstances: 1,
 	},
 	report: {
@@ -436,7 +445,12 @@ export function defaultHomeConfig(): DashboardConfig {
 export function defaultRestaurantHomeConfig({
 	bookingsToday = false,
 	salesGoals = false,
-}: { bookingsToday?: boolean; salesGoals?: boolean } = {}): DashboardConfig {
+	status = false,
+}: {
+	bookingsToday?: boolean
+	salesGoals?: boolean
+	status?: boolean
+} = {}): DashboardConfig {
 	const blocks: DashboardBlock[] = [
 		{ id: 'today', type: 'today' },
 		...(salesGoals
@@ -486,6 +500,11 @@ export function defaultRestaurantHomeConfig({
 		lg.push({ i: 'bookings-today', x: 0, y: 15, w: 6, h: 8 })
 		md.push({ i: 'bookings-today', x: 0, y: 16, w: 4, h: 8 })
 	}
+	if (status) {
+		blocks.push({ id: 'status', type: 'status' })
+		lg.push({ i: 'status', x: 6, y: 15, w: 6, h: 8 })
+		md.push({ i: 'status', x: 4, y: 16, w: 4, h: 8 })
+	}
 	return {
 		version: DASHBOARD_CONFIG_VERSION,
 		blocks,
@@ -525,12 +544,14 @@ export function addableBuiltInBlockTypes(
 		todayAvailable = false,
 		salesGoalsAvailable = false,
 		attentionAvailable = false,
+		statusAvailable = false,
 	}: {
 		onboardingAvailable: boolean
 		bookingsTodayAvailable: boolean
 		todayAvailable?: boolean
 		salesGoalsAvailable?: boolean
 		attentionAvailable?: boolean
+		statusAvailable?: boolean
 	},
 ): BuiltInBlockType[] {
 	return BUILT_IN_BLOCK_TYPES.filter(
@@ -540,7 +561,8 @@ export function addableBuiltInBlockTypes(
 			(type !== 'bookings-today' || bookingsTodayAvailable) &&
 			(type !== 'today' || todayAvailable) &&
 			(type !== 'sales-goals' || salesGoalsAvailable) &&
-			(type !== 'attention' || attentionAvailable),
+			(type !== 'attention' || attentionAvailable) &&
+			(type !== 'status' || statusAvailable),
 	)
 }
 

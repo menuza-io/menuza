@@ -14,6 +14,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { LocationForm } from '#app/components/locations/location-form.tsx'
+import { applyChainDefaultsToNewLocation } from '#app/utils/location/chain-defaults.server.ts'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
 import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
 import {
@@ -112,6 +113,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		dataRegion: true,
 	})
 
 	await requireUserWithOrganizationPermission(
@@ -228,6 +230,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (!newLocationId) {
 		return { error: 'Failed to create location.' }
 	}
+
+	// A new location starts on the chain defaults (#417).
+	await applyChainDefaultsToNewLocation(
+		{
+			id: organization.id,
+			slug: organization.slug,
+			dataRegion: organization.dataRegion || 'us',
+		},
+		newLocationId,
+	)
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 

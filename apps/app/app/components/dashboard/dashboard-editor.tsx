@@ -96,6 +96,7 @@ export function DashboardEditor({
 			bookingsToday: picker.bookingsToday.available,
 			today: picker.today.available,
 			salesGoals: picker.salesGoals.available,
+			status: picker.statusAvailable === true,
 		})
 		return [...fromData, ...byType, ...byAccess]
 	}, [
@@ -105,6 +106,7 @@ export function DashboardEditor({
 		picker.bookingsToday.available,
 		picker.today.available,
 		picker.salesGoals.available,
+		picker.statusAvailable,
 		picker.onboardingAvailable,
 	])
 

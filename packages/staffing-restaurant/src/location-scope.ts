@@ -14,6 +14,8 @@ export type StaffingLocationScope = z.infer<typeof staffingLocationScopeSchema>
 
 /** More than any restaurant group has, so a crafted form cannot send a huge list. */
 export const STAFFING_MAX_SCOPED_LOCATIONS = 200
+/** Tags a member can be granted (an organization has at most 50 tags). */
+export const STAFFING_MAX_SCOPED_TAGS = 50
 
 const locationIdSchema = z.string().trim().min(1).max(64)
 
@@ -25,6 +27,11 @@ export const memberLocationScopeInputSchema = z
 			.array(locationIdSchema)
 			.max(STAFFING_MAX_SCOPED_LOCATIONS)
 			.default([]),
+		/** Location tags granted as a group (#374); resolved to locations when read. */
+		tagIds: z
+			.array(locationIdSchema)
+			.max(STAFFING_MAX_SCOPED_TAGS)
+			.default([]),
 	})
 	.strict()
 	.transform((value) => ({
@@ -33,6 +40,7 @@ export const memberLocationScopeInputSchema = z
 		// two states cannot disagree.
 		locationIds:
 			value.scope === 'all' ? [] : [...new Set(value.locationIds)].sort(),
+		tagIds: value.scope === 'all' ? [] : [...new Set(value.tagIds)].sort(),
 	}))
 export type MemberLocationScopeInput = z.output<
 	typeof memberLocationScopeInputSchema

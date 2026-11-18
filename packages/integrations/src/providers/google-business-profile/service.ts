@@ -7,6 +7,7 @@ import {
 	and,
 	db,
 	eq,
+	getLockedLocationSettingIds,
 	OrganizationLocation,
 	Integration as IntegrationTable,
 } from '@repo/database'
@@ -617,11 +618,19 @@ export async function importGoogleBusinessLocation(
 
 	const importedAddress = address(location)
 	const importedSchedule = googleBusinessSchedule(location)
+	// Head office can lock store hours (#417): an import must not overwrite them.
+	const lockedSettings = await getLockedLocationSettingIds(organizationId)
 	const values = {
 		name: location.title,
 		phone: location.phoneNumbers?.primaryPhone ?? null,
 		address: importedAddress ? JSON.stringify(importedAddress) : null,
-		storeHours: importedSchedule ? JSON.stringify(importedSchedule) : null,
+		...(lockedSettings.has('storeHours')
+			? {}
+			: {
+					storeHours: importedSchedule
+						? JSON.stringify(importedSchedule)
+						: null,
+				}),
 	}
 	const menuzaLocationId = await db.transaction(async (tx) => {
 		const locationId = scopedLocationId

@@ -51,7 +51,9 @@ import {
 } from '#app/components/locations/location-form.tsx'
 import { type OrderPolicyValues } from '#app/components/locations/order-policies-card.tsx'
 import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
+import { loadLocationPolicyView } from '#app/utils/location/chain-defaults.server.ts'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
+import { lockedSettingsChangedByFormSave } from '#app/utils/location/location-settings.server.ts'
 import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
 import {
 	type CheckoutRulesBundle,
@@ -331,6 +333,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		.where(eq(OrganizationLocation.organizationId, organization.id))
 		.orderBy(asc(OrganizationLocation.name))
 
+	// Chain defaults (#417): what head office locked, and where this location
+	// differs from a default.
+	const policy = await loadLocationPolicyView(
+		{
+			id: organization.id,
+			slug: organization.slug,
+			dataRegion: organization.dataRegion || 'us',
+		},
+		record.id,
+	)
+
 	return {
 		organization,
 		location,
@@ -340,6 +353,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		checkoutSettings,
 		orderingSettings,
 		checkoutRules,
+		policy,
 	}
 }
 
@@ -527,6 +541,68 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	// coordinates (missing or 0,0 → geocode server-side; best effort).
 	const geocoded = await ensureLocationCoordinates(data.address)
 
+	const updateSet = {
+		name: data.name,
+		slug: data.slug,
+		phone: data.phone || null,
+		timezone: data.timezone,
+		taxRate: data.taxRate,
+		taxInclusive: data.taxInclusive,
+		vatNumber: data.vatNumber,
+		isActive: data.isActive,
+		isDefault: data.isDefault,
+		address: geocoded.address || null,
+		storeHours: data.storeHours || null,
+		onlineHours: data.onlineHours || null,
+		specialHours: data.specialHours || null,
+		prepTime: data.prepTime,
+		largeOrderThreshold: data.largeOrderThreshold,
+		largeOrderThresholdType: data.largeOrderThresholdType,
+		largeOrderExtraPrepTime: data.largeOrderExtraPrepTime,
+		fulfillmentOptions: data.fulfillmentOptions || null,
+		inHouseTips: data.inHouseTips || null,
+		scheduling: data.scheduling || null,
+		deliveryConfig: data.deliveryConfig || null,
+		deliveryZones: data.deliveryZones || null,
+		...(data.courseSettings !== undefined
+			? { courseSettings: courseSettingsJson(data.courseSettings) }
+			: {}),
+		...(data.orderNumberFormat !== undefined
+			? {
+					orderNumberFormat: orderNumberFormatResult.value
+						? JSON.stringify(orderNumberFormatResult.value)
+						: null,
+				}
+			: {}),
+		...policy.patch,
+		...checkout.patch,
+		...ordering.patch,
+		...checkoutRulesResult.patch,
+	}
+
+	// Head office can lock a setting (Settings, Locations, Chain defaults). A
+	// lock is enforced here, not only by a read-only field: a save that changes
+	// a locked setting is refused and nothing is written.
+	const lockedChanges = await lockedSettingsChangedByFormSave(
+		{
+			id: organization.id,
+			slug: organization.slug,
+			dataRegion: organization.dataRegion || 'us',
+		},
+		locationId,
+		updateSet,
+	)
+	if (lockedChanges.length > 0) {
+		return Response.json(
+			{
+				error: 'This setting is locked by head office.',
+				code: 'setting_locked',
+				settings: lockedChanges,
+			},
+			{ status: 409 },
+		)
+	}
+
 	await db.transaction(async (tx) => {
 		if (data.isDefault) {
 			await tx
@@ -537,44 +613,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 		await tx
 			.update(OrganizationLocation)
-			.set({
-				name: data.name,
-				slug: data.slug,
-				phone: data.phone || null,
-				timezone: data.timezone,
-				taxRate: data.taxRate,
-				taxInclusive: data.taxInclusive,
-				vatNumber: data.vatNumber,
-				isActive: data.isActive,
-				isDefault: data.isDefault,
-				address: geocoded.address || null,
-				storeHours: data.storeHours || null,
-				onlineHours: data.onlineHours || null,
-				specialHours: data.specialHours || null,
-				prepTime: data.prepTime,
-				largeOrderThreshold: data.largeOrderThreshold,
-				largeOrderThresholdType: data.largeOrderThresholdType,
-				largeOrderExtraPrepTime: data.largeOrderExtraPrepTime,
-				fulfillmentOptions: data.fulfillmentOptions || null,
-				inHouseTips: data.inHouseTips || null,
-				scheduling: data.scheduling || null,
-				deliveryConfig: data.deliveryConfig || null,
-				deliveryZones: data.deliveryZones || null,
-				...(data.courseSettings !== undefined
-					? { courseSettings: courseSettingsJson(data.courseSettings) }
-					: {}),
-				...(data.orderNumberFormat !== undefined
-					? {
-							orderNumberFormat: orderNumberFormatResult.value
-								? JSON.stringify(orderNumberFormatResult.value)
-								: null,
-						}
-					: {}),
-				...policy.patch,
-				...checkout.patch,
-				...ordering.patch,
-				...checkoutRulesResult.patch,
-			})
+			.set(updateSet)
 			.where(
 				and(
 					eq(OrganizationLocation.id, locationId),
@@ -603,6 +642,7 @@ export default function EditLocationRoute() {
 		checkoutSettings,
 		orderingSettings,
 		checkoutRules,
+		policy,
 	} = useLoaderData<typeof loader>()
 	const deleteFetcher = useFetcher<{
 		error?: string
@@ -750,6 +790,7 @@ export default function EditLocationRoute() {
 				checkoutSettings={checkoutSettings}
 				orderingSettings={orderingSettings}
 				checkoutRules={checkoutRules}
+				policy={policy}
 			/>
 
 			<AlertDialog

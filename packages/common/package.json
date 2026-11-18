@@ -229,6 +229,26 @@
       "import": "./src/location-settings.ts",
       "default": "./src/location-settings.ts"
     },
+    "./location-settings-registry": {
+      "types": "./src/location-settings-registry.ts",
+      "import": "./src/location-settings-registry.ts",
+      "default": "./src/location-settings-registry.ts"
+    },
+    "./location-settings-copy": {
+      "types": "./src/location-settings-copy.ts",
+      "import": "./src/location-settings-copy.ts",
+      "default": "./src/location-settings-copy.ts"
+    },
+    "./location-health": {
+      "types": "./src/location-health.ts",
+      "import": "./src/location-health.ts",
+      "default": "./src/location-health.ts"
+    },
+    "./location-tags": {
+      "types": "./src/location-tags.ts",
+      "import": "./src/location-tags.ts",
+      "default": "./src/location-tags.ts"
+    },
     "./ordering-flags": {
       "types": "./src/ordering-flags.ts",
       "import": "./src/ordering-flags.ts",

@@ -3,17 +3,18 @@ import {
 	asc,
 	db,
 	eq,
-	inArray,
 	OrganizationLocation,
+	OrganizationLocationTag,
 	UserOrganization,
 	UserOrganizationLocation,
+	UserOrganizationLocationTag,
 } from '@repo/database'
 import {
-	locationIdsClaim,
 	type MemberLocationScopeInput,
 	type StaffingLocationScope,
 	staffingLocationScopeSchema,
 } from '@repo/staffing-restaurant'
+import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
 
 /**
  * Location scoping for staffing access (control plane, ids only).
@@ -32,6 +33,8 @@ import {
 export type MemberLocationAccess = {
 	scope: StaffingLocationScope
 	locationIds: string[]
+	/** Location tags granted as a group (#374). */
+	tagIds: string[]
 }
 
 /**
@@ -44,50 +47,14 @@ export async function resolveLocationGrantIds(
 	userId: string,
 	organizationId: string,
 ): Promise<string[] | null> {
-	const [membership] = await db
-		.select({
-			locationScope: UserOrganization.locationScope,
-			active: UserOrganization.active,
-		})
-		.from(UserOrganization)
-		.where(
-			and(
-				eq(UserOrganization.userId, userId),
-				eq(UserOrganization.organizationId, organizationId),
-			),
-		)
-		.limit(1)
-	if (!membership?.active) return []
-	if (membership.locationScope === 'all') return null
-	if (membership.locationScope !== 'selected') return []
-
-	const rows = await db
-		.select({ locationId: UserOrganizationLocation.locationId })
-		.from(UserOrganizationLocation)
-		.innerJoin(
-			OrganizationLocation,
-			and(
-				eq(OrganizationLocation.id, UserOrganizationLocation.locationId),
-				eq(OrganizationLocation.organizationId, organizationId),
-			),
-		)
-		.where(
-			and(
-				eq(UserOrganizationLocation.userId, userId),
-				eq(UserOrganizationLocation.organizationId, organizationId),
-			),
-		)
-	return locationIdsClaim(
-		'selected',
-		rows.map((row) => row.locationId),
-	)
+	return resolveMemberLocationIds(userId, organizationId)
 }
 
 /** Every active member's stored scope and chosen locations, keyed by user id. */
 export async function listMemberLocationAccess(
 	organizationId: string,
 ): Promise<Map<string, MemberLocationAccess>> {
-	const [members, grants] = await Promise.all([
+	const [members, grants, tagGrants] = await Promise.all([
 		db
 			.select({
 				userId: UserOrganization.userId,
@@ -109,12 +76,33 @@ export async function listMemberLocationAccess(
 				),
 			)
 			.where(eq(UserOrganizationLocation.organizationId, organizationId)),
+		db
+			.select({
+				userId: UserOrganizationLocationTag.userId,
+				tagId: UserOrganizationLocationTag.tagId,
+			})
+			.from(UserOrganizationLocationTag)
+			.innerJoin(
+				OrganizationLocationTag,
+				and(
+					eq(OrganizationLocationTag.id, UserOrganizationLocationTag.tagId),
+					eq(OrganizationLocationTag.organizationId, organizationId),
+				),
+			)
+			.where(eq(UserOrganizationLocationTag.organizationId, organizationId)),
 	])
 	const byUser = new Map<string, string[]>()
 	for (const grant of grants) {
 		byUser.set(grant.userId, [
 			...(byUser.get(grant.userId) ?? []),
 			grant.locationId,
+		])
+	}
+	const tagsByUser = new Map<string, string[]>()
+	for (const grant of tagGrants) {
+		tagsByUser.set(grant.userId, [
+			...(tagsByUser.get(grant.userId) ?? []),
+			grant.tagId,
 		])
 	}
 	return new Map(
@@ -126,6 +114,7 @@ export async function listMemberLocationAccess(
 					// An unrecognized stored value reads as the most restrictive scope.
 					scope: parsed.success ? parsed.data : 'selected',
 					locationIds: (byUser.get(member.userId) ?? []).sort(),
+					tagIds: (tagsByUser.get(member.userId) ?? []).sort(),
 				},
 			]
 		}),
@@ -148,7 +137,10 @@ export async function listScopableLocations(organizationId: string) {
 
 export type SetMemberLocationScopeResult =
 	| { ok: true; previous: MemberLocationAccess; next: MemberLocationAccess }
-	| { ok: false; reason: 'member_not_found' | 'unknown_location' }
+	| {
+			ok: false
+			reason: 'member_not_found' | 'unknown_location' | 'unknown_tag'
+	  }
 
 /**
  * Replaces a member's staffing location access in one transaction. Every
@@ -159,22 +151,37 @@ export type SetMemberLocationScopeResult =
 export async function setMemberLocationScope(input: {
 	organizationId: string
 	userId: string
-	value: MemberLocationScopeInput
+	value: Omit<MemberLocationScopeInput, 'tagIds'> & { tagIds?: string[] }
 }): Promise<SetMemberLocationScopeResult> {
-	const { organizationId, userId, value } = input
+	const { organizationId, userId } = input
+	const value = { ...input.value, tagIds: input.value.tagIds ?? [] }
 
 	if (value.locationIds.length > 0) {
-		const owned = await db
-			.select({ id: OrganizationLocation.id })
-			.from(OrganizationLocation)
-			.where(
-				and(
-					eq(OrganizationLocation.organizationId, organizationId),
-					inArray(OrganizationLocation.id, value.locationIds),
-				),
-			)
-		if (owned.length !== value.locationIds.length) {
+		// Read the organization's locations and compare here: D1 allows only 100
+		// bound parameters per statement, and a group can hold more locations.
+		const owned = new Set(
+			(
+				await db
+					.select({ id: OrganizationLocation.id })
+					.from(OrganizationLocation)
+					.where(eq(OrganizationLocation.organizationId, organizationId))
+			).map((row) => row.id),
+		)
+		if (!value.locationIds.every((id) => owned.has(id))) {
 			return { ok: false, reason: 'unknown_location' }
+		}
+	}
+	if (value.tagIds.length > 0) {
+		const ownedTags = new Set(
+			(
+				await db
+					.select({ id: OrganizationLocationTag.id })
+					.from(OrganizationLocationTag)
+					.where(eq(OrganizationLocationTag.organizationId, organizationId))
+			).map((row) => row.id),
+		)
+		if (!value.tagIds.every((id) => ownedTags.has(id))) {
+			return { ok: false, reason: 'unknown_tag' }
 		}
 	}
 
@@ -201,12 +208,22 @@ export async function setMemberLocationScope(input: {
 					eq(UserOrganizationLocation.organizationId, organizationId),
 				),
 			)
+		const existingTags = await tx
+			.select({ tagId: UserOrganizationLocationTag.tagId })
+			.from(UserOrganizationLocationTag)
+			.where(
+				and(
+					eq(UserOrganizationLocationTag.userId, userId),
+					eq(UserOrganizationLocationTag.organizationId, organizationId),
+				),
+			)
 		const parsedPrevious = staffingLocationScopeSchema.safeParse(
 			member.locationScope,
 		)
 		const previous: MemberLocationAccess = {
 			scope: parsedPrevious.success ? parsedPrevious.data : 'selected',
 			locationIds: existing.map((row) => row.locationId).sort(),
+			tagIds: existingTags.map((row) => row.tagId).sort(),
 		}
 
 		await tx
@@ -226,19 +243,41 @@ export async function setMemberLocationScope(input: {
 					eq(UserOrganizationLocation.organizationId, organizationId),
 				),
 			)
-		if (value.locationIds.length > 0) {
+		// A statement binds at most 100 parameters on D1: 3 per grant row.
+		for (let i = 0; i < value.locationIds.length; i += 30) {
 			await tx.insert(UserOrganizationLocation).values(
-				value.locationIds.map((locationId) => ({
+				value.locationIds.slice(i, i + 30).map((locationId) => ({
 					userId,
 					organizationId,
 					locationId,
 				})),
 			)
 		}
+		await tx
+			.delete(UserOrganizationLocationTag)
+			.where(
+				and(
+					eq(UserOrganizationLocationTag.userId, userId),
+					eq(UserOrganizationLocationTag.organizationId, organizationId),
+				),
+			)
+		for (let i = 0; i < value.tagIds.length; i += 30) {
+			await tx.insert(UserOrganizationLocationTag).values(
+				value.tagIds.slice(i, i + 30).map((tagId) => ({
+					userId,
+					organizationId,
+					tagId,
+				})),
+			)
+		}
 		return {
 			ok: true as const,
 			previous,
-			next: { scope: value.scope, locationIds: [...value.locationIds] },
+			next: {
+				scope: value.scope,
+				locationIds: [...value.locationIds],
+				tagIds: [...value.tagIds],
+			},
 		}
 	})
 }

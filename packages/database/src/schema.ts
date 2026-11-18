@@ -2842,6 +2842,157 @@ export const UserOrganizationLocation = sqliteTable(
 	],
 )
 
+/**
+ * Location tags (#374): a named group of locations ("Texas", "Franchisee A").
+ * Business data in the control plane, no guest data. `nameKey` is the trimmed,
+ * lower-cased name so two tags cannot differ only by case.
+ */
+export const OrganizationLocationTag = sqliteTable(
+	'OrganizationLocationTag',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		name: text().notNull(),
+		nameKey: text().notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('OrganizationLocationTag_organizationId_nameKey_key').on(
+			table.organizationId,
+			table.nameKey,
+		),
+	],
+)
+
+/** Which locations carry which tag. Removing a tag or a location removes its links. */
+export const OrganizationLocationTagLink = sqliteTable(
+	'OrganizationLocationTagLink',
+	{
+		locationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		tagId: text()
+			.notNull()
+			.references(() => OrganizationLocationTag.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.locationId, table.tagId],
+			name: 'OrganizationLocationTagLink_locationId_tagId_pk',
+		}),
+		index('OrganizationLocationTagLink_tagId_idx').on(table.tagId),
+	],
+)
+
+/**
+ * Tags a member is granted while `UserOrganization.locationScope` is
+ * 'selected' (#374). The member's locations are the explicit
+ * `UserOrganizationLocation` rows plus every location carrying one of these
+ * tags, resolved at read time so a location added to the tag later is covered.
+ */
+export const UserOrganizationLocationTag = sqliteTable(
+	'UserOrganizationLocationTag',
+	{
+		userId: text().notNull(),
+		organizationId: text().notNull(),
+		tagId: text()
+			.notNull()
+			.references(() => OrganizationLocationTag.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.userId, table.organizationId, table.tagId],
+			name: 'UserOrganizationLocationTag_userId_organizationId_tagId_pk',
+		}),
+		foreignKey({
+			columns: [table.userId, table.organizationId],
+			foreignColumns: [
+				UserOrganization.userId,
+				UserOrganization.organizationId,
+			],
+			name: 'UserOrganizationLocationTag_member_fk',
+		})
+			.onUpdate('cascade')
+			.onDelete('cascade'),
+		index('UserOrganizationLocationTag_tagId_idx').on(table.tagId),
+	],
+)
+
+/**
+ * Chain default for one location setting (#417). `settingId` is a key of the
+ * registry in `@repo/common/location-settings-registry`; `defaultValue` is the
+ * registry's canonical JSON for it. While `locked` is true no location may
+ * change the setting. The values are copied into each inheriting location's own
+ * columns when the default changes, so Sites and the region read the same
+ * columns as before. A location "overrides" the default when its own value
+ * differs from it: nothing is stored for that, it is read from the columns.
+ */
+export const OrganizationLocationSettingPolicy = sqliteTable(
+	'OrganizationLocationSettingPolicy',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		settingId: text().notNull(),
+		defaultValue: text().notNull(),
+		locked: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** Why head office locked it; shown to people at the location. */
+		lockReason: text(),
+		updatedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex(
+			'OrganizationLocationSettingPolicy_organizationId_settingId_key',
+		).on(table.organizationId, table.settingId),
+	],
+)
+
 export const PlatformMarketingCampaign = sqliteTable(
 	'PlatformMarketingCampaign',
 	{

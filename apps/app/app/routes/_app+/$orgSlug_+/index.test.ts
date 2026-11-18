@@ -195,12 +195,13 @@ describe('Home dashboard loader', () => {
 			id: null,
 			kind: 'home',
 			access: 'owner',
-			config: defaultRestaurantHomeConfig(),
+			config: defaultRestaurantHomeConfig({ status: true }),
 		})
 		expect(data.dashboard.config.blocks.map((block) => block.type)).toEqual([
 			'today',
 			'attention',
 			'onboarding',
+			'status',
 		])
 		expect(data.showsNotesKpis).toBe(false)
 		expect(data.blockData.notes).toBeNull()
@@ -458,7 +459,7 @@ describe('Home dashboard loader', () => {
 
 		expect(data.dashboard.id).toBeNull()
 		expect(data.dashboard.config).toEqual(
-			defaultRestaurantHomeConfig({ salesGoals: true }),
+			defaultRestaurantHomeConfig({ salesGoals: true, status: true }),
 		)
 	})
 
@@ -590,11 +591,11 @@ describe('Home dashboard action', () => {
 
 		const colleagueHome = await loadHome(organization.slug, colleagueCookie)
 		expect(colleagueHome.dashboard.config).toEqual(
-			defaultRestaurantHomeConfig(),
+			defaultRestaurantHomeConfig({ status: true }),
 		)
 		const otherHome = await loadHome(otherOrganization.slug, cookie)
 		expect(otherHome.dashboard.config).toEqual(
-			defaultRestaurantHomeConfig({ salesGoals: true }),
+			defaultRestaurantHomeConfig({ salesGoals: true, status: true }),
 		)
 		const ownHome = await loadHome(organization.slug, cookie)
 		expect(ownHome.dashboard.config.blocks.map((block) => block.id)).toEqual([
@@ -806,7 +807,7 @@ describe('Home dashboard action', () => {
 
 		const data = await loadHome(organization.slug, cookie)
 		expect(data.dashboard.config).toEqual(
-			defaultRestaurantHomeConfig({ salesGoals: true }),
+			defaultRestaurantHomeConfig({ salesGoals: true, status: true }),
 		)
 	})
 
@@ -829,7 +830,7 @@ describe('Home dashboard action', () => {
 		const data = await loadHome(organization.slug, cookie)
 		expect(data.dashboard).toMatchObject({
 			id: null,
-			config: defaultRestaurantHomeConfig({ salesGoals: true }),
+			config: defaultRestaurantHomeConfig({ salesGoals: true, status: true }),
 		})
 	})
 

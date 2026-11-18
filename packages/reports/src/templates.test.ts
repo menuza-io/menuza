@@ -3,11 +3,12 @@ import { templatesForGrants } from './access.ts'
 import { getCatalog, getField, getSubject } from './catalog.ts'
 import { RESERVATIONS_REPORT_SUBJECTS } from './catalog-reservations.ts'
 import { flattenFilterConditions } from './dsl.ts'
-import { validateReportDefinition } from './engine.ts'
+import { runReport, validateReportDefinition } from './engine.ts'
 import {
 	definitionForNewReport,
 	organizationTemplates,
 	platformTemplates,
+	withLocationsFilter,
 } from './templates.ts'
 
 describe('report templates', () => {
@@ -196,6 +197,65 @@ describe('Reservations templates', () => {
 				'rsv-late-cancels-30d',
 				'rsv-waitlist-avg-wait-7d',
 			]),
+		)
+	})
+})
+
+describe('withLocationsFilter (location tags)', () => {
+	const catalog = getCatalog('organization')
+	const template = organizationTemplates().find(
+		(item) => item.id === 'channel-sales-by-channel',
+	)!
+
+	it('limits a sales report to the locations of a tag', () => {
+		const limited = withLocationsFilter('organization', template.definition, [
+			'Austin',
+			'Dallas',
+		])
+		const conditions = flattenFilterConditions(limited.filters)
+		expect(conditions).toContainEqual({
+			field: 'location',
+			operator: 'in',
+			value: ['Austin', 'Dallas'],
+		})
+		expect(validateReportDefinition(catalog, limited)).toBeNull()
+	})
+
+	it('no list leaves the report alone, an empty list shows no location, and the engine agrees', () => {
+		expect(withLocationsFilter('organization', template.definition, null)).toBe(
+			template.definition,
+		)
+		const timeField = template.definition.timeframe.field
+		const records = ['Austin', 'Dallas', 'Houston'].map((location) => ({
+			location,
+			sales: 100,
+			channel: 'online',
+			[timeField]: new Date().toISOString(),
+		}))
+		const total = (definition: typeof template.definition) => {
+			const result = runReport(
+				catalog,
+				definition,
+				records as never,
+			) as { total?: number }
+			return result.total
+		}
+		expect(total(template.definition)).toBe(3)
+		expect(
+			total(withLocationsFilter('organization', template.definition, ['Austin', 'Dallas'])),
+		).toBe(2)
+		expect(
+			total(withLocationsFilter('organization', template.definition, ['Houston'])),
+		).toBe(1)
+		expect(total(withLocationsFilter('organization', template.definition, []))).toBe(0)
+	})
+
+	it('leaves a subject without a location field alone', () => {
+		const other = organizationTemplates().find(
+			(item) => !getSubject(catalog, item.definition.subject)?.fields.some((f) => f.id === 'location' && f.filterable),
+		)!
+		expect(withLocationsFilter('organization', other.definition, ['A'])).toBe(
+			other.definition,
 		)
 	})
 })

@@ -1950,3 +1950,38 @@ export function withLocationFilter(
 				: { combinator: 'and', conditions: [filters, condition] },
 	}
 }
+
+/**
+ * The definition limited to several locations by name (the locations of a
+ * location tag, #374). Same rule as `withLocationFilter`: only a subject with a
+ * filterable `location` field is limited. `null` or `undefined` means no
+ * limit; an empty list limits to no location, so a tag nobody carries yet shows
+ * an empty report rather than every location.
+ */
+export function withLocationsFilter(
+	scope: ReportScope,
+	definition: ReportDefinition,
+	locationNames: readonly string[] | null | undefined,
+): ReportDefinition {
+	if (!locationNames) return definition
+	const subject = getCatalog(scope).subjects.find(
+		(item) => item.id === definition.subject,
+	)
+	const field = subject?.fields.find((item) => item.id === 'location')
+	if (!field?.filterable) return definition
+	const condition: FilterCondition = {
+		field: 'location',
+		operator: 'in',
+		value: [...locationNames],
+	}
+	const filters = definition.filters
+	return {
+		...definition,
+		advancedFilters:
+			filters.combinator === 'and' ? definition.advancedFilters : true,
+		filters:
+			filters.combinator === 'and' && !filters.not
+				? { ...filters, conditions: [...filters.conditions, condition] }
+				: { combinator: 'and', conditions: [filters, condition] },
+	}
+}

@@ -1046,6 +1046,18 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   Neutral vocabulary: workplaces are opaque **scopes** (`DEFAULT_SCOPE_ID`),
   never "locations" (see `docs/staffing-plan.md`)
 
+**Multi-location control (copy settings, bulk pause, Status, tags, compare and
+edit, chain defaults and locks):**
+
+- Control-plane only. One registry of location settings
+  (`packages/common/src/location-settings-registry.ts`) drives copy, compare and
+  edit, chain defaults and locks: add a setting there, nowhere else. Location
+  scope for a member is resolved only by `resolveMemberLocationIds` (explicit
+  grants plus tags); the module resolvers delegate to it and a guard test keeps
+  it that way. Bulk writes are one `db.batch` (D1 `db.transaction` is not
+  atomic). Locks are enforced on the server for every write path to a registry
+  setting. Docs: `docs/multi-location.md`.
+
 **Key Apps:**
 
 - `apps/app` - Operators; publishes sites; routes provision by `dataRegion`;
