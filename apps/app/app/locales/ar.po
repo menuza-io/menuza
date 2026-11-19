@@ -308,7 +308,7 @@ msgstr "{0, plural, zero {لا توجد صور} one {صورة واحدة} two {�
 #. placeholder {0}: result.partialHidden!
 #: ../../packages/reports/src/ui/report-chart.tsx:179
 msgid "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
-msgstr "{0, plural, one {فترة واحدة غير مكتملة ({#}) مستبعدة من هذا الرسم لأنها ما زالت جارية.} other {فترات غير مكتملة ({#}) مستبعدة من هذا الرسم لأنها ما زالت جارية.}}"
+msgstr "{0, plural, one {فترة واحدة غير مكتملة (#) مستبعدة من هذا الرسم لأنها ما زالت جارية.} other {فترات غير مكتملة (#) مستبعدة من هذا الرسم لأنها ما زالت جارية.}}"
 
 #. placeholder {0}: view.unpricedCount
 #: app/components/inventory/recipe-section.tsx:815

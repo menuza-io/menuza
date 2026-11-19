@@ -4,9 +4,9 @@
  * with `read:website:any`. The entries are the organization's `AuditLog`
  * lines for website actions (`utils/website/activity.server.ts`).
  */
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
 import { Frame } from '@repo/ui/frame'
 import { PageHeader } from '@repo/ui/page-header'
@@ -41,24 +41,25 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return { entries: await listWebsiteActivity(organization.id) }
 }
 
-const ACTION_LABELS = {
-	[AuditAction.WEBSITE_PAGE_PUBLISHED]: msg`Published a page`,
-	[AuditAction.WEBSITE_PAGE_UNPUBLISHED]: msg`Unpublished a page`,
-	[AuditAction.WEBSITE_PAGE_DELETED]: msg`Deleted a page`,
-	[AuditAction.WEBSITE_PAGE_RESTORED]: msg`Brought a page back`,
-	[AuditAction.WEBSITE_VERSION_RESTORED]: msg`Restored an earlier version`,
-	[AuditAction.WEBSITE_DRAFT_DISCARDED]: msg`Discarded unpublished changes`,
-	[AuditAction.WEBSITE_SITE_DESIGN_PUBLISHED]: msg`Published the site design`,
-	[AuditAction.WEBSITE_PUBLISH_SCHEDULED]: msg`Scheduled a publish`,
-	[AuditAction.WEBSITE_SCHEDULE_CANCELLED]: msg`Cancelled a scheduled publish`,
-	[AuditAction.WEBSITE_SCHEDULED_PUBLISH_RAN]: msg`A scheduled publish went live`,
-	[AuditAction.WEBSITE_SCHEDULED_PUBLISH_FAILED]: msg`A scheduled publish failed`,
-	[AuditAction.WEBSITE_REDIRECT_CREATED]: msg`Added a redirect`,
-	[AuditAction.WEBSITE_REDIRECT_UPDATED]: msg`Changed a redirect`,
-	[AuditAction.WEBSITE_REDIRECT_DELETED]: msg`Removed a redirect`,
-	[AuditAction.WEBSITE_DOMAIN_CHANGED]: msg`Changed the website domain`,
-	[AuditAction.WEBSITE_LEGAL_PAGES_GENERATED]: msg`Generated legal pages`,
-	[AuditAction.WEBSITE_LEGAL_PAGE_REGENERATED]: msg`Updated a legal page`,
+// String keys on purpose: `@repo/audit` is server-only and this runs in the browser.
+const ACTION_LABELS: Record<string, MessageDescriptor> = {
+	website_page_published: msg`Published a page`,
+	website_page_unpublished: msg`Unpublished a page`,
+	website_page_deleted: msg`Deleted a page`,
+	website_page_restored: msg`Brought a page back`,
+	website_version_restored: msg`Restored an earlier version`,
+	website_draft_discarded: msg`Discarded unpublished changes`,
+	website_site_design_published: msg`Published the site design`,
+	website_publish_scheduled: msg`Scheduled a publish`,
+	website_schedule_cancelled: msg`Cancelled a scheduled publish`,
+	website_scheduled_publish_ran: msg`A scheduled publish went live`,
+	website_scheduled_publish_failed: msg`A scheduled publish failed`,
+	website_redirect_created: msg`Added a redirect`,
+	website_redirect_updated: msg`Changed a redirect`,
+	website_redirect_deleted: msg`Removed a redirect`,
+	website_domain_changed: msg`Changed the website domain`,
+	website_legal_pages_generated: msg`Generated legal pages`,
+	website_legal_page_regenerated: msg`Updated a legal page`,
 } as const
 
 export default function WebsiteActivityRoute() {
@@ -106,8 +107,7 @@ export default function WebsiteActivityRoute() {
 						</TableHeader>
 						<TableBody>
 							{entries.map((entry) => {
-								const label =
-									ACTION_LABELS[entry.action as keyof typeof ACTION_LABELS]
+								const label = ACTION_LABELS[entry.action]
 								return (
 									<TableRow key={entry.id}>
 										<TableCell className="font-medium">
