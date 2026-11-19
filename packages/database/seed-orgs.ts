@@ -6,6 +6,8 @@ import {
 	db,
 	eq,
 	isNull,
+	LegalAcceptance,
+	LegalAgreement,
 	Organization,
 	OrganizationRole,
 	User,
@@ -143,6 +145,29 @@ async function seedOrganizations() {
 					organizationRoleId: adminRole.id,
 					isDefault: i === 0, // First org is default for admin
 				})
+				// Demo owners have accepted the current Menuza agreements, so the
+				// acceptance dialog does not open over every demo screen.
+				const agreements = await db
+					.select({
+						key: LegalAgreement.key,
+						version: LegalAgreement.version,
+					})
+					.from(LegalAgreement)
+					.where(eq(LegalAgreement.scope, 'always'))
+				if (agreements.length > 0) {
+					await db
+						.insert(LegalAcceptance)
+						.values(
+							agreements.map((agreement) => ({
+								agreementKey: agreement.key,
+								version: agreement.version,
+								organizationId: organization.id,
+								userId: adminUser.id,
+								source: 'seed',
+							})),
+						)
+						.onConflictDoNothing()
+				}
 			}
 
 			// Add some members

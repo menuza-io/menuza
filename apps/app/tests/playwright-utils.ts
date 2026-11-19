@@ -12,6 +12,8 @@ import { cookieConsentCookie } from '@repo/common/cookie-consent'
 import {
 	db,
 	eq,
+	LegalAcceptance,
+	LegalAgreement,
 	Password,
 	Session,
 	User,
@@ -92,6 +94,27 @@ async function getOrInsertUser({
 		await db
 			.insert(Password)
 			.values({ userId: user.id, hash: await getPasswordHash(password) })
+		// A real sign-up records the accepted agreements, and the first
+		// organization inherits them. Without them the acceptance dialog would
+		// open over every screen the test visits.
+		const agreements = await db
+			.select({ key: LegalAgreement.key, version: LegalAgreement.version })
+			.from(LegalAgreement)
+			.where(eq(LegalAgreement.scope, 'always'))
+		if (agreements.length > 0) {
+			await db
+				.insert(LegalAcceptance)
+				.values(
+					agreements.map((agreement) => ({
+						agreementKey: agreement.key,
+						version: agreement.version,
+						organizationId: null,
+						userId: user.id,
+						source: 'signup',
+					})),
+				)
+				.onConflictDoNothing()
+		}
 		return user
 	}
 }
