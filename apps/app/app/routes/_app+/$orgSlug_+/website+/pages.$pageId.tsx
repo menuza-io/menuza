@@ -19,6 +19,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { parseFormData } from '@mjackson/form-data-parser'
+import { AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 
@@ -144,6 +145,15 @@ import {
 	LocalizedTextarea,
 } from '#app/components/website/locale-fields.tsx'
 import {
+	DiscardChangesDialog,
+	ScheduledNotice,
+	SchedulePublishDialog,
+	UnpublishedChangesBadge,
+	UnpublishWarningDialog,
+	VersionHistorySheet,
+	type VersionPreview,
+} from '#app/components/website/publish-controls.tsx'
+import {
 	TranslateAllButton,
 	TranslateProvider,
 	useSectionTranslator,
@@ -173,6 +183,7 @@ import {
 	uploadWebsiteSeoImage,
 } from '#app/utils/storage.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
+import { logWebsiteActivity } from '#app/utils/website/activity.server.ts'
 import {
 	addableBlockTypes,
 	BLOCK_TYPES,
@@ -192,20 +203,41 @@ import {
 import { HOME_PAGE_SLUG } from '#app/utils/website/home-page.ts'
 import { ensureSiteChrome } from '#app/utils/website/locked-chrome.server.ts'
 import {
-	buildPublishWebsitePageUpdate,
-	publishWebsitePage,
+	PublishConflictError,
+	publishPageWithSiteDesign,
+	publishSiteDesign,
 } from '#app/utils/website/publish-page.server.ts'
 import {
 	automaticRedirectStatements,
+	countRedirectsPointingAt,
 	loadRedirectRows,
 	planAutomaticRedirect,
 	websitePagePath,
 } from '#app/utils/website/redirects.server.ts'
 import {
-	SiteThemeConflictError,
-	updateSiteTheme,
-} from '#app/utils/website/site-theme.server.ts'
+	cancelSchedule,
+	listActiveSchedules,
+	scheduleWebsitePublish,
+} from '#app/utils/website/scheduled-publish.server.ts'
+import {
+	discardSiteDesignDraft,
+	readSiteDesign,
+	saveChromeDraft,
+} from '#app/utils/website/site-design.server.ts'
+import { updateSiteThemeDraft } from '#app/utils/website/site-theme.server.ts'
+import { getSiteTimeZone } from '#app/utils/website/site-time-zone.server.ts'
 import { BULK_UPDATE_SECTIONS_INTENT } from '#app/utils/website/translation.ts'
+import {
+	discardPageDraft,
+	restoreVersion,
+} from '#app/utils/website/version-actions.server.ts'
+import {
+	hashChrome,
+	hashTheme,
+	pageDraftState,
+	siteDesignChanges,
+} from '#app/utils/website/versions.ts'
+import { wakeWebsitePublisherAt } from '#app/utils/website/wake.server.ts'
 
 // --- Action Intents ---
 const updateTitleIntent = 'update-title'
@@ -222,6 +254,12 @@ const moveSectionIntent = 'move-section'
 const reorderSectionsIntent = 'reorder-sections'
 const publishIntent = 'publish'
 const unpublishIntent = 'unpublish'
+const discardDraftIntent = 'discard-draft'
+const discardSiteDraftIntent = 'discard-site-draft'
+const restoreVersionIntent = 'restore-version'
+const publishSiteIntent = 'publish-site'
+const schedulePublishIntent = 'schedule-publish'
+const cancelScheduleIntent = 'cancel-schedule'
 
 function extensionForImageMime(mimeType: string): string {
 	switch (mimeType) {
@@ -531,15 +569,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	await ensureSiteChrome(organization.id)
 
 	const [chrome, page, sitePages] = await Promise.all([
-		db
-			.select({
-				siteHeaderConfig: Organization.siteHeaderConfig,
-				siteFooterConfig: Organization.siteFooterConfig,
-			})
-			.from(Organization)
-			.where(eq(Organization.id, organization.id))
-			.limit(1)
-			.then((rows) => rows[0]),
+		readSiteDesign(organization.id),
 		db.query.WebsitePage.findFirst({
 			columns: {
 				id: true,
@@ -547,6 +577,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				slug: true,
 				status: true,
 				isHomePage: true,
+				publishedData: true,
 				seoTitle: true,
 				seoDescription: true,
 				seoImageUrl: true,
@@ -592,19 +623,36 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const cookieHeader = request.headers.get('Cookie')
 	const cookies = cookieHeader ? cookie.parse(cookieHeader) : {}
 
-	let themeConfig = parseSiteThemeConfig(organization.siteTheme)
-	if (cookies.epic_preview_theme) {
-		try {
-			themeConfig = JSON.parse(
-				decodeURIComponent(cookies.epic_preview_theme),
-			) as ReturnType<typeof parseSiteThemeConfig>
-		} catch {}
-	}
-
+	// The editor shows the draft header, footer and theme (#85), else live.
+	const themeConfig = parseSiteThemeConfig(chrome.theme)
 	const headerConfig =
-		chrome?.siteHeaderConfig ?? JSON.stringify(getDefaultConfig('header'))
+		chrome.header ?? JSON.stringify(getDefaultConfig('header'))
 	const footerConfig =
-		chrome?.siteFooterConfig ?? JSON.stringify(getDefaultConfig('footer'))
+		chrome.footer ?? JSON.stringify(getDefaultConfig('footer'))
+
+	// What the badge, Discard and Restore need (#85, #180, #248). The draft hash
+	// is computed from the saved sections, never the unsaved preview cookie.
+	const { publishedData, ...pageColumns } = page
+	const draftState = await pageDraftState({
+		status: page.status,
+		publishedData,
+		draftSections: page.sections.filter(
+			(section) => !isLockedBlockType(section.type),
+		),
+	})
+	const designChanges = siteDesignChanges(chrome)
+	const [schedules, siteTimeZone, redirectsHere] = await Promise.all([
+		listActiveSchedules(organization.id),
+		getSiteTimeZone(organization.id),
+		countRedirectsPointingAt(organization.id, websitePagePath(page)),
+	])
+	const designHashes = {
+		chrome: await hashChrome({
+			header: chrome.header,
+			footer: chrome.footer,
+		}),
+		theme: await hashTheme(chrome.theme),
+	}
 	let websiteForms: Array<{ id: string; name: string; status: string }> = []
 	try {
 		const { fetchTenant } = await getOperatorTenantClient(
@@ -687,8 +735,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reservationLocations,
 		themeConfig,
 		sitePages,
+		draft: {
+			neverPublished: draftState.neverPublished,
+			hasUnpublishedChanges: draftState.hasUnpublishedChanges,
+			draftHash: draftState.draftHash,
+		},
+		siteDesign: { ...designChanges, hashes: designHashes },
+		pageSchedule:
+			schedules.find((schedule) => schedule.pageId === page.id) ?? null,
+		siteSchedule:
+			schedules.find((schedule) => schedule.kind === 'site') ?? null,
+		siteTimeZone,
+		redirectsHere,
 		page: {
-			...page,
+			...pageColumns,
 			sections: composePageSectionsWithChrome(
 				(() => {
 					if (cookies.epic_preview_sections) {
@@ -725,6 +785,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 	const [page] = await db
 		.select({
 			id: WebsitePage.id,
+			title: WebsitePage.title,
 			isHomePage: WebsitePage.isHomePage,
 			slug: WebsitePage.slug,
 			status: WebsitePage.status,
@@ -961,7 +1022,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 					filename: fontFile.name.replace(/^.*[\\/]/, '').slice(0, 180),
 					format,
 				}
-				await updateSiteTheme(organization.id, (current) => ({
+				await updateSiteThemeDraft(organization.id, (current) => ({
 					...current,
 					headingFont:
 						role === 'heading' ? CUSTOM_SITE_FONT_ID : current.headingFont,
@@ -1291,28 +1352,14 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 			)
 		}
 
+		// Header and footer are site-wide drafts until published (#85): the
+		// public site keeps serving the live ones, so nothing to purge.
 		if (sectionId === SITE_HEADER_ID) {
-			await db
-				.update(Organization)
-				.set({ siteHeaderConfig: config })
-				.where(eq(Organization.id, organization.id))
-			await purgeOrganizationSiteCache(
-				organization.id,
-				organization.slug,
-				organization.customDomain,
-			)
+			await saveChromeDraft(organization.id, { header: config })
 			return Response.json({ status: 'success' })
 		}
 		if (sectionId === SITE_FOOTER_ID) {
-			await db
-				.update(Organization)
-				.set({ siteFooterConfig: config })
-				.where(eq(Organization.id, organization.id))
-			await purgeOrganizationSiteCache(
-				organization.id,
-				organization.slug,
-				organization.customDomain,
-			)
+			await saveChromeDraft(organization.id, { footer: config })
 			return Response.json({ status: 'success' })
 		}
 
@@ -1359,20 +1406,15 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 				)
 			}
 
+			const chromePatch: { header?: string; footer?: string } = {}
 			await db.transaction(async (tx) => {
 				for (const update of parsedUpdates.data) {
 					JSON.parse(update.config)
 
 					if (update.id === SITE_HEADER_ID) {
-						await tx
-							.update(Organization)
-							.set({ siteHeaderConfig: update.config })
-							.where(eq(Organization.id, organization.id))
+						chromePatch.header = update.config
 					} else if (update.id === SITE_FOOTER_ID) {
-						await tx
-							.update(Organization)
-							.set({ siteFooterConfig: update.config })
-							.where(eq(Organization.id, organization.id))
+						chromePatch.footer = update.config
 					} else {
 						await tx
 							.update(WebsitePageSection)
@@ -1386,6 +1428,13 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 					}
 				}
 			})
+			// Header and footer are drafts until published (#85).
+			if (
+				chromePatch.header !== undefined ||
+				chromePatch.footer !== undefined
+			) {
+				await saveChromeDraft(organization.id, chromePatch)
+			}
 			await purgeOrganizationSiteCache(
 				organization.id,
 				organization.slug,
@@ -1596,41 +1645,36 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 	}
 
 	if (intent === publishIntent) {
-		const themeData = formData.get('theme') as string | null
-		let theme: Partial<ReturnType<typeof parseSiteThemeConfig>> | null = null
-		if (themeData) {
-			try {
-				theme = JSON.parse(themeData) as Partial<
-					ReturnType<typeof parseSiteThemeConfig>
-				>
-			} catch {}
+		// The page and the pending site design (header, footer, theme drafts)
+		// go live together or not at all (#85). Publishing now also replaces any
+		// schedule, which would otherwise publish older content later (#180).
+		let published: Awaited<ReturnType<typeof publishPageWithSiteDesign>>
+		try {
+			published = await publishPageWithSiteDesign(page.id, organization.id, {
+				publishedById: userId,
+			})
+		} catch (error) {
+			if (!(error instanceof PublishConflictError)) throw error
+			return Response.json(
+				{ status: 'error', error: error.message },
+				{ status: 409 },
+			)
 		}
-
-		if (theme) {
-			// The page and the theme go live together or not at all.
-			try {
-				await updateSiteTheme(
-					organization.id,
-					(current) => ({ ...current, ...theme }),
-					async (themeUnchanged) => {
-						const { update } = await buildPublishWebsitePageUpdate(
-							page.id,
-							db,
-							themeUnchanged,
-						)
-						return [update]
-					},
-				)
-			} catch (error) {
-				if (!(error instanceof SiteThemeConflictError)) throw error
-				return Response.json(
-					{ status: 'error', error: error.message },
-					{ status: 409 },
-				)
-			}
-		} else {
-			await publishWebsitePage(page.id)
-		}
+		await cancelSchedule(organization.id, page.id, 'published_now')
+		await logWebsiteActivity({
+			action: AuditAction.WEBSITE_PAGE_PUBLISHED,
+			organizationId: organization.id,
+			userId,
+			details: `Published the page "${page.title}".`,
+			metadata: {
+				pageId: page.id,
+				pageTitle: page.title,
+				versionId: published.versionId,
+				chrome: published.publishedChrome,
+				theme: published.publishedTheme,
+			},
+			request,
+		})
 		await notifyReservationsContextChanged(organization.id, 'branding')
 		await purgeOrganizationSiteCache(
 			organization.id,
@@ -1641,7 +1685,191 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 		runAfterResponse(context, () =>
 			notifyIndexNowForPages(organization.id, [page.id]),
 		)
+		return Response.json({ status: 'success', versionId: published.versionId })
+	}
+
+	if (intent === publishSiteIntent) {
+		// Publish only the pending header, footer and theme (Branding).
+		try {
+			const result = await publishSiteDesign(organization.id, {
+				publishedById: userId,
+			})
+			if (result.publishedChrome || result.publishedTheme) {
+				await cancelSchedule(organization.id, null, 'published_now')
+				await logWebsiteActivity({
+					action: AuditAction.WEBSITE_SITE_DESIGN_PUBLISHED,
+					organizationId: organization.id,
+					userId,
+					details: 'Published the site header, footer and theme changes.',
+					metadata: {
+						chrome: result.publishedChrome,
+						theme: result.publishedTheme,
+					},
+					request,
+				})
+				await invalidateUserOrganizationsCache(userId)
+				await notifyReservationsContextChanged(organization.id, 'branding')
+				await purgeOrganizationSiteCache(
+					organization.id,
+					organization.slug,
+					organization.customDomain,
+				)
+			}
+			return Response.json({ status: 'success', ...result })
+		} catch (error) {
+			if (!(error instanceof PublishConflictError)) throw error
+			return Response.json(
+				{ status: 'error', error: error.message },
+				{ status: 409 },
+			)
+		}
+	}
+
+	if (intent === discardDraftIntent) {
+		const result = await discardPageDraft({
+			organizationId: organization.id,
+			pageId: page.id,
+		})
+		if (!result.ok) {
+			return Response.json(
+				{ status: 'error', error: result.error },
+				{ status: 409 },
+			)
+		}
+		await logWebsiteActivity({
+			action: AuditAction.WEBSITE_DRAFT_DISCARDED,
+			organizationId: organization.id,
+			userId,
+			details: `Discarded the unpublished changes of "${page.title}".`,
+			metadata: { pageId: page.id, pageTitle: page.title },
+			request,
+		})
 		return Response.json({ status: 'success' })
+	}
+
+	if (intent === discardSiteDraftIntent) {
+		await discardSiteDesignDraft(organization.id)
+		await logWebsiteActivity({
+			action: AuditAction.WEBSITE_DRAFT_DISCARDED,
+			organizationId: organization.id,
+			userId,
+			details: 'Discarded the unpublished header, footer and theme changes.',
+			metadata: { scope: 'site' },
+			request,
+		})
+		return Response.json({ status: 'success' })
+	}
+
+	if (intent === restoreVersionIntent) {
+		const versionId = formData.get('versionId')
+		const expectedDraftHash = formData.get('expectedDraftHash')
+		if (
+			typeof versionId !== 'string' ||
+			!versionId ||
+			typeof expectedDraftHash !== 'string' ||
+			!expectedDraftHash
+		) {
+			return Response.json(
+				{ status: 'error', error: 'invalid_request' },
+				{ status: 400 },
+			)
+		}
+		const result = await restoreVersion({
+			organizationId: organization.id,
+			pageId: page.id,
+			versionId,
+			expectedDraftHash,
+		})
+		if (!result.ok) {
+			return Response.json(
+				{ status: 'error', error: result.error },
+				{ status: result.error === 'stale_version' ? 409 : 404 },
+			)
+		}
+		await logWebsiteActivity({
+			action: AuditAction.WEBSITE_VERSION_RESTORED,
+			organizationId: organization.id,
+			userId,
+			details:
+				result.kind === 'page'
+					? `Restored an earlier version of "${page.title}" into the draft.`
+					: `Restored an earlier ${result.kind} version into the draft.`,
+			metadata: {
+				pageId: result.kind === 'page' ? page.id : null,
+				pageTitle: result.kind === 'page' ? page.title : null,
+				versionId,
+				kind: result.kind,
+			},
+			request,
+		})
+		return Response.json({
+			status: 'success',
+			kind: result.kind,
+			missingMedia: result.missingMedia,
+		})
+	}
+
+	if (intent === schedulePublishIntent) {
+		// `scope=site` schedules the pending header, footer and theme instead.
+		const forSite = formData.get('scope') === 'site'
+		const runAtRaw = formData.get('runAt')
+		const runAt = new Date(typeof runAtRaw === 'string' ? runAtRaw : '')
+		const result = await scheduleWebsitePublish({
+			organizationId: organization.id,
+			userId,
+			pageId: forSite ? null : page.id,
+			runAt,
+		})
+		if (!result.ok) {
+			return Response.json(
+				{ status: 'error', error: result.error },
+				{ status: 400 },
+			)
+		}
+		await wakeWebsitePublisherAt(result.id, result.runAt)
+		await logWebsiteActivity({
+			action: AuditAction.WEBSITE_PUBLISH_SCHEDULED,
+			organizationId: organization.id,
+			userId,
+			details: forSite
+				? `Scheduled the site design to go live at ${result.runAt.toISOString()}.`
+				: `Scheduled "${page.title}" to go live at ${result.runAt.toISOString()}.`,
+			metadata: {
+				pageId: forSite ? null : page.id,
+				pageTitle: forSite ? null : page.title,
+				runAt: result.runAt.toISOString(),
+			},
+			request,
+		})
+		return Response.json({
+			status: 'success',
+			scheduleId: result.id,
+			runAt: result.runAt.toISOString(),
+		})
+	}
+
+	if (intent === cancelScheduleIntent) {
+		const forSite = formData.get('scope') === 'site'
+		const cancelled = await cancelSchedule(
+			organization.id,
+			forSite ? null : page.id,
+		)
+		if (cancelled) {
+			await logWebsiteActivity({
+				action: AuditAction.WEBSITE_SCHEDULE_CANCELLED,
+				organizationId: organization.id,
+				userId,
+				details: forSite
+					? 'Cancelled the scheduled site design publish.'
+					: `Cancelled the scheduled publish of "${page.title}".`,
+				metadata: {
+					pageId: forSite ? null : page.id,
+					pageTitle: forSite ? null : page.title,
+				},
+				request,
+			})
+		}
+		return Response.json({ status: 'success', cancelled })
 	}
 
 	if (intent === unpublishIntent) {
@@ -1651,10 +1879,35 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 				error: 'Cannot unpublish the home page',
 			})
 		}
+		// #248: redirects that send visitors here would land on a missing page.
+		// The operator confirms once they have seen how many.
+		const redirectsHere = await countRedirectsPointingAt(
+			organization.id,
+			websitePagePath(page),
+		)
+		if (redirectsHere > 0 && formData.get('confirmRedirects') !== 'true') {
+			return Response.json(
+				{
+					status: 'error',
+					error: 'redirects_point_here',
+					redirectCount: redirectsHere,
+				},
+				{ status: 409 },
+			)
+		}
 		await db
 			.update(WebsitePage)
 			.set({ status: 'draft' })
 			.where(eq(WebsitePage.id, page.id))
+		await cancelSchedule(organization.id, page.id, 'unpublished')
+		await logWebsiteActivity({
+			action: AuditAction.WEBSITE_PAGE_UNPUBLISHED,
+			organizationId: organization.id,
+			userId,
+			details: `Unpublished the page "${page.title}".`,
+			metadata: { pageId: page.id, pageTitle: page.title },
+			request,
+		})
 		await purgeOrganizationSiteCache(
 			organization.id,
 			organization.slug,
@@ -1673,7 +1926,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 			submission.value
 
 		try {
-			await updateSiteTheme(organization.id, (current) => ({
+			await updateSiteThemeDraft(organization.id, (current) => ({
 				baseColor,
 				theme,
 				radius,
@@ -1756,7 +2009,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 		}
 
 		try {
-			await updateSiteTheme(organization.id, (current) => ({
+			await updateSiteThemeDraft(organization.id, (current) => ({
 				...current,
 				headingFont: role === 'heading' ? 'inter' : current.headingFont,
 				bodyFont: role === 'body' ? 'inter' : current.bodyFont,
@@ -5546,8 +5799,30 @@ export default function PageBuilderRoute() {
 		themeConfig: initialTheme,
 		sitePages,
 		targetKeywords,
+		draft,
+		siteDesign,
+		pageSchedule,
+		siteSchedule,
+		siteTimeZone,
+		redirectsHere,
 	} = useLoaderData<typeof loader>()
 	const [themeConfig, setThemeConfig] = useState(initialTheme)
+	// History (#85): a version shown in the preview instead of the draft, the
+	// sheet itself, Publish later (#180), Discard and the unpublish warning (#248).
+	const [versionPreview, setVersionPreview] = useState<VersionPreview | null>(
+		null,
+	)
+	const [historyOpen, setHistoryOpen] = useState(false)
+	const [historyKind, setHistoryKind] = useState<'page' | 'chrome' | 'theme'>(
+		'page',
+	)
+	const [siteScheduleOpen, setSiteScheduleOpen] = useState(false)
+	const [scheduleOpen, setScheduleOpen] = useState(false)
+	const [discardOpen, setDiscardOpen] = useState(false)
+	const [unpublishWarningOpen, setUnpublishWarningOpen] = useState(false)
+	useEffect(() => {
+		setThemeConfig(initialTheme)
+	}, [initialTheme])
 
 	useAIPanelHotkey()
 	const { isOpen: isAIPanelOpen, isExpanded: isAIPanelExpanded } = useAIPanel()
@@ -5668,13 +5943,13 @@ export default function PageBuilderRoute() {
 			frame.contentWindow.postMessage(
 				{
 					type: 'epic-preview-update',
-					sections: page.sections,
-					theme: themeConfig,
+					sections: versionPreview?.sections ?? page.sections,
+					theme: versionPreview?.theme ?? themeConfig,
 				},
 				new URL(previewUrl).origin,
 			)
 		},
-		[page.sections, themeConfig, previewUrl],
+		[page.sections, themeConfig, previewUrl, versionPreview],
 	)
 
 	useEffect(() => {
@@ -5920,25 +6195,22 @@ export default function PageBuilderRoute() {
 	)
 
 	const handlePublish = useCallback(() => {
-		let themeCookie = ''
 		if (typeof document !== 'undefined') {
-			themeCookie =
-				(document.cookie.match(/(?:^|; )epic_preview_theme=([^;]*)/) ||
-					[])[1] || ''
 			document.cookie = `epic_preview_sections=; path=/; max-age=0; SameSite=Lax${getSharedCookieDomain()}`
-			document.cookie = `epic_preview_theme=; path=/; max-age=0; SameSite=Lax${getSharedCookieDomain()}`
 		}
-		const formData = new FormData()
-		formData.append('intent', publishIntent)
-		if (themeCookie) {
-			formData.append('theme', decodeURIComponent(themeCookie))
-		}
-		void publishFetcher.submit(formData, { method: 'POST' })
+		// The header, footer and theme drafts are published with the page by the
+		// server (#85); nothing travels in the request.
+		void publishFetcher.submit({ intent: publishIntent }, { method: 'POST' })
 	}, [publishFetcher])
 
 	const handleUnpublish = useCallback(() => {
+		// #248: redirects that point here are sent home while it is unpublished.
+		if (redirectsHere > 0) {
+			setUnpublishWarningOpen(true)
+			return
+		}
 		void publishFetcher.submit({ intent: unpublishIntent }, { method: 'POST' })
-	}, [publishFetcher])
+	}, [publishFetcher, redirectsHere])
 
 	const optimisticStatus =
 		publishFetcher.formData?.get('intent') === publishIntent
@@ -6007,6 +6279,12 @@ export default function PageBuilderRoute() {
 						organization={{ ...organization, siteIconAssets: [] }}
 						themeConfig={themeConfig}
 						onPreviewRefresh={handlePreviewRefresh}
+						siteDesignPending={siteDesign.any}
+						onOpenHistory={() => {
+							setHistoryKind('theme')
+							setHistoryOpen(true)
+						}}
+						onSchedule={() => setSiteScheduleOpen(true)}
 					/>
 				) : selectedSection ? (
 					<SectionEditorPanel
@@ -6369,6 +6647,10 @@ export default function PageBuilderRoute() {
 									</Button>
 								</div>
 
+								{draft.hasUnpublishedChanges || siteDesign.any ? (
+									<UnpublishedChangesBadge className="hidden md:inline-flex" />
+								) : null}
+
 								<GlobalAIToggle />
 
 								<Button
@@ -6408,6 +6690,26 @@ export default function PageBuilderRoute() {
 											<Icon name="refresh-cw" className="size-4" />
 											<Trans>Refresh preview</Trans>
 										</DropdownMenuItem>
+										<DropdownMenuItem
+											onClick={() => {
+												setHistoryKind('page')
+												setHistoryOpen(true)
+											}}
+										>
+											<Icon name="history" className="size-4" />
+											<Trans>History</Trans>
+										</DropdownMenuItem>
+										<DropdownMenuItem onClick={() => setScheduleOpen(true)}>
+											<Icon name="clock" className="size-4" />
+											<Trans>Publish later</Trans>
+										</DropdownMenuItem>
+										{!draft.neverPublished &&
+										(draft.hasUnpublishedChanges || siteDesign.any) ? (
+											<DropdownMenuItem onClick={() => setDiscardOpen(true)}>
+												<Icon name="rotate-ccw" className="size-4" />
+												<Trans>Discard changes</Trans>
+											</DropdownMenuItem>
+										) : null}
 										<DropdownMenuSeparator />
 										<DropdownMenuItem
 											onClick={() => {
@@ -6443,9 +6745,93 @@ export default function PageBuilderRoute() {
 								</DropdownMenu>
 							</div>
 						</header>
+						{versionPreview ? (
+							<div
+								role="status"
+								className="bg-muted text-foreground flex items-center justify-between gap-2 px-4 py-1.5 text-xs"
+							>
+								<span>
+									<Trans>
+										Previewing an earlier version. Nothing has changed yet.
+									</Trans>
+								</span>
+								<Button
+									type="button"
+									size="xs"
+									variant="outline"
+									onClick={() => setVersionPreview(null)}
+								>
+									<Trans>Back to your draft</Trans>
+								</Button>
+							</div>
+						) : null}
+						{pageSchedule || siteSchedule ? (
+							<div className="flex flex-wrap gap-2 px-4 py-1.5">
+								{pageSchedule ? (
+									<ScheduledNotice
+										runAt={pageSchedule.runAt}
+										timeZone={siteTimeZone}
+										scope="page"
+									/>
+								) : null}
+								{siteSchedule ? (
+									<ScheduledNotice
+										runAt={siteSchedule.runAt}
+										timeZone={siteTimeZone}
+										scope="site"
+									/>
+								) : null}
+							</div>
+						) : null}
 						<CreatePageDialog
 							open={createPageOpen}
 							onOpenChange={setCreatePageOpen}
+						/>
+						<VersionHistorySheet
+							open={historyOpen}
+							onOpenChange={setHistoryOpen}
+							orgSlug={organization.slug}
+							pageId={page.id}
+							initialKind={historyKind}
+							onPreview={setVersionPreview}
+							onRestored={handlePreviewRefresh}
+						/>
+						<SchedulePublishDialog
+							open={scheduleOpen}
+							onOpenChange={setScheduleOpen}
+							timeZone={siteTimeZone}
+							scope="page"
+							existingRunAt={pageSchedule?.runAt ?? null}
+						/>
+						<SchedulePublishDialog
+							open={siteScheduleOpen}
+							onOpenChange={setSiteScheduleOpen}
+							timeZone={siteTimeZone}
+							scope="site"
+							existingRunAt={siteSchedule?.runAt ?? null}
+						/>
+						<DiscardChangesDialog
+							open={discardOpen}
+							onOpenChange={setDiscardOpen}
+							onConfirm={() => {
+								document.cookie = `epic_preview_sections=; path=/; max-age=0; SameSite=Lax${getSharedCookieDomain()}`
+								void publishFetcher.submit(
+									{ intent: discardDraftIntent },
+									{ method: 'POST' },
+								)
+							}}
+						/>
+						<UnpublishWarningDialog
+							open={unpublishWarningOpen}
+							onOpenChange={setUnpublishWarningOpen}
+							count={redirectsHere}
+							title={displayTitle}
+							onConfirm={() => {
+								void publishFetcher.submit(
+									{ intent: unpublishIntent, confirmRedirects: 'true' },
+									{ method: 'POST' },
+								)
+							}}
 						/>
 
 						<div

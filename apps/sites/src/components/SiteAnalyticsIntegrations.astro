@@ -4,6 +4,12 @@ interface Props {
 	googleTagManagerId?: string | null
 	googleAnalyticsId?: string | null
 	tiktokPixelId?: string | null
+	/**
+	 * The cookie banner mode (#89). Absent or `off`: tags load as they always
+	 * did. `required`: nothing loads before the guest accepts. `notice`: tags
+	 * load, with an opt-out.
+	 */
+	consentMode?: 'required' | 'notice' | 'off'
 }
 
 const {
@@ -11,6 +17,7 @@ const {
 	googleTagManagerId,
 	googleAnalyticsId,
 	tiktokPixelId,
+	consentMode = 'off',
 } = Astro.props
 const facebookEnabled = Boolean(
 	facebookPixelId && /^\d{5,20}$/.test(facebookPixelId),
@@ -24,17 +31,21 @@ const googleAnalyticsEnabled = Boolean(
 const tiktokEnabled = Boolean(
 	tiktokPixelId && /^[A-Z0-9]{10,30}$/.test(tiktokPixelId),
 )
-const safeJson = (value: string | null | undefined) =>
-	JSON.stringify(value ?? '').replace(/</g, '\\u003c')
-const googleAnalyticsScriptUrl = `https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`
 ---
 
+<!--
+	No vendor script is rendered here: the bundled script below loads each tag
+	only once the guest's consent allows it (lib/site-pixels.ts), so in Required
+	mode nothing reaches an ad or analytics vendor before Accept.
+-->
 <div
 	hidden
 	data-site-pixels
+	data-consent-mode={consentMode}
 	data-facebook-pixel={facebookEnabled ? facebookPixelId : undefined}
 	data-tiktok-pixel={tiktokEnabled ? tiktokPixelId : undefined}
 	data-google-tag-manager={tagManagerEnabled ? googleTagManagerId : undefined}
+	data-google-analytics={googleAnalyticsEnabled ? googleAnalyticsId : undefined}
 />
 <script>
 	import { bootSitePixels } from '~/lib/site-pixels'
@@ -42,15 +53,3 @@ const googleAnalyticsScriptUrl = `https://www.googletagmanager.com/gtag/js?id=${
 	const node = document.querySelector('[data-site-pixels]')
 	if (node instanceof HTMLElement) bootSitePixels(node)
 </script>
-{
-	googleAnalyticsEnabled && (
-		<>
-			<script is:inline type="text/partytown" src={googleAnalyticsScriptUrl} />
-			<script
-				is:inline
-				type="text/partytown"
-				set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${safeJson(googleAnalyticsId)});`}
-			/>
-		</>
-	)
-}

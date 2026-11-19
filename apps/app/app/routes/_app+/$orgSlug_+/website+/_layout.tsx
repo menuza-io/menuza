@@ -108,6 +108,18 @@ export default function WebsiteLayout() {
 							`/${orgSlug}/website/redirects`,
 						),
 					},
+					{
+						label: _(t`Legal pages`),
+						href: `/${orgSlug}/website/legal`,
+						isActive: location.pathname.includes(`/${orgSlug}/website/legal`),
+					},
+					{
+						label: _(t`Activity`),
+						href: `/${orgSlug}/website/activity`,
+						isActive: location.pathname.includes(
+							`/${orgSlug}/website/activity`,
+						),
+					},
 				]
 			: []),
 	]

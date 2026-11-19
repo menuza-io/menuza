@@ -2,6 +2,7 @@ import { i18n } from '@lingui/core'
 import { msg } from '@lingui/macro'
 import { type BroadcastProblem } from '@repo/common/broadcast-checks'
 import { type EmailBlock } from '@repo/common/email-blocks'
+import { requireModuleAgreement } from '#app/utils/legal/agreements.server.ts'
 import { auditCampaign } from './campaign-audit.server.ts'
 import { prepareCampaignMessage } from './campaign-message.server.ts'
 import {
@@ -116,6 +117,23 @@ export async function submitCampaign(input: {
 			})
 		}
 		return { kind: 'test', result }
+	}
+
+	// Sending texts asks for the Text marketing terms first (#194); a draft
+	// and email are not affected.
+	if (channel === 'sms' && intent !== 'draft') {
+		const textTerms = await requireModuleAgreement(
+			input.organizationId,
+			'text_marketing',
+		)
+		if (textTerms) {
+			return {
+				kind: 'error',
+				error: i18n._(
+					msg`Texts need the Text marketing terms. An owner can accept them in Settings, Legal.`,
+				),
+			}
+		}
 	}
 
 	const read = readCampaignSchedule(formData)

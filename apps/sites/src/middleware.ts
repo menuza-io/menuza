@@ -21,6 +21,7 @@ import {
 	isSitesAppRoute,
 	isSitesProduction,
 	publishedHtmlCacheUrl,
+	publishedHtmlCacheControl,
 	shouldCachePublishedHtml,
 	sitesConnectSrc,
 	sitesFrameSrc,
@@ -328,7 +329,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			: await next()
 
 	const htmlCacheControl = cacheHtml
-		? 'public, max-age=60, s-maxage=60, stale-while-revalidate=300'
+		? publishedHtmlCacheControl(organization?.announcements)
 		: isDropVisibilityPage(url.pathname) ||
 			  isCareersPage(url.pathname) ||
 			  isReservationsPage(url.pathname)

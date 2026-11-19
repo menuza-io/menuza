@@ -289,6 +289,10 @@ msgstr "قبول السعر الجديد، {orderName}"
 msgid "Accept the new wholesale price?"
 msgstr "قبول سعر الجملة الجديد؟"
 
+#: app/routes/_admin+/legal-agreements.tsx:67
+msgid "Accepted"
+msgstr "المقبولة"
+
 #: app/routes/_admin+/waitlist.tsx:268
 msgid "Access"
 msgstr "الوصول"
@@ -482,8 +486,8 @@ msgstr "إضافة نقاط قائمة الانتظار"
 msgid "Address, phone and opening hours"
 msgstr "العنوان والهاتف وساعات العمل"
 
-#: app/components/admin-sidebar.tsx:161
-#: app/components/admin-sidebar.tsx:169
+#: app/components/admin-sidebar.tsx:167
+#: app/components/admin-sidebar.tsx:175
 #: app/components/sso-configuration-form.tsx:438
 #: app/components/sso-user-management.tsx:101
 #: app/routes/_admin+/roles+/$roleId.tsx:504
@@ -491,7 +495,7 @@ msgstr "العنوان والهاتف وساعات العمل"
 msgid "Admin"
 msgstr "مدير"
 
-#: app/components/admin-sidebar.tsx:187
+#: app/components/admin-sidebar.tsx:193
 #: app/routes/_admin+/index.tsx:129
 msgid "Admin Dashboard"
 msgstr "لوحة تحكم المدير"
@@ -504,6 +508,15 @@ msgstr "انتحال شخصية المدير نشط"
 #: app/routes/_admin+/cache.tsx:933
 msgid "Admin role required"
 msgstr "دور المدير مطلوب"
+
+#: app/routes/_admin+/legal-agreements.tsx:228
+msgid "After this date the dashboard is blocked for owners who have not accepted."
+msgstr "بعد هذا التاريخ تُحجب لوحة التحكم عن المالكين الذين لم يقبلوا."
+
+#: app/routes/_admin+/legal-agreements.tsx:58
+#: app/routes/_admin+/legal-agreements.tsx:174
+msgid "Agreement"
+msgstr "الاتفاقية"
 
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:146
 msgid "AI drafts are not available for this organization."
@@ -1373,6 +1386,7 @@ msgstr "أنشئ أول حملة بريد إلكتروني للمنصة لمشغ
 #: app/components/admin-organizations-table.tsx:280
 #: app/components/admin-users-table.tsx:202
 #: app/routes/_admin+/cache.tsx:613
+#: app/routes/_admin+/legal-agreements.tsx:141
 msgid "Created"
 msgstr "تم الإنشاء"
 
@@ -2726,6 +2740,11 @@ msgstr "اترك معرف المؤسسة فارغاً لعرض/تعيين الت
 msgid "Left"
 msgstr "يسار"
 
+#: app/components/admin-sidebar.tsx:149
+#: app/routes/_admin+/legal-agreements.tsx:42
+msgid "Legal agreements"
+msgstr "الاتفاقيات القانونية"
+
 #: app/routes/_admin+/roles+/index.tsx:400
 msgid "Level"
 msgstr "المستوى"
@@ -2757,6 +2776,10 @@ msgstr "رابط"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:296
 msgid "Link (optional)"
 msgstr "رابط (اختياري)"
+
+#: app/routes/_admin+/legal-agreements.tsx:217
+msgid "Link to the full text"
+msgstr "رابط النص الكامل"
 
 #: app/components/admin-launch-card.tsx:156
 msgid "Live"
@@ -3251,6 +3274,14 @@ msgstr "العُقد"
 msgid "None"
 msgstr "بلا"
 
+#: app/routes/_admin+/legal-agreements.tsx:113
+#~ msgid "Not accepted: {0} version {1}"
+#~ msgstr "غير مقبولة: {0} الإصدار {1}"
+
+#: app/routes/_admin+/legal-agreements.tsx:115
+msgid "Not accepted: {missingKey} version {missingVersion}"
+msgstr "غير مقبولة: {missingKey} الإصدار {missingVersion}"
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:75
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:12
 msgid "Not sent: too late"
@@ -3418,6 +3449,7 @@ msgstr "org - موارد المؤسسة"
 #: app/components/admin/feature-flags.tsx:784
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
+#: app/routes/_admin+/legal-agreements.tsx:135
 #: app/routes/_admin+/phone-numbers.tsx:361
 #: app/routes/_admin+/print-shop.tsx:796
 msgid "Organization"
@@ -3511,6 +3543,10 @@ msgstr "own - موارد المستخدم الخاصة"
 #: app/components/sso-user-management.tsx:95
 msgid "Owner"
 msgstr "المالك"
+
+#: app/routes/_admin+/legal-agreements.tsx:138
+msgid "Owners"
+msgstr "المالكون"
 
 #: ../../packages/reports/src/ui/report-labels.ts:124
 msgid "Pacing"
@@ -3827,9 +3863,21 @@ msgstr "موفر الخدمة:"
 msgid "Publish"
 msgstr "نشر"
 
+#: app/routes/_admin+/legal-agreements.tsx:168
+msgid "Publish a new version"
+msgstr "نشر إصدار جديد"
+
+#: app/routes/_admin+/legal-agreements.tsx:44
+msgid "Publish a new version of a Menuza agreement and see which organizations have not accepted it. Owners are asked at their next sign-in; after a \"required by\" date the dashboard is blocked until they accept."
+msgstr "انشر إصدارًا جديدًا من اتفاقية Menuza وشاهد المنظمات التي لم تقبله. يُطلب من المالكين القبول عند تسجيل دخولهم التالي؛ وبعد تاريخ \"مطلوبة قبل\" تُحجب لوحة التحكم إلى أن يقبلوا."
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:209
 msgid "Publish and activate automation"
 msgstr "نشر وتفعيل الأتمتة"
+
+#: app/routes/_admin+/legal-agreements.tsx:233
+msgid "Publish version"
+msgstr "نشر الإصدار"
 
 #: app/routes/_admin+/marketing+/automations.$journeyId.tsx:213
 msgid "Publishing automation..."
@@ -4110,6 +4158,14 @@ msgstr "الطلبات"
 msgid "Require a verified email"
 msgstr "اشتراط بريد إلكتروني موثّق"
 
+#: app/routes/_admin+/legal-agreements.tsx:64
+msgid "Required by"
+msgstr "مطلوبة قبل"
+
+#: app/routes/_admin+/legal-agreements.tsx:223
+msgid "Required by (optional)"
+msgstr "مطلوبة قبل (اختياري)"
+
 #: app/components/sso-configuration-form.tsx:374
 msgid "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
 msgstr "مطلوب. لا يمكن لموفّر الهوية إنشاء حسابات أو تسجيل دخول الأشخاص إلا لعناوين البريد الإلكتروني على هذه النطاقات."
@@ -4142,7 +4198,7 @@ msgstr "لم يحضر صاحب الحجز"
 msgid "Reservations"
 msgstr "الحجوزات"
 
-#: app/components/admin-sidebar.tsx:149
+#: app/components/admin-sidebar.tsx:155
 msgid "Reservations fees"
 msgstr "رسوم الحجوزات"
 
@@ -5090,7 +5146,7 @@ msgstr "الافتراضي للنظام"
 msgid "System Flags"
 msgstr "مؤشرات النظام"
 
-#: app/components/admin-sidebar.tsx:190
+#: app/components/admin-sidebar.tsx:196
 msgid "System Management"
 msgstr "إدارة النظام"
 
@@ -5339,6 +5395,10 @@ msgstr "تعذّر إنشاء ملف الطباعة"
 msgid "The request was not completed"
 msgstr "لم يكتمل الطلب"
 
+#: app/routes/_admin+/legal-agreements.tsx:124
+msgid "The required-by date has passed: these owners are blocked until they accept."
+msgstr "انقضى تاريخ \"مطلوبة قبل\": هؤلاء المالكون محجوبون إلى أن يقبلوا."
+
 #: ../../packages/reports/src/ui/report-labels.ts:133
 msgid "The share of booked parties that did not show up over the last 30 days."
 msgstr "نسبة المجموعات المحجوزة التي لم تحضر خلال آخر 30 يومًا."
@@ -5498,6 +5558,14 @@ msgstr "صندوق البقشيش: البقشيش حسب اليوم"
 #: ../../packages/reports/src/ui/report-labels.ts:69
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "البقشيش على الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، حسب يوم العمل. تُحدَّد طريقة توزيع الصندوق بين الأشخاص في صفحة العمالة."
+
+#: app/routes/_admin+/legal-agreements.tsx:198
+msgid "Title (Arabic)"
+msgstr "العنوان (بالعربية)"
+
+#: app/routes/_admin+/legal-agreements.tsx:192
+msgid "Title (English)"
+msgstr "العنوان (بالإنجليزية)"
 
 #: app/components/admin-launch-card.tsx:48
 msgid "To do"
@@ -5856,6 +5924,10 @@ msgstr "حالة التوثيق"
 msgid "Verified phone numbers only"
 msgstr "أرقام الهواتف الموثّقة فقط"
 
+#: app/routes/_admin+/legal-agreements.tsx:61
+msgid "Version"
+msgstr "الإصدار"
+
 #: app/routes/_admin+/marketing+/_index.tsx:186
 msgid "View all"
 msgstr "عرض الكل"
@@ -5978,6 +6050,14 @@ msgstr "WELCOME"
 msgid "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
 msgstr "مرحباً بك في Menuza، {ORGANIZATION_NAME_TAG}"
 
+#: app/routes/_admin+/legal-agreements.tsx:211
+msgid "What changed (Arabic)"
+msgstr "ما الذي تغيّر (بالعربية)"
+
+#: app/routes/_admin+/legal-agreements.tsx:205
+msgid "What changed (English)"
+msgstr "ما الذي تغيّر (بالإنجليزية)"
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:217
 msgid "What is this message for?"
 msgstr "ما الغرض من هذه الرسالة؟"
@@ -6001,6 +6081,10 @@ msgstr "من أين تأتي الحجوزات خلال آخر 30 يومًا: ع�
 #: ../../packages/reports/src/ui/report-labels.ts:97
 msgid "Who cancelled over the last 30 days: the guest, the restaurant or the system."
 msgstr "من ألغى خلال آخر 30 يومًا: الضيف أو المطعم أو النظام."
+
+#: app/routes/_admin+/legal-agreements.tsx:103
+msgid "Who has not accepted"
+msgstr "من لم يقبل"
 
 #: ../../packages/reports/src/ui/report-labels.ts:49
 msgid "Who worked overtime over the last 30 days, and how much."

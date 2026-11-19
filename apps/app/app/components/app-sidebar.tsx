@@ -792,6 +792,11 @@ function OrganizationSidebar({
 					url: `/${orgSlug}/settings/notifications`,
 					isActive: location.pathname === `/${orgSlug}/settings/notifications`,
 				},
+				{
+					title: _(msg`Legal`),
+					url: `/${orgSlug}/settings/legal`,
+					isActive: location.pathname === `/${orgSlug}/settings/legal`,
+				},
 				// Hide billing for PUBLIC_BETA and CLOSED_BETA
 				...(rootData?.launchStatus !== 'PUBLIC_BETA' &&
 				rootData?.launchStatus !== 'CLOSED_BETA'

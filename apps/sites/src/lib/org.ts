@@ -31,6 +31,9 @@ export type PublicSiteAnnouncement = {
 	linkUrl: string | null
 	linkLabel: string | null
 	linkNewTab: boolean
+	/** The show window (#238), ISO (UTC); the page filters it per request. */
+	startsAt?: string | null
+	endsAt?: string | null
 }
 
 export type PublicSiteRedirect = {
@@ -70,6 +73,15 @@ export type PublicOrganization = {
 	siteVerification?: { google: string[]; bing: string | null }
 	/** IndexNow key served at `/<key>.txt` (#138). */
 	indexNowKey?: string | null
+	/**
+	 * Published legal pages by kind, as site paths (#89, #260). Absent on
+	 * payloads cached before the field existed: no links are shown then.
+	 */
+	legalPages?: Partial<
+		Record<'privacy' | 'terms' | 'cookies' | 'accessibility', string>
+	>
+	/** The cookie banner mode (#89); absent means `off` (tags load as before). */
+	consent?: { mode: 'required' | 'notice' | 'off' }
 }
 
 function getAppUrl(): string {

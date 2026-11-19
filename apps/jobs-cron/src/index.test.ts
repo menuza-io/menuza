@@ -20,6 +20,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 	let mockJourneyWorkflowCreate: any
 	let mockJourneyWorkflowGet: any
 	let mockSocialWorkflowCreate: any
+	let mockWebsiteWorkflowCreate: any
 	let env: Env
 
 	beforeEach(() => {
@@ -40,6 +41,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 		mockSocialWorkflowCreate = vi
 			.fn()
 			.mockImplementation(({ id }) => Promise.resolve({ id }))
+		mockWebsiteWorkflowCreate = vi
+			.fn()
+			.mockImplementation(({ id }) => Promise.resolve({ id }))
 
 		env = {
 			APP_BASE_URL: 'https://app.example.com',
@@ -58,7 +62,63 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				create: mockSocialWorkflowCreate,
 				get: vi.fn(),
 			} as any,
+			WEBSITE_PUBLISH_WORKFLOW: {
+				create: mockWebsiteWorkflowCreate,
+				get: vi.fn(),
+			} as any,
 		}
+	})
+
+	describe('POST /workflows/website-publish/start (#180)', () => {
+		const start = (body: unknown, token = mockInternalToken) =>
+			worker.fetch(
+				new Request('http://localhost/workflows/website-publish/start', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(body),
+				}),
+				env,
+			)
+		const runAt = '2026-11-01T09:00:00.000Z'
+
+		it('rejects a caller without the internal token', async () => {
+			expect(
+				(await start({ scheduleId: 'abcdefgh1234', runAt }, 'wrong')).status,
+			).toBe(401)
+			expect(mockWebsiteWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts one instance per schedule and time, carrying ids and a time only', async () => {
+			const res = await start({ scheduleId: 'abcdefgh1234', runAt })
+			expect(res.status).toBe(200)
+			expect(mockWebsiteWorkflowCreate).toHaveBeenCalledWith({
+				id: `website-abcdefgh1234-${Date.parse(runAt)}`,
+				params: { scheduleId: 'abcdefgh1234', runAt },
+			})
+		})
+
+		it('treats an instance that already exists as started', async () => {
+			mockWebsiteWorkflowCreate.mockRejectedValueOnce(
+				new Error('instance.already_exists'),
+			)
+			expect((await start({ scheduleId: 'abcdefgh1234', runAt })).status).toBe(
+				200,
+			)
+		})
+
+		it('refuses a malformed id or time, or one further ahead than a workflow can sleep', async () => {
+			expect((await start({ scheduleId: '../x', runAt: 'soon' })).status).toBe(
+				400,
+			)
+			const far = new Date(Date.now() + 366 * 24 * 60 * 60_000).toISOString()
+			expect(
+				(await start({ scheduleId: 'abcdefgh1234', runAt: far })).status,
+			).toBe(400)
+			expect(mockWebsiteWorkflowCreate).not.toHaveBeenCalled()
+		})
 	})
 
 	describe('POST /workflows/social-post/start', () => {
@@ -590,6 +650,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					headers: { Authorization: `Bearer ${mockInternalToken}` },
 				}),
 			)
+			// Versions of deleted pages and finished schedules (#85, #180).
+			expect(fetchMock).toHaveBeenCalledWith(
+				'https://app.example.com/resources/jobs/website-version-prune',
+				expect.objectContaining({
+					method: 'POST',
+					headers: { Authorization: `Bearer ${mockInternalToken}` },
+				}),
+			)
 		})
 
 		it('runs MCP token cleanup, job postings expiry, the seat reconcile and the SEO jobs from the shared 0 3 trigger', async () => {
@@ -708,6 +776,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
@@ -793,9 +862,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							token,
 						],
 						['https://app.example.com/resources/jobs/gbp-sync', 'POST', token],
+						[
+							'https://app.example.com/resources/jobs/website-publish',
+							'POST',
+							token,
+						],
 					]),
 				)
-				expect(calls).toHaveLength(20)
+				expect(calls).toHaveLength(21)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -839,6 +913,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -969,6 +1044,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
 					'Tenant loyalty tick failed for https://tenant-ksa.example.com',
@@ -994,6 +1070,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1049,6 +1126,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					)
 					const results = await Promise.allSettled(promises)
 					expect(results.map((r) => r.status)).toEqual([
+						'fulfilled',
 						'fulfilled',
 						'fulfilled',
 						'fulfilled',
@@ -1123,6 +1201,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const reason = String((results[3] as PromiseRejectedResult).reason)
 				expect(reason).toContain(
@@ -1158,6 +1237,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				expect(results.map((r) => r.status)).toEqual([
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1221,6 +1301,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -1258,6 +1339,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[2] as PromiseRejectedResult).reason)).toContain(
 					'Tenant reservations tick failed for https://tenant-us.example.com',
@@ -1285,6 +1367,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'https://app.example.com/resources/jobs/impersonation-cleanup',
 					'https://app.example.com/resources/jobs/restaurant-order-refunds-reconcile',
 					'https://app.example.com/resources/jobs/gbp-sync',
+					'https://app.example.com/resources/jobs/website-publish',
 				])
 			})
 		})

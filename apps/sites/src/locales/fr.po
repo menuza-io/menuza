@@ -292,9 +292,17 @@ msgstr "Un membre de l’équipe règle cette note. Demandez-lui de l’aide."
 msgid "About {count} min"
 msgstr "Environ {count} min"
 
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Accept all"
+msgstr "Tout accepter"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Accepted"
 msgstr "Acceptée"
+
+#: src/components/LegalLinks.astro.ts:3
+msgid "Accessibility statement"
+msgstr "Déclaration d’accessibilité"
 
 #: src/components/AccountShell.astro.ts:3
 msgid "Account"
@@ -431,6 +439,10 @@ msgstr "Montant"
 #: src/lib/reservations/labels.ts:378
 msgid "Amount due now"
 msgstr "Montant à payer maintenant"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Analytics: help us count visits and see what works"
+msgstr "Mesure d’audience : nous aide à compter les visites et à voir ce qui fonctionne"
 
 #: src/lib/loyalty/labels.ts:184
 msgid "Another guest has already claimed rewards for this tab."
@@ -836,6 +848,10 @@ msgstr "Paiement"
 msgid "Checkout was cancelled. No card was sent."
 msgstr "Le paiement a été annulé. Aucune carte n’a été envoyée."
 
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Choose"
+msgstr "Choisir"
+
 #: src/lib/ordering-labels.ts:74
 msgid "Choose {count}"
 msgstr "Choisissez {count}"
@@ -1042,6 +1058,18 @@ msgstr "Continuer vers le paiement"
 #: src/lib/careers/labels.ts:22
 msgid "Contract"
 msgstr "Contrat"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Cookie choices"
+msgstr "Choix relatifs aux cookies"
+
+#: src/components/LegalLinks.astro.ts:3
+msgid "Cookie policy"
+msgstr "Politique relative aux cookies"
+
+#: src/components/SiteFooter.astro.ts:3
+msgid "Cookie settings"
+msgstr "Paramètres des cookies"
 
 #: src/lib/loyalty/labels.ts:297
 msgid "Copied"
@@ -1385,6 +1413,10 @@ msgstr "Saisissez votre nom."
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
 msgstr "Saisissez votre numéro de téléphone. Nous enverrons un code."
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Essential storage (cart, sign-in, language) is always on."
+msgstr "Le stockage essentiel (panier, connexion, langue) est toujours actif."
 
 #: src/pages/menu.astro.ts:3
 msgid "Estimated tax"
@@ -1933,6 +1965,10 @@ msgstr "Gérer"
 #: src/lib/reservations/labels.ts:152
 msgid "Manage reservation"
 msgstr "Gérer la réservation"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Marketing: measure and improve our advertising"
+msgstr "Marketing : mesurer et améliorer notre publicité"
 
 #: src/lib/loyalty/labels.ts:315
 msgid "Membership tiers"
@@ -2777,6 +2813,10 @@ msgstr "Précédent"
 msgid "Primary"
 msgstr "Principal"
 
+#: src/components/LegalLinks.astro.ts:3
+msgid "Privacy policy"
+msgstr "Politique de confidentialité"
+
 #: src/pages/menu.astro.ts:3
 msgid "Proceed to checkout"
 msgstr "Passer au paiement"
@@ -2832,6 +2872,10 @@ msgstr "Ramadan"
 #: src/components/drops/DropHero.astro.ts:3
 msgid "Read more"
 msgstr "Lire la suite"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Read the cookie policy"
+msgstr "Lire la politique relative aux cookies"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
@@ -2907,6 +2951,10 @@ msgstr "Remboursé"
 #: src/pages/menu/success.astro.ts:3
 msgid "Refunded {amount}"
 msgstr "Remboursé : {amount}"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Reject non-essential"
+msgstr "Refuser les non essentiels"
 
 #: src/lib/gift-cards/labels.ts:89
 #: src/lib/ordering-labels.ts:94
@@ -3021,6 +3069,10 @@ msgstr "Enregistrer les modifications"
 #: src/pages/profile.astro.ts:3
 msgid "Save Changes"
 msgstr "Enregistrer"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Save my choices"
+msgstr "Enregistrer mes choix"
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/profile.astro.ts:3
@@ -3375,6 +3427,10 @@ msgstr "Dites-nous quand vous souhaitez dîner. Nous vous contacterons si une ta
 #: src/lib/careers/labels.ts:20
 msgid "Temporary"
 msgstr "Temporaire"
+
+#: src/components/LegalLinks.astro.ts:3
+msgid "Terms of service"
+msgstr "Conditions d’utilisation"
 
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Text"
@@ -4389,6 +4445,14 @@ msgstr "Nous avons envoyé un code à 6 chiffres au {phone}."
 msgid "We told the restaurant you are running late."
 msgstr "Nous avons prévenu le restaurant de votre retard."
 
+#: src/components/ConsentBanner.astro.ts:3
+msgid "We use analytics and advertising tags to understand visits and measure our ads. You can opt out at any time."
+msgstr "Nous utilisons des balises de mesure d’audience et de publicité pour comprendre les visites et mesurer nos annonces. Vous pouvez vous y opposer à tout moment."
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "We use essential storage to run this site. With your consent we also use analytics and advertising tags."
+msgstr "Nous utilisons un stockage essentiel pour faire fonctionner ce site. Avec votre consentement, nous utilisons aussi des balises de mesure d’audience et de publicité."
+
 #: src/lib/reservations/labels.ts:308
 msgid "We will let you know"
 msgstr "Nous vous préviendrons"
@@ -4774,6 +4838,10 @@ msgstr "Votre place dans la file"
 #: src/pages/profile/rewards.astro.ts:3
 msgid "Your points, rewards, code and history."
 msgstr "Vos points, récompenses, votre code et votre historique."
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Your privacy choices"
+msgstr "Vos choix de confidentialité"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

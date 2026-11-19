@@ -13,6 +13,7 @@ import { z } from 'zod'
 
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ShopCard } from '#app/components/settings/cards/organization/shop-card.tsx'
+import { requireModuleAgreement } from '#app/utils/legal/agreements.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -198,6 +199,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					'Payout onboarding can only be started once every 30 seconds.',
 				type: 'error',
 			})
+		}
+
+		// Turning on online payments asks for the Payment terms first (#194).
+		const paymentTerms = await requireModuleAgreement(
+			organization.id,
+			'payments',
+		)
+		if (paymentTerms) {
+			return redirect(
+				`/${organization.slug}/settings/legal?agreement=payments&next=${encodeURIComponent(`/${organization.slug}/settings/shop`)}`,
+			)
 		}
 
 		try {

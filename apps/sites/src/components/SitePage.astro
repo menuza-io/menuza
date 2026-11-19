@@ -4,7 +4,9 @@ import {
 	getSiteLocaleDirection,
 	getSiteLocaleNativeLabel,
 } from '@repo/common/site-locales'
+import { activeAnnouncements } from '@repo/common/announcement-window'
 import AnnouncementBanners from '~/components/AnnouncementBanners.astro'
+import ConsentBanner from '~/components/ConsentBanner.astro'
 import SiteFooter from '~/components/SiteFooter.astro'
 import SiteHeader from '~/components/SiteHeader.astro'
 import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
@@ -16,6 +18,7 @@ import {
 	type PublicWebsitePageSection,
 } from '~/lib/org'
 import type { SiteLocaleLink } from '~/lib/media'
+import { bannerApplies } from '~/lib/legal-links'
 import { getTenantApiUrl } from '~/lib/tenant-api'
 import { ENV } from 'varlock/env'
 
@@ -48,7 +51,12 @@ const {
 	siteVerification = null,
 } = Astro.props
 
-const announcements = organization.announcements ?? []
+// The bars whose window includes this request's time (#238): decided per
+// request, so a window opening or closing needs no republish.
+const announcements = activeAnnouncements(
+	organization.announcements ?? [],
+	Date.now(),
+)
 const locales = organization.locales ?? ['en']
 const activeLocale =
 	Astro.locals.requestedLocale ||
@@ -57,6 +65,9 @@ const activeLocale =
 	'en'
 const localeDirection = getSiteLocaleDirection(activeLocale)
 const sections = page?.sections ?? []
+// The cookie banner (#89): tags load only as the guest's consent allows.
+const showConsentBanner = bannerApplies(organization)
+const consentMode = organization.consent?.mode ?? 'off'
 const isPreview = Astro.url.searchParams.get('preview') === 'true'
 const findChrome = (list: PublicWebsitePageSection[]) => ({
 	header: list.find((section) => section.type === 'header'),
@@ -131,10 +142,12 @@ const alternateLinks = [
 	googleTagManagerId={organization.googleTagManagerId ?? null}
 	googleAnalyticsId={organization.googleAnalyticsId ?? null}
 	tiktokPixelId={organization.tiktokPixelId ?? null}
+	consentMode={consentMode}
 	siteVerification={siteVerification}
 >
 	<slot name="head" slot="head" />
 	<div class="bg-background text-foreground flex min-h-dvh flex-col">
+		{showConsentBanner ? <ConsentBanner /> : null}
 		<AnnouncementBanners announcements={announcements} />
 		<SiteHeader
 			config={header?.config}
@@ -146,7 +159,11 @@ const alternateLinks = [
 				{page ? <RenderBlocks sections={sections} /> : null}
 			</slot>
 		</main>
-		<SiteFooter config={footer?.config} organization={organization} />
+		<SiteFooter
+			config={footer?.config}
+			organization={organization}
+			showCookieSettings={showConsentBanner}
+		/>
 		
 		{isPreview ? (
 			<>

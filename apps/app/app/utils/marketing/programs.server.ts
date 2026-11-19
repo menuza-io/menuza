@@ -16,6 +16,7 @@ import { checkJourneyOffers } from '#app/utils/discounts/marketing-offers.server
 import { renderJourneyEmailNodes } from '#app/utils/email/journey-render.server.ts'
 import { loadEmailRenderContext } from '#app/utils/email/render-context.server.ts'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
+import { requireModuleAgreement } from '#app/utils/legal/agreements.server.ts'
 import { loyaltyTriggersEnabled } from '#app/utils/marketing/loyalty-triggers.server.ts'
 import {
 	getMarketingFeatures,
@@ -118,9 +119,11 @@ export async function loadProgramCards(input: {
 		)
 		if (resultsRes?.ok) {
 			results =
-				((await resultsRes.json().catch(() => null)) as {
-					results?: typeof results
-				} | null)?.results ?? {}
+				(
+					(await resultsRes.json().catch(() => null)) as {
+						results?: typeof results
+					} | null
+				)?.results ?? {}
 		}
 	} catch {
 		results = {}
@@ -158,6 +161,7 @@ export type TurnOnResult =
 				| 'program_unavailable'
 				| 'program_already_active'
 				| 'review_link_required'
+				| 'agreement_required'
 				| 'offer_invalid'
 				| 'render_failed'
 				| 'create_failed'
@@ -220,11 +224,28 @@ export async function turnOnProgram(input: {
 			i18n._(t`This program is not available for your organization yet.`),
 		)
 	}
+	// A program that sends texts turns text marketing on: its terms first (#194).
+	if (input.channel === 'sms') {
+		const textTerms = await requireModuleAgreement(
+			input.organizationId,
+			'text_marketing',
+		)
+		if (textTerms) {
+			return failure(
+				'agreement_required',
+				i18n._(
+					t`Texts need the Text marketing terms. An owner can accept them in Settings, Legal.`,
+				),
+			)
+		}
+	}
 	const reviewUrl = validReviewUrl(input.reviewUrl)
 	if (template.requires.includes('review_link') && !reviewUrl) {
 		return failure(
 			'review_link_required',
-			i18n._(t`Paste the link to your Google review page (it starts with https://).`),
+			i18n._(
+				t`Paste the link to your Google review page (it starts with https://).`,
+			),
 		)
 	}
 
@@ -292,7 +313,10 @@ export async function turnOnProgram(input: {
 			programVersion: journey.programVersion,
 			nodes: rendered.nodes,
 			edges: journey.edges,
-			graphJson: JSON.stringify({ nodes: rendered.nodes, edges: journey.edges }),
+			graphJson: JSON.stringify({
+				nodes: rendered.nodes,
+				edges: journey.edges,
+			}),
 		}),
 	})
 	if (!createRes.ok) {
@@ -305,12 +329,18 @@ export async function turnOnProgram(input: {
 				i18n._(t`This program is already set up. Open it in Automations.`),
 			)
 		}
-		return failure('create_failed', i18n._(t`The program could not be created.`))
+		return failure(
+			'create_failed',
+			i18n._(t`The program could not be created.`),
+		)
 	}
 	const created = (await createRes.json()) as { journey?: { id?: string } }
 	const journeyId = created.journey?.id
 	if (!journeyId) {
-		return failure('create_failed', i18n._(t`The program could not be created.`))
+		return failure(
+			'create_failed',
+			i18n._(t`The program could not be created.`),
+		)
 	}
 
 	// Turning a program on brings the message limit with it (3 per guest per 7

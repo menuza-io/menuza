@@ -169,6 +169,21 @@
       "import": "./src/job-posting.ts",
       "default": "./src/job-posting.ts"
     },
+    "./site-consent": {
+      "types": "./src/site-consent.ts",
+      "import": "./src/site-consent.ts",
+      "default": "./src/site-consent.ts"
+    },
+    "./legal": {
+      "types": "./src/legal/index.ts",
+      "import": "./src/legal/index.ts",
+      "default": "./src/legal/index.ts"
+    },
+    "./announcement-window": {
+      "types": "./src/announcement-window.ts",
+      "import": "./src/announcement-window.ts",
+      "default": "./src/announcement-window.ts"
+    },
     "./site-locales": {
       "types": "./src/site-locales.ts",
       "import": "./src/site-locales.ts",

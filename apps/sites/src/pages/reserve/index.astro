@@ -1,6 +1,7 @@
 ---
 import { msg } from '@lingui/core/macro'
 import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
+import LegalLinks from '~/components/LegalLinks.astro'
 import ReservationLabels from '~/components/reservations/ReservationLabels.astro'
 import SitePage from '~/components/SitePage.astro'
 import { siteContainer } from '~/lib/media'
@@ -86,6 +87,11 @@ const phoneExample = smsAllowed ? '+1 415 555 0123' : '+966 50 123 4567'
 				<p class="text-sm text-muted-foreground">{loading}</p>
 				<noscript><p class="text-sm text-foreground">{noscript}</p></noscript>
 			</div>
+			{/* Booking details are personal data: link the policies (#89). */}
+			<LegalLinks
+				kinds={['terms', 'privacy']}
+				class="mt-6 max-w-3xl text-xs text-muted-foreground"
+			/>
 		</div>
 		<script>
 			import '~/scripts/reserve-page.ts'

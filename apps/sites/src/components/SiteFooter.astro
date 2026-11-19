@@ -1,5 +1,7 @@
 ---
+import { msg } from '@lingui/core/macro'
 import { resolveSiteLink, siteLinkHasDestination } from '@repo/common/site-link'
+import LegalLinks from '~/components/LegalLinks.astro'
 import SiteAnchor from '~/components/SiteAnchor.astro'
 import {
 	resolveMediaUrl,
@@ -32,9 +34,12 @@ interface Props {
 		copyright?: string
 	}
 	organization: SiteOrgChrome
+	/** The cookie banner applies, so the footer offers "Cookie settings" (#89). */
+	showCookieSettings?: boolean
 }
 
-const { config = {}, organization } = Astro.props
+const { config = {}, organization, showCookieSettings = false } = Astro.props
+const cookieSettingsLabel = Astro.locals.i18n._(msg`Cookie settings`)
 const columns = Array.isArray(config.columns) ? config.columns : []
 const socials = Array.isArray(config.socials)
 	? config.socials.filter((item) => item.platform && siteLinkHasDestination(item.url))
@@ -96,6 +101,18 @@ const copyright = config.copyright?.trim() || `© ${year} ${organization.name}`
 	<div class="border-t border-border/80">
 		<div class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
 			<p class="text-xs text-muted-foreground">{copyright}</p>
+			<div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+				<LegalLinks class="text-xs" />
+				{showCookieSettings ? (
+					<button
+						type="button"
+						class="underline underline-offset-2 hover:no-underline"
+						data-open-consent-settings
+					>
+						{cookieSettingsLabel}
+					</button>
+				) : null}
+			</div>
 			{socials.length > 0 ? (
 				<ul class="flex items-center gap-4">
 					{socials.map((social) => {

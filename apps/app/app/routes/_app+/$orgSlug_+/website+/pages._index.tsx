@@ -1,6 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
 import {
 	isReservedSiteLocaleSlug,
@@ -8,6 +9,7 @@ import {
 } from '@repo/common/site-locales'
 import {
 	and,
+	asc,
 	db,
 	desc,
 	eq,
@@ -75,9 +77,11 @@ import {
 } from '#app/utils/organization/permissions.server.ts'
 import { notifyIndexNowForPages } from '#app/utils/seo/indexnow.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
+import { logWebsiteActivity } from '#app/utils/website/activity.server.ts'
 import {
 	PAGE_TEMPLATES,
 	getDefaultConfig,
+	isLockedBlockType,
 	type BlockType,
 	type PageTemplate,
 } from '#app/utils/website/block-types.ts'
@@ -86,17 +90,31 @@ import { ensureSiteChrome } from '#app/utils/website/locked-chrome.server.ts'
 import { publishWebsitePage } from '#app/utils/website/publish-page.server.ts'
 import {
 	automaticRedirectStatements,
+	countRedirectsPointingAt,
 	loadRedirectRows,
 	normalizeRedirectPath,
 	planAutomaticRedirect,
 	websitePagePath,
 } from '#app/utils/website/redirects.server.ts'
+import { formatSiteDateTime } from '#app/utils/website/schedule-format.ts'
+import {
+	cancelSchedule,
+	listActiveSchedules,
+} from '#app/utils/website/scheduled-publish.server.ts'
+import { getSiteTimeZone } from '#app/utils/website/site-time-zone.server.ts'
+import { keepDeletedPageVersions } from '#app/utils/website/version-actions.server.ts'
+import {
+	pageDraftState,
+	type SectionLike,
+} from '#app/utils/website/versions.ts'
 
 // --- Action Intents ---
 const createPageIntent = 'create-page'
 const publishPageIntent = 'publish-page'
 const unpublishPageIntent = 'unpublish-page'
 const deletePageIntent = 'delete-page'
+/** Cancels a page's scheduled publish (#180). */
+const cancelScheduleIntent = 'cancel-schedule'
 
 // --- Schemas ---
 const CreatePageSchema = z.object({
@@ -117,10 +135,17 @@ const CreatePageSchema = z.object({
 })
 
 const PageActionSchema = z.object({
-	intent: z.enum([publishPageIntent, unpublishPageIntent, deletePageIntent]),
+	intent: z.enum([
+		publishPageIntent,
+		unpublishPageIntent,
+		deletePageIntent,
+		cancelScheduleIntent,
+	]),
 	pageId: z.string().min(1),
 	/** Delete only: where visitors of a published page go (#88). Home by default. */
 	redirectTo: z.string().max(200).optional(),
+	/** Unpublish only: the operator saw how many redirects point here (#248). */
+	confirmRedirects: z.enum(['true', 'false']).optional(),
 })
 
 // --- Loader ---
@@ -168,11 +193,51 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		],
 	})
 
+	// Each page's saved sections, to tell which have unpublished changes (#85).
+	const sectionRows = await db
+		.select({
+			pageId: WebsitePageSection.pageId,
+			type: WebsitePageSection.type,
+			config: WebsitePageSection.config,
+		})
+		.from(WebsitePageSection)
+		.innerJoin(WebsitePage, eq(WebsitePage.id, WebsitePageSection.pageId))
+		.where(eq(WebsitePage.organizationId, organization.id))
+		.orderBy(asc(WebsitePageSection.position))
+	const sectionsByPage = new Map<string, SectionLike[]>()
+	for (const row of sectionRows) {
+		if (isLockedBlockType(row.type)) continue
+		const list = sectionsByPage.get(row.pageId) ?? []
+		list.push({ type: row.type, config: row.config })
+		sectionsByPage.set(row.pageId, list)
+	}
+	const redirectRows = await loadRedirectRows(organization.id)
+	const schedules = await listActiveSchedules(organization.id)
+	const timeZone = await getSiteTimeZone(organization.id)
+	const states = await Promise.all(
+		pages.map((page) =>
+			pageDraftState({
+				status: page.status,
+				publishedData: page.publishedData,
+				draftSections: sectionsByPage.get(page.id) ?? [],
+			}),
+		),
+	)
+
 	return {
 		organization,
 		defaultLocale,
-		pages: pages.map(({ publishedData, ...page }) => ({
+		timeZone,
+		pages: pages.map(({ publishedData, ...page }, index) => ({
 			...page,
+			hasUnpublishedChanges: states[index]!.hasUnpublishedChanges,
+			// Redirects that send visitors here, so unpublishing warns first (#248).
+			redirectsHere: redirectRows.filter(
+				(row) => normalizeRedirectPath(row.toPath) === websitePagePath(page),
+			).length,
+			scheduledFor:
+				schedules.find((schedule) => schedule.pageId === page.id)?.runAt ??
+				null,
 			// Was public at some point: deleting it asks where visitors go.
 			wasPublished: page.status === 'published' || publishedData !== null,
 			title:
@@ -290,7 +355,8 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 	if (
 		intent === publishPageIntent ||
 		intent === unpublishPageIntent ||
-		intent === deletePageIntent
+		intent === deletePageIntent ||
+		intent === cancelScheduleIntent
 	) {
 		const submission = parseWithZod(formData, { schema: PageActionSchema })
 
@@ -306,6 +372,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 		const [page] = await db
 			.select({
 				id: WebsitePage.id,
+				title: WebsitePage.title,
 				isHomePage: WebsitePage.isHomePage,
 				slug: WebsitePage.slug,
 				status: WebsitePage.status,
@@ -336,8 +403,32 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 				organization.customDomain,
 			)
 
+		if (intent === cancelScheduleIntent) {
+			const cancelled = await cancelSchedule(organization.id, pageId)
+			if (cancelled) {
+				await logWebsiteActivity({
+					action: AuditAction.WEBSITE_SCHEDULE_CANCELLED,
+					organizationId: organization.id,
+					userId,
+					details: `Cancelled the scheduled publish of "${page.title}".`,
+					metadata: { pageId, pageTitle: page.title },
+					request,
+				})
+			}
+			return Response.json({ status: 'success' as const, cancelled })
+		}
+
 		if (intent === publishPageIntent) {
-			await publishWebsitePage(pageId)
+			await publishWebsitePage(pageId, db, { publishedById: userId })
+			await cancelSchedule(organization.id, pageId, 'published_now')
+			await logWebsiteActivity({
+				action: AuditAction.WEBSITE_PAGE_PUBLISHED,
+				organizationId: organization.id,
+				userId,
+				details: `Published the page "${page.title}".`,
+				metadata: { pageId, pageTitle: page.title },
+				request,
+			})
 			await purgeSiteCache()
 			// #138: tell IndexNow engines, without making the operator wait.
 			runAfterResponse(context, () =>
@@ -353,10 +444,34 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 					error: 'Cannot unpublish the home page',
 				})
 			}
+			// #248: redirects that send visitors here would land on a missing page.
+			const redirectsHere = await countRedirectsPointingAt(
+				organization.id,
+				websitePagePath(page),
+			)
+			if (redirectsHere > 0 && submission.value.confirmRedirects !== 'true') {
+				return Response.json(
+					{
+						status: 'error' as const,
+						error: 'redirects_point_here',
+						redirectCount: redirectsHere,
+					},
+					{ status: 409 },
+				)
+			}
 			await db
 				.update(WebsitePage)
 				.set({ status: 'draft' })
 				.where(eq(WebsitePage.id, pageId))
+			await cancelSchedule(organization.id, pageId, 'unpublished')
+			await logWebsiteActivity({
+				action: AuditAction.WEBSITE_PAGE_UNPUBLISHED,
+				organizationId: organization.id,
+				userId,
+				details: `Unpublished the page "${page.title}".`,
+				metadata: { pageId, pageTitle: page.title },
+				request,
+			})
 			await purgeSiteCache()
 			return Response.json({ status: 'success' as const })
 		}
@@ -371,10 +486,22 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 			const deletePage = db
 				.delete(WebsitePage)
 				.where(eq(WebsitePage.id, pageId))
+			// Its versions are kept 30 days (#85); a scheduled publish dies with it.
+			const keepVersions = keepDeletedPageVersions(organization.id, pageId)
+			const deleted = () =>
+				logWebsiteActivity({
+					action: AuditAction.WEBSITE_PAGE_DELETED,
+					organizationId: organization.id,
+					userId,
+					details: `Deleted the page "${page.title}".`,
+					metadata: { pageId, pageTitle: page.title },
+					request,
+				})
 			const wasEverPublished =
 				page.status === 'published' || page.publishedData !== null
 			if (!wasEverPublished) {
-				await deletePage
+				await db.batch([keepVersions, deletePage])
+				await deleted()
 				await purgeSiteCache()
 				return Response.json({ status: 'success' as const })
 			}
@@ -421,7 +548,8 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 				null,
 				plan,
 			)
-			await db.batch([deletePage, ...statements])
+			await db.batch([keepVersions, deletePage, ...statements])
+			await deleted()
 			await purgeSiteCache()
 			return Response.json({
 				status: 'success' as const,
@@ -447,6 +575,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 function PageRow({
 	page,
 	destinations,
+	timeZone,
 }: {
 	page: {
 		id: string
@@ -455,13 +584,22 @@ function PageRow({
 		status: string
 		isHomePage: boolean
 		wasPublished: boolean
+		hasUnpublishedChanges: boolean
+		redirectsHere: number
+		scheduledFor: string | null
 		createdByName: string
 		updatedAt: string
 	}
 	/** Published pages a deleted page's visitors can be sent to (#88). */
 	destinations: Array<{ path: string; title: string }>
+	timeZone: string
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
+	const redirectCount = page.redirectsHere
+	const goesLive = page.scheduledFor
+		? formatSiteDateTime(page.scheduledFor, timeZone, i18n.locale)
+		: ''
+	const [unpublishDialogOpen, setUnpublishDialogOpen] = useState(false)
 	const [redirectTo, setRedirectTo] = useState('/')
 	const publishFetcher = useFetcher()
 	const deleteFetcher = useFetcher()
@@ -512,6 +650,16 @@ function PageRow({
 						<Trans>Draft</Trans>
 					)}
 				</Badge>
+				{optimisticStatus === 'published' && page.hasUnpublishedChanges ? (
+					<Badge variant="outline" className="ml-2">
+						<Trans>Unpublished changes</Trans>
+					</Badge>
+				) : null}
+				{page.scheduledFor ? (
+					<p className="text-muted-foreground mt-1 text-xs">
+						<Trans>Goes live {goesLive}</Trans>
+					</p>
+				) : null}
 			</TableCell>
 			<TableCell className="text-muted-foreground hidden text-sm md:table-cell">
 				{formatDistanceToNow(new Date(page.updatedAt), { addSuffix: true })}
@@ -558,6 +706,10 @@ function PageRow({
 						) : !page.isHomePage ? (
 							<DropdownMenuItem
 								onClick={() => {
+									if (page.redirectsHere > 0) {
+										setUnpublishDialogOpen(true)
+										return
+									}
 									void publishFetcher.submit(
 										{
 											intent: unpublishPageIntent,
@@ -572,6 +724,33 @@ function PageRow({
 							</DropdownMenuItem>
 						) : null}
 
+						{page.scheduledFor ? (
+							<>
+								<DropdownMenuItem
+									onClick={() => {
+										void publishFetcher.submit(
+											{ intent: publishPageIntent, pageId: page.id },
+											{ method: 'POST' },
+										)
+									}}
+								>
+									<Icon name="check-circle" className="mr-2 size-4" />
+									<Trans>Publish now</Trans>
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => {
+										void publishFetcher.submit(
+											{ intent: cancelScheduleIntent, pageId: page.id },
+											{ method: 'POST' },
+										)
+									}}
+								>
+									<Icon name="x" className="mr-2 size-4" />
+									<Trans>Cancel schedule</Trans>
+								</DropdownMenuItem>
+							</>
+						) : null}
+
 						{!page.isHomePage && (
 							<DropdownMenuItem
 								className="text-destructive focus:text-destructive"
@@ -583,6 +762,57 @@ function PageRow({
 						)}
 					</DropdownMenuContent>
 				</DropdownMenu>
+
+				{!page.isHomePage && page.redirectsHere > 0 ? (
+					<AlertDialog
+						open={unpublishDialogOpen}
+						onOpenChange={setUnpublishDialogOpen}
+					>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>
+									<Trans>Unpublish a page that redirects point to?</Trans>
+								</AlertDialogTitle>
+								<AlertDialogDescription>
+									{page.redirectsHere === 1 ? (
+										<Trans>
+											1 redirect sends visitors to "{pageTitle}". While it is
+											unpublished, they go to the home page instead, and return
+											to this page when you publish it again.
+										</Trans>
+									) : (
+										<Trans>
+											{redirectCount} redirects send visitors to "
+											{pageTitle}". While it is unpublished, they go to the home
+											page instead, and return to this page when you publish it
+											again.
+										</Trans>
+									)}
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel>
+									<Trans>Cancel</Trans>
+								</AlertDialogCancel>
+								<AlertDialogAction
+									onClick={() => {
+										void publishFetcher.submit(
+											{
+												intent: unpublishPageIntent,
+												pageId: page.id,
+												confirmRedirects: 'true',
+											},
+											{ method: 'POST' },
+										)
+										setUnpublishDialogOpen(false)
+									}}
+								>
+									<Trans>Unpublish</Trans>
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
+				) : null}
 
 				{!page.isHomePage && (
 					<AlertDialog
@@ -637,6 +867,21 @@ function PageRow({
 											keep working.
 										</Trans>
 									</p>
+									{page.redirectsHere > 0 ? (
+										<p className="text-muted-foreground text-xs">
+											{page.redirectsHere === 1 ? (
+												<Trans>
+													1 redirect that pointed here is sent to the same
+													place.
+												</Trans>
+											) : (
+												<Trans>
+													{redirectCount} redirects that pointed here are sent
+													to the same place.
+												</Trans>
+											)}
+										</p>
+									) : null}
 								</div>
 							) : null}
 							<AlertDialogFooter>
@@ -669,7 +914,7 @@ function PageRow({
 
 // --- Main Page Component ---
 export default function WebsitePagesRoute() {
-	const { pages, search } = useLoaderData<typeof loader>()
+	const { pages, search, timeZone } = useLoaderData<typeof loader>()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const { _ } = useLingui()
 	const [createOpen, setCreateOpen] = useState(false)
@@ -777,6 +1022,7 @@ export default function WebsitePagesRoute() {
 										<PageRow
 											key={page.id}
 											page={page}
+											timeZone={timeZone}
 											destinations={[
 												{ path: '/', title: _(t`Home page`) },
 												...pages

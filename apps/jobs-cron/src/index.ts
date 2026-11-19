@@ -6,6 +6,11 @@ import {
 } from './social-post-workflow'
 import { StorageMigrationWorkflow } from './storage-migration-workflow'
 import type { MarketingJourneyWorkflowParams } from './types'
+import {
+	WEBSITE_PUBLISH_PATH,
+	WebsitePublishWorkflow,
+	type WebsitePublishWorkflowParams,
+} from './website-publish-workflow'
 
 export interface Env {
 	APP_BASE_URL: string
@@ -15,6 +20,7 @@ export interface Env {
 	STORAGE_MIGRATION_WORKFLOW: Workflow<{ migrationId: string }>
 	MARKETING_JOURNEY_WORKFLOW: Workflow<MarketingJourneyWorkflowParams>
 	SOCIAL_POST_WORKFLOW: Workflow<SocialPostWorkflowParams>
+	WEBSITE_PUBLISH_WORKFLOW: Workflow<WebsitePublishWorkflowParams>
 }
 
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
@@ -23,6 +29,8 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 	'0 2 * * *': [
 		'/resources/jobs/audit-log-archival',
 		'/resources/jobs/menu-snapshot-prune',
+		// Website versions of deleted pages after 30 days, and finished schedules (#85).
+		'/resources/jobs/website-version-prune',
 	],
 	'0 3 * * *': [
 		'/resources/jobs/mcp-token-cleanup',
@@ -73,6 +81,9 @@ const GBP_SYNC_PATH = '/resources/jobs/gbp-sync'
 // the App and this Worker. A post due later is left to the hourly
 // social-publish sweep (the App logs the refused wake-up and carries on).
 const SOCIAL_POST_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
+// A scheduled website publish is at most 90 days ahead (#180), well inside the
+// year a Workflow can sleep; the same margin applies.
+const WEBSITE_PUBLISH_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
 
 async function safeCompareAsync(
 	a: string | null | undefined,
@@ -552,6 +563,62 @@ export default {
 		}
 
 		// =========================================================================
+		// Website Publish Workflow: wake the App when a scheduled publish is due
+		// POST /workflows/website-publish/start  { scheduleId, runAt }  (#180)
+		// =========================================================================
+		if (
+			(pathname === '/workflows/website-publish/start' ||
+				pathname === '/api/workflows/website-publish/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				scheduleId?: unknown
+				runAt?: unknown
+			}
+			const scheduleId =
+				typeof body.scheduleId === 'string' ? body.scheduleId : ''
+			const runAt =
+				typeof body.runAt === 'string' ? new Date(body.runAt) : new Date('')
+			if (
+				!/^[a-z0-9]{8,64}$/i.test(scheduleId) ||
+				Number.isNaN(runAt.getTime())
+			) {
+				return Response.json(
+					{ error: 'scheduleId and runAt are required' },
+					{ status: 400 },
+				)
+			}
+			if (runAt.getTime() - Date.now() > WEBSITE_PUBLISH_MAX_LEAD_MS) {
+				return Response.json(
+					{ error: 'runAt is too far ahead to wait for' },
+					{ status: 400 },
+				)
+			}
+
+			// One instance per schedule and time: starting it twice is harmless.
+			const instanceId = `website-${scheduleId}-${runAt.getTime()}`
+			try {
+				const instance = await env.WEBSITE_PUBLISH_WORKFLOW.create({
+					id: instanceId,
+					params: { scheduleId, runAt: runAt.toISOString() },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start website publish workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
 		// 3. Marketing Journey Workflow: Cancel / Terminate
 		// POST /api/workflows/marketing-journey/:instanceId/cancel
 		// POST /workflows/marketing-journey/:instanceId/cancel
@@ -667,6 +734,13 @@ export default {
 					'Google Business Profile sync sweep',
 					(jobEnv: Env) => invokeJob(jobEnv, GBP_SYNC_PATH),
 				],
+				// Scheduled website publishes are woken on time by
+				// WebsitePublishWorkflow; this sweep catches a wake-up that could not
+				// be started and retries a publish that failed (#180).
+				[
+					'Website publish sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, WEBSITE_PUBLISH_PATH),
+				],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {
@@ -706,4 +780,5 @@ export {
 	StorageMigrationWorkflow,
 	MarketingJourneyWorkflow,
 	SocialPostWorkflow,
+	WebsitePublishWorkflow,
 }

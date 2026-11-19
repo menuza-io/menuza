@@ -4,6 +4,7 @@ import {
 } from '@repo/common/site-theme'
 import { and, db, eq, isNull, Organization, sql } from '@repo/database'
 import { type SQL } from 'drizzle-orm'
+import { canonicalJson } from './versions.ts'
 
 type SiteTheme = ReturnType<typeof parseSiteThemeConfig>
 
@@ -66,6 +67,52 @@ export async function updateSiteTheme(
 			typeof themeUpdate,
 		])
 		const updated = results[results.length - 1] as unknown as { id: string }[]
+		if (updated.length > 0) return
+	}
+	throw new SiteThemeConflictError()
+}
+
+/**
+ * Like `updateSiteTheme`, but writes the unpublished theme (#85): the change
+ * applies to the draft when there is one and to live otherwise, and lands in
+ * `Organization.draftSiteTheme`. The public site keeps reading `siteTheme`
+ * until a publish. A result equal to live clears the draft. The write only
+ * applies while both columns still hold what was read, and is otherwise tried
+ * again on the newer values.
+ */
+export async function updateSiteThemeDraft(
+	organizationId: string,
+	change: (current: SiteTheme) => SiteTheme,
+) {
+	for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+		const [org] = await db
+			.select({
+				siteTheme: Organization.siteTheme,
+				draftSiteTheme: Organization.draftSiteTheme,
+			})
+			.from(Organization)
+			.where(eq(Organization.id, organizationId))
+			.limit(1)
+		if (!org) throw new Error('Organization not found')
+		const next = serializeSiteThemeConfig(
+			change(parseSiteThemeConfig(org.draftSiteTheme ?? org.siteTheme)),
+		)
+		const liveNormalized = serializeSiteThemeConfig(
+			parseSiteThemeConfig(org.siteTheme),
+		)
+		const draft =
+			canonicalJson(next) === canonicalJson(liveNormalized) ? null : next
+		const updated = await db
+			.update(Organization)
+			.set({ draftSiteTheme: draft })
+			.where(
+				and(
+					eq(Organization.id, organizationId),
+					sql`${Organization.siteTheme} IS ${org.siteTheme}`,
+					sql`${Organization.draftSiteTheme} IS ${org.draftSiteTheme}`,
+				),
+			)
+			.returning({ id: Organization.id })
 		if (updated.length > 0) return
 	}
 	throw new SiteThemeConflictError()

@@ -21,6 +21,10 @@ import {
 	siteThemeActionIntent,
 	uploadSiteFontActionIntent,
 } from '#app/components/settings/cards/organization/site-theme-card.tsx'
+import {
+	DiscardChangesDialog,
+	UnpublishedChangesBadge,
+} from '#app/components/website/publish-controls.tsx'
 
 const MAX_ICON_SIZE = 1024 * 1024 * 5
 
@@ -40,6 +44,9 @@ export function BrandingPanel({
 	organization,
 	themeConfig,
 	onPreviewRefresh,
+	siteDesignPending = false,
+	onOpenHistory,
+	onSchedule,
 }: {
 	organization: {
 		id: string
@@ -48,7 +55,13 @@ export function BrandingPanel({
 	}
 	themeConfig: SiteThemeConfig
 	onPreviewRefresh: () => void
+	/** Header, footer or theme has unpublished changes (#85). */
+	siteDesignPending?: boolean
+	onOpenHistory?: () => void
+	onSchedule?: () => void
 }) {
+	const publishFetcher = useFetcher<{ status?: string; error?: string }>()
+	const [discardOpen, setDiscardOpen] = useState(false)
 	const themeFetcher = useFetcher<{ status?: string; error?: string }>()
 	const iconFetcher = useFetcher<{ status?: string; error?: string }>()
 	const fontFetcher = useFetcher<{ status?: string; error?: string }>()
@@ -372,12 +385,92 @@ export function BrandingPanel({
 					) : null}
 				</div>
 			</ScrollArea>
-			<div className="border-border bg-background flex items-center justify-end border-t p-3">
-				<Button size="sm" onClick={handleSaveTheme} disabled={busyTheme}>
-					{busyTheme ? <Spinner className="mr-2 size-3" /> : null}
-					<Trans>Save Branding</Trans>
-				</Button>
+			<div className="border-border bg-background space-y-2 border-t p-3">
+				{siteDesignPending ? (
+					<div className="flex items-center justify-between gap-2">
+						<UnpublishedChangesBadge />
+						<p className="text-muted-foreground text-[11px] leading-snug">
+							<Trans>
+								Visitors keep seeing the live header, footer and theme until you
+								publish.
+							</Trans>
+						</p>
+					</div>
+				) : null}
+				{publishFetcher.data?.status === 'error' ? (
+					<p role="alert" className="text-destructive text-xs">
+						{publishFetcher.data.error}
+					</p>
+				) : null}
+				<div className="flex flex-wrap items-center justify-end gap-2">
+					{onOpenHistory ? (
+						<Button
+							type="button"
+							size="sm"
+							variant="ghost"
+							onClick={onOpenHistory}
+						>
+							<Trans>History</Trans>
+						</Button>
+					) : null}
+					{siteDesignPending ? (
+						<Button
+							type="button"
+							size="sm"
+							variant="ghost"
+							disabled={publishFetcher.state !== 'idle'}
+							onClick={() => setDiscardOpen(true)}
+						>
+							<Trans>Discard</Trans>
+						</Button>
+					) : null}
+					{onSchedule ? (
+						<Button
+							type="button"
+							size="sm"
+							variant="outline"
+							onClick={onSchedule}
+						>
+							<Trans>Publish later</Trans>
+						</Button>
+					) : null}
+					<Button
+						size="sm"
+						variant="outline"
+						onClick={handleSaveTheme}
+						disabled={busyTheme}
+					>
+						{busyTheme ? <Spinner className="mr-2 size-3" /> : null}
+						<Trans>Save Branding</Trans>
+					</Button>
+					<Button
+						size="sm"
+						disabled={!siteDesignPending || publishFetcher.state !== 'idle'}
+						onClick={() => {
+							void publishFetcher.submit(
+								{ intent: 'publish-site' },
+								{ method: 'POST' },
+							)
+						}}
+					>
+						{publishFetcher.state !== 'idle' ? (
+							<Spinner className="mr-2 size-3" />
+						) : null}
+						<Trans>Publish branding</Trans>
+					</Button>
+				</div>
 			</div>
+			<DiscardChangesDialog
+				site
+				open={discardOpen}
+				onOpenChange={setDiscardOpen}
+				onConfirm={() => {
+					void publishFetcher.submit(
+						{ intent: 'discard-site-draft' },
+						{ method: 'POST' },
+					)
+				}}
+			/>
 		</div>
 	)
 }

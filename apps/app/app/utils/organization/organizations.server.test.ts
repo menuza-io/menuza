@@ -118,7 +118,19 @@ describe('createOrganization', () => {
 				config: '{"heading":"Welcome to Acme"}',
 			},
 		]
-		mockSelectResults([{ id: 'role-admin' }], storedSections)
+		mockSelectResults(
+			[{ id: 'role-admin' }],
+			// publishWebsitePage reads the page (for its version), then its sections.
+			[
+				{
+					organizationId: 'org-1',
+					title: HOME_PAGE_TITLE,
+					slug: HOME_PAGE_SLUG,
+					publishedData: null,
+				},
+			],
+			storedSections,
+		)
 		const { updatedValues } = captureUpdates()
 
 		await createOrganization({
