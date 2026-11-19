@@ -49,6 +49,31 @@
       "import": "./src/location-types.ts",
       "default": "./src/location-types.ts"
     },
+    "./cuisines": {
+      "types": "./src/cuisines.ts",
+      "import": "./src/cuisines.ts",
+      "default": "./src/cuisines.ts"
+    },
+    "./seo-keywords": {
+      "types": "./src/seo-keywords.ts",
+      "import": "./src/seo-keywords.ts",
+      "default": "./src/seo-keywords.ts"
+    },
+    "./site-events": {
+      "types": "./src/site-events.ts",
+      "import": "./src/site-events.ts",
+      "default": "./src/site-events.ts"
+    },
+    "./site-seo": {
+      "types": "./src/site-seo.ts",
+      "import": "./src/site-seo.ts",
+      "default": "./src/site-seo.ts"
+    },
+    "./site-landing-pages": {
+      "types": "./src/site-landing-pages.ts",
+      "import": "./src/site-landing-pages.ts",
+      "default": "./src/site-landing-pages.ts"
+    },
     "./location-currency": {
       "types": "./src/location-currency.ts",
       "import": "./src/location-currency.ts",

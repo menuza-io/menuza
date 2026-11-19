@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "astro check",
-    "test": "vitest run",
+    "test": "vitest run && vitest run -c vitest.astro.config.ts",
     "lingui:extract": "lingui extract --clean",
     "dummy": "echo"
   },

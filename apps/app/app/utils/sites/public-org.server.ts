@@ -1,3 +1,4 @@
+import { formatPriceRange, parseStoredCuisines } from '@repo/common/cuisines'
 import {
 	negotiateSiteLocale,
 	parseLocalizedString,
@@ -6,6 +7,7 @@ import {
 	type SiteContentLocale,
 	type SiteLocalesConfig,
 } from '@repo/common/site-locales'
+import { isIndexNowKey, parseVerificationCode } from '@repo/common/site-seo'
 import {
 	buildSiteThemeCss,
 	parseSiteThemeConfig,
@@ -22,6 +24,7 @@ import {
 	WebsiteRedirect,
 } from '@repo/database'
 import { isSafeAnnouncementLink } from '#app/utils/safe-link.ts'
+import { readSearchConsoleVerificationToken } from '#app/utils/seo/search-console.server.ts'
 import {
 	composePageSectionsWithChrome,
 	getDefaultConfig,
@@ -57,6 +60,13 @@ export type PublicSiteOrganization = {
 	googleTagManagerId: string | null
 	googleAnalyticsId: string | null
 	tiktokPixelId: string | null
+	cuisines?: string | null
+	priceRange?: number | null
+	googleSiteVerification?: string | null
+	bingSiteVerification?: string | null
+	indexNowKey?: string | null
+	/** The Search Console verification token (#138), when connected. */
+	searchConsoleVerification?: string | null
 	announcements: Array<{
 		id: string
 		content: string
@@ -94,6 +104,17 @@ export type PublicSitePayload = {
 	googleTagManagerId: string | null
 	googleAnalyticsId: string | null
 	tiktokPixelId: string | null
+	/** Cuisine keys (#182); empty when not set. */
+	cuisines: string[]
+	/** `$` to `$$$$` in the local currency symbol, or null. */
+	priceRange: string | null
+	/**
+	 * Search engine verification codes for the home page meta tags (#138):
+	 * the operator's own Google code and the Search Console one, and Bing's.
+	 */
+	siteVerification: { google: string[]; bing: string | null }
+	/** IndexNow key (#138), served at `/<key>.txt`. */
+	indexNowKey: string | null
 }
 
 const ANNOUNCEMENT_TYPES = ['info', 'warning', 'error', 'success'] as const
@@ -200,6 +221,29 @@ export function toPublicSitePayload(
 		googleTagManagerId: organization.googleTagManagerId ?? null,
 		googleAnalyticsId: organization.googleAnalyticsId ?? null,
 		tiktokPixelId: organization.tiktokPixelId ?? null,
+		cuisines: parseStoredCuisines(organization.cuisines) ?? [],
+		priceRange:
+			formatPriceRange(
+				organization.priceRange,
+				organization.dataRegion === 'ksa' ? 'SAR' : 'USD',
+			) || null,
+		siteVerification: {
+			google: [
+				organization.googleSiteVerification,
+				organization.searchConsoleVerification,
+			]
+				.map((code) => (code ? parseVerificationCode('google', code) : null))
+				.filter(
+					(code, index, all): code is string =>
+						Boolean(code) && all.indexOf(code) === index,
+				),
+			bing: organization.bingSiteVerification
+				? parseVerificationCode('bing', organization.bingSiteVerification)
+				: null,
+		},
+		indexNowKey: isIndexNowKey(organization.indexNowKey)
+			? organization.indexNowKey
+			: null,
 	}
 }
 
@@ -264,7 +308,15 @@ export async function findPublishedSiteOrganization(options: {
 				eq(WebsiteRedirect.isEnabled, true),
 			),
 		)
-	return { ...organization, announcements, redirects }
+	const searchConsoleVerification = await readSearchConsoleVerificationToken(
+		organization.id,
+	)
+	return {
+		...organization,
+		announcements,
+		redirects,
+		searchConsoleVerification,
+	}
 }
 
 export type PublicSitePageSection = {

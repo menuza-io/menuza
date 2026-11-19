@@ -32,6 +32,8 @@ as the Admin cache route).
 | `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`                  | Remove expired MCP tokens                       |
 | `0 3 * * *` | `/resources/jobs/job-postings-expiry`                | Mark job postings past their closing date       |
 | `0 3 * * *` | `/resources/jobs/seat-reconcile`                     | Sync Stripe seat counts with active members     |
+| `0 3 * * *` | `/resources/jobs/seo-rank-check`                     | Weekly local rank check per keyword (#182)      |
+| `0 3 * * *` | `/resources/jobs/search-console-sync`                | Search Console setup retry and 28-day fetch     |
 | `0 4 * * *` | `/resources/jobs/gdpr-erasure`                       | Process pending GDPR erasures                   |
 | `0 4 * * *` | `/resources/jobs/voice-retention`                    | Delete expired call recordings and caller data  |
 | `0 4 * * *` | `/resources/jobs/staffing-outbox`                    | Deliver staffing link, unlink, and erase events |

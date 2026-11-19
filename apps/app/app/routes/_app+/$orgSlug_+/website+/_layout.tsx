@@ -2,10 +2,28 @@ import { t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { PageHeader } from '@repo/ui/page-header'
 import { WorkspacePage, WorkspaceTabBar } from '@repo/ui/workspace'
-import { Outlet, useLocation, useParams } from 'react-router'
+import {
+	type LoaderFunctionArgs,
+	Outlet,
+	useLoaderData,
+	useLocation,
+	useParams,
+} from 'react-router'
 import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { getLandingFeatures } from '#app/utils/seo/landing-pages.server.ts'
+
+/** Which optional Website tabs this organization has (#184 events). */
+export async function loader({ request, params }: LoaderFunctionArgs) {
+	const organization = await requireUserOrganization(request, params.orgSlug, {
+		id: true,
+	})
+	const features = await getLandingFeatures(organization.id)
+	return { events: features.events, areaPages: features.areaPages }
+}
 
 export default function WebsiteLayout() {
+	const features = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const location = useLocation()
 	const params = useParams()
@@ -41,6 +59,33 @@ export default function WebsiteLayout() {
 							`/${orgSlug}/website/analytics`,
 						),
 					},
+					{
+						label: _(t`SEO`),
+						href: `/${orgSlug}/website/seo`,
+						isActive: location.pathname.includes(`/${orgSlug}/website/seo`),
+					},
+					...(features?.events
+						? [
+								{
+									label: _(t`Events`),
+									href: `/${orgSlug}/website/events`,
+									isActive: location.pathname.includes(
+										`/${orgSlug}/website/events`,
+									),
+								},
+							]
+						: []),
+					...(features?.areaPages
+						? [
+								{
+									label: _(t`Area pages`),
+									href: `/${orgSlug}/website/area-pages`,
+									isActive: location.pathname.includes(
+										`/${orgSlug}/website/area-pages`,
+									),
+								},
+							]
+						: []),
 				]
 			: []),
 		...(canReadAnnouncements

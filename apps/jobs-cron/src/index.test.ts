@@ -592,7 +592,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			)
 		})
 
-		it('runs MCP token cleanup, job postings expiry and the seat reconcile from the shared 0 3 trigger', async () => {
+		it('runs MCP token cleanup, job postings expiry, the seat reconcile and the SEO jobs from the shared 0 3 trigger', async () => {
 			const fetchMock = vi.fn(async (url: string) =>
 				url.endsWith('/mcp-token-cleanup')
 					? new Response('down', { status: 502 })
@@ -616,10 +616,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				'https://app.example.com/resources/jobs/mcp-token-cleanup',
 				'https://app.example.com/resources/jobs/job-postings-expiry',
 				'https://app.example.com/resources/jobs/seat-reconcile',
+				'https://app.example.com/resources/jobs/seo-rank-check',
+				'https://app.example.com/resources/jobs/search-console-sync',
 			])
 			// One failing job does not stop the others from running.
 			expect(results.map((result) => result.status)).toEqual([
 				'rejected',
+				'fulfilled',
+				'fulfilled',
 				'fulfilled',
 				'fulfilled',
 			])

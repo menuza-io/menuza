@@ -96,8 +96,8 @@ describe('Providers Index', () => {
 		it('should register all providers', () => {
 			initializeProviders()
 
-			// Nine note providers, five POS/delivery providers, and seven review providers (GBP, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, Resy).
-			expect(providerRegistry.register).toHaveBeenCalledTimes(21)
+			// Nine note providers, five POS/delivery providers, seven review providers (GBP, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, Resy) and Google Search Console (#138).
+			expect(providerRegistry.register).toHaveBeenCalledTimes(22)
 
 			// Verify each provider was registered
 			const registerCalls = vi.mocked(providerRegistry.register).mock.calls

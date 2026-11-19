@@ -1,0 +1,36 @@
+---
+import { msg } from '@lingui/core/macro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer } from '~/lib/media'
+import { type PublicOrganization } from '~/lib/org'
+
+/**
+ * A generated page that existed and was removed (a deactivated location, an
+ * event over for 30 days): answers 410 Gone so search engines drop it, with a
+ * link to where the visitor can go instead. The route sets the status.
+ */
+interface Props {
+	organization: PublicOrganization
+	title: string
+	backHref: string
+	backLabel: string
+}
+
+const { organization, title, backHref, backLabel } = Astro.props
+const i18n = Astro.locals.i18n
+const heading = i18n._(msg`This page is no longer available.`)
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'gone', title, slug: 'gone', isHomePage: false, sections: [] }}
+	title={`${title} - ${organization.name}`}
+	noIndex={true}
+>
+	<div class:list={[siteContainer, 'py-20']}>
+		<div class="surface flex flex-col items-start gap-3 px-6 py-10">
+			<p class="text-base font-semibold text-foreground">{heading}</p>
+			<a href={backHref} class="btn-secondary">{backLabel}</a>
+		</div>
+	</div>
+</SitePage>

@@ -1,3 +1,4 @@
+import { servesCuisine } from '@repo/common/cuisines'
 import { serializeJsonLd } from '@repo/common/job-posting'
 import { DAYS_OF_WEEK, type DayOfWeek } from '@repo/common/location-types'
 import { getLocaleHref } from '@repo/common/site-locales'
@@ -23,6 +24,10 @@ export type RestaurantJsonLdLocation = {
 	/** `WeeklySchedule`, possibly a JSON string. */
 	storeHours: unknown
 	fulfillmentOptions?: unknown
+	/** Cuisine keys for this location (its override or the organization's, #182). */
+	cuisines?: readonly string[]
+	/** Price range text for this location (`$$`), when set. */
+	priceRange?: string | null
 }
 
 export type RestaurantJsonLdInput = {
@@ -38,6 +43,14 @@ export type RestaurantJsonLdInput = {
 	hasMenu: boolean
 	/** Online booking is on (the reservations gate's `online`). */
 	reservationsOnline: boolean
+	/** Organization cuisine keys (#182); left out when empty. */
+	cuisines?: readonly string[]
+	/** Organization price range text (`$$` in the local symbol); left out when empty. */
+	priceRange?: string | null
+	/** Location page addresses by location id (#137), used as each branch's `url`. */
+	locationPageUrls?: Readonly<Record<string, string>>
+	/** Name each location after the brand ("Al Bait - Olaya"). Default: several locations. */
+	nameBranches?: boolean
 }
 
 type JsonObject = Record<string, unknown>
@@ -285,12 +298,20 @@ export function buildRestaurantJsonLd(
 		const locationName = location ? localizedName(location.name, names) : ''
 		// With several locations each is named, keeping the brand in front.
 		node.name =
-			input.locations.length > 1 && locationName
+			(input.nameBranches ?? input.locations.length > 1) && locationName
 				? locationName.includes(name)
 					? locationName
 					: `${name} - ${locationName}`
 				: name
-		node.url = homeUrl
+		node.url = (location && input.locationPageUrls?.[location.id]) || homeUrl
+		const cuisines = servesCuisine(
+			location?.cuisines?.length ? location.cuisines : (input.cuisines ?? []),
+		)
+		if (cuisines.length) {
+			node.servesCuisine = cuisines.length === 1 ? cuisines[0] : cuisines
+		}
+		const priceRange = location?.priceRange?.trim() || input.priceRange?.trim()
+		if (priceRange) node.priceRange = priceRange
 		if (logo) {
 			node.logo = logo
 			node.image = logo
@@ -359,4 +380,108 @@ export function buildRestaurantJsonLd(
 /** The `application/ld+json` text, safe inside a `<script>` element. */
 export function restaurantStructuredData(input: RestaurantJsonLdInput): string {
 	return serializeJsonLd(buildRestaurantJsonLd(input))
+}
+
+/**
+ * One branch's own `Restaurant` for its location page (#137): the same node
+ * the home page lists, with the page as its `url` and the branch named after
+ * the brand ("Al Bait - Olaya"), linked to the organization.
+ */
+export function buildLocationRestaurantJsonLd(
+	input: Omit<
+		RestaurantJsonLdInput,
+		'locations' | 'locationPageUrls' | 'nameBranches'
+	> & {
+		location: RestaurantJsonLdLocation
+		pageUrl: string
+		/** Other locations exist: name the branch, link the brand. */
+		multiLocation: boolean
+	},
+): JsonObject {
+	const node = buildRestaurantJsonLd({
+		...input,
+		locations: [input.location],
+		locationPageUrls: { [input.location.id]: input.pageUrl },
+		nameBranches: input.multiLocation,
+	})
+	return {
+		...node,
+		'@id': `${input.pageUrl}#restaurant`,
+		...(input.multiLocation
+			? {
+					parentOrganization: {
+						'@type': 'Organization',
+						'@id': `${input.origin}/#organization`,
+						name: input.name.trim(),
+						url: `${input.origin}${getLocaleHref('/', input.locale, null, input.locales.defaultLocale)}`,
+					},
+				}
+			: {}),
+	}
+}
+
+export function locationRestaurantStructuredData(
+	input: Parameters<typeof buildLocationRestaurantJsonLd>[0],
+): string {
+	return serializeJsonLd(buildLocationRestaurantJsonLd(input))
+}
+
+/**
+ * schema.org `MenuItem` for a dish page (#137): name, description, photo,
+ * price (an `Offer` in the menu currency), dietary claims, and the
+ * restaurant that serves it.
+ */
+export function buildMenuItemJsonLd(input: {
+	url: string
+	name: string
+	description?: string | null
+	imageUrl?: string | null
+	/** Major units, as the public menu sends it. */
+	price: number | null
+	currency: string
+	restaurantName: string
+	restaurantUrl: string
+	vegetarian?: boolean
+	glutenFree?: boolean
+	vegan?: boolean
+}): JsonObject {
+	const node: JsonObject = {
+		'@context': 'https://schema.org',
+		'@type': 'MenuItem',
+		'@id': `${input.url}#dish`,
+		name: input.name,
+		url: input.url,
+	}
+	if (input.description?.trim()) node.description = input.description.trim()
+	if (input.imageUrl) node.image = input.imageUrl
+	if (
+		input.price !== null &&
+		Number.isFinite(input.price) &&
+		input.price >= 0
+	) {
+		node.offers = {
+			'@type': 'Offer',
+			price: input.price.toFixed(2),
+			priceCurrency: input.currency,
+			availability: 'https://schema.org/InStock',
+			url: input.url,
+		}
+	}
+	const diets: string[] = []
+	if (input.vegan) diets.push('https://schema.org/VeganDiet')
+	if (input.vegetarian) diets.push('https://schema.org/VegetarianDiet')
+	if (input.glutenFree) diets.push('https://schema.org/GlutenFreeDiet')
+	if (diets.length) node.suitableForDiet = diets.length === 1 ? diets[0] : diets
+	node.isPartOf = {
+		'@type': 'Menu',
+		url: input.restaurantUrl,
+		provider: { '@type': 'Restaurant', name: input.restaurantName },
+	}
+	return node
+}
+
+export function menuItemStructuredData(
+	input: Parameters<typeof buildMenuItemJsonLd>[0],
+): string {
+	return serializeJsonLd(buildMenuItemJsonLd(input))
 }

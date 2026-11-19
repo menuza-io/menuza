@@ -16,5 +16,7 @@ export default defineConfig({
 		globals: true,
 		environment: 'node',
 		include: ['src/**/*.test.ts'],
+		// Page renders need Astro's compiler: `vitest.astro.config.ts`.
+		exclude: ['**/node_modules/**', 'src/**/*.astro.test.ts'],
 	},
 })

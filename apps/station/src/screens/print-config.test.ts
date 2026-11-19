@@ -583,7 +583,9 @@ describe('when the receipt prints (#363)', () => {
 		vi.stubGlobal('print', print)
 		setTickets({ when: { receipt: 'on_close' } })
 		await pay('takeaway')
-		expect(print).toHaveBeenCalledTimes(1)
+		// The save and the print run after the click; a busy CI runner can
+		// take longer than the helper's fixed pauses.
+		await vi.waitFor(() => expect(print).toHaveBeenCalledTimes(1))
 	})
 
 	it('does not print by itself for dine-in when dine-in is left out', async () => {

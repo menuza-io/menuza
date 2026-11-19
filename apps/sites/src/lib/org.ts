@@ -62,6 +62,14 @@ export type PublicOrganization = {
 	googleTagManagerId?: string | null
 	googleAnalyticsId?: string | null
 	tiktokPixelId?: string | null
+	/** Cuisine keys (#182). Absent on payloads cached before the field existed. */
+	cuisines?: string[]
+	/** `$` to `$$$$` in the local currency symbol, or null (#182). */
+	priceRange?: string | null
+	/** Verification codes for the home page meta tags (#138). */
+	siteVerification?: { google: string[]; bing: string | null }
+	/** IndexNow key served at `/<key>.txt` (#138). */
+	indexNowKey?: string | null
 }
 
 function getAppUrl(): string {
@@ -888,6 +896,105 @@ export async function fetchPublishedJobPosting(options: {
 	params.set('posting', options.posting)
 	return fetchAppJson<PublicCareersPosting>(
 		`${getAppUrl()}/resources/sites/careers?${params.toString()}`,
+		false,
+	)
+}
+
+export type PublicLandingLocation = {
+	id: string
+	slug: string
+	name: string
+	phone: string | null
+	address: unknown
+	storeHours: unknown
+	specialHours: unknown
+	timezone: string
+	fulfillmentOptions: unknown
+	isDefault: boolean
+	/** Localized JSON text, or null. */
+	intro: string | null
+	seoTitle: string | null
+	seoDescription: string | null
+	cuisines: string[]
+	priceRange: number | null
+	updatedAt: string
+}
+
+export type PublicAreaPage = {
+	slug: string
+	locationId: string
+	locationSlug: string
+	zoneId: string
+	name: string
+	minimumOrder: number
+	deliveryFee: number
+	intro: string | null
+	noIndex: boolean
+}
+
+/** Generated pages (#137): `GET /resources/sites/landing`. */
+export type PublicLandingPayload = {
+	features: {
+		locationPages: boolean
+		dishPages: boolean
+		areaPages: boolean
+		events: boolean
+	}
+	locations: PublicLandingLocation[]
+	goneLocationSlugs: string[]
+	dishes: Array<{ id: string; slug: string }>
+	areas: PublicAreaPage[]
+}
+
+export async function fetchPublishedLanding(options: {
+	slug?: string | null
+	host?: string | null
+}): Promise<PublicLandingPayload | null> {
+	const params = careersParams(options)
+	if (!params) return null
+	return fetchAppJson<PublicLandingPayload>(
+		`${getAppUrl()}/resources/sites/landing?${params.toString()}`,
+	)
+}
+
+export type PublicSiteEvent = {
+	slug: string
+	title: string
+	description: string
+	imageUrl: string | null
+	link: { url: string; label: string | null } | null
+	experience: { id: string } | null
+	location: { name: string; slug: string; address: unknown } | null
+	timezone: string
+	phase: 'upcoming' | 'ended' | 'gone'
+	lastEndsAt: string | null
+	occurrences: Array<{
+		date: string
+		start: string
+		end: string
+		startMs: number
+		endMs: number
+	}>
+	updatedAt: string
+}
+
+/**
+ * Published website events (#184), or `null` when the site has none (events
+ * off or not published). `event` asks for one, ended ones included.
+ */
+export async function fetchPublishedEvents(options: {
+	slug?: string | null
+	host?: string | null
+	lng?: string | null
+	event?: string | null
+}): Promise<{ events: PublicSiteEvent[] } | null> {
+	const params = careersParams(options)
+	if (!params) return null
+	if (options.lng) params.set('lng', options.lng)
+	if (options.event) params.set('event', options.event)
+	// Occurrences move with the clock: never from the long-lived cache.
+	return fetchAppJson<{ events: PublicSiteEvent[] }>(
+		`${getAppUrl()}/resources/sites/events?${params.toString()}`,
 		false,
 	)
 }

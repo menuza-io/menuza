@@ -1,0 +1,86 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref, pickLocalized } from '@repo/common/site-locales'
+import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
+import SiteNotFound from '~/components/SiteNotFound.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer } from '~/lib/media'
+import { fetchPublishedLanding, fetchPublishedSitePage } from '~/lib/org'
+import { formatAddress } from '~/lib/seo-files'
+import { translate } from '~/lib/translate'
+
+/**
+ * `/locations` (#137): every active location with a link to its page. A page
+ * the operator built at `/locations` always wins. With one location there is
+ * no list: it redirects to that location's page.
+ */
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+const defaultLocale = organization.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || defaultLocale
+const href = (path: string) => getLocaleHref(path, locale, locale, defaultLocale)
+
+const cmsPage = await fetchPublishedSitePage({
+	slug: orgSlug,
+	host: customHost,
+	pageSlug: 'locations',
+	lng: Astro.locals.requestedLocale,
+})
+const landing = cmsPage ? null : await fetchPublishedLanding({ slug: orgSlug, host: customHost })
+const locations = landing?.features.locationPages ? landing.locations : []
+if (!cmsPage && locations.length === 1) {
+	return Astro.redirect(href(`/locations/${encodeURIComponent(locations[0]!.slug)}`), 302)
+}
+if (!cmsPage && !locations.length) {
+	Astro.response.status = 404
+	Astro.response.statusText = 'Not Found'
+}
+const heading = i18n._(msg`Locations`)
+const subtitle = translate(i18n, msg`Find a {name} near you`, { name: organization.name })
+const cards = locations.map((location) => ({
+	name: pickLocalized(location.name, locale, defaultLocale) || location.name,
+	address: formatAddress(location.address),
+	href: href(`/locations/${encodeURIComponent(location.slug)}`),
+}))
+---
+
+{cmsPage ? (
+	<SitePage
+		organization={organization}
+		page={cmsPage}
+		title={`${cmsPage.seo?.title || cmsPage.title} - ${organization.name}`}
+		description={cmsPage.seo?.description || undefined}
+		noIndex={cmsPage.seo?.noIndex ?? false}
+	>
+		<RenderBlocks sections={cmsPage.sections} />
+	</SitePage>
+) : !cards.length ? (
+	<SiteNotFound organization={organization} />
+) : (
+	<SitePage
+		organization={organization}
+		page={{ id: 'locations', title: heading, slug: 'locations', isHomePage: false, sections: [] }}
+		title={`${heading} - ${organization.name}`}
+		description={subtitle}
+	>
+		<div class:list={[siteContainer, 'py-12 sm:py-16']}>
+			<h1 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{heading}</h1>
+			<p class="mt-2 text-base text-muted-foreground">{subtitle}</p>
+			<ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{cards.map((card) => (
+					<li>
+						<a href={card.href} class="surface-interactive focus-ring flex h-full flex-col gap-1 px-6 py-5">
+							<span class="text-lg font-semibold text-foreground" dir="auto">{card.name}</span>
+							{card.address ? <span class="text-sm text-muted-foreground" dir="auto">{card.address}</span> : null}
+						</a>
+					</li>
+				))}
+			</ul>
+		</div>
+	</SitePage>
+)}

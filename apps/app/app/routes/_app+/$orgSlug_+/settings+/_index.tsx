@@ -36,6 +36,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
+import { CuisinePriceCard } from '#app/components/settings/cards/organization/cuisine-price-card.tsx'
 import DangerZoneCard from '#app/components/settings/cards/organization/danger-zone-card.tsx'
 import { GeneralSettingsCard } from '#app/components/settings/cards/organization/general-settings-card.tsx'
 import {
@@ -73,6 +74,12 @@ import {
 } from '#app/utils/organization/verified-domain.server.ts'
 import { deleteSubscription } from '#app/utils/payments.server.ts'
 import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
+import {
+	organizationCurrency,
+	parseCuisineForm,
+	storedCuisineKeys,
+} from '#app/utils/seo/cuisine-form.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { deprovisionTenantDatabase } from '#app/utils/sites/tenant-api.server.ts'
 import {
 	countOrgMediaObjectKeys,
@@ -102,10 +109,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		pendingVerifiedDomain: true,
 		verifiedDomainToken: true,
 		stripeSubscriptionId: true,
+		cuisines: true,
+		priceRange: true,
+		dataRegion: true,
 	})
 	// The TXT record to publish for a pending claim; the token itself only
 	// travels inside that record value.
-	const { verifiedDomainToken, ...organizationFields } = organization
+	const {
+		verifiedDomainToken,
+		cuisines: storedCuisines,
+		priceRange,
+		dataRegion,
+		...organizationFields
+	} = organization
+	const cuisine = {
+		cuisines: storedCuisineKeys(storedCuisines),
+		priceRange: priceRange ?? null,
+		currency: organizationCurrency(dataRegion),
+	}
 	const domainClaim =
 		organization.pendingVerifiedDomain && verifiedDomainToken
 			? {
@@ -165,6 +186,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return {
 		organization: { ...organizationFields, s3Config, image, domainClaim },
+		cuisine,
 		activeMigration,
 		latestMigration,
 		mediaFileCount,
@@ -235,6 +257,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		'delete-organization',
 		s3StorageActionIntent,
 		'test-s3-connection',
+		'update-cuisine',
 	]
 
 	// Handle file uploads for organization logo
@@ -365,6 +388,24 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				}),
 			})
 		}
+	}
+
+	if (intent === 'update-cuisine') {
+		const parsed = parseCuisineForm(formData)
+		if (!parsed.ok) {
+			return Response.json({ ok: false, error: parsed.error }, { status: 400 })
+		}
+		await db
+			.update(Organization)
+			.set({ cuisines: parsed.cuisines, priceRange: parsed.priceRange })
+			.where(eq(Organization.id, organization.id))
+		// The site's structured data and llms.txt read them from the public payload.
+		await purgeOrganizationSiteCache(
+			organization.id,
+			organization.slug,
+			organization.customDomain,
+		)
+		return Response.json({ ok: true })
 	}
 
 	if (intent === 'update-team-size') {
@@ -959,6 +1000,7 @@ export default function GeneralSettings() {
 		latestMigration,
 		mediaFileCount,
 		canDeleteOrganization,
+		cuisine,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 
@@ -969,6 +1011,7 @@ export default function GeneralSettings() {
 				<div className="flex flex-col gap-4">
 					<GeneralSettingsCard organization={organization} />
 					<TeamSizeCard organization={organization} actionData={actionData} />
+					<CuisinePriceCard organization={cuisine} />
 				</div>
 			</AnnotatedSection>
 

@@ -1,0 +1,78 @@
+---
+import { msg } from '@lingui/core/macro'
+import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
+import EventCard from '~/components/events/EventCard.astro'
+import SiteNotFound from '~/components/SiteNotFound.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer } from '~/lib/media'
+import { fetchPublishedEvents, fetchPublishedSitePage } from '~/lib/org'
+import { translate } from '~/lib/translate'
+
+/**
+ * `/events` (#184): upcoming events by date. A page the operator built at
+ * `/events` wins. 404 while website events are off.
+ */
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+const defaultLocale = organization.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || defaultLocale
+const cmsPage = await fetchPublishedSitePage({
+	slug: orgSlug,
+	host: customHost,
+	pageSlug: 'events',
+	lng: Astro.locals.requestedLocale,
+})
+const payload = cmsPage
+	? null
+	: await fetchPublishedEvents({ slug: orgSlug, host: customHost, lng: locale })
+if (!cmsPage && !payload) {
+	Astro.response.status = 404
+	Astro.response.statusText = 'Not Found'
+}
+const events = (payload?.events ?? []).filter(
+	(event) => event.phase === 'upcoming' && event.occurrences.length,
+)
+const heading = i18n._(msg`Events`)
+const subtitle = translate(i18n, msg`What's coming up at {name}`, { name: organization.name })
+const empty = i18n._(msg`No upcoming events right now. Check back soon.`)
+---
+
+{cmsPage ? (
+	<SitePage
+		organization={organization}
+		page={cmsPage}
+		title={`${cmsPage.seo?.title || cmsPage.title} - ${organization.name}`}
+		description={cmsPage.seo?.description || undefined}
+		noIndex={cmsPage.seo?.noIndex ?? false}
+	>
+		<RenderBlocks sections={cmsPage.sections} />
+	</SitePage>
+) : !payload ? (
+	<SiteNotFound organization={organization} />
+) : (
+	<SitePage
+		organization={organization}
+		page={{ id: 'events', title: heading, slug: 'events', isHomePage: false, sections: [] }}
+		title={`${heading} - ${organization.name}`}
+		description={subtitle}
+	>
+		<div class:list={[siteContainer, 'py-12 sm:py-16']}>
+			<h1 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{heading}</h1>
+			<p class="mt-2 text-base text-muted-foreground">{subtitle}</p>
+			{events.length ? (
+				<ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-events-list>
+					{events.map((event) => (
+						<li><EventCard event={event} locale={locale} defaultLocale={defaultLocale} /></li>
+					))}
+				</ul>
+			) : (
+				<p class="surface mt-8 px-6 py-10 text-base text-muted-foreground">{empty}</p>
+			)}
+		</div>
+	</SitePage>
+)}

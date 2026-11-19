@@ -28,6 +28,10 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 		'/resources/jobs/mcp-token-cleanup',
 		'/resources/jobs/job-postings-expiry',
 		'/resources/jobs/seat-reconcile',
+		// Weekly per keyword; daily so new keywords get a baseline next day (#182).
+		'/resources/jobs/seo-rank-check',
+		// Daily Search Console fetch (#138).
+		'/resources/jobs/search-console-sync',
 	],
 	'0 4 * * *': [
 		'/resources/jobs/gdpr-erasure',

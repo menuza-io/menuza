@@ -144,6 +144,11 @@ export type LlmsLocation = {
 	phone: string | null
 	address: unknown
 	storeHours: unknown
+	/** Cuisine names when the location's differ from the organization's (#182). */
+	cuisines?: string[]
+	priceRange?: string | null
+	/** The location's own page (#137), root-relative. */
+	path?: string | null
 }
 
 export type LlmsMenuCategory = {
@@ -161,6 +166,12 @@ export type LlmsInput = {
 	locations: LlmsLocation[]
 	menu: LlmsMenuCategory[]
 	links: Array<{ title: string; path: string; description?: string | null }>
+	/** Cuisine names (#182), e.g. `Lebanese`. Left out when empty. */
+	cuisines?: string[]
+	/** Price range text (`$$`). Left out when empty. */
+	priceRange?: string | null
+	/** Upcoming events (#184): title, page and next start (ISO with offset). */
+	events?: Array<{ title: string; path: string; start: string }>
 }
 
 /** Keeps the file small enough to read in one go. */
@@ -274,10 +285,18 @@ export function buildLlmsTxt(input: LlmsInput): string {
 		lines.push(`> ${inline(input.description)}`, '')
 	}
 	lines.push(`Official website: ${origin}/`)
+	if (input.cuisines?.length) {
+		lines.push(`Cuisine: ${input.cuisines.map(inline).join(', ')}`)
+	}
+	if (input.priceRange?.trim()) {
+		lines.push(`Price range: ${inline(input.priceRange)}`)
+	}
 	if (locales.locales.length > 1) {
 		lines.push(`Languages: ${locales.locales.join(', ')}`)
 	}
 	lines.push('')
+	const href = (path: string) =>
+		`${origin}${getLocaleHref(path, locales.defaultLocale, null, locales.defaultLocale)}`
 
 	if (input.locations.length) {
 		lines.push(input.locations.length > 1 ? '## Locations' : '## Location', '')
@@ -285,8 +304,15 @@ export function buildLlmsTxt(input: LlmsInput): string {
 			if (input.locations.length > 1) {
 				lines.push(`### ${inline(location.name) || inline(input.name)}`, '')
 			}
+			if (location.path) lines.push(`- Page: ${href(location.path)}`)
 			const address = formatAddress(location.address)
 			if (address) lines.push(`- Address: ${inline(address)}`)
+			if (location.cuisines?.length) {
+				lines.push(`- Cuisine: ${location.cuisines.map(inline).join(', ')}`)
+			}
+			if (location.priceRange?.trim()) {
+				lines.push(`- Price range: ${inline(location.priceRange)}`)
+			}
 			if (location.phone) lines.push(`- Phone: ${inline(location.phone)}`)
 			const hours = formatWeeklyHours(location.storeHours)
 			if (hours.length) {
@@ -303,6 +329,16 @@ export function buildLlmsTxt(input: LlmsInput): string {
 			const description = inline(link.description)
 			lines.push(
 				`- [${inline(link.title)}](${origin}${getLocaleHref(link.path, locales.defaultLocale, null, locales.defaultLocale)})${description ? `: ${description}` : ''}`,
+			)
+		}
+		lines.push('')
+	}
+
+	if (input.events?.length) {
+		lines.push('## Upcoming events', '')
+		for (const event of input.events) {
+			lines.push(
+				`- [${inline(event.title)}](${href(event.path)}): ${inline(event.start)}`,
 			)
 		}
 		lines.push('')

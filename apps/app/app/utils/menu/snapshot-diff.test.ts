@@ -53,6 +53,8 @@ describe('diffMenuSnapshots', () => {
 				kitchenHighlight: null,
 				isPopular: false,
 				isUpsell: false,
+				sitePageEnabled: false,
+				siteSlug: null,
 				availabilityStatus: 'available',
 				unavailableUntil: null,
 				position: 0,
