@@ -3,6 +3,7 @@ import {
 	LOYALTY_RESERVATION_TTL_MS,
 	LoyaltyDomainError,
 	loyaltyEventKeys,
+	memberMeetsTier,
 	type LoyaltyActorKind,
 	type LoyaltyCart,
 	type LoyaltyChannel,
@@ -11,6 +12,7 @@ import {
 	type LoyaltyReviewReason,
 	type LoyaltyRewardQuote,
 	type LoyaltyRewardSnapshot,
+	type LoyaltyTiersConfig,
 } from '@repo/loyalty'
 import { loyaltyRedemptions } from '@repo/tenant-db'
 import { and, eq, ne } from 'drizzle-orm'
@@ -92,9 +94,35 @@ export function quoteReward(
 	cart: LoyaltyCart,
 	available: number,
 	targetLineId: string | null = null,
+	tierCheck?: {
+		memberTierId: string | null
+		tiersConfig: Pick<LoyaltyTiersConfig, 'enabled' | 'tiers'> | null
+	},
 ): LoyaltyRewardQuote {
 	const pointsCost = reward.definition.pointsCost
 	const affordable = available >= pointsCost
+	if (
+		reward.definition.minTierId &&
+		tierCheck &&
+		!memberMeetsTier(
+			tierCheck.tiersConfig ?? { enabled: false, tiers: [] },
+			tierCheck.memberTierId,
+			reward.definition.minTierId,
+		)
+	) {
+		return {
+			rewardId: reward.rewardId,
+			rewardVersion: reward.version,
+			applicable: false,
+			code: 'tier_required',
+			discountMinor: 0,
+			pointsCost,
+			affordable,
+			eligibleLineIds: [],
+			lines: [],
+			targetLineId: null,
+		}
+	}
 	const result = computeRewardDiscount(reward, cart, { targetLineId })
 	if (!result.ok) {
 		return {
@@ -154,6 +182,24 @@ export async function reserveRedemptionInTx(
 ): Promise<RedemptionRow> {
 	if (input.member.status !== 'active') {
 		throw new LoyaltyDomainError('member_inactive')
+	}
+	if (input.reward.definition.minTierId) {
+		const program = await readProgramInTx(tx)
+		const tiersConfig = program?.current.config.tiers ?? {
+			enabled: false,
+			tiers: [],
+		}
+		if (
+			!memberMeetsTier(
+				tiersConfig,
+				input.member.tierId,
+				input.reward.definition.minTierId,
+			)
+		) {
+			throw new LoyaltyDomainError('tier_required', {
+				minTierId: input.reward.definition.minTierId,
+			})
+		}
 	}
 	const result = computeRewardDiscount(input.reward, input.cart, {
 		targetLineId: input.targetLineId,

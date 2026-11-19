@@ -6,6 +6,7 @@ import {
 import {
 	LoyaltyDomainError,
 	loyaltyCheckoutQuoteRequestSchema,
+	loyaltyReferralClaimRequestSchema,
 	loyaltyTabQuoteRequestSchema,
 	type LoyaltyFeatures,
 } from '@repo/loyalty'
@@ -17,6 +18,7 @@ import {
 	getLoyaltyFeatures,
 	getLoyaltyFlagState,
 	loyaltyRefusal,
+	referralRefusal,
 } from '../lib/loyalty-context.ts'
 import {
 	loyaltyErrorResponse,
@@ -37,6 +39,10 @@ import {
 } from '../services/loyalty-member-service.ts'
 import { quoteCheckout, quoteTab } from '../services/loyalty-checkout-quote.ts'
 import { getPublicProgram } from '../services/loyalty-program-service.ts'
+import {
+	claimReferral,
+	lookupPublicReferral,
+} from '../services/loyalty-referral-service.ts'
 import { authenticateCustomer } from './auth.ts'
 import {
 	failureCountsAsCouponGuess,
@@ -159,6 +165,7 @@ loyaltyRoutes.get('/wallet', async (c) => {
 		}
 		const wallet = await getWallet(auth.customer.db, {
 			customerId: auth.customer.customerId,
+			orgId: auth.customer.orgId,
 			features,
 		})
 		return Response.json({ wallet }, { headers: NO_STORE })
@@ -458,6 +465,73 @@ loyaltyRoutes.post('/approvals/:approvalId/decide', async (c) => {
 			idempotency: idem.idempotency,
 		})
 		return Response.json({ approval }, { headers: NO_STORE })
+	} catch (error) {
+		return loyaltyErrorResponse(error)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// GET /referral — public lookup for a referral share code (?code=REF-...)
+// ---------------------------------------------------------------------------
+
+loyaltyRoutes.get('/referral', async (c) => {
+	try {
+		const resolved = await resolveOrderingOrganization(c, queryIdentity(c))
+		if ('error' in resolved) return resolved.error
+		const code = c.req.query('code')?.trim()
+		if (!code || code.length > 32) {
+			return loyaltyErrorResponse(new LoyaltyDomainError('invalid_request'))
+		}
+		const features = await getLoyaltyFeatures(resolved.organization.id)
+		const referral = await lookupPublicReferral(
+			await getTenantDb(resolved.organization.id),
+			{
+				orgId: resolved.organization.id,
+				code,
+				features,
+			},
+		)
+		return Response.json({ referral }, { headers: NO_STORE })
+	} catch (error) {
+		return loyaltyErrorResponse(error)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// POST /referral/claim — signed-in friend claims a referral offer
+// ---------------------------------------------------------------------------
+
+const claimReferralBodySchema = loyaltyReferralClaimRequestSchema.extend({
+	slug: z.string().max(253).optional(),
+	host: z.string().max(253).optional(),
+})
+
+loyaltyRoutes.post('/referral/claim', async (c) => {
+	try {
+		const { raw, identity } = await readQuoteBody(c)
+		const auth = await requireLoyaltyCustomer(c, identity)
+		if ('error' in auth) return auth.error
+		const body = claimReferralBodySchema.safeParse(raw)
+		if (!body.success) return validationResponse(body.error)
+		const kill = loyaltyKillSwitchResponse()
+		if (kill) return kill
+		const flags = await getLoyaltyFlagState(auth.customer.orgId)
+		const refusal = referralRefusal(flags)
+		if (refusal) {
+			return loyaltyErrorResponse(new LoyaltyDomainError(refusal))
+		}
+		await enforceLoyaltyLimit(
+			auth.customer.db,
+			'customerWrite',
+			auth.customer.customerId,
+		)
+		const claimed = await claimReferral(auth.customer.orgId, {
+			customerId: auth.customer.customerId,
+			code: body.data.code,
+			deviceId: body.data.deviceId,
+			features: flags.features,
+		})
+		return Response.json(claimed, { headers: NO_STORE })
 	} catch (error) {
 		return loyaltyErrorResponse(error)
 	}

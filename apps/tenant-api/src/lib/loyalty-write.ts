@@ -118,6 +118,12 @@ export function activeLoyaltyTx(orgId: string): LoyaltyTx | null {
 	return active && active.orgId === orgId && !active.done ? active.tx : null
 }
 
+/** The organization id of the active loyalty write in AsyncLocalStorage, if any. */
+export function activeLoyaltyOrgId(): string | null {
+	const active = activeWrite.getStore()
+	return active && !active.done ? active.orgId : null
+}
+
 export async function withLoyaltyWrite<T>(
 	options: {
 		orgId: string

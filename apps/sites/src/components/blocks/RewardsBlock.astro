@@ -1,0 +1,81 @@
+---
+import LoyaltyLabels from '~/components/loyalty/LoyaltyLabels.astro'
+import { getLocaleHref } from '~/lib/locale'
+import { fetchPublishedLoyalty } from '~/lib/org'
+
+interface Props {
+	config: Record<string, any>
+}
+
+const { config } = Astro.props
+const organization = Astro.locals.organization
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+const defaultLocale = organization?.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization?.locale || defaultLocale
+
+const gate = organization?.id
+	? await fetchPublishedLoyalty({ slug: orgSlug, host: customHost })
+	: null
+
+const enabled = gate?.enabled === true
+const walletHref = getLocaleHref('/profile/rewards', locale, locale, defaultLocale)
+const loginHref = `${getLocaleHref('/login', locale, locale, defaultLocale)}?redirect=${encodeURIComponent(walletHref)}`
+
+const heading = typeof config?.heading === 'string' ? config.heading : ''
+const body = typeof config?.body === 'string' ? config.body : ''
+const ctaLabel = typeof config?.ctaLabel === 'string' ? config.ctaLabel : ''
+const showRewards = config?.showRewards !== false ? 'true' : 'false'
+const showTiers = config?.showTiers !== false ? 'true' : 'false'
+---
+
+{
+	enabled && (
+		<>
+			<LoyaltyLabels />
+			<section
+				data-rewards-block
+				data-login-href={loginHref}
+				data-wallet-href={walletHref}
+				data-heading={heading}
+				data-body={body}
+				data-cta-label={ctaLabel}
+				data-show-rewards={showRewards}
+				data-show-tiers={showTiers}
+				hidden
+			/>
+			<script>
+				import { getAccessToken } from '~/lib/client-auth'
+				import { browserLocale } from '~/lib/locale'
+				import { readLoyaltyLabels } from '~/lib/loyalty/read-labels'
+				import { initRewardsBlock } from '~/lib/loyalty/rewards-block'
+				import { createLoyaltyClient } from '~/lib/loyalty-client'
+
+				const labels = readLoyaltyLabels()
+				if (labels) {
+					const client = createLoyaltyClient()
+					const locale = browserLocale()
+					for (const root of document.querySelectorAll<HTMLElement>(
+						'[data-rewards-block]',
+					)) {
+						void initRewardsBlock(root, {
+							client,
+							labels,
+							locale,
+							signedIn: () => Boolean(getAccessToken()),
+							loginHref: root.dataset.loginHref || '/login',
+							walletHref: root.dataset.walletHref || '/profile/rewards',
+							config: {
+								heading: root.dataset.heading || undefined,
+								body: root.dataset.body || undefined,
+								ctaLabel: root.dataset.ctaLabel || undefined,
+								showRewards: root.dataset.showRewards !== 'false',
+								showTiers: root.dataset.showTiers !== 'false',
+							},
+						})
+					}
+				}
+			</script>
+		</>
+	)
+}

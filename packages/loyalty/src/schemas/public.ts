@@ -15,7 +15,11 @@ import {
 	LOYALTY_UNIT_LABELS,
 	type LoyaltyUnitLabel,
 } from '../program.ts'
+import { LOYALTY_EXPIRY_MODES } from '../expiry.ts'
+import { LOYALTY_MULTIPLIER_ONE_BP } from '../money.ts'
+import { LOYALTY_REFERRAL_STATUSES } from '../referrals.ts'
 import { LOYALTY_REWARD_KINDS, loyaltyDiscountSchema } from '../rewards.ts'
+import { LOYALTY_TIER_METRICS, loyaltyTierIdSchema } from '../tiers.ts'
 
 /**
  * Customer-facing contract: `/loyalty/*` on the regional tenant-api, called
@@ -127,6 +131,9 @@ export const loyaltyPublicRewardSchema = z.object({
 	freeItemId: loyaltyCatalogIdSchema.nullable(),
 	labels: labelsSchema,
 	currency: currencySchema,
+	minTierId: loyaltyTierIdSchema.nullable().default(null),
+	minTierName: z.string().nullable().default(null),
+	lockedByTier: z.boolean().default(false),
 })
 export type LoyaltyPublicReward = z.infer<typeof loyaltyPublicRewardSchema>
 
@@ -152,6 +159,56 @@ export const loyaltyPublicProgramSchema = z.object({
 	rewards: publicRewardsSchema,
 	/** Rewards can be spent (the redemption flag is on). */
 	redemptionEnabled: z.boolean(),
+	welcomeBonus: z
+		.object({
+			enabled: z.boolean(),
+			points: z.number().int().nonnegative(),
+			afterFirstPaidOrder: z.boolean(),
+		})
+		.nullable()
+		.optional()
+		.default(null)
+		.catch(null),
+	tiers: z
+		.object({
+			metric: z.enum(LOYALTY_TIER_METRICS),
+			periodMonths: z.number().int().min(1),
+			graceDays: z.number().int().nonnegative(),
+			levels: z.array(
+				z.object({
+					id: z.string(),
+					name: z.string(),
+					threshold: z.number().int().min(1),
+					multiplierBp: z.number().int().min(LOYALTY_MULTIPLIER_ONE_BP),
+				}),
+			),
+		})
+		.nullable()
+		.optional()
+		.default(null)
+		.catch(null),
+	expiry: z
+		.object({
+			mode: z.enum(LOYALTY_EXPIRY_MODES),
+			months: z.number().int().min(1),
+			enabledAt: msSchema.nullable().optional().default(null),
+		})
+		.nullable()
+		.optional()
+		.default(null)
+		.catch(null),
+	referrals: z
+		.object({
+			enabled: z.boolean(),
+			referrerPoints: z.number().int().nonnegative(),
+			friendPoints: z.number().int().nonnegative(),
+			friendDiscount: discountSchema.nullable(),
+			minimumOrderMinor: minorSchema,
+		})
+		.nullable()
+		.optional()
+		.default(null)
+		.catch(null),
 })
 export type LoyaltyPublicProgram = z.infer<typeof loyaltyPublicProgramSchema>
 
@@ -186,6 +243,72 @@ export const loyaltyWalletSchema = z.object({
 		.object({ rewardId: idSchema, pointsNeeded: z.number().int().min(1) })
 		.nullable(),
 	pendingApprovals: z.number().int().nonnegative(),
+	welcomeBonus: z
+		.object({
+			status: z.enum(['granted', 'pending_first_order', 'ineligible', 'none']),
+			points: z.number().int().nonnegative(),
+			grantedAt: msSchema.nullable(),
+		})
+		.nullable()
+		.optional()
+		.default(null)
+		.catch(null),
+	tier: z
+		.object({
+			current: z
+				.object({
+					id: z.string(),
+					name: z.string(),
+					multiplierBp: z.number().int(),
+				})
+				.nullable(),
+			next: z
+				.object({
+					id: z.string(),
+					name: z.string(),
+					threshold: z.number().int(),
+					pointsRemaining: z.number().int().nonnegative(),
+					multiplierBp: z.number().int(),
+				})
+				.nullable(),
+			metric: z.enum(LOYALTY_TIER_METRICS),
+			progressValue: z.number().int().nonnegative(),
+			periodMonths: z.number().int().min(1),
+			reviewAt: msSchema.nullable(),
+			graceUntil: msSchema.nullable(),
+			pendingDowngradeTierName: z.string().nullable(),
+		})
+		.nullable()
+		.optional()
+		.default(null)
+		.catch(null),
+	expiry: z
+		.object({
+			mode: z.enum(LOYALTY_EXPIRY_MODES),
+			months: z.number().int().min(1),
+			nextExpiryAt: msSchema.nullable(),
+			nextExpiryPoints: z.number().int().nonnegative(),
+			expiringWithin30d: z.number().int().nonnegative(),
+		})
+		.nullable()
+		.optional()
+		.default(null)
+		.catch(null),
+	referral: z
+		.object({
+			code: z.string(),
+			sharePath: z.string(),
+			referredCount: z.number().int().nonnegative(),
+			pendingCount: z.number().int().nonnegative(),
+			creditedCount: z.number().int().nonnegative(),
+			creditedPoints: z.number().int().nonnegative(),
+			capReached: z.boolean(),
+			maxReferralsPerMember: z.number().int().positive(),
+		})
+		.nullable()
+		.optional()
+		.default(null)
+		.catch(null),
 })
 export type LoyaltyWallet = z.infer<typeof loyaltyWalletSchema>
 
@@ -364,3 +487,42 @@ export const loyaltyErrorResponseSchema = z
 		code: z.string(),
 	})
 	.passthrough()
+
+export const loyaltyReferralPublicSchema = z.object({
+	valid: z.boolean(),
+	code: z.string(),
+	referrerFirstName: z.string().nullable(),
+	friendDiscount: discountSchema.nullable(),
+	friendPoints: z.number().int().nonnegative(),
+	minimumOrderMinor: minorSchema,
+})
+export type LoyaltyReferralPublic = z.infer<typeof loyaltyReferralPublicSchema>
+
+export const loyaltyReferralPublicResponseSchema = z.object({
+	referral: loyaltyReferralPublicSchema.nullable(),
+})
+
+export const loyaltyReferralClaimRequestSchema = z
+	.object({
+		code: z.string().trim().min(1).max(32),
+		deviceId: z.string().trim().min(1).max(128).optional(),
+	})
+	.strict()
+export type LoyaltyReferralClaimRequest = z.infer<
+	typeof loyaltyReferralClaimRequestSchema
+>
+
+export const loyaltyReferralClaimResponseSchema = z.object({
+	referral: z.object({
+		id: idSchema,
+		code: z.string(),
+		status: z.enum(LOYALTY_REFERRAL_STATUSES),
+		discountCode: z.string().nullable(),
+		friendDiscount: discountSchema.nullable(),
+		friendPoints: z.number().int().nonnegative(),
+		minimumOrderMinor: minorSchema,
+	}),
+})
+export type LoyaltyReferralClaimResponse = z.infer<
+	typeof loyaltyReferralClaimResponseSchema
+>

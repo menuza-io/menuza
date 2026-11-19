@@ -93,7 +93,7 @@ describe('GET /resources/loyalty/context', () => {
 		const body = loyaltyContextSchema.parse(await res.json())
 		expect(body).toEqual({
 			orgId: organization.id,
-			features: { enabled: false, redemption: false },
+			features: { enabled: false, redemption: false, referrals: false },
 		})
 	})
 
@@ -108,22 +108,35 @@ describe('GET /resources/loyalty/context', () => {
 
 		const body = loyaltyContextSchema.parse(await res.json())
 		expect(body.orgId).toBe(organization.id)
-		expect(body.features).toEqual({ enabled: true, redemption: true })
+		expect(body.features).toEqual({
+			enabled: true,
+			redemption: true,
+			referrals: false,
+		})
 	})
 
 	it('folds child flags off when the master flag is off (redemption requires enabled)', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
-		// Redemption on, master off: redemption folds to false.
+		// Redemption and referrals on, master off: both fold to false.
 		await setFlag(LOYALTY_FLAG_KEYS.redemption, organization.id)
+		await setFlag(LOYALTY_FLAG_KEYS.referrals, organization.id)
 
 		const offRes = await callLoader(contextRequest(organization.id))
 		const offBody = loyaltyContextSchema.parse(await offRes.json())
-		expect(offBody.features).toEqual({ enabled: false, redemption: false })
+		expect(offBody.features).toEqual({
+			enabled: false,
+			redemption: false,
+			referrals: false,
+		})
 
-		// With the master on, redemption reads true.
+		// With the master on, redemption and referrals read true.
 		await setFlag(LOYALTY_FLAG_KEYS.enabled, organization.id)
 		const onRes = await callLoader(contextRequest(organization.id))
 		const onBody = loyaltyContextSchema.parse(await onRes.json())
-		expect(onBody.features).toEqual({ enabled: true, redemption: true })
+		expect(onBody.features).toEqual({
+			enabled: true,
+			redemption: true,
+			referrals: true,
+		})
 	})
 })

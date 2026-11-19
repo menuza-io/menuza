@@ -34,6 +34,8 @@ function member(
 			lifetimeRedeemed: 0,
 		},
 		lastPurchaseAt: null,
+		imported: false,
+		tier: null,
 		...over,
 	}
 }

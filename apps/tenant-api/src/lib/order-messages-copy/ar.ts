@@ -67,6 +67,9 @@ export const AR: OrderMessageCopy = {
 		arriving: 'يصل بين {from} و{to}',
 		arrivingAround: 'يصل نحو {time}',
 		viewOrder: 'عرض طلبك',
+		welcomeBonusLine: 'أهلاً بك! تمت إضافة {points} {unit}',
+		pointsUnit: 'نقطة',
+		starsUnit: 'نجمة',
 		footer: 'هذه رسالة خدمة بخصوص طلبك.',
 	},
 }

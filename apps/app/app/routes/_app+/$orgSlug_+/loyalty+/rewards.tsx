@@ -5,6 +5,7 @@ import { isImpersonating } from '@repo/auth'
 import {
 	LOYALTY_PERMISSIONS,
 	type LoyaltyDiscount,
+	type LoyaltyOperatorProgram,
 	type LoyaltyOperatorReward,
 } from '@repo/loyalty'
 import { Alert, AlertDescription } from '@repo/ui/alert'
@@ -26,6 +27,7 @@ import { useLoaderData } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { RewardDialog } from '#app/components/loyalty/reward-dialog.tsx'
+import { RewardReturnPreview } from '#app/components/loyalty/reward-return-preview.tsx'
 import { useLoyaltyClient } from '#app/hooks/use-loyalty-client.ts'
 import { requireLoyaltyAccess } from '#app/utils/loyalty/access.server.ts'
 import { loadLoyaltyCatalog } from '#app/utils/loyalty/catalog.server.ts'
@@ -42,6 +44,7 @@ import {
 } from '#app/utils/loyalty/loyalty-labels.ts'
 import { formatLoyaltyMoney } from '#app/utils/loyalty/loyalty-view.ts'
 import { LOYALTY_SECTION_REQUIREMENTS } from '#app/utils/loyalty/sections.ts'
+import { parseMoneyToMinor } from '#app/utils/money-input.ts'
 import { type Route } from './+types/rewards.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -117,6 +120,7 @@ export default function LoyaltyRewardsRoute() {
 	const client = useLoyaltyClient()
 
 	const [rewards, setRewards] = useState<LoyaltyOperatorReward[] | null>(null)
+	const [program, setProgram] = useState<LoyaltyOperatorProgram | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [dialog, setDialog] = useState<
 		{ mode: 'create' } | { mode: 'edit'; reward: LoyaltyOperatorReward } | null
@@ -127,7 +131,12 @@ export default function LoyaltyRewardsRoute() {
 	const load = useCallback(async () => {
 		setError(null)
 		try {
-			setRewards(await client.listRewards())
+			const [rewardList, currentProgram] = await Promise.all([
+				client.listRewards(),
+				client.getProgram().catch(() => null),
+			])
+			setRewards(rewardList)
+			setProgram(currentProgram)
 		} catch (err) {
 			setRewards(null)
 			setError(
@@ -262,6 +271,11 @@ export default function LoyaltyRewardsRoute() {
 								<TableHead className="text-end">
 									<Trans>Cost</Trans>
 								</TableHead>
+								{program ? (
+									<TableHead>
+										<Trans>Est. return</Trans>
+									</TableHead>
+								) : null}
 								<TableHead>
 									<Trans>Status</Trans>
 								</TableHead>
@@ -281,9 +295,18 @@ export default function LoyaltyRewardsRoute() {
 									data-testid={`loyalty-reward-row-${reward.id}`}
 								>
 									<TableCell>
-										<span className="font-medium wrap-anywhere">
-											{reward.definition.name}
-										</span>
+										<div className="flex flex-wrap items-center gap-1.5">
+											<span className="font-medium wrap-anywhere">
+												{reward.definition.name}
+											</span>
+											{reward.definition.minTierId ? (
+												<Badge variant="outline" className="text-[11px]">
+													{program?.current.config.tiers.tiers.find(
+														(tier) => tier.id === reward.definition.minTierId,
+													)?.name ?? reward.definition.minTierId}
+												</Badge>
+											) : null}
+										</div>
 										{reward.definition.description ? (
 											<span className="text-muted-foreground block text-xs wrap-anywhere">
 												{reward.definition.description}
@@ -305,6 +328,42 @@ export default function LoyaltyRewardsRoute() {
 									<TableCell className="text-end tabular-nums" dir="ltr">
 										{reward.definition.pointsCost}
 									</TableCell>
+									{program ? (
+										<TableCell>
+											<RewardReturnPreview
+												compact
+												earning={program.current.config.earning}
+												reward={{
+													kind: reward.definition.kind,
+													pointsCost: reward.definition.pointsCost,
+													discount:
+														'discount' in reward.definition
+															? reward.definition.discount
+															: null,
+												}}
+												currency={reward.currency}
+												tiers={program.current.config.tiers}
+												itemPriceMinor={(() => {
+													if (reward.definition.kind !== 'free_item')
+														return null
+													const freeId = reward.definition.itemId
+													const match = catalog.items.find(
+														(item) => item.id === freeId,
+													)
+													if (
+														typeof match?.priceMajor === 'number' &&
+														match.priceMajor > 0
+													) {
+														return parseMoneyToMinor(String(match.priceMajor), {
+															min: 1,
+															currency: reward.currency,
+														})
+													}
+													return null
+												})()}
+											/>
+										</TableCell>
+									) : null}
 									<TableCell>
 										<Badge
 											variant={
@@ -371,8 +430,11 @@ export default function LoyaltyRewardsRoute() {
 					key={dialog.mode === 'edit' ? dialog.reward.id : 'new'}
 					client={client}
 					reward={dialog.mode === 'edit' ? dialog.reward : null}
-					// The page has no program; rewards carry the program currency.
-					currency={rewards?.[0]?.currency ?? null}
+					currency={
+						program?.current.config.currency ?? rewards?.[0]?.currency ?? null
+					}
+					earning={program?.current.config.earning ?? null}
+					tiers={program?.current.config.tiers ?? null}
 					catalog={catalog}
 					onClose={() => setDialog(null)}
 					onSaved={(saved) => {

@@ -23,7 +23,10 @@ import {
 	loyaltyErrorResponse,
 	loyaltyIdempotency,
 } from '../lib/loyalty-http.ts'
-import { requireLoyaltyLocation } from '../lib/loyalty-auth.ts'
+import {
+	requireLoyaltyFeature,
+	requireLoyaltyLocation,
+} from '../lib/loyalty-auth.ts'
 import { withLoyaltyWrite } from '../lib/loyalty-write.ts'
 import {
 	getLoyaltyReviewQueue,
@@ -55,6 +58,7 @@ import {
 } from '../services/loyalty-purchase-service.ts'
 import { resolveRedemption } from '../services/loyalty-redemption-service.ts'
 import { recordLoyaltyRefund } from '../services/loyalty-refund-service.ts'
+import { listOperatorReferrals } from '../services/loyalty-referral-service.ts'
 import { getLoyaltyReport } from '../services/loyalty-report-service.ts'
 
 /**
@@ -643,6 +647,32 @@ operatorLoyaltyRoutes.get(
 				{ locationIds: ctx.locationIdList },
 			)
 			return json({ report })
+		} catch (error) {
+			return loyaltyErrorResponse(error)
+		}
+	},
+)
+
+const referralsQuerySchema = z.object({
+	limit: z.coerce.number().int().min(1).max(200).optional(),
+})
+
+operatorLoyaltyRoutes.get(
+	'/referrals',
+	loyaltyGuard({ scope: 'reports', grant: REPORT, read: true }),
+	async (c) => {
+		try {
+			const ctx = getLoyaltyAuth(c)
+			const denied = requireLoyaltyFeature(ctx, 'referrals', {
+				killSwitch: false,
+			})
+			if (denied) return denied
+			const query = readQuery(c, referralsQuerySchema)
+			if ('error' in query) return query.error
+			const data = await listOperatorReferrals(await getTenantDb(ctx.orgId), {
+				limit: query.data.limit,
+			})
+			return json(data)
 		} catch (error) {
 			return loyaltyErrorResponse(error)
 		}

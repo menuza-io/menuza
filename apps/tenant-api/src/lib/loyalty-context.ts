@@ -244,6 +244,19 @@ export function rewardRefusal(
 	)
 }
 
+/** Why refer-a-friend cannot run now; null when it can. */
+export function referralRefusal(
+	state: LoyaltyFlagState,
+): Extract<
+	LoyaltyErrorCode,
+	'loyalty_unavailable' | 'loyalty_disabled' | 'referrals_disabled'
+> | null {
+	return (
+		loyaltyRefusal(state) ??
+		(state.features.referrals ? null : 'referrals_disabled')
+	)
+}
+
 export function invalidateLoyaltyContext(orgId?: string): void {
 	generation += 1
 	if (orgId) {
@@ -259,9 +272,20 @@ export function invalidateLoyaltyContext(orgId?: string): void {
 
 export function seedLoyaltyContextForTest(
 	orgId: string,
-	features: LoyaltyFeatures,
+	features: {
+		enabled: boolean
+		redemption: boolean
+		referrals?: boolean
+	},
 	fetchedAt = Date.now(),
 ): void {
-	cache.set(orgId, { fetchedAt, features })
+	cache.set(orgId, {
+		fetchedAt,
+		features: {
+			enabled: features.enabled,
+			redemption: features.redemption,
+			referrals: features.referrals ?? false,
+		},
+	})
 	lastFailureAt.delete(orgId)
 }

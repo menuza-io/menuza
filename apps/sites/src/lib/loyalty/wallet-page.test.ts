@@ -868,4 +868,102 @@ describe('rewards wallet: till requests', () => {
 		await vi.advanceTimersByTimeAsync(20_000)
 		expect(ctx.client.approvals).toHaveBeenCalledTimes(1)
 	})
+
+	it('renders welcome bonus, tier progress, expiry warning, locked tier reward, and referral share card', async () => {
+		const ctx = setup()
+		const base = testWallet()
+		ctx.client.wallet.mockResolvedValue({
+			...base,
+			welcomeBonus: {
+				points: 25,
+				status: 'granted',
+				grantedAt: NOW,
+			},
+			tier: {
+				current: {
+					id: 'silver',
+					name: 'Silver',
+					multiplierBp: 12_500,
+				},
+				next: {
+					id: 'gold',
+					name: 'Gold',
+					threshold: 500,
+					pointsRemaining: 380,
+					multiplierBp: 15_000,
+				},
+				metric: 'qualifying_points',
+				progressValue: 120,
+				periodMonths: 12,
+				reviewAt: NOW + 30 * 86_400_000,
+				graceUntil: null,
+				pendingDowngradeTierName: null,
+			},
+			expiry: {
+				mode: 'after_inactivity',
+				months: 12,
+				nextExpiryAt: NOW + 15 * 86_400_000,
+				nextExpiryPoints: 180,
+				expiringWithin30d: 180,
+			},
+			referral: {
+				code: 'REF-SAMI1',
+				sharePath: '/?ref=REF-SAMI1',
+				referredCount: 3,
+				pendingCount: 1,
+				creditedCount: 2,
+				creditedPoints: 100,
+				capReached: false,
+				maxReferralsPerMember: 10,
+			},
+			program: {
+				...base.program,
+				referrals: {
+					enabled: true,
+					referrerPoints: 50,
+					friendPoints: 25,
+					friendDiscount: {
+						type: 'fixed',
+						amountMinor: 1500,
+					},
+					minimumOrderMinor: 3000,
+				},
+				rewards: [
+					...base.program.rewards,
+					{
+						...base.program.rewards[0]!,
+						id: 'rew_vip',
+						name: 'Gold Secret Dessert',
+						pointsCost: 100,
+						minTierId: 'gold',
+						minTierName: 'Gold',
+						lockedByTier: true,
+					},
+				],
+			},
+		})
+		await ctx.start()
+
+		expect(
+			ctx.root.querySelector('[data-loyalty-welcome]')?.textContent,
+		).toContain('25')
+		expect(
+			ctx.root.querySelector('[data-loyalty-tier]')?.textContent,
+		).toContain('Silver')
+		expect(
+			ctx.root.querySelector('[data-loyalty-tier]')?.textContent,
+		).toContain('Gold')
+		expect(
+			ctx.root.querySelector('[data-loyalty-expiry-warning]')?.textContent,
+		).toContain('180')
+		expect(
+			ctx.root.querySelector('[data-reward-standing="locked"]')?.textContent,
+		).toContain('Gold')
+		expect(
+			ctx.root.querySelector('[data-loyalty-referral-code]')?.textContent,
+		).toBe('REF-SAMI1')
+		expect(
+			ctx.root.querySelector('[data-loyalty-referral-stats]')?.textContent,
+		).toContain('100')
+	})
 })

@@ -10,6 +10,7 @@ import {
 	customers,
 	destroyTenantDb,
 	getTenantDb,
+	loyaltyMembers,
 	marketingCampaigns,
 	marketingJourneys,
 	provisionTenantDb,
@@ -77,7 +78,10 @@ describe('saved audiences (#98)', () => {
 	}
 
 	async function guest(id: string, phone?: string) {
-		return insertCustomer(ORG, { id, phone: phone ?? `+1555000${id.length}${id}` })
+		return insertCustomer(ORG, {
+			id,
+			phone: phone ?? `+1555000${id.length}${id}`,
+		})
 	}
 
 	const at = (daysAgo: number) => new Date(NOW - daysAgo * DAY)
@@ -89,7 +93,11 @@ describe('saved audiences (#98)', () => {
 		await insertOrder(ORG, { customerId: 'a', createdAt: at(1) })
 		await insertOrder(ORG, { customerId: 'a', createdAt: at(2) })
 		// b: one cancelled order and one refunded in full: nothing counts.
-		await insertOrder(ORG, { customerId: 'b', status: 'cancelled', createdAt: at(1) })
+		await insertOrder(ORG, {
+			customerId: 'b',
+			status: 'cancelled',
+			createdAt: at(1),
+		})
 		await insertOrder(ORG, {
 			customerId: 'b',
 			createdAt: at(1),
@@ -126,7 +134,10 @@ describe('saved audiences (#98)', () => {
 			rungUpAt: NOW - DAY,
 		})
 		// An unlinked sale counts for nobody.
-		await insertPosSale(ORG, { customerPhone: '+15559999999', rungUpAt: NOW - DAY })
+		await insertPosSale(ORG, {
+			customerPhone: '+15559999999',
+			rungUpAt: NOW - DAY,
+		})
 		expect(
 			await matching({
 				match: 'all',
@@ -164,9 +175,7 @@ describe('saved audiences (#98)', () => {
 		expect(
 			await matching({
 				match: 'all',
-				rules: [
-					{ field: 'orders_count', op: 'gte', value: 1, windowDays: 30 },
-				],
+				rules: [{ field: 'orders_count', op: 'gte', value: 1, windowDays: 30 }],
 			}),
 		).toEqual(['b'])
 		expect(
@@ -215,16 +224,52 @@ describe('saved audiences (#98)', () => {
 		).toEqual([])
 	})
 
+	it('filters active loyalty members by loyalty_tier', async () => {
+		await guest('gold_guest', '+15550000101')
+		await guest('silver_guest', '+15550000102')
+		await guest('suspended_gold', '+15550000103')
+		await db.insert(loyaltyMembers).values([
+			{
+				id: 'lm_gold',
+				customerId: 'gold_guest',
+				status: 'active',
+				tierId: 'gold',
+				createdAt: NOW,
+				updatedAt: NOW,
+			},
+			{
+				id: 'lm_silver',
+				customerId: 'silver_guest',
+				status: 'active',
+				tierId: 'silver',
+				createdAt: NOW,
+				updatedAt: NOW,
+			},
+			{
+				id: 'lm_susp',
+				customerId: 'suspended_gold',
+				status: 'suspended',
+				tierId: 'gold',
+				createdAt: NOW,
+				updatedAt: NOW,
+			},
+		])
+		expect(
+			await matching({
+				match: 'all',
+				rules: [{ field: 'loyalty_tier', tierId: 'gold' }],
+			}),
+		).toEqual(['gold_guest'])
+	})
+
 	it('narrows consent and never widens it: a matching guest without a subscription is not reachable', async () => {
-		await db
-			.insert(customers)
-			.values({
-				id: 'a',
-				name: 'A',
-				email: 'a@example.com',
-				phone: '+15550000001',
-				phoneVerified: true,
-			})
+		await db.insert(customers).values({
+			id: 'a',
+			name: 'A',
+			email: 'a@example.com',
+			phone: '+15550000001',
+			phoneVerified: true,
+		})
 		await db.insert(customers).values({
 			id: 'b',
 			name: 'B',
@@ -277,19 +322,30 @@ describe('saved audiences (#98)', () => {
 	})
 
 	it('refuses sensitive rule fields and rules outside a location scope', () => {
-		expect(namesSensitiveRule({ rules: [{ field: 'allergy_notes' }] })).toBe(true)
-		expect(namesSensitiveRule({ rules: [{ field: 'tag', value: 'vip' }] })).toBe(true)
-		expect(namesSensitiveRule({ rules: [{ field: 'orders_count' }] })).toBe(false)
+		expect(namesSensitiveRule({ rules: [{ field: 'allergy_notes' }] })).toBe(
+			true,
+		)
+		expect(
+			namesSensitiveRule({ rules: [{ field: 'tag', value: 'vip' }] }),
+		).toBe(true)
+		expect(namesSensitiveRule({ rules: [{ field: 'orders_count' }] })).toBe(
+			false,
+		)
 		const rule: AudienceDefinition = {
 			match: 'all',
-			rules: [{ field: 'orders_count', op: 'gte', value: 1, locationIds: [LOC_1] }],
+			rules: [
+				{ field: 'orders_count', op: 'gte', value: 1, locationIds: [LOC_1] },
+			],
 		}
 		expect(audienceOutOfScope(rule, undefined)).toBe(false)
 		expect(audienceOutOfScope(rule, [LOC_1])).toBe(false)
 		expect(audienceOutOfScope(rule, [LOC_2])).toBe(true)
 		expect(
 			audienceOutOfScope(
-				{ match: 'all', rules: [{ field: 'orders_count', op: 'gte', value: 1 }] },
+				{
+					match: 'all',
+					rules: [{ field: 'orders_count', op: 'gte', value: 1 }],
+				},
 				[LOC_1],
 			),
 		).toBe(true)
@@ -316,9 +372,10 @@ describe('saved audiences (#98)', () => {
 		const created = await createAudience(db, { name: 'Verified', definition })
 		expect(created.ok).toBe(true)
 		if (!created.ok) return
-		expect(
-			await createAudience(db, { name: 'verified', definition }),
-		).toEqual({ ok: false, error: 'audience_name_taken' })
+		expect(await createAudience(db, { name: 'verified', definition })).toEqual({
+			ok: false,
+			error: 'audience_name_taken',
+		})
 
 		const updated = await updateAudience(db, created.value.id, {
 			name: 'Verified guests',
@@ -354,7 +411,11 @@ describe('saved audiences (#98)', () => {
 				{
 					id: 'c',
 					type: 'condition',
-					data: { field: 'audience', operator: 'equals', value: created.value.id },
+					data: {
+						field: 'audience',
+						operator: 'equals',
+						value: created.value.id,
+					},
 				},
 			],
 		})

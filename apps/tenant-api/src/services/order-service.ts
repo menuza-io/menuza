@@ -68,6 +68,7 @@ import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent
 import { readQrOrderingFeatures } from '@repo/common/qr-ordering'
 import {
 	hashLoyaltyCart,
+	LOYALTY_REFERRAL_DISCOUNT_ID,
 	LoyaltyDomainError,
 	sameCurrency,
 	type LoyaltyCart,
@@ -195,6 +196,11 @@ import {
 	setAsideSourceRedemptionInTx,
 } from './loyalty-redemption-service.ts'
 import {
+	bindReferralToOrderInTx,
+	onReferralOrderCancelledOrRefundedInTx,
+	onReferralOrderCompletedInTx,
+} from './loyalty-referral-service.ts'
+import {
 	isTabPaymentOpen,
 	openTab,
 	readQrSettings,
@@ -279,6 +285,13 @@ const LOYALTY_PLACEMENT_MESSAGES: Partial<Record<LoyaltyErrorCode, string>> = {
 	reward_not_applicable: 'That reward does not apply to this order.',
 	zero_value: 'That reward does not apply to this order.',
 	insufficient_points: 'Not enough points for that reward.',
+	tier_required: 'This reward is reserved for a higher loyalty tier.',
+	referrals_disabled: 'Referrals are not available.',
+	referral_invalid: 'That referral code was not found.',
+	referral_self: 'You cannot use your own referral code.',
+	referral_already_claimed: 'You have already claimed a referral.',
+	referral_existing_customer: 'Referral rewards are for new customers only.',
+	referral_cap_reached: 'This referral offer is no longer available.',
 	cart_changed: 'Your order changed. Review the new total and try again.',
 	one_reward_per_order: 'This order already has a reward.',
 	already_claimed: 'Another member is collecting the points for this tab.',
@@ -340,6 +353,10 @@ export async function quotePlacementReward(
 		cart,
 		balance.available,
 		selection.targetLineId,
+		{
+			memberTierId: member.tierId,
+			tiersConfig: program.current.config.tiers,
+		},
 	)
 	if (!quote.applicable) {
 		throw new LoyaltyDomainError(quote.code ?? 'reward_not_applicable')
@@ -1453,6 +1470,9 @@ export async function placeOrder(input: {
 						customerId,
 						now,
 						killed: isDiscountsKillSwitchOn(),
+						orgId,
+						phone: request.contact.phone,
+						deviceId: request.referralDeviceId ?? null,
 					})
 					if (!preparedResult.ok) {
 						return orderFailure(
@@ -1851,6 +1871,27 @@ export async function placeOrder(input: {
 							locationId: tabRow.locationId,
 							currency: tabRow.currency,
 							at,
+						})
+					}
+					if (!isDineIn) {
+						const referralDiscountApplied =
+							prepared?.evaluation.applied.filter(
+								(a) => a.discountId === LOYALTY_REFERRAL_DISCOUNT_ID,
+							) ?? []
+						await bindReferralToOrderInTx(loyaltyTx(tx), {
+							orgId,
+							orderId: inserted.id,
+							customerId,
+							memberId: member?.id ?? null,
+							phone: request.contact.phone,
+							deviceId: request.referralDeviceId ?? null,
+							typedCode: request.discounts?.code ?? null,
+							appliedDiscountMinor: referralDiscountApplied.reduce(
+								(sum, a) => sum + a.amountMinor,
+								0,
+							),
+							appliedReferralDiscount: referralDiscountApplied.length > 0,
+							now: at,
 						})
 					}
 
@@ -2444,6 +2485,12 @@ export async function applyPaymentEvent(input: {
 								})
 								.where(eq(restaurantOrders.id, order.id))
 							await releaseDiscountRedemptions(tx, [order.id])
+							await onReferralOrderCancelledOrRefundedInTx(loyaltyTx(tx), {
+								orderId: order.id,
+								fullRefund: true,
+								remainingEligibleMinor: 0,
+								now: now.getTime(),
+							})
 							await restoreOrderGiftCardsInTx(
 								tx,
 								[order.id],
@@ -2484,6 +2531,12 @@ export async function applyPaymentEvent(input: {
 							})
 							.where(eq(restaurantOrders.id, order.id))
 						await releaseDiscountRedemptions(tx, [order.id])
+						await onReferralOrderCancelledOrRefundedInTx(loyaltyTx(tx), {
+							orderId: order.id,
+							fullRefund: true,
+							remainingEligibleMinor: 0,
+							now: now.getTime(),
+						})
 						await restoreOrderGiftCardsInTx(
 							tx,
 							[order.id],
@@ -3090,6 +3143,12 @@ export async function applyOrderStatusPatchInTx(
 	if (patch.status === 'cancelled') {
 		await releaseDiscountRedemptions(tx, [order.id])
 		await refundDiscountRedemptions(tx, order.id)
+		await onReferralOrderCancelledOrRefundedInTx(loyaltyTx(tx), {
+			orderId: order.id,
+			fullRefund: true,
+			remainingEligibleMinor: 0,
+			now: now.getTime(),
+		})
 		// An order that captured no provider money (unpaid, or paid entirely by
 		// a gift card) gives the card its part back. A paid one returns it
 		// through the refund path, gift card first.
@@ -3121,6 +3180,20 @@ export async function applyOrderStatusPatchInTx(
 			await reReserveReleasedDiscounts(tx, order.id)
 		}
 		await consumeDiscountRedemptions(tx, [order.id])
+		const effectivePaymentStatus = patch.paymentStatus ?? order.paymentStatus
+		if (
+			patch.status === 'completed' &&
+			(effectivePaymentStatus === 'paid' ||
+				effectivePaymentStatus === 'not_required')
+		) {
+			await onReferralOrderCompletedInTx(loyaltyTx(tx), {
+				orderId: order.id,
+				eligibleMinor: Math.max(0, order.subtotalCents - order.discountCents),
+				totalPaidMinor: order.totalCents,
+				paymentStatus: effectivePaymentStatus,
+				now: now.getTime(),
+			})
+		}
 	}
 	// Ready and cancelled tell the guest (once per kind and channel).
 	await queueOrderStatusMessages(

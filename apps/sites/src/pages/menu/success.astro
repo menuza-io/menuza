@@ -168,6 +168,13 @@ const successLabels = {
 	deliveryDiscountPlain: deliveryDiscountText,
 	freeOrder: freeOrderText,
 	readyAround: translate(i18n, msg`Ready around {time}`, { time: '{time}' }),
+	welcomeBanner: translate(i18n, msg`Welcome! {points} added`, { points: '{points}' }),
+	unitPoints: i18n._(msg`points`),
+	unitPoint: i18n._(msg`point`),
+	unitStars: i18n._(msg`stars`),
+	unitStar: i18n._(msg`star`),
+	unitStamps: i18n._(msg`stamps`),
+	unitStamp: i18n._(msg`stamp`),
 	arrivingAround: translate(i18n, msg`Arriving around {time}`, { time: '{time}' }),
 	arriving: translate(i18n, msg`Arriving {range}`, { range: '{range}' }),
 	cancelledTitle: i18n._(msg`This order was cancelled`),
@@ -333,6 +340,7 @@ const valueClass = 'price font-medium text-foreground'
 					<p id="success-subtext" class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
 						{thankYouDesc}
 					</p>
+					<p id="loyalty-order-welcome" class="mx-auto mt-3 hidden max-w-md rounded-md border border-success/30 bg-success/10 px-3 py-1.5 text-sm font-medium text-foreground"></p>
 
 					<div class="mt-6 inline-flex flex-col items-center gap-1 rounded-lg bg-muted px-5 py-3">
 						<span class="text-xs text-muted-foreground">{orderNumLabel}</span>
@@ -653,6 +661,8 @@ const valueClass = 'price font-medium text-foreground'
 		} from '~/lib/ordering/hold-timer'
 		import { receiptDiscounts } from '~/lib/ordering/discount-view'
 		import { formatPickupAddress, formatSlot } from '~/lib/ordering/pickup'
+		import { getAccessToken } from '~/lib/client-auth'
+		import { createLoyaltyClient } from '~/lib/loyalty-client'
 		import {
 			receiptLineNote,
 			receiptPackagingLine,
@@ -1413,6 +1423,37 @@ const valueClass = 'price font-medium text-foreground'
 			setHeading(labels.confirmedBadge, labels.confirmedTitle, desc)
 		}
 
+		let checkedLoyaltyWelcome = false
+		async function checkLoyaltyWelcome() {
+			if (checkedLoyaltyWelcome) return
+			checkedLoyaltyWelcome = true
+			if (!getAccessToken()) return
+			try {
+				const wallet = await createLoyaltyClient().wallet()
+				const wb = wallet?.welcomeBonus
+				if (wb && wb.status === 'granted' && wb.points > 0) {
+					const banner = document.getElementById('loyalty-order-welcome')
+					if (!banner) return
+					const unitLabel = wallet.program.unitLabel
+					const singular = wb.points === 1
+					const unitWord =
+						unitLabel === 'stars'
+							? singular
+								? labels.unitStar
+								: labels.unitStars
+							: singular
+								? labels.unitPoint
+								: labels.unitPoints
+					banner.textContent = fillTemplate(labels.welcomeBanner, {
+						points: `${wb.points} ${unitWord}`,
+					})
+					banner.classList.remove('hidden')
+				}
+			} catch {
+				// Welcome banner is purely informational.
+			}
+		}
+
 		function showConfirmed() {
 			confirmedView = true
 			stopHoldCountdown()
@@ -1421,6 +1462,7 @@ const valueClass = 'price font-medium text-foreground'
 			hide('payment-expired')
 			setHeading(labels.confirmedBadge, labels.confirmedTitle, labels.confirmedDesc)
 			applyStatusHeading()
+			void checkLoyaltyWelcome()
 		}
 
 		function showPending(order: ReceiptOrder) {

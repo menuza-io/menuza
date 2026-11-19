@@ -92,6 +92,7 @@ afterEach(async () => {
 const ENABLED: LoyaltyFeatures = {
 	enabled: true,
 	redemption: true,
+	referrals: false,
 }
 
 describe('Loyalty navigation access', () => {
@@ -182,9 +183,10 @@ describe('Loyalty navigation access', () => {
 	it('computes nav access purely from features and grants without a database', () => {
 		// Master flag off hides everything, even with grants.
 		expect(
-			computeLoyaltyNavAccess({ enabled: false, redemption: false }, [
-				P.READ_LOYALTY,
-			]),
+			computeLoyaltyNavAccess(
+				{ enabled: false, redemption: false, referrals: false },
+				[P.READ_LOYALTY],
+			),
 		).toEqual(HIDDEN_LOYALTY_NAV)
 
 		// No grants: nothing visible.

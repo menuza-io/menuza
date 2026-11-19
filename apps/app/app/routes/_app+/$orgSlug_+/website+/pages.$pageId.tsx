@@ -145,6 +145,7 @@ import {
 	useSectionTranslator,
 } from '#app/components/website/translate-provider.tsx'
 import { displayLocationName } from '#app/utils/location-name.server.ts'
+import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { useDirtyBeforeUnload } from '#app/utils/navigation-guards.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
@@ -607,7 +608,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		// The page editor remains usable while the regional data plane is offline.
 	}
 
-	const reservationsState = await getReservationsFeatureState(organization.id)
+	const [reservationsState, loyaltyEnabled] = await Promise.all([
+		getReservationsFeatureState(organization.id),
+		isLoyaltyFeatureEnabled(organization.id),
+	])
 	const reservationsOnline =
 		reservationsState.enabled && reservationsState.online
 	const reservationLocations = reservationsOnline
@@ -642,6 +646,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		organization,
 		previewToken: signSitePreviewToken(organization.id),
 		websiteForms,
+		loyaltyEnabled,
 		reservationsOnline,
 		reservationLocations,
 		themeConfig,
@@ -1092,6 +1097,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			if (!reservationsState.enabled || !reservationsState.online) {
 				return Response.json(
 					{ status: 'error', error: 'Online reservations are not enabled' },
+					{ status: 403 },
+				)
+			}
+		}
+		if (type === 'rewards') {
+			const loyaltyEnabled = await isLoyaltyFeatureEnabled(organization.id)
+			if (!loyaltyEnabled) {
+				return Response.json(
+					{ status: 'error', error: 'Loyalty rewards are not enabled' },
 					{ status: 403 },
 				)
 			}
@@ -1678,10 +1692,10 @@ function AddSectionDialog({
 	onAdd: (type: BlockType, position: number) => void
 	trigger?: 'button' | 'insert' | 'footer' | 'link'
 }) {
-	const { reservationsOnline } = useLoaderData<typeof loader>()
+	const { reservationsOnline, loyaltyEnabled } = useLoaderData<typeof loader>()
 	const addableTypes = useMemo(
-		() => addableBlockTypes({ reservationsOnline }),
-		[reservationsOnline],
+		() => addableBlockTypes({ reservationsOnline, loyaltyEnabled }),
+		[reservationsOnline, loyaltyEnabled],
 	)
 	const [open, setOpen] = useState(false)
 	const [selected, setSelected] = useState<BlockType>(
@@ -2143,6 +2157,8 @@ function previewText(
 			return loc(config.formName) || 'Choose a form'
 		case 'reservation':
 			return loc(config.heading) || loc(config.buttonLabel) || 'Book a table'
+		case 'rewards':
+			return loc(config.heading) || 'Rewards'
 		case 'cta':
 			return loc(config.heading) || 'Call to action'
 		default:
@@ -2874,6 +2890,8 @@ function renderBlockEditor(props: {
 			return (
 				<ReservationBlockEditor config={config} updateField={updateField} />
 			)
+		case 'rewards':
+			return <RewardsBlockEditor config={config} updateField={updateField} />
 		case 'cta':
 			return (
 				<CtaEditor config={config} updateField={updateField} {...editorProps} />
@@ -4279,6 +4297,50 @@ function ReservationBlockEditor({ config, updateField }: EditorProps) {
 								<Trans>Button</Trans>
 							),
 					}))}
+				/>
+			</EditorSection>
+		</div>
+	)
+}
+
+function RewardsBlockEditor({ config, updateField }: EditorProps) {
+	const { _ } = useLingui()
+	return (
+		<div className="space-y-5">
+			<EditorSection title={<Trans>Content</Trans>}>
+				<FieldInput
+					label={_(msg`Heading`)}
+					value={(config.heading as string) ?? ''}
+					onChange={(v) => updateField('heading', v)}
+					placeholder={_(msg`Program name (default)`)}
+				/>
+				<FieldTextarea
+					label={_(msg`Description`)}
+					value={(config.body as string) ?? ''}
+					onChange={(v) => updateField('body', v)}
+					rows={3}
+				/>
+				<FieldInput
+					label={_(msg`Button label`)}
+					value={(config.ctaLabel as string) ?? ''}
+					onChange={(v) => updateField('ctaLabel', v)}
+					placeholder={_(msg`Join rewards (default)`)}
+				/>
+			</EditorSection>
+			<EditorSection title={<Trans>Display</Trans>}>
+				<FieldSwitch
+					label={_(msg`Show rewards catalog`)}
+					checked={config.showRewards !== false}
+					onChange={(checked) => updateField('showRewards', checked)}
+				/>
+				<FieldSwitch
+					label={_(msg`Show membership tiers`)}
+					checked={config.showTiers !== false}
+					onChange={(checked) => updateField('showTiers', checked)}
+				/>
+				<SectionBackgroundField
+					value={(config.background as string) ?? 'muted'}
+					onChange={(v) => updateField('background', v)}
 				/>
 			</EditorSection>
 		</div>

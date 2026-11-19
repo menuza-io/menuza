@@ -53,40 +53,51 @@ test.describe.serial('Launch Status Flows', () => {
 
 		// Create an organization
 		const orgName = faker.company.name()
+		const orgSlug = 'test-org-' + faker.string.alphanumeric(5).toLowerCase()
 		// Retry until the form has hydrated; an early fill is wiped on hydration.
 		await expect(async () => {
 			const nameInput = page.getByRole('textbox', { name: /name/i })
 			await nameInput.fill(orgName)
+			await page
+				.getByRole('textbox', { name: /description/i })
+				.fill('Test Description')
+			await page.getByRole('textbox', { name: /slug/i }).fill(orgSlug)
 			await expect(nameInput).toHaveValue(orgName, { timeout: 1000 })
+			await expect(page.getByRole('textbox', { name: /slug/i })).toHaveValue(
+				orgSlug,
+				{ timeout: 1000 },
+			)
 		}).toPass()
-		// Let the form auto-generate the slug from the name
-		await page
-			.getByRole('textbox', { name: /description/i })
-			.fill('Test Description')
-
-		// Fill the slug manually to avoid auto-gen timeouts
-		const orgSlug = 'test-org-' + faker.string.alphanumeric(5).toLowerCase()
-		await page.getByRole('textbox', { name: /slug/i }).fill(orgSlug)
 
 		// Submit the form (Step 1)
 		await page.getByRole('button', { name: /continue/i }).click()
 
-		// Wait for the next step to load
-		await page.waitForLoadState('networkidle')
-
-		// Check if we're on the invitations step (step 2)
-		const currentUrl = page.url()
-		if (currentUrl.includes('step=2')) {
+		// Wait for step 2 or 3 to load
+		await expect(page).toHaveURL(/step=[23]/)
+		if (page.url().includes('step=2')) {
 			// We're on invitations step - skip it
 			await page.getByRole('button', { name: /skip for now/i }).click()
-			await page.waitForLoadState('networkidle')
+			await expect(page).toHaveURL(/step=3/)
 		}
 
 		// Now we should be on the additional info step
-		await page.getByRole('combobox').first().click()
-		await page.getByRole('option', { name: /1-10 employees/i }).click()
-		await page.getByRole('combobox').last().click()
-		await page.getByRole('option', { name: /engineering/i }).click()
+		const sizeOption = page.getByRole('option', { name: /1-10 employees/i })
+		await expect(async () => {
+			if (!(await sizeOption.isVisible())) {
+				await page.getByRole('combobox').first().click()
+			}
+			await expect(sizeOption).toBeVisible({ timeout: 2000 })
+		}).toPass()
+		await sizeOption.click()
+
+		const deptOption = page.getByRole('option', { name: /engineering/i })
+		await expect(async () => {
+			if (!(await deptOption.isVisible())) {
+				await page.getByRole('combobox').last().click()
+			}
+			await expect(deptOption).toBeVisible({ timeout: 2000 })
+		}).toPass()
+		await deptOption.click()
 		await page.getByRole('button', { name: /complete setup/i }).click()
 		await page.getByRole('button', { name: /finish onboarding/i }).click()
 
@@ -121,35 +132,51 @@ test.describe.serial('Launch Status Flows', () => {
 
 		// Create an organization
 		const orgName = faker.company.name()
-		await page.getByRole('textbox', { name: /name/i }).fill(orgName)
-		// Let the form auto-generate the slug from the name
-		await page
-			.getByRole('textbox', { name: /description/i })
-			.fill('Test Description')
-
-		// Fill the slug manually to avoid auto-gen timeouts
 		const orgSlug = 'test-org-' + faker.string.alphanumeric(5).toLowerCase()
-		await page.getByRole('textbox', { name: /slug/i }).fill(orgSlug)
+		// Retry until the form has hydrated; an early fill is wiped on hydration.
+		await expect(async () => {
+			const nameInput = page.getByRole('textbox', { name: /name/i })
+			await nameInput.fill(orgName)
+			await page
+				.getByRole('textbox', { name: /description/i })
+				.fill('Test Description')
+			await page.getByRole('textbox', { name: /slug/i }).fill(orgSlug)
+			await expect(nameInput).toHaveValue(orgName, { timeout: 1000 })
+			await expect(page.getByRole('textbox', { name: /slug/i })).toHaveValue(
+				orgSlug,
+				{ timeout: 1000 },
+			)
+		}).toPass()
 
 		// Submit the form (Step 1)
 		await page.getByRole('button', { name: /continue/i }).click()
 
-		// Wait for the next step to load
-		await page.waitForLoadState('networkidle')
-
-		// Check if we're on the invitations step (step 2)
-		const launchedCurrentUrl = page.url()
-		if (launchedCurrentUrl.includes('step=2')) {
+		// Wait for step 2 or 3 to load
+		await expect(page).toHaveURL(/step=[23]/)
+		if (page.url().includes('step=2')) {
 			// We're on invitations step - skip it
 			await page.getByRole('button', { name: /skip for now/i }).click()
-			await page.waitForLoadState('networkidle')
+			await expect(page).toHaveURL(/step=3/)
 		}
 
 		// Now we should be on the additional info step
-		await page.getByRole('combobox').first().click()
-		await page.getByRole('option', { name: /1-10 employees/i }).click()
-		await page.getByRole('combobox').last().click()
-		await page.getByRole('option', { name: /engineering/i }).click()
+		const sizeOption = page.getByRole('option', { name: /1-10 employees/i })
+		await expect(async () => {
+			if (!(await sizeOption.isVisible())) {
+				await page.getByRole('combobox').first().click()
+			}
+			await expect(sizeOption).toBeVisible({ timeout: 2000 })
+		}).toPass()
+		await sizeOption.click()
+
+		const deptOption = page.getByRole('option', { name: /engineering/i })
+		await expect(async () => {
+			if (!(await deptOption.isVisible())) {
+				await page.getByRole('combobox').last().click()
+			}
+			await expect(deptOption).toBeVisible({ timeout: 2000 })
+		}).toPass()
+		await deptOption.click()
 		await page.getByRole('button', { name: /complete setup/i }).click()
 		await page.getByRole('button', { name: /finish onboarding/i }).click()
 

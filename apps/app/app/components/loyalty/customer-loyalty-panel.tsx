@@ -1,7 +1,10 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { type LoyaltyMemberSummary } from '@repo/loyalty'
+import {
+	LOYALTY_MULTIPLIER_ONE_BP,
+	type LoyaltyMemberSummary,
+} from '@repo/loyalty'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -42,6 +45,7 @@ import {
 	LOYALTY_MEMBER_STATUS_LABELS,
 	loyaltyEnumLabel,
 } from '#app/utils/loyalty/loyalty-labels.ts'
+import { formatLoyaltyInstant } from '#app/utils/loyalty/loyalty-view.ts'
 
 type PanelState =
 	| { kind: 'loading' }
@@ -327,6 +331,62 @@ export function CustomerLoyaltyPanelView({
 								member.status,
 							)}
 						</Badge>
+						{member.tier
+							? (() => {
+									const tierProgress = member.tier.progressValue
+									const reviewText = member.tier.reviewAt
+										? formatLoyaltyInstant(member.tier.reviewAt, i18n.locale)
+										: null
+									const graceText = member.tier.graceUntil
+										? formatLoyaltyInstant(member.tier.graceUntil, i18n.locale)
+										: null
+									return (
+										<div
+											className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs"
+											data-testid="customer-loyalty-tier"
+										>
+											<Badge variant="secondary">
+												{member.tier.name ?? <Trans>Base tier</Trans>}
+												{member.tier.multiplierBp >
+												LOYALTY_MULTIPLIER_ONE_BP ? (
+													<span className="ms-1 tabular-nums" dir="ltr">
+														(
+														{(
+															member.tier.multiplierBp /
+															LOYALTY_MULTIPLIER_ONE_BP
+														)
+															.toFixed(2)
+															.replace(/\.00$/, '')}
+														×)
+													</span>
+												) : null}
+											</Badge>
+											<span>
+												<Trans>
+													Qualifying progress:{' '}
+													<bdi dir="ltr" className="tabular-nums">
+														{tierProgress}
+													</bdi>
+												</Trans>
+											</span>
+											{reviewText ? (
+												<span>
+													<Trans>
+														Review: <bdi dir="ltr">{reviewText}</bdi>
+													</Trans>
+												</span>
+											) : null}
+											{graceText ? (
+												<Badge variant="warning">
+													<Trans>
+														Grace period until <bdi dir="ltr">{graceText}</bdi>
+													</Trans>
+												</Badge>
+											) : null}
+										</div>
+									)
+								})()
+							: null}
 						{detail.filteredByLocation ? (
 							<span className="text-muted-foreground text-xs">
 								<Trans>Activity at other locations is hidden.</Trans>

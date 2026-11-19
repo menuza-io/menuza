@@ -1,6 +1,17 @@
 import { type z } from 'zod'
 import { type LoyaltyCart, type loyaltyCartSchema } from './cart.ts'
-import { type LoyaltyPurchaseSnapshot } from './earning.ts'
+import {
+	applyTierToEarning,
+	computeEarning,
+	computeRefundReversal,
+	type LoyaltyPurchaseSnapshot,
+} from './earning.ts'
+import { type EstimateRewardReturnInput } from './estimate.ts'
+import {
+	addExpiryMonths,
+	type ComputePointExpiryInput,
+	type ExpiryLedgerEntry,
+} from './expiry.ts'
 import { type LoyaltyEarningRule } from './program.ts'
 import {
 	type LoyaltyPromotion,
@@ -183,12 +194,13 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
 const reward = (
 	definition: DistributiveOmit<
 		LoyaltyRewardDefinition,
-		'description' | 'labels'
+		'description' | 'labels' | 'minTierId'
 	>,
 ): LoyaltyRewardDefinition =>
 	({
 		description: null,
 		labels: { items: {}, categories: {} },
+		minTierId: null,
 		...definition,
 	}) as LoyaltyRewardDefinition
 
@@ -906,3 +918,273 @@ export const PROMOTION_EXAMPLES: readonly PromotionExample[] = [
 		expectedApplied: [],
 	},
 ] as const
+
+type TierEarningExample = {
+	id: string
+	rule: string
+	earning: LoyaltyEarningRule
+	minimumSpendMinor: number
+	snapshot: LoyaltyPurchaseSnapshot
+	tierMultiplierBp: number
+	promotions: Array<Partial<LoyaltyPromotion> & { id: string }>
+	stacking?: LoyaltyPromotionStacking
+	occurredAt: number
+	timeZone: string
+	locationId: string | null
+	expectedTierPoints: number
+	expectedPromoBonus: number
+	expectedTotalPoints: number
+}
+
+export const TIER_EARNING_EXAMPLES: readonly TierEarningExample[] = [
+	{
+		id: 'tier-1.5x-earning-before-promo',
+		rule: 'Tier multiplier scales base points first; 2x promotion multiplies on top of the tier-adjusted award.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 10_000,
+			lines: [line('l1', 'a', 10_000)],
+		},
+		tierMultiplierBp: 15_000,
+		promotions: [
+			{ id: 'dbl', name: 'Double', kind: 'multiplier', value: 20_000 },
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedTierPoints: 150,
+		expectedPromoBonus: 150,
+		expectedTotalPoints: 300,
+	},
+	{
+		id: 'tier-1.25x-alone-floors',
+		rule: 'Tier multiplier alone scales base earning and floors fractional points.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1500,
+			lines: [line('l1', 'a', 1500)],
+		},
+		tierMultiplierBp: 12_500,
+		promotions: [],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedTierPoints: 18,
+		expectedPromoBonus: 0,
+		expectedTotalPoints: 18,
+	},
+] as const
+
+type TierRefundExample = {
+	id: string
+	rule: string
+	earning: LoyaltyEarningRule
+	minimumSpendMinor: number
+	snapshot: LoyaltyPurchaseSnapshot
+	tierMultiplierBp: number
+	awardedPoints: number
+	cumulativeRefundedMinor: number
+	expectedReversePoints: number
+}
+
+export const TIER_REFUND_EXAMPLES: readonly TierRefundExample[] = [
+	{
+		id: 'tier-2x-partial-refund',
+		rule: 'Partial refund on a 2x tier purchase takes back the 2x points for the refunded share.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 5000,
+			lines: [line('l1', 'a', 5000)],
+		},
+		tierMultiplierBp: 20_000,
+		awardedPoints: 100,
+		cumulativeRefundedMinor: 2000,
+		expectedReversePoints: 40,
+	},
+] as const
+
+type ExpiryExample = {
+	id: string
+	rule: string
+	input: ComputePointExpiryInput
+	expectedExpiredDue: number
+	expectedNextExpiryAt: number | null
+	expectedNextExpiryPoints: number
+}
+
+const jan1 = Date.UTC(2026, 0, 1, 12, 0)
+const feb1 = Date.UTC(2026, 1, 1, 12, 0)
+const jul1 = addExpiryMonths(jan1, 6)
+const aug1 = addExpiryMonths(feb1, 6)
+
+export const EXPIRY_EXAMPLES: readonly ExpiryExample[] = [
+	{
+		id: 'after-earn-6-months-exact',
+		rule: 'Points earned 6 months ago expire when 6 calendar months elapse.',
+		input: {
+			config: { mode: 'after_earn', months: 6, enabledAt: null },
+			entries: [
+				{
+					id: 'e1',
+					type: 'earn',
+					delta: 100,
+					createdAt: jan1,
+					purchaseId: 'p1',
+				},
+			],
+			currentBalance: 100,
+			lastActivityAt: jan1,
+			now: jul1,
+		},
+		expectedExpiredDue: 100,
+		expectedNextExpiryAt: null,
+		expectedNextExpiryPoints: 0,
+	},
+	{
+		id: 'after-earn-fifo-partial-spend',
+		rule: 'Spending points drains oldest earned lots first before expiry removes the rest.',
+		input: {
+			config: { mode: 'after_earn', months: 6, enabledAt: null },
+			entries: [
+				{
+					id: 'e1',
+					type: 'earn',
+					delta: 100,
+					createdAt: jan1,
+					purchaseId: 'p1',
+				},
+				{
+					id: 'e2',
+					type: 'earn',
+					delta: 80,
+					createdAt: feb1,
+					purchaseId: 'p2',
+				},
+				{ id: 'r1', type: 'redeem', delta: -40, createdAt: feb1 + 60_000 },
+			],
+			currentBalance: 140,
+			lastActivityAt: feb1,
+			now: jul1,
+		},
+		expectedExpiredDue: 60,
+		expectedNextExpiryAt: aug1,
+		expectedNextExpiryPoints: 80,
+	},
+	{
+		id: 'after-inactivity-6-months',
+		rule: 'Inactivity expiry clears the full balance once 6 months pass without qualifying activity.',
+		input: {
+			config: { mode: 'after_inactivity', months: 6, enabledAt: null },
+			entries: [
+				{
+					id: 'e1',
+					type: 'earn',
+					delta: 200,
+					createdAt: jan1,
+					purchaseId: 'p1',
+				},
+			],
+			currentBalance: 200,
+			lastActivityAt: jan1,
+			now: jul1,
+		},
+		expectedExpiredDue: 200,
+		expectedNextExpiryAt: null,
+		expectedNextExpiryPoints: 0,
+	},
+	{
+		id: 'switch-on-gives-full-period',
+		rule: 'Pre-existing balances receive one full expiry period starting from enabledAt.',
+		input: {
+			config: { mode: 'after_earn', months: 6, enabledAt: jul1 },
+			entries: [
+				{
+					id: 'e1',
+					type: 'earn',
+					delta: 150,
+					createdAt: jan1,
+					purchaseId: 'p1',
+				},
+			],
+			currentBalance: 150,
+			lastActivityAt: jan1,
+			now: jul1 + 86_400_000,
+		},
+		expectedExpiredDue: 0,
+		expectedNextExpiryAt: addExpiryMonths(jul1, 6),
+		expectedNextExpiryPoints: 150,
+	},
+	{
+		id: 'refund-after-expiry-keeps-balance-consistent',
+		rule: 'When points already expired before a refund, remaining expiry due stays zero.',
+		input: {
+			config: { mode: 'after_earn', months: 6, enabledAt: null },
+			entries: [
+				{
+					id: 'e1',
+					type: 'earn',
+					delta: 100,
+					createdAt: jan1,
+					purchaseId: 'p1',
+				},
+				{ id: 'x1', type: 'expired', delta: -100, createdAt: jul1 },
+			] satisfies ExpiryLedgerEntry[],
+			currentBalance: 0,
+			lastActivityAt: jan1,
+			now: jul1 + 86_400_000,
+		},
+		expectedExpiredDue: 0,
+		expectedNextExpiryAt: null,
+		expectedNextExpiryPoints: 0,
+	},
+] as const
+
+type EstimateExample = {
+	id: string
+	rule: string
+	input: EstimateRewardReturnInput
+	expectedReturnBp: number
+	expectedExceedsWarning: boolean
+}
+
+export const ESTIMATE_EXAMPLES: readonly EstimateExample[] = [
+	{
+		id: 'spend-1pt-per-100-5usd-reward-is-5pct',
+		rule: '1 point per $1 spent with $5 off at 100 points equals 5% back (no warning).',
+		input: {
+			earning: spendOne,
+			reward: {
+				kind: 'order',
+				pointsCost: 100,
+				discount: { type: 'fixed', amountMinor: 500 },
+			},
+		},
+		expectedReturnBp: 500,
+		expectedExceedsWarning: false,
+	},
+	{
+		id: 'spend-1pt-per-100-20usd-for-80pts-warns-at-25pct',
+		rule: '1 point per $1 spent with $20 off at 80 points equals 25% back (>20% warning).',
+		input: {
+			earning: spendOne,
+			reward: {
+				kind: 'order',
+				pointsCost: 80,
+				discount: { type: 'fixed', amountMinor: 2000 },
+			},
+		},
+		expectedReturnBp: 2500,
+		expectedExceedsWarning: true,
+	},
+] as const
+
+// Touch computeEarning/computeRefundReversal/applyTierToEarning types cleanly
+void computeEarning
+void computeRefundReversal
+void applyTierToEarning

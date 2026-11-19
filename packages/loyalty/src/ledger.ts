@@ -14,6 +14,11 @@ export const LOYALTY_LEDGER_TYPES = [
 	'redeem',
 	'redeem_restore',
 	'adjust',
+	'welcome',
+	'welcome_reversal',
+	'expired',
+	'referral',
+	'referral_reversal',
 ] as const
 export type LoyaltyLedgerType = (typeof LOYALTY_LEDGER_TYPES)[number]
 
@@ -62,9 +67,14 @@ export function isValidLedgerDelta(
 	switch (type) {
 		case 'earn':
 		case 'redeem_restore':
+		case 'welcome':
+		case 'referral':
 			return delta > 0
 		case 'earn_reversal':
 		case 'redeem':
+		case 'welcome_reversal':
+		case 'expired':
+		case 'referral_reversal':
 			return delta < 0
 		case 'adjust':
 			return true
@@ -80,6 +90,14 @@ export const loyaltyEventKeys = {
 	restore: (redemptionId: string) => `restore:${redemptionId}`,
 	adjust: (memberId: string, idempotencyKey: string) =>
 		`adjust:${memberId}:${idempotencyKey}`,
+	welcome: (memberId: string) => `welcome:${memberId}`,
+	welcomeReversal: (purchaseId: string) => `welcome_reversal:${purchaseId}`,
+	expired: (memberId: string, batchKey: string) =>
+		`expired:${memberId}:${batchKey}`,
+	referral: (referralId: string, side: 'referrer' | 'friend') =>
+		`referral:${referralId}:${side}`,
+	referralReversal: (referralId: string, side: 'referrer' | 'friend') =>
+		`referral_reversal:${referralId}:${side}`,
 } as const
 
 export type LoyaltyBalance = {
@@ -103,7 +121,14 @@ export function applyLedgerEntry(
 	entry: { type: LoyaltyLedgerType; delta: number },
 ): LoyaltyBalance {
 	const next = { ...balance, points: balance.points + entry.delta }
-	if (entry.type === 'earn' || entry.type === 'earn_reversal') {
+	if (
+		entry.type === 'earn' ||
+		entry.type === 'earn_reversal' ||
+		entry.type === 'welcome' ||
+		entry.type === 'welcome_reversal' ||
+		entry.type === 'referral' ||
+		entry.type === 'referral_reversal'
+	) {
 		next.lifetimeEarned += entry.delta
 	} else if (entry.type === 'redeem' || entry.type === 'redeem_restore') {
 		next.lifetimeRedeemed -= entry.delta

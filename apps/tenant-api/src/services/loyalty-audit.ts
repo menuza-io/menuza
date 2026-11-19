@@ -23,6 +23,7 @@ export type LoyaltyAuditEntry = {
 		| 'approval'
 		| 'balance'
 		| 'outbox'
+		| 'referral'
 	entityId: string
 	changes?: Record<string, string | number | boolean | null>
 	at: number

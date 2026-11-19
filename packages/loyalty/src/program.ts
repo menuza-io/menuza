@@ -7,11 +7,53 @@ import {
 	loyaltyCatalogLabelsSchema,
 	refineCatalogLabels,
 } from './catalog.ts'
+import {
+	DEFAULT_LOYALTY_EXPIRY_CONFIG,
+	isTimeExpiryAllowedInRegion,
+	loyaltyExpiryConfigSchema,
+} from './expiry.ts'
 import { currencySchema, minorSchema } from './money.ts'
 import {
 	LOYALTY_PROMOTION_STACKING,
 	loyaltyPromotionsSchema,
 } from './promotions.ts'
+import {
+	DEFAULT_LOYALTY_REFERRAL_CONFIG,
+	loyaltyReferralConfigSchema,
+} from './referrals.ts'
+import {
+	DEFAULT_LOYALTY_TIERS_CONFIG,
+	loyaltyTiersConfigSchema,
+} from './tiers.ts'
+
+export const LOYALTY_WELCOME_MAX_POINTS = 100_000
+
+export const loyaltyWelcomeBonusConfigSchema = z
+	.object({
+		enabled: z.boolean().default(false),
+		points: z.number().int().min(0).max(LOYALTY_WELCOME_MAX_POINTS).default(0),
+		afterFirstPaidOrder: z.boolean().default(false),
+	})
+	.strict()
+	.superRefine((value, ctx) => {
+		if (value.enabled && value.points <= 0) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['points'],
+				message: 'Welcome bonus points must be at least 1 when enabled',
+			})
+		}
+	})
+export type LoyaltyWelcomeBonusConfig = z.infer<
+	typeof loyaltyWelcomeBonusConfigSchema
+>
+
+export const DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG: Readonly<LoyaltyWelcomeBonusConfig> =
+	Object.freeze({
+		enabled: false,
+		points: 0,
+		afterFirstPaidOrder: false,
+	})
 
 /**
  * Program definition. One program per organization; every edit is a new
@@ -114,6 +156,18 @@ const loyaltyProgramConfigObject = z
 		promotions: loyaltyPromotionsSchema.default([]),
 		/** Several promotions at once: the best one wins, or they add up. */
 		promotionStacking: z.enum(LOYALTY_PROMOTION_STACKING).default('best'),
+		/** Optional one-time points grant for new members. */
+		welcomeBonus: loyaltyWelcomeBonusConfigSchema.default(
+			DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
+		),
+		/** Optional progression tiers rewarding regulars with higher earning rates and gated rewards. */
+		tiers: loyaltyTiersConfigSchema.default(DEFAULT_LOYALTY_TIERS_CONFIG),
+		/** Optional point expiration rule (`never`, `after_inactivity`, or `after_earn`). */
+		expiry: loyaltyExpiryConfigSchema.default(DEFAULT_LOYALTY_EXPIRY_CONFIG),
+		/** Optional refer-a-friend rewards configuration. */
+		referrals: loyaltyReferralConfigSchema.default(
+			DEFAULT_LOYALTY_REFERRAL_CONFIG,
+		),
 	})
 	.strict()
 
@@ -131,6 +185,19 @@ export const loyaltyProgramConfigSchema =
 				code: z.ZodIssueCode.custom,
 				path: ['earning', 'points'],
 				message: 'Points cannot exceed the spend unit',
+			})
+		}
+		const expiryAllowed = isTimeExpiryAllowedInRegion({
+			mode: config.expiry.mode,
+			currency: config.currency,
+			timeZone: config.timeZone,
+		})
+		if (!expiryAllowed.allowed) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['expiry', 'mode'],
+				message:
+					'Time-based point expiry is not permitted in this region; use inactivity expiry or never',
 			})
 		}
 		refineCatalogLabels(

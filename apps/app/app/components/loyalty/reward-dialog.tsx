@@ -9,9 +9,11 @@ import {
 	loyaltyRewardDefinitionSchema,
 	type LoyaltyCatalogLabels,
 	type LoyaltyDiscount,
+	type LoyaltyEarningRule,
 	type LoyaltyOperatorReward,
 	type LoyaltyRewardDefinition,
 	type LoyaltyRewardKind,
+	type LoyaltyTiersConfig,
 } from '@repo/loyalty'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
@@ -48,6 +50,7 @@ import {
 } from '#app/utils/loyalty/loyalty-view.ts'
 import { parseMoneyToMinor, parseWholeNumber } from '#app/utils/money-input.ts'
 import { CatalogPicker } from './catalog-picker.tsx'
+import { RewardReturnPreview } from './reward-return-preview.tsx'
 
 type RewardFormValues = {
 	name: string
@@ -61,6 +64,7 @@ type RewardFormValues = {
 	itemIds: string
 	categoryIds: string
 	freeItemId: string
+	minTierId: string
 }
 
 function rewardDefaults(
@@ -93,6 +97,7 @@ function rewardDefaults(
 				? joinCatalogIds(definition.categoryIds)
 				: '',
 		freeItemId: definition?.kind === 'free_item' ? definition.itemId : '',
+		minTierId: definition?.minTierId ?? '',
 	}
 }
 
@@ -101,6 +106,8 @@ export function RewardDialog({
 	client,
 	reward,
 	currency = null,
+	earning = null,
+	tiers = null,
 	catalog,
 	onClose,
 	onSaved,
@@ -109,6 +116,10 @@ export function RewardDialog({
 	reward: LoyaltyOperatorReward | null
 	/** The program currency, for a new reward; an edit uses the reward's. */
 	currency?: string | null
+	/** Active earning rule, used to show the real percent-back preview (#414). */
+	earning?: LoyaltyEarningRule | null
+	/** Program tier configuration, used for minimum-tier gating and tier return rates. */
+	tiers?: LoyaltyTiersConfig | null
 	catalog: LoyaltyCatalog
 	onClose: () => void
 	onSaved: (reward: LoyaltyOperatorReward) => void
@@ -139,6 +150,8 @@ export function RewardDialog({
 					client={client}
 					reward={reward}
 					currency={reward?.currency ?? currency}
+					earning={earning}
+					tiers={tiers}
 					catalog={catalog}
 					submitting={submitting}
 					onSubmittingChange={setSubmitting}
@@ -150,10 +163,22 @@ export function RewardDialog({
 	)
 }
 
+function majorToMinor(
+	major: number | null | undefined,
+	currency: string | null,
+): number | null {
+	if (typeof major !== 'number' || !Number.isFinite(major) || major <= 0) {
+		return null
+	}
+	return parseMoneyToMinor(String(major), { min: 1, currency })
+}
+
 function RewardForm({
 	client,
 	reward,
 	currency,
+	earning,
+	tiers,
 	catalog,
 	submitting,
 	onSubmittingChange: setSubmitting,
@@ -163,6 +188,8 @@ function RewardForm({
 	client: LoyaltyClient
 	reward: LoyaltyOperatorReward | null
 	currency: string | null
+	earning: LoyaltyEarningRule | null
+	tiers: LoyaltyTiersConfig | null
 	catalog: LoyaltyCatalog
 	submitting: boolean
 	onSubmittingChange: (submitting: boolean) => void
@@ -178,6 +205,21 @@ function RewardForm({
 	const [discountType, setDiscountType] = useState<'fixed' | 'percent'>(
 		defaults.discountType,
 	)
+	const [minTierId, setMinTierId] = useState(defaults.minTierId)
+	const [pointsCostText, setPointsCostText] = useState(defaults.pointsCost)
+	const [amountText, setAmountText] = useState(defaults.amount)
+	const [percentText, setPercentText] = useState(defaults.percent)
+	const [maxDiscountText, setMaxDiscountText] = useState(defaults.maxDiscount)
+	const [avgOrderMinor, setAvgOrderMinor] = useState<number | null>(null)
+	const [sampleItemPriceMinor, setSampleItemPriceMinor] = useState<
+		number | null
+	>(() => {
+		if (defaults.freeItemId) {
+			const match = catalog.items.find((i) => i.id === defaults.freeItemId)
+			return majorToMinor(match?.priceMajor, currency)
+		}
+		return null
+	})
 	const [error, setError] = useState<string | null>(null)
 	const keyRef = useRef(newLoyaltySubmitKey('reward'))
 	const savedLabels: LoyaltyCatalogLabels = reward?.definition.labels ?? {
@@ -222,6 +264,7 @@ function RewardForm({
 					itemIds: z.string().prefault(''),
 					categoryIds: z.string().prefault(''),
 					freeItemId: z.string().trim().prefault(''),
+					minTierId: z.string().trim().prefault(''),
 				})
 				.superRefine((value, ctx) => {
 					const needsDiscount = value.kind !== 'free_item'
@@ -303,6 +346,7 @@ function RewardForm({
 				name: value.name,
 				description: value.description === '' ? null : value.description,
 				pointsCost: parseWholeNumber(value.pointsCost)!,
+				minTierId: value.minTierId === '' ? null : value.minTierId,
 			}
 			const discount: LoyaltyDiscount =
 				value.discountType === 'fixed'
@@ -411,6 +455,32 @@ function RewardForm({
 	const freeItemControl = useInputControl(fields.freeItemId)
 	const usesDiscount = kind !== 'free_item'
 
+	const previewCost = parseWholeNumber(pointsCostText, {
+		min: 1,
+		max: LOYALTY_MAX_REWARD_COST,
+	})
+	const previewDiscount: LoyaltyDiscount | null = useMemo(() => {
+		if (kind === 'free_item') return null
+		if (discountType === 'fixed') {
+			const minor = parseMoneyToMinor(amountText, { min: 1, currency })
+			return minor !== null ? { type: 'fixed', amountMinor: minor } : null
+		}
+		const percentBp = parsePercentToBp(percentText)
+		if (percentBp === null) return null
+		const maxDiscountMinor = parseMoneyToMinor(maxDiscountText, {
+			min: 1,
+			currency,
+		})
+		return { type: 'percent', percentBp, maxDiscountMinor }
+	}, [kind, discountType, amountText, percentText, maxDiscountText, currency])
+	const tierOptions = useMemo(() => {
+		if (!tiers?.enabled || tiers.tiers.length === 0) return []
+		return [
+			{ value: '', label: t`Any loyalty member` },
+			...tiers.tiers.map((tier) => ({ value: tier.id, label: tier.name })),
+		]
+	}, [tiers, t])
+
 	return (
 		<form
 			{...getFormProps(form)}
@@ -423,6 +493,7 @@ function RewardForm({
 				name={fields.discountType.name}
 				value={discountType}
 			/>
+			<input type="hidden" name={fields.minTierId.name} value={minTierId} />
 
 			{error ? (
 				<Alert variant="destructive" data-testid="loyalty-reward-error">
@@ -456,6 +527,7 @@ function RewardForm({
 					id="loyalty-reward-cost"
 					name={fields.pointsCost.name}
 					defaultValue={defaults.pointsCost}
+					onChange={(event) => setPointsCostText(event.target.value)}
 					error={fields.pointsCost.errors?.[0] ?? null}
 					inputMode="numeric"
 					data-testid="loyalty-reward-cost"
@@ -500,6 +572,7 @@ function RewardForm({
 								id="loyalty-reward-amount"
 								name={fields.amount.name}
 								defaultValue={defaults.amount}
+								onChange={(event) => setAmountText(event.target.value)}
 								error={fields.amount.errors?.[0] ?? null}
 								inputMode="decimal"
 								placeholder="5.00"
@@ -513,6 +586,7 @@ function RewardForm({
 									id="loyalty-reward-percent"
 									name={fields.percent.name}
 									defaultValue={defaults.percent}
+									onChange={(event) => setPercentText(event.target.value)}
 									error={fields.percent.errors?.[0] ?? null}
 									inputMode="decimal"
 									placeholder="10"
@@ -525,6 +599,7 @@ function RewardForm({
 									id="loyalty-reward-max-discount"
 									name={fields.maxDiscount.name}
 									defaultValue={defaults.maxDiscount}
+									onChange={(event) => setMaxDiscountText(event.target.value)}
 									error={fields.maxDiscount.errors?.[0] ?? null}
 									inputMode="decimal"
 									placeholder="20.00"
@@ -580,7 +655,13 @@ function RewardForm({
 					hint={t`One of this item, free. The customer picks the size or variant; paid extras are still charged.`}
 					options={catalog.items}
 					value={splitCatalogIds(freeItemControl.value)}
-					onChange={(ids) => freeItemControl.change(ids[0] ?? '')}
+					onChange={(ids) => {
+						const chosen = ids[0] ?? ''
+						freeItemControl.change(chosen)
+						const match = catalog.items.find((i) => i.id === chosen)
+						const minor = majorToMinor(match?.priceMajor, currency)
+						if (minor !== null) setSampleItemPriceMinor(minor)
+					}}
 					onClose={() => freeItemControl.blur()}
 					savedLabels={savedLabels.items}
 					error={fields.freeItemId.errors?.[0] ?? null}
@@ -588,6 +669,33 @@ function RewardForm({
 					emptyMessage={<Trans>The menu has no items yet.</Trans>}
 				/>
 			) : null}
+
+			{tierOptions.length > 0 ? (
+				<SelectField
+					label={<Trans>Minimum tier</Trans>}
+					id="loyalty-reward-min-tier"
+					testId="loyalty-reward-min-tier"
+					options={tierOptions}
+					value={minTierId}
+					onValueChange={(next) => setMinTierId(next)}
+					error={fields.minTierId.errors?.[0] ?? null}
+				/>
+			) : null}
+
+			<RewardReturnPreview
+				earning={earning}
+				reward={{
+					kind,
+					pointsCost: previewCost,
+					discount: previewDiscount,
+				}}
+				currency={currency}
+				averageOrderMinor={avgOrderMinor}
+				itemPriceMinor={sampleItemPriceMinor}
+				tiers={tiers}
+				onAverageOrderChange={setAvgOrderMinor}
+				onItemPriceChange={setSampleItemPriceMinor}
+			/>
 
 			<ErrorList id={form.errorId} errors={form.errors} />
 

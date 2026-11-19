@@ -60,6 +60,30 @@ describe('website block types', () => {
 		])
 	})
 
+	it('offers the rewards block only when loyalty is enabled and defines its defaults', () => {
+		expect(
+			addableBlockTypes({
+				reservationsOnline: false,
+				loyaltyEnabled: true,
+			}).some((block) => block.type === 'rewards'),
+		).toBe(true)
+		expect(
+			addableBlockTypes({
+				reservationsOnline: false,
+				loyaltyEnabled: false,
+			}).some((block) => block.type === 'rewards'),
+		).toBe(false)
+		expect(getDefaultConfig('rewards')).toEqual({
+			heading: '',
+			body: '',
+			ctaLabel: '',
+			showRewards: true,
+			showTiers: true,
+			background: 'muted',
+		})
+		expect(LOCALIZED_FIELDS.rewards).toEqual(['heading', 'body', 'ctaLabel'])
+	})
+
 	it('pins header first and footer last when reordering', () => {
 		const typesById = new Map([
 			['h', 'header'],

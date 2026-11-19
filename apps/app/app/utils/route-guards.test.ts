@@ -182,6 +182,8 @@ const PUBLIC_ROUTES: Record<string, string> = {
 		'public published menu; rate limited, preview only on the custom domain',
 	'resources+/sites.reservations.ts':
 		'public booking-flow flags; rate limited, 404 unless published and on',
+	'resources+/sites.loyalty.ts':
+		'public loyalty gate flag; rate limited, 404 unless published and enabled',
 	'resources+/sites.order.checkout.ts':
 		'restaurant order checkout; rate limited, the regional payment token is the credential',
 	'resources+/sites.order.status.ts':

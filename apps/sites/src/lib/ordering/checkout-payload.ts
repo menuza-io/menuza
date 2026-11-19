@@ -41,6 +41,11 @@ export function checkoutOrderPayload(
 		utensilsRequested?: boolean | null
 		/** A gift card applied after discounts and loyalty (#110): `{code | savedCardId, expectedAmountMinor}`. */
 		giftCard?: Record<string, unknown> | null
+		/**
+		 * A browser id for referral abuse checks; sent only when a referral
+		 * code is the discount code of this order.
+		 */
+		referralDeviceId?: string | null
 	},
 ): Record<string, unknown> {
 	const notes = extra.deliveryNotes?.trim()
@@ -53,6 +58,11 @@ export function checkoutOrderPayload(
 		...(extra.reward ? { loyalty: extra.reward } : {}),
 		...(extra.discounts ? { discounts: extra.discounts } : {}),
 		...(extra.giftCard ? { giftCard: extra.giftCard } : {}),
+		...(extra.referralDeviceId &&
+		typeof extra.discounts?.code === 'string' &&
+		extra.discounts.code.toUpperCase().startsWith('REF')
+			? { referralDeviceId: extra.referralDeviceId }
+			: {}),
 		...(wantsSmsUpdates(priced, extra) ? { smsUpdates: true } : {}),
 		...(extra.expectedServiceFeeMinor && extra.expectedServiceFeeMinor > 0
 			? { expectedServiceFeeMinor: extra.expectedServiceFeeMinor }

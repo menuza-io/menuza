@@ -68,6 +68,9 @@ export const FR: OrderMessageCopy = {
 		arriving: 'Arrivée entre {from} et {to}',
 		arrivingAround: 'Arrivée vers {time}',
 		viewOrder: 'Voir votre commande',
+		welcomeBonusLine: 'Bienvenue ! {points} {unit} ajoutés',
+		pointsUnit: 'points',
+		starsUnit: 'étoiles',
 		footer: 'Ceci est un message de service concernant votre commande.',
 	},
 }

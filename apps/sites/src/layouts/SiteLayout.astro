@@ -221,7 +221,9 @@ const htmlClass =
 </html>
 
 <script>
+	import { captureReferralFromPage } from '~/lib/loyalty/referral-storage'
 	import { mountSiteInteractions } from '~/lib/site-interactions'
 
+	captureReferralFromPage()
 	mountSiteInteractions()
 </script>

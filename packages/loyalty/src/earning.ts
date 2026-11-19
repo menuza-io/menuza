@@ -4,12 +4,14 @@ import {
 	allocateProportionally,
 	currencySchema,
 	LOYALTY_MAX_POINTS,
+	LOYALTY_MULTIPLIER_ONE_BP,
 	minorSchema,
 	mulDiv,
 	sumMinor,
 } from './money.ts'
 import { loyaltyCatalogIdSchema } from './catalog.ts'
 import { type LoyaltyEarningRule } from './program.ts'
+import { applyTierMultiplier } from './tiers.ts'
 
 /**
  * Earning and refund reversal. Both read only the purchase snapshot and the
@@ -209,6 +211,31 @@ export type RefundReversal = {
  * - visit: kept while the remainder still qualifies;
  * - any method: nothing once the remainder falls below the minimum spend.
  */
+/**
+ * Applies a member's active tier multiplier to the base earning result before
+ * promotions multiply on top of the tier-adjusted award.
+ */
+export function applyTierToEarning(
+	earning: EarningResult,
+	tierMultiplierBp: number,
+): EarningResult {
+	if (
+		earning.reason !== null ||
+		earning.points <= 0 ||
+		tierMultiplierBp <= LOYALTY_MULTIPLIER_ONE_BP
+	) {
+		return earning
+	}
+	return {
+		...earning,
+		points: applyTierMultiplier(earning.points, tierMultiplierBp),
+		lines: earning.lines.map((line) => ({
+			...line,
+			points: applyTierMultiplier(line.points, tierMultiplierBp),
+		})),
+	}
+}
+
 export function computeRefundReversal(input: {
 	rule: LoyaltyEarningRule
 	minimumSpendMinor: number
@@ -217,6 +244,8 @@ export function computeRefundReversal(input: {
 	awardedPoints: number
 	/** The part of `awardedPoints` that came from promotions (0 when none). */
 	bonusPoints?: number
+	/** Tier multiplier active on the purchase (10_000 = 1x). */
+	tierMultiplierBp?: number
 	previouslyReversedPoints: number
 	cumulativeRefundedMinor: number
 }): RefundReversal {
@@ -249,9 +278,13 @@ export function computeRefundReversal(input: {
 	} else {
 		let baseAfter: number
 		if (rule.method === 'spend') {
+			const tierMultiplier = input.tierMultiplierBp ?? LOYALTY_MULTIPLIER_ONE_BP
 			baseAfter = Math.min(
 				baseAwarded,
-				mulDiv(remainingEligibleMinor, rule.points, rule.perMinor),
+				applyTierMultiplier(
+					mulDiv(remainingEligibleMinor, rule.points, rule.perMinor),
+					tierMultiplier,
+				),
 			)
 		} else if (rule.method === 'visit') {
 			baseAfter = baseAwarded

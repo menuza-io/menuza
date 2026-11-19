@@ -24,6 +24,7 @@ import {
 	getNavigableAppRoutes,
 } from '#app/utils/ai/app-nav-routes.ts'
 import { getLaunchStatus } from '#app/utils/env.server.ts'
+import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -139,7 +140,7 @@ async function loadPageContext(
 
 const getPageEditorTools = (
 	organizationId: string,
-	options: { reservationsOnline: boolean },
+	options: { reservationsOnline: boolean; loyaltyEnabled: boolean },
 ) => {
 	const addableSectionTypes = addableBlockTypes(options).map(
 		(block) => block.type,
@@ -343,6 +344,7 @@ export const action = async (args: ActionFunctionArgs) => {
 	// The page-editor tools are built synchronously, after hasWebsiteAccess has
 	// run for the same organization, so the flag is read there.
 	const reservationsOnlineByOrg = new Map<string, boolean>()
+	const loyaltyEnabledByOrg = new Map<string, boolean>()
 	return handleChat(args, {
 		requireUserId,
 		requireOrgMembership: (request, organizationId) =>
@@ -359,6 +361,7 @@ export const action = async (args: ActionFunctionArgs) => {
 			getPageEditorTools(organizationId, {
 				reservationsOnline:
 					reservationsOnlineByOrg.get(organizationId) ?? false,
+				loyaltyEnabled: loyaltyEnabledByOrg.get(organizationId) ?? false,
 			}),
 		getNavigationTools,
 		getNavigableRoutes: () => {
@@ -383,11 +386,15 @@ export const action = async (args: ActionFunctionArgs) => {
 					organizationId,
 					ORG_PERMISSIONS.READ_WEBSITE_ANY,
 				)
-				const reservations = await getReservationsFeatureState(organizationId)
+				const [reservations, loyaltyEnabled] = await Promise.all([
+					getReservationsFeatureState(organizationId),
+					isLoyaltyFeatureEnabled(organizationId),
+				])
 				reservationsOnlineByOrg.set(
 					organizationId,
 					reservations.enabled && reservations.online,
 				)
+				loyaltyEnabledByOrg.set(organizationId, loyaltyEnabled)
 				return true
 			} catch {
 				return false

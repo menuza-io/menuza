@@ -5,6 +5,10 @@ import {
 	loyaltyMemberBindings,
 	loyaltyMemberCodes,
 	loyaltyMembers,
+	loyaltyNotices,
+	loyaltyReferralCodes,
+	loyaltyReferrals,
+	loyaltyWelcomeGrants,
 } from '@repo/tenant-db'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { type LoyaltyTx } from '../lib/loyalty-write.ts'
@@ -39,6 +43,18 @@ export async function eraseLoyaltyMembersInTx(
 	input: { customerIds: readonly string[]; now: number },
 ): Promise<{ membersErased: number }> {
 	if (input.customerIds.length === 0) return { membersErased: 0 }
+	await queryInChunks(input.customerIds, async (chunk) => {
+		await tx
+			.update(loyaltyReferrals)
+			.set({
+				friendCustomerId: null,
+				deviceHash: null,
+				updatedAt: input.now,
+			})
+			.where(inArray(loyaltyReferrals.friendCustomerId, chunk))
+			.run()
+		return []
+	})
 	const members = await queryInChunks(input.customerIds, (chunk) =>
 		tx
 			.select({ id: loyaltyMembers.id, status: loyaltyMembers.status })
@@ -47,9 +63,32 @@ export async function eraseLoyaltyMembersInTx(
 			.all(),
 	)
 	for (const member of members) {
-		// Unused codes, bindings, pending approvals and unbound holds first:
-		// nothing may act as the member from the moment it is erased.
+		// Unused codes, bindings, notices, referral codes, pending approvals and
+		// unbound holds first: nothing may act as the member once erased.
 		await closeMemberAccessInTx(tx, member.id, input.now)
+		await tx
+			.delete(loyaltyNotices)
+			.where(eq(loyaltyNotices.memberId, member.id))
+		await tx
+			.delete(loyaltyReferralCodes)
+			.where(eq(loyaltyReferralCodes.memberId, member.id))
+		await tx
+			.update(loyaltyWelcomeGrants)
+			.set({ memberId: null })
+			.where(eq(loyaltyWelcomeGrants.memberId, member.id))
+		await tx
+			.update(loyaltyReferrals)
+			.set({ referrerMemberId: null, updatedAt: input.now })
+			.where(eq(loyaltyReferrals.referrerMemberId, member.id))
+		await tx
+			.update(loyaltyReferrals)
+			.set({
+				friendMemberId: null,
+				friendCustomerId: null,
+				deviceHash: null,
+				updatedAt: input.now,
+			})
+			.where(eq(loyaltyReferrals.friendMemberId, member.id))
 		await tx
 			.delete(loyaltyMemberCodes)
 			.where(eq(loyaltyMemberCodes.memberId, member.id))

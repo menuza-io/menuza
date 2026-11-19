@@ -109,6 +109,10 @@ async function quoteMemberRewards(
 			cart,
 			balance.available,
 			selection?.rewardId === reward.rewardId ? selection.targetLineId : null,
+			{
+				memberTierId: member.tierId,
+				tiersConfig: program.current.config.tiers,
+			},
 		),
 	)
 	// A pick that changed version, stopped applying or is not affordable is
@@ -225,6 +229,9 @@ export async function quoteCheckout(input: {
 		now,
 		killed: isDiscountsKillSwitchOn(),
 		applyAutomatic: true,
+		orgId,
+		phone: request.contact?.phone ?? null,
+		deviceId: request.referralDeviceId ?? null,
 	})
 	if (!prepared.ok && prepared.failure.code === 'discounts_disabled') {
 		return {

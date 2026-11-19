@@ -326,6 +326,16 @@ export function historyEntryLabel(
 			return i18n._(LOYALTY_LABELS.historyRedeemRestore)
 		case 'adjust':
 			return i18n._(LOYALTY_LABELS.historyAdjust)
+		case 'welcome':
+			return i18n._(LOYALTY_LABELS.historyWelcome)
+		case 'welcome_reversal':
+			return i18n._(LOYALTY_LABELS.historyWelcomeReversal)
+		case 'expired':
+			return i18n._(LOYALTY_LABELS.historyExpire)
+		case 'referral':
+			return i18n._(LOYALTY_LABELS.historyReferral)
+		case 'referral_reversal':
+			return i18n._(LOYALTY_LABELS.historyReferralReversal)
 	}
 }
 

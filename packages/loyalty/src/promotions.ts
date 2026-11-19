@@ -10,7 +10,12 @@ import {
 	type LoyaltyPurchaseLine,
 	type LoyaltyPurchaseSnapshot,
 } from './earning.ts'
-import { LOYALTY_MAX_POINTS, mulDiv } from './money.ts'
+import {
+	LOYALTY_MAX_POINTS,
+	LOYALTY_MULTIPLIER_MAX_BP,
+	LOYALTY_MULTIPLIER_ONE_BP,
+	mulDiv,
+} from './money.ts'
 import {
 	LOYALTY_MAX_CATEGORY_IDS,
 	LOYALTY_MAX_ITEM_IDS,
@@ -48,10 +53,8 @@ export const LOYALTY_PROMOTION_STACKING = ['best', 'add'] as const
 export type LoyaltyPromotionStacking =
 	(typeof LOYALTY_PROMOTION_STACKING)[number]
 
-/** One whole multiplier, in basis points. */
-export const LOYALTY_MULTIPLIER_ONE_BP = 10_000
-/** The largest multiplier a promotion may have: 10x. */
-export const LOYALTY_MULTIPLIER_MAX_BP = 100_000
+/** Re-exported from `./money.ts` for backwards compatibility. */
+export { LOYALTY_MULTIPLIER_MAX_BP, LOYALTY_MULTIPLIER_ONE_BP }
 export const LOYALTY_PROMOTION_MAX_FLAT_POINTS = 100_000
 
 export const loyaltyPromotionScopeSchema = z.discriminatedUnion('type', [

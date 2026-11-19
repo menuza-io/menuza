@@ -429,6 +429,8 @@ const restaurantOrderObjectSchema = z.strictObject({
 	guestCount: z.number().int().min(1).max(500).optional(),
 	lines: z.array(restaurantOrderLineSchema).min(1).max(RESTAURANT_MAX_LINES),
 	turnstileToken: z.string().min(1).max(2048).optional(),
+	/** Opaque client device identifier used for referral abuse prevention. */
+	referralDeviceId: z.string().trim().min(1).max(128).optional(),
 })
 
 /** The cross-field shape the refinement sees (a quote may drop contact). */

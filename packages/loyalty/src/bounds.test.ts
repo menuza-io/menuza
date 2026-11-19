@@ -228,3 +228,43 @@ describe('order reward selection bounds', () => {
 		expect(accepts({ ...valid, ...patch })).toBe(false)
 	})
 })
+
+describe('program extension bounds', () => {
+	const base = {
+		name: 'Program',
+		unitLabel: 'points',
+		currency: 'USD',
+		timeZone: 'UTC',
+		minimumSpendMinor: 0,
+		earning: { method: 'spend', points: 1, perMinor: 100 },
+	}
+
+	it('validates welcomeBonus, tiers, expiry, and referrals bounds', () => {
+		expect(
+			loyaltyProgramConfigSchema.safeParse({
+				...base,
+				welcomeBonus: { enabled: true, points: 0, afterFirstPaidOrder: false },
+			}).success,
+		).toBe(false)
+		expect(
+			loyaltyProgramConfigSchema.safeParse({
+				...base,
+				welcomeBonus: { enabled: true, points: 50, afterFirstPaidOrder: true },
+			}).success,
+		).toBe(true)
+		expect(
+			loyaltyProgramConfigSchema.safeParse({
+				...base,
+				expiry: { mode: 'after_earn', months: 2, enabledAt: null },
+			}).success,
+		).toBe(false)
+		expect(
+			loyaltyProgramConfigSchema.safeParse({
+				...base,
+				currency: 'CAD',
+				timeZone: 'America/Toronto',
+				expiry: { mode: 'after_earn', months: 6, enabledAt: null },
+			}).success,
+		).toBe(false)
+	})
+})

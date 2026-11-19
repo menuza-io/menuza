@@ -6,6 +6,7 @@ import {
 	loyaltyHistoryResponseSchema,
 	loyaltyMemberCodeResponseSchema,
 	loyaltyProgramResponseSchema,
+	loyaltyReferralClaimResponseSchema,
 	loyaltyWalletResponseSchema,
 	type LoyaltyCheckoutQuote,
 	type LoyaltyCustomerApproval,
@@ -460,6 +461,30 @@ export function createLoyaltyClient(deps: LoyaltyClientDeps = {}) {
 				init,
 				loyaltyCheckoutQuoteResponseSchema,
 			)
+		},
+
+		/**
+		 * A signed-in friend claims a referral link or code. The answer may
+		 * carry a single-use discount code for the first order.
+		 */
+		async claimReferral(
+			input: { code: string; deviceId?: string | null },
+			key: string = newKey(),
+		) {
+			const data = await authed(
+				'/loyalty/referral/claim',
+				request(
+					'POST',
+					{
+						code: input.code,
+						...(input.deviceId ? { deviceId: input.deviceId } : {}),
+						...binding(),
+					},
+					key,
+				),
+				loyaltyReferralClaimResponseSchema,
+			)
+			return data.referral
 		},
 
 		async decideApproval(

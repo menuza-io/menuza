@@ -5,13 +5,13 @@ import {
 	NO_LOYALTY_CAPABILITIES,
 } from './capabilities.ts'
 
-const ON = { enabled: true, redemption: false }
+const ON = { enabled: true, redemption: false, referrals: false }
 
 describe('computeLoyaltyCapabilities', () => {
 	it('shows nothing while the flag is off, whatever the grants', () => {
 		expect(
 			computeLoyaltyCapabilities({
-				features: { enabled: false, redemption: false },
+				features: { enabled: false, redemption: false, referrals: false },
 				grants: [P.READ_LOYALTY, P.UPDATE_LOYALTY_POINTS],
 				locationIds: null,
 				impersonated: false,

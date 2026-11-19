@@ -1,4 +1,11 @@
-import { type LoyaltyProgramConfig, type LoyaltyScope } from '@repo/loyalty'
+import {
+	DEFAULT_LOYALTY_EXPIRY_CONFIG,
+	DEFAULT_LOYALTY_REFERRAL_CONFIG,
+	DEFAULT_LOYALTY_TIERS_CONFIG,
+	DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
+	type LoyaltyProgramConfig,
+	type LoyaltyScope,
+} from '@repo/loyalty'
 import { describe, expect, it, vi } from 'vitest'
 import {
 	LoyaltyApiError,
@@ -23,6 +30,10 @@ const programConfig: LoyaltyProgramConfig = {
 	labels: { items: {}, categories: {} },
 	promotions: [],
 	promotionStacking: 'best',
+	welcomeBonus: DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
+	tiers: DEFAULT_LOYALTY_TIERS_CONFIG,
+	expiry: DEFAULT_LOYALTY_EXPIRY_CONFIG,
+	referrals: DEFAULT_LOYALTY_REFERRAL_CONFIG,
 }
 
 function makeToken(
@@ -36,7 +47,7 @@ function makeToken(
 		scope,
 		grants: [],
 		locationIds: null,
-		features: { enabled: true, redemption: true },
+		features: { enabled: true, redemption: true, referrals: false },
 	}
 }
 
@@ -383,6 +394,8 @@ describe('createLoyaltyClient', () => {
 				lifetimeRedeemed: 0,
 			},
 			lastPurchaseAt: null,
+			imported: false,
+			tier: null,
 		}
 		const { pool, calls } = fakePool({
 			'GET /operator/loyalty/members/customer/cus%201': { member },

@@ -43,6 +43,8 @@ function newRule(field: AudienceRuleField): AudienceRule {
 			return { field, op: 'gte', value: 100 }
 		case 'loyalty_near_reward':
 			return { field, withinPercent: 20 }
+		case 'loyalty_tier':
+			return { field, tierId: 'gold' }
 		case 'phone_verified':
 			return { field, value: true }
 		case 'joined_within_days':
@@ -61,6 +63,7 @@ const FIELD_ORDER: AudienceRuleField[] = [
 	'loyalty_member',
 	'loyalty_points',
 	'loyalty_near_reward',
+	'loyalty_tier',
 	'phone_verified',
 	'joined_within_days',
 ]
@@ -95,6 +98,7 @@ export function AudienceBuilder({
 		loyalty_member: _(msg`Is a loyalty member`),
 		loyalty_points: _(msg`Loyalty points`),
 		loyalty_near_reward: _(msg`Near a loyalty reward`),
+		loyalty_tier: _(msg`Loyalty tier`),
 		phone_verified: _(msg`Has a verified phone`),
 		joined_within_days: _(msg`Joined recently`),
 	}
@@ -121,7 +125,9 @@ export function AudienceBuilder({
 	) => (
 		<Select
 			value={rule.op}
-			onValueChange={(op) => op && setRule(index, { ...rule, op: op as Compare })}
+			onValueChange={(op) =>
+				op && setRule(index, { ...rule, op: op as Compare })
+			}
 			disabled={disabled}
 		>
 			<SelectTrigger className="h-9 w-32">
@@ -252,7 +258,8 @@ export function AudienceBuilder({
 					<>
 						{numberInput(
 							rule.percent,
-							(next) => setRule(index, { ...rule, percent: num(String(next), 1, 50) }),
+							(next) =>
+								setRule(index, { ...rule, percent: num(String(next), 1, 50) }),
 							{ label: _(msg`Percent`), min: 1, max: 50 },
 						)}
 						<span className="text-muted-foreground text-sm">
@@ -260,7 +267,11 @@ export function AudienceBuilder({
 						</span>
 						{numberInput(
 							rule.windowDays,
-							(next) => setRule(index, { ...rule, windowDays: num(String(next), 1, 730) }),
+							(next) =>
+								setRule(index, {
+									...rule,
+									windowDays: num(String(next), 1, 730),
+								}),
 							{ label: _(msg`Days`), min: 1, max: 730 },
 						)}
 						<span className="text-muted-foreground text-sm">
@@ -283,7 +294,9 @@ export function AudienceBuilder({
 			case 'has_upcoming_reservation':
 			case 'loyalty_member':
 			case 'phone_verified':
-				return yesNo(rule.value, (next) => setRule(index, { ...rule, value: next }))
+				return yesNo(rule.value, (next) =>
+					setRule(index, { ...rule, value: next }),
+				)
 			case 'loyalty_near_reward':
 				return (
 					<>
@@ -293,13 +306,30 @@ export function AudienceBuilder({
 						{numberInput(
 							rule.withinPercent,
 							(next) =>
-								setRule(index, { ...rule, withinPercent: num(String(next), 1, 90) }),
+								setRule(index, {
+									...rule,
+									withinPercent: num(String(next), 1, 90),
+								}),
 							{ label: _(msg`Percent`), min: 1, max: 90 },
 						)}
 						<span className="text-muted-foreground text-sm">
 							{_(msg`% of the cheapest reward`)}
 						</span>
 					</>
+				)
+			case 'loyalty_tier':
+				return (
+					<Input
+						aria-label={_(msg`Tier ID`)}
+						className="h-9 w-40"
+						value={rule.tierId}
+						onChange={(event) =>
+							setRule(index, { ...rule, tierId: event.target.value })
+						}
+						placeholder={_(msg`e.g. gold`)}
+						disabled={disabled}
+						maxLength={64}
+					/>
 				)
 			case 'joined_within_days':
 				return (
@@ -401,8 +431,8 @@ export function AudienceBuilder({
 			</Button>
 			<p className="text-muted-foreground text-xs">
 				<Trans>
-					An audience only narrows who you can message. Guests who did not
-					agree to hear from you are never included, whatever the rules say.
+					An audience only narrows who you can message. Guests who did not agree
+					to hear from you are never included, whatever the rules say.
 				</Trans>
 			</p>
 		</div>

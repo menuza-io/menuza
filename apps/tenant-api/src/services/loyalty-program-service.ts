@@ -1,7 +1,10 @@
 import {
+	isTimeExpiryAllowedInRegion,
 	LoyaltyDomainError,
 	loyaltyProgramConfigSchema,
 	loyaltyRewardDefinitionSchema,
+	memberMeetsTier,
+	tierById,
 	type LoyaltyFeatures,
 	type LoyaltyOperatorProgram,
 	type LoyaltyOperatorReward,
@@ -12,6 +15,7 @@ import {
 	type LoyaltyRewardDefinition,
 	type LoyaltyRewardSnapshot,
 	type LoyaltyRewardStatus,
+	type LoyaltyTiersConfig,
 } from '@repo/loyalty'
 import {
 	loyaltyProgramVersions,
@@ -21,12 +25,15 @@ import {
 } from '@repo/tenant-db'
 import { and, asc, desc, eq, lte, sql } from 'drizzle-orm'
 import {
+	afterActiveLoyaltyCommit,
 	type LoyaltyIdempotency,
 	type LoyaltyReader,
 	type LoyaltyTx,
 	withLoyaltyWrite,
 } from '../lib/loyalty-write.ts'
+import { getReservationsContext } from '../lib/reservations-context.ts'
 import { recordLoyaltyAudit } from './loyalty-audit.ts'
+import { notifyExpiryEnabledForOrg } from './loyalty-expiry-service.ts'
 
 /**
  * Program and reward definitions. One program per organization (`default`).
@@ -208,10 +215,46 @@ export async function saveProgram(
 	},
 ): Promise<LoyaltyOperatorProgram> {
 	const config = loyaltyProgramConfigSchema.parse(input.config)
+	const orgCtx = await getReservationsContext(orgId).catch(() => null)
+	const regionCheck = isTimeExpiryAllowedInRegion({
+		mode: config.expiry.mode,
+		currency: config.currency,
+		timeZone: config.timeZone,
+		addresses:
+			orgCtx?.locations.map((loc) =>
+				typeof loc.address === 'string'
+					? loc.address
+					: (loc.address?.formattedAddress ?? loc.address?.city ?? null),
+			) ?? [],
+	})
+	if (!regionCheck.allowed) {
+		throw new LoyaltyDomainError('expiry_restricted_region', {
+			reason: regionCheck.reason,
+			jurisdiction: regionCheck.jurisdiction,
+		})
+	}
 	return withLoyaltyWrite(
 		{ orgId, now: input.now, idempotency: input.idempotency },
 		async (tx, ctx) => {
 			const existing = await readProgramInTx(tx)
+			const prevExpiryMode = existing?.current.config.expiry.mode ?? 'never'
+			const nextExpiry =
+				config.expiry.mode === 'never'
+					? { ...config.expiry, enabledAt: null }
+					: {
+							...config.expiry,
+							enabledAt:
+								prevExpiryMode === 'never'
+									? ctx.now
+									: (existing?.current.config.expiry.enabledAt ?? ctx.now),
+						}
+			const normalizedConfig: LoyaltyProgramConfig = {
+				...config,
+				expiry: nextExpiry,
+			}
+			const turnedExpiryOn =
+				prevExpiryMode === 'never' && normalizedConfig.expiry.mode !== 'never'
+
 			if (!existing) {
 				if (input.expectedVersion !== null) {
 					throw new LoyaltyDomainError('stale_version')
@@ -221,14 +264,14 @@ export async function saveProgram(
 					status: 'draft',
 					version: 1,
 					currentVersion: 1,
-					currency: config.currency,
+					currency: normalizedConfig.currency,
 					createdAt: ctx.now,
 					updatedAt: ctx.now,
 				})
 				await insertProgramVersion(tx, {
 					version: 1,
 					status: 'draft',
-					config,
+					config: normalizedConfig,
 					at: ctx.now,
 					actorId: input.actorId,
 				})
@@ -238,7 +281,7 @@ export async function saveProgram(
 					action: 'program.created',
 					entityType: 'program',
 					entityId: LOYALTY_PROGRAM_ID,
-					changes: { version: 1, method: config.earning.method },
+					changes: { version: 1, method: normalizedConfig.earning.method },
 					at: ctx.now,
 				})
 				return (await getOperatorProgram(tx))!
@@ -249,7 +292,7 @@ export async function saveProgram(
 					currentVersion: program.version,
 				})
 			}
-			const currencyChanged = config.currency !== program.currency
+			const currencyChanged = normalizedConfig.currency !== program.currency
 			if (currencyChanged && program.activatedAt !== null) {
 				throw new LoyaltyDomainError('config_invalid', {
 					field: 'currency',
@@ -260,7 +303,7 @@ export async function saveProgram(
 			await insertProgramVersion(tx, {
 				version: nextVersion,
 				status: program.status,
-				config,
+				config: normalizedConfig,
 				at: ctx.now,
 				actorId: input.actorId,
 			})
@@ -269,12 +312,12 @@ export async function saveProgram(
 				.set({
 					version: program.version + 1,
 					currentVersion: nextVersion,
-					currency: config.currency,
+					currency: normalizedConfig.currency,
 					updatedAt: ctx.now,
 				})
 				.where(eq(loyaltyPrograms.id, LOYALTY_PROGRAM_ID))
 			if (currencyChanged) {
-				await reissueRewardsInCurrency(tx, config.currency, {
+				await reissueRewardsInCurrency(tx, normalizedConfig.currency, {
 					at: ctx.now,
 					actorId: input.actorId,
 				})
@@ -287,11 +330,16 @@ export async function saveProgram(
 				entityId: LOYALTY_PROGRAM_ID,
 				changes: {
 					version: nextVersion,
-					method: config.earning.method,
+					method: normalizedConfig.earning.method,
 					currencyChanged,
 				},
 				at: ctx.now,
 			})
+			if (turnedExpiryOn) {
+				afterActiveLoyaltyCommit((committedOrgId) => {
+					void notifyExpiryEnabledForOrg(committedOrgId, { now: ctx.now })
+				})
+			}
 			return (await getOperatorProgram(tx))!
 		},
 	)
@@ -536,6 +584,14 @@ export async function createReward(
 		async (tx, ctx) => {
 			const program = await readProgramInTx(tx)
 			if (!program) throw new LoyaltyDomainError('program_not_found')
+			if (
+				definition.minTierId &&
+				!tierById(program.current.config.tiers, definition.minTierId).tier
+			) {
+				throw new LoyaltyDomainError('config_invalid', {
+					field: 'minTierId',
+				})
+			}
 			const count = await tx
 				.select({ count: sql<number>`count(*)` })
 				.from(loyaltyRewards)
@@ -602,6 +658,17 @@ export async function updateReward(
 		async (tx, ctx) => {
 			const current = await readRewardInTx(tx, input.rewardId)
 			if (!current) throw new LoyaltyDomainError('reward_not_found')
+			if (definition.minTierId) {
+				const program = await readProgramInTx(tx)
+				if (
+					!program ||
+					!tierById(program.current.config.tiers, definition.minTierId).tier
+				) {
+					throw new LoyaltyDomainError('config_invalid', {
+						field: 'minTierId',
+					})
+				}
+			}
 			if (current.reward.version !== input.expectedVersion) {
 				throw new LoyaltyDomainError('stale_version', {
 					currentVersion: current.reward.version,
@@ -684,8 +751,19 @@ export async function setRewardStatus(
 
 export function toPublicReward(
 	snapshot: LoyaltyRewardSnapshot,
+	options?: {
+		tiers?: LoyaltyTiersConfig | null
+		memberTierId?: string | null
+	},
 ): LoyaltyPublicReward {
 	const definition = snapshot.definition
+	const minTierId = definition.minTierId ?? null
+	const minTier =
+		minTierId && options?.tiers ? tierById(options.tiers, minTierId).tier : null
+	const lockedByTier =
+		minTierId !== null && options?.tiers?.enabled
+			? !memberMeetsTier(options.tiers, options.memberTierId ?? null, minTierId)
+			: false
 	return {
 		id: snapshot.rewardId,
 		version: snapshot.version,
@@ -699,6 +777,9 @@ export function toPublicReward(
 		freeItemId: definition.kind === 'free_item' ? definition.itemId : null,
 		labels: definition.labels,
 		currency: snapshot.currency,
+		minTierId,
+		minTierName: minTier?.name ?? null,
+		lockedByTier,
 	}
 }
 
@@ -709,15 +790,21 @@ export function toPublicReward(
 export async function getPublicProgram(
 	db: LoyaltyReader,
 	features: LoyaltyFeatures,
+	options?: { memberTierId?: string | null },
 ): Promise<LoyaltyPublicProgram | null> {
 	if (!features.enabled) return null
 	const current = await readProgramInTx(db)
 	if (!current || current.program.status === 'draft') return null
 	const status = current.program.status
+	const config = current.current.config
 	const rewards = (await activeRewardsInTx(db))
 		.filter((reward) => reward.currency === current.program.currency)
-		.map(toPublicReward)
-	const config = current.current.config
+		.map((reward) =>
+			toPublicReward(reward, {
+				tiers: config.tiers,
+				memberTierId: options?.memberTierId ?? null,
+			}),
+		)
 	return {
 		name: config.name,
 		unitLabel: config.unitLabel,
@@ -729,5 +816,45 @@ export async function getPublicProgram(
 		terms: config.terms.trim() === '' ? null : config.terms,
 		rewards,
 		redemptionEnabled: features.redemption && status === 'active',
+		welcomeBonus:
+			config.welcomeBonus.enabled && config.welcomeBonus.points > 0
+				? {
+						enabled: true,
+						points: config.welcomeBonus.points,
+						afterFirstPaidOrder: config.welcomeBonus.afterFirstPaidOrder,
+					}
+				: null,
+		tiers:
+			config.tiers.enabled && config.tiers.tiers.length > 0
+				? {
+						metric: config.tiers.metric,
+						periodMonths: config.tiers.periodMonths,
+						graceDays: config.tiers.graceDays,
+						levels: config.tiers.tiers.map((tier) => ({
+							id: tier.id,
+							name: tier.name,
+							threshold: tier.threshold,
+							multiplierBp: tier.multiplierBp,
+						})),
+					}
+				: null,
+		expiry:
+			config.expiry.mode !== 'never'
+				? {
+						mode: config.expiry.mode,
+						months: config.expiry.months,
+						enabledAt: config.expiry.enabledAt,
+					}
+				: null,
+		referrals:
+			features.referrals && config.referrals.enabled
+				? {
+						enabled: true,
+						referrerPoints: config.referrals.referrerPoints,
+						friendPoints: config.referrals.friendPoints,
+						friendDiscount: config.referrals.friendDiscount,
+						minimumOrderMinor: config.referrals.minimumOrderMinor,
+					}
+				: null,
 	}
 }

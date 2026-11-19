@@ -24,9 +24,15 @@ import {
 	historyEntryLabel,
 	isolateName,
 	loyaltyErrorLabelKey,
+	progressPercent,
 	spellCode,
 } from '~/lib/loyalty/format'
 import { type LoyaltyLabels } from '~/lib/loyalty/labels'
+import {
+	clearPendingReferral,
+	readPendingReferral,
+	referralDeviceId,
+} from '~/lib/loyalty/referral-storage'
 import {
 	approvalDeadline,
 	isUnavailableCode,
@@ -47,6 +53,7 @@ import {
 } from '~/lib/loyalty-client'
 import { el } from '~/lib/ordering/dom'
 import { fillTemplate } from '~/lib/ordering/money'
+import { formatMinor } from '~/lib/reservations/money'
 
 /**
  * The rewards wallet at `/profile/rewards`. Everything on it comes from the
@@ -141,7 +148,9 @@ export type WalletPageDeps = {
 		| 'memberCode'
 		| 'approvals'
 		| 'decideApproval'
-	>
+	> & {
+		claimReferral?: LoyaltyClient['claimReferral']
+	}
 	labels: LoyaltyLabels
 	locale: string
 	signedIn: () => boolean
@@ -185,6 +194,7 @@ type MemberLayout = {
 	notices: HTMLElement
 	balance: HTMLElement
 	rewards: HTMLElement
+	referral: HTMLElement
 	earning: HTMLElement
 	details: HTMLElement
 	/** The terms text shown, so a refresh does not close the open section. */
@@ -487,7 +497,17 @@ export async function initWalletPage(
 				document.createTextNode(points(reward.pointsCost, program.unitLabel)),
 			)
 			item.append(cost)
-			if (available !== null) {
+			if (reward.lockedByTier) {
+				const note = el(
+					'p',
+					'text-xs font-medium text-muted-foreground',
+					fillTemplate(labels.rewardTierLocked, {
+						tier: isolateName(reward.minTierName ?? reward.minTierId ?? ''),
+					}),
+				)
+				note.dataset.rewardStanding = 'locked'
+				item.append(note)
+			} else if (available !== null) {
 				const standing = rewardStanding(reward, available)
 				const note = el(
 					'p',
@@ -567,6 +587,136 @@ export async function initWalletPage(
 		if (current.balance.available < 0) {
 			s.body.append(el('p', noticeClass, labels.owedNotice))
 		}
+		if (
+			current.expiry &&
+			current.expiry.nextExpiryPoints > 0 &&
+			current.expiry.nextExpiryAt !== null
+		) {
+			const warn = el(
+				'p',
+				noticeClass,
+				fillTemplate(labels.expiryWarning, {
+					points: points(current.expiry.nextExpiryPoints, unitLabel),
+					date: formatEntryDate(current.expiry.nextExpiryAt, locale, 'date'),
+				}),
+			)
+			warn.dataset.loyaltyExpiryWarning = ''
+			s.body.append(warn)
+		}
+		if (current.welcomeBonus && current.welcomeBonus.points > 0) {
+			if (current.welcomeBonus.status === 'granted') {
+				const wb = el(
+					'p',
+					noticeClass,
+					fillTemplate(labels.welcomeGranted, {
+						points: points(current.welcomeBonus.points, unitLabel),
+					}),
+				)
+				wb.dataset.loyaltyWelcome = 'granted'
+				s.body.append(wb)
+			} else if (current.welcomeBonus.status === 'pending_first_order') {
+				const wb = el(
+					'p',
+					mutedTextClass,
+					fillTemplate(labels.welcomePending, {
+						points: points(current.welcomeBonus.points, unitLabel),
+					}),
+				)
+				wb.dataset.loyaltyWelcome = 'pending'
+				s.body.append(wb)
+			}
+		}
+		if (current.tier) {
+			const tierBox = el('div', `${tileClass} flex flex-col gap-1.5`)
+			tierBox.dataset.loyaltyTier = current.tier.current?.id ?? 'base'
+			if (current.tier.current) {
+				const mult = (current.tier.current.multiplierBp / 10_000)
+					.toFixed(2)
+					.replace(/\.00$/, '')
+				tierBox.append(
+					el(
+						'p',
+						'text-sm font-medium text-foreground',
+						fillTemplate(labels.tierCurrent, {
+							tier: isolateName(current.tier.current.name),
+						}),
+					),
+				)
+				if (current.tier.current.multiplierBp > 10_000) {
+					tierBox.append(
+						el(
+							'p',
+							'text-xs text-muted-foreground',
+							fillTemplate(labels.tierMultiplier, { multiplier: mult }),
+						),
+					)
+				}
+			}
+			if (current.tier.next) {
+				const neededText =
+					current.tier.metric === 'spend_minor'
+						? formatMinor(
+								current.tier.next.pointsRemaining,
+								current.program.currency,
+								locale,
+							)
+						: points(current.tier.next.pointsRemaining, unitLabel)
+				const pct = progressPercent(
+					current.tier.progressValue,
+					current.tier.next.threshold,
+				)
+				const bar = el(
+					'div',
+					'h-2 w-full overflow-hidden rounded-full bg-muted',
+				)
+				bar.setAttribute('role', 'progressbar')
+				bar.setAttribute('aria-valuemin', '0')
+				bar.setAttribute('aria-valuemax', '100')
+				bar.setAttribute('aria-valuenow', String(pct))
+				const fill = el('div', 'h-full rounded-full bg-primary')
+				fill.style.width = `${pct}%`
+				bar.append(fill)
+				tierBox.append(
+					el(
+						'p',
+						'text-xs text-foreground',
+						fillTemplate(labels.tierNextProgress, {
+							amount: neededText,
+							tier: isolateName(current.tier.next.name),
+						}),
+					),
+					bar,
+				)
+			} else if (current.tier.current) {
+				tierBox.append(
+					el('p', 'text-xs text-foreground', labels.tierTopReached),
+				)
+			}
+			if (current.tier.reviewAt) {
+				tierBox.append(
+					el(
+						'p',
+						'text-xs text-muted-foreground',
+						fillTemplate(labels.tierReview, {
+							date: formatEntryDate(current.tier.reviewAt, locale, 'date'),
+						}),
+					),
+				)
+			}
+			if (current.tier.graceUntil && current.tier.pendingDowngradeTierName) {
+				const grace = el(
+					'p',
+					noticeClass,
+					fillTemplate(labels.tierGrace, {
+						tier: isolateName(current.tier.pendingDowngradeTierName),
+						date: formatEntryDate(current.tier.graceUntil, locale, 'date'),
+					}),
+				)
+				grace.dataset.loyaltyTierGrace = ''
+				tierBox.append(grace)
+			}
+			s.body.append(tierBox)
+		}
 		const next = nextRewardView(current)
 		if (next?.kind === 'next') {
 			const progress = (reward: string) =>
@@ -594,6 +744,67 @@ export async function initWalletPage(
 			s.body.append(
 				el('p', 'text-sm text-foreground', labels.allRewardsUnlocked),
 			)
+		}
+		return s.root
+	}
+
+	function referralCard(current: LoyaltyMemberWallet): HTMLElement | null {
+		const ref = current.referral
+		if (!ref) return null
+		const s = section('referral', labels.referralHeading)
+		const refPts = current.program.referrals?.referrerPoints ?? 0
+		s.body.append(
+			el(
+				'p',
+				mutedTextClass,
+				refPts > 0
+					? fillTemplate(labels.referralBody, {
+							points: points(refPts, current.program.unitLabel),
+						})
+					: labels.referralBodyGeneric,
+			),
+		)
+		const codeBox = el(
+			'div',
+			`${tileClass} flex flex-wrap items-center justify-between gap-3`,
+		)
+		const codeText = el(
+			'span',
+			'font-mono text-lg font-semibold text-foreground',
+			ref.code,
+		)
+		codeText.dir = 'ltr'
+		codeText.dataset.loyaltyReferralCode = ''
+		const actions = el('div', 'flex flex-wrap items-center gap-2')
+		const copyCodeBtn = button(secondaryClass, labels.referralCopyCode)
+		copyCodeBtn.dataset.loyaltyAction = 'copy-referral-code'
+		copyCodeBtn.addEventListener('click', () => {
+			void navigator.clipboard?.writeText(ref.code)
+			copyCodeBtn.textContent = labels.referralCopied
+		})
+		const copyLinkBtn = button(primaryClass, labels.referralCopyLink)
+		copyLinkBtn.dataset.loyaltyAction = 'copy-referral-link'
+		copyLinkBtn.addEventListener('click', () => {
+			const origin = typeof window !== 'undefined' ? window.location.origin : ''
+			void navigator.clipboard?.writeText(`${origin}${ref.sharePath}`)
+			copyLinkBtn.textContent = labels.referralCopied
+		})
+		actions.append(copyCodeBtn, copyLinkBtn)
+		codeBox.append(codeText, actions)
+		s.body.append(codeBox)
+		const stats = el(
+			'p',
+			'text-xs text-muted-foreground',
+			fillTemplate(labels.referralStats, {
+				credited: String(ref.creditedCount),
+				pending: String(ref.pendingCount),
+				points: points(ref.creditedPoints, current.program.unitLabel),
+			}),
+		)
+		stats.dataset.loyaltyReferralStats = ''
+		s.body.append(stats)
+		if (ref.capReached) {
+			s.body.append(el('p', noticeClass, labels.referralCapReached))
 		}
 		return s.root
 	}
@@ -638,6 +849,7 @@ export async function initWalletPage(
 				notices: el('div', 'contents'),
 				balance: el('div', 'contents'),
 				rewards: el('div', 'contents'),
+				referral: el('div', 'contents'),
 				earning: el('div', 'contents'),
 				details: el('div', 'contents'),
 				termsText: undefined,
@@ -647,6 +859,7 @@ export async function initWalletPage(
 			if (can.canShowCode) parts.push(codeSection.root)
 			parts.push(
 				layout.rewards,
+				layout.referral,
 				layout.earning,
 				historySection.root,
 				layout.details,
@@ -658,6 +871,8 @@ export async function initWalletPage(
 		layout.rewards.replaceChildren(
 			rewardsCard(next.program, next.balance.available),
 		)
+		const refCard = referralCard(next)
+		layout.referral.replaceChildren(...(refCard ? [refCard] : []))
 		layout.earning.replaceChildren(earningCard(next.program))
 		if (layout.termsText !== next.program.terms) {
 			const terms = termsDetails(next.program)
@@ -667,7 +882,28 @@ export async function initWalletPage(
 		renderCode()
 		renderApprovals()
 		renderHistory()
-		if (firstRender) void loadHistory(false)
+		if (firstRender) {
+			void loadHistory(false)
+			if (typeof window !== 'undefined' && client.claimReferral) {
+				const pending = readPendingReferral({
+					host: window.location.host,
+					storage: window.localStorage,
+					now: now(),
+				})
+				if (pending) {
+					clearPendingReferral({
+						host: window.location.host,
+						storage: window.localStorage,
+					})
+					void client
+						.claimReferral({
+							code: pending,
+							deviceId: referralDeviceId(window.localStorage),
+						})
+						.catch(() => {})
+				}
+			}
+		}
 		if (can.canApprove && (firstRender || next.pendingApprovals > 0)) {
 			void refreshApprovals()
 		} else {

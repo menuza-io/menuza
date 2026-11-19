@@ -12,6 +12,8 @@ export type LoyaltyCatalogOption = {
 	name: string
 	/** Second line: a category's parent path, or an item's internal name. */
 	detail: string | null
+	/** Item price in major currency units when available, for percent-back estimates. */
+	priceMajor?: number | null
 }
 
 export type LoyaltyCatalog = {
@@ -23,6 +25,7 @@ type MenuRow = {
 	id: string
 	displayName: string
 	internalName: string | null
+	price?: number | null
 }
 
 type CategoryRow = MenuRow & { parentId: string | null }
@@ -64,6 +67,9 @@ export function buildLoyaltyCatalog({
 				id: row.id,
 				name,
 				detail: internal && internal !== name ? internal : null,
+				...(typeof row.price === 'number' && Number.isFinite(row.price)
+					? { priceMajor: row.price }
+					: {}),
 			},
 		]
 	})

@@ -8,6 +8,7 @@ import { z } from 'zod'
 export const LOYALTY_FLAG_KEYS = {
 	enabled: 'loyalty.enabled',
 	redemption: 'loyalty.redemption',
+	referrals: 'loyalty.referrals',
 } as const
 
 export type LoyaltyFlagName = keyof typeof LOYALTY_FLAG_KEYS
@@ -21,17 +22,21 @@ export type LoyaltyFeatures = {
 	enabled: boolean
 	/** Spending points on rewards: quotes, holds and member codes. */
 	redemption: boolean
+	/** Refer-a-friend sharing links, claim rewards and referrer bonuses. */
+	referrals: boolean
 }
 
 export const LOYALTY_FEATURES_OFF: Readonly<LoyaltyFeatures> = Object.freeze({
 	enabled: false,
 	redemption: false,
+	referrals: false,
 })
 
 export const loyaltyFeaturesSchema = z
 	.object({
 		enabled: z.boolean(),
 		redemption: z.boolean(),
+		referrals: z.boolean().default(false),
 	})
 	.strict()
 
@@ -50,6 +55,7 @@ export function foldLoyaltyFeatures(
 	return {
 		enabled,
 		redemption: enabled && isLoyaltyFlagOn(raw.redemption),
+		referrals: enabled && isLoyaltyFlagOn(raw.referrals),
 	}
 }
 

@@ -11,6 +11,10 @@ import { z } from 'zod'
 export const LOYALTY_MAX_MINOR = 1_000_000_000_000
 /** Largest point amount on a single entry or reward. */
 export const LOYALTY_MAX_POINTS = 100_000_000
+/** One whole multiplier in basis points (1.0x). */
+export const LOYALTY_MULTIPLIER_ONE_BP = 10_000
+/** The largest multiplier a tier or promotion may have (10.0x). */
+export const LOYALTY_MULTIPLIER_MAX_BP = 100_000
 
 export const minorSchema = z.number().int().min(0).max(LOYALTY_MAX_MINOR)
 export const positiveMinorSchema = minorSchema.min(1)

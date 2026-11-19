@@ -41,6 +41,7 @@ import {
 	purgeLoyaltyAccessInTx,
 } from './loyalty-code-service.ts'
 import { countParkedLoyaltySources } from './loyalty-outbox.ts'
+import { processExpiryTickForOrg } from './loyalty-expiry-service.ts'
 import {
 	loyaltySourceAdapters,
 	processLoyaltyOutbox,
@@ -51,6 +52,8 @@ import {
 	releaseRedemptionInTx,
 	reviewRedemptionInTx,
 } from './loyalty-redemption-service.ts'
+import { processReferralHoldTickForOrg } from './loyalty-referral-service.ts'
+import { processTierReviewTickForOrg } from './loyalty-tier-service.ts'
 import { purgeUnverifiedJoinRows } from './loyalty-till-join-service.ts'
 import { sweepExpiredHolds } from './order-service.ts'
 
@@ -179,6 +182,37 @@ export async function runLoyaltyTickForOrg(
 	await purgeUnverifiedJoinRows(orgId, now)
 
 	const failures: Array<{ step: string; rowId: string | null }> = []
+	await processTierReviewTickForOrg(orgId, { db, now }).catch(
+		(error: unknown) => {
+			failures.push({ step: 'tier_review', rowId: null })
+			console.error('Loyalty tick step failed', {
+				orgId,
+				step: 'tier_review',
+				rowId: null,
+				...errorLogFields(error),
+			})
+		},
+	)
+	await processExpiryTickForOrg(orgId, { db, now }).catch((error: unknown) => {
+		failures.push({ step: 'expiry', rowId: null })
+		console.error('Loyalty tick step failed', {
+			orgId,
+			step: 'expiry',
+			rowId: null,
+			...errorLogFields(error),
+		})
+	})
+	await processReferralHoldTickForOrg(orgId, { db, now }).catch(
+		(error: unknown) => {
+			failures.push({ step: 'referrals', rowId: null })
+			console.error('Loyalty tick step failed', {
+				orgId,
+				step: 'referrals',
+				rowId: null,
+				...errorLogFields(error),
+			})
+		},
+	)
 	/** One row (or one step) in its own transaction; a failure is logged, not thrown. */
 	async function inOwnTx<T>(
 		step: string,

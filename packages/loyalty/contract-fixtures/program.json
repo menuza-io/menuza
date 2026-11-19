@@ -34,7 +34,10 @@
 					"items": {},
 					"categories": {}
 				},
-				"currency": "USD"
+				"currency": "USD",
+				"minTierId": null,
+				"minTierName": null,
+				"lockedByTier": false
 			},
 			{
 				"id": "00000000-0000-4000-8000-000000000002",
@@ -53,7 +56,10 @@
 					},
 					"categories": {}
 				},
-				"currency": "USD"
+				"currency": "USD",
+				"minTierId": null,
+				"minTierName": null,
+				"lockedByTier": false
 			},
 			{
 				"id": "00000000-0000-4000-8000-000000000003",
@@ -68,9 +74,7 @@
 					"maxDiscountMinor": 400
 				},
 				"itemIds": [],
-				"categoryIds": [
-					"cat_pastry"
-				],
+				"categoryIds": ["cat_pastry"],
 				"freeItemId": null,
 				"labels": {
 					"items": {},
@@ -78,9 +82,16 @@
 						"cat_pastry": "Pastries"
 					}
 				},
-				"currency": "USD"
+				"currency": "USD",
+				"minTierId": null,
+				"minTierName": null,
+				"lockedByTier": false
 			}
 		],
-		"redemptionEnabled": true
+		"redemptionEnabled": true,
+		"welcomeBonus": null,
+		"tiers": null,
+		"expiry": null,
+		"referrals": null
 	}
 }

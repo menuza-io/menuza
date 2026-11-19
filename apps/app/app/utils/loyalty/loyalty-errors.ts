@@ -31,6 +31,16 @@ const ERROR_MESSAGES: Record<string, MessageDescriptor> = {
 	refund_not_online: msg`Only a tab paid from the guest's phone can be refunded here.`,
 	refund_not_paid: msg`Only a paid tab can be refunded.`,
 	currency_mismatch: msg`The currency does not match the program's currency.`,
+	tier_required: msg`This reward requires a higher membership tier.`,
+	referrals_disabled: msg`Referrals are turned off for this program.`,
+	referral_invalid: msg`That referral code could not be found.`,
+	referral_self: msg`Customers cannot use their own referral link.`,
+	referral_already_claimed: msg`A referral has already been claimed on this account or device.`,
+	referral_existing_customer: msg`Referrals are only for new customers.`,
+	referral_cap_reached: msg`This referral code has reached its limit.`,
+	expiry_restricted_region: msg`Time-limited points expiry is not allowed in this region (Canada permits inactivity expiry only).`,
+	customer_not_found: msg`Customer account not found.`,
+	phone_required: msg`A verified phone number is required.`,
 }
 
 const STATUS_MESSAGES: Record<number, MessageDescriptor> = {

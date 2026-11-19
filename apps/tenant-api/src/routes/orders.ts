@@ -55,6 +55,7 @@ import { rateLimitByKey } from '../lib/rate-limit.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, syncEnvFromProcess } from '../lib/secrets.ts'
 import { quoteOrderDiscounts } from '../services/discount-quote.ts'
+import { welcomeBonusForOrderReceipt } from '../services/loyalty-welcome-service.ts'
 import {
 	cancelOrderAsGuest,
 	guestCancelGlance,
@@ -1096,7 +1097,24 @@ async function guestReceiptResponse(
 			access.via === 'receipt'
 				? receiptOrder(access.order, refunds, cancel)
 				: linkReceiptOrder(access.order, refunds, cancel)
-		return c.json({ order }, 200, noStoreHeaders())
+		const loyaltyWelcomeBonus =
+			access.via === 'receipt'
+				? await welcomeBonusForOrderReceipt(await getTenantDb(orgId), {
+						orderId: access.order.id,
+						customerId: access.order.customerId,
+						orderCreatedAt: access.order.createdAt
+							? access.order.createdAt.getTime()
+							: Date.now(),
+					})
+				: null
+		return c.json(
+			{
+				order,
+				...(loyaltyWelcomeBonus ? { loyaltyWelcomeBonus } : {}),
+			},
+			200,
+			noStoreHeaders(),
+		)
 	} catch (error) {
 		console.error(
 			`Failed to load order receipt for org ${orgId}:`,
@@ -1157,8 +1175,21 @@ publicOrderRoutes.get('/:id', async (c) => {
 			organization.organization.id,
 			result.data.order,
 		)
+		const loyaltyWelcomeBonus = await welcomeBonusForOrderReceipt(
+			await getTenantDb(organization.organization.id),
+			{
+				orderId: result.data.order.id,
+				customerId: result.data.order.customerId,
+				orderCreatedAt: result.data.order.createdAt
+					? result.data.order.createdAt.getTime()
+					: Date.now(),
+			},
+		)
 		return c.json(
-			{ order: receiptOrder(result.data.order, refunds, cancel) },
+			{
+				order: receiptOrder(result.data.order, refunds, cancel),
+				...(loyaltyWelcomeBonus ? { loyaltyWelcomeBonus } : {}),
+			},
 			200,
 			noStoreHeaders(),
 		)

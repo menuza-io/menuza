@@ -4,6 +4,7 @@ import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import {
 	LOYALTY_PERMISSIONS,
 	type LoyaltyOperatorProgram,
+	type LoyaltyOperatorReferralsResponse,
 	type LoyaltyOperatorReward,
 	type LoyaltyReport,
 } from '@repo/loyalty'
@@ -24,6 +25,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLoaderData } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { RewardReturnPreview } from '#app/components/loyalty/reward-return-preview.tsx'
 import { useLoyaltyClient } from '#app/hooks/use-loyalty-client.ts'
 import { requireLoyaltyAccess } from '#app/utils/loyalty/access.server.ts'
 import { loyaltyErrorInfo } from '#app/utils/loyalty/loyalty-client.ts'
@@ -71,12 +73,14 @@ export default function LoyaltyOverviewRoute() {
 	const tx = useCallback((d: MessageDescriptor) => i18n._(d), [i18n])
 	const { orgSlug, canReadReports, canReadProgram } =
 		useLoaderData<typeof loader>()
-	const { nav } = useLoyaltyLayoutData()
+	const { nav, features } = useLoyaltyLayoutData()
 	const client = useLoyaltyClient()
 
 	const [program, setProgram] = useState<LoyaltyOperatorProgram | null>(null)
 	const [rewards, setRewards] = useState<LoyaltyOperatorReward[]>([])
 	const [report, setReport] = useState<LoyaltyReport | null>(null)
+	const [referrals, setReferrals] =
+		useState<LoyaltyOperatorReferralsResponse | null>(null)
 	const [reportFailed, setReportFailed] = useState(false)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
@@ -86,6 +90,7 @@ export default function LoyaltyOverviewRoute() {
 		setError(null)
 		setReportFailed(false)
 		setReport(null)
+		setReferrals(null)
 		try {
 			if (!canReadProgram) {
 				// A reports-only role cannot mint a read token, so it gets the
@@ -98,6 +103,11 @@ export default function LoyaltyOverviewRoute() {
 							reportWindow(Intl.DateTimeFormat().resolvedOptions().timeZone),
 						),
 					)
+					if (features?.referrals) {
+						setReferrals(
+							await client.listReferrals({ limit: 10 }).catch(() => null),
+						)
+					}
 				} catch (err) {
 					if (loyaltyErrorInfo(err).code !== 'program_not_found') throw err
 				}
@@ -114,6 +124,11 @@ export default function LoyaltyOverviewRoute() {
 							reportWindow(nextProgram.current.config.timeZone),
 						),
 					)
+					if (features?.referrals) {
+						setReferrals(
+							await client.listReferrals({ limit: 10 }).catch(() => null),
+						)
+					}
 				} catch {
 					setReportFailed(true)
 				}
@@ -129,7 +144,7 @@ export default function LoyaltyOverviewRoute() {
 		} finally {
 			setLoading(false)
 		}
-	}, [client, canReadReports, canReadProgram, tx])
+	}, [client, canReadReports, canReadProgram, features?.referrals, tx])
 
 	useEffect(() => {
 		void load()
@@ -394,19 +409,35 @@ export default function LoyaltyOverviewRoute() {
 									className="text-muted-foreground mt-0.5 size-4 shrink-0"
 								/>
 								{cheapestReward ? (
-									<span>
-										<Trans>
-											Cheapest reward:{' '}
-											<span className="font-medium wrap-anywhere">
-												{rewardName}
-											</span>{' '}
-											for{' '}
-											<bdi dir="ltr" className="tabular-nums">
-												{rewardCost}
-											</bdi>{' '}
-											{unitName}.
-										</Trans>
-									</span>
+									<div className="flex flex-col gap-1">
+										<span>
+											<Trans>
+												Cheapest reward:{' '}
+												<span className="font-medium wrap-anywhere">
+													{rewardName}
+												</span>{' '}
+												for{' '}
+												<bdi dir="ltr" className="tabular-nums">
+													{rewardCost}
+												</bdi>{' '}
+												{unitName}.
+											</Trans>
+										</span>
+										<RewardReturnPreview
+											compact
+											earning={config.earning}
+											reward={{
+												kind: cheapestReward.definition.kind,
+												pointsCost: cheapestReward.definition.pointsCost,
+												discount:
+													'discount' in cheapestReward.definition
+														? cheapestReward.definition.discount
+														: null,
+											}}
+											currency={config.currency}
+											tiers={config.tiers}
+										/>
+									</div>
 								) : (
 									<span className="text-muted-foreground">
 										<Trans>
@@ -570,9 +601,101 @@ export default function LoyaltyOverviewRoute() {
 												report.operations.purchasesInReview}
 										</dd>
 									</div>
+									{(() => {
+										const welcomeBonuses = report.welcome.bonusesGiven
+										const welcomeRepeat = report.welcome.repeatOrders30d
+										const pointsExpired = report.expiry.pointsExpired
+										const pointsExpiringSoon =
+											report.expiry.pointsExpiringSoon30d
+										const refCredited = report.referrals.credited
+										const refClaimed = report.referrals.claimed
+										return (
+											<>
+												<div className="flex flex-col gap-0.5">
+													<dt className="text-muted-foreground text-xs">
+														<Trans>Welcome bonuses</Trans>
+													</dt>
+													<dd
+														className="tabular-nums"
+														data-testid="loyalty-metric-welcome"
+													>
+														<Trans>
+															<bdi dir="ltr">{welcomeBonuses}</bdi> granted ·{' '}
+															<bdi dir="ltr">{welcomeRepeat}</bdi> reordered
+															within 30d
+														</Trans>
+													</dd>
+												</div>
+												<div className="flex flex-col gap-0.5">
+													<dt className="text-muted-foreground text-xs">
+														<Trans>Points expiry</Trans>
+													</dt>
+													<dd
+														className="tabular-nums"
+														data-testid="loyalty-metric-expiry"
+													>
+														<Trans>
+															<bdi dir="ltr">{pointsExpired}</bdi> expired ·{' '}
+															<bdi dir="ltr">{pointsExpiringSoon}</bdi> expiring
+															within 30d
+														</Trans>
+													</dd>
+												</div>
+												{features?.referrals || refClaimed > 0 ? (
+													<div className="flex flex-col gap-0.5">
+														<dt className="text-muted-foreground text-xs">
+															<Trans>Referrals</Trans>
+														</dt>
+														<dd
+															className="tabular-nums"
+															data-testid="loyalty-metric-referrals"
+														>
+															<Trans>
+																<bdi dir="ltr">{refCredited}</bdi> credited /{' '}
+																<bdi dir="ltr">{refClaimed}</bdi> claimed
+															</Trans>
+														</dd>
+													</div>
+												) : null}
+											</>
+										)
+									})()}
 								</dl>
 							</CardContent>
 						</Card>
+						{referrals && referrals.referrals.length > 0 ? (
+							<Card data-testid="loyalty-report-referrals">
+								<CardHeader className="pb-2">
+									<CardTitle className="text-base">
+										<Trans>Recent referrals</Trans>
+									</CardTitle>
+									<CardDescription>
+										<Trans>
+											Latest friend invites claimed or credited in your program.
+										</Trans>
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<ul className="flex flex-col gap-2 text-sm">
+										{referrals.referrals.map((entry) => (
+											<li
+												key={entry.id}
+												className="flex flex-wrap items-center justify-between gap-2"
+											>
+												<span className="font-mono text-xs" dir="ltr">
+													{entry.code}
+												</span>
+												<span className="text-muted-foreground text-xs">
+													{entry.referrerName ?? t`Member`} →{' '}
+													{entry.friendName ?? t`Guest`}
+												</span>
+												<Badge variant="outline">{entry.status}</Badge>
+											</li>
+										))}
+									</ul>
+								</CardContent>
+							</Card>
+						) : null}
 						{report.promotions.byPromotion.length > 0 ? (
 							<Card data-testid="loyalty-report-promotions">
 								<CardHeader className="pb-2">

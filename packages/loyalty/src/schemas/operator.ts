@@ -24,8 +24,10 @@ import {
 } from '../purchases.ts'
 import {
 	LOYALTY_REWARD_STATUSES,
+	loyaltyDiscountSchema,
 	loyaltyRewardDefinitionSchema,
 } from '../rewards.ts'
+import { LOYALTY_REFERRAL_STATUSES } from '../referrals.ts'
 import { loyaltyBalanceSchema } from './public.ts'
 
 /**
@@ -152,6 +154,18 @@ export const loyaltyMemberSummarySchema = z
 		createdAt: msSchema,
 		balance: loyaltyOperatorBalanceSchema,
 		lastPurchaseAt: msSchema.nullable(),
+		imported: z.boolean().default(false),
+		tier: z
+			.object({
+				id: z.string().nullable(),
+				name: z.string().nullable(),
+				multiplierBp: z.number().int(),
+				reviewAt: msSchema.nullable(),
+				graceUntil: msSchema.nullable(),
+				progressValue: z.number().int().nonnegative(),
+			})
+			.nullable()
+			.default(null),
 	})
 	.strict()
 export type LoyaltyMemberSummary = z.infer<typeof loyaltyMemberSummarySchema>
@@ -347,3 +361,50 @@ export const loyaltyAdjustmentResponseSchema = z
 		balance: loyaltyOperatorBalanceSchema,
 	})
 	.strict()
+
+export const loyaltyOperatorReferralEntrySchema = z
+	.object({
+		id: idSchema,
+		code: z.string(),
+		referrerMemberId: idSchema.nullable(),
+		referrerName: z.string().nullable(),
+		friendMemberId: idSchema.nullable(),
+		friendName: z.string().nullable(),
+		status: z.enum(LOYALTY_REFERRAL_STATUSES),
+		orderId: idSchema.nullable(),
+		discountCode: z.string().nullable(),
+		discountMinor: minorSchema,
+		referrerPoints: z.number().int().nonnegative(),
+		friendPoints: z.number().int().nonnegative(),
+		holdUntil: msSchema.nullable(),
+		creditedAt: msSchema.nullable(),
+		createdAt: msSchema,
+	})
+	.strict()
+export type LoyaltyOperatorReferralEntry = z.infer<
+	typeof loyaltyOperatorReferralEntrySchema
+>
+
+export const loyaltyOperatorReferralsResponseSchema = z
+	.object({
+		summary: z
+			.object({
+				totalClaimed: z.number().int().nonnegative(),
+				pendingOrder: z.number().int().nonnegative(),
+				holding: z.number().int().nonnegative(),
+				credited: z.number().int().nonnegative(),
+				cancelled: z.number().int().nonnegative(),
+				reversed: z.number().int().nonnegative(),
+				pointsAwarded: z.number().int().nonnegative(),
+				friendDiscountMinor: minorSchema,
+			})
+			.strict(),
+		referrals: z.array(loyaltyOperatorReferralEntrySchema),
+	})
+	.strict()
+export type LoyaltyOperatorReferralsResponse = z.infer<
+	typeof loyaltyOperatorReferralsResponseSchema
+>
+
+// Re-export discount schema reference so callers inspecting operator referral offers share one type.
+export { loyaltyDiscountSchema }

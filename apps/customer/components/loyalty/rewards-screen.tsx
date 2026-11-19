@@ -20,6 +20,7 @@ import {
 	TermsDetails,
 	WebsiteOrderLink,
 } from './program-sections'
+import { ReferralCard } from './referral-card'
 import { useLoyaltyActivity } from './use-loyalty-activity'
 import { useLoyaltyText } from './use-loyalty-text'
 
@@ -153,6 +154,7 @@ function Wallet({
 							/>
 						) : null}
 						<RewardsSection program={program} standings={snapshot.rewards} />
+						<ReferralCard wallet={wallet} />
 						{orderUrl ? <WebsiteOrderLink url={orderUrl} /> : null}
 						<EarningSection program={program} />
 						{snapshot.history ? (

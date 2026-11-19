@@ -10,6 +10,7 @@ import { LoyaltyDomainError } from '@repo/loyalty'
 import { getTenantDb, type TenantTransaction } from '@repo/tenant-db'
 import { verifyDeliveryQuote } from '../lib/delivery-quote-token.ts'
 import { isDiscountsKillSwitchOn } from '../lib/discount-switches.ts'
+import { getLoyaltyFeatures } from '../lib/loyalty-context.ts'
 import type { PublishedOrganization } from '../lib/origin.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import {
@@ -66,8 +67,14 @@ export async function quoteOrderDiscounts(input: {
 	// Automatic and coupon flags both off: the website must not wait on this
 	// endpoint. 404 is the signal the checkout client treats as "feature off".
 	const discountFeatures = context.discounts?.features
+	const loyaltyFlags = await getLoyaltyFeatures(orgId).catch(() => null)
+	const loyaltyReferralsOn = Boolean(
+		loyaltyFlags?.enabled && loyaltyFlags.referrals,
+	)
 	const discountsOn =
-		discountFeatures?.automatic === true || discountFeatures?.coupons === true
+		discountFeatures?.automatic === true ||
+		discountFeatures?.coupons === true ||
+		loyaltyReferralsOn
 	if (!discountsOn && !request.discounts?.code && !request.giftCard) {
 		return orderFailure(
 			404,
@@ -143,6 +150,9 @@ export async function quoteOrderDiscounts(input: {
 		customerId,
 		now,
 		killed: isDiscountsKillSwitchOn(),
+		orgId,
+		phone: request.contact?.phone ?? null,
+		deviceId: request.referralDeviceId ?? null,
 	})
 	if (!prepared.ok) {
 		return {
@@ -212,7 +222,7 @@ export async function quoteOrderDiscounts(input: {
 		totalMinor,
 		serviceFeeMinor,
 		packagingFeeMinor,
-		couponsEnabled: discountFeatures?.coupons === true,
+		couponsEnabled: discountFeatures?.coupons === true || loyaltyReferralsOn,
 	})
 	if (!request.giftCard || request.fulfillment === 'dine_in') {
 		return { ok: true, data: quote }

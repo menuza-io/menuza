@@ -230,7 +230,11 @@ export function requireLoyaltyFeature(
 	if (feature !== 'enabled' && !context.features[feature]) {
 		return deny(
 			403,
-			feature === 'redemption' ? 'redemption_disabled' : 'loyalty_disabled',
+			feature === 'redemption'
+				? 'redemption_disabled'
+				: feature === 'referrals'
+					? 'referrals_disabled'
+					: 'loyalty_disabled',
 		)
 	}
 	return null

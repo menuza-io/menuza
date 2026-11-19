@@ -21,11 +21,15 @@ msgstr "已为进行中的订单预留 {amount}"
 msgid "{amount} more needed"
 msgstr "还差 {amount}"
 
+#: lib/loyalty/labels.ts:123
+msgid "{amount} more to reach {tier}"
+msgstr "还差 {amount} 即可升至 {tier}"
+
 #: lib/loyalty/labels.ts:37
 msgid "{amount} more to unlock {reward}"
 msgstr "再获得 {amount} 即可兑换 {reward}"
 
-#: components/ordering/menu-screen.tsx:415
+#: components/ordering/menu-screen.tsx:417
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "立减 {amount}"
@@ -42,6 +46,10 @@ msgstr "{count, plural, other {可在预订前 # 小时免费取消。}}"
 msgid "{count} min"
 msgstr "{count} 分钟"
 
+#: lib/loyalty/labels.ts:136
+msgid "{credited} completed · {pending} waiting · {points} earned"
+msgstr "已完成 {credited} · 等待中 {pending} · 已获 {points}"
+
 #: components/profile/messages-section.tsx:110
 msgid "{label}: {channel}"
 msgstr "{label}：{channel}"
@@ -54,11 +62,11 @@ msgstr "{n, plural, other {{count} 积分}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, other {{count} 颗星}}"
 
-#: components/ordering/menu-screen.tsx:398
+#: components/ordering/menu-screen.tsx:400
 msgid "{name} (limit {count} per order)"
 msgstr "{name}（每单限 {count} 件）"
 
-#: components/ordering/menu-screen.tsx:394
+#: components/ordering/menu-screen.tsx:396
 msgid "{name} (up to {amount} off)"
 msgstr "{name}（最高减 {amount}）"
 
@@ -66,9 +74,13 @@ msgstr "{name}（最高减 {amount}）"
 msgid "{percent} off"
 msgstr "优惠 {percent}"
 
-#: components/ordering/menu-screen.tsx:407
+#: components/ordering/menu-screen.tsx:409
 msgid "{percentText} off"
 msgstr "优惠 {percentText}"
+
+#: lib/loyalty/labels.ts:128
+msgid "{points} expire on {date} unless used or you place an order."
+msgstr "{points} 将于 {date} 过期，除非在此之前使用或下单。"
 
 #: lib/loyalty/labels.ts:45
 msgid "{points} for each {items}"
@@ -97,6 +109,10 @@ msgstr "每消费 {amount} 可获得 {points}"
 #: components/ordering/menu-screen.tsx:316
 msgid "{price}, was {originalPrice}"
 msgstr "{price}，原价 {originalPrice}"
+
+#: lib/loyalty/labels.ts:121
+msgid "{tier} tier"
+msgstr "{tier} 等级"
 
 #: components/auth/login-screen.tsx:25
 msgid "+1 555 000 0000"
@@ -158,9 +174,13 @@ msgstr "应付金额"
 msgid "Amount due: {amount}"
 msgstr "应付金额：{amount}"
 
-#: lib/loyalty/labels.ts:117
+#: lib/loyalty/labels.ts:141
 msgid "App"
 msgstr "应用"
+
+#: lib/loyalty/labels.ts:132
+msgid "Applies on the friend's first order of {amount} or more."
+msgstr "适用于好友满 {amount} 的首笔订单。"
 
 #: lib/loyalty/labels.ts:62
 msgid "Applies to {categories}"
@@ -344,11 +364,19 @@ msgstr "继续"
 msgid "Continue to payment"
 msgstr "继续付款"
 
+#: lib/loyalty/labels.ts:135
+msgid "Copied"
+msgstr "已复制"
+
+#: lib/loyalty/labels.ts:134
+msgid "Copy invite link"
+msgstr "复制邀请链接"
+
 #: lib/loyalty/labels.ts:55
 msgid "Cost"
 msgstr "所需"
 
-#: components/ordering/menu-screen.tsx:444
+#: components/ordering/menu-screen.tsx:446
 msgid "Dairy-free"
 msgstr "不含乳制品"
 
@@ -376,8 +404,8 @@ msgstr "已拒绝"
 msgid "Declined: {reward}."
 msgstr "已拒绝：{reward}。"
 
-#: components/ordering/menu-screen.tsx:318
-#: components/ordering/menu-screen.tsx:343
+#: components/ordering/menu-screen.tsx:319
+#: components/ordering/menu-screen.tsx:345
 msgid "Delivery price {deliveryPriceText}"
 msgstr "外送价格 {deliveryPriceText}"
 
@@ -411,9 +439,17 @@ msgstr "限量活动"
 msgid "Drops could not be loaded."
 msgstr "无法加载限量活动。"
 
+#: lib/loyalty/labels.ts:126
+msgid "Earn enough by {date} to keep {tier} before moving to {nextTier}."
+msgstr "请在 {date} 前累积足够积分以保留 {tier}，否则将调整为 {nextTier}。"
+
 #: lib/loyalty/labels.ts:108
 msgid "Earned"
 msgstr "获得"
+
+#: lib/loyalty/labels.ts:122
+msgid "Earning at {multiplier}× rate"
+msgstr "享 {multiplier}× 累积倍率"
 
 #: lib/reservations/messages.ts:59
 msgid "Edit details"
@@ -494,7 +530,7 @@ msgstr "如此人数的团体，请致电 {phone}。"
 msgid "Free {item}"
 msgstr "免费 {item}"
 
-#: components/ordering/menu-screen.tsx:425
+#: components/ordering/menu-screen.tsx:427
 msgid "Free delivery"
 msgstr "免配送费"
 
@@ -543,11 +579,15 @@ msgstr "礼品卡暂不可用"
 msgid "Gift cards are not available right now. Please try again later."
 msgstr "礼品卡暂不可用，请稍后再试。"
 
-#: components/ordering/menu-screen.tsx:442
+#: lib/loyalty/labels.ts:130
+msgid "Give a friend {friendReward}, get {referrerPoints} after their first paid order."
+msgstr "赠送好友 {friendReward}，好友完成首笔付款订单后您可获得 {referrerPoints}。"
+
+#: components/ordering/menu-screen.tsx:444
 msgid "Gluten-free"
 msgstr "无麸质"
 
-#: components/ordering/menu-screen.tsx:436
+#: components/ordering/menu-screen.tsx:438
 msgid "Halal"
 msgstr "清真"
 
@@ -575,9 +615,13 @@ msgstr "我正在赶来"
 msgid "I've paid, check again"
 msgstr "我已付款，重新确认"
 
-#: lib/loyalty/labels.ts:115
+#: lib/loyalty/labels.ts:139
 msgid "In store"
 msgstr "到店"
+
+#: lib/loyalty/labels.ts:131
+msgid "Invite a friend and get {referrerPoints} after their first paid order."
+msgstr "邀请好友，好友完成首笔付款订单后您可获得 {referrerPoints}。"
 
 #: components/auth/complete-name-screen.tsx:26
 #: components/profile/profile-screen.tsx:108
@@ -692,7 +736,7 @@ msgid "Name"
 msgstr "姓名"
 
 #: lib/gift-cards/labels.ts:75
-#: lib/loyalty/labels.ts:120
+#: lib/loyalty/labels.ts:144
 msgid "Network error. Check your connection and try again."
 msgstr "网络错误。请检查网络连接后重试。"
 
@@ -764,7 +808,7 @@ msgstr "当天不接受在线预订。"
 msgid "Nothing on the menu right now."
 msgstr "菜单上现在没有内容。"
 
-#: components/ordering/menu-screen.tsx:446
+#: components/ordering/menu-screen.tsx:448
 msgid "Nut-free"
 msgstr "不含坚果"
 
@@ -792,7 +836,7 @@ msgstr "限一件。付费附加项仍需付款。"
 msgid "One reward per order."
 msgstr "每笔订单限用一个奖励。"
 
-#: lib/loyalty/labels.ts:114
+#: lib/loyalty/labels.ts:138
 msgid "Online"
 msgstr "线上"
 
@@ -804,12 +848,12 @@ msgstr "在线预订已暂停，请稍后再试。"
 msgid "Online reservations aren't available right now."
 msgstr "暂时无法在线预订。"
 
-#: components/loyalty/program-sections.tsx:132
+#: components/loyalty/program-sections.tsx:138
 msgid "Opens in your browser. Your points and rewards apply when you order there."
 msgstr "将在浏览器中打开。在那里下单时可使用您的积分和奖励。"
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:366
+#: components/ordering/menu-screen.tsx:368
 msgid "Opens the website"
 msgstr "打开网站"
 
@@ -821,7 +865,7 @@ msgstr "打开网站。在菜单中添加商品，然后在那里结账。优惠
 msgid "Order on the menu"
 msgstr "在菜单中下单"
 
-#: components/loyalty/program-sections.tsx:129
+#: components/loyalty/program-sections.tsx:135
 msgid "Order on the website"
 msgstr "在网站上下单"
 
@@ -872,6 +916,10 @@ msgstr "暂时无法付款。"
 msgid "Phone number"
 msgstr "手机号码"
 
+#: lib/loyalty/labels.ts:120
+msgid "Place your first paid order to get your {points} welcome bonus."
+msgstr "完成您的首笔付款订单即可获得 {points} 欢迎奖励。"
+
 #: lib/reservations/messages.ts:124
 msgid "Please accept the booking terms."
 msgstr "请接受预订条款。"
@@ -883,6 +931,10 @@ msgstr "请检查您的信息。"
 #: lib/reservations/messages.ts:128
 msgid "Please sign in again."
 msgstr "请重新登录。"
+
+#: lib/loyalty/labels.ts:116
+msgid "Points expired"
+msgstr "积分已过期"
 
 #: lib/reservations/messages.ts:38
 msgid "Preferred time"
@@ -925,6 +977,18 @@ msgstr "兑换 {reward}"
 msgid "Redeemed a reward"
 msgstr "兑换奖励"
 
+#: lib/loyalty/labels.ts:129
+msgid "Refer a friend"
+msgstr "推荐好友"
+
+#: lib/loyalty/labels.ts:117
+msgid "Referral bonus"
+msgstr "推荐奖励"
+
+#: lib/loyalty/labels.ts:118
+msgid "Referral bonus removed"
+msgstr "推荐奖励已移除"
+
 #: lib/loyalty/labels.ts:109
 msgid "Refund adjustment"
 msgstr "退款调整"
@@ -940,6 +1004,10 @@ msgstr "待确认"
 #: lib/loyalty/labels.ts:86
 msgid "Requests to use your rewards"
 msgstr "奖励使用请求"
+
+#: lib/loyalty/labels.ts:127
+msgid "Requires {tier} tier"
+msgstr "需达到 {tier} 等级"
 
 #: lib/reservations/messages.ts:85
 msgid "Reservation"
@@ -979,11 +1047,11 @@ msgstr "奖励"
 msgid "Rewards are not available right now"
 msgstr "奖励暂不可用"
 
-#: lib/loyalty/labels.ts:123
+#: lib/loyalty/labels.ts:147
 msgid "Rewards are not available right now."
 msgstr "奖励暂不可用。"
 
-#: lib/loyalty/labels.ts:122
+#: lib/loyalty/labels.ts:146
 msgid "Rewards are temporarily unavailable. Please try again later."
 msgstr "奖励暂时不可用，请稍后重试。"
 
@@ -1023,7 +1091,7 @@ msgstr "提交申请"
 msgid "Send code"
 msgstr "发送验证码"
 
-#: components/ordering/menu-screen.tsx:423
+#: components/ordering/menu-screen.tsx:425
 msgid "Set price {amount}"
 msgstr "固定价 {amount}"
 
@@ -1080,13 +1148,13 @@ msgstr "退出登录"
 msgid "Site address"
 msgstr "网站地址"
 
-#: components/ordering/menu-screen.tsx:331
+#: components/ordering/menu-screen.tsx:333
 msgid "Sold out"
 msgstr "已售罄"
 
 #: lib/gift-cards/labels.ts:74
 #: lib/i18n/app-error-message.ts:43
-#: lib/loyalty/labels.ts:130
+#: lib/loyalty/labels.ts:154
 #: lib/reservations/messages.ts:137
 msgid "Something went wrong. Please try again."
 msgstr "出了点问题，请重试。"
@@ -1107,7 +1175,7 @@ msgstr "使用 {points} 抵扣 {amount}"
 msgid "Spent"
 msgstr "已使用"
 
-#: components/ordering/menu-screen.tsx:448
+#: components/ordering/menu-screen.tsx:450
 msgid "Spicy"
 msgstr "辣"
 
@@ -1119,7 +1187,7 @@ msgstr "{time} 后失效"
 msgid "System default"
 msgstr "系统默认"
 
-#: lib/loyalty/labels.ts:116
+#: lib/loyalty/labels.ts:140
 msgid "Table order"
 msgstr "桌台点餐"
 
@@ -1187,7 +1255,7 @@ msgstr "付款未成功。"
 msgid "The payment window ended and the table was released."
 msgstr "付款时间已过，餐桌已释放。"
 
-#: lib/loyalty/labels.ts:125
+#: lib/loyalty/labels.ts:149
 msgid "The program is paused right now."
 msgstr "该计划目前已暂停。"
 
@@ -1243,7 +1311,7 @@ msgstr "此人数需要提交申请。"
 msgid "This payment was refunded."
 msgstr "此笔付款已退款。"
 
-#: lib/loyalty/labels.ts:127
+#: lib/loyalty/labels.ts:151
 msgid "This reward is no longer available."
 msgstr "此奖励已不可用。"
 
@@ -1255,6 +1323,10 @@ msgstr "此网站暂不支持在本应用中使用。"
 msgid "This waitlist link no longer works."
 msgstr "此候位链接已失效。"
 
+#: lib/loyalty/labels.ts:125
+msgid "Tier reviewed on {date}"
+msgstr "等级评估日期：{date}"
+
 #: lib/reservations/messages.ts:126
 msgid "Too many attempts. Please try again in a few minutes."
 msgstr "尝试次数过多，请几分钟后再试。"
@@ -1264,7 +1336,7 @@ msgid "Too many attempts. Please try again later."
 msgstr "尝试次数过多，请稍后重试。"
 
 #: lib/gift-cards/labels.ts:76
-#: lib/loyalty/labels.ts:121
+#: lib/loyalty/labels.ts:145
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "尝试次数过多，请稍候再试。"
 
@@ -1328,11 +1400,11 @@ msgstr "在收银台使用"
 msgid "Use code {code}"
 msgstr "使用优惠码 {code}"
 
-#: components/ordering/menu-screen.tsx:438
+#: components/ordering/menu-screen.tsx:440
 msgid "Vegan"
 msgstr "纯素"
 
-#: components/ordering/menu-screen.tsx:440
+#: components/ordering/menu-screen.tsx:442
 msgid "Vegetarian"
 msgstr "素食"
 
@@ -1396,6 +1468,18 @@ msgstr "将使用您账户中的号码 {phone}。"
 msgid "We're holding your table for {time}"
 msgstr "已为您保留餐桌 {time}"
 
+#: lib/loyalty/labels.ts:114
+msgid "Welcome bonus"
+msgstr "欢迎奖励"
+
+#: lib/loyalty/labels.ts:115
+msgid "Welcome bonus removed"
+msgstr "欢迎奖励已移除"
+
+#: lib/loyalty/labels.ts:119
+msgid "Welcome! {points} added"
+msgstr "欢迎！已添加 {points}"
+
 #: components/ordering/menu-screen.tsx:165
 msgid "What is on the menu today. Checkout is on the website."
 msgstr "这是今天的菜单。结账在网站上完成。"
@@ -1420,7 +1504,7 @@ msgstr "您在该时段已有预订。"
 msgid "You already have the maximum number of upcoming reservations."
 msgstr "您已达到即将到来的预订数量上限。"
 
-#: lib/loyalty/labels.ts:129
+#: lib/loyalty/labels.ts:153
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "您已登录其他网站。请在此重新登录。"
 
@@ -1435,6 +1519,14 @@ msgstr "您的余额足以兑换所有奖励。"
 #: lib/loyalty/labels.ts:67
 msgid "You have enough for this reward"
 msgstr "您的余额足以兑换此奖励"
+
+#: lib/loyalty/labels.ts:124
+msgid "You have reached the highest tier."
+msgstr "您已达到最高等级。"
+
+#: lib/loyalty/labels.ts:137
+msgid "You have reached the referral limit."
+msgstr "您已达到推荐上限。"
 
 #: lib/reservations/messages.ts:118
 msgid "You left the waitlist."
@@ -1460,7 +1552,7 @@ msgstr "您排在第 {position} 位"
 msgid "Your balance is below zero because of a refund. New purchases will bring it back up."
 msgstr "由于退款，您的余额低于零。新的消费会让余额回升。"
 
-#: lib/loyalty/labels.ts:126
+#: lib/loyalty/labels.ts:150
 msgid "Your balance is too low for this reward."
 msgstr "您的余额不足以兑换此奖励。"
 
@@ -1508,7 +1600,11 @@ msgstr "您的积分"
 msgid "Your profile"
 msgstr "您的个人资料"
 
-#: lib/loyalty/labels.ts:124
+#: lib/loyalty/labels.ts:133
+msgid "Your referral code"
+msgstr "您的推荐码"
+
+#: lib/loyalty/labels.ts:148
 msgid "Your rewards account is on hold."
 msgstr "您的奖励账户已暂停。"
 
@@ -1518,7 +1614,7 @@ msgstr "您的奖励账户已暂停。如需帮助，请联系商家。"
 
 #: lib/gift-cards/labels.ts:77
 #: lib/i18n/app-error-message.ts:31
-#: lib/loyalty/labels.ts:128
+#: lib/loyalty/labels.ts:152
 msgid "Your session ended. Please sign in again."
 msgstr "您的会话已结束。请重新登录。"
 
