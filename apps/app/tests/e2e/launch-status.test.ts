@@ -71,15 +71,12 @@ test.describe.serial('Launch Status Flows', () => {
 		// Submit the form (Step 1)
 		await page.getByRole('button', { name: /continue/i }).click()
 
-		// Wait for the next step to load
-		await page.waitForLoadState('networkidle')
-
-		// Check if we're on the invitations step (step 2)
-		const currentUrl = page.url()
-		if (currentUrl.includes('step=2')) {
+		// Wait for step 2 or 3 to load
+		await expect(page).toHaveURL(/step=[23]/)
+		if (page.url().includes('step=2')) {
 			// We're on invitations step - skip it
 			await page.getByRole('button', { name: /skip for now/i }).click()
-			await page.waitForLoadState('networkidle')
+			await expect(page).toHaveURL(/step=3/)
 		}
 
 		// Now we should be on the additional info step
@@ -121,7 +118,12 @@ test.describe.serial('Launch Status Flows', () => {
 
 		// Create an organization
 		const orgName = faker.company.name()
-		await page.getByRole('textbox', { name: /name/i }).fill(orgName)
+		// Retry until the form has hydrated; an early fill is wiped on hydration.
+		await expect(async () => {
+			const nameInput = page.getByRole('textbox', { name: /name/i })
+			await nameInput.fill(orgName)
+			await expect(nameInput).toHaveValue(orgName, { timeout: 1000 })
+		}).toPass()
 		// Let the form auto-generate the slug from the name
 		await page
 			.getByRole('textbox', { name: /description/i })
@@ -134,15 +136,12 @@ test.describe.serial('Launch Status Flows', () => {
 		// Submit the form (Step 1)
 		await page.getByRole('button', { name: /continue/i }).click()
 
-		// Wait for the next step to load
-		await page.waitForLoadState('networkidle')
-
-		// Check if we're on the invitations step (step 2)
-		const launchedCurrentUrl = page.url()
-		if (launchedCurrentUrl.includes('step=2')) {
+		// Wait for step 2 or 3 to load
+		await expect(page).toHaveURL(/step=[23]/)
+		if (page.url().includes('step=2')) {
 			// We're on invitations step - skip it
 			await page.getByRole('button', { name: /skip for now/i }).click()
-			await page.waitForLoadState('networkidle')
+			await expect(page).toHaveURL(/step=3/)
 		}
 
 		// Now we should be on the additional info step
