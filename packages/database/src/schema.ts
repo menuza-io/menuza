@@ -2772,6 +2772,13 @@ export const OrganizationLocation = sqliteTable(
 		siteSeoTitle: text(),
 		siteSeoDescription: text(),
 		/**
+		 * Temporary closure (#87): the location is closed until
+		 * `temporarilyClosedUntil` (null: until someone reopens it). Reopening
+		 * clears both. Pushed to Google as `CLOSED_TEMPORARILY` when sync is on.
+		 */
+		temporarilyClosed: integer({ mode: 'boolean' }).default(false).notNull(),
+		temporarilyClosedUntil: integer({ mode: 'timestamp_ms' }),
+		/**
 		 * The first time the launch checklist found this location live (set
 		 * once, never cleared; whether it is live now is evaluated on read).
 		 */
@@ -4914,11 +4921,21 @@ export const SocialAccount = sqliteTable(
 				onUpdate: 'cascade',
 			}),
 		platform: text().notNull(), // facebook | instagram
-		// The Page id (Facebook) or Instagram user id.
+		// The Page id (Facebook), Instagram user id, or Google location name
+		// (`locations/123`, platform `google_business`, #135).
 		externalId: text().notNull(),
 		name: text().notNull(),
 		username: text(),
+		/**
+		 * Google accounts (#135) read the token from the linked
+		 * `Integration`; this column holds only an encrypted marker.
+		 */
 		accessToken: text().notNull(),
+		/** The Menuza location a `google_business` account posts for. */
+		organizationLocationId: text().references(() => OrganizationLocation.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
 		// active | needs_reauth (Meta refused the token; connect again)
 		status: text().default('active').notNull(),
 		connectedById: text().references(() => User.id, {
@@ -4965,6 +4982,13 @@ export const SocialPost = sqliteTable(
 		status: text().default('draft').notNull(),
 		scheduledAt: integer({ mode: 'timestamp_ms' }),
 		publishedAt: integer({ mode: 'timestamp_ms' }),
+		/**
+		 * Google posts (#135): `STANDARD` (update) | `OFFER` | `EVENT`; null for
+		 * Facebook and Instagram. `googleDetails` is JSON `GooglePostDetails`
+		 * (button, offer, event fields), validated by `google-post.ts`.
+		 */
+		googleTopicType: text(),
+		googleDetails: text(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -5011,6 +5035,11 @@ export const SocialPostTarget = sqliteTable(
 		externalPostId: text(),
 		permalink: text(),
 		error: text(),
+		/**
+		 * Google posts (#135): Google may hold a post for review. `pending` until
+		 * the hourly sweep sees it `live` or `rejected`; null elsewhere.
+		 */
+		reviewState: text(),
 		attempts: integer().default(0).notNull(),
 		publishedAt: integer({ mode: 'timestamp_ms' }),
 		createdAt: integer({ mode: 'timestamp_ms' })
@@ -5515,5 +5544,439 @@ export const IndexNowPing = sqliteTable(
 			columns: [table.organizationId, table.url],
 			name: 'IndexNowPing_organizationId_url_pk',
 		}),
+	],
+)
+
+// ---------------------------------------------------------------------------
+// Google Business Profile (#87, #284, #209, #208, #199, #135, #136)
+// Business data only; no guest data. Docs: docs/google-business-profile.md
+// ---------------------------------------------------------------------------
+
+/**
+ * The link between one Menuza location and one Google listing, plus the sync
+ * state of everything Menuza keeps on it. `googleLocationName` is unique
+ * across the platform: a Google location belongs to one Menuza location.
+ */
+export const GbpLocationSync = sqliteTable(
+	'GbpLocationSync',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		integrationId: text().references(() => Integration.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		googleLocationName: text().notNull(),
+		googleAccountName: text(),
+		/** "Keep Google in sync": push the fields in `fieldsSynced` on change. */
+		syncEnabled: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** JSON array of `GbpSyncField`; the fields the operator opted in to. */
+		fieldsSynced: text().notNull(),
+		// ok | not_verified | suspended | access_lost | token_expired
+		state: text().default('ok').notNull(),
+		lastPulledAt: integer({ mode: 'timestamp_ms' }),
+		lastPushedAt: integer({ mode: 'timestamp_ms' }),
+		/** JSON: what Google showed at the last pull. */
+		lastGoogleSnapshot: text(),
+		lastError: text(),
+		/**
+		 * JSON `Record<field, { fingerprint, attemptedAt, status, reason? }>`:
+		 * the outbox bookkeeping. The same fingerprint is not sent again within
+		 * an hour (quota rule); a changed value is a new attempt.
+		 */
+		fieldState: text(),
+		/** Outbox: set when Menuza changed something that should reach Google. */
+		pushRequestedAt: integer({ mode: 'timestamp_ms' }),
+		/** Order link removed by a long ordering pause; restored on resume. */
+		orderLinkPausedAt: integer({ mode: 'timestamp_ms' }),
+		// Verification (#284). unknown | verified | unverified | pending
+		verificationState: text().default('unknown').notNull(),
+		verificationMethod: text(),
+		verificationDestination: text(),
+		verificationName: text(),
+		verificationRequestedAt: integer({ mode: 'timestamp_ms' }),
+		verificationCheckedAt: integer({ mode: 'timestamp_ms' }),
+		/** JSON: methods Google offered at the last look. */
+		verificationOptions: text(),
+		// Menu (#208)
+		menuSyncEnabled: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** Set when the menu changed; the next allowed publish picks it up. */
+		menuDirtyAt: integer({ mode: 'timestamp_ms' }),
+		menuPublishedAt: integer({ mode: 'timestamp_ms' }),
+		menuAttemptedAt: integer({ mode: 'timestamp_ms' }),
+		menuHash: text(),
+		/** JSON: Google's answer and what was left out, with reasons. */
+		menuPublishResult: text(),
+		// Metrics (#136)
+		metricsBackfilledAt: integer({ mode: 'timestamp_ms' }),
+		metricsDataUntil: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('GbpLocationSync_organizationLocationId_key').on(
+			table.organizationLocationId,
+		),
+		uniqueIndex('GbpLocationSync_googleLocationName_key').on(
+			table.googleLocationName,
+		),
+		index('GbpLocationSync_organizationId_idx').on(table.organizationId),
+	],
+)
+
+/** A difference between Menuza and Google (Needs attention item). */
+export const GbpListingIssue = sqliteTable(
+	'GbpListingIssue',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		syncId: text()
+			.notNull()
+			.references(() => GbpLocationSync.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		field: text().notNull(),
+		/** JSON of the canonical value on each side. */
+		menuzaValue: text(),
+		googleValue: text(),
+		// open | resolved | ignored | pending_google
+		status: text().default('open').notNull(),
+		resolvedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		resolvedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('GbpListingIssue_syncId_field_idx').on(table.syncId, table.field),
+		index('GbpListingIssue_organizationId_status_idx').on(
+			table.organizationId,
+			table.status,
+		),
+	],
+)
+
+/** Append-only history of what was sent to or read from Google. */
+export const GbpSyncEvent = sqliteTable(
+	'GbpSyncEvent',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		syncId: text().references(() => GbpLocationSync.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		// push | pull | resolve | verify | menu | media | attributes | links
+		kind: text().notNull(),
+		field: text(),
+		/** The member who did it; null for the sweep or a save-triggered push. */
+		actorId: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		summary: text().notNull(),
+		/** JSON: what was sent (`updateMask`, body). */
+		request: text(),
+		// accepted | pending_google | rejected | failed | skipped
+		result: text().notNull(),
+		/** Google's answer or reason, trimmed. */
+		response: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('GbpSyncEvent_organizationLocationId_createdAt_idx').on(
+			table.organizationLocationId,
+			table.createdAt,
+		),
+	],
+)
+
+/** Hand-set profile fields (#209): description, opening date, attributes. */
+export const GoogleProfileField = sqliteTable(
+	'GoogleProfileField',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** `description`, `openingDate` or `attr:<attributeName>`. */
+		key: text().notNull(),
+		/** JSON value. */
+		value: text().notNull(),
+		// hand | derived
+		source: text().default('hand').notNull(),
+		// saved | pending | rejected
+		status: text().default('saved').notNull(),
+		reason: text(),
+		pendingSince: integer({ mode: 'timestamp_ms' }),
+		updatedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('GoogleProfileField_location_key_key').on(
+			table.organizationLocationId,
+			table.key,
+		),
+	],
+)
+
+/** Photos Menuza put on (or refused for) the profile (#208). */
+export const GoogleMediaUpload = sqliteTable(
+	'GoogleMediaUpload',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		mediaId: text().notNull(),
+		// FOOD_AND_DRINK | COVER | PROFILE
+		category: text().notNull(),
+		remoteName: text(),
+		// chosen | uploaded | skipped | failed | removed
+		status: text().default('chosen').notNull(),
+		reason: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('GoogleMediaUpload_location_media_category_key').on(
+			table.organizationLocationId,
+			table.mediaId,
+			table.category,
+		),
+	],
+)
+
+/**
+ * Place Actions links seen on the profile (#199). Rows are a snapshot per
+ * check; `state` keeps what a "Make Menuza preferred" change replaced so Undo
+ * can put it back (`changeId` groups one confirmation).
+ */
+export const ListingOrderLink = sqliteTable(
+	'ListingOrderLink',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		// order | pickup | delivery | reservation
+		kind: text().notNull(),
+		url: text().notNull(),
+		/** Provider name from the domain list, or the host. */
+		provider: text().notNull(),
+		// direct | delivery_app | other
+		classification: text().notNull(),
+		isPreferred: integer({ mode: 'boolean' }).default(false).notNull(),
+		googleLinkName: text(),
+		/** Google's own provider type; MERCHANT links can be edited. */
+		googleProviderType: text(),
+		editable: integer({ mode: 'boolean' }).default(true).notNull(),
+		// current | superseded | removed
+		state: text().default('current').notNull(),
+		changeId: text(),
+		checkedAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('ListingOrderLink_location_state_idx').on(
+			table.organizationLocationId,
+			table.state,
+		),
+	],
+)
+
+/** Daily Google listing totals per location (#136). */
+export const GbpDailyMetric = sqliteTable(
+	'GbpDailyMetric',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** `YYYY-MM-DD` (Google's day). */
+		date: text().notNull(),
+		metric: text().notNull(),
+		value: integer().notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('GbpDailyMetric_location_date_metric_key').on(
+			table.organizationLocationId,
+			table.date,
+			table.metric,
+		),
+		index('GbpDailyMetric_organizationId_date_idx').on(
+			table.organizationId,
+			table.date,
+		),
+	],
+)
+
+/** Top monthly search phrases (#136). Below Google's threshold: a range. */
+export const GbpSearchKeyword = sqliteTable(
+	'GbpSearchKeyword',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** `YYYY-MM`. */
+		month: text().notNull(),
+		keyword: text().notNull(),
+		/** The count, or null when Google gave only `threshold`. */
+		value: integer(),
+		/** Google's "< n" privacy bound, shown as given. */
+		threshold: integer(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('GbpSearchKeyword_location_month_keyword_key').on(
+			table.organizationLocationId,
+			table.month,
+			table.keyword,
+		),
 	],
 )

@@ -17,6 +17,7 @@ import {
 	resolveOrganizationLocationIdForConnect,
 } from '../../location-integrations.ts'
 import { tokenManager } from '../../token-manager'
+import { claimGoogleLocation } from './link'
 import {
 	GoogleBusinessProfileProvider,
 	isGoogleBusinessProfileMockMode,
@@ -91,7 +92,7 @@ const googleReviewSchema = z
 	.loose()
 
 const MOCK_GOOGLE_ACCOUNT_NAME = 'accounts/mock-menuza'
-const MOCK_GOOGLE_LOCATIONS: GoogleBusinessLocation[] = [
+const MOCK_GOOGLE_LOCATION_SAMPLES: GoogleBusinessLocation[] = [
 	{
 		name: 'locations/mock-menuza-downtown',
 		title: 'Menuza Demo Bistro',
@@ -127,6 +128,26 @@ const MOCK_GOOGLE_LOCATIONS: GoogleBusinessLocation[] = [
 	},
 ]
 
+/**
+ * The sample listing for one Menuza location. Its name is unique per Menuza
+ * location, so the platform-wide rule "a Google location links to one Menuza
+ * location" (`gbp_location_taken`) holds in mock mode too.
+ */
+export function mockGoogleLocationName(menuzaLocationId: string) {
+	const suffix = menuzaLocationId.toLowerCase().replace(/[^a-z0-9]/g, '')
+	return `locations/mock-${suffix.slice(0, 24) || 'menuza'}`
+}
+
+function mockGoogleLocations(
+	menuzaLocationId: string,
+): GoogleBusinessLocation[] {
+	return MOCK_GOOGLE_LOCATION_SAMPLES.map((sample) => ({
+		...sample,
+		name: mockGoogleLocationName(menuzaLocationId),
+	}))
+}
+
+const MOCK_REVIEW_PREFIX = 'locations/mock-menuza-downtown/reviews/'
 const MOCK_GOOGLE_REVIEWS: z.infer<typeof googleReviewSchema>[] = [
 	{
 		name: `${MOCK_GOOGLE_ACCOUNT_NAME}/locations/mock-menuza-downtown/reviews/review-1`,
@@ -274,6 +295,16 @@ async function getScopedReviewConnection(
 	}
 }
 
+/** The Google account a linked location belongs to (v4 endpoints need it). */
+export async function resolveGbpAccountName(
+	organizationId: string,
+	organizationLocationId: string,
+): Promise<string> {
+	return (
+		await getScopedReviewConnection(organizationId, organizationLocationId)
+	).accountName
+}
+
 /** Fetches one Google API page for each connected GBP location and merges by newest review. */
 export async function listGoogleBusinessReviews(
 	organizationId: string,
@@ -407,7 +438,12 @@ export async function replyToGoogleBusinessReview(
 		.regex(reviewPattern, 'Review does not belong to this connected location.')
 		.parse(reviewName)
 	if (isGoogleBusinessProfileMockMode()) {
-		if (!MOCK_GOOGLE_REVIEWS.some((review) => review.name === parsedName)) {
+		const mockReviewId = parsedName.split('/reviews/')[1]
+		if (
+			!MOCK_GOOGLE_REVIEWS.some(
+				(review) => review.name.split('/reviews/')[1] === mockReviewId,
+			)
+		) {
 			throw new Error(
 				'Google review was not found in the local GBP sample data.',
 			)
@@ -505,7 +541,7 @@ export async function listGoogleBusinessLocations(
 		throw new Error('A restaurant location is required.')
 	}
 	const { token } = await getConnection(organizationId, locationId)
-	if (isGoogleBusinessProfileMockMode()) return MOCK_GOOGLE_LOCATIONS
+	if (isGoogleBusinessProfileMockMode()) return mockGoogleLocations(locationId)
 	const results: GoogleBusinessLocation[] = []
 	let pageToken: string | undefined
 	do {
@@ -559,7 +595,10 @@ export function googleBusinessSchedule(
 	})
 }
 
-function address(location: GoogleBusinessLocation): LocationAddress | null {
+/** A Google listing's address in Menuza's shape (also used by "Use Google's value"). */
+export function googleAddressToMenuza(
+	location: Pick<GoogleBusinessLocation, 'storefrontAddress' | 'latlng'>,
+): LocationAddress | null {
 	const source = location.storefrontAddress
 	if (!source) return null
 	return {
@@ -604,7 +643,9 @@ export async function importGoogleBusinessLocation(
 		scopedLocationId,
 	)
 	const location = isGoogleBusinessProfileMockMode()
-		? MOCK_GOOGLE_LOCATIONS.find((candidate) => candidate.name === selected)
+		? mockGoogleLocations(scopedLocationId).find(
+				(candidate) => candidate.name === selected,
+			)
 		: await (async () => {
 				const url = new URL(
 					`https://mybusinessbusinessinformation.googleapis.com/v1/${selected}`,
@@ -616,7 +657,7 @@ export async function importGoogleBusinessLocation(
 		throw new Error('Google Business Profile location was not found.')
 	const config = parseIntegrationConfig(integration.config)
 
-	const importedAddress = address(location)
+	const importedAddress = googleAddressToMenuza(location)
 	const importedSchedule = googleBusinessSchedule(location)
 	// Head office can lock store hours (#417): an import must not overwrite them.
 	const lockedSettings = await getLockedLocationSettingIds(organizationId)
@@ -632,6 +673,17 @@ export async function importGoogleBusinessLocation(
 						: null,
 				}),
 	}
+	// A Google location links to one Menuza location only (#87). Refuses with
+	// `gbp_location_taken` before anything is written.
+	await claimGoogleLocation({
+		organizationId,
+		organizationLocationId: scopedLocationId,
+		integrationId: integration.id,
+		googleLocationName: selected,
+		googleAccountName: isGoogleBusinessProfileMockMode()
+			? MOCK_GOOGLE_ACCOUNT_NAME
+			: undefined,
+	})
 	const menuzaLocationId = await db.transaction(async (tx) => {
 		const locationId = scopedLocationId
 		await tx

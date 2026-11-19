@@ -53,6 +53,12 @@ export {
 	type ReservationsReportSubject,
 } from './catalog-reservations.ts'
 
+export {
+	GBP_REPORT_SUBJECTS,
+	isGbpReportSubject,
+	type GbpReportSubject,
+} from './catalog-gbp.ts'
+
 export const OPERATOR_TOKEN_AUD = 'tenant-api-operator'
 export const OPERATOR_TOKEN_ISS = 'menuza-control-plane'
 export const OPERATOR_TOKEN_EXPIRY = '15m'

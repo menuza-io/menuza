@@ -1,4 +1,5 @@
 import { type ReportCatalog, type ReportSubject, getField } from './catalog.ts'
+import { isGbpReportSubject } from './catalog-gbp.ts'
 import { isGiftCardReportSubject } from './catalog-gift-cards.ts'
 import {
 	isSalesReportSubject,
@@ -37,6 +38,7 @@ function isGatedSubject(subject: string) {
 		isStaffingReportSubject(subject) ||
 		isReservationsReportSubject(subject) ||
 		isGiftCardReportSubject(subject) ||
+		isGbpReportSubject(subject) ||
 		isSalesReportSubject(subject) ||
 		isMenuInsightsReportSubject(subject) ||
 		isOrgWideReportSubject(subject) ||

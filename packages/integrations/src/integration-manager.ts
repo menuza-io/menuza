@@ -12,6 +12,7 @@
 
 import { ENV } from './package-env.js'
 import { pinGitLabInstanceUrl } from './providers/gitlab/instance-pin.js'
+import { releaseGoogleLocation } from './providers/google-business-profile/link.js'
 import {
 	Integration as IntegrationTable,
 	IntegrationLog as IntegrationLogTable,
@@ -480,6 +481,13 @@ export class IntegrationManager {
 		await db
 			.delete(IntegrationLogTable)
 			.where(eq(IntegrationLogTable.integrationId, integrationId))
+
+		if (integration.providerName === 'google-business-profile') {
+			await releaseGoogleLocation({
+				integrationId,
+				organizationLocationId: integration.organizationLocationId ?? null,
+			})
+		}
 
 		await db
 			.delete(IntegrationTable)
