@@ -8,6 +8,7 @@ import {
 	needsCloverAuthorizeStep,
 	peekOAuthState,
 	readOAuthAuthorizationCode,
+	SEARCH_CONSOLE_PROVIDER,
 } from '@repo/integrations'
 import { type LoaderFunctionArgs, redirectDocument } from 'react-router'
 import { ENV } from '#app/utils/env.server.ts'
@@ -98,10 +99,13 @@ export async function loader(args: LoaderFunctionArgs) {
 		id: true,
 		slug: true,
 	})
+	// Search Console belongs to Website, SEO (#138): website editors connect it.
 	await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
-		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		saved.provider === SEARCH_CONSOLE_PROVIDER
+			? ORG_PERMISSIONS.UPDATE_WEBSITE_ANY
+			: ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
 	)
 	if (isPosProvider(saved.provider)) {
 		await requireOrganizationAdmin(request, organization.id)

@@ -12,6 +12,7 @@ import TestimonialsBlock from './TestimonialsBlock.astro'
 import FormBlock from './FormBlock.astro'
 import ReservationBlock from './ReservationBlock.astro'
 import RewardsBlock from './RewardsBlock.astro'
+import EventsBlock from './EventsBlock.astro'
 
 interface Props {
 	sections: PublicWebsitePageSection[]
@@ -50,6 +51,8 @@ const bodySections = sections.filter(
 				return <ReservationBlock config={section.config} />
 			case 'rewards':
 				return <RewardsBlock config={section.config} />
+			case 'events':
+				return <EventsBlock config={section.config} />
 			default:
 				return null
 		}

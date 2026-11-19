@@ -180,6 +180,10 @@ const PUBLIC_ROUTES: Record<string, string> = {
 		'public list of published, indexable page slugs for sitemaps; rate limited, 404 unless published',
 	'resources+/sites.menu.ts':
 		'public published menu; rate limited, preview only on the custom domain',
+	'resources+/sites.landing.ts':
+		'public generated location, dish and area pages (#137); rate limited, 404 unless published',
+	'resources+/sites.events.ts':
+		'public published website events (#184); rate limited, 404 unless published and website.events is on',
 	'resources+/sites.reservations.ts':
 		'public booking-flow flags; rate limited, 404 unless published and on',
 	'resources+/sites.loyalty.ts':

@@ -82,6 +82,10 @@ import {
 	isValidRedirectDestination,
 	REDIRECT_DESTINATION_ERROR,
 } from '#app/utils/website/redirect-destination.ts'
+import {
+	detectRedirectCycle,
+	normalizeRedirectPath,
+} from '#app/utils/website/redirects.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -134,6 +138,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			statusCode: r.statusCode,
 			isEnabled: r.isEnabled,
 			hitCount: r.hitCount,
+			source: r.source,
 			lastTriggeredAt: r.lastTriggeredAt
 				? new Date(r.lastTriggeredAt).toISOString()
 				: null,
@@ -155,75 +160,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		})),
 		pages,
 	}
-}
-
-function normalizePath(p: string): string {
-	let clean = p.trim()
-	if (
-		!clean.startsWith('/') &&
-		!clean.startsWith('http://') &&
-		!clean.startsWith('https://')
-	) {
-		clean = `/${clean}`
-	}
-	if (clean.length > 1 && clean.endsWith('/') && !clean.startsWith('http')) {
-		clean = clean.slice(0, -1)
-	}
-	return clean
-}
-
-/**
- * Checks if adding/updating a redirect would cause a loop (e.g. /a -> /b -> /a).
- * Traverses internal redirect chain up to 25 hops.
- */
-async function detectRedirectCycle(
-	organizationId: string,
-	fromPath: string,
-	toPath: string,
-	ignoreRedirectId?: string,
-): Promise<boolean> {
-	if (fromPath === toPath) return true
-	if (toPath.startsWith('http://') || toPath.startsWith('https://')) {
-		return false
-	}
-
-	const existingRedirects = await db
-		.select({
-			id: WebsiteRedirect.id,
-			fromPath: WebsiteRedirect.fromPath,
-			toPath: WebsiteRedirect.toPath,
-		})
-		.from(WebsiteRedirect)
-		.where(eq(WebsiteRedirect.organizationId, organizationId))
-
-	const redirectMap = new Map<string, string>()
-	for (const r of existingRedirects) {
-		if (ignoreRedirectId && r.id === ignoreRedirectId) continue
-		redirectMap.set(r.fromPath.toLowerCase(), r.toPath)
-	}
-
-	// Add the candidate redirect
-	redirectMap.set(fromPath.toLowerCase(), toPath)
-
-	let current: string | undefined = toPath.toLowerCase()
-	const visited = new Set<string>([fromPath.toLowerCase()])
-	let hops = 0
-
-	while (current && redirectMap.has(current) && hops < 25) {
-		hops++
-		const next: string | undefined = redirectMap.get(current)
-		if (!next || next.startsWith('http://') || next.startsWith('https://')) {
-			break
-		}
-		const nextLower = next.toLowerCase()
-		if (visited.has(nextLower)) {
-			return true
-		}
-		visited.add(nextLower)
-		current = nextLower
-	}
-
-	return false
 }
 
 const CreateRedirectSchema = z.object({
@@ -286,8 +222,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
-		const fromPath = normalizePath(parsed.data.fromPath)
-		const toPath = normalizePath(parsed.data.toPath)
+		const fromPath = normalizeRedirectPath(parsed.data.fromPath)
+		const toPath = normalizeRedirectPath(parsed.data.toPath)
 
 		if (fromPath === toPath) {
 			return Response.json(
@@ -384,8 +320,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
-		const fromPath = normalizePath(parsed.data.fromPath)
-		const toPath = normalizePath(parsed.data.toPath)
+		const fromPath = normalizeRedirectPath(parsed.data.fromPath)
+		const toPath = normalizeRedirectPath(parsed.data.toPath)
 
 		if (fromPath === toPath) {
 			return Response.json(
@@ -581,6 +517,7 @@ type RedirectRecord = {
 	id: string
 	fromPath: string
 	toPath: string
+	source: string
 	statusCode: number
 	isEnabled: boolean
 	hitCount: number
@@ -915,6 +852,15 @@ export default function WebsiteRedirectsRoute() {
 													>
 														{redirect.fromPath}
 													</button>
+													{redirect.source !== 'manual' ? (
+														<Badge
+															variant="secondary"
+															className="ms-2 text-xs"
+															data-testid="redirect-auto-badge"
+														>
+															<Trans>Added automatically</Trans>
+														</Badge>
+													) : null}
 												</TableCell>
 												<TableCell className="font-mono text-sm">
 													<div className="text-muted-foreground flex items-center gap-1.5">

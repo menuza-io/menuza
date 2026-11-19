@@ -1,0 +1,54 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import EventCard from '~/components/events/EventCard.astro'
+import { siteContainer, siteSection, siteSectionBackground } from '~/lib/media'
+import { fetchPublishedEvents } from '~/lib/org'
+
+/**
+ * Upcoming events (#184): the next 3 or 6 published events, for any page.
+ * Renders nothing while website events are off or none is coming up.
+ */
+interface Props {
+	config: Record<string, any>
+}
+
+const { config } = Astro.props
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const defaultLocale = organization?.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization?.locale || defaultLocale
+const count = Number(config?.count) === 6 ? 6 : 3
+const payload = organization
+	? await fetchPublishedEvents({
+			slug: Astro.locals.orgSlug,
+			host: Astro.locals.customHost,
+			lng: locale,
+		})
+	: null
+const events = (payload?.events ?? [])
+	.filter((event) => event.phase === 'upcoming' && event.occurrences.length)
+	.slice(0, count)
+const heading =
+	typeof config?.heading === 'string' && config.heading.trim()
+		? config.heading
+		: i18n._(msg`Upcoming events`)
+const seeAll = i18n._(msg`See all events`)
+const background = siteSectionBackground(config?.background)
+---
+
+{events.length ? (
+	<section class:list={[siteSection, background]} data-events-block>
+		<div class={siteContainer}>
+			<div class="flex flex-wrap items-end justify-between gap-3">
+				<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl" dir="auto">{heading}</h2>
+				<a href={getLocaleHref('/events', locale, locale, defaultLocale)} class="text-sm font-medium underline underline-offset-4">{seeAll}</a>
+			</div>
+			<ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{events.map((event) => (
+					<li><EventCard event={event} locale={locale} defaultLocale={defaultLocale} /></li>
+				))}
+			</ul>
+		</div>
+	</section>
+) : null}

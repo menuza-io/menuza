@@ -1,0 +1,30 @@
+---
+import { getLocaleHref } from '@repo/common/site-locales'
+import { formatOccurrence } from '~/lib/event-format'
+import { resolveMediaUrl } from '~/lib/media'
+import { type PublicSiteEvent } from '~/lib/org'
+
+/** One upcoming event in a list: photo, title, next date, place. */
+interface Props {
+	event: PublicSiteEvent
+	locale: string
+	defaultLocale: string
+}
+const { event, locale, defaultLocale } = Astro.props
+const next = event.occurrences[0]
+const href = getLocaleHref(`/events/${encodeURIComponent(event.slug)}`, locale, locale, defaultLocale)
+const imageUrl = resolveMediaUrl(event.imageUrl)
+---
+
+<a href={href} class="surface-interactive focus-ring flex h-full flex-col overflow-hidden" data-event={event.slug}>
+	{imageUrl ? <img src={imageUrl} alt="" loading="lazy" class="aspect-[16/9] w-full object-cover" /> : null}
+	<span class="flex flex-col gap-1 px-5 py-4">
+		{next ? (
+			<time class="text-sm font-medium text-brand" datetime={next.start}>
+				{formatOccurrence(next, event.timezone, locale)}
+			</time>
+		) : null}
+		<span class="text-lg font-semibold text-foreground" dir="auto">{event.title}</span>
+		{event.location ? <span class="text-sm text-muted-foreground" dir="auto">{event.location.name}</span> : null}
+	</span>
+</a>

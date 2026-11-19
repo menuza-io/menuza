@@ -135,6 +135,18 @@ msgstr "{n} 个限量活动正在接受下单"
 msgid "{n} min"
 msgstr "{n}分钟"
 
+#: src/pages/locations/[slug].astro.ts:3
+msgid "{name} – {cuisine} restaurant"
+msgstr "{name} – {cuisine}餐厅"
+
+#: src/pages/locations/[slug].astro.ts:3
+msgid "{name} – {cuisine} restaurant in {city}"
+msgstr "{name} – {city}的{cuisine}餐厅"
+
+#: src/pages/locations/[slug].astro.ts:3
+msgid "{name} – restaurant in {city}"
+msgstr "{name} – {city}的餐厅"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "{name} ({limits})"
 msgstr "{name}（{limits}）"
@@ -200,7 +212,7 @@ msgstr "每次预订 {price}"
 msgid "{price} per guest"
 msgstr "每位 {price}"
 
-#: src/lib/loyalty/labels.ts:314
+#: src/lib/loyalty/labels.ts:318
 msgid "{tier}: from {threshold}, earn {multiplier}× points"
 msgstr "{tier}：达到 {threshold} 起享 {multiplier}× 积分"
 
@@ -356,6 +368,7 @@ msgstr "请把所需商品加入订单才能使用此优惠码。"
 #: src/components/drops/DropSummaryCard.astro.ts:3
 #: src/lib/reservations/labels.ts:151
 #: src/pages/drop/[slug].astro.ts:3
+#: src/pages/events/[slug].astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Add to calendar"
 msgstr "添加到日历"
@@ -386,6 +399,7 @@ msgstr "下单后，我们会为您保留商品 {duration}，以便您完成付�
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "Alcohol"
 msgstr "含酒精"
 
@@ -402,6 +416,7 @@ msgid "All jobs"
 msgstr "所有职位"
 
 #: src/pages/careers/index.astro.ts:3
+#: src/pages/locations/[slug].astro.ts:3
 msgid "All locations"
 msgstr "所有门店"
 
@@ -430,7 +445,7 @@ msgstr "任何饮食偏好、酱料另放等"
 msgid "Any location"
 msgstr "任意门店"
 
-#: src/lib/loyalty/labels.ts:322
+#: src/lib/loyalty/labels.ts:326
 msgid "App"
 msgstr "应用"
 
@@ -566,6 +581,10 @@ msgstr "准备中。您的礼品卡将在 2 小时内送达。"
 msgid "Birthday (optional)"
 msgstr "生日（选填）"
 
+#: src/pages/events/[slug].astro.ts:3
+msgid "Book"
+msgstr "预订"
+
 #: src/lib/reservations/labels.ts:65
 msgid "Book {time}"
 msgstr "预订 {time}"
@@ -582,6 +601,7 @@ msgstr "预订普通餐桌"
 #: src/components/reservations/UpcomingReservations.astro.ts:3
 #: src/lib/reservations/labels.ts:210
 #: src/lib/reservations/labels.ts:483
+#: src/pages/locations/[slug].astro.ts:3
 msgid "Book a table"
 msgstr "预订餐位"
 
@@ -634,6 +654,7 @@ msgid "By signing up you agree to receive recurring automated marketing texts fr
 msgstr "注册即表示您同意 {org} 向此号码定期发送自动营销短信。同意并非购买的条件。可能产生短信和数据费用。回复 STOP 即可退订。"
 
 #: src/components/drops/LocationList.astro.ts:3
+#: src/pages/locations/[slug].astro.ts:3
 msgid "Call"
 msgstr "致电"
 
@@ -915,6 +936,7 @@ msgid "Close"
 msgstr "关闭"
 
 #: src/lib/ordering-labels.ts:181
+#: src/pages/locations/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Closed"
 msgstr "已关闭"
@@ -1070,6 +1092,7 @@ msgid "CVC"
 msgstr "CVC"
 
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "Dairy-free"
 msgstr "不含乳制品"
 
@@ -1077,6 +1100,10 @@ msgstr "不含乳制品"
 #: src/lib/reservations/labels.ts:37
 #: src/lib/reservations/labels.ts:470
 msgid "Date"
+msgstr "日期"
+
+#: src/pages/events/[slug].astro.ts:3
+msgid "Dates"
 msgstr "日期"
 
 #: src/components/BirthdayField.astro.ts:3
@@ -1123,6 +1150,10 @@ msgstr "配送至"
 msgid "Deliver to: {address}"
 msgstr "配送至：{address}"
 
+#: src/pages/delivery/[area].astro.ts:3
+msgid "Delivered from {location}"
+msgstr "由{location}配送"
+
 #: src/lib/ordering-labels.ts:138
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -1149,6 +1180,10 @@ msgstr "配送费"
 msgid "Delivery Fee"
 msgstr "配送费"
 
+#: src/pages/delivery/[area].astro.ts:3
+msgid "Delivery fee {amount}"
+msgstr "配送费 {amount}"
+
 #: src/lib/ordering-labels.ts:111
 msgid "Delivery fee and discounts at checkout"
 msgstr "配送费和优惠将在结账时计算"
@@ -1172,6 +1207,10 @@ msgstr "外送订单"
 #: src/pages/menu.astro.ts:3
 msgid "Delivery time"
 msgstr "配送时间"
+
+#: src/pages/delivery/[area].astro.ts:3
+msgid "Delivery to {area}"
+msgstr "配送至{area}"
 
 #: src/lib/reservations/labels.ts:390
 msgid "Deposit"
@@ -1368,6 +1407,10 @@ msgstr "这是预估合计。刚才未能更新，最终金额可能不同。"
 msgid "Estimated wait"
 msgstr "预计等待时间"
 
+#: src/pages/events/index.astro.ts:3
+msgid "Events"
+msgstr "活动"
+
 #: src/lib/reservations/labels.ts:443
 msgid "Experience"
 msgstr "体验"
@@ -1434,10 +1477,18 @@ msgstr "费用已支付"
 msgid "Fee pending"
 msgstr "费用待收"
 
+#: src/pages/locations/index.astro.ts:3
+msgid "Find a {name} near you"
+msgstr "查找附近的{name}"
+
 #: src/lib/reservations/labels.ts:32
 #: src/lib/reservations/labels.ts:39
 msgid "Find a table"
 msgstr "查找餐位"
+
+#: src/pages/events/[slug].astro.ts:3
+msgid "Find out more"
+msgstr "了解更多"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:84
@@ -1473,6 +1524,7 @@ msgstr "预订前 {count} 小时内可免费取消。"
 msgid "Free cancellation up to {count} minutes before your booking."
 msgstr "预订前 {count} 分钟内可免费取消。"
 
+#: src/pages/delivery/[area].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Free delivery"
 msgstr "免配送费"
@@ -1516,6 +1568,10 @@ msgstr "订单开放时短信通知我"
 msgid "Get a text when the next drop opens, before it sells out."
 msgstr "下一场限量活动开始时短信通知您，抢在售罄之前。"
 
+#: src/pages/locations/[slug].astro.ts:3
+msgid "Get directions"
+msgstr "导航"
+
 #: src/lib/reservations/labels.ts:288
 msgid "Get notified when a table opens"
 msgstr "有餐位时通知我"
@@ -1554,6 +1610,7 @@ msgid "Give us an email, a phone number, or both."
 msgstr "请提供电子邮箱、电话号码，或两者都提供。"
 
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "Gluten-free"
 msgstr "无麸质"
 
@@ -1562,6 +1619,7 @@ msgid "Gluten-Free"
 msgstr "无麸质"
 
 #: src/components/SiteNotFound.astro.ts:3
+#: src/pages/locations/[slug].astro.ts:3
 msgid "Go to the home page"
 msgstr "前往首页"
 
@@ -1575,6 +1633,7 @@ msgid "Guests"
 msgstr "客人"
 
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "Halal"
 msgstr "清真"
 
@@ -1602,6 +1661,10 @@ msgstr "记录"
 #: src/lib/careers/labels.ts:31
 msgid "hour"
 msgstr "小时"
+
+#: src/pages/locations/[slug].astro.ts:3
+msgid "Hours"
+msgstr "营业时间"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "How many are at your table?"
@@ -1640,7 +1703,7 @@ msgstr "如果我们有您的邮箱，收据已在发送途中。"
 msgid "in {t}"
 msgstr "{t}后"
 
-#: src/lib/loyalty/labels.ts:320
+#: src/lib/loyalty/labels.ts:324
 msgid "In store"
 msgstr "到店"
 
@@ -1691,7 +1754,7 @@ msgstr "已过在线修改时限，请致电餐厅。"
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "该地址不在 {location} 的配送范围内。您仍可下单自取。"
 
-#: src/lib/loyalty/labels.ts:310
+#: src/lib/loyalty/labels.ts:312
 msgid "Join and get {points} as a welcome bonus."
 msgstr "加入即可获得 {points} 欢迎奖励。"
 
@@ -1814,6 +1877,7 @@ msgid "Limited menus you pre-order for a pickup window."
 msgstr "限量菜单，预订后在指定时段自取。"
 
 #: src/components/careers/ShareJob.astro.ts:3
+#: src/pages/events/[slug].astro.ts:3
 msgid "Link copied"
 msgstr "链接已复制"
 
@@ -1841,6 +1905,11 @@ msgstr "加载中…"
 msgid "Location"
 msgstr "门店"
 
+#: src/pages/locations/[slug].astro.ts:3
+#: src/pages/locations/index.astro.ts:3
+msgid "Locations"
+msgstr "门店"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
 msgstr "退出"
@@ -1865,7 +1934,7 @@ msgstr "管理"
 msgid "Manage reservation"
 msgstr "管理预订"
 
-#: src/lib/loyalty/labels.ts:311
+#: src/lib/loyalty/labels.ts:315
 msgid "Membership tiers"
 msgstr "会员等级"
 
@@ -1893,6 +1962,10 @@ msgstr "来自 {org} 的消息"
 #: src/lib/ordering-labels.ts:156
 msgid "Minimum order"
 msgstr "起送金额"
+
+#: src/pages/delivery/[area].astro.ts:3
+msgid "Minimum order {amount}"
+msgstr "最低消费 {amount}"
 
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Missed this one?"
@@ -1940,7 +2013,7 @@ msgstr "name@example.com"
 msgid "National Day"
 msgstr "国庆日"
 
-#: src/lib/loyalty/labels.ts:325
+#: src/lib/loyalty/labels.ts:329
 msgid "Network error. Check your connection and try again."
 msgstr "网络错误。请检查网络连接后重试。"
 
@@ -2059,6 +2132,10 @@ msgstr "该搜索条件下没有可订餐位"
 msgid "No tip"
 msgstr "不付小费"
 
+#: src/pages/events/index.astro.ts:3
+msgid "No upcoming events right now. Check back soon."
+msgstr "目前没有即将举行的活动，请稍后再来看看。"
+
 #: src/lib/reservations/labels.ts:464
 msgid "No upcoming seatings"
 msgstr "暂无即将开始的场次"
@@ -2108,6 +2185,7 @@ msgid "Notify me"
 msgstr "通知我"
 
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "Nut-free"
 msgstr "不含坚果"
 
@@ -2151,7 +2229,7 @@ msgstr "每笔订单限用一个奖励。"
 msgid "One reward per tab."
 msgstr "每张账单限用一个奖励。"
 
-#: src/lib/loyalty/labels.ts:319
+#: src/lib/loyalty/labels.ts:323
 msgid "Online"
 msgstr "线上"
 
@@ -2264,6 +2342,10 @@ msgstr "可选"
 msgid "Order confirmed"
 msgstr "订单已确认"
 
+#: src/pages/delivery/[area].astro.ts:3
+msgid "Order delivery"
+msgstr "订外卖"
+
 #: src/lib/ordering-labels.ts:134
 msgid "Order details"
 msgstr "订单详情"
@@ -2274,12 +2356,17 @@ msgid "Order history"
 msgstr "订单历史"
 
 #: src/components/drops/DropCard.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "Order now"
 msgstr "立即下单"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Order number"
 msgstr "订单号"
+
+#: src/pages/locations/[slug].astro.ts:3
+msgid "Order online"
+msgstr "在线点餐"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Order received"
@@ -2657,6 +2744,10 @@ msgstr "积分已过期"
 msgid "Popular"
 msgstr "人气推荐"
 
+#: src/pages/locations/[slug].astro.ts:3
+msgid "Popular dishes"
+msgstr "热门菜品"
+
 #: src/lib/reservations/labels.ts:241
 msgid "Position in line"
 msgstr "排队位置"
@@ -2895,11 +2986,11 @@ msgstr "奖励"
 msgid "Rewards are not available right now"
 msgstr "奖励暂不可用"
 
-#: src/lib/loyalty/labels.ts:332
+#: src/lib/loyalty/labels.ts:336
 msgid "Rewards are not available right now."
 msgstr "奖励暂不可用。"
 
-#: src/lib/loyalty/labels.ts:330
+#: src/lib/loyalty/labels.ts:334
 msgid "Rewards are temporarily unavailable. Please try again later."
 msgstr "奖励暂时不可用，请稍后重试。"
 
@@ -2968,9 +3059,17 @@ msgstr "座位偏好"
 msgid "Secure checkout. By placing your order you agree to the restaurant's terms."
 msgstr "安全结账。提交订单即表示您同意餐厅的条款。"
 
+#: src/components/blocks/EventsBlock.astro.ts:3
+msgid "See all events"
+msgstr "查看全部活动"
+
 #: src/pages/careers/[slug].astro.ts:3
 msgid "See all open jobs"
 msgstr "查看所有在招职位"
+
+#: src/pages/menu/[dish].astro.ts:3
+msgid "See the full menu"
+msgstr "查看完整菜单"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Select a published form in the page editor."
@@ -3025,6 +3124,10 @@ msgstr "已上菜"
 #: src/pages/menu/success.astro.ts:3
 msgid "Service fee"
 msgstr "服务费"
+
+#: src/pages/events/[slug].astro.ts:3
+msgid "Share"
+msgstr "分享"
 
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Share this job"
@@ -3156,7 +3259,7 @@ msgid "Something went wrong."
 msgstr "出了点问题。"
 
 #: src/lib/gift-cards/labels.ts:54
-#: src/lib/loyalty/labels.ts:341
+#: src/lib/loyalty/labels.ts:345
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "出了点问题，请重试。"
@@ -3183,6 +3286,7 @@ msgid "Spent"
 msgstr "已使用"
 
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "Spicy"
 msgstr "辣"
 
@@ -3234,7 +3338,7 @@ msgstr "桌号 {label}"
 msgid "Table alerts are not available right now. Please call the restaurant."
 msgstr "暂时无法使用餐位提醒。请致电餐厅。"
 
-#: src/lib/loyalty/labels.ts:321
+#: src/lib/loyalty/labels.ts:325
 msgid "Table order"
 msgstr "桌台点餐"
 
@@ -3456,7 +3560,7 @@ msgstr "您要查找的页面不存在或已移动。"
 msgid "The payment did not go through"
 msgstr "付款未成功"
 
-#: src/lib/loyalty/labels.ts:334
+#: src/lib/loyalty/labels.ts:338
 msgid "The program is paused right now."
 msgstr "该计划目前已暂停。"
 
@@ -3650,6 +3754,10 @@ msgstr "本次活动已结束"
 msgid "This drop is no longer accepting orders."
 msgstr "该限时活动已停止接单。"
 
+#: src/pages/events/[slug].astro.ts:3
+msgid "This event has ended."
+msgstr "此活动已结束。"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "This form is currently unavailable."
 msgstr "此表单当前不可用。"
@@ -3722,6 +3830,10 @@ msgstr "此订单链接已过期。您仍可从菜单中点餐。"
 msgid "This order was cancelled"
 msgstr "此订单已取消"
 
+#: src/components/GonePage.astro.ts:3
+msgid "This page is no longer available."
+msgstr "此页面已不可用。"
+
 #: src/lib/reservations/labels.ts:412
 msgid "This payment is no longer open"
 msgstr "此付款已不再有效"
@@ -3751,7 +3863,7 @@ msgstr "该餐厅目前无法接受在线订单，请稍后再试。"
 msgid "This reward covers your whole order. Choose to pay when you receive it."
 msgstr "此奖励可抵扣您的全部订单。请选择在收到订单时付款。"
 
-#: src/lib/loyalty/labels.ts:336
+#: src/lib/loyalty/labels.ts:340
 msgid "This reward is no longer available."
 msgstr "此奖励已不可用。"
 
@@ -3812,6 +3924,7 @@ msgid "To your door"
 msgstr "送货上门"
 
 #: src/lib/ordering-labels.ts:194
+#: src/pages/locations/[slug].astro.ts:3
 msgid "Today"
 msgstr "今天"
 
@@ -3827,7 +3940,7 @@ msgstr "从此处提交的申请过多，请稍后再试。"
 msgid "Too many attempts. Please try again later."
 msgstr "尝试次数过多。请稍后重试。"
 
-#: src/lib/loyalty/labels.ts:327
+#: src/lib/loyalty/labels.ts:331
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "尝试次数过多，请稍候再试。"
@@ -3918,6 +4031,11 @@ msgstr "每单最高优惠 {amount}"
 msgid "Up to {count}"
 msgstr "最多 {count} 项"
 
+#: src/components/blocks/EventsBlock.astro.ts:3
+#: src/pages/events/[slug].astro.ts:3
+msgid "Upcoming events"
+msgstr "即将举行的活动"
+
 #: src/components/reservations/UpcomingReservations.astro.ts:3
 #: src/lib/reservations/labels.ts:206
 msgid "Upcoming reservations"
@@ -3976,11 +4094,13 @@ msgid "VAT number"
 msgstr "增值税号"
 
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "Vegan"
 msgstr "纯素"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "Vegetarian"
 msgstr "素食"
 
@@ -4336,6 +4456,10 @@ msgstr "欢迎奖励已退回"
 msgid "Welcome! {points} added"
 msgstr "欢迎！已添加 {points}"
 
+#: src/pages/events/index.astro.ts:3
+msgid "What's coming up at {name}"
+msgstr "{name}近期活动"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "What's your name?"
 msgstr "您叫什么名字？"
@@ -4406,7 +4530,7 @@ msgstr "预订成功"
 msgid "You are on the waitlist"
 msgstr "您已在候位名单中"
 
-#: src/lib/loyalty/labels.ts:339
+#: src/lib/loyalty/labels.ts:343
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "您已登录其他网站。请在此重新登录。"
 
@@ -4462,6 +4586,10 @@ msgstr "您已达到最高等级。"
 msgid "You left the waitlist"
 msgstr "您已退出候位名单"
 
+#: src/pages/menu/[dish].astro.ts:3
+msgid "You may also like"
+msgstr "你可能还喜欢"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "You pay on a secure payment page. Your receipt shows here when you come back."
 msgstr "您将在安全支付页面付款。返回后，收据会显示在这里。"
@@ -4510,7 +4638,7 @@ msgstr "您的余额"
 msgid "Your balance is below zero because of a refund. New purchases will bring it back up."
 msgstr "由于退款，您的余额低于零。新的消费会让余额回升。"
 
-#: src/lib/loyalty/labels.ts:335
+#: src/lib/loyalty/labels.ts:339
 msgid "Your balance is too low for this reward."
 msgstr "您的余额不足以兑换此奖励。"
 
@@ -4672,7 +4800,7 @@ msgstr "您的预订已取消。"
 msgid "Your reservation was updated."
 msgstr "您的预订已更新。"
 
-#: src/lib/loyalty/labels.ts:333
+#: src/lib/loyalty/labels.ts:337
 msgid "Your rewards account is on hold."
 msgstr "您的奖励账户已暂停。"
 
@@ -4688,7 +4816,7 @@ msgstr "优惠已抵扣整笔订单。"
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "您预约的时间已不可用，请重新选择。"
 
-#: src/lib/loyalty/labels.ts:337
+#: src/lib/loyalty/labels.ts:341
 msgid "Your session ended. Please sign in again."
 msgstr "您的会话已结束。请重新登录。"
 

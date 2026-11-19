@@ -1,7 +1,11 @@
+import { cuisineLabel, formatPriceRange } from '@repo/common/cuisines'
+import { visibleDishPages } from '~/lib/landing-pages'
 import {
 	type PublicOrganization,
 	fetchPublishedCareers,
 	fetchPublishedDrops,
+	fetchPublishedEvents,
+	fetchPublishedLanding,
 	fetchPublishedReservations,
 	fetchPublishedSiteMenu,
 	fetchPublishedSitePages,
@@ -37,13 +41,16 @@ export async function loadSiteSeoData(
 		defaultLocale: organization.defaultLocale ?? 'en',
 	}
 
-	const [pages, menu, reservations, careers, drops] = await Promise.all([
-		fetchPublishedSitePages(where),
-		fetchPublishedSiteMenu({ ...where, lng: locales.defaultLocale }),
-		fetchPublishedReservations(where),
-		fetchPublishedCareers({ ...where, locale: locales.defaultLocale }),
-		fetchPublishedDrops(where),
-	])
+	const [pages, menu, reservations, careers, drops, landing, events] =
+		await Promise.all([
+			fetchPublishedSitePages(where),
+			fetchPublishedSiteMenu({ ...where, lng: locales.defaultLocale }),
+			fetchPublishedReservations(where),
+			fetchPublishedCareers({ ...where, locale: locales.defaultLocale }),
+			fetchPublishedDrops(where),
+			fetchPublishedLanding(where),
+			fetchPublishedEvents({ ...where, lng: locales.defaultLocale }),
+		])
 
 	const sitemap: SitemapEntry[] = []
 	const links: LlmsInput['links'] = []
@@ -106,6 +113,53 @@ export async function loadSiteSeoData(
 		}
 	}
 
+	// Generated pages (#137). Operator pages with the same path came first and
+	// the sitemap keeps the first entry for a path.
+	const locationPages = landing?.features.locationPages ? landing.locations : []
+	const locationPath = (slug: string) =>
+		`/locations/${encodeURIComponent(slug)}`
+	if (locationPages.length > 1) {
+		sitemap.push({ path: '/locations' })
+		links.push({ title: 'Locations', path: '/locations' })
+	}
+	for (const location of locationPages) {
+		sitemap.push({
+			path: locationPath(location.slug),
+			lastModified: location.updatedAt,
+		})
+	}
+	for (const dish of visibleDishPages(landing, menu)) {
+		sitemap.push({ path: `/menu/${encodeURIComponent(dish.slug)}` })
+	}
+	for (const area of landing?.features.areaPages ? landing.areas : []) {
+		// Thin pages without an operator introduction stay out until written.
+		if (!area.noIndex)
+			sitemap.push({ path: `/delivery/${encodeURIComponent(area.slug)}` })
+	}
+
+	// Events (#184): only upcoming ones; a finished event leaves the sitemap.
+	const upcoming = (events?.events ?? []).filter(
+		(event) => event.phase === 'upcoming' && event.occurrences.length,
+	)
+	if (upcoming.length) {
+		sitemap.push({ path: '/events' })
+		links.push({ title: 'Events', path: '/events' })
+		for (const event of upcoming) {
+			sitemap.push({
+				path: `/events/${encodeURIComponent(event.slug)}`,
+				lastModified: event.updatedAt,
+			})
+		}
+	}
+
+	const currency = menu?.organization?.currency ?? null
+	const englishCuisines = (keys: readonly string[] | undefined) =>
+		(keys ?? []).map((key) => cuisineLabel(key, 'en')).filter(Boolean)
+	const orgCuisines = englishCuisines(organization.cuisines)
+	const byLocationId = new Map(
+		locationPages.map((location) => [location.id, location]),
+	)
+
 	return {
 		locales,
 		sitemap,
@@ -114,14 +168,32 @@ export async function loadSiteSeoData(
 			description,
 			currency: menu?.organization?.currency ?? null,
 			locales,
-			locations: (menu?.locations ?? []).map((location) => ({
-				name: localizedName(location.name, locales),
-				phone: location.phone,
-				address: location.address,
-				storeHours: location.storeHours,
-			})),
+			cuisines: orgCuisines,
+			priceRange: organization.priceRange ?? null,
+			locations: (menu?.locations ?? []).map((location) => {
+				const page = byLocationId.get(location.id)
+				const cuisines = englishCuisines(page?.cuisines)
+				const ownPrice = page ? formatPriceRange(page.priceRange, currency) : ''
+				return {
+					name: localizedName(location.name, locales),
+					phone: location.phone,
+					address: location.address,
+					storeHours: location.storeHours,
+					path: page ? locationPath(page.slug) : null,
+					// Only when it differs from the organization's.
+					cuisines:
+						cuisines.join() !== orgCuisines.join() ? cuisines : undefined,
+					priceRange:
+						ownPrice && ownPrice !== organization.priceRange ? ownPrice : null,
+				}
+			}),
 			menu: categories,
 			links,
+			events: upcoming.map((event) => ({
+				title: event.title,
+				path: `/events/${encodeURIComponent(event.slug)}`,
+				start: event.occurrences[0]!.start,
+			})),
 		},
 	}
 }

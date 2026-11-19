@@ -1,0 +1,156 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import GonePage from '~/components/GonePage.astro'
+import SiteNotFound from '~/components/SiteNotFound.astro'
+import SitePage from '~/components/SitePage.astro'
+import { formatOccurrence } from '~/lib/event-format'
+import { eventStructuredData } from '~/lib/event-jsonld'
+import { resolveEventPage } from '~/lib/landing-pages'
+import { resolveMediaUrl, siteContainer } from '~/lib/media'
+import { fetchPublishedEvents } from '~/lib/org'
+import { formatAddress } from '~/lib/seo-files'
+
+/**
+ * One website event (#184): its next dates in the location's time zone,
+ * Event structured data, an Add to calendar file and a share button. A
+ * finished event says so (and is noindex); 30 days after its last date the
+ * page answers 410.
+ */
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+const slug = (Astro.params.slug ?? '').toLowerCase()
+const defaultLocale = organization.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || defaultLocale
+const href = (path: string) => getLocaleHref(path, locale, locale, defaultLocale)
+
+const payload = /^[a-z0-9-]{1,80}$/.test(slug)
+	? await fetchPublishedEvents({ slug: orgSlug, host: customHost, lng: locale, event: slug })
+	: null
+const outcome = resolveEventPage(payload, slug)
+if (outcome.kind === 'gone') {
+	Astro.response.status = 410
+	Astro.response.statusText = 'Gone'
+} else if (outcome.kind === 'not_found') {
+	Astro.response.status = 404
+	Astro.response.statusText = 'Not Found'
+}
+const event = outcome.kind === 'page' ? outcome.value : null
+const ended = event?.phase === 'ended'
+const pageUrl = `${Astro.url.origin}${href(`/events/${slug}`)}`
+const imageUrl = event ? resolveMediaUrl(event.imageUrl) : null
+const linkUrl = event?.link
+	? event.link.url.startsWith('/')
+		? `${Astro.url.origin}${href(event.link.url)}`
+		: event.link.url
+	: null
+const structuredData =
+	event && !ended
+		? eventStructuredData({
+				url: pageUrl,
+				name: event.title,
+				description: event.description,
+				imageUrl,
+				occurrences: event.occurrences,
+				location: event.location,
+				organizer: { name: organization.name, url: `${Astro.url.origin}${href('/')}` },
+				offerUrl: linkUrl,
+			})
+		: null
+const address = event?.location ? formatAddress(event.location.address) : ''
+const labels = {
+	upcoming: i18n._(msg`Upcoming events`),
+	ended: i18n._(msg`This event has ended.`),
+	calendar: i18n._(msg`Add to calendar`),
+	share: i18n._(msg`Share`),
+	copied: i18n._(msg`Link copied`),
+	dates: i18n._(msg`Dates`),
+	book: i18n._(msg`Book`),
+	more: i18n._(msg`Find out more`),
+}
+---
+
+{outcome.kind === 'gone' ? (
+	<GonePage organization={organization} title={labels.upcoming} backHref={href('/events')} backLabel={labels.upcoming} />
+) : !event ? (
+	<SiteNotFound organization={organization} />
+) : (
+	<SitePage
+		organization={organization}
+		page={{ id: `event-${slug}`, title: event.title, slug: `events/${slug}`, isHomePage: false, sections: [] }}
+		title={`${event.title} - ${organization.name}`}
+		description={event.description ? event.description.slice(0, 160) : undefined}
+		imageUrl={imageUrl}
+		noIndex={ended}
+	>
+		{structuredData ? (
+			<script slot="head" type="application/ld+json" is:inline set:html={structuredData} />
+		) : null}
+		<div class:list={[siteContainer, 'py-12 sm:py-16']} data-event-page={slug}>
+			<a href={href('/events')} class="focus-ring text-sm text-muted-foreground hover:text-foreground">{labels.upcoming}</a>
+			<div class="mt-4 grid gap-8 lg:grid-cols-2 lg:items-start">
+				{imageUrl ? <img src={imageUrl} alt="" class="surface aspect-[16/9] w-full object-cover" /> : null}
+				<div>
+					<h1 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl" dir="auto">{event.title}</h1>
+					{event.location ? (
+						<p class="mt-2 text-base text-muted-foreground" dir="auto">
+							<a href={href(`/locations/${encodeURIComponent(event.location.slug)}`)} class="underline underline-offset-4">{event.location.name}</a>
+							{address ? ` · ${address}` : ''}
+						</p>
+					) : null}
+					{ended ? (
+						<p class="surface mt-6 px-5 py-4 text-base font-semibold text-foreground">{labels.ended}</p>
+					) : (
+						<section class="mt-6">
+							<h2 class="text-sm font-semibold text-muted-foreground">{labels.dates}</h2>
+							<ul class="mt-2 space-y-1 text-base text-foreground" data-occurrences>
+								{event.occurrences.map((occurrence) => (
+									<li><time datetime={occurrence.start}>{formatOccurrence(occurrence, event.timezone, locale)}</time></li>
+								))}
+							</ul>
+						</section>
+					)}
+					{event.description ? (
+						<p class="mt-6 max-w-prose text-base leading-relaxed whitespace-pre-line text-foreground" dir="auto">{event.description}</p>
+					) : null}
+					{!ended ? (
+						<div class="mt-8 flex flex-wrap gap-3">
+							{event.experience ? (
+								<a class="btn-cta" href={href(`/experiences/${encodeURIComponent(event.experience.id)}`)} data-action="book">{labels.book}</a>
+							) : null}
+							{linkUrl ? (
+								<a class:list={[event.experience ? 'btn-secondary' : 'btn-cta']} href={linkUrl} rel={event.link?.url.startsWith('/') ? undefined : 'noopener'} data-action="link">{event.link?.label || labels.more}</a>
+							) : null}
+							<a class="btn-secondary" href={`${href(`/events/${slug}`)}.ics`} download={`${slug}.ics`} data-action="calendar">{labels.calendar}</a>
+							<button type="button" class="btn-secondary" data-share-url={pageUrl} data-share-title={event.title} data-copied={labels.copied}>{labels.share}</button>
+						</div>
+					) : null}
+				</div>
+			</div>
+		</div>
+	</SitePage>
+)}
+
+<script>
+	for (const button of document.querySelectorAll<HTMLButtonElement>('[data-share-url]')) {
+		button.addEventListener('click', async () => {
+			const url = button.dataset.shareUrl ?? location.href
+			const title = button.dataset.shareTitle ?? document.title
+			try {
+				if (navigator.share) {
+					await navigator.share({ url, title })
+					return
+				}
+				await navigator.clipboard.writeText(url)
+				button.textContent = button.dataset.copied ?? button.textContent
+			} catch {
+				// Closed the share sheet: nothing to do.
+			}
+		})
+	}
+</script>

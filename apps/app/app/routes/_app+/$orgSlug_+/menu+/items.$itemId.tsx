@@ -34,6 +34,7 @@ import {
 	useLoaderData,
 	useNavigation,
 } from 'react-router'
+import { DishPageCard } from '#app/components/menu/dish-page-card.tsx'
 import { ItemForm } from '#app/components/menu/item-form.tsx'
 import {
 	requireMenuRead,
@@ -59,6 +60,7 @@ import {
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { getLandingFeatures } from '#app/utils/seo/landing-pages.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -189,9 +191,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	const slotLimits = await buildSlotLimitsContext(organization.id)
 	const dailyLimitsEnabled = await isDailyDishLimitsEnabled(organization.id)
+	// #137: "Give this dish its own page", offered while dish pages are on.
+	const dishPage = (await getLandingFeatures(organization.id)).dishPages
+		? { enabled: item.sitePageEnabled, slug: item.siteSlug }
+		: null
 
 	return {
 		organization,
+		dishPage,
 		defaultLocale,
 		supportedLocales,
 		slotLimitsEnabled: slotLimits.enabled,
@@ -507,6 +514,7 @@ export default function EditItemRoute() {
 		allLocations,
 		slotLimitsEnabled,
 		dailyLimitsEnabled,
+		dishPage,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -528,6 +536,16 @@ export default function EditItemRoute() {
 				dailyLimitsEnabled={dailyLimitsEnabled}
 				isSubmitting={isSubmitting}
 			/>
+			{dishPage ? (
+				<div className="px-4 pb-6 md:px-2">
+					<DishPageCard
+						orgSlug={organization.slug}
+						itemId={item.id}
+						enabled={dishPage.enabled}
+						slug={dishPage.slug}
+					/>
+				</div>
+			) : null}
 		</div>
 	)
 }

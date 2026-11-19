@@ -2348,6 +2348,17 @@ export const WebsiteRedirect = sqliteTable(
 		fromPath: text().notNull(),
 		toPath: text().notNull(),
 		statusCode: integer().default(301).notNull(),
+		/**
+		 * Who made it (#88): `manual` (Website, Redirects), `page_rename` or
+		 * `page_delete` (added automatically, shown with a badge), or
+		 * `location_rename` (a location page's address changed, #137).
+		 */
+		source: text().default('manual').notNull(),
+		/** The page an automatic redirect was made for; null once it is gone. */
+		pageId: text().references(() => WebsitePage.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
 		isEnabled: integer({ mode: 'boolean' }).default(true).notNull(),
 		hitCount: integer().default(0).notNull(),
 		lastTriggeredAt: integer({ mode: 'timestamp_ms' }),
@@ -2586,6 +2597,18 @@ export const Organization = sqliteTable(
 		 * settings.
 		 */
 		staffingTimeZone: text().default('UTC').notNull(),
+		/**
+		 * Cuisines served (#182): JSON array of up to three keys from
+		 * `@repo/common/cuisines`. Null: not set (left out of the site).
+		 */
+		cuisines: text(),
+		/** Price range 1 to 4 (`$` to `$$$$`); null leaves it out everywhere. */
+		priceRange: integer(),
+		/** Search engine site verification codes (#138), rendered escaped. */
+		googleSiteVerification: text(),
+		bingSiteVerification: text(),
+		/** IndexNow key (#138), served by Sites at `/<key>.txt`. Generated. */
+		indexNowKey: text(),
 	},
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),
@@ -2735,6 +2758,19 @@ export const OrganizationLocation = sqliteTable(
 			.notNull(),
 		isActive: integer({ mode: 'boolean' }).default(true).notNull(),
 		isDefault: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** Cuisines override (#182), same shape as `Organization.cuisines`. */
+		cuisines: text(),
+		/** Price range override (#182), 1 to 4. */
+		priceRange: integer(),
+		/**
+		 * Location landing page (#137): `/locations/<slug>` on the website.
+		 * `siteIntro` is localized JSON text; title and description override the
+		 * generated ones. Turning the page off answers 410, like deactivating.
+		 */
+		sitePageEnabled: integer({ mode: 'boolean' }).default(true).notNull(),
+		siteIntro: text(),
+		siteSeoTitle: text(),
+		siteSeoDescription: text(),
 		/**
 		 * The first time the launch checklist found this location live (set
 		 * once, never cleared; whether it is live now is evaluated on read).
@@ -3392,6 +3428,12 @@ export const OrganizationMenuItem = sqliteTable(
 		kitchenHighlight: text(),
 		isPopular: integer({ mode: 'boolean' }).default(false).notNull(),
 		isUpsell: integer({ mode: 'boolean' }).default(false).notNull(),
+		/**
+		 * "Give this dish its own page" (#137, `website.dish_pages`): published
+		 * at `/menu/<siteSlug>` while the dish is visible online.
+		 */
+		sitePageEnabled: integer({ mode: 'boolean' }).default(false).notNull(),
+		siteSlug: text(),
 		availabilityStatus: text().default('available').notNull(),
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
 		position: integer().default(0).notNull(),
@@ -5182,5 +5224,296 @@ export const MarketingEmailTemplate = sqliteTable(
 			table.organizationId,
 			table.name,
 		),
+	],
+)
+
+/**
+ * Local search keywords (#182), up to ten per location, one primary. A
+ * removed keyword is soft-deleted (`deletedAt`) and its history purged after
+ * 90 days. Business data only.
+ */
+export const SeoKeyword = sqliteTable(
+	'SeoKeyword',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** Lower-cased, 2 to 80 characters. */
+		phrase: text().notNull(),
+		/** `en` or `ar`: the language the check runs in. */
+		locale: text().default('en').notNull(),
+		isPrimary: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** `home`, `location:<id>`, `dish:<id>` or `page:<id>`; a hint only. */
+		pageRef: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		deletedAt: integer({ mode: 'timestamp_ms' }),
+	},
+	(table) => [
+		index('SeoKeyword_organizationId_idx').on(table.organizationId),
+		uniqueIndex('SeoKeyword_location_phrase_key')
+			.on(table.organizationLocationId, table.phrase)
+			.where(sql`${table.deletedAt} IS NULL`),
+	],
+)
+
+/**
+ * One local rank check (#182): the location's position in map results at
+ * each point of a grid, and their average. `status` is `ok`, `skipped`
+ * (with `reason`, e.g. `budget_exhausted`) or `failed`.
+ */
+export const SeoRankCheck = sqliteTable(
+	'SeoRankCheck',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		keywordId: text()
+			.notNull()
+			.references(() => SeoKeyword.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		checkedAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		status: text().default('ok').notNull(),
+		reason: text(),
+		gridSize: integer().default(5).notNull(),
+		spacingMeters: integer().default(1000).notNull(),
+		averageRank: real(),
+		/** JSON `[{ lat, lng, rank }]`, rank null when not in the top 20. */
+		points: text().default('[]').notNull(),
+	},
+	(table) => [
+		index('SeoRankCheck_keywordId_checkedAt_idx').on(
+			table.keywordId,
+			table.checkedAt,
+		),
+		index('SeoRankCheck_organizationId_idx').on(table.organizationId),
+	],
+)
+
+/** Rank checks used per organization per month (`YYYY-MM`), for the budget. */
+export const SeoUsage = sqliteTable(
+	'SeoUsage',
+	{
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		month: text().notNull(),
+		checks: integer().default(0).notNull(),
+		skipped: integer().default(0).notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.organizationId, table.month],
+			name: 'SeoUsage_organizationId_month_pk',
+		}),
+	],
+)
+
+/**
+ * Delivery area pages (#137): `/delivery/<slug>` for a named delivery zone.
+ * A zone without a row still gets a page (generated slug, no intro, noindex);
+ * the row stores the operator's intro, slug and switch.
+ */
+export const SiteAreaPage = sqliteTable(
+	'SiteAreaPage',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		zoneId: text().notNull(),
+		slug: text().notNull(),
+		/** Localized JSON text. Empty: the page is noindex. */
+		intro: text(),
+		enabled: integer({ mode: 'boolean' }).default(true).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('SiteAreaPage_organizationId_slug_key').on(
+			table.organizationId,
+			table.slug,
+		),
+		uniqueIndex('SiteAreaPage_location_zone_key').on(
+			table.organizationLocationId,
+			table.zoneId,
+		),
+	],
+)
+
+/**
+ * Website events (#184): announced, not booked. Wall-clock start and end of
+ * the first occurrence in `timezone`, a repeat rule and exceptions (JSON,
+ * `@repo/common/site-events`). Public marketing content only.
+ */
+export const SiteEvent = sqliteTable(
+	'SiteEvent',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text().references(() => OrganizationLocation.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		slug: text().notNull(),
+		/** `draft` or `published`. */
+		status: text().default('draft').notNull(),
+		/** Localized JSON text. */
+		title: text().notNull(),
+		description: text(),
+		imageUrl: text(),
+		linkUrl: text(),
+		linkLabel: text(),
+		/** An opaque reservations experience id; its button shows only while booking is on. */
+		experienceId: text(),
+		startLocal: text().notNull(),
+		endLocal: text().notNull(),
+		timezone: text().notNull(),
+		recurrence: text().default('{"frequency":"none"}').notNull(),
+		exceptions: text().default('{"skipped":[],"moved":[]}').notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('SiteEvent_organizationId_slug_key').on(
+			table.organizationId,
+			table.slug,
+		),
+		index('SiteEvent_organizationId_status_idx').on(
+			table.organizationId,
+			table.status,
+		),
+	],
+)
+
+/** Search Console totals per day (#138), aggregate only. */
+export const SearchConsoleDaily = sqliteTable(
+	'SearchConsoleDaily',
+	{
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		date: text().notNull(),
+		clicks: integer().default(0).notNull(),
+		impressions: integer().default(0).notNull(),
+		position: real(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.organizationId, table.date],
+			name: 'SearchConsoleDaily_organizationId_date_pk',
+		}),
+	],
+)
+
+/**
+ * Top search queries and pages for the last 28 days (#138), replaced on every
+ * daily fetch. `kind` is `query` or `page`.
+ */
+export const SearchConsoleTop = sqliteTable(
+	'SearchConsoleTop',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		kind: text().notNull(),
+		value: text().notNull(),
+		clicks: integer().default(0).notNull(),
+		impressions: integer().default(0).notNull(),
+		position: real(),
+		fetchedAt: integer({ mode: 'timestamp_ms' }).notNull(),
+	},
+	(table) => [
+		index('SearchConsoleTop_organizationId_kind_idx').on(
+			table.organizationId,
+			table.kind,
+		),
+	],
+)
+
+/** When each URL was last sent to IndexNow (#138): once per URL per hour. */
+export const IndexNowPing = sqliteTable(
+	'IndexNowPing',
+	{
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		url: text().notNull(),
+		lastPingedAt: integer({ mode: 'timestamp_ms' }).notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.organizationId, table.url],
+			name: 'IndexNowPing_organizationId_url_pk',
+		}),
 	],
 )

@@ -47,8 +47,11 @@ import {
 	Organization,
 	OrganizationLocation,
 	OrganizationSiteAsset,
+	isNull,
+	SeoKeyword,
 	WebsitePage,
 	WebsitePageSection,
+	WebsiteRedirect,
 } from '@repo/database'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
@@ -109,6 +112,7 @@ import {
 	useParams,
 	useSearchParams,
 } from 'react-router'
+import { toast } from 'sonner'
 import { z } from 'zod'
 import {
 	useAIPanel,
@@ -144,6 +148,7 @@ import {
 	TranslateProvider,
 	useSectionTranslator,
 } from '#app/components/website/translate-provider.tsx'
+import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { displayLocationName } from '#app/utils/location-name.server.ts'
 import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { useDirtyBeforeUnload } from '#app/utils/navigation-guards.ts'
@@ -156,6 +161,9 @@ import {
 	getReservationsFeatureState,
 	notifyReservationsContextChanged,
 } from '#app/utils/reservations/access.server.ts'
+import { notifyIndexNowForPages } from '#app/utils/seo/indexnow.server.ts'
+import { getLandingFeatures } from '#app/utils/seo/landing-pages.server.ts'
+import { isRankTrackingEnabled } from '#app/utils/seo/rank-tracking.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { signSitePreviewToken } from '#app/utils/sites/preview-token.server.ts'
 import {
@@ -188,6 +196,12 @@ import {
 	publishWebsitePage,
 } from '#app/utils/website/publish-page.server.ts'
 import {
+	automaticRedirectStatements,
+	loadRedirectRows,
+	planAutomaticRedirect,
+	websitePagePath,
+} from '#app/utils/website/redirects.server.ts'
+import {
 	SiteThemeConflictError,
 	updateSiteTheme,
 } from '#app/utils/website/site-theme.server.ts'
@@ -196,6 +210,8 @@ import { BULK_UPDATE_SECTIONS_INTENT } from '#app/utils/website/translation.ts'
 // --- Action Intents ---
 const updateTitleIntent = 'update-title'
 const updatePageSettingsIntent = 'update-page-settings'
+/** Removes the redirect a rename just added (the toast's Undo, #88). */
+const undoAutoRedirectIntent = 'undo-auto-redirect'
 const uploadPageImageIntent = 'upload-page-image'
 const uploadBlockAssetIntent = 'upload-block-asset'
 const addSectionIntent = 'add-section'
@@ -608,10 +624,28 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		// The page editor remains usable while the regional data plane is offline.
 	}
 
-	const [reservationsState, loyaltyEnabled] = await Promise.all([
-		getReservationsFeatureState(organization.id),
-		isLoyaltyFeatureEnabled(organization.id),
-	])
+	// #182: keywords linked to this page, shown as a hint (nothing is changed).
+	const targetKeywords = (await isRankTrackingEnabled(organization.id))
+		? (
+				await db
+					.select({ phrase: SeoKeyword.phrase })
+					.from(SeoKeyword)
+					.where(
+						and(
+							eq(SeoKeyword.organizationId, organization.id),
+							eq(SeoKeyword.pageRef, `page:${params.pageId}`),
+							isNull(SeoKeyword.deletedAt),
+						),
+					)
+			).map((row) => row.phrase)
+		: []
+	const [reservationsState, loyaltyEnabled, landingFeatures] =
+		await Promise.all([
+			getReservationsFeatureState(organization.id),
+			isLoyaltyFeatureEnabled(organization.id),
+			getLandingFeatures(organization.id),
+		])
+	const eventsEnabled = landingFeatures.events
 	const reservationsOnline =
 		reservationsState.enabled && reservationsState.online
 	const reservationLocations = reservationsOnline
@@ -647,6 +681,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		previewToken: signSitePreviewToken(organization.id),
 		websiteForms,
 		loyaltyEnabled,
+		eventsEnabled,
+		targetKeywords,
 		reservationsOnline,
 		reservationLocations,
 		themeConfig,
@@ -672,7 +708,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 // --- Action ---
-export async function action({ request, params }: ActionFunctionArgs) {
+export async function action({ request, params, context }: ActionFunctionArgs) {
 	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
@@ -691,6 +727,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			id: WebsitePage.id,
 			isHomePage: WebsitePage.isHomePage,
 			slug: WebsitePage.slug,
+			status: WebsitePage.status,
+			publishedData: WebsitePage.publishedData,
 		})
 		.from(WebsitePage)
 		.where(
@@ -1052,7 +1090,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			}
 		}
 
-		await db
+		const pageUpdate = db
 			.update(WebsitePage)
 			.set({
 				...(nextSlug !== undefined ? { slug: nextSlug } : {}),
@@ -1062,6 +1100,64 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				seoNoIndex,
 			})
 			.where(eq(WebsitePage.id, page.id))
+
+		// #88: a page that was ever public keeps its old address working. A
+		// draft that was never published has no visitors to send anywhere.
+		let autoRedirect: { id: string; fromPath: string; toPath: string } | null =
+			null
+		const wasEverPublished =
+			page.status === 'published' || page.publishedData !== null
+		if (nextSlug !== undefined && !page.isHomePage && wasEverPublished) {
+			const plan = planAutomaticRedirect({
+				existing: await loadRedirectRows(organization.id),
+				oldPath: websitePagePath(page),
+				newPath: websitePagePath({ slug: nextSlug }),
+				source: 'page_rename',
+			})
+			const { statements, insertedId } = automaticRedirectStatements(
+				organization.id,
+				page.id,
+				plan,
+			)
+			await db.batch([pageUpdate, ...statements])
+			if (insertedId && plan.insert) {
+				autoRedirect = {
+					id: insertedId,
+					fromPath: plan.insert.fromPath,
+					toPath: plan.insert.toPath,
+				}
+			}
+		} else {
+			await pageUpdate
+		}
+		await purgeOrganizationSiteCache(
+			organization.id,
+			organization.slug,
+			organization.customDomain,
+		)
+		return Response.json({ status: 'success', redirect: autoRedirect })
+	}
+
+	if (intent === undoAutoRedirectIntent) {
+		const id = formData.get('id')
+		if (typeof id !== 'string' || !id) {
+			return Response.json({ status: 'error' }, { status: 400 })
+		}
+		// Only a redirect added automatically for this page can be undone here.
+		const removed = await db
+			.delete(WebsiteRedirect)
+			.where(
+				and(
+					eq(WebsiteRedirect.id, id),
+					eq(WebsiteRedirect.organizationId, organization.id),
+					eq(WebsiteRedirect.pageId, page.id),
+					eq(WebsiteRedirect.source, 'page_rename'),
+				),
+			)
+			.returning({ id: WebsiteRedirect.id })
+		if (!removed.length) {
+			return Response.json({ status: 'error' }, { status: 404 })
+		}
 		await purgeOrganizationSiteCache(
 			organization.id,
 			organization.slug,
@@ -1097,6 +1193,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			if (!reservationsState.enabled || !reservationsState.online) {
 				return Response.json(
 					{ status: 'error', error: 'Online reservations are not enabled' },
+					{ status: 403 },
+				)
+			}
+		}
+		if (type === 'events') {
+			if (!(await getLandingFeatures(organization.id)).events) {
+				return Response.json(
+					{ status: 'error', error: 'Website events are not enabled' },
 					{ status: 403 },
 				)
 			}
@@ -1533,6 +1637,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			organization.slug,
 			organization.customDomain,
 		)
+		// #138: tell IndexNow engines, without making the operator wait.
+		runAfterResponse(context, () =>
+			notifyIndexNowForPages(organization.id, [page.id]),
+		)
 		return Response.json({ status: 'success' })
 	}
 
@@ -1692,10 +1800,12 @@ function AddSectionDialog({
 	onAdd: (type: BlockType, position: number) => void
 	trigger?: 'button' | 'insert' | 'footer' | 'link'
 }) {
-	const { reservationsOnline, loyaltyEnabled } = useLoaderData<typeof loader>()
+	const { reservationsOnline, loyaltyEnabled, eventsEnabled } =
+		useLoaderData<typeof loader>()
 	const addableTypes = useMemo(
-		() => addableBlockTypes({ reservationsOnline, loyaltyEnabled }),
-		[reservationsOnline, loyaltyEnabled],
+		() =>
+			addableBlockTypes({ reservationsOnline, loyaltyEnabled, eventsEnabled }),
+		[reservationsOnline, loyaltyEnabled, eventsEnabled],
 	)
 	const [open, setOpen] = useState(false)
 	const [selected, setSelected] = useState<BlockType>(
@@ -2159,6 +2269,8 @@ function previewText(
 			return loc(config.heading) || loc(config.buttonLabel) || 'Book a table'
 		case 'rewards':
 			return loc(config.heading) || 'Rewards'
+		case 'events':
+			return loc(config.heading) || 'Upcoming events'
 		case 'cta':
 			return loc(config.heading) || 'Call to action'
 		default:
@@ -2285,7 +2397,9 @@ function PageSettingsPanel({
 	uploadError,
 	slugError,
 	isSaving,
+	targetKeywords = [],
 }: {
+	targetKeywords?: string[]
 	page: {
 		title: string
 		slug: string
@@ -2786,6 +2900,17 @@ function PageSettingsPanel({
 							}}
 						/>
 					</div>
+					{targetKeywords.length ? (
+						<p
+							className="text-muted-foreground text-xs"
+							data-testid="page-target-keywords"
+						>
+							{(() => {
+								const keywords = targetKeywords.join(', ')
+								return <Trans>This page targets: {keywords}</Trans>
+							})()}
+						</p>
+					) : null}
 				</div>
 			</ScrollArea>
 		</div>
@@ -2892,6 +3017,8 @@ function renderBlockEditor(props: {
 			)
 		case 'rewards':
 			return <RewardsBlockEditor config={config} updateField={updateField} />
+		case 'events':
+			return <EventsBlockEditor config={config} updateField={updateField} />
 		case 'cta':
 			return (
 				<CtaEditor config={config} updateField={updateField} {...editorProps} />
@@ -4303,6 +4430,33 @@ function ReservationBlockEditor({ config, updateField }: EditorProps) {
 	)
 }
 
+function EventsBlockEditor({ config, updateField }: EditorProps) {
+	const { _ } = useLingui()
+	const count = Number(config.count) === 6 ? 6 : 3
+	return (
+		<div className="space-y-5">
+			<EditorSection title={<Trans>Content</Trans>}>
+				<FieldInput
+					label={_(msg`Heading`)}
+					value={(config.heading as string) ?? ''}
+					onChange={(v) => updateField('heading', v)}
+				/>
+				<FieldSwitch
+					label={_(msg`Show the next six (instead of three)`)}
+					checked={count === 6}
+					onChange={(checked) => updateField('count', checked ? 6 : 3)}
+				/>
+			</EditorSection>
+			<EditorSection title={<Trans>Style</Trans>}>
+				<SectionBackgroundField
+					value={(config.background as string) ?? 'none'}
+					onChange={(v) => updateField('background', v)}
+				/>
+			</EditorSection>
+		</div>
+	)
+}
+
 function RewardsBlockEditor({ config, updateField }: EditorProps) {
 	const { _ } = useLingui()
 	return (
@@ -5391,6 +5545,7 @@ export default function PageBuilderRoute() {
 		previewToken,
 		themeConfig: initialTheme,
 		sitePages,
+		targetKeywords,
 	} = useLoaderData<typeof loader>()
 	const [themeConfig, setThemeConfig] = useState(initialTheme)
 
@@ -5410,7 +5565,32 @@ export default function PageBuilderRoute() {
 		status: string
 		result?: { error?: { slug?: string[] } }
 		error?: string
+		redirect?: { id: string; fromPath: string; toPath: string } | null
 	}>()
+	const undoRedirectFetcher = useFetcher()
+	const { _: translate } = useLingui()
+	const announcedRedirect = useRef<string | null>(null)
+	const addedRedirect = pageSettingsFetcher.data?.redirect ?? null
+	useEffect(() => {
+		if (!addedRedirect || announcedRedirect.current === addedRedirect.id) return
+		announcedRedirect.current = addedRedirect.id
+		const fromPath = addedRedirect.fromPath
+		const toPath = addedRedirect.toPath
+		toast.success(
+			translate(msg`We'll send visitors from ${fromPath} to ${toPath}`),
+			{
+				action: {
+					label: translate(msg`Undo redirect`),
+					onClick: () => {
+						void undoRedirectFetcher.submit(
+							{ intent: undoAutoRedirectIntent, id: addedRedirect.id },
+							{ method: 'POST' },
+						)
+					},
+				},
+			},
+		)
+	}, [addedRedirect, translate, undoRedirectFetcher])
 	const pageImageFetcher = useFetcher<{
 		status: string
 		seoImageUrl?: string
@@ -5800,6 +5980,7 @@ export default function PageBuilderRoute() {
 				{inspector === 'page' ? (
 					<PageSettingsPanel
 						page={page}
+						targetKeywords={targetKeywords}
 						previewHost={previewHost || `${organization.slug}.site`}
 						onSave={handleUpdatePageSettings}
 						isSaving={pageSettingsFetcher.state !== 'idle'}

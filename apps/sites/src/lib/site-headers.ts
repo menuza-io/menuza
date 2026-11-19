@@ -192,6 +192,18 @@ export function isSitesExperiencesRoute(pathname: string) {
 	return slug === 'experiences' || slug.startsWith('experiences/')
 }
 
+/**
+ * Generated SEO pages (#137, #184): location, delivery area and event pages.
+ * Their index routes (`/locations`, `/events`) look up an operator page at
+ * the same path themselves, so the middleware need not.
+ */
+export function isSitesLandingRoute(pathname: string) {
+	const slug = pathname.replace(/^\/+|\/+$/g, '')
+	return ['locations', 'delivery', 'events'].some(
+		(prefix) => slug === prefix || slug.startsWith(`${prefix}/`),
+	)
+}
+
 export function isSitesAppRoute(pathname: string) {
 	const slug = pathname.replace(/^\/+|\/+$/g, '')
 	if (APP_ROUTE_SLUGS.has(slug)) return true
@@ -201,7 +213,8 @@ export function isSitesAppRoute(pathname: string) {
 		isSitesCareersRoute(pathname) ||
 		isSitesReservationsRoute(pathname) ||
 		isSitesGiftCardsRoute(pathname) ||
-		isSitesExperiencesRoute(pathname)
+		isSitesExperiencesRoute(pathname) ||
+		isSitesLandingRoute(pathname)
 	)
 }
 

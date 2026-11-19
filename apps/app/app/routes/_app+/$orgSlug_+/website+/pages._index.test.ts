@@ -132,7 +132,7 @@ describe('website pages list actions', () => {
 				pageId,
 			})
 			expect(response.status).toBe(200)
-			expect(await response.json()).toEqual({ status: 'success' })
+			expect(await response.json()).toMatchObject({ status: 'success' })
 			expect(purgeOrganizationSiteCache).toHaveBeenCalledWith(
 				organization.id,
 				organization.slug,

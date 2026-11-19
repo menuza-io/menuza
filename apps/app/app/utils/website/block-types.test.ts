@@ -172,4 +172,19 @@ describe('website block types', () => {
 			},
 		])
 	})
+
+	it('offers the Upcoming events section on any page only while website events are on (#184)', () => {
+		const has = (eventsEnabled: boolean) =>
+			addableBlockTypes({ reservationsOnline: false, eventsEnabled }).some(
+				(block) => block.type === 'events',
+			)
+		expect(has(false)).toBe(false)
+		expect(has(true)).toBe(true)
+		expect(getDefaultConfig('events')).toEqual({
+			heading: 'Upcoming events',
+			count: 3,
+			background: 'none',
+		})
+		expect(LOCALIZED_FIELDS.events).toEqual(['heading'])
+	})
 })

@@ -4,10 +4,13 @@ import { getPageTitle } from '@repo/config/brand'
 import SitePage from '~/components/SitePage.astro'
 import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
 import {
+	fetchPublishedLanding,
 	fetchPublishedReservations,
 	fetchPublishedSiteMenu,
 	fetchPublishedSitePage,
 } from '~/lib/org'
+import { formatPriceRange } from '@repo/common/cuisines'
+import { getLocaleHref } from '@repo/common/site-locales'
 import { resolveMediaUrl } from '~/lib/media'
 import { restaurantStructuredData } from '~/lib/restaurant-jsonld'
 import { buildSiteThemeCss } from '@repo/common/site-theme'
@@ -33,9 +36,15 @@ const structuredDataPromise = isPreview
 	: Promise.all([
 			fetchPublishedSiteMenu({ slug: orgSlug, host: customHost, lng: locale }),
 			fetchPublishedReservations({ slug: orgSlug, host: customHost }),
+			fetchPublishedLanding({ slug: orgSlug, host: customHost }),
 		])
-			.then(([menu, reservations]) =>
-				restaurantStructuredData({
+			.then(([menu, reservations, landing]) => {
+				// Cuisine and price (#182) and each branch's own page (#137).
+				const pages = new Map(
+					(landing?.locations ?? []).map((location) => [location.id, location]),
+				)
+				const currency = menu?.organization?.currency ?? null
+				return restaurantStructuredData({
 					origin: Astro.url.origin,
 					name: menu?.organization?.name || organization.name,
 					locale,
@@ -47,11 +56,26 @@ const structuredDataPromise = isPreview
 					},
 					// The App sends a root-relative image path; search engines need it absolute.
 					logoUrl: resolveMediaUrl(organization.siteIcon?.original),
-					locations: menu?.locations ?? [],
+					locations: (menu?.locations ?? []).map((location) => {
+						const page = pages.get(location.id)
+						return {
+							...location,
+							cuisines: page?.cuisines,
+							priceRange: page ? formatPriceRange(page.priceRange, currency) || null : null,
+						}
+					}),
 					hasMenu: Boolean(menu?.menus?.length),
 					reservationsOnline: reservations?.online === true,
-				}),
-			)
+					cuisines: organization.cuisines ?? [],
+					priceRange: organization.priceRange ?? null,
+					locationPageUrls: Object.fromEntries(
+						[...pages.values()].map((location) => [
+							location.id,
+							`${Astro.url.origin}${getLocaleHref(`/locations/${encodeURIComponent(location.slug)}`, locale, null, defaultLocale)}`,
+						]),
+					),
+				})
+			})
 			.catch(() => null)
 
 const page = await (Astro.locals.publishedPagePromise ??
@@ -164,6 +188,7 @@ const structuredData = await structuredDataPromise
 	description={seoDescription}
 	imageUrl={seoImageUrl}
 	noIndex={seoNoIndex}
+	siteVerification={organization.siteVerification ?? null}
 >
 	{structuredData ? (
 		<script slot="head" type="application/ld+json" is:inline set:html={structuredData} />

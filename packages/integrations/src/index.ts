@@ -99,6 +99,11 @@ export {
 
 export * from './providers'
 export {
+	SEARCH_CONSOLE_PROVIDER,
+	SEARCH_CONSOLE_SCOPES,
+	isSearchConsoleMockMode,
+} from './providers/google-search-console/provider'
+export {
 	listGoogleBusinessLocations,
 	importGoogleBusinessLocation,
 	listGoogleBusinessReviews,

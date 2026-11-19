@@ -49,6 +49,7 @@ import {
 	type InitialLocationData,
 	LocationForm,
 } from '#app/components/locations/location-form.tsx'
+import { LocationWebsiteCard } from '#app/components/locations/location-website-card.tsx'
 import { type OrderPolicyValues } from '#app/components/locations/order-policies-card.tsx'
 import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
 import { loadLocationPolicyView } from '#app/utils/location/chain-defaults.server.ts'
@@ -91,6 +92,12 @@ import {
 	notifyReservationsContextChanged,
 } from '#app/utils/reservations/access.server.ts'
 import { checkLocationReservationsDeleteGuard } from '#app/utils/reservations/region-guard.server.ts'
+import {
+	localizedRecord,
+	organizationCurrency,
+	storedCuisineKeys,
+} from '#app/utils/seo/cuisine-form.server.ts'
+import { addLocationPageRedirect } from '#app/utils/seo/landing-pages.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 const LocationInputSchema = z.object({
@@ -134,6 +141,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteLocales: true,
 		siteDefaultLocale: true,
 		dataRegion: true,
+		cuisines: true,
+		priceRange: true,
 	})
 
 	await requireUserWithOrganizationPermission(
@@ -344,9 +353,28 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		record.id,
 	)
 
+	// Website card (#137, #182): cuisine override and the location's page.
+	const websiteLocales = parseSiteLocalesConfig(
+		organization.siteLocales,
+		organization.siteDefaultLocale,
+	)
+	const website = {
+		cuisines: storedCuisineKeys(record.cuisines),
+		priceRange: record.priceRange ?? null,
+		organizationCuisines: storedCuisineKeys(organization.cuisines),
+		organizationPriceRange: organization.priceRange ?? null,
+		currency: organizationCurrency(organization.dataRegion),
+		pageEnabled: record.sitePageEnabled,
+		intro: localizedRecord(record.siteIntro, websiteLocales.defaultLocale),
+		seoTitle: record.siteSeoTitle ?? '',
+		seoDescription: record.siteSeoDescription ?? '',
+		locales: websiteLocales.locales,
+	}
+
 	return {
 		organization,
 		location,
+		website,
 		reservationsEnabled,
 		allLocations,
 		orderPolicies,
@@ -603,6 +631,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		)
 	}
 
+	const [before] = await db
+		.select({ slug: OrganizationLocation.slug })
+		.from(OrganizationLocation)
+		.where(
+			and(
+				eq(OrganizationLocation.id, locationId),
+				eq(OrganizationLocation.organizationId, organization.id),
+			),
+		)
+		.limit(1)
+
 	await db.transaction(async (tx) => {
 		if (data.isDefault) {
 			await tx
@@ -621,6 +660,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				),
 			)
 	})
+
+	// #137: the location's website page moved; keep its old address working.
+	if (before && before.slug !== data.slug) {
+		await addLocationPageRedirect(organization.id, before.slug, data.slug)
+	}
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 	await notifyReservationsContextChanged(organization.id, 'locations')
@@ -643,6 +687,7 @@ export default function EditLocationRoute() {
 		orderingSettings,
 		checkoutRules,
 		policy,
+		website,
 	} = useLoaderData<typeof loader>()
 	const deleteFetcher = useFetcher<{
 		error?: string
@@ -778,6 +823,15 @@ export default function EditLocationRoute() {
 						locations={allLocations}
 					/>
 				</Card>
+			) : null}
+
+			{location.id ? (
+				<LocationWebsiteCard
+					orgSlug={organization.slug}
+					locationId={location.id}
+					locationSlug={location.slug}
+					website={website}
+				/>
 			) : null}
 
 			<LocationForm

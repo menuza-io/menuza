@@ -36,7 +36,15 @@ import {
 import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import { Label } from '@repo/ui/label'
 import { PageHeader } from '@repo/ui/page-header'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@repo/ui/select'
 import {
 	Table,
 	TableBody,
@@ -59,11 +67,13 @@ import {
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { CreatePageDialog } from '#app/components/website/create-page-dialog.tsx'
+import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { notifyIndexNowForPages } from '#app/utils/seo/indexnow.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
 	PAGE_TEMPLATES,
@@ -74,6 +84,13 @@ import {
 import { HOME_PAGE_SLUG } from '#app/utils/website/home-page.ts'
 import { ensureSiteChrome } from '#app/utils/website/locked-chrome.server.ts'
 import { publishWebsitePage } from '#app/utils/website/publish-page.server.ts'
+import {
+	automaticRedirectStatements,
+	loadRedirectRows,
+	normalizeRedirectPath,
+	planAutomaticRedirect,
+	websitePagePath,
+} from '#app/utils/website/redirects.server.ts'
 
 // --- Action Intents ---
 const createPageIntent = 'create-page'
@@ -102,6 +119,8 @@ const CreatePageSchema = z.object({
 const PageActionSchema = z.object({
 	intent: z.enum([publishPageIntent, unpublishPageIntent, deletePageIntent]),
 	pageId: z.string().min(1),
+	/** Delete only: where visitors of a published page go (#88). Home by default. */
+	redirectTo: z.string().max(200).optional(),
 })
 
 // --- Loader ---
@@ -131,6 +150,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			status: true,
 			template: true,
 			isHomePage: true,
+			publishedData: true,
 			createdAt: true,
 			updatedAt: true,
 		},
@@ -151,8 +171,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		organization,
 		defaultLocale,
-		pages: pages.map((page) => ({
+		pages: pages.map(({ publishedData, ...page }) => ({
 			...page,
+			// Was public at some point: deleting it asks where visitors go.
+			wasPublished: page.status === 'published' || publishedData !== null,
 			title:
 				pickLocalized(page.title, defaultLocale, defaultLocale) || page.title,
 			createdAt: page.createdAt.toISOString(),
@@ -164,7 +186,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 // --- Action ---
-export async function action({ request, params }: ActionFunctionArgs) {
+export async function action({ request, params, context }: ActionFunctionArgs) {
 	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
@@ -279,13 +301,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			})
 		}
 
-		const { pageId } = submission.value
+		const { pageId, redirectTo } = submission.value
 
 		const [page] = await db
 			.select({
 				id: WebsitePage.id,
 				isHomePage: WebsitePage.isHomePage,
 				slug: WebsitePage.slug,
+				status: WebsitePage.status,
+				publishedData: WebsitePage.publishedData,
 			})
 			.from(WebsitePage)
 			.where(
@@ -315,6 +339,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		if (intent === publishPageIntent) {
 			await publishWebsitePage(pageId)
 			await purgeSiteCache()
+			// #138: tell IndexNow engines, without making the operator wait.
+			runAfterResponse(context, () =>
+				notifyIndexNowForPages(organization.id, [pageId]),
+			)
 			return Response.json({ status: 'success' as const })
 		}
 
@@ -340,9 +368,72 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					error: 'Cannot delete the home page',
 				})
 			}
-			await db.delete(WebsitePage).where(eq(WebsitePage.id, pageId))
+			const deletePage = db
+				.delete(WebsitePage)
+				.where(eq(WebsitePage.id, pageId))
+			const wasEverPublished =
+				page.status === 'published' || page.publishedData !== null
+			if (!wasEverPublished) {
+				await deletePage
+				await purgeSiteCache()
+				return Response.json({ status: 'success' as const })
+			}
+			// #88: send the deleted page's visitors to the chosen page (home by
+			// default). Only a published page of this site can be chosen.
+			const destination = normalizeRedirectPath(redirectTo?.trim() || '/')
+			if (destination !== '/') {
+				const published = await db
+					.select({
+						slug: WebsitePage.slug,
+						isHomePage: WebsitePage.isHomePage,
+					})
+					.from(WebsitePage)
+					.where(
+						and(
+							eq(WebsitePage.organizationId, organization.id),
+							eq(WebsitePage.status, 'published'),
+						),
+					)
+				const allowed = published
+					.filter((row) => row.slug !== page.slug)
+					.map((row) => websitePagePath(row))
+				if (!allowed.includes(destination)) {
+					return Response.json(
+						{ status: 'error' as const, error: 'invalid_redirect_destination' },
+						{ status: 400 },
+					)
+				}
+			}
+			const plan = planAutomaticRedirect({
+				existing: await loadRedirectRows(organization.id),
+				oldPath: websitePagePath(page),
+				newPath: destination,
+				source: 'page_delete',
+			})
+			if (plan.skipped === 'redirect_loop') {
+				return Response.json(
+					{ status: 'error' as const, error: 'redirect_loop' },
+					{ status: 400 },
+				)
+			}
+			const { statements, insertedId } = automaticRedirectStatements(
+				organization.id,
+				null,
+				plan,
+			)
+			await db.batch([deletePage, ...statements])
 			await purgeSiteCache()
-			return Response.json({ status: 'success' as const })
+			return Response.json({
+				status: 'success' as const,
+				redirect:
+					insertedId && plan.insert
+						? {
+								id: insertedId,
+								fromPath: plan.insert.fromPath,
+								toPath: plan.insert.toPath,
+							}
+						: null,
+			})
 		}
 	}
 
@@ -355,6 +446,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 // --- Page Row Component ---
 function PageRow({
 	page,
+	destinations,
 }: {
 	page: {
 		id: string
@@ -362,11 +454,15 @@ function PageRow({
 		slug: string
 		status: string
 		isHomePage: boolean
+		wasPublished: boolean
 		createdByName: string
 		updatedAt: string
 	}
+	/** Published pages a deleted page's visitors can be sent to (#88). */
+	destinations: Array<{ path: string; title: string }>
 }) {
 	const { _ } = useLingui()
+	const [redirectTo, setRedirectTo] = useState('/')
 	const publishFetcher = useFetcher()
 	const deleteFetcher = useFetcher()
 	const busy = publishFetcher.state !== 'idle' || deleteFetcher.state !== 'idle'
@@ -505,6 +601,44 @@ function PageRow({
 									</Trans>
 								</AlertDialogDescription>
 							</AlertDialogHeader>
+							{page.wasPublished ? (
+								<div className="space-y-1.5">
+									<Label htmlFor={`delete-redirect-${page.id}`}>
+										<Trans>Send its visitors to</Trans>
+									</Label>
+									<Select
+										value={redirectTo}
+										onValueChange={(value) => setRedirectTo(value ?? '/')}
+										items={destinations.map((destination) => ({
+											value: destination.path,
+											label: destination.title,
+										}))}
+									>
+										<SelectTrigger
+											id={`delete-redirect-${page.id}`}
+											data-testid="delete-page-destination"
+										>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											{destinations.map((destination) => (
+												<SelectItem
+													key={destination.path}
+													value={destination.path}
+												>
+													{destination.title}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<p className="text-muted-foreground text-xs">
+										<Trans>
+											We add a permanent redirect so links and search results
+											keep working.
+										</Trans>
+									</p>
+								</div>
+							) : null}
 							<AlertDialogFooter>
 								<AlertDialogCancel>
 									<Trans>Cancel</Trans>
@@ -515,6 +649,7 @@ function PageRow({
 											{
 												intent: deletePageIntent,
 												pageId: page.id,
+												...(page.wasPublished ? { redirectTo } : {}),
 											},
 											{ method: 'POST' },
 										)
@@ -639,7 +774,24 @@ export default function WebsitePagesRoute() {
 								</TableHeader>
 								<TableBody>
 									{pages.map((page) => (
-										<PageRow key={page.id} page={page} />
+										<PageRow
+											key={page.id}
+											page={page}
+											destinations={[
+												{ path: '/', title: _(t`Home page`) },
+												...pages
+													.filter(
+														(other) =>
+															other.id !== page.id &&
+															other.status === 'published' &&
+															!other.isHomePage,
+													)
+													.map((other) => ({
+														path: `/${other.slug}`,
+														title: other.title,
+													})),
+											]}
+										/>
 									))}
 								</TableBody>
 								<TableFooter>

@@ -1,0 +1,151 @@
+---
+import { msg } from '@lingui/core/macro'
+import { dietaryTagsOf } from '@repo/common/menu-types'
+import { getLocaleHref, pickLocalized } from '@repo/common/site-locales'
+import SiteNotFound from '~/components/SiteNotFound.astro'
+import SitePage from '~/components/SitePage.astro'
+import DietaryBadges from '~/components/ordering/DietaryBadges.astro'
+import { resolveDishPage } from '~/lib/landing-pages'
+import { resolveMediaUrl, siteContainer } from '~/lib/media'
+import { fetchPublishedLanding, fetchPublishedSiteMenu } from '~/lib/org'
+import { formatMoney } from '~/lib/ordering/money'
+import { menuItemStructuredData } from '~/lib/restaurant-jsonld'
+
+/**
+ * A dish's own page (#137, `website.dish_pages`): `/menu/<slug>` with photo,
+ * description, price at the default location, dietary badges, an Order
+ * button, related dishes and MenuItem structured data. A hidden dish, or one
+ * whose page is off, is a 404. `/menu/checkout` and `/menu/success` are
+ * ordering pages and never reach here.
+ */
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+const slug = (Astro.params.dish ?? '').toLowerCase()
+const defaultLocale = organization.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || defaultLocale
+const href = (path: string) => getLocaleHref(path, locale, locale, defaultLocale)
+
+const [landing, menu] = await Promise.all([
+	fetchPublishedLanding({ slug: orgSlug, host: customHost }),
+	fetchPublishedSiteMenu({ slug: orgSlug, host: customHost, lng: locale }),
+])
+const outcome = resolveDishPage(landing, menu, slug)
+if (outcome.kind !== 'page') {
+	Astro.response.status = 404
+	Astro.response.statusText = 'Not Found'
+}
+const dish = outcome.kind === 'page' ? outcome.value : null
+const currency = menu?.organization?.currency ?? 'USD'
+const defaultLocation =
+	menu?.locations.find((location) => location.isDefault) ?? menu?.locations[0]
+const fixed = dish && defaultLocation
+	? menu?.locationOverrides?.[defaultLocation.id]?.find(
+			(entry) => entry.entityType === 'item' && entry.entityId === dish.item.id,
+		)?.price
+	: null
+const price = dish ? (typeof fixed === 'number' ? fixed : dish.item.price) : null
+const name = dish ? pickLocalized(dish.item.displayName, locale, defaultLocale) || dish.item.displayName : ''
+const description = dish?.item.description
+	? pickLocalized(dish.item.description, locale, defaultLocale)
+	: ''
+const imageUrl = dish ? resolveMediaUrl(dish.item.imageUrl) : null
+const dishSlugs = new Map((landing?.dishes ?? []).map((entry) => [entry.id, entry.slug]))
+const related = (dish?.related ?? []).map((item) => ({
+	name: pickLocalized(item.displayName, locale, defaultLocale) || item.displayName,
+	href: dishSlugs.has(item.id)
+		? href(`/menu/${encodeURIComponent(dishSlugs.get(item.id)!)}`)
+		: `${href('/menu')}?item=${encodeURIComponent(item.id)}`,
+}))
+const tags = dish ? dietaryTagsOf(dish.item) : []
+const pageUrl = `${Astro.url.origin}${href(`/menu/${slug}`)}`
+const structuredData = dish
+	? menuItemStructuredData({
+			url: pageUrl,
+			name,
+			description,
+			imageUrl,
+			price,
+			currency,
+			restaurantName: menu?.organization?.name || organization.name,
+			restaurantUrl: `${Astro.url.origin}${href('/menu')}`,
+			vegetarian: tags.includes('vegetarian'),
+			glutenFree: tags.includes('gluten_free'),
+			vegan: tags.includes('vegan'),
+		})
+	: null
+const vegetarianLabel = i18n._(msg`Vegetarian`)
+const glutenFreeLabel = i18n._(msg`Gluten-free`)
+const dietaryLabels = {
+	vegetarian: vegetarianLabel,
+	glutenFree: glutenFreeLabel,
+	alcohol: i18n._(msg`Alcohol`),
+	tags: {
+		halal: i18n._(msg`Halal`),
+		vegan: i18n._(msg`Vegan`),
+		dairy_free: i18n._(msg`Dairy-free`),
+		nut_free: i18n._(msg`Nut-free`),
+		spicy: i18n._(msg`Spicy`),
+	},
+}
+const orderLabel = i18n._(msg`Order now`)
+const relatedLabel = i18n._(msg`You may also like`)
+const fullMenu = i18n._(msg`See the full menu`)
+---
+
+{!dish ? (
+	<SiteNotFound organization={organization} />
+) : (
+	<SitePage
+		organization={organization}
+		page={{ id: `dish-${dish.item.id}`, title: name, slug: `menu/${slug}`, isHomePage: false, sections: [] }}
+		title={`${name} - ${organization.name}`}
+		description={description ? description.slice(0, 160) : undefined}
+		imageUrl={imageUrl}
+	>
+		{structuredData ? (
+			<script slot="head" type="application/ld+json" is:inline set:html={structuredData} />
+		) : null}
+		<div class:list={[siteContainer, 'py-12 sm:py-16']} data-dish-page={dish.item.id}>
+			<a href={href('/menu')} class="focus-ring text-sm text-muted-foreground hover:text-foreground">{fullMenu}</a>
+			<div class="mt-4 grid gap-8 lg:grid-cols-2 lg:items-start">
+				{imageUrl ? (
+					<img src={imageUrl} alt={name} class="surface aspect-[4/3] w-full object-cover" />
+				) : null}
+				<div>
+					<p class="eyebrow">{pickLocalized(dish.categoryName, locale, defaultLocale)}</p>
+					<h1 class="mt-1 text-3xl font-bold tracking-tight text-foreground sm:text-4xl" dir="auto">{name}</h1>
+					{price !== null && price > 0 ? (
+						<p class="price mt-2 text-xl font-semibold text-foreground">{formatMoney(price, currency, locale)}</p>
+					) : null}
+					<DietaryBadges
+						class="mt-3"
+						isVegetarian={dish.item.isVegetarian}
+						isGlutenFree={dish.item.isGlutenFree}
+						isAlcohol={dish.item.isAlcohol}
+						dietaryTags={dish.item.dietaryTags}
+						labels={dietaryLabels}
+					/>
+					{description ? (
+						<p class="mt-4 max-w-prose text-base leading-relaxed whitespace-pre-line text-foreground" dir="auto">{description}</p>
+					) : null}
+					<a class="btn-cta mt-6 inline-flex" href={`${href('/menu')}?item=${encodeURIComponent(dish.item.id)}`} data-action="order">{orderLabel}</a>
+				</div>
+			</div>
+			{related.length ? (
+				<section class="mt-14">
+					<h2 class="text-xl font-semibold text-foreground">{relatedLabel}</h2>
+					<ul class="mt-4 flex flex-wrap gap-3">
+						{related.map((item) => (
+							<li><a class="chip" href={item.href} dir="auto">{item.name}</a></li>
+						))}
+					</ul>
+				</section>
+			) : null}
+		</div>
+	</SitePage>
+)}

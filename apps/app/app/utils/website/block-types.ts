@@ -259,6 +259,16 @@ export const BLOCK_TYPES = {
 			background: 'muted',
 		},
 	},
+	events: {
+		label: 'Upcoming events',
+		icon: 'calendar' as IconName,
+		description: 'The next events from Website, Events',
+		defaultConfig: {
+			heading: 'Upcoming events',
+			count: 3,
+			background: 'none',
+		},
+	},
 	footer: {
 		label: 'Footer',
 		icon: 'share-2' as IconName,
@@ -301,19 +311,26 @@ export const MAX_RESERVATION_PARTY_SIZE = 20
 export function addableBlockTypes(options: {
 	reservationsOnline: boolean
 	loyaltyEnabled?: boolean
+	/** `website.events` (#184): the Upcoming events section. */
+	eventsEnabled?: boolean
 }) {
 	return BLOCK_TYPE_LIST.filter(
 		(block) =>
 			!isLockedBlockType(block.type) &&
 			(block.type !== 'reservation' || options.reservationsOnline) &&
-			(block.type !== 'rewards' || Boolean(options.loyaltyEnabled)),
+			(block.type !== 'rewards' || Boolean(options.loyaltyEnabled)) &&
+			(block.type !== 'events' || Boolean(options.eventsEnabled)),
 	)
 }
 
 export const ADDABLE_BLOCK_TYPES = addableBlockTypes({
 	reservationsOnline: true,
 	loyaltyEnabled: true,
+	eventsEnabled: true,
 })
+
+/** The Upcoming events section shows the next 3 or the next 6 events. */
+export const EVENTS_BLOCK_COUNTS = [3, 6] as const
 
 export function pinLockedChromeOrder(
 	orderedIds: string[],
@@ -447,6 +464,7 @@ export const LOCALIZED_FIELDS: Record<string, string[]> = {
 	video: ['title', 'subtitle'],
 	reservation: ['heading', 'body', 'buttonLabel'],
 	rewards: ['heading', 'body', 'ctaLabel'],
+	events: ['heading'],
 	footer: [
 		'copyright',
 		'ctaLabel',

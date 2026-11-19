@@ -750,6 +750,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   optional. Seconds between in-process loyalty ticks (default 120, minimum 60,
   `0` off). The hourly cron fan-out always runs; the Workers runtime uses
   Durable Object alarms. See `docs/scheduled-jobs.md#loyalty-tick`.
+- `SEO_RANK_API_LOGIN` / `SEO_RANK_API_PASSWORD` - App only, optional.
+  DataForSEO Google Maps SERP credentials for the weekly local rank checks
+  (`seo.rank_tracking`). Empty: checks are skipped as not set up (a local
+  `BASE_URL` uses a mock). Search Console reuses `GBP_CLIENT_ID` /
+  `GBP_CLIENT_SECRET`. See `docs/website-seo.md`.
 - `CANVA_CLIENT_ID` / `CANVA_CLIENT_SECRET` / `CANVA_MOCK` - App only. Canva
   Connect integration for Print shop Import from Canva and Send to Canva
   (redirect URL `<BASE_URL>/resources/print/canva/callback`); empty hides the
@@ -1708,6 +1713,20 @@ packaging fee, daily dish limits; #251, #257, #355, #422, #408, #409):**
   returns a card code names it in `sealFields`, so no plaintext code is stored
   (`lib/gift-card-write.ts`). Person erasure: `gift-card-erasure.ts`. Docs:
   `docs/gift-cards.md`.
+
+**Website SEO (cuisine, keywords, generated pages, redirects, events,
+Search Console; #182, #137, #88, #184, #138):**
+
+- Extend the existing Sites SEO stack (`seo-files.ts`, `seo-data.ts`,
+  `restaurant-jsonld.ts`); never add a second sitemap, robots, `llms.txt` or
+  JSON-LD system. Generated pages read `GET /resources/sites/landing`; events
+  read `GET /resources/sites/events`.
+- Automatic redirects go through `apps/app/app/utils/website/redirect-plan.ts`
+  and `redirects.server.ts` (one hop, operator rule wins, no loops).
+- Flags (default off unless noted): `seo.rank_tracking`, `seo.rank_budget`
+  (number), `seo.search_console`, `website.location_pages` (on),
+  `website.dish_pages`, `website.area_pages`, `website.events`. Control-plane
+  migration `0062_website_seo`. Docs: `docs/website-seo.md`.
 
 **Print shop (Marketing, Print shop):**
 

@@ -1,0 +1,82 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref, pickLocalized } from '@repo/common/site-locales'
+import SiteNotFound from '~/components/SiteNotFound.astro'
+import SitePage from '~/components/SitePage.astro'
+import { resolveAreaPage } from '~/lib/landing-pages'
+import { siteContainer } from '~/lib/media'
+import { fetchPublishedLanding, fetchPublishedSiteMenu } from '~/lib/org'
+import { formatMoney } from '~/lib/ordering/money'
+import { translate } from '~/lib/translate'
+
+/**
+ * A delivery area page (#137, `website.area_pages`): `/delivery/<slug>` for a
+ * named zone, with its minimum order and fee, the location that serves it and
+ * an Order button. Without the operator's introduction it is noindex (and
+ * out of the sitemap), so dozens of thin pages never reach search results.
+ */
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+const slug = (Astro.params.area ?? '').toLowerCase()
+const defaultLocale = organization.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || defaultLocale
+const href = (path: string) => getLocaleHref(path, locale, locale, defaultLocale)
+
+const [landing, menu] = await Promise.all([
+	fetchPublishedLanding({ slug: orgSlug, host: customHost }),
+	fetchPublishedSiteMenu({ slug: orgSlug, host: customHost, lng: locale }),
+])
+const outcome = resolveAreaPage(landing, slug)
+if (outcome.kind !== 'page') {
+	Astro.response.status = 404
+	Astro.response.statusText = 'Not Found'
+}
+const area = outcome.kind === 'page' ? outcome.value : null
+const currency = menu?.organization?.currency ?? 'USD'
+const location = area ? landing?.locations.find((entry) => entry.id === area.locationId) : null
+const locationName = location ? pickLocalized(location.name, locale, defaultLocale) || location.name : ''
+const intro = area?.intro ? pickLocalized(area.intro, locale, defaultLocale) : ''
+const heading = area ? translate(i18n, msg`Delivery to {area}`, { area: area.name }) : ''
+const servedBy = locationName ? translate(i18n, msg`Delivered from {location}`, { location: locationName }) : ''
+const minimum = area ? translate(i18n, msg`Minimum order {amount}`, { amount: formatMoney(area.minimumOrder, currency, locale) }) : ''
+const fee = area
+	? area.deliveryFee > 0
+		? translate(i18n, msg`Delivery fee {amount}`, { amount: formatMoney(area.deliveryFee, currency, locale) })
+		: i18n._(msg`Free delivery`)
+	: ''
+const orderLabel = i18n._(msg`Order delivery`)
+---
+
+{!area ? (
+	<SiteNotFound organization={organization} />
+) : (
+	<SitePage
+		organization={organization}
+		page={{ id: `area-${area.zoneId}`, title: heading, slug: `delivery/${slug}`, isHomePage: false, sections: [] }}
+		title={`${heading} - ${organization.name}`}
+		description={intro ? intro.slice(0, 160) : `${heading} · ${minimum} · ${fee}`}
+		noIndex={area.noIndex}
+	>
+		<div class:list={[siteContainer, 'py-12 sm:py-16']} data-area-page={area.slug}>
+			<h1 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl" dir="auto">{heading}</h1>
+			{servedBy ? (
+				<p class="mt-2 text-base text-muted-foreground">
+					{location ? <a href={href(`/locations/${encodeURIComponent(location.slug)}`)} class="underline underline-offset-4">{servedBy}</a> : servedBy}
+				</p>
+			) : null}
+			<ul class="mt-4 flex flex-wrap gap-2 text-sm">
+				<li class="badge tone-neutral">{minimum}</li>
+				<li class="badge tone-neutral">{fee}</li>
+			</ul>
+			{intro ? (
+				<p class="mt-6 max-w-prose text-base leading-relaxed whitespace-pre-line text-foreground" dir="auto">{intro}</p>
+			) : null}
+			<a class="btn-cta mt-8 inline-flex" href={`${href('/menu')}?location=${encodeURIComponent(area.locationId)}`} data-action="order">{orderLabel}</a>
+		</div>
+	</SitePage>
+)}

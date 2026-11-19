@@ -14,6 +14,7 @@ import { AsanaProvider } from './asana/provider'
 import { TrelloProvider } from './trello/provider'
 import { GitHubProvider } from './github/provider'
 import { GoogleBusinessProfileProvider } from './google-business-profile/provider'
+import { GoogleSearchConsoleProvider } from './google-search-console/provider'
 import { YelpProvider } from './yelp/provider'
 import { TripAdvisorProvider } from './tripadvisor/provider'
 import { DeliverooProvider } from './deliveroo/provider'
@@ -52,6 +53,7 @@ export function initializeProviders(): void {
 	// Register GitHub provider
 	providerRegistry.register(new GitHubProvider())
 	providerRegistry.register(new GoogleBusinessProfileProvider())
+	providerRegistry.register(new GoogleSearchConsoleProvider())
 	providerRegistry.register(new YelpProvider())
 	providerRegistry.register(new TripAdvisorProvider())
 	providerRegistry.register(new DeliverooProvider())
@@ -181,7 +183,7 @@ export { NotionProvider }
 export { AsanaProvider }
 export { TrelloProvider }
 export { GitHubProvider }
-export { GoogleBusinessProfileProvider }
+export { GoogleBusinessProfileProvider, GoogleSearchConsoleProvider }
 export { YelpProvider }
 export { TripAdvisorProvider }
 export { DeliverooProvider }
