@@ -10,7 +10,10 @@ import {
 	_RoleToUser,
 } from '@repo/database'
 import { expect, saveBar, test } from '#tests/playwright-utils.ts'
-import { createTestOrganization } from '#tests/test-utils.ts'
+import {
+	acceptMenuzaAgreements,
+	createTestOrganization,
+} from '#tests/test-utils.ts'
 
 test.describe('Organization Management', () => {
 	test('Users can create a new organization', async ({
@@ -109,6 +112,7 @@ test.describe('Organization Management', () => {
 			})
 			.returning()
 		if (!org1) throw new Error('Failed to create org1')
+		await acceptMenuzaAgreements(org1.id, user.id)
 		await db.insert(UserOrganization).values({
 			userId: user.id,
 			organizationId: org1.id,
@@ -257,6 +261,7 @@ test.describe('Organization Management', () => {
 			})
 			.returning()
 		if (!org) throw new Error('Failed to create organization')
+		await acceptMenuzaAgreements(org.id, user.id)
 		await db.insert(UserOrganization).values([
 			{
 				userId: user.id,
@@ -331,6 +336,7 @@ test.describe('Organization Management', () => {
 			})
 			.returning()
 		if (!org) throw new Error('Failed to create organization')
+		await acceptMenuzaAgreements(org.id, user.id)
 		await db.insert(UserOrganization).values([
 			{
 				userId: user.id,
@@ -419,6 +425,7 @@ test.describe('Organization Management', () => {
 			})
 			.returning()
 		if (!org) throw new Error('Failed to create organization')
+		await acceptMenuzaAgreements(org.id, owner.id)
 		await db.insert(UserOrganization).values([
 			{
 				userId: owner.id,
