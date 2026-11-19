@@ -26,6 +26,8 @@ const MEMBER: LoyaltyMemberSummary = {
 		lifetimeRedeemed: 0,
 	},
 	lastPurchaseAt: null,
+	imported: false,
+	tier: null,
 }
 
 function setup(

@@ -54,7 +54,13 @@ export function RewardsSection({
 						<Text variant="label">
 							{`${label('rewardCost')}: ${formatPoints(reward.pointsCost, unit, i18n)}`}
 						</Text>
-						{standing ? (
+						{reward.lockedByTier ? (
+							<Text variant="caption">
+								{label('rewardTierLocked', {
+									tier: reward.minTierName ?? reward.minTierId ?? '',
+								})}
+							</Text>
+						) : standing ? (
 							<Text variant="caption">
 								{standing.affordable
 									? label('rewardAffordable')

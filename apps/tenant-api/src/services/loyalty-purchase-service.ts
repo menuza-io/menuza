@@ -1,9 +1,11 @@
 import {
+	applyTierToEarning,
 	classifySaleTime,
 	computeEarning,
 	computePromotionBonus,
 	computeRefundReversal,
 	LOYALTY_HOLDING_STATES,
+	LOYALTY_MULTIPLIER_ONE_BP,
 	LOYALTY_OUTBOX_MAX_ATTEMPTS,
 	LOYALTY_POS_DAILY_EARN_REVIEW_POINTS,
 	LOYALTY_SOURCE_CHANNEL,
@@ -11,12 +13,15 @@ import {
 	loyaltyEventKeys,
 	loyaltyOutboxBackoffMs,
 	loyaltyPurchaseSnapshotSchema,
+	mulDiv,
 	normalizeCurrency,
+	purchaseEligibleMinor,
 	sameCurrency,
 	visitDateOf,
 	type LoyaltyActorKind,
 	type LoyaltyExcludedReason,
 	type LoyaltyOperatorPurchase,
+	type LoyaltyProgramConfig,
 	type LoyaltyPurchaseSource,
 	type LoyaltyReviewReason,
 } from '@repo/loyalty'
@@ -31,6 +36,7 @@ import { and, asc, desc, eq, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import { errorLogFields } from '../lib/error-log.ts'
 import { reportLoyaltyDeferred } from '../lib/loyalty-alarm.ts'
 import {
+	activeLoyaltyOrgId,
 	afterActiveLoyaltyCommit,
 	type LoyaltyIdempotency,
 	type LoyaltyReader,
@@ -51,11 +57,21 @@ import {
 	toOperatorPurchase,
 	type MemberRow,
 } from './loyalty-member-service.ts'
+import { dispatchLoyaltyNotice } from './loyalty-notices-service.ts'
 import { closeParkedSourceInTx } from './loyalty-outbox.ts'
 import {
 	programVersionAtInTx,
 	programVersionByNumberInTx,
+	readProgramInTx,
 } from './loyalty-program-service.ts'
+import {
+	activeTierDefinition,
+	refreshMemberTierInTx,
+} from './loyalty-tier-service.ts'
+import {
+	onReferralOrderCancelledOrRefundedInTx,
+	onReferralOrderCompletedInTx,
+} from './loyalty-referral-service.ts'
 import {
 	activeRedemptionForSourceInTx,
 	consumeRedemptionInTx,
@@ -69,6 +85,10 @@ import {
 	type LoyaltySourceFacts,
 	type LoyaltySourceVerdict,
 } from './loyalty-sources.ts'
+import {
+	maybeGrantWelcomeBonusInTx,
+	maybeReverseWelcomeBonusOnRefundInTx,
+} from './loyalty-welcome-service.ts'
 
 /**
  * Purchases and their reconciliation.
@@ -410,6 +430,34 @@ type CompletedVerdict = Extract<LoyaltySourceVerdict, { kind: 'completed' }>
  * event key carries the total refunded so far, so replaying a refund posts
  * nothing new.
  */
+async function refreshTierAfterPurchaseMutationInTx(
+	tx: LoyaltyTx,
+	input: {
+		memberId: string
+		fallbackConfig: LoyaltyProgramConfig
+		now: number
+		reason: 'earn' | 'refund'
+	},
+): Promise<void> {
+	const current = await readProgramInTx(tx)
+	const config = current?.current.config ?? input.fallbackConfig
+	if (!config.tiers.enabled) return
+	const orgId = activeLoyaltyOrgId() ?? null
+	const tierResult = await refreshMemberTierInTx(tx, {
+		orgId,
+		memberId: input.memberId,
+		config,
+		now: input.now,
+		reason: input.reason,
+	})
+	if (tierResult.notice) {
+		const notice = tierResult.notice
+		afterActiveLoyaltyCommit((committedOrgId) => {
+			void dispatchLoyaltyNotice(committedOrgId, notice)
+		})
+	}
+}
+
 export async function applyPurchaseRefundsInTx(
 	tx: LoyaltyTx,
 	purchase: PurchaseRow,
@@ -430,21 +478,82 @@ export async function applyPurchaseRefundsInTx(
 	const fullRefund =
 		snapshot.totalPaidMinor > 0 &&
 		purchase.refundedMinor >= snapshot.totalPaidMinor
-	if (purchase.awardedPoints <= 0) {
-		return { purchase, pointsReversed: 0, fullRefund }
-	}
 	const version = await programVersionByNumberInTx(tx, purchase.programVersion)
 	if (!version) throw new LoyaltyDomainError('program_not_found')
+	const eligibleMinor = purchaseEligibleMinor(snapshot)
+	const refundedPaid = Math.min(snapshot.totalPaidMinor, purchase.refundedMinor)
+	const refundedEligibleMinor =
+		snapshot.totalPaidMinor <= 0
+			? 0
+			: fullRefund
+				? eligibleMinor
+				: Math.min(
+						eligibleMinor,
+						mulDiv(
+							eligibleMinor,
+							refundedPaid,
+							snapshot.totalPaidMinor,
+							'ceil',
+						),
+					)
+	const remainingEligibleMinor = eligibleMinor - refundedEligibleMinor
+	await maybeReverseWelcomeBonusOnRefundInTx(tx, {
+		memberId: purchase.memberId,
+		purchaseId: purchase.id,
+		fullRefund,
+		remainingEligibleMinor,
+		minimumSpendMinor: version.config.minimumSpendMinor,
+		channel: purchase.channel,
+		locationId: purchase.locationId,
+		programVersion: purchase.programVersion,
+		actorKind: input.actorKind,
+		actorId: input.actorId,
+		at: input.at,
+	})
+	if (purchase.sourceType === 'restaurant_order') {
+		await onReferralOrderCancelledOrRefundedInTx(tx, {
+			orderId: purchase.sourceId,
+			fullRefund,
+			remainingEligibleMinor,
+			now: input.at,
+		})
+	}
+	if (purchase.awardedPoints <= 0) {
+		if (
+			purchase.refundedMinor > 0 &&
+			version.config.tiers.metric === 'spend_minor'
+		) {
+			await refreshTierAfterPurchaseMutationInTx(tx, {
+				memberId: purchase.memberId,
+				fallbackConfig: version.config,
+				now: input.at,
+				reason: 'refund',
+			})
+		}
+		return { purchase, pointsReversed: 0, fullRefund }
+	}
 	const reversal = computeRefundReversal({
 		rule: version.config.earning,
 		minimumSpendMinor: version.config.minimumSpendMinor,
 		snapshot,
 		awardedPoints: purchase.awardedPoints,
 		bonusPoints: purchase.bonusPoints,
+		tierMultiplierBp: purchase.tierMultiplierBp,
 		previouslyReversedPoints: purchase.reversedPoints,
 		cumulativeRefundedMinor: purchase.refundedMinor,
 	})
 	if (reversal.reversePoints <= 0) {
+		if (
+			purchase.refundedMinor > 0 &&
+			version.config.tiers.metric === 'spend_minor'
+		) {
+			await refreshTierAfterPurchaseMutationInTx(tx, {
+				memberId: purchase.memberId,
+				fallbackConfig: version.config,
+				now: input.at,
+				reason: 'refund',
+			})
+		}
 		return { purchase, pointsReversed: 0, fullRefund: reversal.fullRefund }
 	}
 	const posted = await postLedgerEntryInTx(tx, {
@@ -471,14 +580,25 @@ export async function applyPurchaseRefundsInTx(
 	afterActiveLoyaltyCommit((orgId) => {
 		scheduleRewardJourneys(orgId, purchase.memberId)
 	})
+	const nextReversedPoints = purchase.reversedPoints + reversal.reversePoints
 	const [row] = await tx
 		.update(loyaltyPurchases)
 		.set({
-			reversedPoints: purchase.reversedPoints + reversal.reversePoints,
+			reversedPoints: nextReversedPoints,
+			qualifyingPoints: Math.max(
+				0,
+				purchase.awardedPoints - nextReversedPoints,
+			),
 			updatedAt: input.at,
 		})
 		.where(eq(loyaltyPurchases.id, purchase.id))
 		.returning()
+	await refreshTierAfterPurchaseMutationInTx(tx, {
+		memberId: purchase.memberId,
+		fallbackConfig: version.config,
+		now: input.at,
+		reason: 'refund',
+	})
 	return {
 		purchase: row!,
 		pointsReversed: reversal.reversePoints,
@@ -548,7 +668,7 @@ async function settlePurchaseInTx(
 	const { config } = version
 	const visitDate = visitDateOf(verdict.occurredAt, config.timeZone)
 	const isVisit = config.earning.method === 'visit'
-	const earning = computeEarning(
+	const baseEarning = computeEarning(
 		{
 			rule: config.earning,
 			minimumSpendMinor: config.minimumSpendMinor,
@@ -559,8 +679,13 @@ async function settlePurchaseInTx(
 				isVisit && (await visitAwardedOnInTx(tx, purchase, visitDate)),
 		},
 	)
+	const activeTier = config.tiers.enabled
+		? activeTierDefinition(config.tiers, member.tierId)
+		: null
+	const tierMultiplierBp = activeTier?.multiplierBp ?? LOYALTY_MULTIPLIER_ONE_BP
+	const earning = applyTierToEarning(baseEarning, tierMultiplierBp)
 	// Promotions running when the sale finished, as the program version in force
-	// then defines them: a pure step on top of the base award.
+	// then defines them: multiplying on top of the tier-adjusted award.
 	const locationId = facts.locationId ?? purchase.locationId
 	const promotion = computePromotionBonus({
 		promotions: config.promotions,
@@ -598,6 +723,9 @@ async function settlePurchaseInTx(
 			totalPaidMinor: verdict.snapshot.totalPaidMinor,
 			awardedPoints,
 			bonusPoints: promotion.points,
+			tierId: activeTier?.id ?? null,
+			tierMultiplierBp,
+			qualifyingPoints: awardedPoints,
 			appliedPromotions:
 				promotion.applied.length > 0 ? promotion.applied : null,
 			locationId,
@@ -633,6 +761,36 @@ async function settlePurchaseInTx(
 			updatedAt: now,
 		})
 		.where(eq(loyaltyMembers.id, member.id))
+	const resolvedOrgId = activeLoyaltyOrgId()
+	if (
+		resolvedOrgId &&
+		verdict.snapshot.totalPaidMinor > 0 &&
+		settled.eligibleMinor >= config.minimumSpendMinor
+	) {
+		await maybeGrantWelcomeBonusInTx(tx, {
+			orgId: resolvedOrgId,
+			memberId: purchase.memberId,
+			trigger: 'first_order',
+			purchaseId: purchase.id,
+			channel: purchase.channel,
+			locationId: settled.locationId,
+			actorKind: options.actorKind ?? 'system',
+			actorId: options.actorId ?? null,
+			now,
+		})
+	}
+	if (
+		purchase.sourceType === 'restaurant_order' &&
+		settled.refundedMinor === 0
+	) {
+		await onReferralOrderCompletedInTx(tx, {
+			orderId: purchase.sourceId,
+			memberId: purchase.memberId,
+			eligibleMinor: settled.eligibleMinor,
+			totalPaidMinor: verdict.snapshot.totalPaidMinor,
+			now,
+		})
+	}
 	if (settled.refundedMinor > 0) {
 		// Money recorded as returned before the sale finished.
 		settled = (
@@ -641,6 +799,13 @@ async function settlePurchaseInTx(
 				actorKind: 'system',
 			})
 		).purchase
+	} else {
+		await refreshTierAfterPurchaseMutationInTx(tx, {
+			memberId: purchase.memberId,
+			fallbackConfig: config,
+			now,
+			reason: 'earn',
+		})
 	}
 	return settled
 }

@@ -243,6 +243,83 @@ export function buildLoyaltyLabels(i18n: I18n) {
 		historyRedeemGeneric: t(msg`Redeemed a reward`),
 		historyRedeemRestore: t(msg`Reward returned`),
 		historyAdjust: t(msg`Adjusted by staff`),
+		historyWelcome: t(msg`Welcome bonus`),
+		historyWelcomeReversal: t(msg`Welcome bonus reversed`),
+		historyExpired: t(msg`Points expired`),
+		historyReferral: t(msg`Referral bonus`),
+		historyReferralReversal: t(msg`Referral bonus reversed`),
+
+		// Welcome bonus, tiers, expiry
+		welcomeGranted: keep(i18n, msg`Welcome! {points} added`, 'points'),
+		welcomePending: keep(
+			i18n,
+			msg`Your welcome bonus of {points} arrives after your first paid order.`,
+			'points',
+		),
+		tierHeading: t(msg`Your tier`),
+		tierCurrent: keep(i18n, msg`Current tier: {tier}`, 'tier'),
+		tierMultiplier: keep(i18n, msg`Earning {multiplier}× points`, 'multiplier'),
+		tierNextProgress: keep(
+			i18n,
+			msg`{amount} more to reach {tier}`,
+			'amount',
+			'tier',
+		),
+		tierTopReached: t(msg`You have reached the top tier.`),
+		tierReview: keep(i18n, msg`Tier reviewed on {date}`, 'date'),
+		tierGrace: keep(
+			i18n,
+			msg`Your tier moves to {tier} on {date} unless you earn more before then.`,
+			'tier',
+			'date',
+		),
+		rewardTierLocked: keep(i18n, msg`Requires {tier}`, 'tier'),
+		expiryWarning: keep(
+			i18n,
+			msg`{points} expire on {date}. Order before then to keep them.`,
+			'points',
+			'date',
+		),
+
+		// Refer a friend
+		referralHeading: t(msg`Refer a friend`),
+		referralBody: keep(
+			i18n,
+			msg`Share your link. When a friend completes their first order, you earn {points}.`,
+			'points',
+		),
+		referralBodyGeneric: t(
+			msg`Share your link. You are rewarded when a friend completes their first order.`,
+		),
+		referralCodeLabel: t(msg`Your referral code`),
+		referralCopyCode: t(msg`Copy code`),
+		referralCopyLink: t(msg`Copy link`),
+		referralCopied: t(msg`Copied`),
+		referralStats: keep(
+			i18n,
+			msg`{credited} completed, {pending} pending, {points} earned`,
+			'credited',
+			'pending',
+			'points',
+		),
+		referralCapReached: t(msg`You have reached the referral limit.`),
+
+		// Rewards section on the website
+		blockJoin: t(msg`Join rewards`),
+		blockView: t(msg`View your rewards`),
+		blockWelcome: keep(
+			i18n,
+			msg`Join and get {points} as a welcome bonus.`,
+			'points',
+		),
+		blockTiersHeading: t(msg`Membership tiers`),
+		blockTierLine: keep(
+			i18n,
+			msg`{tier}: from {threshold}, earn {multiplier}× points`,
+			'tier',
+			'threshold',
+			'multiplier',
+		),
 		channelWeb: t(msg`Online`),
 		channelPos: t(msg`In store`),
 		channelQr: t(msg`Table order`),

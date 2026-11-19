@@ -67,6 +67,9 @@ export const ZH: OrderMessageCopy = {
 		arriving: '{from} 至 {to} 送达',
 		arrivingAround: '约 {time} 送达',
 		viewOrder: '查看您的订单',
+		welcomeBonusLine: '欢迎加入！已添加 {points} {unit}',
+		pointsUnit: '积分',
+		starsUnit: '颗星',
 		footer: '这是一条关于您订单的服务消息。',
 	},
 }

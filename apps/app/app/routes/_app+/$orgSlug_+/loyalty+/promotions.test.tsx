@@ -2,6 +2,10 @@
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import {
+	DEFAULT_LOYALTY_EXPIRY_CONFIG,
+	DEFAULT_LOYALTY_REFERRAL_CONFIG,
+	DEFAULT_LOYALTY_TIERS_CONFIG,
+	DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
 	loyaltyPromotionSchema,
 	type LoyaltyOperatorProgram,
 	type LoyaltyProgramConfig,
@@ -72,6 +76,10 @@ const CONFIG: LoyaltyProgramConfig = {
 	labels: { items: {}, categories: {} },
 	promotions: [],
 	promotionStacking: 'best',
+	welcomeBonus: DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
+	tiers: DEFAULT_LOYALTY_TIERS_CONFIG,
+	expiry: DEFAULT_LOYALTY_EXPIRY_CONFIG,
+	referrals: DEFAULT_LOYALTY_REFERRAL_CONFIG,
 }
 
 function programWith(

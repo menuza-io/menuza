@@ -10,13 +10,14 @@ import {
 	LOYALTY_CONTEXT_TIMEOUT_MS,
 	loyaltyCreditsSales,
 	loyaltyRefusal,
+	referralRefusal,
 	rewardRefusal,
 	seedLoyaltyContextForTest,
 } from './loyalty-context.ts'
 
 const ORG = 'org_flags_1'
-const ON = { enabled: true, redemption: true }
-const OFF = { enabled: false, redemption: false }
+const ON = { enabled: true, redemption: true, referrals: false }
+const OFF = { enabled: false, redemption: false, referrals: false }
 const T0 = Date.UTC(2026, 0, 10, 12, 0, 0)
 
 type Answer = (init?: RequestInit) => Promise<Response>
@@ -111,6 +112,7 @@ describe('reading the organization’s loyalty flags', () => {
 		expect(state.status).toBe('on')
 		expect(loyaltyRefusal(state)).toBeNull()
 		expect(rewardRefusal(state)).toBe('redemption_disabled')
+		expect(referralRefusal(state)).toBe('referrals_disabled')
 		expect(loyaltyCreditsSales(state)).toBe(true)
 	})
 

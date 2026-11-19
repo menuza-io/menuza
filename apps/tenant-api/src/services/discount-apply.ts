@@ -39,6 +39,7 @@ import {
 import { inJsonList } from '../lib/chunked-in.ts'
 import { codesWithIssuedCode } from './discount-marketing-codes.ts'
 import { memberForCustomerInTx } from './loyalty-member-service.ts'
+import { resolveReferralDiscountForOrder } from './loyalty-referral-service.ts'
 import { customerInAudience } from './marketing-audience-service.ts'
 import { QR_TAB_SESSION_HOLD_MS } from './qr-dine-in.ts'
 
@@ -202,6 +203,9 @@ export async function prepareOrderDiscounts(
 		 * never sends the field, keeps the total it showed.
 		 */
 		applyAutomatic?: boolean
+		orgId?: string
+		phone?: string | null
+		deviceId?: string | null
 	},
 ): Promise<
 	| { ok: true; prepared: PreparedDiscounts | null }
@@ -238,16 +242,30 @@ export async function prepareOrderDiscounts(
 	// A checkout that never asked about discounts keeps the price it showed.
 	if (!discounts && !input.applyAutomatic) return { ok: true, prepared: null }
 
+	const referralOffer =
+		input.orgId && typedCode
+			? await resolveReferralDiscountForOrder(db, {
+					orgId: input.orgId,
+					typedCode,
+					customerId: input.customerId,
+					phone: input.phone ?? null,
+					deviceId: input.deviceId ?? null,
+					currency: priced.currency,
+					now: input.now.getTime(),
+				})
+			: null
+
 	const features = input.context.discounts?.features
-	const records = (input.context.discounts?.discounts ?? []).filter(
-		(record) => {
+	const records = [
+		...(input.context.discounts?.discounts ?? []).filter((record) => {
 			if (record.application === 'automatic')
 				return features?.automatic === true
 			if (record.application === 'code') return features?.coupons === true
 			return false
-		},
-	)
-	const codes =
+		}),
+		...(referralOffer?.syntheticRecord ? [referralOffer.syntheticRecord] : []),
+	]
+	const baseCodes =
 		features?.coupons === true
 			? await codesWithIssuedCode(
 					db,
@@ -256,6 +274,15 @@ export async function prepareOrderDiscounts(
 					input.now,
 				)
 			: []
+	const codes = referralOffer?.syntheticCode
+		? [
+				...baseCodes.filter(
+					(c) =>
+						c.normalizedCode !== referralOffer.syntheticCode!.normalizedCode,
+				),
+				referralOffer.syntheticCode,
+			]
+		: baseCodes
 	const localNow = discountLocalNow(priced, input.now)
 	const periods = discountPeriodKeys(localNow)
 	const customer = await discountCustomerFacts(db, input.customerId, input.now)

@@ -36,6 +36,7 @@ const ORG = 'org_ll_program'
 const FEATURES_ON: LoyaltyFeatures = {
 	enabled: true,
 	redemption: true,
+	referrals: false,
 }
 
 let directory: string

@@ -12,6 +12,7 @@ import {
 	loyaltyPurchases,
 	loyaltyRedemptions,
 	loyaltyRefunds,
+	loyaltyWelcomeGrants,
 	restaurantOrderRefunds,
 } from '@repo/tenant-db'
 import { addDays, startOfLocalDay } from '@repo/zoned-time'
@@ -30,7 +31,9 @@ import {
 } from 'drizzle-orm'
 import { type LoyaltyReader } from '../lib/loyalty-write.ts'
 import { scopeCondition } from './loyalty-activity-service.ts'
+import { countExpiringSoon30dInTx } from './loyalty-expiry-service.ts'
 import { readProgramInTx } from './loyalty-program-service.ts'
+import { getReferralReportStatsInTx } from './loyalty-referral-service.ts'
 
 /**
  * Program figures for an operator window (`GET /operator/loyalty/reports`).
@@ -294,6 +297,47 @@ export async function getLoyaltyReport(
 	const refundsRecorded =
 		toNumber(tabRefunds?.count) + toNumber(orderRefunds?.count)
 
+	// ---- Welcome bonus (#293) ----------------------------------------------
+	const welcomeMemberScope =
+		locationIds === null
+			? undefined
+			: sql`(${loyaltyWelcomeGrants.purchaseId} is not null and exists (select 1 from ${loyaltyPurchases} where ${loyaltyPurchases.id} = ${loyaltyWelcomeGrants.purchaseId} and ${scopeCondition(loyaltyPurchases.locationId, locationIds)!})) or (${loyaltyWelcomeGrants.purchaseId} is null and ${loyaltyWelcomeGrants.memberId} is not null and exists (select 1 from ${loyaltyPurchases} where ${loyaltyPurchases.memberId} = ${loyaltyWelcomeGrants.memberId} and ${scopeCondition(loyaltyPurchases.locationId, locationIds)!}))`
+	const welcomeTotals = await db
+		.select({
+			bonusesGiven: sql<number>`count(*)`,
+			pointsGiven: sql<number>`coalesce(sum(${loyaltyWelcomeGrants.points}), 0)`,
+		})
+		.from(loyaltyWelcomeGrants)
+		.where(
+			and(
+				inWindow(loyaltyWelcomeGrants.grantedAt),
+				isNull(loyaltyWelcomeGrants.reversedAt),
+				welcomeMemberScope,
+			),
+		)
+		.get()
+	const repeatWithin30dMs = 30 * 24 * 60 * 60_000
+	const welcomeRepeatRow = await db
+		.select({ count: sql<number>`count(*)` })
+		.from(loyaltyWelcomeGrants)
+		.where(
+			and(
+				inWindow(loyaltyWelcomeGrants.grantedAt),
+				isNull(loyaltyWelcomeGrants.reversedAt),
+				isNotNull(loyaltyWelcomeGrants.memberId),
+				welcomeMemberScope,
+				sql`exists (select 1 from ${loyaltyPurchases} p where p.member_id = ${loyaltyWelcomeGrants.memberId} and p.state = 'completed' and p.occurred_at is not null and (${loyaltyWelcomeGrants.purchaseId} is null or p.id <> ${loyaltyWelcomeGrants.purchaseId}) and p.occurred_at >= ${loyaltyWelcomeGrants.grantedAt} and p.occurred_at <= ${loyaltyWelcomeGrants.grantedAt} + ${repeatWithin30dMs})`,
+			),
+		)
+		.get()
+	const bonusesGiven = toNumber(welcomeTotals?.bonusesGiven)
+	const repeatOrders30d = toNumber(welcomeRepeatRow?.count)
+	const expirySoon = await countExpiringSoon30dInTx(db, {
+		config: program.current.config,
+		now,
+	})
+	const referrals = await getReferralReportStatsInTx(db, { fromMs, toMs })
+
 	const oldest = open && open.oldest !== null ? toNumber(open.oldest) : null
 	return loyaltyReportSchema.parse({
 		window: { from: query.from, to: query.to, timeZone },
@@ -349,5 +393,16 @@ export async function getLoyaltyReport(
 				oldest !== null ? Math.max(0, now - oldest) : null,
 			refundsRecorded,
 		},
+		welcome: {
+			bonusesGiven,
+			pointsGiven: toNumber(welcomeTotals?.pointsGiven),
+			repeatOrders30d,
+			repeatRate30dBp: ratioToBp(repeatOrders30d, bonusesGiven),
+		},
+		expiry: {
+			pointsExpired: -(pointsByType.get('expired') ?? 0),
+			pointsExpiringSoon30d: expirySoon.pointsExpiringSoon30d,
+		},
+		referrals,
 	})
 }

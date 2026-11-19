@@ -1,5 +1,9 @@
 import { type PricedOrderLine } from '@repo/common/restaurant-orders'
 import {
+	DEFAULT_LOYALTY_EXPIRY_CONFIG,
+	DEFAULT_LOYALTY_REFERRAL_CONFIG,
+	DEFAULT_LOYALTY_TIERS_CONFIG,
+	DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
 	hashLoyaltyCart,
 	LoyaltyDomainError,
 	type LoyaltyCart,
@@ -77,6 +81,10 @@ export function programConfig(
 		labels: { items: {}, categories: {} },
 		promotions: [],
 		promotionStacking: 'best',
+		welcomeBonus: { ...DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG },
+		tiers: { ...DEFAULT_LOYALTY_TIERS_CONFIG },
+		expiry: { ...DEFAULT_LOYALTY_EXPIRY_CONFIG },
+		referrals: { ...DEFAULT_LOYALTY_REFERRAL_CONFIG },
 		...overrides,
 	}
 }

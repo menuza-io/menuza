@@ -48,6 +48,7 @@ const ORG = 'org_ll_member'
 const FEATURES_ON: LoyaltyFeatures = {
 	enabled: true,
 	redemption: true,
+	referrals: false,
 }
 
 let directory: string
@@ -213,7 +214,7 @@ describe('getWallet', () => {
 		expect(
 			await getWallet(db, {
 				customerId,
-				features: { enabled: false, redemption: false },
+				features: { enabled: false, redemption: false, referrals: false },
 				now: NOW,
 			}),
 		).toBeNull()

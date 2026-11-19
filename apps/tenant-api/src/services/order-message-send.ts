@@ -31,6 +31,7 @@ import { getReservationsContext } from '../lib/reservations-context.ts'
 import { normalizeReservationLocale } from '../lib/reservations-email.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
+import { welcomeBonusForOrderReceipt } from './loyalty-welcome-service.ts'
 import { orderPaidCents, orderRefundedNetCents } from './order-refund-book.ts'
 import {
 	ORDER_MESSAGE_SENDING,
@@ -194,6 +195,16 @@ async function sendForOrder(input: {
 		}
 		return
 	}
+	const welcomeBonus =
+		kind === 'receipt' && order.customerId
+			? await welcomeBonusForOrderReceipt(await getTenantDb(orgId), {
+					orderId: order.id,
+					customerId: order.customerId,
+					orderCreatedAt: order.createdAt
+						? order.createdAt.getTime()
+						: Date.now(),
+				})
+			: null
 	const rendered = renderOrderEmail({
 		kind,
 		locale,
@@ -203,6 +214,7 @@ async function sendForOrder(input: {
 		order,
 		timeZone,
 		linkUrl,
+		welcomeBonus,
 		// A cancel with a refund books it in the same write: the message says
 		// the money is on its way while the provider has not answered yet.
 		// A cancel that still owes the rest of its refund (another refund was

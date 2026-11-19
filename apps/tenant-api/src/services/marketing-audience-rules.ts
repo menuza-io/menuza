@@ -33,7 +33,9 @@ function locationFilter(ids: readonly string[] | undefined): SQL {
 }
 
 function windowFilter(windowDays: number | undefined, now: number): SQL {
-	return windowDays === undefined ? sql`` : sql` AND o.ts >= ${now - windowDays * DAY_MS}`
+	return windowDays === undefined
+		? sql``
+		: sql` AND o.ts >= ${now - windowDays * DAY_MS}`
 }
 
 function compileRule(rule: AudienceRule, now: number): SQL {
@@ -117,6 +119,13 @@ function compileRule(rule: AudienceRule, now: number): SQL {
 				WHERE lm.customer_id = ${guestId} AND lm.status = 'active'
 					AND (b.points - b.reserved) < (SELECT MIN(points_cost) FROM loyalty_rewards WHERE status = 'active')
 					AND (b.points - b.reserved) * 100 >= (SELECT MIN(points_cost) FROM loyalty_rewards WHERE status = 'active') * ${100 - rule.withinPercent}
+			)`
+		case 'loyalty_tier':
+			return sql`EXISTS (
+				SELECT 1 FROM loyalty_members lm
+				WHERE lm.customer_id = ${guestId}
+					AND lm.status = 'active'
+					AND lm.tier_id = ${rule.tierId}
 			)`
 		case 'phone_verified':
 			return rule.value

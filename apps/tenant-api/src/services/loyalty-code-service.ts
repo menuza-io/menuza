@@ -128,7 +128,9 @@ async function programRewardsInTx(
 ): Promise<LoyaltyPublicReward[]> {
 	return (await activeRewardsInTx(db))
 		.filter((reward) => reward.currency === program.program.currency)
-		.map(toPublicReward)
+		.map((reward) =>
+			toPublicReward(reward, { tiers: program.current.config.tiers }),
+		)
 }
 
 function requireEnabled(features: LoyaltyFeatures): void {
@@ -494,6 +496,10 @@ export async function quoteForTill(
 		input.cart,
 		balance.available,
 		input.targetLineId,
+		{
+			memberTierId: member.tierId,
+			tiersConfig: program.current.config.tiers,
+		},
 	)
 	return {
 		quote,

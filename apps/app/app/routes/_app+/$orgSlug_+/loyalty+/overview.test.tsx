@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
-import { type LoyaltyOperatorProgram, type LoyaltyReport } from '@repo/loyalty'
+import {
+	DEFAULT_LOYALTY_EXPIRY_CONFIG,
+	DEFAULT_LOYALTY_REFERRAL_CONFIG,
+	DEFAULT_LOYALTY_TIERS_CONFIG,
+	DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
+	type LoyaltyOperatorProgram,
+	type LoyaltyReport,
+} from '@repo/loyalty'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import { createRoutesStub, Outlet } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -52,6 +59,21 @@ const REPORT: LoyaltyReport = {
 		oldestOpenRedemptionAgeMs: null,
 		refundsRecorded: 0,
 	},
+	welcome: {
+		bonusesGiven: 0,
+		pointsGiven: 0,
+		repeatOrders30d: 0,
+		repeatRate30dBp: 0,
+	},
+	expiry: { pointsExpired: 0, pointsExpiringSoon30d: 0 },
+	referrals: {
+		claimed: 0,
+		credited: 0,
+		cancelled: 0,
+		reversed: 0,
+		pointsGiven: 0,
+		friendDiscountMinor: 0,
+	},
 }
 
 const PROGRAM = {
@@ -75,6 +97,10 @@ const PROGRAM = {
 			labels: { items: {}, categories: {} },
 			promotions: [],
 			promotionStacking: 'best',
+			welcomeBonus: DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
+			tiers: DEFAULT_LOYALTY_TIERS_CONFIG,
+			expiry: DEFAULT_LOYALTY_EXPIRY_CONFIG,
+			referrals: DEFAULT_LOYALTY_REFERRAL_CONFIG,
 		},
 		createdAt: 1_700_000_000_000,
 		createdBy: null,

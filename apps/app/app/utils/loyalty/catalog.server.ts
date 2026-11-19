@@ -31,6 +31,7 @@ export async function loadLoyaltyCatalog(
 				id: OrganizationMenuItem.id,
 				displayName: OrganizationMenuItem.displayName,
 				internalName: OrganizationMenuItem.internalName,
+				price: OrganizationMenuItem.price,
 			})
 			.from(OrganizationMenuItem)
 			.where(eq(OrganizationMenuItem.organizationId, organizationId))

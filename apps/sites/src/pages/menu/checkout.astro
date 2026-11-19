@@ -1039,6 +1039,11 @@ const inputClass =
 			spendableRewards,
 			type RewardQuotes,
 		} from '~/lib/loyalty/reward-quotes'
+		import {
+			clearPendingReferral,
+			readPendingReferral,
+			referralDeviceId,
+		} from '~/lib/loyalty/referral-storage'
 		import { formatRemaining, startCountdown } from '~/lib/ordering/countdown'
 		import { checkoutOrderPayload, checkoutOrderRequest } from '~/lib/ordering/checkout-payload'
 		import {
@@ -2601,6 +2606,11 @@ const inputClass =
 				dropCode(couponCode)
 				couponCode = null
 				saveStoredCode(sessionStorage, orgId, null)
+				// A referral code is spent with the first order.
+				clearPendingReferral({
+					host: window.location.host,
+					storage: window.localStorage,
+				})
 				pendingAnnounce = null
 			}
 			if (outcome && outcome.status !== 'applied') couponExpanded = true
@@ -2736,6 +2746,11 @@ const inputClass =
 				couponCode = null
 				heldRefusal = null
 				saveStoredCode(sessionStorage, orgId, null)
+				// A referral code is spent with the first order.
+				clearPendingReferral({
+					host: window.location.host,
+					storage: window.localStorage,
+				})
 				localMessage = discountLabels.enterCode
 				discounts?.refresh()
 				renderCoupon()
@@ -2748,6 +2763,11 @@ const inputClass =
 				dropCode(couponCode)
 				couponCode = null
 				saveStoredCode(sessionStorage, orgId, null)
+				// A referral code is spent with the first order.
+				clearPendingReferral({
+					host: window.location.host,
+					storage: window.localStorage,
+				})
 				renderCoupon()
 				couponInput.focus()
 				return
@@ -2830,6 +2850,11 @@ const inputClass =
 					dropCode(couponCode)
 					couponCode = null
 					saveStoredCode(sessionStorage, orgId, null)
+				// A referral code is spent with the first order.
+				clearPendingReferral({
+					host: window.location.host,
+					storage: window.localStorage,
+				})
 				}
 				couponExpanded = true
 				discounts?.refresh()
@@ -3020,6 +3045,7 @@ const inputClass =
 					expectedPackagingFeeMinor: Math.round(computeTotals().packagingFee * 100),
 					utensilsRequested: utensilsAnswer(),
 					giftCard: giftCardCheckout?.payload() ?? null,
+					referralDeviceId: referralDeviceId(window.localStorage),
 				})
 				// smsUpdates is part of the core payload: the region hashes it into
 				// the order, so a changed box must get a new attempt key.
@@ -3042,6 +3068,11 @@ const inputClass =
 				} catch {}
 				// The order is placed: the next one in this tab must not send the code again.
 				saveStoredCode(sessionStorage, orgId, null)
+				// A referral code is spent with the first order.
+				clearPendingReferral({
+					host: window.location.host,
+					storage: window.localStorage,
+				})
 
 				// A free order (a total of 0) is never paid: the region marks it
 				// `not_required` and accepts it, so go straight to the confirmation.
@@ -3242,5 +3273,19 @@ const inputClass =
 		if (isDrop) renderDropPickup()
 		updateHandoffLabel()
 		void loadOrderingOptions()
+
+		// A referral link brought this guest here: put its code in the coupon
+		// box, kept in this browser (never sent to Sites). The region decides.
+		{
+			const pending = readPendingReferral({
+				host: window.location.host,
+				storage: window.localStorage,
+			})
+			if (pending && cart.length > 0 && couponInput && !couponInput.value) {
+				couponInput.value = pending
+				couponExpanded = true
+				couponApply?.click()
+			}
+		}
 	</script>
 </SitePage>

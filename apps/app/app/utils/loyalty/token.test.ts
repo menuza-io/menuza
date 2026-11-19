@@ -34,6 +34,7 @@ import {
 const FEATURES: LoyaltyFeatures = {
 	enabled: true,
 	redemption: true,
+	referrals: false,
 }
 
 const NOW = 1_700_000_000

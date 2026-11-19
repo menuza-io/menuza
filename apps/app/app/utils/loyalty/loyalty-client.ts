@@ -9,6 +9,8 @@ import {
 	type LoyaltyOperatorProgram,
 	loyaltyOperatorProgramSchema,
 	loyaltyOperatorProgramResponseSchema,
+	type LoyaltyOperatorReferralsResponse,
+	loyaltyOperatorReferralsResponseSchema,
 	type LoyaltyOperatorPurchase,
 	loyaltyOperatorPurchaseSchema,
 	type LoyaltyOperatorRedemption,
@@ -391,6 +393,12 @@ export type LoyaltyClient = {
 		},
 		signal?: AbortSignal,
 	): Promise<LoyaltyActivityPage>
+	listReferrals(
+		params?: {
+			limit?: number
+		},
+		signal?: AbortSignal,
+	): Promise<LoyaltyOperatorReferralsResponse>
 	getReport(
 		query: { from: string; to: string },
 		signal?: AbortSignal,
@@ -526,6 +534,18 @@ export function createLoyaltyClient(pool: LoyaltyClientPool): LoyaltyClient {
 				signal,
 			})
 			return loyaltyActivityResponseSchema.parse(raw)
+		},
+		async listReferrals(params = {}, signal) {
+			const raw = await reports.request<unknown>(
+				`${LOYALTY_API_BASE}/referrals`,
+				{
+					query: {
+						limit: params.limit,
+					},
+					signal,
+				},
+			)
+			return loyaltyOperatorReferralsResponseSchema.parse(raw)
 		},
 		async getReport(query, signal) {
 			const raw = await reports.request<unknown>(

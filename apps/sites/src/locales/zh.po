@@ -31,6 +31,10 @@ msgstr "使用此奖励后剩余 {amount}"
 msgid "{amount} more needed"
 msgstr "还差 {amount}"
 
+#: src/lib/loyalty/labels.ts:264
+msgid "{amount} more to reach {tier}"
+msgstr "还差 {amount} 即可升至 {tier}"
+
 #: src/lib/loyalty/labels.ts:92
 msgid "{amount} more to unlock {reward}"
 msgstr "再获得 {amount} 即可兑换 {reward}"
@@ -77,6 +81,10 @@ msgstr "{count} 分钟"
 #: src/lib/reservations/labels.ts:192
 msgid "{count} minutes late"
 msgstr "晚到 {count} 分钟"
+
+#: src/lib/loyalty/labels.ts:300
+msgid "{credited} completed, {pending} pending, {points} earned"
+msgstr "已完成 {credited}，待处理 {pending}，已获 {points}"
 
 #: src/lib/reservations/labels.ts:64
 msgid "{date} at {time}"
@@ -156,6 +164,10 @@ msgstr "优惠 {percent}"
 msgid "{percentText} off"
 msgstr "优惠 {percentText}"
 
+#: src/lib/loyalty/labels.ts:279
+msgid "{points} expire on {date}. Order before then to keep them."
+msgstr "{points} 将于 {date} 过期。请在此之前下单以保留积分。"
+
 #: src/lib/loyalty/labels.ts:108
 msgid "{points} for each {items}"
 msgstr "每份 {items} 可获得 {points}"
@@ -187,6 +199,10 @@ msgstr "每次预订 {price}"
 #: src/lib/reservations/labels.ts:459
 msgid "{price} per guest"
 msgstr "每位 {price}"
+
+#: src/lib/loyalty/labels.ts:314
+msgid "{tier}: from {threshold}, earn {multiplier}× points"
+msgstr "{tier}：达到 {threshold} 起享 {multiplier}× 积分"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "{time} left to complete payment."
@@ -414,7 +430,7 @@ msgstr "任何饮食偏好、酱料另放等"
 msgid "Any location"
 msgstr "任意门店"
 
-#: src/lib/loyalty/labels.ts:249
+#: src/lib/loyalty/labels.ts:322
 msgid "App"
 msgstr "应用"
 
@@ -1005,7 +1021,16 @@ msgstr "继续付款"
 msgid "Contract"
 msgstr "合同工"
 
+#: src/lib/loyalty/labels.ts:297
+msgid "Copied"
+msgstr "已复制"
+
+#: src/lib/loyalty/labels.ts:295
+msgid "Copy code"
+msgstr "复制代码"
+
 #: src/components/careers/ShareJob.astro.ts:3
+#: src/lib/loyalty/labels.ts:296
 msgid "Copy link"
 msgstr "复制链接"
 
@@ -1021,6 +1046,10 @@ msgstr "优惠码"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Coupon code removed. Total {total}."
 msgstr "已移除优惠码。合计 {total}。"
+
+#: src/lib/loyalty/labels.ts:260
+msgid "Current tier: {tier}"
+msgstr "当前等级：{tier}"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -1213,6 +1242,10 @@ msgstr "最早时间"
 #: src/lib/loyalty/labels.ts:240
 msgid "Earned"
 msgstr "获得"
+
+#: src/lib/loyalty/labels.ts:261
+msgid "Earning {multiplier}× points"
+msgstr "当前享 {multiplier}× 积分"
 
 #: src/lib/gift-cards/labels.ts:22
 msgid "Eid"
@@ -1607,7 +1640,7 @@ msgstr "如果我们有您的邮箱，收据已在发送途中。"
 msgid "in {t}"
 msgstr "{t}后"
 
-#: src/lib/loyalty/labels.ts:247
+#: src/lib/loyalty/labels.ts:320
 msgid "In store"
 msgstr "到店"
 
@@ -1657,6 +1690,14 @@ msgstr "已过在线修改时限，请致电餐厅。"
 #: src/lib/ordering-labels.ts:165
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "该地址不在 {location} 的配送范围内。您仍可下单自取。"
+
+#: src/lib/loyalty/labels.ts:310
+msgid "Join and get {points} as a welcome bonus."
+msgstr "加入即可获得 {points} 欢迎奖励。"
+
+#: src/lib/loyalty/labels.ts:308
+msgid "Join rewards"
+msgstr "加入会员奖励"
 
 #: src/lib/reservations/labels.ts:213
 #: src/lib/reservations/labels.ts:220
@@ -1824,6 +1865,10 @@ msgstr "管理"
 msgid "Manage reservation"
 msgstr "管理预订"
 
+#: src/lib/loyalty/labels.ts:311
+msgid "Membership tiers"
+msgstr "会员等级"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Menu"
 msgstr "菜单"
@@ -1895,7 +1940,7 @@ msgstr "name@example.com"
 msgid "National Day"
 msgstr "国庆日"
 
-#: src/lib/loyalty/labels.ts:252
+#: src/lib/loyalty/labels.ts:325
 msgid "Network error. Check your connection and try again."
 msgstr "网络错误。请检查网络连接后重试。"
 
@@ -2106,7 +2151,7 @@ msgstr "每笔订单限用一个奖励。"
 msgid "One reward per tab."
 msgstr "每张账单限用一个奖励。"
 
-#: src/lib/loyalty/labels.ts:246
+#: src/lib/loyalty/labels.ts:319
 msgid "Online"
 msgstr "线上"
 
@@ -2596,6 +2641,18 @@ msgstr "请告知我们您正在赶来，然后向接待人员报到。"
 msgid "Please tell us you are coming. We can hold your table for {time}."
 msgstr "请告知我们您正在赶来。我们可为您保留餐位 {time}。"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "point"
+msgstr "积分"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "points"
+msgstr "积分"
+
+#: src/lib/loyalty/labels.ts:248
+msgid "Points expired"
+msgstr "积分已过期"
+
 #: src/pages/menu.astro.ts:3
 msgid "Popular"
 msgstr "人气推荐"
@@ -2727,6 +2784,18 @@ msgstr "兑换 {reward}"
 msgid "Redeemed a reward"
 msgstr "兑换奖励"
 
+#: src/lib/loyalty/labels.ts:285
+msgid "Refer a friend"
+msgstr "推荐好友"
+
+#: src/lib/loyalty/labels.ts:249
+msgid "Referral bonus"
+msgstr "推荐奖励"
+
+#: src/lib/loyalty/labels.ts:250
+msgid "Referral bonus reversed"
+msgstr "推荐奖励已退回"
+
 #: src/lib/loyalty/labels.ts:241
 msgid "Refund adjustment"
 msgstr "退款调整"
@@ -2776,6 +2845,10 @@ msgstr "奖励使用请求"
 msgid "Required"
 msgstr "必填"
 
+#: src/lib/loyalty/labels.ts:276
+msgid "Requires {tier}"
+msgstr "需达到 {tier}"
+
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Reservation news"
 msgstr "预订动态"
@@ -2822,11 +2895,11 @@ msgstr "奖励"
 msgid "Rewards are not available right now"
 msgstr "奖励暂不可用"
 
-#: src/lib/loyalty/labels.ts:259
+#: src/lib/loyalty/labels.ts:332
 msgid "Rewards are not available right now."
 msgstr "奖励暂不可用。"
 
-#: src/lib/loyalty/labels.ts:257
+#: src/lib/loyalty/labels.ts:330
 msgid "Rewards are temporarily unavailable. Please try again later."
 msgstr "奖励暂时不可用，请稍后重试。"
 
@@ -2957,6 +3030,14 @@ msgstr "服务费"
 msgid "Share this job"
 msgstr "分享此职位"
 
+#: src/lib/loyalty/labels.ts:288
+msgid "Share your link. When a friend completes their first order, you earn {points}."
+msgstr "分享您的链接。当好友完成首笔订单时，您可获得 {points}。"
+
+#: src/lib/loyalty/labels.ts:292
+msgid "Share your link. You are rewarded when a friend completes their first order."
+msgstr "分享您的链接。当好友完成首笔订单时，您将获得奖励。"
+
 #: src/pages/shop.astro.ts:3
 msgid "Shop"
 msgstr "商店"
@@ -3075,7 +3156,7 @@ msgid "Something went wrong."
 msgstr "出了点问题。"
 
 #: src/lib/gift-cards/labels.ts:54
-#: src/lib/loyalty/labels.ts:268
+#: src/lib/loyalty/labels.ts:341
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "出了点问题，请重试。"
@@ -3104,6 +3185,22 @@ msgstr "已使用"
 #: src/pages/menu.astro.ts:3
 msgid "Spicy"
 msgstr "辣"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "stamp"
+msgstr "印花"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "stamps"
+msgstr "印花"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "star"
+msgstr "星"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "stars"
+msgstr "星"
 
 #: src/lib/gift-cards/labels.ts:91
 msgid "Still to pay: {amount}"
@@ -3137,7 +3234,7 @@ msgstr "桌号 {label}"
 msgid "Table alerts are not available right now. Please call the restaurant."
 msgstr "暂时无法使用餐位提醒。请致电餐厅。"
 
-#: src/lib/loyalty/labels.ts:248
+#: src/lib/loyalty/labels.ts:321
 msgid "Table order"
 msgstr "桌台点餐"
 
@@ -3359,7 +3456,7 @@ msgstr "您要查找的页面不存在或已移动。"
 msgid "The payment did not go through"
 msgstr "付款未成功"
 
-#: src/lib/loyalty/labels.ts:261
+#: src/lib/loyalty/labels.ts:334
 msgid "The program is paused right now."
 msgstr "该计划目前已暂停。"
 
@@ -3654,7 +3751,7 @@ msgstr "该餐厅目前无法接受在线订单，请稍后再试。"
 msgid "This reward covers your whole order. Choose to pay when you receive it."
 msgstr "此奖励可抵扣您的全部订单。请选择在收到订单时付款。"
 
-#: src/lib/loyalty/labels.ts:263
+#: src/lib/loyalty/labels.ts:336
 msgid "This reward is no longer available."
 msgstr "此奖励已不可用。"
 
@@ -3677,6 +3774,10 @@ msgstr "此桌码已失效。请向工作人员寻求帮助。"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "This table has sent many orders. Please ask a team member for help."
 msgstr "这张桌子已提交很多订单。请向工作人员寻求帮助。"
+
+#: src/lib/loyalty/labels.ts:269
+msgid "Tier reviewed on {date}"
+msgstr "等级评估日期：{date}"
 
 #: src/lib/gift-cards/labels.ts:36
 #: src/lib/reservations/labels.ts:38
@@ -3726,7 +3827,7 @@ msgstr "从此处提交的申请过多，请稍后再试。"
 msgid "Too many attempts. Please try again later."
 msgstr "尝试次数过多。请稍后重试。"
 
-#: src/lib/loyalty/labels.ts:254
+#: src/lib/loyalty/labels.ts:327
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "尝试次数过多，请稍候再试。"
@@ -3945,6 +4046,7 @@ msgstr "查看您的收据"
 msgid "View your reservation"
 msgstr "查看您的预订"
 
+#: src/lib/loyalty/labels.ts:309
 #: src/pages/profile.astro.ts:3
 msgid "View your rewards"
 msgstr "查看您的奖励"
@@ -4221,6 +4323,19 @@ msgstr "我们已将6位验证码发送至"
 msgid "week"
 msgstr "周"
 
+#: src/lib/loyalty/labels.ts:246
+msgid "Welcome bonus"
+msgstr "欢迎奖励"
+
+#: src/lib/loyalty/labels.ts:247
+msgid "Welcome bonus reversed"
+msgstr "欢迎奖励已退回"
+
+#: src/lib/loyalty/labels.ts:253
+#: src/pages/menu/success.astro.ts:3
+msgid "Welcome! {points} added"
+msgstr "欢迎！已添加 {points}"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "What's your name?"
 msgstr "您叫什么名字？"
@@ -4291,7 +4406,7 @@ msgstr "预订成功"
 msgid "You are on the waitlist"
 msgstr "您已在候位名单中"
 
-#: src/lib/loyalty/labels.ts:266
+#: src/lib/loyalty/labels.ts:339
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "您已登录其他网站。请在此重新登录。"
 
@@ -4334,6 +4449,14 @@ msgstr "您的余额足以兑换此奖励"
 #: src/lib/reservations/labels.ts:207
 msgid "You have no upcoming reservations."
 msgstr "您没有即将到来的预订。"
+
+#: src/lib/loyalty/labels.ts:305
+msgid "You have reached the referral limit."
+msgstr "您已达到推荐上限。"
+
+#: src/lib/loyalty/labels.ts:268
+msgid "You have reached the top tier."
+msgstr "您已达到最高等级。"
 
 #: src/lib/reservations/labels.ts:263
 msgid "You left the waitlist"
@@ -4387,7 +4510,7 @@ msgstr "您的余额"
 msgid "Your balance is below zero because of a refund. New purchases will bring it back up."
 msgstr "由于退款，您的余额低于零。新的消费会让余额回升。"
 
-#: src/lib/loyalty/labels.ts:262
+#: src/lib/loyalty/labels.ts:335
 msgid "Your balance is too low for this reward."
 msgstr "您的余额不足以兑换此奖励。"
 
@@ -4528,6 +4651,10 @@ msgstr "您的积分、奖励、专属码和历史记录。"
 msgid "Your Profile"
 msgstr "您的资料"
 
+#: src/lib/loyalty/labels.ts:294
+msgid "Your referral code"
+msgstr "您的推荐码"
+
 #: src/lib/reservations/labels.ts:315
 msgid "Your request was cancelled. We will not contact you about it."
 msgstr "您的请求已取消。我们不会就此联系您。"
@@ -4545,7 +4672,7 @@ msgstr "您的预订已取消。"
 msgid "Your reservation was updated."
 msgstr "您的预订已更新。"
 
-#: src/lib/loyalty/labels.ts:260
+#: src/lib/loyalty/labels.ts:333
 msgid "Your rewards account is on hold."
 msgstr "您的奖励账户已暂停。"
 
@@ -4561,7 +4688,7 @@ msgstr "优惠已抵扣整笔订单。"
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "您预约的时间已不可用，请重新选择。"
 
-#: src/lib/loyalty/labels.ts:264
+#: src/lib/loyalty/labels.ts:337
 msgid "Your session ended. Please sign in again."
 msgstr "您的会话已结束。请重新登录。"
 
@@ -4584,3 +4711,15 @@ msgstr "您的餐位已准备好"
 #: src/lib/reservations/labels.ts:269
 msgid "Your table was released"
 msgstr "您的餐位已释放"
+
+#: src/lib/loyalty/labels.ts:259
+msgid "Your tier"
+msgstr "您的等级"
+
+#: src/lib/loyalty/labels.ts:272
+msgid "Your tier moves to {tier} on {date} unless you earn more before then."
+msgstr "除非在此之前累积更多积分，否则您的等级将于 {date} 调整为 {tier}。"
+
+#: src/lib/loyalty/labels.ts:256
+msgid "Your welcome bonus of {points} arrives after your first paid order."
+msgstr "您的 {points} 欢迎奖励将在您完成首笔付款订单后到账。"

@@ -96,6 +96,11 @@ export const LOYALTY_LEDGER_TYPE_LABELS: Record<
 	redeem: msg`Redeemed`,
 	redeem_restore: msg`Redemption restored`,
 	adjust: msg`Adjusted`,
+	welcome: msg`Welcome bonus`,
+	welcome_reversal: msg`Welcome bonus reversed`,
+	expired: msg`Expired`,
+	referral: msg`Referral bonus`,
+	referral_reversal: msg`Referral reversed`,
 }
 
 export const LOYALTY_CHANNEL_LABELS: Record<LoyaltyChannel, MessageDescriptor> =

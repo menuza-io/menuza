@@ -13,21 +13,45 @@ import { RewardDialog } from './reward-dialog.tsx'
 
 const CATALOG: LoyaltyCatalog = {
 	items: [
-		{ id: 'item_latte', name: 'Latte', detail: null },
-		{ id: 'item_mocha', name: 'Mocha', detail: null },
+		{ id: 'item_latte', name: 'Latte', detail: null, priceMajor: 4.5 },
+		{ id: 'item_mocha', name: 'Mocha', detail: null, priceMajor: 5.0 },
 	],
 	categories: [],
 }
 
 function rewardWith(
-	definition: LoyaltyRewardDefinition,
+	definition:
+		| (Omit<
+				Extract<LoyaltyRewardDefinition, { kind: 'order' }>,
+				'minTierId'
+		  > & {
+				minTierId?: string | null
+		  })
+		| (Omit<
+				Extract<LoyaltyRewardDefinition, { kind: 'categories' }>,
+				'minTierId'
+		  > & {
+				minTierId?: string | null
+		  })
+		| (Omit<
+				Extract<LoyaltyRewardDefinition, { kind: 'items' }>,
+				'minTierId'
+		  > & {
+				minTierId?: string | null
+		  })
+		| (Omit<
+				Extract<LoyaltyRewardDefinition, { kind: 'free_item' }>,
+				'minTierId'
+		  > & {
+				minTierId?: string | null
+		  }),
 ): LoyaltyOperatorReward {
 	return {
 		id: 'rwd_1',
 		status: 'active',
 		version: 2,
 		currency: 'USD',
-		definition,
+		definition: { minTierId: null, ...definition } as LoyaltyRewardDefinition,
 		createdAt: 1_700_000_000_000,
 		updatedAt: 1_700_000_000_000,
 	}
@@ -95,6 +119,7 @@ describe('RewardDialog', () => {
 				name: 'Five off',
 				description: null,
 				pointsCost: 100,
+				minTierId: null,
 				labels: { items: {}, categories: {} },
 				discount: { type: 'fixed', amountMinor: 500 },
 			},
@@ -208,6 +233,7 @@ describe('RewardDialog', () => {
 			name: 'Free drink',
 			description: 'Any size',
 			pointsCost: 120,
+			minTierId: null,
 			labels: { items: { item_mocha: 'Mocha' }, categories: {} },
 			itemId: 'item_mocha',
 		})
@@ -254,6 +280,64 @@ describe('RewardDialog', () => {
 		expect(client.createReward.mock.calls[0]![0]).toMatchObject({
 			pointsCost: 1000,
 			discount: { type: 'fixed', amountMinor: 500 },
+		})
+	})
+
+	it('shows live percent-back preview and saves minimum tier restriction', async () => {
+		const client = {
+			createReward: vi.fn(async (definition: LoyaltyRewardDefinition) =>
+				rewardWith(definition),
+			),
+			updateReward: vi.fn(),
+		}
+		const onSaved = vi.fn()
+		renderStaff(
+			<RewardDialog
+				client={client as unknown as LoyaltyClient}
+				reward={null}
+				currency="USD"
+				earning={{ method: 'spend', points: 1, perMinor: 100 }}
+				tiers={{
+					enabled: true,
+					metric: 'qualifying_points',
+					periodMonths: 12,
+					graceDays: 30,
+					tiers: [
+						{
+							id: 'silver',
+							name: 'Silver',
+							threshold: 200,
+							multiplierBp: 12_500,
+						},
+						{ id: 'gold', name: 'Gold', threshold: 500, multiplierBp: 15_000 },
+					],
+				}}
+				catalog={CATALOG}
+				onClose={() => {}}
+				onSaved={onSaved}
+			/>,
+		)
+		await userEvent.type(
+			await screen.findByTestId('loyalty-reward-name'),
+			'VIP Credit',
+		)
+		await userEvent.type(screen.getByTestId('loyalty-reward-cost'), '100')
+		await userEvent.type(screen.getByTestId('loyalty-reward-amount'), '5.00')
+		expect(screen.getByTestId('loyalty-reward-return-badge')).toHaveTextContent(
+			'5% back',
+		)
+		expect(screen.getByTestId('loyalty-reward-return-tier')).toHaveTextContent(
+			'Gold',
+		)
+
+		await userEvent.click(
+			screen.getByRole('combobox', { name: /Minimum tier/i }),
+		)
+		await userEvent.click(await screen.findByRole('option', { name: 'Gold' }))
+		await userEvent.click(screen.getByTestId('loyalty-reward-save'))
+		await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1))
+		expect(client.createReward.mock.calls[0]![0]).toMatchObject({
+			minTierId: 'gold',
 		})
 	})
 })

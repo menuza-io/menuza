@@ -858,6 +858,24 @@ export async function fetchPublishedReservations(options: {
 	)
 }
 
+/** Whether the restaurant has loyalty on (flag only: no member data). */
+export interface PublicLoyaltyGate {
+	enabled: boolean
+}
+
+/** The loyalty gate, or `null` when the website is unpublished or loyalty is off. */
+export async function fetchPublishedLoyalty(options: {
+	slug?: string | null
+	host?: string | null
+}): Promise<PublicLoyaltyGate | null> {
+	const params = careersParams(options)
+	if (!params) return null
+	return fetchAppJson<PublicLoyaltyGate>(
+		`${getAppUrl()}/resources/sites/loyalty?${params.toString()}`,
+		false,
+	)
+}
+
 /** One live posting with its description and questions, or `null`. */
 export async function fetchPublishedJobPosting(options: {
 	slug?: string | null

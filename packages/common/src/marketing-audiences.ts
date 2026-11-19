@@ -77,9 +77,7 @@ export const audienceRuleSchema = z.discriminatedUnion('field', [
 			windowDays,
 		})
 		.strict(),
-	z
-		.object({ field: z.literal('visits'), op: compare, value: count })
-		.strict(),
+	z.object({ field: z.literal('visits'), op: compare, value: count }).strict(),
 	z
 		.object({
 			field: z.literal('days_since_last_visit'),
@@ -88,7 +86,10 @@ export const audienceRuleSchema = z.discriminatedUnion('field', [
 		})
 		.strict(),
 	z
-		.object({ field: z.literal('has_upcoming_reservation'), value: z.boolean() })
+		.object({
+			field: z.literal('has_upcoming_reservation'),
+			value: z.boolean(),
+		})
 		.strict(),
 	z.object({ field: z.literal('loyalty_member'), value: z.boolean() }).strict(),
 	z
@@ -102,8 +103,12 @@ export const audienceRuleSchema = z.discriminatedUnion('field', [
 		})
 		.strict(),
 	z
-		.object({ field: z.literal('phone_verified'), value: z.boolean() })
+		.object({
+			field: z.literal('loyalty_tier'),
+			tierId: z.string().trim().min(1).max(64),
+		})
 		.strict(),
+	z.object({ field: z.literal('phone_verified'), value: z.boolean() }).strict(),
 	z
 		.object({ field: z.literal('joined_within_days'), value: windowDays })
 		.strict(),
@@ -155,7 +160,8 @@ const SENSITIVE_PATTERN =
 /** True when a raw definition names a sensitive field anywhere (keys and `field` values). */
 export function namesSensitiveRule(raw: unknown, depth = 0): boolean {
 	if (depth > 6 || raw === null || typeof raw !== 'object') return false
-	if (Array.isArray(raw)) return raw.some((v) => namesSensitiveRule(v, depth + 1))
+	if (Array.isArray(raw))
+		return raw.some((v) => namesSensitiveRule(v, depth + 1))
 	for (const [key, value] of Object.entries(raw)) {
 		if (SENSITIVE_PATTERN.test(key)) return true
 		if (key === 'field' && typeof value === 'string') {

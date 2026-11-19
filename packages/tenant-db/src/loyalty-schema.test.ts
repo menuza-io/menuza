@@ -17,15 +17,19 @@ const LOYALTY_TABLES = [
 	'loyalty_member_bindings',
 	'loyalty_member_codes',
 	'loyalty_members',
+	'loyalty_notices',
 	'loyalty_outbox',
 	'loyalty_program_versions',
 	'loyalty_programs',
 	'loyalty_purchases',
 	'loyalty_rate_counters',
 	'loyalty_redemptions',
+	'loyalty_referral_codes',
+	'loyalty_referrals',
 	'loyalty_refunds',
 	'loyalty_reward_versions',
 	'loyalty_rewards',
+	'loyalty_welcome_grants',
 ] as const
 
 const LOYALTY_TRIGGERS = [
@@ -153,6 +157,28 @@ describe('loyalty tenant schema (0025_loyalty)', () => {
 		const tabColumns = await client.execute('PRAGMA table_info(qr_tabs)')
 		expect(tabColumns.rows.map((row) => String(row.name))).toEqual(
 			expect.arrayContaining(['loyalty_discount_cents', 'rung_up_on_station']),
+		)
+		const memberColumns = await client.execute(
+			'PRAGMA table_info(loyalty_members)',
+		)
+		expect(memberColumns.rows.map((row) => String(row.name))).toEqual(
+			expect.arrayContaining([
+				'imported',
+				'tier_id',
+				'tier_review_at',
+				'tier_grace_until',
+				'tier_updated_at',
+			]),
+		)
+		const purchaseColumns = await client.execute(
+			'PRAGMA table_info(loyalty_purchases)',
+		)
+		expect(purchaseColumns.rows.map((row) => String(row.name))).toEqual(
+			expect.arrayContaining([
+				'tier_id',
+				'tier_multiplier_bp',
+				'qualifying_points',
+			]),
 		)
 	})
 

@@ -1,3 +1,4 @@
+import { type LoyaltyFeatures } from '@repo/loyalty'
 import { Outlet, useLoaderData, useOutletContext } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { LoyaltyChrome } from '#app/components/loyalty/loyalty-chrome.tsx'
@@ -12,6 +13,7 @@ import { type Route } from './+types/_layout.ts'
 export type LoyaltyLayoutContext = {
 	orgSlug: string
 	nav: LoyaltyNavAccess
+	features?: LoyaltyFeatures
 }
 
 export function useLoyaltyLayoutData(): LoyaltyLayoutContext {
@@ -24,12 +26,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	if (!nav.visible) {
 		throw new Response('Forbidden: requires loyalty access', { status: 403 })
 	}
-	return { orgSlug: access.orgSlug, nav }
+	return { orgSlug: access.orgSlug, nav, features: access.features }
 }
 
 export default function LoyaltyLayout() {
-	const { orgSlug, nav } = useLoaderData<typeof loader>()
-	const context: LoyaltyLayoutContext = { orgSlug, nav }
+	const { orgSlug, nav, features } = useLoaderData<typeof loader>()
+	const context: LoyaltyLayoutContext = { orgSlug, nav, features }
 	return (
 		<LoyaltyClientProvider orgSlug={orgSlug}>
 			<LoyaltyChrome orgSlug={orgSlug} nav={nav}>

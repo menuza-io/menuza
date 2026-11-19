@@ -188,7 +188,7 @@ describe('loyalty future values', () => {
 		})
 		expect(wallet.member?.status).toBe('active')
 		expect(wallet.balance).toEqual(raw.wallet.balance)
-		expect(wallet).not.toHaveProperty('tier')
+		expect(wallet).not.toHaveProperty('badges')
 
 		const alone = loyaltyProgramResponseSchema.parse(readFuture('program'))
 		expect(alone.program).toEqual(program)

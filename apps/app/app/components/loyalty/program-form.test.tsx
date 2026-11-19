@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
 import {
+	DEFAULT_LOYALTY_EXPIRY_CONFIG,
+	DEFAULT_LOYALTY_REFERRAL_CONFIG,
+	DEFAULT_LOYALTY_TIERS_CONFIG,
+	DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
 	loyaltyPromotionSchema,
 	type LoyaltyOperatorProgram,
 	type LoyaltyProgramConfig,
@@ -41,6 +45,10 @@ function programWith(config: Partial<LoyaltyProgramConfig>) {
 				labels: { items: {}, categories: {} },
 				promotions: [],
 				promotionStacking: 'best',
+				welcomeBonus: DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
+				tiers: DEFAULT_LOYALTY_TIERS_CONFIG,
+				expiry: DEFAULT_LOYALTY_EXPIRY_CONFIG,
+				referrals: DEFAULT_LOYALTY_REFERRAL_CONFIG,
 				...config,
 			},
 			createdAt: 1_700_000_000_000,
@@ -108,6 +116,10 @@ describe('ProgramForm', () => {
 				labels: { items: {}, categories: {} },
 				promotions: [],
 				promotionStacking: 'best',
+				welcomeBonus: DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
+				tiers: DEFAULT_LOYALTY_TIERS_CONFIG,
+				expiry: DEFAULT_LOYALTY_EXPIRY_CONFIG,
+				referrals: DEFAULT_LOYALTY_REFERRAL_CONFIG,
 			},
 			null,
 		)
@@ -317,5 +329,53 @@ describe('ProgramForm', () => {
 			await screen.findByText('Check the fields and try again.'),
 		).toBeTruthy()
 		expect(onSave).not.toHaveBeenCalled()
+	})
+
+	it('saves welcome bonus, tiers, inactivity expiry, and referrals when enabled', async () => {
+		const onSave = vi.fn()
+		renderStaff(
+			<ProgramForm
+				program={null}
+				catalog={CATALOG}
+				defaultTimeZone="America/Toronto"
+				features={{ enabled: true, redemption: true, referrals: true }}
+				locationAddresses={['100 King St W, Toronto, ON M5X 1A9, Canada']}
+				canManage
+				saving={false}
+				onSave={onSave}
+			/>,
+		)
+		// Canadian location hides after_earn expiry and shows notice
+		expect(screen.getByTestId('loyalty-expiry-canada-notice')).toBeTruthy()
+
+		await userEvent.type(
+			screen.getByTestId('loyalty-program-name'),
+			'Maple Club',
+		)
+		await userEvent.type(screen.getByTestId('loyalty-program-currency'), 'CAD')
+		await userEvent.click(screen.getByTestId('loyalty-welcome-enabled'))
+		const wPts = screen.getByTestId('loyalty-welcome-points')
+		await userEvent.clear(wPts)
+		await userEvent.type(wPts, '100')
+		await userEvent.click(screen.getByTestId('loyalty-welcome-after-order'))
+
+		await userEvent.click(screen.getByTestId('loyalty-tiers-enabled'))
+		await userEvent.click(screen.getByTestId('loyalty-referrals-enabled'))
+		const refPts = screen.getByTestId('loyalty-ref-referrer-points')
+		await userEvent.clear(refPts)
+		await userEvent.type(refPts, '150')
+
+		await userEvent.click(screen.getByTestId('loyalty-program-save'))
+		await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+		const saved = onSave.mock.calls[0]![0] as LoyaltyProgramConfig
+		expect(saved.welcomeBonus).toEqual({
+			enabled: true,
+			points: 100,
+			afterFirstPaidOrder: true,
+		})
+		expect(saved.tiers.enabled).toBe(true)
+		expect(saved.tiers.tiers).toHaveLength(1)
+		expect(saved.referrals.enabled).toBe(true)
+		expect(saved.referrals.referrerPoints).toBe(150)
 	})
 })

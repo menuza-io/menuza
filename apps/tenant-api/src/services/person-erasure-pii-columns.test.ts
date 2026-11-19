@@ -104,6 +104,10 @@ const COVERED: Record<string, string> = {
 		'operator note on a manual adjustment, nulled with the member by the erasure (the only update the append-only trigger allows)',
 	'loyalty_refunds.note':
 		'operator note on a recorded refund, nulled with the member by the erasure (the only update the append-only trigger allows)',
+	'loyalty_welcome_grants.phone_hash':
+		'purpose-prefixed keyed HMAC of verified E.164 phone retained after erasure so re-joining never re-grants welcome bonus (member_id is nulled)',
+	'loyalty_referrals.friend_phone_hash':
+		'purpose-prefixed keyed HMAC of friend phone retained after erasure for one-per-phone abuse prevention (friend_customer_id, friend_member_id and device_hash are nulled)',
 	'restaurant_order_refunds.note':
 		'operator note on an order refund, nulled with the scrubbed order (the only update the append-only trigger allows)',
 	'qr_tab_refunds.note':

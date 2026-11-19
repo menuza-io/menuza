@@ -21,11 +21,15 @@ msgstr "{amount} محجوزة لطلب قيد التنفيذ"
 msgid "{amount} more needed"
 msgstr "تحتاج إلى {amount} إضافية"
 
+#: lib/loyalty/labels.ts:123
+msgid "{amount} more to reach {tier}"
+msgstr "{amount} إضافية للوصول إلى {tier}"
+
 #: lib/loyalty/labels.ts:37
 msgid "{amount} more to unlock {reward}"
 msgstr "{amount} إضافية للحصول على {reward}"
 
-#: components/ordering/menu-screen.tsx:415
+#: components/ordering/menu-screen.tsx:417
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "خصم {amount}"
@@ -42,6 +46,10 @@ msgstr "{count, plural, zero {إلغاء مجاني حتى الموعد.} one {�
 msgid "{count} min"
 msgstr "{count} د"
 
+#: lib/loyalty/labels.ts:136
+msgid "{credited} completed · {pending} waiting · {points} earned"
+msgstr "{credited} مكتملة · {pending} قيد الانتظار · {points} مكتسبة"
+
 #: components/profile/messages-section.tsx:110
 msgid "{label}: {channel}"
 msgstr "{label}: {channel}"
@@ -54,11 +62,11 @@ msgstr "{n, plural, zero {{count} نقطة} one {نقطة واحدة} two {نق�
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, zero {{count} نجمة} one {نجمة واحدة} two {نجمتان} few {{count} نجوم} many {{count} نجمة} other {{count} نجمة}}"
 
-#: components/ordering/menu-screen.tsx:398
+#: components/ordering/menu-screen.tsx:400
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (بحد أقصى {count} لكل طلب)"
 
-#: components/ordering/menu-screen.tsx:394
+#: components/ordering/menu-screen.tsx:396
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (خصم يصل إلى {amount})"
 
@@ -66,9 +74,13 @@ msgstr "{name} (خصم يصل إلى {amount})"
 msgid "{percent} off"
 msgstr "خصم {percent}"
 
-#: components/ordering/menu-screen.tsx:407
+#: components/ordering/menu-screen.tsx:409
 msgid "{percentText} off"
 msgstr "خصم {percentText}"
+
+#: lib/loyalty/labels.ts:128
+msgid "{points} expire on {date} unless used or you place an order."
+msgstr "تنتهي صلاحية {points} في {date} ما لم تُستخدم أو تطلب قبل ذلك."
 
 #: lib/loyalty/labels.ts:45
 msgid "{points} for each {items}"
@@ -97,6 +109,10 @@ msgstr "{points} مقابل كل {amount} تنفقها"
 #: components/ordering/menu-screen.tsx:316
 msgid "{price}, was {originalPrice}"
 msgstr "{price}، كان {originalPrice}"
+
+#: lib/loyalty/labels.ts:121
+msgid "{tier} tier"
+msgstr "مستوى {tier}"
 
 #: components/auth/login-screen.tsx:25
 msgid "+1 555 000 0000"
@@ -158,9 +174,13 @@ msgstr "المبلغ المستحق"
 msgid "Amount due: {amount}"
 msgstr "المبلغ المستحق: {amount}"
 
-#: lib/loyalty/labels.ts:117
+#: lib/loyalty/labels.ts:141
 msgid "App"
 msgstr "التطبيق"
+
+#: lib/loyalty/labels.ts:132
+msgid "Applies on the friend's first order of {amount} or more."
+msgstr "يسري على أول طلب للصديق بقيمة {amount} أو أكثر."
 
 #: lib/loyalty/labels.ts:62
 msgid "Applies to {categories}"
@@ -344,11 +364,19 @@ msgstr "متابعة"
 msgid "Continue to payment"
 msgstr "المتابعة إلى الدفع"
 
+#: lib/loyalty/labels.ts:135
+msgid "Copied"
+msgstr "تم النسخ"
+
+#: lib/loyalty/labels.ts:134
+msgid "Copy invite link"
+msgstr "نسخ رابط الدعوة"
+
 #: lib/loyalty/labels.ts:55
 msgid "Cost"
 msgstr "التكلفة"
 
-#: components/ordering/menu-screen.tsx:444
+#: components/ordering/menu-screen.tsx:446
 msgid "Dairy-free"
 msgstr "خالٍ من الألبان"
 
@@ -376,8 +404,8 @@ msgstr "مرفوضة"
 msgid "Declined: {reward}."
 msgstr "تم الرفض: {reward}."
 
-#: components/ordering/menu-screen.tsx:318
-#: components/ordering/menu-screen.tsx:343
+#: components/ordering/menu-screen.tsx:319
+#: components/ordering/menu-screen.tsx:345
 msgid "Delivery price {deliveryPriceText}"
 msgstr "سعر التوصيل {deliveryPriceText}"
 
@@ -411,9 +439,17 @@ msgstr "الطروحات"
 msgid "Drops could not be loaded."
 msgstr "تعذر تحميل الطروحات."
 
+#: lib/loyalty/labels.ts:126
+msgid "Earn enough by {date} to keep {tier} before moving to {nextTier}."
+msgstr "اكسب ما يكفي قبل {date} للاحتفاظ بمستوى {tier} قبل الانتقال إلى {nextTier}."
+
 #: lib/loyalty/labels.ts:108
 msgid "Earned"
 msgstr "اكتساب"
+
+#: lib/loyalty/labels.ts:122
+msgid "Earning at {multiplier}× rate"
+msgstr "الكسب بمعدل {multiplier}×"
 
 #: lib/reservations/messages.ts:59
 msgid "Edit details"
@@ -494,7 +530,7 @@ msgstr "لهذا العدد من الأشخاص، يرجى الاتصال على
 msgid "Free {item}"
 msgstr "{item} مجانًا"
 
-#: components/ordering/menu-screen.tsx:425
+#: components/ordering/menu-screen.tsx:427
 msgid "Free delivery"
 msgstr "توصيل مجاني"
 
@@ -543,11 +579,15 @@ msgstr "بطاقات الهدايا غير متاحة حاليًا"
 msgid "Gift cards are not available right now. Please try again later."
 msgstr "بطاقات الهدايا غير متاحة حاليًا. يرجى المحاولة لاحقًا."
 
-#: components/ordering/menu-screen.tsx:442
+#: lib/loyalty/labels.ts:130
+msgid "Give a friend {friendReward}, get {referrerPoints} after their first paid order."
+msgstr "امنح صديقًا {friendReward} واحصل على {referrerPoints} بعد أول طلب مدفوع له."
+
+#: components/ordering/menu-screen.tsx:444
 msgid "Gluten-free"
 msgstr "خالٍ من الغلوتين"
 
-#: components/ordering/menu-screen.tsx:436
+#: components/ordering/menu-screen.tsx:438
 msgid "Halal"
 msgstr "حلال"
 
@@ -575,9 +615,13 @@ msgstr "أنا في الطريق"
 msgid "I've paid, check again"
 msgstr "دفعت، تحقق مرة أخرى"
 
-#: lib/loyalty/labels.ts:115
+#: lib/loyalty/labels.ts:139
 msgid "In store"
 msgstr "في المتجر"
+
+#: lib/loyalty/labels.ts:131
+msgid "Invite a friend and get {referrerPoints} after their first paid order."
+msgstr "ادعُ صديقًا واحصل على {referrerPoints} بعد أول طلب مدفوع له."
 
 #: components/auth/complete-name-screen.tsx:26
 #: components/profile/profile-screen.tsx:108
@@ -692,7 +736,7 @@ msgid "Name"
 msgstr "الاسم"
 
 #: lib/gift-cards/labels.ts:75
-#: lib/loyalty/labels.ts:120
+#: lib/loyalty/labels.ts:144
 msgid "Network error. Check your connection and try again."
 msgstr "خطأ في الشبكة. تحقق من اتصالك وحاول مرة أخرى."
 
@@ -764,7 +808,7 @@ msgstr "لا يوجد حجز عبر الإنترنت في هذا اليوم."
 msgid "Nothing on the menu right now."
 msgstr "لا يوجد شيء في القائمة حاليًا."
 
-#: components/ordering/menu-screen.tsx:446
+#: components/ordering/menu-screen.tsx:448
 msgid "Nut-free"
 msgstr "خالٍ من المكسرات"
 
@@ -792,7 +836,7 @@ msgstr "منتج واحد. تُحتسب الإضافات المدفوعة كال
 msgid "One reward per order."
 msgstr "مكافأة واحدة لكل طلب."
 
-#: lib/loyalty/labels.ts:114
+#: lib/loyalty/labels.ts:138
 msgid "Online"
 msgstr "عبر الإنترنت"
 
@@ -804,12 +848,12 @@ msgstr "الحجز عبر الإنترنت متوقف مؤقتًا. حاول ل�
 msgid "Online reservations aren't available right now."
 msgstr "الحجز عبر الإنترنت غير متاح حاليًا."
 
-#: components/loyalty/program-sections.tsx:132
+#: components/loyalty/program-sections.tsx:138
 msgid "Opens in your browser. Your points and rewards apply when you order there."
 msgstr "يفتح في متصفحك. تُطبَّق نقاطك ومكافآتك عند الطلب هناك."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:366
+#: components/ordering/menu-screen.tsx:368
 msgid "Opens the website"
 msgstr "يفتح الموقع"
 
@@ -821,7 +865,7 @@ msgstr "يفتح الموقع. أضف الأصناف من القائمة، ثم 
 msgid "Order on the menu"
 msgstr "اطلب من القائمة"
 
-#: components/loyalty/program-sections.tsx:129
+#: components/loyalty/program-sections.tsx:135
 msgid "Order on the website"
 msgstr "اطلب عبر الموقع"
 
@@ -872,6 +916,10 @@ msgstr "الدفع غير متاح حاليًا."
 msgid "Phone number"
 msgstr "رقم الهاتف"
 
+#: lib/loyalty/labels.ts:120
+msgid "Place your first paid order to get your {points} welcome bonus."
+msgstr "أكمل أول طلب مدفوع للحصول على مكافأة الترحيب البالغة {points}."
+
 #: lib/reservations/messages.ts:124
 msgid "Please accept the booking terms."
 msgstr "يرجى قبول شروط الحجز."
@@ -883,6 +931,10 @@ msgstr "يرجى التحقق من بياناتك."
 #: lib/reservations/messages.ts:128
 msgid "Please sign in again."
 msgstr "يرجى تسجيل الدخول مرة أخرى."
+
+#: lib/loyalty/labels.ts:116
+msgid "Points expired"
+msgstr "نقاط منتهية الصلاحية"
 
 #: lib/reservations/messages.ts:38
 msgid "Preferred time"
@@ -925,6 +977,18 @@ msgstr "استبدال {reward}"
 msgid "Redeemed a reward"
 msgstr "استبدال مكافأة"
 
+#: lib/loyalty/labels.ts:129
+msgid "Refer a friend"
+msgstr "ادعُ صديقًا"
+
+#: lib/loyalty/labels.ts:117
+msgid "Referral bonus"
+msgstr "مكافأة الإحالة"
+
+#: lib/loyalty/labels.ts:118
+msgid "Referral bonus removed"
+msgstr "إزالة مكافأة الإحالة"
+
 #: lib/loyalty/labels.ts:109
 msgid "Refund adjustment"
 msgstr "تعديل بسبب استرداد"
@@ -940,6 +1004,10 @@ msgstr "قيد الطلب"
 #: lib/loyalty/labels.ts:86
 msgid "Requests to use your rewards"
 msgstr "طلبات استخدام مكافآتك"
+
+#: lib/loyalty/labels.ts:127
+msgid "Requires {tier} tier"
+msgstr "يتطلب مستوى {tier}"
 
 #: lib/reservations/messages.ts:85
 msgid "Reservation"
@@ -979,11 +1047,11 @@ msgstr "المكافآت"
 msgid "Rewards are not available right now"
 msgstr "المكافآت غير متاحة حاليًا"
 
-#: lib/loyalty/labels.ts:123
+#: lib/loyalty/labels.ts:147
 msgid "Rewards are not available right now."
 msgstr "المكافآت غير متاحة حاليًا."
 
-#: lib/loyalty/labels.ts:122
+#: lib/loyalty/labels.ts:146
 msgid "Rewards are temporarily unavailable. Please try again later."
 msgstr "المكافآت غير متاحة مؤقتًا. يُرجى المحاولة لاحقًا."
 
@@ -1023,7 +1091,7 @@ msgstr "أرسل طلبًا"
 msgid "Send code"
 msgstr "إرسال الرمز"
 
-#: components/ordering/menu-screen.tsx:423
+#: components/ordering/menu-screen.tsx:425
 msgid "Set price {amount}"
 msgstr "سعر ثابت {amount}"
 
@@ -1080,13 +1148,13 @@ msgstr "تسجيل الخروج"
 msgid "Site address"
 msgstr "عنوان الموقع"
 
-#: components/ordering/menu-screen.tsx:331
+#: components/ordering/menu-screen.tsx:333
 msgid "Sold out"
 msgstr "نفد المخزون"
 
 #: lib/gift-cards/labels.ts:74
 #: lib/i18n/app-error-message.ts:43
-#: lib/loyalty/labels.ts:130
+#: lib/loyalty/labels.ts:154
 #: lib/reservations/messages.ts:137
 msgid "Something went wrong. Please try again."
 msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
@@ -1107,7 +1175,7 @@ msgstr "يستخدم {points} مقابل خصم {amount}"
 msgid "Spent"
 msgstr "مُستخدم"
 
-#: components/ordering/menu-screen.tsx:448
+#: components/ordering/menu-screen.tsx:450
 msgid "Spicy"
 msgstr "حار"
 
@@ -1119,7 +1187,7 @@ msgstr "يتوقف عن العمل خلال {time}"
 msgid "System default"
 msgstr "افتراضي النظام"
 
-#: lib/loyalty/labels.ts:116
+#: lib/loyalty/labels.ts:140
 msgid "Table order"
 msgstr "طلب من الطاولة"
 
@@ -1187,7 +1255,7 @@ msgstr "لم تتم عملية الدفع."
 msgid "The payment window ended and the table was released."
 msgstr "انتهت مهلة الدفع وتم تحرير الطاولة."
 
-#: lib/loyalty/labels.ts:125
+#: lib/loyalty/labels.ts:149
 msgid "The program is paused right now."
 msgstr "البرنامج متوقف مؤقتًا الآن."
 
@@ -1243,7 +1311,7 @@ msgstr "هذا العدد يتطلب إرسال طلب."
 msgid "This payment was refunded."
 msgstr "تم استرداد هذه الدفعة."
 
-#: lib/loyalty/labels.ts:127
+#: lib/loyalty/labels.ts:151
 msgid "This reward is no longer available."
 msgstr "هذه المكافأة لم تعد متاحة."
 
@@ -1255,6 +1323,10 @@ msgstr "هذا الموقع غير متاح في هذا التطبيق بعد."
 msgid "This waitlist link no longer works."
 msgstr "هذا الرابط لم يعد صالحًا."
 
+#: lib/loyalty/labels.ts:125
+msgid "Tier reviewed on {date}"
+msgstr "تتم مراجعة المستوى في {date}"
+
 #: lib/reservations/messages.ts:126
 msgid "Too many attempts. Please try again in a few minutes."
 msgstr "محاولات كثيرة. حاول مرة أخرى بعد دقائق."
@@ -1264,7 +1336,7 @@ msgid "Too many attempts. Please try again later."
 msgstr "محاولات كثيرة جدًا. يرجى المحاولة لاحقًا."
 
 #: lib/gift-cards/labels.ts:76
-#: lib/loyalty/labels.ts:121
+#: lib/loyalty/labels.ts:145
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلًا ثم المحاولة مرة أخرى."
 
@@ -1328,11 +1400,11 @@ msgstr "الاستخدام عند الصندوق"
 msgid "Use code {code}"
 msgstr "استخدم الرمز {code}"
 
-#: components/ordering/menu-screen.tsx:438
+#: components/ordering/menu-screen.tsx:440
 msgid "Vegan"
 msgstr "نباتي صرف"
 
-#: components/ordering/menu-screen.tsx:440
+#: components/ordering/menu-screen.tsx:442
 msgid "Vegetarian"
 msgstr "نباتي"
 
@@ -1396,6 +1468,18 @@ msgstr "سنستخدم الرقم {phone} من حسابك."
 msgid "We're holding your table for {time}"
 msgstr "نحجز طاولتك لمدة {time}"
 
+#: lib/loyalty/labels.ts:114
+msgid "Welcome bonus"
+msgstr "مكافأة الترحيب"
+
+#: lib/loyalty/labels.ts:115
+msgid "Welcome bonus removed"
+msgstr "إزالة مكافأة الترحيب"
+
+#: lib/loyalty/labels.ts:119
+msgid "Welcome! {points} added"
+msgstr "مرحبًا! تمت إضافة {points}"
+
 #: components/ordering/menu-screen.tsx:165
 msgid "What is on the menu today. Checkout is on the website."
 msgstr "ما هو موجود في القائمة اليوم. إتمام الطلب يتم على الموقع."
@@ -1420,7 +1504,7 @@ msgstr "لديك حجز بالفعل في وقت قريب من هذا."
 msgid "You already have the maximum number of upcoming reservations."
 msgstr "لديك بالفعل الحد الأقصى من الحجوزات القادمة."
 
-#: lib/loyalty/labels.ts:129
+#: lib/loyalty/labels.ts:153
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "أنت مسجّل الدخول إلى موقع آخر. يُرجى تسجيل الدخول مرة أخرى هنا."
 
@@ -1435,6 +1519,14 @@ msgstr "لديك ما يكفي لكل المكافآت."
 #: lib/loyalty/labels.ts:67
 msgid "You have enough for this reward"
 msgstr "لديك ما يكفي لهذه المكافأة"
+
+#: lib/loyalty/labels.ts:124
+msgid "You have reached the highest tier."
+msgstr "لقد وصلت إلى أعلى مستوى."
+
+#: lib/loyalty/labels.ts:137
+msgid "You have reached the referral limit."
+msgstr "لقد وصلت إلى الحد الأقصى للإحالات."
 
 #: lib/reservations/messages.ts:118
 msgid "You left the waitlist."
@@ -1460,7 +1552,7 @@ msgstr "أنت رقم {position} في الصف"
 msgid "Your balance is below zero because of a refund. New purchases will bring it back up."
 msgstr "رصيدك أقل من الصفر بسبب استرداد. سترفعه مشترياتك الجديدة مجددًا."
 
-#: lib/loyalty/labels.ts:126
+#: lib/loyalty/labels.ts:150
 msgid "Your balance is too low for this reward."
 msgstr "رصيدك غير كافٍ لهذه المكافأة."
 
@@ -1508,7 +1600,11 @@ msgstr "نقاطك"
 msgid "Your profile"
 msgstr "ملفك الشخصي"
 
-#: lib/loyalty/labels.ts:124
+#: lib/loyalty/labels.ts:133
+msgid "Your referral code"
+msgstr "رمز الإحالة الخاص بك"
+
+#: lib/loyalty/labels.ts:148
 msgid "Your rewards account is on hold."
 msgstr "حسابك في برنامج المكافآت معلّق."
 
@@ -1518,7 +1614,7 @@ msgstr "حسابك في برنامج المكافآت معلّق. يُرجى ا�
 
 #: lib/gift-cards/labels.ts:77
 #: lib/i18n/app-error-message.ts:31
-#: lib/loyalty/labels.ts:128
+#: lib/loyalty/labels.ts:152
 msgid "Your session ended. Please sign in again."
 msgstr "انتهت جلستك. يُرجى تسجيل الدخول مرة أخرى."
 

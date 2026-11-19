@@ -22,7 +22,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useLoaderData } from 'react-router'
+import { useFetcher, useLoaderData } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ProgramForm } from '#app/components/loyalty/program-form.tsx'
 import { useLoyaltyClient } from '#app/hooks/use-loyalty-client.ts'
@@ -41,6 +41,7 @@ import {
 } from '#app/utils/loyalty/loyalty-labels.ts'
 import { formatLoyaltyInstant } from '#app/utils/loyalty/loyalty-view.ts'
 import { LOYALTY_SECTION_REQUIREMENTS } from '#app/utils/loyalty/sections.ts'
+import { ensureHomeRewardsSection } from '#app/utils/website/add-rewards-to-home.server.ts'
 import { type Route } from './+types/program.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -48,14 +49,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		anyOf: LOYALTY_SECTION_REQUIREMENTS.program.anyOf,
 	})
 	const impersonated = await isImpersonating(request)
-	const [[organization], [location], catalog] = await Promise.all([
+	const [[organization], locations, catalog] = await Promise.all([
 		db
 			.select({ timeZone: Organization.staffingTimeZone })
 			.from(Organization)
 			.where(eq(Organization.id, access.organizationId))
 			.limit(1),
 		db
-			.select({ timeZone: OrganizationLocation.timezone })
+			.select({
+				timeZone: OrganizationLocation.timezone,
+				address: OrganizationLocation.address,
+			})
 			.from(OrganizationLocation)
 			.where(
 				and(
@@ -63,25 +67,46 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					eq(OrganizationLocation.isActive, true),
 				),
 			)
-			.orderBy(asc(OrganizationLocation.createdAt))
-			.limit(1),
+			.orderBy(asc(OrganizationLocation.createdAt)),
 		loadLoyaltyCatalog(access.organizationId),
 	])
+	const locationAddresses = locations
+		.map((loc) => loc.address?.trim())
+		.filter((addr): addr is string => Boolean(addr))
 	return {
 		orgSlug: access.orgSlug,
 		catalog,
+		features: access.features,
+		locationAddresses,
 		canManage:
 			!impersonated &&
 			access.grants.includes(LOYALTY_PERMISSIONS.UPDATE_LOYALTY_PROGRAM),
 		defaultTimeZone:
-			location?.timeZone ?? organization?.timeZone ?? 'America/New_York',
+			locations[0]?.timeZone ?? organization?.timeZone ?? 'America/New_York',
 	}
+}
+
+export async function action({ request, params }: Route.ActionArgs) {
+	const access = await requireLoyaltyAccess(request, params.orgSlug, {
+		anyOf: [LOYALTY_PERMISSIONS.UPDATE_LOYALTY_PROGRAM],
+	})
+	const impersonated = await isImpersonating(request)
+	if (impersonated) {
+		throw new Response('Forbidden', { status: 403 })
+	}
+	const formData = await request.formData()
+	if (formData.get('intent') === 'ensure-rewards-section') {
+		return Response.json(await ensureHomeRewardsSection(access.organizationId))
+	}
+	throw new Response('Bad Request', { status: 400 })
 }
 
 export default function LoyaltyProgramRoute() {
 	const { i18n } = useLingui()
 	const tx = useCallback((d: MessageDescriptor) => i18n._(d), [i18n])
-	const { canManage, catalog, defaultTimeZone } = useLoaderData<typeof loader>()
+	const { canManage, catalog, defaultTimeZone, features, locationAddresses } =
+		useLoaderData<typeof loader>()
+	const ensureRewardsFetcher = useFetcher()
 	const client = useLoyaltyClient()
 
 	const [program, setProgram] = useState<LoyaltyOperatorProgram | null>(null)
@@ -171,6 +196,8 @@ export default function LoyaltyProgramRoute() {
 		async (status: 'active' | 'paused') => {
 			const keyRef = statusKeyRef.current!
 			if (!program) return
+			const activatingFromDraft =
+				program.status === 'draft' && status === 'active'
 			setStatusBusy(true)
 			setFormError(null)
 			setSavedBanner(false)
@@ -182,6 +209,12 @@ export default function LoyaltyProgramRoute() {
 				)
 				setProgram(saved)
 				keyRef.current = newLoyaltySubmitKey('status')
+				if (activatingFromDraft) {
+					void ensureRewardsFetcher.submit(
+						{ intent: 'ensure-rewards-section' },
+						{ method: 'post' },
+					)
+				}
 			} catch (err) {
 				afterFailedLoyaltySubmit(keyRef, 'status', err)
 				handleSubmitError(err, msg`The program status could not be changed.`)
@@ -189,7 +222,7 @@ export default function LoyaltyProgramRoute() {
 				setStatusBusy(false)
 			}
 		},
-		[client, program, handleSubmitError],
+		[client, program, handleSubmitError, ensureRewardsFetcher],
 	)
 
 	if (loading) {
@@ -377,6 +410,8 @@ export default function LoyaltyProgramRoute() {
 				program={program}
 				catalog={catalog}
 				defaultTimeZone={defaultTimeZone}
+				features={features}
+				locationAddresses={locationAddresses}
 				canManage={canManage}
 				saving={saving}
 				onSave={saveConfig}

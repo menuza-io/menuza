@@ -4,13 +4,19 @@ import { type MessageDescriptor } from '@lingui/core'
 import { plural } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import {
+	DEFAULT_LOYALTY_EXPIRY_CONFIG,
+	DEFAULT_LOYALTY_REFERRAL_CONFIG,
+	DEFAULT_LOYALTY_TIERS_CONFIG,
+	DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG,
 	LOYALTY_MAX_CATEGORY_IDS,
 	LOYALTY_MAX_ITEM_IDS,
 	LOYALTY_MAX_RULE_POINTS,
 	LOYALTY_MAX_SPEND_PER_MINOR,
+	LOYALTY_MULTIPLIER_ONE_BP,
 	loyaltyProgramConfigSchema,
 	type LoyaltyEarningMethod,
 	type LoyaltyEarningRule,
+	type LoyaltyFeatures,
 	type LoyaltyOperatorProgram,
 	type LoyaltyProgramConfig,
 	type LoyaltyUnitLabel,
@@ -42,8 +48,10 @@ import {
 	loyaltyEnumLabel,
 } from '#app/utils/loyalty/loyalty-labels.ts'
 import {
+	bpToPercentInput,
 	isUsableTimeZone,
 	minorToMoneyInput,
+	parsePercentToBp,
 } from '#app/utils/loyalty/loyalty-view.ts'
 import {
 	currencyExponent,
@@ -52,6 +60,15 @@ import {
 	parseWholeNumber,
 } from '#app/utils/money-input.ts'
 import { CatalogPicker } from './catalog-picker.tsx'
+import {
+	ExpiryCard,
+	ReferralsCard,
+	TiersCard,
+	validateProgramExtensions,
+	WelcomeBonusCard,
+	type ProgramExtensionErrors,
+	type ProgramExtensionState,
+} from './program-extension-cards.tsx'
 
 type ProgramFormValues = {
 	name: string
@@ -98,6 +115,61 @@ function programDefaults(
 	}
 }
 
+function extensionDefaults(
+	program: LoyaltyOperatorProgram | null,
+): ProgramExtensionState {
+	const config = program?.current.config
+	const currency = config?.currency
+	const welcome = config?.welcomeBonus ?? DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG
+	const tiers = config?.tiers ?? DEFAULT_LOYALTY_TIERS_CONFIG
+	const expiry = config?.expiry ?? DEFAULT_LOYALTY_EXPIRY_CONFIG
+	const ref = config?.referrals ?? DEFAULT_LOYALTY_REFERRAL_CONFIG
+	return {
+		welcomeEnabled: welcome.enabled,
+		welcomePoints: welcome.points > 0 ? String(welcome.points) : '50',
+		welcomeAfterFirstOrder: welcome.afterFirstPaidOrder,
+		tiersEnabled: tiers.enabled,
+		tierMetric: tiers.metric,
+		tierPeriodMonths: String(tiers.periodMonths),
+		tierGraceDays: String(tiers.graceDays),
+		tierRows: tiers.tiers.map((tier) => ({
+			id: tier.id,
+			name: tier.name,
+			threshold:
+				tiers.metric === 'spend_minor'
+					? minorToMoneyInput(tier.threshold, currency)
+					: String(tier.threshold),
+			multiplier: String(tier.multiplierBp / LOYALTY_MULTIPLIER_ONE_BP),
+		})),
+		expiryMode: expiry.mode,
+		expiryMonths: String(expiry.months),
+		refEnabled: ref.enabled,
+		refReferrerPoints: String(ref.referrerPoints),
+		refFriendPoints: String(ref.friendPoints),
+		refDiscountType: ref.friendDiscount ? ref.friendDiscount.type : 'none',
+		refDiscountAmount:
+			ref.friendDiscount?.type === 'fixed'
+				? minorToMoneyInput(ref.friendDiscount.amountMinor, currency)
+				: '',
+		refDiscountPercent:
+			ref.friendDiscount?.type === 'percent'
+				? bpToPercentInput(ref.friendDiscount.percentBp)
+				: '',
+		refDiscountMax:
+			ref.friendDiscount?.type === 'percent'
+				? minorToMoneyInput(ref.friendDiscount.maxDiscountMinor, currency)
+				: '',
+		refMinOrder:
+			ref.minimumOrderMinor > 0
+				? minorToMoneyInput(ref.minimumOrderMinor, currency)
+				: '',
+		refHoldDays: String(ref.holdDays),
+		refMaxPerMember: String(ref.maxReferralsPerMember),
+		refMaxPerMonth:
+			ref.maxReferralsPerMonth !== null ? String(ref.maxReferralsPerMonth) : '',
+	}
+}
+
 /**
  * The program editor. Saving sends the whole configuration as a new version;
  * chosen items and categories carry the menu names captured at save time.
@@ -106,6 +178,8 @@ export function ProgramForm({
 	program,
 	catalog,
 	defaultTimeZone,
+	features = { enabled: true, redemption: true, referrals: false },
+	locationAddresses = [],
 	canManage,
 	saving,
 	onSave,
@@ -114,6 +188,8 @@ export function ProgramForm({
 	program: LoyaltyOperatorProgram | null
 	catalog: LoyaltyCatalog
 	defaultTimeZone: string
+	features?: LoyaltyFeatures
+	locationAddresses?: readonly string[]
 	canManage: boolean
 	saving: boolean
 	onSave: (config: LoyaltyProgramConfig, expectedVersion: number | null) => void
@@ -126,6 +202,15 @@ export function ProgramForm({
 		() => programDefaults(program, defaultTimeZone),
 		[program, defaultTimeZone],
 	)
+	const defaultExt = useMemo(() => extensionDefaults(program), [program])
+	const [ext, setExt] = useState<ProgramExtensionState>(defaultExt)
+	const [extErrors, setExtErrors] = useState<ProgramExtensionErrors>({})
+	const [liveCurrency, setLiveCurrency] = useState(defaults.currency)
+	const [liveTimeZone, setLiveTimeZone] = useState(defaults.timeZone)
+	const updateExt = useCallback((patch: Partial<ProgramExtensionState>) => {
+		setExt((prev) => ({ ...prev, ...patch }))
+		setExtErrors({})
+	}, [])
 	const [unitLabel, setUnitLabel] = useState<LoyaltyUnitLabel>(
 		defaults.unitLabel,
 	)
@@ -302,6 +387,102 @@ export function ProgramForm({
 									points,
 									categoryIds: splitCatalogIds(value.earnCategoryIds),
 								}
+			const extErrs = validateProgramExtensions(
+				ext,
+				value.currency,
+				value.timeZone,
+				locationAddresses,
+				tx,
+				(text, bounds) =>
+					parseMoneyToMinor(text, { ...bounds, currency: value.currency }),
+				(text, bounds) => parseWholeNumber(text, bounds),
+			)
+			if (Object.keys(extErrs).length > 0) {
+				setExtErrors(extErrs)
+				return
+			}
+			const existingConfig = program?.current.config
+			const welcomeBonus = ext.welcomeEnabled
+				? {
+						enabled: true,
+						points: parseWholeNumber(ext.welcomePoints, { min: 1 })!,
+						afterFirstPaidOrder: ext.welcomeAfterFirstOrder,
+					}
+				: DEFAULT_LOYALTY_WELCOME_BONUS_CONFIG
+			const tiers = ext.tiersEnabled
+				? {
+						enabled: true,
+						metric: ext.tierMetric,
+						periodMonths: parseWholeNumber(ext.tierPeriodMonths, { min: 1 })!,
+						graceDays: parseWholeNumber(ext.tierGraceDays, { min: 0 })!,
+						tiers: ext.tierRows.map((row) => ({
+							id: row.id,
+							name: row.name.trim(),
+							threshold:
+								ext.tierMetric === 'spend_minor'
+									? parseMoneyToMinor(row.threshold, {
+											min: 1,
+											currency: value.currency,
+										})!
+									: parseWholeNumber(row.threshold, { min: 1 })!,
+							multiplierBp: Math.round(
+								Number(row.multiplier) * LOYALTY_MULTIPLIER_ONE_BP,
+							),
+						})),
+					}
+				: DEFAULT_LOYALTY_TIERS_CONFIG
+			const expiry =
+				ext.expiryMode === 'never'
+					? DEFAULT_LOYALTY_EXPIRY_CONFIG
+					: {
+							mode: ext.expiryMode,
+							months: parseWholeNumber(ext.expiryMonths, { min: 1 })!,
+							enabledAt: existingConfig?.expiry.enabledAt ?? null,
+						}
+			const referrals = features.referrals
+				? ext.refEnabled
+					? {
+							enabled: true,
+							referrerPoints: parseWholeNumber(ext.refReferrerPoints, {
+								min: 0,
+							})!,
+							friendPoints: parseWholeNumber(ext.refFriendPoints, { min: 0 })!,
+							friendDiscount:
+								ext.refDiscountType === 'fixed'
+									? {
+											type: 'fixed' as const,
+											amountMinor: parseMoneyToMinor(ext.refDiscountAmount, {
+												min: 1,
+												currency: value.currency,
+											})!,
+										}
+									: ext.refDiscountType === 'percent'
+										? {
+												type: 'percent' as const,
+												percentBp: parsePercentToBp(ext.refDiscountPercent)!,
+												maxDiscountMinor: parseMoneyToMinor(
+													ext.refDiscountMax,
+													{ min: 1, currency: value.currency },
+												),
+											}
+										: null,
+							minimumOrderMinor:
+								parseMoneyToMinor(ext.refMinOrder, {
+									min: 0,
+									currency: value.currency,
+								}) ?? 0,
+							holdDays: parseWholeNumber(ext.refHoldDays, { min: 0 })!,
+							maxReferralsPerMember: parseWholeNumber(ext.refMaxPerMember, {
+								min: 1,
+							})!,
+							maxReferralsPerMonth:
+								ext.refMaxPerMonth.trim() !== ''
+									? parseWholeNumber(ext.refMaxPerMonth, { min: 1 })!
+									: null,
+						}
+					: DEFAULT_LOYALTY_REFERRAL_CONFIG
+				: (existingConfig?.referrals ?? DEFAULT_LOYALTY_REFERRAL_CONFIG)
+
 			const config: LoyaltyProgramConfig = {
 				name: value.name,
 				unitLabel: value.unitLabel,
@@ -316,6 +497,10 @@ export function ProgramForm({
 				// them (and how they stack) exactly as they are.
 				promotions: program?.current.config.promotions ?? [],
 				promotionStacking: program?.current.config.promotionStacking ?? 'best',
+				welcomeBonus,
+				tiers,
+				expiry,
+				referrals,
 				labels: {
 					items:
 						earning.method === 'items'
@@ -347,8 +532,13 @@ export function ProgramForm({
 
 	// The two selects live outside conform's tracking (hidden inputs), so they
 	// count on their own.
+	const extDirty = useMemo(
+		() => JSON.stringify(ext) !== JSON.stringify(defaultExt),
+		[ext, defaultExt],
+	)
 	const dirty =
 		form.dirty ||
+		extDirty ||
 		unitLabel !== defaults.unitLabel ||
 		earningMethod !== defaults.earningMethod
 	useEffect(() => {
@@ -431,6 +621,9 @@ export function ProgramForm({
 						id="loyalty-program-currency"
 						name={currencyLocked ? undefined : fields.currency.name}
 						defaultValue={defaults.currency}
+						onChange={(event) =>
+							setLiveCurrency(event.target.value.trim().toUpperCase())
+						}
 						error={fields.currency.errors?.[0] ?? null}
 						disabled={readOnly || currencyLocked}
 						maxLength={3}
@@ -445,6 +638,7 @@ export function ProgramForm({
 						id="loyalty-program-timezone"
 						name={fields.timeZone.name}
 						defaultValue={defaults.timeZone}
+						onChange={(event) => setLiveTimeZone(event.target.value.trim())}
 						error={fields.timeZone.errors?.[0] ?? null}
 						disabled={readOnly}
 						placeholder="America/New_York"
@@ -575,6 +769,45 @@ export function ProgramForm({
 					</div>
 				</CardContent>
 			</Card>
+
+			<WelcomeBonusCard
+				state={ext}
+				onChange={updateExt}
+				errors={extErrors}
+				unitLabelText={unitLabelText}
+				readOnly={readOnly}
+			/>
+
+			<TiersCard
+				state={ext}
+				onChange={updateExt}
+				errors={extErrors}
+				readOnly={readOnly}
+				unitLabelText={unitLabelText}
+				currency={liveCurrency || defaults.currency}
+			/>
+
+			<ExpiryCard
+				state={ext}
+				onChange={updateExt}
+				errors={extErrors}
+				readOnly={readOnly}
+				unitLabelText={unitLabelText}
+				currency={liveCurrency || defaults.currency}
+				timeZone={liveTimeZone || defaults.timeZone}
+				locationAddresses={locationAddresses}
+			/>
+
+			{features.referrals ? (
+				<ReferralsCard
+					state={ext}
+					onChange={updateExt}
+					errors={extErrors}
+					readOnly={readOnly}
+					unitLabelText={unitLabelText}
+					currency={liveCurrency || defaults.currency}
+				/>
+			) : null}
 
 			<Card>
 				<CardHeader className="pb-2">

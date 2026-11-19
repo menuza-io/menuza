@@ -257,6 +257,16 @@ export function historyEntryLabel(
 			return labels.historyRedeemRestore
 		case 'adjust':
 			return labels.historyAdjust
+		case 'welcome':
+			return labels.historyWelcome
+		case 'welcome_reversal':
+			return labels.historyWelcomeReversal
+		case 'expired':
+			return labels.historyExpired
+		case 'referral':
+			return labels.historyReferral
+		case 'referral_reversal':
+			return labels.historyReferralReversal
 	}
 }
 

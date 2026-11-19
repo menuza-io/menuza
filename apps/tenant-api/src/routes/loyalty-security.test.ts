@@ -92,10 +92,17 @@ const CUST_RATE = 'cus_lty_sec_rate'
 const FEATURES_ON: LoyaltyFeatures = {
 	enabled: true,
 	redemption: true,
+	referrals: false,
 }
 const FEATURES_OFF: LoyaltyFeatures = {
 	enabled: false,
 	redemption: false,
+	referrals: false,
+}
+const FEATURES_REFERRALS_ON: LoyaltyFeatures = {
+	enabled: true,
+	redemption: true,
+	referrals: true,
 }
 
 const READ = LOYALTY_PERMISSIONS.READ_LOYALTY
@@ -272,7 +279,7 @@ function customerRequest(
 		method === 'POST' &&
 		(options.body === undefined ||
 			(typeof options.body === 'object' && options.body !== null)) &&
-		/^\/loyalty\/(checkout\/quote|tab\/quote|approvals\/[^/]+\/decide)$/.test(
+		/^\/loyalty\/(checkout\/quote|tab\/quote|referral\/claim|approvals\/[^/]+\/decide)$/.test(
 			path,
 		)
 	if (slugInBody) {
@@ -480,6 +487,8 @@ describe('mounts and route discovery', () => {
 			'POST /loyalty/member-code',
 			'GET /loyalty/approvals',
 			'POST /loyalty/approvals/:approvalId/decide',
+			'GET /loyalty/referral',
+			'POST /loyalty/referral/claim',
 		]) {
 			expect(customerKeys.has(key), key).toBe(true)
 		}
@@ -550,10 +559,15 @@ describe('customer loyalty security', () => {
 	it('refuses every authenticated customer route without a bearer token (401)', async () => {
 		const validBodies: Record<string, unknown> = {
 			'POST /loyalty/approvals/:approvalId/decide': { decision: 'approve' },
+			'POST /loyalty/referral/claim': { code: 'REF-AAAAAAAA' },
 		}
 		const failures: string[] = []
 		for (const route of CUSTOMER_ROUTES) {
-			if (route.path === '/loyalty/program') continue // anonymous by design
+			if (
+				route.path === '/loyalty/program' ||
+				route.path === '/loyalty/referral'
+			)
+				continue // anonymous by design
 			const key = `${route.method} ${route.path}`
 			const res = await customerRequest(route.method, fill(route.path), {
 				body: validBodies[key],
@@ -793,6 +807,68 @@ describe('customer loyalty security', () => {
 		}
 		expect(last!.status).toBe(429)
 		expect(await errorBody(last!)).toMatchObject({ error: 'rate_limited' })
+	})
+})
+
+describe('referral route security', () => {
+	it('enforces loyalty.referrals feature gate on customer claim and operator referrals, and allows public lookup quietly', async () => {
+		seedLoyaltyContextForTest(ORG_A, FEATURES_ON) // referrals: false
+		const custToken = await mintCustomerToken({ customerId: CUST_A1 })
+		const opToken = await mintLoyaltyToken({
+			scope: 'reports',
+			grants: [REPORT],
+		})
+
+		const pubRes = await app.request(
+			`/loyalty/referral?slug=${SLUG_A}&code=REF-AAAAAAAA`,
+			{ method: 'GET' },
+		)
+		expect(pubRes.status).toBe(200)
+		expect(await pubRes.json()).toEqual({ referral: null })
+
+		const claimOff = await customerRequest('POST', '/loyalty/referral/claim', {
+			token: custToken,
+			body: { code: 'REF-AAAAAAAA' },
+		})
+		expect(claimOff.status).toBe(403)
+		expect(await errorBody(claimOff)).toMatchObject({
+			error: 'referrals_disabled',
+		})
+
+		const opOff = await operatorRequest('GET', '/operator/loyalty/referrals', {
+			token: opToken,
+		})
+		expect(opOff.status).toBe(403)
+		expect(await errorBody(opOff)).toMatchObject({
+			error: 'referrals_disabled',
+		})
+
+		const opOnToken = await mintLoyaltyToken({
+			scope: 'reports',
+			grants: [REPORT],
+			features: FEATURES_REFERRALS_ON,
+		})
+		const opWrongScopeToken = await mintLoyaltyToken({
+			scope: 'read',
+			grants: [READ],
+			features: FEATURES_REFERRALS_ON,
+		})
+		expect(
+			(
+				await operatorRequest('GET', '/operator/loyalty/referrals', {
+					token: opWrongScopeToken,
+				})
+			).status,
+		).toBe(403)
+
+		const opOn = await operatorRequest('GET', '/operator/loyalty/referrals', {
+			token: opOnToken,
+		})
+		expect(opOn.status).toBe(200)
+		expect(await opOn.json()).toMatchObject({
+			summary: { credited: 0 },
+			referrals: [],
+		})
 	})
 })
 

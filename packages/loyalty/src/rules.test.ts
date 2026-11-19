@@ -54,17 +54,28 @@ import {
 
 describe('flags', () => {
 	it('counts only a literal true and forces children off without the master', () => {
-		expect(foldLoyaltyFeatures({ enabled: 'true', redemption: true })).toEqual({
+		expect(
+			foldLoyaltyFeatures({
+				enabled: 'true',
+				redemption: true,
+				referrals: true,
+			}),
+		).toEqual({
 			enabled: false,
 			redemption: false,
+			referrals: false,
 		})
 		expect(foldLoyaltyFeatures({ enabled: true, redemption: 1 })).toEqual({
 			enabled: true,
 			redemption: false,
+			referrals: false,
 		})
-		expect(foldLoyaltyFeatures({ enabled: true, redemption: true })).toEqual({
+		expect(
+			foldLoyaltyFeatures({ enabled: true, redemption: true, referrals: true }),
+		).toEqual({
 			enabled: true,
 			redemption: true,
+			referrals: true,
 		})
 	})
 
@@ -72,13 +83,26 @@ describe('flags', () => {
 		expect(readLoyaltyFeatures(null)).toEqual({
 			enabled: false,
 			redemption: false,
+			referrals: false,
 		})
 		expect(
 			readLoyaltyFeatures({ enabled: true, redemption: true, x: 1 }),
-		).toEqual({ enabled: false, redemption: false })
-		expect(readLoyaltyFeatures({ enabled: false, redemption: true })).toEqual({
+		).toEqual({ enabled: false, redemption: false, referrals: false })
+		expect(
+			readLoyaltyFeatures({
+				enabled: false,
+				redemption: true,
+				referrals: true,
+			}),
+		).toEqual({
 			enabled: false,
 			redemption: false,
+			referrals: false,
+		})
+		expect(readLoyaltyFeatures({ enabled: true, redemption: true })).toEqual({
+			enabled: true,
+			redemption: true,
+			referrals: false,
 		})
 	})
 })
@@ -132,7 +156,7 @@ describe('operator token', () => {
 			LOYALTY_PERMISSIONS.UPDATE_LOYALTY_POINTS,
 		],
 		locationIds: null,
-		features: { enabled: true, redemption: false },
+		features: { enabled: true, redemption: false, referrals: false },
 		impersonated: false,
 		iat: now,
 		exp: now + 300,
@@ -332,7 +356,28 @@ describe('ledger', () => {
 				},
 			),
 		)
-		expect(LOYALTY_LEDGER_TYPES).toHaveLength(5)
+		expect(LOYALTY_LEDGER_TYPES).toHaveLength(10)
+		expect(isValidLedgerDelta('welcome', 50)).toBe(true)
+		expect(isValidLedgerDelta('welcome', -1)).toBe(false)
+		expect(isValidLedgerDelta('welcome_reversal', -50)).toBe(true)
+		expect(isValidLedgerDelta('expired', -25)).toBe(true)
+		expect(isValidLedgerDelta('expired', 25)).toBe(false)
+		expect(isValidLedgerDelta('referral', 100)).toBe(true)
+		expect(isValidLedgerDelta('referral_reversal', -100)).toBe(true)
+		const afterWelcome = applyLedgerEntry(EMPTY_LOYALTY_BALANCE, {
+			type: 'welcome',
+			delta: 50,
+		})
+		const afterExpired = applyLedgerEntry(afterWelcome, {
+			type: 'expired',
+			delta: -20,
+		})
+		expect(afterExpired).toEqual({
+			points: 30,
+			reserved: 0,
+			lifetimeEarned: 50,
+			lifetimeRedeemed: 0,
+		})
 	})
 })
 

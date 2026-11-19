@@ -16,16 +16,16 @@ in [Migrations and deployment order](#migrations-and-deployment-order) and
 
 ## Status by surface
 
-| Surface                                                                                                 | State                                                                                                                      |
-| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Regional API: programs, rewards, accounts, ledger, redemptions, reconciliation, tick, erasure           | Built                                                                                                                      |
-| Website orders: reward at placement, earning, refunds                                                   | Built: the region and the Sites checkout reward picker                                                                     |
-| QR tabs: one purchase per tab, reward on phone payment, counter close                                   | Built: the region, the App, and the Sites tab payment picker                                                               |
-| Operator App: Loyalty pages, Loyalty panel on the Customer profile, order refunds, counter close option | Built                                                                                                                      |
-| Sites wallet                                                                                            | Built (balance, next reward, rewards, history, terms, member code, approvals)                                              |
-| Station till                                                                                            | Built: Rewards sheet in the cart (member code or phone join, balance, spend with approval), sale upload carries the member |
-| Customer app wallet (Expo, iOS and Android)                                                             | Built (balance, next reward, rewards, history, terms, member code, approvals, website link)                                |
-| Marketing audience filters                                                                              | Not built yet (no flag; it will be added with them)                                                                        |
+| Surface                                                                                                 | State                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Regional API: programs, rewards, accounts, ledger, redemptions, reconciliation, tick, erasure           | Built                                                                                                                                                          |
+| Website orders: reward at placement, earning, refunds                                                   | Built: the region and the Sites checkout reward picker                                                                                                         |
+| QR tabs: one purchase per tab, reward on phone payment, counter close                                   | Built: the region, the App, and the Sites tab payment picker                                                                                                   |
+| Operator App: Loyalty pages, Loyalty panel on the Customer profile, order refunds, counter close option | Built (including welcome bonus, tiers, expiry, referrals, return-rate preview, website Rewards block)                                                          |
+| Sites wallet & Rewards block                                                                            | Built (balance, next reward, welcome bonus, tiers, expiry warning, referral link/code, rewards, history, terms, member code, approvals, website Rewards block) |
+| Station till                                                                                            | Built: Rewards sheet in the cart (member code or phone join, balance, spend with approval), sale upload carries the member                                     |
+| Customer app wallet (Expo, iOS and Android)                                                             | Built (balance, next reward, welcome bonus, tiers, expiry warning, referral link/code, rewards, history, terms, member code, approvals, website link)          |
+| Marketing audience filters                                                                              | Built (`loyalty_tier` rule in the audience builder)                                                                                                            |
 
 Keep `loyalty.enabled` off for every organization until each channel it sells
 through is built and has passed its launch checks.
@@ -76,7 +76,59 @@ through is built and has passed its launch checks.
   the order is free and skips payment. A QR tab still refuses that
   (`reward_covers_total`), because a tab cannot be paid online at 0; the guest
   asks staff to close it.
-- No tiers, referrals, transfers, expiry, or historical backfill at launch.
+- **Welcome bonus** (`#293`): an optional one-time points bonus
+  (`program.config.welcomeBonus`), granted either on enrollment or after the
+  member's first paid order. Granted at most once per verified phone number
+  (`loyalty_welcome_phone_claims` stores an HMAC-SHA256 hash of the verified
+  E.164 phone in regional tenant SQLite; person erasure preserves this hash so
+  re-joining after erasure never receives a second welcome bonus). Refused for
+  suspended accounts and imported accounts (`customers.source = 'imported'`).
+  Welcome points post as `welcome` ledger entries (and `welcome_reversal` when a
+  first paid order is fully refunded) and never count toward tier qualification.
+- **Membership tiers** (`#292`): up to four optional tiers
+  (`program.config.tiers`) evaluated over a rolling window (`periodMonths`, 1–24
+  months) from either qualifying points earned (`qualifying_points`,
+  `earn + earn_reversal`) or qualifying spend (`spend_minor`), never from
+  spendable balance — so redeeming points never demotes a member. Each tier can
+  carry an earning multiplier (`multiplierBp`, which stacks multiplicatively
+  with active promotions up to `5.00x`) and/or tier-only rewards
+  (`reward.minTierId`). Upgrades apply immediately on the next qualifying
+  purchase; downgrades wait until `tier_review_at` plus an optional grace period
+  (`graceDays`, 0–90 days), with a pre-review notice emitted inside 14 days of
+  review.
+- **Points expiry** (`#307`): optional expiry (`program.config.expiry`) either
+  after account inactivity (`after_inactivity`) or after time earned
+  (`after_earn`, FIFO per positive point batch in `loyalty_point_lots`).
+  Existing points at activation receive a full grace window from `enabledAt`.
+  Canadian organizations (detected by Canadian time zones / address) cannot
+  select time-limited `after_earn` expiry (`expiry_restricted_region`);
+  inactivity expiry remains available. The loyalty tick sweeps expired points
+  (`expired` ledger entry, never driving available balance below zero) and emits
+  30-day and 7-day advance warning notices.
+- **Refer-a-friend** (`#169`, `#336`): gated by `loyalty.referrals` (child of
+  `loyalty.enabled`, default off) and `program.config.referrals`. Each active
+  member gets one deterministic referral code and share path (`/?ref=<CODE>`),
+  usable as a link or entered as a checkout promo code. Only new customers (zero
+  prior paid orders, distinct customer/phone/device from the referrer) can
+  claim. When a friend's first qualifying paid order settles, the referral
+  enters a configurable hold window (`holdDays`, default 7); once the hold
+  expires without refund, the loyalty tick credits the referrer (`referral`
+  ledger entry) and optional friend bonus points, reversing
+  (`referral_reversal`) if later refunded.
+- **Website Rewards section** (`#295`): a `rewards` website builder block
+  (`RewardsBlock.astro` + `apps/sites/src/lib/loyalty/rewards-block.ts`), gated
+  by `GET /resources/sites/loyalty`, that loads the public program
+  browser-direct from regional `tenant-api`, shows how earning works, active
+  rewards, welcome bonus and tiers, and links signed-out visitors to sign in or
+  signed-in members straight to `/profile/rewards`. Activating a loyalty program
+  automatically adds a Rewards section to the organization's home page draft if
+  one is not already present.
+- **Effective return preview** (`#414`): `estimateRewardReturn` in
+  `@repo/loyalty` and `<RewardReturnPreview />` in the reward dialog, rewards
+  table, and overview show the required spend to unlock a reward, its monetary
+  value, and the effective percentage back (both base and top-tier rates),
+  warning when the return exceeds 20%.
+- Historical orders placed before the program went live are not backfilled.
   Customers who verified before the program went live earn from their first
   order after it, not for earlier ones.
 - Program and reward edits create new immutable versions; purchases snapshot the
@@ -147,14 +199,14 @@ flowchart LR
 
 ## Flags, permissions, and the kill switch
 
-Org flags (`ConfigFlag`, seeded system-false by control-plane migration
-`0030_loyalty`). There is no marketing flag: the audience filters are not built,
-and their flag will be added together with them.
+Org flags (`ConfigFlag`, seeded system-false by control-plane migrations
+`0030_loyalty` and `0061_loyalty_referrals_flag`).
 
 | Flag                 | Gates                                                     |
 | -------------------- | --------------------------------------------------------- |
 | `loyalty.enabled`    | Everything: accounts, wallets, earning, operator screens. |
 | `loyalty.redemption` | Spending points: quotes, holds, member codes, approvals.  |
+| `loyalty.referrals`  | Refer-a-friend links, claims, friend discounts, credits.  |
 
 Child flags read off while the master is off. Regions cache flags for 5 minutes.
 While the App cannot be read, a cached **on** answer keeps serving for up to 15
@@ -584,10 +636,10 @@ off). Both are documented in `apps/tenant-api/.env.schema` and `.env.example`.
 
 ## Migrations and deployment order
 
-| Plane                     | Migration      | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Control plane (D1/LibSQL) | `0030_loyalty` | Five loyalty permissions granted to `org_role_admin` only, and the two `loyalty.*` flags (`loyalty.enabled`, `loyalty.redemption`) as system-level `false`.                                                                                                                                                                                                                                                                                                                              |
-| Tenant SQLite             | `0025_loyalty` | The `loyalty_*` tables (including the outbox and its lease column; `loyalty_members` carries `created_at` and no enrolled channel or terms fields, and program versions carry no terms version), unique source and event keys, the append-only `restaurant_order_refunds` table, `restaurant_orders.loyalty_discount_cents` and `refunded_cents`, `qr_tabs.loyalty_discount_cents` and `rung_up_on_station`, and every append-only, state-transition and refund-total trigger and index. |
+| Plane                     | Migration                                     | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Control plane (D1/LibSQL) | `0030_loyalty`, `0061_loyalty_referrals_flag` | Five loyalty permissions granted to `org_role_admin` only, and the three `loyalty.*` flags (`loyalty.enabled`, `loyalty.redemption`, `loyalty.referrals`) as system-level `false`.                                                                                                                                                                                                                                                                                                                                |
+| Tenant SQLite             | `0025_loyalty`, `0055_loyalty_extensions`     | The `loyalty_*` tables (including welcome phone claim hashes, member tier/welcome/activity columns, `loyalty_point_lots`, `loyalty_referrals`, `loyalty_notices`, `loyalty_rewards.min_tier_id`, and `customers.source`), unique source and event keys, the append-only `restaurant_order_refunds` table, `restaurant_orders.loyalty_discount_cents` and `refunded_cents`, `qr_tabs.loyalty_discount_cents` and `rung_up_on_station`, and every append-only, state-transition and refund-total trigger and index. |
 
 Both are additive, and each plane has exactly one migration for this release.
 Tenant migrations ship with tenant-api: Node nodes apply them when they open an
@@ -749,8 +801,9 @@ End-to-end, through the regional routes:
 - Provider refunds and chargebacks of restaurant orders and QR tab payments are
   not mirrored from the Stripe or Checkout.com webhooks. Each one is recorded by
   hand (see [Refunds](#refunds)); until then the member keeps those points.
-- Marketing loyalty filters are not built; their flag will be added with them.
-  There is no loyalty campaign sender.
+- Marketing audience builder supports `loyalty_tier` filtering; there is no
+  standalone loyalty campaign sender outside the existing marketing campaign
+  system.
 - Joining is automatic: signing in joins the program, and there is no opt-out or
   opt-in in this release. The terms are display text, not an acceptance step. An
   organization that needs explicit opt-in consent is not supported.

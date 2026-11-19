@@ -109,10 +109,12 @@ const FUTURE_SCHEMAS: Record<string, ZodTypeAny> = {
 const FEATURES_ON: LoyaltyFeatures = {
 	enabled: true,
 	redemption: true,
+	referrals: false,
 }
 const FEATURES_OFF: LoyaltyFeatures = {
 	enabled: false,
 	redemption: false,
+	referrals: false,
 }
 
 const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())

@@ -322,4 +322,96 @@ describe('RewardsScreen', () => {
 			false,
 		)
 	})
+
+	it('renders welcome bonus, tier progress, expiry warning, locked tier reward, and referral card', async () => {
+		const walletPayload = fixtureJson('wallet-member') as {
+			wallet: {
+				program: {
+					rewards: Array<Record<string, unknown>>
+				} & Record<string, unknown>
+			} & Record<string, unknown>
+		}
+		await renderWallet({
+			'/loyalty/wallet': {
+				json: {
+					wallet: {
+						...walletPayload.wallet,
+						welcomeBonus: {
+							status: 'granted',
+							points: 25,
+							grantedAt: 1_776_000_000_000,
+						},
+						tier: {
+							current: {
+								id: 'silver',
+								name: 'Silver',
+								multiplierBp: 12_500,
+							},
+							next: {
+								id: 'gold',
+								name: 'Gold',
+								threshold: 500,
+								pointsRemaining: 168,
+								multiplierBp: 15_000,
+							},
+							metric: 'qualifying_points',
+							progressValue: 332,
+							periodMonths: 12,
+							reviewAt: 1_800_000_000_000,
+							graceUntil: null,
+							pendingDowngradeTierName: null,
+						},
+						expiry: {
+							mode: 'after_inactivity',
+							months: 12,
+							nextExpiryAt: 1_780_000_000_000,
+							nextExpiryPoints: 80,
+							expiringWithin30d: 80,
+						},
+						referral: {
+							code: 'REF-CUST1',
+							sharePath: '/?ref=REF-CUST1',
+							referredCount: 2,
+							pendingCount: 1,
+							creditedCount: 1,
+							creditedPoints: 50,
+							capReached: false,
+							maxReferralsPerMember: 10,
+						},
+						program: {
+							...walletPayload.wallet.program,
+							referrals: {
+								enabled: true,
+								referrerPoints: 50,
+								friendPoints: 25,
+								friendDiscount: {
+									type: 'fixed',
+									amountMinor: 500,
+								},
+								minimumOrderMinor: 2000,
+							},
+							rewards: [
+								...walletPayload.wallet.program.rewards,
+								{
+									...walletPayload.wallet.program.rewards[0],
+									id: 'rew_vip',
+									name: 'Gold Secret Dessert',
+									pointsCost: 200,
+									minTierId: 'gold',
+									minTierName: 'Gold',
+									lockedByTier: true,
+								},
+							],
+						},
+					},
+				},
+			},
+		})
+		await screen.findByText('Welcome! 25 points added')
+		expect(screen.getByText(/Silver/)).toBeTruthy()
+		expect(screen.getByText(/168 points more to reach/)).toBeTruthy()
+		expect(screen.getByText(/80 points expire on/)).toBeTruthy()
+		expect(screen.getByText('Requires Gold tier')).toBeTruthy()
+		expect(screen.getByText('REF-CUST1')).toBeTruthy()
+	})
 })

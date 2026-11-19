@@ -44,6 +44,16 @@ export const LOYALTY_ERROR_CODES = [
 	'forbidden_grant',
 	'rate_limited',
 	'invalid_request',
+	'tier_required',
+	'referrals_disabled',
+	'referral_invalid',
+	'referral_self',
+	'referral_already_claimed',
+	'referral_existing_customer',
+	'referral_cap_reached',
+	'expiry_restricted_region',
+	'customer_not_found',
+	'phone_required',
 ] as const
 
 export type LoyaltyErrorCode = (typeof LOYALTY_ERROR_CODES)[number]
@@ -91,6 +101,16 @@ export const LOYALTY_ERROR_HTTP_STATUS: Readonly<
 	forbidden_grant: 403,
 	rate_limited: 429,
 	invalid_request: 400,
+	tier_required: 403,
+	referrals_disabled: 403,
+	referral_invalid: 404,
+	referral_self: 409,
+	referral_already_claimed: 409,
+	referral_existing_customer: 409,
+	referral_cap_reached: 409,
+	expiry_restricted_region: 400,
+	customer_not_found: 404,
+	phone_required: 422,
 }
 
 export class LoyaltyDomainError extends Error {

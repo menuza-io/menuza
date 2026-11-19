@@ -35,17 +35,19 @@ const LOYALTY_PERMISSION_SET = new Set<string>(LOYALTY_PERMISSION_LIST)
 export async function getLoyaltyFeatureState(
 	organizationId: string,
 ): Promise<LoyaltyFeatures> {
+	const keys = Object.keys(LOYALTY_FLAG_KEYS) as Array<
+		keyof typeof LOYALTY_FLAG_KEYS
+	>
 	const values = await Promise.all(
-		(
-			Object.keys(LOYALTY_FLAG_KEYS) as Array<keyof typeof LOYALTY_FLAG_KEYS>
-		).map((name) =>
+		keys.map((name) =>
 			getFeatureFlag(LOYALTY_FLAG_KEYS[name], { organizationId }),
 		),
 	)
-	return foldLoyaltyFeatures({
-		enabled: values[0],
-		redemption: values[1],
-	})
+	const raw: Partial<Record<keyof typeof LOYALTY_FLAG_KEYS, unknown>> = {}
+	for (const [index, name] of keys.entries()) {
+		raw[name] = values[index]
+	}
+	return foldLoyaltyFeatures(raw)
 }
 
 export async function isLoyaltyFeatureEnabled(

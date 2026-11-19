@@ -9,6 +9,7 @@ import {
 	loyaltyMemberCodeResponseSchema,
 	loyaltyProgramResponseSchema,
 	type LoyaltyPublicProgram,
+	loyaltyReferralClaimResponseSchema,
 	type LoyaltyWallet,
 	loyaltyWalletResponseSchema,
 } from '@repo/loyalty'
@@ -361,6 +362,19 @@ export class LoyaltyClient {
 			idempotencyKey: key,
 		})
 		return data.approval
+	}
+
+	claimReferral(params: { code: string; deviceId?: string | null }) {
+		return this.#member({
+			method: 'POST',
+			path: '/loyalty/referral/claim',
+			schema: loyaltyReferralClaimResponseSchema,
+			binding: 'body',
+			body: {
+				code: params.code,
+				...(params.deviceId ? { deviceId: params.deviceId } : {}),
+			},
+		})
 	}
 
 	/** A member call: the customer token, refreshed once on a 401 by the session. */

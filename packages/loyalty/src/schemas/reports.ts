@@ -120,6 +120,48 @@ export const loyaltyReportSchema = z
 				refundsRecorded: count,
 			})
 			.strict(),
+		welcome: z
+			.object({
+				bonusesGiven: count,
+				pointsGiven: count,
+				repeatOrders30d: count,
+				repeatRate30dBp: ratioBp,
+			})
+			.strict()
+			.default({
+				bonusesGiven: 0,
+				pointsGiven: 0,
+				repeatOrders30d: 0,
+				repeatRate30dBp: 0,
+			}),
+		expiry: z
+			.object({
+				pointsExpired: count,
+				pointsExpiringSoon30d: count,
+			})
+			.strict()
+			.default({
+				pointsExpired: 0,
+				pointsExpiringSoon30d: 0,
+			}),
+		referrals: z
+			.object({
+				claimed: count,
+				credited: count,
+				cancelled: count,
+				reversed: count,
+				pointsGiven: count,
+				friendDiscountMinor: count,
+			})
+			.strict()
+			.default({
+				claimed: 0,
+				credited: 0,
+				cancelled: 0,
+				reversed: 0,
+				pointsGiven: 0,
+				friendDiscountMinor: 0,
+			}),
 	})
 	.strict()
 export type LoyaltyReport = z.infer<typeof loyaltyReportSchema>

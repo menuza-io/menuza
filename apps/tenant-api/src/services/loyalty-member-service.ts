@@ -5,7 +5,6 @@ import {
 	LoyaltyDomainError,
 	loyaltyEventKeys,
 	type LoyaltyAdjustmentReason,
-	type LoyaltyBalanceView,
 	type LoyaltyOperatorBalance,
 	type LoyaltyFeatures,
 	type LoyaltyHistoryEntry,
@@ -31,7 +30,6 @@ import {
 	desc,
 	eq,
 	gt,
-	inArray,
 	isNull,
 	lt,
 	or,
@@ -41,12 +39,14 @@ import {
 import { inJsonList } from '../lib/chunked-in.ts'
 import { getLoyaltyFlagState } from '../lib/loyalty-context.ts'
 import {
+	activeLoyaltyOrgId,
 	type LoyaltyIdempotency,
 	type LoyaltyReader,
 	type LoyaltyTx,
 	withLoyaltyWrite,
 } from '../lib/loyalty-write.ts'
 import { recordLoyaltyAudit } from './loyalty-audit.ts'
+import { buildWalletExpiryViewInTx } from './loyalty-expiry-service.ts'
 import {
 	ensureBalanceRowInTx,
 	postLedgerEntryInTx,
@@ -55,6 +55,15 @@ import {
 } from './loyalty-ledger.ts'
 import { getPublicProgram, readProgramInTx } from './loyalty-program-service.ts'
 import { releaseRedemptionInTx } from './loyalty-redemption-service.ts'
+import { buildWalletReferralInTx } from './loyalty-referral-service.ts'
+import {
+	buildOperatorMemberTierInTx,
+	buildWalletTierViewInTx,
+} from './loyalty-tier-service.ts'
+import {
+	maybeGrantWelcomeBonusInTx,
+	readWelcomeBonusForWalletInTx,
+} from './loyalty-welcome-service.ts'
 
 export type MemberRow = typeof loyaltyMembers.$inferSelect
 
@@ -157,6 +166,7 @@ export async function ensureMemberForCustomerInTx(
 	tx: LoyaltyTx,
 	customerId: string,
 	now: number,
+	orgId?: string,
 ): Promise<MemberRow | null> {
 	const existing = await memberForCustomerInTx(tx, customerId)
 	if (existing) return existing
@@ -168,7 +178,7 @@ export async function ensureMemberForCustomerInTx(
 		.where(eq(customers.id, customerId))
 		.get()
 	if (!customer?.phoneVerified) return null
-	await tx
+	const inserted = await tx
 		.insert(loyaltyMembers)
 		.values({
 			customerId,
@@ -177,9 +187,19 @@ export async function ensureMemberForCustomerInTx(
 			updatedAt: now,
 		})
 		.onConflictDoNothing()
+		.returning({ id: loyaltyMembers.id })
 	const member = await memberForCustomerInTx(tx, customerId)
 	if (!member) return null
 	await ensureBalanceRowInTx(tx, member.id, now)
+	const resolvedOrgId = orgId ?? activeLoyaltyOrgId()
+	if (inserted.length > 0 && resolvedOrgId) {
+		await maybeGrantWelcomeBonusInTx(tx, {
+			orgId: resolvedOrgId,
+			memberId: member.id,
+			trigger: 'join',
+			now,
+		})
+	}
 	return member
 }
 
@@ -196,6 +216,7 @@ export async function ensureMemberForCustomer(
 			tx,
 			input.customerId,
 			ctx.now,
+			orgId,
 		)
 		if (member) ctx.linkMember(member.id)
 		return member
@@ -248,12 +269,20 @@ export async function pendingApprovalCountInTx(
 /** The signed-in customer's wallet; `null` when the program is not available. */
 export async function getWallet(
 	db: LoyaltyReader,
-	input: { customerId: string; features: LoyaltyFeatures; now?: number },
+	input: {
+		customerId: string
+		orgId?: string
+		features: LoyaltyFeatures
+		now?: number
+	},
 ): Promise<LoyaltyWallet | null> {
 	const now = input.now ?? Date.now()
-	const program = await getPublicProgram(db, input.features)
-	if (!program) return null
 	const member = await memberForCustomerInTx(db, input.customerId)
+	const program = await getPublicProgram(db, input.features, {
+		memberTierId: member && member.status !== 'erased' ? member.tierId : null,
+	})
+	if (!program) return null
+	const activeProgram = await readProgramInTx(db)
 	if (!member || member.status === 'erased') {
 		return {
 			program,
@@ -261,12 +290,48 @@ export async function getWallet(
 			balance: null,
 			nextReward: null,
 			pendingApprovals: 0,
+			welcomeBonus: null,
+			tier: null,
+			expiry: null,
+			referral: null,
 		}
 	}
 	const balance = await readBalanceViewInTx(db, member.id)
 	const next = program.rewards
 		.filter((reward) => reward.pointsCost > balance.available)
 		.sort((a, b) => a.pointsCost - b.pointsCost)[0]
+	const welcomeBonus = activeProgram
+		? await readWelcomeBonusForWalletInTx(db, {
+				orgId: input.orgId ?? activeLoyaltyOrgId() ?? null,
+				member,
+				config: activeProgram.current.config,
+			})
+		: null
+	const tier = activeProgram
+		? await buildWalletTierViewInTx(db, {
+				member,
+				config: activeProgram.current.config,
+				now,
+			})
+		: null
+	const expiry = activeProgram
+		? await buildWalletExpiryViewInTx(db, {
+				member,
+				balancePoints: balance.points,
+				config: activeProgram.current.config,
+				now,
+			})
+		: null
+	const resolvedOrgId = input.orgId ?? activeLoyaltyOrgId() ?? null
+	const referral =
+		activeProgram && resolvedOrgId
+			? await buildWalletReferralInTx(resolvedOrgId, db, {
+					member,
+					config: activeProgram.current.config,
+					features: input.features,
+					now,
+				})
+			: null
 	return {
 		program,
 		member: { id: member.id, status: member.status },
@@ -278,6 +343,10 @@ export async function getWallet(
 				}
 			: null,
 		pendingApprovals: await pendingApprovalCountInTx(db, member.id, now),
+		welcomeBonus,
+		tier,
+		expiry,
+		referral,
 	}
 }
 
@@ -350,6 +419,7 @@ type MemberWithCustomer = {
 function toSummary(
 	row: MemberWithCustomer,
 	balance: LoyaltyOperatorBalance,
+	tier: LoyaltyMemberSummary['tier'] = null,
 ): LoyaltyMemberSummary {
 	return {
 		id: row.member.id,
@@ -360,6 +430,8 @@ function toSummary(
 		createdAt: row.member.createdAt,
 		balance,
 		lastPurchaseAt: row.member.lastPurchaseAt,
+		imported: row.member.imported,
+		tier,
 	}
 }
 
@@ -413,7 +485,15 @@ export async function getMemberSummaryInTx(
 		)
 		.get()
 	if (!row) return null
-	return toSummary(row, await readOperatorBalanceViewInTx(db, memberId))
+	const activeProgram = await readProgramInTx(db)
+	const tier = activeProgram
+		? await buildOperatorMemberTierInTx(db, {
+				member: row.member,
+				config: activeProgram.current.config,
+				now: Date.now(),
+			})
+		: null
+	return toSummary(row, await readOperatorBalanceViewInTx(db, memberId), tier)
 }
 
 export async function getMemberForCustomer(

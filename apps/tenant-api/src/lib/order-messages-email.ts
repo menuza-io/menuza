@@ -6,6 +6,7 @@ import {
 	type PricedOrderLine,
 } from '@repo/common/restaurant-orders'
 import { getSiteLocaleDirection } from '@repo/common/site-locales'
+import { type LoyaltyUnitLabel } from '@repo/loyalty'
 import { type OrderMessageKind, type RestaurantOrder } from '@repo/tenant-db'
 import { orderCopyFor } from './order-messages-copy/index.ts'
 import { fillCopy } from './reservations-copy/index.ts'
@@ -79,6 +80,8 @@ export type OrderEmailInput = {
 	 * coming back; 0 or absent shows only what was refunded.
 	 */
 	refundPendingCents?: number
+	/** One-time loyalty welcome points unlocked on this order/checkout, if any. */
+	welcomeBonus?: { points: number; unitLabel: LoyaltyUnitLabel } | null
 }
 
 export type RenderedOrderEmail = { subject: string; html: string; text: string }
@@ -371,6 +374,23 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 	const ctaHtml = linkUrl
 		? `<div style="margin-top:24px;text-align:${align}"><a href="${escapeHtml(linkUrl)}" style="display:inline-block;padding:12px 22px;background:${primary};color:${primaryForeground};text-decoration:none;border-radius:${radius}px;font-size:15px;font-weight:600">${escapeHtml(labels.viewOrder)}</a></div>`
 		: ''
+	const welcomeLine =
+		input.kind === 'receipt' &&
+		input.welcomeBonus &&
+		input.welcomeBonus.points > 0
+			? fillCopy(labels.welcomeBonusLine, {
+					points: new Intl.NumberFormat(locale).format(
+						input.welcomeBonus.points,
+					),
+					unit:
+						input.welcomeBonus.unitLabel === 'stars'
+							? labels.starsUnit
+							: labels.pointsUnit,
+				})
+			: null
+	const welcomeHtml = welcomeLine
+		? `<p style="margin:0 0 14px;padding:10px 12px;border:1px solid ${border};border-radius:${Math.max(4, Math.min(8, radius))}px;font-size:14px;font-weight:600;color:${foreground};text-align:${align}" dir="auto">${escapeHtml(welcomeLine)}</p>`
+		: ''
 	const logoHtml = logo
 		? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(brandName)}" style="max-height:48px;max-width:200px;margin-bottom:16px;display:block" />`
 		: `<div style="font-size:16px;font-weight:700;color:${foreground};margin-bottom:16px;font-family:${headingFont}">${escapeHtml(brandName)}</div>`
@@ -384,6 +404,7 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 ${logoHtml}
 <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;color:${foreground};font-family:${headingFont}">${escapeHtml(copy.heading)}</h1>
 <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:${foreground}">${escapeHtml(copy.lead)}</p>
+${welcomeHtml}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${border}">${detailRows}</table>
 ${itemsHtml}${totalsHtml}${ctaHtml}
 <p style="margin:28px 0 0;font-size:12px;color:${muted}">${escapeHtml(labels.footer)}</p>
@@ -392,7 +413,9 @@ ${itemsHtml}${totalsHtml}${ctaHtml}
 </body>
 </html>`
 
-	const textLines = [copy.heading, '', copy.lead, '']
+	const textLines = [copy.heading, '', copy.lead]
+	if (welcomeLine) textLines.push('', welcomeLine)
+	textLines.push('')
 	for (const [label, value] of rows) textLines.push(`${label}: ${value}`)
 	if (lines.length > 0) {
 		textLines.push('', `${labels.items}:`)

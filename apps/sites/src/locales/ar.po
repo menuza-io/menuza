@@ -31,6 +31,10 @@ msgstr "يتبقى لديك {amount} بعد هذه المكافأة"
 msgid "{amount} more needed"
 msgstr "تحتاج إلى {amount} إضافية"
 
+#: src/lib/loyalty/labels.ts:264
+msgid "{amount} more to reach {tier}"
+msgstr "{amount} إضافية للوصول إلى {tier}"
+
 #: src/lib/loyalty/labels.ts:92
 msgid "{amount} more to unlock {reward}"
 msgstr "{amount} إضافية للحصول على {reward}"
@@ -77,6 +81,10 @@ msgstr "{count} دقيقة"
 #: src/lib/reservations/labels.ts:192
 msgid "{count} minutes late"
 msgstr "متأخر {count} دقيقة"
+
+#: src/lib/loyalty/labels.ts:300
+msgid "{credited} completed, {pending} pending, {points} earned"
+msgstr "{credited} مكتملة، {pending} قيد الانتظار، {points} مكتسبة"
 
 #: src/lib/reservations/labels.ts:64
 msgid "{date} at {time}"
@@ -156,6 +164,10 @@ msgstr "خصم {percent}"
 msgid "{percentText} off"
 msgstr "خصم {percentText}"
 
+#: src/lib/loyalty/labels.ts:279
+msgid "{points} expire on {date}. Order before then to keep them."
+msgstr "تنتهي صلاحية {points} في {date}. اطلب قبل ذلك للاحتفاظ بها."
+
 #: src/lib/loyalty/labels.ts:108
 msgid "{points} for each {items}"
 msgstr "{points} لكل {items}"
@@ -187,6 +199,10 @@ msgstr "{price} لكل حجز"
 #: src/lib/reservations/labels.ts:459
 msgid "{price} per guest"
 msgstr "{price} للضيف الواحد"
+
+#: src/lib/loyalty/labels.ts:314
+msgid "{tier}: from {threshold}, earn {multiplier}× points"
+msgstr "{tier}: من {threshold}، اكسب {multiplier}× نقاط"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "{time} left to complete payment."
@@ -414,7 +430,7 @@ msgstr "أي تفضيلات غذائية، صلصة جانبية، إلخ."
 msgid "Any location"
 msgstr "أي فرع"
 
-#: src/lib/loyalty/labels.ts:249
+#: src/lib/loyalty/labels.ts:322
 msgid "App"
 msgstr "التطبيق"
 
@@ -1005,7 +1021,16 @@ msgstr "المتابعة إلى الدفع"
 msgid "Contract"
 msgstr "عقد"
 
+#: src/lib/loyalty/labels.ts:297
+msgid "Copied"
+msgstr "تم النسخ"
+
+#: src/lib/loyalty/labels.ts:295
+msgid "Copy code"
+msgstr "نسخ الرمز"
+
 #: src/components/careers/ShareJob.astro.ts:3
+#: src/lib/loyalty/labels.ts:296
 msgid "Copy link"
 msgstr "نسخ الرابط"
 
@@ -1021,6 +1046,10 @@ msgstr "رمز القسيمة"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Coupon code removed. Total {total}."
 msgstr "تمت إزالة رمز القسيمة. الإجمالي {total}."
+
+#: src/lib/loyalty/labels.ts:260
+msgid "Current tier: {tier}"
+msgstr "المستوى الحالي: {tier}"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -1213,6 +1242,10 @@ msgstr "أبكر وقت"
 #: src/lib/loyalty/labels.ts:240
 msgid "Earned"
 msgstr "اكتساب"
+
+#: src/lib/loyalty/labels.ts:261
+msgid "Earning {multiplier}× points"
+msgstr "كسب {multiplier}× نقاط"
 
 #: src/lib/gift-cards/labels.ts:22
 msgid "Eid"
@@ -1607,7 +1640,7 @@ msgstr "إذا كان لدينا بريدك الإلكتروني، فالإيص�
 msgid "in {t}"
 msgstr "خلال {t}"
 
-#: src/lib/loyalty/labels.ts:247
+#: src/lib/loyalty/labels.ts:320
 msgid "In store"
 msgstr "في المتجر"
 
@@ -1657,6 +1690,14 @@ msgstr "فات الأوان لتعديل الحجز عبر الإنترنت. ي�
 #: src/lib/ordering-labels.ts:165
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "هذا العنوان خارج منطقة التوصيل لدى {location}. لا يزال بإمكانك الطلب للاستلام."
+
+#: src/lib/loyalty/labels.ts:310
+msgid "Join and get {points} as a welcome bonus."
+msgstr "انضم واحصل على {points} كمكافأة ترحيب."
+
+#: src/lib/loyalty/labels.ts:308
+msgid "Join rewards"
+msgstr "انضم إلى المكافآت"
 
 #: src/lib/reservations/labels.ts:213
 #: src/lib/reservations/labels.ts:220
@@ -1824,6 +1865,10 @@ msgstr "إدارة"
 msgid "Manage reservation"
 msgstr "إدارة الحجز"
 
+#: src/lib/loyalty/labels.ts:311
+msgid "Membership tiers"
+msgstr "مستويات العضوية"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Menu"
 msgstr "القائمة"
@@ -1895,7 +1940,7 @@ msgstr "name@example.com"
 msgid "National Day"
 msgstr "اليوم الوطني"
 
-#: src/lib/loyalty/labels.ts:252
+#: src/lib/loyalty/labels.ts:325
 msgid "Network error. Check your connection and try again."
 msgstr "خطأ في الشبكة. تحقق من اتصالك وحاول مرة أخرى."
 
@@ -2106,7 +2151,7 @@ msgstr "مكافأة واحدة لكل طلب."
 msgid "One reward per tab."
 msgstr "مكافأة واحدة لكل حساب."
 
-#: src/lib/loyalty/labels.ts:246
+#: src/lib/loyalty/labels.ts:319
 msgid "Online"
 msgstr "عبر الإنترنت"
 
@@ -2596,6 +2641,18 @@ msgstr "يرجى إخبارنا بأنك قادم، ثم أبلغ المضيف �
 msgid "Please tell us you are coming. We can hold your table for {time}."
 msgstr "يرجى إخبارنا بأنك قادم. يمكننا الاحتفاظ بطاولتك لمدة {time}."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "point"
+msgstr "نقطة"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "points"
+msgstr "نقاط"
+
+#: src/lib/loyalty/labels.ts:248
+msgid "Points expired"
+msgstr "نقاط منتهية الصلاحية"
+
 #: src/pages/menu.astro.ts:3
 msgid "Popular"
 msgstr "الأكثر طلبًا"
@@ -2727,6 +2784,18 @@ msgstr "استبدال {reward}"
 msgid "Redeemed a reward"
 msgstr "استبدال مكافأة"
 
+#: src/lib/loyalty/labels.ts:285
+msgid "Refer a friend"
+msgstr "ادعُ صديقًا"
+
+#: src/lib/loyalty/labels.ts:249
+msgid "Referral bonus"
+msgstr "مكافأة الإحالة"
+
+#: src/lib/loyalty/labels.ts:250
+msgid "Referral bonus reversed"
+msgstr "إلغاء مكافأة الإحالة"
+
 #: src/lib/loyalty/labels.ts:241
 msgid "Refund adjustment"
 msgstr "تعديل بسبب استرداد"
@@ -2776,6 +2845,10 @@ msgstr "طلبات استخدام مكافآتك"
 msgid "Required"
 msgstr "مطلوب"
 
+#: src/lib/loyalty/labels.ts:276
+msgid "Requires {tier}"
+msgstr "يتطلب مستوى {tier}"
+
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Reservation news"
 msgstr "أخبار الحجوزات"
@@ -2822,11 +2895,11 @@ msgstr "المكافآت"
 msgid "Rewards are not available right now"
 msgstr "المكافآت غير متاحة حاليًا"
 
-#: src/lib/loyalty/labels.ts:259
+#: src/lib/loyalty/labels.ts:332
 msgid "Rewards are not available right now."
 msgstr "المكافآت غير متاحة حاليًا."
 
-#: src/lib/loyalty/labels.ts:257
+#: src/lib/loyalty/labels.ts:330
 msgid "Rewards are temporarily unavailable. Please try again later."
 msgstr "المكافآت غير متاحة مؤقتًا. يُرجى المحاولة لاحقًا."
 
@@ -2957,6 +3030,14 @@ msgstr "رسوم الخدمة"
 msgid "Share this job"
 msgstr "مشاركة هذه الوظيفة"
 
+#: src/lib/loyalty/labels.ts:288
+msgid "Share your link. When a friend completes their first order, you earn {points}."
+msgstr "شارك رابطك. عندما يكمل صديق أول طلب له، تكسب {points}."
+
+#: src/lib/loyalty/labels.ts:292
+msgid "Share your link. You are rewarded when a friend completes their first order."
+msgstr "شارك رابطك. تحصل على مكافأة عندما يكمل صديق أول طلب له."
+
 #: src/pages/shop.astro.ts:3
 msgid "Shop"
 msgstr "المتجر"
@@ -3075,7 +3156,7 @@ msgid "Something went wrong."
 msgstr "حدث خطأ ما."
 
 #: src/lib/gift-cards/labels.ts:54
-#: src/lib/loyalty/labels.ts:268
+#: src/lib/loyalty/labels.ts:341
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
@@ -3104,6 +3185,22 @@ msgstr "مُستخدم"
 #: src/pages/menu.astro.ts:3
 msgid "Spicy"
 msgstr "حار"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "stamp"
+msgstr "ختم"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "stamps"
+msgstr "أختام"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "star"
+msgstr "نجمة"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "stars"
+msgstr "نجوم"
 
 #: src/lib/gift-cards/labels.ts:91
 msgid "Still to pay: {amount}"
@@ -3137,7 +3234,7 @@ msgstr "طاولة {label}"
 msgid "Table alerts are not available right now. Please call the restaurant."
 msgstr "تنبيهات الطاولات غير متاحة حاليًا. يرجى الاتصال بالمطعم."
 
-#: src/lib/loyalty/labels.ts:248
+#: src/lib/loyalty/labels.ts:321
 msgid "Table order"
 msgstr "طلب من الطاولة"
 
@@ -3359,7 +3456,7 @@ msgstr "الصفحة التي تبحث عنها غير موجودة أو تم ن
 msgid "The payment did not go through"
 msgstr "لم تتم عملية الدفع"
 
-#: src/lib/loyalty/labels.ts:261
+#: src/lib/loyalty/labels.ts:334
 msgid "The program is paused right now."
 msgstr "البرنامج متوقف مؤقتًا الآن."
 
@@ -3654,7 +3751,7 @@ msgstr "لا يستطيع هذا المطعم استقبال الطلبات عب
 msgid "This reward covers your whole order. Choose to pay when you receive it."
 msgstr "تغطي هذه المكافأة طلبك بالكامل. اختر الدفع عند استلامه."
 
-#: src/lib/loyalty/labels.ts:263
+#: src/lib/loyalty/labels.ts:336
 msgid "This reward is no longer available."
 msgstr "هذه المكافأة لم تعد متاحة."
 
@@ -3677,6 +3774,10 @@ msgstr "رمز هذه الطاولة لم يعد يعمل. يُرجى طلب ا�
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "This table has sent many orders. Please ask a team member for help."
 msgstr "أرسلت هذه الطاولة طلبات كثيرة. يُرجى طلب المساعدة من أحد أعضاء الفريق."
+
+#: src/lib/loyalty/labels.ts:269
+msgid "Tier reviewed on {date}"
+msgstr "تتم مراجعة المستوى في {date}"
 
 #: src/lib/gift-cards/labels.ts:36
 #: src/lib/reservations/labels.ts:38
@@ -3726,7 +3827,7 @@ msgstr "تم إرسال عدد كبير من الطلبات من هنا. يرج�
 msgid "Too many attempts. Please try again later."
 msgstr "محاولات كثيرة جدًا. حاول مرة أخرى لاحقًا."
 
-#: src/lib/loyalty/labels.ts:254
+#: src/lib/loyalty/labels.ts:327
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلًا ثم المحاولة مرة أخرى."
@@ -3945,6 +4046,7 @@ msgstr "عرض الإيصال"
 msgid "View your reservation"
 msgstr "عرض حجزك"
 
+#: src/lib/loyalty/labels.ts:309
 #: src/pages/profile.astro.ts:3
 msgid "View your rewards"
 msgstr "عرض مكافآتك"
@@ -4221,6 +4323,19 @@ msgstr "أرسلنا رمزاً من 6 أرقام إلى"
 msgid "week"
 msgstr "أسبوع"
 
+#: src/lib/loyalty/labels.ts:246
+msgid "Welcome bonus"
+msgstr "مكافأة الترحيب"
+
+#: src/lib/loyalty/labels.ts:247
+msgid "Welcome bonus reversed"
+msgstr "إلغاء مكافأة الترحيب"
+
+#: src/lib/loyalty/labels.ts:253
+#: src/pages/menu/success.astro.ts:3
+msgid "Welcome! {points} added"
+msgstr "مرحبًا! تمت إضافة {points}"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "What's your name?"
 msgstr "ما اسمك؟"
@@ -4291,7 +4406,7 @@ msgstr "تم حجزك"
 msgid "You are on the waitlist"
 msgstr "أنت في قائمة الانتظار"
 
-#: src/lib/loyalty/labels.ts:266
+#: src/lib/loyalty/labels.ts:339
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "أنت مسجّل الدخول إلى موقع آخر. يُرجى تسجيل الدخول مرة أخرى هنا."
 
@@ -4334,6 +4449,14 @@ msgstr "لديك ما يكفي لهذه المكافأة"
 #: src/lib/reservations/labels.ts:207
 msgid "You have no upcoming reservations."
 msgstr "ليس لديك حجوزات قادمة."
+
+#: src/lib/loyalty/labels.ts:305
+msgid "You have reached the referral limit."
+msgstr "لقد وصلت إلى الحد الأقصى للإحالات."
+
+#: src/lib/loyalty/labels.ts:268
+msgid "You have reached the top tier."
+msgstr "لقد وصلت إلى أعلى مستوى."
 
 #: src/lib/reservations/labels.ts:263
 msgid "You left the waitlist"
@@ -4387,7 +4510,7 @@ msgstr "رصيدك"
 msgid "Your balance is below zero because of a refund. New purchases will bring it back up."
 msgstr "رصيدك أقل من الصفر بسبب استرداد. سترفعه مشترياتك الجديدة مجددًا."
 
-#: src/lib/loyalty/labels.ts:262
+#: src/lib/loyalty/labels.ts:335
 msgid "Your balance is too low for this reward."
 msgstr "رصيدك غير كافٍ لهذه المكافأة."
 
@@ -4528,6 +4651,10 @@ msgstr "نقاطك ومكافآتك ورمزك وسجلك."
 msgid "Your Profile"
 msgstr "ملفك الشخصي"
 
+#: src/lib/loyalty/labels.ts:294
+msgid "Your referral code"
+msgstr "رمز الإحالة الخاص بك"
+
 #: src/lib/reservations/labels.ts:315
 msgid "Your request was cancelled. We will not contact you about it."
 msgstr "تم إلغاء طلبك. لن نتواصل معك بشأنه."
@@ -4545,7 +4672,7 @@ msgstr "تم إلغاء حجزك."
 msgid "Your reservation was updated."
 msgstr "تم تحديث حجزك."
 
-#: src/lib/loyalty/labels.ts:260
+#: src/lib/loyalty/labels.ts:333
 msgid "Your rewards account is on hold."
 msgstr "حساب المكافآت الخاص بك معلّق."
 
@@ -4561,7 +4688,7 @@ msgstr "الخصم يغطي كامل طلبك."
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "الوقت المحدد لم يعد متاحًا. اختر وقتًا جديدًا."
 
-#: src/lib/loyalty/labels.ts:264
+#: src/lib/loyalty/labels.ts:337
 msgid "Your session ended. Please sign in again."
 msgstr "انتهت جلستك. يُرجى تسجيل الدخول مرة أخرى."
 
@@ -4584,3 +4711,15 @@ msgstr "طاولتك جاهزة"
 #: src/lib/reservations/labels.ts:269
 msgid "Your table was released"
 msgstr "تم إلغاء حجز طاولتك"
+
+#: src/lib/loyalty/labels.ts:259
+msgid "Your tier"
+msgstr "مستواك"
+
+#: src/lib/loyalty/labels.ts:272
+msgid "Your tier moves to {tier} on {date} unless you earn more before then."
+msgstr "ينتقل مستواك إلى {tier} في {date} ما لم تكسب المزيد قبل ذلك."
+
+#: src/lib/loyalty/labels.ts:256
+msgid "Your welcome bonus of {points} arrives after your first paid order."
+msgstr "تصل مكافأة الترحيب البالغة {points} بعد أول طلب مدفوع لك."

@@ -50,6 +50,9 @@ export type OrderCopyLabels = {
 	/** Delivery with a promised start only: `{time}`. */
 	arrivingAround: string
 	viewOrder: string
+	welcomeBonusLine: string
+	pointsUnit: string
+	starsUnit: string
 	footer: string
 }
 

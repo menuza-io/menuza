@@ -21,6 +21,8 @@ const BROWSER_ONLY = [
 	'lib/loyalty/reward-picker.ts',
 	'lib/loyalty/reward-quotes.ts',
 	'lib/loyalty/tab-rewards.ts',
+	'lib/loyalty/referral-storage.ts',
+	'lib/loyalty/rewards-block.ts',
 ].map((file) => join(SRC, file))
 const LOYALTY_ROUTE = /['"`}]\/(?:pos\/|operator\/)?loyalty\//
 /** `'/loy' + 'alty/'` and `` `/loy` + "alty/" `` are one string once joined. */

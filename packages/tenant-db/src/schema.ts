@@ -6466,6 +6466,31 @@ export const LOYALTY_LEDGER_TYPE_VALUES = [
 	'redeem',
 	'redeem_restore',
 	'adjust',
+	'welcome',
+	'welcome_reversal',
+	'expired',
+	'referral',
+	'referral_reversal',
+] as const
+
+export const LOYALTY_WELCOME_TRIGGER_VALUES = ['join', 'first_order'] as const
+
+export const LOYALTY_NOTICE_KIND_VALUES = [
+	'tier_downgrade_warning',
+	'expiry_30d',
+	'expiry_7d',
+	'expiry_enabled',
+] as const
+
+export const LOYALTY_NOTICE_CHANNEL_VALUES = ['email', 'sms', 'none'] as const
+
+export const LOYALTY_REFERRAL_STATUS_VALUES = [
+	'claimed',
+	'pending_order',
+	'holding',
+	'credited',
+	'cancelled',
+	'reversed',
 ] as const
 export const LOYALTY_ADJUSTMENT_REASON_VALUES = [
 	'goodwill',
@@ -6678,12 +6703,19 @@ export const loyaltyMembers = sqliteTable(
 		suspendedAt: integer('suspended_at'),
 		erasedAt: integer('erased_at'),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
+		imported: integer('imported', { mode: 'boolean' }).notNull().default(false),
+		tierId: text('tier_id'),
+		tierReviewAt: integer('tier_review_at'),
+		tierGraceUntil: integer('tier_grace_until'),
+		tierUpdatedAt: integer('tier_updated_at'),
 	},
 	(table) => [
 		uniqueIndex('loyalty_members_customer_unique')
 			.on(table.customerId)
 			.where(sql`${table.customerId} is not null`),
 		index('idx_loyalty_members_last_purchase').on(table.lastPurchaseAt),
+		index('idx_loyalty_members_tier').on(table.tierId),
+		index('idx_loyalty_members_tier_review').on(table.tierReviewAt),
 		check(
 			'chk_loyalty_members_status',
 			oneOf(table.status, LOYALTY_MEMBER_STATUS_VALUES),
@@ -6763,6 +6795,9 @@ export const loyaltyPurchases = sqliteTable(
 		reversedPoints: integer('reversed_points').notNull().default(0),
 		// Cumulative money returned; each refund recomputes from the total.
 		refundedMinor: integer('refunded_minor').notNull().default(0),
+		tierId: text('tier_id'),
+		tierMultiplierBp: integer('tier_multiplier_bp').notNull().default(10_000),
+		qualifyingPoints: integer('qualifying_points').notNull().default(0),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
 	},
@@ -6996,7 +7031,7 @@ export const loyaltyLedger = sqliteTable(
 		index('idx_loyalty_ledger_location_at').on(table.locationId, table.at),
 		check(
 			'chk_loyalty_ledger_delta_sign',
-			sql`(${table.type} in ('earn', 'redeem_restore') and ${table.delta} > 0) or (${table.type} in ('earn_reversal', 'redeem') and ${table.delta} < 0) or (${table.type} = 'adjust' and ${table.delta} <> 0)`,
+			sql`(${table.type} in ('earn', 'redeem_restore', 'welcome', 'referral') and ${table.delta} > 0) or (${table.type} in ('earn_reversal', 'redeem', 'welcome_reversal', 'expired', 'referral_reversal') and ${table.delta} < 0) or (${table.type} = 'adjust' and ${table.delta} <> 0)`,
 		),
 		check(
 			'chk_loyalty_ledger_adjust_reason',
@@ -7279,6 +7314,145 @@ export const loyaltyAuditLog = sqliteTable(
 		check(
 			'chk_loyalty_audit_log_actor_kind',
 			oneOf(table.actorKind, LOYALTY_ACTOR_KIND_VALUES),
+		),
+	],
+)
+
+// Abuse-prevention record keyed by verified phone HMAC so re-joining after
+// erasure or re-registering a phone never awards a second welcome bonus.
+export const loyaltyWelcomeGrants = sqliteTable(
+	'loyalty_welcome_grants',
+	{
+		phoneHash: text('phone_hash').primaryKey(),
+		memberId: text('member_id'),
+		purchaseId: text('purchase_id'),
+		points: integer('points').notNull(),
+		trigger: text('trigger', {
+			enum: LOYALTY_WELCOME_TRIGGER_VALUES,
+		}).notNull(),
+		grantedAt: integer('granted_at').notNull().default(nowMs),
+		reversedAt: integer('reversed_at'),
+		reversedPurchaseId: text('reversed_purchase_id'),
+	},
+	(table) => [
+		index('idx_loyalty_welcome_grants_member').on(table.memberId),
+		index('idx_loyalty_welcome_grants_purchase').on(table.purchaseId),
+		check('chk_loyalty_welcome_grants_points', sql`${table.points} >= 1`),
+		check(
+			'chk_loyalty_welcome_grants_trigger',
+			oneOf(table.trigger, LOYALTY_WELCOME_TRIGGER_VALUES),
+		),
+	],
+)
+
+// Deduplicated loyalty notifications sent to members (expiry 30d/7d, expiry enabled,
+// and pre-downgrade tier warnings). Deleted when a person is erased.
+export const loyaltyNotices = sqliteTable(
+	'loyalty_notices',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		memberId: text('member_id')
+			.notNull()
+			.references(() => loyaltyMembers.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: LOYALTY_NOTICE_KIND_VALUES }).notNull(),
+		dedupeKey: text('dedupe_key').notNull(),
+		channel: text('channel', { enum: LOYALTY_NOTICE_CHANNEL_VALUES }).notNull(),
+		payload: text('payload', { mode: 'json' }).$type<Record<string, unknown>>(),
+		sentAt: integer('sent_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('loyalty_notices_member_kind_dedupe').on(
+			table.memberId,
+			table.kind,
+			table.dedupeKey,
+		),
+		index('idx_loyalty_notices_member').on(table.memberId),
+		check(
+			'chk_loyalty_notices_kind',
+			oneOf(table.kind, LOYALTY_NOTICE_KIND_VALUES),
+		),
+		check(
+			'chk_loyalty_notices_channel',
+			oneOf(table.channel, LOYALTY_NOTICE_CHANNEL_VALUES),
+		),
+	],
+)
+
+// Unique share code per active loyalty member for the unified referral program.
+export const loyaltyReferralCodes = sqliteTable(
+	'loyalty_referral_codes',
+	{
+		memberId: text('member_id')
+			.primaryKey()
+			.references(() => loyaltyMembers.id, { onDelete: 'cascade' }),
+		code: text('code').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [uniqueIndex('loyalty_referral_codes_code_unique').on(table.code)],
+)
+
+// Refer-a-friend claims and lifecycle states (link or code checkout).
+export const loyaltyReferrals = sqliteTable(
+	'loyalty_referrals',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		referrerMemberId: text('referrer_member_id').references(
+			() => loyaltyMembers.id,
+			{ onDelete: 'set null' },
+		),
+		referralCode: text('referral_code').notNull(),
+		friendCustomerId: text('friend_customer_id').references(
+			() => customers.id,
+			{ onDelete: 'set null' },
+		),
+		friendMemberId: text('friend_member_id').references(
+			() => loyaltyMembers.id,
+			{ onDelete: 'set null' },
+		),
+		friendPhoneHash: text('friend_phone_hash').notNull(),
+		deviceHash: text('device_hash'),
+		issuedDiscountCodeId: text('issued_discount_code_id'),
+		orderId: text('order_id'),
+		status: text('status', { enum: LOYALTY_REFERRAL_STATUS_VALUES })
+			.notNull()
+			.default('claimed'),
+		referrerPoints: integer('referrer_points').notNull().default(0),
+		friendPoints: integer('friend_points').notNull().default(0),
+		friendDiscountMinor: integer('friend_discount_minor').notNull().default(0),
+		holdUntil: integer('hold_until'),
+		creditedAt: integer('credited_at'),
+		reversedAt: integer('reversed_at'),
+		cancelledReason: text('cancelled_reason'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('loyalty_referrals_order_unique')
+			.on(table.orderId)
+			.where(sql`${table.orderId} is not null`),
+		uniqueIndex('loyalty_referrals_friend_phone_active')
+			.on(table.friendPhoneHash)
+			.where(sql`${table.status} <> 'cancelled'`),
+		index('idx_loyalty_referrals_referrer_status').on(
+			table.referrerMemberId,
+			table.status,
+			table.createdAt,
+		),
+		index('idx_loyalty_referrals_friend_phone').on(table.friendPhoneHash),
+		index('idx_loyalty_referrals_friend_customer').on(table.friendCustomerId),
+		index('idx_loyalty_referrals_device').on(table.deviceHash),
+		index('idx_loyalty_referrals_status_hold').on(
+			table.status,
+			table.holdUntil,
+		),
+		index('idx_loyalty_referrals_discount_code').on(table.issuedDiscountCodeId),
+		check(
+			'chk_loyalty_referrals_status',
+			oneOf(table.status, LOYALTY_REFERRAL_STATUS_VALUES),
 		),
 	],
 )
@@ -7608,6 +7782,7 @@ export const discountRedemptions = sqliteTable(
 export const DISCOUNT_ISSUED_SOURCE_TYPE_VALUES = [
 	'campaign',
 	'journey',
+	'loyalty_referral',
 ] as const
 
 // Single-use coupon codes minted for one recipient of a marketing message (a

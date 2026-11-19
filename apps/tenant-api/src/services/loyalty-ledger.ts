@@ -99,7 +99,14 @@ export async function postLedgerEntryInTx(
 		return { id: existing.id, inserted: false }
 	}
 	const earned =
-		input.type === 'earn' || input.type === 'earn_reversal' ? input.delta : 0
+		input.type === 'earn' ||
+		input.type === 'earn_reversal' ||
+		input.type === 'welcome' ||
+		input.type === 'welcome_reversal' ||
+		input.type === 'referral' ||
+		input.type === 'referral_reversal'
+			? input.delta
+			: 0
 	const redeemed =
 		input.type === 'redeem' || input.type === 'redeem_restore'
 			? -input.delta

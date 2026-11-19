@@ -246,6 +246,19 @@ export const BLOCK_TYPES = {
 			layout: 'button',
 		},
 	},
+	rewards: {
+		label: 'Rewards',
+		icon: 'trophy' as IconName,
+		description: 'Share your loyalty program, tiers, and rewards',
+		defaultConfig: {
+			heading: '',
+			body: '',
+			ctaLabel: '',
+			showRewards: true,
+			showTiers: true,
+			background: 'muted',
+		},
+	},
 	footer: {
 		label: 'Footer',
 		icon: 'share-2' as IconName,
@@ -282,18 +295,24 @@ export const MAX_RESERVATION_PARTY_SIZE = 20
 
 /**
  * The block types an editor may add. The reservation block is offered only when
- * online booking is on (`reservations.enabled` and `reservations.online`).
+ * online booking is on (`reservations.enabled` and `reservations.online`), and
+ * the rewards block is offered only when loyalty is enabled (`loyalty.enabled`).
  */
-export function addableBlockTypes(options: { reservationsOnline: boolean }) {
+export function addableBlockTypes(options: {
+	reservationsOnline: boolean
+	loyaltyEnabled?: boolean
+}) {
 	return BLOCK_TYPE_LIST.filter(
 		(block) =>
 			!isLockedBlockType(block.type) &&
-			(block.type !== 'reservation' || options.reservationsOnline),
+			(block.type !== 'reservation' || options.reservationsOnline) &&
+			(block.type !== 'rewards' || Boolean(options.loyaltyEnabled)),
 	)
 }
 
 export const ADDABLE_BLOCK_TYPES = addableBlockTypes({
 	reservationsOnline: true,
+	loyaltyEnabled: true,
 })
 
 export function pinLockedChromeOrder(
@@ -427,6 +446,7 @@ export const LOCALIZED_FIELDS: Record<string, string[]> = {
 	],
 	video: ['title', 'subtitle'],
 	reservation: ['heading', 'body', 'buttonLabel'],
+	rewards: ['heading', 'body', 'ctaLabel'],
 	footer: [
 		'copyright',
 		'ctaLabel',

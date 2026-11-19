@@ -6,7 +6,8 @@ import {
 	loyaltyCatalogIdSchema,
 	loyaltyCatalogLabelsSchema,
 	refineCatalogLabels,
-} from './program.ts'
+} from './catalog.ts'
+import { loyaltyTierIdSchema } from './tiers.ts'
 
 /**
  * Reward definitions. Every edit is a new immutable version; redemptions keep
@@ -51,6 +52,8 @@ const baseFields = {
 	description: z.string().trim().max(280).nullable().default(null),
 	pointsCost: z.number().int().min(1).max(LOYALTY_MAX_REWARD_COST),
 	labels: loyaltyCatalogLabelsSchema.default({ items: {}, categories: {} }),
+	/** Optional minimum tier required to unlock this reward; null means any member. */
+	minTierId: loyaltyTierIdSchema.nullable().default(null),
 }
 
 const idList = (max: number) =>
