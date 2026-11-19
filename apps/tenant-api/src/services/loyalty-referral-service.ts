@@ -49,6 +49,7 @@ import {
 	or,
 	sql,
 } from 'drizzle-orm'
+import { chunkIds } from '../lib/chunked-in.ts'
 import { getLoyaltyFeatures } from '../lib/loyalty-context.ts'
 import {
 	type LoyaltyReader,
@@ -329,6 +330,7 @@ async function hasPriorCustomerOrderInTx(
 		.where(
 			and(
 				or(...identityClauses),
+				// bounded: fixed 6-element status tuple
 				inArray(restaurantOrders.status, [...activeStatuses]),
 				// Ignore lapsed unpaid online holds (consistent with discount-apply.ts).
 				sql`NOT (${restaurantOrders.paymentMethod} = 'online' AND ${restaurantOrders.status} = 'accepted' AND ${restaurantOrders.paymentStatus} = 'pending' AND ${restaurantOrders.holdExpiresAt} IS NOT NULL AND ${restaurantOrders.holdExpiresAt} < ${cutoffSec})`,
@@ -344,6 +346,7 @@ async function hasPriorCustomerOrderInTx(
 			.from(restaurantOrders)
 			.where(
 				and(
+					// bounded: fixed 6-element status tuple
 					inArray(restaurantOrders.status, [...activeStatuses]),
 					sql`NOT (${restaurantOrders.paymentMethod} = 'online' AND ${restaurantOrders.status} = 'accepted' AND ${restaurantOrders.paymentStatus} = 'pending' AND ${restaurantOrders.holdExpiresAt} IS NOT NULL AND ${restaurantOrders.holdExpiresAt} < ${cutoffSec})`,
 				),
@@ -1587,18 +1590,20 @@ export async function listOperatorReferrals(
 	}
 	const memberNames = new Map<string, string | null>()
 	if (memberIds.size > 0) {
-		const mRows = await db
-			.select({
-				id: loyaltyMembers.id,
-				status: loyaltyMembers.status,
-				name: customers.name,
-			})
-			.from(loyaltyMembers)
-			.leftJoin(customers, eq(customers.id, loyaltyMembers.customerId))
-			.where(inArray(loyaltyMembers.id, [...memberIds]))
-			.all()
-		for (const m of mRows) {
-			memberNames.set(m.id, m.status === 'erased' ? null : (m.name ?? null))
+		for (const part of chunkIds([...memberIds])) {
+			const mRows = await db
+				.select({
+					id: loyaltyMembers.id,
+					status: loyaltyMembers.status,
+					name: customers.name,
+				})
+				.from(loyaltyMembers)
+				.leftJoin(customers, eq(customers.id, loyaltyMembers.customerId))
+				.where(inArray(loyaltyMembers.id, part))
+				.all()
+			for (const m of mRows) {
+				memberNames.set(m.id, m.status === 'erased' ? null : (m.name ?? null))
+			}
 		}
 	}
 
