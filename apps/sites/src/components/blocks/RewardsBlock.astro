@@ -1,6 +1,6 @@
 ---
 import LoyaltyLabels from '~/components/loyalty/LoyaltyLabels.astro'
-import { localizedPath } from '~/i18n'
+import { getLocaleHref } from '~/lib/locale'
 import { fetchPublishedLoyalty } from '~/lib/org'
 
 interface Props {
@@ -8,15 +8,19 @@ interface Props {
 }
 
 const { config } = Astro.props
-const { org, orgSlug, customHost, locale } = Astro.locals
+const organization = Astro.locals.organization
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+const defaultLocale = organization?.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization?.locale || defaultLocale
 
-const gate = org?.id
+const gate = organization?.id
 	? await fetchPublishedLoyalty({ slug: orgSlug, host: customHost })
 	: null
 
 const enabled = gate?.enabled === true
-const walletHref = localizedPath('/profile/rewards', locale)
-const loginHref = `${localizedPath('/login', locale)}?redirect=${encodeURIComponent(walletHref)}`
+const walletHref = getLocaleHref('/profile/rewards', locale, locale, defaultLocale)
+const loginHref = `${getLocaleHref('/login', locale, locale, defaultLocale)}?redirect=${encodeURIComponent(walletHref)}`
 
 const heading = typeof config?.heading === 'string' ? config.heading : ''
 const body = typeof config?.body === 'string' ? config.body : ''
@@ -41,15 +45,16 @@ const showTiers = config?.showTiers !== false ? 'true' : 'false'
 				hidden
 			/>
 			<script>
-				import { isSignedIn } from '~/lib/client-auth'
-				import { readLoyaltyLabels } from '~/lib/loyalty/labels'
+				import { getAccessToken } from '~/lib/client-auth'
+				import { browserLocale } from '~/lib/locale'
+				import { readLoyaltyLabels } from '~/lib/loyalty/read-labels'
 				import { initRewardsBlock } from '~/lib/loyalty/rewards-block'
 				import { createLoyaltyClient } from '~/lib/loyalty-client'
 
 				const labels = readLoyaltyLabels()
 				if (labels) {
 					const client = createLoyaltyClient()
-					const locale = document.documentElement.lang || 'en'
+					const locale = browserLocale()
 					for (const root of document.querySelectorAll<HTMLElement>(
 						'[data-rewards-block]',
 					)) {
@@ -57,7 +62,7 @@ const showTiers = config?.showTiers !== false ? 'true' : 'false'
 							client,
 							labels,
 							locale,
-							signedIn: isSignedIn,
+							signedIn: () => Boolean(getAccessToken()),
 							loginHref: root.dataset.loginHref || '/login',
 							walletHref: root.dataset.walletHref || '/profile/rewards',
 							config: {
