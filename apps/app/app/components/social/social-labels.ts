@@ -1,6 +1,13 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/macro'
 import {
+	GOOGLE_COUPON_MAX,
+	GOOGLE_POST_MAX_TEXT,
+	GOOGLE_TERMS_MAX,
+	GOOGLE_TITLE_MAX,
+	type GooglePostProblem,
+} from '#app/utils/social/google-post.ts'
+import {
 	SOCIAL_MAX_MEDIA,
 	SOCIAL_PLATFORM_RULES,
 	type SocialPlatform,
@@ -13,6 +20,7 @@ export const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, MessageDescriptor> =
 	{
 		facebook: msg`Facebook`,
 		instagram: msg`Instagram`,
+		google_business: msg`Google`,
 	}
 
 export const SOCIAL_POST_STATUS_LABELS: Record<
@@ -39,6 +47,7 @@ export const SOCIAL_TARGET_STATUS_LABELS: Record<
 
 const instagramMaxText = SOCIAL_PLATFORM_RULES.instagram.maxText
 const instagramMaxHashtags = SOCIAL_PLATFORM_RULES.instagram.maxHashtags ?? 30
+const googleMaxText = SOCIAL_PLATFORM_RULES.google_business.maxText
 
 export const SOCIAL_PROBLEM_LABELS: Record<
 	SocialPlatform,
@@ -58,6 +67,35 @@ export const SOCIAL_PROBLEM_LABELS: Record<
 		too_many_media: msg`Instagram takes at most ${SOCIAL_MAX_MEDIA} images.`,
 		too_many_hashtags: msg`Instagram allows at most ${instagramMaxHashtags} hashtags.`,
 	},
+	google_business: {
+		empty: msg`Google needs text or an image.`,
+		too_long: msg`Google posts are at most ${googleMaxText} characters.`,
+		needs_media: msg`Google needs an image.`,
+		too_many_media: msg`Google posts take one image.`,
+		too_many_hashtags: msg`Too many hashtags for Google.`,
+	},
+}
+
+/** Google post rules (#135) beyond the general ones. */
+export const GOOGLE_POST_PROBLEM_LABELS: Record<
+	GooglePostProblem,
+	MessageDescriptor
+> = {
+	empty: msg`Write some text for the Google post.`,
+	too_long: msg`Google posts are at most ${GOOGLE_POST_MAX_TEXT} characters.`,
+	has_phone: msg`Google refuses posts with a phone number in the text. Use the Call button instead.`,
+	too_many_media: msg`Google posts take one image.`,
+	media_type: msg`The Google image must be a JPEG or PNG.`,
+	media_too_small: msg`The Google image must be at least 400 by 300 pixels.`,
+	title_required: msg`Add a title for the Google post.`,
+	title_too_long: msg`The Google title is at most ${GOOGLE_TITLE_MAX} characters.`,
+	dates_required: msg`Choose a start and an end date for the Google post.`,
+	dates_order: msg`The end of the Google post must not be before its start.`,
+	bad_url: msg`The Google post link must start with https://.`,
+	button_needs_url: msg`Add the link for the Google button.`,
+	coupon_too_long: msg`The coupon code is at most ${GOOGLE_COUPON_MAX} characters.`,
+	terms_too_long: msg`The terms are at most ${GOOGLE_TERMS_MAX} characters.`,
+	coupon_not_valid_online: msg`This coupon is not active and valid online, so it cannot go in a Google offer.`,
 }
 
 /** Our own failure codes stored on a target; Meta's own text shows as is. */
@@ -72,6 +110,13 @@ export const SOCIAL_TARGET_ERROR_LABELS: Record<string, MessageDescriptor> = {
 	image_processing_failed: msg`Instagram could not process the image. Use an aspect ratio between 4:5 and 1.91:1.`,
 	image_processing_slow: msg`Instagram took too long to process the image. Try again.`,
 	mock_refused: msg`The Meta emulator refused this post (it contains #fail).`,
+	google_reconnect: msg`This Google profile needs to be reconnected. Reconnect it in Settings, Integrations, then retry.`,
+	google_suspended: msg`Google has suspended this profile, so it cannot take posts.`,
+	google_not_verified: msg`This Google profile is not verified yet, so it cannot take posts.`,
+	google_access_lost: msg`You no longer have access to this Google profile.`,
+	google_rejected: msg`Google refused this post.`,
+	google_unavailable: msg`Google did not answer. Try again in a few minutes.`,
+	google_removed: msg`Google rejected this post after review.`,
 }
 
 export function socialTargetError(
@@ -79,6 +124,11 @@ export function socialTargetError(
 	error: string | null,
 ): string | null {
 	if (!error) return null
+	if (error.startsWith('google_invalid:')) {
+		const first = error.slice('google_invalid:'.length).split(',')[0]
+		const label = GOOGLE_POST_PROBLEM_LABELS[first as GooglePostProblem]
+		return label ? translate(label) : error
+	}
 	const label = SOCIAL_TARGET_ERROR_LABELS[error]
 	return label ? translate(label) : error
 }
@@ -103,9 +153,12 @@ export function socialFormErrors(
 	return errors?.map((code) => {
 		const [platform, problem] = code.split(':') as [string, string | undefined]
 		const platformLabel = problem
-			? SOCIAL_PROBLEM_LABELS[platform as SocialPlatform]?.[
+			? ((platform === 'google_business'
+					? GOOGLE_POST_PROBLEM_LABELS[problem as GooglePostProblem]
+					: undefined) ??
+				SOCIAL_PROBLEM_LABELS[platform as SocialPlatform]?.[
 					problem as SocialPostProblem
-				]
+				])
 			: undefined
 		const label: MessageDescriptor =
 			platformLabel ??

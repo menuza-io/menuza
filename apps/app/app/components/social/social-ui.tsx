@@ -44,7 +44,7 @@ export function SocialPlatformIcon({
 	const { _ } = useLingui()
 	return (
 		<Icon
-			name={platform}
+			name={platform === 'google_business' ? 'google' : platform}
 			className={className ?? 'size-4'}
 			aria-label={_(SOCIAL_PLATFORM_LABELS[platform])}
 		/>

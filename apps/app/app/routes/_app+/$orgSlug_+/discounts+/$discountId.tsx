@@ -51,6 +51,7 @@ import {
 } from '#app/utils/discounts/save.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { couponPrintHref } from '#app/utils/print/restaurant/coupon.server.ts'
+import { isGoogleSocialEnabled } from '#app/utils/social/google-posts.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -113,22 +114,32 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					)
 					.catch(() => [])
 			: []
-	const [createdBy, history, printHref] = await Promise.all([
-		getDiscountCreatedBy(loaded.row.createdById),
-		listDiscountHistory(access.organization.id, discountId),
-		stored
-			? couponPrintHref({
-					userId: access.userId,
-					organization: access.organization,
-					discount: {
-						id: discountId,
-						status: loaded.row.status,
-						definition: stored.definition,
-						codeCount: loaded.codes.length,
-					},
-				})
-			: null,
-	])
+	const [createdBy, history, printHref, googleSocialEnabled] =
+		await Promise.all([
+			getDiscountCreatedBy(loaded.row.createdById),
+			listDiscountHistory(access.organization.id, discountId),
+			stored
+				? couponPrintHref({
+						userId: access.userId,
+						organization: access.organization,
+						discount: {
+							id: discountId,
+							status: loaded.row.status,
+							definition: stored.definition,
+							codeCount: loaded.codes.length,
+						},
+					})
+				: null,
+			isGoogleSocialEnabled(access.organization.id),
+		])
+	const googleOfferHref =
+		googleSocialEnabled &&
+		canChangeBroadcasts &&
+		loaded.row.status === 'active' &&
+		loaded.codes.length > 0 &&
+		(stored?.definition.channels.includes('web') ?? true)
+			? `/${access.organization.slug}/marketing/social/new?discountId=${encodeURIComponent(discountId)}`
+			: null
 	return {
 		orgSlug: access.organization.slug,
 		// The form takes the currency of the chosen locations; this one serves an
@@ -140,6 +151,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		sharedWithOtherLocations: access.canWrite && !editableHere,
 		// A coupon card for this discount, when the Print shop can make one.
 		printHref,
+		// Pre-fill a Google Business Profile Offer post from this coupon (#135).
+		googleOfferHref,
 		editor,
 		audiences,
 		discountId,
@@ -348,7 +361,7 @@ export default function EditDiscountRoute() {
 				createdAt={data.createdAt}
 				sharedWithOtherLocations={data.sharedWithOtherLocations}
 				statusActions={({ dirty }) =>
-					data.canWrite || data.printHref ? (
+					data.canWrite || data.printHref || data.googleOfferHref ? (
 						<>
 							{data.canWrite ? (
 								<Button
@@ -404,6 +417,14 @@ export default function EditDiscountRoute() {
 									}
 								/>
 								<DropdownMenuContent align="end" className="min-w-44">
+									{data.googleOfferHref ? (
+										<DropdownMenuItem
+											render={<Link to={data.googleOfferHref} />}
+										>
+											<Icon name="google" />
+											<Trans>Post this offer to Google</Trans>
+										</DropdownMenuItem>
+									) : null}
 									{data.printHref ? (
 										<DropdownMenuItem render={<Link to={data.printHref} />}>
 											<Icon name="printer" />

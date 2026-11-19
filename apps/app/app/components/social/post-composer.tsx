@@ -38,6 +38,11 @@ import {
 	type MediaLibraryAsset,
 } from '#app/components/media-library/media-library-picker.tsx'
 import {
+	googlePostProblems,
+	type GooglePostDetails,
+	type GoogleTopicType,
+} from '#app/utils/social/google-post.ts'
+import {
 	SOCIAL_MAX_MEDIA,
 	SOCIAL_PLATFORM_RULES,
 	socialPostProblems,
@@ -46,7 +51,15 @@ import {
 } from '#app/utils/social/platforms.ts'
 import { SocialPostFormSchema } from '#app/utils/social/post-schema.ts'
 import { isScheduleLocalValid } from '#app/utils/social/time.ts'
-import { SOCIAL_PROBLEM_LABELS, socialFormErrors } from './social-labels.ts'
+import {
+	GooglePostFields,
+	type GooglePostValue,
+} from './google-post-fields.tsx'
+import {
+	GOOGLE_POST_PROBLEM_LABELS,
+	SOCIAL_PROBLEM_LABELS,
+	socialFormErrors,
+} from './social-labels.ts'
 import { SocialPlatformIcon } from './social-ui.tsx'
 
 export type ComposerAccount = {
@@ -63,6 +76,8 @@ export type ComposerDefaults = {
 	media: SocialPostMedia[]
 	/** `datetime-local` value in `timeZone`, or empty. */
 	scheduledAt: string
+	googleTopicType?: GoogleTopicType
+	googleDetails?: GooglePostDetails
 }
 
 export function SocialPostComposer({
@@ -114,6 +129,10 @@ export function SocialPostComposer({
 	const [body, setBody] = useState(defaults.body)
 	const [media, setMedia] = useState<SocialPostMedia[]>(defaults.media)
 	const [scheduledAt, setScheduledAt] = useState(defaults.scheduledAt)
+	const [googlePost, setGooglePost] = useState<GooglePostValue>(() => ({
+		topicType: defaults.googleTopicType ?? 'STANDARD',
+		details: defaults.googleDetails ?? {},
+	}))
 
 	const activeSelected = selected.filter((accountId) =>
 		accounts.some(
@@ -127,18 +146,41 @@ export function SocialPostComposer({
 				.map((account) => account.platform),
 		),
 	]
+	const hasGoogle = platforms.includes('google_business')
 	const problems = socialPostProblems({
 		body,
 		mediaCount: media.length,
 		platforms,
 	})
+	const googleProblems = hasGoogle
+		? googlePostProblems({
+				body,
+				topicType: googlePost.topicType,
+				details: googlePost.details,
+				media: media.map((item) => ({
+					mimeType: item.mimeType ?? 'image/jpeg',
+					width: item.width ?? null,
+					height: item.height ?? null,
+				})),
+			})
+		: []
+	// Avoid duplicating general google_business problems already covered by googleProblems.
+	const googleProblemSet = new Set<string>(googleProblems)
+	const dedupedProblems = problems.filter(
+		(item) =>
+			item.platform !== 'google_business' ||
+			!googleProblemSet.has(item.problem),
+	)
 	const textLimit = Math.min(
 		...(platforms.length > 0 ? platforms : (['facebook'] as const)).map(
 			(platform) => SOCIAL_PLATFORM_RULES[platform].maxText,
 		),
 	)
 	const textLength = [...body.trim()].length
-	const canSend = activeSelected.length > 0 && problems.length === 0
+	const canSend =
+		activeSelected.length > 0 &&
+		dedupedProblems.length === 0 &&
+		googleProblems.length === 0
 	const canSchedule =
 		Boolean(scheduledAt) && isScheduleLocalValid(scheduledAt, timeZone)
 	const busy = submittingIntent != null
@@ -160,13 +202,34 @@ export function SocialPostComposer({
 				? current
 				: [
 						...current,
-						{ mediaId: asset.id, url: asset.url, altText: asset.altText },
+						{
+							mediaId: asset.id,
+							url: asset.url,
+							altText: asset.altText,
+							mimeType: asset.mimeType,
+							width: asset.width ?? null,
+							height: asset.height ?? null,
+						},
 					],
 		)
 
 	return (
 		<Form method="post" {...getFormProps(form)} className="space-y-8">
 			<input type="hidden" name="timeZone" value={timeZone} />
+			{hasGoogle ? (
+				<>
+					<input
+						type="hidden"
+						name="googleTopicType"
+						value={googlePost.topicType}
+					/>
+					<input
+						type="hidden"
+						name="googleDetails"
+						value={JSON.stringify(googlePost.details)}
+					/>
+				</>
+			) : null}
 			{media.map((item) => (
 				<input
 					key={item.mediaId}
@@ -286,11 +349,15 @@ export function SocialPostComposer({
 						<FieldError errors={socialFormErrors(_, fields.body.errors)} />
 					</Field>
 
+					{hasGoogle ? (
+						<GooglePostFields value={googlePost} onChange={setGooglePost} />
+					) : null}
+
 					<FieldSet>
 						<FieldLegend>{_(msg`Images`)}</FieldLegend>
 						<FieldDescription>
 							{_(
-								msg`Instagram needs at least one image. Several images become a carousel.`,
+								msg`Instagram needs at least one image. Several images become a carousel. Google posts take one JPEG or PNG (at least 400 by 300 pixels).`,
 							)}
 						</FieldDescription>
 						{media.length > 0 ? (
@@ -389,15 +456,24 @@ export function SocialPostComposer({
 							</div>
 						) : null}
 					</div>
-					{problems.length > 0 ? (
+					{dedupedProblems.length > 0 || googleProblems.length > 0 ? (
 						<ul className="text-warning space-y-1 text-sm">
-							{problems.map(({ platform, problem }) => (
+							{dedupedProblems.map(({ platform, problem }) => (
 								<li key={`${platform}:${problem}`} className="flex gap-2">
 									<Icon
 										name="alert-triangle"
 										className="mt-0.5 size-4 shrink-0"
 									/>
 									{_(SOCIAL_PROBLEM_LABELS[platform][problem])}
+								</li>
+							))}
+							{googleProblems.map((problem) => (
+								<li key={`google:${problem}`} className="flex gap-2">
+									<Icon
+										name="alert-triangle"
+										className="mt-0.5 size-4 shrink-0"
+									/>
+									{_(GOOGLE_POST_PROBLEM_LABELS[problem])}
 								</li>
 							))}
 						</ul>

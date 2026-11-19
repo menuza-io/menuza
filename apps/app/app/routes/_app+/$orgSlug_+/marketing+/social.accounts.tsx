@@ -46,6 +46,10 @@ import {
 } from '#app/utils/social/accounts.server.ts'
 import { isMetaConfigured, isSocialMock } from '#app/utils/social/env.server.ts'
 import {
+	isGoogleSocialEnabled,
+	syncGoogleSocialAccounts,
+} from '#app/utils/social/google-posts.server.ts'
+import {
 	exchangeMetaCode,
 	listMetaAccounts,
 	metaAuthorizeUrl,
@@ -75,7 +79,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const connected = url.searchParams.get('connected')
 	const platform = url.searchParams.get('platform')
 	const meta = url.searchParams.get('meta')
+	const googleEnabled = await isGoogleSocialEnabled(access.organization.id)
 	return {
+		googleEnabled,
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
 		timeZone,
@@ -84,11 +90,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		accounts: await listSocialAccounts(access.organization.id),
 		notice: isSocialPlatform(connected)
 			? ({ kind: 'connected', platform: connected } as const)
-			: meta === 'none' && isSocialPlatform(platform)
-				? ({ kind: 'none', platform } as const)
-				: meta === 'denied' || meta === 'failed'
-					? ({ kind: meta } as const)
-					: null,
+			: url.searchParams.get('google') === 'none'
+				? ({ kind: 'google_none' } as const)
+				: meta === 'none' && isSocialPlatform(platform)
+					? ({ kind: 'none', platform } as const)
+					: meta === 'denied' || meta === 'failed'
+						? ({ kind: meta } as const)
+						: null,
 	}
 }
 
@@ -117,6 +125,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return redirect(back)
 	}
 
+	if (parsed.data.platform === 'google_business') {
+		// Google (#135): no sign-in here. The locations already linked through
+		// the Google Business Profile integration become accounts.
+		if (!(await isGoogleSocialEnabled(access.organization.id))) {
+			throw new Response('Not Found', { status: 404 })
+		}
+		const linked = await syncGoogleSocialAccounts(access.organization.id)
+		return redirect(
+			linked > 0 ? `${back}?connected=google_business` : `${back}?google=none`,
+		)
+	}
 	if (!isMetaConfigured()) throw new Response('Not Found', { status: 404 })
 	const platform = parsed.data.platform
 	if (isSocialMock()) {
@@ -138,14 +157,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 const PLATFORM_DESCRIPTIONS: Record<SocialPlatform, MessageDescriptor> = {
+	google_business: msg`Post updates, offers and events to the Google profiles you linked in Settings, Integrations.`,
 	facebook: msg`Post to the Facebook Pages you manage.`,
 	instagram: msg`Post to Instagram professional accounts (business or creator) linked to a Facebook Page.`,
 }
 
 export default function SocialAccountsRoute() {
 	const { _, i18n } = useLingui()
-	const { orgSlug, canWrite, timeZone, configured, mock, accounts, notice } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		canWrite,
+		timeZone,
+		configured,
+		mock,
+		accounts,
+		notice,
+		googleEnabled,
+	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const connecting =
 		navigation.state !== 'idle' &&
@@ -184,6 +212,16 @@ export default function SocialAccountsRoute() {
 							return _(msg`${platformName} connected`)
 						})()}
 					</AlertTitle>
+				</Alert>
+			) : notice?.kind === 'google_none' ? (
+				<Alert variant="destructive">
+					<Icon name="circle-alert" />
+					<AlertTitle>{_(msg`No Google profile linked yet`)}</AlertTitle>
+					<AlertDescription>
+						{_(
+							msg`Link a Google location in Settings, Integrations, then connect it here.`,
+						)}
+					</AlertDescription>
 				</Alert>
 			) : notice?.kind === 'none' ? (
 				<Alert variant="destructive">
@@ -251,7 +289,9 @@ export default function SocialAccountsRoute() {
 				</Item>
 			) : null}
 
-			{SOCIAL_PLATFORMS.map((platform) => {
+			{SOCIAL_PLATFORMS.filter(
+				(platform) => platform !== 'google_business' || googleEnabled,
+			).map((platform) => {
 				const platformAccounts = accounts.filter(
 					(account) => account.platform === platform,
 				)
@@ -278,7 +318,7 @@ export default function SocialAccountsRoute() {
 									{_(PLATFORM_DESCRIPTIONS[platform])}
 								</ItemDescription>
 							</ItemContent>
-							{canWrite && configured ? (
+							{canWrite && (configured || platform === 'google_business') ? (
 								<ItemActions>
 									<Form method="post">
 										<input type="hidden" name="platform" value={platform} />
@@ -338,7 +378,17 @@ export default function SocialAccountsRoute() {
 												) : (
 													<Badge variant="success">{_(msg`Active`)}</Badge>
 												)}
-												{canWrite ? (
+												{canWrite && account.platform === 'google_business' ? (
+													<Button
+														variant="ghost"
+														size="sm"
+														render={
+															<Link to={`/${orgSlug}/settings/integrations`} />
+														}
+													>
+														{_(msg`Manage in Integrations`)}
+													</Button>
+												) : canWrite ? (
 													<AlertDialog>
 														<AlertDialogTrigger
 															render={

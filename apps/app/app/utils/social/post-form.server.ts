@@ -3,6 +3,8 @@ import { i18n } from '@lingui/core'
 import { t } from '@lingui/macro'
 import { redirectWithToast } from '@repo/common/toast'
 import { type SocialAccess } from './access.server.ts'
+import { isGoogleTopicType, parseGooglePostDetails } from './google-post.ts'
+import { googlePostServerProblems } from './google-posts.server.ts'
 import { socialPostProblems } from './platforms.ts'
 import { SocialPostFormSchema } from './post-schema.ts'
 import {
@@ -34,8 +36,16 @@ export async function handleSocialPostForm(
 	if (submission.status !== 'success') {
 		return { result: submission.reply() }
 	}
-	const { intent, body, accountIds, mediaIds, scheduledAt, timeZone } =
-		submission.value
+	const {
+		intent,
+		body,
+		accountIds,
+		mediaIds,
+		scheduledAt,
+		timeZone,
+		googleTopicType,
+		googleDetails,
+	} = submission.value
 	const organizationId = access.organization.id
 
 	if (intent !== 'draft') {
@@ -55,11 +65,28 @@ export async function handleSocialPostForm(
 			mediaCount: media.length,
 			platforms: accounts.map((account) => account.platform),
 		})
-		if (problems.length > 0) {
+		const googleProblems = accounts.some(
+			(account) => account.platform === 'google_business',
+		)
+			? await googlePostServerProblems({
+					organizationId,
+					body,
+					topicType: isGoogleTopicType(googleTopicType)
+						? googleTopicType
+						: 'STANDARD',
+					details: parseGooglePostDetails(googleDetails),
+					media,
+				})
+			: []
+		if (problems.length > 0 || googleProblems.length > 0) {
+			// The general rules and the Google ones can name the same problem
+			// (text too long): list each once.
+			const codes = new Set([
+				...problems.map((p) => `${p.platform}:${p.problem}`),
+				...googleProblems.map((problem) => `google_business:${problem}`),
+			])
 			return {
-				result: submission.reply({
-					formErrors: problems.map((p) => `${p.platform}:${p.problem}`),
-				}),
+				result: submission.reply({ formErrors: [...codes] }),
 			}
 		}
 	}
@@ -80,6 +107,12 @@ export async function handleSocialPostForm(
 						: scheduledAt
 							? fromLocalInputValue(scheduledAt, timeZone)
 							: null,
+				googleTopicType: isGoogleTopicType(googleTopicType)
+					? googleTopicType
+					: null,
+				googleDetails: isGoogleTopicType(googleTopicType)
+					? JSON.stringify(parseGooglePostDetails(googleDetails))
+					: null,
 			},
 			postId,
 		)
