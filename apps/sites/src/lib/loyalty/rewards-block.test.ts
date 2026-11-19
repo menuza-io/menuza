@@ -33,7 +33,7 @@ function makeProgram(
 }
 
 describe('initRewardsBlock', () => {
-	const labels = testLoyaltyLabels('en')
+	const labels = testLoyaltyLabels()
 
 	it('renders heading, welcome bonus, tiers, rewards, and Join CTA when signed out', async () => {
 		const root = document.createElement('section')

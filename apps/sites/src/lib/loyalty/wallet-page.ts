@@ -891,7 +891,10 @@ export async function initWalletPage(
 					now: now(),
 				})
 				if (pending) {
-					clearPendingReferral(window.localStorage)
+					clearPendingReferral({
+						host: window.location.host,
+						storage: window.localStorage,
+					})
 					void client
 						.claimReferral({
 							code: pending,

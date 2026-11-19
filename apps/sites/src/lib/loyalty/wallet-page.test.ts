@@ -923,7 +923,7 @@ describe('rewards wallet: till requests', () => {
 					referrerPoints: 50,
 					friendPoints: 25,
 					friendDiscount: {
-						type: 'fixed_amount',
+						type: 'fixed',
 						amountMinor: 1500,
 					},
 					minimumOrderMinor: 3000,

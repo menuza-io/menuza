@@ -3,7 +3,7 @@
 import 'fake-indexeddb/auto'
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
-import { type TicketsConfig, resolveTickets  } from '@repo/common/ticket-config'
+import { type TicketsConfig, resolveTickets } from '@repo/common/ticket-config'
 import { act, createElement as h } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -12,10 +12,10 @@ import { Checkout } from './Checkout.tsx'
 import { PrintedKitchenTicket } from './PrintedKitchenTicket.tsx'
 import { Receipt } from './Receipt.tsx'
 import { db, type PosOrder } from '~/lib/db.ts'
-import { type OrderDraft } from '~/lib/orders.ts'
+import { localDate, type OrderDraft } from '~/lib/orders.ts'
 import { usePos } from '~/lib/store.ts'
 import { kitchenTicketPlan } from '~/lib/tickets.ts'
-(
+;(
 	globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -158,7 +158,6 @@ const order = (over: Partial<PosOrder> = {}): PosOrder =>
 	}) as PosOrder
 
 const draw = (node: ReturnType<typeof h>) => {
-	 
 	act(() => root.render(h(I18nProvider, { i18n }, node)))
 	return document.getElementById('receipt')?.textContent ?? ''
 }
@@ -691,6 +690,7 @@ describe('the orders list prints the kitchen ticket of a till order (#363)', () 
 		setTickets({ cancellationSlip: true })
 		await putTab({
 			status: 'void',
+			businessDate: localDate(new Date(), undefined, 240),
 			createdAt: Date.now(),
 			updatedAt: Date.now(),
 			voidedAt: Date.now(),

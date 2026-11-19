@@ -1441,13 +1441,9 @@ const valueClass = 'price font-medium text-foreground'
 							? singular
 								? labels.unitStar
 								: labels.unitStars
-							: unitLabel === 'stamps'
-								? singular
-									? labels.unitStamp
-									: labels.unitStamps
-								: singular
-									? labels.unitPoint
-									: labels.unitPoints
+							: singular
+								? labels.unitPoint
+								: labels.unitPoints
 					banner.textContent = fillTemplate(labels.welcomeBanner, {
 						points: `${wb.points} ${unitWord}`,
 					})

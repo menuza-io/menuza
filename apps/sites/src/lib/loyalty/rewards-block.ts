@@ -121,7 +121,7 @@ export async function initRewardsBlock(
 			locale,
 		)
 		const noteText = program.welcomeBonus.afterFirstPaidOrder
-			? fillTemplate(labels.welcomeFirstOrder, { points: pts })
+			? fillTemplate(labels.welcomePending, { points: pts })
 			: fillTemplate(labels.welcomeGranted, { points: pts })
 		const welcomeNote = el(
 			'p',
@@ -140,7 +140,7 @@ export async function initRewardsBlock(
 			el(
 				'h3',
 				'text-xs font-semibold tracking-wider text-muted-foreground uppercase',
-				labels.howYouEarn,
+				labels.earnHeading,
 			),
 		)
 		for (const line of earnLines) {
