@@ -16,6 +16,8 @@ import {
 	db,
 	desc,
 	eq,
+	GbpListingIssue,
+	GbpLocationSync,
 	gt,
 	HomeAttentionDismissal,
 	inArray,
@@ -528,6 +530,102 @@ export const ATTENTION_DETECTORS: readonly AttentionDetector[] = [
 					href: '/mailbox?tab=reviews',
 				}),
 			]
+		},
+	},
+	{
+		kind: 'google_listing_status',
+		flag: 'gbp.sync',
+		permission: ORG_PERMISSIONS.READ_SETTINGS_ANY,
+		async detect({ organization, locations }) {
+			if (locations.length === 0) return []
+			const byId = new Map(locations.map((loc) => [loc.id, loc]))
+			const syncs = await db
+				.select({
+					locationId: GbpLocationSync.organizationLocationId,
+					state: GbpLocationSync.state,
+					verificationState: GbpLocationSync.verificationState,
+					lastError: GbpLocationSync.lastError,
+					updatedAt: GbpLocationSync.updatedAt,
+				})
+				.from(GbpLocationSync)
+				.where(
+					and(
+						eq(GbpLocationSync.organizationId, organization.id),
+						inArray(
+							GbpLocationSync.organizationLocationId,
+							locations.map((l) => l.id),
+						),
+					),
+				)
+			const items: AttentionItem[] = []
+			for (const sync of syncs) {
+				const location = byId.get(sync.locationId)
+				if (!location) continue
+				const broken =
+					sync.state === 'suspended' ||
+					sync.state === 'access_lost' ||
+					sync.state === 'token_expired' ||
+					sync.state === 'not_verified' ||
+					sync.verificationState === 'unverified' ||
+					Boolean(sync.lastError)
+				if (!broken) continue
+				items.push(
+					attentionItem('google_listing_status', location, {
+						since: sync.updatedAt?.toISOString() ?? null,
+						href: `/settings/locations/${location.id}?tab=google`,
+					}),
+				)
+			}
+			return items
+		},
+	},
+	{
+		kind: 'google_listing_issue',
+		flag: 'gbp.sync',
+		permission: ORG_PERMISSIONS.READ_SETTINGS_ANY,
+		async detect({ organization, locations }) {
+			if (locations.length === 0) return []
+			const byId = new Map(locations.map((loc) => [loc.id, loc]))
+			const issues = await db
+				.select({
+					locationId: GbpListingIssue.organizationLocationId,
+					createdAt: GbpListingIssue.createdAt,
+				})
+				.from(GbpListingIssue)
+				.where(
+					and(
+						eq(GbpListingIssue.organizationId, organization.id),
+						eq(GbpListingIssue.status, 'open'),
+						inArray(
+							GbpListingIssue.organizationLocationId,
+							locations.map((l) => l.id),
+						),
+					),
+				)
+			const grouped = new Map<string, { count: number; oldest: number }>()
+			for (const issue of issues) {
+				const ts = issue.createdAt.getTime()
+				const prev = grouped.get(issue.locationId)
+				if (prev) {
+					prev.count += 1
+					if (ts < prev.oldest) prev.oldest = ts
+				} else {
+					grouped.set(issue.locationId, { count: 1, oldest: ts })
+				}
+			}
+			const items: AttentionItem[] = []
+			for (const [locationId, summary] of grouped) {
+				const location = byId.get(locationId)
+				if (!location) continue
+				items.push(
+					attentionItem('google_listing_issue', location, {
+						count: summary.count,
+						since: new Date(summary.oldest).toISOString(),
+						href: `/settings/locations/${location.id}?tab=google`,
+					}),
+				)
+			}
+			return items
 		},
 	},
 ]

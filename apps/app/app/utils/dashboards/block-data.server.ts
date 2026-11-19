@@ -12,6 +12,7 @@ import {
 	eq,
 	gte,
 	inArray,
+	OrganizationLocation,
 	OrganizationNote,
 	SavedReport,
 	sql,
@@ -21,6 +22,11 @@ import {
 } from '@repo/database'
 import { definitionAllowed, type ReportDefinition } from '@repo/reports'
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
+import { gbpFlags } from '#app/utils/gbp/context.server.ts'
+import {
+	loadPerformanceByLocation,
+	type LocationPerformance,
+} from '#app/utils/gbp/metrics.server.ts'
 import { loadSalesGoalsAccess } from '#app/utils/goals/goals-access.server.ts'
 import { type SalesGoalsAccess } from '#app/utils/goals/goals.ts'
 import {
@@ -28,6 +34,7 @@ import {
 	loadLaunchChecklist,
 } from '#app/utils/launch/launch.server.ts'
 import { type LaunchChecklist } from '#app/utils/launch/launch.ts'
+import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import {
 	loadLocationStatus,
@@ -95,6 +102,8 @@ export type BuiltInBlockData = {
 	attention: AttentionData | null
 	/** Location status for the viewer (#332); null without the block or access. */
 	status?: LocationStatusData | null
+	/** Google Business Profile 28-day performance (#136); null without access/block. */
+	googlePerformance?: LocationPerformance[] | null
 	/**
 	 * The launch checklist the onboarding block shows while `launch.checklist`
 	 * is on (instead of the template steps); null otherwise.
@@ -112,6 +121,8 @@ export type DashboardBlockPicker = {
 	salesGoals: SalesGoalsAccess
 	/** The viewer may see the Status block (#332). */
 	statusAvailable?: boolean
+	/** The viewer may see Google listing performance (#136). */
+	googlePerformanceAvailable?: boolean
 	/** Key the home location picker is remembered under (per user and organization). */
 	locationStorageKey: string
 	savedReports: SavedReportOption[]
@@ -304,23 +315,33 @@ export async function loadBuiltInBlockData({
 	const launchOn = types.has('onboarding')
 		? await isLaunchChecklistOn(organization.id)
 		: false
-	const [notes, onboarding, leaderboard, attention, launch, status] =
-		await Promise.all([
-			types.has('stats') || types.has('notes-chart')
-				? loadNotesSeries(organization, now)
-				: null,
-			types.has('onboarding') && !launchOn
-				? loadOnboarding(userId, organization.id)
-				: null,
-			types.has('leaderboard') ? loadLeaderboard(organization.id) : null,
-			types.has('attention')
-				? loadAttention({ userId, organization, request, now })
-				: null,
-			launchOn ? loadHomeLaunch(userId, organization.id, now) : null,
-			types.has('status')
-				? loadStatusForViewer(userId, organization.id, now)
-				: null,
-		])
+	const [
+		notes,
+		onboarding,
+		leaderboard,
+		attention,
+		launch,
+		status,
+		googlePerformance,
+	] = await Promise.all([
+		types.has('stats') || types.has('notes-chart')
+			? loadNotesSeries(organization, now)
+			: null,
+		types.has('onboarding') && !launchOn
+			? loadOnboarding(userId, organization.id)
+			: null,
+		types.has('leaderboard') ? loadLeaderboard(organization.id) : null,
+		types.has('attention')
+			? loadAttention({ userId, organization, request, now })
+			: null,
+		launchOn ? loadHomeLaunch(userId, organization.id, now) : null,
+		types.has('status')
+			? loadStatusForViewer(userId, organization.id, now)
+			: null,
+		types.has('google-performance')
+			? loadGooglePerformanceForViewer(userId, organization.id)
+			: null,
+	])
 	return {
 		fetchedAt: now.getTime(),
 		notes,
@@ -329,6 +350,7 @@ export async function loadBuiltInBlockData({
 		attention,
 		launch,
 		status,
+		googlePerformance,
 	}
 }
 
@@ -338,6 +360,40 @@ export async function canSeeStatus(userId: string, organizationId: string) {
 	return (
 		has(ORG_PERMISSIONS.READ_SETTINGS_ANY) || has(ORG_PERMISSIONS.READ_MENU_ANY)
 	)
+}
+
+export async function canSeeGooglePerformance(
+	userId: string,
+	organizationId: string,
+) {
+	const [flags, has] = await Promise.all([
+		gbpFlags(organizationId),
+		loadPermissionChecker(userId, organizationId),
+	])
+	return flags.insights && has(ORG_PERMISSIONS.READ_SETTINGS_ANY)
+}
+
+async function loadGooglePerformanceForViewer(
+	userId: string,
+	organizationId: string,
+): Promise<LocationPerformance[] | null> {
+	if (!(await canSeeGooglePerformance(userId, organizationId))) return null
+	const [scope, locations] = await Promise.all([
+		resolveMemberLocationIds(userId, organizationId),
+		db
+			.select({
+				id: OrganizationLocation.id,
+				name: OrganizationLocation.name,
+			})
+			.from(OrganizationLocation)
+			.where(
+				and(
+					eq(OrganizationLocation.organizationId, organizationId),
+					eq(OrganizationLocation.isActive, true),
+				),
+			),
+	])
+	return loadPerformanceByLocation(organizationId, scope, locations)
 }
 
 async function loadStatusForViewer(
@@ -496,21 +552,23 @@ export async function loadBlockPicker({
 			knownBookingsToday ?? loadBookingsTodayAccess({ userId, organizationId }),
 			knownLocations ?? loadHomeLocations(userId, organizationId),
 		])
-	const [today, salesGoals, statusAvailable] = await Promise.all([
-		loadTodayAccess({
-			userId,
-			organization,
-			bookingsToday,
-			locations,
-		}),
-		loadSalesGoalsAccess({
-			userId,
-			organizationId,
-			orgSlug: organization.slug,
-			dataRegion: organization.dataRegion,
-		}),
-		canSeeStatus(userId, organizationId),
-	])
+	const [today, salesGoals, statusAvailable, googlePerformanceAvailable] =
+		await Promise.all([
+			loadTodayAccess({
+				userId,
+				organization,
+				bookingsToday,
+				locations,
+			}),
+			loadSalesGoalsAccess({
+				userId,
+				organizationId,
+				orgSlug: organization.slug,
+				dataRegion: organization.dataRegion,
+			}),
+			canSeeStatus(userId, organizationId),
+			canSeeGooglePerformance(userId, organizationId),
+		])
 	return {
 		// The launch checklist stays on Home (it ends in "You're live").
 		onboardingAvailable: launchOn || isOnboardingVisible(onboarding),
@@ -518,6 +576,7 @@ export async function loadBlockPicker({
 		today,
 		salesGoals,
 		statusAvailable,
+		googlePerformanceAvailable,
 		locationStorageKey: homeLocationStorageKey(userId, organizationId),
 		savedReports,
 		templateGroups: reportTemplateGroups(grants),

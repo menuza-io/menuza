@@ -215,6 +215,7 @@ describe('addableBuiltInBlockTypes', () => {
 				salesGoalsAvailable: true,
 				attentionAvailable: true,
 				statusAvailable: true,
+				googlePerformanceAvailable: true,
 			}),
 		).toEqual(BUILT_IN_BLOCK_TYPES)
 	})

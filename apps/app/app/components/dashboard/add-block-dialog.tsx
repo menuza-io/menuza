@@ -112,6 +112,7 @@ export function AddBlockDialog({
 		salesGoalsAvailable: picker.salesGoals.available,
 		attentionAvailable: true,
 		statusAvailable: picker.statusAvailable === true,
+		googlePerformanceAvailable: picker.googlePerformanceAvailable === true,
 	}).filter((type) => !excludeTypes.includes(type))
 
 	const select = (block: NewDashboardBlock) => {

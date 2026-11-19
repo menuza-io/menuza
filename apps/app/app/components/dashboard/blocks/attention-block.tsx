@@ -305,6 +305,25 @@ function useItemText() {
 					),
 					detail: null,
 				}
+			case 'google_listing_status':
+				return {
+					title: _(msg`Google Business Profile needs attention at ${location}`),
+					detail: _(
+						msg`Verify, reconnect, or retry syncing this Google listing.`,
+					),
+				}
+			case 'google_listing_issue':
+				return {
+					title: _(
+						plural(count, {
+							one: `# Google listing difference at ${location}`,
+							other: `# Google listing differences at ${location}`,
+						}),
+					),
+					detail: _(
+						msg`Review Google edits or preferred ordering link changes.`,
+					),
+				}
 		}
 	}
 }

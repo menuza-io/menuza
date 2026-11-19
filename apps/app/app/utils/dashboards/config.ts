@@ -18,6 +18,7 @@ export const BUILT_IN_BLOCK_TYPES = [
 	'sales-goals',
 	'attention',
 	'status',
+	'google-performance',
 ] as const
 export const BLOCK_TYPES = [...BUILT_IN_BLOCK_TYPES, 'report'] as const
 export type BuiltInBlockType = (typeof BUILT_IN_BLOCK_TYPES)[number]
@@ -143,6 +144,14 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 		type: 'status',
 		title: msg`Status`,
 		description: msg`Whether each location can take orders right now, and what is blocking it.`,
+		defaultSize: { lg: { w: 6, h: 8 }, md: { w: 4, h: 8 } },
+		minSize: { lg: { w: 4, h: 5 }, md: { w: 4, h: 5 } },
+		maxInstances: 1,
+	},
+	'google-performance': {
+		type: 'google-performance',
+		title: msg`Google listing performance`,
+		description: msg`28-day views, calls, directions, website clicks, and orders from Google Business Profile.`,
 		defaultSize: { lg: { w: 6, h: 8 }, md: { w: 4, h: 8 } },
 		minSize: { lg: { w: 4, h: 5 }, md: { w: 4, h: 5 } },
 		maxInstances: 1,
@@ -545,6 +554,7 @@ export function addableBuiltInBlockTypes(
 		salesGoalsAvailable = false,
 		attentionAvailable = false,
 		statusAvailable = false,
+		googlePerformanceAvailable = false,
 	}: {
 		onboardingAvailable: boolean
 		bookingsTodayAvailable: boolean
@@ -552,6 +562,7 @@ export function addableBuiltInBlockTypes(
 		salesGoalsAvailable?: boolean
 		attentionAvailable?: boolean
 		statusAvailable?: boolean
+		googlePerformanceAvailable?: boolean
 	},
 ): BuiltInBlockType[] {
 	return BUILT_IN_BLOCK_TYPES.filter(
@@ -562,7 +573,8 @@ export function addableBuiltInBlockTypes(
 			(type !== 'today' || todayAvailable) &&
 			(type !== 'sales-goals' || salesGoalsAvailable) &&
 			(type !== 'attention' || attentionAvailable) &&
-			(type !== 'status' || statusAvailable),
+			(type !== 'status' || statusAvailable) &&
+			(type !== 'google-performance' || googlePerformanceAvailable),
 	)
 }
 

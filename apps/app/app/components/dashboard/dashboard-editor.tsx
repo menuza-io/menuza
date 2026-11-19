@@ -97,6 +97,7 @@ export function DashboardEditor({
 			today: picker.today.available,
 			salesGoals: picker.salesGoals.available,
 			status: picker.statusAvailable === true,
+			googlePerformance: picker.googlePerformanceAvailable === true,
 		})
 		return [...fromData, ...byType, ...byAccess]
 	}, [
@@ -107,6 +108,7 @@ export function DashboardEditor({
 		picker.today.available,
 		picker.salesGoals.available,
 		picker.statusAvailable,
+		picker.googlePerformanceAvailable,
 		picker.onboardingAvailable,
 	])
 

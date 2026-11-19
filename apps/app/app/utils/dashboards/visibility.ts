@@ -37,6 +37,7 @@ export function inaccessibleBuiltInBlockIds(
 		today: boolean
 		salesGoals: boolean
 		status?: boolean
+		googlePerformance?: boolean
 	},
 ): string[] {
 	return blocks
@@ -45,7 +46,8 @@ export function inaccessibleBuiltInBlockIds(
 				(block.type === 'bookings-today' && !access.bookingsToday) ||
 				(block.type === 'today' && !access.today) ||
 				(block.type === 'sales-goals' && !access.salesGoals) ||
-				(block.type === 'status' && !access.status),
+				(block.type === 'status' && !access.status) ||
+				(block.type === 'google-performance' && !access.googlePerformance),
 		)
 		.map((block) => block.id)
 }
