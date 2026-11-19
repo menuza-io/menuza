@@ -180,6 +180,8 @@ export interface InitialLocationData {
 	orderNumberFormat?: string | null
 	isActive?: boolean
 	isDefault?: boolean
+	temporarilyClosed?: boolean
+	temporarilyClosedUntil?: string | null
 }
 
 interface LocationFormProps {
@@ -305,6 +307,12 @@ function LocationFormBody({
 	const [vatNumber, setVatNumber] = useState(initialData?.vatNumber ?? '')
 	const [isActive, setIsActive] = useState(initialData?.isActive ?? true)
 	const [isDefault, setIsDefault] = useState(initialData?.isDefault ?? false)
+	const [temporarilyClosed, setTemporarilyClosed] = useState(
+		initialData?.temporarilyClosed ?? false,
+	)
+	const [temporarilyClosedUntil, setTemporarilyClosedUntil] = useState(
+		initialData?.temporarilyClosedUntil ?? '',
+	)
 
 	// Address
 	const [address, setAddress] = useState<LocationAddress>(
@@ -464,6 +472,8 @@ function LocationFormBody({
 		vatNumber: vatNumber.trim(),
 		isActive,
 		isDefault,
+		temporarilyClosed,
+		temporarilyClosedUntil: temporarilyClosed ? temporarilyClosedUntil : '',
 		address: JSON.stringify(address),
 		storeHours: JSON.stringify(storeHours),
 		onlineHours: JSON.stringify(onlineHours),
@@ -807,6 +817,56 @@ function LocationFormBody({
 													checked={isDefault}
 													onCheckedChange={setIsDefault}
 												/>
+											</div>
+
+											<div className="space-y-3 p-3">
+												<div className="flex items-center justify-between gap-4">
+													<div>
+														<Label
+															htmlFor="loc-temp-closed"
+															className="cursor-pointer"
+														>
+															<Trans>Temporarily closed</Trans>
+														</Label>
+														<p className="text-muted-foreground text-xs">
+															<Trans>
+																Mark this location as temporarily closed until a
+																reopen date or until you reopen it. Syncs to
+																Google when enabled.
+															</Trans>
+														</p>
+													</div>
+													<Switch
+														id="loc-temp-closed"
+														checked={temporarilyClosed}
+														onCheckedChange={(checked) => {
+															setTemporarilyClosed(checked)
+															if (!checked) setTemporarilyClosedUntil('')
+														}}
+													/>
+												</div>
+												{temporarilyClosed ? (
+													<div className="flex flex-wrap items-center gap-3 pt-1">
+														<Label
+															htmlFor="loc-temp-closed-until"
+															className="text-xs"
+														>
+															<Trans>Temporarily closed until</Trans>
+														</Label>
+														<Input
+															id="loc-temp-closed-until"
+															type="date"
+															value={temporarilyClosedUntil}
+															onChange={(event) =>
+																setTemporarilyClosedUntil(event.target.value)
+															}
+															className="w-48"
+														/>
+														<span className="text-muted-foreground text-xs">
+															<Trans>Leave blank for “until I reopen”.</Trans>
+														</span>
+													</div>
+												) : null}
 											</div>
 										</div>
 									</CardContent>

@@ -25,6 +25,8 @@ export type MediaLibraryAsset = {
 	fileName: string | null
 	mimeType: string
 	fileSize: number | null
+	width?: number | null
+	height?: number | null
 	altText: string | null
 	source: string
 	createdAt: string

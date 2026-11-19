@@ -6,6 +6,7 @@ import {
 } from '@repo/common/location-types'
 import { prepRowInForce } from '@repo/common/prep-schedule'
 import { and, asc, db, desc, eq, OrganizationLocation } from '@repo/database'
+import { onOrderingControlChangedGbp } from '#app/utils/gbp/sweep.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
 	type LocationOrderingControl,
@@ -202,6 +203,13 @@ export async function applyOrderingControl(input: {
 		request: input.request,
 		resourceType: 'organization_location',
 		resourceId: location.id,
+	})
+	await onOrderingControlChangedGbp({
+		organizationId: organization.id,
+		organizationLocationId: location.id,
+		intent: control.intent,
+		actorId: input.userId,
+		now,
 	})
 	return { ok: true }
 }

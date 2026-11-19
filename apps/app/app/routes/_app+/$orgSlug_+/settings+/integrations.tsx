@@ -1,4 +1,5 @@
 import { invariantResponse } from '@epic-web/invariant'
+import { GbpError } from '@repo/common/gbp-listing'
 import { redirectWithToast } from '@repo/common/toast'
 import {
 	asc,
@@ -67,6 +68,7 @@ import {
 	importReviewActionIntent,
 	type ReviewIntegrationItem,
 } from '#app/components/settings/cards/organization/review-integrations-card.tsx'
+import { onGoogleLocationLinked } from '#app/utils/gbp/sweep.server.ts'
 import { setIntegrationOAuthState } from '#app/utils/integrations/oauth-state.server.ts'
 import { connectPosPlatform } from '#app/utils/integrations/pos-connect.server.ts'
 import { connectReviewProvider } from '#app/utils/integrations/review-providers.server.ts'
@@ -408,11 +410,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const locationName = String(formData.get('locationName') ?? '')
 		try {
 			if (providerName === 'google-business-profile') {
-				await importGoogleBusinessLocation(
+				const imported = await importGoogleBusinessLocation(
 					organization.id,
 					locationName,
 					locationFromForm || undefined,
 				)
+				const linkedLocationId = locationFromForm || imported.menuzaLocationId
+				if (linkedLocationId) {
+					await onGoogleLocationLinked({
+						organizationId: organization.id,
+						organizationLocationId: linkedLocationId,
+					})
+				}
 			} else if (providerName === 'yelp') {
 				await importYelpLocation(
 					organization.id,
@@ -456,10 +465,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				type: 'success',
 			})
 		} catch (error) {
+			const taken =
+				error instanceof GbpError && error.code === 'gbp_location_taken'
 			return redirectWithToast(redirectTo, {
-				title: 'Sync failed',
-				description:
-					error instanceof Error
+				title: taken ? 'Google location already linked' : 'Sync failed',
+				description: taken
+					? 'This Google Business Profile location is already linked to another Menuza location.'
+					: error instanceof Error
 						? error.message
 						: 'Could not sync listing details',
 				type: 'error',

@@ -618,10 +618,12 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				'https://app.example.com/resources/jobs/seat-reconcile',
 				'https://app.example.com/resources/jobs/seo-rank-check',
 				'https://app.example.com/resources/jobs/search-console-sync',
+				'https://app.example.com/resources/jobs/gbp-metrics',
 			])
 			// One failing job does not stop the others from running.
 			expect(results.map((result) => result.status)).toEqual([
 				'rejected',
+				'fulfilled',
 				'fulfilled',
 				'fulfilled',
 				'fulfilled',
@@ -693,6 +695,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				const results = await Promise.allSettled(promises)
 
 				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -789,9 +792,10 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							'POST',
 							token,
 						],
+						['https://app.example.com/resources/jobs/gbp-sync', 'POST', token],
 					]),
 				)
-				expect(calls).toHaveLength(19)
+				expect(calls).toHaveLength(20)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -835,6 +839,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -963,6 +968,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
 					'Tenant loyalty tick failed for https://tenant-ksa.example.com',
@@ -988,6 +994,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1042,6 +1049,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					)
 					const results = await Promise.allSettled(promises)
 					expect(results.map((r) => r.status)).toEqual([
+						'fulfilled',
 						'fulfilled',
 						'fulfilled',
 						'fulfilled',
@@ -1114,6 +1122,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const reason = String((results[3] as PromiseRejectedResult).reason)
 				expect(reason).toContain(
@@ -1149,6 +1158,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				expect(results.map((r) => r.status)).toEqual([
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1210,6 +1220,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -1246,6 +1257,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[2] as PromiseRejectedResult).reason)).toContain(
 					'Tenant reservations tick failed for https://tenant-us.example.com',
@@ -1272,6 +1284,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'https://app.example.com/resources/jobs/social-publish',
 					'https://app.example.com/resources/jobs/impersonation-cleanup',
 					'https://app.example.com/resources/jobs/restaurant-order-refunds-reconcile',
+					'https://app.example.com/resources/jobs/gbp-sync',
 				])
 			})
 		})
