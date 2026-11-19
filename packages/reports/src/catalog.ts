@@ -1,3 +1,4 @@
+import { gbpReportSubjects } from './catalog-gbp.ts'
 import { giftCardSubjects } from './catalog-gift-cards.ts'
 import { reservationsSubjects } from './catalog-reservations.ts'
 import { salesReportSubjects } from './catalog-sales.ts'
@@ -1190,6 +1191,7 @@ export const organizationCatalog: ReportCatalog = {
 		...staffingSubjects,
 		...reservationsSubjects,
 		...giftCardSubjects,
+		...gbpReportSubjects,
 		{
 			id: 'notes',
 			label: 'Notes',

@@ -4,8 +4,19 @@
  * `components/social/social-labels.ts`.
  */
 
-export const SOCIAL_PLATFORMS = ['facebook', 'instagram'] as const
+export const SOCIAL_PLATFORMS = [
+	'facebook',
+	'instagram',
+	'google_business',
+] as const
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number]
+
+/** Facebook and Instagram publish through Meta; Google through the linked GBP. */
+export type MetaPlatform = Exclude<SocialPlatform, 'google_business'>
+
+export function isMetaPlatform(value: unknown): value is MetaPlatform {
+	return value === 'facebook' || value === 'instagram'
+}
 
 export function isSocialPlatform(value: unknown): value is SocialPlatform {
 	return SOCIAL_PLATFORMS.includes(value as SocialPlatform)
@@ -57,16 +68,33 @@ export type SocialPostMedia = {
 	mediaId: string
 	url: string
 	altText: string | null
+	/** Known facts of the library image (Google posts check type and size). */
+	mimeType?: string
+	width?: number | null
+	height?: number | null
 }
 
 export const SOCIAL_MAX_MEDIA = 10
 
 export const SOCIAL_PLATFORM_RULES: Record<
 	SocialPlatform,
-	{ maxText: number; requiresMedia: boolean; maxHashtags: number | null }
+	{
+		maxText: number
+		requiresMedia: boolean
+		maxHashtags: number | null
+		/** Fewer images than the general limit, when the platform takes fewer. */
+		maxMedia?: number
+	}
 > = {
 	facebook: { maxText: 63_206, requiresMedia: false, maxHashtags: null },
 	instagram: { maxText: 2_200, requiresMedia: true, maxHashtags: 30 },
+	// Google posts: 1,500 characters and one image (#135).
+	google_business: {
+		maxText: 1_500,
+		requiresMedia: false,
+		maxHashtags: null,
+		maxMedia: 1,
+	},
 }
 
 /** The longest post any platform accepts. */
@@ -104,7 +132,7 @@ export function socialPostProblems(input: {
 		if (rules.requiresMedia && input.mediaCount === 0) {
 			problems.push({ platform, problem: 'needs_media' })
 		}
-		if (input.mediaCount > SOCIAL_MAX_MEDIA) {
+		if (input.mediaCount > (rules.maxMedia ?? SOCIAL_MAX_MEDIA)) {
 			problems.push({ platform, problem: 'too_many_media' })
 		}
 		if (rules.maxHashtags !== null && countHashtags(body) > rules.maxHashtags) {

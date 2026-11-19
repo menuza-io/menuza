@@ -12,7 +12,9 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '@repo/ui/alert-dialog'
+import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
 import { getHints } from '@repo/ui/client-hints'
 import { Icon } from '@repo/ui/icon'
 import {
@@ -24,6 +26,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from '@repo/ui/item'
+import { Label } from '@repo/ui/label'
 import { PageHeader } from '@repo/ui/page-header'
 import { useEffect } from 'react'
 import {
@@ -51,6 +54,14 @@ import {
 import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { requireSocialAccess } from '#app/utils/social/access.server.ts'
 import { listSocialAccounts } from '#app/utils/social/accounts.server.ts'
+import {
+	isGoogleTopicType,
+	parseGooglePostDetails,
+} from '#app/utils/social/google-post.ts'
+import {
+	isGoogleSocialEnabled,
+	removePostFromGoogle,
+} from '#app/utils/social/google-posts.server.ts'
 import { socialTargetOutcomeUnknown } from '#app/utils/social/platforms.ts'
 import { handleSocialPostForm } from '#app/utils/social/post-form.server.ts'
 import {
@@ -71,6 +82,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (!post) throw new Response('Not Found', { status: 404 })
 	const { timeZone } = getHints(request)
 	const editable = access.canWrite && isSocialPostEditable(post.status)
+	const [allAccounts, googleEnabled] = editable
+		? await Promise.all([
+				listSocialAccounts(access.organization.id),
+				isGoogleSocialEnabled(access.organization.id),
+			])
+		: [[], false]
+	const accounts = googleEnabled
+		? allAccounts
+		: allAccounts.filter((account) => account.platform !== 'google_business')
 	return {
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
@@ -80,7 +100,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		scheduledAt: post.scheduledAt
 			? toLocalInputValue(post.scheduledAt, timeZone)
 			: '',
-		accounts: editable ? await listSocialAccounts(access.organization.id) : [],
+		accounts,
 	}
 }
 
@@ -95,12 +115,20 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 	const intent = submitted.get('intent')
 
 	if (intent === 'delete') {
+		const removeFromGoogle = submitted.get('removeFromGoogle') === '1'
+		let removedGoogle = 0
+		if (removeFromGoogle) {
+			removedGoogle = await removePostFromGoogle(organizationId, postId)
+		}
 		if (!(await deleteSocialPost(organizationId, postId))) {
 			return { error: 'busy' as const }
 		}
 		return redirectWithToast(calendar, {
 			type: 'success',
-			description: linguiI18n._(t`Post deleted.`),
+			description:
+				removeFromGoogle && removedGoogle > 0
+					? linguiI18n._(t`Post deleted and removed from Google.`)
+					: linguiI18n._(t`Post deleted.`),
 		})
 	}
 
@@ -141,6 +169,8 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 			),
 			status: 'draft',
 			scheduledAt: null,
+			googleTopicType: post.googleTopicType,
+			googleDetails: post.googleDetails,
 		})
 		return redirectWithToast(`${calendar}/${copy.id}`, {
 			type: 'success',
@@ -159,7 +189,13 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 	})
 }
 
-function DeletePostDialog({ published }: { published: boolean }) {
+function DeletePostDialog({
+	published,
+	hasPublishedGoogle,
+}: {
+	published: boolean
+	hasPublishedGoogle: boolean
+}) {
 	const { _ } = useLingui()
 	return (
 		<AlertDialog>
@@ -172,19 +208,31 @@ function DeletePostDialog({ published }: { published: boolean }) {
 				}
 			/>
 			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>{_(msg`Delete this post?`)}</AlertDialogTitle>
-					<AlertDialogDescription>
-						{published
-							? _(
-									msg`It leaves the calendar here. What is already on Facebook or Instagram stays there: delete it on the platform if needed.`,
-								)
-							: _(msg`It will not be published.`)}
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel>{_(msg`Keep it`)}</AlertDialogCancel>
-					<Form method="post">
+				<Form method="post" className="space-y-4">
+					<AlertDialogHeader>
+						<AlertDialogTitle>{_(msg`Delete this post?`)}</AlertDialogTitle>
+						<AlertDialogDescription>
+							{published
+								? _(
+										msg`It leaves the calendar here. What is already on Facebook, Instagram or Google stays there unless you remove it.`,
+									)
+								: _(msg`It will not be published.`)}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					{hasPublishedGoogle ? (
+						<div className="flex items-center gap-2">
+							<Checkbox
+								id="remove-from-google"
+								name="removeFromGoogle"
+								value="1"
+							/>
+							<Label htmlFor="remove-from-google">
+								{_(msg`Remove from Google`)}
+							</Label>
+						</div>
+					) : null}
+					<AlertDialogFooter>
+						<AlertDialogCancel>{_(msg`Keep it`)}</AlertDialogCancel>
 						<Button
 							type="submit"
 							name="intent"
@@ -193,8 +241,8 @@ function DeletePostDialog({ published }: { published: boolean }) {
 						>
 							{_(msg`Delete`)}
 						</Button>
-					</Form>
-				</AlertDialogFooter>
+					</AlertDialogFooter>
+				</Form>
 			</AlertDialogContent>
 		</AlertDialog>
 	)
@@ -247,6 +295,11 @@ export default function SocialPostRoute() {
 			target.status === 'failed' && !socialTargetOutcomeUnknown(target),
 	)
 
+	const hasPublishedGoogle = post.targets.some(
+		(target) =>
+			target.platform === 'google_business' && target.status === 'published',
+	)
+
 	return (
 		<div className="space-y-8">
 			<PageHeader
@@ -293,6 +346,10 @@ export default function SocialPostRoute() {
 							),
 							media: post.media,
 							scheduledAt,
+							googleTopicType: isGoogleTopicType(post.googleTopicType)
+								? post.googleTopicType
+								: undefined,
+							googleDetails: parseGooglePostDetails(post.googleDetails),
 						}}
 						lastResult={
 							actionData && 'result' in actionData
@@ -302,7 +359,7 @@ export default function SocialPostRoute() {
 						timeZone={timeZone}
 						cancelTo={`/${orgSlug}/marketing/social`}
 					/>
-					<DeletePostDialog published={false} />
+					<DeletePostDialog published={false} hasPublishedGoogle={false} />
 				</>
 			) : (
 				<div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
@@ -338,7 +395,15 @@ export default function SocialPostRoute() {
 											) : null}
 										</ItemContent>
 										<ItemActions>
-											<SocialTargetStatusBadge status={target.status} />
+											{target.platform === 'google_business' &&
+											target.status === 'published' &&
+											target.reviewState === 'pending' ? (
+												<Badge variant="outline">
+													{_(msg`Pending review`)}
+												</Badge>
+											) : (
+												<SocialTargetStatusBadge status={target.status} />
+											)}
 											{canWrite &&
 											post.status !== 'publishing' &&
 											socialTargetOutcomeUnknown(target) ? (
@@ -413,7 +478,10 @@ export default function SocialPostRoute() {
 									</Button>
 								</Form>
 								{post.status !== 'publishing' ? (
-									<DeletePostDialog published />
+									<DeletePostDialog
+										published
+										hasPublishedGoogle={hasPublishedGoogle}
+									/>
 								) : null}
 							</div>
 						) : null}

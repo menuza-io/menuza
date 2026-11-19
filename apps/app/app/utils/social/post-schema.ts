@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { GOOGLE_TOPIC_TYPES } from './google-post.ts'
 import { SOCIAL_MAX_MEDIA, SOCIAL_MAX_TEXT } from './platforms.ts'
 import { fromLocalInputValue } from './time.ts'
 
@@ -26,6 +27,9 @@ export const SocialPostFormSchema = z
 			.array(z.string().max(64))
 			.max(SOCIAL_MAX_MEDIA, 'too_many_media')
 			.default([]),
+		/** Google posts (#135): the post type and its fields as JSON. */
+		googleTopicType: z.enum(GOOGLE_TOPIC_TYPES).optional(),
+		googleDetails: z.string().max(12_000).optional(),
 		scheduledAt: z
 			.string()
 			.regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/u, 'schedule_required')

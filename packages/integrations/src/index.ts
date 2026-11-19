@@ -110,7 +110,45 @@ export {
 	replyToGoogleBusinessReview,
 	type GoogleBusinessReview,
 	type GoogleReviewPageTokens,
+	googleBusinessSchedule,
+	googleAddressToMenuza,
+	resolveGbpAccountName,
+	mockGoogleLocationName,
 } from './providers/google-business-profile/service'
+export { isGoogleBusinessProfileMockMode } from './providers/google-business-profile/provider'
+export {
+	gbpClientFor,
+	googleGbpClient,
+	setGbpClientFactory,
+	GBP_LISTING_READ_MASK,
+	type AttributeValues,
+	type DailyMetricSeries,
+	type FoodMenusBody,
+	type GbpClient,
+	type GbpListing,
+	type GbpMediaItem,
+	type LocalPost,
+	type LocalPostBody,
+	type PatchOutcome,
+	type PlaceActionLink,
+	type SearchKeywordCount,
+	type VerificationRecord,
+	type VoiceOfMerchantState,
+} from './providers/google-business-profile/client'
+export {
+	gbpMockCalls,
+	mockGbpClient,
+	readGbpMockState,
+	resetGbpMock,
+	setGbpMockState,
+	MOCK_METRICS_LAG_DAYS,
+	MOCK_VERIFICATION_CODE,
+} from './providers/google-business-profile/mock-client'
+export {
+	claimGoogleLocation,
+	releaseGoogleLocation,
+	type GbpLinkInput,
+} from './providers/google-business-profile/link'
 
 export {
 	listYelpLocations,

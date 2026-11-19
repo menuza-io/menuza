@@ -23,6 +23,8 @@ export const ATTENTION_KINDS = [
 	'reviews_unanswered',
 	'call_follow_ups',
 	'inventory_counts_waiting',
+	'google_listing_status',
+	'google_listing_issue',
 ] as const
 export type AttentionKind = (typeof ATTENTION_KINDS)[number]
 
@@ -48,6 +50,8 @@ export const ATTENTION_URGENCY: Record<AttentionKind, AttentionUrgency> = {
 	reviews_unanswered: 'todo',
 	call_follow_ups: 'todo',
 	inventory_counts_waiting: 'todo',
+	google_listing_status: 'urgent',
+	google_listing_issue: 'todo',
 }
 
 export function isAttentionKind(value: string): value is AttentionKind {

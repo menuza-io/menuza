@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import { SocialError } from './errors.ts'
-import { type SocialPlatform } from './platforms.ts'
+import { type MetaPlatform } from './platforms.ts'
 
 /**
  * The local Meta emulator (`SOCIAL_MOCK=true`, local BASE_URL only):
@@ -10,7 +10,7 @@ import { type SocialPlatform } from './platforms.ts'
  */
 
 const ACCOUNTS: Record<
-	SocialPlatform,
+	MetaPlatform,
 	{ externalId: string; name: string; username: string | null }
 > = {
 	facebook: { externalId: 'mock-page-1', name: 'Demo Page', username: null },
@@ -23,7 +23,7 @@ const ACCOUNTS: Record<
 
 export const mockMeta = {
 	userToken: () => 'mock-user-token',
-	accounts: (platform: SocialPlatform) => [
+	accounts: (platform: MetaPlatform) => [
 		{
 			platform,
 			...ACCOUNTS[platform],
@@ -31,7 +31,7 @@ export const mockMeta = {
 		},
 	],
 	publish: async (
-		platform: SocialPlatform,
+		platform: MetaPlatform,
 		input: { body: string; imageUrls: string[] },
 	) => {
 		if (input.body.includes('#fail')) {

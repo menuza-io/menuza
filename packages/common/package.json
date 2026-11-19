@@ -59,6 +59,26 @@
       "import": "./src/seo-keywords.ts",
       "default": "./src/seo-keywords.ts"
     },
+    "./ordering-providers": {
+      "types": "./src/ordering-providers.ts",
+      "import": "./src/ordering-providers.ts",
+      "default": "./src/ordering-providers.ts"
+    },
+    "./gbp-hours": {
+      "types": "./src/gbp-hours.ts",
+      "import": "./src/gbp-hours.ts",
+      "default": "./src/gbp-hours.ts"
+    },
+    "./gbp-listing": {
+      "types": "./src/gbp-listing.ts",
+      "import": "./src/gbp-listing.ts",
+      "default": "./src/gbp-listing.ts"
+    },
+    "./gbp-metrics": {
+      "types": "./src/gbp-metrics.ts",
+      "import": "./src/gbp-metrics.ts",
+      "default": "./src/gbp-metrics.ts"
+    },
     "./site-events": {
       "types": "./src/site-events.ts",
       "import": "./src/site-events.ts",

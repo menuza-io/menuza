@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { createOAuthHandoff } from '#app/utils/oauth/handoff.server.ts'
-import { SOCIAL_PLATFORMS, type SocialPlatform } from './platforms.ts'
+import { type MetaPlatform } from './platforms.ts'
 
 /**
  * The OAuth hand-off to Meta and back (see `createOAuthHandoff`): the state,
@@ -9,7 +9,7 @@ import { SOCIAL_PLATFORMS, type SocialPlatform } from './platforms.ts'
 
 export type MetaOAuthState = {
 	state: string
-	platform: SocialPlatform
+	platform: MetaPlatform
 	userId: string
 	orgSlug: string
 }
@@ -19,7 +19,7 @@ const handoff = createOAuthHandoff<MetaOAuthState>({
 	path: '/resources/social/meta',
 	schema: z.object({
 		state: z.string(),
-		platform: z.enum(SOCIAL_PLATFORMS),
+		platform: z.enum(['facebook', 'instagram']),
 		userId: z.string(),
 		orgSlug: z.string(),
 	}),

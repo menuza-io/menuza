@@ -32,6 +32,8 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 		'/resources/jobs/seo-rank-check',
 		// Daily Search Console fetch (#138).
 		'/resources/jobs/search-console-sync',
+		// Daily Google Business Profile performance metrics (#136).
+		'/resources/jobs/gbp-metrics',
 	],
 	'0 4 * * *': [
 		'/resources/jobs/gdpr-erasure',
@@ -64,6 +66,9 @@ const PRINT_SYNC_PATH = '/resources/jobs/print-sync'
 // Hourly App job: ends expired impersonation sessions and writes their END
 // audit entries (a session lasts 15 minutes, so a daily sweep would be late).
 const IMPERSONATION_CLEANUP_PATH = '/resources/jobs/impersonation-cleanup'
+// Hourly App job: Google Business Profile sync sweep (outbox pushes, listing
+// diffs, daily verification check, weekly order links, coalesced menu & photos).
+const GBP_SYNC_PATH = '/resources/jobs/gbp-sync'
 // Workflows sleep at most 365 days; a day of margin covers clock skew between
 // the App and this Worker. A post due later is left to the hourly
 // social-publish sweep (the App logs the refused wake-up and carries on).
@@ -657,6 +662,10 @@ export default {
 					'Restaurant order refunds reconcile',
 					(jobEnv: Env) =>
 						invokeJob(jobEnv, RESTAURANT_ORDER_REFUNDS_RECONCILE_PATH),
+				],
+				[
+					'Google Business Profile sync sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, GBP_SYNC_PATH),
 				],
 			] as const) {
 				ctx.waitUntil(

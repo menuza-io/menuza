@@ -43,8 +43,10 @@ import {
 	Link,
 	useFetcher,
 	useLoaderData,
+	useSearchParams,
 } from 'react-router'
 import { z } from 'zod'
+import { GoogleListingTab } from '#app/components/gbp/google-listing-tab.tsx'
 import {
 	type InitialLocationData,
 	LocationForm,
@@ -52,6 +54,8 @@ import {
 import { LocationWebsiteCard } from '#app/components/locations/location-website-card.tsx'
 import { type OrderPolicyValues } from '#app/components/locations/order-policies-card.tsx'
 import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
+import { gbpFlags } from '#app/utils/gbp/context.server.ts'
+import { enqueueGbpPush } from '#app/utils/gbp/sync.server.ts'
 import { loadLocationPolicyView } from '#app/utils/location/chain-defaults.server.ts'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
 import { lockedSettingsChangedByFormSave } from '#app/utils/location/location-settings.server.ts'
@@ -115,6 +119,17 @@ const LocationInputSchema = z.object({
 	...locationTaxInputFields,
 	isActive: z.preprocess((val) => val === 'true' || val === true, z.boolean()),
 	isDefault: z.preprocess((val) => val === 'true' || val === true, z.boolean()),
+	temporarilyClosed: z.preprocess(
+		(val) => val === 'true' || val === true,
+		z.boolean().default(false),
+	),
+	temporarilyClosedUntil: z
+		.string()
+		.optional()
+		.transform((val) => {
+			const trimmed = (val ?? '').trim()
+			return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null
+		}),
 	address: z.string().optional(),
 	storeHours: z.string().optional(),
 	onlineHours: z.string().optional(),
@@ -187,6 +202,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		vatNumber: record.vatNumber,
 		isActive: record.isActive,
 		isDefault: record.isDefault,
+		temporarilyClosed: record.temporarilyClosed ?? false,
+		temporarilyClosedUntil: record.temporarilyClosedUntil
+			? record.temporarilyClosedUntil.toISOString().slice(0, 10)
+			: null,
 		prepTime: record.prepTime,
 		largeOrderThreshold: record.largeOrderThreshold ?? 100,
 		largeOrderThresholdType: record.largeOrderThresholdType,
@@ -371,6 +390,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		locales: websiteLocales.locales,
 	}
 
+	const gbp = await gbpFlags(organization.id)
+
 	return {
 		organization,
 		location,
@@ -382,6 +403,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orderingSettings,
 		checkoutRules,
 		policy,
+		gbpSyncEnabled: gbp.sync,
 	}
 }
 
@@ -579,6 +601,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		vatNumber: data.vatNumber,
 		isActive: data.isActive,
 		isDefault: data.isDefault,
+		temporarilyClosed: data.temporarilyClosed ?? false,
+		temporarilyClosedUntil:
+			data.temporarilyClosed && data.temporarilyClosedUntil
+				? new Date(`${data.temporarilyClosedUntil}T00:00:00.000Z`)
+				: null,
 		address: geocoded.address || null,
 		storeHours: data.storeHours || null,
 		onlineHours: data.onlineHours || null,
@@ -668,6 +695,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 	await notifyReservationsContextChanged(organization.id, 'locations')
+	await enqueueGbpPush({
+		organizationId: organization.id,
+		organizationLocationId: locationId,
+		actorId: userId,
+	})
 
 	return redirectWithToast(`/${organization.slug}/settings/locations`, {
 		type: 'success',
@@ -688,7 +720,13 @@ export default function EditLocationRoute() {
 		checkoutRules,
 		policy,
 		website,
+		gbpSyncEnabled,
 	} = useLoaderData<typeof loader>()
+	const [searchParams, setSearchParams] = useSearchParams()
+	const activeSection =
+		gbpSyncEnabled && searchParams.get('tab') === 'google'
+			? 'google'
+			: 'details'
 	const deleteFetcher = useFetcher<{
 		error?: string
 		futureReservations?: number
@@ -740,6 +778,40 @@ export default function EditLocationRoute() {
 				</Button>
 			</div>
 
+			{gbpSyncEnabled && location.id ? (
+				<div className="flex items-center gap-2 border-b pb-2" role="tablist">
+					<Button
+						type="button"
+						role="tab"
+						aria-selected={activeSection === 'details'}
+						variant={activeSection === 'details' ? 'secondary' : 'ghost'}
+						size="sm"
+						onClick={() => {
+							const next = new URLSearchParams(searchParams)
+							next.delete('tab')
+							setSearchParams(next, { replace: true })
+						}}
+					>
+						<Trans>Settings</Trans>
+					</Button>
+					<Button
+						type="button"
+						role="tab"
+						aria-selected={activeSection === 'google'}
+						variant={activeSection === 'google' ? 'secondary' : 'ghost'}
+						size="sm"
+						data-testid="location-google-tab"
+						onClick={() => {
+							const next = new URLSearchParams(searchParams)
+							next.set('tab', 'google')
+							setSearchParams(next, { replace: true })
+						}}
+					>
+						<Trans>Google</Trans>
+					</Button>
+				</div>
+			) : null}
+
 			{deleteFetcher.data?.error ? (
 				<div
 					role="alert"
@@ -750,102 +822,112 @@ export default function EditLocationRoute() {
 				</div>
 			) : null}
 
-			{reservationsEnabled ? (
-				<Card data-testid="location-reservations-card">
-					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
-						<div>
-							<CardTitle className="flex items-center gap-2 text-base">
-								<Icon name="calendar" className="size-4" />
-								<Trans>Reservations</Trans>
-							</CardTitle>
-							<CardDescription>
-								<Trans>
-									Configure dining areas, floor plan tables, service periods,
-									turn times, and online booking rules for this location.
-								</Trans>
-							</CardDescription>
-						</div>
-						<Button
-							variant="outline"
-							size="sm"
-							data-testid="location-reservations-settings-link"
-							render={
-								<Link
-									to={`/${organization.slug}/reservations/settings?location=${encodeURIComponent(location.id ?? '')}`}
-								/>
-							}
-						>
-							<Icon name="settings" className="size-4" />
-							<Trans>Manage reservations settings</Trans>
-						</Button>
-					</CardHeader>
-					<CardContent className="text-muted-foreground">
-						<p className="text-xs">
-							<Trans>
-								Location time zone is used to compute reservation seating slots.
-								Changing the time zone will prompt you to re-derive future
-								reservation times in Reservations Settings.
-							</Trans>{' '}
-							({location.timezone ?? 'America/New_York'})
-						</p>
-					</CardContent>
-				</Card>
-			) : null}
-
-			{canCopyMenuOverrides ? (
-				<Card>
-					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
-						<div>
-							<CardTitle className="text-base">
-								<Trans>Menu location overrides</Trans>
-							</CardTitle>
-							<CardDescription>
-								<Trans>
-									Copy this location&apos;s menu prices and availability
-									overrides to another location.
-								</Trans>
-							</CardDescription>
-						</div>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => setCopyOverridesOpen(true)}
-						>
-							<Icon name="copy" className="size-4" />
-							<Trans>Copy overrides</Trans>
-						</Button>
-					</CardHeader>
-					<CopyLocationOverridesDialog
-						orgSlug={organization.slug}
-						open={copyOverridesOpen}
-						onOpenChange={setCopyOverridesOpen}
-						sourceLocationId={location.id!}
-						locations={allLocations}
-					/>
-				</Card>
-			) : null}
-
-			{location.id ? (
-				<LocationWebsiteCard
+			{activeSection === 'google' && location.id ? (
+				<GoogleListingTab
 					orgSlug={organization.slug}
 					locationId={location.id}
-					locationSlug={location.slug}
-					website={website}
 				/>
-			) : null}
+			) : (
+				<>
+					{reservationsEnabled ? (
+						<Card data-testid="location-reservations-card">
+							<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
+								<div>
+									<CardTitle className="flex items-center gap-2 text-base">
+										<Icon name="calendar" className="size-4" />
+										<Trans>Reservations</Trans>
+									</CardTitle>
+									<CardDescription>
+										<Trans>
+											Configure dining areas, floor plan tables, service
+											periods, turn times, and online booking rules for this
+											location.
+										</Trans>
+									</CardDescription>
+								</div>
+								<Button
+									variant="outline"
+									size="sm"
+									data-testid="location-reservations-settings-link"
+									render={
+										<Link
+											to={`/${organization.slug}/reservations/settings?location=${encodeURIComponent(location.id ?? '')}`}
+										/>
+									}
+								>
+									<Icon name="settings" className="size-4" />
+									<Trans>Manage reservations settings</Trans>
+								</Button>
+							</CardHeader>
+							<CardContent className="text-muted-foreground">
+								<p className="text-xs">
+									<Trans>
+										Location time zone is used to compute reservation seating
+										slots. Changing the time zone will prompt you to re-derive
+										future reservation times in Reservations Settings.
+									</Trans>{' '}
+									({location.timezone ?? 'America/New_York'})
+								</p>
+							</CardContent>
+						</Card>
+					) : null}
 
-			<LocationForm
-				orgSlug={organization.slug}
-				siteLocalesRaw={organization.siteLocales}
-				siteDefaultLocaleRaw={organization.siteDefaultLocale}
-				isEditing={true}
-				initialData={location}
-				orderPolicies={orderPolicies}
-				checkoutSettings={checkoutSettings}
-				orderingSettings={orderingSettings}
-				checkoutRules={checkoutRules}
-				policy={policy}
-			/>
+					{canCopyMenuOverrides ? (
+						<Card>
+							<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
+								<div>
+									<CardTitle className="text-base">
+										<Trans>Menu location overrides</Trans>
+									</CardTitle>
+									<CardDescription>
+										<Trans>
+											Copy this location&apos;s menu prices and availability
+											overrides to another location.
+										</Trans>
+									</CardDescription>
+								</div>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => setCopyOverridesOpen(true)}
+								>
+									<Icon name="copy" className="size-4" />
+									<Trans>Copy overrides</Trans>
+								</Button>
+							</CardHeader>
+							<CopyLocationOverridesDialog
+								orgSlug={organization.slug}
+								open={copyOverridesOpen}
+								onOpenChange={setCopyOverridesOpen}
+								sourceLocationId={location.id!}
+								locations={allLocations}
+							/>
+						</Card>
+					) : null}
+
+					{location.id ? (
+						<LocationWebsiteCard
+							orgSlug={organization.slug}
+							locationId={location.id}
+							locationSlug={location.slug}
+							website={website}
+						/>
+					) : null}
+
+					<LocationForm
+						orgSlug={organization.slug}
+						siteLocalesRaw={organization.siteLocales}
+						siteDefaultLocaleRaw={organization.siteDefaultLocale}
+						isEditing={true}
+						initialData={location}
+						orderPolicies={orderPolicies}
+						checkoutSettings={checkoutSettings}
+						orderingSettings={orderingSettings}
+						checkoutRules={checkoutRules}
+						policy={policy}
+					/>
+				</>
+			)}
 
 			<AlertDialog
 				open={confirmDeleteOpen}

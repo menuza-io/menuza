@@ -1,10 +1,12 @@
 import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
 import {
+	GBP_REPORT_SUBJECTS,
 	ORDER_REPORT_SUBJECTS,
 	ORG_WIDE_REPORT_SUBJECTS,
 	PERMISSION_GATED_REPORT_SUBJECTS,
 	SALES_STAFF_FIELD_PERMISSION,
 } from '@repo/reports/token'
+import { gbpFlags } from '#app/utils/gbp/context.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { resolveReservationsReportAccess } from '#app/utils/reservations/report-access.server.ts'
 import { resolveStaffReportAccessForRequest } from './report-access.server.ts'
@@ -75,27 +77,43 @@ export async function resolveReportGrantsForRequest(
 	userId: string,
 	organizationId: string,
 ): Promise<string[]> {
-	const [staff, reservations, admin, canReadMenu, impersonated, pageSubjects] =
-		await Promise.all([
-			resolveStaffReportAccessForRequest(request, userId, organizationId),
-			resolveReservationsReportAccess({ request, userId, organizationId }),
-			hasAdminReportAccess(userId, organizationId),
-			userHasOrganizationPermission(
-				userId,
-				organizationId,
-				ORG_PERMISSIONS.READ_MENU_ANY,
-			),
-			isImpersonating(request),
-			permissionGatedReportSubjects(userId, organizationId),
-		])
+	const [
+		staff,
+		reservations,
+		admin,
+		canReadMenu,
+		canReadSettings,
+		impersonated,
+		pageSubjects,
+		gbp,
+	] = await Promise.all([
+		resolveStaffReportAccessForRequest(request, userId, organizationId),
+		resolveReservationsReportAccess({ request, userId, organizationId }),
+		hasAdminReportAccess(userId, organizationId),
+		userHasOrganizationPermission(
+			userId,
+			organizationId,
+			ORG_PERMISSIONS.READ_MENU_ANY,
+		),
+		userHasOrganizationPermission(
+			userId,
+			organizationId,
+			ORG_PERMISSIONS.READ_SETTINGS_ANY,
+		),
+		isImpersonating(request),
+		permissionGatedReportSubjects(userId, organizationId),
+		gbpFlags(organizationId),
+	])
 	const canReadOrders = admin && canReadMenu
 	const canReadSalesStaff =
 		canReadOrders &&
 		(await canReadSalesStaffFields(userId, organizationId, impersonated))
+	const canReadGbpInsights = gbp.insights && canReadSettings
 	return [
 		...(admin ? ORG_WIDE_REPORT_SUBJECTS : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
 		...(canReadSalesStaff ? [SALES_STAFF_FIELD_PERMISSION] : []),
+		...(canReadGbpInsights ? GBP_REPORT_SUBJECTS : []),
 		...pageSubjects,
 		...staff.subjects,
 		...reservations.subjects,

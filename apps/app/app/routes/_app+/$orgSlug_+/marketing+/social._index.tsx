@@ -29,6 +29,7 @@ import { SOCIAL_PLATFORM_LABELS } from '#app/components/social/social-labels.ts'
 import { SocialPlatformIcon } from '#app/components/social/social-ui.tsx'
 import { requireSocialAccess } from '#app/utils/social/access.server.ts'
 import { listSocialAccounts } from '#app/utils/social/accounts.server.ts'
+import { isGoogleSocialEnabled } from '#app/utils/social/google-posts.server.ts'
 import {
 	SOCIAL_PLATFORMS,
 	isSocialPlatform,
@@ -52,14 +53,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const requested = new URL(request.url).searchParams.get('month')
 	const month = isMonthKey(requested) ? requested : today.slice(0, 7)
 	const { from, to } = monthWindow(month)
-	const [posts, drafts, accounts] = await Promise.all([
+	const [posts, drafts, accounts, googleEnabled] = await Promise.all([
 		listSocialPostsBetween(access.organization.id, from, to),
 		listUndatedSocialDrafts(access.organization.id),
 		listSocialAccounts(access.organization.id),
+		isGoogleSocialEnabled(access.organization.id),
 	])
 	return {
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
+		googleEnabled,
 		month,
 		today,
 		timeZone,
@@ -74,8 +77,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export default function SocialMediaRoute() {
 	const { _, i18n } = useLingui()
-	const { orgSlug, canWrite, month, today, timeZone, posts, drafts, accounts } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		canWrite,
+		googleEnabled,
+		month,
+		today,
+		timeZone,
+		posts,
+		drafts,
+		accounts,
+	} = useLoaderData<typeof loader>()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const view = searchParams.get('view') === 'list' ? 'list' : 'calendar'
 	const platformParam = searchParams.get('platform')
@@ -95,6 +107,13 @@ export default function SocialMediaRoute() {
 		: drafts
 	const needsReconnect = accounts.some(
 		(account) => account.status === 'needs_reauth',
+	)
+	const visiblePlatforms = SOCIAL_PLATFORMS.filter(
+		(key) =>
+			key !== 'google_business' ||
+			googleEnabled ||
+			accounts.some((account) => account.platform === 'google_business') ||
+			posts.some((post) => post.platforms.includes('google_business')),
 	)
 
 	const [year, monthNumber] = month.split('-').map(Number) as [number, number]
@@ -124,9 +143,13 @@ export default function SocialMediaRoute() {
 		<div className="space-y-8">
 			<PageHeader
 				title={_(msg`Social media`)}
-				description={_(
-					msg`Write, schedule and track posts on Facebook and Instagram.`,
-				)}
+				description={
+					googleEnabled
+						? _(
+								msg`Write, schedule and track posts on Facebook, Instagram and Google.`,
+							)
+						: _(msg`Write, schedule and track posts on Facebook and Instagram.`)
+				}
 				actions={
 					<div className="flex flex-wrap gap-2">
 						<Button
@@ -154,9 +177,13 @@ export default function SocialMediaRoute() {
 					<ItemContent>
 						<ItemTitle>{_(msg`Connect your accounts`)}</ItemTitle>
 						<ItemDescription>
-							{_(
-								msg`Connect a Facebook Page or an Instagram professional account to start publishing.`,
-							)}
+							{googleEnabled
+								? _(
+										msg`Connect a Facebook Page, Instagram professional account, or Google Business Profile to start publishing.`,
+									)
+								: _(
+										msg`Connect a Facebook Page or an Instagram professional account to start publishing.`,
+									)}
 						</ItemDescription>
 					</ItemContent>
 					<ItemActions>
@@ -176,7 +203,7 @@ export default function SocialMediaRoute() {
 					<AlertDescription>
 						<p>
 							{_(
-								msg`Meta no longer accepts its access. Posts to it will fail until you connect it again.`,
+								msg`One of your connected accounts needs fresh access. Posts to it will fail until you reconnect it.`,
 							)}
 						</p>
 						<Link
@@ -229,7 +256,7 @@ export default function SocialMediaRoute() {
 					>
 						<TabsList>
 							<TabsTrigger value="all">{_(msg`All`)}</TabsTrigger>
-							{SOCIAL_PLATFORMS.map((key) => (
+							{visiblePlatforms.map((key) => (
 								<TabsTrigger key={key} value={key}>
 									<SocialPlatformIcon platform={key} />
 									{_(SOCIAL_PLATFORM_LABELS[key])}

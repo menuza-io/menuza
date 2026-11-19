@@ -28,6 +28,7 @@ import {
 } from './accounts.server.ts'
 import { isSocialMock, socialEnv } from './env.server.ts'
 import { SocialError } from './errors.ts'
+import { publishToGoogle } from './google-posts.server.ts'
 import { publishToFacebook, publishToInstagram } from './meta.server.ts'
 import {
 	SOCIAL_MAX_MEDIA,
@@ -98,6 +99,7 @@ function guardedTargetInsertStatements(
 					externalPostId: value(null, 'externalPostId'),
 					permalink: value(null, 'permalink'),
 					error: value(null, 'error'),
+					reviewState: value(null, 'reviewState'),
 					attempts: value(0, 'attempts'),
 					publishedAt: value(null, 'publishedAt'),
 					createdAt: value(savedAt.getTime(), 'createdAt'),
@@ -147,6 +149,9 @@ export type SocialPostInput = {
 	accountIds: string[]
 	status: 'draft' | 'scheduled'
 	scheduledAt: Date | null
+	/** Google posts (#135): Update, Offer or Event, and its fields (JSON). */
+	googleTopicType?: string | null
+	googleDetails?: string | null
 }
 
 export type SocialPostTargetView = {
@@ -157,6 +162,8 @@ export type SocialPostTargetView = {
 	status: SocialTargetStatus
 	permalink: string | null
 	error: string | null
+	/** Google posts only: `pending` (in Google's review), `live` or `rejected`. */
+	reviewState: string | null
 	publishedAt: Date | null
 }
 
@@ -169,6 +176,8 @@ export type SocialPostView = {
 	publishedAt: Date | null
 	createdAt: Date
 	updatedAt: Date
+	googleTopicType: string | null
+	googleDetails: string | null
 	targets: SocialPostTargetView[]
 }
 
@@ -190,6 +199,8 @@ export async function resolveSocialMedia(
 			id: OrganizationMediaAsset.id,
 			mimeType: OrganizationMediaAsset.mimeType,
 			altText: OrganizationMediaAsset.altText,
+			width: OrganizationMediaAsset.width,
+			height: OrganizationMediaAsset.height,
 		})
 		.from(OrganizationMediaAsset)
 		.where(
@@ -208,7 +219,16 @@ export async function resolveSocialMedia(
 		) {
 			return []
 		}
-		return [{ mediaId: id, url: mediaUrl(id), altText: row.altText ?? null }]
+		return [
+			{
+				mediaId: id,
+				url: mediaUrl(id),
+				altText: row.altText ?? null,
+				mimeType: row.mimeType,
+				width: row.width,
+				height: row.height,
+			},
+		]
 	})
 }
 
@@ -259,6 +279,8 @@ export async function saveSocialPost(
 		status: input.status,
 		scheduledAt: input.scheduledAt,
 		publishedAt: null,
+		googleTopicType: input.googleTopicType ?? null,
+		googleDetails: input.googleDetails ?? null,
 	}
 	const targets = accounts.map((account) => ({
 		socialAccountId: account.id,
@@ -378,6 +400,7 @@ async function targetsOf(postIds: string[]) {
 			status: SocialPostTarget.status,
 			permalink: SocialPostTarget.permalink,
 			error: SocialPostTarget.error,
+			reviewState: SocialPostTarget.reviewState,
 			publishedAt: SocialPostTarget.publishedAt,
 		})
 		.from(SocialPostTarget)
@@ -401,6 +424,8 @@ const postColumns = {
 	publishedAt: SocialPost.publishedAt,
 	createdAt: SocialPost.createdAt,
 	updatedAt: SocialPost.updatedAt,
+	googleTopicType: SocialPost.googleTopicType,
+	googleDetails: SocialPost.googleDetails,
 }
 
 type PostRow = {
@@ -412,6 +437,8 @@ type PostRow = {
 	publishedAt: Date | null
 	createdAt: Date
 	updatedAt: Date
+	googleTopicType: string | null
+	googleDetails: string | null
 }
 
 /** D1 binds at most 100 parameters, so targets are read in chunks. */
@@ -587,7 +614,7 @@ export async function retrySocialPost(
  * A link Meta can fetch: signed (the media library is private), converted to
  * JPEG (Instagram takes no other image format).
  */
-function publicImageUrl(mediaId: string): string {
+export function publicImageUrl(mediaId: string): string {
 	const expires = Math.floor(Date.now() / 1000) + MEDIA_LINK_TTL_SECONDS
 	const url = new URL('/resources/images', socialEnv('BASE_URL'))
 	url.searchParams.set('mediaId', mediaId)
@@ -602,6 +629,8 @@ type ClaimedPost = {
 	organizationId: string
 	body: string
 	media: unknown
+	googleTopicType: string | null
+	googleDetails: string | null
 }
 
 async function deliverTarget(
@@ -638,11 +667,36 @@ async function deliverTarget(
 		) {
 			throw new SocialError('unauthorized', 'disconnected')
 		}
+		accountId = account.id
+		accountToken = account.accessTokenCiphertext
+		if (account.platform === 'google_business') {
+			// Google (#135): the connection is checked inside, before any call.
+			publishCalled = true
+			const google = await publishToGoogle({
+				post,
+				account: {
+					id: account.id,
+					organizationId: account.organizationId,
+					externalId: account.externalId,
+					organizationLocationId: account.organizationLocationId,
+				},
+			})
+			await db
+				.update(SocialPostTarget)
+				.set({
+					status: 'published',
+					externalPostId: google.externalPostId,
+					permalink: google.permalink,
+					reviewState: google.reviewState,
+					publishedAt: new Date(),
+					error: null,
+				})
+				.where(eq(SocialPostTarget.id, target.id))
+			return
+		}
 		if (account.status === 'needs_reauth') {
 			throw new SocialError('unauthorized', 'needs_reauth')
 		}
-		accountId = account.id
-		accountToken = account.accessTokenCiphertext
 		const media = Array.isArray(post.media)
 			? (post.media as SocialPostMedia[])
 			: []
@@ -782,6 +836,8 @@ export async function publishSocialPost(
 			organizationId: SocialPost.organizationId,
 			body: SocialPost.body,
 			media: SocialPost.media,
+			googleTopicType: SocialPost.googleTopicType,
+			googleDetails: SocialPost.googleDetails,
 		})
 	if (!claimed) return false
 	await deliver(claimed)
@@ -802,6 +858,8 @@ export async function publishDueSocialPosts(
 			organizationId: SocialPost.organizationId,
 			body: SocialPost.body,
 			media: SocialPost.media,
+			googleTopicType: SocialPost.googleTopicType,
+			googleDetails: SocialPost.googleDetails,
 		})
 		.from(SocialPost)
 		.where(

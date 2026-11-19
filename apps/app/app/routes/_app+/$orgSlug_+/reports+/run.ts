@@ -9,10 +9,19 @@ import {
 	runReport,
 } from '@repo/reports'
 import { fetchControlPlaneRecords } from '@repo/reports/server'
-import { isPermissionGatedReportSubject } from '@repo/reports/token'
+import {
+	isGbpReportSubject,
+	isPermissionGatedReportSubject,
+} from '@repo/reports/token'
 import { data } from 'react-router'
+import { gbpFlags } from '#app/utils/gbp/context.server.ts'
+import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
+import {
+	loadGbpPerformanceRecords,
+	loadGbpSearchKeywordRecords,
+} from '#app/utils/reports/gbp-performance-records.server.ts'
 import { loadCachedReviewRecords } from '#app/utils/reports/review-records.server.ts'
 import { permissionGatedReportSubjects } from '#app/utils/staffing/report-grants.server.ts'
 import { type Route } from './+types/run.ts'
@@ -76,6 +85,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 	let records: ReportRecord[]
 	let sourceTruncated = false
+	let gbpMeta: { dataUntil: string | null; emptyNotice: string | null } | null =
+		null
 	if (subject.id === 'reviews') {
 		// Reviews come from the same connections as the mailbox reviews tab.
 		const canReadReviews = await userHasOrganizationPermission(
@@ -95,6 +106,36 @@ export async function action({ request, params }: Route.ActionArgs) {
 		const loaded = await loadCachedReviewRecords(organization.id)
 		records = loaded.records
 		sourceTruncated = loaded.truncated
+	} else if (isGbpReportSubject(subject.id)) {
+		const [flags, canReadSettings] = await Promise.all([
+			gbpFlags(organization.id),
+			userHasOrganizationPermission(
+				userId,
+				organization.id,
+				ORG_PERMISSIONS.READ_SETTINGS_ANY,
+			),
+		])
+		if (!flags.insights || !canReadSettings) {
+			return data(
+				{
+					error: 'forbidden' as const,
+					message: 'You do not have access to Google listing performance.',
+				},
+				{ status: 403 },
+			)
+		}
+		const scope = await resolveMemberLocationIds(userId, organization.id)
+		if (subject.id === 'gbp_performance') {
+			const loaded = await loadGbpPerformanceRecords(organization.id, scope)
+			records = loaded.records
+			gbpMeta = {
+				dataUntil: loaded.dataUntil,
+				emptyNotice: loaded.emptyNotice,
+			}
+		} else {
+			const loaded = await loadGbpSearchKeywordRecords(organization.id, scope)
+			records = loaded.records
+		}
 	} else {
 		records = await fetchControlPlaneRecords({
 			subject: parsed.data.subject,
@@ -112,9 +153,11 @@ export async function action({ request, params }: Route.ActionArgs) {
 			status: result.error === 'missing_group_by' ? 422 : 400,
 		})
 	}
-	return data(
-		sourceTruncated
-			? { ...result, sourceTruncated: true, sourceRowLimit: records.length }
-			: result,
-	)
+	return data({
+		...result,
+		...(sourceTruncated
+			? { sourceTruncated: true, sourceRowLimit: records.length }
+			: {}),
+		...(gbpMeta ? gbpMeta : {}),
+	})
 }

@@ -1,5 +1,6 @@
 import { and, asc, db, eq, SocialAccount } from '@repo/database'
 import { decryptAsync, encryptAsync, getEncryptionKey } from '@repo/security'
+import { syncGoogleSocialAccounts } from './google-posts.server.ts'
 import { type MetaAccount } from './meta.server.ts'
 import { type SocialPlatform } from './platforms.ts'
 
@@ -23,6 +24,9 @@ export type SocialAccountSummary = {
 export async function listSocialAccounts(
 	organizationId: string,
 ): Promise<SocialAccountSummary[]> {
+	// Google locations linked through the integration become accounts (#135,
+	// flag `social.google`; a no-op while it is off).
+	await syncGoogleSocialAccounts(organizationId).catch(() => 0)
 	const rows = await db
 		.select({
 			id: SocialAccount.id,
@@ -106,6 +110,7 @@ export async function readSocialAccountForPublishing(accountId: string) {
 		organizationId: row.organizationId,
 		platform: row.platform as SocialPlatform,
 		externalId: row.externalId,
+		organizationLocationId: row.organizationLocationId,
 		status: row.status,
 		accessToken,
 		/** The stored ciphertext, to flag exactly this token as refused. */

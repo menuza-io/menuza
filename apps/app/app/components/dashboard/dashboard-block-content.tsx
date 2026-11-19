@@ -14,6 +14,7 @@ import { type TodayAccess } from '#app/utils/dashboards/today.ts'
 import { type SalesGoalsAccess } from '#app/utils/goals/goals.ts'
 import { AttentionBlock } from './blocks/attention-block.tsx'
 import { BookingsTodayBlock } from './blocks/bookings-today-block.tsx'
+import { GooglePerformanceBlock } from './blocks/google-performance-block.tsx'
 import { NotesChartBlock } from './blocks/notes-chart-block.tsx'
 import { ReportBlock } from './blocks/report-block.tsx'
 import { SalesGoalsBlock } from './blocks/sales-goals-block.tsx'
@@ -153,6 +154,15 @@ export function DashboardBlockContent({
 		case 'status':
 			return data.status
 				? wrap(<StatusBlock orgSlug={organization.slug} data={data.status} />)
+				: null
+		case 'google-performance':
+			return data.googlePerformance
+				? wrap(
+						<GooglePerformanceBlock
+							orgSlug={organization.slug}
+							locations={data.googlePerformance}
+						/>,
+					)
 				: null
 		case 'attention':
 			return data.attention ? (

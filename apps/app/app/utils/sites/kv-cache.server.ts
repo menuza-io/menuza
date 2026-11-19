@@ -7,6 +7,7 @@ import {
 	publicFormKvKey,
 	type PublicFormProjection,
 } from '@repo/common/public-form'
+import { and, db, eq, GbpLocationSync } from '@repo/database'
 
 let siteDataKv: KVNamespace | null = null
 
@@ -69,6 +70,23 @@ export async function purgeOrganizationSiteCache(
 	slug?: string,
 	host?: string | null,
 ): Promise<boolean> {
+	// Mark any Google-synced menus dirty so the hourly sweep publishes changes
+	// within an hour (#208). Non-menu purges are no-ops because publishMenu
+	// compares a content fingerprint before calling Google.
+	try {
+		await db
+			.update(GbpLocationSync)
+			.set({ menuDirtyAt: new Date() })
+			.where(
+				and(
+					eq(GbpLocationSync.organizationId, orgId),
+					eq(GbpLocationSync.menuSyncEnabled, true),
+				),
+			)
+	} catch {
+		// Never let GBP bookkeeping affect cache purges or unit tests without a DB.
+	}
+
 	const kv = siteDataKv
 	if (!kv) return true
 

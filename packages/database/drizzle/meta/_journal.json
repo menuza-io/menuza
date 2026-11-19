@@ -442,6 +442,13 @@
 			"when": 1795098643935,
 			"tag": "0062_website_seo",
 			"breakpoints": true
+		},
+		{
+			"idx": 63,
+			"version": "6",
+			"when": 1795105924107,
+			"tag": "0063_google_business_profile",
+			"breakpoints": true
 		}
 	]
 }

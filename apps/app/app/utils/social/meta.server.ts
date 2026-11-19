@@ -3,7 +3,7 @@ import { fetchNoRedirect } from '@repo/security/fetch-no-redirect'
 import { metaRedirectUri, isSocialMock, socialEnv } from './env.server.ts'
 import { SocialError } from './errors.ts'
 import { mockMeta } from './mock.server.ts'
-import { type SocialPlatform } from './platforms.ts'
+import { type MetaPlatform } from './platforms.ts'
 
 /**
  * Meta Graph API client for Facebook Pages and Instagram professional
@@ -22,7 +22,7 @@ const CONTAINER_WAIT_MS = 60_000
 const CONTAINER_POLL_MS = 2_000
 
 /** What each platform asks the member to allow. */
-export const META_SCOPES: Record<SocialPlatform, readonly string[]> = {
+export const META_SCOPES: Record<MetaPlatform, readonly string[]> = {
 	facebook: [
 		'pages_show_list',
 		'pages_read_engagement',
@@ -39,7 +39,7 @@ export const META_SCOPES: Record<SocialPlatform, readonly string[]> = {
 }
 
 export type MetaAccount = {
-	platform: SocialPlatform
+	platform: MetaPlatform
 	externalId: string
 	name: string
 	username: string | null
@@ -139,7 +139,7 @@ async function graph<T>(
 
 export function metaAuthorizeUrl(input: {
 	state: string
-	platform: SocialPlatform
+	platform: MetaPlatform
 }): string {
 	const url = new URL(DIALOG)
 	url.searchParams.set('client_id', socialEnv('META_APP_ID'))
@@ -201,7 +201,7 @@ type PageRow = {
  */
 export async function listMetaAccounts(
 	userToken: string,
-	platform: SocialPlatform,
+	platform: MetaPlatform,
 ): Promise<MetaAccount[]> {
 	if (isSocialMock()) return mockMeta.accounts(platform)
 	const accounts: MetaAccount[] = []

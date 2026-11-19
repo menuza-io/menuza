@@ -392,6 +392,7 @@ describe('loadBuiltInBlockData', () => {
 			attention: null,
 			status: null,
 			launch: null,
+			googlePerformance: null,
 		})
 
 		const leaderboardOnly = await loadBuiltInBlockData({
@@ -435,6 +436,7 @@ describe('loadBuiltInBlockData', () => {
 			attention: null,
 			status: null,
 			launch: null,
+			googlePerformance: null,
 		})
 	})
 })
