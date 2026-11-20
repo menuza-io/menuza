@@ -1749,6 +1749,19 @@ legal pages, Menuza agreements; #85, #180, #238, #248, #89, #194, #260):**
   before consent in Required mode.
 - Docs: `docs/website-publishing.md`.
 
+**Website conversion (forms, alerts, popups, funnel, A/B tests; #239, #357,
+#142, #132, #179, #338):**
+
+- Form logic is shared in `@repo/common` (`public-form`,
+  `public-form-submission`, `form-alerts`, `site-popup`, `site-funnel`; not
+  `site-events`, which is the website events feature). Restricted-form access is
+  the signed `restrictedForms` operator claim, minted only for
+  `read:form_restricted:any`; every tenant-api route that reads or deletes
+  responses checks it. Alerts carry ids and counts only. Counts hold no visitor
+  id, address or user agent. Flags (default off): `website.popups`,
+  `website.funnel`. Migrations `0067` (control plane) and `0056` (regional).
+  Docs: `docs/website-conversion.md`.
+
 **Custom domains (apex and www, provider setup, nameservers, buying, email
 forwarding, custom sending; #139, #313, #283, #183, #276, #103):**
 

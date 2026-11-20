@@ -93,6 +93,18 @@ export function newLineId(): string {
 	return `cart_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
+/** Fired on `window` after a dish goes into a cart: the funnel counts it (#179). Carries nothing. */
+export const CART_ADD_EVENT = 'menuza:cart-add'
+
+function announceAdd() {
+	if (typeof window === 'undefined') return
+	try {
+		window.dispatchEvent(new Event(CART_ADD_EVENT))
+	} catch {
+		/* no window */
+	}
+}
+
 export function createCartStore(options: {
 	key: string
 	storage?: StorageLike
@@ -155,11 +167,13 @@ export function createCartStore(options: {
 			if (existing) {
 				existing.quantity += item.quantity
 				write()
+				announceAdd()
 				return { ...existing }
 			}
 			const line: CartItem = candidate
 			items.push(line)
 			write()
+			announceAdd()
 			return { ...line }
 		},
 		setQuantity(lineId, quantity) {

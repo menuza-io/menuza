@@ -1,13 +1,16 @@
 import { Trans } from '@lingui/macro'
+import { formNotifySchema, type FormNotify } from '@repo/common/form-alerts'
 import {
 	publicFormFieldsSchema,
 	toPublicFormProjection,
+	visibleFields,
 	type PublicFormField,
 } from '@repo/common/public-form'
 import {
 	parseSiteLocalesConfig,
 	pickLocalized,
 } from '@repo/common/site-locales'
+import { db, and, eq, OrganizationLocation } from '@repo/database'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -30,6 +33,7 @@ import {
 	type LoaderFunctionArgs,
 	useFetcher,
 	useLoaderData,
+	useParams,
 } from 'react-router'
 import { z } from 'zod'
 
@@ -38,9 +42,12 @@ import {
 	useAIPanelHotkey,
 } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
+import { ExportFormCsv } from '#app/components/forms/export-form-csv.tsx'
 import { FormBuilderSidebar } from '#app/components/website/form-builder-sidebar.tsx'
 import { LocaleContext } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import { resolveFormAlertRecipients } from '#app/utils/forms/alerts.server.ts'
+import { getFormsTenantClient } from '#app/utils/forms/restricted.server.ts'
 import {
 	useConfirmBlocker,
 	useDirtyBeforeUnload,
@@ -56,7 +63,6 @@ import {
 	deleteCachedPublicForm,
 	setCachedPublicForm,
 } from '#app/utils/sites/kv-cache.server.ts'
-import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 import { parseTenantFormResponse } from '#app/utils/website/tenant-form-response.ts'
 
 type FormField = PublicFormField
@@ -68,6 +74,8 @@ type WebsiteForm = {
 	status: 'draft' | 'published'
 	submitLabel: string
 	successMessage: string
+	restricted: boolean
+	notify: FormNotify | null
 }
 type FormSubmission = {
 	id: string
@@ -82,57 +90,124 @@ const updateSchema = z.object({
 	submitLabel: z.string().trim().min(1).max(50),
 	successMessage: z.string().trim().min(1).max(300),
 	status: z.enum(['draft', 'published']),
+	restricted: z.boolean().default(false),
+	notify: formNotifySchema.nullable().default(null),
 })
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	const { fetchTenant, orgId } = await getOperatorTenantClient(
-		request,
-		params.orgSlug || '',
-	)
-	await requireUserWithOrganizationPermission(
-		request,
-		orgId,
-		ORG_PERMISSIONS.UPDATE_WEBSITE_ANY,
-	)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
+		id: true,
 		siteLocales: true,
 		siteDefaultLocale: true,
 	})
-	const response = await fetchTenant(
-		`/operator/forms/${encodeURIComponent(params.formId || '')}/submissions`,
-		{ signal: AbortSignal.timeout(3000) },
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		ORG_PERMISSIONS.UPDATE_WEBSITE_ANY,
 	)
-	if (!response.ok) {
+	// The client carries `restrictedForms` only for members holding
+	// `read:form_restricted:any` (#357).
+	const { fetchTenant, canReadRestricted } = await getFormsTenantClient(
+		request,
+		params.orgSlug || '',
+		organization.id,
+	)
+	const formPath = encodeURIComponent(params.formId || '')
+	const response = await fetchTenant(
+		`/operator/forms/${formPath}/submissions`,
+		{
+			signal: AbortSignal.timeout(3000),
+		},
+	)
+	let payload: {
+		form: WebsiteForm
+		submissions: FormSubmission[]
+	}
+	// A restricted form's responses are not read without the permission: the
+	// region answers 403 and the page shows the form and a count only.
+	let locked: { responseCount: number } | null = null
+	if (response.status === 403) {
+		const list = await fetchTenant('/operator/forms', {
+			signal: AbortSignal.timeout(3000),
+		})
+		if (!list.ok)
+			throw new Response('Regional forms unavailable', { status: 502 })
+		const forms = (
+			(await list.json()) as {
+				forms: Array<WebsiteForm & { submissionCount: number }>
+			}
+		).forms
+		const found = forms.find((candidate) => candidate.id === params.formId)
+		if (!found) throw new Response('Form not found', { status: 404 })
+		const { submissionCount, ...form } = found
+		payload = { form, submissions: [] }
+		locked = { responseCount: submissionCount }
+	} else if (!response.ok) {
 		if (response.status === 404) {
 			throw new Response('Form not found', { status: 404 })
 		}
 		throw new Response('Regional forms unavailable', { status: 502 })
+	} else {
+		payload = (await response.json()) as {
+			form: WebsiteForm
+			submissions: FormSubmission[]
+		}
 	}
 	const { locales } = parseSiteLocalesConfig(
 		organization.siteLocales,
 		organization.siteDefaultLocale,
 	)
-	const payload = (await response.json()) as {
-		form: WebsiteForm
-		submissions: FormSubmission[]
-	}
+	const [locations, recipients] = await Promise.all([
+		db
+			.select({ id: OrganizationLocation.id, name: OrganizationLocation.name })
+			.from(OrganizationLocation)
+			.where(
+				and(
+					eq(OrganizationLocation.organizationId, organization.id),
+					eq(OrganizationLocation.isActive, true),
+				),
+			),
+		resolveFormAlertRecipients({
+			organizationId: organization.id,
+			onlyUserIds: null,
+		}),
+	])
 	return {
 		...payload,
+		form: {
+			...payload.form,
+			restricted: Boolean(payload.form.restricted),
+			notify: payload.form.notify ?? null,
+		},
+		locked,
 		locales,
+		locations,
+		settings: {
+			members: recipients.map((member) => ({
+				id: member.userId,
+				label: member.name || member.email,
+			})),
+			canUnrestrict: canReadRestricted,
+		},
 		defaultLocale: organization.siteDefaultLocale ?? 'en',
 	}
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	const { fetchTenant, orgId } = await getOperatorTenantClient(
-		request,
-		params.orgSlug || '',
-		{ canUpdate: true },
-	)
+	const organization = await requireUserOrganization(request, params.orgSlug, {
+		id: true,
+	})
+	const orgId = organization.id
 	await requireUserWithOrganizationPermission(
 		request,
 		orgId,
 		ORG_PERMISSIONS.UPDATE_WEBSITE_ANY,
+	)
+	const { fetchTenant } = await getFormsTenantClient(
+		request,
+		params.orgSlug || '',
+		orgId,
+		{ canUpdate: true },
 	)
 	const parsed = updateSchema.safeParse(await request.json().catch(() => null))
 	if (!parsed.success) {
@@ -146,8 +221,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		{ method: 'PUT', body: JSON.stringify(parsed.data) },
 	)
 	if (!response.ok) {
+		// Lifting a restriction needs `read:form_restricted:any` (#357).
 		return Response.json(
-			{ error: 'Unable to save the form.' },
+			{
+				error:
+					response.status === 403
+						? 'Only members with the “Read restricted form responses” permission can turn Restricted off.'
+						: 'Unable to save the form.',
+			},
 			{ status: response.status },
 		)
 	}
@@ -162,7 +243,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	return { success: true, form: savedForm }
 }
 
-function FormFieldPreview({ field }: { field: FormField }) {
+function FormFieldPreview({
+	field,
+	locations,
+}: {
+	field: FormField
+	locations: Array<{ id: string; name: string }>
+}) {
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const label = pickLocalized(field.label, activeLocale, defaultLocale)
 	const choices = (field.options ?? []).map((choice) =>
@@ -197,6 +284,41 @@ function FormFieldPreview({ field }: { field: FormField }) {
 			)}
 			{field.type === 'textarea' ? (
 				<Textarea id={controlId} required={field.required} rows={4} />
+			) : field.type === 'address' ? (
+				<div className="grid gap-2">
+					<Input
+						id={controlId}
+						aria-label="Street"
+						placeholder="Street"
+						autoComplete="street-address"
+						required={field.required}
+					/>
+					<div className="grid grid-cols-2 gap-2">
+						<Input
+							aria-label="City"
+							placeholder="City"
+							autoComplete="address-level2"
+						/>
+						<Input
+							aria-label="Postcode"
+							placeholder="Postcode"
+							autoComplete="postal-code"
+						/>
+					</div>
+				</div>
+			) : field.type === 'location' ? (
+				<select
+					id={controlId}
+					required={field.required}
+					className="border-input bg-background h-11 w-full rounded-md border px-3 text-base"
+				>
+					<option value="">—</option>
+					{locations.map((location) => (
+						<option key={location.id} value={location.id}>
+							{location.name}
+						</option>
+					))}
+				</select>
 			) : field.type === 'single_choice' || field.type === 'multiple_choice' ? (
 				<div className="space-y-2 pt-1">
 					{choices.map((choice, index) => (
@@ -221,10 +343,14 @@ function FormFieldPreview({ field }: { field: FormField }) {
 					type={
 						field.type === 'datetime'
 							? 'datetime-local'
-							: field.type === 'name'
-								? 'text'
-								: field.type
+							: field.type === 'text' && field.numeric
+								? 'number'
+								: field.type === 'name'
+									? 'text'
+									: field.type
 					}
+					min={field.type === 'text' && field.numeric ? field.min : undefined}
+					max={field.type === 'text' && field.numeric ? field.max : undefined}
 					autoComplete={
 						field.type === 'name'
 							? 'name'
@@ -252,6 +378,12 @@ export default function WebsiteFormBuilderRoute() {
 	const [mode, setMode] = useState<'build' | 'preview' | 'responses'>('build')
 	const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop')
 	const [testSuccess, setTestSuccess] = useState(false)
+	// Single-choice answers in the preview, so conditional fields show and hide
+	// as they will on the site (#357).
+	const [previewAnswers, setPreviewAnswers] = useState<Record<string, string>>(
+		{},
+	)
+	const { orgSlug = '' } = useParams()
 	const [savedForm, setSavedForm] = useState(initial.form)
 	const [activeLocale, setActiveLocale] = useState(initial.defaultLocale)
 	const pendingSnapshot = useRef('')
@@ -350,13 +482,27 @@ export default function WebsiteFormBuilderRoute() {
 				) : (
 					<form
 						className="space-y-5 p-6 sm:p-8"
+						onChange={(event) => {
+							const data = new FormData(event.currentTarget)
+							const next: Record<string, string> = {}
+							for (const field of form.fields) {
+								if (field.type !== 'single_choice') continue
+								const value = data.get(field.id)
+								if (typeof value === 'string') next[field.id] = value
+							}
+							setPreviewAnswers(next)
+						}}
 						onSubmit={(event) => {
 							event.preventDefault()
 							if (event.currentTarget.reportValidity()) setTestSuccess(true)
 						}}
 					>
-						{form.fields.map((field) => (
-							<FormFieldPreview key={field.id} field={field} />
+						{visibleFields(form.fields, previewAnswers).map((field) => (
+							<FormFieldPreview
+								key={field.id}
+								field={field}
+								locations={initial.locations}
+							/>
 						))}
 						<Button type="submit" className="w-full sm:w-auto">
 							{localizedSubmitLabel}
@@ -461,7 +607,9 @@ export default function WebsiteFormBuilderRoute() {
 								</span>
 								{mode !== 'responses' ? (
 									<Badge variant="secondary" className="ml-1">
-										{initial.submissions.length}
+										{initial.locked
+											? initial.locked.responseCount
+											: initial.submissions.length}
 									</Badge>
 								) : null}
 							</Button>
@@ -555,6 +703,8 @@ export default function WebsiteFormBuilderRoute() {
 						<Responses
 							form={form}
 							submissions={initial.submissions}
+							locked={initial.locked}
+							orgSlug={orgSlug}
 							defaultLocale={initial.defaultLocale}
 						/>
 					) : (
@@ -569,6 +719,8 @@ export default function WebsiteFormBuilderRoute() {
 								setForm={setForm}
 								selectedId={selectedId}
 								setSelectedId={setSelectedId}
+								locations={initial.locations}
+								settings={initial.settings}
 								className={cn(
 									mode === 'build' ? 'flex' : 'hidden',
 									'shrink-0 lg:w-80',
@@ -593,29 +745,63 @@ export default function WebsiteFormBuilderRoute() {
 function Responses({
 	form,
 	submissions,
+	locked,
+	orgSlug,
 	defaultLocale,
 }: {
 	form: WebsiteForm
 	submissions: FormSubmission[]
+	locked: { responseCount: number } | null
+	orgSlug: string
 	defaultLocale: string
 }) {
 	const { activeLocale } = useContext(LocaleContext)
 	const responseFields = form.fields.filter(
 		(field) => field.type !== 'heading' && field.type !== 'paragraph',
 	)
+	if (locked) {
+		const responseCount = locked.responseCount
+		// Restricted form, member without the permission (#357): the form exists
+		// and has a count; the answers are not sent by the region at all.
+		return (
+			<div className="bg-background flex min-h-0 flex-1 items-center justify-center p-8">
+				<div className="max-w-md text-center">
+					<span className="bg-muted text-muted-foreground mx-auto mb-4 flex size-11 items-center justify-center rounded-full">
+						<Icon name="lock" className="size-5" />
+					</span>
+					<h1 className="text-xl">
+						<Trans>This form is restricted</Trans>
+					</h1>
+					<p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+						<Trans>
+							It has {responseCount} responses. Only members with the “Read
+							restricted form responses” permission can open or export them.
+						</Trans>
+					</p>
+				</div>
+			</div>
+		)
+	}
 	return (
 		<ScrollArea className="bg-background min-h-0 flex-1">
 			<div className="mx-auto max-w-6xl p-6 sm:p-10">
-				<div className="mb-6">
-					<h1 className="text-xl">
-						<Trans>Responses</Trans>
-					</h1>
-					<p className="text-muted-foreground mt-1 text-sm">
-						<Trans>
-							Submissions are stored in this organization’s regional tenant
-							database.
-						</Trans>
-					</p>
+				<div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+					<div>
+						<h1 className="text-xl">
+							<Trans>Responses</Trans>
+						</h1>
+						<p className="text-muted-foreground mt-1 text-sm">
+							<Trans>
+								Submissions are stored in this organization’s regional tenant
+								database.
+							</Trans>
+						</p>
+					</div>
+					<ExportFormCsv
+						orgSlug={orgSlug}
+						formId={form.id}
+						formName={pickLocalized(form.name, activeLocale, defaultLocale)}
+					/>
 				</div>
 				<div className="border-border overflow-x-auto rounded-xl border">
 					<table className="w-full text-left text-sm">

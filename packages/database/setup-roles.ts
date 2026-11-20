@@ -666,6 +666,17 @@ const ORG_PERMISSIONS = [
 		description:
 			"Record a guest's marketing consent given in person, on a paper form, or by phone",
 	},
+	// Responses of restricted website forms (#357). Keep in sync with
+	// 0067_website_conversion. Admins (the owner's preset) only by default.
+	{
+		id: 'org_perm_read_form_restricted_any',
+		action: 'read',
+		entity: 'form_restricted',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Read, export and unrestrict responses of restricted website forms',
+	},
 	// Provider refunds of online orders (#80). Keep in sync with
 	// 0045_order_refunds_and_acceptance. Admins (the owner's preset) only.
 	{

@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+	formExportAudit,
 	hiringApplications,
 	hiringEvents,
 	hiringInterviews,
@@ -121,6 +122,82 @@ describe('/operator/hiring', () => {
 		it('answers cache-control no-store', async () => {
 			const reply = await h.operator('GET', '/applications')
 			expect(reply.headers.get('cache-control')).toBe('private, no-store')
+		})
+	})
+
+	describe('applicants export (#142)', () => {
+		it('exports one posting as a formula-safe CSV and audits it by count only', async () => {
+			const d = await db()
+			await seedApplication(d, {
+				postingId: 'posting-1',
+				firstName: '=HYPERLINK("x")',
+				lastName: 'Ali',
+			})
+			await seedApplication(d, { postingId: 'posting-1', firstName: 'Noor' })
+			await seedApplication(d, {
+				postingId: 'posting-2',
+				postingTitle: 'Server',
+				firstName: 'Other',
+			})
+			const reply = await h.operator(
+				'GET',
+				'/applications.csv?postingId=posting-1',
+				{ grants: HIRING_READ_GRANTS },
+			)
+			expect(reply.status).toBe(200)
+			expect(reply.headers.get('content-type')).toContain('text/csv')
+			expect(reply.headers.get('cache-control')).toBe('private, no-store')
+			const lines = reply.raw.replace('\uFEFF', '').trim().split('\r\n')
+			expect(lines[0]).toBe(
+				'Posting,First name,Last name,Email,Phone,Stage,Source,Screener score,Flagged answers,Applied at',
+			)
+			expect(lines).toHaveLength(3)
+			expect(reply.raw).toContain(`'=HYPERLINK`)
+			expect(reply.raw).not.toContain('Other')
+			const audits = await d.select().from(formExportAudit)
+			expect(audits).toHaveLength(1)
+			expect(audits[0]).toMatchObject({
+				kind: 'applicants',
+				targetId: 'posting-1',
+				rowCount: 2,
+			})
+			expect(JSON.stringify(audits)).not.toContain('Noor')
+			const all = await h.operator('GET', '/applications.csv')
+			expect(all.raw.trim().split('\r\n')).toHaveLength(4)
+		})
+
+		it('needs the hiring read grant and stays inside the token scope', async () => {
+			const d = await db()
+			await seedApplication(d, { scopeId: LOC_1, firstName: 'Inside' })
+			await seedApplication(d, { scopeId: LOC_2, firstName: 'Outside' })
+			expect(
+				(await h.operator('GET', '/applications.csv', { token: null })).status,
+			).toBe(401)
+			expect(
+				(
+					await h.operator('GET', '/applications.csv', {
+						grants: ['read:staff:any'],
+					})
+				).status,
+			).toBe(403)
+			const scoped = await h.operator('GET', '/applications.csv', {
+				scopeIds: [LOC_1],
+			})
+			expect(scoped.raw).toContain('Inside')
+			expect(scoped.raw).not.toContain('Outside')
+		})
+
+		it('refuses a token minted for another organization', async () => {
+			await seedApplication(await db(), { firstName: 'Mine' })
+			const other = await h.operator('GET', '/applications.csv', {
+				orgId: ORG_B,
+			})
+			expect(other.status).toBe(200)
+			expect(other.raw).not.toContain('Mine')
+			expect(other.raw.trim().split('\r\n')).toHaveLength(1)
+			const audits = await (await h.db(ORG_B)).select().from(formExportAudit)
+			expect(audits).toHaveLength(1)
+			expect(await (await db()).select().from(formExportAudit)).toHaveLength(0)
 		})
 	})
 

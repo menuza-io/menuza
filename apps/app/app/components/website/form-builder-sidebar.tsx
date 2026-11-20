@@ -17,7 +17,11 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { type PublicFormField } from '@repo/common/public-form'
+import { type FormNotify } from '@repo/common/form-alerts'
+import {
+	clearBrokenConditions,
+	type PublicFormField,
+} from '@repo/common/public-form'
 import { pickLocalized } from '@repo/common/site-locales'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
@@ -31,6 +35,7 @@ import {
 	DialogTitle,
 } from '@repo/ui/dialog'
 import { Icon, type IconName } from '@repo/ui/icon'
+import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { ScrollArea } from '@repo/ui/scroll-area'
 import { Switch } from '@repo/ui/switch'
@@ -70,6 +75,23 @@ type WebsiteForm = {
 	status: 'draft' | 'published'
 	submitLabel: string
 	successMessage: string
+	/** Restricted form (#357). */
+	restricted: boolean
+	/** Who hears about a new response (#142); null means every member. */
+	notify: FormNotify | null
+}
+
+/** An active location the Location field can offer (#239). */
+export type FormLocationOption = { id: string; name: string }
+
+/** A member who can be chosen to hear about responses (#142). */
+export type FormMemberOption = { id: string; label: string }
+
+/** What the form settings need to know about the signed-in member (#357). */
+export type FormSettingsContext = {
+	members: FormMemberOption[]
+	/** Holds `read:form_restricted:any`: may lift the restriction again. */
+	canUnrestrict: boolean
 }
 
 function AddFieldDialog({
@@ -430,12 +452,17 @@ function FieldsList({
 
 function FieldEditorPanel({
 	field,
+	fieldsAbove,
+	locations,
 	onBack,
 	onUpdate,
 	onRemove,
 	canRemove,
 }: {
 	field: PublicFormField
+	/** The fields placed above this one: the only ones a condition may point at. */
+	fieldsAbove: PublicFormField[]
+	locations: FormLocationOption[]
 	onBack: () => void
 	onUpdate: (patch: Partial<PublicFormField>) => void
 	onRemove: () => void
@@ -598,6 +625,16 @@ function FieldEditorPanel({
 							))}
 						</div>
 					) : null}
+					{field.type === 'text' ? (
+						<NumberOption field={field} onUpdate={onUpdate} />
+					) : null}
+					{field.type === 'location' ? (
+						<LocationOption
+							field={field}
+							locations={locations}
+							onUpdate={onUpdate}
+						/>
+					) : null}
 					{field.type !== 'heading' && field.type !== 'paragraph' ? (
 						<div className="flex items-center justify-between">
 							<Label htmlFor="field-required">
@@ -610,18 +647,274 @@ function FieldEditorPanel({
 							/>
 						</div>
 					) : null}
+					<ConditionOption
+						field={field}
+						fieldsAbove={fieldsAbove}
+						onUpdate={onUpdate}
+					/>
 				</div>
 			</ScrollArea>
 		</div>
 	)
 }
 
+/** Accept a number on a text field, within an optional range (#239). */
+function NumberOption({
+	field,
+	onUpdate,
+}: {
+	field: PublicFormField
+	onUpdate: (patch: Partial<PublicFormField>) => void
+}) {
+	const numberId = useId()
+	const toNumber = (value: string) =>
+		value.trim() === '' || !Number.isFinite(Number(value))
+			? undefined
+			: Number(value)
+	return (
+		<div className="space-y-3">
+			<div className="flex items-center justify-between">
+				<Label htmlFor={`${numberId}-numeric`}>
+					<Trans>Only accept a number</Trans>
+				</Label>
+				<Switch
+					id={`${numberId}-numeric`}
+					checked={Boolean(field.numeric)}
+					onCheckedChange={(numeric) =>
+						onUpdate(
+							numeric
+								? { numeric: true }
+								: { numeric: undefined, min: undefined, max: undefined },
+						)
+					}
+				/>
+			</div>
+			{field.numeric ? (
+				<div className="grid grid-cols-2 gap-2">
+					<div className="space-y-1">
+						<Label htmlFor={`${numberId}-min`}>
+							<Trans>Smallest</Trans>
+						</Label>
+						<Input
+							id={`${numberId}-min`}
+							type="number"
+							inputMode="decimal"
+							value={field.min ?? ''}
+							onChange={(event) =>
+								onUpdate({ min: toNumber(event.target.value) })
+							}
+						/>
+					</div>
+					<div className="space-y-1">
+						<Label htmlFor={`${numberId}-max`}>
+							<Trans>Largest</Trans>
+						</Label>
+						<Input
+							id={`${numberId}-max`}
+							type="number"
+							inputMode="decimal"
+							value={field.max ?? ''}
+							onChange={(event) =>
+								onUpdate({ max: toNumber(event.target.value) })
+							}
+						/>
+					</div>
+				</div>
+			) : null}
+		</div>
+	)
+}
+
+/**
+ * Which locations a Location field offers (#239). Nothing ticked offers every
+ * active location; a deactivated location is never offered on the site.
+ */
+function LocationOption({
+	field,
+	locations,
+	onUpdate,
+}: {
+	field: PublicFormField
+	locations: FormLocationOption[]
+	onUpdate: (patch: Partial<PublicFormField>) => void
+}) {
+	const { _ } = useLingui()
+	const chosen = new Set(field.locationIds ?? [])
+	if (locations.length === 0) {
+		return (
+			<p className="text-muted-foreground text-xs leading-relaxed">
+				<Trans>
+					You have no active locations, so this field is hidden on your site.
+				</Trans>
+			</p>
+		)
+	}
+	return (
+		<fieldset className="space-y-2">
+			<legend className="text-sm font-medium">
+				<Trans>Locations guests can pick</Trans>
+			</legend>
+			<p className="text-muted-foreground text-xs leading-relaxed">
+				<Trans>
+					Leave all unticked to offer every active location. With one location,
+					guests are not asked.
+				</Trans>
+			</p>
+			{locations.map((location) => {
+				const locationName = location.name
+				return (
+					<label key={location.id} className="flex items-center gap-2 text-sm">
+						<input
+							type="checkbox"
+							className="accent-primary size-4"
+							checked={chosen.has(location.id)}
+							aria-label={_(msg`Offer ${locationName}`)}
+							onChange={(event) => {
+								const next = new Set(chosen)
+								if (event.target.checked) next.add(location.id)
+								else next.delete(location.id)
+								onUpdate({
+									locationIds: next.size > 0 ? [...next] : undefined,
+								})
+							}}
+						/>
+						{locationName}
+					</label>
+				)
+			})}
+		</fieldset>
+	)
+}
+
+/**
+ * Show this field only for chosen answers of a single-choice field above it
+ * (#357). Chains are allowed; the picker lists only fields placed above, so a
+ * loop cannot be made.
+ */
+function ConditionOption({
+	field,
+	fieldsAbove,
+	onUpdate,
+}: {
+	field: PublicFormField
+	fieldsAbove: PublicFormField[]
+	onUpdate: (patch: Partial<PublicFormField>) => void
+}) {
+	const { _ } = useLingui()
+	const conditionId = useId()
+	const { activeLocale, defaultLocale } = useContext(LocaleContext)
+	const sources = fieldsAbove.filter(
+		(candidate) =>
+			candidate.type === 'single_choice' &&
+			(candidate.options?.length ?? 0) > 0,
+	)
+	const condition = field.showWhen
+	const source = condition
+		? sources.find((candidate) => candidate.id === condition.fieldId)
+		: undefined
+	const label = (value: string) =>
+		pickLocalized(value, activeLocale, defaultLocale) || value
+	return (
+		<div className="border-border space-y-3 border-t pt-4">
+			<div className="flex items-center justify-between">
+				<Label htmlFor={`${conditionId}-on`}>
+					<Trans>Show conditionally</Trans>
+				</Label>
+				<Switch
+					id={`${conditionId}-on`}
+					checked={Boolean(condition)}
+					disabled={!condition && sources.length === 0}
+					onCheckedChange={(on) => {
+						if (!on) return onUpdate({ showWhen: undefined })
+						const first = sources[0]
+						if (!first) return
+						onUpdate({
+							showWhen: { fieldId: first.id, values: [first.options![0]!] },
+						})
+					}}
+				/>
+			</div>
+			{!condition && sources.length === 0 ? (
+				<p className="text-muted-foreground text-xs leading-relaxed">
+					<Trans>
+						Place a single-choice field above this one to show it only for
+						certain answers.
+					</Trans>
+				</p>
+			) : null}
+			{condition ? (
+				<div className="space-y-2">
+					<Label htmlFor={`${conditionId}-source`}>
+						<Trans>Show when this field is answered</Trans>
+					</Label>
+					<select
+						id={`${conditionId}-source`}
+						value={condition.fieldId}
+						onChange={(event) => {
+							const next = sources.find(
+								(candidate) => candidate.id === event.target.value,
+							)
+							if (next) {
+								onUpdate({
+									showWhen: { fieldId: next.id, values: [next.options![0]!] },
+								})
+							}
+						}}
+						className="border-input bg-background h-11 w-full rounded-md border px-3 text-base"
+					>
+						{sources.map((candidate) => (
+							<option key={candidate.id} value={candidate.id}>
+								{label(candidate.label)}
+							</option>
+						))}
+					</select>
+					<fieldset className="space-y-2">
+						<legend className="text-muted-foreground text-xs">
+							<Trans>With one of these answers</Trans>
+						</legend>
+						{(source?.options ?? []).map((option) => {
+							const optionLabel = label(option)
+							return (
+								<label key={option} className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										className="accent-primary size-4"
+										checked={condition.values.includes(option)}
+										aria-label={_(msg`Answer ${optionLabel}`)}
+										onChange={(event) => {
+											const values = event.target.checked
+												? [...condition.values, option]
+												: condition.values.filter((value) => value !== option)
+											if (values.length === 0) return
+											onUpdate({
+												showWhen: { fieldId: condition.fieldId, values },
+											})
+										}}
+									/>
+									{optionLabel}
+								</label>
+							)
+						})}
+					</fieldset>
+					<p className="text-muted-foreground text-xs leading-relaxed">
+						<Trans>
+							A hidden field is never required and its answer is not stored.
+						</Trans>
+					</p>
+				</div>
+			) : null}
+		</div>
+	)
+}
+
 function FormSettingsPanel({
 	form,
+	settings,
 	onBack,
 	onChange,
 }: {
 	form: WebsiteForm
+	settings: FormSettingsContext
 	onBack: () => void
 	onChange: Dispatch<SetStateAction<WebsiteForm>>
 }) {
@@ -716,6 +1009,12 @@ function FormSettingsPanel({
 							rows={3}
 						/>
 					</div>
+					<RestrictedOption
+						form={form}
+						settings={settings}
+						onChange={onChange}
+					/>
+					<NotifyOption form={form} settings={settings} onChange={onChange} />
 					<div className="flex items-center justify-between">
 						<Label htmlFor="published">
 							<Trans>Published</Trans>
@@ -737,23 +1036,159 @@ function FormSettingsPanel({
 	)
 }
 
+/**
+ * Restricted form (#357): only members with "Read restricted form responses"
+ * can open or export its responses; others see the form exists and a count.
+ * It applies to past responses too. Turning it off needs that permission.
+ */
+function RestrictedOption({
+	form,
+	settings,
+	onChange,
+}: {
+	form: WebsiteForm
+	settings: FormSettingsContext
+	onChange: Dispatch<SetStateAction<WebsiteForm>>
+}) {
+	const restrictedId = useId()
+	const restricted = Boolean(form.restricted)
+	return (
+		<div className="border-border space-y-1.5 border-t pt-4">
+			<div className="flex items-center justify-between gap-3">
+				<Label htmlFor={restrictedId}>
+					<Icon name="lock" className="me-1.5 inline size-3.5" />
+					<Trans>Restricted form</Trans>
+				</Label>
+				<Switch
+					id={restrictedId}
+					checked={restricted}
+					disabled={restricted && !settings.canUnrestrict}
+					onCheckedChange={(next) =>
+						onChange((current) => ({ ...current, restricted: next }))
+					}
+				/>
+			</div>
+			<p className="text-muted-foreground text-xs leading-relaxed">
+				<Trans>
+					Only members with the “Read restricted form responses” permission can
+					open or export the responses, including ones already received. Others
+					see that the form exists and how many responses it has.
+				</Trans>
+			</p>
+			{restricted && !settings.canUnrestrict ? (
+				<p className="text-muted-foreground text-xs leading-relaxed">
+					<Trans>
+						Turning this off needs the “Read restricted form responses”
+						permission.
+					</Trans>
+				</p>
+			) : null}
+		</div>
+	)
+}
+
+/** Who is told about a new response (#142): everyone with website access, or chosen members. */
+function NotifyOption({
+	form,
+	settings,
+	onChange,
+}: {
+	form: WebsiteForm
+	settings: FormSettingsContext
+	onChange: Dispatch<SetStateAction<WebsiteForm>>
+}) {
+	const notifyId = useId()
+	const notify: FormNotify = form.notify ?? { mode: 'all' }
+	const chosen = new Set(notify.mode === 'members' ? notify.userIds : [])
+	return (
+		<fieldset className="border-border space-y-2 border-t pt-4">
+			<legend className="text-sm font-medium">
+				<Trans>Who is notified</Trans>
+			</legend>
+			<p className="text-muted-foreground text-xs leading-relaxed">
+				<Trans>
+					Members hear about each new response in the app and, if they choose,
+					by email (at most one email every 10 minutes). The message names the
+					form, never the answers.
+				</Trans>
+			</p>
+			<label className="flex items-center gap-2 text-sm">
+				<input
+					type="radio"
+					name={`${notifyId}-mode`}
+					className="accent-primary size-4"
+					checked={notify.mode === 'all'}
+					onChange={() =>
+						onChange((current) => ({ ...current, notify: { mode: 'all' } }))
+					}
+				/>
+				<Trans>Everyone with website access</Trans>
+			</label>
+			<label className="flex items-center gap-2 text-sm">
+				<input
+					type="radio"
+					name={`${notifyId}-mode`}
+					className="accent-primary size-4"
+					checked={notify.mode === 'members'}
+					onChange={() =>
+						onChange((current) => ({
+							...current,
+							notify: { mode: 'members', userIds: [...chosen] },
+						}))
+					}
+				/>
+				<Trans>Chosen members</Trans>
+			</label>
+			{notify.mode === 'members' ? (
+				<div className="space-y-1.5 ps-6">
+					{settings.members.map((member) => (
+						<label key={member.id} className="flex items-center gap-2 text-sm">
+							<input
+								type="checkbox"
+								className="accent-primary size-4"
+								checked={chosen.has(member.id)}
+								onChange={(event) => {
+									const next = new Set(chosen)
+									if (event.target.checked) next.add(member.id)
+									else next.delete(member.id)
+									onChange((current) => ({
+										...current,
+										notify: { mode: 'members', userIds: [...next] },
+									}))
+								}}
+							/>
+							<span className="wrap-anywhere">{member.label}</span>
+						</label>
+					))}
+				</div>
+			) : null}
+		</fieldset>
+	)
+}
+
 export function FormBuilderSidebar({
 	form,
 	setForm,
 	selectedId,
 	setSelectedId,
+	locations = [],
+	settings = { members: [], canUnrestrict: false },
 	className,
 }: {
 	form: WebsiteForm
 	setForm: Dispatch<SetStateAction<WebsiteForm>>
 	selectedId: string | null
 	setSelectedId: (id: string | null) => void
+	locations?: FormLocationOption[]
+	settings?: FormSettingsContext
 	className?: string
 }) {
 	const { _ } = useLingui()
 	const { FIELD_TYPES } = useFieldTypes()
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const [showSettings, setShowSettings] = useState(false)
+	// Fields whose condition was cleared by the last change (#357).
+	const [clearedConditions, setClearedConditions] = useState<string[]>([])
 	const selected = form.fields.find((field) => field.id === selectedId) ?? null
 	const translateItems = collectFormTranslationFields(
 		form,
@@ -778,11 +1213,20 @@ export function FormBuilderSidebar({
 		setShowSettings(false)
 	}
 
+	/**
+	 * Every change to the fields goes through here: a condition that no longer
+	 * points at a single-choice field above its own is cleared, with a warning.
+	 */
+	const applyFields = (
+		change: (fields: PublicFormField[]) => PublicFormField[],
+	) => {
+		const { fields, cleared } = clearBrokenConditions(change(form.fields))
+		setClearedConditions(cleared)
+		setForm((current) => ({ ...current, fields }))
+	}
+
 	const removeField = (fieldId: string) => {
-		setForm((current) => ({
-			...current,
-			fields: current.fields.filter((field) => field.id !== fieldId),
-		}))
+		applyFields((fields) => fields.filter((field) => field.id !== fieldId))
 		if (selectedId === fieldId) {
 			setSelectedId(
 				form.fields.find((field) => field.id !== fieldId)?.id ?? null,
@@ -791,14 +1235,14 @@ export function FormBuilderSidebar({
 	}
 
 	const reorderFields = (orderedIds: string[]) => {
-		setForm((current) => {
-			const byId = new Map(current.fields.map((field) => [field.id, field]))
+		applyFields((fields) => {
+			const byId = new Map(fields.map((field) => [field.id, field]))
 			const ordered = orderedIds
 				.map((id) => byId.get(id))
 				.filter((field): field is PublicFormField => Boolean(field))
 			const listed = new Set(orderedIds)
-			const missing = current.fields.filter((field) => !listed.has(field.id))
-			return { ...current, fields: [...ordered, ...missing] }
+			const missing = fields.filter((field) => !listed.has(field.id))
+			return [...ordered, ...missing]
 		})
 	}
 
@@ -813,20 +1257,25 @@ export function FormBuilderSidebar({
 				{showSettings ? (
 					<FormSettingsPanel
 						form={form}
+						settings={settings}
 						onBack={() => setShowSettings(false)}
 						onChange={setForm}
 					/>
 				) : selected ? (
 					<FieldEditorPanel
 						field={selected}
+						fieldsAbove={form.fields.slice(
+							0,
+							form.fields.findIndex((field) => field.id === selected.id),
+						)}
+						locations={locations}
 						onBack={() => setSelectedId(null)}
 						onUpdate={(patch) =>
-							setForm((current) => ({
-								...current,
-								fields: current.fields.map((field) =>
+							applyFields((fields) =>
+								fields.map((field) =>
 									field.id === selected.id ? { ...field, ...patch } : field,
 								),
-							}))
+							)
 						}
 						onRemove={() => removeField(selected.id)}
 						canRemove={form.fields.length > 1}
@@ -868,6 +1317,18 @@ export function FormBuilderSidebar({
 								<Icon name="cog" className="size-4" />
 							</Button>
 						</div>
+						{clearedConditions.length > 0 ? (
+							<p
+								role="status"
+								className="bg-muted text-muted-foreground border-b px-3 py-2 text-xs leading-relaxed"
+							>
+								<Trans>
+									A “show conditionally” rule was removed because its question
+									moved below it or was deleted. Check the fields that were
+									conditional.
+								</Trans>
+							</p>
+						) : null}
 						<ScrollArea className="min-h-0 flex-1">
 							{form.fields.length === 0 ? (
 								<div className="flex flex-col items-center justify-center px-4 py-10 text-center">

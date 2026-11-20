@@ -1,16 +1,19 @@
 import { and, count, desc, eq, lt, sql } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import {
+	formResponseOutbox,
 	getTenantDb,
+	runTenantTransaction,
 	websiteForms,
 	websiteFormSubmissions,
 } from '@repo/tenant-db'
+import { formNotifySchema } from '@repo/common/form-alerts'
 import {
 	publicFormFieldObjectSchema,
 	publicFormFieldsSchema,
 	validatePublicFormFieldChoices,
 } from '@repo/common/public-form'
-import { parseLocalizedString } from '@repo/common/site-locales'
+import { validateFormSubmission } from '@repo/common/public-form-submission'
 import {
 	isTurnstileConfigured,
 	parseTurnstileHostnames,
@@ -19,17 +22,26 @@ import {
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 
+import { runInBackground } from '../lib/background.ts'
 import { clientAddress } from '../lib/client-ip.ts'
 import {
 	findActiveOrganizationById,
 	resolveOrganizationForBrowserAuth,
 } from '../lib/origin.ts'
+import { rateLimit } from '../lib/rate-limit.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import {
 	getBearerToken,
 	getInternalCommandToken,
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
+import { drainFormResponseOutbox } from '../services/form-response-outbox.ts'
+import {
+	popupSignupSchema,
+	recordPopupSignup,
+} from '../services/popup-signup.ts'
+import { siteEventBodySchema } from '@repo/common/site-funnel'
+import { countSiteEvent, siteEventsDisabled } from '../services/site-events.ts'
 import { authenticateOperator, requireOperatorClaim } from './operator.ts'
 
 export const publicFormRoutes = new Hono()
@@ -50,6 +62,10 @@ const formSchema = z.object({
 	submitLabel: z.string().trim().min(1).max(50).default('Submit'),
 	successMessage: z.string().trim().min(1).max(300),
 	status: z.enum(['draft', 'published']).default('published'),
+	/** Restricted form (#357): responses need `read:form_restricted:any`. */
+	restricted: z.boolean().optional(),
+	/** Who hears about a new response (#142); `null` means every member. */
+	notify: formNotifySchema.nullable().optional(),
 })
 
 const publicIdentitySchema = z.object({
@@ -63,6 +79,25 @@ const retentionPurgeSchema = z.object({
 })
 
 const TURNSTILE_FORM_ACTION = 'website-form'
+
+/** The `restrictedForms` claim, minted only for `read:form_restricted:any`. */
+function canReadRestrictedForms(auth: { restrictedForms?: boolean }) {
+	return auth.restrictedForms === true
+}
+
+async function isRestrictedAndClosed(
+	db: Awaited<ReturnType<typeof getTenantDb>>,
+	formId: string,
+	auth: { restrictedForms?: boolean },
+) {
+	if (canReadRestrictedForms(auth)) return false
+	const [row] = await db
+		.select({ restricted: websiteForms.restricted })
+		.from(websiteForms)
+		.where(eq(websiteForms.id, formId))
+		.limit(1)
+	return row?.restricted === true
+}
 
 function submissionClientIp(c: Context) {
 	return clientAddress(c) ?? undefined
@@ -127,6 +162,63 @@ async function publicOrganization(c: Context) {
 	return resolveOrganizationForBrowserAuth(c.req.header('Origin'), parsed.data)
 }
 
+/**
+ * `POST /forms/popup-signup` (#132): a contact left in a website popup, with
+ * explicit consent, stored in this region only. Honeypot, Turnstile and a
+ * per-address limit like every public form; the organization comes from the
+ * browser `Origin`.
+ */
+publicFormRoutes.post(
+	'/popup-signup',
+	rateLimit('popup-signup', { windowMs: 10 * 60 * 1000, maxRequests: 10 }),
+	async (c) => {
+		const body = await c.req.json().catch(() => null)
+		if ((body as { website?: unknown } | null)?.website) {
+			return c.json({ success: true }, 201)
+		}
+		const parsed = popupSignupSchema.safeParse(body)
+		if (!parsed.success) return c.json({ error: 'Invalid signup' }, 400)
+		if (!(await verifyFormTurnstile(c, parsed.data.turnstileToken))) {
+			return c.json({ error: 'Verification failed. Please try again.' }, 403)
+		}
+		const organization = await resolveOrganizationForBrowserAuth(
+			c.req.header('Origin'),
+			{ slug: parsed.data.slug, host: parsed.data.host },
+		)
+		if (!organization) return c.json({ error: 'Not found' }, 404)
+		const result = await recordPopupSignup(organization.id, parsed.data)
+		if (!result.ok) return c.json({ error: result.error }, 400)
+		return c.json({ success: true }, 201)
+	},
+)
+
+/**
+ * `POST /forms/site-events` (#179, #338): one funnel count from the visitor's
+ * browser. The body names an event, a device class, how the visit started and
+ * (in a test) the arm: nothing that identifies a person, and nothing about the
+ * person is stored. The organization comes from the browser `Origin`.
+ * Always answers 204, so a blocked, switched-off or malformed beacon is silent
+ * for the visitor. `SITE_EVENTS_ENABLED=false` stops counting on this node.
+ */
+publicFormRoutes.post(
+	'/site-events',
+	rateLimit('site-events', { windowMs: 60 * 1000, maxRequests: 120 }),
+	async (c) => {
+		if (siteEventsDisabled()) return c.body(null, 204)
+		const parsed = siteEventBodySchema.safeParse(
+			await c.req.json().catch(() => null),
+		)
+		if (!parsed.success) return c.body(null, 204)
+		const organization = await resolveOrganizationForBrowserAuth(
+			c.req.header('Origin'),
+			{ slug: parsed.data.slug, host: parsed.data.host },
+		)
+		if (!organization) return c.body(null, 204)
+		await countSiteEvent(organization.id, parsed.data).catch(() => {})
+		return c.body(null, 204)
+	},
+)
+
 publicFormRoutes.get('/:formId', async (c) => {
 	const organization = await publicOrganization(c)
 	if (!organization) return c.json({ error: 'Form not found' }, 404)
@@ -142,7 +234,14 @@ publicFormRoutes.get('/:formId', async (c) => {
 			),
 		)
 		.limit(1)
-	return form ? c.json({ form }) : c.json({ error: 'Form not found' }, 404)
+	if (!form) return c.json({ error: 'Form not found' }, 404)
+	// `notify` names operators and `restricted` is internal: neither is public.
+	const {
+		notify: ignoredNotify,
+		restricted: ignoredRestricted,
+		...publicForm
+	} = form
+	return c.json({ form: publicForm })
 })
 
 publicFormRoutes.post('/:formId/submissions', async (c) => {
@@ -184,82 +283,31 @@ publicFormRoutes.post('/:formId/submissions', async (c) => {
 		.record(z.string(), z.unknown())
 		.safeParse((body as { values?: unknown })?.values)
 	if (!rawValues.success) return c.json({ error: 'Invalid submission' }, 400)
+	const unavailable = z
+		.array(z.string().max(50))
+		.max(20)
+		.safeParse((body as { unavailableFields?: unknown })?.unavailableFields)
 
-	const optionLabels = (option: string) => {
-		const localized = parseLocalizedString(option)
-		const labels = Object.values(localized)
-			.map((label) => label?.trim())
-			.filter(Boolean) as string[]
-		return labels.length > 0 ? labels : [option.trim()]
-	}
-	const isValidChoice = (choice: string, options: string[]) =>
-		options.some((option) => optionLabels(option).includes(choice.trim()))
+	const labels = z
+		.record(z.string().max(50), z.string().max(100))
+		.safeParse((body as { locationLabels?: unknown })?.locationLabels)
 
-	const values: Record<string, string> = {}
-	for (const field of fields) {
-		if (field.type === 'heading' || field.type === 'paragraph') continue
-		const raw = rawValues.data[field.id]
-		if (field.type === 'multiple_choice') {
-			const selected = Array.isArray(raw)
-				? raw
-						.map(String)
-						.map((choice) => choice.trim())
-						.filter(Boolean)
-				: typeof raw === 'string'
-					? raw
-							.split(',')
-							.map((choice) => choice.trim())
-							.filter(Boolean)
-					: []
-			if (field.required && selected.length === 0) {
-				return c.json({ error: `${field.label} is required` }, 400)
-			}
-			if (
-				selected.some(
-					(choice) =>
-						!(field.options ?? []).length ||
-						!isValidChoice(choice, field.options ?? []),
-				)
-			) {
-				return c.json(
-					{ error: `${field.label} contains an invalid choice` },
-					400,
-				)
-			}
-			const serialized = selected.join(', ')
-			if (serialized.length > 5000) {
-				return c.json({ error: 'Value is too long' }, 400)
-			}
-			values[field.id] = serialized
-			continue
-		}
+	// Hidden fields are dropped and never required (#357); address and location
+	// answers are checked against the definition (#239).
+	const result = validateFormSubmission(fields, rawValues.data, {
+		unavailableLocationFields: unavailable.success ? unavailable.data : [],
+		locationLabels: labels.success ? labels.data : {},
+	})
+	if (!result.ok) return c.json({ error: result.error }, 400)
+	const values = result.values
 
-		if (Array.isArray(raw)) {
-			return c.json({ error: `${field.label} must be a single value` }, 400)
-		}
-		const value = String(raw ?? '').trim()
-		if (field.required && !value) {
-			return c.json({ error: `${field.label} is required` }, 400)
-		}
-		if (value.length > 5000) return c.json({ error: 'Value is too long' }, 400)
-		if (
-			field.type === 'email' &&
-			value &&
-			!z.string().email().safeParse(value).success
-		) {
-			return c.json({ error: `${field.label} must be a valid email` }, 400)
-		}
-		if (
-			field.type === 'single_choice' &&
-			value &&
-			!isValidChoice(value, field.options ?? [])
-		) {
-			return c.json({ error: `${field.label} contains an invalid choice` }, 400)
-		}
-		values[field.id] = value
-	}
-
-	await db.insert(websiteFormSubmissions).values({ formId: form.id, values })
+	// The response and its alert event commit together, so only a stored
+	// response ever notifies (spam-blocked submissions returned above).
+	await runTenantTransaction(db, async (tx) => {
+		await tx.insert(websiteFormSubmissions).values({ formId: form.id, values })
+		await tx.insert(formResponseOutbox).values({ formId: form.id })
+	})
+	runInBackground(drainFormResponseOutbox(organization.id, { db }))
 	return c.json({ success: true, message: form.successMessage }, 201)
 })
 
@@ -278,6 +326,8 @@ formOperatorRoutes.get('/', async (c) => {
 			description: websiteForms.description,
 			fields: websiteForms.fields,
 			status: websiteForms.status,
+			restricted: websiteForms.restricted,
+			notify: websiteForms.notify,
 			createdAt: websiteForms.createdAt,
 			updatedAt: websiteForms.updatedAt,
 			submissionCount: count(websiteFormSubmissions.id),
@@ -310,8 +360,18 @@ formOperatorRoutes.post('/', async (c) => {
 			400,
 		)
 	}
+	// Marking a form restricted is allowed to anyone who can edit forms; only a
+	// holder of `read:form_restricted:any` can lift it again (#357).
 	const db = await getTenantDb(orgId)
-	const [form] = await db.insert(websiteForms).values(parsed.data).returning()
+	const { notify, restricted, ...rest } = parsed.data
+	const [form] = await db
+		.insert(websiteForms)
+		.values({
+			...rest,
+			restricted: restricted ?? false,
+			notify: notify ?? null,
+		})
+		.returning()
 	return c.json({ form }, 201)
 })
 
@@ -334,18 +394,42 @@ formOperatorRoutes.put('/:formId', async (c) => {
 		)
 	}
 	const db = await getTenantDb(orgId)
+	const formId = c.req.param('formId')
+	const { notify, restricted, ...rest } = parsed.data
+	const [current] = await db
+		.select({ restricted: websiteForms.restricted })
+		.from(websiteForms)
+		.where(eq(websiteForms.id, formId))
+		.limit(1)
+	if (!current) return c.json({ error: 'Form not found' }, 404)
+	// Editing a restricted form stays open to form editors; lifting the
+	// restriction needs `read:form_restricted:any` (#357).
+	if (
+		current.restricted &&
+		restricted === false &&
+		!canReadRestrictedForms(auth)
+	) {
+		return c.json({ error: 'restricted_form' }, 403)
+	}
 	const [form] = await db
 		.update(websiteForms)
-		.set({ ...parsed.data, updatedAt: sql`(strftime('%s', 'now'))` })
-		.where(eq(websiteForms.id, c.req.param('formId')))
+		.set({
+			...rest,
+			...(restricted === undefined ? {} : { restricted }),
+			...(notify === undefined ? {} : { notify }),
+			updatedAt: sql`(strftime('%s', 'now'))`,
+		})
+		.where(eq(websiteForms.id, formId))
 		.returning()
 	return form ? c.json({ form }) : c.json({ error: 'Form not found' }, 404)
 })
 
 formOperatorRoutes.get('/:formId/submissions', async (c) => {
 	let orgId: string
+	let auth
 	try {
-		orgId = (await authenticateOperator(c)).orgId
+		auth = await authenticateOperator(c)
+		orgId = auth.orgId
 	} catch (response) {
 		return response as Response
 	}
@@ -356,6 +440,10 @@ formOperatorRoutes.get('/:formId/submissions', async (c) => {
 		.where(eq(websiteForms.id, c.req.param('formId')))
 		.limit(1)
 	if (!form) return c.json({ error: 'Form not found' }, 404)
+	// A restricted form's responses are readable only with the claim (#357).
+	if (form.restricted && !canReadRestrictedForms(auth)) {
+		return c.json({ error: 'restricted_form' }, 403)
+	}
 	const submissions = await db
 		.select()
 		.from(websiteFormSubmissions)
@@ -377,6 +465,9 @@ formOperatorRoutes.delete('/:formId/submissions/:submissionId', async (c) => {
 	const denied = requireOperatorClaim(c, auth, 'canDelete')
 	if (denied) return denied
 	const db = await getTenantDb(orgId)
+	if (await isRestrictedAndClosed(db, c.req.param('formId'), auth)) {
+		return c.json({ error: 'restricted_form' }, 403)
+	}
 	const deleted = await db
 		.delete(websiteFormSubmissions)
 		.where(
@@ -403,6 +494,10 @@ formOperatorRoutes.delete('/:formId', async (c) => {
 	const denied = requireOperatorClaim(c, auth, 'canDelete')
 	if (denied) return denied
 	const db = await getTenantDb(orgId)
+	// Deleting a restricted form deletes its responses: readers only (#357).
+	if (await isRestrictedAndClosed(db, c.req.param('formId'), auth)) {
+		return c.json({ error: 'restricted_form' }, 403)
+	}
 	const deleted = await db
 		.delete(websiteForms)
 		.where(eq(websiteForms.id, c.req.param('formId')))

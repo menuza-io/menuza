@@ -103,6 +103,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			org.id,
 			STAFFING_PERMISSIONS.READ_HIRING,
 		))
+	// Form response alerts go to members who can read website forms (#142).
+	const showFormAlerts = await userHasOrganizationPermission(
+		userId,
+		org.id,
+		ORG_PERMISSIONS.READ_WEBSITE_ANY,
+	)
 	// Reservations alerts are offered where the module is on and the member is
 	// one of the people the alerts are sent to.
 	const showReservationsAlerts = (
@@ -130,6 +136,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		showStaffingAlerts,
 		showScheduleAlerts,
 		showHiringAlerts,
+		showFormAlerts,
 		showReservationsAlerts,
 		showInventoryAlerts: inventoryAlerts.any,
 		showInventoryPriceAlerts: inventoryAlerts.priceRise,
@@ -143,6 +150,7 @@ export default function NotificationSettings() {
 		showStaffingAlerts,
 		showScheduleAlerts,
 		showHiringAlerts,
+		showFormAlerts,
 		showReservationsAlerts,
 		showInventoryAlerts,
 		showInventoryPriceAlerts,
@@ -155,6 +163,7 @@ export default function NotificationSettings() {
 					showStaffingAlerts={showStaffingAlerts}
 					showScheduleAlerts={showScheduleAlerts}
 					showHiringAlerts={showHiringAlerts}
+					showFormAlerts={showFormAlerts}
 					showReservationsAlerts={showReservationsAlerts}
 					showInventoryAlerts={showInventoryAlerts}
 					showInventoryPriceAlerts={showInventoryPriceAlerts}

@@ -20,6 +20,7 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_create_media_studio_any',
 	'org_perm_update_settings_any',
 	'org_perm_read_website_any',
+	'org_perm_read_form_restricted_any',
 	'org_perm_update_website_any',
 	'org_perm_read_announcement_any',
 	'org_perm_update_announcement_any',

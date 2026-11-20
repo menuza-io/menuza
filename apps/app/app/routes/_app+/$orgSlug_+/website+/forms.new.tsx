@@ -1,6 +1,8 @@
 import { Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { toPublicFormProjection } from '@repo/common/public-form'
+import { parseSiteLocalesConfig } from '@repo/common/site-locales'
+import { db, eq, Organization } from '@repo/database'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -25,13 +27,18 @@ import {
 import { setCachedPublicForm } from '#app/utils/sites/kv-cache.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 import {
+	buildFormTemplateFields,
 	FORM_TEMPLATES,
 	getFormTemplate,
 } from '#app/utils/website/form-templates.ts'
 import { parseTenantFormResponse } from '#app/utils/website/tenant-form-response.ts'
 
 const createSchema = z.object({
-	name: z.string().trim().min(1).max(120),
+	// Left empty, the form takes its template's name: a catering form is two
+	// clicks (pick the template, create).
+	name: z.string().trim().max(120).default(''),
+	// The template's name in the operator's language, sent by the page.
+	defaultName: z.string().trim().max(120).default(''),
 	template: z.string(),
 })
 
@@ -59,15 +66,37 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const parsed = createSchema.safeParse(
 		Object.fromEntries(await request.formData()),
 	)
-	if (!parsed.success) return { error: 'Choose a template and enter a name.' }
+	if (!parsed.success) return { error: 'Choose a template.' }
 	const template = getFormTemplate(parsed.data.template)
 	if (!template) return { error: 'Template not found.' }
+	// The template's words follow the site's languages (#239).
+	const [site] = await db
+		.select({
+			siteLocales: Organization.siteLocales,
+			siteDefaultLocale: Organization.siteDefaultLocale,
+		})
+		.from(Organization)
+		.where(eq(Organization.id, orgId))
+		.limit(1)
+	const siteLocales = parseSiteLocalesConfig(
+		site?.siteLocales ?? null,
+		site?.siteDefaultLocale ?? null,
+	)
+	const locales = [
+		siteLocales.defaultLocale,
+		...siteLocales.locales.filter(
+			(locale) => locale !== siteLocales.defaultLocale,
+		),
+	]
 	const response = await fetchTenant('/operator/forms', {
 		method: 'POST',
 		body: JSON.stringify({
-			name: parsed.data.name,
+			name:
+				parsed.data.name ||
+				parsed.data.defaultName ||
+				(template.name.message ?? template.id),
 			description: '',
-			fields: template.fields,
+			fields: buildFormTemplateFields(template.id, locales) ?? template.fields,
 			submitLabel: 'Submit',
 			successMessage: 'Thank you. Your response has been received.',
 			status: 'draft',
@@ -91,6 +120,7 @@ export default function NewWebsiteFormRoute() {
 	const templates = FORM_TEMPLATES.map((template) => ({
 		...template,
 		name: _(template.name),
+		defaultName: _(template.name),
 		description: _(template.description),
 	}))
 	return (
@@ -127,6 +157,14 @@ export default function NewWebsiteFormRoute() {
 
 				<Form method="post" className="space-y-8">
 					<input type="hidden" name="template" value={selected} />
+					<input
+						type="hidden"
+						name="defaultName"
+						value={
+							templates.find((template) => template.id === selected)
+								?.defaultName ?? ''
+						}
+					/>
 					<div className="grid gap-4 md:grid-cols-2">
 						{templates.map((template) => (
 							<button
@@ -181,10 +219,11 @@ export default function NewWebsiteFormRoute() {
 							<Input
 								id="form-name"
 								name="name"
-								placeholder="Contact us"
-								required
+								placeholder={
+									templates.find((template) => template.id === selected)
+										?.defaultName ?? 'Contact us'
+								}
 								maxLength={120}
-								autoFocus
 							/>
 						</div>
 						<div className="flex flex-col items-end gap-2">

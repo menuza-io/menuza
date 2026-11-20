@@ -488,7 +488,7 @@ export type PublicSitePage = {
  * Recursively walk a parsed config value and resolve every localized JSON
  * string `{"en":"…","fr":"…"}` to the appropriate locale string.
  */
-function deepLocalize(
+export function deepLocalize(
 	value: unknown,
 	locale: string,
 	defaultLocale: string,

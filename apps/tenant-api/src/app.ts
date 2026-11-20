@@ -37,6 +37,7 @@ import { laborRoutes } from './routes/labor.ts'
 import { operatorRoutes } from './routes/operator.ts'
 import { marketingAudienceRoutes } from './routes/operator-marketing-audiences.ts'
 import { marketingSettingsRoutes } from './routes/operator-marketing-settings.ts'
+import { funnelOperatorRoutes } from './routes/operator-funnel.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
 import { emailDomainRoutes } from './routes/email-domains.ts'
 import { provisionRoutes } from './routes/provision.ts'
@@ -360,6 +361,7 @@ export function createTenantApiApp() {
 	app.route('/operator', operatorRoutes)
 	app.route('/operator/forms', formOperatorRoutes)
 	app.route('/operator/mailbox', mailboxRoutes)
+	app.route('/operator/funnel', funnelOperatorRoutes)
 	app.route('/operator/journeys', journeyOperatorRoutes)
 	app.route('/operator/marketing/audiences', marketingAudienceRoutes)
 	app.route('/operator/marketing/settings', marketingSettingsRoutes)

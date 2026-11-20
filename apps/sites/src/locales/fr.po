@@ -934,6 +934,10 @@ msgstr "Choisissez ce que vous recevez de nous, et comment."
 msgid "Choose your pickup"
 msgstr "Choisissez votre retrait"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "City"
+msgstr "Ville"
+
 #: src/lib/gift-cards/labels.ts:18
 msgid "Classic"
 msgstr "Classique"
@@ -947,6 +951,7 @@ msgid "Clear search"
 msgstr "Effacer la recherche"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/components/SitePopup.astro.ts:3
 #: src/lib/ordering-labels.ts:106
 #: src/lib/ordering-labels.ts:135
 msgid "Close"
@@ -1008,6 +1013,7 @@ msgid "Complete the verification check before sending."
 msgstr "Terminez la vérification avant d'envoyer."
 
 #: src/components/blocks/FormBlock.astro.ts:3
+#: src/components/SitePopup.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "Terminez la vérification avant d’envoyer."
 
@@ -1336,6 +1342,7 @@ msgstr "Aïd"
 msgid "Email"
 msgstr "E-mail"
 
+#: src/components/SitePopup.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Email address"
 msgstr "Adresse e-mail"
@@ -2666,6 +2673,7 @@ msgid "Phone"
 msgstr "Téléphone"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/components/SitePopup.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Phone number"
 msgstr "Numéro de téléphone"
@@ -2829,6 +2837,10 @@ msgstr "Plats populaires"
 #: src/lib/reservations/labels.ts:241
 msgid "Position in line"
 msgstr "Position dans la file"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Postcode"
+msgstr "Code postal"
 
 #: src/pages/careers/[slug].astro.ts:3
 msgid "Posted {date}"
@@ -3299,6 +3311,10 @@ msgstr "Connectez-vous pour utiliser ce code."
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "Connectez-vous avec votre numéro de téléphone pour voir vos points et utiliser vos récompenses."
 
+#: src/components/SitePopup.astro.ts:3
+msgid "Sign up"
+msgstr "S'inscrire"
+
 #: src/lib/ordering-labels.ts:66
 #: src/lib/reservations/labels.ts:471
 msgid "Sold out"
@@ -3362,6 +3378,10 @@ msgstr "Une erreur s’est produite."
 msgid "Something went wrong. Please try again."
 msgstr "Une erreur s'est produite. Veuillez réessayer."
 
+#: src/components/SitePopup.astro.ts:3
+msgid "Something went wrong. Try again."
+msgstr "Une erreur s'est produite. Réessayez."
+
 #: src/pages/menu.astro.ts:3
 msgid "Special instructions"
 msgstr "Instructions spéciales"
@@ -3407,6 +3427,10 @@ msgstr "étoiles"
 #: src/lib/gift-cards/labels.ts:91
 msgid "Still to pay: {amount}"
 msgstr "Reste à payer : {amount}"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Street address"
+msgstr "Adresse"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
@@ -3525,6 +3549,10 @@ msgstr "Merci pour votre commande !"
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "Merci pour votre achat !"
+
+#: src/components/SitePopup.astro.ts:3
+msgid "Thank you."
+msgstr "Merci."
 
 #: src/lib/reservations/labels.ts:399
 msgid "Thank you. The restaurant has your payment."

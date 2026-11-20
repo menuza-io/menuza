@@ -221,6 +221,12 @@ export function getPermissionGroups(): PermissionGroup[] {
 					warning: t`High impact`,
 				},
 				{
+					id: 'org_perm_read_form_restricted_any',
+					label: t`Read restricted form responses`,
+					description: t`Open, export and unrestrict the responses of forms marked Restricted (allergies, complaints, applicants). Needs View website workspace.`,
+					warning: t`Guest personal data`,
+				},
+				{
 					id: 'org_perm_read_announcement_any',
 					label: t`View announcements`,
 					description: t`Read the announcement banners shown on the public site.`,

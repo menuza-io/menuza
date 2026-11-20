@@ -40,6 +40,7 @@ import { ApplicantBoard, ApplicantBoardSkeleton } from './applicant-board.tsx'
 import { type ApplicantsContext } from './applicant-context.ts'
 import { useApplicantLabels } from './applicant-labels.ts'
 import { ApplicantList, ApplicantListSkeleton } from './applicant-list.tsx'
+import { ExportApplicantsCsv } from './export-applicants-csv.tsx'
 
 const LIMIT = 200
 type View = 'board' | 'list'
@@ -271,6 +272,14 @@ export function ApplicantsPage({
 					t`People who applied through your website. Move them along, book interviews and hire.`,
 				)}
 			/>
+
+			<div className="flex justify-end">
+				<ExportApplicantsCsv
+					client={client}
+					postingId={postingId}
+					disabled={!ready}
+				/>
+			</div>
 
 			<div className="flex flex-col gap-2">
 				<div

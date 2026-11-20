@@ -2,11 +2,13 @@ import { and, db, eq, Organization } from '@repo/database'
 import { getClientLocales } from '@repo/i18n/server'
 import { getClientIp } from '@repo/security'
 import { type LoaderFunctionArgs } from 'react-router'
+import { runningExperimentForPage } from '#app/utils/experiments/experiments.server.ts'
 import {
 	checkRateLimit,
 	createRateLimitResponse,
 	PUBLIC_SITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
+import { funnelEnabled } from '#app/utils/site-events/site-events.server.ts'
 import {
 	getCachedSiteData,
 	getSiteCacheVersion,
@@ -15,6 +17,7 @@ import {
 } from '#app/utils/sites/kv-cache.server.ts'
 import { verifySitePreviewToken } from '#app/utils/sites/preview-token.server.ts'
 import {
+	deepLocalize,
 	findPublishedSitePage,
 	toPublicPagePayload,
 } from '#app/utils/sites/public-org.server.ts'
@@ -153,10 +156,37 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			? preferredLocales
 			: defaultLocale
 
-	const payload = toPublicPagePayload(page, requestedLocale, defaultLocale, {
-		headerConfig,
-		footerConfig,
-	})
+	const basePayload = toPublicPagePayload(
+		page,
+		requestedLocale,
+		defaultLocale,
+		{
+			headerConfig,
+			footerConfig,
+		},
+	)
+	// A running A/B test of one section (#338): variant B rides along, localized
+	// like the section. Never in a preview, and only while `website.funnel` is on
+	// (a test needs the counts to mean anything). Starting or ending a test
+	// purges the site cache, so a cached copy never outlives it by more than that.
+	const experiment =
+		!isPreview && (await funnelEnabled(orgId))
+			? await runningExperimentForPage(orgId, page.id)
+			: null
+	const payload = experiment
+		? {
+				...basePayload,
+				experiment: {
+					id: experiment.id,
+					sectionId: experiment.sectionId,
+					variantConfig: deepLocalize(
+						experiment.variantConfig,
+						requestedLocale ?? defaultLocale,
+						defaultLocale,
+					),
+				},
+			}
+		: basePayload
 
 	if (cacheKey && cacheVersion !== null) {
 		await setCachedSiteData(cacheKey, payload, {

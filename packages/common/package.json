@@ -214,6 +214,26 @@
       "import": "./src/public-form.ts",
       "default": "./src/public-form.ts"
     },
+    "./form-alerts": {
+      "types": "./src/form-alerts.ts",
+      "import": "./src/form-alerts.ts",
+      "default": "./src/form-alerts.ts"
+    },
+    "./site-funnel": {
+      "types": "./src/site-funnel.ts",
+      "import": "./src/site-funnel.ts",
+      "default": "./src/site-funnel.ts"
+    },
+    "./site-popup": {
+      "types": "./src/site-popup.ts",
+      "import": "./src/site-popup.ts",
+      "default": "./src/site-popup.ts"
+    },
+    "./public-form-submission": {
+      "types": "./src/public-form-submission.ts",
+      "import": "./src/public-form-submission.ts",
+      "default": "./src/public-form-submission.ts"
+    },
     "./email-blocks": {
       "types": "./src/email-blocks.ts",
       "import": "./src/email-blocks.ts",

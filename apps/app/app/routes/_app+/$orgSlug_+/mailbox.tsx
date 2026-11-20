@@ -6,6 +6,7 @@ import {
 	mailboxReplyUrl,
 	mailboxSender,
 	type MailboxItem,
+	type MailboxLockedForm,
 } from '@repo/common/mailbox'
 import { pickLocalized } from '@repo/common/site-locales'
 import { cn } from '@repo/ui'
@@ -26,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLoaderData, useParams } from 'react-router'
 import { z } from 'zod'
+import { ExportFormCsv } from '#app/components/forms/export-form-csv.tsx'
 import { MailboxIcon } from '#app/components/icons/mailbox-icon.tsx'
 import { CallsTab } from '#app/components/mailbox/calls-tab.tsx'
 import { ReviewsTab } from '#app/components/mailbox/reviews-tab.tsx'
@@ -74,6 +76,8 @@ export default function MailboxRoute() {
 	const [total, setTotal] = useState(0)
 	const [unreadCount, setUnreadCount] = useState(0)
 	const [aiAvailable, setAIAvailable] = useState(false)
+	// Restricted forms this member cannot read: they exist, with a count (#357).
+	const [lockedForms, setLockedForms] = useState<MailboxLockedForm[]>([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 	const [readError, setReadError] = useState<string | null>(null)
@@ -127,6 +131,7 @@ export default function MailboxRoute() {
 				setTotal(result.total)
 				setUnreadCount(result.unreadCount)
 				setAIAvailable(result.aiAvailable)
+				setLockedForms(result.lockedForms)
 				if (page > 1 && result.items.length === 0) setPage(page - 1)
 			})
 			.catch((cause: unknown) => {
@@ -346,6 +351,37 @@ export default function MailboxRoute() {
 									</Button>
 								</div>
 							</div>
+							{lockedForms.length > 0 ? (
+								<ul
+									className="bg-muted/40 divide-y border-b"
+									aria-label={_(msg`Restricted forms`)}
+								>
+									{lockedForms.map((form) => {
+										const responseCount = form.responseCount
+										return (
+											<li
+												key={form.id}
+												className="text-muted-foreground flex items-start gap-2 px-4 py-3 text-xs"
+											>
+												<Icon
+													name="lock"
+													className="mt-0.5 size-3.5 shrink-0"
+												/>
+												<p className="min-w-0">
+													<span className="text-foreground block truncate font-medium">
+														{localize(form.name)}
+													</span>
+													<Trans>
+														Restricted form with {responseCount} responses. You
+														need the “Read restricted form responses” permission
+														to open them.
+													</Trans>
+												</p>
+											</li>
+										)
+									})}
+								</ul>
+							) : null}
 							<ScrollArea className="min-h-0 flex-1" aria-busy={loading}>
 								{loading && items.length === 0 ? (
 									<div
@@ -435,6 +471,13 @@ export default function MailboxRoute() {
 															</span>
 														</div>
 														<div className="mt-1 flex items-center gap-2">
+															{item.restricted ? (
+																<Icon
+																	name="lock"
+																	className="text-muted-foreground size-3 shrink-0"
+																	aria-label={_(msg`Restricted form`)}
+																/>
+															) : null}
 															<span className="text-muted-foreground truncate text-xs">
 																{localize(item.formName)}
 															</span>
@@ -499,18 +542,27 @@ export default function MailboxRoute() {
 											{localize(selected.formName)}
 										</h2>
 									</div>
-									<Button
-										variant="ghost"
-										size="sm"
-										disabled={readingId === selected.id}
-										onClick={() => void updateRead(selected, !selected.isRead)}
-									>
-										{selected.isRead ? (
-											<Trans>Mark unread</Trans>
-										) : (
-											<Trans>Mark read</Trans>
-										)}
-									</Button>
+									<div className="flex items-center gap-1">
+										<ExportFormCsv
+											orgSlug={orgSlug}
+											formId={selected.formId}
+											formName={localize(selected.formName)}
+										/>
+										<Button
+											variant="ghost"
+											size="sm"
+											disabled={readingId === selected.id}
+											onClick={() =>
+												void updateRead(selected, !selected.isRead)
+											}
+										>
+											{selected.isRead ? (
+												<Trans>Mark unread</Trans>
+											) : (
+												<Trans>Mark read</Trans>
+											)}
+										</Button>
+									</div>
 								</header>
 								<ScrollArea className="min-h-0 flex-1">
 									<div className="px-5 py-6 md:px-7">

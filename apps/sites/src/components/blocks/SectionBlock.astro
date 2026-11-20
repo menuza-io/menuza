@@ -1,0 +1,89 @@
+---
+import type { PublicSiteMenuPayload } from '~/lib/org'
+import ContactBlock from './ContactBlock.astro'
+import HeroBlock from './HeroBlock.astro'
+import LocationsBlock from './LocationsBlock.astro'
+import MenuFileBlock from './MenuFileBlock.astro'
+import MenuHighlightsBlock from './MenuHighlightsBlock.astro'
+import ReviewsBlock from './ReviewsBlock.astro'
+import ScrollingStripBlock from './ScrollingStripBlock.astro'
+import ContentBlock from './ContentBlock.astro'
+import FaqBlock from './FaqBlock.astro'
+import FeaturesBlock from './FeaturesBlock.astro'
+import GalleryBlock from './GalleryBlock.astro'
+import CardsBlock from './CardsBlock.astro'
+import VideoBlock from './VideoBlock.astro'
+import CtaBlock from './CtaBlock.astro'
+import TestimonialsBlock from './TestimonialsBlock.astro'
+import FormBlock from './FormBlock.astro'
+import ReservationBlock from './ReservationBlock.astro'
+import RewardsBlock from './RewardsBlock.astro'
+import EventsBlock from './EventsBlock.astro'
+
+/**
+ * One body section. `config` is passed separately from `section` so the same
+ * block renders the original or variant B of an A/B test (#338).
+ */
+interface Props {
+	type: string
+	id: string
+	config: any
+	menu: PublicSiteMenuPayload | null
+	features: { ordering: boolean; reservations: boolean }
+}
+
+const { type, id, config, menu, features } = Astro.props
+---
+
+{
+	(() => {
+		switch (type) {
+			case 'hero':
+				return <HeroBlock config={config} features={features} />
+			case 'content':
+				return <ContentBlock config={config} />
+			case 'faq':
+				return <FaqBlock config={config} />
+			case 'features':
+				return <FeaturesBlock config={config} />
+			case 'gallery':
+				return <GalleryBlock config={config} />
+			case 'cards':
+				return <CardsBlock config={config} />
+			case 'testimonials':
+				return <TestimonialsBlock config={config} />
+			case 'video':
+				return <VideoBlock config={config} />
+			case 'cta':
+				return <CtaBlock config={config} />
+			case 'form':
+				return <FormBlock config={config} sectionId={id} />
+			case 'reservation':
+				return <ReservationBlock config={config} />
+			case 'rewards':
+				return <RewardsBlock config={config} />
+			case 'events':
+				return <EventsBlock config={config} />
+			case 'menuHighlights':
+				return <MenuHighlightsBlock config={config} menu={menu} />
+			case 'locationsHours':
+				return (
+					<LocationsBlock
+						config={config}
+						menu={menu}
+						reservationsOnline={features.reservations}
+					/>
+				)
+			case 'contact':
+				return <ContactBlock config={config} menu={menu} sectionId={id} />
+			case 'reviews':
+				return <ReviewsBlock config={config} />
+			case 'menuFile':
+				return <MenuFileBlock config={config} />
+			case 'scrollingStrip':
+				return <ScrollingStripBlock config={config} />
+			default:
+				return null
+		}
+	})()
+}

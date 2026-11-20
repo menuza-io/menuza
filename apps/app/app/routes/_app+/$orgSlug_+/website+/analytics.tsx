@@ -20,6 +20,7 @@ import {
 	SiteAnalyticsSchema,
 	siteAnalyticsActionIntent,
 } from '#app/components/settings/cards/organization/site-analytics-card.tsx'
+import { FunnelPanel } from '#app/components/website/funnel-panel.tsx'
 import {
 	consentBannerEnabled,
 	readConsentSettings,
@@ -30,6 +31,7 @@ import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import { funnelEnabled } from '#app/utils/site-events/site-events.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -50,11 +52,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_WEBSITE_ANY,
 	)
 
-	const [consent, bannerEnabled] = await Promise.all([
+	const [consent, bannerEnabled, funnel] = await Promise.all([
 		readConsentSettings(organization.id),
 		consentBannerEnabled(organization.id),
+		funnelEnabled(organization.id),
 	])
-	return { organization, consent: { ...consent, bannerEnabled } }
+	return { organization, consent: { ...consent, bannerEnabled }, funnel }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -136,11 +139,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function WebsiteAnalyticsRoute() {
-	const { organization, consent } = useLoaderData<typeof loader>()
+	const { organization, consent, funnel } = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 
 	return (
 		<AnnotatedLayout className="max-w-4xl">
+			{funnel ? (
+				<AnnotatedSection>
+					<FunnelPanel orgSlug={organization.slug} />
+				</AnnotatedSection>
+			) : null}
 			<AnnotatedSection>
 				<SiteAnalyticsCard
 					organization={organization}

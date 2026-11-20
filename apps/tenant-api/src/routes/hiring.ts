@@ -18,6 +18,10 @@ import {
 	validationResponse,
 } from '../lib/staff-http.ts'
 import {
+	applicantExportQuerySchema,
+	exportApplicantsCsv,
+} from '../services/hiring-export.ts'
+import {
 	addNote,
 	createInterview,
 	declineApplication,
@@ -78,6 +82,33 @@ hiringOperatorRoutes.get(
 		const parsed = hiringListQuerySchema.safeParse(c.req.query())
 		if (!parsed.success) return validationResponse(parsed.error)
 		return respond(await listApplications(ctx, parsed.data))
+	}),
+)
+
+/**
+ * `GET /operator/hiring/applications.csv?postingId=&stage=` (#142): applicants
+ * as a formula-safe CSV straight to the browser. Needs the hiring read grant
+ * and the token's scope limit applies. Audited with ids and a count only.
+ */
+hiringOperatorRoutes.get(
+	'/applications.csv',
+	staffGuard('hiring', 'Hiring', READ, async (ctx, c) => {
+		const parsed = applicantExportQuerySchema.safeParse(c.req.query())
+		if (!parsed.success) return validationResponse(parsed.error)
+		const result = await exportApplicantsCsv(ctx, parsed.data)
+		if (!result.ok) {
+			return c.json({ error: result.error, message: result.message }, 413, {
+				'Cache-Control': 'private, no-store',
+			})
+		}
+		return new Response(result.csv, {
+			headers: {
+				'Content-Type': 'text/csv; charset=utf-8',
+				'Content-Disposition': 'attachment; filename="applicants.csv"',
+				'Cache-Control': 'private, no-store',
+				'X-Export-Rows': String(result.rows),
+			},
+		})
 	}),
 )
 

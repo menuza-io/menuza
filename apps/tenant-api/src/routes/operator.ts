@@ -86,7 +86,7 @@ export type OperatorArea = 'marketing' | 'customers' | 'automations'
 
 export async function authenticateOperator(
 	c: Context,
-	scope?: 'mailbox' | 'phone_calls' | 'people',
+	scope?: 'mailbox' | 'phone_calls' | 'people' | 'funnel',
 	area?: OperatorArea,
 ) {
 	const token = getBearerToken(c.req.header('Authorization')) || null
@@ -120,6 +120,11 @@ export async function authenticateOperator(
 		testPhone?: string
 		/** Location-scoped operators: the only places their audiences may look at. */
 		locationIds?: string[]
+		/**
+		 * Minted only for members holding `read:form_restricted:any` (#357): may
+		 * read, export and unrestrict responses of a restricted form.
+		 */
+		restrictedForms?: boolean
 	}
 	try {
 		const secret = new TextEncoder().encode(operatorToken)

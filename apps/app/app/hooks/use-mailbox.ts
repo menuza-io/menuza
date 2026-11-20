@@ -12,8 +12,12 @@ export function notifyMailboxChanged(orgSlug: string) {
 	window.dispatchEvent(new CustomEvent(MAILBOX_CHANGED, { detail: orgSlug }))
 }
 
-/** Only credentials pass through App. All mailbox data goes browser → regional API. */
-export function useMailboxClient(orgSlug: string) {
+/**
+ * The raw browser → regional API call, with credentials from App (the only
+ * thing that passes through it) and one retry on an expired token. Returns the
+ * response untouched, so a caller can read JSON or save a file.
+ */
+export function useMailboxFetch(orgSlug: string) {
 	const credentials = useRef<{
 		orgSlug: string
 		value: Promise<Credentials>
@@ -62,6 +66,18 @@ export function useMailboxClient(orgSlug: string) {
 				credentials.current = null
 				response = await send()
 			}
+			return response
+		},
+		[orgSlug],
+	)
+}
+
+/** Only credentials pass through App. All mailbox data goes browser → regional API. */
+export function useMailboxClient(orgSlug: string) {
+	const mailboxFetch = useMailboxFetch(orgSlug)
+	return useCallback(
+		async (path: string, init: RequestInit = {}) => {
+			const response = await mailboxFetch(path, init)
 			if (!response.ok) {
 				const payload: unknown = await response.json().catch(() => null)
 				const parsed = z.object({ error: z.string() }).safeParse(payload)
@@ -73,7 +89,7 @@ export function useMailboxClient(orgSlug: string) {
 			}
 			return response.json() as Promise<unknown>
 		},
-		[orgSlug],
+		[mailboxFetch],
 	)
 }
 

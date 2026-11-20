@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { FORM_RESPONSE_WORKFLOW } from '@repo/common/form-alerts'
 import { and, db, eq, NotificationPreference } from '@repo/database'
 import { checkHoneypot } from '@repo/security'
 import { STAFFING_NOTIFICATION_WORKFLOWS } from '@repo/staffing'
@@ -36,6 +37,7 @@ const preferenceSchema = z.object({
 	workflow: z.enum([
 		'comment-mention-workflow',
 		'note-comment-workflow',
+		FORM_RESPONSE_WORKFLOW,
 		...STAFFING_NOTIFICATION_WORKFLOWS,
 		...RESERVATION_ALERT_WORKFLOWS,
 		...INVENTORY_ALERT_WORKFLOWS,

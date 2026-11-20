@@ -1,35 +1,19 @@
 ---
 import { locationOffersOrdering } from '@repo/common/restaurant-sections'
+import SectionBlock from './SectionBlock.astro'
 import {
 	fetchPublishedReservations,
 	fetchPublishedSiteMenu,
 	type PublicWebsitePageSection,
 } from '~/lib/org'
-import ContactBlock from './ContactBlock.astro'
-import HeroBlock from './HeroBlock.astro'
-import LocationsBlock from './LocationsBlock.astro'
-import MenuFileBlock from './MenuFileBlock.astro'
-import MenuHighlightsBlock from './MenuHighlightsBlock.astro'
-import ReviewsBlock from './ReviewsBlock.astro'
-import ScrollingStripBlock from './ScrollingStripBlock.astro'
-import ContentBlock from './ContentBlock.astro'
-import FaqBlock from './FaqBlock.astro'
-import FeaturesBlock from './FeaturesBlock.astro'
-import GalleryBlock from './GalleryBlock.astro'
-import CardsBlock from './CardsBlock.astro'
-import VideoBlock from './VideoBlock.astro'
-import CtaBlock from './CtaBlock.astro'
-import TestimonialsBlock from './TestimonialsBlock.astro'
-import FormBlock from './FormBlock.astro'
-import ReservationBlock from './ReservationBlock.astro'
-import RewardsBlock from './RewardsBlock.astro'
-import EventsBlock from './EventsBlock.astro'
 
 interface Props {
 	sections: PublicWebsitePageSection[]
+	/** The running A/B test of this page, if any (#338). */
+	experiment?: { id: string; sectionId: string; variantConfig: unknown } | null
 }
 
-const { sections } = Astro.props
+const { sections, experiment = null } = Astro.props
 const bodySections = sections.filter(
 	(section) => section.type !== 'header' && section.type !== 'footer',
 )
@@ -65,54 +49,45 @@ const features = {
 ---
 
 <div class="flex flex-col">
-	{bodySections.map((section) => {
-		switch (section.type) {
-			case 'hero':
-				return <HeroBlock config={section.config} features={features} />
-			case 'content':
-				return <ContentBlock config={section.config} />
-			case 'faq':
-				return <FaqBlock config={section.config} />
-			case 'features':
-				return <FeaturesBlock config={section.config} />
-			case 'gallery':
-				return <GalleryBlock config={section.config} />
-			case 'cards':
-				return <CardsBlock config={section.config} />
-			case 'testimonials':
-				return <TestimonialsBlock config={section.config} />
-			case 'video':
-				return <VideoBlock config={section.config} />
-			case 'cta':
-				return <CtaBlock config={section.config} />
-			case 'form':
-				return <FormBlock config={section.config} sectionId={section.id} />
-			case 'reservation':
-				return <ReservationBlock config={section.config} />
-			case 'rewards':
-				return <RewardsBlock config={section.config} />
-			case 'events':
-				return <EventsBlock config={section.config} />
-			case 'menuHighlights':
-				return <MenuHighlightsBlock config={section.config} menu={menu} />
-			case 'locationsHours':
-				return (
-					<LocationsBlock
-						config={section.config}
-						menu={menu}
-						reservationsOnline={features.reservations}
-					/>
-				)
-			case 'contact':
-				return <ContactBlock config={section.config} menu={menu} sectionId={section.id} />
-			case 'reviews':
-				return <ReviewsBlock config={section.config} />
-			case 'menuFile':
-				return <MenuFileBlock config={section.config} />
-			case 'scrollingStrip':
-				return <ScrollingStripBlock config={section.config} />
-			default:
-				return null
-		}
-	})}
+	{bodySections.map((section) =>
+		experiment && experiment.sectionId === section.id ? (
+			// A/B test (#338): the original renders as usual and is what crawlers
+			// and scriptless visitors get. Variant B waits in an inert template; the
+			// browser picks the visitor's arm and swaps it in before first paint
+			// (`data-exp` hides the wrapper until then, with a CSS timeout so a
+			// blocked script can never leave the section hidden).
+			<div data-exp={experiment.id} data-exp-pending class="exp-wrap">
+				<div data-exp-arm="a">
+					<SectionBlock type={section.type} id={section.id} config={section.config} menu={menu} features={features} />
+				</div>
+				<template data-exp-arm="b">
+					<SectionBlock type={section.type} id={section.id} config={experiment.variantConfig} menu={menu} features={features} />
+				</template>
+			</div>
+		) : (
+			<SectionBlock type={section.type} id={section.id} config={section.config} menu={menu} features={features} />
+		),
+	)}
 </div>
+
+<style is:global>
+	.exp-wrap[data-exp-pending] {
+		visibility: hidden;
+		animation: exp-reveal 0s 1.5s forwards;
+	}
+	@keyframes exp-reveal {
+		to {
+			visibility: visible;
+		}
+	}
+</style>
+
+{
+	experiment ? (
+		<script>
+			import { applyExperiments } from '~/lib/site-experiments-client'
+
+			applyExperiments()
+		</script>
+	) : null
+}
