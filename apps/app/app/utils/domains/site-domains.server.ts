@@ -341,7 +341,13 @@ export async function addSiteDomains(
 	const plan = hostsForConnect(parsed.hostname, input.primaryForm)
 	if (!plan) throw new DomainError('hostname_invalid')
 
-	const existing = await ensureSiteDomains(input.organization.id)
+	let existing = await ensureSiteDomains(input.organization.id)
+	// An expired primary was released: it does not stand in the way of a new one.
+	const expiredPrimary = existing.find((row) => row.isPrimary && row.status === 'expired')
+	if (input.mode === 'primary' && expiredPrimary) {
+		await db.delete(SiteDomain).where(eq(SiteDomain.id, expiredPrimary.id))
+		existing = existing.filter((row) => row.id !== expiredPrimary.id)
+	}
 	const currentPrimary = primaryOf(existing)
 	if (input.mode === 'primary' && currentPrimary) {
 		throw new DomainError('primary_exists')

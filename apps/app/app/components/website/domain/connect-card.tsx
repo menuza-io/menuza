@@ -670,7 +670,7 @@ export function ConnectCard({
 										onValueChange={(value) => setMethod(value as Method)}
 										className="grid gap-2"
 									>
-										{inspection.canManageNameservers && !hasPrimary ? (
+										{inspection.canManageNameservers ? (
 											<Choice
 												value="nameservers"
 												title={_(
@@ -700,9 +700,7 @@ export function ConnectCard({
 									</RadioGroup>
 								</div>
 
-								{method === 'nameservers' &&
-								inspection.canManageNameservers &&
-								!hasPrimary ? (
+								{method === 'nameservers' && inspection.canManageNameservers ? (
 									<NameserverMove
 										hostname={inspection.hostname}
 										primaryForm={primaryForm}
@@ -718,7 +716,7 @@ export function ConnectCard({
 								) : null}
 								{method === 'records' ||
 								(method === 'nameservers' &&
-									(hasPrimary || !inspection.canManageNameservers)) ? (
+									!inspection.canManageNameservers) ? (
 									<div className="space-y-4">
 										<ProviderSteps steps={steps} _={_} />
 										<div className="flex flex-wrap gap-2">

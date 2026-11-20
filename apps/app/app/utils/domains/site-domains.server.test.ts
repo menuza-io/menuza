@@ -620,6 +620,28 @@ describe('the 15-minute sweep', () => {
 		expect(again.status).toBe('pending')
 	})
 
+	it('lets the organization connect a different primary after its primary expired', async () => {
+		const { organization, actor } = await pendingPrimary(31)
+		await sweepSiteDomains({ resolver: resolverWith({}) })
+		const replacement = uniqueHost()
+		const rows = await addSiteDomains({
+			organization,
+			hostname: replacement,
+			primaryForm: 'www',
+			mode: 'primary',
+			actor,
+		})
+		expect(rows.map((row) => [row.hostname, row.isPrimary])).toEqual([
+			[`www.${replacement}`, true],
+			[replacement, false],
+		])
+		const [org] = await db
+			.select({ customDomain: Organization.customDomain })
+			.from(Organization)
+			.where(eq(Organization.id, organization.id))
+		expect(org?.customDomain).toBe(`www.${replacement}`)
+	})
+
 	it('releases an expired name for another organization', async () => {
 		const { host } = await pendingPrimary(31)
 		await sweepSiteDomains({ resolver: resolverWith({}) })
