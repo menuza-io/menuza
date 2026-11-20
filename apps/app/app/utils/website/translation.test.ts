@@ -79,6 +79,9 @@ describe('collectTranslationFields', () => {
 			if (type === 'header') {
 				config.navLinks = [{ label: 'Home' }]
 			}
+			if (type === 'hero') {
+				config.slides = [{ url: '', alt: 'Welcome' }]
+			}
 			for (const pathDef of LOCALIZED_FIELDS[type] ?? []) {
 				expect(resolvePaths(config, pathDef)).not.toHaveLength(0)
 			}
