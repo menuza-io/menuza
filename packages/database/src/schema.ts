@@ -2005,6 +2005,192 @@ export const ApiKey = sqliteTable(
 	],
 )
 
+/**
+ * Promotional popups (#132). Content only, no visitor data: signups go from the
+ * browser to the regional tenant-api. Published popups reach the public site
+ * with the coupon resolved and re-checked on every request, so a coupon that
+ * expires or is switched off stops the popup without an edit here.
+ */
+export const SitePopup = sqliteTable(
+	'SitePopup',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** The operator's own label; never shown to visitors. */
+		name: text().notNull(),
+		status: text({ enum: ['draft', 'published'] })
+			.default('draft')
+			.notNull(),
+		/** Localized JSON strings (`{"en":"…","ar":"…"}`), like every site text. */
+		title: text().notNull().default(''),
+		body: text().notNull().default(''),
+		buttonLabel: text().notNull().default(''),
+		/** Where the button goes when there is no coupon (a site path or https URL). */
+		buttonUrl: text(),
+		imageUrl: text(),
+		/** An optional online coupon; the popup stops showing if it stops working. */
+		discountId: text().references(() => Discount.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		trigger: text({ enum: ['delay', 'scroll', 'exit'] })
+			.default('delay')
+			.notNull(),
+		/** Seconds for `delay`, percent scrolled for `scroll`; unused for `exit`. */
+		triggerValue: integer().default(5).notNull(),
+		frequency: text({ enum: ['session', 'day', 'week', 'ever'] })
+			.default('day')
+			.notNull(),
+		/** JSON array: `["all"]` or any of `home`, `menu`, `other`. */
+		pages: text().default('["all"]').notNull(),
+		startsAt: integer({ mode: 'timestamp_ms' }),
+		endsAt: integer({ mode: 'timestamp_ms' }),
+		/** Email or phone signup shown in the popup; the contact stays regional. */
+		captureContact: text({ enum: ['none', 'email', 'phone'] })
+			.default('none')
+			.notNull(),
+		/** Localized wording of the unchecked consent checkbox. */
+		consentText: text().notNull().default(''),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		publishedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SitePopup_organizationId_status_idx').on(
+			table.organizationId,
+			table.status,
+		),
+		index('SitePopup_discountId_idx').on(table.discountId),
+	],
+)
+
+/**
+ * A/B tests of one section of one page (#338). The original is the live
+ * section (variant `a`); `variantConfig` is the section config of variant `b`.
+ * Only one test runs per page. Visitors' variants live in their browsers; the
+ * region keeps counts per arm (`site_events_daily.variant`), never a visitor.
+ */
+export const SiteExperiment = sqliteTable(
+	'SiteExperiment',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		pageId: text()
+			.notNull()
+			.references(() => WebsitePage.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		sectionId: text().notNull(),
+		name: text().notNull(),
+		status: text({ enum: ['running', 'ended', 'applied'] })
+			.default('running')
+			.notNull(),
+		/** The section config JSON of variant B (localized strings kept). */
+		variantConfig: text().notNull(),
+		startedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		/** 60 days after the start; the test ends by itself then. */
+		expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		endedAt: integer({ mode: 'timestamp_ms' }),
+		endReason: text({
+			enum: ['manual', 'applied', 'expired', 'visitor_cap'],
+		}),
+		/** The arm applied or declared best when the test ended. */
+		winner: text({ enum: ['a', 'b'] }),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SiteExperiment_organizationId_status_idx').on(
+			table.organizationId,
+			table.status,
+		),
+		// One running test per page, whatever the section.
+		uniqueIndex('SiteExperiment_pageId_running_key')
+			.on(table.pageId)
+			.where(sql`${table.status} = 'running'`),
+	],
+)
+
+/**
+ * Batching of form response emails (#142): at most one email per form per
+ * member every 10 minutes. `pendingCount` holds responses that arrived inside
+ * the window and goes out in the next email ("3 new responses"). Ids and
+ * counts only.
+ */
+export const FormAlertDigest = sqliteTable(
+	'FormAlertDigest',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		/** The regional form id (opaque). */
+		formId: text().notNull(),
+		lastEmailedAt: integer({ mode: 'timestamp_ms' }),
+		pendingCount: integer().default(0).notNull(),
+		/** The form name as of the last response, for the batched email. */
+		formName: text().notNull().default(''),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('FormAlertDigest_organizationId_userId_formId_key').on(
+			table.organizationId,
+			table.userId,
+			table.formId,
+		),
+		index('FormAlertDigest_pending_idx').on(table.pendingCount),
+	],
+)
+
 export const OrganizationAnnouncement = sqliteTable(
 	'OrganizationAnnouncement',
 	{

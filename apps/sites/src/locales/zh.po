@@ -934,6 +934,10 @@ msgstr "选择你想收到的消息和接收方式。"
 msgid "Choose your pickup"
 msgstr "选择取货安排"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "City"
+msgstr "城市"
+
 #: src/lib/gift-cards/labels.ts:18
 msgid "Classic"
 msgstr "经典"
@@ -947,6 +951,7 @@ msgid "Clear search"
 msgstr "清除搜索"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/components/SitePopup.astro.ts:3
 #: src/lib/ordering-labels.ts:106
 #: src/lib/ordering-labels.ts:135
 msgid "Close"
@@ -1008,6 +1013,7 @@ msgid "Complete the verification check before sending."
 msgstr "请在发送前完成验证。"
 
 #: src/components/blocks/FormBlock.astro.ts:3
+#: src/components/SitePopup.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "提交前请完成验证。"
 
@@ -1336,6 +1342,7 @@ msgstr "开斋节"
 msgid "Email"
 msgstr "电子邮件"
 
+#: src/components/SitePopup.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Email address"
 msgstr "电子邮箱"
@@ -2666,6 +2673,7 @@ msgid "Phone"
 msgstr "电话"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/components/SitePopup.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Phone number"
 msgstr "电话号码"
@@ -2829,6 +2837,10 @@ msgstr "热门菜品"
 #: src/lib/reservations/labels.ts:241
 msgid "Position in line"
 msgstr "排队位置"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Postcode"
+msgstr "邮政编码"
 
 #: src/pages/careers/[slug].astro.ts:3
 msgid "Posted {date}"
@@ -3299,6 +3311,10 @@ msgstr "请登录后使用此优惠码。"
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "使用手机号码登录，即可查看积分并使用奖励。"
 
+#: src/components/SitePopup.astro.ts:3
+msgid "Sign up"
+msgstr "注册"
+
 #: src/lib/ordering-labels.ts:66
 #: src/lib/reservations/labels.ts:471
 msgid "Sold out"
@@ -3362,6 +3378,10 @@ msgstr "出了点问题。"
 msgid "Something went wrong. Please try again."
 msgstr "出了点问题，请重试。"
 
+#: src/components/SitePopup.astro.ts:3
+msgid "Something went wrong. Try again."
+msgstr "出了点问题，请重试。"
+
 #: src/pages/menu.astro.ts:3
 msgid "Special instructions"
 msgstr "特别说明"
@@ -3407,6 +3427,10 @@ msgstr "星"
 #: src/lib/gift-cards/labels.ts:91
 msgid "Still to pay: {amount}"
 msgstr "待付：{amount}"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Street address"
+msgstr "街道地址"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
@@ -3525,6 +3549,10 @@ msgstr "感谢您的订单！"
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "感谢您的购买！"
+
+#: src/components/SitePopup.astro.ts:3
+msgid "Thank you."
+msgstr "谢谢。"
 
 #: src/lib/reservations/labels.ts:399
 msgid "Thank you. The restaurant has your payment."

@@ -31,6 +31,8 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { getFormsTenantClient } from '#app/utils/forms/restricted.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
@@ -48,6 +50,7 @@ type WebsiteForm = {
 	description: string | null
 	fields: FormField[]
 	status: 'draft' | 'published'
+	restricted?: boolean
 	submissionCount: number
 	updatedAt: string | null
 	submitLabel: string
@@ -98,9 +101,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	const { fetchTenant, orgId } = await getOperatorTenantClient(
+	const organization = await requireUserOrganization(request, params.orgSlug, {
+		id: true,
+	})
+	const orgId = organization.id
+	// Deleting a restricted form deletes its responses, so the client carries
+	// the `restrictedForms` claim only for members holding the permission (#357).
+	const { fetchTenant } = await getFormsTenantClient(
 		request,
 		params.orgSlug || '',
+		orgId,
 		{ canUpdate: true, canDelete: true },
 	)
 	await requireUserWithOrganizationPermission(
@@ -238,7 +248,13 @@ export default function WebsiteFormsRoute() {
 									<TableCell className="text-muted-foreground hidden sm:table-cell">
 										{form.fields.length}
 									</TableCell>
-									<TableCell>
+									<TableCell className="space-x-1">
+										{form.restricted ? (
+											<Badge variant="outline">
+												<Icon name="lock" className="size-3" />
+												<Trans>Restricted</Trans>
+											</Badge>
+										) : null}
 										<Badge variant="outline">
 											<span
 												aria-hidden="true"

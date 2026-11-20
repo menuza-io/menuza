@@ -822,6 +822,15 @@ export const websiteForms = sqliteTable(
 		status: text('status', { enum: ['draft', 'published'] })
 			.notNull()
 			.default('published'),
+		// Who hears about a new response (#142): null or `{"mode":"all"}` for every
+		// member with website access, `{"mode":"members","userIds":[...]}` for
+		// chosen members. Opaque control-plane user ids only.
+		notify: text('notify', { mode: 'json' }),
+		// Restricted form (#357): only holders of `read:form_restricted:any` read
+		// its responses. Applies to past responses too.
+		restricted: integer('restricted', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),
@@ -830,6 +839,85 @@ export const websiteForms = sqliteTable(
 		),
 	},
 	(table) => [index('idx_website_forms_status').on(table.status)],
+)
+
+// Queued "new response" events for the App (#142). Ids only: the form id and
+// when it happened, never a value. Written in the submission's transaction (a
+// spam-blocked submission never reaches it) and drained to the App, which
+// creates the notifications and the batched emails.
+export const formResponseOutbox = sqliteTable(
+	'form_response_outbox',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		formId: text('form_id').notNull(),
+		status: text('status', { enum: ['pending', 'sent', 'failed'] })
+			.notNull()
+			.default('pending'),
+		attempts: integer('attempts').notNull().default(0),
+		nextAttemptAt: integer('next_attempt_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(table) => [
+		index('idx_form_response_outbox_due').on(table.status, table.nextAttemptAt),
+	],
+)
+
+// One row per CSV export (#142): who, which form or posting, how many rows.
+// Never a value.
+export const formExportAudit = sqliteTable(
+	'form_export_audit',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		kind: text('kind', { enum: ['form_responses', 'applicants'] }).notNull(),
+		// The form id, or the posting id (empty for "all postings").
+		targetId: text('target_id').notNull().default(''),
+		operatorId: text('operator_id').notNull(),
+		rowCount: integer('row_count').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(table) => [index('idx_form_export_audit_created').on(table.createdAt)],
+)
+
+// First-party funnel counts (#179). Counts only: no visitor id, no address, no
+// user agent. A visit is de-duplicated in the browser, never here. `variant`
+// names the A/B arm (`<experimentId>:a|b`, empty outside a test; #338).
+export const siteEventsDaily = sqliteTable(
+	'site_events_daily',
+	{
+		date: text('date').notNull(),
+		locationId: text('location_id').notNull().default(''),
+		event: text('event', {
+			enum: ['visit', 'menu_view', 'add_to_cart', 'checkout', 'order'],
+		}).notNull(),
+		device: text('device', { enum: ['phone', 'tablet', 'desktop'] }).notNull(),
+		entry: text('entry', {
+			enum: ['qr_poster', 'qr_table', 'direct', 'marketing'],
+		}).notNull(),
+		variant: text('variant').notNull().default(''),
+		count: integer('count').notNull().default(0),
+	},
+	(table) => [
+		primaryKey({
+			columns: [
+				table.date,
+				table.locationId,
+				table.event,
+				table.device,
+				table.entry,
+				table.variant,
+			],
+		}),
+	],
 )
 
 export const websiteFormSubmissions = sqliteTable(
@@ -7487,6 +7575,7 @@ export type CustomerPaymentMethod = typeof customerPaymentMethods.$inferSelect
 export type NewCustomerPaymentMethod =
 	typeof customerPaymentMethods.$inferInsert
 export type WebsiteForm = typeof websiteForms.$inferSelect
+export type SiteEventsDailyRow = typeof siteEventsDaily.$inferSelect
 export type WebsiteFormSubmission = typeof websiteFormSubmissions.$inferSelect
 
 export type RestaurantOrder = typeof restaurantOrders.$inferSelect

@@ -42,6 +42,7 @@ function getWorkflowLabel(
 		'staffing-overtime-workflow': msg`Time clock: someone is close to overtime or has reached it`,
 		'staffing-schedule-workflow': msg`Schedule: a week was published`,
 		'staffing-hiring-workflow': msg`Hiring: someone applied for a job`,
+		'form-response-workflow': msg`Website forms: a form got a new response`,
 		'reservations.large_party_request': msg`Reservations: a large-party request is waiting`,
 		'reservations.waitlist_remote_join': msg`Reservations: a guest joined the waitlist remotely`,
 		'reservations.unassigned_conflict': msg`Reservations: a booking no longer has a table`,
@@ -108,6 +109,16 @@ const hiringWorkflows = [
 	{
 		id: 'staffing-hiring-workflow',
 		name: 'staffing-hiring-workflow',
+		critical: false,
+	},
+]
+
+// Form response alerts are offered to members who can read website forms, the
+// people the alerts are sent to (#142).
+const formWorkflows = [
+	{
+		id: 'form-response-workflow',
+		name: 'form-response-workflow',
 		critical: false,
 	},
 ]
@@ -257,6 +268,7 @@ export function NotificationPreferencesCard({
 	showStaffingAlerts = false,
 	showScheduleAlerts = false,
 	showHiringAlerts = false,
+	showFormAlerts = false,
 	showReservationsAlerts = false,
 	showInventoryAlerts = false,
 	showInventoryPriceAlerts = false,
@@ -265,6 +277,7 @@ export function NotificationPreferencesCard({
 	showStaffingAlerts?: boolean
 	showScheduleAlerts?: boolean
 	showHiringAlerts?: boolean
+	showFormAlerts?: boolean
 	showReservationsAlerts?: boolean
 	showInventoryAlerts?: boolean
 	showInventoryPriceAlerts?: boolean
@@ -285,6 +298,7 @@ export function NotificationPreferencesCard({
 		...(showStaffingAlerts ? staffingWorkflows : []),
 		...(showScheduleAlerts ? scheduleWorkflows : []),
 		...(showHiringAlerts ? hiringWorkflows : []),
+		...(showFormAlerts ? formWorkflows : []),
 		...(showReservationsAlerts ? reservationsWorkflows : []),
 		...(showInventoryAlerts
 			? inventoryWorkflows.filter(

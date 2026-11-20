@@ -662,6 +662,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					headers: { Authorization: `Bearer ${mockInternalToken}` },
 				}),
 			)
+			// A/B tests past 60 days or at the visitor cap end (#338).
+			expect(fetchMock).toHaveBeenCalledWith(
+				'https://app.example.com/resources/jobs/website-experiments',
+				expect.objectContaining({
+					method: 'POST',
+					headers: { Authorization: `Bearer ${mockInternalToken}` },
+				}),
+			)
 		})
 
 		it('runs MCP token cleanup, job postings expiry, the seat reconcile and the SEO jobs from the shared 0 3 trigger', async () => {
@@ -1409,13 +1417,21 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				passThroughOnException: vi.fn(),
 			} as any
 			await worker.scheduled({ cron: '*/15 * * * *' } as any, env, ctx)
-			expect(ctx.waitUntil).toHaveBeenCalledTimes(1)
-			await ctx.waitUntil.mock.calls[0]![0]
+			// The domain sweep and the form alert digest share the slot (#139, #142).
+			expect(ctx.waitUntil).toHaveBeenCalledTimes(2)
+			await Promise.all(
+				ctx.waitUntil.mock.calls.map((call: unknown[]) => call[0]),
+			)
 			const [url, init] = fetchMock.mock.calls[0] as unknown as [
 				string,
 				RequestInit,
 			]
 			expect(url).toMatch(/\/resources\/jobs\/domain-status$/u)
+			// Batched form response emails that waited out a window (#142).
+			const urls = fetchMock.mock.calls.map((call) => String(call[0]))
+			expect(urls.some((u) => u.endsWith('/resources/jobs/form-alerts'))).toBe(
+				true,
+			)
 			expect(init.method).toBe('POST')
 			expect((init.headers as Record<string, string>).Authorization).toMatch(
 				/^Bearer /u,

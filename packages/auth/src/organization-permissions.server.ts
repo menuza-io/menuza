@@ -179,6 +179,9 @@ export const ORG_PERMISSIONS = {
 	READ_WEBSITE_ANY: 'read:website:any' as const,
 	UPDATE_WEBSITE_ANY: 'update:website:any' as const,
 
+	// Responses of restricted website forms (#357): read, export, unrestrict.
+	READ_FORM_RESTRICTED_ANY: 'read:form_restricted:any' as const,
+
 	// Website announcement permissions
 	READ_ANNOUNCEMENT_ANY: 'read:announcement:any' as const,
 	UPDATE_ANNOUNCEMENT_ANY: 'update:announcement:any' as const,

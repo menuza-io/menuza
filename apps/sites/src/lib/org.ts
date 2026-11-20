@@ -235,6 +235,8 @@ export type PublicWebsitePage = {
 		noIndex: boolean
 	}
 	sections: PublicWebsitePageSection[]
+	/** A running A/B test of one section (#338): variant B, localized like the section. */
+	experiment?: { id: string; sectionId: string; variantConfig: unknown } | null
 	/** Set by the App only after it verified the signed preview token. */
 	previewVerified?: boolean
 }

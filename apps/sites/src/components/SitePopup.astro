@@ -1,0 +1,46 @@
+---
+import { msg } from '@lingui/core/macro'
+
+/**
+ * Promotional popup host (#132). Empty until the browser fetches the popups
+ * from the App; nothing is rendered or fetched when there is no App URL. The
+ * popup's own words are the operator's; only the fixed labels come from here.
+ */
+interface Props {
+	appUrl?: string
+	tenantApiUrl?: string
+	orgSlug?: string
+	customHost?: string | null
+	locale?: string
+}
+const { appUrl, tenantApiUrl, orgSlug, customHost, locale } = Astro.props
+const i18n = Astro.locals.i18n
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
+---
+
+{
+	appUrl ? (
+		<div
+			id="site-popup-root"
+			hidden
+			data-app-url={appUrl}
+			data-tenant-api-url={tenantApiUrl}
+			data-org-slug={orgSlug}
+			data-custom-host={customHost || undefined}
+			data-locale={locale}
+			data-turnstile-site-key={turnstileSiteKey || undefined}
+			data-close-label={i18n._(msg`Close`)}
+			data-email-label={i18n._(msg`Email address`)}
+			data-phone-label={i18n._(msg`Phone number`)}
+			data-submit-label={i18n._(msg`Sign up`)}
+			data-thanks-label={i18n._(msg`Thank you.`)}
+			data-error-label={i18n._(msg`Something went wrong. Try again.`)}
+			data-verification-label={i18n._(msg`Complete the verification check before submitting.`)}
+		/>
+		<script>
+			import { initSitePopups } from '~/lib/site-popup-client'
+
+			void initSitePopups()
+		</script>
+	) : null
+}

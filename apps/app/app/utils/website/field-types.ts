@@ -75,6 +75,18 @@ export const FIELD_TYPE_META: Record<FieldType, FieldTypeMetaSource> = {
 		description: msg`Add supporting information.`,
 		defaultLabel: msg`Paragraph`,
 	},
+	address: {
+		label: msg`Address`,
+		icon: 'building',
+		description: msg`Collect a street, city and postcode.`,
+		defaultLabel: msg`Address`,
+	},
+	location: {
+		label: msg`Location`,
+		icon: 'globe',
+		description: msg`Let guests pick one of your locations.`,
+		defaultLabel: msg`Location`,
+	},
 	textarea: {
 		label: msg`Long text`,
 		icon: 'edit',

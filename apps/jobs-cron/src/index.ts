@@ -35,12 +35,19 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 	// (and their operators are told), domain registrations progress, renewals and
 	// their reminders run, email forwarding and sending domains are checked
 	// (#139, #283, #183, #276, #103). The App guards each task's own cadence.
-	'*/15 * * * *': ['/resources/jobs/domain-status'],
+	'*/15 * * * *': [
+		'/resources/jobs/domain-status',
+		// Batched form response emails that waited out a member's 10-minute
+		// window (#142).
+		'/resources/jobs/form-alerts',
+	],
 	'0 2 * * *': [
 		'/resources/jobs/audit-log-archival',
 		'/resources/jobs/menu-snapshot-prune',
 		// Website versions of deleted pages after 30 days, and finished schedules (#85).
 		'/resources/jobs/website-version-prune',
+		// A/B tests past 60 days or at the visitor cap end (#338).
+		'/resources/jobs/website-experiments',
 	],
 	'0 3 * * *': [
 		'/resources/jobs/mcp-token-cleanup',

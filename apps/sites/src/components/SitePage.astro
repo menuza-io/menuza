@@ -6,6 +6,7 @@ import {
 } from '@repo/common/site-locales'
 import { activeAnnouncements } from '@repo/common/announcement-window'
 import AnnouncementBanners from '~/components/AnnouncementBanners.astro'
+import SitePopup from '~/components/SitePopup.astro'
 import ConsentBanner from '~/components/ConsentBanner.astro'
 import SiteFooter from '~/components/SiteFooter.astro'
 import SiteHeader from '~/components/SiteHeader.astro'
@@ -163,10 +164,17 @@ const alternateLinks = [
 		/>
 		<main class="flex-1">
 			<slot>
-				{page ? <RenderBlocks sections={sections} /> : null}
+				{page ? <RenderBlocks sections={sections} experiment={page?.experiment} /> : null}
 			</slot>
 		</main>
-		<SiteFooter
+		<SitePopup
+			appUrl={appUrl}
+			tenantApiUrl={getTenantApiUrl(organization.dataRegion) ?? undefined}
+			orgSlug={Astro.locals.orgSlug || organization.slug}
+			customHost={Astro.locals.customHost}
+			locale={Astro.locals.requestedLocale || defaultLocale}
+		/>
+				<SiteFooter
 			config={footer?.config}
 			organization={organization}
 			showCookieSettings={showConsentBanner}

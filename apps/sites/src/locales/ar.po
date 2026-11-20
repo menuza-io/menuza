@@ -934,6 +934,10 @@ msgstr "اختر ما تتلقاه منا وكيف."
 msgid "Choose your pickup"
 msgstr "اختر موعد الاستلام"
 
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "City"
+msgstr "المدينة"
+
 #: src/lib/gift-cards/labels.ts:18
 msgid "Classic"
 msgstr "كلاسيكي"
@@ -947,6 +951,7 @@ msgid "Clear search"
 msgstr "مسح البحث"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/components/SitePopup.astro.ts:3
 #: src/lib/ordering-labels.ts:106
 #: src/lib/ordering-labels.ts:135
 msgid "Close"
@@ -1008,6 +1013,7 @@ msgid "Complete the verification check before sending."
 msgstr "أكمل خطوة التحقق قبل الإرسال."
 
 #: src/components/blocks/FormBlock.astro.ts:3
+#: src/components/SitePopup.astro.ts:3
 msgid "Complete the verification check before submitting."
 msgstr "أكمل التحقق قبل الإرسال."
 
@@ -1336,6 +1342,7 @@ msgstr "العيد"
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
+#: src/components/SitePopup.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Email address"
 msgstr "البريد الإلكتروني"
@@ -2666,6 +2673,7 @@ msgid "Phone"
 msgstr "الهاتف"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/components/SitePopup.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Phone number"
 msgstr "رقم الجوال"
@@ -2829,6 +2837,10 @@ msgstr "الأطباق الأكثر طلبًا"
 #: src/lib/reservations/labels.ts:241
 msgid "Position in line"
 msgstr "الترتيب في القائمة"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Postcode"
+msgstr "الرمز البريدي"
 
 #: src/pages/careers/[slug].astro.ts:3
 msgid "Posted {date}"
@@ -3299,6 +3311,10 @@ msgstr "سجّل الدخول لاستخدام هذا الرمز."
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "سجّل الدخول برقم هاتفك لعرض نقاطك واستخدام مكافآتك."
 
+#: src/components/SitePopup.astro.ts:3
+msgid "Sign up"
+msgstr "سجّل"
+
 #: src/lib/ordering-labels.ts:66
 #: src/lib/reservations/labels.ts:471
 msgid "Sold out"
@@ -3362,6 +3378,10 @@ msgstr "حدث خطأ ما."
 msgid "Something went wrong. Please try again."
 msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
 
+#: src/components/SitePopup.astro.ts:3
+msgid "Something went wrong. Try again."
+msgstr "حدث خطأ ما. حاول مرة أخرى."
+
 #: src/pages/menu.astro.ts:3
 msgid "Special instructions"
 msgstr "تعليمات خاصة"
@@ -3407,6 +3427,10 @@ msgstr "نجوم"
 #: src/lib/gift-cards/labels.ts:91
 msgid "Still to pay: {amount}"
 msgstr "المتبقي للدفع: {amount}"
+
+#: src/components/blocks/FormBlock.astro.ts:3
+msgid "Street address"
+msgstr "عنوان الشارع"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
@@ -3525,6 +3549,10 @@ msgstr "شكرًا لطلبك!"
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "شكرًا لشرائك!"
+
+#: src/components/SitePopup.astro.ts:3
+msgid "Thank you."
+msgstr "شكراً لك."
 
 #: src/lib/reservations/labels.ts:399
 msgid "Thank you. The restaurant has your payment."

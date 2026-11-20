@@ -41,6 +41,12 @@ import {
 	domainAlertKindFromNotificationType,
 	domainAlertPath,
 } from '#app/utils/domains/domain-alerts.ts'
+import {
+	FORM_ALERT_COPY,
+	formAlertPath,
+	isFormResponseNotificationType,
+	plainMarkdown,
+} from '#app/utils/forms/form-alerts.ts'
 import { inventoryAlertCopy } from '#app/utils/inventory/alert-copy.ts'
 import {
 	inventoryAlertKindFromNotificationType,
@@ -178,6 +184,19 @@ function NotificationItem({
 			}
 		: null
 
+	const formKind = isFormResponseNotificationType(notification.type)
+	const safeFormName =
+		typeof payload?.formName === 'string' ? plainMarkdown(payload.formName) : ''
+	const formAlert = formKind
+		? {
+				// The form's name only; never an answer (#142).
+				subject: safeFormName
+					? _(msg`**New response to ${safeFormName}**`)
+					: _(FORM_ALERT_COPY.subject),
+				body: _(FORM_ALERT_COPY.body),
+			}
+		: null
+
 	const websiteKind = websiteAlertKindFromNotificationType(notification.type)
 	const websiteAlert = websiteKind
 		? websiteAlertCopy(
@@ -197,6 +216,7 @@ function NotificationItem({
 		: null
 
 	const subject =
+		formAlert?.subject ??
 		domainAlert?.subject ??
 		websiteAlert?.subject ??
 		discountAlert?.subject ??
@@ -209,6 +229,7 @@ function NotificationItem({
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
 	const body =
+		formAlert?.body ??
 		domainAlert?.body ??
 		websiteAlert?.body ??
 		discountAlert?.body ??
@@ -224,7 +245,13 @@ function NotificationItem({
 		if (!notification.isRead) {
 			onMarkRead(notification.id)
 		}
-		if (domainKind && typeof payload?.orgSlug === 'string') {
+		if (
+			formKind &&
+			typeof payload?.orgSlug === 'string' &&
+			typeof payload?.formId === 'string'
+		) {
+			void navigate(`/${payload.orgSlug}${formAlertPath(payload.formId)}`)
+		} else if (domainKind && typeof payload?.orgSlug === 'string') {
 			void navigate(`/${payload.orgSlug}${domainAlertPath(domainKind)}`)
 		} else if (websiteKind && typeof payload?.orgSlug === 'string') {
 			void navigate(
@@ -298,7 +325,9 @@ function NotificationItem({
 			<div className="flex items-start border-b border-dashed p-2">
 				<Avatar className="mr-2 h-8 w-8">
 					<AvatarFallback>
-						{websiteKind || domainKind ? (
+						{formKind ? (
+							<Icon name="mail" className="h-4 w-4" />
+						) : websiteKind || domainKind ? (
 							<Icon name="globe" className="h-4 w-4" />
 						) : discountKind ? (
 							<Icon name="tag" className="h-4 w-4" />

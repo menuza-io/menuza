@@ -148,7 +148,7 @@ const seoNoIndex = page?.seo?.noIndex ?? false
 	imageUrl={seoImageUrl}
 	noIndex={seoNoIndex}
 >
-	<RenderBlocks sections={page.sections} />
+	<RenderBlocks sections={page.sections} experiment={page.experiment} />
 </SitePage>
 ) : (
 	<SiteNotFound organization={organization} />

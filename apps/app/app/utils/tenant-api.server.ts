@@ -75,6 +75,7 @@ export async function getOperatorTenantClient(
 			| 'people'
 			| 'qr:read'
 			| 'qr:write'
+			| 'funnel'
 		/**
 		 * Names the area of a token that reaches the browser. tenant-api accepts
 		 * it only on that area's routes, so the permission checked before minting

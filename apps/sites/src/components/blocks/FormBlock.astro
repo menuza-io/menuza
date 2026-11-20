@@ -13,7 +13,13 @@ import {
 	getCachedPublicForm,
 	setCachedPublicForm,
 } from '~/lib/public-form-cache'
+import { fetchPublishedSiteMenu } from '~/lib/org'
 import { getTenantApiUrl } from '~/lib/tenant-api'
+import {
+	locationFieldMode,
+	offeredLocations,
+	type FormLocation,
+} from '~/lib/website-form-fields'
 
 const { config, sectionId } = Astro.props
 const organization = Astro.locals.organization
@@ -57,12 +63,34 @@ const activeLocale =
 	'en'
 const defaultLocale =
 	organization?.defaultLocale || Astro.locals.defaultLocale || 'en'
+// Location fields (#239) offer the restaurant's active locations only: they are
+// read from the public menu payload (which lists active locations), so a
+// deactivated location never appears and a form with none left hides the field.
+const locationFields = form?.fields.filter((field) => field.type === 'location') ?? []
+let activeLocations: FormLocation[] = []
+if (locationFields.length > 0) {
+	const menu = await fetchPublishedSiteMenu({
+		slug: Astro.locals.orgSlug,
+		host: Astro.locals.customHost,
+		lng: Astro.locals.requestedLocale,
+	})
+	activeLocations = (menu?.locations ?? []).map((location) => ({
+		id: location.id,
+		name: pickLocalized(location.name, activeLocale, defaultLocale) || location.name,
+	}))
+}
+const offeredByField = Object.fromEntries(
+	locationFields.map((field) => [field.id, offeredLocations(field, activeLocations)]),
+)
 const blockId = `website-form-${sectionId || formId || crypto.randomUUID()}`
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
 const turnstileRequired = Boolean(turnstileSiteKey)
 const unavailable = Astro.locals.i18n._(msg`This form is currently unavailable.`)
 const selectForm = Astro.locals.i18n._(msg`Select a published form in the page editor.`)
 const submitting = Astro.locals.i18n._(msg`Submitting...`)
+const addressStreet = Astro.locals.i18n._(msg`Street address`)
+const addressCity = Astro.locals.i18n._(msg`City`)
+const addressPostcode = Astro.locals.i18n._(msg`Postcode`)
 const submissionError = Astro.locals.i18n._(msg`Unable to submit the form. Please try again.`)
 const verificationRequired = Astro.locals.i18n._(
 	msg`Complete the verification check before submitting.`,
@@ -118,6 +146,8 @@ const verificationRequired = Astro.locals.i18n._(
 						data-error-label={submissionError}
 						data-verification-label={verificationRequired}
 						data-turnstile-site-key={turnstileSiteKey || undefined}
+						data-fields={JSON.stringify(form.fields)}
+						data-offered={JSON.stringify(offeredByField)}
 						data-success-class={siteStatusSuccessClass}
 						data-error-class={siteStatusErrorClass}
 					>
@@ -136,10 +166,66 @@ const verificationRequired = Astro.locals.i18n._(
 								activeLocale,
 								defaultLocale,
 							)
-							return field.type === 'heading' ? (
+							const offered = offeredByField[field.id] ?? []
+							return field.type === 'location' &&
+								locationFieldMode(offered) !== 'pick' ? null : (
+								<div data-field-id={field.id}>
+							{field.type === 'heading' ? (
 								<h3 class="font-heading pt-2 text-xl tracking-tight text-foreground">
 									{fieldLabel}
 								</h3>
+							) : field.type === 'location' ? (
+								<div class="space-y-2">
+									<label class={siteFieldLabelClass} for={`${blockId}-${field.id}`}>
+										{fieldLabel}
+										{field.required ? <span aria-hidden="true"> *</span> : null}
+									</label>
+									<select
+										id={`${blockId}-${field.id}`}
+										name={field.id}
+										required={field.required}
+										class={siteInputClass}
+									>
+										<option value="">—</option>
+										{offered.map((location) => (
+											<option value={location.id}>{location.name}</option>
+										))}
+									</select>
+								</div>
+							) : field.type === 'address' ? (
+								<fieldset class="space-y-2">
+									<legend class={siteFieldLabelClass}>
+										{fieldLabel}
+										{field.required ? <span aria-hidden="true"> *</span> : null}
+									</legend>
+									<input
+										name={`${field.id}__street`}
+										aria-label={addressStreet}
+										placeholder={addressStreet}
+										autocomplete="street-address"
+										required={field.required}
+										maxlength="200"
+										class={siteInputClass}
+									/>
+									<div class="grid grid-cols-2 gap-2">
+										<input
+											name={`${field.id}__city`}
+											aria-label={addressCity}
+											placeholder={addressCity}
+											autocomplete="address-level2"
+											maxlength="200"
+											class={siteInputClass}
+										/>
+										<input
+											name={`${field.id}__postcode`}
+											aria-label={addressPostcode}
+											placeholder={addressPostcode}
+											autocomplete="postal-code"
+											maxlength="200"
+											class={siteInputClass}
+										/>
+									</div>
+								</fieldset>
 							) : field.type === 'paragraph' ? (
 								<p class="text-sm leading-relaxed text-muted-foreground">{fieldLabel}</p>
 							) : field.type === 'single_choice' || field.type === 'multiple_choice' ? (
@@ -192,13 +278,18 @@ const verificationRequired = Astro.locals.i18n._(
 										<input
 											id={`${blockId}-${field.id}`}
 											name={field.id}
-											type={field.type === 'datetime' ? 'datetime-local' : field.type === 'name' ? 'text' : field.type}
+											type={field.type === 'datetime' ? 'datetime-local' : field.type === 'text' && field.numeric ? 'number' : field.type === 'name' ? 'text' : field.type}
+											inputmode={field.type === 'text' && field.numeric ? 'decimal' : undefined}
+											min={field.type === 'text' && field.numeric ? field.min : undefined}
+											max={field.type === 'text' && field.numeric ? field.max : undefined}
 											autocomplete={field.type === 'name' ? 'name' : field.type === 'email' ? 'email' : field.type === 'tel' ? 'tel' : undefined}
 											required={field.required}
 											maxlength="5000"
 											class={siteInputClass}
 										/>
 									)}
+								</div>
+							)}
 								</div>
 							)
 						})}

@@ -182,6 +182,8 @@ const PUBLIC_ROUTES: Record<string, string> = {
 		'public published menu; rate limited, preview only on the custom domain',
 	'resources+/sites.landing.ts':
 		'public generated location, dish and area pages (#137); rate limited, 404 unless published',
+	'resources+/sites.popups.ts':
+		'public published promotional popups and the funnel flag; coupon re-checked per request; rate limited',
 	'resources+/sites.events.ts':
 		'public published website events (#184); rate limited, 404 unless published and website.events is on',
 	'resources+/sites.reservations.ts':

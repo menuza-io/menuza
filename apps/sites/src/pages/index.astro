@@ -195,7 +195,7 @@ const structuredData = await structuredDataPromise
 	) : null}
 	{
 		page ? (
-			<RenderBlocks sections={page.sections} />
+			<RenderBlocks sections={page.sections} experiment={page.experiment} />
 		) : (
 			<section class="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col justify-center px-6 py-24">
 				<p class="text-muted-foreground text-sm font-medium">

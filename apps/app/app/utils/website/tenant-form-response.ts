@@ -1,3 +1,4 @@
+import { formNotifySchema } from '@repo/common/form-alerts'
 import { publicFormFieldsSchema } from '@repo/common/public-form'
 import { z } from 'zod'
 
@@ -9,6 +10,9 @@ const tenantFormResponseSchema = z.object({
 	status: z.enum(['draft', 'published']),
 	submitLabel: z.string(),
 	successMessage: z.string(),
+	/** Restricted form (#357) and who hears about responses (#142). */
+	restricted: z.boolean().default(false),
+	notify: formNotifySchema.nullable().default(null),
 })
 
 export type TenantFormResponse = z.infer<typeof tenantFormResponseSchema>

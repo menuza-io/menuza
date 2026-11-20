@@ -1,8 +1,13 @@
-import { and, count, desc, eq, isNull, sql } from 'drizzle-orm'
+import { and, count, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { mailboxRecipient } from '@repo/common/mailbox'
-import { publicFormFieldsSchema } from '@repo/common/public-form'
 import {
+	publicFormDisplayFieldTypes,
+	publicFormFieldsSchema,
+} from '@repo/common/public-form'
+import { toCsv } from '@repo/staffing'
+import {
+	formExportAudit,
 	getTenantDb,
 	mailboxReadReceipts,
 	websiteForms,
@@ -20,8 +25,13 @@ import { rateLimit } from '../lib/rate-limit.ts'
 import { authenticateOperator } from './operator.ts'
 
 export const mailboxRoutes = new Hono<{
-	Variables: { operator: { orgId: string; sub: string } }
+	Variables: {
+		operator: { orgId: string; sub: string; restrictedForms: boolean }
+	}
 }>()
+
+/** The most rows one export file holds (#142). */
+export const FORM_EXPORT_MAX_ROWS = 10_000
 
 mailboxRoutes.use('*', async (c, next) => {
 	try {
@@ -35,7 +45,12 @@ mailboxRoutes.use('*', async (c, next) => {
 		if (!orgMatchesNodeRegion(organization.dataRegion)) {
 			return c.json({ error: 'Mailbox is not available in this region' }, 404)
 		}
-		c.set('operator', { orgId: auth.orgId, sub: auth.sub })
+		c.set('operator', {
+			orgId: auth.orgId,
+			sub: auth.sub,
+			// Minted only for `read:form_restricted:any` (#357).
+			restrictedForms: auth.restrictedForms === true,
+		})
 	} catch (response) {
 		if (response instanceof Response) return response
 		throw response
@@ -43,6 +58,16 @@ mailboxRoutes.use('*', async (c, next) => {
 	c.header('Cache-Control', 'private, no-store')
 	await next()
 })
+
+/**
+ * Without the `restrictedForms` claim a restricted form's responses are not
+ * listed, counted, searched, marked read, drafted against or exported (#357).
+ */
+function restrictedGate(operator: { restrictedForms: boolean }) {
+	return operator.restrictedForms
+		? undefined
+		: eq(websiteForms.restricted, false)
+}
 
 function readJoin(operatorId: string) {
 	return and(
@@ -99,8 +124,9 @@ mailboxRoutes.get('/count', async (c) => {
 	const [result] = await db
 		.select({ value: count() })
 		.from(websiteFormSubmissions)
+		.innerJoin(websiteForms, eq(websiteForms.id, websiteFormSubmissions.formId))
 		.leftJoin(mailboxReadReceipts, readJoin(auth.sub))
-		.where(isNull(mailboxReadReceipts.submissionId))
+		.where(and(isNull(mailboxReadReceipts.submissionId), restrictedGate(auth)))
 	return c.json({ unreadCount: result?.value ?? 0 })
 })
 
@@ -117,6 +143,7 @@ mailboxRoutes.get('/forms', async (c) => {
 	const db = await getTenantDb(auth.orgId)
 	const { page, search, unread } = parsed.data
 	const where = and(
+		restrictedGate(auth),
 		unread === 'true' ? isNull(mailboxReadReceipts.submissionId) : undefined,
 		search
 			? sql`(instr(lower(${websiteForms.name}), lower(${search})) > 0 or exists (select 1 from json_each(${websiteFormSubmissions.values}) where type = 'text' and instr(lower(value), lower(${search})) > 0))`
@@ -131,13 +158,32 @@ mailboxRoutes.get('/forms', async (c) => {
 	const [unreadResult] = await db
 		.select({ value: count() })
 		.from(websiteFormSubmissions)
+		.innerJoin(websiteForms, eq(websiteForms.id, websiteFormSubmissions.formId))
 		.leftJoin(mailboxReadReceipts, readJoin(auth.sub))
-		.where(isNull(mailboxReadReceipts.submissionId))
+		.where(and(isNull(mailboxReadReceipts.submissionId), restrictedGate(auth)))
+	// What a member without the grant still sees of restricted forms: that they
+	// exist and how many responses they hold, never an answer (#357).
+	const lockedForms = auth.restrictedForms
+		? []
+		: await db
+				.select({
+					id: websiteForms.id,
+					name: websiteForms.name,
+					responseCount: count(websiteFormSubmissions.id),
+				})
+				.from(websiteForms)
+				.leftJoin(
+					websiteFormSubmissions,
+					eq(websiteFormSubmissions.formId, websiteForms.id),
+				)
+				.where(eq(websiteForms.restricted, true))
+				.groupBy(websiteForms.id)
 	const rows = await db
 		.select({
 			id: websiteFormSubmissions.id,
 			formId: websiteFormSubmissions.formId,
 			formName: websiteForms.name,
+			restricted: websiteForms.restricted,
 			fields: websiteForms.fields,
 			values: websiteFormSubmissions.values,
 			createdAt: websiteFormSubmissions.createdAt,
@@ -161,6 +207,8 @@ mailboxRoutes.get('/forms', async (c) => {
 		})),
 		total: result?.value ?? 0,
 		unreadCount: unreadResult?.value ?? 0,
+		lockedForms,
+		canReadRestricted: auth.restrictedForms,
 		aiAvailable: isMailboxAIConfigured(),
 	})
 })
@@ -176,7 +224,8 @@ mailboxRoutes.put('/forms/:submissionId/read', async (c) => {
 	const [submission] = await db
 		.select({ id: websiteFormSubmissions.id })
 		.from(websiteFormSubmissions)
-		.where(eq(websiteFormSubmissions.id, id))
+		.innerJoin(websiteForms, eq(websiteForms.id, websiteFormSubmissions.formId))
+		.where(and(eq(websiteFormSubmissions.id, id), restrictedGate(auth)))
 		.limit(1)
 	if (!submission) return c.json({ error: 'Submission not found' }, 404)
 	if (parsed.data.read) {
@@ -219,7 +268,12 @@ mailboxRoutes.post(
 				websiteForms,
 				eq(websiteForms.id, websiteFormSubmissions.formId),
 			)
-			.where(eq(websiteFormSubmissions.id, c.req.param('submissionId') || ''))
+			.where(
+				and(
+					eq(websiteFormSubmissions.id, c.req.param('submissionId') || ''),
+					restrictedGate(c.get('operator')),
+				),
+			)
 			.limit(1)
 		if (!row) return c.json({ error: 'Submission not found' }, 404)
 		const item = {
@@ -256,3 +310,138 @@ mailboxRoutes.post(
 		}
 	},
 )
+
+const exportQuerySchema = z.object({
+	from: z.string().max(40).optional(),
+	to: z.string().max(40).optional(),
+})
+
+/** A date (`2026-03-01`) or an instant, as the start of a range; null when unreadable. */
+function parseRangeBound(raw: string | undefined, endOfDay: boolean) {
+	if (!raw) return undefined
+	const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+	const time = Date.parse(dateOnly ? `${raw}T00:00:00.000Z` : raw)
+	if (!Number.isFinite(time)) return null
+	return new Date(time + (dateOnly && endOfDay ? 24 * 60 * 60 * 1000 : 0))
+}
+
+/**
+ * `GET /operator/mailbox/forms/:formId/export?from=&to=` (#142): the form's
+ * responses as a CSV, straight from the region to the browser (App never sees
+ * the file). Columns are the form's fields in order, then the time submitted
+ * and this operator's read status. Cells are formula-safe, the file is capped
+ * at 10,000 rows (a larger range is refused so the operator picks a smaller
+ * one), and every export writes an audit row with the form id and a count,
+ * never a value. A restricted form needs the `restrictedForms` claim.
+ */
+mailboxRoutes.get('/forms/:formId/export', async (c) => {
+	const query = exportQuerySchema.safeParse(c.req.query())
+	if (!query.success) return c.json({ error: 'Invalid export range' }, 400)
+	const from = parseRangeBound(query.data.from, false)
+	const to = parseRangeBound(query.data.to, true)
+	if (from === null || to === null) {
+		return c.json({ error: 'Invalid export range' }, 400)
+	}
+	const auth = c.get('operator')
+	const db = await getTenantDb(auth.orgId)
+	const [form] = await db
+		.select()
+		.from(websiteForms)
+		.where(eq(websiteForms.id, c.req.param('formId')))
+		.limit(1)
+	if (!form) return c.json({ error: 'Form not found' }, 404)
+	if (form.restricted && !auth.restrictedForms) {
+		return c.json({ error: 'restricted_form' }, 403)
+	}
+	const where = and(
+		eq(websiteFormSubmissions.formId, form.id),
+		from ? gte(websiteFormSubmissions.createdAt, from) : undefined,
+		to ? lt(websiteFormSubmissions.createdAt, to) : undefined,
+	)
+	const [total] = await db
+		.select({ value: count() })
+		.from(websiteFormSubmissions)
+		.where(where)
+	if ((total?.value ?? 0) > FORM_EXPORT_MAX_ROWS) {
+		return c.json(
+			{
+				error: 'export_too_large',
+				message: `This range holds more than ${FORM_EXPORT_MAX_ROWS} responses. Choose a smaller range.`,
+			},
+			413,
+		)
+	}
+	const rows = await db
+		.select({
+			values: websiteFormSubmissions.values,
+			createdAt: websiteFormSubmissions.createdAt,
+			readAt: mailboxReadReceipts.readAt,
+		})
+		.from(websiteFormSubmissions)
+		.leftJoin(mailboxReadReceipts, readJoin(auth.sub))
+		.where(where)
+		.orderBy(
+			desc(websiteFormSubmissions.createdAt),
+			desc(websiteFormSubmissions.id),
+		)
+		.limit(FORM_EXPORT_MAX_ROWS)
+	const fields = publicFormFieldsSchema
+		.parse(form.fields)
+		.filter(
+			(field) =>
+				!(publicFormDisplayFieldTypes as readonly string[]).includes(
+					field.type,
+				),
+		)
+	const headers = [
+		...fields.map((field) => localizedLabel(field.label)),
+		'Submitted at',
+		'Read',
+	]
+	const csv = toCsv(
+		headers,
+		rows.map((row) => {
+			const values = z.record(z.string(), z.unknown()).parse(row.values)
+			return [
+				...fields.map((field) => {
+					const value = values[field.id]
+					return typeof value === 'string' ? value : ''
+				}),
+				row.createdAt ? row.createdAt.toISOString() : '',
+				row.readAt ? 'read' : 'unread',
+			]
+		}),
+		{ bom: true },
+	)
+	await db.insert(formExportAudit).values({
+		kind: 'form_responses',
+		targetId: form.id,
+		operatorId: auth.sub,
+		rowCount: rows.length,
+	})
+	return new Response(csv, {
+		headers: {
+			'Content-Type': 'text/csv; charset=utf-8',
+			'Content-Disposition': `attachment; filename="form-${form.id.slice(0, 8)}-responses.csv"`,
+			'Cache-Control': 'private, no-store',
+			'X-Export-Rows': String(rows.length),
+		},
+	})
+})
+
+/** A field label is localized JSON; the file takes the first language. */
+function localizedLabel(label: string): string {
+	if (!label.trim().startsWith('{')) return label
+	try {
+		const parsed = JSON.parse(label) as Record<string, unknown>
+		const first = Object.values(parsed).find(
+			(value): value is string =>
+				typeof value === 'string' && value.trim() !== '',
+		)
+		return parsed.en && typeof parsed.en === 'string'
+			? parsed.en
+			: (first ?? label)
+	} catch {
+		return label
+	}
+}

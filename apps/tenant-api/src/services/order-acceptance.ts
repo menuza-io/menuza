@@ -8,6 +8,7 @@ import {
 
 import { forEachWithBudget } from '../lib/concurrency.ts'
 import { errorLogFields } from '../lib/error-log.ts'
+import { drainFormResponseOutbox } from './form-response-outbox.ts'
 import { kickOrderRefundExecute } from '../lib/order-refund-kick.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import {
@@ -197,6 +198,14 @@ export async function runOrdersTickForOrg(
 		},
 	)
 	const messages = await runOrderMessagesTickForOrg(orgId, { now, db })
+	// Form response alerts the App could not take earlier (#142). Ids only.
+	await drainFormResponseOutbox(orgId, { now, db }).catch((error: unknown) => {
+		console.error(
+			'Form response alert drain failed',
+			orgId,
+			errorLogFields(error),
+		)
+	})
 	const due = [messages.nextDueAt, acceptance.nextDeadlineAt].filter(
 		(at): at is number => at !== null,
 	)

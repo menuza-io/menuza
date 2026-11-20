@@ -11,7 +11,9 @@ import {
 } from 'react-router'
 import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { popupsEnabled } from '#app/utils/popups/popups.server.ts'
 import { getLandingFeatures } from '#app/utils/seo/landing-pages.server.ts'
+import { funnelEnabled } from '#app/utils/site-events/site-events.server.ts'
 
 /** Which optional Website tabs this organization has (#184 events). */
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -19,7 +21,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		id: true,
 	})
 	const features = await getLandingFeatures(organization.id)
-	return { events: features.events, areaPages: features.areaPages }
+	return {
+		events: features.events,
+		areaPages: features.areaPages,
+		popups: await popupsEnabled(organization.id),
+		experiments: await funnelEnabled(organization.id),
+	}
 }
 
 export default function WebsiteLayout() {
@@ -69,6 +76,28 @@ export default function WebsiteLayout() {
 						href: `/${orgSlug}/website/seo`,
 						isActive: location.pathname.includes(`/${orgSlug}/website/seo`),
 					},
+					...(features?.experiments
+						? [
+								{
+									label: _(t`Experiments`),
+									href: `/${orgSlug}/website/experiments`,
+									isActive: location.pathname.includes(
+										`/${orgSlug}/website/experiments`,
+									),
+								},
+							]
+						: []),
+					...(features?.popups
+						? [
+								{
+									label: _(t`Popups`),
+									href: `/${orgSlug}/website/popups`,
+									isActive: location.pathname.includes(
+										`/${orgSlug}/website/popups`,
+									),
+								},
+							]
+						: []),
 					...(features?.events
 						? [
 								{
