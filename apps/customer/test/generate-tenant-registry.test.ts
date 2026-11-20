@@ -74,7 +74,7 @@ describe('generate-tenant --registry (#156)', () => {
 			{
 				env: {
 					...process.env,
-					INTERNAL_COMMAND_TOKEN: 'test-token-test-token',
+					CUSTOMER_APP_PIPELINE_TOKEN: 'test-token-test-token',
 				},
 			},
 		)
@@ -110,7 +110,7 @@ describe('generate-tenant --registry (#156)', () => {
 				{
 					env: {
 						...process.env,
-						INTERNAL_COMMAND_TOKEN: 'wrong-wrong-wrong-wrong',
+						CUSTOMER_APP_PIPELINE_TOKEN: 'wrong-wrong-wrong-wrong',
 					},
 				},
 			),
@@ -119,7 +119,7 @@ describe('generate-tenant --registry (#156)', () => {
 
 	it('needs the token in the environment', async () => {
 		const env = { ...process.env }
-		delete env.INTERNAL_COMMAND_TOKEN
+		delete env.CUSTOMER_APP_PIPELINE_TOKEN
 		await expect(
 			run(
 				'node',
@@ -134,7 +134,7 @@ describe('generate-tenant --registry (#156)', () => {
 				{ env },
 			),
 		).rejects.toMatchObject({
-			stderr: expect.stringContaining('INTERNAL_COMMAND_TOKEN'),
+			stderr: expect.stringContaining('CUSTOMER_APP_PIPELINE_TOKEN'),
 		})
 	})
 })
