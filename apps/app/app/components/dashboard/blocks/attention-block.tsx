@@ -312,6 +312,18 @@ function useItemText() {
 						msg`Verify, reconnect, or retry syncing this Google listing.`,
 					),
 				}
+			case 'customer_app_account':
+				return {
+					title: _(msg`Your app’s store account needs attention`),
+					detail: _(
+						msg`A check on the developer account failed. Open the app page for the steps.`,
+					),
+				}
+			case 'customer_app_expiring':
+				return {
+					title: _(msg`Your app’s developer account expires soon`),
+					detail: _(msg`Renew it so the app stays in the store.`),
+				}
 			case 'google_listing_issue':
 				return {
 					title: _(

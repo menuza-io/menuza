@@ -3,6 +3,12 @@ import {
 	type OrganizationPermissionString,
 	userHasOrganizationPermissionClient,
 } from '@repo/auth'
+import {
+	type AccountSnapshot,
+	CUSTOMER_APP_FLAGS,
+	evaluateAccountChecks,
+	showsAccountChecks,
+} from '@repo/common/customer-app'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import { isUnavailableUntilExpired } from '@repo/common/location-availability'
 import {
@@ -16,6 +22,7 @@ import {
 	db,
 	desc,
 	eq,
+	CustomerApp,
 	GbpListingIssue,
 	GbpLocationSync,
 	gt,
@@ -573,6 +580,66 @@ export const ATTENTION_DETECTORS: readonly AttentionDetector[] = [
 					attentionItem('google_listing_status', location, {
 						since: sync.updatedAt?.toISOString() ?? null,
 						href: `/settings/locations/${location.id}?tab=google`,
+					}),
+				)
+			}
+			return items
+		},
+	},
+	{
+		// A failing store account check, or a developer account within 30 days
+		// of expiring (#156). Only for apps the restaurant publishes itself.
+		kind: 'customer_app_account',
+		flag: CUSTOMER_APP_FLAGS.enabled,
+		permission: ORG_PERMISSIONS.READ_SETTINGS_ANY,
+		async detect({ organization, now }) {
+			const [app] = await db
+				.select({
+					publisher: CustomerApp.publisher,
+					status: CustomerApp.status,
+					accountSnapshot: CustomerApp.accountSnapshot,
+					accountCheckedAt: CustomerApp.accountCheckedAt,
+				})
+				.from(CustomerApp)
+				.where(eq(CustomerApp.organizationId, organization.id))
+				.limit(1)
+			if (
+				!app ||
+				app.status === 'archived' ||
+				!showsAccountChecks(app.publisher) ||
+				!app.accountSnapshot
+			) {
+				return []
+			}
+			let checks
+			try {
+				checks = evaluateAccountChecks(
+					JSON.parse(app.accountSnapshot) as AccountSnapshot,
+					now.getTime(),
+				)
+			} catch {
+				return []
+			}
+			const since = app.accountCheckedAt?.toISOString() ?? null
+			const items: AttentionItem[] = []
+			if (checks.some((check) => check.status === 'fail')) {
+				items.push(
+					attentionItem('customer_app_account', null, {
+						since,
+						href: '/settings',
+					}),
+				)
+			}
+			if (
+				checks.some(
+					(check) =>
+						check.kind === 'developer_account' && check.status === 'warn',
+				)
+			) {
+				items.push(
+					attentionItem('customer_app_expiring', null, {
+						since,
+						href: '/settings',
 					}),
 				)
 			}

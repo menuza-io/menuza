@@ -3,6 +3,8 @@ import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 import { organizationSlugSchema } from '@repo/common'
+import { CUSTOMER_APP_FLAGS } from '@repo/common/customer-app'
+import { getFeatureFlag } from '@repo/common/feature-flags'
 import { markStepCompleted } from '@repo/common/onboarding'
 import { redirectWithToast } from '@repo/common/toast'
 import {
@@ -49,6 +51,7 @@ import {
 	s3StorageActionIntent,
 	startS3MigrationActionIntent,
 } from '#app/components/settings/cards/organization/s3-storage-card.tsx'
+import { CustomerAppCard } from '#app/components/settings/cards/organization/customer-app-card.tsx'
 import { EmailSendingCard } from '#app/components/settings/cards/organization/email-sending-card.tsx'
 import TeamSizeCard, {
 	TeamSizeSchema,
@@ -57,6 +60,7 @@ import VerifiedDomainCard, {
 	VerifiedDomainSchema,
 } from '#app/components/settings/cards/organization/verified-domain-card.tsx'
 
+import { loadCustomerAppView } from '#app/utils/customer-apps/view.server.ts'
 import { senderView } from '#app/utils/email-sender/sender.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
@@ -189,6 +193,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		organization: { ...organizationFields, s3Config, image, domainClaim },
 		emailSending: await senderView(organization.id),
+		// Read-only status of the branded app, behind `customer_app.enabled` (#156).
+		customerApp:
+			(await getFeatureFlag(CUSTOMER_APP_FLAGS.enabled, {
+				organizationId: organization.id,
+			})) === true
+				? await loadCustomerAppView(organization.id)
+				: null,
 		cuisine,
 		activeMigration,
 		latestMigration,
@@ -1005,6 +1016,7 @@ export default function GeneralSettings() {
 		canDeleteOrganization,
 		cuisine,
 		emailSending,
+		customerApp,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 
@@ -1026,6 +1038,13 @@ export default function GeneralSettings() {
 					view={emailSending}
 				/>
 			</AnnotatedSection>
+
+			{/* The branded customer app, read-only (#156) */}
+			{customerApp ? (
+				<AnnotatedSection>
+					<CustomerAppCard view={customerApp} />
+				</AnnotatedSection>
+			) : null}
 
 			{/* Access policy */}
 			<AnnotatedSection>

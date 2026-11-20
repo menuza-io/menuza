@@ -6902,3 +6902,261 @@ export const GbpSearchKeyword = sqliteTable(
 		),
 	],
 )
+
+/**
+ * The branded customer app of an organization (#156, #196). One record per
+ * organization, created in Admin from the published website's branding. It holds
+ * public branding, bundle ids, store links and the invite placement switches;
+ * never guest data. Bundle ids are unique across all apps and, once
+ * `publishedAt` is set, immutable. Deleting is allowed only before the first
+ * publish; afterwards the app is archived. Push credentials are in
+ * `CustomerAppCredential` (encrypted, write-only).
+ */
+export const CustomerApp = sqliteTable(
+	'CustomerApp',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** Build slug (`tenants/<slug>`); also the app's URL scheme suffix. */
+		slug: text().notNull(),
+		displayName: text().notNull(),
+		iosBundleId: text().notNull(),
+		androidPackage: text().notNull(),
+		marketingVersion: text().default('1.0.0').notNull(),
+		status: text({ enum: ['draft', 'published', 'archived'] })
+			.default('draft')
+			.notNull(),
+		/** `menuza`: Menuza's developer account. `restaurant`: the restaurant's own. */
+		publisher: text({ enum: ['menuza', 'restaurant'] })
+			.default('menuza')
+			.notNull(),
+		iconBackground: text().default('#0F172A').notNull(),
+		/** Store listing text (subtitle, description) as JSON the staff edit. */
+		listingText: text(),
+		/** JSON `{ app_store?: url, play_store?: url }`; only validated store links. */
+		storeUrls: text(),
+		/** Apple team id and Android signing fingerprints for the app-link files (#195). */
+		appleTeamId: text(),
+		androidSha256: text(),
+		/** JSON account facts (expiry, terms, payment terms, access) the checks read. */
+		accountSnapshot: text(),
+		accountCheckedAt: integer({ mode: 'timestamp_ms' }),
+		/** Set when a store first goes live. Locks the bundle ids. */
+		publishedAt: integer({ mode: 'timestamp_ms' }),
+		archivedAt: integer({ mode: 'timestamp_ms' }),
+		/** Invite placements on the website (#196); nothing shows until a store is live. */
+		inviteBanner: integer({ mode: 'boolean' }).default(true).notNull(),
+		inviteConfirmation: integer({ mode: 'boolean' }).default(true).notNull(),
+		inviteFooter: integer({ mode: 'boolean' }).default(true).notNull(),
+		inviteBannerText: text().default('').notNull(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('CustomerApp_organizationId_key').on(table.organizationId),
+		uniqueIndex('CustomerApp_slug_key').on(table.slug),
+		uniqueIndex('CustomerApp_iosBundleId_key').on(table.iosBundleId),
+		uniqueIndex('CustomerApp_androidPackage_key').on(table.androidPackage),
+	],
+)
+
+/**
+ * A push credential of one app: the APNs key or the Firebase service account.
+ * `ciphertext` is encrypted with INTEGRATION_ENCRYPTION_KEY and is never
+ * selected by any loader or returned by any API: the only reader is the push
+ * credential check in `customer-apps/credentials.server.ts`. Callers learn
+ * whether a credential is set, and when it was uploaded.
+ */
+export const CustomerAppCredential = sqliteTable(
+	'CustomerAppCredential',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		appId: text()
+			.notNull()
+			.references(() => CustomerApp.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		kind: text({ enum: ['apns', 'fcm'] }).notNull(),
+		ciphertext: text().notNull(),
+		uploadedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		uploadedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('CustomerAppCredential_appId_kind_key').on(
+			table.appId,
+			table.kind,
+		),
+	],
+)
+
+/**
+ * One build of one app on one platform for a release. A retry reuses the row
+ * (`attempts` counts), so one app's failure never touches the others. A build
+ * is a recorded job plus status callbacks, not a live EAS or store submission.
+ */
+export const CustomerAppBuild = sqliteTable(
+	'CustomerAppBuild',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		appId: text()
+			.notNull()
+			.references(() => CustomerApp.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		release: text().notNull(),
+		platform: text({ enum: ['ios', 'android'] }).notNull(),
+		status: text({
+			enum: ['queued', 'running', 'succeeded', 'failed', 'cancelled'],
+		})
+			.default('queued')
+			.notNull(),
+		attempts: integer().default(1).notNull(),
+		externalBuildId: text(),
+		logUrl: text(),
+		/** The organization's data region when the build started (#156 region change). */
+		dataRegion: text().default('us').notNull(),
+		/** A short machine reason on failure; never a log. */
+		error: text(),
+		startedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+		finishedAt: integer({ mode: 'timestamp_ms' }),
+	},
+	(table) => [
+		uniqueIndex('CustomerAppBuild_appId_release_platform_key').on(
+			table.appId,
+			table.release,
+			table.platform,
+		),
+		index('CustomerAppBuild_appId_createdAt_idx').on(
+			table.appId,
+			table.createdAt,
+		),
+	],
+)
+
+/**
+ * Last known state of one app in one store. Read on a schedule (at most daily);
+ * a store that cannot be reached keeps its last known state and only
+ * `lastError` changes.
+ */
+export const CustomerAppStoreHealth = sqliteTable(
+	'CustomerAppStoreHealth',
+	{
+		appId: text()
+			.notNull()
+			.references(() => CustomerApp.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		store: text({ enum: ['app_store', 'play_store'] }).notNull(),
+		status: text({ enum: ['live', 'removed', 'unknown'] })
+			.default('unknown')
+			.notNull(),
+		version: text(),
+		/** Stars times 100. */
+		ratingX100: integer(),
+		ratingCount: integer().default(0).notNull(),
+		lastCheckedAt: integer({ mode: 'timestamp_ms' }),
+		lastSuccessAt: integer({ mode: 'timestamp_ms' }),
+		/** Short machine code of the last failed check, cleared on success. */
+		lastError: text(),
+	},
+	(table) => [primaryKey({ columns: [table.appId, table.store] })],
+)
+
+/** Latest public store reviews, read-only (replying is out of scope). */
+export const CustomerAppStoreReview = sqliteTable(
+	'CustomerAppStoreReview',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		appId: text()
+			.notNull()
+			.references(() => CustomerApp.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		store: text({ enum: ['app_store', 'play_store'] }).notNull(),
+		externalId: text().notNull(),
+		rating: integer().notNull(),
+		title: text(),
+		body: text().notNull(),
+		appVersion: text(),
+		reviewedAt: integer({ mode: 'timestamp_ms' }).notNull(),
+	},
+	(table) => [
+		uniqueIndex('CustomerAppStoreReview_app_store_external_key').on(
+			table.appId,
+			table.store,
+			table.externalId,
+		),
+		index('CustomerAppStoreReview_appId_reviewedAt_idx').on(
+			table.appId,
+			table.reviewedAt,
+		),
+	],
+)
+
+/** Taps on the "Get the app" placements, per app, placement, store and day (#196). No visitor data. */
+export const CustomerAppTap = sqliteTable(
+	'CustomerAppTap',
+	{
+		appId: text()
+			.notNull()
+			.references(() => CustomerApp.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		placement: text().notNull(),
+		store: text().notNull(),
+		/** `YYYY-MM-DD` (UTC). */
+		day: text().notNull(),
+		count: integer().default(0).notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.appId, table.placement, table.store, table.day],
+		}),
+	],
+)

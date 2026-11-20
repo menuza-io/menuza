@@ -59,6 +59,9 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 		'/resources/jobs/search-console-sync',
 		// Daily Google Business Profile performance metrics (#136).
 		'/resources/jobs/gbp-metrics',
+		// Daily branded customer app store health and developer account expiry
+		// alerts (#156); the App reads each app's stores at most once a day.
+		'/resources/jobs/customer-app-health',
 	],
 	'0 4 * * *': [
 		'/resources/jobs/gdpr-erasure',

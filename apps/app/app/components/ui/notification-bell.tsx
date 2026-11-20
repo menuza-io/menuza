@@ -42,6 +42,11 @@ import {
 	domainAlertPath,
 } from '#app/utils/domains/domain-alerts.ts'
 import {
+	customerAppAlertCopy,
+	customerAppAlertKindFromNotificationType,
+	customerAppAlertPath,
+} from '#app/utils/customer-apps/alerts.ts'
+import {
 	FORM_ALERT_COPY,
 	formAlertPath,
 	isFormResponseNotificationType,
@@ -215,7 +220,15 @@ function NotificationItem({
 			)
 		: null
 
+	const customerAppKind = customerAppAlertKindFromNotificationType(
+		notification.type,
+	)
+	const customerAppAlert = customerAppKind
+		? customerAppAlertCopy(customerAppKind, _)
+		: null
+
 	const subject =
+		customerAppAlert?.subject ??
 		formAlert?.subject ??
 		domainAlert?.subject ??
 		websiteAlert?.subject ??
@@ -229,6 +242,7 @@ function NotificationItem({
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
 	const body =
+		customerAppAlert?.body ??
 		formAlert?.body ??
 		domainAlert?.body ??
 		websiteAlert?.body ??
@@ -251,6 +265,8 @@ function NotificationItem({
 			typeof payload?.formId === 'string'
 		) {
 			void navigate(`/${payload.orgSlug}${formAlertPath(payload.formId)}`)
+		} else if (customerAppKind && typeof payload?.orgSlug === 'string') {
+			void navigate(`/${payload.orgSlug}${customerAppAlertPath()}`)
 		} else if (domainKind && typeof payload?.orgSlug === 'string') {
 			void navigate(`/${payload.orgSlug}${domainAlertPath(domainKind)}`)
 		} else if (websiteKind && typeof payload?.orgSlug === 'string') {

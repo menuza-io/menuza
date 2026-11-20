@@ -38,11 +38,14 @@ type TenantFile = {
 	marketingVersion?: string
 	appUrl: string
 	brandDomain?: string
-	tenantApiUs: string
+	/** A registry build holds only its organization's own region (#156). */
+	tenantApiUs?: string
 	tenantApiKsa?: string
 	useTls?: boolean
 	iconBackground?: string
 	site?: { slug?: string; host?: string; origin?: string }
+	/** Hosts the app claims as universal and app links: its own site only (#195). */
+	associatedDomains?: string[]
 }
 
 const TENANT_SLUG = /^[a-z0-9][a-z0-9-]{0,62}$/
@@ -87,8 +90,16 @@ function readTenant(slug: string): TenantFile {
 	if (!TENANT_SLUG.test(slug)) {
 		fail(`CUSTOMER_TENANT must name a file in tenants/ (got "${slug}")`)
 	}
-	const file = `${slug}.json`
-	const path = join(__dirname, 'tenants', file)
+	// `generate-tenant.mjs --registry` writes the config it read from the App's
+	// internal endpoint (#156); the committed `tenants/<slug>.json` files stay
+	// until every app is migrated, and the generated one wins when present.
+	const generated = join(__dirname, 'tenants/generated', slug, 'tenant.json')
+	const file = existsSync(generated)
+		? `generated/${slug}/tenant.json`
+		: `${slug}.json`
+	const path = existsSync(generated)
+		? generated
+		: join(__dirname, 'tenants', `${slug}.json`)
 	if (!existsSync(path)) fail(`no tenant config at tenants/${file}`)
 	let raw: unknown
 	try {
@@ -101,7 +112,9 @@ function readTenant(slug: string): TenantFile {
 	requireText(tenant, 'displayName', file)
 	requireText(tenant, 'bundleId', file)
 	requireText(tenant, 'appUrl', file)
-	requireText(tenant, 'tenantApiUs', file)
+	if (!text(tenant.tenantApiUs) && !text(tenant.tenantApiKsa)) {
+		fail(`tenants/${file} needs "tenantApiUs" or "tenantApiKsa"`)
+	}
 	const site = (tenant.site ?? {}) as Record<string, unknown>
 	if (!text(site.slug) && !text(site.host)) {
 		fail(
