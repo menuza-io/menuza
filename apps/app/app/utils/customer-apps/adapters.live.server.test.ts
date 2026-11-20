@@ -13,7 +13,7 @@ describe('PublicStoreAdapter play listing', () => {
 			{
 				iosBundleId: 'com.acme.app',
 				androidPackage: 'com.acme.app',
-				storeUrls: { app_store: null, play_store: null },
+				storeUrls: {},
 			},
 			'play_store',
 		)
@@ -31,7 +31,7 @@ describe('PublicStoreAdapter play listing', () => {
 			{
 				iosBundleId: 'com.acme.app',
 				androidPackage: 'com.acme.live',
-				storeUrls: { app_store: null, play_store: null },
+				storeUrls: {},
 			},
 			'play_store',
 		)

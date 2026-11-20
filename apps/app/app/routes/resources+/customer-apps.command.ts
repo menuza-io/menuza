@@ -166,11 +166,14 @@ export async function action({ request }: ActionFunctionArgs) {
 					? command.payload.length
 					: JSON.stringify(command.payload ?? null).length
 			if (payloadSize > CUSTOMER_APP_CREDENTIAL_UPLOAD_MAX_BYTES) {
-				return respond({
-					ok: false,
-					code: 'too_large',
-					message: 'The upload is too large.',
-				})
+				return answer(
+					{
+						ok: false,
+						code: 'too_large',
+						message: 'The upload is too large.',
+					},
+					422,
+				)
 			}
 			const result = await storeCredential({
 				appId: command.appId,

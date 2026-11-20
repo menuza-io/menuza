@@ -17,7 +17,7 @@ function safeCompare(presented: string, expected: string) {
 	return crypto.timingSafeEqual(left, right)
 }
 
-function unauthorized() {
+function unauthorized(): never {
 	throw Response.json(
 		{ error: 'Unauthorized' },
 		{
