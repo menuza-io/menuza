@@ -73,7 +73,7 @@ describe('the app QR code in the Print shop (#196)', () => {
 			},
 		)
 		expect(pieces).toHaveLength(1)
-		const url = new URL(pieces[0]!.qrUrl)
+		const url = new URL(pieces[0]!.qrUrl!)
 		expect(url.origin).toBe('https://acme.example')
 		expect(url.pathname).toBe('/get-app')
 		expect(url.searchParams.get('p')).toBe('print')
