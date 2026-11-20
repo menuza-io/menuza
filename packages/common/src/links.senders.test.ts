@@ -129,7 +129,8 @@ describe('every sender builds guest links through the registry (#195)', () => {
 			}
 		}
 		expect(offenders).toEqual([])
-	})
+		// Reads the whole repo's source: give a loaded CI runner room.
+	}, 60_000)
 
 	it('keeps the allow list honest: every allowed file still exists', () => {
 		for (const rel of Object.keys(ALLOWED)) {
