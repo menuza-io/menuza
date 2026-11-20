@@ -66,6 +66,10 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				create: mockWebsiteWorkflowCreate,
 				get: vi.fn(),
 			} as any,
+			WEBSITE_IMPORT_WORKFLOW: {
+				create: vi.fn().mockImplementation(({ id }) => Promise.resolve({ id })),
+				get: vi.fn(),
+			} as any,
 		}
 	})
 
