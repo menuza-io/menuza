@@ -307,11 +307,14 @@ export type LinkType = GuestLinkType | OperatorLinkType
 export const LINK_TYPES = { ...GUEST_LINK_TYPES, ...OPERATOR_LINK_TYPES }
 
 export class LinkParamError extends Error {
-	constructor(
-		readonly type: string,
-		readonly param: string,
-	) {
+	// No parameter properties: `apps/customer/app.config.ts` imports this file and
+	// Node loads it in strip-only TypeScript mode.
+	readonly type: string
+	readonly param: string
+	constructor(type: string, param: string) {
 		super(`Invalid link parameter "${param}" for "${type}"`)
+		this.type = type
+		this.param = param
 		this.name = 'LinkParamError'
 	}
 }

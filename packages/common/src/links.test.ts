@@ -423,3 +423,15 @@ describe('templates and site bases with a language', () => {
 		})
 	})
 })
+
+describe('links.ts loads in Node strip-only TypeScript mode', () => {
+	it('uses no syntax that needs a transform (apps/customer/app.config.ts imports it)', async () => {
+		const { readFileSync } = await import('node:fs')
+		const source = readFileSync(new URL('./links.ts', import.meta.url), 'utf8')
+		expect(source).not.toMatch(
+			/constructor\s*\([^)]*\b(readonly|private|public|protected)\s/,
+		)
+		expect(source).not.toMatch(/^\s*(export\s+)?(const\s+)?enum\s/m)
+		expect(source).not.toMatch(/^\s*(export\s+)?namespace\s/m)
+	})
+})
