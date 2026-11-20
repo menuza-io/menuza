@@ -57,6 +57,9 @@ import {
 	OrganizationSiteAsset,
 	OrganizationMediaAsset,
 	WebsitePage,
+	WebsiteVersion,
+	WebsiteScheduledPublish,
+	LegalAcceptance,
 	WebsitePageSection,
 	WebsiteRedirect,
 	WebsiteNotFoundLog,
@@ -852,6 +855,41 @@ export const WebsitePageRelations = relations(WebsitePage, ({ one, many }) => ({
 	}),
 	sections: many(WebsitePageSection),
 }))
+
+export const WebsiteVersionRelations = relations(WebsiteVersion, ({ one }) => ({
+	publishedBy: one(User, {
+		fields: [WebsiteVersion.publishedById],
+		references: [User.id],
+	}),
+	organization: one(Organization, {
+		fields: [WebsiteVersion.organizationId],
+		references: [Organization.id],
+	}),
+}))
+
+export const WebsiteScheduledPublishRelations = relations(
+	WebsiteScheduledPublish,
+	({ one }) => ({
+		createdBy: one(User, {
+			fields: [WebsiteScheduledPublish.createdById],
+			references: [User.id],
+		}),
+		page: one(WebsitePage, {
+			fields: [WebsiteScheduledPublish.pageId],
+			references: [WebsitePage.id],
+		}),
+	}),
+)
+
+export const LegalAcceptanceRelations = relations(
+	LegalAcceptance,
+	({ one }) => ({
+		organization: one(Organization, {
+			fields: [LegalAcceptance.organizationId],
+			references: [Organization.id],
+		}),
+	}),
+)
 
 export const WebsitePageSectionRelations = relations(
 	WebsitePageSection,

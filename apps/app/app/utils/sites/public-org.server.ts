@@ -1,5 +1,10 @@
 import { formatPriceRange, parseStoredCuisines } from '@repo/common/cuisines'
 import {
+	type ConsentMode,
+	legalRegionFor,
+	type LegalKind,
+} from '@repo/common/legal'
+import {
 	negotiateSiteLocale,
 	parseLocalizedString,
 	parseSiteLocalesConfig,
@@ -19,10 +24,19 @@ import {
 	db,
 	eq,
 	inArray,
+	isNotNull,
+	ne,
 	Organization,
 	OrganizationAnnouncement,
+	WebsitePage,
 	WebsiteRedirect,
 } from '@repo/database'
+import {
+	consentBannerEnabled,
+	effectiveConsentMode,
+	hasTrackingTags,
+} from '#app/utils/legal/consent-settings.server.ts'
+import { parseLegalContact } from '#app/utils/legal/contact.server.ts'
 import { isSafeAnnouncementLink } from '#app/utils/safe-link.ts'
 import { readSearchConsoleVerificationToken } from '#app/utils/seo/search-console.server.ts'
 import {
@@ -37,6 +51,12 @@ export type PublicSiteAnnouncement = {
 	linkUrl: string | null
 	linkLabel: string | null
 	linkNewTab: boolean
+	/**
+	 * The show window (#238), ISO (UTC). The public site compares it with the
+	 * time of each request, so it is sent for every enabled announcement.
+	 */
+	startsAt: string | null
+	endsAt: string | null
 }
 
 export type PublicSiteRedirect = {
@@ -67,6 +87,10 @@ export type PublicSiteOrganization = {
 	indexNowKey?: string | null
 	/** The Search Console verification token (#138), when connected. */
 	searchConsoleVerification?: string | null
+	/** Published generated legal pages (#89, #260): kind and address. */
+	legalPages?: Array<{ kind: string; slug: string }>
+	/** The platform's banner switch for this site (#89); absent means on. */
+	consentBanner?: boolean
 	announcements: Array<{
 		id: string
 		content: string
@@ -74,6 +98,8 @@ export type PublicSiteOrganization = {
 		linkUrl: string | null
 		linkLabel: string | null
 		linkNewTab: boolean
+		startsAt?: Date | null
+		endsAt?: Date | null
 	}>
 	redirects: PublicSiteRedirect[]
 }
@@ -115,6 +141,16 @@ export type PublicSitePayload = {
 	siteVerification: { google: string[]; bing: string | null }
 	/** IndexNow key (#138), served at `/<key>.txt`. */
 	indexNowKey: string | null
+	/**
+	 * Published legal pages by kind (#89, #260), as site paths; a kind with no
+	 * published page is absent, so no link is shown for it.
+	 */
+	legalPages: Partial<Record<LegalKind, string>>
+	/**
+	 * The cookie banner mode the site runs. `off` when the operator chose it
+	 * (a site with no tracking tags) or the platform switched the banner off.
+	 */
+	consent: { mode: ConsentMode }
 }
 
 const ANNOUNCEMENT_TYPES = ['info', 'warning', 'error', 'success'] as const
@@ -157,6 +193,8 @@ function toPublicAnnouncement(
 				: null,
 		linkLabel,
 		linkNewTab: announcement.linkNewTab,
+		startsAt: announcement.startsAt?.toISOString() ?? null,
+		endsAt: announcement.endsAt?.toISOString() ?? null,
 	}
 }
 
@@ -244,7 +282,46 @@ export function toPublicSitePayload(
 		indexNowKey: isIndexNowKey(organization.indexNowKey)
 			? organization.indexNowKey
 			: null,
+		legalPages: publicLegalPages(organization.legalPages),
+		consent: { mode: publicConsentMode(organization) },
 	}
+}
+
+const LEGAL_PAGE_KINDS = ['privacy', 'terms', 'cookies', 'accessibility']
+
+function publicLegalPages(
+	pages: PublicSiteOrganization['legalPages'],
+): Partial<Record<LegalKind, string>> {
+	const out: Partial<Record<LegalKind, string>> = {}
+	for (const page of pages ?? []) {
+		if (LEGAL_PAGE_KINDS.includes(page.kind)) {
+			out[page.kind as LegalKind] = `/${page.slug}`
+		}
+	}
+	return out
+}
+
+function publicConsentMode(organization: PublicSiteOrganization): ConsentMode {
+	if (organization.consentBanner === false) return 'off'
+	const contact = parseLegalContact(
+		(organization as { legalContact?: string | null }).legalContact,
+	)
+	return effectiveConsentMode({
+		stored:
+			(organization as { consentMode?: string | null }).consentMode ?? null,
+		region: legalRegionFor({
+			country: contact.country,
+			dataRegion: organization.dataRegion,
+			defaultLocale: organization.siteDefaultLocale,
+			address: contact.address,
+		}),
+		hasTrackingTags: hasTrackingTags({
+			facebookPixelId: organization.facebookPixelId ?? null,
+			googleTagManagerId: organization.googleTagManagerId ?? null,
+			googleAnalyticsId: organization.googleAnalyticsId ?? null,
+			tiktokPixelId: organization.tiktokPixelId ?? null,
+		}),
+	})
 }
 
 /**
@@ -286,6 +363,8 @@ export async function findPublishedSiteOrganization(options: {
 			linkUrl: OrganizationAnnouncement.linkUrl,
 			linkLabel: OrganizationAnnouncement.linkLabel,
 			linkNewTab: OrganizationAnnouncement.linkNewTab,
+			startsAt: OrganizationAnnouncement.startsAt,
+			endsAt: OrganizationAnnouncement.endsAt,
 		})
 		.from(OrganizationAnnouncement)
 		.where(
@@ -294,7 +373,7 @@ export async function findPublishedSiteOrganization(options: {
 				eq(OrganizationAnnouncement.isEnabled, true),
 			),
 		)
-	const redirects = await db
+	const redirectRows = await db
 		.select({
 			id: WebsiteRedirect.id,
 			fromPath: WebsiteRedirect.fromPath,
@@ -308,15 +387,71 @@ export async function findPublishedSiteOrganization(options: {
 				eq(WebsiteRedirect.isEnabled, true),
 			),
 		)
+	// A redirect whose target page is unpublished goes to the home page for the
+	// time being (302), and is back to normal once the page is published (#248).
+	// The public payload is rebuilt on every publish and unpublish.
+	const unpublished = redirectRows.length
+		? await db
+				.select({ slug: WebsitePage.slug })
+				.from(WebsitePage)
+				.where(
+					and(
+						eq(WebsitePage.organizationId, organization.id),
+						ne(WebsitePage.status, 'published'),
+					),
+				)
+		: []
+	const redirects = redirectsWithUnpublishedFallback(
+		redirectRows,
+		unpublished.map((page) => `/${page.slug}`),
+	)
 	const searchConsoleVerification = await readSearchConsoleVerificationToken(
 		organization.id,
 	)
+	const legalPages = (
+		await db
+			.select({
+				kind: WebsitePage.legalKind,
+				slug: WebsitePage.slug,
+			})
+			.from(WebsitePage)
+			.where(
+				and(
+					eq(WebsitePage.organizationId, organization.id),
+					eq(WebsitePage.status, 'published'),
+					isNotNull(WebsitePage.legalKind),
+				),
+			)
+	).flatMap((row) => (row.kind ? [{ kind: row.kind, slug: row.slug }] : []))
 	return {
 		...organization,
 		announcements,
 		redirects,
 		searchConsoleVerification,
+		legalPages,
+		consentBanner: await consentBannerEnabled(organization.id),
 	}
+}
+
+/**
+ * Sends a redirect whose internal target is an unpublished page to the home
+ * page with a temporary 302 instead (#248). Everything else is unchanged.
+ */
+export function redirectsWithUnpublishedFallback<
+	T extends { toPath: string; statusCode: number },
+>(redirects: T[], unpublishedPaths: readonly string[]): T[] {
+	if (unpublishedPaths.length === 0) return redirects
+	const hidden = new Set(unpublishedPaths.map((path) => path.toLowerCase()))
+	return redirects.map((redirect) => {
+		if (!redirect.toPath.startsWith('/') || redirect.toPath.startsWith('//')) {
+			return redirect
+		}
+		const path = redirect.toPath.split(/[?#]/u)[0]!.toLowerCase()
+		const clean = path.length > 1 ? path.replace(/\/+$/u, '') : path
+		return hidden.has(clean)
+			? { ...redirect, toPath: '/', statusCode: 302 }
+			: redirect
+	})
 }
 
 export type PublicSitePageSection = {

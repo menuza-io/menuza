@@ -1,0 +1,45 @@
+---
+import { msg } from '@lingui/core/macro'
+import { legalLinks, type LegalKind } from '~/lib/legal-links'
+
+interface Props {
+	/** Which legal pages to link; default all that are published. */
+	kinds?: readonly LegalKind[]
+	class?: string
+}
+
+/**
+ * Links to the restaurant's published legal pages (#89, #260). Renders nothing
+ * when none is published, so a screen never links to a page that is not there.
+ */
+const { kinds, class: className } = Astro.props
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const locale =
+	Astro.locals.requestedLocale || organization?.locale || organization?.defaultLocale || 'en'
+const labels: Record<LegalKind, string> = {
+	privacy: i18n._(msg`Privacy policy`),
+	terms: i18n._(msg`Terms of service`),
+	cookies: i18n._(msg`Cookie policy`),
+	accessibility: i18n._(msg`Accessibility statement`),
+}
+const links = legalLinks(organization, locale, kinds)
+---
+
+{
+	links.length > 0 ? (
+		<ul class:list={['flex flex-wrap gap-x-4 gap-y-1', className]} data-legal-links>
+			{links.map((link) => (
+				<li>
+					<a
+						href={link.href}
+						class="underline underline-offset-2 hover:no-underline"
+						data-legal-link={link.kind}
+					>
+						{labels[link.kind]}
+					</a>
+				</li>
+			))}
+		</ul>
+	) : null
+}

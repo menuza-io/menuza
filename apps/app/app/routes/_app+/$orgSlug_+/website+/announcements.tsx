@@ -3,6 +3,11 @@ import { Trans, msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import {
+	announcementStatus,
+	isAnnouncementWindowValid,
+	type AnnouncementStatus,
+} from '@repo/common/announcement-window'
+import {
 	parseLocalizedString,
 	parseSiteLocalesConfig,
 	pickLocalized,
@@ -82,6 +87,11 @@ import {
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
+import {
+	formatSiteDateTime,
+	fromDateTimeInputValue,
+} from '#app/utils/website/schedule-format.ts'
+import { getSiteTimeZone } from '#app/utils/website/site-time-zone.server.ts'
 
 function isAnnouncementType(value: string): value is AnnouncementType {
 	return (ANNOUNCEMENT_TYPES as readonly string[]).includes(value)
@@ -97,10 +107,13 @@ function serializeAnnouncement(
 		linkLabel: string | null
 		linkNewTab: boolean
 		position: number | null
+		startsAt: Date | null
+		endsAt: Date | null
 		createdAt: Date
 		updatedAt: Date
 	},
 	defaultLocale: string,
+	now = Date.now(),
 ): AnnouncementRecord {
 	return {
 		id: announcement.id,
@@ -111,6 +124,9 @@ function serializeAnnouncement(
 		linkLabel: parseLocalizedString(announcement.linkLabel, defaultLocale),
 		linkNewTab: announcement.linkNewTab,
 		position: announcement.position,
+		startsAt: announcement.startsAt?.toISOString() ?? null,
+		endsAt: announcement.endsAt?.toISOString() ?? null,
+		status: announcementStatus(announcement, now),
 		createdAt: announcement.createdAt.toISOString(),
 		updatedAt: announcement.updatedAt.toISOString(),
 	}
@@ -146,11 +162,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			desc(OrganizationAnnouncement.createdAt),
 		)
 
+	const timeZone = await getSiteTimeZone(organization.id)
+	const now = Date.now()
 	return {
 		organization,
 		localesConfig,
+		timeZone,
 		announcements: announcements.map((announcement) =>
-			serializeAnnouncement(announcement, localesConfig.defaultLocale),
+			serializeAnnouncement(announcement, localesConfig.defaultLocale, now),
 		),
 	}
 }
@@ -210,7 +229,42 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			linkLabelJson,
 			linkNewTab,
 			defaultLocale,
+			startsAtLocal,
+			endsAtLocal,
 		} = submission.value
+		// The window is entered in the site's time zone and stored in UTC (#238).
+		// The zone comes from the organization, never from the browser.
+		const timeZone = await getSiteTimeZone(organization.id)
+		const startsAt = startsAtLocal
+			? fromDateTimeInputValue(startsAtLocal, timeZone)
+			: null
+		const endsAt = endsAtLocal
+			? fromDateTimeInputValue(endsAtLocal, timeZone)
+			: null
+		const windowErrors: Record<string, string[]> = {}
+		if (startsAtLocal && !startsAt) {
+			windowErrors.startsAtLocal = [
+				'That time does not exist in your time zone',
+			]
+		}
+		if (endsAtLocal && !endsAt) {
+			windowErrors.endsAtLocal = ['That time does not exist in your time zone']
+		}
+		if (
+			!Object.keys(windowErrors).length &&
+			!isAnnouncementWindowValid({ startsAt, endsAt })
+		) {
+			windowErrors.endsAtLocal = ['Show until must be after Show from']
+		}
+		if (Object.keys(windowErrors).length) {
+			return Response.json(
+				{
+					status: 'error',
+					result: submission.reply({ fieldErrors: windowErrors }),
+				},
+				{ status: 400 },
+			)
+		}
 		const wantsLink = addLink === 'on'
 		const contentMap = parseLocalizedString(
 			contentJson,
@@ -232,6 +286,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				? serializeLocalizedString(linkLabelMap) || null
 				: null,
 			linkNewTab: wantsLink ? linkNewTab === 'on' : true,
+			startsAt,
+			endsAt,
 		}
 
 		if (intent === createAnnouncementIntent) {
@@ -381,18 +437,44 @@ function TypeBadge({ type }: { type: AnnouncementType }) {
 	)
 }
 
+function StatusBadge({ status }: { status: AnnouncementStatus }) {
+	const { _ } = useLingui()
+	const labels: Record<AnnouncementStatus, string> = {
+		scheduled: _(msg`Scheduled`),
+		showing: _(msg`Showing`),
+		ended: _(msg`Ended`),
+		off: _(msg`Off`),
+	}
+	const dot =
+		status === 'showing'
+			? 'bg-emerald-500'
+			: status === 'scheduled'
+				? 'bg-amber-500'
+				: 'bg-muted-foreground/64'
+	return (
+		<Badge variant="outline">
+			<span aria-hidden="true" className={cn('size-1.5 rounded-full', dot)} />
+			{labels[status]}
+		</Badge>
+	)
+}
+
 function AnnouncementRow({
 	announcement,
 	activeLocale,
 	defaultLocale,
 	onEdit,
+	onReuse,
+	timeZone,
 }: {
 	announcement: AnnouncementRecord
 	activeLocale: string
 	defaultLocale: string
 	onEdit: (announcement: AnnouncementRecord) => void
+	onReuse: (announcement: AnnouncementRecord) => void
+	timeZone: string
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const hasPermission = useHasPermission()
 	const canManage = hasPermission('update:announcement:any')
 	const toggleFetcher = useFetcher()
@@ -447,6 +529,20 @@ function AnnouncementRow({
 				)}
 			</TableCell>
 			<TableCell>
+				<StatusBadge status={announcement.status} />
+				{announcement.startsAt || announcement.endsAt ? (
+					<p className="text-muted-foreground mt-1 text-xs">
+						{announcement.startsAt
+							? formatSiteDateTime(announcement.startsAt, timeZone, i18n.locale)
+							: _(msg`Now`)}
+						{' → '}
+						{announcement.endsAt
+							? formatSiteDateTime(announcement.endsAt, timeZone, i18n.locale)
+							: _(msg`Until turned off`)}
+					</p>
+				) : null}
+			</TableCell>
+			<TableCell>
 				<TypeBadge type={announcement.type} />
 			</TableCell>
 			<TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
@@ -482,6 +578,12 @@ function AnnouncementRow({
 									<Icon name="pencil" className="mr-2 size-4" />
 									<Trans>Edit</Trans>
 								</DropdownMenuItem>
+								{announcement.status === 'ended' ? (
+									<DropdownMenuItem onClick={() => onReuse(announcement)}>
+										<Icon name="copy" className="mr-2 size-4" />
+										<Trans>Reuse</Trans>
+									</DropdownMenuItem>
+								) : null}
 								<DropdownMenuItem
 									className="text-destructive focus:text-destructive"
 									onClick={() => setDeleteDialogOpen(true)}
@@ -537,13 +639,14 @@ function AnnouncementRow({
 }
 
 export default function WebsiteAnnouncementsRoute() {
-	const { organization, announcements, localesConfig } =
+	const { organization, announcements, localesConfig, timeZone } =
 		useLoaderData<typeof loader>()
 	const hasPermission = useHasPermission()
 	const canManage = hasPermission('update:announcement:any')
 	const revalidator = useRevalidator()
 	const [sheetOpen, setSheetOpen] = useState(false)
 	const [editing, setEditing] = useState<AnnouncementRecord | null>(null)
+	const [reusing, setReusing] = useState(false)
 	const [activeLocale, setActiveLocale] = useState<string>(
 		localesConfig.defaultLocale,
 	)
@@ -553,6 +656,7 @@ export default function WebsiteAnnouncementsRoute() {
 			setSheetOpen(open)
 			if (!open) {
 				setEditing(null)
+				setReusing(false)
 				void revalidator.revalidate()
 			}
 		},
@@ -560,6 +664,13 @@ export default function WebsiteAnnouncementsRoute() {
 	)
 
 	const handleEdit = useCallback((announcement: AnnouncementRecord) => {
+		setReusing(false)
+		setEditing(announcement)
+		setSheetOpen(true)
+	}, [])
+	// An ended announcement is kept; reusing it starts a new one with its text.
+	const handleReuse = useCallback((announcement: AnnouncementRecord) => {
+		setReusing(true)
 		setEditing(announcement)
 		setSheetOpen(true)
 	}, [])
@@ -627,6 +738,9 @@ export default function WebsiteAnnouncementsRoute() {
 											<Trans>Content</Trans>
 										</TableHead>
 										<TableHead>
+											<Trans>Status</Trans>
+										</TableHead>
+										<TableHead>
 											<Trans>Type</Trans>
 										</TableHead>
 										<TableHead className="hidden sm:table-cell">
@@ -650,12 +764,14 @@ export default function WebsiteAnnouncementsRoute() {
 											activeLocale={activeLocale}
 											defaultLocale={localesConfig.defaultLocale}
 											onEdit={handleEdit}
+											onReuse={handleReuse}
+											timeZone={timeZone}
 										/>
 									))}
 								</TableBody>
 								<TableFooter>
 									<TableRow>
-										<TableCell colSpan={5}>
+										<TableCell colSpan={6}>
 											{announcementCount === 1 ? (
 												<Trans>1 announcement</Trans>
 											) : (
@@ -676,6 +792,8 @@ export default function WebsiteAnnouncementsRoute() {
 					organizationId={organization.id}
 					localesConfig={localesConfig}
 					announcement={editing}
+					asNew={reusing}
+					timeZone={timeZone}
 				/>
 			</TranslateProvider>
 		</LocaleContext.Provider>

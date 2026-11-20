@@ -23,6 +23,7 @@ import {
 import { type Connection, type User } from '@repo/database/types'
 import { getClientIp } from '@repo/security'
 import { Authenticator } from 'remix-auth'
+import { recordSignupAcceptance } from './legal/agreements.server.ts'
 import { ssoAuthService } from './sso/auth.server.ts'
 import { uploadProfileImage } from './storage.server.ts'
 import { getUserAgent } from './user-agent.server.ts'
@@ -233,7 +234,23 @@ export async function signup({
 		return createdSession!
 	})
 
+	await recordSignupAgreements(session.userId, request)
 	return session
+}
+
+/**
+ * The sign-up checkbox covers the Terms and the Privacy Policy, so the
+ * versions in force are recorded for the new person (#194). A failure here
+ * never fails the sign-up: the owner is simply asked in the dashboard.
+ */
+async function recordSignupAgreements(userId: string, request?: Request) {
+	try {
+		await recordSignupAcceptance({ userId, request })
+	} catch (error) {
+		console.error('Could not record the sign-up agreements', {
+			error: error instanceof Error ? error.message : String(error),
+		})
+	}
 }
 
 const TRUSTED_AVATAR_HOSTS = new Set([
@@ -329,6 +346,7 @@ export async function signupWithConnection({
 			userId: Session.userId,
 		})
 
+	await recordSignupAgreements(user.id, request)
 	return session!
 }
 

@@ -5,6 +5,7 @@ import {
 	isDropVisibilityPage,
 	isReservationsPage,
 	isSitesAppRoute,
+	publishedHtmlCacheControl,
 	publishedHtmlCacheUrl,
 	shouldCachePublishedHtml,
 	sitesConnectSrc,
@@ -260,5 +261,42 @@ describe('experiences pages', () => {
 				),
 			).toBe(true)
 		}
+	})
+})
+
+describe('publishedHtmlCacheControl (#238)', () => {
+	const now = Date.UTC(2026, 4, 10, 12, 0, 0)
+	const iso = (offsetSeconds: number) =>
+		new Date(now + offsetSeconds * 1000).toISOString()
+
+	it('is the usual lifetime with no announcement boundary ahead', () => {
+		const usual = 'public, max-age=60, s-maxage=60, stale-while-revalidate=300'
+		expect(publishedHtmlCacheControl(undefined, now)).toBe(usual)
+		expect(publishedHtmlCacheControl([], now)).toBe(usual)
+		expect(
+			publishedHtmlCacheControl([{ startsAt: null, endsAt: null }], now),
+		).toBe(usual)
+		expect(publishedHtmlCacheControl([{ endsAt: iso(-10) }], now)).toBe(usual)
+		expect(publishedHtmlCacheControl([{ startsAt: iso(86_400) }], now)).toBe(
+			usual,
+		)
+	})
+
+	it('never lets a page outlive the next start or end', () => {
+		// Starts in 200 seconds: fresh 60 + stale 140 ends exactly at the start.
+		expect(publishedHtmlCacheControl([{ startsAt: iso(200) }], now)).toBe(
+			'public, max-age=60, s-maxage=60, stale-while-revalidate=140',
+		)
+		// Ends in 45 seconds: cached for 45 seconds at most.
+		expect(publishedHtmlCacheControl([{ endsAt: iso(45) }], now)).toBe(
+			'public, max-age=45, s-maxage=45',
+		)
+		// The nearer of two boundaries decides.
+		expect(
+			publishedHtmlCacheControl(
+				[{ startsAt: iso(30) }, { endsAt: iso(500) }],
+				now,
+			),
+		).toBe('public, max-age=30, s-maxage=30')
 	})
 })

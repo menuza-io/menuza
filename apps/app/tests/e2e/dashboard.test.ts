@@ -19,6 +19,7 @@ import { organizationTemplates } from '@repo/reports'
 import { saveReport } from '@repo/reports/server'
 import { expect, test } from '#tests/playwright-utils.ts'
 import {
+	acceptMenuzaAgreements,
 	createTestOrganizationWithClassicHome,
 	saveClassicHome,
 } from '#tests/test-utils.ts'
@@ -305,6 +306,7 @@ test.describe('Dashboard', () => {
 			})
 			.returning()
 		if (!org) throw new Error('Failed to create organization')
+		await acceptMenuzaAgreements(org.id, user.id)
 		await db.insert(UserOrganization).values({
 			userId: user.id,
 			organizationId: org.id,
@@ -406,6 +408,7 @@ test.describe('Dashboard', () => {
 			})
 			.returning()
 		if (!org) throw new Error('Failed to create organization')
+		await acceptMenuzaAgreements(org.id, user.id)
 		await saveClassicHome(user.id, org.id)
 		await db.insert(UserOrganization).values([
 			{
@@ -495,6 +498,7 @@ test.describe('Dashboard', () => {
 			})
 			.returning()
 		if (!org) throw new Error('Failed to create organization')
+		await acceptMenuzaAgreements(org.id, user.id)
 		await db.insert(UserOrganization).values({
 			userId: user.id,
 			organizationId: org.id,

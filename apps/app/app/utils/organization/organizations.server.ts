@@ -25,6 +25,7 @@ import { type User } from '@repo/database/types'
 import { logger } from '@repo/observability'
 import { data } from 'react-router'
 import { LAUNCH_CHECKLIST_FLAG } from '#app/utils/launch/launch.ts'
+import { copySignupAcceptances } from '#app/utils/legal/agreements.server.ts'
 import {
 	deprovisionTenantDatabase,
 	provisionTenantDatabase,
@@ -405,10 +406,21 @@ export async function createOrganization({
 					})),
 				)
 			}
-			await publishWebsitePage(page.id, tx)
+			await publishWebsitePage(page.id, tx, { publishedById: userId })
 		}
 		return created
 	})
+
+	// What the creator accepted at sign-up (Terms, Privacy) is the new
+	// organization's acceptance too (#194). Never fails the creation: an owner
+	// with no record is simply asked in the dashboard.
+	try {
+		await copySignupAcceptances({ userId, organizationId: organization.id })
+	} catch (error) {
+		console.error('Could not record the organization agreements', {
+			error: error instanceof Error ? error.message : String(error),
+		})
+	}
 
 	const tenant = {
 		orgId: organization.id,

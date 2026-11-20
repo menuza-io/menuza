@@ -292,9 +292,17 @@ msgstr "工作人员正在为此账单结账，请向工作人员寻求帮助。
 msgid "About {count} min"
 msgstr "约 {count} 分钟"
 
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Accept all"
+msgstr "全部接受"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Accepted"
 msgstr "已接单"
+
+#: src/components/LegalLinks.astro.ts:3
+msgid "Accessibility statement"
+msgstr "无障碍声明"
 
 #: src/components/AccountShell.astro.ts:3
 msgid "Account"
@@ -431,6 +439,10 @@ msgstr "金额"
 #: src/lib/reservations/labels.ts:378
 msgid "Amount due now"
 msgstr "现需支付金额"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Analytics: help us count visits and see what works"
+msgstr "分析：帮助我们统计访问量并了解哪些内容有效"
 
 #: src/lib/loyalty/labels.ts:184
 msgid "Another guest has already claimed rewards for this tab."
@@ -836,6 +848,10 @@ msgstr "结账"
 msgid "Checkout was cancelled. No card was sent."
 msgstr "结账已取消，未发送礼品卡。"
 
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Choose"
+msgstr "选择"
+
 #: src/lib/ordering-labels.ts:74
 msgid "Choose {count}"
 msgstr "选择 {count} 项"
@@ -1042,6 +1058,18 @@ msgstr "继续付款"
 #: src/lib/careers/labels.ts:22
 msgid "Contract"
 msgstr "合同工"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Cookie choices"
+msgstr "Cookie 选项"
+
+#: src/components/LegalLinks.astro.ts:3
+msgid "Cookie policy"
+msgstr "Cookie 政策"
+
+#: src/components/SiteFooter.astro.ts:3
+msgid "Cookie settings"
+msgstr "Cookie 设置"
 
 #: src/lib/loyalty/labels.ts:297
 msgid "Copied"
@@ -1385,6 +1413,10 @@ msgstr "请输入您的姓名。"
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
 msgstr "请输入手机号，我们将发送验证码。"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Essential storage (cart, sign-in, language) is always on."
+msgstr "必要存储（购物车、登录、语言）始终开启。"
 
 #: src/pages/menu.astro.ts:3
 msgid "Estimated tax"
@@ -1933,6 +1965,10 @@ msgstr "管理"
 #: src/lib/reservations/labels.ts:152
 msgid "Manage reservation"
 msgstr "管理预订"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Marketing: measure and improve our advertising"
+msgstr "营销：衡量并改进我们的广告"
 
 #: src/lib/loyalty/labels.ts:315
 msgid "Membership tiers"
@@ -2777,6 +2813,10 @@ msgstr "上一个"
 msgid "Primary"
 msgstr "主导航"
 
+#: src/components/LegalLinks.astro.ts:3
+msgid "Privacy policy"
+msgstr "隐私政策"
+
 #: src/pages/menu.astro.ts:3
 msgid "Proceed to checkout"
 msgstr "去结账"
@@ -2832,6 +2872,10 @@ msgstr "斋月"
 #: src/components/drops/DropHero.astro.ts:3
 msgid "Read more"
 msgstr "阅读更多"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Read the cookie policy"
+msgstr "阅读 Cookie 政策"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
@@ -2907,6 +2951,10 @@ msgstr "已退款"
 #: src/pages/menu/success.astro.ts:3
 msgid "Refunded {amount}"
 msgstr "已退款 {amount}"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Reject non-essential"
+msgstr "拒绝非必要项"
 
 #: src/lib/gift-cards/labels.ts:89
 #: src/lib/ordering-labels.ts:94
@@ -3021,6 +3069,10 @@ msgstr "保存更改"
 #: src/pages/profile.astro.ts:3
 msgid "Save Changes"
 msgstr "保存更改"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Save my choices"
+msgstr "保存我的选择"
 
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/profile.astro.ts:3
@@ -3375,6 +3427,10 @@ msgstr "告诉我们您想用餐的时间。如果有餐位空出，我们会联
 #: src/lib/careers/labels.ts:20
 msgid "Temporary"
 msgstr "临时工"
+
+#: src/components/LegalLinks.astro.ts:3
+msgid "Terms of service"
+msgstr "服务条款"
 
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Text"
@@ -4389,6 +4445,14 @@ msgstr "我们已向 {phone} 发送了 6 位验证码。"
 msgid "We told the restaurant you are running late."
 msgstr "我们已告知餐厅您会晚到。"
 
+#: src/components/ConsentBanner.astro.ts:3
+msgid "We use analytics and advertising tags to understand visits and measure our ads. You can opt out at any time."
+msgstr "我们使用分析和广告标签来了解访问情况并衡量广告效果。您可以随时选择退出。"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "We use essential storage to run this site. With your consent we also use analytics and advertising tags."
+msgstr "我们使用必要存储来运行本网站。经您同意，我们还会使用分析和广告标签。"
+
 #: src/lib/reservations/labels.ts:308
 msgid "We will let you know"
 msgstr "我们会通知您"
@@ -4774,6 +4838,10 @@ msgstr "您的排队位置"
 #: src/pages/profile/rewards.astro.ts:3
 msgid "Your points, rewards, code and history."
 msgstr "您的积分、奖励、专属码和历史记录。"
+
+#: src/components/ConsentBanner.astro.ts:3
+msgid "Your privacy choices"
+msgstr "您的隐私选择"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

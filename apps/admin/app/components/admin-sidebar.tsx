@@ -146,6 +146,12 @@ export function AdminSidebar({
 			icon: FileTextIcon,
 		},
 		{
+			title: _(msg`Legal agreements`),
+			url: '/legal-agreements',
+			isActive: location.pathname.startsWith('/legal-agreements'),
+			icon: FileTextIcon,
+		},
+		{
 			title: _(msg`Reservations fees`),
 			url: '/feature-flags/reservations-fees',
 			isActive: location.pathname.startsWith(

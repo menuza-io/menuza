@@ -1,6 +1,7 @@
 ---
 import { msg } from '@lingui/core/macro'
 import { type PublicJobLocation, type PublicJobPosting } from '@repo/common/job-posting'
+import LegalLinks from '~/components/LegalLinks.astro'
 import { locationOption } from '~/lib/careers/labels'
 import {
 	siteBtnPrimaryClass,
@@ -217,6 +218,7 @@ const questions = posting.questions ?? []
 						<span>{consentText}</span>
 					</label>
 					<p class="hidden text-sm text-destructive" data-error-for="consent"></p>
+					<LegalLinks kinds={['privacy']} class="text-xs text-muted-foreground" />
 				</div>
 
 				{

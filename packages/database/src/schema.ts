@@ -2025,6 +2025,12 @@ export const OrganizationAnnouncement = sqliteTable(
 		linkLabel: text(),
 		linkNewTab: integer({ mode: 'boolean' }).default(true).notNull(),
 		position: real(),
+		/**
+		 * Show window (#238), UTC. Both null behaves as before: shown while
+		 * enabled. The public site compares these with the request time.
+		 */
+		startsAt: integer({ mode: 'timestamp_ms' }),
+		endsAt: integer({ mode: 'timestamp_ms' }),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -2285,8 +2291,24 @@ export const WebsitePage = sqliteTable(
 		seoImageUrl: text(),
 		seoNoIndex: integer({ mode: 'boolean' }).default(false).notNull(),
 		publishedData: text(),
+		/**
+		 * Which generated legal page this is (#89, #260): `privacy`, `terms`,
+		 * `cookies` or `accessibility`. Null for every other page.
+		 */
+		legalKind: text(),
+		/** The template version the page was last generated from. */
+		legalTemplateVersion: integer(),
+		/**
+		 * Hash of the sections as generated. A page whose current sections hash
+		 * differently was edited by the operator and is never regenerated
+		 * without a diff and a confirm.
+		 */
+		legalGeneratedHash: text(),
 	},
 	(table) => [
+		uniqueIndex('WebsitePage_organizationId_legalKind_key')
+			.on(table.organizationId, table.legalKind)
+			.where(sql`${table.legalKind} IS NOT NULL`),
 		uniqueIndex('WebsitePage_organizationId_slug_key').on(
 			table.organizationId,
 			table.slug,
@@ -2467,6 +2489,209 @@ export const NotificationPreference = sqliteTable(
 	],
 )
 
+/**
+ * One immutable published version of a page, of the site header and footer
+ * (`chrome`) or of the site theme (#85). Every publish writes one; restoring
+ * copies a version into the draft and never publishes. `pageId` has no foreign
+ * key on purpose: the versions of a deleted page are kept for 30 days
+ * (`deletedAt` marks them) so it can be brought back, then purged. At most 50
+ * are kept per page and per kind, never the live (newest) one.
+ */
+export const WebsiteVersion = sqliteTable(
+	'WebsiteVersion',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** Null for `chrome` and `theme`. */
+		pageId: text(),
+		/** `page`, `chrome` or `theme`. */
+		kind: text().notNull(),
+		/** The page's title and slug when it was published (shown after deletion). */
+		title: text(),
+		slug: text(),
+		/**
+		 * JSON. Page: the sections array the site serves. Chrome:
+		 * `{ header, footer }` (config strings). Theme: the theme config string.
+		 */
+		snapshot: text().notNull(),
+		contentHash: text().notNull(),
+		/** JSON counts of what changed against the version before it. */
+		summary: text(),
+		publishedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		publishedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		/** The version this one was restored from, when its draft came from one. */
+		restoredFromId: text(),
+		/** Set when the page was deleted; the purge job uses it. */
+		deletedAt: integer({ mode: 'timestamp_ms' }),
+	},
+	(table) => [
+		index('WebsiteVersion_organizationId_pageId_publishedAt_idx').on(
+			table.organizationId,
+			table.pageId,
+			table.publishedAt,
+		),
+		index('WebsiteVersion_organizationId_kind_publishedAt_idx').on(
+			table.organizationId,
+			table.kind,
+			table.publishedAt,
+		),
+		index('WebsiteVersion_deletedAt_idx').on(table.deletedAt),
+	],
+)
+
+/**
+ * A page, or the site header, footer and theme, set to go live later (#180).
+ * `snapshot` is the draft as it was when scheduled, in the `WebsiteVersion`
+ * snapshot format, so edits made afterwards never ride along. One active
+ * schedule per page and one for the site design (`scopeKey` is the page id or
+ * `site`). A caller claims a due row by moving `scheduled` to `running`.
+ */
+export const WebsiteScheduledPublish = sqliteTable(
+	'WebsiteScheduledPublish',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		pageId: text().references(() => WebsitePage.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		scopeKey: text().notNull(),
+		/** `page` or `site`. */
+		kind: text().notNull(),
+		snapshot: text().notNull(),
+		runAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		/** `scheduled`, `running`, `done`, `cancelled` or `failed`. */
+		status: text().default('scheduled').notNull(),
+		attempts: integer().default(0).notNull(),
+		lastError: text(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		claimedAt: integer({ mode: 'timestamp_ms' }),
+		completedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('WebsiteScheduledPublish_active_scope_key')
+			.on(table.organizationId, table.scopeKey)
+			.where(sql`${table.status} IN ('scheduled', 'running')`),
+		index('WebsiteScheduledPublish_status_runAt_idx').on(
+			table.status,
+			table.runAt,
+		),
+		index('WebsiteScheduledPublish_organizationId_idx').on(
+			table.organizationId,
+		),
+	],
+)
+
+/**
+ * A numbered version of one Menuza agreement (#194, #89): `terms`, `privacy`,
+ * `payments`, `text_marketing` or `dpa`. `title` and `summary` are
+ * locale-keyed JSON. A version with `requiredBy` blocks the dashboard for
+ * owners after that date; before it the dialog can be postponed. `scope` is
+ * `always` (asked of every owner) or `module` (asked when that module is
+ * turned on). Business data, not guest data.
+ */
+export const LegalAgreement = sqliteTable(
+	'LegalAgreement',
+	{
+		key: text().notNull(),
+		version: integer().notNull(),
+		title: text().notNull(),
+		url: text().notNull(),
+		summary: text(),
+		scope: text().default('always').notNull(),
+		publishedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		requiredBy: integer({ mode: 'timestamp_ms' }),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.key, table.version],
+			name: 'LegalAgreement_key_version_pk',
+		}),
+	],
+)
+
+/**
+ * Who accepted which agreement version, and when (#194). Append-only: triggers
+ * refuse every update and every delete except the cascade of a deleted
+ * organization. `organizationId` is null for the acceptance a person gives at
+ * sign-up, before any organization exists; creating an organization copies it
+ * as `signup`. `userId` has no foreign key, so deleting a user never rewrites
+ * a row. `ipHash` is an HMAC of the address, never the address.
+ */
+export const LegalAcceptance = sqliteTable(
+	'LegalAcceptance',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		agreementKey: text().notNull(),
+		version: integer().notNull(),
+		organizationId: text().references(() => Organization.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		userId: text(),
+		acceptedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		ipHash: text(),
+		/** `signup`, `dialog`, `module` or `backfill`. */
+		source: text().default('dialog').notNull(),
+	},
+	(table) => [
+		foreignKey({
+			columns: [table.agreementKey, table.version],
+			foreignColumns: [LegalAgreement.key, LegalAgreement.version],
+			name: 'LegalAcceptance_agreement_fk',
+		}),
+		uniqueIndex('LegalAcceptance_org_agreement_key')
+			.on(table.organizationId, table.agreementKey, table.version)
+			.where(sql`${table.organizationId} IS NOT NULL`),
+		uniqueIndex('LegalAcceptance_user_signup_key')
+			.on(table.userId, table.agreementKey, table.version)
+			.where(sql`${table.organizationId} IS NULL`),
+		index('LegalAcceptance_organizationId_idx').on(table.organizationId),
+		index('LegalAcceptance_agreementKey_version_idx').on(
+			table.agreementKey,
+			table.version,
+		),
+	],
+)
+
 export const Notification = sqliteTable(
 	'Notification',
 	{
@@ -2565,6 +2790,20 @@ export const Organization = sqliteTable(
 		siteIconKey: text(),
 		siteHeaderConfig: text(),
 		siteFooterConfig: text(),
+		/**
+		 * Unpublished header, footer and theme (#85). Null means "same as live";
+		 * the public site only ever reads the live columns above.
+		 */
+		draftHeaderConfig: text(),
+		draftFooterConfig: text(),
+		draftSiteTheme: text(),
+		/**
+		 * Cookie banner mode (#89): `required`, `notice` or `off`. Null picks the
+		 * default for the site's region (`required` in the EU, UK and KSA).
+		 */
+		consentMode: text(),
+		/** Legal name, contact email and postal address for the legal pages (#89). */
+		legalContact: text(),
 		stripeConnectAccountId: text(),
 		stripeConnectChargesEnabled: integer({ mode: 'boolean' })
 			.default(false)

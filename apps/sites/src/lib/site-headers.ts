@@ -1,5 +1,10 @@
 import { createHash } from 'node:crypto'
 import {
+	cacheControlBeforeBoundary,
+	nextAnnouncementBoundary,
+	type AnnouncementWindow,
+} from '@repo/common/announcement-window'
+import {
 	type ShopCheckoutCspOptions,
 	getShopCheckoutConnectSrc,
 	getShopCheckoutFrameSources,
@@ -132,6 +137,30 @@ export function isReservationsPage(pathname: string) {
 	const segments = pathname.split('/').filter(Boolean)
 	const offset = /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segments[0] ?? '') ? 1 : 0
 	return segments[offset] === 'reserve'
+}
+
+/** How long a published page may be cached by the edge and by browsers. */
+export const PUBLISHED_HTML_MAX_AGE = 60
+export const PUBLISHED_HTML_STALE_WHILE_REVALIDATE = 300
+
+/**
+ * The `Cache-Control` of a cacheable published page. Announcement bars start
+ * and end at set times, so a page showing (or hiding) one is never kept past
+ * the next start or end: max-age plus the stale window ends at that boundary
+ * (#238). With no upcoming boundary it is the usual lifetime.
+ */
+export function publishedHtmlCacheControl(
+	announcements: readonly AnnouncementWindow[] | undefined,
+	now = Date.now(),
+) {
+	return cacheControlBeforeBoundary(
+		nextAnnouncementBoundary(announcements ?? [], now),
+		now,
+		{
+			maxAge: PUBLISHED_HTML_MAX_AGE,
+			staleWhileRevalidate: PUBLISHED_HTML_STALE_WHILE_REVALIDATE,
+		},
+	)
 }
 
 export function shouldCachePublishedHtml(

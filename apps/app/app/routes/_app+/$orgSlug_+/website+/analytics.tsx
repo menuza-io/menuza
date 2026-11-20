@@ -12,10 +12,19 @@ import {
 } from 'react-router'
 
 import {
+	ConsentBannerCard,
+	consentModeActionIntent,
+} from '#app/components/settings/cards/organization/consent-banner-card.tsx'
+import {
 	SiteAnalyticsCard,
 	SiteAnalyticsSchema,
 	siteAnalyticsActionIntent,
 } from '#app/components/settings/cards/organization/site-analytics-card.tsx'
+import {
+	consentBannerEnabled,
+	readConsentSettings,
+	saveConsentMode,
+} from '#app/utils/legal/consent-settings.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -41,7 +50,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_WEBSITE_ANY,
 	)
 
-	return { organization }
+	const [consent, bannerEnabled] = await Promise.all([
+		readConsentSettings(organization.id),
+		consentBannerEnabled(organization.id),
+	])
+	return { organization, consent: { ...consent, bannerEnabled } }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -59,6 +72,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	)
 
 	const formData = await request.formData()
+	if (formData.get('intent') === consentModeActionIntent) {
+		// The banner mode (#89): Off is refused while a tracking tag is set.
+		const saved = await saveConsentMode(organization.id, formData.get('mode'))
+		if (!saved.ok) {
+			return Response.json(
+				{ status: 'error', error: saved.error },
+				{ status: 400 },
+			)
+		}
+		await purgeOrganizationSiteCache(
+			organization.id,
+			organization.slug,
+			organization.customDomain,
+		)
+		return Response.json({ status: 'success' })
+	}
 	if (formData.get('intent') !== siteAnalyticsActionIntent) {
 		return Response.json({ error: 'Invalid intent' }, { status: 400 })
 	}
@@ -107,7 +136,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function WebsiteAnalyticsRoute() {
-	const { organization } = useLoaderData<typeof loader>()
+	const { organization, consent } = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 
 	return (
@@ -117,6 +146,9 @@ export default function WebsiteAnalyticsRoute() {
 					organization={organization}
 					actionData={actionData}
 				/>
+			</AnnotatedSection>
+			<AnnotatedSection>
+				<ConsentBannerCard consent={consent} />
 			</AnnotatedSection>
 		</AnnotatedLayout>
 	)

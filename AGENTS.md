@@ -637,9 +637,9 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   devices first, then use the switch. See `docs/staffing.md`.
 - `POS_DEVICE_HEALTH_ENABLED` - Tenant-api only, optional (unset or `true` is
   on). Kill switch for Station connection history (#356): `false` (also `0`,
-  `off`, `no`, `disabled`) drops terminal heartbeats and answers the Health panel
-  as off; stored history is kept. Collection also needs the organization flag
-  `pos.device_health` (default off). See `docs/pos.md`.
+  `off`, `no`, `disabled`) drops terminal heartbeats and answers the Health
+  panel as off; stored history is kept. Collection also needs the organization
+  flag `pos.device_health` (default off). See `docs/pos.md`.
 - `POS_ENABLED` / `POS_ORIGINS` - Tenant-api only. Kill switch for the walk-in
   POS (`false` answers 503 on `/pos/*`; revoking a terminal always works) and
   the comma-separated POS web origins allowed to call `/pos/*` from a browser.
@@ -1714,8 +1714,8 @@ packaging fee, daily dish limits; #251, #257, #355, #422, #408, #409):**
   (`lib/gift-card-write.ts`). Person erasure: `gift-card-erasure.ts`. Docs:
   `docs/gift-cards.md`.
 
-**Website SEO (cuisine, keywords, generated pages, redirects, events,
-Search Console; #182, #137, #88, #184, #138):**
+**Website SEO (cuisine, keywords, generated pages, redirects, events, Search
+Console; #182, #137, #88, #184, #138):**
 
 - Extend the existing Sites SEO stack (`seo-files.ts`, `seo-data.ts`,
   `restaurant-jsonld.ts`); never add a second sitemap, robots, `llms.txt` or
@@ -1727,6 +1727,27 @@ Search Console; #182, #137, #88, #184, #138):**
   (number), `seo.search_console`, `website.location_pages` (on),
   `website.dish_pages`, `website.area_pages`, `website.events`. Control-plane
   migration `0062_website_seo`. Docs: `docs/website-seo.md`.
+
+**Website publishing (versions, schedules, announcement windows, redirects,
+legal pages, Menuza agreements; #85, #180, #238, #248, #89, #194, #260):**
+
+- Every publish goes through `publishWebsitePage` / `publishPageWithSiteDesign`
+  (`apps/app/app/utils/website/publish-page.server.ts`): one `db.batch` writes
+  the page, an immutable `WebsiteVersion` and the pruning (50 per page, chrome
+  and theme). Header, footer and theme edits are **drafts**
+  (`Organization.draft*`, null means "same as live"); Sites reads only the live
+  columns. Never write the live chrome or theme from an editor action.
+- Scheduled publishes freeze the draft in `WebsiteScheduledPublish` and run
+  through `/resources/jobs/website-publish` (jobs-cron `WebsitePublishWorkflow`
+  plus the hourly sweep); a schedule is claimed by one caller. Announcement
+  windows are decided by Sites per request (`@repo/common/announcement-window`).
+- One redirect validator (`checkRedirectDestination`), one legal-page generator
+  (`@repo/common/legal` and `apps/app/app/utils/legal/pages.server.ts`, also the
+  accessibility statement) and one agreement system (`LegalAgreement`,
+  append-only `LegalAcceptance`). The consent choice stays in the guest's
+  browser (`@repo/common/site-consent`); no vendor script is rendered or loaded
+  before consent in Required mode.
+- Docs: `docs/website-publishing.md`.
 
 **Print shop (Marketing, Print shop):**
 

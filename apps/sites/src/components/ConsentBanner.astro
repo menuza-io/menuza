@@ -1,0 +1,107 @@
+---
+import { msg } from '@lingui/core/macro'
+import { legalLinks } from '~/lib/legal-links'
+
+/**
+ * The cookie banner (#89). A region at the top of the page, not a modal and
+ * not fixed: it never covers the cart tray or the checkout bar, never traps
+ * focus and never stops anyone reading the site. Hidden until the script finds
+ * that a choice is needed (no valid choice yet, or the tag set changed).
+ * "Cookie settings" in the footer reopens it. The choice stays in this
+ * browser (lib/consent-banner.ts) and is never sent to a server.
+ */
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const locale =
+	Astro.locals.requestedLocale || organization?.locale || organization?.defaultLocale || 'en'
+const mode = organization?.consent?.mode ?? 'off'
+const cookiePolicy = legalLinks(organization, locale, ['cookies'])[0]
+const t = {
+	region: i18n._(msg`Cookie choices`),
+	heading: i18n._(msg`Your privacy choices`),
+	required: i18n._(
+		msg`We use essential storage to run this site. With your consent we also use analytics and advertising tags.`,
+	),
+	notice: i18n._(
+		msg`We use analytics and advertising tags to understand visits and measure our ads. You can opt out at any time.`,
+	),
+	acceptAll: i18n._(msg`Accept all`),
+	reject: i18n._(msg`Reject non-essential`),
+	choose: i18n._(msg`Choose`),
+	save: i18n._(msg`Save my choices`),
+	analytics: i18n._(msg`Analytics: help us count visits and see what works`),
+	marketing: i18n._(msg`Marketing: measure and improve our advertising`),
+	essential: i18n._(msg`Essential storage (cart, sign-in, language) is always on.`),
+	readPolicy: i18n._(msg`Read the cookie policy`),
+}
+---
+
+<section
+	hidden
+	data-consent-banner
+	data-consent-mode={mode}
+	role="region"
+	aria-labelledby="consent-banner-heading"
+	class="border-border bg-card text-card-foreground border-b px-4 py-4 sm:px-8"
+>
+	<div class="mx-auto flex w-full max-w-6xl flex-col gap-3">
+		<h2 id="consent-banner-heading" class="text-sm font-semibold" tabindex="-1">
+			{t.heading}
+		</h2>
+		<p class="text-sm leading-relaxed">
+			{mode === 'notice' ? t.notice : t.required}
+			{
+				cookiePolicy ? (
+					<>
+						{' '}
+						<a class="underline underline-offset-2" href={cookiePolicy.href}>
+							{t.readPolicy}
+						</a>
+					</>
+				) : null
+			}
+		</p>
+		<fieldset hidden data-consent-choose class="flex flex-col gap-2 text-sm">
+			<legend class="sr-only">{t.heading}</legend>
+			<label class="flex items-start gap-2">
+				<input type="checkbox" name="analytics" data-consent-analytics class="mt-1" />
+				<span>{t.analytics}</span>
+			</label>
+			<label class="flex items-start gap-2">
+				<input type="checkbox" name="marketing" data-consent-marketing class="mt-1" />
+				<span>{t.marketing}</span>
+			</label>
+			<p class="text-muted-foreground text-xs">{t.essential}</p>
+		</fieldset>
+		<div class="flex flex-wrap gap-2">
+			<button type="button" class="btn-cta min-h-11 px-4 py-2 text-sm" data-consent-accept>
+				{t.acceptAll}
+			</button>
+			<button type="button" class="btn-secondary min-h-11 px-4 py-2 text-sm" data-consent-reject>
+				{t.reject}
+			</button>
+			<button
+				type="button"
+				class="btn-secondary min-h-11 px-4 py-2 text-sm"
+				data-consent-choose-toggle
+				aria-expanded="false"
+			>
+				{t.choose}
+			</button>
+			<button
+				type="button"
+				class="btn-cta min-h-11 px-4 py-2 text-sm"
+				data-consent-save
+				hidden
+			>
+				{t.save}
+			</button>
+		</div>
+	</div>
+</section>
+<script>
+	import { initConsentBanner } from '~/lib/consent-banner'
+
+	const node = document.querySelector('[data-consent-banner]')
+	if (node instanceof HTMLElement) initConsentBanner(node)
+</script>

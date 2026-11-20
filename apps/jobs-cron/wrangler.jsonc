@@ -26,6 +26,11 @@
 			"binding": "SOCIAL_POST_WORKFLOW",
 			"class_name": "SocialPostWorkflow",
 		},
+		{
+			"name": "website-publish",
+			"binding": "WEBSITE_PUBLISH_WORKFLOW",
+			"class_name": "WebsitePublishWorkflow",
+		},
 	],
 	// APP_BASE_URL / TENANT_API_URL* patched at deploy — set INTERNAL_COMMAND_TOKEN via wrangler secret put.
 	"vars": {},

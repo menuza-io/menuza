@@ -56,6 +56,11 @@ import {
 	reservationAlertPath,
 } from '#app/utils/reservations/manager-alerts.ts'
 import { staffingAlertCopy } from '#app/utils/staffing/alert-copy.ts'
+import {
+	websiteAlertCopy,
+	websiteAlertKindFromNotificationType,
+	websiteAlertPath,
+} from '#app/utils/website/website-alerts.ts'
 
 interface Notification {
 	id: string
@@ -168,7 +173,17 @@ function NotificationItem({
 			}
 		: null
 
+	const websiteKind = websiteAlertKindFromNotificationType(notification.type)
+	const websiteAlert = websiteKind
+		? websiteAlertCopy(
+				websiteKind,
+				typeof payload?.pageTitle === 'string' ? payload.pageTitle : null,
+				_,
+			)
+		: null
+
 	const subject =
+		websiteAlert?.subject ??
 		discountAlert?.subject ??
 		campaignAlert?.subject ??
 		printAlert?.subject ??
@@ -179,6 +194,7 @@ function NotificationItem({
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
 	const body =
+		websiteAlert?.body ??
 		discountAlert?.body ??
 		campaignAlert?.body ??
 		printAlert?.body ??
@@ -192,7 +208,13 @@ function NotificationItem({
 		if (!notification.isRead) {
 			onMarkRead(notification.id)
 		}
-		if (
+		if (websiteKind && typeof payload?.orgSlug === 'string') {
+			void navigate(
+				`/${payload.orgSlug}${websiteAlertPath(
+					typeof payload.pageId === 'string' ? payload.pageId : null,
+				)}`,
+			)
+		} else if (
 			discountKind &&
 			typeof payload?.orgSlug === 'string' &&
 			typeof payload?.discountId === 'string'
@@ -258,7 +280,9 @@ function NotificationItem({
 			<div className="flex items-start border-b border-dashed p-2">
 				<Avatar className="mr-2 h-8 w-8">
 					<AvatarFallback>
-						{discountKind ? (
+						{websiteKind ? (
+							<Icon name="globe" className="h-4 w-4" />
+						) : discountKind ? (
 							<Icon name="tag" className="h-4 w-4" />
 						) : campaignKind ? (
 							<Icon name="send" className="h-4 w-4" />

@@ -2,6 +2,7 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { type AnnouncementStatus } from '@repo/common/announcement-window'
 import {
 	getLocalizedEditableValue,
 	parseLocalizedString,
@@ -14,6 +15,7 @@ import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@repo/ui/field'
+import { Input } from '@repo/ui/input'
 import {
 	Select,
 	SelectContent,
@@ -55,6 +57,7 @@ import {
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateItemsButton } from '#app/components/website/translate-provider.tsx'
 import { isSafeAnnouncementLink } from '#app/utils/safe-link.ts'
+import { toDateTimeInputValue } from '#app/utils/website/schedule-format.ts'
 import { toTranslateItem } from '#app/utils/website/translation.ts'
 
 export const ANNOUNCEMENT_TYPES = [
@@ -79,8 +82,40 @@ export const AnnouncementSchema = z
 		linkUrl: z.string().trim().optional(),
 		linkLabelJson: z.string().optional(),
 		linkNewTab: z.enum(['on', 'off']).optional(),
+		/**
+		 * The show window (#238), wall-clock `YYYY-MM-DDTHH:mm` in the site's
+		 * time zone, which the server (never the browser) converts to UTC. Empty
+		 * is "right away" and "until I turn it off".
+		 */
+		startsAtLocal: z.string().trim().optional(),
+		endsAtLocal: z.string().trim().optional(),
 	})
 	.superRefine((data, ctx) => {
+		const shape = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/u
+		for (const key of ['startsAtLocal', 'endsAtLocal'] as const) {
+			const value = data[key]
+			if (value && !shape.test(value)) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: [key],
+					message: 'Enter a valid date and time',
+				})
+			}
+		}
+		// Same format in the same zone, so text order is time order.
+		if (
+			data.startsAtLocal &&
+			data.endsAtLocal &&
+			shape.test(data.startsAtLocal) &&
+			shape.test(data.endsAtLocal) &&
+			data.endsAtLocal <= data.startsAtLocal
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['endsAtLocal'],
+				message: 'Show until must be after Show from',
+			})
+		}
 		let contentMap: LocalizedString = {}
 		try {
 			contentMap = parseLocalizedString(data.contentJson, data.defaultLocale)
@@ -163,6 +198,10 @@ export type AnnouncementRecord = {
 	linkLabel: LocalizedString
 	linkNewTab: boolean
 	position: number | null
+	/** The show window, ISO (UTC); null for "right away" / "until I turn it off". */
+	startsAt: string | null
+	endsAt: string | null
+	status: AnnouncementStatus
 	createdAt: string
 	updatedAt: string
 }
@@ -184,6 +223,10 @@ type AnnouncementSheetProps = {
 	organizationId: string
 	localesConfig: SiteLocalesConfig
 	announcement?: AnnouncementRecord | null
+	/** Start a new announcement from this one's text (reusing an ended one). */
+	asNew?: boolean
+	/** The site's time zone, for the show window. */
+	timeZone: string
 }
 
 export function AnnouncementSheet({
@@ -192,16 +235,20 @@ export function AnnouncementSheet({
 	organizationId,
 	localesConfig,
 	announcement,
+	asNew = false,
+	timeZone,
 }: AnnouncementSheetProps) {
 	const { _ } = useLingui()
 	const fetcher = useFetcher<{
 		status?: 'success' | 'error'
 		result?: unknown
 	}>()
-	const isEditing = Boolean(announcement)
+	const isEditing = Boolean(announcement) && !asNew
 	const formId = useId()
 	const isSubmitting = fetcher.state !== 'idle'
-	const sheetKey = announcement?.id ?? 'new'
+	const sheetKey = asNew ? 'new' : (announcement?.id ?? 'new')
+	// A reused announcement keeps its text but starts with a fresh window.
+	const windowSource = asNew ? null : announcement
 	const prevFetcherState = useRef(fetcher.state)
 	const [formInstance, setFormInstance] = useState(0)
 
@@ -222,9 +269,19 @@ export function AnnouncementSheet({
 	const [linkLabelJson, setLinkLabelJson] = useState(() =>
 		serializeLocalizedString(announcement?.linkLabel ?? {}),
 	)
+	const localOf = (iso: string | null | undefined) =>
+		iso ? toDateTimeInputValue(iso, timeZone) : ''
+	const [startsAtLocal, setStartsAtLocal] = useState(
+		localOf(windowSource?.startsAt),
+	)
+	const [endsAtLocal, setEndsAtLocal] = useState(localOf(windowSource?.endsAt))
+	const [untilOff, setUntilOff] = useState(!windowSource?.endsAt)
 
 	useEffect(() => {
 		if (!open) return
+		setStartsAtLocal(localOf(windowSource?.startsAt))
+		setEndsAtLocal(localOf(windowSource?.endsAt))
+		setUntilOff(!windowSource?.endsAt)
 		setFormInstance((current) => current + 1)
 		setIsEnabled(announcement?.isEnabled ?? true)
 		setType(announcement?.type ?? 'info')
@@ -232,7 +289,8 @@ export function AnnouncementSheet({
 		setLinkNewTab(announcement?.linkNewTab ?? true)
 		setContentJson(serializeLocalizedString(announcement?.content ?? {}))
 		setLinkLabelJson(serializeLocalizedString(announcement?.linkLabel ?? {}))
-	}, [open, announcement])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [open, announcement, asNew, timeZone])
 
 	const [form, fields] = useForm({
 		id: `${formId}-${sheetKey}-${formInstance}`,
@@ -254,6 +312,8 @@ export function AnnouncementSheet({
 			linkUrl: announcement?.linkUrl ?? '',
 			linkLabelJson,
 			linkNewTab: announcement?.linkNewTab === false ? undefined : 'on',
+			startsAtLocal,
+			endsAtLocal: untilOff ? '' : endsAtLocal,
 		},
 		shouldRevalidate: 'onBlur',
 	})
@@ -371,6 +431,12 @@ export function AnnouncementSheet({
 					<input type="hidden" name="defaultLocale" value={defaultLocale} />
 					<input type="hidden" name="contentJson" value={contentJson} />
 					<input type="hidden" name="linkLabelJson" value={linkLabelJson} />
+					<input type="hidden" name="startsAtLocal" value={startsAtLocal} />
+					<input
+						type="hidden"
+						name="endsAtLocal"
+						value={untilOff ? '' : endsAtLocal}
+					/>
 					{addLink ? <input type="hidden" name="addLink" value="on" /> : null}
 					{linkNewTab && addLink ? (
 						<input type="hidden" name="linkNewTab" value="on" />
@@ -532,6 +598,67 @@ export function AnnouncementSheet({
 									</label>
 								</div>
 							) : null}
+						</FieldGroup>
+
+						<FieldGroup>
+							<Field
+								data-invalid={Boolean(fields.startsAtLocal.errors?.length)}
+							>
+								<FieldLabel htmlFor={`${form.id}-from`}>
+									<Trans>Show from</Trans>
+								</FieldLabel>
+								<Input
+									id={`${form.id}-from`}
+									type="datetime-local"
+									value={startsAtLocal}
+									onChange={(event) =>
+										setStartsAtLocal(event.currentTarget.value)
+									}
+									disabled={isSubmitting}
+								/>
+								<p className="text-muted-foreground text-xs">
+									<Trans>Leave empty to show it right away.</Trans>
+								</p>
+								<FieldError
+									errors={convertErrorsToFieldFormat(
+										fields.startsAtLocal.errors,
+									)}
+								/>
+							</Field>
+							<label className="flex items-center gap-2 text-sm">
+								<Checkbox
+									checked={untilOff}
+									onCheckedChange={(checked) => setUntilOff(checked === true)}
+									disabled={isSubmitting}
+								/>
+								<Trans>Until I turn it off</Trans>
+							</label>
+							{!untilOff ? (
+								<Field
+									data-invalid={Boolean(fields.endsAtLocal.errors?.length)}
+								>
+									<FieldLabel htmlFor={`${form.id}-until`}>
+										<Trans>Show until</Trans>
+									</FieldLabel>
+									<Input
+										id={`${form.id}-until`}
+										type="datetime-local"
+										value={endsAtLocal}
+										onChange={(event) =>
+											setEndsAtLocal(event.currentTarget.value)
+										}
+										disabled={isSubmitting}
+									/>
+									<FieldError
+										errors={convertErrorsToFieldFormat(
+											fields.endsAtLocal.errors,
+										)}
+									/>
+								</Field>
+							) : null}
+							<p className="text-muted-foreground text-xs">
+								<Trans>Times are in your site's time zone ({timeZone}).</Trans>
+							</p>
 						</FieldGroup>
 
 						<ErrorList errors={form.errors} id={form.errorId} />

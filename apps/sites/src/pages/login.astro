@@ -1,5 +1,6 @@
 ---
 import { msg } from '@lingui/core/macro'
+import LegalLinks from '~/components/LegalLinks.astro'
 import SitePage from '~/components/SitePage.astro'
 
 const organization = Astro.locals.organization
@@ -72,6 +73,10 @@ if (!organization) {
 				>
 					{sendCode}
 				</button>
+				<LegalLinks
+					kinds={['terms', 'privacy']}
+					class="justify-center text-xs text-muted-foreground"
+				/>
 			</form>
 		</div>
 	</div>

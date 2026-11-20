@@ -4,6 +4,8 @@ import {
 	Dashboard,
 	db,
 	eq,
+	LegalAcceptance,
+	LegalAgreement,
 	Organization,
 	OrganizationNote,
 	Password,
@@ -145,6 +147,33 @@ export function getResponseStatus(response: any): number {
 	return response?.init?.status ?? 200
 }
 
+/**
+ * Owners who signed up have accepted the current Menuza agreements. Without
+ * them the acceptance dialog opens over every screen a test visits.
+ */
+export async function acceptMenuzaAgreements(
+	organizationId: string,
+	userId: string,
+) {
+	const agreements = await db
+		.select({ key: LegalAgreement.key, version: LegalAgreement.version })
+		.from(LegalAgreement)
+		.where(eq(LegalAgreement.scope, 'always'))
+	if (agreements.length === 0) return
+	await db
+		.insert(LegalAcceptance)
+		.values(
+			agreements.map((agreement) => ({
+				agreementKey: agreement.key,
+				version: agreement.version,
+				organizationId,
+				userId,
+				source: 'signup',
+			})),
+		)
+		.onConflictDoNothing()
+}
+
 export async function createTestOrganization(
 	userId: string,
 	role: 'admin' | 'member' | 'viewer' | 'guest' = 'admin',
@@ -171,6 +200,11 @@ export async function createTestOrganization(
 		organizationId: organization.id,
 		organizationRoleId: `org_role_${role}`,
 	})
+	// Vitest suites (the agreements' own included) start from nothing accepted;
+	// only the browser tests need the dialog out of the way.
+	if (role === 'admin' && !process.env.VITEST) {
+		await acceptMenuzaAgreements(organization.id, userId)
+	}
 	return organization
 }
 

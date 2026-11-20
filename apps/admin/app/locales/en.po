@@ -289,6 +289,10 @@ msgstr "Accept new price, {orderName}"
 msgid "Accept the new wholesale price?"
 msgstr "Accept the new wholesale price?"
 
+#: app/routes/_admin+/legal-agreements.tsx:67
+msgid "Accepted"
+msgstr "Accepted"
+
 #: app/routes/_admin+/waitlist.tsx:268
 msgid "Access"
 msgstr "Access"
@@ -482,8 +486,8 @@ msgstr "Add waitlist points"
 msgid "Address, phone and opening hours"
 msgstr "Address, phone and opening hours"
 
-#: app/components/admin-sidebar.tsx:161
-#: app/components/admin-sidebar.tsx:169
+#: app/components/admin-sidebar.tsx:167
+#: app/components/admin-sidebar.tsx:175
 #: app/components/sso-configuration-form.tsx:438
 #: app/components/sso-user-management.tsx:101
 #: app/routes/_admin+/roles+/$roleId.tsx:504
@@ -491,7 +495,7 @@ msgstr "Address, phone and opening hours"
 msgid "Admin"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:187
+#: app/components/admin-sidebar.tsx:193
 #: app/routes/_admin+/index.tsx:129
 msgid "Admin Dashboard"
 msgstr ""
@@ -504,6 +508,15 @@ msgstr ""
 #: app/routes/_admin+/cache.tsx:933
 msgid "Admin role required"
 msgstr ""
+
+#: app/routes/_admin+/legal-agreements.tsx:228
+msgid "After this date the dashboard is blocked for owners who have not accepted."
+msgstr "After this date the dashboard is blocked for owners who have not accepted."
+
+#: app/routes/_admin+/legal-agreements.tsx:58
+#: app/routes/_admin+/legal-agreements.tsx:174
+msgid "Agreement"
+msgstr "Agreement"
 
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:146
 msgid "AI drafts are not available for this organization."
@@ -1373,6 +1386,7 @@ msgstr ""
 #: app/components/admin-organizations-table.tsx:280
 #: app/components/admin-users-table.tsx:202
 #: app/routes/_admin+/cache.tsx:613
+#: app/routes/_admin+/legal-agreements.tsx:141
 msgid "Created"
 msgstr ""
 
@@ -2726,6 +2740,11 @@ msgstr ""
 msgid "Left"
 msgstr "Left"
 
+#: app/components/admin-sidebar.tsx:149
+#: app/routes/_admin+/legal-agreements.tsx:42
+msgid "Legal agreements"
+msgstr "Legal agreements"
+
 #: app/routes/_admin+/roles+/index.tsx:400
 msgid "Level"
 msgstr ""
@@ -2757,6 +2776,10 @@ msgstr "Link"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:296
 msgid "Link (optional)"
 msgstr "Link (optional)"
+
+#: app/routes/_admin+/legal-agreements.tsx:217
+msgid "Link to the full text"
+msgstr "Link to the full text"
 
 #: app/components/admin-launch-card.tsx:156
 msgid "Live"
@@ -3251,6 +3274,14 @@ msgstr ""
 msgid "None"
 msgstr ""
 
+#: app/routes/_admin+/legal-agreements.tsx:113
+#~ msgid "Not accepted: {0} version {1}"
+#~ msgstr "Not accepted: {0} version {1}"
+
+#: app/routes/_admin+/legal-agreements.tsx:115
+msgid "Not accepted: {missingKey} version {missingVersion}"
+msgstr "Not accepted: {missingKey} version {missingVersion}"
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:75
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:12
 msgid "Not sent: too late"
@@ -3418,6 +3449,7 @@ msgstr ""
 #: app/components/admin/feature-flags.tsx:784
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
+#: app/routes/_admin+/legal-agreements.tsx:135
 #: app/routes/_admin+/phone-numbers.tsx:361
 #: app/routes/_admin+/print-shop.tsx:796
 msgid "Organization"
@@ -3511,6 +3543,10 @@ msgstr ""
 #: app/components/sso-user-management.tsx:95
 msgid "Owner"
 msgstr ""
+
+#: app/routes/_admin+/legal-agreements.tsx:138
+msgid "Owners"
+msgstr "Owners"
 
 #: ../../packages/reports/src/ui/report-labels.ts:124
 msgid "Pacing"
@@ -3827,9 +3863,21 @@ msgstr ""
 msgid "Publish"
 msgstr ""
 
+#: app/routes/_admin+/legal-agreements.tsx:168
+msgid "Publish a new version"
+msgstr "Publish a new version"
+
+#: app/routes/_admin+/legal-agreements.tsx:44
+msgid "Publish a new version of a Menuza agreement and see which organizations have not accepted it. Owners are asked at their next sign-in; after a \"required by\" date the dashboard is blocked until they accept."
+msgstr "Publish a new version of a Menuza agreement and see which organizations have not accepted it. Owners are asked at their next sign-in; after a \"required by\" date the dashboard is blocked until they accept."
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:209
 msgid "Publish and activate automation"
 msgstr ""
+
+#: app/routes/_admin+/legal-agreements.tsx:233
+msgid "Publish version"
+msgstr "Publish version"
 
 #: app/routes/_admin+/marketing+/automations.$journeyId.tsx:213
 msgid "Publishing automation..."
@@ -4110,6 +4158,14 @@ msgstr ""
 msgid "Require a verified email"
 msgstr "Require a verified email"
 
+#: app/routes/_admin+/legal-agreements.tsx:64
+msgid "Required by"
+msgstr "Required by"
+
+#: app/routes/_admin+/legal-agreements.tsx:223
+msgid "Required by (optional)"
+msgstr "Required by (optional)"
+
 #: app/components/sso-configuration-form.tsx:374
 msgid "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
 msgstr "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
@@ -4142,7 +4198,7 @@ msgstr "Reservation No-Show"
 msgid "Reservations"
 msgstr "Reservations"
 
-#: app/components/admin-sidebar.tsx:149
+#: app/components/admin-sidebar.tsx:155
 msgid "Reservations fees"
 msgstr "Reservations fees"
 
@@ -5090,7 +5146,7 @@ msgstr ""
 msgid "System Flags"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:190
+#: app/components/admin-sidebar.tsx:196
 msgid "System Management"
 msgstr ""
 
@@ -5339,6 +5395,10 @@ msgstr "The print file could not be made"
 msgid "The request was not completed"
 msgstr "The request was not completed"
 
+#: app/routes/_admin+/legal-agreements.tsx:124
+msgid "The required-by date has passed: these owners are blocked until they accept."
+msgstr "The required-by date has passed: these owners are blocked until they accept."
+
 #: ../../packages/reports/src/ui/report-labels.ts:133
 msgid "The share of booked parties that did not show up over the last 30 days."
 msgstr "The share of booked parties that did not show up over the last 30 days."
@@ -5498,6 +5558,14 @@ msgstr "Tip pool: tips by day"
 #: ../../packages/reports/src/ui/report-labels.ts:69
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
+
+#: app/routes/_admin+/legal-agreements.tsx:198
+msgid "Title (Arabic)"
+msgstr "Title (Arabic)"
+
+#: app/routes/_admin+/legal-agreements.tsx:192
+msgid "Title (English)"
+msgstr "Title (English)"
 
 #: app/components/admin-launch-card.tsx:48
 msgid "To do"
@@ -5856,6 +5924,10 @@ msgstr ""
 msgid "Verified phone numbers only"
 msgstr "Verified phone numbers only"
 
+#: app/routes/_admin+/legal-agreements.tsx:61
+msgid "Version"
+msgstr "Version"
+
 #: app/routes/_admin+/marketing+/_index.tsx:186
 msgid "View all"
 msgstr ""
@@ -5978,6 +6050,14 @@ msgstr "WELCOME"
 msgid "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
 msgstr "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
 
+#: app/routes/_admin+/legal-agreements.tsx:211
+msgid "What changed (Arabic)"
+msgstr "What changed (Arabic)"
+
+#: app/routes/_admin+/legal-agreements.tsx:205
+msgid "What changed (English)"
+msgstr "What changed (English)"
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:217
 msgid "What is this message for?"
 msgstr "What is this message for?"
@@ -6001,6 +6081,10 @@ msgstr "Where bookings come from over the last 30 days: online, phone, host, wal
 #: ../../packages/reports/src/ui/report-labels.ts:97
 msgid "Who cancelled over the last 30 days: the guest, the restaurant or the system."
 msgstr "Who cancelled over the last 30 days: the guest, the restaurant or the system."
+
+#: app/routes/_admin+/legal-agreements.tsx:103
+msgid "Who has not accepted"
+msgstr "Who has not accepted"
 
 #: ../../packages/reports/src/ui/report-labels.ts:49
 msgid "Who worked overtime over the last 30 days, and how much."

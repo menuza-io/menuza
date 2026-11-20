@@ -1,4 +1,5 @@
 import { parseWithZod } from '@conform-to/zod/v4'
+import { AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 import {
@@ -66,6 +67,7 @@ import {
 	evaluateRegionGuard,
 	fetchStaffSummary,
 } from '#app/utils/staffing/region-guard.server.ts'
+import { logWebsiteActivity } from '#app/utils/website/activity.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -243,6 +245,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				})
 				.where(eq(Organization.id, organization.id))
 			await notifyReservationsContextChanged(organization.id, 'branding')
+			await logWebsiteActivity({
+				action: AuditAction.WEBSITE_DOMAIN_CHANGED,
+				organizationId: organization.id,
+				userId,
+				details: `Connected the custom domain ${customDomain}.`,
+				metadata: { from: organization.customDomain, to: customDomain },
+				request,
+			})
 
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
@@ -285,6 +295,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				})
 				.where(eq(Organization.id, organization.id))
 			await notifyReservationsContextChanged(organization.id, 'branding')
+			await logWebsiteActivity({
+				action: AuditAction.WEBSITE_DOMAIN_CHANGED,
+				organizationId: organization.id,
+				userId,
+				details: `Disconnected the custom domain ${organization.customDomain ?? ''}.`.replace(' .', '.'),
+				metadata: { from: organization.customDomain, to: null },
+				request,
+			})
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
 				organization.id,

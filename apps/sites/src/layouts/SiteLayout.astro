@@ -33,6 +33,8 @@ interface Props {
 	googleTagManagerId?: string | null
 	googleAnalyticsId?: string | null
 	tiktokPixelId?: string | null
+	/** The cookie banner mode (#89): tags load only as consent allows. */
+	consentMode?: 'required' | 'notice' | 'off'
 	/** Search engine verification codes (#138); the home page passes them. */
 	siteVerification?: { google: string[]; bing: string | null } | null
 }
@@ -57,6 +59,7 @@ const {
 	googleTagManagerId,
 	googleAnalyticsId,
 	tiktokPixelId,
+	consentMode = 'off',
 	siteVerification,
 } = Astro.props
 const themeMode = theme?.mode ?? 'system'
@@ -213,6 +216,7 @@ const htmlClass =
 			googleTagManagerId={googleTagManagerId}
 			googleAnalyticsId={googleAnalyticsId}
 			tiktokPixelId={tiktokPixelId}
+			consentMode={consentMode}
 		/>
 		{/* Inject after bundled CSS so org theme tokens win over any leftover defaults. */}
 		{themeCss ? (

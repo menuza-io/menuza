@@ -132,6 +132,12 @@ there is no second sitemap, robots file, `llms.txt` or JSON-LD system.
 - Without Google credentials outside production the sign-in and the API calls
   use a mock. Tests use `setSearchConsoleClientFactory` and `setIndexNowSender`.
 
+## Related
+
+Version history, scheduled publish, redirect destination rules and the 302
+fallback for an unpublished target extend these features; see
+`docs/website-publishing.md`.
+
 ## Deploy order
 
 App first (migration `0062`, new routes, payload fields), then Sites (reads the

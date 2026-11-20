@@ -62,6 +62,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				siteDefaultLocale: Organization.siteDefaultLocale,
 				siteHeaderConfig: Organization.siteHeaderConfig,
 				siteFooterConfig: Organization.siteFooterConfig,
+				draftHeaderConfig: Organization.draftHeaderConfig,
+				draftFooterConfig: Organization.draftFooterConfig,
 			})
 			.from(Organization)
 			.where(
@@ -114,8 +116,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	}
 
 	const defaultLocale = org?.siteDefaultLocale ?? 'en'
-	const headerConfig = org?.siteHeaderConfig ?? null
-	const footerConfig = org?.siteFooterConfig ?? null
+	// Editors with a signed preview token see their unpublished header and
+	// footer (#85); everyone else, and the cache, only ever the live ones.
+	const headerConfig = isPreview
+		? (org?.draftHeaderConfig ?? org?.siteHeaderConfig ?? null)
+		: (org?.siteHeaderConfig ?? null)
+	const footerConfig = isPreview
+		? (org?.draftFooterConfig ?? org?.siteFooterConfig ?? null)
+		: (org?.siteFooterConfig ?? null)
 
 	// Then fetch the page
 	const page = await findPublishedSitePage(orgId, pageSlug, {

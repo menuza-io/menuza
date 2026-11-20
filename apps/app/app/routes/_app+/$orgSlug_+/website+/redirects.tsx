@@ -1,5 +1,6 @@
-import { Trans, t } from '@lingui/macro'
+import { Trans, msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import {
@@ -78,14 +79,53 @@ import {
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
+import { logWebsiteActivity } from '#app/utils/website/activity.server.ts'
 import {
-	isValidRedirectDestination,
-	REDIRECT_DESTINATION_ERROR,
+	checkRedirectDestination,
+	REDIRECT_DESTINATION_MESSAGES,
+	type RedirectDestinationErrorCode,
 } from '#app/utils/website/redirect-destination.ts'
 import {
 	detectRedirectCycle,
 	normalizeRedirectPath,
+	siteHostsFor,
 } from '#app/utils/website/redirects.server.ts'
+
+const DESTINATION_COPY = {
+	empty: msg`Destination is required.`,
+	invalid: msg`Destination must be an internal path (e.g. /page) or a valid https:// URL.`,
+	credentials: msg`A destination cannot contain a username or password. Remove it from the address.`,
+	not_https: msg`Use an https:// address. Plain http:// is only allowed for a path on your own site.`,
+	own_domain: msg`That address is on your own website. Use the path instead (for example /menu).`,
+	system_path: msg`That path belongs to the platform (for example /api or /login) and cannot be a destination.`,
+} satisfies Record<RedirectDestinationErrorCode, unknown>
+
+type DestinationProblem = {
+	code: RedirectDestinationErrorCode
+	suggestedPath: string | null
+}
+
+/** A refused destination, as the form and the audit trail want it (#248). */
+function destinationRefusal(
+	toPath: string,
+	siteHosts: readonly string[],
+): DestinationProblem | null {
+	const check = checkRedirectDestination(toPath, { siteHosts })
+	return check.ok
+		? null
+		: { code: check.code, suggestedPath: check.suggestedPath ?? null }
+}
+
+function destinationErrorResponse(problem: DestinationProblem) {
+	return Response.json(
+		{
+			status: 'error',
+			errors: { toPath: [REDIRECT_DESTINATION_MESSAGES[problem.code]] },
+			destinationError: problem,
+		},
+		{ status: 400 },
+	)
+}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -129,9 +169,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			),
 	])
 
+	// Redirects saved before the destination rules (#248) are checked once, here:
+	// the ones that now fail are listed for the operator and keep working until
+	// they are edited.
+	const siteHosts = siteHostsFor(organization)
 	return {
 		organization,
 		redirects: redirects.map((r) => ({
+			destinationProblem: destinationRefusal(r.toPath, siteHosts),
 			id: r.id,
 			fromPath: r.fromPath,
 			toPath: r.toPath,
@@ -164,11 +209,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 const CreateRedirectSchema = z.object({
 	fromPath: z.string().trim().min(1, 'Source path is required'),
-	toPath: z
-		.string()
-		.trim()
-		.min(1, 'Destination is required')
-		.refine(isValidRedirectDestination, REDIRECT_DESTINATION_ERROR),
+	toPath: z.string().trim().min(1, 'Destination is required'),
 	statusCode: z.coerce
 		.number()
 		.refine((val) => val === 301 || val === 302, 'Must be 301 or 302'),
@@ -178,11 +219,7 @@ const CreateRedirectSchema = z.object({
 const UpdateRedirectSchema = z.object({
 	id: z.string().min(1),
 	fromPath: z.string().trim().min(1, 'Source path is required'),
-	toPath: z
-		.string()
-		.trim()
-		.min(1, 'Destination is required')
-		.refine(isValidRedirectDestination, REDIRECT_DESTINATION_ERROR),
+	toPath: z.string().trim().min(1, 'Destination is required'),
 	statusCode: z.coerce
 		.number()
 		.refine((val) => val === 301 || val === 302, 'Must be 301 or 302'),
@@ -190,7 +227,7 @@ const UpdateRedirectSchema = z.object({
 })
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
@@ -206,6 +243,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const formData = await request.formData()
 	const intent = formData.get('intent')
+	const siteHosts = siteHostsFor(organization)
 
 	if (intent === 'create-redirect') {
 		const parsed = CreateRedirectSchema.safeParse({
@@ -222,6 +260,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
+		const refused = destinationRefusal(parsed.data.toPath, siteHosts)
+		if (refused) return destinationErrorResponse(refused)
 		const fromPath = normalizeRedirectPath(parsed.data.fromPath)
 		const toPath = normalizeRedirectPath(parsed.data.toPath)
 
@@ -290,6 +330,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		})
+		await logWebsiteActivity({
+			action: AuditAction.WEBSITE_REDIRECT_CREATED,
+			organizationId: organization.id,
+			userId,
+			details: `Added a redirect from ${fromPath} to ${toPath}.`,
+			metadata: { fromPath, toPath, statusCode: parsed.data.statusCode },
+			request,
+		})
 
 		await purgeOrganizationSiteCache(
 			organization.id,
@@ -320,6 +368,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
+		const refused = destinationRefusal(parsed.data.toPath, siteHosts)
+		if (refused) return destinationErrorResponse(refused)
 		const fromPath = normalizeRedirectPath(parsed.data.fromPath)
 		const toPath = normalizeRedirectPath(parsed.data.toPath)
 
@@ -395,6 +445,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					eq(WebsiteRedirect.organizationId, organization.id),
 				),
 			)
+		await logWebsiteActivity({
+			action: AuditAction.WEBSITE_REDIRECT_UPDATED,
+			organizationId: organization.id,
+			userId,
+			details: `Changed the redirect from ${fromPath} to ${toPath}.`,
+			metadata: { fromPath, toPath, statusCode: parsed.data.statusCode },
+			request,
+		})
 
 		await purgeOrganizationSiteCache(
 			organization.id,
@@ -451,7 +509,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return Response.json({ status: 'error' }, { status: 400 })
 		}
 
-		await db
+		const [removed] = await db
 			.delete(WebsiteRedirect)
 			.where(
 				and(
@@ -459,6 +517,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					eq(WebsiteRedirect.organizationId, organization.id),
 				),
 			)
+			.returning({
+				fromPath: WebsiteRedirect.fromPath,
+				toPath: WebsiteRedirect.toPath,
+			})
+		if (removed) {
+			await logWebsiteActivity({
+				action: AuditAction.WEBSITE_REDIRECT_DELETED,
+				organizationId: organization.id,
+				userId,
+				details: `Removed the redirect from ${removed.fromPath} to ${removed.toPath}.`,
+				metadata: { fromPath: removed.fromPath, toPath: removed.toPath },
+				request,
+			})
+		}
 
 		await purgeOrganizationSiteCache(
 			organization.id,
@@ -517,6 +589,7 @@ type RedirectRecord = {
 	id: string
 	fromPath: string
 	toPath: string
+	destinationProblem: DestinationProblem | null
 	source: string
 	statusCode: number
 	isEnabled: boolean
@@ -542,16 +615,23 @@ export default function WebsiteRedirectsRoute() {
 	const saveFetcher = useFetcher<{
 		status?: string
 		errors?: Record<string, string[]>
+		destinationError?: DestinationProblem
 	}>({ key: `redirect-save-${saveFetcherKey}` })
 	const [submittedSave, setSubmittedSave] = useState(false)
 	const [clientToPathError, setClientToPathError] = useState<string | null>(
 		null,
 	)
 	const actionData = saveFetcher.data
-	const toPathError = clientToPathError ?? actionData?.errors?.toPath?.[0]
 	const toggleFetcher = useFetcher()
 	const deleteFetcher = useFetcher()
 	const { _ } = useLingui()
+	const destinationError = actionData?.destinationError ?? null
+	const suggestedPath = destinationError?.suggestedPath ?? '/'
+	const toPathError =
+		clientToPathError ??
+		(destinationError
+			? _(DESTINATION_COPY[destinationError.code])
+			: actionData?.errors?.toPath?.[0])
 
 	// Sheet Drawer State
 	const [drawerOpen, setDrawerOpen] = useState(false)
@@ -682,6 +762,11 @@ export default function WebsiteRedirectsRoute() {
 		)
 	}, [redirects])
 
+	const problemRedirects = useMemo(
+		() => redirects.filter((r) => r.destinationProblem),
+		[redirects],
+	)
+	const problemCount = problemRedirects.length
 	const redirectCount = filteredRedirects.length
 	const notFoundCount = filtered404s.length
 	const deleteRedirectFrom = redirectToDelete?.fromPath
@@ -773,6 +858,54 @@ export default function WebsiteRedirectsRoute() {
 
 				{/* URL Redirects Tab */}
 				<TabsContent value="redirects" className="space-y-4">
+					{problemRedirects.length > 0 ? (
+						<div
+							role="status"
+							data-testid="redirect-problems"
+							className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+						>
+							<p className="font-medium">
+								{problemRedirects.length === 1 ? (
+									<Trans>
+										1 redirect has a destination that is not allowed
+									</Trans>
+								) : (
+									<Trans>
+										{problemCount} redirects have a destination that is not
+										allowed
+									</Trans>
+								)}
+							</p>
+							<p className="text-muted-foreground mt-1 text-xs">
+								<Trans>
+									They keep working as they are until you edit them. Editing
+									asks for a destination that follows the current rules.
+								</Trans>
+							</p>
+							<ul className="mt-2 space-y-1 text-xs">
+								{problemRedirects.map((record) => (
+									<li
+										key={record.id}
+										className="flex flex-wrap items-center gap-2"
+									>
+										<span className="font-mono">{record.fromPath}</span>
+										<Icon name="arrow-right" className="size-3" />
+										<span className="font-mono wrap-anywhere">
+											{record.toPath}
+										</span>
+										<Button
+											type="button"
+											size="xs"
+											variant="outline"
+											onClick={() => openEditDrawer(record)}
+										>
+											<Trans>Edit</Trans>
+										</Button>
+									</li>
+								))}
+							</ul>
+						</div>
+					) : null}
 					{redirects.length === 0 ? (
 						<EmptyState
 							title={_(t`No redirects created yet`)}
@@ -1105,9 +1238,10 @@ export default function WebsiteRedirectsRoute() {
 						method="post"
 						noValidate
 						onSubmit={(e) => {
-							if (!isValidRedirectDestination(toPathInput)) {
+							const check = checkRedirectDestination(toPathInput)
+							if (!check.ok) {
 								e.preventDefault()
-								setClientToPathError(REDIRECT_DESTINATION_ERROR)
+								setClientToPathError(_(DESTINATION_COPY[check.code]))
 								document.getElementById('toPath')?.focus()
 								return
 							}
@@ -1290,6 +1424,26 @@ export default function WebsiteRedirectsRoute() {
 										{toPathError}
 									</p>
 								)}
+								{destinationError?.code === 'own_domain' &&
+								destinationError.suggestedPath &&
+								!clientToPathError ? (
+									<Button
+										type="button"
+										size="xs"
+										variant="outline"
+										data-testid="use-path-offer"
+										onClick={() => {
+											const suggested = destinationError.suggestedPath ?? '/'
+											setToPathInput(suggested)
+											setDestinationType('custom')
+											setClientToPathError(null)
+											// A fresh fetcher drops the refusal that was shown.
+											setSaveFetcherKey((k) => k + 1)
+										}}
+									>
+										<Trans>Use {suggestedPath} instead</Trans>
+									</Button>
+								) : null}
 							</div>
 
 							{/* Redirect Type (301 vs 302) */}
