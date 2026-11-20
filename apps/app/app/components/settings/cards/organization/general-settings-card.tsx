@@ -74,7 +74,11 @@ export function GeneralSettingsCard({
 						<OrganizationPhoto organization={organization} size="small" />
 					</div>
 					<div className="grow">
-						<fetcher.Form method="POST" {...getFormProps(form)}>
+						<fetcher.Form
+							method="POST"
+							data-testid="organization-general-settings-form"
+							{...getFormProps(form)}
+						>
 							<input
 								type="hidden"
 								name="intent"

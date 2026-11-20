@@ -190,19 +190,28 @@ test.describe('Organization Management', () => {
 
 		// Navigate to organization settings
 		await navigate('/:slug/settings', { slug: org.slug })
-		await page.waitForLoadState('networkidle')
+
+		const nameField = page
+			.getByTestId('organization-general-settings-form')
+			.locator('input[name="name"]')
+		await expect(nameField).toHaveValue(org.name)
 
 		// Update organization details (only name and slug are available in the form)
 		const newName = `${faker.company.name()} ${faker.string.alphanumeric(6)}`
-		const nameField = page
-			.locator('#organization-settings-form')
-			.getByRole('textbox', { name: /^name$/i })
-
 		await nameField.fill(newName)
+		await nameField.dispatchEvent('input')
+		await nameField.dispatchEvent('change')
+
 		await expect(saveBar(page).save).toBeVisible()
 
-		// Save changes
-		await saveBar(page).save.click()
+		await Promise.all([
+			page.waitForResponse(
+				(res) =>
+					res.url().includes('/settings') &&
+					res.request().method() === 'POST',
+			),
+			saveBar(page).save.click(),
+		])
 
 		// Verify success message
 		await expect(page.getByText(/updated/i).first()).toBeVisible()
