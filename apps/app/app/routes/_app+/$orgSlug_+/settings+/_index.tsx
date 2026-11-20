@@ -49,6 +49,7 @@ import {
 	s3StorageActionIntent,
 	startS3MigrationActionIntent,
 } from '#app/components/settings/cards/organization/s3-storage-card.tsx'
+import { EmailSendingCard } from '#app/components/settings/cards/organization/email-sending-card.tsx'
 import TeamSizeCard, {
 	TeamSizeSchema,
 } from '#app/components/settings/cards/organization/team-size-card.tsx'
@@ -56,6 +57,7 @@ import VerifiedDomainCard, {
 	VerifiedDomainSchema,
 } from '#app/components/settings/cards/organization/verified-domain-card.tsx'
 
+import { senderView } from '#app/utils/email-sender/sender.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireOrganizationAdmin,
@@ -186,6 +188,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return {
 		organization: { ...organizationFields, s3Config, image, domainClaim },
+		emailSending: await senderView(organization.id),
 		cuisine,
 		activeMigration,
 		latestMigration,
@@ -1001,6 +1004,7 @@ export default function GeneralSettings() {
 		mediaFileCount,
 		canDeleteOrganization,
 		cuisine,
+		emailSending,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 
@@ -1013,6 +1017,14 @@ export default function GeneralSettings() {
 					<TeamSizeCard organization={organization} actionData={actionData} />
 					<CuisinePriceCard organization={cuisine} />
 				</div>
+			</AnnotatedSection>
+
+			{/* Who guest email is from (#103) */}
+			<AnnotatedSection>
+				<EmailSendingCard
+					organizationSlug={organization.slug}
+					view={emailSending}
+				/>
 			</AnnotatedSection>
 
 			{/* Access policy */}

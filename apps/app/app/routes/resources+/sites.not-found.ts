@@ -2,7 +2,6 @@ import {
 	and,
 	db,
 	eq,
-	inArray,
 	Organization,
 	sql,
 	WebsiteNotFoundLog,
@@ -15,6 +14,7 @@ import {
 	createRateLimitResponse,
 	PUBLIC_SITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
+import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 
 const MAX_NOT_FOUND_PATHS_PER_ORG = 5000
 
@@ -72,10 +72,9 @@ export async function action({ request }: ActionFunctionArgs) {
 						eq(Organization.sitePublished, true),
 					)
 				: and(
-						eq(Organization.customDomain, normalizedHost!),
+						siteHostCondition(normalizedHost!),
 						eq(Organization.active, true),
 						eq(Organization.sitePublished, true),
-						inArray(Organization.customDomainStatus, ['active', 'pending']),
 					),
 		)
 		.limit(1)

@@ -1,4 +1,4 @@
-import { db, and, eq, inArray, Organization } from '@repo/database'
+import { db, and, eq, Organization } from '@repo/database'
 import { getClientIp } from '@repo/security'
 import { type LoaderFunctionArgs } from 'react-router'
 import {
@@ -18,6 +18,7 @@ import {
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
 import { withPublicCors } from '#app/utils/sites/public-cors.server.ts'
+import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 
 export type {
 	PublicLocationData,
@@ -131,10 +132,9 @@ export const loader = withPublicCors(async function loader({
 			.from(Organization)
 			.where(
 				and(
-					eq(Organization.customDomain, host),
+					siteHostCondition(host),
 					eq(Organization.active, true),
 					eq(Organization.sitePublished, true),
-					inArray(Organization.customDomainStatus, ['active', 'pending']),
 				),
 			)
 			.limit(1)

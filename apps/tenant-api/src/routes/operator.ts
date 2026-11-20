@@ -1224,6 +1224,8 @@ operatorRoutes.post('/marketing/test-send', async (c) => {
 		const result = await sendTenantEmail({
 			to,
 			toName: TEST_SAMPLE.name,
+			// A test shows the operator the sender name and reply-to guests will see.
+			orgId: auth.orgId,
 			subject: `[Test] ${subject || 'Notification'}`,
 			text: content,
 			// A test is not a campaign message: no signed unsubscribe link, the

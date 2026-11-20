@@ -26,6 +26,11 @@ export interface Env {
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
 // share a trigger instead of each getting its own.
 export const JOB_ROUTES: Record<string, readonly string[]> = {
+	// Every 15 minutes: pending custom domains and nameserver moves become live
+	// (and their operators are told), domain registrations progress, renewals and
+	// their reminders run, email forwarding and sending domains are checked
+	// (#139, #283, #183, #276, #103). The App guards each task's own cadence.
+	'*/15 * * * *': ['/resources/jobs/domain-status'],
 	'0 2 * * *': [
 		'/resources/jobs/audit-log-archival',
 		'/resources/jobs/menu-snapshot-prune',

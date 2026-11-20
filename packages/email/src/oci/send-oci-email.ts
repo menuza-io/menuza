@@ -16,6 +16,14 @@ export type SendOciEmailInput = {
 	messageId?: string
 	/** Custom headers for campaign/journey correlation in OCI logs. */
 	headerFields?: Record<string, string>
+	/**
+	 * The From address and name for this message (#103). Defaults to the
+	 * platform sender. An address on a domain that was not approved at OCI is
+	 * refused by OCI, so callers pass one only for a verified sending domain.
+	 */
+	sender?: { email: string; name?: string }
+	/** Where replies go (#103). */
+	replyTo?: { email: string; name?: string }
 }
 
 export type SendOciEmailResult =
@@ -85,8 +93,8 @@ export async function sendOciEmail(
 				sender: {
 					compartmentId: config.compartmentId,
 					senderAddress: {
-						email: config.senderEmail,
-						name: config.senderName,
+						email: input.sender?.email ?? config.senderEmail,
+						name: input.sender?.name ?? config.senderName,
 					},
 				},
 				recipients: {
@@ -101,6 +109,13 @@ export async function sendOciEmail(
 				bodyHtml: input.html,
 				bodyText: input.text,
 				headerFields: input.headerFields,
+				...(input.replyTo
+					? {
+							replyTo: [
+								{ email: input.replyTo.email, name: input.replyTo.name },
+							],
+						}
+					: {}),
 			},
 		})
 

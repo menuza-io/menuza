@@ -25,7 +25,7 @@ import {
 	isSiteContentLocale,
 	parseSiteLocalesConfig,
 } from '@repo/common/site-locales'
-import { and, db, eq, inArray, Organization } from '@repo/database'
+import { and, db, eq, Organization } from '@repo/database'
 import {
 	buildRestaurantOrderMetadata,
 	buildRestaurantOrderSessionIdempotencyKey,
@@ -52,6 +52,7 @@ import {
 	RegionalOrderApiError,
 	type RestaurantOrderQuote,
 } from './regional-order-api.server.ts'
+import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 
 /** Stripe requires `expires_at` to be at least 30 minutes in the future. */
 const STRIPE_MIN_SESSION_MINUTES = 30
@@ -121,12 +122,7 @@ export async function findPublishedRestaurantOrganization(options: {
 
 	const organization = await db.query.Organization.findFirst({
 		where: and(
-			slug
-				? eq(Organization.slug, slug)
-				: and(
-						eq(Organization.customDomain, host!),
-						inArray(Organization.customDomainStatus, ['active', 'pending']),
-					),
+			slug ? eq(Organization.slug, slug) : and(siteHostCondition(host!)),
 			eq(Organization.active, true),
 			eq(Organization.sitePublished, true),
 		),

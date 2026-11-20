@@ -1,0 +1,17 @@
+{
+	"providerId": "menuza.io",
+	"providerName": "Menuza",
+	"serviceId": "site-root",
+	"serviceName": "Menuza website",
+	"version": 1,
+	"logoUrl": "https://menuza.io/logo.svg",
+	"description": "Points www (and the root, when addresses are given) at your Menuza website. Never touches email records.",
+	"variableDescription": "target is the Menuza sites host; ip is the Menuza address for the root domain.",
+	"syncBlock": false,
+	"warnPhishing": false,
+	"hostRequired": false,
+	"records": [
+		{ "type": "CNAME", "host": "www", "pointsTo": "%target%", "ttl": 3600 },
+		{ "type": "A", "host": "@", "pointsTo": "%ip%", "ttl": 3600 }
+	]
+}

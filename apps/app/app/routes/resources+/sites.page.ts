@@ -1,4 +1,4 @@
-import { and, db, eq, inArray, Organization } from '@repo/database'
+import { and, db, eq, Organization } from '@repo/database'
 import { getClientLocales } from '@repo/i18n/server'
 import { getClientIp } from '@repo/security'
 import { type LoaderFunctionArgs } from 'react-router'
@@ -18,6 +18,7 @@ import {
 	findPublishedSitePage,
 	toPublicPagePayload,
 } from '#app/utils/sites/public-org.server.ts'
+import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 
 /**
  * Public endpoint for fetching an org Site's page.
@@ -74,10 +75,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 							eq(Organization.sitePublished, true),
 						)
 					: and(
-							eq(Organization.customDomain, host ?? ''),
+							siteHostCondition(host ?? ''),
 							eq(Organization.active, true),
 							eq(Organization.sitePublished, true),
-							inArray(Organization.customDomainStatus, ['active', 'pending']),
 						),
 			)
 			.limit(1)

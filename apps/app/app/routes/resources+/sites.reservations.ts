@@ -1,4 +1,4 @@
-import { and, db, eq, inArray, Organization } from '@repo/database'
+import { and, db, eq, Organization } from '@repo/database'
 import { getClientIp } from '@repo/security'
 import { type LoaderFunctionArgs } from 'react-router'
 import {
@@ -7,6 +7,7 @@ import {
 	PUBLIC_SITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
 import { getReservationsFeatureState } from '#app/utils/reservations/access.server.ts'
+import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 
 /**
  * Gate for the guest reservation pages on Sites:
@@ -36,12 +37,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const org = await db.query.Organization.findFirst({
 		where: and(
-			slug
-				? eq(Organization.slug, slug)
-				: and(
-						eq(Organization.customDomain, host!),
-						inArray(Organization.customDomainStatus, ['active', 'pending']),
-					),
+			slug ? eq(Organization.slug, slug) : and(siteHostCondition(host!)),
 			eq(Organization.active, true),
 			eq(Organization.sitePublished, true),
 		),

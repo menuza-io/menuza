@@ -43,6 +43,11 @@ export default function WebsiteLayout() {
 							location.pathname === `/${orgSlug}/website/`,
 					},
 					{
+						label: _(t`Domain`),
+						href: `/${orgSlug}/website/domain`,
+						isActive: location.pathname.includes(`/${orgSlug}/website/domain`),
+					},
+					{
 						label: _(t`Pages`),
 						href: `/${orgSlug}/website/pages`,
 						isActive: location.pathname.includes(`/${orgSlug}/website/pages`),

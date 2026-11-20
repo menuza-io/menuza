@@ -11,6 +11,7 @@ import {
 	getSiteHostSuffixes,
 	resolveHost,
 } from '~/lib/resolve-host'
+import { secondaryHostRedirect } from '~/lib/secondary-host'
 import { isInlineShopCheckoutEnabled } from '~/lib/shop'
 import {
 	asAstroResponse,
@@ -196,6 +197,27 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		context.locals.orgSlug,
 		context.locals.customHost,
 	)
+
+	// A host that only redirects (the other form of the primary, an old domain)
+	// sends visitors to the primary, keeping the path and the query (#139).
+	const secondaryTarget = organization
+		? secondaryHostRedirect({
+				customHost: context.locals.customHost,
+				primaryHost: organization.customDomain,
+				primaryActive: organization.customDomainActive,
+				url,
+			})
+		: null
+	if (secondaryTarget) {
+		return withSecurityHeaders(
+			new Response(null, {
+				status: 301,
+				headers: { Location: secondaryTarget },
+			}),
+			url.pathname,
+			hostEnv,
+		)
+	}
 
 	const enabledLocales = organization?.locales ?? ['en']
 	const defaultLocale = organization?.defaultLocale ?? 'en'

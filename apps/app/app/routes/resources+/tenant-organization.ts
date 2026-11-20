@@ -2,6 +2,7 @@ import { and, db, eq, Organization } from '@repo/database'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import { buildEmailIdentity } from '#app/utils/email-sender/sender.server.ts'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 
 const querySchema = z.object({
@@ -35,8 +36,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		)
 		.limit(1)
 
-	return Response.json(organization ?? { error: 'Organization not found' }, {
-		status: organization ? 200 : 404,
-		headers: { 'Cache-Control': 'private, no-store' },
-	})
+	if (!organization) {
+		return Response.json(
+			{ error: 'Organization not found' },
+			{ status: 404, headers: { 'Cache-Control': 'private, no-store' } },
+		)
+	}
+	// Business identity only (#103): the sender name, a verified reply-to and a
+	// verified sending address, so the region sends as the organization.
+	return Response.json(
+		{ ...organization, emailSender: await buildEmailIdentity(organization.id) },
+		{ status: 200, headers: { 'Cache-Control': 'private, no-store' } },
+	)
 }

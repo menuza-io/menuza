@@ -1,19 +1,48 @@
+import { isValidHostname, normalizeHostname } from '@repo/common/domains'
 import { brand, getBrandDomain } from '@repo/config/brand'
 import { ENV } from 'varlock/env'
 
 export type CustomHostnameStatus =
 	'pending' | 'active' | 'moved' | 'deleted' | 'blocked' | 'error'
 
+export type CloudflareVerificationRecord = {
+	type: string
+	name: string
+	value: string
+}
+
 export type CloudflareCustomHostname = {
 	id: string
 	hostname: string
 	status: string
 	sslStatus?: string
-	ownershipVerification?: {
-		type: string
-		name: string
-		value: string
+	/** `pending` or `verified`: ownership is shown apart from the certificate (#139). */
+	ownershipStatus?: string
+	ownershipVerification?: CloudflareVerificationRecord | null
+	/** Certificate validation records (TXT or CNAME) Cloudflare asked for. */
+	sslValidationRecords?: CloudflareVerificationRecord[]
+	verificationErrors?: string[]
+}
+
+type CloudflareHostnameResult = {
+	id: string
+	hostname: string
+	status?: string
+	ssl?: {
+		status?: string
+		validation_records?: Array<{
+			txt_name?: string
+			txt_value?: string
+			cname?: string
+			cname_target?: string
+		}>
+	}
+	ownership_verification?: {
+		type?: string
+		name?: string
+		value?: string
 	} | null
+	verification_errors?: string[]
 }
 
 type CloudflareApiResult<T> = {
@@ -100,22 +129,16 @@ async function cloudflareFetch<T>(
 	return data
 }
 
-function normalizeHostnameResult(result: {
-	id: string
-	hostname: string
-	status?: string
-	ssl?: { status?: string }
-	ownership_verification?: {
-		type?: string
-		name?: string
-		value?: string
-	} | null
-}): CloudflareCustomHostname {
+function normalizeHostnameResult(
+	result: CloudflareHostnameResult,
+): CloudflareCustomHostname {
+	const status = mapHostnameStatus(result.status)
 	return {
 		id: result.id,
 		hostname: result.hostname,
-		status: mapHostnameStatus(result.status),
+		status,
 		sslStatus: result.ssl?.status,
+		ownershipStatus: status === 'active' ? 'verified' : 'pending',
 		ownershipVerification: result.ownership_verification?.name
 			? {
 					type: result.ownership_verification.type || 'txt',
@@ -123,6 +146,21 @@ function normalizeHostnameResult(result: {
 					value: result.ownership_verification.value || '',
 				}
 			: null,
+		sslValidationRecords: (result.ssl?.validation_records ?? []).flatMap(
+			(record): CloudflareVerificationRecord[] =>
+				record.txt_name && record.txt_value
+					? [{ type: 'txt', name: record.txt_name, value: record.txt_value }]
+					: record.cname && record.cname_target
+						? [
+								{
+									type: 'cname',
+									name: record.cname,
+									value: record.cname_target,
+								},
+							]
+						: [],
+		),
+		verificationErrors: result.verification_errors ?? [],
 	}
 }
 
@@ -145,29 +183,22 @@ export async function createCustomHostname(
 		}
 	}
 
-	const data = await cloudflareFetch<{
-		id: string
-		hostname: string
-		status?: string
-		ssl?: { status?: string }
-		ownership_verification?: {
-			type?: string
-			name?: string
-			value?: string
-		} | null
-	}>('/custom_hostnames', {
-		method: 'POST',
-		body: JSON.stringify({
-			hostname: normalized,
-			ssl: {
-				method: 'http',
-				type: 'dv',
-			},
-			custom_metadata: {
-				source: `${brand.slug}-sites`,
-			},
-		}),
-	})
+	const data = await cloudflareFetch<CloudflareHostnameResult>(
+		'/custom_hostnames',
+		{
+			method: 'POST',
+			body: JSON.stringify({
+				hostname: normalized,
+				ssl: {
+					method: 'http',
+					type: 'dv',
+				},
+				custom_metadata: {
+					source: `${brand.slug}-sites`,
+				},
+			}),
+		},
+	)
 
 	return normalizeHostnameResult(data.result)
 }
@@ -189,21 +220,36 @@ export async function getCustomHostname(
 	}
 
 	try {
-		const data = await cloudflareFetch<{
-			id: string
-			hostname: string
-			status?: string
-			ssl?: { status?: string }
-			ownership_verification?: {
-				type?: string
-				name?: string
-				value?: string
-			} | null
-		}>(`/custom_hostnames/${hostnameId}`)
+		const data = await cloudflareFetch<CloudflareHostnameResult>(
+			`/custom_hostnames/${hostnameId}`,
+		)
 		return normalizeHostnameResult(data.result)
 	} catch {
 		return null
 	}
+}
+
+/**
+ * Asks Cloudflare to try the certificate validation again ("Check certificate
+ * again", #139). Local deployments answer from the synthetic hostname.
+ */
+export async function retryCustomHostnameValidation(
+	hostnameId: string,
+): Promise<CloudflareCustomHostname | null> {
+	if (
+		!isCloudflareCustomHostnamesConfigured() ||
+		hostnameId.startsWith('local-')
+	) {
+		return getCustomHostname(hostnameId)
+	}
+	const data = await cloudflareFetch<CloudflareHostnameResult>(
+		`/custom_hostnames/${hostnameId}`,
+		{
+			method: 'PATCH',
+			body: JSON.stringify({ ssl: { method: 'http', type: 'dv' } }),
+		},
+	)
+	return normalizeHostnameResult(data.result)
 }
 
 export async function deleteCustomHostname(hostnameId: string): Promise<void> {
@@ -220,21 +266,13 @@ export async function deleteCustomHostname(hostnameId: string): Promise<void> {
 }
 
 /**
- * Normalize and validate a customer hostname (no protocol/path/port).
+ * Normalize and validate a customer hostname (no protocol/path/port, lower
+ * case, punycode). The rules live in `@repo/common/domains`.
  */
 export function normalizeCustomDomain(input: string): string {
-	let value = input.trim().toLowerCase()
-	value = value.replace(/^https?:\/\//, '')
-	value = value.split('/')[0] ?? value
-	value = value.split(':')[0] ?? value
-	value = value.replace(/\.$/, '')
-	return value
+	return normalizeHostname(input)
 }
 
-const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i
-
 export function isValidCustomDomain(hostname: string): boolean {
-	if (!hostname || hostname.length > 253) return false
-	if (hostname.includes('..')) return false
-	return DOMAIN_RE.test(hostname)
+	return isValidHostname(hostname)
 }

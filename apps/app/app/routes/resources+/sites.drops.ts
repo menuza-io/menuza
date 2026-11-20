@@ -25,6 +25,7 @@ import {
 	createRateLimitResponse,
 	PUBLIC_SITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
+import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 
 const MAX_LISTED_DROPS = 60
 
@@ -67,12 +68,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const org = await db.query.Organization.findFirst({
 		where: and(
-			slug
-				? eq(Organization.slug, slug)
-				: and(
-						eq(Organization.customDomain, host!),
-						inArray(Organization.customDomainStatus, ['active', 'pending']),
-					),
+			slug ? eq(Organization.slug, slug) : and(siteHostCondition(host!)),
 			eq(Organization.active, true),
 			eq(Organization.sitePublished, true),
 		),

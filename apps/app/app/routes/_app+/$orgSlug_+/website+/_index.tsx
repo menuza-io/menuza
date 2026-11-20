@@ -1,5 +1,4 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 import {
@@ -9,7 +8,7 @@ import {
 } from '@repo/common/site-locales'
 import { redirectWithToast } from '@repo/common/toast'
 import { namesLeftBlank } from '@repo/common/translation-status'
-import { and, db, eq, ne, Organization } from '@repo/database'
+import { and, db, eq, Organization } from '@repo/database'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import {
 	type ActionFunctionArgs,
@@ -17,18 +16,13 @@ import {
 	useLoaderData,
 	useActionData,
 } from 'react-router'
-import { z } from 'zod'
 
 import {
 	SiteCard,
 	SitePublishSchema,
 	SiteDataRegionSchema,
-	CustomDomainSchema,
 	sitePublishActionIntent,
 	siteDataRegionActionIntent,
-	addCustomDomainActionIntent,
-	removeCustomDomainActionIntent,
-	refreshCustomDomainActionIntent,
 } from '#app/components/settings/cards/organization/site-card.tsx'
 import {
 	SiteLocalesCard,
@@ -36,6 +30,7 @@ import {
 	LOCALE_NAMES_LEFT_BLANK,
 	siteLocalesActionIntent,
 } from '#app/components/settings/cards/organization/site-locales-card.tsx'
+import { resetSenderDomainForRegionChange } from '#app/utils/email-sender/sender.server.ts'
 import { loadTranslatableRecords } from '#app/utils/menu/translation-status.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
@@ -48,15 +43,6 @@ import {
 	evaluateReservationsRegionGuard,
 	fetchReservationsSummary,
 } from '#app/utils/reservations/region-guard.server.ts'
-import {
-	createCustomHostname,
-	deleteCustomHostname,
-	getCustomHostname,
-	getCustomHostnameCnameTarget,
-	isCloudflareCustomHostnamesConfigured,
-	isValidCustomDomain,
-	normalizeCustomDomain,
-} from '#app/utils/sites/cloudflare-custom-hostnames.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
 	deprovisionTenantDatabase,
@@ -67,7 +53,6 @@ import {
 	evaluateRegionGuard,
 	fetchStaffSummary,
 } from '#app/utils/staffing/region-guard.server.ts'
-import { logWebsiteActivity } from '#app/utils/website/activity.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -79,7 +64,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		sitePublished: true,
 		customDomain: true,
 		customDomainStatus: true,
-		cloudflareHostnameId: true,
 		siteLocales: true,
 		siteDefaultLocale: true,
 		dataRegion: true,
@@ -98,8 +82,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			organization.siteLocales,
 			organization.siteDefaultLocale,
 		),
-		cnameTarget: getCustomHostnameCnameTarget(),
-		cloudflareConfigured: isCloudflareCustomHostnamesConfigured(),
 	}
 }
 
@@ -109,8 +91,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		id: true,
 		slug: true,
 		customDomain: true,
-		customDomainStatus: true,
-		cloudflareHostnameId: true,
 		dataRegion: true,
 		hasProvisionedDb: true,
 		sitePublished: true,
@@ -184,181 +164,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							? error.message
 							: 'Failed to update site publish settings',
 				},
-				{ status: 500 },
-			)
-		}
-	}
-
-	if (intent === addCustomDomainActionIntent) {
-		await requirePermission(ORG_PERMISSIONS.UPDATE_SETTINGS_ANY)
-
-		const submission = parseWithZod(formData, {
-			schema: CustomDomainSchema.superRefine((data, ctx) => {
-				const normalized = normalizeCustomDomain(data.customDomain)
-				if (!isValidCustomDomain(normalized)) {
-					ctx.addIssue({
-						path: ['customDomain'],
-						code: z.ZodIssueCode.custom,
-						message: 'Enter a valid domain like www.example.com',
-					})
-				}
-			}),
-		})
-
-		if (submission.status !== 'success') {
-			return Response.json({ result: submission.reply() })
-		}
-
-		const customDomain = normalizeCustomDomain(submission.value.customDomain)
-
-		const [existing] = await db
-			.select({ id: Organization.id })
-			.from(Organization)
-			.where(
-				and(
-					eq(Organization.customDomain, customDomain),
-					ne(Organization.id, organization.id),
-				),
-			)
-			.limit(1)
-		if (existing) {
-			return Response.json({
-				result: submission.reply({
-					fieldErrors: {
-						customDomain: [
-							'This domain is already connected to another organization.',
-						],
-					},
-				}),
-			})
-		}
-
-		try {
-			const hostname = await createCustomHostname(customDomain)
-			await db
-				.update(Organization)
-				.set({
-					customDomain,
-					customDomainStatus: hostname.status,
-					cloudflareHostnameId: hostname.id,
-					sitePublished: true,
-				})
-				.where(eq(Organization.id, organization.id))
-			await notifyReservationsContextChanged(organization.id, 'branding')
-			await logWebsiteActivity({
-				action: AuditAction.WEBSITE_DOMAIN_CHANGED,
-				organizationId: organization.id,
-				userId,
-				details: `Connected the custom domain ${customDomain}.`,
-				metadata: { from: organization.customDomain, to: customDomain },
-				request,
-			})
-
-			await invalidateUserOrganizationsCache(userId)
-			await purgeOrganizationSiteCache(
-				organization.id,
-				organization.slug,
-				organization.customDomain,
-			)
-
-			return redirectWithToast(`/${organization.slug}/website`, {
-				title: 'Custom domain added',
-				description: `Point ${customDomain} to ${getCustomHostnameCnameTarget()} via CNAME.`,
-				type: 'success',
-			})
-		} catch (error) {
-			return Response.json({
-				result: submission.reply({
-					formErrors: [
-						error instanceof Error
-							? error.message
-							: 'Failed to connect custom domain. Please try again.',
-					],
-				}),
-			})
-		}
-	}
-
-	if (intent === removeCustomDomainActionIntent) {
-		await requirePermission(ORG_PERMISSIONS.UPDATE_SETTINGS_ANY)
-
-		try {
-			if (organization.cloudflareHostnameId) {
-				await deleteCustomHostname(organization.cloudflareHostnameId)
-			}
-			await db
-				.update(Organization)
-				.set({
-					customDomain: null,
-					customDomainStatus: null,
-					cloudflareHostnameId: null,
-				})
-				.where(eq(Organization.id, organization.id))
-			await notifyReservationsContextChanged(organization.id, 'branding')
-			await logWebsiteActivity({
-				action: AuditAction.WEBSITE_DOMAIN_CHANGED,
-				organizationId: organization.id,
-				userId,
-				details: `Disconnected the custom domain ${organization.customDomain ?? ''}.`.replace(' .', '.'),
-				metadata: { from: organization.customDomain, to: null },
-				request,
-			})
-			await invalidateUserOrganizationsCache(userId)
-			await purgeOrganizationSiteCache(
-				organization.id,
-				organization.slug,
-				organization.customDomain,
-			)
-
-			return redirectWithToast(`/${organization.slug}/website`, {
-				title: 'Custom domain removed',
-				description: 'Your custom domain has been disconnected.',
-				type: 'success',
-			})
-		} catch {
-			return Response.json(
-				{ error: 'Failed to remove custom domain' },
-				{ status: 500 },
-			)
-		}
-	}
-
-	if (intent === refreshCustomDomainActionIntent) {
-		await requirePermission(ORG_PERMISSIONS.UPDATE_SETTINGS_ANY)
-
-		try {
-			if (!organization.cloudflareHostnameId || !organization.customDomain) {
-				return Response.json(
-					{ error: 'No custom domain configured' },
-					{ status: 400 },
-				)
-			}
-
-			const hostname = await getCustomHostname(
-				organization.cloudflareHostnameId,
-			)
-			const status =
-				hostname?.status || organization.customDomainStatus || 'pending'
-
-			await db
-				.update(Organization)
-				.set({ customDomainStatus: status })
-				.where(eq(Organization.id, organization.id))
-			await invalidateUserOrganizationsCache(userId)
-			await purgeOrganizationSiteCache(
-				organization.id,
-				organization.slug,
-				organization.customDomain,
-			)
-
-			return redirectWithToast(`/${organization.slug}/website`, {
-				title: 'Domain status updated',
-				description: `Status is now “${status}”.`,
-				type: 'success',
-			})
-		} catch {
-			return Response.json(
-				{ error: 'Failed to refresh custom domain status' },
 				{ status: 500 },
 			)
 		}
@@ -554,6 +359,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			// events queued while an earlier switch had left the flag cleared.
 			await cancelPendingStaffingOutbox(organization.id, 'region_changed')
 
+			// A custom sending domain is verified per region (#103): it is set up
+			// again in the new one and shows Pending until its records verify.
+			await resetSenderDomainForRegionChange(organization.id, dataRegion).catch(
+				(error) => {
+					console.error(
+						'Resetting the sending domain after a region change failed:',
+						error instanceof Error ? error.message : error,
+					)
+				},
+			)
+
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
 				organization.id,
@@ -652,19 +468,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function WebsiteGeneralSettings() {
-	const { organization, localesConfig, cnameTarget, cloudflareConfigured } =
-		useLoaderData<typeof loader>()
+	const { organization, localesConfig } = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 
 	return (
 		<AnnotatedLayout className="max-w-4xl">
 			<AnnotatedSection>
-				<SiteCard
-					organization={organization}
-					cnameTarget={cnameTarget}
-					cloudflareConfigured={cloudflareConfigured}
-					actionData={actionData}
-				/>
+				<SiteCard organization={organization} />
 			</AnnotatedSection>
 
 			<AnnotatedSection>

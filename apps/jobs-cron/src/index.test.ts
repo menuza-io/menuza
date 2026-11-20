@@ -1397,6 +1397,28 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			}
 		})
 
+		it('runs the domain status sweep every 15 minutes (#139)', async () => {
+			const fetchMock = vi.fn(async () => Response.json({ success: true }))
+			vi.stubGlobal('fetch', fetchMock)
+			const ctx = {
+				waitUntil: vi.fn(),
+				passThroughOnException: vi.fn(),
+			} as any
+			await worker.scheduled({ cron: '*/15 * * * *' } as any, env, ctx)
+			expect(ctx.waitUntil).toHaveBeenCalledTimes(1)
+			await ctx.waitUntil.mock.calls[0]![0]
+			const [url, init] = fetchMock.mock.calls[0] as unknown as [
+				string,
+				RequestInit,
+			]
+			expect(url).toMatch(/\/resources\/jobs\/domain-status$/u)
+			expect(init.method).toBe('POST')
+			expect((init.headers as Record<string, string>).Authorization).toMatch(
+				/^Bearer /u,
+			)
+			vi.unstubAllGlobals()
+		})
+
 		it('ignores unrecognized cron schedule strings', async () => {
 			const ctx = {
 				waitUntil: vi.fn(),

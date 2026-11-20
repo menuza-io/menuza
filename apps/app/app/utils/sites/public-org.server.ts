@@ -39,6 +39,7 @@ import {
 import { parseLegalContact } from '#app/utils/legal/contact.server.ts'
 import { isSafeAnnouncementLink } from '#app/utils/safe-link.ts'
 import { readSearchConsoleVerificationToken } from '#app/utils/seo/search-console.server.ts'
+import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 import {
 	composePageSectionsWithChrome,
 	getDefaultConfig,
@@ -71,6 +72,7 @@ export type PublicSiteOrganization = {
 	name: string
 	slug: string
 	customDomain: string | null
+	customDomainStatus?: string | null
 	dataRegion: string
 	siteTheme: string | null
 	siteLocales: string | null
@@ -109,6 +111,12 @@ export type PublicSitePayload = {
 	name: string
 	slug: string
 	customDomain: string | null
+	/**
+	 * The primary domain answers on its certificate (#139). Sites redirects a
+	 * secondary host to `customDomain` only when this is true, so a primary that
+	 * is still being set up never receives visitors that already work.
+	 */
+	customDomainActive: boolean
 	dataRegion: string
 	theme: Omit<SiteThemeConfig, 'headingCustomFont' | 'bodyCustomFont'> & {
 		css: string
@@ -231,6 +239,9 @@ export function toPublicSitePayload(
 		name: organization.name,
 		slug: organization.slug,
 		customDomain: organization.customDomain,
+		customDomainActive:
+			Boolean(organization.customDomain) &&
+			organization.customDomainStatus === 'active',
 		dataRegion: organization.dataRegion || 'us',
 		theme: {
 			...theme,
@@ -347,10 +358,9 @@ export async function findPublishedSiteOrganization(options: {
 						eq(Organization.sitePublished, true),
 					)
 				: and(
-						eq(Organization.customDomain, host!),
+						siteHostCondition(host!),
 						eq(Organization.active, true),
 						eq(Organization.sitePublished, true),
-						inArray(Organization.customDomainStatus, ['active', 'pending']),
 					),
 		)
 		.limit(1)

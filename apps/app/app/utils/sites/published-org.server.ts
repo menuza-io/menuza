@@ -1,10 +1,11 @@
-import { and, db, eq, inArray, Organization } from '@repo/database'
+import { and, db, eq, Organization } from '@repo/database'
 import { getClientIp } from '@repo/security'
 import {
 	checkRateLimit,
 	createRateLimitResponse,
 	PUBLIC_SITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
+import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 
 /**
  * Shared front of the public `/resources/sites/*` read endpoints added for
@@ -39,12 +40,7 @@ export async function requirePublishedSiteOrganization(request: Request) {
 		.from(Organization)
 		.where(
 			and(
-				slug
-					? eq(Organization.slug, slug)
-					: and(
-							eq(Organization.customDomain, host!),
-							inArray(Organization.customDomainStatus, ['active', 'pending']),
-						),
+				slug ? eq(Organization.slug, slug) : and(siteHostCondition(host!)),
 				eq(Organization.active, true),
 				eq(Organization.sitePublished, true),
 			),

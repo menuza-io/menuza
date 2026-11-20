@@ -189,6 +189,8 @@ export type StaffEmailSender = (input: {
 	subject: string
 	html: string
 	text: string
+	/** The organization the mail is sent for (its sender name and reply-to apply, #103). */
+	orgId?: string
 }) => Promise<
 	| { status: 'success' | 'skipped' }
 	| { status: 'error'; error: { message: string; statusCode?: number } }
@@ -1205,6 +1207,7 @@ async function deliverStaffRows(
 				subject: rendered.subject,
 				html: rendered.html,
 				text: rendered.text,
+				orgId: ctx.orgId,
 			})
 		} catch {
 			outcome = { status: 'error', error: { message: 'send_threw' } }

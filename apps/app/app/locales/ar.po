@@ -89,6 +89,10 @@ msgstr "(مطويّة)"
 msgid "(has an error)"
 msgstr "(فيه خطأ)"
 
+#: app/components/website/domain/provider-steps.tsx:83
+msgid "(leave empty)"
+msgstr "(اتركه فارغًا)"
+
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:310
 msgid "(no name)"
 msgstr "(بلا اسم)"
@@ -995,6 +999,10 @@ msgstr "تمت الإجابة عن {answered}"
 msgid "{answered} answered, {draftCount} drafted and not saved"
 msgstr "تمت الإجابة عن {answered}، و{draftCount} مسودة لم تُحفظ"
 
+#: app/components/website/domain/connect-card.tsx:651
+msgid "{apex} redirects here with a 301."
+msgstr "يتم تحويل {apex} إلى هنا بتحويل دائم 301."
+
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:290
 msgid "{appliedCount} dishes updated."
 msgstr "تم تحديث {appliedCount} من الأطباق."
@@ -1432,7 +1440,7 @@ msgstr "{days} يومًا"
 msgid "{days}, {from} to {to}"
 msgstr "{days}، من {from} إلى {to}"
 
-#: app/components/ui/notification-bell.tsx:96
+#: app/components/ui/notification-bell.tsx:101
 msgid "{days}d ago"
 msgstr "منذ {days} يوم"
 
@@ -1587,6 +1595,10 @@ msgstr "{firstPlace} و{more} أخرى"
 msgid "{firstTypingName} is typing…"
 msgstr "{firstTypingName} يكتب…"
 
+#: app/components/website/domain/buy-card.tsx:336
+msgid "{firstYear} for the first year, then {perYear}"
+msgstr "{firstYear} للسنة الأولى، ثم {perYear}"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:256
 msgid "{flagged, plural, one {# warning:} other {# warnings:}}"
 msgstr "{flagged, plural, one {# تحذير:} two {# تحذيران:} few {# تحذيرات:} many {# تحذيرًا:} other {# تحذيرًا:}}"
@@ -1660,7 +1672,7 @@ msgstr "{hours} س"
 msgid "{hours}h {rest}m"
 msgstr "{hours} س {rest} د"
 
-#: app/components/ui/notification-bell.tsx:92
+#: app/components/ui/notification-bell.tsx:97
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
 
@@ -1848,7 +1860,7 @@ msgstr "{minutes} دقيقة"
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
-#: app/components/ui/notification-bell.tsx:88
+#: app/components/ui/notification-bell.tsx:93
 msgid "{minutes}m ago"
 msgstr "منذ {minutes} دقيقة"
 
@@ -2200,6 +2212,10 @@ msgstr "{openCallFollowUps} بحاجة إلى متابعة"
 msgid "{openFollowUps} need follow-up"
 msgstr "{openFollowUps} بحاجة إلى متابعة"
 
+#: app/components/website/domain/connect-card.tsx:232
+msgid "{otherLive} is live. Two domains for one restaurant can hurt search ranking: add this one as an extra domain that redirects, rather than a second site."
+msgstr "{otherLive} يعمل حاليًا. وجود نطاقين لمطعم واحد قد يضر بترتيب البحث: أضف هذا النطاق كنطاق إضافي يُحوَّل إلى الأساسي بدل موقع ثانٍ."
+
 #: app/components/staff/staff-roster.tsx:73
 msgid "{others, plural, one {+# more} other {+# more}}"
 msgstr "{others, plural, zero {} one {+واحد آخر} two {+اثنان آخران} few {+# آخرون} many {+# آخرًا} other {+# آخر}}"
@@ -2513,7 +2529,7 @@ msgstr "{seconds, plural, one {يُغلق خلال ثانية} two {يُغلق �
 msgid "{seconds} seconds"
 msgstr "{seconds} ثانية"
 
-#: app/components/ui/notification-bell.tsx:84
+#: app/components/ui/notification-bell.tsx:89
 msgid "{seconds}s ago"
 msgstr "منذ {seconds} ثانية"
 
@@ -2737,6 +2753,10 @@ msgstr "{unpriced, plural, one {عنصر واحد بلا سعر بعد} two {ع�
 msgid "{unread} unread"
 msgstr "{unread} غير مقروءة"
 
+#: app/components/website/domain/connect-card.tsx:383
+msgid "{unreadLines} lines of the file could not be read."
+msgstr "تعذّرت قراءة {unreadLines} من أسطر الملف."
+
 #: app/components/pos/terminal-health.tsx:328
 msgid "{used} MB of {quota} MB"
 msgstr "{used} ميغابايت من {quota} ميغابايت"
@@ -2748,6 +2768,14 @@ msgstr "{used} من {GOOGLE_TITLE_MAX} حرف"
 #: app/components/social/post-composer.tsx:345
 msgid "{used} of {limit} characters"
 msgstr "{used} من {limit} حرفًا"
+
+#: app/components/website/domain/registered-panel.tsx:78
+msgid "{verb} on {expiresText} (in {daysLeft} days)."
+msgstr "{verb} في {expiresText} (بعد {daysLeft} يومًا)."
+
+#: app/components/website/domain/registered-panel.tsx:82
+msgid "{verb} on {expiresText}."
+msgstr "{verb} في {expiresText}."
 
 #: app/components/settings/cards/organization/verified-domain-card.tsx:110
 msgid "{verifiedDomain} is verified."
@@ -2809,13 +2837,38 @@ msgstr "{windowCapacityPreview} طلبات كحد أقصى في هذه النا�
 msgid "*.png, *.jpeg files up to 5 MB"
 msgstr "ملفات *.png و *.jpeg حتى 5 ميجابايت"
 
+#: app/utils/domains/domain-alerts.ts:120
+msgid "**{name}** could not be registered"
+msgstr "تعذّر تسجيل **{name}**"
+
+#: app/utils/domains/domain-alerts.ts:102
+msgid "**{name}** could not be renewed"
+msgstr "تعذّر تجديد **{name}**"
+
 #: app/utils/website/website-alerts.ts:41
 msgid "**{name}** could not go live"
 msgstr "تعذّر نشر **{name}**"
 
+#: app/utils/domains/domain-alerts.ts:66
 #: app/utils/website/website-alerts.ts:34
 msgid "**{name}** is live"
 msgstr "**{name}** منشورة الآن"
+
+#: app/utils/domains/domain-alerts.ts:75
+msgid "**{name}** is still not connected"
+msgstr "**{name}** لم يُربط بعد"
+
+#: app/utils/domains/domain-alerts.ts:111
+msgid "**{name}** is yours"
+msgstr "**{name}** أصبح لك"
+
+#: app/utils/domains/domain-alerts.ts:93
+msgid "**{name}** renews soon"
+msgstr "**{name}** سيُجدَّد قريبًا"
+
+#: app/utils/domains/domain-alerts.ts:84
+msgid "**{name}** was disconnected"
+msgstr "تم فصل **{name}**"
 
 #: app/utils/discounts/discount-alerts.ts:37
 msgid "**A discount reached its weekly budget**"
@@ -3295,6 +3348,10 @@ msgstr "500+ شخص"
 msgid "51-200 people"
 msgstr "51-200 شخص"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:211
+msgid "6-digit code"
+msgstr "رمز من 6 أرقام"
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:599
 msgid "6-digit verification code"
 msgstr "رمز التحقق المكوّن من 6 أرقام"
@@ -3367,6 +3424,10 @@ msgstr "كان متصل غير راضٍ أو أبلغ عن مشكلة."
 msgid "A cap on what one purchase can get from this promotion."
 msgstr "حدّ أقصى لما يمكن أن تحصل عليه عملية شراء واحدة من هذا العرض الترويجي."
 
+#: app/components/website/domain/connect-card.tsx:207
+msgid "A certificate record is left over"
+msgstr "بقي سجل شهادة قديم"
+
 #: app/components/member-location-scope.tsx:268
 msgid "A change applies the next time their session refreshes, within 15 minutes."
 msgstr "يُطبَّق التغيير عند تحديث جلستهم في المرة القادمة، خلال 15 دقيقة."
@@ -3378,6 +3439,14 @@ msgstr "تعديل على فاتورة تمت تسويتها بالفعل"
 #: app/utils/website/form-templates.ts:25
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "لوحة نظيفة بحقل واحد يمكنك تشكيله كما تشاء."
+
+#: app/components/website/domain/domain-ui.tsx:111
+msgid "A CNAME cannot share its name with other records."
+msgstr "لا يمكن لسجل CNAME أن يشارك اسمه مع سجلات أخرى."
+
+#: app/components/website/domain/domain-ui.tsx:88
+msgid "A code was just sent. Wait a minute before asking for another."
+msgstr "تم إرسال رمز للتو. انتظر دقيقة قبل طلب رمز آخر."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:666
 msgid "A count is due today."
@@ -3456,6 +3525,26 @@ msgstr "طبق لم يعد في القائمة"
 #: app/components/reservations/payment-panel.tsx:544
 msgid "A dispute was opened with the card issuer. Menuza reports it only."
 msgstr "تم فتح نزاع لدى مُصدِر البطاقة. تكتفي منصة Menuza بالإبلاغ عنه فقط."
+
+#: app/components/website/domain/domain-ui.tsx:52
+msgid "A domain bought here stays with Menuza. Transfer it out instead."
+msgstr "النطاق المشترى هنا يبقى لدى Menuza. انقله إلى جهة أخرى بدلًا من ذلك."
+
+#: app/components/website/domain/domain-ui.tsx:67
+msgid "A domain cannot be transferred within 60 days of registering or a previous transfer."
+msgstr "لا يمكن نقل النطاق خلال 60 يومًا من تسجيله أو من نقل سابق."
+
+#: app/utils/domains/domain-alerts.ts:121
+msgid "A domain could not be registered"
+msgstr "تعذّر تسجيل نطاق"
+
+#: app/utils/domains/domain-alerts.ts:103
+msgid "A domain could not be renewed"
+msgstr "تعذّر تجديد نطاق"
+
+#: app/utils/domains/domain-alerts.ts:85
+msgid "A domain setup timed out"
+msgstr "انتهت مهلة إعداد نطاق"
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:314
 msgid "A draft is invisible to customers until you activate it."
@@ -3620,6 +3709,10 @@ msgstr "هناك قائمة معروضة للبيع هنا."
 msgid "A name and a color are enough. The rest is optional."
 msgstr "يكفي اسم ولون. الباقي اختياري."
 
+#: app/components/website/domain/domain-ui.tsx:110
+msgid "A name can have only one SPF record. Edit the existing one."
+msgstr "يمكن للاسم الواحد أن يملك سجل SPF واحدًا فقط. عدّل السجل الموجود."
+
 #: app/components/menu/option-form.tsx:638
 msgid "A name that removes something, such as “No onions”, starts as Attention. Choose None to leave it plain."
 msgstr "الاسم الذي يحذف شيئًا، مثل «بدون بصل»، يبدأ كتنبيه. اختر بلا تمييز ليبقى عاديًا."
@@ -3712,6 +3805,10 @@ msgstr "رسالة مهذبة تفيد بأنك لن تتابع مع الطلب 
 msgid "A position with that name already exists."
 msgstr "يوجد منصب بهذا الاسم بالفعل."
 
+#: app/components/website/domain/buy-card.tsx:340
+msgid "A premium name; we do not sell those."
+msgstr "اسم مميز؛ لا نبيع هذا النوع."
+
 #: app/components/dashboard/blocks/attention-block.tsx:267
 msgid "A prep-time change"
 msgstr "تغيير في وقت التحضير"
@@ -3719,6 +3816,10 @@ msgstr "تغيير في وقت التحضير"
 #: app/components/reservations/experiences/experience-editor.tsx:741
 msgid "A prepayment or deposit policy makes guests pay to book. Its cancellation terms apply to this experience."
 msgstr "سياسة الدفع المسبق أو الوديعة تُلزم الضيوف بالدفع عند الحجز، وتنطبق شروط الإلغاء الخاصة بها على هذه التجربة."
+
+#: app/components/website/domain/connect-card.tsx:211
+msgid "A previous provider left a record that can block our certificate. Remove it:"
+msgstr "ترك مزوّد سابق سجلًا قد يمنع إصدار شهادتنا. احذفه:"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:465
 msgid "A print can have at most {max} pieces. Choose fewer, then approve again."
@@ -3798,11 +3899,11 @@ msgstr "جمهور محفوظ (غير متاح لك)"
 msgid "A saved report or a report template."
 msgstr "تقرير محفوظ أو قالب تقرير."
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:55
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:56
 msgid "A scheduled publish failed"
 msgstr "فشل نشر مجدول"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:54
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:55
 msgid "A scheduled publish went live"
 msgstr "تم نشر محتوى مجدول"
 
@@ -3988,6 +4089,14 @@ msgstr "وقتًا"
 msgid "A time card cannot be longer than 48 hours."
 msgstr "لا يمكن أن تتجاوز بطاقة الدوام 48 ساعة."
 
+#: app/components/website/domain/buy-card.tsx:440
+msgid "A transfer adds a year and is charged like one. It fails clearly, and refunds, if the domain is locked, the code is wrong or it was registered less than 60 days ago. The domain keeps its current DNS until you let Menuza manage it."
+msgstr "يضيف النقل سنة ويُحاسَب مثل سنة. يفشل بوضوح مع استرداد المبلغ إذا كان النطاق مقفلًا أو الرمز خاطئًا أو سُجّل قبل أقل من 60 يومًا. يحتفظ النطاق بخوادم DNS الحالية حتى تسمح لـ Menuza بإدارته."
+
+#: app/components/website/domain/domain-ui.tsx:115
+msgid "A TXT value can be at most 2048 characters."
+msgstr "يمكن أن تصل قيمة TXT إلى 2048 حرفًا كحد أقصى."
+
 #: app/components/staff/labor-example.tsx:105
 msgid "A typical day shift."
 msgstr "وردية نهارية معتادة."
@@ -4006,9 +4115,17 @@ msgstr "يوجد مستخدم بالفعل بهذا اسم المستخدم"
 msgid "A verified phone number is required."
 msgstr "يلزم رقم هاتف موثّق."
 
+#: app/components/website/domain/connect-card.tsx:161
+msgid "A website already answers on this domain"
+msgstr "يوجد موقع يعمل بالفعل على هذا النطاق"
+
 #: app/components/discounts/discount-form.tsx:1853
 msgid "A window that ends earlier than it starts runs past midnight."
 msgstr "الفترة التي تنتهي قبل أن تبدأ تمتد إلى ما بعد منتصف الليل."
+
+#: app/components/website/domain/connect-card.tsx:135
+msgid "A wrong change could stop email from arriving. Nothing is changed until you confirm, and these records must stay:"
+msgstr "قد يؤدي تغيير خاطئ إلى توقف وصول البريد. لن يتغير شيء حتى تؤكد، ويجب أن تبقى هذه السجلات:"
 
 #: app/components/phone-agent/call-data.ts:135
 msgid "Abandoned"
@@ -4102,7 +4219,7 @@ msgstr "معرف مفتاح الوصول"
 msgid "Access to personal and shared team notes."
 msgstr "الوصول إلى الملاحظات الشخصية وملاحظات الفريق المشتركة."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:220
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:218
 msgid "Accessibility statement"
 msgstr "بيان إمكانية الوصول"
 
@@ -4223,6 +4340,8 @@ msgstr "نشط"
 #: app/components/settings/cards/sessions-card.tsx:249
 #: app/components/staff/details-tab.tsx:265
 #: app/components/staff/staff-status.tsx:12
+#: app/components/website/domain/forwarding-panel.tsx:26
+#: app/components/website/domain/registered-panel.tsx:55
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:426
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:90
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:71
@@ -4267,8 +4386,8 @@ msgstr "يجب أن تكون قيمة «نشط» نعم أو لا."
 #: app/components/loyalty/loyalty-chrome.tsx:72
 #: app/components/orders/order-detail.tsx:1204
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:117
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:70
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:122
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:71
 msgid "Activity"
 msgstr "النشاط"
 
@@ -4339,6 +4458,10 @@ msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
 msgid "Add a break"
 msgstr "إضافة استراحة"
 
+#: app/components/website/domain/domain-ui.tsx:63
+msgid "Add a card in Billing first, then come back."
+msgstr "أضف بطاقة في الفواتير أولًا ثم عد إلى هنا."
+
 #: app/components/menu/item-form.tsx:895
 #: app/components/menu/menu-form.tsx:355
 msgid "Add a category"
@@ -4361,8 +4484,8 @@ msgid "Add a choice"
 msgstr "إضافة خيار"
 
 #: app/components/settings/cards/organization/site-card.tsx:473
-msgid "Add a CNAME record for your domain (or subdomain) pointing to:"
-msgstr "أضف سجل CNAME لنطاقك (أو نطاقك الفرعي) يشير إلى:"
+#~ msgid "Add a CNAME record for your domain (or subdomain) pointing to:"
+#~ msgstr "أضف سجل CNAME لنطاقك (أو نطاقك الفرعي) يشير إلى:"
 
 #: app/components/discounts/codes-editor.tsx:195
 msgid "Add a code"
@@ -4378,11 +4501,11 @@ msgstr "أضف رمزًا قبل تشغيل هذا الخصم."
 msgid "Add a comment..."
 msgstr "أضف تعليقاً..."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:447
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:445
 msgid "Add a contact email and phone number first."
 msgstr "أضف بريدًا إلكترونيًا للتواصل ورقم هاتف أولًا."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:454
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:452
 msgid "Add a contact email first."
 msgstr "أضف بريدًا إلكترونيًا للتواصل أولًا."
 
@@ -4390,7 +4513,7 @@ msgstr "أضف بريدًا إلكترونيًا للتواصل أولًا."
 msgid "Add a contact first."
 msgstr "أضف جهة اتصال أولًا."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:449
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:447
 msgid "Add a contact phone number first: the accessibility statement names it so guests can ask for help."
 msgstr "أضف رقم هاتف للتواصل أولًا: يذكره بيان إمكانية الوصول ليتمكن الضيوف من طلب المساعدة."
 
@@ -4568,6 +4691,10 @@ msgstr "أضف وردية ثانية لاحقًا في اليوم نفسه، م�
 msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
 
+#: app/components/website/domain/domain-ui.tsx:93
+msgid "Add a sending domain first."
+msgstr "أضف نطاق إرسال أولًا."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1448
 msgid "Add a service"
 msgstr "إضافة خدمة"
@@ -4659,6 +4786,10 @@ msgstr "أضف مكان عمل في الإعدادات، أو اطلب من أح
 msgid "Add a workplace in settings, then plan its shifts here."
 msgstr "أضف مكان عمل في الإعدادات، ثم خطّط ورديّاته هنا."
 
+#: app/components/website/domain/forwarding-panel.tsx:252
+msgid "Add address"
+msgstr "إضافة عنوان"
+
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:46
 msgid "Add an active location to your restaurant first."
 msgstr "أضف موقعًا نشطًا لمطعمك أولًا."
@@ -4716,6 +4847,10 @@ msgstr "إضافة بطاقات الدوام وتعديلها وتصدير ال�
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:716
 msgid "Add announcement"
 msgstr "إضافة إعلان"
+
+#: app/components/website/domain/connect-card.tsx:576
+msgid "Add another domain"
+msgstr "إضافة نطاق آخر"
 
 #: app/components/organization-invitations.tsx:317
 #: app/routes/organizations+/create.tsx:1602
@@ -4875,6 +5010,10 @@ msgstr "إضافة منطقة توصيل"
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:246
 msgid "Add dish"
 msgstr "إضافة طبق"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:281
+msgid "Add domain"
+msgstr "إضافة نطاق"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4164
 msgid "Add feature"
@@ -5139,6 +5278,11 @@ msgstr "إضافة تفاعل"
 #: app/components/inventory/missing-recipes-panel.tsx:127
 msgid "Add recipe"
 msgstr "إضافة وصفة"
+
+#: app/components/website/domain/records-panel.tsx:141
+#: app/components/website/domain/records-panel.tsx:206
+msgid "Add record"
+msgstr "إضافة سجل"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1272
 #: app/components/menu/drop-wizard/drop-form.tsx:1328
@@ -5461,7 +5605,7 @@ msgstr "مُضاف"
 msgid "Added {presetLabel} element at ({createdX}, {createdY})"
 msgstr "تمت إضافة العنصر {presetLabel} عند ({createdX}, {createdY})"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:56
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:57
 msgid "Added a redirect"
 msgstr "أضاف عملية إعادة توجيه"
 
@@ -5505,6 +5649,10 @@ msgstr "الإضافة والإزالة مختلطتان في خيار واحد.
 msgid "Adding section"
 msgstr "إضافة قسم"
 
+#: app/components/website/domain/connect-card.tsx:93
+msgid "Adding the records yourself is the safer fit for this domain."
+msgstr "إضافة السجلات بنفسك هي الخيار الأكثر أمانًا لهذا النطاق."
+
 #: app/components/reservations/waitlist/add-party-dialog.tsx:212
 msgid "Adding..."
 msgstr "جارٍ الإضافة..."
@@ -5538,14 +5686,27 @@ msgstr "مستخدمون إضافيون: ${monthlyPrice}/مستخدم/شهر"
 #: app/components/phone-agent/business-details-section.tsx:137
 #: app/components/pos/zatca-settings.tsx:318
 #: app/components/staff/details-tab.tsx:409
+#: app/components/website/domain/buy-card.tsx:66
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:971
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:373
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:371
 msgid "Address"
 msgstr "العنوان"
+
+#: app/components/website/domain/forwarding-panel.tsx:50
+msgid "Address added"
+msgstr "تمت إضافة العنوان"
 
 #: app/components/print/restaurant/vertical-ui.tsx:278
 msgid "Address and prices from"
 msgstr "العنوان والأسعار من"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:275
+msgid "Address before the @"
+msgstr "العنوان قبل علامة @"
+
+#: app/components/website/domain/forwarding-panel.tsx:236
+msgid "Address before the @ (use * for everything else)"
+msgstr "العنوان قبل علامة @ (استخدم * لكل ما عداه)"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:843
 msgid "Address from"
@@ -5554,6 +5715,14 @@ msgstr "العنوان من"
 #: app/components/staff/details-tab.tsx:410
 msgid "Address line 2"
 msgstr "سطر العنوان الثاني"
+
+#: app/components/website/domain/buy-card.tsx:67
+msgid "Address line 2 (optional)"
+msgstr "سطر العنوان الثاني (اختياري)"
+
+#: app/components/website/domain/forwarding-panel.tsx:51
+msgid "Address removed"
+msgstr "تمت إزالة العنوان"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3136
 msgid "Adds a noindex tag so this page stays off Google and Bing."
@@ -5961,8 +6130,8 @@ msgstr "ستُحذف جميع الرسائل في هذه القناة نهائي
 msgid "All none left"
 msgstr "الكل لم يتبقَّ منه شيء"
 
-#: app/components/ui/notification-bell.tsx:511
-#: app/components/ui/notification-bell.tsx:611
+#: app/components/ui/notification-bell.tsx:529
+#: app/components/ui/notification-bell.tsx:629
 msgid "All Notifications"
 msgstr "جميع الإشعارات"
 
@@ -6210,6 +6379,10 @@ msgstr "وصل إلى الوقت الإضافي"
 msgid "already booked"
 msgstr "محجوز مسبقًا"
 
+#: app/components/website/domain/connect-card.tsx:104
+msgid "Already connected to another restaurant"
+msgstr "مرتبط بالفعل بمطعم آخر"
+
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:119
 msgid "Already exists."
 msgstr "موجود بالفعل."
@@ -6227,7 +6400,7 @@ msgstr "هل لديك حساب بالفعل؟"
 msgid "Already paid"
 msgstr "مدفوعة مسبقًا"
 
-#: app/components/ui/notification-bell.tsx:339
+#: app/components/ui/notification-bell.tsx:357
 msgid "Already read"
 msgstr "تمت قراءتها بالفعل"
 
@@ -6240,6 +6413,10 @@ msgstr "استُلم سابقًا <0>{earlierText}</0>"
 #: app/components/orders/record-order-refund-dialog.tsx:264
 msgid "Already refunded"
 msgstr "تم استرداده مسبقًا"
+
+#: app/components/website/domain/buy-card.tsx:342
+msgid "Already taken"
+msgstr "محجوز بالفعل"
 
 #: app/components/locations/copy-settings-dialog.tsx:463
 msgid "Already the same"
@@ -6494,6 +6671,10 @@ msgstr "تمت جدولة مقابلة"
 msgid "An interview was updated"
 msgstr "تم تحديث مقابلة"
 
+#: app/components/website/domain/domain-ui.tsx:108
+msgid "An MX record needs a priority from 0 to 65535."
+msgstr "يحتاج سجل MX إلى أولوية من 0 إلى 65535."
+
 #: app/components/qr/open-tabs.tsx:927
 msgid "An online payment arrived for this tab. Voiding does not refund it: refund it in your payment dashboard. Orders the kitchen has not finished are cancelled."
 msgstr "وصلت دفعة إلكترونية لهذا الحساب. الإلغاء لا يستردها: استردها من لوحة المدفوعات. تُلغى الطلبات التي لم ينته منها المطبخ."
@@ -6508,7 +6689,7 @@ msgstr "يطلب تطبيق غير مسجّل الوصول إلى بيانات �
 
 #: app/components/app-sidebar.tsx:682
 #: app/components/workspace-breadcrumb.tsx:59
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:56
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:61
 msgid "Analytics"
 msgstr "التحليلات"
 
@@ -6549,7 +6730,7 @@ msgstr "إجراءات الإعلان"
 #: app/components/app-sidebar.tsx:698
 #: app/components/command-menu.tsx:160
 #: app/components/workspace-breadcrumb.tsx:60
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:94
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:99
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:695
 msgid "Announcements"
 msgstr "الإعلانات"
@@ -6595,6 +6776,10 @@ msgstr "منصب آخر"
 #: app/components/orders/provider-refund-dialog.tsx:165
 msgid "Another refund for this order is still being processed. Wait for it to finish."
 msgstr "هناك عملية استرداد أخرى لهذا الطلب قيد المعالجة. انتظر حتى تنتهي."
+
+#: app/components/website/domain/domain-ui.tsx:90
+msgid "Another restaurant already uses that sending domain."
+msgstr "يستخدم مطعم آخر نطاق الإرسال هذا بالفعل."
 
 #: app/components/menu/menu-review-card.tsx:177
 msgid "Another way"
@@ -6698,6 +6883,10 @@ msgstr "أي نوع صوت"
 #: app/components/hiring/job-share-panel.tsx:73
 msgid "Anyone with this link can see the job and apply."
 msgstr "يمكن لأي شخص لديه هذا الرابط رؤية الوظيفة والتقديم عليها."
+
+#: app/components/website/domain/forwarding-panel.tsx:143
+msgid "Anything else"
+msgstr "أي عنوان آخر"
 
 #: app/components/staff/onboarding/onboarding-labels.ts:29
 msgid "Anything else you need done, like handing over a uniform."
@@ -6891,6 +7080,10 @@ msgstr "اعتمد مطبوعة، ثم اطلب نسخًا تُشحن إلى أ�
 #: app/components/print/restaurant/vertical-ui.tsx:283
 msgid "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 msgstr "اعتمد بطاقة طاولة أو ملصقًا أو منشورًا أولًا. لا يمكن طلب إلا المطبوعات المعتمدة بمقاس قابل للشحن."
+
+#: app/components/website/domain/connect-card.tsx:505
+msgid "Approve and connect"
+msgstr "الموافقة والربط"
 
 #: app/components/inventory/count-review-screen.tsx:318
 #: app/components/inventory/count-review-screen.tsx:646
@@ -7110,7 +7303,7 @@ msgstr "القسم"
 msgid "Area Boundary Type"
 msgstr "نوع حدود المنطقة"
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:81
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:86
 #: app/routes/_app+/$orgSlug_+/website+/area-pages.tsx:230
 msgid "Area pages"
 msgstr "صفحات المناطق"
@@ -7191,6 +7384,10 @@ msgstr "اطلب من المتصلين تقييم المكالمة من 1 إلى
 #: app/components/my-schedule/shifts-view.tsx:238
 msgid "Ask for a change"
 msgstr "اطلب تغييرًا"
+
+#: app/components/website/domain/domain-ui.tsx:89
+msgid "Ask for a code first."
+msgstr "اطلب رمزًا أولًا."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1177
 msgid "Ask for a rating"
@@ -7482,6 +7679,10 @@ msgstr "صادق على هذه الدفعة"
 msgid "Authentication Code"
 msgstr "رمز المصادقة"
 
+#: app/components/website/domain/buy-card.tsx:416
+msgid "Authorization code"
+msgstr "رمز التفويض"
+
 #: app/routes/mcp+/authorize.tsx:548
 msgid "Authorize"
 msgstr "الموافقة"
@@ -7500,6 +7701,7 @@ msgstr "العملاء المصرح لهم"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:115
 #: app/components/reservations/booking-sheet.tsx:1131
+#: app/components/website/domain/records-panel.tsx:136
 msgid "Auto"
 msgstr "تلقائي"
 
@@ -8315,7 +8517,7 @@ msgstr "تعديل الحجز"
 msgid "Booking confirmation"
 msgstr "تأكيد الحجز"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:400
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:398
 msgid "Booking deposits and cancellations (optional)"
 msgstr "عربون الحجز والإلغاء (اختياري)"
 
@@ -8393,6 +8595,10 @@ msgstr "يُشترى بصيغة"
 #: app/components/inventory/item-form.tsx:442
 msgid "Bought from"
 msgstr "يُشترى من"
+
+#: app/components/website/domain/managed-domain-card.tsx:82
+msgid "Bought with Menuza"
+msgstr "تم شراؤه عبر Menuza"
 
 #: app/utils/loyalty/loyalty-labels.ts:138
 msgid "Bound to a sale"
@@ -8546,7 +8752,7 @@ msgstr "رسائل جماعية بانتظار الإرسال أو قيد الإ
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr "البثّات والأتمتة والأداء في لمحة واحدة."
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:48
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:49
 msgid "Brought a page back"
 msgstr "أعاد صفحة محذوفة"
 
@@ -8766,6 +8972,7 @@ msgid "Buttons"
 msgstr "الأزرار"
 
 #: app/components/discounts/discount-form.tsx:1705
+#: app/components/website/domain/buy-card.tsx:358
 msgid "Buy"
 msgstr "اشترِ"
 
@@ -8781,9 +8988,17 @@ msgstr "اشترِ {buy} واحصل على خصم على {get}"
 msgid "Buy {buyQuantity}, get {getQuantity} from another group"
 msgstr "اشترِ {buyQuantity} واحصل على {getQuantity} من مجموعة أخرى"
 
+#: app/components/website/domain/buy-card.tsx:192
+msgid "Buy {fqdn}"
+msgstr "شراء {fqdn}"
+
 #: app/components/discounts/discount-form.tsx:286
 msgid "Buy a burger, get fries free."
 msgstr "اشترِ برجر واحصل على بطاطس مجانًا."
+
+#: app/components/website/domain/buy-card.tsx:273
+msgid "Buy a domain here and your site is live on it with a certificate, no DNS steps. Paid with the card on file; WHOIS privacy included."
+msgstr "اشترِ نطاقًا من هنا ويعمل موقعك عليه مع شهادة أمان دون أي خطوات DNS. الدفع بالبطاقة المحفوظة، وخصوصية WHOIS مشمولة."
 
 #: app/components/discounts/tier-steps.tsx:125
 msgid "Buy at least"
@@ -8816,6 +9031,14 @@ msgstr "المشتري والمستلم"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:496
 msgid "Buying"
 msgstr "الشراء"
+
+#: app/components/website/domain/buy-card.tsx:287
+msgid "Buying domains is not connected to a registrar in this environment."
+msgstr "شراء النطاقات غير مرتبط بمسجّل في هذه البيئة."
+
+#: app/components/website/domain/domain-ui.tsx:59
+msgid "Buying domains is not set up yet."
+msgstr "شراء النطاقات غير مُعدّ بعد."
 
 #: app/components/loyalty/program-form.tsx:671
 msgid "Buying from selected categories"
@@ -9267,6 +9490,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/staff/timesheets/reason-dialog.tsx:98
 #: app/components/ui/photo-crop-form.tsx:229
 #: app/components/website/create-form-dialog.tsx:292
+#: app/components/website/domain/buy-card.tsx:229
+#: app/components/website/domain/records-panel.tsx:144
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/publish-controls.tsx:511
 #: app/components/website/publish-controls.tsx:623
@@ -9461,7 +9686,7 @@ msgstr "ملغى"
 msgid "CANCELLED"
 msgstr "ملغى"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:53
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:54
 msgid "Cancelled a scheduled publish"
 msgstr "ألغى نشرًا مجدولًا"
 
@@ -9840,6 +10065,10 @@ msgstr "الوسط"
 msgid "Certificate"
 msgstr "الشهادة"
 
+#: app/components/website/domain/site-domains-card.tsx:131
+msgid "Certificate pending"
+msgstr "الشهادة قيد الإصدار"
+
 #: app/components/staff/onboarding/certificates-tab.tsx:82
 msgid "Certificate removed."
 msgstr "تمت إزالة الشهادة."
@@ -9847,6 +10076,10 @@ msgstr "تمت إزالة الشهادة."
 #: app/components/staff/onboarding/certificates-tab.tsx:174
 msgid "Certificate saved."
 msgstr "تم حفظ الشهادة."
+
+#: app/components/website/domain/site-domains-card.tsx:182
+msgid "Certificate: {certificate}"
+msgstr "الشهادة: {certificate}"
 
 #: app/components/staff/onboarding/certificates-tab.tsx:118
 #: app/components/staff/staff-profile-page.tsx:90
@@ -9897,6 +10130,10 @@ msgstr "غيّر الكمية إذا وصل أقل من {sender}. ما هو نا
 #: app/components/inventory/transfer-dialogs.tsx:475
 msgid "Change an amount if you send less. Stock leaves your place when you confirm."
 msgstr "غيّر الكمية إذا أرسلت أقل. يخرج المخزون من مكانك عند التأكيد."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:188
+msgid "Change and verify"
+msgstr "تغيير والتحقق"
 
 #: app/components/staff/onboarding/task-row.tsx:228
 msgid "Change due date"
@@ -10009,7 +10246,7 @@ msgstr "تم تغيير {0} إلى {lastUndoStatusLabel}."
 msgid "Changed {sections}"
 msgstr "تم تغيير {sections}"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:57
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:58
 msgid "Changed a redirect"
 msgstr "غيّر عملية إعادة توجيه"
 
@@ -10017,7 +10254,7 @@ msgstr "غيّر عملية إعادة توجيه"
 msgid "Changed since approval"
 msgstr "تغيّرت بعد الاعتماد"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:59
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:60
 msgid "Changed the website domain"
 msgstr "غيّر نطاق الموقع"
 
@@ -10225,6 +10462,10 @@ msgstr "الحساب"
 msgid "Check against the invoice"
 msgstr "مطابقة مع الفاتورة"
 
+#: app/components/website/domain/site-domains-card.tsx:370
+msgid "Check all"
+msgstr "فحص الكل"
+
 #: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:93
 msgid "Check before it goes out"
 msgstr "تحقق قبل الإرسال"
@@ -10233,9 +10474,17 @@ msgstr "تحقق قبل الإرسال"
 msgid "Check before publishing"
 msgstr "تحقق قبل النشر"
 
+#: app/components/website/domain/site-domains-card.tsx:251
+msgid "Check certificate again"
+msgstr "إعادة فحص الشهادة"
+
 #: app/components/settings/cards/organization/verified-domain-card.tsx:179
 msgid "Check DNS record"
 msgstr "تحقق من سجل DNS"
+
+#: app/components/website/domain/connect-card.tsx:611
+msgid "Check domain"
+msgstr "فحص النطاق"
 
 #: app/components/reservations/status-style.tsx:182
 msgid "Check dropped"
@@ -10250,6 +10499,15 @@ msgstr "تم تقديم الحساب"
 #: app/components/hiring/job-editor.tsx:355
 msgid "Check it over"
 msgstr "راجع الإعلان"
+
+#: app/components/website/domain/managed-domain-card.tsx:156
+msgid "Check nameservers"
+msgstr "فحص خوادم الأسماء"
+
+#: app/components/website/domain/forwarding-panel.tsx:274
+#: app/components/website/domain/site-domains-card.tsx:229
+msgid "Check now"
+msgstr "افحص الآن"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:273
 msgid "Check out our new summer menu"
@@ -10309,6 +10567,10 @@ msgstr "راجع الحقول المحددة وحاول مرة أخرى."
 #: app/components/phone-agent/settings-page.tsx:62
 msgid "Check the highlighted fields."
 msgstr "تحقق من الحقول المميزة."
+
+#: app/components/website/domain/domain-ui.tsx:66
+msgid "Check the owner details: every field except address line 2 is required."
+msgstr "تحقق من بيانات المالك: كل الحقول مطلوبة عدا سطر العنوان الثاني."
 
 #: app/components/locations/checkout-settings-cards.tsx:41
 msgid "Check the percentage and the amounts."
@@ -10373,6 +10635,12 @@ msgstr "تحقق من تطبيق المصادقة الثنائية"
 #: app/routes/_auth+/verify.tsx:64
 msgid "Check your email"
 msgstr "تحقق من بريدك الإلكتروني"
+
+#: app/components/website/domain/forwarding-panel.tsx:55
+#: app/components/website/domain/site-domains-card.tsx:122
+#: app/components/website/domain/site-domains-card.tsx:324
+msgid "Checked"
+msgstr "تم الفحص"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:246
 msgid "Checked before every step, including after a delay. Guests who order are not sent the rest of this automation."
@@ -10491,6 +10759,10 @@ msgstr "الخيارات لكل عنصر"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:416
 msgid "Choose"
 msgstr "اختر"
+
+#: app/components/website/domain/provider-steps.tsx:26
+msgid "Choose \"{label}\"."
+msgstr "اختر \"{label}\"."
 
 #: app/components/inventory/item-form.tsx:334
 #: app/components/menu/menu-bulk-edit-sheet.tsx:667
@@ -10846,6 +11118,10 @@ msgstr "اختر تلقائي أو يدوي."
 msgid "Choose categories"
 msgstr "اختر التصنيفات"
 
+#: app/components/website/domain/connect-card.tsx:308
+msgid "Choose custom nameservers and replace the current ones with:"
+msgstr "اختر خوادم أسماء مخصصة واستبدل الحالية بما يلي:"
+
 #: app/components/inventory/supplier-form.tsx:103
 msgid "Choose days of the week."
 msgstr "اختر أيام الأسبوع."
@@ -11183,9 +11459,15 @@ msgstr "دائرة"
 #: app/components/locations/address-autocomplete.tsx:253
 #: app/components/pos/zatca-settings.tsx:327
 #: app/components/staff/details-tab.tsx:411
+#: app/components/website/domain/buy-card.tsx:68
+#: app/components/website/domain/buy-card.tsx:310
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:387
 msgid "City"
 msgstr "المدينة"
+
+#: app/components/website/domain/buy-card.tsx:309
+msgid "City (optional)"
+msgstr "المدينة (اختياري)"
 
 #: app/components/print/print-labels.ts:40
 msgid "Classic"
@@ -11629,8 +11911,8 @@ msgid "Closing time must be after opening time."
 msgstr "يجب أن يكون وقت الإغلاق بعد وقت الفتح."
 
 #: app/components/settings/cards/organization/site-card.tsx:483
-msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
-msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
+#~ msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
+#~ msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
 
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:165
 #: app/components/discounts/codes-editor.tsx:109
@@ -11644,6 +11926,10 @@ msgstr "الرمز {number}"
 #: app/components/pos/terminals-manager.tsx:1942
 msgid "Code copied."
 msgstr "تم نسخ الرمز."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:212
+msgid "Code sent to {pending}"
+msgstr "تم إرسال الرمز إلى {pending}"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:567
 msgid "Code sent. It expires in 10 minutes."
@@ -12056,6 +12342,18 @@ msgstr "أكّد أن الضيف طلب تلقي الرسائل التسويقي
 msgid "Confirm that you want to rehire them anyway."
 msgstr "أكّد رغبتك في إعادة توظيفهم رغم ذلك."
 
+#: app/components/website/domain/registered-panel.tsx:108
+msgid "Confirm the owner email"
+msgstr "أكّد بريد المالك"
+
+#: app/utils/domains/domain-alerts.ts:145
+msgid "Confirm the owner email for **{name}**"
+msgstr "أكّد بريد المالك للنطاق **{name}**"
+
+#: app/components/website/domain/domain-ui.tsx:84
+msgid "Confirm the reply-to address with the code first."
+msgstr "أكّد عنوان الرد بالرمز أولًا."
+
 #: app/components/settings/cards/organization/site-icon-card.tsx:175
 msgid "Confirm upload"
 msgstr "تأكيد الرفع"
@@ -12068,6 +12366,10 @@ msgstr "أكّد ما وصل"
 msgid "Confirm what you send"
 msgstr "أكّد ما ترسله"
 
+#: app/utils/domains/domain-alerts.ts:146
+msgid "Confirm your domain owner email"
+msgstr "أكّد بريد مالك النطاق"
+
 #: app/routes/_auth+/reset-password.tsx:245
 msgid "Confirm your new password"
 msgstr "أكد كلمة المرور الجديدة"
@@ -12079,6 +12381,10 @@ msgstr "أكد كلمة المرور"
 #: app/components/customers/person-marketing-card.tsx:558
 msgid "Confirmation email sent"
 msgstr "تم إرسال بريد التأكيد"
+
+#: app/components/website/domain/forwarding-panel.tsx:53
+msgid "Confirmation email sent again"
+msgstr "تم إرسال رسالة التأكيد مرة أخرى"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:237
 msgid "Confirmation is taking longer than usual. Refresh in a minute."
@@ -12095,6 +12401,10 @@ msgstr "تم إرسال التأكيد"
 #: app/components/reservations/detail-sheet.tsx:535
 msgid "Confirmation sent with a new manage link"
 msgstr "تم إرسال التأكيد مع رابط إدارة جديد"
+
+#: app/components/website/domain/site-domains-card.tsx:116
+msgid "confirmed"
+msgstr "مؤكّد"
 
 #: app/components/reservations/status-style.tsx:137
 #: app/utils/reservations/labels.ts:16
@@ -12174,6 +12484,10 @@ msgstr "اربط نظام نقاط البيع أو منصة توصيل للحف�
 msgid "Connect accounts"
 msgstr "ربط الحسابات"
 
+#: app/components/website/domain/connect-card.tsx:687
+msgid "Connect automatically"
+msgstr "ربط تلقائي"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:265
 msgid "Connect Canva"
 msgstr "ربط Canva"
@@ -12182,7 +12496,7 @@ msgstr "ربط Canva"
 msgid "Connect Canva again: the connection has expired or was removed in Canva."
 msgstr "اربط Canva مرة أخرى: انتهت صلاحية الربط أو أُزيل في Canva."
 
-#: app/components/settings/cards/organization/site-card.tsx:567
+#: app/components/website/domain/connect-card.tsx:739
 msgid "Connect domain"
 msgstr "ربط نطاق"
 
@@ -12242,9 +12556,21 @@ msgstr "ربط مساعدي الذكاء الاصطناعي ببيانات {orga
 msgid "Connect your Canva account"
 msgstr "اربط حسابك في Canva"
 
+#: app/components/website/domain/connect-card.tsx:578
+msgid "Connect your domain"
+msgstr "اربط نطاقك"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:765
 msgid "Connect your favorite AI client to access your organization's data securely. Follow the instructions for your preferred client below."
 msgstr "اربط عميل الذكاء الاصطناعي المفضل لديك للوصول إلى بيانات منظمتك بشكل آمن. اتبع التعليمات لعميلك المفضل أدناه."
+
+#: app/components/website/domain/domain-ui.tsx:40
+msgid "Connect your main domain first."
+msgstr "اربط نطاقك الرئيسي أولًا."
+
+#: app/components/settings/cards/organization/site-card.tsx:388
+msgid "Connect your own domain, buy one, or set up email forwarding on the Domain tab."
+msgstr "اربط نطاقك الخاص أو اشترِ نطاقًا أو أعدّ تحويل البريد من تبويب النطاق."
 
 #: app/routes/organizations+/create.tsx:1479
 msgid "Connect your POS"
@@ -12276,8 +12602,8 @@ msgid "Connected Channels"
 msgstr "القنوات المتصلة"
 
 #: app/components/settings/cards/organization/site-card.tsx:438
-msgid "Connected domain"
-msgstr "النطاق المرتبط"
+#~ msgid "Connected domain"
+#~ msgstr "النطاق المرتبط"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4537
 msgid "Connected form"
@@ -12315,6 +12641,10 @@ msgstr "يؤدي الربط إلى إضافة حساب تجريبي ولا يُ�
 #: app/components/chat/chat-view.tsx:985
 msgid "Connecting to team chat…"
 msgstr "جارٍ الاتصال بدردشة الفريق…"
+
+#: app/components/website/domain/buy-card.tsx:113
+msgid "Connecting your site and its certificate"
+msgstr "ربط موقعك وشهادته"
 
 #: app/components/pos/zatca-settings.tsx:565
 msgid "Connecting…"
@@ -12370,7 +12700,7 @@ msgstr "مُستخدَم"
 msgid "Contact"
 msgstr "اتصل"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:337
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:335
 msgid "Contact email"
 msgstr "البريد الإلكتروني للتواصل"
 
@@ -12383,7 +12713,7 @@ msgstr "نموذج اتصال"
 msgid "Contact person"
 msgstr "الشخص المسؤول"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:350
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:348
 msgid "Contact phone"
 msgstr "هاتف التواصل"
 
@@ -12514,11 +12844,11 @@ msgstr "محادثة"
 msgid "Cookie banner"
 msgstr "شريط ملفات تعريف الارتباط"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:650
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:648
 msgid "Cookie banner settings"
 msgstr "إعدادات شريط ملفات تعريف الارتباط"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:218
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:216
 msgid "Cookie policy"
 msgstr "سياسة ملفات تعريف الارتباط"
 
@@ -12532,6 +12862,7 @@ msgstr "الإحداثيات (خط العرض، خط الطول)"
 
 #: app/components/organization-invitations.tsx:219
 #: app/components/staff/pin-panel.tsx:78
+#: app/components/website/domain/domain-ui.tsx:179
 msgid "Copied"
 msgstr "تم النسخ"
 
@@ -12576,6 +12907,7 @@ msgstr "نسخة"
 #: app/components/organization-invitations.tsx:224
 #: app/components/phone-agent/agent-details.tsx:239
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
+#: app/components/website/domain/domain-ui.tsx:175
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:327
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:582
 #: app/routes/_auth+/waitlist.tsx:332
@@ -12831,6 +13163,10 @@ msgstr "تعذّر إغلاق الوردية."
 #: app/components/pos/zatca-settings.tsx:512
 msgid "Could not connect the terminal."
 msgstr "تعذّر ربط نقطة البيع."
+
+#: app/components/website/domain/domain-ui.tsx:180
+msgid "Could not copy"
+msgstr "تعذّر النسخ"
 
 #: app/components/pos/terminals-manager.tsx:1944
 msgid "Could not copy. Select it and copy it by hand."
@@ -13289,7 +13625,11 @@ msgstr "قيد الجرد"
 msgid "Country"
 msgstr "الدولة"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:362
+#: app/components/website/domain/buy-card.tsx:71
+msgid "Country (2 letters, for example SA)"
+msgstr "الدولة (حرفان، مثل SA)"
+
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:360
 msgid "Country (two letters, for example US or SA)"
 msgstr "الدولة (حرفان، مثل US أو SA)"
 
@@ -14045,7 +14385,7 @@ msgstr "ألوان مخصصة"
 msgid "Custom dates"
 msgstr "تواريخ مخصصة"
 
-#: app/components/settings/cards/organization/site-card.tsx:421
+#: app/components/settings/cards/organization/site-card.tsx:385
 msgid "Custom domain"
 msgstr "نطاق مخصص"
 
@@ -14157,7 +14497,7 @@ msgstr "سمة العميل"
 msgid "Customer buys"
 msgstr "يشتري العميل"
 
-#: app/components/settings/cards/organization/site-card.tsx:285
+#: app/components/settings/cards/organization/site-card.tsx:249
 msgid "Customer data region"
 msgstr "منطقة بيانات العملاء"
 
@@ -14900,7 +15240,7 @@ msgstr "حذف الاتصال"
 msgid "Delete custom role"
 msgstr "حذف الدور المخصص"
 
-#: app/components/settings/cards/organization/site-card.tsx:341
+#: app/components/settings/cards/organization/site-card.tsx:305
 msgid "Delete customer data and switch region?"
 msgstr "حذف بيانات العملاء وتبديل المنطقة؟"
 
@@ -14908,7 +15248,7 @@ msgstr "حذف بيانات العملاء وتبديل المنطقة؟"
 msgid "Delete dashboard"
 msgstr "حذف لوحة التحكم"
 
-#: app/components/settings/cards/organization/site-card.tsx:381
+#: app/components/settings/cards/organization/site-card.tsx:345
 msgid "Delete data and switch"
 msgstr "حذف البيانات والتبديل"
 
@@ -15138,7 +15478,7 @@ msgstr "حذف بطاقة الدوام هذه؟"
 msgid "Deleted"
 msgstr "حُذفت"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:47
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:48
 msgid "Deleted a page"
 msgstr "حذف صفحة"
 
@@ -15563,6 +15903,10 @@ msgstr "لوحة الاتصال"
 msgid "Did not show"
 msgstr "لم يحضر"
 
+#: app/components/website/domain/connect-card.tsx:186
+msgid "Did you mean the main domain, {suggestion}? Connecting a subdomain only connects that one address."
+msgstr "هل تقصد النطاق الرئيسي {suggestion}؟ ربط نطاق فرعي يربط هذا العنوان وحده فقط."
+
 #: app/components/phone-agent/phrase-fields.tsx:47
 msgid "Didn't catch that"
 msgstr "لم أفهم ذلك"
@@ -15796,7 +16140,7 @@ msgstr "تجاهل التغييرات غير المحفوظة؟"
 msgid "Discard your changes?"
 msgstr "تجاهل تغييراتك؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:50
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:51
 msgid "Discarded unpublished changes"
 msgstr "تجاهل تغييرات غير منشورة"
 
@@ -15822,6 +16166,14 @@ msgstr "قطع الاتصال"
 msgid "Disconnect {accountName}?"
 msgstr "هل تريد فصل {accountName}؟"
 
+#: app/components/website/domain/site-domains-card.tsx:410
+msgid "Disconnect all"
+msgstr "فصل الكل"
+
+#: app/components/website/domain/site-domains-card.tsx:379
+msgid "Disconnect all domains"
+msgstr "فصل جميع النطاقات"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1087
 msgid "Disconnect any active MCP connections"
 msgstr "قطع أي اتصالات MCP نشطة"
@@ -15829,6 +16181,10 @@ msgstr "قطع أي اتصالات MCP نشطة"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:288
 msgid "Disconnect Canva"
 msgstr "إلغاء ربط Canva"
+
+#: app/components/website/domain/site-domains-card.tsx:393
+msgid "Disconnect every domain?"
+msgstr "هل تريد فصل كل النطاقات؟"
 
 #: app/components/discounts/discount-form.tsx:605
 #: app/components/discounts/discount-form.tsx:815
@@ -16042,9 +16398,21 @@ msgstr "الحي"
 msgid "Divide tips"
 msgstr "تقسيم الإكراميات"
 
+#: app/components/website/domain/managed-domain-card.tsx:85
+msgid "DNS managed by Menuza"
+msgstr "DNS تديره Menuza"
+
+#: app/components/website/domain/records-panel.tsx:185
+msgid "DNS records"
+msgstr "سجلات DNS"
+
 #: app/components/settings/cards/organization/site-card.tsx:470
-msgid "DNS setup"
-msgstr "إعداد DNS"
+#~ msgid "DNS setup"
+#~ msgstr "إعداد DNS"
+
+#: app/components/website/domain/provider-steps.tsx:46
+msgid "Do not change or delete any MX or TXT records: they carry the email for this domain."
+msgstr "لا تغيّر أو تحذف أي سجلات MX أو TXT: فهي تحمل البريد الإلكتروني لهذا النطاق."
 
 #: app/components/hiring/applicant-labels.ts:65
 msgid "Do not send anything"
@@ -16082,9 +16450,15 @@ msgstr "لا تتكرر"
 msgid "Does not work at this workplace"
 msgstr "لا يعمل في مكان العمل هذا"
 
-#: app/components/settings/cards/organization/site-card.tsx:552
+#: app/components/website/domain/buy-card.tsx:405
+#: app/components/website/domain/connect-card.tsx:604
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:46
 msgid "Domain"
 msgstr "النطاق"
+
+#: app/components/website/domain/connect-card.tsx:527
+msgid "Domain added"
+msgstr "تمت إضافة النطاق"
 
 #: app/routes/_auth+/login.tsx:409
 msgid "Don't have an account?"
@@ -16131,6 +16505,7 @@ msgstr "عدم قبول الطلبات الهاتفية لـ"
 #: app/components/staff/onboarding/task-row.tsx:272
 #: app/components/staff/pin-panel.tsx:96
 #: app/components/staff/schedule/publish-dialog.tsx:363
+#: app/components/website/domain/buy-card.tsx:114
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:145
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:214
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:528
@@ -16244,6 +16619,10 @@ msgstr "تنزيل بياناتك"
 msgid "Download your locations, change the phone, active and tags columns, and upload the file. Every row is checked first: if one row has a problem nothing is changed."
 msgstr "نزّل مواقعك، وغيّر أعمدة الهاتف والنشط والوسوم، ثم ارفع الملف. يُفحص كل صف أولًا: إذا كان في صف مشكلة فلن يتغيّر شيء."
 
+#: app/components/website/domain/managed-domain-card.tsx:222
+msgid "Download zone and stop"
+msgstr "تنزيل الملف والتوقف"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:363
 msgid "draft"
 msgstr "مسودة"
@@ -16263,7 +16642,7 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:195
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:413
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:254
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:475
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:650
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6547
 #: app/utils/inventory/order-view.ts:23
@@ -16710,6 +17089,10 @@ msgstr "كل مجموعة كاملة بحجم محدد، مثل كل زوج."
 msgid "Each group is one part of the deal, such as a pizza, a side or a drink. The customer gets the deal once the order has every group."
 msgstr "كل مجموعة هي جزء من العرض، مثل بيتزا أو طبق جانبي أو مشروب. يحصل العميل على العرض عندما يحتوي الطلب على كل المجموعات."
 
+#: app/components/website/domain/forwarding-panel.tsx:216
+msgid "Each inbox gets an email with a link to confirm. Forwarding starts once it is clicked."
+msgstr "يتلقى كل بريد رسالة تحتوي على رابط للتأكيد. يبدأ التحويل بمجرد النقر عليه."
+
 #: app/components/inventory/recipe-section.tsx:591
 msgid "Each ingredient can be listed once."
 msgstr "يمكن إدراج كل مكوّن مرة واحدة فقط."
@@ -16851,6 +17234,7 @@ msgstr "إلغاء الكسب"
 #: app/components/staff/onboarding/certificates-tab.tsx:278
 #: app/components/staff/onboarding/templates-page.tsx:213
 #: app/components/staff/timesheets/review-queue.tsx:439
+#: app/components/website/domain/records-panel.tsx:285
 #: app/components/workspace-breadcrumb.tsx:24
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:303
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:469
@@ -16871,7 +17255,7 @@ msgstr "إلغاء الكسب"
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:579
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:502
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:500
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:686
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:902
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1063
@@ -17150,7 +17534,7 @@ msgstr "عدّل وصف نشاطك التجاري على Google وتاريخ ا�
 #: app/components/my-schedule/time-cards-view.tsx:136
 #: app/components/staff/timesheets/card-history.tsx:48
 #: app/components/staff/timesheets/issue-copy.ts:19
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:480
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:478
 msgid "Edited"
 msgstr "معدّلة"
 
@@ -17259,6 +17643,27 @@ msgstr "لا يمكن إرسال البريد الإلكتروني من هنا �
 msgid "Email design"
 msgstr "تصميم البريد"
 
+#: app/components/website/domain/forwarding-panel.tsx:66
+#: app/components/website/domain/managed-domain-card.tsx:262
+msgid "Email forwarding"
+msgstr "تحويل البريد الإلكتروني"
+
+#: app/utils/domains/domain-alerts.ts:127
+msgid "Email forwarding for **{name}** is failing"
+msgstr "تحويل البريد للنطاق **{name}** يفشل"
+
+#: app/utils/domains/domain-alerts.ts:128
+msgid "Email forwarding is failing"
+msgstr "تحويل البريد الإلكتروني يفشل"
+
+#: app/components/website/domain/forwarding-panel.tsx:56
+msgid "Email forwarding turned off"
+msgstr "تم إيقاف تحويل البريد"
+
+#: app/utils/domains/domain-alerts.ts:136
+msgid "Email from **{name}** is back on our address"
+msgstr "عاد بريد **{name}** إلى عنواننا"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:514
 msgid "Email HTML Body"
 msgstr "نص HTML للبريد الإلكتروني"
@@ -17275,9 +17680,17 @@ msgstr "البريد الإلكتروني هو القناة الافتراضية
 msgid "Email is turned off, so nothing was sent"
 msgstr "البريد الإلكتروني متوقف، لذا لم يُرسل شيء"
 
+#: app/components/website/domain/connect-card.tsx:129
+msgid "Email looks hosted at {mailProvider}. A wrong change could stop it. Nothing is changed until you confirm, and these records must stay:"
+msgstr "يبدو أن البريد مستضاف لدى {mailProvider}. قد يوقفه تغيير خاطئ. لن يتغير شيء حتى تؤكد، ويجب أن تبقى هذه السجلات:"
+
 #: app/components/customers/person-marketing-card.tsx:447
 msgid "Email marketing"
 msgstr "التسويق عبر البريد الإلكتروني"
+
+#: app/components/website/domain/connect-card.tsx:371
+msgid "Email may need attention"
+msgstr "قد يحتاج البريد إلى انتباه"
 
 #: app/routes/_auth+/login.tsx:703
 #: app/routes/_auth+/login.tsx:833
@@ -17287,6 +17700,14 @@ msgstr "البريد الإلكتروني / اسم المستخدم"
 #: ../../packages/marketing/src/components/email/email-preview.tsx:123
 msgid "Email preview"
 msgstr "معاينة البريد"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:87
+msgid "Email sending"
+msgstr "إرسال البريد الإلكتروني"
+
+#: app/components/website/domain/registered-panel.tsx:30
+msgid "Email sent again"
+msgstr "تم إرسال البريد مرة أخرى"
 
 #: app/components/reservations/messages/message-preview.tsx:111
 msgid "Email subject"
@@ -17319,6 +17740,10 @@ msgstr "إرسال بريد إلكتروني إلى هذه العناوين"
 #: app/components/staff/schedule/publication-history.tsx:352
 msgid "Emails"
 msgstr "الرسائل"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:298
+msgid "Emails go out from our address until they are fixed. Check the records below and re-check."
+msgstr "تُرسَل الرسائل من عنواننا حتى يتم الإصلاح. افحص السجلات أدناه ثم أعد الفحص."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:75
 msgid "Emails sent"
@@ -17578,6 +18003,15 @@ msgstr "أدخل تاريخًا."
 #: app/components/loyalty/program-extension-cards.tsx:866
 msgid "Enter a discount amount, like 5.00."
 msgstr "أدخل مبلغ خصم، مثل 5.00."
+
+#: app/components/website/domain/domain-ui.tsx:91
+msgid "Enter a domain like acmepizza.com."
+msgstr "أدخل نطاقًا مثل acmepizza.com."
+
+#: app/components/website/domain/domain-ui.tsx:35
+#: app/components/website/domain/domain-ui.tsx:56
+msgid "Enter a domain like example.com."
+msgstr "أدخل نطاقًا مثل example.com."
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:108
 msgid "Enter a fee from 0 to 10 percent."
@@ -18059,6 +18493,15 @@ msgstr "أدخل عدد أشهر بين 1 و60."
 msgid "Enter more than 0 and up to {max} hours."
 msgstr "أدخل قيمة أكبر من 0 وحتى {max} ساعة."
 
+#: app/components/website/domain/domain-ui.tsx:78
+msgid "Enter one email address to forward to."
+msgstr "أدخل عنوان بريد واحدًا للتحويل إليه."
+
+#: app/components/website/domain/domain-ui.tsx:55
+#: app/components/website/domain/domain-ui.tsx:83
+msgid "Enter one email address."
+msgstr "أدخل عنوان بريد واحدًا."
+
 #: app/routes/_auth+/verify.tsx:78
 msgid "Enter one of your backup codes to verify your identity."
 msgstr "أدخل أحد رموزك الاحتياطية للتحقق من هويتك."
@@ -18167,6 +18610,10 @@ msgstr "أدخل سعر الوحدة الواحدة، مثل 28.50."
 #: app/components/inventory/record-delivery-screen.tsx:1275
 msgid "Enter the price on the invoice, for example 28.50."
 msgstr "أدخل السعر المكتوب على الفاتورة، مثل 28.50."
+
+#: app/components/website/domain/provider-steps.tsx:29
+msgid "Enter the record below."
+msgstr "أدخل السجل أدناه."
 
 #: app/components/loyalty/program-form.tsx:307
 msgid "Enter the spend that earns the points, like 10.00."
@@ -18422,7 +18869,7 @@ msgstr "سير عمل قائم على الأحداث"
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr "سير عمل قائم على الأحداث مع محفّزات وتأخيرات وإجراءات."
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:70
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:75
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:128
 msgid "Events"
 msgstr "الفعاليات"
@@ -18458,6 +18905,10 @@ msgstr "كل مكالمة أجاب عنها وكيلك، مع الملخصات �
 #: app/components/staff/timesheets/payroll-summary.tsx:315
 msgid "Every card is approved. This period is ready for payroll."
 msgstr "تمت الموافقة على كل البطاقات. هذه الفترة جاهزة للرواتب."
+
+#: app/components/website/domain/records-panel.tsx:320
+msgid "Every change to a record is logged under Website, Activity."
+msgstr "يُسجَّل كل تغيير على السجلات ضمن الموقع، النشاط."
 
 #: app/components/discounts/discount-form.tsx:1464
 msgid "Every choice in these groups is covered."
@@ -18860,6 +19311,8 @@ msgstr "إنهاء صلاحية {unitLabelText} غير المستخدمة بعد
 #: app/components/reservations/status-style.tsx:147
 #: app/components/settings/cards/sessions-card.tsx:195
 #: app/components/settings/cards/sessions-card.tsx:253
+#: app/components/website/domain/registered-panel.tsx:59
+#: app/components/website/domain/site-domains-card.tsx:127
 #: app/utils/gift-cards/labels.ts:13
 #: app/utils/inventory/labels.ts:53
 #: app/utils/loyalty/loyalty-labels.ts:101
@@ -18871,6 +19324,7 @@ msgstr "منتهي الصلاحية"
 
 #: app/components/settings/cards/sessions-card.tsx:302
 #: app/components/staff/onboarding/certificate-form.tsx:120
+#: app/components/website/domain/registered-panel.tsx:40
 msgid "Expires"
 msgstr "تنتهي الصلاحية"
 
@@ -18938,6 +19392,10 @@ msgstr "تصدير JSON"
 msgid "Export with sensitive data"
 msgstr "تصدير مع البيانات الحساسة"
 
+#: app/components/website/domain/records-panel.tsx:194
+msgid "Export zone file"
+msgstr "تصدير ملف المنطقة"
+
 #: app/components/staff/labor/labor-page.tsx:187
 #: app/components/staff/timesheets/timesheets-page.tsx:504
 msgid "Exported {count} rows."
@@ -18959,6 +19417,10 @@ msgstr "رسوم إضافية عند إضافة هذه الإضافة إلى ا�
 #: app/components/media-library/photo-studio-dialog.tsx:735
 msgid "Extra direction (optional)"
 msgstr "توجيه إضافي (اختياري)"
+
+#: app/components/website/domain/connect-card.tsx:583
+msgid "Extra domains redirect to your primary domain."
+msgstr "تُحوَّل النطاقات الإضافية إلى نطاقك الأساسي."
 
 #: app/components/locations/location-setting-labels.ts:33
 msgid "Extra time for large orders."
@@ -19007,9 +19469,11 @@ msgstr "فشل"
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
 #: app/components/print/print-order-labels.ts:19
+#: app/components/settings/cards/organization/email-sending-card.tsx:78
 #: app/components/settings/cards/organization/shop-card.tsx:49
 #: app/components/social/social-labels.ts:35
 #: app/components/social/social-labels.ts:45
+#: app/components/website/domain/buy-card.tsx:132
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:100
 #: app/utils/reservations/payments-view.ts:72
@@ -19291,6 +19755,10 @@ msgstr "فشل في تحديث اليوم الخاص."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:473
 msgid "Failed to update table."
 msgstr "فشل في تحديث الطاولة."
+
+#: app/components/website/domain/forwarding-panel.tsx:32
+msgid "Failing"
+msgstr "يفشل"
 
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:327
 #: app/utils/reservations/host-errors.test.ts:6
@@ -19626,6 +20094,7 @@ msgstr "اليوم الأول"
 #: app/components/staff/review-rows.tsx:68
 #: app/components/staff/review-rows.tsx:74
 #: app/components/staff/timesheets/payroll-summary.tsx:166
+#: app/components/website/domain/buy-card.tsx:61
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:154
 msgid "First name"
 msgstr "الاسم الأول"
@@ -19994,7 +20463,7 @@ msgstr "عضو سابق"
 #: app/components/command-menu.tsx:159
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:51
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:157
 msgid "Forms"
 msgstr "النماذج"
@@ -20003,6 +20472,10 @@ msgstr "النماذج"
 msgid "Forward old or broken URLs to your new pages to preserve SEO rank and customer traffic."
 msgstr "وجّه عناوين URL القديمة أو المعطلة إلى صفحاتك الجديدة للحفاظ على ترتيب محركات البحث وزيارات العملاء."
 
+#: app/components/website/domain/domain-ui.tsx:79
+msgid "Forward to an inbox outside this domain."
+msgstr "حوّل إلى بريد خارج هذا النطاق."
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:150
 msgid "Forwarded from <0>{forwardedFrom}</0>"
 msgstr "محوَّل من <0>{forwardedFrom}</0>"
@@ -20010,6 +20483,22 @@ msgstr "محوَّل من <0>{forwardedFrom}</0>"
 #: app/components/phone-agent/phone-number-dialogs.tsx:53
 msgid "Forwarding"
 msgstr "تحويل الاتصال"
+
+#: app/components/website/domain/managed-domain-card.tsx:265
+msgid "Forwarding mail from addresses like info@yourdomain to your own inbox is not available for {list}: their DNS is managed somewhere else, and forwarding needs Menuza to run it. Let Menuza manage the domain, or get a domain here, to turn it on."
+msgstr "تحويل البريد من عناوين مثل info@yourdomain إلى بريدك غير متاح للنطاقات {list}: فخوادم DNS الخاصة بها تُدار في مكان آخر، ويحتاج التحويل إلى أن تديرها Menuza. دع Menuza تدير النطاق أو احصل على نطاق من هنا لتفعيله."
+
+#: app/components/website/domain/forwarding-panel.tsx:77
+msgid "Forwarding needs Menuza to run this domain's DNS, and the nameservers have not moved yet. It becomes available as soon as they do."
+msgstr "يحتاج التحويل إلى أن تدير Menuza خوادم DNS لهذا النطاق، ولم تنتقل خوادم الأسماء بعد. سيصبح متاحًا فور انتقالها."
+
+#: app/components/website/domain/forwarding-panel.tsx:83
+msgid "Forwarding needs Menuza to run this domain's DNS, which it does not today. Let Menuza manage the domain, or buy one here, to turn it on."
+msgstr "يحتاج التحويل إلى أن تدير Menuza خوادم DNS لهذا النطاق، وهي لا تفعل ذلك حاليًا. دع Menuza تدير النطاق أو اشترِ نطاقًا من هنا لتفعيله."
+
+#: app/components/website/domain/domain-ui.tsx:209
+msgid "Found"
+msgstr "موجود"
 
 #: app/utils/inventory/labels.ts:68
 msgid "Found more than expected"
@@ -20324,7 +20813,7 @@ msgstr "تم حفظ الإعدادات العامة للحجوزات."
 msgid "General Settings"
 msgstr "الإعدادات العامة"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:561
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:559
 msgid "Generate"
 msgstr "إنشاء"
 
@@ -20332,11 +20821,11 @@ msgstr "إنشاء"
 msgid "Generate a code"
 msgstr "أنشئ رمزًا"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:289
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:287
 msgid "Generate a privacy policy, terms of service, cookie policy and accessibility statement from a template filled with your details. They are normal pages you can edit."
 msgstr "أنشئ سياسة خصوصية وشروط خدمة وسياسة ملفات تعريف الارتباط وبيان إمكانية الوصول من قالب معبأ ببياناتك. وهي صفحات عادية يمكنك تعديلها."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:583
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:581
 msgid "Generate all missing pages"
 msgstr "إنشاء كل الصفحات الناقصة"
 
@@ -20356,11 +20845,11 @@ msgstr "يُنشأ من الاسم والمطبخ والمنطقة"
 #~ msgid "Generated in every site language: {0}. Publish a page to link it from the footer, checkout, booking, job applications and sign-in."
 #~ msgstr "تُنشأ بكل لغات الموقع: {0}. انشر الصفحة لربطها من التذييل وإتمام الطلب والحجز وطلبات التوظيف وتسجيل الدخول."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:437
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:435
 msgid "Generated in every site language: {localeNames}. Publish a page to link it from the footer, checkout, booking, job applications and sign-in."
 msgstr "تُنشأ بكل لغات الموقع: {localeNames}. انشر الصفحة لربطها من التذييل وإتمام الطلب والحجز وطلبات التوظيف وتسجيل الدخول."
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:60
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:61
 msgid "Generated legal pages"
 msgstr "أنشأ صفحات قانونية"
 
@@ -20385,6 +20874,10 @@ msgstr "جاري الإنشاء..."
 #: app/components/media-library/photo-studio-dialog.tsx:930
 msgid "Generating…"
 msgstr "جارٍ الإنشاء…"
+
+#: app/components/website/domain/buy-card.tsx:270
+msgid "Get a domain"
+msgstr "احصل على نطاق"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:452
 msgid "Get a new price"
@@ -20882,6 +21375,10 @@ msgstr "بيانات الضيف عند الدفع"
 msgid "Guest dietary tags and allergen disclosure information."
 msgstr "العلامات الغذائية للعميل ومعلومات الإفصاح عن مسببات الحساسية."
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:90
+msgid "Guest emails (broadcasts, automations, reservations, orders, hiring) show your sender name and send replies to your inbox."
+msgstr "تعرض رسائل الضيوف (الحملات والأتمتة والحجوزات والطلبات والتوظيف) اسم المرسل الخاص بك وتُرسَل الردود إلى بريدك."
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:753
 msgid "Guest is in the audience"
 msgstr "الضيف ضمن الجمهور"
@@ -21226,6 +21723,10 @@ msgstr "الضيوف المطابقون لـ"
 msgid "Guests will no longer be able to book this service. Existing reservations are not cancelled."
 msgstr "لن يتمكن الضيوف من حجز هذه الخدمة. لن يتم إلغاء الحجوزات الحالية."
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:287
+msgid "Guests will see mail from {sendingAddress} once verified."
+msgstr "سيرى الضيوف البريد من {sendingAddress} بعد التحقق."
+
 #: app/components/reservations/region-reservations-guard.tsx:73
 msgid "Guests: {guestsCount}"
 msgstr "الضيوف: {guestsCount}"
@@ -21501,6 +22002,10 @@ msgstr "أخفِه أو أعده."
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:316
 msgid "Hide overrides"
 msgstr "إخفاء التخصيصات"
+
+#: app/components/website/domain/site-domains-card.tsx:173
+msgid "Hide records"
+msgstr "إخفاء السجلات"
 
 #: app/components/pos/terminals-manager.tsx:903
 msgid "Hide removed terminals"
@@ -21846,6 +22351,10 @@ msgstr "كيف تُكتب التواريخ في الملف"
 msgid "How did the guest give consent?"
 msgstr "كيف أعطى الضيف موافقته؟"
 
+#: app/components/website/domain/connect-card.tsx:666
+msgid "How do you want to connect it?"
+msgstr "كيف تريد ربطه؟"
+
 #: ../../packages/reports/src/ui/report-labels.ts:113
 msgid "How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early."
 msgstr "مدى انحراف مدد الجلوس الفعلية عن المدة التي حددتها، لكل حجم مجموعة خلال آخر 30 يومًا. القيمة السالبة تعني أن المجموعات غادرت مبكرًا."
@@ -22035,6 +22544,10 @@ msgstr "لا أستطيع العمل فيها"
 msgid "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 msgstr "تحققت من الدفعة الإلكترونية لهذا الحساب في لوحة المدفوعات، وسأستردها أو أحتفظ بها."
 
+#: app/components/website/domain/registered-panel.tsx:151
+msgid "I clicked the link"
+msgstr "نقرت على الرابط"
+
 #: app/components/menu/menu-review-card.tsx:405
 msgid "I fixed it myself"
 msgstr "أصلحته بنفسي"
@@ -22042,6 +22555,10 @@ msgstr "أصلحته بنفسي"
 #: app/components/orders/order-detail.tsx:1248
 msgid "I have received payment at handoff"
 msgstr "لقد استلمت الدفع عند التسليم"
+
+#: app/components/website/domain/connect-card.tsx:695
+msgid "I'll add records myself"
+msgstr "سأضيف السجلات بنفسي"
 
 #: app/components/settings/cards/organization/danger-zone-card.tsx:121
 msgid "I'll not be able to access the restaurant and its data anymore"
@@ -22094,6 +22611,10 @@ msgstr "إذا انتقلت من موقع ويب أقدم أو غيّرت عنا
 #: app/components/settings/cards/guest-messages-card.tsx:71
 msgid "If you paid online, the money goes back to you."
 msgstr "إذا دفعت عبر الإنترنت، فسيُعاد المبلغ إليك."
+
+#: app/components/website/domain/provider-steps.tsx:33
+msgid "If your provider does not accept ALIAS, ANAME or CNAME at the root, add A records pointing to {values} instead."
+msgstr "إذا كان مزوّدك لا يقبل ALIAS أو ANAME أو CNAME في الجذر، فأضف سجلات A تشير إلى {values} بدلًا من ذلك."
 
 #: app/components/gbp/google-listing-tab.tsx:624
 msgid "Ignore"
@@ -22293,6 +22814,7 @@ msgstr "حضوريًا"
 #: app/components/hiring/applicants-page.tsx:236
 #: app/components/inventory/prep-screen.tsx:417
 #: app/components/inventory/prep-screen.tsx:579
+#: app/components/website/domain/buy-card.tsx:133
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:164
 msgid "In progress"
 msgstr "قيد المعالجة"
@@ -22367,6 +22889,10 @@ msgstr "بقشيش التوصيل الداخلي"
 msgid "Inactive"
 msgstr "غير نشط"
 
+#: app/components/website/domain/forwarding-panel.tsx:248
+msgid "Inbox to forward to"
+msgstr "البريد المراد التحويل إليه"
+
 #: app/components/menu/menu-bulk-edit-sheet.tsx:762
 msgid "Include"
 msgstr "تضمين"
@@ -22435,6 +22961,10 @@ msgstr "غير مكتملة"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:414
 msgid "Info"
 msgstr "معلومات"
+
+#: app/components/website/domain/forwarding-panel.tsx:234
+msgid "info or *"
+msgstr "info أو *"
 
 #: app/components/inventory/recipe-lines.tsx:160
 msgid "Ingredient"
@@ -22841,6 +23371,10 @@ msgstr "تاريخ الإصدار"
 msgid "It could not be completed or was cancelled, so the full amount went back to the card you paid with. It can take a few days to show."
 msgstr "تعذّر إكماله أو أُلغي، لذلك أُعيد المبلغ كاملًا إلى البطاقة التي دفعت بها. قد يستغرق ظهوره بضعة أيام."
 
+#: app/components/website/domain/buy-card.tsx:157
+msgid "It could not be registered. You were not charged."
+msgstr "تعذّر تسجيله. لم يتم خصم أي مبلغ منك."
+
 #: app/utils/marketing/campaign-alerts.ts:30
 msgid "It could not start inside its window, so it was skipped. Open it to duplicate it and schedule it again."
 msgstr "لم يكن بالإمكان بدء إرسالها ضمن المهلة المحددة، فتم تخطيها. افتحها لتكرارها وجدولتها من جديد."
@@ -22869,6 +23403,10 @@ msgstr "تعود إلى المراجعة ليمكن تعديلها، وتحتا�
 msgid "It goes to people who got the first broadcast, did not open or click it, and are still subscribed when this is sent. Opens are not always counted: some mail apps open messages automatically or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read the first one may get this too."
 msgstr "تُرسل إلى من تلقّى الرسالة الجماعية الأولى ولم يفتحها ولم ينقر عليها وما زال مشتركًا وقت الإرسال. لا تُحتسب عمليات الفتح دائمًا: بعض تطبيقات البريد تفتح الرسائل تلقائيًا أو تُخفي الفتح عن المرسلين (مثل حماية خصوصية Apple Mail)، لذا قد يتلقى بعض من قرأ الرسالة الأولى هذه الرسالة أيضًا."
 
+#: app/utils/domains/domain-alerts.ts:78
+msgid "It has been a week. Open the checklist to see which records are missing."
+msgstr "مرّ أسبوع. افتح قائمة التحقق لترى السجلات الناقصة."
+
 #: app/utils/discounts/labels.ts:213
 msgid "It has ended by this date and time."
 msgstr "انتهى في هذا التاريخ والوقت."
@@ -22896,6 +23434,10 @@ msgstr "غير متاح في قناة البيع هذه."
 #: app/utils/discounts/discount-alerts.ts:38
 msgid "It is paused and starts again next week. Open it to see the spend or change the budget."
 msgstr "تم إيقافه مؤقتًا ويستأنف الأسبوع القادم. افتحه لمعرفة المبلغ المصروف أو لتغيير الميزانية."
+
+#: app/utils/domains/domain-alerts.ts:114
+msgid "It is registered and your site is being set up on it. Confirm the email from the registry to keep it."
+msgstr "تم تسجيله ويجري إعداد موقعك عليه. أكّد البريد الوارد من جهة التسجيل للاحتفاظ به."
 
 #: app/components/marketing/campaign-actions.tsx:263
 msgid "It is removed for good. A broadcast that was already sent cannot be deleted."
@@ -22937,6 +23479,10 @@ msgstr "سيتم حذفه من التقويم هنا. ما نُشر بالفعل
 msgid "It leaves the Print shop list. Orders already placed keep printing it."
 msgstr "ستُزال من قائمة المطبعة. الطلبات المقدّمة مسبقًا تواصل طباعتها."
 
+#: app/components/website/domain/connect-card.tsx:165
+msgid "It looks like a {builderName} site. It stops working once this domain points at your Menuza site."
+msgstr "يبدو أنه موقع على {builderName}. سيتوقف عن العمل عندما يشير هذا النطاق إلى موقعك على Menuza."
+
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:808
 msgid "It now also runs at locations outside yours, so you can't change it."
 msgstr "أصبح يعمل الآن أيضًا في فروع خارج فروعك، لذا لا يمكنك تغييره."
@@ -22945,6 +23491,10 @@ msgstr "أصبح يعمل الآن أيضًا في فروع خارج فروعك�
 msgid "It starts answering on the next call."
 msgstr "يبدأ الرد من المكالمة التالية."
 
+#: app/utils/domains/domain-alerts.ts:87
+msgid "It stayed unconnected for 30 days, so we released it. You can connect it again any time."
+msgstr "بقي غير مربوط لمدة 30 يومًا فأفرجنا عنه. يمكنك ربطه من جديد في أي وقت."
+
 #: app/components/discounts/archive-discount-button.tsx:92
 msgid "It stops applying everywhere and its codes stop working. If you restore it later, its codes are not brought back and their use counts start again."
 msgstr "يتوقف تطبيقه في كل مكان وتتوقف رموزه عن العمل. إذا استعدته لاحقًا فلن تعود رموزه وستبدأ أعداد استخدامها من جديد."
@@ -22952,6 +23502,14 @@ msgstr "يتوقف تطبيقه في كل مكان وتتوقف رموزه عن 
 #: app/components/discounts/archive-discount-button.tsx:98
 msgid "It stops applying everywhere. You can restore it later."
 msgstr "يتوقف تطبيقه في كل مكان. يمكنك استعادته لاحقًا."
+
+#: app/components/website/domain/site-domains-card.tsx:286
+msgid "It stops serving your site at once and becomes free for others to connect."
+msgstr "يتوقف فورًا عن عرض موقعك ويصبح متاحًا للآخرين."
+
+#: app/components/website/domain/connect-card.tsx:170
+msgid "It stops working once this domain points at your Menuza site."
+msgstr "سيتوقف عن العمل عندما يشير هذا النطاق إلى موقعك على Menuza."
 
 #: app/components/staff/schedule/time-off-sheet.tsx:152
 msgid "It was entered on short notice."
@@ -23278,7 +23836,7 @@ msgstr "إبقاء كما هو"
 msgid "Keep counting"
 msgstr "متابعة الجرد"
 
-#: app/components/settings/cards/organization/site-card.tsx:368
+#: app/components/settings/cards/organization/site-card.tsx:332
 msgid "Keep current region"
 msgstr "الإبقاء على المنطقة الحالية"
 
@@ -23300,6 +23858,7 @@ msgstr "متابعة التعديل"
 #: app/components/reservations/experiences/experience-editor.tsx:1031
 #: app/components/staff/kiosk-manager.tsx:970
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
+#: app/components/website/domain/site-domains-card.tsx:294
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:581
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1049
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:235
@@ -23310,11 +23869,15 @@ msgstr "متابعة التعديل"
 msgid "Keep it"
 msgstr "إبقاؤه"
 
+#: app/components/website/domain/managed-domain-card.tsx:210
+msgid "Keep managing"
+msgstr "متابعة الإدارة"
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:393
 msgid "Keep mine"
 msgstr "الإبقاء على نصي"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:621
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:619
 msgid "Keep my text"
 msgstr "الإبقاء على نصي"
 
@@ -23431,6 +23994,10 @@ msgstr "اجعل الرقم الضريبي أقل من 40 حرفًا."
 #: app/components/hiring/applicant-labels.ts:79
 msgid "Keep their details on file"
 msgstr "الاحتفاظ ببياناتهم"
+
+#: app/components/website/domain/site-domains-card.tsx:401
+msgid "Keep them"
+msgstr "الإبقاء عليها"
 
 #: app/components/menu/menu-review-card.tsx:155
 msgid "Keep this one"
@@ -23853,6 +24420,14 @@ msgstr "آخر وردية لدرج النقد فُتحت"
 msgid "Last check-in"
 msgstr "آخر اتصال"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:401
+msgid "Last checked {checkedAt}"
+msgstr "آخر فحص: {checkedAt}"
+
+#: app/components/website/domain/site-domains-card.tsx:186
+msgid "Last checked {lastChecked}"
+msgstr "آخر فحص: {lastChecked}"
+
 #: app/components/gbp/google-listing-tab.tsx:490
 msgid "Last checked:"
 msgstr "آخر فحص:"
@@ -23888,6 +24463,10 @@ msgstr "آخر ظهور"
 msgid "Last exported: {lastExportDateFormatted}"
 msgstr "آخر تصدير: {lastExportDateFormatted}"
 
+#: app/components/website/domain/forwarding-panel.tsx:149
+msgid "Last forwarded {lastTime}"
+msgstr "آخر تحويل: {lastTime}"
+
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:92
 msgid "Last four characters"
 msgstr "آخر أربعة أحرف"
@@ -23900,6 +24479,7 @@ msgstr "آخر إشعار لمزامنة Google:"
 #: app/components/staff/review-rows.tsx:82
 #: app/components/staff/review-rows.tsx:88
 #: app/components/staff/timesheets/payroll-summary.tsx:167
+#: app/components/website/domain/buy-card.tsx:62
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:163
 msgid "Last name"
 msgstr "اسم العائلة"
@@ -24236,7 +24816,7 @@ msgstr "النصف الأيسر"
 msgid "Left a message"
 msgstr "تُرك رسالة"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:393
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:391
 msgid "Left empty, the terms say to contact the restaurant."
 msgstr "إذا تُرك فارغًا، تطلب الشروط التواصل مع المطعم."
 
@@ -24269,16 +24849,20 @@ msgstr "المتبقي للاسترداد"
 msgid "Legal"
 msgstr "قانوني"
 
+#: app/components/website/domain/buy-card.tsx:63
+msgid "Legal business name"
+msgstr "الاسم القانوني للنشاط التجاري"
+
 #: app/components/pos/zatca-settings.tsx:302
 msgid "Legal name"
 msgstr "الاسم القانوني"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:326
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:324
 msgid "Legal name of the business"
 msgstr "الاسم القانوني للنشاط التجاري"
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:112
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:287
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:117
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:285
 msgid "Legal pages"
 msgstr "الصفحات القانونية"
 
@@ -24328,6 +24912,14 @@ msgstr "السماح للضيوف بإدخال مبلغ خاص بهم"
 msgid "Let members share their referral link or code with new guests. Rewards grant after the friend’s qualifying paid order completes its hold window."
 msgstr "اسمح للأعضاء بمشاركة رابط أو رمز الإحالة مع الضيوف الجدد. تُمنح المكافآت بعد اكتمال فترة الانتظار لطلب الصديق المدفوع المؤهل."
 
+#: app/components/website/domain/connect-card.tsx:417
+msgid "Let Menuza manage this domain"
+msgstr "دع Menuza تدير هذا النطاق"
+
+#: app/components/website/domain/connect-card.tsx:677
+msgid "Let Menuza manage this domain (recommended)"
+msgstr "دع Menuza تدير هذا النطاق (موصى به)"
+
 #: app/utils/website/field-types.ts:45
 msgid "Let people select one option."
 msgstr "اسمح للناس باختيار خيار واحد."
@@ -24347,6 +24939,10 @@ msgstr "السماح للوكيل بتحويل المكالمات"
 #: app/components/reservations/waitlist/waitlist-settings.tsx:290
 msgid "Let the host stand keep a live queue for this location."
 msgstr "اسمح لمنصة الاستقبال بإدارة طابور مباشر لهذا الموقع."
+
+#: app/components/website/domain/domain-ui.tsx:45
+msgid "Letting Menuza manage a domain needs the main domain (example.com), not a subdomain."
+msgstr "تتطلب إدارة Menuza للنطاق استخدام النطاق الرئيسي (example.com) وليس نطاقًا فرعيًا."
 
 #: app/utils/inventory/starter-lists.ts:104
 msgid "Lettuce"
@@ -24583,6 +25179,7 @@ msgstr "مزامنة الملف التجاري"
 
 #: app/components/hiring/job-labels.ts:50
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:124
+#: app/components/website/domain/site-domains-card.tsx:129
 #: app/components/website/publish-controls.tsx:289
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:955
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:735
@@ -25170,6 +25767,10 @@ msgstr "قفل ({lockCount})"
 msgid "Lock after"
 msgstr "القفل بعد"
 
+#: app/components/website/domain/registered-panel.tsx:226
+msgid "Lock it again"
+msgstr "قفله من جديد"
+
 #: app/components/qr/open-tabs.tsx:593
 msgid "Lock tab"
 msgstr "قفل الحساب"
@@ -25199,6 +25800,10 @@ msgstr "قفل، الحساب {number}، الطاولة {label}"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:229
 msgid "Locked"
 msgstr "مقفلة"
+
+#: app/components/website/domain/registered-panel.tsx:32
+msgid "Locked again"
+msgstr "تم القفل من جديد"
 
 #: app/components/locations/lockable-section.tsx:86
 msgid "Locked by head office"
@@ -25459,6 +26064,10 @@ msgstr "يُصنع داخليًا"
 msgid "Made-in-house ingredients are nested too deeply. Simplify one of them."
 msgstr "المكوّنات المصنوعة داخليًا متداخلة بعمق كبير. بسّط أحدها."
 
+#: app/utils/domains/domain-alerts.ts:130
+msgid "Mail to this domain may not be arriving. Open the domain to see which address."
+msgstr "قد لا يصل البريد المرسل إلى هذا النطاق. افتح النطاق لمعرفة العنوان المعني."
+
 #: app/components/app-sidebar.tsx:470
 #: app/components/command-menu.tsx:101
 #: app/components/workspace-breadcrumb.tsx:19
@@ -25571,6 +26180,7 @@ msgstr "جعلها شاغرة"
 msgid "Make preferred"
 msgstr "تعيين كمفضّل"
 
+#: app/components/website/domain/site-domains-card.tsx:262
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:454
 msgid "Make primary"
 msgstr "جعلها رئيسية"
@@ -25634,6 +26244,10 @@ msgstr "إدارة الخصومات"
 #: app/components/roles/tenant-role-access-manager.tsx:575
 msgid "Manage dish recipes"
 msgstr "إدارة وصفات الأطباق"
+
+#: app/components/settings/cards/organization/site-card.tsx:425
+msgid "Manage domain"
+msgstr "إدارة النطاق"
 
 #: app/components/roles/tenant-role-access-manager.tsx:592
 msgid "Manage gift cards"
@@ -25765,7 +26379,7 @@ msgstr "إدارة كلمة المرور والمصادقة الثنائية و�
 msgid "Manage your personal data in accordance with GDPR Article 20."
 msgstr "إدارة بياناتك الشخصية وفقاً للمادة 20 من اللائحة العامة لحماية البيانات (GDPR)."
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:141
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:146
 msgid "Manage your public organization website and appearance."
 msgstr "إدارة موقع مؤسستك العام ومظهره."
 
@@ -25784,6 +26398,26 @@ msgstr "أدر اسم مطعمك ومعرّفه وصورة ملفه."
 #: app/components/settings/cards/organization/billing-card.tsx:111
 msgid "Manage your restaurant's subscription"
 msgstr "أدر اشتراك مطعمك"
+
+#: app/components/website/domain/records-panel.tsx:277
+msgid "Managed by Menuza"
+msgstr "تديره Menuza"
+
+#: app/components/website/domain/records-panel.tsx:179
+msgid "Managed by the registrar"
+msgstr "يديره المسجّل"
+
+#: app/components/website/domain/records-panel.tsx:177
+msgid "Managed for email forwarding"
+msgstr "تديره Menuza لتحويل البريد"
+
+#: app/components/website/domain/records-panel.tsx:178
+msgid "Managed for email sending"
+msgstr "تديره Menuza لإرسال البريد"
+
+#: app/components/website/domain/records-panel.tsx:176
+msgid "Managed for your site"
+msgstr "تديره Menuza لموقعك"
 
 #: app/components/pos/terminals-manager.tsx:851
 #: app/components/staff/timesheets/card-history.tsx:67
@@ -25832,7 +26466,7 @@ msgstr "تحديد {reviewableCount} كمراجَعة"
 msgid "Mark Active"
 msgstr "تعيين كـنشط"
 
-#: app/components/ui/notification-bell.tsx:636
+#: app/components/ui/notification-bell.tsx:654
 msgid "Mark all as read"
 msgstr "تحديد الكل كمقروء"
 
@@ -25854,7 +26488,7 @@ msgstr "وضع علامة غير منجزة"
 msgid "Mark as preselected"
 msgstr "تعيين كمحدد مسبقًا"
 
-#: app/components/ui/notification-bell.tsx:341
+#: app/components/ui/notification-bell.tsx:359
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
@@ -26337,6 +26971,22 @@ msgstr "القوائم التي تعرض هذا التصنيف."
 #: app/utils/gift-cards/labels.ts:33
 msgid "Menuza"
 msgstr "منيوزا"
+
+#: app/components/website/domain/domain-ui.tsx:47
+msgid "Menuza already manages this domain."
+msgstr "تدير Menuza هذا النطاق بالفعل."
+
+#: app/components/website/domain/domain-ui.tsx:73
+msgid "Menuza does not manage this domain's DNS."
+msgstr "لا تدير Menuza خوادم DNS لهذا النطاق."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:307
+msgid "Menuza manages this domain's DNS, so the records were added for you."
+msgstr "تدير Menuza خوادم DNS لهذا النطاق، لذلك أضفنا السجلات نيابةً عنك."
+
+#: app/components/website/domain/managed-domain-card.tsx:58
+msgid "Menuza no longer manages this domain"
+msgstr "لم تعد Menuza تدير هذا النطاق"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:168
 msgid "Menuza Team"
@@ -26996,6 +27646,10 @@ msgstr "نقل المهمة {position} للأعلى"
 msgid "Move the booking to a free table"
 msgstr "انقل الحجز إلى طاولة شاغرة"
 
+#: app/components/website/domain/domain-ui.tsx:74
+msgid "Move this domain to Menuza's nameservers first."
+msgstr "انقل هذا النطاق إلى خوادم أسماء Menuza أولًا."
+
 #: app/components/hiring/applicant-board.tsx:328
 msgid "Move to"
 msgstr "نقل إلى"
@@ -27149,11 +27803,15 @@ msgstr "رابط جدولي"
 #: app/components/reservations/policies/policy-sheet.tsx:217
 #: app/components/reservations/waitlist/party-fields.tsx:62
 #: app/components/reservations/walk-in-dialog.tsx:239
+#: app/components/settings/cards/organization/email-sending-card.tsx:321
 #: app/components/settings/cards/organization/general-settings-card.tsx:87
 #: app/components/settings/cards/organization/verified-domain-card.tsx:150
 #: app/components/settings/cards/profile-card.tsx:116
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
+#: app/components/website/domain/records-panel.tsx:94
+#: app/components/website/domain/records-panel.tsx:226
+#: app/components/website/domain/site-domains-card.tsx:49
 #: app/components/website/form-builder-sidebar.tsx:673
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:346
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:266
@@ -27263,6 +27921,14 @@ msgstr "تُحفظ الأسماء بلغتك. وتُتخطى العناصر ال
 #: app/components/menu/menu-review-card.tsx:64
 msgid "Names use mixed capital letters. One style looks tidier."
 msgstr "الأسماء تستخدم أحرفًا كبيرة بشكل غير متسق. أسلوب واحد يبدو أنظف."
+
+#: app/components/website/domain/managed-domain-card.tsx:101
+msgid "Nameservers"
+msgstr "خوادم الأسماء"
+
+#: app/components/website/domain/managed-domain-card.tsx:126
+msgid "Nameservers changed at the wrong place"
+msgstr "تم تغيير خوادم الأسماء في المكان الخطأ"
 
 #: app/utils/inventory/starter-lists.ts:315
 msgid "Napkins"
@@ -27828,7 +28494,7 @@ msgstr "ورديات جديدة ونُقلت وعُدّلت وحُذفت."
 msgid "Newer"
 msgstr "الأحدث"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:485
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:483
 msgid "Newer template available"
 msgstr "يتوفر قالب أحدث"
 
@@ -27959,6 +28625,10 @@ msgstr "لا يوجد نشاط بعد"
 #: app/components/phone-agent/phone-number-dialogs.tsx:194
 msgid "No agent numbers are assigned to your business yet. Contact support to get one."
 msgstr "لم تُخصص أي أرقام للوكيل لنشاطك التجاري بعد. تواصل مع الدعم للحصول على رقم."
+
+#: app/components/website/domain/site-domains-card.tsx:35
+msgid "No ALIAS or CNAME at the root? Use {type} records:"
+msgstr "لا يوجد ALIAS أو CNAME في الجذر؟ استخدم سجلات {type}:"
 
 #: app/components/inventory/invoice-read-panel.tsx:139
 msgid "No amount"
@@ -28616,6 +29286,10 @@ msgstr "لا ترتبط بعملية البيع هذه أي نقاط أو مكا
 msgid "No loyalty program yet"
 msgstr "لا يوجد برنامج ولاء بعد"
 
+#: app/components/website/domain/forwarding-panel.tsx:151
+msgid "No mail forwarded yet"
+msgstr "لم يتم تحويل أي بريد بعد"
+
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:367
 msgid "No map position: checks are skipped until the address has one."
 msgstr "لا يوجد موقع على الخريطة: تُتخطى الفحوصات حتى يحصل العنوان على موقع."
@@ -29098,6 +29772,10 @@ msgstr "لا يوجد وقت مذكور"
 msgid "No rate"
 msgstr "بلا أجر ساعي"
 
+#: app/components/website/domain/records-panel.tsx:241
+msgid "No records yet."
+msgstr "لا توجد سجلات بعد."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:911
 msgid "No redirects created yet"
 msgstr "لا توجد عمليات إعادة توجيه بعد"
@@ -29479,7 +30157,7 @@ msgstr "لا توجد مبيعات حضورية في هذا اليوم."
 msgid "No waste logged"
 msgstr "لا يوجد هدر مسجّل"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:82
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:83
 msgid "No website activity yet"
 msgstr "لا يوجد نشاط للموقع بعد"
 
@@ -29717,6 +30395,10 @@ msgstr "غير متاح"
 msgid "Not available at the till."
 msgstr "غير متاح عند الصندوق."
 
+#: app/components/website/domain/forwarding-panel.tsx:73
+msgid "Not available for {fqdn} yet"
+msgstr "غير متاح للنطاق {fqdn} بعد"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:68
 msgid "Not available in your data region yet"
 msgstr "غير متاح في منطقة بياناتك بعد"
@@ -29751,6 +30433,10 @@ msgstr "لم يتغيّر (لا يمكنك إدارة هذه المواقع):"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:528
 msgid "Not changed (you cannot manage these):"
 msgstr "لم يتغيّر (لا يمكنك إدارة هذه):"
+
+#: app/components/website/domain/domain-ui.tsx:229
+msgid "Not checked"
+msgstr "لم يُفحص"
 
 #: app/components/dashboard/blocks/google-performance-block.tsx:120
 #: app/components/pos/zatca-settings.tsx:382
@@ -29801,7 +30487,11 @@ msgstr "لا يوجد سجل كافٍ بعد. تتحسن الاقتراحات ب
 msgid "Not entered"
 msgstr "غير مُدخل"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:471
+#: app/components/website/domain/domain-ui.tsx:223
+msgid "Not found yet"
+msgstr "لم يُعثر عليه بعد"
+
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:469
 msgid "Not generated"
 msgstr "لم تُنشأ"
 
@@ -29886,6 +30576,14 @@ msgstr "غير محدد"
 msgid "Not set up for this position here"
 msgstr "غير مهيأ لهذا المنصب هنا"
 
+#: app/components/website/domain/buy-card.tsx:284
+msgid "Not set up yet"
+msgstr "غير مُعدّ بعد"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:159
+msgid "Not set. Replies go nowhere useful until you add one."
+msgstr "غير محدد. لن تذهب الردود إلى مكان مفيد حتى تضيف عنوانًا."
+
 #: app/components/dashboard/share-dashboard-dialog.tsx:404
 msgid "Not shared with anyone yet."
 msgstr "لم تتم مشاركتها مع أي شخص بعد."
@@ -29897,6 +30595,10 @@ msgstr "غير معروض"
 #: app/components/menu/modifier-form.tsx:1223
 msgid "Not shown yet"
 msgstr "غير معروضة بعد"
+
+#: app/components/website/domain/site-domains-card.tsx:114
+msgid "not started"
+msgstr "لم تبدأ"
 
 #: app/utils/reservations/payments-view.ts:67
 msgid "Not started"
@@ -29934,6 +30636,10 @@ msgstr "غير مستخدم في أي مكان آخر بعد"
 #: app/components/menu/delete-effects.tsx:562
 msgid "Not used anywhere yet."
 msgstr "غير مستخدم في أي مكان بعد."
+
+#: app/components/website/domain/managed-domain-card.tsx:92
+msgid "Not used by your site."
+msgstr "لا يستخدمه موقعك."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1825
 msgid "Not used in any notes, comments, or pages"
@@ -30147,7 +30853,7 @@ msgstr "لم يتم إعداد أي شيء لهذا الشخص."
 msgid "Nothing has happened to this item yet."
 msgstr "لم يحدث شيء لهذا العنصر بعد."
 
-#: app/components/ui/notification-bell.tsx:394
+#: app/components/ui/notification-bell.tsx:412
 msgid "Nothing here yet!"
 msgstr "لا شيء هنا بعد!"
 
@@ -30425,6 +31131,14 @@ msgstr "الآن"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:537
 msgid "Now"
 msgstr "الآن"
+
+#: app/components/website/domain/site-domains-card.tsx:38
+msgid "Now: {list}"
+msgstr "الحالي: {list}"
+
+#: app/components/website/domain/domain-ui.tsx:113
+msgid "NS records at the root cannot be changed."
+msgstr "لا يمكن تغيير سجلات NS في الجذر."
 
 #: app/components/marketing/audience-builder.tsx:290
 msgid "Number"
@@ -31277,7 +31991,7 @@ msgstr "افتح نسخة في Canva لتعديل ما تشاء بحرية، ث�
 msgid "Open a day in"
 msgstr "فتح يوم في"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:648
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:646
 msgid "Open Analytics"
 msgstr "فتح التحليلات"
 
@@ -31376,7 +32090,7 @@ msgstr "افتح إعدادات Kiro IDE"
 msgid "Open link"
 msgstr "فتح الرابط"
 
-#: app/components/ui/notification-bell.tsx:626
+#: app/components/ui/notification-bell.tsx:644
 msgid "Open menu"
 msgstr "فتح القائمة"
 
@@ -31502,6 +32216,10 @@ msgstr "فتح الرسالة الجماعية"
 msgid "Open the dish"
 msgstr "افتح الطبق"
 
+#: app/components/website/domain/provider-steps.tsx:22
+msgid "Open the DNS records for {domain}: {path}."
+msgstr "افتح سجلات DNS للنطاق {domain}: {path}."
+
 #: app/components/staff/onboarding/task-row.tsx:140
 msgid "Open the form"
 msgstr "فتح النموذج"
@@ -31509,6 +32227,10 @@ msgstr "فتح النموذج"
 #: app/components/dashboard/blocks/attention-block.tsx:504
 msgid "Open the menu"
 msgstr "افتح القائمة"
+
+#: app/components/website/domain/connect-card.tsx:305
+msgid "Open the nameserver settings of {registrarLabel}."
+msgstr "افتح إعدادات خوادم الأسماء لدى {registrarLabel}."
 
 #: app/utils/my-schedule/my-schedule-messages.ts:89
 msgid "Open the newest schedule email from your manager and tap the button in it. Do not copy part of the link."
@@ -31745,6 +32467,10 @@ msgstr "تمت إضافة نوع الخيار"
 #: app/components/discounts/variant-filter.tsx:65
 msgid "Option type removed"
 msgstr "تمت إزالة نوع الخيار"
+
+#: app/components/website/domain/site-domains-card.tsx:70
+msgid "optional"
+msgstr "اختياري"
 
 #: app/components/launch/launch-checklist.tsx:84
 #: app/components/menu/menu-review-card.tsx:78
@@ -32303,7 +33029,7 @@ msgstr "تقارير المنظمة مثل العملاء والطلبات وا�
 msgid "Organization Settings"
 msgstr "إعدادات المنظمة"
 
-#: app/components/settings/cards/organization/site-card.tsx:264
+#: app/components/settings/cards/organization/site-card.tsx:228
 msgid "Organization site"
 msgstr "موقع المؤسسة"
 
@@ -32636,6 +33362,18 @@ msgstr "سعر خاص بالفرع"
 msgid "Owner"
 msgstr "المالك"
 
+#: app/components/website/domain/buy-card.tsx:64
+msgid "Owner email"
+msgstr "بريد المالك"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:178
+msgid "owner@yourdomain.com"
+msgstr "owner@yourdomain.com"
+
+#: app/components/website/domain/site-domains-card.tsx:179
+msgid "Ownership: {ownership}"
+msgstr "الملكية: {ownership}"
+
 #: ../../packages/reports/src/ui/report-labels.ts:124
 msgid "Pacing"
 msgstr "الوتيرة"
@@ -32676,7 +33414,7 @@ msgstr "رسوم التغليف"
 #: app/components/website/link-inspector.tsx:419
 #: app/components/workspace-breadcrumb.tsx:116
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:769
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:97
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:98
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:1002
 msgid "Page"
 msgstr "صفحة"
@@ -32714,8 +33452,8 @@ msgstr "رابط الصفحة"
 #: app/components/app-sidebar.tsx:672
 #: app/components/command-menu.tsx:158
 #: app/components/workspace-breadcrumb.tsx:57
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:46
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:434
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:51
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:940
 msgid "Pages"
 msgstr "الصفحات"
@@ -33162,6 +33900,10 @@ msgstr "الأجر"
 msgid "Pay and rates"
 msgstr "الأجر والمعدلات"
 
+#: app/components/website/domain/buy-card.tsx:232
+msgid "Pay and register"
+msgstr "ادفع وسجّل"
+
 #: app/components/orders/order-detail.tsx:1071
 msgid "Pay at handoff"
 msgstr "الدفع عند التسليم"
@@ -33371,9 +34113,14 @@ msgstr "الذروة:"
 msgid "Peanut Allergy"
 msgstr "حساسية الفول السوداني"
 
+#: app/components/website/domain/site-domains-card.tsx:116
+msgid "pending"
+msgstr "قيد الانتظار"
+
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
 #: app/components/customers/person-marketing-card.tsx:370
 #: app/components/customers/person-marketing-card.tsx:393
+#: app/components/settings/cards/organization/email-sending-card.tsx:80
 #: app/components/settings/cards/organization/shop-card.tsx:47
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:490
 msgid "Pending"
@@ -33618,6 +34365,10 @@ msgstr "رابط الدعوة الشخصي"
 #: app/utils/reservations/labels.ts:48
 msgid "Phone"
 msgstr "الهاتف"
+
+#: app/components/website/domain/buy-card.tsx:65
+msgid "Phone (with country code)"
+msgstr "الهاتف (مع رمز الدولة)"
 
 #: app/components/app-sidebar.tsx:534
 #: app/components/command-menu.tsx:126
@@ -34351,8 +35102,8 @@ msgid "Point of sale"
 msgstr "نقطة بيع"
 
 #: app/components/settings/cards/organization/site-card.tsx:424
-msgid "Point your own domain at Sites with a CNAME record. SSL is provisioned automatically when Cloudflare for SaaS is configured."
-msgstr "وجّه نطاقك الخاص إلى Sites باستخدام سجل CNAME. يتم توفير SSL تلقائياً عند تكوين Cloudflare for SaaS."
+#~ msgid "Point your own domain at Sites with a CNAME record. SSL is provisioned automatically when Cloudflare for SaaS is configured."
+#~ msgstr "وجّه نطاقك الخاص إلى Sites باستخدام سجل CNAME. يتم توفير SSL تلقائياً عند تكوين Cloudflare for SaaS."
 
 #: app/components/loyalty/program-form.tsx:606
 #: app/utils/loyalty/loyalty-labels.ts:38
@@ -34371,6 +35122,10 @@ msgstr "التغيير في النقاط"
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:485
 msgid "Points earned"
 msgstr "النقاط المكتسبة"
+
+#: app/components/website/domain/domain-ui.tsx:216
+msgid "Points elsewhere"
+msgstr "يشير إلى جهة أخرى"
 
 #: app/components/loyalty/program-extension-cards.tsx:489
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:631
@@ -34570,6 +35325,7 @@ msgstr "الرمز البريدي"
 
 #: app/components/pos/zatca-settings.tsx:328
 #: app/components/staff/details-tab.tsx:413
+#: app/components/website/domain/buy-card.tsx:70
 msgid "Postal code"
 msgstr "الرمز البريدي"
 
@@ -34889,6 +35645,10 @@ msgstr "نطاق الأسعار"
 msgid "Price ready"
 msgstr "السعر جاهز"
 
+#: app/components/website/domain/buy-card.tsx:427
+msgid "Price shown to you (cents)"
+msgstr "السعر المعروض لك (بالسنت)"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:333
 msgid "Price to confirm"
 msgstr "السعر بانتظار التأكيد"
@@ -34962,6 +35722,7 @@ msgid "Pricing rules"
 msgstr "قواعد التسعير"
 
 #: app/components/menu/item-form.tsx:552
+#: app/components/website/domain/site-domains-card.tsx:148
 #: app/components/website/link-inspector.tsx:394
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:441
 msgid "Primary"
@@ -34975,6 +35736,14 @@ msgstr "الفرع الرئيسي / الافتراضي"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4876
 msgid "Primary button"
 msgstr "الزر الأساسي"
+
+#: app/components/settings/cards/organization/site-card.tsx:398
+msgid "Primary domain"
+msgstr "النطاق الأساسي"
+
+#: app/components/website/domain/connect-card.tsx:638
+msgid "Primary form"
+msgstr "الصيغة الأساسية"
 
 #: app/components/inventory/review-order-screen.tsx:765
 #: app/components/my-schedule/my-schedule-page.tsx:156
@@ -35073,6 +35842,7 @@ msgstr "تحديد أولوية هذه المهام"
 #: app/components/discounts/discount-form.tsx:686
 #: app/components/discounts/discount-form.tsx:2151
 #: app/components/phone-agent/training-rules-section.tsx:564
+#: app/components/website/domain/records-panel.tsx:117
 msgid "Priority"
 msgstr "الأولوية"
 
@@ -35088,7 +35858,11 @@ msgstr "الخصوصية"
 msgid "Privacy & Data Rights"
 msgstr "الخصوصية وحقوق البيانات"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:214
+#: app/components/website/domain/registered-panel.tsx:65
+msgid "Privacy on"
+msgstr "الخصوصية مفعّلة"
+
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:212
 msgid "Privacy policy"
 msgstr "سياسة الخصوصية"
 
@@ -35319,7 +36093,7 @@ msgstr "ملاحظة عامة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:318
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:491
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:545
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:543
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:704
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6663
 msgid "Publish"
@@ -35333,7 +36107,7 @@ msgstr "نشر ({count})"
 msgid "Publish a menu to choose categories."
 msgstr "انشر قائمة لاختيار الفئات."
 
-#: app/components/settings/cards/organization/site-card.tsx:267
+#: app/components/settings/cards/organization/site-card.tsx:231
 msgid "Publish a public website for your organization. Visitors can reach it at your org subdomain, or a custom domain you connect."
 msgstr "انشر موقعاً عاماً لمؤسستك. يمكن للزوار الوصول إليه عبر النطاق الفرعي لمؤسستك، أو نطاق مخصص تقوم بربطه."
 
@@ -35409,7 +36183,7 @@ msgstr "انشر موقعك أولًا."
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:193
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:411
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:252
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:473
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:471
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:648
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6545
 #: app/utils/reservations/experiences-view.ts:38
@@ -35420,7 +36194,7 @@ msgstr "منشور"
 msgid "Published {date}"
 msgstr "نُشر في {date}"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:45
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:46
 msgid "Published a page"
 msgstr "نشر صفحة"
 
@@ -35436,7 +36210,7 @@ msgstr "نُشر بهدوء. لم يصل بريد إلى أحد."
 msgid "Published the call flow"
 msgstr "تم نشر مسار المكالمة"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:51
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:52
 msgid "Published the site design"
 msgstr "نشر تصميم الموقع"
 
@@ -35469,7 +36243,7 @@ msgstr "جارٍ النشر الآن…"
 msgid "Publishing was interrupted, so the post may already be live. Check the account and send it again only if it is not there."
 msgstr "توقف النشر، لذا قد يكون المنشور منشورًا بالفعل. تحقّق من الحساب وأرسله مرة أخرى فقط إن لم يكن موجودًا."
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:84
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:85
 msgid "Publishing, restoring or deleting a page will show up here."
 msgstr "سيظهر هنا نشر الصفحات أو استعادتها أو حذفها."
 
@@ -35785,6 +36559,10 @@ msgstr "سؤال التقييم"
 msgid "Rating thanks"
 msgstr "شكر التقييم"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:385
+msgid "Re-check"
+msgstr "إعادة الفحص"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:582
 msgid "Re-derive future reservation times"
 msgstr "إعادة احتساب أوقات الحجوزات المستقبلية"
@@ -35899,6 +36677,7 @@ msgid "Reading page details"
 msgstr "قراءة تفاصيل الصفحة"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:570
+#: app/components/website/domain/buy-card.tsx:130
 #: app/utils/orders/status-label.ts:10
 msgid "Ready"
 msgstr "جاهز"
@@ -36103,6 +36882,10 @@ msgstr "المستلمون"
 msgid "Recommend a schedule"
 msgstr "اقتراح جدول"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:348
+msgid "recommended"
+msgstr "موصى به"
+
 #: app/components/staff/labor-core-rules.tsx:128
 msgid "Recommended"
 msgstr "موصى به"
@@ -36140,6 +36923,7 @@ msgstr "إعادة الربط"
 msgid "Reconnect needed"
 msgstr "يلزم إعادة الربط"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:318
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:289
 msgid "Record"
 msgstr "السجل"
@@ -36162,6 +36946,10 @@ msgstr "تسجيل رسالة ليتابعها فريقك."
 #: app/components/orders/record-order-refund-dialog.tsx:227
 msgid "Record a refund"
 msgstr "تسجيل استرداد"
+
+#: app/components/website/domain/records-panel.tsx:46
+msgid "Record added"
+msgstr "تمت إضافة السجل"
 
 #: app/components/inventory/record-batch-dialog.tsx:341
 msgid "Record batch"
@@ -36207,6 +36995,14 @@ msgstr "سجّل المبالغ التي أعدتها بالفعل، مثلًا 
 #: app/components/orders/record-order-refund-dialog.tsx:352
 msgid "Record refund"
 msgstr "تسجيل الاسترداد"
+
+#: app/components/website/domain/records-panel.tsx:174
+msgid "Record removed"
+msgstr "تمت إزالة السجل"
+
+#: app/components/website/domain/records-panel.tsx:46
+msgid "Record saved"
+msgstr "تم حفظ السجل"
 
 #: app/components/hiring/applicant-labels.ts:66
 msgid "Record the decision quietly."
@@ -36355,13 +37151,17 @@ msgstr "تمت إعادة التوجيه"
 #: app/components/app-sidebar.tsx:705
 #: app/components/command-menu.tsx:161
 #: app/components/workspace-breadcrumb.tsx:61
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:105
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:110
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:780
 msgid "Redirects & 404 History"
 msgstr "سجل عمليات إعادة التوجيه وأخطاء 404"
+
+#: app/components/website/domain/site-domains-card.tsx:152
+msgid "Redirects to {primary}"
+msgstr "يُحوَّل إلى {primary}"
 
 #: app/components/loyalty/program-extension-cards.tsx:565
 msgid "Refer a friend"
@@ -36440,8 +37240,8 @@ msgid "Refresh reviews"
 msgstr "تحديث التقييمات"
 
 #: app/components/settings/cards/organization/site-card.tsx:509
-msgid "Refresh status"
-msgstr "تحديث الحالة"
+#~ msgid "Refresh status"
+#~ msgstr "تحديث الحالة"
 
 #: app/components/reservations/host-subnav.tsx:395
 msgid "Refresh. {updated}"
@@ -36503,7 +37303,7 @@ msgstr "استرداد قيد الانتظار: {amount}"
 msgid "Refund pending. It is still being processed."
 msgstr "الاسترداد قيد الانتظار. ما زال قيد المعالجة."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:384
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:382
 msgid "Refund policy (optional)"
 msgstr "سياسة الاسترداد (اختياري)"
 
@@ -36621,7 +37421,7 @@ msgstr "المبالغ المستردة عند إلغاء الضيف"
 msgid "Refuse oversized regular orders online. Leave blank for no cap."
 msgstr "ارفض الطلبات العادية كبيرة الحجم عبر الإنترنت. اترك الحقل فارغًا لعدم وضع حد."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:515
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:513
 msgid "Regenerate"
 msgstr "إعادة الإنشاء"
 
@@ -36629,7 +37429,7 @@ msgstr "إعادة الإنشاء"
 msgid "Regenerate Codes"
 msgstr "إعادة إنشاء الرموز"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:600
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:598
 msgid "Regenerating replaces your text with the new version. Here is what would change. Lines in red are removed, lines in green are added."
 msgstr "إعادة الإنشاء تستبدل نصك بالنسخة الجديدة. هذا ما سيتغير. الأسطر الحمراء تُحذف والأسطر الخضراء تُضاف."
 
@@ -36669,6 +37469,14 @@ msgstr "إعدادات الكاشير"
 #: app/components/settings/passkey-manager.tsx:205
 msgid "Registered {timeAgo} ago"
 msgstr "تم التسجيل منذ {timeAgo}"
+
+#: app/components/website/domain/buy-card.tsx:111
+msgid "Registering the domain"
+msgstr "تسجيل النطاق"
+
+#: app/components/website/domain/registered-panel.tsx:47
+msgid "Registration"
+msgstr "التسجيل"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:169
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4299
@@ -36845,6 +37653,7 @@ msgstr "الإزالة غير منشورة"
 #: app/components/phone-agent/phone-number-dialogs.tsx:178
 #: app/components/pos/terminals-manager.tsx:568
 #: app/components/reservations/experiences/experience-editor.tsx:1005
+#: app/components/settings/cards/organization/email-sending-card.tsx:154
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:299
 #: app/components/staff/kiosk-manager.tsx:456
@@ -36858,6 +37667,9 @@ msgstr "الإزالة غير منشورة"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:710
 #: app/components/staff/schedule/shift-editor-sheet.tsx:743
 #: app/components/website/branding-panel.tsx:327
+#: app/components/website/domain/forwarding-panel.tsx:194
+#: app/components/website/domain/records-panel.tsx:297
+#: app/components/website/domain/site-domains-card.tsx:274
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:688
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:713
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3065
@@ -36889,6 +37701,10 @@ msgstr "إزالة {e164}؟"
 #: app/components/reservations/waitlist/waitlist-queue.tsx:364
 msgid "Remove {guest} from the waitlist?"
 msgstr "إزالة {guest} من قائمة الانتظار؟"
+
+#: app/components/website/domain/site-domains-card.tsx:283
+msgid "Remove {hostname}?"
+msgstr "هل تريد إزالة {hostname}؟"
 
 #: app/components/inventory/record-delivery-screen.tsx:1181
 #: app/components/inventory/review-order-screen.tsx:950
@@ -36931,6 +37747,10 @@ msgstr "إزالة صلاحية الوصول لـ {name}"
 msgid "Remove access from all devices except this one"
 msgstr "إزالة الوصول من جميع الأجهزة عدا هذا الجهاز"
 
+#: app/components/website/domain/provider-steps.tsx:42
+msgid "Remove any default record that points the same name at a parking page, so only one record is left for it."
+msgstr "احذف أي سجل افتراضي يوجّه الاسم نفسه إلى صفحة ركن، حتى يبقى سجل واحد فقط لهذا الاسم."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1406
 msgid "Remove availability override"
 msgstr "إزالة استثناء التوفر"
@@ -36970,7 +37790,8 @@ msgstr "إزالة التصميم"
 msgid "Remove dish"
 msgstr "إزالة الطبق"
 
-#: app/components/settings/cards/organization/site-card.tsx:528
+#: app/components/settings/cards/organization/email-sending-card.tsx:396
+#: app/components/website/domain/site-domains-card.tsx:306
 msgid "Remove domain"
 msgstr "إزالة النطاق"
 
@@ -37223,7 +38044,7 @@ msgstr "أزل علامات التتبع قبل إيقاف الشريط: فهي 
 msgid "Removed"
 msgstr "تمت الإزالة"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:58
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:59
 msgid "Removed a redirect"
 msgstr "أزال عملية إعادة توجيه"
 
@@ -37297,6 +38118,14 @@ msgstr "إعادة تسمية، الطاولة {tableName}"
 #: ../../packages/marketing/src/components/email/email-preview.tsx:127
 msgid "Rendering…"
 msgstr "جارٍ العرض…"
+
+#: app/components/website/domain/registered-panel.tsx:175
+msgid "Renew automatically"
+msgstr "التجديد تلقائيًا"
+
+#: app/components/website/domain/registered-panel.tsx:40
+msgid "Renews"
+msgstr "يُجدَّد"
 
 #: app/components/inventory/count-review-screen.tsx:295
 #: app/components/phone-agent/call-follow-up.tsx:151
@@ -37402,7 +38231,7 @@ msgstr "استبدال ما لديك؟"
 msgid "Replace with custom service"
 msgstr "استبدال بفترة خدمة مخصصة"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:635
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:633
 msgid "Replace with the new text"
 msgstr "الاستبدال بالنص الجديد"
 
@@ -37452,6 +38281,14 @@ msgstr "الرد في سلسلة الردود"
 #: app/components/mailbox/reviews-tab.tsx:668
 msgid "Reply to review"
 msgstr "الرد على التقييم"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:139
+msgid "Reply-to address"
+msgstr "عنوان الرد"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:224
+msgid "Reply-to verified"
+msgstr "تم التحقق من عنوان الرد"
 
 #: app/components/chat/chat-view.tsx:893
 msgid "Reply…"
@@ -37619,6 +38456,7 @@ msgid "Required. Kept on the tab for your records."
 msgstr "مطلوب. يُحفظ في الحساب لسجلاتك."
 
 #: app/components/reservations/detail-sheet.tsx:1284
+#: app/components/website/domain/forwarding-panel.tsx:185
 msgid "Resend confirmation"
 msgstr "إعادة إرسال التأكيد"
 
@@ -37955,7 +38793,7 @@ msgstr "استعادة: {name}"
 msgid "Restored"
 msgstr "مُستعاد"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:49
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:50
 msgid "Restored an earlier version"
 msgstr "استعاد نسخة سابقة"
 
@@ -38071,6 +38909,10 @@ msgstr "إعادة محاولة التحصيل"
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:464
 msgid "Retry failed accounts"
 msgstr "إعادة المحاولة للحسابات الفاشلة"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:343
+msgid "Return path"
+msgstr "مسار الارتداد"
 
 #: app/components/menu/item-variations.tsx:594
 msgid "Return time for {name}"
@@ -38761,7 +39603,7 @@ msgstr "صلصات"
 msgid "Saudi Arabia"
 msgstr "المملكة العربية السعودية"
 
-#: app/components/settings/cards/organization/site-card.tsx:129
+#: app/components/settings/cards/organization/site-card.tsx:109
 msgid "Saudi Arabia (KSA)"
 msgstr "المملكة العربية السعودية (KSA)"
 
@@ -38787,6 +39629,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:149
 #: app/components/save-bar.tsx:351
 #: app/components/settings/cards/organization/cuisine-price-card.tsx:61
+#: app/components/settings/cards/organization/email-sending-card.tsx:121
 #: app/components/settings/email-form.tsx:98
 #: app/components/staff/kiosk-manager.tsx:910
 #: app/components/staff/labor/labor-sales.tsx:203
@@ -38909,7 +39752,7 @@ msgstr "حفظ الافتراضي"
 msgid "Save delivery"
 msgstr "حفظ الشحنة"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:420
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:418
 msgid "Save details"
 msgstr "حفظ البيانات"
 
@@ -38978,6 +39821,10 @@ msgstr "حفظ الملف في Google"
 #: app/components/staff/positions-tab.tsx:861
 msgid "Save rate"
 msgstr "حفظ الأجر"
+
+#: app/components/website/domain/records-panel.tsx:141
+msgid "Save record"
+msgstr "حفظ السجل"
 
 #: app/components/pos/station-register-settings.tsx:376
 msgid "Save register settings"
@@ -39071,12 +39918,18 @@ msgstr "احفظ تعديلاتك قبل تغيير الحالة."
 msgid "Save zone"
 msgstr "حفظ المنطقة"
 
+#: app/components/website/domain/provider-steps.tsx:51
+msgid "Save. It can take up to {minutes} minutes (sometimes longer) to take effect."
+msgstr "احفظ. قد يستغرق التطبيق حتى {minutes} دقيقة (وأحيانًا أكثر)."
+
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:166
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/inventory/counting-screen.tsx:661
 #: app/components/pos/station-register-settings.tsx:232
 #: app/components/reservations/floor-plan-canvas.tsx:773
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:424
+#: app/components/settings/cards/organization/email-sending-card.tsx:131
+#: app/components/website/domain/registered-panel.tsx:28
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:422
 msgid "Saved"
 msgstr "تم الحفظ"
 
@@ -39354,6 +40207,10 @@ msgstr "امسح الرمز بكاميرا الجهاز اللوحي، أو اف
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "امسح الرمز بكاميرا هذا الجهاز اللوحي، أو الصق الرابط أدناه."
 
+#: app/components/website/domain/connect-card.tsx:358
+msgid "Scan this domain"
+msgstr "فحص هذا النطاق"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:492
 #: app/components/app-sidebar.tsx:644
 #: app/components/command-menu.tsx:146
@@ -39459,7 +40316,7 @@ msgstr "مجدول"
 msgid "Scheduled (advance) orders"
 msgstr "الطلبات المجدولة (مسبقًا)"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:52
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:53
 msgid "Scheduled a publish"
 msgstr "جدول نشرًا"
 
@@ -39533,6 +40390,7 @@ msgid "Seamless white backdrop, soft even light"
 msgstr "خلفية بيضاء سلسة وإضاءة ناعمة متساوية"
 
 #: app/components/app-sidebar.tsx:262
+#: app/components/website/domain/buy-card.tsx:314
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:305
 msgid "Search"
 msgstr "بحث"
@@ -39618,6 +40476,10 @@ msgstr "البحث عن الأطباق"
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:288
 msgid "Search engine verification"
 msgstr "التحقق لدى محركات البحث"
+
+#: app/components/website/domain/buy-card.tsx:303
+msgid "Search for a domain"
+msgstr "ابحث عن نطاق"
 
 #: app/components/customers/person-merge-dialog.tsx:122
 msgid "Search for the duplicate"
@@ -40547,8 +41409,13 @@ msgstr "يُباع أكثر بنسبة <0>{percent}%</0> اليوم"
 #: app/components/inventory/send-order-dialog.tsx:221
 #: app/components/inventory/transfers-panel.tsx:242
 #: app/components/my-schedule/availability-sheet.tsx:203
+#: app/components/website/domain/connect-card.tsx:785
 msgid "Send"
 msgstr "إرسال"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:190
+msgid "Send a code"
+msgstr "إرسال رمز"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:556
 msgid "Send a new code"
@@ -40607,6 +41474,10 @@ msgstr "إرسال بريد إلكتروني"
 msgid "Send for review"
 msgstr "إرسال للمراجعة"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:244
+msgid "Send from an address on your own domain, such as hello@yourdomain.com, so guests see it and it passes email checks. Until it is verified, emails keep going out from our address with your name and reply-to."
+msgstr "أرسل من عنوان على نطاقك الخاص مثل hello@yourdomain.com ليراه الضيوف ويجتاز فحوصات البريد. إلى أن يتم التحقق منه، تستمر الرسائل بالخروج من عنواننا مع اسمك وعنوان الرد."
+
 #: app/components/hiring/hire-dialog.tsx:384
 #: app/components/staff/access-tab.tsx:414
 msgid "Send invitation"
@@ -40621,6 +41492,10 @@ msgstr "إرسال الدعوات"
 msgid "Send invitations to join the organization workspace."
 msgstr "إرسال دعوات للانضمام إلى مساحة عمل المنظمة."
 
+#: app/components/website/domain/registered-panel.tsx:136
+msgid "Send it again"
+msgstr "إرسالها مرة أخرى"
+
 #: app/components/inventory/review-order-screen.tsx:574
 msgid "Send it by <0>{cutoff}</0> to make this delivery."
 msgstr "أرسله قبل <0>{cutoff}</0> ليصل في هذا الموعد."
@@ -40628,6 +41503,10 @@ msgstr "أرسله قبل <0>{cutoff}</0> ليصل في هذا الموعد."
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:837
 msgid "Send its visitors to"
 msgstr "إرسال زوارها إلى"
+
+#: app/components/website/domain/forwarding-panel.tsx:94
+msgid "Send mail for addresses like info@{fqdn} to your own inbox. Forwarding only: there is no mailbox and you cannot send from these addresses. We never store or read the messages."
+msgstr "حوّل البريد المرسل إلى عناوين مثل info@{fqdn} إلى بريدك الخاص. تحويل فقط: لا يوجد صندوق بريد ولا يمكنك الإرسال من هذه العناوين. لا نخزّن الرسائل ولا نقرؤها أبدًا."
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:161
 #: app/components/chat/chat-composer.tsx:357
@@ -40678,6 +41557,10 @@ msgstr "أرسل أول رسالة — سيراها فريقك هنا."
 msgid "Send the reminder this many hours before"
 msgstr "أرسل التذكير قبل هذا العدد من الساعات"
 
+#: app/components/website/domain/connect-card.tsx:748
+msgid "Send these steps to someone else"
+msgstr "إرسال هذه الخطوات إلى شخص آخر"
+
 #: app/components/inventory/send-order-dialog.tsx:104
 msgid "Send this order?"
 msgstr "إرسال هذا الطلب؟"
@@ -40690,6 +41573,14 @@ msgstr "أرسل إلى"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:995
 msgid "Send to Canva"
 msgstr "إرسال إلى Canva"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:99
+msgid "Sender name"
+msgstr "اسم المرسل"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:268
+msgid "Sending domain"
+msgstr "نطاق الإرسال"
 
 #: app/utils/inventory/order-view.ts:189
 msgid "Sending email is switched off for now."
@@ -40824,7 +41715,7 @@ msgstr "يُرسل عندما يوافق المدير على الطلب."
 msgid "Sent when a manager declines a request."
 msgstr "يُرسل عندما يرفض المدير الطلب."
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:63
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:68
 msgid "SEO"
 msgstr "تحسين محركات البحث"
 
@@ -40872,6 +41763,10 @@ msgstr "أقسام النادلين"
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1059
 msgid "Server:"
 msgstr "النادل:"
+
+#: app/components/website/domain/managed-domain-card.tsx:90
+msgid "Serves {siteList}."
+msgstr "يخدم {siteList}."
 
 #: app/components/customers/person-profile-screen.tsx:773
 #: app/components/note/integration-controls.tsx:306
@@ -41102,6 +41997,10 @@ msgstr "حدّد ساعات العمل الفعلية التي يمكن للعم
 msgid "Set the price"
 msgstr "تحديد السعر"
 
+#: app/components/website/domain/provider-steps.tsx:38
+msgid "Set the proxy status to \"DNS only\" (grey cloud) so the certificate can be issued."
+msgstr "اضبط حالة الوكيل على \"DNS فقط\" (السحابة الرمادية) حتى تُصدَر الشهادة."
+
 #: app/components/website/create-page-dialog.tsx:142
 msgid "Set the title and URL for your new page."
 msgstr "حدد العنوان والرابط لصفحتك الجديدة."
@@ -41109,6 +42008,10 @@ msgstr "حدد العنوان والرابط لصفحتك الجديدة."
 #: app/components/hiring/hire-dialog.tsx:144
 msgid "Set their pay on their profile."
 msgstr "حدّد أجرهم من ملفهم."
+
+#: app/components/website/domain/managed-domain-card.tsx:112
+msgid "Set these at your registrar. Your site stays on the old setup until we see them. We check every 15 minutes."
+msgstr "اضبطها لدى المسجّل. يبقى موقعك على الإعداد القديم إلى أن نراها. نفحص كل 15 دقيقة."
 
 #: app/utils/staffing/staff-errors.ts:35
 msgid "Set this workplace's time zone before pairing a tablet."
@@ -41174,13 +42077,22 @@ msgstr "جهّز طاولاتك الآن. يبدأ الطلب من الطاول�
 msgid "Set when online ordering, pickup, and delivery are accepted for this location."
 msgstr "حدّد وقت قبول الطلب عبر الإنترنت والاستلام والتوصيل لهذا الفرع."
 
+#: app/components/website/domain/connect-card.tsx:689
+msgid "Sets the records at {autoProvider} after you approve each change."
+msgstr "يضبط السجلات لدى {autoProvider} بعد أن توافق على كل تغيير."
+
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:272
 msgid "Setting"
 msgstr "الإعداد"
 
+#: app/components/website/domain/registered-panel.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:447
 msgid "Setting up"
 msgstr "جارٍ الإعداد"
+
+#: app/components/website/domain/buy-card.tsx:112
+msgid "Setting up DNS"
+msgstr "إعداد DNS"
 
 #: app/components/app-sidebar.tsx:545
 #: app/components/app-sidebar.tsx:591
@@ -41621,6 +42533,10 @@ msgstr "إظهار السعر"
 msgid "Show product on your public site"
 msgstr "إظهار المنتج على موقعك العام"
 
+#: app/components/website/domain/site-domains-card.tsx:173
+msgid "Show records"
+msgstr "إظهار السجلات"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:1444
 msgid "Show Remaining Inventory"
 msgstr "إظهار المخزون المتبقي"
@@ -41648,6 +42564,10 @@ msgstr "أرني أمثلة محددة"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:871
 msgid "Show the address"
 msgstr "إظهار العنوان"
+
+#: app/components/website/domain/connect-card.tsx:475
+msgid "Show the changes"
+msgstr "عرض التغييرات"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4698
 msgid "Show the next six (instead of three)"
@@ -41846,6 +42766,10 @@ msgstr "تسجيل الدخول"
 #: app/routes/_auth+/login.tsx:916
 msgid "Sign In"
 msgstr "تسجيل الدخول"
+
+#: app/components/website/domain/provider-steps.tsx:18
+msgid "Sign in to {provider}, where your domain's DNS is managed."
+msgstr "سجّل الدخول إلى {provider} حيث تُدار خوادم DNS لنطاقك."
 
 #: app/routes/_auth+/login.tsx:319
 msgid "Sign in to your account"
@@ -42390,6 +43314,10 @@ msgstr "سيخطّطه شخص يمكنه تعديل المخزون."
 msgid "Something else"
 msgstr "شيء آخر"
 
+#: app/components/website/domain/domain-ui.tsx:32
+msgid "Something in the form is not valid. Check it and try again."
+msgstr "هناك شيء غير صالح في النموذج. تحقق منه وحاول مرة أخرى."
+
 #: app/utils/inventory/inventory-errors.ts:116
 msgid "Something in this form was not accepted. Check it and try again."
 msgstr "لم يتم قبول شيء في هذا النموذج. راجعه وحاول مرة أخرى."
@@ -42418,6 +43346,7 @@ msgstr "حدث خطأ ما."
 msgid "Something went wrong. Check the form and try again."
 msgstr "حدث خطأ. راجع النموذج وحاول مرة أخرى."
 
+#: app/components/website/domain/domain-ui.tsx:34
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:76
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:279
 #: app/utils/kiosk/kiosk-messages.ts:23
@@ -42887,6 +43816,10 @@ msgstr "بدء قائمة مهام الموظف الجديد"
 msgid "Start time"
 msgstr "وقت البدء"
 
+#: app/components/website/domain/buy-card.tsx:453
+msgid "Start transfer"
+msgstr "بدء النقل"
+
 #: app/components/locations/address-autocomplete.tsx:161
 msgid "Start typing an address, city, or zip code..."
 msgstr "ابدأ بكتابة عنوان أو مدينة أو رمز بريدي..."
@@ -42997,6 +43930,7 @@ msgid "State / Province"
 msgstr "الولاية / المنطقة"
 
 #: app/components/staff/details-tab.tsx:412
+#: app/components/website/domain/buy-card.tsx:69
 msgid "State or region"
 msgstr "الولاية أو المنطقة"
 
@@ -43030,10 +43964,12 @@ msgstr "الإحصائيات"
 #: app/components/orders/order-detail.tsx:1077
 #: app/components/reservations/experiences/experiences-screen.tsx:292
 #: app/components/roles/tenant-role-access-manager.tsx:1347
+#: app/components/settings/cards/organization/email-sending-card.tsx:327
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/components/staff/details-tab.tsx:259
 #: app/components/staff/staff-roster.tsx:143
 #: app/components/staff/timesheets/timesheet-table.tsx:232
+#: app/components/website/domain/site-domains-card.tsx:55
 #: app/components/workspace-breadcrumb.tsx:73
 #: app/components/workspace-breadcrumb.tsx:112
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:421
@@ -43122,6 +44058,14 @@ msgstr "اسم الخطوة"
 msgid "Steps"
 msgstr "الخطوات"
 
+#: app/components/website/domain/connect-card.tsx:528
+msgid "Steps sent"
+msgstr "تم إرسال الخطوات"
+
+#: app/components/website/domain/connect-card.tsx:697
+msgid "Steps written for your provider, with every value ready to copy."
+msgstr "خطوات مكتوبة لمزوّدك، وكل قيمة جاهزة للنسخ."
+
 #: app/components/my-schedule/time-cards-view.tsx:99
 msgid "Still clocked in"
 msgstr "ما زال في الدوام"
@@ -43129,6 +44073,10 @@ msgstr "ما زال في الدوام"
 #: app/components/reservations/booking-sheet.tsx:573
 msgid "Still needed: {missingList}"
 msgstr "لا يزال مطلوبًا: {missingList}"
+
+#: app/components/website/domain/site-domains-card.tsx:193
+msgid "Still not connected. We release it in {daysLeft} days if the records stay missing."
+msgstr "لم يُربط بعد. سنفرج عنه بعد {daysLeft} يومًا إذا بقيت السجلات ناقصة."
 
 #: app/components/menu/menu-review-card.tsx:330
 msgid "Still used in"
@@ -43194,6 +44142,14 @@ msgstr "إيقاف التوليد"
 #: app/components/impersonation-banner.tsx:65
 msgid "Stop impersonation"
 msgstr "إيقاف انتحال الشخصية"
+
+#: app/components/website/domain/managed-domain-card.tsx:197
+msgid "Stop managing {fqdn}?"
+msgstr "هل تريد التوقف عن إدارة {fqdn}؟"
+
+#: app/components/website/domain/managed-domain-card.tsx:186
+msgid "Stop managing this domain"
+msgstr "التوقف عن إدارة هذا النطاق"
 
 #: app/components/qr/open-tabs.tsx:490
 #: app/components/qr/open-tabs.tsx:651
@@ -43366,7 +44322,7 @@ msgstr "مجموعات الإضافات الفرعية النشطة:"
 msgid "Subcategory"
 msgstr "تصنيف فرعي"
 
-#: app/components/settings/cards/organization/site-card.tsx:405
+#: app/components/settings/cards/organization/site-card.tsx:369
 msgid "Subdomain URL"
 msgstr "رابط النطاق الفرعي"
 
@@ -43500,6 +44456,10 @@ msgstr "الترجمة المقترحة ({language})"
 #: app/components/menu/menu-review-card.tsx:510
 msgid "Suggested:"
 msgstr "المقترح:"
+
+#: app/components/website/domain/buy-card.tsx:347
+msgid "suggestion"
+msgstr "اقتراح"
 
 #: app/components/menu/menu-review-stack.tsx:605
 msgid "Suggestion is back"
@@ -43667,7 +44627,7 @@ msgstr "غير مفعّل لمؤسستك."
 msgid "Switching away from Coupon code archives every code when you save, and the discount applies automatically to qualifying orders. Continue?"
 msgstr "سيؤدي التحويل من رمز الكوبون إلى أرشفة كل الرموز عند الحفظ، وسيُطبَّق الخصم تلقائيًا على الطلبات المؤهلة. هل تريد المتابعة؟"
 
-#: app/components/settings/cards/organization/site-card.tsx:344
+#: app/components/settings/cards/organization/site-card.tsx:308
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
 msgstr "التبديل من {currentRegionLabel} إلى {pendingRegionLabel} يحذف نهائياً كل حساب زائر في المنطقة الحالية — الأسماء وأرقام الهواتف والبريد الإلكتروني وجلسات تسجيل الدخول. لا يمكن التراجع عن هذا الإجراء. ستبدأ عمليات تسجيل الدخول الجديدة من قاعدة بيانات فارغة في المنطقة الجديدة."
 
@@ -44126,6 +45086,10 @@ msgstr "يستقبل الطلبات مع وجود مشكلات"
 msgid "Taking reservations"
 msgstr "استقبال الحجوزات"
 
+#: app/components/website/domain/buy-card.tsx:110
+msgid "Taking the payment"
+msgstr "استلام الدفعة"
+
 #: app/components/phone-agent/test-call-sheet.tsx:105
 msgid "Talk to your agent from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
 msgstr "تحدّث مع وكيلك من هذا المتصفح واستخدم لوحة الاتصال للضغط على المفاتيح. تستخدم المكالمات التجريبية نفس مسار المكالمة والقواعد وتفاصيل النشاط التجاري التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات مُعلَّمة كتجريبية."
@@ -44464,7 +45428,7 @@ msgstr "جارٍ إنهاء الخدمة…"
 msgid "Terms"
 msgstr "الشروط"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:216
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:214
 msgid "Terms of service"
 msgstr "شروط الخدمة"
 
@@ -44620,6 +45584,10 @@ msgstr "تبدأ الرسائل النصية بمجرد أن يتحقق الضي
 msgid "Thank them"
 msgstr "شكرهم"
 
+#: app/components/website/domain/registered-panel.tsx:29
+msgid "Thank you, confirmed"
+msgstr "شكرًا لك، تم التأكيد"
+
 #: app/components/pos/ticket-settings.tsx:293
 msgid "Thank you!"
 msgstr "شكرًا لك!"
@@ -44669,6 +45637,14 @@ msgstr "شكراً لطلبك. استلمناه ونعمل عليه."
 msgid "Thanks them and says you may get in touch if something suitable opens up."
 msgstr "تشكرهم وتخبرهم بأنك قد تتواصل معهم إذا توفرت وظيفة مناسبة."
 
+#: app/components/website/domain/domain-ui.tsx:36
+msgid "That address belongs to our own platform and cannot be connected."
+msgstr "هذا العنوان تابع لمنصتنا ولا يمكن ربطه."
+
+#: app/components/website/domain/domain-ui.tsx:80
+msgid "That address is already set up."
+msgstr "هذا العنوان مُعدّ بالفعل."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:99
 msgid "That address is on your own website. Use the path instead (for example /menu)."
 msgstr "هذا العنوان على موقعك نفسه. استخدم المسار بدلًا منه (مثل /menu)."
@@ -44688,6 +45664,10 @@ msgstr "هذا المبلغ كبير جدًا."
 #: app/utils/inventory/inventory-errors.ts:185
 msgid "That amount is too small or too large. Check it and try again."
 msgstr "هذه الكمية صغيرة جدًا أو كبيرة جدًا. راجعها وحاول مرة أخرى."
+
+#: app/components/website/domain/domain-ui.tsx:69
+msgid "That authorization code is not right."
+msgstr "رمز التفويض هذا غير صحيح."
 
 #: app/components/dashboard/use-dashboard-editor.ts:38
 msgid "That block is already on the dashboard."
@@ -44724,6 +45704,14 @@ msgstr "لم يعمل هذا الرمز. ربما انتهت صلاحيته. ا�
 #: app/components/kiosk/kiosk-pair.tsx:180
 msgid "That code did not work. It may have expired. Make a new one."
 msgstr "لم يعمل هذا الرمز. ربما انتهت صلاحيته. أنشئ رمزًا جديدًا."
+
+#: app/components/website/domain/domain-ui.tsx:86
+msgid "That code expired. Send a new one."
+msgstr "انتهت صلاحية هذا الرمز. أرسل رمزًا جديدًا."
+
+#: app/components/website/domain/domain-ui.tsx:85
+msgid "That code is not right."
+msgstr "هذا الرمز غير صحيح."
 
 #: app/utils/discounts/marketing-offer-labels.ts:23
 msgid "That code no longer belongs to the discount. Choose another code."
@@ -44769,6 +45757,18 @@ msgstr "لا يبدو هذا رمز تحقق. الصق الرمز أو وسم me
 msgid "That does not look like the locations file. Download it, edit it, and upload it again."
 msgstr "هذا لا يبدو ملف المواقع. نزّله وعدّله وارفعه مرة أخرى."
 
+#: app/components/website/domain/domain-ui.tsx:41
+msgid "That domain is already connected here."
+msgstr "هذا النطاق مربوط هنا بالفعل."
+
+#: app/components/website/domain/domain-ui.tsx:37
+msgid "That domain is already connected to another restaurant."
+msgstr "هذا النطاق مربوط بالفعل بمطعم آخر."
+
+#: app/components/website/domain/domain-ui.tsx:60
+msgid "That domain was just taken. You were not charged."
+msgstr "تم حجز هذا النطاق للتو. لم يتم خصم أي مبلغ منك."
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:138
 msgid "That draft could not be used. Please try again."
 msgstr "تعذر استخدام هذه المسودة. يرجى المحاولة مرة أخرى."
@@ -44804,6 +45804,10 @@ msgstr "هذا الملف كبير جدًا. قسّمه إلى ملفات أصغ
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:72
 msgid "That file is too large. Use a file under 1 MB."
 msgstr "هذا الملف كبير جدًا. استخدم ملفًا أقل من 1 ميغابايت."
+
+#: app/components/website/domain/connect-card.tsx:182
+msgid "That is a subdomain"
+msgstr "هذا نطاق فرعي"
 
 #: app/components/inventory/count-review-screen.tsx:624
 msgid "That is about <0>{netText}</0> less than you expected."
@@ -44950,6 +45954,14 @@ msgstr "هذا النطاق فيه بطاقات كثيرة جدًا. ضيّق ع
 msgid "That range has too many time cards to export. Choose a shorter range."
 msgstr "في هذه الفترة بطاقات وقت أكثر من أن تُصدَّر. اختر فترة أقصر."
 
+#: app/components/website/domain/domain-ui.tsx:49
+msgid "That record is not valid. Check the highlighted problems."
+msgstr "هذا السجل غير صالح. تحقق من المشكلات الموضحة."
+
+#: app/components/website/domain/domain-ui.tsx:116
+msgid "That record type is not supported."
+msgstr "نوع السجل هذا غير مدعوم."
+
 #: app/utils/loyalty/loyalty-errors.ts:36
 msgid "That referral code could not be found."
 msgstr "لم يتم العثور على رمز الإحالة هذا."
@@ -45069,6 +46081,10 @@ msgstr "لا توجد ورديات في ذلك الأسبوع للبدء منه�
 #: app/components/staff/labor-example.tsx:199
 msgid "That week so far"
 msgstr "ذلك الأسبوع حتى الآن"
+
+#: app/components/website/domain/domain-ui.tsx:54
+msgid "That would change email records, so we stopped."
+msgstr "سيؤدي ذلك إلى تغيير سجلات البريد، لذلك توقفنا."
 
 #. placeholder {0}: formatGiftCardMoney(card.balanceMinor, card.currency, i18n.locale)
 #: app/components/gift-cards/gift-card-dialogs.tsx:233
@@ -45281,6 +46297,14 @@ msgstr "رصيد البطاقة غير كافٍ."
 msgid "The card is removed from the hours. It stays in the history with your reason, and {name} is not paid for it."
 msgstr "تُزال البطاقة من الساعات. تبقى في السجل مع سببك، ولا يُدفع لـ {name} مقابلها."
 
+#: app/utils/domains/domain-alerts.ts:96
+msgid "The card on file is charged at renewal. Turn off auto-renew on the Domain screen if you do not want to keep it."
+msgstr "تُخصم قيمة التجديد من البطاقة المحفوظة. أوقف التجديد التلقائي من شاشة النطاق إن لم ترغب في الاحتفاظ به."
+
+#: app/utils/domains/domain-alerts.ts:105
+msgid "The card on file was declined. Update your card now so you do not lose the domain."
+msgstr "تم رفض البطاقة المحفوظة. حدّث بطاقتك الآن حتى لا تفقد النطاق."
+
 #: app/utils/reservations/payments-view.ts:98
 msgid "The card was declined."
 msgstr "تم رفض البطاقة."
@@ -45361,7 +46385,7 @@ msgstr "تعذّر تسجيل الموافقة. حاول مرة أخرى."
 msgid "The conversation and your key presses will appear here."
 msgstr "ستظهر المحادثة وضغطات المفاتيح هنا."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:641
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:639
 msgid "The cookie banner is set under Analytics, next to your tracking tags."
 msgstr "يُضبط شريط ملفات تعريف الارتباط ضمن التحليلات، بجانب علامات التتبع لديك."
 
@@ -45552,6 +46576,18 @@ msgstr "يُطبَّق الخصم على هذه العناصر."
 #: app/components/discounts/deal-groups.tsx:219
 msgid "The discount applies to these. If a deal covers fewer items than the order holds, the cheapest are discounted."
 msgstr "ينطبق الخصم على هذه العناصر. إذا شمل العرض عناصر أقل مما في الطلب، تُخفَّض الأرخص."
+
+#: app/components/website/domain/domain-ui.tsx:68
+msgid "The domain is locked at its current registrar. Unlock it there and try again."
+msgstr "النطاق مقفل لدى المسجّل الحالي. افتح القفل هناك ثم حاول مرة أخرى."
+
+#: app/components/website/domain/connect-card.tsx:86
+msgid "The domain is registered at {registrarName}."
+msgstr "النطاق مسجّل لدى {registrarName}."
+
+#: app/components/website/domain/registered-panel.tsx:208
+msgid "The domain is unlocked and auto-renew is off. Give this authorization code to the new registrar:"
+msgstr "تم فتح قفل النطاق وإيقاف التجديد التلقائي. أعطِ رمز التفويض هذا للمسجّل الجديد:"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:491
 msgid "The download could not be made"
@@ -45977,6 +47013,14 @@ msgstr "لم يتم العثور على الموقع المراد النسخ م�
 msgid "The loyalty overview could not be loaded."
 msgstr "تعذّر تحميل نظرة عامة على برنامج الولاء."
 
+#: app/components/website/domain/domain-ui.tsx:81
+msgid "The mail service did not answer. Try again."
+msgstr "لم تستجب خدمة البريد. حاول مرة أخرى."
+
+#: app/components/website/domain/forwarding-panel.tsx:153
+msgid "The mail service does not report when mail was last forwarded."
+msgstr "لا تُبلغ خدمة البريد عن آخر وقت جرى فيه تحويل البريد."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:24
 msgid "The main paragraph copy of your email."
 msgstr "الفقرة الرئيسية في بريدك الإلكتروني."
@@ -46083,6 +47127,14 @@ msgstr "الاسم والوحدات التي يراها العملاء."
 msgid "The name customers see, and how the discount is taken off."
 msgstr "الاسم الذي يراه العملاء، وكيف يُخصم المبلغ."
 
+#: app/components/website/domain/domain-ui.tsx:104
+msgid "The name is not valid."
+msgstr "الاسم غير صالح."
+
+#: app/components/website/domain/domain-ui.tsx:105
+msgid "The name must be inside this domain."
+msgstr "يجب أن يكون الاسم داخل هذا النطاق."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:632
 msgid "The name the agent uses when it introduces itself."
 msgstr "الاسم الذي يستخدمه الوكيل عند تقديم نفسه."
@@ -46180,7 +47232,7 @@ msgstr "رسوم التغليف أو الأكياس."
 msgid "The page will not mention pay. Showing a range tends to bring more applications."
 msgstr "لن تذكر الصفحة الأجر. إظهار نطاق للأجر يجلب عادةً طلبات أكثر."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:314
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:312
 msgid "The pages are filled with these. An email is needed; the accessibility statement also needs a phone number so guests can ask for help."
 msgstr "تُعبّأ الصفحات بهذه البيانات. البريد الإلكتروني مطلوب؛ ويحتاج بيان إمكانية الوصول أيضًا إلى رقم هاتف ليتمكن الضيوف من طلب المساعدة."
 
@@ -46216,6 +47268,10 @@ msgstr "مسار صورة PNG أو JPEG أو WebP بحجم يصل إلى 2 مي�
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1280
 msgid "The path on your old site that visitors or search engines request."
 msgstr "المسار في موقعك القديم الذي يطلبه الزوار أو محركات البحث."
+
+#: app/components/website/domain/domain-ui.tsx:65
+msgid "The payment did not go through. You were not charged."
+msgstr "لم تتم عملية الدفع. لم يتم خصم أي مبلغ منك."
 
 #: app/components/orders/refund-labels.ts:7
 msgid "The payment is disputed with the card issuer."
@@ -46332,6 +47388,10 @@ msgstr "تعذّر تحميل المعاينة."
 #: app/components/reservations/messages/message-settings.tsx:734
 msgid "The preview shows the saved settings. Save your changes to see them here."
 msgstr "تعرض المعاينة الإعدادات المحفوظة. احفظ تغييراتك لتظهر هنا."
+
+#: app/components/website/domain/domain-ui.tsx:62
+msgid "The price changed. Review it and try again."
+msgstr "تغيّر السعر. راجعه وحاول مرة أخرى."
 
 #: app/components/menu/menu-review-card.tsx:93
 msgid "The prices differ. Check them before you accept."
@@ -46468,6 +47528,18 @@ msgstr "تم قبول الاسترداد وما زال قيد المعالجة."
 msgid "The refund was issued."
 msgstr "تم إصدار الاسترداد."
 
+#: app/components/website/domain/registered-panel.tsx:112
+msgid "The registry emailed the owner address. Click its link within 15 days or the domain can be suspended."
+msgstr "أرسلت جهة التسجيل بريدًا إلى عنوان المالك. انقر على الرابط خلال 15 يومًا وإلا قد يُعلَّق النطاق."
+
+#: app/components/website/domain/domain-ui.tsx:72
+msgid "The registry has not seen your confirmation yet. Click the link in its email first."
+msgstr "لم تستلم جهة التسجيل تأكيدك بعد. انقر على الرابط في بريدها أولًا."
+
+#: app/utils/domains/domain-alerts.ts:148
+msgid "The registry sent you an email. Click its link within 15 days or the domain can be suspended."
+msgstr "أرسلت لك جهة التسجيل بريدًا. انقر على الرابط خلال 15 يومًا وإلا قد يُعلَّق النطاق."
+
 #: app/components/staff/labor-policy-editor.tsx:338
 msgid "The reminder must come before the automatic clock-out."
 msgstr "يجب أن يأتي التذكير قبل تسجيل الانصراف التلقائي."
@@ -46511,6 +47583,10 @@ msgstr "الإجابة المطلوبة هي"
 #: app/components/hiring/job-editor.tsx:635
 msgid "The role on your team, like \"Line cook\". Used when you hire."
 msgstr "الدور في فريقك، مثل \"طاهٍ على الخط\". يُستخدم عند التوظيف."
+
+#: app/components/website/domain/connect-card.tsx:494
+msgid "The root domain needs an ALIAS record your provider does not offer, so it is left out. Only www is set up."
+msgstr "يحتاج النطاق الجذر إلى سجل ALIAS لا يوفره مزوّدك، لذلك تم استبعاده. يتم إعداد www فقط."
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:361
 msgid "The sale could not be queued again."
@@ -46569,6 +47645,10 @@ msgstr "تعذّر تحميل التحقق الأمني. أوقف أدوات ح�
 msgid "The security check failed. Please try again."
 msgstr "فشل التحقق الأمني. يرجى المحاولة مرة أخرى."
 
+#: app/components/website/domain/domain-ui.tsx:82
+msgid "The sender name can be up to 64 characters and cannot contain @, <, >, quotes, commas or line breaks."
+msgstr "يمكن أن يصل اسم المرسل إلى 64 حرفًا ولا يجوز أن يحتوي على @ أو < أو > أو علامات اقتباس أو فواصل أو أسطر جديدة."
+
 #: app/components/pos/terminals-manager.tsx:1372
 msgid "The server could not apply it"
 msgstr "لم يتمكن الخادم من تطبيقه"
@@ -46612,6 +47692,10 @@ msgstr "نسبة الإلغاءات التي جاءت بعد انتهاء فتر
 #: app/components/staff/labor-example.tsx:119
 msgid "The shift as a bar, with any deducted break marked"
 msgstr "الوردية على شكل شريط، مع تمييز أي استراحة مخصومة"
+
+#: app/components/website/domain/connect-card.tsx:91
+msgid "The simple setup fits: let Menuza manage this domain."
+msgstr "الإعداد البسيط مناسب: دع Menuza تدير هذا النطاق."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:327
 msgid "The special days and table blocks could not be loaded."
@@ -46729,7 +47813,7 @@ msgstr "يبدأ جهاز البيع بتطبيقات هذا الملف التع
 msgid "The terminal's app may be out of date"
 msgstr "قد يكون تطبيق نقطة البيع قديمًا"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:409
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:407
 msgid "The terms already say that deposits and cancellation rules are shown when a guest books. Add your own wording here if you want it in the terms too."
 msgstr "تنص الشروط أصلًا على أن العربون وقواعد الإلغاء تُعرض عند الحجز. أضف صياغتك الخاصة هنا إن أردتها في الشروط أيضًا."
 
@@ -46781,6 +47865,10 @@ msgstr "يجب ألا يقل الحد الأعلى للنطاق عن الحد ا
 msgid "The transcript, summary, recording, texted links, and requests from this call are permanently deleted. This cannot be undone."
 msgstr "يُحذف نص هذه المكالمة وملخصها وتسجيلها والروابط المرسلة والطلبات نهائيًا. لا يمكن التراجع عن هذا."
 
+#: app/components/website/domain/domain-ui.tsx:70
+msgid "The transfer could not start. You were not charged."
+msgstr "تعذّر بدء النقل. لم يتم خصم أي مبلغ منك."
+
 #: app/components/settings/cards/organization/consent-banner-card.tsx:52
 msgid "the UK"
 msgstr "المملكة المتحدة"
@@ -46796,6 +47884,10 @@ msgstr "الولايات المتحدة"
 #: app/utils/discounts/labels.ts:222
 msgid "The use limit has been reached."
 msgstr "تم بلوغ حد الاستخدام."
+
+#: app/components/website/domain/domain-ui.tsx:106
+msgid "The value does not fit this record type."
+msgstr "القيمة لا تناسب نوع هذا السجل."
 
 #: app/components/phone-agent/test-call-sheet.tsx:141
 msgid "The voice service for your account hasn't been set up. Contact support and we'll turn it on."
@@ -46845,6 +47937,10 @@ msgstr "الطلب كاملًا"
 msgid "The window must end after it starts."
 msgstr "يجب أن تنتهي الفترة بعد بدايتها."
 
+#: app/components/website/domain/connect-card.tsx:293
+msgid "The zone is ready. One step left at your registrar."
+msgstr "المنطقة جاهزة. تبقّت خطوة واحدة لدى المسجّل."
+
 #: app/components/hiring/candidate-sheet.tsx:400
 msgid "Their answers"
 msgstr "إجاباتهم"
@@ -46856,6 +47952,10 @@ msgstr "يبقى توفره الحالي كما هو. يمكنك ترك ملاح
 #: app/components/hiring/candidate-sheet.tsx:314
 msgid "Their details are removed on {retentionDate}."
 msgstr "تُحذف بياناتهم في {retentionDate}."
+
+#: app/components/website/domain/connect-card.tsx:780
+msgid "Their email address"
+msgstr "عنوان بريدهم الإلكتروني"
 
 #: app/components/staff/timesheets/timesheets-page.tsx:917
 msgid "Their hours are frozen as shown. You can reopen a card later if something is wrong, and the reason is logged."
@@ -46880,6 +47980,10 @@ msgstr "ورديتهم"
 #: app/utils/staffing/alert-copy.ts:57
 msgid "Their time cards are waiting for a review."
 msgstr "بطاقات الوقت الخاصة بهم بانتظار المراجعة."
+
+#: app/components/website/domain/connect-card.tsx:779
+msgid "their@email.com"
+msgstr "their@email.com"
 
 #: app/components/nav-user.tsx:223
 #: app/components/website/publish-controls.tsx:165
@@ -47015,6 +48119,10 @@ msgstr "ما زالت هذه الرسائل تَعِد بهذا الخصم. سي
 msgid "These problems stop this broadcast. Fix them, then try again."
 msgstr "تمنع هذه المشكلات إرسال هذه الرسالة الجماعية. أصلحها ثم حاول مرة أخرى."
 
+#: app/components/website/domain/connect-card.tsx:480
+msgid "These records will be added:"
+msgstr "ستُضاف هذه السجلات:"
+
 #: app/components/reservations/messages/message-settings.tsx:329
 msgid "These settings changed elsewhere and the latest version could not be loaded. Reload the page and try again."
 msgstr "تغيّرت هذه الإعدادات من مكان آخر وتعذّر تحميل أحدث نسخة. أعد تحميل الصفحة وحاول مرة أخرى."
@@ -47036,7 +48144,7 @@ msgstr "لا تكسب هذه الحسابات نقاط ولاء، لأن عمل�
 msgid "These tabs were settled at the counter or voided, and money still arrived online. Refund it or keep it in your payment dashboard."
 msgstr "سُوّيت هذه الحسابات عند الكاونتر أو أُلغيت، ومع ذلك وصل مال إلكترونيًا. استرده أو احتفظ به من لوحة المدفوعات."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:302
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:300
 msgid "These texts are a starting point, not legal advice. Have them reviewed by a lawyer before you rely on them."
 msgstr "هذه النصوص نقطة انطلاق وليست استشارة قانونية. اعرضها على محامٍ قبل الاعتماد عليها."
 
@@ -47579,6 +48687,42 @@ msgstr "هذا الطبق مكرر في الملف."
 msgid "This dish no longer has a daily limit here."
 msgstr "لم يعد لهذا الطبق حد يومي هنا."
 
+#: app/components/website/domain/forwarding-panel.tsx:105
+msgid "This domain already receives email"
+msgstr "هذا النطاق يستقبل البريد بالفعل"
+
+#: app/components/website/domain/domain-ui.tsx:75
+msgid "This domain already receives email. Type the domain to confirm that forwarding replaces it."
+msgstr "هذا النطاق يستقبل البريد بالفعل. اكتب النطاق لتأكيد أن التحويل سيحل محله."
+
+#: app/components/website/domain/connect-card.tsx:107
+msgid "This domain belongs to another Menuza site, so it cannot be connected here."
+msgstr "هذا النطاق تابع لموقع آخر على Menuza، لذلك لا يمكن ربطه هنا."
+
+#: app/components/website/domain/connect-card.tsx:123
+msgid "This domain has email records"
+msgstr "لهذا النطاق سجلات بريد"
+
+#: app/components/website/domain/connect-card.tsx:389
+msgid "This domain has email records we cannot be sure to have captured. If one is missed, email can stop. Type the domain to go on anyway, or upload the zone file above and scan again."
+msgstr "لهذا النطاق سجلات بريد لا يمكننا التأكد من التقاطها كلها. إذا فاتنا أحدها فقد يتوقف البريد. اكتب النطاق للمتابعة على أي حال، أو ارفع ملف المنطقة أعلاه وأعد الفحص."
+
+#: app/components/website/domain/domain-ui.tsx:114
+msgid "This domain has reached the limit of records."
+msgstr "بلغ هذا النطاق الحد الأقصى من السجلات."
+
+#: app/components/website/domain/connect-card.tsx:243
+msgid "This domain is already connected here. It is listed above."
+msgstr "هذا النطاق مربوط هنا بالفعل. وهو مدرج أعلاه."
+
+#: app/components/website/domain/domain-ui.tsx:71
+msgid "This domain is not active."
+msgstr "هذا النطاق غير نشط."
+
+#: app/components/website/domain/connect-card.tsx:121
+msgid "This domain receives email"
+msgstr "هذا النطاق يستقبل البريد"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:731
 msgid "This draft shift is deleted straight away."
 msgstr "تُحذف مسودة الوردية هذه فورًا."
@@ -47656,6 +48800,10 @@ msgstr "لم يعد هذا موجودًا في القائمة. اختر غيره
 msgid "This is not a price."
 msgstr "هذا ليس سعرًا."
 
+#: app/components/website/domain/domain-ui.tsx:58
+msgid "This is not available for your account yet."
+msgstr "هذه الميزة غير متاحة لحسابك بعد."
+
 #: app/utils/kiosk/kiosk-messages.ts:53
 msgid "This is not available on this tablet."
 msgstr "هذا غير متاح على هذا الجهاز اللوحي."
@@ -47687,6 +48835,10 @@ msgstr "هذه هي جلستك الحالية. سجل الخروج لإنهائ�
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:780
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمتك. استخدم هذا الرابط عند تكوين عميل الذكاء الاصطناعي."
+
+#: app/components/website/domain/domain-ui.tsx:42
+msgid "This is your primary domain. Make another one primary first, or disconnect everything."
+msgstr "هذا هو نطاقك الأساسي. اجعل نطاقًا آخر أساسيًا أولًا، أو افصل كل شيء."
 
 #: app/components/phone-agent/settings-page.tsx:144
 msgid "This item duplicates another one. Remove it and add it again."
@@ -48108,9 +49260,21 @@ msgstr "في هذا النطاق بطاقات أكثر مما يمكننا عر�
 msgid "This recipe loops or nests too deeply, so its cost cannot be worked out."
 msgstr "هذه الوصفة تدور في حلقة أو متداخلة بعمق كبير، لذلك لا يمكن حساب تكلفتها."
 
+#: app/components/website/domain/domain-ui.tsx:109
+msgid "This record already exists."
+msgstr "هذا السجل موجود بالفعل."
+
 #: app/utils/inventory/inventory-errors.ts:74
 msgid "This record could not be found. It may have been archived or removed."
 msgstr "تعذر العثور على هذا السجل. ربما تم أرشفته أو إزالته."
+
+#: app/components/website/domain/domain-ui.tsx:112
+msgid "This record is managed by Menuza and cannot be changed."
+msgstr "هذا السجل تديره Menuza ولا يمكن تغييره."
+
+#: app/components/website/domain/domain-ui.tsx:50
+msgid "This record is managed by Menuza for your site and cannot be changed."
+msgstr "هذا السجل تديره Menuza لموقعك ولا يمكن تغييره."
 
 #: app/utils/inventory/inventory-errors.ts:19
 msgid "This record is no longer here. It may have been archived or removed."
@@ -48977,7 +50141,7 @@ msgstr "حجوزات اليوم حسب الحالة وعدد الضيوف حسب
 msgid "Toggle announcement visibility"
 msgstr "تبديل ظهور الإعلان"
 
-#: app/components/ui/notification-bell.tsx:567
+#: app/components/ui/notification-bell.tsx:585
 msgid "Toggle notifications"
 msgstr "تبديل الإشعارات"
 
@@ -49030,6 +50194,10 @@ msgstr "عدد الوسوم كبير جدًا لفيسبوك."
 msgid "Too many hashtags for Google."
 msgstr "عدد الوسوم كبير جداً لمنشورات Google."
 
+#: app/components/website/domain/domain-ui.tsx:33
+msgid "Too many lookups for now. Try again in a little while."
+msgstr "عدد عمليات البحث كبير حاليًا. حاول مرة أخرى بعد قليل."
+
 #: app/components/menu/quick-modifier-group-sheet.tsx:264
 msgid "Too many menu changes. Try again shortly."
 msgstr "تغييرات كثيرة على القائمة. حاول مرة أخرى بعد قليل."
@@ -49054,6 +50222,10 @@ msgstr "محاولات كثيرة. انتظر دقيقة وحاول مرة أخ�
 #: app/utils/gift-cards/labels.ts:67
 msgid "Too many tries. Wait a moment and try again."
 msgstr "محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى."
+
+#: app/components/website/domain/domain-ui.tsx:87
+msgid "Too many wrong codes. Send a new one."
+msgstr "عدد الرموز الخاطئة كبير. أرسل رمزًا جديدًا."
 
 #: app/utils/kiosk/kiosk-messages.ts:43
 msgid "Too many wrong PINs. Try again in {seconds} seconds."
@@ -49177,6 +50349,10 @@ msgstr "النص المكتوب"
 msgid "Transfer"
 msgstr "تحويل"
 
+#: app/components/website/domain/buy-card.tsx:397
+msgid "Transfer a domain in"
+msgstr "نقل نطاق إلى Menuza"
+
 #: app/components/phone-agent/phrase-fields.tsx:59
 msgid "Transfer answered"
 msgstr "تم الرد على التحويل"
@@ -49198,9 +50374,17 @@ msgstr "حالات التحويل"
 msgid "Transfer contacts"
 msgstr "جهات اتصال التحويل"
 
+#: app/components/website/domain/registered-panel.tsx:57
+msgid "Transfer in progress"
+msgstr "النقل قيد التنفيذ"
+
 #: app/components/phone-agent/agent-details.tsx:54
 msgid "Transfer options"
 msgstr "خيارات التحويل"
+
+#: app/components/website/domain/registered-panel.tsx:197
+msgid "Transfer out: unlock and get the code"
+msgstr "النقل إلى الخارج: فتح القفل والحصول على الرمز"
 
 #: app/components/inventory/transfer-dialogs.tsx:184
 msgid "Transfer planned."
@@ -49209,6 +50393,10 @@ msgstr "تم تخطيط النقل."
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:173
 msgid "Transfer reversals"
 msgstr "عكس التحويلات"
+
+#: app/components/website/domain/buy-card.tsx:252
+msgid "Transfer started"
+msgstr "بدأ النقل"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:880
 msgid "Transfer to"
@@ -49225,6 +50413,10 @@ msgstr "التحويل إلى الفريق"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:834
 msgid "Transfer when"
 msgstr "التحويل عندما"
+
+#: app/components/website/domain/managed-domain-card.tsx:84
+msgid "Transferred to Menuza"
+msgstr "تم نقله إلى Menuza"
 
 #: app/components/inventory/inventory-chrome.tsx:63
 #: app/components/workspace-breadcrumb.tsx:51
@@ -49475,6 +50667,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/staff/timeclock-today.tsx:232
 #: app/components/staff/timesheets/timesheets-page.tsx:692
 #: app/components/turnstile-widget.tsx:252
+#: app/components/website/domain/site-domains-card.tsx:214
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:175
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:273
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:155
@@ -49546,6 +50739,14 @@ msgstr "جرّب نوعًا أو حالة أخرى."
 msgid "Try different filters."
 msgstr "جرّب عوامل تصفية مختلفة."
 
+#: app/components/website/domain/records-panel.tsx:129
+msgid "TTL"
+msgstr "TTL"
+
+#: app/components/website/domain/domain-ui.tsx:107
+msgid "TTL must be Auto or 60 to 86400 seconds."
+msgstr "يجب أن تكون TTL تلقائية أو من 60 إلى 86400 ثانية."
+
 #: app/components/loyalty/promotion-dialog.tsx:553
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:217
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:210
@@ -49576,6 +50777,14 @@ msgstr "إيقاف صوت الوكيل"
 #: app/components/orders/ordering-controls.tsx:210
 msgid "Turn off busy mode"
 msgstr "إيقاف وضع الانشغال"
+
+#: app/components/website/domain/domain-ui.tsx:51
+msgid "Turn off email forwarding before you stop managing this domain."
+msgstr "أوقف تحويل البريد قبل التوقف عن إدارة هذا النطاق."
+
+#: app/components/website/domain/forwarding-panel.tsx:286
+msgid "Turn off forwarding"
+msgstr "إيقاف التحويل"
 
 #: app/components/pos/terminals-manager.tsx:994
 msgid "Turn off PIN sign-in for {label}"
@@ -49712,6 +50921,10 @@ msgstr "تم تشغيل قاعدة التدريب \"{title}\""
 msgid "Turning an app on needs permission to change its settings (time clock rules, reservation settings, or stock)."
 msgstr "يتطلب تفعيل أي تطبيق صلاحية تغيير إعداداته (قواعد ساعة الدوام، أو إعدادات الحجوزات، أو المخزون)."
 
+#: app/components/website/domain/forwarding-panel.tsx:109
+msgid "Turning forwarding on replaces its mail provider, and its mailbox stops receiving mail. Type the domain to confirm."
+msgstr "تفعيل التحويل يستبدل مزوّد البريد الحالي ويتوقف صندوقه عن استقبال الرسائل. اكتب النطاق للتأكيد."
+
 #: app/components/staff/schedule-link-section.tsx:149
 msgid "Turning off…"
 msgstr "جارٍ الإيقاف…"
@@ -49762,6 +50975,9 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/components/settings/cards/organization/announcement-sheet.tsx:464
 #: app/components/staff/schedule/time-off-sheet.tsx:194
 #: app/components/website/create-form-dialog.tsx:198
+#: app/components/website/domain/records-panel.tsx:73
+#: app/components/website/domain/records-panel.tsx:223
+#: app/components/website/domain/site-domains-card.tsx:46
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:381
@@ -49804,6 +51020,15 @@ msgstr "اكتب اسمًا واحدًا، أو نطاقًا مثل T1-T12، أ�
 #: app/components/inventory/item-form.tsx:152
 msgid "Type the category name."
 msgstr "اكتب اسم التصنيف."
+
+#: app/components/website/domain/connect-card.tsx:399
+#: app/components/website/domain/forwarding-panel.tsx:123
+msgid "Type the domain to confirm"
+msgstr "اكتب النطاق للتأكيد"
+
+#: app/components/website/domain/domain-ui.tsx:46
+msgid "Type the domain to confirm that email may stop working."
+msgstr "اكتب النطاق لتأكيد أن البريد قد يتوقف عن العمل."
 
 #: app/components/customers/person-profile-screen.tsx:1186
 msgid "Type the name to confirm"
@@ -50051,7 +51276,7 @@ msgstr "وحدة الوزن"
 msgid "Unit system"
 msgstr "نظام الوحدات"
 
-#: app/components/settings/cards/organization/site-card.tsx:128
+#: app/components/settings/cards/organization/site-card.tsx:108
 msgid "United States"
 msgstr "الولايات المتحدة"
 
@@ -50158,6 +51383,10 @@ msgstr "فتح قفل هذه البطاقة؟"
 msgid "Unlocked"
 msgstr "فُتح قفلها"
 
+#: app/components/website/domain/registered-panel.tsx:70
+msgid "Unlocked for transfer"
+msgstr "مفتوح القفل للنقل"
+
 #: app/components/phone-agent/test-call-phone.tsx:238
 msgid "Unmute microphone"
 msgstr "إلغاء كتم الميكروفون"
@@ -50200,7 +51429,7 @@ msgstr "إلغاء التثبيت"
 #: app/components/website/publish-controls.tsx:631
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:308
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:515
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:543
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:541
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:723
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:810
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6740
@@ -50212,7 +51441,7 @@ msgstr "إلغاء النشر"
 msgid "Unpublish a page that redirects point to?"
 msgstr "إلغاء نشر صفحة تشير إليها عمليات إعادة توجيه؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:46
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:47
 msgid "Unpublished a page"
 msgstr "ألغى نشر صفحة"
 
@@ -50225,8 +51454,8 @@ msgstr "تغييرات غير منشورة"
 msgid "Unread"
 msgstr "غير مقروء"
 
-#: app/components/ui/notification-bell.tsx:512
-#: app/components/ui/notification-bell.tsx:616
+#: app/components/ui/notification-bell.tsx:530
+#: app/components/ui/notification-bell.tsx:634
 msgid "Unread Notifications"
 msgstr "الإشعارات غير المقروءة"
 
@@ -50365,6 +51594,10 @@ msgstr "حتى 4 أرقام جوال، مثل +15551234567."
 msgid "Up to 5 addresses."
 msgstr "حتى 5 عناوين."
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:125
+msgid "Up to 64 characters. Leave it empty to use {organizationName}."
+msgstr "حتى 64 حرفًا. اتركه فارغًا لاستخدام {organizationName}."
+
 #: app/components/staff/schedule/time-off-page.tsx:182
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:234
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1471
@@ -50489,7 +51722,7 @@ msgstr "تم التحديث {updated}"
 msgid "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
 msgstr "تم تحديث {updatedGuestName} على {tblLabel} إلى {updatedTime} ({targetDurationMin} د)"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:61
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:62
 msgid "Updated a legal page"
 msgstr "حدّث صفحة قانونية"
 
@@ -50720,6 +51953,10 @@ msgstr "استخدام {subject}"
 msgid "Use {suggestedPath} instead"
 msgstr "استخدم {suggestedPath} بدلًا من ذلك"
 
+#: app/components/website/domain/connect-card.tsx:197
+msgid "Use {suggestion}"
+msgstr "استخدم {suggestion}"
+
 #: app/utils/staffing/timesheet-form.ts:266
 msgid "Use 1000 characters or fewer."
 msgstr "استخدم 1000 حرف أو أقل."
@@ -50910,6 +52147,14 @@ msgstr "استخدم الصيغة الدولية، مثل +15551234567."
 #: app/components/menu/item-variations.tsx:356
 msgid "Use item photo"
 msgstr "استخدام صورة الصنف"
+
+#: app/components/website/domain/domain-ui.tsx:77
+msgid "Use letters, numbers, dots, dashes or a *, with no spaces."
+msgstr "استخدم أحرفًا وأرقامًا ونقاطًا وشرطات أو *، دون مسافات."
+
+#: app/components/website/domain/domain-ui.tsx:92
+msgid "Use letters, numbers, dots, dashes or underscores before the @."
+msgstr "استخدم أحرفًا وأرقامًا ونقاطًا وشرطات أو شرطات سفلية قبل علامة @."
 
 #: app/components/discounts/codes-editor.tsx:132
 msgid "Use limit"
@@ -51120,6 +52365,10 @@ msgstr "يستخدم ساعات العمل والساعات الخاصة للخ�
 msgid "Using a custom call flow"
 msgstr "يستخدم مسار مكالمة مخصصًا"
 
+#: app/components/website/domain/managed-domain-card.tsx:105
+msgid "Using Menuza's nameservers"
+msgstr "يستخدم خوادم أسماء Menuza"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:236
 msgid "Using the standard call flow"
 msgstr "يستخدم مسار المكالمة القياسي"
@@ -51155,7 +52404,11 @@ msgstr "اجتاز التحقق"
 
 #: app/components/inventory/stock-list.tsx:109
 #: app/components/menu/menu-bulk-edit-sheet.tsx:503
+#: app/components/settings/cards/organization/email-sending-card.tsx:324
 #: app/components/settings/cards/organization/verified-domain-card.tsx:156
+#: app/components/website/domain/records-panel.tsx:105
+#: app/components/website/domain/records-panel.tsx:229
+#: app/components/website/domain/site-domains-card.tsx:52
 msgid "Value"
 msgstr "القيمة"
 
@@ -51250,6 +52503,11 @@ msgstr "رمز التحقق"
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:76
+#: app/components/settings/cards/organization/email-sending-card.tsx:146
+msgid "Verified"
+msgstr "تم التحقق"
+
 #: app/components/settings/cards/organization/verified-domain-card.tsx:96
 #: app/components/settings/cards/organization/verified-domain-card.tsx:128
 msgid "Verified domain"
@@ -51268,6 +52526,7 @@ msgid "Verified, sitemap submitted"
 msgstr "تم التحقق وإرسال خريطة الموقع"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:622
+#: app/components/settings/cards/organization/email-sending-card.tsx:217
 #: app/routes/_auth+/verify.tsx:171
 msgid "Verify"
 msgstr "تحقق"
@@ -51572,13 +52831,17 @@ msgstr "الظهور"
 msgid "Visit counts and order totals stay, without a name. This cannot be undone."
 msgstr "تبقى أعداد الزيارات وإجماليات الطلبات بدون اسم. لا يمكن التراجع عن ذلك."
 
-#: app/components/settings/cards/organization/site-card.tsx:288
+#: app/components/settings/cards/organization/site-card.tsx:252
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr "يتم تخزين أسماء الزوار وأرقام هواتفهم وبريدهم الإلكتروني في هذه المنطقة. تغييرها بعد تسجيل دخول العملاء يحذف تلك البيانات نهائياً — فهي لا تُنقل."
 
 #: app/components/website/branding-panel.tsx:393
 msgid "Visitors keep seeing the live header, footer and theme until you publish."
 msgstr "يستمر الزوار في رؤية الترويسة والتذييل والمظهر المنشورة إلى أن تنشر."
+
+#: app/components/website/domain/site-domains-card.tsx:337
+msgid "Visitors reach your site on the primary domain. The other forms and extra domains redirect to it, keeping the page they asked for."
+msgstr "يصل الزوار إلى موقعك عبر النطاق الأساسي. وتُحوَّل الصيغ الأخرى والنطاقات الإضافية إليه مع الاحتفاظ بالصفحة المطلوبة."
 
 #: app/components/customers/people-list-screen.tsx:417
 #: app/components/customers/person-profile-screen.tsx:513
@@ -51745,6 +53008,14 @@ msgstr "بانتظار المدير"
 msgid "Waiting for acceptance"
 msgstr "بانتظار القبول"
 
+#: app/components/website/domain/forwarding-panel.tsx:37
+msgid "Waiting for confirmation"
+msgstr "بانتظار التأكيد"
+
+#: app/components/website/domain/site-domains-card.tsx:132
+msgid "Waiting for DNS"
+msgstr "بانتظار DNS"
+
 #: app/components/print/print-order-labels.ts:10
 msgid "Waiting for payment"
 msgstr "بانتظار الدفع"
@@ -51775,6 +53046,10 @@ msgstr "بانتظارك"
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:188
 msgid "Waiting for your acceptance"
 msgstr "بانتظار قبولك"
+
+#: app/components/website/domain/managed-domain-card.tsx:106
+msgid "Waiting for your registrar"
+msgstr "بانتظار المسجّل"
 
 #: app/components/pos/terminals-manager.tsx:784
 #: app/components/pos/terminals-manager.tsx:788
@@ -51992,6 +53267,10 @@ msgstr "نأسف، لم نتمكن من تحضير طلبك."
 msgid "We are unable to authenticate your payment method. Please choose a different payment method and try again."
 msgstr "تعذرت مصادقة طريقة الدفع. يرجى اختيار طريقة دفع أخرى والمحاولة مرة أخرى."
 
+#: app/components/website/domain/site-domains-card.tsx:384
+msgid "We check pending domains every 15 minutes and email you when one goes live."
+msgstr "نفحص النطاقات المعلّقة كل 15 دقيقة ونراسلك عندما يبدأ أحدها بالعمل."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:444
 msgid "We could not approve this print"
 msgstr "لم نتمكن من اعتماد هذه المطبوعة"
@@ -52030,6 +53309,10 @@ msgstr "تعذّر تأكيد صلاحيتك. أعد تحميل الصفحة."
 #: app/components/inventory/send-order-dialog.tsx:307
 msgid "We could not copy it for you. Select the text below and copy it."
 msgstr "تعذّر نسخه لك. حدّد النص أدناه وانسخه."
+
+#: app/components/website/domain/domain-ui.tsx:48
+msgid "We could not create the DNS zone. Please try again."
+msgstr "تعذّر إنشاء منطقة DNS. حاول مرة أخرى."
 
 #: app/components/hiring/candidate-sheet.tsx:91
 msgid "We could not find that applicant"
@@ -52084,6 +53367,10 @@ msgstr "تعذّر العثور على ذلك القالب. ربما تمت أر
 #: app/utils/staffing/staff-errors.ts:43
 msgid "We could not find that workplace."
 msgstr "تعذّر العثور على مكان العمل ذلك."
+
+#: app/components/website/domain/domain-ui.tsx:43
+msgid "We could not find that."
+msgstr "تعذّر العثور على ذلك."
 
 #: app/utils/staffing/staff-errors.ts:39
 msgid "We could not find that. It may have been removed."
@@ -52175,6 +53462,18 @@ msgstr "تعذّر تسجيل قبولك."
 msgid "We could not record your acceptance. Try again."
 msgstr "تعذّر تسجيل قبولك. حاول مرة أخرى."
 
+#: app/components/website/domain/buy-card.tsx:152
+msgid "We could not register it, and the charge was refunded in full."
+msgstr "تعذّر تسجيله، وتم استرداد المبلغ بالكامل."
+
+#: app/components/website/domain/buy-card.tsx:159
+msgid "We could not register it. Your refund is on its way."
+msgstr "تعذّر تسجيله. استرداد المبلغ في الطريق إليك."
+
+#: app/components/website/domain/registered-panel.tsx:93
+msgid "We could not renew this domain"
+msgstr "تعذّر تجديد هذا النطاق"
+
 #: app/components/staff/time-zone-card.tsx:82
 msgid "We could not save the time zone. Try again."
 msgstr "تعذّر حفظ المنطقة الزمنية. حاول مرة أخرى."
@@ -52187,9 +53486,29 @@ msgstr "تعذّر حفظ هذه المطبوعة"
 msgid "We could not save this. Check your connection and try again."
 msgstr "تعذّر حفظ هذا. تحقق من اتصالك وحاول مرة أخرى."
 
+#: app/components/website/domain/domain-ui.tsx:57
+msgid "We could not send the email. Try again."
+msgstr "تعذّر إرسال البريد. حاول مرة أخرى."
+
+#: app/components/website/domain/domain-ui.tsx:44
+msgid "We could not set the domain up. Please try again in a moment."
+msgstr "تعذّر إعداد النطاق. حاول مرة أخرى بعد قليل."
+
+#: app/components/website/domain/connect-card.tsx:78
+msgid "We could not tell where your DNS is managed, so the steps are generic."
+msgstr "تعذّر علينا معرفة مكان إدارة DNS لديك، لذلك الخطوات عامة."
+
 #: app/components/inventory/log-waste-dialog.tsx:237
 msgid "We could not undo that. Open Waste and try again."
 msgstr "تعذّر التراجع عن ذلك. افتح الهدر وحاول مرة أخرى."
+
+#: app/utils/domains/domain-alerts.ts:139
+msgid "We could not verify its records, so guest emails go out from our address until you fix them."
+msgstr "تعذّر التحقق من سجلاته، لذلك تُرسَل رسائل الضيوف من عنواننا إلى أن تصلحها."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:295
+msgid "We could not verify the records"
+msgstr "تعذّر التحقق من السجلات"
 
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:148
 msgid "We could not write a draft right now. Please try again."
@@ -52206,6 +53525,22 @@ msgstr "لا نحتفظ بنسخة، لذا لا يمكن استرجاعه لا�
 #: app/components/staff/labor-policy-editor.tsx:1448
 msgid "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
 msgstr "لا نختار هذا نيابةً عنك. إلى أن تختار، تُقدَّر الساعات الإضافية في كل مكان عمل على حدة."
+
+#: app/components/website/domain/managed-domain-card.tsx:200
+msgid "We download the zone file for you and switch the domain's hosts back to the CNAME method. Point the nameservers back at your old DNS host and add the records from the checklist, or your site goes offline."
+msgstr "ننزّل لك ملف المنطقة ونعيد مضيفي النطاق إلى طريقة CNAME. أعد توجيه خوادم الأسماء إلى مضيف DNS القديم وأضف السجلات من قائمة التحقق، وإلا سيتوقف موقعك."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:228
+msgid "We email a code to the address. It is used only after you enter it."
+msgstr "نرسل رمزًا إلى العنوان. لا يُستخدم العنوان إلا بعد إدخال الرمز."
+
+#: app/components/website/domain/registered-panel.tsx:178
+msgid "We email you 30 and 7 days before. Cancelling your Menuza plan never takes the domain away."
+msgstr "نراسلك قبل 30 يومًا وقبل 7 أيام. إلغاء خطتك على Menuza لا يسحب النطاق منك أبدًا."
+
+#: app/components/website/domain/connect-card.tsx:377
+msgid "We found {recordCount} records and will copy them to the new zone."
+msgstr "وجدنا {recordCount} سجلًا وسننسخها إلى المنطقة الجديدة."
 
 #: app/routes/_auth+/login.tsx:620
 msgid "We found your organization:"
@@ -52228,9 +53563,25 @@ msgstr "لا نسألك إلا عندما لا نكون متأكدين"
 msgid "We only deliver within 5 miles. Offer pickup otherwise."
 msgstr "نوصّل فقط ضمن مسافة 5 أميال. اعرض الاستلام بخلاف ذلك."
 
+#: app/components/website/domain/domain-ui.tsx:61
+msgid "We only sell .com domains for now."
+msgstr "نبيع نطاقات .com فقط حاليًا."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1008
 msgid "We print and ship it to your door."
 msgstr "نطبعها ونشحنها حتى بابك."
+
+#: app/components/website/domain/connect-card.tsx:325
+msgid "We scan the domain first (website, MX, SPF, DKIM, DMARC). Upload the zone file from your registrar to be sure nothing is missed."
+msgstr "نفحص النطاق أولًا (الموقع وMX وSPF وDKIM وDMARC). ارفع ملف المنطقة من المسجّل للتأكد من عدم فوات أي شيء."
+
+#: app/components/website/domain/connect-card.tsx:457
+msgid "We set the records at {providerName} after you approve them here. We never change email records."
+msgstr "نضبط السجلات لدى {providerName} بعد موافقتك عليها هنا. ولا نغيّر سجلات البريد أبدًا."
+
+#: app/components/website/domain/connect-card.tsx:585
+msgid "We set up both example.com and www.example.com. Pick the one visitors should see; the other redirects to it."
+msgstr "نُعدّ كلًّا من example.com وwww.example.com. اختر ما يجب أن يراه الزوار، وسيُحوَّل الآخر إليه."
 
 #: app/utils/website/website-alerts.ts:44
 msgid "We tried three times and stopped. Open the page, check it and schedule it again, or publish it now."
@@ -52302,7 +53653,7 @@ msgstr "Webhooks: {webhookMode}"
 #: app/components/command-menu.tsx:152
 #: app/components/workspace-breadcrumb.tsx:14
 #: app/routes/_app+/$orgSlug_+/media.tsx:1531
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:139
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:144
 #: app/utils/discounts/labels.ts:171
 msgid "Website"
 msgstr "الموقع الإلكتروني"
@@ -52323,6 +53674,10 @@ msgstr "محرر الموقع والإعلانات والصفحات العامة
 #: app/components/menu/dish-page-card.tsx:36
 msgid "Website page"
 msgstr "صفحة الموقع"
+
+#: app/components/website/domain/connect-card.tsx:373
+msgid "Website safe, email safe"
+msgstr "الموقع آمن والبريد آمن"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1533
 msgid "Website SEO"
@@ -52464,7 +53819,7 @@ msgid "went up <0>{percent}%</0>"
 msgstr "ارتفع <0>{percent}%</0>"
 
 #: app/routes/_app+/$orgSlug_+/gift-cards+/$cardId.tsx:229
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:94
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:95
 msgid "What"
 msgstr "ماذا"
 
@@ -52746,7 +54101,7 @@ msgstr "ملائم للكراسي المتحركة"
 #: app/routes/_app+/$orgSlug_+/menu+/history.tsx:148
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:927
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:263
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:103
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:104
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:468
 #: app/utils/discounts/summary.ts:393
 msgid "When"
@@ -52940,7 +54295,7 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 msgid "When you close it"
 msgstr "عندما تغلقها"
 
-#: app/components/ui/notification-bell.tsx:397
+#: app/components/ui/notification-bell.tsx:415
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 
@@ -53036,6 +54391,10 @@ msgstr "إظهار التذكرة لمدفوع أو غير مدفوع وأسما
 msgid "Which breaks people take, and whether a missing one is flagged."
 msgstr "أي الاستراحات يأخذها الموظفون، وهل يُعلَّم غيابها."
 
+#: app/components/website/domain/connect-card.tsx:636
+msgid "Which form should visitors see?"
+msgstr "أي صيغة يجب أن يراها الزوار؟"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:312
 msgid "Which items"
 msgstr "أي العناصر"
@@ -53071,7 +54430,7 @@ msgstr "سطح رخام أبيض مشرق وفاخر"
 #: app/components/staff/schedule/availability-sheet.tsx:213
 #: app/components/staff/schedule/time-off-sheet.tsx:186
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:620
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:100
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:101
 msgid "Who"
 msgstr "من"
 
@@ -53117,7 +54476,7 @@ msgstr "من تغيّرت ورديّاته"
 msgid "Who changed the phone agent and when. Shows the last 50 changes."
 msgstr "من غيّر وكيل الهاتف ومتى. يعرض آخر 50 تغييرًا."
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:72
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:73
 msgid "Who changed the website and when: publishing, restoring, deleting, schedules, redirects and domain changes."
 msgstr "من غيّر الموقع ومتى: النشر والاستعادة والحذف والجدولة وإعادة التوجيه وتغييرات النطاق."
 
@@ -53377,6 +54736,7 @@ msgid "Workflow validation"
 msgstr "التحقق من سير العمل"
 
 #: app/components/staff/timeclock-today.tsx:123
+#: app/components/website/domain/buy-card.tsx:139
 msgid "Working"
 msgstr "يعمل"
 
@@ -53415,6 +54775,10 @@ msgstr "أماكن العمل"
 #: app/components/hiring/hire-dialog.tsx:268
 msgid "Works as"
 msgstr "يعمل بصفة"
+
+#: app/components/website/domain/connect-card.tsx:680
+msgid "Works for the root and www, renews certificates by itself, and keeps your email records."
+msgstr "يعمل للجذر وwww، ويجدد الشهادات تلقائيًا، ويحتفظ بسجلات بريدك."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:448
 msgid "Worth"
@@ -53545,6 +54909,10 @@ msgstr "رقم خاطئ"
 msgid "Wrong time entered"
 msgstr "تم إدخال وقت خاطئ"
 
+#: app/components/website/domain/connect-card.tsx:657
+msgid "www.{apex} redirects here with a 301."
+msgstr "يتم تحويل www.{apex} إلى هنا بتحويل دائم 301."
+
 #: app/components/reservations/floor-plan-canvas.tsx:1396
 #: app/components/reservations/floor-plan-canvas.tsx:1505
 msgid "X (0–1200)"
@@ -53618,6 +54986,10 @@ msgstr "لديك بالفعل {MAX_CUSTOM_DASHBOARDS} لوحة تحكم في ه�
 #: app/components/phone-agent/training-rules-section.tsx:631
 msgid "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "لديك بالفعل {MAX_TRAINING_RULES} قاعدة، وهو الحد الأقصى المسموح. احذف قاعدة لإضافة أخرى."
+
+#: app/components/website/domain/connect-card.tsx:229
+msgid "You already have a live domain"
+msgstr "لديك نطاق يعمل بالفعل"
 
 #: app/utils/my-schedule/my-schedule-messages.ts:14
 msgid "You already have a lot of requests waiting. Wait for a manager to answer, or cancel one."
@@ -53723,6 +55095,10 @@ msgstr "يمكنك إنشاء ملاحظات لمنظمتك هنا."
 msgid "You can do this from {readyAtText}, 48 hours after it finished."
 msgstr "يمكنك فعل ذلك ابتداءً من {readyAtText}، أي بعد 48 ساعة من انتهائها."
 
+#: app/components/website/domain/domain-ui.tsx:76
+msgid "You can forward at most 10 addresses per domain."
+msgstr "يمكنك تحويل 10 عناوين كحد أقصى لكل نطاق."
+
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:254
 msgid "You can have at most {MAX_LOCATION_TAGS} tags. Delete one you no longer use first."
 msgstr "يمكنك امتلاك {MAX_LOCATION_TAGS} وسمًا كحد أقصى. احذف وسمًا لا تستخدمه أولًا."
@@ -53786,6 +55162,10 @@ msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:59
 msgid "You can save up to {max} audiences."
 msgstr "يمكنك حفظ ما يصل إلى {max} جمهوراً."
+
+#: app/components/website/domain/domain-screen.tsx:65
+msgid "You can see the domain setup. Changing it needs permission to edit settings."
+msgstr "يمكنك رؤية إعداد النطاق. تغييره يحتاج إلى صلاحية تعديل الإعدادات."
 
 #: app/utils/marketing/campaign-send.server.ts:232
 msgid "You can send 10 tests an hour. Try again a little later."
@@ -53983,7 +55363,7 @@ msgstr "ليست لديك صلاحية للقيام بذلك."
 msgid "You don't have permission to see this report's data."
 msgstr "ليست لديك صلاحية لعرض بيانات هذا التقرير."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:597
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:595
 msgid "You edited this page"
 msgstr "لقد عدّلت هذه الصفحة"
 
@@ -54035,6 +55415,10 @@ msgstr "لقد وصلت إلى الحد الأقصى وهو {count} رمز قس�
 #: app/components/discounts/fields.tsx:393
 msgid "You have reached the limit of {count} discounts. Archive some you no longer use."
 msgstr "لقد وصلت إلى الحد الأقصى وهو {count} خصم. أرشِف الخصومات التي لم تعد تستخدمها."
+
+#: app/components/website/domain/domain-ui.tsx:38
+msgid "You have reached the limit of domains for this site."
+msgstr "بلغت الحد الأقصى من النطاقات لهذا الموقع."
 
 #: app/utils/staffing/onboarding-errors.ts:16
 msgid "You have reached the limit of templates. Archive one you no longer use."
@@ -54144,6 +55528,14 @@ msgstr "تستخدم نحو <0>{weekly}</0> في الأسبوع."
 msgid "You were clocked out automatically."
 msgstr "تم تسجيل انصرافك تلقائيًا."
 
+#: app/utils/domains/domain-alerts.ts:122
+msgid "You were not charged, or the charge was refunded in full."
+msgstr "لم يتم خصم أي مبلغ منك، أو تم استرداده بالكامل."
+
+#: app/components/website/domain/buy-card.tsx:212
+msgid "You will be charged {firstYear} now on the card on file, then {perYear} a year. Privacy protection is on and auto-renew is on by default."
+msgstr "سيتم خصم {firstYear} الآن من البطاقة المحفوظة، ثم {perYear} سنويًا. حماية الخصوصية مفعّلة والتجديد التلقائي مفعّل افتراضيًا."
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:387
 msgid "You’re all caught up"
 msgstr "قرأت جميع الردود"
@@ -54212,6 +55604,10 @@ msgstr "ستُستبدل كتلك وترتيبها بالكتل الافتراض
 msgid "Your browser paused the agent's audio. Tap Speaker to hear it."
 msgstr "أوقف متصفحك صوت الوكيل مؤقتًا. اضغط على مكبر الصوت لسماعه."
 
+#: app/components/website/domain/buy-card.tsx:195
+msgid "Your business is the registered owner. The registry emails the owner address; click its link to keep the domain."
+msgstr "نشاطك التجاري هو المالك المسجّل. ترسل جهة التسجيل بريدًا إلى عنوان المالك؛ انقر على رابطه للاحتفاظ بالنطاق."
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:413
 msgid "Your business line"
 msgstr "خط نشاطك التجاري"
@@ -54231,6 +55627,14 @@ msgstr "رقم بطاقتك غير صالح."
 #: app/routes/mock-payments+/__card-errors.ts:13
 msgid "Your card was declined."
 msgstr "تم رفض بطاقتك."
+
+#: app/components/website/domain/registered-panel.tsx:96
+msgid "Your card was declined. Update your card in Billing; we try again every day for 7 days."
+msgstr "تم رفض بطاقتك. حدّث بطاقتك في الفواتير؛ نعيد المحاولة كل يوم لمدة 7 أيام."
+
+#: app/components/website/domain/domain-ui.tsx:64
+msgid "Your card was declined. You were not charged."
+msgstr "تم رفض بطاقتك. لم يتم خصم أي مبلغ منك."
 
 #: app/routes/mock-payments+/__card-errors.ts:15
 msgid "Your card was declined. Your request was in test mode, but used a non test card."
@@ -54268,9 +55672,33 @@ msgstr "تعذّر حفظ تغييرات لوحة التحكم."
 msgid "Your department"
 msgstr "قسمك"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:311
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:309
 msgid "Your details"
 msgstr "بياناتك"
+
+#: app/components/website/domain/connect-card.tsx:72
+msgid "Your DNS is managed at <0>{providerName}</0>."
+msgstr "تُدار خوادم DNS لديك لدى <0>{providerName}</0>."
+
+#: app/utils/domains/domain-alerts.ts:67
+msgid "Your domain is live"
+msgstr "نطاقك يعمل"
+
+#: app/utils/domains/domain-alerts.ts:76
+msgid "Your domain is still not connected"
+msgstr "نطاقك لم يُربط بعد"
+
+#: app/components/website/domain/domain-ui.tsx:53
+msgid "Your domain provider does not support automatic setup. Use the steps instead."
+msgstr "مزوّد نطاقك لا يدعم الإعداد التلقائي. استخدم الخطوات بدلًا من ذلك."
+
+#: app/utils/domains/domain-alerts.ts:94
+msgid "Your domain renews soon"
+msgstr "سيُجدَّد نطاقك قريبًا"
+
+#: app/components/website/domain/site-domains-card.tsx:334
+msgid "Your domains"
+msgstr "نطاقاتك"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:217
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
@@ -54299,6 +55727,10 @@ msgstr "حسابك في Google لا يملك هذا الموقع في Search Con
 #: app/components/phone-agent/business-details-section.tsx:86
 msgid "Your hours, phone, and address. The agent quotes them and uses the hours to tell when you're open."
 msgstr "ساعات العمل والهاتف والعنوان. يذكرها الوكيل ويستخدم الساعات لمعرفة متى تكون مفتوحًا."
+
+#: app/components/website/domain/forwarding-panel.tsx:247
+msgid "Your inbox, for example you@gmail.com"
+msgstr "بريدك، مثل you@gmail.com"
 
 #: app/components/settings/cards/guest-messages-card.tsx:53
 msgid "Your items, the total and the pickup or delivery details."
@@ -54345,6 +55777,10 @@ msgstr "رسالتك تحتوي بالفعل على محتوى. استخدام �
 msgid "Your microphone is being used by another app. Close it and try again."
 msgstr "الميكروفون قيد الاستخدام في تطبيق آخر. أغلقه وحاول مرة أخرى."
 
+#: app/utils/domains/domain-alerts.ts:112
+msgid "Your new domain is ready"
+msgstr "نطاقك الجديد جاهز"
+
 #: app/components/kiosk/kiosk-screens.tsx:346
 msgid "Your next shifts"
 msgstr "ورديّاتك القادمة"
@@ -54376,6 +55812,10 @@ msgstr "أنشأت مؤسستك ملفات طباعة جديدة كثيرة خل
 #: app/components/print/artwork-labels.ts:17
 msgid "Your organization made many new print files this hour. Try again in about 15 minutes."
 msgstr "أنشأت مؤسستك ملفات طباعة جديدة كثيرة هذه الساعة. حاول مرة أخرى بعد نحو 15 دقيقة."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:239
+msgid "Your own sending domain"
+msgstr "نطاق الإرسال الخاص بك"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6441
 msgid "Your page will appear here"
@@ -54429,6 +55869,18 @@ msgstr "رابط الإحالة الخاص بك"
 msgid "your region"
 msgstr "منطقتك"
 
+#: app/components/website/domain/connect-card.tsx:263
+msgid "your registrar"
+msgstr "المسجّل الخاص بك"
+
+#: app/components/website/domain/site-domains-card.tsx:346
+msgid "Your registrar sent you back. We are checking the records now."
+msgstr "أعادك المسجّل إلى هنا. نفحص السجلات الآن."
+
+#: app/components/website/domain/managed-domain-card.tsx:129
+msgid "Your registrar still points at {currentNameservers}. Change the nameservers where the domain is registered, not at your DNS host."
+msgstr "ما زال المسجّل يشير إلى {currentNameservers}. غيّر خوادم الأسماء لدى الجهة المسجّل فيها النطاق وليس لدى مضيف DNS."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1345
 msgid "Your regular services apply again on those dates."
 msgstr "ستسري خدماتك المعتادة مجددا في تلك التواريخ."
@@ -54448,6 +55900,10 @@ msgstr "ردك"
 #: app/components/settings/cards/organization/billing-card.tsx:150
 msgid "Your restaurant's current plan and billing status"
 msgstr "خطة مطعمك الحالية وحالة الفوترة"
+
+#: app/components/website/domain/buy-card.tsx:302
+msgid "Your restaurant's name"
+msgstr "اسم مطعمك"
 
 #: app/routes/_app+/organizations.tsx:337
 msgid "Your restaurants"
@@ -54473,6 +55929,10 @@ msgstr "تعذّر نشر تغيير الموقع المجدول"
 msgid "Your scheduled website change is live"
 msgstr "تم نشر تغيير الموقع المجدول"
 
+#: app/utils/domains/domain-alerts.ts:137
+msgid "Your sending domain stopped verifying"
+msgstr "توقف التحقق من نطاق الإرسال الخاص بك"
+
 #: app/utils/staffing/staff-errors.ts:47
 msgid "Your session expired. Reload the page."
 msgstr "انتهت جلستك. أعد تحميل الصفحة."
@@ -54490,13 +55950,37 @@ msgstr "انتهت جلستك. سجّل الدخول مرة أخرى لمتاب�
 msgid "Your setup progress"
 msgstr "تقدم الإعداد"
 
+#: app/components/website/domain/domain-ui.tsx:39
+msgid "Your site already has a primary domain. Add this one as an extra domain instead."
+msgstr "لدى موقعك نطاق أساسي بالفعل. أضف هذا النطاق كنطاق إضافي بدلًا من ذلك."
+
+#: app/components/website/domain/site-domains-card.tsx:396
+msgid "Your site goes back to its Menuza address."
+msgstr "يعود موقعك إلى عنوانه على Menuza."
+
+#: app/components/website/domain/buy-card.tsx:144
+msgid "Your site is being set up on it. This page updates as it goes live."
+msgstr "يجري إعداد موقعك عليه. تتحدث هذه الصفحة عندما يبدأ بالعمل."
+
 #: app/components/dashboard/blocks/attention-block.tsx:217
 msgid "Your site is not published"
 msgstr "موقعك غير منشور"
 
+#: app/components/website/domain/domain-screen.tsx:73
+msgid "Your site is not published yet. Connecting a domain publishes it."
+msgstr "موقعك غير منشور بعد. ربط نطاق ينشره."
+
+#: app/utils/domains/domain-alerts.ts:69
+msgid "Your site now loads on this domain, with a secure connection."
+msgstr "يعمل موقعك الآن على هذا النطاق باتصال آمن."
+
 #: app/components/launch/launch-checklist.tsx:35
 msgid "Your site should look like your restaurant."
 msgstr "يجب أن يشبه موقعك مطعمك."
+
+#: app/components/website/domain/connect-card.tsx:296
+msgid "Your site stays on the old setup until your registrar uses these nameservers. We check every 15 minutes and email you when it is live."
+msgstr "يبقى موقعك على الإعداد القديم حتى يستخدم المسجّل خوادم الأسماء هذه. نفحص كل 15 دقيقة ونراسلك عندما يعمل."
 
 #: app/components/inventory/count-review-screen.tsx:850
 msgid "Your stock now matches what was counted."
@@ -54572,6 +56056,10 @@ msgstr "الرموز البريدية (مفصولة بفواصل أو مسافا
 #: app/utils/reservations/labels.ts:210
 msgid "Zone"
 msgstr "منطقة"
+
+#: app/components/website/domain/connect-card.tsx:332
+msgid "Zone file (optional)"
+msgstr "ملف المنطقة (اختياري)"
 
 #: app/components/locations/delivery-zones-manager.tsx:320
 msgid "Zone Name"
