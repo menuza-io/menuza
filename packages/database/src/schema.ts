@@ -2304,6 +2304,11 @@ export const WebsitePage = sqliteTable(
 		 * without a diff and a confirm.
 		 */
 		legalGeneratedHash: text(),
+		/**
+		 * Set to `ai` when "Create my site with AI" wrote the page (#141).
+		 * Cleared when the operator edits or publishes it.
+		 */
+		generatedBy: text(),
 	},
 	(table) => [
 		uniqueIndex('WebsitePage_organizationId_legalKind_key')
@@ -2401,6 +2406,103 @@ export const WebsiteRedirect = sqliteTable(
 		index('WebsiteRedirect_organizationId_isEnabled_idx').on(
 			table.organizationId,
 			table.isEnabled,
+		),
+	],
+)
+
+/** One AI site generation, for the five-a-day limit (#141). No page content. */
+export const WebsiteSiteGeneration = sqliteTable(
+	'WebsiteSiteGeneration',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('WebsiteSiteGeneration_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+	],
+)
+
+/** A website import run (#140). Extracted content is the business's public site. */
+export const WebsiteImport = sqliteTable(
+	'WebsiteImport',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		sourceUrl: text().notNull(),
+		status: text().default('found').notNull(),
+		stats: text(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('WebsiteImport_organizationId_idx').on(table.organizationId),
+	],
+)
+
+export const WebsiteImportPage = sqliteTable(
+	'WebsiteImportPage',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		importId: text()
+			.notNull()
+			.references(() => WebsiteImport.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		url: text().notNull(),
+		title: text().default('').notNull(),
+		extracted: text(),
+		proposedSections: text(),
+		status: text().default('found').notNull(),
+		skipReason: text(),
+		pageId: text().references(() => WebsitePage.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		redirectTo: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('WebsiteImportPage_importId_idx').on(table.importId),
+		uniqueIndex('WebsiteImportPage_importId_url_key').on(
+			table.importId,
+			table.url,
 		),
 	],
 )

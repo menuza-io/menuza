@@ -1,0 +1,58 @@
+---
+/**
+ * Hand-entered quotes (#86). A reviews feed is not built; this matches
+ * Testimonials until one exists.
+ */
+import {
+	siteContainer,
+	siteSection,
+	siteSectionBackground,
+	siteSectionBodyClass,
+	siteSectionHeadingClass,
+} from '~/lib/media'
+
+interface Item {
+	quote?: string
+	name?: string
+	rating?: number
+}
+
+interface Props {
+	config: Record<string, unknown>
+}
+
+const { config } = Astro.props
+const items = (Array.isArray(config.items) ? config.items : []).filter(
+	(item): item is Item =>
+		Boolean(item) &&
+		typeof item === 'object' &&
+		typeof (item as Item).quote === 'string' &&
+		(item as Item).quote!.trim().length > 0,
+)
+const background = siteSectionBackground(
+	typeof config.background === 'string' ? config.background : 'muted',
+)
+const headingClass = siteSectionHeadingClass(
+	typeof config.background === 'string' ? config.background : 'muted',
+)
+const bodyClass = siteSectionBodyClass(
+	typeof config.background === 'string' ? config.background : 'muted',
+)
+const title = typeof config.title === 'string' ? config.title : ''
+---
+
+{items.length > 0 ? (
+	<section class:list={[siteSection, background]} data-reviews>
+		<div class={siteContainer}>
+			{title ? <h2 class:list={['text-3xl font-bold tracking-tight', headingClass]}>{title}</h2> : null}
+			<div class="mt-8 grid gap-4 md:grid-cols-3">
+				{items.map((item) => (
+					<blockquote class="surface p-5">
+						<p class:list={['text-base', bodyClass]}>{item.quote}</p>
+						{item.name ? <footer class="mt-3 text-sm font-medium">{item.name}</footer> : null}
+					</blockquote>
+				))}
+			</div>
+		</div>
+	</section>
+) : null}

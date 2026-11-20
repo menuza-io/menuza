@@ -407,3 +407,191 @@ export function buildSiteThemeCss(config: SiteThemeConfig): string {
 		'\n\n',
 	)
 }
+
+/**
+ * A palette drawn from a logo (#396). The same helper is what "Create my
+ * site with AI" applies when a logo exists. Colors are hex so they pass the
+ * theme CSS sanitizer. Text pairs are adjusted until contrast is at least
+ * 4.5:1 (WCAG AA body text).
+ */
+export type Rgb = { r: number; g: number; b: number }
+
+const WHITE: Rgb = { r: 255, g: 255, b: 255 }
+const BLACK: Rgb = { r: 17, g: 17, b: 17 }
+const MIN_TEXT_CONTRAST = 4.5
+
+function channelLuma(value: number) {
+	const s = value / 255
+	return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+}
+
+export function relativeLuminance(color: Rgb) {
+	return (
+		0.2126 * channelLuma(color.r) +
+		0.7152 * channelLuma(color.g) +
+		0.0722 * channelLuma(color.b)
+	)
+}
+
+export function contrastRatio(a: Rgb, b: Rgb) {
+	const left = relativeLuminance(a)
+	const right = relativeLuminance(b)
+	const [hi, lo] = left > right ? [left, right] : [right, left]
+	return (hi + 0.05) / (lo + 0.05)
+}
+
+function clampByte(value: number) {
+	return Math.max(0, Math.min(255, Math.round(value)))
+}
+
+function mix(a: Rgb, b: Rgb, towardB: number): Rgb {
+	const t = Math.max(0, Math.min(1, towardB))
+	return {
+		r: clampByte(a.r + (b.r - a.r) * t),
+		g: clampByte(a.g + (b.g - a.g) * t),
+		b: clampByte(a.b + (b.b - a.b) * t),
+	}
+}
+
+function toHex(color: Rgb) {
+	const byte = (value: number) => clampByte(value).toString(16).padStart(2, '0')
+	return `#${byte(color.r)}${byte(color.g)}${byte(color.b)}`
+}
+
+function readablePair(brand: Rgb): { background: Rgb; foreground: Rgb } {
+	let background = brand
+	for (let step = 0; step < 28; step += 1) {
+		const onWhite = contrastRatio(background, WHITE)
+		const onBlack = contrastRatio(background, BLACK)
+		if (onWhite >= MIN_TEXT_CONTRAST && onWhite >= onBlack) {
+			return { background, foreground: WHITE }
+		}
+		if (onBlack >= MIN_TEXT_CONTRAST) return { background, foreground: BLACK }
+		background = mix(background, onWhite >= onBlack ? BLACK : WHITE, 0.14)
+	}
+	return { background: { r: 30, g: 30, b: 30 }, foreground: WHITE }
+}
+
+function pagePair(brand: Rgb): { background: Rgb; foreground: Rgb } {
+	let background = mix(brand, WHITE, 0.9)
+	let foreground = BLACK
+	for (let step = 0; step < 12; step += 1) {
+		if (contrastRatio(background, foreground) >= MIN_TEXT_CONTRAST) break
+		background = mix(background, WHITE, 0.25)
+	}
+	if (contrastRatio(background, foreground) < MIN_TEXT_CONTRAST) {
+		background = WHITE
+	}
+	return { background, foreground }
+}
+
+function dominantBrand(samples: readonly Rgb[]): Rgb {
+	const usable = samples.filter((sample) => {
+		const luma = relativeLuminance(sample)
+		return luma > 0.04 && luma < 0.94
+	})
+	const pool = usable.length > 0 ? usable : samples
+	if (pool.length === 0) return { r: 30, g: 64, b: 175 }
+	const buckets = new Map<number, { total: Rgb; count: number }>()
+	for (const sample of pool) {
+		const hue = Math.round(hueOf(sample) / 30) * 30
+		const bucket = buckets.get(hue) ?? { total: { r: 0, g: 0, b: 0 }, count: 0 }
+		bucket.total = {
+			r: bucket.total.r + sample.r,
+			g: bucket.total.g + sample.g,
+			b: bucket.total.b + sample.b,
+		}
+		bucket.count += 1
+		buckets.set(hue, bucket)
+	}
+	let best = pool[0]!
+	let bestCount = -1
+	for (const bucket of buckets.values()) {
+		if (bucket.count > bestCount) {
+			bestCount = bucket.count
+			best = {
+				r: bucket.total.r / bucket.count,
+				g: bucket.total.g / bucket.count,
+				b: bucket.total.b / bucket.count,
+			}
+		}
+	}
+	return {
+		r: clampByte(best.r),
+		g: clampByte(best.g),
+		b: clampByte(best.b),
+	}
+}
+
+function hueOf(color: Rgb) {
+	const r = color.r / 255
+	const g = color.g / 255
+	const b = color.b / 255
+	const max = Math.max(r, g, b)
+	const min = Math.min(r, g, b)
+	const delta = max - min
+	if (delta === 0) return 0
+	let hue = 0
+	if (max === r) hue = ((g - b) / delta) % 6
+	else if (max === g) hue = (b - r) / delta + 2
+	else hue = (r - g) / delta + 4
+	return (hue * 60 + 360) % 360
+}
+
+export type LogoPalette = {
+	cssVars: Record<string, string>
+	/** Contrast of the button label on the button, and body text on the page. */
+	contrast: { primaryText: number; bodyText: number }
+}
+
+export function suggestLogoPalette(samples: readonly Rgb[]): LogoPalette {
+	const brand = dominantBrand(samples)
+	const button = readablePair(brand)
+	const page = pagePair(brand)
+	const muted = mix(page.background, brand, 0.08)
+	const primaryText = contrastRatio(button.background, button.foreground)
+	const bodyText = contrastRatio(page.background, page.foreground)
+	return {
+		cssVars: {
+			primary: toHex(button.background),
+			'primary-foreground': toHex(button.foreground),
+			background: toHex(page.background),
+			foreground: toHex(page.foreground),
+			card: toHex(page.background),
+			'card-foreground': toHex(page.foreground),
+			popover: toHex(page.background),
+			'popover-foreground': toHex(page.foreground),
+			secondary: toHex(mix(page.background, brand, 0.16)),
+			'secondary-foreground': toHex(page.foreground),
+			muted: toHex(muted),
+			'muted-foreground': toHex(mix(page.foreground, page.background, 0.35)),
+			accent: toHex(mix(page.background, brand, 0.2)),
+			'accent-foreground': toHex(page.foreground),
+			border: toHex(mix(page.background, brand, 0.28)),
+			ring: toHex(button.background),
+		},
+		contrast: { primaryText, bodyText },
+	}
+}
+
+export function paletteMeetsContrast(palette: LogoPalette) {
+	return (
+		palette.contrast.primaryText >= MIN_TEXT_CONTRAST &&
+		palette.contrast.bodyText >= MIN_TEXT_CONTRAST
+	)
+}
+
+/**
+ * A new theme config with the logo palette in `cssVars`. Does not publish:
+ * callers write it with the draft theme save.
+ */
+export function themeWithLogoPalette(
+	theme: SiteThemeConfig,
+	samples: readonly Rgb[],
+): SiteThemeConfig {
+	const palette = suggestLogoPalette(samples)
+	return {
+		...theme,
+		cssVars: { ...theme.cssVars, ...palette.cssVars },
+	}
+}

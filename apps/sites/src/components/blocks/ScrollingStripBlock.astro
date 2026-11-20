@@ -1,0 +1,81 @@
+---
+import { msg } from '@lingui/core/macro'
+import { scrollingStripItems } from '@repo/common/site-motion'
+
+interface Props {
+	config: Record<string, unknown>
+}
+
+const { config } = Astro.props
+const items = scrollingStripItems(config)
+const pauseLabel = Astro.locals.i18n?._(msg`Pause`) ?? 'Pause'
+const doubled = [...items, ...items]
+---
+
+{items.length > 0 ? (
+	<section class="strip-block bg-primary text-primary-foreground" data-scrolling-strip>
+		<div class="strip-track" data-strip-track>
+			{doubled.map((item) => (
+				<span class="strip-item">{item.text}</span>
+			))}
+		</div>
+		<button type="button" class="strip-pause" data-strip-pause aria-pressed="false">{pauseLabel}</button>
+	</section>
+	<style>
+		.strip-block {
+			position: relative;
+			overflow: hidden;
+			min-height: 3rem;
+		}
+		.strip-track {
+			display: flex;
+			width: max-content;
+			gap: 2rem;
+			padding-block: 0.75rem;
+			animation: strip-scroll 24s linear infinite;
+		}
+		.strip-item {
+			white-space: nowrap;
+			padding-inline: 0.5rem;
+		}
+		.strip-pause {
+			position: absolute;
+			inset-inline-end: 0.5rem;
+			top: 50%;
+			transform: translateY(-50%);
+			min-height: 2.25rem;
+			border-radius: var(--radius);
+			background: rgb(0 0 0 / 0.25);
+			padding-inline: 0.5rem;
+		}
+		@keyframes strip-scroll {
+			from { transform: translateX(0); }
+			to { transform: translateX(-50%); }
+		}
+		[dir='rtl'] .strip-track {
+			animation-direction: reverse;
+		}
+		.strip-block:hover .strip-track,
+		.strip-block:focus-within .strip-track,
+		.strip-block[data-paused] .strip-track {
+			animation-play-state: paused;
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.strip-track {
+				animation: none;
+				width: auto;
+				flex-wrap: wrap;
+				justify-content: center;
+			}
+		}
+	</style>
+	<script>
+		for (const root of document.querySelectorAll<HTMLElement>('[data-scrolling-strip]')) {
+			const button = root.querySelector<HTMLButtonElement>('[data-strip-pause]')
+			button?.addEventListener('click', () => {
+				const paused = root.toggleAttribute('data-paused')
+				button.setAttribute('aria-pressed', paused ? 'true' : 'false')
+			})
+		}
+	</script>
+) : null}

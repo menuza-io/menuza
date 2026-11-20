@@ -87,9 +87,18 @@ function mountHeader(header: HTMLElement): () => void {
 	const observer = new ResizeObserver(schedule)
 	for (const element of [row, links, actions]) observer.observe(element)
 	measure()
+	const onScroll = () => {
+		if (!header.hasAttribute('data-overlay')) return
+		header.toggleAttribute('data-solid', window.scrollY > 12)
+	}
+	if (header.hasAttribute('data-overlay')) {
+		onScroll()
+		window.addEventListener('scroll', onScroll, { passive: true })
+	}
 	return () => {
 		observer.disconnect()
 		if (frame) cancelAnimationFrame(frame)
+		window.removeEventListener('scroll', onScroll)
 	}
 }
 

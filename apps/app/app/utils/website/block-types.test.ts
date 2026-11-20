@@ -173,6 +173,32 @@ describe('website block types', () => {
 		])
 	})
 
+	it('offers the restaurant sections and the restaurant home template (#86)', () => {
+		for (const type of [
+			'menuHighlights',
+			'locationsHours',
+			'contact',
+			'reviews',
+			'menuFile',
+			'scrollingStrip',
+		] as const) {
+			expect(getDefaultConfig(type)).toBeTruthy()
+			expect(LOCALIZED_FIELDS[type]?.length).toBeGreaterThan(0)
+			expect(ADDABLE_BLOCK_TYPES.some((block) => block.type === type)).toBe(
+				true,
+			)
+		}
+		expect(
+			PAGE_TEMPLATES.restaurant.sections.map((section) => section.type),
+		).toEqual([
+			'hero',
+			'menuHighlights',
+			'locationsHours',
+			'reviews',
+			'rewards',
+		])
+	})
+
 	it('offers the Upcoming events section on any page only while website events are on (#184)', () => {
 		const has = (eventsEnabled: boolean) =>
 			addableBlockTypes({ reservationsOnline: false, eventsEnabled }).some(

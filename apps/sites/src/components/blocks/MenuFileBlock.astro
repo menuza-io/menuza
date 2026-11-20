@@ -1,0 +1,31 @@
+---
+import { msg } from '@lingui/core/macro'
+import { resolveMediaUrl, siteContainer, siteSection } from '~/lib/media'
+
+interface Props {
+	config: Record<string, unknown>
+}
+
+const { config } = Astro.props
+const fileUrl = resolveMediaUrl(typeof config.fileUrl === 'string' ? config.fileUrl : '')
+const heading = typeof config.heading === 'string' ? config.heading : ''
+const button =
+	typeof config.buttonLabel === 'string' && config.buttonLabel
+		? config.buttonLabel
+		: (Astro.locals.i18n?._(msg`Download menu`) ?? 'Download menu')
+const fileName = typeof config.fileName === 'string' ? config.fileName : 'menu.pdf'
+---
+
+{fileUrl ? (
+	<section class={siteSection} data-menu-file>
+		<div class={siteContainer}>
+			{heading ? <h2 class="text-3xl font-bold tracking-tight text-foreground">{heading}</h2> : null}
+			<div class="mt-6 overflow-hidden rounded-[var(--radius)] border border-border">
+				<iframe src={`${fileUrl}#page=1`} title={fileName} class="h-96 w-full bg-muted"></iframe>
+			</div>
+			<p class="mt-4">
+				<a class="btn-cta" href={fileUrl} download={fileName}>{button}</a>
+			</p>
+		</div>
+	</section>
+) : null}

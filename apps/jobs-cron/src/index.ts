@@ -11,6 +11,10 @@ import {
 	WebsitePublishWorkflow,
 	type WebsitePublishWorkflowParams,
 } from './website-publish-workflow'
+import {
+	WebsiteImportWorkflow,
+	type WebsiteImportWorkflowParams,
+} from './website-import-workflow'
 
 export interface Env {
 	APP_BASE_URL: string
@@ -21,6 +25,7 @@ export interface Env {
 	MARKETING_JOURNEY_WORKFLOW: Workflow<MarketingJourneyWorkflowParams>
 	SOCIAL_POST_WORKFLOW: Workflow<SocialPostWorkflowParams>
 	WEBSITE_PUBLISH_WORKFLOW: Workflow<WebsitePublishWorkflowParams>
+	WEBSITE_IMPORT_WORKFLOW: Workflow<WebsiteImportWorkflowParams>
 }
 
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
@@ -568,6 +573,42 @@ export default {
 		}
 
 		// =========================================================================
+		// Website import (#140): POST /workflows/website-import/start { importId }
+		// =========================================================================
+		if (
+			(pathname === '/workflows/website-import/start' ||
+				pathname === '/api/workflows/website-import/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				importId?: unknown
+			}
+			const importId = typeof body.importId === 'string' ? body.importId : ''
+			if (!/^[a-z0-9]{8,64}$/i.test(importId)) {
+				return Response.json({ error: 'importId is required' }, { status: 400 })
+			}
+			const instanceId = `website-import-${importId}`
+			try {
+				const instance = await env.WEBSITE_IMPORT_WORKFLOW.create({
+					id: instanceId,
+					params: { importId },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start website import workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
 		// Website Publish Workflow: wake the App when a scheduled publish is due
 		// POST /workflows/website-publish/start  { scheduleId, runAt }  (#180)
 		// =========================================================================
@@ -786,4 +827,5 @@ export {
 	MarketingJourneyWorkflow,
 	SocialPostWorkflow,
 	WebsitePublishWorkflow,
+	WebsiteImportWorkflow,
 }

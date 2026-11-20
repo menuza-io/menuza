@@ -1,0 +1,57 @@
+---
+import { msg } from '@lingui/core/macro'
+import { directionsUrl } from '~/lib/landing-pages'
+import { siteContainer, siteSection } from '~/lib/media'
+import type { PublicSiteMenuPayload } from '~/lib/org'
+import FormBlock from './FormBlock.astro'
+
+interface Props {
+	config: Record<string, unknown>
+	menu: PublicSiteMenuPayload | null
+	sectionId: string
+}
+
+const { config, menu, sectionId } = Astro.props
+const i18n = Astro.locals.i18n
+const heading = typeof config.heading === 'string' ? config.heading : ''
+const intro = typeof config.intro === 'string' ? config.intro : ''
+const email = typeof config.email === 'string' ? config.email : ''
+const location = menu?.locations.find((item) => item.isDefault) ?? menu?.locations[0]
+const address =
+	location?.address && typeof location.address === 'object'
+		? [
+				(location.address as { streetName?: string }).streetName,
+				(location.address as { city?: string }).city,
+			]
+				.filter(Boolean)
+				.join(', ')
+		: ''
+const directions = location ? directionsUrl(location.address) : null
+const mapLabel = i18n?._(msg`Map`) ?? 'Map'
+const showForm = config.showForm === true && typeof config.formId === 'string' && config.formId
+const visible = Boolean(heading || intro || address || location?.phone || email || showForm)
+---
+
+{visible ? (
+	<section class={siteSection} data-contact-block>
+		<div class={siteContainer}>
+			{heading ? <h2 class="text-3xl font-bold tracking-tight text-foreground">{heading}</h2> : null}
+			{intro ? <p class="mt-3 max-w-2xl text-base text-muted-foreground">{intro}</p> : null}
+			<div class="mt-6 space-y-2 text-sm text-foreground">
+				{address ? <p dir="auto">{address}</p> : null}
+				{location?.phone ? (
+					<p><a href={`tel:${location.phone.replace(/[^+\d]/g, '')}`} dir="ltr">{location.phone}</a></p>
+				) : null}
+				{email ? <p><a href={`mailto:${email}`}>{email}</a></p> : null}
+				{directions ? (
+					<p><a href={directions} rel="noopener" target="_blank">{mapLabel}</a></p>
+				) : null}
+			</div>
+			{showForm ? (
+				<div class="mt-8">
+					<FormBlock config={{ formId: config.formId, showTitle: true }} sectionId={sectionId} />
+				</div>
+			) : null}
+		</div>
+	</section>
+) : null}

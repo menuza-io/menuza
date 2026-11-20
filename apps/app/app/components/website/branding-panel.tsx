@@ -1,6 +1,10 @@
 import { Trans } from '@lingui/macro'
 import {
 	DEFAULT_SITE_THEME,
+	paletteMeetsContrast,
+	suggestLogoPalette,
+	themeWithLogoPalette,
+	type Rgb,
 	type SiteThemeConfig,
 } from '@repo/common/site-theme'
 import { cn } from '@repo/ui'
@@ -27,6 +31,92 @@ import {
 } from '#app/components/website/publish-controls.tsx'
 
 const MAX_ICON_SIZE = 1024 * 1024 * 5
+
+async function sampleLogo(src: string): Promise<Rgb[]> {
+	const image = new Image()
+	image.crossOrigin = 'anonymous'
+	await new Promise<void>((resolve, reject) => {
+		image.onload = () => resolve()
+		image.onerror = () => reject(new Error('logo'))
+		image.src = src
+	})
+	const size = 24
+	const canvas = document.createElement('canvas')
+	canvas.width = size
+	canvas.height = size
+	const context = canvas.getContext('2d')
+	if (!context) return []
+	context.drawImage(image, 0, 0, size, size)
+	const data = context.getImageData(0, 0, size, size).data
+	const samples: Rgb[] = []
+	for (let index = 0; index < data.length; index += 4) {
+		if ((data[index + 3] ?? 0) < 128) continue
+		samples.push({
+			r: data[index] ?? 0,
+			g: data[index + 1] ?? 0,
+			b: data[index + 2] ?? 0,
+		})
+	}
+	return samples
+}
+
+function LogoPaletteOffer({
+	src,
+	onApply,
+}: {
+	src: string
+	onApply: (samples: Rgb[]) => void
+}) {
+	const [samples, setSamples] = useState<Rgb[] | null>(null)
+	useEffect(() => {
+		let cancelled = false
+		void sampleLogo(src)
+			.then((next) => {
+				if (!cancelled) setSamples(next)
+			})
+			.catch(() => {
+				if (!cancelled) setSamples(null)
+			})
+		return () => {
+			cancelled = true
+		}
+	}, [src])
+	if (!samples || samples.length === 0) return null
+	const palette = suggestLogoPalette(samples)
+	if (!paletteMeetsContrast(palette)) return null
+	return (
+		<div className="space-y-2" data-logo-palette>
+			<p className="text-muted-foreground text-xs font-medium">
+				<Trans>Colors from your logo</Trans>
+			</p>
+			<div className="flex gap-2">
+				{['primary', 'background', 'foreground'].map((token) => (
+					<span
+						key={token}
+						className="border-border size-8 rounded-md border bg-(--swatch)"
+						style={
+							{ '--swatch': palette.cssVars[token] } as React.CSSProperties
+						}
+					/>
+				))}
+			</div>
+			<Button
+				type="button"
+				variant="outline"
+				size="sm"
+				onClick={() => onApply(samples)}
+			>
+				<Trans>Use these colors</Trans>
+			</Button>
+			<p className="text-muted-foreground text-[11px] leading-relaxed">
+				<Trans>
+					This updates the theme preview. The live site changes when you
+					publish.
+				</Trans>
+			</p>
+		</div>
+	)
+}
 
 function getSharedCookieDomain() {
 	if (typeof window === 'undefined') return ''
@@ -143,6 +233,26 @@ export function BrandingPanel({
 		(iconFetcher.data?.status === 'error'
 			? (iconFetcher.data.error ?? null)
 			: null)
+
+	const applyLogoPalette = (samples: Rgb[]) => {
+		const next = themeWithLogoPalette(theme, samples)
+		if (!paletteMeetsContrast(suggestLogoPalette(samples))) return
+		persistTheme(next)
+		void themeFetcher.submit(
+			{
+				intent: siteThemeActionIntent,
+				organizationId: organization.id,
+				baseColor: next.baseColor,
+				theme: next.theme,
+				radius: next.radius,
+				mode: next.mode,
+				...(next.headingFont ? { headingFont: next.headingFont } : {}),
+				...(next.bodyFont ? { bodyFont: next.bodyFont } : {}),
+				cssVars: JSON.stringify(next.cssVars ?? {}),
+			},
+			{ method: 'POST' },
+		)
+	}
 
 	const handleSaveTheme = () => {
 		void themeFetcher.submit(
@@ -368,6 +478,10 @@ export function BrandingPanel({
 							</p>
 						) : null}
 					</div>
+
+					{displaySrc ? (
+						<LogoPaletteOffer src={displaySrc} onApply={applyLogoPalette} />
+					) : null}
 
 					<SiteThemeFields
 						value={theme}
