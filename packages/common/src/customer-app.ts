@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import { z } from 'zod'
 
 /**
@@ -21,6 +22,22 @@ export const MARKETING_PUSH_FLAG = 'marketing.push'
 
 /** Admin permission: create apps, upload credentials, start builds. */
 export const CUSTOMER_APP_PERMISSION = 'update:customer_app:any' as const
+
+/** Shared by App config reads and per-build status callbacks (not INTERNAL_COMMAND_TOKEN). */
+export const CUSTOMER_APP_PIPELINE_TOKEN_MIN_LENGTH = 32
+
+export const CUSTOMER_APP_CREDENTIAL_UPLOAD_MAX_BYTES = 8_000
+
+/** Bearer value for `POST /resources/customer-app/build-callback` (one build only). */
+export function customerAppBuildCallbackToken(
+	buildId: string,
+	pipelineSecret: string,
+): string {
+	return crypto
+		.createHmac('sha256', pipelineSecret)
+		.update(`customer-app-build:v1:${buildId}`)
+		.digest('hex')
+}
 
 export const CUSTOMER_APP_STORES = ['app_store', 'play_store'] as const
 export type CustomerAppStore = (typeof CUSTOMER_APP_STORES)[number]
@@ -632,8 +649,8 @@ export function parseCredentialUpload(
 			message: 'This is not a Firebase service account file',
 		}
 	}
-	const secret = JSON.stringify(value)
-	if (secret.length > 8_000) {
+	const secret = JSON.stringify(parsed.data)
+	if (secret.length > CUSTOMER_APP_CREDENTIAL_UPLOAD_MAX_BYTES) {
 		return { ok: false, message: 'The service account file is too large' }
 	}
 	return { ok: true, kind, secret }

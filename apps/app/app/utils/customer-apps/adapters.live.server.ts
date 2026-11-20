@@ -63,6 +63,10 @@ export class WorkflowBuildAdapter implements BuildAdapter {
 						build_id: request.buildId,
 						config_url: request.configUrl,
 						callback_url: request.callbackUrl,
+						callback_token: request.callbackAuthorization?.replace(
+							/^Bearer\s+/i,
+							'',
+						),
 					},
 				}),
 				redirect: 'manual',
@@ -210,9 +214,11 @@ export class PublicStoreAdapter implements StoreAdapter {
 			}
 		}
 		if (!response.ok) throw new StoreUnreachableError('unreachable')
+		const html = await response.text()
+		const packageInPage = html.includes(app.androidPackage)
 		return {
 			store: 'play_store',
-			status: 'live',
+			status: packageInPage ? 'live' : 'unknown',
 			version: null,
 			ratingX100: null,
 			ratingCount: 0,

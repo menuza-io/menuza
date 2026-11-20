@@ -1,6 +1,6 @@
 import {
-	ACCOUNT_CHECK_KINDS,
 	CUSTOMER_APP_CREDENTIAL_KINDS,
+	CUSTOMER_APP_CREDENTIAL_UPLOAD_MAX_BYTES,
 	CUSTOMER_APP_PLATFORMS,
 	CUSTOMER_APP_PUBLISHERS,
 	CUSTOMER_APP_STORES,
@@ -121,14 +121,13 @@ const CommandSchema = z.discriminatedUnion('intent', [
 	}),
 ])
 
-void ACCOUNT_CHECK_KINDS
-
 /**
  * Admin's commands on the customer app registry (#156). Admin owns the screens
  * and the permission check (`update:customer_app:any`); the App owns the
  * credential encryption key and the adapters, so Admin reaches it here with
- * the internal command token, like the print shop. Answers never carry a
- * credential value: only whether one is set.
+ * the internal command token, like the print shop. `actorId` is the control-
+ * plane user id from Admin's session; only a holder of INTERNAL_COMMAND_TOKEN
+ * may set it. Answers never carry a credential value: only whether one is set.
  */
 export async function action({ request }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {
@@ -162,6 +161,17 @@ export async function action({ request }: ActionFunctionArgs) {
 		case 'archive':
 			return respond(await archiveCustomerApp(command.appId, command.archived))
 		case 'credential': {
+			const payloadSize =
+				typeof command.payload === 'string'
+					? command.payload.length
+					: JSON.stringify(command.payload ?? null).length
+			if (payloadSize > CUSTOMER_APP_CREDENTIAL_UPLOAD_MAX_BYTES) {
+				return respond({
+					ok: false,
+					code: 'too_large',
+					message: 'The upload is too large.',
+				})
+			}
 			const result = await storeCredential({
 				appId: command.appId,
 				kind: command.kind,

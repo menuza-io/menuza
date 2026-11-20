@@ -6,8 +6,9 @@ import { describe, expect, it } from 'vitest'
  * Customer app security sweep (#156, #196, #105): every route that reaches the
  * app registry checks who is asking before it touches anything else.
  *
- * - Internal routes (config, summary, command, build callback, health job):
- *   the first awaited call is `requireInternalCommandAuth`.
+ * - Pipeline routes (config, build callback): pipeline auth first, not the
+ *   internal command token.
+ * - Admin command, summary and health job: `requireInternalCommandAuth`.
  * - The Marketing page: sign-in and `read:settings:any` come before the flag and
  *   any record; its action needs `update:settings:any`.
  * - Admin: every loader and action starts with `requireUserWithPermission`.
@@ -42,15 +43,29 @@ function exportedFunctionBody(source: string, name: string): string | null {
 const firstAwait = (body: string) =>
 	body.match(/await\s+([A-Za-z_$][\w$.]*)\s*\(/)?.[1]
 
+const PIPELINE: Array<[string, 'loader' | 'action', string]> = [
+	['customer-app.config.ts', 'loader', 'requireCustomerAppPipelineAuth'],
+	[
+		'customer-app.build-callback.ts',
+		'action',
+		'requireCustomerAppBuildCallbackAuth',
+	],
+]
+
 const INTERNAL: Array<[string, 'loader' | 'action']> = [
-	['customer-app.config.ts', 'loader'],
 	['customer-app.summary.ts', 'loader'],
 	['customer-apps.command.ts', 'action'],
-	['customer-app.build-callback.ts', 'action'],
 	['jobs.customer-app-health.ts', 'action'],
 ]
 
 describe('customer app guards', () => {
+	it.each(PIPELINE)('%s checks %s first', (file, kind, guard) => {
+		const source = read(APP, 'routes/resources+', file)
+		const body = exportedFunctionBody(source, kind)
+		expect(body).not.toBeNull()
+		expect(firstAwait(body!)).toBe(guard)
+	})
+
 	it.each(INTERNAL)('%s checks the internal token first', (file, kind) => {
 		const source = read(APP, 'routes/resources+', file)
 		const body = exportedFunctionBody(source, kind)

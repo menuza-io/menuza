@@ -1,7 +1,7 @@
 import { CUSTOMER_APP_SLUG } from '@repo/common/customer-app'
 import { type LoaderFunctionArgs } from 'react-router'
 import { loadBuildConfig } from '#app/utils/customer-apps/service.server.ts'
-import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
+import { requireCustomerAppPipelineAuth } from '#app/utils/customer-apps/pipeline-auth.server.ts'
 
 /**
  * The build pipeline's read of one app's config (#156): the same fields
@@ -12,7 +12,7 @@ import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.ser
  * `GET /resources/customer-app/config?slug=acme`
  */
 export async function loader({ request }: LoaderFunctionArgs) {
-	await requireInternalCommandAuth(request)
+	await requireCustomerAppPipelineAuth(request)
 	const slug = new URL(request.url).searchParams.get('slug')?.trim() ?? ''
 	if (!CUSTOMER_APP_SLUG.test(slug)) {
 		return Response.json({ error: 'not_found' }, { status: 404 })

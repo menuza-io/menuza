@@ -216,6 +216,20 @@ describe('credential uploads', () => {
 		expect(parseCredentialUpload('fcm', 'not json').ok).toBe(false)
 	})
 
+	it('stores only the validated FCM fields', () => {
+		const parsed = parseCredentialUpload('fcm', {
+			type: ACCOUNT_TYPE,
+			project_id: 'p',
+			client_email: 'a@b.iam.gserviceaccount.com',
+			private_key: `-----BEGIN PRIVATE ${'KEY'}-----\nABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEF`,
+			extra: 'dropped',
+		})
+		expect(parsed).toMatchObject({ ok: true, kind: 'fcm' })
+		if (!parsed.ok) throw new Error('parse')
+		expect(parsed.secret).not.toContain('extra')
+		expect(JSON.parse(parsed.secret)).not.toHaveProperty('extra')
+	})
+
 	it('reports only set and date', () => {
 		const statuses = credentialStatuses([
 			{ kind: 'fcm', uploadedAt: new Date('2026-01-02T00:00:00Z') },

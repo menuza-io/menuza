@@ -547,7 +547,7 @@ function BuildsCard({
 									className="text-primary underline"
 									href={build.logUrl}
 									target="_blank"
-									rel="noreferrer"
+									rel="noopener noreferrer"
 								>
 									<Trans>Build log</Trans>
 								</a>

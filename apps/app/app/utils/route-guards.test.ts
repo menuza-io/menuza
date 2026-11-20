@@ -55,6 +55,8 @@ const BASE_GUARDS: Record<string, GuardKind[]> = {
 	checkUserOrganizationAccess: ['membership'],
 	// Machine-to-machine credentials and signed requests.
 	requireInternalCommandAuth: ['machine'],
+	requireCustomerAppPipelineAuth: ['machine'],
+	requireCustomerAppBuildCallbackAuth: ['machine'],
 	requireVoiceAgentAuth: ['machine'],
 	verifyResendWebhook: ['machine'],
 	checkoutWebhookSignatureFromRequest: ['machine'],

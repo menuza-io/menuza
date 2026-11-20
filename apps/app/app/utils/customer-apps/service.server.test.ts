@@ -347,7 +347,7 @@ describe('builds and releases (#156 criterion 3)', () => {
 		await applyBuildCallback({
 			buildId,
 			status: 'succeeded',
-			logUrl: 'https://ci.example/log/1',
+			logUrl: 'https://github.com/acme/menuza/actions/runs/1',
 		})
 		const afterRegress = await applyBuildCallback({
 			buildId,
@@ -358,7 +358,7 @@ describe('builds and releases (#156 criterion 3)', () => {
 			.select()
 			.from(CustomerAppBuild)
 			.where(eq(CustomerAppBuild.id, buildId))
-		expect(row!.logUrl).toBe('https://ci.example/log/1')
+		expect(row!.logUrl).toBe('https://github.com/acme/menuza/actions/runs/1')
 		expect(row!.finishedAt).not.toBeNull()
 		// A non-https log link is dropped.
 		const other = await startAppBuild({

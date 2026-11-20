@@ -33,6 +33,9 @@ New strict keys are sent only when set, so an older node ignores them.
   never selected by a loader. Only `checkStoredCredential` decrypts and answers
   a yes or no. tenant-api learns readiness booleans only
   (`/resources/customer-app/summary`, internal token).
+- **Build pipeline auth**: `GET /resources/customer-app/config` uses
+  `CUSTOMER_APP_PIPELINE_TOKEN` (not `INTERNAL_COMMAND_TOKEN`). Each build
+  callback bears an HMAC of its build id. CI never needs the command token.
 - **Adapters**: builds, store health, account checks, APNs/FCM and Expo go
   through mockable adapters (`MOCKS=true` locally, injected in tests). No test
   calls a third party.
@@ -50,7 +53,9 @@ New strict keys are sent only when set, so an older node ignores them.
 - `apple-app-site-association` and `assetlinks.json` come from the site's own
   app binding. A white-label build claims only its own host.
 - A link the app does not own, an unknown type or a newer version falls back to
-  the website. The app resolves with the same code (`lib/links/app-links.ts`,
+  the website. Only known fallback reasons on this restaurant's host open the
+  in-app browser (`not_in_app`, `not_this_platform`, `app_too_old`); foreign
+  hosts never do. The app resolves with the same code (`lib/links/app-links.ts`,
   `app/+native-intent.tsx`).
 
 ## 3. Orders and order again (#112)

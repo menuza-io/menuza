@@ -1,4 +1,14 @@
 import { resolveLink, type ResolvedLink } from '@repo/common/links'
+
+/** Opens the website in an in-app browser only when it is this restaurant's host. */
+export function shouldOpenResolvedWebInBrowser(resolved: ResolvedLink): boolean {
+	return (
+		resolved.kind === 'web' &&
+		(resolved.reason === 'not_in_app' ||
+			resolved.reason === 'not_this_platform' ||
+			resolved.reason === 'app_too_old')
+	)
+}
 import { type TenantConfiguration } from '../config/configuration'
 
 /**

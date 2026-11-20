@@ -1,5 +1,9 @@
 import { buildLink, type GuestLinkType } from '@repo/common/links'
-import { resolveIncomingLink, routerTarget } from './app-links'
+import {
+	resolveIncomingLink,
+	routerTarget,
+	shouldOpenResolvedWebInBrowser,
+} from './app-links'
 
 const bound = {
 	siteAddress: {
@@ -68,5 +72,20 @@ describe('incoming links in the customer app (#195)', () => {
 		expect(
 			resolveIncomingLink(link('order', { order: 'o1' }), unbound, 'ios'),
 		).toMatchObject({ kind: 'web', reason: 'other_host' })
+	})
+
+	it('opens the in-app browser only for safe fallback reasons on this host', () => {
+		const cart = resolveIncomingLink(
+			link('cart', { cart: '1700000000000.c1.' + HEX }),
+			bound,
+			'ios',
+		)
+		expect(shouldOpenResolvedWebInBrowser(cart)).toBe(true)
+		const foreign = resolveIncomingLink(
+			link('order', { order: 'o1' }, 'https://other.menuza.io'),
+			bound,
+			'ios',
+		)
+		expect(shouldOpenResolvedWebInBrowser(foreign)).toBe(false)
 	})
 })

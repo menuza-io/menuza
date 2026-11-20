@@ -2,7 +2,11 @@ import Constants from 'expo-constants'
 import * as WebBrowser from 'expo-web-browser'
 import { Platform } from 'react-native'
 import { configurationFromBuild } from '../lib/config/configuration'
-import { resolveIncomingLink, routerTarget } from '../lib/links/app-links'
+import {
+	resolveIncomingLink,
+	routerTarget,
+	shouldOpenResolvedWebInBrowser,
+} from '../lib/links/app-links'
 
 /**
  * Routes a link the app was opened with (#195) before expo-router sees it:
@@ -26,8 +30,7 @@ export function redirectSystemPath({
 		const resolved = resolveIncomingLink(path, configuration, platform)
 		const target = routerTarget(resolved)
 		if (!target) {
-			// Not ours to open as a screen: the same address on the website.
-			if (resolved.kind === 'web' && resolved.reason !== 'invalid') {
+			if (shouldOpenResolvedWebInBrowser(resolved)) {
 				void WebBrowser.openBrowserAsync(resolved.url)
 			}
 			return '/'

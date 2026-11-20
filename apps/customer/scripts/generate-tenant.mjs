@@ -115,8 +115,9 @@ async function loadRegistryTenant(slug, registryUrl) {
 	const base = registryUrl ?? process.env.CUSTOMER_APP_REGISTRY_URL
 	if (!base)
 		fail('--registry needs --registry-url (or CUSTOMER_APP_REGISTRY_URL)')
-	const token = process.env.INTERNAL_COMMAND_TOKEN
-	if (!token) fail('--registry needs INTERNAL_COMMAND_TOKEN in the environment')
+	const token = process.env.CUSTOMER_APP_PIPELINE_TOKEN
+	if (!token)
+		fail('--registry needs CUSTOMER_APP_PIPELINE_TOKEN in the environment')
 	const url = `${base.replace(/\/+$/, '')}/resources/customer-app/config?slug=${encodeURIComponent(slug)}`
 	let response
 	try {

@@ -25,6 +25,8 @@ export type BuildRequest = {
 	configUrl: string
 	/** Internal endpoint the pipeline posts status to. */
 	callbackUrl: string
+	/** `Authorization` bearer for the callback (per-build HMAC). */
+	callbackAuthorization: string | null
 }
 
 export type BuildStart = {

@@ -1,3 +1,4 @@
+import { customerAppBuildCallbackToken } from '@repo/common/customer-app'
 import {
 	CustomerApp,
 	CustomerAppBuild,
@@ -27,20 +28,50 @@ vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
 
 function args(
 	path: string,
-	init: { method?: string; token?: string | null; body?: unknown },
+	init: {
+		method?: string
+		token?: string | null
+		body?: unknown
+		auth?: 'command' | 'pipeline' | 'callback'
+		buildId?: string
+	},
 ) {
 	const url = new URL(`http://localhost:3001${path}`)
+	const auth =
+		init.auth ??
+		(path.includes('/customer-app/config')
+			? 'pipeline'
+			: path.includes('build-callback')
+				? 'callback'
+				: 'command')
+	const buildId =
+		init.buildId ??
+		(init.body &&
+		typeof init.body === 'object' &&
+		'buildId' in (init.body as object)
+			? String((init.body as { buildId: string }).buildId)
+			: '')
+	const headers: Record<string, string> = {
+		'Content-Type': 'application/json',
+	}
+	if (init.token !== null) {
+		const fallback =
+			auth === 'pipeline' || auth === 'callback'
+				? ENV.CUSTOMER_APP_PIPELINE_TOKEN
+				: ENV.INTERNAL_COMMAND_TOKEN
+		const bearer =
+			auth === 'callback'
+				? customerAppBuildCallbackToken(buildId, init.token ?? fallback)
+				: (init.token ?? fallback)
+		headers.Authorization = `Bearer ${bearer}`
+	}
+	if (auth === 'callback' && buildId) {
+		headers['X-Customer-App-Build-Id'] = buildId
+	}
 	return {
 		request: new Request(url, {
 			method: init.method ?? 'POST',
-			headers: {
-				...(init.token === null
-					? {}
-					: {
-							Authorization: `Bearer ${init.token ?? ENV.INTERNAL_COMMAND_TOKEN}`,
-						}),
-				'Content-Type': 'application/json',
-			},
+			headers,
 			body:
 				init.body === undefined || init.method === 'GET'
 					? undefined
@@ -66,7 +97,7 @@ async function publishedOrg() {
 beforeEach(() => setCustomerAppAdapters(createMockCustomerAppAdapters()))
 afterEach(() => setCustomerAppAdapters(null))
 
-describe('internal endpoints need the internal command token', () => {
+describe('customer app machine endpoints', () => {
 	it('config answers 401 without a token and with a wrong one', async () => {
 		await expect(
 			configLoader({
@@ -86,7 +117,7 @@ describe('internal endpoints need the internal command token', () => {
 		).rejects.toMatchObject({ status: 401 })
 	})
 
-	it('command, callback and health job refuse a missing or wrong token', async () => {
+	it('command and health job refuse a missing or wrong internal token', async () => {
 		for (const token of [null, 'wrong-wrong-wrong-wrong']) {
 			await expect(
 				command(
@@ -97,16 +128,21 @@ describe('internal endpoints need the internal command token', () => {
 				),
 			).rejects.toMatchObject({ status: 401 })
 			await expect(
+				healthJob(
+					args('/resources/jobs/customer-app-health', { token }) as never,
+				),
+			).rejects.toMatchObject({ status: 401 })
+		}
+	})
+
+	it('build callback refuses a missing or wrong per-build token', async () => {
+		for (const token of [null, 'wrong-wrong-wrong-wrong']) {
+			await expect(
 				buildCallback(
 					args('/resources/customer-app/build-callback', {
 						token,
-						body: {},
+						body: { buildId: 'build-1', status: 'running' },
 					}) as never,
-				),
-			).rejects.toMatchObject({ status: 401 })
-			await expect(
-				healthJob(
-					args('/resources/jobs/customer-app-health', { token }) as never,
 				),
 			).rejects.toMatchObject({ status: 401 })
 		}

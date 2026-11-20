@@ -26,6 +26,7 @@ import {
 	marketingVersionSchema,
 	displayNameSchema,
 	customerAppSlugSchema,
+	customerAppBuildCallbackToken,
 	iconBackgroundSchema,
 	APPLE_TEAM_ID,
 	ANDROID_SHA256,
@@ -48,6 +49,7 @@ import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { resolveSitesOrigin } from '#app/utils/sites/sites-origin.server.ts'
 import { getCustomerAppAdapters } from './adapters.select.server.ts'
 import { StoreUnreachableError } from './adapters.server.ts'
+import { getUsableCustomerAppPipelineToken } from './pipeline-auth.server.ts'
 
 /**
  * The branded customer app registry (#156): create from the organization's
@@ -414,6 +416,10 @@ async function dispatchBuild(
 	build: typeof CustomerAppBuild.$inferSelect,
 ): Promise<{ ok: true } | ServiceFailure> {
 	try {
+		const pipelineToken = getUsableCustomerAppPipelineToken()
+		const callbackAuthorization = pipelineToken
+			? `Bearer ${customerAppBuildCallbackToken(build.id, pipelineToken)}`
+			: null
 		const started = await getCustomerAppAdapters().build.start({
 			appId: app.id,
 			buildId: build.id,
@@ -422,6 +428,7 @@ async function dispatchBuild(
 			platform: build.platform,
 			configUrl: `${internalBase()}/resources/customer-app/config?slug=${encodeURIComponent(app.slug)}`,
 			callbackUrl: `${internalBase()}/resources/customer-app/build-callback`,
+			callbackAuthorization,
 		})
 		await db
 			.update(CustomerAppBuild)
@@ -669,12 +676,26 @@ export async function applyBuildCallback(input: {
 
 function safeLogUrl(raw: string | null | undefined): string | null {
 	if (!raw) return null
+	let url: URL
 	try {
-		const url = new URL(raw)
-		return url.protocol === 'https:' ? url.toString() : null
+		url = new URL(raw)
 	} catch {
 		return null
 	}
+	if (url.protocol !== 'https:') return null
+	const host = url.hostname.toLowerCase()
+	if (host === 'expo.dev' || host.endsWith('.expo.dev')) return url.toString()
+	if (host !== 'github.com') return null
+	const repo = readLiveEnv('CUSTOMER_APP_BUILD_REPO')
+	if (/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+		const [owner, name] = repo.split('/')
+		const prefix = `/${owner}/${name}/`
+		if (url.pathname.startsWith(prefix)) return url.toString()
+	}
+	if (/^\/[\w.-]+\/[\w.-]+\/actions\//.test(url.pathname)) {
+		return url.toString()
+	}
+	return null
 }
 
 // ---------------------------------------------------------------------------
