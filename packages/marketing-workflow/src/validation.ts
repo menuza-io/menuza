@@ -1,6 +1,6 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { hasBoilerplatePhrase } from '@repo/common/email-boilerplate'
 import { msg } from '@lingui/macro'
+import { hasBoilerplatePhrase } from '@repo/common/email-boilerplate'
 import {
 	validateWorkflowDAG as validateTenantWorkflowDAG,
 	type DAGValidationResult,
@@ -22,6 +22,11 @@ export const VALIDATION_MSGS = {
 	emailBoilerplate: msg`Unedited boilerplate text detected in email body.`,
 	smsMessageRequired: msg`SMS message text is required.`,
 	smsMessageTooLong: msg`SMS message exceeds 1600 characters maximum.`,
+	pushTitleRequired: msg`Push title is required.`,
+	pushTitleTooLong: msg`Push title exceeds 65 characters.`,
+	pushBodyRequired: msg`Push message is required.`,
+	pushBodyTooLong: msg`Push message exceeds 178 characters.`,
+	pushNoMergeTags: msg`A push cannot use merge tags: it holds no personal data.`,
 	conditionFieldRequired: msg`Condition comparison field is required.`,
 	conditionOperatorRequired: msg`Condition operator is required.`,
 	couponMissing: msg`This message uses the Coupon code tag. Choose a coupon, or remove the tag.`,
@@ -163,6 +168,24 @@ export function validateFlowCanvas(
 				errs.push(
 					...couponErrors([data.messageText], data.discountOffer, translate),
 				)
+				break
+			case 'action_push':
+				if (!data.title || String(data.title).trim() === '') {
+					errs.push(t(VALIDATION_MSGS.pushTitleRequired, translate))
+				} else if (String(data.title).length > 65) {
+					errs.push(t(VALIDATION_MSGS.pushTitleTooLong, translate))
+				}
+				if (!data.body || String(data.body).trim() === '') {
+					errs.push(t(VALIDATION_MSGS.pushBodyRequired, translate))
+				} else if (String(data.body).length > 178) {
+					errs.push(t(VALIDATION_MSGS.pushBodyTooLong, translate))
+				}
+				if (
+					String(data.title ?? '').includes('{{') ||
+					String(data.body ?? '').includes('{{')
+				) {
+					errs.push(t(VALIDATION_MSGS.pushNoMergeTags, translate))
+				}
 				break
 			case 'condition':
 				if (

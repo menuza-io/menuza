@@ -1,3 +1,4 @@
+import { processPushReceipts } from './push-service.ts'
 import { and, asc, eq, lte, min } from 'drizzle-orm'
 import {
 	getTenantDb,
@@ -205,6 +206,11 @@ export async function runOrdersTickForOrg(
 			orgId,
 			errorLogFields(error),
 		)
+	})
+	// Delivery receipts of guest pushes sent a while ago, and tokens that turned
+	// out invalid (#105). Counts only; a failure never stops the rest of the tick.
+	await processPushReceipts(db, now).catch((error: unknown) => {
+		console.error('Push receipts sweep failed', orgId, errorLogFields(error))
 	})
 	const due = [messages.nextDueAt, acceptance.nextDeadlineAt].filter(
 		(at): at is number => at !== null,

@@ -269,6 +269,7 @@ export const restaurantPrintUi: PrintShopUiVertical = {
 		},
 		menu: { label: msg`Order ahead (menu)`, Fields: LocationFields },
 		reservations: { label: msg`Book a table`, Fields: LocationFields },
+		app: { label: msg`Get the app` },
 	},
 	featuredItems: {
 		title: msg`Featured dishes`,

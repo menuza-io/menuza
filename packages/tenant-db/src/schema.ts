@@ -115,7 +115,7 @@ export const CUSTOMER_SUBSCRIPTION_TOPICS = [
 	// form agreed to hear from the restaurant about their visits.
 	'reservations',
 ] as const
-export const CUSTOMER_SUBSCRIPTION_CHANNELS = ['sms', 'email'] as const
+export const CUSTOMER_SUBSCRIPTION_CHANNELS = ['sms', 'email', 'push'] as const
 export const CUSTOMER_SUBSCRIPTION_SOURCES = [
 	'signup',
 	'profile',
@@ -130,6 +130,9 @@ export const CUSTOMER_SUBSCRIPTION_SOURCES = [
 	'order_success',
 	// Reservations: the marketing box on a booking form.
 	'reservation_booking',
+	// Push marketing (#105): the guest turned on Offers and news in the app's
+	// pre-prompt (`app_prompt`) or in Profile, Notifications (`profile`).
+	'app_prompt',
 	// A staff member recorded consent the guest gave in person, on a paper
 	// form or by phone (`recorded_by` and `consent_method` say who and how).
 	// Email stays pending until the owner confirms, unlike `operator`.
@@ -429,8 +432,10 @@ export const journeyStepExecutions = sqliteTable(
 				'delay',
 				'action_email',
 				'action_sms',
+				'action_push',
 				'email',
 				'sms',
+				'push',
 				'condition',
 			],
 		})
@@ -442,8 +447,10 @@ export const journeyStepExecutions = sqliteTable(
 				'delay',
 				'action_email',
 				'action_sms',
+				'action_push',
 				'email',
 				'sms',
+				'push',
 				'condition',
 			],
 		}),
@@ -507,7 +514,7 @@ export const marketingCampaigns = sqliteTable(
 		})
 			.notNull()
 			.default('Draft'),
-		channel: text('channel', { enum: ['email', 'sms'] })
+		channel: text('channel', { enum: ['email', 'sms', 'push'] })
 			.notNull()
 			.default('email'),
 		subject: text('subject'),
@@ -518,6 +525,9 @@ export const marketingCampaigns = sqliteTable(
 		contentHtml: text('content_html'),
 		/** JSON coupon for `{{couponCode}}` (`marketingOfferSchema`), or null. */
 		discountOffer: text('discount_offer'),
+		/** Push broadcast (#105): optional image and the page or dish it opens. */
+		pushImageUrl: text('push_image_url'),
+		pushLink: text('push_link'),
 		targetAudienceCount: integer('target_audience_count').default(0),
 		segmentationRules: text('segmentation_rules', { mode: 'json' }).default(
 			'{"audience": "all"}',
@@ -596,7 +606,7 @@ export const marketingMessages = sqliteTable(
 		customerId: text('customer_id')
 			.notNull()
 			.references(() => customers.id, { onDelete: 'cascade' }),
-		channel: text('channel', { enum: ['email', 'sms'] })
+		channel: text('channel', { enum: ['email', 'sms', 'push'] })
 			.notNull()
 			.default('email'),
 		status: text('status').notNull().default('Sent'),
@@ -10051,4 +10061,122 @@ export const customerCarts = sqliteTable(
 		remindedAt: integer('reminded_at'),
 	},
 	(table) => [index('idx_customer_carts_updated').on(table.updatedAt)],
+)
+
+// ==========================================
+// Guest push notifications (#105)
+// ==========================================
+
+export const CUSTOMER_PUSH_PLATFORMS = ['ios', 'android'] as const
+/** Service categories (on by default once the OS allows push); marketing is a `push` subscription. */
+export const CUSTOMER_PUSH_CATEGORIES = [
+	'orders',
+	'bookings',
+	'rewards',
+] as const
+export type CustomerPushCategory = (typeof CUSTOMER_PUSH_CATEGORIES)[number]
+
+/**
+ * A guest's phone, registered for push by the branded customer app. The token
+ * is sealed (`token_ciphertext`, AES-256-GCM) and only its HMAC (`token_hash`)
+ * is searchable; at most 10 devices per customer (the oldest is dropped).
+ * Signing out deletes the row; a token the push service reports invalid is
+ * deleted. Regional data: included in person erasure.
+ */
+export const customerPushDevices = sqliteTable(
+	'customer_push_devices',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		customerId: text('customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		platform: text('platform', { enum: CUSTOMER_PUSH_PLATFORMS }).notNull(),
+		tokenCiphertext: text('token_ciphertext').notNull(),
+		tokenHash: text('token_hash').notNull(),
+		appId: text('app_id'),
+		locale: text('locale').notNull().default('en'),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+		lastSeenAt: integer('last_seen_at', { mode: 'timestamp_ms' }).notNull(),
+	},
+	(table) => [
+		uniqueIndex('uniq_customer_push_devices_token').on(table.tokenHash),
+		index('idx_customer_push_devices_customer').on(
+			table.customerId,
+			table.lastSeenAt,
+		),
+	],
+)
+
+/** A guest's switch for one service category; a missing row means on. */
+export const customerPushPreferences = sqliteTable(
+	'customer_push_preferences',
+	{
+		customerId: text('customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		category: text('category', { enum: CUSTOMER_PUSH_CATEGORIES }).notNull(),
+		enabled: integer('enabled', { mode: 'boolean' }).notNull(),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+	},
+	(table) => [primaryKey({ columns: [table.customerId, table.category] })],
+)
+
+export const PUSH_MESSAGE_KINDS = [
+	'order_status',
+	'booking',
+	'reward',
+	'marketing',
+] as const
+export const PUSH_MESSAGE_STATUSES = [
+	'queued',
+	'sent',
+	'delivered',
+	'failed',
+	'invalid_token',
+	'skipped',
+] as const
+
+/**
+ * The push send log: idempotency (one row per kind, reference and device, so a
+ * retried hook never sends twice) and the broadcast metrics (sent, delivered,
+ * opened). It holds ids and a status, never a title, body or any guest data.
+ */
+export const pushMessages = sqliteTable(
+	'push_messages',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		kind: text('kind', { enum: PUSH_MESSAGE_KINDS }).notNull(),
+		/** What the push is about: `<order id>:<status>`, a booking event key, a campaign id... */
+		ref: text('ref').notNull(),
+		customerId: text('customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		deviceId: text('device_id').notNull(),
+		campaignId: text('campaign_id'),
+		status: text('status', { enum: PUSH_MESSAGE_STATUSES })
+			.notNull()
+			.default('queued'),
+		/** A short machine reason (`push_token_invalid`, `provider_error`...). */
+		errorCode: text('error_code'),
+		/** The provider's receipt id, for the delivery check. */
+		ticketId: text('ticket_id'),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+		sentAt: integer('sent_at', { mode: 'timestamp_ms' }),
+		deliveredAt: integer('delivered_at', { mode: 'timestamp_ms' }),
+		openedAt: integer('opened_at', { mode: 'timestamp_ms' }),
+	},
+	(table) => [
+		uniqueIndex('uniq_push_messages_kind_ref_device').on(
+			table.kind,
+			table.ref,
+			table.deviceId,
+		),
+		index('idx_push_messages_campaign').on(table.campaignId),
+		index('idx_push_messages_customer').on(table.customerId),
+		index('idx_push_messages_receipt').on(table.status, table.ticketId),
+	],
 )

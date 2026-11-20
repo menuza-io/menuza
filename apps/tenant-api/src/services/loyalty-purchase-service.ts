@@ -752,6 +752,14 @@ async function settlePurchaseInTx(
 		// A balance that reached a reward starts its journeys once this commits.
 		afterActiveLoyaltyCommit((orgId) => {
 			scheduleRewardJourneys(orgId, purchase.memberId)
+			// The guest's phone: points earned, or a reward now within reach (#105).
+			void import('./push-hooks.ts').then(({ pushLoyaltyEarned }) =>
+				pushLoyaltyEarned(orgId, {
+					memberId: purchase.memberId,
+					purchaseId: purchase.id,
+					awardedPoints,
+				}),
+			)
 		})
 	}
 	await tx

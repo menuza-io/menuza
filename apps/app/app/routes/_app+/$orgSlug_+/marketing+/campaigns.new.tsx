@@ -71,11 +71,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				.limit(1)
 		: []
 
+	const features = await getMarketingFeatures(orgId)
 	return {
 		orgSlug,
-		audienceOptions: (await getMarketingFeatures(orgId)).audiences
+		audienceOptions: features.audiences
 			? ((await loadAudienceOptions(fetchTenant)) ?? null)
 			: null,
+		pushEnabled: features.push,
 		couponOptions: await loadCouponDiscountOptions(userId, orgId),
 		aiDraft: await loadAiDraftConfig(orgId, orgSlug),
 		template: launch ? ('launch' as const) : null,
@@ -149,8 +151,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function NewCampaignRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, audienceOptions, couponOptions, template, siteUrl, aiDraft } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		audienceOptions,
+		couponOptions,
+		template,
+		siteUrl,
+		aiDraft,
+		pushEnabled,
+	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -181,9 +190,13 @@ export default function NewCampaignRoute() {
 						hasEmailBlocks={blocks.length > 0}
 						scheduling
 						canTestSend
+						pushEnabled={pushEnabled}
 						audienceField={
 							audienceOptions ? (
-								<SavedAudienceField options={audienceOptions} orgSlug={orgSlug} />
+								<SavedAudienceField
+									options={audienceOptions}
+									orgSlug={orgSlug}
+								/>
 							) : null
 						}
 						error={

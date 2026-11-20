@@ -41,7 +41,7 @@ const RETARGET_WAIT_MS = 48 * 60 * 60 * 1000
 export type CampaignActionTarget = {
 	id: string
 	status: CampaignStatus
-	channel: 'email' | 'sms'
+	channel: 'email' | 'sms' | 'push'
 	/** When it last changed; for a finished broadcast, when it finished. */
 	updatedAt?: string | Date | null
 	/** The re-send already made from it, if any. */

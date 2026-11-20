@@ -31,6 +31,7 @@ const PROBLEM_TEXT: Record<BroadcastProblemCode, ReturnType<typeof msg>> = {
 	coupon_paused: msg`The coupon's discount is paused, archived or gone. Resume it or choose another coupon.`,
 	coupon_ended_before_send: msg`The coupon's discount ends before this would go out. Change its end date or choose another coupon.`,
 	audience_zero: msg`Nobody would receive this: no one in the audience is subscribed.`,
+	push_merge_tags: msg`A notification can't use merge tags such as a name or a code: it is the same for everyone.`,
 }
 
 export function useBroadcastProblemText() {

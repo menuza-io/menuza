@@ -36,7 +36,7 @@ export async function auditCampaign(input: {
 	campaignId?: string | null
 	/** The campaign this one was copied or re-sent from. */
 	sourceCampaignId?: string
-	channel?: 'email' | 'sms'
+	channel?: 'email' | 'sms' | 'push'
 	request?: Request
 }) {
 	const [action, details] = ACTIONS[input.kind]

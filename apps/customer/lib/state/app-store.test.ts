@@ -1,5 +1,6 @@
 import { type HttpRequest } from '../api/http'
 import { type TenantConfiguration } from '../config/configuration'
+import { type CustomerSession } from '../session/customer-session'
 import { createMemoryTokenStorage } from '../session/token-storage'
 import { makeSiteAddress, type SiteAddress } from '../support/site-address'
 import { AppStore, type CustomerFeature } from './app-store'
@@ -56,6 +57,7 @@ function makeStore(
 		device?: string[]
 		prepareStorage?: () => Promise<unknown>
 		forgetSiteData?: () => Promise<unknown>
+		beforeSignOut?: (session: CustomerSession) => Promise<unknown>
 	} = {},
 ) {
 	const preferences = createMemoryPreferences({
@@ -72,6 +74,7 @@ function makeStore(
 		transport: transport.send,
 		prepareStorage: options.prepareStorage,
 		forgetSiteData: options.forgetSiteData,
+		beforeSignOut: options.beforeSignOut,
 		createFeatures: () => {
 			const rewards = fakeFeature()
 			features.push(rewards)
@@ -756,6 +759,57 @@ describe('AppStore', () => {
 			expect(tokenStorage.current).toBeNull()
 			expect(features[0]?.reset).toHaveBeenCalledTimes(2)
 			await until(() => transport.paths.includes('/auth/logout'), 'revocation')
+		})
+
+		it('runs the push clean-up while the session is still valid, then signs out (#105)', async () => {
+			let signedInDuringCleanup: boolean | null = null
+			const transport = routes({
+				'/resources/sites': { json: ORGANIZATION },
+				'/auth/me': { json: PROFILE },
+				'/auth/logout': { json: { success: true } },
+			})
+			const { store } = makeStore(transport, {
+				tokens: { accessToken: makeAccessToken(), refreshToken: 'r' },
+				beforeSignOut: async (session) => {
+					signedInDuringCleanup = session.isSignedIn
+				},
+			})
+			await store.start()
+			await store.signOut()
+			expect(signedInDuringCleanup).toBe(true)
+			expect(store.getSnapshot().isSignedIn).toBe(false)
+		})
+
+		it('does not let a slow or failing push clean-up hold sign-out up (#105)', async () => {
+			const transport = routes({
+				'/resources/sites': { json: ORGANIZATION },
+				'/auth/me': { json: PROFILE },
+				'/auth/logout': { json: { success: true } },
+			})
+			const failing = makeStore(transport, {
+				tokens: { accessToken: makeAccessToken(), refreshToken: 'r' },
+				beforeSignOut: () => Promise.reject(new Error('offline')),
+			})
+			await failing.store.start()
+			await failing.store.signOut()
+			expect(failing.store.getSnapshot().isSignedIn).toBe(false)
+
+			jest.useFakeTimers()
+			try {
+				const slow = makeStore(transport, {
+					tokens: { accessToken: makeAccessToken(), refreshToken: 'r' },
+					beforeSignOut: () => new Promise(() => undefined),
+				})
+				jest.useRealTimers()
+				await slow.store.start()
+				jest.useFakeTimers()
+				const done = slow.store.signOut()
+				await jest.advanceTimersByTimeAsync(1600)
+				await done
+				expect(slow.store.getSnapshot().isSignedIn).toBe(false)
+			} finally {
+				jest.useRealTimers()
+			}
 		})
 	})
 

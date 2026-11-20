@@ -39,6 +39,7 @@ import {
 	goalFromTriggerConfig,
 	loadAutomationTriggerAccess,
 	marketingTriggerError,
+	pushStepError,
 } from '#app/utils/marketing/automation-triggers.server.ts'
 import {
 	loyaltyTriggerBlocked,
@@ -75,6 +76,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orderTriggers: access.orderTriggers,
 		birthdayTriggers: access.birthdayTriggers,
 		cartTriggers: access.cartTriggers,
+		pushSteps: access.pushSteps,
 		audienceOptions: access.features.audiences
 			? await loadAudienceOptions(fetchTenant)
 			: undefined,
@@ -165,6 +167,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		features: (await loadAutomationTriggerAccess(orgId)).features,
 	})
 	if (triggerError) return { error: triggerError }
+	const pushError = pushStepError({
+		nodes: parsedGraph.nodes,
+		features: (await loadAutomationTriggerAccess(orgId)).features,
+	})
+	if (pushError) return { error: pushError }
 	const branding = await resolveEmailBrandingForOrg(orgId)
 	const rendered = await renderJourneyEmailNodes(
 		orgId,
@@ -227,6 +234,7 @@ export default function NewJourneyRoute() {
 		orderTriggers,
 		birthdayTriggers,
 		cartTriggers,
+		pushSteps,
 		audienceOptions,
 		aiDraft,
 	} = useLoaderData<typeof loader>()
@@ -278,6 +286,7 @@ export default function NewJourneyRoute() {
 					orderTriggers={orderTriggers}
 					birthdayTriggers={birthdayTriggers}
 					cartTriggers={cartTriggers}
+					pushSteps={pushSteps}
 					audienceOptions={audienceOptions}
 					headerExtras={<GlobalAIToggle />}
 					onSave={handleSave}

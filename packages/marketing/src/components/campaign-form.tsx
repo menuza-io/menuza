@@ -2,6 +2,7 @@ import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type BroadcastProblem } from '@repo/common/broadcast-checks'
 import { type EmailBlock } from '@repo/common/email-blocks'
+import { PUSH_BODY_MAX, PUSH_TITLE_MAX } from '@repo/common/push'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
@@ -29,6 +30,9 @@ export interface CampaignFormDefaults {
 	channel?: CampaignChannel
 	subject?: string | null
 	content?: string | null
+	/** Push (#105): the image and the site page a tap opens. */
+	pushImageUrl?: string | null
+	pushLink?: string | null
 	audience?: string | null
 	/** ISO instant of a scheduled send. */
 	scheduledAt?: string | null
@@ -49,6 +53,11 @@ export interface CampaignFormProps {
 	isSubmitting?: boolean
 	cancelTo?: string
 	showSmsProBadge?: boolean
+	/**
+	 * Offer the Push channel (#105): the organization has `marketing.push` and
+	 * the app's push. An existing push broadcast always shows it.
+	 */
+	pushEnabled?: boolean
 	audienceField?: ReactNode
 	/** Replaces the message textarea when the email channel is selected. */
 	emailDesigner?: ReactNode
@@ -92,6 +101,7 @@ export function CampaignForm({
 	isSubmitting = false,
 	cancelTo,
 	showSmsProBadge = true,
+	pushEnabled = false,
 	audienceField,
 	emailDesigner,
 	couponField,
@@ -116,6 +126,12 @@ export function CampaignForm({
 	)
 	const [smsContent, setSmsContent] = useState(
 		defaults?.channel === 'sms' ? (defaults.content ?? '') : '',
+	)
+	const [pushContent, setPushContent] = useState(
+		defaults?.channel === 'push' ? (defaults.content ?? '') : '',
+	)
+	const [pushTitle, setPushTitle] = useState(
+		defaults?.channel === 'push' ? (defaults.subject ?? '') : '',
 	)
 	const [emailContent, setEmailContent] = useState(
 		defaults?.channel === 'email' ? (defaults.content ?? '') : '',
@@ -163,10 +179,13 @@ export function CampaignForm({
 
 	const channels: Array<{
 		value: CampaignChannel
-		icon: 'mail' | 'smartphone'
+		icon: 'mail' | 'smartphone' | 'bell'
 	}> = [
 		{ value: 'email', icon: 'mail' },
 		{ value: 'sms', icon: 'smartphone' },
+		...(pushEnabled || defaults?.channel === 'push'
+			? [{ value: 'push' as const, icon: 'bell' as const }]
+			: []),
 	]
 
 	const resolvedSubmitLabel = submitLabel ?? _(msg`Send now`)
@@ -227,16 +246,25 @@ export function CampaignForm({
 							name="audience"
 							className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm sm:max-w-xs"
 							value={
-								channel === 'sms' && audience === 'unverified'
+								(channel === 'sms' || channel === 'push') &&
+								audience === 'unverified'
 									? 'all'
-									: audience
+									: channel === 'push'
+										? 'all'
+										: audience
 							}
 							onChange={(event) => setAudience(event.target.value)}
 						>
-							<option value="all">{_(msg`Everyone subscribed`)}</option>
-							<option value="verified">
-								{_(msg`Verified phone numbers only`)}
+							<option value="all">
+								{channel === 'push'
+									? _(msg`Everyone who opted in to notifications`)
+									: _(msg`Everyone subscribed`)}
 							</option>
+							{channel === 'push' ? null : (
+								<option value="verified">
+									{_(msg`Verified phone numbers only`)}
+								</option>
+							)}
 							{channel === 'email' ? (
 								<option value="unverified">
 									{_(msg`Without a verified phone`)}
@@ -256,6 +284,28 @@ export function CampaignForm({
 						required
 					/>
 				</div>
+
+				{channel === 'push' ? (
+					<div className="space-y-2">
+						<div className="flex items-center justify-between gap-4">
+							<Label htmlFor="subject">{_(msg`Title`)}</Label>
+							<span className="text-muted-foreground text-xs">
+								{pushTitle.length} / {PUSH_TITLE_MAX}
+							</span>
+						</div>
+						<Input
+							id="subject"
+							name="subject"
+							value={pushTitle}
+							onChange={(event) =>
+								setPushTitle(event.target.value.slice(0, PUSH_TITLE_MAX))
+							}
+							maxLength={PUSH_TITLE_MAX}
+							placeholder={_(msg`Fresh summer menu`)}
+							required
+						/>
+					</div>
+				) : null}
 
 				{channel === 'email' ? (
 					<div className="space-y-2">
@@ -292,6 +342,10 @@ export function CampaignForm({
 								<span className="text-muted-foreground text-xs">
 									{smsContent.length} / 1600
 								</span>
+							) : channel === 'push' ? (
+								<span className="text-muted-foreground text-xs">
+									{pushContent.length} / {PUSH_BODY_MAX}
+								</span>
 							) : (
 								<span className="text-muted-foreground text-xs">
 									{'{{name}}'} {_(msg`supported`)}
@@ -307,6 +361,19 @@ export function CampaignForm({
 								maxLength={1600}
 								placeholder={_(msg`Write your text message`)}
 								className="min-h-45 resize-y"
+								required
+							/>
+						) : channel === 'push' ? (
+							<Textarea
+								id="content"
+								name="content"
+								value={pushContent}
+								onChange={(e) =>
+									setPushContent(e.target.value.slice(0, PUSH_BODY_MAX))
+								}
+								maxLength={PUSH_BODY_MAX}
+								placeholder={_(msg`Write the notification`)}
+								className="min-h-24 resize-y"
 								required
 							/>
 						) : (
@@ -332,12 +399,49 @@ export function CampaignForm({
 					</div>
 				)}
 
-				{couponField}
+				{channel === 'push' ? (
+					<div className="space-y-4">
+						<p className="text-muted-foreground text-xs">
+							{_(
+								msg`A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app.`,
+							)}
+						</p>
+						<div className="grid gap-4 sm:grid-cols-2">
+							<div className="space-y-2">
+								<Label htmlFor="pushLink">{_(msg`Opens this page`)}</Label>
+								<Input
+									id="pushLink"
+									name="pushLink"
+									defaultValue={defaults?.pushLink ?? ''}
+									placeholder="/menu"
+								/>
+								<p className="text-muted-foreground text-xs">
+									{_(msg`A page on your site. Leave empty for the menu.`)}
+								</p>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="pushImageUrl">{_(msg`Image address`)}</Label>
+								<Input
+									id="pushImageUrl"
+									name="pushImageUrl"
+									type="url"
+									defaultValue={defaults?.pushImageUrl ?? ''}
+									placeholder="https://"
+								/>
+								<p className="text-muted-foreground text-xs">
+									{_(msg`Optional. A secure (https) address.`)}
+								</p>
+							</div>
+						</div>
+					</div>
+				) : (
+					couponField
+				)}
 
 				<AiDraftDialog
-					open={aiOpen}
+					open={aiOpen && channel !== 'push'}
 					onOpenChange={setAiOpen}
-					channel={channel}
+					channel={channel === 'push' ? 'sms' : channel}
 					hasContent={
 						channel === 'sms'
 							? smsContent.trim().length > 0

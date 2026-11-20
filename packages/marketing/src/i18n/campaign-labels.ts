@@ -15,6 +15,7 @@ const STATUS_LABELS: Record<CampaignStatus, ReturnType<typeof msg>> = {
 const CHANNEL_LABELS: Record<CampaignChannel, ReturnType<typeof msg>> = {
 	email: msg`Email`,
 	sms: msg`SMS`,
+	push: msg`Push`,
 }
 
 export function useCampaignLabels() {

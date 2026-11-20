@@ -1,3 +1,5 @@
+import { marketingPushContentSchema } from '@repo/common/push'
+import { pushGate } from '../services/push-service.ts'
 import { count, desc, eq, inArray } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import { jwtVerify } from 'jose'
@@ -505,6 +507,8 @@ operatorRoutes.get('/marketing/campaigns/:campaignId/message', async (c) => {
 				contentBlocks: campaign.contentBlocks,
 				contentHtml: campaign.contentHtml,
 				discountOffer: parseMarketingOffer(campaign.discountOffer),
+				pushImageUrl: campaign.pushImageUrl,
+				pushLink: campaign.pushLink,
 				audience: audienceRule(campaign.segmentationRules) ?? 'all',
 				audienceId: audienceIdRule(campaign.segmentationRules) ?? null,
 				scheduledAt: campaign.scheduledAt,
@@ -608,7 +612,7 @@ operatorRoutes.get('/marketing/campaigns/:campaignId', async (c) => {
 
 const createCampaignSchema = z.object({
 	name: z.string().trim().min(1, 'Name is required').max(200),
-	channel: z.enum(['email', 'sms']),
+	channel: z.enum(['email', 'sms', 'push']),
 	audience: z.enum(['all', 'verified', 'unverified']).default('all'),
 	/** A saved audience (#98): narrows the consented guests, never widens them. */
 	audienceId: z.string().min(1).max(100).optional().nullable(),
@@ -637,6 +641,9 @@ const createCampaignSchema = z.object({
 	 * the organization and takes codes before it sends this.
 	 */
 	discountOffer: marketingOfferSchema.optional().nullable(),
+	/** Push (#105): the image and the site page a tap opens. `subject` is the title. */
+	pushImageUrl: z.string().max(600).optional().nullable(),
+	pushLink: z.string().max(300).optional().nullable(),
 	scheduledAt: z.string().datetime().optional().nullable(),
 	/** Keep it as a Draft: nothing is scheduled or sent (#101). */
 	saveAsDraft: z.boolean().optional(),
@@ -688,6 +695,31 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 	}
 
 	const { name, channel, audience, subject, content, scheduledAt } = body
+	if (channel === 'push') {
+		// A push holds no personal data and goes only to guests who opted in to
+		// Offers and news in the app (#105): flag `marketing.push`, words written
+		// once for everyone, no merge tags, no coupon, no phone-based audience.
+		const gate = await pushGate(orgId, { marketing: true })
+		if (!gate.ok) return c.json({ error: gate.code }, 409)
+		const content_ = marketingPushContentSchema.safeParse({
+			title: subject ?? '',
+			body: content,
+			imageUrl: body.pushImageUrl || undefined,
+			link: body.pushLink || undefined,
+		})
+		if (!content_.success) {
+			return c.json(
+				{ error: content_.error.issues[0]?.message ?? 'Invalid push' },
+				400,
+			)
+		}
+		if (audience !== 'all') {
+			return c.json({ error: 'push_audience_not_supported' }, 400)
+		}
+		if (body.discountOffer) {
+			return c.json({ error: 'merge_tags_not_allowed' }, 400)
+		}
+	}
 	if (channel === 'sms' && audience === 'unverified') {
 		return c.json(
 			{ error: 'SMS campaigns can only target verified customers' },
@@ -749,6 +781,8 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 				: null,
 			contentHtml: body.contentHtml || null,
 			discountOffer: offer ? JSON.stringify(offer) : null,
+			pushImageUrl: channel === 'push' ? body.pushImageUrl || null : null,
+			pushLink: channel === 'push' ? body.pushLink || null : null,
 			status,
 			segmentationRules: JSON.stringify({
 				audience,
@@ -779,7 +813,7 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 
 /** The two rules a message must hold to carry a coupon, as create checks them. */
 function offerPairingError(input: {
-	channel: 'email' | 'sms'
+	channel: 'email' | 'sms' | 'push'
 	subject: string | null
 	content: string
 	contentHtml: string | null
@@ -810,6 +844,8 @@ const updateCampaignSchema = z
 		contentBlocks: createCampaignSchema.shape.contentBlocks,
 		contentHtml: z.string().max(500_000).nullable().optional(),
 		discountOffer: marketingOfferSchema.nullable().optional(),
+		pushImageUrl: z.string().max(600).nullable().optional(),
+		pushLink: z.string().max(300).nullable().optional(),
 		/** A future time schedules it; null makes it a Draft again. */
 		scheduledAt: z.string().datetime().nullable().optional(),
 		lateAfterMinutes: z
@@ -863,7 +899,12 @@ operatorRoutes.patch('/marketing/campaigns/:campaignId', async (c) => {
 		if (!current) return c.json({ error: 'not_found' }, 404)
 
 		// Judge the message as it will be after the edit.
-		const channel = current.channel === 'sms' ? 'sms' : 'email'
+		const channel =
+			current.channel === 'sms'
+				? 'sms'
+				: current.channel === 'push'
+					? 'push'
+					: 'email'
 		const audience =
 			body.audience ?? audienceRule(current.segmentationRules) ?? 'all'
 		if (channel === 'sms' && audience === 'unverified') {
@@ -916,6 +957,8 @@ operatorRoutes.patch('/marketing/campaigns/:campaignId', async (c) => {
 					: body.discountOffer
 						? JSON.stringify(body.discountOffer)
 						: null,
+			pushImageUrl: body.pushImageUrl,
+			pushLink: body.pushLink,
 			scheduledAt:
 				body.scheduledAt === undefined
 					? undefined
@@ -1060,7 +1103,7 @@ operatorRoutes.get('/marketing/audience-count', async (c) => {
 	}
 	const query = z
 		.object({
-			channel: z.enum(['email', 'sms']),
+			channel: z.enum(['email', 'sms', 'push']),
 			audience: z.enum(['all', 'verified', 'unverified']).default('all'),
 			audienceId: z.string().min(1).max(100).optional(),
 			retargetOf: z.string().min(1).max(100).optional(),

@@ -167,6 +167,8 @@ type Subject = {
 	timeZone: string | null
 	partySize: number | null
 	token: string | null
+	/** The guest's account, when the booking is linked to one (for a push, #105). */
+	customerId: string | null
 	endMs: number | null
 	quotedWaitMin: number | null
 	/** The booking link's slot parameters that open the offered slot (notify-me only). */
@@ -270,6 +272,7 @@ async function resolveSubject(
 					reservation.id,
 					reservation.manageTokenVersion,
 				),
+				customerId: guest.customerId ?? null,
 				endMs: reservation.endAt,
 				quotedWaitMin: null,
 				bookQuery: null,
@@ -312,6 +315,7 @@ async function resolveSubject(
 				timeZone: null,
 				partySize: entry.partySize,
 				token: deriveWaitlistToken(orgId, entry.id, entry.statusTokenVersion),
+				customerId: await waitlistCustomerId(db, entry.guestId),
 				endMs: null,
 				quotedWaitMin: entry.quotedMin,
 				bookQuery: null,
@@ -349,6 +353,7 @@ async function resolveSubject(
 				timeZone: zone,
 				partySize: request.partySize,
 				token: deriveNotifyToken(orgId, request.id, request.tokenVersion),
+				customerId: null,
 				endMs: null,
 				quotedWaitMin: null,
 				payment: null,
@@ -376,6 +381,29 @@ async function locationTimeZone(
 	return settings?.timeZone ?? 'UTC'
 }
 
+async function waitlistCustomerId(
+	db: TenantDatabase,
+	guestId: string | null,
+): Promise<string | null> {
+	if (!guestId) return null
+	const guest = await db
+		.select({ customerId: rsvGuests.customerId })
+		.from(rsvGuests)
+		.where(eq(rsvGuests.id, guestId))
+		.get()
+	return guest?.customerId ?? null
+}
+
+/** Booking messages that also reach the guest's phone as a push (#105). */
+const BOOKING_PUSH_KINDS_BY_ROW: Record<
+	string,
+	'confirmation' | 'reminder' | 'waitlist_ready'
+> = {
+	confirmation: 'confirmation',
+	reminder: 'reminder',
+	waitlist_ready: 'waitlist_ready',
+}
+
 async function sendOne(options: {
 	db: TenantDatabase
 	orgId: string
@@ -385,6 +413,17 @@ async function sendOne(options: {
 	now: number
 }): Promise<void> {
 	const { db, orgId, context, row, subject } = options
+	// The guest's phone too, once per booking event (the same moment as the text
+	// or email; a retry of either channel finds the push already sent).
+	const pushKind = BOOKING_PUSH_KINDS_BY_ROW[row.kind]
+	if (pushKind && subject.customerId) {
+		const { pushBooking } = await import('./push-hooks.ts')
+		await pushBooking(orgId, {
+			customerId: subject.customerId,
+			kind: pushKind,
+			ref: `${row.reservationId ?? row.waitlistEntryId ?? row.notifyRequestId ?? row.id}:${row.kind}:${milestoneOf(row.dedupeKey)}`,
+		})
+	}
 	const locale = normalizeReservationLocale(
 		resolveGuestLocale(
 			subject.locale,

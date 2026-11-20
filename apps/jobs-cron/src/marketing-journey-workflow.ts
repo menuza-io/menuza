@@ -171,6 +171,7 @@ export class MarketingJourneyWorkflow extends WorkflowEntrypoint<
 
 					case 'action_email':
 					case 'action_sms':
+					case 'action_push':
 					case 'action':
 					case 'email':
 					case 'sms': {

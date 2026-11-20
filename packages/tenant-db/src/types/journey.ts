@@ -184,6 +184,7 @@ export const NODE_TYPES = [
 	'delay',
 	'action_email',
 	'action_sms',
+	'action_push',
 	'condition',
 ] as const
 export type NodeType = (typeof NODE_TYPES)[number]
@@ -259,6 +260,41 @@ export const actionSmsNodeDataSchema = z.object({
 })
 export type ActionSmsNodeData = z.infer<typeof actionSmsNodeDataSchema>
 
+/**
+ * A push step (#105): the guest's phone, for guests who opted in to Offers and
+ * news. Plain words written once for everyone: merge tags are refused, because
+ * a push passes through outside providers and holds no personal data.
+ */
+export const actionPushNodeDataSchema = z.object({
+	title: z
+		.string()
+		.trim()
+		.min(1, 'Title is required')
+		.max(65, 'The title cannot exceed 65 characters')
+		.refine(
+			(value) => !value.includes('{{'),
+			'Merge tags are not allowed in a push',
+		),
+	body: z
+		.string()
+		.trim()
+		.min(1, 'Message is required')
+		.max(178, 'The message cannot exceed 178 characters')
+		.refine(
+			(value) => !value.includes('{{'),
+			'Merge tags are not allowed in a push',
+		),
+	imageUrl: z.string().trim().url().max(600).startsWith('https://').optional(),
+	/** A site path: `/menu` or `/menu?item=<id>`. */
+	link: z
+		.string()
+		.trim()
+		.max(300)
+		.regex(/^\/(?!\/)[^\s#]*$/, 'The link must be a path on the site')
+		.optional(),
+})
+export type ActionPushNodeData = z.infer<typeof actionPushNodeDataSchema>
+
 export const conditionNodeDataSchema = z.object({
 	field: z.string().min(1, 'Condition field is required'),
 	operator: conditionOperatorSchema.default('equals'),
@@ -271,6 +307,7 @@ export type NodeData =
 	| DelayNodeData
 	| ActionEmailNodeData
 	| ActionSmsNodeData
+	| ActionPushNodeData
 	| ConditionNodeData
 
 // ==========================================
@@ -315,6 +352,14 @@ export const actionSmsNodeSchema = z.object({
 })
 export type ActionSmsNode = z.infer<typeof actionSmsNodeSchema>
 
+export const actionPushNodeSchema = z.object({
+	id: z.string().min(1),
+	type: z.literal('action_push'),
+	position: nodePositionSchema.optional(),
+	data: actionPushNodeDataSchema,
+})
+export type ActionPushNode = z.infer<typeof actionPushNodeSchema>
+
 export const conditionNodeSchema = z.object({
 	id: z.string().min(1),
 	type: z.literal('condition'),
@@ -328,6 +373,7 @@ export const nodeSchema = z.discriminatedUnion('type', [
 	delayNodeSchema,
 	actionEmailNodeSchema,
 	actionSmsNodeSchema,
+	actionPushNodeSchema,
 	conditionNodeSchema,
 ])
 export type WorkflowNode = z.infer<typeof nodeSchema>
@@ -409,7 +455,14 @@ export const executeStepPayloadSchema = z.object({
 	runId: z.string().uuid(),
 	customerId: z.string().min(1),
 	nodeId: z.string().min(1),
-	nodeType: z.enum(['action_email', 'action_sms', 'email', 'sms']),
+	nodeType: z.enum([
+		'action_email',
+		'action_sms',
+		'action_push',
+		'email',
+		'sms',
+		'push',
+	]),
 	config: z.record(z.string(), z.unknown()),
 })
 export type ExecuteStepPayload = z.infer<typeof executeStepPayloadSchema>
@@ -693,6 +746,15 @@ export function validateWorkflowDAG(graph: unknown): DAGValidationResult {
 				if (!res.success) {
 					errors.push(
 						`SMS action node "${node.id}" has invalid configuration: ${res.error.issues.map((i) => i.message).join(', ')}`,
+					)
+				}
+				break
+			}
+			case 'action_push': {
+				const res = actionPushNodeDataSchema.safeParse(node.data)
+				if (!res.success) {
+					errors.push(
+						`Push action node "${node.id}" has invalid configuration: ${res.error.issues.map((i) => i.message).join(', ')}`,
 					)
 				}
 				break

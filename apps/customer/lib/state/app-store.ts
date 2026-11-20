@@ -104,7 +104,15 @@ export type AppStoreOptions<Features extends CustomerFeatures> = {
 	prepareStorage?: () => Promise<unknown>
 	/** Deletes the booking codes kept on the device when the customer leaves a site. */
 	forgetSiteData?: () => Promise<unknown>
+	/**
+	 * Runs while the session is still valid, just before it ends (sign-out, or
+	 * leaving the site): deletes this device's push registration (#105). Best
+	 * effort and capped at `BEFORE_SIGN_OUT_MS`, so it never holds sign-out up.
+	 */
+	beforeSignOut?: (session: CustomerSession) => Promise<unknown>
 }
+
+const BEFORE_SIGN_OUT_MS = 1500
 
 const NAME_MAX_LENGTH = 100
 const EMAIL_MAX_LENGTH = 254
@@ -129,6 +137,8 @@ export class AppStore<Features extends CustomerFeatures = CustomerFeatures> {
 	readonly #createFeatures: ((context: FeatureContext) => Features) | null
 	readonly #prepareStorage: (() => Promise<unknown>) | null
 	readonly #forgetSiteData: (() => Promise<unknown>) | null
+	readonly #beforeSignOut:
+		((session: CustomerSession) => Promise<unknown>) | null
 	readonly #buildConfiguration: TenantConfiguration
 	readonly #buildAddress: SiteAddress
 	readonly #listeners = new Set<() => void>()
@@ -157,6 +167,7 @@ export class AppStore<Features extends CustomerFeatures = CustomerFeatures> {
 		this.#createFeatures = options.createFeatures ?? null
 		this.#prepareStorage = options.prepareStorage ?? null
 		this.#forgetSiteData = options.forgetSiteData ?? null
+		this.#beforeSignOut = options.beforeSignOut ?? null
 		this.#buildConfiguration = options.configuration
 		this.#buildAddress = options.configuration.siteAddress
 		this.#client = new TenantApiClient(options.configuration, this.#transport)
@@ -275,6 +286,7 @@ export class AppStore<Features extends CustomerFeatures = CustomerFeatures> {
 		this.#siteLoad += 1
 		this.#contentLoad += 1
 		const { session, features } = this.#snapshot
+		await this.#runBeforeSignOut(session)
 		this.#endCustomer(null)
 		this.#unsubscribeSession?.()
 		this.#unsubscribeSession = null
@@ -302,6 +314,21 @@ export class AppStore<Features extends CustomerFeatures = CustomerFeatures> {
 			this.#preferences.saveSiteAddress(null).catch(() => undefined),
 			this.#forgetSiteData?.().catch(() => undefined),
 		])
+	}
+
+	async #runBeforeSignOut(session: CustomerSession | null): Promise<void> {
+		if (!session?.isSignedIn || !this.#beforeSignOut) return
+		let timer: ReturnType<typeof setTimeout> | undefined
+		try {
+			await Promise.race([
+				this.#beforeSignOut(session).catch(() => undefined),
+				new Promise<void>((resolve) => {
+					timer = setTimeout(resolve, BEFORE_SIGN_OUT_MS)
+				}),
+			])
+		} finally {
+			if (timer) clearTimeout(timer)
+		}
 	}
 
 	dispose(): void {
@@ -581,6 +608,7 @@ export class AppStore<Features extends CustomerFeatures = CustomerFeatures> {
 	/** Ends the session on the device at once; revoking it on the server is best effort. */
 	async signOut(): Promise<void> {
 		const session = this.#snapshot.session
+		await this.#runBeforeSignOut(session)
 		this.#endCustomer(null)
 		await session?.signOut()
 	}
@@ -641,7 +669,10 @@ export class AppStore<Features extends CustomerFeatures = CustomerFeatures> {
 			birthMonthDay !== null &&
 			parseBirthMonthDay(birthMonthDay) === null
 		) {
-			this.#update({ error: { reason: 'invalidBirthday' }, didSaveProfile: false })
+			this.#update({
+				error: { reason: 'invalidBirthday' },
+				didSaveProfile: false,
+			})
 			return
 		}
 		const attempt = this.#authAttempt

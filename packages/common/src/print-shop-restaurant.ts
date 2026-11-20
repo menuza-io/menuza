@@ -25,6 +25,9 @@ type CopyKey =
 	| 'offerHeadline'
 	| 'offerCta'
 	| 'offerCode'
+	| 'getTheApp'
+	| 'scanForApp'
+	| 'appCta'
 
 const COPY: Record<string, Record<CopyKey, string>> = {
 	en: {
@@ -39,6 +42,9 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		offerHeadline: 'A little something for you',
 		offerCta: 'Scan to order. Your code is added for you.',
 		offerCode: 'Code',
+		getTheApp: 'Get our app',
+		scanForApp: 'Scan to get the app',
+		appCta: 'Order again in a tap and get your updates',
 	},
 	ar: {
 		scanToOrder: 'امسح للطلب',
@@ -52,6 +58,9 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		offerHeadline: 'هدية صغيرة لك',
 		offerCta: 'امسح للطلب، وسيُضاف الرمز تلقائيًا.',
 		offerCode: 'الرمز',
+		getTheApp: 'حمّل تطبيقنا',
+		scanForApp: 'امسح لتحميل التطبيق',
+		appCta: 'اطلب مجددًا بلمسة واحدة واستلم تحديثاتك',
 	},
 	es: {
 		scanToOrder: 'Escanea para pedir',
@@ -65,6 +74,9 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		offerHeadline: 'Un detalle para ti',
 		offerCta: 'Escanea para pedir. Tu código se añade solo.',
 		offerCode: 'Código',
+		getTheApp: 'Descarga nuestra app',
+		scanForApp: 'Escanea para descargar la app',
+		appCta: 'Repite tu pedido con un toque y recibe novedades',
 	},
 	fr: {
 		scanToOrder: 'Scannez pour commander',
@@ -78,6 +90,9 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		offerHeadline: 'Un petit cadeau pour vous',
 		offerCta: 'Scannez pour commander. Votre code est ajouté pour vous.',
 		offerCode: 'Code',
+		getTheApp: 'Téléchargez notre appli',
+		scanForApp: 'Scannez pour télécharger l’appli',
+		appCta: 'Recommandez en un geste et suivez vos commandes',
 	},
 	de: {
 		scanToOrder: 'Scannen und bestellen',
@@ -91,6 +106,9 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		offerHeadline: 'Eine kleine Aufmerksamkeit für Sie',
 		offerCta: 'Scannen und bestellen. Der Code ist schon eingetragen.',
 		offerCode: 'Code',
+		getTheApp: 'Hol dir unsere App',
+		scanForApp: 'Scannen und App laden',
+		appCta: 'Mit einem Tipp erneut bestellen und Updates erhalten',
 	},
 	zh: {
 		scanToOrder: '扫码点餐',
@@ -104,6 +122,9 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		offerHeadline: '给你的一份小心意',
 		offerCta: '扫码点餐，优惠码自动填写。',
 		offerCode: '优惠码',
+		getTheApp: '下载我们的应用',
+		scanForApp: '扫码下载应用',
+		appCta: '一键再来一单，随时接收通知',
 	},
 }
 
@@ -134,7 +155,7 @@ export function isTableTarget(
 	return target.kind === 'table' && Array.isArray(target.tableIds)
 }
 
-const TABLE_TARGETS = ['table', 'menu', 'reservations', 'site'] as const
+const TABLE_TARGETS = ['table', 'menu', 'reservations', 'app', 'site'] as const
 const COUPON_TARGETS = ['coupon', 'menu', 'site'] as const
 
 export const restaurantPrintCatalog: PrintCatalogExtension = {
@@ -226,6 +247,18 @@ export const restaurantPrintCatalog: PrintCatalogExtension = {
 			}),
 			// The code is printed where a table's label would be.
 			pieceWord: (locale) => copy(locale, 'offerCode'),
+		},
+		{
+			// The restaurant's own app (#196): the site's `/get-app` smart link,
+			// which counts the tap under the Print placement and sends the phone to
+			// the store. Offered only while the app is live in a store.
+			kind: 'app',
+			schema: z.strictObject({ kind: z.literal('app') }),
+			copy: (locale) => ({
+				headline: copy(locale, 'getTheApp'),
+				callToAction: copy(locale, 'appCta'),
+				qrCaption: copy(locale, 'scanForApp'),
+			}),
 		},
 		{
 			kind: 'reservations',

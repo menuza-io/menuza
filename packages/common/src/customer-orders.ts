@@ -95,3 +95,110 @@ export function isLapsedUnpaidOnlineOrder(order: {
 export function droppedCount(dropped: readonly unknown[]): number {
 	return dropped.length
 }
+
+// ---------------------------------------------------------------------------
+// The app's hand-off to the website cart
+// ---------------------------------------------------------------------------
+
+/** The fragment key the website reads an app's reorder lines from. */
+export const REORDER_PAYLOAD_PARAM = 'reorderlines'
+
+const ID = /^[A-Za-z0-9_-]{1,128}$/
+const payloadOptionSchema = z.object({
+	g: z.string().regex(ID),
+	o: z.string().regex(ID),
+	q: z.number().int().min(1).max(99).optional(),
+	h: z.enum(['whole', 'left', 'right']).optional(),
+})
+const payloadLineSchema = z.object({
+	i: z.string().regex(ID),
+	v: z.string().regex(ID).optional(),
+	q: z.number().int().min(1).max(99),
+	o: z.array(payloadOptionSchema).max(100).optional(),
+})
+const payloadSchema = z.object({
+	l: z.string().regex(ID),
+	n: z.array(payloadLineSchema).min(1).max(200),
+})
+
+/** Ids and counts only (no names, prices or notes), so it is small and holds no guest text. */
+export const REORDER_PAYLOAD_MAX_CHARS = 12_000
+
+function toBase64Url(text: string): string {
+	return btoa(text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function fromBase64Url(value: string): string {
+	const padded = value.replace(/-/g, '+').replace(/_/g, '/')
+	return atob(padded + '='.repeat((4 - (padded.length % 4)) % 4))
+}
+
+/**
+ * The customer app has no cart: it opens the website's menu with the order's
+ * catalog ids in the URL fragment (never sent to a server). The website prices
+ * the cart again from the live menu and leaves out what is gone.
+ */
+export function encodeReorderPayload(reorder: ReorderResponse): string | null {
+	const payload = {
+		l: reorder.locationId,
+		n: reorder.lines.map((line) => ({
+			i: line.itemId,
+			...(line.variantId ? { v: line.variantId } : {}),
+			q: line.quantity,
+			...(line.options.length
+				? {
+						o: line.options.map((option) => ({
+							g: option.groupId,
+							o: option.optionId,
+							...(option.quantity > 1 ? { q: option.quantity } : {}),
+							...(option.half ? { h: option.half } : {}),
+						})),
+					}
+				: {}),
+		})),
+	}
+	if (!payloadSchema.safeParse(payload).success) return null
+	const encoded = toBase64Url(JSON.stringify(payload))
+	return encoded.length <= REORDER_PAYLOAD_MAX_CHARS ? encoded : null
+}
+
+export type DecodedReorderPayload = {
+	locationId: string
+	lines: Array<{
+		itemId: string
+		variantId?: string
+		quantity: number
+		options: Array<{
+			groupId: string
+			optionId: string
+			quantity?: number
+			half?: 'whole' | 'left' | 'right'
+		}>
+	}>
+}
+
+export function decodeReorderPayload(
+	value: string | null | undefined,
+): DecodedReorderPayload | null {
+	if (!value || value.length > REORDER_PAYLOAD_MAX_CHARS) return null
+	try {
+		const parsed = payloadSchema.safeParse(JSON.parse(fromBase64Url(value)))
+		if (!parsed.success) return null
+		return {
+			locationId: parsed.data.l,
+			lines: parsed.data.n.map((line) => ({
+				itemId: line.i,
+				...(line.v ? { variantId: line.v } : {}),
+				quantity: line.q,
+				options: (line.o ?? []).map((option) => ({
+					groupId: option.g,
+					optionId: option.o,
+					...(option.q ? { quantity: option.q } : {}),
+					...(option.h ? { half: option.h } : {}),
+				})),
+			})),
+		}
+	} catch {
+		return null
+	}
+}

@@ -7,6 +7,7 @@ import {
 } from '@repo/common/print-shop-restaurant'
 import { qrPosterUrl, qrTableUrl } from '@repo/common/qr-ordering'
 import { and, db, eq, OrganizationLocation } from '@repo/database'
+import { loadPublicCustomerApp } from '#app/utils/customer-apps/public.server.ts'
 import { buildPublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
 import { type PublicMenuItemData } from '#app/utils/menu/public-serializers.server.ts'
 import {
@@ -165,7 +166,7 @@ async function listDishes(
  */
 function siteLink(
 	origin: string,
-	type: 'reserve' | 'coupon' | 'menu_home',
+	type: 'reserve' | 'coupon' | 'menu_home' | 'get_app',
 	params: Record<string, string>,
 	utm: Record<string, string>,
 ) {
@@ -266,6 +267,26 @@ export const restaurantPrintVertical: PrintShopServerVertical = {
 							(target as RestaurantMenuTarget).locationId,
 							utm,
 						),
+					},
+				],
+				facts: [],
+			}),
+		},
+		app: {
+			// Offered only while the restaurant's app is live in a store (#196).
+			available: async (access) => {
+				const app = await loadPublicCustomerApp(access.organization.id)
+				return Boolean(app && Object.keys(app.stores).length > 0)
+			},
+			defaultFor: async () => null,
+			fromForm: () => ({ kind: 'app' }),
+			resolve: async (_target, { siteOrigin, utm }) => ({
+				pieces: [
+					{
+						label: null,
+						// The tap is counted under the Print placement, then the phone is sent to
+						// its store; the guest is not named or tracked.
+						qrUrl: siteLink(siteOrigin, 'get_app', { p: 'print' }, utm),
 					},
 				],
 				facts: [],

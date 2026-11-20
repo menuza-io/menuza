@@ -1,11 +1,19 @@
 import { type NodeTypes } from '@xyflow/react'
 import { ActionEmailNode } from './action-email-node.tsx'
+import { ActionPushNode } from './action-push-node.tsx'
 import { ActionSmsNode } from './action-sms-node.tsx'
 import { ConditionNode } from './condition-node.tsx'
 import { DelayNode } from './delay-node.tsx'
 import { TriggerNode } from './trigger-node.tsx'
 
-export { TriggerNode, DelayNode, ActionEmailNode, ActionSmsNode, ConditionNode }
+export {
+	TriggerNode,
+	DelayNode,
+	ActionEmailNode,
+	ActionSmsNode,
+	ActionPushNode,
+	ConditionNode,
+}
 export * from './node-shell.tsx'
 
 export const nodeTypes = {
@@ -13,5 +21,6 @@ export const nodeTypes = {
 	delay: DelayNode,
 	action_email: ActionEmailNode,
 	action_sms: ActionSmsNode,
+	action_push: ActionPushNode,
 	condition: ConditionNode,
 } satisfies NodeTypes

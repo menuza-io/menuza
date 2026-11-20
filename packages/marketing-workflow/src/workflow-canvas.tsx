@@ -10,12 +10,10 @@ import {
 	MergeTagScopeProvider,
 	type CouponDiscountOption,
 } from '@repo/marketing'
-import { isLoyaltyJourneyTrigger } from '@repo/tenant-db/types/journey'
-import {
+import { isLoyaltyJourneyTrigger,
 	LOYALTY_JOURNEY_TRIGGER_TYPES,
 	ORDER_JOURNEY_TRIGGER_TYPES,
-	RESERVATION_JOURNEY_TRIGGER_TYPES,
-} from '@repo/tenant-db/types/journey'
+	RESERVATION_JOURNEY_TRIGGER_TYPES } from '@repo/tenant-db/types/journey'
 import { cn } from '@repo/ui'
 import {
 	ReactFlow,
@@ -79,6 +77,8 @@ interface WorkflowCanvasProps {
 	birthdayTriggers?: boolean
 	/** Offer the cart-left-behind trigger (#150). */
 	cartTriggers?: boolean
+	/** Offer the "Send push" step (#105); a journey that has one keeps showing it. */
+	pushSteps?: boolean
 	/** Saved audiences for the "Guest is in audience" condition (#98). */
 	audienceOptions?: Array<{ id: string; name: string }>
 	/** Coupon discounts for email and text steps; undefined hides the picker. */
@@ -435,6 +435,7 @@ export function WorkflowCanvas({
 	orderTriggers = false,
 	birthdayTriggers = false,
 	cartTriggers = false,
+	pushSteps = false,
 	audienceOptions,
 	couponOptions,
 	emailMenuItems,
@@ -461,6 +462,14 @@ export function WorkflowCanvas({
 					}
 				: resolved
 		if (withCoupons.audience !== 'tenant') return withCoupons
+		const withPush = pushSteps
+			? withCoupons
+			: {
+					...withCoupons,
+					paletteItems: withCoupons.paletteItems.filter(
+						(item) => item.type !== 'action_push',
+					),
+				}
 		const hidden = [
 			...(reservationTriggers ? [] : RESERVATION_JOURNEY_TRIGGER_TYPES),
 			...(loyaltyTriggers ? [] : LOYALTY_JOURNEY_TRIGGER_TYPES),
@@ -468,13 +477,10 @@ export function WorkflowCanvas({
 			...(birthdayTriggers ? [] : ['birthday_coming_up']),
 			...(cartTriggers ? [] : ['cart_left_behind']),
 		]
-		if (hidden.length === 0) return withCoupons
+		if (hidden.length === 0) return withPush
 		return {
-			...withCoupons,
-			hiddenTriggerTypes: [
-				...(withCoupons.hiddenTriggerTypes ?? []),
-				...hidden,
-			],
+			...withPush,
+			hiddenTriggerTypes: [...(withPush.hiddenTriggerTypes ?? []), ...hidden],
 		}
 	}, [
 		workflowConfigProp,
@@ -485,6 +491,7 @@ export function WorkflowCanvas({
 		orderTriggers,
 		birthdayTriggers,
 		cartTriggers,
+		pushSteps,
 		audienceOptions,
 		couponOptions,
 		emailMenuItems,

@@ -45,6 +45,7 @@ import { publicOrderRoutes } from './routes/orders.ts'
 import { publicDeliveryRoutes } from './routes/delivery.ts'
 import { orderSystemRoutes } from './routes/order-system.ts'
 import { customerOrderRoutes } from './routes/customer-orders.ts'
+import { pushRoutes } from './routes/push.ts'
 import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
 import { operatorQrRoutes } from './routes/operator-qr.ts'
@@ -327,6 +328,11 @@ export function createTenantApiApp() {
 		'/customer/*',
 		rateLimit('customer-orders', { windowMs: 60 * 1000, maxRequests: 120 }),
 	)
+	// Device registration and preferences (#105): a phone registers a few times.
+	app.use(
+		'/push/*',
+		rateLimit('guest-push', { windowMs: 60 * 1000, maxRequests: 60 }),
+	)
 
 	// Gift cards: a balance check and a purchase are the guessable or abusable
 	// calls, so they get their own tighter burst limit on top of the durable
@@ -352,6 +358,7 @@ export function createTenantApiApp() {
 	app.route('/subscriptions', subscriptionRoutes)
 	app.route('/shop', shopRoutes)
 	app.route('/customer/orders', customerOrderRoutes)
+	app.route('/push', pushRoutes)
 	app.route('/forms', publicFormRoutes)
 	app.route('/orders', publicOrderRoutes)
 	app.route('/delivery', publicDeliveryRoutes)

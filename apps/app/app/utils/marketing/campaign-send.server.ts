@@ -117,7 +117,7 @@ type FetchTenant = (path: string, init?: RequestInit) => Promise<Response>
 export async function countAudience(
 	fetchTenant: FetchTenant,
 	input: {
-		channel: 'email' | 'sms'
+		channel: 'email' | 'sms' | 'push'
 		audience: string
 		/** A saved audience (#98): narrows the consented guests. */
 		audienceId?: string | null

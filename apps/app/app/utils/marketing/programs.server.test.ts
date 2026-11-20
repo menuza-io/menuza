@@ -21,7 +21,9 @@ vi.mock('#app/utils/email/render-context.server.ts', () => ({
 	})),
 }))
 vi.mock('#app/utils/email-branding.server.ts', () => ({
-	resolveEmailBrandingForOrg: vi.fn(async () => ({ organizationName: 'Olive & Co' })),
+	resolveEmailBrandingForOrg: vi.fn(async () => ({
+		organizationName: 'Olive & Co',
+	})),
 }))
 vi.mock('#app/utils/email/journey-render.server.ts', () => ({
 	renderJourneyEmailNodes: vi.fn(),
@@ -36,6 +38,7 @@ const on = {
 	birthdays: true,
 	cartReminders: true,
 	aiDrafts: false,
+	push: false,
 }
 const request = new Request('http://localhost/acme')
 
@@ -104,7 +107,8 @@ describe('ready-made programs on the server (#100)', () => {
 		JSON.parse(
 			(
 				fetchTenant.mock.calls.find(
-					([path, init]) => path === '/operator/journeys' && init?.method === 'POST',
+					([path, init]) =>
+						path === '/operator/journeys' && init?.method === 'POST',
 				)![1] as RequestInit
 			).body as string,
 		) as CreatedJourney
@@ -117,8 +121,20 @@ describe('ready-made programs on the server (#100)', () => {
 			features: { ...on, cartReminders: false },
 			language: 'en',
 			journeys: [
-				{ id: 'j1', status: 'active', version: 1, programId: 'win_back', programVersion: 1 },
-				{ id: 'j2', status: 'active', version: 4, programId: 'welcome_series', programVersion: 1 },
+				{
+					id: 'j1',
+					status: 'active',
+					version: 1,
+					programId: 'win_back',
+					programVersion: 1,
+				},
+				{
+					id: 'j2',
+					status: 'active',
+					version: 4,
+					programId: 'welcome_series',
+					programVersion: 1,
+				},
 				{ id: 'j3', status: 'archived', programId: 'second_order' },
 			],
 		})
@@ -145,10 +161,13 @@ describe('ready-made programs on the server (#100)', () => {
 		})
 		expect(JSON.stringify(body.nodes)).toContain('<p>x</p>')
 		expect(
-			fetchTenant.mock.calls.some(([path]) => String(path).endsWith('/publish')),
+			fetchTenant.mock.calls.some(([path]) =>
+				String(path).endsWith('/publish'),
+			),
 		).toBe(true)
 		const settingsPut = fetchTenant.mock.calls.find(
-			([path, init]) => path === '/operator/marketing/settings' && init?.method === 'PUT',
+			([path, init]) =>
+				path === '/operator/marketing/settings' && init?.method === 'PUT',
 		)
 		expect(JSON.parse(settingsPut![1].body)).toEqual({
 			frequencyCap: { limit: 3, days: 7 },
@@ -158,7 +177,9 @@ describe('ready-made programs on the server (#100)', () => {
 	it('Customize creates a draft (nothing published)', async () => {
 		await turnOn({ publish: false })
 		expect(
-			fetchTenant.mock.calls.some(([path]) => String(path).endsWith('/publish')),
+			fetchTenant.mock.calls.some(([path]) =>
+				String(path).endsWith('/publish'),
+			),
 		).toBe(false)
 	})
 
@@ -173,13 +194,19 @@ describe('ready-made programs on the server (#100)', () => {
 		await turnOn()
 		expect(
 			fetchTenant.mock.calls.some(
-				([path, init]) => path === '/operator/marketing/settings' && init?.method === 'PUT',
+				([path, init]) =>
+					path === '/operator/marketing/settings' && init?.method === 'PUT',
 			),
 		).toBe(false)
 	})
 
 	it('puts the coupon on the steps that take one, and refuses one the checks refuse', async () => {
-		const offer = { mode: 'unique', discountId: 'd1', prefix: '', validDays: 14 }
+		const offer = {
+			mode: 'unique',
+			discountId: 'd1',
+			prefix: '',
+			validDays: 14,
+		}
 		await turnOn({ discountOffer: offer })
 		const withOffer = created().nodes.filter(
 			(node: { data: { discountOffer?: unknown } }) => node.data.discountOffer,
@@ -197,8 +224,14 @@ describe('ready-made programs on the server (#100)', () => {
 	})
 
 	it('refuses a program that is off for the organization, an unknown one, and a second turn-on', async () => {
-		vi.mocked(getMarketingFeatures).mockResolvedValue({ ...on, cartReminders: false })
-		expect(await turnOn()).toMatchObject({ ok: false, error: 'program_unavailable' })
+		vi.mocked(getMarketingFeatures).mockResolvedValue({
+			...on,
+			cartReminders: false,
+		})
+		expect(await turnOn()).toMatchObject({
+			ok: false,
+			error: 'program_unavailable',
+		})
 		expect(await turnOn({ programId: 'nope' })).toMatchObject({
 			ok: false,
 			error: 'program_unknown',
@@ -209,16 +242,27 @@ describe('ready-made programs on the server (#100)', () => {
 				? Response.json({ error: 'program_already_active' }, { status: 409 })
 				: Response.json({}),
 		)
-		expect(await turnOn()).toMatchObject({ ok: false, error: 'program_already_active' })
+		expect(await turnOn()).toMatchObject({
+			ok: false,
+			error: 'program_already_active',
+		})
 	})
 
 	it('the review request needs an https link', async () => {
 		expect(
-			await turnOn({ programId: 'after_visit', reviewUrl: 'javascript:alert(1)' }),
+			await turnOn({
+				programId: 'after_visit',
+				reviewUrl: 'javascript:alert(1)',
+			}),
 		).toMatchObject({ ok: false, error: 'review_link_required' })
 		expect(
-			await turnOn({ programId: 'after_visit', reviewUrl: 'https://g.page/r/olive/review' }),
+			await turnOn({
+				programId: 'after_visit',
+				reviewUrl: 'https://g.page/r/olive/review',
+			}),
 		).toMatchObject({ ok: true })
-		expect(JSON.stringify(created().nodes)).toContain('https://g.page/r/olive/review')
+		expect(JSON.stringify(created().nodes)).toContain(
+			'https://g.page/r/olive/review',
+		)
 	})
 })

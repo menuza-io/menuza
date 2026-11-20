@@ -32,6 +32,37 @@ const noOrdersHint = i18n._(
 )
 const browseShop = i18n._(msg`Browse the shop`)
 
+// Restaurant orders (#112), newest first, above the shop's.
+const restaurantTitle = i18n._(msg`Restaurant orders`)
+const restaurantHint = i18n._(msg`Your orders from the restaurant, newest first.`)
+const restaurantLabels = {
+	empty: i18n._(msg`No restaurant orders yet.`),
+	emptyHint: i18n._(msg`Orders you place while signed in will show up here.`),
+	orderAgain: i18n._(msg`Order again`),
+	finish: i18n._(msg`Finish this order`),
+	details: i18n._(msg`Details`),
+	hideDetails: i18n._(msg`Hide details`),
+	loadMore: i18n._(msg`Load more`),
+	loadError: i18n._(msg`We couldn't load your orders.`),
+	retry: i18n._(msg`Try again`),
+	items: i18n._(msg`Items`),
+	subtotal: i18n._(msg`Subtotal`),
+	total: i18n._(msg`Total`),
+	tax: i18n._(msg`Tax`),
+	number: i18n._(msg`Order`),
+	statuses: {
+		pending_acceptance: i18n._(msg`Waiting for the restaurant`),
+		accepted: i18n._(msg`Accepted`),
+		preparing: i18n._(msg`Preparing`),
+		ready: i18n._(msg`Ready`),
+		completed: i18n._(msg`Completed`),
+		cancelled: i18n._(msg`Cancelled`),
+		expired: i18n._(msg`Expired`),
+		payment_review: i18n._(msg`Payment under review`),
+	},
+}
+const localePrefix = getLocaleHref('/', requestedLocale, requestedLocale, defaultLocale).replace(/\/$/, '')
+
 const shopHref = getLocaleHref('/shop', requestedLocale, requestedLocale, defaultLocale)
 
 if (!organization) {
@@ -45,6 +76,33 @@ if (!organization) {
 	title={`${ordersTitle} - ${organization.name}`}
 >
 	<AccountShell current="orders" title={ordersTitle} description={ordersDescription}>
+		<div
+			id="restaurant-orders-root"
+			class="contents"
+			data-labels={JSON.stringify(restaurantLabels)}
+			data-locale={requestedLocale}
+			data-default-locale={defaultLocale}
+			data-locale-prefix={localePrefix}
+		>
+			<section class={siteCardClass}>
+				<div class={siteSectionHeaderClass}>
+					<h2 class="font-heading text-lg text-foreground">{restaurantTitle}</h2>
+					<p class="text-sm text-muted-foreground">{restaurantHint}</p>
+				</div>
+				<div data-restaurant-orders-loading class="space-y-3" aria-hidden="true">
+					<div class="h-[4.5rem] animate-pulse rounded-lg border border-border bg-muted/30"></div>
+				</div>
+				<ul data-restaurant-orders-list class={siteListClass}></ul>
+				<p data-restaurant-orders-message class="text-sm text-muted-foreground" role="status"></p>
+				<button
+					type="button"
+					data-restaurant-orders-more
+					class="hidden min-h-10 rounded-md border border-border px-4 text-sm"
+				>
+					{restaurantLabels.loadMore}
+				</button>
+			</section>
+		</div>
 		<div
 			id="profile-orders-root"
 			class="contents"
@@ -102,5 +160,6 @@ if (!organization) {
 
 	<script>
 		import '../../scripts/profile-orders.ts'
+		import '../../scripts/profile-restaurant-orders.ts'
 	</script>
 </SitePage>

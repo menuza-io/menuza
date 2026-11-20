@@ -85,9 +85,16 @@ export function CampaignDetailView({
 		? Math.round(campaign.lateAfterMinutes / 60)
 		: 4
 
+	// A push has no address to show; "opened" is a tap on the notification.
+	const pushSent = campaign.recipients.filter((r) => r.sentAt).length
+	const pushOpened = campaign.recipients.filter((r) => r.openedAt).length
+	const pushOpenRate =
+		pushSent > 0 ? `${Math.round((pushOpened / pushSent) * 100)}%` : '0%'
+
 	function recipientContact(recipient: CampaignDetail['recipients'][number]) {
 		if (recipient.email) return recipient.email
 		if (recipient.phone) return recipient.phone
+		if (campaign.channel === 'push') return _(msg`App notification`)
 		return _(msg`No contact on file`)
 	}
 
@@ -188,7 +195,8 @@ export function CampaignDetailView({
 					{_(msg`Message`)}
 				</h2>
 				<div className="rounded-lg border p-4">
-					{campaign.channel === 'email' && campaign.subject ? (
+					{(campaign.channel === 'email' || campaign.channel === 'push') &&
+					campaign.subject ? (
 						<p className="text-sm font-medium">{campaign.subject}</p>
 					) : null}
 					{campaign.contentHtml ? (
@@ -210,6 +218,23 @@ export function CampaignDetailView({
 					</p>
 				) : null}
 			</section>
+
+			{campaign.channel === 'push' ? (
+				<section
+					className="space-y-2"
+					aria-labelledby="campaign-push-metrics-heading"
+				>
+					<h2
+						id="campaign-push-metrics-heading"
+						className="text-sm font-medium"
+					>
+						{_(msg`Results`)}
+					</h2>
+					<p className="text-muted-foreground text-sm">
+						{_(msg`${pushSent} sent, ${pushOpened} opened (${pushOpenRate}).`)}
+					</p>
+				</section>
+			) : null}
 
 			<section
 				className="space-y-3"

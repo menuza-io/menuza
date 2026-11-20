@@ -81,6 +81,19 @@ export function reactFlowToWorkflowGraph(
 						messageText: String(node.data?.messageText || ''),
 					},
 				}
+			case 'action_push':
+				return {
+					...baseNode,
+					type: 'action_push' as const,
+					data: {
+						title: String(node.data?.title || ''),
+						body: String(node.data?.body || ''),
+						imageUrl: node.data?.imageUrl
+							? String(node.data.imageUrl)
+							: undefined,
+						link: node.data?.link ? String(node.data.link) : undefined,
+					},
+				}
 			case 'condition':
 				return {
 					...baseNode,

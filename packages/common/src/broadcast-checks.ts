@@ -28,6 +28,8 @@ export type BroadcastProblemCode =
 	| 'coupon_paused'
 	| 'coupon_ended_before_send'
 	| 'audience_zero'
+	/** A push holds no personal data: no merge tags (#105). */
+	| 'push_merge_tags'
 
 export type BroadcastProblem = {
 	code: BroadcastProblemCode
@@ -40,7 +42,7 @@ export type BroadcastProblem = {
 export type BroadcastCouponState = 'ok' | 'paused' | 'ended_before_send'
 
 export type BroadcastCheckInput = {
-	channel: 'email' | 'sms'
+	channel: 'email' | 'sms' | 'push'
 	subject?: string | null
 	content: string
 	contentHtml?: string | null
@@ -66,6 +68,7 @@ const BLOCKING = new Set<BroadcastProblemCode>([
 	'coupon_paused',
 	'coupon_ended_before_send',
 	'audience_zero',
+	'push_merge_tags',
 ])
 
 function problem(
@@ -91,6 +94,15 @@ export function checkBroadcast(input: BroadcastCheckInput): BroadcastProblem[] {
 
 	if (input.content.trim() === '' && blocks.length === 0) {
 		found.push(problem('empty_message'))
+	}
+	if (input.channel === 'push') {
+		// The subject is the push title: both title and message are needed, and
+		// neither may use a merge tag (a push passes through outside providers).
+		if ((input.subject ?? '').trim() === '')
+			found.push(problem('empty_message'))
+		if ((input.subject ?? '').includes('{{') || input.content.includes('{{')) {
+			found.push(problem('push_merge_tags'))
+		}
 	}
 
 	for (const block of blocks) {

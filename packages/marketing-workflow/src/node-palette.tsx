@@ -12,6 +12,7 @@ const PALETTE_ICONS: Record<string, IconName> = {
 	delay: 'clock',
 	action_email: 'mail',
 	action_sms: 'smartphone',
+	action_push: 'smartphone',
 	condition: 'route',
 }
 

@@ -1,5 +1,8 @@
 import {
 	customerCarts,
+	customerPushDevices,
+	customerPushPreferences,
+	pushMessages,
 	customerPaymentMethods,
 	discountIssuedCodes,
 	orderJourneyEmissions,
@@ -1163,6 +1166,16 @@ export async function erasePerson(
 					await tx
 						.delete(customerRefreshTokens)
 						.where(inArray(customerRefreshTokens.customerId, chunk))
+					// Guest push (#105): the phones, the switches and the send log.
+					await tx
+						.delete(pushMessages)
+						.where(inArray(pushMessages.customerId, chunk))
+					await tx
+						.delete(customerPushDevices)
+						.where(inArray(customerPushDevices.customerId, chunk))
+					await tx
+						.delete(customerPushPreferences)
+						.where(inArray(customerPushPreferences.customerId, chunk))
 					// The left-behind cart (#150) and what order, birthday and cart
 					// journeys already started (#99 #151). The customer row itself
 					// carries the birthday and is deleted below.

@@ -134,6 +134,10 @@ msgstr "Un acompte de {amount} est requis pour confirmer cette réservation."
 msgid "A few messages a month. You can opt out anytime."
 msgstr "Quelques messages par mois. Vous pouvez vous désabonner à tout moment."
 
+#: components/profile/notifications-section.tsx:211
+msgid "A few messages a month. You can turn this off anytime."
+msgstr "Quelques messages par mois. Vous pouvez le désactiver à tout moment."
+
 #: lib/loyalty/labels.ts:65
 msgid "A free item"
 msgstr "Un article offert"
@@ -141,6 +145,10 @@ msgstr "Un article offert"
 #: lib/reservations/messages.ts:114
 msgid "About {count} min"
 msgstr "Environ {count} min"
+
+#: components/orders/format.ts:19
+msgid "Accepted"
+msgstr "Acceptée"
 
 #: components/auth/connect-site-screen.tsx:24
 msgid "acme or acme.example.com"
@@ -165,6 +173,10 @@ msgstr "Ajouter la carte"
 #: lib/loyalty/labels.ts:113
 msgid "Adjusted by staff"
 msgstr "Ajustement par l’équipe"
+
+#: components/profile/notifications-section.tsx:151
+msgid "Also send me offers and news"
+msgstr "Envoyez-moi aussi des offres et des nouveautés"
 
 #: lib/reservations/messages.ts:69
 msgid "Amount due"
@@ -242,7 +254,7 @@ msgstr "Solde repris"
 msgid "Balance removed"
 msgstr "Solde retiré"
 
-#: components/profile/profile-screen.tsx:127
+#: components/profile/profile-screen.tsx:129
 msgid "Birthday (optional)"
 msgstr "Anniversaire (facultatif)"
 
@@ -253,6 +265,10 @@ msgstr "Réserver une table"
 #: lib/reservations/messages.ts:100
 msgid "Booked"
 msgstr "Réservée"
+
+#: components/profile/notifications-section.tsx:105
+msgid "Booking updates"
+msgstr "Mises à jour des réservations"
 
 #: lib/reservations/messages.ts:96
 msgid "Call the restaurant"
@@ -266,6 +282,7 @@ msgstr "Annuler la réservation"
 msgid "Cancel this reservation?"
 msgstr "Annuler cette réservation ?"
 
+#: components/orders/format.ts:27
 #: lib/gift-cards/labels.ts:34
 #: lib/reservations/messages.ts:105
 msgid "Cancelled"
@@ -319,6 +336,10 @@ msgstr "Choisir un lieu"
 msgid "Choose a real month and day for your birthday."
 msgstr "Choisissez un mois et un jour valides pour votre anniversaire."
 
+#: components/profile/notifications-section.tsx:191
+msgid "Choose what this phone tells you about."
+msgstr "Choisissez ce dont ce téléphone vous informe."
+
 #: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "Choisissez ce que vous recevez de nous, et comment."
@@ -335,6 +356,10 @@ msgstr "À venir"
 #: lib/reservations/messages.ts:67
 msgid "Complete your payment"
 msgstr "Finalisez votre paiement"
+
+#: components/orders/format.ts:25
+msgid "Completed"
+msgstr "Terminée"
 
 #: lib/reservations/messages.ts:57
 msgid "Confirm booking"
@@ -384,7 +409,7 @@ msgstr "Sans produits laitiers"
 msgid "Date"
 msgstr "Date"
 
-#: components/profile/profile-screen.tsx:140
+#: components/profile/profile-screen.tsx:142
 msgid "Day"
 msgstr "Jour"
 
@@ -456,7 +481,7 @@ msgid "Edit details"
 msgstr "Modifier les informations"
 
 #: components/profile/messages-section.tsx:107
-#: components/profile/profile-screen.tsx:116
+#: components/profile/profile-screen.tsx:118
 msgid "Email"
 msgstr "E-mail"
 
@@ -492,6 +517,7 @@ msgstr "Saisissez votre numéro de téléphone. Nous vous enverrons un code de v
 msgid "Enter your site address to load its branding."
 msgstr "Saisissez l'adresse de votre site pour charger son image de marque."
 
+#: components/orders/format.ts:29
 #: lib/gift-cards/labels.ts:35
 #: lib/reservations/messages.ts:108
 msgid "Expired"
@@ -513,6 +539,10 @@ msgstr "Moins de personnes"
 #: lib/reservations/messages.ts:27
 msgid "Find a table"
 msgstr "Trouver une table"
+
+#: components/profile/orders-section.tsx:119
+msgid "Finish this order"
+msgstr "Terminer cette commande"
 
 #: lib/reservations/messages.ts:104
 msgid "Finished"
@@ -541,6 +571,10 @@ msgstr "Modification gratuite jusqu'à {time}"
 #: lib/gift-cards/labels.ts:33
 msgid "Frozen"
 msgstr "Gelée"
+
+#: components/profile/notifications-section.tsx:146
+msgid "Get a message when your order is accepted or ready, when your booking is confirmed or coming up, and when a reward is waiting."
+msgstr "Recevez un message lorsque votre commande est acceptée ou prête, lorsque votre réservation est confirmée ou approche, et lorsqu’une récompense vous attend."
 
 #: lib/gift-cards/labels.ts:65
 #: lib/loyalty/labels.ts:78
@@ -623,8 +657,12 @@ msgstr "Sur place"
 msgid "Invite a friend and get {referrerPoints} after their first paid order."
 msgstr "Invitez un ami et recevez {referrerPoints} après sa première commande payée."
 
+#: components/orders/order-screen.tsx:94
+msgid "It was not placed from your signed-in account. You can still view it on the website."
+msgstr "Elle n’a pas été passée depuis votre compte connecté. Vous pouvez toujours la consulter sur le site."
+
 #: components/auth/complete-name-screen.tsx:26
-#: components/profile/profile-screen.tsx:108
+#: components/profile/profile-screen.tsx:110
 msgid "Jane Doe"
 msgstr "Marie Dupont"
 
@@ -641,7 +679,7 @@ msgstr "Rejoindre la liste d'attente"
 msgid "Keep it"
 msgstr "La conserver"
 
-#: components/profile/profile-screen.tsx:202
+#: components/profile/profile-screen.tsx:207
 msgid "Language"
 msgstr "Langue"
 
@@ -669,6 +707,10 @@ msgstr "Quitter la liste d'attente"
 msgid "Limited menus you pre-order for a pickup window."
 msgstr "Des menus limités à précommander pour un créneau de retrait."
 
+#: components/profile/orders-section.tsx:129
+msgid "Load more"
+msgstr "Charger plus"
+
 #: components/ordering/drops-screen.tsx:109
 msgid "Loading drops"
 msgstr "Chargement des offres limitées"
@@ -681,7 +723,11 @@ msgstr "Chargement du menu"
 msgid "Loading your gift cards…"
 msgstr "Chargement de vos cartes cadeaux…"
 
-#: components/profile/profile-screen.tsx:78
+#: components/orders/order-screen.tsx:86
+msgid "Loading your order"
+msgstr "Chargement de votre commande"
+
+#: components/profile/profile-screen.tsx:80
 msgid "Loading your profile…"
 msgstr "Chargement de votre profil…"
 
@@ -708,11 +754,11 @@ msgstr "Messages de {name}"
 msgid "Money added"
 msgstr "Argent ajouté"
 
-#: components/profile/profile-screen.tsx:131
+#: components/profile/profile-screen.tsx:133
 msgid "Month"
 msgstr "Mois"
 
-#: components/profile/profile-screen.tsx:149
+#: components/profile/profile-screen.tsx:151
 msgid "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
 msgstr "Mois et jour uniquement. Nous l'utilisons pour vous envoyer une attention d'anniversaire si vous avez accepté de recevoir nos messages."
 
@@ -729,7 +775,7 @@ msgid "My reservations"
 msgstr "Mes réservations"
 
 #: components/auth/complete-name-screen.tsx:25
-#: components/profile/profile-screen.tsx:107
+#: components/profile/profile-screen.tsx:109
 #: lib/reservations/messages.ts:60
 #: lib/reservations/messages.ts:112
 msgid "Name"
@@ -763,6 +809,10 @@ msgstr "Aucune offre limitée pour le moment."
 #: lib/gift-cards/labels.ts:21
 msgid "No gift cards saved yet"
 msgstr "Aucune carte cadeau enregistrée pour le moment"
+
+#: components/profile/orders-section.tsx:99
+msgid "No orders yet. Orders you place while signed in show up here."
+msgstr "Aucune commande pour l’instant. Les commandes passées une fois connecté apparaissent ici."
 
 #: lib/reservations/messages.ts:52
 msgid "No preference"
@@ -800,6 +850,10 @@ msgstr "Aucune"
 msgid "Not activated"
 msgstr "Non activée"
 
+#: components/profile/notifications-section.tsx:161
+msgid "Not now"
+msgstr "Pas maintenant"
+
 #: lib/reservations/messages.ts:35
 msgid "Not taking online reservations on this day."
 msgstr "Pas de réservation en ligne ce jour-là."
@@ -807,6 +861,20 @@ msgstr "Pas de réservation en ligne ce jour-là."
 #: components/ordering/menu-screen.tsx:207
 msgid "Nothing on the menu right now."
 msgstr "Rien au menu pour le moment."
+
+#: components/profile/notifications-section.tsx:71
+msgid "Notifications are not available on this device."
+msgstr "Les notifications ne sont pas disponibles sur cet appareil."
+
+#: components/profile/notifications-section.tsx:176
+msgid "Notifications are off in your phone's settings. Turn them on there to hear about your orders and bookings."
+msgstr "Les notifications sont désactivées dans les réglages de votre téléphone. Activez-les pour suivre vos commandes et réservations."
+
+#: components/profile/notifications-section.tsx:143
+#: components/profile/notifications-section.tsx:173
+#: components/profile/notifications-section.tsx:189
+msgid "Notifications from {name}"
+msgstr "Notifications de {name}"
 
 #: components/ordering/menu-screen.tsx:448
 msgid "Nut-free"
@@ -817,6 +885,7 @@ msgid "Occasion"
 msgstr "Occasion"
 
 #: components/profile/messages-section.tsx:101
+#: components/profile/notifications-section.tsx:206
 msgid "Offers and news"
 msgstr "Offres et actualités"
 
@@ -848,6 +917,10 @@ msgstr "Les réservations en ligne sont suspendues. Réessayez plus tard."
 msgid "Online reservations aren't available right now."
 msgstr "Les réservations en ligne ne sont pas disponibles pour le moment."
 
+#: components/profile/notifications-section.tsx:179
+msgid "Open settings"
+msgstr "Ouvrir les réglages"
+
 #: components/loyalty/program-sections.tsx:138
 msgid "Opens in your browser. Your points and rewards apply when you order there."
 msgstr "S'ouvre dans votre navigateur. Vos points et récompenses s'appliquent lorsque vous y commandez."
@@ -861,6 +934,18 @@ msgstr "Ouvre le site web"
 msgid "Opens the website. Add items on the menu, then check out there. Coupons and rewards apply at checkout."
 msgstr "Ouvre le site. Ajoutez des articles au menu, puis payez là-bas. Les coupons et les récompenses s’appliquent au paiement."
 
+#. placeholder {0}: item.number
+#. placeholder {0}: order.number
+#: components/orders/order-screen.tsx:116
+#: components/profile/orders-section.tsx:108
+msgid "Order {0}"
+msgstr "Commande {0}"
+
+#: components/orders/order-screen.tsx:137
+#: components/profile/orders-section.tsx:119
+msgid "Order again"
+msgstr "Commander à nouveau"
+
 #: components/ordering/site-checkout.tsx:34
 msgid "Order on the menu"
 msgstr "Commander au menu"
@@ -868,6 +953,10 @@ msgstr "Commander au menu"
 #: components/loyalty/program-sections.tsx:135
 msgid "Order on the website"
 msgstr "Commander sur le site"
+
+#: components/profile/notifications-section.tsx:104
+msgid "Order updates"
+msgstr "Mises à jour des commandes"
 
 #: components/ordering/drops-screen.tsx:133
 #: components/ordering/drops-screen.tsx:213
@@ -906,12 +995,16 @@ msgstr "Payer maintenant"
 msgid "Pay within {time} to keep your table."
 msgstr "Payez dans les {time} pour garder votre table."
 
+#: components/orders/format.ts:31
+msgid "Payment under review"
+msgstr "Paiement en cours d’examen"
+
 #: lib/reservations/messages.ts:125
 msgid "Payments aren't available right now."
 msgstr "Les paiements ne sont pas disponibles pour le moment."
 
 #: components/auth/login-screen.tsx:24
-#: components/profile/profile-screen.tsx:153
+#: components/profile/profile-screen.tsx:155
 #: lib/reservations/messages.ts:16
 msgid "Phone number"
 msgstr "Numéro de téléphone"
@@ -940,12 +1033,16 @@ msgstr "Points expirés"
 msgid "Preferred time"
 msgstr "Heure souhaitée"
 
+#: components/orders/format.ts:21
+msgid "Preparing"
+msgstr "En préparation"
+
 #: app/(tabs)/_layout.tsx:119
 #: lib/reservations/messages.ts:23
 msgid "Profile"
 msgstr "Profil"
 
-#: components/profile/profile-screen.tsx:161
+#: components/profile/profile-screen.tsx:163
 msgid "Profile saved."
 msgstr "Profil enregistré."
 
@@ -964,6 +1061,10 @@ msgstr "Les achats d’au moins {amount} sont éligibles."
 #: lib/gift-cards/labels.ts:70
 msgid "QR code to scan at the till for the card ending in {last4}"
 msgstr "Code QR à scanner en caisse pour la carte se terminant par {last4}"
+
+#: components/orders/format.ts:23
+msgid "Ready"
+msgstr "Prête"
 
 #: lib/gift-cards/labels.ts:29
 msgid "Recent activity"
@@ -1039,6 +1140,7 @@ msgid "Reward returned"
 msgstr "Récompense restituée"
 
 #: app/(tabs)/_layout.tsx:91
+#: components/profile/notifications-section.tsx:106
 #: lib/loyalty/labels.ts:53
 msgid "Rewards"
 msgstr "Récompenses"
@@ -1063,7 +1165,7 @@ msgstr "Les récompenses ne peuvent pas être utilisées pour le moment."
 msgid "Running late"
 msgstr "Je suis en retard"
 
-#: components/profile/profile-screen.tsx:165
+#: components/profile/profile-screen.tsx:167
 msgid "Save changes"
 msgstr "Enregistrer les modifications"
 
@@ -1140,7 +1242,7 @@ msgstr "Connectez-vous avec votre numéro de téléphone pour garder vos cartes 
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "Connectez-vous avec votre numéro de téléphone pour consulter vos points et utiliser vos récompenses."
 
-#: components/profile/profile-screen.tsx:174
+#: components/profile/profile-screen.tsx:179
 msgid "Sign out"
 msgstr "Se déconnecter"
 
@@ -1183,7 +1285,7 @@ msgstr "Épicé"
 msgid "Stops working in {time}"
 msgstr "Expire dans {time}"
 
-#: components/profile/profile-screen.tsx:192
+#: components/profile/profile-screen.tsx:197
 msgid "System default"
 msgstr "Par défaut du système"
 
@@ -1340,9 +1442,14 @@ msgstr "Trop de tentatives. Veuillez réessayer plus tard."
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Trop de tentatives. Patientez un instant puis réessayez."
 
+#: components/orders/order-screen.tsx:129
+msgid "Total"
+msgstr "Total"
+
 #: components/auth/site-unavailable-screen.tsx:26
 #: components/ordering/drops-screen.tsx:117
 #: components/ordering/menu-screen.tsx:128
+#: components/profile/orders-section.tsx:94
 #: components/ui/error-message.tsx:28
 #: lib/gift-cards/labels.ts:20
 #: lib/loyalty/labels.ts:28
@@ -1355,7 +1462,12 @@ msgstr "Réessayer"
 msgid "Try one of these times instead"
 msgstr "Essayez plutôt l'un de ces horaires"
 
+#: components/profile/notifications-section.tsx:158
+msgid "Turn on notifications"
+msgstr "Activer les notifications"
+
 #: components/profile/messages-section.tsx:228
+#: components/profile/notifications-section.tsx:217
 msgid "Turning a switch off never affects receipts or booking confirmations."
 msgstr "Désactiver un interrupteur n'affecte jamais les reçus ni les confirmations de réservation."
 
@@ -1367,7 +1479,7 @@ msgstr "Saisissez ou collez le code figurant dans votre e-mail ou sur votre cart
 msgid "Up to {amount} off"
 msgstr "Jusqu’à {amount} de réduction"
 
-#: components/profile/profile-screen.tsx:104
+#: components/profile/profile-screen.tsx:106
 msgid "Update your basic details below."
 msgstr "Mettez à jour vos informations ci-dessous."
 
@@ -1384,7 +1496,7 @@ msgid "Use a different number"
 msgstr "Utiliser un autre numéro"
 
 #: components/auth/site-unavailable-screen.tsx:34
-#: components/profile/profile-screen.tsx:178
+#: components/profile/profile-screen.tsx:183
 msgid "Use a different site"
 msgstr "Utiliser un autre site"
 
@@ -1420,6 +1532,10 @@ msgstr "Vérifier"
 msgid "Verify your phone first"
 msgstr "Vérifiez d'abord votre téléphone"
 
+#: components/orders/order-screen.tsx:96
+msgid "View on the website"
+msgstr "Voir sur le site"
+
 #: lib/reservations/messages.ts:83
 msgid "View reservation"
 msgstr "Voir la réservation"
@@ -1428,9 +1544,22 @@ msgstr "Voir la réservation"
 msgid "Waiting for payment"
 msgstr "En attente de paiement"
 
+#: components/orders/format.ts:17
+msgid "Waiting for the restaurant"
+msgstr "En attente du restaurant"
+
 #: lib/reservations/messages.ts:110
 msgid "Waitlist"
 msgstr "Liste d'attente"
+
+#: components/orders/order-screen.tsx:92
+msgid "We can't show this order here"
+msgstr "Nous ne pouvons pas afficher cette commande ici"
+
+#: components/orders/order-screen.tsx:134
+#: components/profile/orders-section.tsx:123
+msgid "We could not start this order again."
+msgstr "Nous n’avons pas pu relancer cette commande."
 
 #: lib/i18n/app-error-message.ts:14
 msgid "We couldn't find that site. Check the address and try again."
@@ -1441,8 +1570,13 @@ msgid "We couldn't find that."
 msgstr "Nous n'avons pas trouvé cela."
 
 #: components/profile/messages-section.tsx:157
+#: components/profile/notifications-section.tsx:97
 msgid "We couldn't save that. Try again."
 msgstr "Impossible d'enregistrer. Réessayez."
+
+#: components/profile/notifications-section.tsx:74
+msgid "We couldn't turn notifications on. Try again."
+msgstr "Nous n’avons pas pu activer les notifications. Réessayez."
 
 #: lib/reservations/messages.ts:121
 msgid "We couldn't update your place in line. We'll keep trying."
@@ -1584,11 +1718,19 @@ msgstr "Votre nom"
 msgid "Your new code is ready."
 msgstr "Votre nouveau code est prêt."
 
+#: components/profile/orders-section.tsx:88
+msgid "Your orders"
+msgstr "Vos commandes"
+
+#: components/profile/orders-section.tsx:92
+msgid "Your orders could not be loaded."
+msgstr "Vos commandes n’ont pas pu être chargées."
+
 #: lib/reservations/messages.ts:75
 msgid "Your payment is being checked. We'll confirm shortly."
 msgstr "Votre paiement est en cours de vérification. Confirmation sous peu."
 
-#: components/profile/profile-screen.tsx:156
+#: components/profile/profile-screen.tsx:158
 msgid "Your phone number can't be changed here."
 msgstr "Votre numéro de téléphone ne peut pas être modifié ici."
 
@@ -1596,7 +1738,7 @@ msgstr "Votre numéro de téléphone ne peut pas être modifié ici."
 msgid "Your points"
 msgstr "Vos points"
 
-#: components/profile/profile-screen.tsx:102
+#: components/profile/profile-screen.tsx:104
 msgid "Your profile"
 msgstr "Votre profil"
 

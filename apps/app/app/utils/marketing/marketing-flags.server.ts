@@ -11,6 +11,8 @@ export const MARKETING_FLAG_KEYS = {
 	birthdays: 'marketing.birthdays',
 	cartReminders: 'marketing.cart_reminders',
 	aiDrafts: 'ai.marketing_drafts',
+	/** Push broadcasts and steps (#105); also needs `customer_app.push`. */
+	push: 'marketing.push',
 } as const
 
 export type MarketingFeatures = {
@@ -20,6 +22,8 @@ export type MarketingFeatures = {
 	/** Needs `orderAutomations`. */
 	cartReminders: boolean
 	aiDrafts: boolean
+	/** Push broadcasts and automation steps (needs the app's push too). */
+	push: boolean
 }
 
 export const NO_MARKETING_FEATURES: MarketingFeatures = {
@@ -28,6 +32,7 @@ export const NO_MARKETING_FEATURES: MarketingFeatures = {
 	birthdays: false,
 	cartReminders: false,
 	aiDrafts: false,
+	push: false,
 }
 
 const isOn = (value: unknown) => value === true || value === 'true'
@@ -35,12 +40,17 @@ const isOn = (value: unknown) => value === true || value === 'true'
 export async function getMarketingFeatures(
 	organizationId: string,
 ): Promise<MarketingFeatures> {
-	const [audiences, orderAutomations, birthdays, cartReminders, aiDrafts] =
-		await Promise.all(
+	const [
+		[audiences, orderAutomations, birthdays, cartReminders, aiDrafts, push],
+		appPush,
+	] = await Promise.all([
+		Promise.all(
 			Object.values(MARKETING_FLAG_KEYS).map((key) =>
 				getFeatureFlag(key, { organizationId }),
 			),
-		)
+		),
+		getFeatureFlag('customer_app.push', { organizationId }),
+	])
 	const orders = isOn(orderAutomations)
 	return {
 		audiences: isOn(audiences),
@@ -48,5 +58,6 @@ export async function getMarketingFeatures(
 		birthdays: isOn(birthdays),
 		cartReminders: orders && isOn(cartReminders),
 		aiDrafts: isOn(aiDrafts),
+		push: isOn(push) && isOn(appPush),
 	}
 }

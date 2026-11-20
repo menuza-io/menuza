@@ -75,7 +75,7 @@ export type CartLinkResult =
 	| { status: 'expired' }
 	| { status: 'error' }
 
-function asLine(value: unknown): SavedCartLine | null {
+export function asLine(value: unknown): SavedCartLine | null {
 	if (!value || typeof value !== 'object') return null
 	const v = value as Record<string, unknown>
 	if (typeof v.itemId !== 'string' || !v.itemId) return null
@@ -90,7 +90,8 @@ function asLine(value: unknown): SavedCartLine | null {
 	for (const raw of Array.isArray(v.options) ? v.options : []) {
 		if (!raw || typeof raw !== 'object') continue
 		const o = raw as Record<string, unknown>
-		if (typeof o.groupId !== 'string' || typeof o.optionId !== 'string') continue
+		if (typeof o.groupId !== 'string' || typeof o.optionId !== 'string')
+			continue
 		options.push({
 			groupId: o.groupId,
 			optionId: o.optionId,

@@ -157,7 +157,7 @@ let globalSendTimestamps: number[] = []
  * (durable across isolates and restarts; see broadcast-dispatch.ts). Texts
  * share the SMS cap; email has its own, higher one.
  */
-export function getBroadcastHourlyCap(channel: 'email' | 'sms') {
+export function getBroadcastHourlyCap(channel: 'email' | 'sms' | 'push') {
 	if (channel === 'sms') return getGlobalSendMax()
 	const raw =
 		process.env.BROADCAST_EMAIL_HOURLY_CAP ??
