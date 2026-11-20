@@ -139,6 +139,7 @@ export function useFormSnapshotSaveBar(
 		result,
 		onDiscard,
 		enabled = true,
+		saveLast = false,
 	}: {
 		/** True while this form's submission (or the redirect after it) runs. */
 		saving: boolean
@@ -146,6 +147,11 @@ export function useFormSnapshotSaveBar(
 		result?: unknown
 		onDiscard: () => void
 		enabled?: boolean
+		/**
+		 * Save after every other dirty form finished saving, for a save that moves
+		 * the page (for example an organization slug change redirects).
+		 */
+		saveLast?: boolean
 	},
 ) {
 	const baseline = useRef<string | null>(null)
@@ -232,6 +238,7 @@ export function useFormSnapshotSaveBar(
 		onDiscard: () => {
 			latest.current.onDiscard()
 		},
+		saveLast,
 	})
 }
 

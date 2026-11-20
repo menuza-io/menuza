@@ -10,10 +10,14 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import { FieldGroup } from '@repo/ui/field'
+import { useRef } from 'react'
 import { useFetcher } from 'react-router'
 import { z } from 'zod'
 import { Field, ErrorList } from '#app/components/forms.tsx'
-import { useConformSaveBar } from '#app/components/save-bar.tsx'
+import {
+	useDiscardKey,
+	useFormSnapshotSaveBar,
+} from '#app/components/use-native-form-save-bar.ts'
 
 import { OrganizationPhoto } from './organization-photo-card'
 
@@ -38,6 +42,8 @@ export function GeneralSettingsCard({
 	organization: Organization
 }) {
 	const fetcher = useFetcher()
+	const formRef = useRef<HTMLFormElement>(null)
+	const { discardKey, discard } = useDiscardKey()
 
 	const [form, fields] = useForm({
 		id: 'organization-settings-form',
@@ -56,7 +62,12 @@ export function GeneralSettingsCard({
 	})
 
 	// A slug change redirects, so the other forms save first.
-	useConformSaveBar(form, fetcher, { saveLast: true })
+	useFormSnapshotSaveBar(formRef, {
+		saving: fetcher.state !== 'idle',
+		result: fetcher.data,
+		onDiscard: discard,
+		saveLast: true,
+	})
 
 	return (
 		<Card>
@@ -75,6 +86,8 @@ export function GeneralSettingsCard({
 					</div>
 					<div className="grow">
 						<fetcher.Form
+							key={discardKey}
+							ref={formRef}
 							method="POST"
 							data-testid="organization-general-settings-form"
 							{...getFormProps(form)}
