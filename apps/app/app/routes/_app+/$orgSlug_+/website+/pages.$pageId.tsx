@@ -133,6 +133,15 @@ import {
 	uploadSiteFontActionIntent,
 } from '#app/components/settings/cards/organization/site-theme-card.tsx'
 import { BrandingPanel } from '#app/components/website/branding-panel.tsx'
+import {
+	ContactSectionEditor,
+	FeatureIconSelect,
+	HeroSlidesEditor,
+	LocationsHoursEditor,
+	MenuFileEditor,
+	MenuHighlightsEditor,
+	ScrollingStripEditor,
+} from '#app/components/website/restaurant-editors.tsx'
 import { CreatePageDialog } from '#app/components/website/create-page-dialog.tsx'
 import {
 	LinkInspector,
@@ -582,6 +591,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				seoDescription: true,
 				seoImageUrl: true,
 				seoNoIndex: true,
+				generatedBy: true,
 			},
 			with: {
 				sections: {
@@ -1372,6 +1382,10 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 					eq(WebsitePageSection.pageId, page.id),
 				),
 			)
+		await db
+			.update(WebsitePage)
+			.set({ generatedBy: null })
+			.where(eq(WebsitePage.id, page.id))
 		await purgeOrganizationSiteCache(
 			organization.id,
 			organization.slug,
@@ -1660,6 +1674,10 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 				{ status: 409 },
 			)
 		}
+		await db
+			.update(WebsitePage)
+			.set({ generatedBy: null })
+			.where(eq(WebsitePage.id, page.id))
 		await cancelSchedule(organization.id, page.id, 'published_now')
 		await logWebsiteActivity({
 			action: AuditAction.WEBSITE_PAGE_PUBLISHED,
@@ -2524,6 +2542,20 @@ function previewText(
 			return loc(config.heading) || 'Rewards'
 		case 'events':
 			return loc(config.heading) || 'Upcoming events'
+		case 'menuHighlights':
+			return loc(config.heading) || 'Menu highlights'
+		case 'locationsHours':
+			return loc(config.heading) || 'Locations and hours'
+		case 'contact':
+			return loc(config.heading) || 'Contact'
+		case 'reviews': {
+			const quotes = config.items as unknown[] | undefined
+			return quotes?.length ? `${quotes.length} reviews` : 'Reviews'
+		}
+		case 'menuFile':
+			return loc(config.heading) || 'Menu file'
+		case 'scrollingStrip':
+			return 'Scrolling strip'
 		case 'cta':
 			return loc(config.heading) || 'Call to action'
 		default:
@@ -3272,6 +3304,24 @@ function renderBlockEditor(props: {
 			return <RewardsBlockEditor config={config} updateField={updateField} />
 		case 'events':
 			return <EventsBlockEditor config={config} updateField={updateField} />
+		case 'menuHighlights':
+			return <MenuHighlightsEditor config={config} updateField={updateField} />
+		case 'locationsHours':
+			return <LocationsHoursEditor config={config} updateField={updateField} />
+		case 'contact':
+			return <ContactSectionEditor config={config} updateField={updateField} />
+		case 'reviews':
+			return (
+				<TestimonialsEditor
+					config={config}
+					updateField={updateField}
+					listKey={listKey}
+				/>
+			)
+		case 'menuFile':
+			return <MenuFileEditor config={config} updateField={updateField} />
+		case 'scrollingStrip':
+			return <ScrollingStripEditor config={config} updateField={updateField} />
 		case 'cta':
 			return (
 				<CtaEditor config={config} updateField={updateField} {...editorProps} />
@@ -3652,6 +3702,31 @@ function HeaderEditor({
 				checked={(config.sticky as boolean) ?? true}
 				onChange={(v) => updateField('sticky', v)}
 			/>
+			<FieldSwitch
+				label="Transparent over the hero"
+				checked={config.transparent === true}
+				onChange={(v) => updateField('transparent', v)}
+			/>
+			{config.transparent === true ? (
+				<div className="space-y-1.5">
+					<Label className="text-muted-foreground text-xs font-medium">
+						<Trans>Light logo URL</Trans>
+					</Label>
+					<Input
+						value={(config.lightLogoUrl as string) ?? ''}
+						onChange={(event) =>
+							updateField('lightLogoUrl', event.target.value)
+						}
+					/>
+					{!(config.lightLogoUrl as string)?.trim() ? (
+						<p className="text-destructive text-xs">
+							<Trans>
+								Add a light logo. The regular logo may disappear on the photo.
+							</Trans>
+						</p>
+					) : null}
+				</div>
+			) : null}
 			<div className="space-y-2">
 				<Label className="text-muted-foreground text-xs font-medium">
 					<Trans>Navigation links</Trans>
@@ -3871,6 +3946,7 @@ function HeroEditor({ config, updateField, ...editorProps }: EditorProps) {
 								onChange={(v) => updateField('imageUrl', v)}
 								placeholder="https://…"
 							/>
+							<HeroSlidesEditor config={config} updateField={updateField} />
 						</>
 					) : null}
 					{assetType === 'video' ? (
@@ -4128,7 +4204,11 @@ function FaqEditor({ config, updateField, listKey }: ListEditorProps) {
 function FeaturesEditor({ config, updateField, listKey }: ListEditorProps) {
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const items =
-		(config.items as Array<{ title: string; description: string }>) ?? []
+		(config.items as Array<{
+			title: string
+			description: string
+			icon?: string
+		}>) ?? []
 
 	return (
 		<div className="space-y-4">
@@ -4156,7 +4236,7 @@ function FeaturesEditor({ config, updateField, listKey }: ListEditorProps) {
 					listKey={`${listKey}:features`}
 					items={items}
 					onChange={(next) => updateField('items', next)}
-					createItem={() => ({ title: '', description: '' })}
+					createItem={() => ({ title: '', description: '', icon: '' })}
 					getTitle={(item) =>
 						pickLocalized(item.title, activeLocale, defaultLocale)
 					}
@@ -4165,6 +4245,10 @@ function FeaturesEditor({ config, updateField, listKey }: ListEditorProps) {
 					deleteLabel={<Trans>Delete feature</Trans>}
 					renderFields={(item, _index, update) => (
 						<>
+							<FeatureIconSelect
+								value={item.icon ?? ''}
+								onChange={(icon) => update({ icon })}
+							/>
 							<div className="space-y-1.5">
 								<Label className="text-muted-foreground text-xs font-medium">
 									<Trans>Title</Trans>
@@ -6491,6 +6575,14 @@ export default function PageBuilderRoute() {
 					}}
 				>
 					<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
+						{page.generatedBy === 'ai' ? (
+							<p
+								className="bg-background text-foreground border-border border-b px-3 py-2 text-sm"
+								data-ai-review
+							>
+								<Trans>Written by AI, review before publishing</Trans>
+							</p>
+						) : null}
 						<header className="border-border bg-background flex h-12 shrink-0 items-center justify-between gap-2 border-b px-2 sm:gap-3 sm:px-3">
 							<div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
 								<Button

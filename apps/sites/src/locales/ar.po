@@ -665,6 +665,7 @@ msgstr "بانضمامك، فإنك توافق على أن يتواصل معك {
 msgid "By signing up you agree to receive recurring automated marketing texts from {org} at this number. Consent is not a condition of purchase. Msg & data rates may apply. Reply STOP to opt out."
 msgstr "بالتسجيل، توافق على تلقي رسائل نصية تسويقية آلية ومتكررة من {org} على هذا الرقم. الموافقة ليست شرطًا للشراء. قد تُطبَّق رسوم الرسائل والبيانات. أرسل STOP لإلغاء الاشتراك."
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/drops/LocationList.astro.ts:3
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Call"
@@ -951,6 +952,7 @@ msgstr "مسح البحث"
 msgid "Close"
 msgstr "إغلاق"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/lib/ordering-labels.ts:181
 #: src/pages/locations/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
@@ -964,6 +966,10 @@ msgstr "مغلق · يفتح {time}"
 #: src/lib/ordering-labels.ts:190
 msgid "Closed now. Schedule your order for later."
 msgstr "مغلق الآن. جدول طلبك لوقت لاحق."
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Closes"
+msgstr "يغلق"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Code {code} applied. You save {amount}. Total {total}."
@@ -1261,6 +1267,7 @@ msgstr "التفضيلات الغذائية"
 msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
 msgstr "الوسوم الغذائية وصف المطعم نفسه. اسأل الموظفين إن كانت لديك حساسية."
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/drops/LocationList.astro.ts:3
 msgid "Directions"
 msgstr "الاتجاهات"
@@ -1289,6 +1296,10 @@ msgstr "قيد النزاع"
 #: src/lib/ordering-labels.ts:72
 msgid "Done"
 msgstr "تم"
+
+#: src/components/blocks/MenuFileBlock.astro.ts:3
+msgid "Download menu"
+msgstr "تنزيل القائمة"
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Drop alerts are off"
@@ -1561,6 +1572,10 @@ msgstr "إلغاء مجاني حتى {count} دقيقة قبل موعد حجزك
 msgid "Free delivery"
 msgstr "توصيل مجاني"
 
+#: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+msgid "from"
+msgstr "من"
+
 #: src/lib/gift-cards/labels.ts:29
 #: src/lib/ordering-labels.ts:67
 msgid "From"
@@ -1694,6 +1709,7 @@ msgstr "السجل"
 msgid "hour"
 msgstr "ساعة"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Hours"
 msgstr "ساعات العمل"
@@ -1965,6 +1981,10 @@ msgstr "إدارة"
 #: src/lib/reservations/labels.ts:152
 msgid "Manage reservation"
 msgstr "إدارة الحجز"
+
+#: src/components/blocks/ContactBlock.astro.ts:3
+msgid "Map"
+msgstr "الخريطة"
 
 #: src/components/ConsentBanner.astro.ts:3
 msgid "Marketing: measure and improve our advertising"
@@ -2338,6 +2358,7 @@ msgstr "بقي {count} فقط من {name} اليوم. يرجى العودة إل
 msgid "Open for orders"
 msgstr "مفتوح للطلبات"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/lib/ordering-labels.ts:179
 msgid "Open now"
 msgstr "مفتوح الآن"
@@ -2359,6 +2380,10 @@ msgstr "مفتوح حتى {time}"
 msgid "Opening secure payment…"
 msgstr "جارٍ فتح صفحة الدفع الآمنة…"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Opens"
+msgstr "يفتح"
+
 #: src/lib/ordering-labels.ts:183
 msgid "Opens {time}"
 msgstr "يفتح {time}"
@@ -2372,6 +2397,11 @@ msgstr "يفتح {when}"
 #: src/lib/ordering-labels.ts:152
 msgid "Optional"
 msgstr "اختياري"
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+#: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+msgid "Order"
+msgstr "اطلب"
 
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/shop/success.astro.ts:3
@@ -2431,6 +2461,10 @@ msgstr "الطلب مغلق الآن."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Ordering is currently closed."
 msgstr "الطلب مغلق حاليًا."
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Ordering is paused"
+msgstr "الطلب متوقف مؤقتاً"
 
 #: src/components/drops/DropStatusChip.astro.ts:3
 #: src/pages/drops.astro.ts:3
@@ -2543,6 +2577,14 @@ msgstr "عدد الأشخاص"
 #: src/pages/drops.astro.ts:3
 msgid "Past drops"
 msgstr "الطروحات السابقة"
+
+#: src/components/blocks/ScrollingStripBlock.astro.ts:3
+msgid "Pause"
+msgstr "إيقاف مؤقت"
+
+#: src/components/blocks/HeroBlock.astro.ts:3
+msgid "Pause slideshow"
+msgstr "إيقاف عرض الصور"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Pay {amount}"
@@ -2991,6 +3033,10 @@ msgstr "يتطلب مستوى {tier}"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Reservation news"
 msgstr "أخبار الحجوزات"
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Reserve"
+msgstr "احجز"
 
 #: src/components/blocks/ReservationBlock.astro.ts:3
 #: src/lib/reservations/labels.ts:22

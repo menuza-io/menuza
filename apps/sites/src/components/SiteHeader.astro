@@ -29,16 +29,20 @@ interface Props {
 		showCta?: boolean
 		showName?: boolean
 		sticky?: boolean
+		transparent?: boolean
+		lightLogoUrl?: string
 	}
 	organization: SiteOrgChrome
 	locales?: SiteLocaleLink[]
+	overlay?: boolean
 }
 
-const { config = {}, organization, locales = [] } = Astro.props
+const { config = {}, organization, locales = [], overlay = false } = Astro.props
 const showCta = config.showCta !== false && Boolean(config.ctaLabel)
 const showName = config.showName !== false
 const sticky = config.sticky !== false
-const logoSrc = resolveMediaUrl(organization.siteIcon?.original)
+const lightLogo = resolveMediaUrl(config.lightLogoUrl)
+const logoSrc = (overlay && lightLogo) || resolveMediaUrl(organization.siteIcon?.original)
 const showLocales = locales.length > 1
 const requestedLocale = Astro.locals.requestedLocale
 const defaultLocale = Astro.locals.defaultLocale
@@ -97,9 +101,14 @@ const languageIconNodes = LanguagesIcon.map(([tag, attributes]) => ({
 
 <header
 	data-site-header
+	data-overlay={overlay ? '' : undefined}
 	class:list={[
-		'site-header z-30 border-b border-border/70 bg-background/95 backdrop-blur-md',
-		sticky ? 'sticky top-0' : 'relative',
+		'site-header z-30 border-b',
+		overlay
+			? 'site-header-overlay sticky top-0 border-transparent bg-transparent text-white'
+			: 'border-border/70 bg-background/95 backdrop-blur-md',
+		!overlay && sticky ? 'sticky top-0' : null,
+		!overlay && !sticky ? 'relative' : null,
 	]}
 >
 	<div data-header-row class="site-header-row">
@@ -406,6 +415,20 @@ const languageIconNodes = LanguagesIcon.map(([tag, attributes]) => ({
 		.site-header-chevron {
 			transition: none;
 		}
+	}
+	.site-header-overlay:not([data-solid]) {
+		margin-bottom: -4.75rem;
+		color: white;
+	}
+	.site-header-overlay:not([data-solid]) :global(.site-header-link),
+	.site-header-overlay:not([data-solid]) [data-header-name] {
+		color: white;
+	}
+	.site-header-overlay[data-solid] {
+		border-color: var(--border);
+		background: color-mix(in oklch, var(--background) 95%, transparent);
+		color: var(--foreground);
+		backdrop-filter: blur(12px);
 	}
 </style>
 

@@ -67,6 +67,8 @@ export const BLOCK_TYPES = {
 			showCta: true,
 			showName: true,
 			sticky: true,
+			transparent: false,
+			lightLogoUrl: '',
 		},
 	},
 	hero: {
@@ -88,6 +90,7 @@ export const BLOCK_TYPES = {
 			videoLoop: true,
 			videoMuted: true,
 			videoControls: false,
+			slides: [] as Array<{ url: string; alt: string }>,
 		},
 	},
 	content: {
@@ -189,9 +192,21 @@ export const BLOCK_TYPES = {
 			subtitle: '',
 			background: 'none',
 			items: [
-				{ title: 'Feature 1', description: 'Description of feature 1' },
-				{ title: 'Feature 2', description: 'Description of feature 2' },
-				{ title: 'Feature 3', description: 'Description of feature 3' },
+				{
+					title: 'Feature 1',
+					description: 'Description of feature 1',
+					icon: '',
+				},
+				{
+					title: 'Feature 2',
+					description: 'Description of feature 2',
+					icon: '',
+				},
+				{
+					title: 'Feature 3',
+					description: 'Description of feature 3',
+					icon: '',
+				},
 			],
 		},
 	},
@@ -267,6 +282,71 @@ export const BLOCK_TYPES = {
 			heading: 'Upcoming events',
 			count: 3,
 			background: 'none',
+		},
+	},
+	menuHighlights: {
+		label: 'Menu highlights',
+		icon: 'layout-grid' as IconName,
+		description: 'Dishes from your menu, with live prices',
+		defaultConfig: {
+			heading: 'From the menu',
+			subtitle: '',
+			source: 'popular',
+			categoryId: '',
+			itemIds: [] as string[],
+			layout: 'row',
+		},
+	},
+	locationsHours: {
+		label: 'Locations and hours',
+		icon: 'building' as IconName,
+		description: 'Address, hours, and how to visit',
+		defaultConfig: {
+			heading: 'Visit us',
+			subtitle: '',
+			locationIds: [] as string[],
+		},
+	},
+	contact: {
+		label: 'Contact',
+		icon: 'mail' as IconName,
+		description: 'Address, phone, and an optional form',
+		defaultConfig: {
+			heading: 'Contact',
+			intro: '',
+			email: '',
+			showForm: false,
+			formId: '',
+		},
+	},
+	reviews: {
+		label: 'Reviews',
+		icon: 'star' as IconName,
+		description: 'Quotes you enter, until guest reviews are connected',
+		defaultConfig: {
+			title: 'What guests say',
+			subtitle: '',
+			background: 'muted',
+			items: [{ quote: '', name: '', rating: 5 }],
+		},
+	},
+	menuFile: {
+		label: 'Menu file',
+		icon: 'file-text' as IconName,
+		description: 'A PDF menu guests can download',
+		defaultConfig: {
+			heading: 'Menu',
+			buttonLabel: 'Download menu',
+			fileUrl: '',
+			fileName: '',
+		},
+	},
+	scrollingStrip: {
+		label: 'Scrolling strip',
+		icon: 'arrow-right' as IconName,
+		description: 'A row of short messages that scrolls',
+		defaultConfig: {
+			items: [{ text: 'Fresh today' }, { text: 'Open late' }],
 		},
 	},
 	footer: {
@@ -435,13 +515,24 @@ export const PAGE_TEMPLATES = {
 			{ type: 'faq' as BlockType, position: 5 },
 		]),
 	},
+	restaurant: {
+		label: 'Restaurant',
+		description: 'Home page with the menu, hours, and reviews',
+		sections: bodySections([
+			{ type: 'hero' as BlockType, position: 0 },
+			{ type: 'menuHighlights' as BlockType, position: 1 },
+			{ type: 'locationsHours' as BlockType, position: 2 },
+			{ type: 'reviews' as BlockType, position: 3 },
+			{ type: 'rewards' as BlockType, position: 4 },
+		]),
+	},
 } as const
 
 export type PageTemplate = keyof typeof PAGE_TEMPLATES
 
 export const LOCALIZED_FIELDS: Record<string, string[]> = {
 	header: ['ctaLabel', 'navLinks.[].label'],
-	hero: ['heading', 'subheading', 'links.[].link.label'],
+	hero: ['heading', 'subheading', 'links.[].link.label', 'slides.[].alt'],
 	content: ['title', 'subtitle', 'body', 'ctaLabel', 'imageAlt'],
 	gallery: ['title', 'subtitle', 'images.[].alt', 'images.[].caption'],
 	testimonials: [
@@ -465,6 +556,12 @@ export const LOCALIZED_FIELDS: Record<string, string[]> = {
 	reservation: ['heading', 'body', 'buttonLabel'],
 	rewards: ['heading', 'body', 'ctaLabel'],
 	events: ['heading'],
+	menuHighlights: ['heading', 'subtitle'],
+	locationsHours: ['heading', 'subtitle'],
+	contact: ['heading', 'intro'],
+	reviews: ['title', 'subtitle', 'items.[].quote', 'items.[].name'],
+	menuFile: ['heading', 'buttonLabel'],
+	scrollingStrip: ['items.[].text'],
 	footer: [
 		'copyright',
 		'ctaLabel',

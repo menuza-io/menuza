@@ -37,6 +37,11 @@
 			"binding": "WEBSITE_PUBLISH_WORKFLOW",
 			"class_name": "WebsitePublishWorkflow",
 		},
+		{
+			"name": "website-import",
+			"binding": "WEBSITE_IMPORT_WORKFLOW",
+			"class_name": "WebsiteImportWorkflow",
+		},
 	],
 	// APP_BASE_URL / TENANT_API_URL* patched at deploy — set INTERNAL_COMMAND_TOKEN via wrangler secret put.
 	"vars": {},

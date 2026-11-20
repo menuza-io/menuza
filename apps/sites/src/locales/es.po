@@ -665,6 +665,7 @@ msgstr "Al unirte, aceptas que {name} se ponga en contacto contigo sobre tu luga
 msgid "By signing up you agree to receive recurring automated marketing texts from {org} at this number. Consent is not a condition of purchase. Msg & data rates may apply. Reply STOP to opt out."
 msgstr "Al registrarte aceptas recibir mensajes de texto de marketing automatizados y recurrentes de {org} en este número. El consentimiento no es condición de compra. Pueden aplicarse tarifas de mensajes y datos. Responde STOP para darte de baja."
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/drops/LocationList.astro.ts:3
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Call"
@@ -951,6 +952,7 @@ msgstr "Borrar búsqueda"
 msgid "Close"
 msgstr "Cerrar"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/lib/ordering-labels.ts:181
 #: src/pages/locations/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
@@ -964,6 +966,10 @@ msgstr "Cerrado · abre {time}"
 #: src/lib/ordering-labels.ts:190
 msgid "Closed now. Schedule your order for later."
 msgstr "Cerrado ahora. Programa tu pedido para más tarde."
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Closes"
+msgstr "Cierra"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Code {code} applied. You save {amount}. Total {total}."
@@ -1261,6 +1267,7 @@ msgstr "Preferencias alimentarias"
 msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
 msgstr "Las etiquetas alimentarias son la descripción del propio restaurante. Pregunta al personal si tienes alguna alergia."
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/drops/LocationList.astro.ts:3
 msgid "Directions"
 msgstr "Indicaciones"
@@ -1289,6 +1296,10 @@ msgstr "En disputa"
 #: src/lib/ordering-labels.ts:72
 msgid "Done"
 msgstr "Listo"
+
+#: src/components/blocks/MenuFileBlock.astro.ts:3
+msgid "Download menu"
+msgstr "Descargar el menú"
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Drop alerts are off"
@@ -1561,6 +1572,10 @@ msgstr "Cancelación gratuita hasta {count} minutos antes de tu reserva."
 msgid "Free delivery"
 msgstr "Envío gratis"
 
+#: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+msgid "from"
+msgstr "desde"
+
 #: src/lib/gift-cards/labels.ts:29
 #: src/lib/ordering-labels.ts:67
 msgid "From"
@@ -1694,6 +1709,7 @@ msgstr "Historial"
 msgid "hour"
 msgstr "hora"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Hours"
 msgstr "Horario"
@@ -1965,6 +1981,10 @@ msgstr "Gestionar"
 #: src/lib/reservations/labels.ts:152
 msgid "Manage reservation"
 msgstr "Gestionar reserva"
+
+#: src/components/blocks/ContactBlock.astro.ts:3
+msgid "Map"
+msgstr "Mapa"
 
 #: src/components/ConsentBanner.astro.ts:3
 msgid "Marketing: measure and improve our advertising"
@@ -2338,6 +2358,7 @@ msgstr "Hoy solo quedan {count} de {name}. Vuelve al menú para reducir la canti
 msgid "Open for orders"
 msgstr "Abierto para pedidos"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/lib/ordering-labels.ts:179
 msgid "Open now"
 msgstr "Abierto ahora"
@@ -2359,6 +2380,10 @@ msgstr "Abierto hasta las {time}"
 msgid "Opening secure payment…"
 msgstr "Abriendo el pago seguro…"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Opens"
+msgstr "Abre"
+
 #: src/lib/ordering-labels.ts:183
 msgid "Opens {time}"
 msgstr "Abre {time}"
@@ -2372,6 +2397,11 @@ msgstr "Abre {when}"
 #: src/lib/ordering-labels.ts:152
 msgid "Optional"
 msgstr "Opcional"
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+#: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+msgid "Order"
+msgstr "Pedir"
 
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/shop/success.astro.ts:3
@@ -2431,6 +2461,10 @@ msgstr "Los pedidos están cerrados ahora."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Ordering is currently closed."
 msgstr "Los pedidos están cerrados actualmente."
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Ordering is paused"
+msgstr "Los pedidos están en pausa"
 
 #: src/components/drops/DropStatusChip.astro.ts:3
 #: src/pages/drops.astro.ts:3
@@ -2543,6 +2577,14 @@ msgstr "Número de personas"
 #: src/pages/drops.astro.ts:3
 msgid "Past drops"
 msgstr "Lanzamientos anteriores"
+
+#: src/components/blocks/ScrollingStripBlock.astro.ts:3
+msgid "Pause"
+msgstr "Pausa"
+
+#: src/components/blocks/HeroBlock.astro.ts:3
+msgid "Pause slideshow"
+msgstr "Pausar el carrusel"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Pay {amount}"
@@ -2991,6 +3033,10 @@ msgstr "Requiere {tier}"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Reservation news"
 msgstr "Novedades de reservas"
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Reserve"
+msgstr "Reservar"
 
 #: src/components/blocks/ReservationBlock.astro.ts:3
 #: src/lib/reservations/labels.ts:22

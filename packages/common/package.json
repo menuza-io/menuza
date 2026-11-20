@@ -159,6 +159,21 @@
       "import": "./src/site-theme.ts",
       "default": "./src/site-theme.ts"
     },
+    "./logo-png": {
+      "types": "./src/logo-png.ts",
+      "import": "./src/logo-png.ts",
+      "default": "./src/logo-png.ts"
+    },
+    "./restaurant-sections": {
+      "types": "./src/restaurant-sections.ts",
+      "import": "./src/restaurant-sections.ts",
+      "default": "./src/restaurant-sections.ts"
+    },
+    "./site-motion": {
+      "types": "./src/site-motion.ts",
+      "import": "./src/site-motion.ts",
+      "default": "./src/site-motion.ts"
+    },
     "./site-fonts": {
       "types": "./src/site-fonts.ts",
       "import": "./src/site-fonts.ts",

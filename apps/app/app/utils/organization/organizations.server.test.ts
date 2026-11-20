@@ -155,9 +155,12 @@ describe('createOrganization', () => {
 		expect(JSON.parse(organizationValues.siteHeaderConfig)).toEqual(
 			expect.objectContaining({
 				navLinks: [],
-				ctaLabel: 'Get started',
-				ctaUrl: '/login',
+				showCta: false,
+				ctaUrl: '',
 			}),
+		)
+		expect(JSON.stringify(organizationValues.siteHeaderConfig)).not.toContain(
+			'/login',
 		)
 		expect(JSON.parse(organizationValues.siteFooterConfig)).toEqual(
 			expect.objectContaining({
@@ -167,8 +170,8 @@ describe('createOrganization', () => {
 						links: [{ label: 'Home', url: '/' }],
 					},
 				],
-				ctaLabel: 'Get started',
-				ctaUrl: '/login',
+				showCta: false,
+				ctaUrl: '',
 			}),
 		)
 
@@ -211,13 +214,14 @@ describe('createOrganization', () => {
 		const sections = insertedValues[4] as CreatedHomePageSection[]
 		expect(sections.map((section) => section.type)).toEqual([
 			'hero',
-			'features',
-			'content',
-			'cards',
-			'testimonials',
-			'faq',
-			'cta',
+			'menuHighlights',
+			'locationsHours',
+			'reviews',
+			'rewards',
 		])
+		expect(sections.some((section) => section.config.includes('/login'))).toBe(
+			false,
+		)
 
 		const heroSection = sections[0]!
 		expect(heroSection).toEqual(
@@ -229,19 +233,17 @@ describe('createOrganization', () => {
 		expect(JSON.parse(heroSection.config)).toEqual(
 			expect.objectContaining({
 				heading: 'Welcome to Acme',
-				subheading:
-					'Custom storefronts. Discover a better way to connect, decide, and get started with Acme.',
+				subheading: 'Custom storefronts.',
 			}),
 		)
-
-		const ctaSection = sections[6]!
-		expect(JSON.parse(ctaSection.config)).toEqual(
-			expect.objectContaining({
-				heading: 'Ready to experience Acme?',
-				primaryLabel: 'Get started',
-				primaryUrl: '/login',
-			}),
-		)
+		const heroConfig = JSON.parse(heroSection.config) as {
+			links: Array<{ url: string; when?: string }>
+		}
+		const heroLinks = heroConfig.links
+		expect(heroLinks.map((link) => link.when)).toEqual([
+			'ordering',
+			'reservations',
+		])
 	})
 
 	it('provisions in the chosen region before reporting the organization ready', async () => {

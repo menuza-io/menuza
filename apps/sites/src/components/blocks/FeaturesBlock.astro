@@ -10,6 +10,18 @@ import {
 interface FeatureItem {
 	title?: string
 	description?: string
+	icon?: string
+}
+
+const ICONS: Record<string, string> = {
+	utensils: '<path d="M4 3v8a2 2 0 0 0 2 2h0"/><path d="M6 3v18"/><path d="M10 3v6"/><path d="M14 3c0 6 4 6 4 10v8"/><path d="M14 13h4"/>',
+	clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/>',
+	pin: '<path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2"/>',
+	star: '<path d="m12 3 2.5 5.5L20 9.5l-4 4 1 6L12 16.5 7 19.5l1-6-4-4 5.5-1z"/>',
+	truck: '<path d="M3 7h11v8H3z"/><path d="M14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="1.5"/><circle cx="17" cy="17" r="1.5"/>',
+	leaf: '<path d="M5 19c8 0 14-8 14-14-6 0-14 6-14 14z"/><path d="M8 16c2-3 5-6 9-8"/>',
+	heart: '<path d="M12 19s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z"/>',
+	phone: '<path d="M8 3h3l1 4-2 1a12 12 0 0 0 6 6l1-2 4 1v3a2 2 0 0 1-2 2A15 15 0 0 1 6 5a2 2 0 0 1 2-2z"/>',
 }
 
 interface Props {
@@ -46,6 +58,9 @@ const bodyClass = siteSectionBodyClass(config.background)
 		<div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
 			{items.map((item) => (
 				<div>
+					{item.icon && ICONS[item.icon] ? (
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="mb-3 size-6 text-primary" aria-hidden="true" set:html={ICONS[item.icon]} />
+					) : null}
 					<h3 class:list={['text-xl tracking-tight', headingClass]}>{item.title}</h3>
 					{item.description ? (
 						<p class:list={['mt-3 text-sm leading-relaxed', bodyClass]}>

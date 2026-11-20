@@ -1,4 +1,7 @@
 ---
+import { msg } from '@lingui/core/macro'
+import { visibleHeroLinks } from '@repo/common/restaurant-sections'
+import { heroSlideshow, heroSlides, HERO_SLIDE_SECONDS } from '@repo/common/site-motion'
 import SiteAnchor from '~/components/SiteAnchor.astro'
 import {
 	resolveImageSrcSet,
@@ -29,10 +32,12 @@ interface Props {
 		videoLoop?: boolean
 		videoMuted?: boolean
 		videoControls?: boolean
+		slides?: Array<{ url?: string; alt?: string }>
 	}
+	features?: { ordering: boolean; reservations: boolean }
 }
 
-const { config } = Astro.props
+const { config, features = { ordering: false, reservations: false } } = Astro.props
 const {
 	heading,
 	subheading,
@@ -50,35 +55,54 @@ const {
 	videoControls = false,
 } = config
 
-const rawImageMedia = media?.url ?? imageUrl
-const imageSrc = resolveMediaUrl(rawImageMedia)
-const imageSrcSet = resolveImageSrcSet(rawImageMedia)
+const slides = heroSlides({ slides: config.slides, imageUrl, media })
+	.map((slide) => ({
+		...slide,
+		src: resolveMediaUrl(slide.url),
+		srcSet: resolveImageSrcSet(slide.url),
+	}))
+	.filter((slide) => slide.src)
+const slideshow = heroSlideshow(slides)
+const imageSrc = slides[0]?.src ?? null
+const imageSrcSet = slides[0]?.srcSet
 const videoUrl = resolveMediaUrl(videoSrc)
 const hasMedia =
-	(assetType === 'image' && Boolean(imageSrc)) ||
+	(assetType === 'image' && slides.length > 0) ||
 	(assetType === 'video' && Boolean(videoUrl))
 const isCentered = textPosition === 'center'
-const primary = links[0]
-const secondary = links[1]
+const visibleLinks = visibleHeroLinks(links, features)
+const primary = visibleLinks[0]
+const secondary = visibleLinks[1]
+const pauseLabel = Astro.locals.i18n?._(msg`Pause slideshow`) ?? 'Pause slideshow'
+const slideSeconds = slides.length * HERO_SLIDE_SECONDS
 ---
 
 <section
 	class="relative isolate flex w-full overflow-hidden"
 	style={`min-height: ${Math.max(minHeight, 320)}px;`}
+	data-hero-slideshow={slideshow ? '' : undefined}
 >
-	{hasMedia && assetType === 'image' && imageSrc ? (
-		<img
-			src={imageSrc}
-			srcset={imageSrcSet || undefined}
-			alt={media?.alt || heading || ''}
-			width="1920"
-			height="1080"
-			sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
-			class="absolute inset-0 size-full object-cover"
-			loading="eager"
-			decoding="async"
-			fetchpriority="high"
-		/>
+	{hasMedia && assetType === 'image' && slides.length > 0 ? (
+		slides.map((slide, index) => (
+			<img
+				src={slide.src!}
+				srcset={slide.srcSet || undefined}
+				alt={slide.alt || (index === 0 ? heading || '' : '')}
+				width="1920"
+				height="1080"
+				sizes="100vw"
+				class:list={['hero-slide absolute inset-0 size-full object-cover', slideshow && 'hero-slide-animate']}
+				style={slideshow ? `animation-duration: ${slideSeconds}s; animation-delay: ${index * HERO_SLIDE_SECONDS}s;` : undefined}
+				loading={index === 0 ? 'eager' : 'lazy'}
+				decoding="async"
+				fetchpriority={index === 0 ? 'high' : 'low'}
+			/>
+		))
+	) : null}
+	{slideshow ? (
+		<button type="button" class="hero-pause" data-hero-pause aria-pressed="false">
+			{pauseLabel}
+		</button>
 	) : null}
 
 	{hasMedia && assetType === 'video' && videoUrl ? (
@@ -159,3 +183,54 @@ const secondary = links[1]
 		) : null}
 	</div>
 </section>
+
+<style>
+	.hero-slide-animate {
+		opacity: 0;
+		animation-name: hero-fade;
+		animation-timing-function: ease-in-out;
+		animation-iteration-count: infinite;
+	}
+	@keyframes hero-fade {
+		0% { opacity: 0; }
+		6% { opacity: 1; }
+		28% { opacity: 1; }
+		34% { opacity: 0; }
+		100% { opacity: 0; }
+	}
+	.hero-pause {
+		position: absolute;
+		inset-inline-end: 1rem;
+		bottom: 1rem;
+		z-index: 20;
+		min-height: 2.75rem;
+		border-radius: var(--radius);
+		background: rgb(0 0 0 / 0.55);
+		color: white;
+		padding-inline: 0.75rem;
+	}
+	[data-hero-slideshow]:hover .hero-slide-animate,
+	[data-hero-slideshow]:focus-within .hero-slide-animate,
+	[data-hero-slideshow][data-paused] .hero-slide-animate {
+		animation-play-state: paused;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.hero-slide-animate {
+			animation: none;
+			opacity: 0;
+		}
+		.hero-slide-animate:first-child {
+			opacity: 1;
+		}
+	}
+</style>
+
+<script>
+	for (const root of document.querySelectorAll<HTMLElement>('[data-hero-slideshow]')) {
+		const button = root.querySelector<HTMLButtonElement>('[data-hero-pause]')
+		button?.addEventListener('click', () => {
+			const paused = root.toggleAttribute('data-paused')
+			button.setAttribute('aria-pressed', paused ? 'true' : 'false')
+		})
+	}
+</script>

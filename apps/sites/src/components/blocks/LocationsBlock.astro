@@ -1,0 +1,166 @@
+---
+import { msg } from '@lingui/core/macro'
+import {
+	describeOpenNow,
+	locationOffersOrdering,
+	locationsForSection,
+	orderingIsPaused,
+	selectedLocationIds,
+} from '@repo/common/restaurant-sections'
+import { directionsUrl, weeklyHoursRows } from '~/lib/landing-pages'
+import { siteContainer, siteSection } from '~/lib/media'
+import type { PublicSiteMenuPayload } from '~/lib/org'
+
+interface Props {
+	config: Record<string, unknown>
+	menu: PublicSiteMenuPayload | null
+	reservationsOnline: boolean
+}
+
+const { config, menu, reservationsOnline } = Astro.props
+const locale = Astro.locals.requestedLocale || 'en'
+const i18n = Astro.locals.i18n
+const labels = {
+	open: i18n?._(msg`Open now`) ?? 'Open now',
+	closed: i18n?._(msg`Closed`) ?? 'Closed',
+	closes: i18n?._(msg`Closes`) ?? 'Closes',
+	opens: i18n?._(msg`Opens`) ?? 'Opens',
+	directions: i18n?._(msg`Directions`) ?? 'Directions',
+	order: i18n?._(msg`Order`) ?? 'Order',
+	reserve: i18n?._(msg`Reserve`) ?? 'Reserve',
+	call: i18n?._(msg`Call`) ?? 'Call',
+	hours: i18n?._(msg`Hours`) ?? 'Hours',
+	paused: i18n?._(msg`Ordering is paused`) ?? 'Ordering is paused',
+}
+const heading = typeof config.heading === 'string' ? config.heading : ''
+const now = new Date()
+const locations = locationsForSection(
+	menu?.locations ?? [],
+	selectedLocationIds(config.locationIds),
+).map((location) => {
+	const open = describeOpenNow(
+		{
+			timeZone: location.timezone,
+			storeHours: location.storeHours,
+			specialHours: location.specialHours,
+		},
+		now,
+		locale,
+	)
+	const address =
+		location.address && typeof location.address === 'object'
+			? [
+					(location.address as { streetName?: string }).streetName,
+					(location.address as { city?: string }).city,
+				]
+					.filter(Boolean)
+					.join(', ')
+			: ''
+	return {
+		id: location.id,
+		name: location.name,
+		phone: location.phone,
+		address,
+		directions: directionsUrl(location.address),
+		open,
+		hours: weeklyHoursRows(
+			{
+				storeHours: location.storeHours,
+				specialHours: location.specialHours,
+				timezone: location.timezone,
+			},
+			locale,
+			labels.closed,
+			now,
+		),
+		canOrder:
+			locationOffersOrdering(location.fulfillmentOptions) &&
+			(menu?.menus?.length ?? 0) > 0,
+		paused: orderingIsPaused(location.orderingPause, now),
+		payload: JSON.stringify({
+			timeZone: location.timezone,
+			storeHours: location.storeHours,
+			specialHours: location.specialHours,
+		}),
+	}
+})
+---
+
+{locations.length > 0 ? (
+	<section class={siteSection} data-locations-hours>
+		<div class={siteContainer}>
+			{heading ? <h2 class="text-3xl font-bold tracking-tight text-foreground">{heading}</h2> : null}
+			<div class="mt-8 grid gap-4 lg:grid-cols-2">
+				{locations.map((location) => (
+					<article class="surface p-5" data-location-card data-hours={location.payload}>
+						<h3 class="text-xl font-semibold text-foreground">{location.name}</h3>
+						{location.address ? <p class="mt-2 text-sm text-foreground" dir="auto">{location.address}</p> : null}
+						<p
+							class="mt-2 text-sm font-medium text-foreground"
+							data-open-now
+							data-label-open={labels.open}
+							data-label-closed={labels.closed}
+							data-label-closes={labels.closes}
+							data-label-opens={labels.opens}
+						>
+							{location.open.open
+								? `${labels.open}${location.open.closesAt ? ` · ${labels.closes} ${location.open.closesAt}` : ''}`
+								: `${labels.closed}${location.open.opensAt ? ` · ${labels.opens} ${location.open.opensAt}` : ''}`}
+						</p>
+						{location.hours.length > 0 ? (
+							<details class="mt-3">
+								<summary class="cursor-pointer text-sm text-muted-foreground">{labels.hours}</summary>
+								<ul class="mt-2 space-y-1 text-sm">
+									{location.hours.map((row) => (
+										<li class:list={[row.today && 'font-medium']}>{row.day}: {row.text}</li>
+									))}
+								</ul>
+							</details>
+						) : null}
+						<div class="mt-4 flex flex-wrap gap-2">
+							{location.directions ? (
+								<a class="btn-secondary" href={location.directions} rel="noopener" target="_blank">{labels.directions}</a>
+							) : null}
+							{location.canOrder ? (
+								<a class="btn-cta" href={`/menu?location=${encodeURIComponent(location.id)}`}>{labels.order}</a>
+							) : null}
+							{reservationsOnline ? (
+								<a class="btn-secondary" href="/reserve">{labels.reserve}</a>
+							) : null}
+							{location.phone ? (
+								<a class="btn-secondary" href={`tel:${location.phone.replace(/[^+\d]/g, '')}`} dir="ltr">{labels.call}</a>
+							) : null}
+						</div>
+						{location.paused ? <p class="mt-3 text-sm text-muted-foreground">{labels.paused}</p> : null}
+					</article>
+				))}
+			</div>
+		</div>
+	</section>
+	<script>
+		import { describeOpenNow } from '@repo/common/restaurant-sections'
+		const locale = document.documentElement.lang || 'en'
+		for (const card of document.querySelectorAll<HTMLElement>('[data-location-card]')) {
+			const raw = card.getAttribute('data-hours')
+			const target = card.querySelector('[data-open-now]')
+			if (!raw || !target) continue
+			try {
+				const input = JSON.parse(raw) as {
+					timeZone: string
+					storeHours: unknown
+					specialHours: unknown
+				}
+				const status = describeOpenNow(input, new Date(), locale)
+				const open = target.getAttribute('data-label-open') || 'Open now'
+				const closed = target.getAttribute('data-label-closed') || 'Closed'
+				const closes = target.getAttribute('data-label-closes') || 'Closes'
+				const opens = target.getAttribute('data-label-opens') || 'Opens'
+				target.textContent = status.open
+					? `${open}${status.closesAt ? ` · ${closes} ${status.closesAt}` : ''}`
+					: `${closed}${status.opensAt ? ` · ${opens} ${status.opensAt}` : ''}`
+			} catch {
+				// Keep the server-rendered line.
+			}
+		}
+	</script>
+) : null}

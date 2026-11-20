@@ -90,6 +90,12 @@ if (!header || !footer) {
 	header ??= homeChrome.header
 	footer ??= homeChrome.footer
 }
+const firstBody = sections.find(
+	(section) => section.type !== 'header' && section.type !== 'footer',
+)
+const headerOverlay =
+	(header?.config as { transparent?: boolean } | undefined)?.transparent ===
+		true && firstBody?.type === 'hero'
 const defaultLocale =
 	organization.defaultLocale ?? Astro.locals.defaultLocale ?? 'en'
 const localeLinks: SiteLocaleLink[] = locales.map((locale) => ({
@@ -153,6 +159,7 @@ const alternateLinks = [
 			config={header?.config}
 			organization={organization}
 			locales={localeLinks}
+			overlay={headerOverlay}
 		/>
 		<main class="flex-1">
 			<slot>

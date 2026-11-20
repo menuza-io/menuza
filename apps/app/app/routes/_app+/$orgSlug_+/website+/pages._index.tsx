@@ -782,10 +782,9 @@ function PageRow({
 										</Trans>
 									) : (
 										<Trans>
-											{redirectCount} redirects send visitors to "
-											{pageTitle}". While it is unpublished, they go to the home
-											page instead, and return to this page when you publish it
-											again.
+											{redirectCount} redirects send visitors to "{pageTitle}".
+											While it is unpublished, they go to the home page instead,
+											and return to this page when you publish it again.
 										</Trans>
 									)}
 								</AlertDialogDescription>
@@ -946,16 +945,27 @@ export default function WebsitePagesRoute() {
 				headingLevel="h2"
 				size="section"
 				actions={
-					<CreatePageDialog
-						open={createOpen}
-						onOpenChange={setCreateOpen}
-						trigger={
-							<Button className="shrink-0">
-								<Icon name="plus" className="size-4" />
-								<Trans>New Page</Trans>
-							</Button>
-						}
-					/>
+					<div className="flex flex-wrap gap-2">
+						<Button variant="outline" render={<Link to="../generate" />}>
+							<Trans>Create my site with AI</Trans>
+						</Button>
+						<Button variant="outline" render={<Link to="../import" />}>
+							<Trans>Import your current site</Trans>
+						</Button>
+						<Button variant="outline" render={<a href="../export" />}>
+							<Trans>Export</Trans>
+						</Button>
+						<CreatePageDialog
+							open={createOpen}
+							onOpenChange={setCreateOpen}
+							trigger={
+								<Button className="shrink-0">
+									<Icon name="plus" className="size-4" />
+									<Trans>New Page</Trans>
+								</Button>
+							}
+						/>
+					</div>
 				}
 			/>
 

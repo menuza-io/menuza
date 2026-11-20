@@ -1,6 +1,17 @@
 ---
-import type { PublicWebsitePageSection } from '~/lib/org'
+import { locationOffersOrdering } from '@repo/common/restaurant-sections'
+import {
+	fetchPublishedReservations,
+	fetchPublishedSiteMenu,
+	type PublicWebsitePageSection,
+} from '~/lib/org'
+import ContactBlock from './ContactBlock.astro'
 import HeroBlock from './HeroBlock.astro'
+import LocationsBlock from './LocationsBlock.astro'
+import MenuFileBlock from './MenuFileBlock.astro'
+import MenuHighlightsBlock from './MenuHighlightsBlock.astro'
+import ReviewsBlock from './ReviewsBlock.astro'
+import ScrollingStripBlock from './ScrollingStripBlock.astro'
 import ContentBlock from './ContentBlock.astro'
 import FaqBlock from './FaqBlock.astro'
 import FeaturesBlock from './FeaturesBlock.astro'
@@ -22,13 +33,42 @@ const { sections } = Astro.props
 const bodySections = sections.filter(
 	(section) => section.type !== 'header' && section.type !== 'footer',
 )
+const needsLive = bodySections.some((section) => {
+	if (section.type === 'menuHighlights' || section.type === 'locationsHours' || section.type === 'contact') {
+		return true
+	}
+	if (section.type !== 'hero') return false
+	const links = (section.config as { links?: Array<{ when?: string }> } | undefined)?.links
+	return Array.isArray(links) && links.some((link) => link?.when)
+})
+const menu = needsLive
+	? await fetchPublishedSiteMenu({
+			slug: Astro.locals.orgSlug,
+			host: Astro.locals.customHost,
+			lng: Astro.locals.requestedLocale,
+		})
+	: null
+const reservations = needsLive
+	? await fetchPublishedReservations({
+			slug: Astro.locals.orgSlug,
+			host: Astro.locals.customHost,
+		})
+	: null
+const features = {
+	ordering: (menu?.locations ?? []).some(
+		(location) =>
+			locationOffersOrdering(location.fulfillmentOptions) &&
+			(menu?.menus?.length ?? 0) > 0,
+	),
+	reservations: reservations?.online === true,
+}
 ---
 
 <div class="flex flex-col">
 	{bodySections.map((section) => {
 		switch (section.type) {
 			case 'hero':
-				return <HeroBlock config={section.config} />
+				return <HeroBlock config={section.config} features={features} />
 			case 'content':
 				return <ContentBlock config={section.config} />
 			case 'faq':
@@ -53,6 +93,24 @@ const bodySections = sections.filter(
 				return <RewardsBlock config={section.config} />
 			case 'events':
 				return <EventsBlock config={section.config} />
+			case 'menuHighlights':
+				return <MenuHighlightsBlock config={section.config} menu={menu} />
+			case 'locationsHours':
+				return (
+					<LocationsBlock
+						config={section.config}
+						menu={menu}
+						reservationsOnline={features.reservations}
+					/>
+				)
+			case 'contact':
+				return <ContactBlock config={section.config} menu={menu} sectionId={section.id} />
+			case 'reviews':
+				return <ReviewsBlock config={section.config} />
+			case 'menuFile':
+				return <MenuFileBlock config={section.config} />
+			case 'scrollingStrip':
+				return <ScrollingStripBlock config={section.config} />
 			default:
 				return null
 		}

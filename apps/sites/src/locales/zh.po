@@ -665,6 +665,7 @@ msgstr "加入即表示您同意 {name} 就您的排队情况与您联系。"
 msgid "By signing up you agree to receive recurring automated marketing texts from {org} at this number. Consent is not a condition of purchase. Msg & data rates may apply. Reply STOP to opt out."
 msgstr "注册即表示您同意 {org} 向此号码定期发送自动营销短信。同意并非购买的条件。可能产生短信和数据费用。回复 STOP 即可退订。"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/drops/LocationList.astro.ts:3
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Call"
@@ -951,6 +952,7 @@ msgstr "清除搜索"
 msgid "Close"
 msgstr "关闭"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/lib/ordering-labels.ts:181
 #: src/pages/locations/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
@@ -964,6 +966,10 @@ msgstr "已关闭 · {time}开放"
 #: src/lib/ordering-labels.ts:190
 msgid "Closed now. Schedule your order for later."
 msgstr "当前已打烊，请预约稍后的时间。"
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Closes"
+msgstr "结束营业"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Code {code} applied. You save {amount}. Total {total}."
@@ -1261,6 +1267,7 @@ msgstr "饮食偏好"
 msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
 msgstr "饮食标签由餐厅自行提供。如有过敏，请咨询店员。"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/drops/LocationList.astro.ts:3
 msgid "Directions"
 msgstr "路线"
@@ -1289,6 +1296,10 @@ msgstr "有争议"
 #: src/lib/ordering-labels.ts:72
 msgid "Done"
 msgstr "完成"
+
+#: src/components/blocks/MenuFileBlock.astro.ts:3
+msgid "Download menu"
+msgstr "下载菜单"
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Drop alerts are off"
@@ -1561,6 +1572,10 @@ msgstr "预订前 {count} 分钟内可免费取消。"
 msgid "Free delivery"
 msgstr "免配送费"
 
+#: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+msgid "from"
+msgstr "起"
+
 #: src/lib/gift-cards/labels.ts:29
 #: src/lib/ordering-labels.ts:67
 msgid "From"
@@ -1694,6 +1709,7 @@ msgstr "记录"
 msgid "hour"
 msgstr "小时"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Hours"
 msgstr "营业时间"
@@ -1965,6 +1981,10 @@ msgstr "管理"
 #: src/lib/reservations/labels.ts:152
 msgid "Manage reservation"
 msgstr "管理预订"
+
+#: src/components/blocks/ContactBlock.astro.ts:3
+msgid "Map"
+msgstr "地图"
 
 #: src/components/ConsentBanner.astro.ts:3
 msgid "Marketing: measure and improve our advertising"
@@ -2338,6 +2358,7 @@ msgstr "{name} 今日仅剩 {count} 份。请返回菜单减少数量。"
 msgid "Open for orders"
 msgstr "接受订单中"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/lib/ordering-labels.ts:179
 msgid "Open now"
 msgstr "营业中"
@@ -2359,6 +2380,10 @@ msgstr "营业至 {time}"
 msgid "Opening secure payment…"
 msgstr "正在打开安全支付…"
 
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Opens"
+msgstr "开始营业"
+
 #: src/lib/ordering-labels.ts:183
 msgid "Opens {time}"
 msgstr "{time} 开始营业"
@@ -2372,6 +2397,11 @@ msgstr "{when}开放"
 #: src/lib/ordering-labels.ts:152
 msgid "Optional"
 msgstr "可选"
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+#: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+msgid "Order"
+msgstr "点餐"
 
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/shop/success.astro.ts:3
@@ -2431,6 +2461,10 @@ msgstr "目前暂停点餐。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Ordering is currently closed."
 msgstr "当前暂停下单。"
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Ordering is paused"
+msgstr "点餐已暂停"
 
 #: src/components/drops/DropStatusChip.astro.ts:3
 #: src/pages/drops.astro.ts:3
@@ -2543,6 +2577,14 @@ msgstr "用餐人数"
 #: src/pages/drops.astro.ts:3
 msgid "Past drops"
 msgstr "往期活动"
+
+#: src/components/blocks/ScrollingStripBlock.astro.ts:3
+msgid "Pause"
+msgstr "暂停"
+
+#: src/components/blocks/HeroBlock.astro.ts:3
+msgid "Pause slideshow"
+msgstr "暂停幻灯片"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Pay {amount}"
@@ -2991,6 +3033,10 @@ msgstr "需达到 {tier}"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Reservation news"
 msgstr "预订动态"
+
+#: src/components/blocks/LocationsBlock.astro.ts:3
+msgid "Reserve"
+msgstr "预订"
 
 #: src/components/blocks/ReservationBlock.astro.ts:3
 #: src/lib/reservations/labels.ts:22

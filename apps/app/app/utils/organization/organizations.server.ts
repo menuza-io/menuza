@@ -30,9 +30,9 @@ import {
 	deprovisionTenantDatabase,
 	provisionTenantDatabase,
 } from '#app/utils/sites/tenant-api.server.ts'
-import { getDefaultConfig } from '#app/utils/website/block-types.ts'
 import {
 	getDefaultHomePageSections,
+	getRestaurantChrome,
 	HOME_PAGE_SLUG,
 	HOME_PAGE_TITLE,
 } from '#app/utils/website/home-page.ts'
@@ -348,8 +348,8 @@ export async function createOrganization({
 				slug,
 				description,
 				dataRegion,
-				siteHeaderConfig: JSON.stringify(getDefaultConfig('header')),
-				siteFooterConfig: JSON.stringify(getDefaultConfig('footer')),
+				siteHeaderConfig: JSON.stringify(getRestaurantChrome().header),
+				siteFooterConfig: JSON.stringify(getRestaurantChrome().footer),
 			})
 			.returning({
 				id: Organization.id,
