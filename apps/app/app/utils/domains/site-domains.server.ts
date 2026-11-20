@@ -37,6 +37,7 @@ import {
 } from '#app/utils/sites/cloudflare-custom-hostnames.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { findHostOwner } from '#app/utils/sites/site-host.server.ts'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import { logWebsiteActivity } from '#app/utils/website/activity.server.ts'
 import {
 	platformDomains,
@@ -286,6 +287,8 @@ export async function syncOrganizationPrimary(organizationId: string) {
 			cloudflareHostnameId: holding?.cloudflareHostnameId ?? null,
 		})
 		.where(eq(Organization.id, organizationId))
+	// The region caches the branding (it carries the site's address): tell it.
+	await notifyReservationsContextChanged(organizationId, 'branding')
 }
 
 async function purgeAllHosts(organization: { id: string; slug: string }) {
@@ -343,7 +346,9 @@ export async function addSiteDomains(
 
 	let existing = await ensureSiteDomains(input.organization.id)
 	// An expired primary was released: it does not stand in the way of a new one.
-	const expiredPrimary = existing.find((row) => row.isPrimary && row.status === 'expired')
+	const expiredPrimary = existing.find(
+		(row) => row.isPrimary && row.status === 'expired',
+	)
 	if (input.mode === 'primary' && expiredPrimary) {
 		await db.delete(SiteDomain).where(eq(SiteDomain.id, expiredPrimary.id))
 		existing = existing.filter((row) => row.id !== expiredPrimary.id)
@@ -479,6 +484,7 @@ export async function setPrimaryDomain(input: {
 			})
 			.where(eq(Organization.id, input.organization.id)),
 	] as never)
+	await notifyReservationsContextChanged(input.organization.id, 'branding')
 	await logDomain(
 		input.organization.id,
 		input.actor,

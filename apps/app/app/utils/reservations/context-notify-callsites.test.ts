@@ -11,7 +11,9 @@ const CASES: Array<[file: string, reason: string, min: number]> = [
 	['utils/payments-mock/onboard.server.ts', 'payments', 5],
 	['routes/_app+/$orgSlug_+/settings+/_index.tsx', 'branding', 1],
 	['routes/_app+/$orgSlug_+/staff+/timeclock.rules.tsx', 'staffing', 1],
-	['routes/_app+/$orgSlug_+/website+/_index.tsx', 'branding', 4],
+	['routes/_app+/$orgSlug_+/website+/_index.tsx', 'branding', 2],
+	// Every change of the primary domain mirrors it here (#139).
+	['utils/domains/site-domains.server.ts', 'branding', 1],
 	['routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx', 'branding', 6],
 ]
 
