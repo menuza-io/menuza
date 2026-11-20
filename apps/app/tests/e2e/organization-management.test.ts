@@ -167,7 +167,7 @@ test.describe('Organization Management', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Verify settings page loads with organization details
-		await expect(page.getByRole('textbox', { name: /name/i })).toHaveValue(
+		await expect(page.getByRole('textbox', { name: /^name$/i })).toHaveValue(
 			org.name,
 		)
 		await expect(page.getByRole('textbox', { name: /slug/i })).toHaveValue(
@@ -195,7 +195,7 @@ test.describe('Organization Management', () => {
 		// Update organization details (only name and slug are available in the form)
 		const newName = faker.company.name()
 
-		await page.getByRole('textbox', { name: /name/i }).fill(newName)
+		await page.getByRole('textbox', { name: /^name$/i }).fill(newName)
 
 		// Save changes
 		await saveBar(page).save.click()
