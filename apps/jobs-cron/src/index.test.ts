@@ -1428,7 +1428,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			]
 			expect(url).toMatch(/\/resources\/jobs\/domain-status$/u)
 			// Batched form response emails that waited out a window (#142).
-			const urls = fetchMock.mock.calls.map((call) => String(call[0]))
+			const urls = (fetchMock.mock.calls as unknown as Array<[string]>).map(
+				(call) => String(call[0]),
+			)
 			expect(urls.some((u) => u.endsWith('/resources/jobs/form-alerts'))).toBe(
 				true,
 			)
