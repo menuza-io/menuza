@@ -48,6 +48,8 @@ export type PublicOrganization = {
 	name: string
 	slug: string
 	customDomain?: string | null
+	/** The primary domain is live; a secondary host redirects to it only then (#139). */
+	customDomainActive?: boolean
 	dataRegion?: string | null
 	theme?: PublicSiteTheme
 	locales?: string[]

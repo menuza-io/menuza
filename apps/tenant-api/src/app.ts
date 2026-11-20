@@ -38,6 +38,7 @@ import { operatorRoutes } from './routes/operator.ts'
 import { marketingAudienceRoutes } from './routes/operator-marketing-audiences.ts'
 import { marketingSettingsRoutes } from './routes/operator-marketing-settings.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
+import { emailDomainRoutes } from './routes/email-domains.ts'
 import { provisionRoutes } from './routes/provision.ts'
 import { publicOrderRoutes } from './routes/orders.ts'
 import { publicDeliveryRoutes } from './routes/delivery.ts'
@@ -347,6 +348,7 @@ export function createTenantApiApp() {
 	app.route('/delivery', publicDeliveryRoutes)
 	app.route('/analytics', analyticsRoutes)
 	app.route('/api', provisionRoutes)
+	app.route('/api', emailDomainRoutes)
 	app.route('/api/forms', formSystemRoutes)
 	app.route('/api/orders', orderSystemRoutes)
 	app.route('/api/marketing', engagementSyncRoutes)

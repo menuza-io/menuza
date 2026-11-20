@@ -1,4 +1,4 @@
-import { db, eq, Organization } from '@repo/database'
+import { db, eq, Organization, OrganizationEmailSender } from '@repo/database'
 import { RouterContextProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as reservationsAccess from '#app/utils/reservations/access.server.ts'
@@ -15,6 +15,10 @@ import {
 	createTestSession,
 	createTestUser,
 } from '#tests/test-utils.ts'
+import {
+	mockSenderDomainClient,
+	setSenderDomainClient,
+} from '#app/utils/email-sender/node-client.server.ts'
 import { action } from './_index.tsx'
 
 const databaseMocks = vi.hoisted(() => ({ update: vi.fn() }))
@@ -131,6 +135,42 @@ async function setup(hasProvisionedDb = true) {
 			}),
 	}
 }
+
+describe('a custom sending domain and the data region (#103)', () => {
+	it('is registered again in the new region and shows Pending until verified', async () => {
+		setSenderDomainClient(mockSenderDomainClient)
+		try {
+			const { organization, submit } = await setup()
+			vi.mocked(provisionTenantDatabase).mockResolvedValue({ region: 'ksa' })
+			await db.insert(OrganizationEmailSender).values({
+				organizationId: organization.id,
+				domain: `region-${Date.now()}.com`,
+				domainStatus: 'verified',
+				providerRef: 'old-ref-us',
+				dataRegion: 'us',
+				dnsRecords: JSON.stringify({ records: [] }),
+			})
+			expect(
+				(
+					await submit({
+						intent: 'update-site-data-region',
+						dataRegion: 'ksa',
+						confirmWipe: 'true',
+					})
+				).status,
+			).toBe(302)
+			const [row] = await db
+				.select()
+				.from(OrganizationEmailSender)
+				.where(eq(OrganizationEmailSender.organizationId, organization.id))
+			expect(row).toMatchObject({ domainStatus: 'pending', dataRegion: 'ksa' })
+			expect(row!.providerRef).not.toBe('old-ref-us')
+			expect(row!.verifiedAt).toBeNull()
+		} finally {
+			setSenderDomainClient(null)
+		}
+	})
+})
 
 describe('website tenant database lifecycle', () => {
 	it('publishes provisioned organizations without calling tenant-api again', async () => {

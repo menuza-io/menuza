@@ -1164,9 +1164,11 @@ describe('delivery', () => {
 		const { html } = h.emails[0]!
 		expect(html).not.toMatch(/oklch|var\(--|<script/i)
 		expect(html).toMatch(/#[0-9a-f]{6}/)
-		// `sendEmail` receives only recipient, subject and bodies (no `context`).
+		// `sendEmail` receives only recipient, subject and bodies (no `context`),
+		// and the organization id, so its sender name and reply-to apply (#103).
 		expect(Object.keys(h.emails[0]!).sort()).toEqual([
 			'html',
+			'orgId',
 			'subject',
 			'text',
 			'to',

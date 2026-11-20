@@ -843,6 +843,7 @@ async function notifyStaff({
 				subject,
 				text: message,
 				html: `<p>${html}</p>`,
+				orgId: organization.id,
 			})
 			if (result.status === 'error') {
 				console.error('Failed to send staff alert email', result.error)

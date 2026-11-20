@@ -91,6 +91,10 @@ msgstr "(folded)"
 msgid "(has an error)"
 msgstr "(has an error)"
 
+#: app/components/website/domain/provider-steps.tsx:83
+msgid "(leave empty)"
+msgstr "(leave empty)"
+
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:310
 msgid "(no name)"
 msgstr "(no name)"
@@ -997,6 +1001,10 @@ msgstr "{answered} answered"
 msgid "{answered} answered, {draftCount} drafted and not saved"
 msgstr "{answered} answered, {draftCount} drafted and not saved"
 
+#: app/components/website/domain/connect-card.tsx:651
+msgid "{apex} redirects here with a 301."
+msgstr "{apex} redirects here with a 301."
+
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:290
 msgid "{appliedCount} dishes updated."
 msgstr "{appliedCount} dishes updated."
@@ -1434,7 +1442,7 @@ msgstr "{days} days"
 msgid "{days}, {from} to {to}"
 msgstr "{days}, {from} to {to}"
 
-#: app/components/ui/notification-bell.tsx:96
+#: app/components/ui/notification-bell.tsx:101
 msgid "{days}d ago"
 msgstr ""
 
@@ -1589,6 +1597,10 @@ msgstr "{firstPlace} and {more} more"
 msgid "{firstTypingName} is typing…"
 msgstr "{firstTypingName} is typing…"
 
+#: app/components/website/domain/buy-card.tsx:336
+msgid "{firstYear} for the first year, then {perYear}"
+msgstr "{firstYear} for the first year, then {perYear}"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:256
 msgid "{flagged, plural, one {# warning:} other {# warnings:}}"
 msgstr "{flagged, plural, one {# warning:} other {# warnings:}}"
@@ -1662,7 +1674,7 @@ msgstr "{hours}h"
 msgid "{hours}h {rest}m"
 msgstr "{hours}h {rest}m"
 
-#: app/components/ui/notification-bell.tsx:92
+#: app/components/ui/notification-bell.tsx:97
 msgid "{hours}h ago"
 msgstr ""
 
@@ -1850,7 +1862,7 @@ msgstr "{minutes} minutes"
 msgid "{minutes}m {remainingSec}s"
 msgstr ""
 
-#: app/components/ui/notification-bell.tsx:88
+#: app/components/ui/notification-bell.tsx:93
 msgid "{minutes}m ago"
 msgstr ""
 
@@ -2202,6 +2214,10 @@ msgstr "{openCallFollowUps} need follow-up"
 msgid "{openFollowUps} need follow-up"
 msgstr "{openFollowUps} need follow-up"
 
+#: app/components/website/domain/connect-card.tsx:232
+msgid "{otherLive} is live. Two domains for one restaurant can hurt search ranking: add this one as an extra domain that redirects, rather than a second site."
+msgstr "{otherLive} is live. Two domains for one restaurant can hurt search ranking: add this one as an extra domain that redirects, rather than a second site."
+
 #: app/components/staff/staff-roster.tsx:73
 msgid "{others, plural, one {+# more} other {+# more}}"
 msgstr "{others, plural, one {+# more} other {+# more}}"
@@ -2515,7 +2531,7 @@ msgstr "{seconds, plural, one {Closing in # second} other {Closing in # seconds}
 msgid "{seconds} seconds"
 msgstr "{seconds} seconds"
 
-#: app/components/ui/notification-bell.tsx:84
+#: app/components/ui/notification-bell.tsx:89
 msgid "{seconds}s ago"
 msgstr ""
 
@@ -2739,6 +2755,10 @@ msgstr "{unpriced, plural, one {# item has no price yet} other {# items have no 
 msgid "{unread} unread"
 msgstr "{unread} unread"
 
+#: app/components/website/domain/connect-card.tsx:383
+msgid "{unreadLines} lines of the file could not be read."
+msgstr "{unreadLines} lines of the file could not be read."
+
 #: app/components/pos/terminal-health.tsx:328
 msgid "{used} MB of {quota} MB"
 msgstr "{used} MB of {quota} MB"
@@ -2750,6 +2770,14 @@ msgstr "{used} of {GOOGLE_TITLE_MAX} characters"
 #: app/components/social/post-composer.tsx:345
 msgid "{used} of {limit} characters"
 msgstr "{used} of {limit} characters"
+
+#: app/components/website/domain/registered-panel.tsx:78
+msgid "{verb} on {expiresText} (in {daysLeft} days)."
+msgstr "{verb} on {expiresText} (in {daysLeft} days)."
+
+#: app/components/website/domain/registered-panel.tsx:82
+msgid "{verb} on {expiresText}."
+msgstr "{verb} on {expiresText}."
 
 #: app/components/settings/cards/organization/verified-domain-card.tsx:110
 msgid "{verifiedDomain} is verified."
@@ -2811,13 +2839,38 @@ msgstr "{windowCapacityPreview} orders max in this window"
 msgid "*.png, *.jpeg files up to 5 MB"
 msgstr ""
 
+#: app/utils/domains/domain-alerts.ts:120
+msgid "**{name}** could not be registered"
+msgstr "**{name}** could not be registered"
+
+#: app/utils/domains/domain-alerts.ts:102
+msgid "**{name}** could not be renewed"
+msgstr "**{name}** could not be renewed"
+
 #: app/utils/website/website-alerts.ts:41
 msgid "**{name}** could not go live"
 msgstr "**{name}** could not go live"
 
+#: app/utils/domains/domain-alerts.ts:66
 #: app/utils/website/website-alerts.ts:34
 msgid "**{name}** is live"
 msgstr "**{name}** is live"
+
+#: app/utils/domains/domain-alerts.ts:75
+msgid "**{name}** is still not connected"
+msgstr "**{name}** is still not connected"
+
+#: app/utils/domains/domain-alerts.ts:111
+msgid "**{name}** is yours"
+msgstr "**{name}** is yours"
+
+#: app/utils/domains/domain-alerts.ts:93
+msgid "**{name}** renews soon"
+msgstr "**{name}** renews soon"
+
+#: app/utils/domains/domain-alerts.ts:84
+msgid "**{name}** was disconnected"
+msgstr "**{name}** was disconnected"
 
 #: app/utils/discounts/discount-alerts.ts:37
 msgid "**A discount reached its weekly budget**"
@@ -3297,6 +3350,10 @@ msgstr ""
 msgid "51-200 people"
 msgstr ""
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:211
+msgid "6-digit code"
+msgstr "6-digit code"
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:599
 msgid "6-digit verification code"
 msgstr "6-digit verification code"
@@ -3369,6 +3426,10 @@ msgstr "A caller was unhappy or reported a problem."
 msgid "A cap on what one purchase can get from this promotion."
 msgstr "A cap on what one purchase can get from this promotion."
 
+#: app/components/website/domain/connect-card.tsx:207
+msgid "A certificate record is left over"
+msgstr "A certificate record is left over"
+
 #: app/components/member-location-scope.tsx:268
 msgid "A change applies the next time their session refreshes, within 15 minutes."
 msgstr "A change applies the next time their session refreshes, within 15 minutes."
@@ -3380,6 +3441,14 @@ msgstr "A change to a bill that was already settled"
 #: app/utils/website/form-templates.ts:25
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "A clean canvas with one field you can shape into anything."
+
+#: app/components/website/domain/domain-ui.tsx:111
+msgid "A CNAME cannot share its name with other records."
+msgstr "A CNAME cannot share its name with other records."
+
+#: app/components/website/domain/domain-ui.tsx:88
+msgid "A code was just sent. Wait a minute before asking for another."
+msgstr "A code was just sent. Wait a minute before asking for another."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:666
 msgid "A count is due today."
@@ -3458,6 +3527,26 @@ msgstr "A dish that is no longer on the menu"
 #: app/components/reservations/payment-panel.tsx:544
 msgid "A dispute was opened with the card issuer. Menuza reports it only."
 msgstr "A dispute was opened with the card issuer. Menuza reports it only."
+
+#: app/components/website/domain/domain-ui.tsx:52
+msgid "A domain bought here stays with Menuza. Transfer it out instead."
+msgstr "A domain bought here stays with Menuza. Transfer it out instead."
+
+#: app/components/website/domain/domain-ui.tsx:67
+msgid "A domain cannot be transferred within 60 days of registering or a previous transfer."
+msgstr "A domain cannot be transferred within 60 days of registering or a previous transfer."
+
+#: app/utils/domains/domain-alerts.ts:121
+msgid "A domain could not be registered"
+msgstr "A domain could not be registered"
+
+#: app/utils/domains/domain-alerts.ts:103
+msgid "A domain could not be renewed"
+msgstr "A domain could not be renewed"
+
+#: app/utils/domains/domain-alerts.ts:85
+msgid "A domain setup timed out"
+msgstr "A domain setup timed out"
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:314
 msgid "A draft is invisible to customers until you activate it."
@@ -3622,6 +3711,10 @@ msgstr "A menu is on sale here."
 msgid "A name and a color are enough. The rest is optional."
 msgstr "A name and a color are enough. The rest is optional."
 
+#: app/components/website/domain/domain-ui.tsx:110
+msgid "A name can have only one SPF record. Edit the existing one."
+msgstr "A name can have only one SPF record. Edit the existing one."
+
 #: app/components/menu/option-form.tsx:638
 msgid "A name that removes something, such as “No onions”, starts as Attention. Choose None to leave it plain."
 msgstr "A name that removes something, such as “No onions”, starts as Attention. Choose None to leave it plain."
@@ -3714,6 +3807,10 @@ msgstr "A polite note that you will not be moving forward right now."
 msgid "A position with that name already exists."
 msgstr "A position with that name already exists."
 
+#: app/components/website/domain/buy-card.tsx:340
+msgid "A premium name; we do not sell those."
+msgstr "A premium name; we do not sell those."
+
 #: app/components/dashboard/blocks/attention-block.tsx:267
 msgid "A prep-time change"
 msgstr "A prep-time change"
@@ -3721,6 +3818,10 @@ msgstr "A prep-time change"
 #: app/components/reservations/experiences/experience-editor.tsx:741
 msgid "A prepayment or deposit policy makes guests pay to book. Its cancellation terms apply to this experience."
 msgstr "A prepayment or deposit policy makes guests pay to book. Its cancellation terms apply to this experience."
+
+#: app/components/website/domain/connect-card.tsx:211
+msgid "A previous provider left a record that can block our certificate. Remove it:"
+msgstr "A previous provider left a record that can block our certificate. Remove it:"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:465
 msgid "A print can have at most {max} pieces. Choose fewer, then approve again."
@@ -3800,11 +3901,11 @@ msgstr "A saved audience (not available to you)"
 msgid "A saved report or a report template."
 msgstr "A saved report or a report template."
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:55
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:56
 msgid "A scheduled publish failed"
 msgstr "A scheduled publish failed"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:54
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:55
 msgid "A scheduled publish went live"
 msgstr "A scheduled publish went live"
 
@@ -3990,6 +4091,14 @@ msgstr "a time"
 msgid "A time card cannot be longer than 48 hours."
 msgstr "A time card cannot be longer than 48 hours."
 
+#: app/components/website/domain/buy-card.tsx:440
+msgid "A transfer adds a year and is charged like one. It fails clearly, and refunds, if the domain is locked, the code is wrong or it was registered less than 60 days ago. The domain keeps its current DNS until you let Menuza manage it."
+msgstr "A transfer adds a year and is charged like one. It fails clearly, and refunds, if the domain is locked, the code is wrong or it was registered less than 60 days ago. The domain keeps its current DNS until you let Menuza manage it."
+
+#: app/components/website/domain/domain-ui.tsx:115
+msgid "A TXT value can be at most 2048 characters."
+msgstr "A TXT value can be at most 2048 characters."
+
 #: app/components/staff/labor-example.tsx:105
 msgid "A typical day shift."
 msgstr "A typical day shift."
@@ -4008,9 +4117,17 @@ msgstr ""
 msgid "A verified phone number is required."
 msgstr "A verified phone number is required."
 
+#: app/components/website/domain/connect-card.tsx:161
+msgid "A website already answers on this domain"
+msgstr "A website already answers on this domain"
+
 #: app/components/discounts/discount-form.tsx:1853
 msgid "A window that ends earlier than it starts runs past midnight."
 msgstr "A window that ends earlier than it starts runs past midnight."
+
+#: app/components/website/domain/connect-card.tsx:135
+msgid "A wrong change could stop email from arriving. Nothing is changed until you confirm, and these records must stay:"
+msgstr "A wrong change could stop email from arriving. Nothing is changed until you confirm, and these records must stay:"
 
 #: app/components/phone-agent/call-data.ts:135
 msgid "Abandoned"
@@ -4104,7 +4221,7 @@ msgstr ""
 msgid "Access to personal and shared team notes."
 msgstr "Access to personal and shared team notes."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:220
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:218
 msgid "Accessibility statement"
 msgstr "Accessibility statement"
 
@@ -4225,6 +4342,8 @@ msgstr ""
 #: app/components/settings/cards/sessions-card.tsx:249
 #: app/components/staff/details-tab.tsx:265
 #: app/components/staff/staff-status.tsx:12
+#: app/components/website/domain/forwarding-panel.tsx:26
+#: app/components/website/domain/registered-panel.tsx:55
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:426
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:90
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:71
@@ -4269,8 +4388,8 @@ msgstr "Active must be yes or no."
 #: app/components/loyalty/loyalty-chrome.tsx:72
 #: app/components/orders/order-detail.tsx:1204
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:117
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:70
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:122
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:71
 msgid "Activity"
 msgstr ""
 
@@ -4341,6 +4460,10 @@ msgstr "Add a block to see your email come to life."
 msgid "Add a break"
 msgstr "Add a break"
 
+#: app/components/website/domain/domain-ui.tsx:63
+msgid "Add a card in Billing first, then come back."
+msgstr "Add a card in Billing first, then come back."
+
 #: app/components/menu/item-form.tsx:895
 #: app/components/menu/menu-form.tsx:355
 msgid "Add a category"
@@ -4363,8 +4486,8 @@ msgid "Add a choice"
 msgstr "Add a choice"
 
 #: app/components/settings/cards/organization/site-card.tsx:473
-msgid "Add a CNAME record for your domain (or subdomain) pointing to:"
-msgstr ""
+#~ msgid "Add a CNAME record for your domain (or subdomain) pointing to:"
+#~ msgstr ""
 
 #: app/components/discounts/codes-editor.tsx:195
 msgid "Add a code"
@@ -4380,11 +4503,11 @@ msgstr "Add a code before turning this discount on."
 msgid "Add a comment..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:447
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:445
 msgid "Add a contact email and phone number first."
 msgstr "Add a contact email and phone number first."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:454
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:452
 msgid "Add a contact email first."
 msgstr "Add a contact email first."
 
@@ -4392,7 +4515,7 @@ msgstr "Add a contact email first."
 msgid "Add a contact first."
 msgstr "Add a contact first."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:449
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:447
 msgid "Add a contact phone number first: the accessibility statement names it so guests can ask for help."
 msgstr "Add a contact phone number first: the accessibility statement names it so guests can ask for help."
 
@@ -4570,6 +4693,10 @@ msgstr "Add a second shift later the same day, like lunch and dinner."
 msgid "Add a section from the left to see a live preview."
 msgstr ""
 
+#: app/components/website/domain/domain-ui.tsx:93
+msgid "Add a sending domain first."
+msgstr "Add a sending domain first."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1448
 msgid "Add a service"
 msgstr "Add a service"
@@ -4661,6 +4788,10 @@ msgstr "Add a workplace in settings, or ask an administrator for access to one."
 msgid "Add a workplace in settings, then plan its shifts here."
 msgstr "Add a workplace in settings, then plan its shifts here."
 
+#: app/components/website/domain/forwarding-panel.tsx:252
+msgid "Add address"
+msgstr "Add address"
+
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:46
 msgid "Add an active location to your restaurant first."
 msgstr "Add an active location to your restaurant first."
@@ -4718,6 +4849,10 @@ msgstr "Add and edit time cards and export hours. Includes View time cards."
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:716
 msgid "Add announcement"
 msgstr ""
+
+#: app/components/website/domain/connect-card.tsx:576
+msgid "Add another domain"
+msgstr "Add another domain"
 
 #: app/components/organization-invitations.tsx:317
 #: app/routes/organizations+/create.tsx:1602
@@ -4877,6 +5012,10 @@ msgstr "Add Delivery Zone"
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:246
 msgid "Add dish"
 msgstr "Add dish"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:281
+msgid "Add domain"
+msgstr "Add domain"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4164
 msgid "Add feature"
@@ -5141,6 +5280,11 @@ msgstr "Add reaction"
 #: app/components/inventory/missing-recipes-panel.tsx:127
 msgid "Add recipe"
 msgstr "Add recipe"
+
+#: app/components/website/domain/records-panel.tsx:141
+#: app/components/website/domain/records-panel.tsx:206
+msgid "Add record"
+msgstr "Add record"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1272
 #: app/components/menu/drop-wizard/drop-form.tsx:1328
@@ -5463,7 +5607,7 @@ msgstr "Added"
 msgid "Added {presetLabel} element at ({createdX}, {createdY})"
 msgstr "Added {presetLabel} element at ({createdX}, {createdY})"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:56
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:57
 msgid "Added a redirect"
 msgstr "Added a redirect"
 
@@ -5507,6 +5651,10 @@ msgstr "Adding and removing are mixed in one choice. Two choices are clearer."
 msgid "Adding section"
 msgstr "Adding section"
 
+#: app/components/website/domain/connect-card.tsx:93
+msgid "Adding the records yourself is the safer fit for this domain."
+msgstr "Adding the records yourself is the safer fit for this domain."
+
 #: app/components/reservations/waitlist/add-party-dialog.tsx:212
 msgid "Adding..."
 msgstr "Adding..."
@@ -5540,14 +5688,27 @@ msgstr ""
 #: app/components/phone-agent/business-details-section.tsx:137
 #: app/components/pos/zatca-settings.tsx:318
 #: app/components/staff/details-tab.tsx:409
+#: app/components/website/domain/buy-card.tsx:66
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:971
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:373
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:371
 msgid "Address"
 msgstr "Address"
+
+#: app/components/website/domain/forwarding-panel.tsx:50
+msgid "Address added"
+msgstr "Address added"
 
 #: app/components/print/restaurant/vertical-ui.tsx:278
 msgid "Address and prices from"
 msgstr "Address and prices from"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:275
+msgid "Address before the @"
+msgstr "Address before the @"
+
+#: app/components/website/domain/forwarding-panel.tsx:236
+msgid "Address before the @ (use * for everything else)"
+msgstr "Address before the @ (use * for everything else)"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:843
 msgid "Address from"
@@ -5556,6 +5717,14 @@ msgstr "Address from"
 #: app/components/staff/details-tab.tsx:410
 msgid "Address line 2"
 msgstr "Address line 2"
+
+#: app/components/website/domain/buy-card.tsx:67
+msgid "Address line 2 (optional)"
+msgstr "Address line 2 (optional)"
+
+#: app/components/website/domain/forwarding-panel.tsx:51
+msgid "Address removed"
+msgstr "Address removed"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3136
 msgid "Adds a noindex tag so this page stays off Google and Bing."
@@ -5963,8 +6132,8 @@ msgstr "All messages in this channel are permanently deleted for everyone. This 
 msgid "All none left"
 msgstr "All none left"
 
-#: app/components/ui/notification-bell.tsx:511
-#: app/components/ui/notification-bell.tsx:611
+#: app/components/ui/notification-bell.tsx:529
+#: app/components/ui/notification-bell.tsx:629
 msgid "All Notifications"
 msgstr ""
 
@@ -6212,6 +6381,10 @@ msgstr "already at overtime"
 msgid "already booked"
 msgstr "already booked"
 
+#: app/components/website/domain/connect-card.tsx:104
+msgid "Already connected to another restaurant"
+msgstr "Already connected to another restaurant"
+
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:119
 msgid "Already exists."
 msgstr "Already exists."
@@ -6229,7 +6402,7 @@ msgstr ""
 msgid "Already paid"
 msgstr "Already paid"
 
-#: app/components/ui/notification-bell.tsx:339
+#: app/components/ui/notification-bell.tsx:357
 msgid "Already read"
 msgstr ""
 
@@ -6242,6 +6415,10 @@ msgstr "already received <0>{earlierText}</0>"
 #: app/components/orders/record-order-refund-dialog.tsx:264
 msgid "Already refunded"
 msgstr "Already refunded"
+
+#: app/components/website/domain/buy-card.tsx:342
+msgid "Already taken"
+msgstr "Already taken"
 
 #: app/components/locations/copy-settings-dialog.tsx:463
 msgid "Already the same"
@@ -6496,6 +6673,10 @@ msgstr "An interview was scheduled"
 msgid "An interview was updated"
 msgstr "An interview was updated"
 
+#: app/components/website/domain/domain-ui.tsx:108
+msgid "An MX record needs a priority from 0 to 65535."
+msgstr "An MX record needs a priority from 0 to 65535."
+
 #: app/components/qr/open-tabs.tsx:927
 msgid "An online payment arrived for this tab. Voiding does not refund it: refund it in your payment dashboard. Orders the kitchen has not finished are cancelled."
 msgstr "An online payment arrived for this tab. Voiding does not refund it: refund it in your payment dashboard. Orders the kitchen has not finished are cancelled."
@@ -6510,7 +6691,7 @@ msgstr "An unregistered application is requesting access to your organization da
 
 #: app/components/app-sidebar.tsx:682
 #: app/components/workspace-breadcrumb.tsx:59
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:56
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:61
 msgid "Analytics"
 msgstr "Analytics"
 
@@ -6551,7 +6732,7 @@ msgstr "Announcement actions"
 #: app/components/app-sidebar.tsx:698
 #: app/components/command-menu.tsx:160
 #: app/components/workspace-breadcrumb.tsx:60
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:94
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:99
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:695
 msgid "Announcements"
 msgstr ""
@@ -6597,6 +6778,10 @@ msgstr "another position"
 #: app/components/orders/provider-refund-dialog.tsx:165
 msgid "Another refund for this order is still being processed. Wait for it to finish."
 msgstr "Another refund for this order is still being processed. Wait for it to finish."
+
+#: app/components/website/domain/domain-ui.tsx:90
+msgid "Another restaurant already uses that sending domain."
+msgstr "Another restaurant already uses that sending domain."
 
 #: app/components/menu/menu-review-card.tsx:177
 msgid "Another way"
@@ -6700,6 +6885,10 @@ msgstr "Any voice type"
 #: app/components/hiring/job-share-panel.tsx:73
 msgid "Anyone with this link can see the job and apply."
 msgstr "Anyone with this link can see the job and apply."
+
+#: app/components/website/domain/forwarding-panel.tsx:143
+msgid "Anything else"
+msgstr "Anything else"
 
 #: app/components/staff/onboarding/onboarding-labels.ts:29
 msgid "Anything else you need done, like handing over a uniform."
@@ -6893,6 +7082,10 @@ msgstr "Approve a print, then order copies shipped to any US address."
 #: app/components/print/restaurant/vertical-ui.tsx:283
 msgid "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 msgstr "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
+
+#: app/components/website/domain/connect-card.tsx:505
+msgid "Approve and connect"
+msgstr "Approve and connect"
 
 #: app/components/inventory/count-review-screen.tsx:318
 #: app/components/inventory/count-review-screen.tsx:646
@@ -7112,7 +7305,7 @@ msgstr "Area"
 msgid "Area Boundary Type"
 msgstr "Area Boundary Type"
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:81
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:86
 #: app/routes/_app+/$orgSlug_+/website+/area-pages.tsx:230
 msgid "Area pages"
 msgstr "Area pages"
@@ -7193,6 +7386,10 @@ msgstr "Ask callers to rate the call from 1 to 5 before it ends. Ratings and the
 #: app/components/my-schedule/shifts-view.tsx:238
 msgid "Ask for a change"
 msgstr "Ask for a change"
+
+#: app/components/website/domain/domain-ui.tsx:89
+msgid "Ask for a code first."
+msgstr "Ask for a code first."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1177
 msgid "Ask for a rating"
@@ -7484,6 +7681,10 @@ msgstr "Authenticate this payment"
 msgid "Authentication Code"
 msgstr ""
 
+#: app/components/website/domain/buy-card.tsx:416
+msgid "Authorization code"
+msgstr "Authorization code"
+
 #: app/routes/mcp+/authorize.tsx:548
 msgid "Authorize"
 msgstr ""
@@ -7502,6 +7703,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:115
 #: app/components/reservations/booking-sheet.tsx:1131
+#: app/components/website/domain/records-panel.tsx:136
 msgid "Auto"
 msgstr "Auto"
 
@@ -8317,7 +8519,7 @@ msgstr "Booking changed"
 msgid "Booking confirmation"
 msgstr "Booking confirmation"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:400
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:398
 msgid "Booking deposits and cancellations (optional)"
 msgstr "Booking deposits and cancellations (optional)"
 
@@ -8395,6 +8597,10 @@ msgstr "Bought as"
 #: app/components/inventory/item-form.tsx:442
 msgid "Bought from"
 msgstr "Bought from"
+
+#: app/components/website/domain/managed-domain-card.tsx:82
+msgid "Bought with Menuza"
+msgstr "Bought with Menuza"
 
 #: app/utils/loyalty/loyalty-labels.ts:138
 msgid "Bound to a sale"
@@ -8548,7 +8754,7 @@ msgstr "Broadcasts waiting or sending"
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:48
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:49
 msgid "Brought a page back"
 msgstr "Brought a page back"
 
@@ -8768,6 +8974,7 @@ msgid "Buttons"
 msgstr ""
 
 #: app/components/discounts/discount-form.tsx:1705
+#: app/components/website/domain/buy-card.tsx:358
 msgid "Buy"
 msgstr "Buy"
 
@@ -8783,9 +8990,17 @@ msgstr "Buy {buy}, get {get} discounted"
 msgid "Buy {buyQuantity}, get {getQuantity} from another group"
 msgstr "Buy {buyQuantity}, get {getQuantity} from another group"
 
+#: app/components/website/domain/buy-card.tsx:192
+msgid "Buy {fqdn}"
+msgstr "Buy {fqdn}"
+
 #: app/components/discounts/discount-form.tsx:286
 msgid "Buy a burger, get fries free."
 msgstr "Buy a burger, get fries free."
+
+#: app/components/website/domain/buy-card.tsx:273
+msgid "Buy a domain here and your site is live on it with a certificate, no DNS steps. Paid with the card on file; WHOIS privacy included."
+msgstr "Buy a domain here and your site is live on it with a certificate, no DNS steps. Paid with the card on file; WHOIS privacy included."
 
 #: app/components/discounts/tier-steps.tsx:125
 msgid "Buy at least"
@@ -8818,6 +9033,14 @@ msgstr "Buyer and recipient"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:496
 msgid "Buying"
 msgstr "Buying"
+
+#: app/components/website/domain/buy-card.tsx:287
+msgid "Buying domains is not connected to a registrar in this environment."
+msgstr "Buying domains is not connected to a registrar in this environment."
+
+#: app/components/website/domain/domain-ui.tsx:59
+msgid "Buying domains is not set up yet."
+msgstr "Buying domains is not set up yet."
 
 #: app/components/loyalty/program-form.tsx:671
 msgid "Buying from selected categories"
@@ -9269,6 +9492,8 @@ msgstr "Can't text that number"
 #: app/components/staff/timesheets/reason-dialog.tsx:98
 #: app/components/ui/photo-crop-form.tsx:229
 #: app/components/website/create-form-dialog.tsx:292
+#: app/components/website/domain/buy-card.tsx:229
+#: app/components/website/domain/records-panel.tsx:144
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/publish-controls.tsx:511
 #: app/components/website/publish-controls.tsx:623
@@ -9463,7 +9688,7 @@ msgstr ""
 msgid "CANCELLED"
 msgstr "CANCELLED"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:53
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:54
 msgid "Cancelled a scheduled publish"
 msgstr "Cancelled a scheduled publish"
 
@@ -9842,6 +10067,10 @@ msgstr ""
 msgid "Certificate"
 msgstr "Certificate"
 
+#: app/components/website/domain/site-domains-card.tsx:131
+msgid "Certificate pending"
+msgstr "Certificate pending"
+
 #: app/components/staff/onboarding/certificates-tab.tsx:82
 msgid "Certificate removed."
 msgstr "Certificate removed."
@@ -9849,6 +10078,10 @@ msgstr "Certificate removed."
 #: app/components/staff/onboarding/certificates-tab.tsx:174
 msgid "Certificate saved."
 msgstr "Certificate saved."
+
+#: app/components/website/domain/site-domains-card.tsx:182
+msgid "Certificate: {certificate}"
+msgstr "Certificate: {certificate}"
 
 #: app/components/staff/onboarding/certificates-tab.tsx:118
 #: app/components/staff/staff-profile-page.tsx:90
@@ -9899,6 +10132,10 @@ msgstr "Change an amount if less arrived from {sender}. Whatever is missing is k
 #: app/components/inventory/transfer-dialogs.tsx:475
 msgid "Change an amount if you send less. Stock leaves your place when you confirm."
 msgstr "Change an amount if you send less. Stock leaves your place when you confirm."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:188
+msgid "Change and verify"
+msgstr "Change and verify"
 
 #: app/components/staff/onboarding/task-row.tsx:228
 msgid "Change due date"
@@ -10011,7 +10248,7 @@ msgstr "Changed {0} to {lastUndoStatusLabel}."
 msgid "Changed {sections}"
 msgstr "Changed {sections}"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:57
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:58
 msgid "Changed a redirect"
 msgstr "Changed a redirect"
 
@@ -10019,7 +10256,7 @@ msgstr "Changed a redirect"
 msgid "Changed since approval"
 msgstr "Changed since approval"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:59
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:60
 msgid "Changed the website domain"
 msgstr "Changed the website domain"
 
@@ -10227,6 +10464,10 @@ msgstr "Check"
 msgid "Check against the invoice"
 msgstr "Check against the invoice"
 
+#: app/components/website/domain/site-domains-card.tsx:370
+msgid "Check all"
+msgstr "Check all"
+
 #: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:93
 msgid "Check before it goes out"
 msgstr "Check before it goes out"
@@ -10235,9 +10476,17 @@ msgstr "Check before it goes out"
 msgid "Check before publishing"
 msgstr "Check before publishing"
 
+#: app/components/website/domain/site-domains-card.tsx:251
+msgid "Check certificate again"
+msgstr "Check certificate again"
+
 #: app/components/settings/cards/organization/verified-domain-card.tsx:179
 msgid "Check DNS record"
 msgstr "Check DNS record"
+
+#: app/components/website/domain/connect-card.tsx:611
+msgid "Check domain"
+msgstr "Check domain"
 
 #: app/components/reservations/status-style.tsx:182
 msgid "Check dropped"
@@ -10252,6 +10501,15 @@ msgstr "Check Dropped"
 #: app/components/hiring/job-editor.tsx:355
 msgid "Check it over"
 msgstr "Check it over"
+
+#: app/components/website/domain/managed-domain-card.tsx:156
+msgid "Check nameservers"
+msgstr "Check nameservers"
+
+#: app/components/website/domain/forwarding-panel.tsx:274
+#: app/components/website/domain/site-domains-card.tsx:229
+msgid "Check now"
+msgstr "Check now"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:273
 msgid "Check out our new summer menu"
@@ -10311,6 +10569,10 @@ msgstr "Check the highlighted fields and try again."
 #: app/components/phone-agent/settings-page.tsx:62
 msgid "Check the highlighted fields."
 msgstr "Check the highlighted fields."
+
+#: app/components/website/domain/domain-ui.tsx:66
+msgid "Check the owner details: every field except address line 2 is required."
+msgstr "Check the owner details: every field except address line 2 is required."
 
 #: app/components/locations/checkout-settings-cards.tsx:41
 msgid "Check the percentage and the amounts."
@@ -10375,6 +10637,12 @@ msgstr ""
 #: app/routes/_auth+/verify.tsx:64
 msgid "Check your email"
 msgstr ""
+
+#: app/components/website/domain/forwarding-panel.tsx:55
+#: app/components/website/domain/site-domains-card.tsx:122
+#: app/components/website/domain/site-domains-card.tsx:324
+msgid "Checked"
+msgstr "Checked"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:246
 msgid "Checked before every step, including after a delay. Guests who order are not sent the rest of this automation."
@@ -10493,6 +10761,10 @@ msgstr "Choices per item"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:416
 msgid "Choose"
 msgstr "Choose"
+
+#: app/components/website/domain/provider-steps.tsx:26
+msgid "Choose \"{label}\"."
+msgstr "Choose \"{label}\"."
 
 #: app/components/inventory/item-form.tsx:334
 #: app/components/menu/menu-bulk-edit-sheet.tsx:667
@@ -10848,6 +11120,10 @@ msgstr "Choose Automatic or Manual."
 msgid "Choose categories"
 msgstr "Choose categories"
 
+#: app/components/website/domain/connect-card.tsx:308
+msgid "Choose custom nameservers and replace the current ones with:"
+msgstr "Choose custom nameservers and replace the current ones with:"
+
 #: app/components/inventory/supplier-form.tsx:103
 msgid "Choose days of the week."
 msgstr "Choose days of the week."
@@ -11185,9 +11461,15 @@ msgstr ""
 #: app/components/locations/address-autocomplete.tsx:253
 #: app/components/pos/zatca-settings.tsx:327
 #: app/components/staff/details-tab.tsx:411
+#: app/components/website/domain/buy-card.tsx:68
+#: app/components/website/domain/buy-card.tsx:310
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:387
 msgid "City"
 msgstr "City"
+
+#: app/components/website/domain/buy-card.tsx:309
+msgid "City (optional)"
+msgstr "City (optional)"
 
 #: app/components/print/print-labels.ts:40
 msgid "Classic"
@@ -11631,8 +11913,8 @@ msgid "Closing time must be after opening time."
 msgstr "Closing time must be after opening time."
 
 #: app/components/settings/cards/organization/site-card.tsx:483
-msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
-msgstr ""
+#~ msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
+#~ msgstr ""
 
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:165
 #: app/components/discounts/codes-editor.tsx:109
@@ -11646,6 +11928,10 @@ msgstr "Code {number}"
 #: app/components/pos/terminals-manager.tsx:1942
 msgid "Code copied."
 msgstr "Code copied."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:212
+msgid "Code sent to {pending}"
+msgstr "Code sent to {pending}"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:567
 msgid "Code sent. It expires in 10 minutes."
@@ -12058,6 +12344,18 @@ msgstr "Confirm that the guest asked to receive marketing."
 msgid "Confirm that you want to rehire them anyway."
 msgstr "Confirm that you want to rehire them anyway."
 
+#: app/components/website/domain/registered-panel.tsx:108
+msgid "Confirm the owner email"
+msgstr "Confirm the owner email"
+
+#: app/utils/domains/domain-alerts.ts:145
+msgid "Confirm the owner email for **{name}**"
+msgstr "Confirm the owner email for **{name}**"
+
+#: app/components/website/domain/domain-ui.tsx:84
+msgid "Confirm the reply-to address with the code first."
+msgstr "Confirm the reply-to address with the code first."
+
 #: app/components/settings/cards/organization/site-icon-card.tsx:175
 msgid "Confirm upload"
 msgstr ""
@@ -12070,6 +12368,10 @@ msgstr "Confirm what arrived"
 msgid "Confirm what you send"
 msgstr "Confirm what you send"
 
+#: app/utils/domains/domain-alerts.ts:146
+msgid "Confirm your domain owner email"
+msgstr "Confirm your domain owner email"
+
 #: app/routes/_auth+/reset-password.tsx:245
 msgid "Confirm your new password"
 msgstr ""
@@ -12081,6 +12383,10 @@ msgstr ""
 #: app/components/customers/person-marketing-card.tsx:558
 msgid "Confirmation email sent"
 msgstr "Confirmation email sent"
+
+#: app/components/website/domain/forwarding-panel.tsx:53
+msgid "Confirmation email sent again"
+msgstr "Confirmation email sent again"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:237
 msgid "Confirmation is taking longer than usual. Refresh in a minute."
@@ -12097,6 +12403,10 @@ msgstr "Confirmation sent"
 #: app/components/reservations/detail-sheet.tsx:535
 msgid "Confirmation sent with a new manage link"
 msgstr "Confirmation sent with a new manage link"
+
+#: app/components/website/domain/site-domains-card.tsx:116
+msgid "confirmed"
+msgstr "confirmed"
 
 #: app/components/reservations/status-style.tsx:137
 #: app/utils/reservations/labels.ts:16
@@ -12176,6 +12486,10 @@ msgstr "Connect a point of sale or delivery platform to keep your menu in sync. 
 msgid "Connect accounts"
 msgstr "Connect accounts"
 
+#: app/components/website/domain/connect-card.tsx:687
+msgid "Connect automatically"
+msgstr "Connect automatically"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:265
 msgid "Connect Canva"
 msgstr "Connect Canva"
@@ -12184,7 +12498,7 @@ msgstr "Connect Canva"
 msgid "Connect Canva again: the connection has expired or was removed in Canva."
 msgstr "Connect Canva again: the connection has expired or was removed in Canva."
 
-#: app/components/settings/cards/organization/site-card.tsx:567
+#: app/components/website/domain/connect-card.tsx:739
 msgid "Connect domain"
 msgstr ""
 
@@ -12244,9 +12558,21 @@ msgstr ""
 msgid "Connect your Canva account"
 msgstr "Connect your Canva account"
 
+#: app/components/website/domain/connect-card.tsx:578
+msgid "Connect your domain"
+msgstr "Connect your domain"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:765
 msgid "Connect your favorite AI client to access your organization's data securely. Follow the instructions for your preferred client below."
 msgstr ""
+
+#: app/components/website/domain/domain-ui.tsx:40
+msgid "Connect your main domain first."
+msgstr "Connect your main domain first."
+
+#: app/components/settings/cards/organization/site-card.tsx:388
+msgid "Connect your own domain, buy one, or set up email forwarding on the Domain tab."
+msgstr "Connect your own domain, buy one, or set up email forwarding on the Domain tab."
 
 #: app/routes/organizations+/create.tsx:1479
 msgid "Connect your POS"
@@ -12278,8 +12604,8 @@ msgid "Connected Channels"
 msgstr ""
 
 #: app/components/settings/cards/organization/site-card.tsx:438
-msgid "Connected domain"
-msgstr ""
+#~ msgid "Connected domain"
+#~ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4537
 msgid "Connected form"
@@ -12317,6 +12643,10 @@ msgstr "Connecting adds a sample account and nothing is really posted. A post co
 #: app/components/chat/chat-view.tsx:985
 msgid "Connecting to team chat…"
 msgstr "Connecting to team chat…"
+
+#: app/components/website/domain/buy-card.tsx:113
+msgid "Connecting your site and its certificate"
+msgstr "Connecting your site and its certificate"
 
 #: app/components/pos/zatca-settings.tsx:565
 msgid "Connecting…"
@@ -12372,7 +12702,7 @@ msgstr "Consumed"
 msgid "Contact"
 msgstr "Contact"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:337
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:335
 msgid "Contact email"
 msgstr "Contact email"
 
@@ -12385,7 +12715,7 @@ msgstr "Contact form"
 msgid "Contact person"
 msgstr "Contact person"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:350
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:348
 msgid "Contact phone"
 msgstr "Contact phone"
 
@@ -12516,11 +12846,11 @@ msgstr "Conversation"
 msgid "Cookie banner"
 msgstr "Cookie banner"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:650
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:648
 msgid "Cookie banner settings"
 msgstr "Cookie banner settings"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:218
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:216
 msgid "Cookie policy"
 msgstr "Cookie policy"
 
@@ -12534,6 +12864,7 @@ msgstr "Coordinates (Lat, Lng)"
 
 #: app/components/organization-invitations.tsx:219
 #: app/components/staff/pin-panel.tsx:78
+#: app/components/website/domain/domain-ui.tsx:179
 msgid "Copied"
 msgstr ""
 
@@ -12578,6 +12909,7 @@ msgstr "copy"
 #: app/components/organization-invitations.tsx:224
 #: app/components/phone-agent/agent-details.tsx:239
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
+#: app/components/website/domain/domain-ui.tsx:175
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:327
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:582
 #: app/routes/_auth+/waitlist.tsx:332
@@ -12833,6 +13165,10 @@ msgstr "Could not close the shift."
 #: app/components/pos/zatca-settings.tsx:512
 msgid "Could not connect the terminal."
 msgstr "Could not connect the terminal."
+
+#: app/components/website/domain/domain-ui.tsx:180
+msgid "Could not copy"
+msgstr "Could not copy"
 
 #: app/components/pos/terminals-manager.tsx:1944
 msgid "Could not copy. Select it and copy it by hand."
@@ -13291,7 +13627,11 @@ msgstr "Counting"
 msgid "Country"
 msgstr "Country"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:362
+#: app/components/website/domain/buy-card.tsx:71
+msgid "Country (2 letters, for example SA)"
+msgstr "Country (2 letters, for example SA)"
+
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:360
 msgid "Country (two letters, for example US or SA)"
 msgstr "Country (two letters, for example US or SA)"
 
@@ -14047,7 +14387,7 @@ msgstr "Custom colors"
 msgid "Custom dates"
 msgstr "Custom dates"
 
-#: app/components/settings/cards/organization/site-card.tsx:421
+#: app/components/settings/cards/organization/site-card.tsx:385
 msgid "Custom domain"
 msgstr ""
 
@@ -14159,7 +14499,7 @@ msgstr ""
 msgid "Customer buys"
 msgstr "Customer buys"
 
-#: app/components/settings/cards/organization/site-card.tsx:285
+#: app/components/settings/cards/organization/site-card.tsx:249
 msgid "Customer data region"
 msgstr ""
 
@@ -14902,7 +15242,7 @@ msgstr "Delete connection"
 msgid "Delete custom role"
 msgstr "Delete custom role"
 
-#: app/components/settings/cards/organization/site-card.tsx:341
+#: app/components/settings/cards/organization/site-card.tsx:305
 msgid "Delete customer data and switch region?"
 msgstr ""
 
@@ -14910,7 +15250,7 @@ msgstr ""
 msgid "Delete dashboard"
 msgstr "Delete dashboard"
 
-#: app/components/settings/cards/organization/site-card.tsx:381
+#: app/components/settings/cards/organization/site-card.tsx:345
 msgid "Delete data and switch"
 msgstr ""
 
@@ -15140,7 +15480,7 @@ msgstr "Delete this time card?"
 msgid "Deleted"
 msgstr "Deleted"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:47
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:48
 msgid "Deleted a page"
 msgstr "Deleted a page"
 
@@ -15565,6 +15905,10 @@ msgstr "Dial pad"
 msgid "Did not show"
 msgstr "Did not show"
 
+#: app/components/website/domain/connect-card.tsx:186
+msgid "Did you mean the main domain, {suggestion}? Connecting a subdomain only connects that one address."
+msgstr "Did you mean the main domain, {suggestion}? Connecting a subdomain only connects that one address."
+
 #: app/components/phone-agent/phrase-fields.tsx:47
 msgid "Didn't catch that"
 msgstr "Didn't catch that"
@@ -15798,7 +16142,7 @@ msgstr "Discard unsaved changes?"
 msgid "Discard your changes?"
 msgstr "Discard your changes?"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:50
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:51
 msgid "Discarded unpublished changes"
 msgstr "Discarded unpublished changes"
 
@@ -15824,6 +16168,14 @@ msgstr ""
 msgid "Disconnect {accountName}?"
 msgstr "Disconnect {accountName}?"
 
+#: app/components/website/domain/site-domains-card.tsx:410
+msgid "Disconnect all"
+msgstr "Disconnect all"
+
+#: app/components/website/domain/site-domains-card.tsx:379
+msgid "Disconnect all domains"
+msgstr "Disconnect all domains"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1087
 msgid "Disconnect any active MCP connections"
 msgstr ""
@@ -15831,6 +16183,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:288
 msgid "Disconnect Canva"
 msgstr "Disconnect Canva"
+
+#: app/components/website/domain/site-domains-card.tsx:393
+msgid "Disconnect every domain?"
+msgstr "Disconnect every domain?"
 
 #: app/components/discounts/discount-form.tsx:605
 #: app/components/discounts/discount-form.tsx:815
@@ -16044,9 +16400,21 @@ msgstr "District"
 msgid "Divide tips"
 msgstr "Divide tips"
 
+#: app/components/website/domain/managed-domain-card.tsx:85
+msgid "DNS managed by Menuza"
+msgstr "DNS managed by Menuza"
+
+#: app/components/website/domain/records-panel.tsx:185
+msgid "DNS records"
+msgstr "DNS records"
+
 #: app/components/settings/cards/organization/site-card.tsx:470
-msgid "DNS setup"
-msgstr ""
+#~ msgid "DNS setup"
+#~ msgstr ""
+
+#: app/components/website/domain/provider-steps.tsx:46
+msgid "Do not change or delete any MX or TXT records: they carry the email for this domain."
+msgstr "Do not change or delete any MX or TXT records: they carry the email for this domain."
 
 #: app/components/hiring/applicant-labels.ts:65
 msgid "Do not send anything"
@@ -16084,9 +16452,15 @@ msgstr "Does not repeat"
 msgid "Does not work at this workplace"
 msgstr "Does not work at this workplace"
 
-#: app/components/settings/cards/organization/site-card.tsx:552
+#: app/components/website/domain/buy-card.tsx:405
+#: app/components/website/domain/connect-card.tsx:604
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:46
 msgid "Domain"
 msgstr ""
+
+#: app/components/website/domain/connect-card.tsx:527
+msgid "Domain added"
+msgstr "Domain added"
 
 #: app/routes/_auth+/login.tsx:409
 msgid "Don't have an account?"
@@ -16133,6 +16507,7 @@ msgstr "Don't take phone orders for"
 #: app/components/staff/onboarding/task-row.tsx:272
 #: app/components/staff/pin-panel.tsx:96
 #: app/components/staff/schedule/publish-dialog.tsx:363
+#: app/components/website/domain/buy-card.tsx:114
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:145
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:214
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:528
@@ -16246,6 +16621,10 @@ msgstr ""
 msgid "Download your locations, change the phone, active and tags columns, and upload the file. Every row is checked first: if one row has a problem nothing is changed."
 msgstr "Download your locations, change the phone, active and tags columns, and upload the file. Every row is checked first: if one row has a problem nothing is changed."
 
+#: app/components/website/domain/managed-domain-card.tsx:222
+msgid "Download zone and stop"
+msgstr "Download zone and stop"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:363
 msgid "draft"
 msgstr ""
@@ -16265,7 +16644,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:195
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:413
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:254
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:475
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:650
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6547
 #: app/utils/inventory/order-view.ts:23
@@ -16712,6 +17091,10 @@ msgstr "Each full group of a set size, such as every pair."
 msgid "Each group is one part of the deal, such as a pizza, a side or a drink. The customer gets the deal once the order has every group."
 msgstr "Each group is one part of the deal, such as a pizza, a side or a drink. The customer gets the deal once the order has every group."
 
+#: app/components/website/domain/forwarding-panel.tsx:216
+msgid "Each inbox gets an email with a link to confirm. Forwarding starts once it is clicked."
+msgstr "Each inbox gets an email with a link to confirm. Forwarding starts once it is clicked."
+
 #: app/components/inventory/recipe-section.tsx:591
 msgid "Each ingredient can be listed once."
 msgstr "Each ingredient can be listed once."
@@ -16853,6 +17236,7 @@ msgstr "Earning reversed"
 #: app/components/staff/onboarding/certificates-tab.tsx:278
 #: app/components/staff/onboarding/templates-page.tsx:213
 #: app/components/staff/timesheets/review-queue.tsx:439
+#: app/components/website/domain/records-panel.tsx:285
 #: app/components/workspace-breadcrumb.tsx:24
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:303
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:469
@@ -16873,7 +17257,7 @@ msgstr "Earning reversed"
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:579
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:502
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:500
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:686
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:902
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1063
@@ -17152,7 +17536,7 @@ msgstr "Edit your Google business description, opening date, and service attribu
 #: app/components/my-schedule/time-cards-view.tsx:136
 #: app/components/staff/timesheets/card-history.tsx:48
 #: app/components/staff/timesheets/issue-copy.ts:19
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:480
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:478
 msgid "Edited"
 msgstr "Edited"
 
@@ -17261,6 +17645,27 @@ msgstr "Email cannot be sent from here yet."
 msgid "Email design"
 msgstr "Email design"
 
+#: app/components/website/domain/forwarding-panel.tsx:66
+#: app/components/website/domain/managed-domain-card.tsx:262
+msgid "Email forwarding"
+msgstr "Email forwarding"
+
+#: app/utils/domains/domain-alerts.ts:127
+msgid "Email forwarding for **{name}** is failing"
+msgstr "Email forwarding for **{name}** is failing"
+
+#: app/utils/domains/domain-alerts.ts:128
+msgid "Email forwarding is failing"
+msgstr "Email forwarding is failing"
+
+#: app/components/website/domain/forwarding-panel.tsx:56
+msgid "Email forwarding turned off"
+msgstr "Email forwarding turned off"
+
+#: app/utils/domains/domain-alerts.ts:136
+msgid "Email from **{name}** is back on our address"
+msgstr "Email from **{name}** is back on our address"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:514
 msgid "Email HTML Body"
 msgstr ""
@@ -17277,9 +17682,17 @@ msgstr "Email is the default channel. Text messages and quiet hours are set here
 msgid "Email is turned off, so nothing was sent"
 msgstr "Email is turned off, so nothing was sent"
 
+#: app/components/website/domain/connect-card.tsx:129
+msgid "Email looks hosted at {mailProvider}. A wrong change could stop it. Nothing is changed until you confirm, and these records must stay:"
+msgstr "Email looks hosted at {mailProvider}. A wrong change could stop it. Nothing is changed until you confirm, and these records must stay:"
+
 #: app/components/customers/person-marketing-card.tsx:447
 msgid "Email marketing"
 msgstr "Email marketing"
+
+#: app/components/website/domain/connect-card.tsx:371
+msgid "Email may need attention"
+msgstr "Email may need attention"
 
 #: app/routes/_auth+/login.tsx:703
 #: app/routes/_auth+/login.tsx:833
@@ -17289,6 +17702,14 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-preview.tsx:123
 msgid "Email preview"
 msgstr "Email preview"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:87
+msgid "Email sending"
+msgstr "Email sending"
+
+#: app/components/website/domain/registered-panel.tsx:30
+msgid "Email sent again"
+msgstr "Email sent again"
 
 #: app/components/reservations/messages/message-preview.tsx:111
 msgid "Email subject"
@@ -17321,6 +17742,10 @@ msgstr "Email these addresses"
 #: app/components/staff/schedule/publication-history.tsx:352
 msgid "Emails"
 msgstr "Emails"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:298
+msgid "Emails go out from our address until they are fixed. Check the records below and re-check."
+msgstr "Emails go out from our address until they are fixed. Check the records below and re-check."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:75
 msgid "Emails sent"
@@ -17580,6 +18005,15 @@ msgstr "Enter a date."
 #: app/components/loyalty/program-extension-cards.tsx:866
 msgid "Enter a discount amount, like 5.00."
 msgstr "Enter a discount amount, like 5.00."
+
+#: app/components/website/domain/domain-ui.tsx:91
+msgid "Enter a domain like acmepizza.com."
+msgstr "Enter a domain like acmepizza.com."
+
+#: app/components/website/domain/domain-ui.tsx:35
+#: app/components/website/domain/domain-ui.tsx:56
+msgid "Enter a domain like example.com."
+msgstr "Enter a domain like example.com."
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:108
 msgid "Enter a fee from 0 to 10 percent."
@@ -18061,6 +18495,15 @@ msgstr "Enter months between 1 and 60."
 msgid "Enter more than 0 and up to {max} hours."
 msgstr "Enter more than 0 and up to {max} hours."
 
+#: app/components/website/domain/domain-ui.tsx:78
+msgid "Enter one email address to forward to."
+msgstr "Enter one email address to forward to."
+
+#: app/components/website/domain/domain-ui.tsx:55
+#: app/components/website/domain/domain-ui.tsx:83
+msgid "Enter one email address."
+msgstr "Enter one email address."
+
 #: app/routes/_auth+/verify.tsx:78
 msgid "Enter one of your backup codes to verify your identity."
 msgstr ""
@@ -18169,6 +18612,10 @@ msgstr "Enter the price of one unit, for example 28.50."
 #: app/components/inventory/record-delivery-screen.tsx:1275
 msgid "Enter the price on the invoice, for example 28.50."
 msgstr "Enter the price on the invoice, for example 28.50."
+
+#: app/components/website/domain/provider-steps.tsx:29
+msgid "Enter the record below."
+msgstr "Enter the record below."
 
 #: app/components/loyalty/program-form.tsx:307
 msgid "Enter the spend that earns the points, like 10.00."
@@ -18424,7 +18871,7 @@ msgstr ""
 msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:70
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:75
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:128
 msgid "Events"
 msgstr "Events"
@@ -18460,6 +18907,10 @@ msgstr "Every call your agent answered, with summaries, transcripts, and follow-
 #: app/components/staff/timesheets/payroll-summary.tsx:315
 msgid "Every card is approved. This period is ready for payroll."
 msgstr "Every card is approved. This period is ready for payroll."
+
+#: app/components/website/domain/records-panel.tsx:320
+msgid "Every change to a record is logged under Website, Activity."
+msgstr "Every change to a record is logged under Website, Activity."
 
 #: app/components/discounts/discount-form.tsx:1464
 msgid "Every choice in these groups is covered."
@@ -18862,6 +19313,8 @@ msgstr "Expire unused {unitLabelText} after inactivity or time earned. Members a
 #: app/components/reservations/status-style.tsx:147
 #: app/components/settings/cards/sessions-card.tsx:195
 #: app/components/settings/cards/sessions-card.tsx:253
+#: app/components/website/domain/registered-panel.tsx:59
+#: app/components/website/domain/site-domains-card.tsx:127
 #: app/utils/gift-cards/labels.ts:13
 #: app/utils/inventory/labels.ts:53
 #: app/utils/loyalty/loyalty-labels.ts:101
@@ -18873,6 +19326,7 @@ msgstr ""
 
 #: app/components/settings/cards/sessions-card.tsx:302
 #: app/components/staff/onboarding/certificate-form.tsx:120
+#: app/components/website/domain/registered-panel.tsx:40
 msgid "Expires"
 msgstr ""
 
@@ -18940,6 +19394,10 @@ msgstr "Export JSON"
 msgid "Export with sensitive data"
 msgstr "Export with sensitive data"
 
+#: app/components/website/domain/records-panel.tsx:194
+msgid "Export zone file"
+msgstr "Export zone file"
+
 #: app/components/staff/labor/labor-page.tsx:187
 #: app/components/staff/timesheets/timesheets-page.tsx:504
 msgid "Exported {count} rows."
@@ -18961,6 +19419,10 @@ msgstr "Extra charge when this topping is added to the whole pizza."
 #: app/components/media-library/photo-studio-dialog.tsx:735
 msgid "Extra direction (optional)"
 msgstr "Extra direction (optional)"
+
+#: app/components/website/domain/connect-card.tsx:583
+msgid "Extra domains redirect to your primary domain."
+msgstr "Extra domains redirect to your primary domain."
 
 #: app/components/locations/location-setting-labels.ts:33
 msgid "Extra time for large orders."
@@ -19009,9 +19471,11 @@ msgstr "failed"
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
 #: app/components/print/print-order-labels.ts:19
+#: app/components/settings/cards/organization/email-sending-card.tsx:78
 #: app/components/settings/cards/organization/shop-card.tsx:49
 #: app/components/social/social-labels.ts:35
 #: app/components/social/social-labels.ts:45
+#: app/components/website/domain/buy-card.tsx:132
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:100
 #: app/utils/reservations/payments-view.ts:72
@@ -19293,6 +19757,10 @@ msgstr "Failed to update special day."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:473
 msgid "Failed to update table."
 msgstr "Failed to update table."
+
+#: app/components/website/domain/forwarding-panel.tsx:32
+msgid "Failing"
+msgstr "Failing"
 
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:327
 #: app/utils/reservations/host-errors.test.ts:6
@@ -19628,6 +20096,7 @@ msgstr "First day"
 #: app/components/staff/review-rows.tsx:68
 #: app/components/staff/review-rows.tsx:74
 #: app/components/staff/timesheets/payroll-summary.tsx:166
+#: app/components/website/domain/buy-card.tsx:61
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:154
 msgid "First name"
 msgstr "First name"
@@ -19996,7 +20465,7 @@ msgstr "Former member"
 #: app/components/command-menu.tsx:159
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:51
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:157
 msgid "Forms"
 msgstr "Forms"
@@ -20005,6 +20474,10 @@ msgstr "Forms"
 msgid "Forward old or broken URLs to your new pages to preserve SEO rank and customer traffic."
 msgstr "Forward old or broken URLs to your new pages to preserve SEO rank and customer traffic."
 
+#: app/components/website/domain/domain-ui.tsx:79
+msgid "Forward to an inbox outside this domain."
+msgstr "Forward to an inbox outside this domain."
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:150
 msgid "Forwarded from <0>{forwardedFrom}</0>"
 msgstr "Forwarded from <0>{forwardedFrom}</0>"
@@ -20012,6 +20485,22 @@ msgstr "Forwarded from <0>{forwardedFrom}</0>"
 #: app/components/phone-agent/phone-number-dialogs.tsx:53
 msgid "Forwarding"
 msgstr "Forwarding"
+
+#: app/components/website/domain/managed-domain-card.tsx:265
+msgid "Forwarding mail from addresses like info@yourdomain to your own inbox is not available for {list}: their DNS is managed somewhere else, and forwarding needs Menuza to run it. Let Menuza manage the domain, or get a domain here, to turn it on."
+msgstr "Forwarding mail from addresses like info@yourdomain to your own inbox is not available for {list}: their DNS is managed somewhere else, and forwarding needs Menuza to run it. Let Menuza manage the domain, or get a domain here, to turn it on."
+
+#: app/components/website/domain/forwarding-panel.tsx:77
+msgid "Forwarding needs Menuza to run this domain's DNS, and the nameservers have not moved yet. It becomes available as soon as they do."
+msgstr "Forwarding needs Menuza to run this domain's DNS, and the nameservers have not moved yet. It becomes available as soon as they do."
+
+#: app/components/website/domain/forwarding-panel.tsx:83
+msgid "Forwarding needs Menuza to run this domain's DNS, which it does not today. Let Menuza manage the domain, or buy one here, to turn it on."
+msgstr "Forwarding needs Menuza to run this domain's DNS, which it does not today. Let Menuza manage the domain, or buy one here, to turn it on."
+
+#: app/components/website/domain/domain-ui.tsx:209
+msgid "Found"
+msgstr "Found"
 
 #: app/utils/inventory/labels.ts:68
 msgid "Found more than expected"
@@ -20326,7 +20815,7 @@ msgstr "General reservation settings saved."
 msgid "General Settings"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:561
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:559
 msgid "Generate"
 msgstr "Generate"
 
@@ -20334,11 +20823,11 @@ msgstr "Generate"
 msgid "Generate a code"
 msgstr "Generate a code"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:289
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:287
 msgid "Generate a privacy policy, terms of service, cookie policy and accessibility statement from a template filled with your details. They are normal pages you can edit."
 msgstr "Generate a privacy policy, terms of service, cookie policy and accessibility statement from a template filled with your details. They are normal pages you can edit."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:583
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:581
 msgid "Generate all missing pages"
 msgstr "Generate all missing pages"
 
@@ -20358,11 +20847,11 @@ msgstr "Generated from the name, cuisine and area"
 #~ msgid "Generated in every site language: {0}. Publish a page to link it from the footer, checkout, booking, job applications and sign-in."
 #~ msgstr "Generated in every site language: {0}. Publish a page to link it from the footer, checkout, booking, job applications and sign-in."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:437
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:435
 msgid "Generated in every site language: {localeNames}. Publish a page to link it from the footer, checkout, booking, job applications and sign-in."
 msgstr "Generated in every site language: {localeNames}. Publish a page to link it from the footer, checkout, booking, job applications and sign-in."
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:60
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:61
 msgid "Generated legal pages"
 msgstr "Generated legal pages"
 
@@ -20387,6 +20876,10 @@ msgstr ""
 #: app/components/media-library/photo-studio-dialog.tsx:930
 msgid "Generating…"
 msgstr "Generating…"
+
+#: app/components/website/domain/buy-card.tsx:270
+msgid "Get a domain"
+msgstr "Get a domain"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:452
 msgid "Get a new price"
@@ -20884,6 +21377,10 @@ msgstr "Guest details at checkout"
 msgid "Guest dietary tags and allergen disclosure information."
 msgstr "Guest dietary tags and allergen disclosure information."
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:90
+msgid "Guest emails (broadcasts, automations, reservations, orders, hiring) show your sender name and send replies to your inbox."
+msgstr "Guest emails (broadcasts, automations, reservations, orders, hiring) show your sender name and send replies to your inbox."
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:753
 msgid "Guest is in the audience"
 msgstr "Guest is in the audience"
@@ -21228,6 +21725,10 @@ msgstr "Guests who match"
 msgid "Guests will no longer be able to book this service. Existing reservations are not cancelled."
 msgstr "Guests will no longer be able to book this service. Existing reservations are not cancelled."
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:287
+msgid "Guests will see mail from {sendingAddress} once verified."
+msgstr "Guests will see mail from {sendingAddress} once verified."
+
 #: app/components/reservations/region-reservations-guard.tsx:73
 msgid "Guests: {guestsCount}"
 msgstr "Guests: {guestsCount}"
@@ -21503,6 +22004,10 @@ msgstr "Hide it or bring it back."
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:316
 msgid "Hide overrides"
 msgstr "Hide overrides"
+
+#: app/components/website/domain/site-domains-card.tsx:173
+msgid "Hide records"
+msgstr "Hide records"
 
 #: app/components/pos/terminals-manager.tsx:903
 msgid "Hide removed terminals"
@@ -21848,6 +22353,10 @@ msgstr "How dates are written in the file"
 msgid "How did the guest give consent?"
 msgstr "How did the guest give consent?"
 
+#: app/components/website/domain/connect-card.tsx:666
+msgid "How do you want to connect it?"
+msgstr "How do you want to connect it?"
+
 #: ../../packages/reports/src/ui/report-labels.ts:113
 msgid "How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early."
 msgstr "How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early."
@@ -22037,6 +22546,10 @@ msgstr "I cannot work it"
 msgid "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 msgstr "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 
+#: app/components/website/domain/registered-panel.tsx:151
+msgid "I clicked the link"
+msgstr "I clicked the link"
+
 #: app/components/menu/menu-review-card.tsx:405
 msgid "I fixed it myself"
 msgstr "I fixed it myself"
@@ -22044,6 +22557,10 @@ msgstr "I fixed it myself"
 #: app/components/orders/order-detail.tsx:1248
 msgid "I have received payment at handoff"
 msgstr "I have received payment at handoff"
+
+#: app/components/website/domain/connect-card.tsx:695
+msgid "I'll add records myself"
+msgstr "I'll add records myself"
 
 #: app/components/settings/cards/organization/danger-zone-card.tsx:121
 msgid "I'll not be able to access the restaurant and its data anymore"
@@ -22096,6 +22613,10 @@ msgstr "If you moved from an older website or changed page URLs, create redirect
 #: app/components/settings/cards/guest-messages-card.tsx:71
 msgid "If you paid online, the money goes back to you."
 msgstr "If you paid online, the money goes back to you."
+
+#: app/components/website/domain/provider-steps.tsx:33
+msgid "If your provider does not accept ALIAS, ANAME or CNAME at the root, add A records pointing to {values} instead."
+msgstr "If your provider does not accept ALIAS, ANAME or CNAME at the root, add A records pointing to {values} instead."
 
 #: app/components/gbp/google-listing-tab.tsx:624
 msgid "Ignore"
@@ -22295,6 +22816,7 @@ msgstr "In person"
 #: app/components/hiring/applicants-page.tsx:236
 #: app/components/inventory/prep-screen.tsx:417
 #: app/components/inventory/prep-screen.tsx:579
+#: app/components/website/domain/buy-card.tsx:133
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:164
 msgid "In progress"
 msgstr "In progress"
@@ -22369,6 +22891,10 @@ msgstr "In-House Tips"
 msgid "Inactive"
 msgstr "Inactive"
 
+#: app/components/website/domain/forwarding-panel.tsx:248
+msgid "Inbox to forward to"
+msgstr "Inbox to forward to"
+
 #: app/components/menu/menu-bulk-edit-sheet.tsx:762
 msgid "Include"
 msgstr "Include"
@@ -22437,6 +22963,10 @@ msgstr "Incomplete"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:414
 msgid "Info"
 msgstr ""
+
+#: app/components/website/domain/forwarding-panel.tsx:234
+msgid "info or *"
+msgstr "info or *"
 
 #: app/components/inventory/recipe-lines.tsx:160
 msgid "Ingredient"
@@ -22843,6 +23373,10 @@ msgstr "Issued"
 msgid "It could not be completed or was cancelled, so the full amount went back to the card you paid with. It can take a few days to show."
 msgstr "It could not be completed or was cancelled, so the full amount went back to the card you paid with. It can take a few days to show."
 
+#: app/components/website/domain/buy-card.tsx:157
+msgid "It could not be registered. You were not charged."
+msgstr "It could not be registered. You were not charged."
+
 #: app/utils/marketing/campaign-alerts.ts:30
 msgid "It could not start inside its window, so it was skipped. Open it to duplicate it and schedule it again."
 msgstr "It could not start inside its window, so it was skipped. Open it to duplicate it and schedule it again."
@@ -22871,6 +23405,10 @@ msgstr "It goes back to review so it can be edited, and has to be approved again
 msgid "It goes to people who got the first broadcast, did not open or click it, and are still subscribed when this is sent. Opens are not always counted: some mail apps open messages automatically or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read the first one may get this too."
 msgstr "It goes to people who got the first broadcast, did not open or click it, and are still subscribed when this is sent. Opens are not always counted: some mail apps open messages automatically or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read the first one may get this too."
 
+#: app/utils/domains/domain-alerts.ts:78
+msgid "It has been a week. Open the checklist to see which records are missing."
+msgstr "It has been a week. Open the checklist to see which records are missing."
+
 #: app/utils/discounts/labels.ts:213
 msgid "It has ended by this date and time."
 msgstr "It has ended by this date and time."
@@ -22898,6 +23436,10 @@ msgstr "It is not offered on this sales channel."
 #: app/utils/discounts/discount-alerts.ts:38
 msgid "It is paused and starts again next week. Open it to see the spend or change the budget."
 msgstr "It is paused and starts again next week. Open it to see the spend or change the budget."
+
+#: app/utils/domains/domain-alerts.ts:114
+msgid "It is registered and your site is being set up on it. Confirm the email from the registry to keep it."
+msgstr "It is registered and your site is being set up on it. Confirm the email from the registry to keep it."
 
 #: app/components/marketing/campaign-actions.tsx:263
 msgid "It is removed for good. A broadcast that was already sent cannot be deleted."
@@ -22939,6 +23481,10 @@ msgstr "It leaves the calendar here. What is already on Facebook, Instagram or G
 msgid "It leaves the Print shop list. Orders already placed keep printing it."
 msgstr "It leaves the Print shop list. Orders already placed keep printing it."
 
+#: app/components/website/domain/connect-card.tsx:165
+msgid "It looks like a {builderName} site. It stops working once this domain points at your Menuza site."
+msgstr "It looks like a {builderName} site. It stops working once this domain points at your Menuza site."
+
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:808
 msgid "It now also runs at locations outside yours, so you can't change it."
 msgstr "It now also runs at locations outside yours, so you can't change it."
@@ -22947,6 +23493,10 @@ msgstr "It now also runs at locations outside yours, so you can't change it."
 msgid "It starts answering on the next call."
 msgstr "It starts answering on the next call."
 
+#: app/utils/domains/domain-alerts.ts:87
+msgid "It stayed unconnected for 30 days, so we released it. You can connect it again any time."
+msgstr "It stayed unconnected for 30 days, so we released it. You can connect it again any time."
+
 #: app/components/discounts/archive-discount-button.tsx:92
 msgid "It stops applying everywhere and its codes stop working. If you restore it later, its codes are not brought back and their use counts start again."
 msgstr "It stops applying everywhere and its codes stop working. If you restore it later, its codes are not brought back and their use counts start again."
@@ -22954,6 +23504,14 @@ msgstr "It stops applying everywhere and its codes stop working. If you restore 
 #: app/components/discounts/archive-discount-button.tsx:98
 msgid "It stops applying everywhere. You can restore it later."
 msgstr "It stops applying everywhere. You can restore it later."
+
+#: app/components/website/domain/site-domains-card.tsx:286
+msgid "It stops serving your site at once and becomes free for others to connect."
+msgstr "It stops serving your site at once and becomes free for others to connect."
+
+#: app/components/website/domain/connect-card.tsx:170
+msgid "It stops working once this domain points at your Menuza site."
+msgstr "It stops working once this domain points at your Menuza site."
 
 #: app/components/staff/schedule/time-off-sheet.tsx:152
 msgid "It was entered on short notice."
@@ -23280,7 +23838,7 @@ msgstr "Keep as is"
 msgid "Keep counting"
 msgstr "Keep counting"
 
-#: app/components/settings/cards/organization/site-card.tsx:368
+#: app/components/settings/cards/organization/site-card.tsx:332
 msgid "Keep current region"
 msgstr ""
 
@@ -23302,6 +23860,7 @@ msgstr "Keep editing"
 #: app/components/reservations/experiences/experience-editor.tsx:1031
 #: app/components/staff/kiosk-manager.tsx:970
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
+#: app/components/website/domain/site-domains-card.tsx:294
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:581
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1049
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:235
@@ -23312,11 +23871,15 @@ msgstr "Keep editing"
 msgid "Keep it"
 msgstr "Keep it"
 
+#: app/components/website/domain/managed-domain-card.tsx:210
+msgid "Keep managing"
+msgstr "Keep managing"
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:393
 msgid "Keep mine"
 msgstr "Keep mine"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:621
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:619
 msgid "Keep my text"
 msgstr "Keep my text"
 
@@ -23433,6 +23996,10 @@ msgstr "Keep the VAT number under 40 characters."
 #: app/components/hiring/applicant-labels.ts:79
 msgid "Keep their details on file"
 msgstr "Keep their details on file"
+
+#: app/components/website/domain/site-domains-card.tsx:401
+msgid "Keep them"
+msgstr "Keep them"
 
 #: app/components/menu/menu-review-card.tsx:155
 msgid "Keep this one"
@@ -23855,6 +24422,14 @@ msgstr "Last cash drawer shift opened"
 msgid "Last check-in"
 msgstr "Last check-in"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:401
+msgid "Last checked {checkedAt}"
+msgstr "Last checked {checkedAt}"
+
+#: app/components/website/domain/site-domains-card.tsx:186
+msgid "Last checked {lastChecked}"
+msgstr "Last checked {lastChecked}"
+
 #: app/components/gbp/google-listing-tab.tsx:490
 msgid "Last checked:"
 msgstr "Last checked:"
@@ -23890,6 +24465,10 @@ msgstr "Last Encountered"
 msgid "Last exported: {lastExportDateFormatted}"
 msgstr ""
 
+#: app/components/website/domain/forwarding-panel.tsx:149
+msgid "Last forwarded {lastTime}"
+msgstr "Last forwarded {lastTime}"
+
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:92
 msgid "Last four characters"
 msgstr "Last four characters"
@@ -23902,6 +24481,7 @@ msgstr "Last Google sync notice:"
 #: app/components/staff/review-rows.tsx:82
 #: app/components/staff/review-rows.tsx:88
 #: app/components/staff/timesheets/payroll-summary.tsx:167
+#: app/components/website/domain/buy-card.tsx:62
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:163
 msgid "Last name"
 msgstr "Last name"
@@ -24238,7 +24818,7 @@ msgstr "Left ½"
 msgid "Left a message"
 msgstr "Left a message"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:393
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:391
 msgid "Left empty, the terms say to contact the restaurant."
 msgstr "Left empty, the terms say to contact the restaurant."
 
@@ -24271,16 +24851,20 @@ msgstr "Left to refund"
 msgid "Legal"
 msgstr "Legal"
 
+#: app/components/website/domain/buy-card.tsx:63
+msgid "Legal business name"
+msgstr "Legal business name"
+
 #: app/components/pos/zatca-settings.tsx:302
 msgid "Legal name"
 msgstr "Legal name"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:326
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:324
 msgid "Legal name of the business"
 msgstr "Legal name of the business"
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:112
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:287
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:117
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:285
 msgid "Legal pages"
 msgstr "Legal pages"
 
@@ -24330,6 +24914,14 @@ msgstr "Let guests type their own amount"
 msgid "Let members share their referral link or code with new guests. Rewards grant after the friend’s qualifying paid order completes its hold window."
 msgstr "Let members share their referral link or code with new guests. Rewards grant after the friend’s qualifying paid order completes its hold window."
 
+#: app/components/website/domain/connect-card.tsx:417
+msgid "Let Menuza manage this domain"
+msgstr "Let Menuza manage this domain"
+
+#: app/components/website/domain/connect-card.tsx:677
+msgid "Let Menuza manage this domain (recommended)"
+msgstr "Let Menuza manage this domain (recommended)"
+
 #: app/utils/website/field-types.ts:45
 msgid "Let people select one option."
 msgstr "Let people select one option."
@@ -24349,6 +24941,10 @@ msgstr "Let the agent transfer calls"
 #: app/components/reservations/waitlist/waitlist-settings.tsx:290
 msgid "Let the host stand keep a live queue for this location."
 msgstr "Let the host stand keep a live queue for this location."
+
+#: app/components/website/domain/domain-ui.tsx:45
+msgid "Letting Menuza manage a domain needs the main domain (example.com), not a subdomain."
+msgstr "Letting Menuza manage a domain needs the main domain (example.com), not a subdomain."
 
 #: app/utils/inventory/starter-lists.ts:104
 msgid "Lettuce"
@@ -24585,6 +25181,7 @@ msgstr "Listing Sync"
 
 #: app/components/hiring/job-labels.ts:50
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:124
+#: app/components/website/domain/site-domains-card.tsx:129
 #: app/components/website/publish-controls.tsx:289
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:955
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:735
@@ -25172,6 +25769,10 @@ msgstr "Lock ({lockCount})"
 msgid "Lock after"
 msgstr "Lock after"
 
+#: app/components/website/domain/registered-panel.tsx:226
+msgid "Lock it again"
+msgstr "Lock it again"
+
 #: app/components/qr/open-tabs.tsx:593
 msgid "Lock tab"
 msgstr "Lock tab"
@@ -25201,6 +25802,10 @@ msgstr "Lock, tab {number}, table {label}"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:229
 msgid "Locked"
 msgstr "Locked"
+
+#: app/components/website/domain/registered-panel.tsx:32
+msgid "Locked again"
+msgstr "Locked again"
 
 #: app/components/locations/lockable-section.tsx:86
 msgid "Locked by head office"
@@ -25461,6 +26066,10 @@ msgstr "Made in house"
 msgid "Made-in-house ingredients are nested too deeply. Simplify one of them."
 msgstr "Made-in-house ingredients are nested too deeply. Simplify one of them."
 
+#: app/utils/domains/domain-alerts.ts:130
+msgid "Mail to this domain may not be arriving. Open the domain to see which address."
+msgstr "Mail to this domain may not be arriving. Open the domain to see which address."
+
 #: app/components/app-sidebar.tsx:470
 #: app/components/command-menu.tsx:101
 #: app/components/workspace-breadcrumb.tsx:19
@@ -25573,6 +26182,7 @@ msgstr "Make open"
 msgid "Make preferred"
 msgstr "Make preferred"
 
+#: app/components/website/domain/site-domains-card.tsx:262
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:454
 msgid "Make primary"
 msgstr "Make primary"
@@ -25636,6 +26246,10 @@ msgstr "Manage discounts"
 #: app/components/roles/tenant-role-access-manager.tsx:575
 msgid "Manage dish recipes"
 msgstr "Manage dish recipes"
+
+#: app/components/settings/cards/organization/site-card.tsx:425
+msgid "Manage domain"
+msgstr "Manage domain"
 
 #: app/components/roles/tenant-role-access-manager.tsx:592
 msgid "Manage gift cards"
@@ -25767,7 +26381,7 @@ msgstr ""
 msgid "Manage your personal data in accordance with GDPR Article 20."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:141
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:146
 msgid "Manage your public organization website and appearance."
 msgstr ""
 
@@ -25786,6 +26400,26 @@ msgstr "Manage your restaurant's name, slug, and profile image."
 #: app/components/settings/cards/organization/billing-card.tsx:111
 msgid "Manage your restaurant's subscription"
 msgstr "Manage your restaurant's subscription"
+
+#: app/components/website/domain/records-panel.tsx:277
+msgid "Managed by Menuza"
+msgstr "Managed by Menuza"
+
+#: app/components/website/domain/records-panel.tsx:179
+msgid "Managed by the registrar"
+msgstr "Managed by the registrar"
+
+#: app/components/website/domain/records-panel.tsx:177
+msgid "Managed for email forwarding"
+msgstr "Managed for email forwarding"
+
+#: app/components/website/domain/records-panel.tsx:178
+msgid "Managed for email sending"
+msgstr "Managed for email sending"
+
+#: app/components/website/domain/records-panel.tsx:176
+msgid "Managed for your site"
+msgstr "Managed for your site"
 
 #: app/components/pos/terminals-manager.tsx:851
 #: app/components/staff/timesheets/card-history.tsx:67
@@ -25834,7 +26468,7 @@ msgstr "Mark {reviewableCount} as reviewed"
 msgid "Mark Active"
 msgstr "Mark Active"
 
-#: app/components/ui/notification-bell.tsx:636
+#: app/components/ui/notification-bell.tsx:654
 msgid "Mark all as read"
 msgstr ""
 
@@ -25856,7 +26490,7 @@ msgstr "Mark as not done"
 msgid "Mark as preselected"
 msgstr "Mark as preselected"
 
-#: app/components/ui/notification-bell.tsx:341
+#: app/components/ui/notification-bell.tsx:359
 msgid "Mark as read"
 msgstr ""
 
@@ -26339,6 +26973,22 @@ msgstr "Menus that display this category."
 #: app/utils/gift-cards/labels.ts:33
 msgid "Menuza"
 msgstr "Menuza"
+
+#: app/components/website/domain/domain-ui.tsx:47
+msgid "Menuza already manages this domain."
+msgstr "Menuza already manages this domain."
+
+#: app/components/website/domain/domain-ui.tsx:73
+msgid "Menuza does not manage this domain's DNS."
+msgstr "Menuza does not manage this domain's DNS."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:307
+msgid "Menuza manages this domain's DNS, so the records were added for you."
+msgstr "Menuza manages this domain's DNS, so the records were added for you."
+
+#: app/components/website/domain/managed-domain-card.tsx:58
+msgid "Menuza no longer manages this domain"
+msgstr "Menuza no longer manages this domain"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:168
 msgid "Menuza Team"
@@ -26998,6 +27648,10 @@ msgstr "Move task {position} up"
 msgid "Move the booking to a free table"
 msgstr "Move the booking to a free table"
 
+#: app/components/website/domain/domain-ui.tsx:74
+msgid "Move this domain to Menuza's nameservers first."
+msgstr "Move this domain to Menuza's nameservers first."
+
 #: app/components/hiring/applicant-board.tsx:328
 msgid "Move to"
 msgstr "Move to"
@@ -27151,11 +27805,15 @@ msgstr "My schedule link"
 #: app/components/reservations/policies/policy-sheet.tsx:217
 #: app/components/reservations/waitlist/party-fields.tsx:62
 #: app/components/reservations/walk-in-dialog.tsx:239
+#: app/components/settings/cards/organization/email-sending-card.tsx:321
 #: app/components/settings/cards/organization/general-settings-card.tsx:87
 #: app/components/settings/cards/organization/verified-domain-card.tsx:150
 #: app/components/settings/cards/profile-card.tsx:116
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
+#: app/components/website/domain/records-panel.tsx:94
+#: app/components/website/domain/records-panel.tsx:226
+#: app/components/website/domain/site-domains-card.tsx:49
 #: app/components/website/form-builder-sidebar.tsx:673
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:346
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:266
@@ -27265,6 +27923,14 @@ msgstr "Names are saved in your language. Items already in your list are skipped
 #: app/components/menu/menu-review-card.tsx:64
 msgid "Names use mixed capital letters. One style looks tidier."
 msgstr "Names use mixed capital letters. One style looks tidier."
+
+#: app/components/website/domain/managed-domain-card.tsx:101
+msgid "Nameservers"
+msgstr "Nameservers"
+
+#: app/components/website/domain/managed-domain-card.tsx:126
+msgid "Nameservers changed at the wrong place"
+msgstr "Nameservers changed at the wrong place"
 
 #: app/utils/inventory/starter-lists.ts:315
 msgid "Napkins"
@@ -27830,7 +28496,7 @@ msgstr "New, moved, edited and removed shifts."
 msgid "Newer"
 msgstr "Newer"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:485
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:483
 msgid "Newer template available"
 msgstr "Newer template available"
 
@@ -27961,6 +28627,10 @@ msgstr ""
 #: app/components/phone-agent/phone-number-dialogs.tsx:194
 msgid "No agent numbers are assigned to your business yet. Contact support to get one."
 msgstr "No agent numbers are assigned to your business yet. Contact support to get one."
+
+#: app/components/website/domain/site-domains-card.tsx:35
+msgid "No ALIAS or CNAME at the root? Use {type} records:"
+msgstr "No ALIAS or CNAME at the root? Use {type} records:"
 
 #: app/components/inventory/invoice-read-panel.tsx:139
 msgid "No amount"
@@ -28618,6 +29288,10 @@ msgstr "No loyalty points or rewards are linked to this sale, so there is nothin
 msgid "No loyalty program yet"
 msgstr "No loyalty program yet"
 
+#: app/components/website/domain/forwarding-panel.tsx:151
+msgid "No mail forwarded yet"
+msgstr "No mail forwarded yet"
+
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:367
 msgid "No map position: checks are skipped until the address has one."
 msgstr "No map position: checks are skipped until the address has one."
@@ -29100,6 +29774,10 @@ msgstr "No quote"
 msgid "No rate"
 msgstr "No rate"
 
+#: app/components/website/domain/records-panel.tsx:241
+msgid "No records yet."
+msgstr "No records yet."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:911
 msgid "No redirects created yet"
 msgstr "No redirects created yet"
@@ -29481,7 +30159,7 @@ msgstr "No walk-in sales on this day."
 msgid "No waste logged"
 msgstr "No waste logged"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:82
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:83
 msgid "No website activity yet"
 msgstr "No website activity yet"
 
@@ -29719,6 +30397,10 @@ msgstr "Not available"
 msgid "Not available at the till."
 msgstr "Not available at the till."
 
+#: app/components/website/domain/forwarding-panel.tsx:73
+msgid "Not available for {fqdn} yet"
+msgstr "Not available for {fqdn} yet"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:68
 msgid "Not available in your data region yet"
 msgstr "Not available in your data region yet"
@@ -29753,6 +30435,10 @@ msgstr "Not changed (you cannot manage these locations):"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:528
 msgid "Not changed (you cannot manage these):"
 msgstr "Not changed (you cannot manage these):"
+
+#: app/components/website/domain/domain-ui.tsx:229
+msgid "Not checked"
+msgstr "Not checked"
 
 #: app/components/dashboard/blocks/google-performance-block.tsx:120
 #: app/components/pos/zatca-settings.tsx:382
@@ -29803,7 +30489,11 @@ msgstr "Not enough history yet. Suggestions get better after about two weeks of 
 msgid "Not entered"
 msgstr "Not entered"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:471
+#: app/components/website/domain/domain-ui.tsx:223
+msgid "Not found yet"
+msgstr "Not found yet"
+
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:469
 msgid "Not generated"
 msgstr "Not generated"
 
@@ -29888,6 +30578,14 @@ msgstr "Not set"
 msgid "Not set up for this position here"
 msgstr "Not set up for this position here"
 
+#: app/components/website/domain/buy-card.tsx:284
+msgid "Not set up yet"
+msgstr "Not set up yet"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:159
+msgid "Not set. Replies go nowhere useful until you add one."
+msgstr "Not set. Replies go nowhere useful until you add one."
+
 #: app/components/dashboard/share-dashboard-dialog.tsx:404
 msgid "Not shared with anyone yet."
 msgstr "Not shared with anyone yet."
@@ -29899,6 +30597,10 @@ msgstr "Not shown"
 #: app/components/menu/modifier-form.tsx:1223
 msgid "Not shown yet"
 msgstr "Not shown yet"
+
+#: app/components/website/domain/site-domains-card.tsx:114
+msgid "not started"
+msgstr "not started"
 
 #: app/utils/reservations/payments-view.ts:67
 msgid "Not started"
@@ -29936,6 +30638,10 @@ msgstr "Not used anywhere else yet"
 #: app/components/menu/delete-effects.tsx:562
 msgid "Not used anywhere yet."
 msgstr "Not used anywhere yet."
+
+#: app/components/website/domain/managed-domain-card.tsx:92
+msgid "Not used by your site."
+msgstr "Not used by your site."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1825
 msgid "Not used in any notes, comments, or pages"
@@ -30149,7 +30855,7 @@ msgstr "Nothing has been set up for this person."
 msgid "Nothing has happened to this item yet."
 msgstr "Nothing has happened to this item yet."
 
-#: app/components/ui/notification-bell.tsx:394
+#: app/components/ui/notification-bell.tsx:412
 msgid "Nothing here yet!"
 msgstr ""
 
@@ -30427,6 +31133,14 @@ msgstr "now"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:537
 msgid "Now"
 msgstr "Now"
+
+#: app/components/website/domain/site-domains-card.tsx:38
+msgid "Now: {list}"
+msgstr "Now: {list}"
+
+#: app/components/website/domain/domain-ui.tsx:113
+msgid "NS records at the root cannot be changed."
+msgstr "NS records at the root cannot be changed."
 
 #: app/components/marketing/audience-builder.tsx:290
 msgid "Number"
@@ -31279,7 +31993,7 @@ msgstr "Open a copy in Canva to change anything freely. Bring it back with Impor
 msgid "Open a day in"
 msgstr "Open a day in"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:648
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:646
 msgid "Open Analytics"
 msgstr "Open Analytics"
 
@@ -31378,7 +32092,7 @@ msgstr ""
 msgid "Open link"
 msgstr "Open link"
 
-#: app/components/ui/notification-bell.tsx:626
+#: app/components/ui/notification-bell.tsx:644
 msgid "Open menu"
 msgstr ""
 
@@ -31504,6 +32218,10 @@ msgstr "Open the broadcast"
 msgid "Open the dish"
 msgstr "Open the dish"
 
+#: app/components/website/domain/provider-steps.tsx:22
+msgid "Open the DNS records for {domain}: {path}."
+msgstr "Open the DNS records for {domain}: {path}."
+
 #: app/components/staff/onboarding/task-row.tsx:140
 msgid "Open the form"
 msgstr "Open the form"
@@ -31511,6 +32229,10 @@ msgstr "Open the form"
 #: app/components/dashboard/blocks/attention-block.tsx:504
 msgid "Open the menu"
 msgstr "Open the menu"
+
+#: app/components/website/domain/connect-card.tsx:305
+msgid "Open the nameserver settings of {registrarLabel}."
+msgstr "Open the nameserver settings of {registrarLabel}."
 
 #: app/utils/my-schedule/my-schedule-messages.ts:89
 msgid "Open the newest schedule email from your manager and tap the button in it. Do not copy part of the link."
@@ -31747,6 +32469,10 @@ msgstr "Option type added"
 #: app/components/discounts/variant-filter.tsx:65
 msgid "Option type removed"
 msgstr "Option type removed"
+
+#: app/components/website/domain/site-domains-card.tsx:70
+msgid "optional"
+msgstr "optional"
 
 #: app/components/launch/launch-checklist.tsx:84
 #: app/components/menu/menu-review-card.tsx:78
@@ -32305,7 +33031,7 @@ msgstr "Organization reports such as customers, orders, and calls."
 msgid "Organization Settings"
 msgstr "Organization Settings"
 
-#: app/components/settings/cards/organization/site-card.tsx:264
+#: app/components/settings/cards/organization/site-card.tsx:228
 msgid "Organization site"
 msgstr ""
 
@@ -32638,6 +33364,18 @@ msgstr "Own location price"
 msgid "Owner"
 msgstr "Owner"
 
+#: app/components/website/domain/buy-card.tsx:64
+msgid "Owner email"
+msgstr "Owner email"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:178
+msgid "owner@yourdomain.com"
+msgstr "owner@yourdomain.com"
+
+#: app/components/website/domain/site-domains-card.tsx:179
+msgid "Ownership: {ownership}"
+msgstr "Ownership: {ownership}"
+
 #: ../../packages/reports/src/ui/report-labels.ts:124
 msgid "Pacing"
 msgstr "Pacing"
@@ -32678,7 +33416,7 @@ msgstr "Packaging fee"
 #: app/components/website/link-inspector.tsx:419
 #: app/components/workspace-breadcrumb.tsx:116
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:769
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:97
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:98
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:1002
 msgid "Page"
 msgstr ""
@@ -32716,8 +33454,8 @@ msgstr ""
 #: app/components/app-sidebar.tsx:672
 #: app/components/command-menu.tsx:158
 #: app/components/workspace-breadcrumb.tsx:57
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:46
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:434
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:51
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:940
 msgid "Pages"
 msgstr ""
@@ -33164,6 +33902,10 @@ msgstr "Pay"
 msgid "Pay and rates"
 msgstr "Pay and rates"
 
+#: app/components/website/domain/buy-card.tsx:232
+msgid "Pay and register"
+msgstr "Pay and register"
+
 #: app/components/orders/order-detail.tsx:1071
 msgid "Pay at handoff"
 msgstr "Pay at handoff"
@@ -33373,9 +34115,14 @@ msgstr "Peak:"
 msgid "Peanut Allergy"
 msgstr "Peanut Allergy"
 
+#: app/components/website/domain/site-domains-card.tsx:116
+msgid "pending"
+msgstr "pending"
+
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
 #: app/components/customers/person-marketing-card.tsx:370
 #: app/components/customers/person-marketing-card.tsx:393
+#: app/components/settings/cards/organization/email-sending-card.tsx:80
 #: app/components/settings/cards/organization/shop-card.tsx:47
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:490
 msgid "Pending"
@@ -33620,6 +34367,10 @@ msgstr ""
 #: app/utils/reservations/labels.ts:48
 msgid "Phone"
 msgstr ""
+
+#: app/components/website/domain/buy-card.tsx:65
+msgid "Phone (with country code)"
+msgstr "Phone (with country code)"
 
 #: app/components/app-sidebar.tsx:534
 #: app/components/command-menu.tsx:126
@@ -34353,8 +35104,8 @@ msgid "Point of sale"
 msgstr "Point of sale"
 
 #: app/components/settings/cards/organization/site-card.tsx:424
-msgid "Point your own domain at Sites with a CNAME record. SSL is provisioned automatically when Cloudflare for SaaS is configured."
-msgstr ""
+#~ msgid "Point your own domain at Sites with a CNAME record. SSL is provisioned automatically when Cloudflare for SaaS is configured."
+#~ msgstr ""
 
 #: app/components/loyalty/program-form.tsx:606
 #: app/utils/loyalty/loyalty-labels.ts:38
@@ -34373,6 +35124,10 @@ msgstr "Points change"
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:485
 msgid "Points earned"
 msgstr "Points earned"
+
+#: app/components/website/domain/domain-ui.tsx:216
+msgid "Points elsewhere"
+msgstr "Points elsewhere"
 
 #: app/components/loyalty/program-extension-cards.tsx:489
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:631
@@ -34572,6 +35327,7 @@ msgstr "Postal / ZIP Code"
 
 #: app/components/pos/zatca-settings.tsx:328
 #: app/components/staff/details-tab.tsx:413
+#: app/components/website/domain/buy-card.tsx:70
 msgid "Postal code"
 msgstr "Postal code"
 
@@ -34891,6 +35647,10 @@ msgstr "Price range"
 msgid "Price ready"
 msgstr "Price ready"
 
+#: app/components/website/domain/buy-card.tsx:427
+msgid "Price shown to you (cents)"
+msgstr "Price shown to you (cents)"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:333
 msgid "Price to confirm"
 msgstr "Price to confirm"
@@ -34964,6 +35724,7 @@ msgid "Pricing rules"
 msgstr "Pricing rules"
 
 #: app/components/menu/item-form.tsx:552
+#: app/components/website/domain/site-domains-card.tsx:148
 #: app/components/website/link-inspector.tsx:394
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:441
 msgid "Primary"
@@ -34977,6 +35738,14 @@ msgstr "Primary / Default Location"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4876
 msgid "Primary button"
 msgstr ""
+
+#: app/components/settings/cards/organization/site-card.tsx:398
+msgid "Primary domain"
+msgstr "Primary domain"
+
+#: app/components/website/domain/connect-card.tsx:638
+msgid "Primary form"
+msgstr "Primary form"
 
 #: app/components/inventory/review-order-screen.tsx:765
 #: app/components/my-schedule/my-schedule-page.tsx:156
@@ -35075,6 +35844,7 @@ msgstr ""
 #: app/components/discounts/discount-form.tsx:686
 #: app/components/discounts/discount-form.tsx:2151
 #: app/components/phone-agent/training-rules-section.tsx:564
+#: app/components/website/domain/records-panel.tsx:117
 msgid "Priority"
 msgstr "Priority"
 
@@ -35090,7 +35860,11 @@ msgstr "Privacy"
 msgid "Privacy & Data Rights"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:214
+#: app/components/website/domain/registered-panel.tsx:65
+msgid "Privacy on"
+msgstr "Privacy on"
+
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:212
 msgid "Privacy policy"
 msgstr "Privacy policy"
 
@@ -35321,7 +36095,7 @@ msgstr "Public note"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:318
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:491
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:545
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:543
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:704
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6663
 msgid "Publish"
@@ -35335,7 +36109,7 @@ msgstr "Publish ({count})"
 msgid "Publish a menu to choose categories."
 msgstr "Publish a menu to choose categories."
 
-#: app/components/settings/cards/organization/site-card.tsx:267
+#: app/components/settings/cards/organization/site-card.tsx:231
 msgid "Publish a public website for your organization. Visitors can reach it at your org subdomain, or a custom domain you connect."
 msgstr ""
 
@@ -35411,7 +36185,7 @@ msgstr "Publish your website first."
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:193
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:411
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:252
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:473
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:471
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:648
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6545
 #: app/utils/reservations/experiences-view.ts:38
@@ -35422,7 +36196,7 @@ msgstr ""
 msgid "Published {date}"
 msgstr "Published {date}"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:45
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:46
 msgid "Published a page"
 msgstr "Published a page"
 
@@ -35438,7 +36212,7 @@ msgstr "Published quietly. Nobody was emailed."
 msgid "Published the call flow"
 msgstr "Published the call flow"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:51
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:52
 msgid "Published the site design"
 msgstr "Published the site design"
 
@@ -35471,7 +36245,7 @@ msgstr "Publishing now…"
 msgid "Publishing was interrupted, so the post may already be live. Check the account and send it again only if it is not there."
 msgstr "Publishing was interrupted, so the post may already be live. Check the account and send it again only if it is not there."
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:84
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:85
 msgid "Publishing, restoring or deleting a page will show up here."
 msgstr "Publishing, restoring or deleting a page will show up here."
 
@@ -35787,6 +36561,10 @@ msgstr "Rating question"
 msgid "Rating thanks"
 msgstr "Rating thanks"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:385
+msgid "Re-check"
+msgstr "Re-check"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:582
 msgid "Re-derive future reservation times"
 msgstr "Re-derive future reservation times"
@@ -35901,6 +36679,7 @@ msgid "Reading page details"
 msgstr "Reading page details"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:570
+#: app/components/website/domain/buy-card.tsx:130
 #: app/utils/orders/status-label.ts:10
 msgid "Ready"
 msgstr "Ready"
@@ -36105,6 +36884,10 @@ msgstr ""
 msgid "Recommend a schedule"
 msgstr "Recommend a schedule"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:348
+msgid "recommended"
+msgstr "recommended"
+
 #: app/components/staff/labor-core-rules.tsx:128
 msgid "Recommended"
 msgstr "Recommended"
@@ -36142,6 +36925,7 @@ msgstr "Reconnect"
 msgid "Reconnect needed"
 msgstr "Reconnect needed"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:318
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:289
 msgid "Record"
 msgstr "Record"
@@ -36164,6 +36948,10 @@ msgstr "Record a message for your team to follow up."
 #: app/components/orders/record-order-refund-dialog.tsx:227
 msgid "Record a refund"
 msgstr "Record a refund"
+
+#: app/components/website/domain/records-panel.tsx:46
+msgid "Record added"
+msgstr "Record added"
 
 #: app/components/inventory/record-batch-dialog.tsx:341
 msgid "Record batch"
@@ -36209,6 +36997,14 @@ msgstr "Record money you already returned, for example in your payment provider'
 #: app/components/orders/record-order-refund-dialog.tsx:352
 msgid "Record refund"
 msgstr "Record refund"
+
+#: app/components/website/domain/records-panel.tsx:174
+msgid "Record removed"
+msgstr "Record removed"
+
+#: app/components/website/domain/records-panel.tsx:46
+msgid "Record saved"
+msgstr "Record saved"
 
 #: app/components/hiring/applicant-labels.ts:66
 msgid "Record the decision quietly."
@@ -36357,13 +37153,17 @@ msgstr "Redirected"
 #: app/components/app-sidebar.tsx:705
 #: app/components/command-menu.tsx:161
 #: app/components/workspace-breadcrumb.tsx:61
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:105
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:110
 msgid "Redirects"
 msgstr "Redirects"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:780
 msgid "Redirects & 404 History"
 msgstr "Redirects & 404 History"
+
+#: app/components/website/domain/site-domains-card.tsx:152
+msgid "Redirects to {primary}"
+msgstr "Redirects to {primary}"
 
 #: app/components/loyalty/program-extension-cards.tsx:565
 msgid "Refer a friend"
@@ -36442,8 +37242,8 @@ msgid "Refresh reviews"
 msgstr "Refresh reviews"
 
 #: app/components/settings/cards/organization/site-card.tsx:509
-msgid "Refresh status"
-msgstr ""
+#~ msgid "Refresh status"
+#~ msgstr ""
 
 #: app/components/reservations/host-subnav.tsx:395
 msgid "Refresh. {updated}"
@@ -36505,7 +37305,7 @@ msgstr "Refund pending: {amount}"
 msgid "Refund pending. It is still being processed."
 msgstr "Refund pending. It is still being processed."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:384
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:382
 msgid "Refund policy (optional)"
 msgstr "Refund policy (optional)"
 
@@ -36623,7 +37423,7 @@ msgstr "Refunds when the guest cancels"
 msgid "Refuse oversized regular orders online. Leave blank for no cap."
 msgstr "Refuse oversized regular orders online. Leave blank for no cap."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:515
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:513
 msgid "Regenerate"
 msgstr "Regenerate"
 
@@ -36631,7 +37431,7 @@ msgstr "Regenerate"
 msgid "Regenerate Codes"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:600
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:598
 msgid "Regenerating replaces your text with the new version. Here is what would change. Lines in red are removed, lines in green are added."
 msgstr "Regenerating replaces your text with the new version. Here is what would change. Lines in red are removed, lines in green are added."
 
@@ -36671,6 +37471,14 @@ msgstr "Register settings"
 #: app/components/settings/passkey-manager.tsx:205
 msgid "Registered {timeAgo} ago"
 msgstr ""
+
+#: app/components/website/domain/buy-card.tsx:111
+msgid "Registering the domain"
+msgstr "Registering the domain"
+
+#: app/components/website/domain/registered-panel.tsx:47
+msgid "Registration"
+msgstr "Registration"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:169
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4299
@@ -36847,6 +37655,7 @@ msgstr "Removal not published"
 #: app/components/phone-agent/phone-number-dialogs.tsx:178
 #: app/components/pos/terminals-manager.tsx:568
 #: app/components/reservations/experiences/experience-editor.tsx:1005
+#: app/components/settings/cards/organization/email-sending-card.tsx:154
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:299
 #: app/components/staff/kiosk-manager.tsx:456
@@ -36860,6 +37669,9 @@ msgstr "Removal not published"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:710
 #: app/components/staff/schedule/shift-editor-sheet.tsx:743
 #: app/components/website/branding-panel.tsx:327
+#: app/components/website/domain/forwarding-panel.tsx:194
+#: app/components/website/domain/records-panel.tsx:297
+#: app/components/website/domain/site-domains-card.tsx:274
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:688
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:713
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3065
@@ -36891,6 +37703,10 @@ msgstr "Remove {e164}?"
 #: app/components/reservations/waitlist/waitlist-queue.tsx:364
 msgid "Remove {guest} from the waitlist?"
 msgstr "Remove {guest} from the waitlist?"
+
+#: app/components/website/domain/site-domains-card.tsx:283
+msgid "Remove {hostname}?"
+msgstr "Remove {hostname}?"
 
 #: app/components/inventory/record-delivery-screen.tsx:1181
 #: app/components/inventory/review-order-screen.tsx:950
@@ -36933,6 +37749,10 @@ msgstr "Remove access for {name}"
 msgid "Remove access from all devices except this one"
 msgstr ""
 
+#: app/components/website/domain/provider-steps.tsx:42
+msgid "Remove any default record that points the same name at a parking page, so only one record is left for it."
+msgstr "Remove any default record that points the same name at a parking page, so only one record is left for it."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1406
 msgid "Remove availability override"
 msgstr "Remove availability override"
@@ -36972,7 +37792,8 @@ msgstr "Remove design"
 msgid "Remove dish"
 msgstr "Remove dish"
 
-#: app/components/settings/cards/organization/site-card.tsx:528
+#: app/components/settings/cards/organization/email-sending-card.tsx:396
+#: app/components/website/domain/site-domains-card.tsx:306
 msgid "Remove domain"
 msgstr ""
 
@@ -37225,7 +38046,7 @@ msgstr "Remove your tracking tags before turning the banner off: they need visit
 msgid "Removed"
 msgstr "Removed"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:58
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:59
 msgid "Removed a redirect"
 msgstr "Removed a redirect"
 
@@ -37299,6 +38120,14 @@ msgstr "Rename, table {tableName}"
 #: ../../packages/marketing/src/components/email/email-preview.tsx:127
 msgid "Rendering…"
 msgstr "Rendering…"
+
+#: app/components/website/domain/registered-panel.tsx:175
+msgid "Renew automatically"
+msgstr "Renew automatically"
+
+#: app/components/website/domain/registered-panel.tsx:40
+msgid "Renews"
+msgstr "Renews"
 
 #: app/components/inventory/count-review-screen.tsx:295
 #: app/components/phone-agent/call-follow-up.tsx:151
@@ -37404,7 +38233,7 @@ msgstr "Replace what you have?"
 msgid "Replace with custom service"
 msgstr "Replace with custom service"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:635
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:633
 msgid "Replace with the new text"
 msgstr "Replace with the new text"
 
@@ -37454,6 +38283,14 @@ msgstr "Reply in thread"
 #: app/components/mailbox/reviews-tab.tsx:668
 msgid "Reply to review"
 msgstr "Reply to review"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:139
+msgid "Reply-to address"
+msgstr "Reply-to address"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:224
+msgid "Reply-to verified"
+msgstr "Reply-to verified"
 
 #: app/components/chat/chat-view.tsx:893
 msgid "Reply…"
@@ -37621,6 +38458,7 @@ msgid "Required. Kept on the tab for your records."
 msgstr "Required. Kept on the tab for your records."
 
 #: app/components/reservations/detail-sheet.tsx:1284
+#: app/components/website/domain/forwarding-panel.tsx:185
 msgid "Resend confirmation"
 msgstr "Resend confirmation"
 
@@ -37957,7 +38795,7 @@ msgstr "Restore: {name}"
 msgid "Restored"
 msgstr "Restored"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:49
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:50
 msgid "Restored an earlier version"
 msgstr "Restored an earlier version"
 
@@ -38073,6 +38911,10 @@ msgstr "Retry charge"
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:464
 msgid "Retry failed accounts"
 msgstr "Retry failed accounts"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:343
+msgid "Return path"
+msgstr "Return path"
 
 #: app/components/menu/item-variations.tsx:594
 msgid "Return time for {name}"
@@ -38763,7 +39605,7 @@ msgstr "Sauces"
 msgid "Saudi Arabia"
 msgstr "Saudi Arabia"
 
-#: app/components/settings/cards/organization/site-card.tsx:129
+#: app/components/settings/cards/organization/site-card.tsx:109
 msgid "Saudi Arabia (KSA)"
 msgstr ""
 
@@ -38789,6 +39631,7 @@ msgstr ""
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:149
 #: app/components/save-bar.tsx:351
 #: app/components/settings/cards/organization/cuisine-price-card.tsx:61
+#: app/components/settings/cards/organization/email-sending-card.tsx:121
 #: app/components/settings/email-form.tsx:98
 #: app/components/staff/kiosk-manager.tsx:910
 #: app/components/staff/labor/labor-sales.tsx:203
@@ -38911,7 +39754,7 @@ msgstr "Save default"
 msgid "Save delivery"
 msgstr "Save delivery"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:420
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:418
 msgid "Save details"
 msgstr "Save details"
 
@@ -38980,6 +39823,10 @@ msgstr "Save profile to Google"
 #: app/components/staff/positions-tab.tsx:861
 msgid "Save rate"
 msgstr "Save rate"
+
+#: app/components/website/domain/records-panel.tsx:141
+msgid "Save record"
+msgstr "Save record"
 
 #: app/components/pos/station-register-settings.tsx:376
 msgid "Save register settings"
@@ -39073,12 +39920,18 @@ msgstr "Save your edits before changing the status."
 msgid "Save zone"
 msgstr "Save zone"
 
+#: app/components/website/domain/provider-steps.tsx:51
+msgid "Save. It can take up to {minutes} minutes (sometimes longer) to take effect."
+msgstr "Save. It can take up to {minutes} minutes (sometimes longer) to take effect."
+
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:166
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/inventory/counting-screen.tsx:661
 #: app/components/pos/station-register-settings.tsx:232
 #: app/components/reservations/floor-plan-canvas.tsx:773
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:424
+#: app/components/settings/cards/organization/email-sending-card.tsx:131
+#: app/components/website/domain/registered-panel.tsx:28
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:422
 msgid "Saved"
 msgstr "Saved"
 
@@ -39356,6 +40209,10 @@ msgstr "Scan the code with the tablet's camera, or open the link below in its br
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "Scan the code with this tablet's camera, or paste the link below."
 
+#: app/components/website/domain/connect-card.tsx:358
+msgid "Scan this domain"
+msgstr "Scan this domain"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:492
 #: app/components/app-sidebar.tsx:644
 #: app/components/command-menu.tsx:146
@@ -39461,7 +40318,7 @@ msgstr ""
 msgid "Scheduled (advance) orders"
 msgstr "Scheduled (advance) orders"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:52
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:53
 msgid "Scheduled a publish"
 msgstr "Scheduled a publish"
 
@@ -39535,6 +40392,7 @@ msgid "Seamless white backdrop, soft even light"
 msgstr "Seamless white backdrop, soft even light"
 
 #: app/components/app-sidebar.tsx:262
+#: app/components/website/domain/buy-card.tsx:314
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:305
 msgid "Search"
 msgstr ""
@@ -39620,6 +40478,10 @@ msgstr "Search dishes"
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:288
 msgid "Search engine verification"
 msgstr "Search engine verification"
+
+#: app/components/website/domain/buy-card.tsx:303
+msgid "Search for a domain"
+msgstr "Search for a domain"
 
 #: app/components/customers/person-merge-dialog.tsx:122
 msgid "Search for the duplicate"
@@ -40549,8 +41411,13 @@ msgstr "sells <0>{percent}%</0> more today"
 #: app/components/inventory/send-order-dialog.tsx:221
 #: app/components/inventory/transfers-panel.tsx:242
 #: app/components/my-schedule/availability-sheet.tsx:203
+#: app/components/website/domain/connect-card.tsx:785
 msgid "Send"
 msgstr "Send"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:190
+msgid "Send a code"
+msgstr "Send a code"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:556
 msgid "Send a new code"
@@ -40609,6 +41476,10 @@ msgstr ""
 msgid "Send for review"
 msgstr "Send for review"
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:244
+msgid "Send from an address on your own domain, such as hello@yourdomain.com, so guests see it and it passes email checks. Until it is verified, emails keep going out from our address with your name and reply-to."
+msgstr "Send from an address on your own domain, such as hello@yourdomain.com, so guests see it and it passes email checks. Until it is verified, emails keep going out from our address with your name and reply-to."
+
 #: app/components/hiring/hire-dialog.tsx:384
 #: app/components/staff/access-tab.tsx:414
 msgid "Send invitation"
@@ -40623,6 +41494,10 @@ msgstr ""
 msgid "Send invitations to join the organization workspace."
 msgstr "Send invitations to join the organization workspace."
 
+#: app/components/website/domain/registered-panel.tsx:136
+msgid "Send it again"
+msgstr "Send it again"
+
 #: app/components/inventory/review-order-screen.tsx:574
 msgid "Send it by <0>{cutoff}</0> to make this delivery."
 msgstr "Send it by <0>{cutoff}</0> to make this delivery."
@@ -40630,6 +41505,10 @@ msgstr "Send it by <0>{cutoff}</0> to make this delivery."
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:837
 msgid "Send its visitors to"
 msgstr "Send its visitors to"
+
+#: app/components/website/domain/forwarding-panel.tsx:94
+msgid "Send mail for addresses like info@{fqdn} to your own inbox. Forwarding only: there is no mailbox and you cannot send from these addresses. We never store or read the messages."
+msgstr "Send mail for addresses like info@{fqdn} to your own inbox. Forwarding only: there is no mailbox and you cannot send from these addresses. We never store or read the messages."
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:161
 #: app/components/chat/chat-composer.tsx:357
@@ -40680,6 +41559,10 @@ msgstr "Send the first message — your team will see it here."
 msgid "Send the reminder this many hours before"
 msgstr "Send the reminder this many hours before"
 
+#: app/components/website/domain/connect-card.tsx:748
+msgid "Send these steps to someone else"
+msgstr "Send these steps to someone else"
+
 #: app/components/inventory/send-order-dialog.tsx:104
 msgid "Send this order?"
 msgstr "Send this order?"
@@ -40692,6 +41575,14 @@ msgstr "Send to"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:995
 msgid "Send to Canva"
 msgstr "Send to Canva"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:99
+msgid "Sender name"
+msgstr "Sender name"
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:268
+msgid "Sending domain"
+msgstr "Sending domain"
 
 #: app/utils/inventory/order-view.ts:189
 msgid "Sending email is switched off for now."
@@ -40826,7 +41717,7 @@ msgstr "Sent when a manager approves a request."
 msgid "Sent when a manager declines a request."
 msgstr "Sent when a manager declines a request."
 
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:63
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:68
 msgid "SEO"
 msgstr "SEO"
 
@@ -40874,6 +41765,10 @@ msgstr "Server sections"
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1059
 msgid "Server:"
 msgstr "Server:"
+
+#: app/components/website/domain/managed-domain-card.tsx:90
+msgid "Serves {siteList}."
+msgstr "Serves {siteList}."
 
 #: app/components/customers/person-profile-screen.tsx:773
 #: app/components/note/integration-controls.tsx:306
@@ -41104,6 +41999,10 @@ msgstr "Set the physical operating hours when customers can visit this restauran
 msgid "Set the price"
 msgstr "Set the price"
 
+#: app/components/website/domain/provider-steps.tsx:38
+msgid "Set the proxy status to \"DNS only\" (grey cloud) so the certificate can be issued."
+msgstr "Set the proxy status to \"DNS only\" (grey cloud) so the certificate can be issued."
+
 #: app/components/website/create-page-dialog.tsx:142
 msgid "Set the title and URL for your new page."
 msgstr ""
@@ -41111,6 +42010,10 @@ msgstr ""
 #: app/components/hiring/hire-dialog.tsx:144
 msgid "Set their pay on their profile."
 msgstr "Set their pay on their profile."
+
+#: app/components/website/domain/managed-domain-card.tsx:112
+msgid "Set these at your registrar. Your site stays on the old setup until we see them. We check every 15 minutes."
+msgstr "Set these at your registrar. Your site stays on the old setup until we see them. We check every 15 minutes."
 
 #: app/utils/staffing/staff-errors.ts:35
 msgid "Set this workplace's time zone before pairing a tablet."
@@ -41176,13 +42079,22 @@ msgstr "Set up your tables now. Ordering at the table turns on when it is enable
 msgid "Set when online ordering, pickup, and delivery are accepted for this location."
 msgstr "Set when online ordering, pickup, and delivery are accepted for this location."
 
+#: app/components/website/domain/connect-card.tsx:689
+msgid "Sets the records at {autoProvider} after you approve each change."
+msgstr "Sets the records at {autoProvider} after you approve each change."
+
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:272
 msgid "Setting"
 msgstr "Setting"
 
+#: app/components/website/domain/registered-panel.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:447
 msgid "Setting up"
 msgstr "Setting up"
+
+#: app/components/website/domain/buy-card.tsx:112
+msgid "Setting up DNS"
+msgstr "Setting up DNS"
 
 #: app/components/app-sidebar.tsx:545
 #: app/components/app-sidebar.tsx:591
@@ -41623,6 +42535,10 @@ msgstr "Show price"
 msgid "Show product on your public site"
 msgstr ""
 
+#: app/components/website/domain/site-domains-card.tsx:173
+msgid "Show records"
+msgstr "Show records"
+
 #: app/components/menu/drop-wizard/drop-form.tsx:1444
 msgid "Show Remaining Inventory"
 msgstr "Show Remaining Inventory"
@@ -41650,6 +42566,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:871
 msgid "Show the address"
 msgstr "Show the address"
+
+#: app/components/website/domain/connect-card.tsx:475
+msgid "Show the changes"
+msgstr "Show the changes"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4698
 msgid "Show the next six (instead of three)"
@@ -41848,6 +42768,10 @@ msgstr ""
 #: app/routes/_auth+/login.tsx:916
 msgid "Sign In"
 msgstr ""
+
+#: app/components/website/domain/provider-steps.tsx:18
+msgid "Sign in to {provider}, where your domain's DNS is managed."
+msgstr "Sign in to {provider}, where your domain's DNS is managed."
 
 #: app/routes/_auth+/login.tsx:319
 msgid "Sign in to your account"
@@ -42392,6 +43316,10 @@ msgstr "Someone who can change stock will plan it."
 msgid "Something else"
 msgstr "Something else"
 
+#: app/components/website/domain/domain-ui.tsx:32
+msgid "Something in the form is not valid. Check it and try again."
+msgstr "Something in the form is not valid. Check it and try again."
+
 #: app/utils/inventory/inventory-errors.ts:116
 msgid "Something in this form was not accepted. Check it and try again."
 msgstr "Something in this form was not accepted. Check it and try again."
@@ -42420,6 +43348,7 @@ msgstr "Something went wrong."
 msgid "Something went wrong. Check the form and try again."
 msgstr "Something went wrong. Check the form and try again."
 
+#: app/components/website/domain/domain-ui.tsx:34
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:76
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:279
 #: app/utils/kiosk/kiosk-messages.ts:23
@@ -42889,6 +43818,10 @@ msgstr "Start the new-hire checklist"
 msgid "Start time"
 msgstr "Start time"
 
+#: app/components/website/domain/buy-card.tsx:453
+msgid "Start transfer"
+msgstr "Start transfer"
+
 #: app/components/locations/address-autocomplete.tsx:161
 msgid "Start typing an address, city, or zip code..."
 msgstr "Start typing an address, city, or zip code..."
@@ -42999,6 +43932,7 @@ msgid "State / Province"
 msgstr "State / Province"
 
 #: app/components/staff/details-tab.tsx:412
+#: app/components/website/domain/buy-card.tsx:69
 msgid "State or region"
 msgstr "State or region"
 
@@ -43032,10 +43966,12 @@ msgstr "Stats"
 #: app/components/orders/order-detail.tsx:1077
 #: app/components/reservations/experiences/experiences-screen.tsx:292
 #: app/components/roles/tenant-role-access-manager.tsx:1347
+#: app/components/settings/cards/organization/email-sending-card.tsx:327
 #: app/components/settings/cards/sessions-card.tsx:239
 #: app/components/staff/details-tab.tsx:259
 #: app/components/staff/staff-roster.tsx:143
 #: app/components/staff/timesheets/timesheet-table.tsx:232
+#: app/components/website/domain/site-domains-card.tsx:55
 #: app/components/workspace-breadcrumb.tsx:73
 #: app/components/workspace-breadcrumb.tsx:112
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:421
@@ -43124,6 +44060,14 @@ msgstr "Step name"
 msgid "Steps"
 msgstr "Steps"
 
+#: app/components/website/domain/connect-card.tsx:528
+msgid "Steps sent"
+msgstr "Steps sent"
+
+#: app/components/website/domain/connect-card.tsx:697
+msgid "Steps written for your provider, with every value ready to copy."
+msgstr "Steps written for your provider, with every value ready to copy."
+
 #: app/components/my-schedule/time-cards-view.tsx:99
 msgid "Still clocked in"
 msgstr "Still clocked in"
@@ -43131,6 +44075,10 @@ msgstr "Still clocked in"
 #: app/components/reservations/booking-sheet.tsx:573
 msgid "Still needed: {missingList}"
 msgstr "Still needed: {missingList}"
+
+#: app/components/website/domain/site-domains-card.tsx:193
+msgid "Still not connected. We release it in {daysLeft} days if the records stay missing."
+msgstr "Still not connected. We release it in {daysLeft} days if the records stay missing."
 
 #: app/components/menu/menu-review-card.tsx:330
 msgid "Still used in"
@@ -43196,6 +44144,14 @@ msgstr ""
 #: app/components/impersonation-banner.tsx:65
 msgid "Stop impersonation"
 msgstr "Stop impersonation"
+
+#: app/components/website/domain/managed-domain-card.tsx:197
+msgid "Stop managing {fqdn}?"
+msgstr "Stop managing {fqdn}?"
+
+#: app/components/website/domain/managed-domain-card.tsx:186
+msgid "Stop managing this domain"
+msgstr "Stop managing this domain"
 
 #: app/components/qr/open-tabs.tsx:490
 #: app/components/qr/open-tabs.tsx:651
@@ -43368,7 +44324,7 @@ msgstr "Sub-Modifier Group(s) Active:"
 msgid "Subcategory"
 msgstr "Subcategory"
 
-#: app/components/settings/cards/organization/site-card.tsx:405
+#: app/components/settings/cards/organization/site-card.tsx:369
 msgid "Subdomain URL"
 msgstr ""
 
@@ -43502,6 +44458,10 @@ msgstr "Suggested translation ({language})"
 #: app/components/menu/menu-review-card.tsx:510
 msgid "Suggested:"
 msgstr "Suggested:"
+
+#: app/components/website/domain/buy-card.tsx:347
+msgid "suggestion"
+msgstr "suggestion"
 
 #: app/components/menu/menu-review-stack.tsx:605
 msgid "Suggestion is back"
@@ -43669,7 +44629,7 @@ msgstr "Switched off for your organization."
 msgid "Switching away from Coupon code archives every code when you save, and the discount applies automatically to qualifying orders. Continue?"
 msgstr "Switching away from Coupon code archives every code when you save, and the discount applies automatically to qualifying orders. Continue?"
 
-#: app/components/settings/cards/organization/site-card.tsx:344
+#: app/components/settings/cards/organization/site-card.tsx:308
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
 msgstr ""
 
@@ -44128,6 +45088,10 @@ msgstr "Taking orders with problems"
 msgid "Taking reservations"
 msgstr "Taking reservations"
 
+#: app/components/website/domain/buy-card.tsx:110
+msgid "Taking the payment"
+msgstr "Taking the payment"
+
 #: app/components/phone-agent/test-call-sheet.tsx:105
 msgid "Talk to your agent from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
 msgstr "Talk to your agent from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
@@ -44466,7 +45430,7 @@ msgstr "Terminating…"
 msgid "Terms"
 msgstr "Terms"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:216
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:214
 msgid "Terms of service"
 msgstr "Terms of service"
 
@@ -44622,6 +45586,10 @@ msgstr "Texts start once the guest verifies their phone number."
 msgid "Thank them"
 msgstr "Thank them"
 
+#: app/components/website/domain/registered-panel.tsx:29
+msgid "Thank you, confirmed"
+msgstr "Thank you, confirmed"
+
 #: app/components/pos/ticket-settings.tsx:293
 msgid "Thank you!"
 msgstr "Thank you!"
@@ -44671,6 +45639,14 @@ msgstr "Thanks for your order. We have it and we are on it."
 msgid "Thanks them and says you may get in touch if something suitable opens up."
 msgstr "Thanks them and says you may get in touch if something suitable opens up."
 
+#: app/components/website/domain/domain-ui.tsx:36
+msgid "That address belongs to our own platform and cannot be connected."
+msgstr "That address belongs to our own platform and cannot be connected."
+
+#: app/components/website/domain/domain-ui.tsx:80
+msgid "That address is already set up."
+msgstr "That address is already set up."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:99
 msgid "That address is on your own website. Use the path instead (for example /menu)."
 msgstr "That address is on your own website. Use the path instead (for example /menu)."
@@ -44690,6 +45666,10 @@ msgstr "That amount is too large."
 #: app/utils/inventory/inventory-errors.ts:185
 msgid "That amount is too small or too large. Check it and try again."
 msgstr "That amount is too small or too large. Check it and try again."
+
+#: app/components/website/domain/domain-ui.tsx:69
+msgid "That authorization code is not right."
+msgstr "That authorization code is not right."
 
 #: app/components/dashboard/use-dashboard-editor.ts:38
 msgid "That block is already on the dashboard."
@@ -44726,6 +45706,14 @@ msgstr "That code did not work. It may have expired. Ask for a new one."
 #: app/components/kiosk/kiosk-pair.tsx:180
 msgid "That code did not work. It may have expired. Make a new one."
 msgstr "That code did not work. It may have expired. Make a new one."
+
+#: app/components/website/domain/domain-ui.tsx:86
+msgid "That code expired. Send a new one."
+msgstr "That code expired. Send a new one."
+
+#: app/components/website/domain/domain-ui.tsx:85
+msgid "That code is not right."
+msgstr "That code is not right."
 
 #: app/utils/discounts/marketing-offer-labels.ts:23
 msgid "That code no longer belongs to the discount. Choose another code."
@@ -44771,6 +45759,18 @@ msgstr "That does not look like a verification code. Paste the code or the whole
 msgid "That does not look like the locations file. Download it, edit it, and upload it again."
 msgstr "That does not look like the locations file. Download it, edit it, and upload it again."
 
+#: app/components/website/domain/domain-ui.tsx:41
+msgid "That domain is already connected here."
+msgstr "That domain is already connected here."
+
+#: app/components/website/domain/domain-ui.tsx:37
+msgid "That domain is already connected to another restaurant."
+msgstr "That domain is already connected to another restaurant."
+
+#: app/components/website/domain/domain-ui.tsx:60
+msgid "That domain was just taken. You were not charged."
+msgstr "That domain was just taken. You were not charged."
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:138
 msgid "That draft could not be used. Please try again."
 msgstr "That draft could not be used. Please try again."
@@ -44806,6 +45806,10 @@ msgstr "That file is too large. Split it into smaller files."
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:72
 msgid "That file is too large. Use a file under 1 MB."
 msgstr "That file is too large. Use a file under 1 MB."
+
+#: app/components/website/domain/connect-card.tsx:182
+msgid "That is a subdomain"
+msgstr "That is a subdomain"
 
 #: app/components/inventory/count-review-screen.tsx:624
 msgid "That is about <0>{netText}</0> less than you expected."
@@ -44952,6 +45956,14 @@ msgstr "That range has too many cards. Narrow the filters."
 msgid "That range has too many time cards to export. Choose a shorter range."
 msgstr "That range has too many time cards to export. Choose a shorter range."
 
+#: app/components/website/domain/domain-ui.tsx:49
+msgid "That record is not valid. Check the highlighted problems."
+msgstr "That record is not valid. Check the highlighted problems."
+
+#: app/components/website/domain/domain-ui.tsx:116
+msgid "That record type is not supported."
+msgstr "That record type is not supported."
+
 #: app/utils/loyalty/loyalty-errors.ts:36
 msgid "That referral code could not be found."
 msgstr "That referral code could not be found."
@@ -45071,6 +46083,10 @@ msgstr "That week has no shifts to start from."
 #: app/components/staff/labor-example.tsx:199
 msgid "That week so far"
 msgstr "That week so far"
+
+#: app/components/website/domain/domain-ui.tsx:54
+msgid "That would change email records, so we stopped."
+msgstr "That would change email records, so we stopped."
 
 #. placeholder {0}: formatGiftCardMoney(card.balanceMinor, card.currency, i18n.locale)
 #: app/components/gift-cards/gift-card-dialogs.tsx:233
@@ -45283,6 +46299,14 @@ msgstr "The card has insufficient funds."
 msgid "The card is removed from the hours. It stays in the history with your reason, and {name} is not paid for it."
 msgstr "The card is removed from the hours. It stays in the history with your reason, and {name} is not paid for it."
 
+#: app/utils/domains/domain-alerts.ts:96
+msgid "The card on file is charged at renewal. Turn off auto-renew on the Domain screen if you do not want to keep it."
+msgstr "The card on file is charged at renewal. Turn off auto-renew on the Domain screen if you do not want to keep it."
+
+#: app/utils/domains/domain-alerts.ts:105
+msgid "The card on file was declined. Update your card now so you do not lose the domain."
+msgstr "The card on file was declined. Update your card now so you do not lose the domain."
+
 #: app/utils/reservations/payments-view.ts:98
 msgid "The card was declined."
 msgstr "The card was declined."
@@ -45363,7 +46387,7 @@ msgstr "The consent could not be recorded. Try again."
 msgid "The conversation and your key presses will appear here."
 msgstr "The conversation and your key presses will appear here."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:641
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:639
 msgid "The cookie banner is set under Analytics, next to your tracking tags."
 msgstr "The cookie banner is set under Analytics, next to your tracking tags."
 
@@ -45554,6 +46578,18 @@ msgstr "The discount applies to these items."
 #: app/components/discounts/deal-groups.tsx:219
 msgid "The discount applies to these. If a deal covers fewer items than the order holds, the cheapest are discounted."
 msgstr "The discount applies to these. If a deal covers fewer items than the order holds, the cheapest are discounted."
+
+#: app/components/website/domain/domain-ui.tsx:68
+msgid "The domain is locked at its current registrar. Unlock it there and try again."
+msgstr "The domain is locked at its current registrar. Unlock it there and try again."
+
+#: app/components/website/domain/connect-card.tsx:86
+msgid "The domain is registered at {registrarName}."
+msgstr "The domain is registered at {registrarName}."
+
+#: app/components/website/domain/registered-panel.tsx:208
+msgid "The domain is unlocked and auto-renew is off. Give this authorization code to the new registrar:"
+msgstr "The domain is unlocked and auto-renew is off. Give this authorization code to the new registrar:"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:491
 msgid "The download could not be made"
@@ -45979,6 +47015,14 @@ msgstr "The location to copy from was not found."
 msgid "The loyalty overview could not be loaded."
 msgstr "The loyalty overview could not be loaded."
 
+#: app/components/website/domain/domain-ui.tsx:81
+msgid "The mail service did not answer. Try again."
+msgstr "The mail service did not answer. Try again."
+
+#: app/components/website/domain/forwarding-panel.tsx:153
+msgid "The mail service does not report when mail was last forwarded."
+msgstr "The mail service does not report when mail was last forwarded."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:24
 msgid "The main paragraph copy of your email."
 msgstr "The main paragraph copy of your email."
@@ -46085,6 +47129,14 @@ msgstr "The name and units customers see."
 msgid "The name customers see, and how the discount is taken off."
 msgstr "The name customers see, and how the discount is taken off."
 
+#: app/components/website/domain/domain-ui.tsx:104
+msgid "The name is not valid."
+msgstr "The name is not valid."
+
+#: app/components/website/domain/domain-ui.tsx:105
+msgid "The name must be inside this domain."
+msgstr "The name must be inside this domain."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:632
 msgid "The name the agent uses when it introduces itself."
 msgstr "The name the agent uses when it introduces itself."
@@ -46182,7 +47234,7 @@ msgstr "The packaging or bag fee."
 msgid "The page will not mention pay. Showing a range tends to bring more applications."
 msgstr "The page will not mention pay. Showing a range tends to bring more applications."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:314
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:312
 msgid "The pages are filled with these. An email is needed; the accessibility statement also needs a phone number so guests can ask for help."
 msgstr "The pages are filled with these. An email is needed; the accessibility statement also needs a phone number so guests can ask for help."
 
@@ -46218,6 +47270,10 @@ msgstr "The path of a PNG, JPEG or WebP image up to 2 MB."
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1280
 msgid "The path on your old site that visitors or search engines request."
 msgstr "The path on your old site that visitors or search engines request."
+
+#: app/components/website/domain/domain-ui.tsx:65
+msgid "The payment did not go through. You were not charged."
+msgstr "The payment did not go through. You were not charged."
 
 #: app/components/orders/refund-labels.ts:7
 msgid "The payment is disputed with the card issuer."
@@ -46334,6 +47390,10 @@ msgstr "The preview could not be loaded."
 #: app/components/reservations/messages/message-settings.tsx:734
 msgid "The preview shows the saved settings. Save your changes to see them here."
 msgstr "The preview shows the saved settings. Save your changes to see them here."
+
+#: app/components/website/domain/domain-ui.tsx:62
+msgid "The price changed. Review it and try again."
+msgstr "The price changed. Review it and try again."
 
 #: app/components/menu/menu-review-card.tsx:93
 msgid "The prices differ. Check them before you accept."
@@ -46470,6 +47530,18 @@ msgstr "The refund was accepted and is still processing."
 msgid "The refund was issued."
 msgstr "The refund was issued."
 
+#: app/components/website/domain/registered-panel.tsx:112
+msgid "The registry emailed the owner address. Click its link within 15 days or the domain can be suspended."
+msgstr "The registry emailed the owner address. Click its link within 15 days or the domain can be suspended."
+
+#: app/components/website/domain/domain-ui.tsx:72
+msgid "The registry has not seen your confirmation yet. Click the link in its email first."
+msgstr "The registry has not seen your confirmation yet. Click the link in its email first."
+
+#: app/utils/domains/domain-alerts.ts:148
+msgid "The registry sent you an email. Click its link within 15 days or the domain can be suspended."
+msgstr "The registry sent you an email. Click its link within 15 days or the domain can be suspended."
+
 #: app/components/staff/labor-policy-editor.tsx:338
 msgid "The reminder must come before the automatic clock-out."
 msgstr "The reminder must come before the automatic clock-out."
@@ -46513,6 +47585,10 @@ msgstr "The right answer is"
 #: app/components/hiring/job-editor.tsx:635
 msgid "The role on your team, like \"Line cook\". Used when you hire."
 msgstr "The role on your team, like \"Line cook\". Used when you hire."
+
+#: app/components/website/domain/connect-card.tsx:494
+msgid "The root domain needs an ALIAS record your provider does not offer, so it is left out. Only www is set up."
+msgstr "The root domain needs an ALIAS record your provider does not offer, so it is left out. Only www is set up."
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:361
 msgid "The sale could not be queued again."
@@ -46571,6 +47647,10 @@ msgstr "The security check could not load. Turn off content blockers or check yo
 msgid "The security check failed. Please try again."
 msgstr "The security check failed. Please try again."
 
+#: app/components/website/domain/domain-ui.tsx:82
+msgid "The sender name can be up to 64 characters and cannot contain @, <, >, quotes, commas or line breaks."
+msgstr "The sender name can be up to 64 characters and cannot contain @, <, >, quotes, commas or line breaks."
+
 #: app/components/pos/terminals-manager.tsx:1372
 msgid "The server could not apply it"
 msgstr "The server could not apply it"
@@ -46614,6 +47694,10 @@ msgstr "The share of cancellations that came after the free-cancellation window 
 #: app/components/staff/labor-example.tsx:119
 msgid "The shift as a bar, with any deducted break marked"
 msgstr "The shift as a bar, with any deducted break marked"
+
+#: app/components/website/domain/connect-card.tsx:91
+msgid "The simple setup fits: let Menuza manage this domain."
+msgstr "The simple setup fits: let Menuza manage this domain."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:327
 msgid "The special days and table blocks could not be loaded."
@@ -46731,7 +47815,7 @@ msgstr "The terminal starts with this profile's apps, PIN, shift and display set
 msgid "The terminal's app may be out of date"
 msgstr "The terminal's app may be out of date"
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:409
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:407
 msgid "The terms already say that deposits and cancellation rules are shown when a guest books. Add your own wording here if you want it in the terms too."
 msgstr "The terms already say that deposits and cancellation rules are shown when a guest books. Add your own wording here if you want it in the terms too."
 
@@ -46783,6 +47867,10 @@ msgstr "The top of the range must be at least the bottom."
 msgid "The transcript, summary, recording, texted links, and requests from this call are permanently deleted. This cannot be undone."
 msgstr "The transcript, summary, recording, texted links, and requests from this call are permanently deleted. This cannot be undone."
 
+#: app/components/website/domain/domain-ui.tsx:70
+msgid "The transfer could not start. You were not charged."
+msgstr "The transfer could not start. You were not charged."
+
 #: app/components/settings/cards/organization/consent-banner-card.tsx:52
 msgid "the UK"
 msgstr "the UK"
@@ -46798,6 +47886,10 @@ msgstr "the US"
 #: app/utils/discounts/labels.ts:222
 msgid "The use limit has been reached."
 msgstr "The use limit has been reached."
+
+#: app/components/website/domain/domain-ui.tsx:106
+msgid "The value does not fit this record type."
+msgstr "The value does not fit this record type."
 
 #: app/components/phone-agent/test-call-sheet.tsx:141
 msgid "The voice service for your account hasn't been set up. Contact support and we'll turn it on."
@@ -46847,6 +47939,10 @@ msgstr "The whole order"
 msgid "The window must end after it starts."
 msgstr "The window must end after it starts."
 
+#: app/components/website/domain/connect-card.tsx:293
+msgid "The zone is ready. One step left at your registrar."
+msgstr "The zone is ready. One step left at your registrar."
+
 #: app/components/hiring/candidate-sheet.tsx:400
 msgid "Their answers"
 msgstr "Their answers"
@@ -46858,6 +47954,10 @@ msgstr "Their current availability stays as it is. You can leave a note."
 #: app/components/hiring/candidate-sheet.tsx:314
 msgid "Their details are removed on {retentionDate}."
 msgstr "Their details are removed on {retentionDate}."
+
+#: app/components/website/domain/connect-card.tsx:780
+msgid "Their email address"
+msgstr "Their email address"
 
 #: app/components/staff/timesheets/timesheets-page.tsx:917
 msgid "Their hours are frozen as shown. You can reopen a card later if something is wrong, and the reason is logged."
@@ -46882,6 +47982,10 @@ msgstr "Their shift"
 #: app/utils/staffing/alert-copy.ts:57
 msgid "Their time cards are waiting for a review."
 msgstr "Their time cards are waiting for a review."
+
+#: app/components/website/domain/connect-card.tsx:779
+msgid "their@email.com"
+msgstr "their@email.com"
 
 #: app/components/nav-user.tsx:223
 #: app/components/website/publish-controls.tsx:165
@@ -47017,6 +48121,10 @@ msgstr "These messages still promise this discount. Guests who get them would be
 msgid "These problems stop this broadcast. Fix them, then try again."
 msgstr "These problems stop this broadcast. Fix them, then try again."
 
+#: app/components/website/domain/connect-card.tsx:480
+msgid "These records will be added:"
+msgstr "These records will be added:"
+
 #: app/components/reservations/messages/message-settings.tsx:329
 msgid "These settings changed elsewhere and the latest version could not be loaded. Reload the page and try again."
 msgstr "These settings changed elsewhere and the latest version could not be loaded. Reload the page and try again."
@@ -47038,7 +48146,7 @@ msgstr "These tabs earn no loyalty points, because the till sale does. If one wa
 msgid "These tabs were settled at the counter or voided, and money still arrived online. Refund it or keep it in your payment dashboard."
 msgstr "These tabs were settled at the counter or voided, and money still arrived online. Refund it or keep it in your payment dashboard."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:302
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:300
 msgid "These texts are a starting point, not legal advice. Have them reviewed by a lawyer before you rely on them."
 msgstr "These texts are a starting point, not legal advice. Have them reviewed by a lawyer before you rely on them."
 
@@ -47581,6 +48689,42 @@ msgstr "This dish is in the file twice."
 msgid "This dish no longer has a daily limit here."
 msgstr "This dish no longer has a daily limit here."
 
+#: app/components/website/domain/forwarding-panel.tsx:105
+msgid "This domain already receives email"
+msgstr "This domain already receives email"
+
+#: app/components/website/domain/domain-ui.tsx:75
+msgid "This domain already receives email. Type the domain to confirm that forwarding replaces it."
+msgstr "This domain already receives email. Type the domain to confirm that forwarding replaces it."
+
+#: app/components/website/domain/connect-card.tsx:107
+msgid "This domain belongs to another Menuza site, so it cannot be connected here."
+msgstr "This domain belongs to another Menuza site, so it cannot be connected here."
+
+#: app/components/website/domain/connect-card.tsx:123
+msgid "This domain has email records"
+msgstr "This domain has email records"
+
+#: app/components/website/domain/connect-card.tsx:389
+msgid "This domain has email records we cannot be sure to have captured. If one is missed, email can stop. Type the domain to go on anyway, or upload the zone file above and scan again."
+msgstr "This domain has email records we cannot be sure to have captured. If one is missed, email can stop. Type the domain to go on anyway, or upload the zone file above and scan again."
+
+#: app/components/website/domain/domain-ui.tsx:114
+msgid "This domain has reached the limit of records."
+msgstr "This domain has reached the limit of records."
+
+#: app/components/website/domain/connect-card.tsx:243
+msgid "This domain is already connected here. It is listed above."
+msgstr "This domain is already connected here. It is listed above."
+
+#: app/components/website/domain/domain-ui.tsx:71
+msgid "This domain is not active."
+msgstr "This domain is not active."
+
+#: app/components/website/domain/connect-card.tsx:121
+msgid "This domain receives email"
+msgstr "This domain receives email"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:731
 msgid "This draft shift is deleted straight away."
 msgstr "This draft shift is deleted straight away."
@@ -47658,6 +48802,10 @@ msgstr "This is no longer on the menu. Choose another."
 msgid "This is not a price."
 msgstr "This is not a price."
 
+#: app/components/website/domain/domain-ui.tsx:58
+msgid "This is not available for your account yet."
+msgstr "This is not available for your account yet."
+
 #: app/utils/kiosk/kiosk-messages.ts:53
 msgid "This is not available on this tablet."
 msgstr "This is not available on this tablet."
@@ -47689,6 +48837,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:780
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr ""
+
+#: app/components/website/domain/domain-ui.tsx:42
+msgid "This is your primary domain. Make another one primary first, or disconnect everything."
+msgstr "This is your primary domain. Make another one primary first, or disconnect everything."
 
 #: app/components/phone-agent/settings-page.tsx:144
 msgid "This item duplicates another one. Remove it and add it again."
@@ -48110,9 +49262,21 @@ msgstr "This range has more cards than we can show. Narrow it with the filters o
 msgid "This recipe loops or nests too deeply, so its cost cannot be worked out."
 msgstr "This recipe loops or nests too deeply, so its cost cannot be worked out."
 
+#: app/components/website/domain/domain-ui.tsx:109
+msgid "This record already exists."
+msgstr "This record already exists."
+
 #: app/utils/inventory/inventory-errors.ts:74
 msgid "This record could not be found. It may have been archived or removed."
 msgstr "This record could not be found. It may have been archived or removed."
+
+#: app/components/website/domain/domain-ui.tsx:112
+msgid "This record is managed by Menuza and cannot be changed."
+msgstr "This record is managed by Menuza and cannot be changed."
+
+#: app/components/website/domain/domain-ui.tsx:50
+msgid "This record is managed by Menuza for your site and cannot be changed."
+msgstr "This record is managed by Menuza for your site and cannot be changed."
 
 #: app/utils/inventory/inventory-errors.ts:19
 msgid "This record is no longer here. It may have been archived or removed."
@@ -48979,7 +50143,7 @@ msgstr "Today's reservations by status, covers by service, and the next arrivals
 msgid "Toggle announcement visibility"
 msgstr ""
 
-#: app/components/ui/notification-bell.tsx:567
+#: app/components/ui/notification-bell.tsx:585
 msgid "Toggle notifications"
 msgstr ""
 
@@ -49032,6 +50196,10 @@ msgstr "Too many hashtags for Facebook."
 msgid "Too many hashtags for Google."
 msgstr "Too many hashtags for Google."
 
+#: app/components/website/domain/domain-ui.tsx:33
+msgid "Too many lookups for now. Try again in a little while."
+msgstr "Too many lookups for now. Try again in a little while."
+
 #: app/components/menu/quick-modifier-group-sheet.tsx:264
 msgid "Too many menu changes. Try again shortly."
 msgstr "Too many menu changes. Try again shortly."
@@ -49056,6 +50224,10 @@ msgstr "Too many tries. Wait a minute and try again."
 #: app/utils/gift-cards/labels.ts:67
 msgid "Too many tries. Wait a moment and try again."
 msgstr "Too many tries. Wait a moment and try again."
+
+#: app/components/website/domain/domain-ui.tsx:87
+msgid "Too many wrong codes. Send a new one."
+msgstr "Too many wrong codes. Send a new one."
 
 #: app/utils/kiosk/kiosk-messages.ts:43
 msgid "Too many wrong PINs. Try again in {seconds} seconds."
@@ -49179,6 +50351,10 @@ msgstr "Transcript"
 msgid "Transfer"
 msgstr "Transfer"
 
+#: app/components/website/domain/buy-card.tsx:397
+msgid "Transfer a domain in"
+msgstr "Transfer a domain in"
+
 #: app/components/phone-agent/phrase-fields.tsx:59
 msgid "Transfer answered"
 msgstr "Transfer answered"
@@ -49200,9 +50376,17 @@ msgstr "Transfer cases"
 msgid "Transfer contacts"
 msgstr "Transfer contacts"
 
+#: app/components/website/domain/registered-panel.tsx:57
+msgid "Transfer in progress"
+msgstr "Transfer in progress"
+
 #: app/components/phone-agent/agent-details.tsx:54
 msgid "Transfer options"
 msgstr "Transfer options"
+
+#: app/components/website/domain/registered-panel.tsx:197
+msgid "Transfer out: unlock and get the code"
+msgstr "Transfer out: unlock and get the code"
 
 #: app/components/inventory/transfer-dialogs.tsx:184
 msgid "Transfer planned."
@@ -49211,6 +50395,10 @@ msgstr "Transfer planned."
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:173
 msgid "Transfer reversals"
 msgstr "Transfer reversals"
+
+#: app/components/website/domain/buy-card.tsx:252
+msgid "Transfer started"
+msgstr "Transfer started"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:880
 msgid "Transfer to"
@@ -49227,6 +50415,10 @@ msgstr "Transfer to the team"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:834
 msgid "Transfer when"
 msgstr "Transfer when"
+
+#: app/components/website/domain/managed-domain-card.tsx:84
+msgid "Transferred to Menuza"
+msgstr "Transferred to Menuza"
 
 #: app/components/inventory/inventory-chrome.tsx:63
 #: app/components/workspace-breadcrumb.tsx:51
@@ -49477,6 +50669,7 @@ msgstr ""
 #: app/components/staff/timeclock-today.tsx:232
 #: app/components/staff/timesheets/timesheets-page.tsx:692
 #: app/components/turnstile-widget.tsx:252
+#: app/components/website/domain/site-domains-card.tsx:214
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:175
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:273
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:155
@@ -49548,6 +50741,14 @@ msgstr "Try another type or status."
 msgid "Try different filters."
 msgstr "Try different filters."
 
+#: app/components/website/domain/records-panel.tsx:129
+msgid "TTL"
+msgstr "TTL"
+
+#: app/components/website/domain/domain-ui.tsx:107
+msgid "TTL must be Auto or 60 to 86400 seconds."
+msgstr "TTL must be Auto or 60 to 86400 seconds."
+
 #: app/components/loyalty/promotion-dialog.tsx:553
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:217
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:210
@@ -49578,6 +50779,14 @@ msgstr "Turn off agent audio"
 #: app/components/orders/ordering-controls.tsx:210
 msgid "Turn off busy mode"
 msgstr "Turn off busy mode"
+
+#: app/components/website/domain/domain-ui.tsx:51
+msgid "Turn off email forwarding before you stop managing this domain."
+msgstr "Turn off email forwarding before you stop managing this domain."
+
+#: app/components/website/domain/forwarding-panel.tsx:286
+msgid "Turn off forwarding"
+msgstr "Turn off forwarding"
 
 #: app/components/pos/terminals-manager.tsx:994
 msgid "Turn off PIN sign-in for {label}"
@@ -49714,6 +50923,10 @@ msgstr "Turned on training rule \"{title}\""
 msgid "Turning an app on needs permission to change its settings (time clock rules, reservation settings, or stock)."
 msgstr "Turning an app on needs permission to change its settings (time clock rules, reservation settings, or stock)."
 
+#: app/components/website/domain/forwarding-panel.tsx:109
+msgid "Turning forwarding on replaces its mail provider, and its mailbox stops receiving mail. Type the domain to confirm."
+msgstr "Turning forwarding on replaces its mail provider, and its mailbox stops receiving mail. Type the domain to confirm."
+
 #: app/components/staff/schedule-link-section.tsx:149
 msgid "Turning off…"
 msgstr "Turning off…"
@@ -49764,6 +50977,9 @@ msgstr ""
 #: app/components/settings/cards/organization/announcement-sheet.tsx:464
 #: app/components/staff/schedule/time-off-sheet.tsx:194
 #: app/components/website/create-form-dialog.tsx:198
+#: app/components/website/domain/records-panel.tsx:73
+#: app/components/website/domain/records-panel.tsx:223
+#: app/components/website/domain/site-domains-card.tsx:46
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:381
@@ -49806,6 +51022,15 @@ msgstr "Type one label, a range like T1-T12, or a list separated by commas."
 #: app/components/inventory/item-form.tsx:152
 msgid "Type the category name."
 msgstr "Type the category name."
+
+#: app/components/website/domain/connect-card.tsx:399
+#: app/components/website/domain/forwarding-panel.tsx:123
+msgid "Type the domain to confirm"
+msgstr "Type the domain to confirm"
+
+#: app/components/website/domain/domain-ui.tsx:46
+msgid "Type the domain to confirm that email may stop working."
+msgstr "Type the domain to confirm that email may stop working."
 
 #: app/components/customers/person-profile-screen.tsx:1186
 msgid "Type the name to confirm"
@@ -50053,7 +51278,7 @@ msgstr "Unit of the weight"
 msgid "Unit system"
 msgstr "Unit system"
 
-#: app/components/settings/cards/organization/site-card.tsx:128
+#: app/components/settings/cards/organization/site-card.tsx:108
 msgid "United States"
 msgstr ""
 
@@ -50160,6 +51385,10 @@ msgstr "Unlock this card?"
 msgid "Unlocked"
 msgstr "Unlocked"
 
+#: app/components/website/domain/registered-panel.tsx:70
+msgid "Unlocked for transfer"
+msgstr "Unlocked for transfer"
+
 #: app/components/phone-agent/test-call-phone.tsx:238
 msgid "Unmute microphone"
 msgstr "Unmute microphone"
@@ -50202,7 +51431,7 @@ msgstr "Unpin"
 #: app/components/website/publish-controls.tsx:631
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:308
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:515
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:543
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:541
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:723
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:810
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6740
@@ -50214,7 +51443,7 @@ msgstr ""
 msgid "Unpublish a page that redirects point to?"
 msgstr "Unpublish a page that redirects point to?"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:46
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:47
 msgid "Unpublished a page"
 msgstr "Unpublished a page"
 
@@ -50227,8 +51456,8 @@ msgstr "Unpublished changes"
 msgid "Unread"
 msgstr "Unread"
 
-#: app/components/ui/notification-bell.tsx:512
-#: app/components/ui/notification-bell.tsx:616
+#: app/components/ui/notification-bell.tsx:530
+#: app/components/ui/notification-bell.tsx:634
 msgid "Unread Notifications"
 msgstr ""
 
@@ -50367,6 +51596,10 @@ msgstr "Up to 4 mobile numbers, like +15551234567."
 msgid "Up to 5 addresses."
 msgstr "Up to 5 addresses."
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:125
+msgid "Up to 64 characters. Leave it empty to use {organizationName}."
+msgstr "Up to 64 characters. Leave it empty to use {organizationName}."
+
 #: app/components/staff/schedule/time-off-page.tsx:182
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:234
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1471
@@ -50491,7 +51724,7 @@ msgstr "Updated {updated}"
 msgid "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
 msgstr "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:61
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:62
 msgid "Updated a legal page"
 msgstr "Updated a legal page"
 
@@ -50722,6 +51955,10 @@ msgstr "Use {subject}"
 msgid "Use {suggestedPath} instead"
 msgstr "Use {suggestedPath} instead"
 
+#: app/components/website/domain/connect-card.tsx:197
+msgid "Use {suggestion}"
+msgstr "Use {suggestion}"
+
 #: app/utils/staffing/timesheet-form.ts:266
 msgid "Use 1000 characters or fewer."
 msgstr "Use 1000 characters or fewer."
@@ -50912,6 +52149,14 @@ msgstr "Use international format, for example +15551234567."
 #: app/components/menu/item-variations.tsx:356
 msgid "Use item photo"
 msgstr "Use item photo"
+
+#: app/components/website/domain/domain-ui.tsx:77
+msgid "Use letters, numbers, dots, dashes or a *, with no spaces."
+msgstr "Use letters, numbers, dots, dashes or a *, with no spaces."
+
+#: app/components/website/domain/domain-ui.tsx:92
+msgid "Use letters, numbers, dots, dashes or underscores before the @."
+msgstr "Use letters, numbers, dots, dashes or underscores before the @."
 
 #: app/components/discounts/codes-editor.tsx:132
 msgid "Use limit"
@@ -51122,6 +52367,10 @@ msgstr "Uses your opening hours and special hours for the line the caller reache
 msgid "Using a custom call flow"
 msgstr "Using a custom call flow"
 
+#: app/components/website/domain/managed-domain-card.tsx:105
+msgid "Using Menuza's nameservers"
+msgstr "Using Menuza's nameservers"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:236
 msgid "Using the standard call flow"
 msgstr "Using the standard call flow"
@@ -51157,7 +52406,11 @@ msgstr ""
 
 #: app/components/inventory/stock-list.tsx:109
 #: app/components/menu/menu-bulk-edit-sheet.tsx:503
+#: app/components/settings/cards/organization/email-sending-card.tsx:324
 #: app/components/settings/cards/organization/verified-domain-card.tsx:156
+#: app/components/website/domain/records-panel.tsx:105
+#: app/components/website/domain/records-panel.tsx:229
+#: app/components/website/domain/site-domains-card.tsx:52
 msgid "Value"
 msgstr "Value"
 
@@ -51252,6 +52505,11 @@ msgstr ""
 msgid "Verification Status"
 msgstr ""
 
+#: app/components/settings/cards/organization/email-sending-card.tsx:76
+#: app/components/settings/cards/organization/email-sending-card.tsx:146
+msgid "Verified"
+msgstr "Verified"
+
 #: app/components/settings/cards/organization/verified-domain-card.tsx:96
 #: app/components/settings/cards/organization/verified-domain-card.tsx:128
 msgid "Verified domain"
@@ -51270,6 +52528,7 @@ msgid "Verified, sitemap submitted"
 msgstr "Verified, sitemap submitted"
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:622
+#: app/components/settings/cards/organization/email-sending-card.tsx:217
 #: app/routes/_auth+/verify.tsx:171
 msgid "Verify"
 msgstr ""
@@ -51574,13 +52833,17 @@ msgstr "Visibility"
 msgid "Visit counts and order totals stay, without a name. This cannot be undone."
 msgstr "Visit counts and order totals stay, without a name. This cannot be undone."
 
-#: app/components/settings/cards/organization/site-card.tsx:288
+#: app/components/settings/cards/organization/site-card.tsx:252
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr ""
 
 #: app/components/website/branding-panel.tsx:393
 msgid "Visitors keep seeing the live header, footer and theme until you publish."
 msgstr "Visitors keep seeing the live header, footer and theme until you publish."
+
+#: app/components/website/domain/site-domains-card.tsx:337
+msgid "Visitors reach your site on the primary domain. The other forms and extra domains redirect to it, keeping the page they asked for."
+msgstr "Visitors reach your site on the primary domain. The other forms and extra domains redirect to it, keeping the page they asked for."
 
 #: app/components/customers/people-list-screen.tsx:417
 #: app/components/customers/person-profile-screen.tsx:513
@@ -51747,6 +53010,14 @@ msgstr "Waiting for a manager"
 msgid "Waiting for acceptance"
 msgstr "Waiting for acceptance"
 
+#: app/components/website/domain/forwarding-panel.tsx:37
+msgid "Waiting for confirmation"
+msgstr "Waiting for confirmation"
+
+#: app/components/website/domain/site-domains-card.tsx:132
+msgid "Waiting for DNS"
+msgstr "Waiting for DNS"
+
 #: app/components/print/print-order-labels.ts:10
 msgid "Waiting for payment"
 msgstr "Waiting for payment"
@@ -51777,6 +53048,10 @@ msgstr "Waiting for you"
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:188
 msgid "Waiting for your acceptance"
 msgstr "Waiting for your acceptance"
+
+#: app/components/website/domain/managed-domain-card.tsx:106
+msgid "Waiting for your registrar"
+msgstr "Waiting for your registrar"
 
 #: app/components/pos/terminals-manager.tsx:784
 #: app/components/pos/terminals-manager.tsx:788
@@ -51994,6 +53269,10 @@ msgstr "We are sorry, we could not make your order."
 msgid "We are unable to authenticate your payment method. Please choose a different payment method and try again."
 msgstr "We are unable to authenticate your payment method. Please choose a different payment method and try again."
 
+#: app/components/website/domain/site-domains-card.tsx:384
+msgid "We check pending domains every 15 minutes and email you when one goes live."
+msgstr "We check pending domains every 15 minutes and email you when one goes live."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:444
 msgid "We could not approve this print"
 msgstr "We could not approve this print"
@@ -52032,6 +53311,10 @@ msgstr "We could not confirm your access. Reload the page."
 #: app/components/inventory/send-order-dialog.tsx:307
 msgid "We could not copy it for you. Select the text below and copy it."
 msgstr "We could not copy it for you. Select the text below and copy it."
+
+#: app/components/website/domain/domain-ui.tsx:48
+msgid "We could not create the DNS zone. Please try again."
+msgstr "We could not create the DNS zone. Please try again."
 
 #: app/components/hiring/candidate-sheet.tsx:91
 msgid "We could not find that applicant"
@@ -52086,6 +53369,10 @@ msgstr "We could not find that template. It may have been archived."
 #: app/utils/staffing/staff-errors.ts:43
 msgid "We could not find that workplace."
 msgstr "We could not find that workplace."
+
+#: app/components/website/domain/domain-ui.tsx:43
+msgid "We could not find that."
+msgstr "We could not find that."
 
 #: app/utils/staffing/staff-errors.ts:39
 msgid "We could not find that. It may have been removed."
@@ -52177,6 +53464,18 @@ msgstr "We could not record your acceptance."
 msgid "We could not record your acceptance. Try again."
 msgstr "We could not record your acceptance. Try again."
 
+#: app/components/website/domain/buy-card.tsx:152
+msgid "We could not register it, and the charge was refunded in full."
+msgstr "We could not register it, and the charge was refunded in full."
+
+#: app/components/website/domain/buy-card.tsx:159
+msgid "We could not register it. Your refund is on its way."
+msgstr "We could not register it. Your refund is on its way."
+
+#: app/components/website/domain/registered-panel.tsx:93
+msgid "We could not renew this domain"
+msgstr "We could not renew this domain"
+
 #: app/components/staff/time-zone-card.tsx:82
 msgid "We could not save the time zone. Try again."
 msgstr "We could not save the time zone. Try again."
@@ -52189,9 +53488,29 @@ msgstr "We could not save this print"
 msgid "We could not save this. Check your connection and try again."
 msgstr "We could not save this. Check your connection and try again."
 
+#: app/components/website/domain/domain-ui.tsx:57
+msgid "We could not send the email. Try again."
+msgstr "We could not send the email. Try again."
+
+#: app/components/website/domain/domain-ui.tsx:44
+msgid "We could not set the domain up. Please try again in a moment."
+msgstr "We could not set the domain up. Please try again in a moment."
+
+#: app/components/website/domain/connect-card.tsx:78
+msgid "We could not tell where your DNS is managed, so the steps are generic."
+msgstr "We could not tell where your DNS is managed, so the steps are generic."
+
 #: app/components/inventory/log-waste-dialog.tsx:237
 msgid "We could not undo that. Open Waste and try again."
 msgstr "We could not undo that. Open Waste and try again."
+
+#: app/utils/domains/domain-alerts.ts:139
+msgid "We could not verify its records, so guest emails go out from our address until you fix them."
+msgstr "We could not verify its records, so guest emails go out from our address until you fix them."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:295
+msgid "We could not verify the records"
+msgstr "We could not verify the records"
 
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:148
 msgid "We could not write a draft right now. Please try again."
@@ -52208,6 +53527,22 @@ msgstr "We do not keep a copy, so it cannot be looked up later. Give it to them 
 #: app/components/staff/labor-policy-editor.tsx:1448
 msgid "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
 msgstr "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
+
+#: app/components/website/domain/managed-domain-card.tsx:200
+msgid "We download the zone file for you and switch the domain's hosts back to the CNAME method. Point the nameservers back at your old DNS host and add the records from the checklist, or your site goes offline."
+msgstr "We download the zone file for you and switch the domain's hosts back to the CNAME method. Point the nameservers back at your old DNS host and add the records from the checklist, or your site goes offline."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:228
+msgid "We email a code to the address. It is used only after you enter it."
+msgstr "We email a code to the address. It is used only after you enter it."
+
+#: app/components/website/domain/registered-panel.tsx:178
+msgid "We email you 30 and 7 days before. Cancelling your Menuza plan never takes the domain away."
+msgstr "We email you 30 and 7 days before. Cancelling your Menuza plan never takes the domain away."
+
+#: app/components/website/domain/connect-card.tsx:377
+msgid "We found {recordCount} records and will copy them to the new zone."
+msgstr "We found {recordCount} records and will copy them to the new zone."
 
 #: app/routes/_auth+/login.tsx:620
 msgid "We found your organization:"
@@ -52230,9 +53565,25 @@ msgstr "We only ask when we're unsure"
 msgid "We only deliver within 5 miles. Offer pickup otherwise."
 msgstr "We only deliver within 5 miles. Offer pickup otherwise."
 
+#: app/components/website/domain/domain-ui.tsx:61
+msgid "We only sell .com domains for now."
+msgstr "We only sell .com domains for now."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1008
 msgid "We print and ship it to your door."
 msgstr "We print and ship it to your door."
+
+#: app/components/website/domain/connect-card.tsx:325
+msgid "We scan the domain first (website, MX, SPF, DKIM, DMARC). Upload the zone file from your registrar to be sure nothing is missed."
+msgstr "We scan the domain first (website, MX, SPF, DKIM, DMARC). Upload the zone file from your registrar to be sure nothing is missed."
+
+#: app/components/website/domain/connect-card.tsx:457
+msgid "We set the records at {providerName} after you approve them here. We never change email records."
+msgstr "We set the records at {providerName} after you approve them here. We never change email records."
+
+#: app/components/website/domain/connect-card.tsx:585
+msgid "We set up both example.com and www.example.com. Pick the one visitors should see; the other redirects to it."
+msgstr "We set up both example.com and www.example.com. Pick the one visitors should see; the other redirects to it."
 
 #: app/utils/website/website-alerts.ts:44
 msgid "We tried three times and stopped. Open the page, check it and schedule it again, or publish it now."
@@ -52304,7 +53655,7 @@ msgstr "Webhooks: {webhookMode}"
 #: app/components/command-menu.tsx:152
 #: app/components/workspace-breadcrumb.tsx:14
 #: app/routes/_app+/$orgSlug_+/media.tsx:1531
-#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:139
+#: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:144
 #: app/utils/discounts/labels.ts:171
 msgid "Website"
 msgstr ""
@@ -52325,6 +53676,10 @@ msgstr "Website editor, announcements, and public pages."
 #: app/components/menu/dish-page-card.tsx:36
 msgid "Website page"
 msgstr "Website page"
+
+#: app/components/website/domain/connect-card.tsx:373
+msgid "Website safe, email safe"
+msgstr "Website safe, email safe"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1533
 msgid "Website SEO"
@@ -52466,7 +53821,7 @@ msgid "went up <0>{percent}%</0>"
 msgstr "went up <0>{percent}%</0>"
 
 #: app/routes/_app+/$orgSlug_+/gift-cards+/$cardId.tsx:229
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:94
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:95
 msgid "What"
 msgstr "What"
 
@@ -52748,7 +54103,7 @@ msgstr "Wheelchair accessible"
 #: app/routes/_app+/$orgSlug_+/menu+/history.tsx:148
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:927
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:263
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:103
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:104
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:468
 #: app/utils/discounts/summary.ts:393
 msgid "When"
@@ -52942,7 +54297,7 @@ msgstr "When visitors or search engines request a URL that doesn't exist, it wil
 msgid "When you close it"
 msgstr "When you close it"
 
-#: app/components/ui/notification-bell.tsx:397
+#: app/components/ui/notification-bell.tsx:415
 msgid "When you get notifications, they'll show up here."
 msgstr ""
 
@@ -53038,6 +54393,10 @@ msgstr "Whether the ticket shows paid or unpaid, modifier group names and an ord
 msgid "Which breaks people take, and whether a missing one is flagged."
 msgstr "Which breaks people take, and whether a missing one is flagged."
 
+#: app/components/website/domain/connect-card.tsx:636
+msgid "Which form should visitors see?"
+msgstr "Which form should visitors see?"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:312
 msgid "Which items"
 msgstr "Which items"
@@ -53073,7 +54432,7 @@ msgstr "White marble surface, bright and premium"
 #: app/components/staff/schedule/availability-sheet.tsx:213
 #: app/components/staff/schedule/time-off-sheet.tsx:186
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:620
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:100
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:101
 msgid "Who"
 msgstr "Who"
 
@@ -53119,7 +54478,7 @@ msgstr "Who changed"
 msgid "Who changed the phone agent and when. Shows the last 50 changes."
 msgstr "Who changed the phone agent and when. Shows the last 50 changes."
 
-#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:72
+#: app/routes/_app+/$orgSlug_+/website+/activity.tsx:73
 msgid "Who changed the website and when: publishing, restoring, deleting, schedules, redirects and domain changes."
 msgstr "Who changed the website and when: publishing, restoring, deleting, schedules, redirects and domain changes."
 
@@ -53379,6 +54738,7 @@ msgid "Workflow validation"
 msgstr ""
 
 #: app/components/staff/timeclock-today.tsx:123
+#: app/components/website/domain/buy-card.tsx:139
 msgid "Working"
 msgstr "Working"
 
@@ -53417,6 +54777,10 @@ msgstr "Workplaces"
 #: app/components/hiring/hire-dialog.tsx:268
 msgid "Works as"
 msgstr "Works as"
+
+#: app/components/website/domain/connect-card.tsx:680
+msgid "Works for the root and www, renews certificates by itself, and keeps your email records."
+msgstr "Works for the root and www, renews certificates by itself, and keeps your email records."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:448
 msgid "Worth"
@@ -53547,6 +54911,10 @@ msgstr "Wrong Number"
 msgid "Wrong time entered"
 msgstr "Wrong time entered"
 
+#: app/components/website/domain/connect-card.tsx:657
+msgid "www.{apex} redirects here with a 301."
+msgstr "www.{apex} redirects here with a 301."
+
 #: app/components/reservations/floor-plan-canvas.tsx:1396
 #: app/components/reservations/floor-plan-canvas.tsx:1505
 msgid "X (0–1200)"
@@ -53620,6 +54988,10 @@ msgstr "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization
 #: app/components/phone-agent/training-rules-section.tsx:631
 msgid "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
+
+#: app/components/website/domain/connect-card.tsx:229
+msgid "You already have a live domain"
+msgstr "You already have a live domain"
 
 #: app/utils/my-schedule/my-schedule-messages.ts:14
 msgid "You already have a lot of requests waiting. Wait for a manager to answer, or cancel one."
@@ -53725,6 +55097,10 @@ msgstr ""
 msgid "You can do this from {readyAtText}, 48 hours after it finished."
 msgstr "You can do this from {readyAtText}, 48 hours after it finished."
 
+#: app/components/website/domain/domain-ui.tsx:76
+msgid "You can forward at most 10 addresses per domain."
+msgstr "You can forward at most 10 addresses per domain."
+
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:254
 msgid "You can have at most {MAX_LOCATION_TAGS} tags. Delete one you no longer use first."
 msgstr "You can have at most {MAX_LOCATION_TAGS} tags. Delete one you no longer use first."
@@ -53788,6 +55164,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:59
 msgid "You can save up to {max} audiences."
 msgstr "You can save up to {max} audiences."
+
+#: app/components/website/domain/domain-screen.tsx:65
+msgid "You can see the domain setup. Changing it needs permission to edit settings."
+msgstr "You can see the domain setup. Changing it needs permission to edit settings."
 
 #: app/utils/marketing/campaign-send.server.ts:232
 msgid "You can send 10 tests an hour. Try again a little later."
@@ -53985,7 +55365,7 @@ msgstr "You don't have permission to do that."
 msgid "You don't have permission to see this report's data."
 msgstr "You don't have permission to see this report's data."
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:597
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:595
 msgid "You edited this page"
 msgstr "You edited this page"
 
@@ -54037,6 +55417,10 @@ msgstr "You have reached the limit of {count} coupon codes across all discounts.
 #: app/components/discounts/fields.tsx:393
 msgid "You have reached the limit of {count} discounts. Archive some you no longer use."
 msgstr "You have reached the limit of {count} discounts. Archive some you no longer use."
+
+#: app/components/website/domain/domain-ui.tsx:38
+msgid "You have reached the limit of domains for this site."
+msgstr "You have reached the limit of domains for this site."
 
 #: app/utils/staffing/onboarding-errors.ts:16
 msgid "You have reached the limit of templates. Archive one you no longer use."
@@ -54146,6 +55530,14 @@ msgstr "You use about <0>{weekly}</0> a week."
 msgid "You were clocked out automatically."
 msgstr "You were clocked out automatically."
 
+#: app/utils/domains/domain-alerts.ts:122
+msgid "You were not charged, or the charge was refunded in full."
+msgstr "You were not charged, or the charge was refunded in full."
+
+#: app/components/website/domain/buy-card.tsx:212
+msgid "You will be charged {firstYear} now on the card on file, then {perYear} a year. Privacy protection is on and auto-renew is on by default."
+msgstr "You will be charged {firstYear} now on the card on file, then {perYear} a year. Privacy protection is on and auto-renew is on by default."
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:387
 msgid "You’re all caught up"
 msgstr "You’re all caught up"
@@ -54214,6 +55606,10 @@ msgstr "Your blocks and their arrangement are replaced by the default blocks. Th
 msgid "Your browser paused the agent's audio. Tap Speaker to hear it."
 msgstr "Your browser paused the agent's audio. Tap Speaker to hear it."
 
+#: app/components/website/domain/buy-card.tsx:195
+msgid "Your business is the registered owner. The registry emails the owner address; click its link to keep the domain."
+msgstr "Your business is the registered owner. The registry emails the owner address; click its link to keep the domain."
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:413
 msgid "Your business line"
 msgstr "Your business line"
@@ -54233,6 +55629,14 @@ msgstr "Your card number is invalid."
 #: app/routes/mock-payments+/__card-errors.ts:13
 msgid "Your card was declined."
 msgstr "Your card was declined."
+
+#: app/components/website/domain/registered-panel.tsx:96
+msgid "Your card was declined. Update your card in Billing; we try again every day for 7 days."
+msgstr "Your card was declined. Update your card in Billing; we try again every day for 7 days."
+
+#: app/components/website/domain/domain-ui.tsx:64
+msgid "Your card was declined. You were not charged."
+msgstr "Your card was declined. You were not charged."
 
 #: app/routes/mock-payments+/__card-errors.ts:15
 msgid "Your card was declined. Your request was in test mode, but used a non test card."
@@ -54270,9 +55674,33 @@ msgstr "Your dashboard changes could not be saved."
 msgid "Your department"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:311
+#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:309
 msgid "Your details"
 msgstr "Your details"
+
+#: app/components/website/domain/connect-card.tsx:72
+msgid "Your DNS is managed at <0>{providerName}</0>."
+msgstr "Your DNS is managed at <0>{providerName}</0>."
+
+#: app/utils/domains/domain-alerts.ts:67
+msgid "Your domain is live"
+msgstr "Your domain is live"
+
+#: app/utils/domains/domain-alerts.ts:76
+msgid "Your domain is still not connected"
+msgstr "Your domain is still not connected"
+
+#: app/components/website/domain/domain-ui.tsx:53
+msgid "Your domain provider does not support automatic setup. Use the steps instead."
+msgstr "Your domain provider does not support automatic setup. Use the steps instead."
+
+#: app/utils/domains/domain-alerts.ts:94
+msgid "Your domain renews soon"
+msgstr "Your domain renews soon"
+
+#: app/components/website/domain/site-domains-card.tsx:334
+msgid "Your domains"
+msgstr "Your domains"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:217
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
@@ -54301,6 +55729,10 @@ msgstr "Your Google account does not own this site in Search Console. Ask the ow
 #: app/components/phone-agent/business-details-section.tsx:86
 msgid "Your hours, phone, and address. The agent quotes them and uses the hours to tell when you're open."
 msgstr "Your hours, phone, and address. The agent quotes them and uses the hours to tell when you're open."
+
+#: app/components/website/domain/forwarding-panel.tsx:247
+msgid "Your inbox, for example you@gmail.com"
+msgstr "Your inbox, for example you@gmail.com"
 
 #: app/components/settings/cards/guest-messages-card.tsx:53
 msgid "Your items, the total and the pickup or delivery details."
@@ -54347,6 +55779,10 @@ msgstr "Your message already has content. Using this draft replaces it."
 msgid "Your microphone is being used by another app. Close it and try again."
 msgstr "Your microphone is being used by another app. Close it and try again."
 
+#: app/utils/domains/domain-alerts.ts:112
+msgid "Your new domain is ready"
+msgstr "Your new domain is ready"
+
 #: app/components/kiosk/kiosk-screens.tsx:346
 msgid "Your next shifts"
 msgstr "Your next shifts"
@@ -54378,6 +55814,10 @@ msgstr "Your organization made many new print files this hour. Try again in abou
 #: app/components/print/artwork-labels.ts:17
 msgid "Your organization made many new print files this hour. Try again in about 15 minutes."
 msgstr "Your organization made many new print files this hour. Try again in about 15 minutes."
+
+#: app/components/settings/cards/organization/email-sending-card.tsx:239
+msgid "Your own sending domain"
+msgstr "Your own sending domain"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6441
 msgid "Your page will appear here"
@@ -54431,6 +55871,18 @@ msgstr ""
 msgid "your region"
 msgstr "your region"
 
+#: app/components/website/domain/connect-card.tsx:263
+msgid "your registrar"
+msgstr "your registrar"
+
+#: app/components/website/domain/site-domains-card.tsx:346
+msgid "Your registrar sent you back. We are checking the records now."
+msgstr "Your registrar sent you back. We are checking the records now."
+
+#: app/components/website/domain/managed-domain-card.tsx:129
+msgid "Your registrar still points at {currentNameservers}. Change the nameservers where the domain is registered, not at your DNS host."
+msgstr "Your registrar still points at {currentNameservers}. Change the nameservers where the domain is registered, not at your DNS host."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1345
 msgid "Your regular services apply again on those dates."
 msgstr "Your regular services apply again on those dates."
@@ -54450,6 +55902,10 @@ msgstr "Your reply"
 #: app/components/settings/cards/organization/billing-card.tsx:150
 msgid "Your restaurant's current plan and billing status"
 msgstr "Your restaurant's current plan and billing status"
+
+#: app/components/website/domain/buy-card.tsx:302
+msgid "Your restaurant's name"
+msgstr "Your restaurant's name"
 
 #: app/routes/_app+/organizations.tsx:337
 msgid "Your restaurants"
@@ -54475,6 +55931,10 @@ msgstr "Your scheduled website change could not go live"
 msgid "Your scheduled website change is live"
 msgstr "Your scheduled website change is live"
 
+#: app/utils/domains/domain-alerts.ts:137
+msgid "Your sending domain stopped verifying"
+msgstr "Your sending domain stopped verifying"
+
 #: app/utils/staffing/staff-errors.ts:47
 msgid "Your session expired. Reload the page."
 msgstr "Your session expired. Reload the page."
@@ -54492,13 +55952,37 @@ msgstr "Your session has ended. Sign in again to keep working."
 msgid "Your setup progress"
 msgstr ""
 
+#: app/components/website/domain/domain-ui.tsx:39
+msgid "Your site already has a primary domain. Add this one as an extra domain instead."
+msgstr "Your site already has a primary domain. Add this one as an extra domain instead."
+
+#: app/components/website/domain/site-domains-card.tsx:396
+msgid "Your site goes back to its Menuza address."
+msgstr "Your site goes back to its Menuza address."
+
+#: app/components/website/domain/buy-card.tsx:144
+msgid "Your site is being set up on it. This page updates as it goes live."
+msgstr "Your site is being set up on it. This page updates as it goes live."
+
 #: app/components/dashboard/blocks/attention-block.tsx:217
 msgid "Your site is not published"
 msgstr "Your site is not published"
 
+#: app/components/website/domain/domain-screen.tsx:73
+msgid "Your site is not published yet. Connecting a domain publishes it."
+msgstr "Your site is not published yet. Connecting a domain publishes it."
+
+#: app/utils/domains/domain-alerts.ts:69
+msgid "Your site now loads on this domain, with a secure connection."
+msgstr "Your site now loads on this domain, with a secure connection."
+
 #: app/components/launch/launch-checklist.tsx:35
 msgid "Your site should look like your restaurant."
 msgstr "Your site should look like your restaurant."
+
+#: app/components/website/domain/connect-card.tsx:296
+msgid "Your site stays on the old setup until your registrar uses these nameservers. We check every 15 minutes and email you when it is live."
+msgstr "Your site stays on the old setup until your registrar uses these nameservers. We check every 15 minutes and email you when it is live."
 
 #: app/components/inventory/count-review-screen.tsx:850
 msgid "Your stock now matches what was counted."
@@ -54574,6 +56058,10 @@ msgstr "Zip Codes (comma or space separated)"
 #: app/utils/reservations/labels.ts:210
 msgid "Zone"
 msgstr "Zone"
+
+#: app/components/website/domain/connect-card.tsx:332
+msgid "Zone file (optional)"
+msgstr "Zone file (optional)"
 
 #: app/components/locations/delivery-zones-manager.tsx:320
 msgid "Zone Name"

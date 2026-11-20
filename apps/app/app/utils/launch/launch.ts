@@ -91,7 +91,8 @@ export const LAUNCH_STEPS: readonly LaunchStepDefinition[] = [
 		condition: 'customDomainActive',
 		optional: true,
 		organizationWide: true,
-		href: '/website',
+		// The one Domain screen: connect a domain, or get one there (#139, #183).
+		href: '/website/domain',
 	},
 	{
 		key: 'launch_go_live',

@@ -36,6 +36,11 @@ import {
 	discountAlertKindFromNotificationType,
 	discountAlertPath,
 } from '#app/utils/discounts/discount-alerts.ts'
+import {
+	domainAlertCopy,
+	domainAlertKindFromNotificationType,
+	domainAlertPath,
+} from '#app/utils/domains/domain-alerts.ts'
 import { inventoryAlertCopy } from '#app/utils/inventory/alert-copy.ts'
 import {
 	inventoryAlertKindFromNotificationType,
@@ -182,7 +187,17 @@ function NotificationItem({
 			)
 		: null
 
+	const domainKind = domainAlertKindFromNotificationType(notification.type)
+	const domainAlert = domainKind
+		? domainAlertCopy(
+				domainKind,
+				typeof payload?.host === 'string' ? payload.host : null,
+				_,
+			)
+		: null
+
 	const subject =
+		domainAlert?.subject ??
 		websiteAlert?.subject ??
 		discountAlert?.subject ??
 		campaignAlert?.subject ??
@@ -194,6 +209,7 @@ function NotificationItem({
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
 	const body =
+		domainAlert?.body ??
 		websiteAlert?.body ??
 		discountAlert?.body ??
 		campaignAlert?.body ??
@@ -208,7 +224,9 @@ function NotificationItem({
 		if (!notification.isRead) {
 			onMarkRead(notification.id)
 		}
-		if (websiteKind && typeof payload?.orgSlug === 'string') {
+		if (domainKind && typeof payload?.orgSlug === 'string') {
+			void navigate(`/${payload.orgSlug}${domainAlertPath(domainKind)}`)
+		} else if (websiteKind && typeof payload?.orgSlug === 'string') {
 			void navigate(
 				`/${payload.orgSlug}${websiteAlertPath(
 					typeof payload.pageId === 'string' ? payload.pageId : null,
@@ -280,7 +298,7 @@ function NotificationItem({
 			<div className="flex items-start border-b border-dashed p-2">
 				<Avatar className="mr-2 h-8 w-8">
 					<AvatarFallback>
-						{websiteKind ? (
+						{websiteKind || domainKind ? (
 							<Icon name="globe" className="h-4 w-4" />
 						) : discountKind ? (
 							<Icon name="tag" className="h-4 w-4" />

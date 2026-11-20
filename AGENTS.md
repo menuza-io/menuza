@@ -1749,6 +1749,36 @@ legal pages, Menuza agreements; #85, #180, #238, #248, #89, #194, #260):**
   before consent in Required mode.
 - Docs: `docs/website-publishing.md`.
 
+**Custom domains (apex and www, provider setup, nameservers, buying, email
+forwarding, custom sending; #139, #313, #283, #183, #276, #103):**
+
+- ONE host model (`SiteDomain`, `Organization.customDomain` is its denormalized
+  primary for one release), ONE zone model (`ManagedDomain` + `DomainRecord`,
+  also used by buying and forwarding) and ONE screen (Website, Domain,
+  `website+/domain.tsx`). Do not add a second table, screen or lookup. Every
+  public site endpoint finds an organization by host with `siteHostCondition`
+  (`utils/sites/site-host.server.ts`), never
+  `eq(Organization.customDomain, host)`. Sites 301s a secondary host to the
+  primary (`apps/sites/src/lib/secondary-host.ts`).
+- Code: pure rules in `@repo/common` (`domains`, `domain-dns`, `domain-zone`,
+  `domain-providers`, `domain-steps`, `email-sender`); the App in
+  `utils/domains/` and `utils/email-sender/`; every action of the screen goes
+  through `handleDomainAction` behind `update:settings:any`
+  (`website+/domain.test.ts` refuses every intent without it). Partners sit
+  behind adapters (`adapters.server.ts`: DNS zones, registrar, email routing,
+  Domain Connect); `DOMAINS_MOCK=true` / `MOCKS=true` (local `BASE_URL` only)
+  runs emulators, tests inject them. Registrant contact is encrypted with
+  `INTEGRATION_ENCRYPTION_KEY`. Forwarded mail is never stored.
+- Sweep: `POST /resources/jobs/domain-status` every 15 minutes (jobs-cron's
+  fifth and last cron slot). Flags `domains.registrar` and
+  `messaging.custom_sender` default off. Migration `0065_custom_domains` copies
+  existing domains.
+- Guest email identity: tenant-api `sendTenantEmail` reads the organization's
+  sender name, verified reply-to and (only while verified) sending address from
+  `/resources/tenant-organization` and falls back to the platform sender on any
+  failure. Env for the partners is in `apps/app/.env.schema`. Docs:
+  `docs/custom-domains.md`.
+
 **Print shop (Marketing, Print shop):**
 
 - Operator B2B data in the control plane (`PrintDesign`, `PrintRender`,

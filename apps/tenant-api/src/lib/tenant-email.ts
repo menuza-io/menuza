@@ -1,11 +1,16 @@
+import { resolveSender } from '@repo/common/email-sender'
+import { brand } from '@repo/config/brand'
 import { buildTenantMarketingEmailHeaders } from '@repo/config/marketing-email'
 import {
+	getOciEmailConfig,
 	isOciEmailConfigured,
 	sendOciEmail,
 	shouldUseOciEmailMockTransport,
 	type SendOciEmailInput,
 	type SendOciEmailResult,
 } from '@repo/email'
+
+import { getOrgEmailSender } from './org-email-sender.ts'
 
 export type TenantEmailContext = {
 	orgId: string
@@ -53,11 +58,49 @@ export function canSendTenantEmail(): boolean {
 	)
 }
 
+/**
+ * What this message goes out as (#103): the organization's sender name and
+ * verified reply-to, from the platform address until its own domain is
+ * verified, then from `<local part>@<their domain>`. Works from the
+ * organization the caller names (`orgId`, or the one in `context` or
+ * `capture`); with none, or when the lookup fails, the platform sender stays.
+ */
+async function resolveOutgoingSender(orgId: string | undefined) {
+	// The node's own sender settings; a node with none (or a test double that
+	// does not model them) still sends, from whatever the provider defaults to.
+	let config: ReturnType<typeof getOciEmailConfig> = null
+	try {
+		config = getOciEmailConfig()
+	} catch {
+		config = null
+	}
+	const platform = {
+		email: config?.senderEmail ?? 'noreply@dev.example.test',
+		name: config?.senderName ?? brand.name,
+	}
+	if (!orgId) return { platform, resolved: null }
+	const meta = await getOrgEmailSender(orgId).catch(() => null)
+	if (!meta) return { platform, resolved: null }
+	return {
+		platform,
+		resolved: resolveSender({
+			identity: meta.identity,
+			organizationName: meta.organizationName,
+			platform,
+		}),
+	}
+}
+
 export async function sendTenantEmail(
-	input: Omit<SendOciEmailInput, 'headerFields' | 'messageId'> & {
+	input: Omit<
+		SendOciEmailInput,
+		'headerFields' | 'messageId' | 'sender' | 'replyTo'
+	> & {
 		context?: TenantEmailContext
 		capture?: TenantEmailCaptureMeta
 		from?: string
+		/** The organization the message is sent for, when `context` and `capture` name none. */
+		orgId?: string
 		/** Extra message headers (for example `List-Unsubscribe`). */
 		extraHeaders?: Record<string, string>
 	},
@@ -66,12 +109,23 @@ export async function sendTenantEmail(
 		? buildTenantMarketingEmailHeaders(input.context)
 		: {}
 
-	const { context, capture, from, extraHeaders, ...rest } = input
+	const { context, capture, from, extraHeaders, orgId, ...rest } = input
 	const allHeaders = { ...headerFields, ...extraHeaders }
+	const { resolved, platform } = await resolveOutgoingSender(
+		orgId ?? context?.orgId ?? capture?.orgId,
+	)
+	// Only an organization that has settings changes the sender; others keep
+	// the platform's, exactly as before.
 	const result = await sendOciEmail({
 		...rest,
 		messageId: context?.messageId ?? capture?.messageId,
 		headerFields: Object.keys(allHeaders).length > 0 ? allHeaders : undefined,
+		...(resolved
+			? {
+					sender: resolved.sender,
+					...(resolved.replyTo ? { replyTo: resolved.replyTo } : {}),
+				}
+			: {}),
 	})
 
 	// Only the plain "not configured" mock branch is captured, after its log line.
@@ -79,7 +133,7 @@ export async function sendTenantEmail(
 		try {
 			await devCapture({
 				to: input.to,
-				from: from ?? 'noreply@dev.example.test',
+				from: from ?? resolved?.sender.email ?? platform.email,
 				subject: input.subject,
 				html: input.html,
 				text: input.text,

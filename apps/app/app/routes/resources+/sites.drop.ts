@@ -1,12 +1,5 @@
 import { getUserId } from '@repo/auth'
-import {
-	and,
-	db,
-	eq,
-	inArray,
-	Organization,
-	UserOrganization,
-} from '@repo/database'
+import { and, db, eq, Organization, UserOrganization } from '@repo/database'
 import { getClientIp } from '@repo/security'
 import { type LoaderFunctionArgs } from 'react-router'
 import { buildPublicSiteDropPayload } from '#app/utils/menu/public-drop-context.server.ts'
@@ -21,6 +14,7 @@ import {
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
+import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 
 export type { PublicSiteDropPayload } from '#app/utils/menu/public-drop-context.server.ts'
 
@@ -59,10 +53,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		where: and(
 			orgSlug
 				? eq(Organization.slug, orgSlug)
-				: and(
-						eq(Organization.customDomain, customHost!),
-						inArray(Organization.customDomainStatus, ['active', 'pending']),
-					),
+				: and(siteHostCondition(customHost!)),
 			eq(Organization.active, true),
 			eq(Organization.sitePublished, true),
 		),

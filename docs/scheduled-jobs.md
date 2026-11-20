@@ -26,20 +26,21 @@ as the Admin cache route).
 
 ## Cron schedules (UTC)
 
-| Cron        | Route                                                | Purpose                                         |
-| ----------- | ---------------------------------------------------- | ----------------------------------------------- |
-| `0 2 * * *` | `/resources/jobs/audit-log-archival`                 | Archive old audit logs                          |
-| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`                  | Remove expired MCP tokens                       |
-| `0 3 * * *` | `/resources/jobs/job-postings-expiry`                | Mark job postings past their closing date       |
-| `0 3 * * *` | `/resources/jobs/seat-reconcile`                     | Sync Stripe seat counts with active members     |
-| `0 3 * * *` | `/resources/jobs/seo-rank-check`                     | Weekly local rank check per keyword (#182)      |
-| `0 3 * * *` | `/resources/jobs/search-console-sync`                | Search Console setup retry and 28-day fetch     |
-| `0 4 * * *` | `/resources/jobs/gdpr-erasure`                       | Process pending GDPR erasures                   |
-| `0 4 * * *` | `/resources/jobs/voice-retention`                    | Delete expired call recordings and caller data  |
-| `0 4 * * *` | `/resources/jobs/staffing-outbox`                    | Deliver staffing link, unlink, and erase events |
-| `0 5 * * *` | `/resources/jobs/form-submission-retention`          | Not scheduled (see below)                       |
-| `0 * * * *` | `/resources/jobs/reservation-payments-reconcile`     | Re-check lingering reservation payments         |
-| `0 * * * *` | `/resources/jobs/restaurant-order-refunds-reconcile` | Finish pending order refunds                    |
+| Cron           | Route                                                | Purpose                                                                                                                               |
+| -------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `*/15 * * * *` | `/resources/jobs/domain-status`                      | Domains: pending hosts, nameservers, registrations, renewals, forwarding, sending domains (see [custom domains](./custom-domains.md)) |
+| `0 2 * * *`    | `/resources/jobs/audit-log-archival`                 | Archive old audit logs                                                                                                                |
+| `0 3 * * *`    | `/resources/jobs/mcp-token-cleanup`                  | Remove expired MCP tokens                                                                                                             |
+| `0 3 * * *`    | `/resources/jobs/job-postings-expiry`                | Mark job postings past their closing date                                                                                             |
+| `0 3 * * *`    | `/resources/jobs/seat-reconcile`                     | Sync Stripe seat counts with active members                                                                                           |
+| `0 3 * * *`    | `/resources/jobs/seo-rank-check`                     | Weekly local rank check per keyword (#182)                                                                                            |
+| `0 3 * * *`    | `/resources/jobs/search-console-sync`                | Search Console setup retry and 28-day fetch                                                                                           |
+| `0 4 * * *`    | `/resources/jobs/gdpr-erasure`                       | Process pending GDPR erasures                                                                                                         |
+| `0 4 * * *`    | `/resources/jobs/voice-retention`                    | Delete expired call recordings and caller data                                                                                        |
+| `0 4 * * *`    | `/resources/jobs/staffing-outbox`                    | Deliver staffing link, unlink, and erase events                                                                                       |
+| `0 5 * * *`    | `/resources/jobs/form-submission-retention`          | Not scheduled (see below)                                                                                                             |
+| `0 * * * *`    | `/resources/jobs/reservation-payments-reconcile`     | Re-check lingering reservation payments                                                                                               |
+| `0 * * * *`    | `/resources/jobs/restaurant-order-refunds-reconcile` | Finish pending order refunds                                                                                                          |
 
 The hourly `0 * * * *` trigger fans out to every regional tenant-api node: the
 tenant engagement sync, the staff tick, the reservations tick, the loyalty tick

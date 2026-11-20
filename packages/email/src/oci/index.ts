@@ -34,3 +34,17 @@ export {
 	type OciEngagementAction,
 	type OciEngagementEvent,
 } from './engagement-logs.ts'
+export {
+	dkimSelectorFor,
+	getEmailDomainProvider,
+	getMockEmailDomainProvider,
+	MockEmailDomainProvider,
+	OciEmailDomainProvider,
+	setEmailDomainProvider,
+	type EmailDomainCheck,
+	type EmailDomainProvider,
+	type EmailDomainRecord,
+	type EmailDomainRecordPurpose,
+	type EmailDomainRegistration,
+	type EmailDomainStatus,
+} from './email-domain.ts'

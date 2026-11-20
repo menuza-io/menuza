@@ -2614,6 +2614,401 @@ export const WebsiteScheduledPublish = sqliteTable(
 )
 
 /**
+ * A host a restaurant's site is served on (#139): the primary, or a redirecting
+ * extra (the other form of the primary, an old domain). One row per host, unique
+ * across organizations. `Organization.customDomain` stays the denormalized
+ * primary host for one release; every public lookup reads both.
+ * `method` is how the host reaches us: `cname` (the operator adds records),
+ * `nameservers` or `registered` (a `ManagedDomain` zone holds them).
+ * `verification` is the ownership and certificate records Cloudflare asked
+ * for; `checks` the last per-record DNS result. Operator data only.
+ */
+export const SiteDomain = sqliteTable(
+	'SiteDomain',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		hostname: text().notNull(),
+		isPrimary: integer({ mode: 'boolean' }).default(false).notNull(),
+		managedDomainId: text().references(() => ManagedDomain.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		method: text().default('cname').notNull(),
+		cloudflareHostnameId: text(),
+		/** `pending`, `active`, `moved`, `blocked`, `error` or `expired`. */
+		status: text().default('pending').notNull(),
+		sslStatus: text(),
+		ownershipStatus: text(),
+		verification: text(),
+		checks: text(),
+		lastError: text(),
+		pendingSince: integer({ mode: 'timestamp_ms' }),
+		lastCheckedAt: integer({ mode: 'timestamp_ms' }),
+		/** The "still not connected" email after 7 days pending. */
+		reminderSentAt: integer({ mode: 'timestamp_ms' }),
+		/** The "your domain is live" notice, sent once. */
+		liveNotifiedAt: integer({ mode: 'timestamp_ms' }),
+		addedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('SiteDomain_hostname_key').on(table.hostname),
+		uniqueIndex('SiteDomain_primary_key')
+			.on(table.organizationId)
+			.where(sql`${table.isPrimary} = 1`),
+		index('SiteDomain_organizationId_idx').on(table.organizationId),
+		index('SiteDomain_status_pendingSince_idx').on(
+			table.status,
+			table.pendingSince,
+		),
+		index('SiteDomain_managedDomainId_idx').on(table.managedDomainId),
+	],
+)
+
+/**
+ * A domain whose DNS Menuza hosts (#283) or that Menuza registered (#183): the
+ * one zone model every domain feature shares (records, buying, forwarding).
+ * `source` is `nameservers` (the operator moved an existing domain),
+ * `registered` or `transferred`. The zone lives at the DNS provider (`zoneId`);
+ * `scan` is what the pre-move scan found; `registrantContact` is the business
+ * contact, encrypted with INTEGRATION_ENCRYPTION_KEY. Operator data, no guest
+ * PII.
+ */
+export const ManagedDomain = sqliteTable(
+	'ManagedDomain',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		fqdn: text().notNull(),
+		source: text().default('nameservers').notNull(),
+		zoneProvider: text(),
+		zoneId: text(),
+		nameservers: text(),
+		/** `pending` (move not seen yet), `active`, `moved` (left again) or `failed`. */
+		zoneStatus: text().default('pending').notNull(),
+		nsPendingSince: integer({ mode: 'timestamp_ms' }),
+		nsCheckedAt: integer({ mode: 'timestamp_ms' }),
+		nsVerifiedAt: integer({ mode: 'timestamp_ms' }),
+		scan: text(),
+		/** The operator typed the confirmation for a move that might lose mail. */
+		emailRiskConfirmedAt: integer({ mode: 'timestamp_ms' }),
+		registrar: text(),
+		registrarDomainId: text(),
+		/** `none`, `pending`, `registering`, `active`, `failed`, `transfer_pending`, `transferred_out`, `expired`. */
+		registrationStatus: text().default('none').notNull(),
+		expiresAt: integer({ mode: 'timestamp_ms' }),
+		autoRenew: integer({ mode: 'boolean' }).default(true).notNull(),
+		locked: integer({ mode: 'boolean' }).default(true).notNull(),
+		privacy: integer({ mode: 'boolean' }).default(true).notNull(),
+		registrantContact: text(),
+		registrantEmailConfirmedAt: integer({ mode: 'timestamp_ms' }),
+		/** Renewal reminders already sent (`{"30":ts,"7":ts}`) for the current term. */
+		reminders: text(),
+		renewalFailedSince: integer({ mode: 'timestamp_ms' }),
+		renewalAttemptedAt: integer({ mode: 'timestamp_ms' }),
+		lastJobId: text(),
+		emailForwardingEnabledAt: integer({ mode: 'timestamp_ms' }),
+		/** Confirmed in words: turning forwarding on cuts off the mail provider. */
+		emailForwardingMxConfirmedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('ManagedDomain_fqdn_key').on(table.fqdn),
+		index('ManagedDomain_organizationId_idx').on(table.organizationId),
+		index('ManagedDomain_zoneStatus_idx').on(table.zoneStatus),
+		index('ManagedDomain_registrationStatus_expiresAt_idx').on(
+			table.registrationStatus,
+			table.expiresAt,
+		),
+	],
+)
+
+/**
+ * One DNS record of a managed zone (#283). `managedBy` marks records Menuza
+ * writes for the site, email forwarding or sending: those are read-only to the
+ * operator. `name` is fully qualified. Every change is also an audit entry.
+ */
+export const DomainRecord = sqliteTable(
+	'DomainRecord',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		managedDomainId: text()
+			.notNull()
+			.references(() => ManagedDomain.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		type: text().notNull(),
+		name: text().notNull(),
+		content: text().notNull(),
+		ttl: integer().default(1).notNull(),
+		priority: integer(),
+		proxied: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** `site`, `email_forwarding`, `email_sending`, `registrar`; null is the operator's. */
+		managedBy: text(),
+		/** `imported`, `user` or `managed`. */
+		source: text().default('user').notNull(),
+		providerRecordId: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('DomainRecord_managedDomainId_idx').on(table.managedDomainId),
+	],
+)
+
+/**
+ * A background step of a domain (#183): `register`, `transfer_in`, `renew`,
+ * `transfer_out`. Idempotent by `idempotencyKey`; `step` is what the progress
+ * screen shows; `error` is a code, never a provider message with contact data.
+ */
+export const DomainJob = sqliteTable(
+	'DomainJob',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		managedDomainId: text().references(() => ManagedDomain.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		kind: text().notNull(),
+		/** `queued`, `running`, `succeeded`, `failed` or `cancelled`. */
+		status: text().default('queued').notNull(),
+		step: text(),
+		attempts: integer().default(0).notNull(),
+		error: text(),
+		idempotencyKey: text().notNull(),
+		runAfter: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		params: text(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		completedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('DomainJob_idempotencyKey_key').on(table.idempotencyKey),
+		index('DomainJob_status_runAfter_idx').on(table.status, table.runAfter),
+		index('DomainJob_organizationId_idx').on(table.organizationId),
+		index('DomainJob_managedDomainId_idx').on(table.managedDomainId),
+	],
+)
+
+/**
+ * What a restaurant paid for a domain (#183): Stripe ids and amounts only.
+ * `status` is `pending`, `succeeded`, `failed`, `refunded` or `refund_failed`.
+ * A failed registration refunds the charge; the refund id is kept.
+ */
+export const DomainCharge = sqliteTable(
+	'DomainCharge',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		managedDomainId: text().references(() => ManagedDomain.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		jobId: text().references(() => DomainJob.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		/** `registration`, `renewal` or `transfer_in`. */
+		kind: text().notNull(),
+		amountCents: integer().notNull(),
+		currency: text().default('usd').notNull(),
+		idempotencyKey: text().notNull(),
+		stripePaymentIntentId: text(),
+		stripeRefundId: text(),
+		status: text().default('pending').notNull(),
+		failureCode: text(),
+		refundedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('DomainCharge_idempotencyKey_key').on(table.idempotencyKey),
+		index('DomainCharge_organizationId_idx').on(table.organizationId),
+		index('DomainCharge_managedDomainId_idx').on(table.managedDomainId),
+	],
+)
+
+/**
+ * One forwarding address on a managed domain (#276). `localPart` is `*` for the
+ * catch-all. The destination is the restaurant's own inbox (an operator
+ * address, not guest data); mail contents never reach us. `status` is
+ * `pending_confirmation`, `active`, `failing` or `disabled`.
+ */
+export const DomainEmailForward = sqliteTable(
+	'DomainEmailForward',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		managedDomainId: text()
+			.notNull()
+			.references(() => ManagedDomain.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		localPart: text().notNull(),
+		destination: text().notNull(),
+		status: text().default('pending_confirmation').notNull(),
+		providerRuleId: text(),
+		lastForwardedAt: integer({ mode: 'timestamp_ms' }),
+		lastError: text(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('DomainEmailForward_domain_localPart_key').on(
+			table.managedDomainId,
+			table.localPart,
+		),
+		index('DomainEmailForward_status_idx').on(table.status),
+	],
+)
+
+/**
+ * How an organization's guest email is sent (#103): the sender name, a reply-to
+ * the operator proved with a code, and an optional custom sending domain
+ * (SPF, DKIM, return path). Business identity, never guest data. The region
+ * reads it through the organization metadata the App serves to tenant-api.
+ * `domainStatus` is `none`, `pending`, `verified` or `failed`; `dataRegion` is
+ * the region the domain was set up in (a region change needs a new check).
+ */
+export const OrganizationEmailSender = sqliteTable(
+	'OrganizationEmailSender',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		senderName: text(),
+		replyTo: text(),
+		replyToVerifiedAt: integer({ mode: 'timestamp_ms' }),
+		pendingReplyTo: text(),
+		replyToCodeHash: text(),
+		replyToCodeExpiresAt: integer({ mode: 'timestamp_ms' }),
+		replyToCodeAttempts: integer().default(0).notNull(),
+		replyToCodeSentAt: integer({ mode: 'timestamp_ms' }),
+		localPart: text().default('hello').notNull(),
+		domain: text(),
+		domainStatus: text().default('none').notNull(),
+		dkimSelector: text(),
+		providerRef: text(),
+		/** JSON: the SPF, DKIM and return-path records to add, each with its last result. */
+		dnsRecords: text(),
+		dataRegion: text(),
+		checkedAt: integer({ mode: 'timestamp_ms' }),
+		verifiedAt: integer({ mode: 'timestamp_ms' }),
+		failedAt: integer({ mode: 'timestamp_ms' }),
+		fallbackNotifiedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('OrganizationEmailSender_organizationId_key').on(
+			table.organizationId,
+		),
+		uniqueIndex('OrganizationEmailSender_domain_key')
+			.on(table.domain)
+			.where(sql`${table.domain} IS NOT NULL`),
+		index('OrganizationEmailSender_domainStatus_idx').on(table.domainStatus),
+	],
+)
+
+/**
  * A numbered version of one Menuza agreement (#194, #89): `terms`, `privacy`,
  * `payments`, `text_marketing` or `dpa`. `title` and `summary` are
  * locale-keyed JSON. A version with `requiredBy` blocks the dashboard for

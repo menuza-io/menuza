@@ -518,6 +518,36 @@
       "types": "./src/order-limit-exempt.ts",
       "import": "./src/order-limit-exempt.ts",
       "default": "./src/order-limit-exempt.ts"
+    },
+    "./domains": {
+      "types": "./src/domains.ts",
+      "import": "./src/domains.ts",
+      "default": "./src/domains.ts"
+    },
+    "./domain-dns": {
+      "types": "./src/domain-dns.ts",
+      "import": "./src/domain-dns.ts",
+      "default": "./src/domain-dns.ts"
+    },
+    "./domain-providers": {
+      "types": "./src/domain-providers.ts",
+      "import": "./src/domain-providers.ts",
+      "default": "./src/domain-providers.ts"
+    },
+    "./domain-zone": {
+      "types": "./src/domain-zone.ts",
+      "import": "./src/domain-zone.ts",
+      "default": "./src/domain-zone.ts"
+    },
+    "./domain-steps": {
+      "types": "./src/domain-steps.ts",
+      "import": "./src/domain-steps.ts",
+      "default": "./src/domain-steps.ts"
+    },
+    "./email-sender": {
+      "types": "./src/email-sender.ts",
+      "import": "./src/email-sender.ts",
+      "default": "./src/email-sender.ts"
     }
   },
   "scripts": {
@@ -544,6 +574,7 @@
     "react": "^19.1.1",
     "react-router": "^8.3.0",
     "spin-delay": "^2.0.1",
+    "tldts": "^7.4.10",
     "zod": "^4.6.7"
   },
   "devDependencies": {

@@ -1,0 +1,16 @@
+{
+	"providerId": "menuza.io",
+	"providerName": "Menuza",
+	"serviceId": "site-subdomain",
+	"serviceName": "Menuza website on a subdomain",
+	"version": 1,
+	"logoUrl": "https://menuza.io/logo.svg",
+	"description": "Points one subdomain (for example order.example.com) at your Menuza website. Never touches email records.",
+	"variableDescription": "target is the Menuza sites host.",
+	"syncBlock": false,
+	"warnPhishing": false,
+	"hostRequired": true,
+	"records": [
+		{ "type": "CNAME", "host": "@", "pointsTo": "%target%", "ttl": 3600 }
+	]
+}

@@ -7,7 +7,7 @@ import {
 	publicFormKvKey,
 	type PublicFormProjection,
 } from '@repo/common/public-form'
-import { and, db, eq, GbpLocationSync } from '@repo/database'
+import { and, db, eq, GbpLocationSync, SiteDomain } from '@repo/database'
 
 let siteDataKv: KVNamespace | null = null
 
@@ -68,7 +68,7 @@ export function getSiteKvKey(
 export async function purgeOrganizationSiteCache(
 	orgId: string,
 	slug?: string,
-	host?: string | null,
+	host?: string | readonly string[] | null,
 ): Promise<boolean> {
 	// Mark any Google-synced menus dirty so the hourly sweep publishes changes
 	// within an hour (#208). Non-menu purges are no-ops because publishMenu
@@ -108,7 +108,23 @@ export async function purgeOrganizationSiteCache(
 		{ kind: 'id', prefix: `org:${orgId}:` },
 	]
 	if (slug) prefixes.push({ kind: 'slug', prefix: `org:${slug}:` })
-	if (host) prefixes.push({ kind: 'host', prefix: `org:${host}:` })
+	// Every host of the site: the primary and the ones that redirect to it (#139),
+	// whichever the caller passed, so a purge never leaves a secondary host stale.
+	const hosts = new Set<string>(
+		typeof host === 'string' ? [host] : (host ?? []),
+	)
+	try {
+		const rows = await db
+			.select({ hostname: SiteDomain.hostname })
+			.from(SiteDomain)
+			.where(eq(SiteDomain.organizationId, orgId))
+		for (const row of rows) hosts.add(row.hostname)
+	} catch {
+		// A lookup failure must not stop the purge of the hosts we already know.
+	}
+	for (const name of hosts) {
+		if (name) prefixes.push({ kind: 'host', prefix: `org:${name}:` })
+	}
 
 	// Each prefix is purged on its own, so one that fails (a list error, say) never
 	// leaves the others (slug, host) stale.

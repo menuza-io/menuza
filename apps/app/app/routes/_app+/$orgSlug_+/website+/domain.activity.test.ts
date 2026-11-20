@@ -4,7 +4,6 @@
 import { AuditAction, auditService } from '@repo/audit'
 import { db, eq, Organization } from '@repo/database'
 import { describe, expect, it, vi } from 'vitest'
-import { removeCustomDomainActionIntent } from '#app/components/settings/cards/organization/site-card.tsx'
 import type * as KvCacheModule from '#app/utils/sites/kv-cache.server.ts'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
 import {
@@ -12,7 +11,7 @@ import {
 	createTestOrganization,
 	createTestSession,
 } from '#tests/test-utils.ts'
-import { action } from './_index.tsx'
+import { action } from './domain.tsx'
 
 vi.mock('#app/utils/sites/kv-cache.server.ts', async (importOriginal) => {
 	const actual = await importOriginal<typeof KvCacheModule>()
@@ -23,9 +22,10 @@ describe('domain changes in Activity', () => {
 	it('removing the custom domain is logged with the member who did it', async () => {
 		const user = await insertTestUser()
 		const organization = await createTestOrganization(user.id, 'admin')
+		const customDomain = `eats-${organization.id.slice(0, 8)}.example.com`
 		await db
 			.update(Organization)
-			.set({ customDomain: `eats-${organization.id.slice(0, 8)}.example.com` })
+			.set({ customDomain })
 			.where(eq(Organization.id, organization.id))
 		const { cookie } = await createTestSession(user.id)
 		const logSpy = vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
@@ -36,7 +36,8 @@ describe('domain changes in Activity', () => {
 					{
 						method: 'POST',
 						body: new URLSearchParams({
-							intent: removeCustomDomainActionIntent,
+							intent: 'remove-domain',
+							hostname: customDomain,
 						}),
 					},
 					cookie,

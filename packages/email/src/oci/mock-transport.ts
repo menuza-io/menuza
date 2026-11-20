@@ -18,6 +18,8 @@ type MockTransportInput = {
 	text: string
 	messageId?: string
 	headerFields?: Record<string, string>
+	sender?: { email: string; name?: string }
+	replyTo?: { email: string; name?: string }
 }
 
 type MockTransportResult =
@@ -49,11 +51,13 @@ export async function sendOciEmailViaMockTransport(
 				},
 				sender: {
 					senderAddress: {
-						email: config?.senderEmail ?? brand.supportEmail,
-						name: config?.senderName ?? brand.shortName,
+						email:
+							input.sender?.email ?? config?.senderEmail ?? brand.supportEmail,
+						name: input.sender?.name ?? config?.senderName ?? brand.shortName,
 					},
 				},
 				headerFields: input.headerFields,
+				...(input.replyTo ? { replyTo: [input.replyTo] } : {}),
 			},
 		}),
 	})
