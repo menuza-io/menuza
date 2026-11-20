@@ -65,7 +65,10 @@ export function GeneralSettingsCard({
 	useFormSnapshotSaveBar(formRef, {
 		saving: fetcher.state !== 'idle',
 		result: fetcher.data,
-		onDiscard: discard,
+		onDiscard: () => {
+			form.reset()
+			discard()
+		},
 		saveLast: true,
 	})
 

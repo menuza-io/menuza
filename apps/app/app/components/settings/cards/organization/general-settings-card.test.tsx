@@ -47,7 +47,9 @@ describe('GeneralSettingsCard', () => {
 		expect(screen.getByText('Unsaved changes')).toBeInTheDocument()
 
 		await user.click(screen.getByRole('button', { name: 'Discard' }))
-		expect(name).toHaveValue('acme')
+		await waitFor(() =>
+			expect(screen.getByLabelText(/^name/i)).toHaveValue('acme'),
+		)
 		await waitFor(() =>
 			expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument(),
 		)
@@ -58,7 +60,9 @@ describe('GeneralSettingsCard', () => {
 		renderCard()
 
 		const name = screen.getByLabelText(/^name/i)
+		await user.click(name)
 		await user.clear(name)
+		expect(screen.getByText('Unsaved changes')).toBeInTheDocument()
 		await user.click(screen.getByRole('button', { name: 'Save' }))
 
 		expect(name).toHaveAttribute('aria-invalid', 'true')
