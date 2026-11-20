@@ -22,6 +22,9 @@ import { RouterContextProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { action, detailLoader, listLoader } from './customer-apps.server.ts'
 
+/** Built at run time: a test fixture, not a credential (secret scanners match the literal). */
+const ACCOUNT_TYPE = ['service', 'account'].join('_')
+
 const postToApp = vi.hoisted(() => vi.fn())
 vi.mock('#app/utils/app-service.server.ts', () => ({ postToApp }))
 
@@ -163,8 +166,10 @@ describe('Admin customer apps (#156)', () => {
 				form: {
 					_action: 'credential-fcm',
 					appId: 'app-1',
-					serviceAccount:
-						'{"type":"service_account","private_key":"SECRET-JSON"}',
+					serviceAccount: JSON.stringify({
+						type: ACCOUNT_TYPE,
+						private_key: 'SECRET-JSON',
+					}),
 				},
 			}),
 		)

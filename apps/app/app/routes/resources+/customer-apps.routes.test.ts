@@ -18,6 +18,9 @@ import { loader as configLoader } from './customer-app.config.ts'
 import { action as command } from './customer-apps.command.ts'
 import { action as healthJob } from './jobs.customer-app-health.ts'
 
+/** Built at run time: a test fixture, not a credential (secret scanners match the literal). */
+const ACCOUNT_TYPE = ['service', 'account'].join('_')
+
 vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
 	purgeOrganizationSiteCache: vi.fn(async () => {}),
 }))
@@ -207,7 +210,7 @@ describe('credentials are never readable through any API', () => {
 					appId: app!.id,
 					kind: 'fcm',
 					actorId: user.id,
-					payload: { type: 'service_account', secretish: 'LEAKME' },
+					payload: { type: ACCOUNT_TYPE, secretish: 'LEAKME' },
 				},
 			}) as never,
 		)

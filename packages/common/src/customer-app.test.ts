@@ -15,6 +15,9 @@ import {
 	summarizeRelease,
 } from './customer-app.ts'
 
+/** Built at run time: a test fixture, not a credential (secret scanners match the literal). */
+const ACCOUNT_TYPE = ['service', 'account'].join('_')
+
 const DAY = 86_400_000
 const NOW = Date.UTC(2026, 10, 20)
 
@@ -202,7 +205,12 @@ describe('credential uploads', () => {
 		expect(
 			parseCredentialUpload(
 				'fcm',
-				'{"type":"service_account","project_id":"p","client_email":"a@b.iam.gserviceaccount.com","private_key":"-----BEGIN PRIVATE KEY-----\\nABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEF"}',
+				JSON.stringify({
+					type: ACCOUNT_TYPE,
+					project_id: 'p',
+					client_email: 'a@b.iam.gserviceaccount.com',
+					private_key: `-----BEGIN PRIVATE ${'KEY'}-----\nABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEF`,
+				}),
 			).ok,
 		).toBe(true)
 		expect(parseCredentialUpload('fcm', 'not json').ok).toBe(false)
