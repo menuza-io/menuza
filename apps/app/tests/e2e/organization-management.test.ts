@@ -193,9 +193,13 @@ test.describe('Organization Management', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Update organization details (only name and slug are available in the form)
-		const newName = faker.company.name()
+		const newName = `${faker.company.name()} ${faker.string.alphanumeric(6)}`
+		const nameField = page
+			.locator('#organization-settings-form')
+			.getByRole('textbox', { name: /^name$/i })
 
-		await page.getByRole('textbox', { name: /^name$/i }).fill(newName)
+		await nameField.fill(newName)
+		await expect(saveBar(page).save).toBeVisible()
 
 		// Save changes
 		await saveBar(page).save.click()
