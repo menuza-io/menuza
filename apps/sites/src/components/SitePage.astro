@@ -6,6 +6,7 @@ import {
 } from '@repo/common/site-locales'
 import { activeAnnouncements } from '@repo/common/announcement-window'
 import AnnouncementBanners from '~/components/AnnouncementBanners.astro'
+import AppInviteBanner from '~/components/AppInviteBanner.astro'
 import SitePopup from '~/components/SitePopup.astro'
 import ConsentBanner from '~/components/ConsentBanner.astro'
 import SiteFooter from '~/components/SiteFooter.astro'
@@ -156,6 +157,7 @@ const alternateLinks = [
 	<div class="bg-background text-foreground flex min-h-dvh flex-col">
 		{showConsentBanner ? <ConsentBanner /> : null}
 		<AnnouncementBanners announcements={announcements} />
+		<AppInviteBanner organization={organization} />
 		<SiteHeader
 			config={header?.config}
 			organization={organization}

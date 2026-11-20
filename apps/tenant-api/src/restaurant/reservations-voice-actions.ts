@@ -1,3 +1,4 @@
+import { GUEST_LINK_TYPES } from '@repo/common/links'
 import { isUsOrCanadaNumber } from '@repo/phone-agent'
 import { type ReservationsContext } from '@repo/reservations'
 import { rsvHolds } from '@repo/tenant-db'
@@ -53,7 +54,8 @@ export const VOICE_ACTION_CAPS = {
 } as const
 
 export const MAX_VOICE_SLOTS = 3
-const RESERVE_PATH = '/reserve'
+/** The booking page the voice agent texts (`#h=<hold>`): the registry's `reserve` path. */
+const RESERVE_PATH = GUEST_LINK_TYPES.reserve.path
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const localTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)

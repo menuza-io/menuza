@@ -1,3 +1,4 @@
+import { buildLink } from '@repo/common/links'
 import { type LocationAddress } from '@repo/common/location-types'
 import {
 	isTableTarget,
@@ -158,9 +159,20 @@ async function listDishes(
 	}
 }
 
-function siteUrl(origin: string, path: string, params: Record<string, string>) {
-	const url = new URL(path, origin)
-	for (const [key, value] of Object.entries(params)) {
+/**
+ * A printed QR code's address: the shared link registry builds the link and
+ * the campaign's `utm` tags are added on top.
+ */
+function siteLink(
+	origin: string,
+	type: 'reserve' | 'coupon' | 'menu_home',
+	params: Record<string, string>,
+	utm: Record<string, string>,
+) {
+	const link = buildLink(type, params, { origin })
+	if (!link) throw new Error('A QR code needs the restaurant’s site origin.')
+	const url = new URL(link)
+	for (const [key, value] of Object.entries(utm)) {
 		url.searchParams.set(key, value)
 	}
 	return url.toString()
@@ -237,7 +249,7 @@ export const restaurantPrintVertical: PrintShopServerVertical = {
 				}
 			},
 		},
-		coupon: couponTarget({ scopes: listLocations, siteUrl }),
+		coupon: couponTarget({ scopes: listLocations, siteLink }),
 		menu: {
 			defaultFor: async (_access, { scope }) =>
 				scope ? { kind: 'menu', locationId: scope.id } : null,
@@ -270,10 +282,12 @@ export const restaurantPrintVertical: PrintShopServerVertical = {
 					pieces: [
 						{
 							label: null,
-							qrUrl: siteUrl(siteOrigin, '/reserve', {
-								...(locationId ? { location: locationId } : {}),
-								...utm,
-							}),
+							qrUrl: siteLink(
+								siteOrigin,
+								'reserve',
+								locationId ? { location: locationId } : {},
+								utm,
+							),
 						},
 					],
 					facts: [],

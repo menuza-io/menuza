@@ -17,6 +17,7 @@ import CtaBlock from './CtaBlock.astro'
 import TestimonialsBlock from './TestimonialsBlock.astro'
 import FormBlock from './FormBlock.astro'
 import ReservationBlock from './ReservationBlock.astro'
+import AppBlock from './AppBlock.astro'
 import RewardsBlock from './RewardsBlock.astro'
 import EventsBlock from './EventsBlock.astro'
 
@@ -62,6 +63,8 @@ const { type, id, config, menu, features } = Astro.props
 				return <ReservationBlock config={config} />
 			case 'rewards':
 				return <RewardsBlock config={config} />
+			case 'app':
+				return <AppBlock config={config} />
 			case 'events':
 				return <EventsBlock config={config} />
 			case 'menuHighlights':

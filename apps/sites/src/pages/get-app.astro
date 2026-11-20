@@ -1,0 +1,64 @@
+---
+import { msg } from '@lingui/core/macro'
+import {
+	INVITE_PLACEMENTS,
+	type InvitePlacement,
+} from '@repo/common/customer-app'
+import { getLocaleHref } from '@repo/common/site-locales'
+import AppInviteSection from '~/components/AppInviteSection.astro'
+import SitePage from '~/components/SitePage.astro'
+import { platformFromUserAgent, storeForPlatform } from '~/lib/app-invite'
+import { recordAppTap } from '~/lib/org'
+
+/**
+ * `/get-app`: the site's own smart link for the restaurant's app (#196). A tap
+ * is counted per placement and the visitor is sent to the live store link of
+ * the app: the one they asked for with `?store=`, or the one for their phone.
+ * A desktop visitor sees both stores with a QR code. The store link comes only
+ * from the published settings, never from the query, and nothing about the
+ * visitor is recorded.
+ */
+const organization = Astro.locals.organization
+if (!organization?.customerApp) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+const app = organization.customerApp
+const rawPlacement = Astro.url.searchParams.get('p') ?? ''
+const placement: InvitePlacement = (INVITE_PLACEMENTS as readonly string[]).includes(rawPlacement)
+	? (rawPlacement as InvitePlacement)
+	: 'footer'
+const asked = Astro.url.searchParams.get('store')
+const requested =
+	asked === 'app_store' || asked === 'play_store'
+		? asked
+		: (() => {
+				const platform = platformFromUserAgent(Astro.request.headers.get('user-agent') ?? '')
+				return platform === 'other' ? null : storeForPlatform(platform)
+			})()
+const target = requested ? app.stores[requested] : undefined
+if (requested && target) {
+	await recordAppTap({
+		slug: Astro.locals.orgSlug,
+		host: Astro.locals.customHost,
+		placement,
+		store: requested,
+	})
+	return Astro.redirect(target, 302)
+}
+if (!app.stores.app_store && !app.stores.play_store) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+const i18n = Astro.locals.i18n
+const title = i18n._(msg`Get the app`)
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'get-app', title, slug: 'get-app', isHomePage: false, sections: [] }}
+	title={`${title} - ${organization.name}`}
+	noIndex
+>
+	<div class="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8">
+		<AppInviteSection organization={organization} placement="block" qr />
+	</div>
+</SitePage>

@@ -1,3 +1,4 @@
+import { buildLink } from '@repo/common/links'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { userHasOrganizationPermission } from '@repo/auth'
@@ -107,11 +108,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				const origin = org ? siteOrigin(org) : ''
 				const code = codeRow?.code ?? ''
 				const redeemUrl =
-					origin && code
-						? `${origin}/menu?coupon=${encodeURIComponent(code)}`
-						: origin
-							? `${origin}/menu`
-							: ''
+					(code
+						? buildLink('coupon', { coupon: code }, { origin })
+						: buildLink('menu_home', {}, { origin })) ?? ''
 				prefillTopicType = 'OFFER'
 				prefillDetails = offerDetailsFromCoupon({
 					title: discount.name,

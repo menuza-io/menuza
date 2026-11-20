@@ -3,6 +3,7 @@ import { msg } from '@lingui/core/macro'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
+import AppInviteSection from '~/components/AppInviteSection.astro'
 import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
 import { translate } from '~/lib/ordering-labels'
 import { formatMoney } from '~/lib/ordering/money'
@@ -570,6 +571,12 @@ const valueClass = 'price font-medium text-foreground'
 				></p>
 
 				<DropAlertsSignup source="order_success" title={dropAlertsTitle} />
+				{/* "Track this order in the app": only for a live store (#196). */}
+				<AppInviteSection
+					organization={organization}
+					placement="confirmation"
+					class="border-border mt-6 rounded-lg border p-5"
+				/>
 
 				{/* Help: the restaurant's phone (public location data) and a re-send
 				    of the receipt email. Shown only when they can work. */}

@@ -1,0 +1,58 @@
+---
+import { msg } from '@lingui/core/macro'
+import { type InvitePlacement } from '@repo/common/customer-app'
+import { getLocaleHref } from '@repo/common/site-locales'
+import AppStoreButtons from '~/components/AppStoreButtons.astro'
+import { placementStores } from '~/lib/app-placements'
+import { type PublicOrganization } from '~/lib/org'
+import { renderQrSvg } from '~/lib/careers/qr'
+
+interface Props {
+	organization: PublicOrganization
+	placement: Extract<InvitePlacement, 'confirmation' | 'footer' | 'block'>
+	heading?: string
+	body?: string
+	/** A desktop QR code that opens the phone's own store. */
+	qr?: boolean
+	class?: string
+}
+
+const { organization, placement, heading, body, qr = false, class: className = '' } = Astro.props
+const i18n = Astro.locals.i18n
+const locale = Astro.locals.requestedLocale || organization.defaultLocale || 'en'
+const defaultLocale = organization.defaultLocale || 'en'
+const prefix = getLocaleHref('/', locale, locale, defaultLocale).replace(/\/$/, '')
+const stores = placementStores(organization.customerApp, placement, prefix)
+const appName = organization.customerApp?.displayName ?? organization.name
+const defaultHeading =
+	placement === 'confirmation'
+		? i18n._(msg`Track this order in the app`)
+		: i18n._(msg`Get our app`)
+const defaultBody = i18n._(msg`Order faster and keep your orders and rewards in one place.`)
+const scan = i18n._(msg`Scan to get the app`)
+// The QR code opens the site's smart link: each phone lands on its own store.
+const qrSvg =
+	qr && stores.length > 0
+		? await renderQrSvg(`${Astro.url.origin}${prefix}/get-app?p=${placement}`)
+		: null
+---
+
+{
+	stores.length > 0 && (
+		<section class={`flex flex-wrap items-center gap-4 ${className}`} data-app-invite-section={placement}>
+			<div class="min-w-0 flex-1 space-y-1">
+				<h2 class="font-heading text-base">{heading?.trim() || defaultHeading}</h2>
+				<p class="text-muted-foreground text-sm" data-app-name={appName}>
+					{body?.trim() || defaultBody}
+				</p>
+				<AppStoreButtons stores={stores} class="pt-2" />
+			</div>
+			{qrSvg ? (
+				<figure class="hidden shrink-0 md:block" data-app-qr>
+					<div class="size-28 [&>svg]:size-full" set:html={qrSvg} />
+					<figcaption class="text-muted-foreground mt-1 text-center text-xs">{scan}</figcaption>
+				</figure>
+			) : null}
+		</section>
+	)
+}

@@ -1,3 +1,4 @@
+import { buildLink } from './links.ts'
 import { z } from 'zod'
 import { orderDiscountsRequestSchema } from '@repo/discounts'
 import { orderLoyaltySelectionSchema } from './order-loyalty.ts'
@@ -147,12 +148,16 @@ export function qrTableUrl(
 	tableToken: string,
 	extraParams: Record<string, string> = {},
 ) {
-	const url = new URL('/menu', siteOrigin)
-	url.searchParams.set('location', locationId)
+	const url = new URL(
+		requireLink(
+			'table',
+			{ location: locationId, table: tableToken },
+			siteOrigin,
+		),
+	)
 	for (const [key, value] of Object.entries(extraParams)) {
 		url.searchParams.set(key, value)
 	}
-	url.hash = `table=${tableToken}`
 	return url.toString()
 }
 
@@ -162,13 +167,24 @@ export function qrPosterUrl(
 	locationId: string,
 	extraParams: Record<string, string> = {},
 ) {
-	const url = new URL('/menu', siteOrigin)
-	url.searchParams.set('location', locationId)
-	url.searchParams.set('src', 'qr')
+	const url = new URL(
+		requireLink('order_ahead', { location: locationId, src: 'qr' }, siteOrigin),
+	)
 	for (const [key, value] of Object.entries(extraParams)) {
 		url.searchParams.set(key, value)
 	}
 	return url.toString()
+}
+
+/** The shared registry's address; a QR code is not printed without a site origin. */
+function requireLink(
+	type: 'table' | 'order_ahead',
+	params: Record<string, string>,
+	origin: string,
+) {
+	const link = buildLink(type, params, { origin })
+	if (!link) throw new Error('A QR code needs the restaurant’s site origin.')
+	return link
 }
 
 // ---------------------------------------------------------------------------
@@ -359,7 +375,11 @@ export type QrPublicTab = {
 	 * "dine-in tips" switch (off hides the section and refuses a tip). Absent
 	 * on older nodes: the page shows the old 10, 15 and 20 percent buttons.
 	 */
-	tipChoices?: { enabled: boolean; currency: string; settings: TipOrderTypeSettings }
+	tipChoices?: {
+		enabled: boolean
+		currency: string
+		settings: TipOrderTypeSettings
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -400,7 +420,12 @@ export const qrTabPayRequestSchema = z.strictObject({
 	 * prices the fee; a different amount is 409 `service_fee_changed`. A missing
 	 * value reads as 0.
 	 */
-	expectedServiceFeeMinor: z.number().int().min(0).max(1_000_000_000).optional(),
+	expectedServiceFeeMinor: z
+		.number()
+		.int()
+		.min(0)
+		.max(1_000_000_000)
+		.optional(),
 	contact: z.strictObject({
 		name: z.string().trim().min(1, 'Enter your name').max(120),
 		phone: z

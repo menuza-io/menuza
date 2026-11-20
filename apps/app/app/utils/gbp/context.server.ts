@@ -3,6 +3,7 @@
  * features built on it): flags, the location and link rows, what Menuza wants
  * Google to show, and the append-only sync history. Business data only.
  */
+import { buildLink } from '@repo/common/links'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import {
 	type GoogleSpecialHourPeriod,
@@ -212,10 +213,11 @@ export function siteLinks(
 			several && location.sitePageEnabled
 				? `${origin}/locations/${encodeURIComponent(location.slug)}`
 				: `${origin}/`,
-		order: several
-			? `${origin}/menu?location=${encodeURIComponent(location.id)}`
-			: `${origin}/menu`,
-		reservation: `${origin}/reserve`,
+		order:
+			buildLink('menu_home', several ? { location: location.id } : {}, {
+				origin,
+			}) ?? origin,
+		reservation: buildLink('reserve', {}, { origin }) ?? origin,
 	}
 }
 

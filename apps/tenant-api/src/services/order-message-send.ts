@@ -1,3 +1,5 @@
+import { buildLink } from '@repo/common/links'
+import { getCustomerAppInfo } from '../lib/customer-app-info.ts'
 import { type ReservationsContext } from '@repo/reservations'
 import {
 	getTenantDb,
@@ -157,6 +159,34 @@ function settingFrom(context: ReservationsContext): MessageSetting {
 	}
 }
 
+/**
+ * The store buttons of the receipt email: the live stores of the organization's
+ * app, each through the site's counting redirect (`/get-app`). Nothing when
+ * there is no app, none is live, the owner switched the placement off, or the
+ * lookup failed.
+ */
+async function appInviteFor(
+	orgId: string,
+	setting: MessageSetting,
+	locale: string,
+): Promise<Array<{ store: 'app_store' | 'play_store'; url: string }>> {
+	const info = await getCustomerAppInfo(orgId)
+	if (!info.app?.inviteEmail) return []
+	const prefix =
+		locale !== setting.defaultLocale && locale !== 'en' ? `/${locale}` : ''
+	const out: Array<{ store: 'app_store' | 'play_store'; url: string }> = []
+	for (const store of ['app_store', 'play_store'] as const) {
+		if (!info.app.stores[store]) continue
+		const url = buildLink(
+			'get_app',
+			{ store, p: 'email' },
+			{ origin: setting.siteOrigin, localePrefix: prefix },
+		)
+		if (url) out.push({ store, url })
+	}
+	return out
+}
+
 /** Sends one message for `order` right now, rendering it from the order as it is. */
 async function sendForOrder(input: {
 	orgId: string
@@ -205,9 +235,13 @@ async function sendForOrder(input: {
 						: Date.now(),
 				})
 			: null
+	// "Track this order in the app" on the receipt, only for a live store (#196).
+	const appInvite =
+		kind === 'receipt' ? await appInviteFor(orgId, setting, locale) : []
 	const rendered = renderOrderEmail({
 		kind,
 		locale,
+		appInvite,
 		theme: setting.theme,
 		restaurantName: setting.restaurantName,
 		defaultLocale: setting.defaultLocale,

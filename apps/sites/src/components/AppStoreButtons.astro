@@ -1,0 +1,35 @@
+---
+import { msg } from '@lingui/core/macro'
+import { type PlacementStore } from '~/lib/app-placements'
+
+interface Props {
+	stores: PlacementStore[]
+	class?: string
+}
+
+const { stores, class: className = '' } = Astro.props
+const i18n = Astro.locals.i18n
+const labels = {
+	app_store: i18n._(msg`Download on the App Store`),
+	play_store: i18n._(msg`Get it on Google Play`),
+}
+---
+
+{
+	stores.length > 0 && (
+		<ul class={`flex flex-wrap items-center gap-3 ${className}`} data-app-store-buttons>
+			{stores.map((store) => (
+				<li>
+					<a
+						href={store.href}
+						class="btn-secondary inline-flex min-h-11 items-center px-5 py-2.5 text-sm"
+						rel="noopener"
+						data-app-store={store.store}
+					>
+						{labels[store.store]}
+					</a>
+				</li>
+			))}
+		</ul>
+	)
+}

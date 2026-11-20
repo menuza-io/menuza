@@ -50,6 +50,10 @@ export type OrderCopyLabels = {
 	/** Delivery with a promised start only: `{time}`. */
 	arrivingAround: string
 	viewOrder: string
+	/** Receipt only, with the branded app's live stores (#196). */
+	trackInApp: string
+	storeAppStore: string
+	storePlayStore: string
 	welcomeBonusLine: string
 	pointsUnit: string
 	starsUnit: string

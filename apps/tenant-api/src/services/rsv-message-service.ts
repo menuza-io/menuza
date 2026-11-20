@@ -15,6 +15,7 @@ import {
 	resolveGuestLocale,
 	type ReservationsContext,
 } from '@repo/reservations'
+import { buildLink } from '@repo/common/links'
 import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { getNodeRegion } from '../lib/region.ts'
@@ -168,8 +169,13 @@ type Subject = {
 	token: string | null
 	endMs: number | null
 	quotedWaitMin: number | null
-	/** Query of the booking link that opens the offered slot (notify-me only). */
-	bookQuery: string | null
+	/** The booking link's slot parameters that open the offered slot (notify-me only). */
+	bookQuery: {
+		location: string
+		party: string
+		date: string
+		time: string
+	} | null
 	/** Amount and id of the payment a payment message is about. */
 	payment: {
 		id: string
@@ -346,12 +352,12 @@ async function resolveSubject(
 				endMs: null,
 				quotedWaitMin: null,
 				payment: null,
-				bookQuery: new URLSearchParams({
+				bookQuery: {
 					location: request.locationId,
 					party: String(request.partySize),
 					date: request.businessDate,
 					time: `${hh}:${mm}`,
-				}).toString(),
+				},
 			},
 		}
 	}
@@ -395,21 +401,31 @@ async function sendOne(options: {
 		(await locationTimeZone(db, subject.locationId))
 	const base = siteBase(context, locale)
 	const token = subject.token
+	// Every link comes from the shared registry (`@repo/common/links`): the
+	// capability token rides in the fragment, and a phone with the restaurant's
+	// app opens the booking screen.
 	const manageUrl =
 		base && token && subject.kind === 'reservation'
-			? `${base}/reserve/manage#t=${token}`
+			? buildLink('reservation', { token }, { origin: base })
 			: null
 	const statusUrl =
 		base && token && subject.kind === 'waitlist'
-			? `${base}/reserve/waitlist#t=${token}`
+			? buildLink('waitlist', { token }, { origin: base })
 			: null
 	const bookUrl = base
-		? `${base}/reserve${subject.bookQuery ? `?${subject.bookQuery}` : ''}`
+		? buildLink('reserve', subject.bookQuery ?? {}, { origin: base })
 		: null
 	const kind = row.kind as ToggleableMessageKind | PaymentEmailKind
 	const payUrl =
 		base && subject.payment && kind === 'fee_action_required'
-			? `${base}/reserve/pay#f=${subject.payment.id}&t=${deriveFeePayToken(orgId, subject.payment.id)}`
+			? buildLink(
+					'reservation_pay',
+					{
+						fee: subject.payment.id,
+						token: deriveFeePayToken(orgId, subject.payment.id),
+					},
+					{ origin: base },
+				)
 			: null
 
 	if (row.channel === 'sms') {

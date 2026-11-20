@@ -1,3 +1,4 @@
+import { buildLink } from '@repo/common/links'
 import { randomUUID } from 'node:crypto'
 import { createHash } from 'node:crypto'
 import {
@@ -339,9 +340,11 @@ export function buildPaymentBlock(params: {
 		expiresAt: new Date(
 			params.reservation.paymentExpiresAt ?? Date.now(),
 		).toISOString(),
-		payUrl: prefix
-			? `${prefix}/reserve/pay#r=${params.reservation.id}&t=${paymentToken}`
-			: null,
+		payUrl: buildLink(
+			'reservation_pay',
+			{ reservation: params.reservation.id, token: paymentToken },
+			{ origin: prefix },
+		),
 	}
 }
 

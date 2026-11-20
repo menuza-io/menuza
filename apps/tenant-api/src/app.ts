@@ -44,6 +44,7 @@ import { provisionRoutes } from './routes/provision.ts'
 import { publicOrderRoutes } from './routes/orders.ts'
 import { publicDeliveryRoutes } from './routes/delivery.ts'
 import { orderSystemRoutes } from './routes/order-system.ts'
+import { customerOrderRoutes } from './routes/customer-orders.ts'
 import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
 import { operatorQrRoutes } from './routes/operator-qr.ts'
@@ -321,6 +322,12 @@ export function createTenantApiApp() {
 			: loyaltyReadRateLimit(c, next),
 	)
 
+	// The guest's own orders (#112) need a customer token; this is a burst ceiling.
+	app.use(
+		'/customer/*',
+		rateLimit('customer-orders', { windowMs: 60 * 1000, maxRequests: 120 }),
+	)
+
 	// Gift cards: a balance check and a purchase are the guessable or abusable
 	// calls, so they get their own tighter burst limit on top of the durable
 	// per-address, per-customer and per-organization guess limits.
@@ -344,6 +351,7 @@ export function createTenantApiApp() {
 	app.route('/auth', authRoutes)
 	app.route('/subscriptions', subscriptionRoutes)
 	app.route('/shop', shopRoutes)
+	app.route('/customer/orders', customerOrderRoutes)
 	app.route('/forms', publicFormRoutes)
 	app.route('/orders', publicOrderRoutes)
 	app.route('/delivery', publicDeliveryRoutes)

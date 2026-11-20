@@ -2540,6 +2540,8 @@ function previewText(
 			return loc(config.heading) || loc(config.buttonLabel) || 'Book a table'
 		case 'rewards':
 			return loc(config.heading) || 'Rewards'
+		case 'app':
+			return loc(config.heading) || 'Get the app'
 		case 'events':
 			return loc(config.heading) || 'Upcoming events'
 		case 'menuHighlights':
@@ -3302,6 +3304,8 @@ function renderBlockEditor(props: {
 			)
 		case 'rewards':
 			return <RewardsBlockEditor config={config} updateField={updateField} />
+		case 'app':
+			return <AppBlockEditor config={config} updateField={updateField} />
 		case 'events':
 			return <EventsBlockEditor config={config} updateField={updateField} />
 		case 'menuHighlights':
@@ -4789,6 +4793,35 @@ function EventsBlockEditor({ config, updateField }: EditorProps) {
 					value={(config.background as string) ?? 'none'}
 					onChange={(v) => updateField('background', v)}
 				/>
+			</EditorSection>
+		</div>
+	)
+}
+
+/** The "Get the app" block (#196): store badges and a QR code, only once a store is live. */
+function AppBlockEditor({ config, updateField }: EditorProps) {
+	const { _ } = useLingui()
+	return (
+		<div className="space-y-5">
+			<EditorSection title={<Trans>Content</Trans>}>
+				<FieldInput
+					label={_(msg`Heading`)}
+					value={(config.heading as string) ?? ''}
+					onChange={(v) => updateField('heading', v)}
+					placeholder={_(msg`Get our app (default)`)}
+				/>
+				<FieldTextarea
+					label={_(msg`Description`)}
+					value={(config.body as string) ?? ''}
+					onChange={(v) => updateField('body', v)}
+					rows={3}
+				/>
+				<p className="text-muted-foreground text-sm">
+					<Trans>
+						The block shows the stores where your app is live, with a QR code
+						for desktop visitors. It stays empty until a store is live.
+					</Trans>
+				</p>
 			</EditorSection>
 		</div>
 	)

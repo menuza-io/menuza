@@ -1,3 +1,4 @@
+import { buildLink } from '@repo/common/links'
 import { type EmailBlock } from '@repo/common/email-blocks'
 
 /**
@@ -31,12 +32,7 @@ export type ProgramId = (typeof PROGRAM_IDS)[number]
 
 /** What a program needs before it is offered: a template only appears when its trigger is available. */
 export type ProgramRequirement =
-	| 'ordering'
-	| 'reservations'
-	| 'loyalty'
-	| 'birthdays'
-	| 'cart'
-	| 'review_link'
+	'ordering' | 'reservations' | 'loyalty' | 'birthdays' | 'cart' | 'review_link'
 
 export type ProgramCapabilities = {
 	/** Restaurant ordering is available (flag `marketing.order_automations`). */
@@ -130,8 +126,14 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				kind: 'message',
 				id: 'welcome',
 				message: {
-					subject: c('Welcome to {{organizationName}}', 'أهلاً بك في {{organizationName}}'),
-					heading: c('Welcome, {{firstName|friend}}!', 'أهلاً {{firstName|بك}}!'),
+					subject: c(
+						'Welcome to {{organizationName}}',
+						'أهلاً بك في {{organizationName}}',
+					),
+					heading: c(
+						'Welcome, {{firstName|friend}}!',
+						'أهلاً {{firstName|بك}}!',
+					),
 					paragraphs: [
 						c(
 							"We're glad you're here. Have a look at the menu whenever you're hungry.",
@@ -150,8 +152,14 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				kind: 'message',
 				id: 'nudge',
 				message: {
-					subject: c('Hungry, {{firstName|friend}}?', 'جائع يا {{firstName|صديقي}}؟'),
-					heading: c('Your next meal is a tap away', 'وجبتك التالية على بعد نقرة'),
+					subject: c(
+						'Hungry, {{firstName|friend}}?',
+						'جائع يا {{firstName|صديقي}}؟',
+					),
+					heading: c(
+						'Your next meal is a tap away',
+						'وجبتك التالية على بعد نقرة',
+					),
 					paragraphs: [
 						c(
 							'Order pickup or delivery in a minute. We will have it ready.',
@@ -188,7 +196,10 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				id: 'thanks',
 				message: {
 					subject: c('Thank you for your order', 'شكراً على طلبك'),
-					heading: c('Thanks for ordering, {{firstName|friend}}', 'شكراً لطلبك يا {{firstName|صديقي}}'),
+					heading: c(
+						'Thanks for ordering, {{firstName|friend}}',
+						'شكراً لطلبك يا {{firstName|صديقي}}',
+					),
 					paragraphs: [
 						c(
 							'It was our pleasure to cook for you. We hope you enjoyed every bite.',
@@ -226,14 +237,20 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				message: {
 					coupon: true,
 					subject: c('We would love to see you again', 'يسعدنا أن نراك مجدداً'),
-					heading: c('Ready for round two, {{firstName|friend}}?', 'جاهز للطلب الثاني يا {{firstName|صديقي}}؟'),
+					heading: c(
+						'Ready for round two, {{firstName|friend}}?',
+						'جاهز للطلب الثاني يا {{firstName|صديقي}}؟',
+					),
 					paragraphs: [
 						c(
 							'It has been a week since your first order. Your favourites are waiting.',
 							'مرّ أسبوع على أول طلب. أطباقك المفضلة بانتظارك.',
 						),
 					],
-					couponLine: c('Use code {{couponCode}} on your next order.', 'استخدم الرمز {{couponCode}} في طلبك القادم.'),
+					couponLine: c(
+						'Use code {{couponCode}} on your next order.',
+						'استخدم الرمز {{couponCode}} في طلبك القادم.',
+					),
 					button: { label: c('Order now', 'اطلب الآن'), target: 'menu' },
 					sms: c(
 						'Come back to {{organizationName}}! Your favourites are waiting.',
@@ -267,7 +284,10 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				id: 'miss-you',
 				message: {
 					coupon: true,
-					subject: c('We miss you, {{firstName|friend}}', 'نفتقدك يا {{firstName|صديقي}}'),
+					subject: c(
+						'We miss you, {{firstName|friend}}',
+						'نفتقدك يا {{firstName|صديقي}}',
+					),
 					heading: c('It has been a while', 'مضى وقت طويل'),
 					paragraphs: [
 						c(
@@ -275,7 +295,10 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 							'نود أن نراك مجدداً. عُد واطلب أطباقك المفضلة.',
 						),
 					],
-					couponLine: c('Here is a little something: use code {{couponCode}}.', 'هدية صغيرة لك: استخدم الرمز {{couponCode}}.'),
+					couponLine: c(
+						'Here is a little something: use code {{couponCode}}.',
+						'هدية صغيرة لك: استخدم الرمز {{couponCode}}.',
+					),
 					button: { label: c('Order now', 'اطلب الآن'), target: 'menu' },
 					sms: c(
 						'We miss you at {{organizationName}}! Come back and order your favourites.',
@@ -309,7 +332,10 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				id: 'reward',
 				message: {
 					subject: c('You have a reward waiting', 'لديك مكافأة بانتظارك'),
-					heading: c('A reward is yours, {{firstName|friend}}', 'مكافأة بانتظارك يا {{firstName|صديقي}}'),
+					heading: c(
+						'A reward is yours, {{firstName|friend}}',
+						'مكافأة بانتظارك يا {{firstName|صديقي}}',
+					),
 					paragraphs: [
 						c(
 							'Your points reached {{rewardName|a reward}}. Claim it on your next order.',
@@ -346,14 +372,20 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				id: 'review',
 				message: {
 					subject: c('How was your visit?', 'كيف كانت زيارتك؟'),
-					heading: c('Thank you for visiting, {{firstName|friend}}', 'شكراً لزيارتك يا {{firstName|صديقي}}'),
+					heading: c(
+						'Thank you for visiting, {{firstName|friend}}',
+						'شكراً لزيارتك يا {{firstName|صديقي}}',
+					),
 					paragraphs: [
 						c(
 							'If you enjoyed your meal, a short review helps other guests find us.',
 							'إذا أعجبتك وجبتك، فإن تقييماً قصيراً يساعد الآخرين على اكتشافنا.',
 						),
 					],
-					button: { label: c('Leave a review', 'اكتب تقييماً'), target: 'review' },
+					button: {
+						label: c('Leave a review', 'اكتب تقييماً'),
+						target: 'review',
+					},
 					sms: c('', ''),
 				},
 			},
@@ -380,7 +412,10 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				id: 'missed',
 				message: {
 					subject: c('We missed you', 'افتقدناك'),
-					heading: c('We missed you, {{firstName|friend}}', 'افتقدناك يا {{firstName|صديقي}}'),
+					heading: c(
+						'We missed you, {{firstName|friend}}',
+						'افتقدناك يا {{firstName|صديقي}}',
+					),
 					paragraphs: [
 						c(
 							'Plans change. Whenever you are ready, we would love to host you.',
@@ -416,15 +451,24 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				id: 'treat',
 				message: {
 					coupon: true,
-					subject: c('A birthday treat from {{organizationName}}', 'هدية عيد ميلاد من {{organizationName}}'),
-					heading: c('Happy early birthday, {{firstName|friend}}!', 'عيد ميلاد سعيد مبكراً يا {{firstName|صديقي}}!'),
+					subject: c(
+						'A birthday treat from {{organizationName}}',
+						'هدية عيد ميلاد من {{organizationName}}',
+					),
+					heading: c(
+						'Happy early birthday, {{firstName|friend}}!',
+						'عيد ميلاد سعيد مبكراً يا {{firstName|صديقي}}!',
+					),
 					paragraphs: [
 						c(
 							'Your birthday is coming up, and we would like to celebrate with you.',
 							'عيد ميلادك يقترب ونود الاحتفال معك.',
 						),
 					],
-					couponLine: c('Use code {{couponCode}} for a birthday treat.', 'استخدم الرمز {{couponCode}} لهدية عيد الميلاد.'),
+					couponLine: c(
+						'Use code {{couponCode}} for a birthday treat.',
+						'استخدم الرمز {{couponCode}} لهدية عيد الميلاد.',
+					),
 					button: { label: c('Order now', 'اطلب الآن'), target: 'menu' },
 					sms: c(
 						'Happy early birthday from {{organizationName}}!',
@@ -458,14 +502,20 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 				id: 'reminder',
 				message: {
 					subject: c('You left something behind', 'نسيت شيئاً في سلتك'),
-					heading: c('Your order is waiting, {{firstName|friend}}', 'طلبك بانتظارك يا {{firstName|صديقي}}'),
+					heading: c(
+						'Your order is waiting, {{firstName|friend}}',
+						'طلبك بانتظارك يا {{firstName|صديقي}}',
+					),
 					paragraphs: [
 						c(
 							'You left items in your cart. Pick up where you left off.',
 							'تركت أصنافاً في سلتك. أكمل من حيث توقفت.',
 						),
 					],
-					button: { label: c('Back to your order', 'العودة إلى طلبك'), target: 'cart' },
+					button: {
+						label: c('Back to your order', 'العودة إلى طلبك'),
+						target: 'cart',
+					},
 					sms: c(
 						'You left something in your cart at {{organizationName}}: {{cartLink}}',
 						'تركت شيئاً في سلتك في {{organizationName}}: {{cartLink}}',
@@ -486,8 +536,14 @@ export const PROGRAM_TEMPLATES: readonly ProgramTemplate[] = [
 							'سلتك لا تزال محفوظة. أنهِ طلبك متى شئت.',
 						),
 					],
-					couponLine: c('Use code {{couponCode}} to make it sweeter.', 'استخدم الرمز {{couponCode}} لتجعله أحلى.'),
-					button: { label: c('Back to your order', 'العودة إلى طلبك'), target: 'cart' },
+					couponLine: c(
+						'Use code {{couponCode}} to make it sweeter.',
+						'استخدم الرمز {{couponCode}} لتجعله أحلى.',
+					),
+					button: {
+						label: c('Back to your order', 'العودة إلى طلبك'),
+						target: 'cart',
+					},
 					sms: c(
 						'Your cart is still saved: {{cartLink}}',
 						'سلتك لا تزال محفوظة: {{cartLink}}',
@@ -511,7 +567,9 @@ export function isProgramId(value: unknown): value is ProgramId {
 }
 
 /** The language a program is written in: the organization's, or English. */
-export function programLanguage(locale: string | null | undefined): ProgramLanguage {
+export function programLanguage(
+	locale: string | null | undefined,
+): ProgramLanguage {
 	const base = (locale ?? 'en').toLowerCase().split(/[-_]/)[0]
 	return (PROGRAM_LANGUAGES as readonly string[]).includes(base ?? '')
 		? (base as ProgramLanguage)
@@ -592,7 +650,7 @@ function targetUrl(
 	try {
 		const origin = new URL(input.siteOrigin)
 		return target === 'menu'
-			? new URL('/menu', origin.origin).toString()
+			? (buildLink('menu_home', {}, { origin: origin.origin }) ?? '')
 			: origin.origin
 	} catch {
 		return ''

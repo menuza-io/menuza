@@ -1,3 +1,5 @@
+import { GUEST_LINK_TYPES } from '@repo/common/links'
+
 /**
  * Facts about the table the assistant held or booked on this call. Kept free
  * of the caller's name and number: they feed the call log summary.
@@ -18,7 +20,7 @@ export const RESERVATION_ACTIONS = {
 } as const
 
 /** The path of the booking page a held table's link opens. */
-export const RESERVE_PATH = '/reserve'
+export const RESERVE_PATH = GUEST_LINK_TYPES.reserve.path
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 

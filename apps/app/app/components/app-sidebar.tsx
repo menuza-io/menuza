@@ -303,6 +303,7 @@ function OrganizationSidebar({
 	const qrOrderingNav: QrOrderingNavAccess =
 		rootData?.qrOrderingNav ?? HIDDEN_QR_ORDERING_NAV
 	const showAudiencesNav = rootData?.marketingNav?.audiences === true
+	const showCustomerAppNav = rootData?.marketingNav?.customerApp === true
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -527,6 +528,13 @@ function OrganizationSidebar({
 					title: _(msg`Print shop`),
 					url: `/${orgSlug}/marketing/print`,
 					isActive: location.pathname.includes(`/${orgSlug}/marketing/print`),
+				},
+				{
+					title: _(msg`Customer app`),
+					url: `/${orgSlug}/marketing/customer-app`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/marketing/customer-app`,
+					),
 				},
 			],
 		},
@@ -882,6 +890,9 @@ function OrganizationSidebar({
 						}
 						if (subItem.url.includes('/marketing/print')) {
 							return printShopNav.visible
+						}
+						if (subItem.url.includes('/marketing/customer-app')) {
+							return showCustomerAppNav
 						}
 						return true
 					}),

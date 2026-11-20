@@ -129,6 +129,16 @@
       "import": "./src/gift-card-contract.ts",
       "default": "./src/gift-card-contract.ts"
     },
+    "./links": {
+      "types": "./src/links.ts",
+      "import": "./src/links.ts",
+      "default": "./src/links.ts"
+    },
+    "./customer-orders": {
+      "types": "./src/customer-orders.ts",
+      "import": "./src/customer-orders.ts",
+      "default": "./src/customer-orders.ts"
+    },
     "./customer-app": {
       "types": "./src/customer-app.ts",
       "import": "./src/customer-app.ts",
