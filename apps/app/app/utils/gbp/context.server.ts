@@ -3,7 +3,11 @@
  * features built on it): flags, the location and link rows, what Menuza wants
  * Google to show, and the append-only sync history. Business data only.
  */
-import { buildLink } from '@repo/common/links'
+import {
+	parseActionTargets,
+	targetFor,
+	type PublicActionTargets,
+} from '@repo/common/action-targets'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import {
 	type GoogleSpecialHourPeriod,
@@ -17,6 +21,7 @@ import {
 	GbpError,
 	connectionStateForError,
 } from '@repo/common/gbp-listing'
+import { buildLink } from '@repo/common/links'
 import {
 	DEFAULT_FULFILLMENT_OPTIONS,
 	type FulfillmentOptions,
@@ -70,6 +75,8 @@ export type GbpOrganization = {
 	customDomain: string | null
 	customDomainStatus: string | null
 	dataRegion: string
+	/** Where the Order and Reservations buttons go (#318), JSON. */
+	actionTargets?: string | null
 }
 
 export type GbpLocationRow = typeof OrganizationLocation.$inferSelect
@@ -104,6 +111,7 @@ export async function loadOrganization(
 			customDomain: Organization.customDomain,
 			customDomainStatus: Organization.customDomainStatus,
 			dataRegion: Organization.dataRegion,
+			actionTargets: Organization.actionTargets,
 		})
 		.from(Organization)
 		.where(eq(Organization.id, organizationId))
@@ -208,16 +216,33 @@ export function siteLinks(
 ): SiteLinks {
 	const origin = siteOrigin(organization)
 	const several = locationCount > 1
+	// Google's Order and Reserve buttons go where the site's do (#318): a
+	// location's own choice wins, else the organization's.
+	const targets: PublicActionTargets = {
+		organization: parseActionTargets(organization.actionTargets),
+		locations: {
+			[location.id]: parseActionTargets(
+				(location as { actionTargets?: string | null }).actionTargets,
+			),
+		},
+	}
+	const order = targetFor(targets, 'order', location.id)
+	const reservation = targetFor(targets, 'reservations', location.id)
 	return {
 		website:
 			several && location.sitePageEnabled
 				? `${origin}/locations/${encodeURIComponent(location.slug)}`
 				: `${origin}/`,
 		order:
-			buildLink('menu_home', several ? { location: location.id } : {}, {
-				origin,
-			}) ?? origin,
-		reservation: buildLink('reserve', {}, { origin }) ?? origin,
+			order.mode === 'external'
+				? order.url
+				: (buildLink('menu_home', several ? { location: location.id } : {}, {
+						origin,
+					}) ?? origin),
+		reservation:
+			reservation.mode === 'external'
+				? reservation.url
+				: (buildLink('reserve', {}, { origin }) ?? origin),
 	}
 }
 

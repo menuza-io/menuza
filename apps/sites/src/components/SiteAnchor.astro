@@ -1,6 +1,7 @@
 ---
 import { resolveSiteLink, type SiteLinkInput } from '@repo/common/site-link'
 import { getLocaleHref } from '@repo/common/site-locales'
+import { actionAttrs, actionLink } from '~/lib/action-targets'
 
 interface Props {
 	link: SiteLinkInput
@@ -16,12 +17,22 @@ const {
 	title,
 } = Astro.props
 const resolved = resolveSiteLink(link)
-resolved.href = getLocaleHref(
-	resolved.href,
-	Astro.locals.requestedLocale,
-	Astro.locals.requestedLocale,
-	Astro.locals.defaultLocale,
-)
+// A button for Order online, Gift cards or Reservations goes where the site
+// sends it (#318): another site opens in a new tab and is counted.
+const action = actionLink(Astro.locals.organization, resolved.href)
+const outbound = actionAttrs(action)
+if (action.external) {
+	resolved.href = action.href
+	resolved.target = '_blank'
+	resolved.rel = action.rel
+} else {
+	resolved.href = getLocaleHref(
+		resolved.href,
+		Astro.locals.requestedLocale,
+		Astro.locals.requestedLocale,
+		Astro.locals.defaultLocale,
+	)
+}
 ---
 
 <a
@@ -31,6 +42,7 @@ resolved.href = getLocaleHref(
 	rel={resolved.rel}
 	aria-current={ariaCurrent}
 	title={title}
+	data-outbound={outbound['data-outbound']}
 >
 	<slot />
 </a>

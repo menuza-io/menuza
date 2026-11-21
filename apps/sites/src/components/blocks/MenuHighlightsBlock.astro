@@ -1,4 +1,5 @@
 ---
+import { actionAttrs, actionLink } from '~/lib/action-targets'
 import { pickLocalized } from '@repo/common/site-locales'
 import {
 	dishPriceAtLocation,
@@ -17,6 +18,8 @@ interface Props {
 }
 
 const { config, menu } = Astro.props
+const cardLink = (itemId: string) =>
+	actionLink(Astro.locals.organization, `/menu?item=${encodeURIComponent(itemId)}`)
 const locale = Astro.locals.requestedLocale || menu?.organization.defaultLocale || 'en'
 const defaultLocale = menu?.organization.defaultLocale || Astro.locals.defaultLocale || 'en'
 const i18n = Astro.locals.i18n
@@ -89,7 +92,7 @@ const subtitle = typeof config.subtitle === 'string' ? config.subtitle : ''
 								{highlightShowsFromPrice(card) ? <span>{fromLabel} </span> : null}
 								{formatMoney(card.price, card.currency, locale)}
 							</p>
-							<a class="btn-cta mt-4" href={`/menu?item=${encodeURIComponent(card.id)}`}>{orderLabel}</a>
+							<a class="btn-cta mt-4" href={cardLink(card.id).href} {...actionAttrs(cardLink(card.id))}>{orderLabel}</a>
 						</div>
 					</article>
 				))}

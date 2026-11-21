@@ -14,6 +14,7 @@ import {
 	type SiteLocaleLink,
 	type SiteOrgChrome,
 } from '~/lib/media'
+import { navLinkIsReplaced } from '~/lib/action-targets'
 import { isCurrentHeaderLink } from '~/lib/site-header'
 
 interface NavLink {
@@ -56,6 +57,9 @@ const currentUrl = new URL(Astro.url)
 currentUrl.pathname = localeHref(currentUrl.pathname)
 const navLinks = (Array.isArray(config.navLinks) ? config.navLinks : [])
 	.filter((link) => link.label)
+	// Our ordering, gift card and booking pages leave the navigation while
+	// that action goes to another site (#318).
+	.filter((link) => !navLinkIsReplaced(Astro.locals.organization, link.url))
 	.map((link) => ({
 		...link,
 		current: isCurrentHeaderLink(

@@ -1,3 +1,7 @@
+import {
+	parseActionTargets,
+	type PublicActionTargets,
+} from '@repo/common/action-targets'
 import { formatPriceRange, parseStoredCuisines } from '@repo/common/cuisines'
 import {
 	type ConsentMode,
@@ -32,6 +36,10 @@ import {
 	WebsiteRedirect,
 } from '@repo/database'
 import {
+	loadPublicCustomerApp,
+	type PublicCustomerApp,
+} from '#app/utils/customer-apps/public.server.ts'
+import {
 	consentBannerEnabled,
 	effectiveConsentMode,
 	hasTrackingTags,
@@ -39,11 +47,8 @@ import {
 import { parseLegalContact } from '#app/utils/legal/contact.server.ts'
 import { isSafeAnnouncementLink } from '#app/utils/safe-link.ts'
 import { readSearchConsoleVerificationToken } from '#app/utils/seo/search-console.server.ts'
-import {
-	loadPublicCustomerApp,
-	type PublicCustomerApp,
-} from '#app/utils/customer-apps/public.server.ts'
 import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
+import { loadPublicActionTargets } from '#app/utils/website/action-targets.server.ts'
 import {
 	composePageSectionsWithChrome,
 	getDefaultConfig,
@@ -97,6 +102,10 @@ export type PublicSiteOrganization = {
 	legalPages?: Array<{ kind: string; slug: string }>
 	/** The platform's banner switch for this site (#89); absent means on. */
 	consentBanner?: boolean
+	/** Where the Order, Gift cards and Reservations buttons go (#318). */
+	actionTargets?: string | null
+	/** Each location's own choice, by location id (#318). */
+	locationActionTargets?: PublicActionTargets['locations']
 	/** The branded app's public facts (#195, #196). */
 	customerApp?: PublicCustomerApp | null
 	announcements: Array<{
@@ -171,6 +180,12 @@ export type PublicSitePayload = {
 	 * (a site with no tracking tags) or the platform switched the banner off.
 	 */
 	consent: { mode: ConsentMode }
+	/**
+	 * Where the site's Order online, Gift cards and Reservations buttons go
+	 * (#318): the organization's choice and each location's. Sites resolves
+	 * every such button and link from this, in one place.
+	 */
+	actionTargets: PublicActionTargets
 }
 
 const ANNOUNCEMENT_TYPES = ['info', 'warning', 'error', 'success'] as const
@@ -308,6 +323,10 @@ export function toPublicSitePayload(
 			: null,
 		legalPages: publicLegalPages(organization.legalPages),
 		consent: { mode: publicConsentMode(organization) },
+		actionTargets: {
+			organization: parseActionTargets(organization.actionTargets),
+			locations: organization.locationActionTargets ?? {},
+		},
 	}
 }
 
@@ -454,6 +473,9 @@ export async function findPublishedSiteOrganization(options: {
 		legalPages,
 		consentBanner: await consentBannerEnabled(organization.id),
 		customerApp: await loadPublicCustomerApp(organization.id),
+		locationActionTargets: (
+			await loadPublicActionTargets(organization.id, organization.actionTargets)
+		).locations,
 	}
 }
 

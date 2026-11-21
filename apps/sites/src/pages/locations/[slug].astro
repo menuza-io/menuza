@@ -1,4 +1,5 @@
 ---
+import { actionAnchor } from '~/lib/action-targets'
 import { msg } from '@lingui/core/macro'
 import { formatPriceRange, cuisineLabel } from '@repo/common/cuisines'
 import { getLocaleHref, pickLocalized } from '@repo/common/site-locales'
@@ -52,6 +53,14 @@ if (outcome.kind === 'gone') {
 	Astro.response.statusText = 'Not Found'
 }
 const location = outcome.kind === 'page' ? outcome.value : null
+// Order and Reserve go where the site (or this location) sends them (#318).
+const orderAnchor = actionAnchor(
+	organization,
+	`/menu?location=${encodeURIComponent(location?.id ?? '')}`,
+	(path) => href(path),
+	{ locationId: location?.id },
+)
+const reserveAnchor = actionAnchor(organization, '/reserve', href, { locationId: location?.id })
 const multiLocation = (landing?.locations.length ?? 0) > 1
 const menuLocation = location
 	? menu?.locations.find((entry) => entry.id === location.id) ?? null
@@ -123,6 +132,7 @@ const structuredData =
 				multiLocation,
 				hasMenu: canOrder,
 				reservationsOnline: canReserve,
+				actionTargets: organization.actionTargets,
 			})
 		: null
 
@@ -173,11 +183,11 @@ const labels = {
 				{address ? <p class="mt-2 text-base text-foreground" dir="auto">{address}</p> : null}
 			</header>
 			<div class="mt-6 flex flex-wrap gap-3">
-				{canOrder ? (
-					<a class="btn-cta" href={`${href('/menu')}?location=${encodeURIComponent(location.id)}`} data-action="order">{labels.order}</a>
+				{canOrder || orderAnchor.external ? (
+					<a class="btn-cta" href={orderAnchor.href} {...orderAnchor.attrs} data-action="order">{labels.order}</a>
 				) : null}
-				{canReserve ? (
-					<a class="btn-secondary" href={href('/reserve')} data-action="reserve">{labels.reserve}</a>
+				{canReserve || reserveAnchor.external ? (
+					<a class="btn-secondary" href={reserveAnchor.href} {...reserveAnchor.attrs} data-action="reserve">{labels.reserve}</a>
 				) : null}
 				{directions ? (
 					<a class="btn-secondary" href={directions} rel="noopener" target="_blank" data-action="directions">{labels.directions}</a>

@@ -19,7 +19,17 @@ const stepSchema = z.object({
 	previousCount: z.number(),
 	changePoints: z.number().nullable(),
 })
-const funnelSchema = z.object({ steps: z.array(stepSchema) })
+const funnelSchema = z.object({
+	steps: z.array(stepSchema),
+	/** Clicks that left for another site (#318). */
+	outbound: z
+		.object({
+			order: z.number(),
+			gift_cards: z.number(),
+			reservations: z.number(),
+		})
+		.optional(),
+})
 const credentialsSchema = z.object({
 	jwt: z.string(),
 	tenantApiUrl: z.string(),
@@ -219,6 +229,25 @@ export function FunnelPanel({ orgSlug }: { orgSlug: string }) {
 					})}
 				</ol>
 			)}
+			{funnel?.outbound ? <OutboundLine outbound={funnel.outbound} /> : null}
 		</section>
+	)
+}
+
+/** Clicks that left for another site (#318), when there are any. */
+function OutboundLine({
+	outbound,
+}: {
+	outbound: { order: number; gift_cards: number; reservations: number }
+}) {
+	const { order, gift_cards: giftCards, reservations } = outbound
+	if (order + giftCards + reservations === 0) return null
+	return (
+		<p className="text-muted-foreground text-sm" data-testid="funnel-outbound">
+			<Trans>
+				Visitors who left for another site: orders {order}, gift cards{' '}
+				{giftCards}, reservations {reservations}.
+			</Trans>
+		</p>
 	)
 }

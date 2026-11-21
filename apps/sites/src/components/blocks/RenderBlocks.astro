@@ -1,4 +1,5 @@
 ---
+import { externalFor } from '~/lib/action-targets'
 import { locationOffersOrdering } from '@repo/common/restaurant-sections'
 import SectionBlock from './SectionBlock.astro'
 import {
@@ -40,13 +41,18 @@ const reservations = needsLive
 			host: Astro.locals.customHost,
 		})
 	: null
+// A button for ordering or booking also shows when that action goes to
+// another site (#318): guests are sent there, so our own modules need not be on.
 const features = {
-	ordering: (menu?.locations ?? []).some(
-		(location) =>
-			locationOffersOrdering(location.fulfillmentOptions) &&
-			(menu?.menus?.length ?? 0) > 0,
-	),
-	reservations: reservations?.online === true,
+	ordering:
+		(menu?.locations ?? []).some(
+			(location) =>
+				locationOffersOrdering(location.fulfillmentOptions) &&
+				(menu?.menus?.length ?? 0) > 0,
+		) || externalFor(Astro.locals.organization, 'order'),
+	reservations:
+		reservations?.online === true ||
+		externalFor(Astro.locals.organization, 'reservations'),
 }
 ---
 

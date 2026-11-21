@@ -66,6 +66,7 @@ const structuredDataPromise = isPreview
 					}),
 					hasMenu: Boolean(menu?.menus?.length),
 					reservationsOnline: reservations?.online === true,
+					actionTargets: organization.actionTargets,
 					cuisines: organization.cuisines ?? [],
 					priceRange: organization.priceRange ?? null,
 					locationPageUrls: Object.fromEntries(

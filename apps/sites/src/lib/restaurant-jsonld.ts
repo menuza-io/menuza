@@ -1,3 +1,8 @@
+import {
+	EMPTY_ACTION_TARGETS,
+	targetFor,
+	type PublicActionTargets,
+} from '@repo/common/action-targets'
 import { servesCuisine } from '@repo/common/cuisines'
 import { serializeJsonLd } from '@repo/common/job-posting'
 import { DAYS_OF_WEEK, type DayOfWeek } from '@repo/common/location-types'
@@ -51,6 +56,8 @@ export type RestaurantJsonLdInput = {
 	locationPageUrls?: Readonly<Record<string, string>>
 	/** Name each location after the brand ("Al Bait - Olaya"). Default: several locations. */
 	nameBranches?: boolean
+	/** Where Order and Reserve go (#318): Google's buttons follow the site's. */
+	actionTargets?: PublicActionTargets
 }
 
 type JsonObject = Record<string, unknown>
@@ -286,8 +293,7 @@ export function buildRestaurantJsonLd(
 	const href = (path: string) =>
 		`${origin}${getLocaleHref(path, locale, null, input.locales.defaultLocale)}`
 	const homeUrl = href('/')
-	const menuUrl = input.hasMenu ? href('/menu') : null
-	const reserveUrl = input.reservationsOnline ? href('/reserve') : null
+	const targets = input.actionTargets ?? EMPTY_ACTION_TARGETS
 	const name = input.name.trim()
 	const logo = input.logoUrl?.trim() || null
 
@@ -326,6 +332,18 @@ export function buildRestaurantJsonLd(
 			const hours = openingHoursSpecification(location.storeHours)
 			if (hours.length) node.openingHoursSpecification = hours
 		}
+		// Order and Reserve go where the site sends them (#318): a location's own
+		// choice wins. A menu page that is replaced is not advertised.
+		const orderTarget = targetFor(targets, 'order', location?.id)
+		const reserveTarget = targetFor(targets, 'reservations', location?.id)
+		const orderElsewhere = orderTarget.mode === 'external'
+		const menuUrl = input.hasMenu && !orderElsewhere ? href('/menu') : null
+		const reserveUrl =
+			reserveTarget.mode === 'external'
+				? reserveTarget.url
+				: input.reservationsOnline
+					? href('/reserve')
+					: null
 		if (menuUrl) node.hasMenu = menuUrl
 		if (reserveUrl) node.acceptsReservations = true
 		const actions: JsonObject[] = []
@@ -335,12 +353,15 @@ export function buildRestaurantJsonLd(
 				target: entryPoint(reserveUrl),
 			})
 		}
-		// Ordering happens on the menu page and needs a location to order from.
-		if (menuUrl && location) {
+		// Ordering happens on the menu page (or the other site) and needs a
+		// location to order from.
+		if (location && (menuUrl || orderElsewhere)) {
 			const methods = deliveryMethods(location.fulfillmentOptions)
 			actions.push({
 				'@type': 'OrderAction',
-				target: entryPoint(menuUrl),
+				target: entryPoint(
+					orderTarget.mode === 'external' ? orderTarget.url : menuUrl!,
+				),
 				...(methods.length ? { deliveryMethod: methods } : {}),
 			})
 		}

@@ -4,6 +4,7 @@ import { resolveSiteLink, siteLinkHasDestination } from '@repo/common/site-link'
 import AppInviteSection from '~/components/AppInviteSection.astro'
 import LegalLinks from '~/components/LegalLinks.astro'
 import SiteAnchor from '~/components/SiteAnchor.astro'
+import { navLinkIsReplaced } from '~/lib/action-targets'
 import { type PublicCustomerApp } from '~/lib/customer-app-types'
 import {
 	resolveMediaUrl,
@@ -76,7 +77,7 @@ const copyright = config.copyright?.trim() || `© ${year} ${organization.name}`
 						) : null}
 						<ul class="space-y-2">
 							{(column.links ?? []).map((link) =>
-								link.label ? (
+								link.label && !navLinkIsReplaced(Astro.locals.organization, link.url) ? (
 									<li>
 										<SiteAnchor
 											link={link.url}

@@ -21,6 +21,7 @@ import {
 	type PublicWebsitePageSection,
 } from '~/lib/org'
 import type { SiteLocaleLink } from '~/lib/media'
+import { pageReplaced } from '~/lib/action-targets'
 import { bannerApplies } from '~/lib/legal-links'
 import { getTenantApiUrl } from '~/lib/tenant-api'
 import { ENV } from 'varlock/env'
@@ -74,6 +75,8 @@ const showConsentBanner = bannerApplies(organization, {
 })
 const consentMode = organization.consent?.mode ?? 'off'
 const isPreview = Astro.url.searchParams.get('preview') === 'true'
+// Our own pages for an action that goes to another site are not indexed (#318).
+const replacedPage = pageReplaced(organization, Astro.url.pathname)
 const findChrome = (list: PublicWebsitePageSection[]) => ({
 	header: list.find((section) => section.type === 'header'),
 	footer: list.find((section) => section.type === 'footer'),
@@ -139,7 +142,7 @@ const alternateLinks = [
 	imageUrl={imageUrl}
 	canonicalUrl={resolvedCanonical}
 	alternateLinks={isPreview ? [] : alternateLinks}
-	noIndex={Boolean(noIndex) || isPreview}
+	noIndex={Boolean(noIndex) || isPreview || replacedPage}
 	theme={organization.theme}
 	lang={activeLocale}
 	dir={localeDirection}

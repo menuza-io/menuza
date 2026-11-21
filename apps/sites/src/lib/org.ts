@@ -47,6 +47,8 @@ export type PublicSiteRedirect = {
 	statusCode: number
 }
 
+import { type PublicActionTargets } from '@repo/common/action-targets'
+
 export type PublicOrganization = {
 	id: string
 	name: string
@@ -71,6 +73,8 @@ export type PublicOrganization = {
 	googleTagManagerId?: string | null
 	googleAnalyticsId?: string | null
 	tiktokPixelId?: string | null
+	/** Where Order, Gift cards and Reservations buttons go (#318); absent means Menuza. */
+	actionTargets?: PublicActionTargets
 	/** Cuisine keys (#182). Absent on payloads cached before the field existed. */
 	cuisines?: string[]
 	/** `$` to `$$$$` in the local currency symbol, or null (#182). */

@@ -1,3 +1,4 @@
+import { pageReplaced } from '~/lib/action-targets'
 import { cuisineLabel, formatPriceRange } from '@repo/common/cuisines'
 import { visibleDishPages } from '~/lib/landing-pages'
 import {
@@ -150,6 +151,16 @@ export async function loadSiteSeoData(
 				lastModified: event.updatedAt,
 			})
 		}
+	}
+
+	// Our own pages for an action that goes to another site are not advertised
+	// (#318): out of the sitemap and the llms.txt links, like the `noindex`.
+	const listed = (path: string) => !pageReplaced(organization, path)
+	for (let i = sitemap.length - 1; i >= 0; i--) {
+		if (!listed(sitemap[i]!.path)) sitemap.splice(i, 1)
+	}
+	for (let i = links.length - 1; i >= 0; i--) {
+		if (!listed(links[i]!.path)) links.splice(i, 1)
 	}
 
 	const currency = menu?.organization?.currency ?? null

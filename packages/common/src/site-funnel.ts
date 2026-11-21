@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { OUTBOUND_EVENT_NAMES } from './action-targets.ts'
 
 /**
  * First-party funnel counts for the public site (#179) and the per-arm counts
@@ -16,6 +17,17 @@ export const SITE_EVENT_NAMES = [
 	'order',
 ] as const
 export type SiteEventName = (typeof SITE_EVENT_NAMES)[number]
+
+/**
+ * What a beacon may name: the funnel steps and (#318) a click that leaves for
+ * another site (`outbound_order`, `outbound_gift_cards`, `outbound_reservations`).
+ * An outbound click is a count beside the funnel, never a step of it.
+ */
+export const SITE_COUNTED_EVENT_NAMES = [
+	...SITE_EVENT_NAMES,
+	...OUTBOUND_EVENT_NAMES,
+] as const
+export type SiteCountedEventName = (typeof SITE_COUNTED_EVENT_NAMES)[number]
 
 export const SITE_DEVICES = ['phone', 'tablet', 'desktop'] as const
 export type SiteDevice = (typeof SITE_DEVICES)[number]
@@ -38,7 +50,7 @@ export const siteEventBodySchema = z
 	.object({
 		slug: z.string().max(100).optional(),
 		host: z.string().max(255).optional(),
-		event: z.enum(SITE_EVENT_NAMES),
+		event: z.enum(SITE_COUNTED_EVENT_NAMES),
 		device: z.enum(SITE_DEVICES),
 		entry: z.enum(SITE_ENTRIES),
 		locationId: z
