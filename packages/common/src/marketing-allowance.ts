@@ -26,6 +26,9 @@ export const SMS_SENDS_BY_PLAN: Readonly<Record<string, number>> = {
 	enterprise: 100,
 }
 
+/** The most extra sends Admin grants in one go; a month rarely needs more than a few. */
+export const MAX_SMS_GRANT = 100
+
 export function smsSendsForPlan(planName: string | null | undefined): number {
 	const key = planName?.trim().toLowerCase()
 	return (

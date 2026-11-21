@@ -1,6 +1,7 @@
 import { msg } from '@lingui/macro'
 import { AuditAction, auditService } from '@repo/audit'
 import { requireUserWithRole } from '@repo/auth'
+import { MAX_SMS_GRANT } from '@repo/common/marketing-allowance'
 import { redirectWithToast } from '@repo/common/toast'
 import { db, eq, Organization } from '@repo/database'
 import {
@@ -15,8 +16,7 @@ import {
 import { z } from 'zod'
 import { getRequestI18n } from '#app/modules/lingui/lingui.server.ts'
 
-/** The most Admin grants in one go; a month rarely needs more than a few. */
-export const MAX_GRANT = 100
+const MAX_GRANT = MAX_SMS_GRANT
 
 const grantSchema = z.object({
 	intent: z.literal('grant'),

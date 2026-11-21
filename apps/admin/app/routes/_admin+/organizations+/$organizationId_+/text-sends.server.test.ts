@@ -5,6 +5,7 @@ import {
 	getSessionExpirationDate,
 	sessionKey,
 } from '@repo/auth'
+import { billingPeriod, MAX_SMS_GRANT } from '@repo/common/marketing-allowance'
 import {
 	db,
 	eq,
@@ -16,10 +17,9 @@ import {
 	UserOrganization,
 	_RoleToUser,
 } from '@repo/database'
-import { billingPeriod } from '@repo/common/marketing-allowance'
 import { RouterContextProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import { action, loader, MAX_GRANT } from './text-sends.server.ts'
+import { action, loader } from './text-sends.server.ts'
 
 async function setup(role: 'admin' | 'user' = 'admin') {
 	const id = randomUUID()
@@ -121,7 +121,7 @@ describe('platform admin text sends (#247)', () => {
 		)
 	})
 
-	it.each(['0', '-1', '1.5', 'abc', '', String(MAX_GRANT + 1)])(
+	it.each(['0', '-1', '1.5', 'abc', '', String(MAX_SMS_GRANT + 1)])(
 		'refuses %j without granting or auditing',
 		async (value) => {
 			const { organization, args } = await setup()

@@ -1,5 +1,6 @@
 import { Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { MAX_SMS_GRANT } from '@repo/common/marketing-allowance'
 import { Button } from '@repo/ui/button'
 import {
 	Card,
@@ -18,7 +19,7 @@ import {
 	useLoaderData,
 	useNavigation,
 } from 'react-router'
-import { action, loader, MAX_GRANT } from './text-sends.server.ts'
+import { action, loader } from './text-sends.server.ts'
 
 export { action, loader }
 
@@ -114,7 +115,7 @@ export default function TextSendsPage() {
 								name="extra"
 								type="number"
 								min={1}
-								max={MAX_GRANT}
+								max={MAX_SMS_GRANT}
 								defaultValue={1}
 								required
 							/>
