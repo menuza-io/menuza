@@ -429,6 +429,39 @@ export async function uploadVideoThumbnail(
 	})
 }
 
+/**
+ * Stores one generated hero file (a clip or its poster, #301) in the
+ * organization's private media storage. The caller registers the media asset.
+ */
+export async function uploadHeroVideoObject(input: {
+	organizationId: string
+	bytes: Uint8Array
+	mimeType: string
+	extension: string
+	suffix?: string
+}) {
+	const key = `orgs/${input.organizationId}/media/hero-video/${crypto.randomUUID()}${input.suffix ?? ''}.${input.extension}`
+	const config = await createUploadOptions().getConfig(input.organizationId)
+	const file = new File([new Uint8Array(input.bytes)], `hero.${input.extension}`, {
+		type: input.mimeType,
+	})
+	await _uploadToStorage(file, key, config)
+	return key
+}
+
+/**
+ * A short-lived read link to one stored object (the photo renderer reads
+ * through it; it is never stored). Default expiry 15 minutes.
+ */
+export async function getPresignedMediaUrl(
+	key: string,
+	organizationId: string,
+	expiresInSeconds = 900,
+) {
+	const config = await createUploadOptions().getConfig(organizationId)
+	return _getPresignedGetUrl(key, config, expiresInSeconds)
+}
+
 export async function uploadSiteIcon(
 	organizationId: string,
 	file: File | FileUpload,

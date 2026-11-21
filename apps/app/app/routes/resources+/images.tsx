@@ -412,6 +412,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 				organizationId: OrganizationMediaAsset.organizationId,
 				storageScope: OrganizationMediaAsset.storageScope,
 				source: OrganizationMediaAsset.source,
+				status: OrganizationMediaAsset.status,
 			})
 			.from(OrganizationMediaAsset)
 			.where(eq(OrganizationMediaAsset.id, mediaId))

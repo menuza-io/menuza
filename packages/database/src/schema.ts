@@ -6752,6 +6752,8 @@ export const HeroVideoGeneration = sqliteTable(
 		photoAssetIds: text().notNull(),
 		/** `picked` or `auto`. */
 		selection: text().default('picked').notNull(),
+		/** The page whose hero this is for: the "it is ready" notice opens it. */
+		pageId: text(),
 		durationSeconds: integer().notNull(),
 		status: text().default('queued').notNull(),
 		attempts: integer().default(0).notNull(),

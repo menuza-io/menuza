@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "128b0aac-bd7c-45b7-9862-75d2e1a87e8c",
+	"id": "fb7d0a46-5e26-4f1c-b702-8c18e8804a46",
 	"prevId": "8419c05a-b202-42a8-9ce8-5c29dd119cb9",
 	"tables": {
 		"ApiKey": {
@@ -4094,6 +4094,13 @@
 					"notNull": true,
 					"autoincrement": false,
 					"default": "'picked'"
+				},
+				"pageId": {
+					"name": "pageId",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
 				},
 				"durationSeconds": {
 					"name": "durationSeconds",

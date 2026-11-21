@@ -7,13 +7,21 @@ const PUBLIC_MEDIA_SOURCES = new Set([
 	'site-icon',
 	'website-seo',
 	'website-asset',
+	// A generated hero clip and its poster (#301): public once accepted.
+	'hero-video',
 ])
 
-/** Platform-scoped assets and organization branding assets are public. */
+/**
+ * Platform-scoped assets and organization branding assets are public, once
+ * they are ready: a draft (a generated hero clip still waiting for the
+ * operator to accept it, #301) is private to the organization's members.
+ */
 export function isPublicMediaAsset(asset: {
 	storageScope: string
 	source: string
+	status?: string
 }) {
+	if (asset.status !== undefined && asset.status !== 'ready') return false
 	return (
 		asset.storageScope === 'platform' || PUBLIC_MEDIA_SOURCES.has(asset.source)
 	)
@@ -49,6 +57,7 @@ export async function authorizeRegisteredObject(
 			organizationId: OrganizationMediaAsset.organizationId,
 			storageScope: OrganizationMediaAsset.storageScope,
 			source: OrganizationMediaAsset.source,
+			status: OrganizationMediaAsset.status,
 		})
 		.from(OrganizationMediaAsset)
 		.where(eq(OrganizationMediaAsset.objectKey, objectKey))

@@ -57,6 +57,11 @@
 			"binding": "CALENDAR_SYNC_WORKFLOW",
 			"class_name": "CalendarSyncWorkflow",
 		},
+		{
+			"name": "hero-video",
+			"binding": "HERO_VIDEO_WORKFLOW",
+			"class_name": "HeroVideoWorkflow",
+		},
 	],
 	// APP_BASE_URL / TENANT_API_URL* patched at deploy — set INTERNAL_COMMAND_TOKEN via wrangler secret put.
 	"vars": {},

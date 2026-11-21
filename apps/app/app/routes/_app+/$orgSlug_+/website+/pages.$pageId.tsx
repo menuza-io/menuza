@@ -148,6 +148,7 @@ import {
 } from '#app/components/settings/cards/organization/site-theme-card.tsx'
 import { BrandingPanel } from '#app/components/website/branding-panel.tsx'
 import { CreatePageDialog } from '#app/components/website/create-page-dialog.tsx'
+import { HeroVideoMaker } from '#app/components/website/hero-video-maker.tsx'
 import {
 	LinkInspector,
 	SiteLinkBuilderContext,
@@ -231,6 +232,7 @@ import {
 	recordFontLicence,
 	removeSiteFont,
 } from '#app/utils/website/font-licence.server.ts'
+import { heroVideoEnabled } from '#app/utils/website/hero-video/service.server.ts'
 import { HOME_PAGE_SLUG } from '#app/utils/website/home-page.ts'
 import { ensureSiteChrome } from '#app/utils/website/locked-chrome.server.ts'
 import {
@@ -726,6 +728,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			getLandingFeatures(organization.id),
 		])
 	const eventsEnabled = landingFeatures.events
+	// "Make a video from my photos" on the hero (#301), behind `website.hero_video`.
+	const heroVideoOn = await heroVideoEnabled(organization.id)
 	const reservationsOnline =
 		reservationsState.enabled && reservationsState.online
 	const reservationLocations = reservationsOnline
@@ -769,6 +773,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		websiteForms,
 		loyaltyEnabled,
 		eventsEnabled,
+		heroVideoOn,
 		targetKeywords,
 		reservationsOnline,
 		reservationLocations,
@@ -2774,6 +2779,7 @@ function SectionEditorPanel({
 						config,
 						updateField,
 						listKey: section.id,
+						sectionId: section.id,
 						onUploadAsset,
 						isUploadingAsset,
 						uploadedAssetUrl,
@@ -3326,6 +3332,7 @@ function renderBlockEditor(props: {
 	config: Record<string, unknown>
 	updateField: (key: string, value: unknown) => void
 	listKey: string
+	sectionId?: string
 	onUploadAsset?: (file: File) => void
 	isUploadingAsset?: boolean
 	uploadedAssetUrl?: string | null
@@ -3468,6 +3475,8 @@ function renderBlockEditor(props: {
 interface EditorProps {
 	config: Record<string, unknown>
 	updateField: (key: string, value: unknown) => void
+	/** The section being edited (the hero's video maker, #301). */
+	sectionId?: string
 	onUploadAsset?: (file: File) => void
 	isUploadingAsset?: boolean
 	uploadedAssetUrl?: string | null
@@ -3897,6 +3906,7 @@ function HeaderEditor({
 
 function HeroEditor({ config, updateField, ...editorProps }: EditorProps) {
 	const assetType = (config.assetType as string) ?? 'none'
+	const { organization, page, heroVideoOn } = useLoaderData<typeof loader>()
 	const links =
 		(config.links as Array<{
 			url: unknown
@@ -4048,6 +4058,29 @@ function HeroEditor({ config, updateField, ...editorProps }: EditorProps) {
 					}))}
 				/>
 			</EditorSection>
+
+			{heroVideoOn && editorProps.sectionId ? (
+				<EditorSection title={<Trans>Video from your photos</Trans>}>
+					<p className="text-muted-foreground text-xs">
+						<Trans>
+							Turn 3 to 6 of your own photos into a short looping clip. You
+							preview it first; your hero stays as it is until you accept.
+						</Trans>
+					</p>
+					<HeroVideoMaker
+						orgSlug={organization.slug}
+						pageId={page.id}
+						sectionId={editorProps.sectionId}
+						onAccepted={({ videoSrc, videoPoster }) => {
+							// The server already put the clip in the section; mirror it so
+							// the open editor does not save the old values back.
+							updateField('assetType', 'video')
+							updateField('videoSrc', videoSrc)
+							updateField('videoPoster', videoPoster)
+						}}
+					/>
+				</EditorSection>
+			) : null}
 
 			{assetType !== 'none' ? (
 				<EditorSection title={<Trans>Media</Trans>}>

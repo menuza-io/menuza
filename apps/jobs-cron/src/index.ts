@@ -3,6 +3,11 @@ import {
 	CalendarSyncWorkflow,
 	type CalendarSyncWorkflowParams,
 } from './calendar-sync-workflow'
+import {
+	HERO_VIDEO_JOB_PATH,
+	HeroVideoWorkflow,
+	type HeroVideoWorkflowParams,
+} from './hero-video-workflow'
 import { MarketingJourneyWorkflow } from './marketing-journey-workflow'
 import {
 	MENU_IMPORT_PATH,
@@ -44,6 +49,7 @@ export interface Env {
 	MENU_SCHEDULE_WORKFLOW: Workflow<MenuScheduleWorkflowParams>
 	MENU_IMPORT_WORKFLOW: Workflow<MenuImportWorkflowParams>
 	CALENDAR_SYNC_WORKFLOW: Workflow<CalendarSyncWorkflowParams>
+	HERO_VIDEO_WORKFLOW: Workflow<HeroVideoWorkflowParams>
 }
 
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
@@ -777,6 +783,47 @@ export default {
 		}
 
 		// =========================================================================
+		// Hero video (#301): POST /workflows/hero-video/start { generationId }
+		// =========================================================================
+		if (
+			(pathname === '/workflows/hero-video/start' ||
+				pathname === '/api/workflows/hero-video/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				generationId?: unknown
+			}
+			const generationId =
+				typeof body.generationId === 'string' ? body.generationId : ''
+			if (!/^[a-z0-9]{8,64}$/i.test(generationId)) {
+				return Response.json(
+					{ error: 'generationId is required' },
+					{ status: 400 },
+				)
+			}
+			const instanceId = `hero-video-${generationId}`
+			try {
+				const instance = await env.HERO_VIDEO_WORKFLOW.create({
+					id: instanceId,
+					params: { generationId },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start hero video workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
 		// Calendar sync (#319): wake the App when a connected Google Calendar is
 		// due — POST /workflows/calendar-sync/start { sourceId, runAt }
 		// =========================================================================
@@ -1012,6 +1059,12 @@ export default {
 					'Calendar sync sweep',
 					(jobEnv: Env) => invokeJob(jobEnv, CALENDAR_SYNC_JOB_PATH),
 				],
+				// Hero videos are rendered on request by HeroVideoWorkflow; this hourly
+				// sweep re-drives one that was never woken or went quiet (#301).
+				[
+					'Hero video sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, HERO_VIDEO_JOB_PATH),
+				],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {
@@ -1056,4 +1109,5 @@ export {
 	MenuScheduleWorkflow,
 	MenuImportWorkflow,
 	CalendarSyncWorkflow,
+	HeroVideoWorkflow,
 }

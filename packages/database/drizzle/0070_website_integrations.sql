@@ -24,6 +24,7 @@ CREATE TABLE `HeroVideoGeneration` (
 	`style` text NOT NULL,
 	`photoAssetIds` text NOT NULL,
 	`selection` text DEFAULT 'picked' NOT NULL,
+	`pageId` text,
 	`durationSeconds` integer NOT NULL,
 	`status` text DEFAULT 'queued' NOT NULL,
 	`attempts` integer DEFAULT 0 NOT NULL,

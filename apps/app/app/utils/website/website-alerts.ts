@@ -10,6 +10,9 @@ import { msg } from '@lingui/macro'
 export const WEBSITE_ALERT_TYPES = {
 	live: 'website-publish-live',
 	failed: 'website-publish-failed',
+	// "Make a video from my photos" (#301): the clip is ready to preview, or could not be made.
+	heroVideoReady: 'hero-video-ready',
+	heroVideoFailed: 'hero-video-failed',
 } as const
 
 export type WebsiteAlertKind = keyof typeof WEBSITE_ALERT_TYPES
@@ -19,6 +22,8 @@ export function websiteAlertKindFromNotificationType(
 ): WebsiteAlertKind | null {
 	if (type === WEBSITE_ALERT_TYPES.live) return 'live'
 	if (type === WEBSITE_ALERT_TYPES.failed) return 'failed'
+	if (type === WEBSITE_ALERT_TYPES.heroVideoReady) return 'heroVideoReady'
+	if (type === WEBSITE_ALERT_TYPES.heroVideoFailed) return 'heroVideoFailed'
 	return null
 }
 
@@ -28,6 +33,22 @@ export function websiteAlertCopy(
 	_: (descriptor: MessageDescriptor) => string,
 ) {
 	const name = title?.trim() || null
+	if (kind === 'heroVideoReady') {
+		return {
+			subject: _(msg`Your hero video is ready to preview`),
+			body: _(
+				msg`Watch it, then accept it to use it on your site. Your current hero stays until you do.`,
+			),
+		}
+	}
+	if (kind === 'heroVideoFailed') {
+		return {
+			subject: _(msg`Your hero video could not be made`),
+			body: _(
+				msg`Nothing on your site changed. Try again, or pick other photos.`,
+			),
+		}
+	}
 	if (kind === 'live') {
 		return {
 			subject: name
