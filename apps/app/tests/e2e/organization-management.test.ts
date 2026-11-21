@@ -9,12 +9,7 @@ import {
 	UserOrganization,
 	_RoleToUser,
 } from '@repo/database'
-import {
-	expect,
-	saveBar,
-	test,
-	typeIntoConformInput,
-} from '#tests/playwright-utils.ts'
+import { expect, fillConformFormField, saveBar, test } from '#tests/playwright-utils.ts'
 import {
 	acceptMenuzaAgreements,
 	createTestOrganization,
@@ -195,17 +190,23 @@ test.describe('Organization Management', () => {
 
 		// Navigate to organization settings
 		await navigate('/:slug/settings', { slug: org.slug })
+		await page.waitForLoadState('networkidle')
 
 		const nameField = page
 			.getByTestId('organization-general-settings-form')
-			.locator('input[name="name"]')
+			.getByRole('textbox', { name: /^name$/i })
 		await expect(nameField).toHaveValue(org.name)
 
 		// Update organization details (only name and slug are available in the form)
 		const newName = `${faker.company.name()} ${faker.string.alphanumeric(6)}`
-		await typeIntoConformInput(nameField, newName)
-
-		await expect(saveBar(page).save).toBeVisible()
+		await fillConformFormField(
+			page,
+			'organization-settings-form',
+			'name',
+			newName,
+		)
+		await expect(nameField).toHaveValue(newName)
+		await expect(saveBar(page).bar).toBeVisible()
 
 		await Promise.all([
 			page.waitForResponse(

@@ -282,14 +282,37 @@ export async function waitFor<ReturnValue>(
 	throw lastError
 }
 
-/** Types into a Conform-controlled input so the save bar sees a dirty form. */
-export async function typeIntoConformInput(
-	locator: ReturnType<Page['locator']>,
+/**
+ * Fills a Conform text field and notifies the form (Playwright `fill` alone can
+ * miss Conform's document-level `input` listener in headless CI).
+ */
+export async function fillConformFormField(
+	page: Page,
+	formId: string,
+	fieldName: string,
 	value: string,
 ) {
-	await locator.click()
-	await locator.press('ControlOrMeta+A')
-	await locator.pressSequentially(value, { delay: 10 })
+	const field = page.locator(
+		`form#${formId} [name="${fieldName}"], #${formId} [name="${fieldName}"]`,
+	)
+	await field.scrollIntoViewIfNeeded()
+	await field.fill(value)
+	await page.evaluate(
+		({ formId, fieldName, value }) => {
+			const form = document.forms.namedItem(formId)
+			if (!(form instanceof HTMLFormElement)) return
+			const control = form.elements.namedItem(fieldName)
+			if (
+				!(control instanceof HTMLInputElement) &&
+				!(control instanceof HTMLTextAreaElement)
+			) {
+				return
+			}
+			if (control.value !== value) control.value = value
+			control.dispatchEvent(new Event('input', { bubbles: true }))
+		},
+		{ formId, fieldName, value },
+	)
 }
 
 /** The global "Unsaved changes" bar that replaced per-form Save buttons. */
