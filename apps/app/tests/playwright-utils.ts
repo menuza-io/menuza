@@ -282,6 +282,16 @@ export async function waitFor<ReturnValue>(
 	throw lastError
 }
 
+/** Types into a Conform-controlled input so the save bar sees a dirty form. */
+export async function typeIntoConformInput(
+	locator: ReturnType<Page['locator']>,
+	value: string,
+) {
+	await locator.click()
+	await locator.press('ControlOrMeta+A')
+	await locator.pressSequentially(value, { delay: 10 })
+}
+
 /** The global "Unsaved changes" bar that replaced per-form Save buttons. */
 export function saveBar(page: Page) {
 	const bar = page.getByRole('group', { name: 'Unsaved changes' })

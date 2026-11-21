@@ -9,7 +9,12 @@ import {
 	UserOrganization,
 	_RoleToUser,
 } from '@repo/database'
-import { expect, saveBar, test } from '#tests/playwright-utils.ts'
+import {
+	expect,
+	saveBar,
+	test,
+	typeIntoConformInput,
+} from '#tests/playwright-utils.ts'
 import {
 	acceptMenuzaAgreements,
 	createTestOrganization,
@@ -198,8 +203,7 @@ test.describe('Organization Management', () => {
 
 		// Update organization details (only name and slug are available in the form)
 		const newName = `${faker.company.name()} ${faker.string.alphanumeric(6)}`
-		await nameField.click()
-		await nameField.fill(newName)
+		await typeIntoConformInput(nameField, newName)
 
 		await expect(saveBar(page).save).toBeVisible()
 
