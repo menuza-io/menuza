@@ -40,16 +40,28 @@ export const ATTRIBUTION_PARAMS = {
 /** Values the platform reads back from a URL are capped and stripped (#115). */
 export const ATTRIBUTION_VALUE_MAX = 100
 
-// C0 and C1 controls, plus the line and paragraph separators.
-const CONTROL_CHARACTERS = new RegExp(
-	'[\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]',
-	'g',
-)
+/** C0 and C1 controls, plus the line and paragraph separators, removed. */
+function stripControlCharacters(value: string): string {
+	let out = ''
+	for (const char of value) {
+		const code = char.codePointAt(0)!
+		if (
+			code <= 0x1f ||
+			(code >= 0x7f && code <= 0x9f) ||
+			code === 0x2028 ||
+			code === 0x2029
+		) {
+			continue
+		}
+		out += char
+	}
+	return out
+}
 
 /** A reporting value: control characters removed, trimmed, at most 100 characters. */
 export function sanitizeAttributionValue(value: unknown): string | null {
 	if (typeof value !== 'string') return null
-	const cleaned = value.replace(CONTROL_CHARACTERS, '')
+	const cleaned = stripControlCharacters(value)
 	const trimmed = cleaned.trim().slice(0, ATTRIBUTION_VALUE_MAX)
 	return trimmed.length > 0 ? trimmed : null
 }
