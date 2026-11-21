@@ -4879,7 +4879,12 @@ export const MenuCheckDismissal = sqliteTable(
 	],
 )
 
-export const MENU_SCHEDULE_STATUSES = ['pending', 'done', 'cancelled'] as const
+export const MENU_SCHEDULE_STATUSES = [
+	'pending',
+	'running',
+	'done',
+	'cancelled',
+] as const
 export type MenuScheduleStatus = (typeof MENU_SCHEDULE_STATUSES)[number]
 
 /**
@@ -4911,7 +4916,7 @@ export const MenuSchedule = sqliteTable(
 			onDelete: 'set null',
 			onUpdate: 'cascade',
 		}),
-		/** `pending` | `done` | `cancelled`. */
+		/** `pending` | `running` | `done` | `cancelled`. */
 		status: text().default('pending').notNull(),
 		createdById: text().references(() => User.id, {
 			onDelete: 'set null',

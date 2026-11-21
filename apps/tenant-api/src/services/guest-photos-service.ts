@@ -1,10 +1,13 @@
 import {
 	GUEST_PHOTO_CONSENT_TEXT,
+	GUEST_PHOTO_CONSENT_VERSION,
 	GUEST_PHOTO_ELIGIBILITY_DAYS,
 	GUEST_PHOTO_MAX_BYTES,
 	GUEST_PHOTO_MAX_PER_DISH_ORDER,
 	GUEST_PHOTO_MAX_PER_GUEST_DAY,
 	GUEST_PHOTO_REJECTED_RETENTION_DAYS,
+	GUEST_PHOTO_STAGED_RETENTION_HOURS,
+	GUEST_PHOTO_STATUSES,
 	type GuestPhotoSubmission,
 	type GuestPhotoSubmitInput,
 	type GuestPhotoListQuery,
@@ -20,7 +23,18 @@ import {
 	restaurantOrders,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, count, desc, eq, gte, isNotNull, lt, or } from 'drizzle-orm'
+import {
+	and,
+	count,
+	desc,
+	eq,
+	gte,
+	inArray,
+	isNotNull,
+	lt,
+	ne,
+	or,
+} from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { HttpError, notFound } from '../lib/http.ts'
 import {
@@ -38,6 +52,7 @@ import {
 import { withSetupWrite } from '../lib/reservations-write.ts'
 
 const DAY_MS = 86_400_000
+const HOUR_MS = 3_600_000
 const ACTIVE_ORDER_STATUS_SET = new Set<string>(
 	RESTAURANT_ACTIVE_ORDER_STATUSES,
 )
@@ -105,9 +120,10 @@ function serializeForOperator(row: SubmissionRow): GuestPhotoSubmission {
 		objectKey: row.objectKey,
 		contentType: row.contentType,
 		byteSize: row.byteSize,
-		status: row.status,
-		consentText: row.consentText,
-		consentedAt: row.consentedAt.toISOString(),
+		status: row.status as GuestPhotoSubmission['status'],
+		consentText: row.consentText ?? GUEST_PHOTO_CONSENT_TEXT,
+		consentVersion: row.consentVersion ?? null,
+		consentedAt: (row.consentedAt ?? row.createdAt).toISOString(),
 		decidedAt: row.decidedAt ? row.decidedAt.toISOString() : null,
 		decidedByUserId: row.decidedByUserId ?? null,
 		addedAt: row.addedAt ? row.addedAt.toISOString() : null,
@@ -383,6 +399,66 @@ export async function uploadGuestPhoto(
 		)
 	}
 
+	try {
+		await withSetupWrite(
+			db,
+			async (tx) => {
+				await loadEligibleOrderAndDishes(
+					tx,
+					orgId,
+					customerId,
+					input.orderId,
+					input.itemId,
+					nowMs,
+				)
+				// Includes 'staged' upload reservations so parallel/unsubmitted uploads
+				// count toward the 3/dish/order and 10/guest/day caps.
+				const { perItem, dailyUsed } = await countSubmissionCaps(
+					tx,
+					orgId,
+					customerId,
+					input.orderId,
+					nowMs,
+				)
+				if (dailyUsed >= GUEST_PHOTO_MAX_PER_GUEST_DAY) {
+					throw new GuestPhotosError(
+						429,
+						'daily_limit_reached',
+						'Daily guest photo upload limit reached.',
+					)
+				}
+				if (
+					(perItem.get(input.itemId) ?? 0) >= GUEST_PHOTO_MAX_PER_DISH_ORDER
+				) {
+					throw new GuestPhotosError(
+						429,
+						'dish_order_limit_reached',
+						'Maximum photos for this dish on this order reached.',
+					)
+				}
+				await tx.insert(guestPhotoSubmissions).values({
+					id: randomUUID(),
+					orgId,
+					customerId,
+					orderId: input.orderId,
+					itemId: input.itemId,
+					objectKey,
+					contentType: cleaned.contentType,
+					byteSize: cleaned.bytes.byteLength,
+					status: 'staged',
+					consentText: null,
+					consentVersion: null,
+					consentedAt: null,
+					createdAt: new Date(nowMs),
+				})
+			},
+			orgId,
+		)
+	} catch (error) {
+		await storage.deleteObject(objectKey).catch(() => {})
+		throw error
+	}
+
 	return {
 		objectKey,
 		contentType: cleaned.contentType,
@@ -453,17 +529,58 @@ export async function submitGuestPhoto(
 				nowMs,
 			)
 
-			const existingKey = await tx
-				.select({ id: guestPhotoSubmissions.id })
+			const existing = await tx
+				.select()
 				.from(guestPhotoSubmissions)
 				.where(eq(guestPhotoSubmissions.objectKey, input.objectKey))
 				.get()
-			if (existingKey) {
-				throw new GuestPhotosError(
-					409,
-					'duplicate_submission',
-					'This photo has already been submitted.',
-				)
+			if (existing) {
+				if (
+					existing.orgId !== orgId ||
+					existing.customerId !== customerId ||
+					existing.orderId !== input.orderId ||
+					existing.itemId !== input.itemId
+				) {
+					throw new GuestPhotosError(
+						403,
+						'not_eligible',
+						'This photo is not eligible for this order or dish.',
+					)
+				}
+				if (existing.status !== 'staged') {
+					throw new GuestPhotosError(
+						409,
+						'duplicate_submission',
+						'This photo has already been submitted.',
+					)
+				}
+				const nowDate = new Date(nowMs)
+				const [promoted] = await tx
+					.update(guestPhotoSubmissions)
+					.set({
+						status: 'pending',
+						contentType: head.contentType || input.contentType,
+						byteSize: head.sizeBytes,
+						consentText: GUEST_PHOTO_CONSENT_TEXT,
+						consentVersion: GUEST_PHOTO_CONSENT_VERSION,
+						consentedAt: nowDate,
+					})
+					.where(
+						and(
+							eq(guestPhotoSubmissions.id, existing.id),
+							eq(guestPhotoSubmissions.orgId, orgId),
+							eq(guestPhotoSubmissions.status, 'staged'),
+						),
+					)
+					.returning()
+				if (!promoted) {
+					throw new GuestPhotosError(
+						409,
+						'duplicate_submission',
+						'This photo has already been submitted.',
+					)
+				}
+				return promoted
 			}
 
 			const { perItem, dailyUsed } = await countSubmissionCaps(
@@ -501,7 +618,8 @@ export async function submitGuestPhoto(
 					contentType: head.contentType || input.contentType,
 					byteSize: head.sizeBytes,
 					status: 'pending',
-					consentText: input.consentText?.trim() || GUEST_PHOTO_CONSENT_TEXT,
+					consentText: GUEST_PHOTO_CONSENT_TEXT,
+					consentVersion: GUEST_PHOTO_CONSENT_VERSION,
 					consentedAt: nowDate,
 					createdAt: nowDate,
 				})
@@ -559,6 +677,10 @@ export async function listOperatorGuestPhotos(
 	const conditions = [eq(guestPhotoSubmissions.orgId, orgId)]
 	if (query.status) {
 		conditions.push(eq(guestPhotoSubmissions.status, query.status))
+	} else {
+		conditions.push(
+			inArray(guestPhotoSubmissions.status, [...GUEST_PHOTO_STATUSES]),
+		)
 	}
 	if (query.itemId) {
 		conditions.push(eq(guestPhotoSubmissions.itemId, query.itemId))
@@ -624,6 +746,7 @@ export async function getOperatorGuestPhoto(
 			and(
 				eq(guestPhotoSubmissions.id, id),
 				eq(guestPhotoSubmissions.orgId, orgId),
+				ne(guestPhotoSubmissions.status, 'staged'),
 			),
 		)
 		.get()
@@ -660,7 +783,9 @@ export async function decideGuestPhoto(
 					),
 				)
 				.get()
-			if (!existing) throw notFound('Guest photo submission not found')
+			if (!existing || existing.status === 'staged') {
+				throw notFound('Guest photo submission not found')
+			}
 			if (existing.status !== 'pending') {
 				throw new GuestPhotosError(
 					409,
@@ -722,10 +847,13 @@ export async function getApprovedGuestPhotoSignedUrl(
 			and(
 				eq(guestPhotoSubmissions.id, id),
 				eq(guestPhotoSubmissions.orgId, orgId),
+				ne(guestPhotoSubmissions.status, 'staged'),
 			),
 		)
 		.get()
-	if (!row) throw notFound('Guest photo submission not found')
+	if (!row || row.status === 'staged') {
+		throw notFound('Guest photo submission not found')
+	}
 	if (row.status !== 'approved') {
 		throw new GuestPhotosError(
 			409,
@@ -776,7 +904,9 @@ export async function markGuestPhotoAdded(
 					),
 				)
 				.get()
-			if (!existing) throw notFound('Guest photo submission not found')
+			if (!existing || existing.status === 'staged') {
+				throw notFound('Guest photo submission not found')
+			}
 			if (existing.status !== 'approved') {
 				throw new GuestPhotosError(
 					409,
@@ -834,7 +964,9 @@ export async function removeGuestPhotoAdded(
 					),
 				)
 				.get()
-			if (!existing) throw notFound('Guest photo submission not found')
+			if (!existing || existing.status === 'staged') {
+				throw notFound('Guest photo submission not found')
+			}
 			if (existing.status !== 'added') {
 				throw new GuestPhotosError(
 					409,
@@ -931,39 +1063,112 @@ export async function purgeExpiredRejectedGuestPhotos(
 	return { purged, failed }
 }
 
+/**
+ * Purges unsubmitted `'staged'` upload reservations older than
+ * `GUEST_PHOTO_STAGED_RETENTION_HOURS` (24 hours), deleting both their R2
+ * object and database row. If R2 deletion fails, the row stays for retry.
+ */
+export async function purgeStaleStagedGuestPhotos(
+	db: TenantDatabase,
+	options: {
+		now?: number
+		limit?: number
+		storage?: Pick<GuestPhotoStorageAdapter, 'deleteObject'>
+	} = {},
+): Promise<{ purged: number; failed: number }> {
+	const nowMs = options.now ?? Date.now()
+	const cutoff = new Date(nowMs - GUEST_PHOTO_STAGED_RETENTION_HOURS * HOUR_MS)
+	const storage = options.storage ?? defaultStorageAdapter
+	const batchLimit = Math.max(1, Math.min(500, options.limit ?? 200))
+
+	const candidates = await db
+		.select({
+			id: guestPhotoSubmissions.id,
+			objectKey: guestPhotoSubmissions.objectKey,
+		})
+		.from(guestPhotoSubmissions)
+		.where(
+			and(
+				eq(guestPhotoSubmissions.status, 'staged'),
+				lt(guestPhotoSubmissions.createdAt, cutoff),
+			),
+		)
+		.limit(batchLimit)
+		.all()
+
+	let purged = 0
+	let failed = 0
+	for (const candidate of candidates) {
+		const delResult = await storage.deleteObject(candidate.objectKey)
+		if (delResult === 'failed') {
+			failed += 1
+			continue
+		}
+		await db
+			.delete(guestPhotoSubmissions)
+			.where(
+				and(
+					eq(guestPhotoSubmissions.id, candidate.id),
+					eq(guestPhotoSubmissions.status, 'staged'),
+				),
+			)
+		purged += 1
+	}
+
+	return { purged, failed }
+}
+
+export type GuestPhotosTickResult = {
+	purged: number
+	failed: number
+	errors: number
+}
+
 export async function runGuestPhotosTickForOrg(
 	orgId: string,
 	options: {
 		now?: number
 		storage?: Pick<GuestPhotoStorageAdapter, 'deleteObject'>
 	} = {},
-): Promise<{ purged: number; failed: number; errors: number }> {
+): Promise<GuestPhotosTickResult> {
 	const db = await getTenantDb(orgId)
-	const result = await purgeExpiredRejectedGuestPhotos(db, options)
+	const [rejected, staged] = await Promise.all([
+		purgeExpiredRejectedGuestPhotos(db, options),
+		purgeStaleStagedGuestPhotos(db, options),
+	])
+	const purged = rejected.purged + staged.purged
+	const failed = rejected.failed + staged.failed
 	return {
-		purged: result.purged,
-		failed: result.failed,
-		errors: result.failed > 0 ? 1 : 0,
+		purged,
+		failed,
+		errors: failed > 0 ? 1 : 0,
 	}
 }
 
 export async function fanOutGuestPhotosTick(
 	options: {
 		orgIds?: readonly string[]
+		run?: (orgId: string) => Promise<GuestPhotosTickResult | null>
 		now?: number
 		storage?: Pick<GuestPhotoStorageAdapter, 'deleteObject'>
 	} = {},
-): Promise<{ purged: number; failed: number; errors: number }> {
+): Promise<GuestPhotosTickResult> {
 	const orgIds = options.orgIds ?? (await listTenantOrgIds())
 	let purged = 0
 	let failed = 0
 	let errors = 0
 	for (const orgId of orgIds) {
 		try {
-			const res = await runGuestPhotosTickForOrg(orgId, {
-				now: options.now,
-				storage: options.storage,
-			})
+			const res = options.run
+				? await options.run(orgId)
+				: await runGuestPhotosTickForOrg(orgId, {
+						now: options.now,
+						storage: options.storage,
+					})
+			if (!res) {
+				errors += 1
+				continue
+			}
 			purged += res.purged
 			failed += res.failed
 			errors += res.errors

@@ -8,7 +8,9 @@ import {
 	OrganizationMenu,
 	OrganizationMenuCategory,
 	OrganizationMenuItem,
+	OrganizationMenuItemModifierGroupAssignment,
 	OrganizationMenuModifierGroup,
+	OrganizationMenuModifierGroupOptionAssignment,
 	OrganizationMenuOption,
 } from '@repo/database'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -16,7 +18,7 @@ import type * as storageServer from '#app/utils/storage.server.ts'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 import { applyMenuImport } from './apply.server.ts'
-import { type MenuImportDraft } from './schema.ts'
+import { MENU_IMPORT_STALE_MS, type MenuImportDraft } from './schema.ts'
 
 const mocks = vi.hoisted(() => ({
 	snapshotStore: new Map<string, string>(),
@@ -103,6 +105,7 @@ function buildSampleDraft(): MenuImportDraft {
 								],
 								confidence: 'high',
 								lowConfidenceFields: [],
+								matchMode: 'auto',
 								matchExistingItemId: null,
 							},
 							{
@@ -115,6 +118,7 @@ function buildSampleDraft(): MenuImportDraft {
 								modifierGroups: [],
 								confidence: 'high',
 								lowConfidenceFields: [],
+								matchMode: 'auto',
 								matchExistingItemId: null,
 							},
 						],
@@ -387,5 +391,219 @@ describe('menu import apply.server (#73)', () => {
 			en: 'Classic Burger',
 			ar: 'برجر كلاسيك',
 		})
+	})
+
+	it('respects matchMode="new" to skip fallback name matching and reclaims stale applying rows', async () => {
+		await db.insert(OrganizationMenuItem).values({
+			organizationId,
+			displayName: '{"en":"Classic Burger"}',
+			price: 12,
+			availabilityStatus: 'available',
+		})
+
+		const staleDate = new Date(Date.now() - MENU_IMPORT_STALE_MS - 60_000)
+		const [imp] = await db
+			.insert(MenuImport)
+			.values({
+				organizationId,
+				sourceKind: 'pdf',
+				status: 'applying',
+				createdById: userId,
+				updatedAt: staleDate,
+			})
+			.returning()
+
+		const draft = buildSampleDraft()
+		draft.menus[0]!.categories[0]!.items[0]!.matchMode = 'new'
+
+		const res = await applyMenuImport({
+			importId: imp!.id,
+			organizationId,
+			organizationSlug,
+			userId,
+			draft,
+		})
+		expect(res.ok).toBe(true)
+		if (!res.ok) return
+		expect(res.createdItems).toBe(1)
+		expect(res.updatedItems).toBe(0)
+
+		const items = await db
+			.select()
+			.from(OrganizationMenuItem)
+			.where(eq(OrganizationMenuItem.organizationId, organizationId))
+		expect(items).toHaveLength(2)
+	})
+
+	it('scopes modifier group matching to the matched item, never updates shared option prices globally, and merges modifierGraphChanges', async () => {
+		// Seed Dish A with group "Sauces" sharing option "Garlic Sauce" ($1) with Group X
+		const [dishA] = await db
+			.insert(OrganizationMenuItem)
+			.values({
+				organizationId,
+				displayName: '{"en":"Chicken Shawarma"}',
+				price: 11,
+				availabilityStatus: 'available',
+			})
+			.returning()
+		const [groupA] = await db
+			.insert(OrganizationMenuModifierGroup)
+			.values({
+				organizationId,
+				name: '{"en":"Sauces"}',
+				selectionType: 'multiple',
+			})
+			.returning()
+		const [otherGroup] = await db
+			.insert(OrganizationMenuModifierGroup)
+			.values({
+				organizationId,
+				name: '{"en":"Dipping"}',
+				selectionType: 'single',
+			})
+			.returning()
+		const [sharedOpt] = await db
+			.insert(OrganizationMenuOption)
+			.values({
+				organizationId,
+				displayName: '{"en":"Garlic Sauce"}',
+				price: 1,
+			})
+			.returning()
+		await db.insert(OrganizationMenuItemModifierGroupAssignment).values({
+			itemId: dishA!.id,
+			modifierGroupId: groupA!.id,
+		})
+		await db.insert(OrganizationMenuModifierGroupOptionAssignment).values([
+			{ modifierGroupId: groupA!.id, optionId: sharedOpt!.id },
+			{ modifierGroupId: otherGroup!.id, optionId: sharedOpt!.id },
+		])
+
+		const [imp] = await db
+			.insert(MenuImport)
+			.values({
+				organizationId,
+				sourceKind: 'pdf',
+				status: 'ready',
+				createdById: userId,
+			})
+			.returning()
+
+		const draft: MenuImportDraft = {
+			version: 1,
+			detectedCurrency: 'USD',
+			detectedLocales: ['en'],
+			imageSuggestions: [],
+			menus: [
+				{
+					id: 'm1',
+					included: true,
+					name: { en: 'Main Menu' },
+					categories: [
+						{
+							id: 'c1',
+							included: true,
+							name: { en: 'Wraps' },
+							description: {},
+							items: [
+								{
+									id: 'it-a',
+									included: true,
+									name: { en: 'Chicken Shawarma' },
+									description: {},
+									price: 12,
+									sizes: [],
+									modifierGroups: [
+										{
+											id: 'g-a',
+											included: true,
+											name: { en: 'Sauces' },
+											selectionType: 'multiple',
+											minSelections: 0,
+											maxSelections: 2,
+											options: [
+												{
+													id: 'o-shared',
+													included: true,
+													name: { en: 'Garlic Sauce' },
+													price: 5, // Must NOT overwrite sharedOpt's $1 globally
+												},
+												{
+													id: 'o-new',
+													included: true,
+													name: { en: 'Tahini' },
+													price: 1.5,
+												},
+											],
+										},
+									],
+									confidence: 'high',
+									lowConfidenceFields: [],
+									matchMode: 'auto',
+									matchExistingItemId: null,
+								},
+								{
+									id: 'it-b',
+									included: true,
+									name: { en: 'Falafel Wrap' },
+									description: {},
+									price: 9,
+									sizes: [],
+									modifierGroups: [
+										{
+											id: 'g-b',
+											included: true,
+											name: { en: 'Sauces' }, // Same group name on a DIFFERENT item -> must create new group!
+											selectionType: 'single',
+											minSelections: 0,
+											maxSelections: 1,
+											options: [
+												{
+													id: 'o-b',
+													included: true,
+													name: { en: 'Garlic Sauce' },
+													price: 2.5,
+												},
+											],
+										},
+									],
+									confidence: 'high',
+									lowConfidenceFields: [],
+									matchMode: 'new',
+									matchExistingItemId: null,
+								},
+							],
+						},
+					],
+				},
+			],
+		}
+
+		const res = await applyMenuImport({
+			importId: imp!.id,
+			organizationId,
+			organizationSlug,
+			userId,
+			draft,
+		})
+		expect(res.ok).toBe(true)
+		if (!res.ok) return
+		// Created 1 new modifier group (for Falafel Wrap) and 2 new options (Tahini + Falafel Wrap's Garlic Sauce)
+		expect(res.createdModifierGroups).toBe(1)
+		expect(res.createdOptions).toBe(2)
+
+		// Shared option price must remain $1
+		const [afterShared] = await db
+			.select()
+			.from(OrganizationMenuOption)
+			.where(eq(OrganizationMenuOption.id, sharedOpt!.id))
+		expect(afterShared?.price).toBe(1)
+
+		// 3 modifier groups total: groupA, otherGroup, and Falafel Wrap's new Sauces group
+		const allGroups = await db
+			.select()
+			.from(OrganizationMenuModifierGroup)
+			.where(eq(OrganizationMenuModifierGroup.organizationId, organizationId))
+		expect(allGroups).toHaveLength(3)
 	})
 })

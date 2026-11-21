@@ -245,6 +245,7 @@ loyaltyRoutes.post('/checkout/quote', async (c) => {
 				customerId: auth.customer.customerId,
 				request: order.data,
 				selection: body.data.selection,
+				client: c.req.header('X-Client') ?? null,
 			})
 			refused =
 				(!result.ok && failureCountsAsCouponGuess(result.failure)) ||

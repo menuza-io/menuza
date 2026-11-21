@@ -5,6 +5,7 @@ import { z } from 'zod'
 export const MENU_IMPORT_MAX_BYTES = 10 * 1024 * 1024 // 10 MB
 export const MENU_IMPORT_FETCH_TIMEOUT_MS = 20_000 // 20 seconds
 export const MENU_IMPORT_MAX_REDIRECTS = 5
+export const MENU_IMPORT_STALE_MS = 5 * 60_000 // 5 minutes
 
 export const MENU_IMPORT_NAME_MAX = 120
 export const MENU_IMPORT_DESCRIPTION_MAX = 500
@@ -17,6 +18,12 @@ export const MENU_IMPORT_MAX_MODIFIER_GROUPS = 20
 export const MENU_IMPORT_MAX_MODIFIER_OPTIONS = 50
 export const MENU_IMPORT_MAX_SIZES = 20
 export const MENU_IMPORT_MAX_IMAGE_SUGGESTIONS = 30
+export const MENU_IMPORT_MAX_TOTAL_ITEMS = MENU_IMPORT_MAX_ITEMS
+export const MENU_IMPORT_MAX_TOTAL_MODIFIER_GROUPS = 500
+export const MENU_IMPORT_MAX_TOTAL_MODIFIER_OPTIONS = 2_000
+
+export const MENU_IMPORT_MATCH_MODES = ['auto', 'new', 'existing'] as const
+export type MenuImportMatchMode = (typeof MENU_IMPORT_MATCH_MODES)[number]
 
 export const MENU_IMPORT_ALLOWED_IMAGE_MIME_TYPES = [
 	'image/jpeg',
@@ -254,6 +261,60 @@ export const menuImportModelSchema = z
 	})
 	.strict()
 
+type DraftTotalCapsShape = {
+	menus: Array<{
+		categories: Array<{
+			items: Array<{
+				modifierGroups?: Array<{
+					options: unknown[]
+				}>
+			}>
+		}>
+	}>
+}
+
+function enforceDraftTotalCaps(
+	data: DraftTotalCapsShape,
+	ctx: z.RefinementCtx,
+) {
+	let totalItems = 0
+	let totalGroups = 0
+	let totalOptions = 0
+	for (const menu of data.menus) {
+		for (const category of menu.categories) {
+			totalItems += category.items.length
+			for (const item of category.items) {
+				const groups = item.modifierGroups ?? []
+				totalGroups += groups.length
+				for (const group of groups) {
+					totalOptions += group.options.length
+				}
+			}
+		}
+	}
+	if (totalItems > MENU_IMPORT_MAX_TOTAL_ITEMS) {
+		ctx.addIssue({
+			code: 'custom',
+			path: ['menus'],
+			message: `Total items across the draft cannot exceed ${MENU_IMPORT_MAX_TOTAL_ITEMS}`,
+		})
+	}
+	if (totalGroups > MENU_IMPORT_MAX_TOTAL_MODIFIER_GROUPS) {
+		ctx.addIssue({
+			code: 'custom',
+			path: ['menus'],
+			message: `Total modifier groups across the draft cannot exceed ${MENU_IMPORT_MAX_TOTAL_MODIFIER_GROUPS}`,
+		})
+	}
+	if (totalOptions > MENU_IMPORT_MAX_TOTAL_MODIFIER_OPTIONS) {
+		ctx.addIssue({
+			code: 'custom',
+			path: ['menus'],
+			message: `Total modifier options across the draft cannot exceed ${MENU_IMPORT_MAX_TOTAL_MODIFIER_OPTIONS}`,
+		})
+	}
+}
+
 /**
  * Strict validation schema for model output before normalizing IDs and UI flags.
  * Trims strings, checks length caps, checks finite non-negative prices, and
@@ -361,6 +422,7 @@ export const menuImportValidatedModelSchema = z
 			.max(MENU_IMPORT_MAX_MENUS),
 	})
 	.strict()
+	.superRefine(enforceDraftTotalCaps)
 
 export const menuImportDraftOptionSchema = z
 	.object({
@@ -423,6 +485,7 @@ export const menuImportDraftItemSchema = z
 			.array(z.enum(MENU_IMPORT_LOW_CONFIDENCE_FIELDS))
 			.max(4)
 			.default([]),
+		matchMode: z.enum(MENU_IMPORT_MATCH_MODES).default('auto'),
 		matchExistingItemId: trimmedRequiredId
 			.nullable()
 			.optional()
@@ -483,6 +546,7 @@ export const menuImportDraftSchema = z
 			.default([]),
 	})
 	.strict()
+	.superRefine(enforceDraftTotalCaps)
 
 export type MenuImportDraft = z.infer<typeof menuImportDraftSchema>
 export type MenuImportDraftMenu = z.infer<typeof menuImportDraftMenuSchema>
@@ -550,6 +614,7 @@ export function normalizeModelOutputToDraft(
 					})),
 					confidence: item.confidence,
 					lowConfidenceFields: Array.from(new Set(item.lowConfidenceFields)),
+					matchMode: 'auto' as const,
 					matchExistingItemId: null,
 				})),
 			})),

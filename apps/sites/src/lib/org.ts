@@ -5,8 +5,11 @@ import {
 import { type MenuChannel } from '@repo/common/menu-channels'
 import { type DropStatus } from '@repo/common/menu-types'
 import { type SiteFontSelection } from '@repo/common/site-fonts'
+import { type PublicCustomerApp } from './customer-app-types'
 import { edgeCache } from '~/lib/site-headers'
 import { getAppServiceBinding, getPublicAppUrl } from '~/lib/worker-env'
+
+export { type PublicCustomerApp }
 
 export type PublicSiteCustomFont = {
 	url: string
@@ -43,10 +46,6 @@ export type PublicSiteRedirect = {
 	toPath: string
 	statusCode: number
 }
-
-import { type PublicCustomerApp } from './customer-app-types'
-
-export { type PublicCustomerApp }
 
 export type PublicOrganization = {
 	id: string
@@ -697,6 +696,8 @@ export type PublicSiteMenuPayload = {
 		upsell?: boolean
 		slotLimits?: boolean
 		dailyDishLimits?: boolean
+		qrOrdering?:
+			boolean | { enabled?: boolean; dineIn?: boolean; online?: boolean }
 	}
 }
 

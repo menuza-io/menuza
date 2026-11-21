@@ -297,6 +297,7 @@ export function MenuScheduleBadge({
 	timezone = 'America/New_York',
 	actionUrl,
 }: MenuScheduleBadgeProps) {
+	const { _ } = useLingui()
 	const defaultAction = useFormAction('.')
 	const targetAction = actionUrl ?? defaultAction
 	const cancelFetcher = useFetcher<ScheduleActionResponse>()
@@ -319,7 +320,7 @@ export function MenuScheduleBadge({
 					variant="ghost"
 					size="xs"
 					disabled={isCancelling}
-					aria-label="Cancel schedule"
+					aria-label={_(t`Cancel schedule`)}
 				>
 					<Icon name="x" className="size-3" />
 				</Button>

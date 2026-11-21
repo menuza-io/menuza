@@ -10,6 +10,7 @@ import {
 	findActiveOrganizationById,
 	resolveOrganizationForBrowserAuth,
 } from '../lib/origin.ts'
+import { derivePublicOrderChannel } from '../services/order-service.ts'
 import { operatorQrRoutes } from './operator-qr.ts'
 import { publicOrderRoutes } from './orders.ts'
 
@@ -132,6 +133,20 @@ function menuContext(overrides: Record<string, unknown> = {}) {
 									price: 12,
 									availabilityStatus: 'available',
 									channels: ['qr'],
+								},
+								{
+									id: 'item-web-only',
+									displayName: 'Web Only Special',
+									price: 15,
+									availabilityStatus: 'available',
+									channels: ['web'],
+								},
+								{
+									id: 'item-app-only',
+									displayName: 'App Exclusive Burger',
+									price: 18,
+									availabilityStatus: 'available',
+									channels: ['app'],
 								},
 							],
 						},
@@ -483,5 +498,111 @@ describe('channel availability enforcement on orders & quotes (#220)', () => {
 			{ 'X-Table-Token': tableToken },
 		)
 		expect(loc1QrPlace.status).toBe(201)
+	})
+
+	it('derives channel "app" from trusted X-Client: ios | android on orders & quotes while rejecting web-only items and ignoring spoofed values', async () => {
+		expect(
+			derivePublicOrderChannel({
+				fulfillment: 'pickup',
+				client: 'ios',
+			}),
+		).toBe('app')
+		expect(
+			derivePublicOrderChannel({
+				fulfillment: 'delivery',
+				client: 'ANDROID',
+			}),
+		).toBe('app')
+		expect(
+			derivePublicOrderChannel({
+				fulfillment: 'dine_in',
+				client: 'ios',
+			}),
+		).toBe('qr')
+		expect(
+			derivePublicOrderChannel({
+				fulfillment: 'pickup',
+				source: 'qr_poster',
+				qrOrdering: { enabled: true, dineIn: true, online: true },
+				client: 'ios',
+			}),
+		).toBe('qr')
+		expect(
+			derivePublicOrderChannel({
+				fulfillment: 'pickup',
+				client: 'pos',
+			}),
+		).toBe('web')
+
+		// App-only dish is refused on web (409), accepted on X-Client: ios & android
+		const webAppOnly = await postJson(
+			'/orders',
+			baseOrder({
+				lines: [{ itemId: 'item-app-only', quantity: 1, options: [] }],
+			}),
+		)
+		expect(webAppOnly.status).toBe(409)
+		expect((await webAppOnly.json()).error).toBe('item_unavailable')
+
+		const { idempotencyKey: _k1, ...appQuotePayload } = baseOrder({
+			lines: [{ itemId: 'item-app-only', quantity: 1, options: [] }],
+		})
+		const iosQuoteOk = await postJson('/orders/quote', appQuotePayload, {
+			'X-Client': 'ios',
+		})
+		expect(iosQuoteOk.status).toBe(200)
+
+		const iosPlaceOk = await postJson(
+			'/orders',
+			baseOrder({
+				lines: [{ itemId: 'item-app-only', quantity: 1, options: [] }],
+			}),
+			{ 'X-Client': 'ios' },
+		)
+		expect(iosPlaceOk.status).toBe(201)
+
+		const androidPlaceOk = await postJson(
+			'/orders',
+			baseOrder({
+				lines: [{ itemId: 'item-app-only', quantity: 1, options: [] }],
+			}),
+			{ 'X-Client': 'android' },
+		)
+		expect(androidPlaceOk.status).toBe(201)
+
+		// Web-only dish is refused when X-Client is ios or android
+		const { idempotencyKey: _k2, ...webOnlyQuotePayload } = baseOrder({
+			lines: [{ itemId: 'item-web-only', quantity: 1, options: [] }],
+		})
+		const iosQuoteWebOnly = await postJson(
+			'/orders/quote',
+			webOnlyQuotePayload,
+			{
+				'X-Client': 'ios',
+			},
+		)
+		expect(iosQuoteWebOnly.status).toBe(409)
+		expect((await iosQuoteWebOnly.json()).error).toBe('item_unavailable')
+
+		const androidPlaceWebOnly = await postJson(
+			'/orders',
+			baseOrder({
+				lines: [{ itemId: 'item-web-only', quantity: 1, options: [] }],
+			}),
+			{ 'X-Client': 'android' },
+		)
+		expect(androidPlaceWebOnly.status).toBe(409)
+		expect((await androidPlaceWebOnly.json()).error).toBe('item_unavailable')
+
+		// Spoofed X-Client: pos cannot unlock pos-only dishes
+		const spoofedHeader = await postJson(
+			'/orders',
+			baseOrder({
+				lines: [{ itemId: 'item-till-only', quantity: 1, options: [] }],
+			}),
+			{ 'X-Client': 'pos' },
+		)
+		expect(spoofedHeader.status).toBe(409)
+		expect((await spoofedHeader.json()).error).toBe('item_unavailable')
 	})
 })

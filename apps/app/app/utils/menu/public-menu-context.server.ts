@@ -10,6 +10,7 @@
  */
 
 import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
+import { getFeatureFlag } from '@repo/common/feature-flags'
 import { readCourseSettings } from '@repo/common/kitchen-ticket'
 import {
 	DEFAULT_DELIVERY_CONFIG,
@@ -43,6 +44,11 @@ import {
 	parsePosLocationStationSettings,
 	type PosLocationStationSettings,
 } from '@repo/common/pos-orders'
+import {
+	foldQrOrderingFeatures,
+	QR_ORDERING_FLAG_KEYS,
+	type QrOrderingFeatures,
+} from '@repo/common/qr-ordering'
 import {
 	and,
 	asc,
@@ -166,6 +172,8 @@ export interface PublicSiteMenuPayload {
 		 * cap itself is never in this payload.
 		 */
 		dailyDishLimits?: boolean
+		/** `qr_ordering.*` flags (#220): aligns poster channel gating with `tenant-api`. */
+		qrOrdering?: QrOrderingFeatures
 	}
 	/**
 	 * Not part of the public response. Till rules are loaded by a paired
@@ -746,6 +754,17 @@ export async function buildPublicSiteMenuPayload(
 			upsell: await isUpsellEnabled(org.id),
 			slotLimits: await isSlotLimitsEnabled(org.id),
 			dailyDishLimits: await isDailyDishLimitsEnabled(org.id),
+			qrOrdering: foldQrOrderingFeatures({
+				enabled: await getFeatureFlag(QR_ORDERING_FLAG_KEYS.enabled, {
+					organizationId: org.id,
+				}),
+				dineIn: await getFeatureFlag(QR_ORDERING_FLAG_KEYS.dineIn, {
+					organizationId: org.id,
+				}),
+				online: await getFeatureFlag(QR_ORDERING_FLAG_KEYS.online, {
+					organizationId: org.id,
+				}),
+			}),
 		},
 	}
 

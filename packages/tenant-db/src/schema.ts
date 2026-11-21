@@ -10186,6 +10186,7 @@ export const pushMessages = sqliteTable(
 // ==========================================
 
 export const GUEST_PHOTO_SUBMISSION_STATUSES = [
+	'staged',
 	'pending',
 	'approved',
 	'rejected',
@@ -10196,8 +10197,8 @@ export type GuestPhotoSubmissionStatus =
 
 /**
  * Guest-submitted dish photos awaiting or following operator moderation (#148).
- * Regional data: `pending` and `rejected` rows (and their R2 objects) are
- * deleted on person erasure; `approved`/`added` rows have `customer_id` and
+ * Regional data: `staged`, `pending`, and `rejected` rows (and their R2 objects)
+ * are deleted on person erasure; `approved`/`added` rows have `customer_id` and
  * `order_id` unlinked.
  */
 export const guestPhotoSubmissions = sqliteTable(
@@ -10218,8 +10219,9 @@ export const guestPhotoSubmissions = sqliteTable(
 		status: text('status', { enum: GUEST_PHOTO_SUBMISSION_STATUSES })
 			.notNull()
 			.default('pending'),
-		consentText: text('consent_text').notNull(),
-		consentedAt: integer('consented_at', { mode: 'timestamp_ms' }).notNull(),
+		consentText: text('consent_text'),
+		consentVersion: text('consent_version'),
+		consentedAt: integer('consented_at', { mode: 'timestamp_ms' }),
 		decidedAt: integer('decided_at', { mode: 'timestamp_ms' }),
 		/** Opaque control-plane operator user ID. */
 		decidedByUserId: text('decided_by_user_id'),
@@ -10242,6 +10244,10 @@ export const guestPhotoSubmissions = sqliteTable(
 		index('idx_guest_photo_submissions_status_decided').on(
 			table.status,
 			table.decidedAt,
+		),
+		index('idx_guest_photo_submissions_status_created').on(
+			table.status,
+			table.createdAt,
 		),
 		index('idx_guest_photo_submissions_org_status_created').on(
 			table.orgId,

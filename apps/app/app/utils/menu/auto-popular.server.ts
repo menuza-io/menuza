@@ -76,6 +76,21 @@ export function clampAutoPopularCount(value: number): number {
 	)
 }
 
+async function clearAutoPopularBadges(organizationId: string): Promise<number> {
+	const cleared = await db
+		.update(OrganizationMenuItem)
+		.set({ isPopular: false })
+		.where(
+			and(
+				eq(OrganizationMenuItem.organizationId, organizationId),
+				eq(OrganizationMenuItem.popularMode, 'auto'),
+				eq(OrganizationMenuItem.isPopular, true),
+			),
+		)
+		.returning({ id: OrganizationMenuItem.id })
+	return cleared.length
+}
+
 export async function updateAutoPopularSettings(input: {
 	organizationId: string
 	enabled: boolean
@@ -99,16 +114,7 @@ export async function updateAutoPopularSettings(input: {
 		.where(eq(Organization.id, org.id))
 
 	if (!input.enabled) {
-		await db
-			.update(OrganizationMenuItem)
-			.set({ isPopular: false })
-			.where(
-				and(
-					eq(OrganizationMenuItem.organizationId, org.id),
-					eq(OrganizationMenuItem.popularMode, 'auto'),
-					eq(OrganizationMenuItem.isPopular, true),
-				),
-			)
+		await clearAutoPopularBadges(org.id)
 	}
 
 	await purgeOrganizationSiteCache(org.id, org.slug)
@@ -206,9 +212,13 @@ export async function applyAutoPopularBadges(
 
 	const featureEnabled = await getMenuAutoPopularEnabled(organization.id)
 	if (!featureEnabled) {
+		const cleared = await clearAutoPopularBadges(organization.id)
+		if (cleared > 0) {
+			await purgeOrganizationSiteCache(organization.id, organization.slug)
+		}
 		return {
 			status: 'ok',
-			result: { updated: 0, skipped: 'feature_disabled' },
+			result: { updated: cleared, skipped: 'feature_disabled' },
 		}
 	}
 
@@ -216,9 +226,13 @@ export async function applyAutoPopularBadges(
 		organization.autoPopularCount == null ||
 		organization.autoPopularCount < MENU_POPULAR_MIN_COUNT
 	) {
+		const cleared = await clearAutoPopularBadges(organization.id)
+		if (cleared > 0) {
+			await purgeOrganizationSiteCache(organization.id, organization.slug)
+		}
 		return {
 			status: 'ok',
-			result: { updated: 0, skipped: 'setting_off' },
+			result: { updated: cleared, skipped: 'setting_off' },
 		}
 	}
 

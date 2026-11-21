@@ -89,6 +89,26 @@ export function parseScheduleGoLiveAt(
 	if (!DATE_PATTERN.test(trimmedDate) || !TIME_PATTERN.test(trimmedTime)) {
 		return null
 	}
+	const [year, month, day] = trimmedDate.split('-').map(Number)
+	if (
+		year === undefined ||
+		month === undefined ||
+		day === undefined ||
+		month < 1 ||
+		month > 12 ||
+		day < 1 ||
+		day > 31
+	) {
+		return null
+	}
+	const probe = new Date(Date.UTC(year, month - 1, day))
+	if (
+		probe.getUTCFullYear() !== year ||
+		probe.getUTCMonth() + 1 !== month ||
+		probe.getUTCDate() !== day
+	) {
+		return null
+	}
 	const [hh, mm] = trimmedTime.split(':').map(Number)
 	if (
 		hh === undefined ||
@@ -138,7 +158,7 @@ export async function setMenuSchedule(input: {
 	}
 
 	const [targetMenu] = await db
-		.select({ id: OrganizationMenu.id })
+		.select({ id: OrganizationMenu.id, menuType: OrganizationMenu.menuType })
 		.from(OrganizationMenu)
 		.where(
 			and(
@@ -147,7 +167,7 @@ export async function setMenuSchedule(input: {
 			),
 		)
 		.limit(1)
-	if (!targetMenu) {
+	if (!targetMenu || targetMenu.menuType === 'drop') {
 		return { ok: false, error: 'menu_not_found' }
 	}
 
@@ -157,7 +177,7 @@ export async function setMenuSchedule(input: {
 			return { ok: false, error: 'same_menu' }
 		}
 		const [takeOffMenu] = await db
-			.select({ id: OrganizationMenu.id })
+			.select({ id: OrganizationMenu.id, menuType: OrganizationMenu.menuType })
 			.from(OrganizationMenu)
 			.where(
 				and(
@@ -166,7 +186,7 @@ export async function setMenuSchedule(input: {
 				),
 			)
 			.limit(1)
-		if (!takeOffMenu) {
+		if (!takeOffMenu || takeOffMenu.menuType === 'drop') {
 			return { ok: false, error: 'take_off_menu_not_found' }
 		}
 	}
@@ -393,7 +413,7 @@ export async function handleMenuScheduleAction(input: {
 		)
 	}
 
-	const targetMenuId = parsed.data.menuId ?? input.menuId
+	const targetMenuId = input.menuId ?? parsed.data.menuId
 	if (!targetMenuId) {
 		return Response.json(
 			{ ok: false, error: 'menu_not_found' },
@@ -451,7 +471,7 @@ export async function handleMenuScheduleAction(input: {
 type MenuScheduleRow = typeof MenuSchedule.$inferSelect
 
 /**
- * Atomically claims one due `pending` schedule by transitioning it to `done`.
+ * Atomically claims one due `pending` schedule by transitioning it to `running`.
  * Concurrent callers racing for the same schedule will get `null`, making
  * double-runs a no-op.
  */
@@ -461,7 +481,7 @@ export async function claimDueMenuSchedule(
 ): Promise<MenuScheduleRow | null> {
 	const [claimed] = await db
 		.update(MenuSchedule)
-		.set({ status: 'done', updatedAt: now })
+		.set({ status: 'running', updatedAt: now })
 		.where(
 			and(
 				eq(MenuSchedule.id, id),
@@ -474,110 +494,166 @@ export async function claimDueMenuSchedule(
 }
 
 /**
- * Executes a claimed menu schedule:
- * 1. Verifies the target menu still exists in the same organization.
+ * Executes a claimed (`running`) menu schedule:
+ * 1. Verifies the target menu still exists in the same organization and is not a drop.
  * 2. Takes a `before_schedule` menu snapshot via `createMenuSnapshot`.
  * 3. Sets `menuId` to `'available'` (clearing `unavailableUntil`) and, if
- *    `takeOffMenuId` is set and belongs to the same organization, sets it to
- *    `'unavailable'` in one `db.batch`.
- * 4. Purges the organization's public site KV cache.
+ *    `takeOffMenuId` is set and belongs to the same organization (and is not a
+ *    drop), sets it to `'unavailable'` in one `db.batch`.
+ * 4. Marks the schedule `'done'` only after snapshot + `db.batch` succeed, or
+ *    reverts it to `'pending'` on error.
+ * 5. Purges the organization's public site KV cache.
  */
 export async function runClaimedMenuSchedule(
 	schedule: MenuScheduleRow,
 	now = new Date(),
 ): Promise<'applied' | 'skipped'> {
-	const [targetMenu] = await db
-		.select({ id: OrganizationMenu.id })
-		.from(OrganizationMenu)
-		.where(
-			and(
-				eq(OrganizationMenu.id, schedule.menuId),
-				eq(OrganizationMenu.organizationId, schedule.organizationId),
-			),
-		)
-		.limit(1)
-
-	if (!targetMenu) {
-		return 'skipped'
-	}
-
-	let validTakeOffMenuId: string | null = null
-	if (schedule.takeOffMenuId && schedule.takeOffMenuId !== schedule.menuId) {
-		const [takeOffMenu] = await db
-			.select({ id: OrganizationMenu.id })
+	let markedDone = false
+	try {
+		const [targetMenu] = await db
+			.select({ id: OrganizationMenu.id, menuType: OrganizationMenu.menuType })
 			.from(OrganizationMenu)
-			.where(
-				and(
-					eq(OrganizationMenu.id, schedule.takeOffMenuId),
-					eq(OrganizationMenu.organizationId, schedule.organizationId),
-				),
-			)
-			.limit(1)
-		if (takeOffMenu) {
-			validTakeOffMenuId = takeOffMenu.id
-		}
-	}
-
-	await createMenuSnapshot({
-		organizationId: schedule.organizationId,
-		reason: 'before_schedule',
-		userId: schedule.createdById,
-	})
-
-	const statements = [
-		db
-			.update(OrganizationMenu)
-			.set({
-				availabilityStatus: 'available',
-				unavailableUntil: null,
-				updatedAt: now,
-			})
 			.where(
 				and(
 					eq(OrganizationMenu.id, schedule.menuId),
 					eq(OrganizationMenu.organizationId, schedule.organizationId),
 				),
-			),
-	]
+			)
+			.limit(1)
 
-	if (validTakeOffMenuId) {
-		statements.push(
+		if (!targetMenu || targetMenu.menuType === 'drop') {
+			await db
+				.update(MenuSchedule)
+				.set({ status: 'done', updatedAt: now })
+				.where(
+					and(
+						eq(MenuSchedule.id, schedule.id),
+						eq(MenuSchedule.status, 'running'),
+					),
+				)
+			markedDone = true
+			return 'skipped'
+		}
+
+		let validTakeOffMenuId: string | null = null
+		if (schedule.takeOffMenuId && schedule.takeOffMenuId !== schedule.menuId) {
+			const [takeOffMenu] = await db
+				.select({
+					id: OrganizationMenu.id,
+					menuType: OrganizationMenu.menuType,
+				})
+				.from(OrganizationMenu)
+				.where(
+					and(
+						eq(OrganizationMenu.id, schedule.takeOffMenuId),
+						eq(OrganizationMenu.organizationId, schedule.organizationId),
+					),
+				)
+				.limit(1)
+			if (takeOffMenu && takeOffMenu.menuType !== 'drop') {
+				validTakeOffMenuId = takeOffMenu.id
+			}
+		}
+
+		await createMenuSnapshot({
+			organizationId: schedule.organizationId,
+			reason: 'before_schedule',
+			userId: schedule.createdById,
+		})
+
+		const statements = [
 			db
 				.update(OrganizationMenu)
 				.set({
-					availabilityStatus: 'unavailable',
+					availabilityStatus: 'available',
 					unavailableUntil: null,
 					updatedAt: now,
 				})
 				.where(
 					and(
-						eq(OrganizationMenu.id, validTakeOffMenuId),
+						eq(OrganizationMenu.id, schedule.menuId),
 						eq(OrganizationMenu.organizationId, schedule.organizationId),
 					),
 				),
-		)
+		]
+
+		if (validTakeOffMenuId) {
+			statements.push(
+				db
+					.update(OrganizationMenu)
+					.set({
+						availabilityStatus: 'unavailable',
+						unavailableUntil: null,
+						updatedAt: now,
+					})
+					.where(
+						and(
+							eq(OrganizationMenu.id, validTakeOffMenuId),
+							eq(OrganizationMenu.organizationId, schedule.organizationId),
+						),
+					),
+			)
+		}
+
+		await db.batch(statements as unknown as Parameters<typeof db.batch>[0])
+
+		await db
+			.update(MenuSchedule)
+			.set({ status: 'done', updatedAt: now })
+			.where(
+				and(
+					eq(MenuSchedule.id, schedule.id),
+					eq(MenuSchedule.status, 'running'),
+				),
+			)
+		markedDone = true
+
+		const [org] = await db
+			.select({
+				slug: Organization.slug,
+				customDomain: Organization.customDomain,
+			})
+			.from(Organization)
+			.where(eq(Organization.id, schedule.organizationId))
+			.limit(1)
+
+		if (org) {
+			await purgeOrganizationSiteCache(
+				schedule.organizationId,
+				org.slug,
+				org.customDomain,
+			)
+		}
+
+		return 'applied'
+	} catch (error) {
+		if (!markedDone) {
+			try {
+				await db
+					.update(MenuSchedule)
+					.set({ status: 'pending', updatedAt: new Date() })
+					.where(
+						and(
+							eq(MenuSchedule.id, schedule.id),
+							eq(MenuSchedule.status, 'running'),
+						),
+					)
+			} catch {
+				// If a newer pending schedule was created for this menu, mark cancelled
+				await db
+					.update(MenuSchedule)
+					.set({ status: 'cancelled', updatedAt: new Date() })
+					.where(
+						and(
+							eq(MenuSchedule.id, schedule.id),
+							eq(MenuSchedule.status, 'running'),
+						),
+					)
+					.catch(() => {})
+			}
+		}
+		throw error
 	}
-
-	await db.batch(statements as unknown as Parameters<typeof db.batch>[0])
-
-	const [org] = await db
-		.select({
-			slug: Organization.slug,
-			customDomain: Organization.customDomain,
-		})
-		.from(Organization)
-		.where(eq(Organization.id, schedule.organizationId))
-		.limit(1)
-
-	if (org) {
-		await purgeOrganizationSiteCache(
-			schedule.organizationId,
-			org.slug,
-			org.customDomain,
-		)
-	}
-
-	return 'applied'
 }
 
 /**
@@ -601,11 +677,18 @@ export async function applyDueMenuSchedules(
 	let applied = 0
 	let skipped = 0
 	for (const { id } of due) {
-		const claimed = await claimDueMenuSchedule(id, now)
-		if (!claimed) continue
-		const outcome = await runClaimedMenuSchedule(claimed, now)
-		if (outcome === 'applied') applied++
-		else skipped++
+		try {
+			const claimed = await claimDueMenuSchedule(id, now)
+			if (!claimed) continue
+			const outcome = await runClaimedMenuSchedule(claimed, now)
+			if (outcome === 'applied') applied++
+			else skipped++
+		} catch (error) {
+			console.error('Failed to apply due menu schedule', {
+				scheduleId: id,
+				error: error instanceof Error ? error.message : String(error),
+			})
+		}
 	}
 
 	return { applied, skipped }

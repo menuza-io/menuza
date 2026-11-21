@@ -4,11 +4,7 @@ import {
 	GUEST_PHOTO_MAX_BYTES,
 } from '@repo/common/guest-photos'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
-import {
-	getAccessToken,
-	getBrowserTenantApiUrl,
-	tenantFetch,
-} from '~/lib/client-auth'
+import { getAccessToken, tenantFetch } from '~/lib/client-auth'
 
 export type GuestPhotoUploadLabels = {
 	sharePrompt: string // "Share a photo of your {dish}"
@@ -191,22 +187,25 @@ export function renderDishPhotoShareList(
 		options.uploadPhoto ??
 		(async ({ orderId, itemId, file }) => {
 			const prepared = await preparePhotoFile(file)
-			const token = getAccessToken()
-			if (!token) throw new Error('unauthorized')
+			if (!getAccessToken()) throw new Error('unauthorized')
 
 			const formData = new FormData()
 			formData.set('orderId', orderId)
 			formData.set('itemId', itemId)
 			formData.set('file', prepared.file)
 
-			const uploadRes = await fetch(
-				`${getBrowserTenantApiUrl()}/photos/upload`,
+			const { session: uploadSession, response: uploadRes } = await tenantFetch(
+				'/photos/upload',
 				{
 					method: 'POST',
-					headers: { Authorization: `Bearer ${token}` },
 					body: formData,
 				},
 			)
+			if (uploadSession !== 'ok') {
+				throw new Error(
+					uploadSession === 'signed_out' ? 'unauthorized' : 'upload_failed',
+				)
+			}
 			const uploadBody = (await uploadRes.json().catch(() => null)) as {
 				objectKey?: string
 				contentType?: string
@@ -217,23 +216,30 @@ export function renderDishPhotoShareList(
 				throw new Error(uploadBody?.error ?? 'upload_failed')
 			}
 
-			const { response: submitRes } = await tenantFetch('/photos', {
-				method: 'POST',
-				body: JSON.stringify({
-					orderId,
-					itemId,
-					objectKey: uploadBody.objectKey,
-					contentType: uploadBody.contentType ?? prepared.contentType,
-					byteSize: uploadBody.byteSize ?? prepared.file.size,
-					consent: true,
-					consentText: options.labels.consentLabel,
-				}),
-			})
-			if (!submitRes.ok) {
+			const { session: submitSession, response: submitRes } = await tenantFetch(
+				'/photos',
+				{
+					method: 'POST',
+					body: JSON.stringify({
+						orderId,
+						itemId,
+						objectKey: uploadBody.objectKey,
+						contentType: uploadBody.contentType ?? prepared.contentType,
+						byteSize: uploadBody.byteSize ?? prepared.file.size,
+						consent: true,
+						consentText: options.labels.consentLabel,
+					}),
+				},
+			)
+			if (submitSession !== 'ok' || !submitRes.ok) {
 				const err = (await submitRes.json().catch(() => null)) as {
 					error?: string
 				} | null
-				throw new Error(err?.error ?? 'upload_failed')
+				throw new Error(
+					submitSession === 'signed_out'
+						? 'unauthorized'
+						: (err?.error ?? 'upload_failed'),
+				)
 			}
 		})
 
@@ -245,6 +251,11 @@ export function renderDishPhotoShareList(
 				options.defaultLocale,
 			) || dish.itemName
 		const row = el('div', 'space-y-2')
+		const formId =
+			`guest-photo-form-${eligibility.orderId}-${dish.itemId}`.replace(
+				/[^A-Za-z0-9_-]/g,
+				'_',
+			)
 		const trigger = el(
 			'button',
 			'inline-flex min-h-9 items-center rounded-md border border-border px-3 text-xs font-medium text-foreground hover:bg-muted/50',
@@ -252,11 +263,14 @@ export function renderDishPhotoShareList(
 		)
 		trigger.type = 'button'
 		trigger.dataset.shareDish = dish.itemId
+		trigger.setAttribute('aria-expanded', 'false')
+		trigger.setAttribute('aria-controls', formId)
 
 		const form = el(
 			'form',
 			'hidden space-y-2 rounded-md border border-border p-3',
 		)
+		form.id = formId
 		const fileLabel = el(
 			'label',
 			'block text-xs text-muted-foreground',
@@ -300,10 +314,14 @@ export function renderDishPhotoShareList(
 		form.append(fileLabel, consentWrap, actions, statusEl)
 
 		trigger.addEventListener('click', () => {
-			form.classList.toggle('hidden')
+			const isOpen = !form.classList.toggle('hidden')
+			trigger.setAttribute('aria-expanded', String(isOpen))
+			if (isOpen) fileInput.focus()
 		})
 		cancelBtn.addEventListener('click', () => {
 			form.classList.add('hidden')
+			trigger.setAttribute('aria-expanded', 'false')
+			trigger.focus()
 		})
 		form.addEventListener('submit', (event) => {
 			event.preventDefault()

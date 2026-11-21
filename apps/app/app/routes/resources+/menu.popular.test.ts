@@ -133,7 +133,7 @@ describe('POST /resources/menu/popular', () => {
 		expect(res.status).toBe(400)
 	})
 
-	it('is a no-op when menu.auto_popular flag is off', async () => {
+	it('is a no-op when menu.auto_popular flag is off and clears previously auto-set badges while keeping always', async () => {
 		const { organization } = await setupTestOrgWithUser()
 		await db
 			.update(Organization)
@@ -160,6 +160,36 @@ describe('POST /resources/menu/popular', () => {
 		})
 		expect(fresh?.isPopular).toBe(false)
 		expect(purgeSpy).not.toHaveBeenCalled()
+
+		// Previously auto-set popular badges are cleared when flag is turned off
+		const autoSet = await createMenuItem(organization.id, 'Old Auto Winner', {
+			popularMode: 'auto',
+			isPopular: true,
+		})
+		const alwaysPinned = await createMenuItem(organization.id, 'Chef Pick', {
+			popularMode: 'always',
+			isPopular: true,
+		})
+		const clearRes = await call({
+			orgId: organization.id,
+			itemIds: [item.id],
+			windowDays: MENU_POPULAR_WINDOW_DAYS,
+		})
+		expect(clearRes.status).toBe(200)
+		expect(await clearRes.json()).toEqual({
+			updated: 1,
+			skipped: 'feature_disabled',
+		})
+		expect(purgeSpy).toHaveBeenCalledWith(organization.id, organization.slug)
+
+		const afterAuto = await db.query.OrganizationMenuItem.findFirst({
+			where: eq(OrganizationMenuItem.id, autoSet.id),
+		})
+		const afterAlways = await db.query.OrganizationMenuItem.findFirst({
+			where: eq(OrganizationMenuItem.id, alwaysPinned.id),
+		})
+		expect(afterAuto?.isPopular).toBe(false)
+		expect(afterAlways?.isPopular).toBe(true)
 	})
 
 	it('marks top N available auto dishes, skips hidden/unavailable and never, and preserves always/never', async () => {

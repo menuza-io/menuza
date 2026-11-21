@@ -7,7 +7,7 @@ import { getTenantDb } from '@repo/tenant-db'
 import { Hono, type Context } from 'hono'
 import { z } from 'zod'
 import {
-	GUEST_PHOTO_OPERATOR_PERMISSION,
+	checkGuestPhotoOperatorAccess,
 	isGuestPhotosKillSwitchOn,
 	verifyGuestPhotoOperatorToken,
 	type GuestPhotoOperatorContext,
@@ -48,11 +48,9 @@ async function requireOperatorPhotoAccess(
 	if (!verified.ok) {
 		return c.json({ error: verified.error }, verified.status, NO_STORE)
 	}
-	if (requireWrite && verified.context.impersonated) {
-		return c.json({ error: 'impersonated_read_only' }, 403, NO_STORE)
-	}
-	if (!verified.context.grants.includes(GUEST_PHOTO_OPERATOR_PERMISSION)) {
-		return c.json({ error: 'insufficient_permissions' }, 403, NO_STORE)
+	const access = checkGuestPhotoOperatorAccess(verified.context, requireWrite)
+	if (!access.ok) {
+		return c.json({ error: access.error }, access.status, NO_STORE)
 	}
 
 	const db = await getTenantDb(verified.context.orgId)

@@ -216,4 +216,52 @@ describe('menu import SSRF & source fetch (#73)', () => {
 			},
 		])
 	})
+
+	it('allows public domains starting with fd/fe8-feb and blocks post-fetch DNS rebinding', async () => {
+		const resolve = async () => ['93.184.216.34']
+		for (const domain of [
+			'https://feastkitchen.com/menu',
+			'https://fdgrill.com/menu',
+			'https://februarybistro.com/menu',
+		]) {
+			const res = await validateMenuImportUrl(domain, resolve)
+			expect(res.ok).toBe(true)
+		}
+
+		// DNS flips from public IP before fetch to private IP before body read
+		let lookupCount = 0
+		let cancelled = false
+		const toctouRes = await fetchMenuSource('https://rebind.example.com/menu', {
+			resolve: async () => {
+				lookupCount += 1
+				return lookupCount === 1 ? ['93.184.216.34'] : ['127.0.0.1']
+			},
+			fetch: async () =>
+				new Response(
+					new ReadableStream({
+						cancel() {
+							cancelled = true
+						},
+					}),
+					{ status: 200, headers: { 'content-type': 'text/html' } },
+				),
+		})
+		expect(toctouRes.ok).toBe(false)
+		if (!toctouRes.ok) expect(toctouRes.error).toBe('url_not_allowed')
+		expect(cancelled).toBe(true)
+	})
+
+	it('handles large and malformed HTML in linear time without regex backtracking', () => {
+		const junk = '<!--<script><div '.repeat(25_000)
+		const html = `<html><head><title>Fast Kitchen</title></head><body><h1>Menu</h1><p>Falafel - $9</p>${junk}</body></html>`
+		const start = Date.now()
+		const out = extractHtmlMenuTextAndImages(
+			html,
+			'https://feastkitchen.com/menu',
+		)
+		const elapsedMs = Date.now() - start
+		expect(out.title).toBe('Fast Kitchen')
+		expect(out.text).toContain('Falafel - $9')
+		expect(elapsedMs).toBeLessThan(1000)
+	})
 })

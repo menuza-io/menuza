@@ -49,21 +49,22 @@ export type FetchedMenuSource =
 	  }
 
 export async function defaultResolveHost(hostname: string): Promise<string[]> {
-	const [ipv4, ipv6] = await Promise.allSettled([
+	const [ipv4, ipv6, lookup] = await Promise.allSettled([
 		dns.promises.resolve4(hostname),
 		dns.promises.resolve6(hostname),
+		dns.promises.lookup(hostname, { all: true }),
 	])
-	const ips: string[] = []
-	if (ipv4.status === 'fulfilled') ips.push(...ipv4.value)
-	if (ipv6.status === 'fulfilled') ips.push(...ipv6.value)
-	if (ips.length > 0) return ips
-
-	try {
-		const records = await dns.promises.lookup(hostname, { all: true })
-		return records.map((record) => record.address)
-	} catch {
-		return []
+	const ips = new Set<string>()
+	if (ipv4.status === 'fulfilled') {
+		for (const ip of ipv4.value) ips.add(ip)
 	}
+	if (ipv6.status === 'fulfilled') {
+		for (const ip of ipv6.value) ips.add(ip)
+	}
+	if (lookup.status === 'fulfilled') {
+		for (const record of lookup.value) ips.add(record.address)
+	}
+	return Array.from(ips)
 }
 
 export async function validateMenuImportUrl(
@@ -231,6 +232,13 @@ async function readResponseWithCap(
  * - Up to 5 redirects
  * - 20s total timeout, 10 MB body cap
  * - Only HTML (`text/html`, `application/xhtml+xml`) and PDF (`application/pdf`)
+ *
+ * DNS TOCTOU note: Web `fetch()` cannot pin a resolved IP while preserving
+ * TLS SNI and the `Host` header. In production on Cloudflare Workers, the
+ * edge egress proxy independently blocks private/loopback/link-local ranges at
+ * connect time. As defense-in-depth (and in Node dev/test), `defaultResolveHost`
+ * checks the union of `resolve4`/`resolve6` and OS `dns.lookup`, and each hop
+ * re-validates DNS immediately before reading the response body.
  */
 export async function fetchMenuSource(
 	rawUrl: string,
@@ -310,6 +318,21 @@ export async function fetchMenuSource(
 					ok: false,
 					error: 'fetch_failed',
 					reason: `HTTP ${response.status}`,
+				}
+			}
+
+			// Post-fetch DNS re-check to narrow the DNS TOCTOU window before
+			// reading any response body.
+			const postValidation = await validateMenuImportUrl(
+				validation.url,
+				resolve,
+			)
+			if (!postValidation.ok) {
+				await response.body?.cancel().catch(() => {})
+				return {
+					ok: false,
+					error: postValidation.error,
+					reason: postValidation.reason,
 				}
 			}
 
@@ -422,6 +445,125 @@ function getHtmlAttr(tag: string, attrName: string): string | null {
 	return match?.[1] ? decodeHtmlEntities(match[1].trim()) : null
 }
 
+const MAX_HTML_EXTRACT_CHARS = 1_000_000
+const MAX_HTML_TAG_SCAN_CHARS = 8_192
+
+const SKIP_CONTENT_TAGS = new Set([
+	'script',
+	'style',
+	'noscript',
+	'svg',
+	'template',
+])
+
+const BLOCK_BREAK_TAGS = new Set([
+	'p',
+	'div',
+	'section',
+	'article',
+	'header',
+	'footer',
+	'li',
+	'tr',
+	'td',
+	'th',
+	'h1',
+	'h2',
+	'h3',
+	'h4',
+	'h5',
+	'h6',
+	'br',
+	'hr',
+])
+
+/**
+ * Index-based O(N) HTML scanner that extracts `<title>`, `<meta>` / `<img>`
+ * candidates, and visible text while skipping comments and `<script>`/`<style>`
+ * blocks without regex backtracking on large or malformed HTML.
+ */
+function scanHtmlBounded(
+	boundedHtml: string,
+	onMetaTag: (tag: string) => void,
+	onImgTag: (tag: string) => void,
+): { title: string | null; stripped: string } {
+	const lower = boundedHtml.toLowerCase()
+	const len = boundedHtml.length
+	const chunks: string[] = []
+	let title: string | null = null
+	let i = 0
+
+	while (i < len) {
+		const lt = boundedHtml.indexOf('<', i)
+		if (lt === -1) {
+			chunks.push(boundedHtml.slice(i))
+			break
+		}
+		if (lt > i) {
+			chunks.push(boundedHtml.slice(i, lt))
+		}
+
+		if (boundedHtml.startsWith('<!--', lt)) {
+			const commentEnd = boundedHtml.indexOf('-->', lt + 4)
+			if (commentEnd === -1) break
+			chunks.push(' ')
+			i = commentEnd + 3
+			continue
+		}
+
+		const gt = boundedHtml.indexOf('>', lt + 1)
+		if (gt === -1) break
+
+		// Parse tag name after optional '/'
+		let cursor = lt + 1
+		const isClosing = boundedHtml[cursor] === '/'
+		if (isClosing) cursor += 1
+		while (cursor < gt && /\s/.test(boundedHtml[cursor]!)) cursor += 1
+		const nameStart = cursor
+		while (cursor < gt && /[a-z0-9-]/i.test(boundedHtml[cursor]!)) cursor += 1
+		const tagName = lower.slice(nameStart, cursor)
+
+		if (!isClosing && tagName) {
+			const isSelfClosing = boundedHtml[gt - 1] === '/'
+			if (!isSelfClosing && SKIP_CONTENT_TAGS.has(tagName)) {
+				const closeNeedle = `</${tagName}`
+				const closeIdx = lower.indexOf(closeNeedle, gt + 1)
+				if (closeIdx === -1) break
+				const closeGt = boundedHtml.indexOf('>', closeIdx + closeNeedle.length)
+				if (closeGt === -1) break
+				chunks.push(' ')
+				i = closeGt + 1
+				continue
+			}
+
+			if (!isSelfClosing && tagName === 'title' && title === null) {
+				const closeTitle = lower.indexOf('</title', gt + 1)
+				if (closeTitle !== -1) {
+					const rawTitle = boundedHtml.slice(gt + 1, closeTitle)
+					title =
+						decodeHtmlEntities(rawTitle)
+							.replace(/\s+/g, ' ')
+							.trim()
+							.slice(0, 120) || null
+				}
+			}
+
+			if (gt - lt <= MAX_HTML_TAG_SCAN_CHARS) {
+				if (tagName === 'meta') {
+					onMetaTag(boundedHtml.slice(lt, gt + 1))
+				} else if (tagName === 'img') {
+					onImgTag(boundedHtml.slice(lt, gt + 1))
+				}
+			}
+		}
+
+		chunks.push(BLOCK_BREAK_TAGS.has(tagName) ? '\n' : ' ')
+		i = gt + 1
+	}
+
+	return { title, stripped: chunks.join('') }
+}
+
 /**
  * Extracts readable visible text and public HTTPS image suggestions from an
  * HTML menu page. Images are suggestions only and are never auto-attached.
@@ -434,16 +576,22 @@ export function extractHtmlMenuTextAndImages(
 	text: string
 	imageSuggestions: MenuImportImageSuggestion[]
 } {
-	const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-	const title = titleMatch?.[1]
-		? decodeHtmlEntities(titleMatch[1])
-				.replace(/\s+/g, ' ')
-				.trim()
-				.slice(0, 120) || null
-		: null
+	const boundedHtml =
+		html.length > MAX_HTML_EXTRACT_CHARS
+			? html.slice(0, MAX_HTML_EXTRACT_CHARS)
+			: html
 
 	const imageSuggestions: MenuImportImageSuggestion[] = []
 	const seenImageUrls = new Set<string>()
+	const pendingMetaTags: string[] = []
+	const pendingImgTags: string[] = []
+
+	const { title, stripped } = scanHtmlBounded(
+		boundedHtml,
+		(tag) => pendingMetaTags.push(tag),
+		(tag) => pendingImgTags.push(tag),
+	)
+
 	const addImageCandidate = (rawSrc: string | null, alt: string | null) => {
 		if (
 			!rawSrc ||
@@ -468,31 +616,18 @@ export function extractHtmlMenuTextAndImages(
 		})
 	}
 
-	const metaRegex = /<meta\b[^>]*>/gi
-	for (const match of html.matchAll(metaRegex)) {
-		const tag = match[0]
+	for (const tag of pendingMetaTags) {
 		const prop = getHtmlAttr(tag, 'property') ?? getHtmlAttr(tag, 'name')
 		if (prop && prop.toLowerCase() === 'og:image') {
 			addImageCandidate(getHtmlAttr(tag, 'content'), title)
 		}
 	}
 
-	const imgRegex = /<img\b[^>]*>/gi
-	for (const match of html.matchAll(imgRegex)) {
-		const tag = match[0]
+	for (const tag of pendingImgTags) {
 		const src = getHtmlAttr(tag, 'src') ?? getHtmlAttr(tag, 'data-src')
 		const alt = getHtmlAttr(tag, 'alt')
 		addImageCandidate(src, alt)
 	}
-
-	const stripped = html
-		.replace(/<!--[\s\S]*?-->/g, ' ')
-		.replace(/<(script|style|noscript|svg|template)\b[\s\S]*?<\/\1>/gi, ' ')
-		.replace(
-			/<\/?(p|div|section|article|header|footer|li|tr|td|th|h[1-6]|br|hr)\b[^>]*>/gi,
-			'\n',
-		)
-		.replace(/<[^>]+>/g, ' ')
 
 	const text = decodeHtmlEntities(stripped)
 		.split('\n')

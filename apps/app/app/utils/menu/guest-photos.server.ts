@@ -17,6 +17,7 @@ import { assertSecretNotPlaceholder } from '@repo/security'
 import { detectRasterImage } from '@repo/storage'
 import { SignJWT } from 'jose'
 import { ENV } from 'varlock/env'
+import { z } from 'zod'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
@@ -335,9 +336,7 @@ function stripWebpChunks(bytes: Uint8Array): Uint8Array | null {
 	return out
 }
 
-export function sanitizeCleanDishImageBytes(
-	bytes: Uint8Array,
-): {
+export function sanitizeCleanDishImageBytes(bytes: Uint8Array): {
 	bytes: Uint8Array
 	mimeType: 'image/jpeg' | 'image/png' | 'image/webp'
 	extension: 'jpg' | 'png' | 'webp'
@@ -389,6 +388,12 @@ async function defaultTenantFetch(
 	return fetch(`${tenantApiUrl}${path}`, { ...init, headers })
 }
 
+const signedUrlResponseSchema = z.object({
+	url: z.string().url(),
+	contentType: z.string().optional(),
+	itemId: z.string().optional(),
+})
+
 export type AddGuestPhotoToDishResult =
 	| { ok: true; objectKey: string; imageKeys: string[] }
 	| { ok: false; status: number; error: string }
@@ -403,29 +408,17 @@ export async function addGuestPhotoToDish(input: {
 	impersonated: boolean
 	submissionId: string
 	itemId: string
-	imageFile: File
 	makePrimary?: boolean
 	request?: Request
 	deps?: {
 		fetchTenant?: GuestPhotoTenantFetch
+		fetchSignedImage?: (url: string) => Promise<Response>
 		uploadMedia?: typeof uploadOrganizationMediaImage
 		deleteStorageObject?: typeof deleteOrganizationStorageObject
 	}
 }): Promise<AddGuestPhotoToDishResult> {
 	if (input.impersonated) {
 		return { ok: false, status: 403, error: 'impersonated_read_only' }
-	}
-	if (
-		input.imageFile.size <= 0 ||
-		input.imageFile.size > GUEST_PHOTO_MAX_BYTES
-	) {
-		return { ok: false, status: 400, error: 'invalid_image_size' }
-	}
-
-	const rawBytes = new Uint8Array(await input.imageFile.arrayBuffer())
-	const clean = sanitizeCleanDishImageBytes(rawBytes)
-	if (!clean) {
-		return { ok: false, status: 400, error: 'invalid_image_data' }
 	}
 
 	const [item] = await db
@@ -487,6 +480,59 @@ export async function addGuestPhotoToDish(input: {
 	}
 	if (parsedSub.data.itemId !== input.itemId) {
 		return { ok: false, status: 400, error: 'item_mismatch' }
+	}
+
+	// Fetch the cleaned image server-side via a short-lived signed URL from the
+	// region instead of trusting browser-posted bytes.
+	const signedRes = await callTenant(
+		`/operator/photos/${encodeURIComponent(input.submissionId)}/signed-url`,
+		{ method: 'GET', token: minted.jwt },
+	)
+	if (!signedRes.ok) {
+		const errBody = (await signedRes.json().catch(() => null)) as {
+			error?: string
+		} | null
+		return {
+			ok: false,
+			status: signedRes.status,
+			error:
+				errBody?.error ??
+				(signedRes.status === 404 ? 'submission_not_found' : 'region_error'),
+		}
+	}
+	const signedJson = await signedRes.json().catch(() => null)
+	const parsedSigned = signedUrlResponseSchema.safeParse(signedJson)
+	if (!parsedSigned.success) {
+		return { ok: false, status: 502, error: 'invalid_region_response' }
+	}
+	if (parsedSigned.data.itemId && parsedSigned.data.itemId !== input.itemId) {
+		return { ok: false, status: 400, error: 'item_mismatch' }
+	}
+	const signedUrl = new URL(parsedSigned.data.url)
+	if (signedUrl.protocol !== 'https:' && signedUrl.protocol !== 'http:') {
+		return { ok: false, status: 502, error: 'invalid_region_response' }
+	}
+
+	const fetchSignedImage =
+		input.deps?.fetchSignedImage ?? ((url: string) => fetch(url))
+	const imgRes = await fetchSignedImage(signedUrl.toString())
+	if (!imgRes.ok) {
+		return { ok: false, status: 502, error: 'image_fetch_failed' }
+	}
+	const contentLength = imgRes.headers.get('Content-Length')
+	if (contentLength) {
+		const declared = Number(contentLength)
+		if (Number.isFinite(declared) && declared > GUEST_PHOTO_MAX_BYTES) {
+			return { ok: false, status: 400, error: 'invalid_image_size' }
+		}
+	}
+	const rawBytes = new Uint8Array(await imgRes.arrayBuffer())
+	if (rawBytes.byteLength <= 0 || rawBytes.byteLength > GUEST_PHOTO_MAX_BYTES) {
+		return { ok: false, status: 400, error: 'invalid_image_size' }
+	}
+	const clean = sanitizeCleanDishImageBytes(rawBytes)
+	if (!clean) {
+		return { ok: false, status: 400, error: 'invalid_image_data' }
 	}
 
 	// Copy ONLY the cleaned image into the App media library with an opaque name

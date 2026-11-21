@@ -2,15 +2,19 @@ import { describe, expect, it } from 'vitest'
 import {
 	GUEST_PHOTO_ALLOWED_MIME_TYPES,
 	GUEST_PHOTO_CONSENT_TEXT,
+	GUEST_PHOTO_CONSENT_VERSION,
 	GUEST_PHOTO_ELIGIBILITY_DAYS,
 	GUEST_PHOTO_ERROR_CODES,
 	GUEST_PHOTO_MAX_BYTES,
 	GUEST_PHOTO_MAX_PER_DISH_ORDER,
 	GUEST_PHOTO_MAX_PER_GUEST_DAY,
+	GUEST_PHOTO_STAGED_RETENTION_HOURS,
+	GUEST_PHOTO_TOKEN_AUDIENCE,
 	guestPhotoDecisionSchema,
 	guestPhotoEligibilityQuerySchema,
 	guestPhotoListQuerySchema,
 	guestPhotoMarkAddedSchema,
+	guestPhotoSubmissionSchema,
 	guestPhotoSubmitSchema,
 	guestPhotoUploadRequestSchema,
 } from './guest-photos.ts'
@@ -21,6 +25,9 @@ describe('guest-photos', () => {
 		expect(GUEST_PHOTO_MAX_PER_DISH_ORDER).toBe(3)
 		expect(GUEST_PHOTO_MAX_PER_GUEST_DAY).toBe(10)
 		expect(GUEST_PHOTO_MAX_BYTES).toBe(10 * 1024 * 1024)
+		expect(GUEST_PHOTO_STAGED_RETENTION_HOURS).toBe(24)
+		expect(GUEST_PHOTO_TOKEN_AUDIENCE).toBe('tenant-api-guest-photos')
+		expect(GUEST_PHOTO_CONSENT_VERSION).toBe('2026-11-v1')
 		expect(GUEST_PHOTO_ALLOWED_MIME_TYPES).toEqual([
 			'image/jpeg',
 			'image/png',
@@ -93,6 +100,38 @@ describe('guest-photos', () => {
 				consent: true,
 			}).consent,
 		).toBe(true)
+
+		expect(
+			guestPhotoSubmitSchema.safeParse({
+				orderId: 'ord-1',
+				itemId: 'item-1',
+				objectKey: 'guest-photos/org-1/abc.jpg',
+				contentType: 'image/webp',
+				byteSize: 5000,
+				consent: true,
+				consentText: 'custom client consent',
+			}).success,
+		).toBe(false)
+
+		expect(
+			guestPhotoSubmissionSchema.parse({
+				id: 'sub-1',
+				orgId: 'org-1',
+				orderId: 'ord-1',
+				itemId: 'item-1',
+				objectKey: 'guest-photos/org-1/abc.jpg',
+				contentType: 'image/webp',
+				byteSize: 5000,
+				status: 'pending',
+				consentText: GUEST_PHOTO_CONSENT_TEXT,
+				consentVersion: GUEST_PHOTO_CONSENT_VERSION,
+				consentedAt: '2026-11-20T00:00:00.000Z',
+				decidedAt: null,
+				decidedByUserId: null,
+				addedAt: null,
+				createdAt: '2026-11-20T00:00:00.000Z',
+			}).consentVersion,
+		).toBe(GUEST_PHOTO_CONSENT_VERSION)
 	})
 
 	it('validates operator list, decision, and mark-added schemas', () => {

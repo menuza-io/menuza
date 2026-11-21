@@ -14,6 +14,7 @@ export type MenuImportWorkflowParams = {
 }
 
 export const MENU_IMPORT_PATH = '/resources/jobs/menu-import'
+const MENU_IMPORT_TIMEOUT_MS = 120_000
 
 /**
  * Wakes the App to process an AI menu import (#73). The payload carries only
@@ -41,6 +42,7 @@ export class MenuImportWorkflow extends WorkflowEntrypoint<
 							'Content-Type': 'application/json',
 						},
 						body: JSON.stringify({ importId: event.payload.importId }),
+						signal: AbortSignal.timeout(MENU_IMPORT_TIMEOUT_MS),
 					},
 				)
 				if (!response.ok) {

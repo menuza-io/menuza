@@ -47,14 +47,15 @@ describe('MenuImportWorkflow (#73)', () => {
 		expect(stepDo).toHaveBeenCalledTimes(1)
 		expect(fetchMock).toHaveBeenCalledWith(
 			`https://app.example.com${MENU_IMPORT_PATH}`,
-			{
+			expect.objectContaining({
 				method: 'POST',
 				headers: {
 					Authorization: 'Bearer secret-token-value',
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({ importId: 'imp_12345678' }),
-			},
+				signal: expect.any(AbortSignal),
+			}),
 		)
 	})
 

@@ -2,7 +2,10 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { brand } from '@repo/config/brand'
-import { GUEST_PHOTO_CONSENT_TEXT } from '@repo/common/guest-photos'
+import {
+	GUEST_PHOTO_CONSENT_TEXT,
+	GUEST_PHOTO_CONSENT_VERSION,
+} from '@repo/common/guest-photos'
 import {
 	customers,
 	destroyTenantDb,
@@ -26,6 +29,8 @@ import { syncEnvFromProcess } from '../lib/secrets.ts'
 import {
 	type GuestPhotoStorageAdapter,
 	purgeExpiredRejectedGuestPhotos,
+	purgeStaleStagedGuestPhotos,
+	runGuestPhotosTickForOrg,
 } from '../services/guest-photos-service.ts'
 import { insertOrder } from '../services/loyalty-test-fixture.ts'
 import { createGuestPhotoRoutes, guestPhotoTickRoutes } from './guest-photos.ts'
@@ -364,7 +369,57 @@ describe('guest dish photos routes (#148)', () => {
 		expect(storedText).not.toContain('GPS_LAT_37_7749')
 		expect(storedText).not.toContain('Exif')
 
-		// Submit with consent
+		// Upload creates a 'staged' row that counts toward eligibility caps and is hidden from operators
+		const dbA = await getTenantDb(orgA)
+		const [stagedRow] = await dbA
+			.select()
+			.from(guestPhotoSubmissions)
+			.where(eq(guestPhotoSubmissions.objectKey, uploaded.objectKey))
+		expect(stagedRow?.status).toBe('staged')
+		expect(stagedRow?.consentText).toBeNull()
+
+		const opListBeforeSubmit = await app.request('/operator/photos', {
+			headers: { Authorization: `Bearer ${await operatorPhotoToken(orgA)}` },
+		})
+		expect(opListBeforeSubmit.status).toBe(200)
+		expect(
+			((await opListBeforeSubmit.json()) as { submissions: unknown[] })
+				.submissions,
+		).toEqual([])
+
+		const eligAfterUpload = await app.request(
+			`/photos/eligibility?orderId=${aliceOrderId}`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		expect(eligAfterUpload.status).toBe(200)
+		expect(
+			(
+				(await eligAfterUpload.json()) as {
+					dishes: Array<{ remainingForDish: number }>
+				}
+			).dishes[0]?.remainingForDish,
+		).toBe(2)
+
+		// Client-supplied consentText is rejected with 400
+		const badSubmitRes = await app.request('/photos', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				orderId: aliceOrderId,
+				itemId: 'dish_tacos',
+				objectKey: uploaded.objectKey,
+				contentType: uploaded.contentType,
+				byteSize: uploaded.byteSize,
+				consent: true,
+				consentText: 'forged consent text',
+			}),
+		})
+		expect(badSubmitRes.status).toBe(400)
+
+		// Submit with consent promotes 'staged' -> 'pending' with canonical text + version
 		const submitRes = await app.request('/photos', {
 			method: 'POST',
 			headers: {
@@ -382,10 +437,19 @@ describe('guest dish photos routes (#148)', () => {
 		})
 		expect(submitRes.status).toBe(201)
 		const submitted = (await submitRes.json()) as {
-			submission: { id: string; status: string; consentText: string }
+			submission: {
+				id: string
+				status: string
+				consentText: string
+				consentVersion: string | null
+			}
 		}
+		expect(submitted.submission.id).toBe(stagedRow!.id)
 		expect(submitted.submission.status).toBe('pending')
 		expect(submitted.submission.consentText).toBe(GUEST_PHOTO_CONSENT_TEXT)
+		expect(submitted.submission.consentVersion).toBe(
+			GUEST_PHOTO_CONSENT_VERSION,
+		)
 		expect(submitted.submission).not.toHaveProperty('customerId')
 	})
 
@@ -860,5 +924,174 @@ describe('guest dish photos routes (#148)', () => {
 				})
 			).status,
 		).toBe(200)
+	})
+
+	it('allows GETs for impersonated operator tokens while keeping writes 403 impersonated_read_only, and purges stale staged uploads in tick', async () => {
+		const dbA = await getTenantDb(orgA)
+		const approvedKey = `guest-photos/${orgA}/00000000-0000-0000-0000-000000000601.jpg`
+		bucket.set(approvedKey, {
+			bytes: makeJpegWithExif(),
+			contentType: 'image/jpeg',
+		})
+		await dbA.insert(guestPhotoSubmissions).values({
+			id: 'sub_imp_1',
+			orgId: orgA,
+			customerId: aliceId,
+			orderId: aliceOrderId,
+			itemId: 'dish_tacos',
+			objectKey: approvedKey,
+			contentType: 'image/jpeg',
+			byteSize: 100,
+			status: 'approved',
+			consentText: GUEST_PHOTO_CONSENT_TEXT,
+			consentVersion: GUEST_PHOTO_CONSENT_VERSION,
+			consentedAt: new Date(),
+			decidedAt: new Date(),
+			decidedByUserId: 'op_1',
+			createdAt: new Date(),
+		})
+
+		const impToken = await operatorPhotoToken(orgA, {
+			impersonated: true,
+			grants: [],
+		})
+		const listRes = await app.request('/operator/photos', {
+			headers: { Authorization: `Bearer ${impToken}` },
+		})
+		expect(listRes.status).toBe(200)
+
+		const getRes = await app.request('/operator/photos/sub_imp_1', {
+			headers: { Authorization: `Bearer ${impToken}` },
+		})
+		expect(getRes.status).toBe(200)
+
+		const signedRes = await app.request(
+			'/operator/photos/sub_imp_1/signed-url',
+			{
+				headers: { Authorization: `Bearer ${impToken}` },
+			},
+		)
+		expect(signedRes.status).toBe(200)
+
+		const writeDecide = await app.request('/operator/photos/sub_imp_1/decide', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${impToken}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ decision: 'reject' }),
+		})
+		expect(writeDecide.status).toBe(403)
+		expect(await writeDecide.json()).toMatchObject({
+			error: 'impersonated_read_only',
+		})
+
+		const writeAdd = await app.request('/operator/photos/sub_imp_1/added', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${impToken}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({}),
+		})
+		expect(writeAdd.status).toBe(403)
+		expect(await writeAdd.json()).toMatchObject({
+			error: 'impersonated_read_only',
+		})
+
+		// Non-impersonated token with empty grants is still refused on GET
+		const noGrantsToken = await operatorPhotoToken(orgA, {
+			impersonated: false,
+			grants: [],
+		})
+		expect(
+			(
+				await app.request('/operator/photos', {
+					headers: { Authorization: `Bearer ${noGrantsToken}` },
+				})
+			).status,
+		).toBe(403)
+
+		// Stale staged purge in tick (>24h deleted, <24h kept)
+		const now = Date.now()
+		const staleKey = `guest-photos/${orgA}/00000000-0000-0000-0000-000000000602.jpg`
+		const freshKey = `guest-photos/${orgA}/00000000-0000-0000-0000-000000000603.jpg`
+		bucket.set(staleKey, {
+			bytes: new Uint8Array([1]),
+			contentType: 'image/jpeg',
+		})
+		bucket.set(freshKey, {
+			bytes: new Uint8Array([1]),
+			contentType: 'image/jpeg',
+		})
+		await dbA.insert(guestPhotoSubmissions).values([
+			{
+				id: 'staged_stale',
+				orgId: orgA,
+				customerId: aliceId,
+				orderId: aliceOrderId,
+				itemId: 'dish_tacos',
+				objectKey: staleKey,
+				contentType: 'image/jpeg',
+				byteSize: 1,
+				status: 'staged',
+				createdAt: new Date(now - 25 * 3_600_000),
+			},
+			{
+				id: 'staged_fresh',
+				orgId: orgA,
+				customerId: aliceId,
+				orderId: aliceOrderId,
+				itemId: 'dish_tacos',
+				objectKey: freshKey,
+				contentType: 'image/jpeg',
+				byteSize: 1,
+				status: 'staged',
+				createdAt: new Date(now - 2 * 3_600_000),
+			},
+		])
+
+		const stagedPurge = await purgeStaleStagedGuestPhotos(dbA, {
+			now,
+			storage: {
+				deleteObject: async (k) => {
+					bucket.delete(k)
+					return 'deleted'
+				},
+			},
+		})
+		expect(stagedPurge).toEqual({ purged: 1, failed: 0 })
+		expect(bucket.has(staleKey)).toBe(false)
+		expect(bucket.has(freshKey)).toBe(true)
+
+		// runGuestPhotosTickForOrg also runs both purges
+		const staleKey2 = `guest-photos/${orgA}/00000000-0000-0000-0000-000000000604.jpg`
+		bucket.set(staleKey2, {
+			bytes: new Uint8Array([1]),
+			contentType: 'image/jpeg',
+		})
+		await dbA.insert(guestPhotoSubmissions).values({
+			id: 'staged_stale_2',
+			orgId: orgA,
+			customerId: aliceId,
+			orderId: aliceOrderId,
+			itemId: 'dish_tacos',
+			objectKey: staleKey2,
+			contentType: 'image/jpeg',
+			byteSize: 1,
+			status: 'staged',
+			createdAt: new Date(now - 26 * 3_600_000),
+		})
+		const tickResult = await runGuestPhotosTickForOrg(orgA, {
+			now,
+			storage: {
+				deleteObject: async (k) => {
+					bucket.delete(k)
+					return 'deleted'
+				},
+			},
+		})
+		expect(tickResult).toEqual({ purged: 1, failed: 0, errors: 0 })
+		expect(bucket.has(staleKey2)).toBe(false)
 	})
 })

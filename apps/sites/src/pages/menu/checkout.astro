@@ -1,6 +1,5 @@
 ---
 import { msg } from '@lingui/core/macro'
-import { isSoldOn, type MenuChannel } from '@repo/common/menu-channels'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import GiftCardLabels from '~/components/gift-cards/GiftCardLabels.astro'
@@ -12,6 +11,13 @@ import SitePage from '~/components/SitePage.astro'
 import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { buildOrderDetailsLabels, translate } from '~/lib/ordering-labels'
+import {
+	buildChannelUpsellCategories,
+	collectUnavailableVariantIds,
+	deriveSiteMenuChannel,
+	posterQuerySource,
+	type SiteMenuChannel,
+} from '~/lib/ordering/menu-channel'
 import { formatMoney } from '~/lib/ordering/money'
 import { buildPriceBook, EMPTY_PRICE_BOOK } from '~/lib/ordering/price-book'
 import { orderLimitMetaFromMenus } from '~/lib/ordering/order-limits'
@@ -20,7 +26,6 @@ import {
 	fetchPublishedDrop,
 	fetchPublishedSiteMenu,
 	type PublicLocationData,
-	type PublicMenuCategoryData,
 } from '~/lib/org'
 import { type OrderingCategory } from '~/lib/ordering/types'
 
@@ -40,36 +45,38 @@ if (!organization) {
 }
 
 const urlLocation = Astro.url.searchParams.get('location')
-const srcParam = (Astro.url.searchParams.get('src') ?? '').toLowerCase()
-const channelParam = (Astro.url.searchParams.get('channel') ?? '').toLowerCase()
-const menuChannel: MenuChannel =
-	srcParam === 'qr' ||
-	srcParam === 'qr_poster' ||
-	srcParam === 'qr_table' ||
-	channelParam === 'qr' ||
-	Astro.url.searchParams.get('qr') === '1'
-		? 'qr'
-		: 'web'
-const menuPayload = await fetchPublishedSiteMenu({
+const initialSource = posterQuerySource(Astro.url.search)
+let menuChannel: SiteMenuChannel = deriveSiteMenuChannel({
+	atTable: false,
+	source: initialSource,
+	qrOrdering: { enabled: true },
+})
+let menuPayload = await fetchPublishedSiteMenu({
 	slug: orgSlug,
 	host: customHost,
 	lng: requestedLocale,
 	locationId: urlLocation,
 	channel: menuChannel,
 })
-
-const unavailableVariantIds = new Set<string>()
-function indexUnavailableVariants(category: PublicMenuCategoryData) {
-	for (const item of category.items) {
-		for (const variant of item.variations.variants) {
-			if (variant.availabilityStatus === 'unavailable') unavailableVariantIds.add(variant.id)
-		}
+if (menuPayload?.features?.qrOrdering !== undefined) {
+	const verifiedChannel = deriveSiteMenuChannel({
+		atTable: false,
+		source: initialSource,
+		qrOrdering: menuPayload.features.qrOrdering,
+	})
+	if (verifiedChannel !== menuChannel) {
+		menuChannel = verifiedChannel
+		menuPayload = await fetchPublishedSiteMenu({
+			slug: orgSlug,
+			host: customHost,
+			lng: requestedLocale,
+			locationId: urlLocation,
+			channel: menuChannel,
+		})
 	}
-	for (const child of category.subcategories ?? []) indexUnavailableVariants(child)
 }
-for (const menu of menuPayload?.menus ?? []) {
-	for (const category of menu.categories) indexUnavailableVariants(category)
-}
+
+const unavailableVariantIds = new Set<string>(collectUnavailableVariantIds(menuPayload))
 
 // Drop checkout (`?drop=<slug>`): loads the drop cart instead of the menu
 // cart and shows the pickup chosen on the drop page. Drops are pickup only,
@@ -106,93 +113,19 @@ const activeLocation: PublicLocationData | undefined =
 	locations.find((l) => l.isDefault) ||
 	locations[0]
 
-const activeOverrides = new Map(
-	(activeLocation ? menuPayload?.locationOverrides?.[activeLocation.id] ?? [] : []).map(
-		(entry) => [entry.entityId, entry],
-	),
-)
-const isOverrideOff = (entityId: string) => {
-	const ov = activeOverrides.get(entityId)
-	return ov?.isEnabled === false || ov?.availabilityStatus === 'unavailable' || ov?.availabilityStatus === 'hidden'
-}
-
 // "Goes well with" at checkout (#114): only the dishes that go straight in
 // (this page has no item modal), so the catalog keeps just what the ranking
 // and the row read: names in the page language, prices, photos and the
 // upsell settings. Off unless `ordering.upsell` is on; never on a drop.
 const upsellOn = menuPayload?.features?.upsell === true && !dropMode
-function upsellCategory(category: PublicMenuCategoryData): OrderingCategory {
-	return {
-		id: category.id,
-		displayName: '',
-		upsellCategoryIds: category.upsellCategoryIds ?? [],
-		items: (category.items ?? [])
-			.filter(
-				(item) =>
-					!isOverrideOff(item.id) &&
-					isSoldOn(menuChannel, { item, override: activeOverrides.get(item.id) }),
-			)
-			.map((item) => ({
-				id: item.id,
-				displayName: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
-				price: item.price,
-				imageUrl: resolveMediaUrl(item.imageUrl),
-				isUpsell: item.isUpsell === true,
-				availabilityStatus: item.availabilityStatus,
-				variations: {
-					groups: (item.variations?.groups ?? []).map((group) => ({
-						id: group.id,
-						name: '',
-						values: [],
-					})),
-					variants: (item.variations?.variants ?? []).map((variant) => ({
-						id: variant.id,
-						valueIds: [],
-						price: variant.price,
-						availabilityStatus: variant.availabilityStatus,
-					})),
-				},
-				modifierGroups: (item.modifierGroups ?? []).map((group) => ({
-					id: group.id,
-					name: '',
-					selectionType: group.selectionType,
-					minSelections: group.minSelections ?? 0,
-					maxSelections: group.maxSelections ?? null,
-					options: [],
-				})),
-			})),
-		subcategories: (category.subcategories ?? [])
-			.filter(
-				(sub) =>
-					sub.availabilityStatus !== 'unavailable' &&
-					!isOverrideOff(sub.id) &&
-					isSoldOn(menuChannel, { category: sub, override: activeOverrides.get(sub.id) }),
-			)
-			.map(upsellCategory),
-	}
-}
 const upsellCategories: OrderingCategory[] = upsellOn
-	? (menuPayload?.menus ?? [])
-			.filter(
-				(menu) =>
-					menu.availabilityStatus !== 'unavailable' &&
-					!isOverrideOff(menu.id) &&
-					isSoldOn(menuChannel, { menu, override: activeOverrides.get(menu.id) }),
-			)
-			.flatMap((menu) =>
-				menu.categories
-					.filter(
-						(category) =>
-							category.availabilityStatus !== 'unavailable' &&
-							!category.parentId &&
-							!isOverrideOff(category.id) &&
-							isSoldOn(menuChannel, {
-								category,
-								override: activeOverrides.get(category.id),
-							}),
-					)
-					.map(upsellCategory),
-			)
+	? buildChannelUpsellCategories(menuPayload, {
+			channel: menuChannel,
+			locationId: activeLocation?.id ?? null,
+			locale: requestedLocale,
+			defaultLocale,
+			resolveImageUrl: resolveMediaUrl,
+		})
 	: []
 
 // Which dishes count toward a cart's item count (#256): the large-order extra
@@ -1056,6 +989,8 @@ const inputClass =
 			defaultLocale,
 			labels: checkoutLabels,
 			tipClasses: { button: tipBtnClass, on: tipOn, off: tipOff },
+			channel: menuChannel,
+			qrOrdering: menuPayload?.features?.qrOrdering ?? null,
 			upsell: upsellOn ? { categories: upsellCategories } : null,
 			drop: dropData && {
 				id: dropData.drop.id,
@@ -1076,7 +1011,7 @@ const inputClass =
 			formatDropTime,
 			zonedTimeToUtc,
 		} from '~/lib/drops/format'
-		import { getAccessToken } from '~/lib/client-auth'
+		import { getAccessToken, getOrgBinding } from '~/lib/client-auth'
 		import {
 			checkoutMarketingConsent,
 			flagEmailConfirmationPending,
@@ -1149,6 +1084,16 @@ const inputClass =
 			repriceCartForMode,
 			type PriceBook,
 		} from '~/lib/ordering/price-book'
+		import {
+			buildChannelCheckoutSync,
+			buildSiteMenuFetchUrl,
+			deriveSiteMenuChannel,
+			filterOrderingCategoriesForChannel,
+			posterQuerySource,
+			resolveClientMediaUrl,
+			resolveSiteQrOrdering,
+		} from '~/lib/ordering/menu-channel'
+		import { type PublicSiteMenuPayload } from '~/lib/org'
 		import { addSuggestion, suggestForCart } from '~/lib/ordering/upsell'
 		import { buildUpsellRow } from '~/lib/ordering/upsell-row'
 		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
@@ -1282,8 +1227,21 @@ const inputClass =
 		const activeLocation = (meta.locations ?? []).find((l: any) => l.id === meta.locationId) ?? null
 		// Which dishes count toward an item count (#256), and the languages to
 		// read the location's pickup text in (#251).
-		const orderLimits = (meta.orderLimits ?? null) as OrderLimitMeta | null
+		let orderLimits = (meta.orderLimits ?? null) as OrderLimitMeta | null
 		const siteDefaultLocale: string = meta.defaultLocale || 'en'
+		const activeCheckoutChannel = () =>
+			deriveSiteMenuChannel({
+				atTable: false,
+				source: !isDrop
+					? (posterSource(orgId) ?? posterQuerySource(window.location.search))
+					: null,
+				qrOrdering: resolveSiteQrOrdering({
+					qrOrdering:
+						meta.qrOrdering === null || meta.qrOrdering === undefined
+							? undefined
+							: meta.qrOrdering,
+				}),
+			})
 
 		let cart: CartItem[] = []
 		try {
@@ -1317,7 +1275,7 @@ const inputClass =
 		})
 		let mode: 'pickup' | 'delivery' = !isDrop && details.mode === 'delivery' ? 'delivery' : 'pickup'
 		// #412: the cart follows the order type, as the region prices it.
-		const priceBook = (meta.priceBook ?? EMPTY_PRICE_BOOK) as PriceBook
+		let priceBook = (meta.priceBook ?? EMPTY_PRICE_BOOK) as PriceBook
 		function repriceCartForCurrentMode() {
 			const repriced = repriceCartForMode(cart, priceBook, priceModeOf(isDrop ? 'pickup' : mode))
 			if (!repriced.changed) return
@@ -2182,7 +2140,13 @@ const inputClass =
 		// built from the page's own catalog (`meta.upsell`, present only while
 		// `ordering.upsell` is on) and the cart; adding one reprices like any
 		// other change to the cart.
-		const upsellCatalog = (meta.upsell?.categories ?? null) as OrderingCategory[] | null
+		let upsellCatalog = (meta.upsell?.categories ?? null) as OrderingCategory[] | null
+		if (upsellCatalog) {
+			upsellCatalog = filterOrderingCategoriesForChannel(
+				upsellCatalog,
+				activeCheckoutChannel(),
+			)
+		}
 		const upsellSlot = document.getElementById('co-upsell')
 		const cartStore = upsellCatalog ? createCartStore({ key: storageKey }) : null
 		const countShown = createShownCounter((id) => recordUpsell(orgId, id, 'shown'))
@@ -2196,6 +2160,7 @@ const inputClass =
 			const items = suggestForCart({
 				categories: upsellCatalog,
 				lines: cart,
+				channel: activeCheckoutChannel(),
 				offered: allowedModes.includes(mode),
 				oneTapOnly: true,
 			})
@@ -3325,6 +3290,65 @@ const inputClass =
 		if (isDrop) renderDropPickup()
 		updateHandoffLabel()
 		void loadOrderingOptions()
+
+		async function syncCheckoutChannelMenu() {
+			if (isDrop) return
+			const targetChannel = activeCheckoutChannel()
+			if (targetChannel === (meta.channel ?? 'web')) return
+			const appUrl = document.documentElement.dataset.appUrl
+			if (!appUrl) return
+			const binding = getOrgBinding()
+			const url = buildSiteMenuFetchUrl({
+				appUrl,
+				slug: binding.slug,
+				host: binding.host,
+				lng: meta.locale || null,
+				locationId: meta.locationId || null,
+				channel: targetChannel,
+			})
+			try {
+				const res = await fetch(url, { headers: { Accept: 'application/json' } })
+				if (!res.ok) return
+				const payload = (await res.json()) as PublicSiteMenuPayload
+				if (payload.features?.qrOrdering !== undefined) {
+					meta.qrOrdering = payload.features.qrOrdering
+					if (activeCheckoutChannel() !== targetChannel) return
+				}
+				const synced = buildChannelCheckoutSync(payload, {
+					channel: targetChannel,
+					locationId: meta.locationId ?? null,
+					locale: meta.locale || 'en',
+					defaultLocale: siteDefaultLocale,
+					resolveImageUrl: (src) => resolveClientMediaUrl(src, appUrl),
+				})
+				meta.channel = targetChannel
+				priceBook = synced.priceBook
+				orderLimits = synced.orderLimits
+				if (meta.upsell) {
+					upsellCatalog = synced.upsellCategories
+				}
+				if (synced.unavailableVariantIds.length > 0 && cart.length > 0) {
+					const unavailable = new Set(synced.unavailableVariantIds)
+					const before = cart.length
+					cart = cart.filter(
+						(item) => !item.variantId || !unavailable.has(item.variantId),
+					)
+					if (cart.length !== before) {
+						try {
+							localStorage.setItem(storageKey, JSON.stringify(cart))
+						} catch {}
+						document
+							.getElementById('cart-availability-notice')
+							?.classList.remove('hidden')
+					}
+				}
+				repriceCartForCurrentMode()
+				renderCheckout()
+			} catch {
+				// Keep SSR checkout metadata if network refetch fails.
+			}
+		}
+		void syncCheckoutChannelMenu()
 
 		// A referral link brought this guest here: put its code in the coupon
 		// box, kept in this browser (never sent to Sites). The region decides.

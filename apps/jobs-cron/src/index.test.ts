@@ -903,6 +903,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
@@ -999,6 +1000,11 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							token,
 						],
 						[
+							'https://app.example.com/resources/jobs/menu-import',
+							'POST',
+							token,
+						],
+						[
 							'https://tenant-us.example.com/api/menu/popular/tick',
 							'POST',
 							token,
@@ -1020,7 +1026,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 						],
 					]),
 				)
-				expect(calls).toHaveLength(26)
+				expect(calls).toHaveLength(27)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -1064,6 +1070,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1202,6 +1209,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
 					'Tenant loyalty tick failed for https://tenant-ksa.example.com',
@@ -1227,6 +1235,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1286,6 +1295,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					)
 					const results = await Promise.allSettled(promises)
 					expect(results.map((r) => r.status)).toEqual([
+						'fulfilled',
 						'fulfilled',
 						'fulfilled',
 						'fulfilled',
@@ -1368,6 +1378,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const reason = String((results[3] as PromiseRejectedResult).reason)
 				expect(reason).toContain(
@@ -1403,6 +1414,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				expect(results.map((r) => r.status)).toEqual([
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1474,6 +1486,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -1501,6 +1514,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1544,6 +1558,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'https://app.example.com/resources/jobs/gbp-sync',
 					'https://app.example.com/resources/jobs/website-publish',
 					'https://app.example.com/resources/jobs/menu-schedules',
+					'https://app.example.com/resources/jobs/menu-import',
 				])
 			})
 		})

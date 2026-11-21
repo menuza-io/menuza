@@ -40,6 +40,7 @@ describe('internal tenant organization metadata', () => {
 			dataRegion: 'ksa',
 			hasProvisionedDb: true,
 			emailSender: null,
+			guestPhotosEnabled: false,
 		})
 		expect(response.headers.get('Cache-Control')).toBe('private, no-store')
 	})

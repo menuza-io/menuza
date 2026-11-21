@@ -2261,14 +2261,21 @@
 					"name": "consent_text",
 					"type": "text",
 					"primaryKey": false,
-					"notNull": true,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"consent_version": {
+					"name": "consent_version",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
 					"autoincrement": false
 				},
 				"consented_at": {
 					"name": "consented_at",
 					"type": "integer",
 					"primaryKey": false,
-					"notNull": true,
+					"notNull": false,
 					"autoincrement": false
 				},
 				"decided_at": {
@@ -2320,6 +2327,11 @@
 				"idx_guest_photo_submissions_status_decided": {
 					"name": "idx_guest_photo_submissions_status_decided",
 					"columns": ["status", "decided_at"],
+					"isUnique": false
+				},
+				"idx_guest_photo_submissions_status_created": {
+					"name": "idx_guest_photo_submissions_status_created",
+					"columns": ["status", "created_at"],
 					"isUnique": false
 				},
 				"idx_guest_photo_submissions_org_status_created": {

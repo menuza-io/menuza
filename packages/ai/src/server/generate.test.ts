@@ -14,6 +14,8 @@ const sampleSchema = z.object({
 
 describe('generateObject', () => {
 	const originalMocks = process.env.MOCKS
+	const originalNodeEnv = process.env.NODE_ENV
+	const originalBaseUrl = process.env.BASE_URL
 
 	afterEach(() => {
 		setGenerateObjectImplementation(null)
@@ -22,6 +24,16 @@ describe('generateObject', () => {
 			delete process.env.MOCKS
 		} else {
 			process.env.MOCKS = originalMocks
+		}
+		if (originalNodeEnv === undefined) {
+			delete process.env.NODE_ENV
+		} else {
+			process.env.NODE_ENV = originalNodeEnv
+		}
+		if (originalBaseUrl === undefined) {
+			delete process.env.BASE_URL
+		} else {
+			process.env.BASE_URL = originalBaseUrl
 		}
 	})
 
@@ -127,7 +139,66 @@ describe('generateObject', () => {
 		])
 	})
 
-	it('rejects unsupported file media types before calling generator', async () => {
+	it('gates MOCKS=true on non-production or local BASE_URL', async () => {
+		process.env.MOCKS = 'true'
+		process.env.NODE_ENV = 'production'
+		process.env.BASE_URL = 'https://app.example.com'
+		const spy = vi.fn(async () => ({ output: { title: 'Live', count: 1 } }))
+		setGenerateTextImplementation(spy as never)
+
+		const prodResult = await generateObject({
+			schema: sampleSchema,
+			prompt: 'Extract menu',
+			mockOutput: { title: 'Mock Menu', count: 2 },
+		})
+		expect(prodResult).toEqual({ title: 'Live', count: 1 })
+		expect(spy).toHaveBeenCalledTimes(1)
+
+		spy.mockClear()
+		delete process.env.BASE_URL
+		vi.stubEnv('VITEST', '')
+		const prodNoBaseResult = await generateObject({
+			schema: sampleSchema,
+			prompt: 'Extract menu',
+			mockOutput: { title: 'Mock Menu', count: 2 },
+		})
+		expect(prodNoBaseResult).toEqual({ title: 'Live', count: 1 })
+		expect(spy).toHaveBeenCalledTimes(1)
+		vi.unstubAllEnvs()
+
+		spy.mockClear()
+		process.env.MOCKS = 'true'
+		process.env.NODE_ENV = 'production'
+		process.env.BASE_URL = 'http://localhost:3001'
+		const localProdResult = await generateObject({
+			schema: sampleSchema,
+			prompt: 'Extract menu',
+			mockOutput: { title: 'Mock Menu', count: 2 },
+		})
+		expect(localProdResult).toEqual({ title: 'Mock Menu', count: 2 })
+		expect(spy).not.toHaveBeenCalled()
+	})
+
+	it('forwards abortSignal to generateText', async () => {
+		delete process.env.MOCKS
+		const controller = new AbortController()
+		const spy = vi.fn(async () => ({ output: { title: 'Ok', count: 1 } }))
+		setGenerateTextImplementation(spy as never)
+
+		await generateObject({
+			schema: sampleSchema,
+			prompt: 'Extract menu',
+			abortSignal: controller.signal,
+		})
+
+		expect(spy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				abortSignal: controller.signal,
+			}),
+		)
+	})
+
+	it('rejects unsupported file media types and URL file data before calling generator', async () => {
 		const spy = vi.fn()
 		await expect(
 			generateObject({
@@ -142,6 +213,19 @@ describe('generateObject', () => {
 				generator: spy,
 			}),
 		).rejects.toThrow(/Unsupported generateObject file mediaType/)
+		await expect(
+			generateObject({
+				schema: sampleSchema,
+				prompt: 'Parse',
+				files: [
+					{
+						data: new URL('https://169.254.169.254/latest') as never,
+						mediaType: 'application/pdf',
+					},
+				],
+				generator: spy,
+			}),
+		).rejects.toThrow(/URL is not allowed/)
 		expect(spy).not.toHaveBeenCalled()
 	})
 })

@@ -609,42 +609,11 @@ export async function erasePerson(
 		throw error
 	}
 
-	// Phase 1b (outside the transaction): delete R2 objects for pending/rejected
-	// guest dish photos before the transaction deletes their rows (#148).
-	if (preview.customerIds.length > 0) {
-		const pendingOrRejectedPhotos = await queryInChunks(
-			preview.customerIds,
-			(chunk) =>
-				db
-					.select({
-						id: guestPhotoSubmissions.id,
-						objectKey: guestPhotoSubmissions.objectKey,
-					})
-					.from(guestPhotoSubmissions)
-					.where(
-						and(
-							inArray(guestPhotoSubmissions.customerId, chunk),
-							inArray(guestPhotoSubmissions.status, ['pending', 'rejected']),
-						),
-					)
-					.all(),
-		)
-		for (const photo of pendingOrRejectedPhotos) {
-			const result = await deleteRecordingObject(photo.objectKey)
-			if (result === 'failed') {
-				throw new PersonErasureError(
-					502,
-					'guest_photo_delete_failed',
-					'A guest dish photo could not be deleted from storage; retry to complete',
-					voiceCounts(),
-				)
-			}
-		}
-	}
-
 	// Phase 2: one serialized regional transaction, identity re-read inside it.
+	let photoKeysToDelete: string[] = []
+	let erasureResult: ErasePersonResult
 	try {
-		return await withSetupWrite(
+		erasureResult = await withSetupWrite(
 			db,
 			async (tx) => {
 				const identity = await resolveIdentity(tx, target)
@@ -1187,10 +1156,11 @@ export async function erasePerson(
 				})
 
 				// ---- Guest dish photos (#148) ---------------------------------------
-				// Pending and rejected submissions are deleted (their R2 objects went
-				// in Phase 1b); approved and added submissions keep the business photo
-				// with customer_id and order_id unlinked. Must run before deleting
-				// `customers` so ON DELETE SET NULL cannot hide pending/rejected rows.
+				// Staged, pending, and rejected submissions are deleted (their R2 keys
+				// are collected inside this transaction for both customerId and orderId
+				// matches and deleted after commit); approved and added submissions keep
+				// the business photo with customer_id and order_id unlinked. Must run
+				// before deleting `customers` so ON DELETE SET NULL cannot hide rows.
 				let guestPhotosDeleted = 0
 				let guestPhotosUnlinked = 0
 				const photoIdSet = new Set<string>()
@@ -1199,6 +1169,7 @@ export async function erasePerson(
 						.select({
 							id: guestPhotoSubmissions.id,
 							status: guestPhotoSubmissions.status,
+							objectKey: guestPhotoSubmissions.objectKey,
 						})
 						.from(guestPhotoSubmissions)
 						.where(inArray(guestPhotoSubmissions.customerId, chunk))
@@ -1211,18 +1182,25 @@ export async function erasePerson(
 							.select({
 								id: guestPhotoSubmissions.id,
 								status: guestPhotoSubmissions.status,
+								objectKey: guestPhotoSubmissions.objectKey,
 							})
 							.from(guestPhotoSubmissions)
 							.where(inArray(guestPhotoSubmissions.orderId, chunk))
 							.all(),
 				)
 				const deletePhotoIds: string[] = []
+				const collectedPhotoKeys: string[] = []
 				const unlinkPhotoIds: string[] = []
 				for (const row of [...photoByCustomer, ...photoByOrder]) {
 					if (photoIdSet.has(row.id)) continue
 					photoIdSet.add(row.id)
-					if (row.status === 'pending' || row.status === 'rejected') {
+					if (
+						row.status === 'staged' ||
+						row.status === 'pending' ||
+						row.status === 'rejected'
+					) {
 						deletePhotoIds.push(row.id)
+						collectedPhotoKeys.push(row.objectKey)
 					} else {
 						unlinkPhotoIds.push(row.id)
 					}
@@ -1242,6 +1220,7 @@ export async function erasePerson(
 						.returning({ id: guestPhotoSubmissions.id })
 					guestPhotosUnlinked += updated.length
 				})
+				photoKeysToDelete = collectedPhotoKeys
 
 				// ---- Customer rows and everything keyed by them ----------------------
 				// Deleted explicitly, not only by FK cascade, so a missing foreign-key
@@ -1433,4 +1412,24 @@ export async function erasePerson(
 		await recordProgress('transaction', voiceCounts())
 		throw error
 	}
+
+	// Post-commit: delete R2 objects collected inside the erasure transaction so
+	// rolled-back transactions never delete live objects.
+	for (const objectKey of photoKeysToDelete) {
+		try {
+			const res = await deleteRecordingObject(objectKey)
+			if (res === 'failed') {
+				console.error('Post-commit guest photo object deletion failed', {
+					subjectId,
+				})
+			}
+		} catch (error) {
+			console.error('Post-commit guest photo object deletion threw', {
+				subjectId,
+				error: error instanceof Error ? error.name : 'UnknownError',
+			})
+		}
+	}
+
+	return erasureResult
 }

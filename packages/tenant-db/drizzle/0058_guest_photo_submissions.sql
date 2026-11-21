@@ -8,8 +8,9 @@ CREATE TABLE `guest_photo_submissions` (
 	`content_type` text NOT NULL,
 	`byte_size` integer NOT NULL,
 	`status` text DEFAULT 'pending' NOT NULL,
-	`consent_text` text NOT NULL,
-	`consented_at` integer NOT NULL,
+	`consent_text` text,
+	`consent_version` text,
+	`consented_at` integer,
 	`decided_at` integer,
 	`decided_by_user_id` text,
 	`added_at` integer,
@@ -21,4 +22,5 @@ CREATE INDEX `idx_guest_photo_submissions_customer` ON `guest_photo_submissions`
 CREATE INDEX `idx_guest_photo_submissions_org_customer_created` ON `guest_photo_submissions` (`org_id`,`customer_id`,`created_at`);--> statement-breakpoint
 CREATE INDEX `idx_guest_photo_submissions_order_item` ON `guest_photo_submissions` (`order_id`,`item_id`);--> statement-breakpoint
 CREATE INDEX `idx_guest_photo_submissions_status_decided` ON `guest_photo_submissions` (`status`,`decided_at`);--> statement-breakpoint
+CREATE INDEX `idx_guest_photo_submissions_status_created` ON `guest_photo_submissions` (`status`,`created_at`);--> statement-breakpoint
 CREATE INDEX `idx_guest_photo_submissions_org_status_created` ON `guest_photo_submissions` (`org_id`,`status`,`created_at`);

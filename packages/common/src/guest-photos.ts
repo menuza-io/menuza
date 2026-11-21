@@ -11,6 +11,8 @@ export const GUEST_PHOTO_MAX_PER_DISH_ORDER = 3
 export const GUEST_PHOTO_MAX_PER_GUEST_DAY = 10
 export const GUEST_PHOTO_MAX_BYTES = 10 * 1024 * 1024
 export const GUEST_PHOTO_REJECTED_RETENTION_DAYS = 30
+export const GUEST_PHOTO_STAGED_RETENTION_HOURS = 24
+export const GUEST_PHOTO_TOKEN_AUDIENCE = 'tenant-api-guest-photos'
 
 export const GUEST_PHOTO_ALLOWED_MIME_TYPES = [
 	'image/jpeg',
@@ -81,7 +83,6 @@ export const guestPhotoSubmitSchema = z
 		contentType: guestPhotoMimeTypeSchema,
 		byteSize: z.number().int().min(1).max(GUEST_PHOTO_MAX_BYTES),
 		consent: z.literal(true),
-		consentText: z.string().trim().min(1).max(500).optional(),
 	})
 	.strict()
 export type GuestPhotoSubmitInput = z.infer<typeof guestPhotoSubmitSchema>
@@ -125,6 +126,7 @@ export const guestPhotoSubmissionSchema = z
 		byteSize: z.number().int().min(1),
 		status: guestPhotoStatusSchema,
 		consentText: z.string(),
+		consentVersion: z.string().nullable().optional(),
 		consentedAt: z.string(),
 		decidedAt: z.string().nullable(),
 		decidedByUserId: z.string().nullable(),

@@ -43,6 +43,7 @@ ALTER TABLE `Organization` ADD `autoPopularCount` integer;--> statement-breakpoi
 ALTER TABLE `OrganizationMenu` ADD `channels` text DEFAULT '["web","qr","pos","app"]' NOT NULL;--> statement-breakpoint
 ALTER TABLE `OrganizationMenuCategory` ADD `channels` text DEFAULT '["web","qr","pos","app"]' NOT NULL;--> statement-breakpoint
 ALTER TABLE `OrganizationMenuItem` ADD `popularMode` text DEFAULT 'auto' NOT NULL;--> statement-breakpoint
+UPDATE "OrganizationMenuItem" SET "popularMode" = 'always' WHERE "isPopular" = true;--> statement-breakpoint
 ALTER TABLE `OrganizationMenuItem` ADD `channels` text DEFAULT '["web","qr","pos","app"]' NOT NULL;--> statement-breakpoint
 ALTER TABLE `OrganizationMenuLocationOverride` ADD `channels` text;--> statement-breakpoint
 -- Guest dish photo moderation (#148). Built-in admins (the owner's preset)

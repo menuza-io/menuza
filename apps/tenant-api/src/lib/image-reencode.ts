@@ -34,11 +34,15 @@ export type HeicConverterAdapter = (
 	bytes: Uint8Array,
 ) => Promise<HeicConversionResult | null>
 
+export const GUEST_PHOTO_MAX_DIMENSION = 8_192
+export const GUEST_PHOTO_MAX_PIXELS = 40_000_000
+
 export type ImageReencodeErrorCode =
 	| 'file_empty'
 	| 'file_too_large'
 	| 'unsupported_image_type'
 	| 'invalid_image_data'
+	| 'image_dimensions_too_large'
 	| 'heic_conversion_unavailable'
 
 export class GuestPhotoImageError extends Error {
@@ -58,14 +62,32 @@ const JPEG_SOF_MARKERS = new Set([
 	0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf,
 ])
 
-// Metadata / ancillary segments stripped from JPEGs:
-// - APP1..APP13 (EXIF, GPS IFD, XMP, ICC/MPF, IPTC, Photoshop IRB)
-// - APP15
-// - COM (0xFE)
-const JPEG_STRIPPED_MARKERS = new Set([
-	0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed,
-	0xef, 0xfe,
+// Allow-list only JPEG markers needed to decode the image (SOF, DHT, DAC, DQT,
+// DRI, SOS) plus the standard 14-byte JFIF APP0 header. All metadata and
+// ancillary segments (APP1..APP15 including 0xEE Adobe, APP0 extensions, COM
+// 0xFE, reserved 0xF0..0xFD, etc.) are stripped.
+const JPEG_ALLOWED_SEGMENT_MARKERS = new Set([
+	...JPEG_SOF_MARKERS,
+	0xc4, // DHT
+	0xcc, // DAC
+	0xda, // SOS
+	0xdb, // DQT
+	0xdd, // DRI
 ])
+
+function assertGuestPhotoDimensions(width: number, height: number): void {
+	if (
+		width > GUEST_PHOTO_MAX_DIMENSION ||
+		height > GUEST_PHOTO_MAX_DIMENSION ||
+		width * height > GUEST_PHOTO_MAX_PIXELS
+	) {
+		throw new GuestPhotoImageError(
+			'image_dimensions_too_large',
+			422,
+			`Image dimensions exceed allowed limits (${GUEST_PHOTO_MAX_DIMENSION}px max edge, ${GUEST_PHOTO_MAX_PIXELS} max pixels)`,
+		)
+	}
+}
 
 const PNG_ALLOWED_CHUNKS = new Set([
 	'IHDR',
@@ -258,17 +280,16 @@ function stripJpegMetadata(bytes: Uint8Array): {
 			height = readUint16BE(bytes, payloadStart + 1)
 			width = readUint16BE(bytes, payloadStart + 3)
 			if (width === 0 || height === 0) return null
+			assertGuestPhotoDimensions(width, height)
 		}
 
-		const shouldStrip =
-			JPEG_STRIPPED_MARKERS.has(marker) ||
-			// Strip APP0 extensions/thumbnails; standard 14-byte JFIF header is safe
-			// or can be omitted cleanly.
+		const shouldKeep =
+			JPEG_ALLOWED_SEGMENT_MARKERS.has(marker) ||
 			(marker === 0xe0 &&
-				(segmentLength !== 16 ||
-					readAscii(bytes, payloadStart, 5) !== 'JFIF\0'))
+				segmentLength === 16 &&
+				readAscii(bytes, payloadStart, 5) === 'JFIF\0')
 
-		if (!shouldStrip) {
+		if (shouldKeep) {
 			kept.push(new Uint8Array([0xff, marker]))
 			kept.push(bytes.subarray(offset, segmentEnd))
 		}
@@ -352,6 +373,7 @@ function stripPngMetadata(bytes: Uint8Array): {
 			) {
 				return null
 			}
+			assertGuestPhotoDimensions(width, height)
 		} else if (type === 'IHDR') {
 			return null
 		}
@@ -425,7 +447,7 @@ function stripWebpMetadata(bytes: Uint8Array): {
 	let width = 0
 	let height = 0
 	let sawImageData = false
-	let hasAlphaOrAnim = false
+	let hasAlpha = false
 
 	while (offset + 8 <= bytes.length) {
 		const type = readAscii(bytes, offset, 4)
@@ -438,6 +460,7 @@ function stripWebpMetadata(bytes: Uint8Array): {
 		if (type === 'VP8 ' || type === 'VP8L') {
 			const dims = decodeWebpBitstreamDimensions(bytes, type, dataStart, length)
 			if (!dims) return null
+			assertGuestPhotoDimensions(dims.width, dims.height)
 			width = dims.width
 			height = dims.height
 			sawImageData = true
@@ -455,20 +478,21 @@ function stripWebpMetadata(bytes: Uint8Array): {
 					((bytes[dataStart + 8] ?? 0) << 8) |
 					((bytes[dataStart + 9] ?? 0) << 16))
 			if (width === 0 || height === 0) return null
+			assertGuestPhotoDimensions(width, height)
 			const copy = new Uint8Array(bytes.subarray(dataStart, dataEnd))
-			// Clear ICCP (0x20), EXIF (0x08), XMP (0x04) feature flags.
-			copy[0] = (copy[0] ?? 0) & ~(0x20 | 0x08 | 0x04)
+			// Clear ICCP (0x20), EXIF (0x08), XMP (0x04), and Animation (0x02) flags.
+			copy[0] = (copy[0] ?? 0) & ~(0x20 | 0x08 | 0x04 | 0x02)
 			keptChunks.push({ type, data: copy })
-		} else if (type === 'ALPH' || type === 'ANIM') {
-			hasAlphaOrAnim = true
+		} else if (type === 'ALPH') {
+			hasAlpha = true
 			keptChunks.push({ type, data: bytes.subarray(dataStart, dataEnd) })
-		} else if (type === 'ANMF') {
-			hasAlphaOrAnim = true
-			sawImageData = true
-			keptChunks.push({ type, data: bytes.subarray(dataStart, dataEnd) })
-		} else if (!WEBP_METADATA_CHUNKS.has(type)) {
-			// Unknown non-image ancillary chunks are also dropped so hidden metadata
-			// cannot ride along in custom FourCC chunks.
+		} else if (
+			type === 'ANIM' ||
+			type === 'ANMF' ||
+			!WEBP_METADATA_CHUNKS.has(type)
+		) {
+			// Strip animation chunks (ANMF can carry arbitrary sub-chunks including
+			// EXIF/XMP), explicit metadata chunks, and any unknown ancillary chunks.
 		}
 
 		offset = chunkEnd
@@ -476,7 +500,7 @@ function stripWebpMetadata(bytes: Uint8Array): {
 
 	if (!sawImageData || width === 0 || height === 0) return null
 
-	const finalChunks = hasAlphaOrAnim
+	const finalChunks = hasAlpha
 		? keptChunks
 		: keptChunks.filter((chunk) => chunk.type !== 'VP8X')
 

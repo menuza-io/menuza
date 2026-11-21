@@ -18,11 +18,13 @@ import { action as jobsMenuImportAction } from '#app/routes/resources+/jobs.menu
 import type * as storageServer from '#app/utils/storage.server.ts'
 import { insertTestMember, insertTestUser } from '#tests/dashboard-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
+import { MENU_IMPORT_STALE_MS } from './schema.ts'
 import {
 	cancelMenuImport,
 	loadMenuImportForOrg,
 	processMenuImportJob,
 	startMenuImport,
+	sweepStaleMenuImports,
 } from './service.server.ts'
 
 const featureMocks = vi.hoisted(() => ({
@@ -438,5 +440,173 @@ describe('menu import service, rate limits, isolation, and route guards (#73)', 
 			where: eq(Organization.id, organizationId),
 		})
 		expect(orgCheck?.id).toBe(organizationId)
+	})
+
+	it('recovers stale running/applying imports, allows cancelling stale applying, cleans up orphaned drafts on 0-row ready update, and runs hourly sweep', async () => {
+		const staleDate = new Date(Date.now() - MENU_IMPORT_STALE_MS - 60_000)
+
+		// 1. Fresh applying cannot be cancelled; stale applying CAN be cancelled
+		const [freshApplying] = await db
+			.insert(MenuImport)
+			.values({
+				organizationId,
+				sourceKind: 'url',
+				sourceUrl: 'https://menu.example.com/fresh',
+				draftKey: 'menu-imports/org/fresh/draft.json',
+				status: 'applying',
+				createdById: userId,
+				updatedAt: new Date(),
+			})
+			.returning()
+		const freshCancel = await cancelMenuImport({
+			importId: freshApplying!.id,
+			organizationId,
+		})
+		expect(freshCancel).toEqual({
+			ok: false,
+			status: 409,
+			error: 'invalid_state',
+		})
+
+		await db
+			.update(MenuImport)
+			.set({ updatedAt: staleDate })
+			.where(eq(MenuImport.id, freshApplying!.id))
+		const staleCancel = await cancelMenuImport({
+			importId: freshApplying!.id,
+			organizationId,
+		})
+		expect(staleCancel).toEqual({ ok: true })
+
+		// 2. Stale applying with draftKey is reset to ready by sweepStaleMenuImports
+		const [staleApplying] = await db
+			.insert(MenuImport)
+			.values({
+				organizationId,
+				sourceKind: 'url',
+				sourceUrl: 'https://menu.example.com/stale-apply',
+				draftKey: 'menu-imports/org/stale/draft.json',
+				status: 'applying',
+				createdById: userId,
+				updatedAt: staleDate,
+			})
+			.returning()
+
+		const sweepRes = await sweepStaleMenuImports(new Date())
+		expect(sweepRes.resetApplying).toBeGreaterThanOrEqual(1)
+		const [afterSweep] = await db
+			.select()
+			.from(MenuImport)
+			.where(eq(MenuImport.id, staleApplying!.id))
+		expect(afterSweep?.status).toBe('ready')
+
+		// Empty-body POST to /resources/jobs/menu-import triggers sweep
+		const { ENV } = await import('varlock/env')
+		const emptyJobRes = await jobsMenuImportAction({
+			request: new Request('https://app.example/resources/jobs/menu-import', {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${ENV.INTERNAL_COMMAND_TOKEN}` },
+			}),
+			params: {},
+			context: new RouterContextProvider(),
+		} as unknown as ActionFunctionArgs)
+		expect(emptyJobRes.status).toBe(200)
+		expect(await emptyJobRes.json()).toMatchObject({
+			success: true,
+			swept: { resetApplying: 0, retried: 0 },
+		})
+
+		// 3. Stale running row can be claimed and taken over by processMenuImportJob
+		const [staleRunning] = await db
+			.insert(MenuImport)
+			.values({
+				organizationId,
+				sourceKind: 'url',
+				sourceUrl: 'https://bistro.example.com/stale-running',
+				status: 'running',
+				createdById: userId,
+				updatedAt: staleDate,
+			})
+			.returning()
+
+		const takeover = await processMenuImportJob(staleRunning!.id, {
+			resolve: async () => ['93.184.216.34'],
+			fetch: async () =>
+				new Response('<html><body><p>Pasta $14</p></body></html>', {
+					status: 200,
+					headers: { 'content-type': 'text/html' },
+				}),
+			generator: async () => ({
+				detectedCurrency: 'USD',
+				detectedLocales: ['en'],
+				menus: [
+					{
+						name: { en: 'Main' },
+						categories: [
+							{
+								name: { en: 'Mains' },
+								items: [{ name: { en: 'Pasta' }, price: 14 }],
+							},
+						],
+					},
+				],
+			}),
+		})
+		expect(takeover).toEqual({ ok: true, status: 'ready' })
+
+		// 4. Orphaned draft & source objects are deleted when running -> ready matches 0 rows
+		await db
+			.update(MenuImport)
+			.set({ status: 'cancelled' })
+			.where(eq(MenuImport.id, staleRunning!.id))
+		const [raceRow] = await db
+			.insert(MenuImport)
+			.values({
+				organizationId,
+				sourceKind: 'pdf',
+				sourceKey: `menu-imports/${organizationId}/race/source.pdf`,
+				status: 'queued',
+				createdById: userId,
+			})
+			.returning()
+		featureMocks.sourceStore.set(
+			raceRow!.sourceKey!,
+			new TextEncoder().encode('%PDF-1.4\n%%EOF'),
+		)
+
+		const raceResult = await processMenuImportJob(raceRow!.id, {
+			generator: async () => ({
+				detectedCurrency: 'USD',
+				detectedLocales: ['en'],
+				menus: [
+					{
+						name: { en: 'Main' },
+						categories: [
+							{
+								name: { en: 'Mains' },
+								items: [{ name: { en: 'Soup' }, price: 8 }],
+							},
+						],
+					},
+				],
+			}),
+			writeDraft: async (orgId, impId, json) => {
+				// Simulate concurrent cancel right after draft upload and before running -> ready update
+				await db
+					.update(MenuImport)
+					.set({ status: 'cancelled' })
+					.where(eq(MenuImport.id, raceRow!.id))
+				const key = `menu-imports/${orgId}/${impId}/draft.json`
+				featureMocks.draftStore.set(key, json)
+				return key
+			},
+		})
+		expect(raceResult).toEqual({ ok: true, skipped: true })
+		expect(
+			featureMocks.draftStore.has(
+				`menu-imports/${organizationId}/${raceRow!.id}/draft.json`,
+			),
+		).toBe(false)
+		expect(featureMocks.sourceStore.has(raceRow!.sourceKey!)).toBe(false)
 	})
 })

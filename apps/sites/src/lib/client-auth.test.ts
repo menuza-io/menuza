@@ -72,6 +72,42 @@ describe('session refresh', () => {
 		expect(new Headers(retry.headers).get('Authorization')).toMatch(/^Bearer /)
 	})
 
+	it('omits Content-Type for FormData bodies and retries after a 401 refresh', async () => {
+		setSessionTokens({
+			accessToken: accessToken(),
+			refreshToken: 'refresh-1',
+		})
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(answer(401))
+			.mockResolvedValueOnce(
+				answer(200, {
+					accessToken: accessToken(),
+					refreshToken: 'refresh-2',
+				}),
+			)
+			.mockResolvedValueOnce(answer(200, { objectKey: 'k1' }))
+		vi.stubGlobal('fetch', fetchMock)
+
+		const formData = new FormData()
+		formData.set('orderId', 'ord_1')
+		const { session, response } = await tenantFetch('/photos/upload', {
+			method: 'POST',
+			body: formData,
+		})
+		expect(session).toBe('ok')
+		expect(response.status).toBe(200)
+		const firstHeaders = new Headers(
+			(fetchMock.mock.calls[0]![1] as RequestInit).headers,
+		)
+		const retryHeaders = new Headers(
+			(fetchMock.mock.calls[2]![1] as RequestInit).headers,
+		)
+		expect(firstHeaders.has('Content-Type')).toBe(false)
+		expect(retryHeaders.has('Content-Type')).toBe(false)
+		expect(retryHeaders.get('Authorization')).toMatch(/^Bearer /)
+	})
+
 	it.each([
 		[401, {}],
 		[403, ORGANIZATION_INACTIVE],
@@ -178,7 +214,10 @@ describe('session refresh', () => {
 				.fn()
 				.mockResolvedValueOnce(answer(401))
 				.mockResolvedValueOnce(
-					answer(200, { accessToken: accessToken(), refreshToken: 'refresh-2' }),
+					answer(200, {
+						accessToken: accessToken(),
+						refreshToken: 'refresh-2',
+					}),
 				)
 				.mockResolvedValueOnce(answer(401)),
 		)
@@ -235,7 +274,10 @@ describe('answers from the route itself', () => {
 	])(
 		'hands any other %i answer to the caller and keeps the session',
 		async (status, body) => {
-			vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(answer(status, body)))
+			vi.stubGlobal(
+				'fetch',
+				vi.fn().mockResolvedValueOnce(answer(status, body)),
+			)
 			const { session, response } = await tenantFetch('/loyalty/wallet')
 			expect(session).toBe('ok')
 			expect(response.status).toBe(status)
@@ -249,7 +291,10 @@ describe('tenantFetchResponse', () => {
 		setSessionTokens({ accessToken: accessToken(), refreshToken: 'refresh-1' })
 		vi.stubGlobal(
 			'fetch',
-			vi.fn().mockResolvedValueOnce(answer(401)).mockResolvedValueOnce(answer(503)),
+			vi
+				.fn()
+				.mockResolvedValueOnce(answer(401))
+				.mockResolvedValueOnce(answer(503)),
 		)
 		await expect(tenantFetchResponse('/loyalty/wallet')).rejects.toBeInstanceOf(
 			TenantSessionUnavailableError,

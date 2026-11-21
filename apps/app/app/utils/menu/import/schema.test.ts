@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
 	hasCurrencyMismatch,
+	MENU_IMPORT_MAX_TOTAL_ITEMS,
+	MENU_IMPORT_MAX_TOTAL_MODIFIER_GROUPS,
+	MENU_IMPORT_MAX_TOTAL_MODIFIER_OPTIONS,
 	MENU_IMPORT_NAME_MAX,
 	menuImportDraftSchema,
 	normalizeModelOutputToDraft,
@@ -194,5 +197,168 @@ describe('menu import draft schema (#73)', () => {
 		expect(hasCurrencyMismatch('EUR', 'USD')).toBe(true)
 		expect(hasCurrencyMismatch('SAR', 'SAR')).toBe(false)
 		expect(hasCurrencyMismatch(null, 'USD')).toBe(false)
+	})
+
+	it('enforces total items, modifier groups, and modifier options caps across the whole draft and defaults matchMode to auto', () => {
+		// 2 menus x 151 items = 302 > MENU_IMPORT_MAX_TOTAL_ITEMS (300)
+		const overItems = normalizeModelOutputToDraft({
+			menus: [0, 1].map((m) => ({
+				name: { en: `Menu ${m}` },
+				categories: [
+					{
+						name: { en: 'Cat' },
+						items: Array.from({ length: 151 }, (_, idx) => ({
+							name: { en: `Dish ${m}-${idx}` },
+							price: 10,
+						})),
+					},
+				],
+			})),
+		})
+		expect(overItems.ok).toBe(false)
+
+		// Draft schema also rejects > MENU_IMPORT_MAX_TOTAL_ITEMS
+		expect(
+			menuImportDraftSchema.safeParse({
+				version: 1,
+				detectedCurrency: null,
+				detectedLocales: ['en'],
+				imageSuggestions: [],
+				menus: [0, 1].map((m) => ({
+					id: `menu-${m}`,
+					included: true,
+					name: { en: `Menu ${m}` },
+					categories: [
+						{
+							id: `cat-${m}`,
+							included: true,
+							name: { en: 'Cat' },
+							items: Array.from(
+								{ length: Math.floor(MENU_IMPORT_MAX_TOTAL_ITEMS / 2) + 1 },
+								(_, idx) => ({
+									id: `item-${m}-${idx}`,
+									included: true,
+									name: { en: `Dish ${m}-${idx}` },
+									price: 10,
+								}),
+							),
+						},
+					],
+				})),
+			}).success,
+		).toBe(false)
+
+		// > MENU_IMPORT_MAX_TOTAL_MODIFIER_GROUPS across items
+		expect(
+			menuImportDraftSchema.safeParse({
+				version: 1,
+				detectedCurrency: null,
+				detectedLocales: ['en'],
+				imageSuggestions: [],
+				menus: [
+					{
+						id: 'm1',
+						included: true,
+						name: { en: 'Menu' },
+						categories: [
+							{
+								id: 'c1',
+								included: true,
+								name: { en: 'Cat' },
+								items: Array.from({ length: 26 }, (_, i) => ({
+									id: `it-${i}`,
+									included: true,
+									name: { en: `Dish ${i}` },
+									price: 10,
+									modifierGroups: Array.from(
+										{
+											length:
+												Math.floor(MENU_IMPORT_MAX_TOTAL_MODIFIER_GROUPS / 26) +
+												1,
+										},
+										(_, g) => ({
+											id: `grp-${i}-${g}`,
+											included: true,
+											name: { en: `Group ${g}` },
+											options: [],
+										}),
+									),
+								})),
+							},
+						],
+					},
+				],
+			}).success,
+		).toBe(false)
+
+		// > MENU_IMPORT_MAX_TOTAL_MODIFIER_OPTIONS across groups
+		expect(
+			menuImportDraftSchema.safeParse({
+				version: 1,
+				detectedCurrency: null,
+				detectedLocales: ['en'],
+				imageSuggestions: [],
+				menus: [
+					{
+						id: 'm1',
+						included: true,
+						name: { en: 'Menu' },
+						categories: [
+							{
+								id: 'c1',
+								included: true,
+								name: { en: 'Cat' },
+								items: Array.from({ length: 5 }, (_, i) => ({
+									id: `it-${i}`,
+									included: true,
+									name: { en: `Dish ${i}` },
+									price: 10,
+									modifierGroups: Array.from({ length: 10 }, (_, g) => ({
+										id: `grp-${i}-${g}`,
+										included: true,
+										name: { en: `Group ${g}` },
+										options: Array.from(
+											{
+												length:
+													Math.floor(
+														MENU_IMPORT_MAX_TOTAL_MODIFIER_OPTIONS / 50,
+													) + 1,
+											},
+											(_, o) => ({
+												id: `opt-${i}-${g}-${o}`,
+												included: true,
+												name: { en: `Opt ${o}` },
+												price: 1,
+											}),
+										),
+									})),
+								})),
+							},
+						],
+					},
+				],
+			}).success,
+		).toBe(false)
+
+		// Default matchMode is 'auto'
+		const okRes = normalizeModelOutputToDraft({
+			menus: [
+				{
+					name: { en: 'Main' },
+					categories: [
+						{
+							name: { en: 'Mains' },
+							items: [{ name: { en: 'Burger' }, price: 12 }],
+						},
+					],
+				},
+			],
+		})
+		expect(okRes.ok).toBe(true)
+		if (okRes.ok) {
+			expect(okRes.draft.menus[0]!.categories[0]!.items[0]!.matchMode).toBe(
+				'auto',
+			)
+		}
 	})
 })

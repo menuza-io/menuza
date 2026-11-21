@@ -165,18 +165,20 @@ export function validateInstanceUrl(urlStr: string): {
 			}
 		}
 
-		// Block IPv6 unique-local (fd00::/8) and link-local (fe80::/10) ranges
+		const bareHost = hostname.replace(/^\[|\]$/g, '')
+
+		// Block IPv6 unique-local (fc00::/7) and link-local (fe80::/10) ranges
+		// only when the host is an IPv6 literal so domain names like
+		// feastkitchen.com or fdgrill.com are not blocked.
 		if (
-			hostname.startsWith('fd') ||
-			hostname.startsWith('[fd') ||
-			hostname.startsWith('fe8') ||
-			hostname.startsWith('[fe8') ||
-			hostname.startsWith('fe9') ||
-			hostname.startsWith('[fe9') ||
-			hostname.startsWith('fea') ||
-			hostname.startsWith('[fea') ||
-			hostname.startsWith('feb') ||
-			hostname.startsWith('[feb')
+			isIP(bareHost) === 6 &&
+			(bareHost.startsWith('fc') ||
+				bareHost.startsWith('fd') ||
+				bareHost.startsWith('fe8') ||
+				bareHost.startsWith('fe9') ||
+				bareHost.startsWith('fea') ||
+				bareHost.startsWith('feb') ||
+				isPrivateIp(bareHost))
 		) {
 			return {
 				valid: false,

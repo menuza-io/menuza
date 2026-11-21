@@ -1,3 +1,6 @@
+import { SignJWT } from 'jose'
+import { brand } from '@repo/config/brand'
+import { GUEST_PHOTO_TOKEN_AUDIENCE } from '@repo/common/guest-photos'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TenantApiWorkerEnv } from './bindings.ts'
 
@@ -7,10 +10,14 @@ vi.mock('../src/lib/origin.ts', async (importOriginal) => ({
 	findActiveOrganizationById,
 }))
 
-import { assertOrgOnUsNode } from './org-router.ts'
+import { assertOrgOnUsNode, resolveOrgId } from './org-router.ts'
 
 const TOKEN = 'internal-command-token-for-tests-1234'
-const env = { TENANT_API_RUNTIME: 'workers' } as TenantApiWorkerEnv
+const OP_SECRET = 'test-operator-secret-key-32-chars!!'
+const env = {
+	TENANT_API_RUNTIME: 'workers',
+	TENANT_OPERATOR_TOKEN: OP_SECRET,
+} as TenantApiWorkerEnv
 
 function request(path: string, bearer?: string) {
 	return new Request(`https://tenant.example.test${path}`, {
@@ -89,5 +96,71 @@ describe('assertOrgOnUsNode and unknown organizations', () => {
 		expect(
 			await assertOrgOnUsNode('org_1', env, request('/auth/me')),
 		).toBeNull()
+	})
+})
+
+describe('resolveOrgId for guest photos operator JWT and popular/guest-photo ticks', () => {
+	it('routes /operator/photos* by signed pho+jwt with GUEST_PHOTO_TOKEN_AUDIENCE', async () => {
+		const orgId = 'clw9x0a12000008l00test77'
+		const jwt = await new SignJWT({ orgId, role: 'operator' })
+			.setProtectedHeader({ alg: 'HS256', typ: 'pho+jwt' })
+			.setAudience(GUEST_PHOTO_TOKEN_AUDIENCE)
+			.setIssuer(brand.shortName)
+			.setSubject('user_1')
+			.setExpirationTime('15m')
+			.sign(new TextEncoder().encode(OP_SECRET))
+
+		expect(
+			await resolveOrgId(
+				new Request('https://tenant.example.test/operator/photos', {
+					headers: { Authorization: `Bearer ${jwt}` },
+				}),
+				env,
+			),
+		).toBe(orgId)
+		expect(
+			await resolveOrgId(
+				new Request(
+					'https://tenant.example.test/operator/photos/sub_1/decide',
+					{
+						method: 'POST',
+						headers: { Authorization: `Bearer ${jwt}` },
+					},
+				),
+				env,
+			),
+		).toBe(orgId)
+	})
+
+	it('resolves orgId from JSON body (or null for fan-out) on /api/menu/popular/tick and /api/guest-photos/tick', async () => {
+		const orgId = 'clw9x0a12000008l00test77'
+		for (const tickPath of [
+			'/api/menu/popular/tick',
+			'/api/guest-photos/tick',
+		]) {
+			expect(
+				await resolveOrgId(
+					new Request(`https://tenant.example.test${tickPath}`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ orgId }),
+					}),
+					env,
+				),
+				tickPath,
+			).toBe(orgId)
+
+			expect(
+				await resolveOrgId(
+					new Request(`https://tenant.example.test${tickPath}`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({}),
+					}),
+					env,
+				),
+				tickPath,
+			).toBeNull()
+		}
 	})
 })

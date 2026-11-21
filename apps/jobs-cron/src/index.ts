@@ -1,5 +1,6 @@
 import { MarketingJourneyWorkflow } from './marketing-journey-workflow'
 import {
+	MENU_IMPORT_PATH,
 	MenuImportWorkflow,
 	type MenuImportWorkflowParams,
 } from './menu-import-workflow'
@@ -931,6 +932,13 @@ export default {
 				[
 					'Menu schedule sweep',
 					(jobEnv: Env) => invokeJob(jobEnv, MENU_SCHEDULE_JOB_PATH),
+				],
+				// AI menu imports are woken on start by MenuImportWorkflow; this hourly
+				// sweep resets stale applying rows and re-drives stale queued/running
+				// imports (#73).
+				[
+					'Menu import sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, MENU_IMPORT_PATH),
 				],
 				['Tenant menu popular tick', invokeTenantMenuPopularTick],
 				['Tenant guest photos tick', invokeTenantGuestPhotosTick],

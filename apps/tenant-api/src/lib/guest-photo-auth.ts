@@ -1,3 +1,4 @@
+import { GUEST_PHOTO_TOKEN_AUDIENCE } from '@repo/common/guest-photos'
 import { brand } from '@repo/config/brand'
 import { and, ConfigFlag, db, eq, isNull, or } from '@repo/database'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
@@ -14,7 +15,7 @@ import {
 	syncEnvFromProcess,
 } from './secrets.ts'
 
-export const GUEST_PHOTO_TOKEN_AUDIENCE = 'tenant-api-guest-photos'
+export { GUEST_PHOTO_TOKEN_AUDIENCE }
 export const GUEST_PHOTO_TOKEN_TYP = 'pho+jwt'
 export const GUEST_PHOTO_OPERATOR_PERMISSION = 'update:guest_photo:any'
 export const GUEST_PHOTO_FLAG_KEY = 'menu.guest_photos'
@@ -298,4 +299,21 @@ export async function verifyGuestPhotoOperatorToken(
 			impersonated: claims.impersonated,
 		},
 	}
+}
+
+export function checkGuestPhotoOperatorAccess(
+	context: GuestPhotoOperatorContext,
+	requireWrite: boolean,
+): { ok: true } | { ok: false; status: 403; error: string } {
+	if (context.impersonated) {
+		if (requireWrite) {
+			return { ok: false, status: 403, error: 'impersonated_read_only' }
+		}
+		// Read-only impersonation tokens are minted with `grants: []` by App.
+		return { ok: true }
+	}
+	if (!context.grants.includes(GUEST_PHOTO_OPERATOR_PERMISSION)) {
+		return { ok: false, status: 403, error: 'insufficient_permissions' }
+	}
+	return { ok: true }
 }

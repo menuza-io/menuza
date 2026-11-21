@@ -106,10 +106,17 @@ describe('menu-schedules.server (#149)', () => {
 		expect(equalNow).toEqual({ ok: false, error: 'schedule_in_past' })
 	})
 
-	it('converts local date and time in the organization timezone via localDateAndTimeToUtc', () => {
+	it('converts local date and time in the organization timezone via localDateAndTimeToUtc and rejects invalid calendar dates', () => {
 		// Asia/Riyadh is UTC+3 (no DST): 15:30 local -> 12:30 UTC
 		const utc = parseScheduleGoLiveAt('2026-12-01', '15:30', 'Asia/Riyadh')
 		expect(utc?.toISOString()).toBe('2026-12-01T12:30:00.000Z')
+
+		expect(parseScheduleGoLiveAt('2026-02-31', '12:00', 'UTC')).toBeNull()
+		expect(parseScheduleGoLiveAt('2026-02-29', '12:00', 'UTC')).toBeNull()
+		expect(
+			parseScheduleGoLiveAt('2024-02-29', '12:00', 'UTC')?.toISOString(),
+		).toBe('2024-02-29T12:00:00.000Z')
+		expect(parseScheduleGoLiveAt('2026-04-31', '12:00', 'UTC')).toBeNull()
 	})
 
 	it('keeps at most one pending schedule per menu and replaces older pending schedules', async () => {
@@ -457,5 +464,128 @@ describe('menu-schedules.server (#149)', () => {
 				runAt: '2026-12-25T12:00:00.000Z',
 			},
 		])
+	})
+
+	it('claims schedule into running, transitions to done only after snapshot + batch succeed, reverts to pending on error, and isolates per-schedule errors', async () => {
+		const { user, org, menuA, menuB } = await setupOrgWithMenus()
+		const schedA = await setMenuSchedule({
+			organizationId: org.id,
+			userId: user.id,
+			menuId: menuA.id,
+			goLiveAt: FUTURE,
+			now: NOW,
+		})
+		const schedB = await setMenuSchedule({
+			organizationId: org.id,
+			userId: user.id,
+			menuId: menuB.id,
+			goLiveAt: LATER,
+			now: NOW,
+		})
+		expect(schedA.ok && schedB.ok).toBe(true)
+		if (!schedA.ok || !schedB.ok) return
+
+		// Claim transitions pending -> running (not done yet)
+		const claimedA = await claimDueMenuSchedule(schedA.id, LATER)
+		expect(claimedA?.status).toBe('running')
+
+		const storage = await import('#app/utils/storage.server.ts')
+		vi.mocked(storage.uploadMenuSnapshotJson).mockRejectedValueOnce(
+			new Error('R2 unavailable'),
+		)
+
+		// Direct runClaimedMenuSchedule reverts running -> pending when snapshot fails
+		await expect(runClaimedMenuSchedule(claimedA!, LATER)).rejects.toThrow(
+			'R2 unavailable',
+		)
+		const [revertedA] = await db
+			.select()
+			.from(MenuSchedule)
+			.where(eq(MenuSchedule.id, schedA.id))
+		expect(revertedA?.status).toBe('pending')
+
+		// applyDueMenuSchedules wraps each schedule in try/catch so schedB succeeds even if schedA throws
+		vi.mocked(storage.uploadMenuSnapshotJson).mockRejectedValueOnce(
+			new Error('R2 transient'),
+		)
+		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+		const res = await applyDueMenuSchedules(LATER)
+		consoleSpy.mockRestore()
+
+		expect(res).toEqual({ applied: 1, skipped: 0 })
+		const [afterA] = await db
+			.select()
+			.from(MenuSchedule)
+			.where(eq(MenuSchedule.id, schedA.id))
+		const [afterB] = await db
+			.select()
+			.from(MenuSchedule)
+			.where(eq(MenuSchedule.id, schedB.id))
+		expect(afterA?.status).toBe('pending')
+		expect(afterB?.status).toBe('done')
+	})
+
+	it('prefers input.menuId over forged form menuId and refuses drop menus', async () => {
+		const { user, org, menuA, menuB } = await setupOrgWithMenus()
+		const [dropMenu] = await db
+			.insert(OrganizationMenu)
+			.values({
+				organizationId: org.id,
+				displayName: JSON.stringify({ en: 'Drop Menu' }),
+				menuType: 'drop',
+				availabilityStatus: 'unavailable',
+			})
+			.returning()
+
+		expect(
+			await setMenuSchedule({
+				organizationId: org.id,
+				userId: user.id,
+				menuId: dropMenu!.id,
+				goLiveAt: FUTURE,
+				now: NOW,
+			}),
+		).toEqual({ ok: false, error: 'menu_not_found' })
+
+		expect(
+			await setMenuSchedule({
+				organizationId: org.id,
+				userId: user.id,
+				menuId: menuA.id,
+				goLiveAt: FUTURE,
+				takeOffMenuId: dropMenu!.id,
+				now: NOW,
+			}),
+		).toEqual({ ok: false, error: 'take_off_menu_not_found' })
+
+		server.use(
+			http.post('http://localhost:8787/workflows/menu-schedule/start', () =>
+				HttpResponse.json({ success: true, instanceId: 'inst_2' }),
+			),
+		)
+
+		const { cookieHeader: adminCookie } = await createTestSession(user.id)
+		const forgedForm = new FormData()
+		forgedForm.set('intent', 'schedule-menu')
+		forgedForm.set('menuId', menuB.id)
+		forgedForm.set('goLiveDate', '2026-12-25')
+		forgedForm.set('goLiveTime', '15:00')
+
+		const res = await handleMenuScheduleAction({
+			request: new Request('http://localhost/test', {
+				method: 'POST',
+				headers: { cookie: adminCookie },
+			}),
+			organizationId: org.id,
+			menuId: menuA.id,
+			formData: forgedForm,
+		})
+		expect(res.status).toBe(200)
+		const body = (await res.json()) as {
+			ok: boolean
+			schedule: { menuId: string }
+		}
+		expect(body.ok).toBe(true)
+		expect(body.schedule.menuId).toBe(menuA.id)
 	})
 })

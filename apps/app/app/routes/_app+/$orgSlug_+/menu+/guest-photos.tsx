@@ -118,8 +118,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			itemId: formData.get('itemId'),
 			makePrimary: formData.get('makePrimary') ?? undefined,
 		})
-		const imageFile = formData.get('imageFile')
-		if (!parsed.success || !(imageFile instanceof File)) {
+		if (!parsed.success) {
 			return data({ error: 'invalid_request' }, { status: 400 })
 		}
 		const result = await addGuestPhotoToDish({
@@ -128,7 +127,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			impersonated,
 			submissionId: parsed.data.submissionId,
 			itemId: parsed.data.itemId,
-			imageFile,
 			makePrimary: parsed.data.makePrimary,
 			request,
 		})
@@ -287,54 +285,11 @@ export default function GuestPhotosModerationPage() {
 		submission: OperatorPhotoItem,
 		makePrimary = false,
 	): Promise<boolean> => {
-		const creds = await ensureToken()
-		const signedRes = await fetch(
-			`${creds.tenantApiUrl}/operator/photos/${encodeURIComponent(submission.id)}/signed-url`,
-			{
-				headers: {
-					Accept: 'application/json',
-					Authorization: `Bearer ${creds.jwt}`,
-				},
-			},
-		)
-		if (!signedRes.ok) {
-			const err = (await signedRes.json().catch(() => null)) as {
-				error?: string
-			} | null
-			toast.error(
-				err?.error === 'not_approved'
-					? _(msg`Only approved photos can be added to a dish.`)
-					: _(msg`Could not fetch cleaned image.`),
-			)
-			return false
-		}
-		const signed = (await signedRes.json()) as {
-			url: string
-			contentType: string
-		}
-		const imgRes = await fetch(signed.url)
-		if (!imgRes.ok) {
-			toast.error(_(msg`Could not download cleaned image.`))
-			return false
-		}
-		const blob = await imgRes.blob()
-		const ext =
-			signed.contentType === 'image/png'
-				? 'png'
-				: signed.contentType === 'image/webp'
-					? 'webp'
-					: 'jpg'
 		const formData = new FormData()
 		formData.set('intent', 'add-to-dish')
 		formData.set('submissionId', submission.id)
 		formData.set('itemId', submission.itemId)
 		if (makePrimary) formData.set('makePrimary', 'true')
-		formData.set(
-			'imageFile',
-			new File([blob], `guest-photo-${submission.id}.${ext}`, {
-				type: signed.contentType,
-			}),
-		)
 
 		const actionRes = await fetch(`/${organization.slug}/menu/guest-photos`, {
 			method: 'POST',
@@ -347,7 +302,9 @@ export default function GuestPhotosModerationPage() {
 			toast.error(
 				err?.error === 'dish_photos_full'
 					? _(msg`This dish already has the maximum number of photos.`)
-					: _(msg`Could not add photo to dish.`),
+					: err?.error === 'not_approved'
+						? _(msg`Only approved photos can be added to a dish.`)
+						: _(msg`Could not add photo to dish.`),
 			)
 			return false
 		}
@@ -457,6 +414,7 @@ export default function GuestPhotosModerationPage() {
 									type="button"
 									size="sm"
 									variant={statusFilter === status ? 'default' : 'outline'}
+									aria-pressed={statusFilter === status}
 									onClick={() => setStatusFilter(status)}
 								>
 									{statusLabel(status)}
@@ -477,9 +435,19 @@ export default function GuestPhotosModerationPage() {
 				</FrameHeader>
 				<FramePanel>
 					{loadError ? (
-						<p className="text-destructive text-sm">{loadError}</p>
+						<p
+							className="text-destructive text-sm"
+							role="alert"
+							aria-live="assertive"
+						>
+							{loadError}
+						</p>
 					) : loading ? (
-						<p className="text-muted-foreground text-sm">
+						<p
+							className="text-muted-foreground text-sm"
+							role="status"
+							aria-live="polite"
+						>
 							<Trans>Loading guest photos…</Trans>
 						</p>
 					) : submissions.length === 0 ? (
@@ -513,7 +481,7 @@ export default function GuestPhotosModerationPage() {
 											{submission.previewUrl ? (
 												<img
 													src={submission.previewUrl}
-													alt={dishName}
+													alt={_(msg`Guest photo of ${dishName}`)}
 													className="size-full object-cover"
 												/>
 											) : (

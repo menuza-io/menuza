@@ -9,7 +9,9 @@ import {
 	and,
 	db,
 	eq,
+	lte,
 	MenuImport,
+	or,
 	Organization,
 	OrganizationMenu,
 	OrganizationMenuCategory,
@@ -26,6 +28,7 @@ import { createMenuSnapshot } from '#app/utils/menu/snapshot.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
 	type LocalizedImportText,
+	MENU_IMPORT_STALE_MS,
 	type MenuImportDraft,
 	menuImportDraftSchema,
 	type MenuImportDraftSize,
@@ -241,6 +244,9 @@ export async function applyMenuImport(
 	}
 
 	const claimNow = new Date()
+	const staleApplyingBefore = new Date(
+		claimNow.getTime() - MENU_IMPORT_STALE_MS,
+	)
 	const claimed = await db
 		.update(MenuImport)
 		.set({ status: 'applying', updatedAt: claimNow })
@@ -248,7 +254,13 @@ export async function applyMenuImport(
 			and(
 				eq(MenuImport.id, input.importId),
 				eq(MenuImport.organizationId, input.organizationId),
-				eq(MenuImport.status, 'ready'),
+				or(
+					eq(MenuImport.status, 'ready'),
+					and(
+						eq(MenuImport.status, 'applying'),
+						lte(MenuImport.updatedAt, staleApplyingBefore),
+					),
+				),
 			),
 		)
 		.returning({ id: MenuImport.id })
@@ -452,13 +464,40 @@ export async function applyMenuImport(
 		for (const row of existingItems) {
 			addNameKeys(itemIdByName, row.id, row.displayName, defaultLocale)
 		}
-		const groupIdByName = new Map<string, string>()
-		for (const row of existingModifierGroups) {
-			addNameKeys(groupIdByName, row.id, row.name, defaultLocale)
+		const groupById = new Map(
+			existingModifierGroups.map((row) => [row.id, row]),
+		)
+		const itemGroupIdByName = new Map<string, Map<string, string>>()
+		for (const link of existingItemModifierGroupLinks) {
+			const group = groupById.get(link.modifierGroupId)
+			if (!group) continue
+			let map = itemGroupIdByName.get(link.itemId)
+			if (!map) {
+				map = new Map<string, string>()
+				itemGroupIdByName.set(link.itemId, map)
+			}
+			addNameKeys(map, group.id, group.name, defaultLocale)
 		}
-		const optionIdByName = new Map<string, string>()
-		for (const row of existingOptions) {
-			addNameKeys(optionIdByName, row.id, row.displayName, defaultLocale)
+
+		const optionById = new Map(existingOptions.map((row) => [row.id, row]))
+		const optionGroupIds = new Map<string, Set<string>>()
+		const groupOptionIdByName = new Map<string, Map<string, string>>()
+		for (const link of existingModifierGroupOptionLinks) {
+			let groupsForOpt = optionGroupIds.get(link.optionId)
+			if (!groupsForOpt) {
+				groupsForOpt = new Set<string>()
+				optionGroupIds.set(link.optionId, groupsForOpt)
+			}
+			groupsForOpt.add(link.modifierGroupId)
+
+			const opt = optionById.get(link.optionId)
+			if (!opt) continue
+			let map = groupOptionIdByName.get(link.modifierGroupId)
+			if (!map) {
+				map = new Map<string, string>()
+				groupOptionIdByName.set(link.modifierGroupId, map)
+			}
+			addNameKeys(map, opt.id, opt.displayName, defaultLocale)
 		}
 
 		const menuCatLinks = new Set(
@@ -679,7 +718,9 @@ export async function applyMenuImport(
 					)
 
 					let itemId: string | null = null
-					if (
+					if (draftItem.matchMode === 'new') {
+						itemId = null
+					} else if (
 						draftItem.matchExistingItemId &&
 						itemById.has(draftItem.matchExistingItemId)
 					) {
@@ -761,6 +802,11 @@ export async function applyMenuImport(
 					}
 
 					let groupLinkPos = 0
+					let scopedGroupMap = itemGroupIdByName.get(itemId)
+					if (!scopedGroupMap) {
+						scopedGroupMap = new Map<string, string>()
+						itemGroupIdByName.set(itemId, scopedGroupMap)
+					}
 					for (const draftGroup of draftItem.modifierGroups) {
 						if (!draftGroup.included) continue
 						const groupName = serializeLocalizedTextForOrg(
@@ -772,7 +818,7 @@ export async function applyMenuImport(
 						if (!groupName) continue
 
 						let groupId = findMatchByLocalizedName(
-							groupIdByName,
+							scopedGroupMap,
 							draftGroup.name,
 						)
 						if (groupId) {
@@ -802,7 +848,7 @@ export async function applyMenuImport(
 						} else {
 							groupId = createId()
 							touchedGroupIds.add(groupId)
-							addNameKeys(groupIdByName, groupId, groupName, defaultLocale)
+							addNameKeys(scopedGroupMap, groupId, groupName, defaultLocale)
 							createdModifierGroups += 1
 							statements.push(
 								db.insert(OrganizationMenuModifierGroup).values({
@@ -834,9 +880,16 @@ export async function applyMenuImport(
 							)
 						}
 
-						const optionIdsForGroup = new Set(
-							existingGroupOptionMap.get(groupId) ?? [],
-						)
+						let scopedOptionMap = groupOptionIdByName.get(groupId)
+						if (!scopedOptionMap) {
+							scopedOptionMap = new Map<string, string>()
+							groupOptionIdByName.set(groupId, scopedOptionMap)
+						}
+						const previousChange = modifierGraphChanges.get(groupId)
+						const optionIdsForGroup = new Set([
+							...(existingGroupOptionMap.get(groupId) ?? []),
+							...(previousChange?.optionIds ?? []),
+						])
 						let optionLinkPos = 0
 						for (const draftOption of draftGroup.options) {
 							if (!draftOption.included) continue
@@ -849,11 +902,13 @@ export async function applyMenuImport(
 							if (!optDisplayName) continue
 
 							let optionId = findMatchByLocalizedName(
-								optionIdByName,
+								scopedOptionMap,
 								draftOption.name,
 							)
 							if (optionId) {
-								if (!touchedOptionIds.has(optionId)) {
+								const isSharedOption =
+									(optionGroupIds.get(optionId)?.size ?? 0) > 1
+								if (!isSharedOption && !touchedOptionIds.has(optionId)) {
 									touchedOptionIds.add(optionId)
 									statements.push(
 										db
@@ -878,11 +933,12 @@ export async function applyMenuImport(
 								optionId = createId()
 								touchedOptionIds.add(optionId)
 								addNameKeys(
-									optionIdByName,
+									scopedOptionMap,
 									optionId,
 									optDisplayName,
 									defaultLocale,
 								)
+								optionGroupIds.set(optionId, new Set([groupId]))
 								createdOptions += 1
 								statements.push(
 									db.insert(OrganizationMenuOption).values({
@@ -916,10 +972,12 @@ export async function applyMenuImport(
 							}
 						}
 
+						const mergedOptionIds = Array.from(optionIdsForGroup)
+						existingGroupOptionMap.set(groupId, mergedOptionIds)
 						modifierGraphChanges.set(groupId, {
 							id: groupId,
 							name: groupName,
-							optionIds: Array.from(optionIdsForGroup),
+							optionIds: mergedOptionIds,
 						})
 					}
 				}

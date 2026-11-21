@@ -45,7 +45,7 @@ export type GenerateObjectFileMediaType =
 	(typeof GENERATE_OBJECT_FILE_MEDIA_TYPES)[number]
 
 export type GenerateObjectFilePart = {
-	data: Uint8Array | ArrayBuffer | string | URL
+	data: Uint8Array | ArrayBuffer | string
 	mediaType: GenerateObjectFileMediaType
 	filename?: string
 }
@@ -60,6 +60,7 @@ export type GenerateStructuredOptions<OBJECT> = {
 	prompt: string
 	files?: readonly GenerateObjectFilePart[]
 	modelName?: string
+	abortSignal?: AbortSignal
 	/** Optional per-call generator override (for testing or custom providers). */
 	generator?: GenerateObjectRunner
 	/** Optional fixture returned when `MOCKS=true`. */
@@ -89,6 +90,42 @@ export function setGenerateTextImplementation(
 	customGenerateText = impl
 }
 
+function isLocalHostname(hostname: string): boolean {
+	const host = hostname
+		.trim()
+		.toLowerCase()
+		.replace(/^\[|\]$/g, '')
+	return (
+		host === 'localhost' ||
+		host === '127.0.0.1' ||
+		host === '::1' ||
+		host.endsWith('.localhost') ||
+		host.endsWith('.test')
+	)
+}
+
+function isLocalUrl(value: string | null | undefined): boolean {
+	if (!value) return false
+	try {
+		return isLocalHostname(new URL(value).hostname)
+	} catch {
+		return false
+	}
+}
+
+function isMockAllowed(): boolean {
+	if (process.env.MOCKS !== 'true') return false
+	const baseUrl = process.env.BASE_URL?.trim()
+	if (baseUrl && baseUrl !== '/') {
+		return isLocalUrl(baseUrl)
+	}
+	return (
+		process.env.NODE_ENV === 'test' ||
+		process.env.NODE_ENV === 'development' ||
+		process.env.VITEST === 'true'
+	)
+}
+
 function assertSupportedFileParts(files: readonly GenerateObjectFilePart[]) {
 	for (const file of files) {
 		if (
@@ -98,6 +135,11 @@ function assertSupportedFileParts(files: readonly GenerateObjectFilePart[]) {
 		) {
 			throw new Error(
 				`Unsupported generateObject file mediaType: ${String(file.mediaType)}`,
+			)
+		}
+		if (file.data instanceof URL) {
+			throw new Error(
+				'Unsupported generateObject file data: URL is not allowed',
 			)
 		}
 	}
@@ -119,6 +161,7 @@ export async function generateObject<OBJECT>(
 		prompt,
 		files,
 		modelName = 'models/gemini-2.5-flash',
+		abortSignal,
 		generator,
 		mockOutput,
 	} = options
@@ -135,7 +178,7 @@ export async function generateObject<OBJECT>(
 		return customGenerateObject(options)
 	}
 
-	if (process.env.MOCKS === 'true') {
+	if (isMockAllowed()) {
 		return (mockOutput !== undefined ? mockOutput : {}) as OBJECT
 	}
 
@@ -147,6 +190,7 @@ export async function generateObject<OBJECT>(
 			model: google(modelName),
 			output,
 			system,
+			abortSignal,
 			messages: [
 				{
 					role: 'user',
@@ -169,6 +213,7 @@ export async function generateObject<OBJECT>(
 		model: google(modelName),
 		output,
 		system,
+		abortSignal,
 		prompt,
 	})
 	return result.output as OBJECT

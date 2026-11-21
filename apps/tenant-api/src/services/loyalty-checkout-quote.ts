@@ -157,6 +157,7 @@ export async function quoteCheckout(input: {
 	customerId: string
 	request: RestaurantOrderQuoteRequest
 	selection: LoyaltyOrderReward | null
+	client?: string | null
 	now?: Date
 }): Promise<LoyaltyCheckoutQuoteResult> {
 	const { orgId, customerId, request, selection } = input
@@ -215,6 +216,7 @@ export async function quoteCheckout(input: {
 		fulfillment: request.fulfillment,
 		source: request.source,
 		qrOrdering: (context as { qrOrdering?: unknown }).qrOrdering,
+		client: input.client,
 	})
 	const priced = priceRestaurantOrder(context, request, {
 		now,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	detectGuestPhotoMagicFormat,
+	GUEST_PHOTO_MAX_DIMENSION,
 	GuestPhotoImageError,
 	stripAndReencodeGuestPhoto,
 } from './image-reencode.ts'
@@ -255,5 +256,188 @@ describe('image-reencode (Worker-safe EXIF/GPS stripper)', () => {
 		const text = new TextDecoder('latin1').decode(cleaned.bytes)
 		expect(text).not.toContain('GPS_LAT_37_7749')
 		expect(text).not.toContain('SecretCameraSerial123')
+	})
+
+	it('strips unknown JPEG markers (APP14 0xEE and JPG2 0xF2) via allow-list', async () => {
+		const soi = new Uint8Array([0xff, 0xd8])
+		const app14Body = new TextEncoder().encode('AdobeHiddenPayload')
+		const app14 = concat(
+			new Uint8Array([
+				0xff,
+				0xee,
+				((app14Body.length + 2) >> 8) & 0xff,
+				(app14Body.length + 2) & 0xff,
+			]),
+			app14Body,
+		)
+		const jpg2Body = new TextEncoder().encode('CustomJPG2Segment')
+		const jpg2 = concat(
+			new Uint8Array([
+				0xff,
+				0xf2,
+				((jpg2Body.length + 2) >> 8) & 0xff,
+				(jpg2Body.length + 2) & 0xff,
+			]),
+			jpg2Body,
+		)
+		const sof0 = new Uint8Array([
+			0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x0c, 0x00, 0x10, 0x01, 0x01, 0x11,
+			0x00,
+		])
+		const sos = new Uint8Array([
+			0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0xaa, 0xbb,
+		])
+		const eoi = new Uint8Array([0xff, 0xd9])
+		const raw = concat(soi, app14, jpg2, sof0, sos, eoi)
+
+		const cleaned = await stripAndReencodeGuestPhoto(raw)
+		const text = new TextDecoder('latin1').decode(cleaned.bytes)
+		expect(text).not.toContain('AdobeHiddenPayload')
+		expect(text).not.toContain('CustomJPG2Segment')
+	})
+
+	it('strips WebP ANMF/ANIM chunks and rejects animated-only WebP without static VP8/VP8L frame', async () => {
+		const chunk = (fourcc: string, data: Uint8Array) => {
+			const pad = data.byteLength % 2
+			const out = new Uint8Array(8 + data.byteLength + pad)
+			for (let i = 0; i < 4; i++) out[i] = fourcc.charCodeAt(i)
+			new DataView(out.buffer).setUint32(4, data.byteLength, true)
+			out.set(data, 8)
+			return out
+		}
+		const vp8Data = new Uint8Array([
+			0x00, 0x00, 0x00, 0x9d, 0x01, 0x2a, 0x0a, 0x00, 0x08, 0x00,
+		])
+		const animData = new Uint8Array(6)
+		const anmfData = new TextEncoder().encode('ANMF_HIDDEN_EXIF_PAYLOAD')
+		const bodyWithStatic = concat(
+			chunk('VP8 ', vp8Data),
+			chunk('ANIM', animData),
+			chunk('ANMF', anmfData),
+		)
+		const hdr1 = new Uint8Array(12)
+		hdr1.set([0x52, 0x49, 0x46, 0x46], 0)
+		new DataView(hdr1.buffer).setUint32(4, 4 + bodyWithStatic.byteLength, true)
+		hdr1.set([0x57, 0x45, 0x42, 0x50], 8)
+		const cleaned = await stripAndReencodeGuestPhoto(
+			concat(hdr1, bodyWithStatic),
+		)
+		const text = new TextDecoder('latin1').decode(cleaned.bytes)
+		expect(text).not.toContain('ANMF_HIDDEN_EXIF_PAYLOAD')
+		expect(text).not.toContain('ANMF')
+		expect(text).not.toContain('ANIM')
+
+		// Animated-only WebP (only VP8X + ANIM + ANMF) is rejected
+		const vp8xData = new Uint8Array(10)
+		vp8xData[0] = 0x02 // animation flag
+		vp8xData[4] = 9
+		vp8xData[7] = 7
+		const bodyAnimOnly = concat(
+			chunk('VP8X', vp8xData),
+			chunk('ANIM', animData),
+			chunk('ANMF', anmfData),
+		)
+		const hdr2 = new Uint8Array(12)
+		hdr2.set([0x52, 0x49, 0x46, 0x46], 0)
+		new DataView(hdr2.buffer).setUint32(4, 4 + bodyAnimOnly.byteLength, true)
+		hdr2.set([0x57, 0x45, 0x42, 0x50], 8)
+		await expect(
+			stripAndReencodeGuestPhoto(concat(hdr2, bodyAnimOnly)),
+		).rejects.toMatchObject({ code: 'invalid_image_data', status: 400 })
+	})
+
+	it('enforces dimension and total-pixel limits across JPEG, PNG, and WebP', async () => {
+		const makeJpegWithDims = (w: number, h: number) => {
+			const soi = new Uint8Array([0xff, 0xd8])
+			const sof0 = new Uint8Array([
+				0xff,
+				0xc0,
+				0x00,
+				0x0b,
+				0x08,
+				(h >> 8) & 0xff,
+				h & 0xff,
+				(w >> 8) & 0xff,
+				w & 0xff,
+				0x01,
+				0x01,
+				0x11,
+				0x00,
+			])
+			const sos = new Uint8Array([
+				0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0xaa, 0xbb,
+			])
+			const eoi = new Uint8Array([0xff, 0xd9])
+			return concat(soi, sof0, sos, eoi)
+		}
+		const makePngWithDims = (w: number, h: number) => {
+			const sig = new Uint8Array([
+				0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+			])
+			const ihdr = new Uint8Array(13)
+			const view = new DataView(ihdr.buffer)
+			view.setUint32(0, w, false)
+			view.setUint32(4, h, false)
+			ihdr[8] = 8
+			ihdr[9] = 2
+			const idat = new Uint8Array([0x78, 0x9c, 0x63, 0x00, 0x00, 0x00, 0x02])
+			return concat(
+				sig,
+				pngChunk('IHDR', ihdr),
+				pngChunk('IDAT', idat),
+				pngChunk('IEND', new Uint8Array(0)),
+			)
+		}
+		const makeWebpWithDims = (w: number, h: number) => {
+			const vp8 = new Uint8Array([
+				0x00,
+				0x00,
+				0x00,
+				0x9d,
+				0x01,
+				0x2a,
+				w & 0xff,
+				(w >> 8) & 0x3f,
+				h & 0xff,
+				(h >> 8) & 0x3f,
+			])
+			const body = new Uint8Array(8 + vp8.byteLength)
+			body.set([0x56, 0x50, 0x38, 0x20], 0)
+			new DataView(body.buffer).setUint32(4, vp8.byteLength, true)
+			body.set(vp8, 8)
+			const header = new Uint8Array(12)
+			header.set([0x52, 0x49, 0x46, 0x46], 0)
+			new DataView(header.buffer).setUint32(4, 4 + body.byteLength, true)
+			header.set([0x57, 0x45, 0x42, 0x50], 8)
+			return concat(header, body)
+		}
+
+		// Edge > 8192
+		await expect(
+			stripAndReencodeGuestPhoto(
+				makeJpegWithDims(GUEST_PHOTO_MAX_DIMENSION + 1, 10),
+			),
+		).rejects.toMatchObject({ code: 'image_dimensions_too_large' })
+		await expect(
+			stripAndReencodeGuestPhoto(
+				makePngWithDims(10, GUEST_PHOTO_MAX_DIMENSION + 1),
+			),
+		).rejects.toMatchObject({ code: 'image_dimensions_too_large' })
+		await expect(
+			stripAndReencodeGuestPhoto(
+				makeWebpWithDims(GUEST_PHOTO_MAX_DIMENSION + 1, 10),
+			),
+		).rejects.toMatchObject({ code: 'image_dimensions_too_large' })
+
+		// Total pixels > 40_000_000 (7000 * 7000 = 49_000_000)
+		await expect(
+			stripAndReencodeGuestPhoto(makeJpegWithDims(7000, 7000)),
+		).rejects.toMatchObject({ code: 'image_dimensions_too_large' })
+		await expect(
+			stripAndReencodeGuestPhoto(makePngWithDims(7000, 7000)),
+		).rejects.toMatchObject({ code: 'image_dimensions_too_large' })
+		await expect(
+			stripAndReencodeGuestPhoto(makeWebpWithDims(7000, 7000)),
+		).rejects.toMatchObject({ code: 'image_dimensions_too_large' })
 	})
 })

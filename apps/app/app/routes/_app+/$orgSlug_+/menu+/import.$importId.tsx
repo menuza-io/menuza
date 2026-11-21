@@ -36,7 +36,7 @@ import {
 } from '@repo/ui/select'
 import { Spinner } from '@repo/ui/spinner'
 import { Textarea } from '@repo/ui/textarea'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	Link,
@@ -278,8 +278,45 @@ const IMPORT_ERRORS: Record<string, MessageDescriptor> = {
 
 const NEW_DISH_VALUE = '__new__'
 
+function applyAutoMatchToDraft(
+	rawDraft: MenuImportDraft,
+	existingByKey: ReadonlyMap<string, string>,
+): MenuImportDraft {
+	return {
+		...rawDraft,
+		menus: rawDraft.menus.map((menu) => ({
+			...menu,
+			categories: menu.categories.map((category) => ({
+				...category,
+				items: category.items.map((item) => {
+					if (item.matchMode === 'new') {
+						return { ...item, matchExistingItemId: null }
+					}
+					if (item.matchExistingItemId) {
+						return item
+					}
+					const byEn = item.name.en
+						? existingByKey.get(normalizeMatchName(item.name.en))
+						: undefined
+					const byAr = item.name.ar
+						? existingByKey.get(normalizeMatchName(item.name.ar))
+						: undefined
+					return {
+						...item,
+						matchExistingItemId: byEn ?? byAr ?? null,
+					}
+				}),
+			})),
+		})),
+	}
+}
+
 export default function MenuImportReviewPage() {
 	const { _ } = useLingui()
+	const baseId = useId()
+	const missingExistingLabelId = `${baseId}-missing-existing`
+	const publishNowId = `${baseId}-publish-now`
+	const includeLabel = (name: string) => _(t`Include ${name}`)
 	const {
 		orgSlug,
 		orgCurrency,
@@ -316,35 +353,14 @@ export default function MenuImportReviewPage() {
 
 	const [draft, setDraft] = useState<MenuImportDraft | null>(() => {
 		if (!initialDraft) return null
-		return {
-			...initialDraft,
-			menus: initialDraft.menus.map((menu) => ({
-				...menu,
-				categories: menu.categories.map((category) => ({
-					...category,
-					items: category.items.map((item) => {
-						if (item.matchExistingItemId) return item
-						const byEn = item.name.en
-							? existingByKey.get(normalizeMatchName(item.name.en))
-							: undefined
-						const byAr = item.name.ar
-							? existingByKey.get(normalizeMatchName(item.name.ar))
-							: undefined
-						return {
-							...item,
-							matchExistingItemId: byEn ?? byAr ?? null,
-						}
-					}),
-				})),
-			})),
-		}
+		return applyAutoMatchToDraft(initialDraft, existingByKey)
 	})
 
 	useEffect(() => {
 		if (initialDraft && !draft) {
-			setDraft(initialDraft)
+			setDraft(applyAutoMatchToDraft(initialDraft, existingByKey))
 		}
-	}, [initialDraft, draft])
+	}, [initialDraft, draft, existingByKey])
 
 	useEffect(() => {
 		if (record.status !== 'queued' && record.status !== 'running') return
@@ -687,332 +703,220 @@ export default function MenuImportReviewPage() {
 				</Card>
 			) : null}
 
-			{draft.menus.map((menu, menuIndex) => (
-				<Card key={menu.id}>
-					<CardHeader className="flex flex-col gap-3">
-						<div className="flex flex-wrap items-center gap-3">
-							<Checkbox
-								checked={menu.included}
-								onCheckedChange={(checked) =>
-									updateMenu(menuIndex, (m) => ({
-										...m,
-										included: checked === true,
-									}))
-								}
-							/>
-							<Badge variant="outline">
-								<Trans>Menu</Trans>
-							</Badge>
-							{showEnglish ? (
-								<Input
-									aria-label={_(t`Menu name (English)`)}
-									value={menu.name.en ?? ''}
-									placeholder={_(t`Menu name (English)`)}
-									className="max-w-xs"
-									onChange={(event) =>
+			{draft.menus.map((menu, menuIndex) => {
+				const menuDisplayName =
+					pickDraftText(menu.name, defaultLocale) || _(t`Untitled menu`)
+				return (
+					<Card key={menu.id}>
+						<CardHeader className="flex flex-col gap-3">
+							<div className="flex flex-wrap items-center gap-3">
+								<Checkbox
+									aria-label={includeLabel(menuDisplayName)}
+									checked={menu.included}
+									onCheckedChange={(checked) =>
 										updateMenu(menuIndex, (m) => ({
 											...m,
-											name: { ...m.name, en: event.target.value },
+											included: checked === true,
 										}))
 									}
 								/>
-							) : null}
-							{showArabic ? (
-								<Input
-									aria-label={_(t`Menu name (Arabic)`)}
-									dir="rtl"
-									value={menu.name.ar ?? ''}
-									placeholder={_(t`Menu name (Arabic)`)}
-									className="max-w-xs"
-									onChange={(event) =>
-										updateMenu(menuIndex, (m) => ({
-											...m,
-											name: { ...m.name, ar: event.target.value },
-										}))
-									}
-								/>
-							) : null}
-						</div>
-					</CardHeader>
-					<CardContent className="flex flex-col gap-6">
-						{menu.categories.map((category, catIndex) => (
-							<div
-								key={category.id}
-								className="border-border flex flex-col gap-4 rounded-lg border p-4"
-							>
-								<div className="flex flex-wrap items-center gap-3">
-									<Checkbox
-										checked={category.included}
-										onCheckedChange={(checked) =>
-											updateCategory(menuIndex, catIndex, (c) => ({
-												...c,
-												included: checked === true,
+								<Badge variant="outline">
+									<Trans>Menu</Trans>
+								</Badge>
+								{showEnglish ? (
+									<Input
+										aria-label={_(t`Menu name (English)`)}
+										value={menu.name.en ?? ''}
+										placeholder={_(t`Menu name (English)`)}
+										className="max-w-xs"
+										onChange={(event) =>
+											updateMenu(menuIndex, (m) => ({
+												...m,
+												name: { ...m.name, en: event.target.value },
 											}))
 										}
 									/>
-									<Badge variant="secondary">
-										<Trans>Category</Trans>
-									</Badge>
-									{showEnglish ? (
-										<Input
-											aria-label={_(t`Category name (English)`)}
-											value={category.name.en ?? ''}
-											placeholder={_(t`Category name (English)`)}
-											className="max-w-xs"
-											onChange={(event) =>
-												updateCategory(menuIndex, catIndex, (c) => ({
-													...c,
-													name: { ...c.name, en: event.target.value },
-												}))
-											}
-										/>
-									) : null}
-									{showArabic ? (
-										<Input
-											aria-label={_(t`Category name (Arabic)`)}
-											dir="rtl"
-											value={category.name.ar ?? ''}
-											placeholder={_(t`Category name (Arabic)`)}
-											className="max-w-xs"
-											onChange={(event) =>
-												updateCategory(menuIndex, catIndex, (c) => ({
-													...c,
-													name: { ...c.name, ar: event.target.value },
-												}))
-											}
-										/>
-									) : null}
-								</div>
-
-								<div className="flex flex-col gap-3">
-									{category.items.map((item, itemIndex) => {
-										const isLowConfidence =
-											item.confidence === 'low' ||
-											item.lowConfidenceFields.length > 0
-										return (
-											<div
-												key={item.id}
-												className={
-													isLowConfidence
-														? 'border-warning bg-warning/5 flex flex-col gap-3 rounded-md border p-3'
-														: 'border-border flex flex-col gap-3 rounded-md border p-3'
+								) : null}
+								{showArabic ? (
+									<Input
+										aria-label={_(t`Menu name (Arabic)`)}
+										dir="rtl"
+										value={menu.name.ar ?? ''}
+										placeholder={_(t`Menu name (Arabic)`)}
+										className="max-w-xs"
+										onChange={(event) =>
+											updateMenu(menuIndex, (m) => ({
+												...m,
+												name: { ...m.name, ar: event.target.value },
+											}))
+										}
+									/>
+								) : null}
+							</div>
+						</CardHeader>
+						<CardContent className="flex flex-col gap-6">
+							{menu.categories.map((category, catIndex) => {
+								const categoryDisplayName =
+									pickDraftText(category.name, defaultLocale) ||
+									_(t`Untitled category`)
+								return (
+									<div
+										key={category.id}
+										className="border-border flex flex-col gap-4 rounded-lg border p-4"
+									>
+										<div className="flex flex-wrap items-center gap-3">
+											<Checkbox
+												aria-label={includeLabel(categoryDisplayName)}
+												checked={category.included}
+												onCheckedChange={(checked) =>
+													updateCategory(menuIndex, catIndex, (c) => ({
+														...c,
+														included: checked === true,
+													}))
 												}
-											>
-												<div className="flex flex-wrap items-center justify-between gap-2">
-													<div className="flex flex-wrap items-center gap-2">
-														<Checkbox
-															checked={item.included}
-															onCheckedChange={(checked) =>
-																updateItem(
-																	menuIndex,
-																	catIndex,
-																	itemIndex,
-																	(it) => ({
-																		...it,
-																		included: checked === true,
-																	}),
-																)
-															}
-														/>
-														<span className="text-sm font-medium wrap-anywhere">
-															{pickDraftText(item.name, defaultLocale) ||
-																_(t`Untitled dish`)}
-														</span>
-														{isLowConfidence ? (
-															<Badge variant="warning">
-																<Trans>Low confidence</Trans>
-															</Badge>
-														) : null}
-													</div>
+											/>
+											<Badge variant="secondary">
+												<Trans>Category</Trans>
+											</Badge>
+											{showEnglish ? (
+												<Input
+													aria-label={_(t`Category name (English)`)}
+													value={category.name.en ?? ''}
+													placeholder={_(t`Category name (English)`)}
+													className="max-w-xs"
+													onChange={(event) =>
+														updateCategory(menuIndex, catIndex, (c) => ({
+															...c,
+															name: { ...c.name, en: event.target.value },
+														}))
+													}
+												/>
+											) : null}
+											{showArabic ? (
+												<Input
+													aria-label={_(t`Category name (Arabic)`)}
+													dir="rtl"
+													value={category.name.ar ?? ''}
+													placeholder={_(t`Category name (Arabic)`)}
+													className="max-w-xs"
+													onChange={(event) =>
+														updateCategory(menuIndex, catIndex, (c) => ({
+															...c,
+															name: { ...c.name, ar: event.target.value },
+														}))
+													}
+												/>
+											) : null}
+										</div>
 
-													<div className="w-60">
-														<Select
-															value={item.matchExistingItemId ?? NEW_DISH_VALUE}
-															items={matchSelectItems}
-															onValueChange={(value) =>
-																updateItem(
-																	menuIndex,
-																	catIndex,
-																	itemIndex,
-																	(it) => ({
-																		...it,
-																		matchExistingItemId:
-																			!value || value === NEW_DISH_VALUE
-																				? null
-																				: value,
-																	}),
-																)
-															}
-														>
-															<SelectTrigger
-																aria-label={_(t`Match existing dish`)}
-																className="w-full"
-															>
-																<SelectValue />
-															</SelectTrigger>
-															<SelectContent>
-																{matchSelectItems.map((opt) => (
-																	<SelectItem key={opt.value} value={opt.value}>
-																		{opt.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-													</div>
-												</div>
+										<div className="flex flex-col gap-3">
+											{category.items.map((item, itemIndex) => {
+												const isLowConfidence =
+													item.confidence === 'low' ||
+													item.lowConfidenceFields.length > 0
+												const dishName =
+													pickDraftText(item.name, defaultLocale) ||
+													_(t`Untitled dish`)
+												const itemNameEnId = `${baseId}-${item.id}-name-en`
+												const itemNameArId = `${baseId}-${item.id}-name-ar`
+												const itemPriceId = `${baseId}-${item.id}-price`
+												const itemDescEnId = `${baseId}-${item.id}-desc-en`
+												const itemDescArId = `${baseId}-${item.id}-desc-ar`
+												const itemSizesLabelId = `${baseId}-${item.id}-sizes`
+												const itemGroupsLabelId = `${baseId}-${item.id}-groups`
+												return (
+													<div
+														key={item.id}
+														className={
+															isLowConfidence
+																? 'border-warning bg-warning/5 flex flex-col gap-3 rounded-md border p-3'
+																: 'border-border flex flex-col gap-3 rounded-md border p-3'
+														}
+													>
+														<div className="flex flex-wrap items-center justify-between gap-2">
+															<div className="flex flex-wrap items-center gap-2">
+																<Checkbox
+																	aria-label={includeLabel(dishName)}
+																	checked={item.included}
+																	onCheckedChange={(checked) =>
+																		updateItem(
+																			menuIndex,
+																			catIndex,
+																			itemIndex,
+																			(it) => ({
+																				...it,
+																				included: checked === true,
+																			}),
+																		)
+																	}
+																/>
+																<span className="text-sm font-medium wrap-anywhere">
+																	{dishName}
+																</span>
+																{isLowConfidence ? (
+																	<Badge variant="warning">
+																		<Trans>Low confidence</Trans>
+																	</Badge>
+																) : null}
+															</div>
 
-												<div className="grid gap-3 md:grid-cols-3">
-													{showEnglish ? (
-														<div className="space-y-1">
-															<Label>
-																<Trans>Name (English)</Trans>
-															</Label>
-															<Input
-																value={item.name.en ?? ''}
-																onChange={(event) =>
-																	updateItem(
-																		menuIndex,
-																		catIndex,
-																		itemIndex,
-																		(it) => ({
-																			...it,
-																			name: {
-																				...it.name,
-																				en: event.target.value,
-																			},
-																		}),
-																	)
-																}
-															/>
-														</div>
-													) : null}
-													{showArabic ? (
-														<div className="space-y-1">
-															<Label>
-																<Trans>Name (Arabic)</Trans>
-															</Label>
-															<Input
-																dir="rtl"
-																value={item.name.ar ?? ''}
-																onChange={(event) =>
-																	updateItem(
-																		menuIndex,
-																		catIndex,
-																		itemIndex,
-																		(it) => ({
-																			...it,
-																			name: {
-																				...it.name,
-																				ar: event.target.value,
-																			},
-																		}),
-																	)
-																}
-															/>
-														</div>
-													) : null}
-													<div className="space-y-1">
-														<Label>
-															<Trans>Price</Trans>
-														</Label>
-														<Input
-															type="number"
-															min={0}
-															step="0.01"
-															value={item.price}
-															onChange={(event) => {
-																const parsedPrice = Number(event.target.value)
-																updateItem(
-																	menuIndex,
-																	catIndex,
-																	itemIndex,
-																	(it) => ({
-																		...it,
-																		price:
-																			Number.isFinite(parsedPrice) &&
-																			parsedPrice >= 0
-																				? parsedPrice
-																				: 0,
-																		lowConfidenceFields:
-																			it.lowConfidenceFields.filter(
-																				(f) => f !== 'price',
-																			),
-																	}),
-																)
-															}}
-														/>
-													</div>
-												</div>
-
-												<div className="grid gap-3 md:grid-cols-2">
-													{showEnglish ? (
-														<div className="space-y-1">
-															<Label>
-																<Trans>Description (English)</Trans>
-															</Label>
-															<Textarea
-																rows={2}
-																value={item.description.en ?? ''}
-																onChange={(event) =>
-																	updateItem(
-																		menuIndex,
-																		catIndex,
-																		itemIndex,
-																		(it) => ({
-																			...it,
-																			description: {
-																				...it.description,
-																				en: event.target.value,
-																			},
-																		}),
-																	)
-																}
-															/>
-														</div>
-													) : null}
-													{showArabic ? (
-														<div className="space-y-1">
-															<Label>
-																<Trans>Description (Arabic)</Trans>
-															</Label>
-															<Textarea
-																rows={2}
-																dir="rtl"
-																value={item.description.ar ?? ''}
-																onChange={(event) =>
-																	updateItem(
-																		menuIndex,
-																		catIndex,
-																		itemIndex,
-																		(it) => ({
-																			...it,
-																			description: {
-																				...it.description,
-																				ar: event.target.value,
-																			},
-																		}),
-																	)
-																}
-															/>
-														</div>
-													) : null}
-												</div>
-
-												{item.sizes.length > 0 ? (
-													<div className="space-y-2">
-														<Label>
-															<Trans>Sizes</Trans>
-														</Label>
-														<div className="flex flex-wrap gap-2">
-															{item.sizes.map((size, sizeIndex) => (
-																<div
-																	key={size.id}
-																	className="border-border flex items-center gap-2 rounded border p-2"
+															<div className="w-60">
+																<Select
+																	value={
+																		item.matchMode === 'new'
+																			? NEW_DISH_VALUE
+																			: (item.matchExistingItemId ??
+																				NEW_DISH_VALUE)
+																	}
+																	items={matchSelectItems}
+																	onValueChange={(value) =>
+																		updateItem(
+																			menuIndex,
+																			catIndex,
+																			itemIndex,
+																			(it) => ({
+																				...it,
+																				matchMode:
+																					!value || value === NEW_DISH_VALUE
+																						? 'new'
+																						: 'existing',
+																				matchExistingItemId:
+																					!value || value === NEW_DISH_VALUE
+																						? null
+																						: value,
+																			}),
+																		)
+																	}
 																>
+																	<SelectTrigger
+																		aria-label={_(t`Match existing dish`)}
+																		className="w-full"
+																	>
+																		<SelectValue />
+																	</SelectTrigger>
+																	<SelectContent>
+																		{matchSelectItems.map((opt) => (
+																			<SelectItem
+																				key={opt.value}
+																				value={opt.value}
+																			>
+																				{opt.label}
+																			</SelectItem>
+																		))}
+																	</SelectContent>
+																</Select>
+															</div>
+														</div>
+
+														<div className="grid gap-3 md:grid-cols-3">
+															{showEnglish ? (
+																<div className="space-y-1">
+																	<Label htmlFor={itemNameEnId}>
+																		<Trans>Name (English)</Trans>
+																	</Label>
 																	<Input
-																		aria-label={_(t`Size name`)}
-																		className="w-28"
-																		value={size.name.en ?? size.name.ar ?? ''}
+																		id={itemNameEnId}
+																		value={item.name.en ?? ''}
 																		onChange={(event) =>
 																			updateItem(
 																				menuIndex,
@@ -1020,169 +924,356 @@ export default function MenuImportReviewPage() {
 																				itemIndex,
 																				(it) => ({
 																					...it,
-																					sizes: it.sizes.map((s, sIdx) =>
-																						sIdx === sizeIndex
-																							? {
-																									...s,
-																									name: {
-																										...s.name,
-																										[defaultLocale === 'ar'
-																											? 'ar'
-																											: 'en']:
-																											event.target.value,
-																									},
-																								}
-																							: s,
-																					),
+																					name: {
+																						...it.name,
+																						en: event.target.value,
+																					},
 																				}),
 																			)
 																		}
 																	/>
+																</div>
+															) : null}
+															{showArabic ? (
+																<div className="space-y-1">
+																	<Label htmlFor={itemNameArId}>
+																		<Trans>Name (Arabic)</Trans>
+																	</Label>
 																	<Input
-																		aria-label={_(t`Size price`)}
-																		type="number"
-																		min={0}
-																		step="0.01"
-																		className="w-24"
-																		value={size.price}
-																		onChange={(event) => {
-																			const nextPrice = Number(
-																				event.target.value,
-																			)
+																		id={itemNameArId}
+																		dir="rtl"
+																		value={item.name.ar ?? ''}
+																		onChange={(event) =>
 																			updateItem(
 																				menuIndex,
 																				catIndex,
 																				itemIndex,
 																				(it) => ({
 																					...it,
-																					sizes: it.sizes.map((s, sIdx) =>
-																						sIdx === sizeIndex
-																							? {
-																									...s,
-																									price:
-																										Number.isFinite(
-																											nextPrice,
-																										) && nextPrice >= 0
-																											? nextPrice
-																											: 0,
-																								}
-																							: s,
-																					),
+																					name: {
+																						...it.name,
+																						ar: event.target.value,
+																					},
 																				}),
 																			)
-																		}}
+																		}
 																	/>
 																</div>
-															))}
+															) : null}
+															<div className="space-y-1">
+																<Label htmlFor={itemPriceId}>
+																	<Trans>Price</Trans>
+																</Label>
+																<Input
+																	id={itemPriceId}
+																	type="number"
+																	min={0}
+																	step="0.01"
+																	value={item.price}
+																	onChange={(event) => {
+																		const parsedPrice = Number(
+																			event.target.value,
+																		)
+																		updateItem(
+																			menuIndex,
+																			catIndex,
+																			itemIndex,
+																			(it) => ({
+																				...it,
+																				price:
+																					Number.isFinite(parsedPrice) &&
+																					parsedPrice >= 0
+																						? parsedPrice
+																						: 0,
+																				lowConfidenceFields:
+																					it.lowConfidenceFields.filter(
+																						(f) => f !== 'price',
+																					),
+																			}),
+																		)
+																	}}
+																/>
+															</div>
 														</div>
-													</div>
-												) : null}
 
-												{item.modifierGroups.length > 0 ? (
-													<div className="space-y-2">
-														<Label>
-															<Trans>Modifier groups</Trans>
-														</Label>
-														<div className="flex flex-col gap-2">
-															{item.modifierGroups.map((group, groupIndex) => (
-																<div
-																	key={group.id}
-																	className="border-border rounded border p-2.5 text-sm"
-																>
-																	<div className="flex items-center gap-2 font-medium">
-																		<Checkbox
-																			checked={group.included}
-																			onCheckedChange={(checked) =>
-																				updateItem(
-																					menuIndex,
-																					catIndex,
-																					itemIndex,
-																					(it) => ({
-																						...it,
-																						modifierGroups:
-																							it.modifierGroups.map(
-																								(g, gIdx) =>
-																									gIdx === groupIndex
-																										? {
-																												...g,
-																												included:
-																													checked === true,
-																											}
-																										: g,
-																							),
-																					}),
-																				)
-																			}
-																		/>
-																		<span className="wrap-anywhere">
-																			{pickDraftText(group.name, defaultLocale)}
-																		</span>
-																	</div>
-																	<ul className="mt-2 flex flex-wrap gap-3 pl-6">
-																		{group.options.map((opt, optIndex) => (
-																			<li
-																				key={opt.id}
-																				className="flex items-center gap-1.5"
-																			>
-																				<Checkbox
-																					checked={opt.included}
-																					onCheckedChange={(checked) =>
-																						updateItem(
-																							menuIndex,
-																							catIndex,
-																							itemIndex,
-																							(it) => ({
-																								...it,
-																								modifierGroups:
-																									it.modifierGroups.map(
-																										(g, gIdx) =>
-																											gIdx === groupIndex
-																												? {
-																														...g,
-																														options:
-																															g.options.map(
-																																(o, oIdx) =>
-																																	oIdx ===
-																																	optIndex
-																																		? {
-																																				...o,
-																																				included:
-																																					checked ===
-																																					true,
-																																			}
-																																		: o,
-																															),
-																													}
-																												: g,
-																									),
-																							}),
-																						)
-																					}
-																				/>
-																				<span>
-																					{pickDraftText(
-																						opt.name,
-																						defaultLocale,
-																					)}{' '}
-																					({opt.price})
-																				</span>
-																			</li>
-																		))}
-																	</ul>
+														<div className="grid gap-3 md:grid-cols-2">
+															{showEnglish ? (
+																<div className="space-y-1">
+																	<Label htmlFor={itemDescEnId}>
+																		<Trans>Description (English)</Trans>
+																	</Label>
+																	<Textarea
+																		id={itemDescEnId}
+																		rows={2}
+																		value={item.description.en ?? ''}
+																		onChange={(event) =>
+																			updateItem(
+																				menuIndex,
+																				catIndex,
+																				itemIndex,
+																				(it) => ({
+																					...it,
+																					description: {
+																						...it.description,
+																						en: event.target.value,
+																					},
+																				}),
+																			)
+																		}
+																	/>
 																</div>
-															))}
+															) : null}
+															{showArabic ? (
+																<div className="space-y-1">
+																	<Label htmlFor={itemDescArId}>
+																		<Trans>Description (Arabic)</Trans>
+																	</Label>
+																	<Textarea
+																		id={itemDescArId}
+																		rows={2}
+																		dir="rtl"
+																		value={item.description.ar ?? ''}
+																		onChange={(event) =>
+																			updateItem(
+																				menuIndex,
+																				catIndex,
+																				itemIndex,
+																				(it) => ({
+																					...it,
+																					description: {
+																						...it.description,
+																						ar: event.target.value,
+																					},
+																				}),
+																			)
+																		}
+																	/>
+																</div>
+															) : null}
 														</div>
+
+														{item.sizes.length > 0 ? (
+															<div
+																role="group"
+																aria-labelledby={itemSizesLabelId}
+																className="space-y-2"
+															>
+																<Label id={itemSizesLabelId}>
+																	<Trans>Sizes</Trans>
+																</Label>
+																<div className="flex flex-wrap gap-2">
+																	{item.sizes.map((size, sizeIndex) => (
+																		<div
+																			key={size.id}
+																			className="border-border flex items-center gap-2 rounded border p-2"
+																		>
+																			<Input
+																				aria-label={_(t`Size name`)}
+																				className="w-28"
+																				value={
+																					size.name.en ?? size.name.ar ?? ''
+																				}
+																				onChange={(event) =>
+																					updateItem(
+																						menuIndex,
+																						catIndex,
+																						itemIndex,
+																						(it) => ({
+																							...it,
+																							sizes: it.sizes.map((s, sIdx) =>
+																								sIdx === sizeIndex
+																									? {
+																											...s,
+																											name: {
+																												...s.name,
+																												[defaultLocale === 'ar'
+																													? 'ar'
+																													: 'en']:
+																													event.target.value,
+																											},
+																										}
+																									: s,
+																							),
+																						}),
+																					)
+																				}
+																			/>
+																			<Input
+																				aria-label={_(t`Size price`)}
+																				type="number"
+																				min={0}
+																				step="0.01"
+																				className="w-24"
+																				value={size.price}
+																				onChange={(event) => {
+																					const nextPrice = Number(
+																						event.target.value,
+																					)
+																					updateItem(
+																						menuIndex,
+																						catIndex,
+																						itemIndex,
+																						(it) => ({
+																							...it,
+																							sizes: it.sizes.map((s, sIdx) =>
+																								sIdx === sizeIndex
+																									? {
+																											...s,
+																											price:
+																												Number.isFinite(
+																													nextPrice,
+																												) && nextPrice >= 0
+																													? nextPrice
+																													: 0,
+																										}
+																									: s,
+																							),
+																						}),
+																					)
+																				}}
+																			/>
+																		</div>
+																	))}
+																</div>
+															</div>
+														) : null}
+
+														{item.modifierGroups.length > 0 ? (
+															<div
+																role="group"
+																aria-labelledby={itemGroupsLabelId}
+																className="space-y-2"
+															>
+																<Label id={itemGroupsLabelId}>
+																	<Trans>Modifier groups</Trans>
+																</Label>
+																<div className="flex flex-col gap-2">
+																	{item.modifierGroups.map(
+																		(group, groupIndex) => {
+																			const groupName = pickDraftText(
+																				group.name,
+																				defaultLocale,
+																			)
+																			return (
+																				<div
+																					key={group.id}
+																					className="border-border rounded border p-2.5 text-sm"
+																				>
+																					<div className="flex items-center gap-2 font-medium">
+																						<Checkbox
+																							aria-label={includeLabel(
+																								groupName,
+																							)}
+																							checked={group.included}
+																							onCheckedChange={(checked) =>
+																								updateItem(
+																									menuIndex,
+																									catIndex,
+																									itemIndex,
+																									(it) => ({
+																										...it,
+																										modifierGroups:
+																											it.modifierGroups.map(
+																												(g, gIdx) =>
+																													gIdx === groupIndex
+																														? {
+																																...g,
+																																included:
+																																	checked ===
+																																	true,
+																															}
+																														: g,
+																											),
+																									}),
+																								)
+																							}
+																						/>
+																						<span className="wrap-anywhere">
+																							{groupName}
+																						</span>
+																					</div>
+																					<ul className="mt-2 flex flex-wrap gap-3 pl-6">
+																						{group.options.map(
+																							(opt, optIndex) => {
+																								const optName = pickDraftText(
+																									opt.name,
+																									defaultLocale,
+																								)
+																								return (
+																									<li
+																										key={opt.id}
+																										className="flex items-center gap-1.5"
+																									>
+																										<Checkbox
+																											aria-label={includeLabel(
+																												optName,
+																											)}
+																											checked={opt.included}
+																											onCheckedChange={(
+																												checked,
+																											) =>
+																												updateItem(
+																													menuIndex,
+																													catIndex,
+																													itemIndex,
+																													(it) => ({
+																														...it,
+																														modifierGroups:
+																															it.modifierGroups.map(
+																																(g, gIdx) =>
+																																	gIdx ===
+																																	groupIndex
+																																		? {
+																																				...g,
+																																				options:
+																																					g.options.map(
+																																						(
+																																							o,
+																																							oIdx,
+																																						) =>
+																																							oIdx ===
+																																							optIndex
+																																								? {
+																																										...o,
+																																										included:
+																																											checked ===
+																																											true,
+																																									}
+																																								: o,
+																																					),
+																																			}
+																																		: g,
+																															),
+																													}),
+																												)
+																											}
+																										/>
+																										<span>
+																											{optName} ({opt.price})
+																										</span>
+																									</li>
+																								)
+																							},
+																						)}
+																					</ul>
+																				</div>
+																			)
+																		},
+																	)}
+																</div>
+															</div>
+														) : null}
 													</div>
-												) : null}
-											</div>
-										)
-									})}
-								</div>
-							</div>
-						))}
-					</CardContent>
-				</Card>
-			))}
+												)
+											})}
+										</div>
+									</div>
+								)
+							})}
+						</CardContent>
+					</Card>
+				)
+			})}
 
 			<Card>
 				<CardHeader>
@@ -1198,10 +1289,11 @@ export default function MenuImportReviewPage() {
 				</CardHeader>
 				<CardContent className="flex flex-col gap-5">
 					<div className="space-y-2">
-						<Label>
+						<Label id={missingExistingLabelId}>
 							<Trans>Existing dishes not in this import</Trans>
 						</Label>
 						<RadioGroup
+							aria-labelledby={missingExistingLabelId}
 							value={missingExistingAction}
 							onValueChange={(value) =>
 								setMissingExistingAction(
@@ -1241,8 +1333,12 @@ export default function MenuImportReviewPage() {
 						</RadioGroup>
 					</div>
 
-					<label className="flex items-center gap-2 text-sm">
+					<label
+						htmlFor={publishNowId}
+						className="flex items-center gap-2 text-sm"
+					>
 						<Checkbox
+							id={publishNowId}
 							checked={publishNow}
 							onCheckedChange={(checked) => setPublishNow(checked === true)}
 						/>

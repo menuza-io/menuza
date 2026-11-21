@@ -5,9 +5,8 @@ import {
 	isLocationOpenForOrdering,
 	type LocationOrderingAvailability,
 } from '@repo/common/location-types'
-import { isSoldOn, type MenuChannel } from '@repo/common/menu-channels'
 import { menuItemSalePrice } from '@repo/discounts'
-import { dietaryTagsOf, getLocalizedMenuValue } from '@repo/common/menu-types'
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
 import DropNudge from '~/components/drops/DropNudge.astro'
@@ -37,6 +36,12 @@ import {
 	lowestAvailablePrice,
 } from '~/lib/ordering/catalog'
 import { dietaryTagsInMenu } from '~/lib/ordering/dietary-filter'
+import {
+	buildChannelMenuCategories,
+	deriveSiteMenuChannel,
+	posterQuerySource,
+	type SiteMenuChannel,
+} from '~/lib/ordering/menu-channel'
 import { formatMoney } from '~/lib/ordering/money'
 import { applyPriceBook, buildPriceBook } from '~/lib/ordering/price-book'
 import {
@@ -51,19 +56,12 @@ import {
 import { schedulingSettings } from '~/lib/ordering/schedule'
 import {
 	type FulfillmentMode,
-	type ModifierGroup,
-	type ModifierOption,
 	type OrderingCategory,
 	type OrderingItem,
 } from '~/lib/ordering/types'
 import {
 	fetchPublishedSiteMenu,
 	type PublicLocationData,
-	type PublicMenuCategoryData,
-	type PublicMenuData,
-	type PublicMenuItemData,
-	type PublicMenuOptionData,
-	type PublicModifierGroupData,
 } from '~/lib/org'
 
 const organization = Astro.locals.organization
@@ -83,18 +81,14 @@ if (!organization) {
 
 const urlLocation = Astro.url.searchParams.get('location')
 const isPreview = Astro.url.searchParams.get('preview') === 'true'
-const srcParam = (Astro.url.searchParams.get('src') ?? '').toLowerCase()
-const channelParam = (Astro.url.searchParams.get('channel') ?? '').toLowerCase()
-const menuChannel: MenuChannel =
-	srcParam === 'qr' ||
-	srcParam === 'qr_poster' ||
-	srcParam === 'qr_table' ||
-	channelParam === 'qr' ||
-	Astro.url.searchParams.get('qr') === '1'
-		? 'qr'
-		: 'web'
+const initialSource = posterQuerySource(Astro.url.search)
+let menuChannel: SiteMenuChannel = deriveSiteMenuChannel({
+	atTable: false,
+	source: initialSource,
+	qrOrdering: { enabled: true },
+})
 
-const menuPayload = await fetchPublishedSiteMenu({
+let menuPayload = await fetchPublishedSiteMenu({
 	slug: orgSlug,
 	host: customHost,
 	lng: requestedLocale,
@@ -102,9 +96,26 @@ const menuPayload = await fetchPublishedSiteMenu({
 	channel: menuChannel,
 	preview: isPreview,
 })
+if (menuPayload?.features?.qrOrdering !== undefined) {
+	const verifiedChannel = deriveSiteMenuChannel({
+		atTable: false,
+		source: initialSource,
+		qrOrdering: menuPayload.features.qrOrdering,
+	})
+	if (verifiedChannel !== menuChannel) {
+		menuChannel = verifiedChannel
+		menuPayload = await fetchPublishedSiteMenu({
+			slug: orgSlug,
+			host: customHost,
+			lng: requestedLocale,
+			locationId: urlLocation,
+			channel: menuChannel,
+			preview: isPreview,
+		})
+	}
+}
 
 const locations = menuPayload?.locations ?? []
-const menus = menuPayload?.menus ?? []
 
 const activeLocation: PublicLocationData | undefined =
 	(urlLocation ? locations.find((l) => l.id === urlLocation) : undefined) ||
@@ -262,146 +273,13 @@ const dietDisclaimer = i18n._(
 
 // ---------- catalog ----------
 
-function localizeOption(option: PublicMenuOptionData): ModifierOption {
-	return {
-		id: option.id,
-		displayName: t(option.displayName),
-		description: option.description ? t(option.description) : '',
-		imageUrl: resolveMediaUrl(option.imageUrl),
-		price: option.price ?? 0,
-		priceWhole: option.priceWhole,
-		priceLeft: option.priceLeft,
-		priceRight: option.priceRight,
-		calories: option.calories,
-		minSelections: option.minSelections,
-		maxSelections: option.maxSelections,
-		isDefault: Boolean((option as { isDefault?: boolean }).isDefault),
-		availabilityStatus: option.availabilityStatus,
-		nestedModifierGroups: (option.nestedModifierGroups ?? []).map(localizeGroup),
-	}
-}
-
-function localizeGroup(group: PublicModifierGroupData): ModifierGroup {
-	return {
-		id: group.id,
-		name: t(group.name),
-		selectionType: group.selectionType,
-		minSelections: group.minSelections ?? 0,
-		maxSelections: group.maxSelections ?? null,
-		availabilityStatus: group.availabilityStatus,
-		options: (group.options ?? []).map(localizeOption),
-	}
-}
-
-function localizeItem(item: PublicMenuItemData, menu: PublicMenuData): OrderingItem {
-	return {
-		id: item.id,
-		displayName: t(item.displayName),
-		description: item.description ? t(item.description) : '',
-		price: item.price,
-		imageUrl: resolveMediaUrl(item.imageUrl),
-		variations: {
-			groups: (item.variations?.groups ?? []).map((group) => ({
-				id: group.id,
-				name: t(group.name),
-				values: group.values.map((value) => ({ id: value.id, name: t(value.name) })),
-			})),
-			variants: (item.variations?.variants ?? []).map((variant) => ({
-				...variant,
-				imageUrl: resolveMediaUrl(variant.imageUrl),
-			})),
-		},
-		modifierGroups: (item.modifierGroups ?? []).map(localizeGroup),
-		isVegetarian: item.isVegetarian,
-		isGlutenFree: item.isGlutenFree,
-		isAlcohol: item.isAlcohol,
-		dietaryTags: dietaryTagsOf(item),
-		allergens: item.allergens ?? [],
-		calorieMin: item.calorieMin,
-		calorieMax: item.calorieMax,
-		isPopular: item.isPopular,
-		isUpsell: item.isUpsell === true,
-		excludeFromDiscounts: item.excludeFromDiscounts === true,
-		availabilityStatus: item.availabilityStatus,
-		specialInstructions: menu.specialInstructions !== false,
-	}
-}
-
-const activeOverrides = new Map(
-	(activeLocation ? menuPayload?.locationOverrides?.[activeLocation.id] ?? [] : []).map(
-		(entry) => [entry.entityId, entry],
-	),
-)
-
-function isOverrideOff(entityId: string): boolean {
-	const ov = activeOverrides.get(entityId)
-	return ov?.isEnabled === false || ov?.availabilityStatus === 'unavailable' || ov?.availabilityStatus === 'hidden'
-}
-
-function localizeCategory(
-	category: PublicMenuCategoryData,
-	menu: PublicMenuData,
-): OrderingCategory {
-	return {
-		id: category.id,
-		displayName: t(category.displayName),
-		description: category.description ? t(category.description) : '',
-		upsellCategoryIds: category.upsellCategoryIds ?? [],
-		items: (category.items ?? [])
-			.filter(
-				(item) =>
-					!isOverrideOff(item.id) &&
-					isSoldOn(menuChannel, { item, override: activeOverrides.get(item.id) }),
-			)
-			.map((item) => localizeItem(item, menu)),
-		subcategories: (category.subcategories ?? [])
-			.filter(
-				(sub) =>
-					sub.availabilityStatus !== 'unavailable' &&
-					!isOverrideOff(sub.id) &&
-					isSoldOn(menuChannel, { category: sub, override: activeOverrides.get(sub.id) }),
-			)
-			.map((sub) => localizeCategory(sub, menu)),
-	}
-}
-
-function categoryItemCount(category: OrderingCategory): number {
-	return (
-		category.items.length +
-		(category.subcategories ?? []).reduce((acc, sub) => acc + categoryItemCount(sub), 0)
-	)
-}
-
-function pruneEmpty(category: OrderingCategory): OrderingCategory | null {
-	const subcategories = (category.subcategories ?? [])
-		.map(pruneEmpty)
-		.filter((sub): sub is OrderingCategory => sub !== null)
-	const pruned = { ...category, subcategories }
-	return categoryItemCount(pruned) > 0 ? pruned : null
-}
-
-const categories: OrderingCategory[] = []
-for (const menu of menus) {
-	if (
-		menu.availabilityStatus === 'unavailable' ||
-		isOverrideOff(menu.id) ||
-		!isSoldOn(menuChannel, { menu, override: activeOverrides.get(menu.id) })
-	) {
-		continue
-	}
-	for (const category of menu.categories) {
-		if (
-			category.availabilityStatus === 'unavailable' ||
-			category.parentId ||
-			isOverrideOff(category.id) ||
-			!isSoldOn(menuChannel, { category, override: activeOverrides.get(category.id) })
-		) {
-			continue
-		}
-		const localized = pruneEmpty(localizeCategory(category, menu))
-		if (localized) categories.push(localized)
-	}
-}
+const categories: OrderingCategory[] = buildChannelMenuCategories(menuPayload, {
+	channel: menuChannel,
+	locationId: activeLocation?.id ?? null,
+	locale: requestedLocale,
+	defaultLocale,
+	resolveImageUrl: resolveMediaUrl,
+})
 
 // #412 / #388: this location's prices per order type, from the same resolver
 // the region charges with. The page renders the first order type's prices; the
@@ -776,6 +654,8 @@ const clientMenuData = {
 	closedReason,
 	allowedModes,
 	channel: menuChannel,
+	qrOrdering: menuPayload?.features?.qrOrdering ?? null,
+	popularLabel,
 	categories,
 	voiceOrderLabels,
 	cartRestoreLabels,
@@ -904,9 +784,11 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 
 			{/* Search sits here below lg; on lg+ it lives at the top of the
 			    category rail (moved by the inline script after the rail). */}
-			{categories.length > 0 ? (
-				<div id="menu-search-slot-top" class="mt-6 w-full sm:ms-auto sm:w-80 lg:hidden"></div>
-			) : null}
+			<div
+				id="menu-search-slot-top"
+				class:list={['mt-6 w-full sm:ms-auto sm:w-80 lg:hidden', categories.length === 0 && 'hidden']}
+				hidden={categories.length === 0}
+			></div>
 		</div>
 
 		{/* Sticky category tabs (wide screens use the rail instead) */}
@@ -921,16 +803,25 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		<PopularRow heading={mostOrderedLabel} labels={carouselLabels} cards={popularCards} />
 
 		<div class:list={[siteContainer, 'pt-8 sm:pt-10']}>
-			{categories.length === 0 ? (
-				<div class="surface flex flex-col items-center gap-3 px-6 py-12 text-center">
-					<span class="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true" set:html={icons.bag} />
-					</span>
-					<h2 class="text-base font-semibold text-foreground">{comingSoonTitle}</h2>
-					<p class="max-w-sm text-sm text-muted-foreground">{comingSoonDesc}</p>
-				</div>
-			) : (
-				<div class="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-12">
+			<div
+				id="menu-empty-catalog"
+				class:list={[
+					'surface flex flex-col items-center gap-3 px-6 py-12 text-center',
+					categories.length > 0 && 'hidden',
+				]}
+				hidden={categories.length > 0}
+			>
+				<span class="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true" set:html={icons.bag} />
+				</span>
+				<h2 class="text-base font-semibold text-foreground">{comingSoonTitle}</h2>
+				<p class="max-w-sm text-sm text-muted-foreground">{comingSoonDesc}</p>
+			</div>
+			<div
+				id="menu-catalog-grid"
+				class:list={['lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-12', categories.length === 0 && 'hidden']}
+				hidden={categories.length === 0}
+			>
 					<div class="hidden lg:block">
 						<div class="sticky top-[calc(4.25rem+1.5rem)]">
 							<div id="menu-search-slot-rail" class="mb-5">
@@ -970,7 +861,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 						})()
 					</script>
 
-					<div class="min-w-0">
+					<div class="min-w-0" data-menu-categories>
 						{dietTagsInMenu.length > 0 ? (
 							<div id="menu-diet-filter" class="mb-6 flex flex-col gap-2">
 								<div class="flex flex-wrap gap-2" role="group" aria-label={dietFilterLabel}>
@@ -1056,7 +947,6 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 						))}
 					</div>
 				</div>
-			)}
 		</div>
 
 		<CartTray labels={{ viewOrder: viewOrderLabel }} initialTotal={price(0)} />
@@ -1116,7 +1006,24 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 
 	<script>
 		import { getBrowserTenantApiUrl, getOrgBinding } from '~/lib/client-auth'
-		import { indexCatalog } from '~/lib/ordering/catalog'
+		import {
+			indexCatalog,
+			isItemSoldOut,
+			lowestAvailablePrice,
+		} from '~/lib/ordering/catalog'
+		import {
+			buildChannelMenuCategories,
+			buildSiteMenuFetchUrl,
+			deriveSiteMenuChannel,
+			filterOrderingCategoriesForChannel,
+			posterQuerySource,
+			resolveClientMediaUrl,
+			resolveSiteQrOrdering,
+			syncMenuCatalogInPlace,
+			syncMenuDomForChannel,
+		} from '~/lib/ordering/menu-channel'
+		import { buildPriceBook } from '~/lib/ordering/price-book'
+		import { type PublicSiteMenuPayload } from '~/lib/org'
 		import { cardMatches } from '~/lib/ordering/dietary-filter'
 		import {
 			applyPriceBook,
@@ -1247,6 +1154,8 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			closedReason: string
 			allowedModes: FulfillmentMode[]
 			channel?: 'web' | 'qr'
+			qrOrdering?: unknown
+			popularLabel?: string
 			categories: OrderingCategory[]
 			/** The "Goes well with" row is on (`ordering.upsell`). */
 			upsell?: boolean
@@ -1405,6 +1314,18 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			}
 		}
 
+		const currentChannel = () =>
+			deriveSiteMenuChannel({
+				atTable: atTable(),
+				source: posterSource(orgId) ?? posterQuerySource(window.location.search),
+				qrOrdering: resolveSiteQrOrdering({
+					qrOrdering:
+						data.qrOrdering === null || data.qrOrdering === undefined
+							? undefined
+							: data.qrOrdering,
+				}),
+			})
+
 		// "Goes well with" (#114): the restaurant's own upsell settings, under the
 		// cart's lines. A dish that needs choices opens the item modal; any other
 		// is added in one tap. The cart re-prices as for any added dish.
@@ -1415,7 +1336,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			const items = suggestForCart({
 				categories: data.categories ?? [],
 				lines,
-				channel: atTable() ? 'qr' : (data.channel ?? 'web'),
+				channel: currentChannel(),
 				// A table order is a pickup-style order here; otherwise the chosen
 				// order type has to be offered at this location.
 				offered: atTable() || data.allowedModes.includes(mode),
@@ -1655,7 +1576,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		}
 		const saleInputs = new Map((data.saleItems ?? []).map((input) => [input.id, input]))
 		// #412 / #388: the price for the current order type (a table is dine-in).
-		const priceBook = data.priceBook ?? EMPTY_PRICE_BOOK
+		let priceBook = data.priceBook ?? EMPTY_PRICE_BOOK
 		const priceMode = () => priceModeOf(details.mode, atTable())
 		/** Switches the page's catalog and the saved cart to the current order type. */
 		function applyOrderTypePrices() {
@@ -1689,10 +1610,123 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 				}
 			}
 		}
+
+		function rebuildSaleInputs(categories: readonly OrderingCategory[]) {
+			const nextSaleItems: MenuData['saleItems'] = []
+			const seen = new Set<string>()
+			const walk = (category: OrderingCategory) => {
+				for (const item of category.items ?? []) {
+					if (seen.has(item.id) || isItemSoldOut(item)) continue
+					seen.add(item.id)
+					const available = (item.variations?.variants ?? []).filter(
+						(variant) => variant.availabilityStatus !== 'unavailable',
+					)
+					nextSaleItems.push({
+						id: item.id,
+						directCategoryIds: [category.id],
+						priceMinor: Math.round(lowestAvailablePrice(item) * 100),
+						currency: data.currency,
+						excludeFromDiscounts:
+							item.excludeFromDiscounts === true ||
+							available.some((variant) => variant.excludeFromDiscounts === true),
+					})
+				}
+				for (const sub of category.subcategories ?? []) walk(sub)
+			}
+			for (const category of categories) walk(category)
+			data.saleItems = nextSaleItems
+			saleInputs.clear()
+			for (const input of nextSaleItems) saleInputs.set(input.id, input)
+		}
+
+		let activeMenuChannel: 'web' | 'qr' = data.channel ?? 'web'
+		let channelSyncSeq = 0
+		let lastDailyAvailability: ReturnType<typeof readDailyAvailability> | null = null
+		let refreshChannelFilterUi = () => {}
+
+		function applyCatalogUpdate(nextCategories: OrderingCategory[], nextPriceBook?: PriceBook) {
+			data.categories = nextCategories
+			if (nextPriceBook) priceBook = nextPriceBook
+			rebuildSaleInputs(nextCategories)
+			syncMenuCatalogInPlace(catalog, nextCategories)
+			syncMenuDomForChannel(document, nextCategories, {
+				formatMoney: money,
+				fromLabel: labels.from ?? '',
+				soldOutLabel: labels.soldOut ?? '',
+				popularLabel: data.popularLabel ?? '',
+			})
+			applyOrderTypePrices()
+			paintPrices()
+			if (lastDailyAvailability) {
+				applyDailyAvailability(data.categories ?? [], lastDailyAvailability)
+				paintDailyCards(document, lastDailyAvailability, { onlyNLeft: labels.onlyNLeft })
+			}
+			refreshChannelFilterUi()
+			cartUi.refresh()
+		}
+
+		async function syncChannelMenu() {
+			const targetChannel = currentChannel()
+			if (targetChannel === activeMenuChannel) return
+			activeMenuChannel = targetChannel
+			data.channel = targetChannel
+			const seq = ++channelSyncSeq
+
+			// Immediately filter already-loaded categories client-side so items
+			// hidden on the active channel disappear without waiting on network.
+			applyCatalogUpdate(
+				filterOrderingCategoriesForChannel(data.categories ?? [], targetChannel),
+			)
+
+			const appUrl = document.documentElement.dataset.appUrl
+			if (!appUrl) return
+			const orgBinding = getOrgBinding()
+			const isPreview =
+				new URLSearchParams(window.location.search).get('preview') === 'true'
+			const url = buildSiteMenuFetchUrl({
+				appUrl,
+				slug: orgBinding.slug,
+				host: orgBinding.host,
+				lng: data.locale,
+				locationId: data.activeLocationId || null,
+				channel: targetChannel,
+				preview: isPreview,
+			})
+			try {
+				const res = await fetch(url, { headers: { Accept: 'application/json' } })
+				if (!res.ok || seq !== channelSyncSeq || currentChannel() !== targetChannel) {
+					return
+				}
+				const payload = (await res.json()) as PublicSiteMenuPayload
+				if (seq !== channelSyncSeq || currentChannel() !== targetChannel) return
+				if (payload.features?.qrOrdering !== undefined) {
+					data.qrOrdering = payload.features.qrOrdering
+					const rechecked = currentChannel()
+					if (rechecked !== targetChannel) {
+						activeMenuChannel = targetChannel
+						void syncChannelMenu()
+						return
+					}
+				}
+				const nextCategories = buildChannelMenuCategories(payload, {
+					channel: targetChannel,
+					locationId: data.activeLocationId || null,
+					locale: data.locale,
+					defaultLocale: document.documentElement.dataset.defaultLocale || 'en',
+					resolveImageUrl: (src) => resolveClientMediaUrl(src, appUrl),
+				})
+				const nextPriceBook = buildPriceBook(payload, data.activeLocationId || null)
+				applyCatalogUpdate(nextCategories, nextPriceBook)
+			} catch {
+				// Keep client-side filtered catalog if network refetch fails.
+			}
+		}
+
 		new MutationObserver(() => {
 			applyOrderTypePrices()
 			paintOffers()
 			paintPrices()
+			void syncChannelMenu()
 		}).observe(document.documentElement, {
 			attributes: true,
 			attributeFilter: ['data-table-mode'],
@@ -1728,6 +1762,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			try {
 				const options = await fetchOrderingOptions({ locationId: data.activeLocationId })
 				const availability = readDailyAvailability(options)
+				lastDailyAvailability = availability
 				applyDailyAvailability(data.categories ?? [], availability)
 				applyDailyConstraints(dailyConstraints, availability)
 				paintDailyCards(document, availability, { onlyNLeft: labels.onlyNLeft })
@@ -1829,7 +1864,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			document.querySelectorAll<HTMLElement>('[data-category-group]').forEach((group) => {
 				group.classList.toggle('hidden', !group.querySelector('.js-item-card:not(.hidden)'))
 			})
-			for (const section of sections) {
+			for (const section of document.querySelectorAll<HTMLElement>('[data-category-section]')) {
 				const visible = Boolean(section.querySelector('.js-item-card:not(.hidden)'))
 				section.classList.toggle('hidden', !visible)
 				for (const nav of navs) {
@@ -1844,6 +1879,8 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			emptyState?.classList.toggle('hidden', anyVisible || !filtering)
 			clearBtn?.classList.toggle('hidden', !query)
 		}
+		refreshChannelFilterUi = () => applySearch(search?.value ?? '')
+		void syncChannelMenu()
 		search?.addEventListener('input', () => applySearch(search.value))
 		document.getElementById('menu-search-reset')?.addEventListener('click', () => {
 			// The empty state clears the dietary chips too.

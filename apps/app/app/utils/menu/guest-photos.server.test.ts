@@ -182,7 +182,6 @@ describe('guest-photos App utils and route guards (#148)', () => {
 		const jpegWithExif = makeJpegWithExifBytes()
 		const jpegCopy = new Uint8Array(jpegWithExif.byteLength)
 		jpegCopy.set(jpegWithExif)
-		const file = new File([jpegCopy.buffer], 'dish.jpg', { type: 'image/jpeg' })
 
 		// 1) Refuses not_approved
 		const notApprovedRes = await addGuestPhotoToDish({
@@ -191,7 +190,6 @@ describe('guest-photos App utils and route guards (#148)', () => {
 			impersonated: false,
 			submissionId: 'sub_pending',
 			itemId: item!.id,
-			imageFile: file,
 			deps: {
 				fetchTenant: async () =>
 					Response.json({
@@ -220,18 +218,28 @@ describe('guest-photos App utils and route guards (#148)', () => {
 			error: 'not_approved',
 		})
 
-		// 2) Approves & adds without EXIF
+		// 2) Fetches cleaned bytes from region /:id/signed-url using pho+jwt & adds without EXIF
 		let uploadedBytes: Uint8Array | null = null
 		let uploadedFileName = ''
+		let signedUrlToken: string | null = null
+		let fetchedSignedUrl: string | null = null
 		const addOk = await addGuestPhotoToDish({
 			organization,
 			userId: user.id,
 			impersonated: false,
 			submissionId: 'sub_ok',
 			itemId: item!.id,
-			imageFile: file,
 			deps: {
-				fetchTenant: async (path) => {
+				fetchTenant: async (path, init) => {
+					if (path.endsWith('/signed-url')) {
+						signedUrlToken = init.token
+						return Response.json({
+							url: 'https://r2.example.test/guest-photos/clean.jpg?sig=1',
+							contentType: 'image/jpeg',
+							itemId: item!.id,
+							submissionId: 'sub_ok',
+						})
+					}
 					if (path.endsWith('/added')) {
 						return Response.json({ ok: true })
 					}
@@ -252,6 +260,13 @@ describe('guest-photos App utils and route guards (#148)', () => {
 							addedAt: null,
 							createdAt: new Date().toISOString(),
 						},
+					})
+				},
+				fetchSignedImage: async (url) => {
+					fetchedSignedUrl = url
+					return new Response(jpegCopy.buffer, {
+						status: 200,
+						headers: { 'Content-Type': 'image/jpeg' },
 					})
 				},
 				uploadMedia: async (orgId, cleanFile) => {
@@ -278,6 +293,16 @@ describe('guest-photos App utils and route guards (#148)', () => {
 		})
 
 		expect(addOk.ok).toBe(true)
+		expect(signedUrlToken).toBeTruthy()
+		const signedJwt = await jwtVerify(
+			signedUrlToken!,
+			new TextEncoder().encode(ENV.TENANT_OPERATOR_TOKEN),
+			{ audience: GUEST_PHOTO_TOKEN_AUDIENCE },
+		)
+		expect(signedJwt.protectedHeader.typ).toBe(GUEST_PHOTO_TOKEN_TYP)
+		expect(fetchedSignedUrl).toBe(
+			'https://r2.example.test/guest-photos/clean.jpg?sig=1',
+		)
 		expect(uploadedFileName).toBe('guest-photo-sub_ok.jpg')
 		expect(uploadedBytes).not.toBeNull()
 		expect(new TextDecoder('latin1').decode(uploadedBytes!)).not.toContain(
@@ -293,7 +318,53 @@ describe('guest-photos App utils and route guards (#148)', () => {
 			.where(eq(OrganizationMenuItem.id, item!.id))
 		expect(JSON.parse(updatedItem!.imageKeys)).toHaveLength(1)
 
-		// 3) Remove from dish leaves submission approved & clears imageKeys
+		// 3) Rejects non-image bytes from signed URL
+		const badBytesRes = await addGuestPhotoToDish({
+			organization,
+			userId: user.id,
+			impersonated: false,
+			submissionId: 'sub_bad_bytes',
+			itemId: item!.id,
+			deps: {
+				fetchTenant: async (path) => {
+					if (path.endsWith('/signed-url')) {
+						return Response.json({
+							url: 'https://r2.example.test/guest-photos/bad.jpg?sig=1',
+							contentType: 'image/jpeg',
+							itemId: item!.id,
+							submissionId: 'sub_bad_bytes',
+						})
+					}
+					return Response.json({
+						submission: {
+							id: 'sub_bad_bytes',
+							orgId: organization.id,
+							orderId: 'ord_1',
+							itemId: item!.id,
+							objectKey: `guest-photos/${organization.id}/bad.jpg`,
+							contentType: 'image/jpeg',
+							byteSize: 100,
+							status: 'approved',
+							consentText: 'consent',
+							consentedAt: new Date().toISOString(),
+							decidedAt: new Date().toISOString(),
+							decidedByUserId: user.id,
+							addedAt: null,
+							createdAt: new Date().toISOString(),
+						},
+					})
+				},
+				fetchSignedImage: async () =>
+					new Response('not-an-image', { status: 200 }),
+			},
+		})
+		expect(badBytesRes).toEqual({
+			ok: false,
+			status: 400,
+			error: 'invalid_image_data',
+		})
+
+		// 4) Remove from dish leaves submission approved & clears imageKeys
 		const removed = await removeGuestPhotoFromDish({
 			organization,
 			userId: user.id,
@@ -307,7 +378,7 @@ describe('guest-photos App utils and route guards (#148)', () => {
 		})
 		expect(removed).toEqual({ ok: true, imageKeys: [] })
 
-		// 4) dish_photos_full when item has 5 photos
+		// 5) dish_photos_full when item has 5 photos
 		await db
 			.update(OrganizationMenuItem)
 			.set({ imageKeys: JSON.stringify(['k1', 'k2', 'k3', 'k4', 'k5']) })
@@ -318,7 +389,6 @@ describe('guest-photos App utils and route guards (#148)', () => {
 			impersonated: false,
 			submissionId: 'sub_full',
 			itemId: item!.id,
-			imageFile: file,
 		})
 		expect(fullRes).toEqual({
 			ok: false,

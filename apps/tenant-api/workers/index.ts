@@ -51,6 +51,14 @@ import {
 	fanOutGiftCardTick,
 	type GiftCardTickResult,
 } from '../src/services/gift-card-tick-service.ts'
+import {
+	fanOutGuestPhotosTick,
+	type GuestPhotosTickResult,
+} from '../src/services/guest-photos-service.ts'
+import {
+	fanOutMenuPopularTick,
+	type MenuPopularOrgTickResult,
+} from '../src/services/popular-items-service.ts'
 import { runOrdersTickForOrg } from '../src/services/order-acceptance.ts'
 import {
 	fanOutOrderMessagesTick,
@@ -226,7 +234,32 @@ const tickBodySchema = z.object({ orgId: z.unknown().optional() })
  * query and no outbound call.
  */
 type TickModuleName =
-	'staff' | 'reservations' | 'loyalty' | 'inventory' | 'order-messages' | 'gift-cards'
+	| 'staff'
+	| 'reservations'
+	| 'loyalty'
+	| 'inventory'
+	| 'order-messages'
+	| 'gift-cards'
+	| 'menu-popular'
+	| 'guest-photos'
+
+const TICK_PATHS: Record<TickModuleName, string> = {
+	staff: '/api/staff/tick',
+	reservations: '/api/reservations/tick',
+	loyalty: '/api/loyalty/tick',
+	inventory: '/api/inventory/tick',
+	'order-messages': ORDER_MESSAGES_TICK_PATH,
+	'gift-cards': '/api/gift-cards/tick',
+	'menu-popular': '/api/menu/popular/tick',
+	'guest-photos': '/api/guest-photos/tick',
+}
+
+const PATH_TO_TICK_MODULE = new Map<string, TickModuleName>(
+	Object.entries(TICK_PATHS).map(([module, path]) => [
+		path,
+		module as TickModuleName,
+	]),
+)
 
 async function handleTickFanOut(
 	request: Request,
@@ -253,7 +286,7 @@ async function handleTickFanOut(
 	}
 
 	const orgIds = await registryStub(env).list()
-	const tickUrl = new URL(`/api/${module}/tick`, request.url)
+	const tickUrl = new URL(TICK_PATHS[module], request.url)
 	const runOne = async <T>(orgId: string): Promise<T | null> => {
 		const failed = (detail: unknown): null => {
 			console.error(
@@ -308,10 +341,20 @@ async function handleTickFanOut(
 									orgIds,
 									run: (orgId) => runOne<GiftCardTickResult>(orgId),
 								})
-						: await fanOutLoyaltyTick({
-								orgIds,
-								run: (orgId) => runOne<LoyaltyTickResult>(orgId),
-							})
+							: module === 'menu-popular'
+								? await fanOutMenuPopularTick({
+										orgIds,
+										run: (orgId) => runOne<MenuPopularOrgTickResult>(orgId),
+									})
+								: module === 'guest-photos'
+									? await fanOutGuestPhotosTick({
+											orgIds,
+											run: (orgId) => runOne<GuestPhotosTickResult>(orgId),
+										})
+									: await fanOutLoyaltyTick({
+											orgIds,
+											run: (orgId) => runOne<LoyaltyTickResult>(orgId),
+										})
 	return Response.json({ success: totals.errors === 0, ...totals })
 }
 
@@ -418,21 +461,9 @@ async function handle(
 	}
 
 	const tickModule: TickModuleName | null =
-		request.method !== 'POST'
-			? null
-			: url.pathname === '/api/staff/tick'
-				? 'staff'
-				: url.pathname === '/api/reservations/tick'
-					? 'reservations'
-					: url.pathname === '/api/loyalty/tick'
-						? 'loyalty'
-						: url.pathname === '/api/inventory/tick'
-							? 'inventory'
-							: url.pathname === ORDER_MESSAGES_TICK_PATH
-								? 'order-messages'
-								: url.pathname === '/api/gift-cards/tick'
-									? 'gift-cards'
-									: null
+		request.method === 'POST'
+			? (PATH_TO_TICK_MODULE.get(url.pathname) ?? null)
+			: null
 	if (tickModule) {
 		const tickOrgId = await resolveOrgId(request, env)
 		if (tickOrgId) {

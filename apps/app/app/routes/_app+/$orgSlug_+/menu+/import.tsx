@@ -31,7 +31,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	Form,
@@ -46,7 +46,10 @@ import {
 	isMenuImportKillSwitchOn,
 	requireMenuImportAccess,
 } from '#app/utils/menu/import/access.server.ts'
-import { MENU_IMPORT_MAX_BYTES } from '#app/utils/menu/import/schema.ts'
+import {
+	MENU_IMPORT_MAX_BYTES,
+	MENU_IMPORT_STALE_MS,
+} from '#app/utils/menu/import/schema.ts'
 import {
 	ACTIVE_MENU_IMPORT_STATUSES,
 	cancelMenuImport,
@@ -67,11 +70,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		imports.find((row) =>
 			(ACTIVE_MENU_IMPORT_STATUSES as readonly string[]).includes(row.status),
 		) ?? null
+	const canCancelActiveImport = activeImport
+		? activeImport.status !== 'applying' ||
+			Date.now() - new Date(activeImport.updatedAt).getTime() >=
+				MENU_IMPORT_STALE_MS
+		: false
 
 	return {
 		orgSlug: organization.slug,
 		imports,
 		activeImport,
+		canCancelActiveImport,
 		disabled: isMenuImportKillSwitchOn(),
 	}
 }
@@ -237,7 +246,7 @@ type SourceMode = 'url' | 'pdf' | 'image' | 'spreadsheet'
 
 export default function MenuImportPage() {
 	const { _, i18n } = useLingui()
-	const { orgSlug, imports, activeImport, disabled } =
+	const { orgSlug, imports, activeImport, canCancelActiveImport, disabled } =
 		useLoaderData<typeof loader>()
 	const actionData = useActionData<{
 		ok?: boolean
@@ -247,6 +256,10 @@ export default function MenuImportPage() {
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
 
+	const sourceLabelId = useId()
+	const urlInputId = useId()
+	const ownershipCheckboxId = useId()
+	const fileInputId = useId()
 	const [mode, setMode] = useState<SourceMode>('url')
 	const [confirmedOwnership, setConfirmedOwnership] = useState(false)
 
@@ -294,7 +307,7 @@ export default function MenuImportPage() {
 								>
 									<Trans>View progress</Trans>
 								</Button>
-								{activeImport.status !== 'applying' ? (
+								{canCancelActiveImport ? (
 									<Form method="post">
 										<input type="hidden" name="intent" value="cancel" />
 										<input
@@ -349,65 +362,71 @@ export default function MenuImportPage() {
 						<input type="hidden" name="intent" value="start" />
 						<input type="hidden" name="mode" value={mode} />
 
-						<RadioGroup
-							value={mode}
-							onValueChange={(value) => setMode(value as SourceMode)}
-							className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-						>
-							<ChoiceCard>
-								<RadioGroupItem value="url" />
-								<ChoiceCardContent>
-									<ChoiceCardTitle>
-										<Trans>Website URL</Trans>
-									</ChoiceCardTitle>
-									<ChoiceCardDescription>
-										<Trans>Public HTTPS menu page or PDF link.</Trans>
-									</ChoiceCardDescription>
-								</ChoiceCardContent>
-							</ChoiceCard>
-							<ChoiceCard>
-								<RadioGroupItem value="pdf" />
-								<ChoiceCardContent>
-									<ChoiceCardTitle>
-										<Trans>PDF menu</Trans>
-									</ChoiceCardTitle>
-									<ChoiceCardDescription>
-										<Trans>Exported or printed menu PDF up to 10 MB.</Trans>
-									</ChoiceCardDescription>
-								</ChoiceCardContent>
-							</ChoiceCard>
-							<ChoiceCard>
-								<RadioGroupItem value="image" />
-								<ChoiceCardContent>
-									<ChoiceCardTitle>
-										<Trans>Menu photo</Trans>
-									</ChoiceCardTitle>
-									<ChoiceCardDescription>
-										<Trans>JPG, PNG, or WebP photo of a printed card.</Trans>
-									</ChoiceCardDescription>
-								</ChoiceCardContent>
-							</ChoiceCard>
-							<ChoiceCard>
-								<RadioGroupItem value="spreadsheet" />
-								<ChoiceCardContent>
-									<ChoiceCardTitle>
-										<Trans>Spreadsheet</Trans>
-									</ChoiceCardTitle>
-									<ChoiceCardDescription>
-										<Trans>CSV, TSV, or XLSX menu table.</Trans>
-									</ChoiceCardDescription>
-								</ChoiceCardContent>
-							</ChoiceCard>
-						</RadioGroup>
+						<div className="space-y-2">
+							<Label id={sourceLabelId}>
+								<Trans>Source</Trans>
+							</Label>
+							<RadioGroup
+								aria-labelledby={sourceLabelId}
+								value={mode}
+								onValueChange={(value) => setMode(value as SourceMode)}
+								className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+							>
+								<ChoiceCard>
+									<RadioGroupItem value="url" />
+									<ChoiceCardContent>
+										<ChoiceCardTitle>
+											<Trans>Website URL</Trans>
+										</ChoiceCardTitle>
+										<ChoiceCardDescription>
+											<Trans>Public HTTPS menu page or PDF link.</Trans>
+										</ChoiceCardDescription>
+									</ChoiceCardContent>
+								</ChoiceCard>
+								<ChoiceCard>
+									<RadioGroupItem value="pdf" />
+									<ChoiceCardContent>
+										<ChoiceCardTitle>
+											<Trans>PDF menu</Trans>
+										</ChoiceCardTitle>
+										<ChoiceCardDescription>
+											<Trans>Exported or printed menu PDF up to 10 MB.</Trans>
+										</ChoiceCardDescription>
+									</ChoiceCardContent>
+								</ChoiceCard>
+								<ChoiceCard>
+									<RadioGroupItem value="image" />
+									<ChoiceCardContent>
+										<ChoiceCardTitle>
+											<Trans>Menu photo</Trans>
+										</ChoiceCardTitle>
+										<ChoiceCardDescription>
+											<Trans>JPG, PNG, or WebP photo of a printed card.</Trans>
+										</ChoiceCardDescription>
+									</ChoiceCardContent>
+								</ChoiceCard>
+								<ChoiceCard>
+									<RadioGroupItem value="spreadsheet" />
+									<ChoiceCardContent>
+										<ChoiceCardTitle>
+											<Trans>Spreadsheet</Trans>
+										</ChoiceCardTitle>
+										<ChoiceCardDescription>
+											<Trans>CSV, TSV, or XLSX menu table.</Trans>
+										</ChoiceCardDescription>
+									</ChoiceCardContent>
+								</ChoiceCard>
+							</RadioGroup>
+						</div>
 
 						{mode === 'url' ? (
 							<div className="flex flex-col gap-4">
 								<div className="max-w-xl space-y-1.5">
-									<Label htmlFor="menu-import-url">
+									<Label htmlFor={urlInputId}>
 										<Trans>Menu page URL (HTTPS)</Trans>
 									</Label>
 									<Input
-										id="menu-import-url"
+										id={urlInputId}
 										name="sourceUrl"
 										type="url"
 										required
@@ -415,8 +434,12 @@ export default function MenuImportPage() {
 										disabled={disabled || Boolean(activeImport)}
 									/>
 								</div>
-								<label className="flex items-center gap-2 text-sm">
+								<label
+									htmlFor={ownershipCheckboxId}
+									className="flex items-center gap-2 text-sm"
+								>
 									<Checkbox
+										id={ownershipCheckboxId}
 										checked={confirmedOwnership}
 										onCheckedChange={(checked) =>
 											setConfirmedOwnership(checked === true)
@@ -435,7 +458,7 @@ export default function MenuImportPage() {
 							</div>
 						) : (
 							<div className="max-w-xl space-y-1.5">
-								<Label htmlFor="menu-import-file">
+								<Label htmlFor={fileInputId}>
 									{mode === 'pdf' ? (
 										<Trans>Upload PDF (max 10 MB)</Trans>
 									) : mode === 'image' ? (
@@ -447,7 +470,7 @@ export default function MenuImportPage() {
 									)}
 								</Label>
 								<Input
-									id="menu-import-file"
+									id={fileInputId}
 									name="file"
 									type="file"
 									accept={acceptForMode}
