@@ -13,6 +13,7 @@ import {
 	operatorSlotLimitsResetSchema,
 	operatorSlotLimitsTodayQuerySchema,
 } from '@repo/common/restaurant-orders'
+import { parseStoredAttribution } from '@repo/common/order-attribution'
 import { brand } from '@repo/config/brand'
 import {
 	getTenantDb,
@@ -32,6 +33,7 @@ import {
 	operatorOrderRefundFields,
 	recordOrderRefund,
 } from '../services/order-refund-service.ts'
+import { campaignNamesById } from '../services/marketing-attribution.ts'
 import {
 	fetchOrderContext,
 	getOperatorOrder,
@@ -278,9 +280,19 @@ async function withCustomerKeys(
 					auth.link,
 				)
 			: null
+	const db = await getTenantDb(auth.orgId)
+	const campaignNames = await campaignNamesById(db, [
+		...new Set(
+			orders
+				.map((order) => parseStoredAttribution(order.attribution)?.campaignId)
+				.filter((id): id is string => !!id),
+		),
+	])
 	return orders.map((order) => {
 		const fields = operatorOrderRefundFields(order, refunds.get(order.id) ?? [])
+		const campaignId = parseStoredAttribution(order.attribution)?.campaignId
 		return {
+			campaignName: campaignId ? (campaignNames.get(campaignId) ?? null) : null,
 			...operatorOrder(order, keys?.get(order.id) ?? null, {
 				refundStatus: fields.refundStatus,
 				pendingCents: fields.refundPendingCents,

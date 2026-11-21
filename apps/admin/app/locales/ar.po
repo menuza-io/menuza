@@ -64,7 +64,7 @@ msgstr "تم بدء {0} من {1} تطبيقات"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:249
+#: ../../packages/marketing/src/components/campaign-detail.tsx:259
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
@@ -143,7 +143,7 @@ msgstr "{numberCount} أرقام"
 msgid "{providerName} identity provider configuration"
 msgstr "إعداد موفر الهوية {providerName}"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:234
+#: ../../packages/marketing/src/components/campaign-detail.tsx:244
 msgid "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
 msgstr "أُرسل {pushSent}، وفُتح {pushOpened} ({pushOpenRate})."
 
@@ -270,7 +270,7 @@ msgstr "1-10 (أعلى = صلاحيات أكثر)"
 msgid "A build is a recorded job. The pipeline reports its progress back here, and nothing is submitted to a store from this page."
 msgstr "البناء مهمة مسجّلة. يُبلغ مسار البناء عن تقدّمه هنا، ولا يُرسل أي شيء إلى المتجر من هذه الصفحة."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:49
+#: ../../packages/marketing/src/components/campaign-detail.tsx:51
 msgid "a discount that is no longer listed"
 msgstr "خصم لم يعد مدرجًا"
 
@@ -306,7 +306,7 @@ msgstr "صورة أو شعار أو لقطة منتج."
 msgid "A push cannot use merge tags: it holds no personal data."
 msgstr "لا يمكن للإشعار استخدام وسوم الدمج: فهو لا يحتوي على بيانات شخصية."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:166
+#: ../../packages/marketing/src/components/campaign-detail.tsx:168
 msgid "A re-send to people who did not open or click the first one and are still subscribed."
 msgstr "إعادة إرسال لمن لم يفتح الرسالة الأولى ولم ينقر عليها وما زال مشتركًا."
 
@@ -629,7 +629,7 @@ msgstr "جميع المؤسسات"
 #~ msgid "All plans"
 #~ msgstr "جميع الخطط"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:41
+#: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "All recipients"
 msgstr "جميع المستلمين"
 
@@ -714,7 +714,7 @@ msgstr "أي - أي موارد"
 msgid "APNs key (iOS)"
 msgstr "مفتاح APNs (iOS)"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:97
+#: ../../packages/marketing/src/components/campaign-detail.tsx:99
 msgid "App notification"
 msgstr "إشعار التطبيق"
 
@@ -927,7 +927,7 @@ msgstr "العودة إلى الأتمتة"
 msgid "Back to blocks"
 msgstr "العودة إلى الكتل"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:38
+#: ../../packages/marketing/src/components/campaign-detail.tsx:40
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
@@ -1079,7 +1079,7 @@ msgstr "صندوق"
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:204
+#: ../../packages/marketing/src/components/campaign-detail.tsx:214
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
@@ -1191,7 +1191,7 @@ msgstr "ملغي"
 msgid "Cancelled by the organization"
 msgstr "ألغته المؤسسة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:73
+#: ../../packages/marketing/src/components/campaign-detail.tsx:75
 msgid "Cancelled, not sent"
 msgstr "أُلغيت ولم تُرسل"
 
@@ -1306,10 +1306,18 @@ msgstr "مسح التحديد"
 msgid "Click rate"
 msgstr "معدل النقر"
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:61
+msgid "Clicked"
+msgstr "نقر"
+
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:105
+#: ../../packages/marketing/src/components/campaign-detail.tsx:107
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:100
+msgid "Clicked: orders placed after a guest followed a link in one of your messages. Revenue is net of refunds."
+msgstr "نقر: الطلبات التي تمت بعد أن فتح الضيف رابطًا في إحدى رسائلك. الإيرادات صافية بعد المبالغ المستردة."
 
 #: app/components/sso-configuration-form.tsx:184
 msgid "Client ID"
@@ -1482,11 +1490,11 @@ msgstr "القسيمة"
 msgid "Coupon card"
 msgstr "بطاقة كوبون"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:58
+#: ../../packages/marketing/src/components/campaign-detail.tsx:60
 msgid "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 msgstr "القسيمة: {name}، برمز للاستخدام مرة واحدة لكل مستلم، صالح لمدة {days} يومًا."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:54
+#: ../../packages/marketing/src/components/campaign-detail.tsx:56
 msgid "Coupon: {name}, with one shared code for everyone."
 msgstr "القسيمة: {name}، برمز واحد مشترك للجميع."
 
@@ -1494,7 +1502,7 @@ msgstr "القسيمة: {name}، برمز واحد مشترك للجميع."
 #~ msgid "Coupon: {name}, with the code {0} for everyone."
 #~ msgstr "القسيمة: {name}، بالرمز {0} للجميع."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:53
+#: ../../packages/marketing/src/components/campaign-detail.tsx:55
 msgid "Coupon: {name}, with the code {code} for everyone."
 msgstr "القسيمة: {name}، بالرمز {code} للجميع."
 
@@ -1938,7 +1946,7 @@ msgstr "مسودة"
 msgid "Draft with AI"
 msgstr "مسودة بالذكاء الاصطناعي"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:69
+#: ../../packages/marketing/src/components/campaign-detail.tsx:71
 msgid "Draft, not sent"
 msgstr "مسودة، لم تُرسل"
 
@@ -2735,6 +2743,10 @@ msgstr "مدة انتظار مجموعات قائمة الانتظار قبل ج
 msgid "How often people clock in on time for the shifts they were scheduled on."
 msgstr "عدد مرات تسجيل الحضور في الوقت المحدد للمناوبات المجدولة."
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:53
+msgid "How orders are counted"
+msgstr "طريقة احتساب الطلبات"
+
 #: ../../packages/reports/src/ui/report-labels.ts:117
 msgid "How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response."
 msgstr "كيف انتهت مجموعات قائمة الانتظار خلال آخر 30 يومًا: جلست أو غادرت أو ألغت أو لم تردّ."
@@ -3314,7 +3326,7 @@ msgstr "فريق Menuza"
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "تُستبدل وسوم الدمج بقيم خاصة بكل مستلم عند إرسال البريد الإلكتروني."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:195
+#: ../../packages/marketing/src/components/campaign-detail.tsx:205
 #: ../../packages/marketing/src/components/campaign-form.tsx:399
 msgid "Message"
 msgstr "الرسالة"
@@ -3482,7 +3494,7 @@ msgstr "لا توجد حملات بعد."
 msgid "No connected accounts"
 msgstr "لا توجد حسابات متصلة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:98
+#: ../../packages/marketing/src/components/campaign-detail.tsx:100
 msgid "No contact on file"
 msgstr "لا يوجد جهة اتصال مسجّلة"
 
@@ -3495,7 +3507,7 @@ msgstr "بدون قسيمة"
 msgid "No custom fonts have been uploaded."
 msgstr "لم يتم رفع أي خطوط مخصصة."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:257
+#: ../../packages/marketing/src/components/campaign-detail.tsx:267
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
@@ -3686,7 +3698,7 @@ msgstr "غير متاح"
 msgid "Not live yet"
 msgstr "غير متاح بعد"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:75
+#: ../../packages/marketing/src/components/campaign-detail.tsx:77
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:12
 msgid "Not sent: too late"
 msgstr "لم تُرسل: فات الوقت"
@@ -3814,7 +3826,7 @@ msgid "Open the new app"
 msgstr "افتح التطبيق الجديد"
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:108
+#: ../../packages/marketing/src/components/campaign-detail.tsx:110
 msgid "Opened {0}"
 msgstr "فُتِح {0}"
 
@@ -3856,6 +3868,22 @@ msgstr "اكتمال الطلب"
 #: app/routes/_admin+/print-shop.tsx:783
 msgid "Orders"
 msgstr "الطلبات"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:73
+msgid "Orders after a click"
+msgstr "الطلبات بعد النقر"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:49
+msgid "Orders and revenue"
+msgstr "الطلبات والإيرادات"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:45
+msgid "Orders and revenue from marketing"
+msgstr "الطلبات والإيرادات من التسويق"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:74
+msgid "Orders from guests reached"
+msgstr "طلبات الضيوف الذين وصلتهم الرسائل"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:401
 msgid "Orders in the last 30 days"
@@ -4439,6 +4467,14 @@ msgstr "صلاحية عرض السعر (دقائق)"
 msgid "Rank"
 msgstr "الترتيب"
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:64
+msgid "Reached"
+msgstr "وصلت"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:103
+msgid "Reached: clicked orders plus orders from guests who were sent a message in the 14 days before. Each order is counted once, for their latest message."
+msgstr "وصلت: الطلبات بعد النقر مضافًا إليها طلبات الضيوف الذين أُرسلت إليهم رسالة خلال الأيام الـ14 السابقة. يُحتسب كل طلب مرة واحدة لأحدث رسالة وصلت إلى الضيف."
+
 #: app/routes/_admin+/customer-apps_.$appId.tsx:586
 msgid "Read from the stores once a day. A store that cannot be reached keeps its last known state."
 msgstr "تُقرأ من المتاجر مرة يوميًا. المتجر الذي يتعذّر الوصول إليه يحتفظ بآخر حالة معروفة."
@@ -4516,7 +4552,7 @@ msgstr "أُعيد مؤخرًا"
 msgid "recipients"
 msgstr "مستلمين"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:245
+#: ../../packages/marketing/src/components/campaign-detail.tsx:255
 msgid "Recipients"
 msgstr "المستلمون"
 
@@ -4806,7 +4842,7 @@ msgstr "المصدر"
 msgid "Restore the app"
 msgstr "استعادة التطبيق"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:231
+#: ../../packages/marketing/src/components/campaign-detail.tsx:241
 msgid "Results"
 msgstr "النتائج"
 
@@ -4879,6 +4915,14 @@ msgstr "العودة إلى التطبيق"
 #: app/routes/_admin+/print-shop.tsx:78
 msgid "Returned"
 msgstr "مُعاد"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:86
+msgid "Revenue after a click"
+msgstr "الإيرادات بعد النقر"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:87
+msgid "Revenue from guests reached"
+msgstr "إيرادات الضيوف الذين وصلتهم الرسائل"
 
 #: app/components/sso-configuration-form.tsx:312
 msgid "Revocation URL (Optional)"
@@ -5165,13 +5209,13 @@ msgstr "الجدولة على أي حال"
 msgid "Schedule for later"
 msgstr "الجدولة لوقت لاحق"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:71
+#: ../../packages/marketing/src/components/campaign-detail.tsx:73
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
 #: app/routes/_admin+/gdpr-requests.tsx:428
 msgid "Scheduled"
 msgstr "مجدول"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:71
+#: ../../packages/marketing/src/components/campaign-detail.tsx:73
 msgid "Scheduled for {at}"
 msgstr "مجدولة في {at}"
 
@@ -5262,11 +5306,11 @@ msgstr "الأمان"
 msgid "Security Events"
 msgstr "أحداث الأمان"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:173
+#: ../../packages/marketing/src/components/campaign-detail.tsx:175
 msgid "See the original"
 msgstr "عرض الأصل"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:187
+#: ../../packages/marketing/src/components/campaign-detail.tsx:189
 msgid "See the re-send"
 msgstr "عرض إعادة الإرسال"
 
@@ -5363,8 +5407,8 @@ msgstr "جارٍ الإرسال..."
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:77
-#: ../../packages/marketing/src/components/campaign-detail.tsx:273
+#: ../../packages/marketing/src/components/campaign-detail.tsx:79
+#: ../../packages/marketing/src/components/campaign-detail.tsx:283
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
@@ -6224,11 +6268,11 @@ msgstr "تم نشر هذا التطبيق، لذا لم يعد بالإمكان 
 msgid "This block still has the text a new block starts with."
 msgstr "ما زالت هذه الكتلة تحمل النص الذي تبدأ به أي كتلة جديدة."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:158
+#: ../../packages/marketing/src/components/campaign-detail.tsx:160
 msgid "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 msgstr "تعذّر بدء إرسال هذه الرسالة الجماعية في الوقت المناسب، فلم تُرسل. كرّرها لجدولتها من جديد."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:181
+#: ../../packages/marketing/src/components/campaign-detail.tsx:183
 msgid "This broadcast was re-sent to non-openers."
 msgstr "أُعيد إرسال هذه الرسالة الجماعية لمن لم يفتحها."
 
@@ -6236,7 +6280,7 @@ msgstr "أُعيد إرسال هذه الرسالة الجماعية لمن لم
 #~ msgid "This broadcast was scheduled for {0} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 #~ msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:155
+#: ../../packages/marketing/src/components/campaign-detail.tsx:157
 msgid "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 msgstr "كانت هذه الرسالة الجماعية مجدولة في {scheduledText} لكن تعذّر بدء إرسالها خلال {lateHours} ساعات، فلم تُرسل. كرّرها لجدولتها من جديد."
 
@@ -6509,7 +6553,7 @@ msgstr "الوحدة"
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:268
+#: ../../packages/marketing/src/components/campaign-detail.tsx:278
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 

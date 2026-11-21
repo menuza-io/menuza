@@ -30,3 +30,15 @@ export const CANCELLED_BY_LABELS: Record<string, MessageDescriptor> = {
 	guest: msg`Guest`,
 	system: msg`Automatically`,
 }
+
+/** Where an order came from (#115): the stored `attribution_source` values. */
+export const ORDER_SOURCE_LABELS: Record<string, MessageDescriptor> = {
+	direct: msg`Direct`,
+	email: msg`Email campaign`,
+	sms: msg`Text campaign`,
+	campaign: msg`Campaign`,
+	short_link: msg`Short link`,
+	qr_table: msg`Table QR code`,
+	qr_poster: msg`Poster QR code`,
+	coupon: msg`Coupon`,
+}

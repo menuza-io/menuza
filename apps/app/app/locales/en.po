@@ -869,7 +869,7 @@ msgstr "{0} modifier groups"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:249
+#: ../../packages/marketing/src/components/campaign-detail.tsx:259
 msgid "{0} of {1} targeted"
 msgstr ""
 
@@ -1495,7 +1495,7 @@ msgstr "{days}, {from} to {to}"
 msgid "{days}d ago"
 msgstr ""
 
-#: app/components/marketing/marketing-calendar.tsx:265
+#: app/components/marketing/marketing-calendar.tsx:266
 msgid "{dayTitle} (expected)"
 msgstr "{dayTitle} (expected)"
 
@@ -1503,11 +1503,11 @@ msgstr "{dayTitle} (expected)"
 msgid "{deviceName} was removed."
 msgstr "{deviceName} was removed."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:169
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:175
 msgid "{diffSec}s"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:172
 msgid "{diffSec}s (running)"
 msgstr ""
 
@@ -1911,7 +1911,7 @@ msgstr "{minutes} min"
 msgid "{minutes} minutes"
 msgstr "{minutes} minutes"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:172
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:178
 msgid "{minutes}m {remainingSec}s"
 msgstr ""
 
@@ -2432,7 +2432,7 @@ msgstr "{provider} is disconnected, so its orders and menu are not syncing."
 msgid "{purchaseCount, plural, one {# purchase} other {# purchases}}"
 msgstr "{purchaseCount, plural, one {# purchase} other {# purchases}}"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:234
+#: ../../packages/marketing/src/components/campaign-detail.tsx:244
 msgid "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
 msgstr "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
 
@@ -2482,7 +2482,7 @@ msgstr "{readyCount, plural, one {Import # person} other {Import # people}}"
 msgid "{readyCount} ready, {needFix} need a fix. Rows with a problem are skipped."
 msgstr "{readyCount} ready, {needFix} need a fix. Rows with a problem are skipped."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:292
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:295
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:211
 msgid "{recipientCount} recipients"
 msgstr ""
@@ -2507,7 +2507,7 @@ msgstr "{referenceCount, plural, one {# place} other {# places}}"
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:1104
+#: app/components/orders/order-detail.tsx:1128
 msgid "{refundedMoney} of {totalMoney}"
 msgstr "{refundedMoney} of {totalMoney}"
 
@@ -2744,7 +2744,7 @@ msgstr "{total, plural, one {Tier added. # tier.} other {Tier added. # tiers.}}"
 msgid "{total, plural, one {Tier removed. # tier.} other {Tier removed. # tiers.}}"
 msgstr "{total, plural, one {Tier removed. # tier.} other {Tier removed. # tiers.}}"
 
-#: app/components/marketing/short-links-screen.tsx:93
+#: app/components/marketing/short-links-screen.tsx:94
 msgid "{total} clicks in the last 30 days"
 msgstr "{total} clicks in the last 30 days"
 
@@ -2760,15 +2760,15 @@ msgstr "{total} submissions"
 msgid "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 msgstr "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 
-#: app/components/orders/order-detail.tsx:1312
+#: app/components/orders/order-detail.tsx:1336
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: give the money back at the counter, then record the refund on this order."
 msgstr "{totalMoney} was received for this order. Cancelling does not refund it: give the money back at the counter, then record the refund on this order."
 
-#: app/components/orders/order-detail.tsx:1308
+#: app/components/orders/order-detail.tsx:1332
 msgid "{totalMoney} was received for this order. Cancelling does not refund it. The order moves to Cancelled and cannot be reopened."
 msgstr "{totalMoney} was received for this order. Cancelling does not refund it. The order moves to Cancelled and cannot be reopened."
 
-#: app/components/orders/order-detail.tsx:1304
+#: app/components/orders/order-detail.tsx:1328
 msgid "{totalMoney} was received for this order. The order is cancelled right away. Choose whether the guest gets their money back."
 msgstr "{totalMoney} was received for this order. The order is cancelled right away. Choose whether the guest gets their money back."
 
@@ -3015,7 +3015,7 @@ msgstr ""
 msgid "+{lateMin}m late"
 msgstr "+{lateMin}m late"
 
-#: app/components/orders/order-detail.tsx:813
+#: app/components/orders/order-detail.tsx:837
 msgid "+{minutes} min"
 msgstr "+{minutes} min"
 
@@ -3623,11 +3623,11 @@ msgstr "A dining time has a party range that is backwards."
 msgid "A discount can have up to 90 codes. Make another discount for more."
 msgstr "A discount can have up to 90 codes. Make another discount for more."
 
-#: app/components/orders/order-detail.tsx:383
+#: app/components/orders/order-detail.tsx:400
 msgid "A discount on this order reached its use limit before the payment arrived. The customer was charged the discounted price, so honoring the order means accepting that overrun."
 msgstr "A discount on this order reached its use limit before the payment arrived. The customer was charged the discounted price, so honoring the order means accepting that overrun."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:49
+#: ../../packages/marketing/src/components/campaign-detail.tsx:51
 msgid "a discount that is no longer listed"
 msgstr "a discount that is no longer listed"
 
@@ -4017,7 +4017,7 @@ msgstr "A range counts up, like T1-T12."
 msgid "A re-send to people who did not open it"
 msgstr "A re-send to people who did not open it"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:166
+#: ../../packages/marketing/src/components/campaign-detail.tsx:168
 msgid "A re-send to people who did not open or click the first one and are still subscribed."
 msgstr "A re-send to people who did not open or click the first one and are still subscribed."
 
@@ -4317,14 +4317,14 @@ msgstr ""
 
 #: app/components/menu/menu-review-card.tsx:567
 #: app/components/menu/menu-review-stack.tsx:1443
-#: app/components/orders/order-detail.tsx:624
+#: app/components/orders/order-detail.tsx:641
 #: app/components/orders/waiting-lane.tsx:204
 #: app/components/privacy-banner.tsx:60
 #: app/routes/_app+/organizations.tsx:302
 msgid "Accept"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:445
+#: app/components/orders/order-detail.tsx:462
 msgid "Accept and start preparing"
 msgstr "Accept and start preparing"
 
@@ -4520,10 +4520,10 @@ msgstr ""
 #: app/components/website/domain/forwarding-panel.tsx:26
 #: app/components/website/domain/registered-panel.tsx:55
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:426
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:90
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:91
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:71
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:363
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:379
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1006
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
@@ -4561,7 +4561,7 @@ msgstr "Active must be yes or no."
 
 #: app/components/app-sidebar.tsx:643
 #: app/components/loyalty/loyalty-chrome.tsx:72
-#: app/components/orders/order-detail.tsx:1204
+#: app/components/orders/order-detail.tsx:1228
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:151
 #: app/routes/_app+/$orgSlug_+/website+/activity.tsx:71
@@ -6296,7 +6296,7 @@ msgstr ""
 msgid "All core features included"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:306
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:319
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr ""
 
@@ -6410,7 +6410,7 @@ msgstr "All purposes"
 msgid "All reasons"
 msgstr "All reasons"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:41
+#: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "All recipients"
 msgstr ""
 
@@ -7192,7 +7192,7 @@ msgstr "App invitations are not available for organizations in the Saudi region 
 msgid "App login"
 msgstr "App login"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:97
+#: ../../packages/marketing/src/components/campaign-detail.tsx:99
 msgid "App notification"
 msgstr "App notification"
 
@@ -7549,7 +7549,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:428
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:73
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/media.tsx:1303
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/discounts/labels.ts:28
@@ -7645,11 +7645,11 @@ msgstr "Arrived"
 msgid "Arrived, waiting"
 msgstr "Arrived, waiting"
 
-#: app/components/orders/order-detail.tsx:329
+#: app/components/orders/order-detail.tsx:330
 msgid "Arriving {promisedFrom} to {promisedTo}"
 msgstr "Arriving {promisedFrom} to {promisedTo}"
 
-#: app/components/orders/order-detail.tsx:331
+#: app/components/orders/order-detail.tsx:332
 msgid "Arriving around {promisedFrom}"
 msgstr "Arriving around {promisedFrom}"
 
@@ -7905,7 +7905,7 @@ msgstr "At sign-up"
 msgid "At slot time"
 msgstr "At slot time"
 
-#: app/components/orders/order-detail.tsx:731
+#: app/components/orders/order-detail.tsx:748
 #: app/routes/_app+/$orgSlug_+/orders.tsx:337
 msgid "At the table"
 msgstr "At the table"
@@ -7939,7 +7939,7 @@ msgstr "Attach secondary modifier groups that appear when this modifier item is 
 msgid "Attached images"
 msgstr "Attached images"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:511
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:524
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr ""
 
@@ -7974,7 +7974,7 @@ msgstr "Audiences"
 msgid "Audiences cannot use tags, allergies or notes. Choose another rule."
 msgstr "Audiences cannot use tags, allergies or notes. Choose another rule."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:359
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:372
 msgid "Audit Trail"
 msgstr ""
 
@@ -8104,7 +8104,7 @@ msgstr "Automation"
 msgid "Automation menu"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:84
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:86
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:84
 msgid "Automation not found"
 msgstr ""
@@ -8124,7 +8124,7 @@ msgstr ""
 #: app/components/app-sidebar.tsx:504
 #: app/components/command-menu.tsx:111
 #: app/components/workspace-breadcrumb.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:111
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:112
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:383
 msgid "Automations"
 msgstr ""
@@ -8306,7 +8306,7 @@ msgstr ""
 msgid "Back to blocks"
 msgstr "Back to blocks"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:38
+#: ../../packages/marketing/src/components/campaign-detail.tsx:40
 msgid "Back to broadcasts"
 msgstr ""
 
@@ -9059,14 +9059,14 @@ msgstr "Broadcast actions"
 msgid "Broadcast not found"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:204
+#: ../../packages/marketing/src/components/campaign-detail.tsx:214
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
 #: app/components/app-sidebar.tsx:497
 #: app/components/command-menu.tsx:110
 #: app/components/workspace-breadcrumb.tsx:44
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:101
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:102
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:119
 #: app/utils/marketing/campaign-alerts.ts:31
 msgid "Broadcasts"
@@ -9084,7 +9084,7 @@ msgstr "Broadcasts and automations already made from it keep their design."
 msgid "Broadcasts waiting or sending"
 msgstr "Broadcasts waiting or sending"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:188
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:189
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr ""
 
@@ -9631,9 +9631,17 @@ msgstr "Calls your agent answers will appear here. Try a test call from your bro
 msgid "Calories (kCal)"
 msgstr "Calories (kCal)"
 
+#: app/components/orders/order-detail.tsx:792
+msgid "Came from: "
+msgstr "Came from: "
+
 #: app/components/inventory/record-delivery-screen.tsx:918
 msgid "Came short"
 msgstr "Came short"
+
+#: app/components/orders/refund-labels.ts:39
+msgid "Campaign"
+msgstr "Campaign"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:340
 msgid "Campaign name"
@@ -9747,7 +9755,7 @@ msgstr "Can't text that number"
 #: app/components/loyalty/reward-dialog.tsx:709
 #: app/components/marketing/campaign-actions.tsx:148
 #: app/components/marketing/campaign-actions.tsx:337
-#: app/components/marketing/programs-section.tsx:262
+#: app/components/marketing/programs-section.tsx:263
 #: app/components/media-library/media-library-picker.tsx:345
 #: app/components/media-library/photo-studio-dialog.tsx:963
 #: app/components/media-library/photo-studio-dialog.tsx:990
@@ -9946,13 +9954,13 @@ msgstr "Cancel interview"
 
 #: app/components/inventory/review-order-screen.tsx:775
 #: app/components/inventory/review-order-screen.tsx:840
-#: app/components/orders/order-detail.tsx:1262
+#: app/components/orders/order-detail.tsx:1286
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:399
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:429
 msgid "Cancel order"
 msgstr "Cancel order"
 
-#: app/components/orders/order-detail.tsx:1299
+#: app/components/orders/order-detail.tsx:1323
 msgid "Cancel order {orderNumber}?"
 msgstr "Cancel order {orderNumber}?"
 
@@ -10025,16 +10033,16 @@ msgstr "Cancellations by who"
 #: app/components/hiring/applicant-labels.ts:42
 #: app/components/inventory/count-status-badge.tsx:10
 #: app/components/my-schedule/status-badge.tsx:17
-#: app/components/orders/order-detail.tsx:402
-#: app/components/orders/order-detail.tsx:544
-#: app/components/orders/order-detail.tsx:559
+#: app/components/orders/order-detail.tsx:419
+#: app/components/orders/order-detail.tsx:561
+#: app/components/orders/order-detail.tsx:576
 #: app/components/print/print-order-labels.ts:20
 #: app/components/reservations/status-style.tsx:144
 #: app/components/reservations/status-style.tsx:211
 #: app/components/staff/schedule/time-off-page.tsx:286
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:215
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:238
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:153
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:159
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:101
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:216
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:242
@@ -10075,7 +10083,7 @@ msgstr "Cancelled moving {cancelledGuestName}."
 msgid "Cancelled orders"
 msgstr "Cancelled orders"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:73
+#: ../../packages/marketing/src/components/campaign-detail.tsx:75
 msgid "Cancelled, not sent"
 msgstr "Cancelled, not sent"
 
@@ -11325,7 +11333,7 @@ msgid "Choose a provider"
 msgstr "Choose a provider"
 
 #: app/components/orders/acceptance.tsx:113
-#: app/components/orders/order-detail.tsx:1330
+#: app/components/orders/order-detail.tsx:1354
 msgid "Choose a reason"
 msgstr "Choose a reason"
 
@@ -12042,7 +12050,7 @@ msgstr "Click a table or decor element on the canvas to edit, resize, rotate, or
 msgid "Click anywhere on the map to add polygon corners"
 msgstr "Click anywhere on the map to add polygon corners"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:85
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:86
 msgid "Click rate"
 msgstr ""
 
@@ -12058,20 +12066,36 @@ msgstr "Click the first day, then the last day. For one day, click it and close.
 msgid "Click to choose a cover image"
 msgstr "Click to choose a cover image"
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:61
+#: app/components/marketing/journey-step-attribution.tsx:116
+msgid "Clicked"
+msgstr "Clicked"
+
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:105
+#: ../../packages/marketing/src/components/campaign-detail.tsx:107
 msgid "Clicked {0}"
 msgstr ""
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:100
+msgid "Clicked: orders placed after a guest followed a link in one of your messages. Revenue is net of refunds."
+msgstr "Clicked: orders placed after a guest followed a link in one of your messages. Revenue is net of refunds."
+
+#: app/components/marketing/journey-step-attribution.tsx:183
+msgid "Clicked: orders placed after a guest followed a link in that step's message. Revenue is net of refunds."
+msgstr "Clicked: orders placed after a guest followed a link in that step's message. Revenue is net of refunds."
 
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:472
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:579
 msgid "Clicks"
 msgstr "Clicks"
 
-#. placeholder {0}: link.clicksThisMonth
 #: app/components/marketing/short-links-screen.tsx:99
-msgid "Clicks: {0} this month"
-msgstr "Clicks: {0} this month"
+#~ msgid "Clicks: {0} this month"
+#~ msgstr "Clicks: {0} this month"
+
+#: app/components/marketing/short-links-screen.tsx:100
+msgid "Clicks: {clicksThisMonth} this month"
+msgstr "Clicks: {clicksThisMonth} this month"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:967
 msgid "Client"
@@ -12634,7 +12658,7 @@ msgstr "Complete and reopen calls and requests, and tag calls. Needs View calls.
 msgid "Complete authentication"
 msgstr "Complete authentication"
 
-#: app/components/orders/order-detail.tsx:449
+#: app/components/orders/order-detail.tsx:466
 msgid "Complete order"
 msgstr "Complete order"
 
@@ -12679,9 +12703,9 @@ msgstr ""
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:46
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/components/onboarding-checklist.tsx:249
-#: app/components/orders/order-detail.tsx:397
+#: app/components/orders/order-detail.tsx:414
 #: app/components/reservations/status-style.tsx:143
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:156
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:98
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:237
 #: app/utils/loyalty/loyalty-labels.ts:128
@@ -12765,7 +12789,7 @@ msgstr "Confirm \"This is my restaurant's menu\" before importing from a website
 msgid "Confirm accepting all translations"
 msgstr "Confirm accepting all translations"
 
-#: app/components/orders/order-detail.tsx:1381
+#: app/components/orders/order-detail.tsx:1405
 msgid "Confirm cancellation"
 msgstr "Confirm cancellation"
 
@@ -13412,7 +13436,7 @@ msgstr "Copies of each print. A set of cards prints every card this many times."
 msgid "copy"
 msgstr "copy"
 
-#: app/components/marketing/short-links-screen.tsx:115
+#: app/components/marketing/short-links-screen.tsx:116
 #: app/components/organization-invitations.tsx:224
 #: app/components/phone-agent/agent-details.tsx:239
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
@@ -13456,7 +13480,7 @@ msgstr "Copy categories as new categories"
 msgid "Copy code"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:688
+#: app/components/orders/order-detail.tsx:705
 msgid "Copy email address"
 msgstr "Copy email address"
 
@@ -13481,7 +13505,7 @@ msgstr ""
 msgid "Copy modifier groups as new groups"
 msgstr "Copy modifier groups as new groups"
 
-#: app/components/orders/order-detail.tsx:506
+#: app/components/orders/order-detail.tsx:523
 msgid "Copy order number"
 msgstr "Copy order number"
 
@@ -13494,7 +13518,7 @@ msgstr "Copy overrides"
 msgid "Copy overrides to another location"
 msgstr "Copy overrides to another location"
 
-#: app/components/orders/order-detail.tsx:674
+#: app/components/orders/order-detail.tsx:691
 msgid "Copy phone number"
 msgstr "Copy phone number"
 
@@ -14035,7 +14059,7 @@ msgstr "Couldn't load the dishes that are sold out."
 msgid "Couldn't load the recording. Try again."
 msgstr "Couldn't load the recording. Try again."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:471
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:484
 msgid "Couldn't load the steps of this run. Close it and try again."
 msgstr "Couldn't load the steps of this run. Close it and try again."
 
@@ -14224,6 +14248,7 @@ msgstr "Counts only. No guest is shown."
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:90
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:137
 #: ../../packages/marketing/src/components/email/block-meta.ts:48
+#: app/components/orders/refund-labels.ts:43
 #: app/routes/_app+/$orgSlug_+/website+/popups._index.tsx:125
 msgid "Coupon"
 msgstr "Coupon"
@@ -14250,15 +14275,15 @@ msgstr "Coupon codes"
 msgid "Coupon prints carry a discount code, so only people who can view discounts can see the proof and download it."
 msgstr "Coupon prints carry a discount code, so only people who can view discounts can see the proof and download it."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:58
+#: ../../packages/marketing/src/components/campaign-detail.tsx:60
 msgid "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 msgstr "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:54
+#: ../../packages/marketing/src/components/campaign-detail.tsx:56
 msgid "Coupon: {name}, with one shared code for everyone."
 msgstr "Coupon: {name}, with one shared code for everyone."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:53
+#: ../../packages/marketing/src/components/campaign-detail.tsx:55
 msgid "Coupon: {name}, with the code {code} for everyone."
 msgstr "Coupon: {name}, with the code {code} for everyone."
 
@@ -14491,7 +14516,7 @@ msgstr "Create an automatic discount or a coupon code. Customers see it at check
 msgid "Create an item to start building your menu."
 msgstr "Create an item to start building your menu."
 
-#: app/components/marketing/programs-section.tsx:269
+#: app/components/marketing/programs-section.tsx:270
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:236
 msgid "Create and customize"
 msgstr "Create and customize"
@@ -14722,7 +14747,7 @@ msgstr "Create reward"
 msgid "Create role"
 msgstr "Create role"
 
-#: app/components/marketing/short-links-screen.tsx:244
+#: app/components/marketing/short-links-screen.tsx:245
 msgid "Create short link"
 msgstr "Create short link"
 
@@ -14738,7 +14763,7 @@ msgstr ""
 msgid "Create your first audience."
 msgstr "Create your first audience."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:268
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:271
 msgid "Create your first broadcast"
 msgstr ""
 
@@ -15005,7 +15030,7 @@ msgstr "Custom form"
 msgid "Custom Hours"
 msgstr "Custom Hours"
 
-#: app/components/orders/order-detail.tsx:901
+#: app/components/orders/order-detail.tsx:925
 msgid "Custom item"
 msgstr "Custom item"
 
@@ -15059,8 +15084,8 @@ msgstr "Custom: what you have now"
 msgid "customer"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:634
-#: app/components/orders/order-detail.tsx:658
+#: app/components/orders/order-detail.tsx:651
+#: app/components/orders/order-detail.tsx:675
 #: app/components/workspace-breadcrumb.tsx:110
 #: app/routes/_app+/$orgSlug_+/orders.tsx:313
 msgid "Customer"
@@ -15140,7 +15165,7 @@ msgstr "Customer reviews"
 msgid "Customer since"
 msgstr "Customer since"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:354
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:367
 msgid "Customer UUID"
 msgstr ""
 
@@ -16151,7 +16176,7 @@ msgstr "Delivers on"
 #: app/components/locations/checkout-settings-cards.tsx:53
 #: app/components/locations/checkout-settings-cards.tsx:358
 #: app/components/locations/location-form.tsx:1110
-#: app/components/orders/order-detail.tsx:729
+#: app/components/orders/order-detail.tsx:746
 #: app/components/orders/slot-limits-panel.tsx:172
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
@@ -16193,8 +16218,8 @@ msgstr "Delivery areas, fees, and pickup alternatives."
 msgid "Delivery cancelled."
 msgstr "Delivery cancelled."
 
-#: app/components/orders/order-detail.tsx:969
-#: app/components/orders/order-detail.tsx:1441
+#: app/components/orders/order-detail.tsx:993
+#: app/components/orders/order-detail.tsx:1465
 msgid "Delivery discount"
 msgstr "Delivery discount"
 
@@ -16202,7 +16227,7 @@ msgstr "Delivery discount"
 msgid "Delivery discounts"
 msgstr "Delivery discounts"
 
-#: app/components/orders/order-detail.tsx:986
+#: app/components/orders/order-detail.tsx:1010
 #: app/utils/discounts/labels.ts:370
 #: app/utils/discounts/summary.ts:222
 msgid "Delivery fee"
@@ -16224,7 +16249,7 @@ msgstr "Delivery limit"
 msgid "Delivery max subtotal ({currency})"
 msgstr "Delivery max subtotal ({currency})"
 
-#: app/components/orders/order-detail.tsx:849
+#: app/components/orders/order-detail.tsx:873
 msgid "Delivery notes:"
 msgstr "Delivery notes:"
 
@@ -16708,6 +16733,7 @@ msgstr "Dining times for {named} overlap for some party sizes."
 msgid "Dining times for {named} skip some party sizes."
 msgstr "Dining times for {named} skip some party sizes."
 
+#: app/components/orders/refund-labels.ts:36
 #: app/components/website/funnel-panel.tsx:55
 msgid "Direct"
 msgstr "Direct"
@@ -16842,8 +16868,8 @@ msgstr "Disconnect this calendar? Its events are removed from your website."
 #: app/components/discounts/discount-form.tsx:1713
 #: app/components/discounts/discount-performance.tsx:246
 #: app/components/loyalty/reward-dialog.tsx:554
-#: app/components/orders/order-detail.tsx:961
-#: app/components/orders/order-detail.tsx:1443
+#: app/components/orders/order-detail.tsx:985
+#: app/components/orders/order-detail.tsx:1467
 #: app/components/print/restaurant/vertical-ui.tsx:143
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:453
 msgid "Discount"
@@ -17037,7 +17063,7 @@ msgstr "Display the opening date below the countdown"
 msgid "Displayed"
 msgstr "Displayed"
 
-#: app/components/orders/order-detail.tsx:501
+#: app/components/orders/order-detail.tsx:518
 #: app/components/reservations/status-style.tsx:148
 #: app/components/settings/cards/organization/shop-card.tsx:53
 #: app/routes/_app+/$orgSlug_+/orders.tsx:352
@@ -17303,7 +17329,7 @@ msgstr ""
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:70
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:364
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:143
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:149
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:96
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1004
@@ -17376,7 +17402,7 @@ msgstr "Draft something for me"
 msgid "Draft with AI"
 msgstr "Draft with AI"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:69
+#: ../../packages/marketing/src/components/campaign-detail.tsx:71
 msgid "Draft, not sent"
 msgstr "Draft, not sent"
 
@@ -17504,7 +17530,7 @@ msgstr "Drop page"
 msgid "Drop title"
 msgstr "Drop title"
 
-#: app/components/orders/order-detail.tsx:856
+#: app/components/orders/order-detail.tsx:880
 msgid "Drop:"
 msgstr "Drop:"
 
@@ -17589,7 +17615,7 @@ msgid "Duplicates and data"
 msgstr "Duplicates and data"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:379
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:357
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:370
 msgid "Duration"
 msgstr ""
 
@@ -18292,6 +18318,7 @@ msgstr "Eligible for rehire."
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/inventory/supplier-form.tsx:37
 #: app/components/inventory/supplier-form.tsx:232
+#: app/components/marketing/journey-step-attribution.tsx:81
 #: app/components/marketing/marketing-calendar.tsx:201
 #: app/components/marketing/programs-section.tsx:129
 #: app/components/marketing/programs-section.tsx:221
@@ -18330,6 +18357,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/validation.ts:21
 msgid "Email body content is required."
 msgstr ""
+
+#: app/components/orders/refund-labels.ts:37
+msgid "Email campaign"
+msgstr "Email campaign"
 
 #: app/utils/inventory/order-view.ts:187
 msgid "Email cannot be sent from here yet."
@@ -18445,7 +18476,7 @@ msgstr "Emails"
 msgid "Emails go out from our address until they are fixed. Check the records below and re-check."
 msgstr "Emails go out from our address until they are fixed. Check the records below and re-check."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:75
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:76
 msgid "Emails sent"
 msgstr ""
 
@@ -19588,7 +19619,7 @@ msgstr "Event request"
 msgid "Event title"
 msgstr "Event title"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:112
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:113
 msgid "Event-driven workflows"
 msgstr ""
 
@@ -19939,11 +19970,11 @@ msgstr "Exclusions"
 msgid "Exclusive seating"
 msgstr "Exclusive seating"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:302
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:315
 msgid "Execution History ({runCount})"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:283
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:289
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "Execution runs and step history, triggered by \"{triggerLabel}\"."
 
@@ -20204,7 +20235,7 @@ msgstr "Extras"
 msgid "Facebook"
 msgstr "Facebook"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:122
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:123
 msgid "Facebook and Instagram posts"
 msgstr "Facebook and Instagram posts"
 
@@ -20248,7 +20279,7 @@ msgstr "failed"
 #: app/components/social/social-labels.ts:35
 #: app/components/social/social-labels.ts:45
 #: app/components/website/domain/buy-card.tsx:132
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:158
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:100
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:215
 #: app/utils/reservations/payments-view.ts:72
@@ -20407,7 +20438,7 @@ msgstr ""
 msgid "Failed to load journeys from regional tenant storage."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:171
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:172
 msgid "Failed to load marketing metrics"
 msgstr ""
 
@@ -20419,7 +20450,7 @@ msgstr "Failed to load reservation details."
 msgid "Failed to load reservation setup for this location."
 msgstr "Failed to load reservation setup for this location."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:327
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:340
 msgid "Failed to load runs"
 msgstr "Failed to load runs"
 
@@ -21386,7 +21417,7 @@ msgstr "Free delivery takes the delivery fee off the order."
 msgid "Free item"
 msgstr "Free item"
 
-#: app/components/orders/order-detail.tsx:496
+#: app/components/orders/order-detail.tsx:513
 msgid "Free order"
 msgstr "Free order"
 
@@ -21569,7 +21600,7 @@ msgid "Frying oil"
 msgstr "Frying oil"
 
 #: app/components/customers/person-orders-panel.tsx:169
-#: app/components/orders/order-detail.tsx:717
+#: app/components/orders/order-detail.tsx:734
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:977
 msgid "Fulfillment"
 msgstr "Fulfillment"
@@ -21609,7 +21640,7 @@ msgstr "Full name"
 msgid "Full Name"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:1346
+#: app/components/orders/order-detail.tsx:1370
 msgid "Full refund"
 msgstr "Full refund"
 
@@ -21838,7 +21869,7 @@ msgstr "Give the group a name."
 msgid "Give the job a title."
 msgstr "Give the job a title."
 
-#: app/components/orders/order-detail.tsx:1187
+#: app/components/orders/order-detail.tsx:1211
 msgid "Give the money back at the counter first, then record it here."
 msgstr "Give the money back at the counter first, then record it here."
 
@@ -22231,7 +22262,7 @@ msgstr "Guest"
 msgid "Guest asked"
 msgstr "Guest asked"
 
-#: app/components/orders/order-detail.tsx:659
+#: app/components/orders/order-detail.tsx:676
 #: app/components/settings/cards/organization/shop-card.tsx:465
 #: app/routes/_app+/$orgSlug_+/orders.tsx:314
 msgid "Guest checkout"
@@ -22563,6 +22594,10 @@ msgstr "Guests prepay {amount} per booking."
 #: app/utils/reservations/policies-view.ts:351
 msgid "Guests prepay {amount} per guest to book."
 msgstr "Guests prepay {amount} per guest to book."
+
+#: app/components/marketing/marketing-attribution-overview.tsx:95
+msgid "Guests reached"
+msgstr "Guests reached"
 
 #: app/components/reservations/policies/policy-sheet.tsx:341
 msgid "Guests read these terms and accept them before they book. Write them in each language your website offers."
@@ -23378,6 +23413,11 @@ msgstr "How often guests can pick a start time"
 msgid "How often people clock in on time for the shifts they were scheduled on."
 msgstr "How often people clock in on time for the shifts they were scheduled on."
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:53
+#: app/components/marketing/journey-step-attribution.tsx:105
+msgid "How orders are counted"
+msgstr "How orders are counted"
+
 #: app/components/staff/kiosk-manager.tsx:592
 #: app/components/staff/kiosk-manager.tsx:878
 msgid "How people sign in"
@@ -23485,7 +23525,7 @@ msgstr "I confirm that I hold a licence that allows this font to be used on a we
 msgid "I fixed it myself"
 msgstr "I fixed it myself"
 
-#: app/components/orders/order-detail.tsx:1248
+#: app/components/orders/order-detail.tsx:1272
 msgid "I have received payment at handoff"
 msgstr "I have received payment at handoff"
 
@@ -23598,7 +23638,7 @@ msgstr "Image link"
 msgid "Image link copied"
 msgstr "Image link copied"
 
-#: app/components/marketing/marketing-calendar.tsx:307
+#: app/components/marketing/marketing-calendar.tsx:309
 #: app/components/social/social-calendar.tsx:116
 #: app/components/social/social-calendar.tsx:175
 #: app/components/social/social-calendar.tsx:224
@@ -24552,7 +24592,7 @@ msgstr "item"
 
 #: app/components/inventory/stock-list.tsx:102
 #: app/components/inventory/supplier-products.tsx:375
-#: app/components/orders/order-detail.tsx:879
+#: app/components/orders/order-detail.tsx:903
 #: app/components/workspace-breadcrumb.tsx:123
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:105
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:119
@@ -24624,7 +24664,7 @@ msgstr "items"
 #: app/components/inventory/review-order-screen.tsx:627
 #: app/components/loyalty/promotion-dialog.tsx:671
 #: app/components/menu/menu-review-card.tsx:103
-#: app/components/orders/order-detail.tsx:865
+#: app/components/orders/order-detail.tsx:889
 #: app/components/pos/ticket-settings.tsx:61
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:322
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:370
@@ -24904,7 +24944,7 @@ msgstr "Keep mine"
 msgid "Keep my text"
 msgstr "Keep my text"
 
-#: app/components/orders/order-detail.tsx:1367
+#: app/components/orders/order-detail.tsx:1391
 msgid "Keep order"
 msgstr "Keep order"
 
@@ -25304,7 +25344,7 @@ msgstr "Lapsed 90d"
 msgid "Large"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:773
+#: app/components/orders/order-detail.tsx:797
 msgid "Large order +{largeOrderExtraMinutes} min"
 msgstr "Large order +{largeOrderExtraMinutes} min"
 
@@ -25434,9 +25474,13 @@ msgstr "Last 30 days"
 msgid "Last 30 days, visitors who left for another site: orders {order}, gift cards {giftCards}, reservations {reservations}."
 msgstr "Last 30 days, visitors who left for another site: orders {order}, gift cards {giftCards}, reservations {reservations}."
 
-#: app/components/marketing/programs-section.tsx:291
+#: app/components/marketing/programs-section.tsx:292
 msgid "Last 30 days: {runs} runs · {messagesSent} messages sent · {ordersByGoal} orders"
 msgstr "Last 30 days: {runs} runs · {messagesSent} messages sent · {ordersByGoal} orders"
+
+#: app/components/marketing/marketing-attribution-overview.tsx:77
+msgid "Last 30 days: messages and orders"
+msgstr "Last 30 days: messages and orders"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:142
 msgid "Last 7 days"
@@ -25551,7 +25595,7 @@ msgstr "Last pushed:"
 msgid "Last seating"
 msgstr "Last seating"
 
-#: app/components/orders/order-detail.tsx:1224
+#: app/components/orders/order-detail.tsx:1248
 msgid "Last updated"
 msgstr "Last updated"
 
@@ -25654,7 +25698,7 @@ msgstr "Launch checklist"
 msgid "Launch run"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:343
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:356
 msgid "Launch Test Run in Builder"
 msgstr ""
 
@@ -26159,7 +26203,7 @@ msgstr "Link button text"
 msgid "Link columns"
 msgstr ""
 
-#: app/components/marketing/short-links-screen.tsx:110
+#: app/components/marketing/short-links-screen.tsx:111
 msgid "Link copied"
 msgstr "Link copied"
 
@@ -26181,7 +26225,7 @@ msgstr "Link created"
 msgid "Link for {label}"
 msgstr "Link for {label}"
 
-#: app/components/marketing/short-links-screen.tsx:135
+#: app/components/marketing/short-links-screen.tsx:136
 msgid "Link is on"
 msgstr "Link is on"
 
@@ -26233,7 +26277,7 @@ msgstr "Links"
 msgid "Links must be a page of your site (starting with /) or a full https:// address."
 msgstr "Links must be a page of your site (starting with /) or a full https:// address."
 
-#: app/components/marketing/short-links-screen.tsx:235
+#: app/components/marketing/short-links-screen.tsx:236
 msgid "Links only point to pages on your own website. A click is counted per day; we never keep who clicked."
 msgstr "Links only point to pages on your own website. A click is counted per day; we never keep who clicked."
 
@@ -26529,7 +26573,7 @@ msgstr "Loading reviews"
 msgid "Loading rewards…"
 msgstr "Loading rewards…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:313
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:326
 msgid "Loading runs…"
 msgstr "Loading runs…"
 
@@ -26545,7 +26589,7 @@ msgstr "Loading settings…"
 msgid "Loading special days…"
 msgstr "Loading special days…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:463
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:476
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr ""
 
@@ -27121,7 +27165,7 @@ msgstr "Loyalty program, members and points, redemptions waiting for review, and
 msgid "Loyalty promotions"
 msgstr "Loyalty promotions"
 
-#: app/components/orders/order-detail.tsx:981
+#: app/components/orders/order-detail.tsx:1005
 msgid "Loyalty reward"
 msgstr "Loyalty reward"
 
@@ -27238,7 +27282,7 @@ msgstr "Make a new code"
 msgid "Make a new QR code for this table?"
 msgstr "Make a new QR code for this table?"
 
-#: app/components/marketing/short-links-screen.tsx:258
+#: app/components/marketing/short-links-screen.tsx:259
 msgid "Make a short link for a sticker, a flyer or a text, then see how many people use it."
 msgstr "Make a short link for a sticker, a flyer or a text, then see how many people use it."
 
@@ -27724,7 +27768,7 @@ msgstr "Mark popular automatically"
 msgid "Mark read"
 msgstr "Mark read"
 
-#: app/components/orders/order-detail.tsx:448
+#: app/components/orders/order-detail.tsx:465
 msgid "Mark ready"
 msgstr "Mark ready"
 
@@ -27792,7 +27836,7 @@ msgstr "Marked unavailable"
 #: app/components/roles/tenant-role-access-manager.tsx:243
 #: app/components/website/funnel-panel.tsx:56
 #: app/components/workspace-breadcrumb.tsx:15
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:186
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:187
 msgid "Marketing"
 msgstr ""
 
@@ -28240,7 +28284,7 @@ msgstr "Merge duplicate"
 msgid "Merge duplicate dishes"
 msgstr "Merge duplicate dishes"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:195
+#: ../../packages/marketing/src/components/campaign-detail.tsx:205
 #: ../../packages/marketing/src/components/campaign-form.tsx:399
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/components/reservations/messages/message-settings.tsx:689
@@ -28308,6 +28352,10 @@ msgstr "Messages and call records tied to this phone number."
 msgid "Messages per guest per 7 days"
 msgstr "Messages per guest per 7 days"
 
+#: app/components/marketing/marketing-attribution-overview.tsx:84
+msgid "Messages sent"
+msgstr "Messages sent"
+
 #: app/components/reservations/messages/message-settings.tsx:437
 msgid "Messages to send"
 msgstr "Messages to send"
@@ -28336,7 +28384,7 @@ msgstr "Meta did not confirm this post, so it may already be live. Check the acc
 msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
 msgstr "Meta no longer accepts this account’s access. Connect it again, then retry."
 
-#: app/components/orders/order-detail.tsx:1067
+#: app/components/orders/order-detail.tsx:1091
 msgid "Method"
 msgstr "Method"
 
@@ -29023,7 +29071,7 @@ msgstr "My schedule link"
 #: app/components/inventory/supplier-form.tsx:195
 #: app/components/loyalty/promotion-dialog.tsx:604
 #: app/components/loyalty/reward-dialog.tsx:506
-#: app/components/marketing/short-links-screen.tsx:177
+#: app/components/marketing/short-links-screen.tsx:178
 #: app/components/menu/menu-bulk-edit-sheet.tsx:808
 #: app/components/pos/terminals-manager.tsx:1603
 #: app/components/reservations/policies/policy-sheet.tsx:217
@@ -29997,7 +30045,7 @@ msgstr "No calls need follow-up"
 msgid "No calls yet"
 msgstr "No calls yet"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:261
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:264
 msgid "No campaigns yet."
 msgstr ""
 
@@ -30116,7 +30164,7 @@ msgstr "No connection. Check your internet and try again."
 msgid "No contact details"
 msgstr "No contact details"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:98
+#: ../../packages/marketing/src/components/campaign-detail.tsx:100
 msgid "No contact on file"
 msgstr ""
 
@@ -30162,7 +30210,7 @@ msgstr "No custom note. This is the default text with sample guest details."
 msgid "No custom roles created yet."
 msgstr "No custom roles created yet."
 
-#: app/components/orders/order-detail.tsx:707
+#: app/components/orders/order-detail.tsx:724
 msgid "No customer profile"
 msgstr "No customer profile"
 
@@ -30198,7 +30246,7 @@ msgstr "No deliveries this week to compare with."
 msgid "No deliveries yet"
 msgstr "No deliveries yet"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:257
+#: ../../packages/marketing/src/components/campaign-detail.tsx:267
 msgid "No delivery records yet."
 msgstr ""
 
@@ -30242,7 +30290,7 @@ msgstr "No discounts match these filters"
 msgid "No discounts yet"
 msgstr "No discounts yet"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:477
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:490
 msgid "No discrete action step dispatches recorded for this run."
 msgstr ""
 
@@ -30314,7 +30362,7 @@ msgstr "No events yet"
 msgid "No events yet."
 msgstr "No events yet."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:332
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:345
 msgid "No execution runs recorded yet for this automation."
 msgstr ""
 
@@ -30732,7 +30780,7 @@ msgstr "No notes yet."
 msgid "No numbers connected yet."
 msgstr "No numbers connected yet."
 
-#: app/components/marketing/marketing-calendar.tsx:332
+#: app/components/marketing/marketing-calendar.tsx:334
 msgid "No occasions in the next four weeks."
 msgstr "No occasions in the next four weeks."
 
@@ -30900,11 +30948,11 @@ msgstr "No pay is set yet."
 msgid "No payment"
 msgstr "No payment"
 
-#: app/components/orders/order-detail.tsx:1315
+#: app/components/orders/order-detail.tsx:1339
 msgid "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 msgstr "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 
-#: app/components/orders/order-detail.tsx:1083
+#: app/components/orders/order-detail.tsx:1107
 #: app/components/orders/order-status.tsx:37
 msgid "No payment needed"
 msgstr "No payment needed"
@@ -31062,7 +31110,7 @@ msgstr "No redirects created yet"
 msgid "No redirects match that search"
 msgstr "No redirects match that search"
 
-#: app/components/orders/order-detail.tsx:1350
+#: app/components/orders/order-detail.tsx:1374
 #: app/utils/reservations/policies-view.ts:40
 msgid "No refund"
 msgstr "No refund"
@@ -31225,7 +31273,7 @@ msgstr "No shifts are published for these dates. When your manager publishes the
 msgid "No shifts have been planned for this week."
 msgstr "No shifts have been planned for this week."
 
-#: app/components/marketing/short-links-screen.tsx:256
+#: app/components/marketing/short-links-screen.tsx:257
 msgid "No short links yet"
 msgstr "No short links yet"
 
@@ -31252,6 +31300,10 @@ msgstr "No special occasions noted for this service."
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:510
 msgid "No staff phone, so only the transfer cases below transfer calls."
 msgstr "No staff phone, so only the transfer cases below transfer calls."
+
+#: app/components/marketing/journey-step-attribution.tsx:134
+msgid "No step has sent a message yet."
+msgstr "No step has sent a message yet."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:224
 msgid "No storage areas yet"
@@ -31427,7 +31479,7 @@ msgid "No upcoming shifts are published."
 msgstr "No upcoming shifts are published."
 
 #: app/components/locations/checkout-rules-cards.tsx:145
-#: app/components/orders/order-detail.tsx:782
+#: app/components/orders/order-detail.tsx:806
 msgid "No utensils"
 msgstr "No utensils"
 
@@ -31659,7 +31711,7 @@ msgstr "Normal"
 msgid "Not a problem"
 msgstr "Not a problem"
 
-#: app/components/orders/order-detail.tsx:548
+#: app/components/orders/order-detail.tsx:565
 #: app/components/orders/refund-labels.ts:25
 msgid "Not accepted in time"
 msgstr "Not accepted in time"
@@ -31889,7 +31941,7 @@ msgstr "Not seen yet"
 msgid "Not sent"
 msgstr "Not sent"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:75
+#: ../../packages/marketing/src/components/campaign-detail.tsx:77
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:12
 msgid "Not sent: too late"
 msgstr "Not sent: too late"
@@ -32560,7 +32612,7 @@ msgstr ""
 
 #: app/components/locations/order-policies-card.tsx:85
 #: app/components/marketing/programs-section.tsx:55
-#: app/components/marketing/short-links-screen.tsx:143
+#: app/components/marketing/short-links-screen.tsx:144
 #: app/components/phone-agent/settings-nav.tsx:82
 #: app/components/pos/station-register-settings.tsx:149
 #: app/components/pos/station-register-settings.tsx:311
@@ -32671,7 +32723,7 @@ msgid "Olive oil"
 msgstr "Olive oil"
 
 #: app/components/marketing/programs-section.tsx:56
-#: app/components/marketing/short-links-screen.tsx:143
+#: app/components/marketing/short-links-screen.tsx:144
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:754
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:366
 msgid "On"
@@ -32916,7 +32968,7 @@ msgstr "One to three dishes with photo, price and an Order button."
 msgid "One-time broadcasts and automated journeys."
 msgstr "One-time broadcasts and automated journeys."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:102
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:103
 msgid "One-time email and SMS"
 msgstr ""
 
@@ -32938,7 +32990,7 @@ msgstr "Onions"
 
 #: app/components/chat/chat-view.tsx:609
 #: app/components/kiosk/kiosk-chrome.tsx:126
-#: app/components/orders/order-detail.tsx:1074
+#: app/components/orders/order-detail.tsx:1098
 #: app/components/pos/terminal-health.tsx:400
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:864
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:803
@@ -32949,7 +33001,7 @@ msgstr "Onions"
 msgid "Online"
 msgstr "Online"
 
-#: app/components/orders/order-detail.tsx:1073
+#: app/components/orders/order-detail.tsx:1097
 msgid "Online ({processor})"
 msgstr "Online ({processor})"
 
@@ -33570,7 +33622,7 @@ msgstr "Open Purchasing to see the price changes."
 msgid "Open question"
 msgstr "Open question"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:80
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:81
 msgid "Open rate"
 msgstr ""
 
@@ -33735,7 +33787,7 @@ msgstr "Open Today to check on the affected guests."
 msgid "Open Today to review the bookings."
 msgstr "Open Today to review the bookings."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:294
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:300
 msgid "Open visual builder"
 msgstr "Open visual builder"
 
@@ -33764,7 +33816,7 @@ msgid "Open, export and unrestrict the responses of forms marked Restricted (all
 msgstr "Open, export and unrestrict the responses of forms marked Restricted (allergies, complaints, applicants). Needs View website workspace."
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:108
+#: ../../packages/marketing/src/components/campaign-detail.tsx:110
 msgid "Opened {0}"
 msgstr ""
 
@@ -34111,7 +34163,7 @@ msgid "Orange juice"
 msgstr "Orange juice"
 
 #: app/components/customers/person-orders-panel.tsx:160
-#: app/components/orders/order-detail.tsx:519
+#: app/components/orders/order-detail.tsx:536
 #: app/components/pos/ticket-settings.tsx:459
 #: app/components/workspace-breadcrumb.tsx:127
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:272
@@ -34224,7 +34276,7 @@ msgstr "Order cut-off"
 msgid "Order cutoff"
 msgstr "Order cutoff"
 
-#: app/components/orders/order-detail.tsx:465
+#: app/components/orders/order-detail.tsx:482
 msgid "Order details"
 msgstr "Order details"
 
@@ -34385,16 +34437,41 @@ msgstr "orders"
 #: app/components/dashboard/blocks/today-block.tsx:385
 #: app/components/discounts/discount-performance.tsx:249
 #: app/components/locations/ordering-settings-cards.tsx:199
-#: app/components/orders/order-detail.tsx:473
+#: app/components/orders/order-detail.tsx:490
 #: app/components/roles/tenant-role-access-manager.tsx:162
 #: app/components/workspace-breadcrumb.tsx:12
 #: app/routes/_app+/$orgSlug_+/orders.tsx:184
 msgid "Orders"
 msgstr "Orders"
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:73
+#: app/components/marketing/journey-step-attribution.tsx:144
+msgid "Orders after a click"
+msgstr "Orders after a click"
+
 #: app/components/pos/terminals-manager.tsx:1720
 msgid "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
 msgstr "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:49
+msgid "Orders and revenue"
+msgstr "Orders and revenue"
+
+#: app/components/marketing/journey-step-attribution.tsx:101
+msgid "Orders and revenue by step"
+msgstr "Orders and revenue by step"
+
+#: app/components/marketing/journey-step-attribution.tsx:130
+msgid "Orders and revenue by step could not be loaded."
+msgstr "Orders and revenue by step could not be loaded."
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:45
+msgid "Orders and revenue from marketing"
+msgstr "Orders and revenue from marketing"
+
+#: app/components/marketing/marketing-attribution-overview.tsx:67
+msgid "Orders and revenue from marketing could not be loaded."
+msgstr "Orders and revenue from marketing could not be loaded."
 
 #: app/components/inventory/record-delivery-screen.tsx:422
 msgid "Orders are not turned on for your business."
@@ -34427,6 +34504,11 @@ msgstr "Orders could not be loaded. Try again."
 #: app/components/locations/order-policies-card.tsx:224
 msgid "Orders for right now go straight to the kitchen."
 msgstr "Orders for right now go straight to the kitchen."
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:74
+#: app/components/marketing/journey-step-attribution.tsx:145
+msgid "Orders from guests reached"
+msgstr "Orders from guests reached"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:401
 msgid "Orders in the last 30 days"
@@ -34899,7 +34981,7 @@ msgstr "Packaging"
 
 #: app/components/locations/checkout-rules-cards.tsx:234
 #: app/components/locations/location-setting-labels.ts:22
-#: app/components/orders/order-detail.tsx:1010
+#: app/components/orders/order-detail.tsx:1034
 msgid "Packaging fee"
 msgstr "Packaging fee"
 
@@ -34929,7 +35011,7 @@ msgstr "Page address"
 msgid "Page block"
 msgstr "Page block"
 
-#: app/components/marketing/short-links-screen.tsx:186
+#: app/components/marketing/short-links-screen.tsx:187
 msgid "Page on your website"
 msgstr "Page on your website"
 
@@ -34976,7 +35058,7 @@ msgstr "Paid"
 msgid "Paid · Cash"
 msgstr "Paid · Cash"
 
-#: app/components/orders/order-detail.tsx:1081
+#: app/components/orders/order-detail.tsx:1105
 msgid "Paid {totalMoney}"
 msgstr "Paid {totalMoney}"
 
@@ -34984,7 +35066,7 @@ msgstr "Paid {totalMoney}"
 msgid "Paid <0>{paid}</0>"
 msgstr "Paid <0>{paid}</0>"
 
-#: app/components/orders/order-detail.tsx:1093
+#: app/components/orders/order-detail.tsx:1117
 msgid "Paid at"
 msgstr "Paid at"
 
@@ -35031,7 +35113,7 @@ msgstr "Paid time <0>{totalLabel}</0>"
 msgid "Paid time off"
 msgstr "Paid time off"
 
-#: app/components/orders/order-detail.tsx:746
+#: app/components/orders/order-detail.tsx:763
 msgid "Paid when the tab closes"
 msgstr "Paid when the tab closes"
 
@@ -35374,7 +35456,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:427
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:72
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:365
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:151
 #: app/utils/discounts/labels.ts:27
 #: app/utils/discounts/labels.ts:48
 #: app/utils/loyalty/loyalty-labels.ts:31
@@ -35427,7 +35509,7 @@ msgstr "Pay and rates"
 msgid "Pay and register"
 msgstr "Pay and register"
 
-#: app/components/orders/order-detail.tsx:1071
+#: app/components/orders/order-detail.tsx:1095
 msgid "Pay at handoff"
 msgstr "Pay at handoff"
 
@@ -35484,13 +35566,13 @@ msgstr "Paying from the phone always asks for a name and phone number."
 msgid "Paying online"
 msgstr "Paying online"
 
-#: app/components/orders/order-detail.tsx:531
-#: app/components/orders/order-detail.tsx:1061
+#: app/components/orders/order-detail.tsx:548
+#: app/components/orders/order-detail.tsx:1085
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
 msgid "Payment"
 msgstr "Payment"
 
-#: app/components/orders/order-detail.tsx:373
+#: app/components/orders/order-detail.tsx:390
 msgid "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it, refund it through your payment processor and record the refund on this order."
 msgstr "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it, refund it through your payment processor and record the refund on this order."
 
@@ -35506,7 +35588,7 @@ msgstr "Payment expired"
 msgid "Payment failed"
 msgstr "Payment failed"
 
-#: app/components/orders/order-detail.tsx:1085
+#: app/components/orders/order-detail.tsx:1109
 msgid "Payment failed. Nothing was charged."
 msgstr "Payment failed. Nothing was charged."
 
@@ -35537,7 +35619,7 @@ msgstr "Payment needs review"
 msgid "Payment not finished"
 msgstr "Payment not finished"
 
-#: app/components/orders/order-detail.tsx:1088
+#: app/components/orders/order-detail.tsx:1112
 msgid "Payment not yet received"
 msgstr "Payment not yet received"
 
@@ -35555,7 +35637,7 @@ msgstr "Payment policies"
 msgid "Payment policy"
 msgstr "Payment policy"
 
-#: app/components/orders/order-detail.tsx:394
+#: app/components/orders/order-detail.tsx:411
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:230
 msgid "Payment received"
 msgstr "Payment received"
@@ -35574,7 +35656,7 @@ msgstr "Payment uncertain"
 msgid "Payment under review"
 msgstr "Payment under review"
 
-#: app/components/orders/order-detail.tsx:1087
+#: app/components/orders/order-detail.tsx:1111
 msgid "Payment window expired before it was paid."
 msgstr "Payment window expired before it was paid."
 
@@ -35662,7 +35744,7 @@ msgstr "pending"
 #: app/components/customers/person-marketing-card.tsx:392
 #: app/components/settings/cards/organization/email-sending-card.tsx:80
 #: app/components/settings/cards/organization/shop-card.tsx:47
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:490
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:503
 #: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:384
 msgid "Pending"
 msgstr ""
@@ -35824,7 +35906,7 @@ msgstr "Percentage off"
 msgid "Performance figures are unavailable right now."
 msgstr "Performance figures are unavailable right now."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:220
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:221
 msgid "Performance metrics"
 msgstr ""
 
@@ -36259,7 +36341,7 @@ msgstr "Pickles"
 #: app/components/locations/checkout-rules-cards.tsx:296
 #: app/components/locations/checkout-settings-cards.tsx:52
 #: app/components/locations/checkout-settings-cards.tsx:357
-#: app/components/orders/order-detail.tsx:732
+#: app/components/orders/order-detail.tsx:749
 #: app/components/orders/slot-limits-panel.tsx:164
 #: app/routes/_app+/$orgSlug_+/orders.tsx:338
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1059
@@ -36418,7 +36500,7 @@ msgstr "Place a single-choice field above this one to show it only for certain a
 msgid "Place a test order"
 msgstr "Place a test order"
 
-#: app/components/orders/order-detail.tsx:393
+#: app/components/orders/order-detail.tsx:410
 msgid "Placed"
 msgstr "Placed"
 
@@ -36953,6 +37035,10 @@ msgstr "Poster"
 msgid "Poster QR"
 msgstr "Poster QR"
 
+#: app/components/orders/refund-labels.ts:42
+msgid "Poster QR code"
+msgstr "Poster QR code"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:407
 msgid "Posts already sent stay on {platformName}. Scheduled posts will fail for this account."
 msgstr "Posts already sent stay on {platformName}. Scheduled posts will fail for this account."
@@ -37176,7 +37262,7 @@ msgstr "Previous week"
 #: app/components/inventory/recipe-section.tsx:763
 #: app/components/menu/location-overrides-card.tsx:178
 #: app/components/menu/menu-review-card.tsx:432
-#: app/components/orders/order-detail.tsx:882
+#: app/components/orders/order-detail.tsx:906
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:965
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:584
@@ -37943,6 +38029,7 @@ msgstr "Purchasing"
 
 #: ../../packages/marketing-workflow/src/nodes/action-push-node.tsx:19
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:18
+#: app/components/marketing/journey-step-attribution.tsx:83
 msgid "Push"
 msgstr "Push"
 
@@ -37962,11 +38049,11 @@ msgstr "Push message is required."
 msgid "Push now"
 msgstr "Push now"
 
-#: app/components/orders/order-detail.tsx:801
+#: app/components/orders/order-detail.tsx:825
 msgid "Push the promised time back"
 msgstr "Push the promised time back"
 
-#: app/components/orders/order-detail.tsx:821
+#: app/components/orders/order-detail.tsx:845
 msgid "Push the time back. The guest's page updates, and 10 minutes or more also sends them the new time."
 msgstr "Push the time back. The guest's page updates, and 10 minutes or more also sends them the new time."
 
@@ -38015,7 +38102,7 @@ msgid "QR"
 msgstr "QR"
 
 #: app/components/hiring/applicant-labels.ts:31
-#: app/components/marketing/short-links-screen.tsx:128
+#: app/components/marketing/short-links-screen.tsx:129
 #: app/components/print/print-labels.ts:66
 #: app/components/settings/two-factor-form.tsx:176
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:778
@@ -38071,7 +38158,7 @@ msgstr "QR tables"
 msgid "qt"
 msgstr "qt"
 
-#: app/components/orders/order-detail.tsx:873
+#: app/components/orders/order-detail.tsx:897
 msgid "Qty"
 msgstr "Qty"
 
@@ -38275,6 +38362,19 @@ msgstr "Re-deriving…"
 msgid "Re-send to non-openers"
 msgstr "Re-send to non-openers"
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:64
+#: app/components/marketing/journey-step-attribution.tsx:122
+msgid "Reached"
+msgstr "Reached"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:103
+msgid "Reached: clicked orders plus orders from guests who were sent a message in the 14 days before. Each order is counted once, for their latest message."
+msgstr "Reached: clicked orders plus orders from guests who were sent a message in the 14 days before. Each order is counted once, for their latest message."
+
+#: app/components/marketing/journey-step-attribution.tsx:186
+msgid "Reached: clicked orders plus orders from guests who were sent that step's message in the 14 days before. Each order is counted once."
+msgstr "Reached: clicked orders plus orders from guests who were sent that step's message in the 14 days before. Each order is counted once."
+
 #: app/utils/staffing/schedule-errors.ts:66
 msgid "Reaches overtime this week"
 msgstr "Reaches overtime this week"
@@ -38389,7 +38489,7 @@ msgstr "Reading your menu…"
 msgid "Ready"
 msgstr "Ready"
 
-#: app/components/orders/order-detail.tsx:332
+#: app/components/orders/order-detail.tsx:333
 msgid "Ready around {promisedFrom}"
 msgstr "Ready around {promisedFrom}"
 
@@ -38531,7 +38631,7 @@ msgstr "Recent"
 msgid "Recent activity"
 msgstr "Recent activity"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:242
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:245
 msgid "Recent campaigns"
 msgstr ""
 
@@ -38592,7 +38692,7 @@ msgstr "Recipient"
 msgid "recipients"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:245
+#: ../../packages/marketing/src/components/campaign-detail.tsx:255
 msgid "Recipients"
 msgstr ""
 
@@ -38661,7 +38761,7 @@ msgid "Record a message for your team to follow up."
 msgstr "Record a message for your team to follow up."
 
 #: app/components/loyalty/record-refund-dialog.tsx:205
-#: app/components/orders/order-detail.tsx:1184
+#: app/components/orders/order-detail.tsx:1208
 #: app/components/orders/record-order-refund-dialog.tsx:227
 msgid "Record a refund"
 msgstr "Record a refund"
@@ -38968,9 +39068,9 @@ msgstr "Refresh. {updated}"
 
 #: app/components/gift-cards/gift-card-dialogs.tsx:496
 #: app/components/loyalty/record-refund-dialog.tsx:252
-#: app/components/orders/order-detail.tsx:1111
-#: app/components/orders/order-detail.tsx:1123
-#: app/components/orders/order-detail.tsx:1161
+#: app/components/orders/order-detail.tsx:1135
+#: app/components/orders/order-detail.tsx:1147
+#: app/components/orders/order-detail.tsx:1185
 #: app/components/orders/provider-refund-dialog.tsx:357
 #: app/components/orders/record-order-refund-dialog.tsx:281
 #: app/components/reservations/payment-panel.tsx:625
@@ -38984,15 +39084,15 @@ msgstr "Refund"
 msgid "Refund failed"
 msgstr "Refund failed"
 
-#: app/components/orders/order-detail.tsx:413
+#: app/components/orders/order-detail.tsx:430
 msgid "Refund failed: {amount}"
 msgstr "Refund failed: {amount}"
 
-#: app/components/orders/order-detail.tsx:1129
+#: app/components/orders/order-detail.tsx:1153
 msgid "Refund failed."
 msgstr "Refund failed."
 
-#: app/components/orders/order-detail.tsx:1402
+#: app/components/orders/order-detail.tsx:1426
 msgid "Refund failed. You can try again."
 msgstr "Refund failed. You can try again."
 
@@ -39010,15 +39110,15 @@ msgstr "Refund online orders"
 msgid "Refund pending"
 msgstr "Refund pending"
 
-#: app/components/orders/order-detail.tsx:1115
+#: app/components/orders/order-detail.tsx:1139
 msgid "Refund pending ({refundPendingMoney})"
 msgstr "Refund pending ({refundPendingMoney})"
 
-#: app/components/orders/order-detail.tsx:411
+#: app/components/orders/order-detail.tsx:428
 msgid "Refund pending: {amount}"
 msgstr "Refund pending: {amount}"
 
-#: app/components/orders/order-detail.tsx:1400
+#: app/components/orders/order-detail.tsx:1424
 msgid "Refund pending. It is still being processed."
 msgstr "Refund pending. It is still being processed."
 
@@ -39035,11 +39135,11 @@ msgstr "Refund processing"
 msgid "Refund queued"
 msgstr "Refund queued"
 
-#: app/components/orders/order-detail.tsx:409
+#: app/components/orders/order-detail.tsx:426
 msgid "Refund recorded: {amount}"
 msgstr "Refund recorded: {amount}"
 
-#: app/components/orders/order-detail.tsx:1422
+#: app/components/orders/order-detail.tsx:1446
 msgid "Refund recorded."
 msgstr "Refund recorded."
 
@@ -39051,7 +39151,7 @@ msgstr "Refund recorded. No points needed to be taken back."
 msgid "Refund recorded. Points taken back: {taken}."
 msgstr "Refund recorded. Points taken back: {taken}."
 
-#: app/components/orders/order-detail.tsx:1403
+#: app/components/orders/order-detail.tsx:1427
 msgid "Refund sent to the guest's card."
 msgstr "Refund sent to the guest's card."
 
@@ -39059,7 +39159,7 @@ msgstr "Refund sent to the guest's card."
 msgid "Refund the buyer"
 msgstr "Refund the buyer"
 
-#: app/components/orders/order-detail.tsx:1335
+#: app/components/orders/order-detail.tsx:1359
 msgid "Refund the guest?"
 msgstr "Refund the guest?"
 
@@ -39079,7 +39179,7 @@ msgstr "Refund to card"
 msgid "Refund to the card"
 msgstr "Refund to the card"
 
-#: app/components/orders/order-detail.tsx:1101
+#: app/components/orders/order-detail.tsx:1125
 #: app/components/orders/order-status.tsx:39
 #: app/components/print/print-order-labels.ts:21
 #: app/components/settings/cards/organization/shop-card.tsx:51
@@ -39109,7 +39209,7 @@ msgstr "Refunded <0>{amount}</0>"
 msgid "Refunded after the deadline (%)"
 msgstr "Refunded after the deadline (%)"
 
-#: app/components/orders/order-detail.tsx:414
+#: app/components/orders/order-detail.tsx:431
 msgid "Refunded to card: {amount}"
 msgstr "Refunded to card: {amount}"
 
@@ -39222,7 +39322,7 @@ msgstr "Rehire {name}"
 msgid "Rehiring…"
 msgstr "Rehiring…"
 
-#: app/components/orders/order-detail.tsx:616
+#: app/components/orders/order-detail.tsx:633
 #: app/components/orders/waiting-lane.tsx:196
 #: app/components/privacy-banner.tsx:48
 #: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:531
@@ -39249,7 +39349,7 @@ msgstr "Rejected"
 msgid "Rejected {refused}"
 msgstr "Rejected {refused}"
 
-#: app/components/orders/order-detail.tsx:551
+#: app/components/orders/order-detail.tsx:568
 msgid "Rejected: {reason}"
 msgstr "Rejected: {reason}"
 
@@ -40610,7 +40710,7 @@ msgstr "Restricted to"
 msgid "Result"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:231
+#: ../../packages/marketing/src/components/campaign-detail.tsx:241
 #: app/components/media-library/photo-studio-dialog.tsx:429
 msgid "Results"
 msgstr "Results"
@@ -40731,6 +40831,16 @@ msgstr "Reuse"
 #: app/components/staff/schedule/templates-dialog.tsx:83
 msgid "Reuse a pattern of shifts week after week."
 msgstr "Reuse a pattern of shifts week after week."
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:86
+#: app/components/marketing/journey-step-attribution.tsx:149
+msgid "Revenue after a click"
+msgstr "Revenue after a click"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:87
+#: app/components/marketing/journey-step-attribution.tsx:150
+msgid "Revenue from guests reached"
+msgstr "Revenue from guests reached"
 
 #: app/components/hiring/job-editor.tsx:203
 #: app/components/inventory/counting-screen.tsx:430
@@ -41057,7 +41167,7 @@ msgstr "Rules teach the agent how your business works, the way you'd explain it 
 msgid "Run double points on a slow Tuesday, a bonus on a new dish, or a boost at one location."
 msgstr "Run double points on a slow Tuesday, a bonus on a new dish, or a boost at one location."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:426
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:439
 msgid "Run Execution Timeline"
 msgstr ""
 
@@ -41065,11 +41175,11 @@ msgstr ""
 msgid "Run history"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:352
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:365
 msgid "Run ID"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:446
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:459
 msgid "Run ID: {selectedRunId}"
 msgstr ""
 
@@ -41082,7 +41192,7 @@ msgid "Rung up on a Station till"
 msgstr "Rung up on a Station till"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:151
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:157
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:410
 msgid "Running"
 msgstr ""
@@ -41784,7 +41894,7 @@ msgstr "Saved in the audit log with your name."
 msgid "Saved offline and sent more than 12 hours later. Check the times."
 msgstr "Saved offline and sent more than 12 hours later. Check the times."
 
-#: app/components/orders/order-detail.tsx:1323
+#: app/components/orders/order-detail.tsx:1347
 msgid "Saved on the order. The guest is told only when an item ran out or the kitchen is closed."
 msgstr "Saved on the order. The guest is told only when an item ran out or the kitchen is closed."
 
@@ -42135,7 +42245,7 @@ msgstr "Schedule: a week was published"
 msgid "scheduled"
 msgstr "scheduled"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:71
+#: ../../packages/marketing/src/components/campaign-detail.tsx:73
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
 #: app/components/hiring/applicant-labels.ts:40
 #: app/components/social/social-labels.ts:31
@@ -42170,7 +42280,7 @@ msgstr "Scheduled Changeover"
 msgid "Scheduled count day"
 msgstr "Scheduled count day"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:71
+#: ../../packages/marketing/src/components/campaign-detail.tsx:73
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:219
 msgid "Scheduled for {at}"
 msgstr "Scheduled for {at}"
@@ -42893,7 +43003,7 @@ msgstr "See teammate names, emails, and assigned roles."
 msgid "See the agent's settings, call flow, numbers, and training rules."
 msgstr "See the agent's settings, call flow, numbers, and training rules."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:173
+#: ../../packages/marketing/src/components/campaign-detail.tsx:175
 msgid "See the original"
 msgstr "See the original"
 
@@ -42905,7 +43015,7 @@ msgstr "See the original broadcast"
 msgid "See the price"
 msgstr "See the price"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:187
+#: ../../packages/marketing/src/components/campaign-detail.tsx:189
 msgid "See the re-send"
 msgstr "See the re-send"
 
@@ -43513,8 +43623,8 @@ msgstr "Sent"
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:77
-#: ../../packages/marketing/src/components/campaign-detail.tsx:273
+#: ../../packages/marketing/src/components/campaign-detail.tsx:79
+#: ../../packages/marketing/src/components/campaign-detail.tsx:283
 msgid "Sent {0}"
 msgstr ""
 
@@ -43676,7 +43786,7 @@ msgstr "Service ends"
 
 #: app/components/locations/checkout-settings-cards.tsx:287
 #: app/components/locations/location-setting-labels.ts:21
-#: app/components/orders/order-detail.tsx:996
+#: app/components/orders/order-detail.tsx:1020
 msgid "Service fee"
 msgstr "Service fee"
 
@@ -44284,6 +44394,10 @@ msgstr "Short by {short} person-hours and {over} over, against the orders you us
 #: app/components/locations/copy-settings-dialog.tsx:538
 msgid "Short day with these hours"
 msgstr "Short day with these hours"
+
+#: app/components/orders/refund-labels.ts:40
+msgid "Short link"
+msgstr "Short link"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/links.tsx:157
 msgid "Short links to your website, with a count of clicks and a QR code."
@@ -45046,7 +45160,7 @@ msgid "Social links"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:532
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:121
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:122
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:145
 msgid "Social media"
 msgstr "Social media"
@@ -45797,7 +45911,7 @@ msgstr "Start menu import"
 msgid "Start order"
 msgstr "Start order"
 
-#: app/components/orders/order-detail.tsx:446
+#: app/components/orders/order-detail.tsx:463
 msgid "Start preparing"
 msgstr "Start preparing"
 
@@ -45858,7 +45972,7 @@ msgstr "Started {startedAt}"
 msgid "Started {startedAt} by <0>{by}</0>"
 msgstr "Started {startedAt} by <0>{by}</0>"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:356
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:369
 msgid "Started At"
 msgstr ""
 
@@ -45979,7 +46093,7 @@ msgstr "Stats"
 #: app/components/dashboard/blocks/status-block.tsx:30
 #: app/components/inventory/stock-list.tsx:114
 #: app/components/menu/menu-bulk-edit-sheet.tsx:603
-#: app/components/orders/order-detail.tsx:1077
+#: app/components/orders/order-detail.tsx:1101
 #: app/components/reservations/experiences/experiences-screen.tsx:292
 #: app/components/roles/tenant-role-access-manager.tsx:1353
 #: app/components/settings/cards/organization/email-sending-card.tsx:327
@@ -45999,7 +46113,7 @@ msgstr "Stats"
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:282
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:390
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:280
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:355
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:368
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:973
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:531
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:350
@@ -46061,11 +46175,15 @@ msgstr "Stayed on current page"
 msgid "Stays dismissed until this changes."
 msgstr "Stays dismissed until this changes."
 
+#: app/components/marketing/journey-step-attribution.tsx:141
+msgid "Step"
+msgstr "Step"
+
 #: app/routes/organizations+/create.tsx:798
 msgid "Step {currentStep} of {totalSteps}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:483
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:496
 msgid "Step Executions ({timelineCount})"
 msgstr ""
 
@@ -46418,7 +46536,7 @@ msgstr ""
 msgid "Subscription Started"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:933
+#: app/components/orders/order-detail.tsx:957
 #: app/components/pos/ticket-settings.tsx:71
 #: app/components/pos/ticket-settings.tsx:263
 msgid "Subtotal"
@@ -46770,7 +46888,7 @@ msgstr "Table {0} is occupied by {1} ({2}p)"
 msgid "Table {createdTableLabel} created."
 msgstr "Table {createdTableLabel} created."
 
-#: app/components/orders/order-detail.tsx:742
+#: app/components/orders/order-detail.tsx:759
 #: app/components/qr/open-tabs.tsx:369
 #: app/components/qr/open-tabs.tsx:1059
 #: app/components/qr/open-tabs.tsx:1147
@@ -46908,6 +47026,10 @@ msgstr "Table QR"
 #: app/components/print/restaurant/vertical-ui.tsx:241
 msgid "Table QR cards"
 msgstr "Table QR cards"
+
+#: app/components/orders/refund-labels.ts:41
+msgid "Table QR code"
+msgstr "Table QR code"
 
 #: app/components/qr/tables-manager.tsx:277
 msgid "Table renamed"
@@ -47217,7 +47339,7 @@ msgstr "Tasks"
 msgid "Tasks to finish when someone joins."
 msgstr "Tasks to finish when someone joins."
 
-#: app/components/orders/order-detail.tsx:1018
+#: app/components/orders/order-detail.tsx:1042
 #: app/components/pos/pos-day-report.tsx:256
 #: app/components/pos/ticket-settings.tsx:73
 #: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:124
@@ -47550,6 +47672,7 @@ msgstr "Test this draft"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:200
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:236
 #: app/components/customers/person-marketing-card.tsx:158
+#: app/components/marketing/journey-step-attribution.tsx:82
 #: app/components/marketing/marketing-calendar.tsx:202
 #: app/components/marketing/programs-section.tsx:129
 #: app/components/marketing/programs-section.tsx:221
@@ -47562,6 +47685,10 @@ msgstr ""
 #: app/components/phone-agent/flow-editor/flow-meta.ts:55
 msgid "Text a link"
 msgstr "Text a link"
+
+#: app/components/orders/refund-labels.ts:38
+msgid "Text campaign"
+msgstr "Text campaign"
 
 #: app/utils/website/field-types.ts:31
 #: app/utils/website/field-types.ts:34
@@ -48959,7 +49086,7 @@ msgstr "The guest asked to receive marketing by email"
 msgid "The guest asked to receive marketing by text"
 msgstr "The guest asked to receive marketing by text"
 
-#: app/components/orders/order-detail.tsx:1140
+#: app/components/orders/order-detail.tsx:1164
 msgid "The guest disputed this payment with their card issuer, so it cannot be refunded here until the dispute is settled."
 msgstr "The guest disputed this payment with their card issuer, so it cannot be refunded here until the dispute is settled."
 
@@ -49156,7 +49283,7 @@ msgstr "The link cannot point back to your own website."
 msgid "The link could not be changed. Try again."
 msgstr "The link could not be changed. Try again."
 
-#: app/components/marketing/short-links-screen.tsx:111
+#: app/components/marketing/short-links-screen.tsx:112
 msgid "The link could not be copied"
 msgstr "The link could not be copied"
 
@@ -49282,11 +49409,11 @@ msgstr "The Meta emulator refused this post (it contains #fail)."
 msgid "The minimum and maximum don't fit this choice."
 msgstr "The minimum and maximum don't fit this choice."
 
-#: app/components/orders/order-detail.tsx:1165
+#: app/components/orders/order-detail.tsx:1189
 msgid "The money goes back to the guest's card through your payment provider."
 msgstr "The money goes back to the guest's card through your payment provider."
 
-#: app/components/orders/order-detail.tsx:1355
+#: app/components/orders/order-detail.tsx:1379
 #: app/components/orders/provider-refund-dialog.tsx:303
 msgid "The money goes back to the guest's card through your payment provider. Card and payment provider fees are usually not returned to you."
 msgstr "The money goes back to the guest's card through your payment provider. Card and payment provider fees are usually not returned to you."
@@ -49675,7 +49802,7 @@ msgstr "The provider could not issue the refund."
 msgid "The provider declined the refund."
 msgstr "The provider declined the refund."
 
-#: app/components/marketing/short-links-screen.tsx:123
+#: app/components/marketing/short-links-screen.tsx:124
 msgid "The QR code could not be made"
 msgstr "The QR code could not be made"
 
@@ -50570,7 +50697,7 @@ msgstr "This booking needs a payment first."
 msgid "This booking no longer exists. The board has been reloaded."
 msgstr "This booking no longer exists. The board has been reloaded."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:158
+#: ../../packages/marketing/src/components/campaign-detail.tsx:160
 msgid "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 msgstr "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 
@@ -50590,11 +50717,11 @@ msgstr "This broadcast is scheduled. Saving keeps it scheduled."
 msgid "This broadcast was already re-sent to non-openers."
 msgstr "This broadcast was already re-sent to non-openers."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:181
+#: ../../packages/marketing/src/components/campaign-detail.tsx:183
 msgid "This broadcast was re-sent to non-openers."
 msgstr "This broadcast was re-sent to non-openers."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:155
+#: ../../packages/marketing/src/components/campaign-detail.tsx:157
 msgid "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 msgstr "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 
@@ -51207,8 +51334,8 @@ msgstr "This one uses a cost somebody typed. You need cost access to see or chan
 msgid "this option"
 msgstr "this option"
 
-#: app/components/orders/order-detail.tsx:356
-#: app/components/orders/order-detail.tsx:819
+#: app/components/orders/order-detail.tsx:373
+#: app/components/orders/order-detail.tsx:843
 msgid "This order can't be pushed back any further."
 msgstr "This order can't be pushed back any further."
 
@@ -51216,7 +51343,7 @@ msgstr "This order can't be pushed back any further."
 msgid "This order cannot be refunded through the payment provider."
 msgstr "This order cannot be refunded through the payment provider."
 
-#: app/components/orders/order-detail.tsx:352
+#: app/components/orders/order-detail.tsx:369
 msgid "This order changed on another screen. Check the new time and try again."
 msgstr "This order changed on another screen. Check the new time and try again."
 
@@ -51250,7 +51377,7 @@ msgstr "This order is being sent right now. Wait a moment and refresh."
 msgid "This order is changing right now. Refresh and try again."
 msgstr "This order is changing right now. Refresh and try again."
 
-#: app/components/orders/order-detail.tsx:358
+#: app/components/orders/order-detail.tsx:375
 msgid "This order is finished, so its time can't change."
 msgstr "This order is finished, so its time can't change."
 
@@ -51258,11 +51385,11 @@ msgstr "This order is finished, so its time can't change."
 msgid "This order is too long for a WhatsApp link. Copy the text and paste it into the chat."
 msgstr "This order is too long for a WhatsApp link. Copy the text and paste it into the chat."
 
-#: app/components/orders/order-detail.tsx:600
+#: app/components/orders/order-detail.tsx:617
 msgid "This order is waiting for you to accept it."
 msgstr "This order is waiting for you to accept it."
 
-#: app/components/orders/order-detail.tsx:376
+#: app/components/orders/order-detail.tsx:393
 msgid "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 msgstr "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 
@@ -52237,13 +52364,13 @@ msgstr "Timezone"
 msgid "Timing and notes"
 msgstr "Timing and notes"
 
-#: app/components/orders/order-detail.tsx:1027
+#: app/components/orders/order-detail.tsx:1051
 #: app/components/pos/ticket-settings.tsx:74
 #: app/components/pos/ticket-settings.tsx:269
 msgid "Tip"
 msgstr "Tip"
 
-#: app/components/orders/order-detail.tsx:1026
+#: app/components/orders/order-detail.tsx:1050
 msgid "Tip ({tipPercent}%)"
 msgstr "Tip ({tipPercent}%)"
 
@@ -52602,7 +52729,7 @@ msgstr "Toppings, sauces and other choices on an item."
 #: app/components/customers/person-orders-panel.tsx:175
 #: app/components/inventory/review-order-screen.tsx:639
 #: app/components/notes-chart.tsx:69
-#: app/components/orders/order-detail.tsx:1046
+#: app/components/orders/order-detail.tsx:1070
 #: app/components/pos/ticket-settings.tsx:75
 #: app/components/pos/ticket-settings.tsx:271
 #: app/components/staff/labor/labor-overview.tsx:219
@@ -52968,7 +53095,7 @@ msgstr ""
 #: app/components/menu/delete-effects.tsx:468
 #: app/components/menu/delete-effects.tsx:543
 #: app/components/menu/menu-review-stack.tsx:907
-#: app/components/orders/order-detail.tsx:1159
+#: app/components/orders/order-detail.tsx:1183
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
@@ -53159,7 +53286,7 @@ msgid "Turn off to stop enforcing caps at checkout."
 msgstr "Turn off to stop enforcing caps at checkout."
 
 #: app/components/marketing/programs-section.tsx:170
-#: app/components/marketing/programs-section.tsx:271
+#: app/components/marketing/programs-section.tsx:272
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:370
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:377
 msgid "Turn on"
@@ -53469,7 +53596,7 @@ msgstr "Unable to load the funnel. Try again."
 msgid "Unable to load this call. Try again."
 msgstr "Unable to load this call. Try again."
 
-#: app/components/orders/order-detail.tsx:361
+#: app/components/orders/order-detail.tsx:378
 #: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:147
 #: app/utils/orders/acceptance.ts:63
 msgid "Unable to update this order. Refresh and try again."
@@ -53751,7 +53878,7 @@ msgstr "Unlocked for transfer"
 msgid "Unmute microphone"
 msgstr "Unmute microphone"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:268
+#: ../../packages/marketing/src/components/campaign-detail.tsx:278
 msgid "Unnamed recipient"
 msgstr ""
 
@@ -54834,16 +54961,16 @@ msgstr "Utensils and napkins"
 msgid "Utensils answer"
 msgstr "Utensils answer"
 
-#: app/components/orders/order-detail.tsx:778
+#: app/components/orders/order-detail.tsx:802
 #: app/components/pos/ticket-settings.tsx:207
 msgid "Utensils: yes"
 msgstr "Utensils: yes"
 
-#: app/components/marketing/short-links-screen.tsx:223
+#: app/components/marketing/short-links-screen.tsx:224
 msgid "UTM campaign (optional)"
 msgstr "UTM campaign (optional)"
 
-#: app/components/marketing/short-links-screen.tsx:212
+#: app/components/marketing/short-links-screen.tsx:213
 msgid "UTM source (optional)"
 msgstr "UTM source (optional)"
 
@@ -55089,11 +55216,11 @@ msgstr "Video thumbnail"
 msgid "View"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:248
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:251
 msgid "View all"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:700
+#: app/components/orders/order-detail.tsx:717
 msgid "View all orders"
 msgstr "View all orders"
 
@@ -55274,7 +55401,7 @@ msgstr "View team schedule"
 msgid "View time cards"
 msgstr "View time cards"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:405
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:418
 msgid "View Timeline →"
 msgstr ""
 
@@ -55549,7 +55676,7 @@ msgstr "Waiting for the tablet…"
 msgid "Waiting for the terminal…"
 msgstr "Waiting for the terminal…"
 
-#: app/components/orders/order-detail.tsx:595
+#: app/components/orders/order-detail.tsx:612
 #: app/components/orders/waiting-lane.tsx:121
 msgid "Waiting for you"
 msgstr "Waiting for you"
@@ -57172,7 +57299,7 @@ msgid "Why are you rejecting it?"
 msgstr "Why are you rejecting it?"
 
 #: app/components/inventory/review-order-screen.tsx:827
-#: app/components/orders/order-detail.tsx:1321
+#: app/components/orders/order-detail.tsx:1345
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:580
 msgid "Why is it cancelled?"
 msgstr "Why is it cancelled?"
@@ -57211,7 +57338,7 @@ msgstr "Win back guests who have not ordered in a while"
 msgid "Window"
 msgstr "Window"
 
-#: app/components/marketing/short-links-screen.tsx:182
+#: app/components/marketing/short-links-screen.tsx:183
 #: app/components/print/print-labels.ts:19
 msgid "Window sticker"
 msgstr "Window sticker"
@@ -57317,7 +57444,7 @@ msgstr "Worked examples from the live configuration."
 msgid "Worker type"
 msgstr "Worker type"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:453
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:466
 msgid "Workflow Error:"
 msgstr ""
 

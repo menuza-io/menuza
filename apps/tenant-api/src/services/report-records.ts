@@ -11,6 +11,7 @@ import {
 	type SQL,
 } from 'drizzle-orm'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { parseStoredAttribution } from '@repo/common/order-attribution'
 import { RESTAURANT_SALES_ORDER_STATUSES } from '@repo/common/restaurant-orders'
 import {
 	type ReportDefinition,
@@ -31,6 +32,7 @@ import {
 } from '@repo/tenant-db'
 import { isValidTimeZone } from '@repo/reservations'
 import { queryInChunks } from '../lib/chunked-in.ts'
+import { campaignNamesById } from './marketing-attribution.ts'
 import { isPayableOrder, payableOrderCondition } from './order-payable.ts'
 
 /**
@@ -200,6 +202,8 @@ const orderColumns = {
 	pickupTimezone: restaurantOrders.pickupTimezone,
 	createdAt: restaurantOrders.createdAt,
 	completedAt: restaurantOrders.completedAt,
+	attribution: restaurantOrders.attribution,
+	attributionSource: restaurantOrders.attributionSource,
 }
 
 export type OrderReportRow = Pick<
@@ -586,6 +590,17 @@ export async function loadOrderRecords(
 		withLines: fields.has('itemCount'),
 		maxRows,
 	})
+	// Where the order came from (#115): stored on the order at placement.
+	const needsCampaign = fields.has('attributionCampaign')
+	const campaignNames = needsCampaign
+		? await campaignNamesById(db, [
+				...new Set(
+					rows
+						.map((row) => parseStoredAttribution(row.attribution)?.campaignId)
+						.filter((id): id is string => !!id),
+				),
+			])
+		: new Map<string, string>()
 
 	const byPhone =
 		needsCustomerType || needsAttribution
@@ -661,6 +676,19 @@ export async function loadOrderRecords(
 					row.loyaltyDiscountCents +
 					(tabDiscountByOrderId.get(row.id) ?? 0)) /
 				100,
+		}
+		if (fields.has('attributionSource')) {
+			record.attributionSource = row.attributionSource || 'direct'
+		}
+		if (needsCampaign) {
+			const stored = parseStoredAttribution(row.attribution)
+			// The Menuza campaign's name, else the UTM campaign, else none.
+			record.attributionCampaign =
+				(stored?.campaignId
+					? campaignNames.get(stored.campaignId)
+					: undefined) ??
+				stored?.utmCampaign ??
+				''
 		}
 		if ('lines' in row) {
 			record.itemCount = parseOrderLines(row.lines).reduce(

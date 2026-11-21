@@ -103,15 +103,19 @@ function wantsSmsUpdates(
  * signed-in guest ticked (undefined sends none). The attempt key is derived
  * from `core` alone, so consent is added only here, after the key exists:
  * changing a box on a retry must replay the first order, not place a second.
+ * The same goes for the attribution (#115): the first order keeps its own.
  */
 export function checkoutOrderRequest(
 	core: Record<string, unknown>,
 	idempotencyKey: string,
 	marketingConsent?: Record<string, unknown> | null,
+	/** Where the guest came from (#115), added after the key like consent. */
+	attribution?: Record<string, unknown> | null,
 ): Record<string, unknown> {
 	return {
 		...core,
 		...(marketingConsent ? { marketingConsent } : {}),
+		...(attribution ? { attribution } : {}),
 		idempotencyKey,
 	}
 }

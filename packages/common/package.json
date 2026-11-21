@@ -658,6 +658,11 @@
       "types": "./src/marketing-allowance.ts",
       "import": "./src/marketing-allowance.ts",
       "default": "./src/marketing-allowance.ts"
+    },
+    "./order-attribution": {
+      "types": "./src/order-attribution.ts",
+      "import": "./src/order-attribution.ts",
+      "default": "./src/order-attribution.ts"
     }
   },
   "scripts": {

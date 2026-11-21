@@ -47,6 +47,10 @@ import {
 } from '../services/broadcast-dispatch.ts'
 import { findAudienceOverlaps } from '../services/campaign-overlap.ts'
 import {
+	campaignAttribution,
+	overviewAttribution,
+} from '../services/marketing-attribution.ts'
+import {
 	cancelCampaign,
 	deleteCampaign,
 	duplicateCampaign,
@@ -394,6 +398,33 @@ operatorRoutes.get('/marketing/metrics', async (c) => {
 	}
 })
 
+/**
+ * The marketing overview's figures for the last 7, 30 or 90 days (#115):
+ * messages sent, different guests reached, and the orders and revenue of online
+ * orders both ways, "Clicked" (a guest followed a link from a message) and
+ * "Reached" (Clicked, plus guests we messaged who ordered within 14 days, each
+ * order credited to their most recent message once). Reached is never below
+ * Clicked. Counts and amounts only.
+ */
+operatorRoutes.get('/marketing/attribution', async (c) => {
+	let auth
+	try {
+		auth = await authenticateOperator(c, undefined, 'marketing')
+	} catch (response) {
+		return response as Response
+	}
+	const days = Number(c.req.query('days') ?? 30)
+	if (![7, 30, 90].includes(days))
+		return c.json({ error: 'Invalid request' }, 400)
+	try {
+		const db = await getTenantDb(auth.orgId)
+		return c.json({ attribution: await overviewAttribution(db, { days }) })
+	} catch (error) {
+		console.error('Error reading marketing attribution:', errorLogFields(error))
+		return c.json({ error: 'Tenant Database unavailable' }, 500)
+	}
+})
+
 operatorRoutes.get('/marketing/campaigns', async (c) => {
 	let auth
 	try {
@@ -597,6 +628,8 @@ operatorRoutes.get('/marketing/campaigns/:campaignId', async (c) => {
 				retargetOfCampaignId: campaign.retargetOfCampaignId,
 				retargetedByCampaignId: retargetedBy?.id ?? null,
 				updatedAt: campaign.updatedAt,
+				// Orders and revenue after this broadcast (#115): counts and amounts.
+				attribution: await campaignAttribution(db, campaign.id),
 				recipients,
 				recipientsPagination: {
 					limit: OPERATOR_LIST_LIMIT,

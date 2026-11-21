@@ -262,7 +262,9 @@ export function MarketingCalendarGrid({
 									key={occasion.key}
 									className="bg-primary/10 text-primary flex min-w-0 items-center gap-1 rounded px-1 py-0.5 text-xs"
 									title={
-										occasion.expected ? _(msg`${dayTitle} (expected)`) : dayTitle
+										occasion.expected
+											? _(msg`${dayTitle} (expected)`)
+											: dayTitle
 									}
 								>
 									<Icon name="sparkles" className="size-3 shrink-0" />

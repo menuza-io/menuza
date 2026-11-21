@@ -163,6 +163,19 @@ export const orderSchema = z.object({
 	promisedVersion: z.number().int().default(0).catch(0),
 	/** Minutes already pushed back (the region caps the total). */
 	promisedDelayMinutes: z.number().int().default(0).catch(0),
+	/** Where the guest came from (#115): `direct`, `email`, `short_link`, ... */
+	attributionSource: z.string().default('direct').catch('direct'),
+	attribution: z
+		.object({
+			utmSource: z.string().optional(),
+			utmCampaign: z.string().optional(),
+			coupon: z.string().optional(),
+		})
+		.nullable()
+		.default(null)
+		.catch(null),
+	/** The broadcast or automation's name, when the order came from one. */
+	campaignName: z.string().nullable().default(null).catch(null),
 })
 export type Order = z.infer<typeof orderSchema>
 

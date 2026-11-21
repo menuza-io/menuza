@@ -72,6 +72,7 @@ function LinkRow({
 	const fetcher = useFetcher()
 	const url = shortLinkUrl(siteOrigin, link.code)
 	const total = link.daily.reduce((sum, day) => sum + day.clicks, 0)
+	const clicksThisMonth = link.clicksThisMonth
 	const title = link.label || link.targetPath
 	return (
 		<li
@@ -96,7 +97,7 @@ function LinkRow({
 					className="text-muted-foreground text-xs"
 					data-testid="short-link-clicks"
 				>
-					{_(msg`Clicks: ${link.clicksThisMonth} this month`)}
+					{_(msg`Clicks: ${clicksThisMonth} this month`)}
 				</p>
 			</div>
 			<div className="flex items-center gap-2">

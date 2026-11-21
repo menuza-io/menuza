@@ -15,6 +15,7 @@ import { PageHeader } from '@repo/ui/page-header'
 import { Skeleton } from '@repo/ui/skeleton'
 import { useEffect, useState } from 'react'
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import { MarketingAttributionOverview } from '#app/components/marketing/marketing-attribution-overview.tsx'
 import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
 import {
 	ORG_PERMISSIONS,
@@ -235,6 +236,8 @@ export default function MarketingOverview() {
 							))}
 						</ItemGroup>
 					</section>
+
+					<MarketingAttributionOverview jwt={jwt} tenantApiUrl={tenantApiUrl} />
 
 					<section aria-labelledby="recent-campaigns-heading">
 						<div className="mb-3 flex items-center justify-between gap-4">

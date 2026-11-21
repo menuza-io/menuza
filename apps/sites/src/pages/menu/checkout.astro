@@ -1032,6 +1032,7 @@ const inputClass =
 			referralDeviceId,
 		} from '~/lib/loyalty/referral-storage'
 		import { formatRemaining, startCountdown } from '~/lib/ordering/countdown'
+		import { currentAttribution } from '~/lib/ordering/attribution'
 		import { checkoutOrderPayload, checkoutOrderRequest } from '~/lib/ordering/checkout-payload'
 		import {
 			dailySoldOutMessage,
@@ -3074,7 +3075,12 @@ const inputClass =
 				const idempotencyKey = await checkoutAttemptKey(orgId, corePayload)
 				const marketingConsent = checkoutMarketingConsent()
 				const created = await submitRegionalOrder(
-					checkoutOrderRequest(corePayload, idempotencyKey, marketingConsent),
+					checkoutOrderRequest(
+						corePayload,
+						idempotencyKey,
+						marketingConsent,
+						currentAttribution(),
+					),
 				)
 				saveOrderCapability(orgId, created)
 				flagEmailConfirmationPending(created.marketingConsent, created.order.id)

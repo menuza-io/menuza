@@ -382,6 +382,18 @@ never carries `cancel`; it shows `cancelledBy: "guest"`. Both reads also carry
 confirm box from it and promises a refund only then. Optional on the wire
 (`publicOrderLifecycleSchema`), so an older region simply omits it.
 
+### Order attribution (#115)
+
+`POST /orders` accepts an optional strict `attribution` object saying where the
+guest came from: `utmSource`, `utmMedium`, `utmCampaign`, `utmContent`,
+`campaignId`, `stepId`, `shortLinkId` (each at most 100 characters) and
+`touchedAt` (epoch ms). An unknown field or an oversized value is a 400. The
+region keeps it only if `touchedAt` is within the last 7 days, drops a
+`shortLinkId` it does not know, and stores it as `attribution` with the derived
+`attribution_source`. It is sent after the idempotency key is derived (a retry
+replays the first order). The operator order carries `attributionSource`,
+`attribution` and `campaignName`. See `docs/marketing-compliance.md`.
+
 ## App → regional API (internal command token)
 
 `POST /api/orders/quote`: `{ orgId, orderId, paymentToken }`. Return only:

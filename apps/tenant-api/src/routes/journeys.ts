@@ -7,6 +7,7 @@ import {
 	executeStepPayloadSchema,
 	completeRunPayloadSchema,
 	evaluateConditionPayloadSchema,
+	getTenantDb,
 } from '@repo/tenant-db'
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
@@ -31,6 +32,10 @@ import {
 	triggerTestJourney,
 } from '../services/journey-service.ts'
 import { journeyResults } from '../services/journey-program-results.ts'
+import {
+	journeyStepAttribution,
+	orderCurrency,
+} from '../services/marketing-attribution.ts'
 import { authenticateOperator, requireOperatorClaim } from './operator.ts'
 
 // =========================================================================
@@ -227,7 +232,8 @@ journeySystemRoutes.get('/definitions/:journeyId', async (c) => {
 // Authenticated via Operator JWT minted with audience: 'tenant-api-operator',
 // verified by the one operator verifier in operator.ts. The two reads the
 // Automations Runs page makes from the browser (`GET /:id/runs` and
-// `GET /runs/:runId`) name the `automations` area, which App mints only after
+// `GET /runs/:runId`, plus `GET /:id/attribution`, counts and amounts only
+// (#115)) name the `automations` area, which App mints only after
 // `read:automation:any`; they carry customer ids, never contacts, and no
 // provider error text. The broadcasts (`marketing`) token is refused there,
 // and the `automations` token is refused on broadcasts. Every other journey
@@ -313,6 +319,30 @@ journeyOperatorRoutes.get('/program-results', async (c) => {
 		})
 	} catch (error) {
 		console.error('Error reading program results:', error)
+		return c.json({ error: 'Tenant Database unavailable' }, 500)
+	}
+})
+
+/**
+ * Orders and revenue per step of an automation (#115), "Clicked" and "Reached".
+ * Counts and amounts only.
+ */
+journeyOperatorRoutes.get('/:id/attribution', async (c) => {
+	let auth
+	try {
+		// The Runs page reads this from the browser with the Automations token.
+		auth = await authenticateOperator(c, undefined, 'automations')
+	} catch (response) {
+		return response as Response
+	}
+	try {
+		const db = await getTenantDb(auth.orgId)
+		return c.json({
+			currency: await orderCurrency(db),
+			steps: await journeyStepAttribution(db, c.req.param('id')),
+		})
+	} catch (error) {
+		console.error('Error reading journey attribution:', error)
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })

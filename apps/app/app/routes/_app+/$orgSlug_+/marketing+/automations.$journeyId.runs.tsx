@@ -35,8 +35,10 @@ import {
 } from '@repo/ui/table'
 import { useEffect, useState } from 'react'
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import { JourneyStepAttribution } from '#app/components/marketing/journey-step-attribution.tsx'
 import { useLoaderToken } from '#app/hooks/use-loader-token.ts'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+import { journeyStepLabels } from '#app/utils/marketing/journey-step-labels.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
@@ -90,6 +92,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			name: string
 			status: string
 			triggerType: string
+			graphJson?: unknown
 		}
 	}
 
@@ -103,6 +106,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			status: journeyData.journey.status,
 			triggerType: journeyData.journey.triggerType,
 		},
+		// Names for the steps in "Orders and revenue by step" (#115).
+		stepLabels: journeyStepLabels(journeyData.journey.graphJson),
 	}
 }
 
@@ -127,7 +132,8 @@ function toRunRecord(r: RawRun): JourneyRunRecord {
 
 export default function JourneyRunsRoute() {
 	const { _ } = useLingui()
-	const { jwt, tenantApiUrl, orgSlug, journey } = useLoaderData<typeof loader>()
+	const { jwt, tenantApiUrl, orgSlug, journey, stepLabels } =
+		useLoaderData<typeof loader>()
 	const { token, refreshIfExpired, reloadKey } = useLoaderToken(jwt)
 	const [runs, setRuns] = useState<JourneyRunRecord[]>([])
 	const [runsState, setRunsState] = useState<'loading' | 'ready' | 'failed'>(
@@ -294,6 +300,13 @@ export default function JourneyRunsRoute() {
 						{_(msg`Open visual builder`)}
 					</Button>
 				}
+			/>
+
+			<JourneyStepAttribution
+				journeyId={journey.id}
+				jwt={jwt}
+				tenantApiUrl={tenantApiUrl}
+				labels={stepLabels}
 			/>
 
 			<Card>

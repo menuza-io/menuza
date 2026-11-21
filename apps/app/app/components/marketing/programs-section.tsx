@@ -93,8 +93,8 @@ export function ProgramsSection({
 				</h2>
 				<p className="text-muted-foreground text-sm">
 					<Trans>
-						Ready-made automations. Turn one on and it starts for new guests only; you
-						can change it any time.
+						Ready-made automations. Turn one on and it starts for new guests
+						only; you can change it any time.
 					</Trans>
 				</p>
 			</div>
@@ -135,8 +135,8 @@ export function ProgramsSection({
 							{program.newerTemplate ? (
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>
-										A newer version of this program exists. Yours keeps working as
-										it is.
+										A newer version of this program exists. Yours keeps working
+										as it is.
 									</Trans>
 								</p>
 							) : null}
@@ -251,8 +251,9 @@ export function ProgramsSection({
 
 						<p className="text-muted-foreground text-xs">
 							<Trans>
-								Guests only get messages if they agreed to hear from you. The message
-								is written in your website's language and uses your branding.
+								Guests only get messages if they agreed to hear from you. The
+								message is written in your website's language and uses your
+								branding.
 							</Trans>
 						</p>
 					</div>

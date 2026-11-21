@@ -21,6 +21,7 @@ import {
 	foldUtensilsRequested,
 	parseUtensilsSettings,
 } from '@repo/common/checkout-utensils'
+import { parseStoredAttribution } from '@repo/common/order-attribution'
 import { resolvePickupInstructions } from '@repo/common/pickup-instructions'
 import { largeOrderExtraMinutes } from '@repo/common/promised-time'
 import {
@@ -140,6 +141,7 @@ import {
 } from './discount-apply.ts'
 import { releaseTabDiscounts } from './discount-tab.ts'
 import { qrTabPayableUntil } from '../restaurant/loyalty-sources.ts'
+import { attributionForNewOrder } from './marketing-attribution.ts'
 import { readBalanceViewInTx } from './loyalty-ledger.ts'
 import {
 	ensureMemberForCustomerInTx,
@@ -1039,6 +1041,15 @@ export async function placeOrder(input: {
 			? 'qr_poster'
 			: null
 
+	// Where the guest came from (#115): what the browser or the customer app
+	// kept (at most 7 days old), the coupon used, or a table or poster code.
+	const placedAttribution = await attributionForNewOrder(orgId, {
+		orderSource,
+		attribution: request.attribution,
+		couponCode: request.discounts?.code ?? null,
+		now: now.getTime(),
+	})
+
 	if (
 		request.paymentMethod === 'online' &&
 		(!context.onlinePayment.enabled || !context.onlinePayment.processor)
@@ -1795,6 +1806,8 @@ export async function placeOrder(input: {
 									deliveryDiscountCents: discounted.deliveryDiscountCents,
 									discounts: orderDiscountSnapshots(prepared),
 									lines: result.lines,
+									attribution: placedAttribution.attribution,
+									attributionSource: placedAttribution.source,
 									idempotencyKey: request.idempotencyKey,
 									requestHash,
 									receiptTokenHash: sha256Hex(receiptToken),
@@ -3744,5 +3757,12 @@ export function operatorOrder(
 		disputed: disputeBlocksRefund(order.disputeStatus),
 		disputeStatus: order.disputeStatus ?? null,
 		disputedAt: order.disputedAt ? order.disputedAt.toISOString() : null,
+		/**
+		 * Where the guest came from (#115): the source (`direct`, `email`, `sms`,
+		 * `short_link`, `qr_table`, ...) and what the order stored with it. The
+		 * route adds `campaignName` for a campaign it can name.
+		 */
+		attributionSource: order.attributionSource ?? 'direct',
+		attribution: parseStoredAttribution(order.attribution),
 	}
 }

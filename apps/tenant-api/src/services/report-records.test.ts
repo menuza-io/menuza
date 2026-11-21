@@ -735,6 +735,55 @@ describe('report record loaders', () => {
 			).toEqual({ A1: 'none', A2: 'sms', A3: 'email', B1: 'none', C1: 'none' })
 		})
 
+		it('names the order source and the campaign it came from (#115)', async () => {
+			const [campaign] = await db
+				.insert(marketingCampaigns)
+				.values({
+					name: 'Spring brunch',
+					channel: 'email',
+					status: 'Completed',
+				})
+				.returning({ id: marketingCampaigns.id })
+			await insertOrders(
+				{
+					number: 'E1',
+					attributionSource: 'email',
+					attribution: { campaignId: campaign!.id, utmMedium: 'email' },
+				},
+				{
+					number: 'U1',
+					attributionSource: 'newsletter',
+					attribution: { utmSource: 'newsletter', utmCampaign: 'winter' },
+				},
+				{ number: 'D1' },
+			)
+
+			const { records } = await loadOrderRecords(
+				db,
+				orgId,
+				orderSubject,
+				listDefinition('orders', [
+					'orderNumber',
+					'attributionSource',
+					'attributionCampaign',
+				]),
+				now,
+			)
+
+			expect(
+				Object.fromEntries(
+					records.map((record) => [
+						record.orderNumber,
+						[record.attributionSource, record.attributionCampaign],
+					]),
+				),
+			).toEqual({
+				E1: ['email', 'Spring brunch'],
+				U1: ['newsletter', 'winter'],
+				D1: ['direct', ''],
+			})
+		})
+
 		it('reads only the timeframe and keeps the newest orders at the cap', async () => {
 			await insertOrders(
 				{ number: 'A1', createdAt: ago(20), completedAt: ago(19) },

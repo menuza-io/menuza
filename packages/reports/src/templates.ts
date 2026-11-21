@@ -955,6 +955,30 @@ function marketingTemplates(): ReportTemplate[] {
 			chartStyle: 'pie',
 			filters: COUNTED_ORDERS,
 		}),
+		template('organization', {
+			id: 'orders-came-from',
+			category: 'Marketing',
+			title: 'Orders by where guests came from',
+			description:
+				'Orders grouped by where the guest came from: campaigns, short links, QR codes, coupons and other sites.',
+			subject: 'orders',
+			groupBy: ['attributionSource'],
+			chartStyle: 'bar',
+			filters: COUNTED_ORDERS,
+		}),
+		template('organization', {
+			id: 'revenue-by-campaign',
+			category: 'Marketing',
+			title: 'Revenue by campaign',
+			description:
+				'Sales from orders that came from one of your campaigns, or a UTM campaign.',
+			subject: 'orders',
+			groupBy: ['attributionCampaign'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'total',
+			filters: COUNTED_ORDERS,
+		}),
 	]
 }
 

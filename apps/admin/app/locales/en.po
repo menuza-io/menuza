@@ -64,7 +64,7 @@ msgstr "{0} of {1} apps started"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:249
+#: ../../packages/marketing/src/components/campaign-detail.tsx:259
 msgid "{0} of {1} targeted"
 msgstr ""
 
@@ -143,7 +143,7 @@ msgstr "{numberCount} numbers"
 msgid "{providerName} identity provider configuration"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:234
+#: ../../packages/marketing/src/components/campaign-detail.tsx:244
 msgid "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
 msgstr "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
 
@@ -270,7 +270,7 @@ msgstr ""
 msgid "A build is a recorded job. The pipeline reports its progress back here, and nothing is submitted to a store from this page."
 msgstr "A build is a recorded job. The pipeline reports its progress back here, and nothing is submitted to a store from this page."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:49
+#: ../../packages/marketing/src/components/campaign-detail.tsx:51
 msgid "a discount that is no longer listed"
 msgstr "a discount that is no longer listed"
 
@@ -306,7 +306,7 @@ msgstr "A picture, logo, or product shot."
 msgid "A push cannot use merge tags: it holds no personal data."
 msgstr "A push cannot use merge tags: it holds no personal data."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:166
+#: ../../packages/marketing/src/components/campaign-detail.tsx:168
 msgid "A re-send to people who did not open or click the first one and are still subscribed."
 msgstr "A re-send to people who did not open or click the first one and are still subscribed."
 
@@ -629,7 +629,7 @@ msgstr ""
 #~ msgid "All plans"
 #~ msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:41
+#: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "All recipients"
 msgstr ""
 
@@ -714,7 +714,7 @@ msgstr ""
 msgid "APNs key (iOS)"
 msgstr "APNs key (iOS)"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:97
+#: ../../packages/marketing/src/components/campaign-detail.tsx:99
 msgid "App notification"
 msgstr "App notification"
 
@@ -927,7 +927,7 @@ msgstr ""
 msgid "Back to blocks"
 msgstr "Back to blocks"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:38
+#: ../../packages/marketing/src/components/campaign-detail.tsx:40
 msgid "Back to broadcasts"
 msgstr ""
 
@@ -1079,7 +1079,7 @@ msgstr "Box"
 msgid "Broadcast not found"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:204
+#: ../../packages/marketing/src/components/campaign-detail.tsx:214
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
@@ -1191,7 +1191,7 @@ msgstr ""
 msgid "Cancelled by the organization"
 msgstr "Cancelled by the organization"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:73
+#: ../../packages/marketing/src/components/campaign-detail.tsx:75
 msgid "Cancelled, not sent"
 msgstr "Cancelled, not sent"
 
@@ -1306,10 +1306,18 @@ msgstr ""
 msgid "Click rate"
 msgstr ""
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:61
+msgid "Clicked"
+msgstr "Clicked"
+
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:105
+#: ../../packages/marketing/src/components/campaign-detail.tsx:107
 msgid "Clicked {0}"
 msgstr ""
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:100
+msgid "Clicked: orders placed after a guest followed a link in one of your messages. Revenue is net of refunds."
+msgstr "Clicked: orders placed after a guest followed a link in one of your messages. Revenue is net of refunds."
 
 #: app/components/sso-configuration-form.tsx:184
 msgid "Client ID"
@@ -1482,11 +1490,11 @@ msgstr "Coupon"
 msgid "Coupon card"
 msgstr "Coupon card"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:58
+#: ../../packages/marketing/src/components/campaign-detail.tsx:60
 msgid "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 msgstr "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:54
+#: ../../packages/marketing/src/components/campaign-detail.tsx:56
 msgid "Coupon: {name}, with one shared code for everyone."
 msgstr "Coupon: {name}, with one shared code for everyone."
 
@@ -1494,7 +1502,7 @@ msgstr "Coupon: {name}, with one shared code for everyone."
 #~ msgid "Coupon: {name}, with the code {0} for everyone."
 #~ msgstr "Coupon: {name}, with the code {0} for everyone."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:53
+#: ../../packages/marketing/src/components/campaign-detail.tsx:55
 msgid "Coupon: {name}, with the code {code} for everyone."
 msgstr "Coupon: {name}, with the code {code} for everyone."
 
@@ -1938,7 +1946,7 @@ msgstr ""
 msgid "Draft with AI"
 msgstr "Draft with AI"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:69
+#: ../../packages/marketing/src/components/campaign-detail.tsx:71
 msgid "Draft, not sent"
 msgstr "Draft, not sent"
 
@@ -2735,6 +2743,10 @@ msgstr "How long waitlist parties waited before they were seated over the last 7
 msgid "How often people clock in on time for the shifts they were scheduled on."
 msgstr "How often people clock in on time for the shifts they were scheduled on."
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:53
+msgid "How orders are counted"
+msgstr "How orders are counted"
+
 #: ../../packages/reports/src/ui/report-labels.ts:117
 msgid "How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response."
 msgstr "How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response."
@@ -3314,7 +3326,7 @@ msgstr ""
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:195
+#: ../../packages/marketing/src/components/campaign-detail.tsx:205
 #: ../../packages/marketing/src/components/campaign-form.tsx:399
 msgid "Message"
 msgstr ""
@@ -3482,7 +3494,7 @@ msgstr ""
 msgid "No connected accounts"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:98
+#: ../../packages/marketing/src/components/campaign-detail.tsx:100
 msgid "No contact on file"
 msgstr ""
 
@@ -3495,7 +3507,7 @@ msgstr "No coupon"
 msgid "No custom fonts have been uploaded."
 msgstr "No custom fonts have been uploaded."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:257
+#: ../../packages/marketing/src/components/campaign-detail.tsx:267
 msgid "No delivery records yet."
 msgstr ""
 
@@ -3686,7 +3698,7 @@ msgstr "Not live"
 msgid "Not live yet"
 msgstr "Not live yet"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:75
+#: ../../packages/marketing/src/components/campaign-detail.tsx:77
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:12
 msgid "Not sent: too late"
 msgstr "Not sent: too late"
@@ -3814,7 +3826,7 @@ msgid "Open the new app"
 msgstr "Open the new app"
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:108
+#: ../../packages/marketing/src/components/campaign-detail.tsx:110
 msgid "Opened {0}"
 msgstr ""
 
@@ -3856,6 +3868,22 @@ msgstr "Order Completed"
 #: app/routes/_admin+/print-shop.tsx:783
 msgid "Orders"
 msgstr "Orders"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:73
+msgid "Orders after a click"
+msgstr "Orders after a click"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:49
+msgid "Orders and revenue"
+msgstr "Orders and revenue"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:45
+msgid "Orders and revenue from marketing"
+msgstr "Orders and revenue from marketing"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:74
+msgid "Orders from guests reached"
+msgstr "Orders from guests reached"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:401
 msgid "Orders in the last 30 days"
@@ -4439,6 +4467,14 @@ msgstr "Quote valid (minutes)"
 msgid "Rank"
 msgstr ""
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:64
+msgid "Reached"
+msgstr "Reached"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:103
+msgid "Reached: clicked orders plus orders from guests who were sent a message in the 14 days before. Each order is counted once, for their latest message."
+msgstr "Reached: clicked orders plus orders from guests who were sent a message in the 14 days before. Each order is counted once, for their latest message."
+
 #: app/routes/_admin+/customer-apps_.$appId.tsx:586
 msgid "Read from the stores once a day. A store that cannot be reached keeps its last known state."
 msgstr "Read from the stores once a day. A store that cannot be reached keeps its last known state."
@@ -4516,7 +4552,7 @@ msgstr "Recently released"
 msgid "recipients"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:245
+#: ../../packages/marketing/src/components/campaign-detail.tsx:255
 msgid "Recipients"
 msgstr ""
 
@@ -4806,7 +4842,7 @@ msgstr "Resource"
 msgid "Restore the app"
 msgstr "Restore the app"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:231
+#: ../../packages/marketing/src/components/campaign-detail.tsx:241
 msgid "Results"
 msgstr "Results"
 
@@ -4879,6 +4915,14 @@ msgstr ""
 #: app/routes/_admin+/print-shop.tsx:78
 msgid "Returned"
 msgstr "Returned"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:86
+msgid "Revenue after a click"
+msgstr "Revenue after a click"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:87
+msgid "Revenue from guests reached"
+msgstr "Revenue from guests reached"
 
 #: app/components/sso-configuration-form.tsx:312
 msgid "Revocation URL (Optional)"
@@ -5165,13 +5209,13 @@ msgstr "Schedule anyway"
 msgid "Schedule for later"
 msgstr "Schedule for later"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:71
+#: ../../packages/marketing/src/components/campaign-detail.tsx:73
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
 #: app/routes/_admin+/gdpr-requests.tsx:428
 msgid "Scheduled"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:71
+#: ../../packages/marketing/src/components/campaign-detail.tsx:73
 msgid "Scheduled for {at}"
 msgstr "Scheduled for {at}"
 
@@ -5262,11 +5306,11 @@ msgstr ""
 msgid "Security Events"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:173
+#: ../../packages/marketing/src/components/campaign-detail.tsx:175
 msgid "See the original"
 msgstr "See the original"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:187
+#: ../../packages/marketing/src/components/campaign-detail.tsx:189
 msgid "See the re-send"
 msgstr "See the re-send"
 
@@ -5363,8 +5407,8 @@ msgstr ""
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:77
-#: ../../packages/marketing/src/components/campaign-detail.tsx:273
+#: ../../packages/marketing/src/components/campaign-detail.tsx:79
+#: ../../packages/marketing/src/components/campaign-detail.tsx:283
 msgid "Sent {0}"
 msgstr ""
 
@@ -6224,11 +6268,11 @@ msgstr "This app was published, so its bundle ids can no longer change."
 msgid "This block still has the text a new block starts with."
 msgstr "This block still has the text a new block starts with."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:158
+#: ../../packages/marketing/src/components/campaign-detail.tsx:160
 msgid "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 msgstr "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:181
+#: ../../packages/marketing/src/components/campaign-detail.tsx:183
 msgid "This broadcast was re-sent to non-openers."
 msgstr "This broadcast was re-sent to non-openers."
 
@@ -6236,7 +6280,7 @@ msgstr "This broadcast was re-sent to non-openers."
 #~ msgid "This broadcast was scheduled for {0} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 #~ msgstr "This broadcast was scheduled for {0} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:155
+#: ../../packages/marketing/src/components/campaign-detail.tsx:157
 msgid "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 msgstr "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 
@@ -6509,7 +6553,7 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:268
+#: ../../packages/marketing/src/components/campaign-detail.tsx:278
 msgid "Unnamed recipient"
 msgstr ""
 

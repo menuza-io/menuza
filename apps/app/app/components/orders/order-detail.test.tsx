@@ -49,6 +49,9 @@ function order(over: Partial<Order> = {}): Order {
 		promisedUntil: null,
 		promisedVersion: 0,
 		promisedDelayMinutes: 0,
+		attributionSource: 'direct',
+		attribution: null,
+		campaignName: null,
 		...over,
 	}
 }
@@ -976,5 +979,37 @@ describe('OrderDetail checkout rules (#251, #257, #355, #408)', () => {
 			}),
 		)
 		expect(screen.getByTestId('order-line')).toHaveTextContent('Custom item')
+	})
+
+	it('shows where the order came from (#115)', () => {
+		show(order())
+		expect(screen.getByTestId('order-came-from')).toHaveTextContent(
+			'Came from: Direct',
+		)
+	})
+
+	it('names the campaign of an order that came from a campaign email', () => {
+		show(
+			order({
+				attributionSource: 'email',
+				campaignName: 'Spring brunch',
+				attribution: { utmSource: 'menuza' },
+			}),
+		)
+		expect(screen.getByTestId('order-came-from')).toHaveTextContent(
+			'Came from: Email campaign · Spring brunch',
+		)
+	})
+
+	it('shows another site as the UTM source it was stored with', () => {
+		show(
+			order({
+				attributionSource: 'newsletter',
+				attribution: { utmSource: 'newsletter' },
+			}),
+		)
+		expect(screen.getByTestId('order-came-from')).toHaveTextContent(
+			'Came from: newsletter',
+		)
 	})
 })

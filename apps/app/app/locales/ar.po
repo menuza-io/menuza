@@ -867,7 +867,7 @@ msgstr "{0} مجموعات إضافات"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:249
+#: ../../packages/marketing/src/components/campaign-detail.tsx:259
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
@@ -1493,7 +1493,7 @@ msgstr "{days}، من {from} إلى {to}"
 msgid "{days}d ago"
 msgstr "منذ {days} يوم"
 
-#: app/components/marketing/marketing-calendar.tsx:265
+#: app/components/marketing/marketing-calendar.tsx:266
 msgid "{dayTitle} (expected)"
 msgstr "{dayTitle} (متوقع)"
 
@@ -1501,11 +1501,11 @@ msgstr "{dayTitle} (متوقع)"
 msgid "{deviceName} was removed."
 msgstr "تمت إزالة {deviceName}."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:169
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:175
 msgid "{diffSec}s"
 msgstr "{diffSec} ث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:172
 msgid "{diffSec}s (running)"
 msgstr "{diffSec} ث (قيد التشغيل)"
 
@@ -1909,7 +1909,7 @@ msgstr "{minutes} د"
 msgid "{minutes} minutes"
 msgstr "{minutes} دقيقة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:172
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:178
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
@@ -2430,7 +2430,7 @@ msgstr "{provider} غير متصل، لذلك لا تتم مزامنة طلبا�
 msgid "{purchaseCount, plural, one {# purchase} other {# purchases}}"
 msgstr "{purchaseCount, plural, zero {لا توجد مشتريات} one {عملية شراء واحدة} two {عمليتا شراء} few {# عمليات شراء} many {# عملية شراء} other {# عملية شراء}}"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:234
+#: ../../packages/marketing/src/components/campaign-detail.tsx:244
 msgid "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
 msgstr "أُرسل {pushSent}، وفُتح {pushOpened} ({pushOpenRate})."
 
@@ -2480,7 +2480,7 @@ msgstr "{readyCount, plural, zero {استيراد 0 أشخاص} one {استير�
 msgid "{readyCount} ready, {needFix} need a fix. Rows with a problem are skipped."
 msgstr "{readyCount} جاهزة، و{needFix} تحتاج إلى تصحيح. يتم تخطي الصفوف التي بها مشكلة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:292
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:295
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:211
 msgid "{recipientCount} recipients"
 msgstr "{recipientCount} مستلم"
@@ -2505,7 +2505,7 @@ msgstr "{referenceCount, plural, zero {لا أماكن} one {مكان واحد} 
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr "{referralCount, plural, one {شخص واحد انضم باستخدام رابطك!} other {# أشخاص انضموا باستخدام رابطك!}}"
 
-#: app/components/orders/order-detail.tsx:1104
+#: app/components/orders/order-detail.tsx:1128
 msgid "{refundedMoney} of {totalMoney}"
 msgstr "{refundedMoney} من {totalMoney}"
 
@@ -2742,7 +2742,7 @@ msgstr "{total, plural, zero {أُضيف المستوى. لا مستويات.} o
 msgid "{total, plural, one {Tier removed. # tier.} other {Tier removed. # tiers.}}"
 msgstr "{total, plural, zero {أُزيل المستوى. لا مستويات.} one {أُزيل المستوى. مستوى واحد.} two {أُزيل المستوى. مستويان.} few {أُزيل المستوى. # مستويات.} many {أُزيل المستوى. # مستوى.} other {أُزيل المستوى. # مستوى.}}"
 
-#: app/components/marketing/short-links-screen.tsx:93
+#: app/components/marketing/short-links-screen.tsx:94
 msgid "{total} clicks in the last 30 days"
 msgstr "{total} نقرة خلال آخر 30 يومًا"
 
@@ -2758,15 +2758,15 @@ msgstr "عدد الردود: {total}"
 msgid "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 msgstr "{totalLimit, plural, zero {حتى # استخدامات} one {حتى استخدام واحد} two {حتى استخدامين} few {حتى # استخدامات} many {حتى # استخدامًا} other {حتى # استخدام}}"
 
-#: app/components/orders/order-detail.tsx:1312
+#: app/components/orders/order-detail.tsx:1336
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: give the money back at the counter, then record the refund on this order."
 msgstr "تم استلام {totalMoney} مقابل هذا الطلب. الإلغاء لا يردّ المبلغ: أعد المال للضيف عند الكاشير، ثم سجّل الاسترداد على هذا الطلب."
 
-#: app/components/orders/order-detail.tsx:1308
+#: app/components/orders/order-detail.tsx:1332
 msgid "{totalMoney} was received for this order. Cancelling does not refund it. The order moves to Cancelled and cannot be reopened."
 msgstr "تم استلام {totalMoney} مقابل هذا الطلب. الإلغاء لا يردّ المبلغ. سينتقل الطلب إلى «ملغى» ولا يمكن إعادة فتحه."
 
-#: app/components/orders/order-detail.tsx:1304
+#: app/components/orders/order-detail.tsx:1328
 msgid "{totalMoney} was received for this order. The order is cancelled right away. Choose whether the guest gets their money back."
 msgstr "تم استلام {totalMoney} مقابل هذا الطلب. سيُلغى الطلب فورًا. اختر ما إذا كان الضيف سيسترد أمواله."
 
@@ -3013,7 +3013,7 @@ msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 msgid "+{lateMin}m late"
 msgstr "متأخر +{lateMin} د"
 
-#: app/components/orders/order-detail.tsx:813
+#: app/components/orders/order-detail.tsx:837
 msgid "+{minutes} min"
 msgstr "+{minutes} دقيقة"
 
@@ -3621,11 +3621,11 @@ msgstr "مدة جلوس نطاق حجمها معكوس."
 msgid "A discount can have up to 90 codes. Make another discount for more."
 msgstr "يمكن أن يحتوي الخصم على 90 رمزًا كحد أقصى. أنشئ خصمًا آخر للمزيد."
 
-#: app/components/orders/order-detail.tsx:383
+#: app/components/orders/order-detail.tsx:400
 msgid "A discount on this order reached its use limit before the payment arrived. The customer was charged the discounted price, so honoring the order means accepting that overrun."
 msgstr "وصل خصم في هذا الطلب إلى حد استخدامه قبل وصول الدفعة. تم تحصيل السعر بعد الخصم من العميل، لذا فإن تنفيذ الطلب يعني قبول هذا التجاوز."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:49
+#: ../../packages/marketing/src/components/campaign-detail.tsx:51
 msgid "a discount that is no longer listed"
 msgstr "خصم لم يعد مدرجًا"
 
@@ -4015,7 +4015,7 @@ msgstr "يكون النطاق تصاعديًا، مثل T1-T12."
 msgid "A re-send to people who did not open it"
 msgstr "إعادة إرسال لمن لم يفتحها"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:166
+#: ../../packages/marketing/src/components/campaign-detail.tsx:168
 msgid "A re-send to people who did not open or click the first one and are still subscribed."
 msgstr "إعادة إرسال لمن لم يفتح الرسالة الأولى ولم ينقر عليها وما زال مشتركًا."
 
@@ -4315,14 +4315,14 @@ msgstr "لون التمييز"
 
 #: app/components/menu/menu-review-card.tsx:567
 #: app/components/menu/menu-review-stack.tsx:1443
-#: app/components/orders/order-detail.tsx:624
+#: app/components/orders/order-detail.tsx:641
 #: app/components/orders/waiting-lane.tsx:204
 #: app/components/privacy-banner.tsx:60
 #: app/routes/_app+/organizations.tsx:302
 msgid "Accept"
 msgstr "قبول"
 
-#: app/components/orders/order-detail.tsx:445
+#: app/components/orders/order-detail.tsx:462
 msgid "Accept and start preparing"
 msgstr "قبول وبدء التحضير"
 
@@ -4518,10 +4518,10 @@ msgstr "نشط"
 #: app/components/website/domain/forwarding-panel.tsx:26
 #: app/components/website/domain/registered-panel.tsx:55
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:426
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:90
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:91
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:71
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:363
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:379
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1006
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
@@ -4559,7 +4559,7 @@ msgstr "يجب أن تكون قيمة «نشط» نعم أو لا."
 
 #: app/components/app-sidebar.tsx:643
 #: app/components/loyalty/loyalty-chrome.tsx:72
-#: app/components/orders/order-detail.tsx:1204
+#: app/components/orders/order-detail.tsx:1228
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:151
 #: app/routes/_app+/$orgSlug_+/website+/activity.tsx:71
@@ -6294,7 +6294,7 @@ msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاه�
 msgid "All core features included"
 msgstr "جميع الميزات الأساسية مضمنة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:306
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:319
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr "جميع سير عمل أتمتة العملاء تُنسَّق بشكل دائم عبر Cloudflare Workflows وتُنفَّذ بواسطة محرك البيانات الإقليمي."
 
@@ -6408,7 +6408,7 @@ msgstr "كل الأغراض"
 msgid "All reasons"
 msgstr "كل الأسباب"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:41
+#: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "All recipients"
 msgstr "جميع المستلمين"
 
@@ -7190,7 +7190,7 @@ msgstr "دعوات التطبيق غير متاحة بعد للمؤسسات في
 msgid "App login"
 msgstr "تسجيل الدخول إلى التطبيق"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:97
+#: ../../packages/marketing/src/components/campaign-detail.tsx:99
 msgid "App notification"
 msgstr "إشعار التطبيق"
 
@@ -7547,7 +7547,7 @@ msgstr "مؤرشف"
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:428
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:73
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/media.tsx:1303
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/discounts/labels.ts:28
@@ -7643,11 +7643,11 @@ msgstr "وصل"
 msgid "Arrived, waiting"
 msgstr "وصل، في الانتظار"
 
-#: app/components/orders/order-detail.tsx:329
+#: app/components/orders/order-detail.tsx:330
 msgid "Arriving {promisedFrom} to {promisedTo}"
 msgstr "الوصول من {promisedFrom} إلى {promisedTo}"
 
-#: app/components/orders/order-detail.tsx:331
+#: app/components/orders/order-detail.tsx:332
 msgid "Arriving around {promisedFrom}"
 msgstr "الوصول تقريبًا في {promisedFrom}"
 
@@ -7903,7 +7903,7 @@ msgstr "عند التسجيل"
 msgid "At slot time"
 msgstr "عند وقت الموعد"
 
-#: app/components/orders/order-detail.tsx:731
+#: app/components/orders/order-detail.tsx:748
 #: app/routes/_app+/$orgSlug_+/orders.tsx:337
 msgid "At the table"
 msgstr "على الطاولة"
@@ -7937,7 +7937,7 @@ msgstr "إرفاق مجموعات معدِّلات فرعية تظهر عندم�
 msgid "Attached images"
 msgstr "الصور المرفقة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:511
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:524
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
 
@@ -7972,7 +7972,7 @@ msgstr "الجماهير"
 msgid "Audiences cannot use tags, allergies or notes. Choose another rule."
 msgstr "لا يمكن للجماهير استخدام الوسوم أو الحساسية أو الملاحظات. اختر قاعدة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:359
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:372
 msgid "Audit Trail"
 msgstr "سجل التدقيق"
 
@@ -8102,7 +8102,7 @@ msgstr "أتمتة"
 msgid "Automation menu"
 msgstr "قائمة الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:84
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:86
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:84
 msgid "Automation not found"
 msgstr "لم يتم العثور على الأتمتة"
@@ -8122,7 +8122,7 @@ msgstr "تم حفظ الأتمتة بنجاح"
 #: app/components/app-sidebar.tsx:504
 #: app/components/command-menu.tsx:111
 #: app/components/workspace-breadcrumb.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:111
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:112
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:383
 msgid "Automations"
 msgstr "الأتمتة"
@@ -8304,7 +8304,7 @@ msgstr "العودة إلى الأتمتة"
 msgid "Back to blocks"
 msgstr "العودة إلى الكتل"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:38
+#: ../../packages/marketing/src/components/campaign-detail.tsx:40
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
@@ -9057,14 +9057,14 @@ msgstr "إجراءات الرسالة الجماعية"
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:204
+#: ../../packages/marketing/src/components/campaign-detail.tsx:214
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
 #: app/components/app-sidebar.tsx:497
 #: app/components/command-menu.tsx:110
 #: app/components/workspace-breadcrumb.tsx:44
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:101
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:102
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:119
 #: app/utils/marketing/campaign-alerts.ts:31
 msgid "Broadcasts"
@@ -9082,7 +9082,7 @@ msgstr "تحتفظ الرسائل الجماعية والأتمتة التي أ�
 msgid "Broadcasts waiting or sending"
 msgstr "رسائل جماعية بانتظار الإرسال أو قيد الإرسال"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:188
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:189
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr "البثّات والأتمتة والأداء في لمحة واحدة."
 
@@ -9629,9 +9629,17 @@ msgstr "ستظهر هنا المكالمات التي يرد عليها وكيل
 msgid "Calories (kCal)"
 msgstr "السعرات الحرارية (كيلو كالوري)"
 
+#: app/components/orders/order-detail.tsx:792
+msgid "Came from: "
+msgstr "جاء من: "
+
 #: app/components/inventory/record-delivery-screen.tsx:918
 msgid "Came short"
 msgstr "وصل ناقصًا"
+
+#: app/components/orders/refund-labels.ts:39
+msgid "Campaign"
+msgstr "حملة"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:340
 msgid "Campaign name"
@@ -9745,7 +9753,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/loyalty/reward-dialog.tsx:709
 #: app/components/marketing/campaign-actions.tsx:148
 #: app/components/marketing/campaign-actions.tsx:337
-#: app/components/marketing/programs-section.tsx:262
+#: app/components/marketing/programs-section.tsx:263
 #: app/components/media-library/media-library-picker.tsx:345
 #: app/components/media-library/photo-studio-dialog.tsx:963
 #: app/components/media-library/photo-studio-dialog.tsx:990
@@ -9944,13 +9952,13 @@ msgstr "إلغاء المقابلة"
 
 #: app/components/inventory/review-order-screen.tsx:775
 #: app/components/inventory/review-order-screen.tsx:840
-#: app/components/orders/order-detail.tsx:1262
+#: app/components/orders/order-detail.tsx:1286
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:399
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:429
 msgid "Cancel order"
 msgstr "إلغاء الطلب"
 
-#: app/components/orders/order-detail.tsx:1299
+#: app/components/orders/order-detail.tsx:1323
 msgid "Cancel order {orderNumber}?"
 msgstr "إلغاء الطلب {orderNumber}؟"
 
@@ -10023,16 +10031,16 @@ msgstr "الإلغاءات حسب الجهة"
 #: app/components/hiring/applicant-labels.ts:42
 #: app/components/inventory/count-status-badge.tsx:10
 #: app/components/my-schedule/status-badge.tsx:17
-#: app/components/orders/order-detail.tsx:402
-#: app/components/orders/order-detail.tsx:544
-#: app/components/orders/order-detail.tsx:559
+#: app/components/orders/order-detail.tsx:419
+#: app/components/orders/order-detail.tsx:561
+#: app/components/orders/order-detail.tsx:576
 #: app/components/print/print-order-labels.ts:20
 #: app/components/reservations/status-style.tsx:144
 #: app/components/reservations/status-style.tsx:211
 #: app/components/staff/schedule/time-off-page.tsx:286
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:215
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:238
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:153
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:159
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:101
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:216
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:242
@@ -10073,7 +10081,7 @@ msgstr "تم إلغاء نقل {cancelledGuestName}."
 msgid "Cancelled orders"
 msgstr "طلبات ملغاة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:73
+#: ../../packages/marketing/src/components/campaign-detail.tsx:75
 msgid "Cancelled, not sent"
 msgstr "أُلغيت ولم تُرسل"
 
@@ -11323,7 +11331,7 @@ msgid "Choose a provider"
 msgstr "اختر مزوّدًا"
 
 #: app/components/orders/acceptance.tsx:113
-#: app/components/orders/order-detail.tsx:1330
+#: app/components/orders/order-detail.tsx:1354
 msgid "Choose a reason"
 msgstr "اختر سببًا"
 
@@ -12040,7 +12048,7 @@ msgstr "انقر على طاولة أو عنصر ديكور في المخطط ل
 msgid "Click anywhere on the map to add polygon corners"
 msgstr "انقر في أي مكان على الخريطة لإضافة زوايا المضلع"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:85
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:86
 msgid "Click rate"
 msgstr "معدل النقر"
 
@@ -12056,20 +12064,36 @@ msgstr "انقر على اليوم الأول ثم على اليوم الأخي�
 msgid "Click to choose a cover image"
 msgstr "انقر لاختيار صورة الغلاف"
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:61
+#: app/components/marketing/journey-step-attribution.tsx:116
+msgid "Clicked"
+msgstr "نقر"
+
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:105
+#: ../../packages/marketing/src/components/campaign-detail.tsx:107
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:100
+msgid "Clicked: orders placed after a guest followed a link in one of your messages. Revenue is net of refunds."
+msgstr "نقر: الطلبات التي تمت بعد أن فتح الضيف رابطًا في إحدى رسائلك. الإيرادات صافية بعد المبالغ المستردة."
+
+#: app/components/marketing/journey-step-attribution.tsx:183
+msgid "Clicked: orders placed after a guest followed a link in that step's message. Revenue is net of refunds."
+msgstr "نقر: الطلبات التي تمت بعد أن فتح الضيف رابطًا في رسالة هذه الخطوة. الإيرادات صافية بعد المبالغ المستردة."
 
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:472
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:579
 msgid "Clicks"
 msgstr "النقرات"
 
-#. placeholder {0}: link.clicksThisMonth
 #: app/components/marketing/short-links-screen.tsx:99
-msgid "Clicks: {0} this month"
-msgstr "النقرات: {0} هذا الشهر"
+#~ msgid "Clicks: {0} this month"
+#~ msgstr "النقرات: {0} هذا الشهر"
+
+#: app/components/marketing/short-links-screen.tsx:100
+msgid "Clicks: {clicksThisMonth} this month"
+msgstr "النقرات: {clicksThisMonth} هذا الشهر"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:967
 msgid "Client"
@@ -12632,7 +12656,7 @@ msgstr "إكمال المكالمات والطلبات وإعادة فتحها،
 msgid "Complete authentication"
 msgstr "إكمال المصادقة"
 
-#: app/components/orders/order-detail.tsx:449
+#: app/components/orders/order-detail.tsx:466
 msgid "Complete order"
 msgstr "إكمال الطلب"
 
@@ -12677,9 +12701,9 @@ msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:46
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/components/onboarding-checklist.tsx:249
-#: app/components/orders/order-detail.tsx:397
+#: app/components/orders/order-detail.tsx:414
 #: app/components/reservations/status-style.tsx:143
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:156
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:98
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:237
 #: app/utils/loyalty/loyalty-labels.ts:128
@@ -12763,7 +12787,7 @@ msgstr "أكد «هذه قائمة مطعمي» قبل الاستيراد من �
 msgid "Confirm accepting all translations"
 msgstr "تأكيد قبول كل الترجمات"
 
-#: app/components/orders/order-detail.tsx:1381
+#: app/components/orders/order-detail.tsx:1405
 msgid "Confirm cancellation"
 msgstr "تأكيد الإلغاء"
 
@@ -13410,7 +13434,7 @@ msgstr "عدد النسخ من كل مطبوعة. تُطبع كل بطاقة ف�
 msgid "copy"
 msgstr "نسخة"
 
-#: app/components/marketing/short-links-screen.tsx:115
+#: app/components/marketing/short-links-screen.tsx:116
 #: app/components/organization-invitations.tsx:224
 #: app/components/phone-agent/agent-details.tsx:239
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
@@ -13454,7 +13478,7 @@ msgstr "نسخ التصنيفات كتصنيفات جديدة"
 msgid "Copy code"
 msgstr "نسخ الكود"
 
-#: app/components/orders/order-detail.tsx:688
+#: app/components/orders/order-detail.tsx:705
 msgid "Copy email address"
 msgstr "نسخ البريد الإلكتروني"
 
@@ -13479,7 +13503,7 @@ msgstr "نسخ الرابط"
 msgid "Copy modifier groups as new groups"
 msgstr "نسخ مجموعات الإضافات كمجموعات جديدة"
 
-#: app/components/orders/order-detail.tsx:506
+#: app/components/orders/order-detail.tsx:523
 msgid "Copy order number"
 msgstr "نسخ رقم الطلب"
 
@@ -13492,7 +13516,7 @@ msgstr "نسخ التجاوزات"
 msgid "Copy overrides to another location"
 msgstr "نسخ التجاوزات إلى موقع آخر"
 
-#: app/components/orders/order-detail.tsx:674
+#: app/components/orders/order-detail.tsx:691
 msgid "Copy phone number"
 msgstr "نسخ رقم الهاتف"
 
@@ -14033,7 +14057,7 @@ msgstr "تعذّر تحميل الأطباق غير المتوفرة."
 msgid "Couldn't load the recording. Try again."
 msgstr "تعذّر تحميل التسجيل. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:471
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:484
 msgid "Couldn't load the steps of this run. Close it and try again."
 msgstr "تعذّر تحميل خطوات هذا التشغيل. أغلقه وحاول مرة أخرى."
 
@@ -14222,6 +14246,7 @@ msgstr "أعداد فقط. لا يُعرض أي ضيف."
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:90
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:137
 #: ../../packages/marketing/src/components/email/block-meta.ts:48
+#: app/components/orders/refund-labels.ts:43
 #: app/routes/_app+/$orgSlug_+/website+/popups._index.tsx:125
 msgid "Coupon"
 msgstr "القسيمة"
@@ -14248,15 +14273,15 @@ msgstr "رموز القسائم"
 msgid "Coupon prints carry a discount code, so only people who can view discounts can see the proof and download it."
 msgstr "تحمل مطبوعات الكوبونات رمز خصم، لذا لا يستطيع رؤية المعاينة وتنزيلها إلا من يملك صلاحية عرض الخصومات."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:58
+#: ../../packages/marketing/src/components/campaign-detail.tsx:60
 msgid "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 msgstr "القسيمة: {name}، برمز للاستخدام مرة واحدة لكل مستلم، صالح لمدة {days} يومًا."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:54
+#: ../../packages/marketing/src/components/campaign-detail.tsx:56
 msgid "Coupon: {name}, with one shared code for everyone."
 msgstr "القسيمة: {name}، برمز واحد مشترك للجميع."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:53
+#: ../../packages/marketing/src/components/campaign-detail.tsx:55
 msgid "Coupon: {name}, with the code {code} for everyone."
 msgstr "القسيمة: {name}، بالرمز {code} للجميع."
 
@@ -14489,7 +14514,7 @@ msgstr "أنشئ خصمًا تلقائيًا أو رمز قسيمة. يراه ا
 msgid "Create an item to start building your menu."
 msgstr "أنشئ عنصرًا لبدء بناء قائمتك."
 
-#: app/components/marketing/programs-section.tsx:269
+#: app/components/marketing/programs-section.tsx:270
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:236
 msgid "Create and customize"
 msgstr "إنشاء وتخصيص"
@@ -14720,7 +14745,7 @@ msgstr "إنشاء المكافأة"
 msgid "Create role"
 msgstr "إنشاء دور"
 
-#: app/components/marketing/short-links-screen.tsx:244
+#: app/components/marketing/short-links-screen.tsx:245
 msgid "Create short link"
 msgstr "إنشاء رابط قصير"
 
@@ -14736,7 +14761,7 @@ msgstr "أنشئ مفتاح API الأول للبدء"
 msgid "Create your first audience."
 msgstr "أنشئ أول جمهور لك."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:268
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:271
 msgid "Create your first broadcast"
 msgstr "أنشئ أول بث لك"
 
@@ -15003,7 +15028,7 @@ msgstr "نموذج مخصص"
 msgid "Custom Hours"
 msgstr "ساعات مخصصة"
 
-#: app/components/orders/order-detail.tsx:901
+#: app/components/orders/order-detail.tsx:925
 msgid "Custom item"
 msgstr "صنف مخصّص"
 
@@ -15057,8 +15082,8 @@ msgstr "مخصص: ما لديك الآن"
 msgid "customer"
 msgstr "عميل"
 
-#: app/components/orders/order-detail.tsx:634
-#: app/components/orders/order-detail.tsx:658
+#: app/components/orders/order-detail.tsx:651
+#: app/components/orders/order-detail.tsx:675
 #: app/components/workspace-breadcrumb.tsx:110
 #: app/routes/_app+/$orgSlug_+/orders.tsx:313
 msgid "Customer"
@@ -15138,7 +15163,7 @@ msgstr "تقييمات العملاء"
 msgid "Customer since"
 msgstr "عميل منذ"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:354
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:367
 msgid "Customer UUID"
 msgstr "معرّف العميل الفريد"
 
@@ -16149,7 +16174,7 @@ msgstr "يسلّم في"
 #: app/components/locations/checkout-settings-cards.tsx:53
 #: app/components/locations/checkout-settings-cards.tsx:358
 #: app/components/locations/location-form.tsx:1110
-#: app/components/orders/order-detail.tsx:729
+#: app/components/orders/order-detail.tsx:746
 #: app/components/orders/slot-limits-panel.tsx:172
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
@@ -16191,8 +16216,8 @@ msgstr "مناطق التوصيل والرسوم وبدائل الاستلام."
 msgid "Delivery cancelled."
 msgstr "تم إلغاء الشحنة."
 
-#: app/components/orders/order-detail.tsx:969
-#: app/components/orders/order-detail.tsx:1441
+#: app/components/orders/order-detail.tsx:993
+#: app/components/orders/order-detail.tsx:1465
 msgid "Delivery discount"
 msgstr "خصم التوصيل"
 
@@ -16200,7 +16225,7 @@ msgstr "خصم التوصيل"
 msgid "Delivery discounts"
 msgstr "خصومات التوصيل"
 
-#: app/components/orders/order-detail.tsx:986
+#: app/components/orders/order-detail.tsx:1010
 #: app/utils/discounts/labels.ts:370
 #: app/utils/discounts/summary.ts:222
 msgid "Delivery fee"
@@ -16222,7 +16247,7 @@ msgstr "Delivery limit"
 msgid "Delivery max subtotal ({currency})"
 msgstr "الحد الأقصى لإجمالي التوصيل ({currency})"
 
-#: app/components/orders/order-detail.tsx:849
+#: app/components/orders/order-detail.tsx:873
 msgid "Delivery notes:"
 msgstr "ملاحظات التوصيل:"
 
@@ -16706,6 +16731,7 @@ msgstr "مدد الجلوس في {named} متداخلة لبعض أحجام ال
 msgid "Dining times for {named} skip some party sizes."
 msgstr "مدد الجلوس في {named} تتخطى بعض أحجام المجموعات."
 
+#: app/components/orders/refund-labels.ts:36
 #: app/components/website/funnel-panel.tsx:55
 msgid "Direct"
 msgstr "مباشر"
@@ -16840,8 +16866,8 @@ msgstr "فصل هذا التقويم؟ ستُزال فعالياته من موق
 #: app/components/discounts/discount-form.tsx:1713
 #: app/components/discounts/discount-performance.tsx:246
 #: app/components/loyalty/reward-dialog.tsx:554
-#: app/components/orders/order-detail.tsx:961
-#: app/components/orders/order-detail.tsx:1443
+#: app/components/orders/order-detail.tsx:985
+#: app/components/orders/order-detail.tsx:1467
 #: app/components/print/restaurant/vertical-ui.tsx:143
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:453
 msgid "Discount"
@@ -17035,7 +17061,7 @@ msgstr "اعرض تاريخ الفتح أسفل العد التنازلي"
 msgid "Displayed"
 msgstr "معروض"
 
-#: app/components/orders/order-detail.tsx:501
+#: app/components/orders/order-detail.tsx:518
 #: app/components/reservations/status-style.tsx:148
 #: app/components/settings/cards/organization/shop-card.tsx:53
 #: app/routes/_app+/$orgSlug_+/orders.tsx:352
@@ -17301,7 +17327,7 @@ msgstr "مسودة"
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:70
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:364
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:143
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:149
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:96
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1004
@@ -17374,7 +17400,7 @@ msgstr "اكتب مسودة لي"
 msgid "Draft with AI"
 msgstr "صياغة بالذكاء الاصطناعي"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:69
+#: ../../packages/marketing/src/components/campaign-detail.tsx:71
 msgid "Draft, not sent"
 msgstr "مسودة، لم تُرسل"
 
@@ -17502,7 +17528,7 @@ msgstr "صفحة الإصدار"
 msgid "Drop title"
 msgstr "عنوان الطرح"
 
-#: app/components/orders/order-detail.tsx:856
+#: app/components/orders/order-detail.tsx:880
 msgid "Drop:"
 msgstr "الإطلاق:"
 
@@ -17587,7 +17613,7 @@ msgid "Duplicates and data"
 msgstr "التكرارات والبيانات"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:379
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:357
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:370
 msgid "Duration"
 msgstr "المدة"
 
@@ -18290,6 +18316,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/inventory/supplier-form.tsx:37
 #: app/components/inventory/supplier-form.tsx:232
+#: app/components/marketing/journey-step-attribution.tsx:81
 #: app/components/marketing/marketing-calendar.tsx:201
 #: app/components/marketing/programs-section.tsx:129
 #: app/components/marketing/programs-section.tsx:221
@@ -18328,6 +18355,10 @@ msgstr "عنوان البريد الإلكتروني"
 #: ../../packages/marketing-workflow/src/validation.ts:21
 msgid "Email body content is required."
 msgstr "محتوى نص البريد الإلكتروني مطلوب."
+
+#: app/components/orders/refund-labels.ts:37
+msgid "Email campaign"
+msgstr "حملة بريد إلكتروني"
 
 #: app/utils/inventory/order-view.ts:187
 msgid "Email cannot be sent from here yet."
@@ -18443,7 +18474,7 @@ msgstr "الرسائل"
 msgid "Emails go out from our address until they are fixed. Check the records below and re-check."
 msgstr "تُرسَل الرسائل من عنواننا حتى يتم الإصلاح. افحص السجلات أدناه ثم أعد الفحص."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:75
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:76
 msgid "Emails sent"
 msgstr "رسائل البريد المُرسَلة"
 
@@ -19586,7 +19617,7 @@ msgstr "طلب مناسبة"
 msgid "Event title"
 msgstr "عنوان الفعالية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:112
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:113
 msgid "Event-driven workflows"
 msgstr "سير عمل قائم على الأحداث"
 
@@ -19937,11 +19968,11 @@ msgstr "الاستثناءات"
 msgid "Exclusive seating"
 msgstr "جلوس حصري"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:302
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:315
 msgid "Execution History ({runCount})"
 msgstr "سجل التنفيذ ({runCount})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:283
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:289
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "عمليات التشغيل وسجل الخطوات، المُطلقة بواسطة \"{triggerLabel}\"."
 
@@ -20202,7 +20233,7 @@ msgstr "إضافات"
 msgid "Facebook"
 msgstr "فيسبوك"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:122
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:123
 msgid "Facebook and Instagram posts"
 msgstr "منشورات فيسبوك وإنستغرام"
 
@@ -20246,7 +20277,7 @@ msgstr "فشل"
 #: app/components/social/social-labels.ts:35
 #: app/components/social/social-labels.ts:45
 #: app/components/website/domain/buy-card.tsx:132
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:158
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:100
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:215
 #: app/utils/reservations/payments-view.ts:72
@@ -20405,7 +20436,7 @@ msgstr "فشل تحميل الحملات"
 msgid "Failed to load journeys from regional tenant storage."
 msgstr "فشل تحميل الرحلات من تخزين المستأجر الإقليمي."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:171
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:172
 msgid "Failed to load marketing metrics"
 msgstr "فشل تحميل مقاييس التسويق"
 
@@ -20417,7 +20448,7 @@ msgstr "فشل تحميل تفاصيل الحجز."
 msgid "Failed to load reservation setup for this location."
 msgstr "فشل في تحميل إعدادات الحجوزات لهذا الفرع."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:327
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:340
 msgid "Failed to load runs"
 msgstr "تعذّر تحميل عمليات التشغيل"
 
@@ -21384,7 +21415,7 @@ msgstr "التوصيل المجاني يخصم رسوم التوصيل من ال
 msgid "Free item"
 msgstr "عنصر مجاني"
 
-#: app/components/orders/order-detail.tsx:496
+#: app/components/orders/order-detail.tsx:513
 msgid "Free order"
 msgstr "طلب مجاني"
 
@@ -21567,7 +21598,7 @@ msgid "Frying oil"
 msgstr "زيت القلي"
 
 #: app/components/customers/person-orders-panel.tsx:169
-#: app/components/orders/order-detail.tsx:717
+#: app/components/orders/order-detail.tsx:734
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:977
 msgid "Fulfillment"
 msgstr "التنفيذ"
@@ -21607,7 +21638,7 @@ msgstr "الاسم الكامل"
 msgid "Full Name"
 msgstr "الاسم الكامل"
 
-#: app/components/orders/order-detail.tsx:1346
+#: app/components/orders/order-detail.tsx:1370
 msgid "Full refund"
 msgstr "استرداد كامل"
 
@@ -21836,7 +21867,7 @@ msgstr "أعطِ المجموعة اسمًا."
 msgid "Give the job a title."
 msgstr "أعطِ الوظيفة مسمى."
 
-#: app/components/orders/order-detail.tsx:1187
+#: app/components/orders/order-detail.tsx:1211
 msgid "Give the money back at the counter first, then record it here."
 msgstr "أعد المال للضيف عند الكاشير أولًا، ثم سجّله هنا."
 
@@ -22229,7 +22260,7 @@ msgstr "ضيف"
 msgid "Guest asked"
 msgstr "طلب الضيف"
 
-#: app/components/orders/order-detail.tsx:659
+#: app/components/orders/order-detail.tsx:676
 #: app/components/settings/cards/organization/shop-card.tsx:465
 #: app/routes/_app+/$orgSlug_+/orders.tsx:314
 msgid "Guest checkout"
@@ -22561,6 +22592,10 @@ msgstr "يدفع الضيوف {amount} مسبقًا لكل حجز."
 #: app/utils/reservations/policies-view.ts:351
 msgid "Guests prepay {amount} per guest to book."
 msgstr "يدفع الضيوف {amount} مسبقًا عن كل ضيف."
+
+#: app/components/marketing/marketing-attribution-overview.tsx:95
+msgid "Guests reached"
+msgstr "الضيوف الذين وصلتهم الرسائل"
 
 #: app/components/reservations/policies/policy-sheet.tsx:341
 msgid "Guests read these terms and accept them before they book. Write them in each language your website offers."
@@ -23376,6 +23411,11 @@ msgstr "عدد مرات إتاحة وقت البدء للضيوف"
 msgid "How often people clock in on time for the shifts they were scheduled on."
 msgstr "عدد مرات تسجيل الحضور في الوقت المحدد للمناوبات المجدولة."
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:53
+#: app/components/marketing/journey-step-attribution.tsx:105
+msgid "How orders are counted"
+msgstr "طريقة احتساب الطلبات"
+
 #: app/components/staff/kiosk-manager.tsx:592
 #: app/components/staff/kiosk-manager.tsx:878
 msgid "How people sign in"
@@ -23483,7 +23523,7 @@ msgstr "أؤكد أنني أملك ترخيصًا يسمح باستخدام هذ
 msgid "I fixed it myself"
 msgstr "أصلحته بنفسي"
 
-#: app/components/orders/order-detail.tsx:1248
+#: app/components/orders/order-detail.tsx:1272
 msgid "I have received payment at handoff"
 msgstr "لقد استلمت الدفع عند التسليم"
 
@@ -23596,7 +23636,7 @@ msgstr "رابط الصورة"
 msgid "Image link copied"
 msgstr "تم نسخ رابط الصورة"
 
-#: app/components/marketing/marketing-calendar.tsx:307
+#: app/components/marketing/marketing-calendar.tsx:309
 #: app/components/social/social-calendar.tsx:116
 #: app/components/social/social-calendar.tsx:175
 #: app/components/social/social-calendar.tsx:224
@@ -24550,7 +24590,7 @@ msgstr "عنصر"
 
 #: app/components/inventory/stock-list.tsx:102
 #: app/components/inventory/supplier-products.tsx:375
-#: app/components/orders/order-detail.tsx:879
+#: app/components/orders/order-detail.tsx:903
 #: app/components/workspace-breadcrumb.tsx:123
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:105
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:119
@@ -24622,7 +24662,7 @@ msgstr "عناصر"
 #: app/components/inventory/review-order-screen.tsx:627
 #: app/components/loyalty/promotion-dialog.tsx:671
 #: app/components/menu/menu-review-card.tsx:103
-#: app/components/orders/order-detail.tsx:865
+#: app/components/orders/order-detail.tsx:889
 #: app/components/pos/ticket-settings.tsx:61
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:322
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:370
@@ -24902,7 +24942,7 @@ msgstr "الإبقاء على نصي"
 msgid "Keep my text"
 msgstr "الإبقاء على نصي"
 
-#: app/components/orders/order-detail.tsx:1367
+#: app/components/orders/order-detail.tsx:1391
 msgid "Keep order"
 msgstr "الاحتفاظ بالطلب"
 
@@ -25302,7 +25342,7 @@ msgstr "منقطع منذ 90 يومًا"
 msgid "Large"
 msgstr "كبير"
 
-#: app/components/orders/order-detail.tsx:773
+#: app/components/orders/order-detail.tsx:797
 msgid "Large order +{largeOrderExtraMinutes} min"
 msgstr "طلب كبير +{largeOrderExtraMinutes} د"
 
@@ -25432,9 +25472,13 @@ msgstr "آخر 30 يومًا"
 msgid "Last 30 days, visitors who left for another site: orders {order}, gift cards {giftCards}, reservations {reservations}."
 msgstr "آخر 30 يومًا، الزوار الذين غادروا إلى موقع آخر: الطلبات {order}، بطاقات الهدايا {giftCards}، الحجوزات {reservations}."
 
-#: app/components/marketing/programs-section.tsx:291
+#: app/components/marketing/programs-section.tsx:292
 msgid "Last 30 days: {runs} runs · {messagesSent} messages sent · {ordersByGoal} orders"
 msgstr "آخر 30 يوماً: {runs} تشغيلاً · {messagesSent} رسالة مرسلة · {ordersByGoal} طلباً"
+
+#: app/components/marketing/marketing-attribution-overview.tsx:77
+msgid "Last 30 days: messages and orders"
+msgstr "آخر 30 يومًا: الرسائل والطلبات"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:142
 msgid "Last 7 days"
@@ -25549,7 +25593,7 @@ msgstr "آخر تحديث مرسل:"
 msgid "Last seating"
 msgstr "آخر جلوس"
 
-#: app/components/orders/order-detail.tsx:1224
+#: app/components/orders/order-detail.tsx:1248
 msgid "Last updated"
 msgstr "آخر تحديث"
 
@@ -25652,7 +25696,7 @@ msgstr "قائمة الإطلاق"
 msgid "Launch run"
 msgstr "بدء التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:343
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:356
 msgid "Launch Test Run in Builder"
 msgstr "بدء تشغيل اختباري في المُنشئ"
 
@@ -26157,7 +26201,7 @@ msgstr "نص زر الرابط"
 msgid "Link columns"
 msgstr "أعمدة الروابط"
 
-#: app/components/marketing/short-links-screen.tsx:110
+#: app/components/marketing/short-links-screen.tsx:111
 msgid "Link copied"
 msgstr "تم نسخ الرابط"
 
@@ -26179,7 +26223,7 @@ msgstr "تم إنشاء الرابط"
 msgid "Link for {label}"
 msgstr "رابط {label}"
 
-#: app/components/marketing/short-links-screen.tsx:135
+#: app/components/marketing/short-links-screen.tsx:136
 msgid "Link is on"
 msgstr "الرابط مفعّل"
 
@@ -26231,7 +26275,7 @@ msgstr "الروابط"
 msgid "Links must be a page of your site (starting with /) or a full https:// address."
 msgstr "يجب أن يكون الرابط صفحة من موقعك (يبدأ بـ /) أو عنوانًا كاملًا يبدأ بـ https://."
 
-#: app/components/marketing/short-links-screen.tsx:235
+#: app/components/marketing/short-links-screen.tsx:236
 msgid "Links only point to pages on your own website. A click is counted per day; we never keep who clicked."
 msgstr "تشير الروابط إلى صفحات موقعك فقط. تُحتسب النقرات يوميًا ولا نحتفظ بهوية من نقر."
 
@@ -26527,7 +26571,7 @@ msgstr "جارٍ تحميل التقييمات"
 msgid "Loading rewards…"
 msgstr "جارٍ تحميل المكافآت…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:313
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:326
 msgid "Loading runs…"
 msgstr "جارٍ تحميل عمليات التشغيل…"
 
@@ -26543,7 +26587,7 @@ msgstr "جارٍ تحميل الإعدادات…"
 msgid "Loading special days…"
 msgstr "جارٍ تحميل الأيام الخاصة…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:463
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:476
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
 
@@ -27119,7 +27163,7 @@ msgstr "برنامج الولاء والأعضاء والنقاط وعمليات
 msgid "Loyalty promotions"
 msgstr "العروض الترويجية للولاء"
 
-#: app/components/orders/order-detail.tsx:981
+#: app/components/orders/order-detail.tsx:1005
 msgid "Loyalty reward"
 msgstr "مكافأة الولاء"
 
@@ -27236,7 +27280,7 @@ msgstr "إنشاء رمز جديد"
 msgid "Make a new QR code for this table?"
 msgstr "إنشاء رمز QR جديد لهذه الطاولة؟"
 
-#: app/components/marketing/short-links-screen.tsx:258
+#: app/components/marketing/short-links-screen.tsx:259
 msgid "Make a short link for a sticker, a flyer or a text, then see how many people use it."
 msgstr "أنشئ رابطًا قصيرًا لملصق أو نشرة أو رسالة نصية، ثم تابع عدد من يستخدمه."
 
@@ -27722,7 +27766,7 @@ msgstr "تحديد الأكثر طلباً تلقائياً"
 msgid "Mark read"
 msgstr "تحديد كمقروء"
 
-#: app/components/orders/order-detail.tsx:448
+#: app/components/orders/order-detail.tsx:465
 msgid "Mark ready"
 msgstr "تمييز كجاهز"
 
@@ -27790,7 +27834,7 @@ msgstr "محدد كغير متاح"
 #: app/components/roles/tenant-role-access-manager.tsx:243
 #: app/components/website/funnel-panel.tsx:56
 #: app/components/workspace-breadcrumb.tsx:15
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:186
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:187
 msgid "Marketing"
 msgstr "التسويق"
 
@@ -28238,7 +28282,7 @@ msgstr "دمج المكرر"
 msgid "Merge duplicate dishes"
 msgstr "دمج الأطباق المكررة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:195
+#: ../../packages/marketing/src/components/campaign-detail.tsx:205
 #: ../../packages/marketing/src/components/campaign-form.tsx:399
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/components/reservations/messages/message-settings.tsx:689
@@ -28306,6 +28350,10 @@ msgstr "الرسائل وسجلات المكالمات المرتبطة برقم
 msgid "Messages per guest per 7 days"
 msgstr "الرسائل لكل ضيف خلال 7 أيام"
 
+#: app/components/marketing/marketing-attribution-overview.tsx:84
+msgid "Messages sent"
+msgstr "الرسائل المرسلة"
+
 #: app/components/reservations/messages/message-settings.tsx:437
 msgid "Messages to send"
 msgstr "الرسائل المراد إرسالها"
@@ -28334,7 +28382,7 @@ msgstr "لم تؤكد Meta هذا المنشور، لذا قد يكون منشو
 msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
 msgstr "لم تعد Meta تقبل صلاحية الوصول لهذا الحساب. أعد ربطه ثم حاول مرة أخرى."
 
-#: app/components/orders/order-detail.tsx:1067
+#: app/components/orders/order-detail.tsx:1091
 msgid "Method"
 msgstr "الطريقة"
 
@@ -29021,7 +29069,7 @@ msgstr "رابط جدولي"
 #: app/components/inventory/supplier-form.tsx:195
 #: app/components/loyalty/promotion-dialog.tsx:604
 #: app/components/loyalty/reward-dialog.tsx:506
-#: app/components/marketing/short-links-screen.tsx:177
+#: app/components/marketing/short-links-screen.tsx:178
 #: app/components/menu/menu-bulk-edit-sheet.tsx:808
 #: app/components/pos/terminals-manager.tsx:1603
 #: app/components/reservations/policies/policy-sheet.tsx:217
@@ -29995,7 +30043,7 @@ msgstr "لا توجد مكالمات تحتاج إلى متابعة"
 msgid "No calls yet"
 msgstr "لا توجد مكالمات بعد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:261
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:264
 msgid "No campaigns yet."
 msgstr "لا توجد حملات بعد."
 
@@ -30114,7 +30162,7 @@ msgstr "لا يوجد اتصال. تحقق من الإنترنت وحاول مر
 msgid "No contact details"
 msgstr "لا توجد بيانات تواصل"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:98
+#: ../../packages/marketing/src/components/campaign-detail.tsx:100
 msgid "No contact on file"
 msgstr "لا يوجد جهة اتصال مسجّلة"
 
@@ -30160,7 +30208,7 @@ msgstr "لا توجد ملاحظة مخصصة. هذا هو النص الافتر
 msgid "No custom roles created yet."
 msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 
-#: app/components/orders/order-detail.tsx:707
+#: app/components/orders/order-detail.tsx:724
 msgid "No customer profile"
 msgstr "لا يوجد ملف عميل"
 
@@ -30196,7 +30244,7 @@ msgstr "لا توجد شحنات هذا الأسبوع للمقارنة بها."
 msgid "No deliveries yet"
 msgstr "لا توجد توريدات بعد"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:257
+#: ../../packages/marketing/src/components/campaign-detail.tsx:267
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
@@ -30240,7 +30288,7 @@ msgstr "لا توجد خصومات تطابق هذه التصفيات"
 msgid "No discounts yet"
 msgstr "لا توجد خصومات بعد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:477
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:490
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
 
@@ -30312,7 +30360,7 @@ msgstr "لا توجد فعاليات بعد"
 msgid "No events yet."
 msgstr "لا توجد أحداث بعد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:332
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:345
 msgid "No execution runs recorded yet for this automation."
 msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمتة."
 
@@ -30730,7 +30778,7 @@ msgstr "لا توجد ملاحظات بعد."
 msgid "No numbers connected yet."
 msgstr "لم يتم ربط أي أرقام بعد."
 
-#: app/components/marketing/marketing-calendar.tsx:332
+#: app/components/marketing/marketing-calendar.tsx:334
 msgid "No occasions in the next four weeks."
 msgstr "لا توجد مناسبات في الأسابيع الأربعة المقبلة."
 
@@ -30898,11 +30946,11 @@ msgstr "لم يتم تحديد أي أجر بعد."
 msgid "No payment"
 msgstr "بدون دفع"
 
-#: app/components/orders/order-detail.tsx:1315
+#: app/components/orders/order-detail.tsx:1339
 msgid "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 msgstr "لم يتم استلام أي دفعة، لذا لا يوجد ما يُسترد. سيصبح الطلب ملغى ولا يمكن إعادة فتحه."
 
-#: app/components/orders/order-detail.tsx:1083
+#: app/components/orders/order-detail.tsx:1107
 #: app/components/orders/order-status.tsx:37
 msgid "No payment needed"
 msgstr "لا حاجة للدفع"
@@ -31060,7 +31108,7 @@ msgstr "لا توجد عمليات إعادة توجيه بعد"
 msgid "No redirects match that search"
 msgstr "لا توجد عمليات إعادة توجيه تطابق هذا البحث"
 
-#: app/components/orders/order-detail.tsx:1350
+#: app/components/orders/order-detail.tsx:1374
 #: app/utils/reservations/policies-view.ts:40
 msgid "No refund"
 msgstr "بدون استرداد"
@@ -31223,7 +31271,7 @@ msgstr "لا توجد ورديات منشورة لهذه التواريخ. عن�
 msgid "No shifts have been planned for this week."
 msgstr "لم يتم تخطيط أي ورديات لهذا الأسبوع."
 
-#: app/components/marketing/short-links-screen.tsx:256
+#: app/components/marketing/short-links-screen.tsx:257
 msgid "No short links yet"
 msgstr "لا توجد روابط قصيرة بعد"
 
@@ -31250,6 +31298,10 @@ msgstr "لا توجد مناسبات خاصة مسجلة لهذه الخدمة."
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:510
 msgid "No staff phone, so only the transfer cases below transfer calls."
 msgstr "لا يوجد هاتف للموظفين، لذا تُحوَّل المكالمات فقط في حالات التحويل أدناه."
+
+#: app/components/marketing/journey-step-attribution.tsx:134
+msgid "No step has sent a message yet."
+msgstr "لم ترسل أي خطوة رسالة بعد."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:224
 msgid "No storage areas yet"
@@ -31425,7 +31477,7 @@ msgid "No upcoming shifts are published."
 msgstr "لا توجد ورديات قادمة منشورة."
 
 #: app/components/locations/checkout-rules-cards.tsx:145
-#: app/components/orders/order-detail.tsx:782
+#: app/components/orders/order-detail.tsx:806
 msgid "No utensils"
 msgstr "بدون أدوات"
 
@@ -31657,7 +31709,7 @@ msgstr "عادي"
 msgid "Not a problem"
 msgstr "ليست مشكلة"
 
-#: app/components/orders/order-detail.tsx:548
+#: app/components/orders/order-detail.tsx:565
 #: app/components/orders/refund-labels.ts:25
 msgid "Not accepted in time"
 msgstr "لم يُقبل في الوقت المحدد"
@@ -31887,7 +31939,7 @@ msgstr "لم يُرَ بعد"
 msgid "Not sent"
 msgstr "لم يُرسل"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:75
+#: ../../packages/marketing/src/components/campaign-detail.tsx:77
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:12
 msgid "Not sent: too late"
 msgstr "لم تُرسل: فات الوقت"
@@ -32558,7 +32610,7 @@ msgstr "من {totalUsers} شخص"
 
 #: app/components/locations/order-policies-card.tsx:85
 #: app/components/marketing/programs-section.tsx:55
-#: app/components/marketing/short-links-screen.tsx:143
+#: app/components/marketing/short-links-screen.tsx:144
 #: app/components/phone-agent/settings-nav.tsx:82
 #: app/components/pos/station-register-settings.tsx:149
 #: app/components/pos/station-register-settings.tsx:311
@@ -32669,7 +32721,7 @@ msgid "Olive oil"
 msgstr "زيت الزيتون"
 
 #: app/components/marketing/programs-section.tsx:56
-#: app/components/marketing/short-links-screen.tsx:143
+#: app/components/marketing/short-links-screen.tsx:144
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:754
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:366
 msgid "On"
@@ -32914,7 +32966,7 @@ msgstr "من طبق إلى ثلاثة أطباق مع الصورة والسعر 
 msgid "One-time broadcasts and automated journeys."
 msgstr "بثّات لمرة واحدة ومسارات أتمتة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:102
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:103
 msgid "One-time email and SMS"
 msgstr "بريد إلكتروني ورسائل نصية لمرة واحدة"
 
@@ -32936,7 +32988,7 @@ msgstr "بصل"
 
 #: app/components/chat/chat-view.tsx:609
 #: app/components/kiosk/kiosk-chrome.tsx:126
-#: app/components/orders/order-detail.tsx:1074
+#: app/components/orders/order-detail.tsx:1098
 #: app/components/pos/terminal-health.tsx:400
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:864
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:803
@@ -32947,7 +32999,7 @@ msgstr "بصل"
 msgid "Online"
 msgstr "متصل"
 
-#: app/components/orders/order-detail.tsx:1073
+#: app/components/orders/order-detail.tsx:1097
 msgid "Online ({processor})"
 msgstr "عبر الإنترنت ({processor})"
 
@@ -33568,7 +33620,7 @@ msgstr "افتح «المشتريات» لرؤية تغيّرات الأسعار
 msgid "Open question"
 msgstr "سؤال مفتوح"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:80
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:81
 msgid "Open rate"
 msgstr "معدل الفتح"
 
@@ -33733,7 +33785,7 @@ msgstr "افتح «اليوم» للاطمئنان على الضيوف المت�
 msgid "Open Today to review the bookings."
 msgstr "افتح «اليوم» لمراجعة الحجوزات."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:294
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:300
 msgid "Open visual builder"
 msgstr "فتح المنشئ المرئي"
 
@@ -33762,7 +33814,7 @@ msgid "Open, export and unrestrict the responses of forms marked Restricted (all
 msgstr "فتح ردود النماذج المعلَّمة «مقيّدة» (الحساسية والشكاوى والمتقدمون) وتصديرها وإلغاء تقييدها. تتطلب عرض مساحة عمل الموقع."
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:108
+#: ../../packages/marketing/src/components/campaign-detail.tsx:110
 msgid "Opened {0}"
 msgstr "فُتِح {0}"
 
@@ -34109,7 +34161,7 @@ msgid "Orange juice"
 msgstr "عصير برتقال"
 
 #: app/components/customers/person-orders-panel.tsx:160
-#: app/components/orders/order-detail.tsx:519
+#: app/components/orders/order-detail.tsx:536
 #: app/components/pos/ticket-settings.tsx:459
 #: app/components/workspace-breadcrumb.tsx:127
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:272
@@ -34222,7 +34274,7 @@ msgstr "موعد إغلاق الطلب"
 msgid "Order cutoff"
 msgstr "موعد إيقاف الطلب"
 
-#: app/components/orders/order-detail.tsx:465
+#: app/components/orders/order-detail.tsx:482
 msgid "Order details"
 msgstr "تفاصيل الطلب"
 
@@ -34383,16 +34435,41 @@ msgstr "طلبات"
 #: app/components/dashboard/blocks/today-block.tsx:385
 #: app/components/discounts/discount-performance.tsx:249
 #: app/components/locations/ordering-settings-cards.tsx:199
-#: app/components/orders/order-detail.tsx:473
+#: app/components/orders/order-detail.tsx:490
 #: app/components/roles/tenant-role-access-manager.tsx:162
 #: app/components/workspace-breadcrumb.tsx:12
 #: app/routes/_app+/$orgSlug_+/orders.tsx:184
 msgid "Orders"
 msgstr "الطلبات"
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:73
+#: app/components/marketing/journey-step-attribution.tsx:144
+msgid "Orders after a click"
+msgstr "الطلبات بعد النقر"
+
 #: app/components/pos/terminals-manager.tsx:1720
 msgid "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
 msgstr "تُحسب الطلبات بعد منتصف الليل على اليوم السابق حتى هذا الوقت، فتبقى أرقام الطلبات والإيرادات للخدمة المتأخرة ضمن يوم واحد."
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:49
+msgid "Orders and revenue"
+msgstr "الطلبات والإيرادات"
+
+#: app/components/marketing/journey-step-attribution.tsx:101
+msgid "Orders and revenue by step"
+msgstr "الطلبات والإيرادات حسب الخطوة"
+
+#: app/components/marketing/journey-step-attribution.tsx:130
+msgid "Orders and revenue by step could not be loaded."
+msgstr "تعذّر تحميل الطلبات والإيرادات حسب الخطوة."
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:45
+msgid "Orders and revenue from marketing"
+msgstr "الطلبات والإيرادات من التسويق"
+
+#: app/components/marketing/marketing-attribution-overview.tsx:67
+msgid "Orders and revenue from marketing could not be loaded."
+msgstr "تعذّر تحميل الطلبات والإيرادات من التسويق."
 
 #: app/components/inventory/record-delivery-screen.tsx:422
 msgid "Orders are not turned on for your business."
@@ -34425,6 +34502,11 @@ msgstr "تعذّر تحميل الطلبات. حاول مرة أخرى."
 #: app/components/locations/order-policies-card.tsx:224
 msgid "Orders for right now go straight to the kitchen."
 msgstr "الطلبات الفورية تذهب مباشرة إلى المطبخ."
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:74
+#: app/components/marketing/journey-step-attribution.tsx:145
+msgid "Orders from guests reached"
+msgstr "طلبات الضيوف الذين وصلتهم الرسائل"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:401
 msgid "Orders in the last 30 days"
@@ -34897,7 +34979,7 @@ msgstr "تغليف"
 
 #: app/components/locations/checkout-rules-cards.tsx:234
 #: app/components/locations/location-setting-labels.ts:22
-#: app/components/orders/order-detail.tsx:1010
+#: app/components/orders/order-detail.tsx:1034
 msgid "Packaging fee"
 msgstr "رسوم التغليف"
 
@@ -34927,7 +35009,7 @@ msgstr "عنوان الصفحة"
 msgid "Page block"
 msgstr "كتلة الصفحة"
 
-#: app/components/marketing/short-links-screen.tsx:186
+#: app/components/marketing/short-links-screen.tsx:187
 msgid "Page on your website"
 msgstr "صفحة في موقعك"
 
@@ -34974,7 +35056,7 @@ msgstr "مدفوع"
 msgid "Paid · Cash"
 msgstr "مدفوع · نقدًا"
 
-#: app/components/orders/order-detail.tsx:1081
+#: app/components/orders/order-detail.tsx:1105
 msgid "Paid {totalMoney}"
 msgstr "تم دفع {totalMoney}"
 
@@ -34982,7 +35064,7 @@ msgstr "تم دفع {totalMoney}"
 msgid "Paid <0>{paid}</0>"
 msgstr "مدفوع <0>{paid}</0>"
 
-#: app/components/orders/order-detail.tsx:1093
+#: app/components/orders/order-detail.tsx:1117
 msgid "Paid at"
 msgstr "تاريخ الدفع"
 
@@ -35029,7 +35111,7 @@ msgstr "الوقت المدفوع <0>{totalLabel}</0>"
 msgid "Paid time off"
 msgstr "إجازة مدفوعة"
 
-#: app/components/orders/order-detail.tsx:746
+#: app/components/orders/order-detail.tsx:763
 msgid "Paid when the tab closes"
 msgstr "يُدفع عند إغلاق الحساب"
 
@@ -35372,7 +35454,7 @@ msgstr "متوقف مؤقتاً"
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:427
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:72
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:365
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:151
 #: app/utils/discounts/labels.ts:27
 #: app/utils/discounts/labels.ts:48
 #: app/utils/loyalty/loyalty-labels.ts:31
@@ -35425,7 +35507,7 @@ msgstr "الأجر والمعدلات"
 msgid "Pay and register"
 msgstr "ادفع وسجّل"
 
-#: app/components/orders/order-detail.tsx:1071
+#: app/components/orders/order-detail.tsx:1095
 msgid "Pay at handoff"
 msgstr "الدفع عند التسليم"
 
@@ -35482,13 +35564,13 @@ msgstr "الدفع من الهاتف يطلب دائمًا الاسم ورقم �
 msgid "Paying online"
 msgstr "يدفع إلكترونيًا"
 
-#: app/components/orders/order-detail.tsx:531
-#: app/components/orders/order-detail.tsx:1061
+#: app/components/orders/order-detail.tsx:548
+#: app/components/orders/order-detail.tsx:1085
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
 msgid "Payment"
 msgstr "الدفعة"
 
-#: app/components/orders/order-detail.tsx:373
+#: app/components/orders/order-detail.tsx:390
 msgid "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it, refund it through your payment processor and record the refund on this order."
 msgstr "وصل الدفع بعد انتهاء مهلة الحجز لهذا الطلب، لذا لم يُؤكَّد تلقائيًا. تم استلام المبلغ: ابدأ التحضير للوفاء بالطلب، أو ألغِه واسترد المبلغ عبر معالج الدفع ثم سجّل الاسترداد في هذا الطلب."
 
@@ -35504,7 +35586,7 @@ msgstr "انتهت صلاحية الدفع"
 msgid "Payment failed"
 msgstr "فشل الدفع"
 
-#: app/components/orders/order-detail.tsx:1085
+#: app/components/orders/order-detail.tsx:1109
 msgid "Payment failed. Nothing was charged."
 msgstr "فشل الدفع. لم يتم خصم أي مبلغ."
 
@@ -35535,7 +35617,7 @@ msgstr "الدفع يحتاج إلى مراجعة"
 msgid "Payment not finished"
 msgstr "لم يكتمل الدفع"
 
-#: app/components/orders/order-detail.tsx:1088
+#: app/components/orders/order-detail.tsx:1112
 msgid "Payment not yet received"
 msgstr "لم يُستلم الدفع بعد"
 
@@ -35553,7 +35635,7 @@ msgstr "سياسات الدفع"
 msgid "Payment policy"
 msgstr "سياسة الدفع"
 
-#: app/components/orders/order-detail.tsx:394
+#: app/components/orders/order-detail.tsx:411
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:230
 msgid "Payment received"
 msgstr "تم استلام الدفعة"
@@ -35572,7 +35654,7 @@ msgstr "الدفع غير مؤكد"
 msgid "Payment under review"
 msgstr "الدفع قيد المراجعة"
 
-#: app/components/orders/order-detail.tsx:1087
+#: app/components/orders/order-detail.tsx:1111
 msgid "Payment window expired before it was paid."
 msgstr "انتهت مهلة الدفع قبل إتمامه."
 
@@ -35660,7 +35742,7 @@ msgstr "قيد الانتظار"
 #: app/components/customers/person-marketing-card.tsx:392
 #: app/components/settings/cards/organization/email-sending-card.tsx:80
 #: app/components/settings/cards/organization/shop-card.tsx:47
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:490
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:503
 #: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:384
 msgid "Pending"
 msgstr "قيد الانتظار"
@@ -35822,7 +35904,7 @@ msgstr "نسبة الخصم"
 msgid "Performance figures are unavailable right now."
 msgstr "أرقام الأداء غير متاحة حاليًا."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:220
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:221
 msgid "Performance metrics"
 msgstr "مقاييس الأداء"
 
@@ -36257,7 +36339,7 @@ msgstr "مخللات"
 #: app/components/locations/checkout-rules-cards.tsx:296
 #: app/components/locations/checkout-settings-cards.tsx:52
 #: app/components/locations/checkout-settings-cards.tsx:357
-#: app/components/orders/order-detail.tsx:732
+#: app/components/orders/order-detail.tsx:749
 #: app/components/orders/slot-limits-panel.tsx:164
 #: app/routes/_app+/$orgSlug_+/orders.tsx:338
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1059
@@ -36416,7 +36498,7 @@ msgstr "ضع حقل اختيار واحد فوق هذا الحقل لإظهار�
 msgid "Place a test order"
 msgstr "قدّم طلبًا تجريبيًا"
 
-#: app/components/orders/order-detail.tsx:393
+#: app/components/orders/order-detail.tsx:410
 msgid "Placed"
 msgstr "تم الطلب"
 
@@ -36951,6 +37033,10 @@ msgstr "ملصق"
 msgid "Poster QR"
 msgstr "رمز QR الملصق"
 
+#: app/components/orders/refund-labels.ts:42
+msgid "Poster QR code"
+msgstr "رمز QR على الملصق"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:407
 msgid "Posts already sent stay on {platformName}. Scheduled posts will fail for this account."
 msgstr "تبقى المنشورات المرسلة بالفعل على {platformName}. ستفشل المنشورات المجدولة لهذا الحساب."
@@ -37174,7 +37260,7 @@ msgstr "الأسبوع السابق"
 #: app/components/inventory/recipe-section.tsx:763
 #: app/components/menu/location-overrides-card.tsx:178
 #: app/components/menu/menu-review-card.tsx:432
-#: app/components/orders/order-detail.tsx:882
+#: app/components/orders/order-detail.tsx:906
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:965
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:584
@@ -37941,6 +38027,7 @@ msgstr "المشتريات"
 
 #: ../../packages/marketing-workflow/src/nodes/action-push-node.tsx:19
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:18
+#: app/components/marketing/journey-step-attribution.tsx:83
 msgid "Push"
 msgstr "إشعار"
 
@@ -37960,11 +38047,11 @@ msgstr "رسالة الإشعار مطلوبة."
 msgid "Push now"
 msgstr "إرسال التحديث الآن"
 
-#: app/components/orders/order-detail.tsx:801
+#: app/components/orders/order-detail.tsx:825
 msgid "Push the promised time back"
 msgstr "تأجيل الوقت الموعود"
 
-#: app/components/orders/order-detail.tsx:821
+#: app/components/orders/order-detail.tsx:845
 msgid "Push the time back. The guest's page updates, and 10 minutes or more also sends them the new time."
 msgstr "أجّل الوقت. تتحدّث صفحة الضيف، وإذا كان التأجيل 10 دقائق أو أكثر يصله الوقت الجديد أيضًا."
 
@@ -38013,7 +38100,7 @@ msgid "QR"
 msgstr "QR"
 
 #: app/components/hiring/applicant-labels.ts:31
-#: app/components/marketing/short-links-screen.tsx:128
+#: app/components/marketing/short-links-screen.tsx:129
 #: app/components/print/print-labels.ts:66
 #: app/components/settings/two-factor-form.tsx:176
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:778
@@ -38069,7 +38156,7 @@ msgstr "طاولات QR"
 msgid "qt"
 msgstr "ربع غالون"
 
-#: app/components/orders/order-detail.tsx:873
+#: app/components/orders/order-detail.tsx:897
 msgid "Qty"
 msgstr "الكمية"
 
@@ -38273,6 +38360,19 @@ msgstr "جارٍ إعادة الاحتساب…"
 msgid "Re-send to non-openers"
 msgstr "إعادة الإرسال لمن لم يفتحها"
 
+#: ../../packages/marketing/src/components/attribution-panel.tsx:64
+#: app/components/marketing/journey-step-attribution.tsx:122
+msgid "Reached"
+msgstr "وصلت"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:103
+msgid "Reached: clicked orders plus orders from guests who were sent a message in the 14 days before. Each order is counted once, for their latest message."
+msgstr "وصلت: الطلبات بعد النقر مضافًا إليها طلبات الضيوف الذين أُرسلت إليهم رسالة خلال الأيام الـ14 السابقة. يُحتسب كل طلب مرة واحدة لأحدث رسالة وصلت إلى الضيف."
+
+#: app/components/marketing/journey-step-attribution.tsx:186
+msgid "Reached: clicked orders plus orders from guests who were sent that step's message in the 14 days before. Each order is counted once."
+msgstr "وصلت: الطلبات بعد النقر مضافًا إليها طلبات الضيوف الذين أُرسلت إليهم رسالة هذه الخطوة خلال الأيام الـ14 السابقة. يُحتسب كل طلب مرة واحدة."
+
 #: app/utils/staffing/schedule-errors.ts:66
 msgid "Reaches overtime this week"
 msgstr "يصل إلى الوقت الإضافي هذا الأسبوع"
@@ -38387,7 +38487,7 @@ msgstr "جارٍ قراءة قائمتك…"
 msgid "Ready"
 msgstr "جاهز"
 
-#: app/components/orders/order-detail.tsx:332
+#: app/components/orders/order-detail.tsx:333
 msgid "Ready around {promisedFrom}"
 msgstr "جاهز تقريبًا في {promisedFrom}"
 
@@ -38529,7 +38629,7 @@ msgstr "الأخيرة"
 msgid "Recent activity"
 msgstr "النشاط الأخير"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:242
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:245
 msgid "Recent campaigns"
 msgstr "الحملات الأخيرة"
 
@@ -38590,7 +38690,7 @@ msgstr "المستلم"
 msgid "recipients"
 msgstr "مستلمين"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:245
+#: ../../packages/marketing/src/components/campaign-detail.tsx:255
 msgid "Recipients"
 msgstr "المستلمون"
 
@@ -38659,7 +38759,7 @@ msgid "Record a message for your team to follow up."
 msgstr "تسجيل رسالة ليتابعها فريقك."
 
 #: app/components/loyalty/record-refund-dialog.tsx:205
-#: app/components/orders/order-detail.tsx:1184
+#: app/components/orders/order-detail.tsx:1208
 #: app/components/orders/record-order-refund-dialog.tsx:227
 msgid "Record a refund"
 msgstr "تسجيل استرداد"
@@ -38966,9 +39066,9 @@ msgstr "تحديث. {updated}"
 
 #: app/components/gift-cards/gift-card-dialogs.tsx:496
 #: app/components/loyalty/record-refund-dialog.tsx:252
-#: app/components/orders/order-detail.tsx:1111
-#: app/components/orders/order-detail.tsx:1123
-#: app/components/orders/order-detail.tsx:1161
+#: app/components/orders/order-detail.tsx:1135
+#: app/components/orders/order-detail.tsx:1147
+#: app/components/orders/order-detail.tsx:1185
 #: app/components/orders/provider-refund-dialog.tsx:357
 #: app/components/orders/record-order-refund-dialog.tsx:281
 #: app/components/reservations/payment-panel.tsx:625
@@ -38982,15 +39082,15 @@ msgstr "استرداد"
 msgid "Refund failed"
 msgstr "فشل الاسترداد"
 
-#: app/components/orders/order-detail.tsx:413
+#: app/components/orders/order-detail.tsx:430
 msgid "Refund failed: {amount}"
 msgstr "فشل الاسترداد: {amount}"
 
-#: app/components/orders/order-detail.tsx:1129
+#: app/components/orders/order-detail.tsx:1153
 msgid "Refund failed."
 msgstr "فشل الاسترداد."
 
-#: app/components/orders/order-detail.tsx:1402
+#: app/components/orders/order-detail.tsx:1426
 msgid "Refund failed. You can try again."
 msgstr "فشل الاسترداد. يمكنك المحاولة مرة أخرى."
 
@@ -39008,15 +39108,15 @@ msgstr "استرداد مبالغ الطلبات عبر الإنترنت"
 msgid "Refund pending"
 msgstr "استرداد قيد الانتظار"
 
-#: app/components/orders/order-detail.tsx:1115
+#: app/components/orders/order-detail.tsx:1139
 msgid "Refund pending ({refundPendingMoney})"
 msgstr "استرداد قيد الانتظار ({refundPendingMoney})"
 
-#: app/components/orders/order-detail.tsx:411
+#: app/components/orders/order-detail.tsx:428
 msgid "Refund pending: {amount}"
 msgstr "استرداد قيد الانتظار: {amount}"
 
-#: app/components/orders/order-detail.tsx:1400
+#: app/components/orders/order-detail.tsx:1424
 msgid "Refund pending. It is still being processed."
 msgstr "الاسترداد قيد الانتظار. ما زال قيد المعالجة."
 
@@ -39033,11 +39133,11 @@ msgstr "استرداد قيد المعالجة"
 msgid "Refund queued"
 msgstr "استرداد في قائمة الانتظار"
 
-#: app/components/orders/order-detail.tsx:409
+#: app/components/orders/order-detail.tsx:426
 msgid "Refund recorded: {amount}"
 msgstr "تم تسجيل استرداد: {amount}"
 
-#: app/components/orders/order-detail.tsx:1422
+#: app/components/orders/order-detail.tsx:1446
 msgid "Refund recorded."
 msgstr "تم تسجيل الاسترداد."
 
@@ -39049,7 +39149,7 @@ msgstr "تم تسجيل الاسترداد. لم تكن هناك نقاط يجب
 msgid "Refund recorded. Points taken back: {taken}."
 msgstr "تم تسجيل الاسترداد. النقاط المسحوبة: {taken}."
 
-#: app/components/orders/order-detail.tsx:1403
+#: app/components/orders/order-detail.tsx:1427
 msgid "Refund sent to the guest's card."
 msgstr "تم إرسال المبلغ المسترد إلى بطاقة الضيف."
 
@@ -39057,7 +39157,7 @@ msgstr "تم إرسال المبلغ المسترد إلى بطاقة الضيف
 msgid "Refund the buyer"
 msgstr "استرداد المبلغ للمشتري"
 
-#: app/components/orders/order-detail.tsx:1335
+#: app/components/orders/order-detail.tsx:1359
 msgid "Refund the guest?"
 msgstr "استرداد المبلغ للضيف؟"
 
@@ -39077,7 +39177,7 @@ msgstr "استرداد إلى البطاقة"
 msgid "Refund to the card"
 msgstr "استرداد إلى البطاقة"
 
-#: app/components/orders/order-detail.tsx:1101
+#: app/components/orders/order-detail.tsx:1125
 #: app/components/orders/order-status.tsx:39
 #: app/components/print/print-order-labels.ts:21
 #: app/components/settings/cards/organization/shop-card.tsx:51
@@ -39107,7 +39207,7 @@ msgstr "تم استرداد <0>{amount}</0>"
 msgid "Refunded after the deadline (%)"
 msgstr "المسترد بعد الموعد النهائي (%)"
 
-#: app/components/orders/order-detail.tsx:414
+#: app/components/orders/order-detail.tsx:431
 msgid "Refunded to card: {amount}"
 msgstr "تم الاسترداد إلى البطاقة: {amount}"
 
@@ -39220,7 +39320,7 @@ msgstr "إعادة توظيف {name}"
 msgid "Rehiring…"
 msgstr "جارٍ إعادة التوظيف…"
 
-#: app/components/orders/order-detail.tsx:616
+#: app/components/orders/order-detail.tsx:633
 #: app/components/orders/waiting-lane.tsx:196
 #: app/components/privacy-banner.tsx:48
 #: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:531
@@ -39247,7 +39347,7 @@ msgstr "مرفوض"
 msgid "Rejected {refused}"
 msgstr "مرفوضة {refused}"
 
-#: app/components/orders/order-detail.tsx:551
+#: app/components/orders/order-detail.tsx:568
 msgid "Rejected: {reason}"
 msgstr "مرفوض: {reason}"
 
@@ -40608,7 +40708,7 @@ msgstr "مقيّد بـ"
 msgid "Result"
 msgstr "النتيجة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:231
+#: ../../packages/marketing/src/components/campaign-detail.tsx:241
 #: app/components/media-library/photo-studio-dialog.tsx:429
 msgid "Results"
 msgstr "النتائج"
@@ -40729,6 +40829,16 @@ msgstr "إعادة الاستخدام"
 #: app/components/staff/schedule/templates-dialog.tsx:83
 msgid "Reuse a pattern of shifts week after week."
 msgstr "أعد استخدام نمط من الورديات أسبوعًا بعد أسبوع."
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:86
+#: app/components/marketing/journey-step-attribution.tsx:149
+msgid "Revenue after a click"
+msgstr "الإيرادات بعد النقر"
+
+#: ../../packages/marketing/src/components/attribution-panel.tsx:87
+#: app/components/marketing/journey-step-attribution.tsx:150
+msgid "Revenue from guests reached"
+msgstr "إيرادات الضيوف الذين وصلتهم الرسائل"
 
 #: app/components/hiring/job-editor.tsx:203
 #: app/components/inventory/counting-screen.tsx:430
@@ -41055,7 +41165,7 @@ msgstr "تعلّم القواعد الوكيلَ كيف يعمل نشاطك ال
 msgid "Run double points on a slow Tuesday, a bonus on a new dish, or a boost at one location."
 msgstr "قدّم نقاطًا مضاعفة في يوم ثلاثاء هادئ، أو مكافأة على طبق جديد، أو دفعة إضافية في فرع واحد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:426
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:439
 msgid "Run Execution Timeline"
 msgstr "الجدول الزمني لتنفيذ التشغيل"
 
@@ -41063,11 +41173,11 @@ msgstr "الجدول الزمني لتنفيذ التشغيل"
 msgid "Run history"
 msgstr "سجل التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:352
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:365
 msgid "Run ID"
 msgstr "معرّف التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:446
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:459
 msgid "Run ID: {selectedRunId}"
 msgstr "معرّف التشغيل: {selectedRunId}"
 
@@ -41080,7 +41190,7 @@ msgid "Rung up on a Station till"
 msgstr "سُجّل على جهاز Station"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:151
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:157
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:410
 msgid "Running"
 msgstr "قيد التشغيل"
@@ -41782,7 +41892,7 @@ msgstr "يُحفظ في سجل التدقيق باسمك."
 msgid "Saved offline and sent more than 12 hours later. Check the times."
 msgstr "حُفظ دون اتصال وأُرسل بعد أكثر من 12 ساعة. راجع الأوقات."
 
-#: app/components/orders/order-detail.tsx:1323
+#: app/components/orders/order-detail.tsx:1347
 msgid "Saved on the order. The guest is told only when an item ran out or the kitchen is closed."
 msgstr "يُحفظ على الطلب. يُبلَّغ الضيف فقط عند نفاد صنف أو إغلاق المطبخ."
 
@@ -42133,7 +42243,7 @@ msgstr "الجدول: نُشر أسبوع"
 msgid "scheduled"
 msgstr "مجدولة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:71
+#: ../../packages/marketing/src/components/campaign-detail.tsx:73
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
 #: app/components/hiring/applicant-labels.ts:40
 #: app/components/social/social-labels.ts:31
@@ -42168,7 +42278,7 @@ msgstr "التبديل المجدول"
 msgid "Scheduled count day"
 msgstr "يوم الجرد المجدول"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:71
+#: ../../packages/marketing/src/components/campaign-detail.tsx:73
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:219
 msgid "Scheduled for {at}"
 msgstr "مجدولة في {at}"
@@ -42891,7 +43001,7 @@ msgstr "عرض أسماء الزملاء ورسائلهم الإلكترونية
 msgid "See the agent's settings, call flow, numbers, and training rules."
 msgstr "عرض إعدادات الوكيل ومسار المكالمة والأرقام وقواعد التدريب."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:173
+#: ../../packages/marketing/src/components/campaign-detail.tsx:175
 msgid "See the original"
 msgstr "عرض الأصل"
 
@@ -42903,7 +43013,7 @@ msgstr "عرض الرسالة الجماعية الأصلية"
 msgid "See the price"
 msgstr "عرض السعر"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:187
+#: ../../packages/marketing/src/components/campaign-detail.tsx:189
 msgid "See the re-send"
 msgstr "عرض إعادة الإرسال"
 
@@ -43511,8 +43621,8 @@ msgstr "أُرسلت"
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:77
-#: ../../packages/marketing/src/components/campaign-detail.tsx:273
+#: ../../packages/marketing/src/components/campaign-detail.tsx:79
+#: ../../packages/marketing/src/components/campaign-detail.tsx:283
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
@@ -43674,7 +43784,7 @@ msgstr "تنتهي الخدمة"
 
 #: app/components/locations/checkout-settings-cards.tsx:287
 #: app/components/locations/location-setting-labels.ts:21
-#: app/components/orders/order-detail.tsx:996
+#: app/components/orders/order-detail.tsx:1020
 msgid "Service fee"
 msgstr "رسوم الخدمة"
 
@@ -44282,6 +44392,10 @@ msgstr "نقص {short} ساعة عمل للأفراد وزيادة {over}، مق
 #: app/components/locations/copy-settings-dialog.tsx:538
 msgid "Short day with these hours"
 msgstr "يوم قصير بهذه الساعات"
+
+#: app/components/orders/refund-labels.ts:40
+msgid "Short link"
+msgstr "رابط مختصر"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/links.tsx:157
 msgid "Short links to your website, with a count of clicks and a QR code."
@@ -45044,7 +45158,7 @@ msgid "Social links"
 msgstr "روابط التواصل الاجتماعي"
 
 #: app/components/app-sidebar.tsx:532
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:121
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:122
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:145
 msgid "Social media"
 msgstr "وسائل التواصل الاجتماعي"
@@ -45795,7 +45909,7 @@ msgstr "بدء استيراد القائمة"
 msgid "Start order"
 msgstr "بدء الطلب"
 
-#: app/components/orders/order-detail.tsx:446
+#: app/components/orders/order-detail.tsx:463
 msgid "Start preparing"
 msgstr "بدء التحضير"
 
@@ -45856,7 +45970,7 @@ msgstr "بدأ {startedAt}"
 msgid "Started {startedAt} by <0>{by}</0>"
 msgstr "بدأ {startedAt} بواسطة <0>{by}</0>"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:356
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:369
 msgid "Started At"
 msgstr "بدأ في"
 
@@ -45977,7 +46091,7 @@ msgstr "الإحصائيات"
 #: app/components/dashboard/blocks/status-block.tsx:30
 #: app/components/inventory/stock-list.tsx:114
 #: app/components/menu/menu-bulk-edit-sheet.tsx:603
-#: app/components/orders/order-detail.tsx:1077
+#: app/components/orders/order-detail.tsx:1101
 #: app/components/reservations/experiences/experiences-screen.tsx:292
 #: app/components/roles/tenant-role-access-manager.tsx:1353
 #: app/components/settings/cards/organization/email-sending-card.tsx:327
@@ -45997,7 +46111,7 @@ msgstr "الإحصائيات"
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:282
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:390
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:280
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:355
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:368
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:973
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:531
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:350
@@ -46059,11 +46173,15 @@ msgstr "تم البقاء في الصفحة الحالية"
 msgid "Stays dismissed until this changes."
 msgstr "يبقى متجاهلًا حتى يتغير هذا."
 
+#: app/components/marketing/journey-step-attribution.tsx:141
+msgid "Step"
+msgstr "الخطوة"
+
 #: app/routes/organizations+/create.tsx:798
 msgid "Step {currentStep} of {totalSteps}"
 msgstr "الخطوة {currentStep} من {totalSteps}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:483
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:496
 msgid "Step Executions ({timelineCount})"
 msgstr "تنفيذات الخطوات ({timelineCount})"
 
@@ -46416,7 +46534,7 @@ msgstr "الاشتراك غير نشط"
 msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
-#: app/components/orders/order-detail.tsx:933
+#: app/components/orders/order-detail.tsx:957
 #: app/components/pos/ticket-settings.tsx:71
 #: app/components/pos/ticket-settings.tsx:263
 msgid "Subtotal"
@@ -46768,7 +46886,7 @@ msgstr "الطاولة {0} مشغولة بواسطة {1} ({2} أشخاص)"
 msgid "Table {createdTableLabel} created."
 msgstr "تم إنشاء الطاولة {createdTableLabel}."
 
-#: app/components/orders/order-detail.tsx:742
+#: app/components/orders/order-detail.tsx:759
 #: app/components/qr/open-tabs.tsx:369
 #: app/components/qr/open-tabs.tsx:1059
 #: app/components/qr/open-tabs.tsx:1147
@@ -46906,6 +47024,10 @@ msgstr "رمز QR الطاولة"
 #: app/components/print/restaurant/vertical-ui.tsx:241
 msgid "Table QR cards"
 msgstr "بطاقات QR للطاولات"
+
+#: app/components/orders/refund-labels.ts:41
+msgid "Table QR code"
+msgstr "رمز QR على الطاولة"
 
 #: app/components/qr/tables-manager.tsx:277
 msgid "Table renamed"
@@ -47215,7 +47337,7 @@ msgstr "المهام"
 msgid "Tasks to finish when someone joins."
 msgstr "مهام يجب إنجازها عند انضمام شخص جديد."
 
-#: app/components/orders/order-detail.tsx:1018
+#: app/components/orders/order-detail.tsx:1042
 #: app/components/pos/pos-day-report.tsx:256
 #: app/components/pos/ticket-settings.tsx:73
 #: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:124
@@ -47548,6 +47670,7 @@ msgstr "اختبار هذه المسودة"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:200
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:236
 #: app/components/customers/person-marketing-card.tsx:158
+#: app/components/marketing/journey-step-attribution.tsx:82
 #: app/components/marketing/marketing-calendar.tsx:202
 #: app/components/marketing/programs-section.tsx:129
 #: app/components/marketing/programs-section.tsx:221
@@ -47560,6 +47683,10 @@ msgstr "نص"
 #: app/components/phone-agent/flow-editor/flow-meta.ts:55
 msgid "Text a link"
 msgstr "إرسال رابط"
+
+#: app/components/orders/refund-labels.ts:38
+msgid "Text campaign"
+msgstr "حملة رسائل نصية"
 
 #: app/utils/website/field-types.ts:31
 #: app/utils/website/field-types.ts:34
@@ -48957,7 +49084,7 @@ msgstr "طلب الضيف تلقي الرسائل التسويقية عبر ال
 msgid "The guest asked to receive marketing by text"
 msgstr "طلب الضيف تلقي الرسائل التسويقية عبر الرسائل النصية"
 
-#: app/components/orders/order-detail.tsx:1140
+#: app/components/orders/order-detail.tsx:1164
 msgid "The guest disputed this payment with their card issuer, so it cannot be refunded here until the dispute is settled."
 msgstr "اعترض الضيف على هذه الدفعة لدى مُصدر بطاقته، لذا لا يمكن استردادها من هنا حتى تُسوّى المنازعة."
 
@@ -49154,7 +49281,7 @@ msgstr "لا يمكن أن يشير الرابط إلى موقعك نفسه."
 msgid "The link could not be changed. Try again."
 msgstr "تعذّر تغيير الرابط. حاول مرة أخرى."
 
-#: app/components/marketing/short-links-screen.tsx:111
+#: app/components/marketing/short-links-screen.tsx:112
 msgid "The link could not be copied"
 msgstr "تعذّر نسخ الرابط"
 
@@ -49280,11 +49407,11 @@ msgstr "رفض محاكي Meta هذا المنشور (يحتوي على #fail)."
 msgid "The minimum and maximum don't fit this choice."
 msgstr "الحدان الأدنى والأقصى لا يناسبان هذا الخيار."
 
-#: app/components/orders/order-detail.tsx:1165
+#: app/components/orders/order-detail.tsx:1189
 msgid "The money goes back to the guest's card through your payment provider."
 msgstr "يعود المبلغ إلى بطاقة الضيف عبر مزوّد الدفع الخاص بك."
 
-#: app/components/orders/order-detail.tsx:1355
+#: app/components/orders/order-detail.tsx:1379
 #: app/components/orders/provider-refund-dialog.tsx:303
 msgid "The money goes back to the guest's card through your payment provider. Card and payment provider fees are usually not returned to you."
 msgstr "يعود المبلغ إلى بطاقة الضيف عبر مزوّد الدفع الخاص بك. وعادةً لا تُردّ إليك رسوم البطاقة ومزوّد الدفع."
@@ -49673,7 +49800,7 @@ msgstr "تعذّر على المزوّد إصدار الاسترداد."
 msgid "The provider declined the refund."
 msgstr "رفض مزوّد الدفع الاسترداد."
 
-#: app/components/marketing/short-links-screen.tsx:123
+#: app/components/marketing/short-links-screen.tsx:124
 msgid "The QR code could not be made"
 msgstr "تعذّر إنشاء رمز QR"
 
@@ -50568,7 +50695,7 @@ msgstr "يحتاج هذا الحجز إلى دفعة أولاً."
 msgid "This booking no longer exists. The board has been reloaded."
 msgstr "هذه المصادقة لم تعد نشطة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:158
+#: ../../packages/marketing/src/components/campaign-detail.tsx:160
 msgid "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 msgstr "تعذّر بدء إرسال هذه الرسالة الجماعية في الوقت المناسب، فلم تُرسل. كرّرها لجدولتها من جديد."
 
@@ -50588,11 +50715,11 @@ msgstr "هذه الرسالة الجماعية مجدولة. سيُبقيها ا
 msgid "This broadcast was already re-sent to non-openers."
 msgstr "سبق إعادة إرسال هذه الرسالة الجماعية لمن لم يفتحها."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:181
+#: ../../packages/marketing/src/components/campaign-detail.tsx:183
 msgid "This broadcast was re-sent to non-openers."
 msgstr "أُعيد إرسال هذه الرسالة الجماعية لمن لم يفتحها."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:155
+#: ../../packages/marketing/src/components/campaign-detail.tsx:157
 msgid "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 msgstr "كانت هذه الرسالة الجماعية مجدولة في {scheduledText} لكن تعذّر بدء إرسالها خلال {lateHours} ساعات، فلم تُرسل. كرّرها لجدولتها من جديد."
 
@@ -51205,8 +51332,8 @@ msgstr "هذا يستخدم تكلفة أدخلها شخص ما يدويًا. ت
 msgid "this option"
 msgstr "هذا الخيار"
 
-#: app/components/orders/order-detail.tsx:356
-#: app/components/orders/order-detail.tsx:819
+#: app/components/orders/order-detail.tsx:373
+#: app/components/orders/order-detail.tsx:843
 msgid "This order can't be pushed back any further."
 msgstr "لا يمكن تأجيل هذا الطلب أكثر من ذلك."
 
@@ -51214,7 +51341,7 @@ msgstr "لا يمكن تأجيل هذا الطلب أكثر من ذلك."
 msgid "This order cannot be refunded through the payment provider."
 msgstr "لا يمكن استرداد مبلغ هذا الطلب عبر مزوّد الدفع."
 
-#: app/components/orders/order-detail.tsx:352
+#: app/components/orders/order-detail.tsx:369
 msgid "This order changed on another screen. Check the new time and try again."
 msgstr "تغيّر هذا الطلب على شاشة أخرى. تحقق من الوقت الجديد وحاول مرة أخرى."
 
@@ -51248,7 +51375,7 @@ msgstr "يتم إرسال هذا الطلب الآن. انتظر لحظة ثم �
 msgid "This order is changing right now. Refresh and try again."
 msgstr "هذا الطلب يتغيّر الآن. حدّث الصفحة وحاول مجددًا."
 
-#: app/components/orders/order-detail.tsx:358
+#: app/components/orders/order-detail.tsx:375
 msgid "This order is finished, so its time can't change."
 msgstr "انتهى هذا الطلب، لذا لا يمكن تغيير وقته."
 
@@ -51256,11 +51383,11 @@ msgstr "انتهى هذا الطلب، لذا لا يمكن تغيير وقته.
 msgid "This order is too long for a WhatsApp link. Copy the text and paste it into the chat."
 msgstr "هذا الطلب أطول من أن يُرسل برابط واتساب. انسخ النص والصقه في المحادثة."
 
-#: app/components/orders/order-detail.tsx:600
+#: app/components/orders/order-detail.tsx:617
 msgid "This order is waiting for you to accept it."
 msgstr "هذا الطلب ينتظر قبولك."
 
-#: app/components/orders/order-detail.tsx:376
+#: app/components/orders/order-detail.tsx:393
 msgid "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 msgstr "يحتاج هذا الطلب إلى مراجعة يدوية قبل المتابعة. ابدأ التحضير لقبوله، أو ألغِه."
 
@@ -52235,13 +52362,13 @@ msgstr "المنطقة الزمنية"
 msgid "Timing and notes"
 msgstr "التوقيت والملاحظات"
 
-#: app/components/orders/order-detail.tsx:1027
+#: app/components/orders/order-detail.tsx:1051
 #: app/components/pos/ticket-settings.tsx:74
 #: app/components/pos/ticket-settings.tsx:269
 msgid "Tip"
 msgstr "البقشيش"
 
-#: app/components/orders/order-detail.tsx:1026
+#: app/components/orders/order-detail.tsx:1050
 msgid "Tip ({tipPercent}%)"
 msgstr "البقشيش ({tipPercent}%)"
 
@@ -52600,7 +52727,7 @@ msgstr "الإضافات والصلصات وخيارات أخرى على الع�
 #: app/components/customers/person-orders-panel.tsx:175
 #: app/components/inventory/review-order-screen.tsx:639
 #: app/components/notes-chart.tsx:69
-#: app/components/orders/order-detail.tsx:1046
+#: app/components/orders/order-detail.tsx:1070
 #: app/components/pos/ticket-settings.tsx:75
 #: app/components/pos/ticket-settings.tsx:271
 #: app/components/staff/labor/labor-overview.tsx:219
@@ -52966,7 +53093,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/menu/delete-effects.tsx:468
 #: app/components/menu/delete-effects.tsx:543
 #: app/components/menu/menu-review-stack.tsx:907
-#: app/components/orders/order-detail.tsx:1159
+#: app/components/orders/order-detail.tsx:1183
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
@@ -53157,7 +53284,7 @@ msgid "Turn off to stop enforcing caps at checkout."
 msgstr "Turn off to stop enforcing caps at checkout."
 
 #: app/components/marketing/programs-section.tsx:170
-#: app/components/marketing/programs-section.tsx:271
+#: app/components/marketing/programs-section.tsx:272
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:370
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:377
 msgid "Turn on"
@@ -53467,7 +53594,7 @@ msgstr "تعذّر تحميل المسار. حاول مرة أخرى."
 msgid "Unable to load this call. Try again."
 msgstr "تعذّر تحميل هذه المكالمة. حاول مرة أخرى."
 
-#: app/components/orders/order-detail.tsx:361
+#: app/components/orders/order-detail.tsx:378
 #: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:147
 #: app/utils/orders/acceptance.ts:63
 msgid "Unable to update this order. Refresh and try again."
@@ -53749,7 +53876,7 @@ msgstr "مفتوح القفل للنقل"
 msgid "Unmute microphone"
 msgstr "إلغاء كتم الميكروفون"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:268
+#: ../../packages/marketing/src/components/campaign-detail.tsx:278
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
@@ -54832,16 +54959,16 @@ msgstr "أدوات الأكل والمناديل"
 msgid "Utensils answer"
 msgstr "إجابة أدوات الطعام"
 
-#: app/components/orders/order-detail.tsx:778
+#: app/components/orders/order-detail.tsx:802
 #: app/components/pos/ticket-settings.tsx:207
 msgid "Utensils: yes"
 msgstr "أدوات: نعم"
 
-#: app/components/marketing/short-links-screen.tsx:223
+#: app/components/marketing/short-links-screen.tsx:224
 msgid "UTM campaign (optional)"
 msgstr "حملة UTM (اختياري)"
 
-#: app/components/marketing/short-links-screen.tsx:212
+#: app/components/marketing/short-links-screen.tsx:213
 msgid "UTM source (optional)"
 msgstr "مصدر UTM (اختياري)"
 
@@ -55087,11 +55214,11 @@ msgstr "صورة مصغرة للفيديو"
 msgid "View"
 msgstr "عرض"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:248
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:251
 msgid "View all"
 msgstr "عرض الكل"
 
-#: app/components/orders/order-detail.tsx:700
+#: app/components/orders/order-detail.tsx:717
 msgid "View all orders"
 msgstr "عرض كل الطلبات"
 
@@ -55272,7 +55399,7 @@ msgstr "عرض جدول الفريق"
 msgid "View time cards"
 msgstr "عرض بطاقات الدوام"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:405
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:418
 msgid "View Timeline →"
 msgstr "عرض الجدول الزمني ←"
 
@@ -55547,7 +55674,7 @@ msgstr "بانتظار الجهاز اللوحي…"
 msgid "Waiting for the terminal…"
 msgstr "في انتظار الجهاز…"
 
-#: app/components/orders/order-detail.tsx:595
+#: app/components/orders/order-detail.tsx:612
 #: app/components/orders/waiting-lane.tsx:121
 msgid "Waiting for you"
 msgstr "بانتظارك"
@@ -57170,7 +57297,7 @@ msgid "Why are you rejecting it?"
 msgstr "لماذا ترفضه؟"
 
 #: app/components/inventory/review-order-screen.tsx:827
-#: app/components/orders/order-detail.tsx:1321
+#: app/components/orders/order-detail.tsx:1345
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:580
 msgid "Why is it cancelled?"
 msgstr "لماذا أُلغيت؟"
@@ -57209,7 +57336,7 @@ msgstr "استعد الضيوف الذين لم يطلبوا منذ فترة"
 msgid "Window"
 msgstr "نافذة"
 
-#: app/components/marketing/short-links-screen.tsx:182
+#: app/components/marketing/short-links-screen.tsx:183
 #: app/components/print/print-labels.ts:19
 msgid "Window sticker"
 msgstr "ملصق واجهة"
@@ -57315,7 +57442,7 @@ msgstr "أمثلة محسوبة من الإعدادات الحالية."
 msgid "Worker type"
 msgstr "نوع العامل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:453
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:466
 msgid "Workflow Error:"
 msgstr "خطأ في سير العمل:"
 
