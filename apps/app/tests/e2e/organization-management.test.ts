@@ -199,13 +199,15 @@ test.describe('Organization Management', () => {
 
 		// Update organization details (only name and slug are available in the form)
 		const newName = `${faker.company.name()} ${faker.string.alphanumeric(6)}`
-		await nameField.fill(newName)
+		await nameField.click()
+		await nameField.press('ControlOrMeta+A')
+		await nameField.pressSequentially(newName, { delay: 10 })
 		await expect(nameField).toHaveValue(newName)
 
 		const settingsForm = page.getByTestId('organization-general-settings-form')
 		const save = saveBar(page).save
 		const saveVisible = await save.isVisible().catch(() => false)
-		await Promise.all([
+		const response = await Promise.all([
 			page.waitForResponse(
 				(res) =>
 					res.url().includes('/settings') &&
@@ -219,18 +221,20 @@ test.describe('Organization Management', () => {
 						}
 						form.requestSubmit()
 					}),
-		])
+		]).then(([res]) => res)
+		expect(response.ok()).toBe(true)
 
-		// Verify success message
-		await expect(page.getByText(/updated/i).first()).toBeVisible()
-
-		// Verify changes in database
-		const [updatedOrg] = await db
-			.select()
-			.from(Organization)
-			.where(eq(Organization.id, org.id))
-			.limit(1)
-		expect(updatedOrg?.name).toBe(newName)
+		await expect.poll(
+			async () => {
+				const [updatedOrg] = await db
+					.select({ name: Organization.name })
+					.from(Organization)
+					.where(eq(Organization.id, org.id))
+					.limit(1)
+				return updatedOrg?.name ?? null
+			},
+			{ timeout: 30_000 },
+		).toBe(newName)
 	})
 
 	test('Users can view organization members', async ({

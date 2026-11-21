@@ -282,45 +282,6 @@ export async function waitFor<ReturnValue>(
 	throw lastError
 }
 
-/**
- * Fills a Conform text field and notifies the form (Playwright `fill` alone can
- * miss Conform's document-level `input` listener in headless CI).
- */
-export async function fillConformFormField(
-	page: Page,
-	formId: string,
-	fieldName: string,
-	value: string,
-) {
-	const field = page.locator(
-		`form#${formId} [name="${fieldName}"], #${formId} [name="${fieldName}"]`,
-	)
-	await field.scrollIntoViewIfNeeded()
-	await field.click()
-	await field.fill(value)
-	await page.evaluate(
-		({ formId, fieldName, value }) => {
-			const form =
-				document.forms.namedItem(formId) ??
-				document.getElementById(formId)
-			if (!(form instanceof HTMLFormElement)) {
-				throw new Error(`Form not found: ${formId}`)
-			}
-			const control = form.elements.namedItem(fieldName)
-			if (
-				!(control instanceof HTMLInputElement) &&
-				!(control instanceof HTMLTextAreaElement)
-			) {
-				throw new Error(`Field not found: ${fieldName}`)
-			}
-			if (control.value !== value) control.value = value
-			control.dispatchEvent(new InputEvent('input', { bubbles: true }))
-			control.dispatchEvent(new Event('change', { bubbles: true }))
-		},
-		{ formId, fieldName, value },
-	)
-}
-
 /** The global "Unsaved changes" bar that replaced per-form Save buttons. */
 export function saveBar(page: Page) {
 	const bar = page.getByTestId('global-save-bar')
