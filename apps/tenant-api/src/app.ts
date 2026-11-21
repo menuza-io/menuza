@@ -23,7 +23,13 @@ import {
 	journeyOperatorRoutes,
 	journeySystemRoutes,
 } from './routes/journeys.ts'
+import {
+	guestPhotoRoutes,
+	guestPhotoTickRoutes,
+} from './routes/guest-photos.ts'
 import { menuAvailabilityEventRoutes } from './routes/menu-availability-events.ts'
+import { menuPopularTickRoutes } from './routes/menu-popular-tick.ts'
+import { operatorGuestPhotoRoutes } from './routes/operator-guest-photos.ts'
 import { staffOperatorRoutes } from './routes/staff.ts'
 import { careersRoutes } from './routes/careers.ts'
 import { hiringOperatorRoutes } from './routes/hiring.ts'
@@ -137,10 +143,16 @@ export function createTenantApiApp() {
 		maxSize: 8 * 1024 * 1024,
 		onError: (c) => c.json({ error: 'Payload too large' }, 413),
 	})
+	const photoUploadBodyLimit = bodyLimit({
+		maxSize: 10 * 1024 * 1024 + 256 * 1024,
+		onError: (c) => c.json({ error: 'Payload too large' }, 413),
+	})
 	app.use('*', (c, next) =>
-		c.req.path.startsWith('/api/')
-			? serviceBodyLimit(c, next)
-			: publicBodyLimit(c, next),
+		c.req.path === '/photos/upload'
+			? photoUploadBodyLimit(c, next)
+			: c.req.path.startsWith('/api/')
+				? serviceBodyLimit(c, next)
+				: publicBodyLimit(c, next),
 	)
 
 	app.use('*', async (c, next) => {
@@ -333,6 +345,10 @@ export function createTenantApiApp() {
 		'/push/*',
 		rateLimit('guest-push', { windowMs: 60 * 1000, maxRequests: 60 }),
 	)
+	app.use(
+		'/photos/*',
+		rateLimit('guest-photos', { windowMs: 60 * 1000, maxRequests: 60 }),
+	)
 
 	// Gift cards: a balance check and a purchase are the guessable or abusable
 	// calls, so they get their own tighter burst limit on top of the durable
@@ -371,6 +387,10 @@ export function createTenantApiApp() {
 	app.route('/api/staff', staffTickRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/api/menu', menuAvailabilityEventRoutes)
+	app.route('/api/menu/popular', menuPopularTickRoutes)
+	app.route('/api/guest-photos', guestPhotoTickRoutes)
+	app.route('/photos', guestPhotoRoutes)
+	app.route('/operator/photos', operatorGuestPhotoRoutes)
 	app.route('/api/voice', voiceSystemRoutes)
 	app.route('/voice', publicVoiceRoutes)
 	app.route('/operator', operatorRoutes)

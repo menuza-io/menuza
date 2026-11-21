@@ -21,6 +21,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 	let mockJourneyWorkflowGet: any
 	let mockSocialWorkflowCreate: any
 	let mockWebsiteWorkflowCreate: any
+	let mockMenuScheduleWorkflowCreate: any
+	let mockMenuImportWorkflowCreate: any
 	let env: Env
 
 	beforeEach(() => {
@@ -42,6 +44,12 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			.fn()
 			.mockImplementation(({ id }) => Promise.resolve({ id }))
 		mockWebsiteWorkflowCreate = vi
+			.fn()
+			.mockImplementation(({ id }) => Promise.resolve({ id }))
+		mockMenuScheduleWorkflowCreate = vi
+			.fn()
+			.mockImplementation(({ id }) => Promise.resolve({ id }))
+		mockMenuImportWorkflowCreate = vi
 			.fn()
 			.mockImplementation(({ id }) => Promise.resolve({ id }))
 
@@ -68,6 +76,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			} as any,
 			WEBSITE_IMPORT_WORKFLOW: {
 				create: vi.fn().mockImplementation(({ id }) => Promise.resolve({ id })),
+				get: vi.fn(),
+			} as any,
+			MENU_SCHEDULE_WORKFLOW: {
+				create: mockMenuScheduleWorkflowCreate,
+				get: vi.fn(),
+			} as any,
+			MENU_IMPORT_WORKFLOW: {
+				create: mockMenuImportWorkflowCreate,
 				get: vi.fn(),
 			} as any,
 		}
@@ -122,6 +138,99 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				(await start({ scheduleId: 'abcdefgh1234', runAt: far })).status,
 			).toBe(400)
 			expect(mockWebsiteWorkflowCreate).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('POST /workflows/menu-schedule/start (#149)', () => {
+		const start = (body: unknown, token = mockInternalToken) =>
+			worker.fetch(
+				new Request('http://localhost/workflows/menu-schedule/start', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(body),
+				}),
+				env,
+			)
+		const runAt = '2026-11-01T09:00:00.000Z'
+
+		it('rejects a caller without the internal token', async () => {
+			expect(
+				(await start({ scheduleId: 'abcdefgh1234', runAt }, 'wrong')).status,
+			).toBe(401)
+			expect(mockMenuScheduleWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts one instance per schedule and time, carrying ids and a time only', async () => {
+			const res = await start({ scheduleId: 'abcdefgh1234', runAt })
+			expect(res.status).toBe(200)
+			expect(mockMenuScheduleWorkflowCreate).toHaveBeenCalledWith({
+				id: `menu-abcdefgh1234-${Date.parse(runAt)}`,
+				params: { scheduleId: 'abcdefgh1234', runAt },
+			})
+		})
+
+		it('treats an instance that already exists as started', async () => {
+			mockMenuScheduleWorkflowCreate.mockRejectedValueOnce(
+				new Error('instance.already_exists'),
+			)
+			expect((await start({ scheduleId: 'abcdefgh1234', runAt })).status).toBe(
+				200,
+			)
+		})
+
+		it('refuses a malformed id or time, or one further ahead than 90 days', async () => {
+			expect((await start({ scheduleId: '../x', runAt: 'soon' })).status).toBe(
+				400,
+			)
+			const far = new Date(Date.now() + 91 * 24 * 60 * 60_000).toISOString()
+			expect(
+				(await start({ scheduleId: 'abcdefgh1234', runAt: far })).status,
+			).toBe(400)
+			expect(mockMenuScheduleWorkflowCreate).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('POST /workflows/menu-import/start (#73)', () => {
+		const start = (body: unknown, token = mockInternalToken) =>
+			worker.fetch(
+				new Request('http://localhost/workflows/menu-import/start', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(body),
+				}),
+				env,
+			)
+
+		it('rejects a caller without the internal token', async () => {
+			expect((await start({ importId: 'import123456' }, 'wrong')).status).toBe(
+				401,
+			)
+			expect(mockMenuImportWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts one instance per importId and treats already_exists as started', async () => {
+			const res = await start({ importId: 'import123456' })
+			expect(res.status).toBe(200)
+			expect(mockMenuImportWorkflowCreate).toHaveBeenCalledWith({
+				id: 'menu-import-import123456',
+				params: { importId: 'import123456' },
+			})
+
+			mockMenuImportWorkflowCreate.mockRejectedValueOnce(
+				new Error('instance.already_exists'),
+			)
+			expect((await start({ importId: 'import123456' })).status).toBe(200)
+		})
+
+		it('refuses a malformed importId', async () => {
+			expect((await start({ importId: '../bad' })).status).toBe(400)
+			expect(mockMenuImportWorkflowCreate).not.toHaveBeenCalled()
 		})
 	})
 
@@ -791,6 +900,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
@@ -881,9 +993,34 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							'POST',
 							token,
 						],
+						[
+							'https://app.example.com/resources/jobs/menu-schedules',
+							'POST',
+							token,
+						],
+						[
+							'https://tenant-us.example.com/api/menu/popular/tick',
+							'POST',
+							token,
+						],
+						[
+							'https://tenant-ksa.example.com/api/menu/popular/tick',
+							'POST',
+							token,
+						],
+						[
+							'https://tenant-us.example.com/api/guest-photos/tick',
+							'POST',
+							token,
+						],
+						[
+							'https://tenant-ksa.example.com/api/guest-photos/tick',
+							'POST',
+							token,
+						],
 					]),
 				)
-				expect(calls).toHaveLength(21)
+				expect(calls).toHaveLength(26)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -927,6 +1064,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1059,6 +1199,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
 					'Tenant loyalty tick failed for https://tenant-ksa.example.com',
@@ -1084,6 +1227,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1140,6 +1286,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					)
 					const results = await Promise.allSettled(promises)
 					expect(results.map((r) => r.status)).toEqual([
+						'fulfilled',
+						'fulfilled',
+						'fulfilled',
 						'fulfilled',
 						'fulfilled',
 						'fulfilled',
@@ -1216,6 +1365,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 				])
 				const reason = String((results[3] as PromiseRejectedResult).reason)
 				expect(reason).toContain(
@@ -1251,6 +1403,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				expect(results.map((r) => r.status)).toEqual([
 					'fulfilled',
 					'rejected',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1316,6 +1471,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -1343,6 +1501,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1382,6 +1543,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'https://app.example.com/resources/jobs/restaurant-order-refunds-reconcile',
 					'https://app.example.com/resources/jobs/gbp-sync',
 					'https://app.example.com/resources/jobs/website-publish',
+					'https://app.example.com/resources/jobs/menu-schedules',
 				])
 			})
 		})

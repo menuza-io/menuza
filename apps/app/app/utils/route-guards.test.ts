@@ -512,6 +512,15 @@ describe('route guards: discovery', () => {
 		expect(reports.get('resources+/launch-status.ts#action')?.kinds).toContain(
 			'machine',
 		)
+		expect(reports.get('resources+/menu.popular.ts#action')?.kinds).toContain(
+			'machine',
+		)
+		expect(
+			reports.get('resources+/jobs.menu-schedules.ts#action')?.kinds,
+		).toContain('machine')
+		expect(
+			reports.get('resources+/jobs.menu-import.ts#action')?.kinds,
+		).toContain('machine')
 	})
 })
 

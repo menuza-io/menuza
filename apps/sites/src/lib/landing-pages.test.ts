@@ -216,6 +216,48 @@ describe('dish pages', () => {
 			),
 		).toBe(true)
 	})
+
+	it('a dish hidden on web at base or at every location is not visible (#220)', () => {
+		expect(
+			isDishVisible(
+				{ ...(item('i1') as object), channels: ['pos'] } as never,
+				menu(),
+			),
+		).toBe(false)
+		expect(
+			isDishVisible(
+				{ ...(item('i1') as object), channels: ['web', 'pos'] } as never,
+				menu({
+					locationOverrides: {
+						l1: [{ entityType: 'item', entityId: 'i1', channels: ['pos'] }],
+						l2: [{ entityType: 'item', entityId: 'i1', channels: ['pos'] }],
+					},
+				}),
+			),
+		).toBe(false)
+		expect(
+			isDishVisible(
+				{ ...(item('i1') as object), channels: ['web', 'pos'] } as never,
+				menu({
+					locationOverrides: {
+						l1: [{ entityType: 'item', entityId: 'i1', channels: ['pos'] }],
+					},
+				}),
+			),
+		).toBe(true)
+
+		expect(
+			isDishVisible(
+				{ ...(item('i1') as object), channels: ['web', 'pos'] } as never,
+				menu({
+					locationOverrides: {
+						l1: [{ entityType: 'menu', entityId: 'm', channels: ['pos'] }],
+						l2: [{ entityType: 'category', entityId: 'c', channels: ['pos'] }],
+					},
+				}),
+			),
+		).toBe(false)
+	})
 })
 
 describe('area and event pages', () => {

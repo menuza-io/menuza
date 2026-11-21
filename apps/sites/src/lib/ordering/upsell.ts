@@ -5,6 +5,7 @@
  * the guest menu to it and applies what the guest page knows (the order type,
  * per-order limits) as a veto.
  */
+import { type MenuChannel } from '@repo/common/menu-channels'
 import { pickUpsells, UPSELL_MAX_SUGGESTIONS } from '@repo/common/upsell'
 import { newLineId } from './cart-store.ts'
 import { remainingFor } from './constraints.ts'
@@ -76,6 +77,8 @@ export function suggestForCart(input: {
 	lines: readonly CartLine[]
 	/** The chosen order type is offered at this location. */
 	offered: boolean
+	/** Ordering channel (#220): dishes hidden on this channel are excluded. */
+	channel?: MenuChannel
 	/** Per-order limits and stock where the page has them (drops). */
 	constraints?: Constraints | null
 	/** Only dishes that go straight in (the checkout page has no item modal). */
@@ -86,6 +89,7 @@ export function suggestForCart(input: {
 	return pickUpsells({
 		menus: [{ categories: input.categories }],
 		cartItemIds: input.lines.map((line) => line.itemId),
+		channel: input.channel,
 		limit: input.limit ?? UPSELL_MAX_SUGGESTIONS,
 		allow: (item) => {
 			if (input.oneTapOnly && upsellNeedsChoices(item)) return false

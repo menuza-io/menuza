@@ -200,6 +200,22 @@ export const MENU_MUTATION_RATE_LIMIT: RateLimitConfig = {
 }
 
 /**
+ * AI menu import (#73): each import fetches a website or sends a file to the
+ * model. Capped per organization (10/day) and per user (3/hour).
+ */
+export const MENU_IMPORT_ORGANIZATION_RATE_LIMIT: RateLimitConfig = {
+	scope: 'menu-import-organization',
+	maxRequests: 10,
+	windowMs: 24 * 60 * 60 * 1000, // 1 day
+}
+
+export const MENU_IMPORT_USER_RATE_LIMIT: RateLimitConfig = {
+	scope: 'menu-import-user',
+	maxRequests: 3,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
+/**
  * Check if a request should be rate limited.
  *
  * Sliding window with database persistence. The allow decision is one atomic

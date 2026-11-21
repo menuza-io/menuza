@@ -10180,3 +10180,76 @@ export const pushMessages = sqliteTable(
 		index('idx_push_messages_receipt').on(table.status, table.ticketId),
 	],
 )
+
+// ==========================================
+// Guest dish photo submissions (#148)
+// ==========================================
+
+export const GUEST_PHOTO_SUBMISSION_STATUSES = [
+	'pending',
+	'approved',
+	'rejected',
+	'added',
+] as const
+export type GuestPhotoSubmissionStatus =
+	(typeof GUEST_PHOTO_SUBMISSION_STATUSES)[number]
+
+/**
+ * Guest-submitted dish photos awaiting or following operator moderation (#148).
+ * Regional data: `pending` and `rejected` rows (and their R2 objects) are
+ * deleted on person erasure; `approved`/`added` rows have `customer_id` and
+ * `order_id` unlinked.
+ */
+export const guestPhotoSubmissions = sqliteTable(
+	'guest_photo_submissions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orgId: text('org_id').notNull(),
+		customerId: text('customer_id').references(() => customers.id, {
+			onDelete: 'set null',
+		}),
+		orderId: text('order_id'),
+		itemId: text('item_id').notNull(),
+		objectKey: text('object_key').notNull(),
+		contentType: text('content_type').notNull(),
+		byteSize: integer('byte_size').notNull(),
+		status: text('status', { enum: GUEST_PHOTO_SUBMISSION_STATUSES })
+			.notNull()
+			.default('pending'),
+		consentText: text('consent_text').notNull(),
+		consentedAt: integer('consented_at', { mode: 'timestamp_ms' }).notNull(),
+		decidedAt: integer('decided_at', { mode: 'timestamp_ms' }),
+		/** Opaque control-plane operator user ID. */
+		decidedByUserId: text('decided_by_user_id'),
+		addedAt: integer('added_at', { mode: 'timestamp_ms' }),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(nowMs),
+	},
+	(table) => [
+		index('idx_guest_photo_submissions_customer').on(table.customerId),
+		index('idx_guest_photo_submissions_org_customer_created').on(
+			table.orgId,
+			table.customerId,
+			table.createdAt,
+		),
+		index('idx_guest_photo_submissions_order_item').on(
+			table.orderId,
+			table.itemId,
+		),
+		index('idx_guest_photo_submissions_status_decided').on(
+			table.status,
+			table.decidedAt,
+		),
+		index('idx_guest_photo_submissions_org_status_created').on(
+			table.orgId,
+			table.status,
+			table.createdAt,
+		),
+	],
+)
+
+export type GuestPhotoSubmission = typeof guestPhotoSubmissions.$inferSelect
+export type NewGuestPhotoSubmission = typeof guestPhotoSubmissions.$inferInsert

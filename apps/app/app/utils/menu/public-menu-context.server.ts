@@ -27,6 +27,11 @@ import {
 	type SpecialHour,
 	type WeeklySchedule,
 } from '@repo/common/location-types'
+import {
+	isSoldOn,
+	parseMenuChannels,
+	type MenuChannel,
+} from '@repo/common/menu-channels'
 import { type MenuPricingRule } from '@repo/common/menu-pricing'
 import {
 	isUnavailableUntilExpired,
@@ -136,6 +141,7 @@ export interface PublicSiteMenuPayload {
 			isEnabled?: boolean | null
 			price?: number | null
 			availabilityStatus?: string | null
+			channels?: MenuChannel[] | null
 		}>
 	>
 	/** Banners and item badges. Absent on a cached menu from before discounts. */
@@ -183,11 +189,13 @@ export interface PublicSiteMenuOrgContext {
 /**
  * Build the public site menu payload from the live control-plane database.
  * Never reads or writes the site KV cache. `locationId` optionally picks the
- * currency-bearing location in `organization.currency`.
+ * currency-bearing location in `organization.currency` (and filters location
+ * channel overrides when `buildOptions.channel` is provided).
  */
 export async function buildPublicSiteMenuPayload(
 	org: PublicSiteMenuOrgContext,
 	locationId: string | null,
+	buildOptions?: { channel?: MenuChannel },
 ): Promise<{
 	payload: PublicSiteMenuPayload
 	/**
@@ -438,6 +446,7 @@ export async function buildPublicSiteMenuPayload(
 			isEnabled?: boolean | null
 			price?: number | null
 			availabilityStatus?: string | null
+			channels?: MenuChannel[] | null
 		}>
 	> = {}
 	for (const ov of overrides) {
@@ -450,6 +459,11 @@ export async function buildPublicSiteMenuPayload(
 				? 'available'
 				: ov.availabilityStatus
 
+		const parsedOverrideChannels =
+			ov.channels !== null && ov.channels !== undefined
+				? parseMenuChannels(ov.channels)
+				: null
+
 		locationOverridesMap[ov.locationId] ??= []
 		locationOverridesMap[ov.locationId]?.push({
 			entityType: ov.entityType,
@@ -457,6 +471,9 @@ export async function buildPublicSiteMenuPayload(
 			isEnabled: ov.isEnabled,
 			price: ov.price,
 			availabilityStatus: effectiveStatus,
+			...(parsedOverrideChannels !== null
+				? { channels: parsedOverrideChannels }
+				: {}),
 		})
 	}
 
@@ -593,6 +610,7 @@ export async function buildPublicSiteMenuPayload(
 					cat.unavailableUntil,
 					now,
 				),
+				channels: parseMenuChannels(cat.channels),
 				position: cat.position,
 				excludeFromOrderLimits: Boolean(cat.excludeFromOrderLimits),
 				items: itemsByCategoryId.get(cat.id) ?? [],
@@ -621,7 +639,7 @@ export async function buildPublicSiteMenuPayload(
 		}
 	}
 
-	const structuredMenus = menus.map((menu) => ({
+	const allStructuredMenus: PublicMenuData[] = menus.map((menu) => ({
 		id: menu.id,
 		displayName: menu.displayName,
 		internalName: menu.internalName,
@@ -633,9 +651,75 @@ export async function buildPublicSiteMenuPayload(
 			menu.unavailableUntil,
 			now,
 		),
+		channels: parseMenuChannels(menu.channels),
 		position: menu.position,
 		categories: categoriesByMenuId.get(menu.id) ?? [],
 	}))
+
+	const channel = buildOptions?.channel
+	const overrideByEntityId =
+		channel && locationId
+			? new Map(
+					(locationOverridesMap[locationId] ?? []).map((ov) => [
+						ov.entityId,
+						ov,
+					]),
+				)
+			: null
+	const categoryAllowedOnChannel = (cat: PublicMenuCategoryData): boolean => {
+		if (!channel) return true
+		const visited = new Set<string>()
+		let current: PublicMenuCategoryData | undefined = cat
+		while (current && !visited.has(current.id)) {
+			visited.add(current.id)
+			if (
+				!isSoldOn(channel, {
+					category: current,
+					override: overrideByEntityId?.get(current.id),
+				})
+			) {
+				return false
+			}
+			current = current.parentId
+				? categoriesMap.get(current.parentId)
+				: undefined
+		}
+		return true
+	}
+	const filterCategoryForChannel = (
+		cat: PublicMenuCategoryData,
+	): PublicMenuCategoryData | null => {
+		if (!channel) return cat
+		if (!categoryAllowedOnChannel(cat)) return null
+		return {
+			...cat,
+			items: cat.items.filter((item) =>
+				isSoldOn(channel, {
+					item,
+					override: overrideByEntityId?.get(item.id),
+				}),
+			),
+			subcategories: (cat.subcategories ?? [])
+				.map(filterCategoryForChannel)
+				.filter((sub): sub is PublicMenuCategoryData => sub !== null),
+		}
+	}
+
+	const structuredMenus = channel
+		? allStructuredMenus
+				.filter((menu) =>
+					isSoldOn(channel, {
+						menu,
+						override: overrideByEntityId?.get(menu.id),
+					}),
+				)
+				.map((menu) => ({
+					...menu,
+					categories: menu.categories
+						.map(filterCategoryForChannel)
+						.filter((cat): cat is PublicMenuCategoryData => cat !== null),
+				}))
+		: allStructuredMenus
 
 	const activeLocation =
 		(locationId ? locations.find((l) => l.id === locationId) : undefined) ||

@@ -65,6 +65,7 @@ import {
 	type OrderNumberFormat,
 } from '@repo/common/pos-orders'
 import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent'
+import { type MenuChannel } from '@repo/common/menu-channels'
 import { readQrOrderingFeatures } from '@repo/common/qr-ordering'
 import {
 	hashLoyaltyCart,
@@ -952,6 +953,21 @@ export type PlaceOrderResult =
 	| { ok: true; data: PlaceOrderSuccess }
 	| { ok: false; failure: OrderServiceFailure }
 
+export function derivePublicOrderChannel(input: {
+	fulfillment: 'pickup' | 'delivery' | 'dine_in'
+	source?: string | null
+	qrOrdering?: unknown
+}): MenuChannel {
+	const qrFeatures = readQrOrderingFeatures(input.qrOrdering)
+	if (input.fulfillment === 'dine_in') {
+		return 'qr'
+	}
+	if (input.source === 'qr_poster' && qrFeatures.enabled) {
+		return 'qr'
+	}
+	return 'web'
+}
+
 export async function placeOrder(input: {
 	organization: PublishedOrganization
 	request: RestaurantOrderRequest
@@ -1048,7 +1064,16 @@ export async function placeOrder(input: {
 		}
 	}
 
-	const priced = priceRestaurantOrder(context, request, { now, deliveryQuote })
+	const channel = derivePublicOrderChannel({
+		fulfillment: request.fulfillment,
+		source: request.source,
+		qrOrdering: (context as { qrOrdering?: unknown }).qrOrdering,
+	})
+	const priced = priceRestaurantOrder(context, request, {
+		now,
+		deliveryQuote,
+		channel,
+	})
 	if (!priced.ok) {
 		return { ok: false, failure: fromEngineError(priced.error) }
 	}

@@ -26,6 +26,7 @@ import { prepareGiftCardForOrder } from './gift-card-orders.ts'
 import { assertDailyDishCapacity } from './order-dish-daily-service.ts'
 import { memberForCustomerInTx } from './loyalty-member-service.ts'
 import {
+	derivePublicOrderChannel,
 	fetchOrderContext,
 	loyaltyFailure,
 	orderFailure,
@@ -121,7 +122,16 @@ export async function quoteOrderDiscounts(input: {
 		}
 	}
 
-	const priced = priceRestaurantOrder(context, request, { now, deliveryQuote })
+	const channel = derivePublicOrderChannel({
+		fulfillment: request.fulfillment,
+		source: request.source,
+		qrOrdering: (context as { qrOrdering?: unknown }).qrOrdering,
+	})
+	const priced = priceRestaurantOrder(context, request, {
+		now,
+		deliveryQuote,
+		channel,
+	})
 	if (!priced.ok) {
 		const { status, code, message, details } = priced.error
 		return {

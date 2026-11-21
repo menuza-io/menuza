@@ -325,6 +325,8 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 			'discount_redemptions',
 			'discount_issued_codes',
 			'gift_card_show_tokens',
+			// Guest dish photos (#148): pending/rejected deleted (+ R2 object); approved/added unlinked.
+			'guest_photo_submissions',
 			'journey_runs',
 			'loyalty_members',
 			'journey_step_executions',

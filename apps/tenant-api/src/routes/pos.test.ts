@@ -1890,6 +1890,48 @@ describe('POS terminals: pairing, upload and sync', () => {
 			).toBe('catalog:unknown_item')
 		})
 
+		it('accepts a Till-only dish on POS and flags a web-only dish (#220)', async () => {
+			contextFor = (orgId) => {
+				const ctx = menuContext(orgId) as {
+					menu: {
+						menus: Array<{
+							categories: Array<{ items: Array<Record<string, unknown>> }>
+						}>
+					}
+				}
+				const items = ctx.menu.menus[0]!.categories[0]!.items
+				// Burger -> Till only; Fries -> Web only
+				items[0] = { ...items[0], channels: ['pos'] }
+				items[1] = { ...items[1], channels: ['web'] }
+				return ctx
+			}
+			const { deviceSecret } = await pair()
+			const tillOnlyRes = await upload(deviceSecret, wireOrder())
+			expect(tillOnlyRes.status).toBe(201)
+			expect(
+				(
+					(await tillOnlyRes.json()) as {
+						order: { reviewReason: string | null }
+					}
+				).order.reviewReason,
+			).toBeNull()
+
+			const webOnlySpec: LineSpec = {
+				itemId: 'item-fries',
+				name: 'Fries',
+				baseCents: 450,
+			}
+			const webOnlyRes = await upload(
+				deviceSecret,
+				wireOrder({ number: 'T1-0002', lines: [webOnlySpec] }),
+			)
+			expect(webOnlyRes.status).toBe(201)
+			expect(
+				((await webOnlyRes.json()) as { order: { reviewReason: string } }).order
+					.reviewReason,
+			).toBe('catalog:item_unavailable')
+		})
+
 		it('flags a tax mismatch when the rate changed', async () => {
 			const { deviceSecret } = await pair()
 			const order = wireOrder()

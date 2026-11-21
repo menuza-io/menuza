@@ -1,5 +1,6 @@
 ---
 import { msg } from '@lingui/core/macro'
+import { isSoldOn, type MenuChannel } from '@repo/common/menu-channels'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import GiftCardLabels from '~/components/gift-cards/GiftCardLabels.astro'
@@ -39,11 +40,22 @@ if (!organization) {
 }
 
 const urlLocation = Astro.url.searchParams.get('location')
+const srcParam = (Astro.url.searchParams.get('src') ?? '').toLowerCase()
+const channelParam = (Astro.url.searchParams.get('channel') ?? '').toLowerCase()
+const menuChannel: MenuChannel =
+	srcParam === 'qr' ||
+	srcParam === 'qr_poster' ||
+	srcParam === 'qr_table' ||
+	channelParam === 'qr' ||
+	Astro.url.searchParams.get('qr') === '1'
+		? 'qr'
+		: 'web'
 const menuPayload = await fetchPublishedSiteMenu({
 	slug: orgSlug,
 	host: customHost,
 	lng: requestedLocale,
 	locationId: urlLocation,
+	channel: menuChannel,
 })
 
 const unavailableVariantIds = new Set<string>()
@@ -87,6 +99,23 @@ if (dropData) {
 const locations = menuPayload?.locations ?? []
 const currency = menuPayload?.organization?.currency || 'USD'
 
+// Resolve the active location exactly like the menu page (URL param → default →
+// first) so checkout and the menu agree on the same cart's tax rate and fee.
+const activeLocation: PublicLocationData | undefined =
+	(urlLocation ? locations.find((l) => l.id === urlLocation) : undefined) ||
+	locations.find((l) => l.isDefault) ||
+	locations[0]
+
+const activeOverrides = new Map(
+	(activeLocation ? menuPayload?.locationOverrides?.[activeLocation.id] ?? [] : []).map(
+		(entry) => [entry.entityId, entry],
+	),
+)
+const isOverrideOff = (entityId: string) => {
+	const ov = activeOverrides.get(entityId)
+	return ov?.isEnabled === false || ov?.availabilityStatus === 'unavailable' || ov?.availabilityStatus === 'hidden'
+}
+
 // "Goes well with" at checkout (#114): only the dishes that go straight in
 // (this page has no item modal), so the catalog keeps just what the ranking
 // and the row read: names in the page language, prices, photos and the
@@ -97,56 +126,74 @@ function upsellCategory(category: PublicMenuCategoryData): OrderingCategory {
 		id: category.id,
 		displayName: '',
 		upsellCategoryIds: category.upsellCategoryIds ?? [],
-		items: (category.items ?? []).map((item) => ({
-			id: item.id,
-			displayName: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
-			price: item.price,
-			imageUrl: resolveMediaUrl(item.imageUrl),
-			isUpsell: item.isUpsell === true,
-			availabilityStatus: item.availabilityStatus,
-			variations: {
-				groups: (item.variations?.groups ?? []).map((group) => ({
+		items: (category.items ?? [])
+			.filter(
+				(item) =>
+					!isOverrideOff(item.id) &&
+					isSoldOn(menuChannel, { item, override: activeOverrides.get(item.id) }),
+			)
+			.map((item) => ({
+				id: item.id,
+				displayName: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
+				price: item.price,
+				imageUrl: resolveMediaUrl(item.imageUrl),
+				isUpsell: item.isUpsell === true,
+				availabilityStatus: item.availabilityStatus,
+				variations: {
+					groups: (item.variations?.groups ?? []).map((group) => ({
+						id: group.id,
+						name: '',
+						values: [],
+					})),
+					variants: (item.variations?.variants ?? []).map((variant) => ({
+						id: variant.id,
+						valueIds: [],
+						price: variant.price,
+						availabilityStatus: variant.availabilityStatus,
+					})),
+				},
+				modifierGroups: (item.modifierGroups ?? []).map((group) => ({
 					id: group.id,
 					name: '',
-					values: [],
+					selectionType: group.selectionType,
+					minSelections: group.minSelections ?? 0,
+					maxSelections: group.maxSelections ?? null,
+					options: [],
 				})),
-				variants: (item.variations?.variants ?? []).map((variant) => ({
-					id: variant.id,
-					valueIds: [],
-					price: variant.price,
-					availabilityStatus: variant.availabilityStatus,
-				})),
-			},
-			modifierGroups: (item.modifierGroups ?? []).map((group) => ({
-				id: group.id,
-				name: '',
-				selectionType: group.selectionType,
-				minSelections: group.minSelections ?? 0,
-				maxSelections: group.maxSelections ?? null,
-				options: [],
 			})),
-		})),
 		subcategories: (category.subcategories ?? [])
-			.filter((sub) => sub.availabilityStatus !== 'unavailable')
+			.filter(
+				(sub) =>
+					sub.availabilityStatus !== 'unavailable' &&
+					!isOverrideOff(sub.id) &&
+					isSoldOn(menuChannel, { category: sub, override: activeOverrides.get(sub.id) }),
+			)
 			.map(upsellCategory),
 	}
 }
 const upsellCategories: OrderingCategory[] = upsellOn
 	? (menuPayload?.menus ?? [])
-			.filter((menu) => menu.availabilityStatus !== 'unavailable')
+			.filter(
+				(menu) =>
+					menu.availabilityStatus !== 'unavailable' &&
+					!isOverrideOff(menu.id) &&
+					isSoldOn(menuChannel, { menu, override: activeOverrides.get(menu.id) }),
+			)
 			.flatMap((menu) =>
 				menu.categories
-					.filter((category) => category.availabilityStatus !== 'unavailable' && !category.parentId)
+					.filter(
+						(category) =>
+							category.availabilityStatus !== 'unavailable' &&
+							!category.parentId &&
+							!isOverrideOff(category.id) &&
+							isSoldOn(menuChannel, {
+								category,
+								override: activeOverrides.get(category.id),
+							}),
+					)
 					.map(upsellCategory),
 			)
 	: []
-
-// Resolve the active location exactly like the menu page (URL param → default →
-// first) so checkout and the menu agree on the same cart's tax rate and fee.
-const activeLocation: PublicLocationData | undefined =
-	(urlLocation ? locations.find((l) => l.id === urlLocation) : undefined) ||
-	locations.find((l) => l.isDefault) ||
-	locations[0]
 
 // Which dishes count toward a cart's item count (#256): the large-order extra
 // time (#355) and a per-item packaging fee (#408) both leave the others out,

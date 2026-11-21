@@ -25,6 +25,7 @@ import {
 	type LocationOrderingAvailability,
 } from './location-availability.ts'
 import { parsePrepSchedule } from './location-settings.ts'
+import { isSoldOn, type MenuChannel } from './menu-channels.ts'
 import { prepMinutesAt } from './prep-schedule.ts'
 import { parseUtensilsSettings } from './checkout-utensils.ts'
 import {
@@ -260,7 +261,7 @@ export type RestaurantOrderErrorCode =
 	| 'packaging_fee_unavailable'
 
 export type RestaurantOrderError = {
-	status: 400 | 403 | 404 | 422 | 503
+	status: 400 | 403 | 404 | 409 | 422 | 503
 	code: RestaurantOrderErrorCode
 	message: string
 	/** Machine-readable context for the client, never personal data. */
@@ -925,6 +926,10 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 // ---------------------------------------------------------------------------
 
 const availabilityStatusSchema = z.string()
+const channelsFieldSchema = z
+	.union([z.array(z.string()), z.string()])
+	.nullable()
+	.optional()
 
 const locationOverrideSchema = z
 	.object({
@@ -933,6 +938,7 @@ const locationOverrideSchema = z
 		isEnabled: z.boolean().nullable().optional(),
 		price: z.number().nullable().optional(),
 		availabilityStatus: z.string().nullable().optional(),
+		channels: channelsFieldSchema,
 	})
 	.loose()
 
@@ -1007,6 +1013,7 @@ export type PublicMenuItemContext = {
 	displayName: string
 	price: number
 	availabilityStatus: string
+	channels?: readonly string[] | string | null
 	/** False: the item's own price is not taxed (options have their own flag). Missing reads as true. */
 	applySalesTax?: boolean
 	/** True: the item never receives a discount. Missing reads as false. */
@@ -1040,6 +1047,7 @@ const publicMenuItemContextSchema: z.ZodType<PublicMenuItemContext> = z.lazy(
 				displayName: z.string(),
 				price: z.number().finite().min(0),
 				availabilityStatus: availabilityStatusSchema,
+				channels: channelsFieldSchema,
 				applySalesTax: z.boolean().optional(),
 				excludeFromDiscounts: z.boolean().optional(),
 				excludeFromOrderLimits: z.boolean().optional(),
@@ -1078,6 +1086,7 @@ export type PublicMenuCategoryContext = {
 	id: string
 	displayName: string
 	availabilityStatus: string
+	channels?: readonly string[] | string | null
 	excludeFromOrderLimits?: boolean
 	items?: PublicMenuItemContext[]
 	subcategories?: PublicMenuCategoryContext[]
@@ -1091,6 +1100,7 @@ const publicMenuCategoryContextSchema: z.ZodType<PublicMenuCategoryContext> =
 				id: z.string().min(1),
 				displayName: z.string(),
 				availabilityStatus: availabilityStatusSchema,
+				channels: channelsFieldSchema,
 				items: z.array(publicMenuItemContextSchema).optional(),
 				subcategories: z.array(publicMenuCategoryContextSchema).optional(),
 			})
@@ -1103,6 +1113,7 @@ export type PublicMenuContext = {
 	menuType: string
 	specialInstructions?: boolean
 	availabilityStatus: string
+	channels?: readonly string[] | string | null
 	categories?: PublicMenuCategoryContext[]
 	[key: string]: unknown
 }
@@ -1115,6 +1126,7 @@ const publicMenuContextSchema: z.ZodType<PublicMenuContext> = z.lazy(() =>
 			menuType: z.string(),
 			specialInstructions: z.boolean().optional(),
 			availabilityStatus: availabilityStatusSchema,
+			channels: channelsFieldSchema,
 			categories: z.array(publicMenuCategoryContextSchema).optional(),
 		})
 		.loose(),
@@ -2207,16 +2219,30 @@ type ResolvedCatalog = Map<string, CatalogEntry>
 function collectMenuCategories(
 	categories: PublicMenuCategoryContext[],
 	overrides: LocationOverride[] | undefined,
-	visit: (category: PublicMenuCategoryContext) => void,
+	visit: (category: PublicMenuCategoryContext, channelAllowed: boolean) => void,
+	channel?: MenuChannel,
+	parentAllowed = true,
 ): void {
 	for (const category of categories) {
 		const override = entityOverride(overrides, category.id)
 		if (override?.isEnabled === false) continue
 		const status = override?.availabilityStatus ?? category.availabilityStatus
 		if (status !== 'available') continue
-		visit(category)
+		const rawOverride = channel
+			? overrideFor(overrides, category.id)
+			: undefined
+		const categoryAllowed =
+			parentAllowed &&
+			(!channel || isSoldOn(channel, { category, override: rawOverride }))
+		visit(category, categoryAllowed)
 		if (category.subcategories?.length) {
-			collectMenuCategories(category.subcategories, overrides, visit)
+			collectMenuCategories(
+				category.subcategories,
+				overrides,
+				visit,
+				channel,
+				categoryAllowed,
+			)
 		}
 	}
 }
@@ -2689,9 +2715,15 @@ export function priceRestaurantOrder(
 		 * drive-through as pickup).
 		 */
 		priceAs?: MenuOrderType
+		/**
+		 * Ordering channel (#220): items/categories/menus not sold on this
+		 * channel are treated as missing from the catalog and return HTTP 409
+		 * `item_unavailable`.
+		 */
+		channel?: MenuChannel
 	},
 ): PriceRestaurantOrderResult {
-	const { now } = options
+	const { now, channel } = options
 	const walkIn = options.walkIn === true
 	const deliveryQuote = options.deliveryQuote ?? null
 
@@ -2829,6 +2861,7 @@ export function priceRestaurantOrder(
 		? undefined
 		: (context.menu.locationOverrides?.[location.id] ?? undefined)
 	const catalog: ResolvedCatalog = new Map()
+	const channelHiddenItemIds = new Set<string>()
 	const categoryExempt = new Set<string>()
 	let dropInfo: PricedRestaurantOrder['drop'] = null
 	let pickupInfo: PricedRestaurantOrder['pickup'] = null
@@ -2956,10 +2989,20 @@ export function priceRestaurantOrder(
 		// Published catalog membership for a drop is the drop's own categories.
 		for (const category of dropData.categories) {
 			if (category.availabilityStatus !== 'available') continue
-			if (category.excludeFromOrderLimits === true) {
+			const categoryAllowed =
+				!channel ||
+				isSoldOn(channel, {
+					menu: { channels: dropData.drop.menu.channels },
+					category,
+				})
+			if (categoryAllowed && category.excludeFromOrderLimits === true) {
 				categoryExempt.add(category.id)
 			}
 			for (const item of category.items ?? []) {
+				if (channel && (!categoryAllowed || !isSoldOn(channel, { item }))) {
+					channelHiddenItemIds.add(item.id)
+					continue
+				}
 				const existing = catalog.get(item.id)
 				const categoryIds = new Set(existing?.categoryIds ?? [])
 				categoryIds.add(category.id)
@@ -3006,11 +3049,16 @@ export function priceRestaurantOrder(
 			if (menu.menuType === 'drop' || menu.availabilityStatus !== 'available') {
 				continue
 			}
+			const rawMenuOverride = channel
+				? overrideFor(locationOverrides, menu.id)
+				: undefined
+			const menuAllowed =
+				!channel || isSoldOn(channel, { menu, override: rawMenuOverride })
 			collectMenuCategories(
 				menu.categories ?? [],
 				locationOverrides,
-				(category) => {
-					if (category.excludeFromOrderLimits === true) {
+				(category, categoryAllowed) => {
+					if (categoryAllowed && category.excludeFromOrderLimits === true) {
 						categoryExempt.add(category.id)
 					}
 					for (const item of category.items ?? []) {
@@ -3019,6 +3067,17 @@ export function priceRestaurantOrder(
 						const status =
 							itemOverride?.availabilityStatus ?? item.availabilityStatus
 						if (status !== 'available') continue
+						const rawItemOverride = channel
+							? overrideFor(locationOverrides, item.id)
+							: undefined
+						if (
+							channel &&
+							(!categoryAllowed ||
+								!isSoldOn(channel, { item, override: rawItemOverride }))
+						) {
+							channelHiddenItemIds.add(item.id)
+							continue
+						}
 						const existing = catalog.get(item.id)
 						const categoryIds = new Set(existing?.categoryIds ?? [])
 						categoryIds.add(category.id)
@@ -3032,6 +3091,8 @@ export function priceRestaurantOrder(
 						})
 					}
 				},
+				channel,
+				menuAllowed,
 			)
 		}
 	}
@@ -3054,6 +3115,16 @@ export function priceRestaurantOrder(
 	for (const line of request.lines) {
 		const entry = catalog.get(line.itemId)
 		if (!entry) {
+			if (channel && channelHiddenItemIds.has(line.itemId)) {
+				return {
+					ok: false,
+					error: orderError(
+						409,
+						'item_unavailable',
+						'This item is not available on this ordering channel.',
+					),
+				}
+			}
 			return {
 				ok: false,
 				error: orderError(

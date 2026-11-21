@@ -3531,6 +3531,11 @@ export const Organization = sqliteTable(
 		bingSiteVerification: text(),
 		/** IndexNow key (#138), served by Sites at `/<key>.txt`. Generated. */
 		indexNowKey: text(),
+		/**
+		 * Top N items to auto-mark as popular per org (#97). Null disables
+		 * automatic popular marking; 3..10 enables it.
+		 */
+		autoPopularCount: integer(),
 	},
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),
@@ -4208,6 +4213,8 @@ export const OrganizationMenu = sqliteTable(
 		availabilityHours: text(),
 		availabilityStatus: text().default('available').notNull(),
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		/** JSON array of enabled channels (#220): ["web","qr","pos","app"]. */
+		channels: text().default('["web","qr","pos","app"]').notNull(),
 		position: integer().default(0).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
@@ -4249,6 +4256,8 @@ export const OrganizationMenuCategory = sqliteTable(
 			.notNull(),
 		/** Course id from the location's course list (#290). Null: the first course. */
 		defaultCourseId: text(),
+		/** JSON array of enabled channels (#220): ["web","qr","pos","app"]. */
+		channels: text().default('["web","qr","pos","app"]').notNull(),
 		parentId: text().references((): any => OrganizationMenuCategory.id, {
 			onDelete: 'cascade',
 			onUpdate: 'cascade',
@@ -4356,6 +4365,8 @@ export const OrganizationMenuItem = sqliteTable(
 		/** none | allergy | attention | long_prep. Null uses the removal default. */
 		kitchenHighlight: text(),
 		isPopular: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** Popularity mode (#97): 'auto' | 'always' | 'never'. */
+		popularMode: text().default('auto').notNull(),
 		isUpsell: integer({ mode: 'boolean' }).default(false).notNull(),
 		/**
 		 * "Give this dish its own page" (#137, `website.dish_pages`): published
@@ -4365,6 +4376,8 @@ export const OrganizationMenuItem = sqliteTable(
 		siteSlug: text(),
 		availabilityStatus: text().default('available').notNull(),
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		/** JSON array of enabled channels (#220): ["web","qr","pos","app"]. */
+		channels: text().default('["web","qr","pos","app"]').notNull(),
 		position: integer().default(0).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
@@ -4646,6 +4659,8 @@ export const OrganizationMenuLocationOverride = sqliteTable(
 		price: real(),
 		availabilityStatus: text(),
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
+		/** Nullable JSON array of channels (#220); may only narrow the base channels. */
+		channels: text(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -4768,6 +4783,7 @@ export const MENU_SNAPSHOT_REASONS = [
 	'before_bulk_edit',
 	'before_restore',
 	'before_import',
+	'before_schedule',
 	// Taken before a review-stack card is accepted; Undo restores from it.
 	'before_suggestion',
 ] as const
@@ -4860,6 +4876,133 @@ export const MenuCheckDismissal = sqliteTable(
 			table.checkKey,
 		),
 		index('MenuCheckDismissal_organizationId_idx').on(table.organizationId),
+	],
+)
+
+export const MENU_SCHEDULE_STATUSES = ['pending', 'done', 'cancelled'] as const
+export type MenuScheduleStatus = (typeof MENU_SCHEDULE_STATUSES)[number]
+
+/**
+ * Scheduled menu changeover (#149): at `goLiveAt`, sets `menuId` to
+ * `'available'` and (optionally) `takeOffMenuId` to `'unavailable'`. At most
+ * one `'pending'` schedule per menu.
+ */
+export const MenuSchedule = sqliteTable(
+	'MenuSchedule',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		menuId: text()
+			.notNull()
+			.references(() => OrganizationMenu.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		goLiveAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		takeOffMenuId: text().references(() => OrganizationMenu.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		/** `pending` | `done` | `cancelled`. */
+		status: text().default('pending').notNull(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('MenuSchedule_pending_menu_key')
+			.on(table.menuId)
+			.where(sql`${table.status} = 'pending'`),
+		index('MenuSchedule_organizationId_idx').on(table.organizationId),
+		index('MenuSchedule_status_goLiveAt_idx').on(table.status, table.goLiveAt),
+		index('MenuSchedule_takeOffMenuId_idx').on(table.takeOffMenuId),
+	],
+)
+
+export const MENU_IMPORT_SOURCE_KINDS = [
+	'url',
+	'pdf',
+	'image',
+	'spreadsheet',
+] as const
+export type MenuImportSourceKind = (typeof MENU_IMPORT_SOURCE_KINDS)[number]
+
+export const MENU_IMPORT_STATUSES = [
+	'queued',
+	'running',
+	'ready',
+	'applying',
+	'applied',
+	'failed',
+	'cancelled',
+] as const
+export type MenuImportStatus = (typeof MENU_IMPORT_STATUSES)[number]
+
+/**
+ * AI menu import job (#73): extracts a structured draft from a URL, PDF,
+ * image, or spreadsheet into R2 (`draftKey`) before operator review & apply.
+ * At most one active (`queued`, `running`, `applying`) import per org.
+ */
+export const MenuImport = sqliteTable(
+	'MenuImport',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** `url` | `pdf` | `image` | `spreadsheet`. */
+		sourceKind: text().notNull(),
+		sourceUrl: text(),
+		sourceKey: text(),
+		/** `queued` | `running` | `ready` | `applying` | `applied` | `failed` | `cancelled`. */
+		status: text().default('queued').notNull(),
+		error: text(),
+		draftKey: text(),
+		appliedAt: integer({ mode: 'timestamp_ms' }),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		confirmedOwnership: integer({ mode: 'boolean' }).default(false).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('MenuImport_active_org_key')
+			.on(table.organizationId)
+			.where(sql`${table.status} IN ('queued', 'running', 'applying')`),
+		index('MenuImport_organizationId_idx').on(table.organizationId),
+		index('MenuImport_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
 	],
 )
 

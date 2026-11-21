@@ -6,6 +6,7 @@
  */
 import { cuisineLabel } from '@repo/common/cuisines'
 import { DAYS_OF_WEEK } from '@repo/common/location-types'
+import { isSoldOn } from '@repo/common/menu-channels'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { RESERVED_DISH_SLUGS } from '@repo/common/site-landing-pages'
 import { localParts } from '@repo/zoned-time'
@@ -42,22 +43,77 @@ const HIDDEN = new Set(['hidden'])
 
 /**
  * Visible online at some location: not hidden, and not switched off by
- * every location's override.
+ * every location's override (at item, category, or menu level).
  */
 export function isDishVisible(
-	item: Pick<PublicMenuItemData, 'id' | 'availabilityStatus'>,
-	menu: Pick<PublicSiteMenuPayload, 'locations' | 'locationOverrides'>,
+	item: Pick<PublicMenuItemData, 'id' | 'availabilityStatus' | 'channels'>,
+	menu: Pick<PublicSiteMenuPayload, 'locations' | 'locationOverrides'> &
+		Partial<Pick<PublicSiteMenuPayload, 'menus'>>,
 ): boolean {
 	if (HIDDEN.has(item.availabilityStatus)) return false
+	if (!isSoldOn('web', { item })) return false
 	const locations = menu.locations ?? []
 	if (!locations.length) return false
+
+	type CategoryEntry =
+		PublicSiteMenuPayload['menus'][number]['categories'][number]
+	const occurrences: Array<{
+		published: PublicSiteMenuPayload['menus'][number]
+		categories: CategoryEntry[]
+	}> = []
+	for (const published of menu.menus ?? []) {
+		const walk = (categories: CategoryEntry[], parents: CategoryEntry[]) => {
+			for (const category of categories ?? []) {
+				const chain = [...parents, category]
+				if ((category.items ?? []).some((entry) => entry.id === item.id)) {
+					occurrences.push({ published, categories: chain })
+				}
+				if (category.subcategories?.length) {
+					walk(category.subcategories, chain)
+				}
+			}
+		}
+		walk(published.categories ?? [], [])
+	}
+
+	const isOverrideOff = (
+		override:
+			| {
+					isEnabled?: boolean | null
+					availabilityStatus?: string | null
+					channels?: unknown
+			  }
+			| undefined,
+	) =>
+		override?.isEnabled === false ||
+		override?.availabilityStatus === 'hidden' ||
+		!isSoldOn('web', { override })
+
 	return locations.some((location) => {
-		const override = menu.locationOverrides?.[location.id]?.find(
+		const overrides = menu.locationOverrides?.[location.id] ?? []
+		const itemOverride = overrides.find(
 			(entry) => entry.entityType === 'item' && entry.entityId === item.id,
 		)
-		return !(
-			override?.isEnabled === false || override?.availabilityStatus === 'hidden'
-		)
+		if (isOverrideOff(itemOverride)) return false
+		if (!occurrences.length) return true
+		return occurrences.some(({ published, categories }) => {
+			if (HIDDEN.has(published.availabilityStatus)) return false
+			if (!isSoldOn('web', { menu: published })) return false
+			const menuOverride = overrides.find(
+				(entry) =>
+					entry.entityType === 'menu' && entry.entityId === published.id,
+			)
+			if (isOverrideOff(menuOverride)) return false
+			return categories.every((cat) => {
+				if (HIDDEN.has(cat.availabilityStatus)) return false
+				if (!isSoldOn('web', { category: cat })) return false
+				const catOverride = overrides.find(
+					(entry) =>
+						entry.entityType === 'category' && entry.entityId === cat.id,
+				)
+				return !isOverrideOff(catOverride)
+			})
+		})
 	})
 }
 

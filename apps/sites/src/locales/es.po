@@ -690,6 +690,11 @@ msgid "Call the restaurant"
 msgstr "Llamar al restaurante"
 
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/pages/menu/success.astro.ts:3
 msgid "Cancel order"
 msgstr "Cancelar pedido"
 
@@ -891,6 +896,11 @@ msgstr "Elige un lugar"
 #: src/lib/reservations/labels.ts:182
 msgid "Choose a new time"
 msgstr "Elige una nueva hora"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Choose a photo (JPG, PNG, WebP, or HEIC, up to 10 MB)"
+msgstr "Elige una foto (JPG, PNG, WebP o HEIC, hasta 10 MB)"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -2770,6 +2780,11 @@ msgstr "El número de teléfono no se puede cambiar ahora."
 msgid "Photo of {name}"
 msgstr "Foto de {name}"
 
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Photos can only be shared for dishes you ordered within 14 days."
+msgstr "Solo se pueden compartir fotos de platos que pediste en los últimos 14 días."
+
 #: src/lib/ordering-labels.ts:178
 msgid "Pick up from"
 msgstr "Recoger en"
@@ -2855,6 +2870,11 @@ msgstr "Comprueba tu conexión e inténtalo de nuevo."
 #: src/lib/reservations/labels.ts:524
 msgid "Please check your details and try again."
 msgstr "Revisa tus datos e inténtalo de nuevo."
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Please choose a JPG, PNG, WebP, or HEIC image."
+msgstr "Por favor elige una imagen JPG, PNG, WebP o HEIC."
 
 #: src/lib/reservations/labels.ts:267
 msgid "Please contact the restaurant if you think this is a mistake."
@@ -3327,6 +3347,15 @@ msgstr "Tarifa de servicio"
 msgid "Share"
 msgstr "Compartir"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Share a photo from your order"
+msgstr "Comparte una foto de tu pedido"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Share a photo of your {dish}"
+msgstr "Comparte una foto de tu {dish}"
+
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Share this job"
 msgstr "Compartir este empleo"
@@ -3520,6 +3549,11 @@ msgstr "Falta por pagar: {amount}"
 msgid "Street address"
 msgstr "Dirección"
 
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Submit photo"
+msgstr "Enviar foto"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
 msgstr "Enviando..."
@@ -3655,6 +3689,11 @@ msgstr "Gracias. Tu solicitud se ha enviado. Si encaja, se pondrán en contacto 
 #: src/lib/reservations/labels.ts:398
 msgid "Thank you. Your reservation is confirmed."
 msgstr "Gracias. Tu reserva está confirmada."
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Thanks, the restaurant will review it."
+msgstr "Gracias, el restaurante la revisará."
 
 #: src/lib/reservations/labels.ts:190
 msgid "Thanks. The restaurant knows you are coming."
@@ -3879,6 +3918,11 @@ msgstr "Hoy no queda suficiente de: {names}. Vuelve al menú para modificar tu p
 msgid "This booking includes a payment, so the party size cannot be changed online. Please call the restaurant."
 msgstr "Esta reserva incluye un pago, por lo que el número de personas no se puede cambiar en línea. Llame al restaurante."
 
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "This browser cannot convert HEIC photos. Please upload a JPG, PNG, or WebP photo."
+msgstr "Este navegador no puede convertir fotos HEIC. Por favor sube una foto JPG, PNG o WebP."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "this business"
 msgstr "este negocio"
@@ -4073,6 +4117,11 @@ msgstr "Este número de teléfono tiene demasiadas reservas próximas."
 #: src/lib/reservations/labels.ts:526
 msgid "This phone number is already on the waitlist today."
 msgstr "Este número de teléfono ya está en la lista de espera hoy."
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "This photo is larger than 10 MB."
+msgstr "Esta foto supera los 10 MB."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
@@ -4278,6 +4327,11 @@ msgstr "Actualiza tus datos básicos a continuación."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Updating your total…"
 msgstr "Actualizando tu total…"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Uploading…"
+msgstr "Subiendo…"
 
 #: src/lib/ordering-labels.ts:148
 msgid "Use “{query}”"
@@ -4501,6 +4555,11 @@ msgstr "No pudimos enviar tu solicitud ahora. Inténtalo de nuevo en un momento.
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "We could not send your order. Please try again."
 msgstr "No pudimos enviar tu pedido. Inténtalo de nuevo."
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "We could not upload your photo. Please try again."
+msgstr "No pudimos subir tu foto. Inténtalo de nuevo."
 
 #: src/lib/gift-cards/labels.ts:94
 msgid "We could not use that gift card."
@@ -4827,6 +4886,11 @@ msgstr "Tienes suficiente para esta recompensa"
 #: src/lib/reservations/labels.ts:207
 msgid "You have no upcoming reservations."
 msgstr "No tienes reservas próximas."
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "You have reached the photo upload limit."
+msgstr "Has alcanzado el límite de subida de fotos."
 
 #: src/lib/loyalty/labels.ts:305
 msgid "You have reached the referral limit."

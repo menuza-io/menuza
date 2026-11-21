@@ -13,6 +13,7 @@
  */
 
 import { type LocationAddress } from '@repo/common/location-types'
+import { parseMenuChannels, type MenuChannel } from '@repo/common/menu-channels'
 import { generatePickupSlots, type PickupSlot } from '@repo/common/menu-types'
 import {
 	and,
@@ -89,6 +90,7 @@ export interface PublicSiteDropPayload {
 			id: string
 			displayName: string
 			specialInstructions: boolean
+			channels?: MenuChannel[]
 		}
 	}
 	pickupWindows: Array<{
@@ -123,6 +125,8 @@ export interface PublicSiteDropPayload {
 		displayName: string
 		internalName: string | null
 		description: string | null
+		availabilityStatus: string
+		channels?: MenuChannel[]
 		items: PublicMenuItemData[]
 	}>
 }
@@ -321,6 +325,7 @@ export async function buildPublicSiteDropPayload(
 		internalName: cat.internalName,
 		description: cat.description,
 		availabilityStatus: cat.availabilityStatus ?? 'available',
+		channels: parseMenuChannels(cat.channels),
 		items: relevantItemAssignments
 			.filter((ia) => ia.categoryId === cat.id)
 			.flatMap((ia) => {
@@ -331,7 +336,12 @@ export async function buildPublicSiteDropPayload(
 
 	const menu = await db.query.OrganizationMenu.findFirst({
 		where: eq(OrganizationMenu.id, drop.menuId),
-		columns: { id: true, displayName: true, specialInstructions: true },
+		columns: {
+			id: true,
+			displayName: true,
+			specialInstructions: true,
+			channels: true,
+		},
 	})
 
 	// Format pickup windows with generated slots
@@ -397,6 +407,7 @@ export async function buildPublicSiteDropPayload(
 				id: drop.menuId,
 				displayName: menu?.displayName ?? '',
 				specialInstructions: menu ? Boolean(menu.specialInstructions) : true,
+				channels: parseMenuChannels(menu?.channels),
 			},
 		},
 		pickupWindows: formattedWindows,

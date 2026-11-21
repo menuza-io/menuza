@@ -1,5 +1,6 @@
 import { restaurantDataOf } from '@repo/phone-agent-restaurant'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildPublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
 import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
 import { restaurantServerVertical } from './vertical.server.ts'
 
@@ -111,5 +112,100 @@ describe('restaurant config: table booking facts', () => {
 			categories: [],
 			reservationsAvailable: false,
 		})
+	})
+
+	it('requests the web channel menu and omits till-only dishes from phone agent facts (#220)', async () => {
+		vi.mocked(isReservationsFeatureEnabled).mockResolvedValue(false)
+		vi.mocked(buildPublicSiteMenuPayload).mockResolvedValueOnce({
+			secondsUntilVariationReturn: null,
+			payload: {
+				locations: [
+					{
+						id: 'loc_1',
+						name: 'Downtown',
+						phone: null,
+						timezone: 'America/New_York',
+						currency: 'USD',
+						isDefault: true,
+						isActive: true,
+						taxRate: 0,
+						address: null,
+						storeHours: [],
+						onlineHours: [],
+						specialHours: [],
+						prepTime: 15,
+						fulfillmentOptions: {
+							pickup: true,
+							delivery: false,
+							dineIn: false,
+							curbside: false,
+						},
+						deliveryConfig: {
+							estimatedDeliveryTimeMin: 30,
+							estimatedDeliveryTimeMax: 45,
+						},
+						deliveryZones: [],
+					},
+				],
+				menus: [
+					{
+						id: 'm1',
+						displayName: 'Dinner',
+						availabilityStatus: 'available',
+						categories: [
+							{
+								id: 'c1',
+								displayName: 'Mains',
+								description: null,
+								upsellCategoryIds: [],
+								availabilityStatus: 'available',
+								items: [
+									{
+										id: 'web-item',
+										displayName: 'Web Dish',
+										description: null,
+										price: 12,
+										variations: { groups: [], variants: [] },
+										isGlutenFree: false,
+										isVegetarian: false,
+										allergens: [],
+										isPopular: false,
+										isUpsell: false,
+										availabilityStatus: 'available',
+										channels: ['web', 'pos'],
+										modifierGroups: [],
+									},
+									{
+										id: 'till-only',
+										displayName: 'Till Secret Dish',
+										description: null,
+										price: 9,
+										variations: { groups: [], variants: [] },
+										isGlutenFree: false,
+										isVegetarian: false,
+										allergens: [],
+										isPopular: false,
+										isUpsell: false,
+										availabilityStatus: 'available',
+										channels: ['pos'],
+										modifierGroups: [],
+									},
+								],
+							},
+						],
+					},
+				],
+			} as never,
+		})
+		const parts = await configFor('us')
+		expect(buildPublicSiteMenuPayload).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'org_1' }),
+			'loc_1',
+			{ channel: 'web' },
+		)
+		const menuIds = restaurantDataOf(parts).menus.flatMap((m) =>
+			m.categories.flatMap((c) => c.items.map((i) => i.id)),
+		)
+		expect(menuIds).toEqual(['web-item'])
 	})
 })

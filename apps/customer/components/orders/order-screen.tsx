@@ -7,6 +7,11 @@ import {
 	type CustomerOrderReceipt,
 	CustomerOrdersClient,
 } from '../../lib/api/customer-orders'
+import {
+	type EligibleGuestPhotoDish,
+	type GuestPhotoFileInput,
+	GuestPhotosClient,
+} from '../../lib/api/guest-photos'
 import { useAppSnapshot } from '../../lib/app/use-app'
 import { websitePageUrl } from '../../lib/loyalty/website-link'
 import { openWebsitePage } from '../../lib/ordering/open-site'
@@ -31,9 +36,13 @@ type State =
 export function OrderScreen({
 	id,
 	linkToken,
+	pickPhoto,
 }: {
 	id: string
 	linkToken?: string
+	pickPhoto?: (
+		dish: EligibleGuestPhotoDish,
+	) => Promise<GuestPhotoFileInput | null>
 }) {
 	const { t } = useLingui()
 	const { session, organization, configuration } = useAppSnapshot()
@@ -42,15 +51,44 @@ export function OrderScreen({
 		() => (session ? new CustomerOrdersClient(session) : null),
 		[session],
 	)
+	const photosClient = useMemo(
+		() => (session ? new GuestPhotosClient(session) : null),
+		[session],
+	)
 	const [state, setState] = useState<State>({ kind: 'loading' })
 	const [again, setAgain] = useState<'idle' | 'busy' | 'failed'>('idle')
+	const [eligibleDishes, setEligibleDishes] = useState<
+		EligibleGuestPhotoDish[]
+	>([])
+	const [photoBusyId, setPhotoBusyId] = useState<string | null>(null)
+	const [photoSubmittedIds, setPhotoSubmittedIds] = useState<
+		Record<string, boolean>
+	>({})
+	const [photoError, setPhotoError] = useState<string | null>(null)
 
 	useEffect(() => {
 		if (!client) return
 		let cancelled = false
 		void client
 			.get(id)
-			.then((order) => !cancelled && setState({ kind: 'ready', order }))
+			.then((order) => {
+				if (cancelled) return
+				setState({ kind: 'ready', order })
+				if (photosClient) {
+					void photosClient
+						.eligibility(id)
+						.then((elig) => {
+							if (!cancelled && elig?.eligible) {
+								setEligibleDishes(
+									elig.dishes.filter(
+										(d) => d.eligible && d.remainingForDish > 0,
+									),
+								)
+							}
+						})
+						.catch(() => {})
+				}
+			})
 			.catch((error: unknown) => {
 				if (cancelled) return
 				setState(
@@ -62,7 +100,7 @@ export function OrderScreen({
 		return () => {
 			cancelled = true
 		}
-	}, [client, id])
+	}, [client, id, photosClient])
 
 	const pageInput = organization
 		? {
@@ -96,6 +134,36 @@ export function OrderScreen({
 			{ origin },
 		)
 		if (url) openWebsitePage(url)
+	}
+
+	const shareDishPhoto = async (dish: EligibleGuestPhotoDish) => {
+		if (!photosClient || !pickPhoto) {
+			openOnWebsite()
+			return
+		}
+		setPhotoError(null)
+		const picked = await pickPhoto(dish)
+		if (!picked) return
+		setPhotoBusyId(dish.itemId)
+		try {
+			const uploaded = await photosClient.upload({
+				orderId: id,
+				itemId: dish.itemId,
+				file: picked,
+			})
+			await photosClient.submit({
+				orderId: id,
+				itemId: dish.itemId,
+				objectKey: uploaded.objectKey,
+				contentType: uploaded.contentType,
+				byteSize: uploaded.byteSize,
+			})
+			setPhotoSubmittedIds((prev) => ({ ...prev, [dish.itemId]: true }))
+		} catch {
+			setPhotoError(t`We could not upload your photo. Please try again.`)
+		} finally {
+			setPhotoBusyId(null)
+		}
 	}
 
 	if (!client || state.kind === 'loading') {
@@ -151,6 +219,30 @@ export function OrderScreen({
 						</Text>
 					</View>
 				</Card>
+				{eligibleDishes.length > 0 ? (
+					<Card className="gap-2">
+						{eligibleDishes.map((dish) =>
+							photoSubmittedIds[dish.itemId] ? (
+								<Text key={dish.itemId} variant="muted">
+									{t`Thanks, the restaurant will review it.`}
+								</Text>
+							) : (
+								<Button
+									key={dish.itemId}
+									variant="outline"
+									loading={photoBusyId === dish.itemId}
+									onPress={() => void shareDishPhoto(dish)}
+								>
+									{t`Share a photo of your ${dish.itemName}`}
+								</Button>
+							),
+						)}
+						<Text variant="muted" className="text-xs">
+							{t`By sharing a photo, you allow the restaurant to display it on their menu.`}
+						</Text>
+						{photoError ? <Text variant="error">{photoError}</Text> : null}
+					</Card>
+				) : null}
 				{again === 'failed' ? (
 					<Text variant="error">{t`We could not start this order again.`}</Text>
 				) : null}

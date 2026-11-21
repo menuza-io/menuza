@@ -207,6 +207,7 @@ export const ORG_PERMISSIONS = {
 	// Menu permissions
 	READ_MENU_ANY: 'read:menu:any' as const,
 	UPDATE_MENU_ANY: 'update:menu:any' as const,
+	UPDATE_GUEST_PHOTO_ANY: 'update:guest_photo:any' as const,
 	// Media library: browsing is open to every member; changing the shared
 	// library and spending AI studio credits are not.
 	UPDATE_MEDIA_ANY: 'update:media:any' as const,

@@ -4,6 +4,7 @@ import { type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { buildEmailIdentity } from '#app/utils/email-sender/sender.server.ts'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
+import { isGuestPhotosEnabledForOrganization } from '#app/utils/menu/guest-photos.server.ts'
 
 const querySchema = z.object({
 	orgId: z.string().regex(TENANT_ORG_ID_PATTERN),
@@ -45,7 +46,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	// Business identity only (#103): the sender name, a verified reply-to and a
 	// verified sending address, so the region sends as the organization.
 	return Response.json(
-		{ ...organization, emailSender: await buildEmailIdentity(organization.id) },
+		{
+			...organization,
+			emailSender: await buildEmailIdentity(organization.id),
+			guestPhotosEnabled:
+				await isGuestPhotosEnabledForOrganization(organization),
+		},
 		{ status: 200, headers: { 'Cache-Control': 'private, no-store' } },
 	)
 }

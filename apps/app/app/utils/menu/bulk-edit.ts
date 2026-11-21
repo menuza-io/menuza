@@ -1,3 +1,4 @@
+import { parseMenuChannels, type MenuChannel } from '@repo/common/menu-channels'
 import {
 	DIETARY_TAGS,
 	type AvailabilityStatus,
@@ -35,6 +36,7 @@ export type BulkItemOperation =
 	| { type: 'dietary'; flag: BulkDietaryFlag; enabled: boolean }
 	| { type: 'popular'; enabled: boolean }
 	| { type: 'upsell'; enabled: boolean }
+	| { type: 'channels'; channels: MenuChannel[] }
 	| { type: 'add_category'; categoryId: string }
 	| { type: 'remove_category'; categoryId: string }
 	| { type: 'add_modifier_group'; modifierGroupId: string }
@@ -68,6 +70,7 @@ export type BulkItemRowInput = {
 	dietaryTags: DietaryTag[]
 	isPopular: boolean
 	isUpsell: boolean
+	channels?: MenuChannel[]
 	categoryIds: string[]
 	modifierGroupIds: string[]
 }
@@ -150,7 +153,6 @@ function applyPriceChange(
 	if (ending && exponent === 2) {
 		const suffix = Number.parseInt(ending.to, 10) / 100
 		const whole = Math.floor(next)
-		const frac = next - whole
 		const targets = [whole + suffix, whole - 1 + suffix, whole + 1 + suffix]
 		const candidates = targets.filter((c) => c >= 0)
 		if (candidates.length === 0) return { price: 0 }
@@ -185,6 +187,7 @@ function planItemOperation(
 ): BulkPlanRow<BulkItemRowInput, BulkItemRowInput> {
 	const after = {
 		...row,
+		channels: parseMenuChannels(row.channels),
 		categoryIds: [...row.categoryIds],
 		modifierGroupIds: [...row.modifierGroupIds],
 	}
@@ -227,6 +230,11 @@ function planItemOperation(
 
 	if (operation.type === 'upsell') {
 		after.isUpsell = operation.enabled
+		return { id: row.id, before: row, after }
+	}
+
+	if (operation.type === 'channels') {
+		after.channels = parseMenuChannels(operation.channels)
 		return { id: row.id, before: row, after }
 	}
 

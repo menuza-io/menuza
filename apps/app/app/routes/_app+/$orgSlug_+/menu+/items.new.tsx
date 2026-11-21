@@ -1,4 +1,5 @@
 import { requireUserId } from '@repo/auth'
+import { popularModeSchema } from '@repo/common/menu-popular'
 import {
 	MenuItemInputSchema,
 	parseMenuItemImageKeys,
@@ -31,6 +32,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { effectiveIsPopularForMode } from '#app/utils/menu/auto-popular.server.ts'
 import {
 	dailyLimitColumn,
 	dailyLimitLocationIds,
@@ -39,6 +41,8 @@ import { autoTranslateNewItem } from '#app/utils/menu/menu-auto-translate.server
 import {
 	dietaryAndOrderTypeColumns,
 	MENU_JSON_FORM_KEYS,
+	narrowOverrideChannels,
+	parseChannelsFormData,
 	parseMenuJsonFormValue,
 } from '#app/utils/menu/menu-write-columns.ts'
 import {
@@ -177,6 +181,25 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
+	const channelsParsed = parseChannelsFormData(formData)
+	if (!channelsParsed.ok) {
+		return Response.json(
+			{ error: { channels: ['Invalid channels'] } },
+			{ status: 400 },
+		)
+	}
+
+	const popularModeParsed = formData.has('popularMode')
+		? popularModeSchema.safeParse(rawData.popularMode)
+		: { success: true as const, data: 'auto' as const }
+	if (!popularModeParsed.success) {
+		return Response.json(
+			{ error: { popularMode: ['Invalid popular mode'] } },
+			{ status: 400 },
+		)
+	}
+	const popularMode = popularModeParsed.data
+
 	const parsed = MenuItemInputSchema.safeParse(rawData)
 	if (!parsed.success) {
 		return Response.json(
@@ -186,6 +209,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+	const rawOverrides =
+		rawData.locationOverrides &&
+		typeof rawData.locationOverrides === 'object' &&
+		!Array.isArray(rawData.locationOverrides)
+			? (rawData.locationOverrides as Record<string, { channels?: unknown }>)
+			: undefined
 
 	const imageKeys = parseMenuItemImageKeys(
 		JSON.stringify(data.imageKeys),
@@ -260,8 +289,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					formData.has('dailySaleLimit'),
 					data.dailySaleLimit,
 				),
-				isPopular: data.isPopular,
+				popularMode,
+				isPopular: effectiveIsPopularForMode(popularMode, data.isPopular),
 				isUpsell: data.isUpsell,
+				channels: channelsParsed.serialized,
 				availabilityStatus: data.availabilityStatus,
 				unavailableUntil:
 					(data.availabilityStatus === 'unavailable_until' ||
@@ -310,6 +341,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					isEnabled: entry.isEnabled,
 					price: data.variations.groups.length ? null : entry.price,
 					availabilityStatus: entry.availabilityStatus,
+					channels: narrowOverrideChannels(
+						channelsParsed.channels,
+						rawOverrides?.[entry.locationId]?.channels,
+					),
 				})),
 			)
 		}

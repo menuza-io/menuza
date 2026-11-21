@@ -690,6 +690,11 @@ msgid "Call the restaurant"
 msgstr "致电餐厅"
 
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Cancel"
+msgstr "取消"
+
+#: src/pages/menu/success.astro.ts:3
 msgid "Cancel order"
 msgstr "取消订单"
 
@@ -891,6 +896,11 @@ msgstr "选择取货地点"
 #: src/lib/reservations/labels.ts:182
 msgid "Choose a new time"
 msgstr "选择新的时间"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Choose a photo (JPG, PNG, WebP, or HEIC, up to 10 MB)"
+msgstr "选择照片（JPG、PNG、WebP 或 HEIC，最大 10 MB）"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -2770,6 +2780,11 @@ msgstr "目前无法更改电话号码。"
 msgid "Photo of {name}"
 msgstr "{name} 的照片"
 
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Photos can only be shared for dishes you ordered within 14 days."
+msgstr "仅可为您在 14 天内点过的菜品分享照片。"
+
 #: src/lib/ordering-labels.ts:178
 msgid "Pick up from"
 msgstr "自取门店"
@@ -2855,6 +2870,11 @@ msgstr "请检查网络连接后重试。"
 #: src/lib/reservations/labels.ts:524
 msgid "Please check your details and try again."
 msgstr "请检查您的信息后重试。"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Please choose a JPG, PNG, WebP, or HEIC image."
+msgstr "请选择 JPG、PNG、WebP 或 HEIC 图片。"
 
 #: src/lib/reservations/labels.ts:267
 msgid "Please contact the restaurant if you think this is a mistake."
@@ -3327,6 +3347,15 @@ msgstr "服务费"
 msgid "Share"
 msgstr "分享"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Share a photo from your order"
+msgstr "分享您的订单照片"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Share a photo of your {dish}"
+msgstr "分享您的 {dish} 照片"
+
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Share this job"
 msgstr "分享此职位"
@@ -3520,6 +3549,11 @@ msgstr "待付：{amount}"
 msgid "Street address"
 msgstr "街道地址"
 
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Submit photo"
+msgstr "提交照片"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
 msgstr "正在提交..."
@@ -3655,6 +3689,11 @@ msgstr "谢谢。您的申请已提交。如果合适，他们会与您联系。
 #: src/lib/reservations/labels.ts:398
 msgid "Thank you. Your reservation is confirmed."
 msgstr "谢谢。您的预订已确认。"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Thanks, the restaurant will review it."
+msgstr "感谢分享，餐厅将进行审核。"
 
 #: src/lib/reservations/labels.ts:190
 msgid "Thanks. The restaurant knows you are coming."
@@ -3879,6 +3918,11 @@ msgstr "以下商品今日库存不足：{names}。请返回菜单修改订单�
 msgid "This booking includes a payment, so the party size cannot be changed online. Please call the restaurant."
 msgstr "此预订包含付款，因此无法在线更改用餐人数。请致电餐厅。"
 
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "This browser cannot convert HEIC photos. Please upload a JPG, PNG, or WebP photo."
+msgstr "此浏览器无法转换 HEIC 照片。请上传 JPG、PNG 或 WebP 照片。"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "this business"
 msgstr "该商家"
@@ -4073,6 +4117,11 @@ msgstr "该手机号的未来预订过多。"
 #: src/lib/reservations/labels.ts:526
 msgid "This phone number is already on the waitlist today."
 msgstr "该电话号码今天已在候位名单中。"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "This photo is larger than 10 MB."
+msgstr "此照片超过 10 MB。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
@@ -4278,6 +4327,11 @@ msgstr "请在下方更新您的基本信息。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Updating your total…"
 msgstr "正在更新合计…"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "Uploading…"
+msgstr "正在上传…"
 
 #: src/lib/ordering-labels.ts:148
 msgid "Use “{query}”"
@@ -4501,6 +4555,11 @@ msgstr "暂时无法提交您的申请，请稍后重试。"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "We could not send your order. Please try again."
 msgstr "无法发送您的订单。请重试。"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "We could not upload your photo. Please try again."
+msgstr "无法上传您的照片，请重试。"
 
 #: src/lib/gift-cards/labels.ts:94
 msgid "We could not use that gift card."
@@ -4827,6 +4886,11 @@ msgstr "您的余额足以兑换此奖励"
 #: src/lib/reservations/labels.ts:207
 msgid "You have no upcoming reservations."
 msgstr "您没有即将到来的预订。"
+
+#: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
+msgid "You have reached the photo upload limit."
+msgstr "您已达到照片上传上限。"
 
 #: src/lib/loyalty/labels.ts:305
 msgid "You have reached the referral limit."

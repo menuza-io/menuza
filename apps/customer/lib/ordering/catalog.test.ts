@@ -334,6 +334,7 @@ describe('catalog fetches', () => {
 			'/resources/sites/drops',
 		])
 		expect(transport.recorded[0]?.url.searchParams.get('slug')).toBe('acme')
+		expect(transport.recorded[0]?.url.searchParams.get('channel')).toBe('app')
 	})
 })
 
@@ -426,5 +427,80 @@ describe('presentMenu prices and dietary tags (#412, #388, #335)', () => {
 			),
 		).toEqual(['soup'])
 		expect(filterSectionsByDiet(sections, ['halal'])).toEqual([])
+	})
+})
+
+describe('presentMenu channel filtering (#220)', () => {
+	it('hides till-only, web-only, channel-off categories, and app-disabled location overrides', () => {
+		const presented = presentMenu(
+			{
+				organization: { currency: 'USD' },
+				locations: [{ id: 'loc_1', isDefault: true }],
+				menus: [
+					{
+						id: 'm_main',
+						displayName: 'Main',
+						channels: ['web', 'qr', 'pos', 'app'],
+						categories: [
+							{
+								id: 'c_open',
+								displayName: 'Open',
+								channels: ['web', 'app'],
+								items: [
+									{
+										id: 'i_all',
+										displayName: 'Default Dish',
+										price: 10,
+									},
+									{
+										id: 'i_till',
+										displayName: 'Till Steak',
+										price: 25,
+										channels: ['pos'],
+									},
+									{
+										id: 'i_web',
+										displayName: 'Web Salad',
+										price: 9,
+										channels: ['web'],
+									},
+									{
+										id: 'i_loc_off',
+										displayName: 'App Hidden At Loc',
+										price: 11,
+										channels: ['web', 'app'],
+									},
+								],
+							},
+							{
+								id: 'c_no_app',
+								displayName: 'Web Only Category',
+								channels: ['web'],
+								items: [
+									{
+										id: 'i_in_no_app',
+										displayName: 'Category Hidden Dish',
+										price: 7,
+									},
+								],
+							},
+						],
+					},
+				],
+				locationOverrides: {
+					loc_1: [
+						{
+							entityType: 'item',
+							entityId: 'i_loc_off',
+							channels: ['web'],
+						},
+					],
+				},
+			},
+			'en',
+			'en',
+		)
+		expect(presented.sections.map((s) => s.id)).toEqual(['c_open'])
+		expect(presented.sections[0]?.items.map((i) => i.id)).toEqual(['i_all'])
 	})
 })

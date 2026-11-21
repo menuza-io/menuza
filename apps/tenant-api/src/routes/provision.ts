@@ -12,6 +12,7 @@ import {
 } from '../lib/origin.ts'
 import {
 	DEPROVISION_RECORDING_BUDGET_MS,
+	deleteOrganizationGuestPhotos,
 	deleteOrganizationRecordings,
 	type PrefixDeleteResult,
 } from '../lib/recording-storage.ts'
@@ -113,9 +114,13 @@ async function runTenantDbCommand(
 		if (command === 'provision') {
 			await provisionTenantDb(orgId)
 		} else {
-			// Recordings go first: if destroying the database then fails, the
-			// command can be retried, but recordings are never left without an org.
+			// Recordings and guest photos go first: if destroying the database then
+			// fails, the command can be retried, but objects are never left without an org.
 			recordings = await deleteOrganizationRecordings(orgId, {
+				budgetMs: DEPROVISION_RECORDING_BUDGET_MS,
+				runInBackground: (task) => runInBackground(c, task),
+			})
+			await deleteOrganizationGuestPhotos(orgId, {
 				budgetMs: DEPROVISION_RECORDING_BUDGET_MS,
 				runInBackground: (task) => runInBackground(c, task),
 			})

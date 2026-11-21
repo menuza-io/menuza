@@ -137,4 +137,14 @@ describe('dietary tags in bulk edit (#335)', () => {
 			isGlutenFree: true,
 		})
 	})
+
+	it('updates item channels in canonical order (#220)', () => {
+		const [plan] = planBulkEditItem({
+			rows: [{ ...baseItem, channels: ['web', 'qr', 'pos', 'app'] }],
+			currencyExponent: 2,
+			operation: { type: 'channels', channels: ['pos', 'web'] },
+		})
+		expect(plan?.before.channels).toEqual(['web', 'qr', 'pos', 'app'])
+		expect(plan?.after.channels).toEqual(['web', 'pos'])
+	})
 })

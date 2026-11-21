@@ -1,3 +1,4 @@
+import { isSoldOn } from '@repo/common/menu-channels'
 import {
 	fixedOverridePrice,
 	parseMenuPricingRules,
@@ -20,12 +21,19 @@ import { type TenantConfiguration } from '../config/configuration'
 import { siteQuery } from '../support/site-address'
 import { DEFAULT_OFFER_SCOPE, type OfferMode, type OfferScope } from './offers'
 
+const channelsFieldSchema = z
+	.union([z.array(z.string()), z.string()])
+	.nullable()
+	.optional()
+	.catch(undefined)
+
 const itemSchema = z.object({
 	id: z.string(),
 	displayName: z.string(),
 	description: z.string().nullish(),
 	price: z.number(),
 	availabilityStatus: z.string().optional(),
+	channels: channelsFieldSchema,
 	excludeFromDiscounts: z.boolean().optional().catch(undefined),
 	// #335 and #412: read defensively, an older or newer menu never breaks the list.
 	dietaryTags: z.array(z.string()).optional().catch(undefined),
@@ -52,6 +60,7 @@ const categorySchema = z.object({
 	id: z.string(),
 	displayName: z.string(),
 	availabilityStatus: z.string().optional(),
+	channels: channelsFieldSchema,
 	items: z.array(z.unknown()).optional(),
 	subcategories: z.array(z.unknown()).optional(),
 })
@@ -59,6 +68,8 @@ const categorySchema = z.object({
 const menuSchema = z.object({
 	id: z.string(),
 	displayName: z.string(),
+	availabilityStatus: z.string().optional(),
+	channels: channelsFieldSchema,
 	categories: z.array(z.unknown()).optional(),
 })
 
@@ -126,7 +137,15 @@ const menuEnvelopeSchema = z.object({
 		.record(
 			z.string(),
 			z.array(
-				z.object({ entityId: z.string(), price: z.number().nullish() }).loose(),
+				z
+					.object({
+						entityId: z.string(),
+						price: z.number().nullish(),
+						isEnabled: z.boolean().nullish().catch(undefined),
+						availabilityStatus: z.string().nullish().catch(undefined),
+						channels: channelsFieldSchema,
+					})
+					.loose(),
 			),
 		)
 		.optional()
@@ -329,6 +348,18 @@ export function presentMenu(
 	for (const menuValue of envelope.data.menus ?? []) {
 		const menu = menuSchema.safeParse(menuValue)
 		if (!menu.success) continue
+		const menuOverride = pricing.overrides.find(
+			(ov) => ov.entityId === menu.data.id,
+		)
+		if (
+			menu.data.availabilityStatus === 'unavailable' ||
+			menuOverride?.isEnabled === false ||
+			menuOverride?.availabilityStatus === 'hidden' ||
+			menuOverride?.availabilityStatus === 'unavailable' ||
+			!isSoldOn('app', { menu: menu.data, override: menuOverride })
+		) {
+			continue
+		}
 		const menuName = textOf(menu.data.displayName, locale, defaultLocale)
 		walkCategories(
 			menu.data.categories ?? [],
@@ -397,7 +428,9 @@ export async function fetchPublishedMenu(
 	configuration: TenantConfiguration,
 	transport: HttpTransport = fetchTransport,
 ): Promise<unknown> {
-	return fetchSiteResource(configuration, transport, '/resources/sites/menu')
+	return fetchSiteResource(configuration, transport, '/resources/sites/menu', [
+		['channel', 'app'],
+	])
 }
 
 export async function fetchPublishedDrops(
@@ -411,6 +444,7 @@ async function fetchSiteResource(
 	configuration: TenantConfiguration,
 	transport: HttpTransport,
 	path: '/resources/sites/menu' | '/resources/sites/drops',
+	extraQuery: Array<[string, string]> = [],
 ): Promise<unknown> {
 	const binding = siteQuery(configuration.siteAddress)
 	if (!binding) throw notBoundToTenantError()
@@ -418,6 +452,7 @@ async function fetchSiteResource(
 		method: 'GET',
 		url: buildUrl(configuration.appBaseUrl, path, [
 			[binding.name, binding.value],
+			...extraQuery,
 		]),
 		headers: { Accept: 'application/json' },
 		timeoutMs: configuration.requestTimeoutMs,
@@ -437,7 +472,13 @@ type PricingScope = {
 	locationId: string | null
 	modes: readonly OfferMode[]
 	rules: MenuPricingRule[]
-	overrides: Array<{ entityId: string; price?: number | null }>
+	overrides: Array<{
+		entityId: string
+		price?: number | null
+		isEnabled?: boolean | null
+		availabilityStatus?: string | null
+		channels?: readonly string[] | string | null
+	}>
 }
 
 /** The price shown for one order type, with the resolver the region charges with. */
@@ -514,12 +555,33 @@ function walkCategories(
 	for (const value of values) {
 		const category = categorySchema.safeParse(value)
 		if (!category.success) continue
-		if (category.data.availabilityStatus === 'unavailable') continue
+		const categoryOverride = pricing.overrides.find(
+			(ov) => ov.entityId === category.data.id,
+		)
+		if (
+			category.data.availabilityStatus === 'unavailable' ||
+			categoryOverride?.isEnabled === false ||
+			categoryOverride?.availabilityStatus === 'hidden' ||
+			categoryOverride?.availabilityStatus === 'unavailable' ||
+			!isSoldOn('app', { category: category.data, override: categoryOverride })
+		) {
+			continue
+		}
 		const categoryIds = [...parentIds, category.data.id]
 		const name = textOf(category.data.displayName, locale, defaultLocale)
 		const items = (category.data.items ?? []).flatMap((itemValue) => {
 			const item = itemSchema.safeParse(itemValue)
 			if (!item.success) return []
+			const itemOverride = pricing.overrides.find(
+				(ov) => ov.entityId === item.data.id,
+			)
+			if (
+				itemOverride?.isEnabled === false ||
+				itemOverride?.availabilityStatus === 'hidden' ||
+				!isSoldOn('app', { item: item.data, override: itemOverride })
+			) {
+				return []
+			}
 			const variants = item.data.variations?.variants ?? []
 			const soldOut =
 				item.data.availabilityStatus === 'unavailable' ||

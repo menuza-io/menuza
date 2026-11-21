@@ -603,7 +603,10 @@ export function getPrintFileUrl(key: string, expiresInSeconds = 3600) {
 	return _getPresignedGetUrl(key, DEFAULT_STORAGE_CONFIG, expiresInSeconds)
 }
 
-export function menuSnapshotObjectKey(organizationId: string, snapshotId: string) {
+export function menuSnapshotObjectKey(
+	organizationId: string,
+	snapshotId: string,
+) {
 	return `menu-snapshots/${organizationId}/${snapshotId}.json`
 }
 
@@ -618,12 +621,86 @@ export async function uploadMenuSnapshotJson(
 	return key
 }
 
-export async function readMenuSnapshotJson(key: string): Promise<string | null> {
+export async function readMenuSnapshotJson(
+	key: string,
+): Promise<string | null> {
 	const bytes = await readPrintFile(key)
 	if (!bytes) return null
 	return new TextDecoder().decode(bytes)
 }
 
 export async function deleteMenuSnapshotJson(key: string) {
+	await deleteFromStorage(key, DEFAULT_STORAGE_CONFIG)
+}
+
+export function menuImportSourceObjectKey(
+	organizationId: string,
+	importId: string,
+	extension: string,
+) {
+	const safeExt =
+		extension
+			.toLowerCase()
+			.replace(/[^a-z0-9]/g, '')
+			.slice(0, 12) || 'bin'
+	return `menu-imports/${organizationId}/${importId}/source.${safeExt}`
+}
+
+export function menuImportDraftObjectKey(
+	organizationId: string,
+	importId: string,
+) {
+	return `menu-imports/${organizationId}/${importId}/draft.json`
+}
+
+export async function uploadMenuImportSource(
+	organizationId: string,
+	importId: string,
+	extension: string,
+	bytes: Uint8Array<ArrayBuffer>,
+	contentType: string,
+) {
+	const key = menuImportSourceObjectKey(organizationId, importId, extension)
+	const file = new File([bytes], key.split('/').pop() || 'source.bin', {
+		type: contentType,
+	})
+	await _uploadToStorage(file, key, DEFAULT_STORAGE_CONFIG)
+	return key
+}
+
+export async function readMenuImportSource(
+	key: string,
+): Promise<Uint8Array<ArrayBuffer> | null> {
+	const { url, headers } = _getSignedGetRequestInfo(key, DEFAULT_STORAGE_CONFIG)
+	try {
+		const response = await fetch(url, {
+			headers,
+			signal: AbortSignal.timeout(20_000),
+		})
+		if (!response.ok) return null
+		return new Uint8Array(await response.arrayBuffer())
+	} catch {
+		return null
+	}
+}
+
+export async function uploadMenuImportDraftJson(
+	organizationId: string,
+	importId: string,
+	json: string,
+) {
+	const key = menuImportDraftObjectKey(organizationId, importId)
+	const bytes = new TextEncoder().encode(json)
+	await uploadPrintFile(key, bytes, 'application/json; charset=utf-8')
+	return key
+}
+
+export async function readMenuImportDraftJson(
+	key: string,
+): Promise<string | null> {
+	return readMenuSnapshotJson(key)
+}
+
+export async function deleteMenuImportObject(key: string) {
 	await deleteFromStorage(key, DEFAULT_STORAGE_CONFIG)
 }

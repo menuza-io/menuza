@@ -1,3 +1,4 @@
+import { isSoldOn } from '@repo/common/menu-channels'
 import {
 	parseMenuPricingRules,
 	resolveMenuItemPrice,
@@ -94,7 +95,9 @@ export async function refreshCatalog(
 		const slug = encodeURIComponent(settings.slug.trim().toLowerCase())
 		const [organization, menu] = await Promise.all([
 			getJson<PublicOrganization>(`${base}/resources/sites?slug=${slug}`),
-			getJson<MenuPayload>(`${base}/resources/sites/menu?slug=${slug}`),
+			getJson<MenuPayload>(
+				`${base}/resources/sites/menu?slug=${slug}&channel=pos`,
+			),
 		])
 		if (!organization?.id || !menu?.menus)
 			throw new Error('Unexpected catalog response')
@@ -211,7 +214,12 @@ export function buildCategories(
 		}
 	}
 	const applyItem = (item: MenuItem): MenuItem | null => {
-		if (off(item.id, item.availabilityStatus)) return null
+		if (
+			off(item.id, item.availabilityStatus) ||
+			!isSoldOn('pos', { item, override: byId.get(item.id) })
+		) {
+			return null
+		}
 		const variants = item.variations.variants.map((variant) => ({
 			...variant,
 			price: itemPrice(item, variant.price),
@@ -234,7 +242,8 @@ export function buildCategories(
 	const applyCategory = (cat: MenuCategory): MenuCategory | null => {
 		if (
 			byId.get(cat.id)?.isEnabled === false ||
-			categoryOff(cat.availabilityStatus)
+			categoryOff(cat.availabilityStatus) ||
+			!isSoldOn('pos', { category: cat, override: byId.get(cat.id) })
 		)
 			return null
 		const subcategories = (cat.subcategories ?? [])
@@ -253,7 +262,11 @@ export function buildCategories(
 	}
 
 	const menus = menu.menus
-		.filter((m) => !categoryOff(m.availabilityStatus))
+		.filter(
+			(m) =>
+				!categoryOff(m.availabilityStatus) &&
+				isSoldOn('pos', { menu: m, override: byId.get(m.id) }),
+		)
 		.sort((a, b) => a.position - b.position)
 	return (
 		menus

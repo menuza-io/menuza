@@ -330,3 +330,96 @@ describe('till discount rules in the stored catalog', () => {
 		})
 	})
 })
+
+describe('Station channel filtering (#220)', () => {
+	it('requests channel=pos when refreshing catalog from App', async () => {
+		const demo = demoCatalog()
+		const seenUrls: string[] = []
+		const fetchMock = vi.fn(async (url: string | URL) => {
+			seenUrls.push(String(url))
+			if (String(url).includes('/pos/discount-rules')) {
+				return new Response(JSON.stringify({ discountRules: [] }), {
+					status: 200,
+				})
+			}
+			if (String(url).includes('/resources/sites/menu')) {
+				return new Response(JSON.stringify(demo.menu), { status: 200 })
+			}
+			return new Response(JSON.stringify(demo.organization), { status: 200 })
+		})
+		vi.stubGlobal('fetch', fetchMock)
+		try {
+			const result = await refreshCatalog({
+				...loadSettings(),
+				demo: false,
+				appUrl: 'https://app.test',
+				slug: 'acme',
+			})
+			expect(result.ok).toBe(true)
+			const menuUrl = seenUrls.find((u) => u.includes('/resources/sites/menu'))
+			expect(menuUrl).toBeTruthy()
+			expect(new URL(menuUrl!).searchParams.get('channel')).toBe('pos')
+		} finally {
+			vi.unstubAllGlobals()
+			await db.catalog.clear()
+		}
+	})
+
+	it('keeps till-only dishes, hides web-only and pos-off categories, and applies location channel overrides', () => {
+		const m = menu()
+		const mains = m.menus[0]!.categories.find((c) => c.id === 'c-mains')!
+		mains.items.push(
+			{
+				...mains.items[0]!,
+				id: 'i-till-only',
+				displayName: 'Till Secret',
+				channels: ['pos'],
+			},
+			{
+				...mains.items[0]!,
+				id: 'i-web-only',
+				displayName: 'Web Only',
+				channels: ['web', 'qr', 'app'],
+			},
+		)
+		m.menus[0]!.categories.push({
+			id: 'c-web-cat',
+			displayName: 'Web Category',
+			availabilityStatus: 'available',
+			channels: ['web'],
+			position: 99,
+			items: [
+				{
+					...mains.items[0]!,
+					id: 'i-in-web-cat',
+					displayName: 'In Web Cat',
+					channels: ['web', 'qr', 'pos', 'app'],
+				},
+			],
+		})
+		m.locationOverrides = {
+			...m.locationOverrides,
+			'loc-1': [
+				{
+					entityType: 'item',
+					entityId: 'i-till-only',
+					channels: ['web'],
+				},
+			],
+			'loc-2': [],
+		}
+		const loc1Items = buildCategories(m, 'loc-1').flatMap((c) =>
+			categoryItems(c).map((i) => i.id),
+		)
+		expect(loc1Items).not.toContain('i-till-only')
+		expect(loc1Items).not.toContain('i-web-only')
+		expect(loc1Items).not.toContain('i-in-web-cat')
+
+		const loc2Items = buildCategories(m, 'loc-2').flatMap((c) =>
+			categoryItems(c).map((i) => i.id),
+		)
+		expect(loc2Items).toContain('i-till-only')
+		expect(loc2Items).not.toContain('i-web-only')
+		expect(loc2Items).not.toContain('i-in-web-cat')
+	})
+})

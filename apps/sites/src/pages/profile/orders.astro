@@ -1,5 +1,6 @@
 ---
 import { msg } from '@lingui/core/macro'
+import { GUEST_PHOTO_CONSENT_TEXT } from '@repo/common/guest-photos'
 import { getLocaleHref } from '@repo/common/site-locales'
 import AccountShell from '~/components/AccountShell.astro'
 import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
@@ -61,6 +62,25 @@ const restaurantLabels = {
 		payment_review: i18n._(msg`Payment under review`),
 	},
 }
+const photoLabels = {
+	sharePrompt: i18n._(msg`Share a photo of your {dish}`),
+	choosePhoto: i18n._(msg`Choose a photo (JPG, PNG, WebP, or HEIC, up to 10 MB)`),
+	consentLabel: GUEST_PHOTO_CONSENT_TEXT,
+	submit: i18n._(msg`Submit photo`),
+	uploading: i18n._(msg`Uploading…`),
+	cancel: i18n._(msg`Cancel`),
+	submitted: i18n._(msg`Thanks, the restaurant will review it.`),
+	tooLarge: i18n._(msg`This photo is larger than 10 MB.`),
+	invalidType: i18n._(msg`Please choose a JPG, PNG, WebP, or HEIC image.`),
+	heicUnavailable: i18n._(
+		msg`This browser cannot convert HEIC photos. Please upload a JPG, PNG, or WebP photo.`,
+	),
+	notEligible: i18n._(
+		msg`Photos can only be shared for dishes you ordered within 14 days.`,
+	),
+	limitReached: i18n._(msg`You have reached the photo upload limit.`),
+	uploadFailed: i18n._(msg`We could not upload your photo. Please try again.`),
+}
 const localePrefix = getLocaleHref('/', requestedLocale, requestedLocale, defaultLocale).replace(/\/$/, '')
 
 const shopHref = getLocaleHref('/shop', requestedLocale, requestedLocale, defaultLocale)
@@ -80,6 +100,7 @@ if (!organization) {
 			id="restaurant-orders-root"
 			class="contents"
 			data-labels={JSON.stringify(restaurantLabels)}
+			data-photo-labels={JSON.stringify(photoLabels)}
 			data-locale={requestedLocale}
 			data-default-locale={defaultLocale}
 			data-locale-prefix={localePrefix}
@@ -161,5 +182,6 @@ if (!organization) {
 	<script>
 		import '../../scripts/profile-orders.ts'
 		import '../../scripts/profile-restaurant-orders.ts'
+		import '../../scripts/guest-photo-upload.ts'
 	</script>
 </SitePage>

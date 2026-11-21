@@ -77,6 +77,7 @@ export type OrderingItem = {
 	isUpsell?: boolean
 	excludeFromDiscounts?: boolean
 	availabilityStatus?: string
+	channels?: readonly string[] | string | null
 	/** Daily limit (#409): how many are left today, when guests may see it. */
 	dailyRemaining?: number | null
 	/** The availability the menu published, kept while a daily sell-out overrides it. */
@@ -91,6 +92,7 @@ export type OrderingCategory = {
 	description?: string | null
 	/** Categories whose dishes go well with this one (#114). */
 	upsellCategoryIds?: string[]
+	channels?: readonly string[] | string | null
 	items: OrderingItem[]
 	subcategories?: OrderingCategory[]
 }

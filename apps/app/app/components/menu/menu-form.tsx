@@ -1,5 +1,6 @@
 import { Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { parseMenuChannels, type MenuChannel } from '@repo/common/menu-channels'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import {
 	ChoiceCard,
@@ -31,6 +32,7 @@ import {
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
 import { AssignedSortableList } from './assigned-sortable-list.tsx'
 import { AvailabilityHoursSection } from './availability-hours-section.tsx'
+import { ChannelSwitches } from './channel-switches.tsx'
 import {
 	LocationOverridesCard,
 	type LocationItem,
@@ -54,6 +56,7 @@ export interface MenuFormData {
 		| 'unavailable'
 	unavailableUntil?: Date | string | null
 	availabilityHours?: string
+	channels?: MenuChannel[]
 	assignedCategoryIds: string[]
 	locationOverrides: Record<string, LocationOverrideState>
 }
@@ -135,6 +138,9 @@ function MenuFormBody({
 	const [availabilityHours, setAvailabilityHours] = useState(
 		initialData?.availabilityHours ?? '',
 	)
+	const [channels, setChannels] = useState<MenuChannel[]>(() =>
+		parseMenuChannels(initialData?.channels),
+	)
 	const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
 		initialData?.assignedCategoryIds ?? [],
 	)
@@ -162,6 +168,11 @@ function MenuFormBody({
 						type="hidden"
 						name="availabilityHours"
 						value={availabilityHours}
+					/>
+					<input
+						type="hidden"
+						name="channels"
+						value={JSON.stringify(channels)}
 					/>
 					<input
 						type="hidden"
@@ -394,11 +405,34 @@ function MenuFormBody({
 									locations={allLocations}
 								/>
 
+								{/* Channels Frame */}
+								<Frame className="w-full">
+									<FrameHeader>
+										<FrameTitle className="text-base">
+											<Trans>Channels</Trans>
+										</FrameTitle>
+										<FrameDescription>
+											<Trans>
+												Choose where this menu is sold. Categories and dishes
+												inside it can narrow further.
+											</Trans>
+										</FrameDescription>
+									</FrameHeader>
+									<FramePanel>
+										<ChannelSwitches
+											idPrefix="menu-channels"
+											channels={channels}
+											onChange={setChannels}
+										/>
+									</FramePanel>
+								</Frame>
+
 								{/* Location Availability Card */}
 								<LocationOverridesCard
 									locations={allLocations}
 									overrides={locationOverrides}
 									onChange={setLocationOverrides}
+									baseChannels={channels}
 								/>
 							</div>
 						</div>

@@ -5,6 +5,7 @@ import {
 	isLocationOpenForOrdering,
 	type LocationOrderingAvailability,
 } from '@repo/common/location-types'
+import { isSoldOn, type MenuChannel } from '@repo/common/menu-channels'
 import { menuItemSalePrice } from '@repo/discounts'
 import { dietaryTagsOf, getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
@@ -82,12 +83,23 @@ if (!organization) {
 
 const urlLocation = Astro.url.searchParams.get('location')
 const isPreview = Astro.url.searchParams.get('preview') === 'true'
+const srcParam = (Astro.url.searchParams.get('src') ?? '').toLowerCase()
+const channelParam = (Astro.url.searchParams.get('channel') ?? '').toLowerCase()
+const menuChannel: MenuChannel =
+	srcParam === 'qr' ||
+	srcParam === 'qr_poster' ||
+	srcParam === 'qr_table' ||
+	channelParam === 'qr' ||
+	Astro.url.searchParams.get('qr') === '1'
+		? 'qr'
+		: 'web'
 
 const menuPayload = await fetchPublishedSiteMenu({
 	slug: orgSlug,
 	host: customHost,
 	lng: requestedLocale,
 	locationId: urlLocation,
+	channel: menuChannel,
 	preview: isPreview,
 })
 
@@ -315,6 +327,17 @@ function localizeItem(item: PublicMenuItemData, menu: PublicMenuData): OrderingI
 	}
 }
 
+const activeOverrides = new Map(
+	(activeLocation ? menuPayload?.locationOverrides?.[activeLocation.id] ?? [] : []).map(
+		(entry) => [entry.entityId, entry],
+	),
+)
+
+function isOverrideOff(entityId: string): boolean {
+	const ov = activeOverrides.get(entityId)
+	return ov?.isEnabled === false || ov?.availabilityStatus === 'unavailable' || ov?.availabilityStatus === 'hidden'
+}
+
 function localizeCategory(
 	category: PublicMenuCategoryData,
 	menu: PublicMenuData,
@@ -324,9 +347,20 @@ function localizeCategory(
 		displayName: t(category.displayName),
 		description: category.description ? t(category.description) : '',
 		upsellCategoryIds: category.upsellCategoryIds ?? [],
-		items: (category.items ?? []).map((item) => localizeItem(item, menu)),
+		items: (category.items ?? [])
+			.filter(
+				(item) =>
+					!isOverrideOff(item.id) &&
+					isSoldOn(menuChannel, { item, override: activeOverrides.get(item.id) }),
+			)
+			.map((item) => localizeItem(item, menu)),
 		subcategories: (category.subcategories ?? [])
-			.filter((sub) => sub.availabilityStatus !== 'unavailable')
+			.filter(
+				(sub) =>
+					sub.availabilityStatus !== 'unavailable' &&
+					!isOverrideOff(sub.id) &&
+					isSoldOn(menuChannel, { category: sub, override: activeOverrides.get(sub.id) }),
+			)
 			.map((sub) => localizeCategory(sub, menu)),
 	}
 }
@@ -348,9 +382,22 @@ function pruneEmpty(category: OrderingCategory): OrderingCategory | null {
 
 const categories: OrderingCategory[] = []
 for (const menu of menus) {
-	if (menu.availabilityStatus === 'unavailable') continue
+	if (
+		menu.availabilityStatus === 'unavailable' ||
+		isOverrideOff(menu.id) ||
+		!isSoldOn(menuChannel, { menu, override: activeOverrides.get(menu.id) })
+	) {
+		continue
+	}
 	for (const category of menu.categories) {
-		if (category.availabilityStatus === 'unavailable' || category.parentId) continue
+		if (
+			category.availabilityStatus === 'unavailable' ||
+			category.parentId ||
+			isOverrideOff(category.id) ||
+			!isSoldOn(menuChannel, { category, override: activeOverrides.get(category.id) })
+		) {
+			continue
+		}
 		const localized = pruneEmpty(localizeCategory(category, menu))
 		if (localized) categories.push(localized)
 	}
@@ -728,6 +775,7 @@ const clientMenuData = {
 	isOpen: availability.isOpen,
 	closedReason,
 	allowedModes,
+	channel: menuChannel,
 	categories,
 	voiceOrderLabels,
 	cartRestoreLabels,
@@ -1198,6 +1246,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			isOpen: boolean
 			closedReason: string
 			allowedModes: FulfillmentMode[]
+			channel?: 'web' | 'qr'
 			categories: OrderingCategory[]
 			/** The "Goes well with" row is on (`ordering.upsell`). */
 			upsell?: boolean
@@ -1366,6 +1415,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			const items = suggestForCart({
 				categories: data.categories ?? [],
 				lines,
+				channel: atTable() ? 'qr' : (data.channel ?? 'web'),
 				// A table order is a pickup-style order here; otherwise the chosen
 				// order type has to be offered at this location.
 				offered: atTable() || data.allowedModes.includes(mode),

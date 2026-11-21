@@ -1,9 +1,11 @@
 import { requireUserId } from '@repo/auth'
-import { MenuInputSchema } from '@repo/common/menu-types'
+import { parseMenuChannels } from '@repo/common/menu-channels'
+import { getLocalizedMenuValue, MenuInputSchema } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
 	db,
 	eq,
+	ne,
 	asc,
 	desc,
 	and,
@@ -21,10 +23,19 @@ import {
 	useNavigation,
 } from 'react-router'
 import { MenuForm } from '#app/components/menu/menu-form.tsx'
+import { MenuScheduleCard } from '#app/components/menu/menu-schedule-card.tsx'
 import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import {
+	handleMenuScheduleAction,
+	loadMenuScheduleCardData,
+} from '#app/utils/menu/menu-schedules.server.ts'
+import {
+	narrowOverrideChannels,
+	parseChannelsFormData,
+} from '#app/utils/menu/menu-write-columns.ts'
 import {
 	assertCategoryIdsInOrganization,
 	assertLocationIdsInOrganization,
@@ -101,13 +112,45 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			locationId: ov.locationId,
 			isEnabled: ov.isEnabled ?? true,
 			availabilityStatus: ov.availabilityStatus,
+			channels: ov.channels ? parseMenuChannels(ov.channels) : null,
 		}
 	}
+
+	const [{ pendingSchedule, timezone: scheduleTimezone }, otherMenuRows] =
+		await Promise.all([
+			loadMenuScheduleCardData(organization.id, menu.id),
+			db
+				.select({
+					id: OrganizationMenu.id,
+					displayName: OrganizationMenu.displayName,
+					internalName: OrganizationMenu.internalName,
+				})
+				.from(OrganizationMenu)
+				.where(
+					and(
+						eq(OrganizationMenu.organizationId, organization.id),
+						ne(OrganizationMenu.id, menu.id),
+						ne(OrganizationMenu.menuType, 'drop'),
+					),
+				)
+				.orderBy(asc(OrganizationMenu.position)),
+		])
+
+	const otherMenus = otherMenuRows.map((m) => ({
+		id: m.id,
+		name:
+			getLocalizedMenuValue(m.displayName, defaultLocale, defaultLocale) ||
+			m.internalName ||
+			'Untitled',
+	}))
 
 	return {
 		organization,
 		defaultLocale,
 		supportedLocales,
+		pendingSchedule,
+		scheduleTimezone,
+		otherMenus,
 		menu: {
 			id: menu.id,
 			displayName: menu.displayName,
@@ -118,6 +161,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			availabilityStatus: menu.availabilityStatus as
 				'available' | 'unavailable_until_tomorrow' | 'unavailable',
 			availabilityHours: menu.availabilityHours ?? '',
+			channels: parseMenuChannels(menu.channels),
 			assignedCategoryIds: menu.categoryAssignments.map((ca) => ca.categoryId),
 			locationOverrides,
 		},
@@ -156,6 +200,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await assertMenuInOrganization(organization.id, menuId)
 
 	const formData = await request.formData()
+	const intent = formData.get('intent')
+	if (intent === 'schedule-menu' || intent === 'cancel-menu-schedule') {
+		return handleMenuScheduleAction({
+			request,
+			organizationId: organization.id,
+			menuId,
+			formData,
+		})
+	}
 	const rawData: Record<string, unknown> = {}
 
 	for (const [key, value] of formData.entries()) {
@@ -178,6 +231,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
+	const channelsParsed = parseChannelsFormData(formData)
+	if (!channelsParsed.ok) {
+		return Response.json(
+			{ error: { channels: ['Invalid channels'] } },
+			{ status: 400 },
+		)
+	}
+
 	const parsed = MenuInputSchema.safeParse(rawData)
 	if (!parsed.success) {
 		return Response.json(
@@ -187,6 +248,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+	const rawOverrides =
+		rawData.locationOverrides &&
+		typeof rawData.locationOverrides === 'object' &&
+		!Array.isArray(rawData.locationOverrides)
+			? (rawData.locationOverrides as Record<string, { channels?: unknown }>)
+			: undefined
 
 	await db.transaction(async (tx) => {
 		await assertCategoryIdsInOrganization(
@@ -201,6 +268,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				.filter((id): id is string => typeof id === 'string'),
 			tx,
 		)
+
+		let effectiveBaseChannels = channelsParsed.channels
+		if (!channelsParsed.provided) {
+			const [currentMenu] = await tx
+				.select({ channels: OrganizationMenu.channels })
+				.from(OrganizationMenu)
+				.where(
+					and(
+						eq(OrganizationMenu.id, menuId),
+						eq(OrganizationMenu.organizationId, organization.id),
+					),
+				)
+			effectiveBaseChannels = parseMenuChannels(currentMenu?.channels)
+		}
 
 		// Update Menu
 		await tx
@@ -219,6 +300,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						? data.unavailableUntil
 						: null,
 				availabilityHours: data.availabilityHours || null,
+				...(channelsParsed.provided
+					? { channels: channelsParsed.serialized }
+					: {}),
 				updatedAt: new Date(),
 			})
 			.where(
@@ -264,6 +348,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					entityId: menuId,
 					isEnabled: entry.isEnabled,
 					availabilityStatus: entry.availabilityStatus,
+					channels: narrowOverrideChannels(
+						effectiveBaseChannels,
+						rawOverrides?.[entry.locationId]?.channels,
+					),
 				})),
 			)
 		}
@@ -282,6 +370,9 @@ export default function EditMenuRoute() {
 		menu,
 		allCategories,
 		allLocations,
+		pendingSchedule,
+		scheduleTimezone,
+		otherMenus,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -298,6 +389,14 @@ export default function EditMenuRoute() {
 				allLocations={allLocations}
 				isSubmitting={isSubmitting}
 			/>
+			<div className="mx-auto w-full max-w-6xl px-4 pb-8 md:px-6 lg:px-8">
+				<MenuScheduleCard
+					menuId={menu.id}
+					pendingSchedule={pendingSchedule}
+					otherMenus={otherMenus}
+					timezone={scheduleTimezone}
+				/>
+			</div>
 		</div>
 	)
 }
