@@ -91,21 +91,38 @@ export function useNativeFormSaveBar(
 		check.current()
 	})
 	useEffect(() => {
-		const form = formRef.current
-		if (!form) return
-		const onChange = () => check.current()
-		let resetTimer: ReturnType<typeof setTimeout> | undefined
-		const onReset = () => {
-			resetTimer = setTimeout(() => check.current(), 0)
+		let cleanup: (() => void) | undefined
+		let cancelled = false
+		let attempts = 0
+
+		const bind = () => {
+			if (cancelled) return
+			const form = formRef.current
+			if (!form) {
+				if (attempts++ < 30) requestAnimationFrame(bind)
+				return
+			}
+			const onChange = () => check.current()
+			let resetTimer: ReturnType<typeof setTimeout> | undefined
+			const onReset = () => {
+				resetTimer = setTimeout(() => check.current(), 0)
+			}
+			form.addEventListener('input', onChange)
+			form.addEventListener('change', onChange)
+			form.addEventListener('reset', onReset)
+			check.current()
+			cleanup = () => {
+				clearTimeout(resetTimer)
+				form.removeEventListener('input', onChange)
+				form.removeEventListener('change', onChange)
+				form.removeEventListener('reset', onReset)
+			}
 		}
-		form.addEventListener('input', onChange)
-		form.addEventListener('change', onChange)
-		form.addEventListener('reset', onReset)
+
+		bind()
 		return () => {
-			clearTimeout(resetTimer)
-			form.removeEventListener('input', onChange)
-			form.removeEventListener('change', onChange)
-			form.removeEventListener('reset', onReset)
+			cancelled = true
+			cleanup?.()
 		}
 	}, [formRef])
 

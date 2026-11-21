@@ -199,7 +199,9 @@ test.describe('Organization Management', () => {
 
 		// Update organization details (only name and slug are available in the form)
 		const newName = `${faker.company.name()} ${faker.string.alphanumeric(6)}`
+		await nameField.click()
 		await nameField.fill(newName)
+		await nameField.dispatchEvent('input', { bubbles: true })
 		await expect(nameField).toHaveValue(newName)
 		await expect(saveBar(page).bar).toBeVisible()
 
