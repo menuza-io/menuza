@@ -296,6 +296,7 @@ export async function fillConformFormField(
 		`form#${formId} [name="${fieldName}"], #${formId} [name="${fieldName}"]`,
 	)
 	await field.scrollIntoViewIfNeeded()
+	await field.click()
 	await field.fill(value)
 	await page.evaluate(
 		({ formId, fieldName, value }) => {

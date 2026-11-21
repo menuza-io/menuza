@@ -67,9 +67,15 @@ export function useNativeFormSaveBar(
 		extraDirty?: boolean
 		/** Resets that state; the fields themselves are reset for you. */
 		onDiscard?: () => void
+		/**
+		 * Save after every other dirty form finished saving, for a save that moves
+		 * the page (for example an organization slug change redirects).
+		 */
+		saveLast?: boolean
 	} = {},
 ) {
-	const { enabled = true, extraDirty = false, onDiscard } = options
+	const { enabled = true, extraDirty = false, onDiscard, saveLast = false } =
+		options
 	const discardExtra = useRef(onDiscard)
 	const [dirty, setDirty] = useState(false)
 
@@ -112,6 +118,7 @@ export function useNativeFormSaveBar(
 			discardExtra.current?.()
 			check.current()
 		},
+		saveLast,
 	})
 }
 
