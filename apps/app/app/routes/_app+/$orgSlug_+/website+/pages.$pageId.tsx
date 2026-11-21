@@ -25,6 +25,17 @@ import { invalidateUserOrganizationsCache } from '@repo/cache'
 
 import { isFontRole, sha256Hex } from '@repo/common/font-licence'
 import {
+	EMBED_PROVIDERS,
+	embedDetectedLabel,
+	embedProviderInfo,
+	embedProviderLabel,
+	isBookingEmbed,
+	isEmbedProvider,
+	normalizeEmbedHeight,
+	parseEmbed,
+	type EmbedProvider,
+} from '@repo/common/site-embeds'
+import {
 	getLocaleHref,
 	getLocalizedEditableValue,
 	isReservedSiteLocaleSlug,
@@ -92,6 +103,7 @@ import { ScrollArea } from '@repo/ui/scroll-area'
 import { Spinner } from '@repo/ui/spinner'
 import { Switch } from '@repo/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { Textarea } from '@repo/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
 import * as cookie from 'cookie'
 import {
@@ -211,6 +223,7 @@ import {
 	SITE_HEADER_ID,
 	type BlockType,
 } from '#app/utils/website/block-types.ts'
+import { sanitizeEmbedSectionConfig } from '#app/utils/website/embeds.server.ts'
 import {
 	checkFontLicence,
 	confirmExistingFontLicence,
@@ -1404,6 +1417,31 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 			)
 		}
 
+		// An embed keeps only a provider on the allowlist and its ids (#259):
+		// whatever else arrives (an address, markup) is dropped, and a provider
+		// with ids that do not check out is refused.
+		let configToSave = config
+		const [target] = await db
+			.select({ type: WebsitePageSection.type })
+			.from(WebsitePageSection)
+			.where(
+				and(
+					eq(WebsitePageSection.id, sectionId),
+					eq(WebsitePageSection.pageId, page.id),
+				),
+			)
+			.limit(1)
+		if (target?.type === 'embed') {
+			const sanitized = sanitizeEmbedSectionConfig(config)
+			if (!sanitized.ok) {
+				return Response.json(
+					{ status: 'error', error: 'embed_unsupported' },
+					{ status: 400 },
+				)
+			}
+			configToSave = sanitized.config
+		}
+
 		// Header and footer are site-wide drafts until published (#85): the
 		// public site keeps serving the live ones, so nothing to purge.
 		if (sectionId === SITE_HEADER_ID) {
@@ -1417,7 +1455,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 
 		await db
 			.update(WebsitePageSection)
-			.set({ config })
+			.set({ config: configToSave })
 			.where(
 				and(
 					eq(WebsitePageSection.id, sectionId),
@@ -2606,6 +2644,12 @@ function previewText(
 		}
 		case 'video':
 			return loc(config.videoUrl) || loc(config.title) || 'Video section'
+		case 'embed': {
+			const provider = isEmbedProvider(config.provider)
+				? embedProviderLabel(config.provider)
+				: ''
+			return loc(config.title) || provider || 'Embed'
+		}
 		case 'form':
 			return loc(config.formName) || 'Choose a form'
 		case 'reservation':
@@ -3368,6 +3412,8 @@ function renderBlockEditor(props: {
 			)
 		case 'video':
 			return <VideoEditor config={config} updateField={updateField} />
+		case 'embed':
+			return <EmbedEditor config={config} updateField={updateField} />
 		case 'form':
 			return <FormBlockEditor config={config} updateField={updateField} />
 		case 'reservation':
@@ -4939,6 +4985,174 @@ function RewardsBlockEditor({ config, updateField }: EditorProps) {
 					onChange={(v) => updateField('background', v)}
 				/>
 			</EditorSection>
+		</div>
+	)
+}
+
+/**
+ * The Embed section (#259). The operator picks a provider and pastes a link or
+ * an embed snippet; Menuza finds the ids it needs ("Detected: venue 12345") and
+ * keeps only those. The pasted text is never stored or shown on the page.
+ */
+function EmbedEditor({ config, updateField }: EditorProps) {
+	const { _ } = useLingui()
+	const { page } = useLoaderData<typeof loader>()
+	const provider = isEmbedProvider(config.provider) ? config.provider : ''
+	const [pasted, setPasted] = useState('')
+	const [error, setError] = useState(false)
+	const detected = embedDetectedLabel(config)
+	const info = provider ? embedProviderInfo(provider) : null
+	const height = config.height === 'auto' ? 'auto' : Number(config.height)
+	const hasOwnBooking = page.sections.some(
+		(section: { type: string }) => section.type === 'reservation',
+	)
+
+	const onPaste = (text: string) => {
+		setPasted(text)
+		if (!provider || !text.trim()) {
+			setError(false)
+			return
+		}
+		const parsed = parseEmbed(provider, text)
+		if (!parsed.ok) {
+			setError(true)
+			return
+		}
+		setError(false)
+		updateField('ids', parsed.ids)
+		setPasted('')
+	}
+
+	return (
+		<div className="space-y-5">
+			<EditorSection title={<Trans>Content</Trans>}>
+				<FieldInput
+					label={_(msg`Title (read aloud by screen readers)`)}
+					value={(config.title as string) ?? ''}
+					onChange={(v) => updateField('title', v)}
+				/>
+				<div className="space-y-2">
+					<Label htmlFor="block-embed-provider">
+						<Trans>Provider</Trans>
+					</Label>
+					<select
+						id="block-embed-provider"
+						value={provider}
+						onChange={(event) => {
+							// A new provider starts without the old provider's ids.
+							updateField('provider', event.target.value)
+							updateField('ids', {})
+							updateField(
+								'height',
+								isEmbedProvider(event.target.value)
+									? embedProviderInfo(event.target.value).autoHeight
+										? 'auto'
+										: embedProviderInfo(event.target.value).defaultHeight
+									: 'auto',
+							)
+							setPasted('')
+							setError(false)
+						}}
+						className="border-input bg-background h-11 w-full rounded-md border px-3 text-base"
+					>
+						<option value="">{_(msg`Choose a provider`)}</option>
+						{EMBED_PROVIDERS.map((id) => (
+							<option key={id} value={id}>
+								{embedProviderLabel(id)}
+							</option>
+						))}
+					</select>
+				</div>
+				{provider ? (
+					<div className="space-y-2">
+						<Label htmlFor="block-embed-paste">
+							<Trans>Paste the embed code or link</Trans>
+						</Label>
+						<Textarea
+							id="block-embed-paste"
+							value={pasted}
+							rows={3}
+							spellCheck={false}
+							onChange={(event) => onPaste(event.target.value)}
+							placeholder={_(
+								msg`Paste a link or the embed code from the provider`,
+							)}
+							aria-invalid={error || undefined}
+							aria-describedby="block-embed-status"
+						/>
+						<p
+							id="block-embed-status"
+							role={error ? 'alert' : 'status'}
+							className={cn(
+								'text-xs',
+								error ? 'text-destructive' : 'text-muted-foreground',
+							)}
+						>
+							{error ? (
+								<Trans>We don't support this embed yet.</Trans>
+							) : detected ? (
+								<Trans>Detected: {detected}</Trans>
+							) : (
+								<Trans>
+									Only the ids are kept. Pasted code is never shown on your
+									site.
+								</Trans>
+							)}
+						</p>
+					</div>
+				) : null}
+			</EditorSection>
+			{info ? (
+				<EditorSection title={<Trans>Size</Trans>}>
+					{info.autoHeight ? (
+						<FieldSwitch
+							label={_(msg`Fit the width automatically (16:9)`)}
+							checked={height === 'auto'}
+							onChange={(checked) =>
+								updateField('height', checked ? 'auto' : info.defaultHeight)
+							}
+						/>
+					) : null}
+					{height === 'auto' && info.autoHeight ? null : (
+						<FieldInput
+							label={_(msg`Height in pixels`)}
+							value={String(
+								Number.isFinite(height) ? height : info.defaultHeight,
+							)}
+							onChange={(v) =>
+								updateField(
+									'height',
+									normalizeEmbedHeight(provider as EmbedProvider, v),
+								)
+							}
+						/>
+					)}
+				</EditorSection>
+			) : null}
+			{hasOwnBooking && isBookingEmbed(provider) ? (
+				<p
+					role="status"
+					className="text-muted-foreground bg-muted rounded-lg px-3 py-2 text-xs"
+				>
+					<Trans>
+						This page also has our own booking section. Guests will see two ways
+						to book.
+					</Trans>
+				</p>
+			) : null}
+			<EditorSection title={<Trans>Style</Trans>}>
+				<SectionBackgroundField
+					value={(config.background as string) ?? 'none'}
+					onChange={(v) => updateField('background', v)}
+				/>
+			</EditorSection>
+			<p className="text-muted-foreground text-xs">
+				<Trans>
+					The widget loads in a sandboxed frame and receives no guest data from
+					your site. With the cookie banner on Required, it waits until the
+					guest accepts.
+				</Trans>
+			</p>
 		</div>
 	)
 }

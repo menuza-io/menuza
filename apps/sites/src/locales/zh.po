@@ -1100,6 +1100,7 @@ msgstr "Cookie 选项"
 msgid "Cookie policy"
 msgstr "Cookie 政策"
 
+#: src/components/blocks/EmbedBlock.astro.ts:3
 #: src/components/SiteFooter.astro.ts:3
 msgid "Cookie settings"
 msgstr "Cookie 设置"
@@ -1995,6 +1996,10 @@ msgstr "限量菜单，预订后在指定时段自取。"
 msgid "Link copied"
 msgstr "链接已复制"
 
+#: src/components/blocks/EmbedBlock.astro.ts:3
+msgid "Load content"
+msgstr "加载内容"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Load more"
 msgstr "加载更多"
@@ -2431,6 +2436,10 @@ msgstr "{name} 今日仅剩 {count} 份。请返回菜单减少数量。"
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
 msgstr "接受订单中"
+
+#: src/components/blocks/EmbedBlock.astro.ts:3
+msgid "Open in a new tab"
+msgstr "在新标签页中打开"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/lib/ordering-labels.ts:179
@@ -4009,6 +4018,10 @@ msgstr "此代码仅可使用一次，几分钟后失效。它不是您的卡号
 #: src/lib/ordering-labels.ts:85
 msgid "This combination is sold out. Choose another combination."
 msgstr "此组合已售罄。请选择其他组合。"
+
+#: src/components/blocks/EmbedBlock.astro.ts:3
+msgid "This content is provided by another service and may set cookies."
+msgstr "此内容由其他服务提供，可能会设置 Cookie。"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This drop could not be found. It may have ended."

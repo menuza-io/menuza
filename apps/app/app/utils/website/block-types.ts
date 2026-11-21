@@ -239,6 +239,18 @@ export const BLOCK_TYPES = {
 			background: 'none',
 		},
 	},
+	embed: {
+		label: 'Embed',
+		icon: 'plug' as IconName,
+		description: 'A booking widget, beer list, map or video from another site',
+		defaultConfig: {
+			title: '',
+			provider: '',
+			ids: {},
+			height: 'auto',
+			background: 'none',
+		},
+	},
 	form: {
 		label: 'Form',
 		icon: 'file-text' as IconName,
@@ -564,6 +576,7 @@ export const LOCALIZED_FIELDS: Record<string, string[]> = {
 		'items.[].ctaLabel',
 	],
 	video: ['title', 'subtitle'],
+	embed: ['title'],
 	reservation: ['heading', 'body', 'buttonLabel'],
 	rewards: ['heading', 'body', 'ctaLabel'],
 	app: ['heading', 'body'],

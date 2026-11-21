@@ -20,6 +20,7 @@ import ReservationBlock from './ReservationBlock.astro'
 import AppBlock from './AppBlock.astro'
 import RewardsBlock from './RewardsBlock.astro'
 import EventsBlock from './EventsBlock.astro'
+import EmbedBlock from './EmbedBlock.astro'
 
 /**
  * One body section. `config` is passed separately from `section` so the same
@@ -31,9 +32,11 @@ interface Props {
 	config: any
 	menu: PublicSiteMenuPayload | null
 	features: { ordering: boolean; reservations: boolean }
+	/** The cookie banner mode (#89): embeds wait for consent under `required`. */
+	consentMode?: 'required' | 'notice' | 'off'
 }
 
-const { type, id, config, menu, features } = Astro.props
+const { type, id, config, menu, features, consentMode = 'off' } = Astro.props
 ---
 
 {
@@ -67,6 +70,8 @@ const { type, id, config, menu, features } = Astro.props
 				return <AppBlock config={config} />
 			case 'events':
 				return <EventsBlock config={config} />
+			case 'embed':
+				return <EmbedBlock config={config} consentMode={consentMode} />
 			case 'menuHighlights':
 				return <MenuHighlightsBlock config={config} menu={menu} />
 			case 'locationsHours':

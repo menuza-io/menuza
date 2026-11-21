@@ -46,18 +46,24 @@ export function legalLinks(
 }
 
 /**
- * Whether the cookie banner applies: a mode other than `off`, and at least one
- * tracking tag to ask about. Without a tag there is nothing to consent to.
+ * Whether the cookie banner applies: a mode other than `off`, and something to
+ * ask about: a tracking tag, or (#259) an embedded third-party widget on this
+ * page, which can set marketing cookies. Without either there is nothing to
+ * consent to.
  */
-export function bannerApplies(organization: {
-	consent?: { mode: 'required' | 'notice' | 'off' }
-	facebookPixelId?: string | null
-	googleTagManagerId?: string | null
-	googleAnalyticsId?: string | null
-	tiktokPixelId?: string | null
-}) {
+export function bannerApplies(
+	organization: {
+		consent?: { mode: 'required' | 'notice' | 'off' }
+		facebookPixelId?: string | null
+		googleTagManagerId?: string | null
+		googleAnalyticsId?: string | null
+		tiktokPixelId?: string | null
+	},
+	page: { hasEmbeds?: boolean } = {},
+) {
 	const mode = organization.consent?.mode ?? 'off'
 	if (mode === 'off') return false
+	if (page.hasEmbeds) return true
 	return Boolean(
 		organization.facebookPixelId?.trim() ||
 		organization.googleTagManagerId?.trim() ||
