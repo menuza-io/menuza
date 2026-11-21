@@ -54,6 +54,8 @@ describe('Challenger 2 — Adversarial Zero-PII & API Security Verification', ()
 			WEBSITE_IMPORT_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
 			MENU_SCHEDULE_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
 			MENU_IMPORT_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
+			CALENDAR_SYNC_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
+			HERO_VIDEO_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
 		}
 
 		workflowEnv = {

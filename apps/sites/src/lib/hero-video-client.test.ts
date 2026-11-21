@@ -4,7 +4,7 @@
  * gets no source and does not play; everyone else gets the clip.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { initHeroVideos } from './hero-video-client'
+import { type HeroVideoEnv, initHeroVideos } from './hero-video-client'
 
 function mount(html: string) {
 	document.body.innerHTML = html
@@ -20,10 +20,12 @@ function motion(reduce: boolean) {
 	const listeners: Array<() => void> = []
 	const query = {
 		matches: reduce,
-		addEventListener: (_: string, fn: () => void) => listeners.push(fn),
+		addEventListener: (_: string, fn: () => void) => {
+			listeners.push(fn)
+		},
 	}
 	return {
-		env: { matchMedia: () => query },
+		env: { matchMedia: () => query } as unknown as HeroVideoEnv,
 		change(next: boolean) {
 			query.matches = next
 			for (const fn of listeners) fn()
