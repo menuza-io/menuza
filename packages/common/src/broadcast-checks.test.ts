@@ -196,3 +196,35 @@ describe('late cut-off', () => {
 		).toBe(true)
 	})
 })
+
+describe('push broadcasts (#105)', () => {
+	const base = { hasOffer: false, usesCouponTag: false, audienceCount: 3 }
+	it('need a title and a message, and refuse merge tags', () => {
+		expect(
+			checkBroadcast({
+				...base,
+				channel: 'push',
+				subject: 'New dish',
+				content: 'Try it',
+			}),
+		).toEqual([])
+		expect(
+			checkBroadcast({
+				...base,
+				channel: 'push',
+				subject: '',
+				content: 'Try it',
+			}).map((p) => p.code),
+		).toContain('empty_message')
+		const tags = checkBroadcast({
+			...base,
+			channel: 'push',
+			subject: 'Hi {{name}}',
+			content: 'Try it',
+		})
+		expect(tags).toContainEqual({
+			code: 'push_merge_tags',
+			severity: 'blocking',
+		})
+	})
+})

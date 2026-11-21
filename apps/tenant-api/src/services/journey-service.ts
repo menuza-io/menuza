@@ -19,6 +19,7 @@ import {
 	isReservationJourneyTrigger,
 	validateWorkflowDAG,
 	actionEmailNodeDataSchema,
+	actionPushNodeDataSchema,
 	interpolateMergeTags,
 	interpolateMergeTagsHtml,
 	createJourneySchema,
@@ -300,7 +301,7 @@ export interface StepExecutionResult {
 async function skipWithoutReservationConsent(
 	db: Awaited<ReturnType<typeof getTenantDb>>,
 	payload: ExecuteStepPayload,
-	stepType: 'email' | 'sms',
+	stepType: 'email' | 'sms' | 'push',
 ): Promise<StepExecutionResult | null> {
 	if (!payload.journeyId) return null
 	const journey = await db
@@ -402,7 +403,7 @@ async function recordOutcomeUnknown(
 	db: Awaited<ReturnType<typeof getTenantDb>>,
 	input: {
 		stepExecutionId: string
-		channel: 'email' | 'sms'
+		channel: 'email' | 'sms' | 'push'
 		messageId?: string
 		errorMessage: string
 	},
@@ -431,7 +432,108 @@ async function recordOutcomeUnknown(
 }
 
 /**
- * Executes a journey action step (Email or SMS) within the regional boundary.
+ * The push step (#105). Consent, the frequency cap and idempotency are checked
+ * by the caller before this runs; the push goes out once per run and step (the
+ * send log is unique per run, step and device), only to a guest who opted in,
+ * with the operator's plain words (no merge tags) and a link on the site.
+ */
+async function executePushDispatch(
+	db: Awaited<ReturnType<typeof getTenantDb>>,
+	input: {
+		orgId: string
+		payload: ExecuteStepPayload
+		customerId: string
+		stepExecutionId: string
+		config: Record<string, unknown>
+		isTestRun: boolean
+		journeyId: string
+		runId: string
+	},
+): Promise<StepExecutionResult> {
+	const { stepExecutionId } = input
+	const fail = async (errorMessage: string, statusCode: number) => {
+		await db
+			.update(journeyStepExecutions)
+			.set({ status: 'failed', errorMessage, completedAt: new Date() })
+			.where(eq(journeyStepExecutions.id, stepExecutionId))
+		return {
+			success: false as const,
+			executionId: stepExecutionId,
+			status: 'failed' as const,
+			error: errorMessage,
+			statusCode,
+		}
+	}
+	const parsed = actionPushNodeDataSchema.safeParse(input.config)
+	if (!parsed.success) return fail('Invalid push configuration', 422)
+	const { sendPushToCustomer, marketingBuilder } =
+		await import('./push-service.ts')
+	const result = await sendPushToCustomer(db, {
+		orgId: input.orgId,
+		customerId: input.customerId,
+		kind: 'marketing',
+		ref: `${input.runId}:${input.payload.nodeId}`,
+		build: marketingBuilder(parsed.data),
+	})
+	if (result.sent === 0) {
+		await db
+			.update(journeyStepExecutions)
+			.set({
+				status: 'skipped',
+				errorMessage: null,
+				executionDetails: JSON.stringify({
+					skipReason: 'no_consent' satisfies JourneySkipReason,
+					channel: 'push',
+					detail: result.reason ?? 'not_sent',
+				}),
+				completedAt: new Date(),
+			})
+			.where(eq(journeyStepExecutions.id, stepExecutionId))
+		return {
+			success: true,
+			executionId: stepExecutionId,
+			status: 'skipped',
+			reason: 'no_consent',
+		}
+	}
+	// Counted by the frequency cap like any marketing message.
+	await db.insert(marketingMessages).values({
+		id: randomUUID(),
+		journeyStepExecutionId: stepExecutionId,
+		customerId: input.customerId,
+		channel: 'push',
+		status: 'Sent',
+		sentAt: new Date(),
+	})
+	await db
+		.update(journeyStepExecutions)
+		.set({
+			status: 'delivered',
+			executionDetails: JSON.stringify({
+				channel: 'push',
+				dispatched: true,
+				deliveredAt: new Date().toISOString(),
+			}),
+			completedAt: new Date(),
+		})
+		.where(eq(journeyStepExecutions.id, stepExecutionId))
+	await db
+		.update(journeyRuns)
+		.set({
+			currentNodeId: input.payload.nodeId,
+			currentStepNodeId: input.payload.nodeId,
+			updatedAt: new Date(),
+		})
+		.where(eq(journeyRuns.id, input.runId))
+	return {
+		success: true,
+		executionId: stepExecutionId,
+		status: 'delivered',
+	}
+}
+
+/**
+ * Executes a journey action step (Email, SMS or push) within the regional boundary.
  * Resolves customer PII in the local SQLite tenant DB, interpolates merge tags,
  * dispatches the message via OCI Email Delivery (@repo/email) or @repo/sms,
  * and returns a strictly ZERO-PII response.
@@ -488,8 +590,12 @@ export async function executeJourneyStep(
 	}
 
 	const rawType = payload.nodeType
-	const stepType =
-		rawType === 'action_email' || rawType === 'email' ? 'email' : 'sms'
+	const stepType: 'email' | 'sms' | 'push' =
+		rawType === 'action_email' || rawType === 'email'
+			? 'email'
+			: rawType === 'action_push' || rawType === 'push'
+				? 'push'
+				: 'sms'
 
 	const skipped = await skipWithoutReservationConsent(db, payload, stepType)
 	if (skipped) return skipped
@@ -722,7 +828,9 @@ export async function executeJourneyStep(
 				errorMessage:
 					stepType === 'sms'
 						? 'Skipped: the customer has not subscribed to marketing texts'
-						: 'Skipped: the customer has not confirmed marketing email',
+						: stepType === 'push'
+							? 'Skipped: the customer has not turned on push offers and news'
+							: 'Skipped: the customer has not confirmed marketing email',
 				executionDetails: JSON.stringify({
 					skipReason: 'no_consent' satisfies JourneySkipReason,
 					channel: stepType,
@@ -1100,6 +1208,17 @@ export async function executeJourneyStep(
 				statusCode: 500,
 			}
 		}
+	} else if (stepType === 'push') {
+		return executePushDispatch(db, {
+			orgId,
+			payload,
+			customerId: customer.id,
+			stepExecutionId,
+			config,
+			isTestRun: contextData.isTestRun === true,
+			journeyId: payload.journeyId,
+			runId: payload.runId,
+		})
 	} else {
 		// SMS Dispatch
 		if (!customer.phone || customer.phone.trim().length === 0) {

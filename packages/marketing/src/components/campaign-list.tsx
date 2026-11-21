@@ -70,7 +70,13 @@ export function CampaignListGrid({
 				>
 					<ItemMedia variant="icon">
 						<Icon
-							name={campaign.channel === 'email' ? 'mail' : 'smartphone'}
+							name={
+								campaign.channel === 'email'
+									? 'mail'
+									: campaign.channel === 'push'
+										? 'bell'
+										: 'smartphone'
+							}
 							className="size-4"
 						/>
 					</ItemMedia>

@@ -46,6 +46,7 @@ import {
 	goalFromTriggerConfig,
 	loadAutomationTriggerAccess,
 	marketingTriggerError,
+	pushStepError,
 } from '#app/utils/marketing/automation-triggers.server.ts'
 import {
 	loyaltyTriggerBlocked,
@@ -98,6 +99,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orderTriggers: access.orderTriggers,
 		birthdayTriggers: access.birthdayTriggers,
 		cartTriggers: access.cartTriggers,
+		pushSteps: access.pushSteps,
 		audienceOptions: access.features.audiences
 			? await loadAudienceOptions(fetchTenant)
 			: undefined,
@@ -259,6 +261,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			})
 		}
 		if (marketingError) return { error: marketingError }
+		// The saved nodes are read only when a push step is being added while push is off.
+		const addsPushStep =
+			!marketingFeaturesNow.push &&
+			renderedGraph.nodes.some((node) => node.type === 'action_push')
+		const pushError = pushStepError({
+			nodes: renderedGraph.nodes,
+			features: marketingFeaturesNow,
+			storedNodes: addsPushStep
+				? await storedJourneyNodes(fetchTenant, journeyId)
+				: undefined,
+		})
+		if (pushError) return { error: pushError }
 
 		if (isReservationJourneyTrigger(triggerType)) {
 			const enabled = await reservationTriggersEnabled(orgId)
@@ -408,6 +422,7 @@ export default function JourneyBuilderRoute() {
 		orderTriggers,
 		birthdayTriggers,
 		cartTriggers,
+		pushSteps,
 		audienceOptions,
 		couponOptions,
 		aiDraft,
@@ -497,6 +512,7 @@ export default function JourneyBuilderRoute() {
 					orderTriggers={orderTriggers}
 					birthdayTriggers={birthdayTriggers}
 					cartTriggers={cartTriggers}
+					pushSteps={pushSteps}
 					audienceOptions={audienceOptions}
 					couponOptions={couponOptions ?? undefined}
 					emailMenuItems

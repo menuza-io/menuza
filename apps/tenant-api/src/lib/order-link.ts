@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { buildLink } from '@repo/common/links'
 import { hmacHash, timingSafeEqualString } from './secrets.ts'
 
 /**
@@ -83,26 +84,25 @@ export function orderLinkExpiresAt(
 }
 
 /**
- * `<site origin>/menu/success?order=<id>#link=<token>`. The origin is the
- * organization's public site as the control plane resolves it from its slug
- * and custom domain (the same `siteOrigin` reservation emails use), never a
- * browser-sent value. Null when the origin is missing or not http(s).
+ * `<site origin>/menu/success?order=<id>#link=<token>`, built by the shared link
+ * registry (`@repo/common/links`, type `order`): the token rides in the URL
+ * fragment, and a phone with the restaurant's app opens the order screen. The
+ * origin is the organization's public site as the control plane resolves it
+ * from its slug and custom domain (the same `siteOrigin` reservation emails
+ * use), never a browser-sent value. Null when the origin is missing or not
+ * http(s).
  */
 export function buildOrderLinkUrl(input: {
 	siteOrigin: string | null | undefined
 	orgId: string
 	orderId: string
 }): string | null {
-	if (!input.siteOrigin) return null
-	let origin: URL
-	try {
-		origin = new URL(input.siteOrigin)
-	} catch {
-		return null
-	}
-	if (origin.protocol !== 'https:' && origin.protocol !== 'http:') return null
-	const url = new URL('/menu/success', origin.origin)
-	url.searchParams.set('order', input.orderId)
-	url.hash = `link=${deriveOrderLinkToken(input.orgId, input.orderId)}`
-	return url.toString()
+	return buildLink(
+		'order',
+		{
+			order: input.orderId,
+			link: deriveOrderLinkToken(input.orgId, input.orderId),
+		},
+		{ origin: input.siteOrigin },
+	)
 }

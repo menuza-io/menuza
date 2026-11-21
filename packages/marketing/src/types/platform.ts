@@ -1,9 +1,5 @@
 import { z } from 'zod'
-import {
-	CAMPAIGN_CHANNELS,
-	type CampaignChannel,
-	type CampaignStatus,
-} from './campaign.ts'
+import { type CampaignChannel, type CampaignStatus } from './campaign.ts'
 
 export const PLATFORM_AUDIENCES = ['all_operators', 'organization'] as const
 export type PlatformAudience = (typeof PLATFORM_AUDIENCES)[number]
@@ -21,7 +17,7 @@ export const platformTriggerTypeSchema = z.enum(PLATFORM_TRIGGER_TYPES)
 
 export const createPlatformCampaignSchema = z.object({
 	name: z.string().min(1),
-	channel: z.enum(CAMPAIGN_CHANNELS),
+	channel: z.enum(['email', 'sms']),
 	subject: z.string().optional(),
 	content: z.string().min(1),
 	/** JSON array of email designer blocks, when the broadcast was designed. */

@@ -1,5 +1,11 @@
 export type NodeType =
-	'trigger' | 'delay' | 'action_email' | 'action_sms' | 'action' | 'condition'
+	| 'trigger'
+	| 'delay'
+	| 'action_email'
+	| 'action_sms'
+	| 'action_push'
+	| 'action'
+	| 'condition'
 
 export interface DelayNodeData {
 	duration?: number

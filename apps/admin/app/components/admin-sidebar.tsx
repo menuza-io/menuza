@@ -146,6 +146,12 @@ export function AdminSidebar({
 			icon: FileTextIcon,
 		},
 		{
+			title: _(msg`Customer apps`),
+			url: '/customer-apps',
+			isActive: location.pathname.startsWith('/customer-apps'),
+			icon: FileTextIcon,
+		},
+		{
 			title: _(msg`Legal agreements`),
 			url: '/legal-agreements',
 			isActive: location.pathname.startsWith('/legal-agreements'),

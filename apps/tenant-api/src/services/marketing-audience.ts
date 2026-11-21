@@ -125,6 +125,9 @@ export async function loadBroadcastAudience(
 	let audience = [...byId.values()].map((entry) => entry.customer)
 	if (params.channel === 'sms') {
 		audience = audience.filter((c) => Boolean(c.phoneVerified) && c.phone)
+	} else if (params.channel === 'push') {
+		// A push needs only the opt-in: the phone is a registered device, found
+		// (and its absence handled) when the push is sent.
 	} else {
 		audience = audience.filter((c) => {
 			const email = c.email?.trim()
@@ -377,7 +380,7 @@ export async function hasDeliverableSubscription(
 		)
 		.get()
 	if (!row) return false
-	if (params.channel === 'sms') return true
+	if (params.channel !== 'email') return true
 	const email = row.email?.trim()
 	return Boolean(email && row.confirmedEmailHash === emailConsentHash(email))
 }

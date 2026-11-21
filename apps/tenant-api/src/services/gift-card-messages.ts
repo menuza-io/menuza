@@ -1,3 +1,4 @@
+import { buildLink } from '@repo/common/links'
 import { type GiftCardDesignKey } from '@repo/common/gift-cards'
 import { getTenantDb, giftCards, type GiftCardRow } from '@repo/tenant-db'
 import { and, eq, isNotNull, isNull, lte, or, sql } from 'drizzle-orm'
@@ -204,9 +205,9 @@ export async function sendGiftCardMessages(
 			expiresAt: card.expiresAt,
 			timeZone: zoneFor(context, card),
 			balanceUrl: safeUrlJoin(origin, '/gift-cards/balance'),
-			orderUrl: safeUrlJoin(origin, '/menu'),
+			orderUrl: buildLink('menu_home', {}, { origin }) ?? '',
 			// The code rides in the fragment: it never reaches a server log.
-			addToAccountUrl: safeUrlJoin(origin, `/profile/gift-cards#add=${code}`),
+			addToAccountUrl: buildLink('gift_cards', { add: code }, { origin }) ?? '',
 		})
 		const sent = await sendTenantEmail({
 			to: card.recipientEmail!,

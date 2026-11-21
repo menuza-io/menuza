@@ -1,8 +1,10 @@
 ---
 import { msg } from '@lingui/core/macro'
 import { resolveSiteLink, siteLinkHasDestination } from '@repo/common/site-link'
+import AppInviteSection from '~/components/AppInviteSection.astro'
 import LegalLinks from '~/components/LegalLinks.astro'
 import SiteAnchor from '~/components/SiteAnchor.astro'
+import { type PublicCustomerApp } from '~/lib/customer-app-types'
 import {
 	resolveMediaUrl,
 	siteBtnPrimary,
@@ -33,7 +35,7 @@ interface Props {
 		socials?: SocialLink[]
 		copyright?: string
 	}
-	organization: SiteOrgChrome
+	organization: SiteOrgChrome & { customerApp?: PublicCustomerApp | null }
 	/** The cookie banner applies, so the footer offers "Cookie settings" (#89). */
 	showCookieSettings?: boolean
 }
@@ -97,6 +99,18 @@ const copyright = config.copyright?.trim() || `© ${year} ${organization.name}`
 			) : null}
 		</div>
 	</div>
+
+	{
+		organization.customerApp ? (
+			<div class="mx-auto w-full max-w-6xl px-5 pb-8 sm:px-8">
+				<AppInviteSection
+					organization={organization as any}
+					placement="footer"
+					qr
+				/>
+			</div>
+		) : null
+	}
 
 	<div class="border-t border-border/80">
 		<div class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">

@@ -1,3 +1,4 @@
+import { buildLink } from '@repo/common/links'
 import { randomUUID } from 'node:crypto'
 import {
 	noShowFee,
@@ -1338,8 +1339,11 @@ export function feePayLink(
 	feeId: string,
 	siteBase: string | null,
 ): string | null {
-	if (!siteBase) return null
-	return `${siteBase}/reserve/pay#f=${feeId}&t=${deriveFeePayToken(orgId, feeId)}`
+	return buildLink(
+		'reservation_pay',
+		{ fee: feeId, token: deriveFeePayToken(orgId, feeId) },
+		{ origin: siteBase },
+	)
 }
 
 // ---------------------------------------------------------------------------

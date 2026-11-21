@@ -55,6 +55,8 @@ const BASE_GUARDS: Record<string, GuardKind[]> = {
 	checkUserOrganizationAccess: ['membership'],
 	// Machine-to-machine credentials and signed requests.
 	requireInternalCommandAuth: ['machine'],
+	requireCustomerAppPipelineAuth: ['machine'],
+	requireCustomerAppBuildCallbackAuth: ['machine'],
 	requireVoiceAgentAuth: ['machine'],
 	verifyResendWebhook: ['machine'],
 	checkoutWebhookSignatureFromRequest: ['machine'],
@@ -188,6 +190,8 @@ const PUBLIC_ROUTES: Record<string, string> = {
 		'public published website events (#184); rate limited, 404 unless published and website.events is on',
 	'resources+/sites.reservations.ts':
 		'public booking-flow flags; rate limited, 404 unless published and on',
+	'resources+/sites.app-tap.ts':
+		'public app invite tap counter (#196); rate limited, counts per placement and day, stores no visitor data, 404 unless the site is published',
 	'resources+/sites.loyalty.ts':
 		'public loyalty gate flag; rate limited, 404 unless published and enabled',
 	'resources+/sites.order.checkout.ts':

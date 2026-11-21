@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { useAppSnapshot, useAppStore } from '../../lib/app/use-app'
 import { localeLabel } from '../../lib/i18n/site-locale'
-import { displayPhone } from '../../lib/support/phone-number'
 import {
 	birthMonthDayFromFields,
 	INVALID_BIRTHDAY,
 	splitBirthMonthDay,
 } from '../../lib/support/birthday-fields'
+import { displayPhone } from '../../lib/support/phone-number'
 import { isAcceptableName } from '../auth/complete-name-screen'
 import {
 	Button,
@@ -20,6 +20,8 @@ import {
 	TextField,
 } from '../ui'
 import { MessagesSection } from './messages-section'
+import { NotificationsSection } from './notifications-section'
+import { OrdersSection } from './orders-section'
 
 /**
  * The signed-in customer's details. Name and email are editable; the phone
@@ -89,7 +91,8 @@ export function ProfileScreen() {
 		let birthMonthDay =
 			parsed === undefined && hasMonth && hasDay ? INVALID_BIRTHDAY : parsed
 		// Empty fields clear a stored birthday; with none stored there is nothing to send.
-		if (birthMonthDay === null && !profile?.birthMonthDay) birthMonthDay = undefined
+		if (birthMonthDay === null && !profile?.birthMonthDay)
+			birthMonthDay = undefined
 		void store.saveProfile(name, email, birthMonthDay)
 	}
 
@@ -166,7 +169,10 @@ export function ProfileScreen() {
 					</Button>
 				</Card>
 
+				<OrdersSection />
+
 				<MessagesSection />
+				<NotificationsSection />
 
 				<LanguagePicker />
 

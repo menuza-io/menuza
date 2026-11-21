@@ -23,6 +23,7 @@ import {
 	_OrganizationPermissionToRole,
 } from '@repo/database'
 import { StaffingAlertEmail, sendEmail } from '@repo/email'
+import { formResponseLink } from '@repo/common/form-alerts'
 import { ENV } from 'varlock/env'
 import {
 	FORM_EMAIL_ACTION,
@@ -140,7 +141,10 @@ const defaultDeps: FormAlertDeps = { now: () => new Date(), sendEmail }
 
 function actionUrl(orgSlug: string, formId: string) {
 	const baseUrl = String(ENV.BASE_URL ?? '').replace(/\/$/, '')
-	return `${baseUrl}/${orgSlug}${formAlertPath(formId)}`
+	return (
+		formResponseLink(baseUrl, orgSlug, formId) ??
+		`${baseUrl}/${orgSlug}${formAlertPath(formId)}`
+	)
 }
 
 async function sendDigestEmail(

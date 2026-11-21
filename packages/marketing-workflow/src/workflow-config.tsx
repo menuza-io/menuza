@@ -98,7 +98,7 @@ const TENANT_TRIGGER_LABELS: Record<string, { label: string; desc: string }> = {
 	},
 	order_completed: {
 		label: 'Order Completed',
-		desc: 'Runs when a guest\'s order is completed, optionally only their Nth',
+		desc: "Runs when a guest's order is completed, optionally only their Nth",
 	},
 	guest_lapsed: {
 		label: 'Guest Lapsed',
@@ -106,7 +106,7 @@ const TENANT_TRIGGER_LABELS: Record<string, { label: string; desc: string }> = {
 	},
 	birthday_coming_up: {
 		label: 'Birthday Coming Up',
-		desc: 'Runs a few days before a guest\'s birthday, once a year',
+		desc: "Runs a few days before a guest's birthday, once a year",
 	},
 	cart_left_behind: {
 		label: 'Cart Left Behind',
@@ -204,6 +204,13 @@ const BASE_PALETTE_ITEMS: Omit<PaletteItem, 'defaultData'>[] = [
 		icon: 'split',
 		color: 'text-muted-foreground ',
 	},
+	{
+		type: 'action_push',
+		label: 'Send push',
+		description: 'Notify guests who opted in to offers in the app',
+		icon: 'smartphone',
+		color: 'text-muted-foreground ',
+	},
 ]
 
 function createTenantPaletteItems(): PaletteItem[] {
@@ -240,6 +247,13 @@ function createTenantPaletteItems(): PaletteItem[] {
 				field: 'tags',
 				operator: 'contains' as const,
 				value: 'VIP',
+			},
+		},
+		{
+			...BASE_PALETTE_ITEMS[5]!,
+			defaultData: {
+				title: 'Something new on the menu',
+				body: 'Open the app to take a look.',
 			},
 		},
 	]

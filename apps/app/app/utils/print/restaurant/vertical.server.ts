@@ -1,3 +1,4 @@
+import { buildLink } from '@repo/common/links'
 import { type LocationAddress } from '@repo/common/location-types'
 import {
 	isTableTarget,
@@ -6,6 +7,7 @@ import {
 } from '@repo/common/print-shop-restaurant'
 import { qrPosterUrl, qrTableUrl } from '@repo/common/qr-ordering'
 import { and, db, eq, OrganizationLocation } from '@repo/database'
+import { loadPublicCustomerApp } from '#app/utils/customer-apps/public.server.ts'
 import { buildPublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
 import { type PublicMenuItemData } from '#app/utils/menu/public-serializers.server.ts'
 import {
@@ -158,9 +160,20 @@ async function listDishes(
 	}
 }
 
-function siteUrl(origin: string, path: string, params: Record<string, string>) {
-	const url = new URL(path, origin)
-	for (const [key, value] of Object.entries(params)) {
+/**
+ * A printed QR code's address: the shared link registry builds the link and
+ * the campaign's `utm` tags are added on top.
+ */
+function siteLink(
+	origin: string,
+	type: 'reserve' | 'coupon' | 'menu_home' | 'get_app',
+	params: Record<string, string>,
+	utm: Record<string, string>,
+) {
+	const link = buildLink(type, params, { origin })
+	if (!link) throw new Error('A QR code needs the restaurant’s site origin.')
+	const url = new URL(link)
+	for (const [key, value] of Object.entries(utm)) {
 		url.searchParams.set(key, value)
 	}
 	return url.toString()
@@ -237,7 +250,7 @@ export const restaurantPrintVertical: PrintShopServerVertical = {
 				}
 			},
 		},
-		coupon: couponTarget({ scopes: listLocations, siteUrl }),
+		coupon: couponTarget({ scopes: listLocations, siteLink }),
 		menu: {
 			defaultFor: async (_access, { scope }) =>
 				scope ? { kind: 'menu', locationId: scope.id } : null,
@@ -259,6 +272,26 @@ export const restaurantPrintVertical: PrintShopServerVertical = {
 				facts: [],
 			}),
 		},
+		app: {
+			// Offered only while the restaurant's app is live in a store (#196).
+			available: async (access) => {
+				const app = await loadPublicCustomerApp(access.organization.id)
+				return Boolean(app && Object.keys(app.stores).length > 0)
+			},
+			defaultFor: async () => null,
+			fromForm: () => ({ kind: 'app' }),
+			resolve: async (_target, { siteOrigin, utm }) => ({
+				pieces: [
+					{
+						label: null,
+						// The tap is counted under the Print placement, then the phone is sent to
+						// its store; the guest is not named or tracked.
+						qrUrl: siteLink(siteOrigin, 'get_app', { p: 'print' }, utm),
+					},
+				],
+				facts: [],
+			}),
+		},
 		reservations: {
 			fromForm: (formData) => ({
 				kind: 'reservations',
@@ -270,10 +303,12 @@ export const restaurantPrintVertical: PrintShopServerVertical = {
 					pieces: [
 						{
 							label: null,
-							qrUrl: siteUrl(siteOrigin, '/reserve', {
-								...(locationId ? { location: locationId } : {}),
-								...utm,
-							}),
+							qrUrl: siteLink(
+								siteOrigin,
+								'reserve',
+								locationId ? { location: locationId } : {},
+								utm,
+							),
 						},
 					],
 					facts: [],

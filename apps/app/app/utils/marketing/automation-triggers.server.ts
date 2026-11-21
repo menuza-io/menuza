@@ -19,6 +19,8 @@ export type AutomationTriggerAccess = {
 	orderTriggers: boolean
 	birthdayTriggers: boolean
 	cartTriggers: boolean
+	/** Offer the "Send push" step (#105): `marketing.push` and the app's push. */
+	pushSteps: boolean
 }
 
 export function triggerAccessFrom(
@@ -28,6 +30,7 @@ export function triggerAccessFrom(
 		orderTriggers: features.orderAutomations,
 		birthdayTriggers: features.birthdays,
 		cartTriggers: features.cartReminders,
+		pushSteps: features.push,
 	}
 }
 
@@ -64,4 +67,26 @@ export function goalFromTriggerConfig(
 	config: Record<string, unknown> | null | undefined,
 ): 'order' | null {
 	return config?.goal === 'order' ? 'order' : null
+}
+
+const hasPushStep = (nodes: readonly unknown[]) =>
+	nodes.some(
+		(node) => (node as { type?: unknown } | null)?.type === 'action_push',
+	)
+
+/**
+ * "Send push" (#105) needs `marketing.push` (and the app's push). A journey
+ * that already has a push step keeps saving with the flag off, so turning the
+ * flag off never strands it; the step then sends nothing (the send checks the
+ * flag again).
+ */
+export function pushStepError(input: {
+	nodes: readonly unknown[]
+	features: MarketingFeatures
+	/** The journey's saved nodes, when editing one. */
+	storedNodes?: readonly unknown[]
+}): string | null {
+	if (input.features.push || !hasPushStep(input.nodes)) return null
+	if (input.storedNodes && hasPushStep(input.storedNodes)) return null
+	return i18n._(t`Turn on push notifications to use the Send push step`)
 }

@@ -35,6 +35,8 @@ const COVERED: Record<string, string> = {
 	'customer_subscriptions.confirmed_email_hash':
 		'HMAC of the address, deleted with the subscription by customer id',
 	'customer_refresh_tokens.token_hash': 'deleted by customer id',
+	'customer_push_devices.token_hash':
+		'HMAC of the device push token, deleted with the device by customer id (#105)',
 	'customer_payment_methods.stripe_payment_method_id': 'deleted by customer id',
 	'customer_payment_methods.last4': 'deleted by customer id',
 	'shop_orders.stripe_checkout_session_id':
@@ -310,6 +312,10 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 		// the erasure deletes from or unlinks (listed here), so a new one fails.
 		const handled = new Set([
 			'customer_refresh_tokens',
+			// Guest push (#105): devices, switches and the send log.
+			'customer_push_devices',
+			'customer_push_preferences',
+			'push_messages',
 			'customer_subscriptions',
 			'customer_payment_methods',
 			// The left-behind cart and what order, birthday and cart journeys

@@ -1,3 +1,4 @@
+import { buildOperatorLink } from './links.ts'
 import { z } from 'zod'
 
 import { parseLocalizedString } from './site-locales.ts'
@@ -91,4 +92,21 @@ export function plainFormName(name: string): string {
 /** Where a response opens, relative to the organization (Mailbox). */
 export function formResponsePath(formId: string): string {
 	return `/mailbox?${new URLSearchParams({ source: 'forms', form: formId })}`
+}
+
+/**
+ * The full link for a response alert, from the shared registry
+ * (`@repo/common/links`, type `operator_form_response`): the operator mobile
+ * app opens it as an app link, the browser as the Mailbox.
+ */
+export function formResponseLink(
+	baseUrl: string,
+	orgSlug: string,
+	formId: string,
+): string | null {
+	return buildOperatorLink(
+		'operator_form_response',
+		{ source: 'forms', form: formId },
+		{ baseUrl, orgSlug },
+	)
 }

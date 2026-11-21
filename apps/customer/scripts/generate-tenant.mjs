@@ -16,9 +16,19 @@
  * adaptive icon needs ImageMagick everywhere. Without the tool the placeholder
  * stays and the build continues. No secrets pass through here.
  *
+ * Config source (#156): by default the committed `tenants/<slug>.json`. With
+ * `--registry` the config is read from the App's internal endpoint
+ * (`GET <registry-url>/resources/customer-app/config?slug=<slug>`, bearer
+ * `INTERNAL_COMMAND_TOKEN` from the environment) and written to
+ * `tenants/generated/<slug>/tenant.json`, which `app.config.ts` prefers. The
+ * token is never printed or written, and the answer holds only public
+ * branding, bundle ids and endpoints. The committed JSON files stay until
+ * every app is migrated.
+ *
  * Usage:
  *   node scripts/generate-tenant.mjs --tenant acme [--icon-source <url|path>]
  *                                    [--no-icon] [--no-api]
+ *                                    [--registry --registry-url <app origin>]
  */
 import { execFileSync } from 'node:child_process'
 import {
@@ -43,7 +53,7 @@ function parseArgs(argv) {
 		const value = argv[index]
 		if (!value.startsWith('--')) continue
 		const [name, inline] = value.slice(2).split('=')
-		if (['no-icon', 'no-api'].includes(name)) {
+		if (['no-icon', 'no-api', 'registry'].includes(name)) {
 			args.flags.add(name)
 			continue
 		}
@@ -66,6 +76,23 @@ function log(message) {
 	console.log(`• ${message}`)
 }
 
+function validateConfig(config, file) {
+	for (const key of ['displayName', 'bundleId', 'appUrl']) {
+		if (typeof config[key] !== 'string' || config[key].trim() === '') {
+			fail(`${file} is missing "${key}"`)
+		}
+	}
+	const hasEndpoint = ['tenantApiUs', 'tenantApiKsa'].some(
+		(key) => typeof config[key] === 'string' && config[key].trim() !== '',
+	)
+	if (!hasEndpoint) fail(`${file} needs "tenantApiUs" or "tenantApiKsa"`)
+	if (!config.site?.slug && !config.site?.host) {
+		fail(
+			`${file} needs site.slug or site.host: a white-label app is bound to one tenant`,
+		)
+	}
+}
+
 function loadTenant(slug) {
 	if (!TENANT_SLUG.test(slug)) fail(`Not a tenant slug: ${slug}`)
 	const file = `${slug}.json`
@@ -78,17 +105,35 @@ function loadTenant(slug) {
 	} catch (error) {
 		fail(`tenants/${file} is not valid JSON: ${error.message}`)
 	}
-	for (const key of ['displayName', 'bundleId', 'appUrl', 'tenantApiUs']) {
-		if (typeof config[key] !== 'string' || config[key].trim() === '') {
-			fail(`tenants/${file} is missing "${key}"`)
-		}
-	}
-	if (!config.site?.slug && !config.site?.host) {
-		fail(
-			`tenants/${file} needs site.slug or site.host: a white-label app is bound to one tenant`,
-		)
-	}
+	validateConfig(config, `tenants/${file}`)
 	return { config, file }
+}
+
+/** The config from the App's registry (#156), over the internal token. */
+async function loadRegistryTenant(slug, registryUrl) {
+	if (!TENANT_SLUG.test(slug)) fail(`Not a tenant slug: ${slug}`)
+	const base = registryUrl ?? process.env.CUSTOMER_APP_REGISTRY_URL
+	if (!base)
+		fail('--registry needs --registry-url (or CUSTOMER_APP_REGISTRY_URL)')
+	const token = process.env.CUSTOMER_APP_PIPELINE_TOKEN
+	if (!token)
+		fail('--registry needs CUSTOMER_APP_PIPELINE_TOKEN in the environment')
+	const url = `${base.replace(/\/+$/, '')}/resources/customer-app/config?slug=${encodeURIComponent(slug)}`
+	let response
+	try {
+		response = await fetch(url, {
+			headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+			redirect: 'manual',
+			signal: AbortSignal.timeout(15_000),
+		})
+	} catch (error) {
+		fail(`Could not reach the registry (${error.message})`)
+	}
+	if (response.status === 404) fail(`The registry has no app "${slug}"`)
+	if (!response.ok) fail(`The registry answered ${response.status}`)
+	const config = await response.json()
+	validateConfig(config, `registry config for ${slug}`)
+	return { config, file: `registry:${slug}` }
 }
 
 function appOrigin(config) {
@@ -209,9 +254,19 @@ async function main() {
 	const slug = args.tenant ?? process.env.CUSTOMER_TENANT
 	if (!slug) fail('Pass --tenant <slug> (or set CUSTOMER_TENANT)')
 
-	const { config, file } = loadTenant(slug)
+	const registry = args.flags.has('registry')
+	const { config, file } = registry
+		? await loadRegistryTenant(slug, args['registry-url'])
+		: loadTenant(slug)
 	const outDir = join(APP_ROOT, 'tenants/generated', slug)
 	rmSync(outDir, { recursive: true, force: true })
+	if (registry) {
+		mkdirSync(outDir, { recursive: true })
+		writeFileSync(
+			join(outDir, 'tenant.json'),
+			`${JSON.stringify(config, null, '\t')}\n`,
+		)
+	}
 
 	const organization = args.flags.has('no-api')
 		? null

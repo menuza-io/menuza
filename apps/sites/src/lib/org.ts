@@ -43,6 +43,10 @@ export type PublicSiteRedirect = {
 	statusCode: number
 }
 
+import { type PublicCustomerApp } from './customer-app-types'
+
+export { type PublicCustomerApp }
+
 export type PublicOrganization = {
 	id: string
 	name: string
@@ -84,6 +88,8 @@ export type PublicOrganization = {
 	>
 	/** The cookie banner mode (#89); absent means `off` (tags load as before). */
 	consent?: { mode: 'required' | 'notice' | 'off' }
+	/** Absent on payloads cached before the field existed: no placements. */
+	customerApp?: PublicCustomerApp | null
 }
 
 function getAppUrl(): string {
@@ -150,6 +156,16 @@ async function postAppJson(url: string, body: unknown): Promise<boolean> {
 	} catch {
 		return false
 	}
+}
+
+/** Counts a tap on a "Get the app" placement (#196): ids and enums only. */
+export async function recordAppTap(options: {
+	slug?: string | null
+	host?: string | null
+	placement: string
+	store: string
+}): Promise<boolean> {
+	return postAppJson(`${getAppUrl()}/resources/sites/app-tap`, options)
 }
 
 export async function recordSiteRedirectHit(

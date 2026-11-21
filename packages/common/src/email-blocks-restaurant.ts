@@ -1,3 +1,4 @@
+import { buildLinkTemplatePath } from './links.ts'
 import { z } from 'zod'
 import {
 	emailBlockIdSchema,
@@ -161,7 +162,9 @@ export function restaurantBlockProblems(
 }
 
 /** The coupon button URL is a merge-token path, escaped by `replaceMergeTokensInHtml`. */
-export const EMAIL_COUPON_BUTTON_PATH = '/menu?coupon={{couponCode}}'
+export const EMAIL_COUPON_BUTTON_PATH = buildLinkTemplatePath('coupon', {
+	coupon: '{{couponCode}}',
+})
 
 /**
  * A URL on the organization's own site, or '' when the origin is unknown or the

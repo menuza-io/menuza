@@ -134,6 +134,10 @@ msgstr "需支付 {amount} 订金以确认此预订。"
 msgid "A few messages a month. You can opt out anytime."
 msgstr "每月只发几条消息，你可以随时退订。"
 
+#: components/profile/notifications-section.tsx:211
+msgid "A few messages a month. You can turn this off anytime."
+msgstr "每月只有几条消息。您可以随时关闭。"
+
 #: lib/loyalty/labels.ts:65
 msgid "A free item"
 msgstr "一件免费商品"
@@ -141,6 +145,10 @@ msgstr "一件免费商品"
 #: lib/reservations/messages.ts:114
 msgid "About {count} min"
 msgstr "约 {count} 分钟"
+
+#: components/orders/format.ts:19
+msgid "Accepted"
+msgstr "已接受"
 
 #: components/auth/connect-site-screen.tsx:24
 msgid "acme or acme.example.com"
@@ -165,6 +173,10 @@ msgstr "添加卡"
 #: lib/loyalty/labels.ts:113
 msgid "Adjusted by staff"
 msgstr "工作人员调整"
+
+#: components/profile/notifications-section.tsx:151
+msgid "Also send me offers and news"
+msgstr "同时向我发送优惠和资讯"
 
 #: lib/reservations/messages.ts:69
 msgid "Amount due"
@@ -242,7 +254,7 @@ msgstr "已转入余额"
 msgid "Balance removed"
 msgstr "余额已移除"
 
-#: components/profile/profile-screen.tsx:127
+#: components/profile/profile-screen.tsx:129
 msgid "Birthday (optional)"
 msgstr "生日（选填）"
 
@@ -253,6 +265,10 @@ msgstr "预订餐桌"
 #: lib/reservations/messages.ts:100
 msgid "Booked"
 msgstr "已预订"
+
+#: components/profile/notifications-section.tsx:105
+msgid "Booking updates"
+msgstr "预订动态"
 
 #: lib/reservations/messages.ts:96
 msgid "Call the restaurant"
@@ -266,6 +282,7 @@ msgstr "取消预订"
 msgid "Cancel this reservation?"
 msgstr "要取消此预订吗？"
 
+#: components/orders/format.ts:27
 #: lib/gift-cards/labels.ts:34
 #: lib/reservations/messages.ts:105
 msgid "Cancelled"
@@ -319,6 +336,10 @@ msgstr "选择门店"
 msgid "Choose a real month and day for your birthday."
 msgstr "请为您的生日选择有效的月份和日期。"
 
+#: components/profile/notifications-section.tsx:191
+msgid "Choose what this phone tells you about."
+msgstr "选择这部手机通知您的内容。"
+
 #: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "选择你想收到的消息和接收方式。"
@@ -335,6 +356,10 @@ msgstr "即将开始"
 #: lib/reservations/messages.ts:67
 msgid "Complete your payment"
 msgstr "完成付款"
+
+#: components/orders/format.ts:25
+msgid "Completed"
+msgstr "已完成"
 
 #: lib/reservations/messages.ts:57
 msgid "Confirm booking"
@@ -384,7 +409,7 @@ msgstr "不含乳制品"
 msgid "Date"
 msgstr "日期"
 
-#: components/profile/profile-screen.tsx:140
+#: components/profile/profile-screen.tsx:142
 msgid "Day"
 msgstr "日"
 
@@ -456,7 +481,7 @@ msgid "Edit details"
 msgstr "修改信息"
 
 #: components/profile/messages-section.tsx:107
-#: components/profile/profile-screen.tsx:116
+#: components/profile/profile-screen.tsx:118
 msgid "Email"
 msgstr "电子邮件"
 
@@ -492,6 +517,7 @@ msgstr "请输入您的电话号码，我们将发送验证码。"
 msgid "Enter your site address to load its branding."
 msgstr "输入您的网站地址以加载其品牌样式。"
 
+#: components/orders/format.ts:29
 #: lib/gift-cards/labels.ts:35
 #: lib/reservations/messages.ts:108
 msgid "Expired"
@@ -513,6 +539,10 @@ msgstr "减少人数"
 #: lib/reservations/messages.ts:27
 msgid "Find a table"
 msgstr "查找餐桌"
+
+#: components/profile/orders-section.tsx:119
+msgid "Finish this order"
+msgstr "完成此订单"
 
 #: lib/reservations/messages.ts:104
 msgid "Finished"
@@ -541,6 +571,10 @@ msgstr "{time} 前可免费修改"
 #: lib/gift-cards/labels.ts:33
 msgid "Frozen"
 msgstr "已冻结"
+
+#: components/profile/notifications-section.tsx:146
+msgid "Get a message when your order is accepted or ready, when your booking is confirmed or coming up, and when a reward is waiting."
+msgstr "订单被接受或备好、预订确认或临近、有奖励待领取时，您都会收到消息。"
 
 #: lib/gift-cards/labels.ts:65
 #: lib/loyalty/labels.ts:78
@@ -623,8 +657,12 @@ msgstr "到店"
 msgid "Invite a friend and get {referrerPoints} after their first paid order."
 msgstr "邀请好友，好友完成首笔付款订单后您可获得 {referrerPoints}。"
 
+#: components/orders/order-screen.tsx:94
+msgid "It was not placed from your signed-in account. You can still view it on the website."
+msgstr "此订单不是通过您已登录的账户下的。您仍可在网站上查看。"
+
 #: components/auth/complete-name-screen.tsx:26
-#: components/profile/profile-screen.tsx:108
+#: components/profile/profile-screen.tsx:110
 msgid "Jane Doe"
 msgstr "张三"
 
@@ -641,7 +679,7 @@ msgstr "加入候位"
 msgid "Keep it"
 msgstr "保留"
 
-#: components/profile/profile-screen.tsx:202
+#: components/profile/profile-screen.tsx:207
 msgid "Language"
 msgstr "语言"
 
@@ -669,6 +707,10 @@ msgstr "退出候位"
 msgid "Limited menus you pre-order for a pickup window."
 msgstr "限量菜单，预订后在指定时段自取。"
 
+#: components/profile/orders-section.tsx:129
+msgid "Load more"
+msgstr "加载更多"
+
 #: components/ordering/drops-screen.tsx:109
 msgid "Loading drops"
 msgstr "正在加载限量活动"
@@ -681,7 +723,11 @@ msgstr "正在加载菜单"
 msgid "Loading your gift cards…"
 msgstr "正在加载您的礼品卡…"
 
-#: components/profile/profile-screen.tsx:78
+#: components/orders/order-screen.tsx:86
+msgid "Loading your order"
+msgstr "正在加载您的订单"
+
+#: components/profile/profile-screen.tsx:80
 msgid "Loading your profile…"
 msgstr "正在加载您的个人资料…"
 
@@ -708,11 +754,11 @@ msgstr "来自 {name} 的消息"
 msgid "Money added"
 msgstr "已充值"
 
-#: components/profile/profile-screen.tsx:131
+#: components/profile/profile-screen.tsx:133
 msgid "Month"
 msgstr "月"
 
-#: components/profile/profile-screen.tsx:149
+#: components/profile/profile-screen.tsx:151
 msgid "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
 msgstr "仅需月份和日期。如果您同意接收我们的消息，我们会用它为您送上生日惊喜。"
 
@@ -729,7 +775,7 @@ msgid "My reservations"
 msgstr "我的预订"
 
 #: components/auth/complete-name-screen.tsx:25
-#: components/profile/profile-screen.tsx:107
+#: components/profile/profile-screen.tsx:109
 #: lib/reservations/messages.ts:60
 #: lib/reservations/messages.ts:112
 msgid "Name"
@@ -763,6 +809,10 @@ msgstr "目前没有限量活动。"
 #: lib/gift-cards/labels.ts:21
 msgid "No gift cards saved yet"
 msgstr "尚未保存礼品卡"
+
+#: components/profile/orders-section.tsx:99
+msgid "No orders yet. Orders you place while signed in show up here."
+msgstr "暂无订单。登录后下的订单会显示在这里。"
 
 #: lib/reservations/messages.ts:52
 msgid "No preference"
@@ -800,6 +850,10 @@ msgstr "无"
 msgid "Not activated"
 msgstr "未激活"
 
+#: components/profile/notifications-section.tsx:161
+msgid "Not now"
+msgstr "暂不"
+
 #: lib/reservations/messages.ts:35
 msgid "Not taking online reservations on this day."
 msgstr "当天不接受在线预订。"
@@ -807,6 +861,20 @@ msgstr "当天不接受在线预订。"
 #: components/ordering/menu-screen.tsx:207
 msgid "Nothing on the menu right now."
 msgstr "菜单上现在没有内容。"
+
+#: components/profile/notifications-section.tsx:71
+msgid "Notifications are not available on this device."
+msgstr "此设备不支持通知。"
+
+#: components/profile/notifications-section.tsx:176
+msgid "Notifications are off in your phone's settings. Turn them on there to hear about your orders and bookings."
+msgstr "手机设置中已关闭通知。请在设置中开启，以便了解您的订单和预订动态。"
+
+#: components/profile/notifications-section.tsx:143
+#: components/profile/notifications-section.tsx:173
+#: components/profile/notifications-section.tsx:189
+msgid "Notifications from {name}"
+msgstr "来自 {name} 的通知"
 
 #: components/ordering/menu-screen.tsx:448
 msgid "Nut-free"
@@ -817,6 +885,7 @@ msgid "Occasion"
 msgstr "场合"
 
 #: components/profile/messages-section.tsx:101
+#: components/profile/notifications-section.tsx:206
 msgid "Offers and news"
 msgstr "优惠和动态"
 
@@ -848,6 +917,10 @@ msgstr "在线预订已暂停，请稍后再试。"
 msgid "Online reservations aren't available right now."
 msgstr "暂时无法在线预订。"
 
+#: components/profile/notifications-section.tsx:179
+msgid "Open settings"
+msgstr "打开设置"
+
 #: components/loyalty/program-sections.tsx:138
 msgid "Opens in your browser. Your points and rewards apply when you order there."
 msgstr "将在浏览器中打开。在那里下单时可使用您的积分和奖励。"
@@ -861,6 +934,18 @@ msgstr "打开网站"
 msgid "Opens the website. Add items on the menu, then check out there. Coupons and rewards apply at checkout."
 msgstr "打开网站。在菜单中添加商品，然后在那里结账。优惠券和奖励在结账时使用。"
 
+#. placeholder {0}: item.number
+#. placeholder {0}: order.number
+#: components/orders/order-screen.tsx:116
+#: components/profile/orders-section.tsx:108
+msgid "Order {0}"
+msgstr "订单 {0}"
+
+#: components/orders/order-screen.tsx:137
+#: components/profile/orders-section.tsx:119
+msgid "Order again"
+msgstr "再来一单"
+
 #: components/ordering/site-checkout.tsx:34
 msgid "Order on the menu"
 msgstr "在菜单中下单"
@@ -868,6 +953,10 @@ msgstr "在菜单中下单"
 #: components/loyalty/program-sections.tsx:135
 msgid "Order on the website"
 msgstr "在网站上下单"
+
+#: components/profile/notifications-section.tsx:104
+msgid "Order updates"
+msgstr "订单动态"
 
 #: components/ordering/drops-screen.tsx:133
 #: components/ordering/drops-screen.tsx:213
@@ -906,12 +995,16 @@ msgstr "立即付款"
 msgid "Pay within {time} to keep your table."
 msgstr "请在 {time} 内付款以保留餐桌。"
 
+#: components/orders/format.ts:31
+msgid "Payment under review"
+msgstr "付款审核中"
+
 #: lib/reservations/messages.ts:125
 msgid "Payments aren't available right now."
 msgstr "暂时无法付款。"
 
 #: components/auth/login-screen.tsx:24
-#: components/profile/profile-screen.tsx:153
+#: components/profile/profile-screen.tsx:155
 #: lib/reservations/messages.ts:16
 msgid "Phone number"
 msgstr "手机号码"
@@ -940,12 +1033,16 @@ msgstr "积分已过期"
 msgid "Preferred time"
 msgstr "期望时间"
 
+#: components/orders/format.ts:21
+msgid "Preparing"
+msgstr "准备中"
+
 #: app/(tabs)/_layout.tsx:119
 #: lib/reservations/messages.ts:23
 msgid "Profile"
 msgstr "个人资料"
 
-#: components/profile/profile-screen.tsx:161
+#: components/profile/profile-screen.tsx:163
 msgid "Profile saved."
 msgstr "个人资料已保存。"
 
@@ -964,6 +1061,10 @@ msgstr "消费满 {amount} 即可累积。"
 #: lib/gift-cards/labels.ts:70
 msgid "QR code to scan at the till for the card ending in {last4}"
 msgstr "在收银台扫描的二维码，对应尾号 {last4} 的礼品卡"
+
+#: components/orders/format.ts:23
+msgid "Ready"
+msgstr "已备好"
 
 #: lib/gift-cards/labels.ts:29
 msgid "Recent activity"
@@ -1039,6 +1140,7 @@ msgid "Reward returned"
 msgstr "奖励退回"
 
 #: app/(tabs)/_layout.tsx:91
+#: components/profile/notifications-section.tsx:106
 #: lib/loyalty/labels.ts:53
 msgid "Rewards"
 msgstr "奖励"
@@ -1063,7 +1165,7 @@ msgstr "目前无法使用奖励。"
 msgid "Running late"
 msgstr "我会迟到"
 
-#: components/profile/profile-screen.tsx:165
+#: components/profile/profile-screen.tsx:167
 msgid "Save changes"
 msgstr "保存更改"
 
@@ -1140,7 +1242,7 @@ msgstr "使用手机号登录，即可在此保存您的礼品卡。"
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "使用手机号码登录，即可查看积分并使用奖励。"
 
-#: components/profile/profile-screen.tsx:174
+#: components/profile/profile-screen.tsx:179
 msgid "Sign out"
 msgstr "退出登录"
 
@@ -1183,7 +1285,7 @@ msgstr "辣"
 msgid "Stops working in {time}"
 msgstr "{time} 后失效"
 
-#: components/profile/profile-screen.tsx:192
+#: components/profile/profile-screen.tsx:197
 msgid "System default"
 msgstr "系统默认"
 
@@ -1340,9 +1442,14 @@ msgstr "尝试次数过多，请稍后重试。"
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "尝试次数过多，请稍候再试。"
 
+#: components/orders/order-screen.tsx:129
+msgid "Total"
+msgstr "合计"
+
 #: components/auth/site-unavailable-screen.tsx:26
 #: components/ordering/drops-screen.tsx:117
 #: components/ordering/menu-screen.tsx:128
+#: components/profile/orders-section.tsx:94
 #: components/ui/error-message.tsx:28
 #: lib/gift-cards/labels.ts:20
 #: lib/loyalty/labels.ts:28
@@ -1355,7 +1462,12 @@ msgstr "重试"
 msgid "Try one of these times instead"
 msgstr "试试这些时间"
 
+#: components/profile/notifications-section.tsx:158
+msgid "Turn on notifications"
+msgstr "开启通知"
+
 #: components/profile/messages-section.tsx:228
+#: components/profile/notifications-section.tsx:217
 msgid "Turning a switch off never affects receipts or booking confirmations."
 msgstr "关闭开关不会影响收据或预订确认。"
 
@@ -1367,7 +1479,7 @@ msgstr "输入或粘贴邮件或卡片上的代码。"
 msgid "Up to {amount} off"
 msgstr "最多优惠 {amount}"
 
-#: components/profile/profile-screen.tsx:104
+#: components/profile/profile-screen.tsx:106
 msgid "Update your basic details below."
 msgstr "在下方更新您的基本信息。"
 
@@ -1384,7 +1496,7 @@ msgid "Use a different number"
 msgstr "使用其他号码"
 
 #: components/auth/site-unavailable-screen.tsx:34
-#: components/profile/profile-screen.tsx:178
+#: components/profile/profile-screen.tsx:183
 msgid "Use a different site"
 msgstr "使用其他网站"
 
@@ -1420,6 +1532,10 @@ msgstr "验证"
 msgid "Verify your phone first"
 msgstr "请先验证你的手机"
 
+#: components/orders/order-screen.tsx:96
+msgid "View on the website"
+msgstr "在网站上查看"
+
 #: lib/reservations/messages.ts:83
 msgid "View reservation"
 msgstr "查看预订"
@@ -1428,9 +1544,22 @@ msgstr "查看预订"
 msgid "Waiting for payment"
 msgstr "等待付款"
 
+#: components/orders/format.ts:17
+msgid "Waiting for the restaurant"
+msgstr "等待餐厅确认"
+
 #: lib/reservations/messages.ts:110
 msgid "Waitlist"
 msgstr "候位"
+
+#: components/orders/order-screen.tsx:92
+msgid "We can't show this order here"
+msgstr "无法在此显示该订单"
+
+#: components/orders/order-screen.tsx:134
+#: components/profile/orders-section.tsx:123
+msgid "We could not start this order again."
+msgstr "无法重新开始此订单。"
 
 #: lib/i18n/app-error-message.ts:14
 msgid "We couldn't find that site. Check the address and try again."
@@ -1441,8 +1570,13 @@ msgid "We couldn't find that."
 msgstr "未找到相关内容。"
 
 #: components/profile/messages-section.tsx:157
+#: components/profile/notifications-section.tsx:97
 msgid "We couldn't save that. Try again."
 msgstr "无法保存，请重试。"
+
+#: components/profile/notifications-section.tsx:74
+msgid "We couldn't turn notifications on. Try again."
+msgstr "无法开启通知，请重试。"
 
 #: lib/reservations/messages.ts:121
 msgid "We couldn't update your place in line. We'll keep trying."
@@ -1584,11 +1718,19 @@ msgstr "您的姓名"
 msgid "Your new code is ready."
 msgstr "您的新码已就绪。"
 
+#: components/profile/orders-section.tsx:88
+msgid "Your orders"
+msgstr "您的订单"
+
+#: components/profile/orders-section.tsx:92
+msgid "Your orders could not be loaded."
+msgstr "无法加载您的订单。"
+
 #: lib/reservations/messages.ts:75
 msgid "Your payment is being checked. We'll confirm shortly."
 msgstr "您的付款正在审核，稍后确认。"
 
-#: components/profile/profile-screen.tsx:156
+#: components/profile/profile-screen.tsx:158
 msgid "Your phone number can't be changed here."
 msgstr "无法在此更改您的电话号码。"
 
@@ -1596,7 +1738,7 @@ msgstr "无法在此更改您的电话号码。"
 msgid "Your points"
 msgstr "您的积分"
 
-#: components/profile/profile-screen.tsx:102
+#: components/profile/profile-screen.tsx:104
 msgid "Your profile"
 msgstr "您的个人资料"
 

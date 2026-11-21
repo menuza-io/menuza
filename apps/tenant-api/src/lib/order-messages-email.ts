@@ -82,6 +82,12 @@ export type OrderEmailInput = {
 	refundPendingCents?: number
 	/** One-time loyalty welcome points unlocked on this order/checkout, if any. */
 	welcomeBonus?: { points: number; unitLabel: LoyaltyUnitLabel } | null
+	/**
+	 * Receipt only (#196): "Track this order in the app" with the stores that
+	 * are live. Each link is the site's own counting redirect. Empty or absent
+	 * shows nothing.
+	 */
+	appInvite?: Array<{ store: 'app_store' | 'play_store'; url: string }>
 }
 
 export type RenderedOrderEmail = { subject: string; html: string; text: string }
@@ -374,6 +380,31 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 	const ctaHtml = linkUrl
 		? `<div style="margin-top:24px;text-align:${align}"><a href="${escapeHtml(linkUrl)}" style="display:inline-block;padding:12px 22px;background:${primary};color:${primaryForeground};text-decoration:none;border-radius:${radius}px;font-size:15px;font-weight:600">${escapeHtml(labels.viewOrder)}</a></div>`
 		: ''
+	const inviteLinks =
+		input.kind === 'receipt'
+			? (input.appInvite ?? []).flatMap((entry) => {
+					const url = safeUrl(entry.url)
+					return url
+						? [
+								{
+									url,
+									label:
+										entry.store === 'app_store'
+											? labels.storeAppStore
+											: labels.storePlayStore,
+								},
+							]
+						: []
+				})
+			: []
+	const inviteHtml = inviteLinks.length
+		? `<div style="margin-top:20px;padding-top:16px;border-top:1px solid ${border};text-align:${align}"><div style="font-size:14px;font-weight:600;color:${foreground};margin-bottom:8px">${escapeHtml(labels.trackInApp)}</div>${inviteLinks
+				.map(
+					(link) =>
+						`<a href="${escapeHtml(link.url)}" style="display:inline-block;margin:0 8px 8px 0;padding:8px 14px;border:1px solid ${border};color:${foreground};text-decoration:none;border-radius:${radius}px;font-size:13px">${escapeHtml(link.label)}</a>`,
+				)
+				.join('')}</div>`
+		: ''
 	const welcomeLine =
 		input.kind === 'receipt' &&
 		input.welcomeBonus &&
@@ -406,7 +437,7 @@ ${logoHtml}
 <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:${foreground}">${escapeHtml(copy.lead)}</p>
 ${welcomeHtml}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${border}">${detailRows}</table>
-${itemsHtml}${totalsHtml}${ctaHtml}
+${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}
 <p style="margin:28px 0 0;font-size:12px;color:${muted}">${escapeHtml(labels.footer)}</p>
 </td></tr></table>
 </td></tr></table>
@@ -430,6 +461,10 @@ ${itemsHtml}${totalsHtml}${ctaHtml}
 		for (const [label, value] of totals) textLines.push(`${label}: ${value}`)
 	}
 	if (linkUrl) textLines.push('', `${labels.viewOrder}: ${linkUrl}`)
+	if (inviteLinks.length > 0) {
+		textLines.push('', `${labels.trackInApp}:`)
+		for (const link of inviteLinks) textLines.push(`${link.label}: ${link.url}`)
+	}
 	textLines.push('', labels.footer)
 
 	return { subject: copy.subject, html, text: textLines.join('\n') }

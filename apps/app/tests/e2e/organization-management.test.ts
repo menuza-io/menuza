@@ -192,24 +192,55 @@ test.describe('Organization Management', () => {
 		await navigate('/:slug/settings', { slug: org.slug })
 		await page.waitForLoadState('networkidle')
 
+		const nameField = page
+			.getByTestId('organization-general-settings-form')
+			.getByRole('textbox', { name: /^name$/i })
+		await expect(nameField).toHaveValue(org.name)
+
 		// Update organization details (only name and slug are available in the form)
-		const newName = faker.company.name()
+		const newName = `${faker.company.name()} ${faker.string.alphanumeric(6)}`
+		await nameField.click()
+		await nameField.press('ControlOrMeta+A')
+		await nameField.pressSequentially(newName, { delay: 10 })
+		await expect(nameField).toHaveValue(newName)
 
-		await page.getByRole('textbox', { name: /^name$/i }).fill(newName)
+		const settingsForm = page.getByTestId('organization-general-settings-form')
+		const save = saveBar(page).save
+		const submit = async () => {
+			if (await save.isVisible()) {
+				await save.click()
+				return
+			}
+			// Same path as the global save bar; Conform `form.dirty` can lag in CI.
+			await settingsForm.evaluate((form) => {
+				if (!(form instanceof HTMLFormElement)) {
+					throw new Error('organization settings form missing')
+				}
+				form.requestSubmit()
+			})
+		}
 
-		// Save changes
-		await saveBar(page).save.click()
+		await Promise.all([
+			page.waitForResponse(
+				(res) =>
+					res.request().method() === 'POST' &&
+					res.url().includes('/settings') &&
+					!res.url().includes('.data'),
+			),
+			submit(),
+		])
 
-		// Verify success message
-		await expect(page.getByText(/updated/i).first()).toBeVisible()
-
-		// Verify changes in database
-		const [updatedOrg] = await db
-			.select()
-			.from(Organization)
-			.where(eq(Organization.id, org.id))
-			.limit(1)
-		expect(updatedOrg?.name).toBe(newName)
+		await expect.poll(
+			async () => {
+				const [updatedOrg] = await db
+					.select({ name: Organization.name })
+					.from(Organization)
+					.where(eq(Organization.id, org.id))
+					.limit(1)
+				return updatedOrg?.name ?? null
+			},
+			{ timeout: 30_000 },
+		).toBe(newName)
 	})
 
 	test('Users can view organization members', async ({

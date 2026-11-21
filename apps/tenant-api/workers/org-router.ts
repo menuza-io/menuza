@@ -579,6 +579,12 @@ export async function resolveOrgId(
 		return orgIdFromCustomerJwt(request, env)
 	}
 
+	// The signed-in guest's own orders (#112) and push devices (#105): the
+	// customer token names the organization, never a query or body.
+	if (pathname.startsWith('/customer/') || pathname.startsWith('/push/')) {
+		return orgIdFromCustomerJwt(request, env)
+	}
+
 	if (pathname.startsWith('/auth/')) {
 		const fromJwt = await orgIdFromCustomerJwt(request, env)
 		if (fromJwt) return fromJwt

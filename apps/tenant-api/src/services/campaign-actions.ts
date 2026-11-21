@@ -132,6 +132,8 @@ export async function duplicateCampaign(
 		contentBlocks: source.contentBlocks,
 		contentHtml: source.contentHtml,
 		discountOffer: source.discountOffer,
+		pushImageUrl: source.pushImageUrl,
+		pushLink: source.pushLink,
 		segmentationRules: source.segmentationRules,
 		lateAfterMinutes: source.lateAfterMinutes,
 		scheduledAt: null,
@@ -224,6 +226,9 @@ export type CampaignPatch = {
 	contentBlocks?: string | null
 	contentHtml?: string | null
 	discountOffer?: string | null
+	/** Push broadcast (#105): optional image and the site path it opens. */
+	pushImageUrl?: string | null
+	pushLink?: string | null
 	/** A future time schedules; null makes it a Draft again. */
 	scheduledAt?: Date | null
 	lateAfterMinutes?: number
@@ -292,13 +297,17 @@ export async function updateCampaign(
 	if (patch.contentBlocks !== undefined) set.contentBlocks = patch.contentBlocks
 	if (patch.contentHtml !== undefined) set.contentHtml = patch.contentHtml
 	if (patch.discountOffer !== undefined) set.discountOffer = patch.discountOffer
+	if (patch.pushImageUrl !== undefined) set.pushImageUrl = patch.pushImageUrl
+	if (patch.pushLink !== undefined) set.pushLink = patch.pushLink
 	if (patch.lateAfterMinutes !== undefined) {
 		set.lateAfterMinutes = patch.lateAfterMinutes
 	}
 	if (patch.audience !== undefined || patch.audienceRef !== undefined) {
 		// A JSON column: write the object, not a string of it. Keep any other
 		// keys already stored (the create path once stored a string of JSON).
-		const rules: Record<string, unknown> = { ...storedRules(row.segmentationRules) }
+		const rules: Record<string, unknown> = {
+			...storedRules(row.segmentationRules),
+		}
 		if (patch.audience !== undefined) rules.audience = patch.audience
 		if (patch.audienceRef === null) {
 			delete rules.audienceId

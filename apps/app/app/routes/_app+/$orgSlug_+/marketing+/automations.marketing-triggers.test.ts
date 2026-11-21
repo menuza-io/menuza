@@ -22,12 +22,15 @@ vi.mock('#app/utils/marketing/marketing-flags.server.ts', () => ({
 	getMarketingFeatures: vi.fn(),
 }))
 
-const flags = (over: Partial<Awaited<ReturnType<typeof getMarketingFeatures>>>) => ({
+const flags = (
+	over: Partial<Awaited<ReturnType<typeof getMarketingFeatures>>>,
+) => ({
 	audiences: false,
 	orderAutomations: false,
 	birthdays: false,
 	cartReminders: false,
 	aiDrafts: false,
+	push: false,
 	...over,
 })
 
@@ -102,7 +105,9 @@ describe('order, birthday and cart triggers in the automation editor (#99 #151 #
 	})
 
 	it('saves with the flag on and sends the goal from the trigger settings', async () => {
-		vi.mocked(getMarketingFeatures).mockResolvedValue(flags({ orderAutomations: true }))
+		vi.mocked(getMarketingFeatures).mockResolvedValue(
+			flags({ orderAutomations: true }),
+		)
 		fetchTenant.mockResolvedValueOnce(Response.json({ journey: { id: 'j1' } }))
 		await newAction(
 			args(
@@ -121,7 +126,9 @@ describe('order, birthday and cart triggers in the automation editor (#99 #151 #
 		// Without the toggle there is no goal.
 		fetchTenant.mockResolvedValueOnce(Response.json({ journey: { id: 'j2' } }))
 		await newAction(
-			args(post({ name: 'Plain', graphJson: graph('guest_lapsed', { days: 30 }) })),
+			args(
+				post({ name: 'Plain', graphJson: graph('guest_lapsed', { days: 30 }) }),
+			),
 		)
 		const secondBody = JSON.parse(
 			(fetchTenant.mock.calls[1]![1] as RequestInit).body as string,

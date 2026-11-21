@@ -74,6 +74,10 @@ msgstr "{count} personas"
 msgid "{count} items"
 msgstr "{count} artículos"
 
+#: src/pages/menu.astro.ts:3
+msgid "{count} items are no longer available and were left out."
+msgstr "{count} artículos ya no están disponibles y se han omitido."
+
 #: src/lib/ordering-labels.ts:161
 msgid "{count} min"
 msgstr "{count} min"
@@ -271,6 +275,10 @@ msgstr "1 lanzamiento con pedidos abiertos"
 msgid "1 guest"
 msgstr "1 persona"
 
+#: src/pages/menu.astro.ts:3
+msgid "1 item is no longer available and was left out."
+msgstr "1 artículo ya no está disponible y se ha omitido."
+
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "A few messages a month. You can opt out anytime."
@@ -297,6 +305,7 @@ msgid "Accept all"
 msgstr "Aceptar todo"
 
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Accepted"
 msgstr "Aceptado"
 
@@ -703,6 +712,7 @@ msgstr "¿Cancelar esta reserva?"
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:168
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Cancelled"
 msgstr "Cancelado"
 
@@ -1024,6 +1034,7 @@ msgstr "Completa tu pago"
 
 #: src/lib/reservations/labels.ts:167
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Completed"
 msgstr "Completado"
 
@@ -1260,6 +1271,10 @@ msgstr "Depósito"
 msgid "Design"
 msgstr "Diseño"
 
+#: src/pages/profile/orders.astro.ts:3
+msgid "Details"
+msgstr "Detalles"
+
 #: src/lib/reservations/labels.ts:97
 #: src/lib/reservations/labels.ts:202
 msgid "Dietary needs"
@@ -1295,6 +1310,10 @@ msgstr "Los descuentos no están disponibles ahora, así que quitamos tu código
 msgid "Discounts aren't available right now. Please review your total and place your order again."
 msgstr "Los descuentos no están disponibles ahora. Revisa el total y vuelve a hacer el pedido."
 
+#: src/components/AppInviteBanner.astro.ts:3
+msgid "Dismiss"
+msgstr "Descartar"
+
 #: src/lib/reservations/labels.ts:441
 msgid "Disputed"
 msgstr "En disputa"
@@ -1306,6 +1325,10 @@ msgstr "Listo"
 #: src/components/blocks/MenuFileBlock.astro.ts:3
 msgid "Download menu"
 msgstr "Descargar el menú"
+
+#: src/components/AppStoreButtons.astro.ts:3
+msgid "Download on the App Store"
+msgstr "Descargar en el App Store"
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Drop alerts are off"
@@ -1482,6 +1505,7 @@ msgid "Experiences are not available right now."
 msgstr "Las experiencias no están disponibles ahora mismo."
 
 #: src/lib/reservations/labels.ts:171
+#: src/pages/profile/orders.astro.ts:3
 msgid "Expired"
 msgstr "Caducada"
 
@@ -1539,6 +1563,10 @@ msgstr "Buscar mesa"
 #: src/pages/events/[slug].astro.ts:3
 msgid "Find out more"
 msgstr "Más información"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Finish this order"
+msgstr "Terminar este pedido"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:84
@@ -1626,9 +1654,22 @@ msgstr "Recibe un SMS cuando abra el próximo lanzamiento, antes de que se agote
 msgid "Get directions"
 msgstr "Cómo llegar"
 
+#: src/components/AppStoreButtons.astro.ts:3
+msgid "Get it on Google Play"
+msgstr "Disponible en Google Play"
+
 #: src/lib/reservations/labels.ts:288
 msgid "Get notified when a table opens"
 msgstr "Recibe un aviso cuando se libere una mesa"
+
+#: src/components/AppInviteSection.astro.ts:3
+msgid "Get our app"
+msgstr "Descarga nuestra app"
+
+#: src/components/AppInviteBanner.astro.ts:3
+#: src/pages/get-app.astro.ts:3
+msgid "Get the app"
+msgstr "Descarga la app"
 
 #: src/lib/loyalty/labels.ts:204
 msgid "Getting your code…"
@@ -1707,6 +1748,10 @@ msgstr "Reservada durante {time}"
 #: src/lib/reservations/labels.ts:178
 msgid "Hello, {name}"
 msgstr "Hola, {name}"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Hide details"
+msgstr "Ocultar detalles"
 
 #: src/lib/loyalty/labels.ts:236
 msgid "History"
@@ -1808,6 +1853,10 @@ msgstr "Es demasiado tarde para cambiarla en línea. Llama al restaurante."
 #: src/lib/ordering-labels.ts:165
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "Está fuera de la zona de entrega de {location}. Aún puedes pedir para recoger."
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Items"
+msgstr "Artículos"
 
 #: src/lib/loyalty/labels.ts:312
 msgid "Join and get {points} as a welcome bonus."
@@ -1935,6 +1984,10 @@ msgstr "Menús limitados que reservas para recoger en un horario concreto."
 #: src/pages/events/[slug].astro.ts:3
 msgid "Link copied"
 msgstr "Enlace copiado"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Load more"
+msgstr "Cargar más"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Loading your receipt…"
@@ -2165,6 +2218,10 @@ msgstr "Sin preferencia"
 #: src/lib/loyalty/labels.ts:215
 msgid "No requests right now."
 msgstr "No hay solicitudes por ahora."
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "No restaurant orders yet."
+msgstr "Aún no hay pedidos del restaurante."
 
 #: src/lib/loyalty/labels.ts:164
 msgid "No reward"
@@ -2407,8 +2464,13 @@ msgstr "Opcional"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Order"
 msgstr "Pedir"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Order again"
+msgstr "Pedir de nuevo"
 
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/shop/success.astro.ts:3
@@ -2422,6 +2484,14 @@ msgstr "Pedir a domicilio"
 #: src/lib/ordering-labels.ts:134
 msgid "Order details"
 msgstr "Detalles del pedido"
+
+#: src/components/AppInviteSection.astro.ts:3
+msgid "Order faster and keep your orders and rewards in one place."
+msgstr "Pide más rápido y guarda tus pedidos y recompensas en un solo lugar."
+
+#: src/components/AppInviteBanner.astro.ts:3
+msgid "Order faster in our app"
+msgstr "Pide más rápido en nuestra app"
 
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
@@ -2515,6 +2585,10 @@ msgstr "Los pedidos abren {when}"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Orders open: {title}"
 msgstr "Pedidos abiertos: {title}"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Orders you place while signed in will show up here."
+msgstr "Los pedidos que hagas con la sesión iniciada aparecerán aquí."
 
 #: src/lib/ordering-labels.ts:68
 msgid "Original price"
@@ -2662,6 +2736,10 @@ msgstr "Métodos de pago"
 #: src/lib/reservations/labels.ts:395
 msgid "Payment received"
 msgstr "Pago recibido"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Payment under review"
+msgstr "Pago en revisión"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Payment was not finished. Nothing was charged."
@@ -2848,6 +2926,7 @@ msgstr "Publicado el {date}"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Preparing"
 msgstr "En preparación"
 
@@ -2933,6 +3012,7 @@ msgstr "Leer la política de cookies"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Ready"
 msgstr "Listo"
 
@@ -3056,6 +3136,10 @@ msgstr "Reservar"
 msgid "Reserve a table"
 msgstr "Reservar una mesa"
 
+#: src/pages/profile/orders.astro.ts:3
+msgid "Restaurant orders"
+msgstr "Pedidos del restaurante"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Return to homepage"
 msgstr "Volver a la página de inicio"
@@ -3136,6 +3220,10 @@ msgstr "Guardar mis opciones"
 #: src/pages/profile.astro.ts:3
 msgid "Saving..."
 msgstr "Guardando..."
+
+#: src/components/AppInviteSection.astro.ts:3
+msgid "Scan to get the app"
+msgstr "Escanea para descargar la app"
 
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Scan to open this job on your phone."
@@ -3441,6 +3529,7 @@ msgstr "Enviando..."
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Subtotal"
 msgstr "Subtotal"
 
@@ -3479,6 +3568,7 @@ msgstr "Menús degustación, mesas del chef y eventos especiales en {name}."
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Tax"
 msgstr "Impuesto"
 
@@ -3649,6 +3739,10 @@ msgstr "La reserva de tu pedido se liberó. Realiza un nuevo pedido."
 #: src/pages/menu.astro.ts:3
 msgid "The items from your call are no longer available. You can still order from the menu."
 msgstr "Los artículos de su llamada ya no están disponibles. Aún puede ordenar desde el menú."
+
+#: src/pages/menu.astro.ts:3
+msgid "The items in this order are no longer available. You can still order from the menu."
+msgstr "Los artículos de este pedido ya no están disponibles. Aún puedes pedir desde el menú."
 
 #: src/pages/menu.astro.ts:3
 msgid "The items in your saved cart are no longer available. You can still order from the menu."
@@ -4097,6 +4191,7 @@ msgstr "Recargada"
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Total"
 msgstr "Total"
 
@@ -4108,12 +4203,17 @@ msgstr "Total pagado"
 msgid "Total updated to {total}."
 msgstr "Total actualizado a {total}."
 
+#: src/components/AppInviteSection.astro.ts:3
+msgid "Track this order in the app"
+msgstr "Sigue este pedido en la app"
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:150
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Try again"
 msgstr "Intentar de nuevo"
 
@@ -4313,6 +4413,10 @@ msgstr "Esperando el pago"
 msgid "Waiting for payment confirmation"
 msgstr "Esperando la confirmación del pago"
 
+#: src/pages/profile/orders.astro.ts:3
+msgid "Waiting for the restaurant"
+msgstr "Esperando al restaurante"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Waiting for the restaurant to confirm"
 msgstr "Esperando a que el restaurante confirme"
@@ -4435,6 +4539,10 @@ msgstr "No pudimos encontrar este pedido"
 msgid "We couldn't load address suggestions."
 msgstr "No pudimos cargar las sugerencias de direcciones."
 
+#: src/pages/profile/orders.astro.ts:3
+msgid "We couldn't load your orders."
+msgstr "No pudimos cargar tus pedidos."
+
 #: src/pages/menu.astro.ts:3
 msgid "We couldn't load your phone order."
 msgstr "No pudimos cargar su pedido telefónico."
@@ -4442,6 +4550,10 @@ msgstr "No pudimos cargar su pedido telefónico."
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't load your receipt"
 msgstr "No pudimos cargar tu recibo"
+
+#: src/pages/menu.astro.ts:3
+msgid "We couldn't rebuild your cart from this order."
+msgstr "No pudimos recrear tu carrito a partir de este pedido."
 
 #: src/pages/menu.astro.ts:3
 msgid "We couldn't restore your cart."
@@ -4494,6 +4606,10 @@ msgstr "Sabemos que vas en camino"
 #: src/pages/menu.astro.ts:3
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "Cargamos su pedido de la llamada. Revíselo y complete la compra."
+
+#: src/pages/menu.astro.ts:3
+msgid "We rebuilt your cart from this order. Review it and check out."
+msgstr "Hemos recreado tu carrito a partir de este pedido. Revísalo y finaliza la compra."
 
 #: src/pages/menu.astro.ts:3
 msgid "We restored your cart. Review it and check out."
@@ -4879,6 +4995,10 @@ msgstr "Tu pedido está listo."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order was placed, but we couldn't start online payment. You can pay from your receipt page."
 msgstr "Tu pedido se realizó, pero no pudimos iniciar el pago en línea. Puedes pagar desde la página del recibo."
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Your orders from the restaurant, newest first."
+msgstr "Tus pedidos del restaurante, los más recientes primero."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Your payment didn't go through. Your order is held for a short time — you can try again."

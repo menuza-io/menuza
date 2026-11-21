@@ -51,6 +51,8 @@ const updateSchema = z.object({
 			'drops_page',
 			'drop_page',
 			'order_success',
+			// Push marketing (#105): the app's pre-prompt.
+			'app_prompt',
 		])
 		.default('profile'),
 	// Version id of the consent wording the guest was shown; stored on opt-in.
@@ -148,6 +150,19 @@ subscriptionRoutes.put(
 		}
 		if (subscribed && channel === 'email' && !customer.email?.trim()) {
 			return c.json({ error: 'An email address is required' }, 409)
+		}
+		if (channel === 'push') {
+			// Push marketing is opt-in through `PUT /push/preferences` (it needs a
+			// registered device and `marketing.push`); here a guest can only turn it off.
+			if (subscribed) return c.json({ error: 'push_not_enabled' }, 409)
+			await setCustomerSubscription(db, {
+				customerId,
+				topic,
+				channel,
+				subscribed: false,
+				source,
+			})
+			return c.json({ topic, channel, subscribed: false, pending: false })
 		}
 
 		if (subscribed && channel === 'email') {

@@ -16,7 +16,6 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { ScrollArea } from '@repo/ui/scroll-area'
-import { Switch } from '@repo/ui/switch'
 import {
 	Select,
 	SelectContent,
@@ -24,6 +23,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
+import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
 import { type Node } from '@xyflow/react'
 import { useState, type ReactNode } from 'react'
@@ -236,16 +236,14 @@ export function NodeInspector({
 							data.triggerType !== 'custom_event' ? (
 								<div className="flex items-start justify-between gap-3 rounded-lg border p-3">
 									<div className="space-y-1">
-										<Label
-											htmlFor="goalOrder"
-											className="text-xs font-medium"
-										>
+										<Label htmlFor="goalOrder" className="text-xs font-medium">
 											<Trans>Stop when the guest places an order</Trans>
 										</Label>
 										<p className="text-muted-foreground text-[11px]">
 											<Trans>
-												Checked before every step, including after a delay. Guests
-												who order are not sent the rest of this automation.
+												Checked before every step, including after a delay.
+												Guests who order are not sent the rest of this
+												automation.
 											</Trans>
 										</p>
 									</div>
@@ -275,15 +273,17 @@ export function NodeInspector({
 											const n = parseInt(e.target.value)
 											handleConfigChange(
 												'nth',
-												Number.isFinite(n) && n >= 1 ? Math.min(n, 1000) : undefined,
+												Number.isFinite(n) && n >= 1
+													? Math.min(n, 1000)
+													: undefined,
 											)
 										}}
 										className="h-11"
 									/>
 									<p className="text-muted-foreground text-[11px]">
 										<Trans>
-											Leave empty to run for every completed order, or enter 3 to
-											run only for a guest's third order.
+											Leave empty to run for every completed order, or enter 3
+											to run only for a guest's third order.
 										</Trans>
 									</p>
 								</div>
@@ -313,8 +313,8 @@ export function NodeInspector({
 									</Select>
 									<p className="text-muted-foreground text-[11px]">
 										<Trans>
-											Runs once per quiet spell, for a guest who ordered at least
-											once. It starts again after their next order.
+											Runs once per quiet spell, for a guest who ordered at
+											least once. It starts again after their next order.
 										</Trans>
 									</p>
 								</div>
@@ -334,16 +334,19 @@ export function NodeInspector({
 										onChange={(e) =>
 											handleConfigChange(
 												'daysBefore',
-												Math.min(60, Math.max(0, parseInt(e.target.value) || 0)),
+												Math.min(
+													60,
+													Math.max(0, parseInt(e.target.value) || 0),
+												),
 											)
 										}
 										className="h-11"
 									/>
 									<p className="text-muted-foreground text-[11px]">
 										<Trans>
-											Starts at 10:00 local time, once a year. A birthday alone is
-											not consent: guests who did not agree to hear from you get
-											nothing.
+											Starts at 10:00 local time, once a year. A birthday alone
+											is not consent: guests who did not agree to hear from you
+											get nothing.
 										</Trans>
 									</p>
 								</div>
@@ -588,6 +591,67 @@ export function NodeInspector({
 						</div>
 					)}
 
+					{node.type === 'action_push' && (
+						<div className="space-y-4">
+							<div className="space-y-1.5">
+								<Label htmlFor="pushTitle" className="text-xs font-medium">
+									<Trans>Push title</Trans>
+								</Label>
+								<Input
+									id="pushTitle"
+									maxLength={65}
+									value={(data.title as string) || ''}
+									onChange={(event) =>
+										handleChange('title', event.target.value)
+									}
+									className="text-xs"
+								/>
+							</div>
+							<div className="space-y-1.5">
+								<div className="flex items-center justify-between">
+									<Label htmlFor="pushBody" className="text-xs font-medium">
+										<Trans>Push message</Trans>
+									</Label>
+									<span className="text-muted-foreground font-mono text-[10px]">
+										<Trans>
+											{(data.body as string | undefined)?.length || 0} / 178
+											chars
+										</Trans>
+									</span>
+								</div>
+								<Textarea
+									id="pushBody"
+									rows={4}
+									maxLength={178}
+									value={(data.body as string) || ''}
+									onChange={(event) => handleChange('body', event.target.value)}
+									className="text-xs"
+								/>
+							</div>
+							<div className="space-y-1.5">
+								<Label htmlFor="pushLink" className="text-xs font-medium">
+									<Trans>Opens (a page of your site)</Trans>
+								</Label>
+								<Input
+									id="pushLink"
+									placeholder="/menu"
+									value={(data.link as string) || ''}
+									onChange={(event) =>
+										handleChange('link', event.target.value || undefined)
+									}
+									className="text-xs"
+								/>
+							</div>
+							<p className="text-muted-foreground text-xs">
+								<Trans>
+									Guests who turned on offers in the app get this once per run.
+									A push holds no personal data, so merge tags are not
+									available.
+								</Trans>
+							</p>
+						</div>
+					)}
+
 					{node.type === 'action_sms' && (
 						<div className="space-y-4">
 							<div className="space-y-1.5">
@@ -728,7 +792,10 @@ export function NodeInspector({
 									>
 										<SelectTrigger id="audienceId" className="h-11">
 											<SelectValue placeholder={_(msg`Choose an audience`)}>
-												{audienceOptions?.find((a) => a.id === data.value)?.name}
+												{
+													audienceOptions?.find((a) => a.id === data.value)
+														?.name
+												}
 											</SelectValue>
 										</SelectTrigger>
 										<SelectContent>
@@ -740,7 +807,9 @@ export function NodeInspector({
 										</SelectContent>
 									</Select>
 									<Select
-										value={data.operator === 'not_equals' ? 'not_equals' : 'equals'}
+										value={
+											data.operator === 'not_equals' ? 'not_equals' : 'equals'
+										}
 										onValueChange={(val) =>
 											handleChange('operator', val ?? 'equals')
 										}
@@ -766,12 +835,17 @@ export function NodeInspector({
 							) : NUMERIC_CONDITION_FIELDS.includes(data.field) ? (
 								<div className="grid grid-cols-2 gap-3">
 									<div className="space-y-1.5">
-										<Label htmlFor="numericOperator" className="text-xs font-medium">
+										<Label
+											htmlFor="numericOperator"
+											className="text-xs font-medium"
+										>
 											<Trans>Condition Logic</Trans>
 										</Label>
 										<Select
 											value={data.operator || 'greater_than'}
-											onValueChange={(val: string) => handleChange('operator', val)}
+											onValueChange={(val: string) =>
+												handleChange('operator', val)
+											}
 										>
 											<SelectTrigger id="numericOperator" className="h-11">
 												<SelectValue />
@@ -790,7 +864,10 @@ export function NodeInspector({
 										</Select>
 									</div>
 									<div className="space-y-1.5">
-										<Label htmlFor="numericValue" className="text-xs font-medium">
+										<Label
+											htmlFor="numericValue"
+											className="text-xs font-medium"
+										>
 											<Trans>Target Value</Trans>
 										</Label>
 										<Input
@@ -805,7 +882,10 @@ export function NodeInspector({
 								</div>
 							) : data.field === 'has_upcoming_reservation' ? (
 								<div className="space-y-1.5">
-									<Label htmlFor="upcomingValue" className="text-xs font-medium">
+									<Label
+										htmlFor="upcomingValue"
+										className="text-xs font-medium"
+									>
 										<Trans>Upcoming reservation</Trans>
 									</Label>
 									<Select

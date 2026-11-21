@@ -344,6 +344,7 @@ export function SaveBar() {
 
 	return (
 		<SaveBarView
+			data-testid="global-save-bar"
 			aria-label={_(msg`Unsaved changes`)}
 			savingLabel={_(msg`Saving…`)}
 			message={<Trans>Unsaved changes</Trans>}

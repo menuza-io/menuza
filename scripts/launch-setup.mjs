@@ -424,6 +424,7 @@ function generateSharedSecrets() {
 	const tenantOperatorToken = randomHex(16)
 	const operatorAnalyticsToken = randomHex(16)
 	const customerJwtSecret = randomHex(16)
+	const customerAppPipelineToken = randomHex(32)
 
 	return {
 		generatedAt: new Date().toISOString(),
@@ -444,6 +445,7 @@ function generateSharedSecrets() {
 			INTEGRATION_ENCRYPTION_KEY: randomHex(32),
 			INTEGRATIONS_OAUTH_STATE_SECRET: randomHex(16),
 			OPERATOR_ANALYTICS_TOKEN: operatorAnalyticsToken,
+			CUSTOMER_APP_PIPELINE_TOKEN: customerAppPipelineToken,
 		},
 		tenant_api: {
 			JWT_SECRET: customerJwtSecret,
@@ -460,6 +462,7 @@ function generateSharedSecrets() {
 			'TENANT_CUSTOMER_JWT_SECRET (App) must equal JWT_SECRET on US tenant-api.',
 			'VOICE_AGENT_TOKEN must match on App, US tenant-api, and the LiveKit Cloud voice agent (launch.voice-agent.env).',
 			'OPERATOR_ANALYTICS_TOKEN must match on App and every tenant-api, and must differ from INTERNAL_COMMAND_TOKEN.',
+			'CUSTOMER_APP_PIPELINE_TOKEN is App-only: branded customer-app build config and per-build callbacks. Must differ from INTERNAL_COMMAND_TOKEN and from CUSTOMER_APP_BUILD_TOKEN (the GitHub PAT for workflow dispatch, set manually). Copy the same value to GitHub Actions when the build workflow runs in CI.',
 			'launch:setup can apply these via wrangler secret put after deploy — never commit values to git.',
 		],
 	}
@@ -639,6 +642,10 @@ function applyGeneratedWranglerSecrets(
 					secrets.shared.SITES_RESERVATION_PAYMENT_TOKEN,
 				],
 				['OPERATOR_ANALYTICS_TOKEN', secrets.app.OPERATOR_ANALYTICS_TOKEN],
+				[
+					'CUSTOMER_APP_PIPELINE_TOKEN',
+					secrets.app.CUSTOMER_APP_PIPELINE_TOKEN,
+				],
 				['JWT_SECRET', secrets.app.JWT_SECRET],
 				['TENANT_CUSTOMER_JWT_SECRET', secrets.app.TENANT_CUSTOMER_JWT_SECRET],
 				...(secrets.app.INTEGRATION_ENCRYPTION_KEY
@@ -1192,6 +1199,9 @@ function printGhCommands(config, repo) {
 	console.log(
 		`# Optional private GHCR pulls: gh secret set GHCR_PULL_TOKEN${repoFlag}`,
 	)
+	console.log(
+		`# Branded customer-app build pipeline (same value as App CUSTOMER_APP_PIPELINE_TOKEN): gh secret set CUSTOMER_APP_PIPELINE_TOKEN${repoFlag}`,
+	)
 }
 
 function printWranglerSecrets(secrets, { autoApplied = false } = {}) {
@@ -1230,6 +1240,10 @@ function printWranglerSecrets(secrets, { autoApplied = false } = {}) {
 							secrets.shared.SITES_RESERVATION_PAYMENT_TOKEN,
 						],
 						['OPERATOR_ANALYTICS_TOKEN', secrets.app.OPERATOR_ANALYTICS_TOKEN],
+						[
+							'CUSTOMER_APP_PIPELINE_TOKEN',
+							secrets.app.CUSTOMER_APP_PIPELINE_TOKEN,
+						],
 						['JWT_SECRET', secrets.app.JWT_SECRET],
 						[
 							'TENANT_CUSTOMER_JWT_SECRET',
@@ -1456,6 +1470,7 @@ async function main() {
 		SITES_RESERVATION_PAYMENT_TOKEN:
 			secrets.shared.SITES_RESERVATION_PAYMENT_TOKEN,
 		OPERATOR_ANALYTICS_TOKEN: secrets.app.OPERATOR_ANALYTICS_TOKEN,
+		CUSTOMER_APP_PIPELINE_TOKEN: secrets.app.CUSTOMER_APP_PIPELINE_TOKEN,
 		JWT_SECRET: secrets.app.JWT_SECRET,
 		TENANT_CUSTOMER_JWT_SECRET: secrets.app.TENANT_CUSTOMER_JWT_SECRET,
 		...(secrets.app.INTEGRATION_ENCRYPTION_KEY
@@ -1721,6 +1736,19 @@ async function main() {
 						'yellow',
 					)
 				}
+			}
+			try {
+				setGhSecret(
+					inferred.githubRepo,
+					'CUSTOMER_APP_PIPELINE_TOKEN',
+					secrets.app.CUSTOMER_APP_PIPELINE_TOKEN,
+				)
+				log('✓ CUSTOMER_APP_PIPELINE_TOKEN', 'green')
+			} catch (error) {
+				log(
+					`✗ Failed to set CUSTOMER_APP_PIPELINE_TOKEN: ${redactSecrets(error.message)}`,
+					'yellow',
+				)
 			}
 			try {
 				await applyTurboR2GhSecrets(inferred.githubRepo, inferred.accountId)

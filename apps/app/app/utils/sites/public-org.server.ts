@@ -39,6 +39,10 @@ import {
 import { parseLegalContact } from '#app/utils/legal/contact.server.ts'
 import { isSafeAnnouncementLink } from '#app/utils/safe-link.ts'
 import { readSearchConsoleVerificationToken } from '#app/utils/seo/search-console.server.ts'
+import {
+	loadPublicCustomerApp,
+	type PublicCustomerApp,
+} from '#app/utils/customer-apps/public.server.ts'
 import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
 import {
 	composePageSectionsWithChrome,
@@ -93,6 +97,8 @@ export type PublicSiteOrganization = {
 	legalPages?: Array<{ kind: string; slug: string }>
 	/** The platform's banner switch for this site (#89); absent means on. */
 	consentBanner?: boolean
+	/** The branded app's public facts (#195, #196). */
+	customerApp?: PublicCustomerApp | null
 	announcements: Array<{
 		id: string
 		content: string
@@ -107,6 +113,12 @@ export type PublicSiteOrganization = {
 }
 
 export type PublicSitePayload = {
+	/**
+	 * The branded customer app (#195, #196): its public identifiers and the
+	 * stores that are live, or null when there is none. Sites serves the
+	 * app-association files from it and shows the "Get the app" placements.
+	 */
+	customerApp: PublicCustomerApp | null
 	id: string
 	name: string
 	slug: string
@@ -235,6 +247,7 @@ export function toPublicSitePayload(
 	}
 
 	return {
+		customerApp: organization.customerApp ?? null,
 		id: organization.id,
 		name: organization.name,
 		slug: organization.slug,
@@ -440,6 +453,7 @@ export async function findPublishedSiteOrganization(options: {
 		searchConsoleVerification,
 		legalPages,
 		consentBanner: await consentBannerEnabled(organization.id),
+		customerApp: await loadPublicCustomerApp(organization.id),
 	}
 }
 

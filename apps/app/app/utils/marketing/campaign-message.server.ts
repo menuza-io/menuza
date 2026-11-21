@@ -1,6 +1,7 @@
 import { i18n } from '@lingui/core'
 import { t } from '@lingui/macro'
 import { type EmailBlock } from '@repo/common/email-blocks'
+import { marketingPushContentSchema } from '@repo/common/push'
 import { parseMarketingOffer, type MarketingOffer } from '@repo/discounts'
 import { MARKETING_OFFER_ERROR_MESSAGES } from '#app/utils/discounts/marketing-offer-labels.ts'
 import {
@@ -17,9 +18,13 @@ import { designEmail } from '#app/utils/email/designer.server.ts'
  */
 
 export type PreparedCampaignMessage = {
-	channel: 'email' | 'sms'
+	channel: 'email' | 'sms' | 'push'
+	/** The email subject, or the push title. */
 	subject: string
 	content: string
+	/** Push (#105): the image and the site page a tap opens. */
+	pushImageUrl?: string | null
+	pushLink?: string | null
 	contentHtml: string | null
 	/** JSON of the saved blocks (dishes re-resolved), or null for SMS. */
 	contentBlocks: string | null
@@ -40,11 +45,20 @@ export async function prepareCampaignMessage(input: {
 	unchangedOffer?: boolean
 }): Promise<PrepareResult> {
 	const { formData } = input
-	const channel = formData.get('channel') === 'sms' ? 'sms' : 'email'
+	const channelValue = formData.get('channel')
+	const channel =
+		channelValue === 'sms' ? 'sms' : channelValue === 'push' ? 'push' : 'email'
 	const subject =
-		channel === 'email' && typeof formData.get('subject') === 'string'
+		(channel === 'email' || channel === 'push') &&
+		typeof formData.get('subject') === 'string'
 			? String(formData.get('subject'))
 			: ''
+	const text = (name: string) =>
+		channel === 'push' && typeof formData.get(name) === 'string'
+			? String(formData.get(name)).trim() || null
+			: null
+	const pushImageUrl = text('pushImageUrl')
+	const pushLink = text('pushLink')
 	const blocksRaw = formData.get('blocks')
 	const offerRaw = readOfferField(formData.get('discountOffer'))
 
@@ -91,6 +105,47 @@ export async function prepareCampaignMessage(input: {
 		return { ok: false, error: i18n._(t`Message content is required`) }
 	}
 
+	if (channel === 'push') {
+		// A push holds no personal data and no coupon (#105): no merge tags, and
+		// the same limits tenant-api enforces, so the operator sees the reason here.
+		const parsed = marketingPushContentSchema.safeParse({
+			title: subject,
+			body: content,
+			imageUrl: pushImageUrl ?? undefined,
+			link: pushLink ?? undefined,
+		})
+		if (!parsed.success) {
+			const code = parsed.error.issues[0]?.message
+			return {
+				ok: false,
+				error:
+					code === 'merge_tags_not_allowed'
+						? i18n._(
+								t`A notification can't use merge tags such as a name or a code: it is the same for everyone.`,
+							)
+						: code === 'link_must_be_a_site_path'
+							? i18n._(t`The page must be a path on your site, like /menu.`)
+							: i18n._(
+									t`Add a title (up to 65 characters), a message (up to 178) and, if you like, a secure image address.`,
+								),
+			}
+		}
+		return {
+			ok: true,
+			message: {
+				channel,
+				subject,
+				content,
+				pushImageUrl,
+				pushLink,
+				contentHtml: null,
+				contentBlocks: null,
+				blocks: [],
+				discountOffer: null,
+			},
+		}
+	}
+
 	const offerCheck = await checkMarketingOffer({
 		userId: input.userId,
 		organizationId: input.organizationId,
@@ -111,6 +166,8 @@ export async function prepareCampaignMessage(input: {
 			channel,
 			subject,
 			content,
+			pushImageUrl: null,
+			pushLink: null,
 			contentHtml,
 			contentBlocks,
 			blocks,

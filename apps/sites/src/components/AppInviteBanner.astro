@@ -1,0 +1,64 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import { placementStores } from '~/lib/app-placements'
+import { type PublicOrganization } from '~/lib/org'
+
+interface Props {
+	organization: PublicOrganization
+}
+
+const { organization } = Astro.props
+const i18n = Astro.locals.i18n
+const locale = Astro.locals.requestedLocale || organization.defaultLocale || 'en'
+const defaultLocale = organization.defaultLocale || 'en'
+// Locale prefix for the tap redirect, so a guest stays in their language.
+const prefix = getLocaleHref('/', locale, locale, defaultLocale).replace(/\/$/, '')
+const stores = placementStores(organization.customerApp, 'banner', prefix)
+const ios = stores.find((store) => store.store === 'app_store')
+const android = stores.find((store) => store.store === 'play_store')
+const owner = organization.customerApp?.invite.bannerText?.trim()
+const text = owner || i18n._(msg`Order faster in our app`)
+const cta = i18n._(msg`Get the app`)
+const dismiss = i18n._(msg`Dismiss`)
+---
+
+{
+	(ios || android) && (
+		<div
+			data-app-invite
+			data-ios-href={ios?.href ?? ''}
+			data-android-href={android?.href ?? ''}
+			hidden
+			role="region"
+			aria-label={cta}
+			class="border-border bg-muted text-foreground border-b"
+		>
+			<div class="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-2 text-sm">
+				<p class="min-w-0 flex-1">{text}</p>
+				<a
+					data-app-invite-link
+					href="#"
+					class="btn-cta min-h-9 shrink-0 px-4 py-1.5 text-sm"
+					rel="noopener"
+				>
+					{cta}
+				</a>
+				<button
+					type="button"
+					data-app-invite-dismiss
+					class="text-muted-foreground hover:text-foreground min-h-9 shrink-0 px-2 text-sm"
+					aria-label={dismiss}
+				>
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+		</div>
+		<script>
+			import { runAppInviteBanner } from '~/lib/app-invite-client'
+
+			const root = document.querySelector<HTMLElement>('[data-app-invite]')
+			if (root) runAppInviteBanner(root)
+		</script>
+	)
+}

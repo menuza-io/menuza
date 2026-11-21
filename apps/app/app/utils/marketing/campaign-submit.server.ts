@@ -65,11 +65,15 @@ export async function submitCampaign(input: {
 }): Promise<SubmitResult> {
 	const { formData, existing } = input
 	const intent = readCampaignIntent(formData.get('intent')) ?? 'send'
-	const channel = formData.get('channel') === 'sms' ? 'sms' : 'email'
+	const channelValue = formData.get('channel')
+	const channel =
+		channelValue === 'sms' ? 'sms' : channelValue === 'push' ? 'push' : 'email'
 	const rawAudience = String(formData.get('audience') ?? 'all')
-	const audience = (AUDIENCES as readonly string[]).includes(rawAudience)
-		? rawAudience
-		: 'all'
+	// A push goes to everyone who opted in; it has no phone-based audience (#105).
+	const audience =
+		channel !== 'push' && (AUDIENCES as readonly string[]).includes(rawAudience)
+			? rawAudience
+			: 'all'
 	if (channel === 'sms' && audience === 'unverified') {
 		return {
 			kind: 'error',
@@ -171,6 +175,9 @@ export async function submitCampaign(input: {
 		contentHtml: message.contentHtml,
 		contentBlocks: message.contentBlocks,
 		discountOffer: message.discountOffer,
+		...(message.channel === 'push'
+			? { pushImageUrl: message.pushImageUrl, pushLink: message.pushLink }
+			: {}),
 		lateAfterMinutes: schedule.lateAfterMinutes,
 	}
 	const res = existing

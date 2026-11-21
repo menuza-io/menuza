@@ -74,6 +74,10 @@ msgstr "{count} 位"
 msgid "{count} items"
 msgstr "{count} 件商品"
 
+#: src/pages/menu.astro.ts:3
+msgid "{count} items are no longer available and were left out."
+msgstr "有 {count} 件商品已不可用，已被略过。"
+
 #: src/lib/ordering-labels.ts:161
 msgid "{count} min"
 msgstr "{count} 分钟"
@@ -271,6 +275,10 @@ msgstr "1 个限量活动正在接受下单"
 msgid "1 guest"
 msgstr "1 位"
 
+#: src/pages/menu.astro.ts:3
+msgid "1 item is no longer available and was left out."
+msgstr "有 1 件商品已不可用，已被略过。"
+
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "A few messages a month. You can opt out anytime."
@@ -297,6 +305,7 @@ msgid "Accept all"
 msgstr "全部接受"
 
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Accepted"
 msgstr "已接单"
 
@@ -703,6 +712,7 @@ msgstr "要取消这个预订吗？"
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:168
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Cancelled"
 msgstr "已取消"
 
@@ -1024,6 +1034,7 @@ msgstr "完成付款"
 
 #: src/lib/reservations/labels.ts:167
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Completed"
 msgstr "已完成"
 
@@ -1260,6 +1271,10 @@ msgstr "订金"
 msgid "Design"
 msgstr "设计"
 
+#: src/pages/profile/orders.astro.ts:3
+msgid "Details"
+msgstr "详情"
+
 #: src/lib/reservations/labels.ts:97
 #: src/lib/reservations/labels.ts:202
 msgid "Dietary needs"
@@ -1295,6 +1310,10 @@ msgstr "优惠暂时不可用，我们已移除您的优惠码。请核对合计
 msgid "Discounts aren't available right now. Please review your total and place your order again."
 msgstr "优惠暂时不可用。请核对合计后重新下单。"
 
+#: src/components/AppInviteBanner.astro.ts:3
+msgid "Dismiss"
+msgstr "关闭"
+
 #: src/lib/reservations/labels.ts:441
 msgid "Disputed"
 msgstr "有争议"
@@ -1306,6 +1325,10 @@ msgstr "完成"
 #: src/components/blocks/MenuFileBlock.astro.ts:3
 msgid "Download menu"
 msgstr "下载菜单"
+
+#: src/components/AppStoreButtons.astro.ts:3
+msgid "Download on the App Store"
+msgstr "在 App Store 下载"
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Drop alerts are off"
@@ -1482,6 +1505,7 @@ msgid "Experiences are not available right now."
 msgstr "体验暂时不可用。"
 
 #: src/lib/reservations/labels.ts:171
+#: src/pages/profile/orders.astro.ts:3
 msgid "Expired"
 msgstr "已过期"
 
@@ -1539,6 +1563,10 @@ msgstr "查找餐位"
 #: src/pages/events/[slug].astro.ts:3
 msgid "Find out more"
 msgstr "了解更多"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Finish this order"
+msgstr "完成此订单"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:84
@@ -1626,9 +1654,22 @@ msgstr "下一场限量活动开始时短信通知您，抢在售罄之前。"
 msgid "Get directions"
 msgstr "导航"
 
+#: src/components/AppStoreButtons.astro.ts:3
+msgid "Get it on Google Play"
+msgstr "在 Google Play 获取"
+
 #: src/lib/reservations/labels.ts:288
 msgid "Get notified when a table opens"
 msgstr "有餐位时通知我"
+
+#: src/components/AppInviteSection.astro.ts:3
+msgid "Get our app"
+msgstr "下载我们的应用"
+
+#: src/components/AppInviteBanner.astro.ts:3
+#: src/pages/get-app.astro.ts:3
+msgid "Get the app"
+msgstr "获取应用"
 
 #: src/lib/loyalty/labels.ts:204
 msgid "Getting your code…"
@@ -1707,6 +1748,10 @@ msgstr "保留 {time}"
 #: src/lib/reservations/labels.ts:178
 msgid "Hello, {name}"
 msgstr "您好，{name}"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Hide details"
+msgstr "隐藏详情"
 
 #: src/lib/loyalty/labels.ts:236
 msgid "History"
@@ -1808,6 +1853,10 @@ msgstr "已过在线修改时限，请致电餐厅。"
 #: src/lib/ordering-labels.ts:165
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "该地址不在 {location} 的配送范围内。您仍可下单自取。"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Items"
+msgstr "商品"
 
 #: src/lib/loyalty/labels.ts:312
 msgid "Join and get {points} as a welcome bonus."
@@ -1935,6 +1984,10 @@ msgstr "限量菜单，预订后在指定时段自取。"
 #: src/pages/events/[slug].astro.ts:3
 msgid "Link copied"
 msgstr "链接已复制"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Load more"
+msgstr "加载更多"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Loading your receipt…"
@@ -2165,6 +2218,10 @@ msgstr "无偏好"
 #: src/lib/loyalty/labels.ts:215
 msgid "No requests right now."
 msgstr "目前没有请求。"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "No restaurant orders yet."
+msgstr "暂无餐厅订单。"
 
 #: src/lib/loyalty/labels.ts:164
 msgid "No reward"
@@ -2407,8 +2464,13 @@ msgstr "可选"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Order"
 msgstr "点餐"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Order again"
+msgstr "再来一单"
 
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/shop/success.astro.ts:3
@@ -2422,6 +2484,14 @@ msgstr "订外卖"
 #: src/lib/ordering-labels.ts:134
 msgid "Order details"
 msgstr "订单详情"
+
+#: src/components/AppInviteSection.astro.ts:3
+msgid "Order faster and keep your orders and rewards in one place."
+msgstr "下单更快，订单和奖励集中在一处。"
+
+#: src/components/AppInviteBanner.astro.ts:3
+msgid "Order faster in our app"
+msgstr "在我们的应用中更快下单"
 
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
@@ -2515,6 +2585,10 @@ msgstr "订单于{when}开放"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Orders open: {title}"
 msgstr "开放订购：{title}"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Orders you place while signed in will show up here."
+msgstr "登录后下的订单会显示在这里。"
 
 #: src/lib/ordering-labels.ts:68
 msgid "Original price"
@@ -2662,6 +2736,10 @@ msgstr "支付方式"
 #: src/lib/reservations/labels.ts:395
 msgid "Payment received"
 msgstr "已收到付款"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Payment under review"
+msgstr "付款审核中"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Payment was not finished. Nothing was charged."
@@ -2848,6 +2926,7 @@ msgstr "发布于 {date}"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Preparing"
 msgstr "制作中"
 
@@ -2933,6 +3012,7 @@ msgstr "阅读 Cookie 政策"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Ready"
 msgstr "已备好"
 
@@ -3056,6 +3136,10 @@ msgstr "预订"
 msgid "Reserve a table"
 msgstr "预订餐位"
 
+#: src/pages/profile/orders.astro.ts:3
+msgid "Restaurant orders"
+msgstr "餐厅订单"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Return to homepage"
 msgstr "返回首页"
@@ -3136,6 +3220,10 @@ msgstr "保存我的选择"
 #: src/pages/profile.astro.ts:3
 msgid "Saving..."
 msgstr "保存中..."
+
+#: src/components/AppInviteSection.astro.ts:3
+msgid "Scan to get the app"
+msgstr "扫码下载应用"
 
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Scan to open this job on your phone."
@@ -3441,6 +3529,7 @@ msgstr "正在提交..."
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Subtotal"
 msgstr "小计"
 
@@ -3479,6 +3568,7 @@ msgstr "{name} 的品鉴菜单、主厨餐台和特别活动。"
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Tax"
 msgstr "税费"
 
@@ -3649,6 +3739,10 @@ msgstr "您的订单保留已释放。请重新下单。"
 #: src/pages/menu.astro.ts:3
 msgid "The items from your call are no longer available. You can still order from the menu."
 msgstr "您通话中的商品已无货。您仍可从菜单中点餐。"
+
+#: src/pages/menu.astro.ts:3
+msgid "The items in this order are no longer available. You can still order from the menu."
+msgstr "此订单中的商品已不可用。您仍可从菜单下单。"
 
 #: src/pages/menu.astro.ts:3
 msgid "The items in your saved cart are no longer available. You can still order from the menu."
@@ -4097,6 +4191,7 @@ msgstr "已充值"
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Total"
 msgstr "总计"
 
@@ -4108,12 +4203,17 @@ msgstr "实付总额"
 msgid "Total updated to {total}."
 msgstr "合计已更新为 {total}。"
 
+#: src/components/AppInviteSection.astro.ts:3
+msgid "Track this order in the app"
+msgstr "在应用中跟踪此订单"
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:150
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
+#: src/pages/profile/orders.astro.ts:3
 msgid "Try again"
 msgstr "重试"
 
@@ -4313,6 +4413,10 @@ msgstr "等待付款"
 msgid "Waiting for payment confirmation"
 msgstr "等待支付确认"
 
+#: src/pages/profile/orders.astro.ts:3
+msgid "Waiting for the restaurant"
+msgstr "等待餐厅确认"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Waiting for the restaurant to confirm"
 msgstr "等待餐厅确认"
@@ -4435,6 +4539,10 @@ msgstr "找不到此订单"
 msgid "We couldn't load address suggestions."
 msgstr "无法加载地址建议。"
 
+#: src/pages/profile/orders.astro.ts:3
+msgid "We couldn't load your orders."
+msgstr "无法加载您的订单。"
+
 #: src/pages/menu.astro.ts:3
 msgid "We couldn't load your phone order."
 msgstr "无法加载您的电话订单。"
@@ -4442,6 +4550,10 @@ msgstr "无法加载您的电话订单。"
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't load your receipt"
 msgstr "无法加载您的收据"
+
+#: src/pages/menu.astro.ts:3
+msgid "We couldn't rebuild your cart from this order."
+msgstr "无法根据此订单重建您的购物车。"
 
 #: src/pages/menu.astro.ts:3
 msgid "We couldn't restore your cart."
@@ -4494,6 +4606,10 @@ msgstr "我们知道您正在赶来"
 #: src/pages/menu.astro.ts:3
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "我们已载入您通话中的订单。请核对后结账。"
+
+#: src/pages/menu.astro.ts:3
+msgid "We rebuilt your cart from this order. Review it and check out."
+msgstr "我们已根据此订单重建了您的购物车。请检查后结账。"
 
 #: src/pages/menu.astro.ts:3
 msgid "We restored your cart. Review it and check out."
@@ -4879,6 +4995,10 @@ msgstr "您的订单已备好。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order was placed, but we couldn't start online payment. You can pay from your receipt page."
 msgstr "您的订单已提交，但无法发起在线支付。您可以在收据页面完成支付。"
+
+#: src/pages/profile/orders.astro.ts:3
+msgid "Your orders from the restaurant, newest first."
+msgstr "您在餐厅的订单，最新的在前。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Your payment didn't go through. Your order is held for a short time — you can try again."

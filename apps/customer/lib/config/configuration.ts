@@ -155,7 +155,7 @@ export function rewriteLoopbackEndpoints(
 	return {
 		...configuration,
 		appBaseUrl: rewrite(configuration.appBaseUrl)!,
-		tenantApiBaseUrlUs: rewrite(configuration.tenantApiBaseUrlUs)!,
+		tenantApiBaseUrlUs: rewrite(configuration.tenantApiBaseUrlUs) ?? '',
 		tenantApiBaseUrlKsa: rewrite(configuration.tenantApiBaseUrlKsa),
 	}
 }
@@ -280,10 +280,14 @@ export function configurationFromBuild(
 
 	return {
 		appBaseUrl: endpoint(fields.appBaseUrl, fallback.appBaseUrl),
-		tenantApiBaseUrlUs: endpoint(
-			fields.tenantApiUs,
-			fallback.tenantApiBaseUrlUs,
-		),
+		// A branded build holds only its organization's own regional node (#156): a
+		// blank US node in a TLS build is a KSA-only app, never the dev default.
+		tenantApiBaseUrlUs:
+			fields.tenantApiUs !== undefined &&
+			!readText(fields.tenantApiUs) &&
+			useTls
+				? ''
+				: endpoint(fields.tenantApiUs, fallback.tenantApiBaseUrlUs),
 		tenantApiBaseUrlKsa,
 		siteAddress: makeSiteAddress({
 			slug: readText(site.slug)?.toLowerCase(),
@@ -315,5 +319,5 @@ export function tenantApiBaseUrl(
 ): string | null {
 	if (region.trim().toLowerCase() === 'ksa')
 		return configuration.tenantApiBaseUrlKsa
-	return configuration.tenantApiBaseUrlUs
+	return configuration.tenantApiBaseUrlUs || null
 }

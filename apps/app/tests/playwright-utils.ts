@@ -284,7 +284,7 @@ export async function waitFor<ReturnValue>(
 
 /** The global "Unsaved changes" bar that replaced per-form Save buttons. */
 export function saveBar(page: Page) {
-	const bar = page.getByRole('group', { name: 'Unsaved changes' })
+	const bar = page.getByTestId('global-save-bar')
 	return {
 		bar,
 		save: bar.getByRole('button', { name: 'Save', exact: true }),

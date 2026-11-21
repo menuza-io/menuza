@@ -49,7 +49,7 @@ export async function sendTestBroadcast(input: {
 	makeFetchTenant: TestSendClientFactory
 	userId: string
 	message: {
-		channel: 'email' | 'sms'
+		channel: 'email' | 'sms' | 'push'
 		subject: string | null
 		content: string
 		contentHtml: string | null

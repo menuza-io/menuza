@@ -50,8 +50,10 @@ type StoredMessage = {
 	id: string
 	name: string
 	status: string
-	channel: 'email' | 'sms'
+	channel: 'email' | 'sms' | 'push'
 	subject: string | null
+	pushImageUrl?: string | null
+	pushLink?: string | null
 	content: string
 	contentBlocks: string | null
 	discountOffer: unknown
@@ -91,9 +93,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		return redirect(`/${orgSlug}/marketing/campaigns/${campaignId}`)
 	}
 
+	const features = await getMarketingFeatures(orgId)
 	return {
 		orgSlug,
-		audienceOptions: (await getMarketingFeatures(orgId)).audiences
+		audienceOptions: features.audiences
 			? ((await loadAudienceOptions(fetchTenant)) ?? null)
 			: null,
 		campaign: {
@@ -103,6 +106,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			channel: campaign.channel,
 			subject: campaign.subject,
 			content: campaign.content,
+			pushImageUrl: campaign.pushImageUrl ?? null,
+			pushLink: campaign.pushLink ?? null,
 			audience: campaign.audience,
 			audienceId: campaign.audienceId ?? null,
 			scheduledAt: campaign.scheduledAt
@@ -241,6 +246,8 @@ export default function EditCampaignRoute() {
 							channel: campaign.channel,
 							subject: campaign.subject,
 							content: campaign.content,
+							pushImageUrl: campaign.pushImageUrl,
+							pushLink: campaign.pushLink,
 							audience: campaign.audience,
 							scheduledAt: campaign.scheduledAt,
 							lateAfterMinutes: campaign.lateAfterMinutes,

@@ -152,10 +152,11 @@ async function printableDiscounts(access: Access) {
 
 export function couponTarget(input: {
 	scopes: (organizationId: string) => Promise<PrintScope[]>
-	siteUrl: (
+	siteLink: (
 		origin: string,
-		path: string,
+		type: 'coupon' | 'menu_home',
 		params: Record<string, string>,
+		utm: Record<string, string>,
 	) => string
 }): PrintQrTargetServer {
 	const scopesOf = (access: Access) => () =>
@@ -232,13 +233,17 @@ export function couponTarget(input: {
 					{
 						label: code?.code ?? null,
 						// One location: open its menu, where the code works.
-						qrUrl: input.siteUrl(siteOrigin, '/menu', {
-							...(locationIds?.length === 1
-								? { location: locationIds[0]! }
-								: {}),
-							...(code ? { coupon: code.code } : {}),
-							...utm,
-						}),
+						qrUrl: input.siteLink(
+							siteOrigin,
+							code ? 'coupon' : 'menu_home',
+							{
+								...(locationIds?.length === 1
+									? { location: locationIds[0]! }
+									: {}),
+								...(code ? { coupon: code.code } : {}),
+							},
+							utm,
+						),
 					},
 				],
 				facts: [

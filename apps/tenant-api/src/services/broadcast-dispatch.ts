@@ -146,7 +146,7 @@ export function audienceIdRule(segmentationRules: unknown): string | undefined {
 /** Messages of this channel the organization sent (or attempted) in the last hour. */
 export async function broadcastSendsInWindow(
 	db: Db,
-	channel: 'email' | 'sms',
+	channel: 'email' | 'sms' | 'push',
 	now: number,
 ) {
 	const [row] = await db
@@ -243,8 +243,12 @@ export async function dispatchBroadcast(
 			.where(eq(marketingCampaigns.id, campaignId))
 			.get()
 		if (!campaign) return 'missing'
-		const channel: 'email' | 'sms' =
-			campaign.channel === 'sms' ? 'sms' : 'email'
+		const channel: 'email' | 'sms' | 'push' =
+			campaign.channel === 'sms'
+				? 'sms'
+				: campaign.channel === 'push'
+					? 'push'
+					: 'email'
 		const audience = audienceRule(campaign.segmentationRules)
 
 		// The unsubscribe link carries a signed token, so its origin must be the
@@ -258,6 +262,20 @@ export async function dispatchBroadcast(
 			})
 			await finish(db, campaignId, currentLease, 'Failed')
 			return 'failed'
+		}
+		// A push broadcast needs `marketing.push` (and the node, region and app
+		// credentials) at the moment it starts, like every send.
+		if (channel === 'push') {
+			const { pushGate } = await import('./push-service.ts')
+			const gate = await pushGate(orgId, { marketing: true })
+			if (!gate.ok) {
+				console.error('Broadcast failed: push is not enabled', {
+					orgId,
+					campaignId,
+				})
+				await finish(db, campaignId, currentLease, 'Failed')
+				return 'failed'
+			}
 		}
 		// A coupon the broadcast carries fills `{{couponCode}}`. One that cannot
 		// be read fails the campaign before anything is sent.
@@ -539,7 +557,7 @@ async function sendOne(params: {
 	orgId: string
 	campaignId: string
 	campaign: typeof marketingCampaigns.$inferSelect
-	channel: 'email' | 'sms'
+	channel: 'email' | 'sms' | 'push'
 	consentOrigin: string | null
 	messageId: string
 	customer: Customer
@@ -547,6 +565,28 @@ async function sendOne(params: {
 	offer: MarketingOffer | null
 }) {
 	const { orgId, campaignId, campaign, customer, messageId } = params
+	if (params.channel === 'push') {
+		// Plain words for everyone: no merge tags, no coupon, no personal data.
+		const { marketingBuilder, sendPushToCustomer } =
+			await import('./push-service.ts')
+		const result = await sendPushToCustomer(params.db, {
+			orgId,
+			customerId: customer.id,
+			kind: 'marketing',
+			ref: campaignId,
+			campaignId,
+			build: marketingBuilder({
+				title: campaign.subject ?? '',
+				body: campaign.content,
+				imageUrl: campaign.pushImageUrl ?? undefined,
+				link: campaign.pushLink ?? undefined,
+			}),
+		})
+		// No device (uninstalled) or a refused send is a failed row: it does not
+		// count against the guest's frequency cap.
+		if (result.sent === 0) throw new Error(result.reason ?? 'No push was sent')
+		return
+	}
 	// The coupon is minted before anything is sent, so a failed mint fails this
 	// recipient instead of sending a raw tag. A resumed dispatch reuses it.
 	const mergeContext: Record<string, string> = params.offer

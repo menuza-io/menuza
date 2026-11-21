@@ -1,3 +1,5 @@
+import { orderStatusMatters } from '@repo/common/push'
+import { type OrderPushIntent } from './push-hooks.ts'
 import {
 	orderMessages,
 	type OrderMessageChannel,
@@ -49,11 +51,15 @@ export type OrderMessageContext = {
 	now: number
 	/** Receives the ids of rows queued to send, for delivery after commit. */
 	collect?: (ids: readonly string[]) => void
+	/** Receives a status change a signed-in guest should get a push for (#105). */
+	collectPush?: (intent: OrderPushIntent) => void
 }
 
 type OrderForMessages = Pick<
 	RestaurantOrder,
 	| 'id'
+	| 'number'
+	| 'customerId'
 	| 'fulfillment'
 	| 'tabId'
 	| 'tableId'
@@ -297,6 +303,24 @@ export async function queueOrderStatusMessages(
 	ctx: OrderMessageContext,
 ): Promise<string[]> {
 	if (!nextStatus || prevStatus === nextStatus) return []
+	// A signed-in guest's push (#105): accepted, ready and cancelled only, for
+	// online pickup and delivery orders, not a table round or a tab. It does not
+	// depend on the guest having given an email or phone.
+	if (
+		order.customerId &&
+		orderStatusMatters(nextStatus) &&
+		order.fulfillment !== 'dine_in' &&
+		!order.tabId &&
+		!order.tableId
+	) {
+		ctx.collectPush?.({
+			orderId: order.id,
+			customerId: order.customerId,
+			number: order.number,
+			status: nextStatus,
+			fulfillment: order.fulfillment,
+		})
+	}
 	const queued: string[] = []
 	if (prevStatus === 'payment_review' && nextStatus !== 'cancelled') {
 		queued.push(...(await queueOrderMessage(tx, order, 'receipt', ctx)))
@@ -339,6 +363,7 @@ export async function orderMessagesIdle(): Promise<void> {
  */
 export function orderMessageBatch() {
 	const ids = new Set<string>()
+	const pushes = new Map<string, OrderPushIntent>()
 	return {
 		context(now: number = Date.now()): OrderMessageContext {
 			return {
@@ -346,17 +371,28 @@ export function orderMessageBatch() {
 				collect: (queued) => {
 					for (const id of queued) ids.add(id)
 				},
+				collectPush: (intent) => {
+					pushes.set(`${intent.orderId}:${intent.status}`, intent)
+				},
 			}
 		},
 		deliver(orgId: string): void {
-			if (ids.size === 0) return
+			if (ids.size === 0 && pushes.size === 0) return
 			const pending = [...ids]
+			const pendingPushes = [...pushes.values()]
 			ids.clear()
+			pushes.clear()
 			const work = (async () => {
 				try {
-					const { deliverOrderMessagesByIds } =
-						await import('./order-message-send.ts')
-					await deliverOrderMessagesByIds(orgId, pending)
+					if (pending.length > 0) {
+						const { deliverOrderMessagesByIds } =
+							await import('./order-message-send.ts')
+						await deliverOrderMessagesByIds(orgId, pending)
+					}
+					if (pendingPushes.length > 0) {
+						const { deliverOrderPushes } = await import('./push-hooks.ts')
+						await deliverOrderPushes(orgId, pendingPushes)
+					}
 				} catch (error) {
 					console.warn(
 						'Order messages not sent after commit',

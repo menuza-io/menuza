@@ -146,6 +146,10 @@ const PALETTE_MSGS = {
 		label: msg`Send SMS`,
 		description: msg`Dispatch text message with merge tags`,
 	},
+	action_push: {
+		label: msg`Send push`,
+		description: msg`Notify guests who opted in to offers in the app`,
+	},
 	condition: {
 		label: msg`Condition Branch`,
 		description: msg`Split path based on rules (True / False)`,
@@ -157,6 +161,11 @@ const TENANT_EMAIL_DEFAULTS = {
 	bodyHtml: msg`<p>Hi ${NAME_TAG},</p><p>Check out our latest update.</p>`,
 	bodyText: msg`Hi ${NAME_TAG}, Check out our latest update.`,
 	fromName: msg`Team`,
+}
+
+const TENANT_PUSH_DEFAULT = {
+	title: msg`Something new on the menu`,
+	body: msg`Open the app to take a look.`,
 }
 
 const TENANT_SMS_DEFAULT = msg`Hi ${NAME_TAG}, your account update is ready!`
@@ -211,6 +220,13 @@ function buildPaletteItems(
 			icon: 'split',
 			color: 'text-muted-foreground ',
 		},
+		{
+			type: 'action_push',
+			label: _(PALETTE_MSGS.action_push.label),
+			description: _(PALETTE_MSGS.action_push.description),
+			icon: 'smartphone',
+			color: 'text-muted-foreground ',
+		},
 	]
 
 	if (audience === 'tenant') {
@@ -247,6 +263,14 @@ function buildPaletteItems(
 					field: 'tags',
 					operator: 'contains',
 					value: 'VIP',
+				},
+			},
+			// Push is for restaurants with a branded app (flag `marketing.push`).
+			{
+				...baseItems[5]!,
+				defaultData: {
+					title: _(TENANT_PUSH_DEFAULT.title),
+					body: _(TENANT_PUSH_DEFAULT.body),
 				},
 			},
 		]

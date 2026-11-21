@@ -221,6 +221,12 @@ const cartRestoreLabels = {
 	removed: i18n._(msg`Some items are no longer available and were left out:`),
 	repriced: i18n._(msg`Some prices changed. Your cart shows the current prices.`),
 	removedCount: i18n._(msg`Some items are no longer available and were left out.`),
+	// "Order again" and "Finish this order" (#112).
+	reorderLoaded: i18n._(msg`We rebuilt your cart from this order. Review it and check out.`),
+	reorderOne: i18n._(msg`1 item is no longer available and was left out.`),
+	reorderMany: translate(i18n, msg`{count} items are no longer available and were left out.`, { count: '{count}' }),
+	reorderNone: i18n._(msg`The items in this order are no longer available. You can still order from the menu.`),
+	reorderError: i18n._(msg`We couldn't rebuild your cart from this order.`),
 }
 const dietTagLabels = {
 	halal: i18n._(msg`Halal`),
@@ -1146,6 +1152,15 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			type HandoffCartItem,
 		} from '../scripts/voice-order-handoff'
 		import {
+			fetchReorder,
+			getReorderId,
+			getReorderPayload,
+			hasReorderParam,
+			hasReorderPayloadParam,
+			stripReorderParam,
+			stripReorderPayloadParam,
+		} from '../scripts/reorder'
+		import {
 			fetchSavedCart,
 			getCartToken,
 			hasCartParam,
@@ -1153,7 +1168,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			stripCartParam,
 			type SavedCartLine,
 		} from '../scripts/cart-restore'
-		import { getAccessToken } from '~/lib/client-auth'
+		import { getAccessToken, redirectToLogin } from '~/lib/client-auth'
 		import { mountTableOrdering } from '../scripts/table-ordering'
 
 		type MenuData = {
@@ -1199,7 +1214,12 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 				| 'unavailable'
 				| 'removed'
 				| 'repriced'
-				| 'removedCount',
+				| 'removedCount'
+				| 'reorderLoaded'
+				| 'reorderOne'
+				| 'reorderMany'
+				| 'reorderNone'
+				| 'reorderError',
 				string
 			>
 			timeLabels: { today: string; tomorrow: string; minutesRange: string }
@@ -2029,6 +2049,125 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 				try {
 					applySavedCart(JSON.parse(pending) as SavedCartLine[])
 				} catch {}
+			}
+		}
+
+		// "Order again" / "Finish this order" (#112): `#reorder=<order id>`. Fragment
+		// only; the cart is rebuilt from the menu published now, and dishes that
+		// cannot be made exactly as ordered are left out and counted.
+		const REORDER_NOTICE_KEY = 'menuza_reorder_pending'
+		function showReorderNotice(
+			outcome: 'loaded' | 'none' | 'error',
+			dropped = 0,
+		) {
+			const region = document.getElementById('voice-order-notice')
+			if (!region) return
+			const cartLabels = data.cartRestoreLabels
+			const notice = el(
+				'div',
+				`mt-4 flex items-start gap-3 rounded-lg border p-3 text-sm sm:p-4 ${outcome === 'error' ? 'tone-danger' : 'tone-neutral'}`,
+			)
+			const body = el('div', 'min-w-0 space-y-1')
+			const headline =
+				outcome === 'loaded'
+					? cartLabels.reorderLoaded
+					: outcome === 'none'
+						? cartLabels.reorderNone
+						: cartLabels.reorderError
+			body.appendChild(el('p', 'font-semibold text-foreground', headline))
+			if (dropped > 0 && outcome === 'loaded') {
+				body.appendChild(
+					el(
+						'p',
+						'text-muted-foreground',
+						dropped === 1
+							? cartLabels.reorderOne
+							: cartLabels.reorderMany.replace('{count}', String(dropped)),
+					),
+				)
+			}
+			notice.append(voiceIcon(outcome === 'loaded' ? 'cart' : 'alert'), body)
+			region.replaceChildren(notice)
+		}
+		function applyReorderLines(lines: SavedCartLine[]) {
+			const restored = restoreCart(lines, [{ categories: data.categories ?? [] }])
+			if (!restored.cart.length) {
+				showReorderNotice('none')
+				return
+			}
+			store.save(restored.cart)
+			showReorderNotice('loaded', restored.droppedCount)
+			cartUi.open()
+		}
+		async function importReorder(orderId: string) {
+			history.replaceState(history.state, '', stripReorderParam(window.location.href))
+			const result = await fetchReorder(orderId)
+			if (result.status === 'signed_out') {
+				// The sign-in page takes the guest home; Orders is one tap away.
+				redirectToLogin()
+				return
+			}
+			if (result.status === 'not_reorderable') {
+				showReorderNotice('none')
+				return
+			}
+			if (result.status !== 'loaded') {
+				showReorderNotice('error')
+				return
+			}
+			const { cart } = result
+			const canSwitchLocation =
+				cart.locationId !== data.activeLocationId &&
+				data.locationIds.includes(cart.locationId)
+			if (canSwitchLocation) {
+				// The menu, tax and fee are per location: reload on it, then rebuild
+				// the cart from that location's menu.
+				sessionStorage.setItem(REORDER_NOTICE_KEY, JSON.stringify(cart.lines))
+				const url = new URL(window.location.href)
+				url.searchParams.set('location', cart.locationId)
+				window.location.href = url.toString()
+				return
+			}
+			// A different location that is not on this menu: lines stay only if
+			// the dish exists here (the rebuild below drops the rest).
+			applyReorderLines(cart.lines)
+		}
+		// The customer app's hand-off: the order's catalog ids in the fragment.
+		function importReorderPayload(cart: { locationId: string; lines: SavedCartLine[] }) {
+			history.replaceState(history.state, '', stripReorderPayloadParam(window.location.href))
+			const canSwitchLocation =
+				cart.locationId !== data.activeLocationId &&
+				data.locationIds.includes(cart.locationId)
+			if (canSwitchLocation) {
+				sessionStorage.setItem(REORDER_NOTICE_KEY, JSON.stringify(cart.lines))
+				const url = new URL(window.location.href)
+				url.searchParams.set('location', cart.locationId)
+				window.location.href = url.toString()
+				return
+			}
+			applyReorderLines(cart.lines)
+		}
+		{
+			const reorderId = getReorderId(window.location.href)
+			const handoff = getReorderPayload(window.location.href)
+			if (handoff) {
+				importReorderPayload(handoff)
+			} else if (hasReorderPayloadParam(window.location.href)) {
+				history.replaceState(history.state, '', stripReorderPayloadParam(window.location.href))
+				showReorderNotice('error')
+			} else if (reorderId) {
+				void importReorder(reorderId)
+			} else if (hasReorderParam(window.location.href)) {
+				history.replaceState(history.state, '', stripReorderParam(window.location.href))
+				showReorderNotice('error')
+			} else {
+				const pendingReorder = readSession(REORDER_NOTICE_KEY)
+				if (pendingReorder) {
+					writeSession(REORDER_NOTICE_KEY, null)
+					try {
+						applyReorderLines(JSON.parse(pendingReorder) as SavedCartLine[])
+					} catch {}
+				}
 			}
 		}
 

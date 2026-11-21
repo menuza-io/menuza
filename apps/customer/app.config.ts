@@ -1,6 +1,7 @@
-import { getLocalDomain } from '@repo/config/brand'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { androidIntentPaths } from '@repo/common/links'
+import { getLocalDomain } from '@repo/config/brand'
 import { type ConfigContext, type ExpoConfig } from 'expo/config'
 
 /**
@@ -20,6 +21,8 @@ import { type ConfigContext, type ExpoConfig } from 'expo/config'
 type SiteBinding = { slug: string; host: string; origin: string }
 
 type CustomerExtra = {
+	/** Hosts this build claims as universal and app links: its own site only (#195). */
+	associatedDomains?: string[]
 	useTls: boolean
 	appBaseUrl: string
 	tenantApiUs: string
@@ -38,16 +41,20 @@ type TenantFile = {
 	marketingVersion?: string
 	appUrl: string
 	brandDomain?: string
-	tenantApiUs: string
+	/** A registry build holds only its organization's own region (#156). */
+	tenantApiUs?: string
 	tenantApiKsa?: string
 	useTls?: boolean
 	iconBackground?: string
 	site?: { slug?: string; host?: string; origin?: string }
+	/** Hosts the app claims as universal and app links: its own site only (#195). */
+	associatedDomains?: string[]
 }
 
 const TENANT_SLUG = /^[a-z0-9][a-z0-9-]{0,62}$/
 const LOCAL_HOST = /^(localhost|127\.|10\.0\.2\.2|\[::1\])/
 const DEFAULT_ICON_BACKGROUND = '#0F172A'
+const ANDROID_LINK_PATHS = androidIntentPaths()
 
 const DEVELOPMENT = {
 	useTls: false,
@@ -87,8 +94,16 @@ function readTenant(slug: string): TenantFile {
 	if (!TENANT_SLUG.test(slug)) {
 		fail(`CUSTOMER_TENANT must name a file in tenants/ (got "${slug}")`)
 	}
-	const file = `${slug}.json`
-	const path = join(__dirname, 'tenants', file)
+	// `generate-tenant.mjs --registry` writes the config it read from the App's
+	// internal endpoint (#156); the committed `tenants/<slug>.json` files stay
+	// until every app is migrated, and the generated one wins when present.
+	const generated = join(__dirname, 'tenants/generated', slug, 'tenant.json')
+	const file = existsSync(generated)
+		? `generated/${slug}/tenant.json`
+		: `${slug}.json`
+	const path = existsSync(generated)
+		? generated
+		: join(__dirname, 'tenants', `${slug}.json`)
 	if (!existsSync(path)) fail(`no tenant config at tenants/${file}`)
 	let raw: unknown
 	try {
@@ -101,7 +116,9 @@ function readTenant(slug: string): TenantFile {
 	requireText(tenant, 'displayName', file)
 	requireText(tenant, 'bundleId', file)
 	requireText(tenant, 'appUrl', file)
-	requireText(tenant, 'tenantApiUs', file)
+	if (!text(tenant.tenantApiUs) && !text(tenant.tenantApiKsa)) {
+		fail(`tenants/${file} needs "tenantApiUs" or "tenantApiKsa"`)
+	}
 	const site = (tenant.site ?? {}) as Record<string, unknown>
 	if (!text(site.slug) && !text(site.host)) {
 		fail(
@@ -159,12 +176,35 @@ function tenantExtra(tenant: TenantFile): CustomerExtra {
 		brandDomain:
 			text(tenant.brandDomain) ||
 			(useTls ? PRODUCTION.brandDomain : DEVELOPMENT.brandDomain),
+		associatedDomains: associatedDomains(tenant, useTls),
 		site: {
 			slug: host ? '' : text(tenant.site?.slug).toLowerCase(),
 			host: host.toLowerCase(),
 			origin: siteOrigin(tenant, useTls),
 		},
 	}
+}
+
+/**
+ * The only hosts a white-label build claims (#195): its own restaurant's site.
+ * Never a wildcard and never another organization's domain, and only over TLS
+ * (a local build has no association files to verify).
+ */
+function associatedDomains(tenant: TenantFile, useTls: boolean): string[] {
+	if (!useTls) return []
+	const fromFile = (tenant.associatedDomains ?? []).map((host) => text(host))
+	const own = text(tenant.site?.host)
+	let originHost = ''
+	try {
+		originHost = tenant.site?.origin ? new URL(tenant.site.origin).host : ''
+	} catch {
+		originHost = ''
+	}
+	const hosts = [...fromFile, own, originHost].filter(
+		(host) =>
+			/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i.test(host) && !host.includes('*'),
+	)
+	return [...new Set(hosts.map((host) => host.toLowerCase()))].slice(0, 3)
 }
 
 function generatedAsset(slug: string, name: string): string | null {
@@ -210,6 +250,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 			bundleIdentifier: bundleId,
 			buildNumber,
 			supportsTablet: true,
+			associatedDomains: (extra.associatedDomains ?? []).map(
+				(host) => `applinks:${host}`,
+			),
 			infoPlist: {
 				ITSAppUsesNonExemptEncryption: false,
 			},
@@ -226,12 +269,27 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 			// follow the customer to another device through backup or transfer.
 			allowBackup: false,
 			predictiveBackGestureEnabled: false,
+			// App links (#195): verified against `/.well-known/assetlinks.json` on
+			// the restaurant's own host, for the paths the link registry lists.
+			intentFilters: (extra.associatedDomains ?? []).map((host) => ({
+				action: 'VIEW',
+				autoVerify: true,
+				data: ANDROID_LINK_PATHS.map((pathPrefix) => ({
+					scheme: 'https',
+					host,
+					pathPrefix,
+				})),
+				category: ['BROWSABLE', 'DEFAULT'],
+			})),
 		},
 		plugins: [
 			'expo-router',
 			'expo-status-bar',
 			['expo-secure-store', { configureAndroidBackup: true }],
 			'expo-web-browser',
+			// Guest push (#105). The push credentials (APNs key, FCM service
+			// account) are the app's own, uploaded write-only in Admin (#156).
+			'expo-notifications',
 			[
 				'expo-localization',
 				{

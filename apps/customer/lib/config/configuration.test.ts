@@ -86,6 +86,19 @@ describe('configurationFromBuild', () => {
 		)
 	})
 
+	it('treats a blank US node in a TLS build as a KSA-only app, never a dev default', () => {
+		const configuration = configurationFromBuild({
+			appBaseUrl: 'app.epic-startup.com',
+			tenantApiUs: '',
+			tenantApiKsa: 'tenant-ksa.epic-startup.com',
+		})
+		expect(configuration.tenantApiBaseUrlUs).toBe('')
+		expect(tenantApiBaseUrl(configuration, 'us')).toBeNull()
+		expect(tenantApiBaseUrl(configuration, 'ksa')).toBe(
+			'https://tenant-ksa.epic-startup.com',
+		)
+	})
+
 	it('points loopback endpoints at the host machine on the Android emulator', () => {
 		const configuration = configurationFromBuild(
 			{
@@ -123,9 +136,9 @@ describe('configurationFromBuild', () => {
 
 	it('rewrites loopback dev endpoints to the Metro machine host', () => {
 		const base = localDevelopment()
-		expect(
-			rewriteLoopbackEndpoints(base, '192.168.2.44').appBaseUrl,
-		).toBe('http://192.168.2.44:3001')
+		expect(rewriteLoopbackEndpoints(base, '192.168.2.44').appBaseUrl).toBe(
+			'http://192.168.2.44:3001',
+		)
 		expect(
 			rewriteLoopbackEndpoints(base, '192.168.2.44').tenantApiBaseUrlUs,
 		).toBe('http://192.168.2.44:3007')
@@ -139,9 +152,9 @@ describe('configurationFromBuild', () => {
 	})
 
 	it('resolves the dev machine from Metro URIs', () => {
-		expect(
-			developmentMachineHostFromLink('exp://192.168.2.44:8081'),
-		).toBe('192.168.2.44')
+		expect(developmentMachineHostFromLink('exp://192.168.2.44:8081')).toBe(
+			'192.168.2.44',
+		)
 		expect(
 			resolveDevelopmentMachineHost({
 				linkingUri: 'exp://192.168.2.44:8081',

@@ -1,3 +1,4 @@
+import { buildLink } from '@repo/common/links'
 import { hmacHash, timingSafeEqualString } from './secrets.ts'
 
 /**
@@ -60,23 +61,14 @@ export function verifyCartToken(input: {
 }
 
 /**
- * `<site origin>/menu#cart=<token>`. The origin is the organization's public
- * site as the control plane resolves it, never a browser-sent value. Null when
- * the origin is missing or not http(s).
+ * `<site origin>/menu#cart=<token>`, built by the shared link registry
+ * (`@repo/common/links`, type `cart`; website only, the app has no cart). The
+ * origin is the organization's public site as the control plane resolves it,
+ * never a browser-sent value. Null when the origin is missing or not http(s).
  */
 export function buildCartLinkUrl(input: {
 	siteOrigin: string | null | undefined
 	token: string
 }): string | null {
-	if (!input.siteOrigin) return null
-	let origin: URL
-	try {
-		origin = new URL(input.siteOrigin)
-	} catch {
-		return null
-	}
-	if (origin.protocol !== 'https:' && origin.protocol !== 'http:') return null
-	const url = new URL('/menu', origin.origin)
-	url.hash = `cart=${input.token}`
-	return url.toString()
+	return buildLink('cart', { cart: input.token }, { origin: input.siteOrigin })
 }

@@ -26,23 +26,45 @@ msgstr ""
 msgid "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
 msgstr "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
 
+#. placeholder {0}: data.organization?.name ?? ''
+#. placeholder {1}: data.app.iosBundleId
+#: app/routes/_admin+/customer-apps_.$appId.tsx:927
+msgid "{0} · {1}"
+msgstr "{0} · {1}"
+
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:608
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:663
 msgid "{0} / 1600 chars"
 msgstr ""
+
+#. placeholder {0}: (data.body as string | undefined)?.length || 0
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:611
+msgid "{0} / 178 chars"
+msgstr "{0} / 178 chars"
 
 #. placeholder {0}: emailBlocks.length
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:500
 msgid "{0} blocks · rendered in your website branding"
 msgstr "{0} blocks · rendered in your website branding"
 
+#. placeholder {0}: check.daysLeft
+#: app/routes/_admin+/customer-apps_.$appId.tsx:779
+msgid "{0} days left"
+msgstr "{0} days left"
+
 #: app/routes/_admin+/phone-numbers.tsx:400
 #~ msgid "{0} numbers"
 #~ msgstr "{0} numbers"
 
+#. placeholder {0}: result.summary.succeeded
+#. placeholder {1}: result.summary.total
+#: app/routes/_admin+/customer-apps.tsx:216
+msgid "{0} of {1} apps started"
+msgstr "{0} of {1} apps started"
+
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:224
+#: ../../packages/marketing/src/components/campaign-detail.tsx:251
 msgid "{0} of {1} targeted"
 msgstr ""
 
@@ -85,11 +107,11 @@ msgstr ""
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:393
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:417
 msgid "{field}"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:424
+#: ../../packages/marketing/src/components/campaign-form.tsx:528
 msgid "{hours} hours late"
 msgstr "{hours} hours late"
 
@@ -109,6 +131,10 @@ msgstr "{numberCount} numbers"
 msgid "{providerName} identity provider configuration"
 msgstr ""
 
+#: ../../packages/marketing/src/components/campaign-detail.tsx:235
+msgid "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
+msgstr "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
+
 #: app/components/impersonation-banner.tsx:40
 msgid "{remainingMinutes, plural, one {expires in # minute} other {expires in # minutes}}"
 msgstr ""
@@ -117,7 +143,7 @@ msgstr ""
 msgid "{selectedCount} selected"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:391
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:415
 msgid "{status}"
 msgstr ""
 
@@ -141,7 +167,7 @@ msgstr ""
 msgid "{totalSize} total"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:389
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:413
 msgid "{unit}"
 msgstr ""
 
@@ -153,11 +179,11 @@ msgstr ""
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:899
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:954
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:980
 msgid "• Otherwise → <0>False branch</0>"
 msgstr ""
 
@@ -184,7 +210,7 @@ msgstr ""
 msgid "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:157
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:161
 msgid "<p>Hi {NAME_TAG},</p><p>Check out our latest update.</p>"
 msgstr "<p>Hi {NAME_TAG},</p><p>Check out our latest update.</p>"
 
@@ -192,7 +218,7 @@ msgstr "<p>Hi {NAME_TAG},</p><p>Check out our latest update.</p>"
 msgid "<p>Hi {NAME_TAG},</p><p>Welcome to our service!</p>"
 msgstr "<p>Hi {NAME_TAG},</p><p>Welcome to our service!</p>"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:166
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:175
 msgid "<p>Hi {NAME_TAG},</p><p>Your organization {ORGANIZATION_NAME_TAG} is ready.</p>"
 msgstr "<p>Hi {NAME_TAG},</p><p>Your organization {ORGANIZATION_NAME_TAG} is ready.</p>"
 
@@ -208,7 +234,7 @@ msgstr ""
 msgid "1 entry"
 msgstr "1 entry"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:423
+#: ../../packages/marketing/src/components/campaign-form.tsx:527
 msgid "1 hour late"
 msgstr "1 hour late"
 
@@ -228,6 +254,10 @@ msgstr "1 user"
 msgid "1-10 (higher = more permissions)"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:457
+msgid "A build is a recorded job. The pipeline reports its progress back here, and nothing is submitted to a store from this page."
+msgstr "A build is a recorded job. The pipeline reports its progress back here, and nothing is submitted to a store from this page."
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:49
 msgid "a discount that is no longer listed"
 msgstr "a discount that is no longer listed"
@@ -240,11 +270,31 @@ msgstr "A large title that opens a section."
 msgid "A link styled as a call to action."
 msgstr "A link styled as a call to action."
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:467
+msgid "A new build is required"
+msgstr "A new build is required"
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:34
+msgid "A notification can't use merge tags such as a name or a code: it is the same for everyone."
+msgstr "A notification can't use merge tags such as a name or a code: it is the same for everyone."
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:406
+msgid "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
+msgstr "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:419
+msgid "A page on your site. Leave empty for the menu."
+msgstr "A page on your site. Leave empty for the menu."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:34
 msgid "A picture, logo, or product shot."
 msgstr "A picture, logo, or product shot."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:159
+#: ../../packages/marketing-workflow/src/validation.ts:29
+msgid "A push cannot use merge tags: it holds no personal data."
+msgstr "A push cannot use merge tags: it holds no personal data."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:166
 msgid "A re-send to people who did not open or click the first one and are still subscribed."
 msgstr "A re-send to people who did not open or click the first one and are still subscribed."
 
@@ -289,6 +339,10 @@ msgstr "Accept new price, {orderName}"
 msgid "Accept the new wholesale price?"
 msgstr "Accept the new wholesale price?"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:53
+msgid "Accept the paid applications and payment terms in the store’s agreements section."
+msgstr "Accept the paid applications and payment terms in the store’s agreements section."
+
 #: app/routes/_admin+/legal-agreements.tsx:67
 msgid "Accepted"
 msgstr "Accepted"
@@ -310,6 +364,10 @@ msgstr ""
 #: app/routes/_admin+/roles+/$roleId.tsx:918
 msgid "Access Level"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps.tsx:364
+msgid "Account needs attention"
+msgstr "Account needs attention"
 
 #: app/routes/_admin+/cache.tsx:341
 msgid "across all caches"
@@ -345,7 +403,7 @@ msgstr ""
 msgid "Activate"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:364
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:388
 msgid "active"
 msgstr ""
 
@@ -391,7 +449,7 @@ msgstr ""
 #~ msgid "Add {0}"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-palette.tsx:52
+#: ../../packages/marketing-workflow/src/node-palette.tsx:53
 msgid "Add {label}"
 msgstr "Add {label}"
 
@@ -474,7 +532,7 @@ msgstr "Add points"
 msgid "Add points to {name}'s current total of {points}."
 msgstr "Add points to {name}'s current total of {points}."
 
-#: ../../packages/marketing-workflow/src/validation.ts:28
+#: ../../packages/marketing-workflow/src/validation.ts:33
 msgid "Add the Coupon code tag to the message so customers see their code."
 msgstr "Add the Coupon code tag to the message so customers see their code."
 
@@ -486,8 +544,8 @@ msgstr "Add waitlist points"
 msgid "Address, phone and opening hours"
 msgstr "Address, phone and opening hours"
 
-#: app/components/admin-sidebar.tsx:167
-#: app/components/admin-sidebar.tsx:175
+#: app/components/admin-sidebar.tsx:173
+#: app/components/admin-sidebar.tsx:181
 #: app/components/sso-configuration-form.tsx:438
 #: app/components/sso-user-management.tsx:101
 #: app/routes/_admin+/roles+/$roleId.tsx:504
@@ -495,7 +553,7 @@ msgstr "Address, phone and opening hours"
 msgid "Admin"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:193
+#: app/components/admin-sidebar.tsx:199
 #: app/routes/_admin+/index.tsx:129
 msgid "Admin Dashboard"
 msgstr ""
@@ -534,9 +592,14 @@ msgstr "AI drafts are not set up yet."
 msgid "Alignment"
 msgstr "Alignment"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:664
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:30
 msgid "All"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:932
+msgid "All apps"
+msgstr "All apps"
 
 #: app/routes/_admin+/cache.tsx:371
 msgid "All caches"
@@ -599,6 +662,18 @@ msgstr "Alt text"
 msgid "Amount in US dollars, up to {left}"
 msgstr "Amount in US dollars, up to {left}"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:859
+msgid "An app can be deleted only before it was first published. After that it can be archived: it stops building and disappears from the website."
+msgstr "An app can be deleted only before it was first published. After that it can be archived: it stops building and disappears from the website."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:150
+msgid "Android package"
+msgstr "Android package"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:194
+msgid "Android signing fingerprints (SHA-256)"
+msgstr "Android signing fingerprints (SHA-256)"
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:110
 msgid "Announce a dish"
 msgstr "Announce a dish"
@@ -618,6 +693,31 @@ msgstr "Answering"
 #: app/routes/_admin+/roles+/$roleId.tsx:936
 msgid "any - Any resources"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:273
+msgid "APNs key (iOS)"
+msgstr "APNs key (iOS)"
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:97
+msgid "App notification"
+msgstr "App notification"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:578
+#: app/routes/_admin+/customer-apps.tsx:254
+msgid "App Store"
+msgstr "App Store"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:203
+msgid "App Store link"
+msgstr "App Store link"
+
+#: app/routes/_admin+/customer-apps.tsx:67
+msgid "APP_URL or INTERNAL_COMMAND_TOKEN is not set."
+msgstr "APP_URL or INTERNAL_COMMAND_TOKEN is not set."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:184
+msgid "Apple team id"
+msgstr "Apple team id"
 
 #: ../../packages/reports/src/ui/report-labels.ts:72
 msgid "Applicant funnel"
@@ -639,6 +739,10 @@ msgstr "Applies to every organization without its own override. Basis points: 10
 msgid "Apply Preset"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps.tsx:268
+msgid "Apps"
+msgstr "Apps"
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:284
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:289
 msgid "Arabic"
@@ -648,13 +752,26 @@ msgstr "Arabic"
 msgid "Archive Old Logs"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:366
+#: app/routes/_admin+/customer-apps_.$appId.tsx:856
+msgid "Archive or delete"
+msgstr "Archive or delete"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:879
+msgid "Archive the app"
+msgstr "Archive the app"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:390
 msgid "archived"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps.tsx:299
 #: app/routes/_admin+/marketing+/automations._index.tsx:54
 msgid "Archived"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps.tsx:57
+msgid "Archived apps cannot be built."
+msgstr "Archived apps cannot be built."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:256
 msgid "Archived Logs"
@@ -688,11 +805,16 @@ msgstr "Assign"
 msgid "Assigned, not connected"
 msgstr "Assigned, not connected"
 
+#. placeholder {0}: build.attempts
+#: app/routes/_admin+/customer-apps_.$appId.tsx:542
+msgid "attempt {0}"
+msgstr "attempt {0}"
+
 #: app/components/sso-configuration-form.tsx:455
 msgid "Attribute Mapping (JSON)"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:224
+#: ../../packages/marketing/src/components/campaign-form.tsx:243
 msgid "Audience"
 msgstr "Audience"
 
@@ -900,7 +1022,7 @@ msgstr "Bleed in millimetres, {item}"
 #~ msgid "Block {0}: {1}"
 #~ msgstr "Block {0}: {1}"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:82
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:83
 msgid "Block {position}: {name}"
 msgstr "Block {position}: {name}"
 
@@ -940,7 +1062,7 @@ msgstr "Box"
 msgid "Broadcast not found"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:196
+#: ../../packages/marketing/src/components/campaign-detail.tsx:204
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
@@ -957,9 +1079,37 @@ msgstr ""
 msgid "Build a branded HTML email with blocks."
 msgstr "Build a branded HTML email with blocks."
 
+#: app/routes/_admin+/customer-apps.tsx:204
+msgid "Build all apps"
+msgstr "Build all apps"
+
+#: app/routes/_admin+/customer-apps.tsx:179
+msgid "Build every app for a release. Each app is built on its own: one failure does not stop the others, and a failed app is retried by itself."
+msgstr "Build every app for a release. Each app is built on its own: one failure does not stop the others, and a failed app is retried by itself."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:552
+msgid "Build log"
+msgstr "Build log"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:454
+msgid "Builds"
+msgstr "Builds"
+
 #: app/routes/_admin+/cache.tsx:859
 msgid "Bulk Actions ({selectedCount})"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps.tsx:276
+msgid "Bundle ids"
+msgstr "Bundle ids"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:112
+msgid "Bundle ids are unique across all apps."
+msgstr "Bundle ids are unique across all apps."
+
+#: app/routes/_admin+/customer-apps.tsx:51
+msgid "Bundle ids cannot change after the app was published."
+msgstr "Bundle ids cannot change after the app was published."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:38
 msgid "Button"
@@ -983,18 +1133,19 @@ msgstr ""
 msgid "Cache Type:"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:250
+#: ../../packages/marketing/src/components/campaign-form.tsx:278
 msgid "Campaign name"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:365
-#: ../../packages/marketing/src/components/campaign-form.tsx:447
+#: ../../packages/marketing/src/components/campaign-form.tsx:551
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:317
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
+#: app/routes/_admin+/customer-apps_.$appId.tsx:902
 #: app/routes/_admin+/gdpr-requests.tsx:663
 #: app/routes/_admin+/print-shop.tsx:193
 #: app/routes/_admin+/roles+/index.tsx:352
@@ -1011,6 +1162,8 @@ msgid "Cancellations by who"
 msgstr "Cancellations by who"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:11
+#: app/routes/_admin+/customer-apps_.$appId.tsx:534
+#: app/routes/_admin+/customer-apps.tsx:84
 #: app/routes/_admin+/gdpr-requests.tsx:430
 #: app/routes/_admin+/print-shop.tsx:76
 msgid "Cancelled"
@@ -1049,7 +1202,7 @@ msgstr "Cash drawer variance by shift"
 msgid "Center"
 msgstr "Center"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:192
+#: ../../packages/marketing/src/components/campaign-form.tsx:211
 msgid "Channel"
 msgstr ""
 
@@ -1057,11 +1210,15 @@ msgstr ""
 msgid "characters with the opt-out footer"
 msgstr "characters with the opt-out footer"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:93
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:94
 msgid "Check before it goes out"
 msgstr "Check before it goes out"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:273
+#: app/routes/_admin+/customer-apps_.$appId.tsx:321
+msgid "Check it still works"
+msgstr "Check it still works"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:323
 msgid "Check out our new summer menu"
 msgstr ""
 
@@ -1070,11 +1227,19 @@ msgstr ""
 msgid "Check the form values."
 msgstr "Check the form values."
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:647
+msgid "Check the stores now"
+msgstr "Check the stores now"
+
+#: app/routes/_admin+/customer-apps.tsx:63
+msgid "Check the values and try again."
+msgstr "Check the values and try again."
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:246
 msgid "Checked before every step, including after a delay. Guests who order are not sent the rest of this automation."
 msgstr "Checked before every step, including after a delay. Guests who order are not sent the rest of this automation."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:761
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:816
 msgid "Checked when the guest reaches this step, never stored."
 msgstr "Checked when the guest reaches this step, never stored."
 
@@ -1090,9 +1255,13 @@ msgstr "Choose a subject"
 msgid "Choose a valid retention period."
 msgstr "Choose a valid retention period."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:730
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:785
 msgid "Choose an audience"
 msgstr "Choose an audience"
+
+#: app/routes/_admin+/customer-apps.tsx:134
+msgid "Choose an organization"
+msgstr "Choose an organization"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:284
 msgid "Choose from library"
@@ -1120,7 +1289,7 @@ msgid "Click rate"
 msgstr ""
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:98
+#: ../../packages/marketing/src/components/campaign-detail.tsx:105
 msgid "Clicked {0}"
 msgstr ""
 
@@ -1192,20 +1361,20 @@ msgstr ""
 msgid "Comprehensive activity tracking and compliance audit trail"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:150
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:154
 msgid "Condition Branch"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:25
+#: ../../packages/marketing-workflow/src/validation.ts:30
 msgid "Condition comparison field is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:770
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:854
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:825
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:909
 msgid "Condition Logic"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/validation.ts:26
+#: ../../packages/marketing-workflow/src/validation.ts:31
 msgid "Condition operator is required."
 msgstr ""
 
@@ -1269,13 +1438,17 @@ msgstr ""
 msgid "contains"
 msgstr "contains"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:873
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:928
 msgid "Contains (Partial Match)"
 msgstr ""
 
 #: app/routes/_admin+/roles+/system.$roleId.tsx:283
 msgid "Core System Role"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:632
+msgid "could not be reached, showing the last known state"
+msgstr "could not be reached, showing the last known state"
 
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:90
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:137
@@ -1335,6 +1508,10 @@ msgstr ""
 msgid "Create a new role with custom permissions"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps.tsx:112
+msgid "Create an app"
+msgstr "Create an app"
+
 #: app/components/admin/feature-flags.tsx:282
 msgid "Create an override at organization level."
 msgstr ""
@@ -1342,6 +1519,10 @@ msgstr ""
 #: app/components/admin/feature-flags.tsx:284
 msgid "Create an override at user level."
 msgstr ""
+
+#: app/routes/_admin+/customer-apps.tsx:143
+msgid "Create app"
+msgstr "Create app"
 
 #: app/routes/_admin+/marketing+/automations._index.tsx:168
 msgid "Create Automation"
@@ -1444,7 +1625,7 @@ msgstr ""
 msgid "Custom trigger event"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:320
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:344
 msgid "customer"
 msgstr ""
 
@@ -1453,7 +1634,12 @@ msgstr ""
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:668
+#: app/components/admin-sidebar.tsx:149
+#: app/routes/_admin+/customer-apps.tsx:258
+msgid "Customer apps"
+msgstr "Customer apps"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:723
 msgid "Customer Attribute"
 msgstr ""
 
@@ -1498,7 +1684,7 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:358
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:382
 msgid "days"
 msgstr ""
 
@@ -1510,7 +1696,7 @@ msgstr ""
 msgid "Days before the birthday"
 msgstr "Days before the birthday"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:379
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:403
 msgid "Days since last order"
 msgstr "Days since last order"
 
@@ -1543,6 +1729,7 @@ msgid "Delay unit is required."
 msgstr ""
 
 #: app/components/admin/feature-flags.tsx:440
+#: app/routes/_admin+/customer-apps_.$appId.tsx:907
 #: app/routes/_admin+/marketing+/automations._index.tsx:289
 msgid "Delete"
 msgstr ""
@@ -1576,6 +1763,14 @@ msgstr ""
 #: app/routes/_admin+/roles+/system.$roleId.tsx:312
 msgid "Delete role"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:887
+msgid "Delete the app"
+msgstr "Delete the app"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:892
+msgid "Delete this app?"
+msgstr "Delete this app?"
 
 #: app/routes/_admin+/print-shop.tsx:73
 msgid "Delivered"
@@ -1612,6 +1807,7 @@ msgstr "Design email"
 msgid "Detailed information for IP {ip}"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:104
 #: app/routes/_admin+/gdpr-requests.tsx:581
 msgid "Details"
 msgstr "Details"
@@ -1623,6 +1819,14 @@ msgstr "Details or action"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:312
 msgid "Detected"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:58
+msgid "Developer account"
+msgstr "Developer account"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:796
+msgid "Developer account expires on"
+msgstr "Developer account expires on"
 
 #: app/routes/_admin+/print-shop.tsx:609
 msgid "Did the vendor get this order?"
@@ -1678,11 +1882,15 @@ msgstr ""
 msgid "Dispatch text message with merge tags"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:870
+#: app/routes/_admin+/customer-apps_.$appId.tsx:120
+msgid "Display name"
+msgstr "Display name"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
 msgid "Does Not Equal"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:412
+#: ../../packages/marketing/src/components/campaign-form.tsx:516
 msgid "Don't send if more than this late"
 msgstr "Don't send if more than this late"
 
@@ -1694,7 +1902,7 @@ msgstr "Done"
 msgid "Double-click a block to add it instantly"
 msgstr "Double-click a block to add it instantly"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:363
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:387
 msgid "draft"
 msgstr ""
 
@@ -1728,7 +1936,7 @@ msgstr ""
 msgid "Duration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:885
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:940
 msgid "e.g. @gmail.com"
 msgstr ""
 
@@ -1780,8 +1988,8 @@ msgstr "Each day’s published hours and shifts next to the hours worked and the
 msgid "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 msgstr "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:146
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:159
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:147
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:160
 #: app/components/admin/feature-flags.tsx:433
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
@@ -1822,8 +2030,8 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:694
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:370
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:749
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:394
 msgid "Email Address"
 msgstr ""
 
@@ -1833,7 +2041,7 @@ msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:463
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:573
-#: ../../packages/marketing/src/components/campaign-form.tsx:281
+#: ../../packages/marketing/src/components/campaign-form.tsx:331
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
@@ -1867,6 +2075,7 @@ msgstr "Email, username, or name"
 msgid "Emails sent"
 msgstr ""
 
+#: ../../packages/marketing-workflow/src/nodes/action-push-node.tsx:20
 #: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:20
 msgid "Empty message"
 msgstr ""
@@ -2009,6 +2218,10 @@ msgstr "Event or occasion"
 msgid "Event-driven workflows for tenant operator lifecycle."
 msgstr ""
 
+#: app/routes/_admin+/customer-apps.tsx:240
+msgid "Every app was started."
+msgstr "Every app was started."
+
 #: ../../packages/reports/src/ui/report-labels.ts:105
 msgid "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
 msgstr "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
@@ -2025,11 +2238,15 @@ msgstr "Every pay-in, pay-out and safe drop recorded in till shifts over the las
 msgid "Everyone gets {code}"
 msgstr "Everyone gets {code}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:236
+#: ../../packages/marketing/src/components/campaign-form.tsx:261
 msgid "Everyone subscribed"
 msgstr "Everyone subscribed"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:867
+#: ../../packages/marketing/src/components/campaign-form.tsx:260
+msgid "Everyone who opted in to notifications"
+msgstr "Everyone who opted in to notifications"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:922
 msgid "Exactly Equals"
 msgstr ""
 
@@ -2044,6 +2261,10 @@ msgstr ""
 #: app/components/admin-ban-user-dialog.tsx:139
 msgid "Expiration Date"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:778
+msgid "expired"
+msgstr "expired"
 
 #: app/components/admin-user-detail.tsx:379
 msgid "Expires:"
@@ -2069,7 +2290,13 @@ msgstr ""
 msgid "Export JSON"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:770
+msgid "Fail"
+msgstr "Fail"
+
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
+#: app/routes/_admin+/customer-apps_.$appId.tsx:529
+#: app/routes/_admin+/customer-apps.tsx:79
 #: app/routes/_admin+/gdpr-requests.tsx:431
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:33
 #: app/routes/_admin+/print-shop.tsx:75
@@ -2152,6 +2379,10 @@ msgstr ""
 msgid "Find and manage user accounts"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:274
+msgid "Firebase service account (Android)"
+msgstr "Firebase service account (Android)"
+
 #: app/components/admin-launch-card.tsx:72
 msgid "First live {firstLive}"
 msgstr "First live {firstLive}"
@@ -2174,7 +2405,7 @@ msgstr ""
 msgid "Fit canvas view"
 msgstr ""
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:91
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:92
 msgid "Fix this before it goes out"
 msgstr "Fix this before it goes out"
 
@@ -2240,6 +2471,10 @@ msgstr "Found it at the vendor"
 msgid "Found it at the vendor, {orderName}"
 msgstr "Found it at the vendor, {orderName}"
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:304
+msgid "Fresh summer menu"
+msgstr "Fresh summer menu"
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:130
 msgid "Friendly"
 msgstr "Friendly"
@@ -2292,6 +2527,15 @@ msgstr ""
 msgid "Go to previous page"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:578
+#: app/routes/_admin+/customer-apps.tsx:254
+msgid "Google Play"
+msgstr "Google Play"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:213
+msgid "Google Play link"
+msgstr "Google Play link"
+
 #: app/routes/_admin+/waitlist.tsx:525
 msgid "Grant Access"
 msgstr ""
@@ -2308,11 +2552,11 @@ msgstr ""
 msgid "Guest"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:753
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:808
 msgid "Guest is in the audience"
 msgstr "Guest is in the audience"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:756
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:811
 msgid "Guest is not in the audience"
 msgstr "Guest is not in the audience"
 
@@ -2320,15 +2564,19 @@ msgstr "Guest is not in the audience"
 msgid "Guest Lapsed"
 msgstr "Guest Lapsed"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:381
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:638
+msgid "Guests who turned on offers in the app get this once per run. A push holds no personal data, so merge tags are not available."
+msgstr "Guests who turned on offers in the app get this once per run. A push holds no personal data, so merge tags are not available."
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:405
 msgid "Has an upcoming reservation"
 msgstr "Has an upcoming reservation"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:823
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:878
 msgid "Has none (False)"
 msgstr "Has none (False)"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:820
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:875
 msgid "Has one (True)"
 msgstr "Has one (True)"
 
@@ -2344,7 +2592,7 @@ msgstr "Held for the previous organization until {until}"
 msgid "Held: the previous organization was deleted while it had this number"
 msgstr "Held: the previous organization was deleted while it had this number"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:158
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:162
 msgid "Hi {NAME_TAG}, Check out our latest update."
 msgstr "Hi {NAME_TAG}, Check out our latest update."
 
@@ -2352,19 +2600,19 @@ msgstr "Hi {NAME_TAG}, Check out our latest update."
 msgid "Hi {NAME_TAG}, Welcome to our service!"
 msgstr "Hi {NAME_TAG}, Welcome to our service!"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:162
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:171
 msgid "Hi {NAME_TAG}, your account update is ready!"
 msgstr "Hi {NAME_TAG}, your account update is ready!"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:171
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:180
 msgid "Hi {NAME_TAG}, your Menuza account is ready."
 msgstr "Hi {NAME_TAG}, your Menuza account is ready."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:616
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:671
 msgid "Hi {NAME_TAG}, your order has been confirmed!"
 msgstr "Hi {NAME_TAG}, your order has been confirmed!"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:167
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:176
 msgid "Hi {NAME_TAG}, Your organization {ORGANIZATION_NAME_TAG} is ready."
 msgstr "Hi {NAME_TAG}, Your organization {ORGANIZATION_NAME_TAG} is ready."
 
@@ -2384,7 +2632,7 @@ msgstr ""
 msgid "Hot storage: {hotStorageDays} days"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:357
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:381
 msgid "hours"
 msgstr ""
 
@@ -2452,17 +2700,25 @@ msgstr ""
 msgid "I found nothing, retry"
 msgstr "I found nothing, retry"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:160
+msgid "Icon background"
+msgstr "Icon background"
+
 #: app/components/sso-configuration-form.tsx:144
 msgid "Identity Provider Configuration"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:430
+#: ../../packages/marketing/src/components/campaign-form.tsx:534
 msgid "If sending cannot start in time, it is not sent and you are told."
 msgstr "If sending cannot start in time, it is not sent and you are told."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:33
 msgid "Image"
 msgstr "Image"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:423
+msgid "Image address"
+msgstr "Image address"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:264
 msgid "Image URL"
@@ -2484,7 +2740,7 @@ msgstr ""
 msgid "In setup"
 msgstr "In setup"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:407
+#: ../../packages/marketing/src/components/campaign-form.tsx:511
 msgid "In your time zone."
 msgstr "In your time zone."
 
@@ -2538,6 +2794,18 @@ msgstr "Invalid"
 msgid "Invalid graph format"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:54
+msgid "Invite our access user back to the developer account with the app manager role."
+msgstr "Invite our access user back to the developer account with the app manager role."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:498
+msgid "iOS and Android"
+msgstr "iOS and Android"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:140
+msgid "iOS bundle id"
+msgstr "iOS bundle id"
+
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:90
 #: app/routes/_admin+/ip-addresses+/index.tsx:211
 msgid "IP Address"
@@ -2574,19 +2842,19 @@ msgstr ""
 msgid "is"
 msgstr "is"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:787
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:842
 msgid "Is exactly"
 msgstr "Is exactly"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:784
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:839
 msgid "Is less than"
 msgstr "Is less than"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:781
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:836
 msgid "Is more than"
 msgstr "Is more than"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:842
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:897
 msgid "Is Verified (True)"
 msgstr ""
 
@@ -2597,6 +2865,10 @@ msgstr ""
 #: app/components/sso-configuration-overview.tsx:157
 msgid "Issuer URL:"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:895
+msgid "Its builds and credentials are deleted with it. This cannot be undone."
+msgstr "Its builds and credentials are deleted with it. This cannot be undone."
 
 #: app/routes/_admin+/waitlist.tsx:362
 msgid "Joined"
@@ -2626,6 +2898,14 @@ msgstr "Keep mine"
 #: app/routes/_admin+/roles+/system.$roleId.tsx:345
 msgid "Key"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:366
+msgid "Key file (.p8)"
+msgstr "Key file (.p8)"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:343
+msgid "Key id"
+msgstr "Key id"
 
 #: app/components/admin-cache-confirmation-dialog.tsx:86
 msgid "Keys to delete:"
@@ -2670,6 +2950,11 @@ msgstr ""
 #: app/components/sso-user-management.tsx:444
 msgid "Last 7 days"
 msgstr ""
+
+#. placeholder {0}: i18n.date(new Date(store.lastCheckedAt), { dateStyle: 'medium', timeStyle: 'short' })
+#: app/routes/_admin+/customer-apps_.$appId.tsx:628
+msgid "Last checked {0}"
+msgstr "Last checked {0}"
 
 #: app/components/admin-users-table.tsx:183
 msgid "Last Login"
@@ -2716,6 +3001,14 @@ msgstr "Late cancellations"
 msgid "Late cancellations, last 30 days"
 msgstr "Late cancellations, last 30 days"
 
+#: app/routes/_admin+/customer-apps.tsx:278
+msgid "Latest build"
+msgstr "Latest build"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:653
+msgid "Latest reviews"
+msgstr "Latest reviews"
+
 #: app/components/admin-launch-card.tsx:97
 msgid "Launch"
 msgstr "Launch"
@@ -2740,7 +3033,7 @@ msgstr ""
 msgid "Left"
 msgstr "Left"
 
-#: app/components/admin-sidebar.tsx:149
+#: app/components/admin-sidebar.tsx:155
 #: app/routes/_admin+/legal-agreements.tsx:42
 msgid "Legal agreements"
 msgstr "Legal agreements"
@@ -2753,7 +3046,7 @@ msgstr ""
 msgid "Level (Organization roles only)"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:380
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:404
 msgid "Lifetime spend (minor units)"
 msgstr "Lifetime spend (minor units)"
 
@@ -2782,6 +3075,8 @@ msgid "Link to the full text"
 msgstr "Link to the full text"
 
 #: app/components/admin-launch-card.tsx:156
+#: app/routes/_admin+/customer-apps_.$appId.tsx:606
+#: app/routes/_admin+/customer-apps.tsx:351
 msgid "Live"
 msgstr "Live"
 
@@ -2935,7 +3230,7 @@ msgstr "Menu"
 msgid "Menu item"
 msgstr "Menu item"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:168
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:177
 msgid "Menuza Team"
 msgstr ""
 
@@ -2943,8 +3238,8 @@ msgstr ""
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:188
-#: ../../packages/marketing/src/components/campaign-form.tsx:287
+#: ../../packages/marketing/src/components/campaign-detail.tsx:195
+#: ../../packages/marketing/src/components/campaign-form.tsx:337
 msgid "Message"
 msgstr ""
 
@@ -2961,7 +3256,7 @@ msgstr "Message retention"
 msgid "Message retention updated"
 msgstr "Message retention updated"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:356
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:380
 msgid "minutes"
 msgstr ""
 
@@ -2998,8 +3293,8 @@ msgstr ""
 msgid "N/A"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:703
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:373
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:758
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:397
 #: app/routes/_admin+/roles+/$roleId.tsx:569
 #: app/routes/_admin+/roles+/$roleId.tsx:802
 #: app/routes/_admin+/roles+/$roleId.tsx:893
@@ -3062,6 +3357,7 @@ msgstr ""
 #~ msgstr ""
 
 #: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:71
+#: app/routes/_admin+/customer-apps_.$appId.tsx:831
 msgid "No"
 msgstr ""
 
@@ -3072,6 +3368,10 @@ msgstr "No active locations."
 #: app/components/admin-user-detail.tsx:771
 msgid "No active sessions"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps.tsx:287
+msgid "No apps yet."
+msgstr "No apps yet."
 
 #: app/components/sso-user-management.tsx:398
 msgid "No Audit Logs"
@@ -3106,7 +3406,7 @@ msgstr ""
 msgid "No connected accounts"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:91
+#: ../../packages/marketing/src/components/campaign-detail.tsx:98
 msgid "No contact on file"
 msgstr ""
 
@@ -3115,7 +3415,7 @@ msgstr ""
 msgid "No coupon"
 msgstr "No coupon"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:232
+#: ../../packages/marketing/src/components/campaign-detail.tsx:259
 msgid "No delivery records yet."
 msgstr ""
 
@@ -3189,6 +3489,10 @@ msgstr ""
 msgid "No recent comments"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:670
+msgid "No reviews to show."
+msgstr "No reviews to show."
+
 #: ../../packages/marketing/src/components/email/email-templates.tsx:259
 msgid "No saved templates yet. Design an email, then choose Save as template."
 msgstr "No saved templates yet. Design an email, then choose Save as template."
@@ -3242,6 +3546,10 @@ msgstr "No users match"
 msgid "No users yet"
 msgstr "No users yet"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:616
+msgid "No version yet"
+msgstr "No version yet"
+
 #: app/routes/_admin+/waitlist.tsx:334
 msgid "No waitlist entries found"
 msgstr ""
@@ -3262,7 +3570,7 @@ msgstr "No-shows & cancellations"
 msgid "Nobody would receive this: no one in the audience is subscribed."
 msgstr "Nobody would receive this: no one in the audience is subscribed."
 
-#: ../../packages/marketing-workflow/src/node-palette.tsx:50
+#: ../../packages/marketing-workflow/src/node-palette.tsx:51
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:289
 msgid "Nodes"
 msgstr ""
@@ -3282,11 +3590,28 @@ msgstr ""
 msgid "Not accepted: {missingKey} version {missingVersion}"
 msgstr "Not accepted: {missingKey} version {missingVersion}"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:829
+msgid "Not checked"
+msgstr "Not checked"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:630
+msgid "Not checked yet"
+msgstr "Not checked yet"
+
+#: app/routes/_admin+/customer-apps.tsx:354
+msgid "Not live"
+msgstr "Not live"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:609
+msgid "Not live yet"
+msgstr "Not live yet"
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:75
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:12
 msgid "Not sent: too late"
 msgstr "Not sent: too late"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:308
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:61
 msgid "Not set"
 msgstr "Not set"
@@ -3295,7 +3620,7 @@ msgstr "Not set"
 msgid "Not Set"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:845
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:900
 msgid "Not Verified (False)"
 msgstr ""
 
@@ -3307,13 +3632,21 @@ msgstr ""
 msgid "Notes Created"
 msgstr ""
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:102
+#: app/routes/_admin+/customer-apps_.$appId.tsx:746
+msgid "Nothing has been recorded yet."
+msgstr "Nothing has been recorded yet."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:103
 msgid "Nothing is broken, but you may want to look at this first."
 msgstr "Nothing is broken, but you may want to look at this first."
 
 #: app/routes/_admin+/print-shop.tsx:458
 #~ msgid "Nothing there, retry"
 #~ msgstr "Nothing there, retry"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:151
+msgid "Notify guests who opted in to offers in the app"
+msgstr "Notify guests who opted in to offers in the app"
 
 #: app/components/admin/feature-flags.tsx:172
 #: app/routes/_admin+/phone-numbers.tsx:355
@@ -3384,12 +3717,24 @@ msgstr ""
 msgid "Only the Nth order"
 msgstr "Only the Nth order"
 
+#: app/routes/_admin+/customer-apps.tsx:375
+msgid "Open"
+msgstr "Open"
+
 #: app/routes/_admin+/marketing+/_index.tsx:55
 msgid "Open rate"
 msgstr ""
 
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:168
+msgid "Open the app to take a look."
+msgstr "Open the app to take a look."
+
+#: app/routes/_admin+/customer-apps.tsx:157
+msgid "Open the new app"
+msgstr "Open the new app"
+
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:101
+#: ../../packages/marketing/src/components/campaign-detail.tsx:108
 msgid "Opened {0}"
 msgstr ""
 
@@ -3397,7 +3742,15 @@ msgstr ""
 msgid "openid email profile"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:341
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:625
+msgid "Opens (a page of your site)"
+msgstr "Opens (a page of your site)"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:411
+msgid "Opens this page"
+msgstr "Opens this page"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:365
 msgid "operator"
 msgstr ""
 
@@ -3412,6 +3765,10 @@ msgstr ""
 msgid "Optional"
 msgstr ""
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:432
+msgid "Optional. A secure (https) address."
+msgstr "Optional. A secure (https) address."
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:68
 msgid "Order Completed"
 msgstr "Order Completed"
@@ -3420,11 +3777,11 @@ msgstr "Order Completed"
 msgid "Orders"
 msgstr "Orders"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:377
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:401
 msgid "Orders in the last 30 days"
 msgstr "Orders in the last 30 days"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:378
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:402
 msgid "Orders in the last 90 days"
 msgstr "Orders in the last 90 days"
 
@@ -3447,6 +3804,8 @@ msgstr ""
 #: app/components/admin-organizations-table.tsx:141
 #: app/components/admin-users-table.tsx:235
 #: app/components/admin/feature-flags.tsx:784
+#: app/routes/_admin+/customer-apps.tsx:126
+#: app/routes/_admin+/customer-apps.tsx:275
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
 #: app/routes/_admin+/legal-agreements.tsx:135
@@ -3505,6 +3864,18 @@ msgstr ""
 #: app/components/admin-organizations-table.tsx:415
 msgid "Organizations will appear here once they are created."
 msgstr "Organizations will appear here once they are created."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:61
+msgid "Our access to the store account"
+msgstr "Our access to the store account"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:818
+msgid "Our access works"
+msgstr "Our access works"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:177
+msgid "Our developer account"
+msgstr "Our developer account"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:108
 msgid "Outline"
@@ -3594,6 +3965,10 @@ msgstr "Paragraph text"
 msgid "Part of this order was already printing. Refund what was cancelled."
 msgstr "Part of this order was already printing. Refund what was cancelled."
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:767
+msgid "Pass"
+msgstr "Pass"
+
 #: app/components/admin-user-detail.tsx:683
 msgid "Passkeys"
 msgstr ""
@@ -3611,13 +3986,25 @@ msgstr ""
 msgid "Pause"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:365
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:389
 msgid "paused"
 msgstr ""
 
 #: app/routes/_admin+/marketing+/automations._index.tsx:53
 msgid "Paused"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:51
+msgid "Pay the annual developer fee with a card that has not expired."
+msgstr "Pay the annual developer fee with a card that has not expired."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:60
+msgid "Payment terms"
+msgstr "Payment terms"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:815
+msgid "Payment terms accepted"
+msgstr "Payment terms accepted"
 
 #: app/components/admin-launch-card.tsx:15
 msgid "Payments or pay at pickup"
@@ -3666,8 +4053,8 @@ msgstr ""
 msgid "Phone number"
 msgstr "Phone number"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:697
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:371
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:752
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:395
 msgid "Phone Number"
 msgstr ""
 
@@ -3676,8 +4063,8 @@ msgstr ""
 msgid "Phone numbers"
 msgstr "Phone numbers"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:700
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:372
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:755
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:396
 msgid "Phone Verification Status"
 msgstr ""
 
@@ -3727,9 +4114,13 @@ msgstr ""
 msgid "Plan"
 msgstr "Plan"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:375
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:399
 msgid "Plan Name"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:491
+msgid "Platform"
+msgstr "Platform"
 
 #: app/routes/_admin+/marketing+/automations.new.tsx:117
 msgid "Platform automation created via visual builder."
@@ -3811,8 +4202,8 @@ msgstr "Print shop"
 msgid "Printing"
 msgstr "Printing"
 
-#: ../../packages/marketing-workflow/src/node-palette.tsx:40
-#: ../../packages/marketing/src/components/campaign-form.tsx:212
+#: ../../packages/marketing-workflow/src/node-palette.tsx:41
+#: ../../packages/marketing/src/components/campaign-form.tsx:231
 msgid "Pro"
 msgstr ""
 
@@ -3875,9 +4266,21 @@ msgstr "Publish a new version of a Menuza agreement and see which organizations 
 msgid "Publish and activate automation"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps.tsx:43
+msgid "Publish the organization’s website first."
+msgstr "Publish the organization’s website first."
+
 #: app/routes/_admin+/legal-agreements.tsx:233
 msgid "Publish version"
 msgstr "Publish version"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:169
+msgid "Published under"
+msgstr "Published under"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:736
+msgid "Published under our account: the restaurant does not see these checks."
+msgstr "Published under our account: the restaurant does not see these checks."
 
 #: app/routes/_admin+/marketing+/automations.$journeyId.tsx:213
 msgid "Publishing automation..."
@@ -3891,6 +4294,39 @@ msgstr ""
 msgid "Publishing..."
 msgstr ""
 
+#: ../../packages/marketing-workflow/src/nodes/action-push-node.tsx:19
+#: ../../packages/marketing/src/i18n/campaign-labels.ts:18
+msgid "Push"
+msgstr "Push"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:279
+msgid "Push credentials"
+msgstr "Push credentials"
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:608
+msgid "Push message"
+msgstr "Push message"
+
+#: ../../packages/marketing-workflow/src/validation.ts:28
+msgid "Push message exceeds 178 characters."
+msgstr "Push message exceeds 178 characters."
+
+#: ../../packages/marketing-workflow/src/validation.ts:27
+msgid "Push message is required."
+msgstr "Push message is required."
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:595
+msgid "Push title"
+msgstr "Push title"
+
+#: ../../packages/marketing-workflow/src/validation.ts:26
+msgid "Push title exceeds 65 characters."
+msgstr "Push title exceeds 65 characters."
+
+#: ../../packages/marketing-workflow/src/validation.ts:25
+msgid "Push title is required."
+msgstr "Push title is required."
+
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:228
 msgid "Put {TAG} in your message where the code should go. Each customer gets their own code. It works once and expires after the days you set."
 msgstr "Put {TAG} in your message where the code should go. Each customer gets their own code. It works once and expires after the days you set."
@@ -3898,6 +4334,11 @@ msgstr "Put {TAG} in your message where the code should go. Each customer gets t
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:231
 msgid "Put {TAG} in your message where the code should go. The code follows the discount's own limits."
 msgstr "Put {TAG} in your message where the code should go. The code follows the discount's own limits."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:533
+#: app/routes/_admin+/customer-apps.tsx:83
+msgid "Queued"
+msgstr "Queued"
 
 #: app/routes/_admin+/index.tsx:412
 msgid "Quick Actions"
@@ -3915,6 +4356,10 @@ msgstr "Quote valid (minutes)"
 #: app/routes/_admin+/waitlist.tsx:344
 msgid "Rank"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:586
+msgid "Read from the stores once a day. A store that cannot be reached keeps its last known state."
+msgstr "Read from the stores once a day. A store that cannot be reached keeps its last known state."
 
 #: app/components/privacy-banner.tsx:32
 msgid "Read our Cookie Policy"
@@ -3935,6 +4380,10 @@ msgstr ""
 #: app/routes/_admin+/phone-numbers.tsx:225
 msgid "Reassign anyway"
 msgstr "Reassign anyway"
+
+#: app/routes/_admin+/customer-apps.tsx:334
+msgid "Rebuild needed"
+msgstr "Rebuild needed"
 
 #: app/components/admin-user-detail.tsx:604
 msgid "Recent Activity"
@@ -3972,12 +4421,12 @@ msgstr ""
 msgid "Recently released"
 msgstr "Recently released"
 
-#: ../../packages/marketing/src/components/campaign-list.tsx:83
+#: ../../packages/marketing/src/components/campaign-list.tsx:89
 #: app/routes/_admin+/marketing+/_index.tsx:217
 msgid "recipients"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:220
+#: ../../packages/marketing/src/components/campaign-detail.tsx:247
 msgid "Recipients"
 msgstr ""
 
@@ -3988,6 +4437,10 @@ msgstr "Recipients not confirmed: {unconfirmed}. Their send was cut off or timed
 #: app/routes/_admin+/print-shop.tsx:641
 msgid "Record and track"
 msgstr "Record and track"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:838
+msgid "Record the account facts"
+msgstr "Record the account facts"
 
 #: app/routes/_admin+/print-shop.tsx:564
 #~ msgid "Record the vendor order for {orderName}"
@@ -4095,6 +4548,16 @@ msgstr "Refuse sign-in unless the identity provider marks the email as verified 
 msgid "Reject"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps.tsx:176
+msgid "Release"
+msgstr "Release"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:480
+#: app/routes/_admin+/customer-apps.tsx:191
+msgid "Release name"
+msgstr "Release name"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:333
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:225
 msgid "Remove"
 msgstr "Remove"
@@ -4120,6 +4583,11 @@ msgstr ""
 msgid "Remove variable"
 msgstr "Remove variable"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:608
+#: app/routes/_admin+/customer-apps.tsx:353
+msgid "Removed"
+msgstr "Removed"
+
 #: ../../packages/marketing/src/components/email/email-preview.tsx:127
 msgid "Rendering…"
 msgstr "Rendering…"
@@ -4127,6 +4595,14 @@ msgstr "Rendering…"
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:396
 msgid "Replace"
 msgstr "Replace"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:408
+msgid "Replace the file"
+msgstr "Replace the file"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:382
+msgid "Replace the key"
+msgstr "Replace the key"
 
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:383
 msgid "Replace what you have?"
@@ -4198,7 +4674,7 @@ msgstr "Reservation No-Show"
 msgid "Reservations"
 msgstr "Reservations"
 
-#: app/components/admin-sidebar.tsx:155
+#: app/components/admin-sidebar.tsx:161
 msgid "Reservations fees"
 msgstr "Reservations fees"
 
@@ -4217,6 +4693,14 @@ msgstr "Reset SSO link"
 #: app/routes/_admin+/audit-logs.tsx:286
 msgid "Resource"
 msgstr "Resource"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:877
+msgid "Restore the app"
+msgstr "Restore the app"
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:231
+msgid "Results"
+msgstr "Results"
 
 #: app/routes/_admin+/print-shop.tsx:283
 msgid "Retail is the vendor's wholesale price plus the markup; shipping is passed through. A paid order whose wholesale price rose by more than the drift limit is held here."
@@ -4250,6 +4734,7 @@ msgstr "Retire {e164}? It can't be assigned again, and any agent using it stops 
 msgid "Retired"
 msgstr "Retired"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:561
 #: app/routes/_admin+/print-shop.tsx:607
 #: app/routes/_admin+/print-shop.tsx:678
 msgid "Retry"
@@ -4259,6 +4744,10 @@ msgstr "Retry"
 #: app/routes/_admin+/print-shop.tsx:593
 #~ msgid "Retry {orderName}"
 #~ msgstr "Retry {orderName}"
+
+#: app/routes/_admin+/customer-apps.tsx:235
+msgid "Retry the failed apps"
+msgstr "Retry the failed apps"
 
 #: app/routes/_admin+/print-shop.tsx:450
 #: app/routes/_admin+/print-shop.tsx:470
@@ -4338,7 +4827,7 @@ msgstr ""
 msgid "Roles that apply within specific organizations"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:896
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:951
 msgid "Routing Logic:"
 msgstr ""
 
@@ -4357,6 +4846,11 @@ msgstr ""
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:498
 msgid "Run maintenance tasks on audit logs"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:531
+#: app/routes/_admin+/customer-apps.tsx:81
+msgid "Running"
+msgstr "Running"
 
 #: app/routes/_admin+/marketing+/automations._index.tsx:185
 msgid "runs"
@@ -4464,6 +4958,7 @@ msgstr "Sales per labor hour"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:188
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:350
+#: app/routes/_admin+/customer-apps_.$appId.tsx:248
 #: app/routes/_admin+/print-shop.tsx:330
 msgid "Save"
 msgstr "Save"
@@ -4486,7 +4981,7 @@ msgid "Save default"
 msgstr "Save default"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: ../../packages/marketing/src/components/campaign-form.tsx:462
+#: ../../packages/marketing/src/components/campaign-form.tsx:566
 msgid "Save draft"
 msgstr ""
 
@@ -4518,8 +5013,8 @@ msgstr "Save this design as a template"
 msgid "Saved"
 msgstr "Saved"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:723
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:376
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:778
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:400
 msgid "Saved audience"
 msgstr "Saved audience"
 
@@ -4527,6 +5022,7 @@ msgstr "Saved audience"
 msgid "Saved: {item}"
 msgstr "Saved: {item}"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:92
 #: app/routes/_admin+/print-shop.tsx:263
 msgid "Saved."
 msgstr "Saved."
@@ -4549,15 +5045,15 @@ msgstr ""
 msgid "Saving…"
 msgstr "Saving…"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:492
+#: ../../packages/marketing/src/components/campaign-form.tsx:596
 msgid "Schedule"
 msgstr "Schedule"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:164
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:165
 msgid "Schedule anyway"
 msgstr "Schedule anyway"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:389
+#: ../../packages/marketing/src/components/campaign-form.tsx:493
 msgid "Schedule for later"
 msgstr "Schedule for later"
 
@@ -4650,11 +5146,11 @@ msgstr ""
 msgid "Security Events"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:166
+#: ../../packages/marketing/src/components/campaign-detail.tsx:173
 msgid "See the original"
 msgstr "See the original"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:180
+#: ../../packages/marketing/src/components/campaign-detail.tsx:187
 msgid "See the re-send"
 msgstr "See the re-send"
 
@@ -4663,7 +5159,7 @@ msgstr "See the re-send"
 msgid "Select access level"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:690
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:745
 msgid "Select attribute"
 msgstr ""
 
@@ -4675,7 +5171,7 @@ msgstr ""
 msgid "Select flag type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:863
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:918
 msgid "Select operator"
 msgstr ""
 
@@ -4684,7 +5180,7 @@ msgstr ""
 msgid "Select role type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:838
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:893
 msgid "Select status"
 msgstr ""
 
@@ -4700,15 +5196,15 @@ msgstr ""
 msgid "Send a one-time message to tenant operators."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:473
+#: ../../packages/marketing/src/components/campaign-form.tsx:577
 msgid "Send a test"
 msgstr "Send a test"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:166
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:167
 msgid "Send anyway"
 msgstr "Send anyway"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:397
+#: ../../packages/marketing/src/components/campaign-form.tsx:501
 msgid "Send at"
 msgstr "Send at"
 
@@ -4716,14 +5212,18 @@ msgstr "Send at"
 msgid "Send Email"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:172
-#: ../../packages/marketing/src/components/campaign-form.tsx:388
+#: ../../packages/marketing/src/components/campaign-form.tsx:191
+#: ../../packages/marketing/src/components/campaign-form.tsx:492
 msgid "Send now"
 msgstr ""
 
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:82
 msgid "Send one-time emails to tenant operators."
 msgstr ""
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:150
+msgid "Send push"
+msgstr "Send push"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:146
 msgid "Send SMS"
@@ -4737,14 +5237,14 @@ msgstr "Sending to the printer"
 msgid "Sending to the vendor failed unexpectedly"
 msgstr "Sending to the vendor failed unexpectedly"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:173
+#: ../../packages/marketing/src/components/campaign-form.tsx:192
 msgid "Sending..."
 msgstr ""
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
 #: ../../packages/marketing/src/components/campaign-detail.tsx:77
-#: ../../packages/marketing/src/components/campaign-detail.tsx:248
+#: ../../packages/marketing/src/components/campaign-detail.tsx:275
 msgid "Sent {0}"
 msgstr ""
 
@@ -4756,17 +5256,27 @@ msgstr "Sent to the printer"
 msgid "Sent to the vendor again."
 msgstr "Sent to the vendor again."
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:394
+msgid "Service account file (JSON)"
+msgstr "Service account file (JSON)"
+
 #: app/components/admin-user-detail.tsx:754
 msgid "Session {sessionId}..."
 msgstr ""
 
 #: app/components/admin-user-detail.tsx:678
+#: app/routes/_admin+/customer-apps_.$appId.tsx:305
 msgid "Set"
 msgstr ""
 
 #: app/components/admin-ban-user-dialog.tsx:128
 msgid "Set expiration date (optional)"
 msgstr ""
+
+#. placeholder {0}: i18n.date(new Date(current.uploadedAt), { dateStyle: 'medium' })
+#: app/routes/_admin+/customer-apps_.$appId.tsx:303
+msgid "Set on {0}"
+msgstr "Set on {0}"
 
 #: app/components/admin/feature-flags.tsx:772
 msgid "Set system defaults and override them for an organization or a user."
@@ -4845,6 +5355,14 @@ msgstr "Shown to recipients who have no value for this field."
 msgid "Shows the offer, each guest's own code, its terms and a button that opens the menu with the code applied. The words come from the discount."
 msgstr "Shows the offer, each guest's own code, its terms and a button that opens the menu with the code applied. The words come from the discount."
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:50
+msgid "Sign in to the developer account that publishes the app and renew the membership."
+msgstr "Sign in to the developer account that publishes the app and renew the membership."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:52
+msgid "Sign in to the store’s developer site and accept the new terms and agreements."
+msgstr "Sign in to the store’s developer site and accept the new terms and agreements."
+
 #: app/components/admin-launch-card.tsx:20
 msgid "Site published and ordering on"
 msgstr "Site published and ordering on"
@@ -4873,7 +5391,7 @@ msgstr ""
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:596
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:651
 msgid "SMS Message Text"
 msgstr ""
 
@@ -4881,7 +5399,7 @@ msgstr ""
 msgid "SMS message text is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:654
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:709
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
@@ -4896,6 +5414,10 @@ msgstr "Some sends were not confirmed"
 #: app/routes/_admin+/print-shop.tsx:94
 msgid "Some vendor orders were cancelled and others are printing: refund what was cancelled"
 msgstr "Some vendor orders were cancelled and others are printing: refund what was cancelled"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:167
+msgid "Something new on the menu"
+msgstr "Something new on the menu"
 
 #: ../../packages/marketing/src/components/email/email-templates.tsx:59
 msgid "Something went wrong. Try again."
@@ -4926,7 +5448,7 @@ msgstr ""
 msgid "Specific Organization"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:151
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:155
 msgid "Split path based on rules (True / False)"
 msgstr ""
 
@@ -4967,6 +5489,10 @@ msgstr ""
 #: app/components/sso-user-management.tsx:154
 msgid "SSO Users ({userCount})"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:505
+msgid "Start a build"
+msgstr "Start a build"
 
 #: app/routes/_admin+/audit-logs.tsx:131
 msgid "Start date"
@@ -5052,6 +5578,34 @@ msgstr "Stop shipping this size?"
 msgid "Stop when the guest places an order"
 msgstr "Stop when the guest places an order"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:727
+msgid "Store account checks"
+msgstr "Store account checks"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:234
+msgid "Store description"
+msgstr "Store description"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:583
+msgid "Store health"
+msgstr "Store health"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:223
+msgid "Store subtitle"
+msgstr "Store subtitle"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:59
+msgid "Store terms"
+msgstr "Store terms"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:810
+msgid "Store terms accepted"
+msgstr "Store terms accepted"
+
+#: app/routes/_admin+/customer-apps.tsx:279
+msgid "Stores"
+msgstr "Stores"
+
 #: app/components/admin/feature-flags.tsx:169
 msgid "String"
 msgstr ""
@@ -5071,7 +5625,7 @@ msgstr "Stuck in setup for more than 14 days"
 msgid "Style"
 msgstr "Style"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:263
+#: ../../packages/marketing/src/components/campaign-form.tsx:313
 msgid "Subject"
 msgstr ""
 
@@ -5098,11 +5652,16 @@ msgstr ""
 msgid "Subscription Status"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:255
+#: app/routes/_admin+/customer-apps_.$appId.tsx:527
+#: app/routes/_admin+/customer-apps.tsx:77
+msgid "Succeeded"
+msgstr "Succeeded"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:283
 msgid "Summer promo"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:297
+#: ../../packages/marketing/src/components/campaign-form.tsx:351
 msgid "supported"
 msgstr ""
 
@@ -5146,7 +5705,7 @@ msgstr ""
 msgid "System Flags"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:196
+#: app/components/admin-sidebar.tsx:202
 msgid "System Management"
 msgstr ""
 
@@ -5193,7 +5752,7 @@ msgstr "Table tent"
 #~ msgid "Tag Added"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:374
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:398
 msgid "Tags"
 msgstr ""
 
@@ -5205,14 +5764,18 @@ msgstr ""
 #~ msgid "Target Tag Name"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:794
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:881
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:849
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:936
 msgid "Target Value"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:159
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:163
 msgid "Team"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:354
+msgid "Team id"
+msgstr "Team id"
 
 #: ../../packages/marketing/src/components/email/email-templates.tsx:195
 msgid "Template name"
@@ -5248,6 +5811,10 @@ msgstr "Text"
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:138
 msgid "That draft could not be used. Please try again."
 msgstr "That draft could not be used. Please try again."
+
+#: app/routes/_admin+/customer-apps.tsx:59
+msgid "That is not a valid store link."
+msgstr "That is not a valid store link."
 
 #: app/routes/_admin+/phone-numbers.tsx:210
 msgid "That organization had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
@@ -5285,6 +5852,10 @@ msgstr ""
 msgid "The App could not do that. Try again."
 msgstr "The App could not do that. Try again."
 
+#: app/routes/_admin+/customer-apps.tsx:65
+msgid "The App did not answer."
+msgstr "The App did not answer."
+
 #: app/routes/_admin+/print-shop.tsx:211
 msgid "The App did not answer. Try again."
 msgstr "The App did not answer. Try again."
@@ -5293,9 +5864,17 @@ msgstr "The App did not answer. Try again."
 msgid "The App link is not set up (APP_URL or INTERNAL_COMMAND_TOKEN)."
 msgstr "The App link is not set up (APP_URL or INTERNAL_COMMAND_TOKEN)."
 
+#: app/routes/_admin+/customer-apps.tsx:115
+msgid "The app starts from the organization’s published website: its name, icon, colors and site address. You can adjust everything after."
+msgstr "The app starts from the organization’s published website: its name, icon, colors and site address. You can adjust everything after."
+
 #: app/components/admin-ban-user-dialog.tsx:150
 msgid "The ban will be automatically lifted on this date. Leave empty for permanent ban."
 msgstr ""
+
+#: app/routes/_admin+/customer-apps.tsx:260
+msgid "The branded app of each restaurant: bundle ids, builds and store health."
+msgstr "The branded app of each restaurant: bundle ids, builds and store health."
 
 #: app/routes/_admin+/cache.tsx:520
 msgid "The cache is empty"
@@ -5367,6 +5946,10 @@ msgstr "The order goes to the vendor at today's price. The organization already 
 #~ msgid "The order goes to the vendor at today's price. The organization already paid {amount}; Menuza absorbs the difference."
 #~ msgstr "The order goes to the vendor at today's price. The organization already paid {amount}; Menuza absorbs the difference."
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:470
+msgid "The organization moved to another data region after the last build."
+msgstr "The organization moved to another data region after the last build."
+
 #: app/routes/_admin+/print-shop.tsx:97
 msgid "The parcel went back to the vendor: reship or refund (the prints were made)"
 msgstr "The parcel went back to the vendor: reship or refund (the prints were made)"
@@ -5399,6 +5982,14 @@ msgstr "The request was not completed"
 msgid "The required-by date has passed: these owners are blocked until they accept."
 msgstr "The required-by date has passed: these owners are blocked until they accept."
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:731
+msgid "The restaurant publishes under its own account, so it sees these checks too."
+msgstr "The restaurant publishes under its own account, so it sees these checks too."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:179
+msgid "The restaurant’s developer account"
+msgstr "The restaurant’s developer account"
+
 #: ../../packages/reports/src/ui/report-labels.ts:133
 msgid "The share of booked parties that did not show up over the last 30 days."
 msgstr "The share of booked parties that did not show up over the last 30 days."
@@ -5414,6 +6005,14 @@ msgstr "The share of cancellations that came after the free-cancellation window 
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:175
 msgid "The share of each Reservations payment kept by the platform, in basis points."
 msgstr "The share of each Reservations payment kept by the platform, in basis points."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:423
+msgid "The stored credential decrypts and has the right shape."
+msgstr "The stored credential decrypts and has the right shape."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:427
+msgid "The stored credential is missing or damaged. Upload it again."
+msgstr "The stored credential is missing or damaged. Upload it again."
 
 #: app/routes/_admin+/print-shop.tsx:98
 msgid "The vendor cancelled or failed the order after it shipped: check before refunding"
@@ -5467,19 +6066,31 @@ msgstr ""
 msgid "There is nothing to save yet. Add a block first."
 msgstr "There is nothing to save yet. Add a block first."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:98
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:99
 msgid "These problems stop this broadcast. Fix them, then try again."
 msgstr "These problems stop this broadcast. Fix them, then try again."
+
+#: app/routes/_admin+/customer-apps.tsx:47
+msgid "This Android package is already used by another app."
+msgstr "This Android package is already used by another app."
+
+#: app/routes/_admin+/customer-apps.tsx:54
+msgid "This app was published, so it cannot be deleted. Archive it instead."
+msgstr "This app was published, so it cannot be deleted. Archive it instead."
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:108
+msgid "This app was published, so its bundle ids can no longer change."
+msgstr "This app was published, so its bundle ids can no longer change."
 
 #: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:23
 msgid "This block still has the text a new block starts with."
 msgstr "This block still has the text a new block starts with."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:151
+#: ../../packages/marketing/src/components/campaign-detail.tsx:158
 msgid "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 msgstr "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:174
+#: ../../packages/marketing/src/components/campaign-detail.tsx:181
 msgid "This broadcast was re-sent to non-openers."
 msgstr "This broadcast was re-sent to non-openers."
 
@@ -5487,7 +6098,7 @@ msgstr "This broadcast was re-sent to non-openers."
 #~ msgid "This broadcast was scheduled for {0} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 #~ msgstr "This broadcast was scheduled for {0} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:148
+#: ../../packages/marketing/src/components/campaign-detail.tsx:155
 msgid "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 msgstr "This broadcast was scheduled for {scheduledText} but could not start within {lateHours} hours, so it was not sent. Duplicate it to schedule it again."
 
@@ -5507,7 +6118,11 @@ msgstr "This dish block has no dish."
 msgid "This image block has no picture."
 msgstr "This image block has no picture."
 
-#: ../../packages/marketing-workflow/src/validation.ts:27
+#: app/routes/_admin+/customer-apps.tsx:45
+msgid "This iOS bundle id is already used by another app."
+msgstr "This iOS bundle id is already used by another app."
+
+#: ../../packages/marketing-workflow/src/validation.ts:32
 msgid "This message uses the Coupon code tag. Choose a coupon, or remove the tag."
 msgstr "This message uses the Coupon code tag. Choose a coupon, or remove the tag."
 
@@ -5526,6 +6141,10 @@ msgstr "This number was released on {releasedOn} by an organization that no long
 #: app/routes/_admin+/print-shop.tsx:222
 msgid "This order is changing right now. Refresh and try again."
 msgstr "This order is changing right now. Refresh and try again."
+
+#: app/routes/_admin+/customer-apps.tsx:49
+msgid "This organization already has an app."
+msgstr "This organization already has an app."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:64
 msgid "This policy applies to all channels, direct messages, and group chats in this organization. Only platform admins can change it."
@@ -5558,6 +6177,10 @@ msgstr "Tip pool: tips by day"
 #: ../../packages/reports/src/ui/report-labels.ts:69
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:291
+msgid "Title"
+msgstr "Title"
 
 #: app/routes/_admin+/legal-agreements.tsx:198
 msgid "Title (Arabic)"
@@ -5732,7 +6355,7 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:243
+#: ../../packages/marketing/src/components/campaign-detail.tsx:270
 msgid "Unnamed recipient"
 msgstr ""
 
@@ -5748,7 +6371,7 @@ msgstr "Unsaved changes"
 msgid "until"
 msgstr "until"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:809
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:864
 msgid "Upcoming reservation"
 msgstr "Upcoming reservation"
 
@@ -5780,6 +6403,14 @@ msgstr ""
 msgid "Updated:"
 msgstr ""
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:410
+msgid "Upload the file"
+msgstr "Upload the file"
+
+#: app/routes/_admin+/customer-apps_.$appId.tsx:384
+msgid "Upload the key"
+msgstr "Upload the key"
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:133
 msgid "Urgent"
 msgstr "Urgent"
@@ -5787,6 +6418,10 @@ msgstr "Urgent"
 #: app/components/sso-configuration-overview.tsx:294
 msgid "Usage Statistics"
 msgstr ""
+
+#: app/routes/_admin+/customer-apps.tsx:61
+msgid "Use a release name such as 1.2.0-1."
+msgstr "Use a release name such as 1.2.0-1."
 
 #: app/routes/_admin+/roles+/index.tsx:307
 msgid "Use lowercase letters, numbers, and hyphens only"
@@ -5916,17 +6551,24 @@ msgstr "Vendor, {item}"
 msgid "Vendors were cancelled for this order: refund it instead of retrying."
 msgstr "Vendors were cancelled for this order: refund it instead of retrying."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:831
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:886
 msgid "Verification Status"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:238
+#: ../../packages/marketing/src/components/campaign-form.tsx:265
 msgid "Verified phone numbers only"
 msgstr "Verified phone numbers only"
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:131
+#: app/routes/_admin+/customer-apps.tsx:277
 #: app/routes/_admin+/legal-agreements.tsx:61
 msgid "Version"
 msgstr "Version"
+
+#. placeholder {0}: store.version
+#: app/routes/_admin+/customer-apps_.$appId.tsx:614
+msgid "Version {0}"
+msgstr "Version {0}"
 
 #: app/routes/_admin+/marketing+/_index.tsx:186
 msgid "View all"
@@ -6015,6 +6657,7 @@ msgid "Waitlist waits"
 msgstr "Waitlist waits"
 
 #: app/routes/_admin+/audit-logs.tsx:157
+#: app/routes/_admin+/customer-apps_.$appId.tsx:769
 msgid "Warning"
 msgstr ""
 
@@ -6034,7 +6677,7 @@ msgstr ""
 msgid "Weekly newsletter"
 msgstr "Weekly newsletter"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:359
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:383
 msgid "weeks"
 msgstr ""
 
@@ -6046,7 +6689,7 @@ msgstr ""
 msgid "WELCOME"
 msgstr "WELCOME"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:165
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:174
 msgid "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
 msgstr "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
 
@@ -6062,7 +6705,7 @@ msgstr "What changed (English)"
 msgid "What is this message for?"
 msgstr "What is this message for?"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:368
+#: ../../packages/marketing/src/components/campaign-form.tsx:472
 msgid "When"
 msgstr "When"
 
@@ -6116,7 +6759,7 @@ msgstr "Win back guests who have not ordered in a while"
 msgid "Window sticker"
 msgstr "Window sticker"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:242
+#: ../../packages/marketing/src/components/campaign-form.tsx:270
 msgid "Without a verified phone"
 msgstr "Without a verified phone"
 
@@ -6136,7 +6779,11 @@ msgstr "Write a draft"
 msgid "Write again"
 msgstr "Write again"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:319
+#: ../../packages/marketing/src/components/campaign-form.tsx:375
+msgid "Write the notification"
+msgstr "Write the notification"
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:386
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "Write your email. Use {NAME_TAG} to personalize."
 
@@ -6144,7 +6791,7 @@ msgstr "Write your email. Use {NAME_TAG} to personalize."
 msgid "Write your message"
 msgstr "Write your message"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:308
+#: ../../packages/marketing/src/components/campaign-form.tsx:362
 msgid "Write your text message"
 msgstr "Write your text message"
 
@@ -6152,11 +6799,16 @@ msgstr "Write your text message"
 #~ msgid "Write your text message. Max 160 characters."
 #~ msgstr ""
 
+#: app/routes/_admin+/customer-apps_.$appId.tsx:282
+msgid "Write-only. Once uploaded a credential is stored encrypted and can never be read again, only replaced or removed."
+msgstr "Write-only. Once uploaded a credential is stored encrypted and can never be read again, only replaced or removed."
+
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:302
 msgid "Writing…"
 msgstr "Writing…"
 
 #: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:60
+#: app/routes/_admin+/customer-apps_.$appId.tsx:830
 msgid "Yes"
 msgstr ""
 
@@ -6190,7 +6842,7 @@ msgstr "You have reached the limit for AI drafts. Please try again later."
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "Your email design has changes that haven't been saved. Leaving now will lose them."
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:156
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:160
 msgid "Your Exclusive Update"
 msgstr ""
 

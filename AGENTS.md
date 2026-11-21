@@ -1106,6 +1106,19 @@ edit, chain defaults and locks):**
   (`npm run tenant -w customer -- --tenant <slug>`). `apps/mobile` is the
   separate operator app
 
+**Branded customer app (management, links, orders, invites, push):**
+
+- One app registry (`CustomerApp*`, control plane `0068`), managed in Admin
+  (`update:customer_app:any`); credentials are write-only and encrypted with
+  `INTEGRATION_ENCRYPTION_KEY`. Builds, store health, accounts and push go
+  through mockable adapters. One link registry, `@repo/common/links`: no sender
+  builds a guest URL by hand, capability tokens live in the URL fragment only.
+  Guests' restaurant orders are `/customer/orders*` (own orders only, reorder
+  returns ids). Push (tenant-db `0057`): regional devices and send log, strict
+  PII-free payloads, `PUSH_ENABLED` kill switch, KSA off until
+  `PUSH_KSA_APPROVED`. Flags `customer_app.enabled` / `.push`, `marketing.push`
+  (default off). Docs: `docs/customer-app.md`.
+
 **Staff module (hiring, scheduling, staff management, time clock):**
 
 - Staff, pay, punch, schedule, and applicant data lives in the **regional**

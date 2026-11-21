@@ -14,7 +14,8 @@ export const CAMPAIGN_STATUSES = [
 export type CampaignStatus = (typeof CAMPAIGN_STATUSES)[number]
 export const campaignStatusSchema = z.enum(CAMPAIGN_STATUSES)
 
-export const CAMPAIGN_CHANNELS = ['email', 'sms'] as const
+/** `push` (#105) is a tenant channel only: platform campaigns stay email and SMS. */
+export const CAMPAIGN_CHANNELS = ['email', 'sms', 'push'] as const
 export type CampaignChannel = (typeof CAMPAIGN_CHANNELS)[number]
 export const campaignChannelSchema = z.enum(CAMPAIGN_CHANNELS)
 

@@ -3,6 +3,7 @@ import {
 	type DelayNodeData,
 	type ActionEmailNodeData,
 	type ActionSmsNodeData,
+	type ActionPushNodeData,
 	type ConditionNodeData,
 	type JourneyTriggerType,
 	type DelayUnit,
@@ -20,6 +21,7 @@ export type {
 	DelayNodeData,
 	ActionEmailNodeData,
 	ActionSmsNodeData,
+	ActionPushNodeData,
 	ConditionNodeData,
 	JourneyTriggerType,
 	DelayUnit,
@@ -36,6 +38,7 @@ export type TriggerFlowNode = Node<TriggerNodeData, 'trigger'>
 export type DelayFlowNode = Node<DelayNodeData, 'delay'>
 export type ActionEmailFlowNode = Node<ActionEmailNodeData, 'action_email'>
 export type ActionSmsFlowNode = Node<ActionSmsNodeData, 'action_sms'>
+export type ActionPushFlowNode = Node<ActionPushNodeData, 'action_push'>
 export type ConditionFlowNode = Node<ConditionNodeData, 'condition'>
 
 export type AppFlowNode =
@@ -43,6 +46,7 @@ export type AppFlowNode =
 	| DelayFlowNode
 	| ActionEmailFlowNode
 	| ActionSmsFlowNode
+	| ActionPushFlowNode
 	| ConditionFlowNode
 
 export type AppFlowEdge = Edge<{
@@ -51,7 +55,13 @@ export type AppFlowEdge = Edge<{
 }>
 
 export interface PaletteItem {
-	type: 'trigger' | 'delay' | 'action_email' | 'action_sms' | 'condition'
+	type:
+		| 'trigger'
+		| 'delay'
+		| 'action_email'
+		| 'action_sms'
+		| 'action_push'
+		| 'condition'
 	label: string
 	description: string
 	icon: string
@@ -61,6 +71,7 @@ export interface PaletteItem {
 		| DelayNodeData
 		| ActionEmailNodeData
 		| ActionSmsNodeData
+		| ActionPushNodeData
 		| ConditionNodeData
 
 	isGated?: boolean

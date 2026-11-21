@@ -732,6 +732,15 @@ const SYSTEM_PERMISSIONS = [
 		context: 'system',
 		description: 'Create, edit, publish, and delete platform automations',
 	},
+	// Branded customer apps in Admin (#156). Keep in sync with 0068_customer_app.
+	{
+		id: 'sys_perm_update_customer_app_any',
+		action: 'update',
+		entity: 'customer_app',
+		access: 'any',
+		context: 'system',
+		description: 'Manage branded customer apps: create, credentials, builds',
+	},
 ] as const
 
 const ADMIN_PERMISSION_IDS = ORG_PERMISSIONS.map((permission) => permission.id)

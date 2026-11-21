@@ -67,9 +67,15 @@ export function useNativeFormSaveBar(
 		extraDirty?: boolean
 		/** Resets that state; the fields themselves are reset for you. */
 		onDiscard?: () => void
+		/**
+		 * Save after every other dirty form finished saving, for a save that moves
+		 * the page (for example an organization slug change redirects).
+		 */
+		saveLast?: boolean
 	} = {},
 ) {
-	const { enabled = true, extraDirty = false, onDiscard } = options
+	const { enabled = true, extraDirty = false, onDiscard, saveLast = false } =
+		options
 	const discardExtra = useRef(onDiscard)
 	const [dirty, setDirty] = useState(false)
 
@@ -85,21 +91,38 @@ export function useNativeFormSaveBar(
 		check.current()
 	})
 	useEffect(() => {
-		const form = formRef.current
-		if (!form) return
-		const onChange = () => check.current()
-		let resetTimer: ReturnType<typeof setTimeout> | undefined
-		const onReset = () => {
-			resetTimer = setTimeout(() => check.current(), 0)
+		let cleanup: (() => void) | undefined
+		let cancelled = false
+		let attempts = 0
+
+		const bind = () => {
+			if (cancelled) return
+			const form = formRef.current
+			if (!form) {
+				if (attempts++ < 30) requestAnimationFrame(bind)
+				return
+			}
+			const onChange = () => check.current()
+			let resetTimer: ReturnType<typeof setTimeout> | undefined
+			const onReset = () => {
+				resetTimer = setTimeout(() => check.current(), 0)
+			}
+			form.addEventListener('input', onChange)
+			form.addEventListener('change', onChange)
+			form.addEventListener('reset', onReset)
+			check.current()
+			cleanup = () => {
+				clearTimeout(resetTimer)
+				form.removeEventListener('input', onChange)
+				form.removeEventListener('change', onChange)
+				form.removeEventListener('reset', onReset)
+			}
 		}
-		form.addEventListener('input', onChange)
-		form.addEventListener('change', onChange)
-		form.addEventListener('reset', onReset)
+
+		bind()
 		return () => {
-			clearTimeout(resetTimer)
-			form.removeEventListener('input', onChange)
-			form.removeEventListener('change', onChange)
-			form.removeEventListener('reset', onReset)
+			cancelled = true
+			cleanup?.()
 		}
 	}, [formRef])
 
@@ -112,6 +135,7 @@ export function useNativeFormSaveBar(
 			discardExtra.current?.()
 			check.current()
 		},
+		saveLast,
 	})
 }
 
@@ -139,6 +163,7 @@ export function useFormSnapshotSaveBar(
 		result,
 		onDiscard,
 		enabled = true,
+		saveLast = false,
 	}: {
 		/** True while this form's submission (or the redirect after it) runs. */
 		saving: boolean
@@ -146,6 +171,11 @@ export function useFormSnapshotSaveBar(
 		result?: unknown
 		onDiscard: () => void
 		enabled?: boolean
+		/**
+		 * Save after every other dirty form finished saving, for a save that moves
+		 * the page (for example an organization slug change redirects).
+		 */
+		saveLast?: boolean
 	},
 ) {
 	const baseline = useRef<string | null>(null)
@@ -232,6 +262,7 @@ export function useFormSnapshotSaveBar(
 		onDiscard: () => {
 			latest.current.onDiscard()
 		},
+		saveLast,
 	})
 }
 

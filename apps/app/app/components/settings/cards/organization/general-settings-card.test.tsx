@@ -47,7 +47,7 @@ describe('GeneralSettingsCard', () => {
 		expect(screen.getByText('Unsaved changes')).toBeInTheDocument()
 
 		await user.click(screen.getByRole('button', { name: 'Discard' }))
-		expect(name).toHaveValue('acme')
+		expect(screen.getByLabelText(/^name/i)).toHaveValue('acme')
 		await waitFor(() =>
 			expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument(),
 		)

@@ -9,6 +9,7 @@ import {
 	type TenantConfiguration,
 } from '../config/configuration'
 import { APP_LOCALES } from '../i18n/lingui'
+import { PushManager } from '../push/push-manager'
 import { forgetAllReservationTokens } from '../reservations/token-store'
 import { forgetPreviousInstall } from '../session/reinstall-guard'
 import { createSecureTokenStorage } from '../session/token-storage'
@@ -64,6 +65,12 @@ export function createAppStore(options: {
 		transport: options.transport,
 		prepareStorage: options.prepareStorage ?? (() => forgetPreviousInstall()),
 		forgetSiteData: forgetAllReservationTokens,
+		// Push (#105): delete this device's registration while the session is valid.
+		beforeSignOut: (session) =>
+			new PushManager({
+				session,
+				language: () => store?.getSnapshot().language.code ?? 'en',
+			}).unregister(),
 		createFeatures: (context) =>
 			createCustomerFeatures(context, {
 				// The callback fires on a loyalty answer, never during construction.

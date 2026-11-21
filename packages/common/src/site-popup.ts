@@ -1,3 +1,4 @@
+import { buildLinkPath } from './links.ts'
 import { z } from 'zod'
 
 /**
@@ -268,7 +269,12 @@ export function pickPopup<
 
 /** The button of a popup with a coupon: the menu, with the code in the URL. */
 export function popupCouponHref(code: string): string {
-	return `/menu?coupon=${encodeURIComponent(code)}`
+	try {
+		return buildLinkPath('coupon', { coupon: code })
+	} catch {
+		// A code outside the link registry's alphabet cannot ride in the URL.
+		return buildLinkPath('menu_home', {})
+	}
 }
 
 // ---------------------------------------------------------------------------

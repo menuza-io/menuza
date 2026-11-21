@@ -1,0 +1,27 @@
+---
+import AppInviteSection from '~/components/AppInviteSection.astro'
+
+interface Props {
+	config: Record<string, any>
+}
+
+const { config } = Astro.props
+const organization = Astro.locals.organization
+const heading = typeof config?.heading === 'string' ? config.heading : ''
+const body = typeof config?.body === 'string' ? config.body : ''
+---
+
+{
+	organization?.customerApp && (
+		<section class="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
+			<AppInviteSection
+				organization={organization}
+				placement="block"
+				heading={heading}
+				body={body}
+				qr
+				class="border-border rounded-lg border p-6"
+			/>
+		</section>
+	)
+}

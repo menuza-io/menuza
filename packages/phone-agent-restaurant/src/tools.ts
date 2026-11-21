@@ -1,3 +1,4 @@
+import { buildLinkPath } from '@repo/common/links'
 import { z } from 'zod'
 import {
 	defineVerticalTool,
@@ -56,9 +57,7 @@ export type RestaurantHandoffPayload = z.infer<
 
 /** The Sites menu page, for one location when it is known. */
 export function restaurantMenuPath(locationId: string | null) {
-	const params = new URLSearchParams()
-	if (locationId) params.set('location', locationId)
-	return params.size ? `/menu?${params}` : '/menu'
+	return buildLinkPath('menu_home', locationId ? { location: locationId } : {})
 }
 
 /**

@@ -1,3 +1,4 @@
+import { buildLinkPath } from '@repo/common/links'
 import { type EmailBlock } from '@repo/common/email-blocks'
 import {
 	type EmailMenuItemBlock,
@@ -87,7 +88,7 @@ export function collectPickableMenuItems(
 				priceMinor: Math.round(price * 100),
 				currency,
 				imageUrl: absoluteImageUrl(item, options.baseUrl),
-				path: `/menu?item=${encodeURIComponent(item.id)}`,
+				path: buildLinkPath('dish', { item: item.id }),
 			})
 		}
 	}

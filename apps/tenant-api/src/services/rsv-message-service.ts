@@ -15,6 +15,7 @@ import {
 	resolveGuestLocale,
 	type ReservationsContext,
 } from '@repo/reservations'
+import { buildLink } from '@repo/common/links'
 import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { getNodeRegion } from '../lib/region.ts'
@@ -166,10 +167,17 @@ type Subject = {
 	timeZone: string | null
 	partySize: number | null
 	token: string | null
+	/** The guest's account, when the booking is linked to one (for a push, #105). */
+	customerId: string | null
 	endMs: number | null
 	quotedWaitMin: number | null
-	/** Query of the booking link that opens the offered slot (notify-me only). */
-	bookQuery: string | null
+	/** The booking link's slot parameters that open the offered slot (notify-me only). */
+	bookQuery: {
+		location: string
+		party: string
+		date: string
+		time: string
+	} | null
 	/** Amount and id of the payment a payment message is about. */
 	payment: {
 		id: string
@@ -264,6 +272,7 @@ async function resolveSubject(
 					reservation.id,
 					reservation.manageTokenVersion,
 				),
+				customerId: guest.customerId ?? null,
 				endMs: reservation.endAt,
 				quotedWaitMin: null,
 				bookQuery: null,
@@ -306,6 +315,7 @@ async function resolveSubject(
 				timeZone: null,
 				partySize: entry.partySize,
 				token: deriveWaitlistToken(orgId, entry.id, entry.statusTokenVersion),
+				customerId: await waitlistCustomerId(db, entry.guestId),
 				endMs: null,
 				quotedWaitMin: entry.quotedMin,
 				bookQuery: null,
@@ -343,15 +353,16 @@ async function resolveSubject(
 				timeZone: zone,
 				partySize: request.partySize,
 				token: deriveNotifyToken(orgId, request.id, request.tokenVersion),
+				customerId: null,
 				endMs: null,
 				quotedWaitMin: null,
 				payment: null,
-				bookQuery: new URLSearchParams({
+				bookQuery: {
 					location: request.locationId,
 					party: String(request.partySize),
 					date: request.businessDate,
 					time: `${hh}:${mm}`,
-				}).toString(),
+				},
 			},
 		}
 	}
@@ -370,6 +381,29 @@ async function locationTimeZone(
 	return settings?.timeZone ?? 'UTC'
 }
 
+async function waitlistCustomerId(
+	db: TenantDatabase,
+	guestId: string | null,
+): Promise<string | null> {
+	if (!guestId) return null
+	const guest = await db
+		.select({ customerId: rsvGuests.customerId })
+		.from(rsvGuests)
+		.where(eq(rsvGuests.id, guestId))
+		.get()
+	return guest?.customerId ?? null
+}
+
+/** Booking messages that also reach the guest's phone as a push (#105). */
+const BOOKING_PUSH_KINDS_BY_ROW: Record<
+	string,
+	'confirmation' | 'reminder' | 'waitlist_ready'
+> = {
+	confirmation: 'confirmation',
+	reminder: 'reminder',
+	waitlist_ready: 'waitlist_ready',
+}
+
 async function sendOne(options: {
 	db: TenantDatabase
 	orgId: string
@@ -379,6 +413,17 @@ async function sendOne(options: {
 	now: number
 }): Promise<void> {
 	const { db, orgId, context, row, subject } = options
+	// The guest's phone too, once per booking event (the same moment as the text
+	// or email; a retry of either channel finds the push already sent).
+	const pushKind = BOOKING_PUSH_KINDS_BY_ROW[row.kind]
+	if (pushKind && subject.customerId) {
+		const { pushBooking } = await import('./push-hooks.ts')
+		await pushBooking(orgId, {
+			customerId: subject.customerId,
+			kind: pushKind,
+			ref: `${row.reservationId ?? row.waitlistEntryId ?? row.notifyRequestId ?? row.id}:${row.kind}:${milestoneOf(row.dedupeKey)}`,
+		})
+	}
 	const locale = normalizeReservationLocale(
 		resolveGuestLocale(
 			subject.locale,
@@ -395,21 +440,31 @@ async function sendOne(options: {
 		(await locationTimeZone(db, subject.locationId))
 	const base = siteBase(context, locale)
 	const token = subject.token
+	// Every link comes from the shared registry (`@repo/common/links`): the
+	// capability token rides in the fragment, and a phone with the restaurant's
+	// app opens the booking screen.
 	const manageUrl =
 		base && token && subject.kind === 'reservation'
-			? `${base}/reserve/manage#t=${token}`
+			? buildLink('reservation', { token }, { origin: base })
 			: null
 	const statusUrl =
 		base && token && subject.kind === 'waitlist'
-			? `${base}/reserve/waitlist#t=${token}`
+			? buildLink('waitlist', { token }, { origin: base })
 			: null
 	const bookUrl = base
-		? `${base}/reserve${subject.bookQuery ? `?${subject.bookQuery}` : ''}`
+		? buildLink('reserve', subject.bookQuery ?? {}, { origin: base })
 		: null
 	const kind = row.kind as ToggleableMessageKind | PaymentEmailKind
 	const payUrl =
 		base && subject.payment && kind === 'fee_action_required'
-			? `${base}/reserve/pay#f=${subject.payment.id}&t=${deriveFeePayToken(orgId, subject.payment.id)}`
+			? buildLink(
+					'reservation_pay',
+					{
+						fee: subject.payment.id,
+						token: deriveFeePayToken(orgId, subject.payment.id),
+					},
+					{ origin: base },
+				)
 			: null
 
 	if (row.channel === 'sms') {

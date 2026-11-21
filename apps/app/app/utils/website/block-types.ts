@@ -274,6 +274,17 @@ export const BLOCK_TYPES = {
 			background: 'muted',
 		},
 	},
+	app: {
+		label: 'Get the app',
+		icon: 'phone' as IconName,
+		description:
+			'Store links and a QR code for your app; shown only once it is live',
+		defaultConfig: {
+			heading: '',
+			body: '',
+			background: 'none',
+		},
+	},
 	events: {
 		label: 'Upcoming events',
 		icon: 'calendar' as IconName,
@@ -555,6 +566,7 @@ export const LOCALIZED_FIELDS: Record<string, string[]> = {
 	video: ['title', 'subtitle'],
 	reservation: ['heading', 'body', 'buttonLabel'],
 	rewards: ['heading', 'body', 'ctaLabel'],
+	app: ['heading', 'body'],
 	events: ['heading'],
 	menuHighlights: ['heading', 'subtitle'],
 	locationsHours: ['heading', 'subtitle'],

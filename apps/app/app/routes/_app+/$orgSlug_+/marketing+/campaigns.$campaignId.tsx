@@ -174,7 +174,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			if (!res.ok) return refused(res)
 			const { campaign } = (await res.json()) as {
 				campaign: {
-					channel: 'email' | 'sms'
+					channel: 'email' | 'sms' | 'push'
 					subject: string | null
 					content: string
 					contentHtml: string | null

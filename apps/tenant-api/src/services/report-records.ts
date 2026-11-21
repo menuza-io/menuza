@@ -450,12 +450,12 @@ async function loadAttributionMessages(
 	const byCustomer = new Map<string, AttributionMessage[]>()
 	for (const row of rows) {
 		if (!row.sentAt) continue
+		const channel = row.campaignChannel ?? row.channel
+		// Push is not attributed to orders (yet): reports name email and text.
+		if (channel === 'push') continue
 		const messages = byCustomer.get(row.customerId) ?? []
 		// Broadcast rows keep the column default, so the campaign's channel wins.
-		messages.push({
-			sentAt: row.sentAt.getTime(),
-			channel: row.campaignChannel ?? row.channel,
-		})
+		messages.push({ sentAt: row.sentAt.getTime(), channel })
 		byCustomer.set(row.customerId, messages)
 	}
 	for (const messages of byCustomer.values()) {
