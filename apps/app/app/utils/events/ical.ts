@@ -55,9 +55,22 @@ export type ParsedCalendar = {
 	occurrences: CalendarOccurrence[]
 	/** Events in the feed that could not be read (bad dates, unsupported rules). */
 	skipped: number
+	/**
+	 * Keys of occurrences that were read but cut by the occurrence cap. They are
+	 * still in the calendar, so the sync must not treat them as removed.
+	 */
+	trimmedKeys: string[]
+	/**
+	 * True when a limit stopped the expansion early: what is missing from the
+	 * result may still be in the calendar, so the sync deletes nothing.
+	 */
+	partial: boolean
 }
 
-export type ParseError = { ok: false; error: 'invalid_calendar' | 'too_large' }
+export type ParseError = {
+	ok: false
+	error: 'invalid_calendar' | 'too_large' | 'too_many_events'
+}
 
 type Property = { name: string; params: Map<string, string>; value: string }
 
@@ -453,7 +466,22 @@ function readDuration(value: string): number | null {
 	)
 }
 
-function readEvents(properties: Property[]): {
+/** A one-off event that ended days ago can never reach the window. */
+function isLongOver(event: RawEvent, now: number) {
+	if (event.rule || event.rdates.length > 0 || event.recurrenceId) return false
+	const ref = event.end ?? event.start
+	if (!ref) return false
+	const cutoffMs = now - 2 * 86_400_000
+	if (ref.kind === 'utc') return ref.ms < cutoffMs
+	const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10)
+	const date = ref.kind === 'date' ? ref.date : ref.local.slice(0, 10)
+	return date < cutoffDate
+}
+
+function readEvents(
+	properties: Property[],
+	now: number,
+): {
 	events: RawEvent[]
 	name: string | null
 	timezone: string | null
@@ -498,7 +526,9 @@ function readEvents(properties: Property[]): {
 			if (current && depth > 0) {
 				depth--
 			} else if (current && kind === 'VEVENT') {
-				events.push(current)
+				// A finished one-off is history: it never counts toward the cap, so a
+				// calendar with years of past events still reads its upcoming ones.
+				if (!isLongOver(current, now)) events.push(current)
 				current = null
 			}
 			continue
@@ -610,13 +640,17 @@ export function parseCalendar(
 	) {
 		return { ok: false, error: 'invalid_calendar' }
 	}
+	const now = options.now ?? Date.now()
 	const { events, name, timezone, tooMany } = readEvents(
 		readProperties(trimmed),
+		now,
 	)
+	// Past the limit even after leaving out finished events: what was read is
+	// only part of the calendar, and a part must never stand for the whole.
+	if (tooMany) return { ok: false, error: 'too_many_events' }
 	const defaultZone = isValidTimeZone(options.defaultTimezone)
 		? options.defaultTimezone
 		: (timezone ?? 'UTC')
-	const now = options.now ?? Date.now()
 	const window: Window = {
 		fromMs: now,
 		untilMs: now + (options.windowDays ?? ICAL_WINDOW_DAYS) * 86_400_000,
@@ -628,8 +662,10 @@ export function parseCalendar(
 	const masters: RawEvent[] = []
 	for (const event of events) {
 		if (event.recurrenceId && event.uid) {
-			const at = readWall(event.recurrenceId, defaultZone)
-			if (at) overrides.set(`${event.uid}|${at.date}T${at.time}`, event)
+			// By instant, not by wall clock: the id may name the instance in UTC or
+			// another zone than the master's.
+			const at = whenKey(event.recurrenceId, defaultZone)
+			if (at) overrides.set(`${event.uid}|${at}`, event)
 		} else {
 			masters.push(event)
 		}
@@ -637,7 +673,8 @@ export function parseCalendar(
 
 	const out: CalendarOccurrence[] = []
 	const seen = new Set<string>()
-	let skipped = tooMany ? 1 : 0
+	let skipped = 0
+	let partial = false
 	const push = (
 		raw: RawEvent,
 		uid: string,
@@ -707,13 +744,25 @@ export function parseCalendar(
 		}
 		const excluded = new Set(
 			raw.exdates.flatMap((when) => {
-				const w = toWall(when, wall.timezone)
-				return w ? [`${w.date}T${allDay ? '00:00' : w.time}`] : []
+				const key = whenKey(when, wall.timezone)
+				return key ? [key] : []
 			}),
 		)
 		const repeating = Boolean(raw.rule) || raw.rdates.length > 0
 		const instances: Array<{ date: string; time: string }> = []
-		if (raw.rule) {
+		if (raw.rule && raw.start.kind === 'utc') {
+			// A UTC start repeats at the same UTC time: each instance is placed on
+			// the calendar's wall clock on its own, so after a daylight-saving
+			// change it moves with the clock instead of keeping the first wall time.
+			const startIso = new Date(raw.start.ms).toISOString()
+			const utcDate = startIso.slice(0, 10)
+			const utcTime = startIso.slice(11, 16)
+			for (const date of ruleDates(utcDate, raw.rule, addDays(lastDate, 1))) {
+				const ms = Date.parse(`${date}T${utcTime}:00Z`)
+				const at = toWall({ kind: 'utc', ms }, defaultZone)
+				if (at) instances.push({ date: at.date, time: at.time })
+			}
+		} else if (raw.rule) {
 			for (const date of ruleDates(wall.date, raw.rule, lastDate)) {
 				instances.push({ date, time: wall.time })
 			}
@@ -725,7 +774,12 @@ export function parseCalendar(
 			if (w) instances.push({ date: w.date, time: allDay ? '00:00' : w.time })
 		}
 		for (const instance of instances) {
-			const id = `${instance.date}T${instance.time}`
+			const id = instanceKey(
+				instance.date,
+				instance.time,
+				wall.timezone,
+				allDay,
+			)
 			if (excluded.has(id)) continue
 			const override = overrides.get(`${raw.uid}|${id}`)
 			if (override?.start) {
@@ -758,7 +812,10 @@ export function parseCalendar(
 				minutes,
 				allDay,
 			)
-			if (out.length >= ICAL_MAX_OCCURRENCES * 4) break
+			if (out.length >= ICAL_MAX_OCCURRENCES * 4) {
+				partial = true
+				break
+			}
 		}
 	}
 
@@ -766,10 +823,40 @@ export function parseCalendar(
 		(a, b) =>
 			a.startLocal.localeCompare(b.startLocal) || a.key.localeCompare(b.key),
 	)
+	const trimmedKeys = out.slice(ICAL_MAX_OCCURRENCES).map((o) => o.key)
 	if (out.length > ICAL_MAX_OCCURRENCES) out.length = ICAL_MAX_OCCURRENCES
-	return { ok: true, name, timezone, occurrences: out, skipped }
+	return {
+		ok: true,
+		name,
+		timezone,
+		occurrences: out,
+		skipped,
+		trimmedKeys,
+		partial,
+	}
 }
 
-function readWall(when: When, fallbackZone: string) {
-	return toWall(when, fallbackZone)
+/** One moment, comparable across zones: a date for all-day, else the instant. */
+function whenKey(when: When, fallbackZone: string): string | null {
+	if (when.kind === 'date') return `d:${when.date}`
+	if (when.kind === 'utc') return `t:${when.ms}`
+	try {
+		return `t:${parseLocalTimestamp(when.local, when.timezone ?? fallbackZone)}`
+	} catch {
+		return null
+	}
+}
+
+function instanceKey(
+	date: string,
+	time: string,
+	zone: string,
+	allDay: boolean,
+): string {
+	if (allDay) return `d:${date}`
+	try {
+		return `t:${parseLocalTimestamp(`${date}T${time}`, zone)}`
+	} catch {
+		return `x:${date}T${time}`
+	}
 }

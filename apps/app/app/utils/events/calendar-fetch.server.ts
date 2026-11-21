@@ -47,10 +47,23 @@ export async function fetchCalendarFeed(
 	const maxRedirects = deps.maxRedirects ?? 3
 	const controller = new AbortController()
 	const timer = setTimeout(() => controller.abort(), deps.timeoutMs ?? 15_000)
+	// The deadline covers the name lookups too, not only the download.
+	const withinDeadline = <T>(work: Promise<T>): Promise<T> =>
+		Promise.race([
+			work,
+			new Promise<never>((_, reject) => {
+				const stop = () => reject(new Error('deadline'))
+				if (controller.signal.aborted) stop()
+				else controller.signal.addEventListener('abort', stop, { once: true })
+			}),
+		])
 	try {
 		let current = rawUrl
 		for (let hop = 0; hop <= maxRedirects; hop++) {
-			const checked = await validateMenuImportUrl(current, resolve)
+			const checked = await withinDeadline(
+				validateMenuImportUrl(current, resolve),
+			).catch(() => null)
+			if (!checked) return { ok: false, error: 'fetch_failed' }
 			if (!checked.ok) {
 				return {
 					ok: false,
@@ -89,8 +102,10 @@ export async function fetchCalendarFeed(
 				return { ok: false, error: 'fetch_failed' }
 			}
 			// Narrow the DNS rebinding window before reading anything.
-			const again = await validateMenuImportUrl(checked.url, resolve)
-			if (!again.ok) {
+			const again = await withinDeadline(
+				validateMenuImportUrl(checked.url, resolve),
+			).catch(() => null)
+			if (!again?.ok) {
 				await response.body?.cancel().catch(() => {})
 				return { ok: false, error: 'url_not_allowed' }
 			}

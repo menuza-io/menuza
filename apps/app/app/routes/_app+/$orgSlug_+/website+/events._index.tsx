@@ -324,6 +324,7 @@ const CALENDAR_ERRORS = {
 	fetch_failed: msg`We could not read that calendar. Check that it is public, or paste its secret address.`,
 	invalid_calendar: msg`That address does not lead to a calendar.`,
 	too_large: msg`That calendar is too large to import.`,
+	too_many_events: msg`That calendar has too many upcoming events to import. Use a calendar with fewer, or remove old events.`,
 	too_many_calendars: msg`You have connected the most calendars you can.`,
 	location_not_found: msg`Choose one of your locations.`,
 	not_found: msg`That calendar is no longer connected.`,

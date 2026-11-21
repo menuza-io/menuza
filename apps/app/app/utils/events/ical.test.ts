@@ -501,17 +501,118 @@ describe('what is not a calendar', () => {
 		expect(result.skipped).toBeGreaterThanOrEqual(3)
 	})
 
-	it('reads at most the maximum number of events', () => {
+	const upcoming = (i: number, extra: string[] = []) =>
+		event([
+			`UID:m${i}@x`,
+			`SUMMARY:M${i}`,
+			'DTSTART:20260312T170000Z',
+			'DTEND:20260312T180000Z',
+			...extra,
+		])
+
+	it('refuses a feed with more upcoming events than the limit, instead of reading part of it', () => {
 		const many = Array.from({ length: ICAL_MAX_EVENTS + 50 }, (_, i) =>
+			upcoming(i),
+		)
+		const result = parseCalendar(calendar(...many), {
+			defaultTimezone: 'Asia/Riyadh',
+			now: NOW,
+		})
+		expect(result).toEqual({ ok: false, error: 'too_many_events' })
+	})
+
+	it('does not count events that are long over toward the limit', () => {
+		const history = Array.from({ length: ICAL_MAX_EVENTS + 500 }, (_, i) =>
 			event([
-				`UID:m${i}@x`,
-				`SUMMARY:M${i}`,
-				'DTSTART:20260312T170000Z',
-				'DTEND:20260312T180000Z',
+				`UID:old${i}@x`,
+				'SUMMARY:Old',
+				'DTSTART:20240312T170000Z',
+				'DTEND:20240312T180000Z',
 			]),
 		)
-		const result = parse(calendar(...many))
-		expect(result.occurrences.length).toBeLessThanOrEqual(ICAL_MAX_OCCURRENCES)
-		expect(result.skipped).toBeGreaterThan(0)
+		const result = parse(calendar(...history, upcoming(1), upcoming(2)))
+		expect(result.occurrences.map((o) => o.title)).toEqual(['M1', 'M2'])
+		expect(result.partial).toBe(false)
+	})
+
+	it('names what the occurrence cap cut, so it is not mistaken for removed', () => {
+		const some = Array.from({ length: ICAL_MAX_OCCURRENCES + 30 }, (_, i) =>
+			upcoming(i),
+		)
+		const result = parse(calendar(...some))
+		expect(result.occurrences).toHaveLength(ICAL_MAX_OCCURRENCES)
+		expect(result.trimmedKeys).toHaveLength(30)
+		const kept = new Set(result.occurrences.map((o) => o.key))
+		expect(result.trimmedKeys.some((key) => kept.has(key))).toBe(false)
+	})
+})
+
+describe('zones and instants', () => {
+	it('a UTC weekly event moves with the wall clock after a daylight-saving change', () => {
+		const { occurrences } = parse(
+			calendar(
+				event([
+					'UID:utc@x',
+					'SUMMARY:Utc weekly',
+					'DTSTART:20260312T180000Z',
+					'DTEND:20260312T190000Z',
+					'RRULE:FREQ=WEEKLY;BYDAY=TH',
+				]),
+			),
+			'Europe/London',
+		)
+		const before = occurrences.find((o) =>
+			o.startLocal.startsWith('2026-03-19'),
+		)!
+		const after = occurrences.find((o) =>
+			o.startLocal.startsWith('2026-04-02'),
+		)!
+		// The clocks went forward on 29 March: the same UTC moment is an hour later.
+		expect(before.startLocal).toBe('2026-03-19T18:00')
+		expect(after.startLocal).toBe('2026-04-02T19:00')
+	})
+
+	it('an EXDATE in UTC cancels the right instance after the change too', () => {
+		const { occurrences } = parse(
+			calendar(
+				event([
+					'UID:utc@x',
+					'SUMMARY:Utc weekly',
+					'DTSTART:20260312T180000Z',
+					'DTEND:20260312T190000Z',
+					'RRULE:FREQ=WEEKLY;BYDAY=TH',
+					'EXDATE:20260402T180000Z',
+				]),
+			),
+			'Europe/London',
+		)
+		const days = occurrences.map((o) => o.startLocal.slice(0, 10))
+		expect(days).toContain('2026-03-26')
+		expect(days).not.toContain('2026-04-02')
+		expect(days).toContain('2026-04-09')
+	})
+
+	it('a moved instance named in UTC is found on a master that has its own zone', () => {
+		const master = event([
+			'UID:trivia@x',
+			'SUMMARY:Trivia',
+			'DTSTART;TZID=America/New_York:20260226T200000',
+			'DTEND;TZID=America/New_York:20260226T220000',
+			'RRULE:FREQ=WEEKLY;BYDAY=TH',
+		])
+		// 20:00 in New York on 12 March (summer time) is 00:00 UTC on the 13th.
+		const moved = event([
+			'UID:trivia@x',
+			'RECURRENCE-ID:20260313T000000Z',
+			'SUMMARY:Trivia (special)',
+			'DTSTART;TZID=America/New_York:20260312T190000',
+			'DTEND;TZID=America/New_York:20260312T210000',
+		])
+		const { occurrences } = parse(calendar(master, moved), 'Asia/Riyadh')
+		const onThe12th = occurrences.filter((o) =>
+			o.startLocal.startsWith('2026-03-12'),
+		)
+		expect(onThe12th).toHaveLength(1)
+		expect(onThe12th[0]!.title).toBe('Trivia (special)')
 	})
 })

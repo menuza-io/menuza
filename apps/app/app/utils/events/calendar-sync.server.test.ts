@@ -24,6 +24,7 @@ import {
 	syncCalendarSource,
 	syncDueCalendars,
 } from './calendar-sync.server.ts'
+import { ICAL_MAX_EVENTS, ICAL_MAX_OCCURRENCES } from './ical.ts'
 
 function titleEn(raw: string) {
 	return (JSON.parse(raw) as { en: string }).en
@@ -356,11 +357,104 @@ describe('events appear and stay in step with the calendar (#319)', () => {
 			'SUMMARY:Live band',
 			'STATUS:CANCELLED\r\nSUMMARY:Live band',
 		)
-		await syncCalendarSource(
+		// The only event left is cancelled: the calendar now reads as empty. One
+		// empty read keeps the site's events (a private or emptied calendar must
+		// not wipe them); a second one in a row removes them.
+		const first = await syncCalendarSource(
 			result.sourceId,
 			deps(serve(feed(cancelled)), NOW + 2 * CALENDAR_SYNC_INTERVAL_MS),
 		)
+		expect(first).toEqual({ ok: false, error: 'empty_calendar' })
+		expect(await eventsOf(result.sourceId)).toHaveLength(1)
+		await syncCalendarSource(
+			result.sourceId,
+			deps(serve(feed(cancelled)), NOW + 3 * CALENDAR_SYNC_INTERVAL_MS),
+		)
 		expect(await eventsOf(result.sourceId)).toHaveLength(0)
+	})
+
+	it('an emptied calendar keeps its events once, and a calendar that fills again recovers', async () => {
+		const ctx = await setup()
+		const { result } = await connect(ctx, feed(quiz(), band))
+		if (!result.ok) throw new Error(result.error)
+		const empty = await syncCalendarSource(
+			result.sourceId,
+			deps(serve(feed()), NOW + CALENDAR_SYNC_INTERVAL_MS),
+		)
+		expect(empty).toEqual({ ok: false, error: 'empty_calendar' })
+		expect(await eventsOf(result.sourceId)).toHaveLength(2)
+		// It comes back: nothing was lost, and the next empty read starts over.
+		await syncCalendarSource(
+			result.sourceId,
+			deps(serve(feed(quiz(), band)), NOW + 2 * CALENDAR_SYNC_INTERVAL_MS),
+		)
+		const again = await syncCalendarSource(
+			result.sourceId,
+			deps(serve(feed()), NOW + 3 * CALENDAR_SYNC_INTERVAL_MS),
+		)
+		expect(again).toEqual({ ok: false, error: 'empty_calendar' })
+		expect(await eventsOf(result.sourceId)).toHaveLength(2)
+	})
+
+	it('two syncs at once read the calendar once: the other does nothing', async () => {
+		const ctx = await setup()
+		const { result } = await connect(ctx, feed(quiz(), band))
+		if (!result.ok) throw new Error(result.error)
+		const d = deps(serve(feed(quiz(), band)), NOW + CALENDAR_SYNC_INTERVAL_MS)
+		const outcomes = await Promise.all([
+			syncCalendarSource(result.sourceId, d),
+			syncCalendarSource(result.sourceId, d),
+		])
+		expect(outcomes.filter((o) => o.ok)).toHaveLength(1)
+		expect(outcomes.filter((o) => !o.ok)).toEqual([
+			{ ok: false, error: 'not_due' },
+		])
+		expect(await eventsOf(result.sourceId)).toHaveLength(2)
+	})
+
+	it('a feed with more upcoming events than the limit deletes nothing', async () => {
+		const ctx = await setup()
+		const { result } = await connect(ctx, feed(quiz(), band))
+		if (!result.ok) throw new Error(result.error)
+		const flood = Array.from({ length: ICAL_MAX_EVENTS + 20 }, (_, i) =>
+			vevent([
+				`UID:flood${i}@x`,
+				`SUMMARY:Flood ${i}`,
+				'DTSTART:20260320T170000Z',
+				'DTEND:20260320T180000Z',
+			]),
+		)
+		const outcome = await syncCalendarSource(
+			result.sourceId,
+			deps(serve(feed(...flood)), NOW + CALENDAR_SYNC_INTERVAL_MS),
+		)
+		expect(outcome).toEqual({ ok: false, error: 'too_many_events' })
+		expect(await eventsOf(result.sourceId)).toHaveLength(2)
+	})
+
+	it('what the occurrence cap cuts is not removed, and keeps what the operator added', async () => {
+		const ctx = await setup()
+		const many = (count: number) =>
+			Array.from({ length: count }, (_, i) =>
+				vevent([
+					`UID:cap${i}@x`,
+					`SUMMARY:Cap ${i}`,
+					`DTSTART:2026032${String(i % 9)}T${String(10 + (i % 10)).padStart(2, '0')}0000Z`,
+					`DTEND:2026032${String(i % 9)}T${String(10 + (i % 10)).padStart(2, '0')}3000Z`,
+				]),
+			)
+		const total = ICAL_MAX_OCCURRENCES + 30
+		const { result } = await connect(ctx, feed(...many(total)))
+		if (!result.ok) throw new Error(result.error)
+		const stored = await eventsOf(result.sourceId)
+		expect(stored).toHaveLength(ICAL_MAX_OCCURRENCES)
+		// Another read of the same feed removes none of the rest, whatever was cut.
+		const again = await syncCalendarSource(
+			result.sourceId,
+			deps(serve(feed(...many(total))), NOW + CALENDAR_SYNC_INTERVAL_MS),
+		)
+		expect(again).toMatchObject({ ok: true, report: { removed: 0 } })
+		expect(await eventsOf(result.sourceId)).toHaveLength(ICAL_MAX_OCCURRENCES)
 	})
 
 	it('never touches events made in Menuza or imported by another calendar', async () => {
@@ -380,10 +474,13 @@ describe('events appear and stay in step with the calendar (#319)', () => {
 		const first = await connect(ctx, feed(quiz()))
 		const second = await connect(ctx, feed(band))
 		if (!first.result.ok || !second.result.ok) throw new Error('connect')
-		await syncCalendarSource(
-			first.result.sourceId,
-			deps(serve(feed()), NOW + CALENDAR_SYNC_INTERVAL_MS),
-		)
+		// An emptied calendar needs two empty reads in a row to clear its events.
+		for (const step of [1, 2]) {
+			await syncCalendarSource(
+				first.result.sourceId,
+				deps(serve(feed()), NOW + step * CALENDAR_SYNC_INTERVAL_MS),
+			)
+		}
 		expect(await eventsOf(first.result.sourceId)).toHaveLength(0)
 		expect(await eventsOf(second.result.sourceId)).toHaveLength(1)
 		const [kept] = await db
@@ -577,6 +674,17 @@ describe('the address is guarded against server-side request forgery (#319)', ()
 				calls: 0,
 			})
 		}
+	})
+
+	it('a name lookup that hangs ends at the deadline, like a slow download', async () => {
+		const fetchMock = vi.fn()
+		const result = await fetchCalendarFeed('https://calendar.example/a.ics', {
+			fetch: fetchMock as unknown as typeof fetch,
+			resolve: () => new Promise<string[]>(() => {}),
+			timeoutMs: 50,
+		})
+		expect(result).toEqual({ ok: false, error: 'fetch_failed' })
+		expect(fetchMock).not.toHaveBeenCalled()
 	})
 
 	it('checks every redirect hop again', async () => {

@@ -43,6 +43,8 @@ import { parseCalendar, type CalendarOccurrence } from './ical.ts'
  */
 
 export const CALENDAR_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000
+/** How long a read holds its source before another caller may take it. */
+export const CALENDAR_SYNC_LEASE_MS = 10 * 60 * 1000
 export const CALENDAR_FAILURE_RETRY_MS = 60 * 60 * 1000
 export const MAX_CALENDARS_PER_ORGANIZATION = 5
 const SWEEP_LIMIT = 25
@@ -63,6 +65,7 @@ export type ConnectError =
 	| 'fetch_failed'
 	| 'invalid_calendar'
 	| 'too_large'
+	| 'too_many_events'
 	| 'too_many_calendars'
 	| 'location_not_found'
 
@@ -210,6 +213,7 @@ export async function connectCalendar(
 		parsed.skipped,
 		deps,
 		now,
+		{ keep: new Set(parsed.trimmedKeys), noDelete: parsed.partial },
 	)
 	return { ok: true, sourceId: id, report }
 }
@@ -263,6 +267,7 @@ async function applyFeed(
 	skipped: number,
 	deps: CalendarDeps,
 	now: number,
+	guard: { keep?: ReadonlySet<string>; noDelete?: boolean } = {},
 ): Promise<SyncReport> {
 	const [source] = await db
 		.select()
@@ -356,7 +361,15 @@ async function applyFeed(
 		})
 		report.updated++
 	}
-	const removed = existing.filter((row) => !wanted.has(row.sourceKey ?? ''))
+	// Gone from the calendar: not in the feed, and not merely cut by a limit. When
+	// a limit stopped the read early nothing is removed at all.
+	const removed = guard.noDelete
+		? []
+		: existing.filter(
+				(row) =>
+					!wanted.has(row.sourceKey ?? '') &&
+					!guard.keep?.has(row.sourceKey ?? ''),
+			)
 	report.removed = removed.length
 
 	for (let i = 0; i < inserts.length; i += WRITE_CHUNK) {
@@ -410,6 +423,8 @@ export type SyncOutcome =
 				| 'not_due'
 				| 'events_disabled'
 				| 'decrypt_failed'
+				| 'too_many_events'
+				| 'empty_calendar'
 	  }
 
 /**
@@ -438,6 +453,23 @@ export async function syncCalendarSource(
 	) {
 		return { ok: false, error: 'not_due' }
 	}
+	// One caller reads a source at a time (the sweep, a wake-up and a manual
+	// "Update now" can arrive together): the next time moves ahead by compare and
+	// set, and the caller that lost it does nothing. A crashed run is retried
+	// when the lease runs out; every outcome below sets the real next time.
+	const claimed = await db
+		.update(SiteEventCalendarSource)
+		.set({ nextSyncAt: new Date(now + CALENDAR_SYNC_LEASE_MS) })
+		.where(
+			and(
+				eq(SiteEventCalendarSource.id, sourceId),
+				source.nextSyncAt
+					? eq(SiteEventCalendarSource.nextSyncAt, source.nextSyncAt)
+					: isNull(SiteEventCalendarSource.nextSyncAt),
+			),
+		)
+		.returning({ id: SiteEventCalendarSource.id })
+	if (claimed.length === 0) return { ok: false, error: 'not_due' }
 	const retry = async (error: string, delay: number) => {
 		await db
 			.update(SiteEventCalendarSource)
@@ -482,6 +514,19 @@ export async function syncCalendarSource(
 		await retry(error, CALENDAR_FAILURE_RETRY_MS)
 		return { ok: false, error }
 	}
+	// A calendar with nothing in it may be one that was made private or emptied
+	// by mistake. The first empty read keeps the events and tries again in an
+	// hour; only a second empty read in a row takes them off the site.
+	if (parsed.occurrences.length === 0 && !parsed.partial) {
+		const [stored] = await db
+			.select({ total: count() })
+			.from(SiteEvent)
+			.where(eq(SiteEvent.sourceId, sourceId))
+		if ((stored?.total ?? 0) > 0 && source.lastError !== 'empty_calendar') {
+			await retry('empty_calendar', CALENDAR_FAILURE_RETRY_MS)
+			return { ok: false, error: 'empty_calendar' }
+		}
+	}
 	return {
 		ok: true,
 		report: await applyFeed(
@@ -490,6 +535,7 @@ export async function syncCalendarSource(
 			parsed.skipped,
 			deps,
 			now,
+			{ keep: new Set(parsed.trimmedKeys), noDelete: parsed.partial },
 		),
 	}
 }
