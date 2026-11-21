@@ -433,7 +433,7 @@ describe('marketing coupon codes', () => {
 			expect(issued!.code).toMatch(/^[A-HJ-NP-Z2-9]{8}$/)
 			expect(vi.mocked(sendSms)).toHaveBeenCalledWith({
 				to: maya.phone,
-				message: `Hi Maya, ${issued!.code} gets you 10% off`,
+				message: `Hi Maya, ${issued!.code} gets you 10% off\nReply STOP to opt out.`,
 			})
 
 			// A replay of the same step does not mint a second code.

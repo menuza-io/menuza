@@ -247,7 +247,8 @@ describe('overlapping broadcasts (#393)', () => {
 
 		it('answers counts only: no guest id, name, email or number is in the payload', async () => {
 			const db = await getTenantDb(orgId)
-			const guests = await emailGuests(db, 12)
+			// A name that cannot match a hex id by chance.
+			const guests = await emailGuests(db, 12, 'zelda')
 			await campaign(db)
 			const res = await ask(`channel=email&audience=all&sendAt=${SEND_AT}`)
 			expect(res.status).toBe(200)
