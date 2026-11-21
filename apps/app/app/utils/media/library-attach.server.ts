@@ -29,6 +29,9 @@ function assetStillMatches(input: {
 		eq(OrganizationMediaAsset.id, input.assetId),
 		eq(OrganizationMediaAsset.organizationId, input.organizationId),
 		eq(OrganizationMediaAsset.objectKey, input.objectKey),
+		// Only a ready asset can be attached (#147): a clip still rendering or a
+		// draft has nothing to show yet.
+		eq(OrganizationMediaAsset.status, 'ready'),
 	)
 }
 
@@ -56,6 +59,7 @@ export async function libraryAssetsStillMatch(
 		.where(
 			and(
 				eq(OrganizationMediaAsset.organizationId, organizationId),
+				eq(OrganizationMediaAsset.status, 'ready'),
 				inArray(OrganizationMediaAsset.id, [
 					...new Set(items.map((item) => item.assetId)),
 				]),

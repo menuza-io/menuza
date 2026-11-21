@@ -2411,6 +2411,21 @@ export const OrganizationMediaAsset = sqliteTable(
 		altText: text(),
 		caption: text(),
 		source: text().default('library').notNull(),
+		/**
+		 * Archived assets are hidden from the library and pickers until restored
+		 * (#147). The file stays in storage and still counts toward limits.
+		 */
+		archivedAt: integer({ mode: 'timestamp_ms' }),
+		/** `ready`, `processing` or `draft` (#147). Only `ready` can be attached. */
+		status: text().default('ready').notNull(),
+		/**
+		 * The original this asset is an edit of (#147): a studio edit or a
+		 * generated clip. Cleared when the original is deleted; never loops.
+		 */
+		parentAssetId: text().references((): any => OrganizationMediaAsset.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
 		createdById: text().references(() => User.id, {
 			onDelete: 'set null',
 			onUpdate: 'cascade',
@@ -2437,6 +2452,95 @@ export const OrganizationMediaAsset = sqliteTable(
 			table.mimeType,
 		),
 		index('OrganizationMediaAsset_createdById_idx').on(table.createdById),
+		index('OrganizationMediaAsset_parentAssetId_idx').on(table.parentAssetId),
+	],
+)
+
+/**
+ * A tag on a media asset (#147): lowercase, 1 to 32 characters, up to 20 per
+ * asset. `featured` is reserved: the website and the hero video (#301) prefer
+ * those photos.
+ */
+export const OrganizationMediaTag = sqliteTable(
+	'OrganizationMediaTag',
+	{
+		assetId: text()
+			.notNull()
+			.references(() => OrganizationMediaAsset.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		tag: text().notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('OrganizationMediaTag_assetId_tag_key').on(
+			table.assetId,
+			table.tag,
+		),
+		index('OrganizationMediaTag_organizationId_tag_idx').on(
+			table.organizationId,
+			table.tag,
+		),
+	],
+)
+
+/**
+ * Who confirmed they hold a web licence before uploading a custom font, which
+ * file it was for, and when (#286). One row per upload. `agreementVersion` is
+ * the version of the agreement text in `@repo/common/font-licence`; a changed
+ * text asks every member again. `userId` has no foreign key, so deleting a
+ * user never rewrites a row. `removedAt` marks a font taken down (by the
+ * owner or by Admin after a complaint); the row itself is kept.
+ */
+export const FontLicenceAcceptance = sqliteTable(
+	'FontLicenceAcceptance',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		userId: text().notNull(),
+		agreementVersion: integer().notNull(),
+		/** `heading` or `body`. */
+		role: text().notNull(),
+		fileName: text().notNull(),
+		/** SHA-256 of the uploaded file, hex. */
+		fileHash: text().notNull(),
+		objectKey: text().notNull(),
+		acceptedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		removedAt: integer({ mode: 'timestamp_ms' }),
+		/** `owner` or `admin`. */
+		removedBy: text(),
+		removedByUserId: text(),
+		removedReason: text(),
+	},
+	(table) => [
+		index('FontLicenceAcceptance_organizationId_acceptedAt_idx').on(
+			table.organizationId,
+			table.acceptedAt,
+		),
+		index('FontLicenceAcceptance_org_user_version_idx').on(
+			table.organizationId,
+			table.userId,
+			table.agreementVersion,
+		),
 	],
 )
 
@@ -3485,6 +3589,11 @@ export const Organization = sqliteTable(
 		 * default for the site's region (`required` in the EU, UK and KSA).
 		 */
 		consentMode: text(),
+		/**
+		 * Where the Order online, Gift cards and Reservations buttons go (#318):
+		 * JSON `ActionTargets`. Null means Menuza everywhere.
+		 */
+		actionTargets: text(),
 		/** Legal name, contact email and postal address for the legal pages (#89). */
 		legalContact: text(),
 		stripeConnectAccountId: text(),
@@ -3609,6 +3718,11 @@ export const OrganizationLocation = sqliteTable(
 		 * JSON `PrayerPauseSettings`.
 		 */
 		prayerPauseSettings: text(),
+		/**
+		 * This location's own action targets (#318), JSON `ActionTargets`. A kind
+		 * set here wins over the organization's. Null follows the organization.
+		 */
+		actionTargets: text(),
 		/**
 		 * Localized pickup instructions for guests (#251). JSON map like menu copy.
 		 */
@@ -6521,6 +6635,16 @@ export const SiteEvent = sqliteTable(
 		timezone: text().notNull(),
 		recurrence: text().default('{"frequency":"none"}').notNull(),
 		exceptions: text().default('{"skipped":[],"moved":[]}').notNull(),
+		/**
+		 * The calendar this event was imported from (#319); null for an event made
+		 * in Menuza. Disconnecting the calendar deletes its imported events.
+		 */
+		sourceId: text().references((): any => SiteEventCalendarSource.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		/** The calendar's own id for this occurrence (`UID` plus instance). */
+		sourceKey: text(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -6530,6 +6654,9 @@ export const SiteEvent = sqliteTable(
 			.notNull(),
 	},
 	(table) => [
+		uniqueIndex('SiteEvent_sourceId_sourceKey_key')
+			.on(table.sourceId, table.sourceKey)
+			.where(sql`${table.sourceId} IS NOT NULL`),
 		uniqueIndex('SiteEvent_organizationId_slug_key').on(
 			table.organizationId,
 			table.slug,
@@ -6538,6 +6665,124 @@ export const SiteEvent = sqliteTable(
 			table.organizationId,
 			table.status,
 		),
+	],
+)
+
+/**
+ * A Google Calendar (or any public iCalendar feed) connected to the website's
+ * events (#319). Read-only: Menuza never writes to the calendar. A secret
+ * address is stored encrypted (`urlEncrypted`, `INTEGRATION_ENCRYPTION_KEY`)
+ * and never logged; `urlHint` is the host only, safe to show.
+ */
+export const SiteEventCalendarSource = sqliteTable(
+	'SiteEventCalendarSource',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationLocationId: text().references(() => OrganizationLocation.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		label: text().notNull(),
+		urlEncrypted: text().notNull(),
+		urlHint: text().notNull(),
+		/** IANA zone for floating times in the feed. */
+		timezone: text().notNull(),
+		/** `active`, `error` or `paused`. */
+		status: text().default('active').notNull(),
+		/** A short machine reason (`fetch_failed`, `invalid_calendar`), never the address. */
+		lastError: text(),
+		lastSyncedAt: integer({ mode: 'timestamp_ms' }),
+		nextSyncAt: integer({ mode: 'timestamp_ms' }),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SiteEventCalendarSource_organizationId_idx').on(
+			table.organizationId,
+		),
+		index('SiteEventCalendarSource_nextSyncAt_idx').on(table.nextSyncAt),
+	],
+)
+
+/**
+ * One request to turn 3 to 6 of the restaurant's own photos into a looping
+ * hero clip (#301). The live hero never changes until `accepted`: the clip is
+ * a media asset (`status` of the asset is `draft` until accepted) previewed in
+ * the editor first. `status`: `queued`, `rendering`, `ready`, `failed`,
+ * `accepted` or `discarded`.
+ */
+export const HeroVideoGeneration = sqliteTable(
+	'HeroVideoGeneration',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		requestedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		/** `slow_pans`, `quick_cuts` or `warm_fade`. */
+		style: text().notNull(),
+		/** JSON array of the media asset ids used as stills, in order. */
+		photoAssetIds: text().notNull(),
+		/** `picked` or `auto`. */
+		selection: text().default('picked').notNull(),
+		durationSeconds: integer().notNull(),
+		status: text().default('queued').notNull(),
+		attempts: integer().default(0).notNull(),
+		videoAssetId: text().references(() => OrganizationMediaAsset.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		posterAssetId: text().references(() => OrganizationMediaAsset.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		/** A short machine reason when `failed` (`renderer_failed`, ...). */
+		error: text(),
+		startedAt: integer({ mode: 'timestamp_ms' }),
+		completedAt: integer({ mode: 'timestamp_ms' }),
+		acceptedAt: integer({ mode: 'timestamp_ms' }),
+		acceptedById: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('HeroVideoGeneration_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+		index('HeroVideoGeneration_status_idx').on(table.status),
 	],
 )
 

@@ -374,6 +374,8 @@ export function PhotoStudioDialog({
 		if (kind === 'copy') {
 			formData.set('intent', 'upload')
 			formData.set('source', 'ai-studio')
+			// The result is a version of the photo it was made from (#147).
+			formData.set('parentAssetId', active.asset.id)
 		} else {
 			formData.set('intent', 'replace')
 			formData.set('id', active.asset.id)
