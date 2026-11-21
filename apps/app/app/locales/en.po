@@ -1402,7 +1402,7 @@ msgstr "{createdLabel} is ready to take orders."
 msgid "{customized} changed"
 msgstr "{customized} changed"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:708
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:931
 msgid "{date}: {start}–{end}"
 msgstr "{date}: {start}–{end}"
 
@@ -3869,6 +3869,10 @@ msgstr "A payment policy has an invalid cancellation window."
 msgid "A payment policy points to a service that is gone."
 msgstr "A payment policy points to a service that is gone."
 
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:388
+msgid "A photo and a link stay when the calendar updates."
+msgstr "A photo and a link stay when the calendar updates."
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:2754
 msgid "A photo can have at most 20 tags."
 msgstr "A photo can have at most 20 tags."
@@ -4941,7 +4945,7 @@ msgstr "Add an email address to invite them to the app."
 msgid "Add an emergency contact"
 msgstr "Add an emergency contact"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:150
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:239
 msgid "Add an event, then put the Upcoming events section on any page."
 msgstr "Add an event, then put the Upcoming events section on any page."
 
@@ -6251,7 +6255,8 @@ msgstr "All days"
 msgid "All devices"
 msgstr "All devices"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:298
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:344
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:521
 msgid "All events"
 msgstr "All events"
 
@@ -6281,6 +6286,7 @@ msgstr "All jobs"
 #: app/routes/_app+/$orgSlug_+/reports+/_index.tsx:111
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:770
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:164
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:407
 #: app/utils/loyalty/promotions.ts:267
 msgid "All locations"
 msgstr "All locations"
@@ -6904,7 +6910,7 @@ msgstr "Announce a dish and make guests want to order it"
 msgid "Announce an event or an occasion"
 msgstr "Announce an event or an occasion"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:130
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:218
 msgid "Announce trivia nights, live music or a holiday brunch. Each event gets its own page with an Add to calendar file."
 msgstr "Announce trivia nights, live music or a holiday brunch. Each event gets its own page with an Add to calendar file."
 
@@ -6937,7 +6943,7 @@ msgstr "Another discount already uses this code."
 msgid "Another discount gives the customer more."
 msgstr "Another discount gives the customer more."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:202
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:270
 msgid "Another event already uses this web address."
 msgstr "Another event already uses this web address."
 
@@ -8718,7 +8724,7 @@ msgstr "Book, guestbook & reports"
 msgid "Book, waitlist & table status"
 msgstr "Book, waitlist & table status"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:447
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:670
 msgid "Bookable experience (its web address name)"
 msgstr "Bookable experience (its web address name)"
 
@@ -9384,6 +9390,14 @@ msgstr "Calculation method"
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:201
 msgid "Calendar"
 msgstr "Calendar"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:395
+msgid "Calendar address"
+msgstr "Calendar address"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:394
+msgid "Calendar address (public or secret)"
+msgstr "Calendar address (public or secret)"
 
 #: app/components/social/google-post-fields.tsx:48
 msgid "Call"
@@ -10499,7 +10513,7 @@ msgstr "Change the due date"
 msgid "Change the sales source"
 msgstr "Change the sales source"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:678
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:901
 msgid "Change this date's time"
 msgstr "Change this date's time"
 
@@ -10848,7 +10862,7 @@ msgstr "Check the domain settings on your website page."
 msgid "Check the drop details and try saving again."
 msgstr "Check the drop details and try saving again."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:199
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:267
 msgid "Check the event details and try again."
 msgstr "Check the event details and try again."
 
@@ -11534,7 +11548,8 @@ msgstr "Choose one of the listed options."
 msgid "Choose one of the listed times."
 msgstr "Choose one of the listed times."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:204
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:328
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:272
 msgid "Choose one of your locations."
 msgstr "Choose one of your locations."
 
@@ -12852,6 +12867,10 @@ msgstr "Connect accounts"
 msgid "Connect automatically"
 msgstr "Connect automatically"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:416
+msgid "Connect calendar"
+msgstr "Connect calendar"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:265
 msgid "Connect Canva"
 msgstr "Connect Canva"
@@ -13486,6 +13505,10 @@ msgstr "Could not assign the table."
 #: app/components/locations/location-setting-labels.ts:62
 msgid "Could not be changed"
 msgstr "Could not be changed"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:447
+msgid "Could not be read, trying again soon"
+msgstr "Could not be read, trying again soon"
 
 #: app/components/staff/schedule/notice-lists.tsx:31
 #: app/components/staff/schedule/publication-history.tsx:313
@@ -15207,11 +15230,11 @@ msgstr "Date of birth"
 msgid "Date of birth, address and emergency contact. Each time you view these, it is recorded."
 msgstr "Date of birth, address and emergency contact. Each time you view these, it is recorded."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:640
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:863
 msgid "Date to move"
 msgstr "Date to move"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:615
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:838
 msgid "Date to skip"
 msgstr "Date to skip"
 
@@ -15718,7 +15741,7 @@ msgstr "Delete dining time for {range} guests"
 msgid "Delete drop?"
 msgstr "Delete drop?"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:757
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:980
 msgid "Delete event"
 msgstr "Delete event"
 
@@ -16205,7 +16228,7 @@ msgstr "Describe when the agent should transfer to a specific contact. For examp
 msgid "Description"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:362
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:585
 msgid "Description ({language})"
 msgstr "Description ({language})"
 
@@ -16332,7 +16355,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:628
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1251
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1370
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:338
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:561
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:92
 msgid "Details"
 msgstr "Details"
@@ -16653,6 +16676,7 @@ msgstr "Disclose any allergens present to inform guest dietary and safety filter
 #: app/components/settings/connections.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:396
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:427
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:491
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:532
 msgid "Disconnect"
 msgstr ""
@@ -16680,6 +16704,10 @@ msgstr "Disconnect Canva"
 #: app/components/website/domain/site-domains-card.tsx:393
 msgid "Disconnect every domain?"
 msgstr "Disconnect every domain?"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:477
+msgid "Disconnect this calendar? Its events are removed from your website."
+msgstr "Disconnect this calendar? Its events are removed from your website."
 
 #: app/components/discounts/discount-form.tsx:605
 #: app/components/discounts/discount-form.tsx:815
@@ -16950,7 +16978,7 @@ msgstr ""
 msgid "Does not expire"
 msgstr "Does not expire"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:524
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:747
 msgid "Does not repeat"
 msgstr "Does not repeat"
 
@@ -17152,7 +17180,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:929
 #: app/routes/_app+/$orgSlug_+/media.tsx:1391
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:195
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:295
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:559
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:270
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:473
@@ -18426,8 +18454,8 @@ msgstr "End without choosing"
 #: app/components/hiring/job-labels.ts:52
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:758
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:445
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:122
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:123
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:210
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:211
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:414
 #: app/utils/discounts/labels.ts:51
 #: app/utils/loyalty/promotions.ts:49
@@ -18444,7 +18472,7 @@ msgstr "Ending"
 #: app/components/social/google-post-fields.tsx:150
 #: app/components/social/google-post-fields.tsx:256
 #: app/components/staff/schedule/shift-editor-sheet.tsx:471
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:489
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:712
 msgid "Ends"
 msgstr "Ends"
 
@@ -19409,8 +19437,9 @@ msgid "Evening line cook, three nights a week, must be comfortable on grill"
 msgstr "Evening line cook, three nights a week, must be comfortable on grill"
 
 #: app/components/social/google-post-fields.tsx:40
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:160
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:284
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:249
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:329
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:507
 msgid "Event"
 msgstr "Event"
 
@@ -19439,7 +19468,7 @@ msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:104
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:128
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:216
 msgid "Events"
 msgstr "Events"
 
@@ -19721,7 +19750,7 @@ msgstr "Example shift"
 msgid "Excellent"
 msgstr "Excellent"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:610
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:833
 msgid "Exceptions"
 msgstr "Exceptions"
 
@@ -21241,7 +21270,7 @@ msgstr "Fresh summer menu"
 
 #: app/components/loyalty/promotion-dialog.tsx:556
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:220
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:213
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:281
 #: app/utils/reservations/experiences-view.ts:69
 #: app/utils/reservations/setup-api.ts:457
 msgid "Fri"
@@ -21324,6 +21353,10 @@ msgstr "From <0>{other}</0>"
 msgid "From a file"
 msgstr "From a file"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:280
+msgid "From calendar"
+msgstr "From calendar"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:134
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1210
 msgid "From Canva"
@@ -21349,9 +21382,21 @@ msgstr ""
 msgid "From now on it has no ingredients and no cost. Sales made before keep the recipe they used."
 msgstr "From now on it has no ingredients and no cost. Sales made before keep the recipe they used."
 
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:362
+msgid "From the calendar"
+msgstr "From the calendar"
+
 #: app/components/inventory/record-delivery-screen.tsx:681
 msgid "From the paper invoice. VAT is kept apart from prices."
 msgstr "From the paper invoice. VAT is kept apart from prices."
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:330
+#~ msgid "From your calendar \"{0}\". Change its title and time in Google Calendar."
+#~ msgstr "From your calendar \"{0}\". Change its title and time in Google Calendar."
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:331
+msgid "From your calendar {sourceLabel}. Change its title and time in Google Calendar."
+msgstr "From your calendar {sourceLabel}. Change its title and time in Google Calendar."
 
 #: app/components/pos/terminals-manager.tsx:1611
 msgid "Front counter"
@@ -21631,7 +21676,7 @@ msgstr "Give new members a one-time {unitLabelText} bonus per verified phone num
 msgid "Give only the biggest bonus"
 msgstr "Give only the biggest bonus"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:201
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:269
 msgid "Give the event a title."
 msgstr "Give the event a title."
 
@@ -21818,6 +21863,10 @@ msgstr "Google Business Profile Status"
 #: app/components/gbp/google-listing-tab.tsx:282
 msgid "Google Business Profile sync is not enabled for this organization."
 msgstr "Google Business Profile sync is not enabled for this organization."
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:370
+msgid "Google Calendar"
+msgstr "Google Calendar"
 
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:241
 msgid "Google could not see the verification tag yet. We will try again automatically."
@@ -22650,6 +22699,8 @@ msgstr "Hi, {userName}"
 #: app/components/menu/menu-status-badge.tsx:55
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:406
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:185
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:293
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:364
 msgid "Hidden"
 msgstr "Hidden"
 
@@ -22689,6 +22740,10 @@ msgstr "Hide from menu"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3283
 msgid "Hide from search engines"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:348
+msgid "Hide from site"
+msgstr "Hide from site"
 
 #: app/components/menu/menu-health-card.tsx:230
 msgid "Hide it or bring it back."
@@ -23610,7 +23665,7 @@ msgstr "in the last"
 msgid "in the last {days} days"
 msgstr "in the last {days} days"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:471
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:694
 msgid "In the location's time zone ({timezone})."
 msgstr "In the location's time zone ({timezone})."
 
@@ -24488,7 +24543,7 @@ msgstr "Items to add"
 msgid "Items using it"
 msgstr "Items using it"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:456
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:679
 msgid "Its Book button shows only while online booking is on."
 msgstr "Its Book button shows only while online booking is on."
 
@@ -25905,7 +25960,7 @@ msgstr "Lines the flow uses"
 msgid "Link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:419
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:642
 msgid "Link (book a table, tickets, any page)"
 msgstr "Link (book a table, tickets, any page)"
 
@@ -25917,7 +25972,11 @@ msgstr "Link (optional)"
 msgid "Link a Google location in Settings, Integrations, then connect it here."
 msgstr "Link a Google location in Settings, Integrations, then connect it here."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:431
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:416
+msgid "Link button label"
+msgstr "Link button label"
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:654
 msgid "Link button text"
 msgstr "Link button text"
 
@@ -25982,7 +26041,7 @@ msgstr ""
 msgid "Linked customer"
 msgstr "Linked customer"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:203
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:271
 msgid "Links must be a page of your site (starting with /) or a full https:// address."
 msgstr "Links must be a page of your site (starting with /) or a full https:// address."
 
@@ -26475,7 +26534,8 @@ msgstr "Local search keywords"
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:654
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:968
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:328
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:389
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:404
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:612
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4827
 #: app/utils/website/field-types.ts:85
 #: app/utils/website/field-types.ts:88
@@ -28336,7 +28396,7 @@ msgstr "Modify organization settings"
 
 #: app/components/loyalty/promotion-dialog.tsx:552
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:216
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:209
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:277
 #: app/utils/reservations/experiences-view.ts:65
 #: app/utils/reservations/setup-api.ts:433
 msgid "Mon"
@@ -28372,7 +28432,7 @@ msgid "Month to date: {0} / {1}"
 msgstr "Month to date: {0} / {1}"
 
 #: app/components/settings/cards/organization/billing-card.tsx:232
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:526
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:749
 #: app/routes/organizations+/create.tsx:1189
 msgid "Monthly"
 msgstr ""
@@ -28381,7 +28441,7 @@ msgstr ""
 msgid "Monthly cap / member"
 msgstr "Monthly cap / member"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:551
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:774
 msgid "Monthly on"
 msgstr "Monthly on"
 
@@ -28445,7 +28505,7 @@ msgstr "More actions for {title}"
 msgid "More arrived than was sent. Check the amounts."
 msgstr "More arrived than was sent. Check the amounts."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:590
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:813
 msgid "More dates (YYYY-MM-DD, separated by commas)"
 msgstr "More dates (YYYY-MM-DD, separated by commas)"
 
@@ -29191,11 +29251,11 @@ msgstr "New discount"
 msgid "New Email"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:656
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:879
 msgid "New end"
 msgstr "New end"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:141
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:229
 msgid "New event"
 msgstr "New event"
 
@@ -29393,7 +29453,7 @@ msgstr "New reward"
 msgid "New section layout"
 msgstr "New section layout"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:647
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:870
 msgid "New start"
 msgstr "New start"
 
@@ -29468,7 +29528,7 @@ msgstr "Newer template available"
 #: app/components/website/create-page-dialog.tsx:131
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:520
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:281
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:166
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:255
 msgid "Next"
 msgstr ""
 
@@ -29486,7 +29546,7 @@ msgstr "Next arrivals"
 msgid "Next booking"
 msgstr "Next booking"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:734
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:957
 msgid "Next dates"
 msgstr "Next dates"
 
@@ -30018,7 +30078,7 @@ msgstr "No email on file, so nothing was sent"
 msgid "No emojis found"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:148
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:237
 msgid "No events yet"
 msgstr "No events yet"
 
@@ -32368,7 +32428,7 @@ msgstr "On a reprint, served dishes are crossed out."
 msgid "On break"
 msgstr "On break"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:527
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:750
 msgid "On chosen dates"
 msgstr "On chosen dates"
 
@@ -32424,11 +32484,11 @@ msgstr "On target"
 msgid "On that date"
 msgstr "On that date"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:561
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:784
 msgid "On the same date"
 msgstr "On the same date"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:563
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:786
 msgid "On the same weekday (for example the second Friday)"
 msgstr "On the same weekday (for example the second Friday)"
 
@@ -34941,6 +35001,10 @@ msgstr "Paste at least one item to continue."
 msgid "Paste from a spreadsheet"
 msgstr "Paste from a spreadsheet"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:322
+msgid "Paste the calendar's public address, a webcal:// link or its calendar ID."
+msgstr "Paste the calendar's public address, a webcal:// link or its calendar ID."
+
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:291
 msgid "Paste the code Google Search Console or Bing Webmaster Tools gives you. We add it to your home page as a meta tag."
 msgstr "Paste the code Google Search Console or Bing Webmaster Tools gives you. We add it to your home page as a meta tag."
@@ -35670,7 +35734,8 @@ msgstr ""
 msgid "Photo added to dish"
 msgstr "Photo added to dish"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:407
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:394
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:630
 msgid "Photo address"
 msgstr "Photo address"
 
@@ -37381,7 +37446,7 @@ msgstr "Public note"
 #: app/components/reservations/experiences/experience-editor.tsx:516
 #: app/components/staff/schedule/publish-dialog.tsx:273
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:548
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:318
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:541
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:639
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:543
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:704
@@ -37483,7 +37548,7 @@ msgstr "Publish your website first."
 #: app/components/staff/schedule/publish-dialog.tsx:325
 #: app/components/staff/schedule/shift-block.tsx:38
 #: app/components/website/form-builder-sidebar.tsx:1020
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:193
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:291
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:557
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:268
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:471
@@ -39041,8 +39106,8 @@ msgstr "Removal not published"
 #: app/components/website/domain/forwarding-panel.tsx:194
 #: app/components/website/domain/records-panel.tsx:297
 #: app/components/website/domain/site-domains-card.tsx:274
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:688
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:713
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:911
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:936
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3215
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:498
 msgid "Remove"
@@ -39587,8 +39652,8 @@ msgstr "Repeat on other days"
 msgid "Repeat-purchase rate"
 msgstr "Repeat-purchase rate"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:182
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:501
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:271
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:724
 msgid "Repeats"
 msgstr "Repeats"
 
@@ -41023,7 +41088,7 @@ msgstr ""
 
 #: app/components/loyalty/promotion-dialog.tsx:557
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:221
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:214
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:282
 #: app/utils/reservations/experiences-view.ts:70
 #: app/utils/reservations/setup-api.ts:463
 msgid "Sat"
@@ -41101,7 +41166,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:203
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 #: app/routes/_app+/$orgSlug_+/website+/area-pages.tsx:340
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:301
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:354
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:524
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:847
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:344
 msgid "Save"
@@ -41118,7 +41184,7 @@ msgstr ""
 msgid "Save adjustment"
 msgstr "Save adjustment"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:316
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:539
 msgid "Save and publish"
 msgstr "Save and publish"
 
@@ -41476,7 +41542,8 @@ msgstr "Saved: {title}"
 #: app/components/reservations/policies/policies-screen.tsx:209
 #: app/routes/_app+/$orgSlug_+/gift-cards+/settings.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/customer-app.tsx:208
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:331
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:431
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:554
 msgid "Saved."
 msgstr "Saved."
 
@@ -43949,6 +44016,10 @@ msgstr "Show {label}"
 msgid "Show {removedCount} removed"
 msgstr "Show {removedCount} removed"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:373
+msgid "Show a calendar's upcoming events here too. Menuza reads it a few times a day and never changes it. You can hide an event, add a photo and a ticket or booking link; those stay when the calendar updates."
+msgstr "Show a calendar's upcoming events here too. Menuza reads it a few times a day and never changes it. You can hide an event, add a photo and a ticket or booking link; those stay when the calendar updates."
+
 #: app/components/reservations/waitlist/waitlist-settings.tsx:302
 msgid "Show a join button on your website. Online booking must also be on for the button to appear."
 msgstr "Show a join button on your website. Online booking must also be on for the button to appear."
@@ -44045,6 +44116,10 @@ msgstr "Show membership tiers"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:504
 msgid "Show more"
 msgstr "Show more"
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:350
+msgid "Show on site"
+msgstr "Show on site"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1396
 msgid "Show opening date"
@@ -44219,6 +44294,10 @@ msgstr "Showing option groups with no choices guests can see"
 #: app/components/hiring/applicants-page.tsx:493
 msgid "Showing the newest {shown} of {total}. Search or filter to narrow the list."
 msgstr "Showing the newest {shown} of {total}. Search or filter to narrow the list."
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:364
+msgid "Shown"
+msgstr "Shown"
 
 #: app/components/inventory/recipe-section.tsx:490
 msgid "Shown as typed. It is not worked out from ingredients."
@@ -44495,7 +44574,7 @@ msgstr "Skip selected"
 msgid "Skip step"
 msgstr "Skip step"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:634
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:857
 msgid "Skip this date"
 msgstr "Skip this date"
 
@@ -44517,7 +44596,7 @@ msgstr "Skipped"
 msgid "skipped (different currency)"
 msgstr "skipped (different currency)"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:685
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:908
 msgid "Skipped {date}"
 msgstr "Skipped {date}"
 
@@ -45495,7 +45574,7 @@ msgstr "Starting…"
 #: app/components/social/google-post-fields.tsx:136
 #: app/components/social/google-post-fields.tsx:230
 #: app/components/staff/schedule/shift-editor-sheet.tsx:465
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:478
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:701
 msgid "Starts"
 msgstr "Starts"
 
@@ -45605,7 +45684,7 @@ msgstr "Stats"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:236
 #: app/routes/_app+/$orgSlug_+/status.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:741
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:163
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:252
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:217
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:1018
 #: app/routes/_app+/$orgSlug_+/website+/popups._index.tsx:100
@@ -46134,7 +46213,7 @@ msgstr ""
 
 #: app/components/loyalty/promotion-dialog.tsx:551
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:215
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:208
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:276
 #: app/utils/reservations/experiences-view.ts:71
 #: app/utils/reservations/setup-api.ts:427
 msgid "Sun"
@@ -47286,6 +47365,14 @@ msgstr "Thanks them and says you may get in touch if something suitable opens up
 msgid "That address belongs to our own platform and cannot be connected."
 msgstr "That address belongs to our own platform and cannot be connected."
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:323
+msgid "That address cannot be used. It must be a public https:// address."
+msgstr "That address cannot be used. It must be a public https:// address."
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:325
+msgid "That address does not lead to a calendar."
+msgstr "That address does not lead to a calendar."
+
 #: app/components/website/domain/domain-ui.tsx:80
 msgid "That address is already set up."
 msgstr "That address is already set up."
@@ -47329,6 +47416,14 @@ msgstr "That break has not happened yet."
 #: app/utils/marketing/campaign-send.server.ts:237
 msgid "That broadcast no longer exists."
 msgstr "That broadcast no longer exists."
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:329
+msgid "That calendar is no longer connected."
+msgstr "That calendar is no longer connected."
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:326
+msgid "That calendar is too large to import."
+msgstr "That calendar is too large to import."
 
 #: app/hooks/use-phone-calls.ts:42
 msgid "That change couldn't be saved. Refresh the page and try again."
@@ -48319,7 +48414,7 @@ msgstr "The end has to be after the start."
 msgid "The end has to come after the start."
 msgstr "The end has to come after the start."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:200
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:268
 msgid "The end must be after the start, and an event lasts at most 24 hours."
 msgstr "The end must be after the start, and an event lasts at most 24 hours."
 
@@ -51394,7 +51489,7 @@ msgstr "Threshold ({unitLabelText})"
 
 #: app/components/loyalty/promotion-dialog.tsx:555
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:219
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:212
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:280
 #: app/utils/reservations/experiences-view.ts:68
 #: app/utils/reservations/setup-api.ts:451
 msgid "Thu"
@@ -51410,6 +51505,10 @@ msgstr "Thursday"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:183
 msgid "Ticket"
 msgstr "Ticket"
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:405
+msgid "Ticket or booking link"
+msgstr "Ticket or booking link"
 
 #: app/components/pos/ticket-settings.tsx:479
 msgid "Ticket settings"
@@ -51809,7 +51908,7 @@ msgstr "Tips on online orders that count toward sales, by business day. How a po
 msgid "Title"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:351
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:574
 msgid "Title ({language})"
 msgstr "Title ({language})"
 
@@ -52573,7 +52672,7 @@ msgstr "TTL must be Auto or 60 to 86400 seconds."
 
 #: app/components/loyalty/promotion-dialog.tsx:553
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:217
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:210
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:278
 #: app/utils/reservations/experiences-view.ts:66
 #: app/utils/reservations/setup-api.ts:439
 msgid "Tue"
@@ -53274,7 +53373,7 @@ msgstr "Unpin"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:518
 #: app/components/website/publish-controls.tsx:631
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:308
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:531
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:663
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:541
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:723
@@ -53363,7 +53462,7 @@ msgstr "Unsupported file. Upload a PDF, JPG/PNG/WebP photo, CSV, TSV, or XLSX sp
 msgid "Until"
 msgstr "Until"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:571
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:794
 msgid "Until (optional)"
 msgstr "Until (optional)"
 
@@ -53473,7 +53572,7 @@ msgstr "Up to 64 characters. Leave it empty to use {organizationName}."
 #: app/components/staff/schedule/time-off-page.tsx:182
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:234
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1471
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:121
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:209
 msgid "Upcoming"
 msgstr "Upcoming"
 
@@ -53531,6 +53630,10 @@ msgstr "Update location details, hours, and fulfillment preferences."
 msgid "Update my availability"
 msgstr "Update my availability"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:465
+msgid "Update now"
+msgstr "Update now"
+
 #: app/components/menu/modifier-form.tsx:1880
 msgid "Update option details and pricing."
 msgstr "Update option details and pricing."
@@ -53577,6 +53680,10 @@ msgstr "Update: {name}"
 msgid "Updated"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:441
+#~ msgid "Updated {0}"
+#~ msgstr "Updated {0}"
+
 #: app/components/reservations/host-subnav.tsx:372
 #: app/components/reservations/waitlist/waitlist-clock.tsx:57
 msgid "Updated {ago}"
@@ -53597,6 +53704,10 @@ msgstr "Updated {updated}"
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:365
 msgid "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
 msgstr "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:508
+msgid "Updated {when}"
+msgstr "Updated {when}"
 
 #: app/routes/_app+/$orgSlug_+/website+/activity.tsx:62
 msgid "Updated a legal page"
@@ -55413,6 +55524,10 @@ msgstr "We could not put it back. Try again in a moment."
 msgid "We could not reach the staff service. Check your connection."
 msgstr "We could not reach the staff service. Check your connection."
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:324
+msgid "We could not read that calendar. Check that it is public, or paste its secret address."
+msgstr "We could not read that calendar. Check that it is public, or paste its secret address."
+
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:78
 msgid "We could not read that file."
 msgstr "We could not read that file."
@@ -55614,7 +55729,7 @@ msgid "Web"
 msgstr "Web"
 
 #: app/routes/_app+/$orgSlug_+/website+/area-pages.tsx:302
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:378
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:601
 msgid "Web address"
 msgstr "Web address"
 
@@ -55681,7 +55796,7 @@ msgstr "Website visitor"
 
 #: app/components/loyalty/promotion-dialog.tsx:554
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:218
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:211
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:279
 #: app/utils/reservations/experiences-view.ts:67
 #: app/utils/reservations/setup-api.ts:445
 msgid "Wed"
@@ -55710,7 +55825,7 @@ msgstr "Week starts on"
 msgid "Weekdays"
 msgstr "Weekdays"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:525
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:748
 msgid "Weekly"
 msgstr "Weekly"
 
@@ -56089,7 +56204,7 @@ msgstr "Wheelchair accessible"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:927
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:263
 #: app/routes/_app+/$orgSlug_+/website+/activity.tsx:104
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:468
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:691
 #: app/routes/_app+/$orgSlug_+/website+/popups._index.tsx:97
 #: app/utils/discounts/summary.ts:393
 msgid "When"
@@ -57427,6 +57542,10 @@ msgstr ""
 msgid "You have changes that are not saved."
 msgstr "You have changes that are not saved."
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:327
+msgid "You have connected the most calendars you can."
+msgstr "You have connected the most calendars you can."
+
 #: app/components/inventory/prep-screen.tsx:285
 msgid "You have enough of everything you make. If that changes, update the plan."
 msgstr "You have enough of everything you make. If that changes, update the plan."
@@ -57639,6 +57758,10 @@ msgstr ""
 #: app/components/settings/cards/security-card.tsx:164
 msgid "Your account is secured with two-factor authentication"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:385
+msgid "Your additions"
+msgstr "Your additions"
 
 #: app/components/phone-agent/test-call-panel.tsx:307
 msgid "Your agent didn't join the call. Make sure the voice agent is running and try again."

@@ -1400,7 +1400,7 @@ msgstr "{createdLabel} جاهز لاستقبال الطلبات."
 msgid "{customized} changed"
 msgstr "تم تغيير {customized}"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:708
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:931
 msgid "{date}: {start}–{end}"
 msgstr "{date}: {start}–{end}"
 
@@ -3867,6 +3867,10 @@ msgstr "سياسة دفع بها مهلة إلغاء غير صالحة."
 msgid "A payment policy points to a service that is gone."
 msgstr "سياسة دفع تشير إلى خدمة لم تعد موجودة."
 
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:388
+msgid "A photo and a link stay when the calendar updates."
+msgstr "تبقى الصورة والرابط عند تحديث التقويم."
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:2754
 msgid "A photo can have at most 20 tags."
 msgstr "يمكن أن تحمل الصورة 20 وسمًا كحد أقصى."
@@ -4939,7 +4943,7 @@ msgstr "أضف بريدًا إلكترونيًا لدعوتهم إلى التط�
 msgid "Add an emergency contact"
 msgstr "إضافة جهة اتصال للطوارئ"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:150
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:239
 msgid "Add an event, then put the Upcoming events section on any page."
 msgstr "أضف فعالية، ثم ضع قسم الفعاليات القادمة في أي صفحة."
 
@@ -6249,7 +6253,8 @@ msgstr "كل الأيام"
 msgid "All devices"
 msgstr "كل الأجهزة"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:298
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:344
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:521
 msgid "All events"
 msgstr "كل الفعاليات"
 
@@ -6279,6 +6284,7 @@ msgstr "كل الوظائف"
 #: app/routes/_app+/$orgSlug_+/reports+/_index.tsx:111
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:770
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:164
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:407
 #: app/utils/loyalty/promotions.ts:267
 msgid "All locations"
 msgstr "كل الفروع"
@@ -6902,7 +6908,7 @@ msgstr "أعلن عن طبق واجعل الضيوف يرغبون في طلبه"
 msgid "Announce an event or an occasion"
 msgstr "أعلن عن فعالية أو مناسبة"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:130
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:218
 msgid "Announce trivia nights, live music or a holiday brunch. Each event gets its own page with an Add to calendar file."
 msgstr "أعلن عن ليالي المسابقات أو الموسيقى الحية أو برانش العطلة. لكل فعالية صفحة خاصة بها مع ملف للإضافة إلى التقويم."
 
@@ -6935,7 +6941,7 @@ msgstr "خصم آخر يستخدم هذا الرمز."
 msgid "Another discount gives the customer more."
 msgstr "خصم آخر يوفّر للعميل أكثر."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:202
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:270
 msgid "Another event already uses this web address."
 msgstr "فعالية أخرى تستخدم عنوان الويب هذا."
 
@@ -8716,7 +8722,7 @@ msgstr "دفتر الحجوزات وسجل الضيوف والتقارير"
 msgid "Book, waitlist & table status"
 msgstr "دفتر الحجوزات وقائمة الانتظار وحالة الطاولات"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:447
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:670
 msgid "Bookable experience (its web address name)"
 msgstr "تجربة قابلة للحجز (اسمها في عنوان الويب)"
 
@@ -9382,6 +9388,14 @@ msgstr "Calculation method"
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:201
 msgid "Calendar"
 msgstr "التقويم"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:395
+msgid "Calendar address"
+msgstr "عنوان التقويم"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:394
+msgid "Calendar address (public or secret)"
+msgstr "عنوان التقويم (عام أو سري)"
 
 #: app/components/social/google-post-fields.tsx:48
 msgid "Call"
@@ -10497,7 +10511,7 @@ msgstr "تغيير تاريخ الاستحقاق"
 msgid "Change the sales source"
 msgstr "تغيير مصدر المبيعات"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:678
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:901
 msgid "Change this date's time"
 msgstr "تغيير وقت هذا التاريخ"
 
@@ -10846,7 +10860,7 @@ msgstr "تحقق من إعدادات النطاق في صفحة موقعك."
 msgid "Check the drop details and try saving again."
 msgstr "تحقق من تفاصيل الطرح وحاول الحفظ مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:199
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:267
 msgid "Check the event details and try again."
 msgstr "راجع تفاصيل الفعالية وحاول مرة أخرى."
 
@@ -11532,7 +11546,8 @@ msgstr "اختر أحد الخيارات المدرجة."
 msgid "Choose one of the listed times."
 msgstr "اختر أحد الأوقات المعروضة."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:204
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:328
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:272
 msgid "Choose one of your locations."
 msgstr "اختر أحد فروعك."
 
@@ -12850,6 +12865,10 @@ msgstr "ربط الحسابات"
 msgid "Connect automatically"
 msgstr "ربط تلقائي"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:416
+msgid "Connect calendar"
+msgstr "ربط التقويم"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:265
 msgid "Connect Canva"
 msgstr "ربط Canva"
@@ -13484,6 +13503,10 @@ msgstr "تعذّر تعيين الطاولة."
 #: app/components/locations/location-setting-labels.ts:62
 msgid "Could not be changed"
 msgstr "تعذّر تغييره"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:447
+msgid "Could not be read, trying again soon"
+msgstr "تعذّرت قراءته، سنحاول مجددًا قريبًا"
 
 #: app/components/staff/schedule/notice-lists.tsx:31
 #: app/components/staff/schedule/publication-history.tsx:313
@@ -15205,11 +15228,11 @@ msgstr "تاريخ الميلاد"
 msgid "Date of birth, address and emergency contact. Each time you view these, it is recorded."
 msgstr "تاريخ الميلاد والعنوان وجهة اتصال الطوارئ. يتم تسجيل كل مرة تعرض فيها هذه البيانات."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:640
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:863
 msgid "Date to move"
 msgstr "التاريخ المراد نقله"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:615
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:838
 msgid "Date to skip"
 msgstr "التاريخ المراد تخطيه"
 
@@ -15716,7 +15739,7 @@ msgstr "حذف مدة الجلوس لـ {range} ضيوف"
 msgid "Delete drop?"
 msgstr "حذف الطرح؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:757
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:980
 msgid "Delete event"
 msgstr "حذف الفعالية"
 
@@ -16203,7 +16226,7 @@ msgstr "صف متى يجب على الوكيل التحويل إلى جهة ات
 msgid "Description"
 msgstr "الوصف"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:362
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:585
 msgid "Description ({language})"
 msgstr "الوصف ({language})"
 
@@ -16330,7 +16353,7 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيت�
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:628
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1251
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1370
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:338
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:561
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:92
 msgid "Details"
 msgstr "التفاصيل"
@@ -16651,6 +16674,7 @@ msgstr "اذكر مسببات الحساسية الموجودة لتفعيل ف�
 #: app/components/settings/connections.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:396
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:427
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:491
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:532
 msgid "Disconnect"
 msgstr "قطع الاتصال"
@@ -16678,6 +16702,10 @@ msgstr "إلغاء ربط Canva"
 #: app/components/website/domain/site-domains-card.tsx:393
 msgid "Disconnect every domain?"
 msgstr "هل تريد فصل كل النطاقات؟"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:477
+msgid "Disconnect this calendar? Its events are removed from your website."
+msgstr "فصل هذا التقويم؟ ستُزال فعالياته من موقعك."
 
 #: app/components/discounts/discount-form.tsx:605
 #: app/components/discounts/discount-form.tsx:815
@@ -16948,7 +16976,7 @@ msgstr "لا يساوي"
 msgid "Does not expire"
 msgstr "لا تنتهي صلاحيتها"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:524
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:747
 msgid "Does not repeat"
 msgstr "لا تتكرر"
 
@@ -17150,7 +17178,7 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:929
 #: app/routes/_app+/$orgSlug_+/media.tsx:1391
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:195
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:295
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:559
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:270
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:473
@@ -18424,8 +18452,8 @@ msgstr "إنهاء دون اختيار"
 #: app/components/hiring/job-labels.ts:52
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:758
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:445
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:122
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:123
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:210
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:211
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:414
 #: app/utils/discounts/labels.ts:51
 #: app/utils/loyalty/promotions.ts:49
@@ -18442,7 +18470,7 @@ msgstr "تنتهي"
 #: app/components/social/google-post-fields.tsx:150
 #: app/components/social/google-post-fields.tsx:256
 #: app/components/staff/schedule/shift-editor-sheet.tsx:471
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:489
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:712
 msgid "Ends"
 msgstr "تنتهي"
 
@@ -19407,8 +19435,9 @@ msgid "Evening line cook, three nights a week, must be comfortable on grill"
 msgstr "طاهٍ مسائي على الخط، ثلاث ليالٍ في الأسبوع، يجيد العمل على الشواية"
 
 #: app/components/social/google-post-fields.tsx:40
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:160
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:284
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:249
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:329
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:507
 msgid "Event"
 msgstr "فعالية"
 
@@ -19437,7 +19466,7 @@ msgid "Event-driven workflows with triggers, delays, and actions."
 msgstr "سير عمل قائم على الأحداث مع محفّزات وتأخيرات وإجراءات."
 
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:104
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:128
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:216
 msgid "Events"
 msgstr "الفعاليات"
 
@@ -19719,7 +19748,7 @@ msgstr "وردية نموذجية"
 msgid "Excellent"
 msgstr "ممتازة"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:610
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:833
 msgid "Exceptions"
 msgstr "الاستثناءات"
 
@@ -21239,7 +21268,7 @@ msgstr "قائمة الصيف الجديدة"
 
 #: app/components/loyalty/promotion-dialog.tsx:556
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:220
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:213
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:281
 #: app/utils/reservations/experiences-view.ts:69
 #: app/utils/reservations/setup-api.ts:457
 msgid "Fri"
@@ -21322,6 +21351,10 @@ msgstr "من <0>{other}</0>"
 msgid "From a file"
 msgstr "من ملف"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:280
+msgid "From calendar"
+msgstr "من التقويم"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:134
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1210
 msgid "From Canva"
@@ -21347,9 +21380,21 @@ msgstr "اسم المرسل (اختياري)"
 msgid "From now on it has no ingredients and no cost. Sales made before keep the recipe they used."
 msgstr "من الآن لن يكون لها مكوّنات ولا تكلفة. تحتفظ المبيعات السابقة بالوصفة التي استخدمتها."
 
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:362
+msgid "From the calendar"
+msgstr "من التقويم"
+
 #: app/components/inventory/record-delivery-screen.tsx:681
 msgid "From the paper invoice. VAT is kept apart from prices."
 msgstr "من الفاتورة الورقية. تُحفظ ضريبة القيمة المضافة بمعزل عن الأسعار."
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:330
+#~ msgid "From your calendar \"{0}\". Change its title and time in Google Calendar."
+#~ msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:331
+msgid "From your calendar {sourceLabel}. Change its title and time in Google Calendar."
+msgstr "من تقويمك {sourceLabel}. غيّر عنوانها ووقتها في تقويم جوجل."
 
 #: app/components/pos/terminals-manager.tsx:1611
 msgid "Front counter"
@@ -21629,7 +21674,7 @@ msgstr "امنح الأعضاء الجدد مكافأة {unitLabelText} لمرة
 msgid "Give only the biggest bonus"
 msgstr "منح أكبر مكافأة فقط"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:201
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:269
 msgid "Give the event a title."
 msgstr "أعطِ الفعالية عنوانًا."
 
@@ -21816,6 +21861,10 @@ msgstr "حالة ملف Google التجاري"
 #: app/components/gbp/google-listing-tab.tsx:282
 msgid "Google Business Profile sync is not enabled for this organization."
 msgstr "مزامنة ملف Google التجاري غير مفعّلة لهذه المؤسسة."
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:370
+msgid "Google Calendar"
+msgstr "تقويم جوجل"
 
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:241
 msgid "Google could not see the verification tag yet. We will try again automatically."
@@ -22648,6 +22697,8 @@ msgstr "مرحباً، {userName}"
 #: app/components/menu/menu-status-badge.tsx:55
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:406
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:185
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:293
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:364
 msgid "Hidden"
 msgstr "مخفي"
 
@@ -22687,6 +22738,10 @@ msgstr "إخفاء من القائمة"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3283
 msgid "Hide from search engines"
 msgstr "إخفاء عن محركات البحث"
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:348
+msgid "Hide from site"
+msgstr "إخفاء من الموقع"
 
 #: app/components/menu/menu-health-card.tsx:230
 msgid "Hide it or bring it back."
@@ -23608,7 +23663,7 @@ msgstr "خلال آخر"
 msgid "in the last {days} days"
 msgstr "خلال آخر {days} يوماً"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:471
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:694
 msgid "In the location's time zone ({timezone})."
 msgstr "بتوقيت الفرع ({timezone})."
 
@@ -24486,7 +24541,7 @@ msgstr "العناصر المراد إضافتها"
 msgid "Items using it"
 msgstr "أطباق تستخدمه"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:456
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:679
 msgid "Its Book button shows only while online booking is on."
 msgstr "يظهر زر الحجز فقط ما دام الحجز عبر الإنترنت مفعّلًا."
 
@@ -25903,7 +25958,7 @@ msgstr "العبارات التي يستخدمها المسار"
 msgid "Link"
 msgstr "رابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:419
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:642
 msgid "Link (book a table, tickets, any page)"
 msgstr "رابط (حجز طاولة، تذاكر، أي صفحة)"
 
@@ -25915,7 +25970,11 @@ msgstr "رابط (اختياري)"
 msgid "Link a Google location in Settings, Integrations, then connect it here."
 msgstr "اربط فرع Google من الإعدادات ثم التكاملات، وبعدها قم بوصله هنا."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:431
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:416
+msgid "Link button label"
+msgstr "نص زر الرابط"
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:654
 msgid "Link button text"
 msgstr "نص زر الرابط"
 
@@ -25980,7 +26039,7 @@ msgstr "عنوان الرابط"
 msgid "Linked customer"
 msgstr "عميل مرتبط"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:203
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:271
 msgid "Links must be a page of your site (starting with /) or a full https:// address."
 msgstr "يجب أن يكون الرابط صفحة من موقعك (يبدأ بـ /) أو عنوانًا كاملًا يبدأ بـ https://."
 
@@ -26473,7 +26532,8 @@ msgstr "كلمات البحث المحلي"
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:654
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:968
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:328
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:389
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:404
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:612
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4827
 #: app/utils/website/field-types.ts:85
 #: app/utils/website/field-types.ts:88
@@ -28334,7 +28394,7 @@ msgstr "تعديل إعدادات المنظمة"
 
 #: app/components/loyalty/promotion-dialog.tsx:552
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:216
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:209
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:277
 #: app/utils/reservations/experiences-view.ts:65
 #: app/utils/reservations/setup-api.ts:433
 msgid "Mon"
@@ -28370,7 +28430,7 @@ msgid "Month to date: {0} / {1}"
 msgstr "منذ بداية الشهر: {0} / {1}"
 
 #: app/components/settings/cards/organization/billing-card.tsx:232
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:526
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:749
 #: app/routes/organizations+/create.tsx:1189
 msgid "Monthly"
 msgstr "شهري"
@@ -28379,7 +28439,7 @@ msgstr "شهري"
 msgid "Monthly cap / member"
 msgstr "الحد الشهري لكل عضو"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:551
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:774
 msgid "Monthly on"
 msgstr "شهريًا في"
 
@@ -28443,7 +28503,7 @@ msgstr "المزيد من الإجراءات لـ {title}"
 msgid "More arrived than was sent. Check the amounts."
 msgstr "وصل أكثر مما أُرسل. تحقق من الكميات."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:590
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:813
 msgid "More dates (YYYY-MM-DD, separated by commas)"
 msgstr "تواريخ إضافية (YYYY-MM-DD، مفصولة بفواصل)"
 
@@ -29189,11 +29249,11 @@ msgstr "خصم جديد"
 msgid "New Email"
 msgstr "البريد الإلكتروني الجديد"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:656
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:879
 msgid "New end"
 msgstr "النهاية الجديدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:141
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:229
 msgid "New event"
 msgstr "فعالية جديدة"
 
@@ -29391,7 +29451,7 @@ msgstr "مكافأة جديدة"
 msgid "New section layout"
 msgstr "تخطيط أقسام جديد"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:647
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:870
 msgid "New start"
 msgstr "البداية الجديدة"
 
@@ -29466,7 +29526,7 @@ msgstr "يتوفر قالب أحدث"
 #: app/components/website/create-page-dialog.tsx:131
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:520
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:281
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:166
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:255
 msgid "Next"
 msgstr "التالي"
 
@@ -29484,7 +29544,7 @@ msgstr "الوصول القادم"
 msgid "Next booking"
 msgstr "الحجز القادم"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:734
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:957
 msgid "Next dates"
 msgstr "المواعيد القادمة"
 
@@ -30016,7 +30076,7 @@ msgstr "لا يوجد بريد إلكتروني مسجّل، لذا لم يُر�
 msgid "No emojis found"
 msgstr "لم يتم العثور على رموز تعبيرية"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:148
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:237
 msgid "No events yet"
 msgstr "لا توجد فعاليات بعد"
 
@@ -32366,7 +32426,7 @@ msgstr "عند إعادة الطباعة تُشطب الأطباق التي قُ
 msgid "On break"
 msgstr "في استراحة"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:527
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:750
 msgid "On chosen dates"
 msgstr "في تواريخ محددة"
 
@@ -32422,11 +32482,11 @@ msgstr "ضمن الهدف"
 msgid "On that date"
 msgstr "في ذلك التاريخ"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:561
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:784
 msgid "On the same date"
 msgstr "في التاريخ نفسه"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:563
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:786
 msgid "On the same weekday (for example the second Friday)"
 msgstr "في يوم الأسبوع نفسه (مثل الجمعة الثانية)"
 
@@ -34939,6 +34999,10 @@ msgstr "الصق عنصرًا واحدًا على الأقل للمتابعة."
 msgid "Paste from a spreadsheet"
 msgstr "لصق من جدول بيانات"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:322
+msgid "Paste the calendar's public address, a webcal:// link or its calendar ID."
+msgstr "الصق العنوان العام للتقويم أو رابط webcal:// أو معرّف التقويم."
+
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:291
 msgid "Paste the code Google Search Console or Bing Webmaster Tools gives you. We add it to your home page as a meta tag."
 msgstr "الصق الرمز الذي يعطيك إياه Google Search Console أو Bing Webmaster Tools. نضيفه إلى صفحتك الرئيسية كوسم meta."
@@ -35668,7 +35732,8 @@ msgstr "صورة + نص"
 msgid "Photo added to dish"
 msgstr "تمت إضافة الصورة إلى الطبق"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:407
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:394
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:630
 msgid "Photo address"
 msgstr "رابط الصورة"
 
@@ -37379,7 +37444,7 @@ msgstr "ملاحظة عامة"
 #: app/components/reservations/experiences/experience-editor.tsx:516
 #: app/components/staff/schedule/publish-dialog.tsx:273
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:548
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:318
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:541
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:639
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:543
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:704
@@ -37481,7 +37546,7 @@ msgstr "انشر موقعك أولًا."
 #: app/components/staff/schedule/publish-dialog.tsx:325
 #: app/components/staff/schedule/shift-block.tsx:38
 #: app/components/website/form-builder-sidebar.tsx:1020
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:193
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:291
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:557
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:268
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:471
@@ -39039,8 +39104,8 @@ msgstr "الإزالة غير منشورة"
 #: app/components/website/domain/forwarding-panel.tsx:194
 #: app/components/website/domain/records-panel.tsx:297
 #: app/components/website/domain/site-domains-card.tsx:274
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:688
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:713
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:911
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:936
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3215
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:498
 msgid "Remove"
@@ -39585,8 +39650,8 @@ msgstr "التكرار في أيام أخرى"
 msgid "Repeat-purchase rate"
 msgstr "معدل تكرار الشراء"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:182
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:501
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:271
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:724
 msgid "Repeats"
 msgstr "تتكرر"
 
@@ -41021,7 +41086,7 @@ msgstr "بدون زوائد"
 
 #: app/components/loyalty/promotion-dialog.tsx:557
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:221
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:214
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:282
 #: app/utils/reservations/experiences-view.ts:70
 #: app/utils/reservations/setup-api.ts:463
 msgid "Sat"
@@ -41099,7 +41164,8 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:203
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 #: app/routes/_app+/$orgSlug_+/website+/area-pages.tsx:340
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:301
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:354
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:524
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:847
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:344
 msgid "Save"
@@ -41116,7 +41182,7 @@ msgstr "وفّر 20٪"
 msgid "Save adjustment"
 msgstr "حفظ التعديل"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:316
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:539
 msgid "Save and publish"
 msgstr "حفظ ونشر"
 
@@ -41474,7 +41540,8 @@ msgstr "تم الحفظ: {title}"
 #: app/components/reservations/policies/policies-screen.tsx:209
 #: app/routes/_app+/$orgSlug_+/gift-cards+/settings.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/customer-app.tsx:208
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:331
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:431
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:554
 msgid "Saved."
 msgstr "تم الحفظ."
 
@@ -43947,6 +44014,10 @@ msgstr "إظهار: {label}"
 msgid "Show {removedCount} removed"
 msgstr "عرض {removedCount} من الأجهزة المُزالة"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:373
+msgid "Show a calendar's upcoming events here too. Menuza reads it a few times a day and never changes it. You can hide an event, add a photo and a ticket or booking link; those stay when the calendar updates."
+msgstr "اعرض الفعاليات القادمة من تقويم هنا أيضًا. تقرأه منيوزا عدة مرات في اليوم ولا تغيّره أبدًا. يمكنك إخفاء فعالية وإضافة صورة ورابط تذاكر أو حجز؛ وتبقى هذه الإضافات عند تحديث التقويم."
+
 #: app/components/reservations/waitlist/waitlist-settings.tsx:302
 msgid "Show a join button on your website. Online booking must also be on for the button to appear."
 msgstr "عرض زر انضمام في موقعك الإلكتروني. يجب أن يكون الحجز عبر الإنترنت مفعّلًا أيضًا لكي يظهر الزر."
@@ -44043,6 +44114,10 @@ msgstr "عرض مستويات العضوية"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:504
 msgid "Show more"
 msgstr "عرض المزيد"
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:350
+msgid "Show on site"
+msgstr "إظهار في الموقع"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1396
 msgid "Show opening date"
@@ -44217,6 +44292,10 @@ msgstr "عرض مجموعات الخيارات التي لا تحتوي على �
 #: app/components/hiring/applicants-page.tsx:493
 msgid "Showing the newest {shown} of {total}. Search or filter to narrow the list."
 msgstr "عرض أحدث {shown} من {total}. ابحث أو صفِّ لتضييق القائمة."
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:364
+msgid "Shown"
+msgstr "ظاهرة"
 
 #: app/components/inventory/recipe-section.tsx:490
 msgid "Shown as typed. It is not worked out from ingredients."
@@ -44493,7 +44572,7 @@ msgstr "تخطي المحدد"
 msgid "Skip step"
 msgstr "تخطَّ الخطوة"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:634
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:857
 msgid "Skip this date"
 msgstr "تخطي هذا التاريخ"
 
@@ -44515,7 +44594,7 @@ msgstr "تم تخطيها"
 msgid "skipped (different currency)"
 msgstr "تم التخطي (عملة مختلفة)"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:685
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:908
 msgid "Skipped {date}"
 msgstr "تم تخطي {date}"
 
@@ -45493,7 +45572,7 @@ msgstr "جارٍ البدء…"
 #: app/components/social/google-post-fields.tsx:136
 #: app/components/social/google-post-fields.tsx:230
 #: app/components/staff/schedule/shift-editor-sheet.tsx:465
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:478
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:701
 msgid "Starts"
 msgstr "تبدأ"
 
@@ -45603,7 +45682,7 @@ msgstr "الإحصائيات"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:236
 #: app/routes/_app+/$orgSlug_+/status.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:741
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:163
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:252
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:217
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:1018
 #: app/routes/_app+/$orgSlug_+/website+/popups._index.tsx:100
@@ -46132,7 +46211,7 @@ msgstr "عرض الصيف"
 
 #: app/components/loyalty/promotion-dialog.tsx:551
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:215
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:208
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:276
 #: app/utils/reservations/experiences-view.ts:71
 #: app/utils/reservations/setup-api.ts:427
 msgid "Sun"
@@ -47284,6 +47363,14 @@ msgstr "تشكرهم وتخبرهم بأنك قد تتواصل معهم إذا �
 msgid "That address belongs to our own platform and cannot be connected."
 msgstr "هذا العنوان تابع لمنصتنا ولا يمكن ربطه."
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:323
+msgid "That address cannot be used. It must be a public https:// address."
+msgstr "لا يمكن استخدام هذا العنوان. يجب أن يكون عنوان https:// عامًا."
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:325
+msgid "That address does not lead to a calendar."
+msgstr "هذا العنوان لا يقود إلى تقويم."
+
 #: app/components/website/domain/domain-ui.tsx:80
 msgid "That address is already set up."
 msgstr "هذا العنوان مُعدّ بالفعل."
@@ -47327,6 +47414,14 @@ msgstr "هذه الاستراحة لم تحدث بعد."
 #: app/utils/marketing/campaign-send.server.ts:237
 msgid "That broadcast no longer exists."
 msgstr "هذه الرسالة الجماعية لم تعد موجودة."
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:329
+msgid "That calendar is no longer connected."
+msgstr "هذا التقويم لم يعد مرتبطًا."
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:326
+msgid "That calendar is too large to import."
+msgstr "هذا التقويم أكبر من أن يُستورد."
 
 #: app/hooks/use-phone-calls.ts:42
 msgid "That change couldn't be saved. Refresh the page and try again."
@@ -48317,7 +48412,7 @@ msgstr "يجب أن تكون النهاية بعد البداية."
 msgid "The end has to come after the start."
 msgstr "يجب أن يأتي الانتهاء بعد البدء."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:200
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:268
 msgid "The end must be after the start, and an event lasts at most 24 hours."
 msgstr "يجب أن تكون النهاية بعد البداية، ولا تتجاوز الفعالية 24 ساعة."
 
@@ -51392,7 +51487,7 @@ msgstr "الحد ({unitLabelText})"
 
 #: app/components/loyalty/promotion-dialog.tsx:555
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:219
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:212
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:280
 #: app/utils/reservations/experiences-view.ts:68
 #: app/utils/reservations/setup-api.ts:451
 msgid "Thu"
@@ -51408,6 +51503,10 @@ msgstr "الخميس"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:183
 msgid "Ticket"
 msgstr "قسيمة"
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:405
+msgid "Ticket or booking link"
+msgstr "رابط التذاكر أو الحجز"
 
 #: app/components/pos/ticket-settings.tsx:479
 msgid "Ticket settings"
@@ -51807,7 +51906,7 @@ msgstr "البقشيش على الطلبات عبر الإنترنت المحت�
 msgid "Title"
 msgstr "العنوان"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:351
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:574
 msgid "Title ({language})"
 msgstr "العنوان ({language})"
 
@@ -52571,7 +52670,7 @@ msgstr "يجب أن تكون TTL تلقائية أو من 60 إلى 86400 ثان
 
 #: app/components/loyalty/promotion-dialog.tsx:553
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:217
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:210
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:278
 #: app/utils/reservations/experiences-view.ts:66
 #: app/utils/reservations/setup-api.ts:439
 msgid "Tue"
@@ -53272,7 +53371,7 @@ msgstr "إلغاء التثبيت"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:518
 #: app/components/website/publish-controls.tsx:631
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:308
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:531
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:663
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:541
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:723
@@ -53361,7 +53460,7 @@ msgstr "ملف غير مدعوم. ارفع ملف PDF أو صورة JPG/PNG/WebP
 msgid "Until"
 msgstr "حتى"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:571
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:794
 msgid "Until (optional)"
 msgstr "حتى (اختياري)"
 
@@ -53471,7 +53570,7 @@ msgstr "حتى 64 حرفًا. اتركه فارغًا لاستخدام {organiza
 #: app/components/staff/schedule/time-off-page.tsx:182
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:234
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1471
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:121
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:209
 msgid "Upcoming"
 msgstr "القادمة"
 
@@ -53529,6 +53628,10 @@ msgstr "حدّث تفاصيل الفرع وساعاته وتفضيلات الت�
 msgid "Update my availability"
 msgstr "تحديث توفّري"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:465
+msgid "Update now"
+msgstr "تحديث الآن"
+
 #: app/components/menu/modifier-form.tsx:1880
 msgid "Update option details and pricing."
 msgstr "حدّث تفاصيل الخيار وتسعيره."
@@ -53575,6 +53678,10 @@ msgstr "تحديث: {name}"
 msgid "Updated"
 msgstr "تم التحديث"
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:441
+#~ msgid "Updated {0}"
+#~ msgstr ""
+
 #: app/components/reservations/host-subnav.tsx:372
 #: app/components/reservations/waitlist/waitlist-clock.tsx:57
 msgid "Updated {ago}"
@@ -53595,6 +53702,10 @@ msgstr "تم التحديث {updated}"
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:365
 msgid "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
 msgstr "تم تحديث {updatedGuestName} على {tblLabel} إلى {updatedTime} ({targetDurationMin} د)"
+
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:508
+msgid "Updated {when}"
+msgstr "تم التحديث {when}"
 
 #: app/routes/_app+/$orgSlug_+/website+/activity.tsx:62
 msgid "Updated a legal page"
@@ -55411,6 +55522,10 @@ msgstr "تعذّرت إعادته. حاول مجددًا بعد قليل."
 msgid "We could not reach the staff service. Check your connection."
 msgstr "تعذّر الوصول إلى خدمة الموظفين. تحقق من اتصالك."
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:324
+msgid "We could not read that calendar. Check that it is public, or paste its secret address."
+msgstr "تعذّرت قراءة هذا التقويم. تأكد من أنه عام، أو الصق عنوانه السري."
+
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:78
 msgid "We could not read that file."
 msgstr "تعذّرت قراءة هذا الملف."
@@ -55612,7 +55727,7 @@ msgid "Web"
 msgstr "الويب"
 
 #: app/routes/_app+/$orgSlug_+/website+/area-pages.tsx:302
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:378
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:601
 msgid "Web address"
 msgstr "عنوان الويب"
 
@@ -55679,7 +55794,7 @@ msgstr "زائر الموقع"
 
 #: app/components/loyalty/promotion-dialog.tsx:554
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:218
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:211
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:279
 #: app/utils/reservations/experiences-view.ts:67
 #: app/utils/reservations/setup-api.ts:445
 msgid "Wed"
@@ -55708,7 +55823,7 @@ msgstr "يبدأ الأسبوع يوم"
 msgid "Weekdays"
 msgstr "أيام الأسبوع"
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:525
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:748
 msgid "Weekly"
 msgstr "أسبوعيًا"
 
@@ -56087,7 +56202,7 @@ msgstr "ملائم للكراسي المتحركة"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:927
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:263
 #: app/routes/_app+/$orgSlug_+/website+/activity.tsx:104
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:468
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:691
 #: app/routes/_app+/$orgSlug_+/website+/popups._index.tsx:97
 #: app/utils/discounts/summary.ts:393
 msgid "When"
@@ -57425,6 +57540,10 @@ msgstr "تمت دعوتك للانضمام إلى المنظمات التالي�
 msgid "You have changes that are not saved."
 msgstr "لديك تغييرات غير محفوظة."
 
+#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:327
+msgid "You have connected the most calendars you can."
+msgstr "لقد ربطت أقصى عدد ممكن من التقويمات."
+
 #: app/components/inventory/prep-screen.tsx:285
 msgid "You have enough of everything you make. If that changes, update the plan."
 msgstr "لديك ما يكفي من كل ما تُحضّره. إن تغيّر ذلك فحدّث الخطة."
@@ -57637,6 +57756,10 @@ msgstr "حسابك مجدول للحذف في {deletionDateFormatted}."
 #: app/components/settings/cards/security-card.tsx:164
 msgid "Your account is secured with two-factor authentication"
 msgstr "حسابك محمي بالمصادقة الثنائية"
+
+#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:385
+msgid "Your additions"
+msgstr "إضافاتك"
 
 #: app/components/phone-agent/test-call-panel.tsx:307
 msgid "Your agent didn't join the call. Make sure the voice agent is running and try again."
