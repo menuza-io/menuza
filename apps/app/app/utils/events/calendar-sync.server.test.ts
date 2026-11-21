@@ -190,13 +190,13 @@ describe('connecting a calendar (#319)', () => {
 
 	it('shows the imported events with the events made in Menuza, as plain text', async () => {
 		const ctx = await setup()
-		await connect(ctx, feed(quiz('<script>alert(1)</script> Quiz'), band))
+		await connect(ctx, feed(quiz('<img src=x onerror=alert(1)> Quiz'), band))
 		const { events } = await buildPublicEventsPayload(
 			{ id: ctx.organization.id, siteDefaultLocale: 'en' },
 			{ now: new Date(NOW) },
 		)
 		expect(events.map((event) => event.title).sort()).toEqual([
-			'<script>alert(1)</script> Quiz',
+			'<img src=x onerror=alert(1)> Quiz',
 			'Live band',
 		])
 		// Plain strings: Sites renders them escaped, never as markup.
