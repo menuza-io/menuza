@@ -305,7 +305,7 @@ msgid "{0, plural, one {# hour has no pay rate, so it has no wage figure.} other
 msgstr "{0, plural, one {ساعة واحدة بلا أجر محدد، لذا لا يوجد رقم أجور لها.} two {ساعتان بلا أجر محدد، لذا لا يوجد رقم أجور لهما.} few {# ساعات بلا أجر محدد، لذا لا يوجد رقم أجور لها.} many {# ساعة بلا أجر محدد، لذا لا يوجد رقم أجور لها.} other {# ساعة بلا أجر محدد، لذا لا يوجد رقم أجور لها.}}"
 
 #. placeholder {0}: assets.length
-#: app/routes/_app+/$orgSlug_+/media.tsx:1226
+#: app/routes/_app+/$orgSlug_+/media.tsx:1233
 msgid "{0, plural, one {# image} other {# images}}"
 msgstr "{0, plural, zero {لا توجد صور} one {صورة واحدة} two {صورتان} few {# صور} many {# صورة} other {# صورة}}"
 
@@ -507,7 +507,7 @@ msgstr "{0, plural, zero {لا وصفة في المخزون تستخدمه} one 
 #. placeholder {0}: selectedIds.length
 #. placeholder {0}: selectedIds.size
 #: app/components/media-library/photo-studio-dialog.tsx:495
-#: app/routes/_app+/$orgSlug_+/media.tsx:1304
+#: app/routes/_app+/$orgSlug_+/media.tsx:1311
 msgid "{0, plural, one {# selected} other {# selected}}"
 msgstr "{0, plural, one {تم تحديد صورة واحدة} two {تم تحديد صورتين} few {تم تحديد # صور} many {تم تحديد # صورة} other {تم تحديد # صورة}}"
 
@@ -1288,7 +1288,7 @@ msgstr "{count, plural, one {أضف عنصرًا واحدًا على الأقل.
 msgid "{count, plural, one {Cap reached on {reached} order} other {Cap reached on {reached} orders}}"
 msgstr "{count, plural, one {بلغ الحد الأقصى في طلب واحد} two {بلغ الحد الأقصى في طلبين} few {بلغ الحد الأقصى في {reached} طلبات} many {بلغ الحد الأقصى في {reached} طلبًا} other {بلغ الحد الأقصى في {reached} طلب}}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2815
+#: app/routes/_app+/$orgSlug_+/media.tsx:2847
 msgid "{count, plural, one {Changes apply to # photo.} other {Changes apply to # photos.}}"
 msgstr "{count, plural, one {تنطبق التغييرات على صورة واحدة.} two {تنطبق التغييرات على صورتين.} few {تنطبق التغييرات على # صور.} many {تنطبق التغييرات على # صورة.} other {تنطبق التغييرات على # صورة.}}"
 
@@ -2469,7 +2469,7 @@ msgstr "{redirectCount} عمليات إعادة توجيه ترسل الزوار
 msgid "{redirectCount} redirects that pointed here are sent to the same place."
 msgstr "{redirectCount} عمليات إعادة توجيه كانت تشير إلى هنا تُرسَل إلى المكان نفسه."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2239
+#: app/routes/_app+/$orgSlug_+/media.tsx:2271
 msgid "{referenceCount, plural, one {# place} other {# places}}"
 msgstr "{referenceCount, plural, zero {لا أماكن} one {مكان واحد} two {مكانان} few {# أماكن} many {# مكانًا} other {# مكان}}"
 
@@ -3891,7 +3891,7 @@ msgstr "سياسة دفع تشير إلى خدمة لم تعد موجودة."
 msgid "A photo and a link stay when the calendar updates."
 msgstr "تبقى الصورة والرابط عند تحديث التقويم."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2754
+#: app/routes/_app+/$orgSlug_+/media.tsx:2786
 msgid "A photo can have at most 20 tags."
 msgstr "يمكن أن تحمل الصورة 20 وسمًا كحد أقصى."
 
@@ -4545,7 +4545,7 @@ msgstr "الفعلي {0} / الهدف {1} {2}"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:394
 #: app/components/website/form-builder-sidebar.tsx:217
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:191
-#: app/routes/_app+/$orgSlug_+/media.tsx:2150
+#: app/routes/_app+/$orgSlug_+/media.tsx:2182
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:359
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1677
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:815
@@ -4894,7 +4894,7 @@ msgstr "إضافة مورّد"
 msgid "Add a supplier first."
 msgstr "أضف مورّدًا أولًا."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2136
+#: app/routes/_app+/$orgSlug_+/media.tsx:2168
 msgid "Add a tag, like hero or drinks"
 msgstr "أضف وسمًا، مثل رئيسية أو مشروبات"
 
@@ -5559,7 +5559,7 @@ msgstr "إضافة طاولات"
 msgid "Add tag"
 msgstr "إضافة وسم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2825
+#: app/routes/_app+/$orgSlug_+/media.tsx:2857
 msgid "Add tags"
 msgstr "إضافة وسوم"
 
@@ -6135,7 +6135,7 @@ msgstr "مكالمات الهاتف بالذكاء الاصطناعي متاحة
 msgid "AI photos are not set up for this workspace."
 msgstr "لم يتم إعداد صور الذكاء الاصطناعي لمساحة العمل هذه."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1804
+#: app/routes/_app+/$orgSlug_+/media.tsx:1823
 msgid "AI studio"
 msgstr "استوديو الذكاء الاصطناعي"
 
@@ -6193,7 +6193,7 @@ msgstr "المحاذاة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:362
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:258
-#: app/routes/_app+/$orgSlug_+/media.tsx:1255
+#: app/routes/_app+/$orgSlug_+/media.tsx:1262
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:233
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1468
 msgid "All"
@@ -6656,7 +6656,7 @@ msgstr "أعفِ أيضًا من رسوم التغليف"
 msgid "Alt text"
 msgstr "النص البديل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2042
+#: app/routes/_app+/$orgSlug_+/media.tsx:2074
 msgid "Alt Text"
 msgstr "النص البديل"
 
@@ -7254,7 +7254,7 @@ msgstr "ينطبق على"
 msgid "Applies when a customer enters a code."
 msgstr "يُطبَّق عندما يُدخل العميل رمزًا."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2891
+#: app/routes/_app+/$orgSlug_+/media.tsx:2923
 msgid "Apply"
 msgstr "تطبيق"
 
@@ -7299,7 +7299,7 @@ msgstr "تطبيق النسخة ب"
 msgid "Applying"
 msgstr "جارٍ التطبيق"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2708
+#: app/routes/_app+/$orgSlug_+/media.tsx:2740
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:1369
 msgid "Applying…"
 msgstr "جارٍ التطبيق…"
@@ -7422,8 +7422,8 @@ msgstr "العربية"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:234
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:404
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1057
-#: app/routes/_app+/$orgSlug_+/media.tsx:1328
-#: app/routes/_app+/$orgSlug_+/media.tsx:2379
+#: app/routes/_app+/$orgSlug_+/media.tsx:1335
+#: app/routes/_app+/$orgSlug_+/media.tsx:2411
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
 msgid "Archive"
 msgstr "أرشفة"
@@ -7504,7 +7504,7 @@ msgstr "مؤرشف"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:73
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
-#: app/routes/_app+/$orgSlug_+/media.tsx:1290
+#: app/routes/_app+/$orgSlug_+/media.tsx:1297
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/discounts/labels.ts:28
 #: app/utils/discounts/labels.ts:49
@@ -7513,7 +7513,7 @@ msgstr "مؤرشف"
 msgid "Archived"
 msgstr "مؤرشف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2735
+#: app/routes/_app+/$orgSlug_+/media.tsx:2767
 msgid "Archived {count} items. Restore them from the Archived view."
 msgstr "تمت أرشفة {count} عنصرًا. يمكنك استعادتها من عرض المؤرشف."
 
@@ -7541,7 +7541,7 @@ msgstr "هل أنت متأكد أنك تريد حذف «{roleNameToDelete}»؟ �
 msgid "Are you sure you want to delete this comment?"
 msgstr "هل أنت متأكد أنك تريد حذف هذا التعليق؟"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1096
+#: app/routes/_app+/$orgSlug_+/media.tsx:1103
 msgid "Are you sure you want to remove this media asset?"
 msgstr "هل أنت متأكد أنك تريد إزالة عنصر الوسائط هذا؟"
 
@@ -8205,7 +8205,7 @@ msgstr "«منح النقاط» يضيف نقاط عملية البيع؛ و«ا
 msgid "Award points"
 msgstr "منح النقاط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1825
+#: app/routes/_app+/$orgSlug_+/media.tsx:1846
 msgid "B&W"
 msgstr "أبيض وأسود"
 
@@ -8278,7 +8278,7 @@ msgstr "العودة إلى عمليات الجرد"
 msgid "Back to customers"
 msgstr "العودة إلى العملاء"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2668
+#: app/routes/_app+/$orgSlug_+/media.tsx:2700
 msgid "Back to details"
 msgstr "العودة إلى التفاصيل"
 
@@ -8981,7 +8981,7 @@ msgstr "الاستراحات: من {before} إلى {after}"
 msgid "Bright & airy"
 msgstr "مشرق وهادئ"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2605
+#: app/routes/_app+/$orgSlug_+/media.tsx:2637
 msgid "Brightness"
 msgstr "السطوع"
 
@@ -9802,8 +9802,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:277
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:478
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1103
-#: app/routes/_app+/$orgSlug_+/media.tsx:2393
-#: app/routes/_app+/$orgSlug_+/media.tsx:2876
+#: app/routes/_app+/$orgSlug_+/media.tsx:2425
+#: app/routes/_app+/$orgSlug_+/media.tsx:2908
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:551
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:445
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:319
@@ -10103,7 +10103,7 @@ msgstr "بدء الجملة بحرف كبير فقط"
 msgid "Capitals read like shouting. Use normal case."
 msgstr "الأحرف الكبيرة تبدو كالصراخ. استخدم الحالة العادية."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2067
+#: app/routes/_app+/$orgSlug_+/media.tsx:2099
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4654
 msgid "Caption"
 msgstr "التسمية التوضيحية"
@@ -11017,7 +11017,7 @@ msgstr "جارٍ التحقق من سجلات الموظفين…"
 msgid "Checking recipes…"
 msgstr "جارٍ التحقق من الوصفات…"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2254
+#: app/routes/_app+/$orgSlug_+/media.tsx:2286
 msgid "Checking references…"
 msgstr "جارٍ التحقق من المراجع…"
 
@@ -11877,7 +11877,7 @@ msgstr "تنظيف"
 #: app/components/reservations/detail-sheet.tsx:1063
 #: app/components/staff/schedule/schedule-page.tsx:566
 #: app/components/staff/timesheets/bulk-bar.tsx:103
-#: app/routes/_app+/$orgSlug_+/media.tsx:1336
+#: app/routes/_app+/$orgSlug_+/media.tsx:1343
 msgid "Clear"
 msgstr "مسح"
 
@@ -12122,7 +12122,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 #: app/components/website/hero-video-maker.tsx:464
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:248
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:245
-#: app/routes/_app+/$orgSlug_+/media.tsx:2341
+#: app/routes/_app+/$orgSlug_+/media.tsx:2373
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:614
 msgid "Close"
 msgstr "إغلاق"
@@ -12443,12 +12443,12 @@ msgstr "مريح"
 msgid "Coming soon"
 msgstr "قريبًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2848
+#: app/routes/_app+/$orgSlug_+/media.tsx:2880
 msgid "Comma separated"
 msgstr "مفصولة بفواصل"
 
 #: app/components/note/comment-input.tsx:196
-#: app/routes/_app+/$orgSlug_+/media.tsx:1806
+#: app/routes/_app+/$orgSlug_+/media.tsx:1825
 msgid "Comment"
 msgstr "تعليق"
 
@@ -13234,7 +13234,7 @@ msgstr "عقد"
 msgid "Contractor"
 msgstr "متعاقد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2617
+#: app/routes/_app+/$orgSlug_+/media.tsx:2649
 msgid "Contrast"
 msgstr "التباين"
 
@@ -13278,7 +13278,7 @@ msgstr "إعدادات شريط ملفات تعريف الارتباط"
 msgid "Cookie policy"
 msgstr "سياسة ملفات تعريف الارتباط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1828
+#: app/routes/_app+/$orgSlug_+/media.tsx:1849
 msgid "Cool"
 msgstr "بارد"
 
@@ -13389,7 +13389,7 @@ msgstr "نسخ إلى هذا الأسبوع"
 #: app/components/hiring/job-share-panel.tsx:87
 #: app/components/pos/terminals-manager.tsx:2034
 #: app/components/staff/kiosk-manager.tsx:782
-#: app/routes/_app+/$orgSlug_+/media.tsx:1419
+#: app/routes/_app+/$orgSlug_+/media.tsx:1437
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
 msgid "Copy link"
 msgstr "نسخ الرابط"
@@ -13458,7 +13458,7 @@ msgstr "النسخ إلى"
 msgid "Copy to new draft"
 msgstr "نسخ إلى مسودة جديدة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1988
+#: app/routes/_app+/$orgSlug_+/media.tsx:2020
 msgid "Copy URL"
 msgstr "نسخ الرابط"
 
@@ -15628,7 +15628,7 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:242
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:219
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:311
-#: app/routes/_app+/$orgSlug_+/media.tsx:2356
+#: app/routes/_app+/$orgSlug_+/media.tsx:2388
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:563
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:398
@@ -16227,12 +16227,12 @@ msgstr "صف الدور والأجر وما تريد أن تسأل عنه."
 msgid "Describe the text you want. You will review it before it fills your message. Nothing is sent."
 msgstr "صِف النص الذي تريده. ستراجعه قبل أن يملأ رسالتك. لا يتم إرسال أي شيء."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2866
+#: app/routes/_app+/$orgSlug_+/media.tsx:2898
 msgid "Describe these images for accessibility"
 msgstr "صِف هذه الصور لسهولة الوصول"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2045
-#: app/routes/_app+/$orgSlug_+/media.tsx:2058
+#: app/routes/_app+/$orgSlug_+/media.tsx:2077
+#: app/routes/_app+/$orgSlug_+/media.tsx:2090
 msgid "Describe this image for accessibility"
 msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 
@@ -16528,7 +16528,7 @@ msgstr "منطقة زمنية مختلفة: تُطبَّق الأوقات الم
 msgid "Digits"
 msgstr "عدد الخانات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1935
+#: app/routes/_app+/$orgSlug_+/media.tsx:1967
 msgid "Dimensions:"
 msgstr "الأبعاد:"
 
@@ -17215,7 +17215,7 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:96
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:929
-#: app/routes/_app+/$orgSlug_+/media.tsx:1391
+#: app/routes/_app+/$orgSlug_+/media.tsx:1398
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:295
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:559
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:270
@@ -17828,7 +17828,7 @@ msgstr "إلغاء الكسب"
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:469
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:391
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:433
-#: app/routes/_app+/$orgSlug_+/media.tsx:2213
+#: app/routes/_app+/$orgSlug_+/media.tsx:2245
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:478
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:374
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:787
@@ -17950,8 +17950,8 @@ msgstr "تعديل الطرح"
 msgid "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
 msgstr "تعديل ملفات الضيوف والوسوم والملاحظات ودمج أو مسح بيانات الضيوف. يشمل عرض سجل الضيوف."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1900
-#: app/routes/_app+/$orgSlug_+/media.tsx:2421
+#: app/routes/_app+/$orgSlug_+/media.tsx:1932
+#: app/routes/_app+/$orgSlug_+/media.tsx:2453
 msgid "Edit image"
 msgstr "تعديل الصورة"
 
@@ -18072,7 +18072,7 @@ msgstr "تعديل حد القسم"
 msgid "Edit section layout"
 msgstr "تعديل تخطيط الأقسام"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2812
+#: app/routes/_app+/$orgSlug_+/media.tsx:2844
 msgid "Edit selected media"
 msgstr "تعديل الوسائط المحددة"
 
@@ -18100,7 +18100,7 @@ msgstr "تعديل الطاولة"
 msgid "Edit tablet"
 msgstr "تعديل الجهاز اللوحي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1313
+#: app/routes/_app+/$orgSlug_+/media.tsx:1320
 msgid "Edit tags and alt text"
 msgstr "تعديل الوسوم والنص البديل"
 
@@ -18152,7 +18152,7 @@ msgstr "تم التعديل ({count} إعدادات)"
 msgid "Edited, not published"
 msgstr "معدّلة وغير منشورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2590
+#: app/routes/_app+/$orgSlug_+/media.tsx:2622
 msgid "Editor preview"
 msgstr "معاينة المحرر"
 
@@ -18563,8 +18563,8 @@ msgid "English"
 msgstr "الإنجليزية"
 
 #: app/components/media-library/photo-studio-dialog.tsx:447
-#: app/routes/_app+/$orgSlug_+/media.tsx:1173
-#: app/routes/_app+/$orgSlug_+/media.tsx:1915
+#: app/routes/_app+/$orgSlug_+/media.tsx:1180
+#: app/routes/_app+/$orgSlug_+/media.tsx:1947
 msgid "Enhance with AI"
 msgstr "تحسين بالذكاء الاصطناعي"
 
@@ -20265,11 +20265,11 @@ msgstr "فشل في حذف شريحة وقت الدوران."
 msgid "Failed to duplicate journey"
 msgstr "فشل تكرار الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1735
+#: app/routes/_app+/$orgSlug_+/media.tsx:1754
 msgid "Failed to export edited image."
 msgstr "تعذر تصدير الصورة المعدّلة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1751
+#: app/routes/_app+/$orgSlug_+/media.tsx:1770
 msgid "Failed to export image copy."
 msgstr "تعذر تصدير نسخة الصورة."
 
@@ -20458,7 +20458,7 @@ msgstr "تم إنشاء متغيرات الأيقونة المفضلة وأيق�
 msgid "Favorites"
 msgstr "المفضلة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2169
+#: app/routes/_app+/$orgSlug_+/media.tsx:2201
 msgid "Feature"
 msgstr "تمييز"
 
@@ -20479,7 +20479,7 @@ msgstr "أطباق مميزة"
 msgid "Featured items"
 msgstr "عناصر مميزة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2159
+#: app/routes/_app+/$orgSlug_+/media.tsx:2191
 msgid "Featured photos are preferred for the website's hero"
 msgstr "تُفضَّل الصور المميزة في واجهة الموقع الرئيسية"
 
@@ -20587,12 +20587,12 @@ msgstr "تغيّرت الأرقام"
 msgid "File"
 msgstr "ملف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2005
+#: app/routes/_app+/$orgSlug_+/media.tsx:2037
 msgid "File name of the media asset"
 msgstr "اسم ملف عنصر الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2003
-#: app/routes/_app+/$orgSlug_+/media.tsx:2016
+#: app/routes/_app+/$orgSlug_+/media.tsx:2035
+#: app/routes/_app+/$orgSlug_+/media.tsx:2048
 msgid "Filename"
 msgstr "اسم الملف"
 
@@ -20677,7 +20677,7 @@ msgstr "التصفية حسب الوسم"
 msgid "Filter by workplace"
 msgstr "تصفية حسب مكان العمل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1247
+#: app/routes/_app+/$orgSlug_+/media.tsx:1254
 msgid "Filter media"
 msgstr "تصفية الوسائط"
 
@@ -20706,7 +20706,7 @@ msgstr "بحث"
 msgid "Find a returning guest"
 msgstr "ابحث عن ضيف عائد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1141
+#: app/routes/_app+/$orgSlug_+/media.tsx:1148
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "البحث عن الصور وإعادة استخدامها عبر الملاحظات والتعليقات وموقع الويب وإعدادات المؤسسة."
 
@@ -20930,11 +20930,11 @@ msgstr "الخصائص"
 msgid "Flavored syrup"
 msgstr "شراب منكّه"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2492
+#: app/routes/_app+/$orgSlug_+/media.tsx:2524
 msgid "Flip horizontally"
 msgstr "قلب أفقيًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2522
+#: app/routes/_app+/$orgSlug_+/media.tsx:2554
 msgid "Flip vertically"
 msgstr "قلب عموديًا"
 
@@ -21148,7 +21148,7 @@ msgstr "رسمي"
 msgid "Format and daily reset time for new web, QR and Station order numbers at this location. Existing orders keep their numbers."
 msgstr "تنسيق أرقام الطلبات الجديدة عبر الموقع وQR ونقطة البيع ووقت إعادة التعيين اليومي لهذا الفرع. تحتفظ الطلبات الحالية بأرقامها."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1958
+#: app/routes/_app+/$orgSlug_+/media.tsx:1990
 msgid "Format:"
 msgstr "التنسيق:"
 
@@ -22010,7 +22010,7 @@ msgstr "بيانات الرسم البياني مفقودة"
 msgid "Gray color"
 msgstr "اللون الرمادي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2641
+#: app/routes/_app+/$orgSlug_+/media.tsx:2673
 msgid "Grayscale"
 msgstr "تدرج الرمادي"
 
@@ -22667,11 +22667,15 @@ msgstr "يساعد المتصل طوال بقية المكالمة"
 msgid "Here's how to do it:"
 msgstr "إليك كيفية القيام بذلك:"
 
+#: app/routes/_app+/$orgSlug_+/media.tsx:1839
+msgid "Hero video (made by Menuza)"
+msgstr "فيديو الواجهة الرئيسية (من إنشاء منيوزا)"
+
 #: app/components/website/hero-video-maker.tsx:54
 msgid "Hero videos are not turned on for your account."
 msgstr "فيديوهات الواجهة الرئيسية غير مفعّلة لحسابك."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2832
+#: app/routes/_app+/$orgSlug_+/media.tsx:2864
 msgid "hero, ramadan, drinks"
 msgstr "رئيسية، رمضان، مشروبات"
 
@@ -23456,7 +23460,7 @@ msgstr "يتجاهل تداخل الطاولات عند تغيير الطاول�
 msgid "Image"
 msgstr "صورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1014
+#: app/routes/_app+/$orgSlug_+/media.tsx:1021
 msgid "Image added to your media library"
 msgstr "تمت إضافة الصورة إلى مكتبة الوسائط"
 
@@ -23476,7 +23480,7 @@ msgstr "صورة من مكتبة الوسائط لديك"
 msgid "Image link"
 msgstr "رابط الصورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1415
+#: app/routes/_app+/$orgSlug_+/media.tsx:1433
 msgid "Image link copied"
 msgstr "تم نسخ رابط الصورة"
 
@@ -23486,11 +23490,11 @@ msgstr "تم نسخ رابط الصورة"
 msgid "Image post"
 msgstr "منشور بصورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1025
+#: app/routes/_app+/$orgSlug_+/media.tsx:1032
 msgid "Image removed from media library"
 msgstr "تمت إزالة الصورة من مكتبة الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1022
+#: app/routes/_app+/$orgSlug_+/media.tsx:1029
 msgid "Image replaced successfully"
 msgstr "تم استبدال الصورة بنجاح"
 
@@ -26586,7 +26590,7 @@ msgstr "كلمات البحث المحلي"
 #: app/components/reservations/header-controls.tsx:39
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:151
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:161
-#: app/routes/_app+/$orgSlug_+/media.tsx:2022
+#: app/routes/_app+/$orgSlug_+/media.tsx:2054
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:654
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:968
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:328
@@ -27070,7 +27074,7 @@ msgstr "طبق رئيسي"
 msgid "Main language"
 msgstr "اللغة الرئيسية"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1820
+#: app/routes/_app+/$orgSlug_+/media.tsx:1841
 msgid "Main library"
 msgstr "المكتبة الرئيسية"
 
@@ -27815,11 +27819,11 @@ msgstr "لحوم"
 msgid "Media"
 msgstr "الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1840
+#: app/routes/_app+/$orgSlug_+/media.tsx:1861
 msgid "Media details"
 msgstr "تفاصيل الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1019
+#: app/routes/_app+/$orgSlug_+/media.tsx:1026
 msgid "Media details saved"
 msgstr "تم حفظ تفاصيل الوسائط"
 
@@ -27828,11 +27832,11 @@ msgstr "تم حفظ تفاصيل الوسائط"
 #: app/components/media-library/media-library-picker.tsx:232
 #: app/components/roles/tenant-role-access-manager.tsx:180
 #: app/components/workspace-breadcrumb.tsx:21
-#: app/routes/_app+/$orgSlug_+/media.tsx:1139
+#: app/routes/_app+/$orgSlug_+/media.tsx:1146
 msgid "Media library"
 msgstr "مكتبة الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2769
+#: app/routes/_app+/$orgSlug_+/media.tsx:2801
 msgid "Media not found."
 msgstr "لم يتم العثور على الوسائط."
 
@@ -30414,7 +30418,7 @@ msgstr "لا يوجد موقع على الخريطة: تُتخطى الفحوص�
 msgid "No matching calls"
 msgstr "لا توجد مكالمات مطابقة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1463
+#: app/routes/_app+/$orgSlug_+/media.tsx:1481
 msgid "No matching images"
 msgstr "لا توجد صور مطابقة"
 
@@ -31168,7 +31172,7 @@ msgstr "لا توجد طاولات بعد. أضف الطاولات التي يم
 msgid "No tablets paired yet"
 msgstr "لا توجد أجهزة لوحية مرتبطة بعد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2087
+#: app/routes/_app+/$orgSlug_+/media.tsx:2119
 msgid "No tags yet"
 msgstr "لا توجد وسوم بعد"
 
@@ -31489,7 +31493,7 @@ msgstr "لم يتبقَّ شيء"
 msgid "None this week."
 msgstr "لا شيء هذا الأسبوع."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1824
+#: app/routes/_app+/$orgSlug_+/media.tsx:1845
 msgid "Normal"
 msgstr "عادي"
 
@@ -31797,7 +31801,7 @@ msgstr "غير مستخدم في أي مكان بعد."
 msgid "Not used by your site."
 msgstr "لا يستخدمه موقعك."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2259
+#: app/routes/_app+/$orgSlug_+/media.tsx:2291
 msgid "Not used in any notes, comments, or pages"
 msgstr "غير مستخدم في أي ملاحظات أو تعليقات أو صفحات"
 
@@ -31836,7 +31840,7 @@ msgstr "ملاحظة"
 #: app/components/staff/timesheets/card-fields.tsx:210
 #: app/components/workspace-breadcrumb.tsx:111
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:783
-#: app/routes/_app+/$orgSlug_+/media.tsx:1808
+#: app/routes/_app+/$orgSlug_+/media.tsx:1827
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:925
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1310
 #: app/utils/gift-cards/labels.ts:25
@@ -33276,7 +33280,7 @@ msgstr "فتح ملف العميل"
 msgid "Open details"
 msgstr "فتح التفاصيل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1370
+#: app/routes/_app+/$orgSlug_+/media.tsx:1377
 msgid "Open details for {name}"
 msgstr "فتح تفاصيل {name}"
 
@@ -33394,7 +33398,7 @@ msgstr "سؤال مفتوح"
 msgid "Open rate"
 msgstr "معدل الفتح"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2316
+#: app/routes/_app+/$orgSlug_+/media.tsx:2348
 msgid "Open reference"
 msgstr "فتح المرجع"
 
@@ -33759,7 +33763,7 @@ msgstr "اختياري. حد أقصى لطلب واحد، بعملة <0>{currenc
 msgid "Optional caps per category or item"
 msgstr "حدود اختيارية لكل فئة أو صنف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2073
+#: app/routes/_app+/$orgSlug_+/media.tsx:2105
 msgid "Optional caption for display"
 msgstr "تعليق توضيحي اختياري للعرض"
 
@@ -34315,7 +34319,7 @@ msgstr "تم إنشاء المنظمة"
 msgid "Organization details and configuration."
 msgstr "تفاصيل المنظمة وإعداداتها."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1810
+#: app/routes/_app+/$orgSlug_+/media.tsx:1829
 msgid "Organization logo"
 msgstr "شعار المؤسسة"
 
@@ -34345,7 +34349,7 @@ msgid "Organize the shelves and walk order for this location, and group items yo
 msgstr "نظّم الأرفف وترتيب المرور لهذا الفرع، واجمع الأصناف التي تجردها معاً."
 
 #: app/components/media-library/photo-studio-dialog.tsx:848
-#: app/routes/_app+/$orgSlug_+/media.tsx:2209
+#: app/routes/_app+/$orgSlug_+/media.tsx:2241
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:425
 msgid "Original"
 msgstr "الأصلية"
@@ -36881,7 +36885,7 @@ msgstr "محدد مسبقًا (يُضمَّن عند فتح العملاء له�
 msgid "Preset amounts"
 msgstr "المبالغ المحددة مسبقًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2547
+#: app/routes/_app+/$orgSlug_+/media.tsx:2579
 msgid "Presets"
 msgstr "الإعدادات المسبقة"
 
@@ -37334,11 +37338,11 @@ msgstr "معالجة الآن"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:99
-#: app/routes/_app+/$orgSlug_+/media.tsx:1389
+#: app/routes/_app+/$orgSlug_+/media.tsx:1396
 msgid "Processing"
 msgstr "قيد المعالجة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2692
+#: app/routes/_app+/$orgSlug_+/media.tsx:2724
 msgid "Processing…"
 msgstr "جارٍ المعالجة…"
 
@@ -39472,7 +39476,7 @@ msgstr "إزالة مرجع النمط"
 msgid "Remove tag"
 msgstr "إزالة الوسم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2101
+#: app/routes/_app+/$orgSlug_+/media.tsx:2133
 msgid "Remove tag {tag}"
 msgstr "إزالة الوسم {tag}"
 
@@ -39480,7 +39484,7 @@ msgstr "إزالة الوسم {tag}"
 msgid "Remove tag {tagName}"
 msgstr "إزالة الوسم {tagName}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2842
+#: app/routes/_app+/$orgSlug_+/media.tsx:2874
 msgid "Remove tags"
 msgstr "إزالة وسوم"
 
@@ -39772,7 +39776,7 @@ msgstr "استبدال الملف..."
 msgid "Replace existing overrides on the target"
 msgstr "استبدال التجاوزات الحالية في الهدف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1888
+#: app/routes/_app+/$orgSlug_+/media.tsx:1920
 msgid "Replace image"
 msgstr "استبدال الصورة"
 
@@ -40192,11 +40196,11 @@ msgstr "محجوزة قريبًا"
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/menu/modifier-guest-preview.tsx:229
 #: app/components/organization-invitations.tsx:247
-#: app/routes/_app+/$orgSlug_+/media.tsx:2580
+#: app/routes/_app+/$orgSlug_+/media.tsx:2612
 msgid "Reset"
 msgstr "إعادة تعيين"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2680
+#: app/routes/_app+/$orgSlug_+/media.tsx:2712
 msgid "Reset adjustments"
 msgstr "إعادة تعيين التعديلات"
 
@@ -40343,8 +40347,8 @@ msgstr "تُستخدم المطاعم لإدارة فروعك وقوائمك و�
 #: app/components/website/publish-controls.tsx:332
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:593
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:397
-#: app/routes/_app+/$orgSlug_+/media.tsx:1328
-#: app/routes/_app+/$orgSlug_+/media.tsx:2377
+#: app/routes/_app+/$orgSlug_+/media.tsx:1335
+#: app/routes/_app+/$orgSlug_+/media.tsx:2409
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
 msgid "Restore"
 msgstr "استعادة"
@@ -40365,7 +40369,7 @@ msgstr "استعادة: {name}"
 msgid "Restored"
 msgstr "مُستعاد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2738
+#: app/routes/_app+/$orgSlug_+/media.tsx:2770
 msgid "Restored {count} items"
 msgstr "تمت استعادة {count} عنصرًا"
 
@@ -40760,7 +40764,7 @@ msgstr "الأدوار والصلاحيات"
 msgid "Rolling period (months)"
 msgstr "الفترة المتجددة (أشهر)"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2445
+#: app/routes/_app+/$orgSlug_+/media.tsx:2477
 msgid "Rotate left"
 msgstr "تدوير لليسار"
 
@@ -40768,7 +40772,7 @@ msgstr "تدوير لليسار"
 msgid "Rotate manage link"
 msgstr "تغيير رابط الإدارة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2466
+#: app/routes/_app+/$orgSlug_+/media.tsx:2498
 msgid "Rotate right"
 msgstr "تدوير لليمين"
 
@@ -41194,7 +41198,7 @@ msgstr "السبت"
 msgid "Saturated backdrop that makes it pop"
 msgstr "خلفية مشبعة تجعله يبرز"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2629
+#: app/routes/_app+/$orgSlug_+/media.tsx:2661
 msgid "Saturation"
 msgstr "التشبع"
 
@@ -41257,7 +41261,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:335
 #: app/routes/_app+/$orgSlug_+/marketing+/customer-app.tsx:204
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1253
-#: app/routes/_app+/$orgSlug_+/media.tsx:2409
+#: app/routes/_app+/$orgSlug_+/media.tsx:2441
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
 #: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:203
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
@@ -41293,7 +41297,7 @@ msgid "Save and update proof"
 msgstr "حفظ وتحديث البروفة"
 
 #: app/components/media-library/photo-studio-dialog.tsx:1058
-#: app/routes/_app+/$orgSlug_+/media.tsx:2694
+#: app/routes/_app+/$orgSlug_+/media.tsx:2726
 msgid "Save as copy"
 msgstr "حفظ كنسخة"
 
@@ -41337,7 +41341,7 @@ msgstr "حفظ البطاقة للمعاملات اللاحقة"
 #: app/components/reservations/settings/save-bar.tsx:87
 #: app/components/settings/cards/organization/announcement-sheet.tsx:678
 #: app/components/staff/timesheets/card-sheet.tsx:310
-#: app/routes/_app+/$orgSlug_+/media.tsx:2710
+#: app/routes/_app+/$orgSlug_+/media.tsx:2742
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:446
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:618
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1482
@@ -41563,7 +41567,7 @@ msgstr "جمهور محفوظ"
 msgid "Saved changes for {name}."
 msgstr "تم حفظ التغييرات الخاصة بـ {name}."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2740
+#: app/routes/_app+/$orgSlug_+/media.tsx:2772
 msgid "Saved changes to {count} items"
 msgstr "تم حفظ التغييرات على {count} عنصرًا"
 
@@ -41670,7 +41674,7 @@ msgstr "تم الحفظ. موقعك يتبع هذا الآن."
 msgid "Saves this layout for next time. A template keeps the blocks only: no audience, coupon or schedule."
 msgstr "يحفظ هذا التخطيط للمرة القادمة. يحتفظ القالب بالكتل فقط: دون جمهور أو قسيمة أو جدولة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1747
+#: app/routes/_app+/$orgSlug_+/media.tsx:1766
 msgid "Saving as new copy…"
 msgstr "جارٍ الحفظ كنسخة جديدة…"
 
@@ -41682,7 +41686,7 @@ msgstr "جارٍ حفظ مسودة الأتمتة..."
 msgid "Saving creates a new version; purchases keep the version they earned under."
 msgstr "الحفظ يُنشئ إصدارًا جديدًا؛ وتحتفظ المشتريات بالإصدار الذي اكتسبت بموجبه."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1731
+#: app/routes/_app+/$orgSlug_+/media.tsx:1750
 msgid "Saving edited image…"
 msgstr "جارٍ حفظ الصورة المعدّلة…"
 
@@ -41742,7 +41746,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/staff/timesheets/review-queue.tsx:403
 #: app/components/staff/timesheets/review-queue.tsx:428
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:335
-#: app/routes/_app+/$orgSlug_+/media.tsx:2409
+#: app/routes/_app+/$orgSlug_+/media.tsx:2441
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:616
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1468
@@ -42162,12 +42166,12 @@ msgid "Search items to exclude"
 msgstr "البحث في عناصر للاستثناء"
 
 #: app/components/media-library/media-library-picker.tsx:251
-#: app/routes/_app+/$orgSlug_+/media.tsx:1219
+#: app/routes/_app+/$orgSlug_+/media.tsx:1226
 msgid "Search media"
 msgstr "البحث في الوسائط"
 
 #: app/components/media-library/media-library-picker.tsx:252
-#: app/routes/_app+/$orgSlug_+/media.tsx:1220
+#: app/routes/_app+/$orgSlug_+/media.tsx:1227
 msgid "Search media library"
 msgstr "البحث في مكتبة الوسائط"
 
@@ -42753,13 +42757,13 @@ msgid "Seen just now"
 msgstr "شوهد الآن"
 
 #: app/components/staff/timesheets/timesheet-table.tsx:204
-#: app/routes/_app+/$orgSlug_+/media.tsx:1240
+#: app/routes/_app+/$orgSlug_+/media.tsx:1247
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:576
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:442
 msgid "Select"
 msgstr "تحديد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1369
+#: app/routes/_app+/$orgSlug_+/media.tsx:1376
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:623
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:483
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:704
@@ -43012,7 +43016,7 @@ msgstr "عناصر مختارة"
 msgid "Selected locations"
 msgstr "فروع محددة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1300
+#: app/routes/_app+/$orgSlug_+/media.tsx:1307
 msgid "Selected media"
 msgstr "الوسائط المحددة"
 
@@ -43676,7 +43680,7 @@ msgstr "تحديد السعر"
 msgid "Set the proxy status to \"DNS only\" (grey cloud) so the certificate can be issued."
 msgstr "اضبط حالة الوكيل على \"DNS فقط\" (السحابة الرمادية) حتى تُصدَر الشهادة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2858
+#: app/routes/_app+/$orgSlug_+/media.tsx:2890
 msgid "Set the same alt text"
 msgstr "تعيين النص البديل نفسه"
 
@@ -44605,7 +44609,7 @@ msgid "Site address"
 msgstr "عنوان الموقع"
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
-#: app/routes/_app+/$orgSlug_+/media.tsx:1812
+#: app/routes/_app+/$orgSlug_+/media.tsx:1831
 msgid "Site icon"
 msgstr "أيقونة الموقع"
 
@@ -44634,7 +44638,7 @@ msgstr "اسم الحجم"
 msgid "Size price"
 msgstr "سعر الحجم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1926
+#: app/routes/_app+/$orgSlug_+/media.tsx:1958
 msgid "Size:"
 msgstr "الحجم:"
 
@@ -45109,7 +45113,7 @@ msgstr "حدث خطأ. راجع النموذج وحاول مرة أخرى."
 
 #: app/components/website/domain/domain-ui.tsx:34
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:76
-#: app/routes/_app+/$orgSlug_+/media.tsx:2771
+#: app/routes/_app+/$orgSlug_+/media.tsx:2803
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:279
 #: app/utils/kiosk/kiosk-messages.ts:23
 msgid "Something went wrong. Please try again."
@@ -46086,7 +46090,7 @@ msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإع
 msgid "Studio"
 msgstr "استوديو"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2211
+#: app/routes/_app+/$orgSlug_+/media.tsx:2243
 msgid "Studio edit"
 msgstr "تعديل الاستوديو"
 
@@ -46788,12 +46792,12 @@ msgstr "اسم الوسم"
 #: app/components/member-location-scope.tsx:189
 #: app/components/phone-agent/agent-details.tsx:57
 #: app/components/phone-agent/call-follow-up.tsx:206
-#: app/routes/_app+/$orgSlug_+/media.tsx:2082
+#: app/routes/_app+/$orgSlug_+/media.tsx:2114
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1473
 msgid "Tags"
 msgstr "الوسوم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2730
+#: app/routes/_app+/$orgSlug_+/media.tsx:2762
 msgid "Tags added to {count} items"
 msgstr "تمت إضافة الوسوم إلى {count} عنصرًا"
 
@@ -46809,11 +46813,11 @@ msgstr "الوسوم ادعاءات منك. يستطيع الضيوف تصفية
 msgid "Tags load, and the visitor can opt out. The default for the US."
 msgstr "تُحمَّل العلامات ويمكن للزائر الانسحاب. وهو الافتراضي في الولايات المتحدة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2732
+#: app/routes/_app+/$orgSlug_+/media.tsx:2764
 msgid "Tags removed from {count} items"
 msgstr "تمت إزالة الوسوم من {count} عنصرًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2751
+#: app/routes/_app+/$orgSlug_+/media.tsx:2783
 msgid "Tags use letters, numbers, spaces, - and _, up to 32 characters."
 msgstr "تتكوّن الوسوم من أحرف وأرقام ومسافات و- و_، بحد أقصى 32 حرفًا."
 
@@ -47770,7 +47774,7 @@ msgstr "هذا الشخص غير متاح لهذه الوردية."
 msgid "That phone number is not valid."
 msgstr "رقم الهاتف هذا غير صالح."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2767
+#: app/routes/_app+/$orgSlug_+/media.tsx:2799
 msgid "That photo cannot be the original of this one."
 msgstr "لا يمكن أن تكون تلك الصورة الأصل لهذه الصورة."
 
@@ -50912,7 +50916,7 @@ msgstr "لم يعد هذا موجودًا. أعد التحميل لرؤية أح
 msgid "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 msgstr "هذا الرقم يصل إلى الوكيل الذكي، لذا ستعود التحويلات إليه. استخدم رقمًا يرد عليه الفريق مباشرة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2218
+#: app/routes/_app+/$orgSlug_+/media.tsx:2250
 msgid "This one"
 msgstr "هذه الصورة"
 
@@ -51132,11 +51136,11 @@ msgstr "رقم الهاتف هذا غير صالح."
 msgid "This photo has already been decided."
 msgstr "تم اتخاذ قرار بشأن هذه الصورة بالفعل."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2761
+#: app/routes/_app+/$orgSlug_+/media.tsx:2793
 msgid "This photo is in use ({where}). Replace it there first, then archive it."
 msgstr "هذه الصورة قيد الاستخدام ({where}). استبدلها هناك أولًا ثم أرشفها."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2765
+#: app/routes/_app+/$orgSlug_+/media.tsx:2797
 msgid "This photo is still being prepared."
 msgstr "هذه الصورة لا تزال قيد التحضير."
 
@@ -52472,7 +52476,7 @@ msgstr "ينقل ترتيب البحث"
 msgid "Transfers unavailable"
 msgstr "التحويلات غير متاحة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2436
+#: app/routes/_app+/$orgSlug_+/media.tsx:2468
 msgid "Transform"
 msgstr "تحويل"
 
@@ -52616,7 +52620,7 @@ msgstr "جرّب بحثًا مختلفًا أو امسح عوامل التصفي
 msgid "Try a different search term or clear the search."
 msgstr "جرّب مصطلح بحث مختلفاً أو امسح البحث."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1468
+#: app/routes/_app+/$orgSlug_+/media.tsx:1486
 msgid "Try a different search term."
 msgstr "جرّب مصطلح بحث مختلفًا."
 
@@ -53635,9 +53639,9 @@ msgstr "خصم بلا عنوان"
 msgid "Untitled dish"
 msgstr "طبق بدون عنوان"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1345
-#: app/routes/_app+/$orgSlug_+/media.tsx:1843
-#: app/routes/_app+/$orgSlug_+/media.tsx:2424
+#: app/routes/_app+/$orgSlug_+/media.tsx:1352
+#: app/routes/_app+/$orgSlug_+/media.tsx:1864
+#: app/routes/_app+/$orgSlug_+/media.tsx:2456
 msgid "Untitled image"
 msgstr "صورة بلا عنوان"
 
@@ -53911,7 +53915,7 @@ msgstr "رفع مرجع للنمط"
 msgid "Upload already in progress."
 msgstr "الرفع قيد التنفيذ بالفعل."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1470
+#: app/routes/_app+/$orgSlug_+/media.tsx:1488
 msgid "Upload an image here, or add one to a note, comment, website page, or your organization settings."
 msgstr "حمّل صورة هنا، أو أضف صورة إلى ملاحظة أو تعليق أو صفحة موقع أو إعدادات مؤسستك."
 
@@ -53931,7 +53935,7 @@ msgstr "رفع ملف"
 msgid "Upload held for review"
 msgstr "الرفع محتجز للمراجعة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1189
+#: app/routes/_app+/$orgSlug_+/media.tsx:1196
 msgid "Upload image"
 msgstr "تحميل صورة"
 
@@ -53987,13 +53991,13 @@ msgstr "رفعه {uploader} في {date}"
 msgid "Uploaded discount does not match"
 msgstr "الخصم المرفوع لا يطابق"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1949
+#: app/routes/_app+/$orgSlug_+/media.tsx:1981
 msgid "Uploaded:"
 msgstr "تاريخ الرفع:"
 
 #: app/components/chat/chat-composer.tsx:336
 #: app/components/website/link-inspector.tsx:542
-#: app/routes/_app+/$orgSlug_+/media.tsx:1187
+#: app/routes/_app+/$orgSlug_+/media.tsx:1194
 msgid "Uploading…"
 msgstr "جارٍ الرفع…"
 
@@ -54025,7 +54029,7 @@ msgstr "عاجل"
 msgid "URL"
 msgstr "الرابط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1986
+#: app/routes/_app+/$orgSlug_+/media.tsx:2018
 msgid "URL copied to clipboard"
 msgstr "تم نسخ الرابط إلى الحافظة"
 
@@ -54037,7 +54041,7 @@ msgstr "عمليات إعادة توجيه عناوين URL"
 msgid "URL Slug"
 msgstr "المعرّف في الرابط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1971
+#: app/routes/_app+/$orgSlug_+/media.tsx:2003
 msgid "URL:"
 msgstr "الرابط:"
 
@@ -54423,7 +54427,7 @@ msgstr "مستخدم في المبيعات"
 
 #: app/components/discounts/message-impact.tsx:435
 #: app/components/menu/delete-effects.tsx:527
-#: app/routes/_app+/$orgSlug_+/media.tsx:2232
+#: app/routes/_app+/$orgSlug_+/media.tsx:2264
 msgid "Used in"
 msgstr "مستخدم في"
 
@@ -54749,7 +54753,7 @@ msgstr "النسخة ب في المقدمة."
 msgid "Version B wording (leave a text as it is to keep it)"
 msgstr "صياغة النسخة ب (اترك النص كما هو للإبقاء عليه)"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2182
+#: app/routes/_app+/$orgSlug_+/media.tsx:2214
 msgid "Versions"
 msgstr "الإصدارات"
 
@@ -54770,7 +54774,7 @@ msgstr "فيديو من صورك"
 msgid "Video style"
 msgstr "أسلوب الفيديو"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1814
+#: app/routes/_app+/$orgSlug_+/media.tsx:1833
 msgid "Video thumbnail"
 msgstr "صورة مصغرة للفيديو"
 
@@ -55054,7 +55058,7 @@ msgstr "زيارات"
 msgid "Visits"
 msgstr "الزيارات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1826
+#: app/routes/_app+/$orgSlug_+/media.tsx:1847
 msgid "Vivid"
 msgstr "زاهٍ"
 
@@ -55380,7 +55384,7 @@ msgstr "المطلوب: نعم"
 msgid "Wanted: Yes. This one matters for the job."
 msgstr "المطلوب: نعم. هذا مهم للوظيفة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1827
+#: app/routes/_app+/$orgSlug_+/media.tsx:1848
 msgid "Warm"
 msgstr "دافئ"
 
@@ -55889,7 +55893,7 @@ msgstr "Webhooks: {webhookMode}"
 #: app/components/app-sidebar.tsx:669
 #: app/components/command-menu.tsx:152
 #: app/components/workspace-breadcrumb.tsx:14
-#: app/routes/_app+/$orgSlug_+/media.tsx:1816
+#: app/routes/_app+/$orgSlug_+/media.tsx:1835
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:173
 #: app/utils/discounts/labels.ts:171
 msgid "Website"
@@ -55925,7 +55929,7 @@ msgstr "صفحة الموقع"
 msgid "Website safe, email safe"
 msgstr "الموقع آمن والبريد آمن"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1818
+#: app/routes/_app+/$orgSlug_+/media.tsx:1837
 msgid "Website SEO"
 msgstr "تحسين محركات البحث للموقع"
 
@@ -58125,7 +58129,7 @@ msgstr "رابط خادم MCP الخاص بك"
 msgid "Your media library has no photos yet."
 msgstr "لا توجد صور في مكتبة الوسائط بعد."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1464
+#: app/routes/_app+/$orgSlug_+/media.tsx:1482
 msgid "Your media library is empty"
 msgstr "مكتبة الوسائط فارغة"
 

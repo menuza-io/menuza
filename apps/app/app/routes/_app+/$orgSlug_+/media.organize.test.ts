@@ -511,6 +511,53 @@ describe('assets still processing (#147)', () => {
 	})
 })
 
+describe('a generated hero clip in the library (#301, #147)', () => {
+	it('is a draft video, labelled as made by Menuza, linked to its first photo, and never offered by a picker', async () => {
+		const { organization, cookie } = await setup()
+		const photo = await addAsset(organization.id)
+		const clip = await addAsset(organization.id, {
+			mimeType: 'video/mp4',
+			source: 'hero-video',
+			status: 'draft',
+			parentAssetId: photo.id,
+		})
+		const library = (await load(organization.slug, cookie)) as unknown as {
+			assets: Array<{
+				id: string
+				url: string
+				status: string
+				source: string
+				parentAssetId: string | null
+			}>
+		}
+		const listed = library.assets.find((asset) => asset.id === clip.id)!
+		expect(listed).toMatchObject({
+			status: 'draft',
+			source: 'hero-video',
+			parentAssetId: photo.id,
+		})
+		// It plays from the video route, not as an image.
+		expect(listed.url).toContain('/resources/videos/source?objectKey=')
+		const picker = await load(organization.slug, cookie, '?picker=1')
+		expect(picker.assets.map((asset) => asset.id)).toEqual([photo.id])
+		// It shows under Versions of the photo it was made from.
+		const versions = await post(organization.slug, cookie, {
+			intent: 'get-versions',
+			id: clip.id,
+		})
+		const body = (await versions.json()) as {
+			versions: {
+				original: { id: string }
+				versions: Array<{ id: string; source: string }>
+			}
+		}
+		expect(body.versions.original.id).toBe(photo.id)
+		expect(body.versions.versions).toEqual([
+			expect.objectContaining({ id: clip.id, source: 'hero-video' }),
+		])
+	})
+})
+
 describe('permissions (#147)', () => {
 	it('refuses a signed-out archive and changes nothing', async () => {
 		const { organization } = await setup()

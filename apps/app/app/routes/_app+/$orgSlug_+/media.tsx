@@ -157,6 +157,13 @@ function getMediaUrl(id: string, updatedAt: Date) {
 	return `/resources/images?mediaId=${encodeURIComponent(id)}&v=${updatedAt.getTime()}`
 }
 
+/** A generated hero clip (#301) is a video: it plays from the video route. */
+function getAssetUrl(asset: typeof OrganizationMediaAsset.$inferSelect) {
+	return asset.mimeType.startsWith('video/')
+		? `/resources/videos/source?objectKey=${encodeURIComponent(asset.objectKey)}`
+		: getMediaUrl(asset.id, asset.updatedAt)
+}
+
 function serializeAsset(
 	asset: typeof OrganizationMediaAsset.$inferSelect,
 	tags: string[] = [],
@@ -164,7 +171,7 @@ function serializeAsset(
 	return {
 		id: asset.id,
 		objectKey: asset.objectKey,
-		url: getMediaUrl(asset.id, asset.updatedAt),
+		url: getAssetUrl(asset),
 		fileName: asset.fileName,
 		mimeType: asset.mimeType,
 		fileSize: asset.fileSize,
@@ -1393,14 +1400,25 @@ export default function MediaLibraryRoute({
 									</Badge>
 								) : null}
 								<div className="bg-muted pointer-events-none relative aspect-square overflow-hidden">
-									<img
-										src={asset.url}
-										alt={asset.altText ?? ''}
-										className="size-full object-cover motion-safe:transition-transform motion-safe:duration-240 motion-safe:group-hover:scale-[1.02]"
-										loading="lazy"
-										width={360}
-										height={360}
-									/>
+									{asset.mimeType.startsWith('video/') ? (
+										<video
+											src={asset.url}
+											muted
+											playsInline
+											preload="metadata"
+											aria-label={asset.altText ?? undefined}
+											className="size-full object-cover"
+										/>
+									) : (
+										<img
+											src={asset.url}
+											alt={asset.altText ?? ''}
+											className="size-full object-cover motion-safe:transition-transform motion-safe:duration-240 motion-safe:group-hover:scale-[1.02]"
+											loading="lazy"
+											width={360}
+											height={360}
+										/>
+									)}
 									<div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-end p-2 opacity-0 focus-within:opacity-100 motion-safe:transition-opacity motion-safe:group-hover:opacity-100">
 										<Button
 											type="button"
@@ -1647,6 +1665,7 @@ function MediaDetailsDialog({
 
 	if (!asset) return null
 
+	const isVideo = asset.mimeType.startsWith('video/')
 	const formatLabel = (asset.mimeType.split('/')[1] || 'IMAGE').toUpperCase()
 	const formattedDate = format(
 		new Date(asset.createdAt),
@@ -1816,6 +1835,8 @@ function MediaDetailsDialog({
 				return _(msg`Website`)
 			case 'website-seo':
 				return _(msg`Website SEO`)
+			case 'hero-video':
+				return _(msg`Hero video (made by Menuza)`)
 			default:
 				return _(msg`Main library`)
 		}
@@ -1851,17 +1872,28 @@ function MediaDetailsDialog({
 								{/* Left Column: Image preview, metadata, and link */}
 								<div className="space-y-4 p-6">
 									<div className="group/preview bg-muted/30 relative flex h-64 w-full items-center justify-center overflow-hidden rounded-lg border p-3 sm:h-72">
-										<img
-											src={asset.url}
-											alt={altText || asset.altText || ''}
-											onLoad={(e) =>
-												setDimensions({
-													width: e.currentTarget.naturalWidth,
-													height: e.currentTarget.naturalHeight,
-												})
-											}
-											className="max-h-full max-w-full rounded-md object-contain"
-										/>
+										{isVideo ? (
+											<video
+												src={asset.url}
+												controls
+												muted
+												loop
+												playsInline
+												className="max-h-full max-w-full rounded-md object-contain"
+											/>
+										) : (
+											<img
+												src={asset.url}
+												alt={altText || asset.altText || ''}
+												onLoad={(e) =>
+													setDimensions({
+														width: e.currentTarget.naturalWidth,
+														height: e.currentTarget.naturalHeight,
+													})
+												}
+												className="max-h-full max-w-full rounded-md object-contain"
+											/>
+										)}
 										<input
 											ref={replaceFileInputRef}
 											type="file"
@@ -1875,7 +1907,7 @@ function MediaDetailsDialog({
 												}
 											}}
 										/>
-										{readOnly ? null : (
+										{readOnly || isVideo ? null : (
 											<Button
 												type="button"
 												variant="secondary"
@@ -1888,7 +1920,7 @@ function MediaDetailsDialog({
 												<Trans>Replace image</Trans>
 											</Button>
 										)}
-										{!readOnly && asset.mimeType !== 'image/gif' ? (
+										{!readOnly && !isVideo && asset.mimeType !== 'image/gif' ? (
 											<Button
 												type="button"
 												variant="secondary"

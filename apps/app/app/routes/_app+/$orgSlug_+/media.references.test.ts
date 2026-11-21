@@ -6,6 +6,7 @@ import {
 	NoteComment,
 	NoteCommentImage,
 	OrganizationMediaAsset,
+	OrganizationMenuItem,
 	OrganizationNote,
 	OrganizationNoteUpload,
 	SocialPost,
@@ -129,6 +130,18 @@ async function insertPage(
 }
 
 describe('media library delete keeps objects that are still used', () => {
+	it('keeps an object a dish uses as its photo (#147)', async () => {
+		const { organization, cookie, asset } = await setup()
+		await db.insert(OrganizationMenuItem).values({
+			organizationId: organization.id,
+			displayName: 'Margherita',
+			imageKeys: JSON.stringify([asset.id]),
+		})
+		const res = await deleteAsset(organization.slug, cookie, asset.id)
+		expect(res.status).toBe(200)
+		expect(deleteOrganizationStorageObject).not.toHaveBeenCalled()
+	})
+
 	it('keeps an object used only by a published page snapshot', async () => {
 		const { user, organization, cookie, asset } = await setup()
 		await insertPage(organization.id, user.id, {
