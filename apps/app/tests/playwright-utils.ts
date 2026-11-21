@@ -299,17 +299,22 @@ export async function fillConformFormField(
 	await field.fill(value)
 	await page.evaluate(
 		({ formId, fieldName, value }) => {
-			const form = document.forms.namedItem(formId)
-			if (!(form instanceof HTMLFormElement)) return
+			const form =
+				document.forms.namedItem(formId) ??
+				document.getElementById(formId)
+			if (!(form instanceof HTMLFormElement)) {
+				throw new Error(`Form not found: ${formId}`)
+			}
 			const control = form.elements.namedItem(fieldName)
 			if (
 				!(control instanceof HTMLInputElement) &&
 				!(control instanceof HTMLTextAreaElement)
 			) {
-				return
+				throw new Error(`Field not found: ${fieldName}`)
 			}
 			if (control.value !== value) control.value = value
-			control.dispatchEvent(new Event('input', { bubbles: true }))
+			control.dispatchEvent(new InputEvent('input', { bubbles: true }))
+			control.dispatchEvent(new Event('change', { bubbles: true }))
 		},
 		{ formId, fieldName, value },
 	)
@@ -317,7 +322,7 @@ export async function fillConformFormField(
 
 /** The global "Unsaved changes" bar that replaced per-form Save buttons. */
 export function saveBar(page: Page) {
-	const bar = page.getByRole('group', { name: 'Unsaved changes' })
+	const bar = page.getByTestId('global-save-bar')
 	return {
 		bar,
 		save: bar.getByRole('button', { name: 'Save', exact: true }),

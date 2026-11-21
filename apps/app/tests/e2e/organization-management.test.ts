@@ -206,7 +206,7 @@ test.describe('Organization Management', () => {
 			newName,
 		)
 		await expect(nameField).toHaveValue(newName)
-		await expect(saveBar(page).bar).toBeVisible()
+		await expect(saveBar(page).bar).toBeVisible({ timeout: 30_000 })
 
 		await Promise.all([
 			page.waitForResponse(

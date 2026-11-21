@@ -76,6 +76,7 @@ export function GeneralSettingsCard({
 					<div className="grow">
 						<fetcher.Form
 							method="POST"
+							name={form.id}
 							data-testid="organization-general-settings-form"
 							{...getFormProps(form)}
 						>
