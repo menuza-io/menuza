@@ -13,6 +13,10 @@ export const MARKETING_FLAG_KEYS = {
 	aiDrafts: 'ai.marketing_drafts',
 	/** Push broadcasts and steps (#105); also needs `customer_app.push`. */
 	push: 'marketing.push',
+	/** Short links for texts and printed QR codes, and the Links screen (#159). */
+	shortLinks: 'marketing.short_links',
+	/** The seasonal marketing calendar and its suggested occasions (#152). */
+	calendar: 'marketing.calendar',
 } as const
 
 export type MarketingFeatures = {
@@ -24,6 +28,10 @@ export type MarketingFeatures = {
 	aiDrafts: boolean
 	/** Push broadcasts and automation steps (needs the app's push too). */
 	push: boolean
+	/** Short links and the Links screen (#159). */
+	shortLinks: boolean
+	/** The seasonal marketing calendar (#152). */
+	calendar: boolean
 }
 
 export const NO_MARKETING_FEATURES: MarketingFeatures = {
@@ -33,6 +41,8 @@ export const NO_MARKETING_FEATURES: MarketingFeatures = {
 	cartReminders: false,
 	aiDrafts: false,
 	push: false,
+	shortLinks: false,
+	calendar: false,
 }
 
 const isOn = (value: unknown) => value === true || value === 'true'
@@ -41,7 +51,16 @@ export async function getMarketingFeatures(
 	organizationId: string,
 ): Promise<MarketingFeatures> {
 	const [
-		[audiences, orderAutomations, birthdays, cartReminders, aiDrafts, push],
+		[
+			audiences,
+			orderAutomations,
+			birthdays,
+			cartReminders,
+			aiDrafts,
+			push,
+			shortLinks,
+			calendar,
+		],
 		appPush,
 	] = await Promise.all([
 		Promise.all(
@@ -59,5 +78,7 @@ export async function getMarketingFeatures(
 		cartReminders: orders && isOn(cartReminders),
 		aiDrafts: isOn(aiDrafts),
 		push: isOn(push) && isOn(appPush),
+		shortLinks: isOn(shortLinks),
+		calendar: isOn(calendar),
 	}
 }

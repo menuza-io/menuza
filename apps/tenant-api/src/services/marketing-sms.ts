@@ -4,11 +4,19 @@ import {
 	smsSendWindow,
 	withSmsOptOutFooter,
 } from '@repo/common/sms-compliance'
+import {
+	ATTRIBUTION_PARAMS,
+	findOwnSiteLinks,
+	shortLinkUrl,
+	tagOwnSiteLinksInText,
+} from '@repo/common/short-links'
+import { getTenantDb } from '@repo/tenant-db'
 import { quietHoursDisabledForTests } from '../lib/marketing-sms-switch.ts'
 import {
 	getOrgEmailSender,
 	isOrgLookupConfigured,
 } from '../lib/org-email-sender.ts'
+import { campaignUtm, ensureShortLink } from './short-links.ts'
 
 /**
  * The one place a marketing text is prepared (#75), used by broadcasts and
@@ -47,14 +55,79 @@ export async function marketingSmsTimeZone(
 	return zone && isValidTimeZone(zone) ? zone : null
 }
 
+/** Which campaign a text belongs to, so its links can be short, counted and attributed. */
+export type SmsLinkContext = {
+	/** The broadcast id, or the automation (journey) id. */
+	campaignId: string
+	/** The automation step (node) id; absent for a broadcast. */
+	stepId?: string | null
+	/** The campaign's name, which becomes `utm_campaign`. */
+	campaignName?: string | null
+	/** This recipient's `marketing_messages` id: a click marks that text clicked. */
+	messageId?: string | null
+}
+
+/**
+ * Links to the organization's own site in a text (#159, #115). With short links
+ * on, each becomes `<site>/l/<code>` (UTM values and ids live in the link row);
+ * without, the same values are added to the URL itself. Other URLs are left as
+ * they are.
+ */
+export async function linkOwnSite(
+	orgId: string,
+	text: string,
+	context: SmsLinkContext,
+): Promise<string> {
+	const profile = await getOrgEmailSender(orgId).catch(() => null)
+	const siteOrigin = profile?.siteOrigin
+	if (!siteOrigin) return text
+	const links = findOwnSiteLinks(text, siteOrigin)
+	if (links.length === 0) return text
+	const utmCampaign = campaignUtm(context.campaignName, context.campaignId)
+	if (!profile.shortLinksEnabled) {
+		return tagOwnSiteLinksInText(text, siteOrigin, {
+			utm_source: 'menuza',
+			utm_medium: 'sms',
+			utm_campaign: utmCampaign,
+			[ATTRIBUTION_PARAMS.campaign]: context.campaignId,
+			[ATTRIBUTION_PARAMS.step]: context.stepId,
+		})
+	}
+	const db = await getTenantDb(orgId)
+	let out = text
+	for (const link of new Map(
+		links.map((entry) => [entry.url, entry]),
+	).values()) {
+		const row = await ensureShortLink(db, {
+			kind: 'message',
+			ref: `${context.campaignId}:${context.stepId ?? ''}`,
+			targetPath: link.path,
+			utmSource: 'menuza',
+			utmMedium: 'sms',
+			utmCampaign,
+			campaignId: context.campaignId,
+			stepId: context.stepId,
+		})
+		out = out
+			.split(link.url)
+			.join(shortLinkUrl(siteOrigin, row.code, context.messageId))
+	}
+	return out
+}
+
 export async function prepareMarketingSms(input: {
 	orgId: string
 	locationId?: string | null
 	text: string
 	now: number
+	/** The campaign the text belongs to; links to the own site are shortened and tagged. */
+	links?: SmsLinkContext
 }): Promise<PreparedMarketingSms> {
-	const body = withSmsOptOutFooter(input.text)
-	const segments = countMarketingSmsSegments(input.text).segments
+	const text = input.links
+		? await linkOwnSite(input.orgId, input.text, input.links)
+		: input.text
+	const body = withSmsOptOutFooter(text)
+	const segments = countMarketingSmsSegments(text).segments
 	if (quietHoursDisabledForTests()) {
 		return { body, notBefore: input.now, reason: null, segments }
 	}

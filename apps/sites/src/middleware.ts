@@ -24,6 +24,7 @@ import {
 	isDropVisibilityPage,
 	isReservationsPage,
 	isSitesAppRoute,
+	isSitesShortLinkRoute,
 	isSitesProduction,
 	publishedHtmlCacheUrl,
 	publishedHtmlCacheControl,
@@ -384,7 +385,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		? publishedHtmlCacheControl(organization?.announcements)
 		: isDropVisibilityPage(url.pathname) ||
 			  isCareersPage(url.pathname) ||
-			  isReservationsPage(url.pathname)
+			  isReservationsPage(url.pathname) ||
+			  isSitesShortLinkRoute(url.pathname)
 			? 'no-store'
 			: undefined
 	// Embed sections (#259): this page's frame-src names only the providers its

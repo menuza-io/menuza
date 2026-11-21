@@ -46,6 +46,7 @@ import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { couponCodeForRecipient } from './discount-marketing-codes.ts'
 import { BROADCAST_TOPIC, loadBroadcastAudience } from './marketing-audience.ts'
 import { cappedCustomerIds, readFrequencyCap } from './journey-guards.ts'
+import { tagEmailLinks } from './campaign-links.ts'
 import { prepareMarketingSms } from './marketing-sms.ts'
 import { resolveAudienceWhere } from './marketing-audience-service.ts'
 
@@ -663,12 +664,18 @@ async function sendOne(params: {
 		const bodyHtml = campaign.contentHtml
 			? interpolateMergeTagsHtml(campaign.contentHtml, customer, mergeContext)
 			: `<p>${escapeHtml(parsedContent)}</p>`
+		// Links to the own site carry the campaign id and UTM values (#115).
+		const tagged = await tagEmailLinks(
+			orgId,
+			{ html: bodyHtml, text: parsedContent },
+			{ campaignId, campaignName: campaign.name },
+		)
 		const emailRes = await sendTenantEmail({
 			to: customer.email,
 			toName: customer.name,
 			subject: parsedSubject || 'Notification',
-			text: `${parsedContent}\n\nUnsubscribe: ${optOutUrl}`,
-			html: withUnsubscribeFooter(bodyHtml, optOutUrl),
+			text: `${tagged.text}\n\nUnsubscribe: ${optOutUrl}`,
+			html: withUnsubscribeFooter(tagged.html, optOutUrl),
 			extraHeaders: listUnsubscribeHeaders(optOutUrl),
 			context: { orgId, campaignId, customerId: customer.id, messageId },
 		})
@@ -683,6 +690,11 @@ async function sendOne(params: {
 		orgId,
 		text: parsedContent,
 		now: Date.now(),
+		links: {
+			campaignId,
+			campaignName: campaign.name,
+			messageId,
+		},
 	})
 	await sendSms({ to: customer.phone, message: prepared.body })
 }

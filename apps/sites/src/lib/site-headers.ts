@@ -188,6 +188,8 @@ export function shouldCachePublishedHtml(
 	if (isReservationsPage(url.pathname)) return false
 	// Live pages: the options and the balance come from the region.
 	if (isSitesGiftCardsRoute(url.pathname)) return false
+	// A short link counts every click and must never be answered from a cache.
+	if (isSitesShortLinkRoute(url.pathname)) return false
 	return true
 }
 
@@ -244,10 +246,17 @@ export function isSitesLandingRoute(pathname: string) {
 	)
 }
 
+/** `/l/<code>`: a short link (#159). Generated per site, never a CMS page. */
+export function isSitesShortLinkRoute(pathname: string) {
+	const slug = pathname.replace(/^\/+|\/+$/g, '')
+	return slug.startsWith('l/')
+}
+
 export function isSitesAppRoute(pathname: string) {
 	const slug = pathname.replace(/^\/+|\/+$/g, '')
 	if (APP_ROUTE_SLUGS.has(slug)) return true
 	return (
+		isSitesShortLinkRoute(pathname) ||
 		isSitesShopRoute(pathname) ||
 		isSitesMenuRoute(pathname) ||
 		isSitesCareersRoute(pathname) ||

@@ -56,6 +56,7 @@ import {
 } from './journey-conditions.ts'
 import { customerInAudience } from './marketing-audience-service.ts'
 import { cartLinkForGuest } from './cart-reminders.ts'
+import { tagEmailLinks } from './campaign-links.ts'
 import { prepareMarketingSms } from './marketing-sms.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
@@ -854,15 +855,18 @@ export async function executeJourneyStep(
 	// Reservation journeys are gated on the `reservations` topic instead
 	// (`skipWithoutReservationConsent`): a guest who agreed to hear about their
 	// bookings has not agreed to marketing.
-	const journeyTrigger = payload.journeyId
-		? (
-				await db
-					.select({ triggerType: marketingJourneys.triggerType })
-					.from(marketingJourneys)
-					.where(eq(marketingJourneys.id, payload.journeyId))
-					.get()
-			)?.triggerType
+	const journeyRow = payload.journeyId
+		? await db
+				.select({
+					triggerType: marketingJourneys.triggerType,
+					name: marketingJourneys.name,
+				})
+				.from(marketingJourneys)
+				.where(eq(marketingJourneys.id, payload.journeyId))
+				.get()
 		: undefined
+	const journeyTrigger = journeyRow?.triggerType
+	const journeyName = journeyRow?.name ?? null
 	const isReservationJourney = isReservationJourneyTrigger(
 		journeyTrigger ?? run.triggerEvent,
 	)
@@ -1103,8 +1107,18 @@ export async function executeJourneyStep(
 			customerId: customer.id,
 			topic: isReservationJourney ? 'reservations' : BROADCAST_TOPIC,
 		})
-		const html = withUnsubscribeFooter(bodyHtml, optOutUrl)
-		const plainText = `${text || subject}\n\nUnsubscribe: ${optOutUrl}`
+		// Links to the own site carry the campaign and step ids (#115).
+		const tagged = await tagEmailLinks(
+			orgId,
+			{ html: bodyHtml, text: text || subject },
+			{
+				campaignId: payload.journeyId,
+				stepId: payload.nodeId,
+				campaignName: journeyName,
+			},
+		)
+		const html = withUnsubscribeFooter(tagged.html, optOutUrl)
+		const plainText = `${tagged.text}\n\nUnsubscribe: ${optOutUrl}`
 
 		try {
 			// Stable across retries of this step: a reclaimed step keeps its
@@ -1314,12 +1328,22 @@ export async function executeJourneyStep(
 		const smsConfig = config as { messageText?: string; content?: string }
 		const rawMessage = smsConfig.messageText || smsConfig.content || ''
 		const merged = interpolateMergeTags(rawMessage, customer, contextData)
-		// Every marketing text ends with the opt-out phrase (#75).
+		// The recipient's message row id travels in the short link, so a click
+		// marks this text clicked (#159). The row is written after the send.
+		const smsMessageId = randomUUID()
+		// Every marketing text ends with the opt-out phrase (#75), and links to
+		// the own site are short and tagged (#159, #115).
 		const message = (
 			await prepareMarketingSms({
 				orgId,
 				text: merged,
 				now: Date.now(),
+				links: {
+					campaignId: payload.journeyId,
+					stepId: payload.nodeId,
+					campaignName: journeyName,
+					messageId: smsMessageId,
+				},
 			})
 		).body
 
@@ -1347,7 +1371,7 @@ export async function executeJourneyStep(
 
 			// Record marketing message outbox entry
 			await db.insert(marketingMessages).values({
-				id: randomUUID(),
+				id: smsMessageId,
 				journeyStepExecutionId: stepExecutionId,
 				customerId: customer.id,
 				channel: 'sms',

@@ -304,6 +304,8 @@ function OrganizationSidebar({
 		rootData?.qrOrderingNav ?? HIDDEN_QR_ORDERING_NAV
 	const showAudiencesNav = rootData?.marketingNav?.audiences === true
 	const showCustomerAppNav = rootData?.marketingNav?.customerApp === true
+	const showLinksNav = rootData?.marketingNav?.links === true
+	const showCalendarNav = rootData?.marketingNav?.calendar === true
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -520,9 +522,21 @@ function OrganizationSidebar({
 					),
 				},
 				{
+					title: _(msg`Calendar`),
+					url: `/${orgSlug}/marketing/calendar`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/marketing/calendar`,
+					),
+				},
+				{
 					title: _(msg`Social media`),
 					url: `/${orgSlug}/marketing/social`,
 					isActive: location.pathname.includes(`/${orgSlug}/marketing/social`),
+				},
+				{
+					title: _(msg`Links`),
+					url: `/${orgSlug}/marketing/links`,
+					isActive: location.pathname.includes(`/${orgSlug}/marketing/links`),
 				},
 				{
 					title: _(msg`Print shop`),
@@ -884,6 +898,12 @@ function OrganizationSidebar({
 						}
 						if (subItem.url.includes('/marketing/templates')) {
 							return canReadCampaigns || canReadAutomations
+						}
+						if (subItem.url.includes('/marketing/calendar')) {
+							return showCalendarNav && canReadCampaigns
+						}
+						if (subItem.url.includes('/marketing/links')) {
+							return showLinksNav && canReadCampaigns
 						}
 						if (subItem.url.includes('/marketing/social')) {
 							return canReadCampaigns

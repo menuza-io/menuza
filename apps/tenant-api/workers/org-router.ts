@@ -424,6 +424,12 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// Short links (#159): the public lookup names its organization the way the
+	// order options do, by the site's own Origin (plus slug or host hints).
+	if (pathname === '/short-links/resolve') {
+		return orgIdFromOrderIdentity(request, url)
+	}
+
 	// Inbound text replies (#75): the edge forwards one keyword to one
 	// organization; the route checks INTERNAL_COMMAND_TOKEN.
 	if (pathname === '/api/sms-inbound/apply') {

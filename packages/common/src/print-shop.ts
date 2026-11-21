@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { siteTargetPathSchema } from './short-links.ts'
 
 /**
  * Print shop: branded print templates operators design in the App and either
@@ -173,17 +174,18 @@ export type PrintQrTargetSpec = {
 }
 
 /** Path on the org's own site: never an external URL. */
-export const printSitePathSchema = z
-	.string()
-	.trim()
-	.max(200)
-	.regex(/^\/(?!\/)[A-Za-z0-9\-._~/%?=&]*$/, 'Use a path on your site')
+export const printSitePathSchema = siteTargetPathSchema
 
 const SITE_TARGET: PrintQrTargetSpec = {
 	kind: 'site',
 	schema: z.strictObject({
 		kind: z.literal('site'),
 		path: printSitePathSchema,
+		/**
+		 * Count scans (#159): the QR carries a short link and the design shows
+		 * "Scans: N this month". Off or absent prints the plain page link.
+		 */
+		track: z.boolean().optional(),
 	}),
 	copy: (locale) => ({
 		headline: printCopy(locale, 'visitUs'),

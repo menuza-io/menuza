@@ -31,6 +31,8 @@ const flags = (
 	cartReminders: false,
 	aiDrafts: false,
 	push: false,
+	shortLinks: false,
+	calendar: false,
 	...over,
 })
 

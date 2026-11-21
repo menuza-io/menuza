@@ -648,6 +648,11 @@
       "types": "./src/sms-compliance.ts",
       "import": "./src/sms-compliance.ts",
       "default": "./src/sms-compliance.ts"
+    },
+    "./short-links": {
+      "types": "./src/short-links.ts",
+      "import": "./src/short-links.ts",
+      "default": "./src/short-links.ts"
     }
   },
   "scripts": {
