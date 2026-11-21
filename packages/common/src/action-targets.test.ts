@@ -3,6 +3,7 @@ import {
 	actionForPath,
 	actionReplacedEverywhere,
 	hasExternalTarget,
+	linkIsOwnDomain,
 	kindFromOutboundEvent,
 	outboundEventFor,
 	pageIsReplaced,
@@ -60,6 +61,26 @@ describe('validateActionUrl', () => {
 			ok: false,
 			error: 'invalid_url',
 		})
+	})
+	it('a name in its own script and its punycode form are one name', () => {
+		// The domain was stored as typed (unicode); the link is read as punycode.
+		expect(
+			validateActionUrl('https://xn--bcher-kva.example/menu', [
+				'b\u00fccher.example',
+			]),
+		).toEqual({ ok: false, error: 'own_domain' })
+		expect(
+			validateActionUrl('https://b\u00fccher.example/menu', [
+				'xn--bcher-kva.example',
+			]),
+		).toEqual({ ok: false, error: 'own_domain' })
+		expect(
+			linkIsOwnDomain('https://shop.xn--bcher-kva.example/x', [
+				'B\u00dcCHER.example',
+			]),
+		).toBe(true)
+		expect(linkIsOwnDomain('https://other.example', ['acme.com'])).toBe(false)
+		expect(linkIsOwnDomain('not a link', ['acme.com'])).toBe(false)
 	})
 	it("refuses the site's own domains and their sub-domains, not look-alikes", () => {
 		for (const url of [

@@ -66,6 +66,18 @@ describe('outbound click counting', () => {
 		).toBe(true)
 	})
 
+	it('counts a middle click, which opens the link without a click event, and no other button', () => {
+		initOutboundClicks(context, host)
+		const aux = (id: string, button: number) =>
+			host
+				.querySelector<HTMLElement>(`#${id}`)!
+				.dispatchEvent(new MouseEvent('auxclick', { bubbles: true, button }))
+		aux('order', 1)
+		aux('gift', 2)
+		aux('plain', 1)
+		expect(posts.map((post) => post.body.event)).toEqual(['outbound_order'])
+	})
+
 	it('sends counts only: no visitor id, address, user agent or destination', () => {
 		initOutboundClicks(context, host)
 		click('order')

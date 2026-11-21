@@ -1,5 +1,6 @@
 import {
 	ACTION_KINDS,
+	linkIsOwnDomain,
 	parseActionTargets,
 	serializeActionTargets,
 	validateActionUrl,
@@ -132,9 +133,30 @@ export async function saveActionTargets(input: {
 }
 
 /** The organization's and each location's settings, for the editor and Sites. */
+/**
+ * A setting that sends visitors to one of the site's own domains (one added
+ * after the link was saved) would loop: it is left out, which means Menuza.
+ */
+function withoutOwnDomains(
+	targets: ActionTargets,
+	ownHosts: readonly string[],
+): ActionTargets {
+	const out: ActionTargets = {}
+	for (const kind of ACTION_KINDS) {
+		const target = targets[kind]
+		if (!target) continue
+		if (target.mode === 'external' && linkIsOwnDomain(target.url, ownHosts)) {
+			continue
+		}
+		out[kind] = target
+	}
+	return out
+}
+
 export async function loadPublicActionTargets(
 	organizationId: string,
 	organizationActionTargets?: string | null,
+	options: { dropOwnDomains?: boolean } = {},
 ): Promise<PublicActionTargets> {
 	const organization =
 		organizationActionTargets !== undefined
@@ -158,10 +180,17 @@ export async function loadPublicActionTargets(
 				isNotNull(OrganizationLocation.actionTargets),
 			),
 		)
+	const ownHosts = options.dropOwnDomains
+		? await ownSiteHosts(organizationId)
+		: null
+	const read = (raw: string | null | undefined) => {
+		const parsed = parseActionTargets(raw)
+		return ownHosts ? withoutOwnDomains(parsed, ownHosts) : parsed
+	}
 	const locations: Record<string, ActionTargets> = {}
 	for (const row of rows) {
-		const parsed = parseActionTargets(row.actionTargets)
+		const parsed = read(row.actionTargets)
 		if (Object.keys(parsed).length) locations[row.id] = parsed
 	}
-	return { organization: parseActionTargets(organization), locations }
+	return { organization: read(organization), locations }
 }

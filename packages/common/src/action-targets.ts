@@ -41,15 +41,41 @@ export const MAX_ACTION_URL_LENGTH = 2000
 
 export type ActionUrlError = 'invalid_url' | 'https_required' | 'own_domain'
 
-function hostMatches(host: string, domain: string) {
-	const clean = domain
+/**
+ * A host as the address bar sends it: lower case, no scheme, path or port, and
+ * punycode for a name written in its own script, so `bücher.de` and
+ * `xn--bcher-kva.de` are one name.
+ */
+function plainHost(value: string) {
+	const clean = value
 		.trim()
 		.toLowerCase()
 		.replace(/^https?:\/\//u, '')
-		.replace(/\/.*$/u, '')
+		.replace(/[/?#].*$/u, '')
 		.replace(/:\d+$/u, '')
 		.replace(/\.$/u, '')
+	if (!clean) return ''
+	try {
+		return new URL(`https://${clean}`).hostname.replace(/\.$/u, '')
+	} catch {
+		return clean
+	}
+}
+
+function hostMatches(host: string, domain: string) {
+	const clean = plainHost(domain)
 	return clean !== '' && (host === clean || host.endsWith(`.${clean}`))
+}
+
+/** Whether a link points at one of the given hosts or a sub-domain of one. */
+export function linkIsOwnDomain(url: string, ownHosts: readonly string[]) {
+	let host: string
+	try {
+		host = new URL(url).hostname.toLowerCase().replace(/\.$/u, '')
+	} catch {
+		return false
+	}
+	return ownHosts.some((own) => hostMatches(host, own))
 }
 
 /**

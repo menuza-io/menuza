@@ -186,6 +186,33 @@ describe('saving where buttons go (#318)', () => {
 		})
 	})
 
+	it('a domain added after the link was saved takes that link out of the public site', async () => {
+		const { organization, cookie } = await org()
+		await post(organization.slug, cookie, {
+			locationId: '',
+			orderMode: 'external',
+			orderUrl: 'https://order.shop-later.example/acme',
+		})
+		const before = toPublicSitePayload(
+			(await findPublishedSiteOrganization({ slug: organization.slug }))!,
+		)
+		expect(before.actionTargets.organization.order?.mode).toBe('external')
+		// The restaurant now owns that domain: sending guests there would loop.
+		await db
+			.update(Organization)
+			.set({ customDomain: 'shop-later.example' })
+			.where(eq(Organization.id, organization.id))
+		const after = toPublicSitePayload(
+			(await findPublishedSiteOrganization({ slug: organization.slug }))!,
+		)
+		expect(after.actionTargets.organization.order).toBeUndefined()
+		// What the operator saved is still there for the editor to show.
+		expect(
+			((await stored(organization.id)) as { order: { mode: string } }).order
+				.mode,
+		).toBe('external')
+	})
+
 	it('only a member who can update the website may change it', async () => {
 		const { organization } = await org()
 		const viewer = await createTestUser()

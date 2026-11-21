@@ -217,12 +217,17 @@ export function initOutboundClicks(
 ) {
 	if (!context.tenantApiUrl) return
 	if (globalThis.navigator?.doNotTrack === '1') return
-	doc.addEventListener('click', (event) => {
+	const count = (event: Event) => {
 		const target = event.target
 		if (!(target instanceof Element)) return
 		const link = target.closest<HTMLElement>('[data-outbound]')
 		const kind = link?.dataset.outbound as ActionKind | undefined
 		if (!kind || !kindFromOutboundEvent(outboundEventFor(kind))) return
 		post(context, outboundEventFor(kind), '')
+	}
+	doc.addEventListener('click', count)
+	// A middle click opens the link in a new tab without a `click`: it leaves too.
+	doc.addEventListener('auxclick', (event) => {
+		if ((event as MouseEvent).button === 1) count(event)
 	})
 }
