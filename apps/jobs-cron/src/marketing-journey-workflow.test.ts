@@ -883,4 +883,55 @@ describe('MarketingJourneyWorkflow', () => {
 		}
 		expect(spanMs).toBeGreaterThan(leaseMs)
 	})
+
+	it('sleeps until the quiet-hours window opens and asks again (#75)', async () => {
+		const opensAt = Date.now() + 6 * 60 * 60 * 1000
+		let executeCalls = 0
+		globalThis.fetch = vi.fn(async (url: string | URL | Request) => {
+			const urlStr = url.toString()
+			if (urlStr.includes('/api/journeys/execute-step')) {
+				executeCalls++
+				return Response.json(
+					executeCalls === 1
+						? { success: true, status: 'deferred', notBefore: opensAt }
+						: { success: true, status: 'delivered', executionId: 'exec_sms_1' },
+				)
+			}
+			return Response.json({ success: true })
+		}) as typeof fetch
+		const sleepUntil = vi.fn().mockResolvedValue(undefined)
+		const step = { ...mockStep, sleepUntil }
+
+		const result = await createWorkflowInstance(env).run(
+			{
+				payload: {
+					orgId: 'org_550e8400-e29b-41d4-a716-446655440000',
+					journeyId: 'jny_1',
+					runId: 'run_1',
+					customerId: 'cust_1',
+					tenantApiUrl: 'http://localhost:3007',
+					triggerEvent: 'phone_verified',
+					graph: {
+						nodes: [
+							{ id: 't', type: 'trigger', data: {} },
+							{ id: 'sms', type: 'action_sms', data: { content: 'Hi' } },
+						],
+						edges: [{ id: 'e', source: 't', target: 'sms' }],
+					},
+				},
+			} as any,
+			step as any,
+		)
+
+		expect(result).toEqual({ status: 'completed', executedSteps: 2 })
+		// One sleep, to the instant the window opens; then the step is asked again
+		// under its own step name and delivers.
+		expect(sleepUntil).toHaveBeenCalledTimes(1)
+		expect(sleepUntil.mock.calls[0]![0]).toBe('quiet-hours-sms-1')
+		expect((sleepUntil.mock.calls[0]![1] as Date).getTime()).toBe(opensAt)
+		expect(executeCalls).toBe(2)
+		expect(mockStep.do.mock.calls.map((call) => call[0])).toEqual(
+			expect.arrayContaining(['action-sms', 'action-sms-after-1']),
+		)
+	})
 })

@@ -643,6 +643,11 @@
       "types": "./src/email-sender.ts",
       "import": "./src/email-sender.ts",
       "default": "./src/email-sender.ts"
+    },
+    "./sms-compliance": {
+      "types": "./src/sms-compliance.ts",
+      "import": "./src/sms-compliance.ts",
+      "default": "./src/sms-compliance.ts"
     }
   },
   "scripts": {

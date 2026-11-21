@@ -115,7 +115,7 @@ msgstr ""
 msgid "{fileName} is taken off the site of {organizationName} at once, and the site falls back to the theme font. The licence record is kept."
 msgstr "{fileName} is taken off the site of {organizationName} at once, and the site falls back to the theme font. The licence record is kept."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:528
+#: ../../packages/marketing/src/components/campaign-form.tsx:547
 msgid "{hours} hours late"
 msgstr "{hours} hours late"
 
@@ -183,11 +183,11 @@ msgstr ""
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:979
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:982
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:1005
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:1008
 msgid "• Otherwise → <0>False branch</0>"
 msgstr ""
 
@@ -238,7 +238,7 @@ msgstr ""
 msgid "1 entry"
 msgstr "1 entry"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:527
+#: ../../packages/marketing/src/components/campaign-form.tsx:546
 msgid "1 hour late"
 msgstr "1 hour late"
 
@@ -282,11 +282,11 @@ msgstr "A new build is required"
 msgid "A notification can't use merge tags such as a name or a code: it is the same for everyone."
 msgstr "A notification can't use merge tags such as a name or a code: it is the same for everyone."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:406
+#: ../../packages/marketing/src/components/campaign-form.tsx:425
 msgid "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
 msgstr "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:419
+#: ../../packages/marketing/src/components/campaign-form.tsx:438
 msgid "A page on your site. Leave empty for the menu."
 msgstr "A page on your site. Leave empty for the menu."
 
@@ -818,7 +818,7 @@ msgstr "attempt {0}"
 msgid "Attribute Mapping (JSON)"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:243
+#: ../../packages/marketing/src/components/campaign-form.tsx:250
 msgid "Audience"
 msgstr "Audience"
 
@@ -1137,13 +1137,13 @@ msgstr ""
 msgid "Cache Type:"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:278
+#: ../../packages/marketing/src/components/campaign-form.tsx:285
 msgid "Campaign name"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:365
-#: ../../packages/marketing/src/components/campaign-form.tsx:551
+#: ../../packages/marketing/src/components/campaign-form.tsx:570
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:317
@@ -1207,7 +1207,7 @@ msgstr "Cash drawer variance by shift"
 msgid "Center"
 msgstr "Center"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:211
+#: ../../packages/marketing/src/components/campaign-form.tsx:218
 msgid "Channel"
 msgstr ""
 
@@ -1223,7 +1223,7 @@ msgstr "Check before it goes out"
 msgid "Check it still works"
 msgstr "Check it still works"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:323
+#: ../../packages/marketing/src/components/campaign-form.tsx:330
 msgid "Check out our new summer menu"
 msgstr ""
 
@@ -1244,7 +1244,7 @@ msgstr "Check the values and try again."
 msgid "Checked before every step, including after a delay. Guests who order are not sent the rest of this automation."
 msgstr "Checked before every step, including after a delay. Guests who order are not sent the rest of this automation."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:830
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:833
 msgid "Checked when the guest reaches this step, never stored."
 msgstr "Checked when the guest reaches this step, never stored."
 
@@ -1260,7 +1260,7 @@ msgstr "Choose a subject"
 msgid "Choose a valid retention period."
 msgstr "Choose a valid retention period."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:794
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:797
 msgid "Choose an audience"
 msgstr "Choose an audience"
 
@@ -1374,8 +1374,8 @@ msgstr ""
 msgid "Condition comparison field is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:842
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:934
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:845
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:937
 msgid "Condition Logic"
 msgstr ""
 
@@ -1447,7 +1447,7 @@ msgstr ""
 msgid "contains"
 msgstr "contains"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:953
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:956
 msgid "Contains (Partial Match)"
 msgstr ""
 
@@ -1648,7 +1648,7 @@ msgstr ""
 msgid "Customer apps"
 msgstr "Customer apps"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:732
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:735
 msgid "Customer Attribute"
 msgstr ""
 
@@ -1895,11 +1895,11 @@ msgstr ""
 msgid "Display name"
 msgstr "Display name"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:950
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:953
 msgid "Does Not Equal"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:516
+#: ../../packages/marketing/src/components/campaign-form.tsx:535
 msgid "Don't send if more than this late"
 msgstr "Don't send if more than this late"
 
@@ -1945,7 +1945,7 @@ msgstr ""
 msgid "Duration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:965
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:968
 msgid "e.g. @gmail.com"
 msgstr ""
 
@@ -2039,7 +2039,7 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:758
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:761
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:394
 msgid "Email Address"
 msgstr ""
@@ -2050,7 +2050,7 @@ msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:576
-#: ../../packages/marketing/src/components/campaign-form.tsx:331
+#: ../../packages/marketing/src/components/campaign-form.tsx:338
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
@@ -2247,19 +2247,23 @@ msgstr "Every order"
 msgid "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
 msgstr "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:407
+msgid "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
+msgstr "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
+
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
 msgid "Everyone gets {code}"
 msgstr "Everyone gets {code}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:261
+#: ../../packages/marketing/src/components/campaign-form.tsx:268
 msgid "Everyone subscribed"
 msgstr "Everyone subscribed"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:260
+#: ../../packages/marketing/src/components/campaign-form.tsx:267
 msgid "Everyone who opted in to notifications"
 msgstr "Everyone who opted in to notifications"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:947
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:950
 msgid "Exactly Equals"
 msgstr ""
 
@@ -2493,7 +2497,7 @@ msgstr "Found it at the vendor"
 msgid "Found it at the vendor, {orderName}"
 msgstr "Found it at the vendor, {orderName}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:304
+#: ../../packages/marketing/src/components/campaign-form.tsx:311
 msgid "Fresh summer menu"
 msgstr "Fresh summer menu"
 
@@ -2574,11 +2578,11 @@ msgstr ""
 msgid "Guest"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:822
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:825
 msgid "Guest is in the audience"
 msgstr "Guest is in the audience"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:825
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:828
 msgid "Guest is not in the audience"
 msgstr "Guest is not in the audience"
 
@@ -2594,11 +2598,11 @@ msgstr "Guests who turned on offers in the app get this once per run. A push hol
 msgid "Has an upcoming reservation"
 msgstr "Has an upcoming reservation"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:903
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:906
 msgid "Has none (False)"
 msgstr "Has none (False)"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:900
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:903
 msgid "Has one (True)"
 msgstr "Has one (True)"
 
@@ -2730,7 +2734,7 @@ msgstr "Icon background"
 msgid "Identity Provider Configuration"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:534
+#: ../../packages/marketing/src/components/campaign-form.tsx:553
 msgid "If sending cannot start in time, it is not sent and you are told."
 msgstr "If sending cannot start in time, it is not sent and you are told."
 
@@ -2738,7 +2742,7 @@ msgstr "If sending cannot start in time, it is not sent and you are told."
 msgid "Image"
 msgstr "Image"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:423
+#: ../../packages/marketing/src/components/campaign-form.tsx:442
 msgid "Image address"
 msgstr "Image address"
 
@@ -2766,7 +2770,7 @@ msgstr "In setup"
 msgid "In use"
 msgstr "In use"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:511
+#: ../../packages/marketing/src/components/campaign-form.tsx:530
 msgid "In your time zone."
 msgstr "In your time zone."
 
@@ -2868,19 +2872,19 @@ msgstr ""
 msgid "is"
 msgstr "is"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:861
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:864
 msgid "Is exactly"
 msgstr "Is exactly"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:858
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:861
 msgid "Is less than"
 msgstr "Is less than"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:855
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:858
 msgid "Is more than"
 msgstr "Is more than"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:922
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
 msgid "Is Verified (True)"
 msgstr ""
 
@@ -3265,7 +3269,7 @@ msgstr ""
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:195
-#: ../../packages/marketing/src/components/campaign-form.tsx:337
+#: ../../packages/marketing/src/components/campaign-form.tsx:344
 msgid "Message"
 msgstr ""
 
@@ -3319,7 +3323,7 @@ msgstr ""
 msgid "N/A"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:767
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:770
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:397
 #: app/routes/_admin+/roles+/$roleId.tsx:569
 #: app/routes/_admin+/roles+/$roleId.tsx:802
@@ -3650,7 +3654,7 @@ msgstr "Not set"
 msgid "Not Set"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:928
 msgid "Not Verified (False)"
 msgstr ""
 
@@ -3776,7 +3780,7 @@ msgstr ""
 msgid "Opens (a page of your site)"
 msgstr "Opens (a page of your site)"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:411
+#: ../../packages/marketing/src/components/campaign-form.tsx:430
 msgid "Opens this page"
 msgstr "Opens this page"
 
@@ -3795,7 +3799,7 @@ msgstr ""
 msgid "Optional"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:432
+#: ../../packages/marketing/src/components/campaign-form.tsx:451
 msgid "Optional. A secure (https) address."
 msgstr "Optional. A secure (https) address."
 
@@ -4084,7 +4088,7 @@ msgstr ""
 msgid "Phone number"
 msgstr "Phone number"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:761
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:764
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:395
 msgid "Phone Number"
 msgstr ""
@@ -4094,7 +4098,7 @@ msgstr ""
 msgid "Phone numbers"
 msgstr "Phone numbers"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:764
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:767
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:396
 msgid "Phone Verification Status"
 msgstr ""
@@ -4234,7 +4238,7 @@ msgid "Printing"
 msgstr "Printing"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:41
-#: ../../packages/marketing/src/components/campaign-form.tsx:231
+#: ../../packages/marketing/src/components/campaign-form.tsx:238
 msgid "Pro"
 msgstr ""
 
@@ -4884,7 +4888,7 @@ msgstr ""
 msgid "Roles that apply within specific organizations"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:976
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:979
 msgid "Routing Logic:"
 msgstr ""
 
@@ -5038,7 +5042,7 @@ msgid "Save default"
 msgstr "Save default"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: ../../packages/marketing/src/components/campaign-form.tsx:566
+#: ../../packages/marketing/src/components/campaign-form.tsx:585
 msgid "Save draft"
 msgstr ""
 
@@ -5070,7 +5074,7 @@ msgstr "Save this design as a template"
 msgid "Saved"
 msgstr "Saved"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:787
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:790
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:400
 msgid "Saved audience"
 msgstr "Saved audience"
@@ -5102,7 +5106,7 @@ msgstr ""
 msgid "Saving…"
 msgstr "Saving…"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:596
+#: ../../packages/marketing/src/components/campaign-form.tsx:615
 msgid "Schedule"
 msgstr "Schedule"
 
@@ -5110,7 +5114,7 @@ msgstr "Schedule"
 msgid "Schedule anyway"
 msgstr "Schedule anyway"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:493
+#: ../../packages/marketing/src/components/campaign-form.tsx:512
 msgid "Schedule for later"
 msgstr "Schedule for later"
 
@@ -5219,12 +5223,16 @@ msgstr "See the original"
 msgid "See the re-send"
 msgstr "See the re-send"
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:355
+msgid "Segments: {smsSegments} (opt-out line included)"
+msgstr "Segments: {smsSegments} (opt-out line included)"
+
 #: app/routes/_admin+/roles+/$roleId.tsx:923
 #: app/routes/_admin+/roles+/$roleId.tsx:926
 msgid "Select access level"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:754
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:757
 msgid "Select attribute"
 msgstr ""
 
@@ -5236,7 +5244,7 @@ msgstr ""
 msgid "Select flag type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:943
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:946
 msgid "Select operator"
 msgstr ""
 
@@ -5245,7 +5253,7 @@ msgstr ""
 msgid "Select role type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:918
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:921
 msgid "Select status"
 msgstr ""
 
@@ -5261,7 +5269,7 @@ msgstr ""
 msgid "Send a one-time message to tenant operators."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:577
+#: ../../packages/marketing/src/components/campaign-form.tsx:596
 msgid "Send a test"
 msgstr "Send a test"
 
@@ -5269,7 +5277,7 @@ msgstr "Send a test"
 msgid "Send anyway"
 msgstr "Send anyway"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:501
+#: ../../packages/marketing/src/components/campaign-form.tsx:520
 msgid "Send at"
 msgstr "Send at"
 
@@ -5277,8 +5285,8 @@ msgstr "Send at"
 msgid "Send Email"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:191
-#: ../../packages/marketing/src/components/campaign-form.tsx:492
+#: ../../packages/marketing/src/components/campaign-form.tsx:198
+#: ../../packages/marketing/src/components/campaign-form.tsx:511
 msgid "Send now"
 msgstr ""
 
@@ -5302,7 +5310,7 @@ msgstr "Sending to the printer"
 msgid "Sending to the vendor failed unexpectedly"
 msgstr "Sending to the vendor failed unexpectedly"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:192
+#: ../../packages/marketing/src/components/campaign-form.tsx:199
 msgid "Sending..."
 msgstr ""
 
@@ -5465,8 +5473,12 @@ msgid "SMS message text is required."
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:718
-msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
-msgstr ""
+#~ msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
+#~ msgstr ""
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:718
+msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols. Every text ends with \"Reply STOP to opt out.\" and goes out between 9:00 and 20:00 local time: a step that comes up at night waits for the morning."
+msgstr "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols. Every text ends with \"Reply STOP to opt out.\" and goes out between 9:00 and 20:00 local time: a step that comes up at night waits for the morning."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:107
 msgid "Solid"
@@ -5691,7 +5703,7 @@ msgstr "Stuck in setup for more than 14 days"
 msgid "Style"
 msgstr "Style"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:313
+#: ../../packages/marketing/src/components/campaign-form.tsx:320
 msgid "Subject"
 msgstr ""
 
@@ -5723,11 +5735,11 @@ msgstr ""
 msgid "Succeeded"
 msgstr "Succeeded"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:283
+#: ../../packages/marketing/src/components/campaign-form.tsx:290
 msgid "Summer promo"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:351
+#: ../../packages/marketing/src/components/campaign-form.tsx:363
 msgid "supported"
 msgstr ""
 
@@ -5830,8 +5842,8 @@ msgstr ""
 #~ msgid "Target Tag Name"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:871
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:961
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:874
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:964
 msgid "Target Value"
 msgstr ""
 
@@ -6244,7 +6256,7 @@ msgstr "Tip pool: tips by day"
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:291
+#: ../../packages/marketing/src/components/campaign-form.tsx:298
 msgid "Title"
 msgstr "Title"
 
@@ -6437,7 +6449,7 @@ msgstr "Unsaved changes"
 msgid "until"
 msgstr "until"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:889
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:892
 msgid "Upcoming reservation"
 msgstr "Upcoming reservation"
 
@@ -6617,11 +6629,11 @@ msgstr "Vendor, {item}"
 msgid "Vendors were cancelled for this order: refund it instead of retrying."
 msgstr "Vendors were cancelled for this order: refund it instead of retrying."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:911
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:914
 msgid "Verification Status"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:265
+#: ../../packages/marketing/src/components/campaign-form.tsx:272
 msgid "Verified phone numbers only"
 msgstr "Verified phone numbers only"
 
@@ -6771,7 +6783,7 @@ msgstr "What changed (English)"
 msgid "What is this message for?"
 msgstr "What is this message for?"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:472
+#: ../../packages/marketing/src/components/campaign-form.tsx:491
 msgid "When"
 msgstr "When"
 
@@ -6825,7 +6837,7 @@ msgstr "Win back guests who have not ordered in a while"
 msgid "Window sticker"
 msgstr "Window sticker"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:270
+#: ../../packages/marketing/src/components/campaign-form.tsx:277
 msgid "Without a verified phone"
 msgstr "Without a verified phone"
 
@@ -6845,11 +6857,11 @@ msgstr "Write a draft"
 msgid "Write again"
 msgstr "Write again"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:375
+#: ../../packages/marketing/src/components/campaign-form.tsx:387
 msgid "Write the notification"
 msgstr "Write the notification"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:386
+#: ../../packages/marketing/src/components/campaign-form.tsx:398
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "Write your email. Use {NAME_TAG} to personalize."
 
@@ -6857,7 +6869,7 @@ msgstr "Write your email. Use {NAME_TAG} to personalize."
 msgid "Write your message"
 msgstr "Write your message"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:362
+#: ../../packages/marketing/src/components/campaign-form.tsx:374
 msgid "Write your text message"
 msgstr "Write your text message"
 

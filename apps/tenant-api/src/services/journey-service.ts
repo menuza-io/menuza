@@ -39,6 +39,7 @@ import {
 	listUnsubscribeHeaders,
 	unsubscribeUrl,
 } from '../lib/email-consent.ts'
+import { isMarketingSmsEnabled } from '../lib/marketing-sms-switch.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
@@ -55,6 +56,7 @@ import {
 } from './journey-conditions.ts'
 import { customerInAudience } from './marketing-audience-service.ts'
 import { cartLinkForGuest } from './cart-reminders.ts'
+import { prepareMarketingSms } from './marketing-sms.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
 export const JOURNEY_LIST_LIMIT = 100
@@ -128,6 +130,16 @@ function deliveredResultFromDispatchedExecution(execution: {
 		executionId: execution.id,
 		status: outcomeUnknown ? 'unknown' : 'delivered',
 		messageId,
+	}
+}
+
+/** An operator's test run (`contextData.isTestRun`) is never held for quiet hours. */
+function isTestRunContext(raw: unknown): boolean {
+	try {
+		const value = typeof raw === 'string' ? JSON.parse(raw) : raw
+		return (value as { isTestRun?: unknown } | null)?.isTestRun === true
+	} catch {
+		return false
 	}
 }
 
@@ -283,7 +295,20 @@ export interface StepExecutionResult {
 	 * way that may have sent the message; it is never sent again.
 	 */
 	status:
-		'delivered' | 'failed' | 'skipped' | 'processing' | 'halted' | 'unknown'
+		| 'delivered'
+		| 'failed'
+		| 'skipped'
+		| 'processing'
+		| 'halted'
+		| 'unknown'
+		/**
+		 * A marketing text outside 9:00 to 20:00 local time (#75): nothing was
+		 * sent or recorded, and the workflow sleeps until `notBefore` and asks
+		 * again. A step moves forward; it is never dropped.
+		 */
+		| 'deferred'
+	/** With `deferred`: the instant (epoch ms) the step may be asked again. */
+	notBefore?: number
 	messageId?: string
 	/** Why a step was `skipped`. */
 	reason?: JourneySkipReason
@@ -392,7 +417,11 @@ async function skipWithoutReservationConsent(
  * unsubscribe link (`TENANT_API_URL` unset in production), so it is not sent.
  */
 export type JourneySkipReason =
-	'no_consent' | 'no_unsubscribe_origin' | 'frequency_capped'
+	| 'no_consent'
+	| 'no_unsubscribe_origin'
+	| 'frequency_capped'
+	/** `MARKETING_SMS_ENABLED=false` on this node (#75). */
+	| 'marketing_sms_disabled'
 
 /**
  * The provider may have accepted the message (timeout, dropped connection,
@@ -599,6 +628,26 @@ export async function executeJourneyStep(
 
 	const skipped = await skipWithoutReservationConsent(db, payload, stepType)
 	if (skipped) return skipped
+
+	// Quiet hours (#75): a marketing text goes out from 9:00 to 20:00 in the
+	// location's time zone. Outside it nothing is written; the workflow sleeps
+	// until the window opens and asks again. An operator's own test run is not
+	// held back.
+	if (stepType === 'sms' && !isTestRunContext(run.contextData)) {
+		const timing = await prepareMarketingSms({
+			orgId,
+			text: '',
+			now: Date.now(),
+		})
+		if (timing.reason) {
+			return {
+				success: true,
+				status: 'deferred',
+				notBefore: timing.notBefore,
+				error: timing.reason,
+			}
+		}
+	}
 
 	const txResult = await retryOnSqliteBusy(() =>
 		runTenantTransaction(db, async (tx) => {
@@ -1221,6 +1270,27 @@ export async function executeJourneyStep(
 		})
 	} else {
 		// SMS Dispatch
+		if (!isMarketingSmsEnabled()) {
+			await db
+				.update(journeyStepExecutions)
+				.set({
+					status: 'skipped',
+					errorMessage: null,
+					executionDetails: JSON.stringify({
+						skipped: true,
+						skipReason: 'marketing_sms_disabled' satisfies JourneySkipReason,
+						channel: 'sms',
+					}),
+					completedAt: new Date(),
+				})
+				.where(eq(journeyStepExecutions.id, stepExecutionId))
+			return {
+				success: true,
+				executionId: stepExecutionId,
+				status: 'skipped',
+				reason: 'marketing_sms_disabled',
+			}
+		}
 		if (!customer.phone || customer.phone.trim().length === 0) {
 			const errorMessage = 'Customer has no phone number'
 			await db
@@ -1243,7 +1313,15 @@ export async function executeJourneyStep(
 
 		const smsConfig = config as { messageText?: string; content?: string }
 		const rawMessage = smsConfig.messageText || smsConfig.content || ''
-		const message = interpolateMergeTags(rawMessage, customer, contextData)
+		const merged = interpolateMergeTags(rawMessage, customer, contextData)
+		// Every marketing text ends with the opt-out phrase (#75).
+		const message = (
+			await prepareMarketingSms({
+				orgId,
+				text: merged,
+				now: Date.now(),
+			})
+		).body
 
 		try {
 			const smsRes = await sendSms({

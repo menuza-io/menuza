@@ -115,7 +115,7 @@ msgstr "{field}"
 msgid "{fileName} is taken off the site of {organizationName} at once, and the site falls back to the theme font. The licence record is kept."
 msgstr "تتم إزالة {fileName} من موقع {organizationName} فورًا، ويعود الموقع إلى خط السمة. يتم الاحتفاظ بسجل الترخيص."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:528
+#: ../../packages/marketing/src/components/campaign-form.tsx:547
 msgid "{hours} hours late"
 msgstr "متأخر {hours} ساعات"
 
@@ -183,11 +183,11 @@ msgstr "{userCount} مستخدم"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:979
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:982
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:1005
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:1008
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
@@ -238,7 +238,7 @@ msgstr "0 مفاتيح مرور"
 msgid "1 entry"
 msgstr "إدخال واحد"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:527
+#: ../../packages/marketing/src/components/campaign-form.tsx:546
 msgid "1 hour late"
 msgstr "متأخر ساعة واحدة"
 
@@ -282,11 +282,11 @@ msgstr "يلزم بناء جديد"
 msgid "A notification can't use merge tags such as a name or a code: it is the same for everyone."
 msgstr "لا يمكن للإشعار استخدام وسوم الدمج مثل الاسم أو الرمز: فهو نفسه للجميع."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:406
+#: ../../packages/marketing/src/components/campaign-form.tsx:425
 msgid "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
 msgstr "يُكتب الإشعار مرة واحدة للجميع ولا يحتوي على أسماء أو رموز. ويصل فقط إلى الضيوف الذين فعّلوا العروض والأخبار في تطبيقك."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:419
+#: ../../packages/marketing/src/components/campaign-form.tsx:438
 msgid "A page on your site. Leave empty for the menu."
 msgstr "صفحة في موقعك. اتركها فارغة لفتح القائمة."
 
@@ -818,7 +818,7 @@ msgstr "المحاولة {0}"
 msgid "Attribute Mapping (JSON)"
 msgstr "تعيين الخصائص (JSON)"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:243
+#: ../../packages/marketing/src/components/campaign-form.tsx:250
 msgid "Audience"
 msgstr "الجمهور"
 
@@ -1137,13 +1137,13 @@ msgstr "إدارة ذاكرة التخزين المؤقت"
 msgid "Cache Type:"
 msgstr "نوع ذاكرة التخزين المؤقت:"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:278
+#: ../../packages/marketing/src/components/campaign-form.tsx:285
 msgid "Campaign name"
 msgstr "اسم الحملة"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:365
-#: ../../packages/marketing/src/components/campaign-form.tsx:551
+#: ../../packages/marketing/src/components/campaign-form.tsx:570
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:317
@@ -1207,7 +1207,7 @@ msgstr "فروقات درج النقدية حسب الوردية"
 msgid "Center"
 msgstr "وسط"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:211
+#: ../../packages/marketing/src/components/campaign-form.tsx:218
 msgid "Channel"
 msgstr "القناة"
 
@@ -1223,7 +1223,7 @@ msgstr "تحقق قبل الإرسال"
 msgid "Check it still works"
 msgstr "تحقق من أنه ما زال يعمل"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:323
+#: ../../packages/marketing/src/components/campaign-form.tsx:330
 msgid "Check out our new summer menu"
 msgstr "اطّلع على قائمة الصيف الجديدة"
 
@@ -1244,7 +1244,7 @@ msgstr "تحقق من القيم وحاول مرة أخرى."
 msgid "Checked before every step, including after a delay. Guests who order are not sent the rest of this automation."
 msgstr "يُتحقق منه قبل كل خطوة، بما في ذلك بعد التأخير. لا يتلقى الضيوف الذين يطلبون بقية هذه الأتمتة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:830
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:833
 msgid "Checked when the guest reaches this step, never stored."
 msgstr "يُتحقق منه عند وصول الضيف إلى هذه الخطوة، ولا يُخزَّن أبداً."
 
@@ -1260,7 +1260,7 @@ msgstr "اختر عنواناً"
 msgid "Choose a valid retention period."
 msgstr "اختر فترة احتفاظ صالحة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:794
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:797
 msgid "Choose an audience"
 msgstr "اختر جمهوراً"
 
@@ -1374,8 +1374,8 @@ msgstr "فرع شرطي"
 msgid "Condition comparison field is required."
 msgstr "حقل مقارنة الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:842
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:934
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:845
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:937
 msgid "Condition Logic"
 msgstr "منطق الشرط"
 
@@ -1447,7 +1447,7 @@ msgstr "الاتصالات"
 msgid "contains"
 msgstr "يحتوي على"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:953
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:956
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
@@ -1648,7 +1648,7 @@ msgstr "هاتف <0>العميل</0> {0}<1>موثّق</1>"
 msgid "Customer apps"
 msgstr "تطبيقات العملاء"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:732
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:735
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
@@ -1895,11 +1895,11 @@ msgstr "إرسال رسالة نصية مع وسوم الدمج"
 msgid "Display name"
 msgstr "الاسم المعروض"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:950
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:953
 msgid "Does Not Equal"
 msgstr "لا يساوي"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:516
+#: ../../packages/marketing/src/components/campaign-form.tsx:535
 msgid "Don't send if more than this late"
 msgstr "لا ترسل إذا تأخر الموعد أكثر من"
 
@@ -1945,7 +1945,7 @@ msgstr "تكرار"
 msgid "Duration"
 msgstr "المدة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:965
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:968
 msgid "e.g. @gmail.com"
 msgstr "مثال: @gmail.com"
 
@@ -2039,7 +2039,7 @@ msgstr "القيمة الفعالة"
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:758
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:761
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:394
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
@@ -2050,7 +2050,7 @@ msgstr "محتوى نص البريد الإلكتروني مطلوب."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:576
-#: ../../packages/marketing/src/components/campaign-form.tsx:331
+#: ../../packages/marketing/src/components/campaign-form.tsx:338
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
@@ -2247,19 +2247,23 @@ msgstr "كل طلب"
 msgid "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
 msgstr "كل عملية إيداع أو سحب أو تسليم للخزنة مسجّلة في ورديات الكاشير خلال آخر 30 يومًا."
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:407
+msgid "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
+msgstr "تنتهي كل رسالة نصية بعبارة \"{SMS_OPT_OUT_PHRASE}\" وتُرسل بين الساعة 9:00 و20:00 بالتوقيت المحلي. نضيف الأمرين عنك."
+
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
 msgid "Everyone gets {code}"
 msgstr "يحصل الجميع على {code}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:261
+#: ../../packages/marketing/src/components/campaign-form.tsx:268
 msgid "Everyone subscribed"
 msgstr "جميع المشتركين"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:260
+#: ../../packages/marketing/src/components/campaign-form.tsx:267
 msgid "Everyone who opted in to notifications"
 msgstr "كل من فعّل الإشعارات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:947
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:950
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
@@ -2493,7 +2497,7 @@ msgstr "وجدته لدى المورد"
 msgid "Found it at the vendor, {orderName}"
 msgstr "وجدته لدى المورد، {orderName}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:304
+#: ../../packages/marketing/src/components/campaign-form.tsx:311
 msgid "Fresh summer menu"
 msgstr "قائمة الصيف الجديدة"
 
@@ -2574,11 +2578,11 @@ msgstr "بيانات الرسم البياني مفقودة"
 msgid "Guest"
 msgstr "ضيف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:822
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:825
 msgid "Guest is in the audience"
 msgstr "الضيف ضمن الجمهور"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:825
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:828
 msgid "Guest is not in the audience"
 msgstr "الضيف ليس ضمن الجمهور"
 
@@ -2594,11 +2598,11 @@ msgstr "الضيوف الذين فعّلوا العروض في التطبيق ي
 msgid "Has an upcoming reservation"
 msgstr "لديه حجز قادم"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:903
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:906
 msgid "Has none (False)"
 msgstr "ليس لديه (خطأ)"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:900
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:903
 msgid "Has one (True)"
 msgstr "لديه (صحيح)"
 
@@ -2730,7 +2734,7 @@ msgstr "خلفية الأيقونة"
 msgid "Identity Provider Configuration"
 msgstr "إعداد موفر الهوية"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:534
+#: ../../packages/marketing/src/components/campaign-form.tsx:553
 msgid "If sending cannot start in time, it is not sent and you are told."
 msgstr "إذا تعذّر بدء الإرسال في الوقت المناسب، فلن تُرسل الرسالة وسيتم إخبارك."
 
@@ -2738,7 +2742,7 @@ msgstr "إذا تعذّر بدء الإرسال في الوقت المناسب،
 msgid "Image"
 msgstr "صورة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:423
+#: ../../packages/marketing/src/components/campaign-form.tsx:442
 msgid "Image address"
 msgstr "عنوان الصورة"
 
@@ -2766,7 +2770,7 @@ msgstr "قيد الإعداد"
 msgid "In use"
 msgstr "قيد الاستخدام"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:511
+#: ../../packages/marketing/src/components/campaign-form.tsx:530
 msgid "In your time zone."
 msgstr "بتوقيت منطقتك الزمنية."
 
@@ -2868,19 +2872,19 @@ msgstr "معلومات IP"
 msgid "is"
 msgstr "هو"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:861
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:864
 msgid "Is exactly"
 msgstr "يساوي بالضبط"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:858
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:861
 msgid "Is less than"
 msgstr "أقل من"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:855
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:858
 msgid "Is more than"
 msgstr "أكثر من"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:922
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
@@ -3265,7 +3269,7 @@ msgstr "فريق Menuza"
 #~ msgstr "تُستبدل وسوم الدمج بقيم خاصة بكل مستلم عند إرسال البريد الإلكتروني."
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:195
-#: ../../packages/marketing/src/components/campaign-form.tsx:337
+#: ../../packages/marketing/src/components/campaign-form.tsx:344
 msgid "Message"
 msgstr "الرسالة"
 
@@ -3319,7 +3323,7 @@ msgstr "المزيد من الإجراءات"
 msgid "N/A"
 msgstr "غير متاح"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:767
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:770
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:397
 #: app/routes/_admin+/roles+/$roleId.tsx:569
 #: app/routes/_admin+/roles+/$roleId.tsx:802
@@ -3650,7 +3654,7 @@ msgstr "غير محدد"
 msgid "Not Set"
 msgstr "غير محدد"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:928
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
 
@@ -3776,7 +3780,7 @@ msgstr "openid email profile"
 msgid "Opens (a page of your site)"
 msgstr "يفتح (صفحة من موقعك)"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:411
+#: ../../packages/marketing/src/components/campaign-form.tsx:430
 msgid "Opens this page"
 msgstr "يفتح هذه الصفحة"
 
@@ -3795,7 +3799,7 @@ msgstr "تمت دعوة المشغّل"
 msgid "Optional"
 msgstr "اختياري"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:432
+#: ../../packages/marketing/src/components/campaign-form.tsx:451
 msgid "Optional. A secure (https) address."
 msgstr "اختياري. عنوان آمن (https)."
 
@@ -4084,7 +4088,7 @@ msgstr "الملاحظات الشخصية + المؤسسة"
 msgid "Phone number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:761
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:764
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:395
 msgid "Phone Number"
 msgstr "رقم الهاتف"
@@ -4094,7 +4098,7 @@ msgstr "رقم الهاتف"
 msgid "Phone numbers"
 msgstr "أرقام الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:764
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:767
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:396
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
@@ -4234,7 +4238,7 @@ msgid "Printing"
 msgstr "قيد الطباعة"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:41
-#: ../../packages/marketing/src/components/campaign-form.tsx:231
+#: ../../packages/marketing/src/components/campaign-form.tsx:238
 msgid "Pro"
 msgstr "احترافي"
 
@@ -4884,7 +4888,7 @@ msgstr "الأدوار"
 msgid "Roles that apply within specific organizations"
 msgstr "الأدوار التي تنطبق على مؤسسات محددة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:976
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:979
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
@@ -5038,7 +5042,7 @@ msgid "Save default"
 msgstr "حفظ الافتراضي"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: ../../packages/marketing/src/components/campaign-form.tsx:566
+#: ../../packages/marketing/src/components/campaign-form.tsx:585
 msgid "Save draft"
 msgstr "حفظ المسودة"
 
@@ -5070,7 +5074,7 @@ msgstr "حفظ هذا التصميم كقالب"
 msgid "Saved"
 msgstr "تم الحفظ"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:787
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:790
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:400
 msgid "Saved audience"
 msgstr "جمهور محفوظ"
@@ -5102,7 +5106,7 @@ msgstr "جاري الحفظ..."
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:596
+#: ../../packages/marketing/src/components/campaign-form.tsx:615
 msgid "Schedule"
 msgstr "جدولة"
 
@@ -5110,7 +5114,7 @@ msgstr "جدولة"
 msgid "Schedule anyway"
 msgstr "الجدولة على أي حال"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:493
+#: ../../packages/marketing/src/components/campaign-form.tsx:512
 msgid "Schedule for later"
 msgstr "الجدولة لوقت لاحق"
 
@@ -5219,12 +5223,16 @@ msgstr "عرض الأصل"
 msgid "See the re-send"
 msgstr "عرض إعادة الإرسال"
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:355
+msgid "Segments: {smsSegments} (opt-out line included)"
+msgstr "عدد الأجزاء: {smsSegments} (يشمل سطر إلغاء الاشتراك)"
+
 #: app/routes/_admin+/roles+/$roleId.tsx:923
 #: app/routes/_admin+/roles+/$roleId.tsx:926
 msgid "Select access level"
 msgstr "اختر مستوى الوصول"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:754
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:757
 msgid "Select attribute"
 msgstr "اختر السمة"
 
@@ -5236,7 +5244,7 @@ msgstr "اختر الجمهور"
 msgid "Select flag type"
 msgstr "اختر نوع المؤشر"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:943
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:946
 msgid "Select operator"
 msgstr "اختر العامل"
 
@@ -5245,7 +5253,7 @@ msgstr "اختر العامل"
 msgid "Select role type"
 msgstr "اختر نوع الدور"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:918
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:921
 msgid "Select status"
 msgstr "اختر الحالة"
 
@@ -5261,7 +5269,7 @@ msgstr "اختر الحدث الذي يبدأ هذه الرحلة المؤتمت
 msgid "Send a one-time message to tenant operators."
 msgstr "أرسل رسالة لمرة واحدة إلى مشغّلي المستأجرين."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:577
+#: ../../packages/marketing/src/components/campaign-form.tsx:596
 msgid "Send a test"
 msgstr "إرسال رسالة تجريبية"
 
@@ -5269,7 +5277,7 @@ msgstr "إرسال رسالة تجريبية"
 msgid "Send anyway"
 msgstr "الإرسال على أي حال"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:501
+#: ../../packages/marketing/src/components/campaign-form.tsx:520
 msgid "Send at"
 msgstr "وقت الإرسال"
 
@@ -5277,8 +5285,8 @@ msgstr "وقت الإرسال"
 msgid "Send Email"
 msgstr "إرسال بريد إلكتروني"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:191
-#: ../../packages/marketing/src/components/campaign-form.tsx:492
+#: ../../packages/marketing/src/components/campaign-form.tsx:198
+#: ../../packages/marketing/src/components/campaign-form.tsx:511
 msgid "Send now"
 msgstr "إرسال الآن"
 
@@ -5302,7 +5310,7 @@ msgstr "جارٍ الإرسال إلى المطبعة"
 msgid "Sending to the vendor failed unexpectedly"
 msgstr "فشل الإرسال إلى المورّد بشكل غير متوقع"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:192
+#: ../../packages/marketing/src/components/campaign-form.tsx:199
 msgid "Sending..."
 msgstr "جارٍ الإرسال..."
 
@@ -5465,8 +5473,12 @@ msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:718
-msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
-msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
+#~ msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
+#~ msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:718
+msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols. Every text ends with \"Reply STOP to opt out.\" and goes out between 9:00 and 20:00 local time: a step that comes up at night waits for the morning."
+msgstr "الرسائل النصية التي تزيد عن 160 حرفًا تُقسَّم وفق بروتوكولات GSM القياسية. تنتهي كل رسالة بعبارة \"Reply STOP to opt out.\" وتُرسل بين الساعة 9:00 و20:00 بالتوقيت المحلي: الخطوة التي يحين وقتها ليلًا تنتظر حتى الصباح."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:107
 msgid "Solid"
@@ -5691,7 +5703,7 @@ msgstr "عالق في الإعداد لأكثر من 14 يومًا"
 msgid "Style"
 msgstr "النمط"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:313
+#: ../../packages/marketing/src/components/campaign-form.tsx:320
 msgid "Subject"
 msgstr "الموضوع"
 
@@ -5723,11 +5735,11 @@ msgstr "حالة الاشتراك"
 msgid "Succeeded"
 msgstr "نجح"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:283
+#: ../../packages/marketing/src/components/campaign-form.tsx:290
 msgid "Summer promo"
 msgstr "عرض الصيف"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:351
+#: ../../packages/marketing/src/components/campaign-form.tsx:363
 msgid "supported"
 msgstr "مدعوم"
 
@@ -5830,8 +5842,8 @@ msgstr "الجمهور المستهدف"
 #~ msgid "Target Tag Name"
 #~ msgstr "اسم الوسم المستهدف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:871
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:961
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:874
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:964
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
@@ -6244,7 +6256,7 @@ msgstr "صندوق البقشيش: البقشيش حسب اليوم"
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "البقشيش على الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، حسب يوم العمل. تُحدَّد طريقة توزيع الصندوق بين الأشخاص في صفحة العمالة."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:291
+#: ../../packages/marketing/src/components/campaign-form.tsx:298
 msgid "Title"
 msgstr "العنوان"
 
@@ -6437,7 +6449,7 @@ msgstr "تغييرات غير محفوظة"
 msgid "until"
 msgstr "حتى"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:889
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:892
 msgid "Upcoming reservation"
 msgstr "حجز قادم"
 
@@ -6617,11 +6629,11 @@ msgstr "المورد، {item}"
 msgid "Vendors were cancelled for this order: refund it instead of retrying."
 msgstr "أُلغيت طلبات الموردين لهذا الطلب: استرده بدلًا من إعادة المحاولة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:911
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:914
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:265
+#: ../../packages/marketing/src/components/campaign-form.tsx:272
 msgid "Verified phone numbers only"
 msgstr "أرقام الهواتف الموثّقة فقط"
 
@@ -6771,7 +6783,7 @@ msgstr "ما الذي تغيّر (بالإنجليزية)"
 msgid "What is this message for?"
 msgstr "ما الغرض من هذه الرسالة؟"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:472
+#: ../../packages/marketing/src/components/campaign-form.tsx:491
 msgid "When"
 msgstr "الموعد"
 
@@ -6825,7 +6837,7 @@ msgstr "استعد الضيوف الذين لم يطلبوا منذ فترة"
 msgid "Window sticker"
 msgstr "ملصق نافذة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:270
+#: ../../packages/marketing/src/components/campaign-form.tsx:277
 msgid "Without a verified phone"
 msgstr "بدون هاتف موثّق"
 
@@ -6845,11 +6857,11 @@ msgstr "اكتب مسودة"
 msgid "Write again"
 msgstr "اكتب مجدداً"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:375
+#: ../../packages/marketing/src/components/campaign-form.tsx:387
 msgid "Write the notification"
 msgstr "اكتب الإشعار"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:386
+#: ../../packages/marketing/src/components/campaign-form.tsx:398
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "اكتب بريدك الإلكتروني. استخدم {NAME_TAG} للتخصيص."
 
@@ -6857,7 +6869,7 @@ msgstr "اكتب بريدك الإلكتروني. استخدم {NAME_TAG} للت
 msgid "Write your message"
 msgstr "اكتب رسالتك"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:362
+#: ../../packages/marketing/src/components/campaign-form.tsx:374
 msgid "Write your text message"
 msgstr "اكتب رسالتك النصية"
 

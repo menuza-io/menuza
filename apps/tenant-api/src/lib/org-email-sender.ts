@@ -16,6 +16,16 @@ import { getInternalCommandToken } from './secrets.ts'
 export type OrgEmailSender = {
 	organizationName: string | null
 	identity: OrganizationEmailIdentity | null
+	/**
+	 * What a marketing text needs (#75, #159), also business data: the time
+	 * zone of the first location, each location's own zone, the organization's
+	 * public site origin and whether short links are on. Null when the App
+	 * did not say (an older App); callers then fall back safely.
+	 */
+	timeZone: string | null
+	locationTimeZones: Record<string, string>
+	siteOrigin: string | null
+	shortLinksEnabled: boolean
 }
 
 export const ORG_SENDER_TTL_MS = 60_000
@@ -50,6 +60,20 @@ function parseIdentity(value: unknown): OrganizationEmailIdentity | null {
 	}
 }
 
+function parseZones(value: unknown): Record<string, string> {
+	if (!value || typeof value !== 'object') return {}
+	const zones: Record<string, string> = {}
+	for (const [id, zone] of Object.entries(value as Record<string, unknown>)) {
+		if (typeof zone === 'string' && zone.length < 64) zones[id] = zone
+	}
+	return zones
+}
+
+/** Whether the App is reachable at all (false in a bare local run). */
+export function isOrgLookupConfigured() {
+	return Boolean(appBaseUrl()) && getInternalCommandToken().length >= 16
+}
+
 export async function getOrgEmailSender(
 	orgId: string,
 ): Promise<OrgEmailSender | null> {
@@ -77,11 +101,23 @@ export async function getOrgEmailSender(
 			id?: string
 			name?: string | null
 			emailSender?: unknown
+			timeZone?: unknown
+			locationTimeZones?: unknown
+			siteOrigin?: unknown
+			features?: { shortLinks?: unknown } | null
 		}
 		if (body.id !== orgId) return cached ?? null
 		const value: OrgEmailSender = {
 			organizationName: typeof body.name === 'string' ? body.name : null,
 			identity: parseIdentity(body.emailSender),
+			timeZone: typeof body.timeZone === 'string' ? body.timeZone : null,
+			locationTimeZones: parseZones(body.locationTimeZones),
+			siteOrigin:
+				typeof body.siteOrigin === 'string' &&
+				/^https?:\/\//.test(body.siteOrigin)
+					? body.siteOrigin.replace(/\/$/u, '')
+					: null,
+			shortLinksEnabled: body.features?.shortLinks === true,
 		}
 		cache.set(orgId, value)
 		expiry.set(orgId, Date.now() + ORG_SENDER_TTL_MS)

@@ -130,6 +130,20 @@ describe('CampaignForm with scheduling', () => {
 		).toEqual(['all', 'verified'])
 	})
 
+	it('counts the text segments with the opt-out line included (#75)', async () => {
+		const user = userEvent.setup()
+		show({ scheduling: true })
+		await user.click(screen.getByRole('button', { name: /SMS/ }))
+		expect(screen.getByText(/Every text ends with/)).toHaveTextContent(
+			'Reply STOP to opt out.',
+		)
+		// 150 characters are one segment on their own; the opt-out line makes two.
+		await user.click(screen.getByLabelText('Message'))
+		await user.paste('a'.repeat(150))
+		expect(screen.getByTestId('sms-count')).toHaveTextContent('150 / 1600')
+		expect(screen.getByTestId('sms-count')).toHaveTextContent('Segments: 2')
+	})
+
 	it('puts an existing broadcast back: its time, its window, its channel locked', () => {
 		const scheduledAt = new Date(Date.now() + 5 * 3_600_000).toISOString()
 		show({

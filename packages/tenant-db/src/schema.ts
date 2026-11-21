@@ -137,6 +137,8 @@ export const CUSTOMER_SUBSCRIPTION_SOURCES = [
 	// form or by phone (`recorded_by` and `consent_method` say who and how).
 	// Email stays pending until the owner confirms, unlike `operator`.
 	'staff',
+	// The guest texted START back to the platform number (#75).
+	'sms_reply',
 ] as const
 
 /**
@@ -151,6 +153,9 @@ export const CUSTOMER_UNSUBSCRIBE_SOURCES = [
 	'self',
 	'operator',
 	'import',
+	// The guest replied STOP (or a synonym) to a text (#75). A guest's own
+	// opt-out, like `self`; kept apart so the person page can say how.
+	'sms_reply',
 ] as const
 export type CustomerUnsubscribeSource =
 	(typeof CUSTOMER_UNSUBSCRIBE_SOURCES)[number]
@@ -1194,6 +1199,14 @@ export const restaurantOrders = sqliteTable(
 		tableId: text('table_id'),
 		tableLabel: text('table_label'),
 		source: text('source', { enum: [...QR_ORDER_SOURCE_VALUES] }),
+		// Where the guest came from (#115): UTM source, medium, campaign and
+		// content, a Menuza campaign id (`mzc`), a short-link id (`mzl`) and a
+		// coupon code, all capped and stripped of control characters, used only
+		// for reporting. `attribution_source` is the one value reports group by
+		// (`utm_source`, `email`, `sms`, `short_link`, `coupon`, `qr_table`,
+		// `qr_poster`, `direct`). Holds no visitor id, address or user agent.
+		attribution: text('attribution', { mode: 'json' }),
+		attributionSource: text('attribution_source'),
 		idempotencyKey: text('idempotency_key').notNull(),
 		requestHash: text('request_hash').notNull(),
 		receiptTokenHash: text('receipt_token_hash').notNull(),
@@ -10269,3 +10282,96 @@ export const guestPhotoSubmissions = sqliteTable(
 
 export type GuestPhotoSubmission = typeof guestPhotoSubmissions.$inferSelect
 export type NewGuestPhotoSubmission = typeof guestPhotoSubmissions.$inferInsert
+
+
+/**
+ * Inbound text replies that were acted on (#75): one row per provider message,
+ * so a provider retry is processed once. Holds the provider's message id, an
+ * HMAC of the sender's number and the keyword matched, and nothing else: the
+ * body is never stored beyond the keyword. Pruned after 90 days.
+ */
+export const SMS_INBOUND_KEYWORDS = ['stop', 'start', 'help'] as const
+export const smsInboundEvents = sqliteTable(
+	'sms_inbound_events',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		providerMessageId: text('provider_message_id').notNull(),
+		phoneHash: text('phone_hash').notNull(),
+		keyword: text('keyword', { enum: SMS_INBOUND_KEYWORDS }).notNull(),
+		receivedAt: integer('received_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_sms_inbound_events_provider_message').on(
+			table.providerMessageId,
+		),
+		index('idx_sms_inbound_events_received').on(table.receivedAt),
+	],
+)
+
+export type SmsInboundEvent = typeof smsInboundEvents.$inferSelect
+
+/**
+ * Short links on the organization's own site (#159): `<site>/l/<code>` sends a
+ * guest to a path of the same site with UTM values. Created by an operator
+ * (`link`), for a print's QR code (`print`) or by a broadcast or automation
+ * (`message`, one per `(ref, target)`). Targets are paths on the own site only,
+ * never an external URL.
+ */
+export const SHORT_LINK_KINDS = ['link', 'print', 'message'] as const
+export type ShortLinkKind = (typeof SHORT_LINK_KINDS)[number]
+export const shortLinks = sqliteTable(
+	'short_links',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		/** 7 random characters; the public part of the link. */
+		code: text('code').notNull(),
+		kind: text('kind', { enum: SHORT_LINK_KINDS }).notNull(),
+		/** What made it: a print design id, a campaign id or a journey step. Opaque. */
+		ref: text('ref'),
+		label: text('label'),
+		/** A path starting with `/` on the organization's own site, with its query. */
+		targetPath: text('target_path').notNull(),
+		utmSource: text('utm_source'),
+		utmMedium: text('utm_medium'),
+		utmCampaign: text('utm_campaign'),
+		utmContent: text('utm_content'),
+		/** The Menuza campaign id (`mzc`) a click carries, with the step id for journeys. */
+		campaignId: text('campaign_id'),
+		stepId: text('step_id'),
+		disabledAt: integer('disabled_at', { mode: 'timestamp_ms' }),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_short_links_code').on(table.code),
+		uniqueIndex('uniq_short_links_kind_ref_target')
+			.on(table.kind, table.ref, table.targetPath)
+			.where(sql`${table.ref} IS NOT NULL`),
+		index('idx_short_links_kind').on(table.kind, table.createdAt),
+	],
+)
+
+export type ShortLink = typeof shortLinks.$inferSelect
+
+/**
+ * Clicks per link per day (#159). Only a count: no address, no user agent, no
+ * person. `day` is the UTC calendar date (`YYYY-MM-DD`).
+ */
+export const shortLinkClicksDaily = sqliteTable(
+	'short_link_clicks_daily',
+	{
+		linkId: text('link_id')
+			.notNull()
+			.references(() => shortLinks.id, { onDelete: 'cascade' }),
+		day: text('day').notNull(),
+		clicks: integer('clicks').notNull().default(0),
+	},
+	(table) => [primaryKey({ columns: [table.linkId, table.day] })],
+)

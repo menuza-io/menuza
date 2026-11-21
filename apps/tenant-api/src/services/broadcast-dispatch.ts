@@ -34,6 +34,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
+import { isMarketingSmsEnabled } from '../lib/marketing-sms-switch.ts'
 import {
 	consentBaseUrl,
 	listUnsubscribeHeaders,
@@ -45,6 +46,7 @@ import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { couponCodeForRecipient } from './discount-marketing-codes.ts'
 import { BROADCAST_TOPIC, loadBroadcastAudience } from './marketing-audience.ts'
 import { cappedCustomerIds, readFrequencyCap } from './journey-guards.ts'
+import { prepareMarketingSms } from './marketing-sms.ts'
 import { resolveAudienceWhere } from './marketing-audience-service.ts'
 
 /**
@@ -70,6 +72,10 @@ import { resolveAudienceWhere } from './marketing-audience-service.ts'
  *   (`late_after_minutes`, default 4 hours) is marked `SkippedLate` instead
  *   and the operator is told (#232). A send that has started is never cut off
  *   and is resumed whatever the clock says.
+ * - Texts only go out from 9:00 to 20:00 in the location's time zone (#75).
+ *   Outside it the broadcast waits (stays `Processing`, its lease dated so it
+ *   goes stale exactly when the window opens) and resumes there, mid-send too.
+ *   Quiet hours defer; they never drop or skip.
  * - The message is checked again when the send starts (no message rows yet):
  *   a blocking problem (an empty block, a coupon tag with no coupon, nobody to
  *   send to) fails the campaign instead of sending it.
@@ -221,6 +227,8 @@ export type BroadcastDispatchOutcome =
 	| 'missing'
 	/** Not dispatched: a scheduled start that missed its window (#232). */
 	| 'skipped_late'
+	/** A text held for quiet hours (#75): resumes when the window opens. */
+	| 'deferred'
 
 /**
  * Sends a `Processing` campaign the caller holds (it created it or claimed it
@@ -257,6 +265,15 @@ export async function dispatchBroadcast(
 		const consentOrigin = channel === 'email' ? consentBaseUrl() : null
 		if (channel === 'email' && !consentOrigin) {
 			console.error('Broadcast failed: TENANT_API_URL is not set', {
+				orgId,
+				campaignId,
+			})
+			await finish(db, campaignId, currentLease, 'Failed')
+			return 'failed'
+		}
+		// `MARKETING_SMS_ENABLED=false` stops every marketing text on this node.
+		if (channel === 'sms' && !isMarketingSmsEnabled()) {
+			console.error('Broadcast failed: marketing texts are switched off', {
 				orgId,
 				campaignId,
 			})
@@ -372,6 +389,32 @@ export async function dispatchBroadcast(
 			const next = await heartbeat(db, campaignId, currentLease, clock())
 			if (!next) return 'lost_lease'
 			currentLease = next
+
+			// Quiet hours (#75): texts go from 9:00 to 20:00 local time. A send
+			// that reaches the end of the window waits for the next one; nothing is
+			// dropped, and the frequency cap still applies when it resumes.
+			if (channel === 'sms') {
+				const timing = await prepareMarketingSms({
+					orgId,
+					text: campaign.content,
+					now: clock(),
+				})
+				if (timing.reason) {
+					await db
+						.update(marketingCampaigns)
+						.set({
+							// Stale (and so claimable) once the window has opened.
+							updatedAt: toLease(timing.notBefore - BROADCAST_STALE_MS + 1000),
+						})
+						.where(holdsLease(campaignId, currentLease))
+					console.info('Broadcast text held for quiet hours', {
+						orgId,
+						campaignId,
+						reason: timing.reason,
+					})
+					return 'deferred'
+				}
+			}
 
 			const room = cap - (await broadcastSendsInWindow(db, channel, clock()))
 			if (room <= 0) {
@@ -635,7 +678,13 @@ async function sendOne(params: {
 		return
 	}
 	if (!customer.phone) throw new Error('No phone number')
-	await sendSms({ to: customer.phone, message: parsedContent })
+	// Every marketing text ends with the opt-out phrase (#75).
+	const prepared = await prepareMarketingSms({
+		orgId,
+		text: parsedContent,
+		now: Date.now(),
+	})
+	await sendSms({ to: customer.phone, message: prepared.body })
 }
 
 /**

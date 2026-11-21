@@ -717,7 +717,10 @@ export function NodeInspector({
 								<p className="text-muted-foreground text-[11px]">
 									<Trans>
 										SMS messages over 160 characters will be segmented according
-										to standard GSM telecommunication protocols.
+										to standard GSM telecommunication protocols. Every text ends
+										with &quot;Reply STOP to opt out.&quot; and goes out between
+										9:00 and 20:00 local time: a step that comes up at night
+										waits for the morning.
 									</Trans>
 								</p>
 							</div>

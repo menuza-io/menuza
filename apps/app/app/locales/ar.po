@@ -1685,7 +1685,7 @@ msgstr "{hours} ساعة و{rest} دقيقة"
 msgid "{hours} hours"
 msgstr "{hours} ساعة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:528
+#: ../../packages/marketing/src/components/campaign-form.tsx:547
 msgid "{hours} hours late"
 msgstr "متأخر {hours} ساعات"
 
@@ -2957,11 +2957,11 @@ msgstr "٪ من أقل مكافأة"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:979
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:982
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:1005
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:1008
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
@@ -3225,7 +3225,7 @@ msgstr "نموذج واحد"
 msgid "1 hour"
 msgstr "ساعة واحدة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:527
+#: ../../packages/marketing/src/components/campaign-form.tsx:546
 msgid "1 hour late"
 msgstr "متأخر ساعة واحدة"
 
@@ -3843,7 +3843,7 @@ msgstr "أُضيفت ملاحظة"
 msgid "A notification can't use merge tags such as a name or a code: it is the same for everyone."
 msgstr "لا يمكن للإشعار استخدام وسوم الدمج مثل الاسم أو الرمز: فهو نفسه للجميع."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:406
+#: ../../packages/marketing/src/components/campaign-form.tsx:425
 msgid "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
 msgstr "يُكتب الإشعار مرة واحدة للجميع ولا يحتوي على أسماء أو رموز. ويصل فقط إلى الضيوف الذين فعّلوا العروض والأخبار في تطبيقك."
 
@@ -3859,7 +3859,7 @@ msgstr "صفحة لكل منطقة توصيل لها اسم. تبقى الصفح
 msgid "A page of its own helps guests find this dish in search. It disappears while the dish is hidden."
 msgstr "صفحة خاصة تساعد الضيوف على إيجاد هذا الطبق في البحث. تختفي ما دام الطبق مخفيًا."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:419
+#: ../../packages/marketing/src/components/campaign-form.tsx:438
 msgid "A page on your site. Leave empty for the menu."
 msgstr "صفحة في موقعك. اتركها فارغة لفتح القائمة."
 
@@ -4101,7 +4101,7 @@ msgstr "عضو محدد في الفريق"
 msgid "A square QR sign for the door or window. Print it yourself."
 msgstr "لافتة QR مربعة للباب أو الواجهة. اطبعها بنفسك."
 
-#: app/components/customers/person-marketing-card.tsx:350
+#: app/components/customers/person-marketing-card.tsx:351
 msgid "a staff member"
 msgstr "أحد الموظفين"
 
@@ -4764,8 +4764,8 @@ msgstr "إضافة رقم"
 msgid "Add a number or email to start sending alerts."
 msgstr "أضف رقمًا أو بريدًا إلكترونيًا لبدء إرسال التنبيهات."
 
-#: app/components/customers/person-marketing-card.tsx:335
-#: app/components/customers/person-marketing-card.tsx:490
+#: app/components/customers/person-marketing-card.tsx:336
+#: app/components/customers/person-marketing-card.tsx:489
 msgid "Add a phone number first"
 msgstr "أضف رقم هاتف أولاً"
 
@@ -4954,8 +4954,8 @@ msgstr "أضف إعلاناً لمشاركة التحديثات أو إشعار�
 msgid "Add an area such as Main dining or Patio to start."
 msgstr "أضف منطقة مثل القاعة الرئيسية أو الشرفة للبدء."
 
-#: app/components/customers/person-marketing-card.tsx:334
-#: app/components/customers/person-marketing-card.tsx:488
+#: app/components/customers/person-marketing-card.tsx:335
+#: app/components/customers/person-marketing-card.tsx:487
 msgid "Add an email address first"
 msgstr "أضف عنوان بريد إلكتروني أولاً"
 
@@ -7906,7 +7906,7 @@ msgstr "المحاولات"
 msgid "Attention"
 msgstr "انتباه"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:243
+#: ../../packages/marketing/src/components/campaign-form.tsx:250
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:401
 msgid "Audience"
 msgstr "الجمهور"
@@ -9371,7 +9371,7 @@ msgstr "بحذف مطعمك ستفقد أنت وفريقك الوصول وستُ
 msgid "By hours worked"
 msgstr "حسب ساعات العمل"
 
-#: app/components/customers/person-marketing-card.tsx:73
+#: app/components/customers/person-marketing-card.tsx:74
 msgid "By phone"
 msgstr "عبر الهاتف"
 
@@ -9574,7 +9574,7 @@ msgstr "السعرات الحرارية (كيلو كالوري)"
 msgid "Came short"
 msgstr "وصل ناقصًا"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:278
+#: ../../packages/marketing/src/components/campaign-form.tsx:285
 msgid "Campaign name"
 msgstr "اسم الحملة"
 
@@ -9629,7 +9629,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:365
-#: ../../packages/marketing/src/components/campaign-form.tsx:551
+#: ../../packages/marketing/src/components/campaign-form.tsx:570
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:317
@@ -9637,7 +9637,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/chat/chat-composer.tsx:350
 #: app/components/chat/chat-view.tsx:1021
 #: app/components/core/feedback-modal.tsx:109
-#: app/components/customers/person-marketing-card.tsx:680
+#: app/components/customers/person-marketing-card.tsx:681
 #: app/components/customers/person-merge-dialog.tsx:195
 #: app/components/customers/person-notes-panel.tsx:119
 #: app/components/customers/person-profile-screen.tsx:1105
@@ -10637,8 +10637,8 @@ msgstr "قد يؤدي تغيير عدد الأشخاص إلى تغيير وقت 
 msgid "Changing this URL will break existing links to the page."
 msgstr "تغيير هذا الرابط سيؤدي إلى تعطيل الروابط الحالية لهذه الصفحة."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:211
-#: app/components/customers/person-marketing-card.tsx:209
+#: ../../packages/marketing/src/components/campaign-form.tsx:218
+#: app/components/customers/person-marketing-card.tsx:210
 #: app/components/note/integration-controls.tsx:333
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1185
 msgid "Channel"
@@ -10848,7 +10848,7 @@ msgstr "فحص خوادم الأسماء"
 msgid "Check now"
 msgstr "افحص الآن"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:323
+#: ../../packages/marketing/src/components/campaign-form.tsx:330
 msgid "Check out our new summer menu"
 msgstr "اطّلع على قائمة الصيف الجديدة"
 
@@ -10997,7 +10997,7 @@ msgstr "يُتحقق منه قبل كل خطوة، بما في ذلك بعد ا�
 msgid "Checked every few minutes while people are clocked in, and at least once an hour, so a reminder can arrive a little late."
 msgstr "يجري الفحص كل بضع دقائق أثناء وجود أشخاص على رأس العمل، ومرة واحدة على الأقل كل ساعة، لذا قد يصل التذكير متأخرًا قليلًا."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:830
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:833
 msgid "Checked when the guest reaches this step, never stored."
 msgstr "يُتحقق منه عند وصول الضيف إلى هذه الخطوة، ولا يُخزَّن أبداً."
 
@@ -11378,7 +11378,7 @@ msgstr "اختر حسابًا للمعاينة"
 msgid "Choose an active member of this organization."
 msgstr "اختر عضوًا نشطًا في هذه المؤسسة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:794
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:797
 msgid "Choose an audience"
 msgstr "اختر جمهوراً"
 
@@ -11530,7 +11530,7 @@ msgstr "اختر طريقة احتساب العمل الإضافي قبل الح
 msgid "Choose how overtime is counted for people who work at more than one workplace."
 msgstr "اختر طريقة احتساب الساعات الإضافية لمن يعمل في أكثر من مكان عمل."
 
-#: app/components/customers/person-marketing-card.tsx:480
+#: app/components/customers/person-marketing-card.tsx:479
 msgid "Choose how the guest gave consent."
 msgstr "اختر كيف أعطى الضيف موافقته."
 
@@ -12620,8 +12620,8 @@ msgstr "فرع شرطي"
 msgid "Condition comparison field is required."
 msgstr "حقل مقارنة الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:842
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:934
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:845
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:937
 msgid "Condition Logic"
 msgstr "منطق الشرط"
 
@@ -12744,7 +12744,7 @@ msgstr "تأكيد الاستعادة"
 msgid "Confirm sent"
 msgstr "تأكيد الإرسال"
 
-#: app/components/customers/person-marketing-card.tsx:482
+#: app/components/customers/person-marketing-card.tsx:481
 msgid "Confirm that the guest asked to receive marketing."
 msgstr "أكّد أن الضيف طلب تلقي الرسائل التسويقية."
 
@@ -12792,7 +12792,7 @@ msgstr "أكد كلمة المرور الجديدة"
 msgid "Confirm your password"
 msgstr "أكد كلمة المرور"
 
-#: app/components/customers/person-marketing-card.tsx:558
+#: app/components/customers/person-marketing-card.tsx:557
 msgid "Confirmation email sent"
 msgstr "تم إرسال بريد التأكيد"
 
@@ -13081,17 +13081,17 @@ msgstr "الاتصال خلال آخر 7 أيام"
 msgid "Connections"
 msgstr "الاتصالات"
 
-#: app/components/customers/person-marketing-card.tsx:324
-#: app/components/customers/person-marketing-card.tsx:485
+#: app/components/customers/person-marketing-card.tsx:325
+#: app/components/customers/person-marketing-card.tsx:484
 msgid "Consent can be recorded once this guest has a customer account."
 msgstr "يمكن تسجيل الموافقة بعد أن يصبح لهذا الضيف حساب عميل."
 
-#: app/components/customers/person-marketing-card.tsx:568
-#: app/components/customers/person-marketing-card.tsx:572
+#: app/components/customers/person-marketing-card.tsx:569
+#: app/components/customers/person-marketing-card.tsx:573
 msgid "Consent recorded"
 msgstr "تم تسجيل الموافقة"
 
-#: app/components/customers/person-marketing-card.tsx:564
+#: app/components/customers/person-marketing-card.tsx:565
 msgid "Consent recorded, but we couldn't send the confirmation email. Try again later."
 msgstr "تم تسجيل الموافقة، لكن تعذّر إرسال رسالة التأكيد. حاول مرة أخرى لاحقاً."
 
@@ -13160,7 +13160,7 @@ msgstr "وسيلة التواصل المطلوب جمعها"
 msgid "Contacts"
 msgstr "جهات الاتصال"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:953
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:956
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
@@ -14995,7 +14995,7 @@ msgstr "بيانات العملاء والأعمال"
 msgid "Customer app"
 msgstr "تطبيق العملاء"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:732
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:735
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
@@ -17006,7 +17006,7 @@ msgstr "مستندات رفضتها الهيئة"
 msgid "Does not count toward per-slot order or dish caps."
 msgstr "Does not count toward per-slot order or dish caps."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:950
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:953
 msgid "Does Not Equal"
 msgstr "لا يساوي"
 
@@ -17045,7 +17045,7 @@ msgstr "عدم الإعادة"
 msgid "Don't retry"
 msgstr "عدم إعادة المحاولة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:516
+#: ../../packages/marketing/src/components/campaign-form.tsx:535
 msgid "Don't send if more than this late"
 msgstr "لا ترسل إذا تأخر الموعد أكثر من"
 
@@ -17521,7 +17521,7 @@ msgstr "يجب أن تكون المدة بين 15 و720 دقيقة وبفواص�
 msgid "During this service"
 msgstr "خلال هذه الخدمة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:965
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:968
 msgid "e.g. @gmail.com"
 msgstr "مثال: @gmail.com"
 
@@ -18195,7 +18195,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:16
 #: app/components/customers/person-marketing-card.tsx:54
-#: app/components/customers/person-marketing-card.tsx:156
+#: app/components/customers/person-marketing-card.tsx:157
 #: app/components/customers/person-profile-screen.tsx:1079
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/inventory/supplier-form.tsx:37
@@ -18229,7 +18229,7 @@ msgstr "البريد الإلكتروني"
 msgid "Email address"
 msgstr "البريد الإلكتروني"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:758
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:761
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:394
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
@@ -18244,7 +18244,7 @@ msgstr "لا يمكن إرسال البريد الإلكتروني من هنا �
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:576
-#: ../../packages/marketing/src/components/campaign-form.tsx:331
+#: ../../packages/marketing/src/components/campaign-form.tsx:338
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
@@ -18291,7 +18291,7 @@ msgstr "البريد الإلكتروني متوقف، لذا لم يُرسل ش
 msgid "Email looks hosted at {mailProvider}. A wrong change could stop it. Nothing is changed until you confirm, and these records must stay:"
 msgstr "يبدو أن البريد مستضاف لدى {mailProvider}. قد يوقفه تغيير خاطئ. لن يتغير شيء حتى تؤكد، ويجب أن تبقى هذه السجلات:"
 
-#: app/components/customers/person-marketing-card.tsx:447
+#: app/components/customers/person-marketing-card.tsx:446
 msgid "Email marketing"
 msgstr "التسويق عبر البريد الإلكتروني"
 
@@ -19665,6 +19665,10 @@ msgstr "انتهت جميع الجداول. أضف جدولًا أو مدّد ج
 msgid "Every table (new tables are added when you approve)"
 msgstr "كل الطاولات (تُضاف الطاولات الجديدة عند الاعتماد)"
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:407
+msgid "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
+msgstr "تنتهي كل رسالة نصية بعبارة \"{SMS_OPT_OUT_PHRASE}\" وتُرسل بين الساعة 9:00 و20:00 بالتوقيت المحلي. نضيف الأمرين عنك."
+
 #: app/components/staff/timesheets/pay-period-dialog.tsx:110
 msgid "Every two weeks"
 msgstr "كل أسبوعين"
@@ -19704,7 +19708,7 @@ msgstr "كل من في الجدول"
 msgid "Everyone on the team"
 msgstr "جميع أعضاء الفريق"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:261
+#: ../../packages/marketing/src/components/campaign-form.tsx:268
 msgid "Everyone subscribed"
 msgstr "جميع المشتركين"
 
@@ -19712,7 +19716,7 @@ msgstr "جميع المشتركين"
 msgid "Everyone who has ordered, signed in or booked a table, in one list. Data is served from your tenant region."
 msgstr "كل من طلب أو سجّل الدخول أو حجز طاولة، في قائمة واحدة. تُقدَّم البيانات من منطقة بيانات مؤسستك."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:260
+#: ../../packages/marketing/src/components/campaign-form.tsx:267
 msgid "Everyone who opted in to notifications"
 msgstr "كل من فعّل الإشعارات"
 
@@ -19769,7 +19773,7 @@ msgstr "الوقت الدقيق (بدون تقريب)"
 msgid "exactly"
 msgstr "بالضبط"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:947
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:950
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
@@ -21300,7 +21304,7 @@ msgstr "كثير عدم الحضور"
 msgid "Frequently asked questions"
 msgstr "الأسئلة الشائعة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:304
+#: ../../packages/marketing/src/components/campaign-form.tsx:311
 msgid "Fresh summer menu"
 msgstr "قائمة الصيف الجديدة"
 
@@ -22136,11 +22140,11 @@ msgstr "العلامات الغذائية للعميل ومعلومات الإف
 msgid "Guest emails (broadcasts, automations, reservations, orders, hiring) show your sender name and send replies to your inbox."
 msgstr "تعرض رسائل الضيوف (الحملات والأتمتة والحجوزات والطلبات والتوظيف) اسم المرسل الخاص بك وتُرسَل الردود إلى بريدك."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:822
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:825
 msgid "Guest is in the audience"
 msgstr "الضيف ضمن الجمهور"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:825
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:828
 msgid "Guest is not in the audience"
 msgstr "الضيف ليس ضمن الجمهور"
 
@@ -22570,11 +22574,11 @@ msgstr "لديه حجز قادم"
 msgid "Has approved time off"
 msgstr "لديه إجازة معتمدة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:903
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:906
 msgid "Has none (False)"
 msgstr "ليس لديه (خطأ)"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:900
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:903
 msgid "Has one (True)"
 msgstr "لديه (صحيح)"
 
@@ -23150,7 +23154,7 @@ msgstr "كيف يمكنني تنفيذ هذا؟"
 msgid "How dates are written in the file"
 msgstr "كيف تُكتب التواريخ في الملف"
 
-#: app/components/customers/person-marketing-card.tsx:624
+#: app/components/customers/person-marketing-card.tsx:625
 msgid "How did the guest give consent?"
 msgstr "كيف أعطى الضيف موافقته؟"
 
@@ -23281,7 +23285,7 @@ msgstr "مدى التزام الساعة بالجدول المنشور. تبدأ
 msgid "How the call flow works"
 msgstr "كيف يعمل مسار المكالمة"
 
-#: app/components/customers/person-marketing-card.tsx:630
+#: app/components/customers/person-marketing-card.tsx:631
 msgid "How the guest gave consent"
 msgstr "كيف أعطى الضيف موافقته"
 
@@ -23419,7 +23423,7 @@ msgstr "إذا كان هناك حساب بهذا اسم المستخدم أو ا
 msgid "If nobody answers"
 msgstr "إذا لم يرد أحد"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:534
+#: ../../packages/marketing/src/components/campaign-form.tsx:553
 msgid "If sending cannot start in time, it is not sent and you are told."
 msgstr "إذا تعذّر بدء الإرسال في الوقت المناسب، فلن تُرسل الرسالة وسيتم إخبارك."
 
@@ -23464,7 +23468,7 @@ msgstr "صورة"
 msgid "Image added to your media library"
 msgstr "تمت إضافة الصورة إلى مكتبة الوسائط"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:423
+#: ../../packages/marketing/src/components/campaign-form.tsx:442
 msgid "Image address"
 msgstr "عنوان الصورة"
 
@@ -23684,7 +23688,7 @@ msgstr "في الانتظار"
 msgid "In modifier groups"
 msgstr "في مجموعات المعدّلات"
 
-#: app/components/customers/person-marketing-card.tsx:71
+#: app/components/customers/person-marketing-card.tsx:72
 #: app/components/hiring/applicant-labels.ts:35
 msgid "In person"
 msgstr "حضوريًا"
@@ -23737,7 +23741,7 @@ msgstr "بوحدات كاملة من عملتك."
 msgid "In your manager account, open Staff, Time clock, then Tablets."
 msgstr "من حساب المدير، افتح «الموظفون» ثم «ساعة الدوام» ثم «الأجهزة اللوحية»."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:511
+#: ../../packages/marketing/src/components/campaign-form.tsx:530
 msgid "In your time zone."
 msgstr "بتوقيت منطقتك الزمنية."
 
@@ -24238,19 +24242,19 @@ msgstr "عنوان IP"
 msgid "Is a loyalty member"
 msgstr "عضو في برنامج الولاء"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:861
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:864
 msgid "Is exactly"
 msgstr "يساوي بالضبط"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:858
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:861
 msgid "Is less than"
 msgstr "أقل من"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:855
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:858
 msgid "Is more than"
 msgstr "أكثر من"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:922
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
@@ -27664,7 +27668,7 @@ msgstr "خيارات التسويق وتسجيل دخول العميل."
 msgid "Marketing manager"
 msgstr "مدير التسويق"
 
-#: app/components/customers/person-marketing-card.tsx:168
+#: app/components/customers/person-marketing-card.tsx:169
 msgid "Marketing preferences"
 msgstr "تفضيلات التسويق"
 
@@ -28097,7 +28101,7 @@ msgid "Merge duplicate dishes"
 msgstr "دمج الأطباق المكررة"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:195
-#: ../../packages/marketing/src/components/campaign-form.tsx:337
+#: ../../packages/marketing/src/components/campaign-form.tsx:344
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/components/reservations/messages/message-settings.tsx:689
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:634
@@ -28865,7 +28869,7 @@ msgstr "جدولي"
 msgid "My schedule link"
 msgstr "رابط جدولي"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:767
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:770
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:397
 #: app/components/customers/people-list-screen.tsx:409
 #: app/components/customers/person-profile-screen.tsx:1047
@@ -31764,7 +31768,7 @@ msgstr "لم تبدأ"
 msgid "Not started"
 msgstr "لم يبدأ"
 
-#: app/components/customers/person-marketing-card.tsx:422
+#: app/components/customers/person-marketing-card.tsx:421
 msgid "Not subscribed"
 msgstr "غير مشترك"
 
@@ -31809,7 +31813,7 @@ msgstr "غير مستخدم في أي ملاحظات أو تعليقات أو ص
 msgid "Not verified"
 msgstr "غير مُوثَّق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:928
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
 
@@ -33627,7 +33631,7 @@ msgstr "يفتح (صفحة من موقعك)"
 msgid "Opens are not always counted. Some mail apps open messages by themselves or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read it may get it again. A broadcast can be re-sent once."
 msgstr "لا تُحتسب عمليات الفتح دائمًا. بعض تطبيقات البريد تفتح الرسائل من تلقاء نفسها أو تُخفي الفتح عن المرسلين (مثل حماية خصوصية Apple Mail)، لذا قد يتلقى بعض من قرأها الرسالة مرة أخرى. يمكن إعادة إرسال الرسالة الجماعية مرة واحدة فقط."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:411
+#: ../../packages/marketing/src/components/campaign-form.tsx:430
 msgid "Opens this page"
 msgstr "يفتح هذه الصفحة"
 
@@ -33659,6 +33663,10 @@ msgstr "المشغّل"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:115
 msgid "Operator Invited"
 msgstr "تمت دعوة المشغّل"
+
+#: app/components/customers/person-marketing-card.tsx:412
+msgid "Opted out by text reply on {when}"
+msgstr "ألغى الاشتراك برسالة نصية في {when}"
 
 #: app/components/inventory/sold-out-panel.tsx:105
 #: app/components/orders/daily-limits-panel.tsx:212
@@ -33787,7 +33795,7 @@ msgstr "اسم النادل (اختياري)"
 msgid "Optional."
 msgstr "اختياري."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:432
+#: ../../packages/marketing/src/components/campaign-form.tsx:451
 msgid "Optional. A secure (https) address."
 msgstr "اختياري. عنوان آمن (https)."
 
@@ -34903,7 +34911,7 @@ msgstr "جارٍ الربط…"
 msgid "Paper cups"
 msgstr "أكواب ورقية"
 
-#: app/components/customers/person-marketing-card.tsx:72
+#: app/components/customers/person-marketing-card.tsx:73
 msgid "Paper form"
 msgstr "نموذج ورقي"
 
@@ -35473,8 +35481,8 @@ msgid "pending"
 msgstr "قيد الانتظار"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
-#: app/components/customers/person-marketing-card.tsx:370
-#: app/components/customers/person-marketing-card.tsx:393
+#: app/components/customers/person-marketing-card.tsx:371
+#: app/components/customers/person-marketing-card.tsx:392
 #: app/components/settings/cards/organization/email-sending-card.tsx:80
 #: app/components/settings/cards/organization/shop-card.tsx:47
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:490
@@ -35776,7 +35784,7 @@ msgstr "رقم الهاتف"
 msgid "Phone number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:761
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:764
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:395
 #: app/components/locations/location-form.tsx:681
 #: app/components/reservations/booking-sheet.tsx:966
@@ -35795,7 +35803,7 @@ msgstr "أرقام الهاتف"
 msgid "Phone ordering"
 msgstr "الطلب عبر الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:764
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:767
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:396
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
@@ -37320,7 +37328,7 @@ msgid "Prix fixe menu"
 msgstr "قائمة بسعر ثابت"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:41
-#: ../../packages/marketing/src/components/campaign-form.tsx:231
+#: ../../packages/marketing/src/components/campaign-form.tsx:238
 msgid "Pro"
 msgstr "احترافي"
 
@@ -38491,15 +38499,15 @@ msgstr "تسجيل الدفعة"
 msgid "Record calls"
 msgstr "تسجيل المكالمات"
 
-#: app/components/customers/person-marketing-card.tsx:687
+#: app/components/customers/person-marketing-card.tsx:688
 msgid "Record consent"
 msgstr "تسجيل الموافقة"
 
-#: app/components/customers/person-marketing-card.tsx:603
+#: app/components/customers/person-marketing-card.tsx:604
 msgid "Record consent for email offers"
 msgstr "تسجيل الموافقة على العروض عبر البريد الإلكتروني"
 
-#: app/components/customers/person-marketing-card.tsx:605
+#: app/components/customers/person-marketing-card.tsx:606
 msgid "Record consent for text offers"
 msgstr "تسجيل الموافقة على العروض عبر الرسائل النصية"
 
@@ -38561,24 +38569,24 @@ msgstr "سجّل ما إذا تواصلت مع الضيف بشأن هذا الح
 msgid "Recorded"
 msgstr "مُسجَّلة"
 
-#: app/components/customers/person-marketing-card.tsx:360
+#: app/components/customers/person-marketing-card.tsx:361
 msgid "Recorded by {name} on {subscribedOn}"
 msgstr "سجّلها {name} في {subscribedOn}"
 
-#: app/components/customers/person-marketing-card.tsx:359
+#: app/components/customers/person-marketing-card.tsx:360
 msgid "Recorded by {name} on {subscribedOn} ({method})"
 msgstr "سجّله {name} في {subscribedOn} ({method})"
 
 #: app/components/customers/person-marketing-card.tsx:63
-#: app/components/customers/person-marketing-card.tsx:366
+#: app/components/customers/person-marketing-card.tsx:367
 msgid "Recorded by staff"
 msgstr "سجّلها الموظفون"
 
-#: app/components/customers/person-marketing-card.tsx:356
+#: app/components/customers/person-marketing-card.tsx:357
 msgid "Recorded by you on {subscribedOn}"
 msgstr "سجّلته أنت في {subscribedOn}"
 
-#: app/components/customers/person-marketing-card.tsx:355
+#: app/components/customers/person-marketing-card.tsx:356
 msgid "Recorded by you on {subscribedOn} ({method})"
 msgstr "سجّلته أنت في {subscribedOn} ({method})"
 
@@ -39605,7 +39613,7 @@ msgstr "أزال عملية إعادة توجيه"
 msgid "Removed after a lost dispute"
 msgstr "أُزيل بعد خسارة نزاع"
 
-#: app/components/customers/person-marketing-card.tsx:417
+#: app/components/customers/person-marketing-card.tsx:416
 msgid "Removed by a list import on {when}"
 msgstr "أُزيل عبر استيراد قائمة في {when}"
 
@@ -40830,7 +40838,7 @@ msgstr "يقرّب وقت الحضور والانصراف عند جمع السا
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "وجّه الزيارات الواردة من مسار قديم إلى وجهة جديدة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:976
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:979
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
@@ -41379,7 +41387,7 @@ msgid "Save discount"
 msgstr "حفظ الخصم"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: ../../packages/marketing/src/components/campaign-form.tsx:566
+#: ../../packages/marketing/src/components/campaign-form.tsx:585
 #: app/components/hiring/job-editor.tsx:437
 #: app/components/inventory/review-order-screen.tsx:454
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:695
@@ -41556,7 +41564,7 @@ msgstr "تم الحفظ"
 msgid "Saved as a copy"
 msgstr "تم الحفظ كنسخة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:787
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:790
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:400
 #: app/components/discounts/discount-form.tsx:530
 #: app/components/discounts/discount-form.tsx:650
@@ -41840,7 +41848,7 @@ msgstr "امسح الرمز بكاميرا هذا الجهاز اللوحي، أ
 msgid "Scan this domain"
 msgstr "فحص هذا النطاق"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:596
+#: ../../packages/marketing/src/components/campaign-form.tsx:615
 #: app/components/app-sidebar.tsx:652
 #: app/components/command-menu.tsx:146
 #: app/components/hiring/interview-dialog.tsx:287
@@ -41902,7 +41910,7 @@ msgstr "الجدولة في"
 msgid "Schedule for {name}, {range}"
 msgstr "الجدول لـ {name}، {range}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:493
+#: ../../packages/marketing/src/components/campaign-form.tsx:512
 msgid "Schedule for later"
 msgstr "الجدولة لوقت لاحق"
 
@@ -42756,6 +42764,10 @@ msgstr "شوهد {seen}"
 msgid "Seen just now"
 msgstr "شوهد الآن"
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:355
+msgid "Segments: {smsSegments} (opt-out line included)"
+msgstr "عدد الأجزاء: {smsSegments} (يشمل سطر إلغاء الاشتراك)"
+
 #: app/components/staff/timesheets/timesheet-table.tsx:204
 #: app/routes/_app+/$orgSlug_+/media.tsx:1253
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:576
@@ -42905,7 +42917,7 @@ msgstr "حدد يوماً نشطاً واحداً على الأقل من أيا�
 msgid "Select at least one language."
 msgstr "اختر لغة واحدة على الأقل."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:754
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:757
 msgid "Select attribute"
 msgstr "اختر السمة"
 
@@ -42921,7 +42933,7 @@ msgstr "اختر صورة"
 msgid "Select languages"
 msgstr "اختر اللغات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:943
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:946
 msgid "Select operator"
 msgstr "اختر العامل"
 
@@ -42941,7 +42953,7 @@ msgstr "اختيار صور"
 msgid "Select several"
 msgstr "تحديد عدة عناصر"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:918
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:921
 msgid "Select status"
 msgstr "اختر الحالة"
 
@@ -43096,7 +43108,7 @@ msgstr "إرسال رابط إدارة جديد؟"
 msgid "Send a one-time email or SMS to your audience, now or later."
 msgstr "أرسل بريدًا إلكترونيًا أو رسالة نصية لمرة واحدة إلى جمهورك، الآن أو لاحقًا."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:577
+#: ../../packages/marketing/src/components/campaign-form.tsx:596
 #: app/components/marketing/campaign-actions.tsx:130
 msgid "Send a test"
 msgstr "إرسال رسالة تجريبية"
@@ -43117,7 +43129,7 @@ msgstr "إرسال دعوة؟"
 msgid "Send anyway"
 msgstr "الإرسال على أي حال"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:501
+#: ../../packages/marketing/src/components/campaign-form.tsx:520
 msgid "Send at"
 msgstr "وقت الإرسال"
 
@@ -43184,8 +43196,8 @@ msgstr "إرسال رسالة"
 msgid "Send new link"
 msgstr "إرسال الرابط الجديد"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:191
-#: ../../packages/marketing/src/components/campaign-form.tsx:492
+#: ../../packages/marketing/src/components/campaign-form.tsx:198
+#: ../../packages/marketing/src/components/campaign-form.tsx:511
 #: app/components/inventory/counting-screen.tsx:468
 msgid "Send now"
 msgstr "إرسال الآن"
@@ -43277,7 +43289,7 @@ msgstr "يتطلب الإرسال إلى Canva إنشاء ملفات PDF، وه�
 msgid "Sending to the printer"
 msgstr "جارٍ الإرسال إلى المطبعة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:192
+#: ../../packages/marketing/src/components/campaign-form.tsx:199
 msgid "Sending..."
 msgstr "جارٍ الإرسال..."
 
@@ -44567,7 +44579,7 @@ msgstr "فاتورة ضريبية مبسّطة"
 msgid "Simulation"
 msgstr "بيئة المحاكاة"
 
-#: app/components/customers/person-marketing-card.tsx:215
+#: app/components/customers/person-marketing-card.tsx:216
 msgid "Since"
 msgstr "منذ"
 
@@ -44811,8 +44823,12 @@ msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:718
-msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
-msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
+#~ msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
+#~ msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:718
+msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols. Every text ends with \"Reply STOP to opt out.\" and goes out between 9:00 and 20:00 local time: a step that comes up at night waits for the morning."
+msgstr "الرسائل النصية التي تزيد عن 160 حرفًا تُقسَّم وفق بروتوكولات GSM القياسية. تنتهي كل رسالة بعبارة \"Reply STOP to opt out.\" وتُرسل بين الساعة 9:00 و20:00 بالتوقيت المحلي: الخطوة التي يحين وقتها ليلًا تنتظر حتى الصباح."
 
 #: app/routes/_app+/$orgSlug_+/menu+/history.$snapshotId.tsx:68
 msgid "Snapshot {id} compared to {target}"
@@ -45144,7 +45160,7 @@ msgstr "الصوت مغلق"
 msgid "Sound on"
 msgstr "الصوت مفعّل"
 
-#: app/components/customers/person-marketing-card.tsx:218
+#: app/components/customers/person-marketing-card.tsx:219
 #: app/components/customers/person-profile-screen.tsx:776
 #: app/components/reservations/detail-sheet.tsx:863
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:367
@@ -45753,7 +45769,7 @@ msgstr "نقطة البيع (Station)"
 msgid "Stats"
 msgstr "الإحصائيات"
 
-#: app/components/customers/person-marketing-card.tsx:212
+#: app/components/customers/person-marketing-card.tsx:213
 #: app/components/customers/person-orders-panel.tsx:166
 #: app/components/customers/person-profile-screen.tsx:779
 #: app/components/dashboard/blocks/status-block.tsx:30
@@ -46136,7 +46152,7 @@ msgstr "تصنيف فرعي"
 msgid "Subdomain URL"
 msgstr "رابط النطاق الفرعي"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:313
+#: ../../packages/marketing/src/components/campaign-form.tsx:320
 #: app/components/website/link-inspector.tsx:477
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:621
 msgid "Subject"
@@ -46178,11 +46194,11 @@ msgstr "ستظهر الطلبات المُرسلة هنا."
 msgid "Subscribe"
 msgstr "اشتراك"
 
-#: app/components/customers/person-marketing-card.tsx:241
+#: app/components/customers/person-marketing-card.tsx:242
 msgid "Subscribed"
 msgstr "مشترك"
 
-#: app/components/customers/person-marketing-card.tsx:398
+#: app/components/customers/person-marketing-card.tsx:396
 msgid "Subscribed on {subscribedOn} ({source})"
 msgstr "اشترك في {subscribedOn} ({source})"
 
@@ -46320,7 +46336,7 @@ msgstr "تلخيص هذه الملاحظة"
 msgid "Summary"
 msgstr "الملخص"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:283
+#: ../../packages/marketing/src/components/campaign-form.tsx:290
 msgid "Summer promo"
 msgstr "عرض الصيف"
 
@@ -46359,7 +46375,7 @@ msgstr "المورّد"
 msgid "Suppliers"
 msgstr "الموردون"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:351
+#: ../../packages/marketing/src/components/campaign-form.tsx:363
 msgid "supported"
 msgstr "مدعوم"
 
@@ -46967,8 +46983,8 @@ msgstr "تكلفة الغذاء المستهدفة (%)"
 msgid "Target location"
 msgstr "الموقع الهدف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:871
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:961
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:874
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:964
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
@@ -47325,7 +47341,7 @@ msgstr "اختبار هذه المسودة"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:200
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:236
-#: app/components/customers/person-marketing-card.tsx:157
+#: app/components/customers/person-marketing-card.tsx:158
 #: app/components/marketing/programs-section.tsx:129
 #: app/components/marketing/programs-section.tsx:221
 #: app/components/social/post-composer.tsx:327
@@ -47351,7 +47367,7 @@ msgstr "أرسل رسالة إلى الضيوف في {name} عندما يجهز 
 msgid "Text guests when their order is ready"
 msgstr "أرسل رسالة إلى الضيوف عندما يجهز طلبهم"
 
-#: app/components/customers/person-marketing-card.tsx:447
+#: app/components/customers/person-marketing-card.tsx:446
 msgid "Text marketing"
 msgstr "التسويق عبر الرسائل النصية"
 
@@ -47370,6 +47386,10 @@ msgstr "نص فقط"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4031
 msgid "Text position"
 msgstr "موضع النص"
+
+#: app/components/customers/person-marketing-card.tsx:69
+msgid "Text reply"
+msgstr "رسالة نصية"
 
 #: app/components/customers/people-summary-row.tsx:209
 msgid "Text subscribers"
@@ -47413,7 +47433,7 @@ msgstr "لا توجد إشارة فتح للرسائل النصية، لذا ل�
 msgid "Texts need the Text marketing terms. An owner can accept them in Settings, Legal."
 msgstr "الرسائل النصية تحتاج إلى شروط التسويق عبر الرسائل النصية. يمكن للمالك قبولها في الإعدادات، قانوني."
 
-#: app/components/customers/person-marketing-card.tsx:576
+#: app/components/customers/person-marketing-card.tsx:577
 msgid "Texts start once the guest verifies their phone number."
 msgstr "تبدأ الرسائل النصية بمجرد أن يتحقق الضيف من رقم هاتفه."
 
@@ -48239,7 +48259,7 @@ msgstr "يكتب أمين الصندوق المبلغ عند الصندوق."
 msgid "The cashier types the percent at the till."
 msgstr "يكتب أمين الصندوق النسبة عند الصندوق."
 
-#: app/components/customers/person-marketing-card.tsx:144
+#: app/components/customers/person-marketing-card.tsx:145
 msgid "The change could not be saved. Try again."
 msgstr "تعذّر حفظ التغيير. حاول مرة أخرى."
 
@@ -48287,7 +48307,7 @@ msgstr "تم إلغاء الربط في فيسبوك."
 msgid "The connection was not allowed in Canva."
 msgstr "لم يُسمح بالربط في Canva."
 
-#: app/components/customers/person-marketing-card.tsx:497
+#: app/components/customers/person-marketing-card.tsx:496
 msgid "The consent could not be recorded. Try again."
 msgstr "تعذّر تسجيل الموافقة. حاول مرة أخرى."
 
@@ -48709,11 +48729,11 @@ msgstr "يُستخدم الترحيب عندما يرد المساعد الذك�
 msgid "the guest"
 msgstr "الضيف"
 
-#: app/components/customers/person-marketing-card.tsx:661
+#: app/components/customers/person-marketing-card.tsx:662
 msgid "The guest asked to receive marketing by email"
 msgstr "طلب الضيف تلقي الرسائل التسويقية عبر البريد الإلكتروني"
 
-#: app/components/customers/person-marketing-card.tsx:663
+#: app/components/customers/person-marketing-card.tsx:664
 msgid "The guest asked to receive marketing by text"
 msgstr "طلب الضيف تلقي الرسائل التسويقية عبر الرسائل النصية"
 
@@ -48729,7 +48749,7 @@ msgstr "لا يكسب الضيف أي نقاط على هذا الحساب. إذ�
 msgid "The guest gets a new confirmation with a new manage link. The link in every earlier message stops working."
 msgstr "يتلقى الضيف تأكيداً جديداً مع رابط إدارة جديد. يتوقف الرابط في كل رسالة سابقة عن العمل."
 
-#: app/components/customers/person-marketing-card.tsx:615
+#: app/components/customers/person-marketing-card.tsx:616
 msgid "The guest gets one text confirming the subscription."
 msgstr "يتلقى الضيف رسالة نصية واحدة تؤكد الاشتراك."
 
@@ -48761,15 +48781,15 @@ msgstr "يدفع الضيف {total} إجمالًا، شاملًا الإكرام
 msgid "The guest sees only \"out of stock\" or \"kitchen closed\". Other reasons stay with you."
 msgstr "يرى الضيف فقط \"نفدت الكمية\" أو \"المطبخ مغلق\". تبقى الأسباب الأخرى لديك."
 
-#: app/components/customers/person-marketing-card.tsx:477
+#: app/components/customers/person-marketing-card.tsx:476
 msgid "The guest unsubscribed recently. Try again later."
 msgstr "ألغى الضيف اشتراكه مؤخراً. حاول مرة أخرى لاحقاً."
 
-#: app/components/customers/person-marketing-card.tsx:329
+#: app/components/customers/person-marketing-card.tsx:330
 msgid "The guest unsubscribed recently. You can record consent again after {until}."
 msgstr "ألغى الضيف اشتراكه مؤخراً. يمكنك تسجيل الموافقة مرة أخرى بعد {until}."
 
-#: app/components/customers/person-marketing-card.tsx:475
+#: app/components/customers/person-marketing-card.tsx:474
 msgid "The guest unsubscribed recently. You can record consent again after {when}."
 msgstr "ألغى الضيف اشتراكه مؤخراً. يمكنك تسجيل الموافقة مرة أخرى بعد {when}."
 
@@ -50517,7 +50537,7 @@ msgstr "هذا العميل غير موجود."
 msgid "This customer has no reservation history yet."
 msgstr "ليس لهذا العميل سجل حجوزات بعد."
 
-#: app/components/customers/person-marketing-card.tsx:496
+#: app/components/customers/person-marketing-card.tsx:495
 msgid "This customer no longer exists."
 msgstr "هذا العميل لم يعد موجوداً."
 
@@ -52028,7 +52048,7 @@ msgstr "تظهر هنا إكراميات الطلبات عبر الإنترنت 
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "البقشيش على الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، حسب يوم العمل. تُحدَّد طريقة توزيع الصندوق بين الأشخاص في صفحة العمالة."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:291
+#: ../../packages/marketing/src/components/campaign-form.tsx:298
 #: app/components/phone-agent/training-rules-section.tsx:516
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4430
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4740
@@ -52302,7 +52322,7 @@ msgstr "أبرز عمليات البحث"
 msgid "Top spenders"
 msgstr "أكثر الضيوف إنفاقاً"
 
-#: app/components/customers/person-marketing-card.tsx:206
+#: app/components/customers/person-marketing-card.tsx:207
 #: app/components/hiring/screener-editor.tsx:178
 msgid "Topic"
 msgstr "الموضوع"
@@ -52960,7 +52980,7 @@ msgstr "تمت إضافة شريحة وقت الدوران."
 msgid "Turn-time bucket deleted."
 msgstr "تم حذف شريحة وقت الدوران."
 
-#: app/components/customers/person-marketing-card.tsx:415
+#: app/components/customers/person-marketing-card.tsx:414
 msgid "Turned off by staff on {when}"
 msgstr "أوقفه الموظفون في {when}"
 
@@ -53567,15 +53587,15 @@ msgstr "المدفوعات غير المسواة: {unsettledPaymentsCount}"
 msgid "Unstar"
 msgstr "إلغاء التفضيل"
 
-#: app/components/customers/person-marketing-card.tsx:245
+#: app/components/customers/person-marketing-card.tsx:246
 msgid "Unsubscribed"
 msgstr "غير مشترك"
 
-#: app/components/customers/person-marketing-card.tsx:413
+#: app/components/customers/person-marketing-card.tsx:410
 msgid "Unsubscribed by the guest on {when}"
 msgstr "ألغى الضيف الاشتراك في {when}"
 
-#: app/components/customers/person-marketing-card.tsx:418
+#: app/components/customers/person-marketing-card.tsx:417
 msgid "Unsubscribed on {when}"
 msgstr "أُلغي الاشتراك في {when}"
 
@@ -53717,7 +53737,7 @@ msgstr "القادمة والواصلة"
 msgid "Upcoming booking"
 msgstr "حجز قادم"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:889
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:892
 msgid "Upcoming reservation"
 msgstr "حجز قادم"
 
@@ -54659,7 +54679,7 @@ msgstr "رمز التحقق"
 msgid "Verification Code"
 msgstr "رمز التحقق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:911
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:914
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
@@ -54677,7 +54697,7 @@ msgstr "النطاق المُتحقق منه"
 msgid "Verified domain must match your current email address domain for security. <0>Learn more</0>"
 msgstr "يجب أن يطابق النطاق المُتحقق منه نطاق عنوان بريدك الإلكتروني الحالي للأمان. <0>اعرف المزيد</0>"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:265
+#: ../../packages/marketing/src/components/campaign-form.tsx:272
 msgid "Verified phone numbers only"
 msgstr "أرقام الهواتف الموثّقة فقط"
 
@@ -55239,8 +55259,8 @@ msgstr "بانتظار الدفع"
 msgid "Waiting for review"
 msgstr "بانتظار المراجعة"
 
-#: app/components/customers/person-marketing-card.tsx:379
-#: app/components/customers/person-marketing-card.tsx:402
+#: app/components/customers/person-marketing-card.tsx:378
+#: app/components/customers/person-marketing-card.tsx:399
 msgid "Waiting for the guest to confirm by email"
 msgstr "بانتظار تأكيد الضيف عبر البريد الإلكتروني"
 
@@ -55851,7 +55871,7 @@ msgstr "لن نقترح هذا مرة أخرى"
 msgid "We'd love to hear what went well or how we can improve the product experience."
 msgstr "نود أن نسمع ما سار على ما يرام أو كيف يمكننا تحسين تجربة المنتج."
 
-#: app/components/customers/person-marketing-card.tsx:610
+#: app/components/customers/person-marketing-card.tsx:611
 msgid "We'll email the guest a link to confirm. It stays pending until they do."
 msgstr "سنرسل إلى الضيف رابط تأكيد عبر البريد الإلكتروني. يبقى الاشتراك معلقاً حتى يؤكد."
 
@@ -56260,7 +56280,7 @@ msgstr "ما يفعله هذا الخصم بكلمات بسيطة. يتحدّث 
 msgid "What this option does"
 msgstr "وظيفة هذا الخيار"
 
-#: app/components/customers/person-marketing-card.tsx:171
+#: app/components/customers/person-marketing-card.tsx:172
 msgid "What this person agreed to receive. This is the only place consent is recorded; broadcasts and automations follow it."
 msgstr "ما وافق هذا الشخص على تلقيه. هذا هو المكان الوحيد الذي تُسجَّل فيه الموافقة، وتلتزم به الحملات والأتمتة."
 
@@ -56350,7 +56370,7 @@ msgstr "كان يجب أن يفتح واتساب. إن لم يفتح، استخ�
 msgid "Wheelchair accessible"
 msgstr "ملائم للكراسي المتحركة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:472
+#: ../../packages/marketing/src/components/campaign-form.tsx:491
 #: app/components/discounts/discount-form.tsx:1818
 #: app/components/loyalty/promotion-dialog.tsx:705
 #: app/components/reservations/booking-sheet.tsx:617
@@ -56955,7 +56975,7 @@ msgstr "ضمن الهدف"
 msgid "Without a policy, guests book without paying. Create a deposit, prepayment or card guarantee to protect busy nights."
 msgstr "بدون سياسة، يحجز الضيوف دون دفع. أنشئ وديعة أو دفعًا مسبقًا أو ضمان بطاقة لحماية الليالي المزدحمة."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:270
+#: ../../packages/marketing/src/components/campaign-form.tsx:277
 msgid "Without a verified phone"
 msgstr "بدون هاتف موثّق"
 
@@ -57133,7 +57153,7 @@ msgstr "اكتب نصاً لمنشور Google."
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr "اكتب الشريط باللغة الافتراضية، ثم بدّل اللغات للترجمة. تظهر الإعلانات الشريطية المفعّلة أعلى موقعك العام."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:375
+#: ../../packages/marketing/src/components/campaign-form.tsx:387
 msgid "Write the notification"
 msgstr "اكتب الإشعار"
 
@@ -57148,7 +57168,7 @@ msgstr "اكتب السياسة التي سيقرّون بها."
 msgid "Write the question."
 msgstr "اكتب السؤال."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:386
+#: ../../packages/marketing/src/components/campaign-form.tsx:398
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "اكتب بريدك الإلكتروني. استخدم {NAME_TAG} للتخصيص."
 
@@ -57164,7 +57184,7 @@ msgstr "اكتب محتوى ملاحظتك..."
 msgid "Write your reply…"
 msgstr "اكتب ردك…"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:362
+#: ../../packages/marketing/src/components/campaign-form.tsx:374
 msgid "Write your text message"
 msgstr "اكتب رسالتك النصية"
 
@@ -57642,8 +57662,8 @@ msgstr "ليست لديك صلاحية إنشاء مجموعات المعدّل�
 msgid "You do not have permission to do that."
 msgstr "ليست لديك صلاحية لتنفيذ ذلك."
 
-#: app/components/customers/person-marketing-card.tsx:492
-#: app/components/customers/person-marketing-card.tsx:495
+#: app/components/customers/person-marketing-card.tsx:491
+#: app/components/customers/person-marketing-card.tsx:494
 msgid "You do not have permission to record consent."
 msgstr "ليس لديك إذن بتسجيل الموافقة."
 

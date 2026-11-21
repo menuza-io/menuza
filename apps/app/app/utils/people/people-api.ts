@@ -121,8 +121,11 @@ export type PersonSubscription = {
 	unsubscribedAt: number | null
 	/** Where the opt-in came from; `staff` when a staff member recorded it. */
 	source: string
-	/** Who opted out: the guest (`self`), staff (`operator`), or an `import`. */
-	unsubscribedSource: 'self' | 'operator' | 'import' | null
+	/**
+	 * Who opted out: the guest (`self`), a STOP text reply (`sms_reply`, #75),
+	 * staff (`operator`), or an `import`.
+	 */
+	unsubscribedSource: 'self' | 'sms_reply' | 'operator' | 'import' | null
 	/** An active email opt-in waiting for its owner to follow the emailed link. */
 	pending: boolean
 	/**

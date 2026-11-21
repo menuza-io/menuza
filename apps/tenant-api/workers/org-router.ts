@@ -424,6 +424,12 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// Inbound text replies (#75): the edge forwards one keyword to one
+	// organization; the route checks INTERNAL_COMMAND_TOKEN.
+	if (pathname === '/api/sms-inbound/apply') {
+		return orgIdFromJsonBody(request)
+	}
+
 	// Hourly staff tick: a body orgId runs that organization in its Durable
 	// Object; no orgId means the edge fans out to every organization.
 	if (pathname === '/api/staff/tick') {

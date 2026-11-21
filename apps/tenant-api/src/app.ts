@@ -52,6 +52,10 @@ import { publicDeliveryRoutes } from './routes/delivery.ts'
 import { orderSystemRoutes } from './routes/order-system.ts'
 import { customerOrderRoutes } from './routes/customer-orders.ts'
 import { pushRoutes } from './routes/push.ts'
+import {
+	smsInboundInternalRoutes,
+	smsWebhookRoutes,
+} from './routes/sms-webhook.ts'
 import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
 import { operatorQrRoutes } from './routes/operator-qr.ts'
@@ -308,6 +312,13 @@ export function createTenantApiApp() {
 		rateLimit('schedule-link', { windowMs: 60 * 1000, maxRequests: 240 }),
 	)
 
+	// Provider webhooks for inbound text replies (#75). The signature is the
+	// gate; this is only a burst ceiling.
+	app.use(
+		'/webhooks/sms/*',
+		rateLimit('sms-webhook', { windowMs: 60 * 1000, maxRequests: 300 }),
+	)
+
 	app.use(
 		'/voice/*',
 		rateLimit('public-voice-handoffs', {
@@ -384,6 +395,8 @@ export function createTenantApiApp() {
 	app.route('/api/forms', formSystemRoutes)
 	app.route('/api/orders', orderSystemRoutes)
 	app.route('/api/marketing', engagementSyncRoutes)
+	app.route('/api/sms-inbound', smsInboundInternalRoutes)
+	app.route('/webhooks/sms', smsWebhookRoutes)
 	app.route('/api/staff', staffTickRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/api/menu', menuAvailabilityEventRoutes)

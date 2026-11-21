@@ -118,6 +118,8 @@ const COVERED: Record<string, string> = {
 		'till binding deleted with the member by the erasure',
 	'sms_send_events.phone_hash':
 		'keyed HMAC used to count send-code requests; deleted by phone, and by the regional tick after 24 hours',
+	'sms_inbound_events.phone_hash':
+		'purpose-prefixed keyed HMAC of the sender of a STOP, START or HELP reply (#75); deleted by phone, and pruned after 90 days',
 	'gift_cards.purchaser_email':
 		'nulled by the purchaser account or the lower-cased email (gift-card-erasure.ts); the card, its ledger and balance stay',
 	'gift_cards.recipient_email':

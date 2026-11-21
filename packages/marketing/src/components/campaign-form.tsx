@@ -3,6 +3,10 @@ import { useLingui } from '@lingui/react'
 import { type BroadcastProblem } from '@repo/common/broadcast-checks'
 import { type EmailBlock } from '@repo/common/email-blocks'
 import { PUSH_BODY_MAX, PUSH_TITLE_MAX } from '@repo/common/push'
+import {
+	countMarketingSmsSegments,
+	SMS_OPT_OUT_PHRASE,
+} from '@repo/common/sms-compliance'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
@@ -127,6 +131,9 @@ export function CampaignForm({
 	const [smsContent, setSmsContent] = useState(
 		defaults?.channel === 'sms' ? (defaults.content ?? '') : '',
 	)
+	// The segment count the guest is billed for includes the opt-out line the
+	// server adds to every marketing text (#75).
+	const smsSegments = countMarketingSmsSegments(smsContent).segments
 	const [pushContent, setPushContent] = useState(
 		defaults?.channel === 'push' ? (defaults.content ?? '') : '',
 	)
@@ -339,8 +346,13 @@ export function CampaignForm({
 								<AiDraftButton onClick={() => setAiOpen(true)} />
 							) : null}
 							{channel === 'sms' ? (
-								<span className="text-muted-foreground text-xs">
+								<span
+									className="text-muted-foreground text-xs"
+									data-testid="sms-count"
+								>
 									{smsContent.length} / 1600
+									{' · '}
+									{_(msg`Segments: ${smsSegments} (opt-out line included)`)}
 								</span>
 							) : channel === 'push' ? (
 								<span className="text-muted-foreground text-xs">
@@ -389,6 +401,13 @@ export function CampaignForm({
 								required
 							/>
 						)}
+						{channel === 'sms' ? (
+							<p className="text-muted-foreground text-xs">
+								{_(
+									msg`Every text ends with "${SMS_OPT_OUT_PHRASE}" and goes out between 9:00 and 20:00 local time. We add both for you.`,
+								)}
+							</p>
+						) : null}
 						{channel === 'sms' ? (
 							<RewriteWithAi
 								sms
