@@ -54,6 +54,19 @@ describe('jobs.hero-video (#301)', () => {
 		})
 		expect(service.processHeroVideo).toHaveBeenCalledWith('gen1234567890')
 	})
+	it('answers 503 for a passing problem, so the workflow retries', async () => {
+		service.processHeroVideo.mockResolvedValueOnce({
+			ok: false,
+			status: 'queued',
+			error: 'renderer_failed',
+			retry: true,
+		} as never)
+		const response = await call({
+			body: JSON.stringify({ generationId: 'gen1234567890' }),
+		})
+		expect(response.status).toBe(503)
+		expect(await response.json()).toMatchObject({ success: false, retry: true })
+	})
 	it('refuses a malformed id or body', async () => {
 		expect(
 			(await call({ body: JSON.stringify({ generationId: '../x' }) })).status,

@@ -67,7 +67,11 @@ export function getHeroVideoRenderer(): HeroVideoRenderer | null {
 	if (isHeroVideoMock()) return createMockHeroVideoRenderer()
 	const url = readLiveEnv('HERO_VIDEO_RENDERER_URL')
 	const token = readLiveEnv('HERO_VIDEO_RENDERER_TOKEN')
-	return url && token ? createHttpHeroVideoRenderer({ url, token }) : null
+	// The token and the photo links travel with the request: https only, except
+	// for a renderer on this machine.
+	if (!url || !token) return null
+	if (!url.toLowerCase().startsWith('https://') && !isLocalUrl(url)) return null
+	return createHttpHeroVideoRenderer({ url, token })
 }
 
 export function isHeroVideoRendererConfigured() {

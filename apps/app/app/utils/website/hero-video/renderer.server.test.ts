@@ -167,4 +167,25 @@ describe('limits and selection (#301)', () => {
 	it('is not available without a renderer', () => {
 		expect(getHeroVideoRenderer()).toBeNull()
 	})
+
+	it('never sends the token and the photo links over plain http', () => {
+		vi.stubEnv('HERO_VIDEO_RENDERER_TOKEN', 'a-long-enough-token')
+		try {
+			vi.stubEnv(
+				'HERO_VIDEO_RENDERER_URL',
+				'http://renderer.example.com/render',
+			)
+			expect(getHeroVideoRenderer()).toBeNull()
+			vi.stubEnv(
+				'HERO_VIDEO_RENDERER_URL',
+				'https://renderer.example.com/render',
+			)
+			expect(getHeroVideoRenderer()?.name).toBe('http')
+			// A renderer on this machine may use http.
+			vi.stubEnv('HERO_VIDEO_RENDERER_URL', 'http://localhost:4000/render')
+			expect(getHeroVideoRenderer()?.name).toBe('http')
+		} finally {
+			vi.unstubAllEnvs()
+		}
+	})
 })

@@ -36,6 +36,13 @@ export async function action({ request }: ActionFunctionArgs) {
 		return Response.json({ success: false }, { status: 400 })
 	}
 	const outcome = await processHeroVideo(generationId)
+	// A passing problem: not a success, so the workflow's retries run.
+	if (!outcome.ok && outcome.retry) {
+		return Response.json(
+			{ success: false, generationId, error: outcome.error, retry: true },
+			{ status: 503 },
+		)
+	}
 	return Response.json({
 		success: outcome.ok,
 		generationId,

@@ -290,6 +290,27 @@ describe('asking for a hero video (#301)', () => {
 		expect((await start(busy, busyIds, harness().deps)).ok).toBe(true)
 	})
 
+	it('two clicks at once make one request: the later one is taken back out', async () => {
+		const ctx = await setup()
+		const h = harness()
+		const chosen = await photos(ctx.organization.id, 3)
+		const ids = chosen.map((p) => p.id)
+		const results = await Promise.all([
+			start(ctx, ids, h.deps),
+			start(ctx, ids, h.deps),
+		])
+		expect(results.filter((r) => r.ok)).toHaveLength(1)
+		expect(results.filter((r) => !r.ok)).toEqual([
+			{ ok: false, error: 'already_running' },
+		])
+		expect(
+			await db
+				.select()
+				.from(HeroVideoGeneration)
+				.where(eq(HeroVideoGeneration.organizationId, ctx.organization.id)),
+		).toHaveLength(1)
+	})
+
 	it('records the request, starts the background job and answers at once', async () => {
 		const ctx = await setup()
 		const h = harness()
@@ -516,8 +537,20 @@ describe('making the clip in the background (#301)', () => {
 				},
 			)
 			if (!started.ok) throw new Error(started.error)
-			const outcome = await processHeroVideo(started.generationId, h.deps)
+			// A renderer that only fails is tried again; the last attempt fails the
+			// request for good. Too large an answer will not change: fails at once.
+			let outcome = await processHeroVideo(started.generationId, h.deps)
+			if (error === 'renderer_failed') {
+				for (let attempt = 1; attempt < 3; attempt++) {
+					expect(outcome).toMatchObject({ ok: false, retry: true })
+					expect(await generation(started.generationId)).toMatchObject({
+						status: 'queued',
+					})
+					outcome = await processHeroVideo(started.generationId, h.deps)
+				}
+			}
 			expect(outcome).toMatchObject({ ok: false, error })
+			expect(outcome).not.toHaveProperty('retry')
 			expect(await generation(started.generationId)).toMatchObject({
 				status: 'failed',
 				error,
@@ -533,6 +566,64 @@ describe('making the clip in the background (#301)', () => {
 				.from(Notification)
 				.where(eq(Notification.entityId, started.generationId))
 			expect(notice?.type).toBe('hero-video-failed')
+		}
+	})
+
+	it('a renderer that recovers is not a failure: the request is made on a later attempt, nobody is told of the first', async () => {
+		const ctx = await setup()
+		let calls = 0
+		const real = createMockHeroVideoRenderer()
+		const h = harness({
+			renderer: {
+				name: 'mock',
+				render: async (input) => {
+					calls++
+					return calls === 1
+						? ({ ok: false, error: 'renderer_failed' } as const)
+						: real.render(input)
+				},
+			},
+		})
+		const chosen = await photos(ctx.organization.id, 3)
+		const started = await start(
+			ctx,
+			chosen.map((p) => p.id),
+			h.deps,
+		)
+		if (!started.ok) throw new Error(started.error)
+		expect(await processHeroVideo(started.generationId, h.deps)).toMatchObject({
+			ok: false,
+			retry: true,
+		})
+		expect(
+			await db
+				.select()
+				.from(Notification)
+				.where(eq(Notification.entityId, started.generationId)),
+		).toHaveLength(0)
+		expect(await processHeroVideo(started.generationId, h.deps)).toEqual({
+			ok: true,
+			status: 'ready',
+		})
+	})
+
+	it('a request the renderer could not make does not use up a daily try', async () => {
+		const ctx = await setup()
+		const h = harness({ renderer: createMockHeroVideoRenderer({ fail: true }) })
+		const chosen = await photos(ctx.organization.id, 3)
+		for (let i = 0; i < HERO_VIDEO_MAX_PER_DAY + 1; i++) {
+			const started = await start(
+				ctx,
+				chosen.map((p) => p.id),
+				h.deps,
+			)
+			if (!started.ok) throw new Error(`try ${i}: ${started.error}`)
+			for (let attempt = 0; attempt < 3; attempt++) {
+				await processHeroVideo(started.generationId, h.deps)
+			}
+			expect(await generation(started.generationId)).toMatchObject({
+				status: 'failed',
+			})
 		}
 	})
 

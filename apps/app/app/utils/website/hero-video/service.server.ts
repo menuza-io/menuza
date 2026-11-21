@@ -18,6 +18,7 @@ import {
 } from '@repo/common/hero-video'
 import {
 	and,
+	asc,
 	desc,
 	db,
 	eq,
@@ -284,6 +285,7 @@ export async function startHeroVideo(
 		.select({
 			id: HeroVideoGeneration.id,
 			status: HeroVideoGeneration.status,
+			error: HeroVideoGeneration.error,
 			updatedAt: HeroVideoGeneration.updatedAt,
 		})
 		.from(HeroVideoGeneration)
@@ -293,7 +295,11 @@ export async function startHeroVideo(
 				gte(HeroVideoGeneration.createdAt, since),
 			),
 		)
-	if (recent.length >= HERO_VIDEO_MAX_PER_DAY) {
+	// A request the renderer could not make is not the restaurant's try.
+	const counted = recent.filter(
+		(row) => !(row.status === 'failed' && row.error === 'renderer_failed'),
+	)
+	if (counted.length >= HERO_VIDEO_MAX_PER_DAY) {
 		return { ok: false, error: 'daily_limit' }
 	}
 	if (
@@ -321,6 +327,45 @@ export async function startHeroVideo(
 			pageId: input.pageId ?? null,
 		})
 		.returning({ id: HeroVideoGeneration.id })
+	// The checks above read and then insert, so two clicks at once can both pass
+	// them. Look again with the new row in: the earlier request keeps its place,
+	// the later one is taken back out.
+	const after = await db
+		.select({
+			id: HeroVideoGeneration.id,
+			status: HeroVideoGeneration.status,
+			error: HeroVideoGeneration.error,
+			updatedAt: HeroVideoGeneration.updatedAt,
+		})
+		.from(HeroVideoGeneration)
+		.where(
+			and(
+				eq(HeroVideoGeneration.organizationId, input.organizationId),
+				gte(HeroVideoGeneration.createdAt, since),
+			),
+		)
+		.orderBy(asc(HeroVideoGeneration.createdAt), asc(HeroVideoGeneration.id))
+	const active = after.filter(
+		(row) =>
+			(row.status === 'queued' || row.status === 'rendering') &&
+			(row.id === created!.id ||
+				now - row.updatedAt.getTime() < HERO_VIDEO_STALE_MS * 3),
+	)
+	const countedAfter = after.filter(
+		(row) => !(row.status === 'failed' && row.error === 'renderer_failed'),
+	)
+	const lostRace =
+		(active[0] && active[0].id !== created!.id ? 'already_running' : null) ??
+		(countedAfter.findIndex((row) => row.id === created!.id) >=
+		HERO_VIDEO_MAX_PER_DAY
+			? 'daily_limit'
+			: null)
+	if (lostRace) {
+		await db
+			.delete(HeroVideoGeneration)
+			.where(eq(HeroVideoGeneration.id, created!.id))
+		return { ok: false, error: lostRace }
+	}
 	await (deps.wake ?? wakeHeroVideoWorkflow)(created!.id).catch(() => false)
 	return { ok: true, generationId: created!.id }
 }
@@ -373,6 +418,8 @@ export type ProcessOutcome =
 			ok: false
 			status?: string
 			error: HeroVideoError | 'skipped' | 'not_found'
+			/** A passing problem: the request is queued again and the job should be retried. */
+			retry?: true
 	  }
 
 /**
@@ -428,6 +475,19 @@ export async function processHeroVideo(
 		return { ok: false as const, status: 'failed', error }
 	}
 
+	// A passing problem (a photo that could not be read, the renderer busy or
+	// down) is tried again while attempts are left: the request goes back to
+	// the queue, nobody is told, and the job answers so the workflow retries.
+	// The last attempt, and any problem that will not change, fails the request.
+	const retryOrFail = async (error: HeroVideoError) => {
+		if (claimed.attempts >= MAX_ATTEMPTS) return fail(error)
+		await db
+			.update(HeroVideoGeneration)
+			.set({ status: 'queued', startedAt: null })
+			.where(eq(HeroVideoGeneration.id, generationId))
+		return { ok: false as const, status: 'queued', error, retry: true as const }
+	}
+
 	const renderer =
 		deps.renderer === undefined ? getHeroVideoRenderer() : deps.renderer
 	if (!renderer) return fail('renderer_not_configured')
@@ -459,14 +519,23 @@ export async function processHeroVideo(
 				mimeType: photo.mimeType,
 				width: photo.width,
 				height: photo.height,
-				bytes: await (deps.readPhoto ?? defaultReadPhoto)(photo),
+				// Only a renderer that works in this process (the mock) needs the
+				// bytes; a remote one reads the short-lived link.
+				bytes:
+					renderer.name === 'mock'
+						? await (deps.readPhoto ?? defaultReadPhoto)(photo)
+						: undefined,
 			})),
 		)
 	} catch {
-		return fail('invalid_photos')
+		return retryOrFail('invalid_photos')
 	}
 	const rendered = await renderer.render({ plan, stills })
-	if (!rendered.ok) return fail(rendered.error)
+	if (!rendered.ok) {
+		return rendered.error === 'renderer_failed'
+			? retryOrFail('renderer_failed')
+			: fail(rendered.error)
+	}
 
 	const store = deps.store ?? uploadHeroVideoObject
 	const remove = deps.remove ?? deleteOrganizationStorageObject
@@ -541,7 +610,7 @@ export async function processHeroVideo(
 		for (const key of [videoKey, posterKey]) {
 			if (key) await remove(key, claimed.organizationId).catch(() => {})
 		}
-		return fail('renderer_failed')
+		return retryOrFail('renderer_failed')
 	}
 }
 
