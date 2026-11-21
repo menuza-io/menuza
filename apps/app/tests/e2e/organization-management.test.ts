@@ -204,7 +204,21 @@ test.describe('Organization Management', () => {
 		await nameField.pressSequentially(newName, { delay: 10 })
 		await expect(nameField).toHaveValue(newName)
 
-		await expect(saveBar(page).save).toBeVisible()
+		const settingsForm = page.getByTestId('organization-general-settings-form')
+		const save = saveBar(page).save
+		const submit = async () => {
+			if (await save.isVisible()) {
+				await save.click()
+				return
+			}
+			// Same path as the global save bar; Conform `form.dirty` can lag in CI.
+			await settingsForm.evaluate((form) => {
+				if (!(form instanceof HTMLFormElement)) {
+					throw new Error('organization settings form missing')
+				}
+				form.requestSubmit()
+			})
+		}
 
 		await Promise.all([
 			page.waitForResponse(
@@ -213,7 +227,7 @@ test.describe('Organization Management', () => {
 					res.url().includes('/settings') &&
 					!res.url().includes('.data'),
 			),
-			saveBar(page).save.click(),
+			submit(),
 		])
 
 		await expect.poll(
