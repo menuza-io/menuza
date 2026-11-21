@@ -254,6 +254,31 @@
       "import": "./src/form-alerts.ts",
       "default": "./src/form-alerts.ts"
     },
+    "./media-library": {
+      "types": "./src/media-library.ts",
+      "import": "./src/media-library.ts",
+      "default": "./src/media-library.ts"
+    },
+    "./font-licence": {
+      "types": "./src/font-licence.ts",
+      "import": "./src/font-licence.ts",
+      "default": "./src/font-licence.ts"
+    },
+    "./site-embeds": {
+      "types": "./src/site-embeds.ts",
+      "import": "./src/site-embeds.ts",
+      "default": "./src/site-embeds.ts"
+    },
+    "./action-targets": {
+      "types": "./src/action-targets.ts",
+      "import": "./src/action-targets.ts",
+      "default": "./src/action-targets.ts"
+    },
+    "./hero-video": {
+      "types": "./src/hero-video.ts",
+      "import": "./src/hero-video.ts",
+      "default": "./src/hero-video.ts"
+    },
     "./site-funnel": {
       "types": "./src/site-funnel.ts",
       "import": "./src/site-funnel.ts",

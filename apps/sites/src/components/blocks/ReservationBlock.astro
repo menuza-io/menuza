@@ -1,4 +1,5 @@
 ---
+import { actionAttrs, actionLink } from '~/lib/action-targets'
 import { msg } from '@lingui/core/macro'
 import ReservationLabels from '~/components/reservations/ReservationLabels.astro'
 import { getLocaleHref } from '~/lib/locale'
@@ -37,13 +38,22 @@ const party = Math.min(Math.max(Math.trunc(Number(config.defaultPartySize)) || 2
 const locationId = (config.locationId || '').trim()
 const query = new URLSearchParams({ party: String(party) })
 if (locationId) query.set('location', locationId)
-const href = `${getLocaleHref('/reserve', locale, locale, defaultLocale)}?${query.toString()}`
+// Reservations can go to another site (#318): the block then is a button to
+// it (new tab, counted), shown even when our own booking is off.
+const reservationLink = actionLink(organization, '/reserve', {
+	locationId: locationId || undefined,
+})
+const external = reservationLink.external
+const href = external
+	? reservationLink.href
+	: `${getLocaleHref('/reserve', locale, locale, defaultLocale)}?${query.toString()}`
+const linkAttrs = actionAttrs(reservationLink)
 const heading = config.heading?.trim() || i18n._(msg`Reserve a table`)
 const buttonLabel = config.buttonLabel?.trim() || i18n._(msg`Book a table`)
-const inline = config.layout === 'inline'
+const inline = !external && config.layout === 'inline'
 ---
 
-{gate ? (
+{gate || external ? (
 	<section class:list={[siteSection]} data-reservation-block>
 		<div class={siteContainer}>
 			<div class="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
@@ -62,7 +72,7 @@ const inline = config.layout === 'inline'
 						</form>
 					</>
 				) : (
-					<a href={href} class={siteBtnPrimary} data-reservation-cta>{buttonLabel}</a>
+					<a href={href} class={siteBtnPrimary} data-reservation-cta {...linkAttrs}>{buttonLabel}</a>
 				)}
 			</div>
 		</div>

@@ -1,4 +1,5 @@
 ---
+import { externalFor } from '~/lib/action-targets'
 import { locationOffersOrdering } from '@repo/common/restaurant-sections'
 import SectionBlock from './SectionBlock.astro'
 import {
@@ -14,6 +15,8 @@ interface Props {
 }
 
 const { sections, experiment = null } = Astro.props
+// Embeds wait for the cookie choice under Required mode (#259).
+const consentMode = Astro.locals.organization?.consent?.mode ?? 'off'
 const bodySections = sections.filter(
 	(section) => section.type !== 'header' && section.type !== 'footer',
 )
@@ -38,13 +41,18 @@ const reservations = needsLive
 			host: Astro.locals.customHost,
 		})
 	: null
+// A button for ordering or booking also shows when that action goes to
+// another site (#318): guests are sent there, so our own modules need not be on.
 const features = {
-	ordering: (menu?.locations ?? []).some(
-		(location) =>
-			locationOffersOrdering(location.fulfillmentOptions) &&
-			(menu?.menus?.length ?? 0) > 0,
-	),
-	reservations: reservations?.online === true,
+	ordering:
+		(menu?.locations ?? []).some(
+			(location) =>
+				locationOffersOrdering(location.fulfillmentOptions) &&
+				(menu?.menus?.length ?? 0) > 0,
+		) || externalFor(Astro.locals.organization, 'order'),
+	reservations:
+		reservations?.online === true ||
+		externalFor(Astro.locals.organization, 'reservations'),
 }
 ---
 
@@ -58,14 +66,14 @@ const features = {
 			// blocked script can never leave the section hidden).
 			<div data-exp={experiment.id} data-exp-pending class="exp-wrap">
 				<div data-exp-arm="a">
-					<SectionBlock type={section.type} id={section.id} config={section.config} menu={menu} features={features} />
+					<SectionBlock type={section.type} id={section.id} config={section.config} menu={menu} features={features} consentMode={consentMode} />
 				</div>
 				<template data-exp-arm="b">
-					<SectionBlock type={section.type} id={section.id} config={experiment.variantConfig} menu={menu} features={features} />
+					<SectionBlock type={section.type} id={section.id} config={experiment.variantConfig} menu={menu} features={features} consentMode={consentMode} />
 				</template>
 			</div>
 		) : (
-			<SectionBlock type={section.type} id={section.id} config={section.config} menu={menu} features={features} />
+			<SectionBlock type={section.type} id={section.id} config={section.config} menu={menu} features={features} consentMode={consentMode} />
 		),
 	)}
 </div>

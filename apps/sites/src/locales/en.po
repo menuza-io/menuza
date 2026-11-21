@@ -1100,6 +1100,7 @@ msgstr "Cookie choices"
 msgid "Cookie policy"
 msgstr "Cookie policy"
 
+#: src/components/blocks/EmbedBlock.astro.ts:3
 #: src/components/SiteFooter.astro.ts:3
 msgid "Cookie settings"
 msgstr "Cookie settings"
@@ -1995,6 +1996,10 @@ msgstr "Limited menus you pre-order for a pickup window."
 msgid "Link copied"
 msgstr "Link copied"
 
+#: src/components/blocks/EmbedBlock.astro.ts:3
+msgid "Load content"
+msgstr "Load content"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Load more"
 msgstr "Load more"
@@ -2431,6 +2436,10 @@ msgstr "Only {count} of {name} left today. Please go back to the menu to lower t
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
 msgstr "Open for orders"
+
+#: src/components/blocks/EmbedBlock.astro.ts:3
+msgid "Open in a new tab"
+msgstr "Open in a new tab"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/lib/ordering-labels.ts:179
@@ -4009,6 +4018,10 @@ msgstr "This code works once and stops working in a few minutes. It is not your 
 #: src/lib/ordering-labels.ts:85
 msgid "This combination is sold out. Choose another combination."
 msgstr "This combination is sold out. Choose another combination."
+
+#: src/components/blocks/EmbedBlock.astro.ts:3
+msgid "This content is provided by another service and may set cookies."
+msgstr "This content is provided by another service and may set cookies."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This drop could not be found. It may have ended."

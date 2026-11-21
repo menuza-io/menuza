@@ -1,0 +1,125 @@
+---
+import { msg } from '@lingui/core/macro'
+import { buildEmbedFrame } from '@repo/common/site-embeds'
+import {
+	siteContainer,
+	siteSection,
+	siteSectionBackground,
+	siteSectionHeadingClass,
+} from '~/lib/media'
+
+/**
+ * A third-party widget (#259): a booking widget, a beer list, a map, a video,
+ * a ticketing page or an Instagram post. The frame address is BUILT from a
+ * provider and strictly checked ids (`buildEmbedFrame`); pasted code is never
+ * rendered, and a config that does not check out renders nothing. The frame is
+ * only created in the browser, once the cookie choice allows marketing cookies
+ * (`site-embeds-client.ts`); until then the visitor sees the placeholder, a
+ * button to load this one widget, and a plain link to the provider. The widget
+ * receives no guest data from this site.
+ */
+interface Props {
+	config: {
+		title?: string
+		provider?: string
+		ids?: Record<string, string>
+		height?: unknown
+		background?: 'none' | 'muted' | 'inverted'
+	}
+	/** The site's cookie banner mode (#89). */
+	consentMode?: 'required' | 'notice' | 'off'
+}
+
+const { config, consentMode = 'off' } = Astro.props
+const frame = buildEmbedFrame(config)
+const i18n = Astro.locals.i18n
+const title = typeof config?.title === 'string' ? config.title.trim() : ''
+const frameTitle = title || frame?.label || ''
+const background = siteSectionBackground(config?.background)
+const headingClass = siteSectionHeadingClass(config?.background)
+const t = frame
+	? {
+			consent: i18n._(
+				msg`This content is provided by another service and may set cookies.`,
+			),
+			load: i18n._(msg`Load content`),
+			settings: i18n._(msg`Cookie settings`),
+			open: i18n._(msg`Open in a new tab`),
+		}
+	: null
+const style =
+	frame?.size.kind === 'px'
+		? `height: ${frame.size.px}px`
+		: 'aspect-ratio: 16 / 9'
+---
+
+{
+	frame && t ? (
+		<section class:list={[siteSection, background]} data-embed-section>
+			<div class={siteContainer}>
+				{title ? (
+					<h2 class:list={['mb-8 text-3xl font-bold tracking-tight sm:text-4xl', headingClass]}>
+						{title}
+					</h2>
+				) : null}
+				<div
+					data-site-embed
+					data-consent-mode={consentMode}
+					data-embed-provider={frame.provider}
+					data-embed-src={frame.src}
+					data-embed-title={frameTitle}
+					data-embed-allow={frame.allow || undefined}
+					class="bg-muted relative w-full overflow-hidden rounded-[calc(var(--radius)+12px)]"
+					style={style}
+				>
+					<div
+						data-embed-placeholder
+						class="text-foreground absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-sm"
+					>
+						<p class="max-w-md">{t.consent}</p>
+						<div class="flex flex-wrap items-center justify-center gap-3">
+							<button type="button" class="btn-secondary" data-embed-load>
+								{t.load}
+							</button>
+							<a
+								class="underline underline-offset-2"
+								href={frame.fallbackUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{t.open}
+							</a>
+						</div>
+						{consentMode !== 'off' ? (
+							<button
+								type="button"
+								class="text-xs underline underline-offset-2"
+								data-open-consent-settings
+							>
+								{t.settings}
+							</button>
+						) : null}
+					</div>
+				</div>
+				<noscript>
+					<p class="mt-3 text-sm">
+						<a
+							class="underline underline-offset-2"
+							href={frame.fallbackUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{frameTitle}
+						</a>
+					</p>
+				</noscript>
+			</div>
+		</section>
+	) : null
+}
+
+<script>
+	import { initSiteEmbeds } from '~/lib/site-embeds-client'
+
+	initSiteEmbeds()
+</script>

@@ -28,6 +28,8 @@ interface Props {
 		imageUrl?: string
 		media?: { url?: string; alt?: string }
 		videoSrc?: string
+		/** The still shown first and to guests who prefer reduced motion (#301). */
+		videoPoster?: string
 		videoAutoPlay?: boolean
 		videoLoop?: boolean
 		videoMuted?: boolean
@@ -49,6 +51,7 @@ const {
 	imageUrl,
 	media,
 	videoSrc,
+	videoPoster,
 	videoAutoPlay = true,
 	videoLoop = true,
 	videoMuted = true,
@@ -66,6 +69,9 @@ const slideshow = heroSlideshow(slides)
 const imageSrc = slides[0]?.src ?? null
 const imageSrcSet = slides[0]?.srcSet
 const videoUrl = resolveMediaUrl(videoSrc)
+// A poster means the video is only given its source by script, for a guest who
+// has not asked for less motion: everyone else sees the still (#301).
+const posterUrl = resolveMediaUrl(videoPoster)
 const hasMedia =
 	(assetType === 'image' && slides.length > 0) ||
 	(assetType === 'video' && Boolean(videoUrl))
@@ -108,8 +114,13 @@ const slideSeconds = slides.length * HERO_SLIDE_SECONDS
 	{hasMedia && assetType === 'video' && videoUrl ? (
 		<video
 			class="absolute inset-0 size-full object-cover"
-			src={videoUrl}
-			autoplay={videoAutoPlay}
+			data-hero-video
+			data-autoplay={videoAutoPlay ? 'true' : 'false'}
+			src={posterUrl ? undefined : videoUrl}
+			data-src={posterUrl ? videoUrl : undefined}
+			poster={posterUrl ?? undefined}
+			preload={posterUrl ? 'none' : undefined}
+			autoplay={posterUrl ? undefined : videoAutoPlay}
 			loop={videoLoop}
 			muted={videoMuted}
 			controls={videoControls}
@@ -224,6 +235,12 @@ const slideSeconds = slides.length * HERO_SLIDE_SECONDS
 		}
 	}
 </style>
+
+<script>
+	import { initHeroVideos } from '~/lib/hero-video-client'
+
+	initHeroVideos()
+</script>
 
 <script>
 	for (const root of document.querySelectorAll<HTMLElement>('[data-hero-slideshow]')) {

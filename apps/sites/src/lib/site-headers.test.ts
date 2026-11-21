@@ -1,3 +1,4 @@
+import { embedFrameOrigins } from '@repo/common/site-embeds'
 import { describe, expect, it } from 'vitest'
 import {
 	asAstroResponse,
@@ -9,6 +10,7 @@ import {
 	publishedHtmlCacheUrl,
 	shouldCachePublishedHtml,
 	sitesConnectSrc,
+	sitesFrameSrc,
 	PARTYTOWN_SCRIPT_HASH,
 	SITES_BOOT_SCRIPT,
 	sitesScriptSrc,
@@ -298,5 +300,68 @@ describe('publishedHtmlCacheControl (#238)', () => {
 				now,
 			),
 		).toBe('public, max-age=30, s-maxage=30')
+	})
+})
+
+describe('sitesFrameSrc: embeds (#259)', () => {
+	const csp = { inlineCard: false, hostedEmbed: true }
+	const section = (config: unknown) => ({
+		type: 'embed',
+		config: JSON.stringify(config),
+	})
+
+	it('adds no provider to a page that has no embed', () => {
+		const policy = sitesFrameSrc(csp, embedFrameOrigins([]))
+		expect(policy).toBe(sitesFrameSrc(csp))
+		for (const host of ['opentable', 'resy', 'youtube', 'vimeo', 'untappd']) {
+			expect(policy).not.toContain(host)
+		}
+	})
+
+	it('allows exactly the providers the page uses', () => {
+		const policy = sitesFrameSrc(
+			csp,
+			embedFrameOrigins([
+				{ type: 'hero', config: '{}' },
+				section({ provider: 'opentable', ids: { restaurantId: '12345' } }),
+			]),
+		)
+		expect(policy).toContain('https://www.opentable.com')
+		expect(policy).toContain('https://challenges.cloudflare.com')
+		for (const host of ['resy', 'youtube', 'vimeo', 'untappd', 'google.com']) {
+			expect(policy).not.toContain(host)
+		}
+	})
+
+	it('never takes an origin from pasted or invalid config', () => {
+		const origins = embedFrameOrigins([
+			section({
+				provider: 'opentable',
+				ids: { restaurantId: 'https://evil.example' },
+			}),
+			section({ provider: 'evil.example', ids: { x: '1' } }),
+			section({
+				provider: 'youtube',
+				ids: { video: 'dQw4w9WgXcQ' },
+				src: 'https://evil.example',
+			}),
+		])
+		const policy = sitesFrameSrc(csp, origins)
+		expect(policy).not.toContain('evil')
+		expect(policy).toContain('https://www.youtube-nocookie.com')
+	})
+
+	it('refuses an extra origin that is not a plain https origin', () => {
+		const policy = sitesFrameSrc(csp, [
+			'http://plain.example',
+			'https://ok.example/path',
+			"https://x.example; script-src 'unsafe-inline'",
+			'*',
+			'https://fine.example',
+		])
+		expect(policy).toContain('https://fine.example')
+		for (const bad of ['plain.example', 'path', 'unsafe-inline', ' * ']) {
+			expect(policy).not.toContain(bad)
+		}
 	})
 })

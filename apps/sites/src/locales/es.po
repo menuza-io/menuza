@@ -1100,6 +1100,7 @@ msgstr "Opciones de cookies"
 msgid "Cookie policy"
 msgstr "Política de cookies"
 
+#: src/components/blocks/EmbedBlock.astro.ts:3
 #: src/components/SiteFooter.astro.ts:3
 msgid "Cookie settings"
 msgstr "Configuración de cookies"
@@ -1995,6 +1996,10 @@ msgstr "Menús limitados que reservas para recoger en un horario concreto."
 msgid "Link copied"
 msgstr "Enlace copiado"
 
+#: src/components/blocks/EmbedBlock.astro.ts:3
+msgid "Load content"
+msgstr "Cargar contenido"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Load more"
 msgstr "Cargar más"
@@ -2431,6 +2436,10 @@ msgstr "Hoy solo quedan {count} de {name}. Vuelve al menú para reducir la canti
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
 msgstr "Abierto para pedidos"
+
+#: src/components/blocks/EmbedBlock.astro.ts:3
+msgid "Open in a new tab"
+msgstr "Abrir en una pestaña nueva"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/lib/ordering-labels.ts:179
@@ -4009,6 +4018,10 @@ msgstr "Este código funciona una vez y deja de valer en unos minutos. No es el 
 #: src/lib/ordering-labels.ts:85
 msgid "This combination is sold out. Choose another combination."
 msgstr "Esta combinación está agotada. Elige otra combinación."
+
+#: src/components/blocks/EmbedBlock.astro.ts:3
+msgid "This content is provided by another service and may set cookies."
+msgstr "Este contenido lo ofrece otro servicio y puede instalar cookies."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This drop could not be found. It may have ended."

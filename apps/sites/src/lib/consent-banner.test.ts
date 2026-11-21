@@ -179,6 +179,13 @@ describe('legal links and the banner', () => {
 			bannerApplies({ consent: { mode: 'off' }, facebookPixelId: '123' }),
 		).toBe(false)
 		expect(bannerApplies({ consent: { mode: 'required' } })).toBe(false)
+		// An embedded widget can set marketing cookies, so it is worth asking (#259).
+		expect(
+			bannerApplies({ consent: { mode: 'required' } }, { hasEmbeds: true }),
+		).toBe(true)
+		expect(
+			bannerApplies({ consent: { mode: 'off' } }, { hasEmbeds: true }),
+		).toBe(false)
 		expect(bannerApplies({ facebookPixelId: '123' })).toBe(false)
 	})
 })

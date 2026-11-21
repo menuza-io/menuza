@@ -1,14 +1,28 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { requireUserId } from '@repo/auth'
+import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 import {
+	ACTION_KINDS,
+	hasExternalTarget,
+	parseActionTargets,
+} from '@repo/common/action-targets'
+import {
 	parseSiteLocalesConfig,
+	pickLocalized,
 	serializeSiteLocales,
 	type SiteContentLocale,
 } from '@repo/common/site-locales'
 import { redirectWithToast } from '@repo/common/toast'
 import { namesLeftBlank } from '@repo/common/translation-status'
-import { and, db, eq, Organization } from '@repo/database'
+import {
+	and,
+	asc,
+	db,
+	desc,
+	eq,
+	Organization,
+	OrganizationLocation,
+} from '@repo/database'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import {
 	type ActionFunctionArgs,
@@ -30,6 +44,11 @@ import {
 	LOCALE_NAMES_LEFT_BLANK,
 	siteLocalesActionIntent,
 } from '#app/components/settings/cards/organization/site-locales-card.tsx'
+import {
+	ActionTargetsCard,
+	actionTargetsActionIntent,
+} from '#app/components/website/action-targets-card.tsx'
+import { useOutboundCounts } from '#app/components/website/use-outbound-counts.ts'
 import { resetSenderDomainForRegionChange } from '#app/utils/email-sender/sender.server.ts'
 import { loadTranslatableRecords } from '#app/utils/menu/translation-status.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -53,9 +72,13 @@ import {
 	evaluateRegionGuard,
 	fetchStaffSummary,
 } from '#app/utils/staffing/region-guard.server.ts'
+import {
+	saveActionTargets,
+	type ActionTargetsForm,
+} from '#app/utils/website/action-targets.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
@@ -76,12 +99,56 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_WEBSITE_ANY,
 	)
 
+	// Where the Order, Gift cards and Reservations buttons go (#318).
+	const defaultLocale = organization.siteDefaultLocale || 'en'
+	const locationRows = await db
+		.select({
+			id: OrganizationLocation.id,
+			name: OrganizationLocation.name,
+			actionTargets: OrganizationLocation.actionTargets,
+		})
+		.from(OrganizationLocation)
+		.where(eq(OrganizationLocation.organizationId, organization.id))
+		.orderBy(
+			desc(OrganizationLocation.isDefault),
+			asc(OrganizationLocation.name),
+		)
+	const [orgTargets] = await db
+		.select({ actionTargets: Organization.actionTargets })
+		.from(Organization)
+		.where(eq(Organization.id, organization.id))
+		.limit(1)
+	const actionTargets = {
+		organization: parseActionTargets(orgTargets?.actionTargets),
+		locations: locationRows.map((row) => ({
+			id: row.id,
+			name: pickLocalized(row.name, defaultLocale, defaultLocale) || row.name,
+			targets: parseActionTargets(row.actionTargets),
+		})),
+	}
+	const canEditActionTargets = await userHasOrganizationPermission(
+		userId,
+		organization.id,
+		ORG_PERMISSIONS.UPDATE_WEBSITE_ANY,
+	)
+
 	return {
 		organization,
 		localesConfig: parseSiteLocalesConfig(
 			organization.siteLocales,
 			organization.siteDefaultLocale,
 		),
+		actionTargets,
+		canEditActionTargets,
+		showOutboundCounts: hasExternalTarget({
+			organization: actionTargets.organization,
+			locations: Object.fromEntries(
+				actionTargets.locations.map((location) => [
+					location.id,
+					location.targets,
+				]),
+			),
+		}),
 	}
 }
 
@@ -402,6 +469,38 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
+	if (intent === actionTargetsActionIntent) {
+		await requirePermission(ORG_PERMISSIONS.UPDATE_WEBSITE_ANY)
+		const form: ActionTargetsForm = {}
+		for (const kind of ACTION_KINDS) {
+			const mode = formData.get(`${kind}Mode`)
+			if (mode === 'menuza' || mode === 'external' || mode === 'inherit') {
+				const url = formData.get(`${kind}Url`)
+				form[kind] = { mode, url: typeof url === 'string' ? url : undefined }
+			}
+		}
+		const locationId = formData.get('locationId')
+		const result = await saveActionTargets({
+			organizationId: organization.id,
+			locationId:
+				typeof locationId === 'string' && locationId ? locationId : null,
+			form,
+		})
+		if (!result.ok) {
+			return Response.json(
+				{ ok: false, error: result.error, kind: result.kind },
+				{ status: result.error === 'not_found' ? 404 : 400 },
+			)
+		}
+		// Every button, link, page and structured data reads this: one purge.
+		await purgeOrganizationSiteCache(
+			organization.id,
+			organization.slug,
+			organization.customDomain,
+		)
+		return Response.json({ ok: true })
+	}
+
 	if (intent === siteLocalesActionIntent) {
 		await requirePermission(ORG_PERMISSIONS.UPDATE_WEBSITE_ANY)
 
@@ -468,8 +567,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function WebsiteGeneralSettings() {
-	const { organization, localesConfig } = useLoaderData<typeof loader>()
+	const {
+		organization,
+		localesConfig,
+		actionTargets,
+		canEditActionTargets,
+		showOutboundCounts,
+	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
+	const outbound = useOutboundCounts(organization.slug, showOutboundCounts)
 
 	return (
 		<AnnotatedLayout className="max-w-4xl">
@@ -482,6 +588,14 @@ export default function WebsiteGeneralSettings() {
 					organization={organization}
 					localesConfig={localesConfig}
 					actionData={actionData}
+				/>
+			</AnnotatedSection>
+
+			<AnnotatedSection>
+				<ActionTargetsCard
+					data={actionTargets}
+					canEdit={canEditActionTargets}
+					outbound={outbound}
 				/>
 			</AnnotatedSection>
 		</AnnotatedLayout>

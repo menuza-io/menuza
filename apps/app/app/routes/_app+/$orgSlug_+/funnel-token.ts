@@ -6,6 +6,8 @@ import {
 } from '#app/utils/organization/permissions.server.ts'
 import { funnelEnabled } from '#app/utils/site-events/site-events.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
+import { loadPublicActionTargets } from '#app/utils/website/action-targets.server.ts'
+import { hasExternalTarget } from '@repo/common/action-targets'
 
 /**
  * Credentials for the browser-direct funnel read:
@@ -19,7 +21,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		params.orgSlug || '',
 		{ id: true },
 	)
-	if (!(await funnelEnabled(organization.id))) {
+	// The funnel is behind `website.funnel`. Clicks that leave for another site
+	// (#318) are counted whenever a button goes there, so their count is
+	// readable then too, from the same endpoint.
+	if (
+		!(await funnelEnabled(organization.id)) &&
+		!hasExternalTarget(await loadPublicActionTargets(organization.id))
+	) {
 		throw new Response('Not found', { status: 404 })
 	}
 	await requireUserWithOrganizationPermission(

@@ -1,4 +1,5 @@
 ---
+import { actionAttrs, actionLink } from '~/lib/action-targets'
 import { msg } from '@lingui/core/macro'
 import {
 	describeOpenNow,
@@ -32,6 +33,10 @@ const labels = {
 	hours: i18n?._(msg`Hours`) ?? 'Hours',
 	paused: i18n?._(msg`Ordering is paused`) ?? 'Ordering is paused',
 }
+const orderLink = (locationId: string) =>
+	actionLink(Astro.locals.organization, `/menu?location=${encodeURIComponent(locationId)}`, { locationId })
+const reserveLink = (locationId: string) =>
+	actionLink(Astro.locals.organization, '/reserve', { locationId })
 const heading = typeof config.heading === 'string' ? config.heading : ''
 const now = new Date()
 const locations = locationsForSection(
@@ -122,10 +127,10 @@ const locations = locationsForSection(
 								<a class="btn-secondary" href={location.directions} rel="noopener" target="_blank">{labels.directions}</a>
 							) : null}
 							{location.canOrder ? (
-								<a class="btn-cta" href={`/menu?location=${encodeURIComponent(location.id)}`}>{labels.order}</a>
+								<a class="btn-cta" href={orderLink(location.id).href} {...actionAttrs(orderLink(location.id))}>{labels.order}</a>
 							) : null}
 							{reservationsOnline ? (
-								<a class="btn-secondary" href="/reserve">{labels.reserve}</a>
+								<a class="btn-secondary" href={reserveLink(location.id).href} {...actionAttrs(reserveLink(location.id))}>{labels.reserve}</a>
 							) : null}
 							{location.phone ? (
 								<a class="btn-secondary" href={`tel:${location.phone.replace(/[^+\d]/g, '')}`} dir="ltr">{labels.call}</a>

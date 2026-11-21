@@ -23,6 +23,7 @@ import {
 	eq,
 	OrganizationLocation,
 	SiteEvent,
+	SiteEventCalendarSource,
 } from '@repo/database'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -56,6 +57,7 @@ import {
 } from '#app/utils/seo/site-events.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { resolveSitesOrigin } from '#app/utils/sites/sites-origin.server.ts'
+import { isValidRedirectDestination } from '#app/utils/website/redirect-destination.ts'
 
 async function loadEvent(organizationId: string, eventId: string | undefined) {
 	const [event] = await db
@@ -92,11 +94,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		.from(OrganizationLocation)
 		.where(eq(OrganizationLocation.organizationId, organization.id))
 		.orderBy(asc(OrganizationLocation.name))
+	// An event imported from a Google Calendar (#319): its title and time belong
+	// to the calendar; only hiding it, a photo and a link are the operator's.
+	const [source] = event.sourceId
+		? await db
+				.select({
+					label: SiteEventCalendarSource.label,
+					urlHint: SiteEventCalendarSource.urlHint,
+				})
+				.from(SiteEventCalendarSource)
+				.where(eq(SiteEventCalendarSource.id, event.sourceId))
+				.limit(1)
+		: []
 	return {
 		orgSlug: organization.slug,
 		locales,
 		defaultLocale,
 		locations,
+		source: source ?? null,
 		siteOrigin: resolveSitesOrigin({
 			slug: organization.slug,
 			customDomain: organization.customDomain,
@@ -137,6 +152,59 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			organization.slug,
 			organization.customDomain,
 		)
+
+	if (event.sourceId) {
+		// The calendar owns the text and the time: a save would be overwritten at
+		// the next update, and deleting would bring the event back. The operator's
+		// own additions go through `save-imported`.
+		if (intent === 'save-imported') {
+			const imageUrl = String(formData.get('imageUrl') ?? '').trim()
+			const linkUrl = String(formData.get('linkUrl') ?? '').trim()
+			const linkLabel = String(formData.get('linkLabel') ?? '')
+				.trim()
+				.slice(0, 80)
+			const visible = formData.get('visible') === 'true'
+			if (imageUrl && !/^(https:\/\/|\/)/u.test(imageUrl)) {
+				return Response.json(
+					{ ok: false, error: 'invalid_link' },
+					{ status: 400 },
+				)
+			}
+			if (linkUrl && !isValidRedirectDestination(linkUrl)) {
+				return Response.json(
+					{ ok: false, error: 'invalid_link' },
+					{ status: 400 },
+				)
+			}
+			const defaultLocale = organization.siteDefaultLocale || 'en'
+			await db
+				.update(SiteEvent)
+				.set({
+					imageUrl: imageUrl || null,
+					linkUrl: linkUrl || null,
+					linkLabel:
+						linkUrl && linkLabel
+							? JSON.stringify({ [defaultLocale]: linkLabel })
+							: null,
+					status: visible ? 'published' : 'draft',
+				})
+				.where(eq(SiteEvent.id, event.id))
+			await purge()
+			return Response.json({ ok: true })
+		}
+		if (intent === 'unpublish-event') {
+			await db
+				.update(SiteEvent)
+				.set({ status: 'draft' })
+				.where(eq(SiteEvent.id, event.id))
+			await purge()
+			return Response.json({ ok: true })
+		}
+		return Response.json(
+			{ ok: false, error: 'imported_event' },
+			{ status: 400 },
+		)
+	}
 
 	if (intent === 'save-event' || intent === 'publish-event') {
 		let json: unknown
@@ -215,6 +283,161 @@ const WEEKDAYS = [
 ] as const
 
 export default function WebsiteEventEditorRoute() {
+	const data = useLoaderData<typeof loader>()
+	if (data.source) return <ImportedEventPanel data={data} />
+	return <EventEditor />
+}
+
+/**
+ * An event imported from a Google Calendar (#319): the calendar's text and time
+ * are shown as plain text and cannot be edited here. Hide or show it, add a
+ * photo and a ticket or booking link; those survive every update.
+ */
+function ImportedEventPanel({
+	data,
+}: {
+	data: ReturnType<typeof useLoaderData<typeof loader>>
+}) {
+	const { _, i18n } = useLingui()
+	const fetcher = useFetcher<{ ok: boolean; error?: string }>()
+	const [imageUrl, setImageUrl] = useState(data.event.imageUrl)
+	const [linkUrl, setLinkUrl] = useState(data.event.linkUrl)
+	const [linkLabel, setLinkLabel] = useState(
+		data.event.linkLabel[data.defaultLocale] ?? '',
+	)
+	const [visible, setVisible] = useState(data.event.status === 'published')
+	const title = data.event.title[data.defaultLocale] ?? ''
+	const sourceLabel = data.source?.label ?? ''
+	const description = data.event.description[data.defaultLocale] ?? ''
+	const save = (nextVisible: boolean) => {
+		setVisible(nextVisible)
+		void fetcher.submit(
+			{
+				intent: 'save-imported',
+				imageUrl,
+				linkUrl,
+				linkLabel,
+				visible: String(nextVisible),
+			},
+			{ method: 'POST' },
+		)
+	}
+	const start = new Date(`${data.event.startLocal}:00Z`)
+	return (
+		<div className="space-y-6" data-testid="imported-event">
+			<PageHeader
+				title={title || <Trans>Event</Trans>}
+				description={
+					<Trans>
+						From your calendar {sourceLabel}. Change its title and time in
+						Google Calendar.
+					</Trans>
+				}
+				headingLevel="h2"
+				size="section"
+				actions={
+					<div className="flex flex-wrap gap-2">
+						<Button
+							variant="outline"
+							render={<Link to={`/${data.orgSlug}/website/events`} />}
+						>
+							<Trans>All events</Trans>
+						</Button>
+						<Button variant="outline" onClick={() => save(!visible)}>
+							{visible ? (
+								<Trans>Hide from site</Trans>
+							) : (
+								<Trans>Show on site</Trans>
+							)}
+						</Button>
+						<Button onClick={() => save(visible)}>
+							<Trans>Save</Trans>
+						</Button>
+					</div>
+				}
+			/>
+			<Card>
+				<CardHeader>
+					<CardTitle>
+						<Trans>From the calendar</Trans>
+						<Badge variant="outline" className="ms-2 text-xs">
+							{visible ? <Trans>Shown</Trans> : <Trans>Hidden</Trans>}
+						</Badge>
+					</CardTitle>
+					<CardDescription>
+						{i18n.date(start, {
+							dateStyle: 'full',
+							timeStyle: 'short',
+							timeZone: 'UTC',
+						})}{' '}
+						· {data.event.timezone}
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<p className="text-sm wrap-anywhere whitespace-pre-line" dir="auto">
+						{description || '—'}
+					</p>
+				</CardContent>
+			</Card>
+			<Card>
+				<CardHeader>
+					<CardTitle>
+						<Trans>Your additions</Trans>
+					</CardTitle>
+					<CardDescription>
+						<Trans>A photo and a link stay when the calendar updates.</Trans>
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="space-y-1.5">
+						<Label htmlFor="imported-image">
+							<Trans>Photo address</Trans>
+						</Label>
+						<Input
+							id="imported-image"
+							value={imageUrl}
+							onChange={(event) => setImageUrl(event.target.value)}
+							placeholder="https://"
+						/>
+					</div>
+					<div className="space-y-1.5">
+						<Label htmlFor="imported-link">
+							<Trans>Ticket or booking link</Trans>
+						</Label>
+						<Input
+							id="imported-link"
+							value={linkUrl}
+							onChange={(event) => setLinkUrl(event.target.value)}
+							placeholder="https://"
+						/>
+					</div>
+					<div className="space-y-1.5">
+						<Label htmlFor="imported-link-label">
+							<Trans>Link button label</Trans>
+						</Label>
+						<Input
+							id="imported-link-label"
+							value={linkLabel}
+							onChange={(event) => setLinkLabel(event.target.value)}
+						/>
+					</div>
+					{fetcher.data && !fetcher.data.ok ? (
+						<p role="alert" className="text-destructive text-sm">
+							{_(ERRORS.invalid_link)}
+						</p>
+					) : null}
+					{fetcher.data?.ok ? (
+						<p role="status" className="text-muted-foreground text-sm">
+							<Trans>Saved.</Trans>
+						</p>
+					) : null}
+				</CardContent>
+			</Card>
+		</div>
+	)
+}
+
+function EventEditor() {
 	const data = useLoaderData<typeof loader>()
 	const { _, i18n } = useLingui()
 	const fetcher = useFetcher<{ ok: boolean; error?: string }>()

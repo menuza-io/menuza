@@ -387,3 +387,94 @@ describe('restaurantStructuredData', () => {
 		)
 	})
 })
+
+describe('structured data follows where the buttons go (#318)', () => {
+	const actions = (json: Record<string, unknown>) =>
+		([] as Array<Record<string, unknown>>).concat(
+			(json.potentialAction as never) ?? [],
+		)
+	const target = (action: Record<string, unknown>) =>
+		(action.target as { urlTemplate: string }).urlTemplate
+
+	it("points Google's Order button at our menu while ordering is on Menuza", () => {
+		const json = buildRestaurantJsonLd(input({ hasMenu: true }))
+		expect(json.hasMenu).toBe('https://example.com/menu')
+		expect(
+			target(actions(json).find((a) => a['@type'] === 'OrderAction')!),
+		).toBe('https://example.com/menu')
+	})
+
+	it("points Google's Order button where the site's does, and advertises no menu page", () => {
+		const json = buildRestaurantJsonLd(
+			input({
+				hasMenu: true,
+				actionTargets: {
+					organization: {
+						order: {
+							mode: 'external',
+							url: 'https://order.toast.example/cedar',
+						},
+					},
+					locations: {},
+				},
+			}),
+		)
+		expect(json.hasMenu).toBeUndefined()
+		expect(
+			target(actions(json).find((a) => a['@type'] === 'OrderAction')!),
+		).toBe('https://order.toast.example/cedar')
+		expect(JSON.stringify(json)).not.toContain('example.com/menu')
+	})
+
+	it('points Reserve at the other booking site, even with our booking off', () => {
+		const json = buildRestaurantJsonLd(
+			input({
+				reservationsOnline: false,
+				actionTargets: {
+					organization: {
+						reservations: {
+							mode: 'external',
+							url: 'https://book.example/cedar',
+						},
+					},
+					locations: {},
+				},
+			}),
+		)
+		expect(json.acceptsReservations).toBe(true)
+		expect(
+			target(actions(json).find((a) => a['@type'] === 'ReserveAction')!),
+		).toBe('https://book.example/cedar')
+	})
+
+	it("a location's own choice wins for its own node", () => {
+		const json = buildRestaurantJsonLd(
+			input({
+				hasMenu: true,
+				locations: [location()],
+				actionTargets: {
+					organization: {
+						order: { mode: 'external', url: 'https://all.example/order' },
+					},
+					locations: { loc_1: { order: { mode: 'menuza' } } },
+				},
+			}),
+		)
+		expect(
+			target(actions(json).find((a) => a['@type'] === 'OrderAction')!),
+		).toBe('https://example.com/menu')
+	})
+
+	it('switching back restores the menu and our own links', () => {
+		const json = buildRestaurantJsonLd(
+			input({
+				hasMenu: true,
+				actionTargets: {
+					organization: { order: { mode: 'menuza' } },
+					locations: {},
+				},
+			}),
+		)
+		expect(json.hasMenu).toBe('https://example.com/menu')
+	})
+})

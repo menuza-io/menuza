@@ -2,12 +2,15 @@ import { msg, Plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
+import { normalizeTag, parseTagList } from '@repo/common/media-library'
 import {
 	and,
 	db,
 	desc,
 	eq,
 	inArray,
+	isNotNull,
+	isNull,
 	like,
 	or,
 	sql,
@@ -17,6 +20,9 @@ import {
 	Organization,
 	OrganizationImage,
 	OrganizationMediaAsset,
+	OrganizationMediaTag,
+	OrganizationMenuItem,
+	OrganizationMenuOption,
 	OrganizationNote,
 	OrganizationNoteUpload,
 	SocialPost,
@@ -41,9 +47,8 @@ import { Label } from '@repo/ui/label'
 import { PageHeader } from '@repo/ui/page-header'
 import { Textarea } from '@repo/ui/textarea'
 import { format, formatDistanceToNow } from 'date-fns'
-import { type SQLiteColumn } from 'drizzle-orm/sqlite-core'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Form, useFetcher } from 'react-router'
+import { Form, Link, useFetcher } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
@@ -52,7 +57,35 @@ import {
 	isPhotoStudioCompatible,
 	PhotoStudioDialog,
 } from '#app/components/media-library/photo-studio-dialog.tsx'
+import {
+	addTagsToAssets,
+	archiveAssets,
+	assetVersions,
+	checkNewAssetParent,
+	organizationTags,
+	parseAssetIds,
+	removeTagsFromAssets,
+	restoreAssets,
+	setAltTextForAssets,
+	setAssetParent,
+	tagsByAsset,
+	type OrganizeFailure,
+} from '#app/utils/media/library-organize.server.ts'
 import { isPhotoStudioConfigured } from '#app/utils/media/photo-studio.server.ts'
+import {
+	emailTemplateReferenceCondition,
+	findMediaReferences,
+	menuItemReferenceCondition,
+	menuOptionReferenceCondition,
+	siteChromeReferenceCondition,
+	publishedPageReferenceCondition,
+	configContains,
+	columnContains,
+} from '#app/utils/media/references.server.ts'
+import {
+	getSourceLabel,
+	type MediaReferenceItem,
+} from '#app/utils/media/references.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -77,6 +110,8 @@ const ALLOWED_IMAGE_TYPES = new Set([
 const UploadSchema = z.object({
 	intent: z.literal('upload'),
 	source: z.enum(['library', 'ai-studio']).default('library'),
+	/** The original this upload is an edit of (a studio result, a saved copy). */
+	parentAssetId: z.string().min(1).max(64).optional(),
 	imageFile: z
 		.instanceof(File)
 		.refine((file) => file.size > 0, 'Choose an image to upload.')
@@ -123,11 +158,21 @@ function getMediaUrl(id: string, updatedAt: Date) {
 	return `/resources/images?mediaId=${encodeURIComponent(id)}&v=${updatedAt.getTime()}`
 }
 
-function serializeAsset(asset: typeof OrganizationMediaAsset.$inferSelect) {
+/** A generated hero clip (#301) is a video: it plays from the video route. */
+function getAssetUrl(asset: typeof OrganizationMediaAsset.$inferSelect) {
+	return asset.mimeType.startsWith('video/')
+		? `/resources/videos/source?objectKey=${encodeURIComponent(asset.objectKey)}`
+		: getMediaUrl(asset.id, asset.updatedAt)
+}
+
+function serializeAsset(
+	asset: typeof OrganizationMediaAsset.$inferSelect,
+	tags: string[] = [],
+) {
 	return {
 		id: asset.id,
 		objectKey: asset.objectKey,
-		url: getMediaUrl(asset.id, asset.updatedAt),
+		url: getAssetUrl(asset),
 		fileName: asset.fileName,
 		mimeType: asset.mimeType,
 		fileSize: asset.fileSize,
@@ -136,29 +181,16 @@ function serializeAsset(asset: typeof OrganizationMediaAsset.$inferSelect) {
 		altText: asset.altText,
 		caption: asset.caption,
 		source: asset.source,
+		tags,
+		status: asset.status,
+		archived: asset.archivedAt !== null,
+		parentAssetId: asset.parentAssetId,
 		createdAt: asset.createdAt.toISOString(),
 		updatedAt: asset.updatedAt.toISOString(),
 	}
 }
 
 type SerializedMediaAsset = ReturnType<typeof serializeAsset>
-
-export type MediaReferenceItem = {
-	id: string
-	type:
-		| 'note'
-		| 'comment'
-		| 'logo'
-		| 'site-icon'
-		| 'page'
-		| 'social-post'
-		| 'email-template'
-		| 'source'
-	title: string
-	subtitle?: string
-	url?: string
-	createdAt?: string
-}
 
 type MediaActionData = {
 	asset?: SerializedMediaAsset
@@ -168,6 +200,27 @@ type MediaActionData = {
 	deleted?: boolean
 	deletedId?: string
 	references?: MediaReferenceItem[]
+	/** Organizing results (#147). */
+	organized?: 'tagged' | 'untagged' | 'archived' | 'restored' | 'updated'
+	updatedCount?: number
+	code?: string
+	versions?: AssetVersions
+}
+
+type AssetVersionItem = {
+	id: string
+	fileName: string | null
+	altText: string | null
+	source: string
+	status: string
+	archived: boolean
+	createdAt: string
+	url: string
+}
+type AssetVersions = {
+	original: AssetVersionItem
+	versions: AssetVersionItem[]
+	current: string
 }
 
 function formatFileSize(bytes: number | null) {
@@ -175,72 +228,6 @@ function formatFileSize(bytes: number | null) {
 	if (bytes < 1024) return `${bytes} B`
 	if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
 	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function getSourceLabel(source: string) {
-	switch (source) {
-		case 'ai-studio':
-			return 'AI studio'
-		case 'comment':
-			return 'Comment'
-		case 'note':
-			return 'Note'
-		case 'organization-logo':
-			return 'Organization logo'
-		case 'site-icon':
-			return 'Site icon'
-		case 'video-thumbnail':
-			return 'Video thumbnail'
-		case 'website-asset':
-			return 'Website'
-		case 'website-seo':
-			return 'Website SEO'
-		default:
-			return 'Media library'
-	}
-}
-
-// D1 rejects LIKE patterns over 50 bytes; object keys exceed that, so use instr().
-function configContains(value: string) {
-	return sql`instr(${WebsitePageSection.config}, ${value}) > 0`
-}
-
-function columnContains(column: SQLiteColumn, value: string) {
-	return sql`instr(coalesce(${column}, ''), ${value}) > 0`
-}
-
-/**
- * A saved email template (#154) names an image by its library URL, which holds
- * the object key (raw or URL-encoded) or the asset id. A template keeps using
- * an image the library would otherwise delete.
- */
-function emailTemplateReferenceCondition(objectKey: string, assetId?: string) {
-	return or(
-		columnContains(MarketingEmailTemplate.blocks, objectKey),
-		columnContains(
-			MarketingEmailTemplate.blocks,
-			encodeURIComponent(objectKey),
-		),
-		assetId
-			? columnContains(MarketingEmailTemplate.blocks, assetId)
-			: undefined,
-	)
-}
-
-/**
- * Published page snapshots and SEO images keep using an object after the
- * draft sections stop referencing it. SEO image URLs store the key
- * URL-encoded.
- */
-function publishedPageReferenceCondition(objectKey: string, assetId?: string) {
-	const needles = [objectKey, encodeURIComponent(objectKey)]
-	if (assetId) needles.push(assetId)
-	return or(
-		...needles.flatMap((needle) => [
-			columnContains(WebsitePage.publishedData, needle),
-			columnContains(WebsitePage.seoImageUrl, needle),
-		]),
-	)
 }
 
 // Posts that may still be sent load their images by media id, so the library
@@ -271,6 +258,9 @@ async function hasMediaObjectReferences(
 		publishedPage,
 		socialPost,
 		emailTemplate,
+		menuItem,
+		menuOption,
+		siteChrome,
 	] = await Promise.all([
 		db
 			.select({ id: OrganizationMediaAsset.id })
@@ -371,6 +361,36 @@ async function hasMediaObjectReferences(
 				),
 			)
 			.limit(1),
+		db
+			.select({ id: OrganizationMenuItem.id })
+			.from(OrganizationMenuItem)
+			.where(
+				and(
+					eq(OrganizationMenuItem.organizationId, organizationId),
+					menuItemReferenceCondition(objectKey, assetId),
+				),
+			)
+			.limit(1),
+		db
+			.select({ id: OrganizationMenuOption.id })
+			.from(OrganizationMenuOption)
+			.where(
+				and(
+					eq(OrganizationMenuOption.organizationId, organizationId),
+					menuOptionReferenceCondition(objectKey, assetId),
+				),
+			)
+			.limit(1),
+		db
+			.select({ id: Organization.id })
+			.from(Organization)
+			.where(
+				and(
+					eq(Organization.id, organizationId),
+					siteChromeReferenceCondition(objectKey, assetId),
+				),
+			)
+			.limit(1),
 	])
 
 	return [
@@ -383,6 +403,9 @@ async function hasMediaObjectReferences(
 		publishedPage,
 		socialPost,
 		emailTemplate,
+		menuItem,
+		menuOption,
+		siteChrome,
 	].some((reference) => reference.length > 0)
 }
 
@@ -420,12 +443,27 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		slug: true,
 		name: true,
 	})
-	const search = new URL(request.url).searchParams.get('search')?.trim() ?? ''
+	const searchParams = new URL(request.url).searchParams
+	const search = searchParams.get('search')?.trim() ?? ''
 	const normalizedSearch = search.slice(0, 100)
+	// Archived assets are hidden unless asked for (#147); a picker only ever
+	// lists assets that are ready to attach.
+	const view = searchParams.get('view') === 'archived' ? 'archived' : 'active'
+	const picker = searchParams.get('picker') === '1'
+	const tagFilter = normalizeTag(searchParams.get('tag'))
 
 	const whereConditions = [
 		eq(OrganizationMediaAsset.organizationId, organization.id),
+		view === 'archived' && !picker
+			? isNotNull(OrganizationMediaAsset.archivedAt)
+			: isNull(OrganizationMediaAsset.archivedAt),
 	]
+	if (picker) whereConditions.push(eq(OrganizationMediaAsset.status, 'ready'))
+	if (tagFilter) {
+		whereConditions.push(
+			sql`EXISTS (SELECT 1 FROM ${OrganizationMediaTag} WHERE ${OrganizationMediaTag.assetId} = ${OrganizationMediaAsset.id} AND ${OrganizationMediaTag.tag} = ${tagFilter})`,
+		)
+	}
 	if (normalizedSearch) {
 		whereConditions.push(
 			or(
@@ -433,6 +471,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				like(OrganizationMediaAsset.altText, `%${normalizedSearch}%`),
 				like(OrganizationMediaAsset.caption, `%${normalizedSearch}%`),
 				like(OrganizationMediaAsset.source, `%${normalizedSearch}%`),
+				sql`EXISTS (SELECT 1 FROM ${OrganizationMediaTag} WHERE ${OrganizationMediaTag.assetId} = ${OrganizationMediaAsset.id} AND instr(${OrganizationMediaTag.tag}, ${normalizedSearch.toLowerCase()}) > 0)`,
 			)!,
 		)
 	}
@@ -443,6 +482,22 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		.where(and(...whereConditions))
 		.orderBy(desc(OrganizationMediaAsset.createdAt))
 		.limit(200)
+	const [tagMap, allTags, archivedCount] = picker
+		? [new Map<string, string[]>(), [], 0]
+		: await Promise.all([
+				tagsByAsset(assets.map((asset) => asset.id)),
+				organizationTags(organization.id),
+				db
+					.select({ count: sql<number>`count(*)` })
+					.from(OrganizationMediaAsset)
+					.where(
+						and(
+							eq(OrganizationMediaAsset.organizationId, organization.id),
+							isNotNull(OrganizationMediaAsset.archivedAt),
+						),
+					)
+					.then((rows) => Number(rows[0]?.count) || 0),
+			])
 
 	const [canManageMedia, canUsePhotoStudio] = await Promise.all([
 		userHasOrganizationPermission(
@@ -459,14 +514,147 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 	return {
 		organization,
-		assets: assets.map(serializeAsset),
+		assets: assets.map((asset) =>
+			serializeAsset(asset, tagMap.get(asset.id) ?? []),
+		),
 		search: normalizedSearch,
+		view,
+		tag: tagFilter,
+		allTags,
+		archivedCount,
 		canManageMedia,
 		// The studio saves its results to the shared library, so using it also
 		// takes permission to manage media (see media_.studio.tsx).
 		photoStudioEnabled:
 			isPhotoStudioConfigured() && canUsePhotoStudio && canManageMedia,
 	}
+}
+
+type OrganizeIntent =
+	'tag' | 'untag' | 'archive' | 'restore' | 'bulk-update' | 'set-parent'
+
+function organizeFailure(failure: OrganizeFailure) {
+	return Response.json(
+		{
+			error: failure.error,
+			code: failure.error,
+			references: failure.references,
+			assetId: failure.assetId,
+		},
+		{ status: failure.status },
+	)
+}
+
+/** The organizing intents (#147): every id is checked against the organization. */
+async function organizeIntent(input: {
+	intent: OrganizeIntent
+	formData: FormData
+	organizationId: string
+	orgSlug: string
+	userId: string
+}) {
+	const { intent, formData, organizationId } = input
+	if (intent === 'set-parent') {
+		const assetId = formData.get('id')
+		const parent = formData.get('parentAssetId')
+		if (typeof assetId !== 'string' || !assetId) {
+			return Response.json({ error: 'invalid_request' }, { status: 400 })
+		}
+		const result = await setAssetParent({
+			organizationId,
+			assetId,
+			parentAssetId: typeof parent === 'string' && parent ? parent : null,
+		})
+		if (!result.ok) return organizeFailure(result)
+		return Response.json({ organized: 'updated', updatedCount: 1 })
+	}
+
+	const assetIds = parseAssetIds([
+		...formData.getAll('ids'),
+		...formData.getAll('id'),
+	])
+	if (!assetIds) {
+		return Response.json({ error: 'invalid_request' }, { status: 400 })
+	}
+	const parsedTags = parseTagList(formData.getAll('tags'))
+	if (!parsedTags.ok)
+		return organizeFailure({ ok: false, status: 400, error: parsedTags.error })
+
+	if (intent === 'tag' || intent === 'untag') {
+		const result =
+			intent === 'tag'
+				? await addTagsToAssets({
+						organizationId,
+						assetIds,
+						tags: parsedTags.tags,
+					})
+				: await removeTagsFromAssets({
+						organizationId,
+						assetIds,
+						tags: parsedTags.tags,
+					})
+		if (!result.ok) return organizeFailure(result)
+		return Response.json({
+			organized: intent === 'tag' ? 'tagged' : 'untagged',
+			updatedCount: result.updated,
+		})
+	}
+
+	if (intent === 'archive') {
+		const result = await archiveAssets({
+			organizationId,
+			orgSlug: input.orgSlug,
+			userId: input.userId,
+			assetIds,
+		})
+		if (!result.ok) return organizeFailure(result)
+		return Response.json({
+			organized: 'archived',
+			updatedCount: result.updated,
+		})
+	}
+
+	if (intent === 'restore') {
+		const result = await restoreAssets({ organizationId, assetIds })
+		if (!result.ok) return organizeFailure(result)
+		return Response.json({
+			organized: 'restored',
+			updatedCount: result.updated,
+		})
+	}
+
+	// bulk-update: alt text and/or tags to add and remove, for the selection.
+	const addList = parseTagList(formData.getAll('addTags'))
+	const removeList = parseTagList(formData.getAll('removeTags'))
+	if (!addList.ok || !removeList.ok) {
+		return organizeFailure({ ok: false, status: 400, error: 'bad_tag' })
+	}
+	const altText = formData.get('altText')
+	if (addList.tags.length > 0) {
+		const result = await addTagsToAssets({
+			organizationId,
+			assetIds,
+			tags: addList.tags,
+		})
+		if (!result.ok) return organizeFailure(result)
+	}
+	if (removeList.tags.length > 0) {
+		const result = await removeTagsFromAssets({
+			organizationId,
+			assetIds,
+			tags: removeList.tags,
+		})
+		if (!result.ok) return organizeFailure(result)
+	}
+	if (typeof altText === 'string') {
+		const result = await setAltTextForAssets({
+			organizationId,
+			assetIds,
+			altText,
+		})
+		if (!result.ok) return organizeFailure(result)
+	}
+	return Response.json({ organized: 'updated', updatedCount: assetIds.length })
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -480,7 +668,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 	// Every intent except the read-only reference lookup changes the shared
 	// library (update, delete, replace, upload).
-	if (intent !== 'get-references') {
+	if (intent !== 'get-references' && intent !== 'get-versions') {
 		await requireUserWithOrganizationPermission(
 			request,
 			organization.id,
@@ -538,6 +726,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 			eq(OrganizationMediaAsset.id, result.data.id),
 			eq(OrganizationMediaAsset.organizationId, organization.id),
 		)
+		// Deleting an original keeps its versions (#147): the foreign key clears
+		// their link (`ON DELETE SET NULL`) in the same statement as the delete, so a
+		// refused delete (below) never leaves a version unlinked.
 		const [deleted] = await db
 			.delete(OrganizationMediaAsset)
 			.where(
@@ -664,6 +855,38 @@ export async function action({ request, params }: Route.ActionArgs) {
 		}
 	}
 
+	if (
+		intent === 'tag' ||
+		intent === 'untag' ||
+		intent === 'archive' ||
+		intent === 'restore' ||
+		intent === 'bulk-update' ||
+		intent === 'set-parent'
+	) {
+		return organizeIntent({
+			intent,
+			formData,
+			organizationId: organization.id,
+			orgSlug: params.orgSlug,
+			userId,
+		})
+	}
+
+	if (intent === 'get-versions') {
+		const assetId = formData.get('id')
+		if (typeof assetId !== 'string' || !assetId) {
+			return Response.json({ error: 'Asset ID required.' }, { status: 400 })
+		}
+		const versions = await assetVersions({
+			organizationId: organization.id,
+			assetId,
+		})
+		if (!versions) {
+			return Response.json({ error: 'Media not found.' }, { status: 404 })
+		}
+		return Response.json({ versions })
+	}
+
 	if (intent === 'get-references') {
 		const assetId = formData.get('id')
 		if (typeof assetId !== 'string' || !assetId) {
@@ -684,236 +907,12 @@ export async function action({ request, params }: Route.ActionArgs) {
 			return Response.json({ error: 'Media not found.' }, { status: 404 })
 		}
 
-		// Notes and comments are listed only when this member could open the
-		// note (the notes-list rule): public, their own, or shared with them.
-		const readableNote = or(
-			eq(OrganizationNote.isPublic, true),
-			eq(OrganizationNote.createdById, userId),
-			sql`EXISTS (SELECT 1 FROM NoteAccess WHERE NoteAccess.noteId = ${OrganizationNote.id} AND NoteAccess.userId = ${userId})`,
-		)
-
-		// 1. Notes
-		const noteRefs = await db
-			.select({
-				id: OrganizationNote.id,
-				title: OrganizationNote.title,
-				createdAt: OrganizationNoteUpload.createdAt,
-			})
-			.from(OrganizationNoteUpload)
-			.innerJoin(
-				OrganizationNote,
-				eq(OrganizationNoteUpload.noteId, OrganizationNote.id),
-			)
-			.where(
-				and(
-					eq(OrganizationNoteUpload.objectKey, asset.objectKey),
-					eq(OrganizationNote.organizationId, organization.id),
-					readableNote,
-				),
-			)
-
-		// 2. Comments
-		const commentRefs = await db
-			.select({
-				commentId: NoteComment.id,
-				content: NoteComment.content,
-				noteId: OrganizationNote.id,
-				noteTitle: OrganizationNote.title,
-				createdAt: NoteCommentImage.createdAt,
-			})
-			.from(NoteCommentImage)
-			.innerJoin(NoteComment, eq(NoteCommentImage.commentId, NoteComment.id))
-			.innerJoin(OrganizationNote, eq(NoteComment.noteId, OrganizationNote.id))
-			.where(
-				and(
-					eq(NoteCommentImage.objectKey, asset.objectKey),
-					eq(OrganizationNote.organizationId, organization.id),
-					readableNote,
-				),
-			)
-
-		// 3. Organization Logo
-		const orgLogoRefs = await db
-			.select({
-				id: OrganizationImage.id,
-				createdAt: OrganizationImage.createdAt,
-			})
-			.from(OrganizationImage)
-			.where(
-				and(
-					eq(OrganizationImage.objectKey, asset.objectKey),
-					eq(OrganizationImage.organizationId, organization.id),
-				),
-			)
-
-		// 4. Site Icon
-		const siteIconRefs = await db
-			.select({
-				id: Organization.id,
-				name: Organization.name,
-			})
-			.from(Organization)
-			.where(
-				and(
-					eq(Organization.id, organization.id),
-					eq(Organization.siteIconKey, asset.objectKey),
-				),
-			)
-
-		// 5. Website Pages
-		const pageRefs = await db
-			.select({
-				pageId: WebsitePage.id,
-				pageTitle: WebsitePage.title,
-				pageSlug: WebsitePage.slug,
-				sectionType: WebsitePageSection.type,
-			})
-			.from(WebsitePageSection)
-			.innerJoin(WebsitePage, eq(WebsitePageSection.pageId, WebsitePage.id))
-			.where(
-				and(
-					eq(WebsitePage.organizationId, organization.id),
-					or(configContains(asset.objectKey), configContains(asset.id)),
-				),
-			)
-
-		const references: MediaReferenceItem[] = []
-
-		for (const note of noteRefs) {
-			references.push({
-				id: `note-${note.id}`,
-				type: 'note',
-				title: note.title || 'Untitled note',
-				subtitle: 'Attached to organization note',
-				url: `/${params.orgSlug}/notes/${note.id}`,
-				createdAt: note.createdAt.toISOString(),
-			})
-		}
-
-		for (const c of commentRefs) {
-			references.push({
-				id: `comment-${c.commentId}`,
-				type: 'comment',
-				title: `Comment on "${c.noteTitle || 'Untitled note'}"`,
-				subtitle: c.content ? c.content.slice(0, 80) : undefined,
-				url: `/${params.orgSlug}/notes/${c.noteId}`,
-				createdAt: c.createdAt.toISOString(),
-			})
-		}
-
-		for (const logo of orgLogoRefs) {
-			references.push({
-				id: `logo-${logo.id}`,
-				type: 'logo',
-				title: 'Organization Logo',
-				subtitle: 'Current organization branding logo',
-				url: `/${params.orgSlug}/settings/organization`,
-				createdAt: logo.createdAt.toISOString(),
-			})
-		}
-
-		for (const org of siteIconRefs) {
-			references.push({
-				id: `site-icon-${org.id}`,
-				type: 'site-icon',
-				title: 'Site Icon / Favicon',
-				subtitle: 'Used as the published site icon',
-				url: `/${params.orgSlug}/website`,
-			})
-		}
-
-		const seenPages = new Set<string>()
-		for (const p of pageRefs) {
-			if (seenPages.has(p.pageId)) continue
-			seenPages.add(p.pageId)
-			references.push({
-				id: `page-${p.pageId}`,
-				type: 'page',
-				title: `Website Page: ${p.pageTitle || p.pageSlug}`,
-				subtitle: `Used in page section (${p.sectionType}) on /${p.pageSlug}`,
-				url: `/${params.orgSlug}/website/pages/${p.pageId}`,
-			})
-		}
-
-		// Published snapshots and SEO images can still use an image the draft
-		// no longer shows.
-		const publishedPageRefs = await db
-			.select({
-				pageId: WebsitePage.id,
-				pageTitle: WebsitePage.title,
-				pageSlug: WebsitePage.slug,
-			})
-			.from(WebsitePage)
-			.where(
-				and(
-					eq(WebsitePage.organizationId, organization.id),
-					publishedPageReferenceCondition(asset.objectKey, asset.id),
-				),
-			)
-		for (const p of publishedPageRefs) {
-			if (seenPages.has(p.pageId)) continue
-			seenPages.add(p.pageId)
-			references.push({
-				id: `page-${p.pageId}`,
-				type: 'page',
-				title: `Website Page: ${p.pageTitle || p.pageSlug}`,
-				subtitle: `Used on the published page or as its SEO image on /${p.pageSlug}`,
-				url: `/${params.orgSlug}/website/pages/${p.pageId}`,
-			})
-		}
-
-		const socialPostRefs = await db
-			.select({ id: SocialPost.id, createdAt: SocialPost.createdAt })
-			.from(SocialPost)
-			.where(
-				and(
-					eq(SocialPost.organizationId, organization.id),
-					columnContains(SocialPost.media, asset.id),
-				),
-			)
-		for (const post of socialPostRefs) {
-			references.push({
-				id: `social-${post.id}`,
-				type: 'social-post',
-				title: 'Social media post',
-				subtitle: 'Attached to a social media post',
-				url: `/${params.orgSlug}/marketing/social/${post.id}`,
-				createdAt: post.createdAt.toISOString(),
-			})
-		}
-
-		const templateRefs = await db
-			.select({
-				id: MarketingEmailTemplate.id,
-				name: MarketingEmailTemplate.name,
-				updatedAt: MarketingEmailTemplate.updatedAt,
-			})
-			.from(MarketingEmailTemplate)
-			.where(
-				and(
-					eq(MarketingEmailTemplate.organizationId, organization.id),
-					emailTemplateReferenceCondition(asset.objectKey, asset.id),
-				),
-			)
-		for (const template of templateRefs) {
-			references.push({
-				id: `email-template-${template.id}`,
-				type: 'email-template',
-				title: `Email template: ${template.name}`,
-				subtitle: 'Used in a saved email template',
-				url: `/${params.orgSlug}/marketing/templates`,
-				createdAt: template.updatedAt.toISOString(),
-			})
-		}
-
-		if (references.length === 0 && asset.source && asset.source !== 'library') {
-			references.push({
-				id: 'source-origin',
-				type: 'source',
-				title: `Origin: ${getSourceLabel(asset.source)}`,
-				subtitle: `Uploaded originally via ${getSourceLabel(asset.source)}.`,
-			})
-		}
+		const references = await findMediaReferences({
+			organizationId: organization.id,
+			orgSlug: params.orgSlug,
+			userId,
+			asset,
+		})
 
 		return Response.json({ references })
 	}
@@ -921,6 +920,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 	const result = UploadSchema.safeParse({
 		intent: formData.get('intent'),
 		source: formData.get('source') || undefined,
+		parentAssetId: formData.get('parentAssetId') || undefined,
 		imageFile: formData.get('imageFile'),
 	})
 
@@ -929,6 +929,16 @@ export async function action({ request, params }: Route.ActionArgs) {
 			{ error: result.error.issues[0]?.message ?? 'Invalid upload.' },
 			{ status: 400 },
 		)
+	}
+
+	// A studio result or a saved copy names the asset it came from; refuse an
+	// original that is not this organization's before anything is stored.
+	if (result.data.parentAssetId) {
+		const parentCheck = await checkNewAssetParent(
+			organization.id,
+			result.data.parentAssetId,
+		)
+		if (!parentCheck.ok) return organizeFailure(parentCheck)
 	}
 
 	try {
@@ -950,6 +960,14 @@ export async function action({ request, params }: Route.ActionArgs) {
 			.limit(1)
 
 		if (!asset) throw new Error('Uploaded media could not be registered.')
+		if (result.data.parentAssetId) {
+			// The asset is new, so it cannot loop; the original was checked above.
+			await db
+				.update(OrganizationMediaAsset)
+				.set({ parentAssetId: result.data.parentAssetId })
+				.where(eq(OrganizationMediaAsset.id, asset.id))
+			asset.parentAssetId = result.data.parentAssetId
+		}
 		return Response.json({ asset: serializeAsset(asset) })
 	} catch (error) {
 		console.error('Failed to upload media library image:', error)
@@ -974,9 +992,33 @@ export default function MediaLibraryRoute({
 		open: boolean
 		assetIds?: string[]
 	}>({ open: false })
-	const { assets, search, organization, photoStudioEnabled, canManageMedia } =
-		loaderData
+	const {
+		assets,
+		search,
+		organization,
+		photoStudioEnabled,
+		canManageMedia,
+		view,
+		tag: activeTag,
+		allTags,
+		archivedCount,
+	} = loaderData
 	const isUploading = uploadFetcher.state !== 'idle'
+	const organizeFetcher = useFetcher<MediaActionData>()
+	const [selectMode, setSelectMode] = useState(false)
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+	const [bulkOpen, setBulkOpen] = useState(false)
+	const isArchivedView = view === 'archived'
+	const filterHref = (next: { tag?: string | null; view?: string | null }) => {
+		const params = new URLSearchParams()
+		const nextTag = next.tag === undefined ? activeTag : next.tag
+		const nextView = next.view === undefined ? view : next.view
+		if (search) params.set('search', search)
+		if (nextTag) params.set('tag', nextTag)
+		if (nextView === 'archived') params.set('view', 'archived')
+		const query = params.toString()
+		return query ? `?${query}` : '?'
+	}
 
 	useEffect(() => {
 		const asset = uploadFetcher.data?.asset
@@ -999,6 +1041,48 @@ export default function MediaLibraryRoute({
 			toast.error(detailsFetcher.data.error)
 		}
 	}, [_, detailsFetcher.data])
+
+	// Keep the open details in step with the list after tags or archive change.
+	useEffect(() => {
+		setSelectedAsset((current) =>
+			current
+				? (assets.find((asset) => asset.id === current.id) ?? null)
+				: current,
+		)
+		setSelectedIds((current) => {
+			const next = new Set(
+				[...current].filter((id) => assets.some((a) => a.id === id)),
+			)
+			return next.size === current.size ? current : next
+		})
+	}, [assets])
+
+	useEffect(() => {
+		const data = organizeFetcher.data
+		if (!data) return
+		if (data.error) {
+			toast.error(organizeErrorMessage(data, _))
+			return
+		}
+		if (data.organized) {
+			toast.success(organizedMessage(data.organized, data.updatedCount ?? 0, _))
+			if (data.organized === 'archived' || data.organized === 'restored') {
+				setSelectedIds(new Set())
+			}
+		}
+	}, [_, organizeFetcher.data])
+
+	const submitOrganize = useCallback(
+		(fields: Record<string, string | string[]>) => {
+			const formData = new FormData()
+			for (const [key, value] of Object.entries(fields)) {
+				if (Array.isArray(value)) for (const v of value) formData.append(key, v)
+				else formData.set(key, value)
+			}
+			void organizeFetcher.submit(formData, { method: 'POST' })
+		},
+		[organizeFetcher],
+	)
 
 	const handleUpdateAsset = useCallback(
 		(data: {
@@ -1049,9 +1133,10 @@ export default function MediaLibraryRoute({
 	)
 
 	const handleSaveCopy = useCallback(
-		(file: File) => {
+		(file: File, parentAssetId?: string) => {
 			const data = new FormData()
 			data.append('intent', 'upload')
+			if (parentAssetId) data.append('parentAssetId', parentAssetId)
 			data.append('imageFile', file)
 			void uploadFetcher.submit(data, {
 				method: 'POST',
@@ -1130,6 +1215,12 @@ export default function MediaLibraryRoute({
 
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Form method="get" className="relative w-full sm:max-w-sm">
+					{activeTag ? (
+						<input type="hidden" name="tag" value={activeTag} />
+					) : null}
+					{isArchivedView ? (
+						<input type="hidden" name="view" value="archived" />
+					) : null}
 					<Icon
 						name="search"
 						className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
@@ -1143,10 +1234,122 @@ export default function MediaLibraryRoute({
 						className="pl-9"
 					/>
 				</Form>
-				<p className="text-muted-foreground text-sm tabular-nums">
-					<Plural value={assets.length} one="# image" other="# images" />
-				</p>
+				<div className="flex items-center gap-3">
+					<p className="text-muted-foreground text-sm tabular-nums">
+						<Plural value={assets.length} one="# image" other="# images" />
+					</p>
+					{canManageMedia && assets.length ? (
+						<Button
+							type="button"
+							variant={selectMode ? 'secondary' : 'outline'}
+							size="sm"
+							aria-pressed={selectMode}
+							onClick={() => {
+								setSelectMode((on) => !on)
+								setSelectedIds(new Set())
+							}}
+						>
+							<Icon name="check" />
+							<Trans>Select</Trans>
+						</Button>
+					) : null}
+				</div>
 			</div>
+
+			<nav
+				aria-label={_(msg`Filter media`)}
+				className="flex flex-wrap items-center gap-2"
+			>
+				<Button
+					variant={!isArchivedView && !activeTag ? 'secondary' : 'outline'}
+					size="xs"
+					render={<Link to={filterHref({ tag: null, view: 'active' })} />}
+				>
+					<Trans>All</Trans>
+				</Button>
+				{allTags.map((entry) => (
+					<Button
+						key={entry.tag}
+						variant={activeTag === entry.tag ? 'secondary' : 'outline'}
+						size="xs"
+						aria-current={activeTag === entry.tag ? 'true' : undefined}
+						render={
+							<Link
+								to={filterHref({
+									tag: activeTag === entry.tag ? null : entry.tag,
+								})}
+							/>
+						}
+					>
+						{entry.tag}
+						<span className="text-muted-foreground tabular-nums">
+							{entry.count}
+						</span>
+					</Button>
+				))}
+				<span className="grow" />
+				<Button
+					variant={isArchivedView ? 'secondary' : 'ghost'}
+					size="xs"
+					render={
+						<Link
+							to={filterHref({
+								view: isArchivedView ? 'active' : 'archived',
+							})}
+						/>
+					}
+				>
+					<Icon name="folder" />
+					<Trans>Archived</Trans>
+					<span className="text-muted-foreground tabular-nums">
+						{archivedCount}
+					</span>
+				</Button>
+			</nav>
+
+			{selectMode && selectedIds.size > 0 ? (
+				<div
+					role="region"
+					aria-label={_(msg`Selected media`)}
+					className="bg-background sticky top-2 z-30 flex flex-wrap items-center gap-2 rounded-xl border p-3 shadow-sm"
+				>
+					<p className="text-sm font-medium tabular-nums">
+						<Plural
+							value={selectedIds.size}
+							one="# selected"
+							other="# selected"
+						/>
+					</p>
+					<span className="grow" />
+					<Button type="button" size="sm" onClick={() => setBulkOpen(true)}>
+						<Icon name="pencil" />
+						<Trans>Edit tags and alt text</Trans>
+					</Button>
+					<Button
+						type="button"
+						size="sm"
+						variant="outline"
+						disabled={organizeFetcher.state !== 'idle'}
+						onClick={() =>
+							submitOrganize({
+								intent: isArchivedView ? 'restore' : 'archive',
+								ids: [...selectedIds],
+							})
+						}
+					>
+						<Icon name="folder" />
+						{isArchivedView ? <Trans>Restore</Trans> : <Trans>Archive</Trans>}
+					</Button>
+					<Button
+						type="button"
+						size="sm"
+						variant="ghost"
+						onClick={() => setSelectedIds(new Set())}
+					>
+						<Trans>Clear</Trans>
+					</Button>
+				</div>
+			) : null}
 
 			{assets.length ? (
 				<ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -1161,19 +1364,67 @@ export default function MediaLibraryRoute({
 							>
 								<button
 									type="button"
-									onClick={() => setSelectedAsset(asset)}
+									onClick={() => {
+										if (selectMode) {
+											setSelectedIds((current) => {
+												const next = new Set(current)
+												if (next.has(asset.id)) next.delete(asset.id)
+												else next.add(asset.id)
+												return next
+											})
+										} else {
+											setSelectedAsset(asset)
+										}
+									}}
 									className="absolute inset-0 z-10 cursor-pointer rounded-xl"
-									aria-label={`Open details for ${name}`}
+									aria-label={
+										selectMode
+											? _(msg`Select ${name}`)
+											: _(msg`Open details for ${name}`)
+									}
+									aria-pressed={
+										selectMode ? selectedIds.has(asset.id) : undefined
+									}
 								/>
+								{selectMode ? (
+									<span className="bg-background/90 pointer-events-none absolute top-2 left-2 z-20 flex size-6 items-center justify-center rounded-md border">
+										{selectedIds.has(asset.id) ? (
+											<Icon name="check" className="size-4" />
+										) : null}
+									</span>
+								) : null}
+								{asset.status !== 'ready' ? (
+									<Badge
+										variant="secondary"
+										className="pointer-events-none absolute top-2 right-2 z-20"
+									>
+										{asset.status === 'processing' ? (
+											<Trans>Processing</Trans>
+										) : (
+											<Trans>Draft</Trans>
+										)}
+									</Badge>
+								) : null}
 								<div className="bg-muted pointer-events-none relative aspect-square overflow-hidden">
-									<img
-										src={asset.url}
-										alt={asset.altText ?? ''}
-										className="size-full object-cover motion-safe:transition-transform motion-safe:duration-240 motion-safe:group-hover:scale-[1.02]"
-										loading="lazy"
-										width={360}
-										height={360}
-									/>
+									{asset.mimeType.startsWith('video/') ? (
+										<video
+											src={asset.url}
+											muted
+											playsInline
+											preload="metadata"
+											aria-label={asset.altText ?? undefined}
+											className="size-full object-cover"
+										/>
+									) : (
+										<img
+											src={asset.url}
+											alt={asset.altText ?? ''}
+											className="size-full object-cover motion-safe:transition-transform motion-safe:duration-240 motion-safe:group-hover:scale-[1.02]"
+											loading="lazy"
+											width={360}
+											height={360}
+										/>
+									)}
 									<div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-end p-2 opacity-0 focus-within:opacity-100 motion-safe:transition-opacity motion-safe:group-hover:opacity-100">
 										<Button
 											type="button"
@@ -1206,6 +1457,24 @@ export default function MediaLibraryRoute({
 											addSuffix: true,
 										})}
 									</p>
+									{asset.tags.length ? (
+										<p className="flex flex-wrap gap-1 pt-0.5">
+											{asset.tags.slice(0, 3).map((tag) => (
+												<Badge
+													key={tag}
+													variant="outline"
+													className="px-1.5 py-0 text-[10px]"
+												>
+													{tag}
+												</Badge>
+											))}
+											{asset.tags.length > 3 ? (
+												<span className="text-muted-foreground text-[10px]">
+													+{asset.tags.length - 3}
+												</span>
+											) : null}
+										</p>
+									) : null}
 								</div>
 							</li>
 						)
@@ -1236,6 +1505,9 @@ export default function MediaLibraryRoute({
 				onDelete={handleDeleteAsset}
 				onReplace={handleReplaceAsset}
 				onSaveCopy={handleSaveCopy}
+				onOrganize={submitOrganize}
+				organizing={organizeFetcher.state !== 'idle'}
+				suggestedTags={allTags.map((entry) => entry.tag)}
 				readOnly={!canManageMedia}
 				onEnhance={
 					photoStudioEnabled
@@ -1248,6 +1520,22 @@ export default function MediaLibraryRoute({
 				isUpdating={
 					detailsFetcher.state !== 'idle' || uploadFetcher.state !== 'idle'
 				}
+			/>
+
+			<BulkEditDialog
+				open={bulkOpen}
+				onOpenChange={setBulkOpen}
+				count={selectedIds.size}
+				busy={organizeFetcher.state !== 'idle'}
+				suggestedTags={allTags.map((entry) => entry.tag)}
+				onApply={(fields) => {
+					submitOrganize({
+						intent: 'bulk-update',
+						ids: [...selectedIds],
+						...fields,
+					})
+					setBulkOpen(false)
+				}}
 			/>
 
 			{photoStudioEnabled ? (
@@ -1272,10 +1560,16 @@ function MediaDetailsDialog({
 	onDelete,
 	onReplace,
 	onSaveCopy,
+	onOrganize,
+	organizing,
+	suggestedTags,
 	onEnhance,
 	isUpdating,
 	readOnly = false,
 }: {
+	onOrganize: (fields: Record<string, string | string[]>) => void
+	organizing: boolean
+	suggestedTags: string[]
 	/** Viewers without update:media:any see details but cannot change them. */
 	readOnly?: boolean
 	asset: SerializedMediaAsset | null
@@ -1289,7 +1583,7 @@ function MediaDetailsDialog({
 	}) => void
 	onDelete: (id: string) => void
 	onReplace: (id: string, file: File) => void
-	onSaveCopy: (file: File) => void
+	onSaveCopy: (file: File, parentAssetId?: string) => void
 	isUpdating: boolean
 }) {
 	const { _ } = useLingui()
@@ -1320,6 +1614,10 @@ function MediaDetailsDialog({
 	// References fetcher for "Used in" section
 	const referencesFetcher = useFetcher<MediaActionData>()
 	const lastFetchedAssetId = useRef<string | null>(null)
+	// Versions (#147): the original and every edit of this photo.
+	const versionsFetcher = useFetcher<{ versions?: AssetVersions }>()
+	const lastVersionsKey = useRef<string | null>(null)
+	const [newTag, setNewTag] = useState('')
 
 	const resetEditor = useCallback(() => {
 		setRotation(0)
@@ -1360,8 +1658,20 @@ function MediaDetailsDialog({
 		}
 	}, [asset, referencesFetcher])
 
+	// Refetch the versions when the asset opens or its link to an original changes.
+	const versionsKey = asset ? `${asset.id}:${asset.parentAssetId ?? ''}` : null
+	useEffect(() => {
+		if (!asset || lastVersionsKey.current === versionsKey) return
+		lastVersionsKey.current = versionsKey
+		const formData = new FormData()
+		formData.set('intent', 'get-versions')
+		formData.set('id', asset.id)
+		void versionsFetcher.submit(formData, { method: 'POST' })
+	}, [asset, versionsFetcher, versionsKey])
+
 	if (!asset) return null
 
+	const isVideo = asset.mimeType.startsWith('video/')
 	const formatLabel = (asset.mimeType.split('/')[1] || 'IMAGE').toUpperCase()
 	const formattedDate = format(
 		new Date(asset.createdAt),
@@ -1458,7 +1768,7 @@ function MediaDetailsDialog({
 		try {
 			setIsExporting(true)
 			const file = await exportTransformedImage('copy')
-			onSaveCopy(file)
+			onSaveCopy(file, asset.id)
 			toast.success(_(msg`Saving as new copy…`))
 			setIsEditing(false)
 		} catch (error) {
@@ -1531,6 +1841,8 @@ function MediaDetailsDialog({
 				return _(msg`Website`)
 			case 'website-seo':
 				return _(msg`Website SEO`)
+			case 'hero-video':
+				return _(msg`Hero video (made by Menuza)`)
 			default:
 				return _(msg`Main library`)
 		}
@@ -1566,17 +1878,28 @@ function MediaDetailsDialog({
 								{/* Left Column: Image preview, metadata, and link */}
 								<div className="space-y-4 p-6">
 									<div className="group/preview bg-muted/30 relative flex h-64 w-full items-center justify-center overflow-hidden rounded-lg border p-3 sm:h-72">
-										<img
-											src={asset.url}
-											alt={altText || asset.altText || ''}
-											onLoad={(e) =>
-												setDimensions({
-													width: e.currentTarget.naturalWidth,
-													height: e.currentTarget.naturalHeight,
-												})
-											}
-											className="max-h-full max-w-full rounded-md object-contain"
-										/>
+										{isVideo ? (
+											<video
+												src={asset.url}
+												controls
+												muted
+												loop
+												playsInline
+												className="max-h-full max-w-full rounded-md object-contain"
+											/>
+										) : (
+											<img
+												src={asset.url}
+												alt={altText || asset.altText || ''}
+												onLoad={(e) =>
+													setDimensions({
+														width: e.currentTarget.naturalWidth,
+														height: e.currentTarget.naturalHeight,
+													})
+												}
+												className="max-h-full max-w-full rounded-md object-contain"
+											/>
+										)}
 										<input
 											ref={replaceFileInputRef}
 											type="file"
@@ -1590,7 +1913,7 @@ function MediaDetailsDialog({
 												}
 											}}
 										/>
-										{readOnly ? null : (
+										{readOnly || isVideo ? null : (
 											<Button
 												type="button"
 												variant="secondary"
@@ -1603,7 +1926,7 @@ function MediaDetailsDialog({
 												<Trans>Replace image</Trans>
 											</Button>
 										)}
-										{!readOnly && asset.mimeType !== 'image/gif' ? (
+										{!readOnly && !isVideo && asset.mimeType !== 'image/gif' ? (
 											<Button
 												type="button"
 												variant="secondary"
@@ -1791,6 +2114,155 @@ function MediaDetailsDialog({
 										/>
 									</div>
 
+									{/* Tags (#147) */}
+									<div className="space-y-1.5">
+										<Label htmlFor="media-tag">
+											<Trans>Tags</Trans>
+										</Label>
+										<div className="flex flex-wrap gap-1.5">
+											{asset.tags.length === 0 ? (
+												<span className="text-muted-foreground text-xs">
+													<Trans>No tags yet</Trans>
+												</span>
+											) : null}
+											{asset.tags.map((tag) => (
+												<Badge
+													key={tag}
+													variant={tag === 'featured' ? 'default' : 'secondary'}
+													className="gap-1 pr-1"
+												>
+													{tag}
+													{readOnly ? null : (
+														<button
+															type="button"
+															className="hover:bg-foreground/10 rounded-sm p-0.5"
+															aria-label={_(msg`Remove tag ${tag}`)}
+															disabled={organizing}
+															onClick={() =>
+																onOrganize({
+																	intent: 'untag',
+																	id: asset.id,
+																	tags: [tag],
+																})
+															}
+														>
+															<Icon name="x" className="size-3" />
+														</button>
+													)}
+												</Badge>
+											))}
+										</div>
+										{readOnly ? null : (
+											<form
+												className="flex gap-2"
+												onSubmit={(event) => {
+													event.preventDefault()
+													if (!newTag.trim()) return
+													onOrganize({
+														intent: 'tag',
+														id: asset.id,
+														tags: [newTag],
+													})
+													setNewTag('')
+												}}
+											>
+												<Input
+													id="media-tag"
+													list="media-tag-suggestions"
+													value={newTag}
+													onChange={(event) => setNewTag(event.target.value)}
+													placeholder={_(msg`Add a tag, like hero or drinks`)}
+													maxLength={32}
+												/>
+												<datalist id="media-tag-suggestions">
+													{suggestedTags.map((tag) => (
+														<option key={tag} value={tag} />
+													))}
+												</datalist>
+												<Button
+													type="submit"
+													variant="outline"
+													size="sm"
+													disabled={organizing || !newTag.trim()}
+												>
+													<Trans>Add</Trans>
+												</Button>
+												{asset.tags.includes('featured') ? null : (
+													<Button
+														type="button"
+														variant="ghost"
+														size="sm"
+														disabled={organizing}
+														title={_(
+															msg`Featured photos are preferred for the website's hero`,
+														)}
+														onClick={() =>
+															onOrganize({
+																intent: 'tag',
+																id: asset.id,
+																tags: ['featured'],
+															})
+														}
+													>
+														<Trans>Feature</Trans>
+													</Button>
+												)}
+											</form>
+										)}
+									</div>
+
+									{/* Versions (#147) */}
+									{versionsFetcher.data?.versions &&
+									(versionsFetcher.data.versions.versions.length > 0 ||
+										asset.parentAssetId) ? (
+										<div className="space-y-1.5" data-testid="media-versions">
+											<Label className="text-xs font-medium">
+												<Trans>Versions</Trans>
+											</Label>
+											<ul className="grid grid-cols-3 gap-2">
+												{[
+													versionsFetcher.data.versions.original,
+													...versionsFetcher.data.versions.versions,
+												].map((version, index) => (
+													<li key={version.id} className="min-w-0 space-y-1">
+														<a
+															href={version.url}
+															target="_blank"
+															rel="noreferrer"
+															className={cn(
+																'bg-muted block aspect-square overflow-hidden rounded-md border',
+																version.id === asset.id &&
+																	'ring-primary ring-2',
+															)}
+														>
+															<img
+																src={version.url}
+																alt={version.altText ?? ''}
+																loading="lazy"
+																className="size-full object-cover"
+															/>
+														</a>
+														<p className="text-muted-foreground truncate text-[11px]">
+															{index === 0 ? (
+																<Trans>Original</Trans>
+															) : version.source === 'ai-studio' ? (
+																<Trans>Studio edit</Trans>
+															) : (
+																<Trans>Edit</Trans>
+															)}
+															{version.id === asset.id ? (
+																<>
+																	{' · '}
+																	<Trans>This one</Trans>
+																</>
+															) : null}
+														</p>
+													</li>
+												))}
+											</ul>
+										</div>
+									) : null}
+
 									{/* Used in references */}
 									<div className="space-y-1.5 pt-1">
 										<div className="flex items-center justify-between">
@@ -1843,7 +2315,10 @@ function MediaDetailsDialog({
 														ref.type === 'site-icon'
 													) {
 														iconName = 'image'
-													} else if (ref.type === 'page') {
+													} else if (
+														ref.type === 'page' ||
+														ref.type === 'site-chrome'
+													) {
 														iconName = 'blocks'
 													}
 
@@ -1909,18 +2384,44 @@ function MediaDetailsDialog({
 							</DialogFooter>
 						) : (
 							<DialogFooter className="m-0 sm:items-center sm:justify-between">
-								<Button
-									type="button"
-									variant="destructive"
-									size="sm"
-									disabled={isUpdating}
-									onClick={() => onDelete(asset.id)}
-								>
-									<Icon name="trash-2" className="size-4" />
-									<span>
-										<Trans>Delete</Trans>
-									</span>
-								</Button>
+								<div className="flex items-center gap-2">
+									<Button
+										type="button"
+										variant="destructive"
+										size="sm"
+										disabled={isUpdating}
+										onClick={() => onDelete(asset.id)}
+									>
+										<Icon name="trash-2" className="size-4" />
+										<span>
+											<Trans>Delete</Trans>
+										</span>
+									</Button>
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										disabled={isUpdating || organizing}
+										onClick={() =>
+											onOrganize({
+												intent: asset.archived ? 'restore' : 'archive',
+												id: asset.id,
+											})
+										}
+									>
+										<Icon
+											name={asset.archived ? 'rotate-ccw' : 'folder'}
+											className="size-4"
+										/>
+										<span>
+											{asset.archived ? (
+												<Trans>Restore</Trans>
+											) : (
+												<Trans>Archive</Trans>
+											)}
+										</span>
+									</Button>
+								</div>
 
 								<div className="flex items-center gap-2">
 									<Button
@@ -2255,6 +2756,182 @@ function MediaDetailsDialog({
 						</DialogFooter>
 					</>
 				)}
+			</DialogContent>
+		</Dialog>
+	)
+}
+
+function organizedMessage(
+	organized: NonNullable<MediaActionData['organized']>,
+	count: number,
+	_: ReturnType<typeof useLingui>['_'],
+) {
+	switch (organized) {
+		case 'tagged':
+			return _(msg`Tags added to ${count} items`)
+		case 'untagged':
+			return _(msg`Tags removed from ${count} items`)
+		case 'archived':
+			return _(
+				msg`Archived ${count} items. Restore them from the Archived view.`,
+			)
+		case 'restored':
+			return _(msg`Restored ${count} items`)
+		default:
+			return _(msg`Saved changes to ${count} items`)
+	}
+}
+
+function organizeErrorMessage(
+	data: MediaActionData,
+	_: ReturnType<typeof useLingui>['_'],
+) {
+	switch (data.code) {
+		case 'bad_tag':
+			return _(
+				msg`Tags use letters, numbers, spaces, - and _, up to 32 characters.`,
+			)
+		case 'too_many_tags':
+			return _(msg`A photo can have at most 20 tags.`)
+		case 'asset_in_use': {
+			const where = (data.references ?? [])
+				.slice(0, 3)
+				.map((reference) => reference.title)
+				.join(', ')
+			return _(
+				msg`This photo is in use (${where}). Replace it there first, then archive it.`,
+			)
+		}
+		case 'asset_not_ready':
+			return _(msg`This photo is still being prepared.`)
+		case 'invalid_parent':
+			return _(msg`That photo cannot be the original of this one.`)
+		case 'not_found':
+			return _(msg`Media not found.`)
+		default:
+			return data.error ?? _(msg`Something went wrong. Please try again.`)
+	}
+}
+
+function BulkEditDialog({
+	open,
+	onOpenChange,
+	count,
+	busy,
+	suggestedTags,
+	onApply,
+}: {
+	open: boolean
+	onOpenChange: (open: boolean) => void
+	count: number
+	busy: boolean
+	suggestedTags: string[]
+	onApply: (fields: {
+		addTags: string
+		removeTags: string
+		altText?: string
+	}) => void
+}) {
+	const { _ } = useLingui()
+	const [addTags, setAddTags] = useState('')
+	const [removeTags, setRemoveTags] = useState('')
+	const [altText, setAltText] = useState('')
+	const [changeAlt, setChangeAlt] = useState(false)
+	useEffect(() => {
+		if (open) {
+			setAddTags('')
+			setRemoveTags('')
+			setAltText('')
+			setChangeAlt(false)
+		}
+	}, [open])
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent className="sm:max-w-md">
+				<DialogHeader>
+					<DialogTitle>
+						<Trans>Edit selected media</Trans>
+					</DialogTitle>
+					<DialogDescription>
+						<Plural
+							value={count}
+							one="Changes apply to # photo."
+							other="Changes apply to # photos."
+						/>
+					</DialogDescription>
+				</DialogHeader>
+				<div className="space-y-4">
+					<div className="space-y-1.5">
+						<Label htmlFor="bulk-add-tags">
+							<Trans>Add tags</Trans>
+						</Label>
+						<Input
+							id="bulk-add-tags"
+							list="bulk-tag-suggestions"
+							value={addTags}
+							onChange={(event) => setAddTags(event.target.value)}
+							placeholder={_(msg`hero, ramadan, drinks`)}
+						/>
+						<datalist id="bulk-tag-suggestions">
+							{suggestedTags.map((tag) => (
+								<option key={tag} value={tag} />
+							))}
+						</datalist>
+					</div>
+					<div className="space-y-1.5">
+						<Label htmlFor="bulk-remove-tags">
+							<Trans>Remove tags</Trans>
+						</Label>
+						<Input
+							id="bulk-remove-tags"
+							value={removeTags}
+							onChange={(event) => setRemoveTags(event.target.value)}
+							placeholder={_(msg`Comma separated`)}
+						/>
+					</div>
+					<div className="space-y-1.5">
+						<Label className="flex items-center gap-2" htmlFor="bulk-alt">
+							<input
+								type="checkbox"
+								checked={changeAlt}
+								onChange={(event) => setChangeAlt(event.target.checked)}
+							/>
+							<Trans>Set the same alt text</Trans>
+						</Label>
+						<Textarea
+							id="bulk-alt"
+							rows={2}
+							value={altText}
+							disabled={!changeAlt}
+							onChange={(event) => setAltText(event.target.value)}
+							placeholder={_(msg`Describe these images for accessibility`)}
+						/>
+					</div>
+				</div>
+				<DialogFooter>
+					<Button
+						type="button"
+						variant="ghost"
+						onClick={() => onOpenChange(false)}
+					>
+						<Trans>Cancel</Trans>
+					</Button>
+					<Button
+						type="button"
+						disabled={
+							busy || (!addTags.trim() && !removeTags.trim() && !changeAlt)
+						}
+						onClick={() =>
+							onApply({
+								addTags,
+								removeTags,
+								...(changeAlt ? { altText } : {}),
+							})
+						}
+					>
+						<Trans>Apply</Trans>
+					</Button>
+				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	)

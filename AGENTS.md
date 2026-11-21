@@ -768,6 +768,12 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   unless `BASE_URL` is local. Page tokens are encrypted with
   `INTEGRATION_ENCRYPTION_KEY`. Scheduled posts are woken by jobs-cron's
   `SocialPostWorkflow`. See `docs/social-media.md`.
+- `HERO_VIDEO_RENDERER_URL` / `HERO_VIDEO_RENDERER_TOKEN` / `HERO_VIDEO_MOCK` -
+  App only, optional. The renderer behind hero "Make a video from my photos"
+  (#301; JSON over HTTP, bearer token, only the plan and short-lived read links
+  to the restaurant's own photos). Empty: the feature reports it is not
+  available. `HERO_VIDEO_MOCK` is a local emulator, ignored unless `BASE_URL` is
+  local. See `docs/hero-video.md`.
 - `STAFFING_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
   optional. Seconds between in-process staff ticks (default 300, minimum 60, `0`
   off). The hourly cron fan-out always runs; the Workers runtime uses Durable
@@ -1740,6 +1746,39 @@ Console; #182, #137, #88, #184, #138):**
   (number), `seo.search_console`, `website.location_pages` (on),
   `website.dish_pages`, `website.area_pages`, `website.events`. Control-plane
   migration `0062_website_seo`. Docs: `docs/website-seo.md`.
+
+**Website integrations (media library, font licence, embeds, outside-provider
+links, calendar import, hero video; #147, #286, #259, #318, #319, #301):**
+
+- One control-plane migration, `0070_website_integrations`. Media: tags, archive
+  and versions on `OrganizationMediaAsset`
+  (`utils/media/library-organize.server.ts`, rules in
+  `@repo/common/media-library`; a dish photo or a photo the website uses cannot
+  be archived). Fonts: `FontLicenceAcceptance`, upload refused until the
+  agreement is ticked (`@repo/common/font-licence`); Admin lists and removes
+  (`/font-licences`), clearing the live and the draft theme. Embeds: one parser
+  and frame builder, `@repo/common/site-embeds`; pasted code is never rendered,
+  Sites adds only the page's providers to `frame-src` and waits for marketing
+  consent in Required mode. Outside providers: one resolver,
+  `@repo/common/action-targets`, used by every Sites button, structured data,
+  the sitemap and Google links; outbound clicks are funnel counts (`outbound_*`,
+  no visitor). Calendar: `SiteEventCalendarSource`, imported events are
+  `SiteEvent` rows with a `sourceId` (`utils/events/`); what the operator adds
+  survives a sync, a failed read removes nothing, the address is stored
+  encrypted. A feed with more upcoming events than the limit, a truncated one or
+  one that reads empty once never deletes anything (an emptied calendar needs
+  two empty reads in a row); what the occurrence cap cuts is not "removed"; one
+  read per source at a time (compare and set on `nextSyncAt`). The address is
+  fetched through the menu importer's SSRF guard, whose DNS rebinding window
+  cannot be fully closed on Workers. A removed font is dropped where the site is
+  served (`findPublishedSiteOrganization`, and `/resources/fonts` answers 410),
+  so a restored version or a scheduled publish cannot bring it back. Hero video:
+  `HeroVideoGeneration`, a renderer adapter and a draft asset until accepted
+  (`docs/hero-video.md`); a passing renderer failure re-queues and answers 503
+  so the workflow retries. jobs-cron gained `CalendarSyncWorkflow` and
+  `HeroVideoWorkflow` (no new cron slot; hourly sweeps). Flags
+  `website.hero_video` (new, default off) and `website.events` (calendar
+  import).
 
 **Website publishing (versions, schedules, announcement windows, redirects,
 legal pages, Menuza agreements; #85, #180, #238, #248, #89, #194, #260):**

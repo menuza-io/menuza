@@ -158,6 +158,12 @@ export function AdminSidebar({
 			icon: FileTextIcon,
 		},
 		{
+			title: _(msg`Font licences`),
+			url: '/font-licences',
+			isActive: location.pathname.startsWith('/font-licences'),
+			icon: FileTextIcon,
+		},
+		{
 			title: _(msg`Reservations fees`),
 			url: '/feature-flags/reservations-fees',
 			isActive: location.pathname.startsWith(

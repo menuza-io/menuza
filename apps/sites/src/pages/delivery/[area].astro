@@ -1,4 +1,5 @@
 ---
+import { actionAnchor } from '~/lib/action-targets'
 import { msg } from '@lingui/core/macro'
 import { getLocaleHref, pickLocalized } from '@repo/common/site-locales'
 import SiteNotFound from '~/components/SiteNotFound.astro'
@@ -37,6 +38,12 @@ if (outcome.kind !== 'page') {
 	Astro.response.statusText = 'Not Found'
 }
 const area = outcome.kind === 'page' ? outcome.value : null
+const orderAnchor = actionAnchor(
+	organization,
+	`/menu?location=${encodeURIComponent(area?.locationId ?? '')}`,
+	(path) => href(path),
+	{ locationId: area?.locationId },
+)
 const currency = menu?.organization?.currency ?? 'USD'
 const location = area ? landing?.locations.find((entry) => entry.id === area.locationId) : null
 const locationName = location ? pickLocalized(location.name, locale, defaultLocale) || location.name : ''
@@ -76,7 +83,7 @@ const orderLabel = i18n._(msg`Order delivery`)
 			{intro ? (
 				<p class="mt-6 max-w-prose text-base leading-relaxed whitespace-pre-line text-foreground" dir="auto">{intro}</p>
 			) : null}
-			<a class="btn-cta mt-8 inline-flex" href={`${href('/menu')}?location=${encodeURIComponent(area.locationId)}`} data-action="order">{orderLabel}</a>
+			<a class="btn-cta mt-8 inline-flex" href={orderAnchor.href} {...orderAnchor.attrs} data-action="order">{orderLabel}</a>
 		</div>
 	</SitePage>
 )}

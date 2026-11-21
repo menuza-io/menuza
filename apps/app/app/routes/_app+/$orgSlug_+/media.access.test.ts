@@ -1,5 +1,6 @@
 import {
 	db,
+	eq,
 	OrganizationMediaAsset,
 	OrganizationNoteUpload,
 	OrganizationRole,
@@ -132,6 +133,44 @@ describe('media library permissions', () => {
 			expect(remove.status).toBe(403)
 		},
 	)
+
+	it.each(['org_role_viewer', 'org_role_guest'])(
+		'%s cannot tag, archive, restore, bulk edit or link versions (#147)',
+		async (role) => {
+			const { organization, asset } = await setup()
+			const cookie = await as(organization.id, role)
+			const attempts: Array<Record<string, string>> = [
+				{ intent: 'tag', ids: asset.id, tags: 'hero' },
+				{ intent: 'untag', ids: asset.id, tags: 'hero' },
+				{ intent: 'archive', ids: asset.id },
+				{ intent: 'restore', ids: asset.id },
+				{ intent: 'bulk-update', ids: asset.id, altText: 'x' },
+				{ intent: 'set-parent', id: asset.id, parentAssetId: '' },
+			]
+			for (const fields of attempts) {
+				const res = await post(organization.slug, cookie, fields)
+				expect({ fields, status: res.status }).toEqual({ fields, status: 403 })
+			}
+			const [row] = await db
+				.select()
+				.from(OrganizationMediaAsset)
+				.where(eq(OrganizationMediaAsset.id, asset.id))
+			expect(row?.archivedAt).toBeNull()
+			expect(row?.altText).toBeNull()
+		},
+	)
+
+	it('a viewer may still read where a photo is used and its versions', async () => {
+		const { organization, asset } = await setup()
+		const cookie = await as(organization.id, 'org_role_viewer')
+		for (const intent of ['get-references', 'get-versions']) {
+			const res = await post(organization.slug, cookie, {
+				intent,
+				id: asset.id,
+			})
+			expect(res.status).toBe(200)
+		}
+	})
 
 	it('a member can still rename media', async () => {
 		const { organization, asset } = await setup()

@@ -1,4 +1,13 @@
+import {
+	parseActionTargets,
+	type PublicActionTargets,
+	serializeActionTargets,
+} from '@repo/common/action-targets'
 import { formatPriceRange, parseStoredCuisines } from '@repo/common/cuisines'
+import {
+	customFontsOf,
+	removeCustomFontFromThemeJson,
+} from '@repo/common/font-licence'
 import {
 	type ConsentMode,
 	legalRegionFor,
@@ -23,6 +32,7 @@ import {
 	and,
 	db,
 	eq,
+	FontLicenceAcceptance,
 	inArray,
 	isNotNull,
 	ne,
@@ -32,6 +42,10 @@ import {
 	WebsiteRedirect,
 } from '@repo/database'
 import {
+	loadPublicCustomerApp,
+	type PublicCustomerApp,
+} from '#app/utils/customer-apps/public.server.ts'
+import {
 	consentBannerEnabled,
 	effectiveConsentMode,
 	hasTrackingTags,
@@ -39,11 +53,8 @@ import {
 import { parseLegalContact } from '#app/utils/legal/contact.server.ts'
 import { isSafeAnnouncementLink } from '#app/utils/safe-link.ts'
 import { readSearchConsoleVerificationToken } from '#app/utils/seo/search-console.server.ts'
-import {
-	loadPublicCustomerApp,
-	type PublicCustomerApp,
-} from '#app/utils/customer-apps/public.server.ts'
 import { siteHostCondition } from '#app/utils/sites/site-host.server.ts'
+import { loadPublicActionTargets } from '#app/utils/website/action-targets.server.ts'
 import {
 	composePageSectionsWithChrome,
 	getDefaultConfig,
@@ -97,6 +108,10 @@ export type PublicSiteOrganization = {
 	legalPages?: Array<{ kind: string; slug: string }>
 	/** The platform's banner switch for this site (#89); absent means on. */
 	consentBanner?: boolean
+	/** Where the Order, Gift cards and Reservations buttons go (#318). */
+	actionTargets?: string | null
+	/** Each location's own choice, by location id (#318). */
+	locationActionTargets?: PublicActionTargets['locations']
 	/** The branded app's public facts (#195, #196). */
 	customerApp?: PublicCustomerApp | null
 	announcements: Array<{
@@ -171,6 +186,12 @@ export type PublicSitePayload = {
 	 * (a site with no tracking tags) or the platform switched the banner off.
 	 */
 	consent: { mode: ConsentMode }
+	/**
+	 * Where the site's Order online, Gift cards and Reservations buttons go
+	 * (#318): the organization's choice and each location's. Sites resolves
+	 * every such button and link from this, in one place.
+	 */
+	actionTargets: PublicActionTargets
 }
 
 const ANNOUNCEMENT_TYPES = ['info', 'warning', 'error', 'success'] as const
@@ -308,6 +329,10 @@ export function toPublicSitePayload(
 			: null,
 		legalPages: publicLegalPages(organization.legalPages),
 		consent: { mode: publicConsentMode(organization) },
+		actionTargets: {
+			organization: parseActionTargets(organization.actionTargets),
+			locations: organization.locationActionTargets ?? {},
+		},
 	}
 }
 
@@ -351,6 +376,38 @@ function publicConsentMode(organization: PublicSiteOrganization): ConsentMode {
 /**
  * Resolve a published org site by slug or custom domain host.
  */
+/**
+ * The theme without any custom font that has a removal on record (#286). Frozen
+ * schedule snapshots and old versions keep their theme text, so the check is
+ * made where the site is served, not only where a theme is saved.
+ */
+async function withoutRemovedFonts(
+	organizationId: string,
+	siteTheme: string | null,
+): Promise<string | null> {
+	const fonts = customFontsOf(siteTheme)
+	if (fonts.length === 0) return siteTheme
+	const removed = await db
+		.select({ objectKey: FontLicenceAcceptance.objectKey })
+		.from(FontLicenceAcceptance)
+		.where(
+			and(
+				eq(FontLicenceAcceptance.organizationId, organizationId),
+				inArray(
+					FontLicenceAcceptance.objectKey,
+					fonts.map((font) => font.objectKey),
+				),
+				isNotNull(FontLicenceAcceptance.removedAt),
+			),
+		)
+	if (removed.length === 0) return siteTheme
+	const keys = new Set(removed.map((row) => row.objectKey))
+	return removeCustomFontFromThemeJson(
+		siteTheme,
+		fonts.filter((font) => keys.has(font.objectKey)).map((font) => font.role),
+	).json
+}
+
 export async function findPublishedSiteOrganization(options: {
 	slug?: string | null
 	host?: string | null
@@ -446,14 +503,28 @@ export async function findPublishedSiteOrganization(options: {
 				),
 			)
 	).flatMap((row) => (row.kind ? [{ kind: row.kind, slug: row.slug }] : []))
+	const actionTargets = await loadPublicActionTargets(
+		organization.id,
+		organization.actionTargets,
+		{ dropOwnDomains: true },
+	)
 	return {
 		...organization,
+		// A font taken off the site (#286) never reaches a visitor, whichever
+		// theme text (a restored version, a scheduled publish) names it again.
+		siteTheme: await withoutRemovedFonts(
+			organization.id,
+			organization.siteTheme,
+		),
 		announcements,
 		redirects,
 		searchConsoleVerification,
 		legalPages,
 		consentBanner: await consentBannerEnabled(organization.id),
 		customerApp: await loadPublicCustomerApp(organization.id),
+		// A link to one of the site's own domains is left out (it would loop).
+		actionTargets: serializeActionTargets(actionTargets.organization),
+		locationActionTargets: actionTargets.locations,
 	}
 }
 

@@ -1,4 +1,5 @@
 ---
+import { actionAnchor } from '~/lib/action-targets'
 import { msg } from '@lingui/core/macro'
 import { dietaryTagsOf } from '@repo/common/menu-types'
 import { getLocaleHref, pickLocalized } from '@repo/common/site-locales'
@@ -40,6 +41,13 @@ if (outcome.kind !== 'page') {
 	Astro.response.statusText = 'Not Found'
 }
 const dish = outcome.kind === 'page' ? outcome.value : null
+// The menu and its Order button follow the site's choice for ordering (#318).
+const menuAnchor = actionAnchor(organization, '/menu', href)
+const dishOrderAnchor = actionAnchor(
+	organization,
+	`/menu?item=${encodeURIComponent(dish?.item.id ?? '')}`,
+	(path) => href(path),
+)
 const currency = menu?.organization?.currency ?? 'USD'
 const defaultLocation =
 	menu?.locations.find((location) => location.isDefault) ?? menu?.locations[0]
@@ -121,7 +129,7 @@ const fullMenu = i18n._(msg`See the full menu`)
 			<script slot="head" type="application/ld+json" is:inline set:html={structuredData} />
 		) : null}
 		<div class:list={[siteContainer, 'py-12 sm:py-16']} data-dish-page={dish.item.id}>
-			<a href={href('/menu')} class="focus-ring text-sm text-muted-foreground hover:text-foreground">{fullMenu}</a>
+			<a href={menuAnchor.href} {...menuAnchor.attrs} class="focus-ring text-sm text-muted-foreground hover:text-foreground">{fullMenu}</a>
 			<div class="mt-4 grid gap-8 lg:grid-cols-2 lg:items-start">
 				{primaryImageUrl ? (
 					<div class="space-y-3">
@@ -158,7 +166,7 @@ const fullMenu = i18n._(msg`See the full menu`)
 					{description ? (
 						<p class="mt-4 max-w-prose text-base leading-relaxed whitespace-pre-line text-foreground" dir="auto">{description}</p>
 					) : null}
-					<a class="btn-cta mt-6 inline-flex" href={`${href('/menu')}?item=${encodeURIComponent(dish.item.id)}`} data-action="order">{orderLabel}</a>
+					<a class="btn-cta mt-6 inline-flex" href={dishOrderAnchor.href} {...dishOrderAnchor.attrs} data-action="order">{orderLabel}</a>
 				</div>
 			</div>
 			{related.length ? (

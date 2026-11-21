@@ -4,7 +4,7 @@ import {
 	SITE_POPUP_DEFAULT_SCROLL_PERCENT,
 	type PublicSitePopup,
 } from '@repo/common/site-popup'
-import { initSiteFunnel } from '~/lib/site-funnel-client'
+import { initOutboundClicks, initSiteFunnel } from '~/lib/site-funnel-client'
 
 /**
  * The browser half of promotional popups (#132). The App decides which
@@ -67,11 +67,16 @@ export function rememberClosed(id: string, now = Date.now()) {
 	}
 }
 
-export type SiteExtras = { popups: PublicSitePopup[]; funnel: boolean }
+export type SiteExtras = {
+	popups: PublicSitePopup[]
+	funnel: boolean
+	/** Count clicks that leave for another site (#318). */
+	outbound: boolean
+}
 
 export async function loadPopups(root: HTMLElement): Promise<SiteExtras> {
 	const appUrl = root.dataset.appUrl
-	if (!appUrl) return { popups: [], funnel: false }
+	if (!appUrl) return { popups: [], funnel: false, outbound: false }
 	const params = new URLSearchParams()
 	if (root.dataset.orgSlug) params.set('slug', root.dataset.orgSlug)
 	if (root.dataset.customHost) params.set('host', root.dataset.customHost)
@@ -81,17 +86,19 @@ export async function loadPopups(root: HTMLElement): Promise<SiteExtras> {
 			headers: { Accept: 'application/json' },
 			cache: 'no-store',
 		})
-		if (!response.ok) return { popups: [], funnel: false }
+		if (!response.ok) return { popups: [], funnel: false, outbound: false }
 		const body = (await response.json()) as {
 			popups?: PublicSitePopup[]
 			funnel?: boolean
+			outbound?: boolean
 		}
 		return {
 			popups: Array.isArray(body.popups) ? body.popups : [],
 			funnel: body.funnel === true,
+			outbound: body.outbound === true || body.funnel === true,
 		}
 	} catch {
-		return { popups: [], funnel: false }
+		return { popups: [], funnel: false, outbound: false }
 	}
 }
 
@@ -328,15 +335,16 @@ export async function initSitePopups() {
 	const root = document.getElementById('site-popup-root')
 	if (!root || root.dataset.bound) return
 	root.dataset.bound = '1'
-	const { popups, funnel } = await loadPopups(root)
-	// The same answer says whether this site counts its funnel (#179).
-	if (funnel && root.dataset.tenantApiUrl) {
-		initSiteFunnel({
-			tenantApiUrl: root.dataset.tenantApiUrl,
-			orgSlug: root.dataset.orgSlug,
-			customHost: root.dataset.customHost,
-		})
+	const { popups, funnel, outbound } = await loadPopups(root)
+	const funnelContext = {
+		tenantApiUrl: root.dataset.tenantApiUrl ?? '',
+		orgSlug: root.dataset.orgSlug,
+		customHost: root.dataset.customHost,
 	}
+	// The same answer says whether this site counts its funnel (#179), and
+	// whether it counts clicks that leave for another site (#318).
+	if (funnel && root.dataset.tenantApiUrl) initSiteFunnel(funnelContext)
+	if (outbound && root.dataset.tenantApiUrl) initOutboundClicks(funnelContext)
 	if (popups.length === 0) return
 	const closed = readClosed()
 	const popup = pickPopup(popups, {

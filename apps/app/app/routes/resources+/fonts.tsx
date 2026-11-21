@@ -1,5 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { siteFontFormatFromExtension } from '@repo/common/site-fonts'
+import { and, db, eq, FontLicenceAcceptance, isNotNull } from '@repo/database'
 import { type LoaderFunctionArgs } from 'react-router'
 import { getSignedGetRequestInfoAsync } from '#app/utils/storage.server.ts'
 
@@ -25,6 +26,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const format = siteFontFormatFromExtension(objectKey)
 	invariantResponse(format, 'Unsupported font file', { status: 400 })
+
+	// A font taken off a site because of a licence complaint is no longer served.
+	const [removed] = await db
+		.select({ id: FontLicenceAcceptance.id })
+		.from(FontLicenceAcceptance)
+		.where(
+			and(
+				eq(FontLicenceAcceptance.objectKey, objectKey),
+				isNotNull(FontLicenceAcceptance.removedAt),
+			),
+		)
+		.limit(1)
+	invariantResponse(!removed, 'Font removed', { status: 410 })
 
 	const { url, headers: signedHeaders } =
 		await getSignedGetRequestInfoAsync(objectKey)

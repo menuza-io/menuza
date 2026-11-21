@@ -1,9 +1,13 @@
-import { and, asc, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import {
 	siteEventsDaily,
 	getTenantDb,
 	type TenantDatabase,
 } from '@repo/tenant-db'
+import {
+	kindFromOutboundEvent,
+	OUTBOUND_EVENT_NAMES,
+} from '@repo/common/action-targets'
 import {
 	buildFunnel,
 	changeInPoints,
@@ -129,6 +133,8 @@ async function readSteps(db: TenantDatabase, query: FunnelQuery) {
 }
 
 export type FunnelResponse = {
+	/** Clicks that left for another site in the period (#318). */
+	outbound: { order: number; gift_cards: number; reservations: number }
 	steps: Array<
 		FunnelStep & {
 			previousCount: number
@@ -140,16 +146,49 @@ export type FunnelResponse = {
 	previous: { from: string; to: string }
 }
 
+/** Outbound clicks per action: counts only, one row per click kind. */
+async function readOutbound(db: TenantDatabase, query: FunnelQuery) {
+	const rows = await db
+		.select({
+			event: siteEventsDaily.event,
+			count: sql<number>`sum(${siteEventsDaily.count})`,
+		})
+		.from(siteEventsDaily)
+		.where(
+			and(
+				gte(siteEventsDaily.date, query.from),
+				lte(siteEventsDaily.date, query.to),
+				inArray(siteEventsDaily.event, [...OUTBOUND_EVENT_NAMES]),
+				// A click is posted once, never again for a test arm.
+				eq(siteEventsDaily.variant, ''),
+				query.locationId !== undefined
+					? eq(siteEventsDaily.locationId, query.locationId)
+					: undefined,
+				query.device ? eq(siteEventsDaily.device, query.device) : undefined,
+				query.entry ? eq(siteEventsDaily.entry, query.entry) : undefined,
+			),
+		)
+		.groupBy(siteEventsDaily.event)
+	const outbound = { order: 0, gift_cards: 0, reservations: 0 }
+	for (const row of rows) {
+		const kind = kindFromOutboundEvent(row.event)
+		if (kind) outbound[kind] = Number(row.count) || 0
+	}
+	return outbound
+}
+
 export async function readFunnel(
 	db: TenantDatabase,
 	query: FunnelQuery,
 ): Promise<FunnelResponse> {
 	const previous = previousPeriod(query)
-	const [current, before] = await Promise.all([
+	const [current, before, outbound] = await Promise.all([
 		readSteps(db, query),
 		readSteps(db, { ...query, ...previous }),
+		readOutbound(db, query),
 	])
 	return {
+		outbound,
 		steps: current.map((step, index) => ({
 			...step,
 			previousCount: before[index]!.count,

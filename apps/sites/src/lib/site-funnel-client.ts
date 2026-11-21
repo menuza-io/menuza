@@ -1,4 +1,9 @@
 import {
+	kindFromOutboundEvent,
+	outboundEventFor,
+	type ActionKind,
+} from '@repo/common/action-targets'
+import {
 	assignArm,
 	classifyDevice,
 	classifyEntry,
@@ -6,6 +11,7 @@ import {
 	SITE_ENTRIES,
 	type ExperimentArm,
 	type SiteEntry,
+	type SiteCountedEventName,
 	type SiteEventName,
 } from '@repo/common/site-funnel'
 import { CART_ADD_EVENT } from '~/lib/ordering/cart-store'
@@ -128,7 +134,7 @@ type Context = {
 	locationId?: string
 }
 
-function post(context: Context, event: SiteEventName, variant: string) {
+function post(context: Context, event: SiteCountedEventName, variant: string) {
 	const body = JSON.stringify({
 		slug: context.orgSlug || undefined,
 		host: context.customHost || undefined,
@@ -196,4 +202,32 @@ export function initSiteFunnel(context: Context) {
 	window.addEventListener(CART_ADD_EVENT, () =>
 		countStep(context, 'add_to_cart'),
 	)
+}
+
+/**
+ * Counts a click that leaves for another site (#318): a button for Order
+ * online, Gift cards or Reservations that the site sends elsewhere carries
+ * `data-outbound`. Every click is counted (no per-session limit: the operator
+ * wants to know how many leave), once. Counts only: no visitor, no address, no
+ * destination.
+ */
+export function initOutboundClicks(
+	context: Context,
+	doc: Pick<EventTarget, 'addEventListener'> = document,
+) {
+	if (!context.tenantApiUrl) return
+	if (globalThis.navigator?.doNotTrack === '1') return
+	const count = (event: Event) => {
+		const target = event.target
+		if (!(target instanceof Element)) return
+		const link = target.closest<HTMLElement>('[data-outbound]')
+		const kind = link?.dataset.outbound as ActionKind | undefined
+		if (!kind || !kindFromOutboundEvent(outboundEventFor(kind))) return
+		post(context, outboundEventFor(kind), '')
+	}
+	doc.addEventListener('click', count)
+	// A middle click opens the link in a new tab without a `click`: it leaves too.
+	doc.addEventListener('auxclick', (event) => {
+		if ((event as MouseEvent).button === 1) count(event)
+	})
 }

@@ -907,7 +907,17 @@ export const siteEventsDaily = sqliteTable(
 		date: text('date').notNull(),
 		locationId: text('location_id').notNull().default(''),
 		event: text('event', {
-			enum: ['visit', 'menu_view', 'add_to_cart', 'checkout', 'order'],
+			enum: [
+				'visit',
+				'menu_view',
+				'add_to_cart',
+				'checkout',
+				'order',
+				// Clicks that leave for another site (#318): counts beside the funnel.
+				'outbound_order',
+				'outbound_gift_cards',
+				'outbound_reservations',
+			],
 		}).notNull(),
 		device: text('device', { enum: ['phone', 'tablet', 'desktop'] }).notNull(),
 		entry: text('entry', {

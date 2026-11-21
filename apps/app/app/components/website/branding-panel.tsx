@@ -1,4 +1,5 @@
-import { Trans } from '@lingui/macro'
+import { Trans, msg } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import {
 	DEFAULT_SITE_THEME,
 	paletteMeetsContrast,
@@ -21,6 +22,7 @@ import {
 } from '#app/components/settings/cards/organization/site-icon-card.tsx'
 import {
 	SiteThemeFields,
+	confirmSiteFontLicenceActionIntent,
 	deleteSiteFontActionIntent,
 	siteThemeActionIntent,
 	uploadSiteFontActionIntent,
@@ -132,6 +134,7 @@ function getSharedCookieDomain() {
 
 export function BrandingPanel({
 	organization,
+	fontLicence,
 	themeConfig,
 	onPreviewRefresh,
 	siteDesignPending = false,
@@ -143,6 +146,22 @@ export function BrandingPanel({
 		siteIconKey: string | null
 		siteIconAssets: Array<{ type: string; status: string }>
 	}
+	/** Licence confirmation of custom fonts (#286). */
+	fontLicence?: {
+		version: number
+		accepted: boolean
+		fonts: Partial<
+			Record<
+				'heading' | 'body',
+				{
+					fileName: string
+					uploader: string | null
+					uploadedAt: string | null
+					needsConfirmation: boolean
+				}
+			>
+		>
+	}
 	themeConfig: SiteThemeConfig
 	onPreviewRefresh: () => void
 	/** Header, footer or theme has unpublished changes (#85). */
@@ -150,11 +169,16 @@ export function BrandingPanel({
 	onOpenHistory?: () => void
 	onSchedule?: () => void
 }) {
+	const { _ } = useLingui()
 	const publishFetcher = useFetcher<{ status?: string; error?: string }>()
 	const [discardOpen, setDiscardOpen] = useState(false)
 	const themeFetcher = useFetcher<{ status?: string; error?: string }>()
 	const iconFetcher = useFetcher<{ status?: string; error?: string }>()
-	const fontFetcher = useFetcher<{ status?: string; error?: string }>()
+	const fontFetcher = useFetcher<{
+		status?: string
+		error?: string
+		code?: string
+	}>()
 	const fileInputRef = useRef<HTMLInputElement | null>(null)
 	const [theme, setTheme] = useState<SiteThemeConfig>(() => ({
 		...DEFAULT_SITE_THEME,
@@ -283,18 +307,41 @@ export function BrandingPanel({
 		// Theme changes are now only saved to cookies until published
 	}
 
-	const handleUploadFont = (role: 'heading' | 'body', file: File) => {
+	const handleUploadFont = (
+		role: 'heading' | 'body',
+		file: File,
+		licenceAccepted: boolean,
+	) => {
 		setFontError(null)
 		setUploadingRole(role)
 		const formData = new FormData()
 		formData.append('intent', uploadSiteFontActionIntent)
 		formData.append('organizationId', organization.id)
 		formData.append('role', role)
+		// The agreement the member ticked, for the version they saw (#286).
+		if (licenceAccepted) {
+			formData.append('fontLicenceAccepted', 'true')
+			formData.append('fontLicenceVersion', String(fontLicence?.version ?? ''))
+		}
 		formData.append('fontFile', file)
 		void fontFetcher.submit(formData, {
 			method: 'POST',
 			encType: 'multipart/form-data',
 		})
+	}
+
+	const handleConfirmFontLicence = (role: 'heading' | 'body') => {
+		setFontError(null)
+		void fontFetcher.submit(
+			{
+				intent: confirmSiteFontLicenceActionIntent,
+				organizationId: organization.id,
+				role,
+				fontLicenceAccepted: 'true',
+				fontLicenceVersion: String(fontLicence?.version ?? ''),
+			},
+			{ method: 'POST' },
+		)
 	}
 
 	const handleRemoveFont = (role: 'heading' | 'body') => {
@@ -491,10 +538,25 @@ export function BrandingPanel({
 						onRemoveFont={handleRemoveFont}
 						onFontError={setFontError}
 						uploadingRole={busyFont ? uploadingRole : null}
+						fontLicence={
+							fontLicence
+								? {
+										version: fontLicence.version,
+										accepted: fontLicence.accepted,
+									}
+								: undefined
+						}
+						fontInfo={fontLicence?.fonts}
+						onConfirmFontLicence={handleConfirmFontLicence}
 					/>
 					{fontError || fontFetcher.data?.status === 'error' ? (
 						<p className="text-destructive text-xs" role="alert">
-							{fontError || fontFetcher.data?.error}
+							{fontError ||
+								(fontFetcher.data?.code === 'font_agreement_required'
+									? _(
+											msg`Confirm that you hold a web licence for this font to upload it.`,
+										)
+									: fontFetcher.data?.error)}
 						</p>
 					) : null}
 				</div>

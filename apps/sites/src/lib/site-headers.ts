@@ -87,10 +87,21 @@ export function sitesShopCheckoutConnectSrc(options: ShopCheckoutCspOptions) {
 	return getShopCheckoutConnectSrc(options)
 }
 
-export function sitesFrameSrc(options: ShopCheckoutCspOptions) {
+/**
+ * `frame-src`: the shop checkout and Turnstile, plus (#259) the origins of the
+ * embed providers THIS page uses, and no others. A page with no Embed section
+ * adds nothing; the origins come from the validated provider table, never from
+ * what an operator pasted. `extraOrigins` are checked to be plain https
+ * origins before they reach the header.
+ */
+export function sitesFrameSrc(
+	options: ShopCheckoutCspOptions,
+	extraOrigins: readonly string[] = [],
+) {
 	const sources = new Set([
 		...getShopCheckoutFrameSources(options),
 		TURNSTILE_ORIGIN,
+		...extraOrigins.filter((origin) => /^https:\/\/[a-z0-9.-]+$/u.test(origin)),
 	])
 	return `frame-src ${Array.from(sources).join(' ')}`
 }

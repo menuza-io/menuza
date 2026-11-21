@@ -236,3 +236,64 @@ describe('loadSiteSeoData: generated pages and events', () => {
 		expect(text).not.toContain('Price range:')
 	})
 })
+
+describe('loadSiteSeoData: ordering goes to another site (#318)', () => {
+	const elsewhere = {
+		...organization,
+		actionTargets: {
+			organization: {
+				order: { mode: 'external', url: 'https://order.toast.example/albait' },
+			},
+			locations: {},
+		},
+	}
+
+	it('leaves the menu, dish and delivery pages out of the sitemap and llms.txt', async () => {
+		const data = await loadSiteSeoData(elsewhere as never, {
+			slug: 'albait',
+			host: null,
+		})
+		const paths = data.sitemap.map((entry) => entry.path)
+		for (const path of ['/menu', '/menu/falafel', '/delivery/al-malqa']) {
+			expect(paths).not.toContain(path)
+		}
+		expect(data.llms.links.map((link) => link.path)).not.toContain('/menu')
+		// Other pages stay.
+		expect(paths).toEqual(
+			expect.arrayContaining(['/locations/olaya', '/events/trivia']),
+		)
+	})
+
+	it('lists them again as soon as ordering is on Menuza', async () => {
+		const back = {
+			...organization,
+			actionTargets: {
+				organization: { order: { mode: 'menuza' } },
+				locations: {},
+			},
+		}
+		const data = await loadSiteSeoData(back as never, {
+			slug: 'albait',
+			host: null,
+		})
+		const paths = data.sitemap.map((entry) => entry.path)
+		expect(paths).toEqual(
+			expect.arrayContaining(['/menu', '/menu/falafel', '/delivery/al-malqa']),
+		)
+	})
+
+	it('keeps them while one location still orders through Menuza', async () => {
+		const mixed = {
+			...elsewhere,
+			actionTargets: {
+				...elsewhere.actionTargets,
+				locations: { l2: { order: { mode: 'menuza' } } },
+			},
+		}
+		const data = await loadSiteSeoData(mixed as never, {
+			slug: 'albait',
+			host: null,
+		})
+		expect(data.sitemap.map((entry) => entry.path)).toContain('/menu')
+	})
+})

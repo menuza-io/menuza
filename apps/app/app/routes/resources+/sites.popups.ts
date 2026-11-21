@@ -1,9 +1,11 @@
+import { hasExternalTarget } from '@repo/common/action-targets'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import { type LoaderFunctionArgs } from 'react-router'
 import { loadPublicPopups } from '#app/utils/popups/popups.server.ts'
 import { funnelEnabled } from '#app/utils/site-events/site-events.server.ts'
 import { withPublicCors } from '#app/utils/sites/public-cors.server.ts'
 import { requirePublishedSiteOrganization } from '#app/utils/sites/published-org.server.ts'
+import { loadPublicActionTargets } from '#app/utils/website/action-targets.server.ts'
 
 /**
  * Promotional popups (#132): `GET /resources/sites/popups?slug=acme&lng=ar`.
@@ -26,6 +28,7 @@ export const loader = withPublicCors(async function loader({
 		requested && (config.locales as string[]).includes(requested)
 			? requested
 			: config.defaultLocale
+	const funnel = await funnelEnabled(organization.id)
 	const popups = await loadPublicPopups({
 		organization: { id: organization.id, dataRegion: organization.dataRegion },
 		locale,
@@ -33,7 +36,15 @@ export const loader = withPublicCors(async function loader({
 	})
 	return Response.json(
 		// `funnel` tells the browser whether to count its funnel (#179).
-		{ popups, funnel: await funnelEnabled(organization.id) },
+		// `outbound` says whether to count clicks that leave for another site
+		// (#318): on with the funnel, and whenever a button goes to another site.
+		{
+			popups,
+			funnel,
+			outbound:
+				funnel ||
+				hasExternalTarget(await loadPublicActionTargets(organization.id)),
+		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)
 })

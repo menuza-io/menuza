@@ -167,6 +167,50 @@ describe('site events and the funnel (#179)', () => {
 		expect(body.steps[0]).toMatchObject({ event: 'visit', count: 100 })
 	})
 
+	it('counts clicks that leave for another site, as counts beside the funnel (#318)', async () => {
+		for (let i = 0; i < 3; i++) {
+			expect((await beacon({ ...base, event: 'outbound_order' })).status).toBe(
+				204,
+			)
+		}
+		await beacon({ ...base, event: 'outbound_gift_cards' })
+		await beacon({ ...base, event: 'outbound_reservations', device: 'desktop' })
+		// An outbound click carries no visitor either: same columns, same table.
+		const all = await rows()
+		expect(all.find((r) => r.event === 'outbound_order')).toMatchObject({
+			count: 3,
+			variant: '',
+		})
+		const res = await app.request(
+			`/operator/funnel?from=${eventDay(Date.now() - 86_400_000)}&to=${eventDay(Date.now())}`,
+			{ headers: { Authorization: `Bearer ${await mint()}` } },
+		)
+		const body = (await res.json()) as {
+			outbound: { order: number; gift_cards: number; reservations: number }
+			steps: Array<{ event: string; count: number }>
+		}
+		expect(body.outbound).toEqual({ order: 3, gift_cards: 1, reservations: 1 })
+		// They are not steps of the ordering funnel.
+		expect(body.steps.map((step) => step.event)).toEqual([
+			'visit',
+			'menu_view',
+			'add_to_cart',
+			'checkout',
+			'order',
+		])
+		expect(body.steps.every((step) => step.count === 0)).toBe(true)
+		// The device filter applies to them like to the steps.
+		const phone = await app.request(
+			`/operator/funnel?from=${eventDay(Date.now() - 86_400_000)}&to=${eventDay(Date.now())}&device=desktop`,
+			{ headers: { Authorization: `Bearer ${await mint()}` } },
+		)
+		expect(((await phone.json()) as typeof body).outbound).toEqual({
+			order: 0,
+			gift_cards: 0,
+			reservations: 1,
+		})
+	})
+
 	it('serves the funnel only to a funnel-scope token of this organization', async () => {
 		const query = '?from=2026-11-01&to=2026-11-07'
 		const get = (token: string | null) =>

@@ -1,3 +1,7 @@
+import {
+	embedFrameOrigins,
+	sectionsWithVariant,
+} from '@repo/common/site-embeds'
 import { resolveSiteLocaleRequest } from '@repo/common/site-locales'
 import { defineMiddleware } from 'astro:middleware'
 import { createSiteI18n } from '~/lib/i18n'
@@ -63,7 +67,10 @@ const shopCheckoutCsp = {
 
 const isProduction = isSitesProduction()
 
-function securityHeadersFor(env: SiteHostEnv) {
+function securityHeadersFor(
+	env: SiteHostEnv,
+	embedFrameOrigins: readonly string[] = [],
+) {
 	const { appUrl, tenantApiUrl, tenantApiUrlKsa } = runtimeUrls()
 	const connectSrc = [
 		sitesConnectSrc([appUrl, tenantApiUrl, tenantApiUrlKsa]),
@@ -92,7 +99,7 @@ function securityHeadersFor(env: SiteHostEnv) {
 			"object-src 'none'",
 			"base-uri 'self'",
 			"form-action 'self'",
-			sitesFrameSrc(shopCheckoutCsp),
+			sitesFrameSrc(shopCheckoutCsp, embedFrameOrigins),
 			`frame-ancestors 'self' ${frameAncestors}${isProduction ? '' : ' localhost:*'}`,
 		]
 			.filter(Boolean)
@@ -103,6 +110,26 @@ function securityHeadersFor(env: SiteHostEnv) {
 						'max-age=63072000; includeSubDomains; preload',
 				}
 			: {}),
+	}
+}
+
+/** The embed providers' origins for a page's `frame-src`; none on any failure. */
+async function pageEmbedFrameOrigins(
+	promise:
+		| Promise<{
+				sections: ReadonlyArray<{ id?: string; type: string; config: unknown }>
+				experiment?: { sectionId: string; variantConfig: unknown } | null
+		  } | null>
+		| undefined,
+) {
+	if (!promise) return []
+	try {
+		const page = await promise
+		return page
+			? embedFrameOrigins(sectionsWithVariant(page.sections, page.experiment))
+			: []
+	} catch {
+		return []
 	}
 }
 
@@ -122,8 +149,11 @@ function withSecurityHeaders(
 	pathname: string,
 	env: SiteHostEnv,
 	cacheControl?: string,
+	embedFrameOrigins: readonly string[] = [],
 ) {
-	for (const [key, value] of Object.entries(securityHeadersFor(env))) {
+	for (const [key, value] of Object.entries(
+		securityHeadersFor(env, embedFrameOrigins),
+	)) {
 		response.headers.set(key, value)
 	}
 
@@ -357,11 +387,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			  isReservationsPage(url.pathname)
 			? 'no-store'
 			: undefined
+	// Embed sections (#259): this page's frame-src names only the providers its
+	// own sections use. The page has already rendered, so its promise is settled.
+	const embedOrigins = await pageEmbedFrameOrigins(
+		context.locals.publishedPagePromise,
+	)
 	const secured = withSecurityHeaders(
 		response,
 		url.pathname,
 		hostEnv,
 		response.status === 200 ? htmlCacheControl : undefined,
+		embedOrigins,
 	)
 
 	if (cache && cacheHtml && secured.status === 200) {

@@ -24,6 +24,22 @@ import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 
 import {
+	FONT_LICENCE_VERSION,
+	isFontRole,
+	sha256Hex,
+} from '@repo/common/font-licence'
+import {
+	EMBED_PROVIDERS,
+	embedDetectedLabel,
+	embedProviderInfo,
+	embedProviderLabel,
+	isBookingEmbed,
+	isEmbedProvider,
+	normalizeEmbedHeight,
+	parseEmbed,
+	type EmbedProvider,
+} from '@repo/common/site-embeds'
+import {
 	getLocaleHref,
 	getLocalizedEditableValue,
 	isReservedSiteLocaleSlug,
@@ -91,6 +107,7 @@ import { ScrollArea } from '@repo/ui/scroll-area'
 import { Spinner } from '@repo/ui/spinner'
 import { Switch } from '@repo/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { Textarea } from '@repo/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
 import * as cookie from 'cookie'
 import {
@@ -128,21 +145,14 @@ import {
 } from '#app/components/settings/cards/organization/site-icon-card.tsx'
 import {
 	SiteThemeSchema,
+	confirmSiteFontLicenceActionIntent,
 	deleteSiteFontActionIntent,
 	siteThemeActionIntent,
 	uploadSiteFontActionIntent,
 } from '#app/components/settings/cards/organization/site-theme-card.tsx'
 import { BrandingPanel } from '#app/components/website/branding-panel.tsx'
-import {
-	ContactSectionEditor,
-	FeatureIconSelect,
-	HeroSlidesEditor,
-	LocationsHoursEditor,
-	MenuFileEditor,
-	MenuHighlightsEditor,
-	ScrollingStripEditor,
-} from '#app/components/website/restaurant-editors.tsx'
 import { CreatePageDialog } from '#app/components/website/create-page-dialog.tsx'
+import { HeroVideoMaker } from '#app/components/website/hero-video-maker.tsx'
 import {
 	LinkInspector,
 	SiteLinkBuilderContext,
@@ -162,6 +172,15 @@ import {
 	VersionHistorySheet,
 	type VersionPreview,
 } from '#app/components/website/publish-controls.tsx'
+import {
+	ContactSectionEditor,
+	FeatureIconSelect,
+	HeroSlidesEditor,
+	LocationsHoursEditor,
+	MenuFileEditor,
+	MenuHighlightsEditor,
+	ScrollingStripEditor,
+} from '#app/components/website/restaurant-editors.tsx'
 import {
 	TranslateAllButton,
 	TranslateProvider,
@@ -186,6 +205,7 @@ import { isRankTrackingEnabled } from '#app/utils/seo/rank-tracking.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { signSitePreviewToken } from '#app/utils/sites/preview-token.server.ts'
 import {
+	deleteOrganizationStorageObject,
 	uploadSiteFont,
 	uploadSiteIcon,
 	uploadWebsiteAsset,
@@ -209,6 +229,15 @@ import {
 	SITE_HEADER_ID,
 	type BlockType,
 } from '#app/utils/website/block-types.ts'
+import { sanitizeEmbedSectionConfig } from '#app/utils/website/embeds.server.ts'
+import {
+	checkFontLicence,
+	confirmExistingFontLicence,
+	fontLicenceStatus,
+	recordFontLicence,
+	removeSiteFont,
+} from '#app/utils/website/font-licence.server.ts'
+import { heroVideoEnabled } from '#app/utils/website/hero-video/service.server.ts'
 import { HOME_PAGE_SLUG } from '#app/utils/website/home-page.ts'
 import { ensureSiteChrome } from '#app/utils/website/locked-chrome.server.ts'
 import {
@@ -557,7 +586,7 @@ const ReorderSectionsSchema = z.object({
 
 // --- Loader ---
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
@@ -704,6 +733,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			getLandingFeatures(organization.id),
 		])
 	const eventsEnabled = landingFeatures.events
+	// "Make a video from my photos" on the hero (#301), behind `website.hero_video`.
+	const heroVideoOn = await heroVideoEnabled(organization.id)
 	const reservationsOnline =
 		reservationsState.enabled && reservationsState.online
 	const reservationLocations = reservationsOnline
@@ -734,12 +765,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			}))
 		: []
 
+	const fontLicence = await fontLicenceStatus({
+		organizationId: organization.id,
+		userId,
+		themeJson: chrome.theme,
+	})
+
 	return {
 		organization,
+		fontLicence,
 		previewToken: signSitePreviewToken(organization.id),
 		websiteForms,
 		loyaltyEnabled,
 		eventsEnabled,
+		heroVideoOn,
 		targetKeywords,
 		reservationsOnline,
 		reservationLocations,
@@ -995,6 +1034,23 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 					{ status: 400 },
 				)
 			}
+			// The member confirms a web licence before anything is stored (#286).
+			const licence = await checkFontLicence({
+				organizationId: organization.id,
+				userId,
+				ticked: formData.get('fontLicenceAccepted'),
+				tickedVersion: formData.get('fontLicenceVersion'),
+			})
+			if (licence !== 'ok') {
+				return Response.json(
+					{
+						status: 'error',
+						code: 'font_agreement_required',
+						error: 'font_agreement_required',
+					},
+					{ status: 403 },
+				)
+			}
 			const fontFile = formData.get('fontFile') as File | null
 			if (!fontFile || !(fontFile instanceof File) || fontFile.size <= 0) {
 				return Response.json(
@@ -1031,6 +1087,27 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 					objectKey,
 					filename: fontFile.name.replace(/^.*[\\/]/, '').slice(0, 180),
 					format,
+				}
+				// Who confirmed which file, and when (#286): name and hash. A file
+				// without its record is never left in storage.
+				try {
+					await recordFontLicence({
+						organizationId: organization.id,
+						userId,
+						role,
+						fileName: customFont.filename,
+						fileHash: await sha256Hex(bytes),
+						objectKey,
+					})
+				} catch {
+					await deleteOrganizationStorageObject(
+						objectKey,
+						organization.id,
+					).catch(() => {})
+					return Response.json(
+						{ status: 'error', error: 'Failed to record the font licence' },
+						{ status: 500 },
+					)
 				}
 				await updateSiteThemeDraft(organization.id, (current) => ({
 					...current,
@@ -1362,6 +1439,31 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 			)
 		}
 
+		// An embed keeps only a provider on the allowlist and its ids (#259):
+		// whatever else arrives (an address, markup) is dropped, and a provider
+		// with ids that do not check out is refused.
+		let configToSave = config
+		const [target] = await db
+			.select({ type: WebsitePageSection.type })
+			.from(WebsitePageSection)
+			.where(
+				and(
+					eq(WebsitePageSection.id, sectionId),
+					eq(WebsitePageSection.pageId, page.id),
+				),
+			)
+			.limit(1)
+		if (target?.type === 'embed') {
+			const sanitized = sanitizeEmbedSectionConfig(config)
+			if (!sanitized.ok) {
+				return Response.json(
+					{ status: 'error', error: 'embed_unsupported' },
+					{ status: 400 },
+				)
+			}
+			configToSave = sanitized.config
+		}
+
 		// Header and footer are site-wide drafts until published (#85): the
 		// public site keeps serving the live ones, so nothing to purge.
 		if (sectionId === SITE_HEADER_ID) {
@@ -1375,7 +1477,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 
 		await db
 			.update(WebsitePageSection)
-			.set({ config })
+			.set({ config: configToSave })
 			.where(
 				and(
 					eq(WebsitePageSection.id, sectionId),
@@ -2019,7 +2121,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 				{ status: 400 },
 			)
 		}
-		if (role !== 'heading' && role !== 'body') {
+		if (!isFontRole(role)) {
 			return Response.json(
 				{ status: 'error', error: 'Invalid font role' },
 				{ status: 400 },
@@ -2027,14 +2129,9 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 		}
 
 		try {
-			await updateSiteThemeDraft(organization.id, (current) => ({
-				...current,
-				headingFont: role === 'heading' ? 'inter' : current.headingFont,
-				bodyFont: role === 'body' ? 'inter' : current.bodyFont,
-				headingCustomFont:
-					role === 'heading' ? null : current.headingCustomFont,
-				bodyCustomFont: role === 'body' ? null : current.bodyCustomFont,
-			}))
+			// Both the live and the draft theme go back to the theme font, so the
+			// site falls back at once: fonts load by reference, nothing republishes.
+			await removeSiteFont({ organizationId: organization.id, role, userId })
 			await invalidateUserOrganizationsCache(userId)
 			await notifyReservationsContextChanged(organization.id, 'branding')
 			await purgeOrganizationSiteCache(
@@ -2049,6 +2146,45 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 				{ status: 500 },
 			)
 		}
+	}
+
+	if (intent === confirmSiteFontLicenceActionIntent) {
+		const role = formData.get('role')
+		if (
+			!isFontRole(role) ||
+			formData.get('fontLicenceAccepted') !== 'true' ||
+			Number(formData.get('fontLicenceVersion')) !== FONT_LICENCE_VERSION
+		) {
+			return Response.json(
+				{
+					status: 'error',
+					code: 'font_agreement_required',
+					error: 'font_agreement_required',
+				},
+				{ status: 403 },
+			)
+		}
+		const [chrome] = await db
+			.select({
+				siteTheme: Organization.siteTheme,
+				draftSiteTheme: Organization.draftSiteTheme,
+			})
+			.from(Organization)
+			.where(eq(Organization.id, organization.id))
+			.limit(1)
+		const result = await confirmExistingFontLicence({
+			organizationId: organization.id,
+			userId,
+			role,
+			themes: [chrome?.draftSiteTheme ?? null, chrome?.siteTheme ?? null],
+		})
+		if (!result.ok) {
+			return Response.json(
+				{ status: 'error', error: 'No custom font to confirm' },
+				{ status: 404 },
+			)
+		}
+		return Response.json({ status: 'success' })
 	}
 
 	return Response.json(
@@ -2534,6 +2670,12 @@ function previewText(
 		}
 		case 'video':
 			return loc(config.videoUrl) || loc(config.title) || 'Video section'
+		case 'embed': {
+			const provider = isEmbedProvider(config.provider)
+				? embedProviderLabel(config.provider)
+				: ''
+			return loc(config.title) || provider || 'Embed'
+		}
 		case 'form':
 			return loc(config.formName) || 'Choose a form'
 		case 'reservation':
@@ -2658,6 +2800,7 @@ function SectionEditorPanel({
 						config,
 						updateField,
 						listKey: section.id,
+						sectionId: section.id,
 						onUploadAsset,
 						isUploadingAsset,
 						uploadedAssetUrl,
@@ -3210,6 +3353,7 @@ function renderBlockEditor(props: {
 	config: Record<string, unknown>
 	updateField: (key: string, value: unknown) => void
 	listKey: string
+	sectionId?: string
 	onUploadAsset?: (file: File) => void
 	isUploadingAsset?: boolean
 	uploadedAssetUrl?: string | null
@@ -3296,6 +3440,8 @@ function renderBlockEditor(props: {
 			)
 		case 'video':
 			return <VideoEditor config={config} updateField={updateField} />
+		case 'embed':
+			return <EmbedEditor config={config} updateField={updateField} />
 		case 'form':
 			return <FormBlockEditor config={config} updateField={updateField} />
 		case 'reservation':
@@ -3350,6 +3496,8 @@ function renderBlockEditor(props: {
 interface EditorProps {
 	config: Record<string, unknown>
 	updateField: (key: string, value: unknown) => void
+	/** The section being edited (the hero's video maker, #301). */
+	sectionId?: string
 	onUploadAsset?: (file: File) => void
 	isUploadingAsset?: boolean
 	uploadedAssetUrl?: string | null
@@ -3779,6 +3927,7 @@ function HeaderEditor({
 
 function HeroEditor({ config, updateField, ...editorProps }: EditorProps) {
 	const assetType = (config.assetType as string) ?? 'none'
+	const { organization, page, heroVideoOn } = useLoaderData<typeof loader>()
 	const links =
 		(config.links as Array<{
 			url: unknown
@@ -3930,6 +4079,29 @@ function HeroEditor({ config, updateField, ...editorProps }: EditorProps) {
 					}))}
 				/>
 			</EditorSection>
+
+			{heroVideoOn && editorProps.sectionId ? (
+				<EditorSection title={<Trans>Video from your photos</Trans>}>
+					<p className="text-muted-foreground text-xs">
+						<Trans>
+							Turn 3 to 6 of your own photos into a short looping clip. You
+							preview it first; your hero stays as it is until you accept.
+						</Trans>
+					</p>
+					<HeroVideoMaker
+						orgSlug={organization.slug}
+						pageId={page.id}
+						sectionId={editorProps.sectionId}
+						onAccepted={({ videoSrc, videoPoster }) => {
+							// The server already put the clip in the section; mirror it so
+							// the open editor does not save the old values back.
+							updateField('assetType', 'video')
+							updateField('videoSrc', videoSrc)
+							updateField('videoPoster', videoPoster)
+						}}
+					/>
+				</EditorSection>
+			) : null}
 
 			{assetType !== 'none' ? (
 				<EditorSection title={<Trans>Media</Trans>}>
@@ -4867,6 +5039,174 @@ function RewardsBlockEditor({ config, updateField }: EditorProps) {
 					onChange={(v) => updateField('background', v)}
 				/>
 			</EditorSection>
+		</div>
+	)
+}
+
+/**
+ * The Embed section (#259). The operator picks a provider and pastes a link or
+ * an embed snippet; Menuza finds the ids it needs ("Detected: venue 12345") and
+ * keeps only those. The pasted text is never stored or shown on the page.
+ */
+function EmbedEditor({ config, updateField }: EditorProps) {
+	const { _ } = useLingui()
+	const { page } = useLoaderData<typeof loader>()
+	const provider = isEmbedProvider(config.provider) ? config.provider : ''
+	const [pasted, setPasted] = useState('')
+	const [error, setError] = useState(false)
+	const detected = embedDetectedLabel(config)
+	const info = provider ? embedProviderInfo(provider) : null
+	const height = config.height === 'auto' ? 'auto' : Number(config.height)
+	const hasOwnBooking = page.sections.some(
+		(section: { type: string }) => section.type === 'reservation',
+	)
+
+	const onPaste = (text: string) => {
+		setPasted(text)
+		if (!provider || !text.trim()) {
+			setError(false)
+			return
+		}
+		const parsed = parseEmbed(provider, text)
+		if (!parsed.ok) {
+			setError(true)
+			return
+		}
+		setError(false)
+		updateField('ids', parsed.ids)
+		setPasted('')
+	}
+
+	return (
+		<div className="space-y-5">
+			<EditorSection title={<Trans>Content</Trans>}>
+				<FieldInput
+					label={_(msg`Title (read aloud by screen readers)`)}
+					value={(config.title as string) ?? ''}
+					onChange={(v) => updateField('title', v)}
+				/>
+				<div className="space-y-2">
+					<Label htmlFor="block-embed-provider">
+						<Trans>Provider</Trans>
+					</Label>
+					<select
+						id="block-embed-provider"
+						value={provider}
+						onChange={(event) => {
+							// A new provider starts without the old provider's ids.
+							updateField('provider', event.target.value)
+							updateField('ids', {})
+							updateField(
+								'height',
+								isEmbedProvider(event.target.value)
+									? embedProviderInfo(event.target.value).autoHeight
+										? 'auto'
+										: embedProviderInfo(event.target.value).defaultHeight
+									: 'auto',
+							)
+							setPasted('')
+							setError(false)
+						}}
+						className="border-input bg-background h-11 w-full rounded-md border px-3 text-base"
+					>
+						<option value="">{_(msg`Choose a provider`)}</option>
+						{EMBED_PROVIDERS.map((id) => (
+							<option key={id} value={id}>
+								{embedProviderLabel(id)}
+							</option>
+						))}
+					</select>
+				</div>
+				{provider ? (
+					<div className="space-y-2">
+						<Label htmlFor="block-embed-paste">
+							<Trans>Paste the embed code or link</Trans>
+						</Label>
+						<Textarea
+							id="block-embed-paste"
+							value={pasted}
+							rows={3}
+							spellCheck={false}
+							onChange={(event) => onPaste(event.target.value)}
+							placeholder={_(
+								msg`Paste a link or the embed code from the provider`,
+							)}
+							aria-invalid={error || undefined}
+							aria-describedby="block-embed-status"
+						/>
+						<p
+							id="block-embed-status"
+							role={error ? 'alert' : 'status'}
+							className={cn(
+								'text-xs',
+								error ? 'text-destructive' : 'text-muted-foreground',
+							)}
+						>
+							{error ? (
+								<Trans>We don't support this embed yet.</Trans>
+							) : detected ? (
+								<Trans>Detected: {detected}</Trans>
+							) : (
+								<Trans>
+									Only the ids are kept. Pasted code is never shown on your
+									site.
+								</Trans>
+							)}
+						</p>
+					</div>
+				) : null}
+			</EditorSection>
+			{info ? (
+				<EditorSection title={<Trans>Size</Trans>}>
+					{info.autoHeight ? (
+						<FieldSwitch
+							label={_(msg`Fit the width automatically (16:9)`)}
+							checked={height === 'auto'}
+							onChange={(checked) =>
+								updateField('height', checked ? 'auto' : info.defaultHeight)
+							}
+						/>
+					) : null}
+					{height === 'auto' && info.autoHeight ? null : (
+						<FieldInput
+							label={_(msg`Height in pixels`)}
+							value={String(
+								Number.isFinite(height) ? height : info.defaultHeight,
+							)}
+							onChange={(v) =>
+								updateField(
+									'height',
+									normalizeEmbedHeight(provider as EmbedProvider, v),
+								)
+							}
+						/>
+					)}
+				</EditorSection>
+			) : null}
+			{hasOwnBooking && isBookingEmbed(provider) ? (
+				<p
+					role="status"
+					className="text-muted-foreground bg-muted rounded-lg px-3 py-2 text-xs"
+				>
+					<Trans>
+						This page also has our own booking section. Guests will see two ways
+						to book.
+					</Trans>
+				</p>
+			) : null}
+			<EditorSection title={<Trans>Style</Trans>}>
+				<SectionBackgroundField
+					value={(config.background as string) ?? 'none'}
+					onChange={(v) => updateField('background', v)}
+				/>
+			</EditorSection>
+			<p className="text-muted-foreground text-xs">
+				<Trans>
+					The widget loads in a sandboxed frame and receives no guest data from
+					your site. With the cookie banner on Required, it waits until the
+					guest accepts.
+				</Trans>
+			</p>
 		</div>
 	)
 }
@@ -5911,6 +6251,7 @@ function InspectorTabs({
 export default function PageBuilderRoute() {
 	const {
 		organization,
+		fontLicence,
 		page,
 		previewToken,
 		themeConfig: initialTheme,
@@ -6394,6 +6735,7 @@ export default function PageBuilderRoute() {
 				) : inspector === 'branding' ? (
 					<BrandingPanel
 						organization={{ ...organization, siteIconAssets: [] }}
+						fontLicence={fontLicence}
 						themeConfig={themeConfig}
 						onPreviewRefresh={handlePreviewRefresh}
 						siteDesignPending={siteDesign.any}

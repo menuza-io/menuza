@@ -112,7 +112,8 @@ export function MediaLibraryPicker({
 		if (wasOpenRef.current) return
 		wasOpenRef.current = true
 		reset()
-		void fetcher.load(`/${orgSlug}/media?index`)
+		// Archived assets and ones still processing are never offered (#147).
+		void fetcher.load(`/${orgSlug}/media?index&picker=1`)
 	}, [fetcher, open, orgSlug, reset])
 
 	const assets = fetcher.data?.assets ?? []

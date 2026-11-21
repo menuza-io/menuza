@@ -33,17 +33,17 @@ msgid "{0} · {1}"
 msgstr "{0} · {1}"
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:663
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:672
 msgid "{0} / 1600 chars"
 msgstr "{0} / 1600 حرف"
 
 #. placeholder {0}: (data.body as string | undefined)?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:611
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:616
 msgid "{0} / 178 chars"
 msgstr "{0} / 178 حرفًا"
 
 #. placeholder {0}: emailBlocks.length
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:500
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:503
 msgid "{0} blocks · rendered in your website branding"
 msgstr "{0} كتل · مُعرَّضة بعلامة موقعك التجارية"
 
@@ -64,7 +64,7 @@ msgstr "تم بدء {0} من {1} تطبيقات"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:251
+#: ../../packages/marketing/src/components/campaign-detail.tsx:249
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
@@ -111,6 +111,10 @@ msgstr "{excluded, plural, zero {لا سجلات مستبعدة} one {تم اس�
 msgid "{field}"
 msgstr "{field}"
 
+#: app/routes/_admin+/font-licences.tsx:72
+msgid "{fileName} is taken off the site of {organizationName} at once, and the site falls back to the theme font. The licence record is kept."
+msgstr "تتم إزالة {fileName} من موقع {organizationName} فورًا، ويعود الموقع إلى خط السمة. يتم الاحتفاظ بسجل الترخيص."
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:528
 msgid "{hours} hours late"
 msgstr "متأخر {hours} ساعات"
@@ -131,7 +135,7 @@ msgstr "{numberCount} أرقام"
 msgid "{providerName} identity provider configuration"
 msgstr "إعداد موفر الهوية {providerName}"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:235
+#: ../../packages/marketing/src/components/campaign-detail.tsx:234
 msgid "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
 msgstr "أُرسل {pushSent}، وفُتح {pushOpened} ({pushOpenRate})."
 
@@ -179,11 +183,11 @@ msgstr "{userCount} مستخدم"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:954
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:979
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:980
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:1005
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
@@ -214,7 +218,7 @@ msgstr "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgid "<p>Hi {NAME_TAG},</p><p>Check out our latest update.</p>"
 msgstr "<p>مرحباً {NAME_TAG}،</p><p>اطّلع على آخر تحديثاتنا.</p>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:520
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:523
 msgid "<p>Hi {NAME_TAG},</p><p>Welcome to our service!</p>"
 msgstr "<p>مرحباً {NAME_TAG}،</p><p>مرحباً بك في خدمتنا!</p>"
 
@@ -544,8 +548,8 @@ msgstr "إضافة نقاط قائمة الانتظار"
 msgid "Address, phone and opening hours"
 msgstr "العنوان والهاتف وساعات العمل"
 
-#: app/components/admin-sidebar.tsx:173
-#: app/components/admin-sidebar.tsx:181
+#: app/components/admin-sidebar.tsx:179
+#: app/components/admin-sidebar.tsx:187
 #: app/components/sso-configuration-form.tsx:438
 #: app/components/sso-user-management.tsx:101
 #: app/routes/_admin+/roles+/$roleId.tsx:504
@@ -553,7 +557,7 @@ msgstr "العنوان والهاتف وساعات العمل"
 msgid "Admin"
 msgstr "مدير"
 
-#: app/components/admin-sidebar.tsx:199
+#: app/components/admin-sidebar.tsx:205
 #: app/routes/_admin+/index.tsx:129
 msgid "Admin Dashboard"
 msgstr "لوحة تحكم المدير"
@@ -1075,7 +1079,7 @@ msgstr "البثّات"
 msgid "Broadcasts and automations for tenant operators."
 msgstr "البثّات والأتمتة لمشغّلي المستأجرين."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:505
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:508
 msgid "Build a branded HTML email with blocks."
 msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخدام الكتل."
 
@@ -1146,6 +1150,7 @@ msgstr "اسم الحملة"
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/customer-apps_.$appId.tsx:902
+#: app/routes/_admin+/font-licences.tsx:88
 #: app/routes/_admin+/gdpr-requests.tsx:663
 #: app/routes/_admin+/print-shop.tsx:193
 #: app/routes/_admin+/roles+/index.tsx:352
@@ -1235,11 +1240,11 @@ msgstr "افحص المتاجر الآن"
 msgid "Check the values and try again."
 msgstr "تحقق من القيم وحاول مرة أخرى."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:246
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:243
 msgid "Checked before every step, including after a delay. Guests who order are not sent the rest of this automation."
 msgstr "يُتحقق منه قبل كل خطوة، بما في ذلك بعد التأخير. لا يتلقى الضيوف الذين يطلبون بقية هذه الأتمتة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:816
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:830
 msgid "Checked when the guest reaches this step, never stored."
 msgstr "يُتحقق منه عند وصول الضيف إلى هذه الخطوة، ولا يُخزَّن أبداً."
 
@@ -1255,7 +1260,7 @@ msgstr "اختر عنواناً"
 msgid "Choose a valid retention period."
 msgstr "اختر فترة احتفاظ صالحة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:785
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:794
 msgid "Choose an audience"
 msgstr "اختر جمهوراً"
 
@@ -1369,8 +1374,8 @@ msgstr "فرع شرطي"
 msgid "Condition comparison field is required."
 msgstr "حقل مقارنة الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:825
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:909
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:842
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:934
 msgid "Condition Logic"
 msgstr "منطق الشرط"
 
@@ -1422,6 +1427,10 @@ msgstr "تكوين إعدادات موفر الهوية لمؤسستك"
 msgid "Confirm"
 msgstr "تأكيد"
 
+#: app/routes/_admin+/font-licences.tsx:135
+msgid "Confirmed by"
+msgstr "أكّده"
+
 #: app/components/admin-user-detail.tsx:695
 msgid "Connected Accounts"
 msgstr "الحسابات المتصلة"
@@ -1438,7 +1447,7 @@ msgstr "الاتصالات"
 msgid "contains"
 msgstr "يحتوي على"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:928
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:953
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
@@ -1613,7 +1622,7 @@ msgstr "النطاق الخاص"
 msgid "Custom Event"
 msgstr "حدث مخصص"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:355
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:358
 msgid "Custom Event Name"
 msgstr "اسم الحدث المخصص"
 
@@ -1639,7 +1648,7 @@ msgstr "هاتف <0>العميل</0> {0}<1>موثّق</1>"
 msgid "Customer apps"
 msgstr "تطبيقات العملاء"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:723
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:732
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
@@ -1688,7 +1697,7 @@ msgstr "التاريخ"
 msgid "days"
 msgstr "أيام"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:414
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:417
 msgid "Days"
 msgstr "أيام"
 
@@ -1799,7 +1808,7 @@ msgstr "وصف ما يمكن لهذا الدور فعله..."
 msgid "Description"
 msgstr "الوصف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:476
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:479
 msgid "Design email"
 msgstr "تصميم البريد"
 
@@ -1886,7 +1895,7 @@ msgstr "إرسال رسالة نصية مع وسوم الدمج"
 msgid "Display name"
 msgstr "الاسم المعروض"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:950
 msgid "Does Not Equal"
 msgstr "لا يساوي"
 
@@ -1932,15 +1941,15 @@ msgstr "حد تغيّر السعر (%)"
 msgid "Duplicate"
 msgstr "تكرار"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:376
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:379
 msgid "Duration"
 msgstr "المدة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:940
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:965
 msgid "e.g. @gmail.com"
 msgstr "مثال: @gmail.com"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:359
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:362
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr "مثال: checkout_abandoned, tier_upgraded"
 
@@ -1956,7 +1965,7 @@ msgstr "مثل: إنشاء، قراءة، موافقة، نشر"
 msgid "e.g. cust_123"
 msgstr "مثال: cust_123"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:454
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:457
 msgid "e.g. Sarah from Marketing"
 msgstr "مثال: سارة من التسويق"
 
@@ -1968,7 +1977,7 @@ msgstr "مثال: سارة من التسويق"
 #~ msgid "e.g. Welcome {{name}}!"
 #~ msgstr "مثال: مرحباً {{name}}!"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:442
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:445
 msgid "e.g. Welcome {FIRST_NAME_TAG}!"
 msgstr "مثال: مرحبًا {FIRST_NAME_TAG}!"
 
@@ -1997,7 +2006,7 @@ msgstr "يُطبع كل منتج ومقاس قابل للشحن لدى مورّ�
 msgid "Edit"
 msgstr "تحرير"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:474
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:477
 msgid "Edit design"
 msgstr "تعديل التصميم"
 
@@ -2030,7 +2039,7 @@ msgstr "القيمة الفعالة"
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:749
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:758
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:394
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
@@ -2039,15 +2048,15 @@ msgstr "عنوان البريد الإلكتروني"
 msgid "Email body content is required."
 msgstr "محتوى نص البريد الإلكتروني مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:463
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:573
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:466
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:576
 #: ../../packages/marketing/src/components/campaign-form.tsx:331
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
 msgstr "تصميم البريد"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:514
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:517
 msgid "Email HTML Body"
 msgstr "نص HTML للبريد الإلكتروني"
 
@@ -2222,11 +2231,15 @@ msgstr "سير عمل قائم على الأحداث لدورة حياة مشغ�
 msgid "Every app was started."
 msgstr "تم بدء جميع التطبيقات."
 
+#: app/routes/_admin+/font-licences.tsx:108
+msgid "Every custom font a member uploaded, who confirmed they hold a web licence, and when. Remove a font after a complaint: the site falls back to the theme font at once."
+msgstr "كل خط مخصص رفعه عضو، ومن أكّد أنه يملك ترخيصًا للويب، ومتى. أزل الخط بعد وصول شكوى: يعود الموقع إلى خط القالب فورًا."
+
 #: ../../packages/reports/src/ui/report-labels.ts:105
 msgid "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
 msgstr "كل حالات عدم الحضور خلال آخر 30 يومًا مع التاريخ والخدمة وحجم المجموعة والمصدر. دون تفاصيل الضيوف."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:272
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:270
 msgid "Every order"
 msgstr "كل طلب"
 
@@ -2246,7 +2259,7 @@ msgstr "جميع المشتركين"
 msgid "Everyone who opted in to notifications"
 msgstr "كل من فعّل الإشعارات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:922
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:947
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
@@ -2438,6 +2451,15 @@ msgstr "المؤشرات للمستخدم: {searchedUserId} (المؤسسة: {se
 msgid "Flyer"
 msgstr "منشور"
 
+#: app/routes/_admin+/font-licences.tsx:132
+msgid "Font file"
+msgstr "ملف الخط"
+
+#: app/components/admin-sidebar.tsx:161
+#: app/routes/_admin+/font-licences.tsx:106
+msgid "Font licences"
+msgstr "تراخيص الخطوط"
+
 #: app/routes/_admin+/print-shop.tsx:723
 msgid "For a defect claim or a lost parcel: the full amount goes back to the card, and the vendor keeps printing and shipping at {platform}'s cost. This cannot be undone."
 msgstr "لمطالبة بعيب أو طرد مفقود: يُعاد المبلغ كاملًا إلى البطاقة، ويواصل المورّد الطباعة والشحن على نفقة {platform}. لا يمكن التراجع عن ذلك."
@@ -2487,7 +2509,7 @@ msgstr "من"
 msgid "From {min} to {max} days."
 msgstr "من {min} إلى {max} يومًا."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:450
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:453
 msgid "From Name (Optional)"
 msgstr "اسم المرسل (اختياري)"
 
@@ -2552,11 +2574,11 @@ msgstr "بيانات الرسم البياني مفقودة"
 msgid "Guest"
 msgstr "ضيف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:808
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:822
 msgid "Guest is in the audience"
 msgstr "الضيف ضمن الجمهور"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:811
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:825
 msgid "Guest is not in the audience"
 msgstr "الضيف ليس ضمن الجمهور"
 
@@ -2564,7 +2586,7 @@ msgstr "الضيف ليس ضمن الجمهور"
 msgid "Guest Lapsed"
 msgstr "ضيف انقطع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:638
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:646
 msgid "Guests who turned on offers in the app get this once per run. A push holds no personal data, so merge tags are not available."
 msgstr "الضيوف الذين فعّلوا العروض في التطبيق يتلقون هذا الإشعار مرة واحدة في كل تشغيل. لا يحتوي الإشعار على بيانات شخصية، لذا لا تتوفر وسوم الدمج."
 
@@ -2572,11 +2594,11 @@ msgstr "الضيوف الذين فعّلوا العروض في التطبيق ي
 msgid "Has an upcoming reservation"
 msgstr "لديه حجز قادم"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:878
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:903
 msgid "Has none (False)"
 msgstr "ليس لديه (خطأ)"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:875
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:900
 msgid "Has one (True)"
 msgstr "لديه (صحيح)"
 
@@ -2596,7 +2618,7 @@ msgstr "محجوز: حُذفت المؤسسة السابقة بينما كان �
 msgid "Hi {NAME_TAG}, Check out our latest update."
 msgstr "مرحباً {NAME_TAG}، اطّلع على آخر تحديثاتنا."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:536
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:539
 msgid "Hi {NAME_TAG}, Welcome to our service!"
 msgstr "مرحباً {NAME_TAG}، مرحباً بك في خدمتنا!"
 
@@ -2608,7 +2630,7 @@ msgstr "مرحباً {NAME_TAG}، تحديث حسابك جاهز!"
 msgid "Hi {NAME_TAG}, your Menuza account is ready."
 msgstr "مرحباً {NAME_TAG}، حسابك في Menuza جاهز."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:671
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:680
 msgid "Hi {NAME_TAG}, your order has been confirmed!"
 msgstr "مرحباً {NAME_TAG}، تم تأكيد طلبك!"
 
@@ -2636,7 +2658,7 @@ msgstr "التخزين الساخن: {hotStorageDays} يوم"
 msgid "hours"
 msgstr "ساعات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:411
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:414
 msgid "Hours"
 msgstr "ساعات"
 
@@ -2740,6 +2762,10 @@ msgstr "في آخر 100 حدث"
 msgid "In setup"
 msgstr "قيد الإعداد"
 
+#: app/routes/_admin+/font-licences.tsx:178
+msgid "In use"
+msgstr "قيد الاستخدام"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:511
 msgid "In your time zone."
 msgstr "بتوقيت منطقتك الزمنية."
@@ -2842,19 +2868,19 @@ msgstr "معلومات IP"
 msgid "is"
 msgstr "هو"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:842
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:861
 msgid "Is exactly"
 msgstr "يساوي بالضبط"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:839
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:858
 msgid "Is less than"
 msgstr "أقل من"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:836
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:855
 msgid "Is more than"
 msgstr "أكثر من"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:897
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:922
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
@@ -3260,7 +3286,7 @@ msgstr "تم تحديث سياسة الاحتفاظ بالرسائل"
 msgid "minutes"
 msgstr "دقائق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:408
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:411
 msgid "Minutes"
 msgstr "دقائق"
 
@@ -3293,7 +3319,7 @@ msgstr "المزيد من الإجراءات"
 msgid "N/A"
 msgstr "غير متاح"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:758
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:767
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:397
 #: app/routes/_admin+/roles+/$roleId.tsx:569
 #: app/routes/_admin+/roles+/$roleId.tsx:802
@@ -3415,7 +3441,11 @@ msgstr "لا يوجد جهة اتصال مسجّلة"
 msgid "No coupon"
 msgstr "بدون قسيمة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:259
+#: app/routes/_admin+/font-licences.tsx:147
+msgid "No custom fonts have been uploaded."
+msgstr "لم يتم رفع أي خطوط مخصصة."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:257
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
@@ -3620,7 +3650,7 @@ msgstr "غير محدد"
 msgid "Not Set"
 msgstr "غير محدد"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:900
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:925
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
 
@@ -3713,7 +3743,7 @@ msgstr "يمكن إضافة الأطباق الموجودة في قائمتك ا
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
 msgstr "يُرسَل معرّف العميل فقط. يحلّ tenant-api الإقليمي بيانات التعريف الشخصية محلياً."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:265
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:263
 msgid "Only the Nth order"
 msgstr "الطلب رقم N فقط"
 
@@ -3742,7 +3772,7 @@ msgstr "فُتِح {0}"
 msgid "openid email profile"
 msgstr "openid email profile"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:625
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:633
 msgid "Opens (a page of your site)"
 msgstr "يفتح (صفحة من موقعك)"
 
@@ -3808,6 +3838,7 @@ msgstr "org - موارد المؤسسة"
 #: app/routes/_admin+/customer-apps.tsx:275
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
+#: app/routes/_admin+/font-licences.tsx:129
 #: app/routes/_admin+/legal-agreements.tsx:135
 #: app/routes/_admin+/phone-numbers.tsx:361
 #: app/routes/_admin+/print-shop.tsx:796
@@ -4053,7 +4084,7 @@ msgstr "الملاحظات الشخصية + المؤسسة"
 msgid "Phone number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:752
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:761
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:395
 msgid "Phone Number"
 msgstr "رقم الهاتف"
@@ -4063,7 +4094,7 @@ msgstr "رقم الهاتف"
 msgid "Phone numbers"
 msgstr "أرقام الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:755
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:764
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:396
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
@@ -4106,7 +4137,7 @@ msgstr "PKCE مفعل"
 msgid "Placed"
 msgstr "تاريخ الطلب"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:530
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:533
 msgid "Plaintext Fallback (Optional)"
 msgstr "نص عادي احتياطي (اختياري)"
 
@@ -4303,7 +4334,7 @@ msgstr "إشعار"
 msgid "Push credentials"
 msgstr "بيانات اعتماد الإشعارات"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:608
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:613
 msgid "Push message"
 msgstr "رسالة الإشعار"
 
@@ -4315,7 +4346,7 @@ msgstr "رسالة الإشعار تتجاوز 178 حرفًا."
 msgid "Push message is required."
 msgstr "رسالة الإشعار مطلوبة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:595
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:598
 msgid "Push title"
 msgstr "عنوان الإشعار"
 
@@ -4365,6 +4396,10 @@ msgstr "تُقرأ من المتاجر مرة يوميًا. المتجر الذ�
 msgid "Read our Cookie Policy"
 msgstr "اقرأ سياسة ملفات تعريف الارتباط الخاصة بنا"
 
+#: app/routes/_admin+/font-licences.tsx:84
+msgid "Reason (optional)"
+msgstr "السبب (اختياري)"
+
 #: app/components/admin-ban-user-dialog.tsx:100
 msgid "Reason for ban"
 msgstr "سبب الحظر"
@@ -4372,6 +4407,10 @@ msgstr "سبب الحظر"
 #: app/routes/_admin+/ip-addresses+/index.tsx:380
 msgid "Reason for blacklisting"
 msgstr "سبب الإدراج في القائمة السوداء"
+
+#: app/routes/_admin+/font-licences.tsx:85
+msgid "Reason for removing the font"
+msgstr "سبب إزالة الخط"
 
 #: app/components/admin-user-detail.tsx:363
 msgid "Reason:"
@@ -4426,7 +4465,7 @@ msgstr "أُعيد مؤخرًا"
 msgid "recipients"
 msgstr "مستلمين"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:247
+#: ../../packages/marketing/src/components/campaign-detail.tsx:245
 msgid "Recipients"
 msgstr "المستلمون"
 
@@ -4567,7 +4606,7 @@ msgstr "إزالة"
 msgid "Remove block"
 msgstr "إزالة الكتلة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:494
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:497
 msgid "Remove design"
 msgstr "إزالة التصميم"
 
@@ -4575,9 +4614,22 @@ msgstr "إزالة التصميم"
 msgid "Remove dish"
 msgstr "إزالة الطبق"
 
+#: app/routes/_admin+/font-licences.tsx:63
+#: app/routes/_admin+/font-licences.tsx:90
+msgid "Remove font"
+msgstr "إزالة الخط"
+
+#: app/routes/_admin+/font-licences.tsx:58
+msgid "Remove font {fileName} from {organizationName}"
+msgstr "إزالة الخط {fileName} من {organizationName}"
+
 #: app/components/admin/feature-flags.tsx:371
 msgid "Remove Override"
 msgstr "إزالة التجاوز"
+
+#: app/routes/_admin+/font-licences.tsx:69
+msgid "Remove this font?"
+msgstr "إزالة هذا الخط؟"
 
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:408
 msgid "Remove variable"
@@ -4585,6 +4637,7 @@ msgstr "إزالة المتغير"
 
 #: app/routes/_admin+/customer-apps_.$appId.tsx:608
 #: app/routes/_admin+/customer-apps.tsx:353
+#: app/routes/_admin+/font-licences.tsx:174
 msgid "Removed"
 msgstr "أُزيل"
 
@@ -4607,6 +4660,10 @@ msgstr "استبدال المفتاح"
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:383
 msgid "Replace what you have?"
 msgstr "استبدال ما لديك؟"
+
+#: app/routes/_admin+/font-licences.tsx:182
+msgid "Replaced"
+msgstr "تم استبداله"
 
 #: app/components/admin-sidebar.tsx:44
 msgid "Reports"
@@ -4674,7 +4731,7 @@ msgstr "لم يحضر صاحب الحجز"
 msgid "Reservations"
 msgstr "الحجوزات"
 
-#: app/components/admin-sidebar.tsx:161
+#: app/components/admin-sidebar.tsx:167
 msgid "Reservations fees"
 msgstr "رسوم الحجوزات"
 
@@ -4827,7 +4884,7 @@ msgstr "الأدوار"
 msgid "Roles that apply within specific organizations"
 msgstr "الأدوار التي تنطبق على مؤسسات محددة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:951
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:976
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
@@ -5013,7 +5070,7 @@ msgstr "حفظ هذا التصميم كقالب"
 msgid "Saved"
 msgstr "تم الحفظ"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:778
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:787
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:400
 msgid "Saved audience"
 msgstr "جمهور محفوظ"
@@ -5100,6 +5157,10 @@ msgstr "البحث في الأتمتة..."
 #~ msgid "Search by name, email, or username..."
 #~ msgstr "البحث بالاسم أو البريد الإلكتروني أو اسم المستخدم..."
 
+#: app/routes/_admin+/font-licences.tsx:120
+msgid "Search by organization or file"
+msgstr "ابحث بالمنظمة أو الملف"
+
 #: app/routes/_admin+/cache.tsx:356
 msgid "Search cache keys..."
 msgstr "البحث عن مفاتيح ذاكرة التخزين المؤقت..."
@@ -5116,6 +5177,10 @@ msgstr "البحث في الحملات..."
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:289
 msgid "Search dishes"
 msgstr "البحث عن الأطباق"
+
+#: app/routes/_admin+/font-licences.tsx:121
+msgid "Search font licences"
+msgstr "البحث في تراخيص الخطوط"
 
 #: app/components/admin/feature-flags.tsx:477
 msgid "Search Organization"
@@ -5159,7 +5224,7 @@ msgstr "عرض إعادة الإرسال"
 msgid "Select access level"
 msgstr "اختر مستوى الوصول"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:745
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:754
 msgid "Select attribute"
 msgstr "اختر السمة"
 
@@ -5171,7 +5236,7 @@ msgstr "اختر الجمهور"
 msgid "Select flag type"
 msgstr "اختر نوع المؤشر"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:918
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:943
 msgid "Select operator"
 msgstr "اختر العامل"
 
@@ -5180,7 +5245,7 @@ msgstr "اختر العامل"
 msgid "Select role type"
 msgstr "اختر نوع الدور"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:893
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:918
 msgid "Select status"
 msgstr "اختر الحالة"
 
@@ -5244,7 +5309,7 @@ msgstr "جارٍ الإرسال..."
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
 #: ../../packages/marketing/src/components/campaign-detail.tsx:77
-#: ../../packages/marketing/src/components/campaign-detail.tsx:275
+#: ../../packages/marketing/src/components/campaign-detail.tsx:273
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
@@ -5391,7 +5456,7 @@ msgstr "رسالة نصية"
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr "تتجاوز الرسالة النصية الحد الأقصى 1600 حرفاً."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:651
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:660
 msgid "SMS Message Text"
 msgstr "نص الرسالة النصية"
 
@@ -5399,7 +5464,7 @@ msgstr "نص الرسالة النصية"
 msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:709
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:718
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
 
@@ -5518,7 +5583,7 @@ msgstr "ابدأ بقالب"
 msgid "Starters"
 msgstr "قوالب جاهزة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:343
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:346
 msgid "Starts at 10:00 local time, once a year. A birthday alone is not consent: guests who did not agree to hear from you get nothing."
 msgstr "يبدأ عند الساعة 10:00 بالتوقيت المحلي، مرة في السنة. عيد الميلاد وحده ليس موافقة: الضيوف الذين لم يوافقوا على تلقي رسائلك لا يتلقون شيئاً."
 
@@ -5530,6 +5595,7 @@ msgstr "جهاز Station أو شاشة مطبخ"
 #: app/components/admin-users-table.tsx:161
 #: app/components/sso-configuration-overview.tsx:232
 #: app/components/sso-user-management.tsx:178
+#: app/routes/_admin+/font-licences.tsx:138
 #: app/routes/_admin+/gdpr-requests.tsx:419
 #: app/routes/_admin+/gdpr-requests.tsx:575
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:114
@@ -5574,7 +5640,7 @@ msgstr "إيقاف شحن {item}"
 msgid "Stop shipping this size?"
 msgstr "إيقاف شحن هذا المقاس؟"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:243
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:240
 msgid "Stop when the guest places an order"
 msgstr "التوقف عندما يقدّم الضيف طلباً"
 
@@ -5629,7 +5695,7 @@ msgstr "النمط"
 msgid "Subject"
 msgstr "الموضوع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:438
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:441
 msgid "Subject Line"
 msgstr "سطر الموضوع"
 
@@ -5705,7 +5771,7 @@ msgstr "الافتراضي للنظام"
 msgid "System Flags"
 msgstr "مؤشرات النظام"
 
-#: app/components/admin-sidebar.tsx:202
+#: app/components/admin-sidebar.tsx:208
 msgid "System Management"
 msgstr "إدارة النظام"
 
@@ -5764,8 +5830,8 @@ msgstr "الجمهور المستهدف"
 #~ msgid "Target Tag Name"
 #~ msgstr "اسم الوسم المستهدف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:849
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:936
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:871
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:961
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
@@ -5890,7 +5956,7 @@ msgstr "خصم القسيمة متوقف أو مؤرشف أو محذوف. است
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:425
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:428
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr "سينتظر محرك التنفيذ لمدة {0} {1} قبل الانتقال إلى العقدة التالية."
 
@@ -6343,8 +6409,8 @@ msgstr "إزالة من القائمة السوداء"
 msgid "Unedited boilerplate text detected in email body."
 msgstr "تم اكتشاف نص قالب غير معدَّل في نص البريد الإلكتروني."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:395
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:404
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:398
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:407
 msgid "Unit"
 msgstr "الوحدة"
 
@@ -6355,7 +6421,7 @@ msgstr "الوحدة"
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:270
+#: ../../packages/marketing/src/components/campaign-detail.tsx:268
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
@@ -6371,7 +6437,7 @@ msgstr "تغييرات غير محفوظة"
 msgid "until"
 msgstr "حتى"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:864
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:889
 msgid "Upcoming reservation"
 msgstr "حجز قادم"
 
@@ -6551,7 +6617,7 @@ msgstr "المورد، {item}"
 msgid "Vendors were cancelled for this order: refund it instead of retrying."
 msgstr "أُلغيت طلبات الموردين لهذا الطلب: استرده بدلًا من إعادة المحاولة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:886
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:911
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
@@ -6681,7 +6747,7 @@ msgstr "النشرة الأسبوعية"
 msgid "weeks"
 msgstr "أسابيع"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:417
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:420
 msgid "Weeks"
 msgstr "أسابيع"
 
