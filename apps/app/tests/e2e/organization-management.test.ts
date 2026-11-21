@@ -204,25 +204,17 @@ test.describe('Organization Management', () => {
 		await nameField.pressSequentially(newName, { delay: 10 })
 		await expect(nameField).toHaveValue(newName)
 
-		const settingsForm = page.getByTestId('organization-general-settings-form')
-		const save = saveBar(page).save
-		const saveVisible = await save.isVisible().catch(() => false)
-		const response = await Promise.all([
+		await expect(saveBar(page).save).toBeVisible()
+
+		await Promise.all([
 			page.waitForResponse(
 				(res) =>
+					res.request().method() === 'POST' &&
 					res.url().includes('/settings') &&
-					res.request().method() === 'POST',
+					!res.url().includes('.data'),
 			),
-			saveVisible
-				? save.click()
-				: settingsForm.evaluate((form) => {
-						if (!(form instanceof HTMLFormElement)) {
-							throw new Error('organization settings form missing')
-						}
-						form.requestSubmit()
-					}),
-		]).then(([res]) => res)
-		expect(response.ok()).toBe(true)
+			saveBar(page).save.click(),
+		])
 
 		await expect.poll(
 			async () => {
