@@ -106,4 +106,51 @@ describe('BroadcastCheckDialog', () => {
 		expect(screen.getByText(/is paused, archived or gone/)).toBeTruthy()
 		expect(screen.getByText(/needs a coupon/)).toBeTruthy()
 	})
+
+	it('says how many guests overlap and with which broadcast, and still allows Send anyway (#393)', async () => {
+		const user = userEvent.setup()
+		const { onSendAnyway } = show([
+			{
+				code: 'audience_overlap',
+				severity: 'warning',
+				overlap: {
+					campaignId: 'c-1',
+					name: 'Taco Tuesday',
+					channel: 'sms',
+					scheduledAt: Date.UTC(2026, 10, 24, 15),
+					overlapCount: 30,
+					audienceCount: 40,
+					otherAudienceCount: 50,
+				},
+			},
+		])
+		expect(
+			screen.getByText(
+				/30 guests in this audience would also get "Taco Tuesday", which goes out .* They may get two messages close together\./,
+			),
+		).toBeTruthy()
+		await user.click(screen.getByRole('button', { name: /anyway/i }))
+		expect(onSendAnyway).toHaveBeenCalled()
+	})
+
+	it('names a broadcast that is going out now', () => {
+		show([
+			{
+				code: 'audience_overlap',
+				severity: 'warning',
+				overlap: {
+					campaignId: 'c-2',
+					name: 'Lunch deal',
+					channel: 'email',
+					scheduledAt: null,
+					overlapCount: 12,
+					audienceCount: 12,
+					otherAudienceCount: 12,
+				},
+			},
+		])
+		expect(
+			screen.getByText(/"Lunch deal", which is going out now/),
+		).toBeTruthy()
+	})
 })

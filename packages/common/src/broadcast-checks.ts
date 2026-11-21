@@ -18,6 +18,8 @@ export type BroadcastProblemCode =
 	/** Warnings */
 	| 'starter_text'
 	| 'boilerplate_phrase'
+	/** Another broadcast in the same window targets many of the same guests (#393). */
+	| 'audience_overlap'
 	/** Blocking */
 	| 'empty_message'
 	| 'empty_image'
@@ -36,6 +38,47 @@ export type BroadcastProblem = {
 	severity: 'blocking' | 'warning'
 	/** The designer block to open, when the problem is in one. */
 	blockId?: string
+	/** With `audience_overlap`: which broadcast, and how many guests they share. */
+	overlap?: BroadcastOverlap
+}
+
+/**
+ * Another broadcast in the window that targets many of the same guests (#393).
+ * Counts and the broadcast's own name and time only: the region computes the
+ * overlap and never sends a guest to the control plane.
+ */
+export type BroadcastOverlap = {
+	campaignId: string
+	/** The operator's own title of the other broadcast. */
+	name: string
+	channel: 'email' | 'sms' | 'push'
+	/** When it goes out (epoch ms); null while it is sending now. */
+	scheduledAt: number | null
+	/** Guests both would reach. */
+	overlapCount: number
+	/** Guests this broadcast would reach, and the other one. */
+	audienceCount: number
+	otherAudienceCount: number
+}
+
+/** The window either side of a send inside which two broadcasts are compared. */
+export const OVERLAP_WINDOW_MS = 24 * 60 * 60 * 1000
+/** At least this many shared guests... */
+export const OVERLAP_MIN_GUESTS = 5
+/** ...and at least this share of the smaller audience is "many". */
+export const OVERLAP_MIN_SHARE = 0.5
+
+export function isManyOverlap(
+	overlapCount: number,
+	audienceCount: number,
+	otherAudienceCount: number,
+) {
+	const smaller = Math.min(audienceCount, otherAudienceCount)
+	return (
+		overlapCount >= OVERLAP_MIN_GUESTS &&
+		smaller > 0 &&
+		overlapCount / smaller >= OVERLAP_MIN_SHARE
+	)
 }
 
 /** What the control plane knows about the message's coupon (the App checks it). */
@@ -56,6 +99,11 @@ export type BroadcastCheckInput = {
 	couponState?: BroadcastCouponState
 	/** Recipients now; null when not known (not checked). */
 	audienceCount: number | null
+	/**
+	 * Other broadcasts in the same window that share many guests (#393), as the
+	 * region counted them. A warning only: sending is still allowed.
+	 */
+	overlaps?: readonly BroadcastOverlap[] | null
 }
 
 const BLOCKING = new Set<BroadcastProblemCode>([
@@ -149,6 +197,9 @@ export function checkBroadcast(input: BroadcastCheckInput): BroadcastProblem[] {
 	}
 	if (hasBoilerplatePhrase(input.subject, input.content, input.contentHtml)) {
 		found.push(problem('boilerplate_phrase'))
+	}
+	for (const overlap of input.overlaps ?? []) {
+		found.push({ ...problem('audience_overlap'), overlap })
 	}
 
 	// Blocking first, in the order they were found.

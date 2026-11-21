@@ -162,6 +162,7 @@ export async function submitCampaign(input: {
 			sendAtMs: later ? schedule.scheduledAt!.getTime() : Date.now(),
 			fetchTenant: input.fetchTenant,
 			retargetOf: existing?.retargetOfCampaignId,
+			excludeCampaignId: existing?.id,
 		})
 		if (!mayProceed(problems, formData.get('acknowledgeWarnings') === '1')) {
 			return { kind: 'problems', problems, blocks: message.blocks }

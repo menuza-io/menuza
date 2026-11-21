@@ -1348,6 +1348,14 @@ msgstr "{count, plural, two {تُضاف طاولتان: {list}.} few {تُضاف
 msgid "{count, plural, other {Adds # tables.}}"
 msgstr "{count, plural, two {تُضاف طاولتان.} few {تُضاف # طاولات.} other {تُضاف # طاولة.}}"
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:58
+msgid "{count} guests in this audience would also get \"{name}\", which goes out {when}. They may get two messages close together."
+msgstr "{count} ضيفًا من هذا الجمهور سيتلقون أيضًا \"{name}\" الذي يُرسل في {when}. قد يصلهم رسالتان متقاربتان."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:50
+msgid "{count} guests in this audience would also get \"{name}\", which is going out now. They may get two messages close together."
+msgstr "{count} ضيفًا من هذا الجمهور سيتلقون أيضًا \"{name}\" الذي يُرسل الآن. قد يصلهم رسالتان متقاربتان."
+
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1180
 msgid "{count} locations"
 msgstr "{count} فروع"
@@ -8621,7 +8629,7 @@ msgstr "أعياد الميلاد والمجموعات الكبيرة وخدما
 msgid "Blank"
 msgstr "فارغ"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:83
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:106
 msgid "Block {position}: {name}"
 msgstr "الكتلة {position}: {name}"
 
@@ -10822,7 +10830,7 @@ msgstr "مطابقة مع الفاتورة"
 msgid "Check all"
 msgstr "فحص الكل"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:94
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:117
 msgid "Check before it goes out"
 msgstr "تحقق قبل الإرسال"
 
@@ -11353,8 +11361,8 @@ msgstr "اختر وقتًا بعد دقيقة واحدة على الأقل من 
 msgid "Choose a time between 5 minutes and 90 days from now."
 msgstr "اختر وقتًا بين 5 دقائق و90 يومًا من الآن."
 
-#: app/utils/marketing/campaign-send.server.ts:57
-#: app/utils/marketing/campaign-send.server.ts:217
+#: app/utils/marketing/campaign-send.server.ts:58
+#: app/utils/marketing/campaign-send.server.ts:269
 msgid "Choose a time in the future."
 msgstr "اختر وقتًا في المستقبل."
 
@@ -11370,7 +11378,7 @@ msgstr "اختر وحدة"
 msgid "Choose a unit."
 msgstr "اختر وحدة."
 
-#: app/utils/marketing/campaign-send.server.ts:52
+#: app/utils/marketing/campaign-send.server.ts:53
 msgid "Choose a valid date and time."
 msgstr "اختر تاريخًا ووقتًا صالحين."
 
@@ -17840,8 +17848,8 @@ msgstr "طريقة الكسب"
 msgid "Earning reversed"
 msgstr "إلغاء الكسب"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:147
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:160
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:170
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:183
 #: app/components/customers/person-notes-panel.tsx:170
 #: app/components/dashboard/access-labels.ts:20
 #: app/components/favorite-notes.tsx:116
@@ -20920,7 +20928,7 @@ msgstr "أصلح أهم المشكلات للوصول إلى 60 أو أكثر."
 msgid "Fix these before saving."
 msgstr "أصلح الأخطاء التالية قبل الحفظ."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:92
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:115
 msgid "Fix this before it goes out"
 msgstr "أصلح هذا قبل الإرسال"
 
@@ -27519,6 +27527,10 @@ msgstr "تشغيل يدوي"
 msgid "Many answers differ"
 msgstr "إجابات كثيرة مختلفة"
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:36
+msgid "Many of the same guests would get another broadcast around the same time."
+msgstr "سيتلقى كثير من الضيوف أنفسهم بثًّا آخر في وقت قريب."
+
 #: app/components/staff/kiosk-manager.tsx:424
 msgid "Many wrong PINs"
 msgstr "أرقام سرية خاطئة كثيرة"
@@ -32110,7 +32122,7 @@ msgstr "لا يوجد في هذا الإطار الزمني ما يطابق عو
 msgid "Nothing is added until you confirm. Fix a row here or remove it."
 msgstr "لن تتم إضافة شيء حتى تؤكد. أصلح صفًا هنا أو أزله."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:103
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:126
 msgid "Nothing is broken, but you may want to look at this first."
 msgstr "لا شيء معطّل، لكن قد تودّ مراجعة هذا أولًا."
 
@@ -33019,19 +33031,19 @@ msgstr "دفعات إلكترونية للتحقق منها"
 msgid "Online website"
 msgstr "الموقع الإلكتروني"
 
-#: app/utils/marketing/campaign-send.server.ts:215
+#: app/utils/marketing/campaign-send.server.ts:267
 msgid "Only a draft or a cancelled broadcast can be deleted."
 msgstr "يمكن حذف المسودات والرسائل الجماعية الملغاة فقط."
 
-#: app/utils/marketing/campaign-send.server.ts:212
+#: app/utils/marketing/campaign-send.server.ts:264
 msgid "Only a draft or a scheduled broadcast can be cancelled."
 msgstr "يمكن إلغاء المسودات والرسائل الجماعية المجدولة فقط."
 
-#: app/utils/marketing/campaign-send.server.ts:209
+#: app/utils/marketing/campaign-send.server.ts:261
 msgid "Only a draft or a scheduled broadcast can be edited."
 msgstr "يمكن تعديل المسودات والرسائل الجماعية المجدولة فقط."
 
-#: app/utils/marketing/campaign-send.server.ts:223
+#: app/utils/marketing/campaign-send.server.ts:275
 msgid "Only a finished broadcast can be re-sent."
 msgstr "يمكن إعادة إرسال رسالة جماعية منتهية فقط."
 
@@ -41959,7 +41971,7 @@ msgstr "جدولة مقابلة"
 msgid "Schedule another"
 msgstr "جدولة أخرى"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:165
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:188
 msgid "Schedule anyway"
 msgstr "الجدولة على أي حال"
 
@@ -43206,7 +43218,7 @@ msgstr "إرسال تنبيه عند"
 msgid "Send an invitation?"
 msgstr "إرسال دعوة؟"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:167
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:190
 msgid "Send anyway"
 msgstr "الإرسال على أي حال"
 
@@ -45228,7 +45240,7 @@ msgstr "حدث خطأ ما. أعد تحميل الصفحة وحاول مرة أ�
 #: ../../packages/marketing/src/components/email/email-templates.tsx:59
 #: app/components/gift-cards/gift-card-dialogs.tsx:40
 #: app/components/hiring/job-editor.tsx:515
-#: app/utils/marketing/campaign-send.server.ts:239
+#: app/utils/marketing/campaign-send.server.ts:291
 #: app/utils/staffing/staff-errors.ts:51
 msgid "Something went wrong. Try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
@@ -47513,7 +47525,7 @@ msgstr "تُرسل الرسائل النصية إلى أرقام الهواتف 
 msgid "Texts can only go to customers with a verified phone."
 msgstr "يمكن إرسال الرسائل النصية فقط إلى العملاء الذين لديهم هاتف موثّق."
 
-#: app/utils/marketing/campaign-send.server.ts:220
+#: app/utils/marketing/campaign-send.server.ts:272
 msgid "Texts have no open signal, so they cannot be re-sent to non-openers."
 msgstr "لا توجد إشارة فتح للرسائل النصية، لذا لا يمكن إعادة إرسالها لمن لم يفتحها."
 
@@ -47635,7 +47647,7 @@ msgstr "هذه الكتلة موجودة بالفعل في لوحة التحكم
 msgid "That break has not happened yet."
 msgstr "هذه الاستراحة لم تحدث بعد."
 
-#: app/utils/marketing/campaign-send.server.ts:237
+#: app/utils/marketing/campaign-send.server.ts:289
 msgid "That broadcast no longer exists."
 msgstr "هذه الرسالة الجماعية لم تعد موجودة."
 
@@ -48271,7 +48283,7 @@ msgstr "يجب أن تكون الاستراحة أقصر من الوردية."
 msgid "The break has to fall inside the shift."
 msgstr "يجب أن تقع الاستراحة داخل الوردية."
 
-#: app/utils/marketing/campaign-submit.server.ts:234
+#: app/utils/marketing/campaign-submit.server.ts:235
 msgid "The broadcast could not be saved."
 msgstr "تعذّر حفظ الرسالة الجماعية."
 
@@ -49900,7 +49912,7 @@ msgstr "تنص الشروط أصلًا على أن العربون وقواعد �
 msgid "The terms are at most {GOOGLE_TERMS_MAX} characters."
 msgstr "الحد الأقصى للشروط والأحكام هو {GOOGLE_TERMS_MAX} حرف."
 
-#: app/utils/marketing/campaign-send.server.ts:235
+#: app/utils/marketing/campaign-send.server.ts:287
 msgid "The test could not be sent. Try again."
 msgstr "تعذّر إرسال الرسالة التجريبية. حاول مرة أخرى."
 
@@ -50202,7 +50214,7 @@ msgstr "يتم التحقق من هذه الحدود قبل أن يدفع الض
 msgid "These messages still promise this discount. Guests who get them would be offered a code that stops working."
 msgstr "ما زالت هذه الرسائل تَعِد بهذا الخصم. سيحصل الضيوف الذين يتلقونها على رمز يتوقف عن العمل."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:99
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:122
 msgid "These problems stop this broadcast. Fix them, then try again."
 msgstr "تمنع هذه المشكلات إرسال هذه الرسالة الجماعية. أصلحها ثم حاول مرة أخرى."
 
@@ -50445,7 +50457,7 @@ msgstr "تعذّر بدء إرسال هذه الرسالة الجماعية في
 msgid "This broadcast is a draft. Nothing is sent until you send or schedule it."
 msgstr "هذه الرسالة الجماعية مسودة. لن يُرسل شيء حتى ترسلها أو تجدولها."
 
-#: app/utils/marketing/campaign-send.server.ts:206
+#: app/utils/marketing/campaign-send.server.ts:258
 msgid "This broadcast is already sending, so it can no longer be changed."
 msgstr "هذه الرسالة الجماعية قيد الإرسال بالفعل، لذا لا يمكن تغييرها."
 
@@ -50453,7 +50465,7 @@ msgstr "هذه الرسالة الجماعية قيد الإرسال بالفع�
 msgid "This broadcast is scheduled. Saving keeps it scheduled."
 msgstr "هذه الرسالة الجماعية مجدولة. سيُبقيها الحفظ مجدولة."
 
-#: app/utils/marketing/campaign-send.server.ts:229
+#: app/utils/marketing/campaign-send.server.ts:281
 msgid "This broadcast was already re-sent to non-openers."
 msgstr "سبق إعادة إرسال هذه الرسالة الجماعية لمن لم يفتحها."
 
@@ -57614,7 +57626,7 @@ msgstr "يمكنك استخدام قواعد لمواقعك فقط."
 msgid "You can open the host stand only at your own locations."
 msgstr "يمكنك تشغيل منصة الاستقبال في مواقعك فقط."
 
-#: app/utils/marketing/campaign-send.server.ts:226
+#: app/utils/marketing/campaign-send.server.ts:278
 msgid "You can re-send to non-openers 48 hours after the broadcast finished."
 msgstr "يمكنك إعادة الإرسال لمن لم يفتحها بعد 48 ساعة من انتهاء الرسالة الجماعية."
 
@@ -57638,7 +57650,7 @@ msgstr "يمكنك حفظ ما يصل إلى {max} جمهوراً."
 msgid "You can see the domain setup. Changing it needs permission to edit settings."
 msgstr "يمكنك رؤية إعداد النطاق. تغييره يحتاج إلى صلاحية تعديل الإعدادات."
 
-#: app/utils/marketing/campaign-send.server.ts:232
+#: app/utils/marketing/campaign-send.server.ts:284
 msgid "You can send 10 tests an hour. Try again a little later."
 msgstr "يمكنك إرسال 10 رسائل تجريبية في الساعة. حاول مرة أخرى بعد قليل."
 
@@ -57952,7 +57964,7 @@ msgstr "لديك تغييرات غير محفوظة في مخطط الصالة. 
 msgid "You have unsaved floor plan changes. Leave and discard them?"
 msgstr "لديك تغييرات غير محفوظة في مخطط الصالة. هل تريد المغادرة وتجاهلها؟"
 
-#: app/utils/marketing/campaign-submit.server.ts:302
+#: app/utils/marketing/campaign-submit.server.ts:303
 msgid "You have used all {limit} text sends this month. You get {limit} more on {date}. You can still write it and schedule it for {date} or later, or upgrade your plan."
 msgstr "استخدمت جميع عمليات الإرسال النصية ({limit}) لهذا الشهر. تحصل على {limit} أخرى في {date}. لا يزال بإمكانك كتابتها وجدولتها لتاريخ {date} أو بعده، أو ترقية خطتك."
 

@@ -78,6 +78,14 @@ msgstr "{active} نشط • +{recent} جديد هذا الأسبوع"
 msgid "{activeCount} active"
 msgstr "{activeCount} نشط"
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:58
+msgid "{count} guests in this audience would also get \"{name}\", which goes out {when}. They may get two messages close together."
+msgstr "{count} ضيفًا من هذا الجمهور سيتلقون أيضًا \"{name}\" الذي يُرسل في {when}. قد يصلهم رسالتان متقاربتان."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:50
+msgid "{count} guests in this audience would also get \"{name}\", which is going out now. They may get two messages close together."
+msgstr "{count} ضيفًا من هذا الجمهور سيتلقون أيضًا \"{name}\" الذي يُرسل الآن. قد يصلهم رسالتان متقاربتان."
+
 #: app/routes/_admin+/audit-logs.tsx:262
 msgid "{count} occurrences"
 msgstr "{count} حدوث"
@@ -1031,7 +1039,7 @@ msgstr "هامش النزف بالمليمتر، {item}"
 #~ msgid "Block {0}: {1}"
 #~ msgstr ""
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:83
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:106
 msgid "Block {position}: {name}"
 msgstr "الكتلة {position}: {name}"
 
@@ -1220,7 +1228,7 @@ msgstr "القناة"
 msgid "characters with the opt-out footer"
 msgstr "حرفاً مع تذييل إلغاء الاشتراك"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:94
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:117
 msgid "Check before it goes out"
 msgstr "تحقق قبل الإرسال"
 
@@ -2002,8 +2010,8 @@ msgstr "ساعات ومناوبات كل يوم المنشورة بجانب ال
 msgid "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 msgstr "يُطبع كل منتج ومقاس قابل للشحن لدى مورّد واحد. تغيير المورّد هنا هو طريقة إعادة توجيه الطلبات: إعادة محاولة طلب معلّق تستخدم الربط الجديد."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:147
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:160
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:170
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:183
 #: app/components/admin/feature-flags.tsx:433
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
@@ -2443,7 +2451,7 @@ msgstr "أول ظهور"
 msgid "Fit canvas view"
 msgstr "ملاءمة عرض اللوحة"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:92
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:115
 msgid "Fix this before it goes out"
 msgstr "أصلح هذا قبل الإرسال"
 
@@ -3245,6 +3253,10 @@ msgstr "تشغيل يدوي"
 msgid "Manually trigger archival of logs older than the hot storage period"
 msgstr "تشغيل أرشفة السجلات الأقدم من فترة التخزين الساخن يدويًا"
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:36
+msgid "Many of the same guests would get another broadcast around the same time."
+msgstr "سيتلقى كثير من الضيوف أنفسهم بثًّا آخر في وقت قريب."
+
 #: app/components/sso-configuration-form.tsx:472
 msgid "Map OIDC claims to user attributes. Leave empty for default mapping."
 msgstr "تعيين مطالبات OIDC إلى سمات المستخدم. اترك فارغاً للتعيين الافتراضي."
@@ -3704,7 +3716,7 @@ msgstr "الملاحظات المنشأة"
 msgid "Nothing has been recorded yet."
 msgstr "لم يُسجَّل أي شيء بعد."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:103
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:126
 msgid "Nothing is broken, but you may want to look at this first."
 msgstr "لا شيء معطّل، لكن قد تودّ مراجعة هذا أولًا."
 
@@ -5145,7 +5157,7 @@ msgstr "جارٍ الحفظ…"
 msgid "Schedule"
 msgstr "جدولة"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:165
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:188
 msgid "Schedule anyway"
 msgstr "الجدولة على أي حال"
 
@@ -5308,7 +5320,7 @@ msgstr "أرسل رسالة لمرة واحدة إلى مشغّلي المستأ
 msgid "Send a test"
 msgstr "إرسال رسالة تجريبية"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:167
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:190
 msgid "Send anyway"
 msgstr "الإرسال على أي حال"
 
@@ -6188,7 +6200,7 @@ msgstr "المظهر"
 msgid "There is nothing to save yet. Add a block first."
 msgstr "لا يوجد ما يمكن حفظه بعد. أضف كتلة أولًا."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:99
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:122
 msgid "These problems stop this broadcast. Fix them, then try again."
 msgstr "تمنع هذه المشكلات إرسال هذه الرسالة الجماعية. أصلحها ثم حاول مرة أخرى."
 

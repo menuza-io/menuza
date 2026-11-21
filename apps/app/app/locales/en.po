@@ -1350,6 +1350,14 @@ msgstr "{count, plural, other {Adds # tables: {list}.}}"
 msgid "{count, plural, other {Adds # tables.}}"
 msgstr "{count, plural, other {Adds # tables.}}"
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:58
+msgid "{count} guests in this audience would also get \"{name}\", which goes out {when}. They may get two messages close together."
+msgstr "{count} guests in this audience would also get \"{name}\", which goes out {when}. They may get two messages close together."
+
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:50
+msgid "{count} guests in this audience would also get \"{name}\", which is going out now. They may get two messages close together."
+msgstr "{count} guests in this audience would also get \"{name}\", which is going out now. They may get two messages close together."
+
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1180
 msgid "{count} locations"
 msgstr "{count} locations"
@@ -8623,7 +8631,7 @@ msgstr "Birthdays, large groups, catering, and holidays."
 msgid "Blank"
 msgstr "Blank"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:83
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:106
 msgid "Block {position}: {name}"
 msgstr "Block {position}: {name}"
 
@@ -10824,7 +10832,7 @@ msgstr "Check against the invoice"
 msgid "Check all"
 msgstr "Check all"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:94
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:117
 msgid "Check before it goes out"
 msgstr "Check before it goes out"
 
@@ -11355,8 +11363,8 @@ msgstr "Choose a time at least a minute from now."
 msgid "Choose a time between 5 minutes and 90 days from now."
 msgstr "Choose a time between 5 minutes and 90 days from now."
 
-#: app/utils/marketing/campaign-send.server.ts:57
-#: app/utils/marketing/campaign-send.server.ts:217
+#: app/utils/marketing/campaign-send.server.ts:58
+#: app/utils/marketing/campaign-send.server.ts:269
 msgid "Choose a time in the future."
 msgstr "Choose a time in the future."
 
@@ -11372,7 +11380,7 @@ msgstr "Choose a unit"
 msgid "Choose a unit."
 msgstr "Choose a unit."
 
-#: app/utils/marketing/campaign-send.server.ts:52
+#: app/utils/marketing/campaign-send.server.ts:53
 msgid "Choose a valid date and time."
 msgstr "Choose a valid date and time."
 
@@ -17842,8 +17850,8 @@ msgstr "Earning method"
 msgid "Earning reversed"
 msgstr "Earning reversed"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:147
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:160
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:170
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:183
 #: app/components/customers/person-notes-panel.tsx:170
 #: app/components/dashboard/access-labels.ts:20
 #: app/components/favorite-notes.tsx:116
@@ -20922,7 +20930,7 @@ msgstr "Fix the top issues to reach 60 or more."
 msgid "Fix these before saving."
 msgstr "Fix these before saving."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:92
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:115
 msgid "Fix this before it goes out"
 msgstr "Fix this before it goes out"
 
@@ -27521,6 +27529,10 @@ msgstr ""
 msgid "Many answers differ"
 msgstr "Many answers differ"
 
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:36
+msgid "Many of the same guests would get another broadcast around the same time."
+msgstr "Many of the same guests would get another broadcast around the same time."
+
 #: app/components/staff/kiosk-manager.tsx:424
 msgid "Many wrong PINs"
 msgstr "Many wrong PINs"
@@ -32112,7 +32124,7 @@ msgstr "Nothing in this timeframe matches the report's filters."
 msgid "Nothing is added until you confirm. Fix a row here or remove it."
 msgstr "Nothing is added until you confirm. Fix a row here or remove it."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:103
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:126
 msgid "Nothing is broken, but you may want to look at this first."
 msgstr "Nothing is broken, but you may want to look at this first."
 
@@ -33021,19 +33033,19 @@ msgstr "Online payments to check"
 msgid "Online website"
 msgstr "Online website"
 
-#: app/utils/marketing/campaign-send.server.ts:215
+#: app/utils/marketing/campaign-send.server.ts:267
 msgid "Only a draft or a cancelled broadcast can be deleted."
 msgstr "Only a draft or a cancelled broadcast can be deleted."
 
-#: app/utils/marketing/campaign-send.server.ts:212
+#: app/utils/marketing/campaign-send.server.ts:264
 msgid "Only a draft or a scheduled broadcast can be cancelled."
 msgstr "Only a draft or a scheduled broadcast can be cancelled."
 
-#: app/utils/marketing/campaign-send.server.ts:209
+#: app/utils/marketing/campaign-send.server.ts:261
 msgid "Only a draft or a scheduled broadcast can be edited."
 msgstr "Only a draft or a scheduled broadcast can be edited."
 
-#: app/utils/marketing/campaign-send.server.ts:223
+#: app/utils/marketing/campaign-send.server.ts:275
 msgid "Only a finished broadcast can be re-sent."
 msgstr "Only a finished broadcast can be re-sent."
 
@@ -41961,7 +41973,7 @@ msgstr "Schedule an interview"
 msgid "Schedule another"
 msgstr "Schedule another"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:165
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:188
 msgid "Schedule anyway"
 msgstr "Schedule anyway"
 
@@ -43208,7 +43220,7 @@ msgstr "Send an alert for"
 msgid "Send an invitation?"
 msgstr "Send an invitation?"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:167
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:190
 msgid "Send anyway"
 msgstr "Send anyway"
 
@@ -45230,7 +45242,7 @@ msgstr "Something went wrong. Reload the page and try again."
 #: ../../packages/marketing/src/components/email/email-templates.tsx:59
 #: app/components/gift-cards/gift-card-dialogs.tsx:40
 #: app/components/hiring/job-editor.tsx:515
-#: app/utils/marketing/campaign-send.server.ts:239
+#: app/utils/marketing/campaign-send.server.ts:291
 #: app/utils/staffing/staff-errors.ts:51
 msgid "Something went wrong. Try again."
 msgstr "Something went wrong. Try again."
@@ -47515,7 +47527,7 @@ msgstr "Texts are only sent to US phone numbers. For other numbers, tell the gue
 msgid "Texts can only go to customers with a verified phone."
 msgstr "Texts can only go to customers with a verified phone."
 
-#: app/utils/marketing/campaign-send.server.ts:220
+#: app/utils/marketing/campaign-send.server.ts:272
 msgid "Texts have no open signal, so they cannot be re-sent to non-openers."
 msgstr "Texts have no open signal, so they cannot be re-sent to non-openers."
 
@@ -47637,7 +47649,7 @@ msgstr "That block is already on the dashboard."
 msgid "That break has not happened yet."
 msgstr "That break has not happened yet."
 
-#: app/utils/marketing/campaign-send.server.ts:237
+#: app/utils/marketing/campaign-send.server.ts:289
 msgid "That broadcast no longer exists."
 msgstr "That broadcast no longer exists."
 
@@ -48273,7 +48285,7 @@ msgstr "The break has to be shorter than the shift."
 msgid "The break has to fall inside the shift."
 msgstr "The break has to fall inside the shift."
 
-#: app/utils/marketing/campaign-submit.server.ts:234
+#: app/utils/marketing/campaign-submit.server.ts:235
 msgid "The broadcast could not be saved."
 msgstr "The broadcast could not be saved."
 
@@ -49902,7 +49914,7 @@ msgstr "The terms already say that deposits and cancellation rules are shown whe
 msgid "The terms are at most {GOOGLE_TERMS_MAX} characters."
 msgstr "The terms are at most {GOOGLE_TERMS_MAX} characters."
 
-#: app/utils/marketing/campaign-send.server.ts:235
+#: app/utils/marketing/campaign-send.server.ts:287
 msgid "The test could not be sent. Try again."
 msgstr "The test could not be sent. Try again."
 
@@ -50204,7 +50216,7 @@ msgstr "These limits are checked before a guest pays, and a refusal never says w
 msgid "These messages still promise this discount. Guests who get them would be offered a code that stops working."
 msgstr "These messages still promise this discount. Guests who get them would be offered a code that stops working."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:99
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:122
 msgid "These problems stop this broadcast. Fix them, then try again."
 msgstr "These problems stop this broadcast. Fix them, then try again."
 
@@ -50447,7 +50459,7 @@ msgstr "This broadcast could not start in time, so it was not sent. Duplicate it
 msgid "This broadcast is a draft. Nothing is sent until you send or schedule it."
 msgstr "This broadcast is a draft. Nothing is sent until you send or schedule it."
 
-#: app/utils/marketing/campaign-send.server.ts:206
+#: app/utils/marketing/campaign-send.server.ts:258
 msgid "This broadcast is already sending, so it can no longer be changed."
 msgstr "This broadcast is already sending, so it can no longer be changed."
 
@@ -50455,7 +50467,7 @@ msgstr "This broadcast is already sending, so it can no longer be changed."
 msgid "This broadcast is scheduled. Saving keeps it scheduled."
 msgstr "This broadcast is scheduled. Saving keeps it scheduled."
 
-#: app/utils/marketing/campaign-send.server.ts:229
+#: app/utils/marketing/campaign-send.server.ts:281
 msgid "This broadcast was already re-sent to non-openers."
 msgstr "This broadcast was already re-sent to non-openers."
 
@@ -57616,7 +57628,7 @@ msgstr "You can only use rules for your own locations."
 msgid "You can open the host stand only at your own locations."
 msgstr "You can open the host stand only at your own locations."
 
-#: app/utils/marketing/campaign-send.server.ts:226
+#: app/utils/marketing/campaign-send.server.ts:278
 msgid "You can re-send to non-openers 48 hours after the broadcast finished."
 msgstr "You can re-send to non-openers 48 hours after the broadcast finished."
 
@@ -57640,7 +57652,7 @@ msgstr "You can save up to {max} audiences."
 msgid "You can see the domain setup. Changing it needs permission to edit settings."
 msgstr "You can see the domain setup. Changing it needs permission to edit settings."
 
-#: app/utils/marketing/campaign-send.server.ts:232
+#: app/utils/marketing/campaign-send.server.ts:284
 msgid "You can send 10 tests an hour. Try again a little later."
 msgstr "You can send 10 tests an hour. Try again a little later."
 
@@ -57954,7 +57966,7 @@ msgstr "You have unsaved floor plan changes. If you leave now they are lost."
 msgid "You have unsaved floor plan changes. Leave and discard them?"
 msgstr "You have unsaved floor plan changes. Leave and discard them?"
 
-#: app/utils/marketing/campaign-submit.server.ts:302
+#: app/utils/marketing/campaign-submit.server.ts:303
 msgid "You have used all {limit} text sends this month. You get {limit} more on {date}. You can still write it and schedule it for {date} or later, or upgrade your plan."
 msgstr "You have used all {limit} text sends this month. You get {limit} more on {date}. You can still write it and schedule it for {date} or later, or upgrade your plan."
 

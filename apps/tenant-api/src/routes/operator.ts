@@ -45,6 +45,7 @@ import {
 	broadcastLease,
 	dispatchBroadcast,
 } from '../services/broadcast-dispatch.ts'
+import { findAudienceOverlaps } from '../services/campaign-overlap.ts'
 import {
 	cancelCampaign,
 	deleteCampaign,
@@ -1132,6 +1133,55 @@ operatorRoutes.get('/marketing/audience-count', async (c) => {
 		return c.json({ count: audience.length })
 	} catch (error) {
 		console.error('Error counting audience:', errorLogFields(error))
+		return c.json({ error: 'Tenant Database unavailable' }, 500)
+	}
+})
+
+/**
+ * Which other broadcasts in the same 24-hour window would reach many of the same
+ * guests as this one (#393): counts, the other broadcast's title and its time,
+ * computed here in the region. No guest id, name or contact is returned. The App
+ * shows the result as a warning when an operator sends or schedules; sending
+ * stays allowed.
+ */
+operatorRoutes.get('/marketing/audience-overlap', async (c) => {
+	let auth
+	try {
+		auth = await authenticateOperator(c, undefined, 'marketing')
+	} catch (response) {
+		return response as Response
+	}
+	const query = z
+		.object({
+			channel: z.enum(['email', 'sms', 'push']),
+			audience: z.enum(['all', 'verified', 'unverified']).default('all'),
+			audienceId: z.string().min(1).max(100).optional(),
+			retargetOf: z.string().min(1).max(100).optional(),
+			excludeId: z.string().min(1).max(100).optional(),
+			sendAt: z.coerce.number().int().positive(),
+		})
+		.safeParse({
+			channel: c.req.query('channel'),
+			audience: c.req.query('audience') || undefined,
+			audienceId: c.req.query('audienceId') || undefined,
+			retargetOf: c.req.query('retargetOf') || undefined,
+			excludeId: c.req.query('excludeId') || undefined,
+			sendAt: c.req.query('sendAt'),
+		})
+	if (!query.success) return c.json({ error: 'Invalid request' }, 400)
+	try {
+		const db = await getTenantDb(auth.orgId)
+		const overlaps = await findAudienceOverlaps(db, {
+			channel: query.data.channel,
+			audience: query.data.audience,
+			audienceId: query.data.audienceId,
+			retargetOf: query.data.retargetOf,
+			excludeCampaignId: query.data.excludeId,
+			sendAtMs: query.data.sendAt,
+		})
+		return c.json({ overlaps })
+	} catch (error) {
+		console.error('Error counting audience overlap:', errorLogFields(error))
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })

@@ -32,11 +32,34 @@ const PROBLEM_TEXT: Record<BroadcastProblemCode, ReturnType<typeof msg>> = {
 	coupon_ended_before_send: msg`The coupon's discount ends before this would go out. Change its end date or choose another coupon.`,
 	audience_zero: msg`Nobody would receive this: no one in the audience is subscribed.`,
 	push_merge_tags: msg`A notification can't use merge tags such as a name or a code: it is the same for everyone.`,
+	// Shown with the count and the other broadcast (`overlapText`).
+	audience_overlap: msg`Many of the same guests would get another broadcast around the same time.`,
 }
 
 export function useBroadcastProblemText() {
-	const { _ } = useLingui()
-	return (code: BroadcastProblemCode) => _(PROBLEM_TEXT[code])
+	const { _, i18n } = useLingui()
+	return (problem: BroadcastProblem | BroadcastProblemCode) => {
+		const code = typeof problem === 'string' ? problem : problem.code
+		const overlap = typeof problem === 'string' ? undefined : problem.overlap
+		if (code === 'audience_overlap' && overlap) {
+			// Counts and the other broadcast's own title only (#393): never a guest.
+			const count = overlap.overlapCount
+			const name = overlap.name
+			if (overlap.scheduledAt === null) {
+				return _(
+					msg`${count} guests in this audience would also get "${name}", which is going out now. They may get two messages close together.`,
+				)
+			}
+			const when = new Intl.DateTimeFormat(i18n.locale, {
+				dateStyle: 'medium',
+				timeStyle: 'short',
+			}).format(new Date(overlap.scheduledAt))
+			return _(
+				msg`${count} guests in this audience would also get "${name}", which goes out ${when}. They may get two messages close together.`,
+			)
+		}
+		return _(PROBLEM_TEXT[code])
+	}
 }
 
 /**
@@ -132,7 +155,7 @@ export function BroadcastCheckDialog({
 											{where}
 										</p>
 									) : null}
-									<p>{text(problem.code)}</p>
+									<p>{text(problem)}</p>
 								</div>
 								{problem.blockId && onEditBlock ? (
 									<Button
