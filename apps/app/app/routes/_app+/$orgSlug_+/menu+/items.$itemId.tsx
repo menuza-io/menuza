@@ -1,5 +1,7 @@
 import { requireUserId } from '@repo/auth'
 import { parseDailySaleLimit } from '@repo/common/daily-dish-limits'
+import { parseMenuChannels } from '@repo/common/menu-channels'
+import { popularModeSchema, type PopularMode } from '@repo/common/menu-popular'
 import { parseOrderTypePrices } from '@repo/common/menu-pricing'
 import {
 	dietaryTagsOf,
@@ -40,6 +42,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { effectiveIsPopularForMode } from '#app/utils/menu/auto-popular.server.ts'
 import {
 	dailyLimitColumn,
 	dailyLimitLocationIds,
@@ -48,6 +51,8 @@ import { recordMenuChange } from '#app/utils/menu/menu-updates.server.ts'
 import {
 	dietaryAndOrderTypeColumns,
 	MENU_JSON_FORM_KEYS,
+	narrowOverrideChannels,
+	parseChannelsFormData,
 	parseMenuJsonFormValue,
 } from '#app/utils/menu/menu-write-columns.ts'
 import {
@@ -181,6 +186,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			isEnabled: ov.isEnabled ?? true,
 			price: ov.price,
 			availabilityStatus: ov.availabilityStatus,
+			channels: ov.channels ? parseMenuChannels(ov.channels) : null,
 		}
 	}
 
@@ -239,7 +245,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			excludeFromOrderLimits: item.excludeFromOrderLimits,
 			dailySaleLimit: parseDailySaleLimit(item.dailySaleLimit),
 			isPopular: item.isPopular,
+			popularMode: popularModeSchema
+				.catch('auto')
+				.parse(item.popularMode) as PopularMode,
 			isUpsell: item.isUpsell,
+			channels: parseMenuChannels(item.channels),
 			availabilityStatus: item.availabilityStatus as
 				'available' | 'unavailable_until_tomorrow' | 'unavailable',
 			assignedCategoryIds: item.categoryAssignments.map((ca) => ca.categoryId),
@@ -328,6 +338,25 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
+	const channelsParsed = parseChannelsFormData(formData)
+	if (!channelsParsed.ok) {
+		return Response.json(
+			{ error: { channels: ['Invalid channels'] } },
+			{ status: 400 },
+		)
+	}
+
+	const popularModeProvided = formData.has('popularMode')
+	const popularModeParsed = popularModeProvided
+		? popularModeSchema.safeParse(rawData.popularMode)
+		: null
+	if (popularModeParsed && !popularModeParsed.success) {
+		return Response.json(
+			{ error: { popularMode: ['Invalid popular mode'] } },
+			{ status: 400 },
+		)
+	}
+
 	const parsed = MenuItemInputSchema.safeParse(rawData)
 	if (!parsed.success) {
 		return Response.json(
@@ -337,6 +366,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+	const rawOverrides =
+		rawData.locationOverrides &&
+		typeof rawData.locationOverrides === 'object' &&
+		!Array.isArray(rawData.locationOverrides)
+			? (rawData.locationOverrides as Record<string, { channels?: unknown }>)
+			: undefined
 
 	const imageKeys = parseMenuItemImageKeys(
 		JSON.stringify(data.imageKeys),
@@ -379,6 +414,37 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			tx,
 		)
 
+		let effectiveBaseChannels = channelsParsed.channels
+		let effectivePopularMode: PopularMode = popularModeParsed?.success
+			? popularModeParsed.data
+			: 'auto'
+		if (!channelsParsed.provided || !popularModeProvided) {
+			const [currentItem] = await tx
+				.select({
+					channels: OrganizationMenuItem.channels,
+					popularMode: OrganizationMenuItem.popularMode,
+				})
+				.from(OrganizationMenuItem)
+				.where(
+					and(
+						eq(OrganizationMenuItem.id, itemId),
+						eq(OrganizationMenuItem.organizationId, organization.id),
+					),
+				)
+			if (!channelsParsed.provided) {
+				effectiveBaseChannels = parseMenuChannels(currentItem?.channels)
+			}
+			if (!popularModeProvided) {
+				effectivePopularMode = popularModeSchema
+					.catch('auto')
+					.parse(currentItem?.popularMode)
+			}
+		}
+		const nextIsPopular = effectiveIsPopularForMode(
+			effectivePopularMode,
+			data.isPopular,
+		)
+
 		// Update Item
 		await tx
 			.update(OrganizationMenuItem)
@@ -416,8 +482,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					formData.has('dailySaleLimit'),
 					data.dailySaleLimit,
 				),
-				isPopular: data.isPopular,
+				popularMode: effectivePopularMode,
+				isPopular: nextIsPopular,
 				isUpsell: data.isUpsell,
+				...(channelsParsed.provided
+					? { channels: channelsParsed.serialized }
+					: {}),
 				availabilityStatus: data.availabilityStatus,
 				unavailableUntil:
 					(data.availabilityStatus === 'unavailable_until' ||
@@ -486,6 +556,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					isEnabled: entry.isEnabled,
 					price: data.variations.groups.length ? null : entry.price,
 					availabilityStatus: entry.availabilityStatus,
+					channels: narrowOverrideChannels(
+						effectiveBaseChannels,
+						rawOverrides?.[entry.locationId]?.channels,
+					),
 				})),
 			)
 		}

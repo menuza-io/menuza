@@ -34,6 +34,7 @@ export const PERMISSIONS = {
 	// Menu permissions
 	READ_MENU_ANY: 'read:menu:any',
 	UPDATE_MENU_ANY: 'update:menu:any',
+	UPDATE_GUEST_PHOTO_ANY: 'update:guest_photo:any',
 
 	// Staffing permissions
 	READ_STAFF_ANY: 'read:staff:any',

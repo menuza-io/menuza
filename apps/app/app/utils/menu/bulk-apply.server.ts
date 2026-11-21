@@ -1,5 +1,10 @@
 import { createId } from '@paralleldrive/cuid2'
 import { auditService, AuditAction } from '@repo/audit'
+import {
+	parseMenuChannels,
+	serializeMenuChannels,
+} from '@repo/common/menu-channels'
+import { popularModeSchema } from '@repo/common/menu-popular'
 import { dietaryColumns, dietaryTagsOf } from '@repo/common/menu-types'
 import {
 	and,
@@ -13,12 +18,14 @@ import {
 	OrganizationMenuOption,
 } from '@repo/database'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
+import { effectiveIsPopularForMode } from './auto-popular.server.ts'
 import {
 	planBulkEditItem,
 	planBulkEditOption,
 	type BulkItemOperation,
 	type BulkOptionOperation,
 } from './bulk-edit.ts'
+import { narrowOverrideChannels } from './menu-write-columns.ts'
 import { checkModifierGraphChange } from './modifier-graph.server.ts'
 import {
 	assertCategoryIdsInOrganization,
@@ -144,10 +151,12 @@ export async function applyBulkItemEdit({
 		dietaryTags: dietaryTagsOf(row),
 		isPopular: row.isPopular,
 		isUpsell: row.isUpsell,
+		channels: parseMenuChannels(row.channels),
 		categoryIds: categoryByItem.get(row.id) ?? [],
 		modifierGroupIds: groupByItem.get(row.id) ?? [],
 	}))
 
+	const itemById = new Map(items.map((row) => [row.id, row]))
 	const plans = planBulkEditItem({
 		rows: rowInputs,
 		operation,
@@ -184,7 +193,9 @@ export async function applyBulkItemEdit({
 			const after = plan.after
 			if (
 				locationId &&
-				(operation.type === 'price' || operation.type === 'availability')
+				(operation.type === 'price' ||
+					operation.type === 'availability' ||
+					operation.type === 'channels')
 			) {
 				if (operation.type === 'price') {
 					await tx
@@ -206,6 +217,34 @@ export async function applyBulkItemEdit({
 								OrganizationMenuLocationOverride.entityId,
 							],
 							set: { price: after.price, updatedAt: new Date() },
+						})
+				} else if (operation.type === 'channels') {
+					const overrideChannels = narrowOverrideChannels(
+						parseMenuChannels(plan.before.channels),
+						after.channels,
+					)
+					await tx
+						.insert(OrganizationMenuLocationOverride)
+						.values({
+							id: createId(),
+							organizationId,
+							locationId,
+							entityType: 'item',
+							entityId: after.id,
+							channels: overrideChannels,
+							createdAt: new Date(),
+							updatedAt: new Date(),
+						})
+						.onConflictDoUpdate({
+							target: [
+								OrganizationMenuLocationOverride.locationId,
+								OrganizationMenuLocationOverride.entityType,
+								OrganizationMenuLocationOverride.entityId,
+							],
+							set: {
+								channels: overrideChannels,
+								updatedAt: new Date(),
+							},
 						})
 				} else {
 					await tx
@@ -238,6 +277,11 @@ export async function applyBulkItemEdit({
 				continue
 			}
 
+			const existingItem = itemById.get(after.id)
+			const effectiveIsPopular = effectiveIsPopularForMode(
+				popularModeSchema.catch('auto').parse(existingItem?.popularMode),
+				after.isPopular,
+			)
 			await tx
 				.update(OrganizationMenuItem)
 				.set({
@@ -247,8 +291,9 @@ export async function applyBulkItemEdit({
 					applySalesTax: after.applySalesTax,
 					...dietaryColumns(after.dietaryTags),
 					isAlcohol: after.isAlcohol,
-					isPopular: after.isPopular,
+					isPopular: effectiveIsPopular,
 					isUpsell: after.isUpsell,
+					channels: serializeMenuChannels(after.channels),
 					updatedAt: new Date(),
 				})
 				.where(eq(OrganizationMenuItem.id, after.id))

@@ -80,6 +80,7 @@ export const restaurantServerVertical: PhoneAgentServerVertical = {
 				currency: DEFAULT_CURRENCY,
 			},
 			scopeId,
+			{ channel: 'web' },
 		)
 		const exact = scopeId
 			? payload.locations.find((candidate) => candidate.id === scopeId)

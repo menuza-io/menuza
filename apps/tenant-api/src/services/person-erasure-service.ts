@@ -11,6 +11,7 @@ import {
 	customers,
 	customerSubscriptions,
 	getTenantDbOrgId,
+	guestPhotoSubmissions,
 	journeyRuns,
 	journeyStepExecutions,
 	marketingMessages,
@@ -58,6 +59,7 @@ import {
 import { HttpError, notFound } from '../lib/http.ts'
 import { legacyPhoneForms } from '../lib/phone.ts'
 import { type LoyaltyTx } from '../lib/loyalty-write.ts'
+import { deleteRecordingObject } from '../lib/recording-storage.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import { eraseGiftCardsInTx } from './gift-card-erasure.ts'
 import { eraseLoyaltyMembersInTx } from './loyalty-erasure.ts'
@@ -153,6 +155,10 @@ export type ErasePersonResult = {
 	loyaltyMembersErased?: number
 	/** Present only when gift cards named the person (their data was removed from them). */
 	giftCardsErased?: number
+	/** Present only when pending/rejected guest dish photos were deleted (#148). */
+	guestPhotosDeleted?: number
+	/** Present only when approved/added guest dish photos were unlinked (#148). */
+	guestPhotosUnlinked?: number
 	waitlistEntriesScrubbed: number
 	notifyRequestsScrubbed: number
 	voice: {
@@ -604,8 +610,10 @@ export async function erasePerson(
 	}
 
 	// Phase 2: one serialized regional transaction, identity re-read inside it.
+	let photoKeysToDelete: string[] = []
+	let erasureResult: ErasePersonResult
 	try {
-		return await withSetupWrite(
+		erasureResult = await withSetupWrite(
 			db,
 			async (tx) => {
 				const identity = await resolveIdentity(tx, target)
@@ -1147,6 +1155,73 @@ export async function erasePerson(
 					now,
 				})
 
+				// ---- Guest dish photos (#148) ---------------------------------------
+				// Staged, pending, and rejected submissions are deleted (their R2 keys
+				// are collected inside this transaction for both customerId and orderId
+				// matches and deleted after commit); approved and added submissions keep
+				// the business photo with customer_id and order_id unlinked. Must run
+				// before deleting `customers` so ON DELETE SET NULL cannot hide rows.
+				let guestPhotosDeleted = 0
+				let guestPhotosUnlinked = 0
+				const photoIdSet = new Set<string>()
+				const photoByCustomer = await queryInChunks(customerIds, (chunk) =>
+					tx
+						.select({
+							id: guestPhotoSubmissions.id,
+							status: guestPhotoSubmissions.status,
+							objectKey: guestPhotoSubmissions.objectKey,
+						})
+						.from(guestPhotoSubmissions)
+						.where(inArray(guestPhotoSubmissions.customerId, chunk))
+						.all(),
+				)
+				const photoByOrder = await queryInChunks(
+					[...restaurantOrderIds],
+					(chunk) =>
+						tx
+							.select({
+								id: guestPhotoSubmissions.id,
+								status: guestPhotoSubmissions.status,
+								objectKey: guestPhotoSubmissions.objectKey,
+							})
+							.from(guestPhotoSubmissions)
+							.where(inArray(guestPhotoSubmissions.orderId, chunk))
+							.all(),
+				)
+				const deletePhotoIds: string[] = []
+				const collectedPhotoKeys: string[] = []
+				const unlinkPhotoIds: string[] = []
+				for (const row of [...photoByCustomer, ...photoByOrder]) {
+					if (photoIdSet.has(row.id)) continue
+					photoIdSet.add(row.id)
+					if (
+						row.status === 'staged' ||
+						row.status === 'pending' ||
+						row.status === 'rejected'
+					) {
+						deletePhotoIds.push(row.id)
+						collectedPhotoKeys.push(row.objectKey)
+					} else {
+						unlinkPhotoIds.push(row.id)
+					}
+				}
+				await forEachInChunks(deletePhotoIds, async (chunk) => {
+					const deleted = await tx
+						.delete(guestPhotoSubmissions)
+						.where(inArray(guestPhotoSubmissions.id, chunk))
+						.returning({ id: guestPhotoSubmissions.id })
+					guestPhotosDeleted += deleted.length
+				})
+				await forEachInChunks(unlinkPhotoIds, async (chunk) => {
+					const updated = await tx
+						.update(guestPhotoSubmissions)
+						.set({ customerId: null, orderId: null })
+						.where(inArray(guestPhotoSubmissions.id, chunk))
+						.returning({ id: guestPhotoSubmissions.id })
+					guestPhotosUnlinked += updated.length
+				})
+				photoKeysToDelete = collectedPhotoKeys
+
 				// ---- Customer rows and everything keyed by them ----------------------
 				// Deleted explicitly, not only by FK cascade, so a missing foreign-key
 				// pragma can never leave a token, subscription or journey behind.
@@ -1224,6 +1299,8 @@ export async function erasePerson(
 					restaurantOrdersScrubbed > 0 ||
 					qrTabsScrubbed > 0 ||
 					giftCardErasure.cardsErased > 0 ||
+					guestPhotosDeleted > 0 ||
+					guestPhotosUnlinked > 0 ||
 					posOrdersScrubbed > 0 ||
 					posHeldScrubbed > 0 ||
 					waitlistIds.length > 0 ||
@@ -1255,6 +1332,8 @@ export async function erasePerson(
 						...(giftCardErasure.cardsErased > 0
 							? { giftCardsErased: giftCardErasure.cardsErased }
 							: {}),
+						...(guestPhotosDeleted > 0 ? { guestPhotosDeleted } : {}),
+						...(guestPhotosUnlinked > 0 ? { guestPhotosUnlinked } : {}),
 						...voiceCounts(),
 					}
 					if (logId) {
@@ -1319,6 +1398,8 @@ export async function erasePerson(
 					...(giftCardErasure.cardsErased > 0
 						? { giftCardsErased: giftCardErasure.cardsErased }
 						: {}),
+					...(guestPhotosDeleted > 0 ? { guestPhotosDeleted } : {}),
+					...(guestPhotosUnlinked > 0 ? { guestPhotosUnlinked } : {}),
 					waitlistEntriesScrubbed: waitlistIds.length,
 					notifyRequestsScrubbed: notifyIds.length,
 					voice,
@@ -1331,4 +1412,24 @@ export async function erasePerson(
 		await recordProgress('transaction', voiceCounts())
 		throw error
 	}
+
+	// Post-commit: delete R2 objects collected inside the erasure transaction so
+	// rolled-back transactions never delete live objects.
+	for (const objectKey of photoKeysToDelete) {
+		try {
+			const res = await deleteRecordingObject(objectKey)
+			if (res === 'failed') {
+				console.error('Post-commit guest photo object deletion failed', {
+					subjectId,
+				})
+			}
+		} catch (error) {
+			console.error('Post-commit guest photo object deletion threw', {
+				subjectId,
+				error: error instanceof Error ? error.name : 'UnknownError',
+			})
+		}
+	}
+
+	return erasureResult
 }

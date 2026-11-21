@@ -293,3 +293,44 @@ describe('the app’s hand-off in the fragment (#112)', async () => {
 		).toBeNull()
 	})
 })
+
+describe('channel availability during reorder (#220)', () => {
+	it('drops dishes omitted from the live channel menu and reports droppedCount', () => {
+		// Web menu only includes the web-available dish; a Till-only dish is absent from menus.
+		const webMenus = [
+			{
+				categories: [
+					{
+						items: [
+							{
+								id: 'web-burger',
+								displayName: 'Web Burger',
+								price: 25,
+								availabilityStatus: 'available',
+								variations: { groups: [], variants: [] },
+							},
+						],
+					},
+				],
+			},
+		]
+		const result = restoreCart(
+			[
+				{
+					itemId: 'web-burger',
+					quantity: 1,
+					options: [],
+				},
+				{
+					itemId: 'till-only-steak',
+					quantity: 2,
+					options: [],
+				},
+			],
+			webMenus,
+		)
+		expect(result.cart).toHaveLength(1)
+		expect(result.cart[0]?.itemId).toBe('web-burger')
+		expect(result.droppedCount).toBe(1)
+	})
+})

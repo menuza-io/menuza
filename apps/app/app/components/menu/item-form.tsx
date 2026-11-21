@@ -1,6 +1,8 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type DailySaleLimit } from '@repo/common/daily-dish-limits'
+import { parseMenuChannels, type MenuChannel } from '@repo/common/menu-channels'
+import { type PopularMode } from '@repo/common/menu-popular'
 import { type OrderTypePrices } from '@repo/common/menu-pricing'
 import {
 	dietaryTagsOf,
@@ -53,6 +55,7 @@ import {
 	type DailyLimitFormState,
 } from '#app/utils/menu/daily-limit-form.ts'
 import { AssignedSortableList } from './assigned-sortable-list.tsx'
+import { ChannelSwitches } from './channel-switches.tsx'
 import { DailyLimitCard } from './daily-limit-fields.tsx'
 import { DietaryTagSwitches } from './dietary-tag-switches.tsx'
 import { ItemVariations } from './item-variations.tsx'
@@ -70,6 +73,7 @@ import {
 	orderTypePriceDraft,
 	orderTypePricesFromDraft,
 } from './order-type-price-fields.tsx'
+import { PopularModeSelect } from './popular-mode-select.tsx'
 import {
 	QuickModifierGroupSheet,
 	useCanCreateModifierGroup,
@@ -105,6 +109,7 @@ export interface ItemFormData {
 	/** Daily quantity cap (#409), parsed; null or absent when there is none. */
 	dailySaleLimit?: DailySaleLimit | null
 	isPopular: boolean
+	popularMode?: PopularMode
 	isUpsell: boolean
 	availabilityStatus:
 		| 'available'
@@ -112,6 +117,7 @@ export interface ItemFormData {
 		| 'unavailable_until_tomorrow'
 		| 'unavailable'
 	unavailableUntil?: Date | string | null
+	channels?: MenuChannel[]
 	assignedCategoryIds: string[]
 	assignedModifierGroupIds: string[]
 	locationOverrides: Record<string, LocationOverrideState>
@@ -284,10 +290,16 @@ function ItemFormBody({
 	const [excludeFromOverride, setExcludeFromOverride] = useState(
 		initialData?.excludeFromOverride ?? false,
 	)
+	const [popularMode, setPopularMode] = useState<PopularMode>(
+		initialData?.popularMode ?? 'auto',
+	)
 	const [isPopular, setIsPopular] = useState(initialData?.isPopular ?? false)
 	const [isUpsell, setIsUpsell] = useState(initialData?.isUpsell ?? false)
 	const [availabilityStatus, setAvailabilityStatus] = useState<string>(
 		initialData?.availabilityStatus ?? 'available',
+	)
+	const [channels, setChannels] = useState<MenuChannel[]>(() =>
+		parseMenuChannels(initialData?.channels),
 	)
 	const [unavailableUntil, setUnavailableUntil] = useState<Date | null>(() => {
 		if (initialData?.unavailableUntil) {
@@ -427,6 +439,11 @@ function ItemFormBody({
 						type="hidden"
 						name="dietaryTags"
 						value={JSON.stringify(dietaryTags)}
+					/>
+					<input
+						type="hidden"
+						name="channels"
+						value={JSON.stringify(channels)}
 					/>
 					<input
 						type="hidden"
@@ -929,6 +946,25 @@ function ItemFormBody({
 									locations={allLocations}
 								/>
 
+								{/* Channels Frame */}
+								<Frame className="w-full">
+									<FrameHeader>
+										<FrameTitle className="text-base">
+											<Trans>Channels</Trans>
+										</FrameTitle>
+										<FrameDescription>
+											<Trans>Choose where this dish is sold.</Trans>
+										</FrameDescription>
+									</FrameHeader>
+									<FramePanel>
+										<ChannelSwitches
+											idPrefix="item-channels"
+											channels={channels}
+											onChange={setChannels}
+										/>
+									</FramePanel>
+								</Frame>
+
 								<RecipeAside
 									itemId={itemId ?? null}
 									dataRegion={dataRegion}
@@ -948,24 +984,36 @@ function ItemFormBody({
 											</Trans>
 										</FrameDescription>
 									</FrameHeader>
-									<FramePanel className="flex items-center justify-between px-5 py-3.5">
-										<Label
-											htmlFor="popular-switch"
-											className="block min-w-0 cursor-pointer space-y-0.5 pr-4 font-normal"
-										>
-											<div className="text-foreground text-sm">
-												<Trans>Popular Item</Trans>
-											</div>
-											<p className="text-muted-foreground text-xs">
-												<Trans>Show "Popular" badge on menus.</Trans>
-											</p>
-										</Label>
-										<Switch
-											id="popular-switch"
-											checked={isPopular}
-											onCheckedChange={setIsPopular}
+									<FramePanel className="px-5 py-3.5">
+										<PopularModeSelect
+											value={popularMode}
+											onChange={(next) => {
+												setPopularMode(next)
+												if (next === 'always') setIsPopular(true)
+												else if (next === 'never') setIsPopular(false)
+											}}
 										/>
 									</FramePanel>
+									{popularMode === 'auto' ? (
+										<FramePanel className="flex items-center justify-between px-5 py-3.5">
+											<Label
+												htmlFor="popular-switch"
+												className="block min-w-0 cursor-pointer space-y-0.5 pr-4 font-normal"
+											>
+												<div className="text-foreground text-sm">
+													<Trans>Popular Item</Trans>
+												</div>
+												<p className="text-muted-foreground text-xs">
+													<Trans>Show "Popular" badge on menus.</Trans>
+												</p>
+											</Label>
+											<Switch
+												id="popular-switch"
+												checked={isPopular}
+												onCheckedChange={setIsPopular}
+											/>
+										</FramePanel>
+									) : null}
 									<FramePanel className="flex items-center justify-between px-5 py-3.5">
 										<Label
 											htmlFor="upsell-switch"
@@ -1064,6 +1112,7 @@ function ItemFormBody({
 									onChange={setLocationOverrides}
 									allowPriceOverride={variations.groups.length === 0}
 									basePrice={price}
+									baseChannels={channels}
 								/>
 							</div>
 						</div>

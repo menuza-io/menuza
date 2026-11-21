@@ -1,4 +1,8 @@
 import { requireUserId } from '@repo/auth'
+import {
+	menuChannelsSchema,
+	parseMenuChannels,
+} from '@repo/common/menu-channels'
 import { dietaryTagsOf } from '@repo/common/menu-types'
 import {
 	and,
@@ -68,6 +72,7 @@ const ItemOperationSchema = z.discriminatedUnion('type', [
 	}),
 	z.object({ type: z.literal('popular'), enabled: z.boolean() }),
 	z.object({ type: z.literal('upsell'), enabled: z.boolean() }),
+	z.object({ type: z.literal('channels'), channels: menuChannelsSchema }),
 	z.object({ type: z.literal('add_category'), categoryId: z.string().min(1) }),
 	z.object({
 		type: z.literal('remove_category'),
@@ -207,6 +212,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					dietaryTags: dietaryTagsOf(row),
 					isPopular: row.isPopular,
 					isUpsell: row.isUpsell,
+					channels: parseMenuChannels(row.channels),
 					categoryIds: categoryByItem.get(row.id) ?? [],
 					modifierGroupIds: groupByItem.get(row.id) ?? [],
 				})),

@@ -1,5 +1,6 @@
 import { requireUserId } from '@repo/auth'
 import { courseChoicesFromLocations } from '@repo/common/kitchen-ticket'
+import { parseMenuChannels } from '@repo/common/menu-channels'
 import { MenuCategoryInputSchema } from '@repo/common/menu-types'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
@@ -29,6 +30,10 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { recordMenuChange } from '#app/utils/menu/menu-updates.server.ts'
+import {
+	narrowOverrideChannels,
+	parseChannelsFormData,
+} from '#app/utils/menu/menu-write-columns.ts'
 import {
 	assertCategoryIdsInOrganization,
 	assertCategoryInOrganization,
@@ -124,6 +129,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			locationId: ov.locationId,
 			isEnabled: ov.isEnabled ?? true,
 			availabilityStatus: ov.availabilityStatus,
+			channels: ov.channels ? parseMenuChannels(ov.channels) : null,
 		}
 	}
 
@@ -150,6 +156,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			availabilityStatus: category.availabilityStatus as
 				'available' | 'unavailable_until_tomorrow' | 'unavailable',
 			availabilityHours: category.availabilityHours ?? '',
+			channels: parseMenuChannels(category.channels),
 			parentId: category.parentId ?? null,
 			excludeFromOverride: category.excludeFromOverride,
 			excludeFromOrderLimits: category.excludeFromOrderLimits,
@@ -233,6 +240,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
+	const channelsParsed = parseChannelsFormData(formData)
+	if (!channelsParsed.ok) {
+		return Response.json(
+			{ error: { channels: ['Invalid channels'] } },
+			{ status: 400 },
+		)
+	}
+
 	const parsed = MenuCategoryInputSchema.safeParse(rawData)
 	if (!parsed.success) {
 		return Response.json(
@@ -242,6 +257,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+	const rawOverrides =
+		rawData.locationOverrides &&
+		typeof rawData.locationOverrides === 'object' &&
+		!Array.isArray(rawData.locationOverrides)
+			? (rawData.locationOverrides as Record<string, { channels?: unknown }>)
+			: undefined
 
 	await db.transaction(async (tx) => {
 		if (data.parentId) {
@@ -269,6 +290,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			tx,
 		)
 
+		let effectiveBaseChannels = channelsParsed.channels
+		if (!channelsParsed.provided) {
+			const [currentCategory] = await tx
+				.select({ channels: OrganizationMenuCategory.channels })
+				.from(OrganizationMenuCategory)
+				.where(
+					and(
+						eq(OrganizationMenuCategory.id, categoryId),
+						eq(OrganizationMenuCategory.organizationId, organization.id),
+					),
+				)
+			effectiveBaseChannels = parseMenuChannels(currentCategory?.channels)
+		}
+
 		// Update Category
 		await tx
 			.update(OrganizationMenuCategory)
@@ -285,6 +320,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						? data.unavailableUntil
 						: null,
 				availabilityHours: data.availabilityHours || null,
+				...(channelsParsed.provided
+					? { channels: channelsParsed.serialized }
+					: {}),
 				excludeFromOverride: data.excludeFromOverride,
 				excludeFromOrderLimits: data.excludeFromOrderLimits,
 				upsellCategoryIds: JSON.stringify(data.upsellCategoryIds),
@@ -349,6 +387,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					entityId: categoryId,
 					isEnabled: entry.isEnabled,
 					availabilityStatus: entry.availabilityStatus,
+					channels: narrowOverrideChannels(
+						effectiveBaseChannels,
+						rawOverrides?.[entry.locationId]?.channels,
+					),
 				})),
 			)
 		}

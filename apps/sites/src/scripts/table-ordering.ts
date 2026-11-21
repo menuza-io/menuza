@@ -20,6 +20,7 @@ import {
 	parseDiscountOrderRefusal,
 } from '~/lib/ordering/discount-quote'
 import { el, lockScroll, trapFocus } from '~/lib/ordering/dom'
+import { posterQuerySource } from '~/lib/ordering/menu-channel'
 import {
 	acceptCheckoutUrl,
 	checkoutAttemptKey,
@@ -222,7 +223,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 	let maxGuests: number | null = null
 
 	// Posters: remember the visit so a pickup order is tagged for attribution.
-	if (new URL(window.location.href).searchParams.get('src') === 'qr') {
+	if (posterQuerySource(window.location.search) === 'qr_poster') {
 		rememberPosterVisit(orgId)
 	}
 

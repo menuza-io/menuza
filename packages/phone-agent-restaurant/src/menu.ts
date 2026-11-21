@@ -78,6 +78,7 @@ export interface AgentMenuItem {
 	isPopular: boolean
 	isUpsell: boolean
 	availabilityStatus: string
+	channels?: string | readonly string[] | null
 	modifierGroups: AgentModifierGroup[]
 }
 
@@ -88,6 +89,7 @@ export interface AgentMenuCategory {
 	subcategories?: AgentMenuCategory[]
 	upsellCategoryIds: string[]
 	availabilityStatus: string
+	channels?: string | readonly string[] | null
 	items: AgentMenuItem[]
 }
 
@@ -95,6 +97,7 @@ export interface AgentMenu {
 	id: string
 	displayName: string
 	availabilityStatus: string
+	channels?: string | readonly string[] | null
 	categories: AgentMenuCategory[]
 }
 

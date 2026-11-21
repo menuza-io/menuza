@@ -1,5 +1,15 @@
 import { MarketingJourneyWorkflow } from './marketing-journey-workflow'
 import {
+	MENU_IMPORT_PATH,
+	MenuImportWorkflow,
+	type MenuImportWorkflowParams,
+} from './menu-import-workflow'
+import {
+	MENU_SCHEDULE_JOB_PATH,
+	MenuScheduleWorkflow,
+	type MenuScheduleWorkflowParams,
+} from './menu-schedule-workflow'
+import {
 	SOCIAL_PUBLISH_PATH,
 	SocialPostWorkflow,
 	type SocialPostWorkflowParams,
@@ -26,6 +36,8 @@ export interface Env {
 	SOCIAL_POST_WORKFLOW: Workflow<SocialPostWorkflowParams>
 	WEBSITE_PUBLISH_WORKFLOW: Workflow<WebsitePublishWorkflowParams>
 	WEBSITE_IMPORT_WORKFLOW: Workflow<WebsiteImportWorkflowParams>
+	MENU_SCHEDULE_WORKFLOW: Workflow<MenuScheduleWorkflowParams>
+	MENU_IMPORT_WORKFLOW: Workflow<MenuImportWorkflowParams>
 }
 
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
@@ -104,6 +116,8 @@ const SOCIAL_POST_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
 // A scheduled website publish is at most 90 days ahead (#180), well inside the
 // year a Workflow can sleep; the same margin applies.
 const WEBSITE_PUBLISH_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
+// A scheduled menu changeover is at most 90 days ahead (#149).
+const MENU_SCHEDULE_MAX_LEAD_MS = 90 * 24 * 60 * 60_000
 
 async function safeCompareAsync(
 	a: string | null | undefined,
@@ -369,6 +383,30 @@ async function invokeTenantOrderMessagesTick(env: Env) {
 		path: '/api/order-messages/tick',
 		body: {},
 		label: 'Tenant order messages tick',
+	})
+}
+
+/**
+ * The Auto Popular tick (#97): computes top-selling items per org once a day
+ * from regional order counts and posts item IDs only to the US App.
+ */
+async function invokeTenantMenuPopularTick(env: Env) {
+	return invokeTenantNodes(env, {
+		path: '/api/menu/popular/tick',
+		body: {},
+		label: 'Tenant menu popular tick',
+	})
+}
+
+/**
+ * The guest photos tick (#148): purges rejected guest photo submissions and
+ * their R2 objects older than 30 days on each regional node.
+ */
+async function invokeTenantGuestPhotosTick(env: Env) {
+	return invokeTenantNodes(env, {
+		path: '/api/guest-photos/tick',
+		body: {},
+		label: 'Tenant guest photos tick',
 	})
 }
 
@@ -675,6 +713,98 @@ export default {
 		}
 
 		// =========================================================================
+		// Menu Schedule Workflow: wake the App when a scheduled menu changeover is
+		// due — POST /workflows/menu-schedule/start { scheduleId, runAt } (#149)
+		// =========================================================================
+		if (
+			(pathname === '/workflows/menu-schedule/start' ||
+				pathname === '/api/workflows/menu-schedule/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				scheduleId?: unknown
+				runAt?: unknown
+			}
+			const scheduleId =
+				typeof body.scheduleId === 'string' ? body.scheduleId : ''
+			const runAt =
+				typeof body.runAt === 'string' ? new Date(body.runAt) : new Date('')
+			if (
+				!/^[a-z0-9]{8,64}$/i.test(scheduleId) ||
+				Number.isNaN(runAt.getTime())
+			) {
+				return Response.json(
+					{ error: 'scheduleId and runAt are required' },
+					{ status: 400 },
+				)
+			}
+			if (runAt.getTime() - Date.now() > MENU_SCHEDULE_MAX_LEAD_MS) {
+				return Response.json(
+					{ error: 'runAt is too far ahead to wait for' },
+					{ status: 400 },
+				)
+			}
+
+			const instanceId = `menu-${scheduleId}-${runAt.getTime()}`
+			try {
+				const instance = await env.MENU_SCHEDULE_WORKFLOW.create({
+					id: instanceId,
+					params: { scheduleId, runAt: runAt.toISOString() },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start menu schedule workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
+		// Menu import (#73): POST /workflows/menu-import/start { importId }
+		// =========================================================================
+		if (
+			(pathname === '/workflows/menu-import/start' ||
+				pathname === '/api/workflows/menu-import/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				importId?: unknown
+			}
+			const importId = typeof body.importId === 'string' ? body.importId : ''
+			if (!/^[a-z0-9]{8,64}$/i.test(importId)) {
+				return Response.json({ error: 'importId is required' }, { status: 400 })
+			}
+			const instanceId = `menu-import-${importId}`
+			try {
+				const instance = await env.MENU_IMPORT_WORKFLOW.create({
+					id: instanceId,
+					params: { importId },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start menu import workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
 		// 3. Marketing Journey Workflow: Cancel / Terminate
 		// POST /api/workflows/marketing-journey/:instanceId/cancel
 		// POST /workflows/marketing-journey/:instanceId/cancel
@@ -797,6 +927,21 @@ export default {
 					'Website publish sweep',
 					(jobEnv: Env) => invokeJob(jobEnv, WEBSITE_PUBLISH_PATH),
 				],
+				// Scheduled menu changeovers are woken on time by MenuScheduleWorkflow;
+				// this hourly sweep catches a wake-up that could not be started (#149).
+				[
+					'Menu schedule sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, MENU_SCHEDULE_JOB_PATH),
+				],
+				// AI menu imports are woken on start by MenuImportWorkflow; this hourly
+				// sweep resets stale applying rows and re-drives stale queued/running
+				// imports (#73).
+				[
+					'Menu import sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, MENU_IMPORT_PATH),
+				],
+				['Tenant menu popular tick', invokeTenantMenuPopularTick],
+				['Tenant guest photos tick', invokeTenantGuestPhotosTick],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {
@@ -838,4 +983,6 @@ export {
 	SocialPostWorkflow,
 	WebsitePublishWorkflow,
 	WebsiteImportWorkflow,
+	MenuScheduleWorkflow,
+	MenuImportWorkflow,
 }

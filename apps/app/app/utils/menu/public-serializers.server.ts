@@ -12,6 +12,7 @@ import {
 	type SpecialHour,
 	type WeeklySchedule,
 } from '@repo/common/location-types'
+import { parseMenuChannels, type MenuChannel } from '@repo/common/menu-channels'
 import {
 	parseOrderTypePrices,
 	type OrderTypePrices,
@@ -186,6 +187,7 @@ export interface PublicMenuItemData {
 	isPopular: boolean
 	isUpsell: boolean
 	availabilityStatus: string
+	channels?: MenuChannel[]
 	position: number
 	modifierGroups: PublicModifierGroupData[]
 }
@@ -200,6 +202,7 @@ export interface PublicMenuCategoryData {
 	subcategories?: PublicMenuCategoryData[]
 	upsellCategoryIds: string[]
 	availabilityStatus: string
+	channels?: MenuChannel[]
 	position: number
 	excludeFromOrderLimits?: boolean
 	items: PublicMenuItemData[]
@@ -213,6 +216,7 @@ export interface PublicMenuData {
 	nutritionalInfo: boolean
 	specialInstructions: boolean
 	availabilityStatus: string
+	channels?: MenuChannel[]
 	position: number
 	categories: PublicMenuCategoryData[]
 }
@@ -462,6 +466,7 @@ export function serializePublicMenuItem(
 			item.unavailableUntil,
 			now,
 		),
+		channels: parseMenuChannels(item.channels),
 		position: item.position,
 		modifierGroups,
 	}

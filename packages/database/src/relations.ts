@@ -81,6 +81,8 @@ import {
 	OrganizationMenuOptionNestedModifierGroupAssignment,
 	OrganizationMenuLocationOverride,
 	OrganizationMenuPosLink,
+	MenuSchedule,
+	MenuImport,
 	OrganizationDrop,
 	OrganizationDropPickupWindow,
 	OrganizationDropInventory,
@@ -290,6 +292,8 @@ export const OrganizationRelations = relations(Organization, ({ many }) => ({
 	menuModifierGroups: many(OrganizationMenuModifierGroup),
 	menuOptions: many(OrganizationMenuOption),
 	menuLocationOverrides: many(OrganizationMenuLocationOverride),
+	menuSchedules: many(MenuSchedule),
+	menuImports: many(MenuImport),
 	drops: many(OrganizationDrop),
 	dashboards: many(Dashboard),
 }))
@@ -994,9 +998,47 @@ export const OrganizationMenuRelations = relations(
 			references: [Organization.id],
 		}),
 		categoryAssignments: many(OrganizationMenuCategoryAssignment),
+		schedules: many(MenuSchedule, {
+			relationName: 'MenuScheduleMenu',
+		}),
+		takeOffSchedules: many(MenuSchedule, {
+			relationName: 'MenuScheduleTakeOffMenu',
+		}),
 		drops: many(OrganizationDrop),
 	}),
 )
+
+export const MenuScheduleRelations = relations(MenuSchedule, ({ one }) => ({
+	organization: one(Organization, {
+		fields: [MenuSchedule.organizationId],
+		references: [Organization.id],
+	}),
+	menu: one(OrganizationMenu, {
+		fields: [MenuSchedule.menuId],
+		references: [OrganizationMenu.id],
+		relationName: 'MenuScheduleMenu',
+	}),
+	takeOffMenu: one(OrganizationMenu, {
+		fields: [MenuSchedule.takeOffMenuId],
+		references: [OrganizationMenu.id],
+		relationName: 'MenuScheduleTakeOffMenu',
+	}),
+	createdBy: one(User, {
+		fields: [MenuSchedule.createdById],
+		references: [User.id],
+	}),
+}))
+
+export const MenuImportRelations = relations(MenuImport, ({ one }) => ({
+	organization: one(Organization, {
+		fields: [MenuImport.organizationId],
+		references: [Organization.id],
+	}),
+	createdBy: one(User, {
+		fields: [MenuImport.createdById],
+		references: [User.id],
+	}),
+}))
 
 export const OrganizationMenuCategoryRelations = relations(
 	OrganizationMenuCategory,

@@ -1,6 +1,7 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { DEFAULT_COURSES } from '@repo/common/kitchen-ticket'
+import { parseMenuChannels, type MenuChannel } from '@repo/common/menu-channels'
 import {
 	getLocalizedMenuValue,
 	getCategoryDepth,
@@ -42,6 +43,7 @@ import {
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
 import { AssignedSortableList } from './assigned-sortable-list.tsx'
 import { AvailabilityHoursSection } from './availability-hours-section.tsx'
+import { ChannelSwitches } from './channel-switches.tsx'
 import {
 	LocationOverridesCard,
 	type LocationItem,
@@ -64,6 +66,7 @@ export interface CategoryFormData {
 		| 'unavailable'
 	unavailableUntil?: Date | string | null
 	availabilityHours?: string
+	channels?: MenuChannel[]
 	excludeFromOverride: boolean
 	excludeFromOrderLimits?: boolean
 	assignedItemIds: string[]
@@ -214,6 +217,9 @@ function CategoryFormBody({
 	const [availabilityHours, setAvailabilityHours] = useState(
 		initialData?.availabilityHours ?? '',
 	)
+	const [channels, setChannels] = useState<MenuChannel[]>(() =>
+		parseMenuChannels(initialData?.channels),
+	)
 	const [excludeFromOverride, setExcludeFromOverride] = useState(
 		initialData?.excludeFromOverride ?? false,
 	)
@@ -268,6 +274,11 @@ function CategoryFormBody({
 						type="hidden"
 						name="availabilityHours"
 						value={availabilityHours}
+					/>
+					<input
+						type="hidden"
+						name="channels"
+						value={JSON.stringify(channels)}
 					/>
 					<input
 						type="hidden"
@@ -591,6 +602,28 @@ function CategoryFormBody({
 									locations={allLocations}
 								/>
 
+								{/* Channels Frame */}
+								<Frame className="w-full">
+									<FrameHeader>
+										<FrameTitle className="text-base">
+											<Trans>Channels</Trans>
+										</FrameTitle>
+										<FrameDescription className="text-xs">
+											<Trans>
+												Turning a channel off here hides all dishes in this
+												category on that channel.
+											</Trans>
+										</FrameDescription>
+									</FrameHeader>
+									<FramePanel>
+										<ChannelSwitches
+											idPrefix="category-channels"
+											channels={channels}
+											onChange={setChannels}
+										/>
+									</FramePanel>
+								</Frame>
+
 								{/* Order Throttling / Operational Frame */}
 								<Frame className="w-full" stackedPanels>
 									<FrameHeader>
@@ -683,6 +716,7 @@ function CategoryFormBody({
 									locations={allLocations}
 									overrides={locationOverrides}
 									onChange={setLocationOverrides}
+									baseChannels={channels}
 								/>
 							</div>
 						</div>

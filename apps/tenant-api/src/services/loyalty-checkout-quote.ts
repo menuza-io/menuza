@@ -48,6 +48,7 @@ import {
 import { purchaseForSourceInTx } from './loyalty-purchase-service.ts'
 import { quoteReward } from './loyalty-redemption-service.ts'
 import {
+	derivePublicOrderChannel,
 	fetchOrderContext,
 	orderFailure,
 	type OrderServiceFailure,
@@ -156,6 +157,7 @@ export async function quoteCheckout(input: {
 	customerId: string
 	request: RestaurantOrderQuoteRequest
 	selection: LoyaltyOrderReward | null
+	client?: string | null
 	now?: Date
 }): Promise<LoyaltyCheckoutQuoteResult> {
 	const { orgId, customerId, request, selection } = input
@@ -210,7 +212,17 @@ export async function quoteCheckout(input: {
 		}
 	}
 
-	const priced = priceRestaurantOrder(context, request, { now, deliveryQuote })
+	const channel = derivePublicOrderChannel({
+		fulfillment: request.fulfillment,
+		source: request.source,
+		qrOrdering: (context as { qrOrdering?: unknown }).qrOrdering,
+		client: input.client,
+	})
+	const priced = priceRestaurantOrder(context, request, {
+		now,
+		deliveryQuote,
+		channel,
+	})
 	if (!priced.ok) {
 		const { status, code, message } = priced.error
 		return { ok: false, failure: { status, code, message } }

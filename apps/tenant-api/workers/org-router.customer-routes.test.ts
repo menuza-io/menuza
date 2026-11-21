@@ -19,8 +19,8 @@ async function customerToken(orgId = ORG) {
 		.sign(new TextEncoder().encode(JWT_SECRET))
 }
 
-describe('the guest’s own order and push routes pick the organization from the customer token (#112, #105)', () => {
-	it('routes /customer/* and /push/* by the signed customer token only', async () => {
+describe('the guest’s own order, push, and photo routes pick the organization from the customer token (#112, #105, #148)', () => {
+	it('routes /customer/*, /push/*, and /photos* by the signed customer token only', async () => {
 		const bearer = await customerToken()
 		for (const path of [
 			'/customer/orders',
@@ -28,6 +28,9 @@ describe('the guest’s own order and push routes pick the organization from the
 			'/customer/orders/abc/reorder',
 			'/push/devices',
 			'/push/preferences',
+			'/photos',
+			'/photos/eligibility',
+			'/photos/upload',
 		]) {
 			const request = new Request(`https://tenant.example.test${path}`, {
 				headers: { Authorization: `Bearer ${bearer}` },
@@ -44,6 +47,20 @@ describe('the guest’s own order and push routes pick the organization from the
 			},
 		)
 		expect(await resolveOrgId(forged, env)).toBeNull()
+		const forgedPhotos = new Request(
+			`https://tenant.example.test/photos/eligibility?orgId=${ORG}`,
+			{
+				headers: { Authorization: 'Bearer not-a-token' },
+			},
+		)
+		expect(await resolveOrgId(forgedPhotos, env)).toBeNull()
+		const nonePhotos = new Request(
+			`https://tenant.example.test/photos/upload?orgId=${ORG}`,
+			{
+				method: 'POST',
+			},
+		)
+		expect(await resolveOrgId(nonePhotos, env)).toBeNull()
 		const none = new Request(
 			`https://tenant.example.test/push/devices?orgId=${ORG}`,
 			{

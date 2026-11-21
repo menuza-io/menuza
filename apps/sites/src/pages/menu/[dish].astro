@@ -54,6 +54,16 @@ const description = dish?.item.description
 	? pickLocalized(dish.item.description, locale, defaultLocale)
 	: ''
 const imageUrl = dish ? resolveMediaUrl(dish.item.imageUrl) : null
+const galleryUrls = dish
+	? Array.from(
+			new Set(
+				(dish.item.imageUrls?.length ? dish.item.imageUrls : dish.item.imageUrl ? [dish.item.imageUrl] : [])
+					.map((src) => resolveMediaUrl(src))
+					.filter((url): url is string => Boolean(url)),
+			),
+		)
+	: []
+const primaryImageUrl = galleryUrls[0] ?? imageUrl
 const dishSlugs = new Map((landing?.dishes ?? []).map((entry) => [entry.id, entry.slug]))
 const related = (dish?.related ?? []).map((item) => ({
 	name: pickLocalized(item.displayName, locale, defaultLocale) || item.displayName,
@@ -113,8 +123,23 @@ const fullMenu = i18n._(msg`See the full menu`)
 		<div class:list={[siteContainer, 'py-12 sm:py-16']} data-dish-page={dish.item.id}>
 			<a href={href('/menu')} class="focus-ring text-sm text-muted-foreground hover:text-foreground">{fullMenu}</a>
 			<div class="mt-4 grid gap-8 lg:grid-cols-2 lg:items-start">
-				{imageUrl ? (
-					<img src={imageUrl} alt={name} class="surface aspect-[4/3] w-full object-cover" />
+				{primaryImageUrl ? (
+					<div class="space-y-3">
+						<img src={primaryImageUrl} alt={name} class="surface aspect-[4/3] w-full object-cover" />
+						{galleryUrls.length > 1 ? (
+							<ul class="grid grid-cols-4 gap-2" data-dish-gallery>
+								{galleryUrls.slice(1).map((url, index) => (
+									<li>
+										<img
+											src={url}
+											alt={`${name} (${index + 2})`}
+											class="surface aspect-square w-full object-cover"
+										/>
+									</li>
+								))}
+							</ul>
+						) : null}
+					</div>
 				) : null}
 				<div>
 					<p class="eyebrow">{pickLocalized(dish.categoryName, locale, defaultLocale)}</p>

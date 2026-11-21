@@ -34,9 +34,18 @@ const mocks = vi.hoisted(() => ({
 	select: vi.fn(),
 	dropQuery: vi.fn(),
 	checkRateLimit: vi.fn(),
+	userHasOrganizationPermission: vi.fn(),
 }))
 
-vi.mock('@repo/auth', () => ({ requireUserId: mocks.requireUserId }))
+vi.mock('@repo/auth', () => ({
+	requireUserId: mocks.requireUserId,
+	userHasOrganizationPermission: mocks.userHasOrganizationPermission,
+	ORG_PERMISSIONS: {
+		READ_MENU_ANY: 'read:menu:any',
+		UPDATE_MENU_ANY: 'update:menu:any',
+		UPDATE_GUEST_PHOTO_ANY: 'update:guest_photo:any',
+	},
+}))
 vi.mock('@repo/database', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
 	db: {
@@ -59,6 +68,7 @@ vi.mock('#app/utils/organization/permissions.server.ts', () => ({
 	ORG_PERMISSIONS: {
 		READ_MENU_ANY: 'read:menu:any',
 		UPDATE_MENU_ANY: 'update:menu:any',
+		UPDATE_GUEST_PHOTO_ANY: 'update:guest_photo:any',
 	},
 	requireUserWithOrganizationPermission: mocks.requirePermission,
 }))
@@ -78,8 +88,19 @@ vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
 vi.mock('#app/utils/menu/menu-feature-access.server.ts', () => ({
 	getMenuHistoryEnabled: vi.fn().mockResolvedValue(false),
 	getMenuBulkEditEnabled: vi.fn().mockResolvedValue(false),
+	getMenuImportEnabled: vi.fn().mockResolvedValue(false),
+	isGuestPhotosEnabledForOrganization: vi.fn().mockResolvedValue(false),
 	requireMenuHistoryAccess: mocks.requirePermission,
 	requireMenuBulkEditAccess: mocks.requirePermission,
+	requireMenuImportAccess: mocks.requirePermission,
+	requireMenuGuestPhotosAccess: mocks.requirePermission,
+}))
+vi.mock('#app/utils/menu/auto-popular.server.ts', () => ({
+	getAutoPopularSettings: vi.fn().mockResolvedValue({
+		featureEnabled: false,
+		autoPopularCount: null,
+	}),
+	getMenuAutoPopularEnabled: vi.fn().mockResolvedValue(false),
 }))
 vi.mock('#app/components/menu/category-form.tsx', () => ({
 	CategoryForm: () => null,
@@ -182,9 +203,16 @@ describe('menu read authorization', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		mocks.requireUserId.mockResolvedValue('user-1')
+		mocks.userHasOrganizationPermission.mockResolvedValue(false)
+		mocks.select.mockReturnValue({
+			from: vi.fn().mockReturnValue({
+				where: vi.fn().mockResolvedValue([]),
+			}),
+		})
 		mocks.requireUserOrganization.mockResolvedValue({
 			id: 'org-1',
 			slug: 'cafe',
+			dataRegion: 'us',
 			siteDefaultLocale: 'en',
 			siteLocales: '["en"]',
 		})

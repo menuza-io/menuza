@@ -29,6 +29,7 @@ vi.hoisted(() => {
 import { setupTestOrgWithUser } from '#tests/test-utils.ts'
 import { loader as mailboxTokenLoader } from '../routes/_app+/$orgSlug_+/mailbox-token.ts'
 import { loader as marketingLoader } from '../routes/_app+/$orgSlug_+/marketing+/_index.tsx'
+import { loader as photosTokenLoader } from '../routes/_app+/$orgSlug_+/menu+/photos-token.ts'
 import { loader as peopleTokenLoader } from '../routes/_app+/$orgSlug_+/people-token.ts'
 import { loader as callsTokenLoader } from '../routes/_app+/$orgSlug_+/phone-agent+/calls-token.ts'
 import { loader as reportLoader } from '../routes/_app+/$orgSlug_+/reports+/$reportId.tsx'
@@ -54,6 +55,7 @@ const ROUTES: Array<[string, string, Loader]> = [
 	['marketing+/_index.tsx', 'marketing', marketingLoader as Loader],
 	['reports+/new.tsx', 'reports/new', newReportLoader as Loader],
 	['reports+/$reportId.tsx', 'reports/rpt_missing', reportLoader as Loader],
+	['menu+/photos-token.ts', 'menu/photos-token', photosTokenLoader as Loader],
 ]
 
 const flagIds: string[] = []
@@ -69,14 +71,20 @@ afterEach(async () => {
 async function enableStaffing(organizationId: string) {
 	const rows = await db
 		.insert(ConfigFlag)
-		.values(
-			Object.values(STAFFING_FLAG_KEYS).map((key) => ({
+		.values([
+			...Object.values(STAFFING_FLAG_KEYS).map((key) => ({
 				key,
 				value: true,
 				level: 'organization' as const,
 				organizationId,
 			})),
-		)
+			{
+				key: 'menu.guest_photos',
+				value: true,
+				level: 'organization' as const,
+				organizationId,
+			},
+		])
 		.returning({ id: ConfigFlag.id })
 	flagIds.push(...rows.map((row) => row.id))
 }
@@ -197,6 +205,7 @@ describe('token-minting routes refuse callers outside the organization', () => {
 				'phone-agent+/calls-token.ts',
 				'people-token.ts',
 				'marketing+/_index.tsx',
+				'menu+/photos-token.ts',
 			].includes(name),
 		),
 	)(

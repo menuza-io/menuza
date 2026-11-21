@@ -38,6 +38,15 @@ export function organizationInvoicePrefix(orgId: string) {
 	return `inventory-invoices/${orgId}/`
 }
 
+/**
+ * Guest dish photos (#148) live in the same region bucket under their own
+ * prefix, `guest-photos/<orgId>/<random>.<ext>`. The trailing slash keeps one
+ * org id from matching another that extends it.
+ */
+export function organizationGuestPhotoPrefix(orgId: string) {
+	return `guest-photos/${orgId}/`
+}
+
 type RecordingStorageConfig = {
 	bucket: string
 	region: string
@@ -552,4 +561,77 @@ export async function deleteOrganizationRecordings(
 		}
 	}
 	return worst
+}
+
+export type ObjectPutResult = 'uploaded' | 'not_configured' | 'failed'
+
+/**
+ * Uploads cleaned bytes directly to the region's object storage using a
+ * presigned PUT target so content-type and content-length are enforced.
+ */
+export async function putStorageObject(
+	key: string,
+	body: Uint8Array,
+	contentType: string,
+	timeoutMs = STORAGE_REQUEST_TIMEOUT_MS,
+): Promise<ObjectPutResult> {
+	const signed = presignObjectUpload(key, {
+		contentType,
+		sizeBytes: body.byteLength,
+	})
+	if (!signed) return 'not_configured'
+	try {
+		const copy = new Uint8Array(body.byteLength)
+		copy.set(body)
+		const response = await fetch(signed.url, {
+			method: 'PUT',
+			headers: signed.headers,
+			body: copy.buffer,
+			signal: AbortSignal.timeout(timeoutMs),
+		})
+		if (response.ok) return 'uploaded'
+		console.error(`Object upload failed with ${response.status}`)
+		return 'failed'
+	} catch (error) {
+		console.error('Object upload failed', error)
+		return 'failed'
+	}
+}
+
+/**
+ * Deletes every guest photo stored under `guest-photos/<orgId>/` when an
+ * organization is deprovisioned, using the same bounded-budget pattern as
+ * `deleteOrganizationRecordings`.
+ */
+export async function deleteOrganizationGuestPhotos(
+	orgId: string,
+	options: {
+		budgetMs: number
+		runInBackground: (task: Promise<void>) => void
+	},
+): Promise<PrefixDeleteResult['status']> {
+	const prefix = organizationGuestPhotoPrefix(orgId)
+	const deadline = Date.now() + options.budgetMs
+	const result = await deleteRecordingsWithPrefix(prefix, { deadline })
+	if (result.status === 'failed') {
+		console.error('Could not delete every guest photo of a deprovisioned org', {
+			orgId,
+			prefix,
+			deleted: result.deleted,
+			failed: result.failed,
+		})
+	}
+	if (result.status === 'incomplete') {
+		options.runInBackground(
+			deleteRecordingsWithPrefix(prefix).then((rest) => {
+				if (rest.status !== 'deleted') {
+					console.error(
+						'Could not delete every guest photo of a deprovisioned org',
+						{ orgId, prefix, ...rest },
+					)
+				}
+			}),
+		)
+	}
+	return result.status
 }

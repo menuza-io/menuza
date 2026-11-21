@@ -2852,3 +2852,162 @@ describe('menu price resolution in the order engine', () => {
 		).toEqual([2000])
 	})
 })
+
+describe('channel availability (#220)', () => {
+	const channelLine = (itemId: string) => ({
+		itemId,
+		quantity: 1,
+		options: [],
+	})
+
+	function makeChannelContext(
+		menuMutate: (menu: RestaurantOrderContext['menu']['menus'][number]) => void,
+		locationOverrides?: RestaurantOrderContext['menu']['locationOverrides'],
+	): RestaurantOrderContext {
+		const base = makeContext()
+		const clonedMenu = structuredClone(base.menu.menus[0]!)
+		clonedMenu.categories = [
+			{
+				id: 'cat-channel-test',
+				displayName: 'Channel Test',
+				availabilityStatus: 'available',
+				items: [
+					{
+						id: 'item-channel-test',
+						displayName: 'Channel Test Dish',
+						price: 10,
+						availabilityStatus: 'available',
+					},
+				],
+			},
+		]
+		menuMutate(clonedMenu)
+		return {
+			...base,
+			menu: {
+				...base.menu,
+				menus: [clonedMenu],
+				...(locationOverrides ? { locationOverrides } : {}),
+			},
+		}
+	}
+
+	it('returns 409 item_unavailable when item, category, menu, or location override disallows the channel', () => {
+		// 1. Item disallows 'web'
+		const itemHidden = makeChannelContext((m) => {
+			m.categories![0]!.items![0]!.channels = ['pos']
+		})
+		const resItem = priceRestaurantOrder(
+			itemHidden,
+			makeRequest({ lines: [channelLine('item-channel-test')] }),
+			{ now: NOW, channel: 'web' },
+		)
+		expect(resItem.ok).toBe(false)
+		if (!resItem.ok) {
+			expect(resItem.error.status).toBe(409)
+			expect(resItem.error.code).toBe('item_unavailable')
+		}
+
+		// Same item succeeds on 'pos' and when channel is omitted
+		expect(
+			priceRestaurantOrder(
+				itemHidden,
+				makeRequest({ lines: [channelLine('item-channel-test')] }),
+				{ now: NOW, channel: 'pos', walkIn: true },
+			).ok,
+		).toBe(true)
+		expect(
+			priceRestaurantOrder(
+				itemHidden,
+				makeRequest({ lines: [channelLine('item-channel-test')] }),
+				{ now: NOW },
+			).ok,
+		).toBe(true)
+
+		// 2. Category disallows 'qr'
+		const catHidden = makeChannelContext((m) => {
+			m.categories![0]!.channels = ['web', 'pos']
+		})
+		const resCat = priceRestaurantOrder(
+			catHidden,
+			makeRequest({ lines: [channelLine('item-channel-test')] }),
+			{ now: NOW, channel: 'qr' },
+		)
+		expect(resCat.ok).toBe(false)
+		if (!resCat.ok) {
+			expect(resCat.error.status).toBe(409)
+			expect(resCat.error.code).toBe('item_unavailable')
+		}
+
+		// 3. Menu disallows 'app'
+		const menuHidden = makeChannelContext((m) => {
+			m.channels = ['web', 'qr']
+		})
+		const resMenu = priceRestaurantOrder(
+			menuHidden,
+			makeRequest({ lines: [channelLine('item-channel-test')] }),
+			{ now: NOW, channel: 'app' },
+		)
+		expect(resMenu.ok).toBe(false)
+		if (!resMenu.ok) {
+			expect(resMenu.error.status).toBe(409)
+			expect(resMenu.error.code).toBe('item_unavailable')
+		}
+
+		// 4. Location override narrows 'web' off
+		const overrideHidden = makeChannelContext(() => {}, {
+			[LOCATION_ID]: [
+				{
+					entityType: 'item',
+					entityId: 'item-channel-test',
+					channels: ['pos'],
+				},
+			],
+		})
+		const resOverride = priceRestaurantOrder(
+			overrideHidden,
+			makeRequest({ lines: [channelLine('item-channel-test')] }),
+			{ now: NOW, channel: 'web' },
+		)
+		expect(resOverride.ok).toBe(false)
+		if (!resOverride.ok) {
+			expect(resOverride.error.status).toBe(409)
+			expect(resOverride.error.code).toBe('item_unavailable')
+		}
+
+		// 5. Menu-level location override narrows 'web' off
+		const menuOverrideHidden = makeChannelContext(() => {}, {
+			[LOCATION_ID]: [
+				{
+					entityType: 'menu',
+					entityId: 'menu-1',
+					channels: ['pos'],
+				},
+			],
+		})
+		const resMenuOverride = priceRestaurantOrder(
+			menuOverrideHidden,
+			makeRequest({ lines: [channelLine('item-channel-test')] }),
+			{ now: NOW, channel: 'web' },
+		)
+		expect(resMenuOverride.ok).toBe(false)
+		if (!resMenuOverride.ok) {
+			expect(resMenuOverride.error.status).toBe(409)
+			expect(resMenuOverride.error.code).toBe('item_unavailable')
+		}
+	})
+
+	it('still returns 400 unknown_item for truly unknown item IDs even when channel is specified', () => {
+		const context = makeContext()
+		const res = priceRestaurantOrder(
+			context,
+			makeRequest({ lines: [channelLine('does-not-exist')] }),
+			{ now: NOW, channel: 'web' },
+		)
+		expect(res.ok).toBe(false)
+		if (!res.ok) {
+			expect(res.error.status).toBe(400)
+			expect(res.error.code).toBe('unknown_item')
+		}
+	})
+})

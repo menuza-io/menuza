@@ -14,11 +14,14 @@
  * decides that itself. Pure: no I/O, no UI strings.
  */
 
+import { isSoldOn, type MenuChannel } from './menu-channels.ts'
+
 /** The fields of a dish the rule reads; callers pass richer objects. */
 export type UpsellItem = {
 	id: string
 	isUpsell?: boolean | null
 	availabilityStatus?: string | null
+	channels?: readonly string[] | string | null
 	variations?: {
 		variants?: ReadonlyArray<{ availabilityStatus?: string | null }>
 	} | null
@@ -27,6 +30,7 @@ export type UpsellItem = {
 export type UpsellCategory<I extends UpsellItem = UpsellItem> = {
 	id: string
 	availabilityStatus?: string | null
+	channels?: readonly string[] | string | null
 	/** Categories whose dishes go well with this one. */
 	upsellCategoryIds?: readonly string[] | null
 	items: readonly I[]
@@ -35,6 +39,7 @@ export type UpsellCategory<I extends UpsellItem = UpsellItem> = {
 
 export type UpsellMenu<I extends UpsellItem = UpsellItem> = {
 	availabilityStatus?: string | null
+	channels?: readonly string[] | string | null
 	categories: ReadonlyArray<UpsellCategory<I>>
 }
 
@@ -61,6 +66,8 @@ export function pickUpsells<I extends UpsellItem>(input: {
 	/** The dishes in the cart (one id per dish, repeats are fine). */
 	cartItemIds: readonly string[]
 	limit?: number
+	/** Ordering channel (#220): dishes/categories/menus hidden on this channel are never suggested. */
+	channel?: MenuChannel
 	/**
 	 * A veto on top of the built-in rules: false drops the dish (not offered for
 	 * the chosen order type, over a per-order limit).
@@ -70,6 +77,7 @@ export function pickUpsells<I extends UpsellItem>(input: {
 	const limit = input.limit ?? UPSELL_MAX_SUGGESTIONS
 	if (limit <= 0) return []
 	const inCart = new Set(input.cartItemIds)
+	const channel = input.channel
 
 	// Menu order, each dish once (a dish listed twice keeps its first place).
 	// A dish belongs to its category and to every ancestor of it, like the
@@ -80,9 +88,11 @@ export function pickUpsells<I extends UpsellItem>(input: {
 	const seen = new Set<string>()
 	const visit = (category: UpsellCategory<I>, ancestors: readonly string[]) => {
 		if (!isOffered(category.availabilityStatus)) return
+		if (channel && !isSoldOn(channel, { category })) return
 		const path = [...ancestors, category.id]
 		categoryById.set(category.id, category)
 		for (const item of category.items) {
+			if (channel && !isSoldOn(channel, { item })) continue
 			if (seen.has(item.id)) continue
 			seen.add(item.id)
 			ordered.push({ item, categoryId: category.id, path })
@@ -91,6 +101,7 @@ export function pickUpsells<I extends UpsellItem>(input: {
 	}
 	for (const menu of input.menus) {
 		if (!isOffered(menu.availabilityStatus)) continue
+		if (channel && !isSoldOn(channel, { menu })) continue
 		for (const category of menu.categories) visit(category, [])
 	}
 
@@ -103,7 +114,8 @@ export function pickUpsells<I extends UpsellItem>(input: {
 	}
 	const targetCategoryIds = new Set<string>()
 	for (const categoryId of cartCategoryIds) {
-		for (const target of categoryById.get(categoryId)?.upsellCategoryIds ?? []) {
+		for (const target of categoryById.get(categoryId)?.upsellCategoryIds ??
+			[]) {
 			targetCategoryIds.add(target)
 		}
 	}
@@ -119,7 +131,9 @@ export function pickUpsells<I extends UpsellItem>(input: {
 	const chosen = new Set(fromCategories.map((entry) => entry.item.id))
 	const flagged = ordered.filter(
 		(entry) =>
-			entry.item.isUpsell === true && !chosen.has(entry.item.id) && eligible(entry),
+			entry.item.isUpsell === true &&
+			!chosen.has(entry.item.id) &&
+			eligible(entry),
 	)
 	return [...fromCategories, ...flagged]
 		.slice(0, limit)

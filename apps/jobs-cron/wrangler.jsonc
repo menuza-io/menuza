@@ -42,6 +42,16 @@
 			"binding": "WEBSITE_IMPORT_WORKFLOW",
 			"class_name": "WebsiteImportWorkflow",
 		},
+		{
+			"name": "menu-schedule",
+			"binding": "MENU_SCHEDULE_WORKFLOW",
+			"class_name": "MenuScheduleWorkflow",
+		},
+		{
+			"name": "menu-import",
+			"binding": "MENU_IMPORT_WORKFLOW",
+			"class_name": "MenuImportWorkflow",
+		},
 	],
 	// APP_BASE_URL / TENANT_API_URL* patched at deploy — set INTERNAL_COMMAND_TOKEN via wrangler secret put.
 	"vars": {},

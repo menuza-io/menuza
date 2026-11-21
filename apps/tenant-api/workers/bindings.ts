@@ -28,6 +28,7 @@ export interface TenantApiWorkerEnv {
 	RESERVATIONS_SMS_ENABLED?: string
 	ORDERS_EMAIL_ENABLED?: string
 	ORDERS_SMS_ENABLED?: string
+	GUEST_PHOTOS_ENABLED?: string
 	TWILIO_ACCOUNT_SID?: string
 	TWILIO_FROM_NUMBER?: string
 	JWT_SECRET: string

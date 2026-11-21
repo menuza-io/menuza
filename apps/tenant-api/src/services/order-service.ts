@@ -65,6 +65,7 @@ import {
 	type OrderNumberFormat,
 } from '@repo/common/pos-orders'
 import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent'
+import { type MenuChannel } from '@repo/common/menu-channels'
 import { readQrOrderingFeatures } from '@repo/common/qr-ordering'
 import {
 	hashLoyaltyCart,
@@ -952,12 +953,40 @@ export type PlaceOrderResult =
 	| { ok: true; data: PlaceOrderSuccess }
 	| { ok: false; failure: OrderServiceFailure }
 
+export function isNativeAppClientHeader(
+	value: string | null | undefined,
+): boolean {
+	const raw = value?.trim().toLowerCase()
+	return raw === 'ios' || raw === 'android'
+}
+
+export function derivePublicOrderChannel(input: {
+	fulfillment: 'pickup' | 'delivery' | 'dine_in'
+	source?: string | null
+	qrOrdering?: unknown
+	client?: string | null
+}): MenuChannel {
+	const qrFeatures = readQrOrderingFeatures(input.qrOrdering)
+	if (input.fulfillment === 'dine_in') {
+		return 'qr'
+	}
+	if (input.source === 'qr_poster' && qrFeatures.enabled) {
+		return 'qr'
+	}
+	if (isNativeAppClientHeader(input.client)) {
+		return 'app'
+	}
+	return 'web'
+}
+
 export async function placeOrder(input: {
 	organization: PublishedOrganization
 	request: RestaurantOrderRequest
 	customerId: string | null
 	/** Dine-in only: the `X-Table-Token` / `X-Tab-Token` the browser sent. */
 	dineIn?: DineInCapability | null
+	/** Trusted client platform header (`X-Client: ios | android`). */
+	client?: string | null
 	now?: Date
 }): Promise<PlaceOrderResult> {
 	const { organization, request, customerId } = input
@@ -1048,7 +1077,17 @@ export async function placeOrder(input: {
 		}
 	}
 
-	const priced = priceRestaurantOrder(context, request, { now, deliveryQuote })
+	const channel = derivePublicOrderChannel({
+		fulfillment: request.fulfillment,
+		source: request.source,
+		qrOrdering: (context as { qrOrdering?: unknown }).qrOrdering,
+		client: input.client,
+	})
+	const priced = priceRestaurantOrder(context, request, {
+		now,
+		deliveryQuote,
+		channel,
+	})
 	if (!priced.ok) {
 		return { ok: false, failure: fromEngineError(priced.error) }
 	}

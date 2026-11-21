@@ -3,6 +3,12 @@ export const MENU_FLAG_KEYS = {
 	bulkEdit: 'menu.bulk_edit',
 	/** #92 structure cards in the review stack (default off). */
 	structureSuggestions: 'menu.structure_suggestions',
+	/** #97 daily auto-popular badges (default off). */
+	autoPopular: 'menu.auto_popular',
+	/** #73 AI menu import (default off). */
+	import: 'menu.import',
+	/** #148 guest dish photos & moderation (default off; forced off for KSA). */
+	guestPhotos: 'menu.guest_photos',
 } as const
 
 export type MenuFlagName = keyof typeof MENU_FLAG_KEYS

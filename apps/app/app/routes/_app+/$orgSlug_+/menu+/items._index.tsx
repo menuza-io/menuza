@@ -2,6 +2,11 @@ import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import {
+	MENU_CHANNEL_LABELS,
+	MENU_CHANNELS,
+	parseMenuChannels,
+} from '@repo/common/menu-channels'
+import {
 	dietaryTagsOf,
 	getLocalizedMenuValue,
 	parseMenuVariations,
@@ -12,8 +17,10 @@ import {
 	asc,
 	desc,
 	and,
+	isNotNull,
 	OrganizationMenuItem,
 	OrganizationMenuCategory,
+	OrganizationMenuLocationOverride,
 	OrganizationMenuModifierGroup,
 	OrganizationLocation,
 } from '@repo/database'
@@ -65,6 +72,7 @@ import {
 	FoodCostHead,
 	FoodCostProvider,
 } from '#app/components/inventory/food-cost-column.tsx'
+import { AutoPopularSettings } from '#app/components/menu/auto-popular-settings.tsx'
 import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
 import { DIETARY_TAG_MESSAGES } from '#app/components/menu/dietary-tag-switches.tsx'
 import { MenuBulkBar } from '#app/components/menu/menu-bulk-bar.tsx'
@@ -81,6 +89,10 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import {
+	getAutoPopularSettings,
+	handleAutoPopularSettingsAction,
+} from '#app/utils/menu/auto-popular.server.ts'
 import {
 	currencyCodeForDataRegion,
 	currencyExponentFor,
@@ -148,6 +160,18 @@ const ITEM_FILTER_FIELDS: FilterField[] = [
 			{ value: 'alcohol', label: 'Alcohol' },
 		],
 	},
+	{
+		id: 'channels',
+		label: 'Channels',
+		type: 'multiselect',
+		defaultOperator: 'has_any_of',
+		searchable: false,
+		icon: <Icon name="globe" className="size-3.5" />,
+		options: MENU_CHANNELS.map((channel) => ({
+			value: channel,
+			label: MENU_CHANNEL_LABELS[channel],
+		})),
+	},
 ]
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -160,6 +184,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await requireMenuWrite(request, organization.id)
 
 	const formData = await request.formData()
+	if (formData.get('intent') === 'updateAutoPopular') {
+		return handleAutoPopularSettingsAction({
+			request,
+			organizationId: organization.id,
+			formData,
+		})
+	}
 	const result = DeleteItemSchema.safeParse(Object.fromEntries(formData))
 
 	if (!result.success) {
@@ -200,10 +231,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 
 	await requireMenuRead(request, organization.id)
-	const [menuBulkEditEnabled, menuHistoryEnabled] = await Promise.all([
-		getMenuBulkEditEnabled(organization.id),
-		getMenuHistoryEnabled(organization.id),
-	])
+	const [menuBulkEditEnabled, menuHistoryEnabled, autoPopular] =
+		await Promise.all([
+			getMenuBulkEditEnabled(organization.id),
+			getMenuHistoryEnabled(organization.id),
+			getAutoPopularSettings(organization.id),
+		])
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 	const bulkCatalogPromise = menuBulkEditEnabled
@@ -256,6 +289,26 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		],
 	})
 
+	const channelOverrides = await db
+		.select({
+			entityId: OrganizationMenuLocationOverride.entityId,
+			channels: OrganizationMenuLocationOverride.channels,
+		})
+		.from(OrganizationMenuLocationOverride)
+		.where(
+			and(
+				eq(OrganizationMenuLocationOverride.organizationId, organization.id),
+				eq(OrganizationMenuLocationOverride.entityType, 'item'),
+				isNotNull(OrganizationMenuLocationOverride.channels),
+			),
+		)
+	const narrowedOverrideItemIds = new Set<string>()
+	for (const ov of channelOverrides) {
+		if (parseMenuChannels(ov.channels).length < MENU_CHANNELS.length) {
+			narrowedOverrideItemIds.add(ov.entityId)
+		}
+	}
+
 	// `?health=<check>` narrows the list to the dishes a Menu health line
 	// counted, using the same function as the card.
 	const healthKey = parseMenuHealthCheckKey(
@@ -284,6 +337,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		healthFilter,
 		menuBulkEditEnabled,
 		menuHistoryEnabled,
+		autoPopular,
 		currencyExponent: currencyExponentFor(
 			currencyCodeForDataRegion(organization.dataRegion),
 		),
@@ -308,6 +362,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			try {
 				if (i.allergens) allergens = JSON.parse(i.allergens) as string[]
 			} catch {}
+			const channels = parseMenuChannels(i.channels)
+			const notSoldEverywhere =
+				channels.length < MENU_CHANNELS.length ||
+				narrowedOverrideItemIds.has(i.id)
 
 			return {
 				id: i.id,
@@ -322,6 +380,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				dietaryTags: dietaryTagsOf(i),
 				isPopular: i.isPopular,
 				isUpsell: i.isUpsell,
+				channels,
+				notSoldEverywhere,
 				allergens,
 				calorieMin: i.calorieMin,
 				calorieMax: i.calorieMax,
@@ -363,6 +423,7 @@ function ItemsIndexContent() {
 		healthFilter,
 		menuBulkEditEnabled,
 		menuHistoryEnabled,
+		autoPopular,
 		currencyExponent,
 		bulkLocations,
 		bulkCategories,
@@ -404,6 +465,8 @@ function ItemsIndexContent() {
 						),
 						...(item.isAlcohol ? ['alcohol'] : []),
 					]
+				case 'channels':
+					return item.channels
 				default:
 					return ''
 			}
@@ -469,6 +532,11 @@ function ItemsIndexContent() {
 					clearTo={`/${organization.slug}/menu/items`}
 				/>
 			) : null}
+
+			<AutoPopularSettings
+				featureEnabled={autoPopular.featureEnabled}
+				autoPopularCount={autoPopular.autoPopularCount}
+			/>
 
 			{allItems.length === 0 ? (
 				<EmptyState
@@ -587,6 +655,14 @@ function ItemsIndexContent() {
 																		★ Popular
 																	</span>
 																)}
+																{item.notSoldEverywhere ? (
+																	<Badge
+																		variant="outline"
+																		className="shrink-0 px-1.5 py-0 text-[10px]"
+																	>
+																		<Trans>Not sold everywhere</Trans>
+																	</Badge>
+																) : null}
 															</div>
 															{item.internalName && (
 																<span className="text-muted-foreground block truncate text-xs">

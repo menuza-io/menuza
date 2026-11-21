@@ -2,10 +2,14 @@ import {
 	type PublicJobPosting,
 	type PublicJobPostingListItem,
 } from '@repo/common/job-posting'
+import { type MenuChannel } from '@repo/common/menu-channels'
 import { type DropStatus } from '@repo/common/menu-types'
 import { type SiteFontSelection } from '@repo/common/site-fonts'
+import { type PublicCustomerApp } from './customer-app-types'
 import { edgeCache } from '~/lib/site-headers'
 import { getAppServiceBinding, getPublicAppUrl } from '~/lib/worker-env'
+
+export { type PublicCustomerApp }
 
 export type PublicSiteCustomFont = {
 	url: string
@@ -42,10 +46,6 @@ export type PublicSiteRedirect = {
 	toPath: string
 	statusCode: number
 }
-
-import { type PublicCustomerApp } from './customer-app-types'
-
-export { type PublicCustomerApp }
 
 export type PublicOrganization = {
 	id: string
@@ -583,6 +583,7 @@ export type PublicMenuItemData = {
 	/** Does not count toward order limits (#256), so not toward item counts (#355, #408). */
 	excludeFromOrderLimits?: boolean
 	availabilityStatus: string
+	channels?: readonly string[] | string | null
 	position: number
 	modifierGroups: PublicModifierGroupData[]
 }
@@ -596,6 +597,7 @@ export type PublicMenuCategoryData = {
 	parentId?: string | null
 	subcategories?: PublicMenuCategoryData[]
 	availabilityStatus: string
+	channels?: readonly string[] | string | null
 	position: number
 	/** Every dish in it is left out of order limits (#256). */
 	excludeFromOrderLimits?: boolean
@@ -610,6 +612,7 @@ export type PublicMenuData = {
 	nutritionalInfo: boolean
 	specialInstructions: boolean
 	availabilityStatus: string
+	channels?: readonly string[] | string | null
 	position: number
 	categories: PublicMenuCategoryData[]
 }
@@ -677,6 +680,7 @@ export type PublicSiteMenuPayload = {
 			isEnabled?: boolean | null
 			price?: number | null
 			availabilityStatus?: string | null
+			channels?: readonly string[] | string | null
 		}>
 	>
 	/** Live pricing rules (#388); read with `parseMenuPricingRules`. */
@@ -692,6 +696,8 @@ export type PublicSiteMenuPayload = {
 		upsell?: boolean
 		slotLimits?: boolean
 		dailyDishLimits?: boolean
+		qrOrdering?:
+			boolean | { enabled?: boolean; dineIn?: boolean; online?: boolean }
 	}
 }
 
@@ -700,6 +706,7 @@ export async function fetchPublishedSiteMenu(options: {
 	host?: string | null
 	lng?: string | null
 	locationId?: string | null
+	channel?: MenuChannel
 	preview?: boolean
 }): Promise<PublicSiteMenuPayload | null> {
 	const params = new URLSearchParams()
@@ -707,6 +714,7 @@ export async function fetchPublishedSiteMenu(options: {
 	if (options.host) params.set('host', options.host)
 	if (options.lng) params.set('lng', options.lng)
 	if (options.locationId) params.set('locationId', options.locationId)
+	if (options.channel) params.set('channel', options.channel)
 	if (options.preview) params.set('preview', '1')
 	if (!params.size) return null
 

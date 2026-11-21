@@ -276,7 +276,11 @@ export async function tenantFetch(
 	const headers = new Headers(init.headers)
 	const access = getAccessToken()
 	if (access) headers.set('Authorization', `Bearer ${access}`)
-	if (init.body && !headers.has('Content-Type')) {
+	if (
+		init.body &&
+		!(typeof FormData !== 'undefined' && init.body instanceof FormData) &&
+		!headers.has('Content-Type')
+	) {
 		headers.set('Content-Type', 'application/json')
 	}
 

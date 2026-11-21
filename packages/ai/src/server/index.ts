@@ -3,10 +3,16 @@ export { createChatStream, type ChatStreamOptions } from './chat.js'
 
 // Content generation
 export {
+	GENERATE_OBJECT_FILE_MEDIA_TYPES,
 	generateContent,
 	generateNoteContent,
 	generateObject,
+	setGenerateObjectImplementation,
+	setGenerateTextImplementation,
 	type GenerateContentOptions,
+	type GenerateObjectFileMediaType,
+	type GenerateObjectFilePart,
+	type GenerateObjectRunner,
 	type GenerateStructuredOptions,
 } from './generate.js'
 

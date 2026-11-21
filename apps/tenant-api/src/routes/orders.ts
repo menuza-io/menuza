@@ -551,6 +551,7 @@ publicOrderRoutes.post('/', async (c) => {
 			request,
 			customerId: customer.customerId,
 			dineIn,
+			client: c.req.header('X-Client') ?? null,
 		})
 		await couponGuard.settle(
 			result.ok ? 'applied' : couponOutcomeOfFailure(result.failure),
@@ -668,6 +669,7 @@ publicOrderRoutes.post('/quote', async (c) => {
 			organization: organization.organization,
 			request,
 			customerId: customer.customerId,
+			client: c.req.header('X-Client') ?? null,
 		})
 		await couponGuard.settle(
 			result.ok

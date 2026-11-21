@@ -1,11 +1,7 @@
 import { type MenuSnapshotContent } from './snapshot-types.ts'
 
 export type EntityKind =
-	| 'item'
-	| 'category'
-	| 'modifier_group'
-	| 'option'
-	| 'menu'
+	'item' | 'category' | 'modifier_group' | 'option' | 'menu'
 
 export type FieldChange = { field: string; before: unknown; after: unknown }
 
@@ -104,14 +100,14 @@ export function diffMenuSnapshots(
 			new Map(a.menus.map((row) => [row.id, row])),
 			new Map(b.menus.map((row) => [row.id, row])),
 			menuName,
-			['displayName', 'availabilityStatus', 'menuType', 'position'],
+			['displayName', 'availabilityStatus', 'menuType', 'channels', 'position'],
 		),
 		compareRecords(
 			'category',
 			new Map(a.categories.map((row) => [row.id, row])),
 			new Map(b.categories.map((row) => [row.id, row])),
 			categoryName,
-			['displayName', 'parentId', 'availabilityStatus', 'position'],
+			['displayName', 'parentId', 'availabilityStatus', 'channels', 'position'],
 		),
 		compareRecords(
 			'item',
@@ -122,6 +118,7 @@ export function diffMenuSnapshots(
 				'displayName',
 				'price',
 				'availabilityStatus',
+				'channels',
 				'description',
 				'isVegetarian',
 				'isGlutenFree',
@@ -136,14 +133,27 @@ export function diffMenuSnapshots(
 			new Map(a.modifierGroups.map((row) => [row.id, row])),
 			new Map(b.modifierGroups.map((row) => [row.id, row])),
 			modifierName,
-			['name', 'selectionType', 'minSelections', 'maxSelections', 'availabilityStatus'],
+			[
+				'name',
+				'selectionType',
+				'minSelections',
+				'maxSelections',
+				'availabilityStatus',
+			],
 		),
 		compareRecords(
 			'option',
 			new Map(a.options.map((row) => [row.id, row])),
 			new Map(b.options.map((row) => [row.id, row])),
 			optionName,
-			['displayName', 'price', 'availabilityStatus', 'isVegetarian', 'isGlutenFree', 'isAlcohol'],
+			[
+				'displayName',
+				'price',
+				'availabilityStatus',
+				'isVegetarian',
+				'isGlutenFree',
+				'isAlcohol',
+			],
 		),
 	])
 }

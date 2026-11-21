@@ -25,6 +25,10 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import {
+	narrowOverrideChannels,
+	parseChannelsFormData,
+} from '#app/utils/menu/menu-write-columns.ts'
+import {
 	assertCategoryIdsInOrganization,
 	assertLocationIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
@@ -116,6 +120,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
+	const channelsParsed = parseChannelsFormData(formData)
+	if (!channelsParsed.ok) {
+		return Response.json(
+			{ error: { channels: ['Invalid channels'] } },
+			{ status: 400 },
+		)
+	}
+
 	const parsed = MenuInputSchema.safeParse(rawData)
 	if (!parsed.success) {
 		return Response.json(
@@ -125,6 +137,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+	const rawOverrides =
+		rawData.locationOverrides &&
+		typeof rawData.locationOverrides === 'object' &&
+		!Array.isArray(rawData.locationOverrides)
+			? (rawData.locationOverrides as Record<string, { channels?: unknown }>)
+			: undefined
 
 	await db.transaction(async (tx) => {
 		await assertCategoryIdsInOrganization(
@@ -158,6 +176,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						? data.unavailableUntil
 						: null,
 				availabilityHours: data.availabilityHours || null,
+				channels: channelsParsed.serialized,
 			})
 			.returning()
 
@@ -187,6 +206,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					entityId: newMenu.id,
 					isEnabled: entry.isEnabled,
 					availabilityStatus: entry.availabilityStatus,
+					channels: narrowOverrideChannels(
+						channelsParsed.channels,
+						rawOverrides?.[entry.locationId]?.channels,
+					),
 				})),
 			)
 		}

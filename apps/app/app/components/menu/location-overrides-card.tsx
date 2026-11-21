@@ -1,4 +1,5 @@
 import { Trans } from '@lingui/macro'
+import { type MenuChannel } from '@repo/common/menu-channels'
 import { Badge } from '@repo/ui/badge'
 import {
 	Frame,
@@ -11,6 +12,7 @@ import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
 import { getLocationDisplayName } from '#app/utils/location/locations.ts'
+import { ChannelSwitches } from './channel-switches.tsx'
 
 export interface LocationItem {
 	id: string
@@ -29,6 +31,7 @@ export interface LocationOverrideState {
 	price?: number | null
 	availabilityStatus?: string | null
 	unavailableUntil?: Date | string | null
+	channels?: MenuChannel[] | null
 }
 
 export interface LocationOverridesCardProps {
@@ -37,6 +40,7 @@ export interface LocationOverridesCardProps {
 	onChange: (overrides: Record<string, LocationOverrideState>) => void
 	allowPriceOverride?: boolean
 	basePrice?: number
+	baseChannels?: readonly MenuChannel[]
 }
 
 export function LocationOverridesCard({
@@ -45,6 +49,7 @@ export function LocationOverridesCard({
 	onChange,
 	allowPriceOverride = false,
 	basePrice = 0,
+	baseChannels,
 }: LocationOverridesCardProps) {
 	if (locations.length === 0) {
 		return null
@@ -79,6 +84,28 @@ export function LocationOverridesCard({
 		})
 	}
 
+	const handleChannelsChange = (
+		locationId: string,
+		nextChannels: MenuChannel[],
+	) => {
+		const current = overrides[locationId] || {
+			locationId,
+			isEnabled: true,
+		}
+		const base = baseChannels ?? []
+		const narrowed = base.filter((channel) => nextChannels.includes(channel))
+		const sameAsBase =
+			narrowed.length === base.length &&
+			base.every((channel, index) => narrowed[index] === channel)
+		onChange({
+			...overrides,
+			[locationId]: {
+				...current,
+				channels: sameAsBase ? null : narrowed,
+			},
+		})
+	}
+
 	return (
 		<Frame className="w-full">
 			<FrameHeader>
@@ -97,72 +124,94 @@ export function LocationOverridesCard({
 						const override = overrides[loc.id]
 						const isEnabled = override ? override.isEnabled : true
 						const price = override?.price ?? ''
+						const effectiveChannels =
+							baseChannels === undefined
+								? []
+								: override?.channels == null
+									? [...baseChannels]
+									: baseChannels.filter((channel) =>
+											override.channels!.includes(channel),
+										)
 
 						return (
-							<div
-								key={loc.id}
-								className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-							>
-								<div className="flex items-center gap-3">
-									<Switch
-										id={`loc-toggle-${loc.id}`}
-										checked={isEnabled}
-										onCheckedChange={(checked) =>
-											handleToggleEnabled(loc.id, checked)
-										}
-									/>
-									<div>
-										<Label
-											htmlFor={`loc-toggle-${loc.id}`}
-											className="flex cursor-pointer items-center gap-2 text-sm font-medium"
-										>
-											{getLocationDisplayName(loc.name)}
-											{loc.isDefault && (
-												<Badge
-													variant="secondary"
-													className="px-1.5 py-0 text-[10px] font-normal"
-												>
-													<Trans>Default</Trans>
-												</Badge>
-											)}
-										</Label>
-										<span className="text-muted-foreground block text-xs">
-											{isEnabled ? (
-												<Trans>Available at this location</Trans>
-											) : (
-												<Trans>Disabled for this location</Trans>
-											)}
-										</span>
-									</div>
-								</div>
-
-								{allowPriceOverride && isEnabled && (
-									<div className="flex items-center gap-2 pl-9 sm:pl-0">
-										<Label
-											htmlFor={`loc-price-${loc.id}`}
-											className="text-muted-foreground shrink-0 text-xs"
-										>
-											<Trans>Price</Trans>
-										</Label>
-										<div className="relative w-28">
-											<span className="text-muted-foreground absolute top-1/2 left-2.5 -translate-y-1/2 text-xs">
-												$
+							<div key={loc.id} className="space-y-3 py-3 first:pt-0 last:pb-0">
+								<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+									<div className="flex items-center gap-3">
+										<Switch
+											id={`loc-toggle-${loc.id}`}
+											checked={isEnabled}
+											onCheckedChange={(checked) =>
+												handleToggleEnabled(loc.id, checked)
+											}
+										/>
+										<div>
+											<Label
+												htmlFor={`loc-toggle-${loc.id}`}
+												className="flex cursor-pointer items-center gap-2 text-sm font-medium"
+											>
+												{getLocationDisplayName(loc.name)}
+												{loc.isDefault && (
+													<Badge
+														variant="secondary"
+														className="px-1.5 py-0 text-[10px] font-normal"
+													>
+														<Trans>Default</Trans>
+													</Badge>
+												)}
+											</Label>
+											<span className="text-muted-foreground block text-xs">
+												{isEnabled ? (
+													<Trans>Available at this location</Trans>
+												) : (
+													<Trans>Disabled for this location</Trans>
+												)}
 											</span>
-											<Input
-												id={`loc-price-${loc.id}`}
-												type="number"
-												step="0.01"
-												min="0"
-												placeholder={basePrice.toFixed(2)}
-												value={price}
-												onChange={(e) =>
-													handlePriceChange(loc.id, e.target.value)
-												}
-												className="h-8 pl-6 text-xs"
-											/>
 										</div>
 									</div>
-								)}
+
+									{allowPriceOverride && isEnabled && (
+										<div className="flex items-center gap-2 pl-9 sm:pl-0">
+											<Label
+												htmlFor={`loc-price-${loc.id}`}
+												className="text-muted-foreground shrink-0 text-xs"
+											>
+												<Trans>Price</Trans>
+											</Label>
+											<div className="relative w-28">
+												<span className="text-muted-foreground absolute top-1/2 left-2.5 -translate-y-1/2 text-xs">
+													$
+												</span>
+												<Input
+													id={`loc-price-${loc.id}`}
+													type="number"
+													step="0.01"
+													min="0"
+													placeholder={basePrice.toFixed(2)}
+													value={price}
+													onChange={(e) =>
+														handlePriceChange(loc.id, e.target.value)
+													}
+													className="h-8 pl-6 text-xs"
+												/>
+											</div>
+										</div>
+									)}
+								</div>
+
+								{baseChannels !== undefined && isEnabled ? (
+									<div className="space-y-1.5 pl-9">
+										<p className="text-muted-foreground text-xs">
+											<Trans>Channels at this location</Trans>
+										</p>
+										<ChannelSwitches
+											compact
+											idPrefix={`loc-channels-${loc.id}`}
+											channels={effectiveChannels}
+											allowedChannels={baseChannels}
+											onChange={(next) => handleChannelsChange(loc.id, next)}
+										/>
+									</div>
+								) : null}
 							</div>
 						)
 					})}

@@ -1,3 +1,4 @@
+import { isSoldOn } from '@repo/common/menu-channels'
 import {
 	fixedOverridePrice,
 	parseMenuPricingRules,
@@ -21,16 +22,20 @@ export function priceAgentMenus(
 	menus: AgentMenu[],
 	options: {
 		locationId: string
-		overrides?: Array<{ entityId: string; price?: number | null }>
+		overrides?: Array<{
+			entityId: string
+			price?: number | null
+			channels?: string[] | string | null
+		}>
 		pricingRules?: unknown
 		now?: Date
 	},
 ): AgentMenu[] {
 	const rules = parseMenuPricingRules(options.pricingRules)
+	const overrideEntryOf = (id: string) =>
+		options.overrides?.find((entry) => entry.entityId === id)
 	const overrideOf = (id: string) =>
-		fixedOverridePrice(
-			options.overrides?.find((entry) => entry.entityId === id)?.price,
-		)
+		fixedOverridePrice(overrideEntryOf(id)?.price)
 	const context = (orderType: 'pickup' | 'delivery') => ({
 		orderType,
 		locationId: options.locationId,
@@ -72,40 +77,56 @@ export function priceAgentMenus(
 
 	const category = (entry: AgentMenuCategory): AgentMenuCategory => ({
 		...entry,
-		items: entry.items.map((item) => {
-			const scope = { ...item, categoryIds: categoriesOf.get(item.id) ?? [] }
-			const overridePrice = overrideOf(item.id)
-			const variants = item.variations.variants.map((variant) => ({
-				...variant,
-				price: resolveMenuItemPrice(scope, context('pickup'), {
-					variantPrice: variant.price,
+		items: entry.items
+			.filter((item) =>
+				isSoldOn('web', { item, override: overrideEntryOf(item.id) }),
+			)
+			.map((item) => {
+				const scope = { ...item, categoryIds: categoriesOf.get(item.id) ?? [] }
+				const overridePrice = overrideOf(item.id)
+				const variants = item.variations.variants.map((variant) => ({
+					...variant,
+					price: resolveMenuItemPrice(scope, context('pickup'), {
+						variantPrice: variant.price,
+						overridePrice,
+					}),
+				}))
+				const pickup = resolveMenuItemPrice(scope, context('pickup'), {
 					overridePrice,
-				}),
-			}))
-			const pickup = resolveMenuItemPrice(scope, context('pickup'), {
-				overridePrice,
-			})
-			const delivery = resolveMenuItemPrice(scope, context('delivery'), {
-				overridePrice,
-			})
-			const { deliveryPrice: _old, ...rest } = item
-			return {
-				...rest,
-				variations: { ...item.variations, variants },
-				price: variants.length
-					? Math.min(...variants.map((variant) => variant.price))
-					: pickup,
-				...(!variants.length && delivery !== pickup
-					? { deliveryPrice: delivery }
-					: {}),
-				modifierGroups: groups(item.modifierGroups),
-			}
-		}),
-		subcategories: entry.subcategories?.map(category),
+				})
+				const delivery = resolveMenuItemPrice(scope, context('delivery'), {
+					overridePrice,
+				})
+				const { deliveryPrice: _old, ...rest } = item
+				return {
+					...rest,
+					variations: { ...item.variations, variants },
+					price: variants.length
+						? Math.min(...variants.map((variant) => variant.price))
+						: pickup,
+					...(!variants.length && delivery !== pickup
+						? { deliveryPrice: delivery }
+						: {}),
+					modifierGroups: groups(item.modifierGroups),
+				}
+			}),
+		subcategories: entry.subcategories
+			?.filter((sub) =>
+				isSoldOn('web', { category: sub, override: overrideEntryOf(sub.id) }),
+			)
+			.map(category),
 	})
 
-	return menus.map((menu) => ({
-		...menu,
-		categories: menu.categories.map(category),
-	}))
+	return menus
+		.filter((menu) =>
+			isSoldOn('web', { menu, override: overrideEntryOf(menu.id) }),
+		)
+		.map((menu) => ({
+			...menu,
+			categories: menu.categories
+				.filter((cat) =>
+					isSoldOn('web', { category: cat, override: overrideEntryOf(cat.id) }),
+				)
+				.map(category),
+		}))
 }

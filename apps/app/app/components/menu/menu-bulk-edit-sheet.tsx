@@ -1,5 +1,10 @@
 import { Trans, plural, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import {
+	MENU_CHANNELS,
+	parseMenuChannels,
+	type MenuChannel,
+} from '@repo/common/menu-channels'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -35,6 +40,10 @@ import {
 } from '@repo/ui/table'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import {
+	ChannelSwitches,
+	MENU_CHANNEL_SHORT_MESSAGES,
+} from '#app/components/menu/channel-switches.tsx'
 import { DIETARY_TAG_MESSAGES } from '#app/components/menu/dietary-tag-switches.tsx'
 import {
 	BULK_DIETARY_FLAGS,
@@ -52,6 +61,7 @@ type ItemActionKey =
 	| 'dietary'
 	| 'popular'
 	| 'upsell'
+	| 'channels'
 	| 'add_category'
 	| 'remove_category'
 	| 'add_modifier_group'
@@ -124,6 +134,9 @@ export function MenuBulkEditSheet({
 		label: flag === 'alcohol' ? _(t`Alcohol`) : _(DIETARY_TAG_MESSAGES[flag]),
 	}))
 	const [toggleEnabled, setToggleEnabled] = useState(true)
+	const [bulkChannels, setBulkChannels] = useState<MenuChannel[]>([
+		...MENU_CHANNELS,
+	])
 	const [categoryId, setCategoryId] = useState('')
 	const [modifierGroupId, setModifierGroupId] = useState('')
 	const [locationId, setLocationId] = useState<string>('')
@@ -207,6 +220,8 @@ export function MenuBulkEditSheet({
 				return { type: 'popular', enabled: toggleEnabled }
 			case 'upsell':
 				return { type: 'upsell', enabled: toggleEnabled }
+			case 'channels':
+				return { type: 'channels', channels: bulkChannels }
 			case 'add_category':
 				return { type: 'add_category', categoryId }
 			case 'remove_category':
@@ -219,7 +234,10 @@ export function MenuBulkEditSheet({
 	}
 
 	const scopeLocation =
-		locationId && (actionKey === 'price' || actionKey === 'availability')
+		locationId &&
+		(actionKey === 'price' ||
+			actionKey === 'availability' ||
+			actionKey === 'channels')
 
 	const loadPreview = async () => {
 		setLoading(true)
@@ -342,6 +360,12 @@ export function MenuBulkEditSheet({
 		if (actionKey === 'upsell') {
 			return row.isUpsell ? _(t`Upsell`) : '—'
 		}
+		if (actionKey === 'channels') {
+			const chs = parseMenuChannels(row.channels)
+			return chs.length
+				? chs.map((ch) => _(MENU_CHANNEL_SHORT_MESSAGES[ch])).join(', ')
+				: '—'
+		}
 		if (actionKey === 'add_category' || actionKey === 'remove_category') {
 			const ids = row.categoryIds as string[] | undefined
 			return ids?.length ? String(ids.length) : '0'
@@ -444,6 +468,9 @@ export function MenuBulkEditSheet({
 											</SelectItem>
 											<SelectItem value="upsell">
 												<Trans>Upsell</Trans>
+											</SelectItem>
+											<SelectItem value="channels">
+												<Trans>Set channels</Trans>
 											</SelectItem>
 											<SelectItem value="add_category">
 												<Trans>Add to category</Trans>
@@ -652,6 +679,19 @@ export function MenuBulkEditSheet({
 							</div>
 						) : null}
 
+						{actionKey === 'channels' ? (
+							<div className="space-y-2 sm:col-span-2">
+								<Label>
+									<Trans>Channels</Trans>
+								</Label>
+								<ChannelSwitches
+									idPrefix="bulk-channels"
+									channels={bulkChannels}
+									onChange={setBulkChannels}
+								/>
+							</div>
+						) : null}
+
 						{needsCategory ? (
 							<div className="space-y-2 sm:col-span-2">
 								<Label>
@@ -702,7 +742,9 @@ export function MenuBulkEditSheet({
 							</div>
 						) : null}
 
-						{(actionKey === 'price' || actionKey === 'availability') &&
+						{(actionKey === 'price' ||
+							actionKey === 'availability' ||
+							actionKey === 'channels') &&
 						locations.length > 0 ? (
 							<div className="space-y-2 sm:col-span-2">
 								<Label>

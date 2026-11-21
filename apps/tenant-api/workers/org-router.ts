@@ -6,6 +6,7 @@ import {
 import { z } from 'zod'
 import { INVENTORY_TOKEN_AUDIENCE } from '@repo/inventory'
 import { GIFT_CARD_TOKEN_AUDIENCE } from '@repo/common/gift-cards'
+import { GUEST_PHOTO_TOKEN_AUDIENCE } from '@repo/common/guest-photos'
 import { LOYALTY_TOKEN_AUDIENCE } from '@repo/loyalty'
 import { RESERVATIONS_TOKEN_AUDIENCE } from '@repo/reservations'
 import {
@@ -85,6 +86,7 @@ async function orgIdFromOperatorJwt(
 				LOYALTY_TOKEN_AUDIENCE,
 				INVENTORY_TOKEN_AUDIENCE,
 				GIFT_CARD_TOKEN_AUDIENCE,
+				GUEST_PHOTO_TOKEN_AUDIENCE,
 			],
 			issuer: brand.shortName,
 			algorithms: ['HS256'],
@@ -448,6 +450,16 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// Menu popular tick: same shape.
+	if (pathname === '/api/menu/popular/tick') {
+		return orgIdFromJsonBody(request)
+	}
+
+	// Guest photos tick: same shape.
+	if (pathname === '/api/guest-photos/tick') {
+		return orgIdFromJsonBody(request)
+	}
+
 	// App -> regional staff commands (link, unlink, erase, summary, export): body
 	// orgId, authenticated by INTERNAL_COMMAND_TOKEN inside the route handler.
 	if (pathname.startsWith('/internal/staff/')) {
@@ -582,6 +594,12 @@ export async function resolveOrgId(
 	// The signed-in guest's own orders (#112) and push devices (#105): the
 	// customer token names the organization, never a query or body.
 	if (pathname.startsWith('/customer/') || pathname.startsWith('/push/')) {
+		return orgIdFromCustomerJwt(request, env)
+	}
+
+	// Guest dish photos (#148): the customer token names the organization,
+	// never a query or body.
+	if (pathname === '/photos' || pathname.startsWith('/photos/')) {
 		return orgIdFromCustomerJwt(request, env)
 	}
 

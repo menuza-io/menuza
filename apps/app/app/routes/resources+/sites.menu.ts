@@ -1,3 +1,4 @@
+import { isMenuChannel, type MenuChannel } from '@repo/common/menu-channels'
 import { db, and, eq, Organization } from '@repo/database'
 import { getClientIp } from '@repo/security'
 import { type LoaderFunctionArgs } from 'react-router'
@@ -58,6 +59,12 @@ export const loader = withPublicCors(async function loader({
 	const host =
 		url.searchParams.get('host')?.trim().toLowerCase().split(':')[0] || null
 	const locationId = url.searchParams.get('locationId') || null
+	const rawChannel =
+		url.searchParams.get('channel')?.trim().toLowerCase() || null
+	if (rawChannel !== null && !isMenuChannel(rawChannel)) {
+		return Response.json({ error: 'Invalid channel' }, { status: 400 })
+	}
+	const channel: MenuChannel = rawChannel ?? 'web'
 	// Accept both `preview=1` (sent by apps/sites) and `preview=true`.
 	const previewParam = url.searchParams.get('preview')
 	const wantsPreview = previewParam === '1' || previewParam === 'true'
@@ -176,7 +183,7 @@ export const loader = withPublicCors(async function loader({
 			: getSiteKvKey(
 					'page',
 					orgId,
-					`menu-g${generation}-${queryHash}`,
+					`menu-g${generation}-${queryHash}-${channel}`,
 					cacheVersion,
 				)
 
@@ -204,7 +211,7 @@ export const loader = withPublicCors(async function loader({
 		customDomain: org.customDomain,
 	}
 	const { payload, secondsUntilVariationReturn } =
-		await buildPublicSiteMenuPayload(orgContext, locationId)
+		await buildPublicSiteMenuPayload(orgContext, locationId, { channel })
 
 	if (
 		cacheKey &&

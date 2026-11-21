@@ -88,6 +88,7 @@ export type MenuItem = {
 	/** Left out of every discount. Absent on a menu published before the flag. */
 	excludeFromDiscounts?: boolean
 	availabilityStatus: string
+	channels?: readonly string[] | string | null
 	position: number
 	modifierGroups: ModifierGroup[]
 }
@@ -99,6 +100,7 @@ export type MenuCategory = {
 	parentId?: string | null
 	subcategories?: MenuCategory[]
 	availabilityStatus: string
+	channels?: readonly string[] | string | null
 	position: number
 	items: MenuItem[]
 }
@@ -145,6 +147,7 @@ export type MenuPayload = {
 		displayName: string
 		menuType: string
 		availabilityStatus: string
+		channels?: readonly string[] | string | null
 		position: number
 		categories: MenuCategory[]
 	}>
@@ -158,6 +161,7 @@ export type MenuPayload = {
 			isEnabled?: boolean | null
 			price?: number | null
 			availabilityStatus?: string | null
+			channels?: readonly string[] | string | null
 		}>
 	>
 	/** Automatic and manual till rules. No coupon codes. Absent on an older catalog. */

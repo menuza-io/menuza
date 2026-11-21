@@ -735,4 +735,92 @@ describe('prices the agent quotes (#412, #388)', () => {
 		// The original menu is left as it was.
 		expect(base[0]!.categories[0]!.items[0]!.price).toBe(10)
 	})
+
+	it('filters out till-only and web-disabled dishes, categories, and menus (#220)', () => {
+		const priced = priceAgentMenus(
+			[
+				{
+					id: 'menu-web',
+					displayName: 'Dinner',
+					availabilityStatus: 'available',
+					channels: ['web', 'pos'],
+					categories: [
+						{
+							id: 'cat-web',
+							displayName: 'Mains',
+							description: null,
+							upsellCategoryIds: [],
+							availabilityStatus: 'available',
+							channels: ['web', 'pos'],
+							items: [
+								{
+									id: 'dish-web',
+									displayName: 'Burger',
+									description: null,
+									price: 12,
+									variations: { groups: [], variants: [] },
+									isGlutenFree: false,
+									isVegetarian: false,
+									allergens: [],
+									isPopular: false,
+									isUpsell: false,
+									availabilityStatus: 'available',
+									channels: ['web', 'pos'],
+									modifierGroups: [],
+								},
+								{
+									id: 'dish-pos',
+									displayName: 'Till Special',
+									description: null,
+									price: 9,
+									variations: { groups: [], variants: [] },
+									isGlutenFree: false,
+									isVegetarian: false,
+									allergens: [],
+									isPopular: false,
+									isUpsell: false,
+									availabilityStatus: 'available',
+									channels: ['pos'],
+									modifierGroups: [],
+								},
+								{
+									id: 'dish-loc-off',
+									displayName: 'Branch Till Only',
+									description: null,
+									price: 11,
+									variations: { groups: [], variants: [] },
+									isGlutenFree: false,
+									isVegetarian: false,
+									allergens: [],
+									isPopular: false,
+									isUpsell: false,
+									availabilityStatus: 'available',
+									channels: ['web', 'pos'],
+									modifierGroups: [],
+								},
+							],
+						},
+						{
+							id: 'cat-pos',
+							displayName: 'POS Only',
+							description: null,
+							upsellCategoryIds: [],
+							availabilityStatus: 'available',
+							channels: ['pos'],
+							items: [],
+						},
+					],
+				},
+			],
+			{
+				locationId: 'loc-1',
+				overrides: [{ entityId: 'dish-loc-off', channels: ['pos'] }],
+			},
+		)
+		expect(priced).toHaveLength(1)
+		expect(priced[0]!.categories.map((c) => c.id)).toEqual(['cat-web'])
+		expect(priced[0]!.categories[0]!.items.map((i) => i.id)).toEqual([
+			'dish-web',
+		])
+	})
 })

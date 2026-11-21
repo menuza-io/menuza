@@ -1,5 +1,6 @@
 ---
 import { msg } from '@lingui/core/macro'
+import { GUEST_PHOTO_CONSENT_TEXT } from '@repo/common/guest-photos'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
@@ -96,6 +97,26 @@ const deliveryOrderText = i18n._(msg`Delivery order`)
 const addToCalendarLabel = i18n._(msg`Add to calendar`)
 /** Kept as a template so the client can fill in the drop title. */
 const pickupCalendarTitle = translate(i18n, msg`Pickup: {title}`, { title: '{title}' })
+const photoShareTitle = i18n._(msg`Share a photo from your order`)
+const photoLabels = {
+	sharePrompt: i18n._(msg`Share a photo of your {dish}`),
+	choosePhoto: i18n._(msg`Choose a photo (JPG, PNG, WebP, or HEIC, up to 10 MB)`),
+	consentLabel: GUEST_PHOTO_CONSENT_TEXT,
+	submit: i18n._(msg`Submit photo`),
+	uploading: i18n._(msg`Uploading…`),
+	cancel: i18n._(msg`Cancel`),
+	submitted: i18n._(msg`Thanks, the restaurant will review it.`),
+	tooLarge: i18n._(msg`This photo is larger than 10 MB.`),
+	invalidType: i18n._(msg`Please choose a JPG, PNG, WebP, or HEIC image.`),
+	heicUnavailable: i18n._(
+		msg`This browser cannot convert HEIC photos. Please upload a JPG, PNG, or WebP photo.`,
+	),
+	notEligible: i18n._(
+		msg`Photos can only be shared for dishes you ordered within 14 days.`,
+	),
+	limitReached: i18n._(msg`You have reached the photo upload limit.`),
+	uploadFailed: i18n._(msg`We could not upload your photo. Please try again.`),
+}
 
 // ---------- regional receipt states ----------
 
@@ -571,6 +592,15 @@ const valueClass = 'price font-medium text-foreground'
 				></p>
 
 				<DropAlertsSignup source="order_success" title={dropAlertsTitle} />
+				<section
+					id="guest-photo-share"
+					class="surface hidden p-5"
+					data-photo-labels={JSON.stringify(photoLabels)}
+					data-locale={requestedLocale}
+					data-default-locale={defaultLocale}
+				>
+					<h2 class="font-heading text-base text-foreground">{photoShareTitle}</h2>
+				</section>
 				{/* "Track this order in the app": only for a live store (#196). */}
 				<AppInviteSection
 					organization={organization}
@@ -1878,5 +1908,8 @@ const valueClass = 'price font-medium text-foreground'
 		})
 
 		void init()
+	</script>
+	<script>
+		import '../../scripts/guest-photo-upload.ts'
 	</script>
 </SitePage>

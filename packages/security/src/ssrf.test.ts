@@ -121,9 +121,25 @@ describe('validateInstanceUrl (textual)', () => {
 		expect(validateInstanceUrl('https://169.254.169.254').valid).toBe(false)
 	})
 
-	it('accepts valid public HTTPS URLs', () => {
+	it('accepts valid public HTTPS URLs including domains starting with fd/fe8-feb', () => {
 		expect(validateInstanceUrl('https://gitlab.example.com').valid).toBe(true)
 		expect(validateInstanceUrl('https://gitlab.com').valid).toBe(true)
+		expect(validateInstanceUrl('https://feastkitchen.com/menu').valid).toBe(
+			true,
+		)
+		expect(validateInstanceUrl('https://fdgrill.com/menu').valid).toBe(true)
+		expect(validateInstanceUrl('https://februarycafe.com/menu').valid).toBe(
+			true,
+		)
+	})
+
+	it('rejects IPv6 unique-local and link-local literals', () => {
+		expect(validateInstanceUrl('https://[fd12:3456:789a::1]/menu').valid).toBe(
+			false,
+		)
+		expect(validateInstanceUrl('https://[fc00::1]/menu').valid).toBe(false)
+		expect(validateInstanceUrl('https://[fe80::1]/menu').valid).toBe(false)
+		expect(validateInstanceUrl('https://[feb0::1]/menu').valid).toBe(false)
 	})
 
 	it('does NOT catch DNS rebinding (textual only)', () => {

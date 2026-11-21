@@ -37,7 +37,12 @@ export const DISCOUNT_VALUE_TYPE_VALUES = [
 ] as const
 export type DiscountValueType = (typeof DISCOUNT_VALUE_TYPE_VALUES)[number]
 
-export const DISCOUNT_CHANNEL_VALUES = ['web', 'qr', 'pos', 'app'] as const
+/**
+ * Canonical ordering channels shared across discounts and menus (`@repo/common/menu-channels`).
+ * Defined here because `@repo/common` already depends on `@repo/discounts`.
+ */
+export const ORDER_CHANNEL_VALUES = ['web', 'qr', 'pos', 'app'] as const
+export const DISCOUNT_CHANNEL_VALUES = ORDER_CHANNEL_VALUES
 export type DiscountChannel = (typeof DISCOUNT_CHANNEL_VALUES)[number]
 
 export const DISCOUNT_FULFILLMENT_VALUES = [

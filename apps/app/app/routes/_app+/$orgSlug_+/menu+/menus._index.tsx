@@ -58,12 +58,18 @@ import {
 	type MenuDuplicateEntity,
 } from '#app/components/menu/menu-duplicate-dialog.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
+import { MenuScheduleBadge } from '#app/components/menu/menu-schedule-card.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
+import {
+	handleMenuScheduleAction,
+	loadMenuSchedulesByMenuId,
+	resolveOrganizationTimezone,
+} from '#app/utils/menu/menu-schedules.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -114,6 +120,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await requireMenuWrite(request, organization.id)
 
 	const formData = await request.formData()
+	if (formData.get('intent') === 'cancel-menu-schedule') {
+		return handleMenuScheduleAction({
+			request,
+			organizationId: organization.id,
+			formData,
+		})
+	}
 	const result = DeleteMenuSchema.safeParse(Object.fromEntries(formData))
 
 	if (!result.success) {
@@ -175,20 +188,29 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireMenuRead(request, organization.id)
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
-	const menus = await db.query.OrganizationMenu.findMany({
-		where: and(
-			eq(OrganizationMenu.organizationId, organization.id),
-			ne(OrganizationMenu.menuType, 'drop'),
-		),
-		with: {
-			categoryAssignments: true,
-		},
-		orderBy: [asc(OrganizationMenu.position), desc(OrganizationMenu.createdAt)],
-	})
+	const [menus, schedulesByMenuId, scheduleTimezone] = await Promise.all([
+		db.query.OrganizationMenu.findMany({
+			where: and(
+				eq(OrganizationMenu.organizationId, organization.id),
+				ne(OrganizationMenu.menuType, 'drop'),
+			),
+			with: {
+				categoryAssignments: true,
+			},
+			orderBy: [
+				asc(OrganizationMenu.position),
+				desc(OrganizationMenu.createdAt),
+			],
+		}),
+		loadMenuSchedulesByMenuId(organization.id),
+		resolveOrganizationTimezone(organization.id),
+	])
 
 	return {
 		organization,
 		defaultLocale,
+		schedulesByMenuId,
+		scheduleTimezone,
 		menus: menus.map((m) => ({
 			id: m.id,
 			displayName: m.displayName,
@@ -207,14 +229,19 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function MenusIndexRoute() {
-	const { organization, defaultLocale, menus } = useLoaderData<typeof loader>()
+	const {
+		organization,
+		defaultLocale,
+		menus,
+		schedulesByMenuId,
+		scheduleTimezone,
+	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher<{ success?: boolean; error?: string }>()
 	const [deleteMenuId, setDeleteMenuId] = useState<string | null>(null)
 	const [deleteError, setDeleteError] = useState<string | null>(null)
-	const [duplicateEntity, setDuplicateEntity] = useState<MenuDuplicateEntity | null>(
-		null,
-	)
+	const [duplicateEntity, setDuplicateEntity] =
+		useState<MenuDuplicateEntity | null>(null)
 
 	useEffect(() => {
 		if (deleteFetcher.state !== 'idle' || !deleteFetcher.data) return
@@ -381,10 +408,18 @@ export default function MenusIndexRoute() {
 													)}
 												</TableCell>
 												<TableCell>
-													<MenuStatusBadge
-														status={menu.availabilityStatus}
-														unavailableUntil={menu.unavailableUntil}
-													/>
+													<div className="flex flex-wrap items-center gap-1.5">
+														<MenuStatusBadge
+															status={menu.availabilityStatus}
+															unavailableUntil={menu.unavailableUntil}
+														/>
+														{schedulesByMenuId[menu.id] ? (
+															<MenuScheduleBadge
+																schedule={schedulesByMenuId[menu.id]!}
+																timezone={scheduleTimezone}
+															/>
+														) : null}
+													</div>
 												</TableCell>
 												<TableCell className="text-right">
 													<DropdownMenu>

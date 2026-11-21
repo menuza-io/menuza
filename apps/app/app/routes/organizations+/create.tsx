@@ -68,6 +68,7 @@ import {
 import { getLaunchStatus } from '#app/utils/env.server.ts'
 import { connectGoogleBusinessProfile } from '#app/utils/integrations/google-business-profile.server.ts'
 import { connectPosPlatform } from '#app/utils/integrations/pos-connect.server.ts'
+import { getMenuImportEnabled } from '#app/utils/menu/menu-feature-access.server.ts'
 import {
 	createOrganizationInvitation,
 	sendOrganizationInvitationEmail,
@@ -225,6 +226,8 @@ export async function loader({ request }: { request: Request }) {
 	const url = new URL(request.url)
 	const onboardingOrgId = url.searchParams.get('orgId')
 	let onboardingLocationId: string | null = null
+	let onboardingOrgSlug: string | null = null
+	let menuImportEnabled = false
 	let googleConnected = false
 	let googleLocations: Array<{ name: string; title: string }> = []
 	let googleError: string | null = null
@@ -233,8 +236,18 @@ export async function loader({ request }: { request: Request }) {
 		Number(url.searchParams.get('step')) >= (shouldShowPricing ? 5 : 4)
 	) {
 		await userHasOrgAccess(request, onboardingOrgId)
-		onboardingLocationId =
-			await ensureDefaultOrganizationLocation(onboardingOrgId)
+		const [[orgRow], defaultLocId, importFlag] = await Promise.all([
+			db
+				.select({ slug: Organization.slug })
+				.from(Organization)
+				.where(eq(Organization.id, onboardingOrgId))
+				.limit(1),
+			ensureDefaultOrganizationLocation(onboardingOrgId),
+			getMenuImportEnabled(onboardingOrgId),
+		])
+		onboardingOrgSlug = orgRow?.slug ?? null
+		onboardingLocationId = defaultLocId
+		menuImportEnabled = importFlag
 		const integrations =
 			await integrationManager.getOrganizationIntegrations(onboardingOrgId)
 		googleConnected = integrations.some(
@@ -265,6 +278,8 @@ export async function loader({ request }: { request: Request }) {
 		launchStatus,
 		posProviders: getAvailablePosProviders(),
 		onboardingLocationId,
+		onboardingOrgSlug,
+		menuImportEnabled,
 		googleConnected,
 		googleLocations,
 		googleError,
@@ -693,6 +708,8 @@ export default function CreateOrganizationPage() {
 		launchStatus,
 		posProviders,
 		onboardingLocationId,
+		onboardingOrgSlug,
+		menuImportEnabled,
 		googleConnected,
 		googleLocations,
 		googleError,
@@ -804,6 +821,8 @@ export default function CreateOrganizationPage() {
 					{currentStep === 5 && orgId && (
 						<StepPos
 							orgId={orgId}
+							onboardingOrgSlug={onboardingOrgSlug}
+							menuImportEnabled={menuImportEnabled}
 							onboardingLocationId={onboardingLocationId}
 							posProviders={posProviders}
 							googleConnected={googleConnected}
@@ -823,6 +842,8 @@ export default function CreateOrganizationPage() {
 					{currentStep === 4 && orgId && (
 						<StepPos
 							orgId={orgId}
+							onboardingOrgSlug={onboardingOrgSlug}
+							menuImportEnabled={menuImportEnabled}
 							onboardingLocationId={onboardingLocationId}
 							posProviders={posProviders}
 							googleConnected={googleConnected}
@@ -1386,6 +1407,8 @@ function Step4({ orgId, actionData }: { orgId: string; actionData: any }) {
 
 function StepPos({
 	orgId,
+	onboardingOrgSlug,
+	menuImportEnabled,
 	onboardingLocationId,
 	posProviders,
 	googleConnected,
@@ -1393,6 +1416,8 @@ function StepPos({
 	googleError,
 }: {
 	orgId: string
+	onboardingOrgSlug: string | null
+	menuImportEnabled: boolean
 	onboardingLocationId: string | null
 	googleConnected: boolean
 	googleLocations: Array<{ name: string; title: string }>
@@ -1414,6 +1439,30 @@ function StepPos({
 
 	return (
 		<div className="space-y-4">
+			{menuImportEnabled && onboardingOrgSlug ? (
+				<Card>
+					<CardHeader>
+						<CardTitle>
+							<Trans>Import from website or file</Trans>
+						</CardTitle>
+						<CardDescription>
+							<Trans>
+								Upload a PDF, menu photo, spreadsheet, or paste your public menu
+								URL to build your menu with AI.
+							</Trans>
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<Button
+							variant="outline"
+							className="w-full"
+							render={<Link to={`/${onboardingOrgSlug}/menu/import`} />}
+						>
+							<Trans>Import from website or file</Trans>
+						</Button>
+					</CardContent>
+				</Card>
+			) : null}
 			<Card>
 				<CardHeader>
 					<CardTitle>Import from Google Business Profile</CardTitle>

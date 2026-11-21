@@ -1,5 +1,6 @@
 import { t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { ORG_PERMISSIONS, userHasOrganizationPermission } from '@repo/auth'
 import { PageHeader } from '@repo/ui/page-header'
 import { WorkspacePage, WorkspaceTabBar } from '@repo/ui/workspace'
 import {
@@ -13,6 +14,8 @@ import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import {
 	getMenuBulkEditEnabled,
 	getMenuHistoryEnabled,
+	getMenuImportEnabled,
+	isGuestPhotosEnabledForOrganization,
 } from '#app/utils/menu/menu-feature-access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 
@@ -21,13 +24,33 @@ export const MENU_LAYOUT_ROUTE_ID = 'routes/_app+/$orgSlug_+/menu+/_layout'
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
+		dataRegion: true,
 	})
-	await requireMenuRead(request, organization.id)
-	const [menuHistoryEnabled, menuBulkEditEnabled] = await Promise.all([
+	const userId = await requireMenuRead(request, organization.id)
+	const [
+		menuHistoryEnabled,
+		menuBulkEditEnabled,
+		menuImportEnabled,
+		guestPhotosFlagOn,
+		canModerateGuestPhotos,
+	] = await Promise.all([
 		getMenuHistoryEnabled(organization.id),
 		getMenuBulkEditEnabled(organization.id),
+		getMenuImportEnabled(organization.id),
+		isGuestPhotosEnabledForOrganization(organization),
+		userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_GUEST_PHOTO_ANY,
+		),
 	])
-	return { menuHistoryEnabled, menuBulkEditEnabled }
+	const guestPhotosEnabled = guestPhotosFlagOn && canModerateGuestPhotos
+	return {
+		menuHistoryEnabled,
+		menuBulkEditEnabled,
+		menuImportEnabled,
+		guestPhotosEnabled,
+	}
 }
 
 export default function MenuLayout() {
@@ -35,8 +58,12 @@ export default function MenuLayout() {
 	const location = useLocation()
 	const params = useParams()
 	const orgSlug = params.orgSlug
-	const { menuHistoryEnabled, menuBulkEditEnabled } =
-		useLoaderData<typeof loader>()
+	const {
+		menuHistoryEnabled,
+		menuBulkEditEnabled,
+		menuImportEnabled,
+		guestPhotosEnabled,
+	} = useLoaderData<typeof loader>()
 
 	const tabs = [
 		{
@@ -118,6 +145,28 @@ export default function MenuLayout() {
 						isActive:
 							location.pathname === `/${orgSlug}/menu/history` ||
 							location.pathname.startsWith(`/${orgSlug}/menu/history/`),
+					},
+				]
+			: []),
+		...(menuImportEnabled
+			? [
+					{
+						label: _(t`Import`),
+						href: `/${orgSlug}/menu/import`,
+						isActive:
+							location.pathname === `/${orgSlug}/menu/import` ||
+							location.pathname.startsWith(`/${orgSlug}/menu/import/`),
+					},
+				]
+			: []),
+		...(guestPhotosEnabled
+			? [
+					{
+						label: _(t`Guest photos`),
+						href: `/${orgSlug}/menu/guest-photos`,
+						isActive:
+							location.pathname === `/${orgSlug}/menu/guest-photos` ||
+							location.pathname.startsWith(`/${orgSlug}/menu/guest-photos/`),
 					},
 				]
 			: []),

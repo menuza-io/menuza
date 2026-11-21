@@ -14,6 +14,7 @@ import {
 	giftCardPurchaseAttempts,
 	giftCardShowTokens,
 	giftCards,
+	guestPhotoSubmissions,
 	journeyRuns,
 	journeyStepExecutions,
 	marketingCampaigns,
@@ -35,7 +36,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { eq, sql } from 'drizzle-orm'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { giftCardFingerprint } from '../lib/gift-card-secret.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { claimGiftCard, createShowToken } from './gift-card-account-service.ts'
@@ -1039,5 +1040,199 @@ describe('person erasure of gift cards', () => {
 				.from(giftCardIdempotencyKeys)
 				.where(eq(giftCardIdempotencyKeys.cardId, bought.cardId)),
 		).toEqual([])
+	})
+})
+
+describe('guest dish photos erasure (#148)', () => {
+	let tmpDir: string
+	let prevTenantDir: string | undefined
+	let db: TenantDatabase
+	const s3Env = {
+		RECORDING_S3_BUCKET: 'recordings',
+		RECORDING_S3_ENDPOINT: 'https://s3.example.test',
+		RECORDING_S3_ACCESS_KEY: 'access',
+		RECORDING_S3_SECRET: 'secret',
+	}
+
+	beforeEach(async () => {
+		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'erasure-photos-'))
+		prevTenantDir = process.env.TENANT_DB_DIR
+		process.env.TENANT_DB_DIR = tmpDir
+		syncEnvFromProcess()
+		await provisionTenantDb(orgA)
+		db = await getTenantDb(orgA)
+	})
+
+	afterEach(async () => {
+		vi.restoreAllMocks()
+		for (const key of Object.keys(s3Env)) delete process.env[key]
+		await destroyTenantDb(orgA)
+		if (prevTenantDir === undefined) delete process.env.TENANT_DB_DIR
+		else process.env.TENANT_DB_DIR = prevTenantDir
+		fs.rmSync(tmpDir, { recursive: true, force: true })
+	})
+
+	it('deletes pending and rejected rows + R2 objects and unlinks added/approved rows', async () => {
+		Object.assign(process.env, s3Env)
+		const deletedUrls: string[] = []
+		vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+			if ((init as RequestInit | undefined)?.method === 'DELETE') {
+				deletedUrls.push(String(url))
+				return new Response(null, { status: 204 })
+			}
+			return new Response(null, { status: 404 })
+		})
+
+		const customerA = await seedPerson(db, {
+			name: NAME,
+			phone: PHONE,
+			email: EMAIL,
+		})
+		const customerB = await seedPerson(db, {
+			name: 'Other Guest',
+			phone: OTHER_PHONE,
+			email: 'other@example.test',
+		})
+		const now = new Date()
+		await db.insert(guestPhotoSubmissions).values([
+			{
+				id: 'gp_staged',
+				orgId: orgA,
+				customerId: customerA,
+				orderId: 'ord_a1',
+				itemId: 'item_1',
+				objectKey: `guest-photos/${orgA}/staged.jpg`,
+				contentType: 'image/jpeg',
+				byteSize: 1200,
+				status: 'staged',
+				createdAt: now,
+			},
+			{
+				id: 'gp_pending',
+				orgId: orgA,
+				customerId: customerA,
+				orderId: 'ord_a1',
+				itemId: 'item_1',
+				objectKey: `guest-photos/${orgA}/pending.jpg`,
+				contentType: 'image/jpeg',
+				byteSize: 1200,
+				status: 'pending',
+				consentText: 'consent',
+				consentedAt: now,
+				createdAt: now,
+			},
+			{
+				id: 'gp_rejected',
+				orgId: orgA,
+				customerId: customerA,
+				orderId: 'ord_a1',
+				itemId: 'item_1',
+				objectKey: `guest-photos/${orgA}/rejected.jpg`,
+				contentType: 'image/jpeg',
+				byteSize: 1200,
+				status: 'rejected',
+				consentText: 'consent',
+				consentedAt: now,
+				decidedAt: now,
+				decidedByUserId: 'op_1',
+				createdAt: now,
+			},
+			{
+				id: 'gp_added',
+				orgId: orgA,
+				customerId: customerA,
+				orderId: 'ord_a1',
+				itemId: 'item_1',
+				objectKey: `guest-photos/${orgA}/added.jpg`,
+				contentType: 'image/jpeg',
+				byteSize: 1200,
+				status: 'added',
+				consentText: 'consent',
+				consentedAt: now,
+				decidedAt: now,
+				decidedByUserId: 'op_1',
+				addedAt: now,
+				createdAt: now,
+			},
+			{
+				id: 'gp_other',
+				orgId: orgA,
+				customerId: customerB,
+				orderId: 'ord_b1',
+				itemId: 'item_1',
+				objectKey: `guest-photos/${orgA}/other.jpg`,
+				contentType: 'image/jpeg',
+				byteSize: 1200,
+				status: 'pending',
+				consentText: 'consent',
+				consentedAt: now,
+				createdAt: now,
+			},
+		])
+
+		// Also include a guest order matched by phone whose photo is linked only by orderId
+		await db.insert(restaurantOrders).values({
+			id: 'ord_guest_phone',
+			orgId: orgA,
+			customerId: null,
+			number: 'ORD-G1',
+			locale: 'en',
+			status: 'completed',
+			paymentMethod: 'handoff',
+			paymentStatus: 'paid',
+			fulfillment: 'pickup',
+			locationId: 'loc_1',
+			locationName: 'Main',
+			contactName: NAME,
+			contactPhone: PHONE,
+			contactEmail: EMAIL,
+			currency: 'USD',
+			subtotalCents: 1000,
+			taxCents: 0,
+			totalCents: 1000,
+			lines: '[]',
+			idempotencyKey: 'idem-guest-photo-order',
+			requestHash: 'hash-guest-photo-order',
+			receiptTokenHash: 'receipt-hash-guest-photo',
+		})
+		await db.insert(guestPhotoSubmissions).values({
+			id: 'gp_order_only',
+			orgId: orgA,
+			customerId: null,
+			orderId: 'ord_guest_phone',
+			itemId: 'item_1',
+			objectKey: `guest-photos/${orgA}/order-only.jpg`,
+			contentType: 'image/jpeg',
+			byteSize: 1200,
+			status: 'pending',
+			consentText: 'consent',
+			consentedAt: now,
+			createdAt: now,
+		})
+
+		const result = await erasePerson(
+			db,
+			{ customerId: customerA },
+			{ actorId: 'op_erase' },
+		)
+		expect(result.guestPhotosDeleted).toBe(4)
+		expect(result.guestPhotosUnlinked).toBe(1)
+
+		expect(
+			deletedUrls.filter((u) => u.includes('/guest-photos/')).sort(),
+		).toEqual([
+			`https://s3.example.test/recordings/guest-photos/${orgA}/order-only.jpg`,
+			`https://s3.example.test/recordings/guest-photos/${orgA}/pending.jpg`,
+			`https://s3.example.test/recordings/guest-photos/${orgA}/rejected.jpg`,
+			`https://s3.example.test/recordings/guest-photos/${orgA}/staged.jpg`,
+		])
+
+		const remaining = await db.select().from(guestPhotoSubmissions).all()
+		expect(remaining.map((r) => r.id).sort()).toEqual(['gp_added', 'gp_other'])
+		const addedRow = remaining.find((r) => r.id === 'gp_added')!
+		expect(addedRow.customerId).toBeNull()
+		expect(addedRow.orderId).toBeNull()
+		const otherRow = remaining.find((r) => r.id === 'gp_other')!
+		expect(otherRow.customerId).toBe(customerB)
 	})
 })

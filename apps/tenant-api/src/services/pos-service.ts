@@ -1471,6 +1471,7 @@ export function reviewAgainstMenu(
 		const priced = priceRestaurantOrder(context, request.data, {
 			now,
 			walkIn: true,
+			channel: 'pos',
 			// #412: dine-in, or takeaway and drive-through as pickup.
 			priceAs: menuOrderTypeFor(order.orderType),
 		})

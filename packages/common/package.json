@@ -104,6 +104,21 @@
       "import": "./src/menu-types.ts",
       "default": "./src/menu-types.ts"
     },
+    "./menu-channels": {
+      "types": "./src/menu-channels.ts",
+      "import": "./src/menu-channels.ts",
+      "default": "./src/menu-channels.ts"
+    },
+    "./menu-popular": {
+      "types": "./src/menu-popular.ts",
+      "import": "./src/menu-popular.ts",
+      "default": "./src/menu-popular.ts"
+    },
+    "./guest-photos": {
+      "types": "./src/guest-photos.ts",
+      "import": "./src/guest-photos.ts",
+      "default": "./src/guest-photos.ts"
+    },
     "./toast": {
       "types": "./src/toast.server.ts",
       "import": "./src/toast.server.ts",

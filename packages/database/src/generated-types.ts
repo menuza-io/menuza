@@ -230,6 +230,10 @@ export type DashboardShare = InferSelectModel<typeof schema.DashboardShare>
 export type DashboardShareInsert = InferInsertModel<
 	typeof schema.DashboardShare
 >
+export type MenuSchedule = InferSelectModel<typeof schema.MenuSchedule>
+export type MenuScheduleInsert = InferInsertModel<typeof schema.MenuSchedule>
+export type MenuImport = InferSelectModel<typeof schema.MenuImport>
+export type MenuImportInsert = InferInsertModel<typeof schema.MenuImport>
 
 export const ConfigFlagLevel = {
 	system: 'system',

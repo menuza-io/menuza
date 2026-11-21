@@ -61,7 +61,9 @@ const group = (minSelections: number) => ({
 describe('suggestForCart', () => {
 	it('suggests drinks for a burger when Drinks is an upsell category of Burgers', () => {
 		expect(
-			names(suggestForCart({ categories, lines: [line('burger')], offered: true })),
+			names(
+				suggestForCart({ categories, lines: [line('burger')], offered: true }),
+			),
 		).toEqual(['cola', 'lemonade', 'water', 'fries'])
 	})
 
@@ -167,7 +169,11 @@ describe('suggestForCart', () => {
 			},
 		]
 		expect(
-			suggestForCart({ categories: many, lines: [line('burger')], offered: true }),
+			suggestForCart({
+				categories: many,
+				lines: [line('burger')],
+				offered: true,
+			}),
 		).toHaveLength(6)
 	})
 })
@@ -230,8 +236,63 @@ describe('addSuggestion', () => {
 		const d = deps()
 		addSuggestion(dish('a'), d)
 		addSuggestion(dish('a'), d)
-		const [first, second] = d.add.mock.calls.map((call) => (call[0] as { id: string }).id)
+		const [first, second] = d.add.mock.calls.map(
+			(call) => (call[0] as { id: string }).id,
+		)
 		expect(first).toBeTruthy()
 		expect(first).not.toBe(second)
+	})
+
+	it('excludes dishes and categories hidden on the active channel (#220)', () => {
+		const channelCats: OrderingCategory[] = [
+			{
+				id: 'burgers',
+				displayName: 'Burgers',
+				upsellCategoryIds: ['drinks', 'pos-only-cat'],
+				items: [dish('burger')],
+			},
+			{
+				id: 'drinks',
+				displayName: 'Drinks',
+				items: [
+					dish('cola', { channels: ['pos'] }),
+					dish('lemonade', { channels: ['web', 'qr'] }),
+				],
+			},
+			{
+				id: 'pos-only-cat',
+				displayName: 'POS Only',
+				channels: ['pos'],
+				items: [dish('till-tea')],
+			},
+			{
+				id: 'sides',
+				displayName: 'Sides',
+				items: [
+					dish('till-fries', { isUpsell: true, channels: ['pos'] }),
+					dish('web-cookie', { isUpsell: true, channels: ['web'] }),
+				],
+			},
+		]
+		expect(
+			names(
+				suggestForCart({
+					categories: channelCats,
+					lines: [line('burger')],
+					offered: true,
+					channel: 'web',
+				}),
+			),
+		).toEqual(['lemonade', 'web-cookie'])
+		expect(
+			names(
+				suggestForCart({
+					categories: channelCats,
+					lines: [line('burger')],
+					offered: true,
+					channel: 'qr',
+				}),
+			),
+		).toEqual(['lemonade'])
 	})
 })

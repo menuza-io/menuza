@@ -54,8 +54,22 @@ export async function getMenuBulkEditEnabled(organizationId: string) {
 }
 
 /** #92 structure cards in the review stack; default off. */
-export async function getMenuStructureSuggestionsEnabled(organizationId: string) {
+export async function getMenuStructureSuggestionsEnabled(
+	organizationId: string,
+) {
 	return isMenuFlagOn(
-		await getFeatureFlag(MENU_FLAG_KEYS.structureSuggestions, { organizationId }),
+		await getFeatureFlag(MENU_FLAG_KEYS.structureSuggestions, {
+			organizationId,
+		}),
 	)
 }
+
+export { getMenuAutoPopularEnabled } from './auto-popular.server.ts'
+export {
+	isGuestPhotosEnabledForOrganization,
+	requireMenuGuestPhotosAccess,
+} from './guest-photos.server.ts'
+export {
+	getMenuImportEnabled,
+	requireMenuImportAccess,
+} from './import/access.server.ts'

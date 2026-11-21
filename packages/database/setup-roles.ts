@@ -246,6 +246,14 @@ const ORG_PERMISSIONS = [
 		description: 'Create, edit, publish, and delete menus and drops',
 	},
 	{
+		id: 'org_perm_update_guest_photo_any',
+		action: 'update',
+		entity: 'guest_photo',
+		access: 'any',
+		context: 'organization',
+		description: 'Moderate guest-submitted dish photos and add them to dishes',
+	},
+	{
 		id: 'org_perm_update_chat_any',
 		action: 'update',
 		entity: 'chat',
