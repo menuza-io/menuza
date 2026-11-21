@@ -2744,7 +2744,7 @@ msgstr "{total, plural, one {Tier added. # tier.} other {Tier added. # tiers.}}"
 msgid "{total, plural, one {Tier removed. # tier.} other {Tier removed. # tiers.}}"
 msgstr "{total, plural, one {Tier removed. # tier.} other {Tier removed. # tiers.}}"
 
-#: app/components/marketing/short-links-screen.tsx:94
+#: app/components/marketing/short-links-screen.tsx:95
 msgid "{total} clicks in the last 30 days"
 msgstr "{total} clicks in the last 30 days"
 
@@ -12093,7 +12093,7 @@ msgstr "Clicks"
 #~ msgid "Clicks: {0} this month"
 #~ msgstr "Clicks: {0} this month"
 
-#: app/components/marketing/short-links-screen.tsx:100
+#: app/components/marketing/short-links-screen.tsx:101
 msgid "Clicks: {clicksThisMonth} this month"
 msgstr "Clicks: {clicksThisMonth} this month"
 
@@ -13436,7 +13436,7 @@ msgstr "Copies of each print. A set of cards prints every card this many times."
 msgid "copy"
 msgstr "copy"
 
-#: app/components/marketing/short-links-screen.tsx:116
+#: app/components/marketing/short-links-screen.tsx:123
 #: app/components/organization-invitations.tsx:224
 #: app/components/phone-agent/agent-details.tsx:239
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
@@ -14747,7 +14747,7 @@ msgstr "Create reward"
 msgid "Create role"
 msgstr "Create role"
 
-#: app/components/marketing/short-links-screen.tsx:245
+#: app/components/marketing/short-links-screen.tsx:252
 msgid "Create short link"
 msgstr "Create short link"
 
@@ -26203,7 +26203,7 @@ msgstr "Link button text"
 msgid "Link columns"
 msgstr ""
 
-#: app/components/marketing/short-links-screen.tsx:111
+#: app/components/marketing/short-links-screen.tsx:118
 msgid "Link copied"
 msgstr "Link copied"
 
@@ -26225,7 +26225,7 @@ msgstr "Link created"
 msgid "Link for {label}"
 msgstr "Link for {label}"
 
-#: app/components/marketing/short-links-screen.tsx:136
+#: app/components/marketing/short-links-screen.tsx:143
 msgid "Link is on"
 msgstr "Link is on"
 
@@ -26277,7 +26277,7 @@ msgstr "Links"
 msgid "Links must be a page of your site (starting with /) or a full https:// address."
 msgstr "Links must be a page of your site (starting with /) or a full https:// address."
 
-#: app/components/marketing/short-links-screen.tsx:236
+#: app/components/marketing/short-links-screen.tsx:243
 msgid "Links only point to pages on your own website. A click is counted per day; we never keep who clicked."
 msgstr "Links only point to pages on your own website. A click is counted per day; we never keep who clicked."
 
@@ -27282,7 +27282,7 @@ msgstr "Make a new code"
 msgid "Make a new QR code for this table?"
 msgstr "Make a new QR code for this table?"
 
-#: app/components/marketing/short-links-screen.tsx:259
+#: app/components/marketing/short-links-screen.tsx:266
 msgid "Make a short link for a sticker, a flyer or a text, then see how many people use it."
 msgstr "Make a short link for a sticker, a flyer or a text, then see how many people use it."
 
@@ -29071,7 +29071,7 @@ msgstr "My schedule link"
 #: app/components/inventory/supplier-form.tsx:195
 #: app/components/loyalty/promotion-dialog.tsx:604
 #: app/components/loyalty/reward-dialog.tsx:506
-#: app/components/marketing/short-links-screen.tsx:178
+#: app/components/marketing/short-links-screen.tsx:185
 #: app/components/menu/menu-bulk-edit-sheet.tsx:808
 #: app/components/pos/terminals-manager.tsx:1603
 #: app/components/reservations/policies/policy-sheet.tsx:217
@@ -31273,7 +31273,7 @@ msgstr "No shifts are published for these dates. When your manager publishes the
 msgid "No shifts have been planned for this week."
 msgstr "No shifts have been planned for this week."
 
-#: app/components/marketing/short-links-screen.tsx:257
+#: app/components/marketing/short-links-screen.tsx:264
 msgid "No short links yet"
 msgstr "No short links yet"
 
@@ -32612,7 +32612,7 @@ msgstr ""
 
 #: app/components/locations/order-policies-card.tsx:85
 #: app/components/marketing/programs-section.tsx:55
-#: app/components/marketing/short-links-screen.tsx:144
+#: app/components/marketing/short-links-screen.tsx:151
 #: app/components/phone-agent/settings-nav.tsx:82
 #: app/components/pos/station-register-settings.tsx:149
 #: app/components/pos/station-register-settings.tsx:311
@@ -32723,7 +32723,7 @@ msgid "Olive oil"
 msgstr "Olive oil"
 
 #: app/components/marketing/programs-section.tsx:56
-#: app/components/marketing/short-links-screen.tsx:144
+#: app/components/marketing/short-links-screen.tsx:151
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:754
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:366
 msgid "On"
@@ -34449,6 +34449,10 @@ msgstr "Orders"
 msgid "Orders after a click"
 msgstr "Orders after a click"
 
+#: app/components/marketing/short-links-screen.tsx:107
+msgid "Orders after a click: {ordersAfterClick}"
+msgstr "Orders after a click: {ordersAfterClick}"
+
 #: app/components/pos/terminals-manager.tsx:1720
 msgid "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
 msgstr "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
@@ -35011,7 +35015,7 @@ msgstr "Page address"
 msgid "Page block"
 msgstr "Page block"
 
-#: app/components/marketing/short-links-screen.tsx:187
+#: app/components/marketing/short-links-screen.tsx:194
 msgid "Page on your website"
 msgstr "Page on your website"
 
@@ -38102,7 +38106,7 @@ msgid "QR"
 msgstr "QR"
 
 #: app/components/hiring/applicant-labels.ts:31
-#: app/components/marketing/short-links-screen.tsx:129
+#: app/components/marketing/short-links-screen.tsx:136
 #: app/components/print/print-labels.ts:66
 #: app/components/settings/two-factor-form.tsx:176
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:778
@@ -49283,7 +49287,7 @@ msgstr "The link cannot point back to your own website."
 msgid "The link could not be changed. Try again."
 msgstr "The link could not be changed. Try again."
 
-#: app/components/marketing/short-links-screen.tsx:112
+#: app/components/marketing/short-links-screen.tsx:119
 msgid "The link could not be copied"
 msgstr "The link could not be copied"
 
@@ -49802,7 +49806,7 @@ msgstr "The provider could not issue the refund."
 msgid "The provider declined the refund."
 msgstr "The provider declined the refund."
 
-#: app/components/marketing/short-links-screen.tsx:124
+#: app/components/marketing/short-links-screen.tsx:131
 msgid "The QR code could not be made"
 msgstr "The QR code could not be made"
 
@@ -54966,11 +54970,11 @@ msgstr "Utensils answer"
 msgid "Utensils: yes"
 msgstr "Utensils: yes"
 
-#: app/components/marketing/short-links-screen.tsx:224
+#: app/components/marketing/short-links-screen.tsx:231
 msgid "UTM campaign (optional)"
 msgstr "UTM campaign (optional)"
 
-#: app/components/marketing/short-links-screen.tsx:213
+#: app/components/marketing/short-links-screen.tsx:220
 msgid "UTM source (optional)"
 msgstr "UTM source (optional)"
 
@@ -57338,7 +57342,7 @@ msgstr "Win back guests who have not ordered in a while"
 msgid "Window"
 msgstr "Window"
 
-#: app/components/marketing/short-links-screen.tsx:183
+#: app/components/marketing/short-links-screen.tsx:190
 #: app/components/print/print-labels.ts:19
 msgid "Window sticker"
 msgstr "Window sticker"

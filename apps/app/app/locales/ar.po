@@ -2742,7 +2742,7 @@ msgstr "{total, plural, zero {أُضيف المستوى. لا مستويات.} o
 msgid "{total, plural, one {Tier removed. # tier.} other {Tier removed. # tiers.}}"
 msgstr "{total, plural, zero {أُزيل المستوى. لا مستويات.} one {أُزيل المستوى. مستوى واحد.} two {أُزيل المستوى. مستويان.} few {أُزيل المستوى. # مستويات.} many {أُزيل المستوى. # مستوى.} other {أُزيل المستوى. # مستوى.}}"
 
-#: app/components/marketing/short-links-screen.tsx:94
+#: app/components/marketing/short-links-screen.tsx:95
 msgid "{total} clicks in the last 30 days"
 msgstr "{total} نقرة خلال آخر 30 يومًا"
 
@@ -12091,7 +12091,7 @@ msgstr "النقرات"
 #~ msgid "Clicks: {0} this month"
 #~ msgstr "النقرات: {0} هذا الشهر"
 
-#: app/components/marketing/short-links-screen.tsx:100
+#: app/components/marketing/short-links-screen.tsx:101
 msgid "Clicks: {clicksThisMonth} this month"
 msgstr "النقرات: {clicksThisMonth} هذا الشهر"
 
@@ -13434,7 +13434,7 @@ msgstr "عدد النسخ من كل مطبوعة. تُطبع كل بطاقة ف�
 msgid "copy"
 msgstr "نسخة"
 
-#: app/components/marketing/short-links-screen.tsx:116
+#: app/components/marketing/short-links-screen.tsx:123
 #: app/components/organization-invitations.tsx:224
 #: app/components/phone-agent/agent-details.tsx:239
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
@@ -14745,7 +14745,7 @@ msgstr "إنشاء المكافأة"
 msgid "Create role"
 msgstr "إنشاء دور"
 
-#: app/components/marketing/short-links-screen.tsx:245
+#: app/components/marketing/short-links-screen.tsx:252
 msgid "Create short link"
 msgstr "إنشاء رابط قصير"
 
@@ -26201,7 +26201,7 @@ msgstr "نص زر الرابط"
 msgid "Link columns"
 msgstr "أعمدة الروابط"
 
-#: app/components/marketing/short-links-screen.tsx:111
+#: app/components/marketing/short-links-screen.tsx:118
 msgid "Link copied"
 msgstr "تم نسخ الرابط"
 
@@ -26223,7 +26223,7 @@ msgstr "تم إنشاء الرابط"
 msgid "Link for {label}"
 msgstr "رابط {label}"
 
-#: app/components/marketing/short-links-screen.tsx:136
+#: app/components/marketing/short-links-screen.tsx:143
 msgid "Link is on"
 msgstr "الرابط مفعّل"
 
@@ -26275,7 +26275,7 @@ msgstr "الروابط"
 msgid "Links must be a page of your site (starting with /) or a full https:// address."
 msgstr "يجب أن يكون الرابط صفحة من موقعك (يبدأ بـ /) أو عنوانًا كاملًا يبدأ بـ https://."
 
-#: app/components/marketing/short-links-screen.tsx:236
+#: app/components/marketing/short-links-screen.tsx:243
 msgid "Links only point to pages on your own website. A click is counted per day; we never keep who clicked."
 msgstr "تشير الروابط إلى صفحات موقعك فقط. تُحتسب النقرات يوميًا ولا نحتفظ بهوية من نقر."
 
@@ -27280,7 +27280,7 @@ msgstr "إنشاء رمز جديد"
 msgid "Make a new QR code for this table?"
 msgstr "إنشاء رمز QR جديد لهذه الطاولة؟"
 
-#: app/components/marketing/short-links-screen.tsx:259
+#: app/components/marketing/short-links-screen.tsx:266
 msgid "Make a short link for a sticker, a flyer or a text, then see how many people use it."
 msgstr "أنشئ رابطًا قصيرًا لملصق أو نشرة أو رسالة نصية، ثم تابع عدد من يستخدمه."
 
@@ -29069,7 +29069,7 @@ msgstr "رابط جدولي"
 #: app/components/inventory/supplier-form.tsx:195
 #: app/components/loyalty/promotion-dialog.tsx:604
 #: app/components/loyalty/reward-dialog.tsx:506
-#: app/components/marketing/short-links-screen.tsx:178
+#: app/components/marketing/short-links-screen.tsx:185
 #: app/components/menu/menu-bulk-edit-sheet.tsx:808
 #: app/components/pos/terminals-manager.tsx:1603
 #: app/components/reservations/policies/policy-sheet.tsx:217
@@ -31271,7 +31271,7 @@ msgstr "لا توجد ورديات منشورة لهذه التواريخ. عن�
 msgid "No shifts have been planned for this week."
 msgstr "لم يتم تخطيط أي ورديات لهذا الأسبوع."
 
-#: app/components/marketing/short-links-screen.tsx:257
+#: app/components/marketing/short-links-screen.tsx:264
 msgid "No short links yet"
 msgstr "لا توجد روابط قصيرة بعد"
 
@@ -32610,7 +32610,7 @@ msgstr "من {totalUsers} شخص"
 
 #: app/components/locations/order-policies-card.tsx:85
 #: app/components/marketing/programs-section.tsx:55
-#: app/components/marketing/short-links-screen.tsx:144
+#: app/components/marketing/short-links-screen.tsx:151
 #: app/components/phone-agent/settings-nav.tsx:82
 #: app/components/pos/station-register-settings.tsx:149
 #: app/components/pos/station-register-settings.tsx:311
@@ -32721,7 +32721,7 @@ msgid "Olive oil"
 msgstr "زيت الزيتون"
 
 #: app/components/marketing/programs-section.tsx:56
-#: app/components/marketing/short-links-screen.tsx:144
+#: app/components/marketing/short-links-screen.tsx:151
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:754
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:366
 msgid "On"
@@ -34447,6 +34447,10 @@ msgstr "الطلبات"
 msgid "Orders after a click"
 msgstr "الطلبات بعد النقر"
 
+#: app/components/marketing/short-links-screen.tsx:107
+msgid "Orders after a click: {ordersAfterClick}"
+msgstr "الطلبات بعد النقر: {ordersAfterClick}"
+
 #: app/components/pos/terminals-manager.tsx:1720
 msgid "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
 msgstr "تُحسب الطلبات بعد منتصف الليل على اليوم السابق حتى هذا الوقت، فتبقى أرقام الطلبات والإيرادات للخدمة المتأخرة ضمن يوم واحد."
@@ -35009,7 +35013,7 @@ msgstr "عنوان الصفحة"
 msgid "Page block"
 msgstr "كتلة الصفحة"
 
-#: app/components/marketing/short-links-screen.tsx:187
+#: app/components/marketing/short-links-screen.tsx:194
 msgid "Page on your website"
 msgstr "صفحة في موقعك"
 
@@ -38100,7 +38104,7 @@ msgid "QR"
 msgstr "QR"
 
 #: app/components/hiring/applicant-labels.ts:31
-#: app/components/marketing/short-links-screen.tsx:129
+#: app/components/marketing/short-links-screen.tsx:136
 #: app/components/print/print-labels.ts:66
 #: app/components/settings/two-factor-form.tsx:176
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:778
@@ -49281,7 +49285,7 @@ msgstr "لا يمكن أن يشير الرابط إلى موقعك نفسه."
 msgid "The link could not be changed. Try again."
 msgstr "تعذّر تغيير الرابط. حاول مرة أخرى."
 
-#: app/components/marketing/short-links-screen.tsx:112
+#: app/components/marketing/short-links-screen.tsx:119
 msgid "The link could not be copied"
 msgstr "تعذّر نسخ الرابط"
 
@@ -49800,7 +49804,7 @@ msgstr "تعذّر على المزوّد إصدار الاسترداد."
 msgid "The provider declined the refund."
 msgstr "رفض مزوّد الدفع الاسترداد."
 
-#: app/components/marketing/short-links-screen.tsx:124
+#: app/components/marketing/short-links-screen.tsx:131
 msgid "The QR code could not be made"
 msgstr "تعذّر إنشاء رمز QR"
 
@@ -54964,11 +54968,11 @@ msgstr "إجابة أدوات الطعام"
 msgid "Utensils: yes"
 msgstr "أدوات: نعم"
 
-#: app/components/marketing/short-links-screen.tsx:224
+#: app/components/marketing/short-links-screen.tsx:231
 msgid "UTM campaign (optional)"
 msgstr "حملة UTM (اختياري)"
 
-#: app/components/marketing/short-links-screen.tsx:213
+#: app/components/marketing/short-links-screen.tsx:220
 msgid "UTM source (optional)"
 msgstr "مصدر UTM (اختياري)"
 
@@ -57336,7 +57340,7 @@ msgstr "استعد الضيوف الذين لم يطلبوا منذ فترة"
 msgid "Window"
 msgstr "نافذة"
 
-#: app/components/marketing/short-links-screen.tsx:183
+#: app/components/marketing/short-links-screen.tsx:190
 #: app/components/print/print-labels.ts:19
 msgid "Window sticker"
 msgstr "ملصق واجهة"

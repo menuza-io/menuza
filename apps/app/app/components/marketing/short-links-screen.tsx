@@ -73,6 +73,7 @@ function LinkRow({
 	const url = shortLinkUrl(siteOrigin, link.code)
 	const total = link.daily.reduce((sum, day) => sum + day.clicks, 0)
 	const clicksThisMonth = link.clicksThisMonth
+	const ordersAfterClick = link.orders
 	const title = link.label || link.targetPath
 	return (
 		<li
@@ -98,6 +99,12 @@ function LinkRow({
 					data-testid="short-link-clicks"
 				>
 					{_(msg`Clicks: ${clicksThisMonth} this month`)}
+				</p>
+				<p
+					className="text-muted-foreground text-xs"
+					data-testid="short-link-orders"
+				>
+					{_(msg`Orders after a click: ${ordersAfterClick}`)}
 				</p>
 			</div>
 			<div className="flex items-center gap-2">

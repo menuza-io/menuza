@@ -17,6 +17,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { queryInChunks } from '../lib/chunked-in.ts'
+import { countedOrders } from './counted-orders.ts'
 
 /**
  * Short links (#159): `<site>/l/<code>` for texts, printed QR codes and links an
@@ -245,6 +246,9 @@ export type ShortLinkView = {
 	clicksTotal: number
 	/** The last 30 days, oldest first, a zero where nobody clicked. */
 	daily: Array<{ day: string; clicks: number }>
+	/** Orders placed after a click on this link (#115), and what they kept after refunds. */
+	orders: number
+	revenueMinor: number
 }
 
 function monthStart(now: number) {
@@ -276,6 +280,19 @@ export async function listShortLinks(
 			.from(shortLinkClicksDaily)
 			.where(inArray(shortLinkClicksDaily.linkId, chunk)),
 	)
+	// Orders that carry this link (#115): counts and amounts, never a guest.
+	const orderRows = await queryInChunks(ids, (chunk) =>
+		db.all<{ link_id: string; orders: number; net: number }>(sql`
+			SELECT short_link_id AS link_id, COUNT(*) AS orders, SUM(net) AS net
+			FROM ${countedOrders()}
+			WHERE short_link_id IN (${sql.join(
+				chunk.map((id) => sql`${id}`),
+				sql`, `,
+			)})
+			GROUP BY short_link_id
+		`),
+	)
+	const ordersByLink = new Map(orderRows.map((row) => [row.link_id, row]))
 	const byLink = new Map<string, typeof clicks>()
 	for (const click of clicks) {
 		const list = byLink.get(click.linkId) ?? []
@@ -306,6 +323,8 @@ export async function listShortLinks(
 				.reduce((sum, click) => sum + click.clicks, 0),
 			clicksTotal: own.reduce((sum, click) => sum + click.clicks, 0),
 			daily: days.map((day) => ({ day, clicks: perDay.get(day) ?? 0 })),
+			orders: Number(ordersByLink.get(row.id)?.orders ?? 0),
+			revenueMinor: Number(ordersByLink.get(row.id)?.net ?? 0),
 		}
 	})
 }

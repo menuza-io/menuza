@@ -29,6 +29,9 @@ export type ShortLinkRow = {
 	clicksThisMonth: number
 	clicksTotal: number
 	daily: Array<{ day: string; clicks: number }>
+	/** Orders placed after a click on this link, and what they kept after refunds (#115). */
+	orders: number
+	revenueMinor: number
 }
 
 export async function isShortLinksOn(organizationId: string) {

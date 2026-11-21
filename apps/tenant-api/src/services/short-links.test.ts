@@ -36,6 +36,7 @@ import {
 } from '../routes/short-links.ts'
 import { broadcastLease, dispatchBroadcast } from './broadcast-dispatch.ts'
 import { executeJourneyStep } from './journey-service.ts'
+import { insertOrder } from './loyalty-test-fixture.ts'
 import {
 	clickDay,
 	ensureShortLink,
@@ -287,6 +288,38 @@ describe('short links (#159)', () => {
 			expect(view).toMatchObject({ ref: 'design-7', clicksThisMonth: 3 })
 			// A print QR never appears in the Links screen's own list.
 			expect(await listShortLinks(db, { kind: 'link' })).toHaveLength(0)
+		})
+
+		it('an order after a click is attributed to the link, net of refunds (#115)', async () => {
+			const created = await link()
+			const other = await link()
+			await click(created.code)
+			const attribution = { shortLinkId: created.id, touchedAt: Date.now() }
+			await insertOrder(orgId, {
+				subtotalCents: 3000,
+				totalCents: 3000,
+				attribution,
+				attributionSource: 'short_link',
+			})
+			await insertOrder(orgId, {
+				subtotalCents: 2000,
+				totalCents: 2000,
+				refundedCents: 500,
+				attribution,
+				attributionSource: 'short_link',
+			})
+			// Not paid, so not counted; and another link's order stays on that link.
+			await insertOrder(orgId, {
+				status: 'cancelled',
+				paymentStatus: 'unpaid',
+				attribution,
+			})
+			await insertOrder(orgId, { attribution: { shortLinkId: other.id } })
+			const db = await getTenantDb(orgId)
+			const [view] = await listShortLinks(db, { ids: [created.id] })
+			expect(view).toMatchObject({ orders: 2, revenueMinor: 4500 })
+			const [none] = await listShortLinks(db, { ids: [other.id] })
+			expect(none).toMatchObject({ orders: 1 })
 		})
 
 		it('counts simultaneous clicks exactly', async () => {

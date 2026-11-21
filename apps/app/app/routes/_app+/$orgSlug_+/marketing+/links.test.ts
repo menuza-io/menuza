@@ -60,6 +60,8 @@ const row: ShortLinkRow = {
 	createdAt: 1,
 	clicksThisMonth: 4,
 	clicksTotal: 9,
+	orders: 2,
+	revenueMinor: 4500,
 	daily: [],
 }
 
