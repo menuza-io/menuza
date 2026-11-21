@@ -305,7 +305,7 @@ msgid "{0, plural, one {# hour has no pay rate, so it has no wage figure.} other
 msgstr "{0, plural, one {ساعة واحدة بلا أجر محدد، لذا لا يوجد رقم أجور لها.} two {ساعتان بلا أجر محدد، لذا لا يوجد رقم أجور لهما.} few {# ساعات بلا أجر محدد، لذا لا يوجد رقم أجور لها.} many {# ساعة بلا أجر محدد، لذا لا يوجد رقم أجور لها.} other {# ساعة بلا أجر محدد، لذا لا يوجد رقم أجور لها.}}"
 
 #. placeholder {0}: assets.length
-#: app/routes/_app+/$orgSlug_+/media.tsx:1202
+#: app/routes/_app+/$orgSlug_+/media.tsx:1226
 msgid "{0, plural, one {# image} other {# images}}"
 msgstr "{0, plural, zero {لا توجد صور} one {صورة واحدة} two {صورتان} few {# صور} many {# صورة} other {# صورة}}"
 
@@ -507,7 +507,7 @@ msgstr "{0, plural, zero {لا وصفة في المخزون تستخدمه} one 
 #. placeholder {0}: selectedIds.length
 #. placeholder {0}: selectedIds.size
 #: app/components/media-library/photo-studio-dialog.tsx:495
-#: app/routes/_app+/$orgSlug_+/media.tsx:1280
+#: app/routes/_app+/$orgSlug_+/media.tsx:1304
 msgid "{0, plural, one {# selected} other {# selected}}"
 msgstr "{0, plural, one {تم تحديد صورة واحدة} two {تم تحديد صورتين} few {تم تحديد # صور} many {تم تحديد # صورة} other {تم تحديد # صورة}}"
 
@@ -1284,7 +1284,7 @@ msgstr "{count, plural, one {أضف عنصرًا واحدًا على الأقل.
 msgid "{count, plural, one {Cap reached on {reached} order} other {Cap reached on {reached} orders}}"
 msgstr "{count, plural, one {بلغ الحد الأقصى في طلب واحد} two {بلغ الحد الأقصى في طلبين} few {بلغ الحد الأقصى في {reached} طلبات} many {بلغ الحد الأقصى في {reached} طلبًا} other {بلغ الحد الأقصى في {reached} طلب}}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2783
+#: app/routes/_app+/$orgSlug_+/media.tsx:2815
 msgid "{count, plural, one {Changes apply to # photo.} other {Changes apply to # photos.}}"
 msgstr "{count, plural, one {تنطبق التغييرات على صورة واحدة.} two {تنطبق التغييرات على صورتين.} few {تنطبق التغييرات على # صور.} many {تنطبق التغييرات على # صورة.} other {تنطبق التغييرات على # صورة.}}"
 
@@ -2461,7 +2461,7 @@ msgstr "{redirectCount} عمليات إعادة توجيه ترسل الزوار
 msgid "{redirectCount} redirects that pointed here are sent to the same place."
 msgstr "{redirectCount} عمليات إعادة توجيه كانت تشير إلى هنا تُرسَل إلى المكان نفسه."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2212
+#: app/routes/_app+/$orgSlug_+/media.tsx:2239
 msgid "{referenceCount, plural, one {# place} other {# places}}"
 msgstr "{referenceCount, plural, zero {لا أماكن} one {مكان واحد} two {مكانان} few {# أماكن} many {# مكانًا} other {# مكان}}"
 
@@ -3867,7 +3867,7 @@ msgstr "سياسة دفع بها مهلة إلغاء غير صالحة."
 msgid "A payment policy points to a service that is gone."
 msgstr "سياسة دفع تشير إلى خدمة لم تعد موجودة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2722
+#: app/routes/_app+/$orgSlug_+/media.tsx:2754
 msgid "A photo can have at most 20 tags."
 msgstr "يمكن أن تحمل الصورة 20 وسمًا كحد أقصى."
 
@@ -4241,7 +4241,7 @@ msgstr "حوالي <0>{netText}</0> أكثر من المتوقع إذا اعتم
 msgid "About drop visibility"
 msgstr "حول ظهور الطرح"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:817
+#: app/components/settings/cards/organization/site-theme-card.tsx:1021
 msgid "Accent color"
 msgstr "لون التمييز"
 
@@ -4517,11 +4517,11 @@ msgstr "الفعلي {0} / الهدف {1} {2}"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:394
 #: app/components/website/form-builder-sidebar.tsx:217
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:191
-#: app/routes/_app+/$orgSlug_+/media.tsx:2124
+#: app/routes/_app+/$orgSlug_+/media.tsx:2150
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:359
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1677
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:815
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2197
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2269
 msgid "Add"
 msgstr "إضافة"
 
@@ -4658,7 +4658,7 @@ msgstr "أضف مجموعة"
 msgid "Add a heading"
 msgstr "أضف عنوانًا"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6453
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6527
 msgid "Add a hero, gallery, or any block between the header and footer."
 msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة بين الترويسة والتذييل."
 
@@ -4674,7 +4674,7 @@ msgstr "أضف مسمى الوظيفة."
 msgid "Add a last name."
 msgstr "أضف اسم العائلة."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3727
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3799
 msgid "Add a light logo. The regular logo may disappear on the photo."
 msgstr "أضف شعاراً فاتحاً. قد يختفي الشعار العادي فوق الصورة."
 
@@ -4799,7 +4799,7 @@ msgstr "أضف لغة ثانية في إعدادات الموقع لترى ال�
 msgid "Add a second shift later the same day, like lunch and dinner."
 msgstr "أضف وردية ثانية لاحقًا في اليوم نفسه، مثل الغداء والعشاء."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6561
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6635
 msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
 
@@ -4866,7 +4866,7 @@ msgstr "إضافة مورّد"
 msgid "Add a supplier first."
 msgstr "أضف مورّدًا أولًا."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2110
+#: app/routes/_app+/$orgSlug_+/media.tsx:2136
 msgid "Add a tag, like hero or drinks"
 msgstr "أضف وسمًا، مثل رئيسية أو مشروبات"
 
@@ -5080,7 +5080,7 @@ msgstr "إضافة كتلة"
 msgid "Add bonus points"
 msgstr "إضافة نقاط إضافية"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4562
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4634
 msgid "Add card"
 msgstr "إضافة بطاقة"
 
@@ -5103,7 +5103,7 @@ msgid "Add choice"
 msgstr "إضافة خيار"
 
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:933
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5132
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5204
 msgid "Add column"
 msgstr "إضافة عمود"
 
@@ -5143,7 +5143,7 @@ msgstr "إضافة طبق"
 msgid "Add domain"
 msgstr "إضافة نطاق"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4248
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4320
 msgid "Add feature"
 msgstr "إضافة ميزة"
 
@@ -5211,8 +5211,8 @@ msgstr "إضافة الأصناف وأماكن التخزين، وجرد الم�
 msgid "Add keyword"
 msgstr "إضافة كلمة مفتاحية"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3747
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5195
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3819
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5267
 msgid "Add link"
 msgstr "إضافة رابط"
 
@@ -5269,7 +5269,7 @@ msgstr "أضف الاسم والبريد الإلكتروني والخيارات
 msgid "Add nested modifier group"
 msgstr "إضافة مجموعة إضافات فرعية"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6720
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6794
 msgid "Add new page"
 msgstr "إضافة صفحة جديدة"
 
@@ -5368,7 +5368,7 @@ msgstr "أضف صورة"
 msgid "Add Photo"
 msgstr "إضافة صورة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4420
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4492
 msgid "Add photo or video"
 msgstr "إضافة صورة أو فيديو"
 
@@ -5401,7 +5401,7 @@ msgstr "إضافة وقت تحضير لبقية اليوم"
 msgid "Add pronunciation"
 msgstr "إضافة نطق"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4175
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4247
 msgid "Add question"
 msgstr "إضافة سؤال"
 
@@ -5439,7 +5439,7 @@ msgstr "إضافة استراحة قصيرة"
 msgid "Add restaurant"
 msgstr "إضافة مطعم"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5060
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5132
 msgid "Add review"
 msgstr "إضافة مراجعة"
 
@@ -5461,8 +5461,8 @@ msgid "Add seating times."
 msgstr "أضف أوقات الجلوس."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:674
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2122
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2128
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2194
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2200
 msgid "Add section"
 msgstr "إضافة قسم"
 
@@ -5475,7 +5475,7 @@ msgstr "إضافة فترة خدمة"
 msgid "Add shift"
 msgstr "إضافة وردية"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5229
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5301
 msgid "Add social link"
 msgstr "إضافة رابط تواصل اجتماعي"
 
@@ -5531,7 +5531,7 @@ msgstr "إضافة طاولات"
 msgid "Add tag"
 msgstr "إضافة وسم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2793
+#: app/routes/_app+/$orgSlug_+/media.tsx:2825
 msgid "Add tags"
 msgstr "إضافة وسوم"
 
@@ -5672,7 +5672,7 @@ msgstr "إضافة حالة تحويل"
 msgid "Add up to five high-resolution photos. The first photo is used on menu cards. Photos are stored in your organization's Media Library."
 msgstr "أضف حتى خمس صور عالية الدقة. تُستخدم الصورة الأولى في بطاقات القائمة. تُحفظ الصور في مكتبة الوسائط الخاصة بمؤسستك."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3132
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3204
 msgid "Add URL"
 msgstr "إضافة رابط"
 
@@ -5879,7 +5879,7 @@ msgstr "سطر العنوان الثاني (اختياري)"
 msgid "Address removed"
 msgstr "تمت إزالة العنوان"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3170
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3242
 msgid "Adds a noindex tag so this page stays off Google and Bing."
 msgstr "يضيف علامة noindex لإبقاء هذه الصفحة بعيدة عن نتائج بحث Google وBing."
 
@@ -6107,11 +6107,11 @@ msgstr "مكالمات الهاتف بالذكاء الاصطناعي متاحة
 msgid "AI photos are not set up for this workspace."
 msgstr "لم يتم إعداد صور الذكاء الاصطناعي لمساحة العمل هذه."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1778
+#: app/routes/_app+/$orgSlug_+/media.tsx:1804
 msgid "AI studio"
 msgstr "استوديو الذكاء الاصطناعي"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3013
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3085
 msgid "Aim for one or two sentences that make someone click."
 msgstr "استهدف جملة أو جملتين تجعلان الزائر ينقر."
 
@@ -6165,7 +6165,7 @@ msgstr "المحاذاة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:362
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:258
-#: app/routes/_app+/$orgSlug_+/media.tsx:1231
+#: app/routes/_app+/$orgSlug_+/media.tsx:1255
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:233
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1468
 msgid "All"
@@ -6622,11 +6622,11 @@ msgid "Also waive the packaging fee"
 msgstr "أعفِ أيضًا من رسوم التغليف"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:288
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4493
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4565
 msgid "Alt text"
 msgstr "النص البديل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2016
+#: app/routes/_app+/$orgSlug_+/media.tsx:2042
 msgid "Alt Text"
 msgstr "النص البديل"
 
@@ -6969,7 +6969,7 @@ msgid "Another way"
 msgstr "طريقة أخرى"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:589
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4191
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4263
 msgid "Answer"
 msgstr "الإجابة"
 
@@ -7124,7 +7124,7 @@ msgstr "App Store"
 msgid "App version"
 msgstr "إصدار التطبيق"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:855
+#: app/components/settings/cards/organization/site-theme-card.tsx:1059
 msgid "Appearance"
 msgstr "المظهر"
 
@@ -7220,7 +7220,7 @@ msgstr "ينطبق على"
 msgid "Applies when a customer enters a code."
 msgstr "يُطبَّق عندما يُدخل العميل رمزًا."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2855
+#: app/routes/_app+/$orgSlug_+/media.tsx:2891
 msgid "Apply"
 msgstr "تطبيق"
 
@@ -7265,7 +7265,7 @@ msgstr "تطبيق النسخة ب"
 msgid "Applying"
 msgstr "جارٍ التطبيق"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2678
+#: app/routes/_app+/$orgSlug_+/media.tsx:2708
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:1369
 msgid "Applying…"
 msgstr "جارٍ التطبيق…"
@@ -7388,8 +7388,8 @@ msgstr "العربية"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:234
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:404
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1057
-#: app/routes/_app+/$orgSlug_+/media.tsx:1304
-#: app/routes/_app+/$orgSlug_+/media.tsx:2349
+#: app/routes/_app+/$orgSlug_+/media.tsx:1328
+#: app/routes/_app+/$orgSlug_+/media.tsx:2379
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
 msgid "Archive"
 msgstr "أرشفة"
@@ -7470,7 +7470,7 @@ msgstr "مؤرشف"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:73
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
-#: app/routes/_app+/$orgSlug_+/media.tsx:1266
+#: app/routes/_app+/$orgSlug_+/media.tsx:1290
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/discounts/labels.ts:28
 #: app/utils/discounts/labels.ts:49
@@ -7479,7 +7479,7 @@ msgstr "مؤرشف"
 msgid "Archived"
 msgstr "مؤرشف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2704
+#: app/routes/_app+/$orgSlug_+/media.tsx:2735
 msgid "Archived {count} items. Restore them from the Archived view."
 msgstr "تمت أرشفة {count} عنصرًا. يمكنك استعادتها من عرض المؤرشف."
 
@@ -7507,7 +7507,7 @@ msgstr "هل أنت متأكد أنك تريد حذف «{roleNameToDelete}»؟ �
 msgid "Are you sure you want to delete this comment?"
 msgstr "هل أنت متأكد أنك تريد حذف هذا التعليق؟"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1074
+#: app/routes/_app+/$orgSlug_+/media.tsx:1096
 msgid "Are you sure you want to remove this media asset?"
 msgstr "هل أنت متأكد أنك تريد إزالة عنصر الوسائط هذا؟"
 
@@ -7541,7 +7541,7 @@ msgstr "صفحات المناطق"
 msgid "Arrange tables as they are in your room."
 msgstr "رتّب الطاولات كما هي في صالتك."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4030
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4102
 msgid "Arrangement"
 msgstr "الترتيب"
 
@@ -8045,7 +8045,7 @@ msgstr "الأتمتة"
 msgid "Automations running"
 msgstr "الأتمتة قيد التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4895
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4967
 msgid "Autoplay"
 msgstr "التشغيل التلقائي"
 
@@ -8171,7 +8171,7 @@ msgstr "«منح النقاط» يضيف نقاط عملية البيع؛ و«ا
 msgid "Award points"
 msgstr "منح النقاط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1799
+#: app/routes/_app+/$orgSlug_+/media.tsx:1825
 msgid "B&W"
 msgstr "أبيض وأسود"
 
@@ -8244,7 +8244,7 @@ msgstr "العودة إلى عمليات الجرد"
 msgid "Back to customers"
 msgstr "العودة إلى العملاء"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2638
+#: app/routes/_app+/$orgSlug_+/media.tsx:2668
 msgid "Back to details"
 msgstr "العودة إلى التفاصيل"
 
@@ -8345,12 +8345,12 @@ msgstr "العودة إلى القائمة"
 msgid "Back to waiting"
 msgstr "العودة إلى الانتظار"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6889
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6963
 msgid "Back to your draft"
 msgstr "العودة إلى مسودتك"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3869
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5556
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3941
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5628
 msgid "Background"
 msgstr "الخلفية"
 
@@ -8624,7 +8624,7 @@ msgstr "أزرق"
 msgid "Board"
 msgstr "لوحة"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:789
+#: app/components/settings/cards/organization/site-theme-card.tsx:990
 msgid "Body"
 msgstr "النص الأساسي"
 
@@ -8753,7 +8753,7 @@ msgstr "تم الحجز فوق حد عدد الحجوزات لكل فترة."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:818
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:773
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:947
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4705
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4777
 msgid "Booking"
 msgstr "الحجز"
 
@@ -8867,9 +8867,9 @@ msgid "Branch on whether you're open right now."
 msgstr "التفرع حسب ما إذا كنت مفتوحًا الآن."
 
 #: app/components/app-sidebar.tsx:697
-#: app/components/website/branding-panel.tsx:367
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5868
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5869
+#: app/components/website/branding-panel.tsx:414
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5940
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5941
 msgid "Branding"
 msgstr "الهوية البصرية"
 
@@ -8947,7 +8947,7 @@ msgstr "الاستراحات: من {before} إلى {after}"
 msgid "Bright & airy"
 msgstr "مشرق وهادئ"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2575
+#: app/routes/_app+/$orgSlug_+/media.tsx:2605
 msgid "Brightness"
 msgstr "السطوع"
 
@@ -9012,7 +9012,7 @@ msgstr "تصفّح الأصوات التي يمكن لمساعدك الذكي ا
 msgid "Browser"
 msgstr "المتصفح"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3993
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4065
 msgid "Browsers only autoplay video when it is muted."
 msgstr "تقوم المتصفحات بتشغيل الفيديو تلقائياً فقط عند كتم الصوت."
 
@@ -9021,7 +9021,7 @@ msgid "Bucket Name"
 msgstr "اسم الحاوية"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:688
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6755
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6829
 msgid "Build"
 msgstr "البناء"
 
@@ -9041,7 +9041,7 @@ msgstr "أنشئ قائمتك"
 msgid "Builder"
 msgstr "المنشئ"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5889
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5961
 msgid "Builder panels"
 msgstr "لوحات المنشئ"
 
@@ -9197,8 +9197,8 @@ msgstr "زبدة"
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:38
 #: app/components/social/google-post-fields.tsx:285
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4125
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4765
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4197
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4837
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:928
 msgid "Button"
 msgstr "الزر"
@@ -9206,8 +9206,8 @@ msgstr "الزر"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:347
 #: app/components/website/create-form-dialog.tsx:258
 #: app/components/website/form-builder-sidebar.tsx:989
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4700
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4848
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4772
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4920
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:596
 msgid "Button label"
 msgstr "نص الزر"
@@ -9217,8 +9217,8 @@ msgstr "نص الزر"
 msgid "Button link"
 msgstr "رابط الزر"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3832
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4990
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3904
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5062
 msgid "Buttons"
 msgstr "الأزرار"
 
@@ -9706,6 +9706,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/settings/cards/organization/announcement-sheet.tsx:674
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
+#: app/components/settings/cards/organization/site-theme-card.tsx:326
 #: app/components/settings/email-form.tsx:90
 #: app/components/settings/passkey-manager.tsx:153
 #: app/components/settings/password-form.tsx:188
@@ -9759,8 +9760,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:277
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:478
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1103
-#: app/routes/_app+/$orgSlug_+/media.tsx:2363
-#: app/routes/_app+/$orgSlug_+/media.tsx:2840
+#: app/routes/_app+/$orgSlug_+/media.tsx:2393
+#: app/routes/_app+/$orgSlug_+/media.tsx:2876
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:551
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:445
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:319
@@ -9795,7 +9796,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:615
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:794
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:888
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2192
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2264
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1559
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1597
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1643
@@ -10060,8 +10061,8 @@ msgstr "بدء الجملة بحرف كبير فقط"
 msgid "Capitals read like shouting. Use normal case."
 msgstr "الأحرف الكبيرة تبدو كالصراخ. استخدم الحالة العادية."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2041
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4503
+#: app/routes/_app+/$orgSlug_+/media.tsx:2067
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4575
 msgid "Caption"
 msgstr "التسمية التوضيحية"
 
@@ -10114,7 +10115,7 @@ msgstr "بطاقة محفوظة، لم يُخصم أي مبلغ"
 msgid "Card only"
 msgstr "بطاقة فقط"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4965
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5037
 msgid "Card position"
 msgstr "موضع البطاقة"
 
@@ -10125,7 +10126,7 @@ msgstr "تم بيع البطاقة"
 #: app/components/staff/timesheets/payroll-summary.tsx:168
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_layout.tsx:54
 #: app/routes/_app+/$orgSlug_+/notes.tsx:326
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4546
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4618
 msgid "Cards"
 msgstr "بطاقات"
 
@@ -10336,8 +10337,8 @@ msgid "Celebration"
 msgstr "احتفال"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:99
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3893
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4976
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3965
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5048
 msgid "Center"
 msgstr "الوسط"
 
@@ -10389,7 +10390,7 @@ msgstr "افتراضيات السلسلة والأقفال"
 #: app/components/settings/cards/organization/site-icon-card.tsx:215
 #: app/components/settings/cards/profile-card.tsx:171
 #: app/components/staff/labor/labor-overview.tsx:341
-#: app/components/website/branding-panel.tsx:427
+#: app/components/website/branding-panel.tsx:474
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:352
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:244
 msgid "Change"
@@ -10480,7 +10481,7 @@ msgstr "تغيير القواعد"
 msgid "Change settings, publish call flows, manage numbers, and edit training rules."
 msgstr "تغيير الإعدادات، ونشر مسارات المكالمات، وإدارة الأرقام، وتعديل قواعد التدريب."
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:658
+#: app/components/settings/cards/organization/site-theme-card.tsx:846
 msgid "Change specific colors here. They start from Accent, Gray, and Appearance above, and work in both light and dark."
 msgstr "غيّر ألواناً محددة هنا. تبدأ من اللون المميز والرمادي والمظهر أعلاه، وتعمل في الوضعين الفاتح والداكن."
 
@@ -10590,7 +10591,7 @@ msgstr "تغيير الافتراضي يحدّث المواقع التي تست�
 msgid "Changing the party size can change the wait you quoted."
 msgstr "قد يؤدي تغيير عدد الأشخاص إلى تغيير وقت الانتظار الذي ذكرته."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2916
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2988
 msgid "Changing this URL will break existing links to the page."
 msgstr "تغيير هذا الرابط سيؤدي إلى تعطيل الروابط الحالية لهذه الصفحة."
 
@@ -10974,7 +10975,7 @@ msgstr "جارٍ التحقق من سجلات الموظفين…"
 msgid "Checking recipes…"
 msgstr "جارٍ التحقق من الوصفات…"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2227
+#: app/routes/_app+/$orgSlug_+/media.tsx:2254
 msgid "Checking references…"
 msgstr "جارٍ التحقق من المراجع…"
 
@@ -11775,8 +11776,8 @@ msgstr "مُختار"
 msgid "Chosen members"
 msgstr "أعضاء محددون"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4112
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4360
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4184
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4432
 msgid "Circle"
 msgstr "دائرة"
 
@@ -11817,7 +11818,7 @@ msgstr "تنظيف"
 #: app/components/reservations/detail-sheet.tsx:1063
 #: app/components/staff/schedule/schedule-page.tsx:566
 #: app/components/staff/timesheets/bulk-bar.tsx:103
-#: app/routes/_app+/$orgSlug_+/media.tsx:1312
+#: app/routes/_app+/$orgSlug_+/media.tsx:1336
 msgid "Clear"
 msgstr "مسح"
 
@@ -12061,7 +12062,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 #: app/components/staff/timesheets/card-sheet.tsx:275
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:248
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:245
-#: app/routes/_app+/$orgSlug_+/media.tsx:2314
+#: app/routes/_app+/$orgSlug_+/media.tsx:2341
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:614
 msgid "Close"
 msgstr "إغلاق"
@@ -12325,7 +12326,7 @@ msgstr "اجمع بريدًا إلكترونيًا صالحًا."
 msgid "Color"
 msgstr "اللون"
 
-#: app/components/website/branding-panel.tsx:90
+#: app/components/website/branding-panel.tsx:92
 msgid "Colors from your logo"
 msgstr "ألوان من شعارك"
 
@@ -12341,7 +12342,7 @@ msgstr "اسم العمود"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:114
 #: app/components/staff/timesheets/payroll-summary.tsx:121
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4327
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4399
 msgid "Columns"
 msgstr "الأعمدة"
 
@@ -12382,12 +12383,12 @@ msgstr "مريح"
 msgid "Coming soon"
 msgstr "قريبًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2816
+#: app/routes/_app+/$orgSlug_+/media.tsx:2848
 msgid "Comma separated"
 msgstr "مفصولة بفواصل"
 
 #: app/components/note/comment-input.tsx:196
-#: app/routes/_app+/$orgSlug_+/media.tsx:1780
+#: app/routes/_app+/$orgSlug_+/media.tsx:1806
 msgid "Comment"
 msgstr "تعليق"
 
@@ -12646,6 +12647,10 @@ msgstr "تأكيد طلب الحذف"
 msgid "Confirm duplicate"
 msgstr "تأكيد النسخ"
 
+#: app/components/settings/cards/organization/site-theme-card.tsx:485
+msgid "Confirm licence"
+msgstr "تأكيد الترخيص"
+
 #: app/components/settings/password-form.tsx:152
 msgid "Confirm New Password"
 msgstr "تأكيد كلمة المرور الجديدة"
@@ -12682,6 +12687,10 @@ msgstr "تأكيد الإرسال"
 #: app/components/customers/person-marketing-card.tsx:482
 msgid "Confirm that the guest asked to receive marketing."
 msgstr "أكّد أن الضيف طلب تلقي الرسائل التسويقية."
+
+#: app/components/website/branding-panel.tsx:557
+msgid "Confirm that you hold a web licence for this font to upload it."
+msgstr "أكّد أنك تملك ترخيصًا للويب لهذا الخط حتى تتمكن من رفعه."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:53
 msgid "Confirm that you want to rehire them anyway."
@@ -12950,7 +12959,7 @@ msgstr "القنوات المتصلة"
 #~ msgid "Connected domain"
 #~ msgstr "النطاق المرتبط"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4625
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4697
 msgid "Connected form"
 msgstr "النموذج المرتبط"
 
@@ -13094,14 +13103,14 @@ msgstr "يحتوي (تطابق جزئي)"
 #: app/components/settings/cards/organization/announcement-sheet.tsx:501
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:491
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:738
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3817
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4008
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4312
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4687
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4779
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4806
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4834
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4912
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3889
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4080
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4384
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4759
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4851
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4878
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4906
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4984
 msgid "Content"
 msgstr "المحتوى"
 
@@ -13112,6 +13121,7 @@ msgstr "محرر المحتوى"
 #: app/components/customers/person-merge-dialog.tsx:203
 #: app/components/kiosk/kiosk-screens.tsx:120
 #: app/components/kiosk/pin-pad.tsx:127
+#: app/components/settings/cards/organization/site-theme-card.tsx:336
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:228
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:156
 #: app/routes/_auth+/login.tsx:730
@@ -13159,7 +13169,7 @@ msgstr "عقد"
 msgid "Contractor"
 msgstr "متعاقد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2587
+#: app/routes/_app+/$orgSlug_+/media.tsx:2617
 msgid "Contrast"
 msgstr "التباين"
 
@@ -13203,7 +13213,7 @@ msgstr "إعدادات شريط ملفات تعريف الارتباط"
 msgid "Cookie policy"
 msgstr "سياسة ملفات تعريف الارتباط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1802
+#: app/routes/_app+/$orgSlug_+/media.tsx:1828
 msgid "Cool"
 msgstr "بارد"
 
@@ -13314,7 +13324,7 @@ msgstr "نسخ إلى هذا الأسبوع"
 #: app/components/hiring/job-share-panel.tsx:87
 #: app/components/pos/terminals-manager.tsx:2034
 #: app/components/staff/kiosk-manager.tsx:782
-#: app/routes/_app+/$orgSlug_+/media.tsx:1393
+#: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
 msgid "Copy link"
 msgstr "نسخ الرابط"
@@ -13383,7 +13393,7 @@ msgstr "النسخ إلى"
 msgid "Copy to new draft"
 msgstr "نسخ إلى مسودة جديدة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1962
+#: app/routes/_app+/$orgSlug_+/media.tsx:1988
 msgid "Copy URL"
 msgstr "نسخ الرابط"
 
@@ -13391,7 +13401,7 @@ msgstr "نسخ الرابط"
 msgid "Copying…"
 msgstr "جارٍ النسخ…"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:884
+#: app/components/settings/cards/organization/site-theme-card.tsx:1088
 msgid "Corners"
 msgstr "الزوايا"
 
@@ -14346,7 +14356,7 @@ msgstr "أنشئ وأدر أطباقك ومشروباتك وأطباقك الج�
 msgid "Create and manage your menus for dine-in, online ordering, POS, and catering."
 msgstr "أنشئ وأدر قوائمك لتناول الطعام في المطعم والطلب عبر الإنترنت ونقاط البيع والتموين."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4650
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4722
 msgid "Create and publish a form from Website → Forms first."
 msgstr "أنشئ نموذجًا وانشره أولًا من الموقع الإلكتروني ← النماذج."
 
@@ -14798,7 +14808,7 @@ msgstr "مخصص"
 msgid "Custom Availability Hours"
 msgstr "ساعات توفر مخصصة"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:624
+#: app/components/settings/cards/organization/site-theme-card.tsx:812
 msgid "Custom colors"
 msgstr "ألوان مخصصة"
 
@@ -15101,8 +15111,8 @@ msgstr "تالف"
 msgid "Danger"
 msgstr "خطر"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:738
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3911
+#: app/components/settings/cards/organization/site-theme-card.tsx:936
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3983
 msgid "Dark"
 msgstr "داكن"
 
@@ -15481,7 +15491,7 @@ msgstr "اللغة الافتراضية مطلوبة"
 msgid "Default limit"
 msgstr "Default limit"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4732
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4804
 msgid "Default party size"
 msgstr "حجم المجموعة الافتراضي"
 
@@ -15545,7 +15555,7 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:242
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:219
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:311
-#: app/routes/_app+/$orgSlug_+/media.tsx:2329
+#: app/routes/_app+/$orgSlug_+/media.tsx:2356
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:563
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:398
@@ -15640,7 +15650,7 @@ msgstr "حذف المكالمات"
 
 #: app/components/staff/timesheets/card-sheet.tsx:266
 #: app/components/staff/timesheets/card-sheet.tsx:436
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4563
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4635
 msgid "Delete card"
 msgstr "حذف البطاقة"
 
@@ -15652,7 +15662,7 @@ msgstr "حذف التصنيف؟"
 msgid "Delete channel"
 msgstr "حذف القناة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5133
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5205
 msgid "Delete column"
 msgstr "حذف العمود"
 
@@ -15697,7 +15707,7 @@ msgstr "حذف الطرح؟"
 msgid "Delete event"
 msgstr "حذف الفعالية"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4249
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4321
 msgid "Delete feature"
 msgstr "حذف الميزة"
 
@@ -15705,7 +15715,7 @@ msgstr "حذف الميزة"
 msgid "Delete invitation"
 msgstr "حذف الدعوة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4421
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4493
 msgid "Delete item"
 msgstr "حذف العنصر"
 
@@ -15721,7 +15731,7 @@ msgstr "حذف آخر رقم"
 msgid "Delete layout"
 msgstr "حذف التخطيط"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3748
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3820
 msgid "Delete link"
 msgstr "حذف الرابط"
 
@@ -15788,7 +15798,7 @@ msgstr "حذف الصفحة؟"
 msgid "Delete post"
 msgstr "حذف المنشور"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4176
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4248
 msgid "Delete question"
 msgstr "حذف السؤال"
 
@@ -15810,7 +15820,7 @@ msgstr "حذف فرع المطعم؟"
 msgid "Delete restaurant?"
 msgstr "حذف المطعم؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5061
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5133
 msgid "Delete review"
 msgstr "حذف المراجعة"
 
@@ -15818,7 +15828,7 @@ msgstr "حذف المراجعة"
 msgid "Delete rule"
 msgstr "حذف القاعدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5230
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5302
 msgid "Delete social link"
 msgstr "حذف رابط التواصل الاجتماعي"
 
@@ -16144,12 +16154,12 @@ msgstr "صف الدور والأجر وما تريد أن تسأل عنه."
 msgid "Describe the text you want. You will review it before it fills your message. Nothing is sent."
 msgstr "صِف النص الذي تريده. ستراجعه قبل أن يملأ رسالتك. لا يتم إرسال أي شيء."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2834
+#: app/routes/_app+/$orgSlug_+/media.tsx:2866
 msgid "Describe these images for accessibility"
 msgstr "صِف هذه الصور لسهولة الوصول"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2019
-#: app/routes/_app+/$orgSlug_+/media.tsx:2032
+#: app/routes/_app+/$orgSlug_+/media.tsx:2045
+#: app/routes/_app+/$orgSlug_+/media.tsx:2058
 msgid "Describe this image for accessibility"
 msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 
@@ -16171,11 +16181,11 @@ msgstr "صف متى يجب على الوكيل التحويل إلى جهة ات
 #: app/components/website/form-builder-sidebar.tsx:976
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:133
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4268
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4578
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4694
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4814
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4842
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4340
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4650
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4766
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4886
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4914
 #: app/routes/organizations+/create.tsx:1082
 msgid "Description"
 msgstr "الوصف"
@@ -16251,7 +16261,7 @@ msgid "Designs guests can choose"
 msgstr "التصاميم التي يمكن للضيوف اختيارها"
 
 #: app/components/website/funnel-panel.tsx:40
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6502
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6576
 msgid "Desktop"
 msgstr "سطح المكتب"
 
@@ -16441,7 +16451,7 @@ msgstr "منطقة زمنية مختلفة: تُطبَّق الأوقات الم
 msgid "Digits"
 msgstr "عدد الخانات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1909
+#: app/routes/_app+/$orgSlug_+/media.tsx:1935
 msgid "Dimensions:"
 msgstr "الأبعاد:"
 
@@ -16571,7 +16581,7 @@ msgstr "معطّل لهذا الفرع"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:234
 #: app/components/reservations/settings/save-bar.tsx:76
 #: app/components/save-bar.tsx:351
-#: app/components/website/branding-panel.tsx:538
+#: app/components/website/branding-panel.tsx:600
 msgid "Discard"
 msgstr "تجاهل"
 
@@ -16588,7 +16598,7 @@ msgstr "تجاهل والتبديل"
 #: app/components/reservations/messages/message-settings.tsx:775
 #: app/components/reservations/settings/setup-list-chrome.tsx:215
 #: app/components/website/publish-controls.tsx:401
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6835
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6909
 msgid "Discard changes"
 msgstr "تجاهل التغييرات"
 
@@ -16835,8 +16845,8 @@ msgstr "إرسال بريد إلكتروني مخصص مع وسوم الدمج"
 msgid "Dispatch text message with merge tags"
 msgstr "إرسال رسالة نصية مع وسوم الدمج"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4657
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4854
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4729
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4926
 msgid "Display"
 msgstr "العرض"
 
@@ -16896,6 +16906,10 @@ msgstr "عدم إرسال أي شيء"
 #: app/components/hiring/job-labels.ts:27
 msgid "Do not show pay"
 msgstr "عدم إظهار الأجر"
+
+#: app/components/settings/cards/organization/site-theme-card.tsx:289
+msgid "Do you have a licence for this font?"
+msgstr "هل لديك ترخيص لهذا الخط؟"
 
 #: app/components/inventory/setup-checklist.tsx:23
 msgid "Do your first count"
@@ -17023,7 +17037,7 @@ msgid "Double time must start after daily overtime."
 msgstr "يجب أن يبدأ الأجر المضاعف بعد العمل الإضافي اليومي."
 
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:135
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2188
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2260
 msgid "Double-click a block to add it instantly"
 msgstr "انقر نقراً مزدوجاً على الكتلة لإضافتها فوراً"
 
@@ -17118,13 +17132,13 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:96
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:929
-#: app/routes/_app+/$orgSlug_+/media.tsx:1365
+#: app/routes/_app+/$orgSlug_+/media.tsx:1391
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:195
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:559
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:270
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:650
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6672
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6746
 #: app/routes/_app+/$orgSlug_+/website+/popups._index.tsx:138
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:500
 #: app/utils/inventory/order-view.ts:23
@@ -17731,7 +17745,7 @@ msgstr "إلغاء الكسب"
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:469
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:391
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:433
-#: app/routes/_app+/$orgSlug_+/media.tsx:2186
+#: app/routes/_app+/$orgSlug_+/media.tsx:2213
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:478
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:374
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:787
@@ -17853,8 +17867,8 @@ msgstr "تعديل الطرح"
 msgid "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
 msgstr "تعديل ملفات الضيوف والوسوم والملاحظات ودمج أو مسح بيانات الضيوف. يشمل عرض سجل الضيوف."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1874
-#: app/routes/_app+/$orgSlug_+/media.tsx:2391
+#: app/routes/_app+/$orgSlug_+/media.tsx:1900
+#: app/routes/_app+/$orgSlug_+/media.tsx:2421
 msgid "Edit image"
 msgstr "تعديل الصورة"
 
@@ -17975,7 +17989,7 @@ msgstr "تعديل حد القسم"
 msgid "Edit section layout"
 msgstr "تعديل تخطيط الأقسام"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2780
+#: app/routes/_app+/$orgSlug_+/media.tsx:2812
 msgid "Edit selected media"
 msgstr "تعديل الوسائط المحددة"
 
@@ -18003,7 +18017,7 @@ msgstr "تعديل الطاولة"
 msgid "Edit tablet"
 msgstr "تعديل الجهاز اللوحي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1289
+#: app/routes/_app+/$orgSlug_+/media.tsx:1313
 msgid "Edit tags and alt text"
 msgstr "تعديل الوسوم والنص البديل"
 
@@ -18055,7 +18069,7 @@ msgstr "تم التعديل ({count} إعدادات)"
 msgid "Edited, not published"
 msgstr "معدّلة وغير منشورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2560
+#: app/routes/_app+/$orgSlug_+/media.tsx:2590
 msgid "Editor preview"
 msgstr "معاينة المحرر"
 
@@ -18466,8 +18480,8 @@ msgid "English"
 msgstr "الإنجليزية"
 
 #: app/components/media-library/photo-studio-dialog.tsx:447
-#: app/routes/_app+/$orgSlug_+/media.tsx:1151
-#: app/routes/_app+/$orgSlug_+/media.tsx:1889
+#: app/routes/_app+/$orgSlug_+/media.tsx:1173
+#: app/routes/_app+/$orgSlug_+/media.tsx:1915
 msgid "Enhance with AI"
 msgstr "تحسين بالذكاء الاصطناعي"
 
@@ -20020,7 +20034,7 @@ msgstr "معرّف بكسل Facebook"
 msgid "Facebook takes at most {SOCIAL_MAX_MEDIA} images."
 msgstr "يقبل فيسبوك {SOCIAL_MAX_MEDIA} صور كحد أقصى."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3916
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3988
 msgid "Fade up"
 msgstr "التلاشي للأعلى"
 
@@ -20163,11 +20177,11 @@ msgstr "فشل في حذف شريحة وقت الدوران."
 msgid "Failed to duplicate journey"
 msgstr "فشل تكرار الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1709
+#: app/routes/_app+/$orgSlug_+/media.tsx:1735
 msgid "Failed to export edited image."
 msgstr "تعذر تصدير الصورة المعدّلة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1725
+#: app/routes/_app+/$orgSlug_+/media.tsx:1751
 msgid "Failed to export image copy."
 msgstr "تعذر تصدير نسخة الصورة."
 
@@ -20356,7 +20370,7 @@ msgstr "تم إنشاء متغيرات الأيقونة المفضلة وأيق�
 msgid "Favorites"
 msgstr "المفضلة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2143
+#: app/routes/_app+/$orgSlug_+/media.tsx:2169
 msgid "Feature"
 msgstr "تمييز"
 
@@ -20377,11 +20391,11 @@ msgstr "أطباق مميزة"
 msgid "Featured items"
 msgstr "عناصر مميزة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2133
+#: app/routes/_app+/$orgSlug_+/media.tsx:2159
 msgid "Featured photos are preferred for the website's hero"
 msgstr "تُفضَّل الصور المميزة في واجهة الموقع الرئيسية"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4237
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4309
 msgid "Features"
 msgstr "الميزات"
 
@@ -20485,12 +20499,12 @@ msgstr "تغيّرت الأرقام"
 msgid "File"
 msgstr "ملف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1979
+#: app/routes/_app+/$orgSlug_+/media.tsx:2005
 msgid "File name of the media asset"
 msgstr "اسم ملف عنصر الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1977
-#: app/routes/_app+/$orgSlug_+/media.tsx:1990
+#: app/routes/_app+/$orgSlug_+/media.tsx:2003
+#: app/routes/_app+/$orgSlug_+/media.tsx:2016
 msgid "Filename"
 msgstr "اسم الملف"
 
@@ -20575,7 +20589,7 @@ msgstr "التصفية حسب الوسم"
 msgid "Filter by workplace"
 msgstr "تصفية حسب مكان العمل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1223
+#: app/routes/_app+/$orgSlug_+/media.tsx:1247
 msgid "Filter media"
 msgstr "تصفية الوسائط"
 
@@ -20604,7 +20618,7 @@ msgstr "بحث"
 msgid "Find a returning guest"
 msgstr "ابحث عن ضيف عائد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1119
+#: app/routes/_app+/$orgSlug_+/media.tsx:1141
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "البحث عن الصور وإعادة استخدامها عبر الملاحظات والتعليقات وموقع الويب وإعدادات المؤسسة."
 
@@ -20824,11 +20838,11 @@ msgstr "الخصائص"
 msgid "Flavored syrup"
 msgstr "شراب منكّه"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2462
+#: app/routes/_app+/$orgSlug_+/media.tsx:2492
 msgid "Flip horizontally"
 msgstr "قلب أفقيًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2492
+#: app/routes/_app+/$orgSlug_+/media.tsx:2522
 msgid "Flip vertically"
 msgstr "قلب عموديًا"
 
@@ -20895,6 +20909,10 @@ msgstr "تم إرسال رسالة المتابعة النصية"
 #: app/components/pos/terminal-profiles.tsx:856
 msgid "Follows {profileName}. Change a setting here to override it for this terminal only."
 msgstr "يتبع {profileName}. غيّر أي إعداد هنا لتجاوزه لهذا الجهاز فقط."
+
+#: app/components/settings/cards/organization/site-theme-card.tsx:292
+msgid "Fonts are licensed software. Foundries can ask the restaurant, and Menuza as the host, to stop using a font that has no web licence."
+msgstr "الخطوط برمجيات مرخّصة. يمكن لشركات الخطوط أن تطلب من المطعم، ومن منيوزا بصفتها المضيف، التوقف عن استخدام خط ليس له ترخيص للويب."
 
 #: app/components/inventory/compare-panel.tsx:175
 #: app/components/inventory/count-review-screen.tsx:900
@@ -21009,7 +21027,7 @@ msgstr "هل نسيت كلمة المرور؟"
 
 #: app/components/customers/person-marketing-card.tsx:66
 #: app/components/workspace-breadcrumb.tsx:117
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4622
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4694
 msgid "Form"
 msgstr "النموذج"
 
@@ -21038,7 +21056,7 @@ msgstr "رسمي"
 msgid "Format and daily reset time for new web, QR and Station order numbers at this location. Existing orders keep their numbers."
 msgstr "تنسيق أرقام الطلبات الجديدة عبر الموقع وQR ونقطة البيع ووقت إعادة التعيين اليومي لهذا الفرع. تحتفظ الطلبات الحالية بأرقامها."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1932
+#: app/routes/_app+/$orgSlug_+/media.tsx:1958
 msgid "Format:"
 msgstr "التنسيق:"
 
@@ -21100,7 +21118,7 @@ msgstr "تم العثور على {0} صفحات. تبقى الصفحات الم�
 msgid "Found more than expected"
 msgstr "وُجد أكثر من المتوقع"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4343
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4415
 msgid "Four"
 msgstr "أربعة"
 
@@ -21346,7 +21364,7 @@ msgstr "خيارات التنفيذ"
 msgid "Fulfillment Options"
 msgstr "خيارات التنفيذ"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:752
+#: app/components/settings/cards/organization/site-theme-card.tsx:950
 msgid "Full"
 msgstr "كامل"
 
@@ -21458,7 +21476,7 @@ msgstr "أنشأ صفحات قانونية"
 msgid "Generating Authentication Options"
 msgstr "جاري إنشاء خيارات المصادقة"
 
-#: app/components/website/branding-panel.tsx:472
+#: app/components/website/branding-panel.tsx:519
 msgid "Generating favicon variants…"
 msgstr "جارٍ إنشاء متغيرات الأيقونة المفضلة…"
 
@@ -21498,7 +21516,7 @@ msgstr "احصل على المساعدة"
 msgid "Get in touch"
 msgstr "تواصل معنا"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4811
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4883
 msgid "Get our app (default)"
 msgstr "حمّل تطبيقنا (الافتراضي)"
 
@@ -21875,11 +21893,11 @@ msgstr "بيانات الرسم البياني مطلوبة"
 msgid "Graph data missing"
 msgstr "بيانات الرسم البياني مفقودة"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:836
+#: app/components/settings/cards/organization/site-theme-card.tsx:1040
 msgid "Gray color"
 msgstr "اللون الرمادي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2611
+#: app/routes/_app+/$orgSlug_+/media.tsx:2641
 msgid "Grayscale"
 msgstr "تدرج الرمادي"
 
@@ -22466,16 +22484,16 @@ msgstr "الترويسة والتذييل"
 #: ../../packages/marketing/src/components/email/block-meta.ts:18
 #: app/components/hiring/description-editor.tsx:115
 #: app/components/hiring/description-editor.tsx:116
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4689
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4781
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4808
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4836
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4761
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4853
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4880
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4908
 #: app/utils/website/field-types.ts:61
 #: app/utils/website/field-types.ts:64
 msgid "Heading"
 msgstr "عنوان"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:761
+#: app/components/settings/cards/organization/site-theme-card.tsx:959
 msgid "Headings"
 msgstr "العناوين"
 
@@ -22532,7 +22550,7 @@ msgstr "يساعد المتصل طوال بقية المكالمة"
 msgid "Here's how to do it:"
 msgstr "إليك كيفية القيام بذلك:"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2800
+#: app/routes/_app+/$orgSlug_+/media.tsx:2832
 msgid "hero, ramadan, drinks"
 msgstr "رئيسية، رمضان، مشروبات"
 
@@ -22636,7 +22654,7 @@ msgstr "إخفاء التفاصيل"
 msgid "Hide from menu"
 msgstr "إخفاء من القائمة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3167
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3239
 msgid "Hide from search engines"
 msgstr "إخفاء عن محركات البحث"
 
@@ -22766,13 +22784,13 @@ msgstr "جارٍ التوظيف…"
 #: app/components/hiring/candidate-sheet.tsx:371
 #: app/components/reservations/detail-sheet.tsx:1307
 #: app/components/staff/timesheets/card-history.tsx:133
-#: app/components/website/branding-panel.tsx:527
+#: app/components/website/branding-panel.tsx:589
 #: app/components/website/publish-controls.tsx:181
 #: app/routes/_app+/$orgSlug_+/gift-cards+/$cardId.tsx:224
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:548
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:143
 #: app/routes/_app+/$orgSlug_+/menu+/history.tsx:130
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6825
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6899
 msgid "History"
 msgstr "السجل"
 
@@ -22841,8 +22859,8 @@ msgstr "الإجازات والفعاليات الخاصة والأوقات ال
 #: app/components/workspace-breadcrumb.tsx:188
 #: app/components/workspace-breadcrumb.tsx:202
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:628
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6707
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6729
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6781
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6803
 msgid "Home"
 msgstr "الرئيسية"
 
@@ -23210,6 +23228,10 @@ msgstr "تحققت من الدفعة الإلكترونية لهذا الحسا�
 msgid "I clicked the link"
 msgstr "نقرت على الرابط"
 
+#: app/components/settings/cards/organization/site-theme-card.tsx:311
+msgid "I confirm that I hold a licence that allows this font to be used on a website and hosted by a third party."
+msgstr "أؤكد أنني أملك ترخيصًا يسمح باستخدام هذا الخط في موقع إلكتروني واستضافته لدى طرف ثالث."
+
 #: app/components/menu/menu-review-card.tsx:405
 msgid "I fixed it myself"
 msgstr "أصلحته بنفسي"
@@ -23299,7 +23321,7 @@ msgstr "يتجاهل تداخل الطاولات عند تغيير الطاول�
 msgid "Image"
 msgstr "صورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:996
+#: app/routes/_app+/$orgSlug_+/media.tsx:1014
 msgid "Image added to your media library"
 msgstr "تمت إضافة الصورة إلى مكتبة الوسائط"
 
@@ -23319,7 +23341,7 @@ msgstr "صورة من مكتبة الوسائط لديك"
 msgid "Image link"
 msgstr "رابط الصورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1389
+#: app/routes/_app+/$orgSlug_+/media.tsx:1415
 msgid "Image link copied"
 msgstr "تم نسخ رابط الصورة"
 
@@ -23329,11 +23351,11 @@ msgstr "تم نسخ رابط الصورة"
 msgid "Image post"
 msgstr "منشور بصورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1007
+#: app/routes/_app+/$orgSlug_+/media.tsx:1025
 msgid "Image removed from media library"
 msgstr "تمت إزالة الصورة من مكتبة الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1004
+#: app/routes/_app+/$orgSlug_+/media.tsx:1022
 msgid "Image replaced successfully"
 msgstr "تم استبدال الصورة بنجاح"
 
@@ -23342,7 +23364,7 @@ msgid "Image to crop"
 msgstr "صورة للقص"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:264
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4589
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4661
 msgid "Image URL"
 msgstr "رابط الصورة"
 
@@ -23712,7 +23734,7 @@ msgstr "تم حفظ المكوّنات."
 msgid "Inherits"
 msgstr "يرث"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4763
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4835
 msgid "Inline"
 msgstr "مضمّن"
 
@@ -23923,7 +23945,7 @@ msgstr "المخزون: طلب حان موعد تسليمه"
 msgid "Inventory: items are below the level you order at"
 msgstr "المخزون: عناصر أقل من مستوى الطلب"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5572
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5644
 msgid "Inverted"
 msgstr "معكوس"
 
@@ -24509,7 +24531,7 @@ msgstr "انضم إلى Discord الخاص بنا"
 msgid "Join our WhatsApp group"
 msgstr "انضم إلى مجموعة واتساب"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4851
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4923
 msgid "Join rewards (default)"
 msgstr "انضم إلى المكافآت (افتراضي)"
 
@@ -25020,7 +25042,7 @@ msgid "Lapsed 90d"
 msgstr "منقطع منذ 90 يومًا"
 
 #: app/components/pos/ticket-settings.tsx:133
-#: app/components/settings/cards/organization/site-theme-card.tsx:751
+#: app/components/settings/cards/organization/site-theme-card.tsx:949
 msgid "Large"
 msgstr "كبير"
 
@@ -25376,10 +25398,10 @@ msgstr "بدء تشغيل اختباري في المُنشئ"
 
 #: app/components/website/restaurant-editors.tsx:115
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:471
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3867
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4028
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4325
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4756
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3939
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4100
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4397
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4828
 msgid "Layout"
 msgstr "التخطيط"
 
@@ -25494,7 +25516,7 @@ msgstr "اتركه فارغًا للإطلاق يدويًا"
 msgid "Leave empty to keep existing secret key, or enter a new one to update."
 msgstr "اتركه فارغاً للاحتفاظ بالمفتاح السري الحالي، أو أدخل واحداً جديداً للتحديث."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2912
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2984
 msgid "Leave empty to keep this page at the root of your site."
 msgstr "اتركه فارغاً لإبقاء هذه الصفحة في جذر موقعك."
 
@@ -25570,9 +25592,9 @@ msgstr "هل تريد مغادرة هذه الصفحة؟"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:98
 #: app/components/reservations/status-style.tsx:212
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3888
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4085
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4971
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3960
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4157
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5043
 #: app/utils/reservations/waitlist-view.ts:17
 msgid "Left"
 msgstr "اليسار"
@@ -25661,7 +25683,7 @@ msgstr "أقل"
 msgid "Less than the minimum rest since their last shift"
 msgstr "أقل من الحد الأدنى للراحة منذ آخر وردية له"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4720
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4792
 msgid "Let guests choose"
 msgstr "دع الضيوف يختارون"
 
@@ -25764,11 +25786,11 @@ msgstr "إجمالي الإنفاق"
 msgid "Lifetime spend (minor units)"
 msgstr "إجمالي الإنفاق (بأصغر وحدة)"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:737
+#: app/components/settings/cards/organization/site-theme-card.tsx:935
 msgid "Light"
 msgstr "فاتح"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3717
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3789
 msgid "Light logo URL"
 msgstr "رابط الشعار الفاتح"
 
@@ -25863,7 +25885,7 @@ msgstr "اربط فرع Google من الإعدادات ثم التكاملات،
 msgid "Link button text"
 msgstr "نص زر الرابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5118
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5190
 msgid "Link columns"
 msgstr "أعمدة الروابط"
 
@@ -26409,12 +26431,12 @@ msgstr "كلمات البحث المحلي"
 #: app/components/reservations/header-controls.tsx:39
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:151
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:161
-#: app/routes/_app+/$orgSlug_+/media.tsx:1996
+#: app/routes/_app+/$orgSlug_+/media.tsx:2022
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:654
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:968
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:328
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:389
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4709
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4781
 #: app/utils/website/field-types.ts:85
 #: app/utils/website/field-types.ts:88
 msgid "Location"
@@ -26653,20 +26675,20 @@ msgstr "خطأ في تسجيل الدخول"
 msgid "Login with a passkey"
 msgstr "تسجيل الدخول بمفتاح المرور"
 
-#: app/components/website/branding-panel.tsx:385
+#: app/components/website/branding-panel.tsx:432
 #: app/routes/organizations+/create.tsx:932
 msgid "Logo"
 msgstr "الشعار"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3683
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3755
 msgid "Logo & colors"
 msgstr "الشعار والألوان"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4046
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4118
 msgid "Logo panel"
 msgstr "لوحة الشعار"
 
-#: app/components/website/branding-panel.tsx:377
+#: app/components/website/branding-panel.tsx:424
 msgid "Logo, fonts, colors, and corners apply to every page. The preview updates as you change them."
 msgstr "ينطبق الشعار والخطوط والألوان والزوايا على كل صفحة. تتحدّث المعاينة عند تغييرها."
 
@@ -26708,7 +26730,7 @@ msgstr "أطول من المعتاد."
 msgid "Longer than your long-shift limit. Check it is not a missed clock-out."
 msgstr "أطول من حد الوردية الطويلة لديك. تأكد أنها ليست انصرافًا لم يُسجَّل."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4928
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5000
 msgid "Look"
 msgstr "الشكل"
 
@@ -26729,7 +26751,7 @@ msgstr "تبدو سليمة"
 msgid "Looks right ({reviewCount})"
 msgstr "تبدو سليمة ({reviewCount})"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4392
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4464
 msgid "Loose"
 msgstr "متباعد"
 
@@ -26888,7 +26910,7 @@ msgstr "طبق رئيسي"
 msgid "Main language"
 msgstr "اللغة الرئيسية"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1794
+#: app/routes/_app+/$orgSlug_+/media.tsx:1820
 msgid "Main library"
 msgstr "المكتبة الرئيسية"
 
@@ -27611,15 +27633,15 @@ msgstr "يُقاس بـ"
 msgid "Meat"
 msgstr "لحوم"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3935
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4007
 msgid "Media"
 msgstr "الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1814
+#: app/routes/_app+/$orgSlug_+/media.tsx:1840
 msgid "Media details"
 msgstr "تفاصيل الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1001
+#: app/routes/_app+/$orgSlug_+/media.tsx:1019
 msgid "Media details saved"
 msgstr "تم حفظ تفاصيل الوسائط"
 
@@ -27628,22 +27650,22 @@ msgstr "تم حفظ تفاصيل الوسائط"
 #: app/components/media-library/media-library-picker.tsx:232
 #: app/components/roles/tenant-role-access-manager.tsx:180
 #: app/components/workspace-breadcrumb.tsx:21
-#: app/routes/_app+/$orgSlug_+/media.tsx:1117
+#: app/routes/_app+/$orgSlug_+/media.tsx:1139
 msgid "Media library"
 msgstr "مكتبة الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2737
+#: app/routes/_app+/$orgSlug_+/media.tsx:2769
 msgid "Media not found."
 msgstr "لم يتم العثور على الوسائط."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4450
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4522
 msgid "Media URL"
 msgstr "رابط الوسائط"
 
 #: app/components/phone-agent/training-rules-section.tsx:65
-#: app/components/settings/cards/organization/site-theme-card.tsx:747
-#: app/components/settings/cards/organization/site-theme-card.tsx:750
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5681
+#: app/components/settings/cards/organization/site-theme-card.tsx:945
+#: app/components/settings/cards/organization/site-theme-card.tsx:948
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5753
 msgid "Medium"
 msgstr "متوسط"
 
@@ -27963,7 +27985,7 @@ msgstr "الرسائل لكل ضيف خلال 7 أيام"
 msgid "Messages to send"
 msgstr "الرسائل المراد إرسالها"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2985
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3057
 msgid "Meta description"
 msgstr "وصف الميتا"
 
@@ -28151,7 +28173,7 @@ msgstr "لم يُحدَّد حقل التجميع المطلوب"
 msgid "Missing something the job needs"
 msgstr "ينقصه شيء تحتاجه الوظيفة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6525
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6599
 msgid "Mobile"
 msgstr "الجوال"
 
@@ -28290,7 +28312,7 @@ msgstr "الاثنين"
 msgid "Money on online orders and point-of-sale shifts."
 msgstr "المبالغ المالية لطلبات الإنترنت وورديات نقطة البيع."
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:218
+#: app/components/settings/cards/organization/site-theme-card.tsx:230
 msgid "Mono"
 msgstr "أحادي المسافة"
 
@@ -28643,7 +28665,7 @@ msgstr "كتم الصوت"
 msgid "Mute microphone"
 msgstr "كتم الميكروفون"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5567
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5639
 msgid "Muted"
 msgstr "بدون صوت"
 
@@ -28709,7 +28731,7 @@ msgstr "رابط جدولي"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:235
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:268
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:211
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5077
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5149
 #: app/routes/organizations+/create.tsx:999
 #: app/utils/people/people-view.ts:14
 #: app/utils/website/field-types.ts:25
@@ -28839,7 +28861,7 @@ msgstr "انتقل إلى الميزات → خوادم MCP"
 msgid "Navigate to MCP Servers configuration"
 msgstr "انتقل إلى تكوين خوادم MCP"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3736
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3808
 msgid "Navigation links"
 msgstr "روابط التنقل"
 
@@ -29939,7 +29961,7 @@ msgstr "لا توجد طروحات تطابق عوامل التصفية"
 msgid "No drops scheduled yet"
 msgstr "لا توجد طروحات مجدولة بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3344
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3416
 msgid "No editor available for this block type."
 msgstr "لا يوجد محرر متاح لهذا النوع من الكتل."
 
@@ -30213,7 +30235,7 @@ msgstr "لا يوجد موقع على الخريطة: تُتخطى الفحوص�
 msgid "No matching calls"
 msgstr "لا توجد مكالمات مطابقة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1437
+#: app/routes/_app+/$orgSlug_+/media.tsx:1463
 msgid "No matching images"
 msgstr "لا توجد صور مطابقة"
 
@@ -30838,7 +30860,7 @@ msgstr "لم يتم إعداد تخطيط أقسام لهذا الفرع بعد.
 msgid "No section layouts yet"
 msgstr "لا توجد تخطيطات أقسام بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6450
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6524
 msgid "No sections yet"
 msgstr "لا توجد أقسام بعد"
 
@@ -30967,7 +30989,7 @@ msgstr "لا توجد طاولات بعد. أضف الطاولات التي يم
 msgid "No tablets paired yet"
 msgstr "لا توجد أجهزة لوحية مرتبطة بعد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2061
+#: app/routes/_app+/$orgSlug_+/media.tsx:2087
 msgid "No tags yet"
 msgstr "لا توجد وسوم بعد"
 
@@ -31258,7 +31280,7 @@ msgstr "لا شيء"
 #: app/components/menu/modifier-form.tsx:283
 #: app/components/menu/option-form.tsx:632
 #: app/components/reservations/booking-sheet.tsx:87
-#: app/components/settings/cards/organization/site-theme-card.tsx:748
+#: app/components/settings/cards/organization/site-theme-card.tsx:946
 #: app/components/staff/empty-value.tsx:14
 #: app/components/staff/labor-example.tsx:163
 #: app/components/staff/schedule/publish-dialog.tsx:160
@@ -31266,9 +31288,9 @@ msgstr "لا شيء"
 #: app/components/website/link-inspector.tsx:634
 #: app/components/website/restaurant-editors.tsx:362
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:649
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3876
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3906
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4377
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3948
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3978
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4449
 msgid "None"
 msgstr "بلا"
 
@@ -31288,7 +31310,7 @@ msgstr "لم يتبقَّ شيء"
 msgid "None this week."
 msgstr "لا شيء هذا الأسبوع."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1798
+#: app/routes/_app+/$orgSlug_+/media.tsx:1824
 msgid "Normal"
 msgstr "عادي"
 
@@ -31596,7 +31618,7 @@ msgstr "غير مستخدم في أي مكان بعد."
 msgid "Not used by your site."
 msgstr "لا يستخدمه موقعك."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2232
+#: app/routes/_app+/$orgSlug_+/media.tsx:2259
 msgid "Not used in any notes, comments, or pages"
 msgstr "غير مستخدم في أي ملاحظات أو تعليقات أو صفحات"
 
@@ -31635,7 +31657,7 @@ msgstr "ملاحظة"
 #: app/components/staff/timesheets/card-fields.tsx:210
 #: app/components/workspace-breadcrumb.tsx:111
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:783
-#: app/routes/_app+/$orgSlug_+/media.tsx:1782
+#: app/routes/_app+/$orgSlug_+/media.tsx:1808
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:925
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1310
 #: app/utils/gift-cards/labels.ts:25
@@ -33059,7 +33081,7 @@ msgstr "فتح ملف العميل"
 msgid "Open details"
 msgstr "فتح التفاصيل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1346
+#: app/routes/_app+/$orgSlug_+/media.tsx:1370
 msgid "Open details for {name}"
 msgstr "فتح تفاصيل {name}"
 
@@ -33072,7 +33094,7 @@ msgstr "فتح البريد الإلكتروني"
 msgid "Open for online booking"
 msgstr "مفتوحة للحجز عبر الإنترنت"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3022
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3094
 msgid "Open Graph image"
 msgstr "صورة Open Graph"
 
@@ -33151,7 +33173,7 @@ msgstr "فتح الصفحات والنماذج والسمات في منشئ ال
 msgid "Open payout dashboard"
 msgstr "فتح لوحة تحكم المدفوعات"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6845
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6919
 msgid "Open preview"
 msgstr "فتح المعاينة"
 
@@ -33177,7 +33199,7 @@ msgstr "سؤال مفتوح"
 msgid "Open rate"
 msgstr "معدل الفتح"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2289
+#: app/routes/_app+/$orgSlug_+/media.tsx:2316
 msgid "Open reference"
 msgstr "فتح المرجع"
 
@@ -33542,7 +33564,7 @@ msgstr "اختياري. حد أقصى لطلب واحد، بعملة <0>{currenc
 msgid "Optional caps per category or item"
 msgstr "حدود اختيارية لكل فئة أو صنف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2047
+#: app/routes/_app+/$orgSlug_+/media.tsx:2073
 msgid "Optional caption for display"
 msgstr "تعليق توضيحي اختياري للعرض"
 
@@ -34093,7 +34115,7 @@ msgstr "تم إنشاء المنظمة"
 msgid "Organization details and configuration."
 msgstr "تفاصيل المنظمة وإعداداتها."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1784
+#: app/routes/_app+/$orgSlug_+/media.tsx:1810
 msgid "Organization logo"
 msgstr "شعار المؤسسة"
 
@@ -34123,7 +34145,7 @@ msgid "Organize the shelves and walk order for this location, and group items yo
 msgstr "نظّم الأرفف وترتيب المرور لهذا الفرع، واجمع الأصناف التي تجردها معاً."
 
 #: app/components/media-library/photo-studio-dialog.tsx:848
-#: app/routes/_app+/$orgSlug_+/media.tsx:2182
+#: app/routes/_app+/$orgSlug_+/media.tsx:2209
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:425
 msgid "Original"
 msgstr "الأصلية"
@@ -34522,8 +34544,8 @@ msgstr "عنوان الصفحة"
 msgid "Page block"
 msgstr "كتلة الصفحة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2867
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5875
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2939
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5947
 msgid "Page Settings"
 msgstr "إعدادات الصفحة"
 
@@ -34536,7 +34558,7 @@ msgid "Page Title"
 msgstr "عنوان الصفحة"
 
 #: app/components/website/create-page-dialog.tsx:170
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2878
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2950
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
@@ -34690,7 +34712,7 @@ msgstr "فقرة"
 msgid "Paragraph text"
 msgstr "نص فقرة"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:812
+#: app/components/settings/cards/organization/site-theme-card.tsx:1016
 msgid "Paragraphs, navigation, and other text."
 msgstr "الفقرات والتنقل والنصوص الأخرى."
 
@@ -35572,17 +35594,17 @@ msgstr "الهاتف موثّق (نجاح OTP)"
 
 #: app/components/media-library/photo-studio-dialog.tsx:514
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:222
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3877
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4058
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4468
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3949
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4130
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4540
 msgid "Photo"
 msgstr "صورة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4934
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5006
 msgid "Photo + card"
 msgstr "صورة + بطاقة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4041
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4113
 msgid "Photo + text"
 msgstr "صورة + نص"
 
@@ -35604,7 +35626,7 @@ msgstr "تم اعتماد الصورة"
 msgid "Photo of the invoice"
 msgstr "صورة الفاتورة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3900
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3972
 msgid "Photo overlay"
 msgstr "تراكب الصورة"
 
@@ -35616,12 +35638,12 @@ msgstr "تم رفض الصورة"
 msgid "Photo saved."
 msgstr "تم حفظ الصورة."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4101
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4349
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4173
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4421
 msgid "Photo shape"
 msgstr "شكل الصورة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4079
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4151
 msgid "Photo side"
 msgstr "جانب الصورة"
 
@@ -35629,7 +35651,7 @@ msgstr "جانب الصورة"
 msgid "Photos"
 msgstr "الصور"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4403
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4475
 msgid "Photos and videos"
 msgstr "الصور والفيديوهات"
 
@@ -35654,7 +35676,7 @@ msgstr "العنوان الفعلي"
 msgid "Pick a block to add to your email."
 msgstr "اختر كتلة لإضافتها إلى بريدك."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2131
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2203
 msgid "Pick a block to insert into your page."
 msgstr "اختر كتلة لإدراجها في صفحتك."
 
@@ -36000,7 +36022,7 @@ msgstr "تم الطلب"
 msgid "Placed an order"
 msgstr "أتمّ طلباً"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5562
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5634
 msgid "Plain"
 msgstr "عادي"
 
@@ -36045,7 +36067,7 @@ msgstr "جارٍ التخطيط الآن."
 msgid "Plant"
 msgstr "نبات"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5235
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5307
 msgid "Platform"
 msgstr "المنصة"
 
@@ -36239,11 +36261,11 @@ msgstr "يُرجى قراءة الاتفاقيات المحدّثة وقبوله
 msgid "PNG only, up to 5 MB. Recommended size: 512×512."
 msgstr "PNG فقط، حتى 5 ميجابايت. الحجم الموصى به: 512×512."
 
-#: app/components/website/branding-panel.tsx:464
+#: app/components/website/branding-panel.tsx:511
 msgid "PNG, up to 5 MB. Recommended 512×512."
 msgstr "PNG، حتى 5 ميجابايت. الموصى به 512×512."
 
-#: app/components/website/branding-panel.tsx:441
+#: app/components/website/branding-panel.tsx:488
 msgid "PNG, up to 5 MB. Used as logo and favicon."
 msgstr "PNG، حتى 5 ميجابايت. يُستخدم كشعار وأيقونة مفضلة."
 
@@ -36644,7 +36666,7 @@ msgstr "محدد مسبقًا (يُضمَّن عند فتح العملاء له�
 msgid "Preset amounts"
 msgstr "المبالغ المحددة مسبقًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2517
+#: app/routes/_app+/$orgSlug_+/media.tsx:2547
 msgid "Presets"
 msgstr "الإعدادات المسبقة"
 
@@ -36684,7 +36706,7 @@ msgstr "السابق"
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:300
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:697
 #: app/routes/_app+/$orgSlug_+/website+/generate.tsx:177
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6770
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6844
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:884
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:888
 msgid "Preview"
@@ -36719,7 +36741,7 @@ msgstr "معاينة الأيام الأولى"
 msgid "Preview prices"
 msgstr "معاينة الأسعار"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6879
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6953
 msgid "Previewing an earlier version. Nothing has changed yet."
 msgstr "معاينة نسخة سابقة. لم يتغير شيء بعد."
 
@@ -36928,8 +36950,8 @@ msgstr "أساسي"
 msgid "Primary / Default Location"
 msgstr "الفرع الرئيسي / الافتراضي"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3835
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4993
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3907
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5065
 msgid "Primary button"
 msgstr "الزر الأساسي"
 
@@ -37097,11 +37119,11 @@ msgstr "معالجة الآن"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:99
-#: app/routes/_app+/$orgSlug_+/media.tsx:1363
+#: app/routes/_app+/$orgSlug_+/media.tsx:1389
 msgid "Processing"
 msgstr "قيد المعالجة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2662
+#: app/routes/_app+/$orgSlug_+/media.tsx:2692
 msgid "Processing…"
 msgstr "جارٍ المعالجة…"
 
@@ -37170,7 +37192,7 @@ msgstr "البرنامج"
 msgid "Program name"
 msgstr "اسم البرنامج"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4839
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4911
 msgid "Program name (default)"
 msgstr "اسم البرنامج (افتراضي)"
 
@@ -37304,7 +37326,7 @@ msgstr "ملاحظة عامة"
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:639
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:543
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:704
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6788
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6862
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:864
 msgid "Publish"
 msgstr "نشر"
@@ -37329,7 +37351,7 @@ msgstr "انشر موقعاً عاماً لمؤسستك. يمكن للزوار �
 msgid "Publish and activate automation"
 msgstr "نشر وتفعيل الأتمتة"
 
-#: app/components/website/branding-panel.tsx:573
+#: app/components/website/branding-panel.tsx:635
 msgid "Publish branding"
 msgstr "نشر الهوية"
 
@@ -37342,9 +37364,9 @@ msgstr "سجل النشر"
 msgid "Publish history…"
 msgstr "سجل النشر…"
 
-#: app/components/website/branding-panel.tsx:548
+#: app/components/website/branding-panel.tsx:610
 #: app/components/website/publish-controls.tsx:469
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6829
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6903
 msgid "Publish later"
 msgstr "النشر لاحقًا"
 
@@ -37375,7 +37397,7 @@ msgid "Publish this week"
 msgstr "نشر هذا الأسبوع"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:641
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6795
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6869
 msgid "Publish updates"
 msgstr "نشر التحديثات"
 
@@ -37407,7 +37429,7 @@ msgstr "انشر موقعك أولًا."
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:268
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:471
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:648
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6670
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6744
 #: app/routes/_app+/$orgSlug_+/website+/popups._index.tsx:136
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:498
 #: app/utils/reservations/experiences-view.ts:38
@@ -37691,7 +37713,7 @@ msgstr "قاعدة الكمية"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:558
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:559
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4181
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4253
 msgid "Question"
 msgstr "السؤال"
 
@@ -37702,7 +37724,7 @@ msgstr "السؤال {number}"
 
 #: app/components/hiring/job-editor.tsx:202
 #: app/components/hiring/job-summary.tsx:64
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4164
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4236
 msgid "Questions"
 msgstr "الأسئلة"
 
@@ -37752,7 +37774,7 @@ msgstr "يجب أن تبدأ ساعات الهدوء وتنتهي في وقتي�
 msgid "Quiet hours start"
 msgstr "بداية ساعات الهدوء"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5066
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5138
 msgid "Quote"
 msgstr "اقتباس"
 
@@ -37809,7 +37831,7 @@ msgstr "تم التقييم"
 msgid "Rated {rating} out of 5"
 msgstr "التقييم {rating} من 5"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5086
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5158
 msgid "Rating"
 msgstr "التقييم"
 
@@ -38517,7 +38539,7 @@ msgstr "تحديث من Google"
 msgid "Refresh now"
 msgstr "التحديث الآن"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6816
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6890
 msgid "Refresh preview"
 msgstr "تحديث المعاينة"
 
@@ -38765,7 +38787,7 @@ msgid "Registration"
 msgstr "التسجيل"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:169
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4387
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4459
 #: app/utils/reservations/labels.ts:96
 msgid "Regular"
 msgstr "عادي"
@@ -38946,7 +38968,6 @@ msgstr "الإزالة غير منشورة"
 #: app/components/reservations/experiences/experience-editor.tsx:1005
 #: app/components/settings/cards/organization/email-sending-card.tsx:154
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
-#: app/components/settings/cards/organization/site-theme-card.tsx:299
 #: app/components/staff/kiosk-manager.tsx:456
 #: app/components/staff/kiosk-manager.tsx:980
 #: app/components/staff/labor-policy-editor.tsx:1144
@@ -38957,13 +38978,13 @@ msgstr "الإزالة غير منشورة"
 #: app/components/staff/positions-tab.tsx:307
 #: app/components/staff/schedule/shift-editor-sheet.tsx:710
 #: app/components/staff/schedule/shift-editor-sheet.tsx:743
-#: app/components/website/branding-panel.tsx:437
+#: app/components/website/branding-panel.tsx:484
 #: app/components/website/domain/forwarding-panel.tsx:194
 #: app/components/website/domain/records-panel.tsx:297
 #: app/components/website/domain/site-domains-card.tsx:274
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:688
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:713
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3099
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3171
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:498
 msgid "Remove"
 msgstr "إزالة"
@@ -39091,6 +39112,10 @@ msgstr "إزالة النطاق"
 msgid "Remove field"
 msgstr "إزالة الحقل"
 
+#: app/components/settings/cards/organization/site-theme-card.tsx:463
+msgid "Remove font"
+msgstr "إزالة الخط"
+
 #: app/components/staff/positions-tab.tsx:280
 msgid "Remove from {name}?"
 msgstr "إزالة من {name}؟"
@@ -39135,7 +39160,7 @@ msgstr "إزالة المكوّن {rowNumber}"
 msgid "Remove invite"
 msgstr "إزالة الدعوة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5182
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5254
 msgid "Remove link"
 msgstr "إزالة الرابط"
 
@@ -39227,7 +39252,7 @@ msgstr "إزالة مرجع النمط"
 msgid "Remove tag"
 msgstr "إزالة الوسم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2075
+#: app/routes/_app+/$orgSlug_+/media.tsx:2101
 msgid "Remove tag {tag}"
 msgstr "إزالة الوسم {tag}"
 
@@ -39235,7 +39260,7 @@ msgstr "إزالة الوسم {tag}"
 msgid "Remove tag {tagName}"
 msgstr "إزالة الوسم {tagName}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2810
+#: app/routes/_app+/$orgSlug_+/media.tsx:2842
 msgid "Remove tags"
 msgstr "إزالة وسوم"
 
@@ -39510,8 +39535,8 @@ msgstr "تتكرر"
 
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:396
 #: app/components/menu/drop-wizard/drop-form.tsx:703
-#: app/components/settings/cards/organization/site-theme-card.tsx:289
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3073
+#: app/components/settings/cards/organization/site-theme-card.tsx:453
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3145
 msgid "Replace"
 msgstr "استبدال"
 
@@ -39527,7 +39552,7 @@ msgstr "استبدال الملف..."
 msgid "Replace existing overrides on the target"
 msgstr "استبدال التجاوزات الحالية في الهدف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1862
+#: app/routes/_app+/$orgSlug_+/media.tsx:1888
 msgid "Replace image"
 msgstr "استبدال الصورة"
 
@@ -39946,15 +39971,15 @@ msgstr "محجوزة قريبًا"
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/menu/modifier-guest-preview.tsx:229
 #: app/components/organization-invitations.tsx:247
-#: app/routes/_app+/$orgSlug_+/media.tsx:2550
+#: app/routes/_app+/$orgSlug_+/media.tsx:2580
 msgid "Reset"
 msgstr "إعادة تعيين"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2650
+#: app/routes/_app+/$orgSlug_+/media.tsx:2680
 msgid "Reset adjustments"
 msgstr "إعادة تعيين التعديلات"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:670
+#: app/components/settings/cards/organization/site-theme-card.tsx:858
 msgid "Reset all"
 msgstr "إعادة تعيين الكل"
 
@@ -39997,7 +40022,7 @@ msgstr "إعادة تعيين إلى التلقائي"
 msgid "Reset to default"
 msgstr "إعادة التعيين إلى الافتراضي"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:536
+#: app/components/settings/cards/organization/site-theme-card.tsx:724
 msgid "Reset to preset"
 msgstr "إعادة التعيين إلى الإعداد المسبق"
 
@@ -40097,8 +40122,8 @@ msgstr "تُستخدم المطاعم لإدارة فروعك وقوائمك و�
 #: app/components/website/publish-controls.tsx:332
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:593
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:397
-#: app/routes/_app+/$orgSlug_+/media.tsx:1304
-#: app/routes/_app+/$orgSlug_+/media.tsx:2347
+#: app/routes/_app+/$orgSlug_+/media.tsx:1328
+#: app/routes/_app+/$orgSlug_+/media.tsx:2377
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
 msgid "Restore"
 msgstr "استعادة"
@@ -40119,7 +40144,7 @@ msgstr "استعادة: {name}"
 msgid "Restored"
 msgstr "مُستعاد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2706
+#: app/routes/_app+/$orgSlug_+/media.tsx:2738
 msgid "Restored {count} items"
 msgstr "تمت استعادة {count} عنصرًا"
 
@@ -40393,7 +40418,7 @@ msgid "reviews"
 msgstr "تقييمات"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:50
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5048
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5120
 msgid "Reviews"
 msgstr "المراجعات"
 
@@ -40472,8 +40497,8 @@ msgid "Rice"
 msgstr "أرز"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:100
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4090
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4981
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4162
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5053
 msgid "Right"
 msgstr "اليمين"
 
@@ -40514,7 +40539,7 @@ msgstr "الأدوار والصلاحيات"
 msgid "Rolling period (months)"
 msgstr "الفترة المتجددة (أشهر)"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2415
+#: app/routes/_app+/$orgSlug_+/media.tsx:2445
 msgid "Rotate left"
 msgstr "تدوير لليسار"
 
@@ -40522,7 +40547,7 @@ msgstr "تدوير لليسار"
 msgid "Rotate manage link"
 msgstr "تغيير رابط الإدارة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2436
+#: app/routes/_app+/$orgSlug_+/media.tsx:2466
 msgid "Rotate right"
 msgstr "تدوير لليمين"
 
@@ -40557,8 +40582,8 @@ msgstr "التقريب للأعلى إلى مبلغ"
 msgid "Round up to decimals"
 msgstr "التقريب للأعلى إلى منازل عشرية"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4107
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4355
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4179
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4427
 msgid "Rounded"
 msgstr "مستدير"
 
@@ -40928,7 +40953,7 @@ msgstr "بيئة اختبار"
 msgid "Sandbox (developer portal)"
 msgstr "بيئة الاختبار (بوابة المطورين)"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:190
+#: app/components/settings/cards/organization/site-theme-card.tsx:202
 msgid "Sans"
 msgstr "بدون زوائد"
 
@@ -40944,7 +40969,7 @@ msgstr "السبت"
 msgid "Saturated backdrop that makes it pop"
 msgstr "خلفية مشبعة تجعله يبرز"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2599
+#: app/routes/_app+/$orgSlug_+/media.tsx:2629
 msgid "Saturation"
 msgstr "التشبع"
 
@@ -41006,7 +41031,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:335
 #: app/routes/_app+/$orgSlug_+/marketing+/customer-app.tsx:204
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1253
-#: app/routes/_app+/$orgSlug_+/media.tsx:2379
+#: app/routes/_app+/$orgSlug_+/media.tsx:2409
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
 #: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:203
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
@@ -41041,7 +41066,7 @@ msgid "Save and update proof"
 msgstr "حفظ وتحديث البروفة"
 
 #: app/components/media-library/photo-studio-dialog.tsx:1058
-#: app/routes/_app+/$orgSlug_+/media.tsx:2664
+#: app/routes/_app+/$orgSlug_+/media.tsx:2694
 msgid "Save as copy"
 msgstr "حفظ كنسخة"
 
@@ -41061,7 +41086,7 @@ msgstr "حفظ الجمهور"
 msgid "Save banner setting"
 msgstr "حفظ إعداد الشريط"
 
-#: app/components/website/branding-panel.tsx:558
+#: app/components/website/branding-panel.tsx:620
 msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
 
@@ -41085,7 +41110,7 @@ msgstr "حفظ البطاقة للمعاملات اللاحقة"
 #: app/components/reservations/settings/save-bar.tsx:87
 #: app/components/settings/cards/organization/announcement-sheet.tsx:678
 #: app/components/staff/timesheets/card-sheet.tsx:310
-#: app/routes/_app+/$orgSlug_+/media.tsx:2680
+#: app/routes/_app+/$orgSlug_+/media.tsx:2710
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:446
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:618
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1482
@@ -41311,7 +41336,7 @@ msgstr "جمهور محفوظ"
 msgid "Saved changes for {name}."
 msgstr "تم حفظ التغييرات الخاصة بـ {name}."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2708
+#: app/routes/_app+/$orgSlug_+/media.tsx:2740
 msgid "Saved changes to {count} items"
 msgstr "تم حفظ التغييرات على {count} عنصرًا"
 
@@ -41413,7 +41438,7 @@ msgstr "تم الحفظ. تتحدّث نقطة البيع عند اتصالها 
 msgid "Saves this layout for next time. A template keeps the blocks only: no audience, coupon or schedule."
 msgstr "يحفظ هذا التخطيط للمرة القادمة. يحتفظ القالب بالكتل فقط: دون جمهور أو قسيمة أو جدولة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1721
+#: app/routes/_app+/$orgSlug_+/media.tsx:1747
 msgid "Saving as new copy…"
 msgstr "جارٍ الحفظ كنسخة جديدة…"
 
@@ -41425,7 +41450,7 @@ msgstr "جارٍ حفظ مسودة الأتمتة..."
 msgid "Saving creates a new version; purchases keep the version they earned under."
 msgstr "الحفظ يُنشئ إصدارًا جديدًا؛ وتحتفظ المشتريات بالإصدار الذي اكتسبت بموجبه."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1705
+#: app/routes/_app+/$orgSlug_+/media.tsx:1731
 msgid "Saving edited image…"
 msgstr "جارٍ حفظ الصورة المعدّلة…"
 
@@ -41485,7 +41510,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/staff/timesheets/review-queue.tsx:403
 #: app/components/staff/timesheets/review-queue.tsx:428
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:335
-#: app/routes/_app+/$orgSlug_+/media.tsx:2379
+#: app/routes/_app+/$orgSlug_+/media.tsx:2409
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:616
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1468
@@ -41905,12 +41930,12 @@ msgid "Search items to exclude"
 msgstr "البحث في عناصر للاستثناء"
 
 #: app/components/media-library/media-library-picker.tsx:251
-#: app/routes/_app+/$orgSlug_+/media.tsx:1195
+#: app/routes/_app+/$orgSlug_+/media.tsx:1219
 msgid "Search media"
 msgstr "البحث في الوسائط"
 
 #: app/components/media-library/media-library-picker.tsx:252
-#: app/routes/_app+/$orgSlug_+/media.tsx:1196
+#: app/routes/_app+/$orgSlug_+/media.tsx:1220
 msgid "Search media library"
 msgstr "البحث في مكتبة الوسائط"
 
@@ -41970,7 +41995,7 @@ msgstr "البحث في الصفحات..."
 msgid "Search people"
 msgstr "البحث عن أشخاص"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2926
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2998
 msgid "Search preview"
 msgstr "معاينة البحث"
 
@@ -42202,8 +42227,8 @@ msgstr "تبدأ الوردية الثانية"
 msgid "Secondary"
 msgstr "ثانوي"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3851
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5006
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3923
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5078
 msgid "Secondary button"
 msgstr "الزر الثانوي"
 
@@ -42239,7 +42264,7 @@ msgstr "حد القسم"
 msgid "Section color"
 msgstr "لون القسم"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3923
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3995
 msgid "Section height"
 msgstr "ارتفاع القسم"
 
@@ -42272,9 +42297,9 @@ msgstr "طبقة الأقسام وتعيين المسؤولين"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:477
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:663
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:436
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5862
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5863
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6433
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5934
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5935
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6507
 msgid "Sections"
 msgstr "الأقسام"
 
@@ -42496,13 +42521,13 @@ msgid "Seen just now"
 msgstr "شوهد الآن"
 
 #: app/components/staff/timesheets/timesheet-table.tsx:204
-#: app/routes/_app+/$orgSlug_+/media.tsx:1216
+#: app/routes/_app+/$orgSlug_+/media.tsx:1240
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:576
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:442
 msgid "Select"
 msgstr "تحديد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1345
+#: app/routes/_app+/$orgSlug_+/media.tsx:1369
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:623
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:483
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:704
@@ -42527,7 +42552,7 @@ msgstr "اختر تصنيفًا لإضافته إلى هذه القائمة."
 msgid "Select a category to display this item."
 msgstr "اختر تصنيفًا لعرض هذا العنصر."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4640
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4712
 msgid "Select a form"
 msgstr "اختر نموذجًا"
 
@@ -42652,7 +42677,7 @@ msgstr "اختر السمة"
 msgid "Select default language"
 msgstr "اختر اللغة الافتراضية"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3124
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3196
 msgid "Select image"
 msgstr "اختر صورة"
 
@@ -42755,7 +42780,7 @@ msgstr "عناصر مختارة"
 msgid "Selected locations"
 msgstr "فروع محددة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1276
+#: app/routes/_app+/$orgSlug_+/media.tsx:1300
 msgid "Selected media"
 msgstr "الوسائط المحددة"
 
@@ -43129,7 +43154,7 @@ msgstr "يُرسل عندما يرفض المدير الطلب."
 msgid "SEO"
 msgstr "تحسين محركات البحث"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2945
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3017
 msgid "SEO title"
 msgstr "عنوان SEO"
 
@@ -43141,7 +43166,7 @@ msgstr "افصل بين المصطلحات بفواصل. بحد أقصى 100."
 msgid "Separate with commas, for example 25, 50, 100."
 msgstr "افصل بينها بفواصل، مثل 25 و50 و100."
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:204
+#: app/components/settings/cards/organization/site-theme-card.tsx:216
 msgid "Serif"
 msgstr "بزوائد"
 
@@ -43415,7 +43440,7 @@ msgstr "تحديد السعر"
 msgid "Set the proxy status to \"DNS only\" (grey cloud) so the certificate can be issued."
 msgstr "اضبط حالة الوكيل على \"DNS فقط\" (السحابة الرمادية) حتى تُصدَر الشهادة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2826
+#: app/routes/_app+/$orgSlug_+/media.tsx:2858
 msgid "Set the same alt text"
 msgstr "تعيين النص البديل نفسه"
 
@@ -43527,7 +43552,7 @@ msgstr "إعداد DNS"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:395
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:13
 #: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:795
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5874
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5946
 msgid "Settings"
 msgstr "الإعدادات"
 
@@ -43643,7 +43668,7 @@ msgstr "شارك هذا الرابط ليتمكن الأشخاص من الانض
 msgid "Share with others"
 msgstr "شارك مع الآخرين"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3686
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3758
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
@@ -43784,7 +43809,7 @@ msgstr "المتجر"
 msgid "Shop order reports are only available for US organizations."
 msgstr "تقارير طلبات المتجر متاحة للمؤسسات الأمريكية فقط."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5680
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5752
 msgid "Short"
 msgstr "قصير"
 
@@ -43907,7 +43932,7 @@ msgstr "إظهار الوصف"
 msgid "Show details"
 msgstr "عرض التفاصيل"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4660
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4732
 msgid "Show form title"
 msgstr "إظهار عنوان النموذج"
 
@@ -43932,7 +43957,7 @@ msgstr "إظهار حقل ملاحظات المطبخ للأصناف على ال
 msgid "Show less"
 msgstr "عرض أقل"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4861
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4933
 msgid "Show membership tiers"
 msgstr "عرض مستويات العضوية"
 
@@ -43984,7 +44009,7 @@ msgstr "عرض الطلبات"
 msgid "Show result {position}"
 msgstr "عرض النتيجة {position}"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4856
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4928
 msgid "Show rewards catalog"
 msgstr "عرض قائمة المكافآت"
 
@@ -44000,7 +44025,7 @@ msgstr "إظهار العنوان"
 msgid "Show the changes"
 msgstr "عرض التغييرات"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4786
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4858
 msgid "Show the next six (instead of three)"
 msgstr "عرض الست التالية (بدلًا من ثلاث)"
 
@@ -44126,7 +44151,7 @@ msgstr "عرض أحدث {shown} من {total}. ابحث أو صفِّ لتضيي�
 msgid "Shown as typed. It is not worked out from ingredients."
 msgstr "تظهر كما أُدخلت. لا تُحسب من المكوّنات."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2975
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3047
 msgid "Shown in browser tabs and search results. Falls back to the page title when empty."
 msgstr "يظهر في علامات تبويب المتصفح ونتائج البحث. يعود إلى عنوان الصفحة عند تركه فارغاً."
 
@@ -44328,7 +44353,7 @@ msgid "Site address"
 msgstr "عنوان الموقع"
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
-#: app/routes/_app+/$orgSlug_+/media.tsx:1786
+#: app/routes/_app+/$orgSlug_+/media.tsx:1812
 msgid "Site icon"
 msgstr "أيقونة الموقع"
 
@@ -44356,7 +44381,7 @@ msgstr "اسم الحجم"
 msgid "Size price"
 msgstr "سعر الحجم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1900
+#: app/routes/_app+/$orgSlug_+/media.tsx:1926
 msgid "Size:"
 msgstr "الحجم:"
 
@@ -44468,7 +44493,7 @@ msgstr "Slot limits are off for this location."
 msgid "Slug"
 msgstr "الرابط الثابت"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:749
+#: app/components/settings/cards/organization/site-theme-card.tsx:947
 msgid "Small"
 msgstr "صغير"
 
@@ -44536,7 +44561,7 @@ msgstr "لقطات لقائمتك. قارن الإصدارات واستعد عن
 msgid "Social accounts"
 msgstr "حسابات التواصل الاجتماعي"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5217
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5289
 msgid "Social links"
 msgstr "روابط التواصل الاجتماعي"
 
@@ -44567,7 +44592,7 @@ msgstr "المبيعات لكل {oneUnit} ممنوحة"
 msgid "Solid"
 msgstr "ممتلئ"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4939
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5011
 msgid "Solid banner"
 msgstr "شريط صلب"
 
@@ -44823,7 +44848,7 @@ msgstr "حدث خطأ. راجع النموذج وحاول مرة أخرى."
 
 #: app/components/website/domain/domain-ui.tsx:34
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:76
-#: app/routes/_app+/$orgSlug_+/media.tsx:2739
+#: app/routes/_app+/$orgSlug_+/media.tsx:2771
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:279
 #: app/utils/kiosk/kiosk-messages.ts:23
 msgid "Something went wrong. Please try again."
@@ -44867,7 +44892,7 @@ msgstr "المصدر"
 msgid "Soy Allergy"
 msgstr "حساسية الصويا"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4371
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4443
 msgid "Spacing"
 msgstr "التباعد"
 
@@ -45016,8 +45041,8 @@ msgstr "جدول البيانات"
 
 #: app/components/reservations/floor-plan-canvas.tsx:112
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:98
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4117
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4365
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4189
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4437
 msgid "Square"
 msgstr "مربع"
 
@@ -45800,7 +45825,7 @@ msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإع
 msgid "Studio"
 msgstr "استوديو"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2184
+#: app/routes/_app+/$orgSlug_+/media.tsx:2211
 msgid "Studio edit"
 msgstr "تعديل الاستوديو"
 
@@ -45813,13 +45838,13 @@ msgstr "تعديل الاستوديو"
 #: app/components/website/link-inspector.tsx:383
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:590
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:196
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4156
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4229
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4538
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4791
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4887
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4926
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5040
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4228
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4301
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4610
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4863
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4959
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4998
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5112
 msgid "Style"
 msgstr "النمط"
 
@@ -46500,12 +46525,12 @@ msgstr "اسم الوسم"
 #: app/components/member-location-scope.tsx:189
 #: app/components/phone-agent/agent-details.tsx:57
 #: app/components/phone-agent/call-follow-up.tsx:206
-#: app/routes/_app+/$orgSlug_+/media.tsx:2056
+#: app/routes/_app+/$orgSlug_+/media.tsx:2082
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1473
 msgid "Tags"
 msgstr "الوسوم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2700
+#: app/routes/_app+/$orgSlug_+/media.tsx:2730
 msgid "Tags added to {count} items"
 msgstr "تمت إضافة الوسوم إلى {count} عنصرًا"
 
@@ -46521,11 +46546,11 @@ msgstr "الوسوم ادعاءات منك. يستطيع الضيوف تصفية
 msgid "Tags load, and the visitor can opt out. The default for the US."
 msgstr "تُحمَّل العلامات ويمكن للزائر الانسحاب. وهو الافتراضي في الولايات المتحدة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2702
+#: app/routes/_app+/$orgSlug_+/media.tsx:2732
 msgid "Tags removed from {count} items"
 msgstr "تمت إزالة الوسوم من {count} عنصرًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2719
+#: app/routes/_app+/$orgSlug_+/media.tsx:2751
 msgid "Tags use letters, numbers, spaces, - and _, up to 32 characters."
 msgstr "تتكوّن الوسوم من أحرف وأرقام ومسافات و- و_، بحد أقصى 32 حرفًا."
 
@@ -46642,7 +46667,7 @@ msgstr "تحدّث مع وكيلك من هذا المتصفح قبل أن يفع
 msgid "Talks to customers"
 msgstr "يتحدث مع العملاء"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5682
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5754
 msgid "Tall"
 msgstr "طويل"
 
@@ -47071,11 +47096,11 @@ msgstr "رسالة نصية"
 msgid "Text messages are sent only to guests who opted in, and only from the US region. Guests of locations in Saudi Arabia receive email only."
 msgstr "تُرسل الرسائل النصية فقط إلى الضيوف الذين وافقوا على ذلك، ومن منطقة الولايات المتحدة فقط. يتلقى ضيوف المواقع في المملكة العربية السعودية البريد الإلكتروني فقط."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4036
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4108
 msgid "Text only"
 msgstr "نص فقط"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3882
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3954
 msgid "Text position"
 msgstr "موضع النص"
 
@@ -47466,7 +47491,7 @@ msgstr "هذا الشخص غير متاح لهذه الوردية."
 msgid "That phone number is not valid."
 msgstr "رقم الهاتف هذا غير صالح."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2735
+#: app/routes/_app+/$orgSlug_+/media.tsx:2767
 msgid "That photo cannot be the original of this one."
 msgstr "لا يمكن أن تكون تلك الصورة الأصل لهذه الصورة."
 
@@ -47818,7 +47843,7 @@ msgstr "أوقفت المنصة الشريط لهذا الموقع؛ وتُحم�
 msgid "The block must start before it ends."
 msgstr "يجب أن يبدأ الحظر قبل أن ينتهي."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4820
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4892
 msgid "The block shows the stores where your app is live, with a QR code for desktop visitors. It stays empty until a store is live."
 msgstr "تعرض الكتلة المتاجر التي يتوفر فيها تطبيقك مع رمز QR لزوار الحاسوب. تبقى فارغة حتى يتوفر التطبيق في أحد المتاجر."
 
@@ -48353,7 +48378,7 @@ msgstr "يضع مخطط الصالة طاولاتك داخل مناطق الطع
 msgid "The floor plan was saved, but the latest version could not be reloaded."
 msgstr "تم حفظ مخطط الصالة، لكن تعذّر إعادة تحميل أحدث نسخة."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5111
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5183
 msgid "The footer is shared across every page. Leave copyright blank to use the organization name and current year."
 msgstr "التذييل مشترك عبر كل صفحة. اترك حقوق النشر فارغة لاستخدام اسم المؤسسة والسنة الحالية."
 
@@ -48461,7 +48486,7 @@ msgstr "أُرسل إلى الضيف رابط لتأكيد هذا الخصم م�
 msgid "The guest's card is closed or expired."
 msgstr "بطاقة الضيف مغلقة أو منتهية الصلاحية."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3696
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3768
 msgid "The header is shared across every page."
 msgstr "الترويسة مشتركة عبر كل صفحة."
 
@@ -50390,6 +50415,10 @@ msgstr "سينشئ هذا الملف أكثر من {MAX_LOCATION_TAGS} وسمً�
 msgid "This floor plan was changed by someone else"
 msgstr "تم تغيير مخطط الصالة هذا بواسطة شخص آخر"
 
+#: app/components/settings/cards/organization/site-theme-card.tsx:476
+msgid "This font has no licence confirmation yet."
+msgstr "لا يوجد تأكيد ترخيص لهذا الخط بعد."
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:773
 msgid "This form is restricted"
 msgstr "هذا النموذج مقيّد"
@@ -50584,7 +50613,7 @@ msgstr "لم يعد هذا موجودًا. أعد التحميل لرؤية أح
 msgid "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 msgstr "هذا الرقم يصل إلى الوكيل الذكي، لذا ستعود التحويلات إليه. استخدم رقمًا يرد عليه الفريق مباشرة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2191
+#: app/routes/_app+/$orgSlug_+/media.tsx:2218
 msgid "This one"
 msgstr "هذه الصورة"
 
@@ -50712,7 +50741,7 @@ msgstr "هذه الصفحة لك وحدك. لا تشارك الرابط الذي
 msgid "This page opens from the link in your schedule email. Find the latest email from your manager and tap the button in it."
 msgstr "تُفتح هذه الصفحة من الرابط في رسالة الجدول. ابحث عن آخر رسالة من مديرك واضغط الزر فيها."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3197
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3269
 msgid "This page targets: {keywords}"
 msgstr "تستهدف هذه الصفحة: {keywords}"
 
@@ -50800,11 +50829,11 @@ msgstr "رقم الهاتف هذا غير صالح."
 msgid "This photo has already been decided."
 msgstr "تم اتخاذ قرار بشأن هذه الصورة بالفعل."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2729
+#: app/routes/_app+/$orgSlug_+/media.tsx:2761
 msgid "This photo is in use ({where}). Replace it there first, then archive it."
 msgstr "هذه الصورة قيد الاستخدام ({where}). استبدلها هناك أولًا ثم أرشفها."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2733
+#: app/routes/_app+/$orgSlug_+/media.tsx:2765
 msgid "This photo is still being prepared."
 msgstr "هذه الصورة لا تزال قيد التحضير."
 
@@ -51158,7 +51187,7 @@ msgstr "انتهى هذا النقل أو أُلغي بالفعل. أغلقه ث
 msgid "This unit is already used by stock, so it cannot be changed."
 msgstr "هذه الوحدة مستخدمة بالفعل في المخزون، لذا لا يمكن تغييرها."
 
-#: app/components/website/branding-panel.tsx:112
+#: app/components/website/branding-panel.tsx:114
 msgid "This updates the theme preview. The live site changes when you publish."
 msgstr "يحدّث هذا معاينة السمة. يتغير الموقع المنشور عند النشر."
 
@@ -51256,7 +51285,7 @@ msgstr "فكّر لمدة {duration} ثانية"
 msgid "Thread"
 msgstr "سلسلة الردود"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4338
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4410
 msgid "Three"
 msgstr "ثلاثة"
 
@@ -51358,7 +51387,7 @@ msgstr "ترتفع المستويات حسب"
 msgid "Tiers go with a plain item or order discount. They are not available at the till, with a quantity rule, a meal deal or modifier choices."
 msgstr "تعمل المستويات مع خصم عادي على العناصر أو الطلب. وهي غير متاحة عند الصندوق، ولا مع قاعدة كمية أو عرض وجبة أو خيارات الإضافات."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4382
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4454
 msgid "Tight"
 msgstr "متقارب"
 
@@ -51682,9 +51711,9 @@ msgstr "البقشيش على الطلبات عبر الإنترنت المحت�
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:291
 #: app/components/phone-agent/training-rules-section.tsx:516
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4258
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4568
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5138
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4330
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4640
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5210
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:575
 msgid "Title"
 msgstr "العنوان"
@@ -51697,7 +51726,7 @@ msgstr "العنوان ({language})"
 msgid "Title for search engines"
 msgstr "العنوان لمحركات البحث"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:784
+#: app/components/settings/cards/organization/site-theme-card.tsx:985
 msgid "Titles and section headings."
 msgstr "العناوين وعناوين الأقسام."
 
@@ -52128,11 +52157,11 @@ msgstr "ينقل ترتيب البحث"
 msgid "Transfers unavailable"
 msgstr "التحويلات غير متاحة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2406
+#: app/routes/_app+/$orgSlug_+/media.tsx:2436
 msgid "Transform"
 msgstr "تحويل"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2649
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2721
 msgid "Translate"
 msgstr "ترجمة"
 
@@ -52272,7 +52301,7 @@ msgstr "جرّب بحثًا مختلفًا أو امسح عوامل التصفي
 msgid "Try a different search term or clear the search."
 msgstr "جرّب مصطلح بحث مختلفاً أو امسح البحث."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1442
+#: app/routes/_app+/$orgSlug_+/media.tsx:1468
 msgid "Try a different search term."
 msgstr "جرّب مصطلح بحث مختلفًا."
 
@@ -52649,7 +52678,7 @@ msgstr "إيقاف هذا الخيار يتطلب صلاحية «قراءة رد
 msgid "Twice a month"
 msgstr "مرتان في الشهر"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4333
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4405
 msgid "Two"
 msgstr "اثنان"
 
@@ -52698,7 +52727,7 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:292
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1356
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:744
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4464
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4536
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:940
 #: app/routes/mock-payments+/dashboard.tsx:155
 msgid "Type"
@@ -52951,7 +52980,7 @@ msgstr "التراجع عن المسودة"
 msgid "Undo no-show"
 msgstr "التراجع عن عدم الحضور"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5975
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6048
 msgid "Undo redirect"
 msgstr "التراجع عن إعادة التوجيه"
 
@@ -53155,7 +53184,7 @@ msgstr "إلغاء التثبيت"
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:541
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:723
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:809
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6865
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6939
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:862
 msgid "Unpublish"
 msgstr "إلغاء النشر"
@@ -53287,9 +53316,9 @@ msgstr "خصم بلا عنوان"
 msgid "Untitled dish"
 msgstr "طبق بدون عنوان"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1321
-#: app/routes/_app+/$orgSlug_+/media.tsx:1817
-#: app/routes/_app+/$orgSlug_+/media.tsx:2394
+#: app/routes/_app+/$orgSlug_+/media.tsx:1345
+#: app/routes/_app+/$orgSlug_+/media.tsx:1843
+#: app/routes/_app+/$orgSlug_+/media.tsx:2424
 msgid "Untitled image"
 msgstr "صورة بلا عنوان"
 
@@ -53379,7 +53408,7 @@ msgstr "حجوزات قادمة تحتاج إلى مراجعة يدوية بعد
 
 #: app/components/media-library/photo-studio-dialog.tsx:924
 #: app/components/social/google-post-fields.tsx:38
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6792
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6866
 msgid "Update"
 msgstr "تحديث"
 
@@ -53515,7 +53544,7 @@ msgstr "جارٍ التحديث…"
 msgid "Upgrade"
 msgstr "ترقية"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:313
+#: app/components/settings/cards/organization/site-theme-card.tsx:501
 msgid "Upload a font"
 msgstr "رفع خط"
 
@@ -53523,7 +53552,7 @@ msgstr "رفع خط"
 msgid "Upload a JPEG, PNG, or WebP photo to your media library first."
 msgstr "ارفع صورة بصيغة JPEG أو PNG أو WebP إلى مكتبة الوسائط أولًا."
 
-#: app/components/website/branding-panel.tsx:461
+#: app/components/website/branding-panel.tsx:508
 msgid "Upload a logo"
 msgstr "رفع شعار"
 
@@ -53551,7 +53580,7 @@ msgstr "رفع مرجع للنمط"
 msgid "Upload already in progress."
 msgstr "الرفع قيد التنفيذ بالفعل."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1444
+#: app/routes/_app+/$orgSlug_+/media.tsx:1470
 msgid "Upload an image here, or add one to a note, comment, website page, or your organization settings."
 msgstr "حمّل صورة هنا، أو أضف صورة إلى ملاحظة أو تعليق أو صفحة موقع أو إعدادات مؤسستك."
 
@@ -53563,7 +53592,7 @@ msgstr "فشل الرفع."
 msgid "Upload failed. Please try again."
 msgstr "فشل الرفع. يرجى المحاولة مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5829
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5901
 msgid "Upload file"
 msgstr "رفع ملف"
 
@@ -53571,7 +53600,7 @@ msgstr "رفع ملف"
 msgid "Upload held for review"
 msgstr "الرفع محتجز للمراجعة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1167
+#: app/routes/_app+/$orgSlug_+/media.tsx:1189
 msgid "Upload image"
 msgstr "تحميل صورة"
 
@@ -53611,21 +53640,29 @@ msgstr "تحميل شعارك"
 msgid "Upload, rename, replace, and delete files in the shared media library. Everyone can browse it."
 msgstr "رفع الملفات وإعادة تسميتها واستبدالها وحذفها في مكتبة الوسائط المشتركة. يمكن للجميع تصفحها."
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:183
+#: app/components/settings/cards/organization/site-theme-card.tsx:195
 msgid "Uploaded"
 msgstr "تم الرفع"
+
+#: app/components/settings/cards/organization/site-theme-card.tsx:444
+#~ msgid "Uploaded by {0} on {1}"
+#~ msgstr "رفعه {0} في {1}"
+
+#: app/components/settings/cards/organization/site-theme-card.tsx:360
+msgid "Uploaded by {uploader} on {date}"
+msgstr "رفعه {uploader} في {date}"
 
 #: app/utils/loyalty/loyalty-labels.ts:153
 msgid "Uploaded discount does not match"
 msgstr "الخصم المرفوع لا يطابق"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1923
+#: app/routes/_app+/$orgSlug_+/media.tsx:1949
 msgid "Uploaded:"
 msgstr "تاريخ الرفع:"
 
 #: app/components/chat/chat-composer.tsx:336
 #: app/components/website/link-inspector.tsx:542
-#: app/routes/_app+/$orgSlug_+/media.tsx:1165
+#: app/routes/_app+/$orgSlug_+/media.tsx:1187
 msgid "Uploading…"
 msgstr "جارٍ الرفع…"
 
@@ -53653,11 +53690,11 @@ msgstr "عاجل"
 
 #: app/components/website/link-inspector.tsx:364
 #: app/components/website/link-inspector.tsx:406
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3081
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3153
 msgid "URL"
 msgstr "الرابط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1960
+#: app/routes/_app+/$orgSlug_+/media.tsx:1986
 msgid "URL copied to clipboard"
 msgstr "تم نسخ الرابط إلى الحافظة"
 
@@ -53669,7 +53706,7 @@ msgstr "عمليات إعادة توجيه عناوين URL"
 msgid "URL Slug"
 msgstr "المعرّف في الرابط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1945
+#: app/routes/_app+/$orgSlug_+/media.tsx:1971
 msgid "URL:"
 msgstr "الرابط:"
 
@@ -53857,7 +53894,7 @@ msgstr "استخدم قائمة طعام موجودة، ثم حدد حدود ا�
 msgid "Use an https:// address. Plain http:// is only allowed for a path on your own site."
 msgstr "استخدم عنوان https://. يُسمح بـ http:// العادي فقط لمسار على موقعك."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3025
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3097
 msgid "Use an image that's at least 1200px by 630px (1.91:1) for the best results."
 msgstr "استخدم صورة بحجم 1200×630 بكسل على الأقل (1.91:1) للحصول على أفضل النتائج."
 
@@ -54000,7 +54037,7 @@ msgstr "استخدم قيمة"
 msgid "Use their version"
 msgstr "استخدام نسخته"
 
-#: app/components/website/branding-panel.tsx:109
+#: app/components/website/branding-panel.tsx:111
 msgid "Use these colors"
 msgstr "استخدم هذه الألوان"
 
@@ -54051,7 +54088,7 @@ msgstr "مستخدم في المبيعات"
 
 #: app/components/discounts/message-impact.tsx:435
 #: app/components/menu/delete-effects.tsx:527
-#: app/routes/_app+/$orgSlug_+/media.tsx:2205
+#: app/routes/_app+/$orgSlug_+/media.tsx:2232
 msgid "Used in"
 msgstr "مستخدم في"
 
@@ -54377,12 +54414,12 @@ msgstr "النسخة ب في المقدمة."
 msgid "Version B wording (leave a text as it is to keep it)"
 msgstr "صياغة النسخة ب (اترك النص كما هو للإبقاء عليه)"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2156
+#: app/routes/_app+/$orgSlug_+/media.tsx:2182
 msgid "Versions"
 msgstr "الإصدارات"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3878
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4469
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3950
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4541
 msgid "Video"
 msgstr "فيديو"
 
@@ -54390,7 +54427,7 @@ msgstr "فيديو"
 msgid "Video call"
 msgstr "مكالمة فيديو"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1788
+#: app/routes/_app+/$orgSlug_+/media.tsx:1814
 msgid "Video thumbnail"
 msgstr "صورة مصغرة للفيديو"
 
@@ -54480,7 +54517,7 @@ msgstr "عرض تكلفة العمالة"
 msgid "View labor policy"
 msgstr "عرض سياسة العمل"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6854
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6928
 msgid "View live site"
 msgstr "عرض الموقع المباشر"
 
@@ -54652,7 +54689,7 @@ msgstr "تبقى أعداد الزيارات وإجماليات الطلبات �
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr "يتم تخزين أسماء الزوار وأرقام هواتفهم وبريدهم الإلكتروني في هذه المنطقة. تغييرها بعد تسجيل دخول العملاء يحذف تلك البيانات نهائياً — فهي لا تُنقل."
 
-#: app/components/website/branding-panel.tsx:507
+#: app/components/website/branding-panel.tsx:569
 msgid "Visitors keep seeing the live header, footer and theme until you publish."
 msgstr "يستمر الزوار في رؤية الترويسة والتذييل والمظهر المنشورة إلى أن تنشر."
 
@@ -54670,7 +54707,7 @@ msgstr "زيارات"
 msgid "Visits"
 msgstr "الزيارات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1800
+#: app/routes/_app+/$orgSlug_+/media.tsx:1826
 msgid "Vivid"
 msgstr "زاهٍ"
 
@@ -54996,7 +55033,7 @@ msgstr "المطلوب: نعم"
 msgid "Wanted: Yes. This one matters for the job."
 msgstr "المطلوب: نعم. هذا مهم للوظيفة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1801
+#: app/routes/_app+/$orgSlug_+/media.tsx:1827
 msgid "Warm"
 msgstr "دافئ"
 
@@ -55451,7 +55488,7 @@ msgstr "سنبلغك بالبريد الإلكتروني بمجرد فتح قا�
 msgid "We'll send a 6-digit code to <0>{line}</0>. The agent starts answering once you enter it."
 msgstr "سنرسل رمزًا مكونًا من 6 أرقام إلى <0>{line}</0>. يبدأ الوكيل بالرد بمجرد إدخاله."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5972
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6045
 msgid "We'll send visitors from {fromPath} to {toPath}"
 msgstr "سنرسل الزوار من {fromPath} إلى {toPath}"
 
@@ -55485,7 +55522,7 @@ msgstr "Webhooks: {webhookMode}"
 #: app/components/app-sidebar.tsx:669
 #: app/components/command-menu.tsx:152
 #: app/components/workspace-breadcrumb.tsx:14
-#: app/routes/_app+/$orgSlug_+/media.tsx:1790
+#: app/routes/_app+/$orgSlug_+/media.tsx:1816
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:173
 #: app/utils/discounts/labels.ts:171
 msgid "Website"
@@ -55521,7 +55558,7 @@ msgstr "صفحة الموقع"
 msgid "Website safe, email safe"
 msgstr "الموقع آمن والبريد آمن"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1792
+#: app/routes/_app+/$orgSlug_+/media.tsx:1818
 msgid "Website SEO"
 msgstr "تحسين محركات البحث للموقع"
 
@@ -56777,7 +56814,7 @@ msgstr "جارٍ كتابة الرسالة"
 msgid "Writing…"
 msgstr "جارٍ الكتابة…"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6616
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6690
 msgid "Written by AI, review before publishing"
 msgstr "كتبه الذكاء الاصطناعي، راجعه قبل النشر"
 
@@ -57689,7 +57726,7 @@ msgstr "تستخدم فروعك عملات مختلفة. اختر فروعًا �
 msgid "Your MCP Server URL"
 msgstr "رابط خادم MCP الخاص بك"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1438
+#: app/routes/_app+/$orgSlug_+/media.tsx:1464
 msgid "Your media library is empty"
 msgstr "مكتبة الوسائط فارغة"
 
@@ -57749,7 +57786,7 @@ msgstr "أنشأت مؤسستك ملفات طباعة جديدة كثيرة هذ
 msgid "Your own sending domain"
 msgstr "نطاق الإرسال الخاص بك"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6558
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6632
 msgid "Your page will appear here"
 msgstr "ستظهر صفحتك هنا"
 

@@ -23,6 +23,7 @@ import { AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 
+import { isFontRole, sha256Hex } from '@repo/common/font-licence'
 import {
 	getLocaleHref,
 	getLocalizedEditableValue,
@@ -128,20 +129,12 @@ import {
 } from '#app/components/settings/cards/organization/site-icon-card.tsx'
 import {
 	SiteThemeSchema,
+	confirmSiteFontLicenceActionIntent,
 	deleteSiteFontActionIntent,
 	siteThemeActionIntent,
 	uploadSiteFontActionIntent,
 } from '#app/components/settings/cards/organization/site-theme-card.tsx'
 import { BrandingPanel } from '#app/components/website/branding-panel.tsx'
-import {
-	ContactSectionEditor,
-	FeatureIconSelect,
-	HeroSlidesEditor,
-	LocationsHoursEditor,
-	MenuFileEditor,
-	MenuHighlightsEditor,
-	ScrollingStripEditor,
-} from '#app/components/website/restaurant-editors.tsx'
 import { CreatePageDialog } from '#app/components/website/create-page-dialog.tsx'
 import {
 	LinkInspector,
@@ -162,6 +155,15 @@ import {
 	VersionHistorySheet,
 	type VersionPreview,
 } from '#app/components/website/publish-controls.tsx'
+import {
+	ContactSectionEditor,
+	FeatureIconSelect,
+	HeroSlidesEditor,
+	LocationsHoursEditor,
+	MenuFileEditor,
+	MenuHighlightsEditor,
+	ScrollingStripEditor,
+} from '#app/components/website/restaurant-editors.tsx'
 import {
 	TranslateAllButton,
 	TranslateProvider,
@@ -209,6 +211,13 @@ import {
 	SITE_HEADER_ID,
 	type BlockType,
 } from '#app/utils/website/block-types.ts'
+import {
+	checkFontLicence,
+	confirmExistingFontLicence,
+	fontLicenceStatus,
+	recordFontLicence,
+	removeSiteFont,
+} from '#app/utils/website/font-licence.server.ts'
 import { HOME_PAGE_SLUG } from '#app/utils/website/home-page.ts'
 import { ensureSiteChrome } from '#app/utils/website/locked-chrome.server.ts'
 import {
@@ -557,7 +566,7 @@ const ReorderSectionsSchema = z.object({
 
 // --- Loader ---
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
@@ -734,8 +743,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			}))
 		: []
 
+	const fontLicence = await fontLicenceStatus({
+		organizationId: organization.id,
+		userId,
+		themeJson: chrome.theme,
+	})
+
 	return {
 		organization,
+		fontLicence,
 		previewToken: signSitePreviewToken(organization.id),
 		websiteForms,
 		loyaltyEnabled,
@@ -995,6 +1011,23 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 					{ status: 400 },
 				)
 			}
+			// The member confirms a web licence before anything is stored (#286).
+			const licence = await checkFontLicence({
+				organizationId: organization.id,
+				userId,
+				ticked: formData.get('fontLicenceAccepted'),
+				tickedVersion: formData.get('fontLicenceVersion'),
+			})
+			if (licence !== 'ok') {
+				return Response.json(
+					{
+						status: 'error',
+						code: 'font_agreement_required',
+						error: 'font_agreement_required',
+					},
+					{ status: 403 },
+				)
+			}
 			const fontFile = formData.get('fontFile') as File | null
 			if (!fontFile || !(fontFile instanceof File) || fontFile.size <= 0) {
 				return Response.json(
@@ -1032,6 +1065,15 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 					filename: fontFile.name.replace(/^.*[\\/]/, '').slice(0, 180),
 					format,
 				}
+				// Who confirmed which file, and when (#286): name and hash.
+				await recordFontLicence({
+					organizationId: organization.id,
+					userId,
+					role,
+					fileName: customFont.filename,
+					fileHash: await sha256Hex(bytes),
+					objectKey,
+				})
 				await updateSiteThemeDraft(organization.id, (current) => ({
 					...current,
 					headingFont:
@@ -2019,7 +2061,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 				{ status: 400 },
 			)
 		}
-		if (role !== 'heading' && role !== 'body') {
+		if (!isFontRole(role)) {
 			return Response.json(
 				{ status: 'error', error: 'Invalid font role' },
 				{ status: 400 },
@@ -2027,14 +2069,9 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 		}
 
 		try {
-			await updateSiteThemeDraft(organization.id, (current) => ({
-				...current,
-				headingFont: role === 'heading' ? 'inter' : current.headingFont,
-				bodyFont: role === 'body' ? 'inter' : current.bodyFont,
-				headingCustomFont:
-					role === 'heading' ? null : current.headingCustomFont,
-				bodyCustomFont: role === 'body' ? null : current.bodyCustomFont,
-			}))
+			// Both the live and the draft theme go back to the theme font, so the
+			// site falls back at once: fonts load by reference, nothing republishes.
+			await removeSiteFont({ organizationId: organization.id, role, userId })
 			await invalidateUserOrganizationsCache(userId)
 			await notifyReservationsContextChanged(organization.id, 'branding')
 			await purgeOrganizationSiteCache(
@@ -2049,6 +2086,41 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 				{ status: 500 },
 			)
 		}
+	}
+
+	if (intent === confirmSiteFontLicenceActionIntent) {
+		const role = formData.get('role')
+		if (!isFontRole(role) || formData.get('fontLicenceAccepted') !== 'true') {
+			return Response.json(
+				{
+					status: 'error',
+					code: 'font_agreement_required',
+					error: 'font_agreement_required',
+				},
+				{ status: 403 },
+			)
+		}
+		const [chrome] = await db
+			.select({
+				siteTheme: Organization.siteTheme,
+				draftSiteTheme: Organization.draftSiteTheme,
+			})
+			.from(Organization)
+			.where(eq(Organization.id, organization.id))
+			.limit(1)
+		const result = await confirmExistingFontLicence({
+			organizationId: organization.id,
+			userId,
+			role,
+			themeJson: chrome?.draftSiteTheme ?? chrome?.siteTheme ?? null,
+		})
+		if (!result.ok) {
+			return Response.json(
+				{ status: 'error', error: 'No custom font to confirm' },
+				{ status: 404 },
+			)
+		}
+		return Response.json({ status: 'success' })
 	}
 
 	return Response.json(
@@ -5911,6 +5983,7 @@ function InspectorTabs({
 export default function PageBuilderRoute() {
 	const {
 		organization,
+		fontLicence,
 		page,
 		previewToken,
 		themeConfig: initialTheme,
@@ -6394,6 +6467,7 @@ export default function PageBuilderRoute() {
 				) : inspector === 'branding' ? (
 					<BrandingPanel
 						organization={{ ...organization, siteIconAssets: [] }}
+						fontLicence={fontLicence}
 						themeConfig={themeConfig}
 						onPreviewRefresh={handlePreviewRefresh}
 						siteDesignPending={siteDesign.any}

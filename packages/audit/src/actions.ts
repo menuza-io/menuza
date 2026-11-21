@@ -114,6 +114,7 @@ export enum AuditAction {
 	WEBSITE_LEGAL_PAGE_REGENERATED = 'website_legal_page_regenerated',
 	LEGAL_AGREEMENT_ACCEPTED = 'legal_agreement_accepted',
 	LEGAL_AGREEMENT_PUBLISHED = 'legal_agreement_published',
+	FONT_REMOVED = 'font_removed',
 
 	// Data Operations - Notes
 	NOTE_CREATED = 'note_created',

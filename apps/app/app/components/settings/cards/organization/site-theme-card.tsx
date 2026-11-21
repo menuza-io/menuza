@@ -21,7 +21,17 @@ import {
 	type SiteThemeRadius,
 } from '@repo/common/site-theme'
 import { cn } from '@repo/ui'
+import {} from '@repo/common/font-licence'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@repo/ui/dialog'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import {
@@ -63,6 +73,8 @@ export const SiteThemeSchema = z.object({
 export const siteThemeActionIntent = 'update-site-theme'
 export const uploadSiteFontActionIntent = 'upload-site-font'
 export const deleteSiteFontActionIntent = 'delete-site-font'
+/** Confirm the licence of a font uploaded before the agreement (#286). */
+export const confirmSiteFontLicenceActionIntent = 'confirm-site-font-licence'
 
 const MAX_FONT_SIZE = 1024 * 1024 * 2
 const FONT_ACCEPT = '.woff2,.woff,.ttf,.otf'
@@ -232,6 +244,126 @@ function FontSelect({
 	)
 }
 
+/** What Design knows about a custom font's licence confirmation (#286). */
+export type FontLicenceInfo = {
+	version: number
+	/** The signed-in member already accepted this version. */
+	accepted: boolean
+}
+
+export type FontLicenceFontInfo = {
+	uploader: string | null
+	uploadedAt: string | null
+	needsConfirmation: boolean
+}
+
+/**
+ * The agreement shown before a custom font is stored (#286). Continue stays
+ * off until the box is ticked; nothing is uploaded before that.
+ */
+export function FontLicenceDialog({
+	open,
+	fileName,
+	onConfirm,
+	onCancel,
+}: {
+	open: boolean
+	fileName: string | null
+	onConfirm: () => void
+	onCancel: () => void
+}) {
+	const [ticked, setTicked] = useState(false)
+	return (
+		<Dialog
+			open={open}
+			onOpenChange={(next) => {
+				if (!next) {
+					setTicked(false)
+					onCancel()
+				}
+			}}
+		>
+			<DialogContent className="sm:max-w-md">
+				<DialogHeader>
+					<DialogTitle>
+						<Trans>Do you have a licence for this font?</Trans>
+					</DialogTitle>
+					<DialogDescription>
+						<Trans>
+							Fonts are licensed software. Foundries can ask the restaurant, and
+							Menuza as the host, to stop using a font that has no web licence.
+						</Trans>
+					</DialogDescription>
+				</DialogHeader>
+				{fileName ? (
+					<p className="text-muted-foreground truncate text-xs">{fileName}</p>
+				) : null}
+				<label
+					className="flex items-start gap-3 text-sm"
+					htmlFor="font-licence"
+				>
+					<Checkbox
+						id="font-licence"
+						checked={ticked}
+						onCheckedChange={(checked) => setTicked(checked === true)}
+					/>
+					<span>
+						<Trans>
+							I confirm that I hold a licence that allows this font to be used
+							on a website and hosted by a third party.
+						</Trans>
+					</span>
+				</label>
+				<DialogFooter>
+					<Button
+						type="button"
+						variant="ghost"
+						onClick={() => {
+							setTicked(false)
+							onCancel()
+						}}
+					>
+						<Trans>Cancel</Trans>
+					</Button>
+					<Button
+						type="button"
+						disabled={!ticked}
+						onClick={() => {
+							setTicked(false)
+							onConfirm()
+						}}
+					>
+						<Trans>Continue</Trans>
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	)
+}
+
+function UploaderLine({
+	role,
+	uploader,
+	uploadedAt,
+}: {
+	role: 'heading' | 'body'
+	uploader: string
+	uploadedAt: string
+}) {
+	const { i18n } = useLingui()
+	const date = i18n.date(new Date(uploadedAt), { dateStyle: 'medium' })
+	return (
+		<p
+			className="text-muted-foreground text-[11px]"
+			data-testid={`font-uploader-${role}`}
+		>
+			<Trans>
+				Uploaded by {uploader} on {date}
+			</Trans>
+		</p>
+	)
+}
+
 function FontFileField({
 	role,
 	filename,
@@ -239,15 +371,29 @@ function FontFileField({
 	onUpload,
 	onRemove,
 	onError,
+	licence,
+	fontInfo,
+	onConfirmLicence,
 }: {
 	role: 'heading' | 'body'
 	filename: string | null
 	disabled?: boolean
-	onUpload: (role: 'heading' | 'body', file: File) => void
+	onUpload: (
+		role: 'heading' | 'body',
+		file: File,
+		licenceAccepted: boolean,
+	) => void
 	onRemove: (role: 'heading' | 'body') => void
 	onError: (message: string) => void
+	licence?: FontLicenceInfo
+	fontInfo?: FontLicenceFontInfo
+	onConfirmLicence?: (role: 'heading' | 'body') => void
 }) {
 	const inputRef = useRef<HTMLInputElement>(null)
+	// A file waits here until the member ticks the agreement.
+	const [pending, setPending] = useState<
+		{ kind: 'upload'; file: File } | { kind: 'confirm' } | null
+	>(null)
 
 	const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const file = event.currentTarget.files?.[0]
@@ -261,7 +407,11 @@ function FontFileField({
 			onError('Font size must be less than 2MB')
 			return
 		}
-		onUpload(role, file)
+		if (licence && !licence.accepted) {
+			setPending({ kind: 'upload', file })
+			return
+		}
+		onUpload(role, file, Boolean(licence?.accepted))
 	}
 
 	return (
@@ -274,30 +424,68 @@ function FontFileField({
 				disabled={disabled}
 				onChange={handleChange}
 			/>
+			<FontLicenceDialog
+				open={pending !== null}
+				fileName={
+					pending?.kind === 'upload' ? pending.file.name : (filename ?? null)
+				}
+				onCancel={() => setPending(null)}
+				onConfirm={() => {
+					const current = pending
+					setPending(null)
+					if (current?.kind === 'upload') onUpload(role, current.file, true)
+					else if (current?.kind === 'confirm') onConfirmLicence?.(role)
+				}}
+			/>
 			{filename ? (
-				<div className="flex flex-wrap items-center gap-1.5">
-					<p className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]">
-						{filename}
-					</p>
-					<Button
-						type="button"
-						variant="outline"
-						size="xs"
-						disabled={disabled}
-						onClick={() => inputRef.current?.click()}
-					>
-						<Trans>Replace</Trans>
-					</Button>
-					<Button
-						type="button"
-						variant="ghost"
-						size="xs"
-						className="text-destructive hover:text-destructive"
-						disabled={disabled}
-						onClick={() => onRemove(role)}
-					>
-						<Trans>Remove</Trans>
-					</Button>
+				<div className="space-y-1">
+					<div className="flex flex-wrap items-center gap-1.5">
+						<p className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]">
+							{filename}
+						</p>
+						<Button
+							type="button"
+							variant="outline"
+							size="xs"
+							disabled={disabled}
+							onClick={() => inputRef.current?.click()}
+						>
+							<Trans>Replace</Trans>
+						</Button>
+						<Button
+							type="button"
+							variant="ghost"
+							size="xs"
+							className="text-destructive hover:text-destructive"
+							disabled={disabled}
+							onClick={() => onRemove(role)}
+						>
+							<Trans>Remove font</Trans>
+						</Button>
+					</div>
+					{fontInfo?.uploader && fontInfo.uploadedAt ? (
+						<UploaderLine
+							role={role}
+							uploader={fontInfo.uploader}
+							uploadedAt={fontInfo.uploadedAt}
+						/>
+					) : null}
+					{fontInfo?.needsConfirmation && onConfirmLicence ? (
+						<div className="flex flex-wrap items-center gap-1.5">
+							<p className="text-muted-foreground text-[11px]">
+								<Trans>This font has no licence confirmation yet.</Trans>
+							</p>
+							<Button
+								type="button"
+								variant="outline"
+								size="xs"
+								disabled={disabled}
+								onClick={() => setPending({ kind: 'confirm' })}
+							>
+								<Trans>Confirm licence</Trans>
+							</Button>
+						</div>
+					) : null}
 				</div>
 			) : (
 				<button
@@ -722,14 +910,24 @@ export function SiteThemeFields({
 	onRemoveFont,
 	onFontError,
 	uploadingRole,
+	fontLicence,
+	fontInfo,
+	onConfirmFontLicence,
 }: {
 	value: SiteThemeConfig
 	disabled?: boolean
 	onChange: (next: SiteThemeConfig) => void
-	onUploadFont?: (role: 'heading' | 'body', file: File) => void
+	onUploadFont?: (
+		role: 'heading' | 'body',
+		file: File,
+		licenceAccepted: boolean,
+	) => void
 	onRemoveFont?: (role: 'heading' | 'body') => void
 	onFontError?: (message: string) => void
 	uploadingRole?: 'heading' | 'body' | null
+	fontLicence?: FontLicenceInfo
+	fontInfo?: Partial<Record<'heading' | 'body', FontLicenceFontInfo>>
+	onConfirmFontLicence?: (role: 'heading' | 'body') => void
 }) {
 	const { _ } = useLingui()
 
@@ -777,6 +975,9 @@ export function SiteThemeFields({
 						disabled={disabled || uploadingRole === 'heading'}
 						onUpload={onUploadFont}
 						onRemove={onRemoveFont}
+						licence={fontLicence}
+						fontInfo={fontInfo?.heading}
+						onConfirmLicence={onConfirmFontLicence}
 						onError={(message) => onFontError?.(message)}
 					/>
 				) : null}
@@ -805,6 +1006,9 @@ export function SiteThemeFields({
 						disabled={disabled || uploadingRole === 'body'}
 						onUpload={onUploadFont}
 						onRemove={onRemoveFont}
+						licence={fontLicence}
+						fontInfo={fontInfo?.body}
+						onConfirmLicence={onConfirmFontLicence}
 						onError={(message) => onFontError?.(message)}
 					/>
 				) : null}
