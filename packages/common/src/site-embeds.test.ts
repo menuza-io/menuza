@@ -3,11 +3,13 @@ import {
 	buildEmbedFrame,
 	EMBED_PROVIDERS,
 	embedFrameOrigins,
+	embedProvidersOf,
 	isBookingEmbed,
 	MAX_EMBED_INPUT,
 	normalizeEmbedHeight,
 	parseEmbed,
 	readEmbedConfig,
+	sectionsWithVariant,
 } from './site-embeds.ts'
 
 const OT_SNIPPET =
@@ -82,6 +84,59 @@ describe('parseEmbed: accepted forms', () => {
 		const parsed = parseEmbed('google_maps', iframe)
 		expect(parsed).toMatchObject({ ok: true, detected: 'map' })
 		if (parsed.ok) expect(parsed.ids.pb).toBe(pb)
+	})
+
+	it('Google Maps: a place named in Arabic or with accents is accepted, and the frame still ends where it should', () => {
+		const pb =
+			'!1m18!1m12!1m3!1d3622.1!2d46.67!3d24.71!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0!2z2YXYt9i52YUg2KfZhNio2YrYqiDYp9mE2LnYsdio2Yo!5e0!3m2!1sar!2ssa'
+		const named = `${pb}!2sCafé Müller & Söhne ${'الرياض'}`
+		const url = `https://www.google.com/maps/embed?pb=${encodeURIComponent(named)}`
+		const parsed = parseEmbed('google_maps', url)
+		expect(parsed).toMatchObject({ ok: true, detected: 'map' })
+		if (!parsed.ok) return
+		expect(parsed.ids.pb).toBe(named)
+		const frame = buildEmbedFrame({ provider: 'google_maps', ids: parsed.ids })
+		expect(new URL(frame!.src).origin).toBe('https://www.google.com')
+		expect(new URL(frame!.src).searchParams.get('pb')).toBe(named)
+	})
+
+	it('Google Maps: markup, quotes and control characters are still refused', () => {
+		for (const bad of [
+			'!1m18!1m12!1m3!1d3022.1"onload="x"!2d-73.98!3d40.75',
+			'!1m18!1m12!1m3!1d3022.1<script>!2d-73.98!3d40.75!2m3',
+			'!1m18!1m12!1m3!1d3022.1\u0000!2d-73.98!3d40.75!2m3',
+			'!1m18!1m12!1m3!1d3022.1\u202e!2d-73.98!3d40.75!2m3',
+		]) {
+			expect(
+				parseEmbed(
+					'google_maps',
+					`https://www.google.com/maps/embed?pb=${encodeURIComponent(bad)}`,
+				),
+			).toEqual({ ok: false, error: 'embed_unsupported' })
+		}
+	})
+
+	it('Vimeo: an unlisted video keeps its hash, from either address form', () => {
+		for (const input of [
+			'https://vimeo.com/76979871/abcdef1234',
+			'https://vimeo.com/76979871?h=abcdef1234',
+			'<iframe src="https://player.vimeo.com/video/76979871?h=abcdef1234"></iframe>',
+		]) {
+			const parsed = parseEmbed('vimeo', input)
+			expect(parsed).toMatchObject({
+				ok: true,
+				ids: { video: '76979871', hash: 'abcdef1234' },
+			})
+			if (!parsed.ok) continue
+			const frame = buildEmbedFrame({ provider: 'vimeo', ids: parsed.ids })
+			expect(frame?.src).toBe(
+				'https://player.vimeo.com/video/76979871?h=abcdef1234&dnt=1',
+			)
+		}
+		// A hash that is not a hash is dropped, the public video still plays.
+		expect(
+			parseEmbed('vimeo', 'https://vimeo.com/76979871?h=zzzz"><b>'),
+		).toMatchObject({ ok: true, ids: { video: '76979871' } })
 	})
 
 	it('YouTube and Vimeo: videos and playlists', () => {
@@ -351,5 +406,30 @@ describe('embedFrameOrigins: only the providers a page uses', () => {
 		expect(isBookingEmbed('opentable')).toBe(true)
 		expect(isBookingEmbed('resy')).toBe(true)
 		expect(isBookingEmbed('youtube')).toBe(false)
+	})
+})
+
+describe('A/B variants (#338)', () => {
+	const ot = { provider: 'opentable', ids: { restaurantId: '12345' } }
+	const resy = { provider: 'resy', ids: { venue: 'x' } }
+	it('counts the provider a variant swaps in, for the frame-src and the banner', () => {
+		const sections = [
+			{ id: 's1', type: 'embed', config: ot },
+			{ id: 's2', type: 'hero', config: {} },
+		]
+		const withVariant = sectionsWithVariant(sections, {
+			sectionId: 's1',
+			variantConfig: { provider: 'google_maps', ids: { pb: 'x'.repeat(30) } },
+		})
+		expect(embedProvidersOf(withVariant).sort()).toEqual([
+			'google_maps',
+			'opentable',
+		])
+		expect(embedFrameOrigins(withVariant)).toContain('https://www.google.com')
+		// Without a test, or when the section is gone, nothing is added.
+		expect(sectionsWithVariant(sections, null)).toEqual(sections)
+		expect(
+			sectionsWithVariant(sections, { sectionId: 'gone', variantConfig: resy }),
+		).toEqual(sections)
 	})
 })

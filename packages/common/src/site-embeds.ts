@@ -94,6 +94,14 @@ function hostIsCountry(host: string, name: string) {
 	).test(host)
 }
 
+/**
+ * The `pb` of a map embed, as decoded from the address: any printable text
+ * (place names in Arabic or with accents are real), with no control or format
+ * characters, quotes, angle brackets, backslashes or backticks. It is encoded
+ * again when the frame address is built, so it can never end the address.
+ */
+const MAPS_PB = /^[^\p{C}\p{Zl}\p{Zp}"'<>\\`]{20,2000}$/u
+
 const PROVIDERS: Record<EmbedProvider, ProviderSpec> = {
 	opentable: {
 		label: 'OpenTable',
@@ -212,14 +220,12 @@ const PROVIDERS: Record<EmbedProvider, ProviderSpec> = {
 			}
 			if (url.pathname !== '/maps/embed') return null
 			const pb = url.searchParams.get('pb')
-			return pb && /^[A-Za-z0-9!_\-.,%:;=+/ ]{20,2000}$/u.test(pb)
-				? { pb }
-				: null
+			return pb && MAPS_PB.test(pb) ? { pb } : null
 		},
 		frameSrc: (ids) =>
 			`https://www.google.com/maps/embed?pb=${encodeURIComponent(ids.pb!)}`,
 		pageUrl: () => 'https://www.google.com/maps',
-		idPatterns: { pb: /^[A-Za-z0-9!_\-.,%:;=+/ ]{20,2000}$/u },
+		idPatterns: { pb: MAPS_PB },
 		detected: () => 'map',
 	},
 	youtube: {
@@ -270,20 +276,32 @@ const PROVIDERS: Record<EmbedProvider, ProviderSpec> = {
 				url.pathname,
 			)
 			if (showcase) return { showcase: showcase[1]! }
+			// An unlisted video carries a hash (`/<id>/<hash>` or `?h=<hash>`) and
+			// does not play without it.
+			const unlisted = /^\/(\d{3,12})\/([a-f0-9]{8,16})$/iu.exec(url.pathname)
+			if (unlisted) return { video: unlisted[1]!, hash: unlisted[2]! }
 			const video =
 				/^\/video\/(\d{3,12})$/u.exec(url.pathname) ??
 				/^\/(?:channels\/[a-z0-9_-]+\/)?(\d{3,12})$/iu.exec(url.pathname)
-			return video ? { video: video[1]! } : null
+			if (!video) return null
+			const hash = url.searchParams.get('h')
+			return hash && /^[a-f0-9]{8,16}$/iu.test(hash)
+				? { video: video[1]!, hash }
+				: { video: video[1]! }
 		},
 		frameSrc: (ids) =>
 			ids.showcase
 				? `https://vimeo.com/showcase/${ids.showcase}/embed`
-				: `https://player.vimeo.com/video/${ids.video}?dnt=1`,
+				: `https://player.vimeo.com/video/${ids.video}?${ids.hash ? `h=${ids.hash}&` : ''}dnt=1`,
 		pageUrl: (ids) =>
 			ids.showcase
 				? `https://vimeo.com/showcase/${ids.showcase}`
-				: `https://vimeo.com/${ids.video}`,
-		idPatterns: { video: /^\d{3,12}$/u, showcase: /^\d{3,12}$/u },
+				: `https://vimeo.com/${ids.video}${ids.hash ? `/${ids.hash}` : ''}`,
+		idPatterns: {
+			video: /^\d{3,12}$/u,
+			showcase: /^\d{3,12}$/u,
+			hash: /^[a-f0-9]{8,16}$/iu,
+		},
 		detected: (ids) =>
 			ids.showcase ? `showcase ${ids.showcase}` : `video ${ids.video}`,
 	},
@@ -529,6 +547,28 @@ export function buildEmbedFrame(config: unknown): EmbedFrame | null {
 		consent: 'marketing',
 	}
 }
+
+/**
+ * A page's sections plus the variant of an A/B test (#338), which waits in an
+ * inert template and may swap in another provider's embed: its provider needs
+ * its origin in `frame-src` and counts for the cookie banner as much as the
+ * original's.
+ */
+export function sectionsWithVariant(
+	sections: ReadonlyArray<{ id?: string; type: string; config: unknown }>,
+	experiment: { sectionId: string; variantConfig: unknown } | null | undefined,
+): Array<{ type: string; config: unknown }> {
+	if (!experiment) return [...sections]
+	const original = sections.find(
+		(section) => section.id === experiment.sectionId,
+	)
+	return original
+		? [...sections, { type: original.type, config: experiment.variantConfig }]
+		: [...sections]
+}
+
+/** Sent after content with embeds is swapped into the page, so frames are found. */
+export const EMBED_RESCAN_EVENT = 'menuza:embeds-rescan'
 
 /** Providers a page's embed sections use, once each, valid ones only. */
 export function embedProvidersOf(

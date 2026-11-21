@@ -4,7 +4,7 @@ import {
 	resolveConsent,
 	type ConsentMode,
 } from '@repo/common/site-consent'
-import { EMBED_SANDBOX } from '@repo/common/site-embeds'
+import { EMBED_RESCAN_EVENT, EMBED_SANDBOX } from '@repo/common/site-embeds'
 import { readTagIds, SITE_CONSENT_EVENT } from './site-pixels'
 
 /**
@@ -65,7 +65,7 @@ export function embedsAllowed(env: EmbedEnv, mode: ConsentMode) {
 	}).marketing
 }
 
-function mountFrame(host: HTMLElement, env: EmbedEnv) {
+function mountFrame(host: HTMLElement, env: EmbedEnv, focus = false) {
 	if (host.querySelector('iframe')) return
 	const src = host.dataset.embedSrc
 	if (!src || !SRC_PATTERN.test(src)) return
@@ -80,24 +80,32 @@ function mountFrame(host: HTMLElement, env: EmbedEnv) {
 	frame.dataset.embedFrame = ''
 	host.querySelector('[data-embed-placeholder]')?.setAttribute('hidden', '')
 	host.append(frame)
+	// The guest pressed "Load content": that button is gone, so keyboard and
+	// screen-reader users land in the new frame instead of nowhere.
+	if (focus) frame.focus()
 }
 
 /** Loads the frames the guest's choice allows, now and after every choice. */
 export function initSiteEmbeds(env: EmbedEnv = browserEnv()) {
-	const hosts = [
-		...env.document.querySelectorAll<HTMLElement>('[data-site-embed]'),
-	]
+	// Looked up on every pass: an A/B variant is swapped in after the page
+	// loads, and a frame that arrives later must be found too.
 	const apply = () => {
+		const hosts =
+			env.document.querySelectorAll<HTMLElement>('[data-site-embed]')
 		for (const host of hosts) {
 			if (embedsAllowed(env, consentMode(host))) mountFrame(host, env)
 		}
 	}
-	for (const host of hosts) {
-		host
-			.querySelector<HTMLElement>('[data-embed-load]')
-			?.addEventListener('click', () => mountFrame(host, env))
-	}
+	// One listener for every "Load content" button, present or added later.
+	env.document.addEventListener('click', (event) => {
+		const target = event.target
+		if (!(target instanceof Element)) return
+		const button = target.closest('[data-embed-load]')
+		const host = button?.closest<HTMLElement>('[data-site-embed]')
+		if (host) mountFrame(host, env, true)
+	})
 	apply()
 	env.window.addEventListener(SITE_CONSENT_EVENT, apply)
+	env.window.addEventListener(EMBED_RESCAN_EVENT, apply)
 	return { apply }
 }

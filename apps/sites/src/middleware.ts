@@ -1,4 +1,7 @@
-import { embedFrameOrigins } from '@repo/common/site-embeds'
+import {
+	embedFrameOrigins,
+	sectionsWithVariant,
+} from '@repo/common/site-embeds'
 import { resolveSiteLocaleRequest } from '@repo/common/site-locales'
 import { defineMiddleware } from 'astro:middleware'
 import { createSiteI18n } from '~/lib/i18n'
@@ -114,14 +117,17 @@ function securityHeadersFor(
 async function pageEmbedFrameOrigins(
 	promise:
 		| Promise<{
-				sections: ReadonlyArray<{ type: string; config: unknown }>
+				sections: ReadonlyArray<{ id?: string; type: string; config: unknown }>
+				experiment?: { sectionId: string; variantConfig: unknown } | null
 		  } | null>
 		| undefined,
 ) {
 	if (!promise) return []
 	try {
 		const page = await promise
-		return page ? embedFrameOrigins(page.sections) : []
+		return page
+			? embedFrameOrigins(sectionsWithVariant(page.sections, page.experiment))
+			: []
 	} catch {
 		return []
 	}

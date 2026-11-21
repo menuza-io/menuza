@@ -5,7 +5,7 @@ import {
 	getSiteLocaleNativeLabel,
 } from '@repo/common/site-locales'
 import { activeAnnouncements } from '@repo/common/announcement-window'
-import { embedProvidersOf } from '@repo/common/site-embeds'
+import { embedProvidersOf, sectionsWithVariant } from '@repo/common/site-embeds'
 import AnnouncementBanners from '~/components/AnnouncementBanners.astro'
 import AppInviteBanner from '~/components/AppInviteBanner.astro'
 import SitePopup from '~/components/SitePopup.astro'
@@ -71,7 +71,8 @@ const localeDirection = getSiteLocaleDirection(activeLocale)
 const sections = page?.sections ?? []
 // The cookie banner (#89): tags load only as the guest's consent allows.
 const showConsentBanner = bannerApplies(organization, {
-	hasEmbeds: embedProvidersOf(sections).length > 0,
+	hasEmbeds:
+		embedProvidersOf(sectionsWithVariant(sections, page?.experiment)).length > 0,
 })
 const consentMode = organization.consent?.mode ?? 'off'
 const isPreview = Astro.url.searchParams.get('preview') === 'true'

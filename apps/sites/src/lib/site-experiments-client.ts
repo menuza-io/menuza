@@ -1,3 +1,4 @@
+import { EMBED_RESCAN_EVENT } from '@repo/common/site-embeds'
 import { armFor, rememberAssignment } from '~/lib/site-funnel-client'
 
 /**
@@ -23,4 +24,6 @@ export function applyExperiments() {
 		}
 		wrapper.removeAttribute('data-exp-pending')
 	}
+	// Variant B may hold an embed: tell the embed script to look again.
+	window.dispatchEvent(new CustomEvent(EMBED_RESCAN_EVENT))
 }

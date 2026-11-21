@@ -1765,11 +1765,20 @@ links, calendar import, hero video; #147, #286, #259, #318, #319, #301):**
   no visitor). Calendar: `SiteEventCalendarSource`, imported events are
   `SiteEvent` rows with a `sourceId` (`utils/events/`); what the operator adds
   survives a sync, a failed read removes nothing, the address is stored
-  encrypted. Hero video: `HeroVideoGeneration`, a renderer adapter and a draft
-  asset until accepted (`docs/hero-video.md`). jobs-cron gained
-  `CalendarSyncWorkflow` and `HeroVideoWorkflow` (no new cron slot; hourly
-  sweeps). Flags `website.hero_video` (new, default off) and `website.events`
-  (calendar import).
+  encrypted. A feed with more upcoming events than the limit, a truncated one or
+  one that reads empty once never deletes anything (an emptied calendar needs
+  two empty reads in a row); what the occurrence cap cuts is not "removed"; one
+  read per source at a time (compare and set on `nextSyncAt`). The address is
+  fetched through the menu importer's SSRF guard, whose DNS rebinding window
+  cannot be fully closed on Workers. A removed font is dropped where the site is
+  served (`findPublishedSiteOrganization`, and `/resources/fonts` answers 410),
+  so a restored version or a scheduled publish cannot bring it back. Hero video:
+  `HeroVideoGeneration`, a renderer adapter and a draft asset until accepted
+  (`docs/hero-video.md`); a passing renderer failure re-queues and answers 503
+  so the workflow retries. jobs-cron gained `CalendarSyncWorkflow` and
+  `HeroVideoWorkflow` (no new cron slot; hourly sweeps). Flags
+  `website.hero_video` (new, default off) and `website.events` (calendar
+  import).
 
 **Website publishing (versions, schedules, announcement windows, redirects,
 legal pages, Menuza agreements; #85, #180, #238, #248, #89, #194, #260):**

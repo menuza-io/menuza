@@ -7,6 +7,7 @@ import {
 	CONSENT_STORAGE_KEY,
 	makeConsentChoice,
 } from '@repo/common/site-consent'
+import { EMBED_RESCAN_EVENT } from '@repo/common/site-embeds'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { initSiteEmbeds, type EmbedEnv } from './site-embeds-client'
 import { SITE_CONSENT_EVENT } from './site-pixels'
@@ -34,6 +35,9 @@ function env(overrides: Partial<EmbedEnv> = {}): EmbedEnv {
 }
 
 const frame = () => document.querySelector<HTMLIFrameElement>('iframe')
+// jest-dom is not set up in this project.
+const hasFocus = (element: Element | null) =>
+	element !== null && Object.is(document.activeElement, element)
 
 function choose(marketing: boolean) {
 	window.localStorage.setItem(
@@ -128,5 +132,51 @@ describe('embed frames and cookie consent', () => {
 			initSiteEmbeds(env())
 			expect(frame()).toBeNull()
 		}
+	})
+})
+
+describe('a frame that arrives after the page loaded (A/B variant)', () => {
+	const late = (mode: 'required' | 'notice' | 'off') =>
+		`<div data-site-embed data-consent-mode="${mode}" data-embed-src="${OT}" data-embed-title="Variant">
+			<div data-embed-placeholder><button type="button" data-embed-load>Load content</button></div>
+		</div>`
+
+	it('its Load button works although it was added after the script started', () => {
+		mount('required')
+		initSiteEmbeds(env())
+		const arrived = document.createElement('div')
+		arrived.innerHTML = late('required')
+		document.body.append(arrived)
+		document
+			.querySelector<HTMLButtonElement>(
+				'[data-embed-title="Variant"] [data-embed-load]',
+			)!
+			.click()
+		expect(
+			document.querySelector('[data-embed-title="Variant"] iframe'),
+		).not.toBeNull()
+	})
+
+	it('is found and loaded by a rescan once consent allows it', () => {
+		document.body.innerHTML = '<div hidden data-site-pixels></div>'
+		initSiteEmbeds(env())
+		const arrived = document.createElement('div')
+		arrived.innerHTML = late('off')
+		document.body.append(arrived)
+		expect(document.querySelector('iframe')).toBeNull()
+		window.dispatchEvent(new CustomEvent(EMBED_RESCAN_EVENT))
+		expect(document.querySelector('iframe')).not.toBeNull()
+	})
+
+	it('moves focus into the frame after the guest presses Load content, and not when consent loads it', () => {
+		mount('required')
+		initSiteEmbeds(env())
+		document.querySelector<HTMLButtonElement>('[data-embed-load]')!.click()
+		expect(hasFocus(frame())).toBe(true)
+		document.body.innerHTML = ''
+		mount('off')
+		initSiteEmbeds(env())
+		expect(frame()).not.toBeNull()
+		expect(hasFocus(frame())).toBe(false)
 	})
 })
