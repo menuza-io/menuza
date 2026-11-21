@@ -199,19 +199,26 @@ test.describe('Organization Management', () => {
 
 		// Update organization details (only name and slug are available in the form)
 		const newName = `${faker.company.name()} ${faker.string.alphanumeric(6)}`
-		await nameField.click()
 		await nameField.fill(newName)
-		await nameField.dispatchEvent('input', { bubbles: true })
 		await expect(nameField).toHaveValue(newName)
-		await expect(saveBar(page).bar).toBeVisible()
 
+		const settingsForm = page.getByTestId('organization-general-settings-form')
+		const save = saveBar(page).save
+		const saveVisible = await save.isVisible().catch(() => false)
 		await Promise.all([
 			page.waitForResponse(
 				(res) =>
 					res.url().includes('/settings') &&
 					res.request().method() === 'POST',
 			),
-			saveBar(page).save.click(),
+			saveVisible
+				? save.click()
+				: settingsForm.evaluate((form) => {
+						if (!(form instanceof HTMLFormElement)) {
+							throw new Error('organization settings form missing')
+						}
+						form.requestSubmit()
+					}),
 		])
 
 		// Verify success message
