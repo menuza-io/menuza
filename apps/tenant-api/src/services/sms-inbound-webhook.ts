@@ -1,5 +1,6 @@
 import { matchSmsKeyword } from '@repo/common/sms-compliance'
 import { consentBaseUrl } from '../lib/email-consent.ts'
+import { readCappedRequestText } from '../lib/http.ts'
 import {
 	isInboundProvider,
 	twimlReply,
@@ -40,12 +41,10 @@ export async function handleInboundSmsWebhook(
 	if (!smsRouteAvailable() || !isInboundProvider(provider)) {
 		return Response.json({ error: 'not_found' }, { status: 404 })
 	}
-	const declared = Number(request.headers.get('content-length') ?? 0)
-	if (declared > MAX_BODY_BYTES) {
-		return Response.json({ error: 'too_large' }, { status: 413 })
-	}
-	const rawBody = await request.text()
-	if (rawBody.length > MAX_BODY_BYTES) {
+	// The stream is counted and cancelled at the cap: a chunked body has no
+	// content-length, and this runs before the signature is checked.
+	const rawBody = await readCappedRequestText(request, MAX_BODY_BYTES)
+	if (rawBody === null) {
 		return Response.json({ error: 'too_large' }, { status: 413 })
 	}
 

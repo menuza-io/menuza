@@ -22,12 +22,14 @@ if (!organization || !tenantApiUrl) {
 	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
 }
 
+// Only Cloudflare's own header names the visitor's address: `x-forwarded-for`
+// is the client's to set, so without `cf-connecting-ip` a visit is not counted
+// (click counts are advisory, not billing-grade).
+const visitor = Astro.request.headers.get('cf-connecting-ip')
 const count =
 	!isLikelyBot(Astro.request.headers.get('user-agent')) &&
-	clickLimiter.allow(
-		Astro.request.headers.get('cf-connecting-ip') ??
-			Astro.request.headers.get('x-forwarded-for'),
-	)
+	visitor !== null &&
+	clickLimiter.allow(visitor)
 const answer = await lookupShortLink({
 	tenantApiUrl,
 	origin: Astro.url.origin,

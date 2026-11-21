@@ -9,7 +9,8 @@ import { sanitizeAttributionValue } from './short-links.ts'
  * `attribution_source` for reports) and uses it only for reporting.
  *
  * Every value is at most 100 characters and loses its control characters; an
- * unknown field refuses the whole payload. The last non-direct touch within 7
+ * unknown field refuses the whole payload. A campaign, step or short link the
+ * region does not know is dropped. The last non-direct touch within 7
  * days wins; that is decided where the touch is kept (the browser) and checked
  * again here (`touchedAt`). No cookie, no visitor id, no address, no user agent.
  */
@@ -79,6 +80,10 @@ export function buildOrderAttribution(input: {
 	orderSource: 'qr_table' | 'qr_poster' | null
 	attribution: OrderAttributionInput | null | undefined
 	shortLinkKnown: boolean
+	/** Whether the region has this broadcast or automation (`campaignId`). */
+	campaignKnown: boolean
+	/** Whether that automation has run this step (`stepId`). */
+	stepKnown: boolean
 	couponCode?: string | null
 	now: number
 }): BuiltAttribution {
@@ -94,8 +99,13 @@ export function buildOrderAttribution(input: {
 		if (touch.utmMedium) stored.utmMedium = touch.utmMedium
 		if (touch.utmCampaign) stored.utmCampaign = touch.utmCampaign
 		if (touch.utmContent) stored.utmContent = touch.utmContent
-		if (touch.campaignId) stored.campaignId = touch.campaignId
-		if (touch.stepId && touch.campaignId) stored.stepId = touch.stepId
+		// An id the region does not know is the visitor's invention: not kept, so
+		// a crafted link cannot credit an order to a campaign or step that is
+		// not this organization's.
+		if (touch.campaignId && input.campaignKnown) {
+			stored.campaignId = touch.campaignId
+			if (touch.stepId && input.stepKnown) stored.stepId = touch.stepId
+		}
 		if (touch.shortLinkId && input.shortLinkKnown) {
 			stored.shortLinkId = touch.shortLinkId
 		}

@@ -12,7 +12,10 @@ describe('postSmsAllowance (#247)', () => {
 		process.env.APP_URL = 'https://app.example.test'
 		process.env.INTERNAL_COMMAND_TOKEN = 'test-internal-command-token'
 	})
-	afterEach(() => vi.unstubAllGlobals())
+	afterEach(() => {
+		vi.unstubAllGlobals()
+		vi.unstubAllEnvs()
+	})
 
 	it('posts ids only, with the internal token, and reads the answer', async () => {
 		const fetchMock = vi.fn(async () => Response.json({ ok: true }))
@@ -76,5 +79,23 @@ describe('postSmsAllowance (#247)', () => {
 			await postSmsAllowance({ ...event, phone: '+15550001111' } as never),
 		).toEqual({ ok: 'unavailable' })
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	it('is a bare local run without an App origin in development, where nothing is counted', async () => {
+		vi.stubEnv('NODE_ENV', 'test')
+		process.env.APP_URL = ''
+		process.env.BASE_URL = ''
+		expect(await postSmsAllowance(event)).toEqual({ ok: 'not_configured' })
+	})
+
+	it('holds the text back in production without an App origin, never sending it uncounted', async () => {
+		vi.stubEnv('NODE_ENV', 'production')
+		process.env.APP_URL = ''
+		process.env.BASE_URL = ''
+		expect(await postSmsAllowance(event)).toEqual({ ok: 'unavailable' })
+		vi.stubEnv('NODE_ENV', 'production')
+		process.env.APP_URL = 'https://app.example.test'
+		process.env.INTERNAL_COMMAND_TOKEN = 'short'
+		expect(await postSmsAllowance(event)).toEqual({ ok: 'unavailable' })
 	})
 })

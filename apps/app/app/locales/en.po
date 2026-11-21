@@ -83,6 +83,10 @@ msgstr ""
 msgid "(edited)"
 msgstr "(edited)"
 
+#: app/components/marketing/marketing-calendar.tsx:274
+msgid "(expected date)"
+msgstr "(expected date)"
+
 #: app/components/print/print-labels.ts:59
 msgid "(folded)"
 msgstr "(folded)"
@@ -23638,7 +23642,7 @@ msgstr "Image link"
 msgid "Image link copied"
 msgstr "Image link copied"
 
-#: app/components/marketing/marketing-calendar.tsx:309
+#: app/components/marketing/marketing-calendar.tsx:313
 #: app/components/social/social-calendar.tsx:116
 #: app/components/social/social-calendar.tsx:175
 #: app/components/social/social-calendar.tsx:224
@@ -26226,8 +26230,8 @@ msgid "Link for {label}"
 msgstr "Link for {label}"
 
 #: app/components/marketing/short-links-screen.tsx:143
-msgid "Link is on"
-msgstr "Link is on"
+#~ msgid "Link is on"
+#~ msgstr "Link is on"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:565
 msgid "Link label"
@@ -30780,7 +30784,7 @@ msgstr "No notes yet."
 msgid "No numbers connected yet."
 msgstr "No numbers connected yet."
 
-#: app/components/marketing/marketing-calendar.tsx:334
+#: app/components/marketing/marketing-calendar.tsx:338
 msgid "No occasions in the next four weeks."
 msgstr "No occasions in the next four weeks."
 
@@ -32601,6 +32605,10 @@ msgstr "Occasion"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1076
 msgid "Occasion name"
 msgstr "Occasion name"
+
+#: app/components/marketing/marketing-calendar.tsx:271
+msgid "Occasion:"
+msgstr "Occasion:"
 
 #: app/components/staff/labor/labor-overview.tsx:404
 msgid "of {sourceName}"
@@ -44402,6 +44410,10 @@ msgstr "Short day with these hours"
 #: app/components/orders/refund-labels.ts:40
 msgid "Short link"
 msgstr "Short link"
+
+#: app/components/marketing/short-links-screen.tsx:143
+msgid "Short link {title} is on"
+msgstr "Short link {title} is on"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/links.tsx:157
 msgid "Short links to your website, with a count of clicks and a QR code."

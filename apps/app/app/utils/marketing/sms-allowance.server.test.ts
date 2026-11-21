@@ -160,6 +160,62 @@ describe('marketing text allowance (#247)', () => {
 		expect(held).toHaveLength(4)
 	})
 
+	it('the same broadcast reserved by several calls at once spends exactly one send', async () => {
+		const organizationId = await org('starter')
+		const campaignId = campaign()
+		const results = await Promise.all(
+			Array.from({ length: 5 }, () =>
+				reserveSmsSend({ organizationId, campaignId, startsAtMs: NOV }),
+			),
+		)
+		expect(results.every((result) => result.ok)).toBe(true)
+		expect((await getSmsAllowance(organizationId, NOV)).used).toBe(1)
+	})
+
+	it('an unpaid claim an interrupted call left behind is paid for on the next call, never a free send', async () => {
+		const organizationId = await org('starter')
+		const campaignId = campaign()
+		// What the old three-step code left after a crash: a hold, no spend.
+		await db.insert(MarketingSmsSend).values({
+			campaignId,
+			organizationId,
+			periodKey: '2026-11',
+			state: 'pending',
+		})
+		expect((await getSmsAllowance(organizationId, NOV)).used).toBe(0)
+		await expect(
+			startSmsSend({ organizationId, campaignId, now: NOV }),
+		).resolves.toEqual({ ok: true })
+		expect((await getSmsAllowance(organizationId, NOV)).used).toBe(1)
+		const [row] = await db
+			.select()
+			.from(MarketingSmsSend)
+			.where(eq(MarketingSmsSend.campaignId, campaignId))
+		expect(row!.state).toBe('started')
+		// And with nothing left, a refused call leaves no hold behind.
+		for (let i = 0; i < 3; i++) {
+			await reserveSmsSend({
+				organizationId,
+				campaignId: campaign(),
+				startsAtMs: NOV,
+			})
+		}
+		const refused = campaign()
+		expect(
+			await reserveSmsSend({
+				organizationId,
+				campaignId: refused,
+				startsAtMs: NOV,
+			}),
+		).toMatchObject({ ok: false })
+		expect(
+			await db
+				.select()
+				.from(MarketingSmsSend)
+				.where(eq(MarketingSmsSend.campaignId, refused)),
+		).toHaveLength(0)
+	})
+
 	it('cancelling before it starts gives the send back, once', async () => {
 		const organizationId = await org('starter')
 		const campaignId = campaign()

@@ -5,6 +5,7 @@ import path from 'node:path'
 import {
 	destroyTenantDb,
 	getTenantDb,
+	marketingCampaigns,
 	provisionTenantDb,
 	restaurantOrders,
 } from '@repo/tenant-db'
@@ -227,12 +228,22 @@ describe('order attribution at placement (#115)', () => {
 		expect(row.attribution).toBeNull()
 	})
 
+	async function broadcast() {
+		const db = await getTenantDb(orgId)
+		const [row] = await db
+			.insert(marketingCampaigns)
+			.values({ name: 'Spring brunch', channel: 'email', status: 'Completed' })
+			.returning({ id: marketingCampaigns.id })
+		return row!.id
+	}
+
 	it('stores the campaign, the UTM values and the source of an email click', async () => {
+		const campaignId = await broadcast()
 		const row = await place({
 			utmSource: 'menuza',
 			utmMedium: 'email',
 			utmCampaign: 'spring-brunch',
-			campaignId: 'camp-1',
+			campaignId,
 			touchedAt: NOW - 3600_000,
 		})
 		expect(row.attributionSource).toBe('email')
@@ -240,8 +251,22 @@ describe('order attribution at placement (#115)', () => {
 			utmSource: 'menuza',
 			utmMedium: 'email',
 			utmCampaign: 'spring-brunch',
-			campaignId: 'camp-1',
+			campaignId,
 		})
+	})
+
+	it('drops a campaign or step id this organization does not have, so a crafted link credits nothing', async () => {
+		const row = await place({
+			utmSource: 'menuza',
+			utmMedium: 'email',
+			campaignId: 'someone-elses-campaign',
+			stepId: 'step-1',
+			touchedAt: NOW - 3600_000,
+		})
+		expect(row.attribution).not.toHaveProperty('campaignId')
+		expect(row.attribution).not.toHaveProperty('stepId')
+		// What is left is only the visitor's own UTM source.
+		expect(row.attributionSource).toBe('menuza')
 	})
 
 	it('a UTM visit two days earlier is still credited, one 8 days earlier is not', async () => {
@@ -266,15 +291,16 @@ describe('order attribution at placement (#115)', () => {
 			kind: 'link',
 			targetPath: '/menu',
 		})
+		const campaignId = await broadcast()
 		const row = await place({
 			shortLinkId: link.id,
-			campaignId: 'camp-2',
+			campaignId,
 			touchedAt: NOW - 3600_000,
 		})
 		expect(row.attributionSource).toBe('short_link')
 		expect(row.attribution).toMatchObject({
 			shortLinkId: link.id,
-			campaignId: 'camp-2',
+			campaignId,
 		})
 		const made = await place({ shortLinkId: 'made-up-id', touchedAt: NOW })
 		expect(made.attributionSource).toBe('direct')

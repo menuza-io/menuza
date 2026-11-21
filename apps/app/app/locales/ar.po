@@ -81,6 +81,10 @@ msgstr "(${annualPrice} يُفوتر سنوياً لكل مستخدم)"
 msgid "(edited)"
 msgstr "(تم التعديل)"
 
+#: app/components/marketing/marketing-calendar.tsx:274
+msgid "(expected date)"
+msgstr "(تاريخ متوقع)"
+
 #: app/components/print/print-labels.ts:59
 msgid "(folded)"
 msgstr "(مطويّة)"
@@ -23636,7 +23640,7 @@ msgstr "رابط الصورة"
 msgid "Image link copied"
 msgstr "تم نسخ رابط الصورة"
 
-#: app/components/marketing/marketing-calendar.tsx:309
+#: app/components/marketing/marketing-calendar.tsx:313
 #: app/components/social/social-calendar.tsx:116
 #: app/components/social/social-calendar.tsx:175
 #: app/components/social/social-calendar.tsx:224
@@ -26224,8 +26228,8 @@ msgid "Link for {label}"
 msgstr "رابط {label}"
 
 #: app/components/marketing/short-links-screen.tsx:143
-msgid "Link is on"
-msgstr "الرابط مفعّل"
+#~ msgid "Link is on"
+#~ msgstr "الرابط مفعّل"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:565
 msgid "Link label"
@@ -30778,7 +30782,7 @@ msgstr "لا توجد ملاحظات بعد."
 msgid "No numbers connected yet."
 msgstr "لم يتم ربط أي أرقام بعد."
 
-#: app/components/marketing/marketing-calendar.tsx:334
+#: app/components/marketing/marketing-calendar.tsx:338
 msgid "No occasions in the next four weeks."
 msgstr "لا توجد مناسبات في الأسابيع الأربعة المقبلة."
 
@@ -32599,6 +32603,10 @@ msgstr "المناسبة"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1076
 msgid "Occasion name"
 msgstr "اسم المناسبة"
+
+#: app/components/marketing/marketing-calendar.tsx:271
+msgid "Occasion:"
+msgstr "مناسبة:"
 
 #: app/components/staff/labor/labor-overview.tsx:404
 msgid "of {sourceName}"
@@ -44400,6 +44408,10 @@ msgstr "يوم قصير بهذه الساعات"
 #: app/components/orders/refund-labels.ts:40
 msgid "Short link"
 msgstr "رابط مختصر"
+
+#: app/components/marketing/short-links-screen.tsx:143
+msgid "Short link {title} is on"
+msgstr "الرابط المختصر {title} مفعّل"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/links.tsx:157
 msgid "Short links to your website, with a count of clicks and a QR code."

@@ -268,7 +268,11 @@ export function MarketingCalendarGrid({
 									}
 								>
 									<Icon name="sparkles" className="size-3 shrink-0" />
+									<span className="sr-only">{_(msg`Occasion:`)}</span>
 									<span className="truncate">{dayTitle}</span>
+									{occasion.expected ? (
+										<span className="sr-only">{_(msg`(expected date)`)}</span>
+									) : null}
 								</li>
 							)
 						})}

@@ -168,7 +168,10 @@ export async function reserveSmsSend(input: {
 			allowance: await getSmsAllowance(input.organizationId, input.startsAtMs),
 		}
 	}
-	if (existing && existing.state !== 'released') {
+	// A `pending` row is an unpaid claim an interrupted call left behind: it
+	// holds nothing, so it is claimed again below.
+	const unpaid = existing?.state === 'released' || existing?.state === 'pending'
+	if (existing && !unpaid) {
 		if (existing.periodKey === period.key) {
 			return { ok: true, periodKey: period.key, alreadyHeld: true }
 		}
@@ -185,75 +188,65 @@ export async function reserveSmsSend(input: {
 		.onConflictDoNothing()
 	const base = smsSendsForPlan(await planNameOf(input.organizationId))
 
-	// Claim this broadcast's hold first (it is the record a release finds), then
-	// spend the send in one conditional statement.
-	const claimed = existing
-		? await db
-				.update(MarketingSmsSend)
-				.set({ state: 'pending', periodKey: period.key })
-				.where(
-					and(
-						eq(MarketingSmsSend.campaignId, input.campaignId),
-						eq(MarketingSmsSend.state, 'released'),
-					),
-				)
-				.returning({ campaignId: MarketingSmsSend.campaignId })
-		: await db
-				.insert(MarketingSmsSend)
-				.values({
-					campaignId: input.campaignId,
-					organizationId: input.organizationId,
-					periodKey: period.key,
-					state: 'pending',
-				})
-				.onConflictDoNothing()
-				.returning({ campaignId: MarketingSmsSend.campaignId })
-	if (claimed.length === 0) {
-		// A twin of this call got there first: it holds the send.
-		return { ok: true, periodKey: period.key, alreadyHeld: true }
-	}
+	// Claim the hold and spend the send in ONE atomic batch (D1 `db.transaction`
+	// is not atomic, `db.batch` is): a crash or a failed call can never leave a
+	// hold that was not paid for, nor a send spent without a hold. The claim
+	// only happens while the month has a send left, and the spend only follows
+	// a claim that is still `pending` in this same batch.
+	const now = Date.now()
+	const room = sql`(SELECT "sends" FROM "MarketingSmsUsage"
+		WHERE "organizationId" = ${input.organizationId} AND "periodKey" = ${period.key})
+		< ${base} + (SELECT "extraSends" FROM "MarketingSmsUsage"
+		WHERE "organizationId" = ${input.organizationId} AND "periodKey" = ${period.key})`
+	await db.batch([
+		existing
+			? db.run(sql`UPDATE "MarketingSmsSend"
+				SET "state" = 'pending', "periodKey" = ${period.key}, "updatedAt" = ${now}
+				WHERE "campaignId" = ${input.campaignId} AND "state" IN ('released', 'pending') AND ${room}`)
+			: db.run(sql`INSERT INTO "MarketingSmsSend"
+					("campaignId", "organizationId", "periodKey", "state", "createdAt", "updatedAt")
+				SELECT ${input.campaignId}, ${input.organizationId}, ${period.key}, 'pending', ${now}, ${now}
+				WHERE ${room}
+				ON CONFLICT ("campaignId") DO NOTHING`),
+		db.run(sql`UPDATE "MarketingSmsUsage" SET "sends" = "sends" + 1
+			WHERE "organizationId" = ${input.organizationId} AND "periodKey" = ${period.key}
+				AND EXISTS (SELECT 1 FROM "MarketingSmsSend"
+					WHERE "campaignId" = ${input.campaignId} AND "state" = 'pending')`),
+		db.run(sql`UPDATE "MarketingSmsSend" SET "state" = 'reserved', "updatedAt" = ${now}
+			WHERE "campaignId" = ${input.campaignId} AND "state" = 'pending'`),
+	])
 
-	const spent = await db
-		.update(MarketingSmsUsage)
-		.set({ sends: sql`${MarketingSmsUsage.sends} + 1` })
-		.where(
-			and(
-				eq(MarketingSmsUsage.organizationId, input.organizationId),
-				eq(MarketingSmsUsage.periodKey, period.key),
-				sql`${MarketingSmsUsage.sends} < ${base} + ${MarketingSmsUsage.extraSends}`,
-			),
-		)
-		.returning({ sends: MarketingSmsUsage.sends })
-	if (spent.length === 0) {
-		// Nothing left: undo the claim so the broadcast holds no send.
-		await db
-			.update(MarketingSmsSend)
-			.set({ state: 'released' })
-			.where(
-				and(
-					eq(MarketingSmsSend.campaignId, input.campaignId),
-					eq(MarketingSmsSend.state, 'pending'),
-				),
-			)
+	const [hold] = await db
+		.select()
+		.from(MarketingSmsSend)
+		.where(eq(MarketingSmsSend.campaignId, input.campaignId))
+		.limit(1)
+	if (
+		hold &&
+		hold.organizationId === input.organizationId &&
+		hold.periodKey === period.key &&
+		hold.state !== 'released'
+	) {
+		// Held now: by this call, or by a twin whose batch ran first (one send
+		// was spent either way). `alreadyHeld` says it was held before this call.
 		return {
-			ok: false,
-			reason: 'exhausted',
-			allowance: await getSmsAllowance(input.organizationId, input.startsAtMs),
+			ok: true,
+			periodKey: period.key,
+			alreadyHeld: !unpaid && !!existing,
 		}
 	}
-	await db
-		.update(MarketingSmsSend)
-		.set({ state: 'reserved' })
-		.where(
-			and(
-				eq(MarketingSmsSend.campaignId, input.campaignId),
-				eq(MarketingSmsSend.state, 'pending'),
-			),
-		)
-	return { ok: true, periodKey: period.key, alreadyHeld: false }
+	return {
+		ok: false,
+		reason: 'exhausted',
+		allowance: await getSmsAllowance(input.organizationId, input.startsAtMs),
+	}
 }
 
-/** Gives a broadcast's send back, once. Returns whether anything was given back. */
+/**
+ * Gives a broadcast's send back, once: a cancel before it started, or the
+ * region reporting a failure before any text went out. Returns whether anything
+ * was given back.
+ */
 export async function releaseSmsSend(input: {
 	organizationId: string
 	campaignId: string
@@ -289,7 +282,9 @@ export type SmsStart =
 /**
  * The region is about to send this broadcast's first text. It holds a send
  * already (reserved when it was sent or scheduled) or gets one now; either way
- * it is marked started, which is what makes a cancel too late to give it back.
+ * it is marked started, which is what makes an operator's cancel too late to
+ * give it back. The one way back from `started` is the region saying the
+ * broadcast failed before any text went out (`releaseSmsSend` accepts both).
  * With nothing left it is refused, and the region puts it off to `resetsAt`.
  */
 export async function startSmsSend(input: {

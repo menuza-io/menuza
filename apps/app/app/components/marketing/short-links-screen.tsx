@@ -140,7 +140,7 @@ function LinkRow({
 						<Switch
 							checked={!link.disabled}
 							disabled={fetcher.state !== 'idle'}
-							aria-label={_(msg`Link is on`)}
+							aria-label={_(msg`Short link ${title} is on`)}
 							onCheckedChange={(on) =>
 								fetcher.submit(
 									{ intent: on ? 'enable' : 'disable', id: link.id },

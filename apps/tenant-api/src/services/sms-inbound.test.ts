@@ -180,6 +180,30 @@ describe('inbound text replies (#75)', () => {
 		expect(await db.select().from(smsInboundEvents).all()).toHaveLength(0)
 	})
 
+	it('stops reading a chunked body at the cap, before the signature is checked', async () => {
+		let pulled = 0
+		const chunk = new TextEncoder().encode('x'.repeat(4096))
+		const body = new ReadableStream<Uint8Array>({
+			pull(controller) {
+				pulled += 1
+				// Endless: it would never end if the node buffered it all.
+				controller.enqueue(chunk)
+			},
+		})
+		const res = await app.request(`${BASE}/webhooks/sms/twilio`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'X-Twilio-Signature': 'AAAA',
+			},
+			body,
+			// @ts-expect-error Node's fetch needs this for a streamed body.
+			duplex: 'half',
+		})
+		expect(res.status).toBe(413)
+		expect(pulled).toBeLessThan(20)
+	})
+
 	it('an unknown provider and the mock provider outside tests are refused', async () => {
 		const unknown = await app.request(`${BASE}/webhooks/sms/acme`, {
 			method: 'POST',

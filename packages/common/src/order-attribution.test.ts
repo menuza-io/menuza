@@ -56,7 +56,13 @@ describe('the attribution a browser sends', () => {
 })
 
 describe('buildOrderAttribution', () => {
-	const base = { orderSource: null, shortLinkKnown: true, now: NOW } as const
+	const base = {
+		orderSource: null,
+		shortLinkKnown: true,
+		campaignKnown: true,
+		stepKnown: true,
+		now: NOW,
+	} as const
 
 	test('a UTM visit two days earlier is still credited', () => {
 		const built = buildOrderAttribution({
@@ -183,6 +189,36 @@ describe('buildOrderAttribution', () => {
 				attribution: { stepId: 'node-1', touchedAt: NOW },
 			}),
 		).toEqual({ attribution: null, source: 'direct' })
+	})
+
+	test('a campaign or step the region does not know is not kept', () => {
+		const attribution = {
+			campaignId: 'made-up',
+			stepId: 'step-9',
+			utmSource: 'menuza',
+			utmMedium: 'email',
+			touchedAt: NOW - 1000,
+		}
+		const unknown = buildOrderAttribution({
+			...base,
+			campaignKnown: false,
+			stepKnown: false,
+			attribution,
+		})
+		expect(unknown.attribution).toEqual({
+			utmSource: 'menuza',
+			utmMedium: 'email',
+			touchedAt: NOW - 1000,
+		})
+		expect(unknown.source).toBe('menuza')
+		const noStep = buildOrderAttribution({
+			...base,
+			stepKnown: false,
+			attribution,
+		})
+		expect(noStep.attribution).toMatchObject({ campaignId: 'made-up' })
+		expect(noStep.attribution).not.toHaveProperty('stepId')
+		expect(noStep.source).toBe('email')
 	})
 })
 

@@ -48,11 +48,34 @@ export async function attributionForNewOrder(
 	},
 ): Promise<BuiltAttribution> {
 	let shortLinkKnown = false
-	if (input.attribution?.shortLinkId) {
+	let campaignKnown = false
+	let stepKnown = false
+	const touch = input.attribution
+	if (touch?.shortLinkId || touch?.campaignId) {
 		const db = await getTenantDb(orgId)
-		shortLinkKnown = await shortLinkExists(db, input.attribution.shortLinkId)
+		if (touch.shortLinkId) {
+			shortLinkKnown = await shortLinkExists(db, touch.shortLinkId)
+		}
+		if (touch.campaignId) {
+			campaignKnown = (await campaignNamesById(db, [touch.campaignId])).has(
+				touch.campaignId,
+			)
+			if (campaignKnown && touch.stepId) {
+				const rows = await db.all<Row>(sql`
+					SELECT 1 AS ok FROM journey_step_executions
+					WHERE journey_id = ${touch.campaignId} AND node_id = ${touch.stepId}
+					LIMIT 1
+				`)
+				stepKnown = rows.length > 0
+			}
+		}
 	}
-	return buildOrderAttribution({ ...input, shortLinkKnown })
+	return buildOrderAttribution({
+		...input,
+		shortLinkKnown,
+		campaignKnown,
+		stepKnown,
+	})
 }
 
 /** The currency most of this region's online orders were placed in (ISO, lower case). */

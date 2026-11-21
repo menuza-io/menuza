@@ -6,6 +6,7 @@ import {
 	type SmsAllowanceResult,
 } from '@repo/common/marketing-allowance'
 import { ENV } from 'varlock/env'
+import { isLocalRuntime } from './client-ip.ts'
 import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
 
 /**
@@ -13,7 +14,9 @@ import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
  * allowance (#247). Ids only (the schema is strict). `unavailable` means the
  * App could not answer: a caller that is about to send holds the send back and
  * asks again later; a caller giving a send back may try again on the next tick.
- * `not_configured` is a bare local run, where nothing is counted.
+ * `not_configured` is a bare local run (`NODE_ENV` development or test), where
+ * nothing is counted. In production a missing App origin or token is
+ * `unavailable`: the text is held back, never sent uncounted.
  */
 export type SmsAllowanceOutcome =
 	SmsAllowanceResult | { ok: 'unavailable' } | { ok: 'not_configured' }
@@ -33,7 +36,9 @@ export async function postSmsAllowance(
 	if (!parsed.success) return { ok: 'unavailable' }
 	const base = appUrl()
 	const token = getInternalCommandToken()
-	if (!base || token.length < 16) return { ok: 'not_configured' }
+	if (!base || token.length < 16) {
+		return isLocalRuntime() ? { ok: 'not_configured' } : { ok: 'unavailable' }
+	}
 	try {
 		const response = await fetch(`${base}${SMS_ALLOWANCE_PATH}`, {
 			method: 'POST',
