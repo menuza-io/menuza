@@ -107,6 +107,26 @@ export function menuItemReferenceCondition(
 	)
 }
 
+/**
+ * The site's header and footer (live and unpublished draft) can show a library
+ * image, by its object key (raw or URL-encoded) or its asset id.
+ */
+export function siteChromeReferenceCondition(
+	objectKey: string,
+	assetId?: string,
+) {
+	const needles = [objectKey, encodeURIComponent(objectKey)]
+	if (assetId) needles.push(assetId)
+	return or(
+		...needles.flatMap((needle) => [
+			columnContains(Organization.siteHeaderConfig, needle),
+			columnContains(Organization.siteFooterConfig, needle),
+			columnContains(Organization.draftHeaderConfig, needle),
+			columnContains(Organization.draftFooterConfig, needle),
+		]),
+	)
+}
+
 export function menuOptionReferenceCondition(
 	objectKey: string,
 	assetId?: string,
@@ -210,6 +230,17 @@ export async function findMediaReferences(input: {
 			),
 		)
 
+	// 4b. Site header and footer, live and draft
+	const chromeRefs = await db
+		.select({ id: Organization.id })
+		.from(Organization)
+		.where(
+			and(
+				eq(Organization.id, organization.id),
+				siteChromeReferenceCondition(asset.objectKey, asset.id),
+			),
+		)
+
 	// 5. Website Pages
 	const pageRefs = await db
 		.select({
@@ -268,6 +299,16 @@ export async function findMediaReferences(input: {
 			type: 'site-icon',
 			title: 'Site Icon / Favicon',
 			subtitle: 'Used as the published site icon',
+			url: `/${params.orgSlug}/website`,
+		})
+	}
+
+	for (const org of chromeRefs) {
+		references.push({
+			id: `site-chrome-${org.id}`,
+			type: 'site-chrome',
+			title: 'Site header or footer',
+			subtitle: 'Used in the header or footer of the website',
 			url: `/${params.orgSlug}/website`,
 		})
 	}

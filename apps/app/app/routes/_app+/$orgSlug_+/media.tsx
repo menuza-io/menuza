@@ -77,6 +77,7 @@ import {
 	findMediaReferences,
 	menuItemReferenceCondition,
 	menuOptionReferenceCondition,
+	siteChromeReferenceCondition,
 	publishedPageReferenceCondition,
 	configContains,
 	columnContains,
@@ -259,6 +260,7 @@ async function hasMediaObjectReferences(
 		emailTemplate,
 		menuItem,
 		menuOption,
+		siteChrome,
 	] = await Promise.all([
 		db
 			.select({ id: OrganizationMediaAsset.id })
@@ -379,6 +381,16 @@ async function hasMediaObjectReferences(
 				),
 			)
 			.limit(1),
+		db
+			.select({ id: Organization.id })
+			.from(Organization)
+			.where(
+				and(
+					eq(Organization.id, organizationId),
+					siteChromeReferenceCondition(objectKey, assetId),
+				),
+			)
+			.limit(1),
 	])
 
 	return [
@@ -393,6 +405,7 @@ async function hasMediaObjectReferences(
 		emailTemplate,
 		menuItem,
 		menuOption,
+		siteChrome,
 	].some((reference) => reference.length > 0)
 }
 
@@ -713,16 +726,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 			eq(OrganizationMediaAsset.id, result.data.id),
 			eq(OrganizationMediaAsset.organizationId, organization.id),
 		)
-		// Deleting an original keeps its versions: the link is cleared (#147).
-		await db
-			.update(OrganizationMediaAsset)
-			.set({ parentAssetId: null })
-			.where(
-				and(
-					eq(OrganizationMediaAsset.organizationId, organization.id),
-					eq(OrganizationMediaAsset.parentAssetId, result.data.id),
-				),
-			)
+		// Deleting an original keeps its versions (#147): the foreign key clears
+		// their link (`ON DELETE SET NULL`) in the same statement as the delete, so a
+		// refused delete (below) never leaves a version unlinked.
 		const [deleted] = await db
 			.delete(OrganizationMediaAsset)
 			.where(
@@ -2309,7 +2315,10 @@ function MediaDetailsDialog({
 														ref.type === 'site-icon'
 													) {
 														iconName = 'image'
-													} else if (ref.type === 'page') {
+													} else if (
+														ref.type === 'page' ||
+														ref.type === 'site-chrome'
+													) {
 														iconName = 'blocks'
 													}
 

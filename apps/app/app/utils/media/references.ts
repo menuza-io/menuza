@@ -9,6 +9,7 @@ export type MediaReferenceItem = {
 		| 'comment'
 		| 'logo'
 		| 'site-icon'
+		| 'site-chrome'
 		| 'page'
 		| 'social-post'
 		| 'email-template'

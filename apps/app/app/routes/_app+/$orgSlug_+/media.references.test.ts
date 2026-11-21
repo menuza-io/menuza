@@ -179,6 +179,34 @@ describe('media library delete keeps objects that are still used', () => {
 		expect(deleteOrganizationStorageObject).not.toHaveBeenCalled()
 	})
 
+	it('a refused delete leaves the versions of the image linked to it', async () => {
+		const { user, organization, cookie, asset } = await setup()
+		const [version] = await db
+			.insert(OrganizationMediaAsset)
+			.values({
+				organizationId: organization.id,
+				objectKey: `orgs/${organization.id}/media/images/v-${Math.random()}.png`,
+				mimeType: 'image/png',
+				source: 'ai-studio',
+				createdById: user.id,
+				parentAssetId: asset.id,
+			})
+			.returning()
+		await db.insert(SocialPost).values({
+			organizationId: organization.id,
+			status: 'scheduled',
+			media: [{ mediaId: asset.id, url: 'x', altText: null }],
+		})
+		expect(
+			(await deleteAsset(organization.slug, cookie, asset.id)).status,
+		).toBe(409)
+		const [after] = await db
+			.select({ parent: OrganizationMediaAsset.parentAssetId })
+			.from(OrganizationMediaAsset)
+			.where(eq(OrganizationMediaAsset.id, version!.id))
+		expect(after?.parent).toBe(asset.id)
+	})
+
 	async function insertTemplate(
 		organizationId: string,
 		userId: string,

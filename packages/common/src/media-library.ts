@@ -120,6 +120,7 @@ export const ARCHIVE_BLOCKING_REFERENCE_TYPES = [
 	'menu-option',
 	'logo',
 	'site-icon',
+	'site-chrome',
 ] as const
 
 export function blocksArchive(referenceType: string): boolean {

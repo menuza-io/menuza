@@ -2,6 +2,7 @@ import {
 	db,
 	eq,
 	OrganizationMediaAsset,
+	Organization,
 	OrganizationMenuItem,
 	OrganizationMediaTag,
 	WebsitePage,
@@ -295,6 +296,32 @@ describe('archive and restore (#147)', () => {
 		})
 		expect(res.status).toBe(409)
 		expect(await res.json()).toMatchObject({ code: 'asset_in_use' })
+	})
+
+	it('refuses to archive a photo the live or the draft header or footer shows', async () => {
+		const { organization, cookie } = await setup()
+		for (const column of [
+			'siteHeaderConfig',
+			'siteFooterConfig',
+			'draftHeaderConfig',
+			'draftFooterConfig',
+		] as const) {
+			const asset = await addAsset(organization.id)
+			await db
+				.update(Organization)
+				.set({ [column]: JSON.stringify({ logo: { src: asset.objectKey } }) })
+				.where(eq(Organization.id, organization.id))
+			const res = await post(organization.slug, cookie, {
+				intent: 'archive',
+				ids: [asset.id],
+			})
+			expect(res.status).toBe(409)
+			expect(await res.json()).toMatchObject({ code: 'asset_in_use' })
+			await db
+				.update(Organization)
+				.set({ [column]: null })
+				.where(eq(Organization.id, organization.id))
+		}
 	})
 
 	it('archives another photo, hides it from the library and pickers, and restores it', async () => {
