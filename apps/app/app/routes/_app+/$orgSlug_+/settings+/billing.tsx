@@ -1,5 +1,6 @@
 import { requireUserId } from '@repo/auth'
 import { db, eq, Organization } from '@repo/database'
+import { smsUsageByLocation } from '@repo/marketing/server/sms-allowance'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import {
 	type ActionFunctionArgs,
@@ -9,6 +10,7 @@ import {
 
 import { BillingCard } from '#app/components/settings/cards/organization/billing-card.tsx'
 import { InvoicesCard } from '#app/components/settings/cards/organization/invoices-card.tsx'
+import { MarketingTextsCard } from '#app/components/settings/cards/organization/marketing-texts-card.tsx'
 
 import { getLaunchStatus } from '#app/utils/env.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -89,6 +91,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
+	// Marketing text sends used this month, per location (#247). Numbers only.
+	const { allowance, locations } = await smsUsageByLocation(organization.id)
+	const smsUsage = {
+		periodKey: allowance.periodKey,
+		limit: allowance.limit,
+		extra: allowance.extra,
+		used: allowance.used,
+		remaining: allowance.remaining,
+		resetsAt: allowance.resetsAt,
+		locations,
+	}
+
 	return {
 		organization,
 		plansAndPrices,
@@ -96,6 +110,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		invoices,
 		invoicesUnavailable,
 		currentPriceId,
+		smsUsage,
 	}
 }
 
@@ -166,6 +181,7 @@ export default function BillingSettings() {
 		invoices,
 		invoicesUnavailable,
 		currentPriceId,
+		smsUsage,
 	} = useLoaderData<typeof loader>()
 
 	return (
@@ -177,6 +193,10 @@ export default function BillingSettings() {
 					plansUnavailable={plansUnavailable}
 					currentPriceId={currentPriceId}
 				/>
+			</AnnotatedSection>
+
+			<AnnotatedSection>
+				<MarketingTextsCard usage={smsUsage} />
 			</AnnotatedSection>
 
 			<AnnotatedSection>

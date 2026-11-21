@@ -3645,6 +3645,11 @@ export const Organization = sqliteTable(
 		 * automatic popular marking; 3..10 enables it.
 		 */
 		autoPopularCount: integer(),
+		/**
+		 * The market the marketing calendar suggests occasions for (#152): `us` or
+		 * `ksa`. Null follows the data region; Marketing, Settings overrides it.
+		 */
+		marketingMarket: text(),
 	},
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),
@@ -7553,5 +7558,119 @@ export const CustomerAppTap = sqliteTable(
 		primaryKey({
 			columns: [table.appId, table.placement, table.store, table.day],
 		}),
+	],
+)
+
+
+/**
+ * Marketing text sends used per organization and billing month (#247). Numbers
+ * only: no guest, no message, no number. A broadcast has no location scope, so
+ * every send reaches every location and counts once for each of them: each
+ * location's usage is `sends`, and the allowance (per location, from the plan,
+ * plus what Admin granted in `extraSends`) is the ceiling `sends` may reach.
+ * `periodKey` is `YYYY-MM`.
+ */
+export const MarketingSmsUsage = sqliteTable(
+	'MarketingSmsUsage',
+	{
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		periodKey: text().notNull(),
+		sends: integer().default(0).notNull(),
+		extraSends: integer().default(0).notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [primaryKey({ columns: [table.organizationId, table.periodKey] })],
+)
+
+/**
+ * Which broadcast holds a send of the allowance (#247), so cancelling it before
+ * it starts gives the send back exactly once. `reserved` when it is sent or
+ * scheduled, `started` once the region began sending, `released` when given
+ * back. Opaque ids and a month: nothing about a guest.
+ */
+export const MarketingSmsSend = sqliteTable(
+	'MarketingSmsSend',
+	{
+		campaignId: text().primaryKey().notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		periodKey: text().notNull(),
+		state: text().default('reserved').notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('MarketingSmsSend_organizationId_periodKey_idx').on(
+			table.organizationId,
+			table.periodKey,
+		),
+	],
+)
+
+/**
+ * What an organization chose for one seasonal occasion of the marketing
+ * calendar (#152): whether to auto-schedule it (never on unless the operator
+ * turned it on), the channel and audience to use, and the year it was last
+ * dismissed or scheduled so each happens once per year. `occasionKey` is a key
+ * of `packages/marketing/src/occasions.ts`. No guest data.
+ */
+export const MarketingOccasionChoice = sqliteTable(
+	'MarketingOccasionChoice',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		occasionKey: text().notNull(),
+		autoSchedule: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** `email` or `sms`, for the auto-scheduled broadcast. */
+		channel: text().default('email').notNull(),
+		/** A saved audience (#98); null is everyone subscribed. */
+		audienceId: text(),
+		/** The calendar year the operator dismissed it for. */
+		dismissedYear: integer(),
+		/** The calendar year a broadcast was auto-scheduled for. */
+		scheduledYear: integer(),
+		/** The broadcast that was auto-scheduled (an opaque regional id). */
+		campaignId: text(),
+		/** Why the auto-schedule was skipped this year (`occasion_conflict`, ...). */
+		skipReason: text(),
+		skippedYear: integer(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('MarketingOccasionChoice_organizationId_occasionKey_key').on(
+			table.organizationId,
+			table.occasionKey,
+		),
 	],
 )

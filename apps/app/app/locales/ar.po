@@ -867,6 +867,18 @@ msgstr "{0} مجموعات إضافات"
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
+#. placeholder {0}: location.used
+#. placeholder {1}: location.limit
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:71
+msgid "{0} of {1} text sends used"
+msgstr "{0} من {1} رسائل نصية مستخدمة"
+
+#. placeholder {0}: usage.used
+#. placeholder {1}: usage.limit
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:56
+msgid "{0} of {1} text sends used this month"
+msgstr "{0} من {1} عمليات إرسال نصية مستخدمة هذا الشهر"
+
 #: app/components/website/hero-video-maker.tsx:250
 #~ msgid "{0} of {HERO_VIDEO_MIN_PHOTOS} to {HERO_VIDEO_MAX_PHOTOS} chosen"
 #~ msgstr ""
@@ -1685,7 +1697,7 @@ msgstr "{hours} ساعة و{rest} دقيقة"
 msgid "{hours} hours"
 msgstr "{hours} ساعة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:547
+#: ../../packages/marketing/src/components/campaign-form.tsx:610
 msgid "{hours} hours late"
 msgstr "متأخر {hours} ساعات"
 
@@ -3229,7 +3241,7 @@ msgstr "نموذج واحد"
 msgid "1 hour"
 msgstr "ساعة واحدة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:546
+#: ../../packages/marketing/src/components/campaign-form.tsx:609
 msgid "1 hour late"
 msgstr "متأخر ساعة واحدة"
 
@@ -3847,7 +3859,7 @@ msgstr "أُضيفت ملاحظة"
 msgid "A notification can't use merge tags such as a name or a code: it is the same for everyone."
 msgstr "لا يمكن للإشعار استخدام وسوم الدمج مثل الاسم أو الرمز: فهو نفسه للجميع."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:425
+#: ../../packages/marketing/src/components/campaign-form.tsx:476
 msgid "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
 msgstr "يُكتب الإشعار مرة واحدة للجميع ولا يحتوي على أسماء أو رموز. ويصل فقط إلى الضيوف الذين فعّلوا العروض والأخبار في تطبيقك."
 
@@ -3863,7 +3875,7 @@ msgstr "صفحة لكل منطقة توصيل لها اسم. تبقى الصفح
 msgid "A page of its own helps guests find this dish in search. It disappears while the dish is hidden."
 msgstr "صفحة خاصة تساعد الضيوف على إيجاد هذا الطبق في البحث. تختفي ما دام الطبق مخفيًا."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:438
+#: ../../packages/marketing/src/components/campaign-form.tsx:489
 msgid "A page on your site. Leave empty for the menu."
 msgstr "صفحة في موقعك. اتركها فارغة لفتح القائمة."
 
@@ -3975,7 +3987,7 @@ msgstr "يمكن للنطاق إضافة 200 طاولة كحد أقصى في ا�
 msgid "A range counts up, like T1-T12."
 msgstr "يكون النطاق تصاعديًا، مثل T1-T12."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:262
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:268
 msgid "A re-send to people who did not open it"
 msgstr "إعادة إرسال لمن لم يفتحها"
 
@@ -7910,7 +7922,7 @@ msgstr "المحاولات"
 msgid "Attention"
 msgstr "انتباه"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:250
+#: ../../packages/marketing/src/components/campaign-form.tsx:301
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:401
 msgid "Audience"
 msgstr "الجمهور"
@@ -9005,7 +9017,7 @@ msgstr "بثّ"
 msgid "Broadcast actions"
 msgstr "إجراءات الرسالة الجماعية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:286
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:290
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
@@ -9579,7 +9591,7 @@ msgstr "السعرات الحرارية (كيلو كالوري)"
 msgid "Came short"
 msgstr "وصل ناقصًا"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:285
+#: ../../packages/marketing/src/components/campaign-form.tsx:336
 msgid "Campaign name"
 msgstr "اسم الحملة"
 
@@ -9634,7 +9646,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:365
-#: ../../packages/marketing/src/components/campaign-form.tsx:570
+#: ../../packages/marketing/src/components/campaign-form.tsx:633
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:317
@@ -10642,7 +10654,7 @@ msgstr "قد يؤدي تغيير عدد الأشخاص إلى تغيير وقت 
 msgid "Changing this URL will break existing links to the page."
 msgstr "تغيير هذا الرابط سيؤدي إلى تعطيل الروابط الحالية لهذه الصفحة."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:218
+#: ../../packages/marketing/src/components/campaign-form.tsx:269
 #: app/components/customers/person-marketing-card.tsx:210
 #: app/components/note/integration-controls.tsx:333
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1185
@@ -10853,7 +10865,7 @@ msgstr "فحص خوادم الأسماء"
 msgid "Check now"
 msgstr "افحص الآن"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:330
+#: ../../packages/marketing/src/components/campaign-form.tsx:381
 msgid "Check out our new summer menu"
 msgstr "اطّلع على قائمة الصيف الجديدة"
 
@@ -11750,7 +11762,7 @@ msgstr "اختر ما تفعله. سيُحفظ على هذا الجهاز ويُ
 msgid "Choose when and where customers can collect their orders."
 msgstr "اختر موعد ومكان استلام العملاء لطلباتهم."
 
-#: app/utils/marketing/campaign-submit.server.ts:148
+#: app/utils/marketing/campaign-submit.server.ts:153
 msgid "Choose when to send it."
 msgstr "اختر موعد الإرسال."
 
@@ -17068,7 +17080,7 @@ msgstr "عدم الإعادة"
 msgid "Don't retry"
 msgstr "عدم إعادة المحاولة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:535
+#: ../../packages/marketing/src/components/campaign-form.tsx:598
 msgid "Don't send if more than this late"
 msgstr "لا ترسل إذا تأخر الموعد أكثر من"
 
@@ -17898,7 +17910,7 @@ msgstr "تعديل الإعلان"
 msgid "Edit audience"
 msgstr "تعديل الجمهور"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:217
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:222
 msgid "Edit broadcast"
 msgstr "تعديل الرسالة الجماعية"
 
@@ -18267,7 +18279,7 @@ msgstr "لا يمكن إرسال البريد الإلكتروني من هنا �
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:576
-#: ../../packages/marketing/src/components/campaign-form.tsx:338
+#: ../../packages/marketing/src/components/campaign-form.tsx:389
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
@@ -19688,7 +19700,7 @@ msgstr "انتهت جميع الجداول. أضف جدولًا أو مدّد ج
 msgid "Every table (new tables are added when you approve)"
 msgstr "كل الطاولات (تُضاف الطاولات الجديدة عند الاعتماد)"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:407
+#: ../../packages/marketing/src/components/campaign-form.tsx:458
 msgid "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
 msgstr "تنتهي كل رسالة نصية بعبارة \"{SMS_OPT_OUT_PHRASE}\" وتُرسل بين الساعة 9:00 و20:00 بالتوقيت المحلي. نضيف الأمرين عنك."
 
@@ -19731,7 +19743,7 @@ msgstr "كل من في الجدول"
 msgid "Everyone on the team"
 msgstr "جميع أعضاء الفريق"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:268
+#: ../../packages/marketing/src/components/campaign-form.tsx:319
 msgid "Everyone subscribed"
 msgstr "جميع المشتركين"
 
@@ -19739,7 +19751,7 @@ msgstr "جميع المشتركين"
 msgid "Everyone who has ordered, signed in or booked a table, in one list. Data is served from your tenant region."
 msgstr "كل من طلب أو سجّل الدخول أو حجز طاولة، في قائمة واحدة. تُقدَّم البيانات من منطقة بيانات مؤسستك."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:267
+#: ../../packages/marketing/src/components/campaign-form.tsx:318
 msgid "Everyone who opted in to notifications"
 msgstr "كل من فعّل الإشعارات"
 
@@ -20320,7 +20332,7 @@ msgstr "فشل تحميل مساعد الذكاء الاصطناعي"
 msgid "Failed to load audiences"
 msgstr "تعذر تحميل الجماهير"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:287
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:291
 msgid "Failed to load broadcast"
 msgstr "فشل تحميل البث"
 
@@ -21331,7 +21343,7 @@ msgstr "كثير عدم الحضور"
 msgid "Frequently asked questions"
 msgstr "الأسئلة الشائعة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:311
+#: ../../packages/marketing/src/components/campaign-form.tsx:362
 msgid "Fresh summer menu"
 msgstr "قائمة الصيف الجديدة"
 
@@ -23450,7 +23462,7 @@ msgstr "إذا كان هناك حساب بهذا اسم المستخدم أو ا
 msgid "If nobody answers"
 msgstr "إذا لم يرد أحد"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:553
+#: ../../packages/marketing/src/components/campaign-form.tsx:616
 msgid "If sending cannot start in time, it is not sent and you are told."
 msgstr "إذا تعذّر بدء الإرسال في الوقت المناسب، فلن تُرسل الرسالة وسيتم إخبارك."
 
@@ -23495,7 +23507,7 @@ msgstr "صورة"
 msgid "Image added to your media library"
 msgstr "تمت إضافة الصورة إلى مكتبة الوسائط"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:442
+#: ../../packages/marketing/src/components/campaign-form.tsx:493
 msgid "Image address"
 msgstr "عنوان الصورة"
 
@@ -23768,7 +23780,7 @@ msgstr "بوحدات كاملة من عملتك."
 msgid "In your manager account, open Staff, Time clock, then Tablets."
 msgstr "من حساب المدير، افتح «الموظفون» ثم «ساعة الدوام» ثم «الأجهزة اللوحية»."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:530
+#: ../../packages/marketing/src/components/campaign-form.tsx:593
 msgid "In your time zone."
 msgstr "بتوقيت منطقتك الزمنية."
 
@@ -24322,7 +24334,7 @@ msgstr "تعود إلى حالة معتمدة ويمكن إعادة فتحها �
 msgid "It goes back to review so it can be edited, and has to be approved again. The change is logged."
 msgstr "تعود إلى المراجعة ليمكن تعديلها، وتحتاج إلى موافقة جديدة. يُسجَّل التغيير."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:266
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:272
 msgid "It goes to people who got the first broadcast, did not open or click it, and are still subscribed when this is sent. Opens are not always counted: some mail apps open messages automatically or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read the first one may get this too."
 msgstr "تُرسل إلى من تلقّى الرسالة الجماعية الأولى ولم يفتحها ولم ينقر عليها وما زال مشتركًا وقت الإرسال. لا تُحتسب عمليات الفتح دائمًا: بعض تطبيقات البريد تفتح الرسائل تلقائيًا أو تُخفي الفتح عن المرسلين (مثل حماية خصوصية Apple Mail)، لذا قد يتلقى بعض من قرأ الرسالة الأولى هذه الرسالة أيضًا."
 
@@ -26263,7 +26275,7 @@ msgstr "جارٍ تحميل المتقدّم"
 msgid "Loading assistant…"
 msgstr "جارٍ تحميل المساعد…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:274
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:278
 msgid "Loading broadcast…"
 msgstr "جارٍ تحميل البث…"
 
@@ -27724,6 +27736,10 @@ msgstr "تفضيلات التسويق"
 msgid "Marketing settings"
 msgstr "إعدادات التسويق"
 
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:43
+msgid "Marketing texts"
+msgstr "الرسائل النصية التسويقية"
+
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 msgid "Marketplaces"
 msgstr "الأسواق الإلكترونية"
@@ -28149,7 +28165,7 @@ msgid "Merge duplicate dishes"
 msgstr "دمج الأطباق المكررة"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:195
-#: ../../packages/marketing/src/components/campaign-form.tsx:344
+#: ../../packages/marketing/src/components/campaign-form.tsx:395
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/components/reservations/messages/message-settings.tsx:689
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:634
@@ -29336,7 +29352,7 @@ msgid "New bookings stop using it. Bookings that already accepted it keep their 
 msgstr "تتوقف الحجوزات الجديدة عن استخدامها. الحجوزات التي وافقت عليها سابقًا تحتفظ بشروطها."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:128
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:180
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:184
 msgid "New broadcast"
 msgstr "بث جديد"
 
@@ -33686,7 +33702,7 @@ msgstr "يفتح (صفحة من موقعك)"
 msgid "Opens are not always counted. Some mail apps open messages by themselves or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read it may get it again. A broadcast can be re-sent once."
 msgstr "لا تُحتسب عمليات الفتح دائمًا. بعض تطبيقات البريد تفتح الرسائل من تلقاء نفسها أو تُخفي الفتح عن المرسلين (مثل حماية خصوصية Apple Mail)، لذا قد يتلقى بعض من قرأها الرسالة مرة أخرى. يمكن إعادة إرسال الرسالة الجماعية مرة واحدة فقط."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:430
+#: ../../packages/marketing/src/components/campaign-form.tsx:481
 msgid "Opens this page"
 msgstr "يفتح هذه الصفحة"
 
@@ -33850,7 +33866,7 @@ msgstr "اسم النادل (اختياري)"
 msgid "Optional."
 msgstr "اختياري."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:451
+#: ../../packages/marketing/src/components/campaign-form.tsx:502
 msgid "Optional. A secure (https) address."
 msgstr "اختياري. عنوان آمن (https)."
 
@@ -37387,7 +37403,7 @@ msgid "Prix fixe menu"
 msgstr "قائمة بسعر ثابت"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:41
-#: ../../packages/marketing/src/components/campaign-form.tsx:238
+#: ../../packages/marketing/src/components/campaign-form.tsx:289
 msgid "Pro"
 msgstr "احترافي"
 
@@ -41447,7 +41463,7 @@ msgid "Save discount"
 msgstr "حفظ الخصم"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: ../../packages/marketing/src/components/campaign-form.tsx:585
+#: ../../packages/marketing/src/components/campaign-form.tsx:648
 #: app/components/hiring/job-editor.tsx:437
 #: app/components/inventory/review-order-screen.tsx:454
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:695
@@ -41913,7 +41929,7 @@ msgstr "فحص هذا النطاق"
 msgid "Scans: {0} this month"
 msgstr "عمليات المسح: {0} هذا الشهر"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:615
+#: ../../packages/marketing/src/components/campaign-form.tsx:678
 #: app/components/app-sidebar.tsx:666
 #: app/components/command-menu.tsx:146
 #: app/components/hiring/interview-dialog.tsx:287
@@ -41975,7 +41991,7 @@ msgstr "الجدولة في"
 msgid "Schedule for {name}, {range}"
 msgstr "الجدول لـ {name}، {range}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:512
+#: ../../packages/marketing/src/components/campaign-form.tsx:563
 msgid "Schedule for later"
 msgstr "الجدولة لوقت لاحق"
 
@@ -42769,7 +42785,7 @@ msgstr "عرض إعدادات الوكيل ومسار المكالمة والأ�
 msgid "See the original"
 msgstr "عرض الأصل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:273
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:279
 msgid "See the original broadcast"
 msgstr "عرض الرسالة الجماعية الأصلية"
 
@@ -42829,7 +42845,7 @@ msgstr "شوهد {seen}"
 msgid "Seen just now"
 msgstr "شوهد الآن"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:355
+#: ../../packages/marketing/src/components/campaign-form.tsx:406
 msgid "Segments: {smsSegments} (opt-out line included)"
 msgstr "عدد الأجزاء: {smsSegments} (يشمل سطر إلغاء الاشتراك)"
 
@@ -43169,11 +43185,11 @@ msgstr "إرسال رمز جديد"
 msgid "Send a new manage link?"
 msgstr "إرسال رابط إدارة جديد؟"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:182
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:186
 msgid "Send a one-time email or SMS to your audience, now or later."
 msgstr "أرسل بريدًا إلكترونيًا أو رسالة نصية لمرة واحدة إلى جمهورك، الآن أو لاحقًا."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:596
+#: ../../packages/marketing/src/components/campaign-form.tsx:659
 #: app/components/marketing/campaign-actions.tsx:130
 msgid "Send a test"
 msgstr "إرسال رسالة تجريبية"
@@ -43194,7 +43210,7 @@ msgstr "إرسال دعوة؟"
 msgid "Send anyway"
 msgstr "الإرسال على أي حال"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:520
+#: ../../packages/marketing/src/components/campaign-form.tsx:583
 msgid "Send at"
 msgstr "وقت الإرسال"
 
@@ -43261,8 +43277,8 @@ msgstr "إرسال رسالة"
 msgid "Send new link"
 msgstr "إرسال الرابط الجديد"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:198
-#: ../../packages/marketing/src/components/campaign-form.tsx:511
+#: ../../packages/marketing/src/components/campaign-form.tsx:249
+#: ../../packages/marketing/src/components/campaign-form.tsx:562
 #: app/components/inventory/counting-screen.tsx:468
 msgid "Send now"
 msgstr "إرسال الآن"
@@ -43354,7 +43370,7 @@ msgstr "يتطلب الإرسال إلى Canva إنشاء ملفات PDF، وه�
 msgid "Sending to the printer"
 msgstr "جارٍ الإرسال إلى المطبعة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:199
+#: ../../packages/marketing/src/components/campaign-form.tsx:250
 msgid "Sending..."
 msgstr "جارٍ الإرسال..."
 
@@ -46221,7 +46237,7 @@ msgstr "تصنيف فرعي"
 msgid "Subdomain URL"
 msgstr "رابط النطاق الفرعي"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:320
+#: ../../packages/marketing/src/components/campaign-form.tsx:371
 #: app/components/website/link-inspector.tsx:477
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:621
 msgid "Subject"
@@ -46405,7 +46421,7 @@ msgstr "تلخيص هذه الملاحظة"
 msgid "Summary"
 msgstr "الملخص"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:290
+#: ../../packages/marketing/src/components/campaign-form.tsx:341
 msgid "Summer promo"
 msgstr "عرض الصيف"
 
@@ -46444,7 +46460,7 @@ msgstr "المورّد"
 msgid "Suppliers"
 msgstr "الموردون"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:363
+#: ../../packages/marketing/src/components/campaign-form.tsx:414
 msgid "supported"
 msgstr "مدعوم"
 
@@ -47460,6 +47476,10 @@ msgstr "موضع النص"
 msgid "Text reply"
 msgstr "رسالة نصية"
 
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:46
+msgid "Text sends included in your plan each month. Order and booking texts never count. Your sends come back on {resets}."
+msgstr "عدد عمليات الإرسال النصية المشمولة في خطتك كل شهر. لا تُحتسب رسائل الطلبات والحجوزات. تعود عمليات الإرسال في {resets}."
+
 #: app/components/customers/people-summary-row.tsx:209
 msgid "Text subscribers"
 msgstr "مشتركو الرسائل النصية"
@@ -47489,7 +47509,7 @@ msgstr "الرسائل النصية غير متاحة في منطقة بيانا
 msgid "Texts are only sent to US phone numbers. For other numbers, tell the guest in person."
 msgstr "تُرسل الرسائل النصية إلى أرقام الهواتف الأمريكية فقط. للأرقام الأخرى، أخبر الضيف شخصيًا."
 
-#: app/utils/marketing/campaign-submit.server.ts:80
+#: app/utils/marketing/campaign-submit.server.ts:85
 msgid "Texts can only go to customers with a verified phone."
 msgstr "يمكن إرسال الرسائل النصية فقط إلى العملاء الذين لديهم هاتف موثّق."
 
@@ -47497,7 +47517,7 @@ msgstr "يمكن إرسال الرسائل النصية فقط إلى العمل
 msgid "Texts have no open signal, so they cannot be re-sent to non-openers."
 msgstr "لا توجد إشارة فتح للرسائل النصية، لذا لا يمكن إعادة إرسالها لمن لم يفتحها."
 
-#: app/utils/marketing/campaign-submit.server.ts:137
+#: app/utils/marketing/campaign-submit.server.ts:142
 #: app/utils/marketing/programs.server.ts:237
 msgid "Texts need the Text marketing terms. An owner can accept them in Settings, Legal."
 msgstr "الرسائل النصية تحتاج إلى شروط التسويق عبر الرسائل النصية. يمكن للمالك قبولها في الإعدادات، قانوني."
@@ -48251,11 +48271,11 @@ msgstr "يجب أن تكون الاستراحة أقصر من الوردية."
 msgid "The break has to fall inside the shift."
 msgstr "يجب أن تقع الاستراحة داخل الوردية."
 
-#: app/utils/marketing/campaign-submit.server.ts:210
+#: app/utils/marketing/campaign-submit.server.ts:234
 msgid "The broadcast could not be saved."
 msgstr "تعذّر حفظ الرسالة الجماعية."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:124
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:128
 msgid "The broadcast was cancelled."
 msgstr "تم إلغاء الرسالة الجماعية."
 
@@ -50421,7 +50441,7 @@ msgstr "هذه المصادقة لم تعد نشطة"
 msgid "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 msgstr "تعذّر بدء إرسال هذه الرسالة الجماعية في الوقت المناسب، فلم تُرسل. كرّرها لجدولتها من جديد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:222
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:227
 msgid "This broadcast is a draft. Nothing is sent until you send or schedule it."
 msgstr "هذه الرسالة الجماعية مسودة. لن يُرسل شيء حتى ترسلها أو تجدولها."
 
@@ -50429,7 +50449,7 @@ msgstr "هذه الرسالة الجماعية مسودة. لن يُرسل شي�
 msgid "This broadcast is already sending, so it can no longer be changed."
 msgstr "هذه الرسالة الجماعية قيد الإرسال بالفعل، لذا لا يمكن تغييرها."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:220
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:225
 msgid "This broadcast is scheduled. Saving keeps it scheduled."
 msgstr "هذه الرسالة الجماعية مجدولة. سيُبقيها الحفظ مجدولة."
 
@@ -50919,6 +50939,10 @@ msgstr "هذا ما يُطلب منهم قراءته والموافقة عليه
 msgid "This is your current session. Sign out to end it."
 msgstr "هذه هي جلستك الحالية. سجل الخروج لإنهائها."
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:130
+msgid "This is your last one this month. You get {limit} more on {resetDate}."
+msgstr "هذه آخر عملية إرسال لك هذا الشهر. تحصل على {limit} أخرى في {resetDate}."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:780
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمتك. استخدم هذا الرابط عند تكوين عميل الذكاء الاصطناعي."
@@ -51008,6 +51032,11 @@ msgstr "يتم تفعيل مجموعة المعدِّلات هذه عندما ي
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:144
 msgid "This month"
 msgstr "هذا الشهر"
+
+#. placeholder {0}: usage.extra
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:81
+msgid "This month includes {0} extra sends from us."
+msgstr "يتضمن هذا الشهر {0} عمليات إرسال إضافية منّا."
 
 #: app/components/menu/menu-review-card.tsx:63
 msgid "This name looks misspelled."
@@ -51611,6 +51640,14 @@ msgstr "هذه الوحدة مستخدمة بالفعل في المخزون، ل
 msgid "This updates the theme preview. The live site changes when you publish."
 msgstr "يحدّث هذا معاينة السمة. يتغير الموقع المنشور عند النشر."
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:134
+msgid "This uses 1 of your {limit} text sends this month. {remaining} left."
+msgstr "تستخدم هذه 1 من {limit} عمليات إرسال نصية لهذا الشهر. المتبقي: {remaining}."
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:125
+msgid "This uses a text send of next month. You get {limit} more on {resetDate}."
+msgstr "تستخدم هذه إحدى عمليات الإرسال النصية للشهر القادم. تحصل على {limit} أخرى في {resetDate}."
+
 #: app/components/media-library/photo-studio-dialog.tsx:768
 msgid "This usually takes 10 to 30 seconds per photo."
 msgstr "يستغرق هذا عادةً من 10 إلى 30 ثانية لكل صورة."
@@ -52137,7 +52174,7 @@ msgstr "تظهر هنا إكراميات الطلبات عبر الإنترنت 
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "البقشيش على الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، حسب يوم العمل. تُحدَّد طريقة توزيع الصندوق بين الأشخاص في صفحة العمالة."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:298
+#: ../../packages/marketing/src/components/campaign-form.tsx:349
 #: app/components/phone-agent/training-rules-section.tsx:516
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4430
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4740
@@ -54798,7 +54835,7 @@ msgstr "النطاق المُتحقق منه"
 msgid "Verified domain must match your current email address domain for security. <0>Learn more</0>"
 msgstr "يجب أن يطابق النطاق المُتحقق منه نطاق عنوان بريدك الإلكتروني الحالي للأمان. <0>اعرف المزيد</0>"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:272
+#: ../../packages/marketing/src/components/campaign-form.tsx:323
 msgid "Verified phone numbers only"
 msgstr "أرقام الهواتف الموثّقة فقط"
 
@@ -56471,7 +56508,7 @@ msgstr "كان يجب أن يفتح واتساب. إن لم يفتح، استخ�
 msgid "Wheelchair accessible"
 msgstr "ملائم للكراسي المتحركة"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:491
+#: ../../packages/marketing/src/components/campaign-form.tsx:542
 #: app/components/discounts/discount-form.tsx:1818
 #: app/components/loyalty/promotion-dialog.tsx:705
 #: app/components/reservations/booking-sheet.tsx:617
@@ -57077,7 +57114,7 @@ msgstr "ضمن الهدف"
 msgid "Without a policy, guests book without paying. Create a deposit, prepayment or card guarantee to protect busy nights."
 msgstr "بدون سياسة، يحجز الضيوف دون دفع. أنشئ وديعة أو دفعًا مسبقًا أو ضمان بطاقة لحماية الليالي المزدحمة."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:277
+#: ../../packages/marketing/src/components/campaign-form.tsx:328
 msgid "Without a verified phone"
 msgstr "بدون هاتف موثّق"
 
@@ -57255,7 +57292,7 @@ msgstr "اكتب نصاً لمنشور Google."
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr "اكتب الشريط باللغة الافتراضية، ثم بدّل اللغات للترجمة. تظهر الإعلانات الشريطية المفعّلة أعلى موقعك العام."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:387
+#: ../../packages/marketing/src/components/campaign-form.tsx:438
 msgid "Write the notification"
 msgstr "اكتب الإشعار"
 
@@ -57270,7 +57307,7 @@ msgstr "اكتب السياسة التي سيقرّون بها."
 msgid "Write the question."
 msgstr "اكتب السؤال."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:398
+#: ../../packages/marketing/src/components/campaign-form.tsx:449
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "اكتب بريدك الإلكتروني. استخدم {NAME_TAG} للتخصيص."
 
@@ -57286,7 +57323,7 @@ msgstr "اكتب محتوى ملاحظتك..."
 msgid "Write your reply…"
 msgstr "اكتب ردك…"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:374
+#: ../../packages/marketing/src/components/campaign-form.tsx:425
 msgid "Write your text message"
 msgstr "اكتب رسالتك النصية"
 
@@ -57914,6 +57951,14 @@ msgstr "لديك تغييرات غير محفوظة في مخطط الصالة. 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:156
 msgid "You have unsaved floor plan changes. Leave and discard them?"
 msgstr "لديك تغييرات غير محفوظة في مخطط الصالة. هل تريد المغادرة وتجاهلها؟"
+
+#: app/utils/marketing/campaign-submit.server.ts:302
+msgid "You have used all {limit} text sends this month. You get {limit} more on {date}. You can still write it and schedule it for {date} or later, or upgrade your plan."
+msgstr "استخدمت جميع عمليات الإرسال النصية ({limit}) لهذا الشهر. تحصل على {limit} أخرى في {date}. لا يزال بإمكانك كتابتها وجدولتها لتاريخ {date} أو بعده، أو ترقية خطتك."
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:122
+msgid "You have used all {limit} text sends this month. You get {limit} more on {resetDate}. Choose a time on {resetDate} or later to schedule it."
+msgstr "استخدمت جميع عمليات الإرسال النصية ({limit}) لهذا الشهر. تحصل على {limit} أخرى في {resetDate}. اختر وقتًا في {resetDate} أو بعده للجدولة."
 
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:436
 msgid "You have used all drafts for now. Try again later."

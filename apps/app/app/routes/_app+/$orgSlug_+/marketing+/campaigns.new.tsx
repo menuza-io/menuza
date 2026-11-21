@@ -13,6 +13,7 @@ import {
 	type CouponOfferValue,
 	AiDraftProvider,
 } from '@repo/marketing'
+import { getSmsAllowance } from '@repo/marketing/server/sms-allowance'
 import { PageHeader } from '@repo/ui/page-header'
 import { useState } from 'react'
 import {
@@ -78,6 +79,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			? ((await loadAudienceOptions(fetchTenant)) ?? null)
 			: null,
 		pushEnabled: features.push,
+		// What is left of this month's text sends (#247).
+		smsAllowance: await getSmsAllowance(orgId),
 		couponOptions: await loadCouponDiscountOptions(userId, orgId),
 		aiDraft: await loadAiDraftConfig(orgId, orgSlug),
 		template: launch ? ('launch' as const) : null,
@@ -159,6 +162,7 @@ export default function NewCampaignRoute() {
 		siteUrl,
 		aiDraft,
 		pushEnabled,
+		smsAllowance,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const navigation = useNavigation()
@@ -191,6 +195,7 @@ export default function NewCampaignRoute() {
 						scheduling
 						canTestSend
 						pushEnabled={pushEnabled}
+						smsAllowance={smsAllowance}
 						audienceField={
 							audienceOptions ? (
 								<SavedAudienceField

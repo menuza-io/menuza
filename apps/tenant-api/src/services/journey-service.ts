@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { ENV } from 'varlock/env'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
@@ -32,6 +32,7 @@ import {
 	triggerConfigMatches,
 } from '@repo/tenant-db'
 import { withUnsubscribeFooter } from '@repo/common/email-unsubscribe'
+import { billingPeriod } from '@repo/common/marketing-allowance'
 import { parseMarketingOffer } from '@repo/discounts'
 import { sendSms } from '@repo/sms'
 import {
@@ -40,6 +41,7 @@ import {
 	unsubscribeUrl,
 } from '../lib/email-consent.ts'
 import { isMarketingSmsEnabled } from '../lib/marketing-sms-switch.ts'
+import { postSmsAllowance } from '../lib/sms-allowance-client.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
@@ -57,7 +59,7 @@ import {
 import { customerInAudience } from './marketing-audience-service.ts'
 import { cartLinkForGuest } from './cart-reminders.ts'
 import { tagEmailLinks } from './campaign-links.ts'
-import { prepareMarketingSms } from './marketing-sms.ts'
+import { prepareMarketingSms, TIME_ZONE_RETRY_MS } from './marketing-sms.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
 export const JOURNEY_LIST_LIMIT = 100
@@ -132,6 +134,24 @@ function deliveredResultFromDispatchedExecution(execution: {
 		status: outcomeUnknown ? 'unknown' : 'delivered',
 		messageId,
 	}
+}
+
+/**
+ * The opaque id an automation text step holds its send of the month under: a
+ * hash of the journey, the step and the billing month, so a step is counted
+ * once per month and the control plane never learns a journey's contents.
+ */
+export function journeyStepAllowanceKey(
+	journeyId: string,
+	nodeId: string,
+	now: number,
+): string {
+	const period = billingPeriod(now).key
+	const digest = createHash('sha256')
+		.update(`${journeyId}:${nodeId}:${period}`)
+		.digest('hex')
+		.slice(0, 40)
+	return `journey:${digest}`
 }
 
 /** An operator's test run (`contextData.isTestRun`) is never held for quiet hours. */
@@ -646,6 +666,35 @@ export async function executeJourneyStep(
 				status: 'deferred',
 				notBefore: timing.notBefore,
 				error: timing.reason,
+			}
+		}
+		// The monthly text allowance (#247): an automation text step counts one
+		// send the first time it sends in a billing month, however many guests
+		// pass through it. With none left the step waits for the month to turn
+		// over, as a broadcast does; it is never dropped.
+		const gate = await postSmsAllowance({
+			orgId,
+			campaignId: journeyStepAllowanceKey(
+				payload.journeyId,
+				payload.nodeId,
+				Date.now(),
+			),
+			action: 'start',
+		})
+		if (gate.ok === false) {
+			return {
+				success: true,
+				status: 'deferred',
+				notBefore: gate.resetsAt,
+				error: 'allowance_exhausted',
+			}
+		}
+		if (gate.ok === 'unavailable') {
+			return {
+				success: true,
+				status: 'deferred',
+				notBefore: Date.now() + TIME_ZONE_RETRY_MS,
+				error: 'allowance_unavailable',
 			}
 		}
 	}

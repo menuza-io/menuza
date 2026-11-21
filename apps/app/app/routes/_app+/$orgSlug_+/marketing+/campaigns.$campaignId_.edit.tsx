@@ -9,6 +9,7 @@ import {
 	type CouponOfferValue,
 	AiDraftProvider,
 } from '@repo/marketing'
+import { getSmsAllowanceForBroadcast } from '@repo/marketing/server/sms-allowance'
 import { PageHeader } from '@repo/ui/page-header'
 import { useState } from 'react'
 import {
@@ -120,6 +121,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		offer: parseMarketingOffer(campaign.discountOffer),
 		couponOptions: await loadCouponDiscountOptions(userId, orgId),
 		aiDraft: await loadAiDraftConfig(orgId, orgSlug),
+		// What is left of this month's text sends (#247); the send this
+		// broadcast already holds is still available to it.
+		smsAllowance: await getSmsAllowanceForBroadcast(orgId, campaignId),
 	}
 }
 
@@ -198,6 +202,7 @@ export default function EditCampaignRoute() {
 		offer: storedOffer,
 		couponOptions,
 		aiDraft,
+		smsAllowance,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const navigation = useNavigation()
@@ -231,6 +236,7 @@ export default function EditCampaignRoute() {
 						hasEmailBlocks={blocks.length > 0}
 						scheduling
 						canTestSend
+						smsAllowance={smsAllowance}
 						audienceField={
 							audienceOptions ? (
 								<SavedAudienceField

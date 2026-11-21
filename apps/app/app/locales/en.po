@@ -869,6 +869,18 @@ msgstr "{0} modifier groups"
 msgid "{0} of {1} targeted"
 msgstr ""
 
+#. placeholder {0}: location.used
+#. placeholder {1}: location.limit
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:71
+msgid "{0} of {1} text sends used"
+msgstr "{0} of {1} text sends used"
+
+#. placeholder {0}: usage.used
+#. placeholder {1}: usage.limit
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:56
+msgid "{0} of {1} text sends used this month"
+msgstr "{0} of {1} text sends used this month"
+
 #: app/components/website/hero-video-maker.tsx:250
 #~ msgid "{0} of {HERO_VIDEO_MIN_PHOTOS} to {HERO_VIDEO_MAX_PHOTOS} chosen"
 #~ msgstr "{0} of {HERO_VIDEO_MIN_PHOTOS} to {HERO_VIDEO_MAX_PHOTOS} chosen"
@@ -1687,7 +1699,7 @@ msgstr "{hours} h {rest} min"
 msgid "{hours} hours"
 msgstr "{hours} hours"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:547
+#: ../../packages/marketing/src/components/campaign-form.tsx:610
 msgid "{hours} hours late"
 msgstr "{hours} hours late"
 
@@ -3231,7 +3243,7 @@ msgstr "1 form"
 msgid "1 hour"
 msgstr "1 hour"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:546
+#: ../../packages/marketing/src/components/campaign-form.tsx:609
 msgid "1 hour late"
 msgstr "1 hour late"
 
@@ -3849,7 +3861,7 @@ msgstr "A note was added"
 msgid "A notification can't use merge tags such as a name or a code: it is the same for everyone."
 msgstr "A notification can't use merge tags such as a name or a code: it is the same for everyone."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:425
+#: ../../packages/marketing/src/components/campaign-form.tsx:476
 msgid "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
 msgstr "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
 
@@ -3865,7 +3877,7 @@ msgstr "A page for each named delivery area. Pages without an introduction stay 
 msgid "A page of its own helps guests find this dish in search. It disappears while the dish is hidden."
 msgstr "A page of its own helps guests find this dish in search. It disappears while the dish is hidden."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:438
+#: ../../packages/marketing/src/components/campaign-form.tsx:489
 msgid "A page on your site. Leave empty for the menu."
 msgstr "A page on your site. Leave empty for the menu."
 
@@ -3977,7 +3989,7 @@ msgstr "A range can add at most 200 tables at once."
 msgid "A range counts up, like T1-T12."
 msgstr "A range counts up, like T1-T12."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:262
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:268
 msgid "A re-send to people who did not open it"
 msgstr "A re-send to people who did not open it"
 
@@ -7912,7 +7924,7 @@ msgstr "Attempts"
 msgid "Attention"
 msgstr "Attention"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:250
+#: ../../packages/marketing/src/components/campaign-form.tsx:301
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:401
 msgid "Audience"
 msgstr "Audience"
@@ -9007,7 +9019,7 @@ msgstr "Broadcast"
 msgid "Broadcast actions"
 msgstr "Broadcast actions"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:286
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:290
 msgid "Broadcast not found"
 msgstr ""
 
@@ -9581,7 +9593,7 @@ msgstr "Calories (kCal)"
 msgid "Came short"
 msgstr "Came short"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:285
+#: ../../packages/marketing/src/components/campaign-form.tsx:336
 msgid "Campaign name"
 msgstr ""
 
@@ -9636,7 +9648,7 @@ msgstr "Can't text that number"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:365
-#: ../../packages/marketing/src/components/campaign-form.tsx:570
+#: ../../packages/marketing/src/components/campaign-form.tsx:633
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:317
@@ -10644,7 +10656,7 @@ msgstr "Changing the party size can change the wait you quoted."
 msgid "Changing this URL will break existing links to the page."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:218
+#: ../../packages/marketing/src/components/campaign-form.tsx:269
 #: app/components/customers/person-marketing-card.tsx:210
 #: app/components/note/integration-controls.tsx:333
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1185
@@ -10855,7 +10867,7 @@ msgstr "Check nameservers"
 msgid "Check now"
 msgstr "Check now"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:330
+#: ../../packages/marketing/src/components/campaign-form.tsx:381
 msgid "Check out our new summer menu"
 msgstr ""
 
@@ -11752,7 +11764,7 @@ msgstr "Choose what you are doing. It is saved on this tablet and recorded as so
 msgid "Choose when and where customers can collect their orders."
 msgstr "Choose when and where customers can collect their orders."
 
-#: app/utils/marketing/campaign-submit.server.ts:148
+#: app/utils/marketing/campaign-submit.server.ts:153
 msgid "Choose when to send it."
 msgstr "Choose when to send it."
 
@@ -17070,7 +17082,7 @@ msgstr "Don't replay"
 msgid "Don't retry"
 msgstr "Don't retry"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:535
+#: ../../packages/marketing/src/components/campaign-form.tsx:598
 msgid "Don't send if more than this late"
 msgstr "Don't send if more than this late"
 
@@ -17900,7 +17912,7 @@ msgstr ""
 msgid "Edit audience"
 msgstr "Edit audience"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:217
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:222
 msgid "Edit broadcast"
 msgstr "Edit broadcast"
 
@@ -18269,7 +18281,7 @@ msgstr "Email cannot be sent from here yet."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:576
-#: ../../packages/marketing/src/components/campaign-form.tsx:338
+#: ../../packages/marketing/src/components/campaign-form.tsx:389
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
@@ -19690,7 +19702,7 @@ msgstr "Every schedule has ended. Add or extend a schedule before publishing."
 msgid "Every table (new tables are added when you approve)"
 msgstr "Every table (new tables are added when you approve)"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:407
+#: ../../packages/marketing/src/components/campaign-form.tsx:458
 msgid "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
 msgstr "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
 
@@ -19733,7 +19745,7 @@ msgstr "Everyone on the schedule"
 msgid "Everyone on the team"
 msgstr "Everyone on the team"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:268
+#: ../../packages/marketing/src/components/campaign-form.tsx:319
 msgid "Everyone subscribed"
 msgstr "Everyone subscribed"
 
@@ -19741,7 +19753,7 @@ msgstr "Everyone subscribed"
 msgid "Everyone who has ordered, signed in or booked a table, in one list. Data is served from your tenant region."
 msgstr "Everyone who has ordered, signed in or booked a table, in one list. Data is served from your tenant region."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:267
+#: ../../packages/marketing/src/components/campaign-form.tsx:318
 msgid "Everyone who opted in to notifications"
 msgstr "Everyone who opted in to notifications"
 
@@ -20322,7 +20334,7 @@ msgstr ""
 msgid "Failed to load audiences"
 msgstr "Failed to load audiences"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:287
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:291
 msgid "Failed to load broadcast"
 msgstr ""
 
@@ -21333,7 +21345,7 @@ msgstr "Frequent no-show"
 msgid "Frequently asked questions"
 msgstr "Frequently asked questions"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:311
+#: ../../packages/marketing/src/components/campaign-form.tsx:362
 msgid "Fresh summer menu"
 msgstr "Fresh summer menu"
 
@@ -23452,7 +23464,7 @@ msgstr ""
 msgid "If nobody answers"
 msgstr "If nobody answers"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:553
+#: ../../packages/marketing/src/components/campaign-form.tsx:616
 msgid "If sending cannot start in time, it is not sent and you are told."
 msgstr "If sending cannot start in time, it is not sent and you are told."
 
@@ -23497,7 +23509,7 @@ msgstr ""
 msgid "Image added to your media library"
 msgstr "Image added to your media library"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:442
+#: ../../packages/marketing/src/components/campaign-form.tsx:493
 msgid "Image address"
 msgstr "Image address"
 
@@ -23770,7 +23782,7 @@ msgstr "In whole units of your currency."
 msgid "In your manager account, open Staff, Time clock, then Tablets."
 msgstr "In your manager account, open Staff, Time clock, then Tablets."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:530
+#: ../../packages/marketing/src/components/campaign-form.tsx:593
 msgid "In your time zone."
 msgstr "In your time zone."
 
@@ -24324,7 +24336,7 @@ msgstr "It goes back to approved and can be reopened for edits. The unlock is lo
 msgid "It goes back to review so it can be edited, and has to be approved again. The change is logged."
 msgstr "It goes back to review so it can be edited, and has to be approved again. The change is logged."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:266
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:272
 msgid "It goes to people who got the first broadcast, did not open or click it, and are still subscribed when this is sent. Opens are not always counted: some mail apps open messages automatically or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read the first one may get this too."
 msgstr "It goes to people who got the first broadcast, did not open or click it, and are still subscribed when this is sent. Opens are not always counted: some mail apps open messages automatically or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read the first one may get this too."
 
@@ -26265,7 +26277,7 @@ msgstr "Loading applicant"
 msgid "Loading assistant…"
 msgstr "Loading assistant…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:274
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:278
 msgid "Loading broadcast…"
 msgstr "Loading broadcast…"
 
@@ -27726,6 +27738,10 @@ msgstr "Marketing preferences"
 msgid "Marketing settings"
 msgstr "Marketing settings"
 
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:43
+msgid "Marketing texts"
+msgstr "Marketing texts"
+
 #: app/components/settings/cards/organization/integrations-card.tsx:58
 msgid "Marketplaces"
 msgstr "Marketplaces"
@@ -28151,7 +28167,7 @@ msgid "Merge duplicate dishes"
 msgstr "Merge duplicate dishes"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:195
-#: ../../packages/marketing/src/components/campaign-form.tsx:344
+#: ../../packages/marketing/src/components/campaign-form.tsx:395
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/components/reservations/messages/message-settings.tsx:689
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:634
@@ -29338,7 +29354,7 @@ msgid "New bookings stop using it. Bookings that already accepted it keep their 
 msgstr "New bookings stop using it. Bookings that already accepted it keep their terms."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:128
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:180
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:184
 msgid "New broadcast"
 msgstr ""
 
@@ -33688,7 +33704,7 @@ msgstr "Opens (a page of your site)"
 msgid "Opens are not always counted. Some mail apps open messages by themselves or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read it may get it again. A broadcast can be re-sent once."
 msgstr "Opens are not always counted. Some mail apps open messages by themselves or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read it may get it again. A broadcast can be re-sent once."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:430
+#: ../../packages/marketing/src/components/campaign-form.tsx:481
 msgid "Opens this page"
 msgstr "Opens this page"
 
@@ -33852,7 +33868,7 @@ msgstr "Optional server name"
 msgid "Optional."
 msgstr "Optional."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:451
+#: ../../packages/marketing/src/components/campaign-form.tsx:502
 msgid "Optional. A secure (https) address."
 msgstr "Optional. A secure (https) address."
 
@@ -37389,7 +37405,7 @@ msgid "Prix fixe menu"
 msgstr "Prix fixe menu"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:41
-#: ../../packages/marketing/src/components/campaign-form.tsx:238
+#: ../../packages/marketing/src/components/campaign-form.tsx:289
 msgid "Pro"
 msgstr ""
 
@@ -41449,7 +41465,7 @@ msgid "Save discount"
 msgstr "Save discount"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: ../../packages/marketing/src/components/campaign-form.tsx:585
+#: ../../packages/marketing/src/components/campaign-form.tsx:648
 #: app/components/hiring/job-editor.tsx:437
 #: app/components/inventory/review-order-screen.tsx:454
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:695
@@ -41915,7 +41931,7 @@ msgstr "Scan this domain"
 msgid "Scans: {0} this month"
 msgstr "Scans: {0} this month"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:615
+#: ../../packages/marketing/src/components/campaign-form.tsx:678
 #: app/components/app-sidebar.tsx:666
 #: app/components/command-menu.tsx:146
 #: app/components/hiring/interview-dialog.tsx:287
@@ -41977,7 +41993,7 @@ msgstr "Schedule for"
 msgid "Schedule for {name}, {range}"
 msgstr "Schedule for {name}, {range}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:512
+#: ../../packages/marketing/src/components/campaign-form.tsx:563
 msgid "Schedule for later"
 msgstr "Schedule for later"
 
@@ -42771,7 +42787,7 @@ msgstr "See the agent's settings, call flow, numbers, and training rules."
 msgid "See the original"
 msgstr "See the original"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:273
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:279
 msgid "See the original broadcast"
 msgstr "See the original broadcast"
 
@@ -42831,7 +42847,7 @@ msgstr "Seen {seen}"
 msgid "Seen just now"
 msgstr "Seen just now"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:355
+#: ../../packages/marketing/src/components/campaign-form.tsx:406
 msgid "Segments: {smsSegments} (opt-out line included)"
 msgstr "Segments: {smsSegments} (opt-out line included)"
 
@@ -43171,11 +43187,11 @@ msgstr "Send a new code"
 msgid "Send a new manage link?"
 msgstr "Send a new manage link?"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:182
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:186
 msgid "Send a one-time email or SMS to your audience, now or later."
 msgstr "Send a one-time email or SMS to your audience, now or later."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:596
+#: ../../packages/marketing/src/components/campaign-form.tsx:659
 #: app/components/marketing/campaign-actions.tsx:130
 msgid "Send a test"
 msgstr "Send a test"
@@ -43196,7 +43212,7 @@ msgstr "Send an invitation?"
 msgid "Send anyway"
 msgstr "Send anyway"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:520
+#: ../../packages/marketing/src/components/campaign-form.tsx:583
 msgid "Send at"
 msgstr "Send at"
 
@@ -43263,8 +43279,8 @@ msgstr ""
 msgid "Send new link"
 msgstr "Send new link"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:198
-#: ../../packages/marketing/src/components/campaign-form.tsx:511
+#: ../../packages/marketing/src/components/campaign-form.tsx:249
+#: ../../packages/marketing/src/components/campaign-form.tsx:562
 #: app/components/inventory/counting-screen.tsx:468
 msgid "Send now"
 msgstr ""
@@ -43356,7 +43372,7 @@ msgstr "Sending to Canva needs PDF rendering, which is not set up here."
 msgid "Sending to the printer"
 msgstr "Sending to the printer"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:199
+#: ../../packages/marketing/src/components/campaign-form.tsx:250
 msgid "Sending..."
 msgstr ""
 
@@ -46223,7 +46239,7 @@ msgstr "Subcategory"
 msgid "Subdomain URL"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:320
+#: ../../packages/marketing/src/components/campaign-form.tsx:371
 #: app/components/website/link-inspector.tsx:477
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:621
 msgid "Subject"
@@ -46407,7 +46423,7 @@ msgstr ""
 msgid "Summary"
 msgstr "Summary"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:290
+#: ../../packages/marketing/src/components/campaign-form.tsx:341
 msgid "Summer promo"
 msgstr ""
 
@@ -46446,7 +46462,7 @@ msgstr "Supplier"
 msgid "Suppliers"
 msgstr "Suppliers"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:363
+#: ../../packages/marketing/src/components/campaign-form.tsx:414
 msgid "supported"
 msgstr ""
 
@@ -47462,6 +47478,10 @@ msgstr ""
 msgid "Text reply"
 msgstr "Text reply"
 
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:46
+msgid "Text sends included in your plan each month. Order and booking texts never count. Your sends come back on {resets}."
+msgstr "Text sends included in your plan each month. Order and booking texts never count. Your sends come back on {resets}."
+
 #: app/components/customers/people-summary-row.tsx:209
 msgid "Text subscribers"
 msgstr "Text subscribers"
@@ -47491,7 +47511,7 @@ msgstr "Texts are not available in your data region yet."
 msgid "Texts are only sent to US phone numbers. For other numbers, tell the guest in person."
 msgstr "Texts are only sent to US phone numbers. For other numbers, tell the guest in person."
 
-#: app/utils/marketing/campaign-submit.server.ts:80
+#: app/utils/marketing/campaign-submit.server.ts:85
 msgid "Texts can only go to customers with a verified phone."
 msgstr "Texts can only go to customers with a verified phone."
 
@@ -47499,7 +47519,7 @@ msgstr "Texts can only go to customers with a verified phone."
 msgid "Texts have no open signal, so they cannot be re-sent to non-openers."
 msgstr "Texts have no open signal, so they cannot be re-sent to non-openers."
 
-#: app/utils/marketing/campaign-submit.server.ts:137
+#: app/utils/marketing/campaign-submit.server.ts:142
 #: app/utils/marketing/programs.server.ts:237
 msgid "Texts need the Text marketing terms. An owner can accept them in Settings, Legal."
 msgstr "Texts need the Text marketing terms. An owner can accept them in Settings, Legal."
@@ -48253,11 +48273,11 @@ msgstr "The break has to be shorter than the shift."
 msgid "The break has to fall inside the shift."
 msgstr "The break has to fall inside the shift."
 
-#: app/utils/marketing/campaign-submit.server.ts:210
+#: app/utils/marketing/campaign-submit.server.ts:234
 msgid "The broadcast could not be saved."
 msgstr "The broadcast could not be saved."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:124
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:128
 msgid "The broadcast was cancelled."
 msgstr "The broadcast was cancelled."
 
@@ -50423,7 +50443,7 @@ msgstr "This booking no longer exists. The board has been reloaded."
 msgid "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 msgstr "This broadcast could not start in time, so it was not sent. Duplicate it to schedule it again."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:222
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:227
 msgid "This broadcast is a draft. Nothing is sent until you send or schedule it."
 msgstr "This broadcast is a draft. Nothing is sent until you send or schedule it."
 
@@ -50431,7 +50451,7 @@ msgstr "This broadcast is a draft. Nothing is sent until you send or schedule it
 msgid "This broadcast is already sending, so it can no longer be changed."
 msgstr "This broadcast is already sending, so it can no longer be changed."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:220
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId_.edit.tsx:225
 msgid "This broadcast is scheduled. Saving keeps it scheduled."
 msgstr "This broadcast is scheduled. Saving keeps it scheduled."
 
@@ -50921,6 +50941,10 @@ msgstr "This is what they are asked to read and accept."
 msgid "This is your current session. Sign out to end it."
 msgstr ""
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:130
+msgid "This is your last one this month. You get {limit} more on {resetDate}."
+msgstr "This is your last one this month. You get {limit} more on {resetDate}."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:780
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr ""
@@ -51010,6 +51034,11 @@ msgstr "This modifier group is triggered when customers select these modifier it
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:144
 msgid "This month"
 msgstr "This month"
+
+#. placeholder {0}: usage.extra
+#: app/components/settings/cards/organization/marketing-texts-card.tsx:81
+msgid "This month includes {0} extra sends from us."
+msgstr "This month includes {0} extra sends from us."
 
 #: app/components/menu/menu-review-card.tsx:63
 msgid "This name looks misspelled."
@@ -51613,6 +51642,14 @@ msgstr "This unit is already used by stock, so it cannot be changed."
 msgid "This updates the theme preview. The live site changes when you publish."
 msgstr "This updates the theme preview. The live site changes when you publish."
 
+#: ../../packages/marketing/src/components/campaign-form.tsx:134
+msgid "This uses 1 of your {limit} text sends this month. {remaining} left."
+msgstr "This uses 1 of your {limit} text sends this month. {remaining} left."
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:125
+msgid "This uses a text send of next month. You get {limit} more on {resetDate}."
+msgstr "This uses a text send of next month. You get {limit} more on {resetDate}."
+
 #: app/components/media-library/photo-studio-dialog.tsx:768
 msgid "This usually takes 10 to 30 seconds per photo."
 msgstr "This usually takes 10 to 30 seconds per photo."
@@ -52139,7 +52176,7 @@ msgstr "Tips on online orders and cash tips people declare on their time cards a
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:298
+#: ../../packages/marketing/src/components/campaign-form.tsx:349
 #: app/components/phone-agent/training-rules-section.tsx:516
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4430
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4740
@@ -54800,7 +54837,7 @@ msgstr ""
 msgid "Verified domain must match your current email address domain for security. <0>Learn more</0>"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:272
+#: ../../packages/marketing/src/components/campaign-form.tsx:323
 msgid "Verified phone numbers only"
 msgstr "Verified phone numbers only"
 
@@ -56473,7 +56510,7 @@ msgstr "WhatsApp should have opened. If it did not, use the button below."
 msgid "Wheelchair accessible"
 msgstr "Wheelchair accessible"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:491
+#: ../../packages/marketing/src/components/campaign-form.tsx:542
 #: app/components/discounts/discount-form.tsx:1818
 #: app/components/loyalty/promotion-dialog.tsx:705
 #: app/components/reservations/booking-sheet.tsx:617
@@ -57079,7 +57116,7 @@ msgstr "within target"
 msgid "Without a policy, guests book without paying. Create a deposit, prepayment or card guarantee to protect busy nights."
 msgstr "Without a policy, guests book without paying. Create a deposit, prepayment or card guarantee to protect busy nights."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:277
+#: ../../packages/marketing/src/components/campaign-form.tsx:328
 msgid "Without a verified phone"
 msgstr "Without a verified phone"
 
@@ -57257,7 +57294,7 @@ msgstr "Write some text for the Google post."
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:387
+#: ../../packages/marketing/src/components/campaign-form.tsx:438
 msgid "Write the notification"
 msgstr "Write the notification"
 
@@ -57272,7 +57309,7 @@ msgstr "Write the policy they are acknowledging."
 msgid "Write the question."
 msgstr "Write the question."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:398
+#: ../../packages/marketing/src/components/campaign-form.tsx:449
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "Write your email. Use {NAME_TAG} to personalize."
 
@@ -57288,7 +57325,7 @@ msgstr ""
 msgid "Write your reply…"
 msgstr "Write your reply…"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:374
+#: ../../packages/marketing/src/components/campaign-form.tsx:425
 msgid "Write your text message"
 msgstr "Write your text message"
 
@@ -57916,6 +57953,14 @@ msgstr "You have unsaved floor plan changes. If you leave now they are lost."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:156
 msgid "You have unsaved floor plan changes. Leave and discard them?"
 msgstr "You have unsaved floor plan changes. Leave and discard them?"
+
+#: app/utils/marketing/campaign-submit.server.ts:302
+msgid "You have used all {limit} text sends this month. You get {limit} more on {date}. You can still write it and schedule it for {date} or later, or upgrade your plan."
+msgstr "You have used all {limit} text sends this month. You get {limit} more on {date}. You can still write it and schedule it for {date} or later, or upgrade your plan."
+
+#: ../../packages/marketing/src/components/campaign-form.tsx:122
+msgid "You have used all {limit} text sends this month. You get {limit} more on {resetDate}. Choose a time on {resetDate} or later to schedule it."
+msgstr "You have used all {limit} text sends this month. You get {limit} more on {resetDate}. Choose a time on {resetDate} or later to schedule it."
 
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:436
 msgid "You have used all drafts for now. Try again later."

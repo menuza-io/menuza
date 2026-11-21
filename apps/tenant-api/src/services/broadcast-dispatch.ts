@@ -41,13 +41,14 @@ import {
 	unsubscribeUrl,
 } from '../lib/email-consent.ts'
 import { postMarketingNotify } from '../lib/marketing-notify.ts'
+import { postSmsAllowance } from '../lib/sms-allowance-client.ts'
 import { getBroadcastHourlyCap } from '../lib/rate-limit.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { couponCodeForRecipient } from './discount-marketing-codes.ts'
 import { BROADCAST_TOPIC, loadBroadcastAudience } from './marketing-audience.ts'
 import { cappedCustomerIds, readFrequencyCap } from './journey-guards.ts'
 import { tagEmailLinks } from './campaign-links.ts'
-import { prepareMarketingSms } from './marketing-sms.ts'
+import { prepareMarketingSms, TIME_ZONE_RETRY_MS } from './marketing-sms.ts'
 import { resolveAudienceWhere } from './marketing-audience-service.ts'
 
 /**
@@ -215,6 +216,39 @@ async function finish(
 		)
 }
 
+/**
+ * Marks a campaign `Failed` before any text went out. A text broadcast gives its
+ * send of the monthly allowance back (#247): it never used it. Best effort; the
+ * App holds the count and gives a send back once.
+ */
+async function failUnsent(
+	orgId: string,
+	db: Db,
+	campaignId: string,
+	lease: Date,
+	channel: 'email' | 'sms' | 'push',
+) {
+	await finish(db, campaignId, lease, 'Failed')
+	if (channel === 'sms') await releaseSmsAllowance(orgId, campaignId)
+}
+
+/** Gives a text broadcast's send of the allowance back (no-op when it holds none). */
+export async function releaseSmsAllowance(orgId: string, campaignId: string) {
+	const outcome = await postSmsAllowance({
+		orgId,
+		campaignId,
+		action: 'release',
+	})
+	if (outcome.ok === 'unavailable') {
+		// Ids only. The send stays counted until the App is reachable and the
+		// operator (or Admin) can correct it; nothing is sent either way.
+		console.warn('Text allowance could not be given back', {
+			orgId,
+			campaignId,
+		})
+	}
+}
+
 export type BroadcastDispatchOptions = {
 	now?: () => number
 }
@@ -269,7 +303,7 @@ export async function dispatchBroadcast(
 				orgId,
 				campaignId,
 			})
-			await finish(db, campaignId, currentLease, 'Failed')
+			await failUnsent(orgId, db, campaignId, currentLease, channel)
 			return 'failed'
 		}
 		// `MARKETING_SMS_ENABLED=false` stops every marketing text on this node.
@@ -278,7 +312,7 @@ export async function dispatchBroadcast(
 				orgId,
 				campaignId,
 			})
-			await finish(db, campaignId, currentLease, 'Failed')
+			await failUnsent(orgId, db, campaignId, currentLease, channel)
 			return 'failed'
 		}
 		// A push broadcast needs `marketing.push` (and the node, region and app
@@ -291,7 +325,7 @@ export async function dispatchBroadcast(
 					orgId,
 					campaignId,
 				})
-				await finish(db, campaignId, currentLease, 'Failed')
+				await failUnsent(orgId, db, campaignId, currentLease, channel)
 				return 'failed'
 			}
 		}
@@ -303,7 +337,7 @@ export async function dispatchBroadcast(
 				orgId,
 				campaignId,
 			})
-			await finish(db, campaignId, currentLease, 'Failed')
+			await failUnsent(orgId, db, campaignId, currentLease, channel)
 			return 'failed'
 		}
 
@@ -320,7 +354,7 @@ export async function dispatchBroadcast(
 					orgId,
 					campaignId,
 				})
-				await finish(db, campaignId, currentLease, 'Failed')
+				await failUnsent(orgId, db, campaignId, currentLease, channel)
 				return 'failed'
 			}
 			audienceWhere = resolved.where
@@ -367,7 +401,7 @@ export async function dispatchBroadcast(
 						.filter((problem) => problem.severity === 'blocking')
 						.map((problem) => problem.code),
 				})
-				await finish(db, campaignId, currentLease, 'Failed')
+				await failUnsent(orgId, db, campaignId, currentLease, channel)
 				return 'failed'
 			}
 		}
@@ -385,6 +419,7 @@ export async function dispatchBroadcast(
 		const frequencyCap = await readFrequencyCap(db)
 		const cap = getBroadcastHourlyCap(channel)
 		let failuresReset = false
+		let allowanceGated = false
 
 		for (let i = 0; i < pending.length; i += BROADCAST_BATCH_SIZE) {
 			const next = await heartbeat(db, campaignId, currentLease, clock())
@@ -415,6 +450,46 @@ export async function dispatchBroadcast(
 					})
 					return 'deferred'
 				}
+			}
+
+			// A text broadcast starts by spending (or confirming) one send of the
+			// month's allowance (#247), once the window is open. With none left it
+			// is put off to the day the allowance comes back, as a scheduled
+			// broadcast the operator can still edit or cancel; if the App cannot
+			// answer it is asked again shortly.
+			if (channel === 'sms' && !allowanceGated) {
+				const gate = await postSmsAllowance({
+					orgId,
+					campaignId,
+					action: 'start',
+				})
+				if (gate.ok === false) {
+					await db
+						.update(marketingCampaigns)
+						.set({
+							status: 'Scheduled',
+							scheduledAt: new Date(gate.resetsAt),
+							updatedAt: new Date(clock()),
+						})
+						.where(holdsLease(campaignId, currentLease))
+					console.info('Broadcast put off: no text sends left this month', {
+						orgId,
+						campaignId,
+					})
+					return 'deferred'
+				}
+				if (gate.ok === 'unavailable') {
+					await db
+						.update(marketingCampaigns)
+						.set({
+							updatedAt: toLease(
+								clock() + TIME_ZONE_RETRY_MS - BROADCAST_STALE_MS + 1000,
+							),
+						})
+						.where(holdsLease(campaignId, currentLease))
+					return 'deferred'
+				}
+				allowanceGated = true
 			}
 
 			const room = cap - (await broadcastSendsInWindow(db, channel, clock()))
@@ -880,6 +955,8 @@ export async function nextBroadcastWakeAt(
 
 /** Tells the operator a scheduled broadcast was not sent because it was too late. */
 async function notifySkippedLate(orgId: string, campaignId: string) {
+	// It will never send: a text broadcast gives its send of the month back (#247).
+	await releaseSmsAllowance(orgId, campaignId)
 	const outcome = await postMarketingNotify({
 		orgId,
 		kind: 'broadcast_skipped_late',

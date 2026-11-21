@@ -100,14 +100,16 @@ async function createViaApi(body: Record<string, unknown>, canUpdate = true) {
 function appKnowsTheSite(shortLinks: boolean) {
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(async () =>
-			Response.json({
-				id: orgId,
-				name: 'Casa Verde',
-				timeZone: 'America/New_York',
-				siteOrigin: SITE,
-				features: { shortLinks },
-			}),
+		vi.fn(async (url: string | URL | Request) =>
+			String(url).includes('/sms-allowance')
+				? Response.json({ ok: true })
+				: Response.json({
+						id: orgId,
+						name: 'Casa Verde',
+						timeZone: 'America/New_York',
+						siteOrigin: SITE,
+						features: { shortLinks },
+					}),
 		),
 	)
 }

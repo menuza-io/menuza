@@ -57,15 +57,17 @@ const at = (hour: number, minute = 0, day = 10) =>
 function appKnowsTimeZone(zone: string | null) {
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(async () =>
-			zone
-				? Response.json({
-						id: orgId,
-						name: 'Casa Verde',
-						timeZone: zone,
-						locationTimeZones: { loc_la: 'America/Los_Angeles' },
-					})
-				: new Response('no', { status: 503 }),
+		vi.fn(async (url: string | URL | Request) =>
+			String(url).includes('/sms-allowance')
+				? Response.json({ ok: true })
+				: zone
+					? Response.json({
+							id: orgId,
+							name: 'Casa Verde',
+							timeZone: zone,
+							locationTimeZones: { loc_la: 'America/Los_Angeles' },
+						})
+					: new Response('no', { status: 503 }),
 		),
 	)
 }
@@ -128,7 +130,8 @@ describe('marketing texts (#75)', () => {
 
 	afterEach(async () => {
 		process.env.MARKETING_SMS_QUIET_HOURS = 'off'
-		delete process.env.MARKETING_SMS_ENABLED
+		// Set rather than deleted: the env snapshot never forgets a removed key.
+		process.env.MARKETING_SMS_ENABLED = 'true'
 		bindAppService(null)
 		vi.unstubAllGlobals()
 		await destroyTenantDb(orgId).catch(() => {})

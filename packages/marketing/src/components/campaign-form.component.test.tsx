@@ -2,7 +2,7 @@
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { type BroadcastProblem } from '@repo/common/broadcast-checks'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -227,5 +227,69 @@ describe('CampaignForm with scheduling', () => {
 		})
 		expect(screen.getByText('A test was sent to me@x.test.')).toBeTruthy()
 		expect(screen.getByText('Nope')).toBeTruthy()
+	})
+
+	describe('CampaignForm text allowance (#247)', () => {
+		const RESET = Date.UTC(2026, 11, 1)
+		const allowance = (remaining: number) => ({
+			limit: 4,
+			remaining,
+			resetsAt: RESET,
+		})
+
+		async function textStep(remaining: number) {
+			const user = userEvent.setup()
+			show({ scheduling: true, smsAllowance: allowance(remaining) })
+			await user.click(screen.getByRole('button', { name: /SMS/ }))
+			return user
+		}
+
+		it('says how many text sends this month has left', async () => {
+			await textStep(3)
+			expect(screen.getByTestId('sms-allowance')).toHaveTextContent(
+				'This uses 1 of your 4 text sends this month. 3 left.',
+			)
+			expect(screen.getByRole('button', { name: 'Send now' })).toBeEnabled()
+		})
+
+		it('says when it is the last one, and when the sends come back', async () => {
+			await textStep(1)
+			expect(screen.getByTestId('sms-allowance')).toHaveTextContent(
+				'This is your last one this month. You get 4 more on December 1, 2026.',
+			)
+		})
+
+		it('with none left it cannot be sent now, and tells the operator when to schedule it', async () => {
+			const user = await textStep(0)
+			const alert = screen.getByRole('alert')
+			expect(alert).toHaveTextContent(
+				'You have used all 4 text sends this month.',
+			)
+			expect(alert).toHaveTextContent('December 1, 2026')
+			// "Send now" is the primary action and it is off.
+			const primary = screen
+				.getAllByRole('button')
+				.find((button) => button.getAttribute('value') === 'send')!
+			expect(primary).toBeDisabled()
+
+			// A time this month stays refused; one in the next month is allowed.
+			await user.click(
+				screen.getByRole('radio', { name: 'Schedule for later' }),
+			)
+			const when = screen.getByLabelText('Send at')
+			fireEvent.change(when, { target: { value: '2099-01-15T10:00' } })
+			const scheduleButton = () =>
+				screen
+					.getAllByRole('button')
+					.find((button) => button.getAttribute('value') === 'schedule')!
+			expect(scheduleButton()).toBeEnabled()
+			fireEvent.change(when, { target: { value: '2026-11-25T10:00' } })
+			expect(scheduleButton()).toBeDisabled()
+		})
+
+		it('email shows no allowance at all', async () => {
+			show({ scheduling: true, smsAllowance: allowance(0) })
+			expect(screen.queryByTestId('sms-allowance')).toBeNull()
+		})
 	})
 })

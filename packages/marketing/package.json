@@ -38,6 +38,11 @@
       "types": "./src/server/platform-resend-webhook.server.ts",
       "import": "./src/server/platform-resend-webhook.server.ts",
       "default": "./src/server/platform-resend-webhook.server.ts"
+    },
+    "./server/sms-allowance": {
+      "types": "./src/server/sms-allowance.server.ts",
+      "import": "./src/server/sms-allowance.server.ts",
+      "default": "./src/server/sms-allowance.server.ts"
     }
   },
   "scripts": {

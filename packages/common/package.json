@@ -653,6 +653,11 @@
       "types": "./src/short-links.ts",
       "import": "./src/short-links.ts",
       "default": "./src/short-links.ts"
+    },
+    "./marketing-allowance": {
+      "types": "./src/marketing-allowance.ts",
+      "import": "./src/marketing-allowance.ts",
+      "default": "./src/marketing-allowance.ts"
     }
   },
   "scripts": {

@@ -498,6 +498,13 @@
 			"when": 1795281213548,
 			"tag": "0070_website_integrations",
 			"breakpoints": true
+		},
+		{
+			"idx": 71,
+			"version": "6",
+			"when": 1795296072558,
+			"tag": "0071_marketing_compliance",
+			"breakpoints": true
 		}
 	]
 }

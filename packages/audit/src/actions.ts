@@ -134,6 +134,8 @@ export enum AuditAction {
 	CHAT_CHANNEL_UPDATED = 'chat_channel_updated',
 	CHAT_CHANNEL_DELETED = 'chat_channel_deleted',
 	CHAT_RETENTION_UPDATED = 'chat_retention_updated',
+	/** A platform admin granted an organization extra marketing text sends (#247). */
+	MARKETING_TEXT_SENDS_GRANTED = 'marketing_text_sends_granted',
 	NOTE_STATUS_CHANGED = 'note_status_changed',
 	NOTE_PRIORITY_CHANGED = 'note_priority_changed',
 	NOTE_ACCESS_GRANTED = 'note_access_granted',
