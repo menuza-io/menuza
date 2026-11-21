@@ -39,6 +39,8 @@ export interface CampaignFormDefaults {
 	pushImageUrl?: string | null
 	pushLink?: string | null
 	audience?: string | null
+	/** A text prefilled for when the operator switches to Text (an occasion's, #152). */
+	smsContent?: string | null
 	/** ISO instant of a scheduled send. */
 	scheduledAt?: string | null
 	lateAfterMinutes?: number | null
@@ -165,7 +167,9 @@ export function CampaignForm({
 		defaults?.channel ?? 'email',
 	)
 	const [smsContent, setSmsContent] = useState(
-		defaults?.channel === 'sms' ? (defaults.content ?? '') : '',
+		defaults?.channel === 'sms'
+			? (defaults.content ?? '')
+			: (defaults?.smsContent ?? ''),
 	)
 	// The segment count the guest is billed for includes the opt-out line the
 	// server adds to every marketing text (#75).

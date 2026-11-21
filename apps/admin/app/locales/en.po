@@ -123,7 +123,7 @@ msgstr ""
 msgid "{fileName} is taken off the site of {organizationName} at once, and the site falls back to the theme font. The licence record is kept."
 msgstr "{fileName} is taken off the site of {organizationName} at once, and the site falls back to the theme font. The licence record is kept."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:610
+#: ../../packages/marketing/src/components/campaign-form.tsx:614
 msgid "{hours} hours late"
 msgstr "{hours} hours late"
 
@@ -246,7 +246,7 @@ msgstr ""
 msgid "1 entry"
 msgstr "1 entry"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:609
+#: ../../packages/marketing/src/components/campaign-form.tsx:613
 msgid "1 hour late"
 msgstr "1 hour late"
 
@@ -290,11 +290,11 @@ msgstr "A new build is required"
 msgid "A notification can't use merge tags such as a name or a code: it is the same for everyone."
 msgstr "A notification can't use merge tags such as a name or a code: it is the same for everyone."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:476
+#: ../../packages/marketing/src/components/campaign-form.tsx:480
 msgid "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
 msgstr "A notification is written once for everyone and holds no names or codes. It goes only to guests who turned on Offers and news in your app."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:489
+#: ../../packages/marketing/src/components/campaign-form.tsx:493
 msgid "A page on your site. Leave empty for the menu."
 msgstr "A page on your site. Leave empty for the menu."
 
@@ -830,7 +830,7 @@ msgstr "attempt {0}"
 msgid "Attribute Mapping (JSON)"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:301
+#: ../../packages/marketing/src/components/campaign-form.tsx:305
 msgid "Audience"
 msgstr "Audience"
 
@@ -1150,13 +1150,13 @@ msgstr ""
 msgid "Cache Type:"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:336
+#: ../../packages/marketing/src/components/campaign-form.tsx:340
 msgid "Campaign name"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:365
-#: ../../packages/marketing/src/components/campaign-form.tsx:633
+#: ../../packages/marketing/src/components/campaign-form.tsx:637
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:317
@@ -1220,7 +1220,7 @@ msgstr "Cash drawer variance by shift"
 msgid "Center"
 msgstr "Center"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:269
+#: ../../packages/marketing/src/components/campaign-form.tsx:273
 msgid "Channel"
 msgstr ""
 
@@ -1236,7 +1236,7 @@ msgstr "Check before it goes out"
 msgid "Check it still works"
 msgstr "Check it still works"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:381
+#: ../../packages/marketing/src/components/campaign-form.tsx:385
 msgid "Check out our new summer menu"
 msgstr ""
 
@@ -1912,7 +1912,7 @@ msgstr "Display name"
 msgid "Does Not Equal"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:598
+#: ../../packages/marketing/src/components/campaign-form.tsx:602
 msgid "Don't send if more than this late"
 msgstr "Don't send if more than this late"
 
@@ -2063,7 +2063,7 @@ msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:576
-#: ../../packages/marketing/src/components/campaign-form.tsx:389
+#: ../../packages/marketing/src/components/campaign-form.tsx:393
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
@@ -2260,7 +2260,7 @@ msgstr "Every order"
 msgid "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
 msgstr "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:458
+#: ../../packages/marketing/src/components/campaign-form.tsx:462
 msgid "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
 msgstr "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
 
@@ -2268,11 +2268,11 @@ msgstr "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 
 msgid "Everyone gets {code}"
 msgstr "Everyone gets {code}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:319
+#: ../../packages/marketing/src/components/campaign-form.tsx:323
 msgid "Everyone subscribed"
 msgstr "Everyone subscribed"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:318
+#: ../../packages/marketing/src/components/campaign-form.tsx:322
 msgid "Everyone who opted in to notifications"
 msgstr "Everyone who opted in to notifications"
 
@@ -2526,7 +2526,7 @@ msgstr "Found it at the vendor"
 msgid "Found it at the vendor, {orderName}"
 msgstr "Found it at the vendor, {orderName}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:362
+#: ../../packages/marketing/src/components/campaign-form.tsx:366
 msgid "Fresh summer menu"
 msgstr "Fresh summer menu"
 
@@ -2771,7 +2771,7 @@ msgstr "Icon background"
 msgid "Identity Provider Configuration"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:616
+#: ../../packages/marketing/src/components/campaign-form.tsx:620
 msgid "If sending cannot start in time, it is not sent and you are told."
 msgstr "If sending cannot start in time, it is not sent and you are told."
 
@@ -2779,7 +2779,7 @@ msgstr "If sending cannot start in time, it is not sent and you are told."
 msgid "Image"
 msgstr "Image"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:493
+#: ../../packages/marketing/src/components/campaign-form.tsx:497
 msgid "Image address"
 msgstr "Image address"
 
@@ -2807,7 +2807,7 @@ msgstr "In setup"
 msgid "In use"
 msgstr "In use"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:593
+#: ../../packages/marketing/src/components/campaign-form.tsx:597
 msgid "In your time zone."
 msgstr "In your time zone."
 
@@ -3315,7 +3315,7 @@ msgstr ""
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:195
-#: ../../packages/marketing/src/components/campaign-form.tsx:395
+#: ../../packages/marketing/src/components/campaign-form.tsx:399
 msgid "Message"
 msgstr ""
 
@@ -3826,7 +3826,7 @@ msgstr ""
 msgid "Opens (a page of your site)"
 msgstr "Opens (a page of your site)"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:481
+#: ../../packages/marketing/src/components/campaign-form.tsx:485
 msgid "Opens this page"
 msgstr "Opens this page"
 
@@ -3845,7 +3845,7 @@ msgstr ""
 msgid "Optional"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:502
+#: ../../packages/marketing/src/components/campaign-form.tsx:506
 msgid "Optional. A secure (https) address."
 msgstr "Optional. A secure (https) address."
 
@@ -4285,7 +4285,7 @@ msgid "Printing"
 msgstr "Printing"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:41
-#: ../../packages/marketing/src/components/campaign-form.tsx:289
+#: ../../packages/marketing/src/components/campaign-form.tsx:293
 msgid "Pro"
 msgstr ""
 
@@ -5089,7 +5089,7 @@ msgid "Save default"
 msgstr "Save default"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: ../../packages/marketing/src/components/campaign-form.tsx:648
+#: ../../packages/marketing/src/components/campaign-form.tsx:652
 msgid "Save draft"
 msgstr ""
 
@@ -5153,7 +5153,7 @@ msgstr ""
 msgid "Saving…"
 msgstr "Saving…"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:678
+#: ../../packages/marketing/src/components/campaign-form.tsx:682
 msgid "Schedule"
 msgstr "Schedule"
 
@@ -5161,7 +5161,7 @@ msgstr "Schedule"
 msgid "Schedule anyway"
 msgstr "Schedule anyway"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:563
+#: ../../packages/marketing/src/components/campaign-form.tsx:567
 msgid "Schedule for later"
 msgstr "Schedule for later"
 
@@ -5270,7 +5270,7 @@ msgstr "See the original"
 msgid "See the re-send"
 msgstr "See the re-send"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:406
+#: ../../packages/marketing/src/components/campaign-form.tsx:410
 msgid "Segments: {smsSegments} (opt-out line included)"
 msgstr "Segments: {smsSegments} (opt-out line included)"
 
@@ -5316,7 +5316,7 @@ msgstr ""
 msgid "Send a one-time message to tenant operators."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:659
+#: ../../packages/marketing/src/components/campaign-form.tsx:663
 msgid "Send a test"
 msgstr "Send a test"
 
@@ -5324,7 +5324,7 @@ msgstr "Send a test"
 msgid "Send anyway"
 msgstr "Send anyway"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:583
+#: ../../packages/marketing/src/components/campaign-form.tsx:587
 msgid "Send at"
 msgstr "Send at"
 
@@ -5332,8 +5332,8 @@ msgstr "Send at"
 msgid "Send Email"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:249
-#: ../../packages/marketing/src/components/campaign-form.tsx:562
+#: ../../packages/marketing/src/components/campaign-form.tsx:253
+#: ../../packages/marketing/src/components/campaign-form.tsx:566
 msgid "Send now"
 msgstr ""
 
@@ -5357,7 +5357,7 @@ msgstr "Sending to the printer"
 msgid "Sending to the vendor failed unexpectedly"
 msgstr "Sending to the vendor failed unexpectedly"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:250
+#: ../../packages/marketing/src/components/campaign-form.tsx:254
 msgid "Sending..."
 msgstr ""
 
@@ -5750,7 +5750,7 @@ msgstr "Stuck in setup for more than 14 days"
 msgid "Style"
 msgstr "Style"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:371
+#: ../../packages/marketing/src/components/campaign-form.tsx:375
 msgid "Subject"
 msgstr ""
 
@@ -5782,11 +5782,11 @@ msgstr ""
 msgid "Succeeded"
 msgstr "Succeeded"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:341
+#: ../../packages/marketing/src/components/campaign-form.tsx:345
 msgid "Summer promo"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:414
+#: ../../packages/marketing/src/components/campaign-form.tsx:418
 msgid "supported"
 msgstr ""
 
@@ -6260,7 +6260,7 @@ msgstr "This image block has no picture."
 msgid "This iOS bundle id is already used by another app."
 msgstr "This iOS bundle id is already used by another app."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:130
+#: ../../packages/marketing/src/components/campaign-form.tsx:132
 msgid "This is your last one this month. You get {limit} more on {resetDate}."
 msgstr "This is your last one this month. You get {limit} more on {resetDate}."
 
@@ -6300,11 +6300,11 @@ msgstr "This policy applies to all channels, direct messages, and group chats in
 msgid "This replaces the blocks you have now with a copy of the template."
 msgstr "This replaces the blocks you have now with a copy of the template."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:134
+#: ../../packages/marketing/src/components/campaign-form.tsx:136
 msgid "This uses 1 of your {limit} text sends this month. {remaining} left."
 msgstr "This uses 1 of your {limit} text sends this month. {remaining} left."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:125
+#: ../../packages/marketing/src/components/campaign-form.tsx:127
 msgid "This uses a text send of next month. You get {limit} more on {resetDate}."
 msgstr "This uses a text send of next month. You get {limit} more on {resetDate}."
 
@@ -6332,7 +6332,7 @@ msgstr "Tip pool: tips by day"
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:349
+#: ../../packages/marketing/src/components/campaign-form.tsx:353
 msgid "Title"
 msgstr "Title"
 
@@ -6713,7 +6713,7 @@ msgstr "Vendors were cancelled for this order: refund it instead of retrying."
 msgid "Verification Status"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:323
+#: ../../packages/marketing/src/components/campaign-form.tsx:327
 msgid "Verified phone numbers only"
 msgstr "Verified phone numbers only"
 
@@ -6863,7 +6863,7 @@ msgstr "What changed (English)"
 msgid "What is this message for?"
 msgstr "What is this message for?"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:542
+#: ../../packages/marketing/src/components/campaign-form.tsx:546
 msgid "When"
 msgstr "When"
 
@@ -6917,7 +6917,7 @@ msgstr "Win back guests who have not ordered in a while"
 msgid "Window sticker"
 msgstr "Window sticker"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:328
+#: ../../packages/marketing/src/components/campaign-form.tsx:332
 msgid "Without a verified phone"
 msgstr "Without a verified phone"
 
@@ -6937,11 +6937,11 @@ msgstr "Write a draft"
 msgid "Write again"
 msgstr "Write again"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:438
+#: ../../packages/marketing/src/components/campaign-form.tsx:442
 msgid "Write the notification"
 msgstr "Write the notification"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:449
+#: ../../packages/marketing/src/components/campaign-form.tsx:453
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "Write your email. Use {NAME_TAG} to personalize."
 
@@ -6949,7 +6949,7 @@ msgstr "Write your email. Use {NAME_TAG} to personalize."
 msgid "Write your message"
 msgstr "Write your message"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:425
+#: ../../packages/marketing/src/components/campaign-form.tsx:429
 msgid "Write your text message"
 msgstr "Write your text message"
 
@@ -6996,7 +6996,7 @@ msgstr ""
 msgid "You have reached the limit for AI drafts. Please try again later."
 msgstr "You have reached the limit for AI drafts. Please try again later."
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:122
+#: ../../packages/marketing/src/components/campaign-form.tsx:124
 msgid "You have used all {limit} text sends this month. You get {limit} more on {resetDate}. Choose a time on {resetDate} or later to schedule it."
 msgstr "You have used all {limit} text sends this month. You get {limit} more on {resetDate}. Choose a time on {resetDate} or later to schedule it."
 

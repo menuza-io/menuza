@@ -10,6 +10,11 @@ import {
 } from './hero-video-workflow'
 import { MarketingJourneyWorkflow } from './marketing-journey-workflow'
 import {
+	OCCASION_SCHEDULE_JOB_PATH,
+	OccasionScheduleWorkflow,
+	type OccasionScheduleWorkflowParams,
+} from './occasion-schedule-workflow'
+import {
 	MENU_IMPORT_PATH,
 	MenuImportWorkflow,
 	type MenuImportWorkflowParams,
@@ -50,6 +55,7 @@ export interface Env {
 	MENU_IMPORT_WORKFLOW: Workflow<MenuImportWorkflowParams>
 	CALENDAR_SYNC_WORKFLOW: Workflow<CalendarSyncWorkflowParams>
 	HERO_VIDEO_WORKFLOW: Workflow<HeroVideoWorkflowParams>
+	OCCASION_SCHEDULE_WORKFLOW: Workflow<OccasionScheduleWorkflowParams>
 }
 
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
@@ -130,6 +136,8 @@ const SOCIAL_POST_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
 const WEBSITE_PUBLISH_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
 // A scheduled menu changeover is at most 90 days ahead (#149).
 const MENU_SCHEDULE_MAX_LEAD_MS = 90 * 24 * 60 * 60_000
+// The marketing calendar's daily wake-up (#152) is at most two days ahead.
+const OCCASION_SCHEDULE_MAX_LEAD_MS = 2 * 24 * 60 * 60_000
 // A calendar is read every few hours (#319); a wake-up is never further ahead
 // than a month, and the hourly sweep covers one that is refused.
 const CALENDAR_SYNC_MAX_LEAD_MS = 30 * 24 * 60 * 60_000
@@ -878,6 +886,53 @@ export default {
 		}
 
 		// =========================================================================
+		// Marketing calendar Auto-schedule (#152): the App's daily wake-up —
+		// POST /workflows/occasion-schedule/start { runAt }
+		// =========================================================================
+		if (
+			(pathname === '/workflows/occasion-schedule/start' ||
+				pathname === '/api/workflows/occasion-schedule/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				runAt?: unknown
+			}
+			const runAt =
+				typeof body.runAt === 'string' ? new Date(body.runAt) : new Date('')
+			if (Number.isNaN(runAt.getTime())) {
+				return Response.json({ error: 'runAt is required' }, { status: 400 })
+			}
+			if (runAt.getTime() - Date.now() > OCCASION_SCHEDULE_MAX_LEAD_MS) {
+				return Response.json(
+					{ error: 'runAt is too far ahead to wait for' },
+					{ status: 400 },
+				)
+			}
+			// One instance per wake-up instant: a second start for the same one is
+			// the same wake-up, not another.
+			const instanceId = `occasions-${runAt.getTime()}`
+			try {
+				const instance = await env.OCCASION_SCHEDULE_WORKFLOW.create({
+					id: instanceId,
+					params: { runAt: runAt.toISOString() },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start occasion schedule workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
 		// Menu import (#73): POST /workflows/menu-import/start { importId }
 		// =========================================================================
 		if (
@@ -1065,6 +1120,13 @@ export default {
 					'Hero video sweep',
 					(jobEnv: Env) => invokeJob(jobEnv, HERO_VIDEO_JOB_PATH),
 				],
+				// The marketing calendar's Auto-schedule (#152) is woken once a day by
+				// OccasionScheduleWorkflow; this hourly sweep runs it too (it is
+				// idempotent, once per occasion and year) and restarts the next wake-up.
+				[
+					'Occasion schedule sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, OCCASION_SCHEDULE_JOB_PATH),
+				],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {
@@ -1110,4 +1172,5 @@ export {
 	MenuImportWorkflow,
 	CalendarSyncWorkflow,
 	HeroVideoWorkflow,
+	OccasionScheduleWorkflow,
 }

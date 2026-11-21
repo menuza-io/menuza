@@ -43,6 +43,7 @@ import { laborRoutes } from './routes/labor.ts'
 import { operatorRoutes } from './routes/operator.ts'
 import { marketingAudienceRoutes } from './routes/operator-marketing-audiences.ts'
 import { marketingSettingsRoutes } from './routes/operator-marketing-settings.ts'
+import { marketingInternalRoutes } from './routes/marketing-internal.ts'
 import {
 	publicShortLinkRoutes,
 	shortLinkOperatorRoutes,
@@ -399,6 +400,7 @@ export function createTenantApiApp() {
 	app.route('/api/forms', formSystemRoutes)
 	app.route('/api/orders', orderSystemRoutes)
 	app.route('/api/marketing', engagementSyncRoutes)
+	app.route('/api/marketing', marketingInternalRoutes)
 	app.route('/api/sms-inbound', smsInboundInternalRoutes)
 	app.route('/webhooks/sms', smsWebhookRoutes)
 	app.route('/api/staff', staffTickRoutes)

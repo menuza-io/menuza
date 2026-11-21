@@ -930,7 +930,7 @@ describe('MarketingJourneyWorkflow', () => {
 		expect(sleepUntil.mock.calls[0]![0]).toBe('quiet-hours-sms-1')
 		expect((sleepUntil.mock.calls[0]![1] as Date).getTime()).toBe(opensAt)
 		expect(executeCalls).toBe(2)
-		expect(mockStep.do.mock.calls.map((call) => call[0])).toEqual(
+		expect(mockStep.do.mock.calls.map((call: unknown[]) => call[0])).toEqual(
 			expect.arrayContaining(['action-sms', 'action-sms-after-1']),
 		)
 	})

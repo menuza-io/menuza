@@ -1,5 +1,6 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { occasionTitle, isOccasionKey } from '@repo/marketing/occasions'
 import {
 	managerAlertKindFromNotificationType,
 	managerAlertPath,
@@ -32,6 +33,11 @@ import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { BellIcon } from '#app/components/icons/bell-icon.tsx'
 import {
+	customerAppAlertCopy,
+	customerAppAlertKindFromNotificationType,
+	customerAppAlertPath,
+} from '#app/utils/customer-apps/alerts.ts'
+import {
 	DISCOUNT_ALERT_COPY,
 	discountAlertKindFromNotificationType,
 	discountAlertPath,
@@ -41,11 +47,6 @@ import {
 	domainAlertKindFromNotificationType,
 	domainAlertPath,
 } from '#app/utils/domains/domain-alerts.ts'
-import {
-	customerAppAlertCopy,
-	customerAppAlertKindFromNotificationType,
-	customerAppAlertPath,
-} from '#app/utils/customer-apps/alerts.ts'
 import {
 	FORM_ALERT_COPY,
 	formAlertPath,
@@ -62,6 +63,11 @@ import {
 	campaignAlertKindFromNotificationType,
 	campaignAlertPath,
 } from '#app/utils/marketing/campaign-alerts.ts'
+import {
+	occasionAlertCopy,
+	occasionAlertKindFromNotificationType,
+	occasionAlertPath,
+} from '#app/utils/marketing/occasion-alerts.ts'
 import {
 	PRINT_ALERT_COPY,
 	printAlertKindFromNotificationType,
@@ -122,7 +128,7 @@ function NotificationItem({
 	notification: Notification
 	onMarkRead: (id: string) => void
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const [isHovered, setIsHovered] = useState(false)
 	const navigate = useNavigate()
 
@@ -181,6 +187,18 @@ function NotificationItem({
 			}
 		: null
 
+	const occasionKind = occasionAlertKindFromNotificationType(notification.type)
+	const occasionAlert = occasionKind
+		? occasionAlertCopy(
+				occasionKind,
+				isOccasionKey(payload?.occasionKey)
+					? occasionTitle(payload.occasionKey, i18n.locale)
+					: '',
+				typeof payload?.reason === 'string' ? payload.reason : null,
+				_,
+			)
+		: null
+
 	const discountKind = discountAlertKindFromNotificationType(notification.type)
 	const discountAlert = discountKind
 		? {
@@ -234,6 +252,7 @@ function NotificationItem({
 		websiteAlert?.subject ??
 		discountAlert?.subject ??
 		campaignAlert?.subject ??
+		occasionAlert?.subject ??
 		printAlert?.subject ??
 		staffing?.subject ??
 		reservations?.subject ??
@@ -248,6 +267,7 @@ function NotificationItem({
 		websiteAlert?.body ??
 		discountAlert?.body ??
 		campaignAlert?.body ??
+		occasionAlert?.body ??
 		printAlert?.body ??
 		staffing?.body ??
 		reservations?.body ??
@@ -290,6 +310,12 @@ function NotificationItem({
 		) {
 			void navigate(
 				`/${payload.orgSlug}${campaignAlertPath(payload.campaignId)}`,
+			)
+		} else if (occasionKind && typeof payload?.orgSlug === 'string') {
+			void navigate(
+				`/${payload.orgSlug}${occasionAlertPath(
+					typeof payload.campaignId === 'string' ? payload.campaignId : null,
+				)}`,
 			)
 		} else if (
 			printKind &&
@@ -347,7 +373,7 @@ function NotificationItem({
 							<Icon name="globe" className="h-4 w-4" />
 						) : discountKind ? (
 							<Icon name="tag" className="h-4 w-4" />
-						) : campaignKind ? (
+						) : campaignKind || occasionKind ? (
 							<Icon name="send" className="h-4 w-4" />
 						) : printKind ? (
 							<Icon name="printer" className="h-4 w-4" />

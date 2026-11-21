@@ -38,6 +38,7 @@ import {
 import { orgSiteUrl } from '#app/utils/launch/launch.server.ts'
 import { loadAiDraftConfig } from '#app/utils/marketing/ai-draft-config.server.ts'
 import { loadAudienceOptions } from '#app/utils/marketing/audiences.server.ts'
+import { occasionDraft } from '#app/utils/marketing/calendar.server.ts'
 import { submitCampaign } from '#app/utils/marketing/campaign-submit.server.ts'
 import { testSendClientFor } from '#app/utils/marketing/campaign-test-send.server.ts'
 import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
@@ -73,7 +74,29 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		: []
 
 	const features = await getMarketingFeatures(orgId)
+	// "Use this" on the marketing calendar (#152): the occasion's email design,
+	// text and subject, scheduled for the recommended time. Nothing is sent or
+	// saved until the operator presses Send or Schedule.
+	const query = new URL(request.url).searchParams
+	const occasion =
+		features.calendar && query.get('occasion')
+			? await occasionDraft({
+					organizationId: orgId,
+					key: query.get('occasion') ?? '',
+					date: query.get('date') ?? '',
+				})
+			: null
 	return {
+		occasion: occasion
+			? {
+					key: occasion.key,
+					name: occasion.message.name,
+					subject: occasion.message.subject,
+					blocks: occasion.message.blocks,
+					sms: occasion.message.sms,
+					sendAt: new Date(occasion.sendAt).toISOString(),
+				}
+			: null,
 		orgSlug,
 		audienceOptions: features.audiences
 			? ((await loadAudienceOptions(fetchTenant)) ?? null)
@@ -163,15 +186,18 @@ export default function NewCampaignRoute() {
 		aiDraft,
 		pushEnabled,
 		smsAllowance,
+		occasion,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
 	const [offer, setOffer] = useState<CouponOfferValue | null>(null)
 	const [blocks, setBlocks] = useState<EmailBlock[]>(() =>
-		buildEmailTemplateBlocks(template ?? 'welcome', {
-			buttonUrl: siteUrl ?? undefined,
-		}),
+		occasion
+			? occasion.blocks
+			: buildEmailTemplateBlocks(template ?? 'welcome', {
+					buttonUrl: siteUrl ?? undefined,
+				}),
 	)
 	const [focusBlock, setFocusBlock] = useState<{
 		id: string
@@ -196,6 +222,17 @@ export default function NewCampaignRoute() {
 						canTestSend
 						pushEnabled={pushEnabled}
 						smsAllowance={smsAllowance}
+						defaults={
+							occasion
+								? {
+										name: occasion.name,
+										channel: 'email',
+										subject: occasion.subject,
+										smsContent: occasion.sms,
+										scheduledAt: occasion.sendAt,
+									}
+								: undefined
+						}
 						audienceField={
 							audienceOptions ? (
 								<SavedAudienceField
