@@ -327,6 +327,10 @@ describe('Design shows the uploader and Remove font falls back at once (#286)', 
 		body.set('intent', 'confirm-site-font-licence')
 		body.set('role', 'body')
 		body.set('fontLicenceAccepted', 'true')
+		// Only the current text can be confirmed.
+		body.set('fontLicenceVersion', String(FONT_LICENCE_VERSION + 1))
+		expect((await post(ctx, body)).status).toBe(403)
+		body.set('fontLicenceVersion', String(FONT_LICENCE_VERSION))
 		expect((await post(ctx, body)).status).toBe(200)
 		const [row] = await db
 			.select()
@@ -345,5 +349,40 @@ describe('Design shows the uploader and Remove font falls back at once (#286)', 
 		expect((await load(ctx)).fontLicence.fonts.body?.needsConfirmation).toBe(
 			false,
 		)
+	})
+
+	it('confirming covers the file that is live and the file in the draft, each by its own hash', async () => {
+		const ctx = await setup()
+		const liveKey = `org/${ctx.organization.id}/site-fonts/body/live.woff2`
+		const draftKey = `org/${ctx.organization.id}/site-fonts/body/draft.woff2`
+		const themeWith = (objectKey: string, filename: string) =>
+			JSON.stringify({
+				bodyFont: 'custom',
+				bodyCustomFont: { objectKey, filename, format: 'woff2' },
+			})
+		await db
+			.update(Organization)
+			.set({
+				siteTheme: themeWith(liveKey, 'Live.woff2'),
+				draftSiteTheme: themeWith(draftKey, 'Draft.woff2'),
+			})
+			.where(eq(Organization.id, ctx.organization.id))
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response(FONT_BYTES, { status: 200 })),
+		)
+		const body = new URLSearchParams()
+		body.set('intent', 'confirm-site-font-licence')
+		body.set('role', 'body')
+		body.set('fontLicenceAccepted', 'true')
+		body.set('fontLicenceVersion', String(FONT_LICENCE_VERSION))
+		expect((await post(ctx, body)).status).toBe(200)
+		const recorded = await rows(ctx.organization.id)
+		expect(recorded.map((row) => row.objectKey).sort()).toEqual(
+			[draftKey, liveKey].sort(),
+		)
+		// A second tick records nothing twice.
+		expect((await post(ctx, body)).status).toBe(200)
+		expect(await rows(ctx.organization.id)).toHaveLength(2)
 	})
 })

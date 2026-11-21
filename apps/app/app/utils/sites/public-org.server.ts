@@ -1,8 +1,13 @@
 import {
 	parseActionTargets,
 	type PublicActionTargets,
+	serializeActionTargets,
 } from '@repo/common/action-targets'
 import { formatPriceRange, parseStoredCuisines } from '@repo/common/cuisines'
+import {
+	customFontsOf,
+	removeCustomFontFromThemeJson,
+} from '@repo/common/font-licence'
 import {
 	type ConsentMode,
 	legalRegionFor,
@@ -27,6 +32,7 @@ import {
 	and,
 	db,
 	eq,
+	FontLicenceAcceptance,
 	inArray,
 	isNotNull,
 	ne,
@@ -370,6 +376,38 @@ function publicConsentMode(organization: PublicSiteOrganization): ConsentMode {
 /**
  * Resolve a published org site by slug or custom domain host.
  */
+/**
+ * The theme without any custom font that has a removal on record (#286). Frozen
+ * schedule snapshots and old versions keep their theme text, so the check is
+ * made where the site is served, not only where a theme is saved.
+ */
+async function withoutRemovedFonts(
+	organizationId: string,
+	siteTheme: string | null,
+): Promise<string | null> {
+	const fonts = customFontsOf(siteTheme)
+	if (fonts.length === 0) return siteTheme
+	const removed = await db
+		.select({ objectKey: FontLicenceAcceptance.objectKey })
+		.from(FontLicenceAcceptance)
+		.where(
+			and(
+				eq(FontLicenceAcceptance.organizationId, organizationId),
+				inArray(
+					FontLicenceAcceptance.objectKey,
+					fonts.map((font) => font.objectKey),
+				),
+				isNotNull(FontLicenceAcceptance.removedAt),
+			),
+		)
+	if (removed.length === 0) return siteTheme
+	const keys = new Set(removed.map((row) => row.objectKey))
+	return removeCustomFontFromThemeJson(
+		siteTheme,
+		fonts.filter((font) => keys.has(font.objectKey)).map((font) => font.role),
+	).json
+}
+
 export async function findPublishedSiteOrganization(options: {
 	slug?: string | null
 	host?: string | null
@@ -465,17 +503,28 @@ export async function findPublishedSiteOrganization(options: {
 				),
 			)
 	).flatMap((row) => (row.kind ? [{ kind: row.kind, slug: row.slug }] : []))
+	const actionTargets = await loadPublicActionTargets(
+		organization.id,
+		organization.actionTargets,
+		{ dropOwnDomains: true },
+	)
 	return {
 		...organization,
+		// A font taken off the site (#286) never reaches a visitor, whichever
+		// theme text (a restored version, a scheduled publish) names it again.
+		siteTheme: await withoutRemovedFonts(
+			organization.id,
+			organization.siteTheme,
+		),
 		announcements,
 		redirects,
 		searchConsoleVerification,
 		legalPages,
 		consentBanner: await consentBannerEnabled(organization.id),
 		customerApp: await loadPublicCustomerApp(organization.id),
-		locationActionTargets: (
-			await loadPublicActionTargets(organization.id, organization.actionTargets)
-		).locations,
+		// A link to one of the site's own domains is left out (it would loop).
+		actionTargets: serializeActionTargets(actionTargets.organization),
+		locationActionTargets: actionTargets.locations,
 	}
 }
 

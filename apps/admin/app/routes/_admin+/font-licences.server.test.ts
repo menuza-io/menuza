@@ -228,6 +228,39 @@ describe('Admin font licences (#286)', () => {
 		).toBeNull()
 	})
 
+	it('a % or _ in the search is a letter, not a wildcard', async () => {
+		const a = await makeOrgWithFont()
+		const b = await makeOrgWithFont()
+		const ids = (rows: Array<{ id: string }>) => rows.map((row) => row.id)
+		const wild = await listFontAcceptances({ search: '%' })
+		expect(ids(wild)).not.toContain(a.acceptance.id)
+		expect(ids(wild)).not.toContain(b.acceptance.id)
+		const under = await listFontAcceptances({ search: '_' })
+		expect(ids(under)).not.toContain(a.acceptance.id)
+		// A normal search still finds it.
+		expect(
+			ids(await listFontAcceptances({ search: a.organization.slug })),
+		).toEqual([a.acceptance.id])
+	})
+
+	it('takes the font off the site (the record) even before the themes are rewritten', async () => {
+		const ctx = await makeOrgWithFont()
+		const result = await removeFontAsAdmin({
+			adminUserId: (await makeUser('admin2')).id,
+			acceptanceId: ctx.acceptance.id,
+		})
+		expect(result).toMatchObject({
+			ok: true,
+			removedFromLive: true,
+			removedFromDraft: true,
+		})
+		const [row] = await db
+			.select({ removedAt: FontLicenceAcceptance.removedAt })
+			.from(FontLicenceAcceptance)
+			.where(eq(FontLicenceAcceptance.id, ctx.acceptance.id))
+		expect(row?.removedAt).toBeInstanceOf(Date)
+	})
+
 	it('answers 404 for an unknown acceptance', async () => {
 		const { admin } = await adminCookie()
 		expect(

@@ -111,6 +111,10 @@ msgstr "{excluded, plural, zero {لا سجلات مستبعدة} one {تم اس�
 msgid "{field}"
 msgstr "{field}"
 
+#: app/routes/_admin+/font-licences.tsx:72
+msgid "{fileName} is taken off the site of {organizationName} at once, and the site falls back to the theme font. The licence record is kept."
+msgstr "تتم إزالة {fileName} من موقع {organizationName} فورًا، ويعود الموقع إلى خط السمة. يتم الاحتفاظ بسجل الترخيص."
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:528
 msgid "{hours} hours late"
 msgstr "متأخر {hours} ساعات"
@@ -1146,6 +1150,7 @@ msgstr "اسم الحملة"
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/customer-apps_.$appId.tsx:902
+#: app/routes/_admin+/font-licences.tsx:88
 #: app/routes/_admin+/gdpr-requests.tsx:663
 #: app/routes/_admin+/print-shop.tsx:193
 #: app/routes/_admin+/roles+/index.tsx:352
@@ -1422,7 +1427,7 @@ msgstr "تكوين إعدادات موفر الهوية لمؤسستك"
 msgid "Confirm"
 msgstr "تأكيد"
 
-#: app/routes/_admin+/font-licences.tsx:57
+#: app/routes/_admin+/font-licences.tsx:135
 msgid "Confirmed by"
 msgstr "أكّده"
 
@@ -2226,7 +2231,7 @@ msgstr "سير عمل قائم على الأحداث لدورة حياة مشغ�
 msgid "Every app was started."
 msgstr "تم بدء جميع التطبيقات."
 
-#: app/routes/_admin+/font-licences.tsx:30
+#: app/routes/_admin+/font-licences.tsx:108
 msgid "Every custom font a member uploaded, who confirmed they hold a web licence, and when. Remove a font after a complaint: the site falls back to the theme font at once."
 msgstr "كل خط مخصص رفعه عضو، ومن أكّد أنه يملك ترخيصًا للويب، ومتى. أزل الخط بعد وصول شكوى: يعود الموقع إلى خط القالب فورًا."
 
@@ -2446,12 +2451,12 @@ msgstr "المؤشرات للمستخدم: {searchedUserId} (المؤسسة: {se
 msgid "Flyer"
 msgstr "منشور"
 
-#: app/routes/_admin+/font-licences.tsx:54
+#: app/routes/_admin+/font-licences.tsx:132
 msgid "Font file"
 msgstr "ملف الخط"
 
 #: app/components/admin-sidebar.tsx:161
-#: app/routes/_admin+/font-licences.tsx:28
+#: app/routes/_admin+/font-licences.tsx:106
 msgid "Font licences"
 msgstr "تراخيص الخطوط"
 
@@ -2757,7 +2762,7 @@ msgstr "في آخر 100 حدث"
 msgid "In setup"
 msgstr "قيد الإعداد"
 
-#: app/routes/_admin+/font-licences.tsx:100
+#: app/routes/_admin+/font-licences.tsx:178
 msgid "In use"
 msgstr "قيد الاستخدام"
 
@@ -3436,7 +3441,7 @@ msgstr "لا يوجد جهة اتصال مسجّلة"
 msgid "No coupon"
 msgstr "بدون قسيمة"
 
-#: app/routes/_admin+/font-licences.tsx:69
+#: app/routes/_admin+/font-licences.tsx:147
 msgid "No custom fonts have been uploaded."
 msgstr "لم يتم رفع أي خطوط مخصصة."
 
@@ -3833,7 +3838,7 @@ msgstr "org - موارد المؤسسة"
 #: app/routes/_admin+/customer-apps.tsx:275
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
-#: app/routes/_admin+/font-licences.tsx:51
+#: app/routes/_admin+/font-licences.tsx:129
 #: app/routes/_admin+/legal-agreements.tsx:135
 #: app/routes/_admin+/phone-numbers.tsx:361
 #: app/routes/_admin+/print-shop.tsx:796
@@ -4391,7 +4396,7 @@ msgstr "تُقرأ من المتاجر مرة يوميًا. المتجر الذ�
 msgid "Read our Cookie Policy"
 msgstr "اقرأ سياسة ملفات تعريف الارتباط الخاصة بنا"
 
-#: app/routes/_admin+/font-licences.tsx:116
+#: app/routes/_admin+/font-licences.tsx:84
 msgid "Reason (optional)"
 msgstr "السبب (اختياري)"
 
@@ -4403,7 +4408,7 @@ msgstr "سبب الحظر"
 msgid "Reason for blacklisting"
 msgstr "سبب الإدراج في القائمة السوداء"
 
-#: app/routes/_admin+/font-licences.tsx:117
+#: app/routes/_admin+/font-licences.tsx:85
 msgid "Reason for removing the font"
 msgstr "سبب إزالة الخط"
 
@@ -4609,13 +4614,22 @@ msgstr "إزالة التصميم"
 msgid "Remove dish"
 msgstr "إزالة الطبق"
 
-#: app/routes/_admin+/font-licences.tsx:125
+#: app/routes/_admin+/font-licences.tsx:63
+#: app/routes/_admin+/font-licences.tsx:90
 msgid "Remove font"
 msgstr "إزالة الخط"
+
+#: app/routes/_admin+/font-licences.tsx:58
+msgid "Remove font {fileName} from {organizationName}"
+msgstr "إزالة الخط {fileName} من {organizationName}"
 
 #: app/components/admin/feature-flags.tsx:371
 msgid "Remove Override"
 msgstr "إزالة التجاوز"
+
+#: app/routes/_admin+/font-licences.tsx:69
+msgid "Remove this font?"
+msgstr "إزالة هذا الخط؟"
 
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:408
 msgid "Remove variable"
@@ -4623,7 +4637,7 @@ msgstr "إزالة المتغير"
 
 #: app/routes/_admin+/customer-apps_.$appId.tsx:608
 #: app/routes/_admin+/customer-apps.tsx:353
-#: app/routes/_admin+/font-licences.tsx:96
+#: app/routes/_admin+/font-licences.tsx:174
 msgid "Removed"
 msgstr "أُزيل"
 
@@ -4647,7 +4661,7 @@ msgstr "استبدال المفتاح"
 msgid "Replace what you have?"
 msgstr "استبدال ما لديك؟"
 
-#: app/routes/_admin+/font-licences.tsx:104
+#: app/routes/_admin+/font-licences.tsx:182
 msgid "Replaced"
 msgstr "تم استبداله"
 
@@ -5143,7 +5157,7 @@ msgstr "البحث في الأتمتة..."
 #~ msgid "Search by name, email, or username..."
 #~ msgstr "البحث بالاسم أو البريد الإلكتروني أو اسم المستخدم..."
 
-#: app/routes/_admin+/font-licences.tsx:42
+#: app/routes/_admin+/font-licences.tsx:120
 msgid "Search by organization or file"
 msgstr "ابحث بالمنظمة أو الملف"
 
@@ -5164,7 +5178,7 @@ msgstr "البحث في الحملات..."
 msgid "Search dishes"
 msgstr "البحث عن الأطباق"
 
-#: app/routes/_admin+/font-licences.tsx:43
+#: app/routes/_admin+/font-licences.tsx:121
 msgid "Search font licences"
 msgstr "البحث في تراخيص الخطوط"
 
@@ -5581,7 +5595,7 @@ msgstr "جهاز Station أو شاشة مطبخ"
 #: app/components/admin-users-table.tsx:161
 #: app/components/sso-configuration-overview.tsx:232
 #: app/components/sso-user-management.tsx:178
-#: app/routes/_admin+/font-licences.tsx:60
+#: app/routes/_admin+/font-licences.tsx:138
 #: app/routes/_admin+/gdpr-requests.tsx:419
 #: app/routes/_admin+/gdpr-requests.tsx:575
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:114

@@ -10,8 +10,8 @@ import {
 	desc,
 	eq,
 	isNull,
-	like,
 	or,
+	sql,
 	FontLicenceAcceptance,
 	Organization,
 	User,
@@ -36,6 +36,10 @@ export async function listFontAcceptances(input: {
 	limit?: number
 }) {
 	const term = input.search?.trim().slice(0, 100)
+	// `%` and `_` in what was typed are letters, not wildcards.
+	const pattern = term ? `%${term.replace(/[\\%_]/gu, '\\$&')}%` : null
+	const matches = (column: Parameters<typeof sql>[1]) =>
+		sql`${column} LIKE ${pattern} ESCAPE '\\'`
 	const rows = await db
 		.select({
 			id: FontLicenceAcceptance.id,
@@ -64,11 +68,11 @@ export async function listFontAcceptances(input: {
 		)
 		.leftJoin(User, eq(User.id, FontLicenceAcceptance.userId))
 		.where(
-			term
+			pattern
 				? or(
-						like(Organization.name, `%${term}%`),
-						like(Organization.slug, `%${term}%`),
-						like(FontLicenceAcceptance.fileName, `%${term}%`),
+						matches(Organization.name),
+						matches(Organization.slug),
+						matches(FontLicenceAcceptance.fileName),
 					)
 				: undefined,
 		)
@@ -107,32 +111,42 @@ const RemoveSchema = z.object({
 	reason: z.string().trim().max(500).optional(),
 })
 
+/**
+ * Takes one font out of a theme text with a compare and set on that text. When
+ * a member saves the theme in between, the write changes nothing: read again
+ * and retry, and say so when it never lands. `false` means the theme does not
+ * use the file; `'busy'` means it still does and could not be changed.
+ */
 async function clearThemeFont(
 	organizationId: string,
 	objectKey: string,
 	column: 'siteTheme' | 'draftSiteTheme',
-) {
-	const [org] = await db
-		.select({ theme: Organization[column] })
-		.from(Organization)
-		.where(eq(Organization.id, organizationId))
-		.limit(1)
-	if (!org?.theme) return false
-	const roles = customFontsOf(org.theme)
-		.filter((font) => font.objectKey === objectKey)
-		.map((font) => font.role)
-	if (roles.length === 0) return false
-	const { json } = removeCustomFontFromThemeJson(org.theme, roles)
-	await db
-		.update(Organization)
-		.set({ [column]: json })
-		.where(
-			and(
-				eq(Organization.id, organizationId),
-				eq(Organization[column], org.theme),
-			),
-		)
-	return true
+): Promise<boolean | 'busy'> {
+	for (let attempt = 0; attempt < 5; attempt++) {
+		const [org] = await db
+			.select({ theme: Organization[column] })
+			.from(Organization)
+			.where(eq(Organization.id, organizationId))
+			.limit(1)
+		if (!org?.theme) return false
+		const roles = customFontsOf(org.theme)
+			.filter((font) => font.objectKey === objectKey)
+			.map((font) => font.role)
+		if (roles.length === 0) return false
+		const { json } = removeCustomFontFromThemeJson(org.theme, roles)
+		const changed = await db
+			.update(Organization)
+			.set({ [column]: json })
+			.where(
+				and(
+					eq(Organization.id, organizationId),
+					eq(Organization[column], org.theme),
+				),
+			)
+			.returning({ id: Organization.id })
+		if (changed.length > 0) return true
+	}
+	return 'busy'
 }
 
 /**
@@ -152,17 +166,9 @@ export async function removeFontAsAdmin(input: {
 		.where(eq(FontLicenceAcceptance.id, input.acceptanceId))
 		.limit(1)
 	if (!acceptance) return { ok: false as const, error: 'not_found' as const }
-	// Live first: a request between the two writes must never read the font.
-	const live = await clearThemeFont(
-		acceptance.organizationId,
-		acceptance.objectKey,
-		'siteTheme',
-	)
-	const draft = await clearThemeFont(
-		acceptance.organizationId,
-		acceptance.objectKey,
-		'draftSiteTheme',
-	)
+	// The record first: the site stops serving a removed file the moment this is
+	// written (whatever theme text names it), so a clear that fails below leaves
+	// the font already off the site, and the same request can be sent again.
 	await db
 		.update(FontLicenceAcceptance)
 		.set({
@@ -178,7 +184,23 @@ export async function removeFontAsAdmin(input: {
 				isNull(FontLicenceAcceptance.removedAt),
 			),
 		)
+	// Live first: a request between the two writes must never read the font.
+	const liveResult = await clearThemeFont(
+		acceptance.organizationId,
+		acceptance.objectKey,
+		'siteTheme',
+	)
+	const draftResult = await clearThemeFont(
+		acceptance.organizationId,
+		acceptance.objectKey,
+		'draftSiteTheme',
+	)
 	requestSiteCachePurge({ organizationId: acceptance.organizationId })
+	if (liveResult === 'busy' || draftResult === 'busy') {
+		return { ok: false as const, error: 'theme_busy' as const }
+	}
+	const live = liveResult
+	const draft = draftResult
 	try {
 		await auditService.log({
 			action: AuditAction.FONT_REMOVED,
@@ -224,7 +246,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (!result.ok) {
 		return Response.json(
 			{ status: 'error', error: result.error },
-			{ status: 404 },
+			{ status: result.error === 'theme_busy' ? 409 : 404 },
 		)
 	}
 	return Response.json({ status: 'success', ...result })

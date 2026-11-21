@@ -111,6 +111,10 @@ msgstr "{excluded, plural, one {# record is left out of this ratio because it ha
 msgid "{field}"
 msgstr ""
 
+#: app/routes/_admin+/font-licences.tsx:72
+msgid "{fileName} is taken off the site of {organizationName} at once, and the site falls back to the theme font. The licence record is kept."
+msgstr "{fileName} is taken off the site of {organizationName} at once, and the site falls back to the theme font. The licence record is kept."
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:528
 msgid "{hours} hours late"
 msgstr "{hours} hours late"
@@ -1146,6 +1150,7 @@ msgstr ""
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/customer-apps_.$appId.tsx:902
+#: app/routes/_admin+/font-licences.tsx:88
 #: app/routes/_admin+/gdpr-requests.tsx:663
 #: app/routes/_admin+/print-shop.tsx:193
 #: app/routes/_admin+/roles+/index.tsx:352
@@ -1422,7 +1427,7 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
-#: app/routes/_admin+/font-licences.tsx:57
+#: app/routes/_admin+/font-licences.tsx:135
 msgid "Confirmed by"
 msgstr "Confirmed by"
 
@@ -2226,7 +2231,7 @@ msgstr ""
 msgid "Every app was started."
 msgstr "Every app was started."
 
-#: app/routes/_admin+/font-licences.tsx:30
+#: app/routes/_admin+/font-licences.tsx:108
 msgid "Every custom font a member uploaded, who confirmed they hold a web licence, and when. Remove a font after a complaint: the site falls back to the theme font at once."
 msgstr "Every custom font a member uploaded, who confirmed they hold a web licence, and when. Remove a font after a complaint: the site falls back to the theme font at once."
 
@@ -2446,12 +2451,12 @@ msgstr ""
 msgid "Flyer"
 msgstr "Flyer"
 
-#: app/routes/_admin+/font-licences.tsx:54
+#: app/routes/_admin+/font-licences.tsx:132
 msgid "Font file"
 msgstr "Font file"
 
 #: app/components/admin-sidebar.tsx:161
-#: app/routes/_admin+/font-licences.tsx:28
+#: app/routes/_admin+/font-licences.tsx:106
 msgid "Font licences"
 msgstr "Font licences"
 
@@ -2757,7 +2762,7 @@ msgstr ""
 msgid "In setup"
 msgstr "In setup"
 
-#: app/routes/_admin+/font-licences.tsx:100
+#: app/routes/_admin+/font-licences.tsx:178
 msgid "In use"
 msgstr "In use"
 
@@ -3436,7 +3441,7 @@ msgstr ""
 msgid "No coupon"
 msgstr "No coupon"
 
-#: app/routes/_admin+/font-licences.tsx:69
+#: app/routes/_admin+/font-licences.tsx:147
 msgid "No custom fonts have been uploaded."
 msgstr "No custom fonts have been uploaded."
 
@@ -3833,7 +3838,7 @@ msgstr ""
 #: app/routes/_admin+/customer-apps.tsx:275
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
-#: app/routes/_admin+/font-licences.tsx:51
+#: app/routes/_admin+/font-licences.tsx:129
 #: app/routes/_admin+/legal-agreements.tsx:135
 #: app/routes/_admin+/phone-numbers.tsx:361
 #: app/routes/_admin+/print-shop.tsx:796
@@ -4391,7 +4396,7 @@ msgstr "Read from the stores once a day. A store that cannot be reached keeps it
 msgid "Read our Cookie Policy"
 msgstr ""
 
-#: app/routes/_admin+/font-licences.tsx:116
+#: app/routes/_admin+/font-licences.tsx:84
 msgid "Reason (optional)"
 msgstr "Reason (optional)"
 
@@ -4403,7 +4408,7 @@ msgstr ""
 msgid "Reason for blacklisting"
 msgstr ""
 
-#: app/routes/_admin+/font-licences.tsx:117
+#: app/routes/_admin+/font-licences.tsx:85
 msgid "Reason for removing the font"
 msgstr "Reason for removing the font"
 
@@ -4609,13 +4614,22 @@ msgstr "Remove design"
 msgid "Remove dish"
 msgstr "Remove dish"
 
-#: app/routes/_admin+/font-licences.tsx:125
+#: app/routes/_admin+/font-licences.tsx:63
+#: app/routes/_admin+/font-licences.tsx:90
 msgid "Remove font"
 msgstr "Remove font"
+
+#: app/routes/_admin+/font-licences.tsx:58
+msgid "Remove font {fileName} from {organizationName}"
+msgstr "Remove font {fileName} from {organizationName}"
 
 #: app/components/admin/feature-flags.tsx:371
 msgid "Remove Override"
 msgstr ""
+
+#: app/routes/_admin+/font-licences.tsx:69
+msgid "Remove this font?"
+msgstr "Remove this font?"
 
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:408
 msgid "Remove variable"
@@ -4623,7 +4637,7 @@ msgstr "Remove variable"
 
 #: app/routes/_admin+/customer-apps_.$appId.tsx:608
 #: app/routes/_admin+/customer-apps.tsx:353
-#: app/routes/_admin+/font-licences.tsx:96
+#: app/routes/_admin+/font-licences.tsx:174
 msgid "Removed"
 msgstr "Removed"
 
@@ -4647,7 +4661,7 @@ msgstr "Replace the key"
 msgid "Replace what you have?"
 msgstr "Replace what you have?"
 
-#: app/routes/_admin+/font-licences.tsx:104
+#: app/routes/_admin+/font-licences.tsx:182
 msgid "Replaced"
 msgstr "Replaced"
 
@@ -5143,7 +5157,7 @@ msgstr ""
 #~ msgid "Search by name, email, or username..."
 #~ msgstr ""
 
-#: app/routes/_admin+/font-licences.tsx:42
+#: app/routes/_admin+/font-licences.tsx:120
 msgid "Search by organization or file"
 msgstr "Search by organization or file"
 
@@ -5164,7 +5178,7 @@ msgstr ""
 msgid "Search dishes"
 msgstr "Search dishes"
 
-#: app/routes/_admin+/font-licences.tsx:43
+#: app/routes/_admin+/font-licences.tsx:121
 msgid "Search font licences"
 msgstr "Search font licences"
 
@@ -5581,7 +5595,7 @@ msgstr "Station terminal or kitchen display"
 #: app/components/admin-users-table.tsx:161
 #: app/components/sso-configuration-overview.tsx:232
 #: app/components/sso-user-management.tsx:178
-#: app/routes/_admin+/font-licences.tsx:60
+#: app/routes/_admin+/font-licences.tsx:138
 #: app/routes/_admin+/gdpr-requests.tsx:419
 #: app/routes/_admin+/gdpr-requests.tsx:575
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:114

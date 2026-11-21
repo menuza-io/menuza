@@ -96,29 +96,49 @@ async function hashStoredFont(organizationId: string, objectKey: string) {
 /**
  * A font that was uploaded before the agreement existed: its uploader is
  * asked to confirm at the next visit to Design (#286). Records the
- * confirmation for the file that is in the theme now.
+ * confirmation for every file of that role the live or the draft theme uses
+ * and that has no acceptance on record yet, so the file shown and the file
+ * live are both covered, never one standing in for the other.
  */
 export async function confirmExistingFontLicence(input: {
 	organizationId: string
 	userId: string
 	role: FontRole
-	themeJson: string | null
+	themes: ReadonlyArray<string | null>
 }) {
-	const font = customFontsOf(input.themeJson).find(
-		(candidate) => candidate.role === input.role,
-	)
-	if (!font) return { ok: false as const }
-	const fileHash =
-		(await hashStoredFont(input.organizationId, font.objectKey)) ??
-		'unavailable'
-	await recordFontLicence({
-		organizationId: input.organizationId,
-		userId: input.userId,
-		role: input.role,
-		fileName: font.filename,
-		fileHash,
-		objectKey: font.objectKey,
-	})
+	const fonts = new Map<string, { filename: string }>()
+	for (const themeJson of input.themes) {
+		for (const font of customFontsOf(themeJson)) {
+			if (font.role === input.role && !fonts.has(font.objectKey)) {
+				fonts.set(font.objectKey, { filename: font.filename })
+			}
+		}
+	}
+	if (fonts.size === 0) return { ok: false as const }
+	const accepted = await db
+		.select({ objectKey: FontLicenceAcceptance.objectKey })
+		.from(FontLicenceAcceptance)
+		.where(
+			and(
+				eq(FontLicenceAcceptance.organizationId, input.organizationId),
+				inArray(FontLicenceAcceptance.objectKey, [...fonts.keys()]),
+				isNull(FontLicenceAcceptance.removedAt),
+			),
+		)
+	const already = new Set(accepted.map((row) => row.objectKey))
+	for (const [objectKey, font] of fonts) {
+		if (already.has(objectKey)) continue
+		const fileHash =
+			(await hashStoredFont(input.organizationId, objectKey)) ?? 'unavailable'
+		await recordFontLicence({
+			organizationId: input.organizationId,
+			userId: input.userId,
+			role: input.role,
+			fileName: font.filename,
+			fileHash,
+			objectKey,
+		})
+	}
 	return { ok: true as const }
 }
 

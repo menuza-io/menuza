@@ -23,7 +23,11 @@ import { AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 
-import { isFontRole, sha256Hex } from '@repo/common/font-licence'
+import {
+	FONT_LICENCE_VERSION,
+	isFontRole,
+	sha256Hex,
+} from '@repo/common/font-licence'
 import {
 	EMBED_PROVIDERS,
 	embedDetectedLabel,
@@ -201,6 +205,7 @@ import { isRankTrackingEnabled } from '#app/utils/seo/rank-tracking.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { signSitePreviewToken } from '#app/utils/sites/preview-token.server.ts'
 import {
+	deleteOrganizationStorageObject,
 	uploadSiteFont,
 	uploadSiteIcon,
 	uploadWebsiteAsset,
@@ -1083,15 +1088,27 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 					filename: fontFile.name.replace(/^.*[\\/]/, '').slice(0, 180),
 					format,
 				}
-				// Who confirmed which file, and when (#286): name and hash.
-				await recordFontLicence({
-					organizationId: organization.id,
-					userId,
-					role,
-					fileName: customFont.filename,
-					fileHash: await sha256Hex(bytes),
-					objectKey,
-				})
+				// Who confirmed which file, and when (#286): name and hash. A file
+				// without its record is never left in storage.
+				try {
+					await recordFontLicence({
+						organizationId: organization.id,
+						userId,
+						role,
+						fileName: customFont.filename,
+						fileHash: await sha256Hex(bytes),
+						objectKey,
+					})
+				} catch {
+					await deleteOrganizationStorageObject(
+						objectKey,
+						organization.id,
+					).catch(() => {})
+					return Response.json(
+						{ status: 'error', error: 'Failed to record the font licence' },
+						{ status: 500 },
+					)
+				}
 				await updateSiteThemeDraft(organization.id, (current) => ({
 					...current,
 					headingFont:
@@ -2133,7 +2150,11 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 
 	if (intent === confirmSiteFontLicenceActionIntent) {
 		const role = formData.get('role')
-		if (!isFontRole(role) || formData.get('fontLicenceAccepted') !== 'true') {
+		if (
+			!isFontRole(role) ||
+			formData.get('fontLicenceAccepted') !== 'true' ||
+			Number(formData.get('fontLicenceVersion')) !== FONT_LICENCE_VERSION
+		) {
 			return Response.json(
 				{
 					status: 'error',
@@ -2155,7 +2176,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 			organizationId: organization.id,
 			userId,
 			role,
-			themeJson: chrome?.draftSiteTheme ?? chrome?.siteTheme ?? null,
+			themes: [chrome?.draftSiteTheme ?? null, chrome?.siteTheme ?? null],
 		})
 		if (!result.ok) {
 			return Response.json(
