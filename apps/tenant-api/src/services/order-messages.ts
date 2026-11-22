@@ -11,6 +11,7 @@ import {
 import { and, eq, isNull, lte, ne, or } from 'drizzle-orm'
 import { runInBackground } from '../lib/background.ts'
 import { getNodeRegion } from '../lib/region.ts'
+import { deliverOrderAlerts, queueOrderPlacedAlert } from './order-alerts.ts'
 import {
 	isOrdersEmailEnabled,
 	isOrdersSmsEnabled,
@@ -53,6 +54,8 @@ export type OrderMessageContext = {
 	collect?: (ids: readonly string[]) => void
 	/** Receives a status change a signed-in guest should get a push for (#105). */
 	collectPush?: (intent: OrderPushIntent) => void
+	/** Receives the id of a manager alert queued for after commit (#131, #241, #300). */
+	collectAlert?: (id: string) => void
 }
 
 type OrderForMessages = Pick<
@@ -279,6 +282,18 @@ export async function queueOrderPlacedMessages(
 	return queueOrderMessage(tx, order, 'receipt', ctx)
 }
 
+/**
+ * The manager alert for an order that stands (#131, #241, #300), queued in the
+ * order's own transaction next to its receipt, and posted after commit.
+ */
+export async function queueOrderPlacedManagerAlert(
+	tx: OrderMessageTx,
+	order: Parameters<typeof queueOrderPlacedAlert>[1],
+	ctx: OrderMessageContext,
+): Promise<void> {
+	await queueOrderPlacedAlert(tx, order, ctx)
+}
+
 /** When an online order's payment arrives (`order` is the paid row). */
 export async function queueOrderPaidMessages(
 	tx: OrderMessageTx,
@@ -363,6 +378,7 @@ export async function orderMessagesIdle(): Promise<void> {
  */
 export function orderMessageBatch() {
 	const ids = new Set<string>()
+	const alertIds = new Set<string>()
 	const pushes = new Map<string, OrderPushIntent>()
 	return {
 		context(now: number = Date.now()): OrderMessageContext {
@@ -374,9 +390,19 @@ export function orderMessageBatch() {
 				collectPush: (intent) => {
 					pushes.set(`${intent.orderId}:${intent.status}`, intent)
 				},
+				collectAlert: (id) => {
+					alertIds.add(id)
+				},
 			}
 		},
 		deliver(orgId: string): void {
+			// Manager alerts (#131, #241, #300) are posted in the background after
+			// commit; the tick retries whatever is left.
+			if (alertIds.size > 0) {
+				const queuedAlerts = [...alertIds]
+				alertIds.clear()
+				deliverOrderAlerts(orgId, queuedAlerts)
+			}
 			if (ids.size === 0 && pushes.size === 0) return
 			const pending = [...ids]
 			const pendingPushes = [...pushes.values()]

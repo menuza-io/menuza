@@ -3,9 +3,11 @@ import {
 	ATTENTION_KINDS,
 	ATTENTION_MAX_ITEMS,
 	ATTENTION_URGENCY,
+	type AttentionData,
 	attentionItem,
 	attentionKey,
 	isDismissibleKind,
+	offlineTabletItems,
 	orderAttentionItems,
 	parseAttentionKey,
 } from './attention.ts'
@@ -96,5 +98,79 @@ describe('orderAttentionItems', () => {
 			),
 		)
 		expect(orderAttentionItems(many)).toHaveLength(ATTENTION_MAX_ITEMS)
+	})
+})
+
+describe('offlineTabletItems (#190)', () => {
+	const NOW = Date.UTC(2026, 10, 21, 12, 0, 0)
+	const MIN = 60_000
+	const locations = [{ id: 'loc-1', name: 'Downtown' }]
+	const open = {
+		'loc-1': [{ startMs: NOW - 3_600_000, endMs: NOW + 3_600_000 }],
+	}
+	const device = (over: Record<string, unknown> = {}) => ({
+		id: 'd1',
+		label: 'Kitchen',
+		locationId: 'loc-1',
+		lastSeenAt: NOW - 6 * MIN,
+		revokedAt: null,
+		...over,
+	})
+
+	it('lists a tablet silent for five minutes in opening hours, urgent and undismissable', () => {
+		const items = offlineTabletItems({
+			devices: [device()],
+			locations,
+			openHours: open,
+			now: NOW,
+		})
+		expect(items).toHaveLength(1)
+		expect(items[0]).toMatchObject({
+			kind: 'station_offline',
+			urgency: 'urgent',
+			dismissible: false,
+			count: 1,
+			locationName: 'Downtown',
+			href: '/settings/terminals',
+		})
+	})
+
+	it('groups the tablets of a location and takes the earliest silence', () => {
+		const items = offlineTabletItems({
+			devices: [device(), device({ id: 'd2', lastSeenAt: NOW - 20 * MIN })],
+			locations,
+			openHours: open,
+			now: NOW,
+		})
+		expect(items).toHaveLength(1)
+		expect(items[0]).toMatchObject({
+			count: 2,
+			since: new Date(NOW - 20 * MIN).toISOString(),
+		})
+	})
+
+	it('is empty before five minutes, outside hours, with no hours, and for spare, removed or never-seen tablets', () => {
+		const none = (
+			devices: ReturnType<typeof device>[],
+			openHours: AttentionData['openHours'] = open,
+		) => offlineTabletItems({ devices, locations, openHours, now: NOW })
+		expect(none([device({ lastSeenAt: NOW - 4 * MIN })])).toEqual([])
+		expect(
+			none([device()], {
+				'loc-1': [{ startMs: NOW + 2 * 3_600_000, endMs: NOW + 5 * 3_600_000 }],
+			}),
+		).toEqual([])
+		expect(none([device()], { 'loc-1': null })).toEqual([])
+		expect(none([device()], {})).toEqual([])
+		expect(none([device({ label: 'Spare' })])).toEqual([])
+		expect(none([device({ revokedAt: NOW - MIN })])).toEqual([])
+		expect(none([device({ lastSeenAt: null })])).toEqual([])
+		expect(none([device({ locationId: 'elsewhere' })])).toEqual([])
+		// Within half an hour of opening it counts.
+		expect(
+			none([device()], {
+				'loc-1': [{ startMs: NOW + 25 * MIN, endMs: NOW + 5 * 3_600_000 }],
+			}),
+		).toHaveLength(1)
 	})
 })

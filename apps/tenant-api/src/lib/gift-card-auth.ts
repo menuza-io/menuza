@@ -52,41 +52,80 @@ export async function verifyGiftCardOperatorToken(
 ): Promise<GiftCardTokenVerificationResult> {
 	const operatorSecret = options?.secret ?? getOperatorToken()
 	if (!operatorSecret || operatorSecret.length < 16) {
-		return { ok: false, status: 500, code: 'gift_cards_unavailable', reason: 'not_configured' }
+		return {
+			ok: false,
+			status: 500,
+			code: 'gift_cards_unavailable',
+			reason: 'not_configured',
+		}
 	}
 	const token = getBearerToken(authHeader)
 	if (!token) {
-		return { ok: false, status: 401, code: 'unauthorized', reason: 'missing_token' }
+		return {
+			ok: false,
+			status: 401,
+			code: 'unauthorized',
+			reason: 'missing_token',
+		}
 	}
 
 	let payload: unknown
 	let protectedHeader: { typ?: string }
 	try {
-		const verified = await jwtVerify(token, new TextEncoder().encode(operatorSecret), {
-			audience: GIFT_CARD_TOKEN_AUDIENCE,
-			issuer: brand.shortName,
-			algorithms: ['HS256'],
-			clockTolerance: options?.clockToleranceSeconds ?? 5,
-		})
+		const verified = await jwtVerify(
+			token,
+			new TextEncoder().encode(operatorSecret),
+			{
+				audience: GIFT_CARD_TOKEN_AUDIENCE,
+				issuer: brand.shortName,
+				algorithms: ['HS256'],
+				clockTolerance: options?.clockToleranceSeconds ?? 5,
+			},
+		)
 		payload = verified.payload
 		protectedHeader = verified.protectedHeader
 	} catch {
-		return { ok: false, status: 401, code: 'unauthorized', reason: 'invalid_token' }
+		return {
+			ok: false,
+			status: 401,
+			code: 'unauthorized',
+			reason: 'invalid_token',
+		}
 	}
 	if (protectedHeader.typ !== GIFT_CARD_TOKEN_TYP) {
-		return { ok: false, status: 401, code: 'unauthorized', reason: 'invalid_token_type' }
+		return {
+			ok: false,
+			status: 401,
+			code: 'unauthorized',
+			reason: 'invalid_token_type',
+		}
 	}
 	const parsed = giftCardTokenClaimsSchema.safeParse(payload)
 	if (!parsed.success) {
-		return { ok: false, status: 401, code: 'unauthorized', reason: 'invalid_claims' }
+		return {
+			ok: false,
+			status: 401,
+			code: 'unauthorized',
+			reason: 'invalid_claims',
+		}
 	}
 	const claims = parsed.data
 	if (!TENANT_ORG_ID_PATTERN.test(claims.orgId)) {
-		return { ok: false, status: 401, code: 'unauthorized', reason: 'invalid_organization' }
+		return {
+			ok: false,
+			status: 401,
+			code: 'unauthorized',
+			reason: 'invalid_organization',
+		}
 	}
 	const expectedRegion = options?.expectedRegion ?? getNodeRegion()
 	if (claims.region !== expectedRegion) {
-		return { ok: false, status: 403, code: 'forbidden', reason: 'region_mismatch' }
+		return {
+			ok: false,
+			status: 403,
+			code: 'forbidden',
+			reason: 'region_mismatch',
+		}
 	}
 	// Defense in depth: the claims schema already refuses write grants on an
 	// impersonated token; strip them again so a future change cannot widen.

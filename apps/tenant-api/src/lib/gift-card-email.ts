@@ -51,7 +51,11 @@ export type GiftCardEmailInput = {
 	addToAccountUrl?: string | null
 }
 
-export type RenderedGiftCardEmail = { subject: string; html: string; text: string }
+export type RenderedGiftCardEmail = {
+	subject: string
+	html: string
+	text: string
+}
 
 const MOTIF: Record<string, string> = {
 	classic: '✦',
@@ -137,7 +141,9 @@ export function renderGiftCardEmail(
 		lead = fillGiftCardCopy(copy.delivery.lead, values)
 	}
 
-	const rows: Array<[string, string]> = [[labels.amount, money(input.amountMinor)]]
+	const rows: Array<[string, string]> = [
+		[labels.amount, money(input.amountMinor)],
+	]
 	if (input.kind === 'receipt') {
 		if ((input.feeMinor ?? 0) > 0) {
 			rows.push([labels.fee, money(input.feeMinor!)])
@@ -151,7 +157,8 @@ export function renderGiftCardEmail(
 			rows.push([labels.deliversOn, `${when.date}, ${when.time}`])
 		}
 	} else {
-		if (input.senderName && !input.sendToSelf) rows.push([labels.from, input.senderName])
+		if (input.senderName && !input.sendToSelf)
+			rows.push([labels.from, input.senderName])
 		if (input.expiresAt) {
 			const when = formatWhen(input.expiresAt, input.timeZone ?? null, locale)
 			rows.push([labels.expires, when.date])
@@ -230,8 +237,14 @@ ${messageHtml}${codeHtml}${ctaHtml}
 
 	const text = [heading, '', lead, '']
 	for (const [label, value] of rows) text.push(`${label}: ${value}`)
-	if (input.message?.trim()) text.push('', `${labels.message}: ${input.message.trim()}`)
-	if (code) text.push('', `${labels.code}: ${formatGiftCardCode(code)}`, labels.keepSafe)
+	if (input.message?.trim())
+		text.push('', `${labels.message}: ${input.message.trim()}`)
+	if (code)
+		text.push(
+			'',
+			`${labels.code}: ${formatGiftCardCode(code)}`,
+			labels.keepSafe,
+		)
 	if (input.kind === 'delivery') {
 		if (orderUrl) text.push('', `${labels.orderNow}: ${orderUrl}`)
 		if (balanceUrl) text.push(`${labels.checkBalance}: ${balanceUrl}`)

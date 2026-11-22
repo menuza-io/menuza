@@ -29,6 +29,10 @@ export const orderSchema = z.object({
 	packagingFeeLabel: z.string().nullable().optional().catch(undefined),
 	utensilsRequested: z.boolean().nullable().optional().catch(undefined),
 	largeOrderExtraMinutes: z.number().int().optional().catch(undefined),
+	/** Over the location's large-order alert threshold when placed (#300). */
+	largeOrder: z.boolean().optional().catch(undefined),
+	/** The time the guest asked for (ISO); null for as soon as possible. */
+	scheduledFor: z.string().nullable().optional().catch(undefined),
 	pickupInstructions: z.string().nullable().optional().catch(undefined),
 	/** A loyalty reward's discount, taken off the subtotal before tax. */
 	loyaltyDiscountCents: z.number().int(),

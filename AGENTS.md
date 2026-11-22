@@ -595,6 +595,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `TENANT_OPERATOR_TOKEN` - Shared secret between App and tenant-api (≥16
   chars). Signs and validates operator JWT tokens for tenant-api `/operator/*`
   routes.
+- `ORDER_ALERT_HASH_SECRET` - App and the US tenant-api only (32+ chars,
+  distinct from `INTERNAL_COMMAND_TOKEN`). Keys the hash of a text alert
+  recipient's number (STOP matching) and the one-time-code hash. The schema
+  default is refused outside development and test. Changing it unlinks every
+  stored recipient's STOP matching, so rotate by adding a hash version.
 - `JOBS_CRON_WORKER_URL` - App only. Public URL of `apps/jobs-cron` Worker used
   to start storage migration workflows (production: `https://jobs.<apex>` custom
   domain).
@@ -1735,6 +1740,25 @@ packaging fee, daily dish limits; #251, #257, #355, #422, #408, #409):**
 - Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.
+
+**Manager alerts (operator push, quiet hours, stuck orders, Orders chime, chosen
+people, large orders, offline tablets; #106, #366, #131, #265, #241, #300,
+#190):**
+
+- Extends the `Notification` table and the notify-route pattern; one engine
+  (`apps/app/app/utils/alerts/`), one quiet-hours/snooze/threshold/log system
+  (`policy.server.ts`, `@repo/common/operator-alerts`), one Needs attention
+  feed. Operator devices (`OperatorPushDevice`) are never the guest customer-app
+  tokens. Docs: `docs/manager-alerts.md`.
+- Flags (default off): `notifications.operator_push`, `orders.manager_alerts`.
+  Kill switches drop and never queue a backlog: `OPERATOR_PUSH_ENABLED`,
+  `ORDERS_ALERTS_ENABLED` (App and tenant-api), `ORDERS_EMAIL_ENABLED` (App),
+  `ORDER_ALERT_SMS_ENABLED` (App and the US tenant-api).
+- No alert, push, banner, email or text may carry a guest name, phone, email,
+  address, notes or items: events are strict (`ordersNotifyEventSchema`), copy
+  is built from a kind, a place, a number, a time and a total.
+- Control-plane migration `0073_operator_alerts`, tenant `0061_manager_alerts`.
+  Deploy App, then jobs-cron, then tenant-api, then Station, then the phone app.
 
 **Gift cards (sell, redeem, fraud holds, guest wallet):**
 

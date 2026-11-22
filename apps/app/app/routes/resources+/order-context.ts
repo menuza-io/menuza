@@ -14,6 +14,7 @@
 
 import { type DailyDishLimitsContext } from '@repo/common/daily-dish-limits'
 import { getFeatureFlag } from '@repo/common/feature-flags'
+import { type LargeOrderAlertRule } from '@repo/common/operator-alerts'
 import {
 	foldQrOrderingFeatures,
 	QR_ORDERING_FLAG_KEYS,
@@ -28,6 +29,7 @@ import { type OrderContextDiscounts } from '@repo/discounts'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import { buildLargeOrderAlertContext } from '#app/utils/alerts/large-order.server.ts'
 import { buildOrderContextDiscounts } from '#app/utils/discounts/order-context.server.ts'
 import {
 	buildGuestMessagesContext,
@@ -98,6 +100,12 @@ export type OrderContextResponse = {
 	 * 100 is 100.00) and an item count for `items`.
 	 */
 	largeOrder: LargeOrderContext
+	/**
+	 * The large-order alert threshold per location id (#300); only locations that
+	 * turned the alert on, only while manager alerts are on. A missing location
+	 * flags nothing.
+	 */
+	largeOrderAlert: Record<string, LargeOrderAlertRule>
 	/**
 	 * Guest self-cancel per location id (`ordering.guest_cancel`): only while
 	 * the flag is on, only locations that offer a window. The region reads a
@@ -226,6 +234,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		discounts: await buildOrderContextDiscounts(org.id),
 		guestMessages: await buildGuestMessagesContext(org.id),
 		largeOrder: await buildLargeOrderContext(
+			org.id,
+			parsed.data.locationId ?? null,
+		),
+		largeOrderAlert: await buildLargeOrderAlertContext(
 			org.id,
 			parsed.data.locationId ?? null,
 		),

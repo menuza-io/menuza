@@ -164,6 +164,7 @@ function project(
 		...(order.largeOrderExtraMinutes
 			? { largeOrderExtraMinutes: order.largeOrderExtraMinutes }
 			: {}),
+		...(order.largeOrder ? { largeOrder: true } : {}),
 		lines,
 	}
 }

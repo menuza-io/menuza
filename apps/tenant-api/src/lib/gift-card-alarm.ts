@@ -31,7 +31,10 @@ export function createGiftCardTickModule(
 		isActivityPath: isGiftCardActivityPath,
 		run: async (orgId, now) => {
 			const result = await run(orgId, now)
-			return { needsFollowUp: result.needsFollowUp, nextDueAt: result.nextDueAt }
+			return {
+				needsFollowUp: result.needsFollowUp,
+				nextDueAt: result.nextDueAt,
+			}
 		},
 	}
 }

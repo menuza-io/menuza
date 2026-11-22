@@ -109,6 +109,18 @@ export default function SettingsScreen() {
 							label={t`Security`}
 							onPress={() => router.push('/(dashboard)/settings/security')}
 						/>
+						<Divider />
+						<SettingsItem
+							icon="notifications-outline"
+							label={t`Notifications`}
+							onPress={() => router.push('/(dashboard)/settings/notifications')}
+						/>
+						<Divider />
+						<SettingsItem
+							icon="phone-portrait-outline"
+							label={t`Your phones`}
+							onPress={() => router.push('/(dashboard)/settings/devices')}
+						/>
 					</View>
 				</Card>
 

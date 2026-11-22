@@ -66,5 +66,7 @@ export function giftCardIdempotency(
 /** The node's kill switch, checked live: new sales and redemptions answer 503. */
 export function giftCardKillSwitchResponse(): Response | null {
 	if (!isGiftCardsKillSwitchOn()) return null
-	return giftCardErrorResponse(new GiftCardDomainError('gift_cards_unavailable'))
+	return giftCardErrorResponse(
+		new GiftCardDomainError('gift_cards_unavailable'),
+	)
 }

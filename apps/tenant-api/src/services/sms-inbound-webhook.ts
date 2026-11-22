@@ -1,4 +1,6 @@
 import { matchSmsKeyword } from '@repo/common/sms-compliance'
+import { forwardAlertKeyword } from '../lib/alert-keyword.ts'
+import { runInBackground } from '../lib/background.ts'
 import { consentBaseUrl } from '../lib/email-consent.ts'
 import { readCappedRequestText } from '../lib/http.ts'
 import {
@@ -84,6 +86,18 @@ export async function handleInboundSmsWebhook(
 			providerMessageId: message.providerMessageId,
 		})
 		return reply(null)
+	}
+
+	// The same reply may be a text recipient of order alerts (#241) stopping or
+	// restarting them: the App matches a hash of the sender, never the number.
+	if (keyword === 'stop' || keyword === 'start') {
+		runInBackground(
+			forwardAlertKeyword({
+				keyword,
+				from: message.from,
+				providerMessageId: message.providerMessageId,
+			}),
+		)
 	}
 
 	const result = await applyInboundSms(await fanOut(), {

@@ -232,6 +232,8 @@ export const kdsTicketSchema = z.object({
 	utensilsRequested: z.boolean().nullable().optional(),
 	/** Extra prep minutes snapshot (#355). */
 	largeOrderExtraMinutes: z.number().int().nonnegative().optional(),
+	/** Over the location's large-order alert threshold at placement (#300). */
+	largeOrder: z.boolean().optional(),
 	/**
 	 * Till drive-through (#404). `fulfillment` stays `takeaway` so an older
 	 * kitchen screen, which rejects an unknown fulfillment, still shows the

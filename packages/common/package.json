@@ -414,6 +414,21 @@
       "import": "./src/location-availability.ts",
       "default": "./src/location-availability.ts"
     },
+    "./operator-alerts": {
+      "types": "./src/operator-alerts.ts",
+      "import": "./src/operator-alerts.ts",
+      "default": "./src/operator-alerts.ts"
+    },
+    "./operator-alert-copy": {
+      "types": "./src/operator-alert-copy.ts",
+      "import": "./src/operator-alert-copy.ts",
+      "default": "./src/operator-alert-copy.ts"
+    },
+    "./order-chime": {
+      "types": "./src/order-chime.ts",
+      "import": "./src/order-chime.ts",
+      "default": "./src/order-chime.ts"
+    },
     "./promised-time": {
       "types": "./src/promised-time.ts",
       "import": "./src/promised-time.ts",

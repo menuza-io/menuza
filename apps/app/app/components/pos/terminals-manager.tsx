@@ -50,6 +50,7 @@ import {
 	useOperatorClient,
 } from '#app/hooks/use-operator-client.ts'
 import { buildPosPairingUrl } from '#app/utils/pos/pairing.ts'
+import { terminalStatus } from '#app/utils/pos/terminal-status.ts'
 import {
 	OfflineThisWeek,
 	TerminalHealthPanel,
@@ -113,6 +114,16 @@ const terminalSchema = z.object({
 	guestDisplayImageUrl: z.string().nullable().default(null),
 	pairedAt: z.number(),
 	lastSeenAt: z.number().nullable(),
+	/** What the tablet last reported in its heartbeat (#190); missing from an older region. */
+	batteryPercent: z
+		.number()
+		.int()
+		.min(0)
+		.max(100)
+		.nullable()
+		.optional()
+		.catch(null),
+	appVersion: z.string().nullable().optional().catch(null),
 	revokedAt: z.number().nullable(),
 })
 const pendingSchema = z.object({
@@ -157,8 +168,6 @@ const createdSchema = z.object({
 })
 type Terminal = z.infer<typeof terminalSchema>
 type Created = z.infer<typeof createdSchema> & { label: string }
-
-const QUIET_AFTER_MS = 10 * 60 * 1000
 
 /** Walk-in POS terminals: pair a tablet or phone, see when each last sent an order, remove one that is lost. */
 /** The Station apps a terminal can offer, as the organization has them switched on. */
@@ -547,8 +556,15 @@ export function TerminalsManager({
 													{device.terminalCode}
 												</Badge>
 											</div>
-											<p className="text-muted-foreground text-sm">
-												<LastSeen at={device.lastSeenAt} />
+											<p
+												className="text-muted-foreground text-sm"
+												data-testid="terminal-status"
+											>
+												<TerminalStatusLine
+													at={device.lastSeenAt}
+													battery={device.batteryPercent ?? null}
+													version={device.appVersion ?? null}
+												/>
 											</p>
 											{healthWindows ? (
 												<OfflineThisWeek
@@ -1386,30 +1402,63 @@ export function suggestCode(
 	return 'T100'
 }
 
-function LastSeen({ at }: { at: number | null }) {
+/**
+ * "Online", "Offline since 2:14 PM" or "Never connected", with the battery and
+ * the Station version when the tablet reports them (#190).
+ */
+function TerminalStatusLine({
+	at,
+	battery,
+	version,
+}: {
+	at: number | null
+	battery: number | null
+	version: string | null
+}) {
 	const { i18n } = useLingui()
 	const [now, setNow] = useState(() => Date.now())
 	useEffect(() => {
 		const timer = setInterval(() => setNow(Date.now()), 30_000)
 		return () => clearInterval(timer)
 	}, [])
-	if (at === null) return <Trans>Not seen yet</Trans>
-	const ago = now - at
-	if (ago < 60_000) return <Trans>Seen just now</Trans>
-	const minutes = Math.round(ago / 60_000)
-	const rtf = new Intl.RelativeTimeFormat(i18n.locale, { numeric: 'auto' })
-	const label =
-		minutes < 60
-			? rtf.format(-minutes, 'minute')
-			: minutes < 60 * 24
-				? rtf.format(-Math.round(minutes / 60), 'hour')
-				: rtf.format(-Math.round(minutes / 60 / 24), 'day')
+	const status = terminalStatus(at, now)
+	const sameDay = (ms: number) =>
+		new Date(ms).toDateString() === new Date(now).toDateString()
+	const since =
+		status.state === 'offline'
+			? new Intl.DateTimeFormat(
+					i18n.locale,
+					sameDay(status.since)
+						? { timeStyle: 'short' }
+						: { dateStyle: 'medium', timeStyle: 'short' },
+				).format(new Date(status.since))
+			: ''
 	return (
-		<span
-			className={ago > QUIET_AFTER_MS ? 'text-muted-foreground' : undefined}
-		>
-			<Trans>Seen {label}</Trans>
-		</span>
+		<>
+			{status.state === 'never' ? (
+				<Trans>Never connected</Trans>
+			) : status.state === 'online' ? (
+				<span className="text-success font-medium">
+					<Trans>Online</Trans>
+				</span>
+			) : (
+				<span className="text-warning font-medium">
+					<Trans>Offline since {since}</Trans>
+				</span>
+			)}
+			{battery !== null ? (
+				<span>
+					{' · '}
+					<Trans>Battery {battery}%</Trans>
+				</span>
+			) : null}
+			{version ? (
+				<span>
+					{' · '}
+					<Trans>Version {version}</Trans>
+				</span>
+			) : null}
+		</>
 	)
 }
 

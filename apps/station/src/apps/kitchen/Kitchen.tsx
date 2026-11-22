@@ -1,3 +1,4 @@
+import { i18n } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
@@ -26,8 +27,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { LogWaste } from '../stock/LogWaste.tsx'
 import { chime, chimeReady, unlockChime } from './chime.ts'
 import { KitchenSettings } from './KitchenSettings.tsx'
-import { PrepView } from './PrepView.tsx'
-import { TicketWaste } from './TicketWaste.tsx'
 import {
 	allDayCounts,
 	averageTicketMinutes,
@@ -41,11 +40,12 @@ import {
 	workFiredAt,
 	type KitchenView,
 } from './model.ts'
+import { PrepView } from './PrepView.tsx'
+import { TicketWaste } from './TicketWaste.tsx'
 import { useKitchen } from './useKitchen.ts'
 import { usePrep } from './usePrep.ts'
 import { categoryItems } from '~/lib/catalog.ts'
 import { type PosSettings } from '~/lib/config.ts'
-import { i18n } from '@lingui/core'
 import { menuText } from '~/lib/menu-text.ts'
 import { type Session } from '~/lib/signin.ts'
 import { type MenuCategory, type MenuItem } from '~/lib/types.ts'
@@ -946,6 +946,12 @@ function Ticket({
 						<p data-kitchen-large-order className="mt-1 text-sm font-semibold">
 							<Trans>Large order +{ticket.largeOrderExtraMinutes} min</Trans>
 						</p>
+					) : ticket.largeOrder ? (
+						// Over the location's large-order alert threshold (#300), with no
+						// extra prep time set.
+						<p data-kitchen-large-order className="mt-1 text-sm font-semibold">
+							<Trans>Large order</Trans>
+						</p>
 					) : null}
 					{ticket.utensilsRequested === true ? (
 						<p data-kitchen-utensils className="mt-1 text-sm font-medium">
@@ -1197,11 +1203,7 @@ function Ticket({
 	)
 }
 
-function KitchenMark({
-	highlight,
-}: {
-	highlight?: KitchenHighlight | null
-}) {
+function KitchenMark({ highlight }: { highlight?: KitchenHighlight | null }) {
 	const { _ } = useLingui()
 	if (!highlight || highlight === 'none') return null
 	const label =

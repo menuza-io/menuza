@@ -11,6 +11,10 @@ import {
 import { StaffingAlertEmail, sendEmail } from '@repo/email'
 import { type ActionFunctionArgs } from 'react-router'
 import { ENV } from 'varlock/env'
+import {
+	pushStoredNotifications,
+	type StoredNotification,
+} from '#app/utils/alerts/push.server.ts'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 import {
 	displayLocationName,
@@ -165,6 +169,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	let inApp = 0
 	let emailed = 0
+	const pushRows: StoredNotification[] = []
 	for (const recipient of recipients) {
 		if (handled.has(recipient.userId)) continue
 		const channels = preferences.get(recipient.userId) ?? {
@@ -200,7 +205,23 @@ export async function action({ request }: ActionFunctionArgs) {
 			.onConflictDoNothing()
 			.returning({ id: Notification.id })
 		if (claimed.length === 0) continue
-		if (channels.inApp) inApp++
+		if (channels.inApp) {
+			inApp++
+			pushRows.push({
+				id: claimed[0]!.id,
+				userId: recipient.userId,
+				organizationId: organization.id,
+				type,
+				entityId: event.eventId,
+				payload: {
+					kind: event.kind,
+					locationId: event.locationId,
+					count: event.count,
+					orgSlug: organization.slug,
+					...(locationName ? { locationName } : {}),
+				},
+			})
+		}
 
 		if (wantsEmail) {
 			try {
@@ -228,5 +249,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		}
 	}
 
+	// Mirrored as a push to the members who turned it on (#106).
+	await pushStoredNotifications(pushRows)
 	return answer({ inApp, emailed })
 }

@@ -20,8 +20,10 @@ import {
 	attentionItem,
 	callFollowUpsSchema,
 	inventoryCountsSchema,
+	offlineTabletItems,
 	orderAttentionItems,
 	paymentReviewCountsSchema,
+	terminalsListSchema,
 	type AttentionData,
 	type AttentionItem,
 	type OrderChannel,
@@ -65,10 +67,12 @@ function useRegionalItems(
 	orgSlug: string,
 	regional: AttentionData['regional'],
 	locations: readonly HomeLocation[],
+	openHours: AttentionData['openHours'],
 ) {
 	const [items, setItems] = useState<AttentionItem[]>([])
 	const locationKey = locations.map((location) => location.id).join(',')
-	const { paymentReview, callFollowUps, inventoryCounts } = regional
+	const { paymentReview, callFollowUps, inventoryCounts, offlineTablets } =
+		regional
 
 	useEffect(() => {
 		const controller = new AbortController()
@@ -115,6 +119,22 @@ function useRegionalItems(
 				}),
 			)
 		}
+		if (offlineTablets) {
+			sources.push(
+				regionalGet(
+					`/${orgSlug}/orders-token`,
+					(base) => `${base}/operator/pos/terminals`,
+					signal,
+				).then((raw) =>
+					offlineTabletItems({
+						devices: terminalsListSchema.parse(raw).devices,
+						locations,
+						openHours,
+						now: Date.now(),
+					}),
+				),
+			)
+		}
 		if (inventoryCounts) {
 			for (const location of locations) {
 				sources.push(
@@ -153,7 +173,14 @@ function useRegionalItems(
 		return () => controller.abort()
 		// `locations` is keyed by its ids.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [orgSlug, paymentReview, callFollowUps, inventoryCounts, locationKey])
+	}, [
+		orgSlug,
+		paymentReview,
+		callFollowUps,
+		inventoryCounts,
+		offlineTablets,
+		locationKey,
+	])
 
 	return items
 }
@@ -305,6 +332,16 @@ function useItemText() {
 					),
 					detail: null,
 				}
+			case 'station_offline':
+				return {
+					title: _(
+						plural(count, {
+							one: `# Station tablet at ${location} has been offline for a while`,
+							other: `# Station tablets at ${location} have been offline for a while`,
+						}),
+					),
+					detail: _(msg`Check its power and its internet connection.`),
+				}
 			case 'google_listing_status':
 				return {
 					title: _(msg`Google Business Profile needs attention at ${location}`),
@@ -363,7 +400,12 @@ export function AttentionBlock({
 			setDismissedHere((keys) => (keys.includes(key) ? keys : [...keys, key])),
 		[],
 	)
-	const regionalItems = useRegionalItems(orgSlug, data.regional, data.locations)
+	const regionalItems = useRegionalItems(
+		orgSlug,
+		data.regional,
+		data.locations,
+		data.openHours,
+	)
 	const selected =
 		selection !== ALL_LOCATIONS &&
 		data.locations.some((location) => location.id === selection)

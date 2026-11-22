@@ -154,6 +154,8 @@ type SourceOrder = {
 	promised?: { at: number; until: number | null; version: number }
 	utensilsRequested?: boolean | null
 	largeOrderExtraMinutes?: number
+	/** Over the location's large-order alert threshold at placement (#300). */
+	largeOrder?: boolean
 }
 
 async function settings(db: KitchenDb, locationId: string) {
@@ -325,6 +327,8 @@ function project(
 		...(order.largeOrderExtraMinutes
 			? { largeOrderExtraMinutes: order.largeOrderExtraMinutes }
 			: {}),
+		// Left out unless set, so tickets of ordinary orders keep their fingerprints.
+		...(order.largeOrder ? { largeOrder: true } : {}),
 		...(order.driveThrough ? { driveThrough: true } : {}),
 		...(order.driveThroughNote
 			? { driveThroughNote: order.driveThroughNote }
@@ -449,6 +453,7 @@ function onlineSource(row: typeof restaurantOrders.$inferSelect): SourceOrder {
 			: {}),
 		utensilsRequested: row.utensilsRequested ?? null,
 		largeOrderExtraMinutes: row.largeOrderExtraMinutes ?? 0,
+		largeOrder: row.largeOrder === true,
 	}
 }
 

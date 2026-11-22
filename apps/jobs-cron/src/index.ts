@@ -30,6 +30,11 @@ import {
 	type MenuScheduleWorkflowParams,
 } from './menu-schedule-workflow'
 import {
+	OPERATOR_ALERTS_JOB_PATH,
+	OperatorAlertsWorkflow,
+	type OperatorAlertsWorkflowParams,
+} from './operator-alerts-workflow'
+import {
 	PHOTO_QUALITY_JOB_PATH,
 	PhotoQualityWorkflow,
 	type PhotoQualityWorkflowParams,
@@ -68,6 +73,7 @@ export interface Env {
 	OCCASION_SCHEDULE_WORKFLOW: Workflow<OccasionScheduleWorkflowParams>
 	PHOTO_QUALITY_WORKFLOW: Workflow<PhotoQualityWorkflowParams>
 	MEDIA_RESTYLE_WORKFLOW: Workflow<MediaRestyleWorkflowParams>
+	OPERATOR_ALERTS_WORKFLOW: Workflow<OperatorAlertsWorkflowParams>
 }
 
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
@@ -148,6 +154,8 @@ const SOCIAL_POST_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
 const WEBSITE_PUBLISH_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
 // A scheduled menu changeover is at most 90 days ahead (#149).
 const MENU_SCHEDULE_MAX_LEAD_MS = 90 * 24 * 60 * 60_000
+// Quiet hours end within a day, so a wake-up is never further ahead than this.
+const OPERATOR_ALERTS_MAX_LEAD_MS = 3 * 24 * 60 * 60_000
 // The marketing calendar's daily wake-up (#152) is at most two days ahead.
 const OCCASION_SCHEDULE_MAX_LEAD_MS = 2 * 24 * 60 * 60_000
 // A calendar is read every few hours (#319); a wake-up is never further ahead
@@ -748,6 +756,55 @@ export default {
 		}
 
 		// =========================================================================
+		// Operator Alerts Workflow: wake the App when quiet hours end so held
+		// alerts go out on time — POST /workflows/operator-alerts/start { runAt }
+		// (#366)
+		// =========================================================================
+		if (
+			(pathname === '/workflows/operator-alerts/start' ||
+				pathname === '/api/workflows/operator-alerts/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				runAt?: unknown
+			}
+			const runAt =
+				typeof body.runAt === 'string' ? new Date(body.runAt) : new Date('')
+			if (Number.isNaN(runAt.getTime())) {
+				return Response.json({ error: 'runAt is required' }, { status: 400 })
+			}
+			if (runAt.getTime() - Date.now() > OPERATOR_ALERTS_MAX_LEAD_MS) {
+				return Response.json(
+					{ error: 'runAt is too far ahead to wait for' },
+					{ status: 400 },
+				)
+			}
+
+			// One instance per quiet-hours end (to the minute): every alert held for
+			// the same moment shares it, and the App sends each alert once.
+			const instanceId = `operator-alerts-${Math.floor(runAt.getTime() / 60_000)}`
+			try {
+				const instance = await env.OPERATOR_ALERTS_WORKFLOW.create({
+					id: instanceId,
+					params: { runAt: runAt.toISOString() },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start operator alerts workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
 		// Menu Schedule Workflow: wake the App when a scheduled menu changeover is
 		// due — POST /workflows/menu-schedule/start { scheduleId, runAt } (#149)
 		// =========================================================================
@@ -1228,6 +1285,14 @@ export default {
 					'Media restyle sweep',
 					(jobEnv: Env) => invokeJob(jobEnv, MEDIA_RESTYLE_JOB_PATH),
 				],
+				// Quiet hours end: OperatorAlertsWorkflow wakes the App on time; this
+				// hourly sweep sends held alerts it missed, alerts about ordering paused
+				// too long, reads push receipts (dead tokens removed) and prunes the
+				// alert log (#106, #131, #366).
+				[
+					'Operator alerts sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, OPERATOR_ALERTS_JOB_PATH),
+				],
 				// The marketing calendar's Auto-schedule (#152) is woken once a day by
 				// OccasionScheduleWorkflow; this hourly sweep runs it too (it is
 				// idempotent, once per occasion and year) and restarts the next wake-up.
@@ -1283,4 +1348,5 @@ export {
 	OccasionScheduleWorkflow,
 	PhotoQualityWorkflow,
 	MediaRestyleWorkflow,
+	OperatorAlertsWorkflow,
 }

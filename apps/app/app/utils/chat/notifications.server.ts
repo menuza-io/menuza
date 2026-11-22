@@ -15,6 +15,7 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import { resolveMentionsToUserIds } from '@repo/notifications'
+import { pushStoredNotifications } from '#app/utils/alerts/push.server.ts'
 import { resolveChannelAudiences } from '#app/utils/chat/audience.server.ts'
 import { sanitizeTextContent } from '#app/utils/content-sanitization.server.ts'
 
@@ -138,7 +139,7 @@ async function upsertChatNotification(input: {
 	entityId: string
 	payload: Record<string, unknown>
 }) {
-	await db
+	const [row] = await db
 		.insert(Notification)
 		.values({
 			userId: input.userId,
@@ -161,4 +162,19 @@ async function upsertChatNotification(input: {
 				updatedAt: new Date(),
 			},
 		})
+		.returning({ id: Notification.id })
+	// A mention can also go out as a push (#106). The push words are fixed: the
+	// message, the channel and the author's name never leave in it.
+	if (row && input.type === 'chat-mention') {
+		await pushStoredNotifications([
+			{
+				id: row.id,
+				userId: input.userId,
+				organizationId: input.organizationId,
+				type: input.type,
+				entityId: input.entityId,
+				payload: {},
+			},
+		])
+	}
 }

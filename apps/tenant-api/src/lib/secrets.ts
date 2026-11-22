@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { resolveOrderAlertHashSecret } from '@repo/common/operator-alerts'
 import { resolveOperatorAnalyticsSecret } from '@repo/reports/token'
 import { ENV, initVarlockEnv } from 'varlock/env'
 import { bindAppService } from './app-service.ts'
@@ -136,6 +137,24 @@ export function getOperatorAnalyticsToken() {
 		internalCommandToken: getInternalCommandToken(),
 		isPlaceholder: (token) =>
 			token === DEV_OPERATOR_ANALYTICS_TOKEN || isInsecureSecret(token),
+		placeholderAllowed: nodeEnv === 'development' || nodeEnv === 'test',
+	})
+}
+
+/**
+ * The key for the order-alert phone hash (STOP matching). Its own secret, shared
+ * with the App only: not `INTERNAL_COMMAND_TOKEN`, so rotating that token cannot
+ * silently break STOP. Empty when missing, short, equal to the command token, or
+ * the development default in production.
+ */
+export function getOrderAlertHashSecret() {
+	syncEnvFromProcess()
+	const nodeEnv =
+		typeof process !== 'undefined' ? process.env.NODE_ENV : undefined
+	return resolveOrderAlertHashSecret({
+		secret: (ENV as Record<string, unknown>).ORDER_ALERT_HASH_SECRET as
+			string | undefined,
+		internalCommandToken: getInternalCommandToken(),
 		placeholderAllowed: nodeEnv === 'development' || nodeEnv === 'test',
 	})
 }

@@ -23,6 +23,10 @@ import {
 } from '@repo/common/checkout-utensils'
 import { parseStoredAttribution } from '@repo/common/order-attribution'
 import { resolvePickupInstructions } from '@repo/common/pickup-instructions'
+import {
+	isLargeForAlert,
+	readLargeOrderAlertRule,
+} from '@repo/common/operator-alerts'
 import { largeOrderExtraMinutes } from '@repo/common/promised-time'
 import {
 	acceptanceDeadline,
@@ -153,6 +157,7 @@ import {
 	orderMessageBatch,
 	queueOrderMessage,
 	queueOrderPaidMessages,
+	queueOrderPlacedManagerAlert,
 	queueOrderPlacedMessages,
 	queueOrderStatusMessages,
 } from './order-messages.ts'
@@ -1292,6 +1297,18 @@ export async function placeOrder(input: {
 		subtotalCents: result.subtotalCents,
 		itemCount: limitItemCount,
 	})
+	// Over the location's large-order alert threshold (#300): the same dish
+	// count and item subtotal as the prep rule above, a separate threshold. Never
+	// a table round. Flags the order; the alert itself is queued with the order.
+	const isLargeAlertOrder =
+		request.fulfillment !== 'dine_in' &&
+		isLargeForAlert(
+			readLargeOrderAlertRule(
+				(context as { largeOrderAlert?: unknown }).largeOrderAlert,
+				request.locationId,
+			),
+			{ subtotalCents: result.subtotalCents, itemCount: limitItemCount },
+		)
 	const promised = promiseLocation
 		? computePromisedTime({
 				now,
@@ -1808,6 +1825,7 @@ export async function placeOrder(input: {
 									pickupInstructions: pickupInstructionsCopy,
 									utensilsRequested,
 									largeOrderExtraMinutes: largeOrderExtra,
+									largeOrder: isLargeAlertOrder,
 									totalCents: totals.totalCents,
 									giftCardCents: gift?.appliedMinor ?? 0,
 									loyaltyDiscountCents: totals.loyaltyDiscountCents,
@@ -1880,6 +1898,9 @@ export async function placeOrder(input: {
 					// The receipt, for an order that stands at once (pay at
 					// handoff, free); an online order waits for its payment.
 					await queueOrderPlacedMessages(tx, inserted, messages.context(at))
+					// The manager alert for a new order (#131, #241, #300), posted after
+					// commit; an online order waits for its paid event like the receipt.
+					await queueOrderPlacedManagerAlert(tx, inserted, messages.context(at))
 					if (prepared) {
 						budgetCrossings = await reserveOrderDiscounts(tx, {
 							orderId: inserted.id,
@@ -2441,6 +2462,11 @@ export async function applyPaymentEvent(input: {
 								})
 								.where(eq(restaurantOrders.id, order.id))
 							await queueOrderPaidMessages(
+								tx,
+								{ ...order, status: nextStatus, paymentStatus: 'paid' },
+								messages.context(now.getTime()),
+							)
+							await queueOrderPlacedManagerAlert(
 								tx,
 								{ ...order, status: nextStatus, paymentStatus: 'paid' },
 								messages.context(now.getTime()),
@@ -3725,6 +3751,11 @@ export function operatorOrder(
 		paymentMethod: order.paymentMethod,
 		paymentProcessor: order.paymentProcessor,
 		paymentSessionId: order.paymentSessionId,
+		/**
+		 * Over the location's large-order alert threshold at placement (#300): the
+		 * Orders list badges it. Operators only, never the guest's receipt.
+		 */
+		largeOrder: order.largeOrder === true,
 		/**
 		 * Why a `payment_review` order waits, when the region knows: the sale was
 		 * paid late and a discount's limit had been used up since. Null otherwise.

@@ -560,6 +560,9 @@ export const serializeDevice = (row: PosDevice) => ({
 	...parseTerminalJsonSettings(row.deviceSettings),
 	pairedAt: row.pairedAt,
 	lastSeenAt: row.lastSeenAt,
+	// What the tablet last reported (#190); null until it has.
+	batteryPercent: row.batteryPercent,
+	appVersion: row.appVersion,
 	revokedAt: row.revokedAt,
 })
 
@@ -1304,6 +1307,29 @@ export async function touchDevice(
 		.set({ lastSeenAt: now })
 		.where(eq(posDevices.id, device.id))
 	await purgePosGuestNames(db, now)
+}
+
+/**
+ * A heartbeat from a Station tablet while the organization has manager alerts
+ * on (#190): it counts as seen at once (the one-a-minute throttle is for
+ * ordinary requests), keeps the battery and version it reported, and marks the
+ * tablet as watched for going offline.
+ */
+export async function recordDeviceHeartbeat(
+	db: TenantDatabase,
+	device: Pick<PosDevice, 'id'>,
+	heartbeat: { batteryPct?: number | null; appVersion?: string | null },
+	now = Date.now(),
+) {
+	await db
+		.update(posDevices)
+		.set({
+			lastSeenAt: now,
+			lastHeartbeatAt: now,
+			batteryPercent: heartbeat.batteryPct ?? null,
+			appVersion: heartbeat.appVersion ?? null,
+		})
+		.where(eq(posDevices.id, device.id))
 }
 
 /**

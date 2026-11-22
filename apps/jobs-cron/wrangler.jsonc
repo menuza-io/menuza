@@ -77,6 +77,11 @@
 			"binding": "MEDIA_RESTYLE_WORKFLOW",
 			"class_name": "MediaRestyleWorkflow",
 		},
+		{
+			"name": "operator-alerts",
+			"binding": "OPERATOR_ALERTS_WORKFLOW",
+			"class_name": "OperatorAlertsWorkflow",
+		},
 	],
 	// APP_BASE_URL / TENANT_API_URL* patched at deploy — set INTERNAL_COMMAND_TOKEN via wrangler secret put.
 	"vars": {},

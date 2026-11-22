@@ -205,10 +205,41 @@ describe('TerminalsManager', () => {
 		expect(within(list).getByText('Front counter')).toBeTruthy()
 		expect(within(list).getByText('T1')).toBeTruthy()
 		expect(within(list).getByText('Bar tablet')).toBeTruthy()
-		expect(within(list).getByText('Not seen yet')).toBeTruthy()
+		expect(within(list).getByText('Never connected')).toBeTruthy()
 		const waiting = screen.getByRole('region', { name: 'Waiting to be paired' })
 		expect(within(waiting).getByText('Patio')).toBeTruthy()
 		expect(within(waiting).getByText('T3')).toBeTruthy()
+	})
+
+	it('says Online, Offline since a time, or Never connected, with battery and version (#190)', async () => {
+		stubApi({
+			devices: [
+				terminal({ batteryPercent: 61, appVersion: '2.4.0' }),
+				terminal({
+					id: 'd2',
+					label: 'Pass tablet',
+					terminalCode: 'T2',
+					lastSeenAt: NOW - 30 * 60_000,
+				}),
+				terminal({
+					id: 'd3',
+					label: 'New tablet',
+					terminalCode: 'T3',
+					lastSeenAt: null,
+				}),
+			],
+		})
+		render()
+		const list = await screen.findByRole('list', { name: 'Paired terminals' })
+		const lines = within(list)
+			.getAllByTestId('terminal-status')
+			.map((node) => node.textContent ?? '')
+		expect(lines[0]).toContain('Online')
+		expect(lines[0]).toContain('Battery 61%')
+		expect(lines[0]).toContain('Version 2.4.0')
+		expect(lines[1]).toMatch(/^Offline since /)
+		expect(lines[1]).not.toContain('Battery')
+		expect(lines[2]).toBe('Never connected')
 	})
 
 	it('shows an empty state when there is nothing yet', async () => {

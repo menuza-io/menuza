@@ -332,6 +332,8 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 		pickupInstructions: z.string().max(400).nullable().optional(),
 		/** Extra minutes a large order added to its promised time (#355). */
 		largeOrderExtraMinutes: z.number().int().nonnegative().optional(),
+		/** Over the location's large-order alert threshold at placement (#300). */
+		largeOrder: z.boolean().optional(),
 		discountCents: z.number().int(),
 		loyaltyDiscountCents: z.number().int(),
 		paidAt: z.number().int().nullable(),

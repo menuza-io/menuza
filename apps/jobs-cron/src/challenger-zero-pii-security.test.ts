@@ -59,6 +59,7 @@ describe('Challenger 2 — Adversarial Zero-PII & API Security Verification', ()
 			PHOTO_QUALITY_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
 			MEDIA_RESTYLE_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
 			OCCASION_SCHEDULE_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
+			OPERATOR_ALERTS_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
 		}
 
 		workflowEnv = {

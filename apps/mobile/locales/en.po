@@ -26,11 +26,23 @@ msgstr "{stillMissing, plural, one {# dish needs a photo} other {# dishes need a
 msgid "+{0} more organizations"
 msgstr "+{0} more organizations"
 
+#: app/(dashboard)/settings/notifications.tsx:241
+msgid "1 hour"
+msgstr "1 hour"
+
+#: app/(dashboard)/settings/notifications.tsx:47
+msgid "A kitchen tablet goes offline"
+msgstr "A kitchen tablet goes offline"
+
+#: app/(dashboard)/settings/notifications.tsx:45
+msgid "A payment needs review"
+msgstr "A payment needs review"
+
 #: app/(auth)/verify-code.tsx:194
 msgid "ABC123"
 msgstr "ABC123"
 
-#: app/(dashboard)/settings/index.tsx:125
+#: app/(dashboard)/settings/index.tsx:137
 msgid "About"
 msgstr "About"
 
@@ -80,7 +92,7 @@ msgstr "Already have an account?"
 msgid "and"
 msgstr "and"
 
-#: app/(dashboard)/settings/index.tsx:119
+#: app/(dashboard)/settings/index.tsx:131
 msgid "App"
 msgstr "App"
 
@@ -123,6 +135,7 @@ msgstr "Camera access is turned off. You can turn it on in your phone's settings
 
 #: app/(dashboard)/create-organization.tsx:222
 #: app/(dashboard)/organizations.tsx:35
+#: app/(dashboard)/settings/devices.tsx:50
 #: app/(dashboard)/settings/index.tsx:52
 msgid "Cancel"
 msgstr "Cancel"
@@ -252,7 +265,7 @@ msgstr "Enter your password"
 msgid "Enter your username"
 msgstr "Enter your username"
 
-#: app/(dashboard)/settings/index.tsx:127
+#: app/(dashboard)/settings/index.tsx:139
 msgid "Epic Stack Mobile"
 msgstr "Epic Stack Mobile"
 
@@ -267,6 +280,10 @@ msgstr "Epic Stack Mobile v1.0.0"
 #: app/(dashboard)/create-organization.tsx:74
 #: app/(dashboard)/create-organization.tsx:99
 #: app/(dashboard)/organizations.tsx:48
+#: app/(dashboard)/settings/devices.tsx:37
+#: app/(dashboard)/settings/devices.tsx:56
+#: app/(dashboard)/settings/notifications.tsx:67
+#: app/(dashboard)/settings/notifications.tsx:81
 #: app/(dashboard)/settings/profile.tsx:43
 #: app/(dashboard)/settings/profile.tsx:64
 #: components/organization-switcher.tsx:41
@@ -313,6 +330,10 @@ msgstr "Forgot password functionality will be available soon. Please contact sup
 msgid "Forgot password?"
 msgstr "Forgot password?"
 
+#: app/(dashboard)/settings/notifications.tsx:177
+msgid "From"
+msgstr "From"
+
 #: app/(auth)/landing.tsx:168
 #: app/(auth)/landing.tsx:171
 msgid "Get Started"
@@ -322,22 +343,46 @@ msgstr "Get Started"
 msgid "Hide password"
 msgstr "Hide password"
 
+#: app/(dashboard)/settings/notifications.tsx:150
+#: app/(dashboard)/settings/notifications.tsx:153
+msgid "Hold alerts that can wait"
+msgstr "Hold alerts that can wait"
+
 #: app/(auth)/forgot-password.tsx:40
 msgid "If an account with that email exists, we've sent you a password reset link."
 msgstr "If an account with that email exists, we've sent you a password reset link."
+
+#: app/(dashboard)/settings/notifications.tsx:49
+msgid "Inventory"
+msgstr "Inventory"
 
 #: app/(dashboard)/menu-photos.tsx:151
 msgid "It still did not go through after several tries."
 msgstr "It still did not go through after several tries."
 
+#: app/(dashboard)/settings/devices.tsx:48
+msgid "It will stop getting alerts for you."
+msgstr "It will stop getting alerts for you."
+
 #: app/(auth)/sign-up.tsx:153
 msgid "Join organization"
 msgstr "Join organization"
+
+#: app/(dashboard)/settings/notifications.tsx:46
+msgid "Large orders"
+msgstr "Large orders"
+
+#. placeholder {0}: new Date(device.lastSeenAt).toLocaleString()
+#: app/(dashboard)/settings/devices.tsx:85
+msgid "Last used {0}"
+msgstr "Last used {0}"
 
 #: components/menu-photos/photo-capture-modal.tsx:166
 msgid "Light from the side"
 msgstr "Light from the side"
 
+#: app/(dashboard)/settings/devices.tsx:67
+#: app/(dashboard)/settings/notifications.tsx:97
 #: app/index.tsx:22
 msgid "Loading"
 msgstr "Loading"
@@ -364,11 +409,15 @@ msgstr "m@example.com"
 msgid "Manage your logged-in devices"
 msgstr "Manage your logged-in devices"
 
-#: app/(dashboard)/_layout.tsx:73
+#: app/(dashboard)/_layout.tsx:80
 #: app/(dashboard)/index.tsx:100
 #: app/(dashboard)/menu-photos.tsx:169
 msgid "Menu photos"
 msgstr "Menu photos"
+
+#: app/(dashboard)/settings/notifications.tsx:42
+msgid "New orders"
+msgstr "New orders"
 
 #: app/(dashboard)/menu-photos.tsx:289
 msgid "No dish matches your search."
@@ -387,9 +436,17 @@ msgstr "No email address provided for verification."
 msgid "No organizations found"
 msgstr "No organizations found"
 
+#: app/(dashboard)/settings/devices.tsx:70
+msgid "No phone is set up for alerts yet."
+msgstr "No phone is set up for alerts yet."
+
 #: app/(dashboard)/menu-photos.tsx:291
 msgid "Nothing to photograph. Nice."
 msgstr "Nothing to photograph. Nice."
+
+#: app/(dashboard)/settings/index.tsx:115
+msgid "Notifications"
+msgstr "Notifications"
 
 #: app/(auth)/sign-in.tsx:133
 #: app/(auth)/sign-up.tsx:84
@@ -413,6 +470,14 @@ msgstr "Or continue with email"
 #: app/(auth)/sign-in.tsx:212
 msgid "Or continue with username"
 msgstr "Or continue with username"
+
+#: app/(dashboard)/settings/notifications.tsx:44
+msgid "Ordering paused for too long"
+msgstr "Ordering paused for too long"
+
+#: app/(dashboard)/settings/notifications.tsx:43
+msgid "Orders waiting too long"
+msgstr "Orders waiting too long"
 
 #. placeholder {0}: result.organization?.name
 #: app/(dashboard)/create-organization.tsx:90
@@ -478,17 +543,35 @@ msgstr "Privacy Policy"
 msgid "Profile updated successfully"
 msgstr "Profile updated successfully"
 
+#: app/(dashboard)/settings/notifications.tsx:103
+msgid "Push notifications"
+msgstr "Push notifications"
+
+#: app/(dashboard)/settings/notifications.tsx:109
+msgid "Push notifications are not turned on for this organization yet."
+msgstr "Push notifications are not turned on for this organization yet."
+
 #: app/(dashboard)/index.tsx:79
 msgid "Quick Actions"
 msgstr "Quick Actions"
+
+#: app/(dashboard)/settings/notifications.tsx:144
+msgid "Quiet hours"
+msgstr "Quiet hours"
 
 #: app/(auth)/sign-in.tsx:306
 msgid "Remember me"
 msgstr "Remember me"
 
 #: app/(dashboard)/menu-photos.tsx:404
+#: app/(dashboard)/settings/devices.tsx:52
+#: app/(dashboard)/settings/devices.tsx:93
 msgid "Remove"
 msgstr "Remove"
+
+#: app/(dashboard)/settings/devices.tsx:47
+msgid "Remove this phone?"
+msgstr "Remove this phone?"
 
 #: app/(dashboard)/menu-photos.tsx:332
 msgid "Replace"
@@ -503,9 +586,17 @@ msgstr "Replace the photo of {0}"
 msgid "Resend code"
 msgstr "Resend code"
 
+#: app/(dashboard)/settings/notifications.tsx:50
+msgid "Reservations"
+msgstr "Reservations"
+
 #: components/menu-photos/photo-capture-modal.tsx:214
 msgid "Retake"
 msgstr "Retake"
+
+#: app/(dashboard)/settings/notifications.tsx:211
+msgid "Save"
+msgstr "Save"
 
 #: app/(dashboard)/menu-photos.tsx:196
 msgid "Search any dish to replace its photo"
@@ -571,7 +662,7 @@ msgstr "Sign in with your social account or username"
 
 #: app/(dashboard)/settings/index.tsx:51
 #: app/(dashboard)/settings/index.tsx:54
-#: app/(dashboard)/settings/index.tsx:139
+#: app/(dashboard)/settings/index.tsx:151
 msgid "Sign Out"
 msgstr "Sign Out"
 
@@ -607,9 +698,22 @@ msgstr "Slug can only contain lowercase letters, numbers, and hyphens"
 msgid "Slug must be at least 2 characters"
 msgstr "Slug must be at least 2 characters"
 
+#: app/(dashboard)/settings/notifications.tsx:222
+msgid "Snooze"
+msgstr "Snooze"
+
+#. placeholder {0}: new Date(snoozed).toLocaleString()
+#: app/(dashboard)/settings/notifications.tsx:228
+msgid "Snoozed until {0}"
+msgstr "Snoozed until {0}"
+
 #: app/(dashboard)/menu-photos.tsx:153
 msgid "Something went wrong."
 msgstr "Something went wrong."
+
+#: app/(dashboard)/settings/notifications.tsx:48
+msgid "Staff"
+msgstr "Staff"
 
 #: app/(dashboard)/create-organization.tsx:89
 #: app/(dashboard)/organizations.tsx:42
@@ -639,6 +743,10 @@ msgstr "Take photo"
 #: app/(dashboard)/organizations.tsx:75
 msgid "Tap to retry"
 msgstr "Tap to retry"
+
+#: app/(dashboard)/settings/notifications.tsx:51
+msgid "Team chat mentions"
+msgstr "Team chat mentions"
 
 #: app/(auth)/sign-up.tsx:255
 msgid "Terms of Service"
@@ -678,9 +786,17 @@ msgstr "The photo is too large."
 msgid "This dish is no longer on the menu."
 msgstr "This dish is no longer on the menu."
 
+#: app/(dashboard)/settings/devices.tsx:82
+msgid "This phone"
+msgstr "This phone"
+
 #: app/(dashboard)/menu-photos.tsx:145
 msgid "This photo format is not supported."
 msgstr "This photo format is not supported."
+
+#: app/(dashboard)/settings/notifications.tsx:185
+msgid "to"
+msgstr "to"
 
 #: app/(auth)/landing.tsx:34
 msgid "Track what you eat 🍎"
@@ -691,6 +807,10 @@ msgstr "Track what you eat 🍎"
 msgid "Try again"
 msgstr "Try again"
 
+#: app/(dashboard)/settings/notifications.tsx:266
+msgid "Turn off"
+msgstr "Turn off"
+
 #: app/(dashboard)/settings/security.tsx:47
 #: app/(dashboard)/settings/security.tsx:80
 msgid "Two-Factor Authentication"
@@ -699,6 +819,14 @@ msgstr "Two-Factor Authentication"
 #: app/(dashboard)/settings/security.tsx:48
 msgid "Two-factor authentication setup will be available soon."
 msgstr "Two-factor authentication setup will be available soon."
+
+#: app/(dashboard)/settings/notifications.tsx:188
+msgid "Until"
+msgstr "Until"
+
+#: app/(dashboard)/settings/notifications.tsx:255
+msgid "Until tomorrow morning"
+msgstr "Until tomorrow morning"
 
 #: app/(dashboard)/settings/security.tsx:74
 msgid "Update your account password"
@@ -740,7 +868,7 @@ msgstr "Verifying code..."
 msgid "Verifying..."
 msgstr "Verifying..."
 
-#: app/(dashboard)/settings/index.tsx:127
+#: app/(dashboard)/settings/index.tsx:139
 msgid "Version 1.0.0"
 msgstr "Version 1.0.0"
 
@@ -800,3 +928,8 @@ msgstr "Your account has been suspended. Please contact support if you believe t
 #: app/(dashboard)/index.tsx:121
 msgid "Your Organizations"
 msgstr "Your Organizations"
+
+#: app/(dashboard)/settings/index.tsx:121
+#: app/(dashboard)/settings/notifications.tsx:279
+msgid "Your phones"
+msgstr "Your phones"

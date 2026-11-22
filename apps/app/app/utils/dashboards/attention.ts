@@ -1,3 +1,9 @@
+import {
+	isSpareTablet,
+	STATION_ALERT_HOURS_MARGIN_MS,
+	STATION_OFFLINE_AFTER_MS,
+	withinOpenIntervals,
+} from '@repo/common/operator-alerts'
 import { z } from 'zod'
 import { type HomeLocation } from './today.ts'
 
@@ -23,6 +29,7 @@ export const ATTENTION_KINDS = [
 	'reviews_unanswered',
 	'call_follow_ups',
 	'inventory_counts_waiting',
+	'station_offline',
 	'google_listing_status',
 	'google_listing_issue',
 	'customer_app_account',
@@ -52,6 +59,9 @@ export const ATTENTION_URGENCY: Record<AttentionKind, AttentionUrgency> = {
 	reviews_unanswered: 'todo',
 	call_follow_ups: 'todo',
 	inventory_counts_waiting: 'todo',
+	// A Station tablet silent for five minutes during opening hours (#190): the
+	// kitchen may not see orders, so it cannot be dismissed, only fixed.
+	station_offline: 'urgent',
 	google_listing_status: 'urgent',
 	google_listing_issue: 'todo',
 	// A failing store account check: updates and the listing are at risk.
@@ -136,6 +146,8 @@ export type RegionalAttentionAccess = {
 	callFollowUps: boolean
 	/** Inventory counts waiting for review (inventory token). */
 	inventoryCounts: boolean
+	/** Station tablets that went silent (orders token); needs manager alerts on. */
+	offlineTablets: boolean
 }
 
 export type AttentionData = {
@@ -145,6 +157,12 @@ export type AttentionData = {
 	regional: RegionalAttentionAccess
 	/** The locations regional counts are read for (the viewer's own). */
 	locations: HomeLocation[]
+	/**
+	 * When each location is open (store hours, epoch ms, yesterday to tomorrow;
+	 * null: not set), so the browser can tell a tablet that is off for the night
+	 * from one that went silent (#190).
+	 */
+	openHours: Record<string, Array<{ startMs: number; endMs: number }> | null>
 }
 
 /**
@@ -206,3 +224,58 @@ export const callFollowUpsSchema = z.object({
 export const inventoryCountsSchema = z.object({
 	counts: z.array(z.object({ status: z.string() }).passthrough()),
 })
+
+export const terminalsListSchema = z.object({
+	devices: z.array(
+		z.object({
+			id: z.string(),
+			label: z.string(),
+			locationId: z.string().nullable(),
+			lastSeenAt: z.number().nullable(),
+			revokedAt: z.number().nullable(),
+		}),
+	),
+})
+
+/**
+ * Offline Station tablets as Needs attention items (#190): one per location
+ * with a tablet silent for five minutes inside opening hours plus half an hour.
+ * A removed tablet, one called "spare" and one that never connected are left out,
+ * and a location with no opening hours set is never called an outage. Names and
+ * counts only.
+ */
+export function offlineTabletItems(input: {
+	devices: z.infer<typeof terminalsListSchema>['devices']
+	locations: ReadonlyArray<{ id: string; name: string }>
+	openHours: AttentionData['openHours']
+	now: number
+}): AttentionItem[] {
+	const byId = new Map(
+		input.locations.map((location) => [location.id, location]),
+	)
+	const perLocation = new Map<string, { count: number; since: number }>()
+	for (const device of input.devices) {
+		if (device.revokedAt !== null || device.lastSeenAt === null) continue
+		if (isSpareTablet(device.label) || device.locationId === null) continue
+		if (!byId.has(device.locationId)) continue
+		if (input.now - device.lastSeenAt < STATION_OFFLINE_AFTER_MS) continue
+		const window = withinOpenIntervals(
+			input.openHours[device.locationId] ?? null,
+			input.now,
+			STATION_ALERT_HOURS_MARGIN_MS,
+		)
+		if (window !== 'inside') continue
+		const entry = perLocation.get(device.locationId)
+		perLocation.set(device.locationId, {
+			count: (entry?.count ?? 0) + 1,
+			since: Math.min(entry?.since ?? Infinity, device.lastSeenAt),
+		})
+	}
+	return [...perLocation].map(([locationId, entry]) =>
+		attentionItem('station_offline', byId.get(locationId)!, {
+			count: entry.count,
+			since: new Date(entry.since).toISOString(),
+			href: '/settings/terminals',
+		}),
+	)
+}

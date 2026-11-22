@@ -187,6 +187,7 @@ describe('internal restaurant order context', () => {
 			},
 			// No locations: nothing extra to prep.
 			largeOrder: {},
+			largeOrderAlert: {},
 			// Guest cancel and manual acceptance flags default off: the region
 			// reads every location as no cancel and Automatic.
 			guestCancel: {},

@@ -1401,7 +1401,8 @@ function OrderDetailBody({
 				</section>
 			) : null}
 			{detail.utensilsRequested != null ||
-			(detail.largeOrderExtraMinutes ?? 0) > 0 ? (
+			(detail.largeOrderExtraMinutes ?? 0) > 0 ||
+			detail.largeOrder === true ? (
 				<section
 					aria-label={_(t`Packing`)}
 					className="flex flex-col gap-1 text-sm font-medium"
@@ -1418,6 +1419,10 @@ function OrderDetailBody({
 					{(detail.largeOrderExtraMinutes ?? 0) > 0 ? (
 						<p>
 							<Trans>Large order +{detail.largeOrderExtraMinutes} min</Trans>
+						</p>
+					) : detail.largeOrder === true ? (
+						<p>
+							<Trans>Large order</Trans>
 						</p>
 					) : null}
 				</section>
@@ -2387,10 +2392,15 @@ export function PrintedTicket({
 				</div>
 			) : null}
 			{kind === 'kitchen' &&
-			(detail.largeOrderExtraMinutes ?? 0) > 0 &&
+			((detail.largeOrderExtraMinutes ?? 0) > 0 ||
+				detail.largeOrder === true) &&
 			f('largeOrder').show ? (
 				<div className={cn('text-center', f('largeOrder').cls)}>
-					<Trans>Large order +{detail.largeOrderExtraMinutes} min</Trans>
+					{(detail.largeOrderExtraMinutes ?? 0) > 0 ? (
+						<Trans>Large order +{detail.largeOrderExtraMinutes} min</Trans>
+					) : (
+						<Trans>Large order</Trans>
+					)}
 				</div>
 			) : null}
 			{kind === 'kitchen' && kitchenSwitches.showPaymentStatus ? (

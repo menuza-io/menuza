@@ -17,15 +17,18 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { DailyLimitsPanel } from '#app/components/orders/daily-limits-panel.tsx'
+import { NewOrderBanner } from '#app/components/orders/new-order-banner.tsx'
 import {
 	OrderStatusLabel,
 	PaymentStatusLabel,
 } from '#app/components/orders/order-status.tsx'
 import { OrderingControls } from '#app/components/orders/ordering-controls.tsx'
+import { OrdersBell } from '#app/components/orders/orders-bell.tsx'
 import { PrepScheduleBanner } from '#app/components/orders/prep-schedule-banner.tsx'
 import { SlotLimitsPanel } from '#app/components/orders/slot-limits-panel.tsx'
 import { WaitingLane } from '#app/components/orders/waiting-lane.tsx'
 import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
+import { useNewOrderAlerts } from '#app/hooks/use-new-order-alerts.ts'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { loadOrderingControls } from '#app/utils/location/ordering-controls.server.ts'
 import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
@@ -172,6 +175,11 @@ export default function OrdersInbox() {
 		}
 	}, [refresh])
 
+	// A new online order chimes, shows a banner and counts in the tab title (#265).
+	const alerts = useNewOrderAlerts({ orders, loading, locale: i18n.locale })
+	const timeZoneOf = (orderId: string) =>
+		orders.find((order) => order.id === orderId)?.timeZone ?? null
+
 	const waiting = orders.filter(
 		(order) => order.status === WAITING_ORDER_STATUS,
 	)
@@ -186,16 +194,25 @@ export default function OrdersInbox() {
 						msg`Receive and manage menu and drop orders. Updates refresh every 15 seconds.`,
 					)}
 				/>
-				<Button
-					variant="outline"
-					onClick={() => {
-						setRefreshKey((key) => key + 1)
-						void refresh()
-					}}
-				>
-					<Trans>Refresh</Trans>
-				</Button>
+				<div className="flex flex-col items-end gap-2">
+					<Button
+						variant="outline"
+						onClick={() => {
+							setRefreshKey((key) => key + 1)
+							void refresh()
+						}}
+					>
+						<Trans>Refresh</Trans>
+					</Button>
+					<OrdersBell alerts={alerts} />
+				</div>
 			</div>
+			<NewOrderBanner
+				orgSlug={orgSlug}
+				items={alerts.items}
+				timeZoneOf={timeZoneOf}
+				onOpen={alerts.dismiss}
+			/>
 			{error ? (
 				<p role="alert" className="text-destructive text-sm">
 					{error}
@@ -264,7 +281,10 @@ export default function OrdersInbox() {
 								key={order.id}
 								className={cn('hover:bg-muted/60 relative cursor-pointer')}
 								data-testid="order-row"
-								onClick={() => void navigate(href)}
+								onClick={() => {
+									alerts.dismiss(order.id)
+									void navigate(href)
+								}}
 							>
 								<div className="flex flex-col gap-2 p-4">
 									<div className="flex items-baseline justify-between gap-3">
@@ -272,10 +292,22 @@ export default function OrdersInbox() {
 											to={href}
 											className="focus-visible:ring-ring rounded-sm font-medium tabular-nums outline-none after:absolute after:inset-0 after:content-[''] focus-visible:ring-2"
 											data-testid="order-row-link"
-											onClick={(event) => event.stopPropagation()}
+											onClick={(event) => {
+												event.stopPropagation()
+												alerts.dismiss(order.id)
+											}}
 										>
 											<bdi dir="ltr">{order.number}</bdi>
 										</Link>
+										{order.largeOrder ? (
+											<Badge
+												variant="secondary"
+												className="ms-2"
+												data-testid="order-row-large"
+											>
+												<Trans>Large order</Trans>
+											</Badge>
+										) : null}
 										<span className="font-medium tabular-nums">
 											<bdi>{money(order.totalCents, order.currency)}</bdi>
 										</span>

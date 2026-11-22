@@ -15,6 +15,10 @@ import {
 } from '@repo/staffing'
 import { type ActionFunctionArgs } from 'react-router'
 import { ENV } from 'varlock/env'
+import {
+	pushStoredNotifications,
+	type StoredNotification,
+} from '#app/utils/alerts/push.server.ts'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 import { getStaffingFeatureState } from '#app/utils/staffing/access.server.ts'
 import { isStaffingEmailEnabled } from '#app/utils/staffing/email-switch.server.ts'
@@ -171,6 +175,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	let inApp = 0
 	let emailed = 0
+	const pushRows: StoredNotification[] = []
 	const deliver = async (recipient: (typeof recipients)[number]) => {
 		const delivered = alreadyDelivered.get(recipient.userId)
 		const channels = preferences.get(recipient.userId) ?? {
@@ -197,7 +202,17 @@ export async function action({ request }: ActionFunctionArgs) {
 				})
 				.onConflictDoNothing()
 				.returning({ id: Notification.id })
-			if (inserted.length > 0) inApp++
+			if (inserted.length > 0) {
+				inApp++
+				pushRows.push({
+					id: inserted[0]!.id,
+					userId: recipient.userId,
+					organizationId: organization.id,
+					type,
+					entityId: event.eventId,
+					payload: { kind: event.kind, scopeId: event.scopeId },
+				})
+			}
 		}
 
 		if (channels.email && emailAllowed) {
@@ -251,5 +266,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		)
 	}
 
+	// Mirrored as a push to the members who turned it on (#106).
+	await pushStoredNotifications(pushRows)
 	return answer({ inApp, emailed })
 }

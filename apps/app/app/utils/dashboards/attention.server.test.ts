@@ -386,6 +386,7 @@ describe('loadAttention', () => {
 			paymentReview: false,
 			callFollowUps: false,
 			inventoryCounts: false,
+			offlineTablets: false,
 		})
 	})
 
