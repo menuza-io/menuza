@@ -38,6 +38,8 @@ import {
 } from '@repo/database'
 import { weeklyScheduleHasOpenDay } from '@repo/opening-hours'
 import { addDays, businessDateOf, startOfLocalDay } from '@repo/zoned-time'
+import { isOrderAlertsEnabled } from '#app/utils/alerts/switches.server.ts'
+import { openIntervalsAround } from '#app/utils/alerts/window.ts'
 import { getInventoryNavAccess } from '#app/utils/inventory/access.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import {
@@ -905,8 +907,10 @@ export async function loadAttention({
 				paymentReview: false,
 				callFollowUps: false,
 				inventoryCounts: false,
+				offlineTablets: false,
 			},
 			locations: [],
+			openHours: {},
 		}
 	}
 	const ctx: DetectorContext = {
@@ -916,9 +920,11 @@ export async function loadAttention({
 		has,
 		now,
 	}
-	const [items, inventory] = await Promise.all([
+	const [items, inventory, tabletsWatched] = await Promise.all([
 		runAttentionDetectors(ctx),
 		getInventoryNavAccess(userId, organizationId).catch(() => null),
+		// Tablets are watched for silence only while manager alerts are on (#190).
+		isOrderAlertsEnabled(organizationId).catch(() => false),
 	])
 	const scoped = hasLocations && locations.length > 0
 	return {
@@ -930,8 +936,17 @@ export async function loadAttention({
 			paymentReview: has(ORG_PERMISSIONS.READ_MENU_ANY),
 			callFollowUps: has(ORG_PERMISSIONS.READ_PHONE_CALL_ANY),
 			inventoryCounts: Boolean(inventory?.counts) && scoped,
+			offlineTablets: tabletsWatched && has(ORG_PERMISSIONS.READ_MENU_ANY),
 		},
 		locations: homeLocations,
+		openHours: tabletsWatched
+			? Object.fromEntries(
+					locations.map((location) => [
+						location.id,
+						openIntervalsAround(location, now.getTime()),
+					]),
+				)
+			: {},
 	}
 }
 

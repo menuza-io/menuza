@@ -1198,6 +1198,15 @@ export const restaurantOrders = sqliteTable(
 		largeOrderExtraMinutes: integer('large_order_extra_minutes')
 			.notNull()
 			.default(0),
+		/**
+		 * The order was over the location's large-order alert threshold at
+		 * placement (#300): by dishes or by item subtotal. Marks it "Large order" in
+		 * the Orders list and on the kitchen ticket. A fact about the order, not a
+		 * person.
+		 */
+		largeOrder: integer('large_order', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		totalCents: integer('total_cents').notNull(),
 		// A loyalty reward's discount, taken off the subtotal before tax. The
 		// redemption (`loyalty_redemptions`, source `restaurant_order`) holds how
@@ -1589,6 +1598,61 @@ export const orderMessages = sqliteTable(
 		check(
 			'chk_order_messages_status',
 			sql`${table.status} in ('queued', 'sent', 'failed', 'dropped')`,
+		),
+	],
+)
+
+// Manager alerts about an order (#131, #241, #300, #190): one row per order and
+// kind, so an order alerts at most once for each. `placed` is queued in the
+// order's own transaction and sent after commit (the tick retries it); the
+// others are written when the tick finds the order. Ids and times only: the
+// order number is read from the order when the event is posted. `last_sent_at`
+// is only for the repeating critical kind (every kitchen tablet offline).
+export const ORDER_ALERT_KINDS = [
+	'placed',
+	'waiting',
+	'due_soon',
+	'payment_review',
+	'large_soon',
+	'kitchen_offline',
+] as const
+export const ORDER_ALERT_STATUSES = ['pending', 'sent', 'dropped'] as const
+
+export const orderAlerts = sqliteTable(
+	'order_alerts',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: [...ORDER_ALERT_KINDS] }).notNull(),
+		locationId: text('location_id').notNull(),
+		status: text('status', { enum: [...ORDER_ALERT_STATUSES] })
+			.notNull()
+			.default('pending'),
+		attempts: integer('attempts').notNull().default(0),
+		nextAttemptAt: integer('next_attempt_at').notNull(),
+		createdAt: integer('created_at').notNull(),
+		sentAt: integer('sent_at'),
+		lastSentAt: integer('last_sent_at'),
+	},
+	(table) => [
+		uniqueIndex('order_alerts_order_kind_unique').on(table.orderId, table.kind),
+		index('idx_order_alerts_due').on(table.status, table.nextAttemptAt),
+		index('idx_order_alerts_location_kind').on(
+			table.locationId,
+			table.kind,
+			table.createdAt,
+		),
+		check(
+			'chk_order_alerts_kind',
+			sql`${table.kind} in ('placed', 'waiting', 'due_soon', 'payment_review', 'large_soon', 'kitchen_offline')`,
+		),
+		check(
+			'chk_order_alerts_status',
+			sql`${table.status} in ('pending', 'sent', 'dropped')`,
 		),
 	],
 )
@@ -2532,6 +2596,18 @@ export const posDevices = sqliteTable(
 		pairedBy: text('paired_by').notNull(),
 		pairedAt: integer('paired_at').notNull().default(nowMs),
 		lastSeenAt: integer('last_seen_at'),
+		// What the tablet last reported in its heartbeat (#190): battery 0-100 and
+		// the Station version. Technical facts only. Null until it reports them.
+		batteryPercent: integer('battery_percent'),
+		appVersion: text('app_version'),
+		// When the last heartbeat arrived while the organization had manager alerts
+		// on. A tablet is watched for going offline only once it has sent one, so a
+		// tablet that was asking only every ten minutes is never called offline.
+		lastHeartbeatAt: integer('last_heartbeat_at'),
+		// When the current outage began (the tablet's last-seen time when it was
+		// found silent), set once the offline alert went out and cleared when the
+		// tablet checks in again (#190): one alert per tablet per outage.
+		offlineAlertedAt: integer('offline_alerted_at'),
 		revokedAt: integer('revoked_at'),
 		revokedBy: text('revoked_by'),
 		createdAt: integer('created_at').notNull().default(nowMs),

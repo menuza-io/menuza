@@ -27,8 +27,10 @@ function data(overrides: Partial<AttentionData> = {}): AttentionData {
 			paymentReview: true,
 			callFollowUps: false,
 			inventoryCounts: false,
+			offlineTablets: false,
 		},
 		locations: [olaya],
+		openHours: {},
 		...overrides,
 	}
 }
@@ -111,6 +113,107 @@ describe('AttentionBlock', () => {
 		).toBeInTheDocument()
 	})
 
+	it('shows a Station tablet that went silent during opening hours, and not one that is off for the night (#190)', async () => {
+		const now = Date.now()
+		fetchMock.mockImplementation(async (input: unknown) => {
+			const url = String(input)
+			if (url.endsWith('/orders-token')) {
+				return new Response(
+					JSON.stringify({
+						jwt: 'orders.jwt',
+						tenantApiUrl: 'http://tenant.test',
+					}),
+				)
+			}
+			return new Response(
+				JSON.stringify({
+					devices: [
+						{
+							id: 'd1',
+							label: 'Kitchen',
+							locationId: 'loc_olaya',
+							lastSeenAt: now - 12 * 60_000,
+							revokedAt: null,
+						},
+						{
+							id: 'd2',
+							label: 'Spare tablet',
+							locationId: 'loc_olaya',
+							lastSeenAt: now - 12 * 60_000,
+							revokedAt: null,
+						},
+					],
+				}),
+			)
+		})
+		renderBlock(
+			data({
+				regional: {
+					paymentReview: false,
+					callFollowUps: false,
+					inventoryCounts: false,
+					offlineTablets: true,
+				},
+				openHours: {
+					loc_olaya: [{ startMs: now - 3_600_000, endMs: now + 3_600_000 }],
+				},
+			}),
+		)
+		const item = await screen.findByTestId('attention-item-station_offline')
+		expect(item).toHaveTextContent(
+			'1 Station tablet at Olaya has been offline for a while',
+		)
+		expect(
+			within(item).queryByRole('button', { name: /Dismiss/ }),
+		).not.toBeInTheDocument()
+	})
+
+	it('shows no offline tablet outside opening hours', async () => {
+		const now = Date.now()
+		fetchMock.mockImplementation(async (input: unknown) =>
+			String(input).endsWith('/orders-token')
+				? new Response(
+						JSON.stringify({
+							jwt: 'orders.jwt',
+							tenantApiUrl: 'http://tenant.test',
+						}),
+					)
+				: new Response(
+						JSON.stringify({
+							devices: [
+								{
+									id: 'd1',
+									label: 'Kitchen',
+									locationId: 'loc_olaya',
+									lastSeenAt: now - 12 * 60_000,
+									revokedAt: null,
+								},
+							],
+						}),
+					),
+		)
+		renderBlock(
+			data({
+				regional: {
+					paymentReview: false,
+					callFollowUps: false,
+					inventoryCounts: false,
+					offlineTablets: true,
+				},
+				openHours: {
+					loc_olaya: [
+						{ startMs: now + 5 * 3_600_000, endMs: now + 9 * 3_600_000 },
+					],
+				},
+			}),
+		)
+		await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+		await new Promise((resolve) => setTimeout(resolve, 20))
+		expect(
+			screen.queryByTestId('attention-item-station_offline'),
+		).not.toBeInTheDocument()
+	})
+
 	it('says when nothing needs attention', async () => {
 		renderBlock(
 			data({
@@ -119,6 +222,7 @@ describe('AttentionBlock', () => {
 					paymentReview: false,
 					callFollowUps: false,
 					inventoryCounts: false,
+					offlineTablets: false,
 				},
 			}),
 		)

@@ -1,5 +1,12 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import {
+	alertCopy,
+	alertLocale,
+	alertPath,
+	parseAlertSubject,
+} from '@repo/common/operator-alert-copy'
+import { orderAlertKindFromNotificationType } from '@repo/common/operator-alerts'
 import { occasionTitle, isOccasionKey } from '@repo/marketing/occasions'
 import {
 	managerAlertKindFromNotificationType,
@@ -245,7 +252,33 @@ function NotificationItem({
 		? customerAppAlertCopy(customerAppKind, _)
 		: null
 
+	// Order and tablet alerts (#131, #241, #300, #190): worded from the stored
+	// facts (an order number, a place, a total), in this member's language.
+	const orderAlertKind = orderAlertKindFromNotificationType(notification.type)
+	const orderAlertSubject = orderAlertKind
+		? parseAlertSubject(payload?.subject)
+		: null
+	const orderAlertText = orderAlertSubject
+		? alertCopy(orderAlertSubject, {
+				locale: alertLocale(i18n.locale),
+				locationName:
+					typeof payload?.locationName === 'string'
+						? payload.locationName
+						: null,
+				timeZone:
+					typeof payload?.timeZone === 'string' ? payload.timeZone : null,
+				test: payload?.test === true,
+			})
+		: null
+	const orderAlert = orderAlertText
+		? {
+				subject: `**${plainMarkdown(orderAlertText.title)}**`,
+				body: plainMarkdown(orderAlertText.body),
+			}
+		: null
+
 	const subject =
+		orderAlert?.subject ??
 		customerAppAlert?.subject ??
 		formAlert?.subject ??
 		domainAlert?.subject ??
@@ -261,6 +294,7 @@ function NotificationItem({
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
 	const body =
+		orderAlert?.body ??
 		customerAppAlert?.body ??
 		formAlert?.body ??
 		domainAlert?.body ??
@@ -285,6 +319,12 @@ function NotificationItem({
 			typeof payload?.formId === 'string'
 		) {
 			void navigate(`/${payload.orgSlug}${formAlertPath(payload.formId)}`)
+		} else if (
+			orderAlertKind &&
+			orderAlertSubject &&
+			typeof payload?.orgSlug === 'string'
+		) {
+			void navigate(`/${payload.orgSlug}${alertPath(orderAlertKind)}`)
 		} else if (customerAppKind && typeof payload?.orgSlug === 'string') {
 			void navigate(`/${payload.orgSlug}${customerAppAlertPath()}`)
 		} else if (domainKind && typeof payload?.orgSlug === 'string') {
@@ -367,7 +407,11 @@ function NotificationItem({
 			<div className="flex items-start border-b border-dashed p-2">
 				<Avatar className="mr-2 h-8 w-8">
 					<AvatarFallback>
-						{formKind ? (
+						{orderAlertKind === 'station_offline' ? (
+							<Icon name="tablet" className="h-4 w-4" />
+						) : orderAlertKind ? (
+							<Icon name="shopping-bag" className="h-4 w-4" />
+						) : formKind ? (
 							<Icon name="mail" className="h-4 w-4" />
 						) : websiteKind || domainKind ? (
 							<Icon name="globe" className="h-4 w-4" />

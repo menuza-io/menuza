@@ -428,6 +428,13 @@
 			"when": 1795314530988,
 			"tag": "0060_dish_photo_tests",
 			"breakpoints": true
+		},
+		{
+			"idx": 61,
+			"version": "6",
+			"when": 1795358865275,
+			"tag": "0061_manager_alerts",
+			"breakpoints": true
 		}
 	]
 }

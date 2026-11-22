@@ -35,6 +35,22 @@ job is still a separate request with its own error logging.
 The workflow fetches presigned URLs from the App and stream-copies org media in
 batches. Triggered by the App when an org admin starts migration from settings.
 
+## Operator alerts workflow (#366)
+
+| HTTP                                    | Body              | Job route the App serves               |
+| --------------------------------------- | ----------------- | -------------------------------------- |
+| `POST /workflows/operator-alerts/start` | `{ runAt }` (ISO) | `POST /resources/jobs/operator-alerts` |
+
+Needs the internal token and also answers under `/api/workflows/...`. The
+instance id is `operator-alerts-<minute of runAt>`, so every alert held for the
+same quiet-hours end shares one instance (starting an existing one counts as
+success); `runAt` more than three days ahead is refused.
+`OperatorAlertsWorkflow` sleeps until `runAt` (`step.sleepUntil`) and then asks
+the App to release what quiet hours and snoozes held, so no alert waits for the
+next hourly sweep. The hourly sweep also calls the same job route (no sixth cron
+slot), which is where long pauses, busy mode and push receipts are checked. The
+payload is a time only: no alert, member or guest data.
+
 ## Photo quality and menu restyle workflows (#145, #146)
 
 | HTTP                                  | Body                 | Job route the App serves             |

@@ -1463,6 +1463,13 @@ export const restaurantOrderContextSchema = z
 		 */
 		largeOrder: z.unknown().optional(),
 		/**
+		 * The large-order alert thresholds per location id (#300): only while the
+		 * organization has manager alerts on and "tell me about large orders" is on
+		 * for the location. Read with `readLargeOrderAlertRule`, never parsed here:
+		 * a bad value flags nothing, it never blocks ordering.
+		 */
+		largeOrderAlert: z.unknown().optional(),
+		/**
 		 * Guest self-cancel per location id (`ordering.guest_cancel`, #111):
 		 * only locations that offer a window, only while the flag is on. Read
 		 * with `readGuestCancelPolicy`, never parsed here: missing or bad is off.

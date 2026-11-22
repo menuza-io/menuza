@@ -562,6 +562,26 @@ export class JWTAuthApi {
 	}
 
 	/**
+	 * An authenticated POST, PUT or DELETE with a JSON body for feature modules
+	 * (push registration, notification settings): the same token handling as
+	 * `authenticatedGet`. The response body's `data` comes back as `data`.
+	 */
+	async authenticatedSend<T>(
+		method: 'POST' | 'PUT' | 'DELETE',
+		path: string,
+		body?: unknown,
+	): Promise<ApiResponse<T>> {
+		try {
+			return await this.httpClient.request<T>(path, {
+				method,
+				body: body === undefined ? undefined : JSON.stringify(body),
+			})
+		} catch (error) {
+			return this.handleError(error as Error) as ApiResponse<T>
+		}
+	}
+
+	/**
 	 * Sets the authorization header for authenticated requests
 	 */
 	async setAuthToken(token: string): Promise<void> {

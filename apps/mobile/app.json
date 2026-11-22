@@ -41,6 +41,7 @@
 			"expo-secure-store",
 			"expo-status-bar",
 			"expo-web-browser",
+			["expo-notifications", { "color": "#000000" }],
 			[
 				"expo-camera",
 				{

@@ -41,6 +41,8 @@ describe('order messages alarm module', () => {
 			'/operator/orders/abc',
 			'/pos/online-orders/abc/command',
 			'/pos/kds/command',
+			// A tablet's heartbeat keeps the offline-tablet check running (#190).
+			'/pos/heartbeat',
 		]) {
 			expect(isOrderMessagesActivityPath(path), path).toBe(true)
 		}

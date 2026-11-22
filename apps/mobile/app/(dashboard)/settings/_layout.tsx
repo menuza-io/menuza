@@ -32,6 +32,18 @@ export default function SettingsLayout() {
 					title: 'Security',
 				}}
 			/>
+			<Stack.Screen
+				name="notifications"
+				options={{
+					title: 'Notifications',
+				}}
+			/>
+			<Stack.Screen
+				name="devices"
+				options={{
+					title: 'Your phones',
+				}}
+			/>
 		</Stack>
 	)
 }

@@ -512,6 +512,13 @@
 			"when": 1795336624248,
 			"tag": "0072_dish_photos",
 			"breakpoints": true
+		},
+		{
+			"idx": 73,
+			"version": "6",
+			"when": 1795357291635,
+			"tag": "0073_operator_alerts",
+			"breakpoints": true
 		}
 	]
 }

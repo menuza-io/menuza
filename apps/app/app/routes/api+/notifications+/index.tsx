@@ -15,6 +15,7 @@ import { checkHoneypot } from '@repo/security'
 
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import { countVisibleOrderAlerts } from '#app/utils/alerts/notification-visibility.server.ts'
 import { countVisibleInventoryAlerts } from '#app/utils/inventory/notification-visibility.server.ts'
 import { countVisibleReservationAlerts } from '#app/utils/reservations/notification-visibility.server.ts'
 import {
@@ -51,6 +52,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const staffingType = like(Notification.type, 'staffing-%')
 	const reservationsType = like(Notification.type, 'reservations-%')
 	const inventoryType = like(Notification.type, 'inventory-%')
+	// Order alerts (`orders-*`, `station-offline`) and their hidden email-only markers.
+	const orderAlertType = or(
+		like(Notification.type, 'orders-%'),
+		eq(Notification.type, 'station-offline'),
+	)
 	const [rows, unread, unreadAlerts] = await Promise.all([
 		db
 			.select()
@@ -70,6 +76,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 					not(staffingType),
 					not(reservationsType),
 					not(inventoryType),
+					not(orderAlertType!),
 				),
 			),
 		db
@@ -82,7 +89,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				and(
 					whereClause,
 					eq(Notification.isRead, false),
-					or(staffingType, reservationsType, inventoryType),
+					or(staffingType, reservationsType, inventoryType, orderAlertType),
 				),
 			),
 	])
@@ -95,6 +102,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const unreadInventory = unreadAlerts.filter((alert) =>
 		alert.type.startsWith('inventory-'),
 	)
+	const unreadOrders = unreadAlerts.filter(
+		(alert) =>
+			alert.type.startsWith('orders-') || alert.type === 'station-offline',
+	)
 	const notifications = await filterVisibleNotifications(userId, rows)
 	let unreadCount = unread[0]?.value ?? 0
 	if (unreadStaffing.length > 0) {
@@ -102,6 +113,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	}
 	unreadCount += await countVisibleReservationAlerts(userId, unreadReservations)
 	unreadCount += await countVisibleInventoryAlerts(userId, unreadInventory)
+	unreadCount += await countVisibleOrderAlerts(userId, unreadOrders)
 
 	return Response.json({ notifications, unreadCount })
 }

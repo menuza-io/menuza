@@ -1,71 +1,101 @@
-/**
- * A short two-note chime for an order waiting to be accepted. Browsers only
- * let a page play sound after a tap, so "Sound on" primes the audio.
- */
-let context: AudioContext | null = null
+import {
+	clampVolume,
+	createChimePlayer,
+	isChimeSound,
+	type ChimeSound,
+} from '@repo/common/order-chime'
 
-function audio(): AudioContext | null {
+/**
+ * The Orders page's sound (#265), one for every alert on it: the "Waiting for
+ * you" lane, and the new-order alert. The sound system is the one Station's
+ * kitchen shares (`@repo/common/order-chime`). Browsers only let a page play
+ * sound after a tap, so "Sound on" and the bell's Test button prime the audio;
+ * the choices (sound on or off, volume, which of three sounds) are remembered
+ * per browser.
+ */
+export const chimePlayer = createChimePlayer()
+
+export type OrderSoundPrefs = {
+	enabled: boolean
+	/** 0 to 1. */
+	volume: number
+	sound: ChimeSound
+	/** The one-line "turn on sound" prompt was answered. */
+	promptAnswered: boolean
+}
+
+export const DEFAULT_SOUND_PREFS: OrderSoundPrefs = {
+	enabled: false,
+	volume: 0.8,
+	sound: 'chime',
+	promptAnswered: false,
+}
+
+const PREFS_KEY = 'orders.soundPrefs.v1'
+
+export function readSoundPrefs(): OrderSoundPrefs {
 	try {
-		context ??= new AudioContext()
-		if (context.state === 'suspended') void context.resume().catch(() => {})
-		return context
+		const raw = window.localStorage.getItem(PREFS_KEY)
+		if (!raw) return { ...DEFAULT_SOUND_PREFS }
+		const parsed = JSON.parse(raw) as Partial<OrderSoundPrefs>
+		return {
+			enabled: parsed.enabled === true,
+			volume: clampVolume(parsed.volume, DEFAULT_SOUND_PREFS.volume),
+			sound: isChimeSound(parsed.sound) ? parsed.sound : 'chime',
+			promptAnswered: parsed.promptAnswered === true,
+		}
 	} catch {
-		return null
+		return { ...DEFAULT_SOUND_PREFS }
 	}
+}
+
+export function writeSoundPrefs(
+	patch: Partial<OrderSoundPrefs>,
+): OrderSoundPrefs {
+	const next = { ...readSoundPrefs(), ...patch }
+	try {
+		window.localStorage.setItem(PREFS_KEY, JSON.stringify(next))
+	} catch {
+		// Private mode: the choice lasts until the page is closed.
+	}
+	return next
 }
 
 /** Called from a tap: lets later chimes play. */
 export function unlockChime() {
-	audio()
+	chimePlayer.unlock()
 }
 
 /** Whether a chime would be heard now. */
-export const chimeReady = () => context?.state === 'running'
+export const chimeReady = () => chimePlayer.ready()
 
-export function playChime() {
-	const ctx = audio()
-	if (!ctx || ctx.state !== 'running') return
-	const start = ctx.currentTime
-	;[880, 1320].forEach((frequency, index) => {
-		const at = start + index * 0.18
-		const tone = ctx.createOscillator()
-		const gain = ctx.createGain()
-		tone.type = 'sine'
-		tone.frequency.value = frequency
-		gain.gain.setValueAtTime(0.0001, at)
-		gain.gain.exponentialRampToValueAtTime(0.25, at + 0.02)
-		gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.16)
-		tone.connect(gain).connect(ctx.destination)
-		tone.start(at)
-		tone.stop(at + 0.17)
+/** Plays the chosen sound at the chosen volume (a quieter one for `soft`). */
+export function playChime(options: { soft?: boolean } = {}) {
+	const prefs = readSoundPrefs()
+	return chimePlayer.play({
+		sound: prefs.sound,
+		volume: prefs.volume,
+		soft: options.soft,
 	})
 }
 
-const KEY = 'orders.waitingSound'
+/** Plays a given sound, whatever is saved (the Test button, the sound picker). */
+export function playSample(sound: ChimeSound, volume: number) {
+	return chimePlayer.play({ sound, volume })
+}
 
+/** Whether the member has the sound on (the page may still be waiting for a tap). */
 export function readSoundChoice(): boolean {
-	try {
-		return window.sessionStorage.getItem(KEY) === 'on'
-	} catch {
-		return false
-	}
+	return readSoundPrefs().enabled
 }
 
 export function writeSoundChoice() {
-	try {
-		window.sessionStorage.setItem(KEY, 'on')
-	} catch {
-		// Private mode: the button simply shows again next time.
-	}
+	writeSoundPrefs({ enabled: true, promptAnswered: true })
 }
 
-/** Sound turned off: the choice is forgotten, so it stays off after a reload. */
+/** Sound turned off: remembered, so it stays off after a reload. */
 export function clearSoundChoice() {
-	try {
-		window.sessionStorage.removeItem(KEY)
-	} catch {
-		// Nothing was stored.
-	}
+	writeSoundPrefs({ enabled: false })
 }
 
 /**

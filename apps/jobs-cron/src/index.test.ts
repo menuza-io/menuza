@@ -27,6 +27,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 	let mockHeroVideoWorkflowCreate: any
 	let mockPhotoQualityWorkflowCreate: any
 	let mockMediaRestyleWorkflowCreate: any
+	let mockOperatorAlertsWorkflowCreate: any
 	let env: Env
 
 	beforeEach(() => {
@@ -67,6 +68,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			.fn()
 			.mockImplementation(({ id }) => Promise.resolve({ id }))
 		mockMediaRestyleWorkflowCreate = vi
+			.fn()
+			.mockImplementation(({ id }) => Promise.resolve({ id }))
+		mockOperatorAlertsWorkflowCreate = vi
 			.fn()
 			.mockImplementation(({ id }) => Promise.resolve({ id }))
 
@@ -118,6 +122,10 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			} as any,
 			MEDIA_RESTYLE_WORKFLOW: {
 				create: mockMediaRestyleWorkflowCreate,
+				get: vi.fn(),
+			} as any,
+			OPERATOR_ALERTS_WORKFLOW: {
+				create: mockOperatorAlertsWorkflowCreate,
 				get: vi.fn(),
 			} as any,
 		}
@@ -224,6 +232,53 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				(await start({ scheduleId: 'abcdefgh1234', runAt: far })).status,
 			).toBe(400)
 			expect(mockMenuScheduleWorkflowCreate).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('POST /workflows/operator-alerts/start (#366)', () => {
+		const start = (body: unknown, token = mockInternalToken) =>
+			worker.fetch(
+				new Request('http://localhost/workflows/operator-alerts/start', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(body),
+				}),
+				env,
+			)
+		const runAt = '2026-11-01T07:00:00.000Z'
+
+		it('rejects a caller without the internal token', async () => {
+			mockOperatorAlertsWorkflowCreate.mockClear()
+			expect((await start({ runAt }, 'wrong')).status).toBe(401)
+			expect(mockOperatorAlertsWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts one instance per quiet-hours end, carrying a time only', async () => {
+			mockOperatorAlertsWorkflowCreate.mockClear()
+			const res = await start({ runAt })
+			expect(res.status).toBe(200)
+			expect(mockOperatorAlertsWorkflowCreate).toHaveBeenCalledWith({
+				id: `operator-alerts-${Math.floor(Date.parse(runAt) / 60_000)}`,
+				params: { runAt },
+			})
+		})
+
+		it('treats an instance that already exists as started', async () => {
+			mockOperatorAlertsWorkflowCreate.mockRejectedValueOnce(
+				new Error('instance.already_exists'),
+			)
+			expect((await start({ runAt })).status).toBe(200)
+		})
+
+		it('refuses a missing or far-off time', async () => {
+			mockOperatorAlertsWorkflowCreate.mockClear()
+			expect((await start({ runAt: 'soon' })).status).toBe(400)
+			const far = new Date(Date.now() + 10 * 24 * 60 * 60_000).toISOString()
+			expect((await start({ runAt: far })).status).toBe(400)
+			expect(mockOperatorAlertsWorkflowCreate).not.toHaveBeenCalled()
 		})
 	})
 
@@ -1285,6 +1340,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
@@ -1432,7 +1488,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 						],
 					]),
 				)
-				expect(calls).toHaveLength(32)
+				expect(calls).toHaveLength(33)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -1476,6 +1532,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1626,6 +1683,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
 					'Tenant loyalty tick failed for https://tenant-ksa.example.com',
@@ -1651,6 +1709,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1716,6 +1775,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					)
 					const results = await Promise.allSettled(promises)
 					expect(results.map((r) => r.status)).toEqual([
+						'fulfilled',
 						'fulfilled',
 						'fulfilled',
 						'fulfilled',
@@ -1810,6 +1870,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const reason = String((results[3] as PromiseRejectedResult).reason)
 				expect(reason).toContain(
@@ -1845,6 +1906,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				expect(results.map((r) => r.status)).toEqual([
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1928,6 +1990,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -1955,6 +2018,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -2009,6 +2073,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'https://app.example.com/resources/jobs/hero-video',
 					'https://app.example.com/resources/jobs/photo-quality',
 					'https://app.example.com/resources/jobs/media-restyle',
+					'https://app.example.com/resources/jobs/operator-alerts',
 					'https://app.example.com/resources/jobs/occasion-schedule',
 				])
 			})

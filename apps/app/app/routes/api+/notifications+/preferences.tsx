@@ -1,5 +1,6 @@
 import { requireUserId } from '@repo/auth'
 import { FORM_RESPONSE_WORKFLOW } from '@repo/common/form-alerts'
+import { ORDER_ALERT_WORKFLOWS } from '@repo/common/operator-alerts'
 import { and, db, eq, NotificationPreference } from '@repo/database'
 import { checkHoneypot } from '@repo/security'
 import { STAFFING_NOTIFICATION_WORKFLOWS } from '@repo/staffing'
@@ -41,6 +42,7 @@ const preferenceSchema = z.object({
 		...STAFFING_NOTIFICATION_WORKFLOWS,
 		...RESERVATION_ALERT_WORKFLOWS,
 		...INVENTORY_ALERT_WORKFLOWS,
+		...ORDER_ALERT_WORKFLOWS,
 	]),
 	channel: z.enum(['email', 'inApp']),
 	enabled: z.string().transform((val) => val === 'true'),

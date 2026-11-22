@@ -10,6 +10,7 @@ import {
 import { forEachWithBudget } from '../lib/concurrency.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { drainFormResponseOutbox } from './form-response-outbox.ts'
+import { runOrderAlertsTickForOrg } from './order-alerts.ts'
 import { kickOrderRefundExecute } from '../lib/order-refund-kick.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import {
@@ -199,6 +200,15 @@ export async function runOrdersTickForOrg(
 		},
 	)
 	const messages = await runOrderMessagesTickForOrg(orgId, { now, db })
+	// Manager alerts about waiting orders, payments to review, large orders and
+	// Station tablets (#131, #300, #190). Ids and numbers only; a failure never
+	// stops the rest of the tick.
+	const alerts = await runOrderAlertsTickForOrg(orgId, { now, db }).catch(
+		(error: unknown) => {
+			console.error('Order alerts tick failed', orgId, errorLogFields(error))
+			return null
+		},
+	)
 	// Form response alerts the App could not take earlier (#142). Ids only.
 	await drainFormResponseOutbox(orgId, { now, db }).catch((error: unknown) => {
 		console.error(
@@ -212,9 +222,11 @@ export async function runOrdersTickForOrg(
 	await processPushReceipts(db, now).catch((error: unknown) => {
 		console.error('Push receipts sweep failed', orgId, errorLogFields(error))
 	})
-	const due = [messages.nextDueAt, acceptance.nextDeadlineAt].filter(
-		(at): at is number => at !== null,
-	)
+	const due = [
+		messages.nextDueAt,
+		acceptance.nextDeadlineAt,
+		alerts?.nextDueAt ?? null,
+	].filter((at): at is number => at !== null)
 	const nextDueAt = due.length > 0 ? Math.min(...due) : null
 	return {
 		...messages,

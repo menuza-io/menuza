@@ -27,7 +27,10 @@ export function isOrderMessagesActivityPath(pathname: string): boolean {
 		/^\/orders\/[^/]+\/cancel$/.test(pathname) ||
 		/^\/operator\/orders\/[^/]+$/.test(pathname) ||
 		/^\/pos\/online-orders\/[^/]+\/command$/.test(pathname) ||
-		pathname === '/pos/kds/command'
+		pathname === '/pos/kds/command' ||
+		// A Station tablet's heartbeat (#190): the tick that finds it silent, or
+		// back, runs while tablets are alive.
+		pathname === '/pos/heartbeat'
 	)
 }
 

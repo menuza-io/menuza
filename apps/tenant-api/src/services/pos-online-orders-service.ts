@@ -567,6 +567,7 @@ export async function onlineOrderDetail(
 		utensilsRequested: order.utensilsRequested,
 		pickupInstructions: clip(order.pickupInstructions, 400),
 		largeOrderExtraMinutes: order.largeOrderExtraMinutes,
+		largeOrder: order.largeOrder,
 		discountCents: order.discountCents + order.deliveryDiscountCents,
 		loyaltyDiscountCents: order.loyaltyDiscountCents,
 		paidAt: ms(order.paidAt),

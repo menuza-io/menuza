@@ -11,8 +11,10 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { AlertSettingsCard } from '#app/components/settings/cards/alert-settings-card.tsx'
 import { GuestMessagesCard } from '#app/components/settings/cards/guest-messages-card.tsx'
 import { NotificationPreferencesCard } from '#app/components/settings/cards/notification-preferences-card.tsx'
+import { availablePushCategories } from '#app/utils/alerts/settings.server.ts'
 import {
 	isGuestMessagesEnabled,
 	readGuestMessageSwitches,
@@ -117,6 +119,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	// Inventory alerts are offered where the module is on and the member holds
 	// an inventory grant; price rises also need the cost grant.
 	const inventoryAlerts = await inventoryAlertSettingsVisible(userId, org.id)
+	// Order and tablet alerts: offered where the organization has them on and the
+	// member can act on them (orders: the menu read grant; tablets: settings).
+	const alertCategories = await availablePushCategories(userId, org.id)
 	// Guest order messages: offered only while the org flag is on; read-only
 	// without `update:settings:any`.
 	const guestMessagesOn = await isGuestMessagesEnabled(org.id)
@@ -140,6 +145,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		showReservationsAlerts,
 		showInventoryAlerts: inventoryAlerts.any,
 		showInventoryPriceAlerts: inventoryAlerts.priceRise,
+		showOrderAlerts: alertCategories.new_orders,
+		showStationAlerts: alertCategories.station_offline,
 	}
 }
 
@@ -154,6 +161,8 @@ export default function NotificationSettings() {
 		showReservationsAlerts,
 		showInventoryAlerts,
 		showInventoryPriceAlerts,
+		showOrderAlerts,
+		showStationAlerts,
 	} = useLoaderData<typeof loader>()
 	return (
 		<AnnotatedLayout>
@@ -167,7 +176,12 @@ export default function NotificationSettings() {
 					showReservationsAlerts={showReservationsAlerts}
 					showInventoryAlerts={showInventoryAlerts}
 					showInventoryPriceAlerts={showInventoryPriceAlerts}
+					showOrderAlerts={showOrderAlerts}
+					showStationAlerts={showStationAlerts}
 				/>
+			</AnnotatedSection>
+			<AnnotatedSection>
+				<AlertSettingsCard organizationId={organizationId} />
 			</AnnotatedSection>
 			{guestMessages ? (
 				<AnnotatedSection>

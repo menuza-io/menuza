@@ -1,5 +1,10 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import {
+	defaultAlertChannels,
+	isOrderAlertKind,
+	ORDER_ALERT_WORKFLOWS,
+} from '@repo/common/operator-alerts'
 import { STAFFING_NOTIFICATION_WORKFLOWS } from '@repo/staffing'
 import { Badge } from '@repo/ui/badge'
 import {
@@ -54,6 +59,13 @@ function getWorkflowLabel(
 		'inventory.count_review': msg`Inventory: a count is waiting for review`,
 		'inventory.delivery_due': msg`Inventory: an order is due for delivery`,
 		'inventory.price_rise': msg`Inventory: an item went up in price`,
+		orders_new: msg`Orders: a new online order arrives`,
+		orders_waiting: msg`Orders: an order has been waiting too long`,
+		orders_due_soon: msg`Orders: a scheduled order is due soon and still new`,
+		orders_payment_review: msg`Orders: a payment needs review`,
+		ordering_paused_long: msg`Orders: online ordering has been paused or busy for too long`,
+		orders_large: msg`Orders: a large order arrives`,
+		station_offline: msg`Kitchen tablets: a tablet goes offline`,
 	}
 	return _(labels[workflowName]) || workflowName
 }
@@ -138,6 +150,21 @@ const inventoryWorkflows = INVENTORY_ALERT_WORKFLOWS.map((id) => ({
 	name: id,
 	critical: false,
 }))
+
+// Order and tablet alerts (#131, #241, #300, #190) are offered where the
+// organization has them on and the member can act on them. A payment that needs
+// review is always on.
+const CRITICAL_ORDER_WORKFLOWS: readonly string[] = ['orders_payment_review']
+const orderWorkflows = ORDER_ALERT_WORKFLOWS.filter(
+	(id) => id !== 'station_offline',
+).map((id) => ({
+	id,
+	name: id,
+	critical: CRITICAL_ORDER_WORKFLOWS.includes(id),
+}))
+const stationWorkflows = [
+	{ id: 'station_offline', name: 'station_offline', critical: false },
+]
 
 interface ChannelSwitchListProps {
 	preference: Preference
@@ -272,6 +299,8 @@ export function NotificationPreferencesCard({
 	showReservationsAlerts = false,
 	showInventoryAlerts = false,
 	showInventoryPriceAlerts = false,
+	showOrderAlerts = false,
+	showStationAlerts = false,
 }: {
 	organizationId: string
 	showStaffingAlerts?: boolean
@@ -281,6 +310,8 @@ export function NotificationPreferencesCard({
 	showReservationsAlerts?: boolean
 	showInventoryAlerts?: boolean
 	showInventoryPriceAlerts?: boolean
+	showOrderAlerts?: boolean
+	showStationAlerts?: boolean
 }) {
 	const fetcher = useFetcher<{ preferences: Preference[] }>()
 
@@ -306,11 +337,18 @@ export function NotificationPreferencesCard({
 						showInventoryPriceAlerts || workflow.id !== 'inventory.price_rise',
 				)
 			: []),
+		...(showOrderAlerts ? orderWorkflows : []),
+		...(showStationAlerts ? stationWorkflows : []),
 	]
 
 	const getPreference = (workflowId: string): Preference => {
 		const pref = preferences.find((p) => p.workflow === workflowId)
-		return pref || { workflow: workflowId, email: true, inApp: true }
+		if (pref) return pref
+		// New orders reach the bell but do not email every manager by default.
+		const defaults = isOrderAlertKind(workflowId)
+			? defaultAlertChannels(workflowId)
+			: { email: true, inApp: true }
+		return { workflow: workflowId, ...defaults }
 	}
 
 	return (

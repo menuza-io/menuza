@@ -36,6 +36,7 @@ import { scheduleOrderJourneys } from '../services/order-journeys.ts'
 import { deviceApps } from '../services/pos-apps-service.ts'
 import { profileSummaryFor } from '../services/pos-profiles-service.ts'
 import { heartbeatSchema } from '@repo/common/device-health'
+import { orderAlertsActive } from '../lib/orders-alerts.ts'
 import { deviceHealthEnabled } from '../lib/pos-device-health.ts'
 import { recordHeartbeat } from '../services/pos-health-service.ts'
 import { explicitTerminalJsonSettings } from '@repo/common/terminal-profiles'
@@ -58,6 +59,7 @@ import {
 	reviewAgainstMenu,
 	revisionDiscountApplications,
 	serializePosOrder,
+	recordDeviceHeartbeat,
 	touchDevice,
 	unverifiedReview,
 	upsertPosOrder,
@@ -309,10 +311,15 @@ posRoutes.post('/heartbeat', async (c) => {
 	if (!parsed.success) return posError(400, 'invalid_request')
 	const { db, device, orgId } = auth.pos
 	const headers = { 'Cache-Control': 'private, no-store' }
-	if (!(await deviceHealthEnabled(orgId)))
-		return c.json({ enabled: false }, 200, headers)
+	const history = await deviceHealthEnabled(orgId)
+	// Manager alerts (#190) watch for a tablet that goes silent, so while they
+	// are on the heartbeat counts as seen at once and the tablet keeps sending
+	// every minute, whether or not connection history is collected.
+	const watched = await orderAlertsActive(orgId)
+	if (!history && !watched) return c.json({ enabled: false }, 200, headers)
 	await touchDevice(db, device)
-	await recordHeartbeat(db, device, parsed.data)
+	if (watched) await recordDeviceHeartbeat(db, device, parsed.data)
+	if (history) await recordHeartbeat(db, device, parsed.data)
 	return c.json({ enabled: true }, 200, headers)
 })
 

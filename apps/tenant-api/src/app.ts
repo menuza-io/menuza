@@ -52,6 +52,7 @@ import { funnelOperatorRoutes } from './routes/operator-funnel.ts'
 import { photoTestOperatorRoutes } from './routes/operator-photo-tests.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
 import { emailDomainRoutes } from './routes/email-domains.ts'
+import { alertTextRoutes } from './routes/alert-texts.ts'
 import { provisionRoutes } from './routes/provision.ts'
 import { publicOrderRoutes } from './routes/orders.ts'
 import { publicDeliveryRoutes } from './routes/delivery.ts'
@@ -412,6 +413,7 @@ export function createTenantApiApp() {
 	app.route('/photos', guestPhotoRoutes)
 	app.route('/operator/photos', operatorGuestPhotoRoutes)
 	app.route('/api/voice', voiceSystemRoutes)
+	app.route('/api/alert-texts', alertTextRoutes)
 	app.route('/voice', publicVoiceRoutes)
 	app.route('/operator', operatorRoutes)
 	app.route('/operator/forms', formOperatorRoutes)

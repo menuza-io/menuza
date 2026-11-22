@@ -2890,6 +2890,25 @@ export const NotificationPreference = sqliteTable(
 		workflow: text().notNull(),
 		email: integer({ mode: 'boolean' }).default(true).notNull(),
 		inApp: integer({ mode: 'boolean' }).default(true).notNull(),
+		/**
+		 * Push to the member's phone (#106). Null means "never chose": the default
+		 * for the kind and the member's role applies (`defaultPushEnabled`).
+		 */
+		push: integer({ mode: 'boolean' }),
+		/**
+		 * "Tell me only after this many in an hour" (#366). Null or 1 is every time.
+		 * Only the kinds in `THRESHOLD_KINDS` read it.
+		 */
+		threshold: integer(),
+		/**
+		 * Person-level settings (#366) live on the one row whose workflow is
+		 * `alerts.settings`: quiet hours (`HH:MM` local in `timeZone`) and a snooze.
+		 * Every other row leaves them null.
+		 */
+		quietStart: text(),
+		quietEnd: text(),
+		timeZone: text(),
+		snoozedUntil: integer({ mode: 'timestamp_ms' }),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -3558,6 +3577,208 @@ export const Notification = sqliteTable(
 	],
 )
 
+/**
+ * A phone that gets operator push (#106): one row per Expo push token, owned by
+ * the signed-in member. NOT the guest customer-app tokens (`customer_push_devices`
+ * in the region): those carry guest messages and never mix with these. The token
+ * is unique, so signing in as someone else on the same phone moves it. A member
+ * who signs out, removes the device or loses access to the organization stops
+ * getting pushes at once; a token the push service reports dead is deleted.
+ */
+export const OperatorPushDevice = sqliteTable(
+	'OperatorPushDevice',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		token: text().notNull(),
+		platform: text().notNull(),
+		locale: text().notNull().default('en'),
+		/** What the member sees in Devices ("iPhone 15"). Not a unique identifier. */
+		deviceName: text(),
+		appVersion: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		lastSeenAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('OperatorPushDevice_token_key').on(table.token),
+		index('OperatorPushDevice_userId_idx').on(table.userId),
+	],
+)
+
+/**
+ * One push sent to one device for one notification (#106). The unique key is
+ * the claim: a retried delivery that loses the insert sends nothing, so a device
+ * gets at most one push per notification. `ticketId` is what the push service
+ * answered; the receipts sweep reads it to learn the token is dead.
+ */
+export const OperatorPushDelivery = sqliteTable(
+	'OperatorPushDelivery',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		notificationId: text().notNull(),
+		deviceId: text()
+			.notNull()
+			.references(() => OperatorPushDevice.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		ticketId: text(),
+		/** `claimed` before the send, then `sent`, `delivered`, `failed` or `invalid`. */
+		status: text().notNull().default('claimed'),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		checkedAt: integer({ mode: 'timestamp_ms' }),
+	},
+	(table) => [
+		uniqueIndex('OperatorPushDelivery_notificationId_deviceId_key').on(
+			table.notificationId,
+			table.deviceId,
+		),
+		index('OperatorPushDelivery_status_createdAt_idx').on(
+			table.status,
+			table.createdAt,
+		),
+	],
+)
+
+/**
+ * What fired, to whom, and what became of it (#366). One row per occurrence per
+ * recipient, ids and numbers only: no order contents, no guest. `outcome` is
+ * `delivered`, `critical`, `snoozed`, `held`, `below_threshold` or `dropped`
+ * (a kill switch). A `held` row keeps the channels still owed (`heldChannels`)
+ * and when quiet hours end (`heldUntil`); the sweep sends them then, unless the
+ * member already saw the in-app alert, and stamps `releasedAt`. Pruned after 90
+ * days.
+ */
+export const AlertLog = sqliteTable(
+	'AlertLog',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** The member; null for a chosen recipient who is not a member. */
+		userId: text().references(() => User.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		recipientId: text(),
+		locationId: text(),
+		kind: text().notNull(),
+		entityId: text().notNull(),
+		notificationId: text(),
+		outcome: text().notNull(),
+		critical: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** JSON array of channels delivered now: `in_app`, `push`, `email`, `sms`. */
+		channels: text().notNull().default('[]'),
+		heldChannels: text(),
+		heldUntil: integer({ mode: 'timestamp_ms' }),
+		releasedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('AlertLog_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+		index('AlertLog_userId_kind_createdAt_idx').on(
+			table.userId,
+			table.kind,
+			table.createdAt,
+		),
+		index('AlertLog_outcome_heldUntil_idx').on(table.outcome, table.heldUntil),
+		uniqueIndex('AlertLog_member_entity_key')
+			.on(table.organizationId, table.userId, table.kind, table.entityId)
+			.where(sql`${table.userId} IS NOT NULL`),
+		uniqueIndex('AlertLog_recipient_entity_key')
+			.on(table.organizationId, table.recipientId, table.kind, table.entityId)
+			.where(sql`${table.recipientId} IS NOT NULL`),
+	],
+)
+
+/**
+ * A person or address a location tells about new online orders (#241): an email
+ * address or a mobile number, not necessarily a member. Staff contact details,
+ * never a guest's. A text recipient confirms with a one-time code before any
+ * alert (`verifiedAt`) and can reply STOP (`stoppedAt`); removing the row stops
+ * alerts at once. At most five per location. `phoneHash` is an HMAC of the
+ * number, so a STOP reply is matched without the number leaving the App.
+ */
+export const OrderAlertRecipient = sqliteTable(
+	'OrderAlertRecipient',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		locationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** `email` or `phone`. */
+		kind: text().notNull(),
+		/** The address (lower case) or the E.164 number. */
+		address: text().notNull(),
+		phoneHash: text(),
+		verifiedAt: integer({ mode: 'timestamp_ms' }),
+		stoppedAt: integer({ mode: 'timestamp_ms' }),
+		verifyCodeHash: text(),
+		verifyExpiresAt: integer({ mode: 'timestamp_ms' }),
+		verifyAttempts: integer().default(0).notNull(),
+		verifySentAt: integer({ mode: 'timestamp_ms' }),
+		verifySentCount: integer().default(0).notNull(),
+		/** Online (ASAP) orders. */
+		onlineOrders: integer({ mode: 'boolean' }).default(true).notNull(),
+		/** Orders placed for a later time. */
+		scheduledOrders: integer({ mode: 'boolean' }).default(true).notNull(),
+		createdBy: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('OrderAlertRecipient_location_address_key').on(
+			table.locationId,
+			table.address,
+		),
+		index('OrderAlertRecipient_organizationId_idx').on(table.organizationId),
+		index('OrderAlertRecipient_phoneHash_idx').on(table.phoneHash),
+	],
+)
+
 export const Organization = sqliteTable(
 	'Organization',
 	{
@@ -3787,6 +4008,18 @@ export const OrganizationLocation = sqliteTable(
 		 */
 		busyExtraPrepMinutes: integer(),
 		busyUntil: integer({ mode: 'timestamp_ms' }),
+		/** When busy mode was last turned on (#131: "busy for more than 3 hours"). */
+		busyStartedAt: integer({ mode: 'timestamp_ms' }),
+		/**
+		 * Minutes an order may stay New before managers are told (#131). Null is the
+		 * default, 10.
+		 */
+		orderAlertMinutes: integer(),
+		/**
+		 * "Tell me about large orders" (#300): JSON `LargeOrderAlertSettings`. Null
+		 * is off. The thresholds default to `largeOrderThreshold` above.
+		 */
+		largeOrderAlert: text(),
 		/**
 		 * "Text guests when their order is ready" (Settings, Terminals): counter
 		 * and phone orders taken on Station get one text when Kitchen marks them

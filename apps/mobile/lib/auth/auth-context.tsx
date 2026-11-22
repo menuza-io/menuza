@@ -7,6 +7,7 @@ import React, {
 } from 'react'
 import { jwtAuthApi } from '../api'
 import { endsSession } from '../api/session-refresh'
+import { unregisterThisDevice } from '../push/operator-push'
 import { TokenManager } from '../storage/session-manager'
 import { authReducer, initialAuthState } from './auth-reducer'
 import { type AuthContextType, type LoginCredentials } from './types'
@@ -213,6 +214,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	const logout = useCallback(async () => {
 		try {
 			const tokens = await tokenManager.getCurrentTokens()
+
+			// Stop pushes to this phone for this member before the token goes (#106).
+			// Best effort: signing out never waits on it.
+			await unregisterThisDevice({}).catch(() => false)
 
 			// Call logout API with refresh token
 			if (tokens?.refreshToken) {

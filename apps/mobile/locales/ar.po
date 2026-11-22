@@ -26,11 +26,23 @@ msgstr "{stillMissing, plural, zero {لا توجد أطباق تحتاج إلى 
 msgid "+{0} more organizations"
 msgstr "+{0} مؤسسات أخرى"
 
+#: app/(dashboard)/settings/notifications.tsx:241
+msgid "1 hour"
+msgstr "ساعة واحدة"
+
+#: app/(dashboard)/settings/notifications.tsx:47
+msgid "A kitchen tablet goes offline"
+msgstr "انقطع اتصال جهاز لوحي في المطبخ"
+
+#: app/(dashboard)/settings/notifications.tsx:45
+msgid "A payment needs review"
+msgstr "دفعة تحتاج إلى مراجعة"
+
 #: app/(auth)/verify-code.tsx:194
 msgid "ABC123"
 msgstr "ABC123"
 
-#: app/(dashboard)/settings/index.tsx:125
+#: app/(dashboard)/settings/index.tsx:137
 msgid "About"
 msgstr "حول"
 
@@ -80,7 +92,7 @@ msgstr "لديك حساب بالفعل؟"
 msgid "and"
 msgstr "و"
 
-#: app/(dashboard)/settings/index.tsx:119
+#: app/(dashboard)/settings/index.tsx:131
 msgid "App"
 msgstr "التطبيق"
 
@@ -123,6 +135,7 @@ msgstr "الوصول إلى الكاميرا متوقف. يمكنك تشغيله
 
 #: app/(dashboard)/create-organization.tsx:222
 #: app/(dashboard)/organizations.tsx:35
+#: app/(dashboard)/settings/devices.tsx:50
 #: app/(dashboard)/settings/index.tsx:52
 msgid "Cancel"
 msgstr "إلغاء"
@@ -252,7 +265,7 @@ msgstr "أدخل كلمة المرور"
 msgid "Enter your username"
 msgstr "أدخل اسم المستخدم"
 
-#: app/(dashboard)/settings/index.tsx:127
+#: app/(dashboard)/settings/index.tsx:139
 msgid "Epic Stack Mobile"
 msgstr "Epic Stack Mobile"
 
@@ -267,6 +280,10 @@ msgstr "Epic Stack Mobile v1.0.0"
 #: app/(dashboard)/create-organization.tsx:74
 #: app/(dashboard)/create-organization.tsx:99
 #: app/(dashboard)/organizations.tsx:48
+#: app/(dashboard)/settings/devices.tsx:37
+#: app/(dashboard)/settings/devices.tsx:56
+#: app/(dashboard)/settings/notifications.tsx:67
+#: app/(dashboard)/settings/notifications.tsx:81
 #: app/(dashboard)/settings/profile.tsx:43
 #: app/(dashboard)/settings/profile.tsx:64
 #: components/organization-switcher.tsx:41
@@ -313,6 +330,10 @@ msgstr "ستتوفر وظيفة نسيت كلمة المرور قريباً. ي�
 msgid "Forgot password?"
 msgstr "نسيت كلمة المرور؟"
 
+#: app/(dashboard)/settings/notifications.tsx:177
+msgid "From"
+msgstr "من"
+
 #: app/(auth)/landing.tsx:168
 #: app/(auth)/landing.tsx:171
 msgid "Get Started"
@@ -322,22 +343,46 @@ msgstr "ابدأ الآن"
 msgid "Hide password"
 msgstr "إخفاء كلمة المرور"
 
+#: app/(dashboard)/settings/notifications.tsx:150
+#: app/(dashboard)/settings/notifications.tsx:153
+msgid "Hold alerts that can wait"
+msgstr "احتجز التنبيهات التي تحتمل الانتظار"
+
 #: app/(auth)/forgot-password.tsx:40
 msgid "If an account with that email exists, we've sent you a password reset link."
 msgstr "إذا كان هناك حساب بهذا البريد الإلكتروني، فقد أرسلنا لك رابط إعادة تعيين كلمة المرور."
+
+#: app/(dashboard)/settings/notifications.tsx:49
+msgid "Inventory"
+msgstr "المخزون"
 
 #: app/(dashboard)/menu-photos.tsx:151
 msgid "It still did not go through after several tries."
 msgstr "لم ينجح الرفع بعد عدة محاولات."
 
+#: app/(dashboard)/settings/devices.tsx:48
+msgid "It will stop getting alerts for you."
+msgstr "سيتوقف عن تلقي التنبيهات الخاصة بك."
+
 #: app/(auth)/sign-up.tsx:153
 msgid "Join organization"
 msgstr "الانضمام إلى المؤسسة"
+
+#: app/(dashboard)/settings/notifications.tsx:46
+msgid "Large orders"
+msgstr "الطلبات الكبيرة"
+
+#. placeholder {0}: new Date(device.lastSeenAt).toLocaleString()
+#: app/(dashboard)/settings/devices.tsx:85
+msgid "Last used {0}"
+msgstr "آخر استخدام {0}"
 
 #: components/menu-photos/photo-capture-modal.tsx:166
 msgid "Light from the side"
 msgstr "إضاءة من الجانب"
 
+#: app/(dashboard)/settings/devices.tsx:67
+#: app/(dashboard)/settings/notifications.tsx:97
 #: app/index.tsx:22
 msgid "Loading"
 msgstr "جاري التحميل"
@@ -364,11 +409,15 @@ msgstr "m@example.com"
 msgid "Manage your logged-in devices"
 msgstr "إدارة الأجهزة المسجلة"
 
-#: app/(dashboard)/_layout.tsx:73
+#: app/(dashboard)/_layout.tsx:80
 #: app/(dashboard)/index.tsx:100
 #: app/(dashboard)/menu-photos.tsx:169
 msgid "Menu photos"
 msgstr "صور القائمة"
+
+#: app/(dashboard)/settings/notifications.tsx:42
+msgid "New orders"
+msgstr "الطلبات الجديدة"
 
 #: app/(dashboard)/menu-photos.tsx:289
 msgid "No dish matches your search."
@@ -387,9 +436,17 @@ msgstr "لم يتم توفير عنوان بريد إلكتروني للتحقق
 msgid "No organizations found"
 msgstr "لم يتم العثور على مؤسسات"
 
+#: app/(dashboard)/settings/devices.tsx:70
+msgid "No phone is set up for alerts yet."
+msgstr "لا يوجد هاتف مُعدّ للتنبيهات بعد."
+
 #: app/(dashboard)/menu-photos.tsx:291
 msgid "Nothing to photograph. Nice."
 msgstr "لا شيء للتصوير. ممتاز."
+
+#: app/(dashboard)/settings/index.tsx:115
+msgid "Notifications"
+msgstr "الإشعارات"
 
 #: app/(auth)/sign-in.tsx:133
 #: app/(auth)/sign-up.tsx:84
@@ -413,6 +470,14 @@ msgstr "أو المتابعة بالبريد الإلكتروني"
 #: app/(auth)/sign-in.tsx:212
 msgid "Or continue with username"
 msgstr "أو المتابعة باسم المستخدم"
+
+#: app/(dashboard)/settings/notifications.tsx:44
+msgid "Ordering paused for too long"
+msgstr "الطلب متوقف لفترة طويلة"
+
+#: app/(dashboard)/settings/notifications.tsx:43
+msgid "Orders waiting too long"
+msgstr "طلبات تنتظر طويلًا"
 
 #. placeholder {0}: result.organization?.name
 #: app/(dashboard)/create-organization.tsx:90
@@ -478,17 +543,35 @@ msgstr "سياسة الخصوصية"
 msgid "Profile updated successfully"
 msgstr "تم تحديث الملف الشخصي بنجاح"
 
+#: app/(dashboard)/settings/notifications.tsx:103
+msgid "Push notifications"
+msgstr "الإشعارات الفورية"
+
+#: app/(dashboard)/settings/notifications.tsx:109
+msgid "Push notifications are not turned on for this organization yet."
+msgstr "الإشعارات الفورية غير مفعلة لهذه المؤسسة بعد."
+
 #: app/(dashboard)/index.tsx:79
 msgid "Quick Actions"
 msgstr "إجراءات سريعة"
+
+#: app/(dashboard)/settings/notifications.tsx:144
+msgid "Quiet hours"
+msgstr "ساعات الهدوء"
 
 #: app/(auth)/sign-in.tsx:306
 msgid "Remember me"
 msgstr "تذكرني"
 
 #: app/(dashboard)/menu-photos.tsx:404
+#: app/(dashboard)/settings/devices.tsx:52
+#: app/(dashboard)/settings/devices.tsx:93
 msgid "Remove"
 msgstr "إزالة"
+
+#: app/(dashboard)/settings/devices.tsx:47
+msgid "Remove this phone?"
+msgstr "إزالة هذا الهاتف؟"
 
 #: app/(dashboard)/menu-photos.tsx:332
 msgid "Replace"
@@ -503,9 +586,17 @@ msgstr "استبدال صورة {0}"
 msgid "Resend code"
 msgstr "إعادة إرسال الرمز"
 
+#: app/(dashboard)/settings/notifications.tsx:50
+msgid "Reservations"
+msgstr "الحجوزات"
+
 #: components/menu-photos/photo-capture-modal.tsx:214
 msgid "Retake"
 msgstr "إعادة الالتقاط"
+
+#: app/(dashboard)/settings/notifications.tsx:211
+msgid "Save"
+msgstr "حفظ"
 
 #: app/(dashboard)/menu-photos.tsx:196
 msgid "Search any dish to replace its photo"
@@ -571,7 +662,7 @@ msgstr "سجل الدخول باستخدام حسابك الاجتماعي أو 
 
 #: app/(dashboard)/settings/index.tsx:51
 #: app/(dashboard)/settings/index.tsx:54
-#: app/(dashboard)/settings/index.tsx:139
+#: app/(dashboard)/settings/index.tsx:151
 msgid "Sign Out"
 msgstr "تسجيل الخروج"
 
@@ -607,9 +698,22 @@ msgstr "يمكن أن يحتوي المعرف فقط على أحرف صغيرة 
 msgid "Slug must be at least 2 characters"
 msgstr "يجب أن يكون المعرف على الأقل حرفين"
 
+#: app/(dashboard)/settings/notifications.tsx:222
+msgid "Snooze"
+msgstr "تأجيل"
+
+#. placeholder {0}: new Date(snoozed).toLocaleString()
+#: app/(dashboard)/settings/notifications.tsx:228
+msgid "Snoozed until {0}"
+msgstr "مؤجّل حتى {0}"
+
 #: app/(dashboard)/menu-photos.tsx:153
 msgid "Something went wrong."
 msgstr "حدث خطأ ما."
+
+#: app/(dashboard)/settings/notifications.tsx:48
+msgid "Staff"
+msgstr "الموظفون"
 
 #: app/(dashboard)/create-organization.tsx:89
 #: app/(dashboard)/organizations.tsx:42
@@ -639,6 +743,10 @@ msgstr "التقاط صورة"
 #: app/(dashboard)/organizations.tsx:75
 msgid "Tap to retry"
 msgstr "اضغط لإعادة المحاولة"
+
+#: app/(dashboard)/settings/notifications.tsx:51
+msgid "Team chat mentions"
+msgstr "الإشارات في محادثة الفريق"
 
 #: app/(auth)/sign-up.tsx:255
 msgid "Terms of Service"
@@ -678,9 +786,17 @@ msgstr "الصورة كبيرة جدًا."
 msgid "This dish is no longer on the menu."
 msgstr "هذا الطبق لم يعد في القائمة."
 
+#: app/(dashboard)/settings/devices.tsx:82
+msgid "This phone"
+msgstr "هذا الهاتف"
+
 #: app/(dashboard)/menu-photos.tsx:145
 msgid "This photo format is not supported."
 msgstr "صيغة هذه الصورة غير مدعومة."
+
+#: app/(dashboard)/settings/notifications.tsx:185
+msgid "to"
+msgstr "إلى"
 
 #: app/(auth)/landing.tsx:34
 msgid "Track what you eat 🍎"
@@ -691,6 +807,10 @@ msgstr "تتبع ما تأكله 🍎"
 msgid "Try again"
 msgstr "حاول مرة أخرى"
 
+#: app/(dashboard)/settings/notifications.tsx:266
+msgid "Turn off"
+msgstr "إيقاف"
+
 #: app/(dashboard)/settings/security.tsx:47
 #: app/(dashboard)/settings/security.tsx:80
 msgid "Two-Factor Authentication"
@@ -699,6 +819,14 @@ msgstr "المصادقة الثنائية"
 #: app/(dashboard)/settings/security.tsx:48
 msgid "Two-factor authentication setup will be available soon."
 msgstr "سيتوفر إعداد المصادقة الثنائية قريباً."
+
+#: app/(dashboard)/settings/notifications.tsx:188
+msgid "Until"
+msgstr "حتى"
+
+#: app/(dashboard)/settings/notifications.tsx:255
+msgid "Until tomorrow morning"
+msgstr "حتى صباح الغد"
 
 #: app/(dashboard)/settings/security.tsx:74
 msgid "Update your account password"
@@ -740,7 +868,7 @@ msgstr "جاري التحقق من الرمز..."
 msgid "Verifying..."
 msgstr "جاري التحقق..."
 
-#: app/(dashboard)/settings/index.tsx:127
+#: app/(dashboard)/settings/index.tsx:139
 msgid "Version 1.0.0"
 msgstr "الإصدار 1.0.0"
 
@@ -800,3 +928,8 @@ msgstr "تم تعليق حسابك. يرجى التواصل مع الدعم إذ
 #: app/(dashboard)/index.tsx:121
 msgid "Your Organizations"
 msgstr "مؤسساتك"
+
+#: app/(dashboard)/settings/index.tsx:121
+#: app/(dashboard)/settings/notifications.tsx:279
+msgid "Your phones"
+msgstr "هواتفك"

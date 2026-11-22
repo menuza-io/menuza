@@ -51,6 +51,7 @@ import {
 	type InitialLocationData,
 	LocationForm,
 } from '#app/components/locations/location-form.tsx'
+import { LocationOrderAlertsCard } from '#app/components/locations/location-order-alerts-card.tsx'
 import { LocationWebsiteCard } from '#app/components/locations/location-website-card.tsx'
 import { type OrderPolicyValues } from '#app/components/locations/order-policies-card.tsx'
 import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
@@ -903,6 +904,13 @@ export default function EditLocationRoute() {
 								locations={allLocations}
 							/>
 						</Card>
+					) : null}
+
+					{location.id ? (
+						<LocationOrderAlertsCard
+							orgSlug={organization.slug}
+							locationId={location.id}
+						/>
 					) : null}
 
 					{location.id ? (
