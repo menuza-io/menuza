@@ -215,7 +215,7 @@ describe('POST /resources/inventory/notify authentication and shape', () => {
 	it.each([
 		['an item name', { itemName: 'Chicken thighs' }],
 		['an amount', { amountMinor: 18400 }],
-		['an unknown kind', { kind: 'inventory_sold_out' }],
+		['an unknown kind', { kind: 'inventory_nope' }],
 		['a zero count', { count: 0 }],
 		['a fractional count', { count: 1.5 }],
 		['a short event id', { eventId: 'abc' }],
@@ -233,7 +233,7 @@ describe('POST /resources/inventory/notify authentication and shape', () => {
 		const text = await response.text()
 		expect(text).not.toContain('Chicken')
 		expect(text).not.toContain('18400')
-		expect(text).not.toContain('inventory_sold_out')
+		expect(text).not.toContain('inventory_nope')
 		expect(text).not.toContain('ABCDEF')
 	})
 

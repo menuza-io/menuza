@@ -33,7 +33,9 @@ import {
 	INVENTORY_ALERT_MARKER_TYPE,
 	inventoryAlertNotificationType,
 	inventoryAlertPath,
+	isSoldOutAlertKind,
 } from '#app/utils/inventory/manager-alerts.ts'
+import { deliverSoldOutAlert } from '#app/utils/inventory/sold-out-alerts.server.ts'
 import {
 	displayLocationName,
 	orgDefaultLocale,
@@ -56,6 +58,8 @@ function featureOn(
 	kind: InventoryNotifyEvent['kind'],
 ) {
 	if (!features.enabled) return false
+	// Dishes come off the menu through recipes.
+	if (isSoldOutAlertKind(kind)) return features.recipes
 	// Orders and prices only exist with Purchasing.
 	return kind === 'inventory_delivery_due' || kind === 'inventory_price_rise'
 		? features.purchasing
@@ -154,6 +158,20 @@ export async function action({ request }: ActionFunctionArgs) {
 						await orgDefaultLocale(organization.id),
 					)
 				: null
+	}
+
+	// Dishes off the menu by stock (#478): the same members and channels, with
+	// quiet hours, snooze and the alert log applied.
+	if (isSoldOutAlertKind(event.kind) && event.soldOut) {
+		return answer(
+			await deliverSoldOutAlert({
+				organization,
+				event: event as typeof event & {
+					kind: 'inventory_sold_out' | 'inventory_sold_out_back'
+				},
+				locationName,
+			}),
+		)
 	}
 
 	const recipients = await resolveInventoryAlertRecipients({

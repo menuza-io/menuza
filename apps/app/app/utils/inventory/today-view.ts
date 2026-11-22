@@ -98,6 +98,12 @@ export function attentionTarget(
 				kind: item.kind,
 				to: `${join(`${base}/today`, search)}#sold-out`,
 			}
+		case 'runs_out_soon':
+			// The item's sheet shows the days left and the use rate behind it.
+			return {
+				kind: item.kind,
+				to: join(`${base}/stock/${encodeURIComponent(item.itemId)}`, search),
+			}
 		case 'ran_out_at_till':
 			return {
 				kind: item.kind,

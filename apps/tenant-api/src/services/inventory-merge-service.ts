@@ -118,8 +118,10 @@ export async function previewItemMerge(
 	return {
 		itemId: dup.id,
 		itemName: dup.name,
+		itemVersion: dup.version,
 		intoItemId: kept.id,
 		intoItemName: kept.name,
+		intoItemVersion: kept.version,
 		blockers,
 		unitMismatch,
 		moves: {
@@ -1125,8 +1127,10 @@ export async function previewSupplierMerge(
 	const out = {
 		supplierId: dup.id,
 		supplierName: dup.name,
+		supplierVersion: dup.version,
 		intoSupplierId: kept.id,
 		intoSupplierName: kept.name,
+		intoSupplierVersion: kept.version,
 		blockers,
 		moves: {
 			products: products.length,
@@ -1137,8 +1141,10 @@ export async function previewSupplierMerge(
 	} as {
 		supplierId: string
 		supplierName: string
+		supplierVersion: number
 		intoSupplierId: string
 		intoSupplierName: string
+		intoSupplierVersion: number
 		blockers: Blocker[]
 		moves: { products: number; orders: number; deliveries: number }
 		unpaidMinor?: number

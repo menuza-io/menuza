@@ -21,6 +21,7 @@ import {
 	TableRow,
 } from '@repo/ui/table'
 import { Link, useNavigate } from 'react-router'
+import { DaysLeftText } from '#app/components/inventory/days-left-text.tsx'
 import { useQuantityFormat } from '#app/components/inventory/inventory-prefs.tsx'
 import { fillRatio, formatMoney } from '#app/utils/inventory/format.ts'
 import { categoryLabel } from '#app/utils/inventory/labels.ts'
@@ -36,6 +37,8 @@ type StockListProps = {
 	/** Add the Value column. Only true when the member may see cost. */
 	showValue: boolean
 	currency: string
+	/** Show the Days left column (Stock sorted by it, or always on wide screens). */
+	showDaysLeft?: boolean
 }
 
 function StatusBadge({ status }: { status: StockItem['status'] }) {
@@ -80,6 +83,7 @@ export function StockList({
 	areaNames,
 	showValue,
 	currency,
+	showDaysLeft = true,
 }: StockListProps) {
 	const { t, i18n } = useLingui()
 	const navigate = useNavigate()
@@ -104,6 +108,11 @@ export function StockList({
 							<TableHead>
 								<Trans>On hand</Trans>
 							</TableHead>
+							{showDaysLeft ? (
+								<TableHead>
+									<Trans>Days left</Trans>
+								</TableHead>
+							) : null}
 							{showValue ? (
 								<TableHead className="text-end">
 									<Trans>Value</Trans>
@@ -141,6 +150,14 @@ export function StockList({
 														<Trans>Made in house</Trans>
 													</Badge>
 												) : null}
+												{item.isGroup ? (
+													<Badge
+														variant="secondary"
+														data-testid={`stock-group-${item.id}`}
+													>
+														<Trans>Group</Trans>
+													</Badge>
+												) : null}
 											</div>
 											<span className="text-muted-foreground truncate text-xs">
 												{itemSubtitle(item, areaNames, i18n)}
@@ -161,6 +178,14 @@ export function StockList({
 											) : null}
 										</div>
 									</TableCell>
+									{showDaysLeft ? (
+										<TableCell data-testid={`stock-days-left-${item.id}`}>
+											<DaysLeftText
+												daysLeft={item.daysLeft}
+												lastCountedAt={item.lastCountedAt}
+											/>
+										</TableCell>
+									) : null}
 									{showValue ? (
 										<TableCell className="text-end tabular-nums">
 											{item.valueMinor === undefined ? (
@@ -201,6 +226,14 @@ export function StockList({
 								<ItemDescription className="truncate">
 									{itemSubtitle(item, areaNames, i18n)}
 								</ItemDescription>
+								{showDaysLeft && item.daysLeft ? (
+									<span className="text-xs">
+										<DaysLeftText
+											daysLeft={item.daysLeft}
+											lastCountedAt={item.lastCountedAt}
+										/>
+									</span>
+								) : null}
 								{ratio !== null ? (
 									<Progress
 										value={Math.round(ratio * 100)}

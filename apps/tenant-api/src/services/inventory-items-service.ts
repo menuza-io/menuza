@@ -522,6 +522,18 @@ export async function getItemDetail(
 			}),
 		hasMovements: byLocation.size > 0,
 	}
+	if (locationId) {
+		const now = Date.now()
+		const clock = await locationClock(db, locationId, now)
+		const left = await loadDaysLeft(db, {
+			locationId,
+			today: clock.date,
+			now,
+			rows: [row],
+		})
+		const own = left.get(itemId)
+		if (own) detail.daysLeft = own
+	}
 	const links = await mergeLinksFor(db, { kind: 'item', id: itemId })
 	detail.mergedInto = links.mergedInto
 	detail.mergedFrom = links.mergedFrom

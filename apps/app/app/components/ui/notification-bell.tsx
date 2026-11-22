@@ -60,7 +60,10 @@ import {
 	isFormResponseNotificationType,
 	plainMarkdown,
 } from '#app/utils/forms/form-alerts.ts'
-import { inventoryAlertCopy } from '#app/utils/inventory/alert-copy.ts'
+import {
+	inventoryAlertCopy,
+	type SoldOutDetails,
+} from '#app/utils/inventory/alert-copy.ts'
 import {
 	inventoryAlertKindFromNotificationType,
 	inventoryAlertPath,
@@ -98,6 +101,26 @@ interface Notification {
 	isRead: boolean
 	isSeen: boolean
 	createdAt: string
+}
+
+/** The dishes and ingredients a sold-out alert carries (names, from the App's own menu). */
+function soldOutDetails(
+	payload: Record<string, unknown> | null | undefined,
+): SoldOutDetails | null {
+	const entries = payload?.soldOut
+	if (!Array.isArray(entries)) return null
+	const dishes: string[] = []
+	const ingredients: string[] = []
+	for (const entry of entries) {
+		if (entry && typeof entry === 'object') {
+			const { dish, ingredient } = entry as Record<string, unknown>
+			if (typeof dish === 'string' && dish) dishes.push(dish)
+			if (typeof ingredient === 'string' && ingredient) {
+				ingredients.push(ingredient)
+			}
+		}
+	}
+	return { dishes, ingredients: [...new Set(ingredients)] }
 }
 
 function formatRelativeTime(
@@ -175,6 +198,7 @@ function NotificationItem({
 				Number(payload?.count),
 				_,
 				typeof payload?.locationName === 'string' ? payload.locationName : null,
+				soldOutDetails(payload),
 			)
 		: null
 

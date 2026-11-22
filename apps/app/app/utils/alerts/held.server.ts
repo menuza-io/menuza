@@ -16,6 +16,14 @@ import {
 	User,
 	UserOrganization,
 } from '@repo/database'
+import {
+	inventoryAlertKindFromNotificationType,
+	isSoldOutAlertKind,
+} from '#app/utils/inventory/manager-alerts.ts'
+import {
+	sendSoldOutEmail,
+	soldOutEmailCopy,
+} from '#app/utils/inventory/sold-out-alerts.server.ts'
 import { alertAppUrl, sendAlertEmail } from './order-alerts.server.ts'
 import {
 	loadAlertPolicySettings,
@@ -205,6 +213,36 @@ export async function releaseHeldAlerts(now = Date.now()): Promise<{
 						delivered.push('email')
 					}
 				}
+			}
+			// A sold-out alert (#478) held for quiet hours owes its email too.
+			const inventoryKind = inventoryAlertKindFromNotificationType(
+				notification.type,
+			)
+			if (
+				owed.includes('email') &&
+				inventoryKind &&
+				isSoldOutAlertKind(inventoryKind)
+			) {
+				const entries = Array.isArray(payload.soldOut) ? payload.soldOut : []
+				const dishes = entries.flatMap((entry: unknown) => {
+					const row = entry as { dish?: unknown; ingredient?: unknown }
+					return typeof row.dish === 'string' &&
+						typeof row.ingredient === 'string'
+						? [{ dish: row.dish, ingredient: row.ingredient }]
+						: []
+				})
+				const sent = await sendSoldOutEmail({
+					to: member.email,
+					orgSlug,
+					kind: inventoryKind,
+					copy: soldOutEmailCopy({
+						kind: inventoryKind,
+						count: Number(payload.count) || dishes.length || 1,
+						locationName,
+						dishes,
+					}),
+				})
+				if (sent) delivered.push('email')
 			}
 			if (dropped && delivered.length === 0) {
 				await markAlertsDropped([row.id])

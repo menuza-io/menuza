@@ -15,6 +15,7 @@ describe('stock filters', () => {
 			category: 'all',
 			areaId: 'all',
 			lowOnly: false,
+			sort: 'name',
 			limit: 50,
 		})
 		expect(
@@ -26,6 +27,7 @@ describe('stock filters', () => {
 			category: 'meat',
 			areaId: 'a1',
 			lowOnly: true,
+			sort: 'name',
 			limit: 100,
 		})
 	})
@@ -45,6 +47,7 @@ describe('stock filters', () => {
 				category: 'meat',
 				areaId: 'a1',
 				lowOnly: true,
+				sort: 'name',
 				limit: 100,
 			},
 			'main',
@@ -114,5 +117,25 @@ describe('stock filters', () => {
 				new URLSearchParams('locationId=l2&q=a&category=meat&low=1&limit=100'),
 			).toString(),
 		).toBe('locationId=l2')
+	})
+
+	it('keeps the sort in the URL and the request, and Clear filters leaves it alone', () => {
+		const filters = parseStockFilters(new URLSearchParams('sort=daysLeft'))
+		expect(filters.sort).toBe('daysLeft')
+		expect(hasActiveStockFilters(filters)).toBe(false)
+		expect(stockListPath(filters, 'main')).toContain('sort=daysLeft')
+		expect(
+			applyStockFilterPatch(new URLSearchParams(), { sort: 'daysLeft' }).get(
+				'sort',
+			),
+		).toBe('daysLeft')
+		expect(
+			applyStockFilterPatch(new URLSearchParams('sort=daysLeft'), {
+				sort: 'name',
+			}).has('sort'),
+		).toBe(false)
+		expect(parseStockFilters(new URLSearchParams('sort=nope')).sort).toBe(
+			'name',
+		)
 	})
 })

@@ -26,7 +26,7 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Progress } from '@repo/ui/progress'
 import { Skeleton } from '@repo/ui/skeleton'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useLoaderData, useParams } from 'react-router'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { toast } from 'sonner'
@@ -35,7 +35,20 @@ import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import { ChangeUnitDialog } from '#app/components/inventory/change-unit-dialog.tsx'
+import { DaysLeftText } from '#app/components/inventory/days-left-text.tsx'
+import { GroupSheet } from '#app/components/inventory/group-sheet.tsx'
 import { ItemRecipeSections } from '#app/components/inventory/item-recipe-sections.tsx'
+import {
+	MergeBanners,
+	MergeItemDialog,
+} from '#app/components/inventory/merge-dialog.tsx'
+import {
+	UsedInList,
+	type UsedInNames,
+	UsedInSection,
+	useUsedIn,
+} from '#app/components/inventory/used-in-section.tsx'
 import { useStockContext } from '#app/components/inventory/stock-context.ts'
 import { SheetPanel } from '#app/components/staff/sheet-frame.tsx'
 import {
@@ -44,6 +57,7 @@ import {
 } from '#app/hooks/use-inventory-client.ts'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
 import { loadMemberNames } from '#app/utils/inventory/actors.server.ts'
+import { loadMenuNames } from '#app/utils/inventory/menu-names.server.ts'
 import {
 	fillRatio,
 	formatCostPerUnit,
@@ -58,6 +72,7 @@ import {
 	categoryLabel,
 	MOVEMENT_KIND_LABELS,
 	ADJUSTMENT_REASON_LABELS,
+	SYSTEM_ADJUSTMENT_LABELS,
 	WASTE_REASON_LABELS,
 } from '#app/utils/inventory/labels.ts'
 import { currencyExponent } from '#app/utils/money-input.ts'
@@ -65,7 +80,15 @@ import { type Route } from './+types/stock.$itemId.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const access = await requireInventoryAccess(request, params.orgSlug)
-	return { memberNames: await loadMemberNames(access.organizationId) }
+	// The region knows dishes and options by id: the names for "Used in" come
+	// from the menu, and only when recipes are on.
+	const menu = access.features.recipes
+		? await loadMenuNames(access.organizationId)
+		: { dishes: [], options: [] }
+	return {
+		memberNames: await loadMemberNames(access.organizationId),
+		menu,
+	}
 }
 
 const MOVEMENT_PAGE = 10
@@ -83,6 +106,20 @@ export default function InventoryItemSheetRoute() {
 	const ctx = useStockContext()
 	const { activeLocationId, canEdit, canSeeCost, locations } = ctx
 	const [movementLimit, setMovementLimit] = useState(MOVEMENT_PAGE)
+	// Undefined when the route renders without its loader (tests, previews).
+	const loaderData = useLoaderData<typeof loader>() as
+		Awaited<ReturnType<typeof loader>> | undefined
+	const menuNames = useMemo<UsedInNames>(
+		() => ({
+			dishes: new Map(
+				loaderData?.menu?.dishes.map((dish) => [dish.id, dish.name]),
+			),
+			options: new Map(
+				loaderData?.menu?.options.map((option) => [option.id, option.name]),
+			),
+		}),
+		[loaderData?.menu],
+	)
 
 	const detail = useInventoryQuery(
 		`/items/${encodeURIComponent(itemId)}?locationId=${encodeURIComponent(activeLocationId)}`,
@@ -133,9 +170,30 @@ export default function InventoryItemSheetRoute() {
 		)
 	}
 
+	if (detail.data.isGroup) {
+		return (
+			<GroupSheet
+				group={detail.data}
+				locationId={activeLocationId}
+				basePath={ctx.basePath}
+				search={ctx.search}
+				canEdit={canEdit && !detail.data.archived}
+				canSeeCost={canSeeCost}
+				currency={ctx.currency}
+				orgSlug={ctx.orgSlug}
+				names={menuNames}
+				recipesEnabled={ctx.nav.recipes}
+				onChanged={reloadAll}
+				close={ctx.close}
+			/>
+		)
+	}
+
 	return (
 		<ItemSheetBody
 			item={detail.data}
+			orgSlug={ctx.orgSlug}
+			menuNames={menuNames}
 			canEdit={canEdit && !detail.data.archived}
 			canSeeCost={canSeeCost}
 			locationName={
@@ -164,6 +222,8 @@ type MovementsQuery = ReturnType<
 
 function ItemSheetBody({
 	item,
+	orgSlug,
+	menuNames,
 	canEdit,
 	canSeeCost,
 	locationName,
@@ -180,6 +240,8 @@ function ItemSheetBody({
 	canEditRecipes,
 }: {
 	item: ItemDetail
+	orgSlug: string
+	menuNames: UsedInNames
 	canEdit: boolean
 	canSeeCost: boolean
 	locationName: string
@@ -205,6 +267,10 @@ function ItemSheetBody({
 	const [archiving, setArchiving] = useState(false)
 	const [archivePending, setArchivePending] = useState(false)
 	const [archiveError, setArchiveError] = useState<string | null>(null)
+	const [changingUnit, setChangingUnit] = useState(false)
+	const [merging, setMerging] = useState(false)
+	// Archiving shows where the item is used before it asks to confirm.
+	const archiveUsedIn = useUsedIn(item.id, recipesEnabled && archiving)
 
 	const fmt = (value: number) =>
 		quantity.format(value, {
@@ -313,6 +379,20 @@ function ItemSheetBody({
 					) : null}
 					<Button
 						variant="outline"
+						onClick={() => setChangingUnit(true)}
+						data-testid="item-sheet-change-unit"
+					>
+						<Trans>Change unit</Trans>
+					</Button>
+					<Button
+						variant="outline"
+						onClick={() => setMerging(true)}
+						data-testid="item-sheet-merge"
+					>
+						<Trans>Merge into…</Trans>
+					</Button>
+					<Button
+						variant="outline"
 						onClick={() => {
 							setArchiveError(null)
 							setArchiving(true)
@@ -324,6 +404,13 @@ function ItemSheetBody({
 					</Button>
 				</div>
 			) : null}
+
+			<MergeBanners
+				mergedInto={item.mergedInto}
+				mergedFrom={item.mergedFrom}
+				onUndone={onChanged}
+				canEdit={canEdit || item.archived}
+			/>
 
 			<section className="flex flex-col gap-3" aria-labelledby="item-summary">
 				<h3 id="item-summary" className="text-sm font-semibold">
@@ -373,6 +460,30 @@ function ItemSheetBody({
 							<bdi dir="ltr">{fmt(item.fillUpToQuantity)}</bdi>
 						)}
 					</dd>
+					<dt className="text-muted-foreground">
+						<Trans>Days left</Trans>
+					</dt>
+					<dd data-testid="item-sheet-days-left">
+						{item.daysLeft ? (
+							<DaysLeftText
+								daysLeft={item.daysLeft}
+								lastCountedAt={item.lastCountedAt}
+								showLastCounted={false}
+							/>
+						) : (
+							<span className="text-muted-foreground">—</span>
+						)}
+					</dd>
+					{item.daysLeft?.state === 'ok' ? (
+						<>
+							<dt className="text-muted-foreground">
+								<Trans>Use per day</Trans>
+							</dt>
+							<dd className="tabular-nums" data-testid="item-sheet-use-rate">
+								<bdi dir="ltr">{fmt(item.daysLeft.perDay)}</bdi>
+							</dd>
+						</>
+					) : null}
 					<dt className="text-muted-foreground">
 						<Trans>Last counted</Trans>
 					</dt>
@@ -533,6 +644,15 @@ function ItemSheetBody({
 				)}
 			</section>
 
+			<UsedInSection
+				itemId={item.id}
+				enabled={recipesEnabled}
+				names={menuNames}
+				orgSlug={orgSlug}
+				canSeeCost={canSeeCost}
+				currency={currency}
+			/>
+
 			<ItemRecipeSections
 				item={item}
 				locationId={locationId}
@@ -591,15 +711,22 @@ function ItemSheetBody({
 													],
 												)
 											: movement.reason
-										: movement.reason && movement.kind === 'adjustment'
-											? Object.hasOwn(ADJUSTMENT_REASON_LABELS, movement.reason)
-												? i18n._(
-														ADJUSTMENT_REASON_LABELS[
-															movement.reason as keyof typeof ADJUSTMENT_REASON_LABELS
-														],
+										: movement.reason &&
+											  movement.kind === 'adjustment' &&
+											  Object.hasOwn(SYSTEM_ADJUSTMENT_LABELS, movement.reason)
+											? i18n._(SYSTEM_ADJUSTMENT_LABELS[movement.reason]!)
+											: movement.reason && movement.kind === 'adjustment'
+												? Object.hasOwn(
+														ADJUSTMENT_REASON_LABELS,
+														movement.reason,
 													)
+													? i18n._(
+															ADJUSTMENT_REASON_LABELS[
+																movement.reason as keyof typeof ADJUSTMENT_REASON_LABELS
+															],
+														)
+													: movement.reason
 												: movement.reason
-											: movement.reason
 								return (
 									<li
 										key={movement.id}
@@ -659,6 +786,24 @@ function ItemSheetBody({
 				onOpenChange={setAdjusting}
 				onAdjusted={onChanged}
 			/>
+			<ChangeUnitDialog
+				item={item}
+				open={changingUnit}
+				onOpenChange={setChangingUnit}
+				onChanged={onChanged}
+				canSeeCost={canSeeCost}
+				currency={currency}
+			/>
+			<MergeItemDialog
+				itemId={item.id}
+				itemName={item.name}
+				open={merging}
+				onOpenChange={setMerging}
+				onMerged={() => {
+					onChanged()
+					close()
+				}}
+			/>
 			<AlertDialog
 				open={archiving}
 				onOpenChange={(next) => {
@@ -677,6 +822,28 @@ function ItemSheetBody({
 							</Trans>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
+					{archiveUsedIn.data && archiveUsedIn.data.rows.length > 0 ? (
+						<div className="flex flex-col gap-2" data-testid="archive-used-in">
+							<p className="text-sm font-medium">
+								<Trans>It is used in these recipes:</Trans>
+							</p>
+							<UsedInList
+								result={archiveUsedIn.data}
+								names={menuNames}
+								orgSlug={orgSlug}
+								canSeeCost={canSeeCost}
+								currency={currency}
+								linkable={false}
+								testId="archive-used-in-list"
+							/>
+							<p className="text-muted-foreground text-xs">
+								<Trans>
+									They keep the line, but you will need to swap it out or the
+									dish will not use stock.
+								</Trans>
+							</p>
+						</div>
+					) : null}
 					{archiveError ? (
 						<Alert variant="destructive" data-testid="item-sheet-archive-error">
 							<AlertDescription>{archiveError}</AlertDescription>

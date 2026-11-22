@@ -1,5 +1,5 @@
 import { i18n } from '@lingui/core'
-import { INVENTORY_NOTIFY_KINDS } from '@repo/inventory'
+import { INVENTORY_ALL_NOTIFY_KINDS } from '@repo/inventory'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { inventoryAlertCopy } from './alert-copy.ts'
 
@@ -22,7 +22,7 @@ describe('inventory alert wording', () => {
 	})
 
 	it('has a subject and a next step for every kind, and names nothing', () => {
-		for (const kind of INVENTORY_NOTIFY_KINDS) {
+		for (const kind of INVENTORY_ALL_NOTIFY_KINDS) {
 			const copy = inventoryAlertCopy(kind, 2, translate)
 			expect(copy.subject).toMatch(/2/)
 			expect(copy.body.length).toBeGreaterThan(5)

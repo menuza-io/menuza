@@ -277,8 +277,11 @@ export const mergeCountsSchema = z.object({
 export const mergeItemPreviewSchema = z.object({
 	itemId: z.string(),
 	itemName: z.string(),
+	/** Versions to send back with the merge. */
+	itemVersion: z.number().int(),
 	intoItemId: z.string(),
 	intoItemName: z.string(),
+	intoItemVersion: z.number().int(),
 	blockers: z.array(blockerSchema),
 	/** The two items measure in different base units: change one first. */
 	unitMismatch: z.boolean(),
@@ -330,8 +333,10 @@ export const mergeSupplierBodySchema = z
 export const mergeSupplierPreviewSchema = z.object({
 	supplierId: z.string(),
 	supplierName: z.string(),
+	supplierVersion: z.number().int(),
 	intoSupplierId: z.string(),
 	intoSupplierName: z.string(),
+	intoSupplierVersion: z.number().int(),
 	blockers: z.array(blockerSchema),
 	moves: z.object({
 		products: z.number().int(),

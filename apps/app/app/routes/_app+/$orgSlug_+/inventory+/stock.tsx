@@ -27,6 +27,7 @@ import {
 } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { GroupDialog } from '#app/components/inventory/group-dialog.tsx'
 import { InventoryHeaderActions } from '#app/components/inventory/inventory-chrome.tsx'
 import { useInventoryRevision } from '#app/components/inventory/inventory-prefs.tsx'
 import { type StockOutletContext } from '#app/components/inventory/stock-context.ts'
@@ -74,6 +75,7 @@ export default function InventoryStockRoute() {
 		canManagePurchasing,
 		purchasingEnabled,
 		currency,
+		nav,
 	} = layout
 	const canSetLevels = purchasingEnabled && canManagePurchasing
 	const direction = useDirection()
@@ -83,6 +85,7 @@ export default function InventoryStockRoute() {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const filters = parseStockFilters(searchParams)
 	const basePath = `/${orgSlug}/inventory/stock`
+	const [grouping, setGrouping] = useState(false)
 
 	// The search box types freely and writes the URL after a pause. A change
 	// to `q` that did not come from the box (Clear filters) refills the box.
@@ -231,6 +234,15 @@ export default function InventoryStockRoute() {
 										<Icon name="list-plus" />
 										<Trans>Add many items</Trans>
 									</DropdownMenuItem>
+									{nav.recipes ? (
+										<DropdownMenuItem
+											onClick={() => setGrouping(true)}
+											data-testid="stock-group-products"
+										>
+											<Icon name="layers" />
+											<Trans>Group products</Trans>
+										</DropdownMenuItem>
+									) : null}
 									<DropdownMenuItem
 										render={<Link to={`${basePath}/areas${search}`} />}
 									>
@@ -305,6 +317,18 @@ export default function InventoryStockRoute() {
 						data-testid="stock-filter-low"
 					>
 						<Trans>Low or out</Trans>
+					</Button>
+					<Button
+						type="button"
+						variant={filters.sort === 'daysLeft' ? 'default' : 'outline'}
+						aria-pressed={filters.sort === 'daysLeft'}
+						className="h-11 md:h-8"
+						onClick={() =>
+							patch({ sort: filters.sort === 'daysLeft' ? 'name' : 'daysLeft' })
+						}
+						data-testid="stock-sort-days-left"
+					>
+						<Trans>Sort by days left</Trans>
 					</Button>
 				</div>
 			</div>
@@ -388,6 +412,7 @@ export default function InventoryStockRoute() {
 						areaNames={areaNames}
 						showValue={canSeeCost}
 						currency={currency}
+						showDaysLeft
 					/>
 					<div className="text-muted-foreground mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
 						<span aria-live="polite" data-testid="stock-count">
@@ -435,6 +460,16 @@ export default function InventoryStockRoute() {
 					<Outlet context={outletContext} />
 				</SheetContent>
 			</Sheet>
+			<GroupDialog
+				group={null}
+				locationId={activeLocationId}
+				open={grouping}
+				onOpenChange={setGrouping}
+				onSaved={(saved) => {
+					reload()
+					void navigate(`${basePath}/${saved.id}${search}`)
+				}}
+			/>
 		</div>
 	)
 }
