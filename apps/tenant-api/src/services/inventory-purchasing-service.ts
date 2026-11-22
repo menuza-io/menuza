@@ -23,7 +23,18 @@ import {
 	invSupplierProducts,
 	invSuppliers,
 } from '@repo/tenant-db'
-import { and, count, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm'
+import {
+	and,
+	count,
+	desc,
+	eq,
+	inArray,
+	isNotNull,
+	isNull,
+	ne,
+	or,
+	sql,
+} from 'drizzle-orm'
 import { inJsonList, queryInChunks } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import {
@@ -119,7 +130,7 @@ type SupplierStats = {
 	currency: string | undefined
 }
 
-async function supplierStats(
+export async function supplierStats(
 	db: InventoryReader,
 	scope: LocationScope,
 ): Promise<SupplierStats> {
@@ -165,6 +176,19 @@ async function supplierStats(
 		)
 		stats.unpaidTotal += amount
 		stats.currency ??= row.currency
+	}
+	// A supplier merged into another (#493) keeps its history; what was bought
+	// from it, its products and what is still unpaid count for the supplier kept.
+	const merged = await db
+		.select({ id: invSuppliers.id, into: invSuppliers.mergedIntoId })
+		.from(invSuppliers)
+		.where(isNotNull(invSuppliers.mergedIntoId))
+	for (const row of merged) {
+		const into = row.into!
+		for (const map of [stats.products, stats.unpaidCount, stats.unpaidMinor]) {
+			const value = map.get(row.id)
+			if (value !== undefined) map.set(into, (map.get(into) ?? 0) + value)
+		}
 	}
 	return stats
 }
@@ -701,6 +725,15 @@ export async function listDeliveries(
 ) {
 	const { query } = input
 	const cursor = decodeCursor(query.cursor)
+	// Suppliers merged into the one asked for keep their deliveries (#493).
+	const mergedSupplierIds = query.supplierId
+		? (
+				await db
+					.select({ id: invSuppliers.id })
+					.from(invSuppliers)
+					.where(eq(invSuppliers.mergedIntoId, query.supplierId))
+			).map((row) => row.id)
+		: []
 	const rows = await db
 		.select()
 		.from(invDeliveries)
@@ -708,7 +741,10 @@ export async function listDeliveries(
 			and(
 				eq(invDeliveries.locationId, query.locationId),
 				query.supplierId
-					? eq(invDeliveries.supplierId, query.supplierId)
+					? inArray(invDeliveries.supplierId, [
+							query.supplierId,
+							...mergedSupplierIds,
+						])
 					: undefined,
 				query.unpaid
 					? and(

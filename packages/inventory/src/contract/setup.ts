@@ -314,6 +314,7 @@ export const mergeCandidateSchema = z.object({
 	/** Why it is listed near the top: same name words, same supplier product. */
 	reasons: z.array(z.enum(['name', 'supplier_product'])),
 })
+export type MergeCandidate = z.infer<typeof mergeCandidateSchema>
 export const mergeCandidatesResultSchema = z.object({
 	candidates: z.array(mergeCandidateSchema),
 })

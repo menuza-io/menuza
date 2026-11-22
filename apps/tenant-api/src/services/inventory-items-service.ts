@@ -26,6 +26,8 @@ import {
 	invCounts,
 	invCountEntries,
 	invItemCosts,
+	invItemGroupMembers,
+	invItemGroups,
 	invItemPlaceAreas,
 	invItemPlaces,
 	invItems,
@@ -48,6 +50,7 @@ import {
 } from '../lib/inventory-write.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
 import { loadUnitChanges } from './inventory-history.ts'
+import { mergeLinksFor } from './inventory-merge-service.ts'
 import {
 	assertLocationAllowed,
 	assertVersion,
@@ -107,6 +110,8 @@ export type StockRow = {
 	cost: CostRow | null
 	status: StockStatus
 	lastCountedAt: number | null
+	/** Ingredient groups (#495): this item is a group, or belongs to one. */
+	group: { isGroup: boolean; groupId: string | null }
 }
 
 /** Out at or below zero; an item this location does not keep yet is fine. */
@@ -134,34 +139,57 @@ export function stockValueMinor(
 export async function loadLocationStock(
 	db: InventoryReader,
 	locationId: string,
-	options: { includeArchived?: boolean } = {},
+	options: {
+		includeArchived?: boolean
+		/**
+		 * Ingredient groups (#495) are items with no stock of their own. Every
+		 * flow that counts, orders, preps or levels items leaves them out; only
+		 * the Stock list asks for them (with the members' total as on hand).
+		 */
+		includeGroups?: boolean
+	} = {},
 ): Promise<StockRow[]> {
-	const [items, places, placeAreas, units, costs, onHand, counted] =
-		await Promise.all([
-			options.includeArchived
-				? db.select().from(invItems)
-				: db.select().from(invItems).where(isNull(invItems.archivedAt)),
-			db
-				.select()
-				.from(invItemPlaces)
-				.where(eq(invItemPlaces.locationId, locationId)),
-			db
-				.select({
-					itemId: invItemPlaceAreas.itemId,
-					areaId: invItemPlaceAreas.areaId,
-					sortOrder: invItemPlaceAreas.sortOrder,
-				})
-				.from(invItemPlaceAreas)
-				.where(eq(invItemPlaceAreas.locationId, locationId))
-				.orderBy(invItemPlaceAreas.sortOrder),
-			db
-				.select()
-				.from(invItemUnits)
-				.orderBy(invItemUnits.createdAt, sql`rowid`),
-			db.select().from(invItemCosts),
-			onHandByItem(db, locationId),
-			lastCountedMap(db, locationId),
-		])
+	const [
+		items,
+		places,
+		placeAreas,
+		units,
+		costs,
+		onHand,
+		counted,
+		groups,
+		members,
+	] = await Promise.all([
+		options.includeArchived
+			? db.select().from(invItems)
+			: db.select().from(invItems).where(isNull(invItems.archivedAt)),
+		db
+			.select()
+			.from(invItemPlaces)
+			.where(eq(invItemPlaces.locationId, locationId)),
+		db
+			.select({
+				itemId: invItemPlaceAreas.itemId,
+				areaId: invItemPlaceAreas.areaId,
+				sortOrder: invItemPlaceAreas.sortOrder,
+			})
+			.from(invItemPlaceAreas)
+			.where(eq(invItemPlaceAreas.locationId, locationId))
+			.orderBy(invItemPlaceAreas.sortOrder),
+		db
+			.select()
+			.from(invItemUnits)
+			.orderBy(invItemUnits.createdAt, sql`rowid`),
+		db.select().from(invItemCosts),
+		onHandByItem(db, locationId),
+		lastCountedMap(db, locationId),
+		db.select({ itemId: invItemGroups.itemId }).from(invItemGroups),
+		db.select().from(invItemGroupMembers),
+	])
+	const groupIds = new Set(groups.map((row) => row.itemId))
+	const groupOfMember = new Map(
+		members.map((row) => [row.memberItemId, row.groupItemId]),
+	)
 	const placeByItem = new Map(places.map((row) => [row.itemId, row]))
 	const areasByItem = new Map<string, string[]>()
 	const sortByItem = new Map<string, Map<string, number>>()
@@ -175,21 +203,49 @@ export async function loadLocationStock(
 	}
 	const unitsByItem = groupUnits(units)
 	const costByItem = new Map(costs.map((row) => [row.itemId, row]))
-	return items.map((item) => {
-		const place = placeByItem.get(item.id) ?? null
-		const stock = onHand.get(item.id) ?? 0
-		return {
-			item,
-			place,
-			areaIds: areasByItem.get(item.id) ?? [],
-			areaSort: sortByItem.get(item.id) ?? new Map(),
-			units: unitsByItem.get(item.id) ?? [],
-			onHand: stock,
-			cost: costByItem.get(item.id) ?? null,
-			status: itemStatus(stock, place),
-			lastCountedAt: counted.get(item.id) ?? null,
+	// A group's stock is its members' total in group units; its last count is
+	// the most recent among them.
+	const groupTotals = new Map<
+		string,
+		{ onHand: number; countedAt: number | null }
+	>()
+	for (const member of members) {
+		const total = groupTotals.get(member.groupItemId) ?? {
+			onHand: 0,
+			countedAt: null,
 		}
-	})
+		total.onHand += Math.round(
+			((onHand.get(member.memberItemId) ?? 0) * member.groupQuantity) /
+				member.memberQuantity,
+		)
+		const at = counted.get(member.memberItemId) ?? null
+		if (at !== null && (total.countedAt === null || at > total.countedAt)) {
+			total.countedAt = at
+		}
+		groupTotals.set(member.groupItemId, total)
+	}
+	return items
+		.filter((item) => options.includeGroups || !groupIds.has(item.id))
+		.map((item) => {
+			const place = placeByItem.get(item.id) ?? null
+			const isGroup = groupIds.has(item.id)
+			const total = isGroup ? groupTotals.get(item.id) : undefined
+			const stock = isGroup ? (total?.onHand ?? 0) : (onHand.get(item.id) ?? 0)
+			return {
+				item,
+				place,
+				areaIds: areasByItem.get(item.id) ?? [],
+				areaSort: sortByItem.get(item.id) ?? new Map(),
+				units: unitsByItem.get(item.id) ?? [],
+				onHand: stock,
+				cost: costByItem.get(item.id) ?? null,
+				status: itemStatus(stock, place),
+				lastCountedAt: isGroup
+					? (total?.countedAt ?? null)
+					: (counted.get(item.id) ?? null),
+				group: { isGroup, groupId: groupOfMember.get(item.id) ?? null },
+			}
+		})
 }
 
 /** When each item was last part of an approved count at a location. */
@@ -244,6 +300,8 @@ export function toStockItem(row: StockRow, cost: boolean): StockItem {
 		fillUpToQuantity: row.place?.fillUpToQuantity ?? null,
 		status: row.status,
 		lastCountedAt: row.lastCountedAt,
+		isGroup: row.group.isGroup,
+		groupId: row.group.groupId,
 	}
 	if (!cost) return base
 	base.costMicro = row.cost?.avgCostMicro ?? null
@@ -261,6 +319,7 @@ export async function listItems(
 	const { query } = input
 	const rows = await loadLocationStock(db, query.locationId, {
 		includeArchived: query.includeArchived,
+		includeGroups: true,
 	})
 	const needle = query.q?.toLowerCase()
 	const filtered = rows
@@ -393,6 +452,7 @@ export async function getItemDetail(
 		cost: costRow ?? null,
 		status: itemStatus(onHand, place),
 		lastCountedAt: counted?.get(itemId) ?? null,
+		group: await groupInfoOf(db, itemId),
 	}
 	const detail: ItemDetail = {
 		...toStockItem(row, caller.cost),
@@ -441,6 +501,9 @@ export async function getItemDetail(
 			}),
 		hasMovements: byLocation.size > 0,
 	}
+	const links = await mergeLinksFor(db, { kind: 'item', id: itemId })
+	detail.mergedInto = links.mergedInto
+	detail.mergedFrom = links.mergedFrom
 	if (caller.cost) {
 		detail.cost = costRow
 			? {
@@ -453,6 +516,22 @@ export async function getItemDetail(
 			: null
 	}
 	return detail
+}
+
+async function groupInfoOf(db: InventoryReader, itemId: string) {
+	const [group, member] = await Promise.all([
+		db
+			.select({ itemId: invItemGroups.itemId })
+			.from(invItemGroups)
+			.where(eq(invItemGroups.itemId, itemId))
+			.get(),
+		db
+			.select({ groupItemId: invItemGroupMembers.groupItemId })
+			.from(invItemGroupMembers)
+			.where(eq(invItemGroupMembers.memberItemId, itemId))
+			.get(),
+	])
+	return { isGroup: !!group, groupId: member?.groupItemId ?? null }
 }
 
 function defaultCountUnitFor(base: InventoryBaseUnit, system: UnitSystem) {
@@ -1259,12 +1338,18 @@ export async function listItemMovements(
 		.get()
 	if (!item) throw notFound()
 	const cursor = decodeCursor(input.cursor)
+	// Duplicates merged into this item keep their history; the log shows it here.
+	const mergedFrom = await db
+		.select({ id: invItems.id })
+		.from(invItems)
+		.where(eq(invItems.mergedIntoId, input.itemId))
+	const itemIds = [input.itemId, ...mergedFrom.map((row) => row.id)]
 	const rows = await db
 		.select()
 		.from(invMovements)
 		.where(
 			and(
-				eq(invMovements.itemId, input.itemId),
+				inArray(invMovements.itemId, itemIds),
 				eq(invMovements.locationId, input.locationId),
 				cursor
 					? or(
@@ -1281,9 +1366,7 @@ export async function listItemMovements(
 		.limit(input.limit + 1)
 	const page = rows.slice(0, input.limit)
 	const last = page.at(-1)
-	const unitChanges = (await loadUnitChanges(db, [input.itemId])).get(
-		input.itemId,
-	)
+	const unitChangesByItem = await loadUnitChanges(db, itemIds)
 	return {
 		movements: page.map((row) => {
 			const out: {
@@ -1311,7 +1394,7 @@ export async function listItemMovements(
 						: quantityInCurrentUnit(
 								row.quantity,
 								row.createdAt,
-								unitChanges ?? [],
+								unitChangesByItem.get(row.itemId) ?? [],
 							),
 				reason: row.reason,
 				note: row.note,

@@ -12,6 +12,7 @@ import {
 	type SaleSource,
 	type UsageDelta,
 	type UsageEntry,
+	quantityInCurrentUnit,
 } from '@repo/inventory'
 import {
 	getTenantDb,
@@ -33,7 +34,12 @@ import {
 	type InventoryWriteContext,
 	withInventoryWrite,
 } from '../lib/inventory-write.ts'
-import { locationBusinessDate, newId } from './inventory-common.ts'
+import {
+	locationBusinessDate,
+	newId,
+	onHandByItem,
+} from './inventory-common.ts'
+import { loadUnitChanges } from './inventory-history.ts'
 import { getLocationCurrency } from './inventory-location-settings.ts'
 import { buildRecipeStore, loadItemCosts } from './inventory-recipe-store.ts'
 import { orderCountsTowardSales } from './report-records.ts'
@@ -535,12 +541,62 @@ async function settleInTx(
 		at: loaded.at,
 		owners: loaded.owners,
 	})
+	// Ingredient groups (#495) take stock from their members, primary first. The
+	// stock they see is what is on hand with this source's own earlier usage
+	// added back, so settling the same source again gives the same answer.
+	const groupStock = new Map<string, number>()
+	const groupFacts = [...store.items.values()].filter((facts) => facts.group)
+	if (groupFacts.length > 0) {
+		const onHand = await onHandByItem(tx, loaded.locationId)
+		for (const facts of groupFacts) {
+			for (const member of facts.group!.members) {
+				groupStock.set(member.itemId, onHand.get(member.itemId) ?? 0)
+			}
+		}
+		for (const entry of before) {
+			if (
+				entry.locationId === loaded.locationId &&
+				groupStock.has(entry.itemId)
+			) {
+				groupStock.set(
+					entry.itemId,
+					groupStock.get(entry.itemId)! + entry.quantity,
+				)
+			}
+		}
+	}
 	const desired = desiredUsage({
 		store,
 		locationId: loaded.locationId,
 		at: loaded.at,
 		source: loaded.source,
+		stock: groupFacts.length > 0 ? groupStock : undefined,
 	})
+	// Recipes in force at the sale's time may be in an older unit than the item
+	// has now (#494): bring the usage to today's unit before it is diffed.
+	const unitChanges = await loadUnitChanges(tx)
+	// A row is written in the unit in force at its `createdAt`: a late sale of
+	// an item whose unit changed since is stamped no earlier than the change.
+	const stampFor = (itemId: string): number => {
+		const lastChange = unitChanges.get(itemId)?.at(-1)?.at
+		return lastChange === undefined
+			? occurredAt
+			: Math.max(occurredAt, lastChange)
+	}
+	if (unitChanges.size > 0) {
+		const convert = (entry: UsageEntry): UsageEntry => ({
+			...entry,
+			quantity: quantityInCurrentUnit(
+				entry.quantity,
+				loaded.at,
+				unitChanges.get(entry.itemId) ?? [],
+			),
+		})
+		desired.sale = desired.sale.map(convert)
+		for (const voided of desired.wasteVoids) {
+			voided.usage = voided.usage.map(convert)
+		}
+	}
 	for (const error of desired.errors) {
 		// A line whose recipes loop is left out; the sale is never refused.
 		console.error('Inventory could not expand a sale line', {
@@ -600,7 +656,7 @@ async function settleInTx(
 				businessDate: loaded.businessDate,
 				actorKind: 'system',
 				actorId: null,
-				createdAt: occurredAt,
+				createdAt: stampFor(delta.itemId),
 			})
 		}
 		if (deltas.length > 0) {
@@ -638,7 +694,7 @@ async function settleInTx(
 					businessDate: loaded.businessDate,
 					source: loaded.deviceId ? 'station' : 'operator',
 					deviceId: loaded.deviceId,
-					createdAt: occurredAt,
+					createdAt: stampFor(delta.itemId),
 				})
 				await tx.insert(invMovements).values({
 					id: newId(),
@@ -655,7 +711,7 @@ async function settleInTx(
 					businessDate: loaded.businessDate,
 					actorKind: 'system',
 					actorId: null,
-					createdAt: occurredAt,
+					createdAt: stampFor(delta.itemId),
 				})
 			}
 			await storeUsage(tx, {

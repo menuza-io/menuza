@@ -7,6 +7,7 @@ import {
 	getTenantDb,
 	invCountEntries,
 	invCounts,
+	invItemGroupMembers,
 	invItemPlaces,
 	invItems,
 	invMovements,
@@ -186,6 +187,59 @@ async function lastCountedAt(
 	)
 }
 
+/**
+ * Ingredient groups (#495) have no stock of their own: a group is at zero only
+ * when every member is, so its on hand is the members' total in group units
+ * and it was counted when any member was.
+ */
+export async function groupMembersOf(
+	db: TenantDatabase,
+	groupIds: readonly string[],
+) {
+	if (groupIds.length === 0)
+		return new Map<string, (typeof invItemGroupMembers.$inferSelect)[]>()
+	const rows = await queryInChunks(groupIds, (chunk) =>
+		db
+			.select()
+			.from(invItemGroupMembers)
+			.where(inArray(invItemGroupMembers.groupItemId, chunk))
+			.orderBy(invItemGroupMembers.rank),
+	)
+	const byGroup = new Map<string, typeof rows>()
+	for (const row of rows) {
+		const list = byGroup.get(row.groupItemId) ?? []
+		list.push(row)
+		byGroup.set(row.groupItemId, list)
+	}
+	return byGroup
+}
+
+export function applyGroupTotals(
+	onHand: Map<string, number>,
+	counted: Map<string, number>,
+	groups: ReadonlyMap<
+		string,
+		readonly (typeof invItemGroupMembers.$inferSelect)[]
+	>,
+): void {
+	for (const [groupId, members] of groups) {
+		let total = 0
+		let at: number | undefined
+		for (const member of members) {
+			total += Math.round(
+				((onHand.get(member.memberItemId) ?? 0) * member.groupQuantity) /
+					member.memberQuantity,
+			)
+			const memberAt = counted.get(member.memberItemId)
+			if (memberAt !== undefined && (at === undefined || memberAt > at)) {
+				at = memberAt
+			}
+		}
+		onHand.set(groupId, total)
+		if (at !== undefined) counted.set(groupId, at)
+	}
+}
+
 const running = new Map<string, { again: boolean }>()
 
 function entityOf(key: string): { type: SoldOutEntityType; id: string } {
@@ -225,8 +279,17 @@ async function syncOnce(
 	// Locations to look at: where an auto item has a place or moved, and
 	// wherever something is recorded as sold out.
 	const locationIds = new Set(rows.map((row) => row.locationId))
+	// A group's stock is its members': look where they have places or moved.
+	const groupMembers = await groupMembersOf(db, [...autoIds])
 	if (autoIds.size > 0) {
-		const ids = [...autoIds]
+		const ids = [
+			...new Set([
+				...autoIds,
+				...[...groupMembers.values()].flatMap((list) =>
+					list.map((member) => member.memberItemId),
+				),
+			]),
+		]
 		const [places, moved] = await Promise.all([
 			queryInChunks(ids, (chunk) =>
 				db
@@ -248,10 +311,18 @@ async function syncOnce(
 	const dependents = await dependentsOfItems(db, [...autoIds])
 	for (const locationId of [...locationIds].sort()) {
 		const itemIds = [...autoIds]
+		const memberIds = [
+			...new Set(
+				[...groupMembers.values()].flatMap((list) =>
+					list.map((member) => member.memberItemId),
+				),
+			),
+		]
 		const [onHand, counted] = await Promise.all([
 			onHandByItem(db, locationId),
-			lastCountedAt(db, locationId, itemIds),
+			lastCountedAt(db, locationId, [...itemIds, ...memberIds]),
 		])
+		applyGroupTotals(onHand, counted, groupMembers)
 		// Entities that must be off the menu now, with the item that ran out.
 		// A dish is only newly taken off when the ingredient was counted in the
 		// last 7 days, so an abandoned count does not suddenly clear the menu;

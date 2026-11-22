@@ -24,8 +24,10 @@ import {
 } from '../lib/inventory-route.ts'
 import { hashInventoryRequest } from '../lib/inventory-write.ts'
 import { operatorInventoryCountsRoutes } from './operator-inventory-counts.ts'
+import { operatorInventoryGroupsRoutes } from './operator-inventory-groups.ts'
 import { operatorInventoryItemsRoutes } from './operator-inventory-items.ts'
 import { operatorInventoryLevelsRoutes } from './operator-inventory-levels.ts'
+import { operatorInventoryMergeRoutes } from './operator-inventory-merge.ts'
 import { operatorInventoryOrdersRoutes } from './operator-inventory-orders.ts'
 import { operatorInventoryPlacesRoutes } from './operator-inventory-places.ts'
 import { operatorInventoryPrepRoutes } from './operator-inventory-prep.ts'
@@ -57,6 +59,8 @@ import {
 export const operatorInventoryRoutes = new Hono()
 
 operatorInventoryRoutes.route('/', operatorInventoryItemsRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryGroupsRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryMergeRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPlacesRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryCountsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryWasteRoutes)
