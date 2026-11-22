@@ -890,6 +890,25 @@ in the org's website branding.
   `ai.marketing_drafts`. Guest data never reaches the App Worker or a model.
   Details: `docs/marketing-programs.md`.
 
+**Marketing compliance and measurement (#75, #159, #247, #393, #152, #115):**
+
+- One SMS consent writer (`setCustomerSubscription`, sources `sms_reply`), one
+  short-link table (`short_links`, own-site paths only, counts per day with no
+  IP, user agent or person id), one attribution record on the order
+  (`restaurant_orders.attribution` / `attribution_source`, no visitor ids), one
+  frequency cap, one marketing calendar (code occasions, flag
+  `marketing.calendar`; short links are `marketing.short_links`). Docs:
+  `docs/marketing-compliance.md`.
+- Inbound texts: `POST /webhooks/sms/:provider` verifies the signature before
+  anything else and stores only the matched keyword. Every marketing SMS ends
+  with the opt-out phrase and waits for 09:00-20:00 local time.
+  `MARKETING_SMS_ENABLED=false` is the node kill switch; #75 has no flag.
+- The text allowance lives in the control plane as numbers only
+  (`MarketingSmsUsage`, `MarketingSmsSend`); spending is one conditional UPDATE.
+- Migrations: tenant-db `0059_marketing_compliance`, control plane
+  `0071_marketing_compliance`. Deploy tenant-api, then App, then Sites and the
+  customer app, then jobs-cron, then Admin.
+
 ## PR & Commit Guidelines
 
 **Pre-commit Checks**:

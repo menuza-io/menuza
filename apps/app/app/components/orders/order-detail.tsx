@@ -71,6 +71,7 @@ import { RecordOrderRefundDialog } from './record-order-refund-dialog.tsx'
 import {
 	CANCEL_REASON_LABELS,
 	CANCELLED_BY_LABELS,
+	ORDER_SOURCE_LABELS,
 	REFUND_FAILURE_FALLBACK,
 	REFUND_FAILURE_LABELS,
 } from './refund-labels.ts'
@@ -331,6 +332,22 @@ export function OrderDetail({
 				? _(msg`Arriving around ${promisedFrom}`)
 				: _(msg`Ready around ${promisedFrom}`)
 	const delayLeft = MAX_PROMISED_DELAY_MINUTES - order.promisedDelayMinutes
+	// Where the guest came from (#115): the campaign when there is one, else
+	// the other site or coupon. A source the app has no words for is shown as
+	// it was stored (a UTM source).
+	const sourceKey = order.attributionSource ?? 'direct'
+	const sourceDescriptor = ORDER_SOURCE_LABELS[sourceKey]
+	const sourceLabel = sourceDescriptor ? _(sourceDescriptor) : sourceKey
+	const sourceDetail =
+		order.campaignName ??
+		order.attribution?.utmCampaign ??
+		order.attribution?.utmSource ??
+		order.attribution?.coupon ??
+		null
+	const cameFromLabel =
+		sourceDetail && sourceDetail.toLowerCase() !== sourceLabel.toLowerCase()
+			? `${sourceLabel} · ${sourceDetail}`
+			: sourceLabel
 	const canPushBack =
 		canWrite &&
 		Boolean(onPushBack) &&
@@ -768,6 +785,13 @@ export function OrderDetail({
 										{promisedLabel}
 									</p>
 								) : null}
+								<p
+									data-testid="order-came-from"
+									className="text-muted-foreground"
+								>
+									<Trans>Came from: </Trans>
+									<span dir="auto">{cameFromLabel}</span>
+								</p>
 								{order.largeOrderExtraMinutes ? (
 									<p className="font-medium" data-testid="order-large-order">
 										<Trans>Large order +{largeOrderExtraMinutes} min</Trans>

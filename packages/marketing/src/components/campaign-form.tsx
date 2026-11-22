@@ -1,8 +1,13 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type BroadcastProblem } from '@repo/common/broadcast-checks'
 import { type EmailBlock } from '@repo/common/email-blocks'
 import { PUSH_BODY_MAX, PUSH_TITLE_MAX } from '@repo/common/push'
+import {
+	countMarketingSmsSegments,
+	SMS_OPT_OUT_PHRASE,
+} from '@repo/common/sms-compliance'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
@@ -34,6 +39,8 @@ export interface CampaignFormDefaults {
 	pushImageUrl?: string | null
 	pushLink?: string | null
 	audience?: string | null
+	/** A text prefilled for when the operator switches to Text (an occasion's, #152). */
+	smsContent?: string | null
 	/** ISO instant of a scheduled send. */
 	scheduledAt?: string | null
 	lateAfterMinutes?: number | null
@@ -94,6 +101,40 @@ export interface CampaignFormProps {
 	 */
 	onAiDraftBlocks?: (blocks: EmailBlock[]) => void
 	hasEmailBlocks?: boolean
+	/**
+	 * The text allowance of the month (#247), shown on the send step of a text
+	 * broadcast: what the plan includes per month, how many sends are left and
+	 * when they come back (epoch ms). A send over the allowance cannot start; it
+	 * can still be scheduled for the first day of next month or later.
+	 */
+	smsAllowance?: { limit: number; remaining: number; resetsAt: number } | null
+}
+
+/** The line under "When" on a text broadcast: what this send costs and what is left. */
+function allowanceNote(
+	allowance: { limit: number; remaining: number },
+	resetDate: string,
+	over: boolean,
+	_: (descriptor: MessageDescriptor) => string,
+) {
+	const { limit, remaining } = allowance
+	if (remaining <= 0) {
+		return over
+			? _(
+					msg`You have used all ${limit} text sends this month. You get ${limit} more on ${resetDate}. Choose a time on ${resetDate} or later to schedule it.`,
+				)
+			: _(
+					msg`This uses a text send of next month. You get ${limit} more on ${resetDate}.`,
+				)
+	}
+	if (remaining === 1) {
+		return _(
+			msg`This is your last one this month. You get ${limit} more on ${resetDate}.`,
+		)
+	}
+	return _(
+		msg`This uses 1 of your ${limit} text sends this month. ${remaining} left.`,
+	)
 }
 
 export function CampaignForm({
@@ -118,15 +159,21 @@ export function CampaignForm({
 	notice,
 	onAiDraftBlocks,
 	hasEmailBlocks = false,
+	smsAllowance = null,
 }: CampaignFormProps) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const { channelLabel } = useCampaignLabels()
 	const [channel, setChannel] = useState<CampaignChannel>(
 		defaults?.channel ?? 'email',
 	)
 	const [smsContent, setSmsContent] = useState(
-		defaults?.channel === 'sms' ? (defaults.content ?? '') : '',
+		defaults?.channel === 'sms'
+			? (defaults.content ?? '')
+			: (defaults?.smsContent ?? ''),
 	)
+	// The segment count the guest is billed for includes the opt-out line the
+	// server adds to every marketing text (#75).
+	const smsSegments = countMarketingSmsSegments(smsContent).segments
 	const [pushContent, setPushContent] = useState(
 		defaults?.channel === 'push' ? (defaults.content ?? '') : '',
 	)
@@ -164,6 +211,21 @@ export function CampaignForm({
 
 	const scheduledIso =
 		when === 'later' && localTime ? new Date(localTime).toISOString() : ''
+	// A text over the month's allowance cannot start in that month (#247).
+	const scheduledMs = scheduledIso ? new Date(scheduledIso).getTime() : null
+	const overAllowance =
+		channel === 'sms' &&
+		smsAllowance !== null &&
+		smsAllowance.remaining <= 0 &&
+		(when === 'now' ||
+			scheduledMs === null ||
+			scheduledMs < smsAllowance.resetsAt)
+	const resetDate = smsAllowance
+		? new Intl.DateTimeFormat(i18n.locale, {
+				dateStyle: 'long',
+				timeZone: 'UTC',
+			}).format(new Date(smsAllowance.resetsAt))
+		: ''
 
 	const sendAnyway = () => {
 		setAcknowledged(true)
@@ -339,8 +401,13 @@ export function CampaignForm({
 								<AiDraftButton onClick={() => setAiOpen(true)} />
 							) : null}
 							{channel === 'sms' ? (
-								<span className="text-muted-foreground text-xs">
+								<span
+									className="text-muted-foreground text-xs"
+									data-testid="sms-count"
+								>
 									{smsContent.length} / 1600
+									{' · '}
+									{_(msg`Segments: ${smsSegments} (opt-out line included)`)}
 								</span>
 							) : channel === 'push' ? (
 								<span className="text-muted-foreground text-xs">
@@ -389,6 +456,13 @@ export function CampaignForm({
 								required
 							/>
 						)}
+						{channel === 'sms' ? (
+							<p className="text-muted-foreground text-xs">
+								{_(
+									msg`Every text ends with "${SMS_OPT_OUT_PHRASE}" and goes out between 9:00 and 20:00 local time. We add both for you.`,
+								)}
+							</p>
+						) : null}
 						{channel === 'sms' ? (
 							<RewriteWithAi
 								sms
@@ -495,6 +569,18 @@ export function CampaignForm({
 							))}
 						</div>
 					</div>
+					{channel === 'sms' && smsAllowance ? (
+						<p
+							role={overAllowance ? 'alert' : undefined}
+							className={cn(
+								'text-sm',
+								overAllowance ? 'text-destructive' : 'text-muted-foreground',
+							)}
+							data-testid="sms-allowance"
+						>
+							{allowanceNote(smsAllowance, resetDate, overAllowance, _)}
+						</p>
+					) : null}
 					{when === 'later' ? (
 						<div className="grid gap-4 sm:grid-cols-2">
 							<div className="space-y-2">
@@ -582,7 +668,7 @@ export function CampaignForm({
 							type="submit"
 							name="intent"
 							value={when === 'later' ? 'schedule' : 'send'}
-							disabled={isSubmitting}
+							disabled={isSubmitting || overAllowance}
 							className="gap-2"
 						>
 							{isSubmitting ? (

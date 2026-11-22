@@ -165,6 +165,7 @@ function defaultUnsubscribedSource(
 ): CustomerUnsubscribeSource {
 	if (source === 'operator' || source === 'staff') return 'operator'
 	if (source === 'import') return 'import'
+	// The guest texted START back: any opt-out they make later is their own.
 	return 'self'
 }
 
@@ -311,7 +312,14 @@ export async function isInStaffConsentCoolingOff(
 		)
 		.get()
 	if (!row?.unsubscribedAt) return false
-	if (row.unsubscribedSource && row.unsubscribedSource !== 'self') return false
+	// A STOP reply is the guest's own opt-out, like the link and the switch.
+	if (
+		row.unsubscribedSource &&
+		row.unsubscribedSource !== 'self' &&
+		row.unsubscribedSource !== 'sms_reply'
+	) {
+		return false
+	}
 	const now = (params.now ?? new Date()).getTime()
 	const coolingOffMs = STAFF_CONSENT_COOLING_OFF_DAYS * 24 * 60 * 60 * 1000
 	return now - row.unsubscribedAt.getTime() < coolingOffMs

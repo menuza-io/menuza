@@ -1,7 +1,7 @@
-import { buildLink } from '@repo/common/links'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { userHasOrganizationPermission } from '@repo/auth'
+import { buildLink } from '@repo/common/links'
 import {
 	and,
 	asc,
@@ -23,6 +23,8 @@ import {
 import { SocialPostComposer } from '#app/components/social/post-composer.tsx'
 import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { loadOrganization, siteOrigin } from '#app/utils/gbp/context.server.ts'
+import { occasionDraft } from '#app/utils/marketing/calendar.server.ts'
+import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { localizedRecord } from '#app/utils/seo/cuisine-form.server.ts'
 import { requireSocialAccess } from '#app/utils/social/access.server.ts'
@@ -35,7 +37,11 @@ import {
 } from '#app/utils/social/google-post.ts'
 import { isGoogleSocialEnabled } from '#app/utils/social/google-posts.server.ts'
 import { handleSocialPostForm } from '#app/utils/social/post-form.server.ts'
-import { schedulePrefillForDay, dayKey } from '#app/utils/social/time.ts'
+import {
+	schedulePrefillForDay,
+	dayKey,
+	toLocalInputValue,
+} from '#app/utils/social/time.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requireSocialAccess(request, params.orgSlug, {
@@ -67,6 +73,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	const discountId = url.searchParams.get('discountId')
 	const eventId = url.searchParams.get('eventId')
+
+	// An occasion of the marketing calendar (#152): its ready-made post, for the
+	// recommended time. Only when the calendar is on and the date is the one the
+	// occasion's rule gives.
+	const occasionKey = url.searchParams.get('occasion')
+	const occasion =
+		occasionKey && (await getMarketingFeatures(access.organization.id)).calendar
+			? await occasionDraft({
+					organizationId: access.organization.id,
+					key: occasionKey,
+					date: date ?? '',
+				})
+			: null
+	if (occasion) prefillBody = occasion.message.social
 
 	if (googleEnabled && discountId) {
 		const canReadDiscount = await userHasOrganizationPermission(
@@ -193,9 +213,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		orgSlug: access.organization.slug,
 		timeZone,
-		scheduledAt: validDate
-			? schedulePrefillForDay(validDate, timeZone, now)
-			: '',
+		scheduledAt: occasion
+			? toLocalInputValue(new Date(occasion.sendAt), timeZone)
+			: validDate
+				? schedulePrefillForDay(validDate, timeZone, now)
+				: '',
 		accounts,
 		prefill: {
 			body: prefillBody,

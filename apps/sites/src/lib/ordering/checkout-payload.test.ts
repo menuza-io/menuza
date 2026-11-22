@@ -317,4 +317,29 @@ describe('checkoutOrderPayload smsUpdates', () => {
 		expect(on).not.toBe(off)
 		vi.unstubAllGlobals()
 	})
+
+	it('adds the attribution to the request but never to the attempt key (#115)', async () => {
+		const store = new Map<string, string>()
+		vi.stubGlobal('sessionStorage', {
+			getItem: (k: string) => store.get(k) ?? null,
+			setItem: (k: string, v: string) => void store.set(k, v),
+			removeItem: (k: string) => void store.delete(k),
+		})
+		const core = build(pickup)
+		const attribution = {
+			utmSource: 'newsletter',
+			touchedAt: 1_700_000_000_000,
+		}
+		expect(
+			checkoutOrderRequest(core, 'key', null, attribution).attribution,
+		).toBe(attribution)
+		expect(checkoutOrderRequest(core, 'key', null, null)).not.toHaveProperty(
+			'attribution',
+		)
+		// The key is derived from the core alone: a retry after a new visit replays the first order.
+		expect(await checkoutAttemptKey('org', core)).toBe(
+			await checkoutAttemptKey('org', core),
+		)
+		vi.unstubAllGlobals()
+	})
 })

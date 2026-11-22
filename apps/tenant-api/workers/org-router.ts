@@ -424,6 +424,24 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// The App's occasion job schedules a broadcast (#152): body orgId,
+	// authenticated by INTERNAL_COMMAND_TOKEN inside the route handler.
+	if (pathname === '/api/marketing/campaigns/auto-schedule') {
+		return orgIdFromJsonBody(request)
+	}
+
+	// Short links (#159): the public lookup names its organization the way the
+	// order options do, by the site's own Origin (plus slug or host hints).
+	if (pathname === '/short-links/resolve') {
+		return orgIdFromOrderIdentity(request, url)
+	}
+
+	// Inbound text replies (#75): the edge forwards one keyword to one
+	// organization; the route checks INTERNAL_COMMAND_TOKEN.
+	if (pathname === '/api/sms-inbound/apply') {
+		return orgIdFromJsonBody(request)
+	}
+
 	// Hourly staff tick: a body orgId runs that organization in its Durable
 	// Object; no orgId means the edge fans out to every organization.
 	if (pathname === '/api/staff/tick') {

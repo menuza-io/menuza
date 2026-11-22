@@ -14,6 +14,8 @@ import {
 import { type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useCampaignLabels } from '../i18n/campaign-labels.ts'
+import { readAttributionView } from '../attribution.ts'
+import { AttributionPanel } from './attribution-panel.tsx'
 import { CampaignStatusBadge } from './campaign-list.tsx'
 import { type CampaignCoupon, type CampaignDetail } from '../types/campaign.ts'
 
@@ -188,6 +190,14 @@ export function CampaignDetailView({
 						</Link>
 					) : null}
 				</p>
+			) : null}
+
+			{campaign.attribution &&
+			(campaign.status === 'Completed' || campaign.status === 'Processing') ? (
+				<AttributionPanel
+					view={readAttributionView(campaign.attribution)}
+					testId="campaign-attribution"
+				/>
 			) : null}
 
 			<section className="space-y-3" aria-labelledby="campaign-message-heading">

@@ -349,6 +349,16 @@ export function AdminOrganizationDetail({
 									</a>
 								}
 							/>
+							<Button
+								variant="outline"
+								size="sm"
+								role="link"
+								render={
+									<a href={`/organizations/${organization.id}/text-sends`}>
+										<Trans>Text sends</Trans>
+									</a>
+								}
+							/>
 						</div>
 					</CardContent>
 				</Card>

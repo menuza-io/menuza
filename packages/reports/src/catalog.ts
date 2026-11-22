@@ -770,6 +770,24 @@ const orderFields: ReportField[] = [
 		],
 	},
 	{
+		id: 'attributionSource',
+		label: 'Order source',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		description:
+			'Where the guest came from: a campaign email or text, a short link, a table or poster QR code, a coupon, another site (its UTM source), or direct. The last visit in the 7 days before the order gets the credit.',
+	},
+	{
+		id: 'attributionCampaign',
+		label: 'Campaign',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		description:
+			'The broadcast or automation whose link the guest followed, or the UTM campaign of the visit. Blank when there was none.',
+	},
+	{
 		id: 'customerName',
 		label: 'Customer name',
 		type: 'string',

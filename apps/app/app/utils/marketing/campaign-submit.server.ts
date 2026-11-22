@@ -2,6 +2,11 @@ import { i18n } from '@lingui/core'
 import { msg } from '@lingui/macro'
 import { type BroadcastProblem } from '@repo/common/broadcast-checks'
 import { type EmailBlock } from '@repo/common/email-blocks'
+import {
+	checkSmsSend,
+	releaseSmsSend,
+	reserveSmsSend,
+} from '@repo/marketing/server/sms-allowance'
 import { requireModuleAgreement } from '#app/utils/legal/agreements.server.ts'
 import { auditCampaign } from './campaign-audit.server.ts'
 import { prepareCampaignMessage } from './campaign-message.server.ts'
@@ -157,9 +162,29 @@ export async function submitCampaign(input: {
 			sendAtMs: later ? schedule.scheduledAt!.getTime() : Date.now(),
 			fetchTenant: input.fetchTenant,
 			retargetOf: existing?.retargetOfCampaignId,
+			excludeCampaignId: existing?.id,
 		})
 		if (!mayProceed(problems, formData.get('acknowledgeWarnings') === '1')) {
 			return { kind: 'problems', problems, blocks: message.blocks }
+		}
+	}
+
+	// The monthly text allowance (#247): a text that starts in a month with no
+	// sends left cannot be sent or scheduled there; scheduling it for the first
+	// day of next month or later is fine.
+	const startsAtMs = later ? schedule.scheduledAt!.getTime() : Date.now()
+	const countsAgainstAllowance = channel === 'sms' && intent !== 'draft'
+	if (countsAgainstAllowance) {
+		const check = await checkSmsSend({
+			organizationId: input.organizationId,
+			startsAtMs,
+			campaignId: existing?.id,
+		})
+		if (!check.ok) {
+			return {
+				kind: 'error',
+				error: allowanceExhaustedMessage(check.allowance),
+			}
 		}
 	}
 
@@ -213,6 +238,36 @@ export async function submitCampaign(input: {
 	const saved = (await res.json().catch(() => ({}))) as { campaignId?: string }
 	const campaignId = saved.campaignId ?? existing?.id ?? ''
 
+	if (countsAgainstAllowance && campaignId) {
+		// Hold this send of the month (idempotent per broadcast; a broadcast moved
+		// into another month moves its send). Losing the race for the last slot
+		// after the broadcast was saved cancels it; one that already started is
+		// put off by the region, which asks again before its first text.
+		const held = await reserveSmsSend({
+			organizationId: input.organizationId,
+			campaignId,
+			startsAtMs,
+		})
+		if (!held.ok) {
+			await input
+				.fetchTenant(
+					`/operator/marketing/campaigns/${encodeURIComponent(campaignId)}/cancel`,
+					{ method: 'POST' },
+				)
+				.catch(() => null)
+			return {
+				kind: 'error',
+				error: allowanceExhaustedMessage(held.allowance),
+			}
+		}
+	} else if (channel === 'sms' && intent === 'draft' && existing) {
+		// Saving a scheduled text as a draft frees the send it held.
+		await releaseSmsSend({
+			organizationId: input.organizationId,
+			campaignId: existing.id,
+		})
+	}
+
 	await auditCampaign({
 		kind: existing ? 'updated' : 'created',
 		userId: input.userId,
@@ -232,6 +287,21 @@ export async function submitCampaign(input: {
 		})
 	}
 	return { kind: 'saved', campaignId, intent }
+}
+
+/** "You have used all N sends this month. You get N more on 1 December." in the operator's words. */
+export function allowanceExhaustedMessage(allowance: {
+	limit: number
+	resetsAt: number
+}) {
+	const date = new Intl.DateTimeFormat(i18n.locale, {
+		dateStyle: 'long',
+		timeZone: 'UTC',
+	}).format(new Date(allowance.resetsAt))
+	const limit = allowance.limit
+	return i18n._(
+		msg`You have used all ${limit} text sends this month. You get ${limit} more on ${date}. You can still write it and schedule it for ${date} or later, or upgrade your plan.`,
+	)
 }
 
 function safeJson(value: string) {

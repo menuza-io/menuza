@@ -1,6 +1,11 @@
 import { i18n } from '@lingui/core'
 import { type BroadcastProblem } from '@repo/common/broadcast-checks'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+	checkSmsSend,
+	releaseSmsSend,
+	reserveSmsSend,
+} from '@repo/marketing/server/sms-allowance'
 import { auditCampaign } from './campaign-audit.server.ts'
 import { prepareCampaignMessage } from './campaign-message.server.ts'
 import { runSendChecks } from './campaign-send.server.ts'
@@ -8,6 +13,14 @@ import { submitCampaign } from './campaign-submit.server.ts'
 import { sendTestBroadcast } from './campaign-test-send.server.ts'
 
 vi.mock('./campaign-audit.server.ts', () => ({ auditCampaign: vi.fn() }))
+vi.mock('#app/utils/legal/agreements.server.ts', () => ({
+	requireModuleAgreement: vi.fn(async () => null),
+}))
+vi.mock('@repo/marketing/server/sms-allowance', () => ({
+	checkSmsSend: vi.fn(),
+	reserveSmsSend: vi.fn(),
+	releaseSmsSend: vi.fn(),
+}))
 vi.mock('./campaign-message.server.ts', () => ({
 	prepareCampaignMessage: vi.fn(),
 }))
@@ -304,5 +317,125 @@ describe('submitCampaign', () => {
 			error: 'A dish is gone',
 		})
 		expect(fetchTenant).not.toHaveBeenCalled()
+	})
+
+	describe('the monthly text allowance (#247)', () => {
+		const NOV_RESET = Date.UTC(2026, 11, 1)
+		const exhausted = {
+			ok: false as const,
+			allowance: {
+				periodKey: '2026-11',
+				limit: 4,
+				extra: 0,
+				used: 4,
+				remaining: 0,
+				resetsAt: NOV_RESET,
+			},
+		}
+		const fits = {
+			ok: true as const,
+			allowance: { ...exhausted.allowance, used: 1, remaining: 3 },
+		}
+
+		beforeEach(() => {
+			// A fresh body per call: a Response can be read once.
+			fetchTenant.mockImplementation(async () =>
+				Response.json({ success: true, campaignId: 'c-new' }),
+			)
+			vi.mocked(checkSmsSend).mockReset().mockResolvedValue(fits)
+			vi.mocked(reserveSmsSend).mockReset().mockResolvedValue({
+				ok: true,
+				periodKey: '2026-11',
+				alreadyHeld: false,
+			})
+			vi.mocked(releaseSmsSend).mockReset().mockResolvedValue(true)
+			vi.mocked(prepareCampaignMessage).mockResolvedValue({
+				ok: true,
+				message: { ...message, channel: 'sms' as never },
+			})
+		})
+
+		it('holds a send of the month for a text sent now, and for one scheduled', async () => {
+			await run({ intent: 'send', channel: 'sms' })
+			expect(reserveSmsSend).toHaveBeenCalledWith(
+				expect.objectContaining({
+					organizationId: 'org',
+					campaignId: 'c-new',
+					startsAtMs: expect.any(Number),
+				}),
+			)
+			vi.mocked(reserveSmsSend).mockClear()
+			const at = later()
+			await run({ intent: 'schedule', channel: 'sms', scheduledAt: at })
+			expect(reserveSmsSend).toHaveBeenCalledWith(
+				expect.objectContaining({ startsAtMs: new Date(at).getTime() }),
+			)
+		})
+
+		it('a text over the allowance cannot be sent or scheduled this month: nothing is saved, and the reset date is named', async () => {
+			vi.mocked(checkSmsSend).mockResolvedValue(exhausted)
+			for (const fields of [
+				{ intent: 'send', channel: 'sms' } as Record<string, string>,
+				{ intent: 'schedule', channel: 'sms', scheduledAt: later() },
+			]) {
+				const result = (await run(fields)) as { kind: string; error: string }
+				expect(result.kind).toBe('error')
+				expect(result.error).toContain('4 text sends this month')
+				expect(result.error).toContain('December 1, 2026')
+			}
+			expect(fetchTenant).not.toHaveBeenCalled()
+			expect(reserveSmsSend).not.toHaveBeenCalled()
+		})
+
+		it('it can still be written as a draft, and scheduled for next month', async () => {
+			vi.mocked(checkSmsSend).mockImplementation(async ({ startsAtMs }) =>
+				startsAtMs >= NOV_RESET ? fits : exhausted,
+			)
+			expect(await run({ intent: 'draft', channel: 'sms' })).toMatchObject({
+				kind: 'saved',
+				intent: 'draft',
+			})
+			const nextMonth = new Date(NOV_RESET + 2 * 3_600_000).toISOString()
+			expect(
+				await run({
+					intent: 'schedule',
+					channel: 'sms',
+					scheduledAt: nextMonth,
+				}),
+			).toMatchObject({ kind: 'saved', intent: 'schedule' })
+		})
+
+		it('losing the race for the last slot after saving cancels the broadcast', async () => {
+			vi.mocked(reserveSmsSend).mockResolvedValue({
+				ok: false,
+				reason: 'exhausted',
+				allowance: exhausted.allowance,
+			})
+			const result = (await run({ intent: 'send', channel: 'sms' })) as {
+				kind: string
+				error: string
+			}
+			expect(result.kind).toBe('error')
+			expect(fetchTenant.mock.calls.at(-1)![0]).toBe(
+				'/operator/marketing/campaigns/c-new/cancel',
+			)
+		})
+
+		it('saving a scheduled text as a draft frees its send; email never touches the allowance', async () => {
+			await run(
+				{ intent: 'draft', channel: 'sms' },
+				{ id: 'c-1', retargetOfCampaignId: null, discountOffer: null },
+			)
+			expect(releaseSmsSend).toHaveBeenCalledWith({
+				organizationId: 'org',
+				campaignId: 'c-1',
+			})
+			vi.mocked(checkSmsSend).mockClear()
+			vi.mocked(reserveSmsSend).mockClear()
+			vi.mocked(prepareCampaignMessage).mockResolvedValue({ ok: true, message })
+			await run({ intent: 'send', channel: 'email' })
+			expect(checkSmsSend).not.toHaveBeenCalled()
+			expect(reserveSmsSend).not.toHaveBeenCalled()
+		})
 	})
 })

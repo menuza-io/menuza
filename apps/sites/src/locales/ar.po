@@ -1724,6 +1724,10 @@ msgstr "خالٍ من الغلوتين"
 msgid "Gluten-Free"
 msgstr "خالٍ من الغلوتين"
 
+#: src/pages/l/[code].astro.ts:3
+msgid "Go to our home page"
+msgstr "الانتقال إلى الصفحة الرئيسية"
+
 #: src/components/SiteNotFound.astro.ts:3
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Go to the home page"
@@ -3828,6 +3832,10 @@ msgstr "تغيّرت رسوم التغليف. يرجى مراجعة المجمو
 msgid "The page you are looking for does not exist or has moved."
 msgstr "الصفحة التي تبحث عنها غير موجودة أو تم نقلها."
 
+#: src/pages/l/[code].astro.ts:3
+msgid "The page you were sent to has been taken down. Our home page has everything you need."
+msgstr "تم حذف الصفحة التي وُجِّهت إليها. صفحتنا الرئيسية فيها كل ما تحتاجه."
+
 #: src/lib/reservations/labels.ts:408
 msgid "The payment did not go through"
 msgstr "لم تتم عملية الدفع"
@@ -4076,6 +4084,10 @@ msgstr "انتهت صلاحية هذا الرابط أو أنه غير صالح.
 #: src/pages/menu.astro.ts:3
 msgid "This link has expired."
 msgstr "انتهت صلاحية هذا الرابط."
+
+#: src/pages/l/[code].astro.ts:3
+msgid "This link is not available any more"
+msgstr "هذا الرابط لم يعد متاحًا"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."

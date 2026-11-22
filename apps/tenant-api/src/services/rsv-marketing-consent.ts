@@ -253,7 +253,14 @@ export function staffCoolingOffUntil(
 ): Date | null {
 	if (!row.unsubscribedAt) return null
 	// A null source predates the column and counts as the guest's own.
-	if (row.unsubscribedSource && row.unsubscribedSource !== 'self') return null
+	// A STOP reply is the guest's own opt-out, like the link and the switch.
+	if (
+		row.unsubscribedSource &&
+		row.unsubscribedSource !== 'self' &&
+		row.unsubscribedSource !== 'sms_reply'
+	) {
+		return null
+	}
 	const until = row.unsubscribedAt.getTime() + STAFF_CONSENT_COOLING_OFF_MS
 	return until > now ? new Date(until) : null
 }

@@ -643,6 +643,26 @@
       "types": "./src/email-sender.ts",
       "import": "./src/email-sender.ts",
       "default": "./src/email-sender.ts"
+    },
+    "./sms-compliance": {
+      "types": "./src/sms-compliance.ts",
+      "import": "./src/sms-compliance.ts",
+      "default": "./src/sms-compliance.ts"
+    },
+    "./short-links": {
+      "types": "./src/short-links.ts",
+      "import": "./src/short-links.ts",
+      "default": "./src/short-links.ts"
+    },
+    "./marketing-allowance": {
+      "types": "./src/marketing-allowance.ts",
+      "import": "./src/marketing-allowance.ts",
+      "default": "./src/marketing-allowance.ts"
+    },
+    "./order-attribution": {
+      "types": "./src/order-attribution.ts",
+      "import": "./src/order-attribution.ts",
+      "default": "./src/order-attribution.ts"
     }
   },
   "scripts": {

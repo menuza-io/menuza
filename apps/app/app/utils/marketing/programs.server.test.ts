@@ -39,6 +39,8 @@ const on = {
 	cartReminders: true,
 	aiDrafts: false,
 	push: false,
+	shortLinks: false,
+	calendar: false,
 }
 const request = new Request('http://localhost/acme')
 

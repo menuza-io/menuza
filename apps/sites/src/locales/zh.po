@@ -1724,6 +1724,10 @@ msgstr "无麸质"
 msgid "Gluten-Free"
 msgstr "无麸质"
 
+#: src/pages/l/[code].astro.ts:3
+msgid "Go to our home page"
+msgstr "前往首页"
+
 #: src/components/SiteNotFound.astro.ts:3
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Go to the home page"
@@ -3828,6 +3832,10 @@ msgstr "包装费已变化，请核对合计后重新下单。"
 msgid "The page you are looking for does not exist or has moved."
 msgstr "您要查找的页面不存在或已移动。"
 
+#: src/pages/l/[code].astro.ts:3
+msgid "The page you were sent to has been taken down. Our home page has everything you need."
+msgstr "您要访问的页面已被下线。我们的首页有您需要的一切信息。"
+
 #: src/lib/reservations/labels.ts:408
 msgid "The payment did not go through"
 msgstr "付款未成功"
@@ -4076,6 +4084,10 @@ msgstr "此链接已过期或无效。"
 #: src/pages/menu.astro.ts:3
 msgid "This link has expired."
 msgstr "此链接已过期。"
+
+#: src/pages/l/[code].astro.ts:3
+msgid "This link is not available any more"
+msgstr "此链接已失效"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."

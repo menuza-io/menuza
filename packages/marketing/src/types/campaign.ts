@@ -82,6 +82,16 @@ export interface CampaignDetail {
 	 * Processing by an interrupted or timed-out send. Platform campaigns only.
 	 */
 	unconfirmedRecipientCount?: number
+	/**
+	 * Orders and revenue credited to this broadcast (#115), counted in the
+	 * guest's region: `clicked` (after a click on its link) and `reached`
+	 * (clicked, plus guests it reached in the 14 days before ordering).
+	 */
+	attribution?: {
+		currency: string
+		clicked: { orders: number; revenueMinor: number }
+		reached: { orders: number; revenueMinor: number }
+	} | null
 }
 
 export type CampaignCoupon =

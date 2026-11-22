@@ -468,7 +468,9 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 		expect(smsModule.sendSms).toHaveBeenCalledWith(
 			expect.objectContaining({
 				to: '+15550192834',
-				message: 'Hello Sarah! Thanks for verifying your phone: +15550192834.',
+				// Every marketing text ends with the opt-out phrase (#75).
+				message:
+					'Hello Sarah! Thanks for verifying your phone: +15550192834.\nReply STOP to opt out.',
 			}),
 		)
 

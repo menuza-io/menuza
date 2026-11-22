@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+	isManyOverlap,
 	checkBroadcast,
 	clampLateAfterMinutes,
 	hasBlockingProblems,
@@ -226,5 +227,59 @@ describe('push broadcasts (#105)', () => {
 			code: 'push_merge_tags',
 			severity: 'blocking',
 		})
+	})
+})
+
+describe('audience overlap (#393)', () => {
+	const base = {
+		channel: 'sms' as const,
+		content: 'Half price today',
+		hasOffer: false,
+		usesCouponTag: false,
+		audienceCount: 40,
+	}
+	const overlap = {
+		campaignId: 'c1',
+		name: 'Taco Tuesday',
+		channel: 'sms' as const,
+		scheduledAt: Date.UTC(2026, 10, 24, 15),
+		overlapCount: 30,
+		audienceCount: 40,
+		otherAudienceCount: 50,
+	}
+
+	it('is a warning with the count and the other broadcast, never blocking', () => {
+		const problems = checkBroadcast({ ...base, overlaps: [overlap] })
+		expect(problems).toEqual([
+			{ code: 'audience_overlap', severity: 'warning', overlap },
+		])
+		expect(hasBlockingProblems(problems)).toBe(false)
+	})
+
+	it('is absent without overlaps', () => {
+		expect(checkBroadcast({ ...base, overlaps: [] })).toEqual([])
+		expect(checkBroadcast({ ...base, overlaps: null })).toEqual([])
+		expect(checkBroadcast(base)).toEqual([])
+	})
+
+	it('"many" is at least 5 guests and half of the smaller audience', () => {
+		expect(isManyOverlap(30, 40, 50)).toBe(true)
+		expect(isManyOverlap(5, 10, 100)).toBe(true)
+		expect(isManyOverlap(4, 4, 4)).toBe(false)
+		expect(isManyOverlap(5, 100, 100)).toBe(false)
+		expect(isManyOverlap(0, 0, 0)).toBe(false)
+		expect(isManyOverlap(60, 100, 5000)).toBe(true)
+	})
+
+	it('carries no guest: only counts, a title and a time', () => {
+		expect(Object.keys(overlap).sort()).toEqual([
+			'audienceCount',
+			'campaignId',
+			'channel',
+			'name',
+			'otherAudienceCount',
+			'overlapCount',
+			'scheduledAt',
+		])
 	})
 })

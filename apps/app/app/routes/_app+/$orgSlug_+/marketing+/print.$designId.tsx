@@ -87,6 +87,11 @@ import {
 	updateArtworkDesign,
 } from '#app/utils/print/designs.server.ts'
 import {
+	isShortLinksOn,
+	trackedQrScans,
+	trackedQrUrl,
+} from '#app/utils/marketing/short-links.server.ts'
+import {
 	listFeaturableItems,
 	listPrintScopes,
 	orgLocales,
@@ -130,7 +135,13 @@ function qrFromForm(
 	formData: FormData,
 ): PrintQrTarget | 'empty' {
 	if (form.qrKind === 'site') {
-		return { kind: 'site', path: form.qrPath?.trim() || '/' }
+		return {
+			kind: 'site',
+			path: form.qrPath?.trim() || '/',
+			// Count scans (#159): only sent when ticked, so an older region or a
+			// design saved before the switch keeps its plain link.
+			...(formData.get('qrTrack') === 'on' ? { track: true } : {}),
+		}
 	}
 	if (form.qrKind === 'none') return { kind: 'none' }
 	const target = printVertical.qrTargets?.[form.qrKind]
@@ -223,6 +234,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
+	// Scans of a tracked QR (#159): "Scans: N this month" next to the code.
+	const shortLinks = await isShortLinksOn(access.organization.id)
+	const trackedPath =
+		design.content.qr.kind === 'site' &&
+		(design.content.qr as { track?: unknown }).track === true
+			? (printSitePath(design.content.qr) ?? '/')
+			: null
+	const scans =
+		shortLinks && trackedPath !== null
+			? await trackedQrScans({
+					request,
+					organization: access.organization,
+					designId: design.id,
+					path: trackedPath,
+				}).catch(() => null)
+			: null
+
 	const size = printCatalog.getSize(design.product, design.sizeKey)
 	const pieceCount = approved?.pieces.length ?? null
 	// Pieces the proof stands for (a per-piece target prints one card each).
@@ -243,6 +271,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		// Some codes are capabilities: the vertical decides who sees them.
 		qrHidden: !(await canViewQrCodes(access, design.content.qr)),
 		design,
+		shortLinks,
+		scans,
 		locales,
 		defaultLocale,
 		scopes,
@@ -343,6 +373,27 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		style: submission.value.style,
 		content: content.data,
 	})
+	// Count scans (#159): saving makes the short link the QR carries, so the
+	// proof, the stale check and the approval all show the same code.
+	if (qr.kind === 'site' && (qr as { track?: unknown }).track === true) {
+		try {
+			await trackedQrUrl({
+				request,
+				organization: access.organization,
+				designId: saved.id,
+				path: printSitePath(qr) ?? '/',
+				canWrite: true,
+			})
+		} catch (error) {
+			if (error instanceof Response && error.status === 503) {
+				return {
+					result: submission.reply(),
+					error: 'qr_unavailable' as const,
+				}
+			}
+			throw error
+		}
+	}
 	if (submission.value.intent === 'approve') {
 		try {
 			await approvePrintDesign(request, access, saved)
@@ -775,6 +826,30 @@ export default function PrintDesignRoute() {
 												placeholder="/contact"
 											/>
 										</Field>
+									) : null}
+
+									{qrKind === 'site' && data.shortLinks ? (
+										<div className="space-y-2">
+											<Label className="flex min-h-11 cursor-pointer items-center gap-3">
+												<Checkbox
+													name="qrTrack"
+													defaultChecked={
+														(content.qr as { track?: unknown }).track === true
+													}
+												/>
+												{_(msg`Count scans`)}
+											</Label>
+											<p
+												className="text-muted-foreground text-sm"
+												data-testid="print-scans"
+											>
+												{data.scans === null
+													? _(
+															msg`The code opens a short link on your site, so each scan is counted. Save to start counting.`,
+														)
+													: _(msg`Scans: ${data.scans} this month`)}
+											</p>
+										</div>
 									) : null}
 								</CardContent>
 							</Card>

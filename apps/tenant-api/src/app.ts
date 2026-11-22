@@ -43,6 +43,11 @@ import { laborRoutes } from './routes/labor.ts'
 import { operatorRoutes } from './routes/operator.ts'
 import { marketingAudienceRoutes } from './routes/operator-marketing-audiences.ts'
 import { marketingSettingsRoutes } from './routes/operator-marketing-settings.ts'
+import { marketingInternalRoutes } from './routes/marketing-internal.ts'
+import {
+	publicShortLinkRoutes,
+	shortLinkOperatorRoutes,
+} from './routes/short-links.ts'
 import { funnelOperatorRoutes } from './routes/operator-funnel.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
 import { emailDomainRoutes } from './routes/email-domains.ts'
@@ -52,6 +57,10 @@ import { publicDeliveryRoutes } from './routes/delivery.ts'
 import { orderSystemRoutes } from './routes/order-system.ts'
 import { customerOrderRoutes } from './routes/customer-orders.ts'
 import { pushRoutes } from './routes/push.ts'
+import {
+	smsInboundInternalRoutes,
+	smsWebhookRoutes,
+} from './routes/sms-webhook.ts'
 import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
 import { operatorQrRoutes } from './routes/operator-qr.ts'
@@ -308,6 +317,13 @@ export function createTenantApiApp() {
 		rateLimit('schedule-link', { windowMs: 60 * 1000, maxRequests: 240 }),
 	)
 
+	// Provider webhooks for inbound text replies (#75). The signature is the
+	// gate; this is only a burst ceiling.
+	app.use(
+		'/webhooks/sms/*',
+		rateLimit('sms-webhook', { windowMs: 60 * 1000, maxRequests: 300 }),
+	)
+
 	app.use(
 		'/voice/*',
 		rateLimit('public-voice-handoffs', {
@@ -384,6 +400,9 @@ export function createTenantApiApp() {
 	app.route('/api/forms', formSystemRoutes)
 	app.route('/api/orders', orderSystemRoutes)
 	app.route('/api/marketing', engagementSyncRoutes)
+	app.route('/api/marketing', marketingInternalRoutes)
+	app.route('/api/sms-inbound', smsInboundInternalRoutes)
+	app.route('/webhooks/sms', smsWebhookRoutes)
 	app.route('/api/staff', staffTickRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/api/menu', menuAvailabilityEventRoutes)
@@ -400,6 +419,8 @@ export function createTenantApiApp() {
 	app.route('/operator/journeys', journeyOperatorRoutes)
 	app.route('/operator/marketing/audiences', marketingAudienceRoutes)
 	app.route('/operator/marketing/settings', marketingSettingsRoutes)
+	app.route('/operator/marketing/short-links', shortLinkOperatorRoutes)
+	app.route('/short-links', publicShortLinkRoutes)
 	app.route('/operator/orders', operatorOrderRoutes)
 	app.route('/operator/qr', operatorQrRoutes)
 	app.route('/operator/people', operatorPeopleRoutes)

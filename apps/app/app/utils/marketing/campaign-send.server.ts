@@ -1,6 +1,7 @@
 import { i18n } from '@lingui/core'
 import { msg } from '@lingui/macro'
 import {
+	type BroadcastOverlap,
 	checkBroadcast,
 	clampLateAfterMinutes,
 	hasBlockingProblems,
@@ -142,6 +143,46 @@ export async function countAudience(
 	}
 }
 
+/**
+ * Other broadcasts in the same window that share many guests with this one
+ * (#393), as the region counted them: counts, a title and a time, never a
+ * guest. Best effort: a region that cannot answer means no warning, not a
+ * refusal to send.
+ */
+export async function findOverlaps(
+	fetchTenant: FetchTenant,
+	input: {
+		channel: 'email' | 'sms' | 'push'
+		audience: string
+		audienceId?: string | null
+		retargetOf?: string | null
+		sendAtMs: number
+		/** The broadcast being edited: not compared with itself. */
+		excludeId?: string | null
+	},
+): Promise<BroadcastOverlap[]> {
+	const query = new URLSearchParams({
+		channel: input.channel,
+		audience: input.audience,
+		sendAt: String(Math.round(input.sendAtMs)),
+	})
+	if (input.audienceId) query.set('audienceId', input.audienceId)
+	if (input.retargetOf) query.set('retargetOf', input.retargetOf)
+	if (input.excludeId) query.set('excludeId', input.excludeId)
+	try {
+		const res = await fetchTenant(
+			`/operator/marketing/audience-overlap?${query.toString()}`,
+		)
+		if (!res.ok) return []
+		const body = (await res.json()) as { overlaps?: unknown }
+		return Array.isArray(body.overlaps)
+			? (body.overlaps as BroadcastOverlap[])
+			: []
+	} catch {
+		return []
+	}
+}
+
 /** The checks for pressing Send or Schedule: blocking problems and warnings. */
 export async function runSendChecks(input: {
 	organizationId: string
@@ -152,14 +193,24 @@ export async function runSendChecks(input: {
 	sendAtMs: number
 	fetchTenant: FetchTenant
 	retargetOf?: string | null
+	/** The broadcast being edited (#393). */
+	excludeCampaignId?: string | null
 }): Promise<BroadcastProblem[]> {
 	const { message } = input
-	const [audienceCount, couponState] = await Promise.all([
+	const [audienceCount, overlaps, couponState] = await Promise.all([
 		countAudience(input.fetchTenant, {
 			channel: message.channel,
 			audience: input.audience,
 			audienceId: input.audienceId,
 			retargetOf: input.retargetOf,
+		}),
+		findOverlaps(input.fetchTenant, {
+			channel: message.channel,
+			audience: input.audience,
+			audienceId: input.audienceId,
+			retargetOf: input.retargetOf,
+			sendAtMs: input.sendAtMs,
+			excludeId: input.excludeCampaignId,
 		}),
 		message.discountOffer
 			? couponStateFor(
@@ -183,6 +234,7 @@ export async function runSendChecks(input: {
 		),
 		couponState,
 		audienceCount,
+		overlaps,
 	})
 }
 

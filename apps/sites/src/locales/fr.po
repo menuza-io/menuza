@@ -1724,6 +1724,10 @@ msgstr "Sans gluten"
 msgid "Gluten-Free"
 msgstr "Sans gluten"
 
+#: src/pages/l/[code].astro.ts:3
+msgid "Go to our home page"
+msgstr "Aller à la page d'accueil"
+
 #: src/components/SiteNotFound.astro.ts:3
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Go to the home page"
@@ -3828,6 +3832,10 @@ msgstr "Les frais d'emballage ont changé. Vérifiez votre total puis passez de 
 msgid "The page you are looking for does not exist or has moved."
 msgstr "La page que vous cherchez n’existe pas ou a été déplacée."
 
+#: src/pages/l/[code].astro.ts:3
+msgid "The page you were sent to has been taken down. Our home page has everything you need."
+msgstr "La page vers laquelle vous étiez dirigé a été retirée. Notre page d'accueil contient tout ce qu'il vous faut."
+
 #: src/lib/reservations/labels.ts:408
 msgid "The payment did not go through"
 msgstr "Le paiement n’a pas abouti"
@@ -4076,6 +4084,10 @@ msgstr "Ce lien a expiré ou n'est pas valide."
 #: src/pages/menu.astro.ts:3
 msgid "This link has expired."
 msgstr "Ce lien a expiré."
+
+#: src/pages/l/[code].astro.ts:3
+msgid "This link is not available any more"
+msgstr "Ce lien n'est plus disponible"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."

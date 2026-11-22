@@ -20,6 +20,7 @@ import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import { and, db, eq, OrganizationMediaAsset, or } from '@repo/database'
 import QRCode from 'qrcode'
 import { ENV } from 'varlock/env'
+import { trackedQrUrl } from '#app/utils/marketing/short-links.server.ts'
 import { resolveSitesOrigin } from '#app/utils/sites/sites-origin.server.ts'
 import { getSignedGetRequestInfoAsync } from '#app/utils/storage.server.ts'
 import { type PrintShopAccess } from './access.server.ts'
@@ -159,8 +160,26 @@ export async function resolvePrintPieces(input: {
 	const utm = printUtmParams(input.designId)
 	const path = printSitePath(input.target)
 	if (path !== null) {
+		// A tracked QR (#159) carries a short link of the site, so every scan
+		// is counted; without one (flag off, or none made yet) it is the page.
+		const tracked =
+			input.target.kind === 'site' &&
+			(input.target as { track?: unknown }).track === true
+				? await trackedQrUrl({
+						request: input.request,
+						organization: input.access.organization,
+						designId: input.designId,
+						path: path || '/',
+						canWrite: input.access.canWrite,
+					})
+				: null
 		return {
-			pieces: [{ label: null, qrUrl: siteUrl(siteOrigin, path || '/', utm) }],
+			pieces: [
+				{
+					label: null,
+					qrUrl: tracked ?? siteUrl(siteOrigin, path || '/', utm),
+				},
+			],
 			facts: [],
 		}
 	}

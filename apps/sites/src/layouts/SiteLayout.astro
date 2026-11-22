@@ -233,8 +233,11 @@ const htmlClass =
 
 <script>
 	import { captureReferralFromPage } from '~/lib/loyalty/referral-storage'
+	import { captureAttributionFromPage } from '~/lib/ordering/attribution'
 	import { mountSiteInteractions } from '~/lib/site-interactions'
 
 	captureReferralFromPage()
+	// Where the guest came from (#115), kept in this browser for 7 days.
+	captureAttributionFromPage()
 	mountSiteInteractions()
 </script>

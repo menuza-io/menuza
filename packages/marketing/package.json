@@ -38,6 +38,21 @@
       "types": "./src/server/platform-resend-webhook.server.ts",
       "import": "./src/server/platform-resend-webhook.server.ts",
       "default": "./src/server/platform-resend-webhook.server.ts"
+    },
+    "./server/sms-allowance": {
+      "types": "./src/server/sms-allowance.server.ts",
+      "import": "./src/server/sms-allowance.server.ts",
+      "default": "./src/server/sms-allowance.server.ts"
+    },
+    "./occasions": {
+      "types": "./src/occasions.ts",
+      "import": "./src/occasions.ts",
+      "default": "./src/occasions.ts"
+    },
+    "./occasion-message": {
+      "types": "./src/occasion-message.ts",
+      "import": "./src/occasion-message.ts",
+      "default": "./src/occasion-message.ts"
     }
   },
   "scripts": {

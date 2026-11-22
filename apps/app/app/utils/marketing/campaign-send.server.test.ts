@@ -257,6 +257,88 @@ describe('runSendChecks', () => {
 	})
 })
 
+describe('overlap warning (#393)', () => {
+	const overlap = {
+		campaignId: 'c-1',
+		name: 'Taco Tuesday',
+		channel: 'email' as const,
+		scheduledAt: NOW + 2 * HOUR,
+		overlapCount: 30,
+		audienceCount: 40,
+		otherAudienceCount: 50,
+	}
+	const msg: PreparedCampaignMessage = {
+		channel: 'email',
+		subject: 'Lunch',
+		content: 'Come eat',
+		contentHtml: '<p>Come eat</p>',
+		contentBlocks: '[]',
+		blocks: [],
+		discountOffer: null,
+	}
+	const region = (answer: unknown) =>
+		vi.fn(async (path: string) =>
+			path.includes('audience-overlap')
+				? answer === 'fail'
+					? new Response('{}', { status: 500 })
+					: Response.json(answer)
+				: Response.json({ count: 40 }),
+		)
+
+	it('asks the region with the audience, the time and the broadcast being edited', async () => {
+		const fetchTenant = region({ overlaps: [] })
+		await runSendChecks({
+			organizationId: 'org',
+			message: msg,
+			audience: 'all',
+			audienceId: 'aud-1',
+			sendAtMs: NOW + HOUR,
+			fetchTenant,
+			excludeCampaignId: 'c-edit',
+		})
+		const call = fetchTenant.mock.calls.find(([path]) =>
+			path.includes('audience-overlap'),
+		)!
+		const url = new URL(`http://x${call[0]}`)
+		expect(Object.fromEntries(url.searchParams)).toEqual({
+			channel: 'email',
+			audience: 'all',
+			audienceId: 'aud-1',
+			sendAt: String(NOW + HOUR),
+			excludeId: 'c-edit',
+		})
+	})
+
+	it('shows the overlap as a warning that can be sent anyway, with the count', async () => {
+		const problems = await runSendChecks({
+			organizationId: 'org',
+			message: msg,
+			audience: 'all',
+			sendAtMs: NOW,
+			fetchTenant: region({ overlaps: [overlap] }),
+		})
+		expect(problems).toEqual([
+			{ code: 'audience_overlap', severity: 'warning', overlap },
+		])
+		// Not an obstacle: acknowledged, it goes ahead.
+		expect(mayProceed(problems, false)).toBe(false)
+		expect(mayProceed(problems, true)).toBe(true)
+	})
+
+	it('no warning when nothing overlaps, or when the region cannot answer', async () => {
+		for (const answer of [{ overlaps: [] }, 'fail', { surprise: 1 }]) {
+			const problems = await runSendChecks({
+				organizationId: 'org',
+				message: msg,
+				audience: 'all',
+				sendAtMs: NOW,
+				fetchTenant: region(answer),
+			})
+			expect(problems).toEqual([])
+		}
+	})
+})
+
 describe('countAudience, intents and messages', () => {
 	it('passes a re-send link and survives a network failure', async () => {
 		const fetchTenant = vi.fn(async (_path: string) =>

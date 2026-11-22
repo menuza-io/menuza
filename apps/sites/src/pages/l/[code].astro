@@ -1,0 +1,82 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import SitePage from '~/components/SitePage.astro'
+import { clickLimiter, isLikelyBot, lookupShortLink } from '~/lib/short-links'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+
+export const prerender = false
+
+/**
+ * `/l/<code>`: a short link on the site's own host (#159). The server asks the
+ * region where it goes and answers a 302 to a path of this same site, with the
+ * link's UTM values and ids. A disabled link shows a friendly page that leads
+ * to the home page. A click is counted per link per day; the visitor's address
+ * and browser are never sent on or stored (a bot, or too many visits from one
+ * address in a minute, resolves without being counted).
+ */
+const organization = Astro.locals.organization
+const code = (Astro.params.code ?? '').toLowerCase()
+const tenantApiUrl = organization ? getTenantApiUrl(organization.dataRegion) : null
+if (!organization || !tenantApiUrl) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+// Only Cloudflare's own header names the visitor's address: `x-forwarded-for`
+// is the client's to set, so without `cf-connecting-ip` a visit is not counted
+// (click counts are advisory, not billing-grade).
+const visitor = Astro.request.headers.get('cf-connecting-ip')
+const count =
+	!isLikelyBot(Astro.request.headers.get('user-agent')) &&
+	visitor !== null &&
+	clickLimiter.allow(visitor)
+const answer = await lookupShortLink({
+	tenantApiUrl,
+	origin: Astro.url.origin,
+	code,
+	messageId: Astro.url.searchParams.get('m'),
+	count,
+	slug: Astro.locals.orgSlug,
+	host: Astro.locals.customHost,
+})
+
+if (answer.status === 'ok') {
+	return new Response(null, {
+		status: 302,
+		headers: { Location: answer.location, 'Cache-Control': 'no-store' },
+	})
+}
+if (answer.status !== 'disabled') {
+	return new Response('Not Found', {
+		status: answer.status === 'unavailable' ? 503 : 404,
+		headers: { 'Cache-Control': 'no-store' },
+	})
+}
+
+const i18n = Astro.locals.i18n
+const locale = Astro.locals.requestedLocale || organization.defaultLocale || 'en'
+const defaultLocale = organization.defaultLocale || 'en'
+const title = i18n._(msg`This link is not available any more`)
+const homeHref = getLocaleHref('/', locale, locale, defaultLocale)
+Astro.response.status = 410
+Astro.response.headers.set('Cache-Control', 'no-store')
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'short-link', title, slug: `l/${code}`, isHomePage: false, sections: [] }}
+	title={`${title} - ${organization.name}`}
+	noIndex
+>
+	<div class="mx-auto flex w-full max-w-xl flex-col items-start gap-4 px-5 py-16 sm:px-8">
+		<h1 class="text-2xl font-semibold">{title}</h1>
+		<p class="text-muted-foreground">
+			{i18n._(msg`The page you were sent to has been taken down. Our home page has everything you need.`)}
+		</p>
+		<a
+			href={homeHref}
+			class="bg-primary text-primary-foreground inline-flex h-10 items-center rounded-md px-5 text-sm font-medium"
+			>{i18n._(msg`Go to our home page`)}</a
+		>
+	</div>
+</SitePage>

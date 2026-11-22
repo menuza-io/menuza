@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { ENV } from 'varlock/env'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
@@ -32,6 +32,7 @@ import {
 	triggerConfigMatches,
 } from '@repo/tenant-db'
 import { withUnsubscribeFooter } from '@repo/common/email-unsubscribe'
+import { billingPeriod } from '@repo/common/marketing-allowance'
 import { parseMarketingOffer } from '@repo/discounts'
 import { sendSms } from '@repo/sms'
 import {
@@ -39,6 +40,8 @@ import {
 	listUnsubscribeHeaders,
 	unsubscribeUrl,
 } from '../lib/email-consent.ts'
+import { isMarketingSmsEnabled } from '../lib/marketing-sms-switch.ts'
+import { postSmsAllowance } from '../lib/sms-allowance-client.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
@@ -55,6 +58,8 @@ import {
 } from './journey-conditions.ts'
 import { customerInAudience } from './marketing-audience-service.ts'
 import { cartLinkForGuest } from './cart-reminders.ts'
+import { tagEmailLinks } from './campaign-links.ts'
+import { prepareMarketingSms, TIME_ZONE_RETRY_MS } from './marketing-sms.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
 export const JOURNEY_LIST_LIMIT = 100
@@ -128,6 +133,34 @@ function deliveredResultFromDispatchedExecution(execution: {
 		executionId: execution.id,
 		status: outcomeUnknown ? 'unknown' : 'delivered',
 		messageId,
+	}
+}
+
+/**
+ * The opaque id an automation text step holds its send of the month under: a
+ * hash of the journey, the step and the billing month, so a step is counted
+ * once per month and the control plane never learns a journey's contents.
+ */
+export function journeyStepAllowanceKey(
+	journeyId: string,
+	nodeId: string,
+	now: number,
+): string {
+	const period = billingPeriod(now).key
+	const digest = createHash('sha256')
+		.update(`${journeyId}:${nodeId}:${period}`)
+		.digest('hex')
+		.slice(0, 40)
+	return `journey:${digest}`
+}
+
+/** An operator's test run (`contextData.isTestRun`) is never held for quiet hours. */
+function isTestRunContext(raw: unknown): boolean {
+	try {
+		const value = typeof raw === 'string' ? JSON.parse(raw) : raw
+		return (value as { isTestRun?: unknown } | null)?.isTestRun === true
+	} catch {
+		return false
 	}
 }
 
@@ -283,7 +316,20 @@ export interface StepExecutionResult {
 	 * way that may have sent the message; it is never sent again.
 	 */
 	status:
-		'delivered' | 'failed' | 'skipped' | 'processing' | 'halted' | 'unknown'
+		| 'delivered'
+		| 'failed'
+		| 'skipped'
+		| 'processing'
+		| 'halted'
+		| 'unknown'
+		/**
+		 * A marketing text outside 9:00 to 20:00 local time (#75): nothing was
+		 * sent or recorded, and the workflow sleeps until `notBefore` and asks
+		 * again. A step moves forward; it is never dropped.
+		 */
+		| 'deferred'
+	/** With `deferred`: the instant (epoch ms) the step may be asked again. */
+	notBefore?: number
 	messageId?: string
 	/** Why a step was `skipped`. */
 	reason?: JourneySkipReason
@@ -392,7 +438,11 @@ async function skipWithoutReservationConsent(
  * unsubscribe link (`TENANT_API_URL` unset in production), so it is not sent.
  */
 export type JourneySkipReason =
-	'no_consent' | 'no_unsubscribe_origin' | 'frequency_capped'
+	| 'no_consent'
+	| 'no_unsubscribe_origin'
+	| 'frequency_capped'
+	/** `MARKETING_SMS_ENABLED=false` on this node (#75). */
+	| 'marketing_sms_disabled'
 
 /**
  * The provider may have accepted the message (timeout, dropped connection,
@@ -600,6 +650,55 @@ export async function executeJourneyStep(
 	const skipped = await skipWithoutReservationConsent(db, payload, stepType)
 	if (skipped) return skipped
 
+	// Quiet hours (#75): a marketing text goes out from 9:00 to 20:00 in the
+	// location's time zone. Outside it nothing is written; the workflow sleeps
+	// until the window opens and asks again. An operator's own test run is not
+	// held back.
+	if (stepType === 'sms' && !isTestRunContext(run.contextData)) {
+		const timing = await prepareMarketingSms({
+			orgId,
+			text: '',
+			now: Date.now(),
+		})
+		if (timing.reason) {
+			return {
+				success: true,
+				status: 'deferred',
+				notBefore: timing.notBefore,
+				error: timing.reason,
+			}
+		}
+		// The monthly text allowance (#247): an automation text step counts one
+		// send the first time it sends in a billing month, however many guests
+		// pass through it. With none left the step waits for the month to turn
+		// over, as a broadcast does; it is never dropped.
+		const gate = await postSmsAllowance({
+			orgId,
+			campaignId: journeyStepAllowanceKey(
+				payload.journeyId,
+				payload.nodeId,
+				Date.now(),
+			),
+			action: 'start',
+		})
+		if (gate.ok === false) {
+			return {
+				success: true,
+				status: 'deferred',
+				notBefore: gate.resetsAt,
+				error: 'allowance_exhausted',
+			}
+		}
+		if (gate.ok === 'unavailable') {
+			return {
+				success: true,
+				status: 'deferred',
+				notBefore: Date.now() + TIME_ZONE_RETRY_MS,
+				error: 'allowance_unavailable',
+			}
+		}
+	}
+
 	const txResult = await retryOnSqliteBusy(() =>
 		runTenantTransaction(db, async (tx) => {
 			// Idempotency: if this (runId, nodeId) action already delivered, return the
@@ -805,15 +904,18 @@ export async function executeJourneyStep(
 	// Reservation journeys are gated on the `reservations` topic instead
 	// (`skipWithoutReservationConsent`): a guest who agreed to hear about their
 	// bookings has not agreed to marketing.
-	const journeyTrigger = payload.journeyId
-		? (
-				await db
-					.select({ triggerType: marketingJourneys.triggerType })
-					.from(marketingJourneys)
-					.where(eq(marketingJourneys.id, payload.journeyId))
-					.get()
-			)?.triggerType
+	const journeyRow = payload.journeyId
+		? await db
+				.select({
+					triggerType: marketingJourneys.triggerType,
+					name: marketingJourneys.name,
+				})
+				.from(marketingJourneys)
+				.where(eq(marketingJourneys.id, payload.journeyId))
+				.get()
 		: undefined
+	const journeyTrigger = journeyRow?.triggerType
+	const journeyName = journeyRow?.name ?? null
 	const isReservationJourney = isReservationJourneyTrigger(
 		journeyTrigger ?? run.triggerEvent,
 	)
@@ -1054,8 +1156,18 @@ export async function executeJourneyStep(
 			customerId: customer.id,
 			topic: isReservationJourney ? 'reservations' : BROADCAST_TOPIC,
 		})
-		const html = withUnsubscribeFooter(bodyHtml, optOutUrl)
-		const plainText = `${text || subject}\n\nUnsubscribe: ${optOutUrl}`
+		// Links to the own site carry the campaign and step ids (#115).
+		const tagged = await tagEmailLinks(
+			orgId,
+			{ html: bodyHtml, text: text || subject },
+			{
+				campaignId: payload.journeyId,
+				stepId: payload.nodeId,
+				campaignName: journeyName,
+			},
+		)
+		const html = withUnsubscribeFooter(tagged.html, optOutUrl)
+		const plainText = `${tagged.text}\n\nUnsubscribe: ${optOutUrl}`
 
 		try {
 			// Stable across retries of this step: a reclaimed step keeps its
@@ -1221,6 +1333,27 @@ export async function executeJourneyStep(
 		})
 	} else {
 		// SMS Dispatch
+		if (!isMarketingSmsEnabled()) {
+			await db
+				.update(journeyStepExecutions)
+				.set({
+					status: 'skipped',
+					errorMessage: null,
+					executionDetails: JSON.stringify({
+						skipped: true,
+						skipReason: 'marketing_sms_disabled' satisfies JourneySkipReason,
+						channel: 'sms',
+					}),
+					completedAt: new Date(),
+				})
+				.where(eq(journeyStepExecutions.id, stepExecutionId))
+			return {
+				success: true,
+				executionId: stepExecutionId,
+				status: 'skipped',
+				reason: 'marketing_sms_disabled',
+			}
+		}
 		if (!customer.phone || customer.phone.trim().length === 0) {
 			const errorMessage = 'Customer has no phone number'
 			await db
@@ -1243,7 +1376,25 @@ export async function executeJourneyStep(
 
 		const smsConfig = config as { messageText?: string; content?: string }
 		const rawMessage = smsConfig.messageText || smsConfig.content || ''
-		const message = interpolateMergeTags(rawMessage, customer, contextData)
+		const merged = interpolateMergeTags(rawMessage, customer, contextData)
+		// The recipient's message row id travels in the short link, so a click
+		// marks this text clicked (#159). The row is written after the send.
+		const smsMessageId = randomUUID()
+		// Every marketing text ends with the opt-out phrase (#75), and links to
+		// the own site are short and tagged (#159, #115).
+		const message = (
+			await prepareMarketingSms({
+				orgId,
+				text: merged,
+				now: Date.now(),
+				links: {
+					campaignId: payload.journeyId,
+					stepId: payload.nodeId,
+					campaignName: journeyName,
+					messageId: smsMessageId,
+				},
+			})
+		).body
 
 		try {
 			const smsRes = await sendSms({
@@ -1269,7 +1420,7 @@ export async function executeJourneyStep(
 
 			// Record marketing message outbox entry
 			await db.insert(marketingMessages).values({
-				id: randomUUID(),
+				id: smsMessageId,
 				journeyStepExecutionId: stepExecutionId,
 				customerId: customer.id,
 				channel: 'sms',

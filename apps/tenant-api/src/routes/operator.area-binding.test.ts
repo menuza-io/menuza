@@ -75,6 +75,15 @@ describe('browser operator tokens are bound to the area they were minted for', (
 		expect((await get('/journeys/runs/r1', token)).status).toBe(401)
 		// Saved audiences (#98) are marketing data: counts and definitions only.
 		expect((await get('/marketing/audiences', token)).status).toBe(200)
+		// Orders and revenue from marketing (#115): counts and amounts only. A
+		// period that is not 7, 30 or 90 days is refused.
+		expect((await get('/marketing/attribution?days=30', token)).status).toBe(
+			200,
+		)
+		expect((await get('/marketing/attribution?days=12', token)).status).toBe(
+			400,
+		)
+		expect((await get('/journeys/j1/attribution', token)).status).toBe(401)
 	})
 
 	// The Automations Runs page reads a journey's runs and a run's timeline
@@ -97,6 +106,11 @@ describe('browser operator tokens are bound to the area they were minted for', (
 		expect((await get('/journeys/j1', token)).status).toBe(401)
 		expect((await get('/journeys/j1/runs', token)).status).toBe(200)
 		expect((await get('/journeys/runs/r1', token)).status).toBe(404)
+		// Orders and revenue per step (#115): ids, counts and amounts only.
+		expect((await get('/journeys/j1/attribution', token)).status).toBe(200)
+		expect((await get('/marketing/attribution?days=30', token)).status).toBe(
+			401,
+		)
 		for (const [method, route] of [
 			['POST', '/journeys'],
 			['PATCH', '/journeys/j1'],
@@ -130,6 +144,10 @@ describe('browser operator tokens are bound to the area they were minted for', (
 			401,
 		)
 		expect((await get('/journeys/j1/runs', token)).status).toBe(401)
+		expect((await get('/journeys/j1/attribution', token)).status).toBe(401)
+		expect((await get('/marketing/attribution?days=30', token)).status).toBe(
+			401,
+		)
 		const send = await app.request('/operator/marketing/campaigns', {
 			method: 'POST',
 			headers: {
@@ -232,7 +250,9 @@ describe('every /operator route refuses a token bound to another area', () => {
 		expect(reached).toEqual([
 			'DELETE /operator/marketing/audiences/x',
 			'DELETE /operator/marketing/campaigns/x',
+			'GET /operator/marketing/attribution',
 			'GET /operator/marketing/audience-count',
+			'GET /operator/marketing/audience-overlap',
 			'GET /operator/marketing/audiences',
 			'GET /operator/marketing/audiences/x',
 			'GET /operator/marketing/campaigns',
@@ -241,13 +261,16 @@ describe('every /operator route refuses a token bound to another area', () => {
 			'GET /operator/marketing/campaigns/x/summary',
 			'GET /operator/marketing/metrics',
 			'GET /operator/marketing/settings',
+			'GET /operator/marketing/short-links',
 			'PATCH /operator/marketing/campaigns/x',
+			'PATCH /operator/marketing/short-links/x',
 			'POST /operator/marketing/audiences',
 			'POST /operator/marketing/audiences/preview',
 			'POST /operator/marketing/campaigns',
 			'POST /operator/marketing/campaigns/x/cancel',
 			'POST /operator/marketing/campaigns/x/duplicate',
 			'POST /operator/marketing/campaigns/x/retarget',
+			'POST /operator/marketing/short-links',
 			'POST /operator/marketing/test-send',
 			'PUT /operator/marketing/audiences/x',
 			'PUT /operator/marketing/settings',
@@ -271,6 +294,7 @@ describe('every /operator route refuses a token bound to another area', () => {
 		)
 		expect(reached).toEqual([
 			'GET /operator/journeys/runs/x',
+			'GET /operator/journeys/x/attribution',
 			'GET /operator/journeys/x/runs',
 		])
 	})

@@ -66,6 +66,8 @@ import {
 } from '../src/services/order-message-send.ts'
 import { fanOutReservationsTick } from '../src/services/rsv-tick-fanout.ts'
 import type { ReservationsTickResult } from '../src/services/rsv-tick-service.ts'
+import type { OrgSmsOutcome } from '../src/services/sms-inbound.ts'
+import { handleInboundSmsWebhook } from '../src/services/sms-inbound-webhook.ts'
 import { fanOutStaffTick } from '../src/services/staff-tick-fanout.ts'
 import type { TickResult } from '../src/services/staff-tick-service.ts'
 import { TENANT_ORG_HEADER, TenantOrg } from './tenant-org.ts'
@@ -458,6 +460,37 @@ async function handle(
 			return forwardToOrg(request, env, orgId)
 		}
 		return edgeApp.fetch(request, env)
+	}
+
+	// Inbound text replies (#75): the edge verifies the provider's signature,
+	// then asks every organization's Durable Object to apply the keyword to its
+	// own database. Never routed by a body or an Origin: the sender is a phone.
+	if (request.method === 'POST' && url.pathname.startsWith('/webhooks/sms/')) {
+		return handleInboundSmsWebhook(
+			request,
+			url.pathname.slice('/webhooks/sms/'.length),
+			async () => ({
+				orgIds: await registryStub(env).list(),
+				applyToOrg: async (orgId, input) => {
+					const forwarded = new Request(
+						new URL('/api/sms-inbound/apply', request.url),
+						{
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								Authorization: `Bearer ${env.INTERNAL_COMMAND_TOKEN || ''}`,
+							},
+							body: JSON.stringify({ orgId, ...input }),
+						},
+					)
+					const answered = await forwardToOrg(forwarded, env, orgId)
+					if (!answered.ok) {
+						throw new Error(`Organization answered ${answered.status}`)
+					}
+					return (await answered.json()) as OrgSmsOutcome
+				},
+			}),
+		)
 	}
 
 	const tickModule: TickModuleName | null =

@@ -537,7 +537,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	}
 
 	// Marketing's flag-gated tabs (#98 Audiences): shown only while the flag is on.
-	let marketingNav = { audiences: false, customerApp: false }
+	let marketingNav = {
+		audiences: false,
+		customerApp: false,
+		links: false,
+		calendar: false,
+	}
 	if (currentOrgId && userId) {
 		const marketingFlags =
 			await import('./utils/marketing/marketing-flags.server.ts')
@@ -550,17 +555,29 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 						key: `marketing-nav:${currentOrgId}`,
 						cache,
 						ttl: 1000 * 30,
-						getFreshValue: async () => ({
-							audiences: (
+						getFreshValue: async () => {
+							const features =
 								await marketingFlags.getMarketingFeatures(currentOrgId)
-							).audiences,
-							// The Customer app panel (#196): flag on and an app exists.
-							customerApp:
-								await customerAppPanel.customerAppPanelAvailable(currentOrgId),
-						}),
+							return {
+								audiences: features.audiences,
+								// The Customer app panel (#196): flag on and an app exists.
+								customerApp:
+									await customerAppPanel.customerAppPanelAvailable(
+										currentOrgId,
+									),
+								// Short links (#159) and the seasonal calendar (#152).
+								links: features.shortLinks,
+								calendar: features.calendar,
+							}
+						},
 					})
 				} catch {
-					return { audiences: false, customerApp: false }
+					return {
+						audiences: false,
+						customerApp: false,
+						links: false,
+						calendar: false,
+					}
 				}
 			},
 			{ timings, type: 'marketing nav', desc: 'marketing nav flags' },

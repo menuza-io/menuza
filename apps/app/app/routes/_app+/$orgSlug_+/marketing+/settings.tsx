@@ -1,6 +1,7 @@
 import { i18n } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { isOccasionMarket } from '@repo/marketing/occasions'
 import { Button } from '@repo/ui/button'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
@@ -14,6 +15,11 @@ import {
 } from 'react-router'
 import { toast } from 'sonner'
 import { useHasPermission } from '#app/hooks/use-organization-permissions.ts'
+import {
+	loadOrganizationFacts,
+	marketOf,
+	setMarketingMarket,
+} from '#app/utils/marketing/calendar.server.ts'
 import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -42,40 +48,80 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_CAMPAIGN_ANY,
 	)
 	const features = await getMarketingFeatures(orgId)
-	if (!features.orderAutomations && !features.cartReminders) {
+	const hasLimits = features.orderAutomations || features.cartReminders
+	if (!hasLimits && !features.calendar) {
 		throw new Response('Not found', { status: 404 })
 	}
-	const res = await fetchTenant('/operator/marketing/settings')
-	const settings = res.ok ? ((await res.json()) as Settings) : null
+	const res = hasLimits
+		? await fetchTenant('/operator/marketing/settings')
+		: null
+	const settings = res?.ok ? ((await res.json()) as Settings) : null
+	const org = features.calendar ? await loadOrganizationFacts(orgId) : null
 	return {
 		orgSlug,
 		settings,
 		cartReminders: features.cartReminders,
-		error: settings ? null : i18n._(t`Failed to load settings`),
+		hasLimits,
+		// The calendar's market (#152): the choice, and what the region implies.
+		calendarMarket:
+			features.calendar && org
+				? {
+						override: isOccasionMarket(org.marketingMarket)
+							? org.marketingMarket
+							: null,
+						regionDefault: marketOf({
+							dataRegion: org.dataRegion,
+							marketingMarket: null,
+						}),
+					}
+				: null,
+		error: hasLimits && !settings ? i18n._(t`Failed to load settings`) : null,
 	}
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug, {
-		canUpdate: true,
-	})
+	const { orgId, fetchTenant } = await getOperatorTenantClient(
+		request,
+		orgSlug,
+		{
+			canUpdate: true,
+		},
+	)
 	await requireUserWithOrganizationPermission(
 		request,
 		orgId,
 		ORG_PERMISSIONS.UPDATE_CAMPAIGN_ANY,
 	)
 	const features = await getMarketingFeatures(orgId)
-	if (!features.orderAutomations && !features.cartReminders) {
+	const hasLimits = features.orderAutomations || features.cartReminders
+	if (!hasLimits && !features.calendar) {
 		throw new Response('Not found', { status: 404 })
 	}
 	const form = await request.formData()
+	// The calendar's market (#152): "follow my region", or Saudi Arabia / the
+	// United States for an organization outside its region's default.
+	if (form.get('intent') === 'market') {
+		if (!features.calendar) throw new Response('Not found', { status: 404 })
+		const value = String(form.get('market') ?? '')
+		const saved = await setMarketingMarket({
+			organizationId: orgId,
+			market: value === 'region' ? null : value,
+		})
+		return saved
+			? { ok: true as const }
+			: { ok: false as const, error: i18n._(t`Choose a market from the list.`) }
+	}
+	if (!hasLimits) throw new Response('Not found', { status: 404 })
 	const body: Record<string, unknown> = {}
 	if (form.get('capOff') === '1') body.frequencyCap = null
 	else {
 		const limit = Math.floor(Number(form.get('capLimit')))
 		if (!Number.isFinite(limit) || limit < 1 || limit > 50) {
-			return { ok: false as const, error: i18n._(t`Enter a number from 1 to 50.`) }
+			return {
+				ok: false as const,
+				error: i18n._(t`Enter a number from 1 to 50.`),
+			}
 		}
 		body.frequencyCap = { limit, days: 7 }
 	}
@@ -105,14 +151,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		body: JSON.stringify(body),
 	})
 	if (!res.ok) {
-		return { ok: false as const, error: i18n._(t`Settings could not be saved.`) }
+		return {
+			ok: false as const,
+			error: i18n._(t`Settings could not be saved.`),
+		}
 	}
 	return { ok: true as const }
 }
 
 export default function MarketingSettingsRoute() {
 	const { _ } = useLingui()
-	const { settings, cartReminders, error } = useLoaderData<typeof loader>()
+	const { settings, cartReminders, error, hasLimits, calendarMarket } =
+		useLoaderData<typeof loader>()
+	const marketFetcher = useFetcher<typeof action>()
 	const hasPermission = useHasPermission()
 	const canManage = hasPermission('update:campaign:any')
 	const fetcher = useFetcher<typeof action>()
@@ -126,6 +177,13 @@ export default function MarketingSettingsRoute() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [fetcher.state, fetcher.data])
 
+	useEffect(() => {
+		if (marketFetcher.state !== 'idle' || !marketFetcher.data) return
+		if (marketFetcher.data.ok) toast.success(_(msg`Settings saved`))
+		else toast.error(marketFetcher.data.error)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [marketFetcher.state, marketFetcher.data])
+
 	return (
 		<div className="space-y-8">
 			<PageHeader
@@ -134,7 +192,45 @@ export default function MarketingSettingsRoute() {
 					msg`Limits that protect your guests from too many messages.`,
 				)}
 			/>
-			{error || !settings ? (
+			{calendarMarket ? (
+				<marketFetcher.Form method="post" className="max-w-xl space-y-3">
+					<input type="hidden" name="intent" value="market" />
+					<h2 className="text-base font-semibold">
+						<Trans>Calendar market</Trans>
+					</h2>
+					<p className="text-muted-foreground text-sm">
+						<Trans>
+							The occasions the marketing calendar suggests. By default they
+							follow where your guests' data is kept; choose another market if
+							you serve guests there (for example Ramadan dates for a restaurant
+							in the United States).
+						</Trans>
+					</p>
+					<div className="flex flex-wrap items-center gap-3">
+						<select
+							name="market"
+							aria-label={_(msg`Calendar market`)}
+							className="border-input bg-background h-9 rounded-md border px-2 text-sm"
+							defaultValue={calendarMarket.override ?? 'region'}
+							disabled={!canManage}
+						>
+							<option value="region">
+								{calendarMarket.regionDefault === 'ksa'
+									? _(msg`Follow my region (Saudi Arabia)`)
+									: _(msg`Follow my region (United States)`)}
+							</option>
+							<option value="us">{_(msg`United States`)}</option>
+							<option value="ksa">{_(msg`Saudi Arabia`)}</option>
+						</select>
+						{canManage ? (
+							<Button type="submit" disabled={marketFetcher.state !== 'idle'}>
+								<Trans>Save market</Trans>
+							</Button>
+						) : null}
+					</div>
+				</marketFetcher.Form>
+			) : null}
+			{!hasLimits ? null : error || !settings ? (
 				<p className="text-destructive text-sm">{error}</p>
 			) : (
 				<fetcher.Form method="post" className="max-w-xl space-y-8">
@@ -145,8 +241,9 @@ export default function MarketingSettingsRoute() {
 						<p className="text-muted-foreground text-sm">
 							<Trans>
 								The most marketing messages one guest gets in 7 days, across
-								broadcasts and automations. Receipts and other order messages never
-								count. A step over the limit is skipped and the run shows why.
+								broadcasts and automations. Receipts and other order messages
+								never count. A step over the limit is skipped and the run shows
+								why.
 							</Trans>
 						</p>
 						<label className="flex items-center gap-2 text-sm">
@@ -184,8 +281,8 @@ export default function MarketingSettingsRoute() {
 							</h2>
 							<p className="text-muted-foreground text-sm">
 								<Trans>
-									A signed-in guest who agreed to hear from you and leaves a cart gets
-									one reminder, at most once a day.
+									A signed-in guest who agreed to hear from you and leaves a
+									cart gets one reminder, at most once a day.
 								</Trans>
 							</p>
 							<div className="grid gap-4 sm:grid-cols-2">

@@ -414,6 +414,13 @@
 			"when": 1795237760912,
 			"tag": "0058_guest_photo_submissions",
 			"breakpoints": true
+		},
+		{
+			"idx": 59,
+			"version": "6",
+			"when": 1795294760559,
+			"tag": "0059_marketing_compliance",
+			"breakpoints": true
 		}
 	]
 }

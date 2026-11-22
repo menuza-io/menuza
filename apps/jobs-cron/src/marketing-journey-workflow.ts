@@ -24,6 +24,12 @@ export const ACTION_STEP_RETRIES = {
 	backoff: 'exponential',
 } as const
 
+/**
+ * How many times a run waits out quiet hours for one text step (#75). One
+ * sleep reaches the window; the rest cover a clock that moved under it.
+ */
+export const MAX_QUIET_HOURS_ROUNDS = 3
+
 export class MarketingJourneyWorkflow extends WorkflowEntrypoint<
 	MarketingJourneyWorkflowEnv,
 	MarketingJourneyWorkflowParams
@@ -185,48 +191,69 @@ export class MarketingJourneyWorkflow extends WorkflowEntrypoint<
 							nodeType = 'action_sms'
 						}
 
-						const actionResult = await step.do(
-							`action-${node.id}`,
-							{
-								retries: ACTION_STEP_RETRIES,
-								timeout: '2 minutes',
-							},
-							async () => {
-								const res = await fetch(
-									`${tenantApiBase}/api/journeys/execute-step`,
-									{
-										method: 'POST',
-										headers: {
-											'Content-Type': 'application/json',
-											Authorization: `Bearer ${env.INTERNAL_COMMAND_TOKEN}`,
+						const runAction = (attempt: number) =>
+							step.do(
+								attempt === 0
+									? `action-${node.id}`
+									: `action-${node.id}-after-${attempt}`,
+								{
+									retries: ACTION_STEP_RETRIES,
+									timeout: '2 minutes',
+								},
+								async () => {
+									const res = await fetch(
+										`${tenantApiBase}/api/journeys/execute-step`,
+										{
+											method: 'POST',
+											headers: {
+												'Content-Type': 'application/json',
+												Authorization: `Bearer ${env.INTERNAL_COMMAND_TOKEN}`,
+											},
+											body: JSON.stringify({
+												orgId,
+												journeyId,
+												runId,
+												customerId,
+												nodeId: node.id,
+												nodeType,
+												config: node.data || {},
+											}),
 										},
-										body: JSON.stringify({
-											orgId,
-											journeyId,
-											runId,
-											customerId,
-											nodeId: node.id,
-											nodeType,
-											config: node.data || {},
-										}),
-									},
-								)
-
-								if (!res.ok) {
-									const errorText = await res.text().catch(() => '')
-									throw new Error(
-										`Action step execution (${node.id}) failed with HTTP ${res.status}: ${errorText}`,
 									)
-								}
 
-								return (await res.json()) as {
-									success: boolean
-									executionId?: string
-									status?: string
-									messageId?: string
-								}
-							},
-						)
+									if (!res.ok) {
+										const errorText = await res.text().catch(() => '')
+										throw new Error(
+											`Action step execution (${node.id}) failed with HTTP ${res.status}: ${errorText}`,
+										)
+									}
+
+									return (await res.json()) as {
+										success: boolean
+										executionId?: string
+										status?: string
+										messageId?: string
+										notBefore?: number
+									}
+								},
+							)
+						// Quiet hours (#75): tenant-api answers `deferred` for a marketing
+						// text outside 9:00 to 20:00 local time, with the instant the window
+						// opens. The run sleeps until then and asks again; the step moves
+						// forward, it is never dropped. A few rounds cover any clock edge.
+						let actionResult = await runAction(0)
+						for (
+							let round = 1;
+							round <= MAX_QUIET_HOURS_ROUNDS &&
+							actionResult?.status === 'deferred';
+							round++
+						) {
+							const wakeAt = new Date(
+								Math.max(Number(actionResult.notBefore) || 0, Date.now()),
+							)
+							await step.sleepUntil(`quiet-hours-${node.id}-${round}`, wakeAt)
+							actionResult = await runAction(round)
+						}
 						if (actionResult?.status === 'halted') halted = true
 						break
 					}

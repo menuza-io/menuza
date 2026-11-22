@@ -192,6 +192,21 @@ describe('PersonMarketingCard states', () => {
 		)
 	})
 
+	it('says a STOP reply opted the guest out, with the date (#75)', () => {
+		setup([
+			sub({
+				channel: 'sms',
+				subscribed: false,
+				unsubscribedAt: Date.UTC(2026, 9, 5),
+				unsubscribedSource: 'sms_reply',
+			}),
+		])
+		expect(screen.getByTestId('person-consent-sms')).toHaveTextContent(
+			'Opted out by text reply on',
+		)
+		expect(screen.getByTestId('person-consent-sms')).toHaveTextContent('2026')
+	})
+
 	it('disables the switch during cooling-off', () => {
 		setup([
 			sub({

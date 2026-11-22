@@ -63,6 +63,7 @@ import { deleteRecordingObject } from '../lib/recording-storage.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import { eraseGiftCardsInTx } from './gift-card-erasure.ts'
 import { eraseLoyaltyMembersInTx } from './loyalty-erasure.ts'
+import { eraseSmsInboundEvents } from './sms-inbound.ts'
 import { erasePosHeldUploads } from './pos-service.ts'
 import { handleCancellationPayments } from './rsv-payment-refunds.ts'
 import {
@@ -1285,6 +1286,8 @@ export async function erasePerson(
 
 				// Send-code rate-limit rows hold an HMAC of the phone number.
 				await eraseSmsSendEvents(tx, identity.phones)
+				// Inbound text replies (#75) keep an HMAC of the sender's number.
+				await eraseSmsInboundEvents(tx, identity.phones)
 
 				// Best effort: only a field holding the stored phone or the email as
 				// a whole token can be recognised.

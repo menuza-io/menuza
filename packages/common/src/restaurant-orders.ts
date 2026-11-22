@@ -11,6 +11,7 @@ import {
 } from '@repo/discounts'
 import { z } from 'zod'
 import { giftCardCheckoutInputSchema } from './gift-card-contract.ts'
+import { orderAttributionInputSchema } from './order-attribution.ts'
 import { giftCardPaymentRiskSchema } from './gift-cards.ts'
 import {
 	DAYS_OF_WEEK,
@@ -370,6 +371,13 @@ const restaurantOrderObjectSchema = z.strictObject({
 	 * (a retry places the same order and records nothing again).
 	 */
 	marketingConsent: orderMarketingConsentSchema.optional(),
+	/**
+	 * Where the guest came from (#115): UTM values, a Menuza campaign, a short
+	 * link, kept by the browser or the customer app for up to 7 days. Strict,
+	 * every value at most 100 characters; stored with the order for reporting
+	 * only, and not part of the idempotency hash.
+	 */
+	attribution: orderAttributionInputSchema.optional(),
 	/**
 	 * "Text me order updates": transactional texts about this order only, never
 	 * marketing consent. Refused on a table round; ignored without a phone or

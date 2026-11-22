@@ -505,8 +505,9 @@ describe('a loyalty journey step', () => {
 		})
 		expect(result.success).toBe(true)
 		expect(sms).toHaveBeenCalledTimes(1)
+		// Every marketing text ends with the opt-out phrase (#75).
 		expect(sms.mock.calls[0]![0].message).toBe(
-			'Ada, 5 more for Coffee (you have 20)',
+			'Ada, 5 more for Coffee (you have 20)\nReply STOP to opt out.',
 		)
 	})
 
@@ -581,6 +582,8 @@ describe('a loyalty journey step', () => {
 			nodeType: 'action_sms',
 			config: { messageText: 'You have {{pointsBalance|some}} points' },
 		})
-		expect(sms.mock.calls[0]![0].message).toBe('You have some points')
+		expect(sms.mock.calls[0]![0].message).toBe(
+			'You have some points\nReply STOP to opt out.',
+		)
 	})
 })

@@ -66,6 +66,7 @@ const SOURCE_LABELS: Record<string, MessageDescriptor> = {
 	form: msg`Form`,
 	operator: msg`Staff`,
 	import: msg`List import`,
+	sms_reply: msg`Text reply`,
 }
 const METHOD_LABELS: Record<StaffConsentMethod, MessageDescriptor> = {
 	in_person: msg`In person`,
@@ -190,9 +191,9 @@ export function PersonMarketingCard({
 							currentUserId={currentUserId ?? null}
 							switchRef={switches[channel]}
 							onTurnOn={() => {
-									lastChannel.current = channel
-									setDialogChannel(channel)
-								}}
+								lastChannel.current = channel
+								setDialogChannel(channel)
+							}}
 							onTurnOff={() => void turnOff(channel)}
 						/>
 					))}
@@ -371,9 +372,7 @@ function ChannelRow({
 							</Badge>
 						) : null}
 					</span>
-					<span data-testid={`person-consent-${channel}-staff`}>
-						{line}
-					</span>
+					<span data-testid={`person-consent-${channel}-staff`}>{line}</span>
 					{row.pending ? (
 						<span>
 							<Trans>Waiting for the guest to confirm by email</Trans>
@@ -394,9 +393,7 @@ function ChannelRow({
 							</Badge>
 						</span>
 					) : null}
-					<span>
-						{_(msg`Subscribed on ${subscribedOn} (${source})`)}
-					</span>
+					<span>{_(msg`Subscribed on ${subscribedOn} (${source})`)}</span>
 					{row.pending ? (
 						<span>
 							<Trans>Waiting for the guest to confirm by email</Trans>
@@ -411,11 +408,13 @@ function ChannelRow({
 			<span>
 				{row.unsubscribedSource === 'self'
 					? _(msg`Unsubscribed by the guest on ${when}`)
-					: row.unsubscribedSource === 'operator'
-						? _(msg`Turned off by staff on ${when}`)
-						: row.unsubscribedSource === 'import'
-							? _(msg`Removed by a list import on ${when}`)
-							: _(msg`Unsubscribed on ${when}`)}
+					: row.unsubscribedSource === 'sms_reply'
+						? _(msg`Opted out by text reply on ${when}`)
+						: row.unsubscribedSource === 'operator'
+							? _(msg`Turned off by staff on ${when}`)
+							: row.unsubscribedSource === 'import'
+								? _(msg`Removed by a list import on ${when}`)
+								: _(msg`Unsubscribed on ${when}`)}
 			</span>
 		)
 	} else if (!checked) {
@@ -557,7 +556,9 @@ function ConsentDialog({
 				if (result.confirmationEmail === 'sent') {
 					toast.success(_(msg`Confirmation email sent`))
 				} else if (result.confirmationEmail === 'throttled') {
-					toast.success(_(msg`Recorded. A confirmation email was sent recently.`))
+					toast.success(
+						_(msg`Recorded. A confirmation email was sent recently.`),
+					)
 				} else if (result.subscription?.pending) {
 					toast.warning(
 						_(

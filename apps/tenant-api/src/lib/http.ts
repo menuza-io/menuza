@@ -53,9 +53,17 @@ async function readCappedText(
 	c: Context,
 	maxBytes: number,
 ): Promise<string | null> {
-	const declared = Number(c.req.header('content-length') ?? 0)
+	return readCappedRequestText(c.req.raw, maxBytes)
+}
+
+/** `readCappedText` for a plain `Request` (a webhook that reads its raw body). */
+export async function readCappedRequestText(
+	request: Request,
+	maxBytes: number,
+): Promise<string | null> {
+	const declared = Number(request.headers.get('content-length') ?? 0)
 	if (Number.isFinite(declared) && declared > maxBytes) return null
-	const stream = c.req.raw.body
+	const stream = request.body
 	if (!stream) return ''
 	const reader = stream.getReader()
 	const chunks: Uint8Array[] = []

@@ -2,6 +2,7 @@ import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { CampaignDetailView, type CampaignDetail } from '@repo/marketing'
+import { releaseSmsSend } from '@repo/marketing/server/sms-allowance'
 import { Skeleton } from '@repo/ui/skeleton'
 import { useCallback, useEffect, useState } from 'react'
 import {
@@ -118,6 +119,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				{ method: 'POST' },
 			)
 			if (!res.ok) return refused(res)
+			// A text broadcast cancelled before it started gives its send of the
+			// month's allowance back (#247); for any other broadcast this is a no-op.
+			await releaseSmsSend({ organizationId: orgId, campaignId })
 			await audit('cancelled')
 			return {
 				ok: true as const,
