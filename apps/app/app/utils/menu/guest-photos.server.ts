@@ -550,7 +550,8 @@ export async function addGuestPhotoToDish(input: {
 		input.organization.id,
 		cleanFile,
 		input.userId,
-		'library',
+		// Never analyzed for quality (#145): a guest's photo is not the owner's.
+		'guest-photo',
 	)
 
 	const [asset] = await db

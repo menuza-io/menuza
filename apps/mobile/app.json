@@ -1,67 +1,87 @@
 {
-  "expo": {
-    "name": "Menuza Mobile",
-    "slug": "menuza-mobile",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "scheme": "menuza",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.menuza.mobile"
-    },
+	"expo": {
+		"name": "Menuza Mobile",
+		"slug": "menuza-mobile",
+		"version": "1.0.0",
+		"orientation": "portrait",
+		"icon": "./assets/icon.png",
+		"userInterfaceStyle": "light",
+		"scheme": "menuza",
+		"splash": {
+			"image": "./assets/splash-icon.png",
+			"resizeMode": "contain",
+			"backgroundColor": "#ffffff"
+		},
+		"ios": {
+			"supportsTablet": true,
+			"bundleIdentifier": "com.menuza.mobile"
+		},
 		"android": {
 			"adaptiveIcon": {
 				"foregroundImage": "./assets/adaptive-icon.png",
 				"backgroundColor": "#ffffff"
 			},
 			"predictiveBackGestureEnabled": false,
-			"package": "com.menuza.mobile"
+			"package": "com.menuza.mobile",
+			"permissions": ["android.permission.CAMERA"],
+			"blockedPermissions": [
+				"android.permission.ACCESS_COARSE_LOCATION",
+				"android.permission.ACCESS_FINE_LOCATION",
+				"android.permission.ACCESS_MEDIA_LOCATION",
+				"android.permission.RECORD_AUDIO"
+			]
 		},
-    "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "metro"
-    },
-    "plugins": [
-      "expo-router",
-      "expo-localization",
-      "expo-secure-store",
-      "expo-status-bar",
-      "expo-web-browser"
-    ],
-    "experiments": {
-      "typedRoutes": true
-    },
-    "linking": {
-      "prefixes": [
-        "menuza://",
-        "https://menuza.io"
-      ],
-      "config": {
-        "screens": {
-          "index": "",
-          "(auth)": {
-            "screens": {
-              "sign-in": "sign-in",
-              "sign-up": "sign-up",
-              "forgot-password": "forgot-password",
-              "verify-email": "verify-email"
-            }
-          },
-          "(dashboard)": {
-            "screens": {
-              "index": "dashboard"
-            }
-          },
-          "auth/callback": "auth/callback"
-        }
-      }
-    }
-  }
+		"web": {
+			"favicon": "./assets/favicon.png",
+			"bundler": "metro"
+		},
+		"plugins": [
+			"expo-router",
+			"expo-localization",
+			"expo-secure-store",
+			"expo-status-bar",
+			"expo-web-browser",
+			[
+				"expo-camera",
+				{
+					"cameraPermission": "Menuza uses the camera to take photos of your dishes.",
+					"microphonePermission": false,
+					"recordAudioAndroid": false
+				}
+			],
+			[
+				"expo-image-picker",
+				{
+					"photosPermission": "Menuza reads a photo you choose from your library to use as a dish photo.",
+					"cameraPermission": "Menuza uses the camera to take photos of your dishes.",
+					"microphonePermission": false
+				}
+			]
+		],
+		"experiments": {
+			"typedRoutes": true
+		},
+		"linking": {
+			"prefixes": ["menuza://", "https://menuza.io"],
+			"config": {
+				"screens": {
+					"index": "",
+					"(auth)": {
+						"screens": {
+							"sign-in": "sign-in",
+							"sign-up": "sign-up",
+							"forgot-password": "forgot-password",
+							"verify-email": "verify-email"
+						}
+					},
+					"(dashboard)": {
+						"screens": {
+							"index": "dashboard"
+						}
+					},
+					"auth/callback": "auth/callback"
+				}
+			}
+		}
+	}
 }

@@ -263,6 +263,11 @@ msgstr "{0, plural, one {# day has no sales yet and is left out of the share.} o
 msgid "{0, plural, one {# day is ready to import.} other {# days are ready to import.}}"
 msgstr "{0, plural, one {# day is ready to import.} other {# days are ready to import.}}"
 
+#. placeholder {0}: test.needs.days
+#: app/components/menu/photo-test-panel.tsx:287
+msgid "{0, plural, one {# day to go.} other {# days to go.}}"
+msgstr "{0, plural, one {# day to go.} other {# days to go.}}"
+
 #. placeholder {0}: timeOffDays(row)
 #: app/components/staff/schedule/time-off-page.tsx:296
 msgid "{0, plural, one {# day} other {# days}}"
@@ -279,10 +284,20 @@ msgstr "{0, plural, one {# delivery is unpaid.} other {# deliveries are unpaid.}
 msgid "{0, plural, one {# dish or option is off the menu.} other {# dishes and options are off the menu.}}"
 msgstr "{0, plural, one {# dish or option is off the menu.} other {# dishes and options are off the menu.}}"
 
+#. placeholder {0}: useAllData.refused?.length ?? 0
+#: app/components/media-library/restyle-review.tsx:143
+msgid "{0, plural, one {# dish was left alone because its photo changed or the draft changed.} other {# dishes were left alone because their photo changed or the draft changed.}}"
+msgstr "{0, plural, one {# dish was left alone because its photo changed or the draft changed.} other {# dishes were left alone because their photo changed or the draft changed.}}"
+
 #. placeholder {0}: check.dismissedCount
-#: app/components/menu/menu-health-card.tsx:413
+#: app/components/menu/menu-health-card.tsx:443
 msgid "{0, plural, one {# dismissed} other {# dismissed}}"
 msgstr "{0, plural, one {# dismissed} other {# dismissed}}"
+
+#. placeholder {0}: flagCounts.duplicate
+#: app/components/media-library/bulk-dish-photos.tsx:575
+msgid "{0, plural, one {# duplicate will be left out.} other {# duplicates will be left out.}}"
+msgstr "{0, plural, one {# duplicate will be left out.} other {# duplicates will be left out.}}"
 
 #. placeholder {0}: snapshot.refused.length
 #: app/components/inventory/counting-screen.tsx:478
@@ -311,7 +326,7 @@ msgid "{0, plural, one {# hour has no pay rate, so it has no wage figure.} other
 msgstr "{0, plural, one {# hour has no pay rate, so it has no wage figure.} other {# hours have no pay rate, so they have no wage figure.}}"
 
 #. placeholder {0}: assets.length
-#: app/routes/_app+/$orgSlug_+/media.tsx:1239
+#: app/routes/_app+/$orgSlug_+/media.tsx:1494
 msgid "{0, plural, one {# image} other {# images}}"
 msgstr "{0, plural, one {# image} other {# images}}"
 
@@ -329,6 +344,16 @@ msgstr "{0, plural, one {# ingredient has no price yet: add a delivery to price 
 #: app/components/staff/schedule/recommend-dialog.tsx:213
 msgid "{0, plural, one {# is already on the schedule and is skipped.} other {# are already on the schedule and are skipped.}}"
 msgstr "{0, plural, one {# is already on the schedule and is skipped.} other {# are already on the schedule and are skipped.}}"
+
+#. placeholder {0}: flagCounts.notPhoto
+#: app/components/media-library/bulk-dish-photos.tsx:561
+msgid "{0, plural, one {# is not a usable photo and will be left out.} other {# are not usable photos and will be left out.}}"
+msgstr "{0, plural, one {# is not a usable photo and will be left out.} other {# are not usable photos and will be left out.}}"
+
+#. placeholder {0}: flagCounts.tooSmall
+#: app/components/media-library/bulk-dish-photos.tsx:568
+msgid "{0, plural, one {# is small and may look soft.} other {# are small and may look soft.}}"
+msgstr "{0, plural, one {# is small and may look soft.} other {# are small and may look soft.}}"
 
 #. placeholder {0}: progress.total - progress.counted
 #: app/components/inventory/counting-screen.tsx:612
@@ -418,6 +443,11 @@ msgstr "{0, plural, one {# location} other {# locations}}"
 msgid "{0, plural, one {# minute unpaid break} other {# minutes unpaid break}}"
 msgstr "{0, plural, one {# minute unpaid break} other {# minutes unpaid break}}"
 
+#. placeholder {0}: waiting.length
+#: app/components/media-library/restyle-review.tsx:231
+msgid "{0, plural, one {# more dish is still waiting to be restyled.} other {# more dishes are still waiting to be restyled.}}"
+msgstr "{0, plural, one {# more dish is still waiting to be restyled.} other {# more dishes are still waiting to be restyled.}}"
+
 #. placeholder {0}: summary.attention
 #: app/components/staff/timeclock-today.tsx:202
 msgid "{0, plural, one {# needs attention} other {# need attention}}"
@@ -495,6 +525,21 @@ msgstr "{0, plural, one {# person on the clock} other {# people on the clock}}"
 msgid "{0, plural, one {# person} other {# people}}"
 msgstr "{0, plural, one {# person} other {# people}}"
 
+#. placeholder {0}: summary.applied.length
+#: app/components/media-library/bulk-dish-photos.tsx:800
+msgid "{0, plural, one {# photo added to a dish} other {# photos added to dishes}}"
+msgstr "{0, plural, one {# photo added to a dish} other {# photos added to dishes}}"
+
+#. placeholder {0}: uploadable.length
+#: app/components/media-library/bulk-dish-photos.tsx:555
+msgid "{0, plural, one {# photo ready to upload.} other {# photos ready to upload.}}"
+msgstr "{0, plural, one {# photo ready to upload.} other {# photos ready to upload.}}"
+
+#. placeholder {0}: unmatchedAssetIds(review).length
+#: app/components/media-library/bulk-dish-photos.tsx:783
+msgid "{0, plural, one {# photo stays in the library.} other {# photos stay in the library.}}"
+msgstr "{0, plural, one {# photo stays in the library.} other {# photos stay in the library.}}"
+
 #. placeholder {0}: redemption.points
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:469
 msgid "{0, plural, one {# point} other {# points}}"
@@ -512,8 +557,8 @@ msgstr "{0, plural, one {# recipe in inventory uses it} other {# recipes in inve
 
 #. placeholder {0}: selectedIds.length
 #. placeholder {0}: selectedIds.size
-#: app/components/media-library/photo-studio-dialog.tsx:495
-#: app/routes/_app+/$orgSlug_+/media.tsx:1317
+#: app/components/media-library/photo-studio-dialog.tsx:504
+#: app/routes/_app+/$orgSlug_+/media.tsx:1583
 msgid "{0, plural, one {# selected} other {# selected}}"
 msgstr "{0, plural, one {# selected} other {# selected}}"
 
@@ -594,7 +639,7 @@ msgid "{0, plural, one {# task} other {# tasks}}"
 msgstr "{0, plural, one {# task} other {# tasks}}"
 
 #. placeholder {0}: health.fixCount
-#: app/components/menu/menu-health-card.tsx:636
+#: app/components/menu/menu-health-card.tsx:666
 msgid "{0, plural, one {# thing to fix.} other {# things to fix.}}"
 msgstr "{0, plural, one {# thing to fix.} other {# things to fix.}}"
 
@@ -617,6 +662,11 @@ msgstr "{0, plural, one {# upcoming reservation needs your review after your cha
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:679
 msgid "{0, plural, one {# upcoming reservation was moved to another table after your change} other {# upcoming reservations were moved to other tables after your change}}"
 msgstr "{0, plural, one {# upcoming reservation was moved to another table after your change} other {# upcoming reservations were moved to other tables after your change}}"
+
+#. placeholder {0}: proposal.ignoredAssetIds.length
+#: app/components/media-library/bulk-dish-photos.tsx:720
+msgid "{0, plural, one {# uploaded photo is no longer in the library. Drop it again to upload it.} other {# uploaded photos are no longer in the library. Drop them again to upload them.}}"
+msgstr "{0, plural, one {# uploaded photo is no longer in the library. Drop it again to upload it.} other {# uploaded photos are no longer in the library. Drop them again to upload them.}}"
 
 #. placeholder {0}: g.visitCount
 #. placeholder {0}: guest?.visitCount ?? 0
@@ -694,6 +744,11 @@ msgstr "{0, plural, one {and # more line} other {and # more lines}}"
 msgid "{0, plural, one {Apply # change} other {Apply # changes}}"
 msgstr "{0, plural, one {Apply # change} other {Apply # changes}}"
 
+#. placeholder {0}: pairs.length
+#: app/components/media-library/bulk-dish-photos.tsx:759
+msgid "{0, plural, one {Apply # photo} other {Apply # photos}}"
+msgstr "{0, plural, one {Apply # photo} other {Apply # photos}}"
+
 #. placeholder {0}: confirm.cards.length
 #: app/components/staff/timesheets/timesheets-page.tsx:906
 msgid "{0, plural, one {Approve # card?} other {Approve # cards?}}"
@@ -725,7 +780,7 @@ msgid "{0, plural, one {Emailing # person now.} other {Emailing # people now.}}"
 msgstr "{0, plural, one {Emailing # person now.} other {Emailing # people now.}}"
 
 #. placeholder {0}: results.length
-#: app/components/media-library/photo-studio-dialog.tsx:761
+#: app/components/media-library/photo-studio-dialog.tsx:791
 msgid "{0, plural, one {Enhancing your photo…} other {Enhancing # photos…}}"
 msgstr "{0, plural, one {Enhancing your photo…} other {Enhancing # photos…}}"
 
@@ -740,9 +795,14 @@ msgid "{0, plural, one {Expires in # day} other {Expires in # days}}"
 msgstr "{0, plural, one {Expires in # day} other {Expires in # days}}"
 
 #. placeholder {0}: selectedAssets.length
-#: app/components/media-library/photo-studio-dialog.tsx:1002
+#: app/components/media-library/photo-studio-dialog.tsx:1032
 msgid "{0, plural, one {Generate photo} other {Generate # photos}}"
 msgstr "{0, plural, one {Generate photo} other {Generate # photos}}"
+
+#. placeholder {0}: counts!.done
+#: app/components/media-library/bulk-dish-photos.tsx:660
+msgid "{0, plural, one {Go on with # uploaded photo} other {Go on with # uploaded photos}}"
+msgstr "{0, plural, one {Go on with # uploaded photo} other {Go on with # uploaded photos}}"
 
 #. placeholder {0}: lockable.length
 #: app/components/staff/timesheets/timesheets-page.tsx:774
@@ -784,6 +844,11 @@ msgstr ""
 msgid "{0, plural, one {This adds # shift.} other {This adds # shifts.}}"
 msgstr "{0, plural, one {This adds # shift.} other {This adds # shifts.}}"
 
+#. placeholder {0}: toReview.length
+#: app/components/media-library/restyle-review.tsx:186
+msgid "{0, plural, one {This replaces the main photo of # dish with its new photo. Dishes whose photo changed since are left alone. Every original stays in your library and you can switch back.} other {This replaces the main photo of # dishes with their new photos. Dishes whose photo changed since are left alone. Every original stays in your library and you can switch back.}}"
+msgstr "{0, plural, one {This replaces the main photo of # dish with its new photo. Dishes whose photo changed since are left alone. Every original stays in your library and you can switch back.} other {This replaces the main photo of # dishes with their new photos. Dishes whose photo changed since are left alone. Every original stays in your library and you can switch back.}}"
+
 #. placeholder {0}: confirm.cards.length
 #: app/components/staff/timesheets/timesheets-page.tsx:959
 msgid "{0, plural, one {Unlock # card?} other {Unlock # cards?}}"
@@ -798,13 +863,23 @@ msgstr "{0, plural, one {Unlock # card?} other {Unlock # cards?}}"
 msgid "{0, plural, one {Updated # location.} other {Updated # locations.}}"
 msgstr "{0, plural, one {Updated # location.} other {Updated # locations.}}"
 
+#. placeholder {0}: uploadable.length
+#: app/components/media-library/bulk-dish-photos.tsx:597
+msgid "{0, plural, one {Upload # photo and find matches} other {Upload # photos and find matches}}"
+msgstr "{0, plural, one {Upload # photo and find matches} other {Upload # photos and find matches}}"
+
+#. placeholder {0}: useAllData.used ?? 0
+#: app/components/media-library/restyle-review.tsx:137
+msgid "{0, plural, one {Used # new photo.} other {Used # new photos.}}"
+msgstr "{0, plural, one {Used # new photo.} other {Used # new photos.}}"
+
 #. placeholder {0}: done.onboardingTasks
 #: app/components/hiring/hire-dialog.tsx:139
 msgid "{0, plural, one {We added a new-hire checklist with # task.} other {We added a new-hire checklist with # tasks.}}"
 msgstr "{0, plural, one {We added a new-hire checklist with # task.} other {We added a new-hire checklist with # tasks.}}"
 
 #. placeholder {0}: selectedAssets.length
-#: app/components/media-library/photo-studio-dialog.tsx:554
+#: app/components/media-library/photo-studio-dialog.tsx:563
 msgid "{0, plural, one {Your photo} other {Your # photos}}"
 msgstr "{0, plural, one {Your photo} other {Your # photos}}"
 
@@ -1310,7 +1385,7 @@ msgstr "{count, plural, one {Add at least # item.} other {Add at least # items.}
 msgid "{count, plural, one {Cap reached on {reached} order} other {Cap reached on {reached} orders}}"
 msgstr "{count, plural, one {Cap reached on {reached} order} other {Cap reached on {reached} orders}}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2856
+#: app/routes/_app+/$orgSlug_+/media.tsx:3174
 msgid "{count, plural, one {Changes apply to # photo.} other {Changes apply to # photos.}}"
 msgstr "{count, plural, one {Changes apply to # photo.} other {Changes apply to # photos.}}"
 
@@ -1539,11 +1614,11 @@ msgstr "{dishName} is available again"
 msgid "{dishName} is hidden from your menu"
 msgstr "{dishName} is hidden from your menu"
 
-#: app/components/menu/menu-health-card.tsx:624
+#: app/components/menu/menu-health-card.tsx:654
 msgid "{dismissedTotal, plural, one {Nothing left to fix. # dismissed.} other {Nothing left to fix. # dismissed.}}"
 msgstr "{dismissedTotal, plural, one {Nothing left to fix. # dismissed.} other {Nothing left to fix. # dismissed.}}"
 
-#: app/components/menu/menu-health-card.tsx:336
+#: app/components/menu/menu-health-card.tsx:358
 msgid "{dismissLabel}: {name}"
 msgstr "{dismissLabel}: {name}"
 
@@ -1637,6 +1712,10 @@ msgstr "{failedTerm}: {failedTermError}"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:417
 msgid "{field}"
 msgstr ""
+
+#: app/components/media-library/restyle-run-status.tsx:61
+msgid "{finished} of {toDo} dishes done"
+msgstr "{finished} of {toDo} dishes done"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:852
 msgid "{first} to {last}"
@@ -1817,6 +1896,14 @@ msgstr "{late, plural, one {Overdue by # day} other {Overdue by # days}}"
 msgid "{left, plural, one {Code removed. # code left.} other {Code removed. # codes left.}}"
 msgstr "{left, plural, one {Code removed. # code left.} other {Code removed. # codes left.}}"
 
+#: app/components/media-library/focal-point-editor.tsx:173
+msgid "{left}% from the left"
+msgstr "{left}% from the left"
+
+#: app/components/media-library/focal-point-editor.tsx:158
+msgid "{left}% from the left, {top}% from the top"
+msgstr "{left}% from the left, {top}% from the top"
+
 #: app/components/kiosk/pin-pad.tsx:147
 msgid "{length, plural, =0 {No digits entered} one {# digit entered} other {# digits entered}}"
 msgstr "{length, plural, =0 {No digits entered} one {# digit entered} other {# digits entered}}"
@@ -1948,7 +2035,7 @@ msgstr "{n, plural, one {# booking needs a payment review} other {# bookings nee
 msgid "{n, plural, one {# booking no longer has a table} other {# bookings no longer have a table}}"
 msgstr "{n, plural, one {# booking no longer has a table} other {# bookings no longer have a table}}"
 
-#: app/components/menu/menu-health-card.tsx:160
+#: app/components/menu/menu-health-card.tsx:169
 msgid "{n, plural, one {# category is empty} other {# categories are empty}}"
 msgstr "{n, plural, one {# category is empty} other {# categories are empty}}"
 
@@ -1960,43 +2047,47 @@ msgstr "{n, plural, one {# certificate is expiring or has expired} other {# cert
 msgid "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
 msgstr "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
 
-#: app/components/menu/menu-health-card.tsx:144
+#: app/components/menu/menu-health-card.tsx:153
 msgid "{n, plural, one {# dish doesn't list allergens or calories} other {# dishes don't list allergens or calories}}"
 msgstr "{n, plural, one {# dish doesn't list allergens or calories} other {# dishes don't list allergens or calories}}"
 
-#: app/components/menu/menu-health-card.tsx:152
+#: app/components/menu/menu-health-card.tsx:119
+msgid "{n, plural, one {# dish has a weak photo} other {# dishes have a weak photo}}"
+msgstr "{n, plural, one {# dish has a weak photo} other {# dishes have a weak photo}}"
+
+#: app/components/menu/menu-health-card.tsx:161
 msgid "{n, plural, one {# dish has been unavailable for more than a week} other {# dishes have been unavailable for more than a week}}"
 msgstr "{n, plural, one {# dish has been unavailable for more than a week} other {# dishes have been unavailable for more than a week}}"
 
-#: app/components/menu/menu-health-card.tsx:120
+#: app/components/menu/menu-health-card.tsx:129
 msgid "{n, plural, one {# dish has no description} other {# dishes have no description}}"
 msgstr "{n, plural, one {# dish has no description} other {# dishes have no description}}"
 
-#: app/components/menu/menu-health-card.tsx:110
+#: app/components/menu/menu-health-card.tsx:111
 msgid "{n, plural, one {# dish has no photo} other {# dishes have no photo}}"
 msgstr "{n, plural, one {# dish has no photo} other {# dishes have no photo}}"
 
-#: app/components/menu/menu-health-card.tsx:200
+#: app/components/menu/menu-health-card.tsx:209
 msgid "{n, plural, one {# dish is listed twice (same name and price)} other {# dishes are listed twice (same name and price)}}"
 msgstr "{n, plural, one {# dish is listed twice (same name and price)} other {# dishes are listed twice (same name and price)}}"
 
-#: app/components/menu/menu-health-card.tsx:134
+#: app/components/menu/menu-health-card.tsx:143
 msgid "{n, plural, one {# dish is missing a translated name or description} other {# dishes are missing a translated name or description}}"
 msgstr "{n, plural, one {# dish is missing a translated name or description} other {# dishes are missing a translated name or description}}"
 
-#: app/components/menu/menu-health-card.tsx:128
+#: app/components/menu/menu-health-card.tsx:137
 msgid "{n, plural, one {# dish is missing an Arabic name or description} other {# dishes are missing an Arabic name or description}}"
 msgstr "{n, plural, one {# dish is missing an Arabic name or description} other {# dishes are missing an Arabic name or description}}"
 
-#: app/components/menu/menu-health-card.tsx:100
+#: app/components/menu/menu-health-card.tsx:101
 msgid "{n, plural, one {# dish is priced at 0} other {# dishes are priced at 0}}"
 msgstr "{n, plural, one {# dish is priced at 0} other {# dishes are priced at 0}}"
 
-#: app/components/menu/menu-health-card.tsx:176
+#: app/components/menu/menu-health-card.tsx:185
 msgid "{n, plural, one {# dish name is over 60 characters} other {# dish names are over 60 characters}}"
 msgstr "{n, plural, one {# dish name is over 60 characters} other {# dish names are over 60 characters}}"
 
-#: app/components/menu/menu-health-card.tsx:168
+#: app/components/menu/menu-health-card.tsx:177
 msgid "{n, plural, one {# dish name is written in capitals} other {# dish names are written in capitals}}"
 msgstr "{n, plural, one {# dish name is written in capitals} other {# dish names are written in capitals}}"
 
@@ -2028,11 +2119,11 @@ msgstr "{n, plural, one {# new applicant} other {# new applicants}}"
 msgid "{n, plural, one {# onboarding task needs attention} other {# onboarding tasks need attention}}"
 msgstr "{n, plural, one {# onboarding task needs attention} other {# onboarding tasks need attention}}"
 
-#: app/components/menu/menu-health-card.tsx:184
+#: app/components/menu/menu-health-card.tsx:193
 msgid "{n, plural, one {# option group has no choices guests can see} other {# option groups have no choices guests can see}}"
 msgstr "{n, plural, one {# option group has no choices guests can see} other {# option groups have no choices guests can see}}"
 
-#: app/components/menu/menu-health-card.tsx:192
+#: app/components/menu/menu-health-card.tsx:201
 msgid "{n, plural, one {# option group requires more picks than it allows} other {# option groups require more picks than they allow}}"
 msgstr "{n, plural, one {# option group requires more picks than it allows} other {# option groups require more picks than they allow}}"
 
@@ -2099,6 +2190,18 @@ msgstr "{name} from"
 msgid "{name} has been terminated."
 msgstr "{name} has been terminated."
 
+#: app/components/media-library/bulk-dish-photos.tsx:71
+msgid "{name} holds more than 100 photos. Split it in parts."
+msgstr "{name} holds more than 100 photos. Split it in parts."
+
+#: app/components/media-library/bulk-dish-photos.tsx:68
+msgid "{name} is larger than 400 MB."
+msgstr "{name} is larger than 400 MB."
+
+#: app/components/media-library/bulk-dish-photos.tsx:66
+msgid "{name} is not a valid zip file."
+msgstr "{name} is not a valid zip file."
+
 #: app/components/reservations/waitlist/use-waitlist.ts:240
 msgid "{name} is now {label}."
 msgstr "{name} is now {label}."
@@ -2114,6 +2217,10 @@ msgstr "{name} is over {stage}."
 #: app/components/reservations/waitlist/waitlist-queue.tsx:493
 msgid "{name} is over position {place} of {total}."
 msgstr "{name} is over position {place} of {total}."
+
+#: app/components/media-library/bulk-dish-photos.tsx:81
+msgid "{name} looks damaged and could not be read."
+msgstr "{name} looks damaged and could not be read."
 
 #: app/components/reservations/waitlist/use-waitlist.ts:286
 msgid "{name} moved to position {position} of {total}."
@@ -2142,6 +2249,10 @@ msgstr "{name} resumed."
 #: app/components/staff/schedule/availability-sheet.tsx:261
 msgid "{name} until"
 msgstr "{name} until"
+
+#: app/components/media-library/bulk-dish-photos.tsx:76
+msgid "{name} uses a zip format that cannot be read here. Make a new zip with your computer's Compress option."
+msgstr "{name} uses a zip format that cannot be read here. Make a new zip with your computer's Compress option."
 
 #: app/components/reservations/waitlist/use-waitlist.ts:187
 msgid "{name} was added to the waitlist."
@@ -2503,7 +2614,7 @@ msgstr "{redirectCount} redirects send visitors to \"{pageTitle}\". While it is 
 msgid "{redirectCount} redirects that pointed here are sent to the same place."
 msgstr "{redirectCount} redirects that pointed here are sent to the same place."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2277
+#: app/routes/_app+/$orgSlug_+/media.tsx:2595
 msgid "{referenceCount, plural, one {# place} other {# places}}"
 msgstr "{referenceCount, plural, one {# place} other {# places}}"
 
@@ -2523,6 +2634,10 @@ msgstr "{refused, plural, one {# item was changed by someone else, so it was not
 msgid "{remaining} left"
 msgstr "{remaining} left"
 
+#: app/components/media-library/restyle-review.tsx:150
+msgid "{remaining} more are waiting: use all again."
+msgstr "{remaining} more are waiting: use all again."
+
 #: app/components/impersonation-banner.tsx:47
 msgid "{remainingMinutes, plural, one {# minute left} other {# minutes left}}"
 msgstr "{remainingMinutes, plural, one {# minute left} other {# minutes left}}"
@@ -2538,6 +2653,10 @@ msgstr "{removed} removed"
 #: app/components/pos/terminals-manager.tsx:969
 msgid "{removingLabel} will stop sending orders at once. Orders it has already saved stay on that device and send after it is paired again. Nothing already received is deleted."
 msgstr "{removingLabel} will stop sending orders at once. Orders it has already saved stay on that device and send after it is paired again. Nothing already received is deleted."
+
+#: app/components/media-library/bulk-dish-photos.tsx:777
+msgid "{replaceCount, plural, one {# replaces an existing dish photo. } other {# replace existing dish photos. }}"
+msgstr "{replaceCount, plural, one {# replaces an existing dish photo. } other {# replace existing dish photos. }}"
 
 #: app/components/chat/chat-message.tsx:165
 msgid "{replyCount, plural, one {# reply} other {# replies}}"
@@ -2584,6 +2703,10 @@ msgstr "{scope}: the first {quantity} on each item"
 msgid "{scope}: when buying {quantity} or more"
 msgstr "{scope}: when buying {quantity} or more"
 
+#: app/components/media-library/photo-quality-info.tsx:86
+msgid "{score} out of 100"
+msgstr "{score} out of 100"
+
 #: app/components/kiosk/kiosk-screens.tsx:701
 msgid "{seconds, plural, one {Closing in # second} other {Closing in # seconds}}"
 msgstr "{seconds, plural, one {Closing in # second} other {Closing in # seconds}}"
@@ -2621,6 +2744,10 @@ msgstr "{sendingCount, plural, one {A broadcast is sending now. A send that has 
 msgid "{services, plural, one {# service} other {# services}}"
 msgstr "{services, plural, one {# service} other {# services}}"
 
+#: app/components/media-library/bulk-dish-photos.tsx:633
+msgid "{settled} of {total} photos uploaded"
+msgstr "{settled} of {total} photos uploaded"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:396
 msgid "{shown, plural, one {Showing # entry} other {Showing # entries}}"
 msgstr "{shown, plural, one {Showing # entry} other {Showing # entries}}"
@@ -2632,6 +2759,10 @@ msgstr "{shown} and {extra} more"
 #: app/components/menu/menu-review-stack.tsx:1227
 msgid "{shown} of {total} reviewed"
 msgstr "{shown} of {total} reviewed"
+
+#: app/components/media-library/bulk-dish-photos.tsx:246
+msgid "{skippedCount} files in {fileName} were left out because they are not photos, are too large or could not be read."
+msgstr "{skippedCount} files in {fileName} were left out because they are not photos, are too large or could not be read."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:302
 #: app/components/menu/drop-wizard/drop-form.tsx:1131
@@ -2719,6 +2850,10 @@ msgstr "{toOrder, plural, one {# item} other {# items}}"
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:582
 msgid "{toOrderSuppliers, plural, one {from # supplier} other {from # suppliers}}"
 msgstr "{toOrderSuppliers, plural, one {from # supplier} other {from # suppliers}}"
+
+#: app/components/media-library/focal-point-editor.tsx:196
+msgid "{top}% from the top"
+msgstr "{top}% from the top"
 
 #: app/utils/discounts/labels.ts:595
 msgid "{total, plural, one {# code in all.} other {# codes in all.}}"
@@ -2824,6 +2959,22 @@ msgstr "{unread} unread"
 msgid "{unreadLines} lines of the file could not be read."
 msgstr "{unreadLines} lines of the file could not be read."
 
+#: app/components/media-library/bulk-file-list.tsx:89
+#~ msgid "{uploaded} of {0} uploaded"
+#~ msgstr "{uploaded} of {0} uploaded"
+
+#: app/components/media-library/bulk-file-list.tsx:85
+#~ msgid "{uploaded} of {0} uploaded, {failedCount} failed"
+#~ msgstr "{uploaded} of {0} uploaded, {failedCount} failed"
+
+#: app/components/media-library/bulk-file-list.tsx:90
+msgid "{uploaded} of {total} uploaded"
+msgstr "{uploaded} of {total} uploaded"
+
+#: app/components/media-library/bulk-file-list.tsx:86
+msgid "{uploaded} of {total} uploaded, {failedCount} failed"
+msgstr "{uploaded} of {total} uploaded, {failedCount} failed"
+
 #: app/components/pos/terminal-health.tsx:328
 msgid "{used} MB of {quota} MB"
 msgstr "{used} MB of {quota} MB"
@@ -2851,6 +3002,10 @@ msgstr "{verb} on {expiresText}."
 #: app/components/settings/cards/organization/verified-domain-card.tsx:110
 msgid "{verifiedDomain} is verified."
 msgstr "{verifiedDomain} is verified."
+
+#: app/components/menu/photo-test-panel.tsx:280
+msgid "{views, plural, one {# more view to go.} other {# more views to go.}}"
+msgstr "{views, plural, one {# more view to go.} other {# more views to go.}}"
 
 #: app/components/inventory/counting-screen.tsx:454
 msgid "{waiting, plural, one {# entry waiting to send} other {# entries waiting to send}}"
@@ -2903,6 +3058,10 @@ msgstr "{windowCapacity} orders max in this window"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:318
 msgid "{windowCapacityPreview} orders max in this window"
 msgstr "{windowCapacityPreview} orders max in this window"
+
+#: app/components/media-library/restyle-start-form.tsx:275
+msgid "{withPhoto} dishes with a photo, {withoutPhoto} without (skipped)"
+msgstr "{withPhoto} dishes with a photo, {withoutPhoto} without (skipped)"
 
 #: app/routes/organizations+/create.tsx:985
 msgid "*.png, *.jpeg files up to 5 MB"
@@ -3483,6 +3642,14 @@ msgstr "A {amount} order on {when} earns {base} points; with this promotion it e
 msgid "A {pack} was <0>{was}</0>, now <1>{now}</1>."
 msgstr "A {pack} was <0>{was}</0>, now <1>{now}</1>."
 
+#: app/components/media-library/bulk-dish-photos.tsx:266
+msgid "A batch holds at most 100 photos. {tooManyCount} were not added."
+msgstr "A batch holds at most 100 photos. {tooManyCount} were not added."
+
+#: app/components/media-library/bulk-dish-photos.tsx:273
+msgid "A batch holds at most 400 MB of photos. {tooBigCount} were not added."
+msgstr "A batch holds at most 400 MB of photos. {tooBigCount} were not added."
+
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:494
 msgid "A before-import snapshot was saved in Menu History. Review your imported dishes and publish when ready."
 msgstr "A before-import snapshot was saved in Menu History. Review your imported dishes and publish when ready."
@@ -3635,11 +3802,23 @@ msgstr "A discount on this order reached its use limit before the payment arrive
 msgid "a discount that is no longer listed"
 msgstr "a discount that is no longer listed"
 
+#: app/components/media-library/bulk-dish-photos.tsx:823
+msgid "A dish"
+msgstr "A dish"
+
+#: app/components/media-library/bulk-dish-photos.tsx:89
+msgid "A dish got a photo while you were reviewing, so nothing was changed. Refresh the matches and review them again."
+msgstr "A dish got a photo while you were reviewing, so nothing was changed. Refresh the matches and review them again."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:216
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:185
 #: app/utils/marketing/campaign-message.server.ts:93
 msgid "A dish in your email is no longer on the live menu. Remove it or choose another one."
 msgstr "A dish in your email is no longer on the live menu. Remove it or choose another one."
+
+#: app/components/media-library/bulk-dish-photos.tsx:94
+msgid "A dish or a photo is no longer there, so nothing was changed. Refresh the matches and review them again."
+msgstr "A dish or a photo is no longer there, so nothing was changed. Refresh the matches and review them again."
 
 #: app/components/inventory/sold-out-panel.tsx:101
 msgid "A dish that is no longer on the menu"
@@ -3701,7 +3880,7 @@ msgstr "A former team member"
 msgid "A former team member has this email or phone number. Rehire them from the team list instead."
 msgstr "A former team member has this email or phone number. Rehire them from the team list instead."
 
-#: app/components/menu/menu-health-card.tsx:225
+#: app/components/menu/menu-health-card.tsx:235
 msgid "A free dish is usually a mistake."
 msgstr "A free dish is usually a mistake."
 
@@ -3937,11 +4116,11 @@ msgstr "A payment policy points to a service that is gone."
 msgid "A photo and a link stay when the calendar updates."
 msgstr "A photo and a link stay when the calendar updates."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2795
+#: app/routes/_app+/$orgSlug_+/media.tsx:3113
 msgid "A photo can have at most 20 tags."
 msgstr "A photo can have at most 20 tags."
 
-#: app/components/media-library/photo-studio-dialog.tsx:692
+#: app/components/media-library/photo-studio-dialog.tsx:701
 msgid "A photo whose lighting, background, and colors you like. JPEG, PNG, or WebP, up to 10 MB."
 msgstr "A photo whose lighting, background, and colors you like. JPEG, PNG, or WebP, up to 10 MB."
 
@@ -4042,6 +4221,14 @@ msgstr "A required break was not taken or not recorded."
 msgid "A restaurant is your workspace to manage locations, menus, online ordering, and delivery."
 msgstr "A restaurant is your workspace to manage locations, menus, online ordering, and delivery."
 
+#: app/components/media-library/restyle-labels.ts:14
+msgid "A restyle is already running. Wait for it to finish or stop it first."
+msgstr "A restyle is already running. Wait for it to finish or stop it first."
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:257
+msgid "A restyle is running"
+msgstr "A restyle is running"
+
 #: app/components/organization-invitations.tsx:74
 #: app/components/organization-invitations.tsx:75
 msgid "A role is required"
@@ -4111,7 +4298,7 @@ msgstr "A set price needs specific items or categories, or a meal deal."
 msgid "A setup check needs attention."
 msgstr "A setup check needs attention."
 
-#: app/components/menu/menu-health-card.tsx:227
+#: app/components/menu/menu-health-card.tsx:238
 msgid "A short description helps guests order."
 msgstr "A short description helps guests order."
 
@@ -4294,6 +4481,10 @@ msgstr "A website already answers on this domain"
 #: app/components/discounts/discount-form.tsx:1853
 msgid "A window that ends earlier than it starts runs past midnight."
 msgstr "A window that ends earlier than it starts runs past midnight."
+
+#: app/components/menu/photo-test-panel.tsx:275
+msgid "A winner needs {PHOTO_TEST_MIN_VIEWS} views of each photo and {PHOTO_TEST_MIN_DAYS} days."
+msgstr "A winner needs {PHOTO_TEST_MIN_VIEWS} views of each photo and {PHOTO_TEST_MIN_DAYS} days."
 
 #: app/components/website/domain/connect-card.tsx:135
 msgid "A wrong change could stop email from arriving. Nothing is changed until you confirm, and these records must stay:"
@@ -4591,7 +4782,7 @@ msgstr "Actual {0} / goal {1} {2}"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:394
 #: app/components/website/form-builder-sidebar.tsx:217
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:191
-#: app/routes/_app+/$orgSlug_+/media.tsx:2188
+#: app/routes/_app+/$orgSlug_+/media.tsx:2506
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:359
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1677
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:815
@@ -4712,7 +4903,7 @@ msgid "Add a dining area first, then add its tables."
 msgstr "Add a dining area first, then add its tables."
 
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:279
-#: app/components/menu/menu-health-card.tsx:594
+#: app/components/menu/menu-health-card.tsx:624
 msgid "Add a dish"
 msgstr "Add a dish"
 
@@ -4829,6 +5020,10 @@ msgstr "Add a photo"
 msgid "Add a photo of the invoice first."
 msgstr "Add a photo of the invoice first."
 
+#: app/components/menu/photo-test-panel.tsx:42
+msgid "Add a photo to the dish first."
+msgstr "Add a photo to the dish first."
+
 #: app/components/staff/positions-tab.tsx:461
 #: app/components/staff/positions-tab.tsx:509
 #: app/components/staff/positions-tab.tsx:512
@@ -4940,7 +5135,7 @@ msgstr "Add a supplier"
 msgid "Add a supplier first."
 msgstr "Add a supplier first."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2174
+#: app/routes/_app+/$orgSlug_+/media.tsx:2492
 msgid "Add a tag, like hero or drinks"
 msgstr "Add a tag, like hero or drinks"
 
@@ -5213,6 +5408,11 @@ msgstr "Add Delivery Zone"
 msgid "Add dish"
 msgstr "Add dish"
 
+#: app/components/media-library/bulk-dish-photos.tsx:501
+#: app/routes/_app+/$orgSlug_+/media.tsx:1422
+msgid "Add dish photos in bulk"
+msgstr "Add dish photos in bulk"
+
 #: app/components/settings/cards/organization/email-sending-card.tsx:281
 msgid "Add domain"
 msgstr "Add domain"
@@ -5334,6 +5534,10 @@ msgstr "Add modifier options below to see guest preview."
 #: app/components/settings/cards/connections-card.tsx:49
 msgid "Add more connections"
 msgstr ""
+
+#: app/components/media-library/bulk-dish-photos.tsx:840
+msgid "Add more photos"
+msgstr "Add more photos"
 
 #: app/components/website/form-builder-sidebar.tsx:1342
 msgid "Add name, email, choices, and more to start collecting responses."
@@ -5605,7 +5809,7 @@ msgstr "Add tables"
 msgid "Add tag"
 msgstr "Add tag"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2866
+#: app/routes/_app+/$orgSlug_+/media.tsx:3184
 msgid "Add tags"
 msgstr "Add tags"
 
@@ -5730,6 +5934,10 @@ msgstr "Add to dish"
 msgid "Add to new hires automatically"
 msgstr "Add to new hires automatically"
 
+#: app/components/media-library/bulk-review-grid.tsx:216
+msgid "Add to this dish"
+msgstr "Add to this dish"
+
 #: app/components/staff/schedule/templates-dialog.tsx:238
 msgid "Add to this week"
 msgstr "Add to this week"
@@ -5770,7 +5978,7 @@ msgstr "Add your business details to see what the assistant is told."
 msgid "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 msgstr "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 
-#: app/components/menu/menu-health-card.tsx:583
+#: app/components/menu/menu-health-card.tsx:613
 msgid "Add your first dishes to see how complete your menu is."
 msgstr "Add your first dishes to see how complete your menu is."
 
@@ -5968,6 +6176,10 @@ msgstr "Adds people to marketing lists"
 #: app/components/qr/tables-manager.tsx:125
 msgid "Adds table {label}."
 msgstr "Adds table {label}."
+
+#: app/components/menu/photo-test-panel.tsx:207
+msgid "Adds to cart"
+msgstr "Adds to cart"
 
 #: app/components/inventory/record-batch-dialog.tsx:93
 msgid "Adds what you made to stock and takes the ingredients out."
@@ -6177,11 +6389,11 @@ msgstr "AI phone agent"
 msgid "AI phone calls are only available for organizations that keep customer data in the US."
 msgstr "AI phone calls are only available for organizations that keep customer data in the US."
 
-#: app/components/media-library/photo-studio-dialog.tsx:197
+#: app/components/media-library/photo-studio-dialog.tsx:206
 msgid "AI photos are not set up for this workspace."
 msgstr "AI photos are not set up for this workspace."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1829
+#: app/routes/_app+/$orgSlug_+/media.tsx:2124
 msgid "AI studio"
 msgstr "AI studio"
 
@@ -6239,7 +6451,7 @@ msgstr "Alignment"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:362
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:258
-#: app/routes/_app+/$orgSlug_+/media.tsx:1268
+#: app/routes/_app+/$orgSlug_+/media.tsx:1523
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:233
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1468
 msgid "All"
@@ -6328,7 +6540,7 @@ msgstr "All devices"
 msgid "All events"
 msgstr "All events"
 
-#: app/components/menu/menu-health-card.tsx:777
+#: app/components/menu/menu-health-card.tsx:809
 msgid "All fixed. Nothing left in this list."
 msgstr "All fixed. Nothing left in this list."
 
@@ -6421,6 +6633,10 @@ msgstr ""
 #: app/components/roles/tenant-role-access-manager.tsx:771
 msgid "All reservations, guestbook, setup & payments"
 msgstr "All reservations, guestbook, setup & payments"
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.$runId.tsx:205
+msgid "All restyle runs"
+msgstr "All restyle runs"
 
 #: app/components/menu/menu-review-stack.tsx:1062
 msgid "All reviewed. Nice work."
@@ -6672,6 +6888,10 @@ msgstr "Already the same"
 msgid "already this value"
 msgstr "already this value"
 
+#: app/components/media-library/bulk-file-list.tsx:49
+msgid "Already uploaded"
+msgstr "Already uploaded"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:765
 msgid "Already working then"
 msgstr "Already working then"
@@ -6702,7 +6922,7 @@ msgstr "Also waive the packaging fee"
 msgid "Alt text"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2080
+#: app/routes/_app+/$orgSlug_+/media.tsx:2398
 msgid "Alt Text"
 msgstr "Alt Text"
 
@@ -7304,7 +7524,7 @@ msgstr "Applies to a"
 msgid "Applies when a customer enters a code."
 msgstr "Applies when a customer enters a code."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2932
+#: app/routes/_app+/$orgSlug_+/media.tsx:3250
 msgid "Apply"
 msgstr "Apply"
 
@@ -7349,7 +7569,7 @@ msgstr "Apply version B"
 msgid "Applying"
 msgstr "Applying"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2749
+#: app/routes/_app+/$orgSlug_+/media.tsx:3067
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:1369
 msgid "Applying…"
 msgstr "Applying…"
@@ -7472,8 +7692,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:234
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:404
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1132
-#: app/routes/_app+/$orgSlug_+/media.tsx:1341
-#: app/routes/_app+/$orgSlug_+/media.tsx:2420
+#: app/routes/_app+/$orgSlug_+/media.tsx:1607
+#: app/routes/_app+/$orgSlug_+/media.tsx:2738
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
 msgid "Archive"
 msgstr "Archive"
@@ -7554,7 +7774,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:73
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
-#: app/routes/_app+/$orgSlug_+/media.tsx:1303
+#: app/routes/_app+/$orgSlug_+/media.tsx:1569
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/discounts/labels.ts:28
 #: app/utils/discounts/labels.ts:49
@@ -7563,7 +7783,7 @@ msgstr ""
 msgid "Archived"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2776
+#: app/routes/_app+/$orgSlug_+/media.tsx:3094
 msgid "Archived {count} items. Restore them from the Archived view."
 msgstr "Archived {count} items. Restore them from the Archived view."
 
@@ -7591,7 +7811,7 @@ msgstr "Are you sure you want to delete “{roleNameToDelete}”? This action ca
 msgid "Are you sure you want to delete this comment?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1109
+#: app/routes/_app+/$orgSlug_+/media.tsx:1346
 msgid "Are you sure you want to remove this media asset?"
 msgstr "Are you sure you want to remove this media asset?"
 
@@ -8263,7 +8483,7 @@ msgstr "Award credits the points for the sale; exclude leaves the sale out of th
 msgid "Award points"
 msgstr "Award points"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1852
+#: app/routes/_app+/$orgSlug_+/media.tsx:2147
 msgid "B&W"
 msgstr "B&W"
 
@@ -8276,7 +8496,7 @@ msgstr "back"
 #: app/components/kiosk/kiosk-screens.tsx:264
 #: app/components/kiosk/kiosk-screens.tsx:495
 #: app/components/kiosk/kiosk-screens.tsx:571
-#: app/components/media-library/photo-studio-dialog.tsx:992
+#: app/components/media-library/photo-studio-dialog.tsx:1022
 #: app/components/website/create-page-dialog.tsx:197
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:185
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:332
@@ -8336,7 +8556,7 @@ msgstr "Back to counts"
 msgid "Back to customers"
 msgstr "Back to customers"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2709
+#: app/routes/_app+/$orgSlug_+/media.tsx:3027
 msgid "Back to details"
 msgstr "Back to details"
 
@@ -8487,6 +8707,10 @@ msgstr "Balance removed"
 #: app/components/pos/pos-day-report.tsx:375
 msgid "Balanced"
 msgstr "Balanced"
+
+#: app/components/media-library/focal-point-editor.tsx:217
+msgid "Banner"
+msgstr "Banner"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/customer-app.tsx:189
 msgid "Banner text"
@@ -8710,6 +8934,10 @@ msgstr "Blocks added to this dashboard show up here."
 msgid "Blue"
 msgstr "Blue"
 
+#: app/components/media-library/photo-quality-info.tsx:10
+msgid "Blurry"
+msgstr "Blurry"
+
 #: app/components/hiring/applicants-page.tsx:349
 #: app/components/inventory/prep-screen.tsx:242
 #: app/components/reservations/host-subnav.tsx:106
@@ -8924,6 +9152,10 @@ msgstr "Booth"
 msgid "Booth preferred, high chair..."
 msgstr "Booth preferred, high chair..."
 
+#: app/components/menu/photo-test-panel.tsx:234
+msgid "Both photos got the same share of orders."
+msgstr "Both photos got the same share of orders."
+
 #: app/utils/inventory/labels.ts:88
 msgid "Bought"
 msgstr "Bought"
@@ -9039,7 +9271,7 @@ msgstr "Breaks: {before} to {after}"
 msgid "Bright & airy"
 msgstr "Bright & airy"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2646
+#: app/routes/_app+/$orgSlug_+/media.tsx:2964
 msgid "Brightness"
 msgstr "Brightness"
 
@@ -9761,8 +9993,9 @@ msgstr "Can't text that number"
 #: app/components/marketing/campaign-actions.tsx:337
 #: app/components/marketing/programs-section.tsx:263
 #: app/components/media-library/media-library-picker.tsx:345
-#: app/components/media-library/photo-studio-dialog.tsx:963
-#: app/components/media-library/photo-studio-dialog.tsx:990
+#: app/components/media-library/photo-studio-dialog.tsx:993
+#: app/components/media-library/photo-studio-dialog.tsx:1020
+#: app/components/media-library/restyle-review.tsx:195
 #: app/components/member-location-scope.tsx:286
 #: app/components/menu/copy-location-overrides-dialog.tsx:124
 #: app/components/menu/drop-wizard/drop-drawers.tsx:396
@@ -9875,8 +10108,8 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:277
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:478
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1103
-#: app/routes/_app+/$orgSlug_+/media.tsx:2434
-#: app/routes/_app+/$orgSlug_+/media.tsx:2917
+#: app/routes/_app+/$orgSlug_+/media.tsx:2752
+#: app/routes/_app+/$orgSlug_+/media.tsx:3235
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:551
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:445
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:319
@@ -10172,15 +10405,16 @@ msgstr "Capitalize each word"
 msgid "Capitalize the first word only"
 msgstr "Capitalize the first word only"
 
-#: app/components/menu/menu-health-card.tsx:232
+#: app/components/menu/menu-health-card.tsx:243
 msgid "Capitals read like shouting. Use normal case."
 msgstr "Capitals read like shouting. Use normal case."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2105
+#: app/routes/_app+/$orgSlug_+/media.tsx:2423
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4675
 msgid "Caption"
 msgstr ""
 
+#: app/components/media-library/focal-point-editor.tsx:216
 #: app/components/pos/pos-day-report.tsx:259
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:146
 msgid "Card"
@@ -11098,9 +11332,13 @@ msgstr "Checking for staff records…"
 msgid "Checking recipes…"
 msgstr "Checking recipes…"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2292
+#: app/routes/_app+/$orgSlug_+/media.tsx:2610
 msgid "Checking references…"
 msgstr "Checking references…"
+
+#: app/components/media-library/photo-quality-info.tsx:76
+msgid "Checking this photo. A score appears in a few minutes."
+msgstr "Checking this photo. A score appears in a few minutes."
 
 #: app/components/reservations/booking-sheet.tsx:703
 msgid "Checking times..."
@@ -11114,6 +11352,11 @@ msgstr "Checking what uses this…"
 msgid "Checking your messages…"
 msgstr "Checking your messages…"
 
+#: app/components/media-library/bulk-dish-photos.tsx:552
+msgid "Checking your photos…"
+msgstr "Checking your photos…"
+
+#: app/components/media-library/bulk-file-list.tsx:121
 #: app/components/settings/cards/organization/verified-domain-card.tsx:177
 msgid "Checking…"
 msgstr "Checking…"
@@ -11261,6 +11504,10 @@ msgstr "Choose a different week to copy from."
 msgid "Choose a discount to print."
 msgstr "Choose a discount to print."
 
+#: app/components/media-library/bulk-review-grid.tsx:229
+msgid "Choose a dish"
+msgstr "Choose a dish"
+
 #: app/components/staff/labor/sales-import-dialog.tsx:147
 msgid "Choose a file"
 msgstr "Choose a file"
@@ -11368,6 +11615,14 @@ msgstr "Choose a starting point"
 #: app/components/print/print-form-errors.ts:15
 msgid "Choose a state"
 msgstr "Choose a state"
+
+#: app/components/media-library/restyle-labels.ts:17
+msgid "Choose a style first."
+msgstr "Choose a style first."
+
+#: app/components/media-library/restyle-start-form.tsx:293
+msgid "Choose a style to start."
+msgstr "Choose a style to start."
 
 #: app/components/website/hero-video-maker.tsx:56
 msgid "Choose a style."
@@ -11689,6 +11944,14 @@ msgstr "Choose Pair a tablet and create a code."
 msgid "Choose photo for {name}"
 msgstr "Choose photo for {name}"
 
+#: app/components/media-library/bulk-dish-photos.tsx:546
+msgid "Choose photos"
+msgstr "Choose photos"
+
+#: app/components/media-library/bulk-drop-zone.tsx:99
+msgid "Choose photos or a zip"
+msgstr "Choose photos or a zip"
+
 #: app/components/my-schedule/availability-sheet.tsx:104
 msgid "Choose something for at least one day."
 msgstr "Choose something for at least one day."
@@ -11774,7 +12037,7 @@ msgstr "Choose the whole order, items, categories or modifier choices."
 msgid "Choose two different customers to merge."
 msgstr "Choose two different customers to merge."
 
-#: app/components/media-library/photo-studio-dialog.tsx:492
+#: app/components/media-library/photo-studio-dialog.tsx:501
 msgid "Choose up to {PHOTO_STUDIO_MAX_PHOTOS} photos"
 msgstr "Choose up to {PHOTO_STUDIO_MAX_PHOTOS} photos"
 
@@ -11962,7 +12225,7 @@ msgstr "Cleaning"
 #: app/components/reservations/detail-sheet.tsx:1063
 #: app/components/staff/schedule/schedule-page.tsx:566
 #: app/components/staff/timesheets/bulk-bar.tsx:103
-#: app/routes/_app+/$orgSlug_+/media.tsx:1349
+#: app/routes/_app+/$orgSlug_+/media.tsx:1615
 msgid "Clear"
 msgstr "Clear"
 
@@ -12054,6 +12317,10 @@ msgstr "Click a table or decor element on the canvas to edit, resize, rotate, or
 msgid "Click anywhere on the map to add polygon corners"
 msgstr "Click anywhere on the map to add polygon corners"
 
+#: app/components/media-library/focal-point-editor.tsx:122
+msgid "Click or drag on the part of the dish that matters, or use the arrow keys or the sliders. Website, QR and app photos keep it in view."
+msgstr "Click or drag on the part of the dish that matters, or use the arrow keys or the sliders. Website, QR and app photos keep it in view."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:86
 msgid "Click rate"
 msgstr ""
@@ -12065,6 +12332,10 @@ msgstr ""
 #: app/components/staff/schedule/date-range-field.tsx:132
 msgid "Click the first day, then the last day. For one day, click it and close."
 msgstr "Click the first day, then the last day. For one day, click it and close."
+
+#: app/components/media-library/focal-point-editor.tsx:91
+#~ msgid "Click the part of the dish that matters. Website, QR and app photos keep it in view."
+#~ msgstr "Click the part of the dish that matters. Website, QR and app photos keep it in view."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:729
 msgid "Click to choose a cover image"
@@ -12228,7 +12499,7 @@ msgstr "Clocked out, {firstName}"
 #: app/components/website/hero-video-maker.tsx:464
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:248
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:245
-#: app/routes/_app+/$orgSlug_+/media.tsx:2382
+#: app/routes/_app+/$orgSlug_+/media.tsx:2700
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:614
 msgid "Close"
 msgstr ""
@@ -12553,12 +12824,12 @@ msgstr "Coming soon"
 msgid "Coming up in the next four weeks"
 msgstr "Coming up in the next four weeks"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2889
+#: app/routes/_app+/$orgSlug_+/media.tsx:3207
 msgid "Comma separated"
 msgstr "Comma separated"
 
 #: app/components/note/comment-input.tsx:196
-#: app/routes/_app+/$orgSlug_+/media.tsx:1831
+#: app/routes/_app+/$orgSlug_+/media.tsx:2126
 msgid "Comment"
 msgstr ""
 
@@ -12779,6 +13050,7 @@ msgstr "Configure weekly opening times for dine-in store hours and online orderi
 msgid "Configure your new restaurant location details, operating hours, and delivery settings."
 msgstr "Configure your new restaurant location details, operating hours, and delivery settings."
 
+#: app/components/media-library/bulk-review-grid.tsx:301
 #: app/components/settings/cards/organization/danger-zone-card.tsx:144
 #: app/components/settings/two-factor-form.tsx:269
 #: app/utils/reservations/host-actions.ts:36
@@ -13344,7 +13616,7 @@ msgstr "Contract"
 msgid "Contractor"
 msgstr "Contractor"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2658
+#: app/routes/_app+/$orgSlug_+/media.tsx:2976
 msgid "Contrast"
 msgstr "Contrast"
 
@@ -13388,7 +13660,7 @@ msgstr "Cookie banner settings"
 msgid "Cookie policy"
 msgstr "Cookie policy"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1855
+#: app/routes/_app+/$orgSlug_+/media.tsx:2150
 msgid "Cool"
 msgstr "Cool"
 
@@ -13500,7 +13772,7 @@ msgstr "Copy into this week"
 #: app/components/hiring/job-share-panel.tsx:87
 #: app/components/pos/terminals-manager.tsx:2034
 #: app/components/staff/kiosk-manager.tsx:782
-#: app/routes/_app+/$orgSlug_+/media.tsx:1443
+#: app/routes/_app+/$orgSlug_+/media.tsx:1714
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
 msgid "Copy link"
 msgstr ""
@@ -13569,7 +13841,7 @@ msgstr "Copy to"
 msgid "Copy to new draft"
 msgstr "Copy to new draft"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2026
+#: app/routes/_app+/$orgSlug_+/media.tsx:2344
 msgid "Copy URL"
 msgstr "Copy URL"
 
@@ -13655,6 +13927,11 @@ msgstr "Could not be changed"
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:448
 msgid "Could not be read, trying again soon"
 msgstr "Could not be read, trying again soon"
+
+#: app/components/media-library/restyle-item-card.tsx:104
+#: app/components/media-library/restyle-review.tsx:264
+msgid "Could not be restyled"
+msgstr "Could not be restyled"
 
 #: app/components/staff/schedule/notice-lists.tsx:31
 #: app/components/staff/schedule/publication-history.tsx:313
@@ -14010,7 +14287,7 @@ msgstr "Could not update the table block."
 msgid "Could not update this call. Try again."
 msgstr "Could not update this call. Try again."
 
-#: app/components/menu/menu-health-card.tsx:302
+#: app/components/menu/menu-health-card.tsx:324
 msgid "Could not update this check. Try again."
 msgstr "Could not update this check. Try again."
 
@@ -14889,6 +15166,14 @@ msgstr "Credit tips: {from} to {to}"
 msgid "Critical"
 msgstr ""
 
+#: app/components/media-library/focal-point-editor.tsx:119
+msgid "Crop focus"
+msgstr "Crop focus"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1252
+msgid "Crop focus saved"
+msgstr "Crop focus saved"
+
 #: app/components/staff/labor/sales-import-dialog.tsx:160
 msgid "CSV text"
 msgstr "CSV text"
@@ -14963,6 +15248,10 @@ msgstr "Current location"
 #: app/components/settings/password-form.tsx:82
 msgid "Current Password"
 msgstr ""
+
+#: app/components/media-library/bulk-review-grid.tsx:252
+msgid "Current photo of {dishName}"
+msgstr "Current photo of {dishName}"
 
 #: app/components/settings/cards/organization/billing-card.tsx:503
 msgid "Current Plan"
@@ -15063,6 +15352,10 @@ msgstr "Custom Roles"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:887
 msgid "Custom scheduled date/time"
 msgstr "Custom scheduled date/time"
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:214
+msgid "Custom style"
+msgstr "Custom style"
 
 #: app/components/staff/onboarding/onboarding-labels.ts:22
 msgid "Custom task"
@@ -15317,6 +15610,10 @@ msgstr "Dark & dramatic"
 msgid "Dark mode"
 msgstr ""
 
+#: app/components/menu/menu-health-card.tsx:237
+msgid "Dark, blurry or small photos hurt orders. Fix them in the photo studio."
+msgstr "Dark, blurry or small photos hurt orders. Fix them in the photo studio."
+
 #: app/components/app-sidebar.tsx:168
 #: app/components/app-sidebar.tsx:335
 #: app/components/command-menu.tsx:94
@@ -15498,6 +15795,10 @@ msgstr "Days without an order"
 #: app/components/hiring/screener-editor.tsx:189
 msgid "Dealbreaker"
 msgstr "Dealbreaker"
+
+#: app/components/media-library/restyle-review.tsx:242
+msgid "Decided"
+msgstr "Decided"
 
 #: app/components/reservations/requests-panel.tsx:257
 msgid "Decided in this session"
@@ -15748,7 +16049,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:242
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:219
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:311
-#: app/routes/_app+/$orgSlug_+/media.tsx:2397
+#: app/routes/_app+/$orgSlug_+/media.tsx:2715
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:563
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:398
@@ -16126,6 +16427,10 @@ msgstr "Deleted a page"
 msgid "Deleted element {removedLabel} from floor plan"
 msgstr "Deleted element {removedLabel} from floor plan"
 
+#: app/components/media-library/restyle-item-card.tsx:129
+msgid "Deleted if you do not choose by <0/>"
+msgstr "Deleted if you do not choose by <0/>"
+
 #: app/components/reservations/floor-plan-canvas.tsx:402
 msgid "Deleted table {removedLabel} from floor plan"
 msgstr "Deleted table {removedLabel} from floor plan"
@@ -16347,12 +16652,12 @@ msgstr "Describe the role, the pay and what you want to ask."
 msgid "Describe the text you want. You will review it before it fills your message. Nothing is sent."
 msgstr "Describe the text you want. You will review it before it fills your message. Nothing is sent."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2907
+#: app/routes/_app+/$orgSlug_+/media.tsx:3225
 msgid "Describe these images for accessibility"
 msgstr "Describe these images for accessibility"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2083
-#: app/routes/_app+/$orgSlug_+/media.tsx:2096
+#: app/routes/_app+/$orgSlug_+/media.tsx:2401
+#: app/routes/_app+/$orgSlug_+/media.tsx:2414
 msgid "Describe this image for accessibility"
 msgstr "Describe this image for accessibility"
 
@@ -16648,7 +16953,7 @@ msgstr "Different time zone: the same local times apply (11:00 stays 11:00 there
 msgid "Digits"
 msgstr "Digits"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1973
+#: app/routes/_app+/$orgSlug_+/media.tsx:2291
 msgid "Dimensions:"
 msgstr "Dimensions:"
 
@@ -16935,15 +17240,19 @@ msgstr "Discounts, coupon codes and how often they were used. Only applies when 
 msgid "Dish"
 msgstr "Dish"
 
+#: app/components/media-library/photo-quality-info.tsx:11
+msgid "Dish cut off"
+msgstr "Dish cut off"
+
 #: app/components/website/restaurant-editors.tsx:96
 msgid "Dish ids, one per line, in order"
 msgstr "Dish ids, one per line, in order"
 
-#: app/components/menu/menu-health-card.tsx:217
+#: app/components/menu/menu-health-card.tsx:227
 msgid "Dish names in capitals"
 msgstr "Dish names in capitals"
 
-#: app/components/menu/menu-health-card.tsx:218
+#: app/components/menu/menu-health-card.tsx:228
 msgid "Dish names that are too long"
 msgstr "Dish names that are too long"
 
@@ -16982,15 +17291,15 @@ msgstr "Dishes I pick"
 msgid "Dishes in this category start in this course on a dine-in ticket. The location chooses the course names."
 msgstr "Dishes in this category start in this course on a dine-in ticket. The location chooses the course names."
 
-#: app/components/menu/menu-health-card.tsx:221
+#: app/components/menu/menu-health-card.tsx:231
 msgid "Dishes listed twice"
 msgstr "Dishes listed twice"
 
-#: app/components/menu/menu-health-card.tsx:213
+#: app/components/menu/menu-health-card.tsx:223
 msgid "Dishes missing a translation"
 msgstr "Dishes missing a translation"
 
-#: app/components/menu/menu-health-card.tsx:210
+#: app/components/menu/menu-health-card.tsx:219
 msgid "Dishes priced at 0"
 msgstr "Dishes priced at 0"
 
@@ -17002,15 +17311,19 @@ msgstr "Dishes that sell without a recipe will show up here, best sellers first.
 msgid "Dishes to feature (up to three)"
 msgstr "Dishes to feature (up to three)"
 
-#: app/components/menu/menu-health-card.tsx:215
+#: app/components/menu/menu-health-card.tsx:225
 msgid "Dishes unavailable for a week"
 msgstr "Dishes unavailable for a week"
 
-#: app/components/menu/menu-health-card.tsx:212
+#: app/components/menu/menu-health-card.tsx:221
+msgid "Dishes with a weak photo"
+msgstr "Dishes with a weak photo"
+
+#: app/components/menu/menu-health-card.tsx:222
 msgid "Dishes with no description"
 msgstr "Dishes with no description"
 
-#: app/components/menu/menu-health-card.tsx:211
+#: app/components/menu/menu-health-card.tsx:220
 msgid "Dishes with no photo"
 msgstr "Dishes with no photo"
 
@@ -17018,7 +17331,7 @@ msgstr "Dishes with no photo"
 msgid "Dishes without a recipe"
 msgstr "Dishes without a recipe"
 
-#: app/components/menu/menu-health-card.tsx:214
+#: app/components/menu/menu-health-card.tsx:224
 msgid "Dishes without allergens or calories"
 msgstr "Dishes without allergens or calories"
 
@@ -17026,7 +17339,7 @@ msgstr "Dishes without allergens or calories"
 #: app/components/feature-updates.tsx:225
 #: app/components/inventory/setup-checklist.tsx:70
 #: app/components/marketing/marketing-calendar.tsx:162
-#: app/components/menu/menu-health-card.tsx:333
+#: app/components/menu/menu-health-card.tsx:355
 #: app/components/reservations/settings/setup-checklist.tsx:94
 #: app/components/reservations/settings/setup-list-chrome.tsx:117
 #: app/components/reservations/waitlist/waitlist-screen.tsx:156
@@ -17136,6 +17449,10 @@ msgstr ""
 msgid "Does not expire"
 msgstr "Does not expire"
 
+#: app/components/media-library/bulk-review-grid.tsx:57
+msgid "Does not look like food"
+msgstr "Does not look like food"
+
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:747
 msgid "Does not repeat"
 msgstr "Does not repeat"
@@ -17143,6 +17460,10 @@ msgstr "Does not repeat"
 #: app/utils/staffing/schedule-errors.ts:69
 msgid "Does not work at this workplace"
 msgstr "Does not work at this workplace"
+
+#: app/components/media-library/photo-quality-info.tsx:13
+msgid "Doesn't look like food"
+msgstr "Doesn't look like food"
 
 #: app/components/website/domain/buy-card.tsx:405
 #: app/components/website/domain/connect-card.tsx:604
@@ -17263,7 +17584,7 @@ msgstr ""
 msgid "Downgrade grace (days)"
 msgstr "Downgrade grace (days)"
 
-#: app/components/media-library/photo-studio-dialog.tsx:879
+#: app/components/media-library/photo-studio-dialog.tsx:909
 #: app/components/settings/backup-codes-display.tsx:99
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1165
 msgid "Download"
@@ -17337,7 +17658,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:96
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1004
-#: app/routes/_app+/$orgSlug_+/media.tsx:1404
+#: app/routes/_app+/$orgSlug_+/media.tsx:1670
 #: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:295
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:559
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:270
@@ -17464,7 +17785,7 @@ msgstr "Drag onto a table, or use Assign to table"
 msgid "Drag right edge to resize duration"
 msgstr "Drag right edge to resize duration"
 
-#: app/components/media-library/photo-studio-dialog.tsx:856
+#: app/components/media-library/photo-studio-dialog.tsx:886
 msgid "Drag the slider to compare."
 msgstr "Drag the slider to compare."
 
@@ -17502,9 +17823,17 @@ msgstr "Drinks"
 msgid "Drop"
 msgstr "Drop"
 
+#: app/components/media-library/bulk-dish-photos.tsx:503
+msgid "Drop a folder of photos or a zip file. Menuza proposes which dish each photo belongs to, and you confirm, swap or skip every one before anything is added."
+msgstr "Drop a folder of photos or a zip file. Menuza proposes which dish each photo belongs to, and you confirm, swap or skip every one before anything is added."
+
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:358
 msgid "Drop actions"
 msgstr "Drop actions"
+
+#: app/components/media-library/bulk-drop-zone.tsx:68
+msgid "Drop dish photos here, or a zip file of photos"
+msgstr "Drop dish photos here, or a zip file of photos"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:623
 msgid "Drop Information"
@@ -17597,6 +17926,8 @@ msgid "Due today"
 msgstr "Due today"
 
 #: app/components/marketing/campaign-actions.tsx:136
+#: app/components/media-library/bulk-file-list.tsx:23
+#: app/components/media-library/bulk-review-grid.tsx:61
 #: app/components/menu/menu-duplicate-dialog.tsx:83
 #: app/components/menu/menu-duplicate-dialog.tsx:134
 #: app/components/menu/menu-duplicate-trigger.tsx:38
@@ -17659,7 +17990,7 @@ msgstr ""
 msgid "e.g. about-us"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:745
+#: app/components/media-library/photo-studio-dialog.tsx:775
 msgid "e.g. Add a few fresh flowers in the background"
 msgstr "e.g. Add a few fresh flowers in the background"
 
@@ -17711,7 +18042,7 @@ msgstr "e.g. Late Dinner"
 msgid "e.g. Main dining"
 msgstr "e.g. Main dining"
 
-#: app/components/media-library/photo-studio-dialog.tsx:907
+#: app/components/media-library/photo-studio-dialog.tsx:937
 msgid "e.g. Make the background a little darker"
 msgstr "e.g. Make the background a little darker"
 
@@ -17778,6 +18109,10 @@ msgstr "Each break has to fall inside the shift."
 #: app/components/locations/checkout-settings-cards.tsx:39
 msgid "Each choice can only be listed once."
 msgstr "Each choice can only be listed once."
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:281
+msgid "Each day Menuza restyles up to {budget} photos for your restaurant. A bigger run pauses and goes on the next day."
+msgstr "Each day Menuza restyles up to {budget} photos for your restaurant. A bigger run pauses and goes on the next day."
 
 #: app/components/staff/labor/labor-tips.tsx:175
 msgid "each day on its own"
@@ -17879,6 +18214,10 @@ msgstr "Each workplace can only be added once."
 msgid "Earlier"
 msgstr "Earlier"
 
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:291
+msgid "Earlier runs"
+msgstr "Earlier runs"
+
 #: app/components/reservations/waitlist/waitlist-queue.tsx:609
 msgid "Earlier today"
 msgstr "Earlier today"
@@ -17950,7 +18289,7 @@ msgstr "Earning reversed"
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:469
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:391
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:433
-#: app/routes/_app+/$orgSlug_+/media.tsx:2251
+#: app/routes/_app+/$orgSlug_+/media.tsx:2569
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:478
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:374
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:787
@@ -18072,8 +18411,8 @@ msgstr "Edit Drop"
 msgid "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
 msgstr "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1938
-#: app/routes/_app+/$orgSlug_+/media.tsx:2462
+#: app/routes/_app+/$orgSlug_+/media.tsx:2233
+#: app/routes/_app+/$orgSlug_+/media.tsx:2780
 msgid "Edit image"
 msgstr "Edit image"
 
@@ -18194,7 +18533,7 @@ msgstr "Edit section cap"
 msgid "Edit section layout"
 msgstr "Edit section layout"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2853
+#: app/routes/_app+/$orgSlug_+/media.tsx:3171
 msgid "Edit selected media"
 msgstr "Edit selected media"
 
@@ -18222,7 +18561,7 @@ msgstr "Edit table"
 msgid "Edit tablet"
 msgstr "Edit tablet"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1326
+#: app/routes/_app+/$orgSlug_+/media.tsx:1592
 msgid "Edit tags and alt text"
 msgstr "Edit tags and alt text"
 
@@ -18274,7 +18613,7 @@ msgstr "Edited ({count} settings)"
 msgid "Edited, not published"
 msgstr "Edited, not published"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2631
+#: app/routes/_app+/$orgSlug_+/media.tsx:2949
 msgid "Editor preview"
 msgstr "Editor preview"
 
@@ -18498,7 +18837,7 @@ msgstr "Emergency contact phone"
 msgid "Employee"
 msgstr "Employee"
 
-#: app/components/menu/menu-health-card.tsx:216
+#: app/components/menu/menu-health-card.tsx:226
 msgid "Empty categories"
 msgstr "Empty categories"
 
@@ -18690,13 +19029,13 @@ msgstr "Ends the next morning."
 msgid "English"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:447
-#: app/routes/_app+/$orgSlug_+/media.tsx:1186
-#: app/routes/_app+/$orgSlug_+/media.tsx:1953
+#: app/components/media-library/photo-studio-dialog.tsx:456
+#: app/routes/_app+/$orgSlug_+/media.tsx:1441
+#: app/routes/_app+/$orgSlug_+/media.tsx:2248
 msgid "Enhance with AI"
 msgstr "Enhance with AI"
 
-#: app/components/media-library/photo-studio-dialog.tsx:849
+#: app/components/media-library/photo-studio-dialog.tsx:879
 msgid "Enhanced"
 msgstr "Enhanced"
 
@@ -19697,9 +20036,13 @@ msgstr "Every delivery here is marked as paid."
 msgid "Every dish"
 msgstr "Every dish"
 
-#: app/components/menu/menu-health-card.tsx:630
+#: app/components/menu/menu-health-card.tsx:660
 msgid "Every dish has a photo, a description and a price. Nice work."
 msgstr "Every dish has a photo, a description and a price. Nice work."
+
+#: app/components/media-library/restyle-start-form.tsx:234
+msgid "Every dish on your menu. Choose categories to limit it."
+msgstr "Every dish on your menu. Choose categories to limit it."
 
 #: app/components/inventory/missing-recipes-panel.tsx:76
 msgid "Every dish you sell has a recipe."
@@ -19914,7 +20257,7 @@ msgstr ""
 msgid "Example shift"
 msgstr "Example shift"
 
-#: app/components/menu/menu-health-card.tsx:69
+#: app/components/menu/menu-health-card.tsx:70
 msgid "Excellent"
 msgstr "Excellent"
 
@@ -20219,7 +20562,7 @@ msgstr "Extend turn by 15m"
 msgid "Extra charge when this topping is added to the whole pizza."
 msgstr "Extra charge when this topping is added to the whole pizza."
 
-#: app/components/media-library/photo-studio-dialog.tsx:737
+#: app/components/media-library/photo-studio-dialog.tsx:767
 msgid "Extra direction (optional)"
 msgstr "Extra direction (optional)"
 
@@ -20402,11 +20745,11 @@ msgstr "Failed to delete turn-time bucket."
 msgid "Failed to duplicate journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1760
+#: app/routes/_app+/$orgSlug_+/media.tsx:2055
 msgid "Failed to export edited image."
 msgstr "Failed to export edited image."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1776
+#: app/routes/_app+/$orgSlug_+/media.tsx:2071
 msgid "Failed to export image copy."
 msgstr "Failed to export image copy."
 
@@ -20599,7 +20942,7 @@ msgstr ""
 msgid "Favorites"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2207
+#: app/routes/_app+/$orgSlug_+/media.tsx:2525
 msgid "Feature"
 msgstr "Feature"
 
@@ -20620,7 +20963,7 @@ msgstr "Featured dishes"
 msgid "Featured items"
 msgstr "Featured items"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2197
+#: app/routes/_app+/$orgSlug_+/media.tsx:2515
 msgid "Featured photos are preferred for the website's hero"
 msgstr "Featured photos are preferred for the website's hero"
 
@@ -20728,12 +21071,12 @@ msgstr "Figures changed"
 msgid "File"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2043
+#: app/routes/_app+/$orgSlug_+/media.tsx:2361
 msgid "File name of the media asset"
 msgstr "File name of the media asset"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2041
-#: app/routes/_app+/$orgSlug_+/media.tsx:2054
+#: app/routes/_app+/$orgSlug_+/media.tsx:2359
+#: app/routes/_app+/$orgSlug_+/media.tsx:2372
 msgid "Filename"
 msgstr "Filename"
 
@@ -20818,7 +21161,7 @@ msgstr "Filter by tag"
 msgid "Filter by workplace"
 msgstr "Filter by workplace"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1260
+#: app/routes/_app+/$orgSlug_+/media.tsx:1515
 msgid "Filter media"
 msgstr "Filter media"
 
@@ -20847,7 +21190,7 @@ msgstr "Find"
 msgid "Find a returning guest"
 msgstr "Find a returning guest"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1154
+#: app/routes/_app+/$orgSlug_+/media.tsx:1391
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 
@@ -20876,7 +21219,7 @@ msgstr "Finish & clear table"
 msgid "Finish onboarding"
 msgstr "Finish onboarding"
 
-#: app/components/menu/menu-health-card.tsx:641
+#: app/components/menu/menu-health-card.tsx:671
 msgid "Finish these to help guests choose and order."
 msgstr "Finish these to help guests choose and order."
 
@@ -20978,6 +21321,11 @@ msgstr "Fix"
 msgid "Fix before publishing"
 msgstr "Fix before publishing"
 
+#: app/components/media-library/photo-quality-info.tsx:98
+#: app/components/menu/menu-health-card.tsx:372
+msgid "Fix in photo studio"
+msgstr "Fix in photo studio"
+
 #: app/components/dashboard/blocks/attention-block.tsx:518
 msgid "Fix it"
 msgstr "Fix it"
@@ -21071,11 +21419,11 @@ msgstr "Flags"
 msgid "Flavored syrup"
 msgstr "Flavored syrup"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2533
+#: app/routes/_app+/$orgSlug_+/media.tsx:2851
 msgid "Flip horizontally"
 msgstr "Flip horizontally"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2563
+#: app/routes/_app+/$orgSlug_+/media.tsx:2881
 msgid "Flip vertically"
 msgstr "Flip vertically"
 
@@ -21297,7 +21645,7 @@ msgstr "Formal"
 msgid "Format and daily reset time for new web, QR and Station order numbers at this location. Existing orders keep their numbers."
 msgstr "Format and daily reset time for new web, QR and Station order numbers at this location. Existing orders keep their numbers."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1996
+#: app/routes/_app+/$orgSlug_+/media.tsx:2314
 msgid "Format:"
 msgstr "Format:"
 
@@ -21747,7 +22095,7 @@ msgstr ""
 msgid "Generating..."
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:932
+#: app/components/media-library/photo-studio-dialog.tsx:962
 msgid "Generating…"
 msgstr "Generating…"
 
@@ -21829,6 +22177,10 @@ msgstr "Give away {when}"
 #: app/components/inventory/supplier-form.tsx:106
 msgid "Give both the time and how many days before delivery."
 msgstr "Give both the time and how many days before delivery."
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:237
+msgid "Give every dish photo one consistent look. Menuza makes a new version of each dish's main photo as a draft. Nothing goes live until you choose it."
+msgstr "Give every dish photo one consistent look. Menuza makes a new version of each dish's main photo as a draft. Nothing goes live until you choose it."
 
 #: app/components/menu/quick-modifier-group-sheet.tsx:215
 msgid "Give every option a name, or remove the empty row."
@@ -21998,7 +22350,7 @@ msgstr "Gold"
 msgid "Golden light, rich textures"
 msgstr "Golden light, rich textures"
 
-#: app/components/menu/menu-health-card.tsx:75
+#: app/components/menu/menu-health-card.tsx:76
 msgid "Good"
 msgstr "Good"
 
@@ -22143,7 +22495,7 @@ msgstr "Grabbed {grabbedGuestName} ({grabbedPartySize}) at {grabbedTime}. Use ar
 msgid "Grace period until <0>{graceText}</0>"
 msgstr "Grace period until <0>{graceText}</0>"
 
-#: app/components/menu/menu-health-card.tsx:274
+#: app/components/menu/menu-health-card.tsx:296
 msgid "Grade"
 msgstr "Grade"
 
@@ -22159,7 +22511,7 @@ msgstr ""
 msgid "Gray color"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2682
+#: app/routes/_app+/$orgSlug_+/media.tsx:3000
 msgid "Grayscale"
 msgstr "Grayscale"
 
@@ -22434,7 +22786,7 @@ msgstr "Guestbook profiles & merges"
 msgid "Guests"
 msgstr "Guests"
 
-#: app/components/menu/menu-health-card.tsx:234
+#: app/components/menu/menu-health-card.tsx:245
 msgid "Guests are asked to choose and have nothing to pick."
 msgstr "Guests are asked to choose and have nothing to pick."
 
@@ -22463,7 +22815,7 @@ msgstr "Guests can choose this area when they book."
 msgid "Guests can join online"
 msgstr "Guests can join online"
 
-#: app/components/menu/menu-health-card.tsx:235
+#: app/components/menu/menu-health-card.tsx:246
 msgid "Guests can never finish ordering this dish."
 msgstr "Guests can never finish ordering this dish."
 
@@ -22531,7 +22883,7 @@ msgstr "Guests leave a card to book. Nothing is charged up front."
 msgid "Guests leave a card. Nothing is charged unless you charge a fee."
 msgstr "Guests leave a card. Nothing is charged unless you charge a fee."
 
-#: app/components/menu/menu-health-card.tsx:229
+#: app/components/menu/menu-health-card.tsx:240
 msgid "Guests look for allergens and calories."
 msgstr "Guests look for allergens and calories."
 
@@ -22607,7 +22959,7 @@ msgstr "Guests reached"
 msgid "Guests read these terms and accept them before they book. Write them in each language your website offers."
 msgstr "Guests read these terms and accept them before they book. Write them in each language your website offers."
 
-#: app/components/menu/menu-health-card.tsx:228
+#: app/components/menu/menu-health-card.tsx:239
 msgid "Guests reading another language see a gap."
 msgstr "Guests reading another language see a gap."
 
@@ -22615,7 +22967,7 @@ msgstr "Guests reading another language see a gap."
 msgid "Guests scan the code on their table to order rounds and pay once when they leave."
 msgstr "Guests scan the code on their table to order rounds and pay once when they leave."
 
-#: app/components/menu/menu-health-card.tsx:231
+#: app/components/menu/menu-health-card.tsx:242
 msgid "Guests see a heading with nothing under it."
 msgstr "Guests see a heading with nothing under it."
 
@@ -22627,7 +22979,7 @@ msgstr "Guests see how many are left once there are only a few. Sold out is alwa
 msgid "Guests see nothing to order."
 msgstr "Guests see nothing to order."
 
-#: app/components/menu/menu-health-card.tsx:236
+#: app/components/menu/menu-health-card.tsx:247
 msgid "Guests see the same dish twice."
 msgstr "Guests see the same dish twice."
 
@@ -22820,7 +23172,7 @@ msgstr "Helps the caller for the rest of the call"
 msgid "Here's how to do it:"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1845
+#: app/routes/_app+/$orgSlug_+/media.tsx:2140
 msgid "Hero video (made by Menuza)"
 msgstr "Hero video (made by Menuza)"
 
@@ -22828,7 +23180,7 @@ msgstr "Hero video (made by Menuza)"
 msgid "Hero videos are not turned on for your account."
 msgstr "Hero videos are not turned on for your account."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2873
+#: app/routes/_app+/$orgSlug_+/media.tsx:3191
 msgid "hero, ramadan, drinks"
 msgstr "hero, ramadan, drinks"
 
@@ -22942,7 +23294,7 @@ msgstr ""
 msgid "Hide from site"
 msgstr "Hide from site"
 
-#: app/components/menu/menu-health-card.tsx:230
+#: app/components/menu/menu-health-card.tsx:241
 msgid "Hide it or bring it back."
 msgstr "Hide it or bring it back."
 
@@ -22989,6 +23341,10 @@ msgstr "High contrast"
 #: app/components/roles/tenant-role-access-manager.tsx:473
 msgid "High impact"
 msgstr "High impact"
+
+#: app/components/media-library/bulk-review-grid.tsx:38
+msgid "High match"
+msgstr "High match"
 
 #: app/components/loyalty/reward-return-preview.tsx:142
 msgid "High return"
@@ -23439,6 +23795,10 @@ msgstr "How strict the clock is about the published schedule. These checks start
 msgid "How the call flow works"
 msgstr "How the call flow works"
 
+#: app/components/media-library/focal-point-editor.tsx:212
+msgid "How the crops look"
+msgstr "How the crops look"
+
 #: app/components/customers/person-marketing-card.tsx:631
 msgid "How the guest gave consent"
 msgstr "How the guest gave consent"
@@ -23618,7 +23978,7 @@ msgstr "Ignores table overlap for table and time changes. Use only when you know
 msgid "Image"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1027
+#: app/routes/_app+/$orgSlug_+/media.tsx:1247
 msgid "Image added to your media library"
 msgstr "Image added to your media library"
 
@@ -23638,7 +23998,7 @@ msgstr "Image from your media library"
 msgid "Image link"
 msgstr "Image link"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1439
+#: app/routes/_app+/$orgSlug_+/media.tsx:1710
 msgid "Image link copied"
 msgstr "Image link copied"
 
@@ -23649,11 +24009,11 @@ msgstr "Image link copied"
 msgid "Image post"
 msgstr "Image post"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1038
+#: app/routes/_app+/$orgSlug_+/media.tsx:1261
 msgid "Image removed from media library"
 msgstr "Image removed from media library"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1035
+#: app/routes/_app+/$orgSlug_+/media.tsx:1258
 msgid "Image replaced successfully"
 msgstr "Image replaced successfully"
 
@@ -23995,7 +24355,7 @@ msgstr "Including locations you add later."
 msgid "Including locations you add later. Applicants choose where."
 msgstr "Including locations you add later. Applicants choose where."
 
-#: app/components/menu/menu-health-card.tsx:88
+#: app/components/menu/menu-health-card.tsx:89
 msgid "Incomplete"
 msgstr "Incomplete"
 
@@ -24418,6 +24778,11 @@ msgstr ""
 msgid "Issued"
 msgstr "Issued"
 
+#: app/components/media-library/photo-studio-dialog.tsx:748
+#: app/components/media-library/photo-studio-dialog.tsx:751
+msgid "Issues found in this photo"
+msgstr "Issues found in this photo"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:257
 msgid "It could not be completed or was cancelled, so the full amount went back to the card you paid with. It can take a few days to show."
 msgstr "It could not be completed or was cancelled, so the full amount went back to the card you paid with. It can take a few days to show."
@@ -24766,6 +25131,18 @@ msgstr "Its Book button shows only while online booking is on."
 msgid "Its coupon codes are not brought back: add new ones before you turn it on."
 msgstr "Its coupon codes are not brought back: add new ones before you turn it on."
 
+#: app/components/media-library/bulk-dish-photos.tsx:105
+msgid "Its photo changed while you were reviewing, so it was left as it is."
+msgstr "Its photo changed while you were reviewing, so it was left as it is."
+
+#: app/components/media-library/restyle-labels.ts:44
+msgid "Its photo comes from your point of sale"
+msgstr "Its photo comes from your point of sale"
+
+#: app/components/media-library/bulk-dish-photos.tsx:111
+msgid "Its photo comes from your point of sale, so it was left as it is."
+msgstr "Its photo comes from your point of sale, so it was left as it is."
+
 #: app/components/qr/tables-manager.tsx:479
 msgid "Its QR code stops taking orders. Past tabs keep their history."
 msgstr "Its QR code stops taking orders. Past tabs keep their history."
@@ -24858,6 +25235,10 @@ msgstr ""
 msgid "journeyId is required"
 msgstr ""
 
+#: app/components/media-library/bulk-drop-zone.tsx:71
+msgid "JPEG, PNG, WebP, GIF or AVIF, up to {MAX_FILE_MB} MB each and {BULK_PHOTO_MAX_FILES} photos at a time. Name each file after its dish to get better matches."
+msgstr "JPEG, PNG, WebP, GIF or AVIF, up to {MAX_FILE_MB} MB each and {BULK_PHOTO_MAX_FILES} photos at a time. Name each file after its dish to get better matches."
+
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:404
 msgid "JPG, PNG, or WebP photo of a printed card."
 msgstr "JPG, PNG, or WebP photo of a printed card."
@@ -24891,9 +25272,17 @@ msgstr "Keep"
 msgid "Keep {subject}"
 msgstr "Keep {subject}"
 
+#: app/components/menu/photo-test-panel.tsx:251
+msgid "Keep A"
+msgstr "Keep A"
+
 #: app/components/reservations/payment-panel.tsx:709
 msgid "Keep as is"
 msgstr "Keep as is"
+
+#: app/components/menu/photo-test-panel.tsx:243
+msgid "Keep B"
+msgstr "Keep B"
 
 #: app/components/inventory/counting-screen.tsx:621
 msgid "Keep counting"
@@ -24951,6 +25340,10 @@ msgstr "Keep my text"
 #: app/components/orders/order-detail.tsx:1391
 msgid "Keep order"
 msgstr "Keep order"
+
+#: app/components/media-library/restyle-item-card.tsx:162
+msgid "Keep original"
+msgstr "Keep original"
 
 #: app/components/reservations/detail-sheet.tsx:1589
 msgid "Keep overlap checks"
@@ -25074,7 +25467,7 @@ msgstr "Keep them"
 msgid "Keep this one"
 msgstr "Keep this one"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1012
+#: app/components/media-library/photo-studio-dialog.tsx:1042
 msgid "Keep this window open until it finishes."
 msgstr "Keep this window open until it finishes."
 
@@ -25113,6 +25506,14 @@ msgstr "Kept as overrides:"
 #: app/components/inventory/item-form.tsx:521
 msgid "Kept in"
 msgstr "Kept in"
+
+#: app/components/menu/photo-test-panel.tsx:132
+msgid "Kept the new photo"
+msgstr "Kept the new photo"
+
+#: app/components/menu/photo-test-panel.tsx:134
+msgid "Kept the original photo"
+msgstr "Kept the original photo"
 
 #: app/components/staff/timesheets/reason-field.tsx:37
 msgid "Kept with the card and shown in its history."
@@ -25949,6 +26350,10 @@ msgstr "Left the team"
 msgid "Left to refund"
 msgstr "Left to refund"
 
+#: app/components/media-library/focal-point-editor.tsx:164
+msgid "Left to right"
+msgstr "Left to right"
+
 #: app/components/app-sidebar.tsx:818
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:172
 msgid "Legal"
@@ -26770,7 +27175,7 @@ msgstr "Local search keywords"
 #: app/components/reservations/header-controls.tsx:39
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:151
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:161
-#: app/routes/_app+/$orgSlug_+/media.tsx:2060
+#: app/routes/_app+/$orgSlug_+/media.tsx:2378
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:654
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:968
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:328
@@ -27036,7 +27441,7 @@ msgstr ""
 msgid "Logout"
 msgstr ""
 
-#: app/components/menu/menu-health-card.tsx:233
+#: app/components/menu/menu-health-card.tsx:244
 msgid "Long names get cut off on small screens."
 msgstr "Long names get cut off on small screens."
 
@@ -27109,9 +27514,17 @@ msgstr "Low"
 msgid "Low confidence"
 msgstr "Low confidence"
 
+#: app/components/media-library/bulk-review-grid.tsx:42
+msgid "Low match"
+msgstr "Low match"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:307
 msgid "Low or out"
 msgstr "Low or out"
+
+#: app/components/media-library/bulk-review-grid.tsx:63
+msgid "Low quality"
+msgstr "Low quality"
 
 #: app/components/phone-agent/phrase-fields.tsx:127
 msgid "Low rating"
@@ -27120,6 +27533,10 @@ msgstr "Low rating"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:120
 msgid "Low ratings"
 msgstr "Low ratings"
+
+#: app/components/media-library/photo-quality-info.tsx:12
+msgid "Low resolution"
+msgstr "Low resolution"
 
 #: app/components/discounts/discount-form.tsx:2153
 msgid "Lower numbers are considered first. 0 is the default."
@@ -27254,7 +27671,7 @@ msgstr "Main"
 msgid "Main language"
 msgstr "Main language"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1847
+#: app/routes/_app+/$orgSlug_+/media.tsx:2142
 msgid "Main library"
 msgstr "Main library"
 
@@ -27896,6 +28313,10 @@ msgstr "Matches {size} · email {email} · text {text}"
 msgid "Matches the invoice."
 msgstr "Matches the invoice."
 
+#: app/components/media-library/bulk-dish-photos.tsx:679
+msgid "Matching your photos to dishes…"
+msgstr "Matching your photos to dishes…"
+
 #: app/components/loyalty/program-extension-cards.tsx:669
 msgid "Max discount cap"
 msgstr "Max discount cap"
@@ -28011,24 +28432,27 @@ msgstr "Meat"
 msgid "Media"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1867
+#: app/routes/_app+/$orgSlug_+/media.tsx:2162
 msgid "Media details"
 msgstr "Media details"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1032
+#: app/routes/_app+/$orgSlug_+/media.tsx:1255
 msgid "Media details saved"
 msgstr "Media details saved"
 
 #: app/components/app-sidebar.tsx:356
 #: app/components/command-menu.tsx:97
+#: app/components/media-library/bulk-dish-photos.tsx:512
+#: app/components/media-library/bulk-dish-photos.tsx:843
 #: app/components/media-library/media-library-picker.tsx:232
 #: app/components/roles/tenant-role-access-manager.tsx:180
 #: app/components/workspace-breadcrumb.tsx:21
-#: app/routes/_app+/$orgSlug_+/media.tsx:1152
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:249
+#: app/routes/_app+/$orgSlug_+/media.tsx:1389
 msgid "Media library"
 msgstr "Media library"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2810
+#: app/routes/_app+/$orgSlug_+/media.tsx:3128
 msgid "Media not found."
 msgstr "Media not found."
 
@@ -28042,6 +28466,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6021
 msgid "Medium"
 msgstr ""
+
+#: app/components/media-library/bulk-review-grid.tsx:40
+msgid "Medium match"
+msgstr "Medium match"
 
 #: app/routes/_auth+/waitlist.tsx:444
 msgid "Meet other members and share updates in the group. An admin can add community points after you join."
@@ -28121,12 +28549,12 @@ msgstr "Menu and drop orders placed by this customer."
 msgid "Menu columns"
 msgstr "Menu columns"
 
-#: app/components/menu/menu-health-card.tsx:580
-#: app/components/menu/menu-health-card.tsx:619
+#: app/components/menu/menu-health-card.tsx:610
+#: app/components/menu/menu-health-card.tsx:649
 msgid "Menu health"
 msgstr "Menu health"
 
-#: app/components/menu/menu-health-card.tsx:662
+#: app/components/menu/menu-health-card.tsx:692
 msgid "Menu health score"
 msgstr "Menu health score"
 
@@ -29261,6 +29689,11 @@ msgstr ""
 msgid "Need an integration but don't see it here?"
 msgstr ""
 
+#: app/components/media-library/photo-quality-info.tsx:50
+#: app/routes/_app+/$orgSlug_+/media.tsx:1553
+msgid "Needs a better photo"
+msgstr "Needs a better photo"
+
 #: app/components/pos/terminals-manager.tsx:1827
 msgid "Needs a location and a staff PIN, so every count and waste entry records who made it."
 msgstr "Needs a location and a staff PIN, so every count and waste entry records who made it."
@@ -29344,7 +29777,7 @@ msgstr "Needs specific items or categories. Choose them under Applies to."
 msgid "Needs two counts"
 msgstr "Needs two counts"
 
-#: app/components/menu/menu-health-card.tsx:82
+#: app/components/menu/menu-health-card.tsx:83
 msgid "Needs work"
 msgstr "Needs work"
 
@@ -29452,11 +29885,16 @@ msgid "Never used"
 msgstr ""
 
 #: app/components/hiring/applicant-labels.ts:22
+#: app/components/media-library/restyle-item-card.tsx:117
 #: app/components/menu/menu-review-card.tsx:76
 #: app/components/workspace-breadcrumb.tsx:23
 #: app/components/workspace-header-actions.tsx:44
 msgid "New"
 msgstr "New"
+
+#: app/components/media-library/restyle-item-card.tsx:117
+msgid "New (in use)"
+msgstr "New (in use)"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:390
 msgid "New announcement"
@@ -29643,6 +30081,14 @@ msgstr ""
 #: app/components/reservations/policies/policy-sheet.tsx:176
 msgid "New payment policy"
 msgstr "New payment policy"
+
+#: app/components/media-library/restyle-item-card.tsx:92
+msgid "New photo in use"
+msgstr "New photo in use"
+
+#: app/components/media-library/restyle-review.tsx:225
+msgid "New photos show up here as they are made."
+msgstr "New photos show up here as they are made."
 
 #: app/components/staff/pin-panel.tsx:64
 msgid "New PIN"
@@ -29865,7 +30311,7 @@ msgstr "Next week"
 msgid "Next:"
 msgstr "Next:"
 
-#: app/components/media-library/photo-studio-dialog.tsx:971
+#: app/components/media-library/photo-studio-dialog.tsx:1001
 msgid "Next: choose style"
 msgstr "Next: choose style"
 
@@ -30258,7 +30704,7 @@ msgstr ""
 msgid "No delivery zones configured"
 msgstr "No delivery zones configured"
 
-#: app/components/menu/menu-health-card.tsx:241
+#: app/components/menu/menu-health-card.tsx:253
 msgid "No description on purpose"
 msgstr "No description on purpose"
 
@@ -30298,15 +30744,19 @@ msgstr "No discounts yet"
 msgid "No discrete action step dispatches recorded for this run."
 msgstr ""
 
+#: app/components/media-library/bulk-review-grid.tsx:145
+msgid "No dish (stays in the library)"
+msgstr "No dish (stays in the library)"
+
 #: app/components/orders/daily-limits-panel.tsx:162
 msgid "No dish has a daily limit at this location."
 msgstr "No dish has a daily limit at this location."
 
-#: app/components/menu/menu-health-card.tsx:118
+#: app/components/menu/menu-health-card.tsx:127
 msgid "No dish has a description"
 msgstr "No dish has a description"
 
-#: app/components/menu/menu-health-card.tsx:108
+#: app/components/menu/menu-health-card.tsx:109
 msgid "No dish has a photo"
 msgstr "No dish has a photo"
 
@@ -30314,7 +30764,7 @@ msgstr "No dish has a photo"
 msgid "No dish has this id."
 msgstr "No dish has this id."
 
-#: app/components/menu/menu-health-card.tsx:142
+#: app/components/menu/menu-health-card.tsx:151
 msgid "No dish lists allergens or calories"
 msgstr "No dish lists allergens or calories"
 
@@ -30612,11 +31062,15 @@ msgstr "No mail forwarded yet"
 msgid "No map position: checks are skipped until the address has one."
 msgstr "No map position: checks are skipped until the address has one."
 
+#: app/components/media-library/bulk-review-grid.tsx:44
+msgid "No match"
+msgstr "No match"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:559
 msgid "No matching calls"
 msgstr "No matching calls"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1487
+#: app/routes/_app+/$orgSlug_+/media.tsx:1758
 msgid "No matching images"
 msgstr "No matching images"
 
@@ -30986,13 +31440,21 @@ msgstr "No payroll ID"
 msgid "No phone can add to it or pay it any more, and scanning the table code is refused too. Close or void it at the counter to finish."
 msgstr "No phone can add to it or pay it any more, and scanning the table code is refused too. Close or void it at the counter to finish."
 
-#: app/components/menu/menu-health-card.tsx:240
+#: app/components/media-library/restyle-labels.ts:40
+msgid "No photo"
+msgstr "No photo"
+
+#: app/components/menu/menu-health-card.tsx:251
 msgid "No photo on purpose"
 msgstr "No photo on purpose"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:434
 msgid "No photo yet."
 msgstr "No photo yet."
+
+#: app/components/media-library/bulk-dish-photos.tsx:79
+msgid "No photos were found in {name}."
+msgstr "No photos were found in {name}."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1057
 msgid "No pickup windows scheduled"
@@ -31229,6 +31691,10 @@ msgstr "No scheduled count day"
 msgid "No schedules yet"
 msgstr "No schedules yet"
 
+#: app/components/media-library/photo-quality-info.tsx:80
+msgid "No score for this photo."
+msgstr "No score for this photo."
+
 #: app/components/hiring/applicant-labels.ts:86
 msgid "No screening questions"
 msgstr "No screening questions"
@@ -31382,7 +31848,7 @@ msgstr "No tables yet. Add the tables guests can be seated at."
 msgid "No tablets paired yet"
 msgstr "No tablets paired yet"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2125
+#: app/routes/_app+/$orgSlug_+/media.tsx:2443
 msgid "No tags yet"
 msgstr "No tags yet"
 
@@ -31703,13 +32169,21 @@ msgstr "None (Top-Level Category)"
 msgid "None left"
 msgstr "None left"
 
+#: app/components/media-library/restyle-labels.ts:20
+msgid "None of these dishes has a photo to restyle."
+msgstr "None of these dishes has a photo to restyle."
+
 #: app/components/pos/terminal-health.tsx:424
 msgid "None this week."
 msgstr "None this week."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1851
+#: app/routes/_app+/$orgSlug_+/media.tsx:2146
 msgid "Normal"
 msgstr "Normal"
+
+#: app/components/media-library/bulk-file-list.tsx:17
+msgid "Not a photo"
+msgstr "Not a photo"
 
 #: app/components/menu/menu-review-card.tsx:402
 msgid "Not a problem"
@@ -31788,6 +32262,10 @@ msgstr "Not available with tiers. Turn tiers off first."
 msgid "Not available yet for <0>{currency}</0>. Use a percentage."
 msgstr "Not available yet for <0>{currency}</0>. Use a percentage."
 
+#: app/components/media-library/bulk-dish-photos.tsx:817
+msgid "Not changed"
+msgstr "Not changed"
+
 #: app/components/locations/copy-settings-dialog.tsx:634
 msgid "Not changed (you cannot manage these locations):"
 msgstr "Not changed (you cannot manage these locations):"
@@ -31799,6 +32277,10 @@ msgstr "Not changed (you cannot manage these):"
 #: app/components/website/domain/domain-ui.tsx:229
 msgid "Not checked"
 msgstr "Not checked"
+
+#: app/components/media-library/restyle-labels.ts:48
+msgid "Not chosen within 30 days, so the draft was deleted"
+msgstr "Not chosen within 30 days, so the draft was deleted"
 
 #: app/components/dashboard/blocks/google-performance-block.tsx:120
 #: app/components/pos/zatca-settings.tsx:382
@@ -31844,6 +32326,10 @@ msgstr "Not enough data for this period yet."
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:235
 msgid "Not enough data yet (each version needs {minVisits} visits)."
 msgstr "Not enough data yet (each version needs {minVisits} visits)."
+
+#: app/components/menu/photo-test-panel.tsx:273
+msgid "Not enough data yet."
+msgstr "Not enough data yet."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:379
 msgid "Not enough history yet. Suggestions get better after about two weeks of use, so treat these as a first guess."
@@ -32014,6 +32500,10 @@ msgstr "Not this guest"
 msgid "Not updated"
 msgstr "Not updated"
 
+#: app/components/media-library/bulk-file-list.tsx:156
+msgid "Not uploaded"
+msgstr "Not uploaded"
+
 #: app/components/menu/item-form.tsx:834
 #: app/components/menu/option-form.tsx:1084
 msgid "Not used anywhere else yet"
@@ -32027,7 +32517,7 @@ msgstr "Not used anywhere yet."
 msgid "Not used by your site."
 msgstr "Not used by your site."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2297
+#: app/routes/_app+/$orgSlug_+/media.tsx:2615
 msgid "Not used in any notes, comments, or pages"
 msgstr "Not used in any notes, comments, or pages"
 
@@ -32066,7 +32556,7 @@ msgstr ""
 #: app/components/staff/timesheets/card-fields.tsx:210
 #: app/components/workspace-breadcrumb.tsx:111
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:783
-#: app/routes/_app+/$orgSlug_+/media.tsx:1833
+#: app/routes/_app+/$orgSlug_+/media.tsx:2128
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:925
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1310
 #: app/utils/gift-cards/labels.ts:25
@@ -32259,6 +32749,10 @@ msgstr "Nothing in this file can be imported yet."
 msgid "Nothing in this timeframe matches the report's filters."
 msgstr "Nothing in this timeframe matches the report's filters."
 
+#: app/components/media-library/bulk-dish-photos.tsx:697
+msgid "Nothing is added to a dish until you apply. Photos without a dish stay in the library."
+msgstr "Nothing is added to a dish until you apply. Photos without a dish stay in the library."
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:172
 msgid "Nothing is added until you confirm. Fix a row here or remove it."
 msgstr "Nothing is added until you confirm. Fix a row here or remove it."
@@ -32312,7 +32806,7 @@ msgstr "Nothing is waiting"
 msgid "Nothing is waiting for review."
 msgstr "Nothing is waiting for review."
 
-#: app/components/menu/menu-health-card.tsx:680
+#: app/components/menu/menu-health-card.tsx:710
 msgid "Nothing left to fix"
 msgstr "Nothing left to fix"
 
@@ -32928,6 +33422,10 @@ msgstr "One item per line: name, category, unit, then price per unit. A header r
 msgid "One moment…"
 msgstr "One moment…"
 
+#: app/components/media-library/restyle-labels.ts:18
+msgid "One of the categories is no longer on your menu."
+msgstr "One of the categories is no longer on your menu."
+
 #: app/components/website/hero-video-maker.tsx:59
 msgid "One of the photos cannot be used. Pick photos from your media library."
 msgstr "One of the photos cannot be used. Pick photos from your media library."
@@ -32967,6 +33465,10 @@ msgstr "One person per line: name, then phone or email. A header row with Name, 
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:704
 msgid "One rule prices a dish: a category rule first, then a menu rule, then a rule for every dish. Ending a rule returns prices to base."
 msgstr "One rule prices a dish: a category rule first, then a menu rule, then a rule for every dish. Ending a rule returns prices to base."
+
+#: app/components/media-library/restyle-start-form.tsx:281
+msgid "One run restyles at most {maxPhotos} photos. Choose fewer categories."
+msgstr "One run restyles at most {maxPhotos} photos. Choose fewer categories."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:44
 msgid "One to three dishes with photo, price and an Order button."
@@ -33244,6 +33746,10 @@ msgstr "Only approved cards can be locked or reopened."
 msgid "Only approved photos can be added to a dish."
 msgstr "Only approved photos can be added to a dish."
 
+#: app/components/media-library/restyle-start-form.tsx:238
+msgid "Only dishes in the chosen categories."
+msgstr "Only dishes in the chosen categories."
+
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:282
 msgid "Only dishes on your live menu can be added."
 msgstr "Only dishes on your live menu can be added."
@@ -33404,6 +33910,10 @@ msgstr "Only the owner can rename this dashboard."
 msgid "Only the owner can share this dashboard."
 msgstr "Only the owner can share this dashboard."
 
+#: app/components/media-library/restyle-start-form.tsx:130
+msgid "Only the plate, the backdrop and the light change. Your food stays exactly as photographed."
+msgstr "Only the plate, the backdrop and the light change. Your food stays exactly as photographed."
+
 #: app/components/discounts/discount-form.tsx:618
 #: app/components/discounts/variant-filter.tsx:86
 msgid "Only these options"
@@ -33446,6 +33956,7 @@ msgstr "Only your team sees notes. The applicant never does."
 #: app/components/staff/timesheets/issue-copy.ts:54
 #: app/components/staff/timesheets/timesheet-table.tsx:325
 #: app/components/staff/timesheets/timesheet-table.tsx:529
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:320
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:585
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:525
 #: app/utils/loyalty/loyalty-labels.ts:127
@@ -33516,7 +34027,7 @@ msgstr "Open customer profile"
 msgid "Open details"
 msgstr "Open details"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1383
+#: app/routes/_app+/$orgSlug_+/media.tsx:1649
 msgid "Open details for {name}"
 msgstr "Open details for {name}"
 
@@ -33634,7 +34145,7 @@ msgstr "Open question"
 msgid "Open rate"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2357
+#: app/routes/_app+/$orgSlug_+/media.tsx:2675
 msgid "Open reference"
 msgstr "Open reference"
 
@@ -33777,6 +34288,10 @@ msgstr "Open this on the tablet"
 #: app/components/pos/terminals-manager.tsx:1976
 msgid "Open this on the terminal"
 msgstr "Open this on the terminal"
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:266
+msgid "Open this run"
+msgstr "Open this run"
 
 #: app/utils/reservations/alert-copy.ts:36
 msgid "Open Today to approve or decline."
@@ -33933,11 +34448,11 @@ msgstr "Option Display Name (Guest-Facing)"
 msgid "Option group"
 msgstr "Option group"
 
-#: app/components/menu/menu-health-card.tsx:220
+#: app/components/menu/menu-health-card.tsx:230
 msgid "Option groups with an impossible minimum"
 msgstr "Option groups with an impossible minimum"
 
-#: app/components/menu/menu-health-card.tsx:219
+#: app/components/menu/menu-health-card.tsx:229
 msgid "Option groups with no choices"
 msgstr "Option groups with no choices"
 
@@ -34004,7 +34519,7 @@ msgstr "Optional cap for one order, in <0>{currency}</0>."
 msgid "Optional caps per category or item"
 msgstr "Optional caps per category or item"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2111
+#: app/routes/_app+/$orgSlug_+/media.tsx:2429
 msgid "Optional caption for display"
 msgstr "Optional caption for display"
 
@@ -34108,6 +34623,7 @@ msgstr "Optional. The most this discount gives in a week (Monday to Sunday), in 
 #: app/components/discounts/discount-form.tsx:2122
 #: app/components/discounts/variant-filter.tsx:152
 #: app/components/discounts/variant-filter.tsx:169
+#: app/components/media-library/restyle-start-form.tsx:199
 #: app/components/menu/menu-review-card.tsx:104
 #: app/components/menu/quick-modifier-group-sheet.tsx:365
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:259
@@ -34145,7 +34661,7 @@ msgstr ""
 msgid "Or continue with email or username"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:638
+#: app/components/media-library/photo-studio-dialog.tsx:647
 msgid "Or match your own style"
 msgstr "Or match your own style"
 
@@ -34445,6 +34961,7 @@ msgstr "orders"
 #: app/components/dashboard/blocks/today-block.tsx:385
 #: app/components/discounts/discount-performance.tsx:249
 #: app/components/locations/ordering-settings-cards.tsx:199
+#: app/components/menu/photo-test-panel.tsx:213
 #: app/components/orders/order-detail.tsx:490
 #: app/components/roles/tenant-role-access-manager.tsx:162
 #: app/components/workspace-breadcrumb.tsx:12
@@ -34594,7 +35111,7 @@ msgstr ""
 msgid "Organization details and configuration."
 msgstr "Organization details and configuration."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1835
+#: app/routes/_app+/$orgSlug_+/media.tsx:2130
 msgid "Organization logo"
 msgstr "Organization logo"
 
@@ -34623,8 +35140,9 @@ msgstr "Organize items into categories (e.g. Appetizers, Entrees, Drinks, Desser
 msgid "Organize the shelves and walk order for this location, and group items you count together."
 msgstr "Organize the shelves and walk order for this location, and group items you count together."
 
-#: app/components/media-library/photo-studio-dialog.tsx:848
-#: app/routes/_app+/$orgSlug_+/media.tsx:2247
+#: app/components/media-library/photo-studio-dialog.tsx:878
+#: app/components/media-library/restyle-item-card.tsx:112
+#: app/routes/_app+/$orgSlug_+/media.tsx:2565
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:425
 msgid "Original"
 msgstr "Original"
@@ -34634,11 +35152,19 @@ msgstr "Original"
 msgid "Original card number ends {0}"
 msgstr "Original card number ends {0}"
 
-#: app/components/media-library/photo-studio-dialog.tsx:176
+#: app/components/media-library/photo-studio-dialog.tsx:185
 msgid "Original image replaced"
 msgstr "Original image replaced"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1034
+#: app/components/media-library/restyle-item-card.tsx:96
+msgid "Original kept"
+msgstr "Original kept"
+
+#: app/components/media-library/restyle-item-card.tsx:113
+msgid "Original photo of {name}"
+msgstr "Original photo of {name}"
+
+#: app/components/media-library/photo-studio-dialog.tsx:1064
 msgid "Original replaced"
 msgstr "Original replaced"
 
@@ -35350,6 +35876,10 @@ msgstr ""
 msgid "Past counts"
 msgstr "Past counts"
 
+#: app/components/menu/photo-test-panel.tsx:128
+msgid "Past tests"
+msgstr "Past tests"
+
 #: app/components/reservations/detail-sheet.tsx:1314
 msgid "Past Visit History"
 msgstr "Past Visit History"
@@ -35464,6 +35994,7 @@ msgstr ""
 
 #: app/components/discounts/discount-history.tsx:50
 #: app/components/marketing/programs-section.tsx:58
+#: app/components/media-library/restyle-labels.ts:8
 #: app/components/phone-agent/phone-number-dialogs.tsx:136
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:427
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:72
@@ -35495,6 +36026,14 @@ msgstr "Paused until you resume"
 #: app/utils/discounts/labels.ts:53
 msgid "Paused: budget reached"
 msgstr "Paused: budget reached"
+
+#: app/components/media-library/restyle-run-status.tsx:75
+msgid "Paused: daily limit reached, resumes <0/>"
+msgstr "Paused: daily limit reached, resumes <0/>"
+
+#: app/components/media-library/restyle-run-status.tsx:80
+msgid "Paused: restyling is switched off for now."
+msgstr "Paused: restyling is switched off for now."
 
 #: app/utils/discounts/summary.ts:483
 msgid "Pauses after {amount} is given in a week"
@@ -36087,7 +36626,7 @@ msgstr ""
 msgid "Phone Verified (OTP Success)"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:514
+#: app/components/media-library/photo-studio-dialog.tsx:523
 #: app/components/website/hero-video-maker.tsx:266
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:222
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4026
@@ -36096,6 +36635,14 @@ msgstr ""
 msgid "Photo"
 msgstr ""
 
+#: app/components/menu/photo-test-panel.tsx:231
+msgid "Photo {winner} got more orders"
+msgstr "Photo {winner} got more orders"
+
+#: app/components/menu/photo-test-panel.tsx:227
+msgid "Photo {winner}: {lift}% more orders"
+msgstr "Photo {winner}: {lift}% more orders"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5274
 msgid "Photo + card"
 msgstr ""
@@ -36103,6 +36650,14 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4213
 msgid "Photo + text"
 msgstr ""
+
+#: app/components/menu/photo-test-panel.tsx:192
+msgid "Photo A"
+msgstr "Photo A"
+
+#: app/components/menu/photo-test-panel.tsx:181
+msgid "Photo A, the current photo"
+msgstr "Photo A, the current photo"
 
 #: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:322
 msgid "Photo added to dish"
@@ -36117,6 +36672,34 @@ msgstr "Photo address"
 msgid "Photo approved"
 msgstr "Photo approved"
 
+#: app/components/menu/photo-test-panel.tsx:194
+msgid "Photo B"
+msgstr "Photo B"
+
+#: app/components/menu/photo-test-panel.tsx:182
+msgid "Photo B, the new photo"
+msgstr "Photo B, the new photo"
+
+#: app/components/media-library/restyle-labels.ts:43
+msgid "Photo changed during the run"
+msgstr "Photo changed during the run"
+
+#: app/components/media-library/focal-point-editor.tsx:101
+#~ msgid "Photo focus point. Click the photo or use the arrow keys."
+#~ msgstr "Photo focus point. Click the photo or use the arrow keys."
+
+#: app/components/media-library/restyle-labels.ts:42
+msgid "Photo format cannot be restyled"
+msgstr "Photo format cannot be restyled"
+
+#: app/components/menu/menu-health-card.tsx:252
+msgid "Photo is fine"
+msgstr "Photo is fine"
+
+#: app/components/media-library/restyle-labels.ts:41
+msgid "Photo is not in your library"
+msgstr "Photo is not in your library"
+
 #: app/components/inventory/record-delivery-screen.tsx:837
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:412
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:416
@@ -36126,6 +36709,14 @@ msgstr "Photo of the invoice"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4049
 msgid "Photo overlay"
 msgstr ""
+
+#: app/components/media-library/photo-quality-info.tsx:72
+msgid "Photo quality"
+msgstr "Photo quality"
+
+#: app/components/media-library/bulk-dish-photos.tsx:712
+msgid "Photo recognition reached its hourly limit, so some photos were matched by file name only."
+msgstr "Photo recognition reached its hourly limit, so some photos were matched by file name only."
 
 #: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:276
 msgid "Photo rejected"
@@ -36144,7 +36735,7 @@ msgstr ""
 msgid "Photo side"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:427
+#: app/components/media-library/photo-studio-dialog.tsx:436
 #: app/components/website/hero-video-maker.tsx:214
 msgid "Photos"
 msgstr "Photos"
@@ -36157,9 +36748,13 @@ msgstr ""
 msgid "Photos guests submit after ordering appear here for your review."
 msgstr "Photos guests submit after ordering appear here for your review."
 
-#: app/components/menu/menu-health-card.tsx:226
+#: app/components/menu/menu-health-card.tsx:236
 msgid "Photos help guests choose."
 msgstr "Photos help guests choose."
+
+#: app/components/media-library/bulk-dish-photos.tsx:704
+msgid "Photos were matched by file name only, because photo recognition is not set up."
+msgstr "Photos were matched by file name only, because photo recognition is not set up."
 
 #: app/components/phone-agent/agent-details.tsx:51
 #: app/components/workspace-breadcrumb.tsx:53
@@ -36213,6 +36808,10 @@ msgstr "Pick a day from 1 to 28. Each period starts on that day."
 msgid "Pick a design below to make it a print."
 msgstr "Pick a design below to make it a print."
 
+#: app/components/menu/photo-test-panel.tsx:39
+msgid "Pick a different photo from the one the dish has now."
+msgstr "Pick a different photo from the one the dish has now."
+
 #: app/utils/inventory/transfer-form.ts:148
 msgid "Pick a different place: stock cannot move to the same place."
 msgstr "Pick a different place: stock cannot move to the same place."
@@ -36246,7 +36845,8 @@ msgstr "Pick a service to use this layout only during that service."
 msgid "Pick a starting point, then adjust anything below."
 msgstr "Pick a starting point, then adjust anything below."
 
-#: app/components/media-library/photo-studio-dialog.tsx:575
+#: app/components/media-library/photo-studio-dialog.tsx:584
+#: app/components/media-library/restyle-start-form.tsx:154
 msgid "Pick a style"
 msgstr "Pick a style"
 
@@ -37168,7 +37768,7 @@ msgstr "Preselected (Included when guests first open this group)"
 msgid "Preset amounts"
 msgstr "Preset amounts"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2588
+#: app/routes/_app+/$orgSlug_+/media.tsx:2906
 msgid "Presets"
 msgstr "Presets"
 
@@ -37302,7 +37902,7 @@ msgstr ""
 msgid "Price / count"
 msgstr "Price / count"
 
-#: app/components/menu/menu-health-card.tsx:242
+#: app/components/menu/menu-health-card.tsx:254
 msgid "Price 0 on purpose"
 msgstr "Price 0 on purpose"
 
@@ -37622,11 +38222,11 @@ msgstr "Process now"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:99
-#: app/routes/_app+/$orgSlug_+/media.tsx:1402
+#: app/routes/_app+/$orgSlug_+/media.tsx:1668
 msgid "Processing"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2733
+#: app/routes/_app+/$orgSlug_+/media.tsx:3051
 msgid "Processing…"
 msgstr "Processing…"
 
@@ -37719,7 +38319,7 @@ msgstr "Program terms"
 msgid "Programs"
 msgstr "Programs"
 
-#: app/components/media-library/photo-studio-dialog.tsx:775
+#: app/components/media-library/photo-studio-dialog.tsx:805
 msgid "Progress"
 msgstr "Progress"
 
@@ -38513,6 +39113,7 @@ msgstr "Ready for guests. A few things could be better"
 msgid "Ready texts"
 msgstr "Ready texts"
 
+#: app/components/media-library/restyle-labels.ts:9
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:212
 msgid "Ready to review"
 msgstr "Ready to review"
@@ -39058,6 +39659,10 @@ msgstr "Refresh Checkout setup"
 msgid "Refresh from Google"
 msgstr "Refresh from Google"
 
+#: app/components/media-library/bulk-dish-photos.tsx:767
+msgid "Refresh matches"
+msgstr "Refresh matches"
+
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:522
 msgid "Refresh now"
 msgstr "Refresh now"
@@ -39251,6 +39856,10 @@ msgstr "Refunds when the guest cancels"
 #: app/components/locations/checkout-rules-cards.tsx:173
 msgid "Refuse oversized regular orders online. Leave blank for no cap."
 msgstr "Refuse oversized regular orders online. Leave blank for no cap."
+
+#: app/components/media-library/bulk-file-list.tsx:52
+msgid "Refused by the server"
+msgstr "Refused by the server"
 
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:513
 msgid "Regenerate"
@@ -39553,6 +40162,10 @@ msgstr "Remove {itemName}"
 msgid "Remove {label}"
 msgstr "Remove {label}"
 
+#: app/components/media-library/bulk-file-list.tsx:167
+msgid "Remove {name}"
+msgstr "Remove {name}"
+
 #: app/components/pos/terminals-manager.tsx:1000
 msgid "Remove {name} as manager"
 msgstr "Remove {name} as manager"
@@ -39767,7 +40380,7 @@ msgstr "Remove schedule"
 msgid "Remove section"
 msgstr "Remove section"
 
-#: app/components/media-library/photo-studio-dialog.tsx:673
+#: app/components/media-library/photo-studio-dialog.tsx:682
 msgid "Remove style reference"
 msgstr "Remove style reference"
 
@@ -39775,7 +40388,7 @@ msgstr "Remove style reference"
 msgid "Remove tag"
 msgstr "Remove tag"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2139
+#: app/routes/_app+/$orgSlug_+/media.tsx:2457
 msgid "Remove tag {tag}"
 msgstr "Remove tag {tag}"
 
@@ -39783,7 +40396,7 @@ msgstr "Remove tag {tag}"
 msgid "Remove tag {tagName}"
 msgstr "Remove tag {tagName}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2883
+#: app/routes/_app+/$orgSlug_+/media.tsx:3201
 msgid "Remove tags"
 msgstr "Remove tags"
 
@@ -40075,11 +40688,11 @@ msgstr ""
 msgid "Replace existing overrides on the target"
 msgstr "Replace existing overrides on the target"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1926
+#: app/routes/_app+/$orgSlug_+/media.tsx:2221
 msgid "Replace image"
 msgstr "Replace image"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1046
+#: app/components/media-library/photo-studio-dialog.tsx:1076
 msgid "Replace original"
 msgstr "Replace original"
 
@@ -40110,6 +40723,10 @@ msgstr "Replace with the new text"
 #: app/components/locations/copy-settings-dialog.tsx:382
 msgid "Replace: swap the entries in the date range below"
 msgstr "Replace: swap the entries in the date range below"
+
+#: app/components/media-library/bulk-review-grid.tsx:271
+msgid "Replace?"
+msgstr "Replace?"
 
 #: app/components/staff/schedule/notice-lists.tsx:23
 msgid "Replaced by a newer message"
@@ -40495,11 +41112,11 @@ msgstr "Reserved soon"
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/menu/modifier-guest-preview.tsx:229
 #: app/components/organization-invitations.tsx:247
-#: app/routes/_app+/$orgSlug_+/media.tsx:2621
+#: app/routes/_app+/$orgSlug_+/media.tsx:2939
 msgid "Reset"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2721
+#: app/routes/_app+/$orgSlug_+/media.tsx:3039
 msgid "Reset adjustments"
 msgstr "Reset adjustments"
 
@@ -40540,6 +41157,10 @@ msgstr "Reset this PIN?"
 #: app/routes/organizations+/create.tsx:1066
 msgid "Reset to auto-generated"
 msgstr ""
+
+#: app/components/media-library/focal-point-editor.tsx:255
+msgid "Reset to centre"
+msgstr "Reset to centre"
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:25
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:686
@@ -40642,12 +41263,12 @@ msgstr "Restaurants"
 msgid "Restaurants are used to manage your locations, menus, and orders."
 msgstr "Restaurants are used to manage your locations, menus, and orders."
 
-#: app/components/menu/menu-health-card.tsx:383
+#: app/components/menu/menu-health-card.tsx:413
 #: app/components/website/publish-controls.tsx:332
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:593
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:397
-#: app/routes/_app+/$orgSlug_+/media.tsx:1341
-#: app/routes/_app+/$orgSlug_+/media.tsx:2418
+#: app/routes/_app+/$orgSlug_+/media.tsx:1607
+#: app/routes/_app+/$orgSlug_+/media.tsx:2736
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
 msgid "Restore"
 msgstr "Restore"
@@ -40660,7 +41281,7 @@ msgstr "Restore {name}"
 msgid "Restore this snapshot"
 msgstr "Restore this snapshot"
 
-#: app/components/menu/menu-health-card.tsx:335
+#: app/components/menu/menu-health-card.tsx:357
 msgid "Restore: {name}"
 msgstr "Restore: {name}"
 
@@ -40668,7 +41289,7 @@ msgstr "Restore: {name}"
 msgid "Restored"
 msgstr "Restored"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2779
+#: app/routes/_app+/$orgSlug_+/media.tsx:3097
 msgid "Restored {count} items"
 msgstr "Restored {count} items"
 
@@ -40718,14 +41339,44 @@ msgstr "Restricted forms"
 msgid "Restricted to"
 msgstr "Restricted to"
 
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:235
+#: app/routes/_app+/$orgSlug_+/media.tsx:1431
+msgid "Restyle menu"
+msgstr "Restyle menu"
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.$runId.tsx:186
+msgid "Restyle menu: review"
+msgstr "Restyle menu: review"
+
+#: app/components/media-library/restyle-item-card.tsx:118
+msgid "Restyled photo of {name}"
+msgstr "Restyled photo of {name}"
+
+#: app/components/media-library/restyle-labels.ts:15
+msgid "Restyling is paused right now. Drafts you already have can still be reviewed."
+msgstr "Restyling is paused right now. Drafts you already have can still be reviewed."
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:226
+msgid "Restyling is paused right now. You can still review drafts you already have."
+msgstr "Restyling is paused right now. You can still review drafts you already have."
+
+#: app/components/media-library/restyle-labels.ts:7
+msgid "Restyling your dishes"
+msgstr "Restyling your dishes"
+
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
+#: app/components/media-library/bulk-dish-photos.tsx:796
 msgid "Result"
 msgstr ""
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:241
-#: app/components/media-library/photo-studio-dialog.tsx:429
+#: app/components/media-library/photo-studio-dialog.tsx:438
 msgid "Results"
 msgstr "Results"
+
+#: app/components/menu/photo-test-panel.tsx:224
+msgid "Results are not available right now."
+msgstr "Results are not available right now."
 
 #: app/components/dashboard/blocks/attention-block.tsx:492
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:595
@@ -40808,6 +41459,14 @@ msgstr "Retry charge"
 msgid "Retry failed accounts"
 msgstr "Retry failed accounts"
 
+#: app/components/media-library/bulk-dish-photos.tsx:656
+msgid "Retry failed photos"
+msgstr "Retry failed photos"
+
+#: app/components/media-library/bulk-file-list.tsx:45
+msgid "Retrying…"
+msgstr "Retrying…"
+
 #: app/components/settings/cards/organization/email-sending-card.tsx:343
 msgid "Return path"
 msgstr "Return path"
@@ -40874,6 +41533,10 @@ msgctxt "Open the pending requests"
 msgid "Review"
 msgstr "Review"
 
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:318
+msgid "Review ({toReview})"
+msgstr "Review ({toReview})"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:213
 msgid "Review accounts"
 msgstr "Review accounts"
@@ -40905,6 +41568,10 @@ msgstr "Review Google edits or preferred ordering link changes."
 msgid "Review list"
 msgstr "Review list"
 
+#: app/components/media-library/bulk-dish-photos.tsx:691
+msgid "Review matches"
+msgstr "Review matches"
+
 #: app/components/inventory/order-panels.tsx:222
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:765
 msgid "Review order"
@@ -40926,10 +41593,14 @@ msgstr "Review redemption"
 msgid "Review sale"
 msgstr "Review sale"
 
-#: app/components/menu/menu-health-card.tsx:670
+#: app/components/menu/menu-health-card.tsx:700
 #: app/components/menu/menu-review-stack.tsx:875
 msgid "Review suggestions"
 msgstr "Review suggestions"
+
+#: app/components/media-library/bulk-dish-photos.tsx:694
+msgid "Review the matches"
+msgstr "Review the matches"
 
 #: app/utils/staffing/alert-copy.ts:147
 msgid "Review the time cards for the week."
@@ -41073,7 +41744,7 @@ msgstr "Roles & access"
 msgid "Rolling period (months)"
 msgstr "Rolling period (months)"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2486
+#: app/routes/_app+/$orgSlug_+/media.tsx:2804
 msgid "Rotate left"
 msgstr "Rotate left"
 
@@ -41081,7 +41752,7 @@ msgstr "Rotate left"
 msgid "Rotate manage link"
 msgstr "Rotate manage link"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2507
+#: app/routes/_app+/$orgSlug_+/media.tsx:2825
 msgid "Rotate right"
 msgstr "Rotate right"
 
@@ -41507,7 +42178,7 @@ msgstr "Sat"
 msgid "Saturated backdrop that makes it pop"
 msgstr "Saturated backdrop that makes it pop"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2670
+#: app/routes/_app+/$orgSlug_+/media.tsx:2988
 msgid "Saturation"
 msgstr "Saturation"
 
@@ -41571,7 +42242,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:335
 #: app/routes/_app+/$orgSlug_+/marketing+/customer-app.tsx:204
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1328
-#: app/routes/_app+/$orgSlug_+/media.tsx:2450
+#: app/routes/_app+/$orgSlug_+/media.tsx:2768
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
 #: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:203
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
@@ -41606,8 +42277,8 @@ msgstr "Save and test"
 msgid "Save and update proof"
 msgstr "Save and update proof"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1058
-#: app/routes/_app+/$orgSlug_+/media.tsx:2735
+#: app/components/media-library/photo-studio-dialog.tsx:1088
+#: app/routes/_app+/$orgSlug_+/media.tsx:3053
 msgid "Save as copy"
 msgstr "Save as copy"
 
@@ -41651,7 +42322,7 @@ msgstr "Save card for later charges"
 #: app/components/reservations/settings/save-bar.tsx:87
 #: app/components/settings/cards/organization/announcement-sheet.tsx:678
 #: app/components/staff/timesheets/card-sheet.tsx:310
-#: app/routes/_app+/$orgSlug_+/media.tsx:2751
+#: app/routes/_app+/$orgSlug_+/media.tsx:3069
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:446
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:618
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1482
@@ -41702,6 +42373,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:987
 msgid "Save first, so the proof shows your changes before you approve it."
 msgstr "Save first, so the proof shows your changes before you approve it."
+
+#: app/components/media-library/focal-point-editor.tsx:243
+msgid "Save focus"
+msgstr "Save focus"
 
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:187
 msgid "Save goal"
@@ -41866,7 +42541,7 @@ msgstr "Save. It can take up to {minutes} minutes (sometimes longer) to take eff
 msgid "Saved"
 msgstr "Saved"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1032
+#: app/components/media-library/photo-studio-dialog.tsx:1062
 msgid "Saved as a copy"
 msgstr "Saved as a copy"
 
@@ -41881,7 +42556,7 @@ msgstr "Saved audience"
 msgid "Saved changes for {name}."
 msgstr "Saved changes for {name}."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2781
+#: app/routes/_app+/$orgSlug_+/media.tsx:3099
 msgid "Saved changes to {count} items"
 msgstr "Saved changes to {count} items"
 
@@ -41926,7 +42601,7 @@ msgstr "Saved reports"
 msgid "Saved section server assignments for this service."
 msgstr "Saved section server assignments for this service."
 
-#: app/components/media-library/photo-studio-dialog.tsx:175
+#: app/components/media-library/photo-studio-dialog.tsx:184
 msgid "Saved to your media library"
 msgstr "Saved to your media library"
 
@@ -41988,7 +42663,7 @@ msgstr "Saved. Your site follows this now."
 msgid "Saves this layout for next time. A template keeps the blocks only: no audience, coupon or schedule."
 msgstr "Saves this layout for next time. A template keeps the blocks only: no audience, coupon or schedule."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1772
+#: app/routes/_app+/$orgSlug_+/media.tsx:2067
 msgid "Saving as new copy…"
 msgstr "Saving as new copy…"
 
@@ -42000,7 +42675,7 @@ msgstr ""
 msgid "Saving creates a new version; purchases keep the version they earned under."
 msgstr "Saving creates a new version; purchases keep the version they earned under."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1756
+#: app/routes/_app+/$orgSlug_+/media.tsx:2051
 msgid "Saving edited image…"
 msgstr "Saving edited image…"
 
@@ -42060,7 +42735,7 @@ msgstr ""
 #: app/components/staff/timesheets/review-queue.tsx:403
 #: app/components/staff/timesheets/review-queue.tsx:428
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:335
-#: app/routes/_app+/$orgSlug_+/media.tsx:2450
+#: app/routes/_app+/$orgSlug_+/media.tsx:2768
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:616
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1468
@@ -42489,12 +43164,12 @@ msgid "Search items to exclude"
 msgstr "Search items to exclude"
 
 #: app/components/media-library/media-library-picker.tsx:251
-#: app/routes/_app+/$orgSlug_+/media.tsx:1232
+#: app/routes/_app+/$orgSlug_+/media.tsx:1487
 msgid "Search media"
 msgstr "Search media"
 
 #: app/components/media-library/media-library-picker.tsx:252
-#: app/routes/_app+/$orgSlug_+/media.tsx:1233
+#: app/routes/_app+/$orgSlug_+/media.tsx:1488
 msgid "Search media library"
 msgstr "Search media library"
 
@@ -42893,7 +43568,7 @@ msgstr ""
 msgid "See all"
 msgstr "See all"
 
-#: app/components/menu/menu-health-card.tsx:490
+#: app/components/menu/menu-health-card.tsx:520
 msgid "See all {total}"
 msgstr "See all {total}"
 
@@ -42947,7 +43622,7 @@ msgstr "See discounts, coupon codes, and their usage."
 msgid "See every check"
 msgstr "See every check"
 
-#: app/components/menu/menu-health-card.tsx:498
+#: app/components/menu/menu-health-card.tsx:528
 msgid "See every missing name and description, for options and categories too"
 msgstr "See every missing name and description, for options and categories too"
 
@@ -43084,13 +43759,13 @@ msgid "Segments: {smsSegments} (opt-out line included)"
 msgstr "Segments: {smsSegments} (opt-out line included)"
 
 #: app/components/staff/timesheets/timesheet-table.tsx:204
-#: app/routes/_app+/$orgSlug_+/media.tsx:1253
+#: app/routes/_app+/$orgSlug_+/media.tsx:1508
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:576
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:442
 msgid "Select"
 msgstr "Select"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1382
+#: app/routes/_app+/$orgSlug_+/media.tsx:1648
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:623
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:483
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:704
@@ -43343,7 +44018,7 @@ msgstr "Selected items"
 msgid "Selected locations"
 msgstr "Selected locations"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1313
+#: app/routes/_app+/$orgSlug_+/media.tsx:1579
 msgid "Selected media"
 msgstr "Selected media"
 
@@ -44007,7 +44682,7 @@ msgstr "Set the price"
 msgid "Set the proxy status to \"DNS only\" (grey cloud) so the certificate can be issued."
 msgstr "Set the proxy status to \"DNS only\" (grey cloud) so the certificate can be issued."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2899
+#: app/routes/_app+/$orgSlug_+/media.tsx:3217
 msgid "Set the same alt text"
 msgstr "Set the same alt text"
 
@@ -44109,7 +44784,7 @@ msgstr "Setting up DNS"
 #: app/components/app-sidebar.tsx:734
 #: app/components/command-menu.tsx:357
 #: app/components/command-menu.tsx:390
-#: app/components/media-library/photo-studio-dialog.tsx:705
+#: app/components/media-library/photo-studio-dialog.tsx:714
 #: app/components/phone-agent/agent-details.tsx:315
 #: app/components/reservations/reservations-chrome.tsx:100
 #: app/components/reservations/reservations-chrome.tsx:151
@@ -44477,11 +45152,15 @@ msgstr "Show a message to visitors after a delay, when they scroll, or when they
 msgid "Show a page for this location on the website"
 msgstr "Show a page for this location on the website"
 
+#: app/components/menu/photo-test-panel.tsx:113
+msgid "Show a second photo to half of your visitors and keep the one that gets more orders. The photo you replace stays in your media library."
+msgstr "Show a second photo to half of your visitors and keep the one that gets more orders. The photo you replace stays in your media library."
+
 #: app/components/reservations/experiences/experiences-screen.tsx:280
 msgid "Show active experiences"
 msgstr "Show active experiences"
 
-#: app/components/menu/menu-health-card.tsx:786
+#: app/components/menu/menu-health-card.tsx:818
 msgid "Show all"
 msgstr "Show all"
 
@@ -44598,7 +45277,7 @@ msgstr "Show replies ({replyCount})"
 msgid "Show requests"
 msgstr "Show requests"
 
-#: app/components/media-library/photo-studio-dialog.tsx:820
+#: app/components/media-library/photo-studio-dialog.tsx:850
 msgid "Show result {position}"
 msgstr "Show result {position}"
 
@@ -44688,51 +45367,55 @@ msgstr "Showing {shownCount} of {total}"
 msgid "Showing 3 of {total} cards. Every card uses the same layout."
 msgstr "Showing 3 of {total} cards. Every card uses the same layout."
 
-#: app/components/menu/menu-health-card.tsx:755
+#: app/components/menu/menu-health-card.tsx:787
 msgid "Showing dishes listed twice"
 msgstr "Showing dishes listed twice"
 
-#: app/components/menu/menu-health-card.tsx:734
+#: app/components/menu/menu-health-card.tsx:766
 msgid "Showing dishes missing a translated name or description"
 msgstr "Showing dishes missing a translated name or description"
 
-#: app/components/menu/menu-health-card.tsx:727
+#: app/components/menu/menu-health-card.tsx:757
 msgid "Showing dishes priced at 0"
 msgstr "Showing dishes priced at 0"
 
-#: app/components/menu/menu-health-card.tsx:737
+#: app/components/menu/menu-health-card.tsx:769
 msgid "Showing dishes that don't list allergens or calories"
 msgstr "Showing dishes that don't list allergens or calories"
 
-#: app/components/menu/menu-health-card.tsx:739
+#: app/components/menu/menu-health-card.tsx:771
 msgid "Showing dishes unavailable for more than a week"
 msgstr "Showing dishes unavailable for more than a week"
 
-#: app/components/menu/menu-health-card.tsx:743
+#: app/components/menu/menu-health-card.tsx:761
+msgid "Showing dishes with a weak photo"
+msgstr "Showing dishes with a weak photo"
+
+#: app/components/menu/menu-health-card.tsx:775
 msgid "Showing dishes with names in capitals"
 msgstr "Showing dishes with names in capitals"
 
-#: app/components/menu/menu-health-card.tsx:745
+#: app/components/menu/menu-health-card.tsx:777
 msgid "Showing dishes with names over 60 characters"
 msgstr "Showing dishes with names over 60 characters"
 
-#: app/components/menu/menu-health-card.tsx:731
+#: app/components/menu/menu-health-card.tsx:763
 msgid "Showing dishes with no description"
 msgstr "Showing dishes with no description"
 
-#: app/components/menu/menu-health-card.tsx:729
+#: app/components/menu/menu-health-card.tsx:759
 msgid "Showing dishes with no photo"
 msgstr "Showing dishes with no photo"
 
-#: app/components/menu/menu-health-card.tsx:741
+#: app/components/menu/menu-health-card.tsx:773
 msgid "Showing empty categories"
 msgstr "Showing empty categories"
 
-#: app/components/menu/menu-health-card.tsx:750
+#: app/components/menu/menu-health-card.tsx:782
 msgid "Showing option groups that require more picks than they allow"
 msgstr "Showing option groups that require more picks than they allow"
 
-#: app/components/menu/menu-health-card.tsx:747
+#: app/components/menu/menu-health-card.tsx:779
 msgid "Showing option groups with no choices guests can see"
 msgstr "Showing option groups with no choices guests can see"
 
@@ -44950,7 +45633,7 @@ msgid "Site address"
 msgstr "Site address"
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
-#: app/routes/_app+/$orgSlug_+/media.tsx:1837
+#: app/routes/_app+/$orgSlug_+/media.tsx:2132
 msgid "Site icon"
 msgstr ""
 
@@ -44979,7 +45662,7 @@ msgstr "Size name"
 msgid "Size price"
 msgstr "Size price"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1964
+#: app/routes/_app+/$orgSlug_+/media.tsx:2282
 msgid "Size:"
 msgstr "Size:"
 
@@ -44994,6 +45677,7 @@ msgstr "Sizes, portions, and how to describe your dishes."
 
 #: app/components/inventory/prep-screen.tsx:512
 #: app/components/launch/launch-checklist.tsx:184
+#: app/components/media-library/bulk-review-grid.tsx:312
 #: app/components/menu/menu-review-card.tsx:395
 #: app/components/menu/menu-review-stack.tsx:1419
 msgid "Skip"
@@ -45033,6 +45717,7 @@ msgstr "skipped"
 
 #: app/components/inventory/prep-screen.tsx:431
 #: app/components/launch/launch-checklist.tsx:90
+#: app/components/media-library/restyle-labels.ts:62
 #: app/components/staff/onboarding/task-row.tsx:285
 msgid "Skipped"
 msgstr "Skipped"
@@ -45044,6 +45729,10 @@ msgstr "skipped (different currency)"
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:908
 msgid "Skipped {date}"
 msgstr "Skipped {date}"
+
+#: app/components/media-library/restyle-review.tsx:286
+msgid "Skipped dishes"
+msgstr "Skipped dishes"
 
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:684
 msgid "Skipped price range"
@@ -45242,6 +45931,10 @@ msgstr "Some fields need a look. They are marked below."
 msgid "Some fields need another look."
 msgstr "Some fields need another look."
 
+#: app/components/media-library/bulk-dish-photos.tsx:531
+msgid "Some files were left out"
+msgstr "Some files were left out"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:1050
 #: app/components/home-prompt.tsx:322
 msgid "Some images couldn't be added. Use PNG, JPEG, WebP or GIF under 10 MB, up to 4 per message."
@@ -45430,6 +46123,7 @@ msgstr "Something in this form was not accepted. Check it and try again."
 msgid "Something new on the menu"
 msgstr "Something new on the menu"
 
+#: app/components/media-library/bulk-dish-photos.tsx:521
 #: app/components/phone-agent/phrase-fields.tsx:87
 msgid "Something went wrong"
 msgstr "Something went wrong"
@@ -45463,7 +46157,7 @@ msgstr "Something went wrong. Check the form and try again."
 #: app/components/website/domain/domain-ui.tsx:34
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:76
 #: app/routes/_app+/$orgSlug_+/marketing+/calendar.tsx:130
-#: app/routes/_app+/$orgSlug_+/media.tsx:2812
+#: app/routes/_app+/$orgSlug_+/media.tsx:3130
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:279
 #: app/utils/kiosk/kiosk-messages.ts:23
 msgid "Something went wrong. Please try again."
@@ -45654,6 +46348,7 @@ msgstr "Spoiled"
 msgid "Spreadsheet"
 msgstr "Spreadsheet"
 
+#: app/components/media-library/focal-point-editor.tsx:215
 #: app/components/reservations/floor-plan-canvas.tsx:112
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:98
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4289
@@ -45927,9 +46622,17 @@ msgstr "Start menu import"
 msgid "Start order"
 msgstr "Start order"
 
+#: app/components/media-library/bulk-dish-photos.tsx:604
+msgid "Start over"
+msgstr "Start over"
+
 #: app/components/orders/order-detail.tsx:463
 msgid "Start preparing"
 msgstr "Start preparing"
+
+#: app/components/media-library/restyle-start-form.tsx:289
+msgid "Start restyle"
+msgstr "Start restyle"
 
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:372
 msgid "Start test"
@@ -46012,6 +46715,10 @@ msgstr "Starter list"
 msgid "Starters"
 msgstr "Starters"
 
+#: app/components/media-library/restyle-labels.ts:6
+msgid "Starting"
+msgstr "Starting"
+
 #: app/components/staff/timesheets/pay-period-dialog.tsx:176
 msgid "Starting date"
 msgstr "Starting date"
@@ -46024,6 +46731,10 @@ msgstr "Starting import…"
 #: app/components/website/create-form-dialog.tsx:97
 msgid "Starting point"
 msgstr "Starting point"
+
+#: app/components/media-library/restyle-start-form.tsx:289
+msgid "Starting..."
+msgstr "Starting..."
 
 #: app/components/chat/chat-compose-dialog.tsx:422
 #: app/components/inventory/start-count-dialog.tsx:238
@@ -46187,9 +46898,13 @@ msgstr "Stay"
 msgid "Stayed on current page"
 msgstr "Stayed on current page"
 
-#: app/components/menu/menu-health-card.tsx:388
+#: app/components/menu/menu-health-card.tsx:418
 msgid "Stays dismissed until this changes."
 msgstr "Stays dismissed until this changes."
+
+#: app/components/media-library/bulk-dish-photos.tsx:857
+msgid "Stays in the library"
+msgstr "Stays in the library"
 
 #: app/components/marketing/journey-step-attribution.tsx:141
 msgid "Step"
@@ -46332,17 +47047,33 @@ msgstr "Stop taking orders for this dish once this many are sold in a day. The c
 msgid "Stop taking this option once this many are chosen in a day. The count starts again each business day."
 msgstr "Stop taking this option once this many are chosen in a day. The count starts again each business day."
 
+#: app/components/menu/photo-test-panel.tsx:261
+msgid "Stop test and keep the current photo"
+msgstr "Stop test and keep the current photo"
+
 #: app/components/qr/open-tabs.tsx:609
 msgid "Stop the online payment for tab {number} (table {label})?"
 msgstr "Stop the online payment for tab {number} (table {label})?"
+
+#: app/components/media-library/restyle-review.tsx:114
+msgid "Stop this run"
+msgstr "Stop this run"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:240
 msgid "Stop when the guest places an order"
 msgstr "Stop when the guest places an order"
 
+#: app/components/media-library/restyle-labels.ts:10
+msgid "Stopped"
+msgstr "Stopped"
+
 #: app/components/hiring/applicant-labels.ts:58
 msgid "Stopped replying"
 msgstr "Stopped replying"
+
+#: app/components/menu/photo-test-panel.tsx:136
+msgid "Stopped without a change"
+msgstr "Stopped without a change"
 
 #: app/components/staff/labor-policy-editor.tsx:665
 msgid "Stops people from starting long before their shift."
@@ -46444,7 +47175,7 @@ msgstr ""
 msgid "Studio"
 msgstr "Studio"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2249
+#: app/routes/_app+/$orgSlug_+/media.tsx:2567
 msgid "Studio edit"
 msgstr "Studio edit"
 
@@ -46452,7 +47183,7 @@ msgstr "Studio edit"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:179
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:362
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:364
-#: app/components/media-library/photo-studio-dialog.tsx:428
+#: app/components/media-library/photo-studio-dialog.tsx:437
 #: app/components/website/hero-video-maker.tsx:306
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
@@ -46468,6 +47199,14 @@ msgstr "Studio edit"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5380
 msgid "Style"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:260
+msgid "Style: {activeStyle}"
+msgstr "Style: {activeStyle}"
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.$runId.tsx:189
+msgid "Style: {styleLabel}. Your live photos only change when you choose a new one."
+msgstr "Style: {styleLabel}. Your live photos only change when you choose a new one."
 
 #: app/components/menu/modifier-form.tsx:1690
 #: app/components/menu/modifier-form.tsx:2069
@@ -46777,6 +47516,10 @@ msgstr "Swapped {guest} with {other} on {tableLabel}."
 #: app/utils/my-schedule/my-schedule-messages.ts:21
 msgid "Swaps are not offered at this workplace. Ask your manager."
 msgstr "Swaps are not offered at this workplace. Ask your manager."
+
+#: app/components/media-library/restyle-item-card.tsx:174
+msgid "Switch back"
+msgstr "Switch back"
 
 #: app/components/reservations/messages/message-settings.tsx:440
 msgid "Switch off any message you do not want guests to receive. Payment messages follow the payment flow and are not listed here."
@@ -47154,12 +47897,12 @@ msgstr "Tag name"
 #: app/components/member-location-scope.tsx:189
 #: app/components/phone-agent/agent-details.tsx:57
 #: app/components/phone-agent/call-follow-up.tsx:206
-#: app/routes/_app+/$orgSlug_+/media.tsx:2120
+#: app/routes/_app+/$orgSlug_+/media.tsx:2438
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1473
 msgid "Tags"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2771
+#: app/routes/_app+/$orgSlug_+/media.tsx:3089
 msgid "Tags added to {count} items"
 msgstr "Tags added to {count} items"
 
@@ -47175,11 +47918,11 @@ msgstr "Tags are your own claims. Guests can filter the menu by them; allergens 
 msgid "Tags load, and the visitor can opt out. The default for the US."
 msgstr "Tags load, and the visitor can opt out. The default for the US."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2773
+#: app/routes/_app+/$orgSlug_+/media.tsx:3091
 msgid "Tags removed from {count} items"
 msgstr "Tags removed from {count} items"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2792
+#: app/routes/_app+/$orgSlug_+/media.tsx:3110
 msgid "Tags use letters, numbers, spaces, - and _, up to 32 characters."
 msgstr "Tags use letters, numbers, spaces, - and _, up to 32 characters."
 
@@ -47642,6 +48385,10 @@ msgstr "Test a booking"
 msgid "Test again"
 msgstr "Test again"
 
+#: app/components/menu/photo-test-panel.tsx:99
+msgid "Test another photo"
+msgstr "Test another photo"
+
 #: app/components/mailbox/calls-tab.tsx:226
 #: app/components/phone-agent/call-detail-sheet.tsx:326
 #: app/components/phone-agent/call-detail-sheet.tsx:376
@@ -47990,6 +48737,10 @@ msgstr "That did not work"
 msgid "That did not work. Try again."
 msgstr "That did not work. Try again."
 
+#: app/components/media-library/restyle-labels.ts:29
+msgid "That dish or run was not found."
+msgstr "That dish or run was not found."
+
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:239
 msgid "That does not look like a verification code. Paste the code or the whole meta tag."
 msgstr "That does not look like a verification code. Paste the code or the whole meta tag."
@@ -48105,6 +48856,10 @@ msgstr "That is too long."
 msgid "That is too many days at once."
 msgstr "That is too many days at once."
 
+#: app/components/media-library/restyle-labels.ts:19
+msgid "That is too many photos for one run. Choose fewer categories."
+msgstr "That is too many photos for one run. Choose fewer categories."
+
 #: app/utils/staffing/schedule-errors.ts:25
 msgid "That is too many shifts for one template. Narrow it to some positions or people."
 msgstr "That is too many shifts for one template. Narrow it to some positions or people."
@@ -48159,9 +48914,13 @@ msgstr "That person is not available for this shift."
 msgid "That phone number is not valid."
 msgstr "That phone number is not valid."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2808
+#: app/routes/_app+/$orgSlug_+/media.tsx:3126
 msgid "That photo cannot be the original of this one."
 msgstr "That photo cannot be the original of this one."
+
+#: app/components/menu/photo-test-panel.tsx:40
+msgid "That photo is not ready to use yet."
+msgstr "That photo is not ready to use yet."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:134
 msgid "That picture is too large. Choose one under 5 MB."
@@ -48422,7 +49181,7 @@ msgstr "The agent tried to transfer a call and nobody answered."
 msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Agent, and What it knows rules until the call ends."
 msgstr "The AI assistant step hands the call to your AI. It answers questions using your business details, Agent, and What it knows rules until the call ends."
 
-#: app/components/media-library/photo-studio-dialog.tsx:663
+#: app/components/media-library/photo-studio-dialog.tsx:672
 msgid "The AI matches its lighting, background, and colors."
 msgstr "The AI matches its lighting, background, and colors."
 
@@ -48875,6 +49634,14 @@ msgstr "The discount applies to these items."
 #: app/components/discounts/deal-groups.tsx:219
 msgid "The discount applies to these. If a deal covers fewer items than the order holds, the cheapest are discounted."
 msgstr "The discount applies to these. If a deal covers fewer items than the order holds, the cheapest are discounted."
+
+#: app/components/media-library/bulk-dish-photos.tsx:108
+msgid "The dish is no longer on the menu."
+msgstr "The dish is no longer on the menu."
+
+#: app/components/menu/photo-test-panel.tsx:41
+msgid "The dish photo changed since the test started."
+msgstr "The dish photo changed since the test started."
 
 #: app/components/website/domain/domain-ui.tsx:68
 msgid "The domain is locked at its current registrar. Unlock it there and try again."
@@ -49478,6 +50245,10 @@ msgstr "The name the agent uses when it introduces itself."
 msgid "The new hire"
 msgstr "The new hire"
 
+#: app/components/media-library/restyle-labels.ts:25
+msgid "The new photo was not used on this dish."
+msgstr "The new photo was not used on this dish."
+
 #: app/components/customers/person-profile-screen.tsx:114
 msgid "The note could not be saved. Try again."
 msgstr "The note could not be saved. Try again."
@@ -49493,6 +50264,10 @@ msgstr "The occasions the marketing calendar suggests. By default they follow wh
 #: ../../packages/marketing/src/components/email/block-meta.ts:49
 msgid "The offer, each guest's code, its terms and a Use it now button."
 msgstr "The offer, each guest's code, its terms and a Use it now button."
+
+#: app/components/media-library/bulk-review-grid.tsx:275
+msgid "The old photo stays in your media library."
+msgstr "The old photo stays in your media library."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:106
 msgid "The online maximum cannot be more than the largest party at the host stand."
@@ -49562,6 +50337,18 @@ msgstr "The order text is copied."
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:239
 msgid "The original is ahead."
 msgstr "The original is ahead."
+
+#: app/components/media-library/restyle-labels.ts:53
+msgid "The original photo could not be read"
+msgstr "The original photo could not be read"
+
+#: app/components/media-library/restyle-labels.ts:52
+msgid "The original photo is no longer in your library"
+msgstr "The original photo is no longer in your library"
+
+#: app/components/media-library/restyle-labels.ts:26
+msgid "The original photo is no longer in your library."
+msgstr "The original photo is no longer in your library."
 
 #: app/components/inventory/supplier-products.tsx:504
 msgid "The pack you usually buy"
@@ -49700,7 +50487,7 @@ msgstr "The phone agent is on but has no active phone line for this location."
 msgid "The phone number is managed through sign-in."
 msgstr "The phone number is managed through sign-in."
 
-#: app/components/media-library/photo-studio-dialog.tsx:201
+#: app/components/media-library/photo-studio-dialog.tsx:210
 msgid "The photo could not be generated. Try again."
 msgstr "The photo could not be generated. Try again."
 
@@ -49708,9 +50495,46 @@ msgstr "The photo could not be generated. Try again."
 msgid "The photo could not be uploaded. Try again."
 msgstr "The photo could not be uploaded. Try again."
 
+#: app/components/media-library/bulk-dish-photos.tsx:114
+msgid "The photo could not be used."
+msgstr "The photo could not be used."
+
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:427
 msgid "The photo of the invoice"
 msgstr "The photo of the invoice"
+
+#: app/components/media-library/restyle-labels.ts:49
+msgid "The photo studio could not make this one"
+msgstr "The photo studio could not make this one"
+
+#: app/components/media-library/restyle-labels.ts:54
+msgid "The photo studio gave back something unusable"
+msgstr "The photo studio gave back something unusable"
+
+#: app/components/media-library/restyle-labels.ts:16
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:229
+msgid "The photo studio is not set up yet."
+msgstr "The photo studio is not set up yet."
+
+#: app/components/media-library/restyle-labels.ts:50
+msgid "The photo studio was busy"
+msgstr "The photo studio was busy"
+
+#: app/components/menu/photo-test-panel.tsx:77
+msgid "The photo test could not be changed."
+msgstr "The photo test could not be changed."
+
+#: app/components/media-library/bulk-dish-photos.tsx:97
+msgid "The photos could not be added. Nothing was changed."
+msgstr "The photos could not be added. Nothing was changed."
+
+#: app/components/media-library/bulk-dish-photos.tsx:399
+msgid "The photos could not be matched. Try again."
+msgstr "The photos could not be matched. Try again."
+
+#: app/components/media-library/bulk-dish-photos.tsx:73
+msgid "The photos in {name} add up to more than 400 MB."
+msgstr "The photos in {name} add up to more than 400 MB."
 
 #: app/components/loyalty/customer-loyalty-panel.tsx:170
 msgid "The points account could not be loaded."
@@ -49735,6 +50559,10 @@ msgstr "The preview could not be loaded."
 #: app/components/reservations/messages/message-settings.tsx:734
 msgid "The preview shows the saved settings. Save your changes to see them here."
 msgstr "The preview shows the saved settings. Save your changes to see them here."
+
+#: app/components/media-library/bulk-dish-photos.tsx:807
+msgid "The previous photo of a replaced dish stays in your media library."
+msgstr "The previous photo of a replaced dish stays in your media library."
 
 #: app/components/website/domain/domain-ui.tsx:62
 msgid "The price changed. Review it and try again."
@@ -49947,6 +50775,10 @@ msgstr "The sale could not be queued again."
 msgid "The sales your team enters each day. Online orders are not added on top."
 msgstr "The sales your team enters each day. Online orders are not added on top."
 
+#: app/components/media-library/bulk-file-list.tsx:36
+msgid "The same photo is already in this batch, so this copy will not be uploaded."
+msgstr "The same photo is already in this batch, so this copy will not be uploaded."
+
 #: app/utils/staffing/schedule-errors.ts:14
 msgid "The schedule changed since you opened it. It was reloaded, so check it and publish again."
 msgstr "The schedule changed since you opened it. It was reloaded, so check it and publish again."
@@ -50043,6 +50875,10 @@ msgstr "The share of cancellations that came after the free-cancellation window 
 #: app/components/staff/labor-example.tsx:119
 msgid "The shift as a bar, with any deducted break marked"
 msgstr "The shift as a bar, with any deducted break marked"
+
+#: app/components/media-library/bulk-file-list.tsx:34
+msgid "The short side is under 800 px. It will still upload, but it may look soft on a menu."
+msgstr "The short side is under 800 px. It will still upload, but it may look soft on a menu."
 
 #: app/components/website/domain/connect-card.tsx:91
 msgid "The simple setup fits: let Menuza manage this domain."
@@ -50477,6 +51313,10 @@ msgstr "These limits are checked before a guest pays, and a refusal never says w
 #: app/components/discounts/message-impact.tsx:206
 msgid "These messages still promise this discount. Guests who get them would be offered a code that stops working."
 msgstr "These messages still promise this discount. Guests who get them would be offered a code that stops working."
+
+#: app/components/media-library/bulk-dish-photos.tsx:860
+msgid "These photos were uploaded but not added to a dish. You can find them in the media library."
+msgstr "These photos were uploaded but not added to a dish. You can find them in the media library."
 
 #: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:122
 msgid "These problems stop this broadcast. Fix them, then try again."
@@ -51026,6 +51866,14 @@ msgstr "This discount was saved in a form the editor can't open. Archive it, the
 msgid "This discount will no longer apply to anything"
 msgstr "This discount will no longer apply to anything"
 
+#: app/components/media-library/bulk-review-grid.tsx:260
+msgid "This dish already has a photo."
+msgstr "This dish already has a photo."
+
+#: app/components/menu/photo-test-panel.tsx:38
+msgid "This dish already has a test running."
+msgstr "This dish already has a test running."
+
 #: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:540
 msgid "This dish already has the maximum {maxDishPhotos} photos."
 msgstr "This dish already has the maximum {maxDishPhotos} photos."
@@ -51037,6 +51885,10 @@ msgstr "This dish already has the maximum number of photos."
 #: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:28
 msgid "This dish block has no dish."
 msgstr "This dish block has no dish."
+
+#: app/components/media-library/restyle-labels.ts:28
+msgid "This dish cannot be tried again."
+msgstr "This dish cannot be tried again."
 
 #: app/components/menu/menu-review-card.tsx:70
 msgid "This dish costs nothing, so guests can order it for free."
@@ -51057,6 +51909,18 @@ msgstr "This dish is in the file twice."
 #: app/components/orders/daily-limits-panel.tsx:153
 msgid "This dish no longer has a daily limit here."
 msgstr "This dish no longer has a daily limit here."
+
+#: app/components/media-library/restyle-labels.ts:21
+msgid "This dish's photo changed since the draft was made. Nothing was replaced."
+msgstr "This dish's photo changed since the draft was made. Nothing was replaced."
+
+#: app/components/menu/photo-test-panel.tsx:43
+msgid "This dish's photo comes from your point of sale, so it cannot be tested."
+msgstr "This dish's photo comes from your point of sale, so it cannot be tested."
+
+#: app/components/media-library/restyle-labels.ts:30
+msgid "This dish's photo comes from your point of sale, so it was not changed."
+msgstr "This dish's photo comes from your point of sale, so it was not changed."
 
 #: app/components/website/domain/forwarding-panel.tsx:105
 msgid "This domain already receives email"
@@ -51094,6 +51958,14 @@ msgstr "This domain is not active."
 msgid "This domain receives email"
 msgstr "This domain receives email"
 
+#: app/components/media-library/restyle-labels.ts:22
+msgid "This draft changed since you opened the page. Reload and look again."
+msgstr "This draft changed since you opened the page. Reload and look again."
+
+#: app/components/media-library/restyle-labels.ts:23
+msgid "This draft is no longer available."
+msgstr "This draft is no longer available."
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:731
 msgid "This draft shift is deleted straight away."
 msgstr "This draft shift is deleted straight away."
@@ -51118,6 +51990,10 @@ msgstr "This fee is already being charged or was charged."
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:154
 msgid "This file does not match the template. Download the template, change only the price and availability columns, and upload it again."
 msgstr "This file does not match the template. Download the template, change only the price and availability columns, and upload it again."
+
+#: app/components/media-library/bulk-file-list.tsx:30
+msgid "This file is not a JPEG, PNG, WebP, GIF or AVIF photo, so it will not be uploaded."
+msgstr "This file is not a JPEG, PNG, WebP, GIF or AVIF photo, so it will not be uploaded."
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:262
 msgid "This file would create more than {MAX_LOCATION_TAGS} tags. Nothing was changed."
@@ -51334,13 +52210,21 @@ msgstr "This no longer exists. Reload to see the latest state."
 msgid "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 msgstr "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2256
+#: app/routes/_app+/$orgSlug_+/media.tsx:2574
 msgid "This one"
 msgstr "This one"
 
-#: app/components/menu/menu-health-card.tsx:301
+#: app/components/menu/menu-health-card.tsx:323
 msgid "This one already passes, so there is nothing to dismiss."
 msgstr "This one already passes, so there is nothing to dismiss."
+
+#: app/components/media-library/restyle-labels.ts:71
+msgid "This one could not be restyled"
+msgstr "This one could not be restyled"
+
+#: app/components/media-library/restyle-labels.ts:55
+msgid "This one kept failing"
+msgstr "This one kept failing"
 
 #: app/components/inventory/recipe-section.tsx:465
 msgid "This one uses a cost somebody typed. You need cost access to see or change it."
@@ -51550,15 +52434,23 @@ msgstr "This person is not set up for that position here. You can still schedule
 msgid "This phone number is not valid."
 msgstr "This phone number is not valid."
 
+#: app/components/media-library/restyle-labels.ts:51
+msgid "This photo could not be restyled"
+msgstr "This photo could not be restyled"
+
 #: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:267
 msgid "This photo has already been decided."
 msgstr "This photo has already been decided."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2802
+#: app/routes/_app+/$orgSlug_+/media.tsx:3120
 msgid "This photo is in use ({where}). Replace it there first, then archive it."
 msgstr "This photo is in use ({where}). Replace it there first, then archive it."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2806
+#: app/components/media-library/bulk-file-list.tsx:32
+msgid "This photo is over 10 MB, so it will not be uploaded."
+msgstr "This photo is over 10 MB, so it will not be uploaded."
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:3124
 msgid "This photo is still being prepared."
 msgstr "This photo is still being prepared."
 
@@ -51780,6 +52672,10 @@ msgstr "This row has a different number of columns than the header."
 msgid "This rule stops applying right away. You can add it again later."
 msgstr "This rule stops applying right away. You can add it again later."
 
+#: app/components/media-library/restyle-labels.ts:27
+msgid "This run was stopped."
+msgstr "This run was stopped."
+
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:405
 msgid "This runs in the background. You can leave this page and return anytime."
 msgstr "This runs in the background. You can leave this page and return anytime."
@@ -51924,7 +52820,7 @@ msgstr "This uses 1 of your {limit} text sends this month. {remaining} left."
 msgid "This uses a text send of next month. You get {limit} more on {resetDate}."
 msgstr "This uses a text send of next month. You get {limit} more on {resetDate}."
 
-#: app/components/media-library/photo-studio-dialog.tsx:768
+#: app/components/media-library/photo-studio-dialog.tsx:798
 msgid "This usually takes 10 to 30 seconds per photo."
 msgstr "This usually takes 10 to 30 seconds per photo."
 
@@ -52535,6 +53431,10 @@ msgstr "To pick up an applicant, press Space. Use the arrow keys to move between
 msgid "To reorder this party, press Space to pick it up, use the up and down arrow keys to move it, then press Space to drop. Press Escape to cancel. You can also use Move up and Move down in the party menu."
 msgstr "To reorder this party, press Space to pick it up, use the up and down arrow keys to move it, then press Space to drop. Press Escape to cancel. You can also use Move up and Move down in the party menu."
 
+#: app/components/media-library/restyle-review.tsx:162
+msgid "To review"
+msgstr "To review"
+
 #: app/components/staff/schedule/week-grid.tsx:620
 msgid "To see coverage against the orders you usually get, set how many orders one person handles in an hour."
 msgstr "To see coverage against the orders you usually get, set how many orders one person handles in an hour."
@@ -52639,6 +53539,14 @@ msgstr "Tone"
 msgid "Too busy"
 msgstr "Too busy"
 
+#: app/components/media-library/photo-quality-info.tsx:9
+msgid "Too dark"
+msgstr "Too dark"
+
+#: app/components/media-library/bulk-file-list.tsx:19
+msgid "Too large"
+msgstr "Too large"
+
 #: app/components/menu/menu-review-stack.tsx:306
 #: app/components/menu/menu-review-stack.tsx:501
 msgid "Too many changes at once. Wait a minute and try again."
@@ -52697,6 +53605,11 @@ msgstr "Too many wrong PINs. Try again in {seconds} seconds."
 msgid "Too old to send"
 msgstr "Too old to send"
 
+#: app/components/media-library/bulk-file-list.tsx:21
+#: app/components/media-library/bulk-review-grid.tsx:59
+msgid "Too small"
+msgstr "Too small"
+
 #: app/components/menu/auto-popular-settings.tsx:105
 msgid "Top {n}"
 msgstr "Top {n}"
@@ -52724,6 +53637,10 @@ msgstr "Top searches"
 #: app/components/marketing/audience-builder.tsx:94
 msgid "Top spenders"
 msgstr "Top spenders"
+
+#: app/components/media-library/focal-point-editor.tsx:187
+msgid "Top to bottom"
+msgstr "Top to bottom"
 
 #: app/components/customers/person-marketing-card.tsx:207
 #: app/components/hiring/screener-editor.tsx:178
@@ -52903,7 +53820,7 @@ msgstr "Transfers search rank"
 msgid "Transfers unavailable"
 msgstr "Transfers unavailable"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2477
+#: app/routes/_app+/$orgSlug_+/media.tsx:2795
 msgid "Transform"
 msgstr "Transform"
 
@@ -53047,7 +53964,7 @@ msgstr "Try a different search or clear the filters."
 msgid "Try a different search term or clear the search."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1492
+#: app/routes/_app+/$orgSlug_+/media.tsx:1763
 msgid "Try a different search term."
 msgstr "Try a different search term."
 
@@ -53107,7 +54024,9 @@ msgstr ""
 #: app/components/loyalty/customer-loyalty-panel.tsx:268
 #: app/components/mailbox/calls-tab.tsx:289
 #: app/components/mailbox/reviews-tab.tsx:418
-#: app/components/media-library/photo-studio-dialog.tsx:946
+#: app/components/media-library/bulk-dish-photos.tsx:684
+#: app/components/media-library/photo-studio-dialog.tsx:976
+#: app/components/media-library/restyle-item-card.tsx:185
 #: app/components/menu/delete-effects.tsx:468
 #: app/components/menu/delete-effects.tsx:543
 #: app/components/menu/menu-review-stack.tsx:907
@@ -53186,6 +54105,10 @@ msgstr "Try another answer"
 msgid "Try another name, email, or message."
 msgstr "Try another name, email, or message."
 
+#: app/components/menu/photo-test-panel.tsx:122
+msgid "Try another photo"
+msgstr "Try another photo"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:351
 msgid "Try another reason or a longer period."
 msgstr "Try another reason or a longer period."
@@ -53198,7 +54121,7 @@ msgstr "Try another search or clear the filters."
 msgid "Try another source"
 msgstr "Try another source"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1025
+#: app/components/media-library/photo-studio-dialog.tsx:1055
 msgid "Try another style"
 msgstr "Try another style"
 
@@ -53241,7 +54164,7 @@ msgstr "Tuesday"
 msgid "Turn 3 to 6 of your own photos into a short looping clip. You preview it first; your hero stays as it is until you accept."
 msgstr "Turn 3 to 6 of your own photos into a short looping clip. You preview it first; your hero stays as it is until you accept."
 
-#: app/components/media-library/photo-studio-dialog.tsx:450
+#: app/components/media-library/photo-studio-dialog.tsx:459
 msgid "Turn everyday photos into professional shots."
 msgstr "Turn everyday photos into professional shots."
 
@@ -53701,7 +54624,7 @@ msgstr "Under"
 #: app/components/gbp/google-listing-tab.tsx:674
 #: app/components/inventory/log-waste-dialog.tsx:235
 #: app/components/locations/delivery-zone-map.tsx:382
-#: app/components/media-library/photo-studio-dialog.tsx:869
+#: app/components/media-library/photo-studio-dialog.tsx:899
 #: app/components/menu/menu-bulk-edit-sheet.tsx:327
 #: app/components/menu/menu-review-stack.tsx:351
 #: app/components/menu/menu-review-stack.tsx:398
@@ -54063,13 +54986,14 @@ msgstr "Untitled category"
 msgid "Untitled discount"
 msgstr "Untitled discount"
 
+#: app/components/media-library/bulk-review-grid.tsx:148
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:819
 msgid "Untitled dish"
 msgstr "Untitled dish"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1358
-#: app/routes/_app+/$orgSlug_+/media.tsx:1870
-#: app/routes/_app+/$orgSlug_+/media.tsx:2465
+#: app/routes/_app+/$orgSlug_+/media.tsx:1624
+#: app/routes/_app+/$orgSlug_+/media.tsx:2165
+#: app/routes/_app+/$orgSlug_+/media.tsx:2783
 msgid "Untitled image"
 msgstr "Untitled image"
 
@@ -54084,6 +55008,11 @@ msgstr ""
 #: app/components/phone-agent/flow-editor/flow-nodes.tsx:124
 msgid "Untitled option"
 msgstr "Untitled option"
+
+#: app/components/media-library/bulk-dish-photos.tsx:496
+#: app/components/media-library/bulk-review-grid.tsx:140
+msgid "Untitled photo"
+msgstr "Untitled photo"
 
 #: app/components/staff/onboarding/onboarding-labels.ts:73
 msgid "Untitled task"
@@ -54157,7 +55086,7 @@ msgstr "Upcoming reservations flagged with conflicts (outside hours or blocked t
 msgid "Upcoming reservations need manual attention after this floor-plan change"
 msgstr "Upcoming reservations need manual attention after this floor-plan change"
 
-#: app/components/media-library/photo-studio-dialog.tsx:924
+#: app/components/media-library/photo-studio-dialog.tsx:954
 #: app/components/social/google-post-fields.tsx:38
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:7134
 msgid "Update"
@@ -54298,7 +55227,7 @@ msgstr "Updates paused"
 msgid "Updating section"
 msgstr "Updating section"
 
-#: app/components/media-library/photo-studio-dialog.tsx:922
+#: app/components/media-library/photo-studio-dialog.tsx:952
 msgid "Updating…"
 msgstr "Updating…"
 
@@ -54311,7 +55240,7 @@ msgstr ""
 msgid "Upload a font"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:541
+#: app/components/media-library/photo-studio-dialog.tsx:550
 msgid "Upload a JPEG, PNG, or WebP photo to your media library first."
 msgstr "Upload a JPEG, PNG, or WebP photo to your media library first."
 
@@ -54335,7 +55264,7 @@ msgstr ""
 msgid "Upload a site icon"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:689
+#: app/components/media-library/photo-studio-dialog.tsx:698
 msgid "Upload a style reference"
 msgstr "Upload a style reference"
 
@@ -54343,9 +55272,13 @@ msgstr "Upload a style reference"
 msgid "Upload already in progress."
 msgstr "Upload already in progress."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1494
+#: app/routes/_app+/$orgSlug_+/media.tsx:1765
 msgid "Upload an image here, or add one to a note, comment, website page, or your organization settings."
 msgstr "Upload an image here, or add one to a note, comment, website page, or your organization settings."
+
+#: app/components/media-library/bulk-file-list.tsx:53
+msgid "Upload failed"
+msgstr "Upload failed"
 
 #: app/components/media-library/media-library-picker.tsx:169
 msgid "Upload failed."
@@ -54363,7 +55296,7 @@ msgstr ""
 msgid "Upload held for review"
 msgstr "Upload held for review"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1202
+#: app/routes/_app+/$orgSlug_+/media.tsx:1457
 msgid "Upload image"
 msgstr "Upload image"
 
@@ -54382,6 +55315,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:465
 msgid "Upload photo (JPG, PNG, or WebP, max 10 MB)"
 msgstr "Upload photo (JPG, PNG, or WebP, max 10 MB)"
+
+#: app/components/media-library/bulk-dish-photos.tsx:630
+msgid "Upload progress"
+msgstr "Upload progress"
 
 #: app/components/gbp/google-listing-tab.tsx:984
 msgid "Upload selected photos"
@@ -54403,6 +55340,7 @@ msgstr ""
 msgid "Upload, rename, replace, and delete files in the shared media library. Everyone can browse it."
 msgstr "Upload, rename, replace, and delete files in the shared media library. Everyone can browse it."
 
+#: app/components/media-library/bulk-file-list.tsx:49
 #: app/components/settings/cards/organization/site-theme-card.tsx:195
 msgid "Uploaded"
 msgstr ""
@@ -54419,19 +55357,28 @@ msgstr "Uploaded by {uploader} on {date}"
 msgid "Uploaded discount does not match"
 msgstr "Uploaded discount does not match"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1987
+#: app/routes/_app+/$orgSlug_+/media.tsx:2305
 msgid "Uploaded:"
 msgstr "Uploaded:"
 
+#: app/components/media-library/bulk-dish-photos.tsx:613
+msgid "Uploading"
+msgstr "Uploading"
+
 #: app/components/chat/chat-composer.tsx:336
+#: app/components/media-library/bulk-file-list.tsx:47
 #: app/components/website/link-inspector.tsx:542
-#: app/routes/_app+/$orgSlug_+/media.tsx:1200
+#: app/routes/_app+/$orgSlug_+/media.tsx:1455
 msgid "Uploading…"
 msgstr ""
 
 #: app/components/gbp/google-listing-tab.tsx:935
 msgid "Uploads new menu item photos to Google on the hourly sweep."
 msgstr "Uploads new menu item photos to Google on the hourly sweep."
+
+#: app/components/media-library/bulk-dish-photos.tsx:621
+msgid "Uploads pause while you are offline and carry on by themselves when the connection is back. Photos already uploaded are kept."
+msgstr "Uploads pause while you are offline and carry on by themselves when the connection is back. Photos already uploaded are kept."
 
 #: app/routes/_app+/$orgSlug_+/website+/generate.tsx:165
 msgid "Upscale"
@@ -54457,7 +55404,7 @@ msgstr "Urgent"
 msgid "URL"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2024
+#: app/routes/_app+/$orgSlug_+/media.tsx:2342
 msgid "URL copied to clipboard"
 msgstr "URL copied to clipboard"
 
@@ -54469,7 +55416,7 @@ msgstr "URL Redirects"
 msgid "URL Slug"
 msgstr "URL Slug"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2009
+#: app/routes/_app+/$orgSlug_+/media.tsx:2327
 msgid "URL:"
 msgstr "URL:"
 
@@ -54598,8 +55545,8 @@ msgstr "Use a different value."
 msgid "Use a full link that starts with https://"
 msgstr "Use a full link that starts with https://"
 
-#: app/components/media-library/photo-studio-dialog.tsx:199
-#: app/components/media-library/photo-studio-dialog.tsx:415
+#: app/components/media-library/photo-studio-dialog.tsx:208
+#: app/components/media-library/photo-studio-dialog.tsx:424
 msgid "Use a JPEG, PNG, or WebP photo up to 10 MB."
 msgstr "Use a JPEG, PNG, or WebP photo up to 10 MB."
 
@@ -54645,9 +55592,21 @@ msgstr "Use a US or Canada phone number."
 msgid "Use Add block to put stats, charts and reports on it."
 msgstr "Use Add block to put stats, charts and reports on it."
 
+#: app/components/media-library/restyle-review.tsx:205
+msgid "Use all"
+msgstr "Use all"
+
+#: app/components/media-library/restyle-review.tsx:176
+msgid "Use all remaining"
+msgstr "Use all remaining"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:347
 msgid "Use all suggestions"
 msgstr "Use all suggestions"
+
+#: app/components/media-library/restyle-review.tsx:183
+msgid "Use all the new photos?"
+msgstr "Use all the new photos?"
 
 #: app/components/menu/menu-review-card.tsx:165
 msgid "Use an existing choice"
@@ -54747,6 +55706,10 @@ msgstr "Use lowercase letters, numbers and dashes only (up to 64)."
 #: app/components/gbp/google-listing-tab.tsx:594
 msgid "Use Menuza"
 msgstr "Use Menuza"
+
+#: app/components/media-library/restyle-item-card.tsx:154
+msgid "Use new"
+msgstr "Use new"
 
 #: app/components/roles/tenant-role-access-manager.tsx:391
 msgid "Use own time clock"
@@ -54863,7 +55826,7 @@ msgstr "Used by sales"
 
 #: app/components/discounts/message-impact.tsx:435
 #: app/components/menu/delete-effects.tsx:527
-#: app/routes/_app+/$orgSlug_+/media.tsx:2270
+#: app/routes/_app+/$orgSlug_+/media.tsx:2588
 msgid "Used in"
 msgstr "Used in"
 
@@ -55181,7 +56144,7 @@ msgstr "Version {flowVersion}, published {publishedOn}"
 msgid "version {version}"
 msgstr "version {version}"
 
-#: app/components/media-library/photo-studio-dialog.tsx:854
+#: app/components/media-library/photo-studio-dialog.tsx:884
 msgid "Version {versionCount}"
 msgstr "Version {versionCount}"
 
@@ -55197,7 +56160,7 @@ msgstr "Version B is ahead."
 msgid "Version B wording (leave a text as it is to keep it)"
 msgstr "Version B wording (leave a text as it is to keep it)"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2220
+#: app/routes/_app+/$orgSlug_+/media.tsx:2538
 msgid "Versions"
 msgstr "Versions"
 
@@ -55218,7 +56181,7 @@ msgstr "Video from your photos"
 msgid "Video style"
 msgstr "Video style"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1839
+#: app/routes/_app+/$orgSlug_+/media.tsx:2134
 msgid "Video thumbnail"
 msgstr "Video thumbnail"
 
@@ -55413,6 +56376,10 @@ msgstr "View team notes"
 msgid "View team schedule"
 msgstr "View team schedule"
 
+#: app/components/media-library/bulk-dish-photos.tsx:837
+msgid "View the menu"
+msgstr "View the menu"
+
 #: app/components/roles/tenant-role-access-manager.tsx:396
 msgid "View time cards"
 msgstr "View time cards"
@@ -55439,6 +56406,7 @@ msgid "Viewing"
 msgstr "Viewing"
 
 #: app/components/dashboard/blocks/google-performance-block.tsx:147
+#: app/components/menu/photo-test-panel.tsx:201
 msgid "Views"
 msgstr "Views"
 
@@ -55502,7 +56470,7 @@ msgstr "visits"
 msgid "Visits"
 msgstr "Visits"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1853
+#: app/routes/_app+/$orgSlug_+/media.tsx:2148
 msgid "Vivid"
 msgstr "Vivid"
 
@@ -55637,6 +56605,8 @@ msgstr "Wait this many hours"
 msgid "Wait until first paid order"
 msgstr "Wait until first paid order"
 
+#: app/components/media-library/bulk-file-list.tsx:45
+#: app/components/media-library/restyle-item-card.tsx:100
 #: app/components/reservations/floor-table.tsx:102
 #: app/components/reservations/status-style.tsx:207
 #: app/components/social/social-labels.ts:42
@@ -55665,6 +56635,11 @@ msgstr "Waiting for acceptance"
 #: app/components/website/domain/forwarding-panel.tsx:37
 msgid "Waiting for confirmation"
 msgstr "Waiting for confirmation"
+
+#: app/components/media-library/bulk-dish-photos.tsx:618
+#: app/components/media-library/bulk-file-list.tsx:44
+msgid "Waiting for connection"
+msgstr "Waiting for connection"
 
 #: app/components/website/domain/site-domains-card.tsx:132
 msgid "Waiting for DNS"
@@ -55804,7 +56779,7 @@ msgstr "Walk-ins without contact details are hidden. <0>Show them</0>"
 msgid "Wall"
 msgstr "Wall"
 
-#: app/components/media-library/photo-studio-dialog.tsx:892
+#: app/components/media-library/photo-studio-dialog.tsx:922
 msgid "Want changes?"
 msgstr "Want changes?"
 
@@ -55828,7 +56803,7 @@ msgstr "Wanted: Yes"
 msgid "Wanted: Yes. This one matters for the job."
 msgstr "Wanted: Yes. This one matters for the job."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1854
+#: app/routes/_app+/$orgSlug_+/media.tsx:2149
 msgid "Warm"
 msgstr "Warm"
 
@@ -56341,7 +57316,7 @@ msgstr "Webhooks: {webhookMode}"
 #: app/components/app-sidebar.tsx:683
 #: app/components/command-menu.tsx:152
 #: app/components/workspace-breadcrumb.tsx:14
-#: app/routes/_app+/$orgSlug_+/media.tsx:1841
+#: app/routes/_app+/$orgSlug_+/media.tsx:2136
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:173
 #: app/utils/discounts/labels.ts:171
 msgid "Website"
@@ -56377,7 +57352,7 @@ msgstr "Website page"
 msgid "Website safe, email safe"
 msgstr "Website safe, email safe"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1843
+#: app/routes/_app+/$orgSlug_+/media.tsx:2138
 msgid "Website SEO"
 msgstr "Website SEO"
 
@@ -57115,6 +58090,10 @@ msgstr "Whether the ticket shows paid or unpaid, modifier group names and an ord
 msgid "Which breaks people take, and whether a missing one is flagged."
 msgstr "Which breaks people take, and whether a missing one is flagged."
 
+#: app/components/media-library/restyle-start-form.tsx:230
+msgid "Which dishes?"
+msgstr "Which dishes?"
+
 #: app/components/website/domain/connect-card.tsx:636
 msgid "Which form should visitors see?"
 msgstr "Which form should visitors see?"
@@ -57732,6 +58711,10 @@ msgstr "Yesterday"
 msgid "You"
 msgstr ""
 
+#: app/components/media-library/restyle-labels.ts:24
+msgid "You already decided about this dish."
+msgstr "You already decided about this dish."
+
 #: app/components/dashboard/dashboard-name-dialog.tsx:49
 msgid "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
 msgstr "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
@@ -57927,6 +58910,10 @@ msgstr "You can see the domain setup. Changing it needs permission to edit setti
 #: app/utils/marketing/campaign-send.server.ts:284
 msgid "You can send 10 tests an hour. Try again a little later."
 msgstr "You can send 10 tests an hour. Try again a little later."
+
+#: app/components/menu/photo-test-panel.tsx:37
+msgid "You can test up to 20 dishes at once. End one first."
+msgstr "You can test up to 20 dishes at once. End one first."
 
 #: app/components/pos/terminals-manager.tsx:1147
 msgid "You can turn on Stock only at your own locations."
@@ -58273,6 +59260,14 @@ msgstr ""
 msgid "You need pay access to change tips or rates."
 msgstr "You need pay access to change tips or rates."
 
+#: app/components/media-library/bulk-dish-photos.tsx:771
+msgid "You need permission to edit the menu to add photos to dishes."
+msgstr "You need permission to edit the menu to add photos to dishes."
+
+#: app/routes/_app+/$orgSlug_+/media_.restyle.tsx:222
+msgid "You need permission to use the photo studio to start a restyle."
+msgstr "You need permission to use the photo studio to start a restyle."
+
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:434
 msgid "You need permission to view discounts to attach a coupon."
 msgstr "You need permission to view discounts to attach a coupon."
@@ -58301,7 +59296,7 @@ msgstr "You owe <0>{owed}</0>"
 msgid "You owe <0>{owed}</0>."
 msgstr "You owe <0>{owed}</0>."
 
-#: app/components/media-library/photo-studio-dialog.tsx:194
+#: app/components/media-library/photo-studio-dialog.tsx:203
 msgid "You reached the hourly limit for AI photos. Try again later."
 msgstr "You reached the hourly limit for AI photos. Try again later."
 
@@ -58581,6 +59576,10 @@ msgstr "Your later edits are not part of the scheduled publish."
 msgid "Your later edits are not part of the scheduled publish. Publish again, or schedule again, to include them."
 msgstr "Your later edits are not part of the scheduled publish. Publish again, or schedule again, to include them."
 
+#: app/routes/_app+/$orgSlug_+/media_.restyle.$runId.tsx:194
+msgid "Your live photos only change when you choose a new one."
+msgstr "Your live photos only change when you choose a new one."
+
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:117
 msgid "Your locations use different currencies, so one amount cannot be the default. Set it on each location instead."
 msgstr "Your locations use different currencies, so one amount cannot be the default. Set it on each location instead."
@@ -58598,7 +59597,7 @@ msgstr ""
 msgid "Your media library has no photos yet."
 msgstr "Your media library has no photos yet."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1488
+#: app/routes/_app+/$orgSlug_+/media.tsx:1759
 msgid "Your media library is empty"
 msgstr "Your media library is empty"
 

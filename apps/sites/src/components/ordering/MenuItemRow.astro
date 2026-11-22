@@ -1,5 +1,10 @@
 ---
 import DietaryBadges from '~/components/ordering/DietaryBadges.astro'
+import {
+	dishPhotoStyle,
+	photoTestAttributes,
+	type DishPhotoTest,
+} from '~/lib/ordering/dish-photo'
 
 /**
  * One menu card. Without a photo it is a typographic card (name, two-line
@@ -26,6 +31,10 @@ interface Props {
 	/** "Sold out", shown in place of the price when a daily limit runs out (#409). */
 	soldOutLabel?: string
 	imageUrl?: string | null
+	/** Focal point of the photo (#394); missing is the centre crop. */
+	imageFocal?: { x: number; y: number } | null
+	/** A running photo test (#192): photo A stays the `src`, the page script swaps to B. */
+	photoTest?: DishPhotoTest | null
 	calories?: string | null
 	popularLabel?: string | null
 	/** Promoted discounts that apply to this item (at most two). */
@@ -55,6 +64,8 @@ const {
 	soldOut,
 	soldOutLabel = '',
 	imageUrl,
+	imageFocal,
+	photoTest,
 	calories,
 	popularLabel,
 	offerLabels = [],
@@ -162,6 +173,8 @@ const hasMeta = Boolean(
 		<div class="relative size-28 shrink-0 self-start overflow-hidden rounded-lg bg-placeholder sm:size-32">
 			<img
 				src={imageUrl}
+				style={dishPhotoStyle(imageFocal)}
+				{...photoTestAttributes(id, photoTest)}
 				alt=""
 				loading="lazy"
 				decoding="async"

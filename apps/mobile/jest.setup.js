@@ -76,6 +76,118 @@ jest.mock('react-native-safe-area-context', () => ({
 	useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }))
 
+// Dish photos (#222). These native modules are mocked virtually so tests run
+// without the native packages being resolvable.
+jest.mock(
+	'expo-camera',
+	() => ({
+		CameraView: 'CameraView',
+		useCameraPermissions: jest.fn(() => [
+			{ granted: true, canAskAgain: true, status: 'granted' },
+			jest.fn(async () => ({ granted: true })),
+		]),
+	}),
+	{ virtual: true },
+)
+
+jest.mock(
+	'expo-image-picker',
+	() => ({
+		launchImageLibraryAsync: jest.fn(async () => ({
+			canceled: true,
+			assets: null,
+		})),
+		launchCameraAsync: jest.fn(async () => ({ canceled: true, assets: null })),
+		requestCameraPermissionsAsync: jest.fn(async () => ({ granted: true })),
+		requestMediaLibraryPermissionsAsync: jest.fn(async () => ({
+			granted: true,
+		})),
+	}),
+	{ virtual: true },
+)
+
+jest.mock(
+	'expo-image-manipulator',
+	() => ({
+		ImageManipulator: {
+			manipulate: jest.fn(() => ({
+				resize: jest.fn().mockReturnThis(),
+				renderAsync: jest.fn(async () => ({
+					saveAsync: jest.fn(async () => ({
+						uri: 'file:///cache/manipulated.jpg',
+						width: 2000,
+						height: 1500,
+					})),
+				})),
+			})),
+		},
+		SaveFormat: { JPEG: 'jpeg', PNG: 'png', WEBP: 'webp' },
+	}),
+	{ virtual: true },
+)
+
+jest.mock(
+	'@react-native-community/netinfo',
+	() => ({
+		__esModule: true,
+		default: {
+			fetch: jest.fn(async () => ({
+				isConnected: true,
+				isInternetReachable: true,
+			})),
+			addEventListener: jest.fn(() => jest.fn()),
+		},
+	}),
+	{ virtual: true },
+)
+
+jest.mock(
+	'@react-native-async-storage/async-storage',
+	() => {
+		const store = new Map()
+		return {
+			__esModule: true,
+			default: {
+				getItem: jest.fn(async (key) => store.get(key) ?? null),
+				setItem: jest.fn(async (key, value) => {
+					store.set(key, value)
+				}),
+				removeItem: jest.fn(async (key) => {
+					store.delete(key)
+				}),
+			},
+		}
+	},
+	{ virtual: true },
+)
+
+jest.mock('expo-file-system', () => {
+	class File {
+		constructor(...parts) {
+			this.uri = parts
+				.map((part) => (typeof part === 'string' ? part : part.uri))
+				.join('/')
+			this.exists = true
+		}
+		copy() {}
+		delete() {}
+	}
+	class Directory {
+		constructor(...parts) {
+			this.uri = parts
+				.map((part) => (typeof part === 'string' ? part : part.uri))
+				.join('/')
+			this.exists = true
+		}
+		create() {}
+	}
+	return {
+		File,
+		Directory,
+		Paths: { document: new Directory('file:///documents') },
+	}
+})
+
 // Mock Alert globally
 global.Alert = {
 	alert: jest.fn(),

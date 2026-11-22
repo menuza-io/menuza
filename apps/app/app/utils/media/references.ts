@@ -42,6 +42,12 @@ export function getSourceLabel(source: string) {
 			return 'Website SEO'
 		case 'hero-video':
 			return 'Hero video'
+		case 'guest-photo':
+			return 'Guest photo'
+		case 'phone':
+			return 'Phone photo'
+		case 'restyle':
+			return 'Menu restyle'
 		default:
 			return 'Media library'
 	}

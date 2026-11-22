@@ -936,7 +936,10 @@ describe('dismissals', () => {
 		})
 		expect(check(edited, 'impossible_minimum')?.count).toBe(1)
 		expect(edited.staleDismissals).toEqual([
-			expect.objectContaining({ entityId: 'g', checkKey: 'impossible_minimum' }),
+			expect.objectContaining({
+				entityId: 'g',
+				checkKey: 'impossible_minimum',
+			}),
 		])
 	})
 
@@ -1139,5 +1142,104 @@ describe('Arabic names', () => {
 		expect(normalizeMenuName('أكل')).toBe(normalizeMenuName('اكل'))
 		expect(normalizeMenuName('إيدام')).toBe(normalizeMenuName('ايدام'))
 		expect(normalizeMenuName('Chicken, Wings')).toBe('chicken wings')
+	})
+})
+
+describe('weak_photo (#145)', () => {
+	const weak = (score: number | null, issues: string[] = []) =>
+		item({
+			primaryPhoto: { assetId: 'asset', score, issues: issues as never },
+		})
+
+	test('a dish whose primary photo scores under 50 is a weak dish photo', () => {
+		const health = run({
+			photoQuality: true,
+			items: [
+				{ ...weak(32, ['too_dark']), id: 'a' },
+				{ ...weak(50), id: 'b' },
+				{ ...weak(88), id: 'c' },
+			],
+		})
+		expect(check(health, 'weak_photo')).toMatchObject({
+			count: 1,
+			itemIds: ['a'],
+			severity: 'warning',
+		})
+		// no_photo is a different check and is not replaced.
+		expect(check(health, 'no_photo')?.count).toBe(0)
+	})
+
+	test('too small is weak without a score; an unscored clean photo is not', () => {
+		const health = run({
+			photoQuality: true,
+			items: [
+				{ ...weak(null, ['low_resolution']), id: 'a' },
+				{ ...weak(null), id: 'b' },
+				{ ...item(), id: 'c', primaryPhoto: null },
+			],
+		})
+		expect(check(health, 'weak_photo')?.itemIds).toEqual(['a'])
+	})
+
+	test('does not run while media.photo_quality is off', () => {
+		const health = run({
+			items: [{ ...weak(10, ['blurry']), id: 'a' }],
+		})
+		expect(check(health, 'weak_photo')).toBeUndefined()
+	})
+
+	test('is a pure deduction: a menu without weak photos scores as before', () => {
+		expect(MENU_HEALTH_DEDUCTION_CHECKS.has('weak_photo')).toBe(true)
+		const clean = run({ photoQuality: true, items: [weak(90)] })
+		expect(clean.score).toBe(100)
+		const hurt = run({ photoQuality: true, items: [weak(10)] })
+		expect(hurt.score).toBeLessThan(100)
+		expect(menuHealthEntityType('weak_photo')).toBe('item')
+	})
+
+	test('a dismissal ends when the photo or its score changes', () => {
+		const before = menuHealthFingerprint({
+			key: 'weak_photo',
+			score: 30,
+			issues: ['blurry'],
+		})
+		expect(
+			menuHealthFingerprint({
+				key: 'weak_photo',
+				score: 30,
+				issues: ['blurry'],
+			}),
+		).toBe(before)
+		expect(
+			menuHealthFingerprint({ key: 'weak_photo', score: 70, issues: [] }),
+		).not.toBe(before)
+	})
+
+	test('the summary carries the photo and issues for "Fix in photo studio"', () => {
+		const health = run({
+			photoQuality: true,
+			items: [{ ...weak(20, ['too_dark', 'blurry']), id: 'a' }],
+		})
+		const summary = summarizeMenuHealth(
+			health,
+			(_type, id) => `Dish ${id}`,
+			(itemId) =>
+				itemId === 'a'
+					? { assetId: 'asset-9', issues: ['too_dark', 'blurry'] }
+					: null,
+		)
+		const weakCheck = summary.checks.find((c) => c.key === 'weak_photo')!
+		expect(weakCheck.records).toEqual([
+			{
+				id: 'a',
+				name: 'Dish a',
+				photo: { assetId: 'asset-9', issues: ['too_dark', 'blurry'] },
+			},
+		])
+		// Other checks carry no photo.
+		const other = summarizeMenuHealth(health, (_t, id) => id).checks
+		expect(other.every((c) => c.records.every((r) => !('photo' in r)))).toBe(
+			true,
+		)
 	})
 })

@@ -91,6 +91,16 @@ export default function DashboardScreen() {
 									</Text>
 								</TouchableOpacity>
 								<TouchableOpacity
+									onPress={() => router.push('/(dashboard)/menu-photos')}
+									className="bg-muted min-w-[140px] flex-1 items-center rounded-lg p-4"
+									accessibilityRole="button"
+								>
+									<Ionicons name="camera-outline" size={24} color="#888" />
+									<Text className="text-foreground mt-2 text-sm font-medium">
+										<Trans>Menu photos</Trans>
+									</Text>
+								</TouchableOpacity>
+								<TouchableOpacity
 									onPress={() => router.push('/(dashboard)/settings/profile')}
 									className="bg-muted min-w-[140px] flex-1 items-center rounded-lg p-4"
 								>

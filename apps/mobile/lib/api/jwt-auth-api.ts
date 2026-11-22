@@ -548,6 +548,20 @@ export class JWTAuthApi {
 	}
 
 	/**
+	 * An authenticated GET for feature modules (menu photos, ...): the same
+	 * token handling as every other call here (proactive refresh, one refresh
+	 * and retry on a 401), without each module reaching into the HTTP client.
+	 * The response body's `data` comes back as `data`.
+	 */
+	async authenticatedGet<T>(path: string): Promise<ApiResponse<T>> {
+		try {
+			return await this.httpClient.get<T>(path)
+		} catch (error) {
+			return this.handleError(error as Error) as ApiResponse<T>
+		}
+	}
+
+	/**
 	 * Sets the authorization header for authenticated requests
 	 */
 	async setAuthToken(token: string): Promise<void> {

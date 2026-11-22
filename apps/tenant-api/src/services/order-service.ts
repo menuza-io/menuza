@@ -161,6 +161,10 @@ import {
 	readDailyDishAvailability,
 	recordDailyDishClaims,
 } from './order-dish-daily-service.ts'
+import {
+	recordDishPhotoOrderLines,
+	verifiedPhotoTestEntries,
+} from './dish-photo-tests.ts'
 import { applyPromisedDelay } from './order-promised-time.ts'
 import {
 	bookOrderProviderRefundInTx,
@@ -995,6 +999,11 @@ export async function placeOrder(input: {
 	const now = input.now ?? new Date()
 	const orgId = organization.id
 	const isDineIn = request.fulfillment === 'dine_in'
+	// Photo test entries count only with the App's signed key (#192).
+	const signedPhotoTests = await verifiedPhotoTestEntries(
+		orgId,
+		request.photoTests,
+	)
 	const dineIn = input.dineIn ?? null
 	const hasDineInToken = Boolean(dineIn?.tableToken || dineIn?.tabToken)
 	if (isDineIn !== hasDineInToken) {
@@ -1834,6 +1843,14 @@ export async function placeOrder(input: {
 					}
 
 					await recordDailyDishClaims({ tx, context, order: inserted, now })
+					// Which photo each dish in a photo test showed this guest (#192):
+					// ids only, in the order's own transaction, not part of the
+					// idempotency hash.
+					await recordDishPhotoOrderLines(tx, {
+						orderId: inserted.id,
+						photoTests: signedPhotoTests,
+						lines: result.lines,
+					})
 
 					if (result.capacity && result.capacity.entities.length > 0) {
 						await insertRowsInChunks(

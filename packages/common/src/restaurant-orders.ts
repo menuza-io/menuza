@@ -11,6 +11,7 @@ import {
 } from '@repo/discounts'
 import { z } from 'zod'
 import { giftCardCheckoutInputSchema } from './gift-card-contract.ts'
+import { PHOTO_TEST_KEY_PATTERN } from './photo-test-key.ts'
 import { orderAttributionInputSchema } from './order-attribution.ts'
 import { giftCardPaymentRiskSchema } from './gift-cards.ts'
 import {
@@ -378,6 +379,24 @@ const restaurantOrderObjectSchema = z.strictObject({
 	 * only, and not part of the idempotency hash.
 	 */
 	attribution: orderAttributionInputSchema.optional(),
+	/**
+	 * The photo each dish in a photo test (#192) showed this guest. Sent only
+	 * when set (the body is strict). Ids and the App's signed key only; the
+	 * region keeps the entries whose key checks out and that name a dish in the
+	 * order.
+	 */
+	photoTests: z
+		.array(
+			z.strictObject({
+				testId: z.string().regex(/^[A-Za-z0-9_-]{8,40}$/),
+				itemId: z.string().min(1).max(100),
+				variant: z.enum(['A', 'B']),
+				/** Signed by the App for this test and dish; unsigned entries are dropped. */
+				key: z.string().regex(PHOTO_TEST_KEY_PATTERN),
+			}),
+		)
+		.max(20)
+		.optional(),
 	/**
 	 * "Text me order updates": transactional texts about this order only, never
 	 * marketing consent. Refused on a table round; ignored without a phone or

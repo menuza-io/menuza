@@ -453,6 +453,8 @@ function rowProps(item: OrderingItem, categoryIds: string[]) {
 		popularLabel: item.isPopular ? popularLabel : null,
 		offerLabels: isItemSoldOut(item) ? [] : offersFor(item, categoryIds),
 		imageUrl: item.imageUrl,
+		imageFocal: item.imageFocal,
+		photoTest: item.photoTest,
 		calories: caloriesFor(item),
 		isVegetarian: item.isVegetarian,
 		isGlutenFree: item.isGlutenFree,
@@ -496,6 +498,8 @@ const popularCards = allItems
 		...priceParts(item),
 		...salePartsFor(item),
 		imageUrl: item.imageUrl,
+		imageFocal: item.imageFocal,
+		photoTest: item.photoTest,
 		soldOut: isItemSoldOut(item),
 		soldOutLabel: labels.soldOut,
 	}))
@@ -1057,6 +1061,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			type HeldCoupon,
 		} from '~/lib/ordering/coupon-retry'
 		import { createItemModal } from '~/lib/ordering/item-modal'
+		import { initPhotoTests, recordPhotoTestAdd } from '~/lib/photo-test-client'
 		import { addSuggestion, suggestForCart } from '~/lib/ordering/upsell'
 		import { buildUpsellRow } from '~/lib/ordering/upsell-row'
 		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
@@ -1203,7 +1208,13 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		const money = createMoneyFormatter(data.currency, data.locale)
 		const catalog = indexCatalog(data.categories ?? [])
 
-		const store = createCartStore({ key: `menuza_cart_${orgId}` })
+		const store = createCartStore({
+			key: `menuza_cart_${orgId}`,
+			// A dish in a photo test counts its add for the photo shown (#192).
+			onAdd: recordPhotoTestAdd,
+		})
+		// Swap the visitors in a dish photo test to photo B, and count views (#192).
+		initPhotoTests()
 		// Pickup/delivery, address and time live in the order details (browser
 		// only); the legacy mode key is kept in sync by `saveOrderDetails`.
 		let details: OrderDetails = loadOrderDetails(orgId, {

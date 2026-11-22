@@ -1,5 +1,6 @@
 ---
 import DietaryBadges from '~/components/ordering/DietaryBadges.astro'
+import { dishPhotoStyle } from '~/lib/ordering/dish-photo'
 
 /**
  * Item card for the drop menu, laid out like the menu page's `MenuItemRow`
@@ -15,6 +16,8 @@ interface Props {
 	priceLabel: string
 	soldOut: boolean
 	imageUrl?: string | null
+	/** Focal point of the photo (#394); missing is the centre crop. */
+	imageFocal?: { x: number; y: number } | null
 	note?: string | null
 	/** `warning` for low stock ("Only 3 left"), `neutral` for order limits. */
 	noteTone?: 'warning' | 'neutral'
@@ -39,6 +42,7 @@ const {
 	priceLabel,
 	soldOut,
 	imageUrl,
+	imageFocal,
 	note,
 	noteTone = 'warning',
 	soldOutLabel,
@@ -121,6 +125,7 @@ const hasMeta = Boolean(calories || isVegetarian || isGlutenFree || isAlcohol ||
 		<div class="relative size-28 shrink-0 self-start overflow-hidden rounded-lg bg-placeholder sm:size-32">
 			<img
 				src={imageUrl}
+				style={dishPhotoStyle(imageFocal)}
 				alt=""
 				loading="lazy"
 				decoding="async"

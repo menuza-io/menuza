@@ -1,5 +1,12 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { getDomainUrl, isCloudflareWorkerRuntime } from '@repo/common'
+import {
+	focalGravity,
+	formatFocalPoint,
+	focalPointOf,
+	parseFocalPoint,
+	type FocalPoint,
+} from '@repo/common/image-focal'
 import { db, eq, OrganizationMediaAsset } from '@repo/database'
 import { ssrfSafeFetch } from '@repo/security'
 import { isValidRasterBytes } from '@repo/storage'
@@ -35,6 +42,8 @@ type ImageParams = {
 	height?: number
 	fit?: ImageFit
 	format?: ImageFormat
+	/** Focal point of the photo (#394): a `cover` crop keeps it in view. */
+	focal?: FocalPoint | null
 }
 
 function parseImageParams(searchParams: URLSearchParams): ImageParams {
@@ -47,6 +56,7 @@ function parseImageParams(searchParams: URLSearchParams): ImageParams {
 		width: width ? Number.parseInt(width, 10) : undefined,
 		height: height ? Number.parseInt(height, 10) : undefined,
 		fit: fit === 'cover' || fit === 'contain' ? fit : undefined,
+		focal: parseFocalPoint(searchParams.get('fp')),
 		format:
 			format === 'webp' ||
 			format === 'avif' ||
@@ -318,11 +328,17 @@ async function getCloudflareImageResponse(
 		params.format != null
 
 	if (shouldTransform) {
-		const imageOptions: Record<string, number | string> = {}
+		const imageOptions: Record<string, unknown> = {}
 		if (params.width != null) imageOptions.width = params.width
 		if (params.height != null) imageOptions.height = params.height
 		if (params.fit != null) imageOptions.fit = params.fit
 		if (params.format != null) imageOptions.format = params.format
+		// A `cover` crop keeps the focal point in view; no point means the
+		// default centre crop, so photos nobody touched crop as they always did.
+		const gravity = params.fit === 'cover' ? focalGravity(params.focal) : null
+		if (gravity) {
+			imageOptions.gravity = gravity
+		}
 
 		// External images returned above, so only storage objects and this
 		// origin's assets reach the transform. Redirects are not followed: the
@@ -331,7 +347,7 @@ async function getCloudflareImageResponse(
 			headers: source.headers,
 			redirect: 'manual',
 			cf: { image: imageOptions },
-		} as RequestInit & { cf?: { image: Record<string, number | string> } })
+		} as RequestInit & { cf?: { image: Record<string, unknown> } })
 
 		if (transformed.ok) {
 			// The original is not needed; release its connection.
@@ -413,11 +429,21 @@ export async function loader({ request }: Route.LoaderArgs) {
 				storageScope: OrganizationMediaAsset.storageScope,
 				source: OrganizationMediaAsset.source,
 				status: OrganizationMediaAsset.status,
+				focalX: OrganizationMediaAsset.focalX,
+				focalY: OrganizationMediaAsset.focalY,
 			})
 			.from(OrganizationMediaAsset)
 			.where(eq(OrganizationMediaAsset.id, mediaId))
 			.limit(1)
 		invariantResponse(asset, 'Media not found', { status: 404 })
+
+		// The photo's own focal point (#394) steers every `cover` crop of it
+		// unless the caller names one. A change bumps the asset's `updatedAt`,
+		// which is part of the `v=` the URL carries, so cached crops refresh.
+		const assetFocal = focalPointOf(asset)
+		if (assetFocal && !searchParams.get('fp')) {
+			searchParams.set('fp', formatFocalPoint(assetFocal))
+		}
 
 		const isPublicMedia = isPublicMediaAsset(asset)
 		cacheable = isPublicMedia

@@ -43,6 +43,8 @@ export function upsellLine(item: OrderingItem): CartItem {
 		quantity: 1,
 		options: [],
 		instructions: '',
+		...(item.photoTest?.id ? { photoTestId: item.photoTest.id } : {}),
+		...(item.photoTest?.key ? { photoTestKey: item.photoTest.key } : {}),
 	}
 }
 

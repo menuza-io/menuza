@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons'
+import { useLingui } from '@lingui/react/macro'
 import { Tabs } from 'expo-router'
 import React from 'react'
 import { View, useColorScheme } from 'react-native'
 import { OrganizationSwitcher } from '../../components/organization-switcher'
 
 export default function DashboardLayout() {
+	const { t } = useLingui()
 	const colorScheme = useColorScheme()
 	const isDark = colorScheme === 'dark'
 
@@ -63,6 +65,14 @@ export default function DashboardLayout() {
 							color={color as string}
 						/>
 					),
+				}}
+			/>
+			<Tabs.Screen
+				name="menu-photos"
+				options={{
+					title: t`Menu photos`,
+					headerShown: false,
+					href: null, // Opened from Quick Actions on Home, not from the tab bar
 				}}
 			/>
 			<Tabs.Screen

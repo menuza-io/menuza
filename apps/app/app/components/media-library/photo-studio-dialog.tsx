@@ -1,6 +1,8 @@
 import { msg, Plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { type PhotoQualityIssue } from '@repo/common/photo-quality'
 import { cn } from '@repo/ui'
+import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
 	Dialog,
@@ -27,6 +29,7 @@ import {
 	resolvePhotoStudioOptions,
 } from '#app/utils/media/photo-studio.ts'
 import { BeforeAfterSlider } from './before-after-slider.tsx'
+import { QUALITY_ISSUE_LABELS } from './photo-quality-info.tsx'
 
 export type PhotoStudioAsset = {
 	id: string
@@ -97,6 +100,8 @@ export function PhotoStudioDialog({
 	orgSlug,
 	assets,
 	initialAssetIds,
+	initialInstructions,
+	initialIssues,
 }: {
 	open: boolean
 	onOpenChange: (open: boolean) => void
@@ -105,6 +110,10 @@ export function PhotoStudioDialog({
 	assets: PhotoStudioAsset[]
 	/** Photos to start with; the photo step is skipped when set. */
 	initialAssetIds?: string[]
+	/** "Extra direction" to start with, e.g. from the issues a photo scored (#145). */
+	initialInstructions?: string
+	/** The quality issues that brought the operator here (#145), shown as chips. */
+	initialIssues?: PhotoQualityIssue[]
 }) {
 	const { _ } = useLingui()
 	const vertical = photoStudioVertical
@@ -144,7 +153,7 @@ export function PhotoStudioDialog({
 			setPresetId(null)
 			setReference(undefined)
 			setOptions(resolvePhotoStudioOptions(vertical, {}))
-			setInstructions('')
+			setInstructions(initialInstructions ?? '')
 			setResults([])
 			setActiveIndex(0)
 			setRefineText('')
@@ -154,7 +163,7 @@ export function PhotoStudioDialog({
 			objectUrls.current = []
 		}
 		wasOpen.current = open
-	}, [open, initialAssetIds, vertical])
+	}, [open, initialAssetIds, initialInstructions, vertical])
 
 	useEffect(() => {
 		if (saveFetcher.state !== 'idle' || !saveFetcher.data) return
@@ -729,6 +738,27 @@ export function PhotoStudioDialog({
 											/>
 										</div>
 									))}
+								</section>
+							) : null}
+
+							{initialIssues?.length ? (
+								<section
+									className="space-y-1.5"
+									data-testid="studio-issues"
+									aria-label={_(msg`Issues found in this photo`)}
+								>
+									<p className="text-sm font-medium">
+										<Trans>Issues found in this photo</Trans>
+									</p>
+									<ul className="flex flex-wrap gap-1.5">
+										{initialIssues.map((issue) => (
+											<li key={issue}>
+												<Badge variant="warning">
+													{_(QUALITY_ISSUE_LABELS[issue])}
+												</Badge>
+											</li>
+										))}
+									</ul>
 								</section>
 							) : null}
 

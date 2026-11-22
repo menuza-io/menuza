@@ -1,3 +1,5 @@
+import { type FocalPoint } from '@repo/common/image-focal'
+
 export type Half = 'whole' | 'left' | 'right'
 
 export type SelectionType = 'single' | 'multiple' | 'quantity' | 'pizza'
@@ -9,6 +11,8 @@ export type ModifierOption = {
 	displayName: string
 	description?: string | null
 	imageUrl?: string | null
+	/** Focal point of the photo (#394); missing or null is the centre crop. */
+	imageFocal?: FocalPoint | null
 	price: number
 	priceWhole?: number | null
 	priceLeft?: number | null
@@ -49,6 +53,7 @@ export type Variant = {
 	valueIds: string[]
 	price: number
 	imageUrl?: string | null
+	imageFocal?: FocalPoint | null
 	excludeFromDiscounts?: boolean
 	availabilityStatus: 'available' | 'unavailable' | string
 }
@@ -59,6 +64,15 @@ export type OrderingItem = {
 	description?: string | null
 	price: number
 	imageUrl?: string | null
+	/** Focal point of the primary photo (#394). */
+	imageFocal?: FocalPoint | null
+	/** A running photo test (#192): `imageUrl` is always photo A. */
+	photoTest?: {
+		id: string
+		imageUrlB: string
+		imageFocalB: FocalPoint | null
+		key?: string
+	} | null
 	variations: {
 		groups: VariationGroup[]
 		variants: Variant[]
@@ -130,6 +144,14 @@ export type CartItem = CartLine & {
 	unitPrice: number
 	options: CartOption[]
 	instructions: string
+	/**
+	 * The photo test (#192) this dish was in when it was added. Checkout reads
+	 * it to tell the region which photo this browser showed; carts saved
+	 * before it existed simply have none.
+	 */
+	photoTestId?: string
+	/** The beacon key of that test; a cart saved before it has none (no add counted). */
+	photoTestKey?: string
 }
 
 export type ConstraintRule = {

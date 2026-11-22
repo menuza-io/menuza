@@ -2426,6 +2426,28 @@ export const OrganizationMediaAsset = sqliteTable(
 			onDelete: 'set null',
 			onUpdate: 'cascade',
 		}),
+		/**
+		 * Focal point of the photo (#394), normalized 0..1 from the top left. Null
+		 * means the centre, so a photo nobody touched keeps its centre crop.
+		 */
+		focalX: real(),
+		focalY: real(),
+		/**
+		 * Photo quality (#145): a 0 to 100 score and a JSON array of issue keys
+		 * (`@repo/common/photo-quality`). A null score is unscored: no model
+		 * answered, which is never a penalty. `qualityAttempts` counts tries (one
+		 * retry); `analyzedAt` is set when the analysis finished or gave up.
+		 */
+		qualityScore: integer(),
+		qualityIssues: text(),
+		qualityAttempts: integer().default(0).notNull(),
+		analyzedAt: integer({ mode: 'timestamp_ms' }),
+		/**
+		 * A claim on this image by a running quality batch (#145): another batch
+		 * skips it until the claim is older than ten minutes, so two workflow
+		 * instances never pay the model for the same photo.
+		 */
+		qualityClaimedAt: integer({ mode: 'timestamp_ms' }),
 		createdById: text().references(() => User.id, {
 			onDelete: 'set null',
 			onUpdate: 'cascade',
@@ -2453,6 +2475,10 @@ export const OrganizationMediaAsset = sqliteTable(
 		),
 		index('OrganizationMediaAsset_createdById_idx').on(table.createdById),
 		index('OrganizationMediaAsset_parentAssetId_idx').on(table.parentAssetId),
+		index('OrganizationMediaAsset_organizationId_analyzedAt_idx').on(
+			table.organizationId,
+			table.analyzedAt,
+		),
 	],
 )
 
@@ -6793,6 +6819,200 @@ export const HeroVideoGeneration = sqliteTable(
 	],
 )
 
+/**
+ * A restyle run (#146): one style applied to the main photo of each dish, as
+ * drafts. Live photos change only when the operator picks "Use new". One run
+ * at a time per organization (`restyle_in_progress`). `status`: `pending`,
+ * `running`, `paused` (daily budget reached), `ready` or `cancelled`.
+ */
+export const MediaRestyleRun = sqliteTable(
+	'MediaRestyleRun',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		/** JSON: `{ type: 'preset', presetId, options }`, the studio's style. */
+		style: text().notNull(),
+		/** JSON array of category ids the run was limited to (empty: all). */
+		categoryIds: text().default('[]').notNull(),
+		status: text().default('pending').notNull(),
+		total: integer().default(0).notNull(),
+		done: integer().default(0).notNull(),
+		failed: integer().default(0).notNull(),
+		skipped: integer().default(0).notNull(),
+		/** When a paused run may go on (the next budget day). */
+		resumeAt: integer({ mode: 'timestamp_ms' }),
+		completedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('MediaRestyleRun_organizationId_status_idx').on(
+			table.organizationId,
+			table.status,
+		),
+		index('MediaRestyleRun_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+		index('MediaRestyleRun_status_idx').on(table.status),
+		// One run at a time per organization, enforced by the database: two
+		// starts at once cannot both insert (`restyle_in_progress`).
+		uniqueIndex('MediaRestyleRun_organizationId_active_key')
+			.on(table.organizationId)
+			.where(sql`${table.status} IN ('pending', 'running', 'paused')`),
+	],
+)
+
+/**
+ * One dish of a restyle run. `sourceAssetKey` is the dish's main photo when
+ * the run started: a draft can be used only while it still is. `status`:
+ * `pending`, `drafted`, `failed` or `skipped` (no photo); `decision`: `used`,
+ * `kept` or `retry`.
+ */
+export const MediaRestyleRunItem = sqliteTable(
+	'MediaRestyleRunItem',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		runId: text()
+			.notNull()
+			.references(() => MediaRestyleRun.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		itemId: text()
+			.notNull()
+			.references(() => OrganizationMenuItem.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		sourceAssetKey: text(),
+		sourceAssetId: text().references(() => OrganizationMediaAsset.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		draftAssetId: text().references(() => OrganizationMediaAsset.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		/** The draft's object key when it was made: a changed draft is refused. */
+		draftObjectKey: text(),
+		status: text().default('pending').notNull(),
+		decision: text(),
+		/** `no_photo` or `photo_not_in_library` when skipped. */
+		skipReason: text(),
+		/** A short machine reason when failed. */
+		error: text(),
+		attempts: integer().default(0).notNull(),
+		/** The photo the dish had before "Use new": "Switch back" restores it. */
+		replacedAssetKey: text(),
+		processedAt: integer({ mode: 'timestamp_ms' }),
+		decidedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('MediaRestyleRunItem_runId_itemId_key').on(
+			table.runId,
+			table.itemId,
+		),
+		index('MediaRestyleRunItem_runId_status_idx').on(table.runId, table.status),
+		index('MediaRestyleRunItem_organizationId_processedAt_idx').on(
+			table.organizationId,
+			table.processedAt,
+		),
+		index('MediaRestyleRunItem_draftAssetId_idx').on(table.draftAssetId),
+	],
+)
+
+/**
+ * A dish photo A/B test (#192). Photo A is the dish's main photo when the
+ * test started (`imageKeyA`); photo B lives only here until the operator keeps
+ * it. `winner` (`A` or `B`) is set when the test ends. At most one running
+ * test per dish and 20 per organization. Counts live in the region.
+ */
+export const MenuItemPhotoTest = sqliteTable(
+	'MenuItemPhotoTest',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		itemId: text()
+			.notNull()
+			.references(() => OrganizationMenuItem.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		imageKeyA: text().notNull(),
+		imageKeyB: text().notNull(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		startedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		endedAt: integer({ mode: 'timestamp_ms' }),
+		winner: text(),
+		/** `kept_a`, `kept_b`, `stopped` or `dish_deleted`. */
+		endedReason: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('MenuItemPhotoTest_organizationId_endedAt_idx').on(
+			table.organizationId,
+			table.endedAt,
+		),
+		index('MenuItemPhotoTest_itemId_idx').on(table.itemId),
+		uniqueIndex('MenuItemPhotoTest_itemId_running_key')
+			.on(table.itemId)
+			.where(sql`${table.endedAt} IS NULL`),
+	],
+)
+
 /** Search Console totals per day (#138), aggregate only. */
 export const SearchConsoleDaily = sqliteTable(
 	'SearchConsoleDaily',
@@ -7560,7 +7780,6 @@ export const CustomerAppTap = sqliteTable(
 		}),
 	],
 )
-
 
 /**
  * Marketing text sends used per organization and billing month (#247). Numbers

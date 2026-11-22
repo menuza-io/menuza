@@ -1,3 +1,4 @@
+import { type FocalPoint } from '@repo/common/image-focal'
 import {
 	type BusyMode,
 	type OrderingPause,
@@ -104,6 +105,8 @@ export interface PublicMenuOptionData {
 	description: string | null
 	imageKey: string | null
 	imageUrl: string | null
+	/** Focal point of the photo (#394); absent or null means the centre. */
+	imageFocal?: FocalPoint | null
 	price: number
 	priceWhole: number | null
 	priceLeft: number | null
@@ -152,6 +155,22 @@ export interface PublicMenuItemData {
 	imageUrl: string | null
 	imageKeys: string[]
 	imageUrls: string[]
+	/** Focal point of the primary photo (#394); absent or null means the centre. */
+	imageFocal?: FocalPoint | null
+	/** Focal points parallel to `imageUrls`. */
+	imageFocals?: Array<FocalPoint | null>
+	/**
+	 * A running photo test for this dish (#192), only on the `web` and `qr`
+	 * channels. `imageUrl` stays photo A for everyone; Sites swaps in photo B
+	 * for about half of the visitors in the browser.
+	 */
+	photoTest?: {
+		id: string
+		imageUrlB: string
+		imageFocalB: FocalPoint | null
+		/** Signed by the App: the region counts a beacon only with it. */
+		key: string
+	}
 	variations: {
 		groups: Array<{
 			id: string
@@ -163,6 +182,7 @@ export interface PublicMenuItemData {
 			valueIds: string[]
 			price: number
 			imageUrl: string | null
+			imageFocal?: FocalPoint | null
 			excludeFromDiscounts?: boolean
 			availabilityStatus: 'available' | 'unavailable'
 		}>
@@ -238,6 +258,32 @@ export type MenuItemRow = InferSelectModel<typeof OrganizationMenuItem>
 /** Maps media asset ids and object keys to public image URLs. */
 export type MediaUrlMap = ReadonlyMap<string, string>
 
+/** Maps media asset ids and object keys to their focal point (#394). */
+export type MediaFocalMap = ReadonlyMap<string, FocalPoint>
+
+/** Optional photo extras a serializer adds when the caller has them. */
+export type PublicPhotoExtras = {
+	focalMap?: MediaFocalMap
+	/** Running photo tests by dish id (#192); only given for `web` and `qr`. */
+	photoTests?: ReadonlyMap<
+		string,
+		{
+			id: string
+			imageUrlB: string
+			imageFocalB: FocalPoint | null
+			key: string
+		}
+	>
+}
+
+function focalField(
+	focalMap: MediaFocalMap | undefined,
+	key: string | null | undefined,
+): { imageFocal?: FocalPoint } {
+	const focal = key ? focalMap?.get(key) : undefined
+	return focal ? { imageFocal: focal } : {}
+}
+
 /** `{ orderTypePrices }` only when one is set, so the payload stays small. */
 function orderTypePricesField(raw: string | null | undefined): {
 	orderTypePrices?: OrderTypePrices
@@ -272,6 +318,7 @@ export function serializePublicOption(
 	opt: MenuOptionRow,
 	mediaMap: MediaUrlMap,
 	now: Date,
+	extras: PublicPhotoExtras = {},
 ): PublicMenuOptionData {
 	return {
 		id: opt.id,
@@ -282,6 +329,7 @@ export function serializePublicOption(
 		description: opt.description,
 		imageKey: opt.imageKey,
 		imageUrl: opt.imageKey ? (mediaMap.get(opt.imageKey) ?? null) : null,
+		...focalField(extras.focalMap, opt.imageKey),
 		price: opt.price,
 		priceWhole: opt.priceWhole,
 		priceLeft: opt.priceLeft,
@@ -399,6 +447,7 @@ export function serializePublicMenuItem(
 	modifierGroups: PublicModifierGroupData[],
 	mediaMap: MediaUrlMap,
 	now: Date,
+	extras: PublicPhotoExtras = {},
 ): PublicMenuItemData {
 	const imageKeys = parseMenuItemImageKeys(item.imageKeys, item.imageKey)
 	const variations = parseMenuVariations(item.variations)
@@ -419,6 +468,11 @@ export function serializePublicMenuItem(
 		const imageUrl = mediaMap.get(imageKey)
 		return imageUrl ? [imageUrl] : []
 	})
+	// Focal points parallel to `imageUrls`: a photo with none is the centre.
+	const imageFocals = imageKeys.flatMap((imageKey) =>
+		mediaMap.get(imageKey) ? [extras.focalMap?.get(imageKey) ?? null] : [],
+	)
+	const photoTest = extras.photoTests?.get(item.id)
 
 	return {
 		id: item.id,
@@ -434,6 +488,10 @@ export function serializePublicMenuItem(
 		imageUrl: imageUrls[0] ?? null,
 		imageKeys,
 		imageUrls,
+		...(imageFocals.some(Boolean)
+			? { imageFocal: imageFocals[0] ?? null, imageFocals }
+			: {}),
+		...(photoTest ? { photoTest } : {}),
 		variations: {
 			groups: variations.groups,
 			variants: effectiveVariants.map((variant) => ({
@@ -445,6 +503,7 @@ export function serializePublicMenuItem(
 				imageUrl: variant.imageKey
 					? (mediaMap.get(variant.imageKey) ?? null)
 					: null,
+				...focalField(extras.focalMap, variant.imageKey),
 			})),
 		},
 		isAlcohol: Boolean(item.isAlcohol),

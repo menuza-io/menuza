@@ -93,7 +93,7 @@ export type OperatorArea = 'marketing' | 'customers' | 'automations'
 
 export async function authenticateOperator(
 	c: Context,
-	scope?: 'mailbox' | 'phone_calls' | 'people' | 'funnel',
+	scope?: 'mailbox' | 'phone_calls' | 'people' | 'funnel' | 'photo_tests',
 	area?: OperatorArea,
 ) {
 	const token = getBearerToken(c.req.header('Authorization')) || null

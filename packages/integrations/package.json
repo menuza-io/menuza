@@ -12,6 +12,14 @@
     "./pos/sandbox": {
       "types": "./src/pos/sandbox.ts",
       "import": "./src/pos/sandbox.ts"
+    },
+    "./pos/project": {
+      "types": "./src/pos/project.ts",
+      "import": "./src/pos/project.ts"
+    },
+    "./pos/types": {
+      "types": "./src/pos/types.ts",
+      "import": "./src/pos/types.ts"
     }
   },
   "scripts": {

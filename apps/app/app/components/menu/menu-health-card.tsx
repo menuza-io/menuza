@@ -45,6 +45,7 @@ import {
 	type MenuHealthCheckSummary,
 	type MenuHealthEntityType,
 	type MenuHealthGrade,
+	type MenuHealthRecordRef,
 	type MenuHealthSeverity,
 	type MenuHealthSummary,
 } from '#app/utils/menu/menu-health.ts'
@@ -111,6 +112,14 @@ function FixLabel({ check }: { check: MenuHealthCheckSummary }) {
 					value={n}
 					one="# dish has no photo"
 					other="# dishes have no photo"
+				/>
+			)
+		case 'weak_photo':
+			return (
+				<Plural
+					value={n}
+					one="# dish has a weak photo"
+					other="# dishes have a weak photo"
 				/>
 			)
 		case 'no_description':
@@ -209,6 +218,7 @@ function FixLabel({ check }: { check: MenuHealthCheckSummary }) {
 const CHECK_TITLES: Record<MenuHealthCheckKey, MessageDescriptor> = {
 	zero_price: msg`Dishes priced at 0`,
 	no_photo: msg`Dishes with no photo`,
+	weak_photo: msg`Dishes with a weak photo`,
 	no_description: msg`Dishes with no description`,
 	missing_translation: msg`Dishes missing a translation`,
 	no_allergens_or_calories: msg`Dishes without allergens or calories`,
@@ -224,6 +234,7 @@ const CHECK_TITLES: Record<MenuHealthCheckKey, MessageDescriptor> = {
 const CHECK_HINTS: Record<MenuHealthCheckKey, MessageDescriptor> = {
 	zero_price: msg`A free dish is usually a mistake.`,
 	no_photo: msg`Photos help guests choose.`,
+	weak_photo: msg`Dark, blurry or small photos hurt orders. Fix them in the photo studio.`,
 	no_description: msg`A short description helps guests order.`,
 	missing_translation: msg`Guests reading another language see a gap.`,
 	no_allergens_or_calories: msg`Guests look for allergens and calories.`,
@@ -238,8 +249,19 @@ const CHECK_HINTS: Record<MenuHealthCheckKey, MessageDescriptor> = {
 
 const DISMISS_LABELS: Partial<Record<MenuHealthCheckKey, MessageDescriptor>> = {
 	no_photo: msg`No photo on purpose`,
+	weak_photo: msg`Photo is fine`,
 	no_description: msg`No description on purpose`,
 	zero_price: msg`Price 0 on purpose`,
+}
+
+/** The photo studio opens on the weak photo with its issues filled in (#145). */
+export function studioHref(
+	orgSlug: string,
+	photo: { assetId: string; issues: readonly string[] },
+) {
+	const query = new URLSearchParams({ studio: photo.assetId })
+	if (photo.issues.length > 0) query.set('issues', photo.issues.join(','))
+	return `/${orgSlug}/media?${query.toString()}`
 }
 
 function editHref(
@@ -321,7 +343,7 @@ function RecordRow({
 }: {
 	orgSlug: string
 	check: MenuHealthCheckSummary
-	record: { id: string; name: string }
+	record: MenuHealthRecordRef
 	canEdit: boolean
 	dismissed: boolean
 }) {
@@ -342,6 +364,14 @@ function RecordRow({
 			>
 				{record.name}
 			</Link>
+			{record.photo && canEdit && !dismissed ? (
+				<Link
+					to={studioHref(orgSlug, record.photo)}
+					className="text-primary shrink-0 text-xs hover:underline"
+				>
+					<Trans>Fix in photo studio</Trans>
+				</Link>
+			) : null}
 			{canEdit ? (
 				<Button
 					variant="ghost"
@@ -727,6 +757,8 @@ function FilterLabel({ checkKey }: { checkKey: MenuHealthCheckKey }) {
 			return <Trans>Showing dishes priced at 0</Trans>
 		case 'no_photo':
 			return <Trans>Showing dishes with no photo</Trans>
+		case 'weak_photo':
+			return <Trans>Showing dishes with a weak photo</Trans>
 		case 'no_description':
 			return <Trans>Showing dishes with no description</Trans>
 		case 'missing_translation':

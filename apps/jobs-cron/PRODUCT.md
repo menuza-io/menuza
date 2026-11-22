@@ -39,7 +39,9 @@ organization's data region.
 ## Capabilities and Constraints
 
 HTTP surface: health (public), storage-migration start, marketing-journey start,
-cancel, and status (all internal-token authenticated).
+cancel, and status (all internal-token authenticated); photo-quality start
+(`{ organizationId }`) and media-restyle start (`{ runId }`), which carry an id
+only and take no cron slot (the hourly trigger is their fallback).
 
 Open item: one declared job route (form-submission retention) is not yet
 registered as a cron trigger.

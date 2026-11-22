@@ -1,5 +1,10 @@
 ---
 import { siteContainer } from '~/lib/media'
+import {
+	dishPhotoStyle,
+	photoTestAttributes,
+	type DishPhotoTest,
+} from '~/lib/ordering/dish-photo'
 
 /**
  * "Most ordered" carousel of the items flagged `isPopular`. With a photo the
@@ -22,6 +27,10 @@ interface Props {
 		originalPriceSrLabel?: string
 		salePriceSrLabel?: string
 		imageUrl?: string | null
+		/** Focal point of the photo (#394); missing is the centre crop. */
+		imageFocal?: { x: number; y: number } | null
+		/** A running photo test (#192): photo A stays the `src`. */
+		photoTest?: DishPhotoTest | null
 		soldOut: boolean
 		/** "Sold out", shown in place of the price when a daily limit runs out (#409). */
 		soldOutLabel?: string
@@ -79,6 +88,8 @@ const cardBase =
 							<span class="relative block aspect-[4/3] overflow-hidden bg-placeholder">
 								<img
 									src={card.imageUrl}
+									style={dishPhotoStyle(card.imageFocal)}
+									{...photoTestAttributes(card.id, card.photoTest)}
 									alt=""
 									loading="lazy"
 									decoding="async"

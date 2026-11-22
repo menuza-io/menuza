@@ -5,11 +5,17 @@
  */
 
 import {
+	focalCropUrl,
+	focalPointOf,
+	mediaIdOfUrl,
+} from '@repo/common/image-focal'
+import {
 	isUnavailableUntilExpired,
 	parseMenuVariations,
 	type MenuVariations,
 } from '@repo/common/menu-types'
 import {
+	OrganizationMediaAsset,
 	OrganizationMenu,
 	OrganizationMenuCategoryAssignment,
 	OrganizationMenuItemCategoryAssignment,
@@ -57,6 +63,55 @@ function parseStringArray(value: string | null | undefined): string[] {
 	} catch {
 		return []
 	}
+}
+
+/**
+ * A dish photo with a focal point (#394) is pushed to delivery platforms as a
+ * crop around that point, since the platform crops the photo it is given. A
+ * photo without a point keeps the plain address.
+ */
+export async function applyFocalCrops<T extends { imageUrl: string | null }>(
+	organizationId: string,
+	items: T[],
+): Promise<T[]> {
+	const ids = [
+		...new Set(
+			items.flatMap((item) => {
+				const id = mediaIdOfUrl(item.imageUrl)
+				return id ? [id] : []
+			}),
+		),
+	]
+	if (ids.length === 0) return items
+	const focals = new Map<string, { x: number; y: number }>()
+	// D1 allows 100 bound parameters per statement.
+	for (let start = 0; start < ids.length; start += 80) {
+		const rows = await db
+			.select({
+				id: OrganizationMediaAsset.id,
+				focalX: OrganizationMediaAsset.focalX,
+				focalY: OrganizationMediaAsset.focalY,
+			})
+			.from(OrganizationMediaAsset)
+			.where(
+				and(
+					eq(OrganizationMediaAsset.organizationId, organizationId),
+					inArray(OrganizationMediaAsset.id, ids.slice(start, start + 80)),
+				),
+			)
+		for (const row of rows) {
+			const focal = focalPointOf(row)
+			if (focal) focals.set(row.id, focal)
+		}
+	}
+	if (focals.size === 0) return items
+	return items.map((item) => {
+		const id = mediaIdOfUrl(item.imageUrl)
+		const focal = id ? focals.get(id) : undefined
+		return focal
+			? { ...item, imageUrl: focalCropUrl(item.imageUrl, focal) }
+			: item
+	})
 }
 
 /**
@@ -205,7 +260,11 @@ export async function loadMenuForSync(
 		}
 	})
 
-	return { menu: { id: menu.id, name: menuName }, items, menus: [] }
+	return {
+		menu: { id: menu.id, name: menuName },
+		items: await applyFocalCrops(organizationId, items),
+		menus: [],
+	}
 }
 
 /** Preserve complete sellable combinations and their prices in the POS catalog. */

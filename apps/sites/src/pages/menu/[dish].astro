@@ -1,6 +1,7 @@
 ---
 import { actionAnchor } from '~/lib/action-targets'
 import { msg } from '@lingui/core/macro'
+import { normalizeFocalPoint } from '@repo/common/image-focal'
 import { dietaryTagsOf } from '@repo/common/menu-types'
 import { getLocaleHref, pickLocalized } from '@repo/common/site-locales'
 import SiteNotFound from '~/components/SiteNotFound.astro'
@@ -9,6 +10,7 @@ import DietaryBadges from '~/components/ordering/DietaryBadges.astro'
 import { resolveDishPage } from '~/lib/landing-pages'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { fetchPublishedLanding, fetchPublishedSiteMenu } from '~/lib/org'
+import { dishPhotoStyle, photoTestAttributes } from '~/lib/ordering/dish-photo'
 import { formatMoney } from '~/lib/ordering/money'
 import { menuItemStructuredData } from '~/lib/restaurant-jsonld'
 
@@ -62,16 +64,42 @@ const description = dish?.item.description
 	? pickLocalized(dish.item.description, locale, defaultLocale)
 	: ''
 const imageUrl = dish ? resolveMediaUrl(dish.item.imageUrl) : null
-const galleryUrls = dish
-	? Array.from(
-			new Set(
-				(dish.item.imageUrls?.length ? dish.item.imageUrls : dish.item.imageUrl ? [dish.item.imageUrl] : [])
-					.map((src) => resolveMediaUrl(src))
-					.filter((url): url is string => Boolean(url)),
-			),
-		)
-	: []
+// Every photo with its own focal point (#394): `imageFocals` runs parallel to
+// `imageUrls`, so the focal travels with its photo through the de-duplication.
+const galleryPhotos: Array<{ url: string; focal: { x: number; y: number } | null }> = []
+if (dish) {
+	const sources = dish.item.imageUrls?.length
+		? dish.item.imageUrls
+		: dish.item.imageUrl
+			? [dish.item.imageUrl]
+			: []
+	const seen = new Set<string>()
+	sources.forEach((src, index) => {
+		const url = resolveMediaUrl(src)
+		if (!url || seen.has(url)) return
+		seen.add(url)
+		const raw = dish.item.imageFocals?.[index] ?? (index === 0 ? dish.item.imageFocal : null)
+		galleryPhotos.push({ url, focal: normalizeFocalPoint(raw?.x, raw?.y) })
+	})
+}
+const galleryUrls = galleryPhotos.map((photo) => photo.url)
 const primaryImageUrl = galleryUrls[0] ?? imageUrl
+const primaryFocal = galleryPhotos[0]?.focal ?? normalizeFocalPoint(dish?.item.imageFocal?.x, dish?.item.imageFocal?.y)
+// A running photo test (#192) marks the dish's own photo. The page, its
+// structured data and its share image stay on photo A: only the visitor's
+// browser swaps to B.
+const photoTest = dish?.item.photoTest?.imageUrlB
+	? {
+			id: dish.item.photoTest.id,
+			key: dish.item.photoTest.key,
+			imageUrlB: resolveMediaUrl(dish.item.photoTest.imageUrlB) ?? '',
+			imageFocalB: normalizeFocalPoint(
+				dish.item.photoTest.imageFocalB?.x,
+				dish.item.photoTest.imageFocalB?.y,
+			),
+		}
+	: null
+const primaryIsDishPhoto = !galleryUrls[0] || galleryUrls[0] === imageUrl
 const dishSlugs = new Map((landing?.dishes ?? []).map((entry) => [entry.id, entry.slug]))
 const related = (dish?.related ?? []).map((item) => ({
 	name: pickLocalized(item.displayName, locale, defaultLocale) || item.displayName,
@@ -133,13 +161,20 @@ const fullMenu = i18n._(msg`See the full menu`)
 			<div class="mt-4 grid gap-8 lg:grid-cols-2 lg:items-start">
 				{primaryImageUrl ? (
 					<div class="space-y-3">
-						<img src={primaryImageUrl} alt={name} class="surface aspect-[4/3] w-full object-cover" />
+						<img
+							src={primaryImageUrl}
+							alt={name}
+							style={dishPhotoStyle(primaryFocal)}
+							{...(primaryIsDishPhoto ? photoTestAttributes(dish.item.id, photoTest) : {})}
+							class="surface aspect-[4/3] w-full object-cover"
+						/>
 						{galleryUrls.length > 1 ? (
 							<ul class="grid grid-cols-4 gap-2" data-dish-gallery>
-								{galleryUrls.slice(1).map((url, index) => (
+								{galleryPhotos.slice(1).map(({ url, focal }, index) => (
 									<li>
 										<img
 											src={url}
+											style={dishPhotoStyle(focal)}
 											alt={`${name} (${index + 2})`}
 											class="surface aspect-square w-full object-cover"
 										/>
@@ -182,3 +217,8 @@ const fullMenu = i18n._(msg`See the full menu`)
 		</div>
 	</SitePage>
 )}
+
+<script>
+	import { initPhotoTests } from '~/lib/photo-test-client'
+	initPhotoTests()
+</script>

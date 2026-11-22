@@ -511,6 +511,8 @@ export type PublicMenuOptionData = {
 	description: string | null
 	imageKey: string | null
 	imageUrl: string | null
+	/** Focal point of the photo (#394); absent or null is the centre. */
+	imageFocal?: { x: number; y: number } | null
 	price: number
 	priceWhole: number | null
 	priceLeft: number | null
@@ -557,6 +559,21 @@ export type PublicMenuItemData = {
 	imageUrl: string | null
 	imageKeys: string[]
 	imageUrls: string[]
+	/** Focal point of the primary photo (#394); absent or null is the centre. */
+	imageFocal?: { x: number; y: number } | null
+	/** Focals parallel to `imageUrls` (#394). */
+	imageFocals?: Array<{ x: number; y: number } | null>
+	/**
+	 * A running photo test (#192): present only for the web and QR channels
+	 * while the flag is on. `imageUrl` is always photo A.
+	 */
+	photoTest?: {
+		id: string
+		imageUrlB: string
+		imageFocalB: { x: number; y: number } | null
+		/** Signed by the App: the region counts a beacon only with it. */
+		key?: string
+	} | null
 	variations: {
 		groups: Array<{
 			id: string
@@ -568,6 +585,7 @@ export type PublicMenuItemData = {
 			valueIds: string[]
 			price: number
 			imageUrl: string | null
+			imageFocal?: { x: number; y: number } | null
 			availabilityStatus: 'available' | 'unavailable'
 		}>
 	}

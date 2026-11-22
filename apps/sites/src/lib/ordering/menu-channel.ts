@@ -1,3 +1,4 @@
+import { normalizeFocalPoint } from '@repo/common/image-focal'
 import {
 	isSoldOn,
 	parseMenuChannels,
@@ -14,6 +15,7 @@ import {
 	itemHasPriceRange,
 	lowestAvailablePrice,
 } from './catalog.ts'
+import { decorateDishPhoto } from './dish-photo.ts'
 import { orderLimitMetaFromMenus, type OrderLimitMeta } from './order-limits.ts'
 import { buildPriceBook, type PriceBook } from './price-book.ts'
 import {
@@ -22,6 +24,41 @@ import {
 	type OrderingCategory,
 	type OrderingItem,
 } from './types.ts'
+
+type FocalLike = { x?: unknown; y?: unknown } | null | undefined
+
+/** A focal point from the payload; anything unreadable or central is the default. */
+function focalOf(value: FocalLike) {
+	return (value ? normalizeFocalPoint(value.x, value.y) : null) ?? undefined
+}
+
+/**
+ * The running photo test of a dish (#192) with photo B resolved. The menu is
+ * cached for everybody, so this only carries B: `imageUrl` stays photo A and
+ * the browser picks.
+ */
+function photoTestOf(
+	item: {
+		photoTest?: {
+			id: string
+			imageUrlB: string
+			imageFocalB?: FocalLike
+			key?: string
+		} | null
+	},
+	resolveImageUrl: (src: string | null | undefined) => string | null,
+): OrderingItem['photoTest'] {
+	const test = item.photoTest
+	if (!test?.id) return undefined
+	const imageUrlB = resolveImageUrl(test.imageUrlB)
+	if (!imageUrlB) return undefined
+	return {
+		id: test.id,
+		imageUrlB,
+		imageFocalB: focalOf(test.imageFocalB) ?? null,
+		...(test.key ? { key: test.key } : {}),
+	}
+}
 
 /**
  * Reads `qr_ordering` flag payloads in the same fail-closed way as
@@ -168,6 +205,7 @@ export function buildChannelMenuCategories(
 		displayName: t(option.displayName),
 		description: option.description ? t(option.description) : '',
 		imageUrl: options.resolveImageUrl(option.imageUrl),
+		imageFocal: focalOf(option.imageFocal),
 		price: option.price ?? 0,
 		priceWhole: option.priceWhole,
 		priceLeft: option.priceLeft,
@@ -203,6 +241,8 @@ export function buildChannelMenuCategories(
 		description: item.description ? t(item.description) : '',
 		price: item.price,
 		imageUrl: options.resolveImageUrl(item.imageUrl),
+		imageFocal: focalOf(item.imageFocal),
+		photoTest: photoTestOf(item, options.resolveImageUrl),
 		variations: {
 			groups: (item.variations?.groups ?? []).map((group) => ({
 				id: group.id,
@@ -215,6 +255,7 @@ export function buildChannelMenuCategories(
 			variants: (item.variations?.variants ?? []).map((variant) => ({
 				...variant,
 				imageUrl: options.resolveImageUrl(variant.imageUrl),
+				imageFocal: focalOf(variant.imageFocal),
 			})),
 		},
 		modifierGroups: (item.modifierGroups ?? []).map(localizeGroup),
@@ -344,6 +385,8 @@ export function buildChannelUpsellCategories(
 				),
 				price: item.price,
 				imageUrl: options.resolveImageUrl(item.imageUrl),
+				imageFocal: focalOf(item.imageFocal),
+				photoTest: photoTestOf(item, options.resolveImageUrl),
 				isUpsell: item.isUpsell === true,
 				availabilityStatus: item.availabilityStatus,
 				channels: item.channels,
@@ -604,6 +647,11 @@ function createMenuItemCardElement(
 		img.decoding = 'async'
 		img.width = 128
 		img.height = 128
+		decorateDishPhoto(img, {
+			itemId: item.id,
+			focal: item.imageFocal,
+			test: item.photoTest,
+		})
 		img.className = [
 			'size-full object-cover transition-transform duration-300 ease-out motion-reduce:transition-none',
 			soldOut ? 'opacity-50 grayscale' : 'group-hover:scale-103',

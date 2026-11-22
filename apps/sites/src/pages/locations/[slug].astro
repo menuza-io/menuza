@@ -12,7 +12,9 @@ import {
 	resolveLocationPage,
 	weeklyHoursRows,
 } from '~/lib/landing-pages'
+import { normalizeFocalPoint } from '@repo/common/image-focal'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
+import { dishPhotoStyle } from '~/lib/ordering/dish-photo'
 import {
 	fetchPublishedLanding,
 	fetchPublishedReservations,
@@ -106,6 +108,7 @@ const popular = (() => {
 			id: item.id,
 			name: pickLocalized(item.displayName, locale, defaultLocale) || item.displayName,
 			imageUrl: resolveMediaUrl(item.imageUrl),
+			imageFocal: normalizeFocalPoint(item.imageFocal?.x, item.imageFocal?.y),
 		}))
 })()
 
@@ -219,7 +222,7 @@ const labels = {
 						{popular.map((dish) => (
 							<li class="surface overflow-hidden">
 								{dish.imageUrl ? (
-									<img src={dish.imageUrl} alt="" loading="lazy" class="aspect-[4/3] w-full object-cover" />
+									<img src={dish.imageUrl} style={dishPhotoStyle(dish.imageFocal)} alt="" loading="lazy" class="aspect-[4/3] w-full object-cover" />
 								) : null}
 								<p class="px-4 py-3 text-sm font-medium text-foreground" dir="auto">{dish.name}</p>
 							</li>

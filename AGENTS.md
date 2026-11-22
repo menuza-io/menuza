@@ -742,6 +742,17 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   `BASE_URL` is local), vendor keys, and the secret in vendor webhook URLs (32+
   characters). Admin needs `APP_URL` for refunds and retries. See
   `docs/print-shop.md`.
+- `MEDIA_RESTYLE_ENABLED` - App only, optional (unset or `true` is on). Kill
+  switch for the menu photo restyle (#146): `false` (also `0`, `off`, `no`,
+  `disabled`) stops new runs and draft generation; drafts already made stay
+  reviewable. `PHOTO_QUALITY_MOCK`, `MEDIA_RESTYLE_MOCK` and
+  `DISH_PHOTO_MATCH_MOCK` are local emulators for the photo adapters (also
+  `MOCKS=true`), ignored unless `BASE_URL` is local. See `docs/dish-photos.md`.
+- `DISH_PHOTO_TESTS_ENABLED` - Tenant-api only, optional (unset or `true` is
+  on). Kill switch for the dish photo A/B counter beacon (#192): `false` (also
+  `0`, `off`, `no`, `disabled`) answers 204 on `POST /forms/dish-photo-events`
+  and writes nothing. Orders still record which photo a guest saw and results
+  still read. See `docs/dish-photos.md`.
 - `RESERVATIONS_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
   optional. Seconds between in-process reservation ticks (default 120, minimum
   60, `0` off). The hourly cron fan-out always runs; the Workers runtime uses
@@ -1862,6 +1873,34 @@ forwarding, custom sending; #139, #313, #283, #183, #276, #103):**
   `/resources/tenant-organization` and falls back to the platform sender on any
   failure. Env for the partners is in `apps/app/.env.schema`. Docs:
   `docs/custom-domains.md`.
+
+**Dish photos (focal point, quality, bulk upload, phone capture, A/B tests,
+restyle; #394, #145, #316, #222, #192, #146):**
+
+- One media library, one studio pipeline, one `parentAssetId` version link, one
+  score and one photo-test type; a dish's main photo changes outside the dish
+  form only through `replaceDishMainPhoto` / `replaceDishMainPhotosBatch`
+  (`apps/app/app/utils/menu/dish-photo.server.ts`: compare-and-set in one
+  `db.batch`, `photo_changed`, old photo kept as the original, cache purge).
+- Control plane `0072_dish_photos`: `OrganizationMediaAsset.focalX/focalY` and
+  `qualityScore/qualityIssues/qualityAttempts/analyzedAt`, `MediaRestyleRun`,
+  `MediaRestyleRunItem`, `MenuItemPhotoTest`. Tenant `0060_dish_photo_tests`:
+  `dish_photo_daily` (numbers only) and `dish_photo_order_lines` (ids only).
+  Flags (default off): `media.photo_quality`, `media.restyle`,
+  `menu.photo_tests`.
+- A focal point is no value at the centre, so existing photos keep centre crops;
+  every channel reads it from the public menu payload (`imageFocal`). Guest
+  photos (`source = 'guest-photo'`) are never scored.
+- The public menu carries photo B of a running test only on the `web` and `qr`
+  channels (`photoTest`); `imageUrl` is always photo A. The browser picks the
+  variant from a hash of a local-only anonymous id. The order body key
+  `photoTests` is sent only when set (the body is strict: deploy App, then
+  tenant-api, then Sites).
+- Jobs (internal token): `POST /resources/jobs/photo-quality`,
+  `POST /resources/jobs/media-restyle` (jobs-cron `PhotoQualityWorkflow` and
+  `MediaRestyleWorkflow`, hourly sweep, no new cron slot). Mobile routes:
+  `GET/POST /api/menu/photos` (bearer token, `update:menu:any`).
+- Docs: `docs/dish-photos.md`.
 
 **Print shop (Marketing, Print shop):**
 

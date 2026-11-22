@@ -945,6 +945,47 @@ export const siteEventsDaily = sqliteTable(
 	],
 )
 
+// Dish photo A/B tests (#192). Numbers only: a view or an add to cart counts
+// per day, test, dish and photo (`A` or `B`). No visitor id, address or user
+// agent is stored; the browser keeps its anonymous id to itself. Orders are not
+// counted here: they are read from `dish_photo_order_lines` and the orders
+// themselves, so a cancelled or refunded order stops counting.
+export const dishPhotoDaily = sqliteTable(
+	'dish_photo_daily',
+	{
+		day: text('day').notNull(),
+		testId: text('test_id').notNull(),
+		itemId: text('item_id').notNull(),
+		variant: text('variant', { enum: ['A', 'B'] }).notNull(),
+		views: integer('views').notNull().default(0),
+		adds: integer('adds').notNull().default(0),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.day, table.testId, table.itemId, table.variant],
+		}),
+		index('idx_dish_photo_daily_test').on(table.testId, table.day),
+	],
+)
+
+// Which photo a guest saw for each dish in test when they ordered (#192).
+// Ids only; deleted with the order.
+export const dishPhotoOrderLines = sqliteTable(
+	'dish_photo_order_lines',
+	{
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
+		testId: text('test_id').notNull(),
+		itemId: text('item_id').notNull(),
+		variant: text('variant', { enum: ['A', 'B'] }).notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.orderId, table.testId, table.itemId] }),
+		index('idx_dish_photo_order_lines_test').on(table.testId, table.variant),
+	],
+)
+
 export const websiteFormSubmissions = sqliteTable(
 	'website_form_submissions',
 	{
@@ -10282,7 +10323,6 @@ export const guestPhotoSubmissions = sqliteTable(
 
 export type GuestPhotoSubmission = typeof guestPhotoSubmissions.$inferSelect
 export type NewGuestPhotoSubmission = typeof guestPhotoSubmissions.$inferInsert
-
 
 /**
  * Inbound text replies that were acted on (#75): one row per provider message,

@@ -8,6 +8,8 @@ import {
 	type CatalogDish,
 } from '@repo/common/restaurant-sections'
 import { msg } from '@lingui/core/macro'
+import { normalizeFocalPoint } from '@repo/common/image-focal'
+import { dishPhotoStyle } from '~/lib/ordering/dish-photo'
 import { formatMoney } from '~/lib/ordering/money'
 import { resolveMediaUrl, siteContainer, siteSection } from '~/lib/media'
 import type { PublicSiteMenuPayload } from '~/lib/org'
@@ -38,6 +40,8 @@ function nameOf(value: string | null | undefined) {
 }
 
 const dishes: CatalogDish[] = []
+// Focal point of each dish photo (#394), looked up by id for the cards.
+const focalById = new Map<string, { x: number; y: number } | null>()
 for (const group of menu?.menus ?? []) {
 	for (const category of group.categories ?? []) {
 		for (const item of category.items ?? []) {
@@ -50,6 +54,7 @@ for (const group of menu?.menus ?? []) {
 				override?.isEnabled === false ||
 				override?.availabilityStatus === 'hidden' ||
 				override?.availabilityStatus === 'unavailable'
+			focalById.set(item.id, normalizeFocalPoint(item.imageFocal?.x, item.imageFocal?.y))
 			dishes.push({
 				id: item.id,
 				name: nameOf(item.displayName),
@@ -83,7 +88,7 @@ const subtitle = typeof config.subtitle === 'string' ? config.subtitle : ''
 				{cards.map((card) => (
 					<article class:list={['surface flex flex-col overflow-hidden', layout === 'row' && 'w-64 shrink-0']}>
 						{card.imageUrl ? (
-							<img src={card.imageUrl} alt="" width="640" height="480" class="aspect-[4/3] w-full object-cover" loading="lazy" />
+							<img src={card.imageUrl} style={dishPhotoStyle(focalById.get(card.id))} alt="" width="640" height="480" class="aspect-[4/3] w-full object-cover" loading="lazy" />
 						) : null}
 						<div class="flex flex-1 flex-col p-4">
 							<h3 class="text-lg font-semibold text-foreground">{card.name}</h3>

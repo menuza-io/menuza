@@ -17,6 +17,7 @@ import {
 	sql,
 	OrganizationMediaAsset,
 	OrganizationMediaTag,
+	MenuItemPhotoTest,
 } from '@repo/database'
 import { findMediaReferences } from './references.server.ts'
 import { type MediaReferenceItem } from './references.ts'
@@ -181,6 +182,29 @@ export async function removeTagsFromAssets(input: {
 type OrganizationResultUpdated = OrganizeResult<{ updated: number }>
 
 /**
+ * Whether a running dish photo test (#192) uses this photo as its photo B: it
+ * can be neither archived nor deleted until the test ends, or the test would
+ * silently lose its second photo.
+ */
+export async function photoTestUsesAsset(
+	organizationId: string,
+	objectKey: string,
+): Promise<boolean> {
+	const [row] = await db
+		.select({ id: MenuItemPhotoTest.id })
+		.from(MenuItemPhotoTest)
+		.where(
+			and(
+				eq(MenuItemPhotoTest.organizationId, organizationId),
+				eq(MenuItemPhotoTest.imageKeyB, objectKey),
+				isNull(MenuItemPhotoTest.endedAt),
+			),
+		)
+		.limit(1)
+	return Boolean(row)
+}
+
+/**
  * Archives assets: hidden from the library and every picker until restored.
  * A photo a dish uses, or the website shows, cannot be archived
  * (`asset_in_use`, with where). Archived assets still count toward storage.
@@ -194,6 +218,15 @@ export async function archiveAssets(input: {
 	const assets = await ownedAssets(input.organizationId, input.assetIds)
 	if (!assets) return notFound
 	for (const asset of assets) {
+		if (await photoTestUsesAsset(input.organizationId, asset.objectKey)) {
+			return {
+				ok: false,
+				status: 409,
+				error: 'asset_in_use',
+				references: [],
+				assetId: asset.id,
+			}
+		}
 		const references = await findMediaReferences({
 			organizationId: input.organizationId,
 			orgSlug: input.orgSlug,

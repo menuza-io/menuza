@@ -11,6 +11,7 @@
 
 import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
 import { getFeatureFlag } from '@repo/common/feature-flags'
+import { focalPointOf, type FocalPoint } from '@repo/common/image-focal'
 import { readCourseSettings } from '@repo/common/kitchen-ticket'
 import {
 	DEFAULT_DELIVERY_CONFIG,
@@ -83,6 +84,7 @@ import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { isSlotLimitsEnabled } from '#app/utils/orders/slot-limits.server.ts'
 import { isUpsellEnabled } from '#app/utils/orders/upsell-flag.server.ts'
+import { loadPublicPhotoTests } from './photo-tests.server.ts'
 import { loadPublishedPricingRules } from './pricing-rules.server.ts'
 import { secondsUntilNextRuleChange } from './pricing-rules.ts'
 import {
@@ -506,6 +508,8 @@ export async function buildPublicSiteMenuPayload(
 						id: OrganizationMediaAsset.id,
 						objectKey: OrganizationMediaAsset.objectKey,
 						updatedAt: OrganizationMediaAsset.updatedAt,
+						focalX: OrganizationMediaAsset.focalX,
+						focalY: OrganizationMediaAsset.focalY,
 					})
 					.from(OrganizationMediaAsset)
 					.where(
@@ -523,15 +527,33 @@ export async function buildPublicSiteMenuPayload(
 			: []
 
 	const mediaMap = new Map<string, string>()
+	const focalMap = new Map<string, FocalPoint>()
 	for (const m of mediaAssets) {
 		const url = `/resources/images?mediaId=${encodeURIComponent(m.id)}&v=${m.updatedAt.getTime()}`
 		mediaMap.set(m.id, url)
 		mediaMap.set(m.objectKey, url)
+		// A focal point (#394) rides along with the photo; the centre is no value.
+		const focal = focalPointOf(m)
+		if (focal) {
+			focalMap.set(m.id, focal)
+			focalMap.set(m.objectKey, focal)
+		}
 	}
+	// Running photo tests (#192) reach only the web and QR menus; the customer
+	// app's cached menu, delivery menus and every internal reader get photo A.
+	const photoTests = await loadPublicPhotoTests(
+		orgId,
+		buildOptions?.channel,
+		items.map((item) => item.id),
+	)
+	const photoExtras = { focalMap, photoTests }
 
 	// 12. Assemble Hierarchical Tree
 	const optionsMap = new Map(
-		options.map((opt) => [opt.id, serializePublicOption(opt, mediaMap, now)]),
+		options.map((opt) => [
+			opt.id,
+			serializePublicOption(opt, mediaMap, now, photoExtras),
+		]),
 	)
 
 	const optionsByGroupId = new Map<string, PublicMenuOptionData[]>()
@@ -585,6 +607,7 @@ export async function buildPublicSiteMenuPayload(
 					groupsByItemId.get(item.id) ?? [],
 					mediaMap,
 					now,
+					photoExtras,
 				),
 			]
 		}),
