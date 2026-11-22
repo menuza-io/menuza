@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
 	alertKeywordEventSchema,
+	alertPhoneHash,
+	DEV_ORDER_ALERT_HASH_SECRET,
+	resolveOrderAlertHashSecret,
 	ALERT_SETTINGS_WORKFLOW,
 	decideDelivery,
 	defaultPushEnabled,
@@ -409,5 +412,48 @@ describe('large orders', () => {
 				thresholdType: 'dollars',
 			}),
 		).toEqual({ itemThreshold: 12, amountThresholdMinor: 25_000 })
+	})
+})
+
+describe('resolveOrderAlertHashSecret', () => {
+	const good = 'a-real-order-alert-hash-secret-0123456789'
+	it('accepts a long secret that is not the command token', () => {
+		expect(
+			resolveOrderAlertHashSecret({
+				secret: good,
+				internalCommandToken: 'another-internal-token-long-enough',
+				placeholderAllowed: false,
+			}),
+		).toBe(good)
+	})
+
+	it('is unusable when missing, short, or equal to the command token', () => {
+		const base = { internalCommandToken: good, placeholderAllowed: true }
+		expect(resolveOrderAlertHashSecret({ ...base, secret: '' })).toBe('')
+		expect(resolveOrderAlertHashSecret({ ...base, secret: undefined })).toBe('')
+		expect(resolveOrderAlertHashSecret({ ...base, secret: 'short' })).toBe('')
+		expect(resolveOrderAlertHashSecret({ ...base, secret: good })).toBe('')
+	})
+
+	it('refuses the development default except in development and test', () => {
+		expect(
+			resolveOrderAlertHashSecret({
+				secret: DEV_ORDER_ALERT_HASH_SECRET,
+				placeholderAllowed: false,
+			}),
+		).toBe('')
+		expect(
+			resolveOrderAlertHashSecret({
+				secret: DEV_ORDER_ALERT_HASH_SECRET,
+				placeholderAllowed: true,
+			}),
+		).toBe(DEV_ORDER_ALERT_HASH_SECRET)
+	})
+
+	it('hashes a number the same way however it is typed, and differently per secret', async () => {
+		const one = await alertPhoneHash('+14155550100', good)
+		expect(await alertPhoneHash('+1 (415) 555-0100', good)).toBe(one)
+		expect(one).toMatch(/^[0-9a-f]{64}$/)
+		expect(await alertPhoneHash('+14155550100', good + 'x')).not.toBe(one)
 	})
 })

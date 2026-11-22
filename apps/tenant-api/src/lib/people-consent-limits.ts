@@ -95,13 +95,11 @@ async function pruneOld(db: TenantDatabase | TenantTransaction, now: number) {
 	const longest = Math.max(
 		...Object.values(PEOPLE_CONSENT_LIMITS).map((limit) => limit.windowMs),
 	)
-	await db
-		.delete(loyaltyRateCounters)
-		.where(
-			and(
-				// bounded: two people_consent bucket names only
-				inArray(loyaltyRateCounters.bucket, Object.values(BUCKET_NAMES)),
-				lt(loyaltyRateCounters.windowStart, now - 2 * longest),
-			),
-		)
+	await db.delete(loyaltyRateCounters).where(
+		and(
+			// bounded: two people_consent bucket names only
+			inArray(loyaltyRateCounters.bucket, Object.values(BUCKET_NAMES)),
+			lt(loyaltyRateCounters.windowStart, now - 2 * longest),
+		),
+	)
 }

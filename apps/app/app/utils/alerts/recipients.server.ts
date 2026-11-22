@@ -9,6 +9,7 @@ import {
 	ALERT_VERIFY_SENDS_PER_HOUR,
 	ALERT_VERIFY_TTL_MS,
 	MAX_ALERT_RECIPIENTS_PER_LOCATION,
+	resolveOrderAlertHashSecret,
 	type AlertKeywordEvent,
 } from '@repo/common/operator-alerts'
 import { isValidE164Phone, normalizePhone } from '@repo/common/phone'
@@ -19,11 +20,14 @@ import {
 	eq,
 	isNotNull,
 	isNull,
+	lt,
 	OrderAlertRecipient,
+	sql,
 } from '@repo/database'
 import { sendEmail, StaffingAlertEmail } from '@repo/email'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
+import { checkRateLimit } from '#app/utils/rate-limit.server.ts'
 import { alertTextsAvailable, getAlertTextProvider } from './text.server.ts'
 
 /**
@@ -100,10 +104,22 @@ export function parseRecipientAddress(
 		: { ok: false, error: 'invalid_address' }
 }
 
+/**
+ * `ORDER_ALERT_HASH_SECRET`: keys the code hash and the phone hash. Its own
+ * secret (never `INTERNAL_COMMAND_TOKEN`, which every node and the cron worker
+ * hold and whose rotation must not break STOP matching).
+ */
 function secret(): string {
-	const value = ENV.INTERNAL_COMMAND_TOKEN
-	if (!value || value.length < 16) {
-		throw new Error('INTERNAL_COMMAND_TOKEN must be configured')
+	const nodeEnv = process.env.NODE_ENV
+	const value = resolveOrderAlertHashSecret({
+		secret: ENV.ORDER_ALERT_HASH_SECRET,
+		internalCommandToken: ENV.INTERNAL_COMMAND_TOKEN,
+		placeholderAllowed: nodeEnv === 'development' || nodeEnv === 'test',
+	})
+	if (!value) {
+		throw new Error(
+			'ORDER_ALERT_HASH_SECRET must be configured (32+ chars, different from INTERNAL_COMMAND_TOKEN, not the development default)',
+		)
 	}
 	return value
 }
@@ -124,6 +140,52 @@ async function hashCode(code: string, recipientId: string): Promise<string> {
 	return [...new Uint8Array(signature)]
 		.map((byte) => byte.toString(16).padStart(2, '0'))
 		.join('')
+}
+
+/** A throttle key for a destination that survives deleting its recipient row. */
+async function destinationKey(row: RecipientRow): Promise<string> {
+	if (row.phoneHash) return row.phoneHash
+	return hashCode(`${row.kind}:${row.address.toLowerCase()}`, 'destination')
+}
+
+/** Per destination, across every organization and location. */
+const DESTINATION_CODES_PER_HOUR = 3
+const DESTINATION_CODES_PER_DAY = 10
+/** Per organization: code texts and emails cost money and reach strangers. */
+const ORGANIZATION_CODES_PER_DAY = 30
+
+async function codeSendAllowed(
+	organizationId: string,
+	row: RecipientRow,
+): Promise<boolean> {
+	const destination = await destinationKey(row)
+	const hour = await checkRateLimit(
+		{ type: 'token', value: destination },
+		{
+			scope: 'order-alert-code-destination-hour',
+			maxRequests: DESTINATION_CODES_PER_HOUR,
+			windowMs: 60 * 60 * 1000,
+		},
+	)
+	if (!hour.allowed) return false
+	const day = await checkRateLimit(
+		{ type: 'token', value: destination },
+		{
+			scope: 'order-alert-code-destination-day',
+			maxRequests: DESTINATION_CODES_PER_DAY,
+			windowMs: 24 * 60 * 60 * 1000,
+		},
+	)
+	if (!day.allowed) return false
+	const org = await checkRateLimit(
+		{ type: 'org', value: organizationId },
+		{
+			scope: 'order-alert-code-org-day',
+			maxRequests: ORGANIZATION_CODES_PER_DAY,
+			windowMs: 24 * 60 * 60 * 1000,
+		},
+	)
+	return org.allowed
 }
 
 function sameString(a: string, b: string): boolean {
@@ -232,6 +294,9 @@ export async function sendRecipientCode(input: {
 	if (sentThisHour >= ALERT_VERIFY_SENDS_PER_HOUR) {
 		return { ok: false, error: 'rate_limited' }
 	}
+	if (!(await codeSendAllowed(input.organizationId, row))) {
+		return { ok: false, error: 'rate_limited' }
+	}
 	const code = newCode()
 	await db
 		.update(OrderAlertRecipient)
@@ -309,19 +374,27 @@ export async function confirmRecipientCode(input: {
 	) {
 		return { ok: false, error: 'expired' }
 	}
-	if (row.verifyAttempts >= ALERT_VERIFY_MAX_ATTEMPTS) {
-		return { ok: false, error: 'too_many_tries' }
-	}
+	// One atomic statement takes the try BEFORE the code is compared: parallel
+	// guesses cannot all read the same count, and only a row that came back
+	// means a guess is allowed.
+	const taken = await db
+		.update(OrderAlertRecipient)
+		.set({ verifyAttempts: sql`${OrderAlertRecipient.verifyAttempts} + 1` })
+		.where(
+			and(
+				eq(OrderAlertRecipient.id, row.id),
+				isNull(OrderAlertRecipient.verifiedAt),
+				lt(OrderAlertRecipient.verifyAttempts, ALERT_VERIFY_MAX_ATTEMPTS),
+			),
+		)
+		.returning({ id: OrderAlertRecipient.id })
+	if (taken.length === 0) return { ok: false, error: 'too_many_tries' }
 	const submitted = input.code.replace(/\D/g, '')
 	const matches = sameString(
 		await hashCode(submitted, row.id),
 		row.verifyCodeHash,
 	)
 	if (!matches) {
-		await db
-			.update(OrderAlertRecipient)
-			.set({ verifyAttempts: row.verifyAttempts + 1 })
-			.where(eq(OrderAlertRecipient.id, row.id))
 		return { ok: false, error: 'wrong_code' }
 	}
 	await db

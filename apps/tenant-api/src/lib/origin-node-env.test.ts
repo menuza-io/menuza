@@ -36,7 +36,10 @@ beforeEach(() => {
 	select.mockImplementation(() => {
 		throw new Error('no local control plane')
 	})
-	vi.stubGlobal('fetch', vi.fn(async () => Response.json(organization)))
+	vi.stubGlobal(
+		'fetch',
+		vi.fn(async () => Response.json(organization)),
+	)
 })
 
 afterEach(() => {

@@ -762,10 +762,40 @@ export function alertPhoneForHash(phone: string): string {
 	return phone.replace(/[^\d+]/g, '')
 }
 
+/** The value committed in the `.env.schema` files. Refused outside development and test. */
+export const DEV_ORDER_ALERT_HASH_SECRET =
+	'dev-order-alert-hash-secret-do-not-use-in-prod-32b'
+export const ORDER_ALERT_HASH_SECRET_MIN_LENGTH = 32
+
 /**
- * HMAC-SHA256 of the E.164 number, keyed by the shared internal token. tenant-api
- * hashes the sender of a STOP reply with it and the App compares against the
- * hash it stored for each text recipient, so a number never travels to match one.
+ * The key for `alertPhoneHash` and the one-time-code hash, from
+ * `ORDER_ALERT_HASH_SECRET`. Its own secret on purpose: `INTERNAL_COMMAND_TOKEN`
+ * is held by every node and the cron worker, and rotating it must not silently
+ * break STOP matching. Empty (unusable) when it is missing, short, equal to the
+ * internal token, or still the development default outside development and test.
+ */
+export function resolveOrderAlertHashSecret(input: {
+	secret: string | undefined | null
+	internalCommandToken?: string | undefined | null
+	placeholderAllowed: boolean
+}): string {
+	const secret = input.secret ?? ''
+	if (secret.length < ORDER_ALERT_HASH_SECRET_MIN_LENGTH) return ''
+	if (input.internalCommandToken && secret === input.internalCommandToken) {
+		return ''
+	}
+	if (secret === DEV_ORDER_ALERT_HASH_SECRET && !input.placeholderAllowed) {
+		return ''
+	}
+	return secret
+}
+
+/**
+ * HMAC-SHA256 of the E.164 number, keyed by `ORDER_ALERT_HASH_SECRET` (see
+ * `resolveOrderAlertHashSecret`). tenant-api hashes the sender of a STOP reply
+ * with it and the App compares against the hash it stored for each text
+ * recipient, so a number never travels to match one. The `v1` in the message is
+ * the hash version: a rotation adds `v2` beside it.
  */
 export async function alertPhoneHash(
 	phone: string,

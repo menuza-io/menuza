@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const sendSms = vi.hoisted(() => vi.fn())
 vi.mock('@repo/sms', () => ({ sendSms }))
 
+import { resetRateLimits } from '../lib/rate-limit.ts'
 import { alertTextRoutes } from './alert-texts.ts'
 
 const TOKEN = 'test-internal-token-very-long-12345'
@@ -42,6 +43,33 @@ describe('POST /api/alert-texts (#241)', () => {
 		})
 		expect(response.status).toBe(200)
 		expect(sendSms).toHaveBeenCalledWith({ to: '+14155550100', message: TEXT })
+	})
+
+	it('caps texts to one number and for one organization, so neither can be flooded', async () => {
+		vi.stubEnv('NODE_ENV', 'production')
+		resetRateLimits()
+		try {
+			let refused = 0
+			for (let i = 0; i < 31; i++) {
+				const response = await send({
+					orgId: 'org_flood',
+					to: '+14155550142',
+					text: TEXT,
+				})
+				if (response.status === 429) refused++
+			}
+			expect(refused).toBe(1)
+			expect(sendSms).toHaveBeenCalledTimes(30)
+			// Another number is still fine; the org cap is 600 an hour.
+			const other = await send({
+				orgId: 'org_flood',
+				to: '+14155550143',
+				text: TEXT,
+			})
+			expect(other.status).toBe(200)
+		} finally {
+			resetRateLimits()
+		}
 	})
 
 	it('refuses a caller without the internal token', async () => {

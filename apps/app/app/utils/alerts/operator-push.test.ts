@@ -300,6 +300,23 @@ describe('push mirrors the Notification table (#106)', () => {
 		expect(push.sent).toHaveLength(0)
 	})
 
+	it('stops pushing to a member whose membership row is deleted', async () => {
+		const { organization, user } = await org()
+		await device(user.id)
+		await prefer(user.id, organization.id, 'push.inventory', { push: true })
+		const row = await notification(user.id, organization.id)
+		await db
+			.delete(UserOrganization)
+			.where(
+				and(
+					eq(UserOrganization.userId, user.id),
+					eq(UserOrganization.organizationId, organization.id),
+				),
+			)
+		expect(await pushStoredNotifications([row])).toBe(0)
+		expect(push.sent).toHaveLength(0)
+	})
+
 	it('mirrors the inventory notify route end to end', async () => {
 		const { organization, user } = await org()
 		const place = await location(organization.id)
@@ -357,6 +374,30 @@ describe('devices (#106)', () => {
 			context: new RouterContextProvider(),
 		} as never)
 	}
+
+	it('reports when a phone moves to another member, and ids are all it reports', async () => {
+		const first = await createTestUser()
+		const second = await createTestUser()
+		const token = `ExponentPushToken[${crypto.randomUUID().slice(0, 14)}]`
+		const input = {
+			token,
+			platform: 'ios' as const,
+			locale: 'en',
+		}
+		const mine = await registerOperatorDevice(first.id, input)
+		expect(mine.movedFromUserId).toBeNull()
+		// The same member registering again is not a move.
+		expect(
+			(await registerOperatorDevice(first.id, input)).movedFromUserId,
+		).toBeNull()
+		const taken = await registerOperatorDevice(second.id, input)
+		expect(taken.movedFromUserId).toBe(first.id)
+		const rows = await db
+			.select({ userId: OperatorPushDevice.userId })
+			.from(OperatorPushDevice)
+			.where(eq(OperatorPushDevice.token, token))
+		expect(rows).toEqual([{ userId: second.id }])
+	})
 
 	it('registers, lists and removes a phone for the signed-in member', async () => {
 		const user = await createTestUser()

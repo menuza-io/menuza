@@ -595,6 +595,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `TENANT_OPERATOR_TOKEN` - Shared secret between App and tenant-api (≥16
   chars). Signs and validates operator JWT tokens for tenant-api `/operator/*`
   routes.
+- `ORDER_ALERT_HASH_SECRET` - App and the US tenant-api only (32+ chars,
+  distinct from `INTERNAL_COMMAND_TOKEN`). Keys the hash of a text alert
+  recipient's number (STOP matching) and the one-time-code hash. The schema
+  default is refused outside development and test. Changing it unlinks every
+  stored recipient's STOP matching, so rotate by adding a hash version.
 - `JOBS_CRON_WORKER_URL` - App only. Public URL of `apps/jobs-cron` Worker used
   to start storage migration workflows (production: `https://jobs.<apex>` custom
   domain).

@@ -53,7 +53,8 @@ type Entry = {
 	currency: string | null
 	locations: NonNullable<GiftCardContext['locations']>
 }
-type Outcome = { ok: true; entry: Omit<Entry, 'fetchedAt'> } | { ok: false; reason: string }
+type Outcome =
+	{ ok: true; entry: Omit<Entry, 'fetchedAt'> } | { ok: false; reason: string }
 
 const cache = new LRUCache<string, Entry>({
 	max: 500,
@@ -76,16 +77,23 @@ export function clearGiftCardContextCache(): void {
 
 async function fetchContext(orgId: string): Promise<Outcome> {
 	const controller = new AbortController()
-	const timer = setTimeout(() => controller.abort(), GIFT_CARD_CONTEXT_TIMEOUT_MS)
+	const timer = setTimeout(
+		() => controller.abort(),
+		GIFT_CARD_CONTEXT_TIMEOUT_MS,
+	)
 	try {
 		syncEnvFromProcess()
 		const base = (ENV.APP_URL || '').replace(/\/$/, '')
 		const token = getInternalCommandToken()
-		if (!base || token.length < 16) return { ok: false, reason: 'not_configured' }
+		if (!base || token.length < 16)
+			return { ok: false, reason: 'not_configured' }
 		const response = await fetch(
 			`${base}/resources/gift-cards/context?${new URLSearchParams({ orgId })}`,
 			{
-				headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+				headers: {
+					Accept: 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
 				redirect: 'error',
 				signal: controller.signal,
 			},
@@ -94,7 +102,9 @@ async function fetchContext(orgId: string): Promise<Outcome> {
 			void response.body?.cancel().catch(() => undefined)
 			return { ok: false, reason: `http_${response.status}` }
 		}
-		const parsed = giftCardContextSchema.safeParse(await response.json().catch(() => null))
+		const parsed = giftCardContextSchema.safeParse(
+			await response.json().catch(() => null),
+		)
 		if (!parsed.success || parsed.data.orgId !== orgId) {
 			return { ok: false, reason: 'invalid_response' }
 		}
@@ -108,7 +118,10 @@ async function fetchContext(orgId: string): Promise<Outcome> {
 			},
 		}
 	} catch {
-		return { ok: false, reason: controller.signal.aborted ? 'timeout' : 'unreachable' }
+		return {
+			ok: false,
+			reason: controller.signal.aborted ? 'timeout' : 'unreachable',
+		}
 	} finally {
 		clearTimeout(timer)
 	}
@@ -117,7 +130,12 @@ async function fetchContext(orgId: string): Promise<Outcome> {
 function stateOf(entry: Omit<Entry, 'fetchedAt'>): GiftCardFlagState {
 	return entry.features.enabled
 		? { status: 'on', ...entry, features: { ...entry.features } }
-		: { ...notOn('off'), settings: entry.settings, currency: entry.currency, locations: entry.locations }
+		: {
+				...notOn('off'),
+				settings: entry.settings,
+				currency: entry.currency,
+				locations: entry.locations,
+			}
 }
 
 function notOn(status: Exclude<GiftCardFlagStatus, 'on'>): GiftCardFlagState {
@@ -152,7 +170,10 @@ function refresh(orgId: string, now: number): Promise<Outcome> {
 				return outcome
 			}
 			lastFailureAt.set(orgId, now)
-			console.error('Gift card flags could not be read', { orgId, reason: outcome.reason })
+			console.error('Gift card flags could not be read', {
+				orgId,
+				reason: outcome.reason,
+			})
 			return outcome
 		})
 		.finally(() => {
@@ -177,7 +198,8 @@ export async function getGiftCardFlagState(
 		}
 		const failedAt = lastFailureAt.get(orgId)
 		const coolingDown =
-			failedAt !== undefined && now - failedAt < GIFT_CARD_CONTEXT_FAILURE_COOLDOWN_MS
+			failedAt !== undefined &&
+			now - failedAt < GIFT_CARD_CONTEXT_FAILURE_COOLDOWN_MS
 		if (!coolingDown) {
 			const outcome = await refresh(orgId, now)
 			if (outcome.ok) return stateOf(outcome.entry)

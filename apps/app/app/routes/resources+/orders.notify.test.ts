@@ -1,5 +1,6 @@
 import {
 	ALERT_SETTINGS_WORKFLOW,
+	ALERT_VERIFY_MAX_ATTEMPTS,
 	type OrdersNotifyEvent,
 } from '@repo/common/operator-alerts'
 import {
@@ -55,6 +56,8 @@ import { registerOperatorDevice } from '#app/utils/alerts/push.server.ts'
 import {
 	addLocationRecipient,
 	confirmRecipientCode,
+	removeLocationRecipient,
+	sendRecipientCode,
 } from '#app/utils/alerts/recipients.server.ts'
 import {
 	getMockAlertTextProvider,
@@ -899,6 +902,120 @@ describe('chosen recipients (#241)', () => {
 				code,
 			}),
 		).toEqual({ ok: true })
+	})
+
+	async function emailCode(organizationId: string, recipientId: string) {
+		const sent = await sendRecipientCode({
+			organizationId,
+			recipientId,
+			organizationName: 'Acme',
+			dataRegion: 'us',
+			settingsUrl: 'https://app.example/acme/settings/locations',
+		})
+		return sent
+	}
+
+	it('counts every guess before it compares, so parallel guesses cannot beat the limit', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const location = await createLocation(organization.id)
+		const added = await recipient(
+			organization.id,
+			location,
+			`race-${crypto.randomUUID()}@example.com`,
+			{ verify: false },
+		)
+		expect(await emailCode(organization.id, added.id)).toEqual({ ok: true })
+		const subject = (sendEmailMock.mock.calls.at(-1)![0] as { subject: string })
+			.subject
+		const code = /(\d{6})/.exec(subject)![1]!
+		const wrong = code === '000000' ? '111111' : '000000'
+		const results = await Promise.all(
+			Array.from({ length: 12 }, () =>
+				confirmRecipientCode({
+					organizationId: organization.id,
+					recipientId: added.id,
+					code: wrong,
+				}),
+			),
+		)
+		expect(
+			results.filter((r) => !r.ok && r.error === 'wrong_code'),
+		).toHaveLength(ALERT_VERIFY_MAX_ATTEMPTS)
+		expect(
+			results.filter((r) => !r.ok && r.error === 'too_many_tries'),
+		).toHaveLength(12 - ALERT_VERIFY_MAX_ATTEMPTS)
+		const [row] = await db
+			.select({ attempts: OrderAlertRecipient.verifyAttempts })
+			.from(OrderAlertRecipient)
+			.where(eq(OrderAlertRecipient.id, added.id))
+		expect(row?.attempts).toBe(ALERT_VERIFY_MAX_ATTEMPTS)
+		// Even the right code is refused once the tries are gone.
+		expect(
+			await confirmRecipientCode({
+				organizationId: organization.id,
+				recipientId: added.id,
+				code,
+			}),
+		).toEqual({ ok: false, error: 'too_many_tries' })
+	})
+
+	it('limits codes to one destination even when its recipient is removed and added again', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const location = await createLocation(organization.id)
+		const address = `victim-${crypto.randomUUID()}@example.com`
+		const results: string[] = []
+		for (let i = 0; i < 5; i++) {
+			const added = await addLocationRecipient({
+				organizationId: organization.id,
+				locationId: location,
+				rawAddress: address,
+				dataRegion: 'us',
+				createdBy: null,
+			})
+			if (!added.ok) throw new Error(added.error)
+			const sent = await emailCode(organization.id, added.recipient.id)
+			results.push(sent.ok ? 'sent' : sent.error)
+			await removeLocationRecipient({
+				organizationId: organization.id,
+				recipientId: added.recipient.id,
+			})
+		}
+		expect(results).toEqual([
+			'sent',
+			'sent',
+			'sent',
+			'rate_limited',
+			'rate_limited',
+		])
+	})
+
+	it('limits verification messages for one organization a day', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const location = await createLocation(organization.id)
+		let refused: string | null = null
+		let sentCount = 0
+		for (let i = 0; i < 32; i++) {
+			const added = await addLocationRecipient({
+				organizationId: organization.id,
+				locationId: location,
+				rawAddress: `bulk-${i}-${crypto.randomUUID()}@example.com`,
+				dataRegion: 'us',
+				createdBy: null,
+			})
+			if (!added.ok) throw new Error(added.error)
+			const sent = await emailCode(organization.id, added.recipient.id)
+			if (sent.ok) sentCount++
+			else refused ??= sent.error
+			await removeLocationRecipient({
+				organizationId: organization.id,
+				recipientId: added.recipient.id,
+			})
+		}
+		expect(sentCount).toBe(30)
+		expect(refused).toBe('rate_limited')
 	})
 })
 

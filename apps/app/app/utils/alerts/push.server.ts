@@ -75,7 +75,14 @@ export async function registerOperatorDevice(
 	userId: string,
 	input: RegisterOperatorDeviceInput,
 	now = new Date(),
-): Promise<{ id: string }> {
+): Promise<{ id: string; movedFromUserId: string | null }> {
+	// The phone may already belong to someone else: that is a move, and the
+	// caller records it (ids only), because a pushed alert follows the token.
+	const [previous] = await db
+		.select({ userId: OperatorPushDevice.userId })
+		.from(OperatorPushDevice)
+		.where(eq(OperatorPushDevice.token, input.token))
+		.limit(1)
 	const [device] = await db
 		.insert(OperatorPushDevice)
 		.values({
@@ -111,7 +118,11 @@ export async function registerOperatorDevice(
 			.delete(OperatorPushDevice)
 			.where(inArray(OperatorPushDevice.id, extra))
 	}
-	return { id: device!.id }
+	return {
+		id: device!.id,
+		movedFromUserId:
+			previous && previous.userId !== userId ? previous.userId : null,
+	}
 }
 
 export async function listOperatorDevices(userId: string) {

@@ -5,7 +5,7 @@ import { SMS_OPT_OUT_PHRASE } from '@repo/common/sms-compliance'
 import { isUsOrCanadaNumber } from '@repo/phone-agent'
 import { sendSms } from '@repo/sms'
 import { ENV } from 'varlock/env'
-import { rateLimit } from '../lib/rate-limit.ts'
+import { rateLimit, rateLimitByKey } from '../lib/rate-limit.ts'
 import { smsRouteAvailable } from '../lib/sms-route.ts'
 import {
 	getBearerToken,
@@ -80,12 +80,29 @@ alertTextRoutes.post('/', async (c) => {
 	const parsed = bodySchema.safeParse(await c.req.json().catch(() => null))
 	if (!parsed.success)
 		return c.json({ error: 'invalid_request' }, 400, NO_STORE)
-	const { to, text } = parsed.data
+	const { to, text, orgId } = parsed.data
 	if (!isValidPhone(to) || !isUsOrCanadaNumber(to)) {
 		return c.json({ error: 'not_allowed_number' }, 400, NO_STORE)
 	}
 	if (!text.trimEnd().endsWith(SMS_OPT_OUT_PHRASE)) {
 		return c.json({ error: 'missing_opt_out' }, 400, NO_STORE)
+	}
+	// Backstops the App's database-backed caps (this window is per isolate): one
+	// number cannot be flooded, and one organization cannot spend without bound.
+	const destination = rateLimitByKey('alert-texts-destination', to, {
+		windowMs: 60 * 60 * 1000,
+		maxRequests: 30,
+	})
+	const organization = rateLimitByKey('alert-texts-org', orgId, {
+		windowMs: 60 * 60 * 1000,
+		maxRequests: 600,
+	})
+	const limited = destination.limited ? destination : organization
+	if (limited.limited) {
+		return c.json({ error: 'rate_limited' }, 429, {
+			...NO_STORE,
+			'Retry-After': String(limited.retryAfter),
+		})
 	}
 	try {
 		await sendSms({ to, message: text })

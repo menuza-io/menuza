@@ -1,3 +1,4 @@
+import { auditService, AuditAction } from '@repo/audit'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import {
@@ -102,7 +103,23 @@ export async function action({ request }: ActionFunctionArgs) {
 				{ status: 400 },
 			)
 		}
-		const { id } = await registerOperatorDevice(userId, parsed.data)
+		const { id, movedFromUserId } = await registerOperatorDevice(
+			userId,
+			parsed.data,
+		)
+		if (movedFromUserId) {
+			// Signing in as someone else on the same phone takes the token over, so
+			// the previous member stops getting pushes there. Ids only, never the
+			// token.
+			void auditService.logAuth(
+				AuditAction.OPERATOR_PUSH_DEVICE_MOVED,
+				userId,
+				'An operator push device was registered by another member',
+				{ deviceId: id, previousUserId: movedFromUserId },
+				request,
+				true,
+			)
+		}
 		return Response.json({ success: true, data: { deviceId: id } })
 	}
 	if (request.method === 'DELETE') {

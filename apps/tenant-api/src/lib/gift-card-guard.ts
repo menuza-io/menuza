@@ -43,15 +43,21 @@ export type GiftCardGuardOptions = {
  *  5. confirms the organization is still active, provisioned and on this node
  *     (a control-plane outage answers 503, never 404, so clients retry).
  */
-export function giftCardGuard(options: GiftCardGuardOptions): MiddlewareHandler {
+export function giftCardGuard(
+	options: GiftCardGuardOptions,
+): MiddlewareHandler {
 	const allowedScopes: readonly GiftCardScope[] = Array.isArray(options.scope)
 		? options.scope
 		: [options.scope as GiftCardScope]
 	const changes = options.grant.startsWith('update:')
 	return async (c, next) => {
-		const verified = await verifyGiftCardOperatorToken(c.req.header('Authorization'))
+		const verified = await verifyGiftCardOperatorToken(
+			c.req.header('Authorization'),
+		)
 		if (!verified.ok) {
-			return giftCardDeny(verified.status, verified.code, { reason: verified.reason })
+			return giftCardDeny(verified.status, verified.code, {
+				reason: verified.reason,
+			})
 		}
 		const ctx = verified.context
 		if (!options.readOnly && isGiftCardsKillSwitchOn()) {
@@ -65,7 +71,10 @@ export function giftCardGuard(options: GiftCardGuardOptions): MiddlewareHandler 
 			return giftCardDeny(403, 'forbidden', { reason: 'impersonated' })
 		}
 		if (!hasGiftCardOperatorGrant(ctx, options.grant)) {
-			return giftCardDeny(403, 'forbidden', { reason: 'grant', required: options.grant })
+			return giftCardDeny(403, 'forbidden', {
+				reason: 'grant',
+				required: options.grant,
+			})
 		}
 		if (options.feature && !ctx.features[options.feature]) {
 			return giftCardDeny(403, 'feature_disabled', { feature: options.feature })

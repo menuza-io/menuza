@@ -15,14 +15,15 @@ is a kind, a location, an order number, a count, a time and a total.
 
 ## Flags, kill switches and defaults
 
-| Name                               | Where                     | What it does                                                                            |
-| ---------------------------------- | ------------------------- | --------------------------------------------------------------------------------------- |
-| Flag `notifications.operator_push` | organization, default off | Push to the operator phone app.                                                         |
-| Flag `orders.manager_alerts`       | organization, default off | The order and tablet alerts, the large-order flag and the Station heartbeat watch.      |
-| `OPERATOR_PUSH_ENABLED`            | App                       | Every operator push.                                                                    |
-| `ORDERS_ALERTS_ENABLED`            | App and tenant-api        | Every order and tablet alert; tenant-api stops posting and marks queued rows `dropped`. |
-| `ORDERS_EMAIL_ENABLED`             | App                       | The email of those alerts (the bell is unaffected).                                     |
-| `ORDER_ALERT_SMS_ENABLED`          | App and tenant-api (US)   | Texts to the people a location chose.                                                   |
+| Name                               | Where                     | What it does                                                                             |
+| ---------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------- |
+| Flag `notifications.operator_push` | organization, default off | Push to the operator phone app.                                                          |
+| Flag `orders.manager_alerts`       | organization, default off | The order and tablet alerts, the large-order flag and the Station heartbeat watch.       |
+| `OPERATOR_PUSH_ENABLED`            | App                       | Every operator push.                                                                     |
+| `ORDERS_ALERTS_ENABLED`            | App and tenant-api        | Every order and tablet alert; tenant-api stops posting and marks queued rows `dropped`.  |
+| `ORDERS_EMAIL_ENABLED`             | App                       | The email of those alerts (the bell is unaffected).                                      |
+| `ORDER_ALERT_SMS_ENABLED`          | App and tenant-api (US)   | Texts to the people a location chose.                                                    |
+| `ORDER_ALERT_HASH_SECRET`          | App and tenant-api (US)   | Secret (32+ chars, not `INTERNAL_COMMAND_TOKEN`) that keys the phone hash and code hash. |
 
 A kill switch **drops**: nothing is queued, so switching it back on sends no
 backlog. Alerts held by quiet hours are the one thing that waits, and they are
@@ -131,6 +132,17 @@ accept `test` and prefix TEST so it will show up marked.
   database). Control plane `OrderAlertRecipient`: staff contact details, never a
   guest's. There is no catering-request event in the product, so there is no
   catering switch yet.
+- The code check takes each try with one atomic
+  `UPDATE ... WHERE verify_attempts < 5` before comparing, so parallel guesses
+  cannot beat the limit. Sending a code is also throttled where deleting the
+  recipient cannot reset it: per destination (3 an hour and 10 a day across
+  every organization, keyed by the number's hash or the email address's) and per
+  organization (30 a day), in the App's database; the US tenant-api adds
+  per-isolate caps per destination and per organization as a backstop.
+- Phone hashes and code hashes use `ORDER_ALERT_HASH_SECRET`, not
+  `INTERNAL_COMMAND_TOKEN`: rotating the command token never breaks STOP, and a
+  holder of the command token cannot compute the hashes. The hash carries a
+  version (`alert-phone:v1`); a rotation adds a version beside it.
 - The region posts `order_placed` (number, type, wanted time, total, dish count,
   large flag) after the order's own transaction; the App emails or texts the
   confirmed recipients and tells subscribed members. An unaccepted order

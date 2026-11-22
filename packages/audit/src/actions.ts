@@ -16,6 +16,8 @@ export enum AuditAction {
 	SESSION_REFRESHED = 'session_refreshed',
 	SESSION_EXPIRED = 'session_expired',
 	SESSION_REVOKED = 'session_revoked',
+	// A phone's push registration moved to another member (#106): ids only.
+	OPERATOR_PUSH_DEVICE_MOVED = 'operator_push_device_moved',
 
 	// User Management
 	USER_CREATED = 'user_created',
