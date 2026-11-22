@@ -1,3 +1,4 @@
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import {
 	and,
 	db,
@@ -7,7 +8,6 @@ import {
 	OrganizationMenuItem,
 	OrganizationMenuOption,
 } from '@repo/database'
-import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { StaffingAlertEmail, sendEmail } from '@repo/email'
 import {
 	type InventoryNotifyEvent,

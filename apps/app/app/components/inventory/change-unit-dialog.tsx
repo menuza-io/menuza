@@ -30,7 +30,6 @@ import {
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
 import { useInventoryClient } from '#app/hooks/use-inventory-client.ts'
-import { formatMoney } from '#app/utils/inventory/format.ts'
 import { inventorySaveErrorMessage } from '#app/utils/inventory/inventory-errors.ts'
 import { BlockerList } from './blocker-list.tsx'
 
@@ -162,9 +161,6 @@ export function ChangeUnitDialog({
 
 	const fromLabel = quantity.unitName(unitLabel(item.baseUnit), undefined)
 	const toLabel = quantity.unitName(unitLabel(toUnit), undefined)
-	const money = (minor: number | undefined) =>
-		minor === undefined ? '' : formatMoney(minor, currency, i18n.locale)
-	void money
 
 	const fmtOld = (value: number) =>
 		quantity.format(value, { baseUnit: item.baseUnit })

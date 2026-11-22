@@ -31,25 +31,25 @@ import { Link, useLoaderData, useParams } from 'react-router'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { toast } from 'sonner'
 import { AdjustStockDialog } from '#app/components/inventory/adjust-stock-dialog.tsx'
+import { ChangeUnitDialog } from '#app/components/inventory/change-unit-dialog.tsx'
+import { DaysLeftText } from '#app/components/inventory/days-left-text.tsx'
+import { GroupSheet } from '#app/components/inventory/group-sheet.tsx'
 import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
-import { ChangeUnitDialog } from '#app/components/inventory/change-unit-dialog.tsx'
-import { DaysLeftText } from '#app/components/inventory/days-left-text.tsx'
-import { GroupSheet } from '#app/components/inventory/group-sheet.tsx'
 import { ItemRecipeSections } from '#app/components/inventory/item-recipe-sections.tsx'
 import {
 	MergeBanners,
 	MergeItemDialog,
 } from '#app/components/inventory/merge-dialog.tsx'
+import { useStockContext } from '#app/components/inventory/stock-context.ts'
 import {
 	UsedInList,
 	type UsedInNames,
 	UsedInSection,
 	useUsedIn,
 } from '#app/components/inventory/used-in-section.tsx'
-import { useStockContext } from '#app/components/inventory/stock-context.ts'
 import { SheetPanel } from '#app/components/staff/sheet-frame.tsx'
 import {
 	useInventoryClient,
@@ -57,7 +57,6 @@ import {
 } from '#app/hooks/use-inventory-client.ts'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
 import { loadMemberNames } from '#app/utils/inventory/actors.server.ts'
-import { loadMenuNames } from '#app/utils/inventory/menu-names.server.ts'
 import {
 	fillRatio,
 	formatCostPerUnit,
@@ -75,6 +74,7 @@ import {
 	SYSTEM_ADJUSTMENT_LABELS,
 	WASTE_REASON_LABELS,
 } from '#app/utils/inventory/labels.ts'
+import { loadMenuNames } from '#app/utils/inventory/menu-names.server.ts'
 import { currencyExponent } from '#app/utils/money-input.ts'
 import { type Route } from './+types/stock.$itemId.ts'
 

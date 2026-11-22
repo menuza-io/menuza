@@ -143,6 +143,72 @@ R2 / OCI bucket configured via `RECORDING_S3_*`:
 
 ---
 
+## Setup tools: used in, unit change, groups, merge, setup checks, days left, sold-out alerts
+
+Tenant migration `0062_inventory_setup` (one migration, widen only) and no new
+flag: everything rides on `inventory.enabled`; groups, "Used in" and the
+sold-out alert also need `inventory.recipes`. Deploy tenant-api, then the App.
+
+- **Used in (#518).** `GET /items/:id/used-in`: every dish, size, option and
+  made item whose **current** recipe has a line for the item (or for the group
+  it belongs to), with the quantity per portion and, with the cost grant, the
+  line's cost and share of the plate cost. The archive confirmation shows the
+  same list.
+- **Change unit (#494).** `POST /items/:id/unit-change/preview` and
+  `POST /items/:id/unit-change`. The person types an equation ("1 piece = 180
+  g"); one plan (`inventory-unit-change-service.ts`) is both the preview and
+  what is applied. On hand (one `unit_changed` adjustment per place carries the
+  difference so the ledger still sums to on hand), cost per unit, named units,
+  supplier packs, levels, prep levels and open tasks, and settled sale usage are
+  converted in place; recipes that use the item get a **new version**. **The
+  ledger is never rewritten**: `inv_unit_changes` records the conversion and
+  readers bring older rows to today's unit (`quantityInCurrentUnit`: the item
+  movement log, the waste list, days left, and sales settled after the change
+  for a recipe in force before it). Reports before and after show the same
+  money. Blocked while the item is in an open count, open transfer or an order
+  that is not closed, and while it is in a group.
+- **Groups (#495).** A group is an item (`inv_item_groups`) with ranked members
+  (`inv_item_group_members`, with a conversion when the units differ). Recipes
+  name the group like any ingredient. A sale takes stock from the first member,
+  then the next (`allocateToMembers` in the expand engine; the stock it sees is
+  on hand with the sale's own earlier usage added back, so a replay converges),
+  food cost uses the first member's price, and auto sold-out looks at the
+  members' total, so a dish goes off the menu only when the whole group is at
+  zero. Groups never appear in counts, orders, prep or levels.
+- **Merge (#493).** `POST /items/:id/merge`, `POST /suppliers/:id/merge`,
+  `POST /merges/:id/undo` (24 hours). The kept item takes over recipes (new
+  versions), supplier products, places, levels, count lists and prep levels; its
+  stock becomes the sum through two `merged` adjustments; the duplicate is
+  archived with `merged_into_id`. **History rows are not moved**: the ledger,
+  waste, counts and deliveries are append-only, so the duplicate keeps its rows
+  and readers (the kept item's movement log, days left, a supplier's unpaid
+  totals and deliveries) follow the link. Items must share a base unit (change
+  one first), and merging is not grouping.
+- **Check your setup (#510).** `GET /setup-checks`,
+  `POST /setup-checks/dismiss`, `POST /setup-checks/fix`. Rules only: a supplier
+  product priced 1.00 or 0, a price far from the item's other suppliers or last
+  price (and the same off by 1000x), a current recipe with no lines, an archived
+  ingredient in a recipe, a made item or a dish sold in the last 7 days without
+  a recipe, an item in no storage area. A finding carries a `key` and a
+  `fingerprint` of its evidence; dismissing stores both and the finding returns
+  when the fingerprint changes. "Fix" calls the write function of the screen it
+  mirrors (`updateSupplierProduct`, `putItemPlace`) or opens the recipe with the
+  line selected (`?recipeLine=<item id>`).
+- **Days left (#492).** Computed on read (`@repo/inventory` `days-left.ts`): on
+  hand over the average use on the days it was used in the last 28 (sales from
+  recipes, waste, batches made and stock sent out, from the ledger), shaped
+  forward by prep's `weekdayDemand` (Ramadan days against Ramadan days). Fewer
+  than 7 days of use is "Not enough history". Stock lists and sorts by it; Today
+  flags an item that runs out before its supplier's next delivery day even with
+  no level set; an item not counted in 14 days shows the number greyed.
+- **Sold-out alerts (#478).** The auto sold-out sync writes one
+  `inv_sold_out_alerts` row per dish it takes off or gives back, and
+  `dispatchSoldOutAlerts` sends ONE alert per location and kind per 15 minutes
+  to `/resources/inventory/notify` (kinds `inventory_sold_out` and
+  `inventory_sold_out_back`; dish ids and the ingredient's name only). A dish
+  that comes back before its alert went out cancels both. The App delivers them
+  on the manager alert engine (see `docs/manager-alerts.md`).
+
 ## Scheduled Jobs, Alarms & Data Retention
 
 - **Hourly fan-out (`apps/jobs-cron`)**: Calls `POST /api/inventory/tick` on

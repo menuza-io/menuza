@@ -9,9 +9,6 @@ import {
 	Organization,
 	OrganizationLocation,
 	OrganizationMenuItem,
-	OrganizationRole,
-	UserOrganization,
-	_OrganizationPermissionToRole,
 } from '@repo/database'
 import type * as EmailModule from '@repo/email'
 import { INVENTORY_FLAG_KEYS, type InventoryNotifyEvent } from '@repo/inventory'
@@ -41,12 +38,7 @@ vi.mock('@repo/email', async (importOriginal) => ({
 
 import { ALERT_SETTINGS_WORKFLOW } from '@repo/common/operator-alerts'
 import { INVENTORY_ALERT_MARKER_TYPE } from '#app/utils/inventory/manager-alerts.ts'
-import { setMemberLocationScope } from '#app/utils/staffing/restaurant/location-scope.server.ts'
-import {
-	addOrganizationMember,
-	createTestUser,
-	setupTestOrgWithUser,
-} from '#tests/test-utils.ts'
+import { setupTestOrgWithUser } from '#tests/test-utils.ts'
 import { action } from './inventory.notify.ts'
 
 const createdFlagIds: string[] = []
@@ -186,13 +178,7 @@ describe('POST /resources/inventory/notify: dishes off the menu by stock (#478)'
 		})
 		// Dish and ingredient names, a count and a place: nothing about a guest.
 		expect(Object.keys(payload).sort()).toEqual(
-			[
-				'count',
-				'kind',
-				'locationId',
-				'orgSlug',
-				'soldOut',
-			].sort(),
+			['count', 'kind', 'locationId', 'orgSlug', 'soldOut'].sort(),
 		)
 		expect(sendEmailMock).toHaveBeenCalledTimes(1)
 		const mail = JSON.stringify(sendEmailMock.mock.calls[0]![0].subject)

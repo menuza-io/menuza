@@ -284,7 +284,7 @@ describe('notifications and the tick', () => {
 			).toBe(true)
 		}
 		for (const bad of [
-			{ kind: 'inventory_sold_out' },
+			{ kind: 'inventory_nope' },
 			{ count: 0 },
 			{ eventId: 'XYZ' },
 			{ itemName: 'Chicken' },

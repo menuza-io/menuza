@@ -78,6 +78,10 @@ function ratio(draft: Draft, groupUnit: InventoryBaseUnit) {
 		: null
 }
 
+function MemberTitle({ first, name }: { first: boolean; name: string }) {
+	return first ? <Trans>First: {name}</Trans> : <Trans>Then: {name}</Trans>
+}
+
 /**
  * Group products that can stand in for each other ("Olive oil": brand A, brand
  * B). Each stays its own item; recipes can name the group, a sale takes stock
@@ -273,11 +277,7 @@ export function GroupDialog({
 						>
 							<div className="flex items-center justify-between gap-2">
 								<span className="min-w-0 text-sm font-medium wrap-anywhere">
-									{index === 0 ? (
-										<Trans>First: {member.name}</Trans>
-									) : (
-										<Trans>Then: {member.name}</Trans>
-									)}
+									<MemberTitle first={index === 0} name={member.name} />
 								</span>
 								<span className="flex shrink-0 gap-1">
 									<Button

@@ -282,6 +282,8 @@ export const mergeItemPreviewSchema = z.object({
 	intoItemId: z.string(),
 	intoItemName: z.string(),
 	intoItemVersion: z.number().int(),
+	/** The unit both items are counted in (they must share it). */
+	baseUnit: inventoryBaseUnitSchema,
 	blockers: z.array(blockerSchema),
 	/** The two items measure in different base units: change one first. */
 	unitMismatch: z.boolean(),

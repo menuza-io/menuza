@@ -29,6 +29,10 @@ export type SetupCheckNames = {
 	options: ReadonlyMap<string, string>
 }
 
+function PutIn({ area }: { area: string }) {
+	return <Trans>Put in {area}</Trans>
+}
+
 function ownerLabel(
 	finding: Extract<
 		SetupFinding,
@@ -91,6 +95,7 @@ export function SetupChecksPanel({
 	const [busy, setBusy] = useState<string | null>(null)
 
 	const findings = checks.data?.findings ?? []
+	const total = findings.length
 	const shown = limit ? findings.slice(0, limit) : findings
 	if (checks.loading && !checks.data) {
 		return <Skeleton className="h-24 w-full rounded-xl" />
@@ -244,7 +249,7 @@ export function SetupChecksPanel({
 			}
 			const label =
 				finding.kind === 'item_no_area' ? (
-					<Trans>Put in {finding.suggestedAreaName}</Trans>
+					<PutIn area={finding.suggestedAreaName} />
 				) : finding.kind === 'unit_off_1000x' ? (
 					<Trans>Fix the size</Trans>
 				) : (
@@ -287,8 +292,8 @@ export function SetupChecksPanel({
 	return (
 		<WorkspacePanel
 			title={
-				findings.length > 0 ? (
-					<Trans>Check your setup ({findings.length})</Trans>
+				total > 0 ? (
+					<Trans>Check your setup ({total})</Trans>
 				) : (
 					<Trans>Check your setup</Trans>
 				)
@@ -354,7 +359,7 @@ export function SetupChecksPanel({
 						render={<Link to={seeAllHref} />}
 						data-testid="setup-checks-see-all"
 					>
-						<Trans>See all {findings.length}</Trans>
+						<Trans>See all {total}</Trans>
 					</Button>
 				</div>
 			) : null}

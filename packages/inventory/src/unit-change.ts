@@ -12,8 +12,6 @@ import { type InventoryBaseUnit } from './units.ts'
 
 export type Fraction = { num: number; den: number }
 
-/** Decimal places a typed amount may have. */
-const MAX_DECIMALS = 6
 const MAX_FACTOR_PART = 1_000_000_000_000
 
 function gcd(a: bigint, b: bigint): bigint {

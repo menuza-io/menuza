@@ -95,4 +95,33 @@ describe('inventory alert vocabulary', () => {
 			expect(without.detail.length).toBeGreaterThan(10)
 		}
 	})
+
+	it('writes the email for a sold-out alert with the dishes and what ran out', () => {
+		const off = describeInventoryAlert({
+			kind: 'inventory_sold_out',
+			count: 3,
+			locationName: 'Olaya',
+			dishes: ['Burger', 'Wrap', 'Extra chicken'],
+			ingredients: ['Chicken', 'Chicken'],
+		})
+		expect(off.subject).toBe(
+			'Burger, Wrap and Extra chicken are off the menu at Olaya',
+		)
+		expect(off.detail).toContain('Chicken ran out at Olaya')
+		expect(off.detail).toContain('undo')
+		const back = describeInventoryAlert({
+			kind: 'inventory_sold_out_back',
+			count: 1,
+			locationName: null,
+			dishes: ['Burger'],
+			ingredients: ['Chicken'],
+		})
+		expect(back.subject).toBe('Burger is back on the menu')
+		expect(inventoryAlertPath('inventory_sold_out')).toBe(
+			'/inventory/today#sold-out',
+		)
+		expect(inventoryAlertWorkflow('inventory_sold_out_back')).toBe(
+			'inventory.sold_out',
+		)
+	})
 })

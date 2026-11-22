@@ -159,7 +159,7 @@ const PLAN = {
 }
 
 function region(overrides: Partial<Record<string, unknown>> = {}) {
-	return vi.fn<InventoryClient['request']>(async (path, init) => {
+	return vi.fn<InventoryClient['request']>(async (path) => {
 		if (path.includes('/movements')) return { movements: [], nextCursor: null }
 		if (path.endsWith('/used-in')) return overrides.usedIn ?? USED_IN
 		if (path.endsWith('/unit-change/preview')) return PLAN
@@ -185,6 +185,7 @@ function region(overrides: Partial<Record<string, unknown>> = {}) {
 				intoItemId: 'itm_2',
 				intoItemName: 'Chicken thigh',
 				intoItemVersion: 4,
+				baseUnit: 'g',
 				blockers: [],
 				unitMismatch: false,
 				moves: {

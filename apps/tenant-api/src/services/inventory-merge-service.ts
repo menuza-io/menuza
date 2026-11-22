@@ -122,6 +122,7 @@ export async function previewItemMerge(
 		intoItemId: kept.id,
 		intoItemName: kept.name,
 		intoItemVersion: kept.version,
+		baseUnit: kept.baseUnit,
 		blockers,
 		unitMismatch,
 		moves: {

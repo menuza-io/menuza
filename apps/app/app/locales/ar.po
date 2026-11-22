@@ -33,16 +33,6 @@ msgstr "فتح بملء الشاشة"
 msgid "AI assistant"
 msgstr "المساعد الذكي"
 
-#. js-lingui-explicit-id
-#: app/components/orders/new-order-banner.tsx:34
-#~ msgid "New orders"
-#~ msgstr ""
-
-#. js-lingui-explicit-id
-#: app/components/orders/new-order-banner.tsx:71
-#~ msgid "Dismiss"
-#~ msgstr ""
-
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1374
 msgid "-15m"
 msgstr "-١٥د"
@@ -282,10 +272,15 @@ msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يومًا}}"
 
 #. placeholder {0}: item.count
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:721
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:731
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:740
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:750
 msgid "{0, plural, one {# delivery is unpaid.} other {# deliveries are unpaid.}}"
 msgstr "{0, plural, zero {لا شحنات غير مدفوعة.} one {شحنة واحدة غير مدفوعة.} two {شحنتان غير مدفوعتين.} few {# شحنات غير مدفوعة.} many {# شحنة غير مدفوعة.} other {# شحنة غير مدفوعة.}}"
+
+#. placeholder {0}: preview.moves.deliveries
+#: app/components/inventory/merge-dialog.tsx:543
+msgid "{0, plural, one {# delivery stays on record.} other {# deliveries stay on record.}}"
+msgstr "{0, plural, one {يبقى توصيل واحد في السجل.} two {يبقى توصيلان في السجل.} few {تبقى # توصيلات في السجل.} many {يبقى # توصيلًا في السجل.} other {يبقى # توصيل في السجل.}}"
 
 #. placeholder {0}: entries.length
 #: app/components/inventory/sold-out-panel.tsx:131
@@ -384,7 +379,7 @@ msgid "{0, plural, one {# item matches and needs no review.} other {# items matc
 msgstr "{0, plural, zero {لا عناصر مطابقة.} one {عنصر واحد مطابق ولا يحتاج إلى مراجعة.} two {عنصران مطابقان ولا يحتاجان إلى مراجعة.} few {# عناصر مطابقة ولا تحتاج إلى مراجعة.} many {# عنصرًا مطابقًا ولا تحتاج إلى مراجعة.} other {# عنصر مطابق ولا تحتاج إلى مراجعة.}}"
 
 #. placeholder {0}: metrics.toOrderItems
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:477
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:496
 msgid "{0, plural, one {# item to order} other {# items to order}}"
 msgstr "{0, plural, one {عنصر واحد للطلب} two {عنصران للطلب} few {# عناصر للطلب} many {# عنصرًا للطلب} other {# عنصر للطلب}}"
 
@@ -558,10 +553,20 @@ msgstr "{0, plural, zero {# نقطة} one {نقطة واحدة} two {نقطتا�
 msgid "{0, plural, one {# problem found. Nothing was changed.} other {# problems found. Nothing was changed.}}"
 msgstr "{0, plural, one {تم العثور على # مشكلة. لم يتغيّر شيء.} two {تم العثور على مشكلتين. لم يتغيّر شيء.} few {تم العثور على # مشكلات. لم يتغيّر شيء.} many {تم العثور على # مشكلة. لم يتغيّر شيء.} other {تم العثور على # مشكلة. لم يتغيّر شيء.}}"
 
+#. placeholder {0}: preview.moves.products
+#: app/components/inventory/merge-dialog.tsx:538
+msgid "{0, plural, one {# product moves over.} other {# products move over.}}"
+msgstr "{0, plural, one {ينتقل منتج واحد.} two {ينتقل منتجان.} few {تنتقل # منتجات.} many {ينتقل # منتجًا.} other {ينتقل # منتج.}}"
+
 #. placeholder {0}: recipes.count
 #: app/components/menu/delete-effects.tsx:380
 msgid "{0, plural, one {# recipe in inventory uses it} other {# recipes in inventory use it}}"
 msgstr "{0, plural, zero {لا وصفة في المخزون تستخدمه} one {وصفة واحدة (#) في المخزون تستخدمه} two {وصفتا (#) في المخزون تستخدمانه} few {# وصفات في المخزون تستخدمه} many {# وصفة في المخزون تستخدمه} other {# وصفة في المخزون تستخدمه}}"
+
+#. placeholder {0}: preview.moves.recipes
+#: app/components/inventory/merge-dialog.tsx:345
+msgid "{0, plural, one {# recipe moves over} other {# recipes move over}}"
+msgstr "{0, plural, one {تنتقل وصفة واحدة} two {تنتقل وصفتان} few {تنتقل # وصفات} many {تنتقل # وصفة} other {تنتقل # وصفة}}"
 
 #. placeholder {0}: selectedIds.length
 #. placeholder {0}: selectedIds.size
@@ -634,8 +639,13 @@ msgstr "{0, plural, zero {تم تطبيق جميع الاقتراحات. حاو�
 msgid "{0, plural, one {# suggestion won't come back} other {# suggestions won't come back}}"
 msgstr "{0, plural, one {لن يعود اقتراح واحد} two {لن يعود اقتراحان} few {لن تعود # اقتراحات} many {لن يعود # اقتراحًا} other {لن يعود # اقتراح}}"
 
+#. placeholder {0}: preview.moves.supplierProducts
+#: app/components/inventory/merge-dialog.tsx:352
+msgid "{0, plural, one {# supplier product moves over} other {# supplier products move over}}"
+msgstr "{0, plural, one {ينتقل منتج مورّد واحد} two {ينتقل منتجا مورّد} few {تنتقل # منتجات مورّدين} many {ينتقل # منتج مورّد} other {ينتقل # منتج مورّد}}"
+
 #. placeholder {0}: metrics.toOrderSuppliers
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:483
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:502
 msgid "{0, plural, one {# supplier} other {# suppliers}}"
 msgstr "{0, plural, one {مورّد واحد} two {موردان} few {# موردين} many {# موردًا} other {# مورّد}}"
 
@@ -712,6 +722,16 @@ msgstr "{0, plural, one {ستصبح وردية واحدة شاغرة لأن صا
 msgid "{0, plural, one {−# in the last 30 days} other {−# in the last 30 days}}"
 msgstr "{0, plural, one {−# في آخر 30 يومًا} other {−# في آخر 30 يومًا}}"
 
+#. placeholder {0}: counts.length
+#: app/components/inventory/blocker-list.tsx:31
+msgid "{0, plural, one {A count is still open.} other {# counts are still open.}}"
+msgstr "{0, plural, one {هناك جرد ما زال مفتوحًا.} two {هناك جردان ما زالا مفتوحين.} few {هناك # جرود ما زالت مفتوحة.} many {هناك # جردًا ما زالت مفتوحة.} other {هناك # جرد ما زالت مفتوحة.}}"
+
+#. placeholder {0}: transfers.length
+#: app/components/inventory/blocker-list.tsx:40
+msgid "{0, plural, one {A transfer is still open.} other {# transfers are still open.}}"
+msgstr "{0, plural, one {هناك نقل ما زال مفتوحًا.} two {هناك نقلان ما زالا مفتوحين.} few {هناك # عمليات نقل ما زالت مفتوحة.} many {هناك # عملية نقل ما زالت مفتوحة.} other {هناك # عملية نقل ما زالت مفتوحة.}}"
+
 #. placeholder {0}: chosenStarter.length
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:270
 msgid "{0, plural, one {Add # item} other {Add # items}}"
@@ -728,24 +748,34 @@ msgid "{0, plural, one {Added to # location.} other {Added to # locations.}}"
 msgstr "{0, plural, one {تمت الإضافة إلى # موقع.} two {تمت الإضافة إلى موقعين.} few {تمت الإضافة إلى # مواقع.} many {تمت الإضافة إلى # موقعًا.} other {تمت الإضافة إلى # موقعًا.}}"
 
 #. placeholder {0}: item.more
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:841
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:891
 msgid "{0, plural, one {And # more dish.} other {And # more dishes.}}"
 msgstr "{0, plural, one {وطبق آخر.} two {وطبقان آخران.} few {و# أطباق أخرى.} many {و# طبقًا آخر.} other {و# طبق آخر.}}"
 
 #. placeholder {0}: item.more
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:648
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:667
 msgid "{0, plural, one {And # more item is low.} other {And # more items are low.}}"
 msgstr "{0, plural, one {وهناك عنصر آخر منخفض.} two {وهناك عنصران آخران منخفضان.} few {وهناك # عناصر أخرى منخفضة.} many {وهناك # عنصرًا آخر منخفضًا.} other {وهناك # عنصر آخر منخفض.}}"
 
 #. placeholder {0}: item.more
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:808
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:827
 msgid "{0, plural, one {And # more item ran out.} other {And # more items ran out.}}"
 msgstr "{0, plural, one {ونفد صنف آخر.} two {ونفد صنفان آخران.} few {ونفدت # أصناف أخرى.} many {ونفد # صنفًا آخر.} other {ونفد # صنف آخر.}}"
+
+#. placeholder {0}: item.more
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:858
+msgid "{0, plural, one {And # more item runs out first.} other {And # more items run out first.}}"
+msgstr "{0, plural, one {وصنف آخر ينفد قبل ذلك.} two {وصنفان آخران ينفدان قبل ذلك.} few {و# أصناف أخرى تنفد قبل ذلك.} many {و# صنفًا آخر ينفد قبل ذلك.} other {و# صنف آخر ينفد قبل ذلك.}}"
 
 #. placeholder {0}: parsed.errors.length - SHOWN_ERRORS
 #: app/components/staff/labor/sales-import-dialog.tsx:223
 msgid "{0, plural, one {and # more line} other {and # more lines}}"
 msgstr "{0, plural, one {وسطر واحد آخر} two {وسطران آخران} few {و# أسطر أخرى} many {و# سطرًا آخر} other {و# سطر آخر}}"
+
+#. placeholder {0}: used.data.more
+#: app/components/inventory/used-in-section.tsx:187
+msgid "{0, plural, one {And # more recipe.} other {And # more recipes.}}"
+msgstr "{0, plural, one {ووصفة أخرى.} two {ووصفتان أخريان.} few {و# وصفات أخرى.} many {و# وصفة أخرى.} other {و# وصفة أخرى.}}"
 
 #. placeholder {0}: applyIds.length
 #: app/components/menu/menu-bulk-edit-sheet.tsx:875
@@ -823,7 +853,7 @@ msgid "{0, plural, one {Lock # card?} other {Lock # cards?}}"
 msgstr "{0, plural, one {قفل بطاقة واحدة؟} two {قفل بطاقتين؟} few {قفل # بطاقات؟} many {قفل # بطاقة؟} other {قفل # بطاقة؟}}"
 
 #. placeholder {0}: supplier.unpaidCount
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:133
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:143
 msgid "{0, plural, one {on # unpaid delivery.} other {on # unpaid deliveries.}}"
 msgstr "{0, plural, one {عن شحنة واحدة غير مدفوعة.} two {عن شحنتين غير مدفوعتين.} few {عن # شحنات غير مدفوعة.} many {عن # شحنة غير مدفوعة.} other {عن # شحنة غير مدفوعة.}}"
 
@@ -890,10 +920,6 @@ msgstr "{0, plural, one {أضفنا قائمة مهام للموظف الجدي�
 #: app/components/media-library/photo-studio-dialog.tsx:563
 msgid "{0, plural, one {Your photo} other {Your # photos}}"
 msgstr "{0, plural, one {صورتك} two {صورتاك} few {صورك الـ #} many {صورك الـ #} other {صورك الـ #}}"
-
-#: app/components/marketing/marketing-calendar.tsx:265
-#~ msgid "{0} (expected)"
-#~ msgstr "{0} (متوقع)"
 
 #. placeholder {0}: slot.used
 #. placeholder {1}: slot.limit
@@ -971,22 +997,6 @@ msgstr "{0} من {1} رسائل نصية مستخدمة"
 #: app/components/settings/cards/organization/marketing-texts-card.tsx:56
 msgid "{0} of {1} text sends used this month"
 msgstr "{0} من {1} عمليات إرسال نصية مستخدمة هذا الشهر"
-
-#: app/components/website/hero-video-maker.tsx:250
-#~ msgid "{0} of {HERO_VIDEO_MIN_PHOTOS} to {HERO_VIDEO_MAX_PHOTOS} chosen"
-#~ msgstr ""
-
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:875
-#~ msgid "{0} redirects have a destination that is not allowed"
-#~ msgstr "{0} عمليات إعادة توجيه وجهتها غير مسموح بها"
-
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:784
-#~ msgid "{0} redirects send visitors to \"{pageTitle}\". While it is unpublished, they go to the home page instead, and return to this page when you publish it again."
-#~ msgstr "{0} عمليات إعادة توجيه ترسل الزوار إلى \"{pageTitle}\". وما دامت الصفحة غير منشورة يذهبون إلى الصفحة الرئيسية بدلًا منها، ثم يعودون إلى هذه الصفحة عند نشرها مرة أخرى."
-
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:877
-#~ msgid "{0} redirects that pointed here are sent to the same place."
-#~ msgstr "{0} عمليات إعادة توجيه كانت تشير إلى هنا تُرسَل إلى المكان نفسه."
 
 #. placeholder {0}: formatRating(store.ratingX100)
 #. placeholder {1}: store.ratingCount
@@ -1565,7 +1575,7 @@ msgstr "يفتح {dayName}"
 msgid "{dayName}: {people} people scheduled, {open} open shifts. Open this day."
 msgstr "{dayName}: عدد المجدولين {people}، والورديات الشاغرة {open}. افتح هذا اليوم."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:456
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:475
 msgid "{days, plural, one {Last count # day ago} other {Last count # days ago}}"
 msgstr "{days, plural, one {آخر جرد قبل يوم واحد} two {آخر جرد قبل يومين} few {آخر جرد قبل # أيام} many {آخر جرد قبل # يومًا} other {آخر جرد قبل # يوم}}"
 
@@ -1582,7 +1592,7 @@ msgstr "{days} يومًا"
 msgid "{days}, {from} to {to}"
 msgstr "{days}، من {from} إلى {to}"
 
-#: app/components/ui/notification-bell.tsx:125
+#: app/components/ui/notification-bell.tsx:148
 msgid "{days}d ago"
 msgstr "منذ {days} يوم"
 
@@ -1613,6 +1623,14 @@ msgstr "خصم {discount} على {count, plural, zero {# تصنيف} one {تصن
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:95
 msgid "{discount} on {count, plural, one {# item} other {# items}}"
 msgstr "خصم {discount} على {count, plural, zero {# عنصر} one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصرًا} other {# عنصر}}"
+
+#: app/utils/inventory/alert-copy.ts:39
+msgid "{dish} is back on the menu"
+msgstr "{dish} عاد إلى القائمة"
+
+#: app/utils/inventory/alert-copy.ts:40
+msgid "{dish} is off the menu"
+msgstr "{dish} خرج من القائمة"
 
 #: app/components/inventory/price-alerts-panel.tsx:69
 msgid "{dishes, plural, one {# dish costs more now.} other {# dishes cost more now.}}"
@@ -1822,7 +1840,7 @@ msgstr "{hours} س"
 msgid "{hours}h {rest}m"
 msgstr "{hours} س {rest} د"
 
-#: app/components/ui/notification-bell.tsx:121
+#: app/components/ui/notification-bell.tsx:144
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
 
@@ -1833,6 +1851,14 @@ msgstr "{incoming} واردة، {outgoing} صادرة"
 #: app/components/staff/labor/labor-tips.tsx:130
 msgid "{ineligibleHours} hours were worked in positions that do not earn tips and are not in the split."
 msgstr "تم العمل {ineligibleHours} ساعة في وظائف لا تحصل على إكراميات وهي غير داخلة في التقسيم."
+
+#: app/utils/inventory/alert-copy.ts:56
+msgid "{ingredient} is back in stock."
+msgstr "{ingredient} عاد إلى المخزون."
+
+#: app/utils/inventory/alert-copy.ts:58
+msgid "{ingredient} ran out. Open Today to see what is off the menu and undo it."
+msgstr "نفد {ingredient}. افتح «اليوم» لترى ما خرج من القائمة وتتراجع عنه."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:280
 #: app/components/menu/drop-wizard/drop-drawers.tsx:292
@@ -1852,11 +1878,11 @@ msgstr "{issueCount} بحاجة إلى إصلاح"
 msgid "{issuedCount, plural, one {# single-use code already sent keeps working until it expires.} other {# single-use codes already sent keep working until they expire.}}"
 msgstr "{issuedCount, plural, zero {# رمز لمرة واحدة أُرسل بالفعل ما زال صالحًا حتى انتهاء صلاحيته.} one {رمز واحد لمرة واحدة أُرسل بالفعل ما زال صالحًا حتى انتهاء صلاحيته.} two {رمزان لمرة واحدة أُرسلا بالفعل وما زالا صالحين حتى انتهاء صلاحيتهما.} few {# رموز لمرة واحدة أُرسلت بالفعل وما زالت صالحة حتى انتهاء صلاحيتها.} many {# رمز لمرة واحدة أُرسل بالفعل وما زال صالحًا حتى انتهاء صلاحيته.} other {# رمز لمرة واحدة أُرسل بالفعل وما زال صالحًا حتى انتهاء صلاحيته.}}"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:755
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:774
 msgid "{itemCount, plural, one {# item to order.} other {# items to order.}}"
 msgstr "{itemCount, plural, one {عنصر واحد للطلب.} two {عنصران للطلب.} few {# عناصر للطلب.} many {# عنصرًا للطلب.} other {# عنصر للطلب.}}"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:235
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:301
 msgid "{itemName} archived."
 msgstr "تمت أرشفة {itemName}."
 
@@ -1924,7 +1950,7 @@ msgstr "{length, plural, =0 {لم يتم إدخال أي رقم} one {تم إد�
 msgid "{length} of {noteMaxLength} characters"
 msgstr "{length} من {noteMaxLength} حرفاً"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:867
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:917
 msgid "{lineCount, plural, one {# item needs its price.} other {# items need their prices.}}"
 msgstr "{lineCount, plural, one {عنصر واحد يحتاج إلى سعره.} two {عنصران يحتاجان إلى سعريهما.} few {# عناصر تحتاج إلى أسعارها.} many {# عنصرًا يحتاج إلى سعره.} other {# عنصر يحتاج إلى سعره.}}"
 
@@ -2018,7 +2044,7 @@ msgstr "{minutes} دقيقة"
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
-#: app/components/ui/notification-bell.tsx:117
+#: app/components/ui/notification-bell.tsx:140
 msgid "{minutes}m ago"
 msgstr "منذ {minutes} دقيقة"
 
@@ -2055,7 +2081,7 @@ msgstr "{n, plural, one {فئة واحدة فارغة} two {فئتان فارغ�
 msgid "{n, plural, one {# certificate is expiring or has expired} other {# certificates are expiring or have expired}}"
 msgstr "{n, plural, one {شهادة واحدة توشك على الانتهاء أو انتهت} two {شهادتان توشكان على الانتهاء أو انتهتا} few {# شهادات توشك على الانتهاء أو انتهت} many {# شهادة توشك على الانتهاء أو انتهت} other {# شهادة توشك على الانتهاء أو انتهت}}"
 
-#: app/utils/inventory/alert-copy.ts:41
+#: app/utils/inventory/alert-copy.ts:90
 msgid "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
 msgstr "{n, plural, one {جرد واحد بانتظار المراجعة} two {جردان بانتظار المراجعة} few {# عمليات جرد بانتظار المراجعة} many {# عملية جرد بانتظار المراجعة} other {# عملية جرد بانتظار المراجعة}}"
 
@@ -2079,6 +2105,10 @@ msgstr "{n, plural, one {طبق واحد بلا وصف} two {طبقان بلا �
 msgid "{n, plural, one {# dish has no photo} other {# dishes have no photo}}"
 msgstr "{n, plural, one {طبق واحد بلا صورة} two {طبقان بلا صورة} few {# أطباق بلا صورة} many {# طبقًا بلا صورة} other {# طبق بلا صورة}}"
 
+#: app/utils/inventory/alert-copy.ts:43
+msgid "{n, plural, one {# dish is back on the menu} other {# dishes are back on the menu}}"
+msgstr "{n, plural, one {عاد طبق واحد إلى القائمة} two {عاد طبقان إلى القائمة} few {عادت # أطباق إلى القائمة} many {عاد # طبقًا إلى القائمة} other {عاد # طبق إلى القائمة}}"
+
 #: app/components/menu/menu-health-card.tsx:209
 msgid "{n, plural, one {# dish is listed twice (same name and price)} other {# dishes are listed twice (same name and price)}}"
 msgstr "{n, plural, one {طبق واحد مدرج مرتين (الاسم والسعر نفسهما)} two {طبقان مدرجان مرتين (الاسم والسعر نفسهما)} few {# أطباق مدرجة مرتين (الاسم والسعر نفسهما)} many {# طبقًا مدرجًا مرتين (الاسم والسعر نفسهما)} other {# طبق مدرج مرتين (الاسم والسعر نفسهما)}}"
@@ -2090,6 +2120,10 @@ msgstr "{n, plural, one {طبق واحد ينقصه اسم أو وصف مترج�
 #: app/components/menu/menu-health-card.tsx:137
 msgid "{n, plural, one {# dish is missing an Arabic name or description} other {# dishes are missing an Arabic name or description}}"
 msgstr "{n, plural, one {طبق واحد ينقصه اسم أو وصف بالعربية} two {طبقان ينقصهما اسم أو وصف بالعربية} few {# أطباق ينقصها اسم أو وصف بالعربية} many {# طبقًا ينقصه اسم أو وصف بالعربية} other {# طبق ينقصه اسم أو وصف بالعربية}}"
+
+#: app/utils/inventory/alert-copy.ts:49
+msgid "{n, plural, one {# dish is off the menu} other {# dishes are off the menu}}"
+msgstr "{n, plural, one {خرج طبق واحد من القائمة} two {خرج طبقان من القائمة} few {خرجت # أطباق من القائمة} many {خرج # طبقًا من القائمة} other {خرج # طبق من القائمة}}"
 
 #: app/components/menu/menu-health-card.tsx:101
 msgid "{n, plural, one {# dish is priced at 0} other {# dishes are priced at 0}}"
@@ -2111,11 +2145,11 @@ msgstr "{n, plural, one {انضم ضيف واحد إلى قائمة الانتظ
 msgid "{n, plural, one {# guest message could not be delivered} other {# guest messages could not be delivered}}"
 msgstr "{n, plural, one {تعذّر تسليم رسالة واحدة إلى ضيف} two {تعذّر تسليم رسالتين إلى ضيوف} few {تعذّر تسليم # رسائل إلى ضيوف} many {تعذّر تسليم # رسالة إلى ضيوف} other {تعذّر تسليم # رسالة إلى ضيوف}}"
 
-#: app/utils/inventory/alert-copy.ts:31
+#: app/utils/inventory/alert-copy.ts:80
 msgid "{n, plural, one {# item is below the level you order at} other {# items are below the level you order at}}"
 msgstr "{n, plural, one {عنصر واحد أقل من مستوى الطلب} two {عنصران أقل من مستوى الطلب} few {# عناصر أقل من مستوى الطلب} many {# عنصرًا أقل من مستوى الطلب} other {# عنصر أقل من مستوى الطلب}}"
 
-#: app/utils/inventory/alert-copy.ts:61
+#: app/utils/inventory/alert-copy.ts:110
 msgid "{n, plural, one {# item went up in price} other {# items went up in price}}"
 msgstr "{n, plural, one {ارتفع سعر عنصر واحد} two {ارتفع سعر عنصرين} few {ارتفع سعر # عناصر} many {ارتفع سعر # عنصرًا} other {ارتفع سعر # عنصر}}"
 
@@ -2139,7 +2173,7 @@ msgstr "{n, plural, one {مجموعة خيارات واحدة بلا خيارا�
 msgid "{n, plural, one {# option group requires more picks than it allows} other {# option groups require more picks than they allow}}"
 msgstr "{n, plural, one {مجموعة خيارات واحدة تشترط اختيارات أكثر مما تسمح به} two {مجموعتا خيارات تشترطان اختيارات أكثر مما تسمحان به} few {# مجموعات خيارات تشترط اختيارات أكثر مما تسمح به} many {# مجموعة خيارات تشترط اختيارات أكثر مما تسمح به} other {# مجموعة خيارات تشترط اختيارات أكثر مما تسمح به}}"
 
-#: app/utils/inventory/alert-copy.ts:51
+#: app/utils/inventory/alert-copy.ts:100
 msgid "{n, plural, one {# order is due for delivery} other {# orders are due for delivery}}"
 msgstr "{n, plural, one {طلب واحد حان موعد تسليمه} two {طلبان حان موعد تسليمهما} few {# طلبات حان موعد تسليمها} many {# طلبًا حان موعد تسليمها} other {# طلب حان موعد تسليمها}}"
 
@@ -2171,6 +2205,10 @@ msgstr "{n, plural, one {سُجّل انصراف شخص واحد تلقائيً�
 msgid "{n, plural, one {A schedule was published} other {# schedules were published}}"
 msgstr "{n, plural, one {تم نشر جدول} two {تم نشر جدولين} few {تم نشر # جداول} many {تم نشر # جدولًا} other {تم نشر # جدول}}"
 
+#: app/components/inventory/used-in-section.tsx:86
+msgid "{name} (swapped in)"
+msgstr "{name} (بديل)"
+
 #: app/components/discounts/variant-filter.tsx:72
 msgid "{name} added"
 msgstr "تمت إضافة {name}"
@@ -2180,7 +2218,7 @@ msgid "{name} added."
 msgstr "تمت إضافة {name}."
 
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:311
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:70
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:80
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:66
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:66
 msgid "{name} archived."
@@ -2682,6 +2720,10 @@ msgstr "{rest} د"
 msgid "{resumed, plural, one {Resumed 1 automation with this discount.} other {Resumed # automations with this discount.}}"
 msgstr "{resumed, plural, zero {تم استئناف # أتمتة مع هذا الخصم.} one {تم استئناف أتمتة واحدة مع هذا الخصم.} two {تم استئناف أتمتتين مع هذا الخصم.} few {تم استئناف # أتمتات مع هذا الخصم.} many {تم استئناف # أتمتة مع هذا الخصم.} other {تم استئناف # أتمتة مع هذا الخصم.}}"
 
+#: app/components/inventory/days-left-text.tsx:46
+msgid "{rounded, plural, one {# day} other {# days}}"
+msgstr "{rounded, plural, one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}"
+
 #: app/components/staff/labor-policy-editor.tsx:489
 msgid "{roundingLabel}, {roundingMinutes} minutes"
 msgstr "{roundingLabel}، {roundingMinutes} دقيقة"
@@ -2727,7 +2769,7 @@ msgstr "{seconds, plural, one {يُغلق خلال ثانية} two {يُغلق �
 msgid "{seconds} seconds"
 msgstr "{seconds} ثانية"
 
-#: app/components/ui/notification-bell.tsx:113
+#: app/components/ui/notification-bell.tsx:136
 msgid "{seconds}s ago"
 msgstr "منذ {seconds} ثانية"
 
@@ -2833,7 +2875,7 @@ msgstr "{text} وقت إضافي"
 msgid "{threadTotalReplies, plural, one {# reply} other {# replies}}"
 msgstr "{threadTotalReplies, plural, zero {لا توجد ردود} one {رد واحد} two {ردان} few {# ردود} many {# رداً} other {# رد}}"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:832
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:882
 msgid "{times, plural, one {A dish ran out at the till # time this week.} other {A dish ran out at the till # times this week.}}"
 msgstr "{times, plural, one {نفد طبق عند الكاشير مرة واحدة هذا الأسبوع.} two {نفد طبق عند الكاشير مرتين هذا الأسبوع.} few {نفد طبق عند الكاشير # مرات هذا الأسبوع.} many {نفد طبق عند الكاشير # مرة هذا الأسبوع.} other {نفد طبق عند الكاشير # مرة هذا الأسبوع.}}"
 
@@ -2855,11 +2897,11 @@ msgstr "نقاط مضاعفة {times}x على الطلب كاملًا"
 msgid "{told, plural, one {# person told} other {# people told}}"
 msgstr "{told, plural, one {أُبلغ شخص واحد} two {أُبلغ شخصان} few {أُبلغ # أشخاص} many {أُبلغ # شخصًا} other {أُبلغ # شخص}}"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:576
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:595
 msgid "{toOrder, plural, one {# item} other {# items}}"
 msgstr "{toOrder, plural, zero {لا عناصر} one {عنصر واحد} two {عنصران} few {# عناصر} many {# عنصرًا} other {# عنصر}}"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:582
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:601
 msgid "{toOrderSuppliers, plural, one {from # supplier} other {from # suppliers}}"
 msgstr "{toOrderSuppliers, plural, one {من مورّد واحد} two {من موردين} few {من # موردين} many {من # موردًا} other {من # مورّد}}"
 
@@ -2970,14 +3012,6 @@ msgstr "{unread} غير مقروءة"
 #: app/components/website/domain/connect-card.tsx:383
 msgid "{unreadLines} lines of the file could not be read."
 msgstr "تعذّرت قراءة {unreadLines} من أسطر الملف."
-
-#: app/components/media-library/bulk-file-list.tsx:89
-#~ msgid "{uploaded} of {0} uploaded"
-#~ msgstr ""
-
-#: app/components/media-library/bulk-file-list.tsx:85
-#~ msgid "{uploaded} of {0} uploaded, {failedCount} failed"
-#~ msgstr ""
 
 #: app/components/media-library/bulk-file-list.tsx:90
 msgid "{uploaded} of {total} uploaded"
@@ -3128,7 +3162,7 @@ msgstr "**بلغ أحد الخصومات ميزانيته الأسبوعية**"
 msgid "**New form response**"
 msgstr "**رد جديد على نموذج**"
 
-#: app/components/ui/notification-bell.tsx:224
+#: app/components/ui/notification-bell.tsx:248
 msgid "**New response to {safeFormName}**"
 msgstr "**رد جديد على {safeFormName}**"
 
@@ -3257,9 +3291,13 @@ msgstr "<0>{differenceText}</0> ناقصة"
 msgid "<0>{differenceText}</0> more than expected"
 msgstr "<0>{differenceText}</0> أكثر من المتوقع"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:826
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:876
 msgid "<0>{dish}</0> ran out at the till {times, plural, one {# time} other {# times}} this week."
 msgstr "نفد <0>{dish}</0> عند الكاشير {times, plural, one {مرة واحدة} two {مرتين} few {# مرات} many {# مرة} other {# مرة}} هذا الأسبوع."
+
+#: app/components/inventory/setup-checks-panel.tsx:215
+msgid "<0>{dish}</0> sold {sold, plural, one {# time} other {# times}} in the last 7 days and has no recipe."
+msgstr "بيع <0>{dish}</0> {sold, plural, one {مرة واحدة} two {مرتين} few {# مرات} many {# مرة} other {# مرة}} في آخر 7 أيام وليس له وصفة."
 
 #: app/components/inventory/counting-screen.tsx:394
 msgid "<0>{doneCount}</0> of <1>{totalCount}</1> counted"
@@ -3291,27 +3329,47 @@ msgstr "<0>{gap}</0> أكثر من المتوقع"
 msgid "<0>{gapText}</0> apart from the invoice. Check the lines."
 msgstr "<0>{gapText}</0> فرق عن الفاتورة. راجع البنود."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:674
+#: app/components/inventory/setup-checks-panel.tsx:150
+msgid "<0>{item}</0> from <1>{supplier}</1> costs <2>{price}</2> for {pack}, far from its other prices (about <3>{suggested}</3>). Was the price per pack worked out?"
+msgstr "سعر <0>{item}</0> من <1>{supplier}</1> هو <2>{price}</2> لـ{pack}، وهو بعيد عن أسعاره الأخرى (نحو <3>{suggested}</3>). هل حُسب سعر العبوة بشكل صحيح؟"
+
+#: app/components/inventory/setup-checks-panel.tsx:134
+msgid "<0>{item}</0> from <1>{supplier}</1> is priced at <2>{price}</2>. That looks like a placeholder."
+msgstr "سعر <0>{item}</0> من <1>{supplier}</1> هو <2>{price}</2>. يبدو أنه سعر مؤقت."
+
+#: app/components/inventory/setup-checks-panel.tsx:225
+msgid "<0>{item}</0> is in no storage area, so it is never counted."
+msgstr "<0>{item}</0> ليس في أي منطقة تخزين، لذلك لا يُجرد أبدًا."
+
+#: app/components/inventory/setup-checks-panel.tsx:205
+msgid "<0>{item}</0> is made in house but has no recipe."
+msgstr "<0>{item}</0> يُحضَّر في المطبخ لكن ليس له وصفة."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:819
 msgid "<0>{itemName}</0> leaves your lists and counts. Its history is kept."
 msgstr "سيختفي <0>{itemName}</0> من قوائمك وعمليات الجرد. ويبقى سجله محفوظًا."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:631
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:650
 msgid "<0>{name}</0> is out of stock."
 msgstr "<0>{name}</0> نفد من المخزون."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:636
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:655
 msgid "<0>{name}</0> is running low: <1>{left}</1> left."
 msgstr "<0>{name}</0> على وشك النفاد: تبقّى <1>{left}</1>."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:795
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:814
 msgid "<0>{name}</0> ran out, so {count, plural, one {# dish or option is} other {# dishes and options are}} off the menu."
 msgstr "نفد <0>{name}</0>، لذلك {count, plural, one {طبق أو خيار واحد خارج} two {طبقان أو خياران خارج} few {# أطباق أو خيارات خارج} many {# طبقًا أو خيارًا خارج} other {# طبق أو خيار خارج}} القائمة."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:696
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:850
+msgid "<0>{name}</0> runs out {runsOut}, but the next delivery from <1>{supplier}</1> is {delivery}."
+msgstr "سينفد <0>{name}</0> يوم {runsOut}، لكن التوصيل القادم من <1>{supplier}</1> يوم {delivery}."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:715
 msgid "<0>{name}</0> went up <1>{percent}%</1> on the last delivery from <2>{supplier}</2>."
 msgstr "ارتفع سعر <0>{name}</0> بنسبة <1>{percent}%</1> في آخر شحنة من <2>{supplier}</2>."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:702
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:721
 msgid "<0>{name}</0> went up <1>{percent}%</1> on the last delivery."
 msgstr "ارتفع سعر <0>{name}</0> بنسبة <1>{percent}%</1> في آخر شحنة."
 
@@ -3323,9 +3381,17 @@ msgstr "<0>{newAccounts}</0> انضموا خلال آخر {REPORT_WINDOW_DAYS} �
 msgid "<0>{other}</0> asked you"
 msgstr "طلب منك <0>{other}</0>"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:588
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:607
 msgid "<0>{outCount}</0> of them out of stock"
 msgstr "<0>{outCount}</0> منها نفد من المخزون"
+
+#: app/components/inventory/setup-checks-panel.tsx:186
+msgid "<0>{owner}</0> has a recipe with no ingredients."
+msgstr "لدى <0>{owner}</0> وصفة بلا مكونات."
+
+#: app/components/inventory/setup-checks-panel.tsx:196
+msgid "<0>{owner}</0> uses <1>{item}</1>, which is archived."
+msgstr "<0>{owner}</0> يستخدم <1>{item}</1> وهو مؤرشف."
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:637
 msgid "<0>{pointsExpired}</0> expired · <1>{pointsExpiringSoon}</1> expiring within 30d"
@@ -3343,7 +3409,7 @@ msgstr "<0>{refCredited}</0> معتمدة / <1>{refClaimed}</1> مطالَب ب�
 msgid "<0>{share}</0> of guests"
 msgstr "<0>{share}</0> من الضيوف"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:564
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:583
 msgid "<0>{shareText}</0> of what you bought"
 msgstr "<0>{shareText}</0> مما اشتريته"
 
@@ -3358,6 +3424,10 @@ msgstr "<0>{shownCount}</0> من <1>{total}</1> {total, plural, one {شخص} two
 #: app/components/inventory/send-order-dialog.tsx:113
 msgid "<0>{supplier}</0> will get {itemCount, plural, one {# item} other {# items}}. Nothing is sent until you press Send."
 msgstr "سيتلقى <0>{supplier}</0> {itemCount, plural, zero {# صنف} one {صنفاً واحداً (#)} two {صنفين (#)} few {# أصناف} many {# صنفاً} other {# صنف}}. لن يتم إرسال أي شيء حتى تضغط على إرسال."
+
+#: app/components/inventory/merge-dialog.tsx:492
+msgid "<0>{supplierName}</0> becomes part of the supplier you keep: its products, deliveries and what you still owe move over. You can undo it for 24 hours."
+msgstr "يصبح <0>{supplierName}</0> جزءًا من المورّد الذي تُبقيه: تنتقل منتجاته وتوصيلاته وما تدين به. يمكنك التراجع خلال 24 ساعة."
 
 #: app/components/discounts/fields.tsx:531
 msgid "<0>{value}</0> of <1>{max}</1>"
@@ -3755,15 +3825,15 @@ msgstr "تم إرسال رمز للتو. انتظر دقيقة قبل طلب ر�
 msgid "A code was sent a moment ago. Wait a little before sending another."
 msgstr "تم إرسال رمز قبل قليل. انتظر قليلاً قبل إرسال رمز آخر."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:666
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:685
 msgid "A count is due today."
 msgstr "موعد الجرد اليوم."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:679
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:698
 msgid "A count is in progress: <0>{counted}</0> of <1>{total}</1> items counted."
 msgstr "جرد قيد التنفيذ: تم جرد <0>{counted}</0> من <1>{total}</1> عنصرًا."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:688
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:707
 msgid "A count is waiting for review."
 msgstr "هناك جرد بانتظار المراجعة."
 
@@ -3771,7 +3841,7 @@ msgstr "هناك جرد بانتظار المراجعة."
 msgid "A count list is a shortlist of items you count together. Counting everything still works without one."
 msgstr "قائمة الجرد هي قائمة قصيرة بالعناصر التي تجردها معًا. ويمكنك جرد كل شيء بدونها."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:668
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:687
 msgid "A count was due on <0>{due}</0>."
 msgstr "كان موعد الجرد في <0>{due}</0>."
 
@@ -3787,11 +3857,11 @@ msgstr "يمكن أن تحتوي لوحة التحكم على {MAX_DASHBOARD_BLO
 msgid "A deal holds at most 20 items. Lower a quantity or remove a group."
 msgstr "يحتوي العرض على 20 عنصرًا كحد أقصى. خفّض كمية أو أزل مجموعة."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:865
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:915
 msgid "A delivery arrived without prices."
 msgstr "وصلت شحنة بلا أسعار."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:859
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:909
 msgid "A delivery from <0>{supplier}</0> arrived without prices."
 msgstr "وصلت شحنة من <0>{supplier}</0> بلا أسعار."
 
@@ -3819,6 +3889,8 @@ msgstr "وصل خصم في هذا الطلب إلى حد استخدامه قبل
 msgid "a discount that is no longer listed"
 msgstr "خصم لم يعد مدرجًا"
 
+#: app/components/inventory/setup-checks-panel.tsx:212
+#: app/components/inventory/used-in-section.tsx:70
 #: app/components/media-library/bulk-dish-photos.tsx:823
 msgid "A dish"
 msgstr "طبق"
@@ -4238,6 +4310,14 @@ msgstr "إعادة إرسال لمن لم يفتح الرسالة الأولى �
 msgid "A reason is required."
 msgstr "السبب مطلوب."
 
+#: app/components/inventory/setup-checks-panel.tsx:126
+msgid "A recipe"
+msgstr "وصفة"
+
+#: app/components/inventory/change-unit-dialog.tsx:423
+msgid "A recipe line"
+msgstr "سطر وصفة"
+
 #: app/utils/loyalty/loyalty-errors.ts:38
 msgid "A referral has already been claimed on this account or device."
 msgstr "تمت المطالبة بإحالة مسبقًا على هذا الحساب أو الجهاز."
@@ -4350,6 +4430,10 @@ msgstr "الضيف المسجّل الذي وافق على تلقي رسائلك
 #: app/components/menu/menu-review-card.tsx:65
 msgid "A similar dish has a choice that this one lacks."
 msgstr "هناك طبق مشابه فيه خيار ينقص هذا الطبق."
+
+#: app/components/inventory/used-in-section.tsx:69
+msgid "A size of a dish"
+msgstr "حجم من طبق"
 
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:1284
 msgid "A snapshot is taken automatically before applying so you can undo anytime in Menu History."
@@ -4522,10 +4606,6 @@ msgstr "قد يؤدي تغيير خاطئ إلى توقف وصول البريد.
 #: app/components/phone-agent/call-data.ts:135
 msgid "Abandoned"
 msgstr "متروكة"
-
-#: app/components/settings/cards/alert-settings-card.tsx:511
-#~ msgid "About {0} a day would reach you at once ({1} held for quiet hours, {2} below your threshold) in the last {3} days."
-#~ msgstr "كان سيصلك نحو {0} تنبيهًا يوميًا فورًا ({1} محتجزة بسبب ساعات الهدوء، {2} دون الحد الذي حددته) خلال آخر {3} أيام."
 
 #: app/components/settings/cards/alert-settings-card.tsx:516
 msgid "About {perDay} a day would reach you at once ({held} held for quiet hours, {belowThreshold} below your threshold) in the last {days} days."
@@ -4833,7 +4913,7 @@ msgstr "أضف (دقائق)"
 
 #: app/components/inventory/counting-screen.tsx:804
 #: app/components/inventory/log-waste-dialog.tsx:327
-#: app/components/inventory/recipe-lines.tsx:204
+#: app/components/inventory/recipe-lines.tsx:238
 #: app/components/inventory/record-batch-dialog.tsx:248
 msgid "Add {fraction}"
 msgstr "إضافة {fraction}"
@@ -4892,10 +4972,6 @@ msgstr "إضافة قائمة مهام…"
 #: app/components/locations/checkout-settings-cards.tsx:208
 msgid "Add a choice"
 msgstr "إضافة خيار"
-
-#: app/components/settings/cards/organization/site-card.tsx:473
-#~ msgid "Add a CNAME record for your domain (or subdomain) pointing to:"
-#~ msgstr "أضف سجل CNAME لنطاقك (أو نطاقك الفرعي) يشير إلى:"
 
 #: app/components/discounts/codes-editor.tsx:195
 msgid "Add a code"
@@ -5053,7 +5129,7 @@ msgstr "أضف رقم هاتف أو بريدًا إلكترونيًا."
 msgid "Add a photo"
 msgstr "إضافة صورة"
 
-#: app/utils/inventory/inventory-errors.ts:201
+#: app/utils/inventory/inventory-errors.ts:228
 msgid "Add a photo of the invoice first."
 msgstr "أضف صورة للفاتورة أولًا."
 
@@ -5070,6 +5146,10 @@ msgstr "إضافة منصب"
 #: app/components/staff/positions-tab.tsx:445
 msgid "Add a position on the Positions page first."
 msgstr "أضف منصبًا من صفحة المناصب أولًا."
+
+#: app/components/inventory/group-dialog.tsx:364
+msgid "Add a product"
+msgstr "أضف منتجًا"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:519
 msgid "Add a question"
@@ -5313,7 +5393,7 @@ msgstr "إضافة كطبق جديد"
 msgid "Add at least one email block"
 msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
 
-#: app/utils/inventory/inventory-errors.ts:146
+#: app/utils/inventory/inventory-errors.ts:173
 msgid "Add at least one ingredient, or use Clear recipe."
 msgstr "أضف مكوّنًا واحدًا على الأقل، أو استخدم «مسح الوصفة»."
 
@@ -5321,7 +5401,7 @@ msgstr "أضف مكوّنًا واحدًا على الأقل، أو استخدم
 msgid "Add at least one ingredient."
 msgstr "أضف مكوّنًا واحدًا على الأقل."
 
-#: app/utils/inventory/inventory-errors.ts:83
+#: app/utils/inventory/inventory-errors.ts:110
 msgid "Add at least one item before you send this order."
 msgstr "أضف عنصرًا واحدًا على الأقل قبل إرسال هذا الطلب."
 
@@ -5503,7 +5583,7 @@ msgstr "إضافة صورة"
 msgid "Add images"
 msgstr "إضافة صور"
 
-#: app/components/inventory/recipe-lines.tsx:313
+#: app/components/inventory/recipe-lines.tsx:347
 msgid "Add ingredient"
 msgstr "إضافة مكوّن"
 
@@ -5513,8 +5593,8 @@ msgstr "إضافة مكوّن"
 #: app/components/menu/category-form.tsx:498
 #: app/components/menu/menu-sortable-category.tsx:179
 #: app/components/menu/modifier-form.tsx:1352
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:209
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:365
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:212
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:389
 msgid "Add item"
 msgstr "إضافة عنصر"
 
@@ -5539,8 +5619,8 @@ msgstr "إضافة فرع"
 
 #: app/components/workspace-breadcrumb.tsx:99
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:243
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:232
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:371
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:235
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:395
 msgid "Add many items"
 msgstr "إضافة عدة عناصر"
 
@@ -5999,7 +6079,7 @@ msgstr "أضف حتى خمس صور عالية الدقة. تُستخدم الص
 msgid "Add URL"
 msgstr "إضافة رابط"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:353
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:377
 msgid "Add what you buy and use, one at a time or many at once. You will see how much you have, where it is kept and what it is worth."
 msgstr "أضف ما تشتريه وتستخدمه، عنصرًا عنصرًا أو عدة عناصر دفعة واحدة. سترى كم لديك وأين يُحفظ وكم تبلغ قيمته."
 
@@ -6253,7 +6333,7 @@ msgid "Adjust points"
 msgstr "تعديل النقاط"
 
 #: app/components/inventory/adjust-stock-dialog.tsx:78
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:311
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:377
 msgid "Adjust stock"
 msgstr "تعديل المخزون"
 
@@ -6262,7 +6342,7 @@ msgid "Adjust your search query to show more."
 msgstr "اضبط استعلام البحث لعرض المزيد."
 
 #: app/utils/gift-cards/labels.ts:21
-#: app/utils/inventory/labels.ts:80
+#: app/utils/inventory/labels.ts:87
 #: app/utils/loyalty/loyalty-labels.ts:98
 msgid "Adjusted"
 msgstr "تعديل"
@@ -6520,7 +6600,7 @@ msgid "All active reservations have assigned tables."
 msgstr "جميع الحجوزات النشطة لديها طاولات معينة."
 
 #: app/components/reservations/host-filters.tsx:93
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:172
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:175
 msgid "All areas"
 msgstr "جميع المناطق"
 
@@ -6537,7 +6617,7 @@ msgstr "كل المكالمات"
 msgid "All cards"
 msgstr "كل البطاقات"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:162
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:165
 msgid "All categories"
 msgstr "كل التصنيفات"
 
@@ -6633,8 +6713,8 @@ msgstr "ستُحذف جميع الرسائل في هذه القناة نهائي
 msgid "All none left"
 msgstr "الكل لم يتبقَّ منه شيء"
 
-#: app/components/ui/notification-bell.tsx:644
-#: app/components/ui/notification-bell.tsx:744
+#: app/components/ui/notification-bell.tsx:668
+#: app/components/ui/notification-bell.tsx:768
 msgid "All Notifications"
 msgstr "جميع الإشعارات"
 
@@ -6916,7 +6996,7 @@ msgstr "هل لديك حساب بالفعل؟"
 msgid "Already paid"
 msgstr "مدفوعة مسبقًا"
 
-#: app/components/ui/notification-bell.tsx:472
+#: app/components/ui/notification-bell.tsx:496
 msgid "Already read"
 msgstr "تمت قراءتها بالفعل"
 
@@ -7008,8 +7088,8 @@ msgstr "كهرماني"
 #: app/components/gift-cards/gift-card-dialogs.tsx:480
 #: app/components/inventory/adjust-stock-dialog.tsx:221
 #: app/components/inventory/log-waste-dialog.tsx:316
-#: app/components/inventory/recipe-lines.tsx:191
-#: app/components/inventory/recipe-lines.tsx:207
+#: app/components/inventory/recipe-lines.tsx:225
+#: app/components/inventory/recipe-lines.tsx:241
 #: app/components/inventory/record-batch-dialog.tsx:262
 #: app/components/marketing/audience-builder.tsx:236
 #: app/components/menu/menu-bulk-edit-sheet.tsx:517
@@ -7080,9 +7160,13 @@ msgstr "الكمية المتبقية"
 msgid "Amount left of {name}"
 msgstr "الكمية المتبقية من {name}"
 
-#: app/components/inventory/recipe-lines.tsx:189
+#: app/components/inventory/recipe-lines.tsx:223
 msgid "Amount of the new ingredient"
 msgstr "كمية المكوّن الجديد"
+
+#: app/components/inventory/group-dialog.tsx:324
+msgid "Amount of this product"
+msgstr "كمية هذا المنتج"
 
 #: app/components/discounts/discount-form.tsx:609
 #: app/components/discounts/discount-form.tsx:1242
@@ -7192,9 +7276,13 @@ msgstr "توضيح بتسجيلات افتراضية. الأرقام الحقي�
 msgid "An import is already running for this organization. Review or cancel it before starting another."
 msgstr "هناك عملية استيراد قيد التشغيل بالفعل لهذه المنشأة. راجعها أو ألغها قبل بدء عملية أخرى."
 
-#: app/utils/inventory/inventory-errors.ts:140
+#: app/utils/inventory/inventory-errors.ts:167
 msgid "An ingredient made in house uses this dish or itself, so it loops. Remove that ingredient."
 msgstr "أحد المكوّنات المصنوعة داخليًا يستخدم هذا الطبق أو نفسه، فتدور الوصفة في حلقة. أزل هذا المكوّن."
+
+#: app/utils/inventory/alert-copy.ts:62
+msgid "An ingredient ran out. Open Today to undo it."
+msgstr "نفد أحد المكونات. افتح «اليوم» للتراجع."
 
 #: app/components/hiring/candidate-parts.tsx:431
 msgid "An interview was cancelled"
@@ -7227,6 +7315,10 @@ msgstr "وصلت دفعة إلكترونية لهذا الحساب. الإلغا
 #: app/components/qr/open-tabs.tsx:752
 msgid "An online payment arrived that does not match this tab. Closing does not refund it: refund or keep it in your payment dashboard, and take only what is still owed at the counter."
 msgstr "وصلت دفعة إلكترونية لا تطابق هذا الحساب. الإغلاق لا يستردها: استردها أو احتفظ بها من لوحة المدفوعات، وخذ عند الكاونتر المبلغ المتبقي فقط."
+
+#: app/components/inventory/used-in-section.tsx:71
+msgid "An option"
+msgstr "خيار"
 
 #: app/routes/mcp+/authorize.tsx:346
 msgid "An unregistered application is requesting access to your organization data"
@@ -7751,9 +7843,9 @@ msgstr "العربية"
 #: app/components/reservations/policies/policies-screen.tsx:558
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:265
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:454
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:220
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:323
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:695
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:250
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:403
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:862
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:370
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:234
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:404
@@ -7782,7 +7874,7 @@ msgstr "أرشفة {name}؟"
 msgid "Archive policy"
 msgstr "أرشفة السياسة"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:187
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:206
 msgid "Archive supplier"
 msgstr "أرشفة المورّد"
 
@@ -7802,7 +7894,7 @@ msgstr "أرشفة قائمة الجرد هذه؟"
 msgid "Archive this experience?"
 msgstr "أرشفة هذه التجربة؟"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:671
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:816
 msgid "Archive this item?"
 msgstr "أرشفة هذا العنصر؟"
 
@@ -7822,7 +7914,7 @@ msgstr "أرشفة هذه المطبوعة؟"
 msgid "Archive this storage area?"
 msgstr "أرشفة منطقة التخزين هذه؟"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:201
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:231
 msgid "Archive this supplier?"
 msgstr "هل تريد أرشفة هذا المورّد؟"
 
@@ -7837,7 +7929,7 @@ msgstr "مؤرشف"
 #: app/components/discounts/discount-history.tsx:52
 #: app/components/settings/cards/organization/customer-app-card.tsx:58
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:428
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:348
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:73
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/media.tsx:1569
@@ -8352,7 +8444,7 @@ msgstr "رحلة دورة حياة مؤتمتة أُنشئت عبر المُنش
 #: app/components/pos/terminal-profiles.tsx:396
 #: app/components/pos/terminal-profiles.tsx:402
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:386
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:583
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:703
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:571
 #: app/utils/discounts/labels.ts:140
 msgid "Automatic"
@@ -8506,6 +8598,10 @@ msgstr "الأدوات المتاحة"
 #: app/components/dashboard/blocks/today-block.tsx:402
 msgid "Average <0>{averageText}</0>"
 msgstr "المتوسط <0>{averageText}</0>"
+
+#: app/components/inventory/change-unit-dialog.tsx:406
+msgid "Average cost per unit"
+msgstr "متوسط التكلفة لكل وحدة"
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:531
 msgid "Average order value"
@@ -8899,7 +8995,7 @@ msgstr "خلف الكواليس"
 msgid "Bell"
 msgstr "جرس"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:490
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:509
 msgid "Below the amount you order at"
 msgstr "أقل من الكمية التي تطلب عندها"
 
@@ -9242,7 +9338,7 @@ msgstr "يفضل مقصورة، كرسي أطفال..."
 msgid "Both photos got the same share of orders."
 msgstr "حصلت الصورتان على الحصة نفسها من الطلبات."
 
-#: app/utils/inventory/labels.ts:88
+#: app/utils/inventory/labels.ts:95
 msgid "Bought"
 msgstr "مشترى"
 
@@ -9689,7 +9785,7 @@ msgstr "الشراء بكمية مع خصم على كمية يحتاج إلى ع
 msgid "Buyer and recipient"
 msgstr "المشتري والمستلم"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:496
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:607
 msgid "Buying"
 msgstr "الشراء"
 
@@ -10050,9 +10146,13 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/hiring/interview-dialog.tsx:279
 #: app/components/hiring/job-editor.tsx:961
 #: app/components/inventory/adjust-stock-dialog.tsx:320
+#: app/components/inventory/change-unit-dialog.tsx:309
 #: app/components/inventory/confirm-prices-dialog.tsx:277
+#: app/components/inventory/group-dialog.tsx:381
 #: app/components/inventory/item-form.tsx:284
 #: app/components/inventory/log-waste-dialog.tsx:443
+#: app/components/inventory/merge-dialog.tsx:379
+#: app/components/inventory/merge-dialog.tsx:558
 #: app/components/inventory/order-panels.tsx:567
 #: app/components/inventory/prep-levels-panel.tsx:296
 #: app/components/inventory/recipe-section.tsx:673
@@ -10182,8 +10282,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/website/publish-controls.tsx:511
 #: app/components/website/publish-controls.tsx:623
 #: app/components/website/translate-provider.tsx:258
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:212
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:687
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:242
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:854
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:255
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:269
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:362
@@ -10944,6 +11044,12 @@ msgstr "تغيير الوقت أو التفاصيل"
 msgid "Change undone"
 msgstr "تم التراجع عن التغيير"
 
+#: app/components/inventory/change-unit-dialog.tsx:186
+#: app/components/inventory/change-unit-dialog.tsx:317
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:385
+msgid "Change unit"
+msgstr "تغيير الوحدة"
+
 #: app/components/phone-agent/voice-picker.tsx:677
 msgid "Change voice"
 msgstr "تغيير الصوت"
@@ -11029,6 +11135,10 @@ msgstr "قد يؤدي تغيير عدد الأشخاص إلى تغيير وقت 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3059
 msgid "Changing this URL will break existing links to the page."
 msgstr "تغيير هذا الرابط سيؤدي إلى تعطيل الروابط الحالية لهذه الصفحة."
+
+#: app/components/inventory/change-unit-dialog.tsx:317
+msgid "Changing…"
+msgstr "جارٍ التغيير…"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:273
 #: app/components/customers/person-marketing-card.tsx:210
@@ -11388,6 +11498,15 @@ msgstr "تحقق من تطبيق المصادقة الثنائية"
 msgid "Check your email"
 msgstr "تحقق من بريدك الإلكتروني"
 
+#: app/components/inventory/setup-checks-panel.tsx:293
+msgid "Check your setup"
+msgstr "راجع إعداداتك"
+
+#. placeholder {0}: findings.length
+#: app/components/inventory/setup-checks-panel.tsx:291
+msgid "Check your setup ({0})"
+msgstr "راجع إعداداتك ({0})"
+
 #: app/components/website/domain/forwarding-panel.tsx:55
 #: app/components/website/domain/site-domains-card.tsx:122
 #: app/components/website/domain/site-domains-card.tsx:324
@@ -11437,6 +11556,10 @@ msgstr "جارٍ التحقق من الأوقات..."
 #: app/components/menu/delete-effects.tsx:444
 msgid "Checking what uses this…"
 msgstr "جارٍ التحقق مما يستخدم هذا…"
+
+#: app/components/inventory/merge-dialog.tsx:314
+msgid "Checking what would move…"
+msgstr "جارٍ التحقق مما سينتقل…"
 
 #: app/components/discounts/message-impact.tsx:439
 msgid "Checking your messages…"
@@ -11582,7 +11705,7 @@ msgstr "اختر تاريخًا."
 msgid "Choose a design, what it prints as and a name."
 msgstr "اختر تصميمًا ونوع المطبوعة واسمًا."
 
-#: app/components/inventory/recipe-lines.tsx:125
+#: app/components/inventory/recipe-lines.tsx:159
 msgid "Choose a different ingredient to replace."
 msgstr "اختر مكوّنًا آخر ليتم استبداله."
 
@@ -11821,13 +11944,13 @@ msgstr "اختر جمهوراً"
 msgid "Choose an existing menu..."
 msgstr "اختر قائمة موجودة..."
 
-#: app/components/inventory/recipe-lines.tsx:151
-#: app/components/inventory/recipe-lines.tsx:178
+#: app/components/inventory/recipe-lines.tsx:185
+#: app/components/inventory/recipe-lines.tsx:212
 msgid "Choose an ingredient"
 msgstr "اختر مكوّنًا"
 
-#: app/components/inventory/recipe-lines.tsx:152
-#: app/components/inventory/recipe-lines.tsx:179
+#: app/components/inventory/recipe-lines.tsx:186
+#: app/components/inventory/recipe-lines.tsx:213
 msgid "Choose an ingredient."
 msgstr "اختر مكوّنًا."
 
@@ -12078,7 +12201,7 @@ msgstr "اختر التاريخ الأول."
 msgid "Choose the free item."
 msgstr "اختر العنصر المجاني."
 
-#: app/components/inventory/recipe-lines.tsx:122
+#: app/components/inventory/recipe-lines.tsx:156
 msgid "Choose the ingredient it replaces"
 msgstr "اختر المكوّن الذي يستبدله"
 
@@ -12349,7 +12472,7 @@ msgstr "مسح المسودة"
 #: app/components/hiring/applicants-page.tsx:443
 #: app/components/reservations/host-filters.tsx:114
 #: app/components/staff/timesheets/timesheets-page.tsx:805
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:346
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:370
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:586
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:441
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:436
@@ -12435,10 +12558,6 @@ msgstr "انقر حفظ وأعد تشغيل Cursor"
 msgid "Click the first day, then the last day. For one day, click it and close."
 msgstr "انقر على اليوم الأول ثم على اليوم الأخير. ليوم واحد، انقر عليه ثم أغلق."
 
-#: app/components/media-library/focal-point-editor.tsx:91
-#~ msgid "Click the part of the dish that matters. Website, QR and app photos keep it in view."
-#~ msgstr "انقر على الجزء المهم من الطبق. ستُبقيه صور الموقع ورمز QR والتطبيق ظاهرًا."
-
 #: app/components/menu/drop-wizard/drop-form.tsx:729
 msgid "Click to choose a cover image"
 msgstr "انقر لاختيار صورة الغلاف"
@@ -12465,10 +12584,6 @@ msgstr "نقر: الطلبات التي تمت بعد أن فتح الضيف ر�
 #: app/routes/_app+/$orgSlug_+/website+/seo._index.tsx:579
 msgid "Clicks"
 msgstr "النقرات"
-
-#: app/components/marketing/short-links-screen.tsx:99
-#~ msgid "Clicks: {0} this month"
-#~ msgstr "النقرات: {0} هذا الشهر"
 
 #: app/components/marketing/short-links-screen.tsx:101
 msgid "Clicks: {clicksThisMonth} this month"
@@ -12775,10 +12890,6 @@ msgstr "Closing buffer (minutes)"
 msgid "Closing time must be after opening time."
 msgstr "يجب أن يكون وقت الإغلاق بعد وقت الفتح."
 
-#: app/components/settings/cards/organization/site-card.tsx:483
-#~ msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
-#~ msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
-
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:165
 #: app/components/discounts/codes-editor.tsx:109
 #: app/components/locations/location-order-alerts-card.tsx:326
@@ -12996,9 +13107,9 @@ msgstr "مقارنة قبل وبعد"
 msgid "Compare wages as a share of sales across your workplaces."
 msgstr "قارن الأجور كنسبة من المبيعات بين أماكن العمل."
 
-#: app/components/inventory/stock-list.tsx:158
-#: app/components/inventory/stock-list.tsx:207
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:350
+#: app/components/inventory/stock-list.tsx:175
+#: app/components/inventory/stock-list.tsx:240
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:437
 msgid "Compared with fill up to"
 msgstr "مقارنة بحد الامتلاء"
 
@@ -13214,7 +13325,7 @@ msgstr "تأكيد كلمة المرور"
 #: app/components/inventory/confirm-prices-dialog.tsx:128
 #: app/components/inventory/confirm-prices-dialog.tsx:285
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:261
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:875
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:925
 msgid "Confirm prices"
 msgstr "تأكيد الأسعار"
 
@@ -13506,10 +13617,6 @@ msgstr "الحسابات المتصلة"
 msgid "Connected Channels"
 msgstr "القنوات المتصلة"
 
-#: app/components/settings/cards/organization/site-card.tsx:438
-#~ msgid "Connected domain"
-#~ msgstr "النطاق المرتبط"
-
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4797
 msgid "Connected form"
 msgstr "النموذج المرتبط"
@@ -13615,7 +13722,7 @@ msgid "Contact form"
 msgstr "نموذج اتصال"
 
 #: app/components/inventory/supplier-form.tsx:207
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:238
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:268
 msgid "Contact person"
 msgstr "الشخص المسؤول"
 
@@ -13687,7 +13794,7 @@ msgid "Continue and update these messages"
 msgstr "المتابعة وتحديث هذه الرسائل"
 
 #: app/components/inventory/order-panels.tsx:213
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:763
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:782
 msgid "Continue draft"
 msgstr "متابعة المسودة"
 
@@ -13965,8 +14072,8 @@ msgstr "تصحيح"
 
 #: app/components/inventory/recipe-panel.tsx:450
 #: app/components/inventory/waste-bars.tsx:40
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:262
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:418
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:328
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:529
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:624
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:272
 msgid "Cost"
@@ -14000,6 +14107,10 @@ msgstr "تكلفة التحضير (مُدخلة يدويًا)"
 #: app/components/inventory/recipe-section.tsx:475
 msgid "Cost to make one (typed)"
 msgstr "تكلفة تحضير واحد (مُدخلة يدويًا)"
+
+#: app/components/inventory/group-sheet.tsx:139
+msgid "Costed at the first product's price."
+msgstr "تُحتسب التكلفة بسعر المنتج الأول."
 
 #: app/components/staff/schedule/week-grid.tsx:588
 msgid "Costs are estimates from pay rates and scheduled hours. They are not payroll."
@@ -14151,17 +14262,9 @@ msgstr "تعذّر حذف الملف التعريفي."
 msgid "Could not delete this call. Try again."
 msgstr "تعذّر حذف هذه المكالمة. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:314
-#~ msgid "Could not download cleaned image."
-#~ msgstr "تعذر تنزيل الصورة المنظفة."
-
 #: app/components/phone-agent/call-detail-sheet.tsx:316
 msgid "Could not erase this caller's data. Try again."
 msgstr "تعذّر مسح بيانات هذا المتصل. حاول مرة أخرى."
-
-#: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:304
-#~ msgid "Could not fetch cleaned image."
-#~ msgstr "تعذر جلب الصورة المنظفة."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:601
 msgid "Could not finish the reservation."
@@ -14501,9 +14604,14 @@ msgstr "تعذّر التراجع. أعد تحميل الصفحة وحاول م�
 #: app/components/locations/ordering-settings-cards.tsx:185
 #: app/components/workspace-breadcrumb.tsx:124
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:316
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:936
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:986
 msgid "Count"
 msgstr "الجرد"
+
+#. placeholder {0}: item.name
+#: app/components/inventory/change-unit-dialog.tsx:189
+msgid "Count <0>{0}</0> in a different unit. Stock, prices per unit and recipes are converted for you. Your history is not changed."
+msgstr "عُدَّ <0>{0}</0> بوحدة مختلفة. نحوّل المخزون وأسعار الوحدات والوصفات لك. لا يتغير سجلّك السابق."
 
 #: app/components/roles/tenant-role-access-manager.tsx:564
 msgid "Count and manage stock"
@@ -14532,7 +14640,7 @@ msgstr "تم حفظ قائمة الجرد."
 #: app/components/workspace-breadcrumb.tsx:98
 #: app/routes/_app+/$orgSlug_+/inventory+/settings.tsx:409
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:111
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:244
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:256
 msgid "Count lists"
 msgstr "قوائم الجرد"
 
@@ -14564,7 +14672,7 @@ msgstr "عدّ المخزون وسجّل الهدر واستلم التوريد�
 msgid "Count what you have now. Every number after this starts here."
 msgstr "اجرد ما لديك الآن. كل رقم بعد ذلك يبدأ من هنا."
 
-#: app/utils/inventory/labels.ts:79
+#: app/utils/inventory/labels.ts:86
 msgid "Counted"
 msgstr "تم جرده"
 
@@ -15267,7 +15375,7 @@ msgstr "إكراميات البطاقات"
 msgid "Credit tips: {from} to {to}"
 msgstr "إكراميات البطاقات: من {from} إلى {to}"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:277
+#: app/components/settings/cards/notification-preferences-card.tsx:278
 msgid "Critical"
 msgstr "حرجة"
 
@@ -15866,6 +15974,11 @@ msgstr "أيام قبل التسليم"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:326
 msgid "Days before the birthday"
 msgstr "الأيام قبل عيد الميلاد"
+
+#: app/components/inventory/stock-list.tsx:113
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:464
+msgid "Days left"
+msgstr "الأيام المتبقية"
 
 #: app/components/staff/schedule/availability-sheet.tsx:281
 msgid "Days left on \"No preference\" go back to open."
@@ -16558,7 +16671,7 @@ msgid "Deliver queued events"
 msgstr "تسليم الأحداث المنتظرة"
 
 #: app/components/print/print-order-labels.ts:17
-#: app/utils/inventory/labels.ts:76
+#: app/utils/inventory/labels.ts:83
 msgid "Delivered"
 msgstr "تم التسليم"
 
@@ -16579,7 +16692,7 @@ msgstr "التوريدات والطلبات والموردون الذين تشت
 msgid "Deliveroo"
 msgstr "Deliveroo"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:242
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:272
 msgid "Delivers on"
 msgstr "يسلّم في"
 
@@ -16598,7 +16711,7 @@ msgstr "يسلّم في"
 #: app/components/workspace-breadcrumb.tsx:125
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:145
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:164
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:940
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:990
 #: app/routes/_app+/$orgSlug_+/orders.tsx:362
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1064
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:448
@@ -16608,7 +16721,7 @@ msgstr "يسلّم في"
 msgid "Delivery"
 msgstr "التوصيل"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:938
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:988
 msgid "Delivery · {supplier}"
 msgstr "شحنة · {supplier}"
 
@@ -17519,10 +17632,6 @@ msgstr "DNS تديره Menuza"
 msgid "DNS records"
 msgstr "سجلات DNS"
 
-#: app/components/settings/cards/organization/site-card.tsx:470
-#~ msgid "DNS setup"
-#~ msgstr "إعداد DNS"
-
 #: app/components/website/domain/provider-steps.tsx:46
 msgid "Do not change or delete any MX or TXT records: they carry the email for this domain."
 msgstr "لا تغيّر أو تحذف أي سجلات MX أو TXT: فهي تحمل البريد الإلكتروني لهذا النطاق."
@@ -18403,7 +18512,7 @@ msgstr "إلغاء الكسب"
 #: app/components/staff/timesheets/review-queue.tsx:439
 #: app/components/website/domain/records-panel.tsx:285
 #: app/components/workspace-breadcrumb.tsx:24
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:303
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:369
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:469
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:391
 #: app/routes/_app+/$orgSlug_+/marketing+/audiences._index.tsx:433
@@ -18524,6 +18633,11 @@ msgstr "تعديل مناطق الطعام والطاولات والدمج وف�
 #: app/components/menu/drop-wizard/drop-form.tsx:488
 msgid "Edit Drop"
 msgstr "تعديل الطرح"
+
+#: app/components/inventory/group-dialog.tsx:212
+#: app/components/inventory/group-sheet.tsx:119
+msgid "Edit group"
+msgstr "تعديل المجموعة"
 
 #: app/components/roles/tenant-role-access-manager.tsx:484
 msgid "Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook."
@@ -18793,7 +18907,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: app/components/website/link-inspector.tsx:368
 #: app/components/website/link-inspector.tsx:468
 #: app/components/website/restaurant-editors.tsx:204
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:240
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:270
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:188
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:237
 #: app/routes/_auth+/login.tsx:828
@@ -19100,10 +19214,6 @@ msgstr "تنتهي"
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:712
 msgid "Ends"
 msgstr "تنتهي"
-
-#: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:396
-#~ msgid "ends {0} at the latest"
-#~ msgstr "ينتهي {0} كحد أقصى"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:854
 msgid "Ends {end}"
@@ -19576,7 +19686,7 @@ msgstr "أدخل مبلغًا أكبر من صفر، مثل 5.00."
 #: app/components/gift-cards/gift-card-dialogs.tsx:312
 #: app/components/inventory/adjust-stock-dialog.tsx:258
 #: app/components/inventory/log-waste-dialog.tsx:358
-#: app/components/inventory/recipe-lines.tsx:288
+#: app/components/inventory/recipe-lines.tsx:322
 #: app/components/inventory/record-batch-dialog.tsx:300
 msgid "Enter an amount above zero."
 msgstr "أدخل كمية أكبر من الصفر."
@@ -19664,6 +19774,10 @@ msgstr "أدخل قيمة بين {min} و{max} ساعة."
 #: app/components/staff/labor-policy-editor.tsx:324
 msgid "Enter between {min} and {max} minutes."
 msgstr "أدخل قيمة بين {min} و{max} دقيقة."
+
+#: app/components/inventory/change-unit-dialog.tsx:280
+msgid "Enter both amounts as numbers above zero."
+msgstr "أدخل الكميتين كرقمين أكبر من صفر."
 
 #: app/components/roles/tenant-role-access-manager.tsx:174
 msgid "Enter counted cash and close an open cash drawer shift from the dashboard when a till is unavailable."
@@ -19965,6 +20079,10 @@ msgstr "طبق رئيسي"
 #: app/components/pos/zatca-settings.tsx:287
 msgid "Environment"
 msgstr "البيئة"
+
+#: app/components/inventory/change-unit-dialog.tsx:262
+msgid "equals"
+msgstr "تساوي"
 
 #: app/components/customers/person-profile-screen.tsx:1150
 msgid "Erase {name}?"
@@ -21206,8 +21324,9 @@ msgstr "اسم الملف"
 msgid "Fill in the fields above to see an example."
 msgstr "املأ الحقول أعلاه لعرض مثال."
 
+#: app/components/inventory/change-unit-dialog.tsx:441
 #: app/components/inventory/item-form.tsx:582
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:367
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:454
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:484
 msgid "Fill up to"
 msgstr "املأ حتى"
@@ -21220,11 +21339,11 @@ msgstr "املأ حتى <0>{target}</0> · لديك <1>{have}</1>"
 msgid "Fill up to must be at least the amount to order at."
 msgstr "يجب ألا يقل حد الامتلاء عن الكمية التي تطلب عندها."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:292
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:304
 msgid "Filter by area"
 msgstr "تصفية حسب المنطقة"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:284
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:296
 msgid "Filter by category"
 msgstr "تصفية حسب التصنيف"
 
@@ -21341,6 +21460,15 @@ msgstr "إنهاء وإخلاء الطاولة"
 msgid "Finish onboarding"
 msgstr "إنهاء الإعداد"
 
+#: app/utils/inventory/inventory-errors.ts:47
+msgid "Finish the open count, transfer or order that uses this item first."
+msgstr "أنهِ أولًا الجرد أو النقل أو الطلب المفتوح الذي يستخدم هذا الصنف."
+
+#: app/components/inventory/change-unit-dialog.tsx:370
+#: app/components/inventory/merge-dialog.tsx:340
+msgid "Finish these first"
+msgstr "أنهِ هذه أولًا"
+
 #: app/components/menu/menu-health-card.tsx:671
 msgid "Finish these to help guests choose and order."
 msgstr "أكمل هذه البنود لتساعد الضيوف على الاختيار والطلب."
@@ -21413,6 +21541,11 @@ msgstr "أول ما يقوله الذكاء الاصطناعي"
 msgid "First visit"
 msgstr "الزيارة الأولى"
 
+#. placeholder {0}: member.name
+#: app/components/inventory/group-dialog.tsx:277
+msgid "First: {0}"
+msgstr "الأول: {0}"
+
 #: app/utils/reservations/labels.ts:112
 msgid "Fish Allergy"
 msgstr "حساسية السمك"
@@ -21449,6 +21582,7 @@ msgid "Fix in photo studio"
 msgstr "إصلاح في استوديو الصور"
 
 #: app/components/dashboard/blocks/attention-block.tsx:560
+#: app/components/inventory/setup-checks-panel.tsx:282
 msgid "Fix it"
 msgstr "أصلحه"
 
@@ -21480,6 +21614,10 @@ msgstr "أصلح المشكلات في مسار المكالمة قبل النش
 msgid "Fix the rows listed below first. Nothing was changed."
 msgstr "أصلح الصفوف المذكورة أدناه أولًا. لم يتغير شيء."
 
+#: app/components/inventory/setup-checks-panel.tsx:249
+msgid "Fix the size"
+msgstr "صحّح الحجم"
+
 #: app/components/dashboard/blocks/attention-block.tsx:261
 msgid "Fix the top issues to reach 60 or more."
 msgstr "أصلح أهم المشكلات للوصول إلى 60 أو أكثر."
@@ -21508,6 +21646,10 @@ msgstr "مبلغ ثابت ({currency})"
 #: app/components/loyalty/reward-dialog.tsx:558
 msgid "Fixed amount off"
 msgstr "خصم بمبلغ ثابت"
+
+#: app/components/inventory/setup-checks-panel.tsx:113
+msgid "Fixed."
+msgstr "تم الإصلاح."
 
 #: app/components/menu/menu-bulk-edit-sheet.tsx:633
 msgid "Flag"
@@ -21630,7 +21772,7 @@ msgstr "الخطوط برمجيات مرخّصة. يمكن لشركات الخط
 #: app/components/inventory/food-cost-column.tsx:106
 #: app/components/inventory/recipe-panel.tsx:461
 #: app/components/inventory/recipe-section.tsx:773
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:537
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:556
 msgid "Food cost"
 msgstr "تكلفة الطعام"
 
@@ -22046,10 +22188,6 @@ msgstr "من التقويم"
 msgid "From the paper invoice. VAT is kept apart from prices."
 msgstr "من الفاتورة الورقية. تُحفظ ضريبة القيمة المضافة بمعزل عن الأسعار."
 
-#: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:330
-#~ msgid "From your calendar \"{0}\". Change its title and time in Google Calendar."
-#~ msgstr ""
-
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:331
 msgid "From your calendar {sourceLabel}. Change its title and time in Google Calendar."
 msgstr "من تقويمك {sourceLabel}. غيّر عنوانها ووقتها في تقويم جوجل."
@@ -22187,10 +22325,6 @@ msgstr "إنشاء بالذكاء الاصطناعي"
 #: app/components/locations/location-website-card.tsx:98
 msgid "Generated from the name, cuisine and area"
 msgstr "يُنشأ من الاسم والمطبخ والمنطقة"
-
-#: app/routes/_app+/$orgSlug_+/website+/legal.tsx:438
-#~ msgid "Generated in every site language: {0}. Publish a page to link it from the footer, checkout, booking, job applications and sign-in."
-#~ msgstr "تُنشأ بكل لغات الموقع: {0}. انشر الصفحة لربطها من التذييل وإتمام الطلب والحجز وطلبات التوظيف وتسجيل الدخول."
 
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:435
 msgid "Generated in every site language: {localeNames}. Publish a page to link it from the footer, checkout, booking, job applications and sign-in."
@@ -22444,10 +22578,6 @@ msgstr "وقت التفعيل"
 msgid "Goal"
 msgstr "الهدف"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:657
-#~ msgid "Goes live {0}"
-#~ msgstr "تُنشر {0}"
-
 #: app/components/menu/menu-schedule-card.tsx:168
 msgid "Goes live {formattedGoLiveAt}"
 msgstr "تصبح متاحة في {formattedGoLiveAt}"
@@ -22658,6 +22788,8 @@ msgid "Gross"
 msgstr "إجمالي"
 
 #: app/components/chat/chat-compose-dialog.tsx:385
+#: app/components/inventory/group-sheet.tsx:97
+#: app/components/inventory/stock-list.tsx:158
 msgid "Group"
 msgstr "مجموعة"
 
@@ -22682,11 +22814,16 @@ msgstr "تجميع حسب المنصب"
 msgid "Group conversation"
 msgstr "محادثة جماعية"
 
+#: app/components/inventory/group-dialog.tsx:188
+msgid "Group created."
+msgstr "تم إنشاء المجموعة."
+
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:310
 msgid "Group locations (a region, a franchisee) to give a team member access to the whole group, filter reports, and edit many locations from a file."
 msgstr "جمّع المواقع (منطقة أو صاحب امتياز) لمنح أحد أعضاء الفريق وصولًا إلى المجموعة كلها، وتصفية التقارير، وتعديل مواقع كثيرة من ملف."
 
 #: app/components/chat/chat-compose-dialog.tsx:297
+#: app/components/inventory/group-dialog.tsx:230
 #: app/components/menu/quick-modifier-group-sheet.tsx:321
 msgid "Group name"
 msgstr "اسم المجموعة"
@@ -22694,6 +22831,19 @@ msgstr "اسم المجموعة"
 #: app/components/menu/modifier-form.tsx:976
 msgid "Group Name (Guest-Facing)"
 msgstr "اسم المجموعة (الظاهر للعميل)"
+
+#: app/components/inventory/group-dialog.tsx:212
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:243
+msgid "Group products"
+msgstr "تجميع المنتجات"
+
+#: app/components/inventory/group-sheet.tsx:82
+msgid "Group removed. Its products are separate again."
+msgstr "أُزيلت المجموعة. عادت منتجاتها منفصلة."
+
+#: app/components/inventory/group-dialog.tsx:188
+msgid "Group saved."
+msgstr "تم حفظ المجموعة."
 
 #: app/components/chat/chat-view.tsx:629
 msgid "Group settings"
@@ -23388,6 +23538,10 @@ msgstr "مخفي عن الظهور العام. مناسب للطروحات ال�
 msgid "Hidden from search until it has an introduction"
 msgstr "مخفية من البحث حتى تُكتب لها مقدمة"
 
+#: app/components/inventory/setup-checks-panel.tsx:113
+msgid "Hidden until it changes."
+msgstr "مخفي حتى يتغير."
+
 #: app/components/phone-agent/summary-card.tsx:50
 #: app/components/phone-agent/test-call-phone.tsx:319
 #: app/components/qr/open-tabs.tsx:1125
@@ -23554,7 +23708,7 @@ msgstr "جارٍ التوظيف…"
 #: app/components/website/branding-panel.tsx:589
 #: app/components/website/publish-controls.tsx:181
 #: app/routes/_app+/$orgSlug_+/gift-cards+/$cardId.tsx:224
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:548
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:668
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:143
 #: app/routes/_app+/$orgSlug_+/menu+/history.tsx:130
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:7167
@@ -23855,6 +24009,10 @@ msgstr "مدة بقاء المجموعات من كل حجم، من الجلوس 
 #: ../../packages/reports/src/ui/report-labels.ts:141
 msgid "How long waitlist parties waited before they were seated over the last 7 days."
 msgstr "مدة انتظار مجموعات قائمة الانتظار قبل جلوسها خلال آخر 7 أيام."
+
+#: app/components/inventory/change-unit-dialog.tsx:245
+msgid "How many"
+msgstr "كم العدد"
 
 #: app/components/inventory/record-delivery-screen.tsx:1242
 msgid "How many {packName}"
@@ -24499,17 +24657,21 @@ msgstr "معلومات"
 msgid "info or *"
 msgstr "info أو *"
 
-#: app/components/inventory/recipe-lines.tsx:160
+#: app/components/inventory/recipe-lines.tsx:194
 msgid "Ingredient"
 msgstr "المكوّن"
 
-#: app/components/inventory/recipe-lines.tsx:96
+#: app/components/inventory/recipe-lines.tsx:127
 msgid "Ingredient {rowNumber}"
 msgstr "المكوّن {rowNumber}"
 
 #: app/components/inventory/recipe-panel.tsx:506
 msgid "Ingredient effect"
 msgstr "تأثير المكوّنات"
+
+#: app/components/inventory/group-sheet.tsx:94
+msgid "Ingredient group"
+msgstr "مجموعة مكونات"
 
 #: app/components/inventory/recipe-panel.tsx:136
 msgid "Ingredients and cost"
@@ -24570,10 +24732,6 @@ msgstr "يتطلب إنستغرام صورة."
 #: app/components/social/social-labels.ts:66
 msgid "Instagram needs at least one image."
 msgstr "يتطلب إنستغرام صورة واحدة على الأقل."
-
-#: app/components/social/post-composer.tsx:293
-#~ msgid "Instagram needs at least one image. Several images become a carousel."
-#~ msgstr "يتطلب إنستغرام صورة واحدة على الأقل. تتحول الصور المتعددة إلى شريط صور متحرك."
 
 #: app/components/social/post-composer.tsx:360
 msgid "Instagram needs at least one image. Several images become a carousel. Google posts take one JPEG or PNG (at least 400 by 300 pixels)."
@@ -24703,7 +24861,7 @@ msgid "Inventory"
 msgstr "المخزون"
 
 #: app/utils/inventory/inventory-errors.ts:22
-#: app/utils/inventory/inventory-errors.ts:113
+#: app/utils/inventory/inventory-errors.ts:140
 msgid "Inventory is paused right now. Try again in a few minutes."
 msgstr "المخزون متوقف مؤقتًا الآن. حاول مرة أخرى بعد بضع دقائق."
 
@@ -24727,6 +24885,10 @@ msgstr "تم حفظ إعدادات المخزون."
 #: app/components/settings/cards/notification-preferences-card.tsx:59
 msgid "Inventory: a count is waiting for review"
 msgstr "المخزون: جرد بانتظار المراجعة"
+
+#: app/components/settings/cards/notification-preferences-card.tsx:62
+msgid "Inventory: a dish went off the menu because an ingredient ran out"
+msgstr "المخزون: خرج طبق من القائمة لنفاد أحد مكوناته"
 
 #: app/components/settings/cards/notification-preferences-card.tsx:61
 msgid "Inventory: an item went up in price"
@@ -24857,7 +25019,7 @@ msgstr "سجل الفواتير غير متاح مؤقتًا."
 msgid "Invoice number"
 msgstr "رقم الفاتورة"
 
-#: app/utils/inventory/inventory-errors.ts:95
+#: app/utils/inventory/inventory-errors.ts:122
 msgid "Invoice photos are not set up for your business yet."
 msgstr "صور الفواتير غير مفعّلة لنشاطك بعد."
 
@@ -24952,10 +25114,6 @@ msgstr "تعود إلى المراجعة ليمكن تعديلها، وتحتا�
 msgid "It goes to people who got the first broadcast, did not open or click it, and are still subscribed when this is sent. Opens are not always counted: some mail apps open messages automatically or hide the open from senders (Apple Mail Privacy Protection, for example), so a few people who read the first one may get this too."
 msgstr "تُرسل إلى من تلقّى الرسالة الجماعية الأولى ولم يفتحها ولم ينقر عليها وما زال مشتركًا وقت الإرسال. لا تُحتسب عمليات الفتح دائمًا: بعض تطبيقات البريد تفتح الرسائل تلقائيًا أو تُخفي الفتح عن المرسلين (مثل حماية خصوصية Apple Mail)، لذا قد يتلقى بعض من قرأ الرسالة الأولى هذه الرسالة أيضًا."
 
-#: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:775
-#~ msgid "It has {0} responses. Only members with the “Read restricted form responses” permission can open or export them."
-#~ msgstr "لديه {0} ردود. يمكن فقط للأعضاء الذين لديهم صلاحية «قراءة ردود النماذج المقيّدة» فتحها أو تصديرها."
-
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:776
 msgid "It has {responseCount} responses. Only members with the “Read restricted form responses” permission can open or export them."
 msgstr "لديه {responseCount} ردود. يمكن فقط للأعضاء الذين لديهم صلاحية «قراءة ردود النماذج المقيّدة» فتحها أو تصديرها."
@@ -25020,13 +25178,13 @@ msgstr "الوقت مبكر جدًا لتسجيل الحضور لورديتك."
 msgid "It is too late to change this booking that way."
 msgstr "فات الوقت لتغيير هذا الحجز بهذه الطريقة."
 
-#: app/utils/inventory/inventory-errors.ts:50
+#: app/utils/inventory/inventory-errors.ts:77
 msgid "It is too late to undo this entry."
 msgstr "فات الأوان للتراجع عن هذا الإدخال."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:180
-#~ msgid "It leaves the calendar here. What is already on Facebook or Instagram stays there: delete it on the platform if needed."
-#~ msgstr "سيُزال من التقويم هنا. ما نُشر بالفعل على فيسبوك أو إنستغرام يبقى هناك: احذفه من المنصة إذا لزم الأمر."
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:828
+msgid "It is used in these recipes:"
+msgstr "يُستخدم في هذه الوصفات:"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:217
 msgid "It leaves the calendar here. What is already on Facebook, Instagram or Google stays there unless you remove it."
@@ -25084,6 +25242,10 @@ msgstr "لن يتم نشره."
 msgid "It will not be sent. You can still duplicate it later. This cannot be undone once it has started sending."
 msgstr "لن تُرسل. يمكنك تكرارها لاحقًا. لا يمكن التراجع بعد بدء الإرسال."
 
+#: app/components/inventory/setup-checks-panel.tsx:342
+msgid "It's correct"
+msgstr "هذا صحيح"
+
 #: app/components/hiring/description-editor.tsx:109
 msgid "Italic"
 msgstr "مائل"
@@ -25092,12 +25254,12 @@ msgstr "مائل"
 msgid "item"
 msgstr "عنصر"
 
-#: app/components/inventory/stock-list.tsx:102
+#: app/components/inventory/stock-list.tsx:106
 #: app/components/inventory/supplier-products.tsx:375
 #: app/components/orders/order-detail.tsx:903
 #: app/components/workspace-breadcrumb.tsx:123
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:105
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:119
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:142
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:156
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:611
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:581
 msgid "Item"
@@ -25219,11 +25381,11 @@ msgstr "تكسب العناصر المدرجة مباشرة في التصنيف 
 msgid "Items listed directly in these categories."
 msgstr "الأصناف المدرجة مباشرةً ضمن هذه الفئات."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:470
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:489
 msgid "Items low"
 msgstr "العناصر المنخفضة"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:314
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:315
 msgid "Items running low, counts that are due and deliveries to pay will show here."
 msgstr "ستظهر هنا العناصر التي على وشك النفاد وعمليات الجرد المستحقة والشحنات المطلوب دفعها."
 
@@ -25748,7 +25910,7 @@ msgstr "تذكرة محطة المطبخ"
 msgid "Kitchen tablet offline"
 msgstr "جهاز المطبخ غير متصل"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:68
+#: app/components/settings/cards/notification-preferences-card.tsx:69
 msgid "Kitchen tablets: a tablet goes offline"
 msgstr "أجهزة المطبخ: انقطع اتصال جهاز"
 
@@ -26072,18 +26234,24 @@ msgstr "آخر فحص: {lastChecked}"
 msgid "Last checked:"
 msgstr "آخر فحص:"
 
+#: app/components/inventory/change-unit-dialog.tsx:449
 #: app/components/inventory/compare-panel.tsx:150
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:504
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:523
 msgid "Last count"
 msgstr "آخر جرد"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:454
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:473
 msgid "Last count today"
 msgstr "آخر جرد اليوم"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:377
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:488
 msgid "Last counted"
 msgstr "آخر جرد"
+
+#. placeholder {0}: new Intl.DateTimeFormat(i18n.locale, { dateStyle: 'medium', }).format(lastCounted)
+#: app/components/inventory/days-left-text.tsx:51
+msgid "Last counted <0>{0}</0>"
+msgstr "آخر جرد <0>{0}</0>"
 
 #: app/components/reservations/experiences/schedule-sheet.tsx:204
 msgid "Last date"
@@ -26132,7 +26300,7 @@ msgstr "آخر فتح في {lastOpened}."
 msgid "Last order"
 msgstr "آخر طلب"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:424
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:535
 msgid "Last paid, per unit"
 msgstr "آخر سعر مدفوع، للوحدة"
 
@@ -26164,10 +26332,6 @@ msgstr "آخر استخدام"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:970
 msgid "Last Used"
 msgstr "آخر استخدام"
-
-#: app/components/settings/cards/alert-settings-card.tsx:547
-#~ msgid "Last used {0}"
-#~ msgstr "آخر استخدام {0}"
 
 #: app/components/settings/cards/alert-settings-card.tsx:553
 msgid "Last used {lastUsed}"
@@ -26543,7 +26707,7 @@ msgstr "المدة"
 #: app/components/inventory/adjust-stock-dialog.tsx:229
 #: app/components/inventory/counting-screen.tsx:802
 #: app/components/inventory/log-waste-dialog.tsx:325
-#: app/components/inventory/recipe-lines.tsx:202
+#: app/components/inventory/recipe-lines.tsx:236
 #: app/components/inventory/recipe-section.tsx:440
 #: app/components/inventory/recipe-section.tsx:530
 #: app/components/inventory/record-batch-dialog.tsx:246
@@ -26793,10 +26957,6 @@ msgstr "تم إنشاء الرابط"
 msgid "Link for {label}"
 msgstr "رابط {label}"
 
-#: app/components/marketing/short-links-screen.tsx:143
-#~ msgid "Link is on"
-#~ msgstr "الرابط مفعّل"
-
 #: app/components/settings/cards/organization/announcement-sheet.tsx:565
 msgid "Link label"
 msgstr "تسمية الرابط"
@@ -27037,13 +27197,17 @@ msgid "Loading inventory settings"
 msgstr "جاري تحميل إعدادات المخزون"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId_.edit.tsx:39
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:108
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:145
 msgid "Loading item"
 msgstr "جارٍ تحميل العنصر"
 
-#: app/components/inventory/stock-list.tsx:232
+#: app/components/inventory/stock-list.tsx:265
 msgid "Loading items"
 msgstr "جارٍ تحميل العناصر"
+
+#: app/components/inventory/merge-dialog.tsx:267
+msgid "Loading items…"
+msgstr "جارٍ تحميل الأصناف…"
 
 #: app/components/staff/labor/labor-page.tsx:349
 msgid "Loading labor figures"
@@ -27226,7 +27390,7 @@ msgstr "جارٍ تحميل المراجعة"
 msgid "Loading the review queue…"
 msgstr "جارٍ تحميل قائمة المراجعة…"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:106
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:116
 msgid "Loading the supplier"
 msgstr "جارٍ تحميل المورّد"
 
@@ -27282,7 +27446,7 @@ msgstr "جارٍ تحميل من هم على الساعة"
 msgid "Loading your count lists"
 msgstr "جارٍ تحميل قوائم الجرد"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:213
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:214
 msgid "Loading your inventory"
 msgstr "جارٍ تحميل مخزونك"
 
@@ -27428,7 +27592,7 @@ msgstr "تُستخدم المنطقة الزمنية للفرع لحساب فت�
 msgid "Location to read stations from"
 msgstr "الموقع الذي تُقرأ منه المحطات"
 
-#: app/utils/inventory/alert-copy.ts:21
+#: app/utils/inventory/alert-copy.ts:24
 #: app/utils/reservations/alert-copy.ts:21
 msgid "Location: {locationName}"
 msgstr "الموقع: {locationName}"
@@ -27664,8 +27828,8 @@ msgstr "متباعد"
 msgid "Low"
 msgstr "منخفضة"
 
-#: app/components/inventory/stock-list.tsx:45
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:286
+#: app/components/inventory/stock-list.tsx:48
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:352
 msgctxt "inventory stock status"
 msgid "Low"
 msgstr "منخفض"
@@ -27678,7 +27842,7 @@ msgstr "ثقة منخفضة"
 msgid "Low match"
 msgstr "تطابق منخفض"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:307
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:319
 msgid "Low or out"
 msgstr "منخفض أو نافد"
 
@@ -27797,14 +27961,14 @@ msgstr "يُحضَّر في"
 msgid "Made from your own photos. Visitors who prefer less motion see the still image instead."
 msgstr "صُنع من صورك الخاصة. الزوار الذين يفضّلون حركة أقل يرون الصورة الثابتة بدلًا منه."
 
-#: app/components/inventory/stock-list.tsx:141
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:274
-#: app/utils/inventory/labels.ts:81
-#: app/utils/inventory/labels.ts:89
+#: app/components/inventory/stock-list.tsx:150
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:340
+#: app/utils/inventory/labels.ts:88
+#: app/utils/inventory/labels.ts:96
 msgid "Made in house"
 msgstr "يُصنع داخليًا"
 
-#: app/utils/inventory/inventory-errors.ts:143
+#: app/utils/inventory/inventory-errors.ts:170
 msgid "Made-in-house ingredients are nested too deeply. Simplify one of them."
 msgstr "المكوّنات المصنوعة داخليًا متداخلة بعمق كبير. بسّط أحدها."
 
@@ -28133,7 +28297,7 @@ msgstr "إدارة حساباتك المتصلة هنا."
 msgid "Manage your menus, categories, items, drops, and modifier groups."
 msgstr "إدارة القوائم والفئات والعناصر والطروحات ومجموعات المعدلات."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:361
+#: app/components/settings/cards/notification-preferences-card.tsx:362
 msgid "Manage your notification settings for different channels and workflows."
 msgstr "إدارة إعدادات الإشعارات للقنوات ومسارات العمل المختلفة."
 
@@ -28240,7 +28404,7 @@ msgstr "تحديد {reviewableCount} كمراجَعة"
 msgid "Mark Active"
 msgstr "تعيين كـنشط"
 
-#: app/components/ui/notification-bell.tsx:769
+#: app/components/ui/notification-bell.tsx:793
 msgid "Mark all as read"
 msgstr "تحديد الكل كمقروء"
 
@@ -28262,7 +28426,7 @@ msgstr "وضع علامة غير منجزة"
 msgid "Mark as preselected"
 msgstr "تعيين كمحدد مسبقًا"
 
-#: app/components/ui/notification-bell.tsx:474
+#: app/components/ui/notification-bell.tsx:498
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
@@ -28851,6 +29015,11 @@ msgstr "فريق Menuza"
 msgid "Menuza will stop syncing hours, links, and menu updates to this Google profile. Your Google listing itself will not be deleted."
 msgstr "سيتوقف Menuza عن مزامنة ساعات العمل والروابط وتحديثات القائمة مع ملف Google هذا. لن يتم حذف ملفك على Google."
 
+#: app/components/inventory/merge-dialog.tsx:387
+#: app/components/inventory/merge-dialog.tsx:566
+msgid "Merge"
+msgstr "دمج"
+
 #: app/components/customers/person-merge-dialog.tsx:212
 msgid "Merge {selectedName} into {currentName}?"
 msgstr "دمج {selectedName} في {currentName}؟"
@@ -28875,6 +29044,50 @@ msgstr "دمج المكرر"
 #: app/components/menu/menu-review-card.tsx:37
 msgid "Merge duplicate dishes"
 msgstr "دمج الأطباق المكررة"
+
+#: app/components/inventory/merge-dialog.tsx:235
+msgid "Merge into another item"
+msgstr "دمج في صنف آخر"
+
+#: app/components/inventory/merge-dialog.tsx:489
+msgid "Merge into another supplier"
+msgstr "دمج في مورّد آخر"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:196
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:392
+msgid "Merge into…"
+msgstr "دمج في…"
+
+#: app/utils/inventory/labels.ts:78
+msgid "Merge undone"
+msgstr "تم التراجع عن الدمج"
+
+#: app/components/inventory/merge-dialog.tsx:49
+msgid "Merge undone."
+msgstr "تم التراجع عن الدمج."
+
+#. placeholder {0}: link.name
+#: app/components/inventory/merge-dialog.tsx:93
+msgid "Merged {0} into this item."
+msgstr "تم دمج {0} في هذا الصنف."
+
+#. placeholder {0}: link.name
+#: app/components/inventory/merge-dialog.tsx:91
+msgid "Merged into {0}."
+msgstr "تم الدمج في {0}."
+
+#: app/components/inventory/merge-dialog.tsx:200
+#: app/components/inventory/merge-dialog.tsx:463
+msgid "Merged into {kept}."
+msgstr "تم الدمج في {kept}."
+
+#: app/utils/inventory/labels.ts:77
+msgid "Merged with a duplicate"
+msgstr "دُمج مع نسخة مكررة"
+
+#: app/components/inventory/merge-dialog.tsx:387
+msgid "Merging…"
+msgstr "جارٍ الدمج…"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:205
 #: ../../packages/marketing/src/components/campaign-form.tsx:399
@@ -28968,10 +29181,6 @@ msgstr "لم تكمل Meta عملية الربط. حاول مرة أخرى."
 msgid "Meta did not confirm this post, so it may already be live. Check the account and send it again only if it is not there."
 msgstr "لم تؤكد Meta هذا المنشور، لذا قد يكون منشورًا بالفعل. تحقّق من الحساب وأرسله مرة أخرى فقط إن لم يكن موجودًا."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:179
-#~ msgid "Meta no longer accepts its access. Posts to it will fail until you connect it again."
-#~ msgstr "لم تعد Meta تقبل صلاحية الوصول الخاصة به. ستفشل المنشورات المرسلة إليه إلى أن تعيد ربطه."
-
 #: app/components/social/social-labels.ts:104
 msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
 msgstr "لم تعد Meta تقبل صلاحية الوصول لهذا الحساب. أعد ربطه ثم حاول مرة أخرى."
@@ -29017,7 +29226,7 @@ msgid "Minimum notice (minutes)"
 msgstr "الحد الأدنى للإشعار المسبق (بالدقائق)"
 
 #: app/components/loyalty/program-extension-cards.tsx:687
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:251
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:281
 msgid "Minimum order"
 msgstr "الحد الأدنى للطلب"
 
@@ -29332,7 +29541,7 @@ msgstr "الأشهر حتى انتهاء الصلاحية"
 #: app/components/inventory/adjust-stock-dialog.tsx:230
 #: app/components/inventory/counting-screen.tsx:803
 #: app/components/inventory/log-waste-dialog.tsx:326
-#: app/components/inventory/recipe-lines.tsx:203
+#: app/components/inventory/recipe-lines.tsx:237
 #: app/components/inventory/recipe-section.tsx:441
 #: app/components/inventory/recipe-section.tsx:531
 #: app/components/inventory/record-batch-dialog.tsx:247
@@ -29393,7 +29602,7 @@ msgstr "خيارات إضافية"
 msgid "More schedule actions"
 msgstr "المزيد من إجراءات الجدول"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:218
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:221
 msgid "More stock actions"
 msgstr "المزيد من إجراءات المخزون"
 
@@ -29483,6 +29692,7 @@ msgstr "أُلغي النقل. يبقى {name} في مكانه."
 msgid "Move cancelled. Nothing changed."
 msgstr "تم إلغاء النقل. لم يتغير شيء."
 
+#: app/components/inventory/group-dialog.tsx:297
 #: app/components/reservations/waitlist/waitlist-queue.tsx:314
 msgid "Move down"
 msgstr "نقل لأسفل"
@@ -29528,6 +29738,7 @@ msgstr "نقل إلى"
 msgid "Move to draft"
 msgstr "نقل إلى المسودة"
 
+#: app/components/inventory/group-dialog.tsx:287
 #: app/components/reservations/waitlist/waitlist-queue.tsx:307
 msgid "Move up"
 msgstr "نقل لأعلى"
@@ -29586,11 +29797,11 @@ msgstr "أُعيد إلى مسار التقديم، إلى مرحلة {to}"
 msgid "Moved from {from} to {to}"
 msgstr "نُقل من {from} إلى {to}"
 
-#: app/utils/inventory/labels.ts:83
+#: app/utils/inventory/labels.ts:90
 msgid "Moved in"
 msgstr "نُقل إلى هنا"
 
-#: app/utils/inventory/labels.ts:84
+#: app/utils/inventory/labels.ts:91
 msgid "Moved out"
 msgstr "نُقل من هنا"
 
@@ -29888,12 +30099,12 @@ msgstr "يحتاج إلى {minimum} طلبات على الأقل"
 #: app/components/reservations/host-subnav.tsx:163
 #: app/components/staff/staff-profile-page.tsx:36
 #: app/components/staff/timeclock-today.tsx:125
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:305
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:306
 #: app/utils/dashboards/config.ts:137
 msgid "Needs attention"
 msgstr "يحتاج إلى انتباه"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:303
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:304
 msgid "Needs attention ({attentionCount})"
 msgstr "يحتاج إلى اهتمام ({attentionCount})"
 
@@ -30025,6 +30236,7 @@ msgid "Never connected"
 msgstr "لم يتصل أبدًا"
 
 #: app/components/inventory/compare-panel.tsx:151
+#: app/components/inventory/days-left-text.tsx:60
 msgid "Never counted"
 msgstr "لم يُجرد قط"
 
@@ -30403,6 +30615,11 @@ msgstr "تجربة جديدة"
 #: app/components/menu/menu-review-card.tsx:432
 msgid "New text"
 msgstr "النص الجديد"
+
+#: app/components/inventory/change-unit-dialog.tsx:206
+#: app/components/inventory/change-unit-dialog.tsx:209
+msgid "New unit"
+msgstr "الوحدة الجديدة"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:424
 msgid "New value (minutes)"
@@ -30810,7 +31027,7 @@ msgstr "لا يوجد جرد قيد التنفيذ."
 msgid "No count lists yet"
 msgstr "لا توجد قوائم جرد بعد"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:450
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:469
 msgid "No count yet"
 msgstr "لا يوجد جرد بعد"
 
@@ -30864,7 +31081,7 @@ msgstr "لا افتراضي"
 msgid "No deliveries in this period."
 msgstr "لا توجد عمليات استلام في هذه الفترة."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:568
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:587
 msgid "No deliveries this week to compare with."
 msgstr "لا توجد شحنات هذا الأسبوع للمقارنة بها."
 
@@ -30943,6 +31160,10 @@ msgstr "لا يوجد طبق بهذا المعرّف."
 #: app/components/menu/menu-health-card.tsx:151
 msgid "No dish lists allergens or calories"
 msgstr "لا يذكر أي طبق مسببات الحساسية أو السعرات الحرارية"
+
+#: app/components/inventory/used-in-section.tsx:174
+msgid "No dish, option or made item uses this yet."
+msgstr "لا يستخدمه أي طبق أو خيار أو صنف مُحضَّر بعد."
 
 #: app/components/dashboard/blocks/attention-block.tsx:678
 msgid "No dishes are sold out here now."
@@ -31109,7 +31330,7 @@ msgstr "لا توجد عناصر في هذا التصنيف بعد."
 msgid "No items in this section."
 msgstr "لا توجد عناصر في هذا القسم."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:330
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:354
 msgid "No items match"
 msgstr "لا توجد عناصر مطابقة"
 
@@ -31121,7 +31342,7 @@ msgstr "لا توجد عناصر مطابقة لهذه الفلاتر"
 msgid "No items match."
 msgstr "لا توجد عناصر مطابقة."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:351
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:375
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:543
 msgid "No items yet"
 msgstr "لا توجد عناصر بعد"
@@ -31527,6 +31748,10 @@ msgstr "لا توجد تصنيفات أخرى متاحة للبيع الإضاف
 msgid "No other customers with reservation history match."
 msgstr "لا يوجد عملاء آخرون لديهم سجل حجوزات يطابقون البحث."
 
+#: app/components/inventory/merge-dialog.tsx:271
+msgid "No other item in the same unit."
+msgstr "لا يوجد صنف آخر بالوحدة نفسها."
+
 #: app/components/note/share-note-button.tsx:338
 msgid "No other members to share with"
 msgstr "لا يوجد أعضاء آخرون للمشاركة معهم"
@@ -31698,7 +31923,7 @@ msgstr "لا توجد منشورات هذا الشهر."
 msgid "No preference"
 msgstr "بلا تفضيل"
 
-#: app/components/inventory/recipe-lines.tsx:269
+#: app/components/inventory/recipe-lines.tsx:303
 msgid "No price yet"
 msgstr "لا يوجد سعر بعد"
 
@@ -31830,7 +32055,7 @@ msgstr "لا توجد قواعد محفوظة لمكان العمل هذا بع�
 msgid "No rules yet."
 msgstr "لا توجد قواعد بعد."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:552
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:571
 msgid "No sales between your last two counts."
 msgstr "لا مبيعات بين آخر عمليتي جرد."
 
@@ -31987,7 +32212,7 @@ msgstr "لا يوجد ملخص لهذه المكالمة."
 msgid "No supplier"
 msgstr "بدون مورّد"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:500
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:611
 msgid "No supplier yet. Add one in Purchasing."
 msgstr "لا يوجد مورّد بعد. أضف واحدًا من المشتريات."
 
@@ -32483,7 +32708,7 @@ msgstr "لم يتم التواصل"
 msgid "Not counted"
 msgstr "لم تُجرد"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:382
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:493
 msgid "Not counted yet"
 msgstr "لم يُجرد بعد"
 
@@ -32514,6 +32739,10 @@ msgstr "البيانات غير كافية بعد (يحتاج كل إصدار إ
 #: app/components/menu/photo-test-panel.tsx:273
 msgid "Not enough data yet."
 msgstr "لا توجد بيانات كافية بعد."
+
+#: app/components/inventory/days-left-text.tsx:30
+msgid "Not enough history"
+msgstr "لا توجد بيانات كافية"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:379
 msgid "Not enough history yet. Suggestions get better after about two weeks of use, so treat these as a first guess."
@@ -32585,6 +32814,11 @@ msgstr "لم يُنشر بعد."
 #: app/components/reservations/detail-sheet.tsx:107
 msgid "Not reached yet"
 msgstr "لم يتم التواصل بعد"
+
+#. placeholder {0}: orders.map((order) => `#${order.reference}`).join(', ')
+#: app/components/inventory/blocker-list.tsx:49
+msgid "Not received yet: <0>{0}</0>"
+msgstr "لم تُستلم بعد: <0>{0}</0>"
 
 #: app/components/pos/terminals-manager.tsx:676
 msgid "Not required"
@@ -32917,11 +33151,11 @@ msgstr "لم يتم إعداد أي شيء لهذا الشخص."
 msgid "Nothing has fired yet."
 msgstr "لم يُطلق أي تنبيه بعد."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:567
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:687
 msgid "Nothing has happened to this item yet."
 msgstr "لم يحدث شيء لهذا العنصر بعد."
 
-#: app/components/ui/notification-bell.tsx:527
+#: app/components/ui/notification-bell.tsx:551
 msgid "Nothing here yet!"
 msgstr "لا شيء هنا بعد!"
 
@@ -32981,7 +33215,7 @@ msgstr "لا يتم حفظ أي شيء حتى تؤكد. صحّح الصف هنا
 msgid "Nothing is saved until you confirm. Members keep their login; this only adds them to your team."
 msgstr "لا يتم حفظ أي شيء حتى تؤكد. يحتفظ الأعضاء بتسجيل دخولهم؛ هذا يضيفهم إلى فريقك فقط."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:910
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:960
 msgid "Nothing is scheduled for the next seven days."
 msgstr "لا شيء مجدول خلال الأيام السبعة القادمة."
 
@@ -33010,6 +33244,10 @@ msgstr "لم يتبقَّ شيء بهذه المشكلة."
 msgid "Nothing logged for this reason"
 msgstr "لا يوجد شيء مسجّل لهذا السبب"
 
+#: app/components/inventory/setup-checks-panel.tsx:312
+msgid "Nothing looks wrong"
+msgstr "لا يبدو أن هناك خطأ"
+
 #: app/components/inventory/item-picker.tsx:159
 #: app/components/loyalty/catalog-picker.tsx:182
 msgid "Nothing matches that search."
@@ -33032,7 +33270,7 @@ msgstr "لا شيء يحتاج إلى نظرة."
 msgid "Nothing needs review"
 msgstr "لا شيء يحتاج إلى مراجعة"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:312
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:313
 msgid "Nothing needs you right now"
 msgstr "لا شيء يحتاجك الآن"
 
@@ -33133,7 +33371,7 @@ msgstr "لم يتم نشر أي شيء."
 msgid "Nothing was sent. You can try again."
 msgstr "لم يُرسل شيء. يمكنك المحاولة مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:386
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:387
 msgid "Nothing was thrown away in the last 7 days."
 msgstr "لم يُرمَ أي شيء خلال آخر 7 أيام."
 
@@ -33158,7 +33396,7 @@ msgstr "إشعار فقط"
 msgid "Notification Message"
 msgstr "رسالة الإشعار"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:358
+#: app/components/settings/cards/notification-preferences-card.tsx:359
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
@@ -33448,8 +33686,9 @@ msgstr "في تواريخ محددة"
 msgid "On exit (desktop)"
 msgstr "عند المغادرة (سطح المكتب)"
 
-#: app/components/inventory/stock-list.tsx:105
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:337
+#: app/components/inventory/change-unit-dialog.tsx:399
+#: app/components/inventory/stock-list.tsx:109
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:424
 msgid "On hand"
 msgstr "المتوفر"
 
@@ -33457,7 +33696,11 @@ msgstr "المتوفر"
 msgid "On hand <0>{onHand}</0>"
 msgstr "المتوفر <0>{onHand}</0>"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:335
+#: app/components/inventory/group-sheet.tsx:132
+msgid "On hand across the group"
+msgstr "المتوفر في المجموعة كلها"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:422
 msgid "On hand at {locationName}"
 msgstr "المتوفر في {locationName}"
 
@@ -33634,9 +33877,13 @@ msgstr "لا يمكن استخدام إحدى الصور. اختر صورًا م
 msgid "One of the photos is still being prepared."
 msgstr "إحدى الصور لا تزال قيد التحضير."
 
-#: app/utils/inventory/inventory-errors.ts:152
+#: app/utils/inventory/inventory-errors.ts:179
 msgid "One of the units cannot measure its ingredient. Pick another unit."
 msgstr "إحدى الوحدات لا تصلح لقياس مكوّنها. اختر وحدة أخرى."
+
+#: app/utils/inventory/inventory-errors.ts:65
+msgid "One of these items is already in a group."
+msgstr "أحد هذه الأصناف موجود بالفعل في مجموعة."
 
 #: app/components/loyalty/reward-dialog.tsx:655
 msgid "One of this item, free. The customer picks the size or variant; paid extras are still charged."
@@ -33920,11 +34167,11 @@ msgstr "لا يمكن استرداد إلا التبويب المدفوع من �
 msgid "Only accept a number"
 msgstr "قبول رقم فقط"
 
-#: app/utils/inventory/inventory-errors.ts:179
+#: app/utils/inventory/inventory-errors.ts:206
 msgid "Only an item made in house can be recorded as a batch."
 msgstr "لا يمكن تسجيل دفعة إلا لعنصر يُصنع داخليًا."
 
-#: app/utils/inventory/inventory-errors.ts:149
+#: app/utils/inventory/inventory-errors.ts:176
 msgid "Only an item made in house can have its own recipe."
 msgstr "لا تكون لها وصفة خاصة إلا العناصر التي تُصنع داخليًا."
 
@@ -34218,7 +34465,7 @@ msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → ال�
 msgid "Open command menu"
 msgstr "فتح قائمة الأوامر"
 
-#: app/utils/inventory/alert-copy.ts:46
+#: app/utils/inventory/alert-copy.ts:95
 msgid "Open Counts to review and approve."
 msgstr "افتح «الجرد» للمراجعة والاعتماد."
 
@@ -34289,7 +34536,7 @@ msgstr "افتح إعدادات Kiro IDE"
 msgid "Open link"
 msgstr "فتح الرابط"
 
-#: app/components/ui/notification-bell.tsx:759
+#: app/components/ui/notification-bell.tsx:783
 msgid "Open menu"
 msgstr "فتح القائمة"
 
@@ -34335,11 +34582,11 @@ msgstr "فتح المعاينة"
 msgid "Open profile"
 msgstr "فتح الملف"
 
-#: app/utils/inventory/alert-copy.ts:56
+#: app/utils/inventory/alert-copy.ts:105
 msgid "Open Purchasing to receive the delivery."
 msgstr "افتح «المشتريات» لاستلام الشحنة."
 
-#: app/utils/inventory/alert-copy.ts:66
+#: app/utils/inventory/alert-copy.ts:115
 msgid "Open Purchasing to see the price changes."
 msgstr "افتح «المشتريات» لرؤية تغيّرات الأسعار."
 
@@ -34383,7 +34630,7 @@ msgstr "ورديات شاغرة"
 msgid "Open shifts are left out when you copy only some people."
 msgstr "تُترك الورديات الشاغرة عند نسخ بعض الأشخاص فقط."
 
-#: app/utils/inventory/alert-copy.ts:36
+#: app/utils/inventory/alert-copy.ts:85
 msgid "Open Stock to see what is running low."
 msgstr "افتح «المخزون الحالي» لرؤية ما ينفد."
 
@@ -34416,7 +34663,7 @@ msgstr "افتح المتقدّمين لإلقاء نظرة."
 msgid "Open the broadcast"
 msgstr "فتح الرسالة الجماعية"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:850
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:900
 msgid "Open the dish"
 msgstr "افتح الطبق"
 
@@ -35031,7 +35278,7 @@ msgstr "اطلب أسرع عبر تطبيقنا"
 msgid "Order flow"
 msgstr "مسار الطلب"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:750
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:769
 msgid "Order from <0>{supplier}</0> by <1>{by}</1> for <2>{day}</2>."
 msgstr "اطلب من <0>{supplier}</0> قبل <1>{by}</1> لموعد <2>{day}</2>."
 
@@ -35047,8 +35294,9 @@ msgstr "Order limits"
 msgid "Order links"
 msgstr "روابط الطلب"
 
+#: app/components/inventory/change-unit-dialog.tsx:433
 #: app/components/inventory/item-form.tsx:572
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:357
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:444
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:458
 msgid "Order more when below"
 msgstr "اطلب المزيد عند أقل من"
@@ -35315,23 +35563,23 @@ msgstr "الطلبات عبر منيوزا لا تكلّفك أي رسوم عن 
 msgid "Orders waiting too long"
 msgstr "طلبات تنتظر طويلًا"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:67
+#: app/components/settings/cards/notification-preferences-card.tsx:68
 msgid "Orders: a large order arrives"
 msgstr "الطلبات: وصل طلب كبير"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:62
+#: app/components/settings/cards/notification-preferences-card.tsx:63
 msgid "Orders: a new online order arrives"
 msgstr "الطلبات: وصل طلب جديد عبر الإنترنت"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:65
+#: app/components/settings/cards/notification-preferences-card.tsx:66
 msgid "Orders: a payment needs review"
 msgstr "الطلبات: دفعة تحتاج إلى مراجعة"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:64
+#: app/components/settings/cards/notification-preferences-card.tsx:65
 msgid "Orders: a scheduled order is due soon and still new"
 msgstr "الطلبات: طلب مجدول يقترب موعده ولا يزال جديدًا"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:63
+#: app/components/settings/cards/notification-preferences-card.tsx:64
 msgid "Orders: an order has been waiting too long"
 msgstr "الطلبات: طلب ينتظر منذ وقت طويل"
 
@@ -35343,7 +35591,7 @@ msgstr "الطلبات: أول طلب"
 msgid "Orders: Guest Lapsed"
 msgstr "الطلبات: ضيف انقطع"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:66
+#: app/components/settings/cards/notification-preferences-card.tsx:67
 msgid "Orders: online ordering has been paused or busy for too long"
 msgstr "الطلبات: الطلب عبر الإنترنت متوقف أو في وضع الازدحام لفترة طويلة"
 
@@ -35490,8 +35738,8 @@ msgstr "يعالج فريقنا هذا الأمر مع المطبعة، لذا �
 msgid "Out"
 msgstr "الانصراف"
 
-#: app/components/inventory/stock-list.tsx:52
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:290
+#: app/components/inventory/stock-list.tsx:55
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:356
 msgctxt "inventory stock status"
 msgid "Out"
 msgstr "نافد"
@@ -35502,7 +35750,7 @@ msgstr "نفد الورق"
 
 #: app/components/inventory/compare-panel.tsx:147
 #: app/components/orders/refund-labels.ts:19
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:495
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:514
 msgid "Out of stock"
 msgstr "نفد من المخزون"
 
@@ -36455,7 +36703,7 @@ msgid "Payment received"
 msgstr "تم استلام الدفعة"
 
 #: app/components/inventory/supplier-form.tsx:355
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:257
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:287
 #: app/utils/customer-apps/alerts.ts:139
 msgid "Payment terms"
 msgstr "شروط الدفع"
@@ -36796,7 +37044,7 @@ msgstr "رابط الدعوة الشخصي"
 #: app/components/website/funnel-panel.tsx:48
 #: app/components/website/link-inspector.tsx:370
 #: app/components/website/link-inspector.tsx:489
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:239
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:269
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:305
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:718
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:974
@@ -36945,10 +37193,6 @@ msgstr "الصورة B، الصورة الجديدة"
 msgid "Photo changed during the run"
 msgstr "تغيّرت الصورة أثناء العملية"
 
-#: app/components/media-library/focal-point-editor.tsx:101
-#~ msgid "Photo focus point. Click the photo or use the arrow keys."
-#~ msgstr "نقطة تركيز الصورة. انقر على الصورة أو استخدم مفاتيح الأسهم."
-
 #: app/components/media-library/restyle-labels.ts:42
 msgid "Photo format cannot be restyled"
 msgstr "لا يمكن تجديد مظهر صيغة هذه الصورة"
@@ -37069,6 +37313,10 @@ msgstr "اختر يومًا من 1 إلى 28. تبدأ كل فترة في ذلك
 msgid "Pick a design below to make it a print."
 msgstr "اختر تصميمًا أدناه لتحويله إلى مطبوعة."
 
+#: app/utils/inventory/inventory-errors.ts:59
+msgid "Pick a different item to merge into."
+msgstr "اختر صنفًا آخر للدمج فيه."
+
 #: app/components/menu/photo-test-panel.tsx:39
 msgid "Pick a different photo from the one the dish has now."
 msgstr "اختر صورة مختلفة عن صورة الطبق الحالية."
@@ -37076,6 +37324,10 @@ msgstr "اختر صورة مختلفة عن صورة الطبق الحالية."
 #: app/utils/inventory/transfer-form.ts:148
 msgid "Pick a different place: stock cannot move to the same place."
 msgstr "اختر مكانًا مختلفًا: لا يمكن نقل المخزون إلى المكان نفسه."
+
+#: app/utils/inventory/inventory-errors.ts:53
+msgid "Pick a different unit from the one the item has now."
+msgstr "اختر وحدة مختلفة عن وحدة الصنف الحالية."
 
 #: app/components/website/form-builder-sidebar.tsx:158
 msgid "Pick a field to add to your form."
@@ -37636,10 +37888,6 @@ msgstr "تظهر حركات النقاط هنا عندما يكسب العملا
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:133
 msgid "Point of sale"
 msgstr "نقطة بيع"
-
-#: app/components/settings/cards/organization/site-card.tsx:424
-#~ msgid "Point your own domain at Sites with a CNAME record. SSL is provisioned automatically when Cloudflare for SaaS is configured."
-#~ msgstr "وجّه نطاقك الخاص إلى Sites باستخدام سجل CNAME. يتم توفير SSL تلقائياً عند تكوين Cloudflare for SaaS."
 
 #: app/components/loyalty/program-form.tsx:606
 #: app/utils/loyalty/loyalty-labels.ts:38
@@ -38264,6 +38512,10 @@ msgstr "تحتاج الأسعار إلى صلاحية الاطلاع على ال
 msgid "Prices still need to be confirmed."
 msgstr "ما زالت الأسعار بحاجة إلى تأكيد."
 
+#: app/components/inventory/setup-checks-panel.tsx:314
+msgid "Prices that look off, recipes with gaps and items nobody counts will show here."
+msgstr "ستظهر هنا الأسعار التي تبدو غير صحيحة والوصفات الناقصة والأصناف التي لا يجردها أحد."
+
 #: app/components/inventory/record-delivery-screen.tsx:1035
 msgid "Prices that moved"
 msgstr "الأسعار التي تغيّرت"
@@ -38506,6 +38758,10 @@ msgstr "الإنتاج (فواتير فعلية)"
 #: app/components/print/print-order-labels.ts:43
 msgid "Production has started, so this order can no longer be cancelled."
 msgstr "بدأ الإنتاج، لذلك لم يعد بالإمكان إلغاء هذا الطلب."
+
+#: app/components/inventory/group-dialog.tsx:215
+msgid "Products that can replace each other, like two brands of olive oil. Sales use the first one, then the next when it runs out. Each keeps its own count, pack and price."
+msgstr "منتجات يمكن أن يحل بعضها محل بعض، مثل علامتين من زيت الزيتون. تستخدم المبيعات الأول ثم التالي عندما ينفد. يحتفظ كل منتج بجرده وعبوته وسعره."
 
 #: app/components/app-sidebar.tsx:174
 #: app/components/customers/person-marketing-card.tsx:61
@@ -38974,6 +39230,11 @@ msgstr "أعد إلى القائمة"
 msgid "Put back on the menu."
 msgstr "أُعيد إلى القائمة."
 
+#. placeholder {0}: finding.suggestedAreaName
+#: app/components/inventory/setup-checks-panel.tsx:247
+msgid "Put in {0}"
+msgstr "ضعه في {0}"
+
 #: app/components/menu/menu-review-card.tsx:49
 msgid "Put options in order"
 msgstr "ترتيب الخيارات"
@@ -39357,7 +39618,7 @@ msgstr "وصول للقراءة فقط إلى ملاحظات المؤسسة"
 msgid "Reading"
 msgstr "جارٍ القراءة"
 
-#: app/utils/inventory/inventory-errors.ts:198
+#: app/utils/inventory/inventory-errors.ts:225
 msgid "Reading invoice photos is not set up for your business."
 msgstr "قراءة صور الفواتير غير مفعّلة لنشاطك بعد."
 
@@ -39479,7 +39740,7 @@ msgstr "طابعة الإيصالات"
 
 #: app/components/inventory/order-panels.tsx:444
 #: app/components/inventory/transfers-panel.tsx:252
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:787
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:806
 msgid "Receive"
 msgstr "استلام"
 
@@ -39491,6 +39752,10 @@ msgstr "استلم طلبات القائمة والطروحات وأدرها. ت
 #: app/components/inventory/review-order-screen.tsx:755
 msgid "Receive delivery"
 msgstr "استلام شحنة"
+
+#: app/components/inventory/merge-dialog.tsx:534
+msgid "Receive or cancel these first"
+msgstr "استلم هذه أو ألغها أولًا"
 
 #: app/utils/inventory/order-view.ts:26
 #: app/utils/inventory/transfer-form.ts:125
@@ -39566,10 +39831,22 @@ msgstr "الوصفة مضبوطة"
 msgid "Recipes"
 msgstr "الوصفات"
 
-#: app/utils/inventory/inventory-errors.ts:158
-#: app/utils/inventory/inventory-errors.ts:188
+#: app/utils/inventory/inventory-errors.ts:185
+#: app/utils/inventory/inventory-errors.ts:215
 msgid "Recipes are not turned on for your business."
 msgstr "الوصفات غير مفعّلة لنشاطك."
+
+#: app/components/inventory/change-unit-dialog.tsx:457
+msgid "Recipes that use this item get a new version. The old versions are kept."
+msgstr "تحصل الوصفات التي تستخدم هذا الصنف على نسخة جديدة. تبقى النسخ القديمة محفوظة."
+
+#: app/components/inventory/change-unit-dialog.tsx:386
+msgid "Recipes use this item, so changing its unit needs the recipe role."
+msgstr "تستخدم الوصفات هذا الصنف، لذلك يحتاج تغيير وحدته إلى دور الوصفات."
+
+#: app/components/inventory/merge-dialog.tsx:331
+msgid "Recipes use this item, so merging it needs the recipe role."
+msgstr "تستخدم الوصفات هذا الصنف، لذلك يحتاج دمجه إلى دور الوصفات."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:341
 msgid "Recipient"
@@ -39680,7 +39957,7 @@ msgstr "تسجيل الموافقة على العروض عبر الرسائل ا
 #: app/components/inventory/record-delivery-screen.tsx:461
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:304
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:452
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:276
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:277
 msgid "Record delivery"
 msgstr "تسجيل شحنة"
 
@@ -39948,10 +40225,6 @@ msgstr "تحديث المعاينة"
 #: app/components/mailbox/reviews-tab.tsx:355
 msgid "Refresh reviews"
 msgstr "تحديث التقييمات"
-
-#: app/components/settings/cards/organization/site-card.tsx:509
-#~ msgid "Refresh status"
-#~ msgstr "تحديث الحالة"
 
 #: app/components/reservations/host-subnav.tsx:395
 msgid "Refresh. {updated}"
@@ -40552,6 +40825,10 @@ msgstr "إزالة من Google"
 msgid "Remove from list"
 msgstr "إزالة من القائمة"
 
+#: app/components/inventory/group-dialog.tsx:307
+msgid "Remove from the group"
+msgstr "إزالة من المجموعة"
+
 #: app/components/staff/positions-tab.tsx:229
 msgid "Remove from workplace"
 msgstr "إزالة من مكان العمل"
@@ -40568,7 +40845,7 @@ msgstr "أزل المجموعة {number}"
 msgid "Remove image"
 msgstr "إزالة الصورة"
 
-#: app/components/inventory/recipe-lines.tsx:278
+#: app/components/inventory/recipe-lines.tsx:312
 msgid "Remove ingredient {rowNumber}"
 msgstr "إزالة المكوّن {rowNumber}"
 
@@ -40956,7 +41233,7 @@ msgstr "تتكرر"
 msgid "Replace"
 msgstr "استبدال"
 
-#: app/components/inventory/recipe-lines.tsx:327
+#: app/components/inventory/recipe-lines.tsx:361
 msgid "Replace an ingredient"
 msgstr "استبدال مكوّن"
 
@@ -41020,7 +41297,7 @@ msgstr "قد يؤدي استبدال الملفات إلى تغيير الصفح
 msgid "Replacement service name (guest-facing)"
 msgstr "اسم الخدمة البديلة (يظهر للضيف)"
 
-#: app/components/inventory/recipe-lines.tsx:103
+#: app/components/inventory/recipe-lines.tsx:137
 msgid "Replaces"
 msgstr "يستبدل"
 
@@ -41605,10 +41882,6 @@ msgstr "القنوات المقيّدة مرئية فقط للأدوار وال�
 msgid "Restricted form"
 msgstr "نموذج مقيّد"
 
-#: app/routes/_app+/$orgSlug_+/mailbox.tsx:369
-#~ msgid "Restricted form with {0} responses. You need the “Read restricted form responses” permission to open them."
-#~ msgstr "نموذج مقيّد يحتوي على {0} ردود. تحتاج إلى صلاحية «قراءة ردود النماذج المقيّدة» لفتحها."
-
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:374
 msgid "Restricted form with {responseCount} responses. You need the “Read restricted form responses” permission to open them."
 msgstr "نموذج مقيّد يحتوي على {responseCount} ردود. تحتاج إلى صلاحية «قراءة ردود النماذج المقيّدة» لفتحها."
@@ -41664,7 +41937,7 @@ msgstr "النتائج غير متاحة حاليًا."
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:595
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:398
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:249
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:684
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:703
 msgid "Resume"
 msgstr "استئناف"
 
@@ -41803,7 +42076,7 @@ msgstr "إيرادات الضيوف الذين وصلتهم الرسائل"
 #: app/components/workspace-breadcrumb.tsx:100
 #: app/hooks/use-staff-attention.ts:117
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:247
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:689
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:708
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:491
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:544
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:583
@@ -41855,7 +42128,7 @@ msgid "Review matches"
 msgstr "مراجعة التطابقات"
 
 #: app/components/inventory/order-panels.tsx:222
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:765
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:784
 msgid "Review order"
 msgstr "مراجعة الطلب"
 
@@ -42384,6 +42657,10 @@ msgstr "المبيعات: {name}."
 msgid "Salt"
 msgstr "ملح"
 
+#: app/components/inventory/group-dialog.tsx:344
+msgid "Same amount in the group's unit"
+msgstr "الكمية نفسها بوحدة المجموعة"
+
 #: app/components/menu/daily-limit-fields.tsx:150
 msgid "Same as above"
 msgstr "مثل الحد أعلاه"
@@ -42411,6 +42688,10 @@ msgstr "نفس الهاتف أو البريد الإلكتروني لصف ساب
 #: app/components/menu/option-form.tsx:765
 msgid "Same price for left or right half."
 msgstr "نفس السعر للنصف الأيسر أو الأيمن."
+
+#: app/components/inventory/merge-dialog.tsx:301
+msgid "Same product"
+msgstr "المنتج نفسه"
 
 #: app/components/inventory/recipe-section.tsx:415
 msgid "Same recipe"
@@ -42663,6 +42944,10 @@ msgstr "حفظ البؤرة"
 #: app/routes/_app+/$orgSlug_+/goals+/index.tsx:187
 msgid "Save goal"
 msgstr "حفظ الهدف"
+
+#: app/components/inventory/group-dialog.tsx:389
+msgid "Save group"
+msgstr "حفظ المجموعة"
 
 #: app/components/inventory/recipe-section.tsx:632
 msgid "Save ingredients"
@@ -42985,6 +43270,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/inventory/adjust-stock-dialog.tsx:327
 #: app/components/inventory/counting-screen.tsx:407
 #: app/components/inventory/counting-screen.tsx:656
+#: app/components/inventory/group-dialog.tsx:389
 #: app/components/inventory/item-form.tsx:291
 #: app/components/inventory/log-waste-dialog.tsx:450
 #: app/components/inventory/prep-levels-panel.tsx:303
@@ -43446,14 +43732,17 @@ msgstr "ابحث عن ضيف، هاتف، رمز، طاولة..."
 #: app/components/discounts/discount-form.tsx:1429
 #: app/components/discounts/discount-form.tsx:1529
 #: app/components/discounts/discount-form.tsx:1629
+#: app/components/inventory/group-dialog.tsx:369
 #: app/components/inventory/item-picker.tsx:139
 #: app/components/inventory/item-picker.tsx:141
+#: app/components/inventory/merge-dialog.tsx:257
+#: app/components/inventory/merge-dialog.tsx:258
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:304
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:305
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:369
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:370
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:275
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:276
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:287
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:288
 msgid "Search items"
 msgstr "البحث في العناصر"
 
@@ -43508,7 +43797,7 @@ msgstr "البحث في الملاحظات"
 msgid "Search notes by title or content..."
 msgstr "البحث في الملاحظات بالعنوان أو المحتوى..."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:418
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:443
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:508
 msgid "Search or filter to narrow the list."
 msgstr "ابحث أو صفِّ لتضييق القائمة."
@@ -43862,9 +44151,14 @@ msgid "Security Settings"
 msgstr "إعدادات الأمان"
 
 #: app/components/launch/launch-checklist.tsx:357
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:365
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:366
 msgid "See all"
 msgstr "عرض الكل"
+
+#. placeholder {0}: findings.length
+#: app/components/inventory/setup-checks-panel.tsx:357
+msgid "See all {0}"
+msgstr "عرض الكل ({0})"
 
 #: app/components/menu/menu-health-card.tsx:520
 msgid "See all {total}"
@@ -43886,11 +44180,11 @@ msgstr "عرض سجل المكالمات وأرقام المتصلين والن�
 msgid "See cards, their balances and history, and the gift card reports."
 msgstr "عرض البطاقات وأرصدتها وسجلّها وتقارير بطاقات الهدايا."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:684
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:703
 msgid "See count"
 msgstr "عرض الجرد"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:672
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:691
 msgid "See counts"
 msgstr "عرض عمليات الجرد"
 
@@ -43902,9 +44196,13 @@ msgstr "اطلع على تقارير عدد الضيوف والوتيرة وعد
 msgid "See dates of birth, home addresses, and emergency contacts."
 msgstr "عرض تواريخ الميلاد وعناوين السكن وجهات الاتصال في حالات الطوارئ."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:867
+msgid "See days left"
+msgstr "عرض الأيام المتبقية"
+
 #: app/components/inventory/price-alerts-panel.tsx:90
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:707
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:877
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:726
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:927
 msgid "See delivery"
 msgstr "عرض الشحنة"
 
@@ -43952,7 +44250,7 @@ msgstr "عرض تكلفة العمالة ونسبتها."
 msgid "See labor rules, time clock devices, and pay periods."
 msgstr "عرض قواعد العمل وأجهزة ساعة الدوام وفترات الأجور."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:657
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:676
 msgid "See low items"
 msgstr "عرض العناصر المنخفضة"
 
@@ -43972,7 +44270,7 @@ msgstr "اطّلع على إعداد واحد في كل موقع، واختر ع
 msgid "See one-time email and SMS campaign history."
 msgstr "عرض سجل حملات البريد الإلكتروني ورسائل SMS لمرة واحدة."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:787
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:806
 msgid "See order"
 msgstr "عرض الطلب"
 
@@ -44016,11 +44314,11 @@ msgstr "اطّلع على قائمة الموظفين وملفاتهم ومنا�
 msgid "See this discount and how often it is used"
 msgstr "اعرض هذا الخصم وعدد مرات استخدامه"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:737
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:756
 msgid "See unpaid"
 msgstr "عرض غير المدفوع"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:817
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:836
 msgid "See what is off"
 msgstr "اعرض ما هو خارج القائمة"
 
@@ -44040,17 +44338,9 @@ msgstr "عرض وظائفك"
 msgid "See your own published shifts. Only useful for people who also work shifts."
 msgstr "عرض ورديّاتك المنشورة. مفيد فقط لمن يعملون في الورديات أيضاً."
 
-#: app/components/pos/terminals-manager.tsx:1411
-#~ msgid "Seen {label}"
-#~ msgstr "شوهد {label}"
-
 #: app/components/staff/kiosk-manager.tsx:442
 msgid "Seen {seen}"
 msgstr "شوهد {seen}"
-
-#: app/components/pos/terminals-manager.tsx:1398
-#~ msgid "Seen just now"
-#~ msgstr "شوهد الآن"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:410
 msgid "Segments: {smsSegments} (opt-out line included)"
@@ -44858,7 +45148,7 @@ msgstr "الجلسات"
 msgid "Set a “fill up to” level for the things you make in house (sauces, dough, marinades). The plan then tells you each morning how much to make."
 msgstr "حدّد مستوى «املأ حتى» للأشياء التي تُحضّرها في المطبخ (الصلصات والعجين والتتبيلات). ثم تخبرك الخطة كل صباح بكمية التحضير."
 
-#: app/utils/inventory/inventory-errors.ts:65
+#: app/utils/inventory/inventory-errors.ts:92
 msgid "Set a currency for this location or enter prices on the first delivery."
 msgstr "حدد عملة لهذا الفرع أو أدخل الأسعار في أول عملية استلام."
 
@@ -44951,7 +45241,7 @@ msgid "Set it in Labor settings"
 msgstr "اضبطه في إعدادات العمالة"
 
 #: app/components/inventory/prep-levels-panel.tsx:132
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:254
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:266
 msgid "Set levels"
 msgstr "ضبط المستويات"
 
@@ -45540,9 +45830,9 @@ msgstr "عرض مستويات العضوية"
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:191
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:438
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:611
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:648
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:775
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:564
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:414
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:439
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:419
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:504
 msgid "Show more"
@@ -45662,7 +45952,7 @@ msgid "Showing {filteredOptionsCount} of {totalCount} options"
 msgstr "عرض {filteredOptionsCount} من {totalCount} خيارًا"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:551
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:394
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:419
 msgid "Showing {shown} of {total}"
 msgstr "عرض {shown} من {total}"
 
@@ -45786,7 +46076,7 @@ msgstr "تظهر عندما ينقر الضيف على الرسوم عند ال�
 msgid "Shows a Custom button that opens an amount field."
 msgstr "يعرض زر «مخصص» يفتح حقل إدخال المبلغ."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:554
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:573
 msgid "Shows after two approved counts."
 msgstr "تظهر بعد عمليتي جرد معتمدتين."
 
@@ -45889,6 +46179,10 @@ msgstr "جاري تسجيل الخروج..."
 #: app/utils/reservations/labels.ts:118
 msgid "Silver"
 msgstr "فضي"
+
+#: app/components/inventory/merge-dialog.tsx:296
+msgid "Similar name"
+msgstr "اسم مشابه"
 
 #: app/components/pos/ticket-settings.tsx:178
 msgid "Simplified tax invoice"
@@ -46148,10 +46442,6 @@ msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:718
-#~ msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
-#~ msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
-
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:718
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols. Every text ends with \"Reply STOP to opt out.\" and goes out between 9:00 and 20:00 local time: a step that comes up at night waits for the morning."
 msgstr "الرسائل النصية التي تزيد عن 160 حرفًا تُقسَّم وفق بروتوكولات GSM القياسية. تنتهي كل رسالة بعبارة \"Reply STOP to opt out.\" وتُرسل بين الساعة 9:00 و20:00 بالتوقيت المحلي: الخطوة التي يحين وقتها ليلًا تنتظر حتى الصباح."
 
@@ -46174,10 +46464,6 @@ msgstr "أجّل حتى ذلك الوقت"
 #: app/components/settings/cards/alert-settings-card.tsx:64
 msgid "Snoozed"
 msgstr "مؤجّل"
-
-#: app/components/settings/cards/alert-settings-card.tsx:381
-#~ msgid "Snoozed until {0}."
-#~ msgstr "مؤجّل حتى {0}."
 
 #: app/components/settings/cards/alert-settings-card.tsx:382
 msgid "Snoozed until {snoozedLabel}."
@@ -46376,7 +46662,7 @@ msgstr "غيّر شخص آخر هذه التجربة أولًا. تم تحميل
 msgid "Someone else changed this experience while you were editing. Your edits are still here."
 msgstr "غيّر شخص آخر هذه التجربة أثناء تعديلك لها. تعديلاتك لا تزال هنا."
 
-#: app/utils/inventory/inventory-errors.ts:104
+#: app/utils/inventory/inventory-errors.ts:131
 msgid "Someone else changed this first. Close it, open it again and retry."
 msgstr "قام شخص آخر بتغيير هذا قبلك. أغلقه وافتحه مجددًا ثم أعد المحاولة."
 
@@ -46438,11 +46724,15 @@ msgstr "سيخطّطه شخص يمكنه تعديل المخزون."
 msgid "Something else"
 msgstr "شيء آخر"
 
+#: app/utils/inventory/inventory-errors.ts:71
+msgid "Something else already has that name. Pick another name."
+msgstr "هناك عنصر آخر يحمل هذا الاسم. اختر اسمًا آخر."
+
 #: app/components/website/domain/domain-ui.tsx:32
 msgid "Something in the form is not valid. Check it and try again."
 msgstr "هناك شيء غير صالح في النموذج. تحقق منه وحاول مرة أخرى."
 
-#: app/utils/inventory/inventory-errors.ts:116
+#: app/utils/inventory/inventory-errors.ts:143
 msgid "Something in this form was not accepted. Check it and try again."
 msgstr "لم يتم قبول شيء في هذا النموذج. راجعه وحاول مرة أخرى."
 
@@ -46506,6 +46796,10 @@ msgstr "حدث خطأ ما. حاول مرة أخرى."
 #: app/components/customers/people-list-screen.tsx:252
 msgid "Sort by"
 msgstr "الترتيب حسب"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:331
+msgid "Sort by days left"
+msgstr "ترتيب حسب الأيام المتبقية"
 
 #: app/components/orders/orders-bell.tsx:103
 msgid "Sound"
@@ -46740,7 +47034,7 @@ msgstr "وجبة الموظفين"
 
 #: app/components/workspace-breadcrumb.tsx:118
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:111
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:581
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:701
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:569
 msgid "Staff member"
 msgstr "موظف"
@@ -46903,8 +47197,8 @@ msgstr "بدء محادثة"
 
 #: app/components/inventory/start-count-dialog.tsx:238
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:154
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:265
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:672
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:266
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:691
 msgid "Start count"
 msgstr "بدء الجرد"
 
@@ -47157,7 +47451,7 @@ msgstr "الإحصائيات"
 #: app/components/customers/person-orders-panel.tsx:166
 #: app/components/customers/person-profile-screen.tsx:779
 #: app/components/dashboard/blocks/status-block.tsx:30
-#: app/components/inventory/stock-list.tsx:114
+#: app/components/inventory/stock-list.tsx:123
 #: app/components/menu/menu-bulk-edit-sheet.tsx:603
 #: app/components/orders/order-detail.tsx:1101
 #: app/components/reservations/experiences/experiences-screen.tsx:292
@@ -47306,6 +47600,15 @@ msgstr "تم تعديل المخزون."
 msgid "Stock app"
 msgstr "تطبيق المخزون"
 
+#. placeholder {0}: quantity.format(row.after, { baseUnit: 'g' })
+#: app/components/inventory/merge-dialog.tsx:360
+msgid "Stock becomes <0>{0}</0>"
+msgstr "يصبح المخزون <0>{0}</0>"
+
+#: app/utils/inventory/alert-copy.ts:61
+msgid "Stock is back."
+msgstr "عاد المخزون."
+
 #: app/components/inventory/count-review-screen.tsx:616
 msgid "Stock is set to what was counted and the count closes. This cannot be undone."
 msgstr "يُضبط المخزون على ما تم جرده ويُغلق الجرد. لا يمكن التراجع عن ذلك."
@@ -47327,7 +47630,7 @@ msgid "Stock on {label}, on"
 msgstr "المخزون على {label}، مفعّل"
 
 #: app/components/inventory/compare-panel.tsx:170
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:532
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:551
 msgid "Stock value"
 msgstr "قيمة المخزون"
 
@@ -47435,7 +47738,7 @@ msgstr "اسم منطقة التخزين"
 #: app/components/workspace-breadcrumb.tsx:97
 #: app/routes/_app+/$orgSlug_+/inventory+/settings.tsx:401
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:161
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:238
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:250
 msgid "Storage areas"
 msgstr "مناطق التخزين"
 
@@ -47756,7 +48059,7 @@ msgstr "تلخيص هذه الملاحظة"
 #: app/components/inventory/review-order-screen.tsx:611
 #: app/components/phone-agent/call-detail-sheet.tsx:415
 #: app/components/staff/timesheets/timesheets-page.tsx:538
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:330
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:417
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:304
 msgid "Summary"
 msgstr "الملخص"
@@ -47789,8 +48092,8 @@ msgstr "المسؤول الأعلى"
 #: app/components/inventory/record-delivery-screen.tsx:551
 #: app/components/inventory/review-order-screen.tsx:621
 #: app/components/workspace-breadcrumb.tsx:126
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:84
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:103
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:94
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:113
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:474
 msgid "Supplier"
 msgstr "المورّد"
@@ -48404,7 +48707,7 @@ msgstr "الهدف {target}"
 msgid "Target {target}, not applied"
 msgstr "الهدف {target}، غير مطبَّق"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:548
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:567
 msgid "Target <0>{targetText}</0>"
 msgstr "الهدف <0>{targetText}</0>"
 
@@ -49013,7 +49316,7 @@ msgstr "هذا المبلغ أقل من الحد الأدنى الذي تسمح 
 msgid "That amount is too large."
 msgstr "هذا المبلغ كبير جدًا."
 
-#: app/utils/inventory/inventory-errors.ts:185
+#: app/utils/inventory/inventory-errors.ts:212
 msgid "That amount is too small or too large. Check it and try again."
 msgstr "هذه الكمية صغيرة جدًا أو كبيرة جدًا. راجعها وحاول مرة أخرى."
 
@@ -49085,6 +49388,10 @@ msgstr "هذا الرمز غير صحيح."
 #: app/utils/discounts/marketing-offer-labels.ts:23
 msgid "That code no longer belongs to the discount. Choose another code."
 msgstr "هذا الرمز لم يعد تابعًا للخصم. اختر رمزًا آخر."
+
+#: app/utils/inventory/inventory-errors.ts:50
+msgid "That conversion would round an amount to nothing. Check the numbers."
+msgstr "هذا التحويل سيجعل كمية تساوي صفرًا بعد التقريب. راجع الأرقام."
 
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:431
 msgid "That coupon cannot be used online right now. It must be active, usable on your website, inside its dates and not used up."
@@ -49254,7 +49561,11 @@ msgstr "هذا عدد كبير جدًا من الصور لعملية واحدة.
 msgid "That is too many shifts for one template. Narrow it to some positions or people."
 msgstr "هذا عدد كبير من الورديات لقالب واحد. ضيّقه على بعض المناصب أو الأشخاص."
 
-#: app/utils/inventory/inventory-errors.ts:86
+#: app/components/inventory/group-dialog.tsx:142
+msgid "That item is already in a group or is a group itself."
+msgstr "هذا الصنف موجود بالفعل في مجموعة أو هو مجموعة بحد ذاته."
+
+#: app/utils/inventory/inventory-errors.ts:113
 msgid "That item is not bought from this supplier."
 msgstr "هذا العنصر لا يُشترى من هذا المورّد."
 
@@ -49402,7 +49713,7 @@ msgstr "بدأت هذه الوردية بالفعل."
 msgid "That shift is not on your schedule any more. Refresh and try again."
 msgstr "لم تعد هذه الوردية في جدولك. حدّث الصفحة وحاول مرة أخرى."
 
-#: app/utils/inventory/inventory-errors.ts:155
+#: app/utils/inventory/inventory-errors.ts:182
 msgid "That start date is too far in the past."
 msgstr "تاريخ البدء هذا بعيد جدًا في الماضي."
 
@@ -49877,7 +50188,7 @@ msgstr "خصم القسيمة متوقف أو مؤرشف أو محذوف. است
 msgid "The currency does not match the program's currency."
 msgstr "العملة لا تطابق عملة البرنامج."
 
-#: app/utils/inventory/inventory-errors.ts:68
+#: app/utils/inventory/inventory-errors.ts:95
 msgid "The currency does not match this location's currency."
 msgstr "العملة لا تطابق عملة هذا الفرع."
 
@@ -49960,10 +50271,6 @@ msgstr "تعذّر إرسال رسالة الرفض"
 #: app/components/staff/labor-policy-editor.tsx:335
 msgid "The deducted break must be shorter than the shift it applies after."
 msgstr "يجب أن تكون الاستراحة المخصومة أقصر من الوردية التي تنطبق بعدها."
-
-#: app/components/settings/cards/organization/consent-banner-card.tsx:141
-#~ msgid "The default for {region} is {0}."
-#~ msgstr "الافتراضي في {region} هو {0}."
 
 #: app/components/settings/cards/organization/consent-banner-card.tsx:145
 msgid "The default for {region} is {defaultModeLabel}."
@@ -50057,7 +50364,7 @@ msgstr "تعذّر إنشاء التنزيل"
 msgid "The drafting tool could not help right now. Write it yourself or try again."
 msgstr "تعذّرت مساعدة أداة الكتابة الآن. اكتب الوصف بنفسك أو حاول مرة أخرى."
 
-#: app/utils/inventory/inventory-errors.ts:98
+#: app/utils/inventory/inventory-errors.ts:125
 msgid "The email could not be sent. Send it by WhatsApp or copy the text instead."
 msgstr "تعذّر إرسال البريد الإلكتروني. أرسله عبر واتساب أو انسخ النص بدلًا من ذلك."
 
@@ -50251,6 +50558,11 @@ msgstr "الإجمالي النهائي شاملًا ضريبة القيمة ا�
 msgid "The greeting is used when the AI assistant answers first. The closing line ends calls when a step has no goodbye of its own."
 msgstr "يُستخدم الترحيب عندما يرد المساعد الذكي أولًا. وتُنهي العبارة الختامية المكالمات عندما لا تتضمن الخطوة عبارة وداع خاصة بها."
 
+#: app/components/inventory/group-dialog.tsx:244
+#: app/components/inventory/group-dialog.tsx:247
+msgid "The group is counted in"
+msgstr "تُجرد المجموعة بوحدة"
+
 #: app/components/reservations/detail-sheet.tsx:608
 msgid "the guest"
 msgstr "الضيف"
@@ -50360,7 +50672,7 @@ msgstr "لم يتم إرسال الدعوة. حاول مرة أخرى."
 msgid "The invitations appear once your app is live in a store. Each one shows only the stores that are live."
 msgstr "تظهر الدعوات بمجرد توفر تطبيقك في أحد المتاجر. تعرض كل دعوة المتاجر المتاحة فقط."
 
-#: app/utils/inventory/inventory-errors.ts:204
+#: app/utils/inventory/inventory-errors.ts:231
 msgid "The invoice could not be read. Try a clearer, straighter photo."
 msgstr "تعذّرت قراءة الفاتورة. جرّب صورة أوضح وأكثر استقامة."
 
@@ -50680,11 +50992,11 @@ msgstr "حدود حجم المجموعة عبر الإنترنت غير متوا
 msgid "The order could not be completed, so we refunded it in full."
 msgstr "تعذّر إكمال الطلب، لذلك استرددنا المبلغ كاملًا."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:781
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:800
 msgid "The order from <0>{supplier}</0> is due today."
 msgstr "طلب <0>{supplier}</0> موعده اليوم."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:775
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:794
 msgid "The order from <0>{supplier}</0> was due <1>{due}</1> and has not been received."
 msgstr "طلب <0>{supplier}</0> كان موعده <1>{due}</1> ولم يُستلم."
 
@@ -50966,7 +51278,7 @@ msgstr "تغيّر السعر. راجعه وحاول مرة أخرى."
 msgid "The prices differ. Check them before you accept."
 msgstr "الأسعار مختلفة. تحقق منها قبل القبول."
 
-#: app/utils/inventory/inventory-errors.ts:92
+#: app/utils/inventory/inventory-errors.ts:119
 msgid "The prices on this delivery were already confirmed."
 msgstr "تم تأكيد أسعار هذه الشحنة من قبل."
 
@@ -51278,6 +51590,14 @@ msgstr "الضلع الأقصر أقل من 800 بكسل. سيتم رفعها م
 msgid "The simple setup fits: let Menuza manage this domain."
 msgstr "الإعداد البسيط مناسب: دع Menuza تدير هذا النطاق."
 
+#: app/components/inventory/setup-checks-panel.tsx:175
+msgid "The size of {pack} of <0>{item}</0> from <1>{supplier}</1> looks 1,000 times too big."
+msgstr "يبدو حجم {pack} من <0>{item}</0> من <1>{supplier}</1> أكبر 1,000 مرة مما ينبغي."
+
+#: app/components/inventory/setup-checks-panel.tsx:168
+msgid "The size of {pack} of <0>{item}</0> from <1>{supplier}</1> looks 1,000 times too small."
+msgstr "يبدو حجم {pack} من <0>{item}</0> من <1>{supplier}</1> أصغر 1,000 مرة مما ينبغي."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:327
 msgid "The special days and table blocks could not be loaded."
 msgstr "تعذّر تحميل الأيام الخاصة وحجوزات إغلاق الطاولات."
@@ -51579,6 +51899,11 @@ msgstr "their@email.com"
 msgid "Theme"
 msgstr "السمة"
 
+#. placeholder {0}: member.name
+#: app/components/inventory/group-dialog.tsx:279
+msgid "Then: {0}"
+msgstr "ثم: {0}"
+
 #: app/components/app-sidebar.tsx:117
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr "باقي <0>{daysRemaining} أيام</0> في فترة التجربة. تواصل معنا إذا كان لديك أي أسئلة أو ملاحظات."
@@ -51700,6 +52025,10 @@ msgstr "وُجدت هذه الصور في الصفحة المصدر ولا يت�
 msgid "These items are used up by the deal. Two burgers earn two discounted sides, not one."
 msgstr "تُستهلك هذه العناصر في العرض. فبرجران يمنحان طبقين جانبيين مخفَّضين، لا طبقًا واحدًا."
 
+#: app/utils/inventory/inventory-errors.ts:68
+msgid "These items cannot be grouped like that. Check the units and the list."
+msgstr "لا يمكن تجميع هذه الأصناف هكذا. راجع الوحدات والقائمة."
+
 #: app/routes/_app+/$orgSlug_+/gift-cards+/settings.tsx:233
 msgid "These limits are checked before a guest pays, and a refusal never says which limit was hit. Cards sold at the till and top-ups are never limited or delayed."
 msgstr "يتم التحقق من هذه الحدود قبل أن يدفع الضيف، ولا يذكر الرفض أبدًا أي حد تم بلوغه. البطاقات المباعة عند الصندوق وعمليات الشحن لا تخضع لأي حد أو تأخير."
@@ -51744,6 +52073,14 @@ msgstr "سُوّيت هذه الحسابات عند الكاونتر أو أُل
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:300
 msgid "These texts are a starting point, not legal advice. Have them reviewed by a lawyer before you rely on them."
 msgstr "هذه النصوص نقطة انطلاق وليست استشارة قانونية. اعرضها على محامٍ قبل الاعتماد عليها."
+
+#: app/components/inventory/merge-dialog.tsx:321
+msgid "These two are counted in different units. Change the unit of one of them first, then merge."
+msgstr "يُجرد هذان الصنفان بوحدتين مختلفتين. غيّر وحدة أحدهما أولًا ثم ادمج."
+
+#: app/utils/inventory/inventory-errors.ts:56
+msgid "These two items are counted in different units. Change one unit first."
+msgstr "يُجرد هذان الصنفان بوحدتين مختلفتين. غيّر إحدى الوحدتين أولًا."
 
 #: app/utils/people/people-errors.ts:19
 msgid "These two people are both signed in as different customers, so they cannot be merged. Each keeps their own profile, orders and marketing choices."
@@ -51809,6 +52146,10 @@ msgstr "لديهم تسجيل دخول وهم أعضاء في مؤسستك."
 msgid "They have no upcoming shifts you could swap for."
 msgstr "ليس لديهم ورديات قادمة يمكنك التبديل بها."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:840
+msgid "They keep the line, but you will need to swap it out or the dish will not use stock."
+msgstr "يحتفظ كل منها بالسطر، لكن عليك استبداله وإلا لن يستهلك الطبق من المخزون."
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:880
 msgid "They keep working as they are until you edit them. Editing asks for a destination that follows the current rules."
 msgstr "تستمر في العمل كما هي إلى أن تعدّلها. يطلب التعديل وجهة تتبع القواعد الحالية."
@@ -51829,7 +52170,7 @@ msgstr "ربما تمت إزالتهم، أو لا تملك صلاحية الو�
 msgid "They may have been removed, or you may not have access to them."
 msgstr "ربما تمت إزالتهم، أو لا تملك صلاحية الوصول إليهم."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:204
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:234
 msgid "They no longer show when you record a delivery. Past deliveries stay as they are."
 msgstr "لن يظهروا عند تسجيل شحنة. تبقى الشحنات السابقة كما هي."
 
@@ -51860,6 +52201,10 @@ msgstr "تم تحديدهم كغير مؤهلين لإعادة التوظيف. �
 #: app/components/staff/access-tab.tsx:240
 msgid "They will not be able to clock in at this workplace until you create a new PIN."
 msgstr "لن يتمكنوا من تسجيل الحضور في مكان العمل هذا حتى تنشئ رمزًا سريًا جديدًا."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/setup-check.tsx:44
+msgid "Things in your stock setup that are probably mistakes. Fix them in a tap, or tell us they are right and we will stop asking until they change."
+msgstr "أمور في إعداد مخزونك يُحتمل أنها أخطاء. أصلحها بلمسة، أو أخبرنا أنها صحيحة وسنتوقف عن السؤال حتى تتغير."
 
 #: ../../packages/ai/src/components/ai-elements/reasoning.tsx:142
 msgid "Thinking..."
@@ -52087,6 +52432,10 @@ msgstr "تعارض هذا التغيير مع محاولة سابقة. أغلق 
 msgid "This changed since the suggestion was made"
 msgstr "تغيّر هذا منذ تقديم الاقتراح"
 
+#: app/utils/inventory/inventory-errors.ts:62
+msgid "This changes recipes, which needs the recipe role. Ask an owner to check your role."
+msgstr "يغيّر هذا الوصفات، وهذا يحتاج دور الوصفات. اطلب من المالك مراجعة دورك."
+
 #: app/utils/staffing/onboarding-errors.ts:18
 msgid "This checklist was already added for them."
 msgstr "سبق أن أُضيفت هذه القائمة لهم."
@@ -52120,7 +52469,7 @@ msgstr "هذا الرمز مذكور مرتين."
 msgid "This code was removed. Make a new one."
 msgstr "أُزيل هذا الرمز. أنشئ رمزًا جديدًا."
 
-#: app/utils/inventory/inventory-errors.ts:53
+#: app/utils/inventory/inventory-errors.ts:80
 msgid "This count is already closed."
 msgstr "هذا الجرد مغلق بالفعل."
 
@@ -52469,7 +52818,7 @@ msgstr "هذه الميزة غير متاحة لحسابك بعد."
 msgid "This is not available on this tablet."
 msgstr "هذا غير متاح على هذا الجهاز اللوحي."
 
-#: app/utils/inventory/inventory-errors.ts:101
+#: app/utils/inventory/inventory-errors.ts:128
 msgid "This is not turned on for your business."
 msgstr "هذا غير مفعّل لنشاطك."
 
@@ -52509,13 +52858,17 @@ msgstr "هذا هو نطاقك الأساسي. اجعل نطاقًا آخر أس
 msgid "This item duplicates another one. Remove it and add it again."
 msgstr "هذا العنصر مكرر لعنصر آخر. أزله ثم أضفه مرة أخرى."
 
-#: app/utils/inventory/inventory-errors.ts:176
+#: app/utils/inventory/inventory-errors.ts:203
 msgid "This item has no recipe yet. Add what goes into it first, then record a batch."
 msgstr "ليس لهذا العنصر وصفة بعد. أضف ما يدخل فيه أولًا، ثم سجّل دفعة."
 
 #: app/components/menu/item-variations.tsx:263
 msgid "This item has reached the 100 combination limit."
 msgstr "وصل هذا الصنف إلى الحد الأقصى البالغ 100 تركيبة."
+
+#: app/components/inventory/blocker-list.tsx:59
+msgid "This item is part of an ingredient group. Take it out of the group first."
+msgstr "هذا الصنف جزء من مجموعة مكونات. أخرجه من المجموعة أولًا."
 
 #: app/components/hiring/candidate-parts.tsx:98
 msgid "This job had no screening questions."
@@ -52600,7 +52953,7 @@ msgstr "يبدو أن هذا الاسم يحتوي على خطأ إملائي."
 msgid "This needs access to every workplace."
 msgstr "يتطلب هذا صلاحية الوصول إلى كل مكان عمل."
 
-#: app/utils/inventory/inventory-errors.ts:89
+#: app/utils/inventory/inventory-errors.ts:116
 msgid "This needs the purchasing role. Ask an owner to check your role."
 msgstr "هذا يحتاج إلى دور المشتريات. اطلب من المالك مراجعة دورك."
 
@@ -52658,7 +53011,7 @@ msgid "This order does not exist or was removed."
 msgstr "هذا الطلب غير موجود أو تمت إزالته."
 
 #: app/components/inventory/record-delivery-screen.tsx:491
-#: app/utils/inventory/inventory-errors.ts:80
+#: app/utils/inventory/inventory-errors.ts:107
 msgid "This order is already closed."
 msgstr "هذا الطلب مغلق بالفعل."
 
@@ -52671,7 +53024,7 @@ msgstr "تم استرداد هذا الطلب بالكامل مسبقًا."
 msgid "This order is already paid or closed."
 msgstr "هذا الطلب مدفوع أو مغلق بالفعل."
 
-#: app/utils/inventory/inventory-errors.ts:62
+#: app/utils/inventory/inventory-errors.ts:89
 msgid "This order is being sent right now. Wait a moment and refresh."
 msgstr "يتم إرسال هذا الطلب الآن. انتظر لحظة ثم حدّث الصفحة."
 
@@ -52704,7 +53057,7 @@ msgstr "لم يعد هذا الطلب موجودًا."
 msgid "This order was already decided or it timed out. The list is updated."
 msgstr "سبق البتّ في هذا الطلب أو انتهت مهلته. تم تحديث القائمة."
 
-#: app/utils/inventory/inventory-errors.ts:77
+#: app/utils/inventory/inventory-errors.ts:104
 msgid "This order was already sent, so its items cannot change. Start a new order instead."
 msgstr "أُرسل هذا الطلب بالفعل، لذا لا يمكن تغيير عناصره. ابدأ طلبًا جديدًا بدلًا من ذلك."
 
@@ -52888,7 +53241,7 @@ msgstr "بدأ نشر هذا المنشور ولم يعد من الممكن تع
 msgid "This post is publishing right now. Try again in a moment."
 msgstr "هذا المنشور قيد النشر الآن. حاول مرة أخرى بعد قليل."
 
-#: app/utils/inventory/inventory-errors.ts:56
+#: app/utils/inventory/inventory-errors.ts:83
 msgid "This prep task was already finished or skipped."
 msgstr "تم إنهاء مهمة التحضير هذه أو تخطيها بالفعل."
 
@@ -52974,7 +53327,7 @@ msgstr "هذه الوصفة تدور في حلقة أو متداخلة بعمق 
 msgid "This record already exists."
 msgstr "هذا السجل موجود بالفعل."
 
-#: app/utils/inventory/inventory-errors.ts:74
+#: app/utils/inventory/inventory-errors.ts:101
 msgid "This record could not be found. It may have been archived or removed."
 msgstr "تعذر العثور على هذا السجل. ربما تم أرشفته أو إزالته."
 
@@ -53198,7 +53551,7 @@ msgstr "هذا الوقت تجاوز حد الحجوزات المسموح به. 
 msgid "This time is over its pacing limit. Turn on the pacing override to book anyway."
 msgstr "هذا الوقت تجاوز حد الحجوزات المسموح به. فعّل تجاوز الحد للحجز رغم ذلك."
 
-#: app/utils/inventory/inventory-errors.ts:59
+#: app/utils/inventory/inventory-errors.ts:86
 msgid "This transfer is already closed."
 msgstr "هذا التحويل مغلق بالفعل."
 
@@ -53238,7 +53591,7 @@ msgstr "تعذّر إنشاء هذا الفيديو. لم يتغير موقعك.
 msgid "This was already submitted with different details."
 msgstr "تم إرسال هذا بالفعل بتفاصيل مختلفة."
 
-#: app/utils/inventory/inventory-errors.ts:47
+#: app/utils/inventory/inventory-errors.ts:74
 msgid "This was already undone."
 msgstr "تم التراجع عن هذا الإجراء مسبقاً."
 
@@ -53255,7 +53608,7 @@ msgid "This way of applying is switched off for your organization. Choose anothe
 msgstr "طريقة التطبيق هذه غير مفعّلة لمؤسستك. اختر طريقة أخرى."
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:117
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:349
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:350
 msgid "This week"
 msgstr "هذا الأسبوع"
 
@@ -53335,6 +53688,11 @@ msgstr "الحد ({currencyCode})"
 #: app/components/loyalty/program-extension-cards.tsx:369
 msgid "Threshold ({unitLabelText})"
 msgstr "الحد ({unitLabelText})"
+
+#. placeholder {0}: row.viaGroupName
+#: app/components/inventory/used-in-section.tsx:90
+msgid "through {0}"
+msgstr "عبر {0}"
 
 #: app/components/loyalty/promotion-dialog.tsx:555
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:219
@@ -53622,10 +53980,6 @@ msgstr "الجدول الزمني"
 msgid "Times"
 msgstr "المرات"
 
-#: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:772
-#~ msgid "Times are in {0}."
-#~ msgstr "الأوقات بتوقيت {0}."
-
 #: app/components/social/post-composer.tsx:419
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:773
 msgid "Times are in {timeZone}."
@@ -53655,7 +54009,7 @@ msgstr "عدد مرات مضاعفة النقاط"
 msgid "Times wasted"
 msgstr "مرات الهدر"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:500
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:519
 msgid "Times wasted this week"
 msgstr "مرات الهدر هذا الأسبوع"
 
@@ -53822,7 +54176,7 @@ msgstr "للتخلي عن وردية أو تغطيتها أو تبديلها، �
 msgid "To move this shift, press Space to pick it up, use the arrow keys to choose a person and day, then press Space to drop. Press Escape to cancel. Press Enter to open it instead."
 msgstr "لنقل هذه الوردية، اضغط Space لرفعها، واستخدم أسهم الاتجاه لاختيار شخص ويوم، ثم اضغط Space للإفلات. اضغط Escape للإلغاء. اضغط Enter لفتحها بدلًا من ذلك."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:573
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:592
 msgid "To order"
 msgstr "للطلب"
 
@@ -53901,7 +54255,7 @@ msgstr "حجوزات اليوم حسب الحالة وعدد الضيوف حسب
 msgid "Toggle announcement visibility"
 msgstr "تبديل ظهور الإعلان"
 
-#: app/components/ui/notification-bell.tsx:700
+#: app/components/ui/notification-bell.tsx:724
 msgid "Toggle notifications"
 msgstr "تبديل الإشعارات"
 
@@ -54364,7 +54718,7 @@ msgstr "جرّب اسمًا آخر أو جزءًا من رقم هاتف أو ع�
 
 #: app/components/hiring/applicants-page.tsx:429
 #: app/components/staff/timesheets/timesheets-page.tsx:799
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:332
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:356
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:430
 msgid "Try a different search or clear the filters."
 msgstr "جرّب بحثًا مختلفًا أو امسح عوامل التصفية."
@@ -54430,6 +54784,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/inventory/recipe-section.tsx:267
 #: app/components/inventory/record-delivery-screen.tsx:502
 #: app/components/inventory/review-order-screen.tsx:331
+#: app/components/inventory/setup-checks-panel.tsx:305
 #: app/components/inventory/start-count-dialog.tsx:168
 #: app/components/inventory/transfers-panel.tsx:153
 #: app/components/loyalty/customer-loyalty-panel.tsx:268
@@ -54467,18 +54822,18 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:175
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:273
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:155
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:94
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:104
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:418
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:645
 #: app/routes/_app+/$orgSlug_+/inventory+/settings.tsx:178
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId_.edit.tsx:59
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:129
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:560
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:166
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:680
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:211
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:398
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:142
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:322
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:230
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:346
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:231
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:266
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:329
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:153
@@ -54646,8 +55001,8 @@ msgstr "تشغيل"
 msgid "Turn on agent audio"
 msgstr "تشغيل صوت الوكيل"
 
-#: app/utils/inventory/inventory-errors.ts:71
-#: app/utils/inventory/inventory-errors.ts:182
+#: app/utils/inventory/inventory-errors.ts:98
+#: app/utils/inventory/inventory-errors.ts:209
 msgid "Turn on batch counting for this made item before recording a batch."
 msgstr "فعّل تتبع الدفعات لهذا الصنف المحضّر قبل تسجيل دفعة."
 
@@ -55046,6 +55401,9 @@ msgstr "تحت"
 
 #: app/components/gbp/google-listing-tab.tsx:674
 #: app/components/inventory/log-waste-dialog.tsx:235
+#: app/components/inventory/merge-dialog.tsx:104
+#: app/components/inventory/merge-dialog.tsx:203
+#: app/components/inventory/merge-dialog.tsx:465
 #: app/components/locations/delivery-zone-map.tsx:382
 #: app/components/media-library/photo-studio-dialog.tsx:899
 #: app/components/menu/menu-bulk-edit-sheet.tsx:327
@@ -55093,18 +55451,30 @@ msgstr "تم التراجع"
 msgid "Unedited boilerplate text detected in email body."
 msgstr "تم اكتشاف نص قالب غير معدَّل في نص البريد الإلكتروني."
 
+#: app/components/inventory/group-sheet.tsx:126
+msgid "Ungroup"
+msgstr "فك التجميع"
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:398
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:407
 #: app/components/inventory/adjust-stock-dialog.tsx:236
 #: app/components/inventory/bulk-review-rows.tsx:108
 #: app/components/inventory/log-waste-dialog.tsx:334
-#: app/components/inventory/recipe-lines.tsx:212
+#: app/components/inventory/recipe-lines.tsx:246
 #: app/components/inventory/recipe-section.tsx:537
 #: app/components/inventory/record-batch-dialog.tsx:277
 #: app/components/inventory/transfer-dialogs.tsx:392
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:292
 msgid "Unit"
 msgstr "الوحدة"
+
+#: app/utils/inventory/labels.ts:79
+msgid "Unit changed"
+msgstr "تغيّرت الوحدة"
+
+#: app/components/inventory/change-unit-dialog.tsx:152
+msgid "Unit changed."
+msgstr "تم تغيير الوحدة."
 
 #: app/components/inventory/counting-screen.tsx:769
 msgid "Unit for {name}"
@@ -55304,8 +55674,8 @@ msgstr "تغييرات غير منشورة"
 msgid "Unread"
 msgstr "غير مقروء"
 
-#: app/components/ui/notification-bell.tsx:645
-#: app/components/ui/notification-bell.tsx:749
+#: app/components/ui/notification-bell.tsx:669
+#: app/components/ui/notification-bell.tsx:773
 msgid "Unread Notifications"
 msgstr "الإشعارات غير المقروءة"
 
@@ -55595,10 +55965,6 @@ msgstr "تحديث: {name}"
 msgid "Updated"
 msgstr "تم التحديث"
 
-#: app/routes/_app+/$orgSlug_+/website+/events._index.tsx:441
-#~ msgid "Updated {0}"
-#~ msgstr ""
-
 #: app/components/reservations/host-subnav.tsx:372
 #: app/components/reservations/waitlist/waitlist-clock.tsx:57
 msgid "Updated {ago}"
@@ -55774,10 +56140,6 @@ msgstr "رفع الملفات وإعادة تسميتها واستبدالها �
 msgid "Uploaded"
 msgstr "تم الرفع"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:444
-#~ msgid "Uploaded by {0} on {1}"
-#~ msgstr "رفعه {0} في {1}"
-
 #: app/components/settings/cards/organization/site-theme-card.tsx:360
 msgid "Uploaded by {uploader} on {date}"
 msgstr "رفعه {uploader} في {date}"
@@ -55853,11 +56215,11 @@ msgstr "الرابط:"
 msgid "US (oz, lb, fl oz, qt, gal)"
 msgstr "أمريكي (أونصة، رطل، أونصة سائلة، كوارت، جالون)"
 
-#: app/components/inventory/recipe-lines.tsx:236
+#: app/components/inventory/recipe-lines.tsx:270
 msgid "Usable %"
 msgstr "النسبة الصالحة للاستخدام %"
 
-#: app/components/inventory/recipe-lines.tsx:293
+#: app/components/inventory/recipe-lines.tsx:327
 msgid "Usable % is a number from 1 to 100."
 msgstr "النسبة الصالحة للاستخدام رقم من 1 إلى 100."
 
@@ -55872,10 +56234,6 @@ msgstr "أعداد الاستخدام غير متاحة الآن."
 #: app/components/phone-agent/training-rules-section.tsx:373
 msgid "Use \"{ruleTitle}\""
 msgstr "استخدام \"{ruleTitle}\""
-
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1446
-#~ msgid "Use {0} instead"
-#~ msgstr "استخدم {0} بدلًا من ذلك"
 
 #: app/components/phone-agent/settings-page.tsx:131
 msgid "Use {count} or less."
@@ -56152,6 +56510,10 @@ msgstr "استخدم كلمة المرور بدلاً من ذلك"
 msgid "Use pay at pickup only"
 msgstr "استخدم الدفع عند الاستلام فقط"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:480
+msgid "Use per day"
+msgstr "الاستهلاك اليومي"
+
 #: app/components/media-library/media-library-picker.tsx:352
 msgid "Use selected"
 msgstr "استخدام المحدد"
@@ -56187,6 +56549,10 @@ msgstr "استخدم الإجمالي الجديد"
 #: app/components/pos/terminal-profiles.tsx:917
 msgid "Use the profile's values"
 msgstr "استخدام قيم الملف التعريفي"
+
+#: app/components/inventory/setup-checks-panel.tsx:251
+msgid "Use the suggested price"
+msgstr "استخدم السعر المقترح"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:461
 msgid "Use the value of"
@@ -56224,6 +56590,10 @@ msgstr "استخدام هذا الفيديو"
 msgid "Use this voice"
 msgstr "استخدام هذا الصوت"
 
+#: app/components/inventory/merge-dialog.tsx:238
+msgid "Use this when <0>{itemName}</0> is the same thing as another item. Its recipes, suppliers and stock move to the item you keep, and this one is archived. You can undo it for 24 hours."
+msgstr "استخدم هذا عندما يكون <0>{itemName}</0> هو نفسه صنفًا آخر. تنتقل وصفاته وموردوه ومخزونه إلى الصنف الذي تُبقيه، ويُؤرشف هذا الصنف. يمكنك التراجع خلال 24 ساعة."
+
 #: app/components/qr/open-tabs.tsx:614
 msgid "Use this when the guest gave up on the payment page or it is stuck. You can then close the tab at the counter. Card pages are closed where the payment provider allows it; if money still arrives, the tab is marked for review."
 msgstr "استخدم هذا عندما يتخلى الضيف عن صفحة الدفع أو تتعطل. يمكنك بعدها إغلاق الحساب عند الكاونتر. تُغلق صفحات البطاقة حيث يسمح مزود الدفع بذلك؛ وإذا وصل المال رغم ذلك، يُعلَّم الحساب للمراجعة."
@@ -56249,11 +56619,17 @@ msgid "Used by a transfer case"
 msgstr "مستخدم في حالة تحويل"
 
 #: app/components/inventory/item-recipe-sections.tsx:112
-#: app/utils/inventory/labels.ts:77
+#: app/utils/inventory/labels.ts:84
 msgid "Used by sales"
 msgstr "مستخدم في المبيعات"
 
+#: app/components/inventory/group-sheet.tsx:163
+msgid "used first"
+msgstr "يُستخدم أولًا"
+
 #: app/components/discounts/message-impact.tsx:435
+#: app/components/inventory/group-sheet.tsx:193
+#: app/components/inventory/used-in-section.tsx:165
 #: app/components/menu/delete-effects.tsx:527
 #: app/routes/_app+/$orgSlug_+/media.tsx:2588
 msgid "Used in"
@@ -56268,7 +56644,7 @@ msgstr "يُستخدم في عنوان الصفحة على الويب. أحرف 
 msgid "Used on the public online ordering website."
 msgstr "يُستخدم في موقع الطلب عبر الإنترنت العام."
 
-#: app/utils/inventory/labels.ts:82
+#: app/utils/inventory/labels.ts:89
 msgid "Used to make something"
 msgstr "استُخدم في التصنيع"
 
@@ -56394,7 +56770,7 @@ msgstr "صالحة حتى {expires}"
 msgid "Validation passed"
 msgstr "اجتاز التحقق"
 
-#: app/components/inventory/stock-list.tsx:109
+#: app/components/inventory/stock-list.tsx:118
 #: app/components/menu/menu-bulk-edit-sheet.tsx:530
 #: app/components/settings/cards/organization/email-sending-card.tsx:324
 #: app/components/settings/cards/organization/verified-domain-card.tsx:156
@@ -56457,7 +56833,7 @@ msgstr "الرقم الضريبي 300000000000003"
 #: app/components/inventory/supplier-form.tsx:366
 #: app/components/pos/ticket-settings.tsx:66
 #: app/components/pos/zatca-settings.tsx:304
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:258
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:288
 msgid "VAT number"
 msgstr "الرقم الضريبي"
 
@@ -56554,11 +56930,6 @@ msgstr "جاري التحقق من مفتاح المرور"
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:257
 msgid "Version"
 msgstr "الإصدار"
-
-#: app/components/legal/agreement-dialog.tsx:148
-#: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:195
-#~ msgid "version {0}"
-#~ msgstr "الإصدار {0}"
 
 #. placeholder {0}: store.version
 #: app/components/settings/cards/organization/customer-app-card.tsx:94
@@ -57290,7 +57661,7 @@ msgstr "التحذيرات لا تمنعك من الحفظ أو النشر."
 msgid "Waste"
 msgstr "الهدر"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:353
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:354
 msgid "Waste by reason"
 msgstr "الهدر حسب السبب"
 
@@ -57307,7 +57678,7 @@ msgid "Waste logged: {itemName}, {amountText}"
 msgstr "تم تسجيل هدر: {itemName}، {amountText}"
 
 #: app/components/inventory/compare-panel.tsx:153
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:559
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:578
 msgid "Waste this week"
 msgstr "هدر هذا الأسبوع"
 
@@ -57317,7 +57688,7 @@ msgid "Waste undone."
 msgstr "تم التراجع عن تسجيل الهدر."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:467
-#: app/utils/inventory/labels.ts:78
+#: app/utils/inventory/labels.ts:85
 msgid "Wasted"
 msgstr "المهدر"
 
@@ -57365,6 +57736,10 @@ msgstr "تعذّرت مصادقة وسيلة الدفع. يرجى اختيار �
 #: app/components/staff/region-staff-guard.tsx:130
 msgid "We could not check how many staff records there are, so assume there are some."
 msgstr "تعذّر التحقق من عدد سجلات الموظفين، لذا افترض وجود بعضها."
+
+#: app/components/inventory/setup-checks-panel.tsx:301
+msgid "We could not check your setup. Try again."
+msgstr "تعذّر فحص إعداداتك. حاول مرة أخرى."
 
 #: app/components/hiring/applicants-page.tsx:390
 msgid "We could not confirm your access to applicants. Reload the page to try again."
@@ -57569,7 +57944,7 @@ msgstr "تعذّر حفظ المنطقة الزمنية. حاول مرة أخر�
 msgid "We could not save this print"
 msgstr "تعذّر حفظ هذه المطبوعة"
 
-#: app/utils/inventory/inventory-errors.ts:119
+#: app/utils/inventory/inventory-errors.ts:146
 msgid "We could not save this. Check your connection and try again."
 msgstr "تعذّر حفظ هذا. تحقق من اتصالك وحاول مرة أخرى."
 
@@ -58177,6 +58552,10 @@ msgstr "ما تم التخلص منه، ولماذا، وكم كلّف."
 msgid "What was wasted?"
 msgstr "ما الذي تم هدره؟"
 
+#: app/components/inventory/change-unit-dialog.tsx:393
+msgid "What will change"
+msgstr "ما الذي سيتغير"
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:149
 msgid "What would you like to collect?"
 msgstr "ما الذي ترغب في جمعه؟"
@@ -58435,7 +58814,7 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 msgid "When you close it"
 msgstr "عندما تغلقها"
 
-#: app/components/ui/notification-bell.tsx:530
+#: app/components/ui/notification-bell.tsx:554
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 
@@ -58791,7 +59170,7 @@ msgstr "نافذة"
 msgid "Window sticker"
 msgstr "ملصق واجهة"
 
-#: app/components/inventory/recipe-lines.tsx:133
+#: app/components/inventory/recipe-lines.tsx:167
 msgid "With"
 msgstr "بـ"
 
@@ -58810,6 +59189,10 @@ msgstr "عند إعداد بيانات اعتماد المنصة، يربط OAut
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:660
 msgid "With the rule"
 msgstr "مع القاعدة"
+
+#: app/components/inventory/change-unit-dialog.tsx:376
+msgid "With this conversion an amount would round to nothing. Check the numbers."
+msgstr "مع هذا التحويل ستصبح كمية صفرًا بعد التقريب. راجع الأرقام."
 
 #: app/components/pos/zatca-settings.tsx:420
 msgid "With warnings {withWarnings}"
@@ -58917,6 +59300,10 @@ msgstr "جارٍ العمل على ذلك"
 msgid "Working out the wait..."
 msgstr "جارٍ احتساب وقت الانتظار..."
 
+#: app/components/inventory/change-unit-dialog.tsx:298
+msgid "Working out what changes…"
+msgstr "جارٍ حساب ما سيتغير…"
+
 #: app/components/staff/timesheets/card-sheet.tsx:469
 #: app/components/staff/timesheets/timesheets-page.tsx:944
 #: app/components/staff/timesheets/timesheets-page.tsx:987
@@ -58949,11 +59336,11 @@ msgstr "يعمل بصفة"
 msgid "Works for the root and www, renews certificates by itself, and keeps your email records."
 msgstr "يعمل للجذر وwww، ويجدد الشهادات تلقائيًا، ويحتفظ بسجلات بريدك."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:448
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:559
 msgid "Worth"
 msgstr "القيمة"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:400
+#: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:425
 msgid "Worth <0>{totalValueText}</0>"
 msgstr "بقيمة <0>{totalValueText}</0>"
 
@@ -59442,7 +59829,7 @@ msgid "You do not have access to experiences here."
 msgstr "ليس لديك صلاحية الوصول إلى التجارب هنا."
 
 #: app/utils/inventory/inventory-errors.ts:13
-#: app/utils/inventory/inventory-errors.ts:107
+#: app/utils/inventory/inventory-errors.ts:134
 msgid "You do not have access to inventory at this location."
 msgstr "ليست لديك صلاحية الوصول إلى المخزون في هذا الفرع."
 
@@ -59488,7 +59875,7 @@ msgstr "ليس لديك صلاحية الوصول إلى هذا الموقع."
 msgid "You do not have permission to change experiences."
 msgstr "ليست لديك صلاحية تغيير التجارب."
 
-#: app/utils/inventory/inventory-errors.ts:110
+#: app/utils/inventory/inventory-errors.ts:137
 msgid "You do not have permission to change inventory. Ask an owner to check your role."
 msgstr "ليس لديك إذن بتغيير المخزون. اطلب من المالك مراجعة دورك."
 
@@ -59502,7 +59889,7 @@ msgstr "ليست لديك صلاحية تغيير سياسات الدفع."
 msgid "You do not have permission to change payments."
 msgstr "ليست لديك صلاحية تغيير المدفوعات."
 
-#: app/utils/inventory/inventory-errors.ts:161
+#: app/utils/inventory/inventory-errors.ts:188
 msgid "You do not have permission to change recipes. Ask an owner to check your role."
 msgstr "ليس لديك صلاحية تغيير الوصفات. اطلب من المالك مراجعة دورك."
 
@@ -59741,11 +60128,11 @@ msgstr "تطلب عبر"
 msgid "You owe"
 msgstr "عليك"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:126
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:136
 msgid "You owe <0>{owed}</0>"
 msgstr "عليك <0>{owed}</0>"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:726
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:745
 msgid "You owe <0>{owed}</0>."
 msgstr "عليك <0>{owed}</0>."
 

@@ -43,4 +43,34 @@ describe('inventory alert wording', () => {
 			).toMatch(/^1 item went up/)
 		}
 	})
+
+	it('names the dish and the ingredient when a dish goes off the menu and when it is back', () => {
+		const details = { dishes: ['Burger'], ingredients: ['Chicken'] }
+		const off = inventoryAlertCopy(
+			'inventory_sold_out',
+			1,
+			translate,
+			'Olaya',
+			details,
+		)
+		expect(off.subject).toBe('Burger is off the menu')
+		expect(off.body).toContain('Chicken ran out')
+		expect(off.body).toContain('Olaya')
+		const back = inventoryAlertCopy(
+			'inventory_sold_out_back',
+			1,
+			translate,
+			null,
+			details,
+		)
+		expect(back.subject).toBe('Burger is back on the menu')
+		expect(back.body).toContain('Chicken is back in stock')
+		// Several dishes are counted, not listed.
+		expect(
+			inventoryAlertCopy('inventory_sold_out', 3, translate, null, {
+				dishes: ['A', 'B', 'C'],
+				ingredients: ['Chicken'],
+			}).subject,
+		).toBe('3 dishes are off the menu')
+	})
 })

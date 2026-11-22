@@ -55,6 +55,18 @@ export function useUndoMerge(onUndone: () => void) {
 	}
 }
 
+function BannerText({ into, name }: { into: boolean; name: string }) {
+	return (
+		<span className="wrap-anywhere">
+			{into ? (
+				<Trans>Merged into {name}.</Trans>
+			) : (
+				<Trans>Merged {name} into this item.</Trans>
+			)}
+		</span>
+	)
+}
+
 /** "Merged into X · Undo" for a duplicate, and "Merged Y into this" for the item kept. */
 export function MergeBanners({
 	mergedInto,
@@ -85,25 +97,21 @@ export function MergeBanners({
 				<li key={link.mergeId}>
 					<Alert>
 						<Icon name="layers" />
-						<AlertDescription className="flex flex-wrap items-center justify-between gap-2">
-							<span className="wrap-anywhere">
-								{into ? (
-									<Trans>Merged into {link.name}.</Trans>
-								) : (
-									<Trans>Merged {link.name} into this item.</Trans>
-								)}
-							</span>
-							{canEdit && live(link) ? (
-								<Button
-									type="button"
-									size="sm"
-									variant="outline"
-									onClick={() => void undo(link.mergeId)}
-									data-testid={`merge-undo-${link.mergeId}`}
-								>
-									<Trans>Undo</Trans>
-								</Button>
-							) : null}
+						<AlertDescription>
+							<div className="flex flex-wrap items-center justify-between gap-2">
+								<BannerText into={into} name={link.name} />
+								{canEdit && live(link) ? (
+									<Button
+										type="button"
+										size="sm"
+										variant="outline"
+										onClick={() => void undo(link.mergeId)}
+										data-testid={`merge-undo-${link.mergeId}`}
+									>
+										<Trans>Undo</Trans>
+									</Button>
+								) : null}
+							</div>
 						</AlertDescription>
 					</Alert>
 				</li>
@@ -360,7 +368,9 @@ export function MergeItemDialog({
 									<Trans>
 										Stock becomes{' '}
 										<bdi dir="ltr" className="tabular-nums">
-											{quantity.format(row.after, { baseUnit: 'g' })}
+											{quantity.format(row.after, {
+												baseUnit: preview.baseUnit,
+											})}
 										</bdi>
 									</Trans>
 								</li>

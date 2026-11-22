@@ -81,13 +81,14 @@ export function UsedInList({
 		>
 			{result.rows.map((row, index) => {
 				const name = usedInName(row, names, generic)
+				const groupName = row.viaGroupName
 				const label = (
 					<span className="wrap-anywhere">
 						{row.mode === 'replace' ? <Trans>{name} (swapped in)</Trans> : name}
 						{row.viaGroupName ? (
 							<span className="text-muted-foreground">
 								{' · '}
-								<Trans>through {row.viaGroupName}</Trans>
+								<Trans>through {groupName}</Trans>
 							</span>
 						) : null}
 					</span>
