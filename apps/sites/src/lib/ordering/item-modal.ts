@@ -1,6 +1,7 @@
 import { createOverlayMotion } from '../site-motion.ts'
 import { newLineId } from './cart-store.ts'
 import { remainingFor } from './constraints.ts'
+import { decorateDishPhoto } from './dish-photo.ts'
 import { el, icon, lockScroll, prefersReducedMotion, trapFocus } from './dom.ts'
 import { fillTemplate } from './money.ts'
 import {
@@ -244,7 +245,12 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 			unavailableEl.classList.toggle('hidden', !blocked)
 		}
 		renderHeadlinePrice()
-		renderMedia(variant?.imageUrl || item.imageUrl)
+		renderMedia(
+			variant?.imageUrl || item.imageUrl,
+			variant?.imageUrl
+				? { itemId: item.id, focal: variant.imageFocal }
+				: { itemId: item.id, focal: item.imageFocal, test: item.photoTest },
+		)
 		updateAddButton()
 	}
 
@@ -269,7 +275,10 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		priceEl.replaceChildren(was, now)
 	}
 
-	function renderMedia(src: string | null | undefined) {
+	function renderMedia(
+		src: string | null | undefined,
+		photo: Parameters<typeof decorateDishPhoto>[1],
+	) {
 		if (!media) return
 		media.replaceChildren()
 		if (!src) {
@@ -281,6 +290,8 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		img.alt = ''
 		img.loading = 'eager'
 		img.className = 'size-full object-cover'
+		// The crop (#394) and, for the dish's own photo, the test markers (#192).
+		decorateDishPhoto(img, photo)
 		media.appendChild(img)
 		media.classList.remove('hidden')
 	}
@@ -968,6 +979,8 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 				item.specialInstructions === false
 					? ''
 					: (instructionsEl?.value.trim() ?? ''),
+			...(item.photoTest?.id ? { photoTestId: item.photoTest.id } : {}),
+			...(item.photoTest?.key ? { photoTestKey: item.photoTest.key } : {}),
 		}
 	}
 

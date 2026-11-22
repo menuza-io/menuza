@@ -25,6 +25,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 	let mockMenuImportWorkflowCreate: any
 	let mockCalendarSyncWorkflowCreate: any
 	let mockHeroVideoWorkflowCreate: any
+	let mockPhotoQualityWorkflowCreate: any
+	let mockMediaRestyleWorkflowCreate: any
 	let env: Env
 
 	beforeEach(() => {
@@ -58,6 +60,13 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			.fn()
 			.mockImplementation(({ id }) => Promise.resolve({ id }))
 		mockHeroVideoWorkflowCreate = vi
+			.fn()
+			.mockImplementation(({ id }) => Promise.resolve({ id }))
+
+		mockPhotoQualityWorkflowCreate = vi
+			.fn()
+			.mockImplementation(({ id }) => Promise.resolve({ id }))
+		mockMediaRestyleWorkflowCreate = vi
 			.fn()
 			.mockImplementation(({ id }) => Promise.resolve({ id }))
 
@@ -101,6 +110,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			OCCASION_SCHEDULE_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
 			HERO_VIDEO_WORKFLOW: {
 				create: mockHeroVideoWorkflowCreate,
+				get: vi.fn(),
+			} as any,
+			PHOTO_QUALITY_WORKFLOW: {
+				create: mockPhotoQualityWorkflowCreate,
+				get: vi.fn(),
+			} as any,
+			MEDIA_RESTYLE_WORKFLOW: {
+				create: mockMediaRestyleWorkflowCreate,
 				get: vi.fn(),
 			} as any,
 		}
@@ -302,6 +319,201 @@ describe('Jobs-Cron Worker Endpoints', () => {
 		it('refuses a malformed id', async () => {
 			expect((await start({ generationId: '../x' })).status).toBe(400)
 			expect(mockHeroVideoWorkflowCreate).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('POST /workflows/photo-quality/start (#145)', () => {
+		const start = (
+			body: unknown,
+			token = mockInternalToken,
+			path = '/workflows/photo-quality/start',
+		) =>
+			worker.fetch(
+				new Request(`http://localhost${path}`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(body),
+				}),
+				env,
+			)
+
+		afterEach(() => vi.useRealTimers())
+
+		it('rejects a caller without the internal token', async () => {
+			expect(
+				(await start({ organizationId: 'org_abcdef-123' }, 'wrong')).status,
+			).toBe(401)
+			expect(mockPhotoQualityWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('rejects a request with no Authorization header', async () => {
+			const res = await worker.fetch(
+				new Request('http://localhost/workflows/photo-quality/start', {
+					method: 'POST',
+					body: JSON.stringify({ organizationId: 'org_abcdef-123' }),
+				}),
+				env,
+			)
+			expect(res.status).toBe(401)
+			expect(mockPhotoQualityWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts one instance per id and 10-minute window, carrying the id only', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] })
+			vi.setSystemTime(new Date('2026-11-21T10:03:00.000Z'))
+			const bucket = Math.floor(Date.now() / 600_000)
+			const res = await start({
+				organizationId: 'org_abcdef-123',
+				extra: 'ignored',
+			})
+			expect(res.status).toBe(200)
+			expect(mockPhotoQualityWorkflowCreate).toHaveBeenCalledWith({
+				id: `photo-quality-org_abcdef-123-${bucket}`,
+				params: { organizationId: 'org_abcdef-123' },
+			})
+			expect(await res.json()).toEqual({
+				success: true,
+				instanceId: `photo-quality-org_abcdef-123-${bucket}`,
+			})
+		})
+
+		it('answers under the /api alias too', async () => {
+			const res = await start(
+				{ organizationId: 'org_abcdef-123' },
+				mockInternalToken,
+				'/api/workflows/photo-quality/start',
+			)
+			expect(res.status).toBe(200)
+			expect(mockPhotoQualityWorkflowCreate).toHaveBeenCalledTimes(1)
+		})
+
+		it('treats an instance that already exists as started', async () => {
+			mockPhotoQualityWorkflowCreate.mockRejectedValueOnce(
+				new Error('instance.already_exists'),
+			)
+			const res = await start({ organizationId: 'org_abcdef-123' })
+			expect(res.status).toBe(200)
+			expect((await res.json()) as { success: boolean }).toMatchObject({
+				success: true,
+			})
+		})
+
+		it('reports any other start failure', async () => {
+			mockPhotoQualityWorkflowCreate.mockRejectedValueOnce(new Error('boom'))
+			expect((await start({ organizationId: 'org_abcdef-123' })).status).toBe(
+				500,
+			)
+		})
+
+		it.each(['../x', 'short', 'a'.repeat(65), 'has space 123', '', 42, null])(
+			'refuses a malformed id (%s)',
+			async (bad) => {
+				expect((await start({ organizationId: bad })).status).toBe(400)
+				expect(mockPhotoQualityWorkflowCreate).not.toHaveBeenCalled()
+			},
+		)
+
+		it('refuses a body with no id', async () => {
+			expect((await start({})).status).toBe(400)
+			expect(mockPhotoQualityWorkflowCreate).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('POST /workflows/media-restyle/start (#146)', () => {
+		const start = (
+			body: unknown,
+			token = mockInternalToken,
+			path = '/workflows/media-restyle/start',
+		) =>
+			worker.fetch(
+				new Request(`http://localhost${path}`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(body),
+				}),
+				env,
+			)
+
+		afterEach(() => vi.useRealTimers())
+
+		it('rejects a caller without the internal token', async () => {
+			expect((await start({ runId: 'run_abcdef-123' }, 'wrong')).status).toBe(
+				401,
+			)
+			expect(mockMediaRestyleWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('rejects a request with no Authorization header', async () => {
+			const res = await worker.fetch(
+				new Request('http://localhost/workflows/media-restyle/start', {
+					method: 'POST',
+					body: JSON.stringify({ runId: 'run_abcdef-123' }),
+				}),
+				env,
+			)
+			expect(res.status).toBe(401)
+			expect(mockMediaRestyleWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts one instance per id and 10-minute window, carrying the id only', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] })
+			vi.setSystemTime(new Date('2026-11-21T10:03:00.000Z'))
+			const bucket = Math.floor(Date.now() / 600_000)
+			const res = await start({ runId: 'run_abcdef-123', extra: 'ignored' })
+			expect(res.status).toBe(200)
+			expect(mockMediaRestyleWorkflowCreate).toHaveBeenCalledWith({
+				id: `media-restyle-run_abcdef-123-${bucket}`,
+				params: { runId: 'run_abcdef-123' },
+			})
+			expect(await res.json()).toEqual({
+				success: true,
+				instanceId: `media-restyle-run_abcdef-123-${bucket}`,
+			})
+		})
+
+		it('answers under the /api alias too', async () => {
+			const res = await start(
+				{ runId: 'run_abcdef-123' },
+				mockInternalToken,
+				'/api/workflows/media-restyle/start',
+			)
+			expect(res.status).toBe(200)
+			expect(mockMediaRestyleWorkflowCreate).toHaveBeenCalledTimes(1)
+		})
+
+		it('treats an instance that already exists as started', async () => {
+			mockMediaRestyleWorkflowCreate.mockRejectedValueOnce(
+				new Error('instance.already_exists'),
+			)
+			const res = await start({ runId: 'run_abcdef-123' })
+			expect(res.status).toBe(200)
+			expect((await res.json()) as { success: boolean }).toMatchObject({
+				success: true,
+			})
+		})
+
+		it('reports any other start failure', async () => {
+			mockMediaRestyleWorkflowCreate.mockRejectedValueOnce(new Error('boom'))
+			expect((await start({ runId: 'run_abcdef-123' })).status).toBe(500)
+		})
+
+		it.each(['../x', 'short', 'a'.repeat(65), 'has space 123', '', 42, null])(
+			'refuses a malformed id (%s)',
+			async (bad) => {
+				expect((await start({ runId: bad })).status).toBe(400)
+				expect(mockMediaRestyleWorkflowCreate).not.toHaveBeenCalled()
+			},
+		)
+
+		it('refuses a body with no id', async () => {
+			expect((await start({})).status).toBe(400)
+			expect(mockMediaRestyleWorkflowCreate).not.toHaveBeenCalled()
 		})
 	})
 
@@ -1071,6 +1283,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
@@ -1182,6 +1396,16 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							token,
 						],
 						[
+							'https://app.example.com/resources/jobs/photo-quality',
+							'POST',
+							token,
+						],
+						[
+							'https://app.example.com/resources/jobs/media-restyle',
+							'POST',
+							token,
+						],
+						[
 							'https://app.example.com/resources/jobs/occasion-schedule',
 							'POST',
 							token,
@@ -1208,7 +1432,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 						],
 					]),
 				)
-				expect(calls).toHaveLength(30)
+				expect(calls).toHaveLength(32)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -1252,6 +1476,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1398,6 +1624,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
 					'Tenant loyalty tick failed for https://tenant-ksa.example.com',
@@ -1423,6 +1651,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1486,6 +1716,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					)
 					const results = await Promise.allSettled(promises)
 					expect(results.map((r) => r.status)).toEqual([
+						'fulfilled',
+						'fulfilled',
 						'fulfilled',
 						'fulfilled',
 						'fulfilled',
@@ -1576,6 +1808,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 				])
 				const reason = String((results[3] as PromiseRejectedResult).reason)
 				expect(reason).toContain(
@@ -1611,6 +1845,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				expect(results.map((r) => r.status)).toEqual([
 					'fulfilled',
 					'rejected',
+					'fulfilled',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1690,6 +1926,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -1717,6 +1955,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1767,6 +2007,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'https://app.example.com/resources/jobs/menu-import',
 					'https://app.example.com/resources/jobs/calendar-sync',
 					'https://app.example.com/resources/jobs/hero-video',
+					'https://app.example.com/resources/jobs/photo-quality',
+					'https://app.example.com/resources/jobs/media-restyle',
 					'https://app.example.com/resources/jobs/occasion-schedule',
 				])
 			})

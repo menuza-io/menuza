@@ -12,6 +12,7 @@ import {
 	resolvePhotoStudioOptions,
 	type PhotoStudioAspectRatio,
 	type PhotoStudioStyle,
+	type PhotoStudioVertical,
 } from './photo-studio.ts'
 
 export const PHOTO_STUDIO_RATE_LIMIT: RateLimitConfig = {
@@ -73,6 +74,13 @@ export type PhotoStudioRequest = {
 	options: Record<string, unknown>
 	instructions?: string
 	aspectRatio: PhotoStudioAspectRatio
+	/** A vertical other than the studio's own (the menu restyle's dish one). */
+	vertical?: PhotoStudioVertical
+	/**
+	 * Skips the per-person hourly limit. Only for a background job that has its
+	 * own budget (the menu restyle's daily organization budget, #146).
+	 */
+	skipRateLimit?: boolean
 }
 
 export type PhotoStudioResult =
@@ -93,16 +101,19 @@ export async function generatePhotoStudioImage(
 	generate: typeof editImage = editImage,
 ): Promise<PhotoStudioResult> {
 	if (!isPhotoStudioConfigured()) return { ok: false, error: 'not_configured' }
-	const limit = await checkRateLimit(
-		{ type: 'user', value: `${input.userId}:${input.organizationId}` },
-		PHOTO_STUDIO_RATE_LIMIT,
-	)
-	if (!limit.allowed) return { ok: false, error: 'rate_limited' }
+	if (!input.skipRateLimit) {
+		const limit = await checkRateLimit(
+			{ type: 'user', value: `${input.userId}:${input.organizationId}` },
+			PHOTO_STUDIO_RATE_LIMIT,
+		)
+		if (!limit.allowed) return { ok: false, error: 'rate_limited' }
+	}
 
+	const vertical = input.vertical ?? photoStudioVertical
 	const prompt = buildPhotoStudioPrompt({
-		vertical: photoStudioVertical,
+		vertical,
 		style: input.style,
-		options: resolvePhotoStudioOptions(photoStudioVertical, input.options),
+		options: resolvePhotoStudioOptions(vertical, input.options),
 		instructions: input.instructions,
 		refining: Boolean(input.previousResult),
 	})

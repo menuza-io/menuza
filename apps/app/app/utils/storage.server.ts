@@ -81,8 +81,11 @@ type MediaSource =
 	| 'ai-studio'
 	| 'chat'
 	| 'comment'
+	| 'guest-photo'
 	| 'library'
 	| 'note'
+	| 'phone'
+	| 'restyle'
 	| 'organization-logo'
 	| 'site-icon'
 	| 'video-thumbnail'
@@ -255,7 +258,10 @@ export async function uploadOrganizationMediaImage(
 	organizationId: string,
 	file: File | FileUpload,
 	createdById?: string,
-	source: Extract<MediaSource, 'library' | 'ai-studio'> = 'library',
+	source: Extract<
+		MediaSource,
+		'library' | 'ai-studio' | 'guest-photo' | 'phone'
+	> = 'library',
 ) {
 	const {
 		key: objectKey,
@@ -442,9 +448,13 @@ export async function uploadHeroVideoObject(input: {
 }) {
 	const key = `orgs/${input.organizationId}/media/hero-video/${crypto.randomUUID()}${input.suffix ?? ''}.${input.extension}`
 	const config = await createUploadOptions().getConfig(input.organizationId)
-	const file = new File([new Uint8Array(input.bytes)], `hero.${input.extension}`, {
-		type: input.mimeType,
-	})
+	const file = new File(
+		[new Uint8Array(input.bytes)],
+		`hero.${input.extension}`,
+		{
+			type: input.mimeType,
+		},
+	)
 	await _uploadToStorage(file, key, config)
 	return key
 }

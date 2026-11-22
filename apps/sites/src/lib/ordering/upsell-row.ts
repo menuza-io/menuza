@@ -1,4 +1,5 @@
 import { lowestAvailablePrice } from './catalog.ts'
+import { decorateDishPhoto } from './dish-photo.ts'
 import { el } from './dom.ts'
 import { fillTemplate } from './money.ts'
 import { type OrderingItem } from './types.ts'
@@ -48,6 +49,11 @@ export function buildUpsellRow(options: {
 			photo.alt = ''
 			photo.loading = 'lazy'
 			photo.className = 'size-12 shrink-0 rounded-lg object-cover'
+			decorateDishPhoto(photo, {
+				itemId: item.id,
+				focal: item.imageFocal,
+				test: item.photoTest,
+			})
 			row.appendChild(photo)
 		}
 		const text = el('div', 'min-w-0 flex-1')

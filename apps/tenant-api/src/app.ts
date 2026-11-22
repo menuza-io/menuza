@@ -49,6 +49,7 @@ import {
 	shortLinkOperatorRoutes,
 } from './routes/short-links.ts'
 import { funnelOperatorRoutes } from './routes/operator-funnel.ts'
+import { photoTestOperatorRoutes } from './routes/operator-photo-tests.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
 import { emailDomainRoutes } from './routes/email-domains.ts'
 import { provisionRoutes } from './routes/provision.ts'
@@ -416,6 +417,7 @@ export function createTenantApiApp() {
 	app.route('/operator/forms', formOperatorRoutes)
 	app.route('/operator/mailbox', mailboxRoutes)
 	app.route('/operator/funnel', funnelOperatorRoutes)
+	app.route('/operator/photo-tests', photoTestOperatorRoutes)
 	app.route('/operator/journeys', journeyOperatorRoutes)
 	app.route('/operator/marketing/audiences', marketingAudienceRoutes)
 	app.route('/operator/marketing/settings', marketingSettingsRoutes)

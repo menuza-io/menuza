@@ -1,5 +1,6 @@
 import { and, count, desc, eq, lt, sql } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import {
 	formResponseOutbox,
 	getTenantDb,
@@ -41,6 +42,12 @@ import {
 	recordPopupSignup,
 } from '../services/popup-signup.ts'
 import { siteEventBodySchema } from '@repo/common/site-funnel'
+import { photoTestEventsBodySchema } from '@repo/common/photo-test-events'
+import {
+	countDishPhotoEvents,
+	verifiedDishPhotoEvents,
+	dishPhotoTestsDisabled,
+} from '../services/dish-photo-tests.ts'
 import { countSiteEvent, siteEventsDisabled } from '../services/site-events.ts'
 import { authenticateOperator, requireOperatorClaim } from './operator.ts'
 
@@ -215,6 +222,47 @@ publicFormRoutes.post(
 		)
 		if (!organization) return c.body(null, 204)
 		await countSiteEvent(organization.id, parsed.data).catch(() => {})
+		return c.body(null, 204)
+	},
+)
+
+/**
+ * `POST /forms/dish-photo-events` (#192): counter beacon of a dish photo test,
+ * a batch of at most 50 `{ testId, itemId, variant, event: view | add }` from
+ * the visitor's browser. Numbers only: no visitor id, address or user agent is
+ * stored (the browser's anonymous id never leaves it). The organization comes
+ * from the browser `Origin`. Always answers 204 (a bad body, a foreign origin,
+ * an oversized request and the kill switch are silent for the visitor), except
+ * the route's own rate limit (429). `DISH_PHOTO_TESTS_ENABLED=false` stops
+ * counting on this node. A new (day, test, dish, photo) row past the
+ * organization's daily cap is dropped; counted rows keep counting.
+ */
+publicFormRoutes.post(
+	'/dish-photo-events',
+	rateLimit('dish-photo-events', { windowMs: 60 * 1000, maxRequests: 60 }),
+	bodyLimit({
+		maxSize: 32 * 1024,
+		onError: (c) => c.body(null, 204),
+	}),
+	async (c) => {
+		if (dishPhotoTestsDisabled()) return c.body(null, 204)
+		const parsed = photoTestEventsBodySchema.safeParse(
+			await c.req.json().catch(() => null),
+		)
+		if (!parsed.success) return c.body(null, 204)
+		const organization = await resolveOrganizationForBrowserAuth(
+			c.req.header('Origin'),
+			{ slug: parsed.data.slug, host: parsed.data.host },
+		)
+		if (!organization) return c.body(null, 204)
+		// Only events for a test the App signed count: invented ids count nothing.
+		const verified = await verifiedDishPhotoEvents(
+			organization.id,
+			parsed.data.events,
+		)
+		if (verified.length > 0) {
+			await countDishPhotoEvents(organization.id, verified).catch(() => {})
+		}
 		return c.body(null, 204)
 	},
 )

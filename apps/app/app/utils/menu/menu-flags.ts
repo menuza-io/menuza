@@ -9,6 +9,8 @@ export const MENU_FLAG_KEYS = {
 	import: 'menu.import',
 	/** #148 guest dish photos & moderation (default off; forced off for KSA). */
 	guestPhotos: 'menu.guest_photos',
+	/** #192 dish photo A/B tests (default off). */
+	photoTests: 'menu.photo_tests',
 } as const
 
 export type MenuFlagName = keyof typeof MENU_FLAG_KEYS

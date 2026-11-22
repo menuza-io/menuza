@@ -2,7 +2,7 @@ import type * as CommonModule from '@repo/common'
 import type * as DatabaseModule from '@repo/database'
 import type * as SecurityModule from '@repo/security'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { resetMockDb } from '#tests/setup/drizzle-mock.ts'
+import { mockSelectResults, resetMockDb } from '#tests/setup/drizzle-mock.ts'
 import { loader } from './images.tsx'
 
 const SIGNED_URL =
@@ -100,6 +100,94 @@ describe('resources/images on the Workers runtime', () => {
 			width: 640,
 			height: 384,
 			fit: 'cover',
+		})
+	})
+
+	describe('focal point (#394)', () => {
+		const objectKey = 'orgs/org-1/media/images/1792072957921-abc.webp'
+		const crop = async (query: string) => {
+			fetchMock.mockClear()
+			const request = new Request(
+				`http://localhost/resources/images?objectKey=${encodeURIComponent(objectKey)}&w=640&h=384&fit=cover${query}`,
+			)
+			await loader({ request, params: {}, context: {} } as any)
+			const [, init] = fetchMock.mock.calls[1]!
+			return (init as { cf?: { image: Record<string, unknown> } }).cf!.image
+		}
+
+		it('keeps the centre crop when there is no focal point', async () => {
+			expect(await crop('')).not.toHaveProperty('gravity')
+		})
+
+		it('shifts the crop toward a top-left focal point', async () => {
+			expect(await crop('&fp=0,0')).toMatchObject({
+				fit: 'cover',
+				gravity: { x: 0, y: 0 },
+			})
+		})
+
+		it('passes any point through and ignores junk', async () => {
+			expect(await crop('&fp=0.2,0.9')).toMatchObject({
+				gravity: { x: 0.2, y: 0.9 },
+			})
+			expect(await crop('&fp=left,top')).not.toHaveProperty('gravity')
+			// The exact centre is "no focal point".
+			expect(await crop('&fp=0.5,0.5')).not.toHaveProperty('gravity')
+		})
+
+		it('only a cover crop uses the point', async () => {
+			const request = new Request(
+				`http://localhost/resources/images?objectKey=${encodeURIComponent(objectKey)}&w=640&fit=contain&fp=0,0`,
+			)
+			await loader({ request, params: {}, context: {} } as any)
+			const [, init] = fetchMock.mock.calls[1]!
+			expect(
+				(init as { cf?: { image: Record<string, unknown> } }).cf!.image,
+			).not.toHaveProperty('gravity')
+		})
+
+		it("uses the photo's own focal point for a library image", async () => {
+			mockSelectResults([
+				{
+					objectKey,
+					organizationId: 'org-1',
+					storageScope: 'organization',
+					source: 'library',
+					status: 'ready',
+					focalX: 0,
+					focalY: 0,
+				},
+			])
+			const request = new Request(
+				'http://localhost/resources/images?mediaId=abcdefghijklmnop1234&w=640&h=384&fit=cover',
+			)
+			await loader({ request, params: {}, context: {} } as any)
+			const [, init] = fetchMock.mock.calls[1]!
+			expect(
+				(init as { cf?: { image: Record<string, unknown> } }).cf!.image,
+			).toMatchObject({ gravity: { x: 0, y: 0 } })
+		})
+
+		it('keeps the centre crop for a library image without a point', async () => {
+			mockSelectResults([
+				{
+					objectKey,
+					organizationId: 'org-1',
+					storageScope: 'organization',
+					source: 'library',
+					status: 'ready',
+					focalX: null,
+					focalY: null,
+				},
+			])
+			const request = new Request(
+				'http://localhost/resources/images?mediaId=abcdefghijklmnop1234&w=640&h=384&fit=cover',
+			)
+			await loader({ request, params: {}, context: {} } as any)
+			const [, init] = fetchMock.mock.calls[1]!
+			expect(
+				(init as { cf?: { image: Record<string, unknown> } }).cf!.image,
+			).not.toHaveProperty('gravity')
 		})
 	})
 

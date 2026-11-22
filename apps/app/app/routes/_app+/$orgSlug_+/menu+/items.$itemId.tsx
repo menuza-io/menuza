@@ -38,6 +38,7 @@ import {
 } from 'react-router'
 import { DishPageCard } from '#app/components/menu/dish-page-card.tsx'
 import { ItemForm } from '#app/components/menu/item-form.tsx'
+import { PhotoTestPanel } from '#app/components/menu/photo-test-panel.tsx'
 import {
 	requireMenuRead,
 	requireMenuWrite,
@@ -62,6 +63,13 @@ import {
 	assertMediaKeysInOrganization,
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
+import { photoTestCountsReader } from '#app/utils/menu/photo-test-results.server.ts'
+import {
+	isPhotoTestsEnabled,
+	listPhotoTestsForItem,
+	photoTestImageUrls,
+	stopPhotoTestsForChangedDish,
+} from '#app/utils/menu/photo-tests.server.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -202,9 +210,31 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		? { enabled: item.sitePageEnabled, slug: item.siteSlug }
 		: null
 
+	// Photo tests (#192): the running and past tests of this dish, with the
+	// regional numbers (counts only).
+	const photoTestsEnabled = await isPhotoTestsEnabled(organization.id)
+	const photoTestList = photoTestsEnabled
+		? await listPhotoTestsForItem({
+				organizationId: organization.id,
+				itemId: item.id,
+				readCounts: photoTestCountsReader(request, organization.slug),
+			})
+		: []
+	const photoTests = photoTestsEnabled
+		? {
+				tests: photoTestList.map((test) => ({
+					...test,
+					startedAt: test.startedAt.toISOString(),
+					endedAt: test.endedAt?.toISOString() ?? null,
+				})),
+				urls: await photoTestImageUrls(organization.id, photoTestList),
+			}
+		: null
+
 	return {
 		organization,
 		dishPage,
+		photoTests,
 		defaultLocale,
 		supportedLocales,
 		slotLimitsEnabled: slotLimits.enabled,
@@ -574,6 +604,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		details: 'Menu item edited.',
 	})
 
+	// A photo change made here ends a running test of this dish: it would no
+	// longer compare what is live (#192).
+	await stopPhotoTestsForChangedDish({
+		organizationId: organization.id,
+		itemId,
+		newMainKey: primaryImageKey,
+	})
+
 	return redirect(`/${organization.slug}/menu/items`)
 }
 
@@ -589,6 +627,7 @@ export default function EditItemRoute() {
 		slotLimitsEnabled,
 		dailyLimitsEnabled,
 		dishPage,
+		photoTests,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -610,6 +649,16 @@ export default function EditItemRoute() {
 				dailyLimitsEnabled={dailyLimitsEnabled}
 				isSubmitting={isSubmitting}
 			/>
+			{photoTests && item.imageKey ? (
+				<div className="px-4 pb-6 md:px-2">
+					<PhotoTestPanel
+						orgSlug={organization.slug}
+						itemId={item.id}
+						tests={photoTests.tests}
+						urls={photoTests.urls}
+					/>
+				</div>
+			) : null}
 			{dishPage ? (
 				<div className="px-4 pb-6 md:px-2">
 					<DishPageCard

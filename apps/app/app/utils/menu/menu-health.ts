@@ -1,3 +1,4 @@
+import { isWeakPhoto, type PhotoQualityIssue } from '@repo/common/photo-quality'
 import {
 	type LocalizedString,
 	parseLocalizedString,
@@ -26,6 +27,7 @@ import {
 export const MENU_HEALTH_CHECK_KEYS = [
 	'zero_price',
 	'no_photo',
+	'weak_photo',
 	'no_description',
 	'missing_translation',
 	'empty_category',
@@ -61,6 +63,7 @@ export const MENU_HEALTH_WEIGHTS: Record<MenuHealthCheckKey, number> = {
 	empty_category: 5,
 	long_unavailable: 5,
 	// Deductions (see above).
+	weak_photo: 10,
 	impossible_minimum: 15,
 	empty_option_group: 10,
 	duplicate_item: 5,
@@ -71,6 +74,7 @@ export const MENU_HEALTH_WEIGHTS: Record<MenuHealthCheckKey, number> = {
 /** Checks that only deduct; see `MENU_HEALTH_WEIGHTS`. */
 export const MENU_HEALTH_DEDUCTION_CHECKS: ReadonlySet<MenuHealthCheckKey> =
 	new Set<MenuHealthCheckKey>([
+		'weak_photo',
 		'impossible_minimum',
 		'empty_option_group',
 		'duplicate_item',
@@ -82,6 +86,7 @@ const SEVERITY: Record<MenuHealthCheckKey, MenuHealthSeverity> = {
 	zero_price: 'error',
 	impossible_minimum: 'error',
 	no_photo: 'warning',
+	weak_photo: 'warning',
 	no_description: 'warning',
 	missing_translation: 'warning',
 	empty_category: 'warning',
@@ -155,6 +160,15 @@ export type MenuHealthItem = {
 	imageUrl: string | null
 	/** JSON array of image keys, as stored. */
 	imageKeys: string | null
+	/**
+	 * The primary photo's quality (#145), set only while the organization has
+	 * `media.photo_quality` on. `null` means unscored: never a penalty.
+	 */
+	primaryPhoto?: {
+		assetId: string
+		score: number | null
+		issues: readonly PhotoQualityIssue[]
+	} | null
 	/** JSON variations, as stored; only variant prices are read. */
 	variations: string | null
 	/** JSON array of allergens, as stored. */
@@ -210,6 +224,8 @@ export type MenuHealthInput = {
 		/** The option's own pick cap in a quantity group (null: no cap). */
 		optionMaxSelections?: number | null
 	}>
+	/** Run the Weak dish photo check (#145): `media.photo_quality` is on. */
+	photoQuality?: boolean
 	/** Health dismissals of this organization (`card:` rows are ignored). */
 	dismissals?: readonly MenuHealthDismissal[]
 	/** Fill `fingerprints` on every check (server use, e.g. to dismiss). */
@@ -264,7 +280,12 @@ export type MenuHealth = {
 }
 
 /** A record listed under a check on the Menu overview. */
-export type MenuHealthRecordRef = { id: string; name: string }
+export type MenuHealthRecordRef = {
+	id: string
+	name: string
+	/** Weak dish photo (#145): the photo to open in the studio, with its issues. */
+	photo?: { assetId: string; issues: PhotoQualityIssue[] }
+}
 
 /** What the Menu overview sends to the browser for each check. */
 export type MenuHealthCheckSummary = {
@@ -446,6 +467,11 @@ export type MenuHealthFingerprintSource =
 				| 'no_allergens_or_calories'
 	  }
 	| { key: 'zero_price'; price: number; variantPrices: readonly number[] }
+	| {
+			key: 'weak_photo'
+			score: number | null
+			issues: readonly string[]
+	  }
 	| { key: 'missing_translation'; missingLocales: readonly string[] }
 	| { key: 'long_unavailable'; availabilityStatus: string }
 	| {
@@ -485,6 +511,11 @@ export function menuHealthFingerprint(
 		case 'empty_category':
 		case 'no_allergens_or_calories':
 			return shortHash('')
+		case 'weak_photo':
+			// A new photo (or a new score) is a new problem: the dismissal ends.
+			return shortHash(
+				`${source.score ?? ''}:${[...source.issues].sort().join(',')}`,
+			)
 		case 'zero_price':
 			return shortHash(
 				[source.price, ...[...source.variantPrices].sort((a, b) => a - b)].join(
@@ -603,7 +634,10 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 	const dismissals = new Map<string, MenuHealthDismissal>()
 	for (const dismissal of input.dismissals ?? []) {
 		if (!isHealthKey(dismissal.checkKey)) continue
-		dismissals.set(`${dismissal.checkKey}\u0000${dismissal.entityId}`, dismissal)
+		dismissals.set(
+			`${dismissal.checkKey}\u0000${dismissal.entityId}`,
+			dismissal,
+		)
 	}
 	const usedDismissals = new Set<string>()
 
@@ -632,7 +666,8 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 			} else {
 				ids.push(record.id)
 			}
-			if (fingerprints) fingerprints[record.id] = fingerprint ?? record.fingerprint()
+			if (fingerprints)
+				fingerprints[record.id] = fingerprint ?? record.fingerprint()
 		}
 		checks.push({
 			key,
@@ -647,7 +682,9 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 	}
 
 	if (items.length > 0) {
-		const enabledLocales = Array.from(new Set([defaultLocale, ...input.locales]))
+		const enabledLocales = Array.from(
+			new Set([defaultLocale, ...input.locales]),
+		)
 		const translationLocales = enabledLocales.filter(
 			(locale) => locale !== defaultLocale,
 		)
@@ -679,7 +716,10 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 			const failing: Failing[] = []
 			for (const fact of facts) {
 				if (test(fact))
-					failing.push({ id: fact.item.id, fingerprint: () => fingerprint(fact) })
+					failing.push({
+						id: fact.item.id,
+						fingerprint: () => fingerprint(fact),
+					})
 			}
 			return failing
 		}
@@ -705,6 +745,24 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 				() => menuHealthFingerprint({ key: 'no_photo' }),
 			),
 		)
+		if (input.photoQuality) {
+			addCheck(
+				'weak_photo',
+				items.length,
+				collect(
+					(fact) => {
+						const photo = fact.item.primaryPhoto
+						return photo ? isWeakPhoto(photo) : false
+					},
+					(fact) =>
+						menuHealthFingerprint({
+							key: 'weak_photo',
+							score: fact.item.primaryPhoto?.score ?? null,
+							issues: fact.item.primaryPhoto?.issues ?? [],
+						}),
+				),
+			)
+		}
 		addCheck(
 			'no_description',
 			items.length,
@@ -829,7 +887,8 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 			categories.length,
 			categories
 				.filter(
-					(category) => !withItems.has(category.id) && !parents.has(category.id),
+					(category) =>
+						!withItems.has(category.id) && !parents.has(category.id),
 				)
 				.map((category) => ({
 					id: category.id,
@@ -897,12 +956,12 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 				})
 				if (optionCount === 0) empty.push(failing('empty_option_group'))
 				else if (
-						groupMinimumIsImpossible(
-							group,
-							optionCount,
-							optionCaps.get(group.id) ?? null,
-						)
+					groupMinimumIsImpossible(
+						group,
+						optionCount,
+						optionCaps.get(group.id) ?? null,
 					)
+				)
 					impossible.push(failing('impossible_minimum'))
 			}
 			addCheck('empty_option_group', groups.length, empty)
@@ -973,6 +1032,9 @@ export function menuHealthCheckIds(check: MenuHealthCheck): string[] {
 export function summarizeMenuHealth(
 	health: MenuHealth,
 	nameOf: (entityType: MenuHealthEntityType, id: string) => string,
+	photoOf?: (
+		itemId: string,
+	) => { assetId: string; issues: readonly PhotoQualityIssue[] } | null,
 ): MenuHealthSummary {
 	return {
 		score: health.score,
@@ -981,7 +1043,17 @@ export function summarizeMenuHealth(
 		itemCount: health.itemCount,
 		checks: health.checks.map((check) => {
 			const entityType = menuHealthEntityType(check.key)
-			const ref = (id: string) => ({ id, name: nameOf(entityType, id) })
+			const ref = (id: string): MenuHealthRecordRef => {
+				const base = { id, name: nameOf(entityType, id) }
+				const photo =
+					check.key === 'weak_photo' ? (photoOf?.(id) ?? null) : null
+				return photo
+					? {
+							...base,
+							photo: { assetId: photo.assetId, issues: [...photo.issues] },
+						}
+					: base
+			}
 			const dismissedIds = check.dismissedIds ?? []
 			return {
 				key: check.key,

@@ -108,6 +108,11 @@ function announceAdd() {
 export function createCartStore(options: {
 	key: string
 	storage?: StorageLike
+	/**
+	 * Called with the line that was added, after the funnel event. The window
+	 * event carries nothing, so a dish photo test (#192) counts its `add` here.
+	 */
+	onAdd?: (line: CartItem) => void
 }): CartStore {
 	const storage = resolveStorage(options.storage)
 	const listeners = new Set<(lines: CartItem[]) => void>()
@@ -132,6 +137,15 @@ export function createCartStore(options: {
 			// Quota or privacy mode: keep the in-memory cart working.
 		}
 		notify()
+	}
+
+	function added(line: CartItem) {
+		announceAdd()
+		try {
+			options.onAdd?.({ ...line })
+		} catch {
+			// A counter must never stop a dish going into the cart.
+		}
 	}
 
 	function notify() {
@@ -167,13 +181,13 @@ export function createCartStore(options: {
 			if (existing) {
 				existing.quantity += item.quantity
 				write()
-				announceAdd()
+				added(candidate)
 				return { ...existing }
 			}
 			const line: CartItem = candidate
 			items.push(line)
 			write()
-			announceAdd()
+			added(candidate)
 			return { ...line }
 		},
 		setQuantity(lineId, quantity) {

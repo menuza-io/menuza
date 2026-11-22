@@ -1,3 +1,9 @@
+import { getFeatureFlag } from '@repo/common/feature-flags'
+import { parseMenuItemImageKeys } from '@repo/common/menu-types'
+import {
+	parsePhotoQualityIssues,
+	type PhotoQualityIssue,
+} from '@repo/common/photo-quality'
 import {
 	parseSiteLocalesConfig,
 	pickLocalized,
@@ -7,10 +13,12 @@ import {
 	db,
 	eq,
 	inArray,
+	sql,
 	MenuCheckDismissal,
 	not,
 	like,
 	OrganizationMenuCategory,
+	OrganizationMediaAsset,
 	OrganizationMenuItem,
 	OrganizationMenuItemCategoryAssignment,
 	OrganizationMenuItemModifierGroupAssignment,
@@ -18,6 +26,7 @@ import {
 	OrganizationMenuModifierGroupOptionAssignment,
 	OrganizationMenuOption,
 } from '@repo/database'
+import { isMediaFlagOn, MEDIA_FLAG_KEYS } from '#app/utils/media/media-flags.ts'
 import {
 	computeMenuHealth,
 	menuHealthCheckIds,
@@ -68,6 +77,8 @@ export type MenuHealthData = {
 		optionMaxSelections: number | null
 	}>
 	dismissals: MenuHealthDismissal[]
+	/** `media.photo_quality` is on: the Weak dish photo check runs (#145). */
+	photoQuality?: boolean
 }
 
 /** Health dismissals of an organization; review-stack `card:` rows excluded. */
@@ -172,6 +183,10 @@ export async function loadMenuHealthData(
 			.from(MenuCheckDismissal)
 			.where(healthDismissalRows(organizationId)),
 	])
+	const photoQuality = isMediaFlagOn(
+		await getFeatureFlag(MEDIA_FLAG_KEYS.photoQuality, { organizationId }),
+	)
+	if (photoQuality) await attachPrimaryPhotoQuality(organizationId, items)
 	return {
 		items,
 		categories,
@@ -180,6 +195,49 @@ export async function loadMenuHealthData(
 		itemModifierGroups,
 		modifierGroupOptions,
 		dismissals,
+		photoQuality,
+	}
+}
+
+/**
+ * Adds each dish's primary photo score (#145) from the library. A photo that
+ * is not in the library, or has no score yet, is unscored: no penalty. Reads
+ * the organization's scored assets in one query, never a list sized by the menu.
+ */
+async function attachPrimaryPhotoQuality(
+	organizationId: string,
+	items: MenuHealthItem[],
+) {
+	const scored = await db
+		.select({
+			id: OrganizationMediaAsset.id,
+			objectKey: OrganizationMediaAsset.objectKey,
+			score: OrganizationMediaAsset.qualityScore,
+			issues: OrganizationMediaAsset.qualityIssues,
+		})
+		.from(OrganizationMediaAsset)
+		.where(
+			and(
+				eq(OrganizationMediaAsset.organizationId, organizationId),
+				sql`(${OrganizationMediaAsset.analyzedAt} IS NOT NULL)`,
+			),
+		)
+	const byKey = new Map<
+		string,
+		{ assetId: string; score: number | null; issues: PhotoQualityIssue[] }
+	>()
+	for (const row of scored) {
+		const value = {
+			assetId: row.id,
+			score: row.score,
+			issues: parsePhotoQualityIssues(row.issues),
+		}
+		byKey.set(row.id, value)
+		byKey.set(row.objectKey, value)
+	}
+	for (const item of items) {
+		const primary = parseMenuItemImageKeys(item.imageKeys, item.imageKey)[0]
+		item.primaryPhoto = primary ? (byKey.get(primary) ?? null) : null
 	}
 }
 
@@ -274,8 +332,20 @@ export async function loadMenuHealthSummary(
 			data.modifierGroups.map((row) => [row.id, row.name]),
 		),
 	}
-	return summarizeMenuHealth(health, (entityType, id) =>
-		pickLocalized(names[entityType].get(id) ?? '', defaultLocale, defaultLocale),
+	const photos = new Map(
+		data.items.flatMap((item) =>
+			item.primaryPhoto ? [[item.id, item.primaryPhoto] as const] : [],
+		),
+	)
+	return summarizeMenuHealth(
+		health,
+		(entityType, id) =>
+			pickLocalized(
+				names[entityType].get(id) ?? '',
+				defaultLocale,
+				defaultLocale,
+			),
+		(itemId) => photos.get(itemId) ?? null,
 	)
 }
 
@@ -306,6 +376,7 @@ export function computeMenuHealthFor(
 		| 'itemModifierGroups'
 		| 'modifierGroupOptions'
 		| 'dismissals'
+		| 'photoQuality'
 	>,
 	options: { includeFingerprints?: boolean; now?: Date } = {},
 ): MenuHealth {

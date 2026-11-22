@@ -111,11 +111,24 @@ export function checkoutOrderRequest(
 	marketingConsent?: Record<string, unknown> | null,
 	/** Where the guest came from (#115), added after the key like consent. */
 	attribution?: Record<string, unknown> | null,
+	/**
+	 * The dish photo tests (#192) this cart's dishes were in, with the photo
+	 * this browser showed. Sent only when there is at least one (the region's
+	 * body is strict), and, like the attribution, only after the key exists.
+	 */
+	photoTests?: ReadonlyArray<{
+		testId: string
+		itemId: string
+		variant: 'A' | 'B'
+	}> | null,
 ): Record<string, unknown> {
 	return {
 		...core,
 		...(marketingConsent ? { marketingConsent } : {}),
 		...(attribution ? { attribution } : {}),
+		...(photoTests && photoTests.length > 0
+			? { photoTests: photoTests.map((entry) => ({ ...entry })) }
+			: {}),
 		idempotencyKey,
 	}
 }

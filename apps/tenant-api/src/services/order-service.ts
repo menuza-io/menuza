@@ -161,6 +161,7 @@ import {
 	readDailyDishAvailability,
 	recordDailyDishClaims,
 } from './order-dish-daily-service.ts'
+import { recordDishPhotoOrderLines } from './dish-photo-tests.ts'
 import { applyPromisedDelay } from './order-promised-time.ts'
 import {
 	bookOrderProviderRefundInTx,
@@ -1834,6 +1835,14 @@ export async function placeOrder(input: {
 					}
 
 					await recordDailyDishClaims({ tx, context, order: inserted, now })
+					// Which photo each dish in a photo test showed this guest (#192):
+					// ids only, in the order's own transaction, not part of the
+					// idempotency hash.
+					await recordDishPhotoOrderLines(tx, {
+						orderId: inserted.id,
+						photoTests: request.photoTests,
+						lines: result.lines,
+					})
 
 					if (result.capacity && result.capacity.entities.length > 0) {
 						await insertRowsInChunks(

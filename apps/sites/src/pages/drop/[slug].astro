@@ -1,5 +1,6 @@
 ---
 import { msg } from '@lingui/core/macro'
+import { normalizeFocalPoint } from '@repo/common/image-focal'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
@@ -148,6 +149,7 @@ function localizeOption(option: PublicMenuOptionData): ModifierOption {
 		displayName: localize(option.displayName),
 		description: option.description ? localize(option.description) : '',
 		imageUrl: option.imageUrl ? resolveMediaUrl(option.imageUrl) : null,
+		imageFocal: normalizeFocalPoint(option.imageFocal?.x, option.imageFocal?.y) ?? undefined,
 		price: option.price ?? 0,
 		priceWhole: option.priceWhole,
 		priceLeft: option.priceLeft,
@@ -180,6 +182,7 @@ function localizeItem(item: PublicMenuItemData): OrderingItem {
 		description: item.description ? localize(item.description) : '',
 		price: item.price,
 		imageUrl: item.imageUrl ? resolveMediaUrl(item.imageUrl) : null,
+		imageFocal: normalizeFocalPoint(item.imageFocal?.x, item.imageFocal?.y) ?? undefined,
 		variations: {
 			groups: (item.variations?.groups ?? []).map((group) => ({
 				id: group.id,
@@ -192,6 +195,7 @@ function localizeItem(item: PublicMenuItemData): OrderingItem {
 			variants: (item.variations?.variants ?? []).map((variant) => ({
 				...variant,
 				imageUrl: variant.imageUrl ? resolveMediaUrl(variant.imageUrl) : null,
+				imageFocal: normalizeFocalPoint(variant.imageFocal?.x, variant.imageFocal?.y) ?? undefined,
 			})),
 		},
 		modifierGroups: (item.modifierGroups ?? []).map(localizeGroup),
@@ -292,6 +296,7 @@ function cardProps(item: OrderingItem) {
 		priceLabel: soldOut ? labels.soldOut : priceLabel,
 		soldOut,
 		imageUrl: item.imageUrl,
+		imageFocal: item.imageFocal,
 		note,
 		noteTone,
 		soldOutLabel: labels.soldOut,

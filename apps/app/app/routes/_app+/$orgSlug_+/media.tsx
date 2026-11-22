@@ -2,7 +2,16 @@ import { msg, Plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
+import { getFeatureFlag } from '@repo/common/feature-flags'
+import { focalPointOf, normalizeFocalPoint } from '@repo/common/image-focal'
 import { normalizeTag, parseTagList } from '@repo/common/media-library'
+import {
+	parsePhotoQualityIssues,
+	parseStudioIssues,
+	studioInstructionsForIssues,
+	WEAK_PHOTO_SCORE,
+	type PhotoQualityIssue,
+} from '@repo/common/photo-quality'
 import {
 	and,
 	db,
@@ -12,6 +21,8 @@ import {
 	isNotNull,
 	isNull,
 	like,
+	lt,
+	ne,
 	or,
 	sql,
 	MarketingEmailTemplate,
@@ -48,11 +59,16 @@ import { PageHeader } from '@repo/ui/page-header'
 import { Textarea } from '@repo/ui/textarea'
 import { format, formatDistanceToNow } from 'date-fns'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Form, Link, useFetcher } from 'react-router'
+import { Form, Link, useFetcher, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { FocalPointEditor } from '#app/components/media-library/focal-point-editor.tsx'
+import {
+	PhotoQualityInfo,
+	QualityBadge,
+} from '#app/components/media-library/photo-quality-info.tsx'
 import {
 	isPhotoStudioCompatible,
 	PhotoStudioDialog,
@@ -62,6 +78,7 @@ import {
 	archiveAssets,
 	assetVersions,
 	checkNewAssetParent,
+	photoTestUsesAsset,
 	organizationTags,
 	parseAssetIds,
 	removeTagsFromAssets,
@@ -71,6 +88,11 @@ import {
 	tagsByAsset,
 	type OrganizeFailure,
 } from '#app/utils/media/library-organize.server.ts'
+import { isMediaFlagOn, MEDIA_FLAG_KEYS } from '#app/utils/media/media-flags.ts'
+import {
+	RESET_PHOTO_QUALITY,
+	wakePhotoQualityWorkflow,
+} from '#app/utils/media/photo-quality.server.ts'
 import { isPhotoStudioConfigured } from '#app/utils/media/photo-studio.server.ts'
 import {
 	emailTemplateReferenceCondition,
@@ -91,6 +113,7 @@ import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
 	deleteOrganizationStorageObject,
 	uploadOrganizationMediaFileOnly,
@@ -131,6 +154,13 @@ const UpdateSchema = z.object({
 	fileName: z.string().optional(),
 	altText: z.string().optional(),
 	caption: z.string().optional(),
+})
+
+const FocalSchema = z.object({
+	intent: z.literal('set-focal'),
+	id: z.string().min(1).max(64),
+	x: z.coerce.number().min(0).max(1).optional(),
+	y: z.coerce.number().min(0).max(1).optional(),
 })
 
 const DeleteSchema = z.object({
@@ -185,6 +215,12 @@ function serializeAsset(
 		status: asset.status,
 		archived: asset.archivedAt !== null,
 		parentAssetId: asset.parentAssetId,
+		/** Focal point (#394); null is the centre. */
+		focal: focalPointOf(asset),
+		/** Photo quality (#145); a null score is unscored, never a penalty. */
+		qualityScore: asset.qualityScore,
+		qualityIssues: parsePhotoQualityIssues(asset.qualityIssues),
+		analyzed: asset.analyzedAt !== null,
 		createdAt: asset.createdAt.toISOString(),
 		updatedAt: asset.updatedAt.toISOString(),
 	}
@@ -196,6 +232,8 @@ type MediaActionData = {
 	asset?: SerializedMediaAsset
 	error?: string
 	updated?: boolean
+	/** The focal point was saved (#394). */
+	focalSet?: boolean
 	replaced?: boolean
 	deleted?: boolean
 	deletedId?: string
@@ -436,6 +474,22 @@ async function deleteMediaObjectIfUnreferenced({
 	}
 }
 
+/**
+ * A new or replaced image is scored in the background (#145). The job picks
+ * up every unscored image, so this is only a nudge: best effort, never blocks
+ * the upload, and the hourly sweep follows if it cannot be reached.
+ */
+async function wakeQualityIfEnabled(organizationId: string) {
+	try {
+		const on = isMediaFlagOn(
+			await getFeatureFlag(MEDIA_FLAG_KEYS.photoQuality, { organizationId }),
+		)
+		if (on) await wakePhotoQualityWorkflow(organizationId)
+	} catch (error) {
+		console.error('Could not start photo quality scoring:', error)
+	}
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
@@ -451,6 +505,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const view = searchParams.get('view') === 'archived' ? 'archived' : 'active'
 	const picker = searchParams.get('picker') === '1'
 	const tagFilter = normalizeTag(searchParams.get('tag'))
+	// "Needs a better photo" (#145): scored under 50, or too small.
+	const qualityFilter = searchParams.get('quality') === 'weak'
 
 	const whereConditions = [
 		eq(OrganizationMediaAsset.organizationId, organization.id),
@@ -459,6 +515,24 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			: isNull(OrganizationMediaAsset.archivedAt),
 	]
 	if (picker) whereConditions.push(eq(OrganizationMediaAsset.status, 'ready'))
+	// A restyle draft (#146) is reviewed on its own page, not mixed into the
+	// library until the operator uses it; a used one is an ordinary photo.
+	if (!picker) {
+		whereConditions.push(
+			or(
+				ne(OrganizationMediaAsset.source, 'restyle'),
+				ne(OrganizationMediaAsset.status, 'draft'),
+			)!,
+		)
+	}
+	if (qualityFilter) {
+		whereConditions.push(
+			or(
+				lt(OrganizationMediaAsset.qualityScore, WEAK_PHOTO_SCORE),
+				sql`instr(coalesce(${OrganizationMediaAsset.qualityIssues}, ''), '"low_resolution"') > 0`,
+			)!,
+		)
+	}
 	if (tagFilter) {
 		whereConditions.push(
 			sql`EXISTS (SELECT 1 FROM ${OrganizationMediaTag} WHERE ${OrganizationMediaTag.assetId} = ${OrganizationMediaAsset.id} AND ${OrganizationMediaTag.tag} = ${tagFilter})`,
@@ -499,6 +573,36 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					.then((rows) => Number(rows[0]?.count) || 0),
 			])
 
+	const [qualityEnabled, restyleFlag, canUseMenu] = await Promise.all([
+		getFeatureFlag(MEDIA_FLAG_KEYS.photoQuality, {
+			organizationId: organization.id,
+		}).then(isMediaFlagOn),
+		getFeatureFlag(MEDIA_FLAG_KEYS.restyle, {
+			organizationId: organization.id,
+		}).then(isMediaFlagOn),
+		userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_MENU_ANY,
+		),
+	])
+	// The photo studio opens on one photo with its issues filled in (#145):
+	// `?studio=<assetId>&issues=too_dark,blurry`, from Menu health.
+	const studioId = searchParams.get('studio')
+	const studioAsset =
+		studioId && /^[A-Za-z0-9_-]{8,64}$/.test(studioId)
+			? await db
+					.select({ id: OrganizationMediaAsset.id })
+					.from(OrganizationMediaAsset)
+					.where(
+						and(
+							eq(OrganizationMediaAsset.id, studioId),
+							eq(OrganizationMediaAsset.organizationId, organization.id),
+						),
+					)
+					.limit(1)
+					.then((rows) => rows[0] ?? null)
+			: null
 	const [canManageMedia, canUsePhotoStudio] = await Promise.all([
 		userHasOrganizationPermission(
 			userId,
@@ -520,9 +624,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		search: normalizedSearch,
 		view,
 		tag: tagFilter,
+		quality: qualityFilter,
+		qualityEnabled,
 		allTags,
 		archivedCount,
 		canManageMedia,
+		// Bulk dish photos need media and menu permissions; the page checks both.
+		canBulkUpload: canUseMenu,
+		restyleEnabled: restyleFlag && canUseMenu,
+		studioPrefill: studioAsset
+			? {
+					assetId: studioAsset.id,
+					issues: parseStudioIssues(searchParams.get('issues')),
+				}
+			: null,
 		// The studio saves its results to the shared library, so using it also
 		// takes permission to manage media (see media_.studio.tsx).
 		photoStudioEnabled:
@@ -676,6 +791,48 @@ export async function action({ request, params }: Route.ActionArgs) {
 		)
 	}
 
+	if (intent === 'set-focal') {
+		const result = FocalSchema.safeParse({
+			intent: 'set-focal',
+			id: formData.get('id'),
+			x: formData.get('x') || undefined,
+			y: formData.get('y') || undefined,
+		})
+		if (!result.success) {
+			return Response.json(
+				{ error: 'Choose a point on the photo.' },
+				{ status: 400 },
+			)
+		}
+		// Clearing (no x and y) or choosing the exact centre both mean "no focal
+		// point": the default centre crop every photo had before.
+		const point =
+			result.data.x === undefined || result.data.y === undefined
+				? null
+				: normalizeFocalPoint(result.data.x, result.data.y)
+		// `updatedAt` is part of every photo URL (`v=`), so changing it re-crops
+		// the photo on every channel without uploading anything again.
+		const [updated] = await db
+			.update(OrganizationMediaAsset)
+			.set({
+				focalX: point?.x ?? null,
+				focalY: point?.y ?? null,
+				updatedAt: new Date(),
+			})
+			.where(
+				and(
+					eq(OrganizationMediaAsset.id, result.data.id),
+					eq(OrganizationMediaAsset.organizationId, organization.id),
+				),
+			)
+			.returning()
+		if (!updated) {
+			return Response.json({ error: 'Media not found.' }, { status: 404 })
+		}
+		await purgeOrganizationSiteCache(organization.id, params.orgSlug)
+		return Response.json({ asset: serializeAsset(updated), focalSet: true })
+	}
+
 	if (intent === 'update') {
 		const result = UpdateSchema.safeParse({
 			intent: 'update',
@@ -726,6 +883,23 @@ export async function action({ request, params }: Route.ActionArgs) {
 			eq(OrganizationMediaAsset.id, result.data.id),
 			eq(OrganizationMediaAsset.organizationId, organization.id),
 		)
+		// Photo B of a running dish photo test (#192) stays until the test ends.
+		const [inTest] = await db
+			.select({ objectKey: OrganizationMediaAsset.objectKey })
+			.from(OrganizationMediaAsset)
+			.where(assetCondition)
+			.limit(1)
+		if (
+			inTest &&
+			(await photoTestUsesAsset(organization.id, inTest.objectKey))
+		) {
+			return Response.json(
+				{
+					error: 'This photo is being tested on a dish. End the test first.',
+				},
+				{ status: 409 },
+			)
+		}
 		// Deleting an original keeps its versions (#147): the foreign key clears
 		// their link (`ON DELETE SET NULL`) in the same statement as the delete, so a
 		// refused delete (below) never leaves a version unlinked.
@@ -821,6 +995,11 @@ export async function action({ request, params }: Route.ActionArgs) {
 					fileName: uploaded.file.name || null,
 					width: uploaded.width,
 					height: uploaded.height,
+					// A replaced or edited image is a different picture: its old
+					// crop point and quality score start over (#394, #145).
+					focalX: null,
+					focalY: null,
+					...RESET_PHOTO_QUALITY,
 					updatedAt: new Date(),
 				})
 				.where(
@@ -835,6 +1014,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 				return Response.json({ error: 'Media not found.' }, { status: 404 })
 			}
 			replacementCommitted = true
+			await wakeQualityIfEnabled(organization.id)
+			await purgeOrganizationSiteCache(organization.id, params.orgSlug)
 			if (existingAsset.objectKey !== newObjectKey) {
 				await deleteMediaObjectIfUnreferenced({
 					organizationId: organization.id,
@@ -960,6 +1141,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 			.limit(1)
 
 		if (!asset) throw new Error('Uploaded media could not be registered.')
+		await wakeQualityIfEnabled(organization.id)
 		if (result.data.parentAssetId) {
 			// The asset is new, so it cannot loop; the original was checked above.
 			await db
@@ -991,6 +1173,7 @@ export default function MediaLibraryRoute({
 	const [studio, setStudio] = useState<{
 		open: boolean
 		assetIds?: string[]
+		issues?: PhotoQualityIssue[]
 	}>({ open: false })
 	const {
 		assets,
@@ -1000,25 +1183,62 @@ export default function MediaLibraryRoute({
 		canManageMedia,
 		view,
 		tag: activeTag,
+		quality: qualityFilter,
+		qualityEnabled,
+		canBulkUpload,
+		restyleEnabled,
+		studioPrefill,
 		allTags,
 		archivedCount,
 	} = loaderData
+	const [, setSearchParams] = useSearchParams()
 	const isUploading = uploadFetcher.state !== 'idle'
 	const organizeFetcher = useFetcher<MediaActionData>()
 	const [selectMode, setSelectMode] = useState(false)
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 	const [bulkOpen, setBulkOpen] = useState(false)
 	const isArchivedView = view === 'archived'
-	const filterHref = (next: { tag?: string | null; view?: string | null }) => {
+	const filterHref = (next: {
+		tag?: string | null
+		view?: string | null
+		quality?: boolean
+	}) => {
 		const params = new URLSearchParams()
 		const nextTag = next.tag === undefined ? activeTag : next.tag
 		const nextView = next.view === undefined ? view : next.view
+		const nextQuality =
+			next.quality === undefined ? qualityFilter : next.quality
 		if (search) params.set('search', search)
 		if (nextTag) params.set('tag', nextTag)
 		if (nextView === 'archived') params.set('view', 'archived')
+		if (nextQuality) params.set('quality', 'weak')
 		const query = params.toString()
 		return query ? `?${query}` : '?'
 	}
+
+	// Menu health's "Fix in photo studio" opens the studio on that photo with the
+	// issues filled in (#145); the link's parameters are dropped once used so a
+	// refresh does not open it again.
+	const openedPrefill = useRef<string | null>(null)
+	useEffect(() => {
+		if (!studioPrefill || !photoStudioEnabled) return
+		if (openedPrefill.current === studioPrefill.assetId) return
+		openedPrefill.current = studioPrefill.assetId
+		setStudio({
+			open: true,
+			assetIds: [studioPrefill.assetId],
+			issues: studioPrefill.issues,
+		})
+		setSearchParams(
+			(current) => {
+				const next = new URLSearchParams(current)
+				next.delete('studio')
+				next.delete('issues')
+				return next
+			},
+			{ replace: true },
+		)
+	}, [photoStudioEnabled, setSearchParams, studioPrefill])
 
 	useEffect(() => {
 		const asset = uploadFetcher.data?.asset
@@ -1028,7 +1248,10 @@ export default function MediaLibraryRoute({
 	}, [_, uploadFetcher.data])
 
 	useEffect(() => {
-		if (detailsFetcher.data?.updated && detailsFetcher.data.asset) {
+		if (detailsFetcher.data?.focalSet && detailsFetcher.data.asset) {
+			toast.success(_(msg`Crop focus saved`))
+			setSelectedAsset(detailsFetcher.data.asset)
+		} else if (detailsFetcher.data?.updated && detailsFetcher.data.asset) {
 			toast.success(_(msg`Media details saved`))
 			setSelectedAsset(detailsFetcher.data.asset)
 		} else if (detailsFetcher.data?.replaced && detailsFetcher.data.asset) {
@@ -1097,6 +1320,20 @@ export default function MediaLibraryRoute({
 			formData.append('fileName', data.fileName)
 			formData.append('altText', data.altText)
 			formData.append('caption', data.caption)
+			void detailsFetcher.submit(formData, { method: 'POST' })
+		},
+		[detailsFetcher],
+	)
+
+	const handleSetFocal = useCallback(
+		(id: string, point: { x: number; y: number } | null) => {
+			const formData = new FormData()
+			formData.append('intent', 'set-focal')
+			formData.append('id', id)
+			if (point) {
+				formData.append('x', String(point.x))
+				formData.append('y', String(point.y))
+			}
 			void detailsFetcher.submit(formData, { method: 'POST' })
 		},
 		[detailsFetcher],
@@ -1176,6 +1413,24 @@ export default function MediaLibraryRoute({
 								event.currentTarget.value = ''
 							}}
 						/>
+						{canManageMedia && canBulkUpload ? (
+							<Button
+								variant="outline"
+								render={<Link to={`/${organization.slug}/media/dish-photos`} />}
+							>
+								<Icon name="image" />
+								<Trans>Add dish photos in bulk</Trans>
+							</Button>
+						) : null}
+						{canManageMedia && restyleEnabled ? (
+							<Button
+								variant="outline"
+								render={<Link to={`/${organization.slug}/media/restyle`} />}
+							>
+								<Icon name="sparkles" />
+								<Trans>Restyle menu</Trans>
+							</Button>
+						) : null}
 						{photoStudioEnabled ? (
 							<Button
 								type="button"
@@ -1287,6 +1542,17 @@ export default function MediaLibraryRoute({
 						</span>
 					</Button>
 				))}
+				{qualityEnabled ? (
+					<Button
+						variant={qualityFilter ? 'secondary' : 'outline'}
+						size="xs"
+						aria-current={qualityFilter ? 'true' : undefined}
+						render={<Link to={filterHref({ quality: !qualityFilter })} />}
+					>
+						<Icon name="alert-triangle" />
+						<Trans>Needs a better photo</Trans>
+					</Button>
+				) : null}
 				<span className="grow" />
 				<Button
 					variant={isArchivedView ? 'secondary' : 'ghost'}
@@ -1425,6 +1691,11 @@ export default function MediaLibraryRoute({
 											height={360}
 										/>
 									)}
+									{qualityEnabled && asset.mimeType.startsWith('image/') ? (
+										<span className="pointer-events-none absolute start-2 top-2 z-10">
+											<QualityBadge photo={asset} />
+										</span>
+									) : null}
 									<div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-end p-2 opacity-0 focus-within:opacity-100 motion-safe:transition-opacity motion-safe:group-hover:opacity-100">
 										<Button
 											type="button"
@@ -1509,6 +1780,16 @@ export default function MediaLibraryRoute({
 				organizing={organizeFetcher.state !== 'idle'}
 				suggestedTags={allTags.map((entry) => entry.tag)}
 				readOnly={!canManageMedia}
+				qualityEnabled={qualityEnabled}
+				onSetFocal={handleSetFocal}
+				onFixQuality={
+					photoStudioEnabled
+						? (id, issues) => {
+								setSelectedAsset(null)
+								setStudio({ open: true, assetIds: [id], issues })
+							}
+						: undefined
+				}
 				onEnhance={
 					photoStudioEnabled
 						? (id) => {
@@ -1547,6 +1828,12 @@ export default function MediaLibraryRoute({
 					orgSlug={organization.slug}
 					assets={assets}
 					initialAssetIds={studio.assetIds}
+					initialIssues={studio.issues}
+					initialInstructions={
+						studio.issues?.length
+							? studioInstructionsForIssues(studio.issues)
+							: undefined
+					}
 				/>
 			) : null}
 		</main>
@@ -1564,9 +1851,17 @@ function MediaDetailsDialog({
 	organizing,
 	suggestedTags,
 	onEnhance,
+	onFixQuality,
+	onSetFocal,
+	qualityEnabled,
 	isUpdating,
 	readOnly = false,
 }: {
+	/** Show the photo's quality score and issues (#145). */
+	qualityEnabled: boolean
+	onSetFocal: (id: string, point: { x: number; y: number } | null) => void
+	/** Opens the photo studio on this photo with its issues filled in. */
+	onFixQuality?: (id: string, issues: PhotoQualityIssue[]) => void
 	onOrganize: (fields: Record<string, string | string[]>) => void
 	organizing: boolean
 	suggestedTags: string[]
@@ -1954,6 +2249,29 @@ function MediaDetailsDialog({
 											</Button>
 										) : null}
 									</div>
+
+									{isVideo ? null : (
+										<FocalPointEditor
+											url={asset.url}
+											focal={asset.focal}
+											readOnly={readOnly}
+											saving={isUpdating}
+											onSave={(point) => onSetFocal(asset.id, point)}
+										/>
+									)}
+									{qualityEnabled && !isVideo ? (
+										<PhotoQualityInfo
+											photo={asset}
+											canFix={Boolean(
+												!readOnly &&
+												onFixQuality &&
+												isPhotoStudioCompatible(asset.mimeType),
+											)}
+											onFix={() =>
+												onFixQuality?.(asset.id, asset.qualityIssues)
+											}
+										/>
+									) : null}
 
 									{/* Metadata Grid */}
 									<div className="space-y-3 pt-1">

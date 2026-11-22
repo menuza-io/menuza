@@ -10,6 +10,11 @@ import {
 } from './hero-video-workflow'
 import { MarketingJourneyWorkflow } from './marketing-journey-workflow'
 import {
+	MEDIA_RESTYLE_JOB_PATH,
+	MediaRestyleWorkflow,
+	type MediaRestyleWorkflowParams,
+} from './media-restyle-workflow'
+import {
 	OCCASION_SCHEDULE_JOB_PATH,
 	OccasionScheduleWorkflow,
 	type OccasionScheduleWorkflowParams,
@@ -24,6 +29,11 @@ import {
 	MenuScheduleWorkflow,
 	type MenuScheduleWorkflowParams,
 } from './menu-schedule-workflow'
+import {
+	PHOTO_QUALITY_JOB_PATH,
+	PhotoQualityWorkflow,
+	type PhotoQualityWorkflowParams,
+} from './photo-quality-workflow'
 import {
 	SOCIAL_PUBLISH_PATH,
 	SocialPostWorkflow,
@@ -56,6 +66,8 @@ export interface Env {
 	CALENDAR_SYNC_WORKFLOW: Workflow<CalendarSyncWorkflowParams>
 	HERO_VIDEO_WORKFLOW: Workflow<HeroVideoWorkflowParams>
 	OCCASION_SCHEDULE_WORKFLOW: Workflow<OccasionScheduleWorkflowParams>
+	PHOTO_QUALITY_WORKFLOW: Workflow<PhotoQualityWorkflowParams>
+	MEDIA_RESTYLE_WORKFLOW: Workflow<MediaRestyleWorkflowParams>
 }
 
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
@@ -832,6 +844,88 @@ export default {
 		}
 
 		// =========================================================================
+		// Photo quality (#145): POST /workflows/photo-quality/start { organizationId }
+		// =========================================================================
+		if (
+			(pathname === '/workflows/photo-quality/start' ||
+				pathname === '/api/workflows/photo-quality/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				organizationId?: unknown
+			}
+			const organizationId =
+				typeof body.organizationId === 'string' ? body.organizationId : ''
+			if (!/^[A-Za-z0-9_-]{8,64}$/.test(organizationId)) {
+				return Response.json(
+					{ error: 'organizationId is required' },
+					{ status: 400 },
+				)
+			}
+			// One instance per id and 10-minute window: a retry inside the window
+			// joins the running instance, a later one can start a fresh pass.
+			const instanceId = `photo-quality-${organizationId}-${Math.floor(Date.now() / 600_000)}`
+			try {
+				const instance = await env.PHOTO_QUALITY_WORKFLOW.create({
+					id: instanceId,
+					params: { organizationId },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start photo quality workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
+		// Menu restyle (#146): POST /workflows/media-restyle/start { runId }
+		// =========================================================================
+		if (
+			(pathname === '/workflows/media-restyle/start' ||
+				pathname === '/api/workflows/media-restyle/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				runId?: unknown
+			}
+			const runId = typeof body.runId === 'string' ? body.runId : ''
+			if (!/^[A-Za-z0-9_-]{8,64}$/.test(runId)) {
+				return Response.json({ error: 'runId is required' }, { status: 400 })
+			}
+			// One instance per id and 10-minute window: a retry inside the window
+			// joins the running instance, a later one can start a fresh pass.
+			const instanceId = `media-restyle-${runId}-${Math.floor(Date.now() / 600_000)}`
+			try {
+				const instance = await env.MEDIA_RESTYLE_WORKFLOW.create({
+					id: instanceId,
+					params: { runId },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start media restyle workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
 		// Calendar sync (#319): wake the App when a connected Google Calendar is
 		// due — POST /workflows/calendar-sync/start { sourceId, runAt }
 		// =========================================================================
@@ -1120,6 +1214,20 @@ export default {
 					'Hero video sweep',
 					(jobEnv: Env) => invokeJob(jobEnv, HERO_VIDEO_JOB_PATH),
 				],
+				// Photo scoring is woken per organization by PhotoQualityWorkflow; this
+				// hourly sweep scores flagged organizations that were never woken and
+				// resumes one that hit its daily limit (#145).
+				[
+					'Photo quality sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, PHOTO_QUALITY_JOB_PATH),
+				],
+				// Menu restyle runs are driven by MediaRestyleWorkflow; this hourly
+				// sweep resumes paused runs whose time has come, kicks stuck ones and
+				// prunes old drafts (#146).
+				[
+					'Media restyle sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, MEDIA_RESTYLE_JOB_PATH),
+				],
 				// The marketing calendar's Auto-schedule (#152) is woken once a day by
 				// OccasionScheduleWorkflow; this hourly sweep runs it too (it is
 				// idempotent, once per occasion and year) and restarts the next wake-up.
@@ -1173,4 +1281,6 @@ export {
 	CalendarSyncWorkflow,
 	HeroVideoWorkflow,
 	OccasionScheduleWorkflow,
+	PhotoQualityWorkflow,
+	MediaRestyleWorkflow,
 }

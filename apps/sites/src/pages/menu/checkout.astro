@@ -1033,6 +1033,7 @@ const inputClass =
 		} from '~/lib/loyalty/referral-storage'
 		import { formatRemaining, startCountdown } from '~/lib/ordering/countdown'
 		import { currentAttribution } from '~/lib/ordering/attribution'
+import { photoTestsForCart } from '~/lib/photo-test-client'
 		import { checkoutOrderPayload, checkoutOrderRequest } from '~/lib/ordering/checkout-payload'
 		import {
 			dailySoldOutMessage,
@@ -3080,6 +3081,8 @@ const inputClass =
 						idempotencyKey,
 						marketingConsent,
 						currentAttribution(),
+						// What this browser showed for a dish in a photo test (#192).
+						photoTestsForCart(cart),
 					),
 				)
 				saveOrderCapability(orgId, created)

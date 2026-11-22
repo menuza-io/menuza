@@ -195,6 +195,10 @@ export class TokenManager {
 				`Failed to clear tokens: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			)
 		}
+		// Wherever the session ends (sign-out, a refresh token that died), photos
+		// still waiting to upload (#222) belong to the member who took them and
+		// must never upload under the next account.
+		await dropQueuedPhotos()
 	}
 
 	/**
@@ -315,3 +319,15 @@ export class TokenManager {
 
 // Export both names for backward compatibility
 export const SessionManager = TokenManager
+
+async function dropQueuedPhotos() {
+	try {
+		const { clearPhotoQueue } = await import('../photo-queue/runtime')
+		await clearPhotoQueue()
+	} catch (error) {
+		console.error(
+			'Could not clear the photo queue when the session ended:',
+			error,
+		)
+	}
+}

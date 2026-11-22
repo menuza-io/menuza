@@ -663,6 +663,46 @@
       "types": "./src/order-attribution.ts",
       "import": "./src/order-attribution.ts",
       "default": "./src/order-attribution.ts"
+    },
+    "./image-focal": {
+      "types": "./src/image-focal.ts",
+      "import": "./src/image-focal.ts",
+      "default": "./src/image-focal.ts"
+    },
+    "./photo-quality": {
+      "types": "./src/photo-quality.ts",
+      "import": "./src/photo-quality.ts",
+      "default": "./src/photo-quality.ts"
+    },
+    "./photo-test": {
+      "types": "./src/photo-test.ts",
+      "import": "./src/photo-test.ts",
+      "default": "./src/photo-test.ts"
+    },
+    "./photo-test-events": {
+      "types": "./src/photo-test-events.ts",
+      "import": "./src/photo-test-events.ts",
+      "default": "./src/photo-test-events.ts"
+    },
+    "./photo-test-results": {
+      "types": "./src/photo-test-results.ts",
+      "import": "./src/photo-test-results.ts",
+      "default": "./src/photo-test-results.ts"
+    },
+    "./dish-photo-match": {
+      "types": "./src/dish-photo-match.ts",
+      "import": "./src/dish-photo-match.ts",
+      "default": "./src/dish-photo-match.ts"
+    },
+    "./media-restyle": {
+      "types": "./src/media-restyle.ts",
+      "import": "./src/media-restyle.ts",
+      "default": "./src/media-restyle.ts"
+    },
+    "./photo-test-key": {
+      "types": "./src/photo-test-key.ts",
+      "import": "./src/photo-test-key.ts",
+      "default": "./src/photo-test-key.ts"
     }
   },
   "scripts": {

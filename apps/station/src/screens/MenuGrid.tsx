@@ -1,5 +1,6 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { focalObjectPosition } from '@repo/common/image-focal'
 import {
 	Empty,
 	EmptyHeader,
@@ -9,7 +10,14 @@ import {
 } from '@repo/ui/empty'
 import { Icon } from '@repo/ui/icon'
 import { Item, ItemContent } from '@repo/ui/item'
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import {
+	type CSSProperties,
+	useDeferredValue,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react'
 import { categoryItems, isSoldOut } from '~/lib/catalog.ts'
 import { menuGridColumnsClass } from '~/lib/config.ts'
 import { lowestPriceCents } from '~/lib/menu-display.ts'
@@ -390,9 +398,18 @@ function ItemCard({
 				{item.imageUrl && !dense ? (
 					<img
 						src={item.imageUrl}
+						// The crop keeps the operator's focal point in frame (#394): a custom
+						// property feeds `object-(--focal)`; unset, the default centre stays.
+						style={
+							item.imageFocal
+								? ({
+										'--focal': focalObjectPosition(item.imageFocal),
+									} as CSSProperties)
+								: undefined
+						}
 						alt=""
 						loading="lazy"
-						className="aspect-video w-full rounded-lg object-cover"
+						className="aspect-video w-full rounded-lg object-cover object-(--focal)"
 					/>
 				) : null}
 				<ItemContent>

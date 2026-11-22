@@ -75,6 +75,8 @@ export type MenuItem = {
 	description: string | null
 	price: number
 	imageUrl: string | null
+	/** Focal point of the photo (#394); absent or null is the centre crop. */
+	imageFocal?: { x: number; y: number } | null
 	variations: { groups: VariationGroup[]; variants: Variant[] }
 	isVegetarian: boolean
 	isGlutenFree: boolean

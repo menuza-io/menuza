@@ -379,6 +379,21 @@ const restaurantOrderObjectSchema = z.strictObject({
 	 */
 	attribution: orderAttributionInputSchema.optional(),
 	/**
+	 * The photo each dish in a photo test (#192) showed this guest. Sent only
+	 * when set (the body is strict). Ids only; the region keeps the ones that
+	 * name a dish in the order.
+	 */
+	photoTests: z
+		.array(
+			z.strictObject({
+				testId: z.string().regex(/^[A-Za-z0-9_-]{8,40}$/),
+				itemId: z.string().min(1).max(100),
+				variant: z.enum(['A', 'B']),
+			}),
+		)
+		.max(20)
+		.optional(),
+	/**
 	 * "Text me order updates": transactional texts about this order only, never
 	 * marketing consent. Refused on a table round; ignored without a phone or
 	 * off the US node (stored false).

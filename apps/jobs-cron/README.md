@@ -35,6 +35,33 @@ job is still a separate request with its own error logging.
 The workflow fetches presigned URLs from the App and stream-copies org media in
 batches. Triggered by the App when an org admin starts migration from settings.
 
+## Photo quality and menu restyle workflows (#145, #146)
+
+| HTTP                                  | Body                 | Job route the App serves             |
+| ------------------------------------- | -------------------- | ------------------------------------ |
+| `POST /workflows/photo-quality/start` | `{ organizationId }` | `POST /resources/jobs/photo-quality` |
+| `POST /workflows/media-restyle/start` | `{ runId }`          | `POST /resources/jobs/media-restyle` |
+
+Both need the internal token and also answer under `/api/workflows/...`. The id
+must match `[A-Za-z0-9_-]{8,64}`. The instance id is
+`<name>-<id>-<10-minute bucket>`; starting one that already exists counts as
+success. The payload is an id only: no photo, dish or guest data.
+
+- `PhotoQualityWorkflow` (`photo-quality`) scores one organization's photos in
+  at most 24 batches with a 20 second pause between them. It stops when nothing
+  remains, when the daily limit is reached (`limited`) or when a batch processes
+  nothing.
+- `MediaRestyleWorkflow` (`media-restyle`) restyles one run in batches (at most
+  600). When the App pauses the run for its daily budget the workflow sleeps
+  until `resumeAt` (one hour when the App gives no usable time). It stops when
+  the run is done, or after three batches in a row that make no progress.
+- Each batch is a retried step (2 retries, exponential from 60 seconds); a
+  non-2xx answer fails the step.
+
+Neither workflow adds a cron slot: the hourly `0 * * * *` trigger also posts an
+empty body to both job routes (`Photo quality sweep`, `Media restyle sweep`) to
+resume what a workflow could not, so the five-cron limit above still holds.
+
 ## Secrets
 
 Set via Wrangler (must match `INTERNAL_COMMAND_TOKEN` on the App):

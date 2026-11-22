@@ -17,8 +17,12 @@ msgstr ""
 msgid "{orgName} is now your default organization"
 msgstr "{orgName} is now your default organization"
 
+#: app/(dashboard)/menu-photos.tsx:182
+msgid "{stillMissing, plural, one {# dish needs a photo} other {# dishes need a photo}}"
+msgstr "{stillMissing, plural, one {# dish needs a photo} other {# dishes need a photo}}"
+
 #. placeholder {0}: organizations.length - 3
-#: app/(dashboard)/index.tsx:172
+#: app/(dashboard)/index.tsx:182
 msgid "+{0} more organizations"
 msgstr "+{0} more organizations"
 
@@ -59,6 +63,14 @@ msgstr "Add organization"
 msgid "Add Organization"
 msgstr "Add Organization"
 
+#: components/menu-photos/photo-capture-modal.tsx:191
+msgid "Allow camera"
+msgstr "Allow camera"
+
+#: components/menu-photos/photo-capture-modal.tsx:183
+msgid "Allow the camera to take a photo of this dish, or choose a photo from your library."
+msgstr "Allow the camera to take a photo of this dish, or choose a photo from your library."
+
 #: app/(auth)/sign-up.tsx:271
 #: app/(auth)/verify-code.tsx:265
 msgid "Already have an account?"
@@ -85,6 +97,10 @@ msgstr "Authentication"
 msgid "Authentication Error"
 msgstr "Authentication Error"
 
+#: app/(dashboard)/menu-photos.tsx:162
+msgid "Back"
+msgstr "Back"
+
 #: app/(auth)/verify-code.tsx:257
 msgid "Back to sign up"
 msgstr "Back to sign up"
@@ -93,13 +109,17 @@ msgstr "Back to sign up"
 msgid "Brief description of your organization"
 msgstr "Brief description of your organization"
 
-#: app/(auth)/landing.tsx:40
+#: app/(auth)/landing.tsx:41
 msgid "Build amazing apps ⚡"
 msgstr "Build amazing apps ⚡"
 
 #: app/(auth)/sign-up.tsx:250
 msgid "By signing up, you agree to our"
 msgstr "By signing up, you agree to our"
+
+#: components/menu-photos/photo-capture-modal.tsx:178
+msgid "Camera access is turned off. You can turn it on in your phone's settings, or choose a photo from your library."
+msgstr "Camera access is turned off. You can turn it on in your phone's settings, or choose a photo from your library."
 
 #: app/(dashboard)/create-organization.tsx:222
 #: app/(dashboard)/organizations.tsx:35
@@ -115,6 +135,18 @@ msgstr "Change Password"
 #: app/(auth)/sign-up.tsx:80
 msgid "Check your email"
 msgstr "Check your email"
+
+#: app/(dashboard)/menu-photos.tsx:220
+msgid "Choose an organization first."
+msgstr "Choose an organization first."
+
+#: components/menu-photos/photo-capture-modal.tsx:229
+msgid "Choose from library"
+msgstr "Choose from library"
+
+#: components/menu-photos/photo-capture-modal.tsx:123
+msgid "Close camera"
+msgstr "Close camera"
 
 #: app/(auth)/verify-code.tsx:126
 msgid "Code Sent"
@@ -138,6 +170,10 @@ msgstr "Continue with GitHub"
 msgid "Continue with Google"
 msgstr "Continue with Google"
 
+#: app/(dashboard)/menu-photos.tsx:387
+msgid "Couldn't upload"
+msgstr "Couldn't upload"
+
 #: app/(auth)/sign-in.tsx:335
 msgid "Create account"
 msgstr "Create account"
@@ -159,7 +195,7 @@ msgstr "Create Your First Organization"
 msgid "Creating your account..."
 msgstr "Creating your account..."
 
-#: app/(dashboard)/index.tsx:155
+#: app/(dashboard)/index.tsx:165
 msgid "Current"
 msgstr "Current"
 
@@ -175,11 +211,15 @@ msgstr "Description (optional)"
 msgid "Didn't receive the code? Check your spam folder or request a new one."
 msgstr "Didn't receive the code? Check your spam folder or request a new one."
 
+#: app/(dashboard)/menu-photos.tsx:380
+msgid "Dish"
+msgstr "Dish"
+
 #: app/(auth)/sign-in.tsx:328
 msgid "Don't have an account?"
 msgstr "Don't have an account?"
 
-#: app/(dashboard)/index.tsx:99
+#: app/(dashboard)/index.tsx:109
 #: app/(dashboard)/settings/index.tsx:103
 msgid "Edit Profile"
 msgstr "Edit Profile"
@@ -216,7 +256,7 @@ msgstr "Enter your username"
 msgid "Epic Stack Mobile"
 msgstr "Epic Stack Mobile"
 
-#: app/(dashboard)/index.tsx:191
+#: app/(dashboard)/index.tsx:201
 msgid "Epic Stack Mobile v1.0.0"
 msgstr "Epic Stack Mobile v1.0.0"
 
@@ -232,6 +272,10 @@ msgstr "Epic Stack Mobile v1.0.0"
 #: components/organization-switcher.tsx:41
 msgid "Error"
 msgstr "Error"
+
+#: app/(dashboard)/menu-photos.tsx:188
+msgid "Every dish has a photo."
+msgstr "Every dish has a photo."
 
 #: app/(dashboard)/create-organization.tsx:99
 msgid "Failed to create organization"
@@ -253,6 +297,10 @@ msgstr "Failed to switch organization"
 msgid "Failed to update profile"
 msgstr "Failed to update profile"
 
+#: components/menu-photos/photo-capture-modal.tsx:169
+msgid "Fill the frame"
+msgstr "Fill the frame"
+
 #: app/(auth)/sign-in.tsx:131
 msgid "Forgot Password"
 msgstr "Forgot Password"
@@ -265,8 +313,8 @@ msgstr "Forgot password functionality will be available soon. Please contact sup
 msgid "Forgot password?"
 msgstr "Forgot password?"
 
+#: app/(auth)/landing.tsx:168
 #: app/(auth)/landing.tsx:171
-#: app/(auth)/landing.tsx:174
 msgid "Get Started"
 msgstr "Get Started"
 
@@ -278,15 +326,27 @@ msgstr "Hide password"
 msgid "If an account with that email exists, we've sent you a password reset link."
 msgstr "If an account with that email exists, we've sent you a password reset link."
 
+#: app/(dashboard)/menu-photos.tsx:151
+msgid "It still did not go through after several tries."
+msgstr "It still did not go through after several tries."
+
 #: app/(auth)/sign-up.tsx:153
 msgid "Join organization"
 msgstr "Join organization"
+
+#: components/menu-photos/photo-capture-modal.tsx:166
+msgid "Light from the side"
+msgstr "Light from the side"
 
 #: app/index.tsx:22
 msgid "Loading"
 msgstr "Loading"
 
-#: app/(dashboard)/index.tsx:125
+#: app/(dashboard)/menu-photos.tsx:208
+msgid "Loading dishes..."
+msgstr "Loading dishes..."
+
+#: app/(dashboard)/index.tsx:135
 msgid "Loading organizations..."
 msgstr "Loading organizations..."
 
@@ -304,6 +364,16 @@ msgstr "m@example.com"
 msgid "Manage your logged-in devices"
 msgstr "Manage your logged-in devices"
 
+#: app/(dashboard)/_layout.tsx:73
+#: app/(dashboard)/index.tsx:100
+#: app/(dashboard)/menu-photos.tsx:169
+msgid "Menu photos"
+msgstr "Menu photos"
+
+#: app/(dashboard)/menu-photos.tsx:289
+msgid "No dish matches your search."
+msgstr "No dish matches your search."
+
 #: app/(auth)/verify-code.tsx:109
 msgid "No email address provided for resending code."
 msgstr "No email address provided for resending code."
@@ -312,10 +382,14 @@ msgstr "No email address provided for resending code."
 msgid "No email address provided for verification."
 msgstr "No email address provided for verification."
 
-#: app/(dashboard)/index.tsx:129
+#: app/(dashboard)/index.tsx:139
 #: app/(dashboard)/organizations.tsx:112
 msgid "No organizations found"
 msgstr "No organizations found"
+
+#: app/(dashboard)/menu-photos.tsx:291
+msgid "Nothing to photograph. Nice."
+msgstr "Nothing to photograph. Nice."
 
 #: app/(auth)/sign-in.tsx:133
 #: app/(auth)/sign-up.tsx:84
@@ -376,7 +450,7 @@ msgstr "Organizations"
 
 #. placeholder {0}: currentIndex + 1
 #. placeholder {1}: slides.length
-#: app/(auth)/landing.tsx:154
+#: app/(auth)/landing.tsx:151
 msgid "Page {0} of {1}"
 msgstr "Page {0} of {1}"
 
@@ -391,6 +465,10 @@ msgstr "Password change functionality will be available soon."
 #: app/(auth)/sign-in.tsx:183
 msgid "Please email support@example.com for assistance."
 msgstr "Please email support@example.com for assistance."
+
+#: components/menu-photos/photo-capture-modal.tsx:142
+msgid "Preview of the photo"
+msgstr "Preview of the photo"
 
 #: app/(auth)/sign-up.tsx:262
 msgid "Privacy Policy"
@@ -408,9 +486,34 @@ msgstr "Quick Actions"
 msgid "Remember me"
 msgstr "Remember me"
 
+#: app/(dashboard)/menu-photos.tsx:404
+msgid "Remove"
+msgstr "Remove"
+
+#: app/(dashboard)/menu-photos.tsx:332
+msgid "Replace"
+msgstr "Replace"
+
+#. placeholder {0}: dish.name
+#: app/(dashboard)/menu-photos.tsx:303
+msgid "Replace the photo of {0}"
+msgstr "Replace the photo of {0}"
+
 #: app/(auth)/verify-code.tsx:244
 msgid "Resend code"
 msgstr "Resend code"
+
+#: components/menu-photos/photo-capture-modal.tsx:214
+msgid "Retake"
+msgstr "Retake"
+
+#: app/(dashboard)/menu-photos.tsx:196
+msgid "Search any dish to replace its photo"
+msgstr "Search any dish to replace its photo"
+
+#: app/(dashboard)/menu-photos.tsx:199
+msgid "Search dishes"
+msgstr "Search dishes"
 
 #: app/(dashboard)/settings/index.tsx:109
 msgid "Security"
@@ -444,7 +547,7 @@ msgstr "Set Default Organization"
 msgid "Set up a new organization for your team"
 msgstr "Set up a new organization for your team"
 
-#: app/(auth)/landing.tsx:47
+#: app/(auth)/landing.tsx:48
 msgid "Ship faster 🚀"
 msgstr "Ship faster 🚀"
 
@@ -452,8 +555,8 @@ msgstr "Ship faster 🚀"
 msgid "Show password"
 msgstr "Show password"
 
+#: app/(auth)/landing.tsx:91
 #: app/(auth)/landing.tsx:94
-#: app/(auth)/landing.tsx:97
 #: app/(auth)/sign-up.tsx:278
 msgid "Sign in"
 msgstr "Sign in"
@@ -504,6 +607,10 @@ msgstr "Slug can only contain lowercase letters, numbers, and hyphens"
 msgid "Slug must be at least 2 characters"
 msgstr "Slug must be at least 2 characters"
 
+#: app/(dashboard)/menu-photos.tsx:153
+msgid "Something went wrong."
+msgstr "Something went wrong."
+
 #: app/(dashboard)/create-organization.tsx:89
 #: app/(dashboard)/organizations.tsx:42
 #: app/(dashboard)/settings/profile.tsx:54
@@ -519,6 +626,16 @@ msgstr "Success!"
 msgid "Switch organization"
 msgstr "Switch organization"
 
+#. placeholder {0}: dish.name
+#: app/(dashboard)/menu-photos.tsx:304
+msgid "Take a photo of {0}"
+msgstr "Take a photo of {0}"
+
+#: app/(dashboard)/menu-photos.tsx:334
+#: components/menu-photos/photo-capture-modal.tsx:237
+msgid "Take photo"
+msgstr "Take photo"
+
 #: app/(dashboard)/organizations.tsx:75
 msgid "Tap to retry"
 msgstr "Tap to retry"
@@ -527,15 +644,52 @@ msgstr "Tap to retry"
 msgid "Terms of Service"
 msgstr "Terms of Service"
 
-#: app/(auth)/landing.tsx:32
-#: app/(auth)/landing.tsx:39
-#: app/(auth)/landing.tsx:46
+#: app/(dashboard)/menu-photos.tsx:247
+msgid "The dishes could not be loaded."
+msgstr "The dishes could not be loaded."
+
+#: app/(auth)/landing.tsx:33
+#: app/(auth)/landing.tsx:40
+#: app/(auth)/landing.tsx:47
 msgid "The easiest way to..."
 msgstr "The easiest way to..."
 
-#: app/(auth)/landing.tsx:33
+#: components/menu-photos/photo-capture-modal.tsx:93
+msgid "The photo could not be opened. Try again."
+msgstr "The photo could not be opened. Try again."
+
+#: app/(dashboard)/menu-photos.tsx:149
+msgid "The photo could not be read."
+msgstr "The photo could not be read."
+
+#: components/menu-photos/photo-capture-modal.tsx:106
+msgid "The photo could not be saved. Try again."
+msgstr "The photo could not be saved. Try again."
+
+#: components/menu-photos/photo-capture-modal.tsx:74
+msgid "The photo could not be taken. Try again."
+msgstr "The photo could not be taken. Try again."
+
+#: app/(dashboard)/menu-photos.tsx:147
+msgid "The photo is too large."
+msgstr "The photo is too large."
+
+#: app/(dashboard)/menu-photos.tsx:143
+msgid "This dish is no longer on the menu."
+msgstr "This dish is no longer on the menu."
+
+#: app/(dashboard)/menu-photos.tsx:145
+msgid "This photo format is not supported."
+msgstr "This photo format is not supported."
+
+#: app/(auth)/landing.tsx:34
 msgid "Track what you eat 🍎"
 msgstr "Track what you eat 🍎"
+
+#: app/(dashboard)/menu-photos.tsx:256
+#: app/(dashboard)/menu-photos.tsx:401
+msgid "Try again"
+msgstr "Try again"
 
 #: app/(dashboard)/settings/security.tsx:47
 #: app/(dashboard)/settings/security.tsx:80
@@ -550,9 +704,17 @@ msgstr "Two-factor authentication setup will be available soon."
 msgid "Update your account password"
 msgstr "Update your account password"
 
+#: app/(dashboard)/menu-photos.tsx:389
+msgid "Uploading..."
+msgstr "Uploading..."
+
 #: app/(dashboard)/create-organization.tsx:163
 msgid "URL-friendly identifier (lowercase letters, numbers, hyphens only)"
 msgstr "URL-friendly identifier (lowercase letters, numbers, hyphens only)"
+
+#: components/menu-photos/photo-capture-modal.tsx:217
+msgid "Use this photo"
+msgstr "Use this photo"
 
 #: app/(auth)/sign-in.tsx:223
 msgid "Username"
@@ -582,9 +744,13 @@ msgstr "Verifying..."
 msgid "Version 1.0.0"
 msgstr "Version 1.0.0"
 
-#: app/(dashboard)/index.tsx:117
+#: app/(dashboard)/index.tsx:127
 msgid "View All"
 msgstr "View All"
+
+#: app/(dashboard)/menu-photos.tsx:391
+msgid "Waiting to upload"
+msgstr "Waiting to upload"
 
 #: app/(auth)/verify-code.tsx:161
 msgid "We've sent a 6-character code to {email}. Enter it below to verify your account."
@@ -615,6 +781,14 @@ msgstr "Welcome back!"
 msgid "Working in {0}"
 msgstr "Working in {0}"
 
+#: app/(dashboard)/menu-photos.tsx:141
+msgid "You can't edit the menu in this organization."
+msgstr "You can't edit the menu in this organization."
+
+#: app/(dashboard)/menu-photos.tsx:242
+msgid "You don't have permission to edit the menu in this organization. Ask an owner or admin for access."
+msgstr "You don't have permission to edit the menu in this organization. Ask an owner or admin for access."
+
 #: app/(auth)/sign-up.tsx:179
 msgid "You've been invited to join an organization. Complete your signup to get started."
 msgstr "You've been invited to join an organization. Complete your signup to get started."
@@ -623,6 +797,6 @@ msgstr "You've been invited to join an organization. Complete your signup to get
 msgid "Your account has been suspended. Please contact support if you believe this is an error."
 msgstr "Your account has been suspended. Please contact support if you believe this is an error."
 
-#: app/(dashboard)/index.tsx:111
+#: app/(dashboard)/index.tsx:121
 msgid "Your Organizations"
 msgstr "Your Organizations"

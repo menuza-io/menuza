@@ -12,6 +12,7 @@
  * anyone other than authenticated org members previewing.
  */
 
+import { focalPointOf, type FocalPoint } from '@repo/common/image-focal'
 import { type LocationAddress } from '@repo/common/location-types'
 import { parseMenuChannels, type MenuChannel } from '@repo/common/menu-channels'
 import { generatePickupSlots, type PickupSlot } from '@repo/common/menu-types'
@@ -174,15 +175,23 @@ export async function buildPublicSiteDropPayload(
 			id: OrganizationMediaAsset.id,
 			objectKey: OrganizationMediaAsset.objectKey,
 			updatedAt: OrganizationMediaAsset.updatedAt,
+			focalX: OrganizationMediaAsset.focalX,
+			focalY: OrganizationMediaAsset.focalY,
 		})
 		.from(OrganizationMediaAsset)
 		.where(eq(OrganizationMediaAsset.organizationId, org.id))
 
 	const mediaMap = new Map<string, string>()
+	const focalMap = new Map<string, FocalPoint>()
 	for (const m of mediaAssets) {
 		const mediaUrl = `/resources/images?mediaId=${encodeURIComponent(m.id)}&v=${m.updatedAt.getTime()}`
 		mediaMap.set(m.id, mediaUrl)
 		mediaMap.set(m.objectKey, mediaUrl)
+		const focal = focalPointOf(m)
+		if (focal) {
+			focalMap.set(m.id, focal)
+			focalMap.set(m.objectKey, focal)
+		}
 	}
 
 	// 3. Fetch Drop Menu Categories & Items
@@ -262,7 +271,7 @@ export async function buildPublicSiteDropPayload(
 	const serializeGroup = (group: LoadedModifierGroup) => {
 		const options = group.optionAssignments.map((oa) =>
 			applyOptionAssignment(
-				serializePublicOption(oa.option, mediaMap, now),
+				serializePublicOption(oa.option, mediaMap, now, { focalMap }),
 				oa,
 			),
 		)
@@ -314,6 +323,7 @@ export async function buildPublicSiteDropPayload(
 				}),
 				mediaMap,
 				now,
+				{ focalMap },
 			),
 		]),
 	)
