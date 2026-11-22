@@ -11,7 +11,10 @@ import {
 	provisionTenantDb,
 	restaurantOrders,
 } from '@repo/tenant-db'
-import { PHOTO_TEST_MAX_DAILY_ROWS } from '@repo/common/photo-test-events'
+import {
+	PHOTO_TEST_MAX_DAILY_ROWS,
+	PHOTO_TEST_MAX_ROW_COUNT,
+} from '@repo/common/photo-test-events'
 import type { PhotoTestResultsResponse } from '@repo/common/photo-test-results'
 import { eq, getTableColumns } from 'drizzle-orm'
 import { Hono } from 'hono'
@@ -164,7 +167,40 @@ function orderContext(id: string) {
 	}
 }
 
-function orderBody(overrides: Record<string, unknown> = {}) {
+// The key the App signs into the menu payload for (organization, test, dish).
+function signedKeyFor(testId: string, itemId: string, forOrg = orgId) {
+	return crypto
+		.createHmac('sha256', OPERATOR_SECRET)
+		.update(`photo-test:v1:${forOrg}:${testId}:${itemId}`)
+		.digest('base64url')
+		.slice(0, 32)
+}
+
+/** Signs the photo-test entries of an order body the way the App's menu does. */
+function withSignedEntries(overrides: Record<string, unknown>) {
+	const entries = overrides.photoTests
+	if (!Array.isArray(entries)) return overrides
+	return {
+		...overrides,
+		photoTests: entries.map((entry) =>
+			entry &&
+			typeof entry === 'object' &&
+			!('key' in entry) &&
+			/^[A-Za-z0-9_-]{8,40}$/.test((entry as { testId: string }).testId)
+				? {
+						...entry,
+						key: signedKeyFor(
+							(entry as { testId: string }).testId,
+							(entry as { itemId: string }).itemId,
+						),
+					}
+				: entry,
+		),
+	}
+}
+
+function orderBody(rawOverrides: Record<string, unknown> = {}) {
+	const overrides = withSignedEntries(rawOverrides)
 	return {
 		slug: 'test-org',
 		idempotencyKey: crypto.randomUUID(),
@@ -266,12 +302,7 @@ describe('dish photo tests (#192)', () => {
 	})
 
 	// The key the App signs into the menu payload for (organization, test, dish).
-	const signedKey = (testId: string, itemId: string, forOrg = orgId) =>
-		crypto
-			.createHmac('sha256', OPERATOR_SECRET)
-			.update(`photo-test:v1:${forOrg}:${testId}:${itemId}`)
-			.digest('base64url')
-			.slice(0, 32)
+	const signedKey = signedKeyFor
 	const event = (
 		overrides: Record<string, unknown> = {},
 	): Record<string, unknown> => {
@@ -382,6 +413,31 @@ describe('dish photo tests (#192)', () => {
 			expect(await rows()).toHaveLength(0)
 		})
 
+		it('stops counting a row past the daily count cap, so a replayed key cannot run away', async () => {
+			const db = await getTenantDb(orgId)
+			await db.insert(dishPhotoDaily).values({
+				day: '2026-03-10',
+				testId: TEST_ID,
+				itemId: 'item-burger',
+				variant: 'A',
+				views: PHOTO_TEST_MAX_ROW_COUNT - 1,
+				adds: 0,
+			})
+			await beacon({ events: [event(), event(), event({ event: 'add' })] })
+			const row = (await rows()).find(
+				(r) => r.itemId === 'item-burger' && r.variant === 'A',
+			)!
+			// The row took the events up to the cap in one statement, then stopped.
+			expect(row.views + row.adds).toBeGreaterThanOrEqual(
+				PHOTO_TEST_MAX_ROW_COUNT,
+			)
+			await beacon({ events: [event()] })
+			const after = (await rows()).find(
+				(r) => r.itemId === 'item-burger' && r.variant === 'A',
+			)!
+			expect(after.views + after.adds).toBe(row.views + row.adds)
+		})
+
 		it('counts per UTC day', async () => {
 			await beacon({ events: [event()] })
 			vi.setSystemTime(NOW + DAY)
@@ -480,16 +536,16 @@ describe('dish photo tests (#192)', () => {
 			expect(await rows()).toHaveLength(1)
 		})
 
-		it('limits one address to 60 requests a minute', async () => {
+		it('limits one address to 20 requests a minute', async () => {
 			vi.stubEnv('NODE_ENV', 'production')
 			resetRateLimits()
-			for (let i = 0; i < 60; i++) {
+			for (let i = 0; i < 20; i++) {
 				expect((await beacon({ events: [event()] })).status).toBe(204)
 			}
 			const limited = await beacon({ events: [event()] })
 			expect(limited.status).toBe(429)
 			expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0)
-			expect((await rows())[0]!.views).toBe(60)
+			expect((await rows())[0]!.views).toBe(20)
 		})
 
 		it('caps distinct rows per organization per day, existing rows keep counting', async () => {
@@ -564,6 +620,47 @@ describe('dish photo tests (#192)', () => {
 					variant: 'B',
 				},
 			])
+		})
+
+		it('credits an order only to a test the App signed: forged, foreign or missing keys store nothing but the order is placed', async () => {
+			const forged = {
+				testId: TEST_ID,
+				itemId: 'item-burger',
+				variant: 'B',
+				key: 'f'.repeat(32),
+			}
+			const otherDish = {
+				testId: TEST_ID,
+				itemId: 'item-burger',
+				variant: 'B',
+				key: signedKeyFor(TEST_ID, 'item-fries'),
+			}
+			const otherOrg = {
+				testId: TEST_ID,
+				itemId: 'item-burger',
+				variant: 'B',
+				key: signedKeyFor(TEST_ID, 'item-burger', otherOrgId),
+			}
+			await place({ photoTests: [forged] })
+			await place({ photoTests: [otherDish] })
+			await place({ photoTests: [otherOrg] })
+			expect(await lines()).toEqual([])
+			// One real entry among bad ones is kept, the bad ones are not.
+			const id = await place({
+				photoTests: [
+					forged,
+					{ testId: TEST_ID, itemId: 'item-burger', variant: 'A' },
+				],
+			})
+			expect(await lines()).toEqual([
+				{ orderId: id, testId: TEST_ID, itemId: 'item-burger', variant: 'A' },
+			])
+		})
+
+		it('a node without the shared secret credits no order to a test', async () => {
+			vi.stubEnv('TENANT_OPERATOR_TOKEN', '')
+			await place({ photoTests: tests })
+			expect(await lines()).toEqual([])
 		})
 
 		it('keeps the first entry of a duplicated test and dish', async () => {

@@ -479,11 +479,13 @@ describe('the tests behind a cart', () => {
 		local.setItem(PHOTO_CLIENT_KEY, idFor(TEST, 'B'))
 		expect(
 			photoTestsForCart([
-				{ itemId: 'dish_1', photoTestId: TEST },
-				{ itemId: 'dish_1', photoTestId: TEST },
+				{ itemId: 'dish_1', photoTestId: TEST, photoTestKey: KEY },
+				{ itemId: 'dish_1', photoTestId: TEST, photoTestKey: KEY },
 				{ itemId: 'dish_2' },
+				// A cart saved before the key existed: not sent (the region would drop it).
+				{ itemId: 'dish_3', photoTestId: TEST },
 			]),
-		).toEqual([{ testId: TEST, itemId: 'dish_1', variant: 'B' }])
+		).toEqual([{ testId: TEST, itemId: 'dish_1', variant: 'B', key: KEY }])
 	})
 
 	it('is empty when no dish is in a test or the visitor is not counted', () => {
@@ -491,7 +493,9 @@ describe('the tests behind a cart', () => {
 		expect(photoTestsForCart([{ itemId: 'dish_2' }])).toEqual([])
 		setNavigator({ doNotTrack: '1' })
 		expect(
-			photoTestsForCart([{ itemId: 'dish_1', photoTestId: TEST }]),
+			photoTestsForCart([
+				{ itemId: 'dish_1', photoTestId: TEST, photoTestKey: KEY },
+			]),
 		).toEqual([])
 	})
 })

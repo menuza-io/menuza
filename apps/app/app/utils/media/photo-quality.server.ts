@@ -7,6 +7,7 @@ import {
 	combinePhotoQuality,
 	hasLowResolution,
 	parsePhotoQualityModelOutput,
+	PHOTO_MIN_SHORT_SIDE,
 	PHOTO_QUALITY_BATCH_SIZE,
 	PHOTO_QUALITY_DAILY_LIMIT,
 	PHOTO_QUALITY_ISSUE_KEYS,
@@ -18,9 +19,11 @@ import {
 	asc,
 	db,
 	eq,
+	ConfigFlag,
 	inArray,
 	isNull,
 	lt,
+	or,
 	OrganizationMediaAsset,
 	sql,
 } from '@repo/database'
@@ -188,10 +191,30 @@ export const RESET_PHOTO_QUALITY = {
 	analyzedAt: null,
 } as const
 
-const PENDING = (organizationId: string) =>
+/** A claim older than this is dead (the batch that made it was cut off). */
+const CLAIM_TTL_MS = 10 * 60 * 1000
+
+const PENDING = (
+	organizationId: string,
+	options: { now?: Date; resolvableWithoutModel?: boolean } = {},
+) =>
 	and(
 		eq(OrganizationMediaAsset.organizationId, organizationId),
 		isNull(OrganizationMediaAsset.analyzedAt),
+		// Not claimed by a batch that is still working on it.
+		or(
+			isNull(OrganizationMediaAsset.qualityClaimedAt),
+			lt(
+				OrganizationMediaAsset.qualityClaimedAt,
+				new Date((options.now ?? new Date()).getTime() - CLAIM_TTL_MS),
+			),
+		),
+		// Without a model only the resolution can be judged: leave out photos
+		// whose stored size already says they are big enough, so they never sit
+		// at the front of the batch.
+		options.resolvableWithoutModel
+			? sql`(${OrganizationMediaAsset.width} IS NULL OR ${OrganizationMediaAsset.height} IS NULL OR min(${OrganizationMediaAsset.width}, ${OrganizationMediaAsset.height}) < ${PHOTO_MIN_SHORT_SIDE})`
+			: undefined,
 		lt(OrganizationMediaAsset.qualityAttempts, PHOTO_QUALITY_MAX_ATTEMPTS),
 		isNull(OrganizationMediaAsset.archivedAt),
 		eq(OrganizationMediaAsset.status, 'ready'),
@@ -247,7 +270,8 @@ export async function processPhotoQualityForOrganization(
 	const readImage = deps.readImage ?? readStoredMediaImage
 	const spend = deps.spend ?? spendAnalysis
 
-	const rows = await db
+	const startedAt = now()
+	const candidates = await db
 		.select({
 			id: OrganizationMediaAsset.id,
 			objectKey: OrganizationMediaAsset.objectKey,
@@ -258,9 +282,43 @@ export async function processPhotoQualityForOrganization(
 			attempts: OrganizationMediaAsset.qualityAttempts,
 		})
 		.from(OrganizationMediaAsset)
-		.where(PENDING(organizationId))
+		.where(
+			PENDING(organizationId, {
+				now: startedAt,
+				resolvableWithoutModel: !analyzer,
+			}),
+		)
 		.orderBy(asc(OrganizationMediaAsset.createdAt))
 		.limit(PHOTO_QUALITY_BATCH_SIZE)
+
+	// Claim the rows, so a second batch running at the same time (two workflow
+	// instances) skips them instead of paying the model for the same photo.
+	const claimed = candidates.length
+		? await db
+				.update(OrganizationMediaAsset)
+				.set({ qualityClaimedAt: startedAt })
+				.where(
+					and(
+						inArray(
+							OrganizationMediaAsset.id,
+							candidates.map((row) => row.id),
+						),
+						eq(OrganizationMediaAsset.organizationId, organizationId),
+						isNull(OrganizationMediaAsset.analyzedAt),
+						or(
+							isNull(OrganizationMediaAsset.qualityClaimedAt),
+							lt(
+								OrganizationMediaAsset.qualityClaimedAt,
+								new Date(startedAt.getTime() - CLAIM_TTL_MS),
+							),
+						),
+					),
+				)
+				.returning({ id: OrganizationMediaAsset.id })
+		: []
+	const mine = new Set(claimed.map((row) => row.id))
+	const rows = candidates.filter((row) => mine.has(row.id))
+	const finished = new Set<string>()
 
 	let processed = 0
 	let limited = false
@@ -303,7 +361,17 @@ export async function processPhotoQualityForOrganization(
 		// Without a model only the resolution can be judged: a photo that is not
 		// small stays waiting (a key added later scores it) instead of being
 		// closed as "analyzed" with no score.
-		if (!analyzer && !isSmall) continue
+		if (!analyzer && !isSmall) {
+			// Remember the size we just learned, so this photo drops out of the
+			// next batch instead of being read again.
+			if (width !== row.width || height !== row.height) {
+				await db
+					.update(OrganizationMediaAsset)
+					.set({ width, height })
+					.where(eq(OrganizationMediaAsset.id, row.id))
+			}
+			continue
+		}
 		// A small photo is flagged without the model; spend a daily analysis only
 		// on a photo the model will actually see.
 		if (image && analyzer && !isSmall) {
@@ -322,7 +390,7 @@ export async function processPhotoQualityForOrganization(
 		const attempts = row.attempts + (failed ? 1 : 0)
 		// A failed model call leaves the photo unscored and is retried once; a
 		// photo that cannot be scored at all ends the same way after that.
-		const finished = !failed || attempts >= PHOTO_QUALITY_MAX_ATTEMPTS
+		const done = !failed || attempts >= PHOTO_QUALITY_MAX_ATTEMPTS
 		await db
 			.update(OrganizationMediaAsset)
 			.set({
@@ -331,7 +399,8 @@ export async function processPhotoQualityForOrganization(
 				qualityScore: result.score,
 				qualityIssues: JSON.stringify(result.issues),
 				qualityAttempts: attempts,
-				analyzedAt: finished ? now() : null,
+				analyzedAt: done ? now() : null,
+				qualityClaimedAt: null,
 			})
 			.where(
 				and(
@@ -342,13 +411,32 @@ export async function processPhotoQualityForOrganization(
 					eq(OrganizationMediaAsset.objectKey, row.objectKey),
 				),
 			)
+		finished.add(row.id)
 		processed += 1
+	}
+
+	// Give back the claims of rows this batch did not finish (the daily limit,
+	// a photo left waiting), so the next batch can take them.
+	const unfinished = rows.filter((row) => !finished.has(row.id))
+	if (unfinished.length > 0) {
+		await db
+			.update(OrganizationMediaAsset)
+			.set({ qualityClaimedAt: null })
+			.where(
+				and(
+					inArray(
+						OrganizationMediaAsset.id,
+						unfinished.map((row) => row.id),
+					),
+					eq(OrganizationMediaAsset.organizationId, organizationId),
+				),
+			)
 	}
 
 	const [remaining] = await db
 		.select({ n: sql<number>`count(*)` })
 		.from(OrganizationMediaAsset)
-		.where(PENDING(organizationId))
+		.where(PENDING(organizationId, { resolvableWithoutModel: !analyzer }))
 	return {
 		processed,
 		remaining: Number(remaining?.n ?? 0),
@@ -365,8 +453,18 @@ export async function sweepPhotoQuality(
 		wake?: (organizationId: string) => Promise<boolean>
 	} = {},
 ) {
+	// Organizations with images waiting AND the flag on (an organization row or
+	// the system row), oldest waiting image first, so the window is never filled
+	// by organizations that cannot be scored (the flag defaults off).
+	const flagIsOn = (level: 'organization' | 'system') =>
+		sql`EXISTS (SELECT 1 FROM ${ConfigFlag} WHERE ${ConfigFlag.key} = ${MEDIA_FLAG_KEYS.photoQuality} AND ${ConfigFlag.level} = ${level} ${
+			level === 'organization'
+				? sql`AND ${ConfigFlag.organizationId} = ${OrganizationMediaAsset.organizationId}`
+				: sql``
+		} AND ${ConfigFlag.value} IN ('true', '"true"', '1'))`
+	const oldest = sql<number>`min(${OrganizationMediaAsset.createdAt})`
 	const rows = await db
-		.selectDistinct({ organizationId: OrganizationMediaAsset.organizationId })
+		.select({ organizationId: OrganizationMediaAsset.organizationId })
 		.from(OrganizationMediaAsset)
 		.where(
 			and(
@@ -376,8 +474,11 @@ export async function sweepPhotoQuality(
 				eq(OrganizationMediaAsset.status, 'ready'),
 				inArray(OrganizationMediaAsset.source, [...PHOTO_QUALITY_SOURCES]),
 				sql`substr(${OrganizationMediaAsset.mimeType}, 1, 6) = 'image/'`,
+				or(flagIsOn('organization'), flagIsOn('system')),
 			),
 		)
+		.groupBy(OrganizationMediaAsset.organizationId)
+		.orderBy(oldest)
 		.limit(100)
 	const flagOn = deps.flagOn ?? isPhotoQualityEnabled
 	const wake = deps.wake ?? wakePhotoQualityWorkflow

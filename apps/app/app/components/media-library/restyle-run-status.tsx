@@ -52,7 +52,12 @@ export function RestyleRunStatus({
 				<Badge variant={BADGE_VARIANT[run.status]}>
 					{_(RESTYLE_STATUS_LABELS[run.status])}
 				</Badge>
-				<span className="text-muted-foreground text-sm">
+				{/* Announced politely as the run moves (the page refreshes while it works). */}
+				<span
+					className="text-muted-foreground text-sm"
+					role="status"
+					aria-live="polite"
+				>
 					<Trans>
 						{finished} of {toDo} dishes done
 					</Trans>

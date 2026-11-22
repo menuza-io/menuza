@@ -17,6 +17,7 @@ import {
 	MenuCheckDismissal,
 	not,
 	like,
+	or,
 	OrganizationMenuCategory,
 	OrganizationMediaAsset,
 	OrganizationMenuItem,
@@ -208,20 +209,45 @@ async function attachPrimaryPhotoQuality(
 	organizationId: string,
 	items: MenuHealthItem[],
 ) {
-	const scored = await db
-		.select({
-			id: OrganizationMediaAsset.id,
-			objectKey: OrganizationMediaAsset.objectKey,
-			score: OrganizationMediaAsset.qualityScore,
-			issues: OrganizationMediaAsset.qualityIssues,
-		})
-		.from(OrganizationMediaAsset)
-		.where(
-			and(
-				eq(OrganizationMediaAsset.organizationId, organizationId),
-				sql`(${OrganizationMediaAsset.analyzedAt} IS NOT NULL)`,
-			),
+	// Only the dishes' primary photos are read, in chunks of 80 (D1 allows 100
+	// bound parameters): the cost follows the menu, not the whole library.
+	const primaryKeys = [
+		...new Set(
+			items.flatMap((item) => {
+				const key = parseMenuItemImageKeys(item.imageKeys, item.imageKey)[0]
+				return key ? [key] : []
+			}),
+		),
+	]
+	const scored: Array<{
+		id: string
+		objectKey: string
+		score: number | null
+		issues: string | null
+	}> = []
+	for (let start = 0; start < primaryKeys.length; start += 40) {
+		const chunk = primaryKeys.slice(start, start + 40)
+		scored.push(
+			...(await db
+				.select({
+					id: OrganizationMediaAsset.id,
+					objectKey: OrganizationMediaAsset.objectKey,
+					score: OrganizationMediaAsset.qualityScore,
+					issues: OrganizationMediaAsset.qualityIssues,
+				})
+				.from(OrganizationMediaAsset)
+				.where(
+					and(
+						eq(OrganizationMediaAsset.organizationId, organizationId),
+						sql`(${OrganizationMediaAsset.analyzedAt} IS NOT NULL)`,
+						or(
+							inArray(OrganizationMediaAsset.objectKey, chunk),
+							inArray(OrganizationMediaAsset.id, chunk),
+						),
+					),
+				)),
 		)
+	}
 	const byKey = new Map<
 		string,
 		{ assetId: string; score: number | null; issues: PhotoQualityIssue[] }

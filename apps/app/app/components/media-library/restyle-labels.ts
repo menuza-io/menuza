@@ -27,6 +27,7 @@ export const RESTYLE_ERROR_MESSAGES = {
 	run_cancelled: msg`This run was stopped.`,
 	not_retryable: msg`This dish cannot be tried again.`,
 	not_found: msg`That dish or run was not found.`,
+	pos_owned: msg`This dish's photo comes from your point of sale, so it was not changed.`,
 } as const
 
 export type RestyleErrorCode = keyof typeof RESTYLE_ERROR_MESSAGES
@@ -40,6 +41,7 @@ export const RESTYLE_SKIP_MESSAGES = {
 	photo_not_in_library: msg`Photo is not in your library`,
 	unsupported_photo: msg`Photo format cannot be restyled`,
 	photo_changed: msg`Photo changed during the run`,
+	pos_owned: msg`Its photo comes from your point of sale`,
 } as const
 
 export const RESTYLE_FAILURE_MESSAGES = {

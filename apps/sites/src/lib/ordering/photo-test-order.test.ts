@@ -112,7 +112,12 @@ describe('the order body', () => {
 		contact: { name: 'Ada', phone: '+15550100', email: 'a@x.test' },
 	}
 	const tests = [
-		{ testId: 'test_abcdefgh', itemId: 'dish_1', variant: 'B' as const },
+		{
+			testId: 'test_abcdefgh',
+			itemId: 'dish_1',
+			variant: 'B' as const,
+			key: 'k'.repeat(32),
+		},
 	]
 
 	it('carries photoTests only when a dish in the cart is in a test', () => {
@@ -149,5 +154,9 @@ describe('the order body', () => {
 		expect(send(tests)).toBe(true)
 		expect(send([{ ...tests[0], clientId: 'leak' }])).toBe(false)
 		expect(send([{ ...tests[0], variant: 'C' }])).toBe(false)
+		// The App's signed key is required: an unsigned entry is not sent.
+		const { key: _key, ...unsigned } = tests[0]!
+		expect(send([unsigned])).toBe(false)
+		expect(send([{ ...tests[0], key: 'short' }])).toBe(false)
 	})
 })

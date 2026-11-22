@@ -2442,6 +2442,12 @@ export const OrganizationMediaAsset = sqliteTable(
 		qualityIssues: text(),
 		qualityAttempts: integer().default(0).notNull(),
 		analyzedAt: integer({ mode: 'timestamp_ms' }),
+		/**
+		 * A claim on this image by a running quality batch (#145): another batch
+		 * skips it until the claim is older than ten minutes, so two workflow
+		 * instances never pay the model for the same photo.
+		 */
+		qualityClaimedAt: integer({ mode: 'timestamp_ms' }),
 		createdById: text().references(() => User.id, {
 			onDelete: 'set null',
 			onUpdate: 'cascade',
@@ -6866,6 +6872,11 @@ export const MediaRestyleRun = sqliteTable(
 			table.createdAt,
 		),
 		index('MediaRestyleRun_status_idx').on(table.status),
+		// One run at a time per organization, enforced by the database: two
+		// starts at once cannot both insert (`restyle_in_progress`).
+		uniqueIndex('MediaRestyleRun_organizationId_active_key')
+			.on(table.organizationId)
+			.where(sql`${table.status} IN ('pending', 'running', 'paused')`),
 	],
 )
 

@@ -8,7 +8,14 @@ import {
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Label } from '@repo/ui/label'
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import {
+	useEffect,
+	useId,
+	useRef,
+	useState,
+	type KeyboardEvent,
+	type PointerEvent,
+} from 'react'
 
 const KEY_STEP = 0.05
 
@@ -37,7 +44,10 @@ export function FocalPointEditor({
 	onSave: (point: FocalPoint | null) => void
 }) {
 	const { _ } = useLingui()
+	const frameId = useId()
+	const helpId = useId()
 	const frame = useRef<HTMLDivElement>(null)
+	const dragging = useRef(false)
 	const [draft, setDraft] = useState<FocalPoint | null>(focal)
 	useEffect(() => setDraft(focal), [focal])
 
@@ -56,6 +66,27 @@ export function FocalPointEditor({
 				clamp((clientY - rect.top) / rect.height),
 			) ?? { x: 0.5, y: 0.5 },
 		)
+	}
+
+	function onPointerDown(event: PointerEvent<HTMLDivElement>) {
+		if (readOnly) return
+		// A drag keeps following the pointer (a finger too) after it leaves the
+		// photo; `touch-none` keeps a touch from scrolling the page instead.
+		dragging.current = true
+		event.currentTarget.setPointerCapture(event.pointerId)
+		setFromPointer(event.clientX, event.clientY)
+	}
+
+	function onPointerMove(event: PointerEvent<HTMLDivElement>) {
+		if (!dragging.current) return
+		setFromPointer(event.clientX, event.clientY)
+	}
+
+	function endDrag(event: PointerEvent<HTMLDivElement>) {
+		dragging.current = false
+		if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+			event.currentTarget.releasePointerCapture(event.pointerId)
+		}
 	}
 
 	function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -84,30 +115,29 @@ export function FocalPointEditor({
 	const top = Math.round(point.y * 100)
 	return (
 		<div className="space-y-2" data-testid="focal-point-editor">
-			<Label className="text-xs font-medium">
+			<Label id={`${frameId}-label`} className="text-xs font-medium">
 				<Trans>Crop focus</Trans>
 			</Label>
-			<p className="text-muted-foreground text-xs">
+			<p id={helpId} className="text-muted-foreground text-xs">
 				<Trans>
-					Click the part of the dish that matters. Website, QR and app photos
-					keep it in view.
+					Click or drag on the part of the dish that matters, or use the arrow
+					keys or the sliders. Website, QR and app photos keep it in view.
 				</Trans>
 			</p>
 			<div
 				ref={frame}
+				id={frameId}
 				role="group"
 				tabIndex={readOnly ? -1 : 0}
-				aria-label={_(
-					msg`Photo focus point. Click the photo or use the arrow keys.`,
-				)}
-				aria-valuetext={_(msg`${left}% from the left, ${top}% from the top`)}
-				onPointerDown={(event) => {
-					if (readOnly) return
-					setFromPointer(event.clientX, event.clientY)
-				}}
+				aria-labelledby={`${frameId}-label`}
+				aria-describedby={helpId}
+				onPointerDown={onPointerDown}
+				onPointerMove={onPointerMove}
+				onPointerUp={endDrag}
+				onPointerCancel={endDrag}
 				onKeyDown={onKeyDown}
 				className={cn(
-					'bg-muted/30 focus-visible:ring-ring relative block w-fit max-w-full overflow-hidden rounded-md border focus-visible:ring-2 focus-visible:outline-none',
+					'bg-muted/30 focus-visible:ring-ring relative block w-fit max-w-full touch-none overflow-hidden rounded-md border focus-visible:ring-2 focus-visible:outline-none',
 					readOnly ? 'cursor-default' : 'cursor-crosshair',
 				)}
 			>
@@ -123,6 +153,60 @@ export function FocalPointEditor({
 					style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }}
 				/>
 			</div>
+			{/* The new position, read out after every move (pointer, keys, sliders). */}
+			<p className="sr-only" role="status" aria-live="polite">
+				{_(msg`${left}% from the left, ${top}% from the top`)}
+			</p>
+			{readOnly ? null : (
+				<div className="grid grid-cols-2 gap-3">
+					<div className="space-y-1">
+						<Label htmlFor={`${frameId}-x`} className="text-xs">
+							<Trans>Left to right</Trans>
+						</Label>
+						<input
+							id={`${frameId}-x`}
+							type="range"
+							min={0}
+							max={100}
+							step={1}
+							value={left}
+							aria-valuetext={_(msg`${left}% from the left`)}
+							onChange={(event) =>
+								setDraft(
+									normalizeFocalPoint(
+										Number(event.currentTarget.value) / 100,
+										point.y,
+									) ?? { x: 0.5, y: point.y },
+								)
+							}
+							className="w-full"
+						/>
+					</div>
+					<div className="space-y-1">
+						<Label htmlFor={`${frameId}-y`} className="text-xs">
+							<Trans>Top to bottom</Trans>
+						</Label>
+						<input
+							id={`${frameId}-y`}
+							type="range"
+							min={0}
+							max={100}
+							step={1}
+							value={top}
+							aria-valuetext={_(msg`${top}% from the top`)}
+							onChange={(event) =>
+								setDraft(
+									normalizeFocalPoint(
+										point.x,
+										Number(event.currentTarget.value) / 100,
+									) ?? { x: point.x, y: 0.5 },
+								)
+							}
+							className="w-full"
+						/>
+					</div>
+				</div>
+			)}
 			<ul
 				className="grid grid-cols-3 gap-2"
 				aria-label={_(msg`How the crops look`)}

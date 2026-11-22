@@ -239,7 +239,7 @@ publicFormRoutes.post(
  */
 publicFormRoutes.post(
 	'/dish-photo-events',
-	rateLimit('dish-photo-events', { windowMs: 60 * 1000, maxRequests: 60 }),
+	rateLimit('dish-photo-events', { windowMs: 60 * 1000, maxRequests: 20 }),
 	bodyLimit({
 		maxSize: 32 * 1024,
 		onError: (c) => c.body(null, 204),

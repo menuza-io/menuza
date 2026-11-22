@@ -52,9 +52,11 @@ Flag `media.photo_quality`. Every ready library image from the library, the
 studio or the phone is scored 0-100 with issues `too_dark`, `blurry`,
 `dish_cut_off`, `low_resolution`, `not_food` in the background:
 `PhotoQualityWorkflow` (jobs-cron) calls `POST /resources/jobs/photo-quality`
-(internal token) in paced batches of 10; the hourly sweep re-drives it. The
-upload, replace and phone routes wake the workflow, so a new upload is scored
-within minutes.
+(internal token) in paced batches of 10; each batch claims its images
+(`qualityClaimedAt`) so two workflow instances never pay for the same photo, and
+the hourly sweep re-drives it for organizations with the flag on, oldest waiting
+image first. The upload, replace and phone routes wake the workflow, so a new
+upload is scored within minutes.
 
 - A short side under 800 px is `low_resolution` without any model, and such a
   photo is not sent to the model.
@@ -121,11 +123,14 @@ test per organization, one per dish (`MenuItemPhotoTest`).
   (`dish_photo_daily`, numbers only) through `POST /forms/dish-photo-events`
   (batched, always 204, rate limited; an event counts only with the beacon `key`
   the App signs into the menu payload for that organization, test and dish, so
-  invented test ids count nothing; capped at 2000 distinct rows per organization
-  per day). Orders are not counted there: the order body carries `photoTests`
-  (sent only when set) and the region stores ids in `dish_photo_order_lines`;
-  results count only orders that are counted sales and not fully refunded
-  (`POST /operator/photo-tests/results`, scope `photo_tests`).
+  invented test ids count nothing; one row stops counting at 20 000 a day, so a
+  replayed key cannot run away; 20 requests a minute per address; capped at 2000
+  distinct rows per organization per day). Orders are not counted there: the
+  order body carries `photoTests` entries with the same signed key (sent only
+  when set, unsigned entries are dropped) and the region stores ids in
+  `dish_photo_order_lines`; results count only orders that are counted sales and
+  not fully refunded (`POST /operator/photo-tests/results`, scope
+  `photo_tests`).
 - The win measure is orders per view. A winner is named only after 200 views of
   each photo and 7 days ("Not enough data yet" before). Keep A / Keep B (or
   stop) ends the test; keeping B makes it the dish's main photo through
@@ -144,9 +149,12 @@ until Use new.
 - Only the plate, backdrop and light may change (`RESTYLE_FOOD_RULE` in every
   prompt). The model sits behind an adapter that reuses the single-photo studio
   generator (`MOCKS=true` / `MEDIA_RESTYLE_MOCK=true` for a local emulator).
-- One run at a time per organization (`restyle_in_progress`); at most 200 photos
-  per run; 150 photos per organization per UTC day, then the run pauses and
-  resumes the next day. Dishes without a photo are skipped and listed.
+- One run at a time per organization (`restyle_in_progress`, enforced by a
+  partial unique index on active runs); a dish the model could not do right now
+  is retried after two minutes, not at once; dishes whose photo a connected POS
+  owns are skipped; at most 200 photos per run; 150 photos per organization per
+  UTC day, then the run pauses and resumes the next day. Dishes without a photo
+  are skipped and listed.
 - Use new is refused with `photo_changed` if the dish's main photo is no longer
   the one the draft was made from, and with `draft_changed` if the draft
   changed. Switch back restores the original in one click. Use all applies the

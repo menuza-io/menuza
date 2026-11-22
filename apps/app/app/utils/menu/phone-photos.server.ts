@@ -365,7 +365,7 @@ export async function attachPhonePhoto(input: {
 			}),
 		)
 	) {
-		void wakePhotoQualityWorkflow(organization.id)
+		await wakePhotoQualityWorkflow(organization.id).catch(() => false)
 	}
 	return {
 		ok: true,

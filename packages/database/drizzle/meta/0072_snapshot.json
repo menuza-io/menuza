@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "a490df9c-7058-49e2-a13c-b8bb61aedeb2",
+	"id": "7bcab79b-c102-4dd8-8217-59097daf4cfe",
 	"prevId": "bea85fa2-30c4-4403-9fa0-248a03ce8e56",
 	"tables": {
 		"ApiKey": {
@@ -6632,6 +6632,12 @@
 					"name": "MediaRestyleRun_status_idx",
 					"columns": ["status"],
 					"isUnique": false
+				},
+				"MediaRestyleRun_organizationId_active_key": {
+					"name": "MediaRestyleRun_organizationId_active_key",
+					"columns": ["organizationId"],
+					"isUnique": true,
+					"where": "\"MediaRestyleRun\".\"status\" IN ('pending', 'running', 'paused')"
 				}
 			},
 			"foreignKeys": {
@@ -11389,6 +11395,13 @@
 				},
 				"analyzedAt": {
 					"name": "analyzedAt",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"qualityClaimedAt": {
+					"name": "qualityClaimedAt",
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": false,

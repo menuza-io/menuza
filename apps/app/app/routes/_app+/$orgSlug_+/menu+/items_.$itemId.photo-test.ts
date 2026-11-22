@@ -37,6 +37,7 @@ const STATUS: Record<PhotoTestError, number> = {
 	too_many_tests: 409,
 	photo_changed: 409,
 	already_ended: 409,
+	pos_owned: 409,
 }
 
 export async function action({ request, params }: Route.ActionArgs) {

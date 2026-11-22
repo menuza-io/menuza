@@ -433,6 +433,35 @@ describe('POST /api/menu/photos', () => {
 		expect(storage.stored).toHaveLength(0)
 	})
 
+	it('never buffers a body past the cap, even without a Content-Length', async () => {
+		const { user, organization } = await setupTestOrgWithUser('admin')
+		const item = await dish(organization.id, 'Soup')
+		let sent = 0
+		const stream = new ReadableStream<Uint8Array>({
+			pull(controller) {
+				// 12 MB in 1 MB chunks, no length announced.
+				if (sent >= 12) return controller.close()
+				sent += 1
+				controller.enqueue(new Uint8Array(1024 * 1024))
+			},
+		})
+		const request = new Request('http://localhost:3000/api/menu/photos', {
+			method: 'POST',
+			headers: {
+				Authorization: await bearer(user),
+				'Content-Type': 'multipart/form-data; boundary=x',
+			},
+			body: stream,
+			duplex: 'half',
+		} as RequestInit)
+		expect(request.headers.get('content-length')).toBeNull()
+		const { status, body } = await run(action, request)
+		expect(status).toBe(413)
+		expect(body.error).toBe('payload_too_large')
+		expect(storage.stored).toHaveLength(0)
+		void item
+	})
+
 	it('is idempotent per clientId: a retry stores nothing twice', async () => {
 		const { user, organization } = await setupTestOrgWithUser('admin')
 		const item = await dish(organization.id, 'Soup')

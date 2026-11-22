@@ -264,7 +264,7 @@ msgid "{0, plural, one {# day is ready to import.} other {# days are ready to im
 msgstr "{0, plural, one {# day is ready to import.} other {# days are ready to import.}}"
 
 #. placeholder {0}: test.needs.days
-#: app/components/menu/photo-test-panel.tsx:286
+#: app/components/menu/photo-test-panel.tsx:287
 msgid "{0, plural, one {# day to go.} other {# days to go.}}"
 msgstr "{0, plural, one {# day to go.} other {# days to go.}}"
 
@@ -1713,7 +1713,7 @@ msgstr "{failedTerm}: {failedTermError}"
 msgid "{field}"
 msgstr ""
 
-#: app/components/media-library/restyle-run-status.tsx:56
+#: app/components/media-library/restyle-run-status.tsx:61
 msgid "{finished} of {toDo} dishes done"
 msgstr "{finished} of {toDo} dishes done"
 
@@ -1896,7 +1896,11 @@ msgstr "{late, plural, one {Overdue by # day} other {Overdue by # days}}"
 msgid "{left, plural, one {Code removed. # code left.} other {Code removed. # codes left.}}"
 msgstr "{left, plural, one {Code removed. # code left.} other {Code removed. # codes left.}}"
 
-#: app/components/media-library/focal-point-editor.tsx:103
+#: app/components/media-library/focal-point-editor.tsx:173
+msgid "{left}% from the left"
+msgstr "{left}% from the left"
+
+#: app/components/media-library/focal-point-editor.tsx:158
 msgid "{left}% from the left, {top}% from the top"
 msgstr "{left}% from the left, {top}% from the top"
 
@@ -2847,6 +2851,10 @@ msgstr "{toOrder, plural, one {# item} other {# items}}"
 msgid "{toOrderSuppliers, plural, one {from # supplier} other {from # suppliers}}"
 msgstr "{toOrderSuppliers, plural, one {from # supplier} other {from # suppliers}}"
 
+#: app/components/media-library/focal-point-editor.tsx:196
+msgid "{top}% from the top"
+msgstr "{top}% from the top"
+
 #: app/utils/discounts/labels.ts:595
 msgid "{total, plural, one {# code in all.} other {# codes in all.}}"
 msgstr "{total, plural, one {# code in all.} other {# codes in all.}}"
@@ -2951,6 +2959,22 @@ msgstr "{unread} unread"
 msgid "{unreadLines} lines of the file could not be read."
 msgstr "{unreadLines} lines of the file could not be read."
 
+#: app/components/media-library/bulk-file-list.tsx:89
+#~ msgid "{uploaded} of {0} uploaded"
+#~ msgstr "{uploaded} of {0} uploaded"
+
+#: app/components/media-library/bulk-file-list.tsx:85
+#~ msgid "{uploaded} of {0} uploaded, {failedCount} failed"
+#~ msgstr "{uploaded} of {0} uploaded, {failedCount} failed"
+
+#: app/components/media-library/bulk-file-list.tsx:90
+msgid "{uploaded} of {total} uploaded"
+msgstr "{uploaded} of {total} uploaded"
+
+#: app/components/media-library/bulk-file-list.tsx:86
+msgid "{uploaded} of {total} uploaded, {failedCount} failed"
+msgstr "{uploaded} of {total} uploaded, {failedCount} failed"
+
 #: app/components/pos/terminal-health.tsx:328
 msgid "{used} MB of {quota} MB"
 msgstr "{used} MB of {quota} MB"
@@ -2979,7 +3003,7 @@ msgstr "{verb} on {expiresText}."
 msgid "{verifiedDomain} is verified."
 msgstr "{verifiedDomain} is verified."
 
-#: app/components/menu/photo-test-panel.tsx:279
+#: app/components/menu/photo-test-panel.tsx:280
 msgid "{views, plural, one {# more view to go.} other {# more views to go.}}"
 msgstr "{views, plural, one {# more view to go.} other {# more views to go.}}"
 
@@ -4458,7 +4482,7 @@ msgstr "A website already answers on this domain"
 msgid "A window that ends earlier than it starts runs past midnight."
 msgstr "A window that ends earlier than it starts runs past midnight."
 
-#: app/components/menu/photo-test-panel.tsx:274
+#: app/components/menu/photo-test-panel.tsx:275
 msgid "A winner needs {PHOTO_TEST_MIN_VIEWS} views of each photo and {PHOTO_TEST_MIN_DAYS} days."
 msgstr "A winner needs {PHOTO_TEST_MIN_VIEWS} views of each photo and {PHOTO_TEST_MIN_DAYS} days."
 
@@ -6153,7 +6177,7 @@ msgstr "Adds people to marketing lists"
 msgid "Adds table {label}."
 msgstr "Adds table {label}."
 
-#: app/components/menu/photo-test-panel.tsx:206
+#: app/components/menu/photo-test-panel.tsx:207
 msgid "Adds to cart"
 msgstr "Adds to cart"
 
@@ -8684,7 +8708,7 @@ msgstr "Balance removed"
 msgid "Balanced"
 msgstr "Balanced"
 
-#: app/components/media-library/focal-point-editor.tsx:133
+#: app/components/media-library/focal-point-editor.tsx:217
 msgid "Banner"
 msgstr "Banner"
 
@@ -9128,7 +9152,7 @@ msgstr "Booth"
 msgid "Booth preferred, high chair..."
 msgstr "Booth preferred, high chair..."
 
-#: app/components/menu/photo-test-panel.tsx:233
+#: app/components/menu/photo-test-panel.tsx:234
 msgid "Both photos got the same share of orders."
 msgstr "Both photos got the same share of orders."
 
@@ -10390,7 +10414,7 @@ msgstr "Capitals read like shouting. Use normal case."
 msgid "Caption"
 msgstr ""
 
-#: app/components/media-library/focal-point-editor.tsx:132
+#: app/components/media-library/focal-point-editor.tsx:216
 #: app/components/pos/pos-day-report.tsx:259
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:146
 msgid "Card"
@@ -11332,7 +11356,7 @@ msgstr "Checking your messages…"
 msgid "Checking your photos…"
 msgstr "Checking your photos…"
 
-#: app/components/media-library/bulk-file-list.tsx:97
+#: app/components/media-library/bulk-file-list.tsx:121
 #: app/components/settings/cards/organization/verified-domain-card.tsx:177
 msgid "Checking…"
 msgstr "Checking…"
@@ -12293,6 +12317,10 @@ msgstr "Click a table or decor element on the canvas to edit, resize, rotate, or
 msgid "Click anywhere on the map to add polygon corners"
 msgstr "Click anywhere on the map to add polygon corners"
 
+#: app/components/media-library/focal-point-editor.tsx:122
+msgid "Click or drag on the part of the dish that matters, or use the arrow keys or the sliders. Website, QR and app photos keep it in view."
+msgstr "Click or drag on the part of the dish that matters, or use the arrow keys or the sliders. Website, QR and app photos keep it in view."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:86
 msgid "Click rate"
 msgstr ""
@@ -12306,8 +12334,8 @@ msgid "Click the first day, then the last day. For one day, click it and close."
 msgstr "Click the first day, then the last day. For one day, click it and close."
 
 #: app/components/media-library/focal-point-editor.tsx:91
-msgid "Click the part of the dish that matters. Website, QR and app photos keep it in view."
-msgstr "Click the part of the dish that matters. Website, QR and app photos keep it in view."
+#~ msgid "Click the part of the dish that matters. Website, QR and app photos keep it in view."
+#~ msgstr "Click the part of the dish that matters. Website, QR and app photos keep it in view."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:729
 msgid "Click to choose a cover image"
@@ -15138,7 +15166,7 @@ msgstr "Credit tips: {from} to {to}"
 msgid "Critical"
 msgstr ""
 
-#: app/components/media-library/focal-point-editor.tsx:88
+#: app/components/media-library/focal-point-editor.tsx:119
 msgid "Crop focus"
 msgstr "Crop focus"
 
@@ -23767,7 +23795,7 @@ msgstr "How strict the clock is about the published schedule. These checks start
 msgid "How the call flow works"
 msgstr "How the call flow works"
 
-#: app/components/media-library/focal-point-editor.tsx:128
+#: app/components/media-library/focal-point-editor.tsx:212
 msgid "How the crops look"
 msgstr "How the crops look"
 
@@ -25107,6 +25135,10 @@ msgstr "Its coupon codes are not brought back: add new ones before you turn it o
 msgid "Its photo changed while you were reviewing, so it was left as it is."
 msgstr "Its photo changed while you were reviewing, so it was left as it is."
 
+#: app/components/media-library/restyle-labels.ts:44
+msgid "Its photo comes from your point of sale"
+msgstr "Its photo comes from your point of sale"
+
 #: app/components/media-library/bulk-dish-photos.tsx:111
 msgid "Its photo comes from your point of sale, so it was left as it is."
 msgstr "Its photo comes from your point of sale, so it was left as it is."
@@ -25240,7 +25272,7 @@ msgstr "Keep"
 msgid "Keep {subject}"
 msgstr "Keep {subject}"
 
-#: app/components/menu/photo-test-panel.tsx:250
+#: app/components/menu/photo-test-panel.tsx:251
 msgid "Keep A"
 msgstr "Keep A"
 
@@ -25248,7 +25280,7 @@ msgstr "Keep A"
 msgid "Keep as is"
 msgstr "Keep as is"
 
-#: app/components/menu/photo-test-panel.tsx:242
+#: app/components/menu/photo-test-panel.tsx:243
 msgid "Keep B"
 msgstr "Keep B"
 
@@ -25475,11 +25507,11 @@ msgstr "Kept as overrides:"
 msgid "Kept in"
 msgstr "Kept in"
 
-#: app/components/menu/photo-test-panel.tsx:131
+#: app/components/menu/photo-test-panel.tsx:132
 msgid "Kept the new photo"
 msgstr "Kept the new photo"
 
-#: app/components/menu/photo-test-panel.tsx:133
+#: app/components/menu/photo-test-panel.tsx:134
 msgid "Kept the original photo"
 msgstr "Kept the original photo"
 
@@ -26317,6 +26349,10 @@ msgstr "Left the team"
 #: app/components/orders/record-order-refund-dialog.tsx:272
 msgid "Left to refund"
 msgstr "Left to refund"
+
+#: app/components/media-library/focal-point-editor.tsx:164
+msgid "Left to right"
+msgstr "Left to right"
 
 #: app/components/app-sidebar.tsx:818
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:172
@@ -31404,7 +31440,7 @@ msgstr "No payroll ID"
 msgid "No phone can add to it or pay it any more, and scanning the table code is refused too. Close or void it at the counter to finish."
 msgstr "No phone can add to it or pay it any more, and scanning the table code is refused too. Close or void it at the counter to finish."
 
-#: app/components/media-library/restyle-labels.ts:39
+#: app/components/media-library/restyle-labels.ts:40
 msgid "No photo"
 msgstr "No photo"
 
@@ -32242,7 +32278,7 @@ msgstr "Not changed (you cannot manage these):"
 msgid "Not checked"
 msgstr "Not checked"
 
-#: app/components/media-library/restyle-labels.ts:46
+#: app/components/media-library/restyle-labels.ts:48
 msgid "Not chosen within 30 days, so the draft was deleted"
 msgstr "Not chosen within 30 days, so the draft was deleted"
 
@@ -32291,7 +32327,7 @@ msgstr "Not enough data for this period yet."
 msgid "Not enough data yet (each version needs {minVisits} visits)."
 msgstr "Not enough data yet (each version needs {minVisits} visits)."
 
-#: app/components/menu/photo-test-panel.tsx:272
+#: app/components/menu/photo-test-panel.tsx:273
 msgid "Not enough data yet."
 msgstr "Not enough data yet."
 
@@ -32464,7 +32500,7 @@ msgstr "Not this guest"
 msgid "Not updated"
 msgstr "Not updated"
 
-#: app/components/media-library/bulk-file-list.tsx:132
+#: app/components/media-library/bulk-file-list.tsx:156
 msgid "Not uploaded"
 msgstr "Not uploaded"
 
@@ -34925,7 +34961,7 @@ msgstr "orders"
 #: app/components/dashboard/blocks/today-block.tsx:385
 #: app/components/discounts/discount-performance.tsx:249
 #: app/components/locations/ordering-settings-cards.tsx:199
-#: app/components/menu/photo-test-panel.tsx:212
+#: app/components/menu/photo-test-panel.tsx:213
 #: app/components/orders/order-detail.tsx:490
 #: app/components/roles/tenant-role-access-manager.tsx:162
 #: app/components/workspace-breadcrumb.tsx:12
@@ -35840,7 +35876,7 @@ msgstr ""
 msgid "Past counts"
 msgstr "Past counts"
 
-#: app/components/menu/photo-test-panel.tsx:127
+#: app/components/menu/photo-test-panel.tsx:128
 msgid "Past tests"
 msgstr "Past tests"
 
@@ -35991,11 +36027,11 @@ msgstr "Paused until you resume"
 msgid "Paused: budget reached"
 msgstr "Paused: budget reached"
 
-#: app/components/media-library/restyle-run-status.tsx:70
+#: app/components/media-library/restyle-run-status.tsx:75
 msgid "Paused: daily limit reached, resumes <0/>"
 msgstr "Paused: daily limit reached, resumes <0/>"
 
-#: app/components/media-library/restyle-run-status.tsx:75
+#: app/components/media-library/restyle-run-status.tsx:80
 msgid "Paused: restyling is switched off for now."
 msgstr "Paused: restyling is switched off for now."
 
@@ -36599,11 +36635,11 @@ msgstr ""
 msgid "Photo"
 msgstr ""
 
-#: app/components/menu/photo-test-panel.tsx:230
+#: app/components/menu/photo-test-panel.tsx:231
 msgid "Photo {winner} got more orders"
 msgstr "Photo {winner} got more orders"
 
-#: app/components/menu/photo-test-panel.tsx:226
+#: app/components/menu/photo-test-panel.tsx:227
 msgid "Photo {winner}: {lift}% more orders"
 msgstr "Photo {winner}: {lift}% more orders"
 
@@ -36615,11 +36651,11 @@ msgstr ""
 msgid "Photo + text"
 msgstr ""
 
-#: app/components/menu/photo-test-panel.tsx:191
+#: app/components/menu/photo-test-panel.tsx:192
 msgid "Photo A"
 msgstr "Photo A"
 
-#: app/components/menu/photo-test-panel.tsx:180
+#: app/components/menu/photo-test-panel.tsx:181
 msgid "Photo A, the current photo"
 msgstr "Photo A, the current photo"
 
@@ -36636,23 +36672,23 @@ msgstr "Photo address"
 msgid "Photo approved"
 msgstr "Photo approved"
 
-#: app/components/menu/photo-test-panel.tsx:193
+#: app/components/menu/photo-test-panel.tsx:194
 msgid "Photo B"
 msgstr "Photo B"
 
-#: app/components/menu/photo-test-panel.tsx:181
+#: app/components/menu/photo-test-panel.tsx:182
 msgid "Photo B, the new photo"
 msgstr "Photo B, the new photo"
 
-#: app/components/media-library/restyle-labels.ts:42
+#: app/components/media-library/restyle-labels.ts:43
 msgid "Photo changed during the run"
 msgstr "Photo changed during the run"
 
 #: app/components/media-library/focal-point-editor.tsx:101
-msgid "Photo focus point. Click the photo or use the arrow keys."
-msgstr "Photo focus point. Click the photo or use the arrow keys."
+#~ msgid "Photo focus point. Click the photo or use the arrow keys."
+#~ msgstr "Photo focus point. Click the photo or use the arrow keys."
 
-#: app/components/media-library/restyle-labels.ts:41
+#: app/components/media-library/restyle-labels.ts:42
 msgid "Photo format cannot be restyled"
 msgstr "Photo format cannot be restyled"
 
@@ -36660,7 +36696,7 @@ msgstr "Photo format cannot be restyled"
 msgid "Photo is fine"
 msgstr "Photo is fine"
 
-#: app/components/media-library/restyle-labels.ts:40
+#: app/components/media-library/restyle-labels.ts:41
 msgid "Photo is not in your library"
 msgstr "Photo is not in your library"
 
@@ -40126,7 +40162,7 @@ msgstr "Remove {itemName}"
 msgid "Remove {label}"
 msgstr "Remove {label}"
 
-#: app/components/media-library/bulk-file-list.tsx:143
+#: app/components/media-library/bulk-file-list.tsx:167
 msgid "Remove {name}"
 msgstr "Remove {name}"
 
@@ -41122,7 +41158,7 @@ msgstr "Reset this PIN?"
 msgid "Reset to auto-generated"
 msgstr ""
 
-#: app/components/media-library/focal-point-editor.tsx:171
+#: app/components/media-library/focal-point-editor.tsx:255
 msgid "Reset to centre"
 msgstr "Reset to centre"
 
@@ -41338,7 +41374,7 @@ msgstr ""
 msgid "Results"
 msgstr "Results"
 
-#: app/components/menu/photo-test-panel.tsx:223
+#: app/components/menu/photo-test-panel.tsx:224
 msgid "Results are not available right now."
 msgstr "Results are not available right now."
 
@@ -42338,7 +42374,7 @@ msgstr ""
 msgid "Save first, so the proof shows your changes before you approve it."
 msgstr "Save first, so the proof shows your changes before you approve it."
 
-#: app/components/media-library/focal-point-editor.tsx:159
+#: app/components/media-library/focal-point-editor.tsx:243
 msgid "Save focus"
 msgstr "Save focus"
 
@@ -45116,7 +45152,7 @@ msgstr "Show a message to visitors after a delay, when they scroll, or when they
 msgid "Show a page for this location on the website"
 msgstr "Show a page for this location on the website"
 
-#: app/components/menu/photo-test-panel.tsx:112
+#: app/components/menu/photo-test-panel.tsx:113
 msgid "Show a second photo to half of your visitors and keep the one that gets more orders. The photo you replace stays in your media library."
 msgstr "Show a second photo to half of your visitors and keep the one that gets more orders. The photo you replace stays in your media library."
 
@@ -45681,7 +45717,7 @@ msgstr "skipped"
 
 #: app/components/inventory/prep-screen.tsx:431
 #: app/components/launch/launch-checklist.tsx:90
-#: app/components/media-library/restyle-labels.ts:60
+#: app/components/media-library/restyle-labels.ts:62
 #: app/components/staff/onboarding/task-row.tsx:285
 msgid "Skipped"
 msgstr "Skipped"
@@ -46312,7 +46348,7 @@ msgstr "Spoiled"
 msgid "Spreadsheet"
 msgstr "Spreadsheet"
 
-#: app/components/media-library/focal-point-editor.tsx:131
+#: app/components/media-library/focal-point-editor.tsx:215
 #: app/components/reservations/floor-plan-canvas.tsx:112
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:98
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4289
@@ -47011,7 +47047,7 @@ msgstr "Stop taking orders for this dish once this many are sold in a day. The c
 msgid "Stop taking this option once this many are chosen in a day. The count starts again each business day."
 msgstr "Stop taking this option once this many are chosen in a day. The count starts again each business day."
 
-#: app/components/menu/photo-test-panel.tsx:260
+#: app/components/menu/photo-test-panel.tsx:261
 msgid "Stop test and keep the current photo"
 msgstr "Stop test and keep the current photo"
 
@@ -47035,7 +47071,7 @@ msgstr "Stopped"
 msgid "Stopped replying"
 msgstr "Stopped replying"
 
-#: app/components/menu/photo-test-panel.tsx:135
+#: app/components/menu/photo-test-panel.tsx:136
 msgid "Stopped without a change"
 msgstr "Stopped without a change"
 
@@ -48349,7 +48385,7 @@ msgstr "Test a booking"
 msgid "Test again"
 msgstr "Test again"
 
-#: app/components/menu/photo-test-panel.tsx:98
+#: app/components/menu/photo-test-panel.tsx:99
 msgid "Test another photo"
 msgstr "Test another photo"
 
@@ -50302,11 +50338,11 @@ msgstr "The order text is copied."
 msgid "The original is ahead."
 msgstr "The original is ahead."
 
-#: app/components/media-library/restyle-labels.ts:51
+#: app/components/media-library/restyle-labels.ts:53
 msgid "The original photo could not be read"
 msgstr "The original photo could not be read"
 
-#: app/components/media-library/restyle-labels.ts:50
+#: app/components/media-library/restyle-labels.ts:52
 msgid "The original photo is no longer in your library"
 msgstr "The original photo is no longer in your library"
 
@@ -50467,11 +50503,11 @@ msgstr "The photo could not be used."
 msgid "The photo of the invoice"
 msgstr "The photo of the invoice"
 
-#: app/components/media-library/restyle-labels.ts:47
+#: app/components/media-library/restyle-labels.ts:49
 msgid "The photo studio could not make this one"
 msgstr "The photo studio could not make this one"
 
-#: app/components/media-library/restyle-labels.ts:52
+#: app/components/media-library/restyle-labels.ts:54
 msgid "The photo studio gave back something unusable"
 msgstr "The photo studio gave back something unusable"
 
@@ -50480,11 +50516,11 @@ msgstr "The photo studio gave back something unusable"
 msgid "The photo studio is not set up yet."
 msgstr "The photo studio is not set up yet."
 
-#: app/components/media-library/restyle-labels.ts:48
+#: app/components/media-library/restyle-labels.ts:50
 msgid "The photo studio was busy"
 msgstr "The photo studio was busy"
 
-#: app/components/menu/photo-test-panel.tsx:76
+#: app/components/menu/photo-test-panel.tsx:77
 msgid "The photo test could not be changed."
 msgstr "The photo test could not be changed."
 
@@ -51878,6 +51914,14 @@ msgstr "This dish no longer has a daily limit here."
 msgid "This dish's photo changed since the draft was made. Nothing was replaced."
 msgstr "This dish's photo changed since the draft was made. Nothing was replaced."
 
+#: app/components/menu/photo-test-panel.tsx:43
+msgid "This dish's photo comes from your point of sale, so it cannot be tested."
+msgstr "This dish's photo comes from your point of sale, so it cannot be tested."
+
+#: app/components/media-library/restyle-labels.ts:30
+msgid "This dish's photo comes from your point of sale, so it was not changed."
+msgstr "This dish's photo comes from your point of sale, so it was not changed."
+
 #: app/components/website/domain/forwarding-panel.tsx:105
 msgid "This domain already receives email"
 msgstr "This domain already receives email"
@@ -52174,11 +52218,11 @@ msgstr "This one"
 msgid "This one already passes, so there is nothing to dismiss."
 msgstr "This one already passes, so there is nothing to dismiss."
 
-#: app/components/media-library/restyle-labels.ts:69
+#: app/components/media-library/restyle-labels.ts:71
 msgid "This one could not be restyled"
 msgstr "This one could not be restyled"
 
-#: app/components/media-library/restyle-labels.ts:53
+#: app/components/media-library/restyle-labels.ts:55
 msgid "This one kept failing"
 msgstr "This one kept failing"
 
@@ -52390,7 +52434,7 @@ msgstr "This person is not set up for that position here. You can still schedule
 msgid "This phone number is not valid."
 msgstr "This phone number is not valid."
 
-#: app/components/media-library/restyle-labels.ts:49
+#: app/components/media-library/restyle-labels.ts:51
 msgid "This photo could not be restyled"
 msgstr "This photo could not be restyled"
 
@@ -53594,6 +53638,10 @@ msgstr "Top searches"
 msgid "Top spenders"
 msgstr "Top spenders"
 
+#: app/components/media-library/focal-point-editor.tsx:187
+msgid "Top to bottom"
+msgstr "Top to bottom"
+
 #: app/components/customers/person-marketing-card.tsx:207
 #: app/components/hiring/screener-editor.tsx:178
 msgid "Topic"
@@ -54057,7 +54105,7 @@ msgstr "Try another answer"
 msgid "Try another name, email, or message."
 msgstr "Try another name, email, or message."
 
-#: app/components/menu/photo-test-panel.tsx:121
+#: app/components/menu/photo-test-panel.tsx:122
 msgid "Try another photo"
 msgstr "Try another photo"
 
@@ -56358,7 +56406,7 @@ msgid "Viewing"
 msgstr "Viewing"
 
 #: app/components/dashboard/blocks/google-performance-block.tsx:147
-#: app/components/menu/photo-test-panel.tsx:200
+#: app/components/menu/photo-test-panel.tsx:201
 msgid "Views"
 msgstr "Views"
 

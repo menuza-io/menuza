@@ -59,6 +59,7 @@ export type RestyleError =
 	| 'nothing_to_restyle'
 	| 'not_found'
 	| 'not_used'
+	| 'pos_owned'
 	| 'switch_back_unavailable'
 
 export type RestyleSkipReason = 'no_photo' | 'photo_not_in_library'

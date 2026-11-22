@@ -17,6 +17,14 @@ export const PHOTO_TEST_ID_PATTERN = /^[A-Za-z0-9_-]{8,40}$/
  */
 export const PHOTO_TEST_MAX_DAILY_ROWS = 2000
 
+/**
+ * The most views plus adds one (day, test, dish, photo) row takes. The signed
+ * key is public, so anyone could replay it: past this a row stops counting.
+ * It bounds how far a replay can tilt a test; 20 000 a day is far above what a
+ * single dish's photo gets.
+ */
+export const PHOTO_TEST_MAX_ROW_COUNT = 20_000
+
 export const photoTestEventSchema = z.strictObject({
 	testId: z.string().regex(PHOTO_TEST_ID_PATTERN),
 	itemId: z.string().min(1).max(100),

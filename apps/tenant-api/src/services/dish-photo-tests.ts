@@ -2,6 +2,7 @@ import { and, eq, gte, lte, sql } from 'drizzle-orm'
 import {
 	foldPhotoTestEvents,
 	PHOTO_TEST_MAX_DAILY_ROWS,
+	PHOTO_TEST_MAX_ROW_COUNT,
 	type PhotoTestCounterEvent,
 } from '@repo/common/photo-test-events'
 import {
@@ -102,8 +103,49 @@ export async function countDishPhotoEvents(
 			ON CONFLICT (day, test_id, item_id, variant) DO UPDATE SET
 				views = views + excluded.views,
 				adds = adds + excluded.adds
+			WHERE views + adds < ${PHOTO_TEST_MAX_ROW_COUNT}
 		`)
 	}
+}
+
+/**
+ * Keeps the order's photo-test entries whose key the App signed for exactly
+ * this (organization, test, dish): a guest cannot credit an order to a test
+ * that does not exist, or to a dish of another test. Returns entries without
+ * the key. A node without the shared secret keeps none.
+ */
+export async function verifiedPhotoTestEntries(
+	orgId: string,
+	entries:
+		| ReadonlyArray<{
+				testId: string
+				itemId: string
+				variant: 'A' | 'B'
+				key: string
+		  }>
+		| undefined,
+	options: { secret?: string } = {},
+): Promise<Array<{ testId: string; itemId: string; variant: 'A' | 'B' }>> {
+	if (!entries || entries.length === 0) return []
+	const secret = options.secret ?? getOperatorToken()
+	if (secret.length < 16) return []
+	const kept: Array<{ testId: string; itemId: string; variant: 'A' | 'B' }> = []
+	for (const entry of entries) {
+		if (
+			await verifyPhotoTestBeaconKey(
+				secret,
+				{ organizationId: orgId, testId: entry.testId, itemId: entry.itemId },
+				entry.key,
+			)
+		) {
+			kept.push({
+				testId: entry.testId,
+				itemId: entry.itemId,
+				variant: entry.variant,
+			})
+		}
+	}
+	return kept
 }
 
 /**

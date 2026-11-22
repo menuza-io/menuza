@@ -51,6 +51,12 @@ import {
 
 /** A claim nobody finished is taken over after this long. */
 export const RESTYLE_CLAIM_STALE_MS = 10 * 60 * 1000
+/**
+ * A dish the model could not do right now (busy, rate limited) is tried again
+ * after this wait, not at once: an immediate second try meets the same busy
+ * model and spends the last attempt.
+ */
+export const RESTYLE_RETRY_DELAY_MS = 2 * 60 * 1000
 /** A running or pending run that made no move for this long is woken again. */
 export const RESTYLE_RUN_IDLE_MS = 15 * 60 * 1000
 const SWEEP_LIMIT = 20
@@ -211,6 +217,32 @@ export async function processRestyleRun(
 	}
 	if (claimed.length === 0) {
 		const state = await refreshRunCounters(run.id, now)
+		// Dishes waiting out a retry delay: say when the first is claimable, so the
+		// workflow sleeps until then instead of asking again at once.
+		if (state?.status !== 'ready' && state?.status !== 'cancelled') {
+			const [waiting] = await db
+				.select({ at: sql<number>`min(${MediaRestyleRunItem.updatedAt})` })
+				.from(MediaRestyleRunItem)
+				.where(
+					and(
+						eq(MediaRestyleRunItem.runId, run.id),
+						eq(MediaRestyleRunItem.status, 'pending'),
+						sql`${MediaRestyleRunItem.attempts} > 0`,
+						sql`${MediaRestyleRunItem.attempts} < ${RESTYLE_MAX_ATTEMPTS}`,
+					),
+				)
+			const eligibleAt = waiting?.at
+				? Number(waiting.at) + RESTYLE_CLAIM_STALE_MS
+				: 0
+			if (eligibleAt > nowMs) {
+				return {
+					done: false,
+					paused: true,
+					resumeAt: new Date(eligibleAt),
+					processed: 0,
+				}
+			}
+		}
 		return {
 			done: state?.status === 'ready',
 			paused: state?.status === 'paused',
@@ -304,7 +336,12 @@ export async function processRestyleRun(
 		passing++
 		await db
 			.update(MediaRestyleRunItem)
-			.set({ updatedAt: new Date(nowMs - RESTYLE_CLAIM_STALE_MS) })
+			// Claimable again once the retry delay has passed.
+			.set({
+				updatedAt: new Date(
+					nowMs - RESTYLE_CLAIM_STALE_MS + RESTYLE_RETRY_DELAY_MS,
+				),
+			})
 			.where(
 				and(
 					eq(MediaRestyleRunItem.id, item.id),

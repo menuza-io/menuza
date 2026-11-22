@@ -1,4 +1,4 @@
-import { msg } from '@lingui/macro'
+import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -72,80 +72,105 @@ export function BulkFileList({
 	onRemove?: (key: string) => void
 }) {
 	const { _ } = useLingui()
+	// One summary for the whole upload, read out as it moves, so a screen reader
+	// hears "3 of 12 uploaded" and "1 failed" without watching every row.
+	const states = queueItems ? [...queueItems.values()] : []
+	const uploaded = states.filter((item) => item.state === 'done').length
+	const failedCount = states.filter((item) => item.state === 'failed').length
+	const total = states.length
 	return (
-		<ul className="divide-border bg-card divide-y rounded-xl border">
-			{entries.map((entry) => {
-				const item = entry.queueId ? queueItems?.get(entry.queueId) : undefined
-				const label = stateLabel(item, paused)
-				const skipped = isSkippedEntry(entry)
-				const name = entry.name
-				return (
-					<li
-						key={entry.key}
-						className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2"
-					>
-						<div className="min-w-0 flex-1">
-							<p className="text-sm font-medium wrap-anywhere">{entry.name}</p>
-							<p className="text-muted-foreground text-xs">
-								{formatBytes(entry.size)}
-							</p>
-						</div>
-						<div className="flex flex-wrap items-center gap-1">
-							{entry.check === 'checking' ? (
-								<Badge variant="secondary">
-									<Icon name="loader" className="animate-spin" />
-									{_(msg`Checking…`)}
-								</Badge>
-							) : null}
-							{entry.flags.map((flag) => (
-								<Badge
-									key={flag}
-									variant={
-										flag === 'not_an_image' || flag === 'too_large'
-											? 'destructive'
-											: flag === 'too_small'
-												? 'warning'
-												: 'secondary'
-									}
-									title={_(checkHint(flag))}
-								>
-									<Icon name="alert-triangle" />
-									{_(checkLabel(flag))}
-								</Badge>
-							))}
-							{label ? (
-								<Badge
-									variant={
-										item?.state === 'done'
-											? 'success'
-											: item?.state === 'failed'
-												? 'destructive'
-												: 'secondary'
-									}
-								>
-									{item?.state === 'uploading' ? (
+		<>
+			{queueItems ? (
+				<p className="sr-only" role="status" aria-live="polite">
+					{failedCount > 0 ? (
+						<Trans>
+							{uploaded} of {total} uploaded, {failedCount} failed
+						</Trans>
+					) : (
+						<Trans>
+							{uploaded} of {total} uploaded
+						</Trans>
+					)}
+				</p>
+			) : null}
+			<ul className="divide-border bg-card divide-y rounded-xl border">
+				{entries.map((entry) => {
+					const item = entry.queueId
+						? queueItems?.get(entry.queueId)
+						: undefined
+					const label = stateLabel(item, paused)
+					const skipped = isSkippedEntry(entry)
+					const name = entry.name
+					return (
+						<li
+							key={entry.key}
+							className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2"
+						>
+							<div className="min-w-0 flex-1">
+								<p className="text-sm font-medium wrap-anywhere">
+									{entry.name}
+								</p>
+								<p className="text-muted-foreground text-xs">
+									{formatBytes(entry.size)}
+								</p>
+							</div>
+							<div className="flex flex-wrap items-center gap-1">
+								{entry.check === 'checking' ? (
+									<Badge variant="secondary">
 										<Icon name="loader" className="animate-spin" />
-									) : null}
-									{_(label)}
-								</Badge>
-							) : skipped && queueItems ? (
-								<Badge variant="secondary">{_(msg`Not uploaded`)}</Badge>
+										{_(msg`Checking…`)}
+									</Badge>
+								) : null}
+								{entry.flags.map((flag) => (
+									<Badge
+										key={flag}
+										variant={
+											flag === 'not_an_image' || flag === 'too_large'
+												? 'destructive'
+												: flag === 'too_small'
+													? 'warning'
+													: 'secondary'
+										}
+										title={_(checkHint(flag))}
+									>
+										<Icon name="alert-triangle" />
+										{_(checkLabel(flag))}
+									</Badge>
+								))}
+								{label ? (
+									<Badge
+										variant={
+											item?.state === 'done'
+												? 'success'
+												: item?.state === 'failed'
+													? 'destructive'
+													: 'secondary'
+										}
+									>
+										{item?.state === 'uploading' ? (
+											<Icon name="loader" className="animate-spin" />
+										) : null}
+										{_(label)}
+									</Badge>
+								) : skipped && queueItems ? (
+									<Badge variant="secondary">{_(msg`Not uploaded`)}</Badge>
+								) : null}
+							</div>
+							{onRemove && !item ? (
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon-sm"
+									onClick={() => onRemove(entry.key)}
+								>
+									<Icon name="x" />
+									<span className="sr-only">{_(msg`Remove ${name}`)}</span>
+								</Button>
 							) : null}
-						</div>
-						{onRemove && !item ? (
-							<Button
-								type="button"
-								variant="ghost"
-								size="icon-sm"
-								onClick={() => onRemove(entry.key)}
-							>
-								<Icon name="x" />
-								<span className="sr-only">{_(msg`Remove ${name}`)}</span>
-							</Button>
-						) : null}
-					</li>
-				)
-			})}
-		</ul>
+						</li>
+					)
+				})}
+			</ul>
+		</>
 	)
 }

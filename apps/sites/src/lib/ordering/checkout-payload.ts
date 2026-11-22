@@ -120,6 +120,7 @@ export function checkoutOrderRequest(
 		testId: string
 		itemId: string
 		variant: 'A' | 'B'
+		key: string
 	}> | null,
 ): Record<string, unknown> {
 	return {

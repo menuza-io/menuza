@@ -247,14 +247,28 @@ export function recordPhotoTestAdd(line: {
  * visitor is counted.
  */
 export function photoTestsForCart(
-	lines: ReadonlyArray<{ itemId: string; photoTestId?: string | null }>,
-): Array<{ testId: string; itemId: string; variant: PhotoVariant }> {
+	lines: ReadonlyArray<{
+		itemId: string
+		photoTestId?: string | null
+		photoTestKey?: string | null
+	}>,
+): Array<{
+	testId: string
+	itemId: string
+	variant: PhotoVariant
+	key: string
+}> {
 	const seen = new Set<string>()
-	const out: Array<{ testId: string; itemId: string; variant: PhotoVariant }> =
-		[]
+	const out: Array<{
+		testId: string
+		itemId: string
+		variant: PhotoVariant
+		key: string
+	}> = []
 	if (!photoTestsTracked() || !photoClientId()) return out
 	for (const line of lines) {
-		if (!line.photoTestId) continue
+		// The region credits an order to a test only with the App's signed key.
+		if (!line.photoTestId || !line.photoTestKey) continue
 		const key = `${line.photoTestId}:${line.itemId}`
 		if (seen.has(key)) continue
 		seen.add(key)
@@ -262,6 +276,7 @@ export function photoTestsForCart(
 			testId: line.photoTestId,
 			itemId: line.itemId,
 			variant: variantFor(line.photoTestId),
+			key: line.photoTestKey,
 		})
 		if (out.length >= 20) break
 	}

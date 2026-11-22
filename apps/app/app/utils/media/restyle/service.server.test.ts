@@ -34,6 +34,7 @@ import {
 import {
 	processRestyleRun,
 	pruneRestyleDrafts,
+	RESTYLE_RETRY_DELAY_MS,
 	sweepRestyleRuns,
 } from './process.server.ts'
 import {
@@ -417,6 +418,26 @@ describe('one run at a time, and the size cap', () => {
 				.from(MediaRestyleRun)
 				.where(eq(MediaRestyleRun.organizationId, ctx.organization.id)),
 		).toHaveLength(1)
+	})
+
+	it('the database itself allows one active run per organization, whatever the clocks say', async () => {
+		const ctx = await setup()
+		const other = await setup()
+		const insert = (organizationId: string, status: string, at: number) =>
+			db.insert(MediaRestyleRun).values({
+				organizationId,
+				style: '{}',
+				status,
+				createdAt: new Date(at),
+			})
+		await insert(ctx.organization.id, 'running', 2000)
+		// An earlier createdAt inserted later does not slip past.
+		await expect(insert(ctx.organization.id, 'pending', 1000)).rejects.toThrow()
+		await expect(insert(ctx.organization.id, 'paused', 3000)).rejects.toThrow()
+		// Another organization, and a finished run, are not in the way.
+		await insert(other.organization.id, 'pending', 1000)
+		await insert(ctx.organization.id, 'ready', 1000)
+		await insert(ctx.organization.id, 'cancelled', 1000)
 	})
 
 	it('refuses more than 200 photos and creates nothing; zero photos is nothing to restyle', async () => {
@@ -920,7 +941,14 @@ describe('failures', () => {
 			status: 'pending',
 			attempts: 1,
 		})
-		const second = await processRestyleRun(started.runId, deps)
+		// Not at once: the dish waits out the retry delay, and the answer says when.
+		const tooSoon = await processRestyleRun(started.runId, deps)
+		expect(tooSoon).toMatchObject({ processed: 0, paused: true, done: false })
+		expect(tooSoon.resumeAt?.getTime()).toBeGreaterThan(deps.now!())
+		const second = await processRestyleRun(started.runId, {
+			...deps,
+			now: () => deps.now!() + RESTYLE_RETRY_DELAY_MS + 1_000,
+		})
 		expect(second).toMatchObject({ processed: 1, done: true })
 		expect((await items(started.runId))[0]).toMatchObject({
 			status: 'failed',
@@ -945,12 +973,14 @@ describe('failures', () => {
 		const started = await start(ctx, deps)
 		if (!started.ok) throw new Error(started.error)
 		await drain(started.runId, deps)
-		const rows = await items(started.runId)
-		expect(rows.find((row) => row.itemId === a.dish.id)).toMatchObject({
-			status: 'failed',
-			error: 'unsupported_image',
-		})
-		expect(rows.find((row) => row.itemId === b.dish.id)?.status).toBe('drafted')
+		// Whichever dish the model met first fails for good; the other is drafted.
+		const rows = (await items(started.runId)).filter((row) =>
+			[a.dish.id, b.dish.id].includes(row.itemId),
+		)
+		expect(rows.filter((row) => row.status === 'failed')).toEqual([
+			expect.objectContaining({ error: 'unsupported_image' }),
+		])
+		expect(rows.filter((row) => row.status === 'drafted')).toHaveLength(1)
 	})
 
 	it('does not use a model answer that is not a picture, and stores nothing', async () => {
@@ -962,7 +992,11 @@ describe('failures', () => {
 		const started = await start(ctx, deps)
 		if (!started.ok) throw new Error(started.error)
 		await drain(started.runId, deps)
-		await drain(started.runId, deps)
+		// The second try comes after the retry delay.
+		await drain(started.runId, {
+			...deps,
+			now: () => deps.now!() + RESTYLE_RETRY_DELAY_MS + 1_000,
+		})
 		expect((await items(started.runId))[0]).toMatchObject({
 			status: 'failed',
 			error: 'invalid_output',

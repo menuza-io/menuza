@@ -26,6 +26,7 @@ import {
 	OrganizationMenuItemCategoryAssignment,
 } from '@repo/database'
 import {
+	posPhotoOwnedItemIds,
 	readDishPhotoStates,
 	type DishPhotoState,
 } from '#app/utils/menu/dish-photo.server.ts'
@@ -225,7 +226,7 @@ export type RestyleCandidate = {
 
 export type RestyleSkipped = {
 	itemId: string
-	reason: RestyleSkipReason | 'unsupported_photo'
+	reason: RestyleSkipReason | 'unsupported_photo' | 'pos_owned'
 }
 
 /**
@@ -273,11 +274,18 @@ export async function collectRestyleCandidates(
 			)
 		for (const row of rows) assets.set(row.objectKey, row)
 	}
+	// A dish whose photo a connected POS owns is left alone: the next sync
+	// would put its own photo back.
+	const posOwned = await posPhotoOwnedItemIds(organizationId)
 	const candidates: RestyleCandidate[] = []
 	const skipped: RestyleSkipped[] = []
 	for (const itemId of itemIds) {
 		const state = states.get(itemId)
 		if (!state) continue
+		if (posOwned.has(itemId)) {
+			skipped.push({ itemId, reason: 'pos_owned' })
+			continue
+		}
 		if (!state.mainKey) {
 			skipped.push({ itemId, reason: 'no_photo' })
 			continue
@@ -427,7 +435,16 @@ export async function startRestyleRun(
 			),
 		),
 	]
-	await db.batch(statements as never)
+	try {
+		await db.batch(statements as never)
+	} catch (error) {
+		// The unique index (one active run per organization) refused a second
+		// start that raced this one.
+		if (isUniqueViolation(error)) {
+			return { ok: false, error: 'restyle_in_progress' }
+		}
+		throw error
+	}
 
 	// The checks above read and then insert, so two clicks at once can both
 	// pass them. Look again with the new run in: the earlier run keeps its
@@ -658,4 +675,14 @@ export async function getRestyleRun(
 		items: views,
 		budgetLeft: restyleBudgetLeft(used),
 	}
+}
+
+/** A unique-index failure, however deep the driver wrapped it. */
+function isUniqueViolation(error: unknown): boolean {
+	for (let depth = 0; depth < 5 && error; depth += 1) {
+		const text = `${(error as { code?: unknown }).code ?? ''} ${(error as { message?: unknown }).message ?? ''}`
+		if (text.includes('UNIQUE')) return true
+		error = (error as { cause?: unknown }).cause
+	}
+	return false
 }

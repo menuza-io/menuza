@@ -122,11 +122,88 @@ describe('photo quality job', () => {
 			analyzer: null,
 			readImage: readImage as never,
 		})
-		expect(result.remaining).toBe(1)
+		// The big photo is not offered to a batch without a model, and it is not
+		// closed as analyzed either: a key added later still scores it.
+		expect(result.remaining).toBe(0)
 		expect((await reload(big.id)).analyzedAt).toBeNull()
 		expect(JSON.parse((await reload(small.id)).qualityIssues!)).toContain(
 			'low_resolution',
 		)
+	})
+
+	it('two batches at once never analyze the same photo twice', async () => {
+		const { organization } = await setup()
+		for (let i = 0; i < 6; i += 1) await photo(organization.id)
+		const analyzer = createMockPhotoQualityAnalyzer({ score: 70 })
+		const deps = {
+			analyzer,
+			readImage: readImage as never,
+			spend: async () => true,
+		}
+		const [a, b] = await Promise.all([
+			processPhotoQualityForOrganization(organization.id, deps),
+			processPhotoQualityForOrganization(organization.id, deps),
+		])
+		expect(a.processed + b.processed).toBe(6)
+		expect(analyzer.calls).toBe(6)
+	})
+
+	it('a batch gives back the claims of photos it did not finish', async () => {
+		const { organization } = await setup()
+		const asset = await photo(organization.id)
+		const analyzer = createMockPhotoQualityAnalyzer({ score: 70 })
+		await processPhotoQualityForOrganization(organization.id, {
+			analyzer,
+			readImage: readImage as never,
+			spend: async () => false,
+		})
+		expect((await reload(asset.id)).qualityClaimedAt).toBeNull()
+		const next = await processPhotoQualityForOrganization(organization.id, {
+			analyzer,
+			readImage: readImage as never,
+			spend: async () => true,
+		})
+		expect(next.processed).toBe(1)
+	})
+
+	it('without a model, big photos never hold up the small ones behind them', async () => {
+		const { organization } = await setup()
+		for (let i = 0; i < 12; i += 1) await photo(organization.id)
+		const small = await photo(organization.id, { width: 500, height: 400 })
+		const reader = vi.fn(async () => ({
+			data: new Uint8Array(10),
+			mediaType: 'image/jpeg' as const,
+		}))
+		const result = await processPhotoQualityForOrganization(organization.id, {
+			analyzer: null,
+			readImage: reader as never,
+		})
+		expect(JSON.parse((await reload(small.id)).qualityIssues!)).toContain(
+			'low_resolution',
+		)
+		// The 12 big photos were not even read, and are not counted as waiting.
+		expect(reader).not.toHaveBeenCalled()
+		expect(result.remaining).toBe(0)
+	})
+
+	it('the sweep is not filled by organizations that cannot be scored', async () => {
+		// Older waiting images belong to organizations with the flag off; the one
+		// with the flag on still gets its turn.
+		const unflagged = await Promise.all(
+			Array.from({ length: 30 }, () => setup(false)),
+		)
+		for (const ctx of unflagged) {
+			await photo(ctx.organization.id, { createdAt: new Date('2020-01-01') })
+		}
+		const flagged = await setup(true)
+		await photo(flagged.organization.id)
+		const wake = vi.fn(async (_id: string) => true)
+		await sweepPhotoQuality({ wake })
+		const woken = wake.mock.calls.map((call) => call[0])
+		expect(woken).toContain(flagged.organization.id)
+		for (const ctx of unflagged) {
+			expect(woken).not.toContain(ctx.organization.id)
+		}
 	})
 
 	it('never reads a guest-submitted photo', async () => {

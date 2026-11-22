@@ -295,6 +295,11 @@ export async function replaceDishMainPhoto(
 	const state = states.get(itemId)
 	if (!state) return { ok: false, error: 'not_found' }
 
+	// A connected POS owns this dish's photo: its next sync would undo ours.
+	if ((await posPhotoOwnedItemIds(organization.id)).has(itemId)) {
+		return { ok: false, error: 'pos_owned' }
+	}
+
 	// The asset must belong to this organization.
 	const owned = await findLibraryAssetByKey(organization.id, asset.id)
 	if (!owned || owned.objectKey !== asset.objectKey) {

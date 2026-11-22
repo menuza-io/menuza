@@ -4,6 +4,7 @@
  * plane's rules are proved: photo B only reaches the web and QR menus, ending
  * keeps the winner on the dish everywhere and never deletes the loser.
  */
+import { verifyPhotoTestBeaconKey } from '@repo/common/photo-test-key'
 import {
 	and,
 	db,
@@ -13,7 +14,6 @@ import {
 	OrganizationMenuItem,
 } from '@repo/database'
 import { describe, expect, it, vi } from 'vitest'
-import { verifyPhotoTestBeaconKey } from '@repo/common/photo-test-key'
 import { setOrgFlag, setupSeoOrganization } from '#tests/seo-utils.ts'
 import {
 	endPhotoTest,

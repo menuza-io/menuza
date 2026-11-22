@@ -202,7 +202,9 @@ export async function applyRestyleDraft(
 					? 'photo_changed'
 					: result.error === 'not_found'
 						? 'not_found'
-						: 'draft_changed',
+						: result.error === 'pos_owned'
+							? 'pos_owned'
+							: 'draft_changed',
 		}
 	}
 	return { ok: true, previousKey: result.previousKey }
@@ -341,7 +343,9 @@ export async function switchBackRestyleItem(
 					? 'not_found'
 					: result.error === 'photo_changed'
 						? 'photo_changed'
-						: 'switch_back_unavailable',
+						: result.error === 'pos_owned'
+							? 'pos_owned'
+							: 'switch_back_unavailable',
 		}
 	}
 	return { ok: true }

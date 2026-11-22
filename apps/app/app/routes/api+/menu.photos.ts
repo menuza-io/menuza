@@ -59,6 +59,56 @@ async function mayEdit(userId: string, organizationId: string) {
 	return memberMayEditMenu(userId, organizationId)
 }
 
+/** 429 in the API's own shape (the phone app reads `rate_limited`). */
+async function limited(userId: string, scope: string, maxRequests: number) {
+	const limit = await checkRateLimit(
+		{ type: 'user', value: userId },
+		{ ...MENU_MUTATION_RATE_LIMIT, scope, maxRequests },
+	)
+	if (limit.allowed) return null
+	const retryAfter = Math.max(
+		1,
+		Math.ceil((limit.resetAt.getTime() - Date.now()) / 1000),
+	)
+	return data(
+		{
+			success: false,
+			error: 'rate_limited',
+			message: 'Too many requests. Try again shortly.',
+		},
+		{ status: 429, headers: { 'Retry-After': String(retryAfter) } },
+	)
+}
+
+/**
+ * Reads the request body without ever holding more than `maxBytes` of it: a
+ * chunked request has no Content-Length to trust, and `request.formData()`
+ * would buffer all of it. `null` means it was too large.
+ */
+async function readBodyCapped(request: Request, maxBytes: number) {
+	if (!request.body) return new Uint8Array()
+	const reader = request.body.getReader()
+	const chunks: Uint8Array[] = []
+	let total = 0
+	for (;;) {
+		const { done, value } = await reader.read()
+		if (done) break
+		total += value.byteLength
+		if (total > maxBytes) {
+			await reader.cancel().catch(() => undefined)
+			return null
+		}
+		chunks.push(value)
+	}
+	const body = new Uint8Array(total)
+	let offset = 0
+	for (const chunk of chunks) {
+		body.set(chunk, offset)
+		offset += chunk.byteLength
+	}
+	return body
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
 	let userId: string
 	try {
@@ -67,6 +117,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 		if (isAuthenticationError(error)) return unauthorized()
 		throw error
 	}
+	const tooMany = await limited(userId, 'mobile-menu-photos-list', 120)
+	if (tooMany) return tooMany
 	const url = new URL(request.url)
 	const parsed = ListQuery.safeParse(Object.fromEntries(url.searchParams))
 	if (!parsed.success) {
@@ -100,14 +152,24 @@ export async function action({ request }: Route.ActionArgs) {
 	if (request.method !== 'POST') {
 		return failure(405, 'method_not_allowed', 'Method not allowed')
 	}
-	// Refuse an oversized body before reading it.
+	// The rate limit comes before anything is read, so a flood of large bodies
+	// is stopped at the door.
+	const tooMany = await limited(userId, 'mobile-menu-photos', 300)
+	if (tooMany) return tooMany
+	// Refuse an oversized body before reading it, and never buffer more than the
+	// cap whatever Content-Length says (or does not say).
+	const maxBody = PHONE_PHOTO_MAX_BYTES + 64 * 1024
 	const declared = Number(request.headers.get('content-length') ?? 0)
-	if (declared > PHONE_PHOTO_MAX_BYTES + 64 * 1024) {
+	if (declared > maxBody) {
 		return failure(413, 'payload_too_large', 'The photo is too large')
 	}
+	const body = await readBodyCapped(request, maxBody)
+	if (!body) return failure(413, 'payload_too_large', 'The photo is too large')
 	let form: FormData
 	try {
-		form = await request.formData()
+		form = await new Response(body as BodyInit, {
+			headers: { 'content-type': request.headers.get('content-type') ?? '' },
+		}).formData()
 	} catch {
 		return failure(400, 'validation_error', 'Invalid request')
 	}
@@ -135,25 +197,6 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 	if (photo.size > PHONE_PHOTO_MAX_BYTES) {
 		return failure(413, 'payload_too_large', 'The photo is too large')
-	}
-
-	const limit = await checkRateLimit(
-		{ type: 'user', value: userId },
-		{ ...MENU_MUTATION_RATE_LIMIT, scope: 'mobile-menu-photos' },
-	)
-	if (!limit.allowed) {
-		const retryAfter = Math.max(
-			1,
-			Math.ceil((limit.resetAt.getTime() - Date.now()) / 1000),
-		)
-		return data(
-			{
-				success: false,
-				error: 'rate_limited',
-				message: 'Too many photos at once. Try again shortly.',
-			},
-			{ status: 429, headers: { 'Retry-After': String(retryAfter) } },
-		)
 	}
 
 	const [organization] = await db

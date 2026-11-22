@@ -227,6 +227,72 @@ describe('replaceDishMainPhoto', () => {
 	})
 })
 
+describe('a dish whose photo a connected POS owns', () => {
+	it('is refused by the single-dish helper too (restyle Use new, Switch back, keep B)', async () => {
+		const { org, userId } = await setup()
+		const a = await asset(org.id)
+		const n = await asset(org.id)
+		const item = await dish(org.id, [a.objectKey])
+		const [integration] = await db
+			.insert(Integration)
+			.values({
+				organizationId: org.id,
+				providerName: 'toast',
+				providerType: 'pos',
+				config: '{}',
+			})
+			.returning()
+		await db.insert(OrganizationMenuPosLink).values({
+			organizationId: org.id,
+			integrationId: integration!.id,
+			providerName: 'toast',
+			entityType: 'item',
+			remoteId: 'remote-9',
+			localId: item.id,
+		})
+		expect(
+			await replaceDishMainPhoto({
+				organization: org,
+				userId,
+				itemId: item.id,
+				asset: n,
+				details: 't',
+			}),
+		).toEqual({ ok: false, error: 'pos_owned' })
+		expect((await reload(item.id)).imageKey).toBe(a.objectKey)
+		// A provider that does not read photos (Clover) does not own them.
+		const clover = await dish(org.id, [a.objectKey])
+		const [cloverIntegration] = await db
+			.insert(Integration)
+			.values({
+				organizationId: org.id,
+				providerName: 'clover',
+				providerType: 'pos',
+				config: '{}',
+			})
+			.returning()
+		await db.insert(OrganizationMenuPosLink).values({
+			organizationId: org.id,
+			integrationId: cloverIntegration!.id,
+			providerName: 'clover',
+			entityType: 'item',
+			remoteId: 'remote-10',
+			localId: clover.id,
+		})
+		expect(
+			(
+				await replaceDishMainPhoto({
+					organization: org,
+					userId,
+					itemId: clover.id,
+					asset: n,
+					details: 't',
+				})
+			).ok,
+		).toBe(true)
+	})
+})
+
 describe('replaceDishMainPhotosBatch', () => {
 	it('changes every dish in one batch with one purge, and ends their tests', async () => {
 		const { org, userId } = await setup()

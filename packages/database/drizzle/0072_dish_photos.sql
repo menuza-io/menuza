@@ -20,6 +20,7 @@ CREATE TABLE `MediaRestyleRun` (
 CREATE INDEX `MediaRestyleRun_organizationId_status_idx` ON `MediaRestyleRun` (`organizationId`,`status`);--> statement-breakpoint
 CREATE INDEX `MediaRestyleRun_organizationId_createdAt_idx` ON `MediaRestyleRun` (`organizationId`,`createdAt`);--> statement-breakpoint
 CREATE INDEX `MediaRestyleRun_status_idx` ON `MediaRestyleRun` (`status`);--> statement-breakpoint
+CREATE UNIQUE INDEX `MediaRestyleRun_organizationId_active_key` ON `MediaRestyleRun` (`organizationId`) WHERE "MediaRestyleRun"."status" IN ('pending', 'running', 'paused');--> statement-breakpoint
 CREATE TABLE `MediaRestyleRunItem` (
 	`id` text PRIMARY KEY NOT NULL,
 	`runId` text NOT NULL,
@@ -77,6 +78,7 @@ ALTER TABLE `OrganizationMediaAsset` ADD `qualityScore` integer;--> statement-br
 ALTER TABLE `OrganizationMediaAsset` ADD `qualityIssues` text;--> statement-breakpoint
 ALTER TABLE `OrganizationMediaAsset` ADD `qualityAttempts` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE `OrganizationMediaAsset` ADD `analyzedAt` integer;--> statement-breakpoint
+ALTER TABLE `OrganizationMediaAsset` ADD `qualityClaimedAt` integer;--> statement-breakpoint
 CREATE INDEX `OrganizationMediaAsset_organizationId_analyzedAt_idx` ON `OrganizationMediaAsset` (`organizationId`,`analyzedAt`);--> statement-breakpoint
 INSERT INTO "ConfigFlag" ("id", "key", "value", "level", "organizationId", "userId", "createdAt", "updatedAt")
 SELECT lower(hex(randomblob(12))), 'media.photo_quality', 'false', 'system', NULL, NULL, CAST(strftime('%s','now') AS INTEGER) * 1000, CAST(strftime('%s','now') AS INTEGER) * 1000

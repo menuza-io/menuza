@@ -40,6 +40,7 @@ const ERRORS: Record<string, ReturnType<typeof msg>> = {
 	asset_not_ready: msg`That photo is not ready to use yet.`,
 	photo_changed: msg`The dish photo changed since the test started.`,
 	no_photo: msg`Add a photo to the dish first.`,
+	pos_owned: msg`This dish's photo comes from your point of sale, so it cannot be tested.`,
 }
 
 /**

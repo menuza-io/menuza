@@ -1,7 +1,6 @@
 import { auditService, AuditAction } from '@repo/audit'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import { focalPointOf, type FocalPoint } from '@repo/common/image-focal'
-import { photoTestBeaconKey } from '@repo/common/photo-test-key'
 import { type MenuChannel } from '@repo/common/menu-channels'
 import {
 	evaluatePhotoTest,
@@ -10,6 +9,7 @@ import {
 	type PhotoVariant,
 	type PhotoVariantCounts,
 } from '@repo/common/photo-test'
+import { photoTestBeaconKey } from '@repo/common/photo-test-key'
 import {
 	and,
 	count,
@@ -27,6 +27,7 @@ import {
 	dishMainPhotoIs,
 	dishPhotoAssetUrl,
 	findLibraryAssetByKey,
+	posPhotoOwnedItemIds,
 	readDishPhotoStates,
 	replaceDishMainPhoto,
 	type DishPhotoOrganization,
@@ -54,6 +55,7 @@ export type PhotoTestError =
 	| 'too_many_tests'
 	| 'photo_changed'
 	| 'already_ended'
+	| 'pos_owned'
 
 export async function isPhotoTestsEnabled(organizationId: string) {
 	return isMenuFlagOn(
@@ -182,6 +184,10 @@ export async function startPhotoTest(
 	const state = states.get(input.itemId)
 	if (!state) return { ok: false, error: 'not_found' }
 	if (!state.mainKey) return { ok: false, error: 'no_photo' }
+	// Keeping photo B would change a photo a connected POS owns.
+	if ((await posPhotoOwnedItemIds(organization.id)).has(input.itemId)) {
+		return { ok: false, error: 'pos_owned' }
+	}
 
 	const asset = await findLibraryAssetByKey(organization.id, input.assetId)
 	if (!asset) return { ok: false, error: 'asset_not_found' }
@@ -338,8 +344,8 @@ export async function endPhotoTest(input: {
 			],
 		})
 		if (!result.ok) {
-			if (result.error === 'photo_changed') {
-				return { ok: false, error: 'photo_changed' }
+			if (result.error === 'photo_changed' || result.error === 'pos_owned') {
+				return { ok: false, error: result.error }
 			}
 			return { ok: false, error: 'asset_not_found' }
 		}
