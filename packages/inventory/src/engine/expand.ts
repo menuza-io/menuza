@@ -15,6 +15,8 @@ import {
 } from './fraction.ts'
 import { recipeInForce, type RecipeStore } from './store.ts'
 import {
+	type GroupMemberSpec,
+	type GroupStock,
 	type ExpandError,
 	type ExpandErrorCode,
 	type ExpandFlag,
@@ -140,9 +142,65 @@ class ExpansionFailure extends Error {
 }
 
 /**
- * Spends `amount` of `itemId` into `out`: a made item that is not counted in
- * batches and has a recipe in force expands into its ingredients (by batches
- * of what it makes), recursively; anything else is a leaf.
+ * What is left of each group member while sold lines are worked out, so
+ * several lines of one sale draw down the same shelves. Member stock is in the
+ * member's own base thousandths.
+ */
+export type GroupAllocator = Map<string, Fraction>
+
+export function createGroupAllocator(stock: GroupStock): GroupAllocator {
+	const remaining: GroupAllocator = new Map()
+	for (const [itemId, onHand] of stock) {
+		remaining.set(itemId, frac(Math.max(0, onHand)))
+	}
+	return remaining
+}
+
+/**
+ * Takes `amount` (group thousandths) from the members of a group: the
+ * primary first, as far as it has stock, then each substitute in rank order.
+ * What no member can cover goes to the primary, which then runs negative like
+ * any other item. Quantities come out in each member's own thousandths.
+ */
+export function allocateToMembers(
+	members: readonly GroupMemberSpec[],
+	amount: Fraction,
+	remaining: GroupAllocator,
+	out: Map<string, Fraction>,
+): void {
+	let left = amount
+	for (const member of members) {
+		if (isZero(left)) return
+		// Member thousandths -> group thousandths: memberQuantity members per groupQuantity group.
+		const toGroup = frac(member.groupQuantity, member.memberQuantity)
+		const available = fmul(remaining.get(member.itemId) ?? ZERO, toGroup)
+		const take = fmin(left, available)
+		if (isZero(take)) continue
+		const memberAmount = fmul(
+			take,
+			frac(member.memberQuantity, member.groupQuantity),
+		)
+		addTo(out, member.itemId, memberAmount)
+		remaining.set(
+			member.itemId,
+			fsubFloor(remaining.get(member.itemId) ?? ZERO, memberAmount),
+		)
+		left = fsubFloor(left, take)
+	}
+	if (!isZero(left) && members[0]) {
+		const primary = members[0]
+		addTo(
+			out,
+			primary.itemId,
+			fmul(left, frac(primary.memberQuantity, primary.groupQuantity)),
+		)
+	}
+}
+
+/**
+ * Spends `amount` of `itemId` into `out`: a made item that is not counted in batches and
+ * has a recipe in force expands into its ingredients (by batches of what it
+ * makes), recursively; anything else is a leaf.
  */
 function spend(
 	store: RecipeStore,
@@ -313,7 +371,10 @@ export function expandLines(
 	store: RecipeStore,
 	lines: readonly SaleLine[],
 	at: number,
+	options: { stock?: GroupStock } = {},
 ): ExpandResult {
+	// One shelf for every line of the sale: the lines draw it down together.
+	const allocator = options.stock ? createGroupAllocator(options.stock) : null
 	const total = new Map<string, Fraction>()
 	const unrecipedLines: UnrecipedLine[] = []
 	const flags = new Map<string, ExpandFlag>()
@@ -347,7 +408,15 @@ export function expandLines(
 			errors.push({ lineIndex: index, code: 'usage_out_of_range', path: [] })
 			return
 		}
-		for (const [itemId, amount] of scaled) addTo(total, itemId, amount)
+		for (const [itemId, amount] of scaled) {
+			const group = store.items.get(itemId)?.group
+			// A group takes its stock from the members, over the whole line.
+			if (group && allocator) {
+				allocateToMembers(group.members, amount, allocator, total)
+			} else {
+				addTo(total, itemId, amount)
+			}
+		}
 	})
 	return {
 		usage: roundUsage(total),
@@ -364,8 +433,9 @@ export function expandRecipe(
 	store: RecipeStore,
 	line: SaleLine,
 	at: number,
+	options: { stock?: GroupStock } = {},
 ): ExpandResult {
-	return expandLines(store, [line], at)
+	return expandLines(store, [line], at, options)
 }
 
 /**

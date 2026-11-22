@@ -5,7 +5,15 @@ import {
 	expandRecipe,
 	MAX_RECIPE_DEPTH,
 } from './expand.ts'
-import { item, line, recipe, replaceLine, store, usageOf } from './fixtures.ts'
+import {
+	groupItem,
+	item,
+	line,
+	recipe,
+	replaceLine,
+	store,
+	usageOf,
+} from './fixtures.ts'
 import { parseSaleLines } from './sale-lines.ts'
 
 const AT = 10_000
@@ -808,5 +816,86 @@ describe('reading stored order lines', () => {
 		])
 		expect(parseSaleLines('not json', 'pos')).toEqual([])
 		expect(parseSaleLines(undefined, 'restaurant')).toEqual([])
+	})
+})
+
+describe('ingredient groups (#495)', () => {
+	const oil = groupItem('oil', ['oil-a', 'oil-b', 'oil-c'])
+	const dish = store([recipe('menu_item', 'fries', [['oil', 100_000]])], [oil])
+	const fries = (quantity: number) => ({ itemId: 'fries', quantity })
+
+	test('takes stock from the primary first', () => {
+		const result = expandLines(dish, [fries(2)], AT, {
+			stock: new Map([
+				['oil-a', 1_000_000],
+				['oil-b', 1_000_000],
+			]),
+		})
+		expect(usageOf(result)).toEqual({ 'oil-a': 200_000 })
+	})
+
+	test('moves on to the next member when the primary runs out, even mid-line', () => {
+		const result = expandLines(dish, [fries(3)], AT, {
+			stock: new Map([
+				['oil-a', 250_000],
+				['oil-b', 1_000_000],
+			]),
+		})
+		expect(usageOf(result)).toEqual({ 'oil-a': 250_000, 'oil-b': 50_000 })
+	})
+
+	test('skips a member at zero or below and uses the third in rank order', () => {
+		const result = expandLines(dish, [fries(1)], AT, {
+			stock: new Map([
+				['oil-a', 0],
+				['oil-b', -5],
+				['oil-c', 500_000],
+			]),
+		})
+		expect(usageOf(result)).toEqual({ 'oil-c': 100_000 })
+	})
+
+	test('lines of one sale draw the same shelf down', () => {
+		const result = expandLines(dish, [fries(1), fries(1), fries(1)], AT, {
+			stock: new Map([
+				['oil-a', 150_000],
+				['oil-b', 1_000_000],
+			]),
+		})
+		expect(usageOf(result)).toEqual({ 'oil-a': 150_000, 'oil-b': 150_000 })
+	})
+
+	test('what no member covers goes to the primary, which runs negative', () => {
+		const result = expandLines(dish, [fries(2)], AT, {
+			stock: new Map([['oil-b', 50_000]]),
+		})
+		expect(usageOf(result)).toEqual({ 'oil-a': 150_000, 'oil-b': 50_000 })
+	})
+
+	test('converts between the member unit and the group unit', () => {
+		// The group is in ml; the primary is counted in bottles (1 piece = 1000 ml).
+		const converted = store(
+			[recipe('menu_item', 'fries', [['oil', 100_000]])],
+			[
+				groupItem('oil', [
+					{ itemId: 'bottle', memberQuantity: 1, groupQuantity: 1000 },
+					'drum',
+				]),
+			],
+		)
+		const result = expandLines(converted, [fries(3)], AT, {
+			stock: new Map([
+				['bottle', 100],
+				['drum', 1_000_000],
+			]),
+		})
+		// 100 thousandths of a bottle = 100_000 ml covers one dish; the rest goes to the drum.
+		expect(usageOf(result)).toEqual({ bottle: 100, drum: 200_000 })
+	})
+
+	test('without a stock view the usage stays on the group', () => {
+		expect(usageOf(expandLines(dish, [fries(2)], AT))).toEqual({
+			oil: 200_000,
+		})
 	})
 })

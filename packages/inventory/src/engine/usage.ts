@@ -3,6 +3,7 @@ import { type RecipeStore } from './store.ts'
 import {
 	type ExpandErrorCode,
 	type ExpandFlag,
+	type GroupStock,
 	type SaleLine,
 	type UnrecipedLine,
 } from './types.ts'
@@ -132,8 +133,14 @@ export function desiredUsage(input: {
 	/** The sale's time, epoch ms: picks the recipe version in force. */
 	at: number
 	source: SaleSource
+	/**
+	 * On hand of group members at the location before this source used
+	 * anything (what the source already used added back). Groups take stock
+	 * from their primary first; without it a group's usage stays on the group.
+	 */
+	stock?: GroupStock
 }): DesiredUsage {
-	const { store, locationId, at, source } = input
+	const { store, locationId, at, source, stock } = input
 	const out: DesiredUsage = {
 		sale: [],
 		wasteVoids: [],
@@ -143,7 +150,7 @@ export function desiredUsage(input: {
 		errors: [],
 	}
 	if (usesStock(source)) {
-		const expanded = expandLines(store, source.lines, at)
+		const expanded = expandLines(store, source.lines, at, { stock })
 		out.sale = entries(expanded.usage, locationId)
 		out.unrecipedLines = expanded.unrecipedLines
 		out.flags = expanded.flags
@@ -164,6 +171,7 @@ export function desiredUsage(input: {
 				store,
 				[{ itemId: voided.itemId, quantity: voided.quantity }],
 				at,
+				{ stock },
 			)
 			for (const error of wasted.errors) {
 				out.errors.push({

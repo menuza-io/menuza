@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import {
 	inventoryNotifyDedupeKey,
 	type InventoryNotifyEvent,
-	type InventoryNotifyKind,
+	type InventoryTickNotifyKind,
 	type InventoryTickResult,
 } from '@repo/inventory'
 import {
@@ -94,7 +94,7 @@ function emptyResult(): InventoryTickOutcome {
 /** The App dedupes by this id: the same thing always hashes to the same value. */
 export function inventoryAlertEventId(input: {
 	orgId: string
-	kind: InventoryNotifyKind
+	kind: InventoryTickNotifyKind
 	locationId: string
 	dedupeKey: string
 }): string {
@@ -206,7 +206,7 @@ export async function runInventoryTickForOrg(
 		 * a sent one is counted as skipped, a pending one is retried below.
 		 */
 		const record = async (
-			kind: InventoryNotifyKind,
+			kind: InventoryTickNotifyKind,
 			locationId: string,
 			dedupeKey: string,
 			count: () => Promise<number>,

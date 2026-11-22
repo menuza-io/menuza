@@ -46,6 +46,17 @@ export const INVENTORY_ERROR_CODES = [
 	'currency_mismatch',
 	'not_batch_counted',
 	'send_in_progress',
+	// Setup (additive): unit change, groups, merge, setup checks.
+	'change_blocked',
+	'unit_change_too_small',
+	'unit_not_changeable',
+	'merge_unit_mismatch',
+	'merge_same_item',
+	'group_invalid',
+	'item_in_group',
+	'not_a_group',
+	'needs_recipe_grant',
+	'merge_not_undoable',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

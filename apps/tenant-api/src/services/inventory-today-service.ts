@@ -59,6 +59,7 @@ const KIND_PRIORITY: Record<AttentionItem['kind'], number> = {
 	count_in_review: 0,
 	sold_out_by_stock: 0.5,
 	low_stock: 1,
+	runs_out_soon: 1.5,
 	// Phase 2 kinds are produced by the region work that follows the contract.
 	order_cutoff: 2,
 	delivery_expected: 3,

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { inventoryCostMicroSchema, inventoryMinorSchema } from '../money.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
 import { inventoryBaseUnitSchema, namedUnitSchema } from '../units.ts'
+import { mergeLinkSchema } from './setup.ts'
 import {
 	adjustmentReasonSchema,
 	inventoryCategorySchema,
@@ -196,8 +197,34 @@ export const listItemsQuerySchema = listQuerySchema
 		areaId: inventoryIdSchema.optional(),
 		status: z.enum(['all', 'low', 'out', 'attention']).default('all'),
 		includeArchived: z.stringbool().default(false),
+		/** `daysLeft` puts the soonest to run out first; items without a number go last. */
+		sort: z.enum(['name', 'daysLeft']).default('name'),
 	})
 	.strict()
+
+/**
+ * Days of stock left at the location (#492). `ok` carries the number and the
+ * use rate behind it; `not_enough_history` (under seven days of use) carries
+ * no number. `stale` is true when the item was not counted in 14 days: the
+ * App greys the number and says "Last counted ...".
+ */
+export const daysLeftSchema = z.discriminatedUnion('state', [
+	z.object({
+		state: z.literal('ok'),
+		days: z.number(),
+		/** Average use on a day it is used, base thousandths. */
+		perDay: z.number().int(),
+		runsOutDate: z.string().nullable(),
+		useDays: z.number().int(),
+		stale: z.boolean(),
+	}),
+	z.object({
+		state: z.literal('not_enough_history'),
+		useDays: z.number().int(),
+		stale: z.boolean(),
+	}),
+])
+export type DaysLeftOut = z.infer<typeof daysLeftSchema>
 
 export const stockItemSchema = z.object({
 	id: z.string(),
@@ -224,6 +251,12 @@ export const stockItemSchema = z.object({
 	costMicro: z.number().int().nullable().optional(),
 	valueMinor: minorOut,
 	currency: currencyOut,
+	/** This item is an ingredient group (#495): its `onHand` is the members' total. */
+	isGroup: z.boolean().optional(),
+	/** The group this item belongs to, when it does. */
+	groupId: z.string().nullable().optional(),
+	/** Days of stock left at this location (#492). Absent from older regions. */
+	daysLeft: daysLeftSchema.optional(),
 })
 export type StockItem = z.infer<typeof stockItemSchema>
 
@@ -270,6 +303,10 @@ export const itemDetailSchema = stockItemSchema.extend({
 		.nullable()
 		.optional(),
 	hasMovements: z.boolean(),
+	/** Set on a duplicate that was merged away (#493); `undone` once undone. */
+	mergedInto: mergeLinkSchema.nullable().optional(),
+	/** Duplicates merged into this item, newest first. */
+	mergedFrom: z.array(mergeLinkSchema).optional(),
 })
 export type ItemDetail = z.infer<typeof itemDetailSchema>
 

@@ -20,6 +20,7 @@ import {
 	type StockItem,
 	type StockStatus,
 	type UnitSystem,
+	quantityInCurrentUnit,
 } from '@repo/inventory'
 import {
 	invCounts,
@@ -46,6 +47,7 @@ import {
 	withInventoryWrite,
 } from '../lib/inventory-write.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
+import { loadUnitChanges } from './inventory-history.ts'
 import {
 	assertLocationAllowed,
 	assertVersion,
@@ -1279,6 +1281,9 @@ export async function listItemMovements(
 		.limit(input.limit + 1)
 	const page = rows.slice(0, input.limit)
 	const last = page.at(-1)
+	const unitChanges = (await loadUnitChanges(db, [input.itemId])).get(
+		input.itemId,
+	)
 	return {
 		movements: page.map((row) => {
 			const out: {
@@ -1297,7 +1302,17 @@ export async function listItemMovements(
 			} = {
 				id: row.id,
 				kind: row.kind,
-				quantity: row.quantity,
+				// Older rows are in the unit the item had then: shown in today's.
+				// The unit-changed row carries the difference that keeps the ledger
+				// summing to what is on hand; the log shows it as no change.
+				quantity:
+					row.sourceType === 'unit_change'
+						? 0
+						: quantityInCurrentUnit(
+								row.quantity,
+								row.createdAt,
+								unitChanges ?? [],
+							),
 				reason: row.reason,
 				note: row.note,
 				sourceType: row.sourceType,

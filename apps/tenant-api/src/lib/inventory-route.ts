@@ -71,6 +71,9 @@ export const MONEY_FIELDS = [
 	'netSalesMinor',
 	// An unpaid-deliveries figure (Today attention) is money too.
 	'amountMinor',
+	// Setup: a line's share of a plate cost and a suggested price are money.
+	'shareBp',
+	'suggestedPriceMinor',
 ] as const
 
 export function inventoryCaller(

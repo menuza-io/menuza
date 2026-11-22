@@ -16,9 +16,13 @@ import {
 	type RecipeOwnerKind,
 	type RecipeVersion,
 	type SaleOption,
+	type UsedInResult,
+	type UsedInRow,
+	USED_IN_LIMIT,
 } from '@repo/inventory'
 import { addDays } from '@repo/reservations'
 import {
+	invItemGroupMembers,
 	invItems,
 	invLocationSettings,
 	invRecipeLines,
@@ -135,7 +139,7 @@ export type RecipeResult = { recipe: RecipeOut | null; version: number }
 
 // ── Reading one recipe ──────────────────────────────────────────────────────
 
-async function currentRow(
+export async function currentRow(
 	db: InventoryReader,
 	owner: RecipeOwnerInput,
 ): Promise<RecipeRow | null> {
@@ -153,14 +157,14 @@ async function currentRow(
 	return row ?? null
 }
 
-type ItemInfo = {
+export type ItemInfo = {
 	name: string
 	baseUnit: 'g' | 'ml' | 'piece'
 	kind: 'bought' | 'made'
 	archived: boolean
 }
 
-async function loadItemInfo(
+export async function loadItemInfo(
 	db: InventoryReader,
 	itemIds: readonly string[],
 ): Promise<Map<string, ItemInfo>> {
@@ -382,7 +386,7 @@ export async function getRecipe(
 /** Each insert stays under 100 bound parameters (eight columns a line). */
 const LINES_PER_INSERT = 10
 
-async function writeVersion(
+export async function writeVersion(
 	tx: InventoryTx,
 	input: {
 		previous: RecipeRow | null
@@ -856,5 +860,141 @@ export async function dishesWithoutRecipe(
 		}),
 		total: ranked.total,
 		truncated: sales.truncated,
+	}
+}
+
+/**
+ * Where an item is used (#518): every dish, size, option and made item whose
+ * CURRENT recipe has a line for it (or for the group it belongs to), with the
+ * quantity per portion and, with the cost grant, the line's cost and its share
+ * of the owner's plate cost. Capped at `USED_IN_LIMIT` rows (`more` says how
+ * many were left out). Names of menu owners are the App's to join.
+ */
+export async function listItemUsedIn(
+	db: InventoryReader,
+	input: { itemId: string; caller: Pick<InventoryCaller, 'cost'> },
+): Promise<UsedInResult> {
+	const item = await db
+		.select({
+			id: invItems.id,
+			baseUnit: invItems.baseUnit,
+		})
+		.from(invItems)
+		.where(eq(invItems.id, input.itemId))
+		.get()
+	if (!item) throw notFound()
+	const membership = await db
+		.select({ groupItemId: invItemGroupMembers.groupItemId })
+		.from(invItemGroupMembers)
+		.where(eq(invItemGroupMembers.memberItemId, input.itemId))
+		.get()
+	const lookup = membership
+		? [input.itemId, membership.groupItemId]
+		: [input.itemId]
+	const hits = await db
+		.select({
+			recipeId: invRecipeLines.recipeId,
+			lineItemId: invRecipeLines.itemId,
+		})
+		.from(invRecipeLines)
+		.innerJoin(invRecipes, eq(invRecipes.id, invRecipeLines.recipeId))
+		.where(
+			and(
+				inArray(invRecipeLines.itemId, lookup),
+				isNull(invRecipes.supersededAt),
+			),
+		)
+	if (hits.length === 0) {
+		return { itemId: item.id, baseUnit: item.baseUnit, rows: [], more: 0 }
+	}
+	const viaGroupByRecipe = new Map(
+		hits
+			.filter((hit) => hit.lineItemId !== input.itemId)
+			.map((hit) => [hit.recipeId, hit.lineItemId] as const),
+	)
+	const recipeIds = [...new Set(hits.map((hit) => hit.recipeId))]
+	const recipeRows = await queryInChunks(recipeIds, (chunk) =>
+		db.select().from(invRecipes).where(inArray(invRecipes.id, chunk)),
+	)
+	recipeRows.sort(
+		(a, b) =>
+			a.ownerKind.localeCompare(b.ownerKind) ||
+			(a.ownerId < b.ownerId ? -1 : a.ownerId > b.ownerId ? 1 : 0),
+	)
+	const shown = recipeRows.slice(0, USED_IN_LIMIT)
+	const lines = await loadRecipeLines(
+		db,
+		shown.map((row) => row.id),
+	)
+	const madeOwners = await loadItemInfo(
+		db,
+		shown
+			.filter((row) => row.ownerKind === 'made_item')
+			.map((row) => row.ownerId),
+	)
+	const groupInfo = await loadItemInfo(db, [
+		...new Set(viaGroupByRecipe.values()),
+	])
+	const withCost = input.caller.cost
+	const costs = withCost ? await loadItemCosts(db) : null
+	const made = withCost ? await buildRecipeStore(db, { at: FAR_FUTURE }) : null
+	const rows: UsedInRow[] = []
+	for (const recipe of shown) {
+		const recipeLines = lines.get(recipe.id) ?? []
+		const viaGroup = viaGroupByRecipe.get(recipe.id) ?? null
+		const matching = recipeLines.filter(
+			(line) => line.itemId === input.itemId || line.itemId === viaGroup,
+		)
+		for (const line of matching) {
+			const row: UsedInRow = {
+				ownerKind: recipe.ownerKind,
+				ownerId: recipe.ownerId,
+				ownerName:
+					recipe.ownerKind === 'made_item'
+						? (madeOwners.get(recipe.ownerId)?.name ?? null)
+						: null,
+				quantity: line.quantity,
+				usableBp: line.usableBp,
+				mode: line.mode,
+				viaGroupItemId: line.itemId === input.itemId ? null : line.itemId,
+				viaGroupName:
+					line.itemId === input.itemId
+						? null
+						: (groupInfo.get(line.itemId)?.name ?? null),
+			}
+			if (costs && made) {
+				const currency = costs.currency ?? recipe.typedCostCurrency ?? ''
+				const version = toRecipeVersion(recipe, recipeLines)
+				const lineCost = lineCostOf({
+					spec: toRecipeVersion(recipe, [line]).lines[0]!,
+					madeVersions: made.madeVersions,
+					facts: made.facts,
+					costs,
+					currency,
+				})
+				const plate = plateOf({
+					version,
+					madeVersions: made.madeVersions,
+					facts: made.facts,
+					costs,
+					currency,
+				})
+				if (lineCost.costMinor !== null) {
+					row.costMinor = lineCost.costMinor
+					if (currency) row.currency = currency
+					row.shareBp =
+						plate && plate.costMinor !== null && plate.costMinor > 0
+							? Math.round((lineCost.costMinor * 10_000) / plate.costMinor)
+							: null
+				}
+			}
+			rows.push(row)
+		}
+	}
+	return {
+		itemId: item.id,
+		baseUnit: item.baseUnit,
+		rows,
+		more: recipeRows.length - shown.length,
 	}
 }

@@ -22,6 +22,11 @@ export const INVENTORY_NOTIFY_PATH = '/resources/inventory/notify'
  *   how many.
  * - `inventory_price_rise`: items whose latest delivery rose by more than 5%;
  *   `count` is how many items.
+ * - `inventory_sold_out` / `inventory_sold_out_back` (#478): dishes taken off
+ *   the menu because an ingredient ran out, and given back. One alert per
+ *   location per 15 minutes; `count` is the dishes, `soldOut` lists them as
+ *   menu ids plus the ingredient (a name from the region; the App joins the
+ *   dish names). No guest data, no money.
  */
 export const INVENTORY_NOTIFY_KINDS = [
 	'inventory_low_stock',
@@ -29,8 +34,22 @@ export const INVENTORY_NOTIFY_KINDS = [
 	'inventory_delivery_due',
 	'inventory_price_rise',
 ] as const
-export type InventoryNotifyKind = (typeof INVENTORY_NOTIFY_KINDS)[number]
-export const inventoryNotifyKindSchema = z.enum(INVENTORY_NOTIFY_KINDS)
+/** The kinds the hourly tick raises (and `inv_alert_log` records). */
+export type InventoryTickNotifyKind = (typeof INVENTORY_NOTIFY_KINDS)[number]
+
+/** Sold out by stock and given back (#478): raised by the auto sold-out sync. */
+export const INVENTORY_SOLD_OUT_KINDS = [
+	'inventory_sold_out',
+	'inventory_sold_out_back',
+] as const
+export type InventorySoldOutKind = (typeof INVENTORY_SOLD_OUT_KINDS)[number]
+
+export const INVENTORY_ALL_NOTIFY_KINDS = [
+	...INVENTORY_NOTIFY_KINDS,
+	...INVENTORY_SOLD_OUT_KINDS,
+] as const
+export type InventoryNotifyKind = (typeof INVENTORY_ALL_NOTIFY_KINDS)[number]
+export const inventoryNotifyKindSchema = z.enum(INVENTORY_ALL_NOTIFY_KINDS)
 
 /**
  * The event the region posts, authenticated with
@@ -43,6 +62,21 @@ export const inventoryNotifyKindSchema = z.enum(INVENTORY_NOTIFY_KINDS)
  * permissions (`read:inventory:any`, the cost grant is NOT needed: counts
  * only) and each member's location scope and notification preferences.
  */
+/** One dish (or option) in a sold-out alert, with the ingredient that ran out. */
+export const soldOutAlertEntrySchema = z
+	.object({
+		entityType: z.enum(['item', 'modifier_option']),
+		entityId: z.string().min(1).max(100),
+		/** The ingredient (or ingredient group) that ran out; its name is the region's. */
+		ingredientId: z.string().min(1).max(64),
+		ingredientName: z.string().min(1).max(80),
+	})
+	.strict()
+export type SoldOutAlertEntry = z.infer<typeof soldOutAlertEntrySchema>
+
+/** Entries shown in one alert; `count` still says how many in all. */
+export const MAX_SOLD_OUT_ALERT_ENTRIES = 20
+
 export const inventoryNotifyEventSchema = z
 	.object({
 		orgId: z.string().min(1).max(64),
@@ -50,6 +84,12 @@ export const inventoryNotifyEventSchema = z
 		kind: inventoryNotifyKindSchema,
 		locationId: inventoryLocationIdSchema,
 		count: z.number().int().min(1).max(10_000),
+		/** Sold-out kinds only. */
+		soldOut: z
+			.array(soldOutAlertEntrySchema)
+			.min(1)
+			.max(MAX_SOLD_OUT_ALERT_ENTRIES)
+			.optional(),
 	})
 	.strict()
 export type InventoryNotifyEvent = z.infer<typeof inventoryNotifyEventSchema>
