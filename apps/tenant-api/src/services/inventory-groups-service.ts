@@ -179,7 +179,7 @@ export async function updateGroup(
 			.from(invItemGroups)
 			.where(eq(invItemGroups.itemId, input.groupId))
 			.get()
-		if (!group) throw new InventoryError('not_a_group', 404)
+		if (!group) throw notFound()
 		const item = await tx
 			.select()
 			.from(invItems)
@@ -236,7 +236,7 @@ export async function dissolveGroup(
 					.where(eq(invItemGroups.itemId, item.id))
 					.get()
 			: null
-		if (!item || !group) throw new InventoryError('not_a_group', 404)
+		if (!item || !group) throw notFound()
 		assertVersion(item.version, input.expectedVersion)
 		const used = await tx
 			.select({ id: invRecipeLines.id })

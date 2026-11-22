@@ -33,6 +33,7 @@ import { operatorInventoryPlacesRoutes } from './operator-inventory-places.ts'
 import { operatorInventoryPrepRoutes } from './operator-inventory-prep.ts'
 import { operatorInventoryPurchasingRoutes } from './operator-inventory-purchasing.ts'
 import { operatorInventoryRecipesRoutes } from './operator-inventory-recipes.ts'
+import { operatorInventorySetupChecksRoutes } from './operator-inventory-setup-checks.ts'
 import { operatorInventorySoldOutRoutes } from './operator-inventory-sold-out.ts'
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
 import { operatorInventoryTransfersRoutes } from './operator-inventory-transfers.ts'
@@ -61,6 +62,7 @@ export const operatorInventoryRoutes = new Hono()
 operatorInventoryRoutes.route('/', operatorInventoryItemsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryGroupsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryMergeRoutes)
+operatorInventoryRoutes.route('/', operatorInventorySetupChecksRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPlacesRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryCountsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryWasteRoutes)

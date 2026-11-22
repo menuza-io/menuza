@@ -49,6 +49,7 @@ import {
 	withInventoryWrite,
 } from '../lib/inventory-write.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
+import { loadDaysLeft } from './inventory-days-left.ts'
 import { loadUnitChanges } from './inventory-history.ts'
 import { mergeLinksFor } from './inventory-merge-service.ts'
 import {
@@ -64,6 +65,7 @@ import {
 	type ItemUnitRow,
 	loadItemUnits,
 	locationBusinessDate,
+	locationClock,
 	locationVisible,
 	type LocationScope,
 	newId,
@@ -314,29 +316,43 @@ export function toStockItem(row: StockRow, cost: boolean): StockItem {
 
 export async function listItems(
 	db: InventoryReader,
-	input: { query: ListItemsQuery; cost: boolean },
+	input: { query: ListItemsQuery; cost: boolean; now?: number },
 ) {
 	const { query } = input
+	const now = input.now ?? Date.now()
 	const rows = await loadLocationStock(db, query.locationId, {
 		includeArchived: query.includeArchived,
 		includeGroups: true,
 	})
 	const needle = query.q?.toLowerCase()
-	const filtered = rows
-		.filter((row) => {
-			if (needle && !row.item.name.toLowerCase().includes(needle)) return false
-			if (query.category && row.item.category !== query.category) return false
-			if (query.areaId && !row.areaIds.includes(query.areaId)) return false
-			if (query.status === 'low') return row.status === 'low'
-			if (query.status === 'out') return row.status === 'out'
-			if (query.status === 'attention') return row.status !== 'ok'
-			return true
-		})
-		.sort(
-			(a, b) =>
-				a.item.name.toLowerCase().localeCompare(b.item.name.toLowerCase()) ||
-				(a.item.id < b.item.id ? -1 : 1),
-		)
+	const filtered = rows.filter((row) => {
+		if (needle && !row.item.name.toLowerCase().includes(needle)) return false
+		if (query.category && row.item.category !== query.category) return false
+		if (query.areaId && !row.areaIds.includes(query.areaId)) return false
+		if (query.status === 'low') return row.status === 'low'
+		if (query.status === 'out') return row.status === 'out'
+		if (query.status === 'attention') return row.status !== 'ok'
+		return true
+	})
+	const clock = await locationClock(db, query.locationId, now)
+	const daysLeft = await loadDaysLeft(db, {
+		locationId: query.locationId,
+		today: clock.date,
+		now,
+		rows: filtered,
+	})
+	const soonest = (id: string): number => {
+		const left = daysLeft.get(id)
+		return left?.state === 'ok' ? left.days : Number.POSITIVE_INFINITY
+	}
+	filtered.sort(
+		(a, b) =>
+			(query.sort === 'daysLeft'
+				? soonest(a.item.id) - soonest(b.item.id) || 0
+				: 0) ||
+			a.item.name.toLowerCase().localeCompare(b.item.name.toLowerCase()) ||
+			(a.item.id < b.item.id ? -1 : 1),
+	)
 	const offset = decodeOffsetCursor(query.cursor)
 	const page = filtered.slice(offset, offset + query.limit)
 	const next = offset + query.limit
@@ -347,7 +363,12 @@ export async function listItems(
 		totalValueMinor?: number
 		currency?: string
 	} = {
-		items: page.map((row) => toStockItem(row, input.cost)),
+		items: page.map((row) => ({
+			...toStockItem(row, input.cost),
+			...(daysLeft.has(row.item.id)
+				? { daysLeft: daysLeft.get(row.item.id) }
+				: {}),
+		})),
 		total: filtered.length,
 		nextCursor: next < filtered.length ? String(next) : null,
 	}

@@ -183,6 +183,13 @@ export async function runInventoryTickForOrg(
 						now + INVENTORY_ALERT_RETRY_MS,
 					)
 				}
+				// A sold-out alert held for its 15-minute window (or not taken yet).
+				if (sold.alertDueAt !== null) {
+					salesFollowUp = Math.min(
+						salesFollowUp ?? Number.MAX_SAFE_INTEGER,
+						sold.alertDueAt,
+					)
+				}
 			} catch (error) {
 				result.errors += 1
 				console.error('Inventory auto sold out step failed', {
