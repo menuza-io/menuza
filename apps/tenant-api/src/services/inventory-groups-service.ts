@@ -67,6 +67,7 @@ async function checkMembers(
 	const items = await tx
 		.select()
 		.from(invItems)
+		// bounded: a group has at most MAX_GROUP_MEMBERS (12) members
 		.where(inArray(invItems.id, ids))
 	if (items.length !== ids.length) throw notFound()
 	const groups = new Set(
@@ -77,6 +78,7 @@ async function checkMembers(
 	const taken = await tx
 		.select()
 		.from(invItemGroupMembers)
+		// bounded: a group has at most MAX_GROUP_MEMBERS (12) members
 		.where(inArray(invItemGroupMembers.memberItemId, ids))
 	for (const item of items) {
 		if (item.archivedAt !== null) {

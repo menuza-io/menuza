@@ -1382,6 +1382,7 @@ export async function listItemMovements(
 		.from(invMovements)
 		.where(
 			and(
+				// bounded: the item and the few duplicates merged into it
 				inArray(invMovements.itemId, itemIds),
 				eq(invMovements.locationId, input.locationId),
 				cursor

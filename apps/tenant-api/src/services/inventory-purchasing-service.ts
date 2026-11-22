@@ -741,7 +741,8 @@ export async function listDeliveries(
 			and(
 				eq(invDeliveries.locationId, query.locationId),
 				query.supplierId
-					? inArray(invDeliveries.supplierId, [
+					? // bounded: the supplier and the few duplicates merged into it
+						inArray(invDeliveries.supplierId, [
 							query.supplierId,
 							...mergedSupplierIds,
 						])

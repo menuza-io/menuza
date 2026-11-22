@@ -13,7 +13,7 @@ import {
 	type TenantTransaction,
 } from '@repo/tenant-db'
 import { and, eq, inArray, isNotNull, isNull, lt, max } from 'drizzle-orm'
-import { queryInChunks } from '../lib/chunked-in.ts'
+import { chunkIds, queryInChunks } from '../lib/chunked-in.ts'
 import {
 	postInventoryNotify,
 	type InventoryNotifyOutcome,
@@ -123,11 +123,11 @@ export async function dispatchSoldOutAlerts(
 			cancelled.add(back.id)
 		}
 	}
-	if (cancelled.size > 0) {
+	for (const chunk of chunkIds([...cancelled])) {
 		await db
 			.update(invSoldOutAlerts)
 			.set({ sentAt: now })
-			.where(inArray(invSoldOutAlerts.id, [...cancelled]))
+			.where(inArray(invSoldOutAlerts.id, chunk))
 	}
 	const live = pending.filter((row) => !cancelled.has(row.id))
 
@@ -201,18 +201,15 @@ export async function dispatchSoldOutAlerts(
 				})
 			}
 			// Delivered, or refused for good: either way these rows are done.
-			await db
-				.update(invSoldOutAlerts)
-				.set({
-					sentAt: now,
-					eventId: outcome.status === 'delivered' ? eventId : null,
-				})
-				.where(
-					inArray(
-						invSoldOutAlerts.id,
-						rows.map((row) => row.id),
-					),
-				)
+			for (const chunk of chunkIds(rows.map((row) => row.id))) {
+				await db
+					.update(invSoldOutAlerts)
+					.set({
+						sentAt: now,
+						eventId: outcome.status === 'delivered' ? eventId : null,
+					})
+					.where(inArray(invSoldOutAlerts.id, chunk))
+			}
 			if (outcome.status === 'delivered') result.sent += 1
 		}
 	}

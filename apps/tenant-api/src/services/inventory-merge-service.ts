@@ -26,6 +26,7 @@ import {
 	invSuppliers,
 } from '@repo/tenant-db'
 import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm'
+import { chunkIds } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import {
 	type InventoryReader,
@@ -996,11 +997,11 @@ export async function undoItemMerge(
 					)
 			}
 		}
-		if (snapshot.soldOut.length > 0) {
+		for (const chunk of chunkIds(snapshot.soldOut)) {
 			await tx
 				.update(invSoldOut)
 				.set({ causeItemId: dup.id })
-				.where(inArray(invSoldOut.id, snapshot.soldOut))
+				.where(inArray(invSoldOut.id, chunk))
 		}
 		// Stock back: the opposite movements.
 		for (const entry of snapshot.moved) {
@@ -1366,6 +1367,7 @@ export async function mergeLinksFor(
 		const found = await db
 			.select({ id: table.id, name: table.name })
 			.from(table)
+			// bounded: the last 30 merges of one item or supplier
 			.where(inArray(table.id, [...new Set(otherIds)]))
 		for (const row of found) names.set(row.id, row.name)
 	}

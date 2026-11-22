@@ -900,6 +900,7 @@ export async function listItemUsedIn(
 		.innerJoin(invRecipes, eq(invRecipes.id, invRecipeLines.recipeId))
 		.where(
 			and(
+				// bounded: the item and the one group it belongs to
 				inArray(invRecipeLines.itemId, lookup),
 				isNull(invRecipes.supersededAt),
 			),
