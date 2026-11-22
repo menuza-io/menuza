@@ -286,13 +286,16 @@ export function MergeItemDialog({
 									className="hover:bg-muted flex w-full items-center justify-between gap-3 p-3 text-start text-sm"
 									aria-pressed={target?.id === candidate.id}
 									disabled={working}
-									onClick={() =>
+									onClick={() => {
+										// The old preview answers for another target.
+										setPreview(null)
+										setError(null)
 										setTarget({
 											id: candidate.id,
 											name: candidate.name,
 											reasons: candidate.reasons,
 										})
-									}
+									}}
 									data-testid={`merge-candidate-${candidate.id}`}
 								>
 									<span className="min-w-0 wrap-anywhere">
@@ -317,67 +320,80 @@ export function MergeItemDialog({
 					)}
 				</ul>
 
-				{loading ? (
-					<p className="text-muted-foreground text-sm" role="status">
-						<Trans>Checking what would move…</Trans>
-					</p>
-				) : preview ? (
-					<div className="flex flex-col gap-3" data-testid="merge-preview">
-						{preview.unitMismatch ? (
-							<Alert variant="destructive">
-								<AlertDescription>
-									<Trans>
-										These two are counted in different units. Change the unit of
-										one of them first, then merge.
-									</Trans>
-								</AlertDescription>
-							</Alert>
-						) : null}
-						{preview.needsRecipeGrant ? (
-							<Alert variant="destructive">
-								<AlertDescription>
-									<Trans>
-										Recipes use this item, so merging it needs the recipe role.
-									</Trans>
-								</AlertDescription>
-							</Alert>
-						) : null}
-						{preview.blockers.length > 0 ? (
-							<BlockerList
-								blockers={preview.blockers}
-								title={<Trans>Finish these first</Trans>}
-							/>
-						) : null}
-						<ul className="text-sm">
-							<li>
-								<Plural
-									value={preview.moves.recipes}
-									one="# recipe moves over"
-									other="# recipes move over"
+				<div id="merge-preview-region" aria-live="polite" aria-atomic="false">
+					{loading ? (
+						<p className="text-muted-foreground text-sm">
+							<Trans>Checking what would move…</Trans>
+						</p>
+					) : preview ? (
+						<div className="flex flex-col gap-3" data-testid="merge-preview">
+							{preview.unitMismatch ? (
+								<Alert variant="destructive">
+									<AlertDescription>
+										<Trans>
+											These two are counted in different units. Change the unit
+											of one of them first, then merge.
+										</Trans>
+									</AlertDescription>
+								</Alert>
+							) : null}
+							{preview.kindMismatch ? (
+								<Alert variant="destructive">
+									<AlertDescription>
+										<Trans>
+											One of these is bought and the other is made in house, so
+											they cannot be merged.
+										</Trans>
+									</AlertDescription>
+								</Alert>
+							) : null}
+							{preview.needsRecipeGrant ? (
+								<Alert variant="destructive">
+									<AlertDescription>
+										<Trans>
+											Recipes use this item, so merging it needs the recipe
+											role.
+										</Trans>
+									</AlertDescription>
+								</Alert>
+							) : null}
+							{preview.blockers.length > 0 ? (
+								<BlockerList
+									blockers={preview.blockers}
+									title={<Trans>Finish these first</Trans>}
 								/>
-							</li>
-							<li>
-								<Plural
-									value={preview.moves.supplierProducts}
-									one="# supplier product moves over"
-									other="# supplier products move over"
-								/>
-							</li>
-							{preview.onHand.map((row) => (
-								<li key={row.locationId} data-testid="merge-on-hand">
-									<Trans>
-										Stock becomes{' '}
-										<bdi dir="ltr" className="tabular-nums">
-											{quantity.format(row.after, {
-												baseUnit: preview.baseUnit,
-											})}
-										</bdi>
-									</Trans>
+							) : null}
+							<ul className="text-sm">
+								<li>
+									<Plural
+										value={preview.moves.recipes}
+										one="# recipe moves over"
+										other="# recipes move over"
+									/>
 								</li>
-							))}
-						</ul>
-					</div>
-				) : null}
+								<li>
+									<Plural
+										value={preview.moves.supplierProducts}
+										one="# supplier product moves over"
+										other="# supplier products move over"
+									/>
+								</li>
+								{preview.onHand.map((row) => (
+									<li key={row.locationId} data-testid="merge-on-hand">
+										<Trans>
+											Stock becomes{' '}
+											<bdi dir="ltr" className="tabular-nums">
+												{quantity.format(row.after, {
+													baseUnit: preview.baseUnit,
+												})}
+											</bdi>
+										</Trans>
+									</li>
+								))}
+							</ul>
+						</div>
+					) : null}
+				</div>
 
 				<DialogFooter>
 					<Button
@@ -391,7 +407,8 @@ export function MergeItemDialog({
 					<Button
 						type="button"
 						onClick={() => void merge()}
-						disabled={!preview || !preview.canApply || working}
+						disabled={!preview || !preview.canApply || working || loading}
+						aria-describedby={preview ? 'merge-preview-region' : undefined}
 						data-testid="merge-apply"
 					>
 						{working ? <Trans>Merging…</Trans> : <Trans>Merge</Trans>}
@@ -523,6 +540,7 @@ export function MergeSupplierDialog({
 									disabled={working}
 									onClick={() => {
 										setPreview(null)
+										setError(null)
 										setTargetId(supplier.id)
 									}}
 									data-testid={`merge-supplier-${supplier.id}`}
@@ -533,31 +551,38 @@ export function MergeSupplierDialog({
 							</li>
 						))}
 				</ul>
-				{preview ? (
-					<div
-						className="flex flex-col gap-2"
-						data-testid="merge-supplier-preview"
-					>
-						{preview.blockers.length > 0 ? (
-							<BlockerList
-								blockers={preview.blockers}
-								title={<Trans>Receive or cancel these first</Trans>}
-							/>
-						) : null}
-						<p className="text-sm">
-							<Plural
-								value={preview.moves.products}
-								one="# product moves over."
-								other="# products move over."
-							/>{' '}
-							<Plural
-								value={preview.moves.deliveries}
-								one="# delivery stays on record."
-								other="# deliveries stay on record."
-							/>
+				<div id="merge-supplier-region" aria-live="polite" aria-atomic="false">
+					{targetId && !preview && !error ? (
+						<p className="text-muted-foreground text-sm">
+							<Trans>Checking what would move…</Trans>
 						</p>
-					</div>
-				) : null}
+					) : null}
+					{preview ? (
+						<div
+							className="flex flex-col gap-2"
+							data-testid="merge-supplier-preview"
+						>
+							{preview.blockers.length > 0 ? (
+								<BlockerList
+									blockers={preview.blockers}
+									title={<Trans>Receive or cancel these first</Trans>}
+								/>
+							) : null}
+							<p className="text-sm">
+								<Plural
+									value={preview.moves.products}
+									one="# product moves over."
+									other="# products move over."
+								/>{' '}
+								<Plural
+									value={preview.moves.deliveries}
+									one="# delivery stays on record."
+									other="# deliveries stay on record."
+								/>
+							</p>
+						</div>
+					) : null}
+				</div>
 				<DialogFooter>
 					<Button
 						type="button"
@@ -571,6 +596,7 @@ export function MergeSupplierDialog({
 						type="button"
 						onClick={() => void merge()}
 						disabled={!preview || !preview.canApply || working}
+						aria-describedby={preview ? 'merge-supplier-region' : undefined}
 						data-testid="merge-supplier-apply"
 					>
 						<Trans>Merge</Trans>

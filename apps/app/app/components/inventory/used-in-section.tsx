@@ -126,9 +126,6 @@ export function UsedInList({
 									<bdi dir="ltr">{percent.format(row.shareBp / 10_000)}</bdi>
 								</>
 							) : null}
-							{canSeeCost && row.costMinor !== undefined ? (
-								<span className="sr-only">{currency}</span>
-							) : null}
 						</span>
 					</li>
 				)

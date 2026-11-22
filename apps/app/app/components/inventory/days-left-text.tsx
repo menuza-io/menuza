@@ -45,6 +45,11 @@ export function DaysLeftText({
 			<bdi dir="ltr" className="tabular-nums">
 				<Plural value={rounded} one="# day" other="# days" />
 			</bdi>
+			{daysLeft.stale && !showLastCounted ? (
+				<span className="sr-only">
+					<Trans>Not counted lately</Trans>
+				</span>
+			) : null}
 			{daysLeft.stale && showLastCounted ? (
 				<span className="block text-xs" data-testid="days-left-last-counted">
 					{lastCounted ? (

@@ -1,6 +1,16 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { listGroupsResultSchema, type StockItem } from '@repo/inventory'
 import { Alert, AlertDescription } from '@repo/ui/alert'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -70,10 +80,13 @@ export function GroupSheet({
 	)
 	const used = useUsedIn(group.id, recipesEnabled)
 	const [editing, setEditing] = useState(false)
+	const [confirming, setConfirming] = useState(false)
+	const [busy, setBusy] = useState(false)
 	const detail = groups.data?.groups.find((entry) => entry.id === group.id)
 
 	async function dissolve() {
-		if (!detail) return
+		if (!detail || busy) return
+		setBusy(true)
 		try {
 			await request(`/groups/${encodeURIComponent(detail.id)}/dissolve`, {
 				method: 'POST',
@@ -85,6 +98,9 @@ export function GroupSheet({
 			close()
 		} catch (caught) {
 			toast.error(i18n._(inventorySaveErrorMessage(caught)))
+			setConfirming(false)
+		} finally {
+			setBusy(false)
 		}
 	}
 
@@ -120,7 +136,7 @@ export function GroupSheet({
 							</Button>
 							<Button
 								variant="outline"
-								onClick={() => void dissolve()}
+								onClick={() => setConfirming(true)}
 								data-testid="group-dissolve"
 							>
 								<Trans>Ungroup</Trans>
@@ -201,6 +217,39 @@ export function GroupSheet({
 							/>
 						</section>
 					) : null}
+					<AlertDialog
+						open={confirming}
+						onOpenChange={(next) => {
+							if (!busy) setConfirming(next)
+						}}
+					>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>
+									<Trans>Ungroup these products?</Trans>
+								</AlertDialogTitle>
+								<AlertDialogDescription>
+									<Trans>
+										They become separate items again. Recipes that use the group
+										must be changed first.
+									</Trans>
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel disabled={busy}>
+									<Trans>Cancel</Trans>
+								</AlertDialogCancel>
+								<AlertDialogAction
+									variant="destructive"
+									disabled={busy}
+									onClick={() => void dissolve()}
+									data-testid="group-dissolve-confirm"
+								>
+									<Trans>Ungroup</Trans>
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
 					<GroupDialog
 						group={detail}
 						locationId={locationId}

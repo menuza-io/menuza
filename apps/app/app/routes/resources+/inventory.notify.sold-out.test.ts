@@ -29,6 +29,12 @@ vi.hoisted(() => {
 	process.env.BUCKET_NAME = 'test'
 })
 
+// The wake-up of quiet hours' end is jobs-cron's: never reached in a test.
+vi.mock('#app/utils/alerts/wake.server.ts', () => ({
+	OPERATOR_ALERTS_START_PATH: '/workflows/operator-alerts/start',
+	wakeOperatorAlertsAt: vi.fn(async () => true),
+}))
+
 const sendEmailMock = vi.hoisted(() => vi.fn())
 
 vi.mock('@repo/email', async (importOriginal) => ({
@@ -39,6 +45,7 @@ vi.mock('@repo/email', async (importOriginal) => ({
 import { ALERT_SETTINGS_WORKFLOW } from '@repo/common/operator-alerts'
 import { INVENTORY_ALERT_MARKER_TYPE } from '#app/utils/inventory/manager-alerts.ts'
 import { setupTestOrgWithUser } from '#tests/test-utils.ts'
+import { releaseHeldAlerts } from '#app/utils/alerts/held.server.ts'
 import { action } from './inventory.notify.ts'
 
 const createdFlagIds: string[] = []
@@ -318,5 +325,52 @@ describe('POST /resources/inventory/notify: dishes off the menu by stock (#478)'
 		})
 		expect(response.status).toBe(400)
 		expect(await response.text()).not.toContain('Sara')
+	})
+
+	it('sends a held email later even to a member who only wants email', async () => {
+		// The sweep reads every held alert, so start from none.
+		await db.delete(AlertLog)
+		const { organization, user, location, burger } = await setup()
+		await db.insert(NotificationPreference).values([
+			{
+				userId: user.id,
+				organizationId: organization.id,
+				workflow: 'inventory.sold_out',
+				inApp: false,
+				email: true,
+			},
+			{
+				userId: user.id,
+				organizationId: organization.id,
+				workflow: ALERT_SETTINGS_WORKFLOW,
+				quietStart: '00:00',
+				quietEnd: '23:59',
+				timeZone: 'UTC',
+			},
+		])
+		await call(
+			eventFor(organization.id, location, {
+				soldOut: [
+					{
+						entityType: 'item',
+						entityId: burger,
+						ingredientId: 'i1',
+						ingredientName: 'Chicken',
+					},
+				],
+			}),
+		)
+		expect(sendEmailMock).not.toHaveBeenCalled()
+		const [log] = await db
+			.select()
+			.from(AlertLog)
+			.where(eq(AlertLog.userId, user.id))
+		expect(log!.outcome).toBe('held')
+		const released = await releaseHeldAlerts(log!.heldUntil!.getTime() + 30_000)
+		expect(released.released).toBeGreaterThan(0)
+		expect(sendEmailMock).toHaveBeenCalledTimes(1)
+		expect(JSON.stringify(sendEmailMock.mock.calls[0]![0].subject)).toContain(
+			'Burger',
+		)
 	})
 })

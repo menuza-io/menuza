@@ -55,6 +55,12 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'merge_unit_mismatch') {
 			return msg`These two items are counted in different units. Change one unit first.`
 		}
+		if (error.code === 'merge_kind_mismatch') {
+			return msg`One is bought and the other is made in house, so they cannot be merged.`
+		}
+		if (error.code === 'merge_not_undoable') {
+			return msg`The unit changed after this merge, so it can no longer be undone.`
+		}
 		if (error.code === 'merge_same_item') {
 			return msg`Pick a different item to merge into.`
 		}
@@ -94,7 +100,10 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'currency_mismatch') {
 			return msg`The currency does not match this location's currency.`
 		}
-		if (error.code === 'not_batch_counted' || error.code === 'batch_not_counted') {
+		if (
+			error.code === 'not_batch_counted' ||
+			error.code === 'batch_not_counted'
+		) {
 			return msg`Turn on batch counting for this made item before recording a batch.`
 		}
 		if (error.code === 'not_found' || error.status === 404) {
@@ -205,7 +214,10 @@ export function batchSaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'not_a_made_item') {
 			return msg`Only an item made in house can be recorded as a batch.`
 		}
-		if (error.code === 'not_batch_counted' || error.code === 'batch_not_counted') {
+		if (
+			error.code === 'not_batch_counted' ||
+			error.code === 'batch_not_counted'
+		) {
 			return msg`Turn on batch counting for this made item before recording a batch.`
 		}
 		if (error.code === 'amount_out_of_range') {

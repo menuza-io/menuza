@@ -229,7 +229,9 @@ export async function deliverSoldOutAlert(input: {
 				organizationId: organization.id,
 				type: channels.inApp ? type : INVENTORY_ALERT_MARKER_TYPE,
 				entityId: event.eventId,
-				payload: JSON.stringify(channels.inApp ? payload : {}),
+				// The hidden marker of an email-only member keeps the payload: the held
+				// email is built from it when quiet hours end.
+				payload: JSON.stringify(payload),
 				isRead: !channels.inApp,
 				isSeen: !channels.inApp,
 			})

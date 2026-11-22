@@ -67,6 +67,8 @@ export const BLOCKER_KINDS = [
 	'open_count',
 	'open_transfer',
 	'open_order',
+	'open_delivery',
+	'open_prep',
 	'in_group',
 	'is_group',
 ] as const
@@ -287,6 +289,8 @@ export const mergeItemPreviewSchema = z.object({
 	blockers: z.array(blockerSchema),
 	/** The two items measure in different base units: change one first. */
 	unitMismatch: z.boolean(),
+	/** One is bought and the other made in house. */
+	kindMismatch: z.boolean(),
 	moves: mergeCountsSchema,
 	onHand: z.array(
 		z.object({

@@ -52,6 +52,8 @@ let env: ReturnType<typeof setupTenantEnv>
 let full: string
 let noRecipe: string
 let tokenB: string
+let scoped: string
+let noPurchasing: string
 
 beforeAll(async () => {
 	env = setupTenantEnv('inv-merge')
@@ -73,6 +75,15 @@ beforeAll(async () => {
 	})
 	noRecipe = await mintToken(ORG, {
 		grants: [READ, UPDATE, COST, PURCHASING],
+		features,
+	})
+	scoped = await mintToken(ORG, {
+		grants: [READ, UPDATE, COST, PURCHASING, RECIPE],
+		features,
+		locationIds: [LOC],
+	})
+	noPurchasing = await mintToken(ORG, {
+		grants: [READ, UPDATE, COST, RECIPE],
 		features,
 	})
 	tokenB = await mintToken(ORG_B, {
@@ -499,6 +510,174 @@ describe('merge items', () => {
 		)
 		expect(result.candidates[0]!.id).toBe(oliveB)
 		expect(result.candidates[0]!.reasons).toEqual(['name', 'supplier_product'])
+	})
+})
+
+describe('merge hardening', () => {
+	async function twin(name: string, dupName: string) {
+		const keep = await item(name)
+		const dup = await item(dupName)
+		return { keep, dup }
+	}
+	const mergeBody = async (keep: string, dup: string) => ({
+		intoItemId: keep,
+		expectedVersion: (await detail(dup)).version,
+		intoExpectedVersion: (await detail(keep)).version,
+	})
+
+	it('refuses to merge a bought item with a made one', async () => {
+		const keep = await item('Dressing')
+		const made = await ok(
+			call('POST', `${BASE}/items`, {
+				token: full,
+				body: {
+					clientId: cid('item'),
+					name: 'House dressing',
+					category: 'sauces',
+					kind: 'made',
+					baseUnit: 'g',
+				},
+			}),
+		)
+		const preview = mergeItemPreviewSchema.parse(
+			await ok(
+				call(
+					'GET',
+					`${BASE}/items/${made.id}/merge-preview?intoItemId=${keep}`,
+					{
+						token: full,
+					},
+				),
+			),
+		)
+		expect(preview).toMatchObject({ kindMismatch: true, canApply: false })
+		const refused = await call('POST', `${BASE}/items/${made.id}/merge`, {
+			token: full,
+			body: await mergeBody(keep, made.id),
+		})
+		expect(refused.status).toBe(409)
+		expect(refused.body.code).toBe('merge_kind_mismatch')
+	})
+
+	it('is not for a token limited to some places, and its preview shows only those places', async () => {
+		const { keep, dup } = await twin('Garlic', 'Garlic cloves')
+		await deliver(dup, 1_000_000, 1_000)
+		const refused = await call('POST', `${BASE}/items/${dup}/merge`, {
+			token: scoped,
+			body: await mergeBody(keep, dup),
+		})
+		expect(refused.status).toBe(403)
+		expect(refused.body.code).toBe('location_forbidden')
+		const otherPlace = await mintToken(ORG, {
+			grants: [READ, UPDATE, COST, PURCHASING, RECIPE],
+			features: { recipes: true },
+			locationIds: ['loc_elsewhere'],
+		})
+		const preview = mergeItemPreviewSchema.parse(
+			await ok(
+				call('GET', `${BASE}/items/${dup}/merge-preview?intoItemId=${keep}`, {
+					token: otherPlace,
+				}),
+			),
+		)
+		expect(preview.onHand).toEqual([])
+	})
+
+	it('cannot be undone after the unit changed, and an undo keeps a price set meanwhile', async () => {
+		const { keep, dup } = await twin('Cumin', 'Ground cumin')
+		await deliver(keep, 1_000_000, 4_000)
+		await deliver(dup, 1_000_000, 8_000)
+		const merged = await ok(
+			call('POST', `${BASE}/items/${dup}/merge`, {
+				token: full,
+				body: await mergeBody(keep, dup),
+			}),
+		)
+		// A delivery after the merge prices the kept item again.
+		await deliver(keep, 1_000_000, 9_000)
+		const priced = (await detail(keep)).cost!.avgCostMicro
+		await ok(
+			call('POST', `${BASE}/merges/${merged.mergeId}/undo`, {
+				token: full,
+				body: {},
+			}),
+		)
+		expect((await detail(keep)).cost!.avgCostMicro).toBe(priced)
+
+		const other = await twin('Paprika', 'Smoked paprika')
+		const second = await ok(
+			call('POST', `${BASE}/items/${other.dup}/merge`, {
+				token: full,
+				body: await mergeBody(other.keep, other.dup),
+			}),
+		)
+		await ok(
+			call('POST', `${BASE}/items/${other.keep}/unit-change`, {
+				token: full,
+				body: {
+					toUnit: 'ml',
+					oldAmount: '1',
+					newAmount: '1',
+					expectedVersion: (await detail(other.keep)).version,
+				},
+			}),
+		)
+		const blocked = await call(
+			'POST',
+			`${BASE}/merges/${second.mergeId}/undo`,
+			{
+				token: full,
+				body: {},
+			},
+		)
+		expect(blocked.status).toBe(409)
+		expect(blocked.body.code).toBe('merge_not_undoable')
+	})
+
+	it('undoing needs the grants the merge needed', async () => {
+		const { keep, dup } = await twin('Sumac', 'Sumac powder')
+		await ok(
+			call('PUT', `${BASE}/recipes`, {
+				token: full,
+				body: {
+					ownerKind: 'menu_item',
+					ownerId: 'dish_fattoush_undo',
+					expectedVersion: 0,
+					lines: [{ itemId: dup, amount: 5, unit: 'g' }],
+				},
+			}),
+		)
+		const merged = await ok(
+			call('POST', `${BASE}/items/${dup}/merge`, {
+				token: full,
+				body: await mergeBody(keep, dup),
+			}),
+		)
+		const denied = await call('POST', `${BASE}/merges/${merged.mergeId}/undo`, {
+			token: noRecipe,
+			body: {},
+		})
+		expect(denied.status).toBe(403)
+		expect(denied.body.code).toBe('needs_recipe_grant')
+
+		const a = await supplier('Spice House')
+		const b = await supplier('Spice House LLC')
+		const sm = await ok(
+			call('POST', `${BASE}/suppliers/${b.id}/merge`, {
+				token: full,
+				body: {
+					intoSupplierId: a.id,
+					expectedVersion: b.version,
+					intoExpectedVersion: a.version,
+				},
+			}),
+		)
+		const noBuy = await call('POST', `${BASE}/merges/${sm.mergeId}/undo`, {
+			token: noPurchasing,
+			body: {},
+		})
+		expect(noBuy.status).toBe(403)
+		expect(noBuy.body.code).toBe('forbidden')
 	})
 })
 

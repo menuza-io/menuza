@@ -57,6 +57,7 @@ export const INVENTORY_ERROR_CODES = [
 	'not_a_group',
 	'needs_recipe_grant',
 	'merge_not_undoable',
+	'merge_kind_mismatch',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

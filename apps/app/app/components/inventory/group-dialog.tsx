@@ -111,11 +111,13 @@ export function GroupDialog({
 	const [members, setMembers] = useState<Draft[]>([])
 	const [saving, setSaving] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const clientId = useState(() => newClientId('grp'))[0]
+	// One id per time the dialog opens: a second group must not replay the first.
+	const [clientId, setClientId] = useState(() => newClientId('grp'))
 
 	useEffect(() => {
 		if (!open) return
 		setError(null)
+		setClientId(newClientId('grp'))
 		if (group) {
 			setName(group.name)
 			setBaseUnit(group.baseUnit)
@@ -251,7 +253,8 @@ export function GroupDialog({
 							aria-label={t`The group is counted in`}
 							variant="segmented"
 							value={[baseUnit]}
-							disabled={saving || !!group}
+							// The unit decides every member's conversion: fixed once there is one.
+							disabled={saving || !!group || members.length > 0}
 							onValueChange={(next) => {
 								if (next[0]) setBaseUnit(next[0] as InventoryBaseUnit)
 							}}

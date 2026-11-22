@@ -93,6 +93,7 @@ export function SetupChecksPanel({
 		}
 	}, [revision, reload])
 	const [busy, setBusy] = useState<string | null>(null)
+	const listRef = useRef<HTMLUListElement | null>(null)
 
 	const findings = checks.data?.findings ?? []
 	const total = findings.length
@@ -118,6 +119,8 @@ export function SetupChecksPanel({
 			toast.success(path === 'fix' ? t`Fixed.` : t`Hidden until it changes.`)
 			notifyChanged()
 			reload()
+			// The row that held the button is gone: keep the keyboard in the list.
+			listRef.current?.focus()
 		} catch (caught) {
 			toast.error(i18n._(inventorySaveErrorMessage(caught)))
 			reload()
@@ -260,6 +263,7 @@ export function SetupChecksPanel({
 					type="button"
 					size="sm"
 					disabled={busy === finding.key}
+					aria-describedby={`finding-${finding.key}`}
 					onClick={() => void act(finding, 'fix')}
 					data-testid={`setup-check-fix-${finding.kind}`}
 				>
@@ -282,6 +286,7 @@ export function SetupChecksPanel({
 			<Button
 				size="sm"
 				render={<Link to={to} />}
+				aria-describedby={`finding-${finding.key}`}
 				data-testid={`setup-check-open-${finding.kind}`}
 			>
 				<Trans>Fix it</Trans>
@@ -324,7 +329,10 @@ export function SetupChecksPanel({
 				/>
 			) : (
 				<ul
-					className="flex flex-col divide-y rounded-xl border"
+					ref={listRef}
+					tabIndex={-1}
+					aria-label={t`Things to check in your setup`}
+					className="flex flex-col divide-y rounded-xl border outline-none"
 					data-testid="setup-checks-list"
 				>
 					{shown.map((finding) => (
@@ -333,7 +341,9 @@ export function SetupChecksPanel({
 							className="flex flex-col gap-2 p-3"
 							data-testid={`setup-check-${finding.kind}`}
 						>
-							<p className="text-sm text-pretty">{sentence(finding)}</p>
+							<p id={`finding-${finding.key}`} className="text-sm text-pretty">
+								{sentence(finding)}
+							</p>
 							<div className="flex flex-wrap gap-2">
 								{fixAction(finding)}
 								<Button
@@ -341,6 +351,7 @@ export function SetupChecksPanel({
 									size="sm"
 									variant="outline"
 									disabled={busy === finding.key || !canEdit}
+									aria-describedby={`finding-${finding.key}`}
 									onClick={() => void act(finding, 'dismiss')}
 									data-testid={`setup-check-dismiss-${finding.kind}`}
 								>

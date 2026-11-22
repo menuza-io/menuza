@@ -38,6 +38,7 @@ import { recordInventoryAudit } from './inventory-audit.ts'
 import {
 	assertVersion,
 	locationBusinessDate,
+	locationVisible,
 	newId,
 	notFound,
 	onHandByLocation,
@@ -136,7 +137,13 @@ async function lastCountOf(
 		locationId: latest.locationId,
 		at: latest.at,
 		before,
-		after: convertQuantity(before, factor),
+		after: (() => {
+			try {
+				return convertQuantity(before, factor)
+			} catch {
+				return before
+			}
+		})(),
 	}
 }
 
@@ -204,6 +211,24 @@ async function buildPlan(
 	])
 
 	let tooSmall = false
+	// A value too big for a safe integer is as unusable as one rounded to
+	// nothing: the change is refused with the same answer, never a 500.
+	const convert = (quantity: number): number => {
+		try {
+			return convertQuantity(quantity, factor)
+		} catch {
+			tooSmall = true
+			return quantity
+		}
+	}
+	const convertCost = (cost: number): number => {
+		try {
+			return convertCostMicro(cost, factor)
+		} catch {
+			tooSmall = true
+			return cost
+		}
+	}
 	const check = (before: number, after: number): number => {
 		if (before !== 0 && !inRange(after)) tooSmall = true
 		return after
@@ -238,10 +263,7 @@ async function buildPlan(
 			const newLines = new Map<string, number>()
 			for (const line of own) {
 				if (line.itemId !== item.id) continue
-				newLines.set(
-					line.id,
-					check(line.quantity, convertQuantity(line.quantity, factor)),
-				)
+				newLines.set(line.id, check(line.quantity, convert(line.quantity)))
 			}
 			recipes.push({ row, lines: own, newLines, newMakes: null })
 		}
@@ -254,10 +276,7 @@ async function buildPlan(
 		const makes =
 			ownRecipe.makesQuantity === null
 				? null
-				: check(
-						ownRecipe.makesQuantity,
-						convertQuantity(ownRecipe.makesQuantity, factor),
-					)
+				: check(ownRecipe.makesQuantity, convert(ownRecipe.makesQuantity))
 		recipes.push({
 			row: ownRecipe,
 			lines,
@@ -291,7 +310,7 @@ async function buildPlan(
 				locationId,
 				before,
 				// On hand may be negative or tiny: it converts like any quantity.
-				after: convertQuantity(before, factor),
+				after: convert(before),
 			})),
 		packs: [
 			...productRows.map((row) => ({
@@ -299,20 +318,14 @@ async function buildPlan(
 				id: row.id,
 				name: row.packName,
 				before: row.packBaseQuantity,
-				after: check(
-					row.packBaseQuantity,
-					convertQuantity(row.packBaseQuantity, factor),
-				),
+				after: check(row.packBaseQuantity, convert(row.packBaseQuantity)),
 			})),
 			...unitRows.map((row) => ({
 				kind: 'named_unit' as const,
 				id: row.id,
 				name: row.name,
 				before: row.baseQuantity,
-				after: check(
-					row.baseQuantity,
-					convertQuantity(row.baseQuantity, factor),
-				),
+				after: check(row.baseQuantity, convert(row.baseQuantity)),
 			})),
 		],
 		recipes: recipes.map((entry) => ({
@@ -340,14 +353,14 @@ async function buildPlan(
 						? null
 						: {
 								before: row.orderBelowQuantity,
-								after: convertQuantity(row.orderBelowQuantity, factor),
+								after: convert(row.orderBelowQuantity),
 							},
 				fillUpTo:
 					row.fillUpToQuantity === null
 						? null
 						: {
 								before: row.fillUpToQuantity,
-								after: convertQuantity(row.fillUpToQuantity, factor),
+								after: convert(row.fillUpToQuantity),
 							},
 			})),
 		lastCount: await lastCountOf(db, item.id, factor),
@@ -362,17 +375,28 @@ async function buildPlan(
 					? null
 					: {
 							before: costRow.avgCostMicro,
-							after: convertCostMicro(costRow.avgCostMicro, factor),
+							after: convertCost(costRow.avgCostMicro),
 						},
 			last:
 				costRow.lastCostMicro === null
 					? null
 					: {
 							before: costRow.lastCostMicro,
-							after: convertCostMicro(costRow.lastCostMicro, factor),
+							after: convertCost(costRow.lastCostMicro),
 						},
 		}
 	}
+	// What apply converts without showing it: prep levels, open prep tasks and
+	// settled sale usage must stay in range too.
+	for (const row of prepLevelRows) {
+		check(row.fillUpToQuantity, convert(row.fillUpToQuantity))
+	}
+	for (const row of prepTaskRows) {
+		check(row.plannedQuantity, convert(row.plannedQuantity))
+		check(row.fillUpToQuantity, convert(row.fillUpToQuantity))
+		check(row.onHandQuantity, convert(row.onHandQuantity))
+	}
+	for (const row of usageRows) check(row.quantity, convert(row.quantity))
 	view.tooSmall = tooSmall
 	// Rewriting recipes (new versions) needs the recipe grant.
 	view.needsRecipeGrant = recipes.length > 0 && !input.recipeGrant
@@ -399,17 +423,27 @@ export async function previewUnitChange(
 	input: {
 		itemId: string
 		body: UnitChangeBody
-		caller: Pick<InventoryCaller, 'cost' | 'recipe'>
+		caller: Pick<InventoryCaller, 'cost' | 'recipe' | 'locationIds'>
 	},
 ): Promise<UnitChangePlan> {
-	return (
-		await buildPlan(db, {
-			itemId: input.itemId,
-			body: input.body,
-			cost: input.caller.cost,
-			recipeGrant: input.caller.recipe === true,
-		})
-	).view
+	const { view } = await buildPlan(db, {
+		itemId: input.itemId,
+		body: input.body,
+		cost: input.caller.cost,
+		recipeGrant: input.caller.recipe === true,
+	})
+	// A token limited to some places sees stock and levels there only.
+	const visible = (locationId: string) =>
+		locationVisible(input.caller.locationIds, locationId)
+	return {
+		...view,
+		onHand: view.onHand.filter((row) => visible(row.locationId)),
+		levels: view.levels.filter((row) => visible(row.locationId)),
+		lastCount:
+			view.lastCount && visible(view.lastCount.locationId)
+				? view.lastCount
+				: null,
+	}
 }
 
 async function writeRecipes(

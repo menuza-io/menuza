@@ -254,6 +254,19 @@ export async function dissolveGroup(
 			.get()
 		if (used)
 			throw new InventoryError('group_invalid', 409, { reason: 'in_use' })
+		// Dishes this group took off the menu would stay off with no record to
+		// give them back: let stock bring them back (or undo them) first.
+		const off = await tx
+			.select({ id: invSoldOut.id })
+			.from(invSoldOut)
+			.where(
+				and(eq(invSoldOut.causeItemId, item.id), eq(invSoldOut.state, 'out')),
+			)
+			.limit(1)
+			.get()
+		if (off) {
+			throw new InventoryError('group_invalid', 409, { reason: 'sold_out' })
+		}
 		await tx
 			.delete(invItemGroupMembers)
 			.where(eq(invItemGroupMembers.groupItemId, item.id))

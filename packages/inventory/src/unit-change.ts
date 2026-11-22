@@ -90,7 +90,9 @@ export function convertCostMicro(cost: number, factor: Fraction): number {
 	const num = BigInt(cost) * BigInt(factor.den)
 	const den = BigInt(factor.num)
 	const rounded = (num * 2n + den) / (den * 2n)
-	return Math.max(1, Number(rounded))
+	const value = Number(rounded)
+	if (!Number.isSafeInteger(value)) throw new RangeError('Cost too large')
+	return Math.max(1, value)
 }
 
 /** The same change seen from the other side (used to convert history back). */

@@ -20,6 +20,8 @@ export function BlockerList({
 	const counts = count('open_count')
 	const transfers = count('open_transfer')
 	const orders = count('open_order')
+	const deliveries = count('open_delivery')
+	const prep = count('open_prep')
 	const groups = [...count('in_group'), ...count('is_group')]
 	return (
 		<Alert variant="destructive" data-testid="blockers">
@@ -52,6 +54,24 @@ export function BlockerList({
 									{orders.map((order) => `#${order.reference}`).join(', ')}
 								</bdi>
 							</Trans>
+						</li>
+					) : null}
+					{deliveries.length > 0 ? (
+						<li data-testid="blocker-open_delivery">
+							<Plural
+								value={deliveries.length}
+								one="A delivery is still a draft."
+								other="# deliveries are still drafts."
+							/>
+						</li>
+					) : null}
+					{prep.length > 0 ? (
+						<li data-testid="blocker-open_prep">
+							<Plural
+								value={prep.length}
+								one="A prep task is still open."
+								other="# prep tasks are still open."
+							/>
 						</li>
 					) : null}
 					{groups.length > 0 ? (

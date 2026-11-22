@@ -1,6 +1,7 @@
 import {
 	INVENTORY_NOTIFY_PATH,
 	inventoryNotifyEventSchema,
+	inventoryNotifyResultSchema,
 	type InventoryNotifyEvent,
 } from '@repo/inventory'
 import { ENV } from 'varlock/env'
@@ -15,7 +16,8 @@ import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
  * `rejected` (any other refusal: the event is wrong, retrying cannot help).
  */
 export type InventoryNotifyOutcome =
-	| { status: 'delivered' }
+	/** `skipped` is the App's own reason it told nobody (flag off, nobody to tell). */
+	| { status: 'delivered'; skipped?: string }
 	| { status: 'retry'; code: string }
 	| { status: 'rejected'; code: string }
 
@@ -51,14 +53,19 @@ export async function postInventoryNotify(
 			redirect: 'error',
 			signal: AbortSignal.timeout(8_000),
 		})
-		void response.body?.cancel().catch(() => undefined)
 		if (!response.ok) {
+			void response.body?.cancel().catch(() => undefined)
 			return {
 				status: RETRYABLE.has(response.status) ? 'retry' : 'rejected',
 				code: `http_${response.status}`,
 			}
 		}
-		return { status: 'delivered' }
+		const answer = inventoryNotifyResultSchema.safeParse(
+			await response.json().catch(() => null),
+		)
+		return answer.success && answer.data.skipped
+			? { status: 'delivered', skipped: answer.data.skipped }
+			: { status: 'delivered' }
 	} catch {
 		return { status: 'retry', code: 'network_error' }
 	}

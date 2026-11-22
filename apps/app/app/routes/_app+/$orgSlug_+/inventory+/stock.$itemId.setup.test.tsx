@@ -188,6 +188,7 @@ function region(overrides: Partial<Record<string, unknown>> = {}) {
 				baseUnit: 'g',
 				blockers: [],
 				unitMismatch: false,
+				kindMismatch: false,
 				moves: {
 					recipes: 2,
 					supplierProducts: 1,
@@ -392,6 +393,23 @@ describe('Change unit (#494)', () => {
 		expect(toast.success).toHaveBeenCalled()
 	})
 
+	it('turns Apply off the moment the typed numbers differ from what was previewed', async () => {
+		const request = region()
+		const user = userEvent.setup()
+		renderSheet(request)
+		await user.click(await screen.findByTestId('item-sheet-change-unit'))
+		await user.click(await screen.findByTestId('change-unit-to-piece'))
+		await user.type(screen.getByTestId('change-unit-old'), '180')
+		await screen.findByTestId('change-unit-preview')
+		expect(screen.getByTestId('change-unit-apply')).toBeEnabled()
+		await user.type(screen.getByTestId('change-unit-old'), '0')
+		// Not applied against the old preview: it goes away until the new one is in.
+		expect(screen.getByTestId('change-unit-apply')).toBeDisabled()
+		expect(screen.queryByTestId('change-unit-preview')).not.toBeInTheDocument()
+		await screen.findByTestId('change-unit-preview')
+		expect(screen.getByTestId('change-unit-apply')).toBeEnabled()
+	})
+
 	it('lists what blocks the change and keeps Apply off', async () => {
 		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
 			if (path.endsWith('/unit-change/preview')) {
@@ -456,6 +474,33 @@ describe('Merge into (#493)', () => {
 			action: { label: 'Undo' },
 		})
 		expect(close).toHaveBeenCalled()
+	})
+
+	it('does not merge into the previous target while the new one is still being checked', async () => {
+		let release: (value: unknown) => void = () => {}
+		const base = region()
+		let previews = 0
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path.includes('/merge-preview')) {
+				previews += 1
+				if (previews === 2) {
+					await new Promise((resolve) => {
+						release = resolve
+					})
+				}
+			}
+			return base(path, init)
+		})
+		const user = userEvent.setup()
+		renderSheet(request)
+		await user.click(await screen.findByTestId('item-sheet-merge'))
+		await user.click(await screen.findByTestId('merge-candidate-itm_2'))
+		await screen.findByTestId('merge-preview')
+		expect(screen.getByTestId('merge-apply')).toBeEnabled()
+		await user.click(screen.getByTestId('merge-candidate-itm_3'))
+		expect(screen.getByTestId('merge-apply')).toBeDisabled()
+		expect(screen.queryByTestId('merge-preview')).not.toBeInTheDocument()
+		release(null)
 	})
 
 	it('shows an undo for a merge still inside its day', async () => {

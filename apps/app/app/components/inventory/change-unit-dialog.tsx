@@ -76,6 +76,7 @@ export function ChangeUnitDialog({
 	const [oldAmount, setOldAmount] = useState('1')
 	const [newAmount, setNewAmount] = useState('')
 	const [plan, setPlan] = useState<UnitChangePlan | null>(null)
+	const [planKey, setPlanKey] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
 	const [applying, setApplying] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -101,10 +102,13 @@ export function ChangeUnitDialog({
 		expectedVersion: item.version,
 	}
 
+	const currentKey = JSON.stringify(body)
 	// The preview follows the typing, a moment after it stops.
 	useEffect(() => {
+		// Whatever was previewed no longer matches what is typed.
+		setPlan(null)
 		if (!open || !valid) {
-			setPlan(null)
+			setLoading(false)
 			return
 		}
 		let cancelled = false
@@ -118,6 +122,7 @@ export function ChangeUnitDialog({
 				.then((answer) => {
 					if (cancelled) return
 					setPlan(unitChangePlanSchema.parse(answer))
+					setPlanKey(JSON.stringify(body))
 					setError(null)
 				})
 				.catch((caught: unknown) => {
@@ -138,7 +143,9 @@ export function ChangeUnitDialog({
 	}, [open, valid, toUnit, oldAmount, newAmount, item.id, item.version])
 
 	async function apply() {
-		if (!plan || !plan.canApply || applying) return
+		// Only what was previewed can be applied: a plan answers for the body it
+		// was asked with.
+		if (!plan || planKey !== currentKey || !plan.canApply || applying) return
 		setApplying(true)
 		setError(null)
 		try {
@@ -277,23 +284,29 @@ export function ChangeUnitDialog({
 					</FieldError>
 				) : null}
 
-				{plan ? (
-					<PlanPreview
-						plan={plan}
-						fmtOld={fmtOld}
-						fmtNew={fmtNew}
-						canSeeCost={canSeeCost}
-						currency={currency}
-					/>
-				) : loading ? (
-					<p
-						className="text-muted-foreground text-sm"
-						role="status"
-						data-testid="change-unit-loading"
-					>
-						<Trans>Working out what changes…</Trans>
-					</p>
-				) : null}
+				<div
+					id="change-unit-preview-region"
+					aria-live="polite"
+					aria-atomic="false"
+				>
+					{plan && planKey === currentKey ? (
+						<PlanPreview
+							plan={plan}
+							fmtOld={fmtOld}
+							fmtNew={fmtNew}
+							canSeeCost={canSeeCost}
+							currency={currency}
+						/>
+					) : loading ? (
+						<p
+							className="text-muted-foreground text-sm"
+							role="status"
+							data-testid="change-unit-loading"
+						>
+							<Trans>Working out what changes…</Trans>
+						</p>
+					) : null}
+				</div>
 
 				<DialogFooter>
 					<Button
@@ -307,7 +320,10 @@ export function ChangeUnitDialog({
 					<Button
 						type="button"
 						onClick={() => void apply()}
-						disabled={!plan || !plan.canApply || applying}
+						disabled={
+							!plan || planKey !== currentKey || !plan.canApply || applying
+						}
+						aria-describedby={plan ? 'change-unit-preview-region' : undefined}
 						data-testid="change-unit-apply"
 					>
 						{applying ? <Trans>Changing…</Trans> : <Trans>Change unit</Trans>}

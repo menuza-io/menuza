@@ -1,4 +1,5 @@
 import {
+	hasInventoryGrant,
 	INVENTORY_PERMISSIONS,
 	mergeItemBodySchema,
 	mergePreviewQuerySchema,
@@ -51,6 +52,16 @@ const supplierWrites = () =>
 
 const undoBodySchema = z.object({}).strict()
 
+/**
+ * Merging and undoing move stock at every place the item is kept, so a token
+ * limited to some locations may not do either (like the settings).
+ */
+function organizationWide(ctx: { locationIds: readonly string[] | null }) {
+	return ctx.locationIds === null
+		? null
+		: inventoryDeny(403, 'location_forbidden')
+}
+
 operatorInventoryMergeRoutes.get(
 	'/items/:id/merge-candidates',
 	reads(),
@@ -95,6 +106,8 @@ operatorInventoryMergeRoutes.get(
 operatorInventoryMergeRoutes.post('/items/:id/merge', writes(), async (c) => {
 	try {
 		const ctx = getInventoryAuth(c)
+		const scoped = organizationWide(ctx)
+		if (scoped) return scoped
 		const id = idParam(c)
 		const body = await parseBody(c, mergeItemBodySchema)
 		if ('error' in body) return body.error
@@ -162,6 +175,21 @@ operatorInventoryMergeRoutes.post('/merges/:id/undo', writes(), async (c) => {
 		const body = await parseBody(c, undoBodySchema)
 		if ('error' in body) return body.error
 		const kind = await mergeKind(await getTenantDb(ctx.orgId), id)
+		if (kind === 'item') {
+			const scoped = organizationWide(ctx)
+			if (scoped) return scoped
+		} else if (
+			// A supplier merge needs what merging suppliers needs.
+			!hasInventoryGrant(ctx.grants, PURCHASING) ||
+			!ctx.features.purchasing
+		) {
+			return ctx.features.purchasing
+				? inventoryDeny(403, 'forbidden', {
+						reason: 'grant',
+						required: PURCHASING,
+					})
+				: inventoryDeny(403, 'feature_disabled')
+		}
 		return respond(
 			ctx,
 			await undoMerge(inventoryCaller(ctx), { mergeId: id, kind }),

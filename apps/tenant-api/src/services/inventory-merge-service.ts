@@ -16,6 +16,7 @@ import {
 	invItems,
 	invMerges,
 	invMovements,
+	invPrepTasks,
 	invOrders,
 	invPrepItems,
 	invPrepLevels,
@@ -25,7 +26,7 @@ import {
 	invSupplierProducts,
 	invSuppliers,
 } from '@repo/tenant-db'
-import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 import { chunkIds } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import {
@@ -35,9 +36,11 @@ import {
 } from '../lib/inventory-write.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
 import { itemBlockers } from './inventory-blockers.ts'
+import { loadUnitChanges } from './inventory-history.ts'
 import {
 	assertVersion,
 	locationBusinessDate,
+	locationVisible,
 	newId,
 	notFound,
 	onHandByLocation,
@@ -82,7 +85,7 @@ export async function previewItemMerge(
 	input: {
 		itemId: string
 		intoItemId: string
-		caller: Pick<InventoryCaller, 'recipe'>
+		caller: Pick<InventoryCaller, 'recipe' | 'locationIds'>
 	},
 ): Promise<MergeItemPreview> {
 	if (input.itemId === input.intoItemId) {
@@ -98,6 +101,28 @@ export async function previewItemMerge(
 		...(await itemBlockers(db, dup.id, { groups: true })),
 		...(await itemBlockers(db, kept.id, { groups: true })),
 	]
+	// A prep task still open for either made item would be left on the archived one.
+	for (const item of [dup, kept]) {
+		if (item.kind !== 'made') continue
+		const tasks = await db
+			.select({ id: invPrepTasks.id, locationId: invPrepTasks.locationId })
+			.from(invPrepTasks)
+			.where(
+				and(
+					eq(invPrepTasks.itemId, item.id),
+					inArray(invPrepTasks.status, ['todo', 'in_progress']),
+				),
+			)
+		for (const task of tasks) {
+			blockers.push({
+				kind: 'open_prep',
+				id: task.id,
+				locationId: task.locationId,
+				reference: null,
+			})
+		}
+	}
+	const kindMismatch = dup.kind !== kept.kind
 	const recipeHits = await recipeRowsUsing(db, dup.id)
 	const [products, places, lists, prep, dupHand, keptHand] = await Promise.all([
 		db
@@ -113,7 +138,10 @@ export async function previewItemMerge(
 		onHandByLocation(db, dup.id),
 		onHandByLocation(db, kept.id),
 	])
-	const locations = [...new Set([...dupHand.keys(), ...keptHand.keys()])].sort()
+	// A token limited to some places sees stock there only.
+	const locations = [...new Set([...dupHand.keys(), ...keptHand.keys()])]
+		.filter((id) => locationVisible(input.caller.locationIds, id))
+		.sort()
 	const needsRecipeGrant = recipeHits.length > 0 && input.caller.recipe !== true
 	const unitMismatch = dup.baseUnit !== kept.baseUnit
 	return {
@@ -126,6 +154,7 @@ export async function previewItemMerge(
 		baseUnit: kept.baseUnit,
 		blockers,
 		unitMismatch,
+		kindMismatch,
 		moves: {
 			recipes: recipeHits.length,
 			supplierProducts: products.length,
@@ -144,7 +173,11 @@ export async function previewItemMerge(
 			}
 		}),
 		needsRecipeGrant,
-		canApply: blockers.length === 0 && !unitMismatch && !needsRecipeGrant,
+		canApply:
+			blockers.length === 0 &&
+			!unitMismatch &&
+			!kindMismatch &&
+			!needsRecipeGrant,
 	}
 }
 
@@ -344,6 +377,8 @@ export async function mergeItems(
 		assertVersion(kept.version, input.body.intoExpectedVersion)
 		if (preview.unitMismatch)
 			throw new InventoryError('merge_unit_mismatch', 409)
+		if (preview.kindMismatch)
+			throw new InventoryError('merge_kind_mismatch', 409)
 		if (preview.needsRecipeGrant) {
 			throw new InventoryError('needs_recipe_grant', 403)
 		}
@@ -742,6 +777,16 @@ export async function mergeItems(
 			}
 		}
 
+		// The cost row as the merge left it: an undo restores the old cost only
+		// when nothing priced the item since.
+		snapshot.keptCostVersionAfter =
+			(
+				await tx
+					.select({ version: invItemCosts.version })
+					.from(invItemCosts)
+					.where(eq(invItemCosts.itemId, kept.id))
+					.get()
+			)?.version ?? null
 		await tx
 			.update(invItems)
 			.set({
@@ -828,6 +873,7 @@ export async function undoItemMerge(
 				dropped: boolean
 			}[]
 			soldOut: string[]
+			keptCostVersionAfter?: number | null
 			moved: { locationId: string; quantity: number }[]
 			costs: {
 				dup: typeof invItemCosts.$inferSelect | null
@@ -840,9 +886,26 @@ export async function undoItemMerge(
 		const clash = await tx
 			.select({ id: invItems.id })
 			.from(invItems)
-			.where(and(isNull(invItems.archivedAt), eq(invItems.name, dup.name)))
+			.where(
+				and(
+					isNull(invItems.archivedAt),
+					sql`lower(${invItems.name}) = lower(${dup.name})`,
+				),
+			)
 			.get()
 		if (clash) throw new InventoryError('name_taken', 409)
+		// A unit change since the merge makes the stored quantities, costs and
+		// recipe lines the wrong unit to put back.
+		const changes = await loadUnitChanges(tx, [kept.id, dup.id])
+		for (const list of changes.values()) {
+			if (list.some((change) => change.at > merge.createdAt)) {
+				throw new InventoryError('merge_not_undoable', 409)
+			}
+		}
+		// Undoing rewrites recipes: it needs the recipe grant like the merge did.
+		if (snapshot.recipes.length > 0 && caller.recipe !== true) {
+			throw new InventoryError('needs_recipe_grant', 403)
+		}
 
 		let recipesKept = 0
 		for (const entry of snapshot.recipes) {
@@ -1037,18 +1100,27 @@ export async function undoItemMerge(
 				})
 			}
 		}
-		// Costs as they were.
-		if (snapshot.costs.kept) {
+		// Costs as they were, but only if nothing priced the item since: a
+		// delivery in the meantime has moved the average on and keeps it.
+		const costNow = await tx
+			.select()
+			.from(invItemCosts)
+			.where(eq(invItemCosts.itemId, kept.id))
+			.get()
+		const untouched =
+			(costNow?.version ?? null) === (snapshot.keptCostVersionAfter ?? null)
+		if (untouched && snapshot.costs.kept && costNow) {
 			await tx
 				.update(invItemCosts)
 				.set({
 					avgCostMicro: snapshot.costs.kept.avgCostMicro,
 					lastCostMicro: snapshot.costs.kept.lastCostMicro,
 					currency: snapshot.costs.kept.currency,
+					version: costNow.version + 1,
 					updatedAt: ctx.now,
 				})
 				.where(eq(invItemCosts.itemId, kept.id))
-		} else if (snapshot.costs.dup) {
+		} else if (untouched && !snapshot.costs.kept && snapshot.costs.dup) {
 			await tx.delete(invItemCosts).where(eq(invItemCosts.itemId, kept.id))
 		}
 		await tx
@@ -1116,16 +1188,27 @@ export async function previewSupplierMerge(
 		db.select().from(invOrders).where(eq(invOrders.supplierId, dup.id)),
 		db.select().from(invDeliveries).where(eq(invDeliveries.supplierId, dup.id)),
 	])
-	const blockers: Blocker[] = orders
-		.filter((order) =>
-			['draft', 'sent', 'partly_received'].includes(order.status),
-		)
-		.map((order) => ({
-			kind: 'open_order' as const,
-			id: order.id,
-			locationId: null,
-			reference: String(order.number),
-		}))
+	const blockers: Blocker[] = [
+		...orders
+			.filter((order) =>
+				['draft', 'sent', 'partly_received'].includes(order.status),
+			)
+			.map((order) => ({
+				kind: 'open_order' as const,
+				id: order.id,
+				locationId: null,
+				reference: String(order.number),
+			})),
+		// A draft delivery could still be received under the archived supplier.
+		...deliveries
+			.filter((delivery) => delivery.status === 'draft')
+			.map((delivery) => ({
+				kind: 'open_delivery' as const,
+				id: delivery.id,
+				locationId: delivery.locationId,
+				reference: null,
+			})),
+	]
 	const out = {
 		supplierId: dup.id,
 		supplierName: dup.name,
@@ -1289,7 +1372,10 @@ export async function undoSupplierMerge(
 			.select({ id: invSuppliers.id })
 			.from(invSuppliers)
 			.where(
-				and(isNull(invSuppliers.archivedAt), eq(invSuppliers.name, dup.name)),
+				and(
+					isNull(invSuppliers.archivedAt),
+					sql`lower(${invSuppliers.name}) = lower(${dup.name})`,
+				),
 			)
 			.get()
 		if (clash) throw new InventoryError('name_taken', 409)

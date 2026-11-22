@@ -329,6 +329,11 @@ operatorInventoryItemsRoutes.post(
 	async (c) => {
 		try {
 			const ctx = getInventoryAuth(c)
+			// It converts stock at every place the item is kept: not for a token
+			// limited to some locations.
+			if (ctx.locationIds !== null) {
+				return inventoryDeny(403, 'location_forbidden')
+			}
 			const id = idParam(c)
 			const body = await parseBody(c, unitChangeBodySchema)
 			if ('error' in body) return body.error

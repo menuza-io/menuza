@@ -37,6 +37,7 @@ import { newId } from './inventory-common.ts'
 
 export const SOLD_OUT_ALERT_WINDOW_MS = 15 * 60 * 1000
 export const SOLD_OUT_ALERT_RETRY_MS = 5 * 60 * 1000
+const SOLD_OUT_ALERT_REJECTED_RETRY_MS = 60 * 60 * 1000
 const KEEP_MS = 14 * 24 * 60 * 60 * 1000
 
 export type QueuedSoldOutAlert = {
@@ -114,6 +115,9 @@ export async function dispatchSoldOutAlerts(
 			(row) =>
 				row.kind === 'out' &&
 				!cancelled.has(row.id) &&
+				// A give-back only undoes an EARLIER sold-out.
+				(row.createdAt < back.createdAt ||
+					(row.createdAt === back.createdAt && row.id < back.id)) &&
 				row.locationId === back.locationId &&
 				row.entityType === back.entityType &&
 				row.entityId === back.entityId,
@@ -195,6 +199,13 @@ export async function dispatchSoldOutAlerts(
 				continue
 			}
 			if (outcome.status === 'rejected') {
+				// An App that does not know the kind yet (deploy skew) answers 400:
+				// try again for an hour before giving the alert up.
+				const waited = now - rows[0]!.createdAt
+				if (waited < SOLD_OUT_ALERT_REJECTED_RETRY_MS) {
+					soon(now + SOLD_OUT_ALERT_RETRY_MS)
+					continue
+				}
 				console.error('Inventory sold-out alert was refused', {
 					orgId,
 					code: outcome.code,
@@ -206,11 +217,15 @@ export async function dispatchSoldOutAlerts(
 					.update(invSoldOutAlerts)
 					.set({
 						sentAt: now,
-						eventId: outcome.status === 'delivered' ? eventId : null,
+						// Only an alert somebody was told about starts the 15-minute window.
+						eventId:
+							outcome.status === 'delivered' && !outcome.skipped
+								? eventId
+								: null,
 					})
 					.where(inArray(invSoldOutAlerts.id, chunk))
 			}
-			if (outcome.status === 'delivered') result.sent += 1
+			if (outcome.status === 'delivered' && !outcome.skipped) result.sent += 1
 		}
 	}
 	await db

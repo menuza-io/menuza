@@ -56,6 +56,7 @@ let env: ReturnType<typeof setupTenantEnv>
 let full: string
 let noRecipe: string
 let tokenB: string
+let scopedToken: string
 
 beforeAll(async () => {
 	env = setupTenantEnv('inv-unit-change')
@@ -78,6 +79,11 @@ beforeAll(async () => {
 	noRecipe = await mintToken(ORG, {
 		grants: [READ, UPDATE, COST, PURCHASING],
 		features,
+	})
+	scopedToken = await mintToken(ORG, {
+		grants: [READ, UPDATE, COST, PURCHASING, RECIPE],
+		features,
+		locationIds: [LOC],
 	})
 	tokenB = await mintToken(ORG_B, {
 		grants: [READ, UPDATE, COST, PURCHASING, RECIPE],
@@ -538,5 +544,17 @@ describe('POST /items/:id/unit-change', () => {
 		})
 		expect(undo.status).toBe(409)
 		expect(undo.body.code).toBe('undo_expired')
+	})
+
+	it('is not for a token limited to some places', async () => {
+		const { itemId } = await bunWithEverything('focaccia')
+		const version = (await detail(itemId)).version
+		const refused = await call('POST', `${BASE}/items/${itemId}/unit-change`, {
+			token: scopedToken,
+			body: body(version),
+		})
+		expect(refused.status).toBe(403)
+		expect(refused.body.code).toBe('location_forbidden')
+		expect((await detail(itemId)).baseUnit).toBe('piece')
 	})
 })

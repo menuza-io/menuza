@@ -195,6 +195,7 @@ export default function InventoryItemSheetRoute() {
 			orgSlug={ctx.orgSlug}
 			menuNames={menuNames}
 			canEdit={canEdit && !detail.data.archived}
+			canUndoMerge={canEdit}
 			canSeeCost={canSeeCost}
 			locationName={
 				locations.find((loc) => loc.id === activeLocationId)?.name ?? ''
@@ -225,6 +226,7 @@ function ItemSheetBody({
 	orgSlug,
 	menuNames,
 	canEdit,
+	canUndoMerge,
 	canSeeCost,
 	locationName,
 	locationNames,
@@ -243,6 +245,8 @@ function ItemSheetBody({
 	orgSlug: string
 	menuNames: UsedInNames
 	canEdit: boolean
+	/** The member may edit inventory (not narrowed by the item being archived). */
+	canUndoMerge: boolean
 	canSeeCost: boolean
 	locationName: string
 	locationNames: ReadonlyMap<string, string>
@@ -409,7 +413,7 @@ function ItemSheetBody({
 				mergedInto={item.mergedInto}
 				mergedFrom={item.mergedFrom}
 				onUndone={onChanged}
-				canEdit={canEdit || item.archived}
+				canEdit={canUndoMerge}
 			/>
 
 			<section className="flex flex-col gap-3" aria-labelledby="item-summary">

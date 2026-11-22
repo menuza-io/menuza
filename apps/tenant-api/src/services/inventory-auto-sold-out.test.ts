@@ -17,6 +17,7 @@ import {
 	invRecipeLines,
 	invRecipes,
 	invSoldOut,
+	invSoldOutAlerts,
 	provisionTenantDb,
 	type TenantDatabase,
 } from '@repo/tenant-db'
@@ -388,12 +389,18 @@ describe('auto sold out', () => {
 
 	describe('manager alerts (#478)', () => {
 		const alerts: InventoryNotifyEvent[] = []
-		let notifyOutcome: InventoryNotifyOutcome['status'] = 'delivered'
+		let notifyOutcome: InventoryNotifyOutcome['status'] | 'skipped' =
+			'delivered'
 		const notify = async (event: InventoryNotifyEvent) => {
 			if (notifyOutcome === 'retry')
 				return { status: 'retry', code: 'x' } as const
+			if (notifyOutcome === 'rejected') {
+				return { status: 'rejected', code: 'http_400' } as const
+			}
 			alerts.push(event)
-			return { status: 'delivered' } as const
+			return notifyOutcome === 'skipped'
+				? ({ status: 'delivered', skipped: 'feature_off' } as const)
+				: ({ status: 'delivered' } as const)
 		}
 		const run = (at: number) => syncAutoSoldOut(ORG, { now: at, post, notify })
 
@@ -495,6 +502,59 @@ describe('auto sold out', () => {
 			notifyOutcome = 'delivered'
 			await run(NOW + 120_000)
 			expect(alerts).toHaveLength(0)
+		})
+
+		it('does not start the 15-minute window for an alert the App skipped', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			notifyOutcome = 'skipped'
+			await run(NOW)
+			expect(alerts).toHaveLength(1)
+			notifyOutcome = 'delivered'
+			// A new dish goes off a minute later: nobody was told before, so it is sent now.
+			await recipe('menu_item', 'bowl', 'it_chicken')
+			await run(NOW + 60_000)
+			expect(alerts).toHaveLength(2)
+			expect(alerts[1]).toMatchObject({ kind: 'inventory_sold_out', count: 1 })
+		})
+
+		it('keeps trying for an hour when the App refuses a kind it does not know yet', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			notifyOutcome = 'rejected'
+			const first = await run(NOW)
+			expect(first.alertDueAt).toBe(NOW + 5 * 60_000)
+			notifyOutcome = 'delivered'
+			await run(NOW + 10 * 60_000)
+			expect(alerts).toHaveLength(1)
+		})
+
+		it('does not let a give-back cancel a sold-out that came after it', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			await db.insert(invSoldOutAlerts).values({
+				id: 'a_back',
+				locationId: LOC,
+				kind: 'back',
+				entityType: 'item',
+				entityId: 'plain_rice',
+				causeItemId: 'it_rice',
+				createdAt: NOW - 2000,
+			})
+			await db.insert(invSoldOutAlerts).values({
+				id: 'a_out',
+				locationId: LOC,
+				kind: 'out',
+				entityType: 'item',
+				entityId: 'plain_rice',
+				causeItemId: 'it_rice',
+				createdAt: NOW - 1000,
+			})
+			await run(NOW)
+			const kinds = alerts.map((alert) => alert.kind).sort()
+			expect(kinds).toContain('inventory_sold_out_back')
+			expect(
+				alerts
+					.filter((alert) => alert.kind === 'inventory_sold_out')
+					.flatMap((alert) => alert.soldOut!.map((entry) => entry.entityId)),
+			).toContain('plain_rice')
 		})
 	})
 })
