@@ -145,6 +145,95 @@ describe('Inventory Stock', () => {
 		)
 	})
 
+	it('shows days left per item, greys a stale number and asks the region to sort by it', async () => {
+		const withDays = ITEMS.map((item, index) => ({
+			...item,
+			...(index === 0
+				? {
+						daysLeft: {
+							state: 'ok' as const,
+							days: 2.5,
+							perDay: 2_000_000,
+							runsOutDate: '2026-11-18',
+							useDays: 28,
+							stale: false,
+						},
+					}
+				: index === 1
+					? {
+							daysLeft: {
+								state: 'ok' as const,
+								days: 12,
+								perDay: 500_000,
+								runsOutDate: null,
+								useDays: 14,
+								stale: true,
+							},
+							lastCountedAt: Date.UTC(2026, 9, 1),
+						}
+					: {
+							daysLeft: {
+								state: 'not_enough_history' as const,
+								useDays: 2,
+								stale: false,
+							},
+						}),
+		}))
+		const request = region(() => ({
+			items: withDays,
+			total: 3,
+			nextCursor: null,
+		}))
+		renderStock(request)
+		await screen.findByTestId('stock-row-itm_1')
+		expect(
+			screen.getByRole('columnheader', { name: 'Days left' }),
+		).toBeInTheDocument()
+		expect(screen.getByTestId('stock-days-left-itm_1')).toHaveTextContent(
+			'2.5 days',
+		)
+		const stale = screen.getByTestId('stock-days-left-itm_2')
+		expect(stale).toHaveTextContent('12 days')
+		expect(within(stale).getByTestId('days-left')).toHaveAttribute(
+			'data-stale',
+			'true',
+		)
+		expect(
+			within(stale).getByTestId('days-left-last-counted'),
+		).toHaveTextContent('Last counted')
+		expect(screen.getByTestId('stock-days-left-itm_3')).toHaveTextContent(
+			'Not enough history',
+		)
+		await userEvent.click(screen.getByTestId('stock-sort-days-left'))
+		await waitFor(() =>
+			expect(listCalls(request).at(-1)).toContain('sort=daysLeft'),
+		)
+	})
+
+	it('marks an ingredient group and shows its total', async () => {
+		renderStock(
+			region(() => ({
+				items: [
+					stockItem({
+						id: 'grp_1',
+						name: 'Olive oil',
+						baseUnit: 'ml',
+						countUnit: null,
+						onHand: 5_000_000,
+						isGroup: true,
+					}),
+				],
+				total: 1,
+				nextCursor: null,
+			})),
+		)
+		const row = await screen.findByTestId('stock-row-grp_1')
+		expect(within(row).getByTestId('stock-group-grp_1')).toHaveTextContent(
+			'Group',
+		)
+		expect(row).toHaveTextContent('5 L')
+	})
+
 	it('hides money without the cost grant and shows it with', async () => {
 		const withoutCost = renderStock(region())
 		await screen.findByTestId('stock-row-itm_1')

@@ -1,5 +1,6 @@
 import {
 	inventoryValueMinorClamped,
+	runsOutBeforeDelivery,
 	type AttentionItem,
 	type Today,
 } from '@repo/inventory'
@@ -29,6 +30,7 @@ import {
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { type InventoryReader } from '../lib/inventory-write.ts'
 import { locationClock, wireUnit } from './inventory-common.ts'
+import { loadDaysLeft } from './inventory-days-left.ts'
 import { computeFoodCost } from './inventory-food-cost.ts'
 import {
 	type InventoryCaller,
@@ -59,6 +61,7 @@ const KIND_PRIORITY: Record<AttentionItem['kind'], number> = {
 	count_in_review: 0,
 	sold_out_by_stock: 0.5,
 	low_stock: 1,
+	runs_out_soon: 1.5,
 	// Phase 2 kinds are produced by the region work that follows the contract.
 	order_cutoff: 2,
 	delivery_expected: 3,
@@ -362,6 +365,99 @@ export async function getToday(
 		}
 		if (cost) item.valueAtStakeMinor = top.money
 		push(item, top.money)
+	}
+
+	// Stock that will run out before the supplier's next delivery day, with or
+	// without a level set (#492): the soonest to run out, "and N more".
+	{
+		const lowIds = new Set(lowRows.map((row) => row.item.id))
+		const daysLeft = await loadDaysLeft(db, {
+			locationId,
+			today: clock.date,
+			now,
+			rows: stock.filter((row) => !lowIds.has(row.item.id) && row.onHand > 0),
+		})
+		const products = daysLeft.size
+			? await db
+					.select({
+						itemId: invSupplierProducts.itemId,
+						preferred: invSupplierProducts.preferred,
+						supplierId: invSuppliers.id,
+						supplierName: invSuppliers.name,
+						deliveryDays: invSuppliers.deliveryDays,
+					})
+					.from(invSupplierProducts)
+					.innerJoin(
+						invSuppliers,
+						eq(invSuppliers.id, invSupplierProducts.supplierId),
+					)
+					.where(
+						and(
+							isNull(invSupplierProducts.archivedAt),
+							isNull(invSuppliers.archivedAt),
+						),
+					)
+			: []
+		const flagged: {
+			row: (typeof stock)[number]
+			left: number
+			runsOutDate: string
+			nextDelivery: string
+			supplierId: string
+			supplierName: string
+		}[] = []
+		for (const row of stock) {
+			const left = daysLeft.get(row.item.id)
+			if (!left || left.state !== 'ok') continue
+			// The preferred supplier's delivery days, else the one delivering first.
+			const options = products
+				.filter((product) => product.itemId === row.item.id)
+				.sort(
+					(a, b) =>
+						Number(b.preferred) - Number(a.preferred) ||
+						a.supplierName.localeCompare(b.supplierName),
+				)
+			const chosen = options[0]
+			if (!chosen) continue
+			const hit = runsOutBeforeDelivery({
+				daysLeft: left,
+				today: clock.date,
+				deliveryDays: chosen.deliveryDays,
+			})
+			if (!hit) continue
+			flagged.push({
+				row,
+				left: left.days,
+				runsOutDate: hit.runsOutDate,
+				nextDelivery: hit.nextDelivery,
+				supplierId: chosen.supplierId,
+				supplierName: chosen.supplierName,
+			})
+		}
+		if (flagged.length > 0) {
+			flagged.sort(
+				(a, b) =>
+					(a.runsOutDate < b.runsOutDate
+						? -1
+						: a.runsOutDate > b.runsOutDate
+							? 1
+							: 0) ||
+					a.left - b.left ||
+					a.row.item.name.localeCompare(b.row.item.name),
+			)
+			const top = flagged[0]!
+			push({
+				kind: 'runs_out_soon',
+				itemId: top.row.item.id,
+				itemName: top.row.item.name,
+				daysLeft: top.left,
+				runsOutDate: top.runsOutDate,
+				nextDeliveryDate: top.nextDelivery,
+				supplierId: top.supplierId,
+				supplierName: top.supplierName,
+				more: flagged.length - 1,
+			})
+		}
 	}
 
 	if (recipes) {

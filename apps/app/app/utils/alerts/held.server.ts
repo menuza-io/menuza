@@ -16,6 +16,15 @@ import {
 	User,
 	UserOrganization,
 } from '@repo/database'
+import {
+	INVENTORY_ALERT_MARKER_TYPE,
+	inventoryAlertKindFromNotificationType,
+	isSoldOutAlertKind,
+} from '#app/utils/inventory/manager-alerts.ts'
+import {
+	sendSoldOutEmail,
+	soldOutEmailCopy,
+} from '#app/utils/inventory/sold-out-alerts.server.ts'
 import { alertAppUrl, sendAlertEmail } from './order-alerts.server.ts'
 import {
 	loadAlertPolicySettings,
@@ -43,6 +52,22 @@ import {
  */
 
 const BATCH = 200
+
+/** The sold-out kind of an in-app alert or of the hidden marker of an email-only member. */
+function soldOutKindOf(type: string, rawPayload: string) {
+	const kind = inventoryAlertKindFromNotificationType(type)
+	if (kind) return isSoldOutAlertKind(kind) ? kind : null
+	if (type !== INVENTORY_ALERT_MARKER_TYPE) return null
+	try {
+		const parsed = JSON.parse(rawPayload) as { kind?: unknown }
+		return parsed.kind === 'inventory_sold_out' ||
+			parsed.kind === 'inventory_sold_out_back'
+			? parsed.kind
+			: null
+	} catch {
+		return null
+	}
+}
 
 function parse(value: string | null): AlertChannel[] {
 	try {
@@ -96,8 +121,16 @@ export async function releaseHeldAlerts(now = Date.now()): Promise<{
 				.from(Notification)
 				.where(eq(Notification.id, row.notificationId))
 				.limit(1)
+			// A sold-out alert (#478) held for quiet hours owes its email even when
+			// the member opened the in-app alert, or has no in-app alert at all (the
+			// row is then a hidden marker whose payload still says what it was).
+			const soldOutKind = notification
+				? soldOutKindOf(notification.type, notification.payload)
+				: null
+			const seen =
+				!!notification && (notification.isRead || notification.isSeen)
 			// Seen already: the phone has nothing to add.
-			if (!notification || notification.isRead || notification.isSeen) {
+			if (!notification || (seen && !soldOutKind)) {
 				await done()
 				result.skipped++
 				continue
@@ -133,7 +166,10 @@ export async function releaseHeldAlerts(now = Date.now()): Promise<{
 				continue
 			}
 
-			const owed = parse(row.heldChannels)
+			// What was seen needs no push; only the email is still owed.
+			const owed = parse(row.heldChannels).filter(
+				(channel) => !seen || channel === 'email',
+			)
 			const orderKind = orderAlertKindFromNotificationType(notification.type)
 			const alertsOn = orderKind
 				? await isOrderAlertsEnabled(row.organizationId)
@@ -205,6 +241,30 @@ export async function releaseHeldAlerts(now = Date.now()): Promise<{
 						delivered.push('email')
 					}
 				}
+			}
+			// A sold-out alert (#478) held for quiet hours owes its email too.
+			const inventoryKind = soldOutKind
+			if (owed.includes('email') && inventoryKind) {
+				const entries = Array.isArray(payload.soldOut) ? payload.soldOut : []
+				const dishes = entries.flatMap((entry: unknown) => {
+					const row = entry as { dish?: unknown; ingredient?: unknown }
+					return typeof row.dish === 'string' &&
+						typeof row.ingredient === 'string'
+						? [{ dish: row.dish, ingredient: row.ingredient }]
+						: []
+				})
+				const sent = await sendSoldOutEmail({
+					to: member.email,
+					orgSlug,
+					kind: inventoryKind,
+					copy: soldOutEmailCopy({
+						kind: inventoryKind,
+						count: Number(payload.count) || dishes.length || 1,
+						locationName,
+						dishes,
+					}),
+				})
+				if (sent) delivered.push('email')
 			}
 			if (dropped && delivered.length === 0) {
 				await markAlertsDropped([row.id])

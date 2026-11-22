@@ -9,6 +9,7 @@ import {
 	INVENTORY_ALERT_TYPE_PREFIX,
 	inventoryAlertAllowedFor,
 	inventoryAlertKindFromNotificationType,
+	isSoldOutAlertKind,
 } from './manager-alerts.ts'
 
 /**
@@ -48,6 +49,8 @@ export async function inventoryAlertVisibleOrgIds(
 				if (kind && PURCHASING_KINDS.includes(kind) && !features.purchasing) {
 					return
 				}
+				// Dishes come off the menu through recipes (#478).
+				if (kind && isSoldOutAlertKind(kind) && !features.recipes) return
 				const held = new Set<string>(
 					await getUserInventoryGrants(userId, organizationId),
 				)

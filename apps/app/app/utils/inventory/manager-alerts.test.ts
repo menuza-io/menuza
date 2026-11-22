@@ -1,5 +1,5 @@
 import {
-	INVENTORY_NOTIFY_KINDS,
+	INVENTORY_ALL_NOTIFY_KINDS,
 	inventoryNotifyEventSchema,
 } from '@repo/inventory'
 import { describe, expect, it } from 'vitest'
@@ -18,10 +18,11 @@ import {
 
 describe('inventory alert vocabulary', () => {
 	it('maps every contract kind to a workflow and a notification type that round-trip', () => {
+		// Going off the menu and coming back are one setting.
 		expect(INVENTORY_ALERT_WORKFLOWS).toHaveLength(
-			INVENTORY_NOTIFY_KINDS.length,
+			INVENTORY_ALL_NOTIFY_KINDS.length - 1,
 		)
-		for (const kind of INVENTORY_NOTIFY_KINDS) {
+		for (const kind of INVENTORY_ALL_NOTIFY_KINDS) {
 			expect(isInventoryAlertWorkflow(inventoryAlertWorkflow(kind))).toBe(true)
 			expect(
 				inventoryAlertKindFromNotificationType(
@@ -77,7 +78,7 @@ describe('inventory alert vocabulary', () => {
 	})
 
 	it('writes email copy with the count and optional place for every kind', () => {
-		for (const kind of INVENTORY_NOTIFY_KINDS) {
+		for (const kind of INVENTORY_ALL_NOTIFY_KINDS) {
 			const withPlace = describeInventoryAlert({
 				kind,
 				count: 2,
@@ -93,5 +94,34 @@ describe('inventory alert vocabulary', () => {
 			expect(without.subject).not.toContain('null')
 			expect(without.detail.length).toBeGreaterThan(10)
 		}
+	})
+
+	it('writes the email for a sold-out alert with the dishes and what ran out', () => {
+		const off = describeInventoryAlert({
+			kind: 'inventory_sold_out',
+			count: 3,
+			locationName: 'Olaya',
+			dishes: ['Burger', 'Wrap', 'Extra chicken'],
+			ingredients: ['Chicken', 'Chicken'],
+		})
+		expect(off.subject).toBe(
+			'Burger, Wrap and Extra chicken are off the menu at Olaya',
+		)
+		expect(off.detail).toContain('Chicken ran out at Olaya')
+		expect(off.detail).toContain('undo')
+		const back = describeInventoryAlert({
+			kind: 'inventory_sold_out_back',
+			count: 1,
+			locationName: null,
+			dishes: ['Burger'],
+			ingredients: ['Chicken'],
+		})
+		expect(back.subject).toBe('Burger is back on the menu')
+		expect(inventoryAlertPath('inventory_sold_out')).toBe(
+			'/inventory/today#sold-out',
+		)
+		expect(inventoryAlertWorkflow('inventory_sold_out_back')).toBe(
+			'inventory.sold_out',
+		)
 	})
 })

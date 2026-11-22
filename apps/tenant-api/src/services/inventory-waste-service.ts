@@ -5,6 +5,7 @@ import {
 	type WasteEntry,
 	type WasteEntryRefusalCode,
 	type WasteSummary,
+	quantityInCurrentUnit,
 } from '@repo/inventory'
 import { daysBetween } from '@repo/reservations'
 import { invItemCosts, invItems, invMovements, invWaste } from '@repo/tenant-db'
@@ -27,6 +28,7 @@ import {
 	withInventoryWrite,
 } from '../lib/inventory-write.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
+import { loadUnitChanges } from './inventory-history.ts'
 import {
 	assertLocationAllowed,
 	badRequest,
@@ -359,6 +361,16 @@ export async function undoWaste(
 		) {
 			throw new InventoryError('undo_expired', 409)
 		}
+		// The item's unit changed since this was logged: the reversal would put
+		// the old quantity into stock counted in the new unit.
+		if (original.itemId) {
+			const changes = (await loadUnitChanges(tx, [original.itemId])).get(
+				original.itemId,
+			)
+			if (changes?.some((change) => change.at > original.createdAt)) {
+				throw new InventoryError('undo_expired', 409)
+			}
+		}
 		const id = newId()
 		const businessDate = await locationBusinessDate(
 			tx,
@@ -454,6 +466,10 @@ async function entriesFor(
 	])
 	const itemById = new Map(items.map((item) => [item.id, item]))
 	const undone = new Map(reversals.map((row) => [row.reversesId, row.at]))
+	const unitChanges = await loadUnitChanges(
+		db,
+		rows.flatMap((row) => (row.itemId ? [row.itemId] : [])),
+	)
 	return rows.map((row) => {
 		const item = row.itemId ? itemById.get(row.itemId) : undefined
 		const entry: WasteEntry = {
@@ -463,7 +479,14 @@ async function entriesFor(
 			itemName: item?.name ?? null,
 			category: item?.category ?? null,
 			baseUnit: item?.baseUnit ?? null,
-			quantity: row.quantity,
+			// Logged in the unit the item had then; shown in today's.
+			quantity: row.itemId
+				? quantityInCurrentUnit(
+						row.quantity,
+						row.createdAt,
+						unitChanges.get(row.itemId) ?? [],
+					)
+				: row.quantity,
 			reason: row.reason,
 			note: row.note,
 			actor: { kind: row.actorKind, id: row.actorId },

@@ -70,3 +70,24 @@ export function usageOf(result: {
 }): Record<string, number> {
 	return Object.fromEntries(result.usage.map((u) => [u.itemId, u.quantity]))
 }
+
+/** An ingredient group of members (primary first); each converts 1:1 unless given. */
+export function groupItem(
+	id: string,
+	members: (
+		string | { itemId: string; memberQuantity: number; groupQuantity: number }
+	)[],
+): RecipeItemFacts {
+	return {
+		id,
+		kind: 'group',
+		batchCounted: false,
+		group: {
+			members: members.map((member) =>
+				typeof member === 'string'
+					? { itemId: member, memberQuantity: 1, groupQuantity: 1 }
+					: member,
+			),
+		},
+	}
+}

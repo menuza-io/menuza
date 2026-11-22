@@ -105,6 +105,21 @@ export const attentionItemSchema = z.discriminatedUnion('kind', [
 		/** How many more dishes ran out at the till beyond this one. */
 		more: z.number().int(),
 	}),
+	/**
+	 * #492: stock runs out before the supplier's next delivery day, with or
+	 * without a level set. One row for the soonest, "and 3 more".
+	 */
+	z.object({
+		kind: z.literal('runs_out_soon'),
+		itemId: z.string(),
+		itemName: z.string(),
+		daysLeft: z.number(),
+		runsOutDate: isoDateSchema,
+		nextDeliveryDate: isoDateSchema,
+		supplierId: z.string(),
+		supplierName: z.string(),
+		more: z.number().int(),
+	}),
 	z.object({
 		kind: z.literal('unpaid_deliveries'),
 		count: z.number().int(),

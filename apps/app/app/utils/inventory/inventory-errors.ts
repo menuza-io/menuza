@@ -43,6 +43,39 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'idempotency_conflict') {
 			return msg`This change conflicted with an earlier attempt. Close this form and try again.`
 		}
+		if (error.code === 'change_blocked') {
+			return msg`Finish the open count, transfer or order that uses this item first.`
+		}
+		if (error.code === 'unit_change_too_small') {
+			return msg`That conversion would round an amount to nothing. Check the numbers.`
+		}
+		if (error.code === 'unit_not_changeable') {
+			return msg`Pick a different unit from the one the item has now.`
+		}
+		if (error.code === 'merge_unit_mismatch') {
+			return msg`These two items are counted in different units. Change one unit first.`
+		}
+		if (error.code === 'merge_kind_mismatch') {
+			return msg`One is bought and the other is made in house, so they cannot be merged.`
+		}
+		if (error.code === 'merge_not_undoable') {
+			return msg`The unit changed after this merge, so it can no longer be undone.`
+		}
+		if (error.code === 'merge_same_item') {
+			return msg`Pick a different item to merge into.`
+		}
+		if (error.code === 'needs_recipe_grant') {
+			return msg`This changes recipes, which needs the recipe role. Ask an owner to check your role.`
+		}
+		if (error.code === 'item_in_group') {
+			return msg`One of these items is already in a group.`
+		}
+		if (error.code === 'group_invalid') {
+			return msg`These items cannot be grouped like that. Check the units and the list.`
+		}
+		if (error.code === 'name_taken') {
+			return msg`Something else already has that name. Pick another name.`
+		}
 		if (error.code === 'already_undone') {
 			return msg`This was already undone.`
 		}
@@ -67,7 +100,10 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'currency_mismatch') {
 			return msg`The currency does not match this location's currency.`
 		}
-		if (error.code === 'not_batch_counted' || error.code === 'batch_not_counted') {
+		if (
+			error.code === 'not_batch_counted' ||
+			error.code === 'batch_not_counted'
+		) {
 			return msg`Turn on batch counting for this made item before recording a batch.`
 		}
 		if (error.code === 'not_found' || error.status === 404) {
@@ -178,7 +214,10 @@ export function batchSaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'not_a_made_item') {
 			return msg`Only an item made in house can be recorded as a batch.`
 		}
-		if (error.code === 'not_batch_counted' || error.code === 'batch_not_counted') {
+		if (
+			error.code === 'not_batch_counted' ||
+			error.code === 'batch_not_counted'
+		) {
 			return msg`Turn on batch counting for this made item before recording a batch.`
 		}
 		if (error.code === 'amount_out_of_range') {

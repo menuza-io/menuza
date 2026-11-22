@@ -217,12 +217,30 @@ const ROUTE_GRANTS: Record<
 	'POST /transfers/:id/send': UPDATE,
 	'POST /transfers/:id/receive': UPDATE,
 	'POST /transfers/:id/cancel': UPDATE,
+	// Setup: used in, unit change, groups, merge, setup checks.
+	'GET /items/:id/used-in': READ,
+	'POST /items/:id/unit-change/preview': READ,
+	'POST /items/:id/unit-change': UPDATE,
+	'GET /groups': READ,
+	'POST /groups': UPDATE,
+	'PATCH /groups/:id': UPDATE,
+	'POST /groups/:id/dissolve': UPDATE,
+	'GET /items/:id/merge-candidates': READ,
+	'GET /items/:id/merge-preview': READ,
+	'POST /items/:id/merge': UPDATE,
+	'GET /suppliers/:id/merge-preview': READ,
+	'POST /suppliers/:id/merge': PURCHASING,
+	'POST /merges/:id/undo': UPDATE,
+	'GET /setup-checks': READ,
+	'POST /setup-checks/dismiss': UPDATE,
+	'POST /setup-checks/fix': UPDATE,
 }
 
 /** POST routes that change nothing (they only carry a body), so a read grant and an impersonated token may call them. */
 const READ_ONLY_POSTS = new Set([
 	'POST /deliveries/:id/credit-message',
 	'POST /recipes/costs',
+	'POST /items/:id/unit-change/preview',
 ])
 
 /** Routes behind the `inventory.purchasing` flag (403 feature_disabled while it is off). */
@@ -239,6 +257,8 @@ const PURCHASING_FLAG_ROUTES = new Set([
 	'POST /orders/:id/cancel',
 	'GET /orders/:id/text',
 	'GET /orders/:id/receive-prefill',
+	'GET /suppliers/:id/merge-preview',
+	'POST /suppliers/:id/merge',
 ])
 
 /** Routes behind the `inventory.transfers` flag (403 feature_disabled while it is off). */
@@ -274,6 +294,11 @@ const RECIPES_FLAG_ROUTES = new Set([
 	'POST /items/:id/batch',
 	'GET /sold-out',
 	'POST /sold-out/:id/undo',
+	'GET /items/:id/used-in',
+	'GET /groups',
+	'POST /groups',
+	'PATCH /groups/:id',
+	'POST /groups/:id/dissolve',
 ])
 
 function routeKey(route: { method: string; path: string }): string {
@@ -853,6 +878,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		list: '',
 		count: '',
 		supplier: '',
+		supplier2: '',
 		product: '',
 		delivery: '',
 		waste: '',
@@ -919,6 +945,13 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				name: 'Sec supplier',
 				currency: 'SAR',
 				minimumOrderMinor: 1000,
+			})
+		).id
+		seed.supplier2 = (
+			await seedCall('POST', '/suppliers', {
+				clientId: 'sec-supplier-02',
+				name: 'Sec supplier two',
+				currency: 'SAR',
 			})
 		).id
 		seed.product = (
@@ -1415,6 +1448,103 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				location: false,
 			}),
 			c('GET /recipes/missing', `/recipes/missing?${q}`),
+			// Setup: used in, unit change, groups, merge, setup checks.
+			c('GET /items/:id/used-in', `/items/${seed.item}/used-in`, {
+				byId: true,
+				location: false,
+			}),
+			c(
+				'POST /items/:id/unit-change/preview',
+				`/items/${seed.item}/unit-change/preview`,
+				{
+					body: {
+						toUnit: 'piece',
+						oldAmount: '1',
+						newAmount: '180',
+						expectedVersion: 1,
+					},
+					byId: true,
+					location: false,
+				},
+			),
+			c('POST /items/:id/unit-change', `/items/${seed.item}/unit-change`, {
+				body: {
+					toUnit: 'piece',
+					oldAmount: '1',
+					newAmount: '180',
+					expectedVersion: 1,
+				},
+				byId: true,
+				location: false,
+			}),
+			c('GET /groups', `/groups?${q}`),
+			c('POST /groups', '/groups', {
+				body: {
+					clientId: 'sec-group-0001',
+					name: 'Sec group',
+					baseUnit: 'g',
+					members: [{ itemId: seed.item }],
+				},
+				location: false,
+			}),
+			c('PATCH /groups/:id', `/groups/${seed.item}`, {
+				body: { expectedVersion: 1, name: 'Renamed group' },
+				byId: true,
+				location: false,
+			}),
+			c('POST /groups/:id/dissolve', `/groups/${seed.item}/dissolve`, {
+				body: one,
+				byId: true,
+				location: false,
+			}),
+			c(
+				'GET /items/:id/merge-candidates',
+				`/items/${seed.item}/merge-candidates`,
+				{
+					byId: true,
+					location: false,
+				},
+			),
+			c(
+				'GET /items/:id/merge-preview',
+				`/items/${seed.item}/merge-preview?intoItemId=${seed.made}`,
+				{ byId: true, location: false },
+			),
+			c('POST /items/:id/merge', `/items/${seed.item}/merge`, {
+				body: {
+					intoItemId: seed.made,
+					expectedVersion: 1,
+					intoExpectedVersion: 1,
+				},
+				byId: true,
+				location: false,
+			}),
+			c(
+				'GET /suppliers/:id/merge-preview',
+				`/suppliers/${seed.supplier}/merge-preview?intoSupplierId=${seed.supplier2}`,
+				{ byId: true, location: false },
+			),
+			c('POST /suppliers/:id/merge', `/suppliers/${seed.supplier}/merge`, {
+				body: {
+					intoSupplierId: seed.supplier2,
+					expectedVersion: 1,
+					intoExpectedVersion: 1,
+				},
+				byId: true,
+				location: false,
+			}),
+			c('POST /merges/:id/undo', `/merges/${seed.item}/undo`, {
+				body: {},
+				byId: true,
+				location: false,
+			}),
+			c('GET /setup-checks', `/setup-checks?${q}`),
+			c('POST /setup-checks/dismiss', '/setup-checks/dismiss', {
+				body: { locationId: loc, key: 'sec:key', fingerprint: 'x' },
+			}),
+			c('POST /setup-checks/fix', '/setup-checks/fix', {
+				body: { locationId: loc, key: 'sec:key', fingerprint: 'x' },
+			}),
 			c('POST /items/:id/batch', `/items/${seed.made}/batch`, {
 				body: {
 					clientId: 'sec-batch-0001',
@@ -1698,7 +1828,11 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		const token = await mintInventoryToken({ grants: [READ, UPDATE] })
 		const current = (await (
 			await call('GET', '/operator/inventory/settings', { token })
-		).json()) as { version: number; targetFoodCostBp: number; unitSystem: string }
+		).json()) as {
+			version: number
+			targetFoodCostBp: number
+			unitSystem: string
+		}
 		const put = await call('PUT', '/operator/inventory/settings', {
 			token,
 			body: {

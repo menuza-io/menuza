@@ -36,6 +36,7 @@ import {
 	clearRecipe,
 	dishesWithoutRecipe,
 	getRecipe,
+	listItemUsedIn,
 	putRecipe,
 	recipeCosts,
 } from '../services/inventory-recipes-service.ts'
@@ -219,3 +220,20 @@ operatorInventoryRecipesRoutes.post(
 		}
 	},
 )
+
+// Where an item is used (#518): the dishes, sizes, options and made items
+// whose current recipe has a line for it.
+operatorInventoryRecipesRoutes.get('/items/:id/used-in', reads(), async (c) => {
+	try {
+		const ctx = getInventoryAuth(c)
+		return respond(
+			ctx,
+			await listItemUsedIn(await getTenantDb(ctx.orgId), {
+				itemId: idParam(c),
+				caller: inventoryCaller(ctx),
+			}),
+		)
+	} catch (error) {
+		return inventoryErrorResponse(error)
+	}
+})

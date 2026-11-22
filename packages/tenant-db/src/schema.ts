@@ -8614,6 +8614,9 @@ export const invItems = sqliteTable(
 		autoSoldOut: integer('auto_sold_out', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// Set when this duplicate was merged into another item (#493): history
+		// stays here, readers follow the link. Cleared by an undo.
+		mergedIntoId: text('merged_into_id'),
 		archivedAt: integer('archived_at'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
@@ -8980,6 +8983,8 @@ export const invSuppliers = sqliteTable(
 		paymentTerms: text('payment_terms'),
 		vatNumber: text('vat_number'),
 		notes: text('notes'),
+		// Set when this duplicate supplier was merged into another (#493).
+		mergedIntoId: text('merged_into_id'),
 		archivedAt: integer('archived_at'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
@@ -10076,6 +10081,181 @@ export const invTransferLines = sqliteTable(
 		),
 	],
 )
+
+// ── Setup: unit change, groups, merge, checks, sold-out alerts ──────────────
+// (tenant migration 0062_inventory_setup; #494, #495, #493, #510, #478)
+
+// An item's base unit changed (#494). The ledger is NOT rewritten: older
+// rows stay in the unit they were written in and readers convert them with
+// this record (`new = old * factor_num / factor_den`). The row is inserted
+// open (`completed_at` null) in the same transaction that changes the item,
+// which is what the triggers look for before they allow a base unit or a used
+// unit size to change; the transaction closes it before it commits.
+export const invUnitChanges = sqliteTable(
+	'inv_unit_changes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		fromUnit: text('from_unit', { enum: INV_BASE_UNIT_VALUES }).notNull(),
+		toUnit: text('to_unit', { enum: INV_BASE_UNIT_VALUES }).notNull(),
+		// New thousandths in one old thousandth, as a fraction of two integers.
+		factorNum: integer('factor_num').notNull(),
+		factorDen: integer('factor_den').notNull(),
+		actorKind: text('actor_kind', { enum: INV_ACTOR_KIND_VALUES }).notNull(),
+		actorId: text('actor_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		completedAt: integer('completed_at'),
+	},
+	(table) => [
+		index('idx_inv_unit_changes_item').on(table.itemId, table.createdAt),
+		check(
+			'chk_inv_unit_changes_factor',
+			sql`${table.factorNum} > 0 and ${table.factorDen} > 0`,
+		),
+	],
+)
+
+// An ingredient group (#495): the group IS an item (`inv_items` row, never
+// counted, bought or stocked itself); recipes name it like any item and the
+// engine takes stock from its members, primary first. A group has no
+// movements and no costs of its own: its stock is the members' total and its
+// cost is the primary's.
+export const invItemGroups = sqliteTable('inv_item_groups', {
+	itemId: text('item_id')
+		.primaryKey()
+		.references(() => invItems.id),
+	createdAt: integer('created_at').notNull().default(nowMs),
+})
+
+// `member_quantity` member thousandths equal `group_quantity` group
+// thousandths (a bottle counted in pieces is 1 piece = 1000 ml). `rank` 0 is
+// the primary. An item belongs to at most one group.
+export const invItemGroupMembers = sqliteTable(
+	'inv_item_group_members',
+	{
+		groupItemId: text('group_item_id')
+			.notNull()
+			.references(() => invItemGroups.itemId),
+		memberItemId: text('member_item_id')
+			.notNull()
+			.references(() => invItems.id),
+		rank: integer('rank').notNull(),
+		memberQuantity: integer('member_quantity').notNull().default(1),
+		groupQuantity: integer('group_quantity').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({ columns: [table.groupItemId, table.memberItemId] }),
+		uniqueIndex('uniq_inv_item_group_members_member').on(table.memberItemId),
+		uniqueIndex('uniq_inv_item_group_members_rank').on(
+			table.groupItemId,
+			table.rank,
+		),
+		check(
+			'chk_inv_item_group_members_amounts',
+			sql`${table.rank} >= 0 and ${table.memberQuantity} > 0 and ${table.groupQuantity} > 0`,
+		),
+	],
+)
+
+export const INV_MERGE_KIND_VALUES = ['item', 'supplier'] as const
+export const INV_MERGE_STATUS_VALUES = ['done', 'undone'] as const
+
+// A merge of a duplicate into the item or supplier to keep (#493), with what
+// moved so an undo within 24 hours puts it back as it was. Ids and numbers
+// only (`snapshot`).
+export const invMerges = sqliteTable(
+	'inv_merges',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		kind: text('kind', { enum: INV_MERGE_KIND_VALUES }).notNull(),
+		keptId: text('kept_id').notNull(),
+		mergedId: text('merged_id').notNull(),
+		status: text('status', { enum: INV_MERGE_STATUS_VALUES })
+			.notNull()
+			.default('done'),
+		snapshot: text('snapshot', { mode: 'json' })
+			.$type<Record<string, unknown>>()
+			.notNull(),
+		actorKind: text('actor_kind', { enum: INV_ACTOR_KIND_VALUES }).notNull(),
+		actorId: text('actor_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		undoUntil: integer('undo_until').notNull(),
+		undoneAt: integer('undone_at'),
+	},
+	(table) => [
+		index('idx_inv_merges_kept').on(table.kind, table.keptId),
+		index('idx_inv_merges_merged').on(table.kind, table.mergedId),
+		check('chk_inv_merges_kind', oneOf(table.kind, INV_MERGE_KIND_VALUES)),
+		check(
+			'chk_inv_merges_status',
+			oneOf(table.status, INV_MERGE_STATUS_VALUES),
+		),
+	],
+)
+
+// A "Check your setup" finding the owner dismissed (#510). `fingerprint` is
+// the evidence the finding rested on when it was dismissed; the finding
+// comes back when the data (so the fingerprint) changes.
+export const invSetupDismissals = sqliteTable('inv_setup_dismissals', {
+	key: text('key').primaryKey(),
+	fingerprint: text('fingerprint').notNull(),
+	dismissedByKind: text('dismissed_by_kind', {
+		enum: INV_ACTOR_KIND_VALUES,
+	}).notNull(),
+	dismissedById: text('dismissed_by_id'),
+	dismissedAt: integer('dismissed_at').notNull().default(nowMs),
+})
+
+export const INV_SOLD_OUT_ALERT_KIND_VALUES = ['out', 'back'] as const
+
+// Outbox of sold-out and come-back alerts (#478): one row per dish taken off
+// the menu or given back because of stock. The dispatcher groups unsent rows
+// per location and kind into one alert per 15 minutes and marks them sent.
+// Ids only: the App joins dish names, the ingredient name is read from
+// `cause_item_id` when the alert is built.
+export const invSoldOutAlerts = sqliteTable(
+	'inv_sold_out_alerts',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		kind: text('kind', { enum: INV_SOLD_OUT_ALERT_KIND_VALUES }).notNull(),
+		entityType: text('entity_type', {
+			enum: INV_SOLD_OUT_ENTITY_VALUES,
+		}).notNull(),
+		entityId: text('entity_id').notNull(),
+		causeItemId: text('cause_item_id')
+			.notNull()
+			.references(() => invItems.id),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		sentAt: integer('sent_at'),
+		eventId: text('event_id'),
+	},
+	(table) => [
+		index('idx_inv_sold_out_alerts_pending').on(
+			table.locationId,
+			table.kind,
+			table.sentAt,
+		),
+		check(
+			'chk_inv_sold_out_alerts_kind',
+			oneOf(table.kind, INV_SOLD_OUT_ALERT_KIND_VALUES),
+		),
+	],
+)
+
+export type InvUnitChangeRow = typeof invUnitChanges.$inferSelect
+export type InvItemGroupMemberRow = typeof invItemGroupMembers.$inferSelect
+export type InvMergeRow = typeof invMerges.$inferSelect
+export type InvSoldOutAlertRow = typeof invSoldOutAlerts.$inferSelect
 
 export type InvTransferRow = typeof invTransfers.$inferSelect
 export type InvTransferLineRow = typeof invTransferLines.$inferSelect

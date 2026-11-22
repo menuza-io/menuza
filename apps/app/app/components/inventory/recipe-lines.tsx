@@ -4,6 +4,7 @@ import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { QuantityStepper } from '@repo/ui/quantity-stepper'
+import { useEffect, useState } from 'react'
 import { type InventoryClient } from '#app/components/inventory/inventory-client-provider.tsx'
 import { useQuantityFormat } from '#app/components/inventory/inventory-prefs.tsx'
 import { ItemPicker } from '#app/components/inventory/item-picker.tsx'
@@ -74,6 +75,32 @@ export function RecipeLines({
 	const { t, i18n } = useLingui()
 	const quantity = useQuantityFormat()
 	const atLimit = draft.lines.length >= MAX_RECIPE_LINES
+	// "Fix" in the setup checks opens a recipe with an ingredient selected
+	// (`?recipeLine=<item id>`): ring it and bring it into view.
+	const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
+	useEffect(() => {
+		try {
+			setSelectedItemId(
+				new URLSearchParams(window.location.search).get('recipeLine'),
+			)
+		} catch {
+			setSelectedItemId(null)
+		}
+	}, [])
+	const selectedKey =
+		selectedItemId === null
+			? null
+			: (draft.lines.find(
+					(line) =>
+						line.itemId === selectedItemId ||
+						line.replacesItemId === selectedItemId,
+				)?.key ?? null)
+	useEffect(() => {
+		if (selectedKey === null) return
+		document
+			.querySelector(`[data-line-key="${CSS.escape(selectedKey)}"]`)
+			?.scrollIntoView?.({ block: 'center' })
+	}, [selectedKey])
 
 	return (
 		<div className="flex flex-col gap-3" data-testid={`${idPrefix}-lines`}>
@@ -92,8 +119,15 @@ export function RecipeLines({
 						return (
 							<li
 								key={line.key}
-								className="flex flex-col gap-2 rounded-lg border p-3"
+								className={
+									line.key === selectedKey
+										? 'ring-primary flex flex-col gap-2 rounded-lg border p-3 ring-2'
+										: 'flex flex-col gap-2 rounded-lg border p-3'
+								}
 								aria-label={t`Ingredient ${rowNumber}`}
+								aria-current={line.key === selectedKey ? 'true' : undefined}
+								data-line-key={line.key}
+								data-selected={line.key === selectedKey ? 'true' : undefined}
 								data-testid={`${idPrefix}-line-${index}`}
 							>
 								{line.mode === 'replace' ? (

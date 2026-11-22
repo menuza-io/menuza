@@ -24,8 +24,36 @@ export const PREP_HISTORY_DAYS = 28
 export const MIN_SAME_WEEKDAY_SAMPLES = 2
 export const MIN_HISTORY_DAYS = 7
 
+// One formatter and one answer per date: building an Intl formatter is slow
+// and Today and Stock ask about the same few dates for every item.
+let hijriFormatter: Intl.DateTimeFormat | null | undefined
+const hijriCache = new Map<string, number | null>()
+const HIJRI_CACHE_LIMIT = 4096
+
+function formatterForHijri(): Intl.DateTimeFormat | null {
+	if (hijriFormatter === undefined) {
+		try {
+			hijriFormatter = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
+				month: 'numeric',
+				timeZone: 'UTC',
+			})
+		} catch {
+			hijriFormatter = null
+		}
+	}
+	return hijriFormatter
+}
+
 /** The Hijri month (1-12) of a business date, `null` when the platform has no such calendar. */
 export function hijriMonth(date: string): number | null {
+	if (hijriCache.has(date)) return hijriCache.get(date) ?? null
+	const month = computeHijriMonth(date)
+	if (hijriCache.size >= HIJRI_CACHE_LIMIT) hijriCache.clear()
+	hijriCache.set(date, month)
+	return month
+}
+
+function computeHijriMonth(date: string): number | null {
 	const [year, month, day] = date.split('-').map(Number) as [
 		number,
 		number,
@@ -33,10 +61,11 @@ export function hijriMonth(date: string): number | null {
 	]
 	if (!year || !month || !day) return null
 	try {
-		const parts = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
-			month: 'numeric',
-			timeZone: 'UTC',
-		}).formatToParts(new Date(Date.UTC(year, month - 1, day, 12)))
+		const formatter = formatterForHijri()
+		if (!formatter) return null
+		const parts = formatter.formatToParts(
+			new Date(Date.UTC(year, month - 1, day, 12)),
+		)
 		const value = parts.find((part) => part.type === 'month')?.value
 		const parsed = value ? Number(value) : Number.NaN
 		return Number.isInteger(parsed) && parsed >= 1 && parsed <= 12

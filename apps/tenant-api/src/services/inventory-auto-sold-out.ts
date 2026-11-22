@@ -1,12 +1,14 @@
 import {
 	AUTO_SOLD_OUT_MAX_COUNT_AGE_MS,
 	type InventoryAvailabilityRequest,
+	type InventoryNotifyEvent,
 	type SoldOutEntityType,
 } from '@repo/inventory'
 import {
 	getTenantDb,
 	invCountEntries,
 	invCounts,
+	invItemGroupMembers,
 	invItemPlaces,
 	invItems,
 	invMovements,
@@ -24,8 +26,14 @@ import {
 	type InventoryAvailabilityOutcome,
 } from '../lib/inventory-availability.ts'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
+import { type InventoryNotifyOutcome } from '../lib/inventory-notify.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { onHandByItem } from './inventory-common.ts'
+import {
+	dispatchSoldOutAlerts,
+	queueSoldOutAlerts,
+	type QueuedSoldOutAlert,
+} from './inventory-sold-out-alerts.ts'
 import { runExclusive } from './order-service.ts'
 
 /**
@@ -56,6 +64,8 @@ import { runExclusive } from './order-service.ts'
 
 export type AutoSoldOutOptions = {
 	now?: number
+	/** Posts a sold-out alert to the App (tests replace it). */
+	notify?: (event: InventoryNotifyEvent) => Promise<InventoryNotifyOutcome>
 	/** Posts to the App (tests replace it). */
 	post?: (
 		request: InventoryAvailabilityRequest,
@@ -69,6 +79,8 @@ export type AutoSoldOutResult = {
 	restored: number
 	/** The App could not be reached; the next run asks again. */
 	deferred: boolean
+	/** When a held-back or failed sold-out alert should be tried again (#478). */
+	alertDueAt: number | null
 }
 
 type Owner = {
@@ -186,6 +198,59 @@ async function lastCountedAt(
 	)
 }
 
+/**
+ * Ingredient groups (#495) have no stock of their own: a group is at zero only
+ * when every member is, so its on hand is the members' total in group units
+ * and it was counted when any member was.
+ */
+export async function groupMembersOf(
+	db: TenantDatabase,
+	groupIds: readonly string[],
+) {
+	if (groupIds.length === 0)
+		return new Map<string, (typeof invItemGroupMembers.$inferSelect)[]>()
+	const rows = await queryInChunks(groupIds, (chunk) =>
+		db
+			.select()
+			.from(invItemGroupMembers)
+			.where(inArray(invItemGroupMembers.groupItemId, chunk))
+			.orderBy(invItemGroupMembers.rank),
+	)
+	const byGroup = new Map<string, typeof rows>()
+	for (const row of rows) {
+		const list = byGroup.get(row.groupItemId) ?? []
+		list.push(row)
+		byGroup.set(row.groupItemId, list)
+	}
+	return byGroup
+}
+
+export function applyGroupTotals(
+	onHand: Map<string, number>,
+	counted: Map<string, number>,
+	groups: ReadonlyMap<
+		string,
+		readonly (typeof invItemGroupMembers.$inferSelect)[]
+	>,
+): void {
+	for (const [groupId, members] of groups) {
+		let total = 0
+		let at: number | undefined
+		for (const member of members) {
+			total += Math.round(
+				((onHand.get(member.memberItemId) ?? 0) * member.groupQuantity) /
+					member.memberQuantity,
+			)
+			const memberAt = counted.get(member.memberItemId)
+			if (memberAt !== undefined && (at === undefined || memberAt > at)) {
+				at = memberAt
+			}
+		}
+		onHand.set(groupId, total)
+		if (at !== undefined) counted.set(groupId, at)
+	}
+}
+
 const running = new Map<string, { again: boolean }>()
 
 function entityOf(key: string): { type: SoldOutEntityType; id: string } {
@@ -200,7 +265,12 @@ async function syncOnce(
 	orgId: string,
 	options: AutoSoldOutOptions,
 ): Promise<AutoSoldOutResult> {
-	const out: AutoSoldOutResult = { soldOut: 0, restored: 0, deferred: false }
+	const out: AutoSoldOutResult = {
+		soldOut: 0,
+		restored: 0,
+		deferred: false,
+		alertDueAt: null,
+	}
 	const now = options.now ?? Date.now()
 	const post = options.post ?? postInventoryAvailability
 	const db = await getTenantDb(orgId)
@@ -225,8 +295,17 @@ async function syncOnce(
 	// Locations to look at: where an auto item has a place or moved, and
 	// wherever something is recorded as sold out.
 	const locationIds = new Set(rows.map((row) => row.locationId))
+	// A group's stock is its members': look where they have places or moved.
+	const groupMembers = await groupMembersOf(db, [...autoIds])
 	if (autoIds.size > 0) {
-		const ids = [...autoIds]
+		const ids = [
+			...new Set([
+				...autoIds,
+				...[...groupMembers.values()].flatMap((list) =>
+					list.map((member) => member.memberItemId),
+				),
+			]),
+		]
 		const [places, moved] = await Promise.all([
 			queryInChunks(ids, (chunk) =>
 				db
@@ -248,10 +327,18 @@ async function syncOnce(
 	const dependents = await dependentsOfItems(db, [...autoIds])
 	for (const locationId of [...locationIds].sort()) {
 		const itemIds = [...autoIds]
+		const memberIds = [
+			...new Set(
+				[...groupMembers.values()].flatMap((list) =>
+					list.map((member) => member.memberItemId),
+				),
+			),
+		]
 		const [onHand, counted] = await Promise.all([
 			onHandByItem(db, locationId),
-			lastCountedAt(db, locationId, itemIds),
+			lastCountedAt(db, locationId, [...itemIds, ...memberIds]),
 		])
+		applyGroupTotals(onHand, counted, groupMembers)
 		// Entities that must be off the menu now, with the item that ran out.
 		// A dish is only newly taken off when the ingredient was counted in the
 		// last 7 days, so an abandoned count does not suddenly clear the menu;
@@ -332,6 +419,7 @@ async function syncOnce(
 		await runExclusive(orgId, () =>
 			retryOnSqliteBusy(() =>
 				runTenantTransaction(db, async (tx) => {
+					const alerts: QueuedSoldOutAlert[] = []
 					for (const row of toForget) {
 						await tx.delete(invSoldOut).where(eq(invSoldOut.id, row.id))
 					}
@@ -353,13 +441,32 @@ async function syncOnce(
 								updatedAt: now,
 							})
 							.onConflictDoNothing()
-						if (ours) out.soldOut += 1
+						if (ours) {
+							out.soldOut += 1
+							alerts.push({
+								locationId,
+								kind: 'out',
+								entityType: entity.type,
+								entityId: entity.id,
+								causeItemId: desired.get(key)!,
+							})
+						}
 					}
 					for (const row of asked.restore) {
 						if (!answered.has(row.entityId)) continue
 						await tx.delete(invSoldOut).where(eq(invSoldOut.id, row.id))
-						if (confirmed.has(row.entityId)) out.restored += 1
+						if (confirmed.has(row.entityId)) {
+							out.restored += 1
+							alerts.push({
+								locationId,
+								kind: 'back',
+								entityType: row.entityType,
+								entityId: row.entityId,
+								causeItemId: row.causeItemId,
+							})
+						}
 					}
+					await queueSoldOutAlerts(tx, alerts, now)
 				}),
 			),
 		)
@@ -376,7 +483,12 @@ export async function syncAutoSoldOut(
 	orgId: string,
 	options: AutoSoldOutOptions = {},
 ): Promise<AutoSoldOutResult> {
-	const total: AutoSoldOutResult = { soldOut: 0, restored: 0, deferred: false }
+	const total: AutoSoldOutResult = {
+		soldOut: 0,
+		restored: 0,
+		deferred: false,
+		alertDueAt: null,
+	}
 	const active = running.get(orgId)
 	if (active) {
 		active.again = true
@@ -400,6 +512,19 @@ export async function syncAutoSoldOut(
 				break
 			}
 			if (!state.again) break
+		}
+		// Tell managers (one grouped alert per location per 15 minutes).
+		try {
+			const alerts = await dispatchSoldOutAlerts(orgId, {
+				now: options.now,
+				post: options.notify,
+			})
+			total.alertDueAt = alerts.dueAt
+		} catch (error) {
+			console.error('Inventory sold-out alert failed', {
+				orgId,
+				...errorLogFields(error),
+			})
 		}
 	} finally {
 		running.delete(orgId)

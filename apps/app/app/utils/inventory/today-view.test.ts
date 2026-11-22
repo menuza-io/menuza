@@ -22,6 +22,17 @@ const KINDS: Record<AttentionItem['kind'], AttentionItem> = {
 		supplierName: null,
 		more: 0,
 	},
+	runs_out_soon: {
+		kind: 'runs_out_soon',
+		itemId: 'i3',
+		itemName: 'Lamb',
+		daysLeft: 2.5,
+		runsOutDate: '2026-11-11',
+		nextDeliveryDate: '2026-11-13',
+		supplierId: 's1',
+		supplierName: 'Lamb Co',
+		more: 0,
+	},
 	count_due: { kind: 'count_due', date: '2026-11-09' },
 	count_in_progress: {
 		kind: 'count_in_progress',
@@ -97,6 +108,7 @@ describe('attentionTarget', () => {
 			prices_pending: '/acme/inventory/purchasing/deliveries/d2',
 			sold_out_by_stock: '/acme/inventory/today#sold-out',
 			ran_out_at_till: '/acme/menu/items/m1',
+			runs_out_soon: '/acme/inventory/stock/i3',
 		})
 	})
 

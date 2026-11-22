@@ -1579,6 +1579,25 @@ packaging fee, daily dish limits; #251, #257, #355, #422, #408, #409):**
   flags and `read:discount:any`; the App checks it in
   `utils/discounts/marketing-offers.server.ts`.
 
+**Inventory setup tools (used in, unit change, groups, merge, setup checks, days
+left, sold-out alerts; tenant `0062_inventory_setup`):**
+
+- Details: `docs/inventory.md` ("Setup tools"). Rules that bite: the stock
+  ledger and the other history stay append-only, so a unit change records a
+  conversion (`inv_unit_changes`) and every reader that shows or sums old
+  quantities calls `quantityInCurrentUnit`; a merge does not move history, it
+  links the archived duplicate (`merged_into_id`) and readers follow the link.
+- An ingredient group is an item (`inv_item_groups`); it has no stock or cost of
+  its own, is left out of counts, orders, prep and levels (`loadLocationStock`
+  hides it unless asked) and a sale takes stock from its first member
+  (`allocateToMembers`). Never mix groups with merges.
+- "Check your setup" findings are rules (no model); a dismissal keeps the
+  evidence `fingerprint` and the finding returns when it changes. Fixes call the
+  write function of the screen they mirror.
+- Days left reuses prep's `weekdayDemand`; do not add a second usage series.
+- Sold-out alerts reuse `/resources/inventory/notify` and the alert policy
+  (`applyAlertPolicy`); the payload is dish ids and the ingredient name only.
+
 **Inventory (stock, counts, waste, deliveries; phase 0 built):**
 
 - Plan and status: `docs/inventory-plan.md`; placement: ADR 049. All inventory

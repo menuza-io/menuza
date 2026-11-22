@@ -8,6 +8,8 @@ import {
 } from '@repo/inventory'
 import {
 	invItemCosts,
+	invItemGroupMembers,
+	invItemGroups,
 	invItems,
 	invRecipeLines,
 	invRecipes,
@@ -123,22 +125,49 @@ export async function loadVersionsAt(
 	return kept.map((row) => toRecipeVersion(row, lines.get(row.id) ?? []))
 }
 
-/** Made items (archived ones too: history may still use them) as engine facts. */
+/**
+ * Made items (archived ones too: history may still use them) and ingredient
+ * groups (#495, with their members in rank order) as engine facts.
+ */
 export async function loadMadeItemFacts(
 	db: InventoryReader,
 ): Promise<RecipeItemFacts[]> {
-	const rows = await db
-		.select({
-			id: invItems.id,
-			batchCounted: invItems.batchCounted,
-		})
-		.from(invItems)
-		.where(eq(invItems.kind, 'made'))
-	return rows.map((row) => ({
+	const [rows, groups, members] = await Promise.all([
+		db
+			.select({
+				id: invItems.id,
+				batchCounted: invItems.batchCounted,
+			})
+			.from(invItems)
+			.where(eq(invItems.kind, 'made')),
+		db.select({ itemId: invItemGroups.itemId }).from(invItemGroups),
+		db
+			.select()
+			.from(invItemGroupMembers)
+			.orderBy(invItemGroupMembers.groupItemId, invItemGroupMembers.rank),
+	])
+	const facts: RecipeItemFacts[] = rows.map((row) => ({
 		id: row.id,
 		kind: 'made' as const,
 		batchCounted: row.batchCounted,
 	}))
+	for (const group of groups) {
+		facts.push({
+			id: group.itemId,
+			kind: 'group' as const,
+			batchCounted: false,
+			group: {
+				members: members
+					.filter((member) => member.groupItemId === group.itemId)
+					.map((member) => ({
+						itemId: member.memberItemId,
+						memberQuantity: member.memberQuantity,
+						groupQuantity: member.groupQuantity,
+					})),
+			},
+		})
+	}
+	return facts
 }
 
 export type OwnerIds = Partial<Record<RecipeOwnerKind, readonly string[]>>
@@ -205,6 +234,22 @@ export async function loadItemCosts(db: InventoryReader): Promise<ItemCosts> {
 		last.set(row.itemId, row.last)
 		average.set(row.itemId, row.average)
 		currencyByItem.set(row.itemId, row.currency)
+	}
+	// A group costs what its primary costs (#495), per group base unit: the
+	// primary's cost per member thousandth times member over group quantity.
+	const primaries = await db
+		.select()
+		.from(invItemGroupMembers)
+		.where(eq(invItemGroupMembers.rank, 0))
+	for (const primary of primaries) {
+		const toGroup = (cost: number | null | undefined) =>
+			cost === null || cost === undefined
+				? null
+				: Math.round((cost * primary.memberQuantity) / primary.groupQuantity)
+		last.set(primary.groupItemId, toGroup(last.get(primary.memberItemId)))
+		average.set(primary.groupItemId, toGroup(average.get(primary.memberItemId)))
+		const currency = currencyByItem.get(primary.memberItemId)
+		if (currency) currencyByItem.set(primary.groupItemId, currency)
 	}
 	return { last, average, currency: rows[0]?.currency ?? null, currencyByItem }
 }

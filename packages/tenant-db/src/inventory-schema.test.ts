@@ -37,11 +37,14 @@ const INVENTORY_TABLES = [
 	'inv_delivery_lines',
 	'inv_idempotency_keys',
 	'inv_item_costs',
+	'inv_item_group_members',
+	'inv_item_groups',
 	'inv_item_place_areas',
 	'inv_item_places',
 	'inv_item_units',
 	'inv_items',
 	'inv_location_settings',
+	'inv_merges',
 	'inv_movements',
 	'inv_order_lines',
 	'inv_orders',
@@ -53,12 +56,15 @@ const INVENTORY_TABLES = [
 	'inv_recipes',
 	'inv_sale_usage',
 	'inv_settings',
+	'inv_setup_dismissals',
 	'inv_sold_out',
+	'inv_sold_out_alerts',
 	'inv_storage_areas',
 	'inv_supplier_products',
 	'inv_suppliers',
 	'inv_transfer_lines',
 	'inv_transfers',
+	'inv_unit_changes',
 	'inv_waste',
 ]
 
@@ -76,10 +82,12 @@ const INVENTORY_TRIGGERS = [
 	'inv_deliveries_photo_type_update',
 	'inv_delivery_lines_no_delete',
 	'inv_delivery_lines_no_update',
+	'inv_item_group_members_no_nesting',
 	'inv_item_units_size_fixed',
 	'inv_items_base_unit_fixed',
 	'inv_items_batch_counted_insert',
 	'inv_items_batch_counted_update',
+	'inv_movements_group_has_no_stock',
 	'inv_movements_no_delete',
 	'inv_movements_no_update',
 	'inv_order_lines_draft_delete',
@@ -104,6 +112,8 @@ const INVENTORY_TRIGGERS = [
 	'inv_transfer_lines_no_insert',
 	'inv_transfers_closed_final',
 	'inv_transfers_forward_only',
+	'inv_unit_changes_closed_final',
+	'inv_unit_changes_no_delete',
 	'inv_waste_no_delete',
 	'inv_waste_no_update',
 	'inv_waste_reversal_matches',
@@ -1333,5 +1343,102 @@ describe('inventory tenant schema (0033_inventory, 0034_inventory_orders, 0035_i
 		expect(columns.rows.map((row) => String(row.name))).toContain(
 			'send_claim_at',
 		)
+	})
+
+	describe('0062_inventory_setup', () => {
+		it('lets a base unit and a used unit size change only inside an open unit change', async () => {
+			const { client } = await openMigratedDb()
+			await insertItem(client, 'it_unit', { baseUnit: 'piece' })
+			await insertMovement(client, 'mv_unit', 'it_unit')
+			await client.execute({
+				sql: `INSERT INTO inv_item_units (id, item_id, name, base_quantity, used_at) VALUES ('u1', 'it_unit', 'Box', 10000, 1)`,
+				args: [],
+			})
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_items SET base_unit = 'g' WHERE id = 'it_unit'",
+				),
+				'inventory item unit is fixed',
+			)
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_item_units SET base_quantity = 1 WHERE id = 'u1'",
+				),
+				'inventory unit in use',
+			)
+			await client.execute(
+				`INSERT INTO inv_unit_changes (id, item_id, from_unit, to_unit, factor_num, factor_den, actor_kind) VALUES ('uc1', 'it_unit', 'piece', 'g', 180, 1, 'operator')`,
+			)
+			// The wrong target unit is still refused.
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_items SET base_unit = 'ml' WHERE id = 'it_unit'",
+				),
+				'inventory item unit is fixed',
+			)
+			await client.execute(
+				"UPDATE inv_items SET base_unit = 'g' WHERE id = 'it_unit'",
+			)
+			await client.execute(
+				"UPDATE inv_item_units SET base_quantity = 1800000 WHERE id = 'u1'",
+			)
+			await client.execute(
+				"UPDATE inv_unit_changes SET completed_at = 5 WHERE id = 'uc1'",
+			)
+			// Closed: final, and the gate is shut again.
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_unit_changes SET completed_at = 6 WHERE id = 'uc1'",
+				),
+				'inv_unit_changes is append-only',
+			)
+			await expectRejectsWith(
+				client.execute("DELETE FROM inv_unit_changes WHERE id = 'uc1'"),
+				'inv_unit_changes is append-only',
+			)
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_items SET base_unit = 'piece' WHERE id = 'it_unit'",
+				),
+				'inventory item unit is fixed',
+			)
+		})
+
+		it('keeps groups flat and without stock of their own', async () => {
+			const { client } = await openMigratedDb()
+			for (const id of ['g1', 'g2', 'm1', 'm2']) await insertItem(client, id)
+			await client.execute(
+				"INSERT INTO inv_item_groups (item_id) VALUES ('g1')",
+			)
+			await client.execute(
+				"INSERT INTO inv_item_groups (item_id) VALUES ('g2')",
+			)
+			await client.execute(
+				"INSERT INTO inv_item_group_members (group_item_id, member_item_id, rank) VALUES ('g1', 'm1', 0)",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_item_group_members (group_item_id, member_item_id, rank) VALUES ('g2', 'm1', 0)",
+				),
+				'inv_item_group_members.member_item_id',
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_item_group_members (group_item_id, member_item_id, rank) VALUES ('g1', 'g2', 1)",
+				),
+				'inventory groups cannot nest',
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_item_group_members (group_item_id, member_item_id, rank) VALUES ('g2', 'g1', 0)",
+				),
+				'inventory groups cannot nest',
+			)
+			await expectRejectsWith(
+				insertMovement(client, 'mv_group', 'g1'),
+				'inventory group has no stock',
+			)
+			await insertMovement(client, 'mv_member', 'm1')
+		})
 	})
 })

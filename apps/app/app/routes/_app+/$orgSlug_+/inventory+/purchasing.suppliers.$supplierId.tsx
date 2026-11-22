@@ -1,5 +1,9 @@
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
-import { supplierDetailSchema, type Supplier } from '@repo/inventory'
+import {
+	listSuppliersResultSchema,
+	supplierDetailSchema,
+	type Supplier,
+} from '@repo/inventory'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import {
 	AlertDialog,
@@ -18,6 +22,7 @@ import { useState } from 'react'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
 import { useNotifyInventoryChanged } from '#app/components/inventory/inventory-prefs.tsx'
+import { MergeSupplierDialog } from '#app/components/inventory/merge-dialog.tsx'
 import { usePurchasingContext } from '#app/components/inventory/purchasing-context.ts'
 import {
 	SupplierForm,
@@ -53,6 +58,11 @@ export default function InventorySupplierRoute() {
 		supplierId ? `/suppliers/${encodeURIComponent(supplierId)}` : null,
 		supplierDetailSchema,
 	)
+	const allSuppliers = useInventoryQuery(
+		'/suppliers',
+		listSuppliersResultSchema,
+	)
+	const [mergeOpen, setMergeOpen] = useState(false)
 	const [archiveOpen, setArchiveOpen] = useState(false)
 	const [busy, setBusy] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -175,7 +185,16 @@ export default function InventorySupplierRoute() {
 			/>
 
 			{ctx.canManagePurchasing ? (
-				<div className="border-t pt-4">
+				<div className="flex flex-wrap gap-2 border-t pt-4">
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => setMergeOpen(true)}
+						disabled={busy}
+						data-testid="supplier-merge"
+					>
+						<Trans>Merge into…</Trans>
+					</Button>
 					<Button
 						type="button"
 						variant="outline"
@@ -189,6 +208,17 @@ export default function InventorySupplierRoute() {
 				</div>
 			) : null}
 
+			<MergeSupplierDialog
+				supplierId={supplier.id}
+				supplierName={supplier.name}
+				suppliers={allSuppliers.data?.suppliers ?? []}
+				open={mergeOpen}
+				onOpenChange={setMergeOpen}
+				onMerged={() => {
+					ctx.reload()
+					ctx.close()
+				}}
+			/>
 			<AlertDialog
 				open={archiveOpen}
 				onOpenChange={(next) => {

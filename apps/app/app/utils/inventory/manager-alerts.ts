@@ -1,5 +1,5 @@
 import {
-	INVENTORY_NOTIFY_KINDS,
+	INVENTORY_ALL_NOTIFY_KINDS,
 	INVENTORY_PERMISSION_LIST,
 	INVENTORY_PERMISSIONS,
 	type InventoryNotifyKind,
@@ -16,13 +16,22 @@ import {
  */
 
 export {
-	INVENTORY_NOTIFY_KINDS as INVENTORY_ALERT_KINDS,
+	INVENTORY_ALL_NOTIFY_KINDS as INVENTORY_ALERT_KINDS,
 	type InventoryNotifyKind as InventoryAlertKind,
+}
+
+/** Dishes taken off the menu by stock, and given back (#478). */
+export function isSoldOutAlertKind(
+	kind: InventoryNotifyKind,
+): kind is 'inventory_sold_out' | 'inventory_sold_out_back' {
+	return kind === 'inventory_sold_out' || kind === 'inventory_sold_out_back'
 }
 
 const KIND_PREFIX = 'inventory_'
 
 export function inventoryAlertWorkflow(kind: InventoryNotifyKind) {
+	// Going off the menu and coming back are one setting.
+	if (kind === 'inventory_sold_out_back') return 'inventory.sold_out' as const
 	return `inventory.${kind.slice(KIND_PREFIX.length)}` as const
 }
 
@@ -31,6 +40,7 @@ export const INVENTORY_ALERT_WORKFLOWS = [
 	'inventory.count_review',
 	'inventory.delivery_due',
 	'inventory.price_rise',
+	'inventory.sold_out',
 ] as const satisfies readonly ReturnType<typeof inventoryAlertWorkflow>[]
 
 export function isInventoryAlertWorkflow(value: unknown): boolean {
@@ -59,7 +69,7 @@ export function inventoryAlertKindFromNotificationType(
 ): InventoryNotifyKind | null {
 	if (typeof type !== 'string') return null
 	return (
-		INVENTORY_NOTIFY_KINDS.find(
+		INVENTORY_ALL_NOTIFY_KINDS.find(
 			(kind) => inventoryAlertNotificationType(kind) === type,
 		) ?? null
 	)
@@ -104,6 +114,10 @@ export function inventoryAlertPath(kind: InventoryNotifyKind): string {
 		case 'inventory_delivery_due':
 		case 'inventory_price_rise':
 			return '/inventory/purchasing'
+		case 'inventory_sold_out':
+		case 'inventory_sold_out_back':
+			// The "Off the menu" panel on Today, where a manager can undo it.
+			return '/inventory/today#sold-out'
 	}
 }
 
@@ -119,15 +133,49 @@ function items(count: number): string {
 	return count === 1 ? '1 item' : `${count} items`
 }
 
+/** Dish names as a sentence: "Burger", "Burger and Wrap", "Burger, Wrap and 2 more". */
+function nameList(names: readonly string[], total: number): string {
+	const shown = names.slice(0, 3)
+	const extra = Math.max(0, total - shown.length)
+	if (extra > 0) return `${shown.join(', ')} and ${extra} more`
+	if (shown.length <= 1) return shown[0] ?? ''
+	return `${shown.slice(0, -1).join(', ')} and ${shown.at(-1)}`
+}
+
 /** Plain English for the email. The in-app copy is translated in the bell. */
 export function describeInventoryAlert(input: {
 	kind: InventoryNotifyKind
 	count: number
 	locationName: string | null
+	/** Sold-out kinds: the dishes and the ingredients that ran out. */
+	dishes?: readonly string[]
+	ingredients?: readonly string[]
 }): InventoryAlertCopy {
 	const { kind, count } = input
 	const place = input.locationName ? ` at ${input.locationName}` : ''
 	switch (kind) {
+		case 'inventory_sold_out':
+		case 'inventory_sold_out_back': {
+			const dishes = nameList(input.dishes ?? [], count) || 'A dish'
+			const ingredient = nameList(
+				[...new Set(input.ingredients ?? [])],
+				new Set(input.ingredients ?? []).size,
+			)
+			const off = kind === 'inventory_sold_out'
+			const verb = count === 1 ? 'is' : 'are'
+			const headline = off
+				? `${dishes} ${verb} off the menu${place}`
+				: `${dishes} ${verb} back on the menu${place}`
+			return {
+				eyebrow: 'Inventory',
+				subject: headline,
+				headline,
+				detail: off
+					? `${ingredient || 'An ingredient'} ran out${place}, so ${count === 1 ? 'this dish was' : 'these dishes were'} taken off the menu. If stock is not really out, undo it from Today.`
+					: `${ingredient || 'The ingredient'} is back in stock${place}, so ${count === 1 ? 'this dish was' : 'these dishes were'} put back on the menu.`,
+				actionLabel: off ? 'See and undo' : 'Open Today',
+			}
+		}
 		case 'inventory_low_stock': {
 			const headline = `${items(count)} ${count === 1 ? 'is' : 'are'} below the level you order at`
 			return {

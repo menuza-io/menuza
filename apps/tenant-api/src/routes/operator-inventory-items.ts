@@ -8,6 +8,7 @@ import {
 	listMovementsQuerySchema,
 	locationQuerySchema,
 	putItemPlaceSchema,
+	unitChangeBodySchema,
 	updateItemSchema,
 	versionOnlySchema,
 } from '@repo/inventory'
@@ -41,6 +42,10 @@ import {
 	setItemArchived,
 	updateItem,
 } from '../services/inventory-items-service.ts'
+import {
+	applyUnitChange,
+	previewUnitChange,
+} from '../services/inventory-unit-change-service.ts'
 
 /**
  * Items, their places and stock history under `/operator/inventory`. The
@@ -292,3 +297,55 @@ operatorInventoryItemsRoutes.get('/items/:id/movements', reads(), async (c) => {
 		return inventoryErrorResponse(error)
 	}
 })
+
+// Changing an item's unit (#494). The preview is a POST only because it
+// carries the conversion: it changes nothing, so a read token may call it.
+operatorInventoryItemsRoutes.post(
+	'/items/:id/unit-change/preview',
+	reads(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, unitChangeBodySchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await previewUnitChange(await getTenantDb(ctx.orgId), {
+					itemId: id,
+					body: body.data,
+					caller: inventoryCaller(ctx),
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryItemsRoutes.post(
+	'/items/:id/unit-change',
+	writes(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			// It converts stock at every place the item is kept: not for a token
+			// limited to some locations.
+			if (ctx.locationIds !== null) {
+				return inventoryDeny(403, 'location_forbidden')
+			}
+			const id = idParam(c)
+			const body = await parseBody(c, unitChangeBodySchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await applyUnitChange(inventoryCaller(ctx), {
+					itemId: id,
+					body: body.data,
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)

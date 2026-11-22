@@ -3,7 +3,9 @@ import os from 'node:os'
 import path from 'node:path'
 import {
 	type InventoryAvailabilityRequest,
+	type InventoryNotifyEvent,
 	AUTO_SOLD_OUT_MAX_COUNT_AGE_MS,
+	inventoryNotifyEventSchema,
 } from '@repo/inventory'
 import {
 	destroyTenantDb,
@@ -15,6 +17,7 @@ import {
 	invRecipeLines,
 	invRecipes,
 	invSoldOut,
+	invSoldOutAlerts,
 	provisionTenantDb,
 	type TenantDatabase,
 } from '@repo/tenant-db'
@@ -25,6 +28,7 @@ import {
 	seedInventoryContextForTest,
 } from '../lib/inventory-context.ts'
 import { type InventoryAvailabilityOutcome } from '../lib/inventory-availability.ts'
+import { type InventoryNotifyOutcome } from '../lib/inventory-notify.ts'
 import {
 	dependentsOfItems,
 	syncAutoSoldOut,
@@ -380,6 +384,177 @@ describe('auto sold out', () => {
 			expect(
 				(await db.select().from(invSoldOut)).every((r) => r.state === 'out'),
 			).toBe(true)
+		})
+	})
+
+	describe('manager alerts (#478)', () => {
+		const alerts: InventoryNotifyEvent[] = []
+		let notifyOutcome: InventoryNotifyOutcome['status'] | 'skipped' =
+			'delivered'
+		const notify = async (event: InventoryNotifyEvent) => {
+			if (notifyOutcome === 'retry')
+				return { status: 'retry', code: 'x' } as const
+			if (notifyOutcome === 'rejected') {
+				return { status: 'rejected', code: 'http_400' } as const
+			}
+			alerts.push(event)
+			return notifyOutcome === 'skipped'
+				? ({ status: 'delivered', skipped: 'feature_off' } as const)
+				: ({ status: 'delivered' } as const)
+		}
+		const run = (at: number) => syncAutoSoldOut(ORG, { now: at, post, notify })
+
+		async function restock() {
+			await db.insert(invMovements).values({
+				locationId: LOC,
+				itemId: 'it_chicken',
+				quantity: 2_000_000,
+				kind: 'delivery',
+				sourceType: 'delivery',
+				sourceId: 'd2',
+				businessDate: '2026-01-11',
+				actorKind: 'system',
+				createdAt: NOW + 1,
+			})
+		}
+
+		beforeEach(() => {
+			alerts.length = 0
+			notifyOutcome = 'delivered'
+		})
+
+		it('sends one grouped alert with the ingredient when dishes go off the menu', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			await run(NOW)
+			expect(alerts).toHaveLength(1)
+			const alert = alerts[0]!
+			expect(inventoryNotifyEventSchema.parse(alert)).toMatchObject({
+				orgId: ORG,
+				kind: 'inventory_sold_out',
+				locationId: LOC,
+				count: 3,
+			})
+			expect(alert.soldOut!.map((entry) => entry.entityId).sort()).toEqual([
+				'burger',
+				'opt_extra',
+				'wrap',
+			])
+			expect(
+				new Set(alert.soldOut!.map((entry) => entry.ingredientName)),
+			).toEqual(new Set(['Chicken']))
+			// Ids, a count and the ingredient: nothing that names a guest.
+			expect(Object.keys(alert).sort()).toEqual(
+				['count', 'eventId', 'kind', 'locationId', 'orgId', 'soldOut'].sort(),
+			)
+			// Running again sends nothing more.
+			await run(NOW + 1000)
+			expect(alerts).toHaveLength(1)
+		})
+
+		it('sends a second alert when the dishes come back', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			await run(NOW)
+			await restock()
+			await run(NOW + 60_000)
+			expect(alerts.map((alert) => alert.kind)).toEqual([
+				'inventory_sold_out',
+				'inventory_sold_out_back',
+			])
+			expect(alerts[1]).toMatchObject({ count: 3 })
+			expect(alerts[1]!.soldOut![0]!.ingredientName).toBe('Chicken')
+		})
+
+		it('groups per location into one alert per 15 minutes', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			await run(NOW)
+			expect(alerts).toHaveLength(1)
+			// Another dish needs the same chicken a minute later.
+			await recipe('menu_item', 'bowl', 'it_chicken')
+			const held = await run(NOW + 60_000)
+			expect(alerts).toHaveLength(1)
+			expect(held.alertDueAt).toBe(NOW + 15 * 60_000)
+			await run(NOW + 14 * 60_000)
+			expect(alerts).toHaveLength(1)
+			const later = await run(NOW + 16 * 60_000)
+			expect(alerts).toHaveLength(2)
+			expect(alerts[1]).toMatchObject({ kind: 'inventory_sold_out', count: 1 })
+			expect(alerts[1]!.soldOut![0]!.entityId).toBe('bowl')
+			expect(later.alertDueAt).toBeNull()
+		})
+
+		it('keeps an alert the App could not take and sends it on the next run', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			notifyOutcome = 'retry'
+			const first = await run(NOW)
+			expect(alerts).toHaveLength(0)
+			expect(first.alertDueAt).toBe(NOW + 5 * 60_000)
+			notifyOutcome = 'delivered'
+			await run(NOW + 6 * 60_000)
+			expect(alerts).toHaveLength(1)
+		})
+
+		it('says nothing about a dish that came back before anyone was told it went', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			notifyOutcome = 'retry'
+			await run(NOW)
+			await restock()
+			await run(NOW + 60_000)
+			notifyOutcome = 'delivered'
+			await run(NOW + 120_000)
+			expect(alerts).toHaveLength(0)
+		})
+
+		it('does not start the 15-minute window for an alert the App skipped', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			notifyOutcome = 'skipped'
+			await run(NOW)
+			expect(alerts).toHaveLength(1)
+			notifyOutcome = 'delivered'
+			// A new dish goes off a minute later: nobody was told before, so it is sent now.
+			await recipe('menu_item', 'bowl', 'it_chicken')
+			await run(NOW + 60_000)
+			expect(alerts).toHaveLength(2)
+			expect(alerts[1]).toMatchObject({ kind: 'inventory_sold_out', count: 1 })
+		})
+
+		it('keeps trying for an hour when the App refuses a kind it does not know yet', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			notifyOutcome = 'rejected'
+			const first = await run(NOW)
+			expect(first.alertDueAt).toBe(NOW + 5 * 60_000)
+			notifyOutcome = 'delivered'
+			await run(NOW + 10 * 60_000)
+			expect(alerts).toHaveLength(1)
+		})
+
+		it('does not let a give-back cancel a sold-out that came after it', async () => {
+			await stock({ onHand: 0, countedAt: NOW - 24 * 60 * 60 * 1000 })
+			await db.insert(invSoldOutAlerts).values({
+				id: 'a_back',
+				locationId: LOC,
+				kind: 'back',
+				entityType: 'item',
+				entityId: 'plain_rice',
+				causeItemId: 'it_rice',
+				createdAt: NOW - 2000,
+			})
+			await db.insert(invSoldOutAlerts).values({
+				id: 'a_out',
+				locationId: LOC,
+				kind: 'out',
+				entityType: 'item',
+				entityId: 'plain_rice',
+				causeItemId: 'it_rice',
+				createdAt: NOW - 1000,
+			})
+			await run(NOW)
+			const kinds = alerts.map((alert) => alert.kind).sort()
+			expect(kinds).toContain('inventory_sold_out_back')
+			expect(
+				alerts
+					.filter((alert) => alert.kind === 'inventory_sold_out')
+					.flatMap((alert) => alert.soldOut!.map((entry) => entry.entityId)),
+			).toContain('plain_rice')
 		})
 	})
 })

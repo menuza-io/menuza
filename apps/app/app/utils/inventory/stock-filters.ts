@@ -13,6 +13,8 @@ export type StockFilters = {
 	areaId: string
 	/** "Low or out": items that need ordering. */
 	lowOnly: boolean
+	/** `daysLeft` puts the items that run out soonest first. */
+	sort: 'name' | 'daysLeft'
 	limit: number
 }
 
@@ -29,6 +31,7 @@ export function parseStockFilters(params: URLSearchParams): StockFilters {
 		category: params.get('category') ?? NO_FILTER,
 		areaId: params.get('area') ?? NO_FILTER,
 		lowOnly: params.get('low') === '1',
+		sort: params.get('sort') === 'daysLeft' ? 'daysLeft' : 'name',
 		limit,
 	}
 }
@@ -40,6 +43,7 @@ export function hasActiveStockFilters(filters: StockFilters): boolean {
 		filters.areaId !== NO_FILTER ||
 		filters.lowOnly
 	)
+	// Sorting is not a filter: it never empties the list.
 }
 
 /** `GET /items` path for the current filters at a location. */
@@ -52,12 +56,13 @@ export function stockListPath(
 	if (filters.category !== NO_FILTER) params.set('category', filters.category)
 	if (filters.areaId !== NO_FILTER) params.set('areaId', filters.areaId)
 	if (filters.lowOnly) params.set('status', 'attention')
+	if (filters.sort === 'daysLeft') params.set('sort', 'daysLeft')
 	params.set('limit', String(filters.limit))
 	return `/items?${params.toString()}`
 }
 
 export type StockFilterPatch = Partial<
-	Pick<StockFilters, 'q' | 'category' | 'areaId' | 'lowOnly' | 'limit'>
+	Pick<StockFilters, 'q' | 'category' | 'areaId' | 'lowOnly' | 'sort' | 'limit'>
 >
 
 /**
@@ -85,6 +90,9 @@ export function applyStockFilterPatch(
 	}
 	if (patch.lowOnly !== undefined)
 		setOrDelete('low', patch.lowOnly ? '1' : null)
+	if (patch.sort !== undefined) {
+		setOrDelete('sort', patch.sort === 'daysLeft' ? 'daysLeft' : null)
+	}
 	if (patch.limit !== undefined) {
 		setOrDelete(
 			'limit',
@@ -101,6 +109,8 @@ export function applyStockFilterPatch(
 /** Clears every Stock filter and keeps the rest (for example `locationId`). */
 export function clearStockFilters(current: URLSearchParams): URLSearchParams {
 	const next = new URLSearchParams(current)
-	for (const key of ['q', 'category', 'area', 'low', 'limit']) next.delete(key)
+	for (const key of ['q', 'category', 'area', 'low', 'sort', 'limit']) {
+		next.delete(key)
+	}
 	return next
 }

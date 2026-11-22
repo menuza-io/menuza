@@ -72,6 +72,13 @@ export const ADJUSTMENT_REASON_LABELS: Record<
 	other: msg`Other`,
 }
 
+/** Reasons the system writes on an adjustment (never picked by a person). */
+export const SYSTEM_ADJUSTMENT_LABELS: Record<string, MessageDescriptor> = {
+	merged: msg`Merged with a duplicate`,
+	merge_undone: msg`Merge undone`,
+	unit_changed: msg`Unit changed`,
+}
+
 export const MOVEMENT_KIND_LABELS: Record<MovementKind, MessageDescriptor> = {
 	delivery: msg`Delivered`,
 	sale: msg`Used by sales`,

@@ -27,13 +27,38 @@ export type RecipeVersion = {
 	lines: readonly RecipeLineSpec[]
 }
 
+/**
+ * One member of an ingredient group (#495): `memberQuantity` member
+ * thousandths are `groupQuantity` group thousandths (a bottle counted in
+ * pieces is 1 piece = 1000 ml).
+ */
+export type GroupMemberSpec = {
+	itemId: string
+	memberQuantity: number
+	groupQuantity: number
+}
+
 /** What the engine needs to know of an inventory item. */
 export type RecipeItemFacts = {
 	id: string
-	kind: 'bought' | 'made'
+	kind: 'bought' | 'made' | 'group'
 	/** "We make this in batches and count it": sales use the item itself. */
 	batchCounted: boolean
+	/**
+	 * An ingredient group: its members, primary first. A recipe line naming the
+	 * group takes stock from the primary, then the next member (see
+	 * `expandLines` with `stock`); without a stock view the usage stays on the
+	 * group itself (plate costs read it that way).
+	 */
+	group?: { members: readonly GroupMemberSpec[] }
 }
+
+/**
+ * On hand per member item at one location, base thousandths of the member,
+ * as it stood before the source being worked out used anything. Members
+ * missing from the map count as having none.
+ */
+export type GroupStock = ReadonlyMap<string, number>
 
 /** A sold option: `quantity` is per dish (a line of 3 dishes with quantity 2 is 6). */
 export type SaleOption = {

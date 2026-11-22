@@ -9,22 +9,71 @@ type Message = { id: string; message: string }
  * carries a kind, a count and at most a location name, so that is all it can
  * say; the details are read in Inventory after opening it.
  */
+export type SoldOutDetails = { dishes: string[]; ingredients: string[] }
+
 export function inventoryAlertCopy(
 	kind: InventoryNotifyKind,
 	count: number,
 	_: Translate,
 	locationName?: string | null,
+	details?: SoldOutDetails | null,
 ): { subject: string; body: string } {
 	const n = Math.max(1, Math.floor(count) || 1)
-	const { subject, step } = describe(kind, n, _)
+	const { subject, step } = describe(kind, n, _, details ?? null)
 	const body = locationName
 		? `${step}\n\n${_(msg`Location: ${locationName}` as Message)}`
 		: step
 	return { subject, body }
 }
 
-function describe(kind: InventoryNotifyKind, n: number, _: Translate) {
+function soldOutCopy(
+	back: boolean,
+	n: number,
+	_: Translate,
+	details: SoldOutDetails | null,
+) {
+	const dish = n === 1 ? details?.dishes[0] : undefined
+	const ingredient = details?.ingredients[0]
+	const subject = dish
+		? back
+			? _(msg`${dish} is back on the menu` as Message)
+			: _(msg`${dish} is off the menu` as Message)
+		: back
+			? _(
+					plural(n, {
+						one: '# dish is back on the menu',
+						other: '# dishes are back on the menu',
+					}),
+				)
+			: _(
+					plural(n, {
+						one: '# dish is off the menu',
+						other: '# dishes are off the menu',
+					}),
+				)
+	const step = ingredient
+		? back
+			? _(msg`${ingredient} is back in stock.` as Message)
+			: _(
+					msg`${ingredient} ran out. Open Today to see what is off the menu and undo it.` as Message,
+				)
+		: back
+			? _(msg`Stock is back.` as Message)
+			: _(msg`An ingredient ran out. Open Today to undo it.` as Message)
+	return { subject, step }
+}
+
+function describe(
+	kind: InventoryNotifyKind,
+	n: number,
+	_: Translate,
+	details: SoldOutDetails | null,
+) {
 	switch (kind) {
+		case 'inventory_sold_out':
+			return soldOutCopy(false, n, _, details)
+		case 'inventory_sold_out_back':
+			return soldOutCopy(true, n, _, details)
 		case 'inventory_low_stock':
 			return {
 				subject: _(

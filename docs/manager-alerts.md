@@ -182,11 +182,40 @@ accept `test` and prefix TEST so it will show up marked.
   and version. The home Needs attention feed shows offline tablets in opening
   hours (`station_offline`, urgent, not dismissible).
 
+## Dishes off the menu by stock (#478)
+
+Inventory's auto sold-out takes a dish off the menu when an ingredient (or a
+whole ingredient group) runs out and gives it back when stock returns. Both tell
+the managers, on the engine above and nothing new beside it.
+
+- The region groups them: one alert per location and kind per 15 minutes
+  (`inv_sold_out_alerts`, `dispatchSoldOutAlerts`), "Burger is off the menu at
+  Downtown: chicken ran out" and, later, a second one when the dish is back. A
+  dish that is back before its alert went out cancels both.
+- The App route `POST /resources/inventory/notify` takes the kinds
+  `inventory_sold_out` and `inventory_sold_out_back` with a `soldOut` list (menu
+  ids and the ingredient's name, strict: no guest field is accepted). Dish names
+  are joined from the App's own menu. Recipients are members holding an
+  inventory grant whose location scope covers the place; `inventory.sold_out` is
+  their per-kind setting (going off and coming back are one setting); push uses
+  the existing Inventory category.
+- The in-app alert is a `Notification` row (the claim that makes a retried event
+  send nothing twice). The **email** goes through `applyAlertPolicy` like every
+  non-critical alert: quiet hours and snooze hold it (logged `held`, owed
+  `email`, released by `releaseHeldAlerts` when they end); the push has its own
+  decision in `pushStoredNotifications`. A sold-out alert is never critical.
+- The link opens Today at the "Off the menu" panel, where each dish has its
+  undo.
+- Needs `inventory.enabled` and `inventory.recipes`; no new flag or switch (the
+  existing `OPERATOR_PUSH_ENABLED` still stops every push).
+
 ## Tests
 
 - `packages/common/src/operator-alerts.test.ts`, `operator-alert-copy.test.ts`,
   `order-chime.test.ts`: kinds, strict events, policy, preview, copy without
   PII.
+- Dishes off the menu: `resources+/inventory.notify.sold-out.test.ts` (App) and
+  `services/inventory-auto-sold-out.test.ts` (grouping, come-back, windows).
 - App: `resources+/orders.notify.test.ts`, `utils/alerts/operator-push.test.ts`,
   `settings+/locations_.$locationId.order-alerts.test.ts`, the Orders hook and
   tracker tests, Terminals and the attention feed.

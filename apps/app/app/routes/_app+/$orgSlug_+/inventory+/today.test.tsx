@@ -593,6 +593,30 @@ describe('Inventory Today', () => {
 			).toHaveAttribute('href', '/acme/inventory/today#sold-out')
 		})
 
+		it('flags an item that runs out before the next delivery, with no level needed', async () => {
+			const list = await renderAttention([
+				{
+					kind: 'runs_out_soon',
+					itemId: 'i5',
+					itemName: 'Lamb shoulder',
+					daysLeft: 2.5,
+					runsOutDate: '2026-11-18',
+					nextDeliveryDate: '2026-11-20',
+					supplierId: 's1',
+					supplierName: 'Lamb Co',
+					more: 2,
+				},
+			])
+			// 18 November 2026 is a Wednesday and 20 November a Friday.
+			expect(list).toHaveTextContent(
+				'Lamb shoulder runs out Wednesday, but the next delivery from Lamb Co is Friday.',
+			)
+			expect(list).toHaveTextContent('And 2 more items run out first.')
+			expect(
+				screen.getByTestId('today-attention-link-runs_out_soon'),
+			).toHaveAttribute('href', '/acme/inventory/stock/i5')
+		})
+
 		it('lists a dish that ran out at the till and opens it', async () => {
 			const list = await renderAttention([
 				{ kind: 'ran_out_at_till', menuItemId: 'm7', times: 3, more: 0 },

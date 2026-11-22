@@ -41,6 +41,7 @@ import {
 } from '#app/components/inventory/inventory-prefs.tsx'
 import { MissingRecipesPanel } from '#app/components/inventory/missing-recipes-panel.tsx'
 import { InventorySetupChecklist } from '#app/components/inventory/setup-checklist.tsx'
+import { SetupChecksPanel } from '#app/components/inventory/setup-checks-panel.tsx'
 import { SoldOutPanel } from '#app/components/inventory/sold-out-panel.tsx'
 import { WasteBars } from '#app/components/inventory/waste-bars.tsx'
 import { useInventoryQuery } from '#app/hooks/use-inventory-client.ts'
@@ -391,6 +392,24 @@ export default function InventoryTodayRoute() {
 						</WorkspacePanel>
 					</div>
 				</div>
+			) : null}
+
+			{hasItems ? (
+				<SetupChecksPanel
+					orgSlug={orgSlug}
+					locationId={activeLocationId}
+					names={{
+						dishes: dishNames,
+						options: new Map(
+							menuOptions.map((option) => [option.id, option.name]),
+						),
+					}}
+					currency={currency}
+					limit={3}
+					seeAllHref={`/${orgSlug}/inventory/setup-check${linkSearch}`}
+					canEdit={canEdit}
+					canManagePurchasing={canManagePurchasing}
+				/>
 			) : null}
 
 			{transfersEnabled && locations.length > 1 && (hasItems || setupDone) ? (
@@ -815,6 +834,37 @@ function AttentionRow({
 				</>
 			)
 			action = <Trans>See what is off</Trans>
+			break
+		}
+		case 'runs_out_soon': {
+			const name = item.itemName
+			const supplier = item.supplierName
+			const runsOut = new Intl.DateTimeFormat(i18n.locale, {
+				weekday: 'long',
+			}).format(localDate(item.runsOutDate))
+			const delivery = new Intl.DateTimeFormat(i18n.locale, {
+				weekday: 'long',
+			}).format(localDate(item.nextDeliveryDate))
+			sentence = (
+				<>
+					<Trans>
+						<span className="font-medium wrap-anywhere">{name}</span> runs out{' '}
+						{runsOut}, but the next delivery from{' '}
+						<span className="wrap-anywhere">{supplier}</span> is {delivery}.
+					</Trans>
+					{item.more > 0 ? (
+						<>
+							{' '}
+							<Plural
+								value={item.more}
+								one="And # more item runs out first."
+								other="And # more items run out first."
+							/>
+						</>
+					) : null}
+				</>
+			)
+			action = <Trans>See days left</Trans>
 			break
 		}
 		case 'ran_out_at_till': {
