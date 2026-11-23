@@ -42,7 +42,7 @@
     "test:e2e:run": "cross-env CI=true playwright test",
     "test:e2e:waitlist": "cross-env LAUNCH_STATUS=CLOSED_BETA playwright test waitlist-referral",
     "test:e2e:waitlist:ui": "cross-env LAUNCH_STATUS=CLOSED_BETA playwright test waitlist-referral --ui",
-    "typecheck": "react-router typegen && tsc",
+    "typecheck": "react-router typegen && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run",
     "lingui:extract": "lingui extract",
     "test:e2e:install": "playwright install --with-deps chromium",
