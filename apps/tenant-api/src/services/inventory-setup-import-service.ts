@@ -626,7 +626,7 @@ export async function startSetupImport(
 		async (tx, ctx) => {
 			const now = ctx.now
 			const importId = newId()
-			const row: typeof invSetupImports.$inferInsert = {
+			const row: typeof invSetupImports.$inferSelect = {
 				id: importId,
 				status: 'reading',
 				totalFiles: parsedFiles.length,
@@ -673,24 +673,7 @@ export async function startSetupImport(
 
 	runInBackground(processSetupImport(caller.orgId, importRow.id))
 
-	return toDetail(
-		{
-			id: importRow.id,
-			status: importRow.status,
-			totalFiles: importRow.totalFiles,
-			completedFiles: importRow.completedFiles,
-			failedFiles: importRow.failedFiles,
-			proposalJson: { suppliers: [] },
-			createdByKind: importRow.createdByKind,
-			createdById: importRow.createdById,
-			appliedAt: null,
-			createdAt: importRow.createdAt,
-			updatedAt: importRow.updatedAt,
-		},
-		fileRows,
-		currency,
-		caller.cost,
-	)
+	return toDetail(importRow, fileRows, currency, caller.cost)
 }
 
 export async function getSetupImport(
