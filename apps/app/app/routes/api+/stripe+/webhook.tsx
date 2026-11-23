@@ -6,6 +6,7 @@ import {
 	stripe,
 	handleSubscriptionChange,
 	handleTrialEnd,
+	recordBillingInvoiceEvent,
 } from '#app/utils/payments.server.ts'
 import {
 	handlePrintStripeSession,
@@ -26,6 +27,7 @@ import {
 } from '#app/utils/restaurant-orders/payment-webhooks.server.ts'
 import {
 	handleConnectAccountUpdated,
+	handleConnectPayoutFailed,
 	recordShopOrderAdjustmentFromConnectWebhook,
 	recordShopOrderFromConnectWebhook,
 } from '#app/utils/shop.server.ts'
@@ -119,15 +121,33 @@ export async function action({ request, context }: ActionFunctionArgs) {
 			}
 
 			case 'invoice.payment_succeeded': {
-				const ignoredInvoice = event.data.object as Stripe.Invoice
-				// You can add additional logic here for successful payments
+				const invoice = event.data.object as Stripe.Invoice
+				// On the Admin Timeline as "recovered" after a failure (#279).
+				await recordBillingInvoiceEvent({
+					id: invoice.id,
+					customer: invoice.customer,
+					outcome: 'succeeded',
+				})
 				break
 			}
 
 			case 'invoice.payment_failed': {
-				const ignoredInvoice = event.data.object as Stripe.Invoice
-				// You can add additional logic here for failed payments
-				// Such as sending notifications to admins
+				const invoice = event.data.object as Stripe.Invoice
+				await recordBillingInvoiceEvent({
+					id: invoice.id,
+					customer: invoice.customer,
+					attempt_count: invoice.attempt_count,
+					outcome: 'failed',
+				})
+				break
+			}
+
+			case 'payout.failed': {
+				// A Connect payout the restaurant's bank refused (#279). Ids only.
+				await handleConnectPayoutFailed(
+					event.data.object as Stripe.Payout,
+					event.account,
+				)
 				break
 			}
 

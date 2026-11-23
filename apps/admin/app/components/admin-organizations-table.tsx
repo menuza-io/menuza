@@ -71,6 +71,8 @@ export interface Filters {
 	plan: string
 	/** `stuck`: in setup (no live location) for more than 14 days. */
 	setup: string
+	/** `me`, `unassigned` or a team member's id (#272). */
+	assignee: string
 }
 
 interface AdminOrganizationsTableProps {
@@ -79,6 +81,7 @@ interface AdminOrganizationsTableProps {
 	planNames: string[]
 	pagination: Pagination
 	filters: Filters
+	team: Array<{ id: string; name: string }>
 }
 
 const SubscriptionStatusBadge = ({ status }: { status: string | null }) => {
@@ -292,6 +295,7 @@ export function AdminOrganizationsTable({
 	planNames,
 	pagination,
 	filters,
+	team,
 }: AdminOrganizationsTableProps) {
 	const { _ } = useLingui()
 	const navigate = useNavigate()
@@ -344,8 +348,21 @@ export function AdminOrganizationsTable({
 					},
 				],
 			},
+			{
+				id: 'assignee',
+				label: _(msg`Contact`),
+				type: 'select',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(msg`is`) }],
+				icon: <Icon name="user" className="size-3.5" />,
+				options: [
+					{ value: 'me', label: _(msg`My restaurants`) },
+					{ value: 'unassigned', label: _(msg`Unassigned`) },
+					...team.map((person) => ({ value: person.id, label: person.name })),
+				],
+			},
 		],
-		[_, subscriptionStatuses, planNames],
+		[_, subscriptionStatuses, planNames, team],
 	)
 
 	const table = useReactTable({
@@ -362,7 +379,8 @@ export function AdminOrganizationsTable({
 		filters.search ||
 		filters.subscriptionStatus ||
 		filters.plan ||
-		filters.setup,
+		filters.setup ||
+		filters.assignee,
 	)
 	const rows = table.getRowModel().rows
 	const totalCount = pagination.totalCount

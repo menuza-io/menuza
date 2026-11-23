@@ -193,8 +193,14 @@ describe('checkout tips and the service fee', () => {
 		directory = fs.mkdtempSync(path.join(os.tmpdir(), 'orders-tips-fees-'))
 		vi.stubEnv('TENANT_DB_DIR', directory)
 		vi.stubEnv('DATA_REGION', 'us')
-		vi.stubEnv('INTERNAL_COMMAND_TOKEN', 'test-internal-token-very-long-and-secure-12345')
-		vi.stubEnv('TENANT_OPERATOR_TOKEN', 'test-operator-token-very-long-and-secure-12345')
+		vi.stubEnv(
+			'INTERNAL_COMMAND_TOKEN',
+			'test-internal-token-very-long-and-secure-12345',
+		)
+		vi.stubEnv(
+			'TENANT_OPERATOR_TOKEN',
+			'test-operator-token-very-long-and-secure-12345',
+		)
 		vi.stubEnv('JWT_SECRET', 'test-jwt-secret-123456789')
 		vi.stubEnv('AUTH_HMAC_SECRET', 'test-hmac-secret-123456789')
 		vi.stubEnv('APP_URL', 'https://app.test')
@@ -253,9 +259,7 @@ describe('checkout tips and the service fee', () => {
 		})
 
 		it('charges a custom amount exactly and stores a null percent', async () => {
-			const response = await postOrder(
-				orderBody({ tip: { amountMinor: 437 } }),
-			)
+			const response = await postOrder(orderBody({ tip: { amountMinor: 437 } }))
 			expect(response.status).toBe(201)
 			const { order } = await response.json()
 			expect(order.tipCents).toBe(437)
@@ -359,7 +363,9 @@ describe('checkout tips and the service fee', () => {
 
 		it('refuses a fee the page showed after the fee was turned off', async () => {
 			activeContext = menuContext()
-			const response = await postOrder(orderBody({ expectedServiceFeeMinor: 60 }))
+			const response = await postOrder(
+				orderBody({ expectedServiceFeeMinor: 60 }),
+			)
 			expect(response.status).toBe(409)
 			expect((await response.json()).error).toBe('service_fee_changed')
 		})
@@ -372,8 +378,12 @@ describe('checkout tips and the service fee', () => {
 		})
 
 		it('caps the fee after the percentage plus the fixed amount', async () => {
-			activeContext = feeContext(feeSettings({ fixedMinor: 100, capMinor: 120 }))
-			const response = await postOrder(orderBody({ expectedServiceFeeMinor: 120 }))
+			activeContext = feeContext(
+				feeSettings({ fixedMinor: 100, capMinor: 120 }),
+			)
+			const response = await postOrder(
+				orderBody({ expectedServiceFeeMinor: 120 }),
+			)
 			expect(response.status).toBe(201)
 			expect((await response.json()).order.serviceFeeCents).toBe(120)
 		})
@@ -382,14 +392,18 @@ describe('checkout tips and the service fee', () => {
 			activeContext = feeContext(
 				feeSettings({ smallOrderBelowMinor: 2500, smallOrderFeeMinor: 99 }),
 			)
-			const response = await postOrder(orderBody({ expectedServiceFeeMinor: 99 }))
+			const response = await postOrder(
+				orderBody({ expectedServiceFeeMinor: 99 }),
+			)
 			expect(response.status).toBe(201)
 			expect((await response.json()).order.serviceFeeCents).toBe(99)
 		})
 
 		it('adds tax on a taxable fee to the order tax and total', async () => {
 			activeContext = feeContext(feeSettings({ taxable: true }))
-			const response = await postOrder(orderBody({ expectedServiceFeeMinor: 60 }))
+			const response = await postOrder(
+				orderBody({ expectedServiceFeeMinor: 60 }),
+			)
 			expect(response.status).toBe(201)
 			const { order } = await response.json()
 			// 8.25 % of 0.60 is 0.0495, so 0.05.
@@ -403,7 +417,9 @@ describe('checkout tips and the service fee', () => {
 			activeContext = feeContext(feeSettings({ taxable: true }), {
 				taxInclusive: true,
 			})
-			const response = await postOrder(orderBody({ expectedServiceFeeMinor: 60 }))
+			const response = await postOrder(
+				orderBody({ expectedServiceFeeMinor: 60 }),
+			)
 			expect(response.status).toBe(201)
 			const { order } = await response.json()
 			// Items 20.00 (tax inside) + fee 0.60 (tax inside): the total adds the fee only.
@@ -418,7 +434,9 @@ describe('checkout tips and the service fee', () => {
 					locations: { 'loc-1': { enabled: true, percentBp: 'three' } },
 				},
 			})
-			const response = await postOrder(orderBody({ expectedServiceFeeMinor: 0 }))
+			const response = await postOrder(
+				orderBody({ expectedServiceFeeMinor: 0 }),
+			)
 			expect(response.status).toBe(503)
 			expect((await response.json()).error).toBe('service_fee_unavailable')
 		})
@@ -427,7 +445,9 @@ describe('checkout tips and the service fee', () => {
 			activeContext = menuContext({
 				serviceFee: { version: 99, locations: { 'loc-1': feeSettings() } },
 			})
-			const response = await postOrder(orderBody({ expectedServiceFeeMinor: 60 }))
+			const response = await postOrder(
+				orderBody({ expectedServiceFeeMinor: 60 }),
+			)
 			expect(response.status).toBe(503)
 		})
 

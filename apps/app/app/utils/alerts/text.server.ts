@@ -14,7 +14,11 @@ import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
  */
 
 export type AlertTextResult =
-	| { ok: true }
+	| {
+			ok: true
+			/** The provider's id for the text, when it gave one (delivery reports use it). */
+			providerMessageId?: string
+	  }
 	| { ok: false; code: 'unavailable' | 'rate_limited' | 'rejected' | 'failed' }
 
 export interface AlertTextProvider {
@@ -59,8 +63,19 @@ export class UsTenantApiTextProvider implements AlertTextProvider {
 				redirect: 'error',
 				signal: AbortSignal.timeout(15_000),
 			})
+			if (response.ok) {
+				const body = (await response.json().catch(() => null)) as {
+					sid?: unknown
+				} | null
+				return {
+					ok: true,
+					...(typeof body?.sid === 'string' &&
+					/^[A-Za-z0-9_-]{6,64}$/.test(body.sid)
+						? { providerMessageId: body.sid }
+						: {}),
+				}
+			}
 			void response.body?.cancel().catch(() => undefined)
-			if (response.ok) return { ok: true }
 			if (response.status === 429) return { ok: false, code: 'rate_limited' }
 			if (response.status === 409 || response.status === 503) {
 				return { ok: false, code: 'unavailable' }
@@ -89,7 +104,10 @@ export class MockAlertTextProvider implements AlertTextProvider {
 	}): Promise<AlertTextResult> {
 		if (this.failing.has(input.to)) return { ok: false, code: 'failed' }
 		this.sent.push(input)
-		return { ok: true }
+		return {
+			ok: true,
+			providerMessageId: `mock_${this.sent.length}_${Date.now()}`,
+		}
 	}
 
 	reset() {

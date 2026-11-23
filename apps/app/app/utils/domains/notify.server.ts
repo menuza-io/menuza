@@ -15,6 +15,7 @@ import {
 import { sendEmail, StaffingAlertEmail } from '@repo/email'
 import { createElement } from 'react'
 import { readLiveEnv } from '#app/utils/env.server.ts'
+import { recordOrganizationEvent } from '#app/utils/organization-events.server.ts'
 import {
 	DOMAIN_ALERT_TYPES,
 	domainAlertPath,
@@ -141,6 +142,58 @@ export function domainAlertEmail(
 	return { subject: copy[kind].headline, ...copy[kind] }
 }
 
+const DOMAIN_FAILING_STATES: Partial<Record<DomainAlertKind, string>> = {
+	expired: 'expired',
+	renewal_failed: 'renewal_failed',
+	registration_failed: 'registration_failed',
+	forwarding_failing: 'forwarding_failing',
+	sender_fallback: 'sender_fallback',
+}
+
+const DOMAIN_REMINDERS = new Set<DomainAlertKind>([
+	'pending_reminder',
+	'renewal_reminder',
+	'registrant_confirmation',
+])
+
+async function recordDomainTimelineEvent(input: {
+	organizationId: string
+	kind: DomainAlertKind
+	entityId: string
+	host: string
+}) {
+	const dedupeKey = `domain:${input.kind}:${input.entityId}`
+	if (input.kind === 'live') {
+		await recordOrganizationEvent({
+			organizationId: input.organizationId,
+			kind: 'domain_live',
+			payload: { host: input.host },
+			dedupeKey,
+		})
+	} else if (input.kind === 'registered') {
+		await recordOrganizationEvent({
+			organizationId: input.organizationId,
+			kind: 'domain_registered',
+			payload: { host: input.host },
+			dedupeKey,
+		})
+	} else if (DOMAIN_FAILING_STATES[input.kind]) {
+		await recordOrganizationEvent({
+			organizationId: input.organizationId,
+			kind: 'domain_failing',
+			payload: { host: input.host, state: DOMAIN_FAILING_STATES[input.kind] },
+			dedupeKey,
+		})
+	} else if (DOMAIN_REMINDERS.has(input.kind)) {
+		await recordOrganizationEvent({
+			organizationId: input.organizationId,
+			kind: 'reminder_sent',
+			payload: { reminderKind: `domain_${input.kind}` },
+			dedupeKey,
+		})
+	}
+}
+
 /**
  * Tells the people who run the domain: an in-app notification and an email,
  * once per `entityId` and kind. Never throws: a notice must not undo the work
@@ -156,6 +209,9 @@ export async function notifyDomainEvent(input: {
 	userIds?: string[]
 	detail?: string
 }): Promise<number> {
+	// One place sees every domain event, so the Admin Timeline (#279) is written
+	// here: host and state only, once per notice.
+	await recordDomainTimelineEvent(input)
 	try {
 		const [organization] = await db
 			.select({ slug: Organization.slug })

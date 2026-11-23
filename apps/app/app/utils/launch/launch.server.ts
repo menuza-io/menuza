@@ -36,6 +36,7 @@ import {
 } from '#app/utils/location-name.server.ts'
 import { loadMenuHealth } from '#app/utils/menu/menu-health.server.ts'
 import { menuHealthMeetsGrade } from '#app/utils/menu/menu-health.ts'
+import { recordOrganizationEvent } from '#app/utils/organization-events.server.ts'
 import { resolveReservationsLocationIds } from '#app/utils/reservations/access.server.ts'
 import { resolveRestaurantOnlinePayment } from '#app/utils/restaurant-orders/payment-config.server.ts'
 import { resolveSitesOrigin } from '#app/utils/sites/sites-origin.server.ts'
@@ -409,6 +410,16 @@ export async function loadLaunchChecklist({
 						),
 					),
 			)
+			// On the Admin Timeline (#279), once per location.
+			writes.push(
+				recordOrganizationEvent({
+					organizationId,
+					locationId: location.id,
+					kind: 'launch_live',
+					dedupeKey: `launch-live:${location.id}`,
+					at: now,
+				}),
+			)
 		}
 
 		const stepViews = steps.map((step) => {
@@ -419,6 +430,19 @@ export async function loadLaunchChecklist({
 				// Detection on read: record the change (an undone step goes back
 				// to to do and loses its date).
 				completedAt = done ? now : null
+				if (done) {
+					// A step completed, on the Admin Timeline (#279): the step key only.
+					writes.push(
+						recordOrganizationEvent({
+							organizationId,
+							locationId: location.id,
+							kind: 'launch_step_completed',
+							payload: { stepKey: step.key },
+							dedupeKey: `launch-step:${location.id}:${step.key}`,
+							at: now,
+						}),
+					)
+				}
 				writes.push(
 					recordStepState({
 						organizationId,

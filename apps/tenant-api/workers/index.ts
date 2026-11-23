@@ -441,6 +441,20 @@ async function handle(
 		return edgeApp.fetch(request, env)
 	}
 
+	// Texting routes that name no organization (#246, #241): the App asks for a
+	// number lookup or a text with the internal token, and the carrier reports a
+	// text's delivery. The edge answers them itself: they read no tenant database,
+	// and each route checks its own token or provider signature.
+	if (
+		(request.method === 'POST' &&
+			(url.pathname === '/api/phone-lookup' ||
+				url.pathname === '/api/alert-texts')) ||
+		(request.method === 'POST' &&
+			url.pathname.startsWith('/webhooks/sms-status/'))
+	) {
+		return edgeApp.fetch(request, env)
+	}
+
 	if (url.pathname === '/api/provision' && request.method === 'POST') {
 		return handleProvision(request, env, ctx, 'provision')
 	}

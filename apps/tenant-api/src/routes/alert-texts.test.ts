@@ -42,7 +42,26 @@ describe('POST /api/alert-texts (#241)', () => {
 			text: TEXT,
 		})
 		expect(response.status).toBe(200)
-		expect(sendSms).toHaveBeenCalledWith({ to: '+14155550100', message: TEXT })
+		expect(sendSms).toHaveBeenCalledWith(
+			expect.objectContaining({ to: '+14155550100', message: TEXT }),
+		)
+	})
+
+	it('answers with the provider message id so the App can log the delivery (#246)', async () => {
+		sendSms.mockResolvedValue({
+			success: true,
+			sid: 'SM1234567890abcdef',
+			mock: false,
+		})
+		const response = await send({
+			orgId: 'org_1',
+			to: '+14155550100',
+			text: TEXT,
+		})
+		expect(await response.json()).toEqual({
+			sent: true,
+			sid: 'SM1234567890abcdef',
+		})
 	})
 
 	it('caps texts to one number and for one organization, so neither can be flooded', async () => {

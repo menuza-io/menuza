@@ -79,6 +79,7 @@ import {
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
 import { requireOrganizationAdmin } from '#app/utils/organization/require-org-admin.server.ts'
+import { recordOrganizationEvent } from '#app/utils/organization-events.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
@@ -344,6 +345,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			{ status: 403 },
 		)
 		await integrationManager.disconnectIntegration(integrationId)
+		await recordOrganizationEvent({
+			organizationId: organization.id,
+			kind: 'integration_disconnected',
+			payload: { provider: integration.providerName || 'unknown' },
+			dedupeKey: `integration:${integrationId}:disconnected:${Math.floor(Date.now() / 60_000)}`,
+		})
 		return redirectWithToast(redirectTo, {
 			title: 'Disconnected',
 			description: 'The integration was disconnected.',

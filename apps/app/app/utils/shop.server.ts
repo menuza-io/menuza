@@ -40,6 +40,7 @@ import {
 	customers,
 	customerPaymentMethods,
 } from '@repo/tenant-db'
+import { recordOrganizationEvent } from '#app/utils/organization-events.server.ts'
 import { withPaymentsMock } from '#app/utils/payments-mock/config.server.ts'
 import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import { resolveVerifiedShopCustomer } from '#app/utils/tenant-customer-auth.server.ts'
@@ -1029,6 +1030,51 @@ export async function handleConnectAccountUpdated(event: unknown) {
 	if (Boolean(before.stripeConnectChargesEnabled) !== current.chargesEnabled) {
 		await notifyReservationsContextChanged(update.organizationId, 'payments')
 	}
+
+	// The payment account on the Admin Timeline (#279): connected once it can
+	// take charges and payouts, needs action when it cannot. The state is the
+	// key, so a retried webhook writes once.
+	await recordOrganizationEvent({
+		organizationId: update.organizationId,
+		kind:
+			current.chargesEnabled && current.payoutsEnabled
+				? 'payment_account_connected'
+				: 'payment_account_needs_action',
+		payload: {
+			accountId: update.accountId,
+			chargesEnabled: current.chargesEnabled,
+			payoutsEnabled: current.payoutsEnabled,
+		},
+		dedupeKey: `connect:${update.accountId}:${current.chargesEnabled}:${current.payoutsEnabled}`,
+	})
+}
+
+/**
+ * `payout.failed` on a connected account: the restaurant's payout was refused
+ * (closed account, bad details). Only the account, the payout id and Stripe's
+ * failure code are kept (#279).
+ */
+export async function handleConnectPayoutFailed(
+	payout: { id: string; failure_code?: string | null },
+	accountId: string | undefined,
+) {
+	if (!accountId) return
+	const [organization] = await db
+		.select({ id: OrganizationTable.id })
+		.from(OrganizationTable)
+		.where(eq(OrganizationTable.stripeConnectAccountId, accountId))
+		.limit(1)
+	if (!organization) return
+	await recordOrganizationEvent({
+		organizationId: organization.id,
+		kind: 'payout_failed',
+		payload: {
+			accountId,
+			payoutId: payout.id,
+			failureCode: payout.failure_code ?? null,
+		},
+		dedupeKey: `payout-failed:${payout.id}`,
+	})
 }
 
 export async function getPublicShopOrderStatus(options: {

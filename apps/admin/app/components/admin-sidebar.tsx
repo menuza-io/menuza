@@ -132,6 +132,24 @@ export function AdminSidebar({
 			icon: MessageSquareMoreIcon,
 		},
 		{
+			title: _(msg`Sign-in help`),
+			url: '/sign-in-help',
+			isActive: location.pathname.startsWith('/sign-in-help'),
+			icon: UserIcon,
+		},
+		{
+			title: _(msg`Request lookup`),
+			url: '/request-lookup',
+			isActive: location.pathname.startsWith('/request-lookup'),
+			icon: FileTextIcon,
+		},
+		{
+			title: _(msg`Assignments`),
+			url: '/assignments',
+			isActive: location.pathname.startsWith('/assignments'),
+			icon: BuildingIcon,
+		},
+		{
 			title: _(msg`Feature Flags`),
 			url: '/feature-flags',
 			isActive:

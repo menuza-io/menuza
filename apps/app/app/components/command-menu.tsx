@@ -14,6 +14,7 @@ import {
 import { Icon, type IconName } from '@repo/ui/icon'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouteLoaderData, useFetcher, useNavigate } from 'react-router'
+import { useOptionalHelp } from '#app/components/help/help-context.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
 	HIDDEN_PRINT_SHOP_NAV,
@@ -197,6 +198,10 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 	const fetcher = useFetcher()
 	const { _ } = useLingui()
 	const navigate = useNavigate()
+	const help = useOptionalHelp()
+	const docsUrl = rootData?.docsUrl ?? null
+	const whatsNewUrl = rootData?.whatsNewUrl ?? null
+	const supportUnread = rootData?.supportUnread ?? 0
 
 	const orgSlug =
 		rootData?.userOrganizations?.currentOrganization?.organization.slug
@@ -328,6 +333,70 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 							<Trans>Invite new members</Trans>
 						</CommandItem>
 					</CommandGroup>
+
+					{help ? (
+						<CommandGroup heading={_(t`Help`)}>
+							<CommandItem
+								keywords={[_(t`support`), _(t`contact`), _(t`question`)]}
+								onSelect={() => {
+									onOpenChange(false)
+									help.open({ kind: 'support' })
+								}}
+							>
+								<Icon name="message-circle" />
+								<Trans>Contact support</Trans>
+							</CommandItem>
+							<CommandItem
+								keywords={[_(t`bug`), _(t`broken`), _(t`error`), _(t`problem`)]}
+								onSelect={() => {
+									onOpenChange(false)
+									help.open({ kind: 'problem' })
+								}}
+							>
+								<Icon name="alert-triangle" />
+								<Trans>Report a problem</Trans>
+							</CommandItem>
+							{orgSlug ? (
+								<CommandItem
+									keywords={[_(t`support`), _(t`replies`), _(t`tickets`)]}
+									onSelect={() => {
+										void navigate(`/${orgSlug}/support`)
+										onOpenChange(false)
+									}}
+								>
+									<Icon name="message-square" />
+									<span>
+										<Trans>My support requests</Trans>
+										{supportUnread > 0 ? ` (${supportUnread})` : ''}
+									</span>
+								</CommandItem>
+							) : null}
+							{docsUrl ? (
+								<CommandItem
+									keywords={[_(t`docs`), _(t`guide`), _(t`articles`)]}
+									onSelect={() => {
+										window.open(docsUrl, '_blank', 'noopener,noreferrer')
+										onOpenChange(false)
+									}}
+								>
+									<Icon name="book-open" />
+									<Trans>Help articles</Trans>
+								</CommandItem>
+							) : null}
+							{whatsNewUrl ? (
+								<CommandItem
+									keywords={[_(t`changelog`), _(t`updates`), _(t`new`)]}
+									onSelect={() => {
+										window.open(whatsNewUrl, '_blank', 'noopener,noreferrer')
+										onOpenChange(false)
+									}}
+								>
+									<Icon name="sparkles" />
+									<Trans>What's new</Trans>
+								</CommandItem>
+							) : null}
+						</CommandGroup>
+					) : null}
 
 					{notes.length > 0 && (
 						<CommandGroup heading={_(t`Notes`)}>

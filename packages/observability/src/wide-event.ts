@@ -5,6 +5,8 @@ import {
 	runWithRequestContext,
 	getRequestContext,
 	addWideEventContext,
+	generateTraceId,
+	parseTraceId,
 } from './request-context.js'
 
 /**
@@ -78,6 +80,13 @@ export function wideEventMiddleware(
 	} = options
 
 	return (req: Request, res: Response, next: NextFunction): void => {
+		// Every request has a valid trace id (#385): the page's when the browser
+		// sent one, else a new one. It is written back onto the request so the
+		// request handler, the error page and the log line all see the same value.
+		const traceId = parseTraceId(req.get(traceIdHeader)) ?? generateTraceId()
+		req.headers[traceIdHeader.toLowerCase()] = traceId
+		res.setHeader(traceIdHeader, traceId)
+
 		// Skip logging for specified paths
 		const path = req.path || req.url
 		const shouldSkip = skipPaths.some((pattern) => {
@@ -95,7 +104,6 @@ export function wideEventMiddleware(
 
 		// Get or generate request ID
 		const requestId = req.get(requestIdHeader) || undefined
-		const traceId = req.get(traceIdHeader) || undefined
 
 		// Run the request within a Wide Event context
 		runWithRequestContext(requestId, () => {

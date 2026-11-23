@@ -136,7 +136,6 @@ function menuContext() {
 	}
 }
 
-
 function orderBody(overrides: Record<string, unknown> = {}) {
 	return {
 		slug: 'test-org',
@@ -185,7 +184,10 @@ describe('orders paid with a gift card', () => {
 
 	async function stored(id: string) {
 		const db = await getTenantDb(orgId)
-		const [row] = await db.select().from(restaurantOrders).where(eq(restaurantOrders.id, id))
+		const [row] = await db
+			.select()
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.id, id))
 		return row!
 	}
 
@@ -193,8 +195,14 @@ describe('orders paid with a gift card', () => {
 		directory = fs.mkdtempSync(path.join(os.tmpdir(), 'gift-card-orders-'))
 		vi.stubEnv('TENANT_DB_DIR', directory)
 		vi.stubEnv('DATA_REGION', 'us')
-		vi.stubEnv('INTERNAL_COMMAND_TOKEN', 'test-internal-token-very-long-and-secure-12345')
-		vi.stubEnv('TENANT_OPERATOR_TOKEN', 'test-operator-token-very-long-and-secure-12345')
+		vi.stubEnv(
+			'INTERNAL_COMMAND_TOKEN',
+			'test-internal-token-very-long-and-secure-12345',
+		)
+		vi.stubEnv(
+			'TENANT_OPERATOR_TOKEN',
+			'test-operator-token-very-long-and-secure-12345',
+		)
 		vi.stubEnv('JWT_SECRET', 'test-jwt-secret-123456789')
 		vi.stubEnv('AUTH_HMAC_SECRET', 'test-hmac-secret-123456789')
 		vi.stubEnv('APP_URL', 'https://app.test')
@@ -220,7 +228,8 @@ describe('orders paid with a gift card', () => {
 			}),
 		)
 		vi.mocked(resolveOrganizationForBrowserAuth).mockImplementation(
-			async (_origin, identity) => (identity?.slug === 'test-org' ? (ORG as never) : null),
+			async (_origin, identity) =>
+				identity?.slug === 'test-org' ? (ORG as never) : null,
 		)
 		vi.mocked(findActiveOrganizationById).mockImplementation(async (id) =>
 			id === orgId ? (ORG as never) : null,
@@ -263,7 +272,10 @@ describe('orders paid with a gift card', () => {
 			idempotencyKey: undefined,
 			giftCard: { code: big.code, expectedAmountMinor: 0 },
 		})
-		expect(covered.body.giftCard).toMatchObject({ appliedMinor: TOTAL, dueMinor: 0 })
+		expect(covered.body.giftCard).toMatchObject({
+			appliedMinor: TOTAL,
+			dueMinor: 0,
+		})
 	})
 
 	it('pays an order in full: nothing to collect, the balance drops, the redemption is on the ledger', async () => {
@@ -281,9 +293,12 @@ describe('orders paid with a gift card', () => {
 		})
 		const db = await getTenantDb(orgId)
 		expect(await giftCardBalance(db, sold.cardId)).toBe(5000 - TOTAL)
-		const redeem = (await db.select().from(giftCardLedger).where(eq(giftCardLedger.cardId, sold.cardId))).find(
-			(row) => row.kind === 'redeem',
-		)
+		const redeem = (
+			await db
+				.select()
+				.from(giftCardLedger)
+				.where(eq(giftCardLedger.cardId, sold.cardId))
+		).find((row) => row.kind === 'redeem')
 		expect(redeem).toMatchObject({
 			sourceType: 'restaurant_order',
 			sourceId: order.id,
@@ -304,7 +319,12 @@ describe('orders paid with a gift card', () => {
 		const quote = await getOrderQuote(orgId, orderId, placed.body.paymentToken)
 		expect(quote.ok && quote.data.totalCents).toBe(TOTAL - 1000)
 
-		const bound = await bindPaymentSession({ orgId, orderId, sessionId: 'cs_test_12345678', processor: 'connect' })
+		const bound = await bindPaymentSession({
+			orgId,
+			orderId,
+			sessionId: 'cs_test_12345678',
+			processor: 'connect',
+		})
 		expect(bound.ok).toBe(true)
 		// The whole total is not what the provider takes.
 		const wrong = await applyPaymentEvent({
@@ -399,7 +419,12 @@ describe('orders paid with a gift card', () => {
 				giftCard: { code: sold.code, expectedAmountMinor: 1000 },
 			})
 			const orderId = placed.body.order.id as string
-			await bindPaymentSession({ orgId, orderId, sessionId: 'cs_test_12345678', processor: 'connect' })
+			await bindPaymentSession({
+				orgId,
+				orderId,
+				sessionId: 'cs_test_12345678',
+				processor: 'connect',
+			})
 			await applyPaymentEvent({
 				orgId,
 				orderId,
@@ -427,9 +452,15 @@ describe('orders paid with a gift card', () => {
 			expect(refund.ok).toBe(true)
 			const db = await getTenantDb(orgId)
 			expect(await giftCardBalance(db, sold.cardId)).toBe(1000)
-			const rows = await db.select().from(restaurantOrderRefunds).where(eq(restaurantOrderRefunds.orderId, orderId))
+			const rows = await db
+				.select()
+				.from(restaurantOrderRefunds)
+				.where(eq(restaurantOrderRefunds.orderId, orderId))
 			const provider = rows.find((row) => row.kind === 'provider')
-			expect(provider).toMatchObject({ status: 'pending', amountCents: TOTAL - 1000 })
+			expect(provider).toMatchObject({
+				status: 'pending',
+				amountCents: TOTAL - 1000,
+			})
 			expect(rows.find((row) => row.kind === 'record')).toMatchObject({
 				status: 'succeeded',
 				amountCents: 1000,
@@ -450,7 +481,10 @@ describe('orders paid with a gift card', () => {
 			expect(refund.ok).toBe(true)
 			const db = await getTenantDb(orgId)
 			expect(await giftCardBalance(db, sold.cardId)).toBe(400)
-			const rows = await db.select().from(restaurantOrderRefunds).where(eq(restaurantOrderRefunds.orderId, orderId))
+			const rows = await db
+				.select()
+				.from(restaurantOrderRefunds)
+				.where(eq(restaurantOrderRefunds.orderId, orderId))
 			expect(rows.filter((row) => row.kind === 'provider')).toHaveLength(0)
 			// A replay of the same key books nothing more.
 			const replay = await createProviderRefundIntent({
@@ -476,8 +510,13 @@ describe('orders paid with a gift card', () => {
 			})
 			expect(more.ok).toBe(true)
 			expect(await giftCardBalance(db, sold.cardId)).toBe(1000)
-			const after = await db.select().from(restaurantOrderRefunds).where(eq(restaurantOrderRefunds.orderId, orderId))
-			expect(after.find((row) => row.kind === 'provider')).toMatchObject({ amountCents: 300 })
+			const after = await db
+				.select()
+				.from(restaurantOrderRefunds)
+				.where(eq(restaurantOrderRefunds.orderId, orderId))
+			expect(after.find((row) => row.kind === 'provider')).toMatchObject({
+				amountCents: 300,
+			})
 		})
 
 		it('a recorded refund of a pay-at-pickup order also returns the card part first', async () => {
@@ -487,7 +526,10 @@ describe('orders paid with a gift card', () => {
 				giftCard: { code: sold.code, expectedAmountMinor: 1000 },
 			})
 			const orderId = placed.body.order.id as string
-			await updateOperatorOrder(orgId, orderId, { status: 'accepted', markPaid: true })
+			await updateOperatorOrder(orgId, orderId, {
+				status: 'accepted',
+				markPaid: true,
+			})
 			const recorded = await recordOrderRefund(orgId, orderId, {
 				request: { amountCents: 700, note: null } as never,
 				actorId: 'user_1',

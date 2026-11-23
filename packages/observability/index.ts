@@ -27,6 +27,16 @@ export {
 	addWideEventContext,
 	runWithRequestContext,
 	generateRequestId,
+	generateTraceId,
+	parseTraceId,
 	WideEventBuilder,
 	type RequestContext,
 } from './src/request-context.js'
+
+export {
+	searchLogsByTraceId,
+	toLogSearchHit,
+	type LogSearchConfig,
+	type LogSearchHit,
+	type LogSearchResult,
+} from './src/log-search.js'

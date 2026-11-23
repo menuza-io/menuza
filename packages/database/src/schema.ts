@@ -819,6 +819,17 @@ export const OrganizationNoteUpload = sqliteTable(
 	],
 )
 
+/**
+ * Member feedback and support requests. One record serves both (#233, #406):
+ * `kind` is `feedback` (the sentiment form, `type` is POSITIVE, NEUTRAL or
+ * NEGATIVE), `support` (Contact support) or `problem` (Report a problem). A
+ * request has a status, a reply thread (`FeedbackMessage`; the first message is
+ * `message`) and a read time per side, which is what the unread badge counts.
+ * `context` is an allowlist (`@repo/common/support-requests`): restaurant,
+ * location, page path, app version and the error reference; never a guest's
+ * name, phone, email or order. Control plane only, so it works with the
+ * regional node down.
+ */
 export const Feedback = sqliteTable(
 	'Feedback',
 	{
@@ -844,10 +855,331 @@ export const Feedback = sqliteTable(
 				onDelete: 'cascade',
 				onUpdate: 'cascade',
 			}),
+		/** `feedback`, `support` or `problem`. */
+		kind: text().default('feedback').notNull(),
+		/** `open`, `waiting_on_you` or `closed` (requests only). */
+		status: text().default('open').notNull(),
+		subject: text(),
+		/** JSON, allowlisted keys only. */
+		context: text(),
+		/** The reference id (trace id) of the error the member came from. */
+		errorId: text(),
+		/** Object key of the one optional screenshot. */
+		screenshotKey: text(),
+		/** The Menuza contact the request was routed to (#272). */
+		assigneeId: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		lastMessageAt: integer({ mode: 'timestamp_ms' }),
+		/** `member` or `support`: who wrote last. */
+		lastMessageSide: text(),
+		/** When the member last read the thread; null: never. */
+		memberReadAt: integer({ mode: 'timestamp_ms' }),
+		/** When support last read the thread; null: never. */
+		supportReadAt: integer({ mode: 'timestamp_ms' }),
+		closedAt: integer({ mode: 'timestamp_ms' }),
+		closedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
 	},
 	(table) => [
 		index('Feedback_organizationId_idx').on(table.organizationId),
 		index('Feedback_userId_idx').on(table.userId),
+		index('Feedback_organizationId_kind_status_idx').on(
+			table.organizationId,
+			table.kind,
+			table.status,
+		),
+		index('Feedback_assigneeId_status_idx').on(table.assigneeId, table.status),
+		index('Feedback_kind_status_lastMessageAt_idx').on(
+			table.kind,
+			table.status,
+			table.lastMessageAt,
+		),
+	],
+)
+
+/** A reply in a support request's thread (#406). */
+export const FeedbackMessage = sqliteTable(
+	'FeedbackMessage',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		feedbackId: text()
+			.notNull()
+			.references(() => Feedback.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** `member` or `support`. */
+		side: text().notNull(),
+		authorId: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		body: text().notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('FeedbackMessage_feedbackId_createdAt_idx').on(
+			table.feedbackId,
+			table.createdAt,
+		),
+	],
+)
+
+/**
+ * Which Menuza team member looks after a restaurant (#272), by role and
+ * location scope. It grants no access: Admin permissions are unchanged. A row
+ * is never edited or deleted when someone is reassigned: `endedAt` is set and a
+ * new row starts, so the history is the table. `scopeKey` is the location id or
+ * `all`; one open row per organization, role and scope.
+ */
+export const OrganizationAssignment = sqliteTable(
+	'OrganizationAssignment',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		adminUserId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		/** `launch_specialist`, `account_manager` or `support`. */
+		role: text().notNull(),
+		/** The location, or null for all locations. */
+		locationId: text(),
+		scopeKey: text().default('all').notNull(),
+		startedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		endedAt: integer({ mode: 'timestamp_ms' }),
+		assignedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		endedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+	},
+	(table) => [
+		uniqueIndex('OrganizationAssignment_open_key')
+			.on(table.organizationId, table.role, table.scopeKey)
+			.where(sql`${table.endedAt} IS NULL`),
+		index('OrganizationAssignment_adminUserId_endedAt_idx').on(
+			table.adminUserId,
+			table.endedAt,
+		),
+		index('OrganizationAssignment_organizationId_startedAt_idx').on(
+			table.organizationId,
+			table.startedAt,
+		),
+	],
+)
+
+/**
+ * One account event of a restaurant for the Admin Timeline (#279): a payment,
+ * domain, billing, plan or launch event that has no audit row. `payload` holds
+ * ids, states and dates only; the allowlist per kind is
+ * `@repo/common/organization-events` and the writer refuses anything else.
+ * Never a guest's name, phone, email or order. Audit rows, support requests and
+ * assignments are read into the Timeline from their own tables, not copied.
+ */
+export const OrganizationEvent = sqliteTable(
+	'OrganizationEvent',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		locationId: text(),
+		kind: text().notNull(),
+		payload: text().default('{}').notNull(),
+		/** Makes a retried webhook write once. */
+		dedupeKey: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('OrganizationEvent_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+		index('OrganizationEvent_organizationId_kind_createdAt_idx').on(
+			table.organizationId,
+			table.kind,
+			table.createdAt,
+		),
+		uniqueIndex('OrganizationEvent_organizationId_dedupeKey_key')
+			.on(table.organizationId, table.dedupeKey)
+			.where(sql`${table.dedupeKey} IS NOT NULL`),
+	],
+)
+
+/** Support's own note on a restaurant, which can be pinned to the Timeline (#279). Admin only. */
+export const SupportNote = sqliteTable(
+	'SupportNote',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		authorId: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		body: text().notNull(),
+		pinned: integer({ mode: 'boolean' }).default(false).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SupportNote_organizationId_pinned_createdAt_idx').on(
+			table.organizationId,
+			table.pinned,
+			table.createdAt,
+		),
+	],
+)
+
+/**
+ * One sign-in code that was sent to an operator or to a contact of theirs
+ * (#246): when, which channel, what the provider reported and why it failed.
+ * It has NO column for the code and none for a hash of it: nothing here can
+ * be turned back into a code. The destination is kept as a keyed hash (for
+ * finding rows by address or number) and a masked hint. Rows are kept 7 days
+ * (`expiresAt`) and pruned by the hourly sweep.
+ */
+export const SignInCodeDelivery = sqliteTable(
+	'SignInCodeDelivery',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		userId: text().references(() => User.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		organizationId: text().references(() => Organization.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		/** `signup`, `reset_password`, `change_email`, `alert_recipient`, `phone_line` or `sign_in_help`. */
+		purpose: text().notNull(),
+		/** `email` or `sms`. */
+		channel: text().notNull(),
+		destinationHash: text().notNull(),
+		/** `j***@example.com` or `+1 ••• ••• 1234`. */
+		destinationHint: text().notNull(),
+		/** `resend`, `oci` or `twilio`. */
+		provider: text().notNull(),
+		providerMessageId: text(),
+		/** `sent`, `delivered`, `delayed`, `failed`, `bounced` or `complained`. */
+		status: text().default('sent').notNull(),
+		/** A short provider reason (bounce type, carrier error code); never message text. */
+		failureReason: text(),
+		/** From the text provider's lookup: `mobile`, `landline`, `voip` or `unknown`. */
+		lineType: text(),
+		carrier: text(),
+		numberValid: integer({ mode: 'boolean' }),
+		lookedUpAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		statusAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
+	},
+	(table) => [
+		index('SignInCodeDelivery_userId_createdAt_idx').on(
+			table.userId,
+			table.createdAt,
+		),
+		index('SignInCodeDelivery_destinationHash_createdAt_idx').on(
+			table.destinationHash,
+			table.createdAt,
+		),
+		index('SignInCodeDelivery_expiresAt_idx').on(table.expiresAt),
+		uniqueIndex('SignInCodeDelivery_provider_message_key')
+			.on(table.provider, table.providerMessageId)
+			.where(sql`${table.providerMessageId} IS NOT NULL`),
+	],
+)
+
+/**
+ * Caller verification (#291): support asks, the signed-in operator reads a
+ * 6-digit code out of the App, the agent types it. The code is made when the
+ * operator opens the card; only a keyed hash of it is stored, it is shown to
+ * the target user's own session only and never to the agent. It expires after 10 minutes and works once; five wrong entries
+ * lock verification for that user for an hour (`lockedUntil`). A sensitive
+ * Admin action needs `verifiedAt` within the last 15 minutes by the same agent.
+ */
+export const SupportVerification = sqliteTable(
+	'SupportVerification',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		/** The operator being verified. */
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		/** The Admin agent who asked. */
+		agentId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		/** Null until the operator opens the card and the code is generated. */
+		codeHash: text(),
+		/** The request is valid until this time (10 minutes after it was made). */
+		expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		attempts: integer().default(0).notNull(),
+		lockedUntil: integer({ mode: 'timestamp_ms' }),
+		/** When the code was entered correctly; the code cannot be used again. */
+		verifiedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SupportVerification_userId_createdAt_idx').on(
+			table.userId,
+			table.createdAt,
+		),
+		index('SupportVerification_agentId_userId_verifiedAt_idx').on(
+			table.agentId,
+			table.userId,
+			table.verifiedAt,
+		),
 	],
 )
 

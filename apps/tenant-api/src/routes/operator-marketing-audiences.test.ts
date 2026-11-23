@@ -126,7 +126,9 @@ describe('operator marketing audiences routes (#98)', () => {
 		}
 		// Four ready-made audiences plus this one.
 		expect(list.audiences).toHaveLength(5)
-		expect(list.audiences.find((a) => a.name === 'Ordered')?.counts.size).toBeNull()
+		expect(
+			list.audiences.find((a) => a.name === 'Ordered')?.counts.size,
+		).toBeNull()
 		const stale = await call('PUT', `/${audience.id}`, {
 			name: 'Ordered 2',
 			definition,
@@ -147,7 +149,10 @@ describe('operator marketing audiences routes (#98)', () => {
 	it('refuses sensitive rules, bad shapes and out-of-scope locations without echoing values', async () => {
 		const sensitive = await call('POST', '', {
 			name: 'Allergic',
-			definition: { match: 'all', rules: [{ field: 'allergy', value: 'peanut' }] },
+			definition: {
+				match: 'all',
+				rules: [{ field: 'allergy', value: 'peanut' }],
+			},
 		})
 		expect(sensitive.status).toBe(422)
 		const body = await sensitive.text()
@@ -186,13 +191,20 @@ describe('operator marketing audiences routes (#98)', () => {
 	it('previews counts only: no guest, and sizes under 5 as null', async () => {
 		const [guest] = await db
 			.insert(customers)
-			.values({ name: 'Secret Name', email: 'secret@example.com', phone: '+15550001111', phoneVerified: true })
+			.values({
+				name: 'Secret Name',
+				email: 'secret@example.com',
+				phone: '+15550001111',
+				phoneVerified: true,
+			})
 			.returning()
 		await insertOrder(orgId, { customerId: guest!.id })
 		const res = await call('POST', '/preview', { definition })
 		expect(res.status).toBe(200)
 		const text = await res.text()
-		expect(JSON.parse(text)).toEqual({ counts: { size: null, email: null, sms: null } })
+		expect(JSON.parse(text)).toEqual({
+			counts: { size: null, email: null, sms: null },
+		})
 		expect(text).not.toMatch(/Secret|secret@|\+1555/)
 	})
 

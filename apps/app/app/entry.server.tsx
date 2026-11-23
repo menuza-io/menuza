@@ -5,6 +5,13 @@ import {
 	makeTimings,
 } from '@repo/common'
 import { getInstanceInfo } from '@repo/common/litefs'
+import {
+	TRACE_ID_HEADER,
+	TraceIdProvider,
+	generateTraceId,
+	parseTraceId,
+	traceIdBootstrapScript,
+} from '@repo/common/trace-id'
 import { i18n, I18nProvider } from '@repo/i18n'
 import { logger, sanitizeUrl } from '@repo/observability'
 import { isbot } from 'isbot'
@@ -190,6 +197,12 @@ export default async function handleRequest(...args: DocRequestArgs) {
 	applyRuntimeHeaders(responseHeaders, request)
 	await applyInstanceHeaders(responseHeaders)
 
+	// The page-load trace id (#385): the browser sends it on later requests, the
+	// error page shows it and every log line for this request carries it.
+	const traceId =
+		parseTraceId(request.headers.get(TRACE_ID_HEADER)) ?? generateTraceId()
+	responseHeaders.set(TRACE_ID_HEADER, traceId)
+
 	const nonce = createNonce()
 	const locale = await linguiServer.getLocale(request)
 	await loadCatalog(locale)
@@ -238,15 +251,18 @@ export default async function handleRequest(...args: DocRequestArgs) {
 	const stream = await renderToReadableStream(
 		<I18nProvider i18n={i18n}>
 			<NonceProvider value={nonce}>
-				<ServerRouter
-					nonce={nonce}
-					context={documentContext}
-					url={request.url}
-				/>
+				<TraceIdProvider value={traceId}>
+					<ServerRouter
+						nonce={nonce}
+						context={documentContext}
+						url={request.url}
+					/>
+				</TraceIdProvider>
 			</NonceProvider>
 		</I18nProvider>,
 		{
 			nonce,
+			bootstrapScriptContent: traceIdBootstrapScript(traceId),
 			onError: () => {
 				didError = true
 			},
@@ -261,15 +277,50 @@ export default async function handleRequest(...args: DocRequestArgs) {
 	responseHeaders.append('Server-Timing', timings.toString())
 	applyContentSecurity(responseHeaders, nonce, requestHost)
 
+	const status = didError ? 500 : responseStatusCode
+	logFailedRequest(request, status, traceId)
 	return new Response(stream, {
 		headers: responseHeaders,
-		status: didError ? 500 : responseStatusCode,
+		status,
 	})
 }
 
-export async function handleDataRequest(response: Response) {
+/**
+ * A page or data response with a 5xx status gets one log line with the trace
+ * id the error page shows (#385), also when the failure was a thrown response
+ * that `handleError` never sees.
+ */
+export function logFailedRequest(
+	request: Request,
+	status: number,
+	traceId: string,
+) {
+	if (status < 500) return
+	logger.error(
+		{
+			traceId,
+			url: sanitizeUrl(request.url),
+			method: request.method,
+			statusCode: status,
+		},
+		'Request failed',
+	)
+}
+
+export async function handleDataRequest(
+	response: Response,
+	args?: { request?: Request },
+) {
 	applyRuntimeHeaders(response.headers)
 	await applyInstanceHeaders(response.headers)
+	const request = args?.request
+	const traceId = request
+		? parseTraceId(request.headers.get(TRACE_ID_HEADER))
+		: null
+	if (traceId) {
+		response.headers.set(TRACE_ID_HEADER, traceId)
+		logFailedRequest(request!, response.status, traceId)
+	}
 	return response
 }
 
@@ -284,6 +335,7 @@ export function handleError(
 	const requestLogger = logger.child({
 		url: sanitizeUrl(request.url),
 		method: request.method,
+		traceId: parseTraceId(request.headers.get(TRACE_ID_HEADER)) ?? undefined,
 	})
 
 	if (error instanceof Error) {

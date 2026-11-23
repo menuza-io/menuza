@@ -43,7 +43,10 @@ function unauthorized(c: Context) {
 
 const tickBodySchema = z
 	.object({
-		orgId: z.string().regex(TENANT_ORG_ID_PATTERN, 'Invalid orgId format').optional(),
+		orgId: z
+			.string()
+			.regex(TENANT_ORG_ID_PATTERN, 'Invalid orgId format')
+			.optional(),
 	})
 	.strict()
 

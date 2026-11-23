@@ -2,6 +2,13 @@ import { styleText } from 'node:util'
 import { contentSecurity } from '@nichtsam/helmet/content'
 import { NonceProvider, makeTimings } from '@repo/common'
 import { getInstanceInfo } from '@repo/common/litefs'
+import {
+	TRACE_ID_HEADER,
+	TraceIdProvider,
+	generateTraceId,
+	parseTraceId,
+	traceIdBootstrapScript,
+} from '@repo/common/trace-id'
 import { i18n, I18nProvider } from '@repo/i18n'
 import { isbot } from 'isbot'
 import { renderToReadableStream } from 'react-dom/server'
@@ -99,6 +106,12 @@ export default async function handleRequest(...args: DocRequestArgs) {
 	const userAgent = request.headers.get('user-agent')
 	const waitForAllContent = isbot(userAgent)
 
+	// The page-load trace id (#385): shown on the error page, written on every
+	// log line for this request.
+	const traceId =
+		parseTraceId(request.headers.get(TRACE_ID_HEADER)) ?? generateTraceId()
+	responseHeaders.set(TRACE_ID_HEADER, traceId)
+
 	const nonce = createNonce()
 	const locale = await linguiServer.getLocale(request)
 	await loadCatalog(locale)
@@ -113,15 +126,18 @@ export default async function handleRequest(...args: DocRequestArgs) {
 		const body = await renderToReadableStream(
 			<I18nProvider i18n={i18n}>
 				<NonceProvider value={nonce}>
-					<ServerRouter
-						nonce={nonce}
-						context={reactRouterContext}
-						url={request.url}
-					/>
+					<TraceIdProvider value={traceId}>
+						<ServerRouter
+							nonce={nonce}
+							context={reactRouterContext}
+							url={request.url}
+						/>
+					</TraceIdProvider>
 				</NonceProvider>
 			</I18nProvider>,
 			{
 				nonce,
+				bootstrapScriptContent: traceIdBootstrapScript(traceId),
 				signal: controller.signal,
 				onError: () => {
 					didError = true
@@ -137,17 +153,81 @@ export default async function handleRequest(...args: DocRequestArgs) {
 			await body.allReady
 		}
 
+		const status = didError ? 500 : responseStatusCode
+		logFailedRequest(request, status, traceId)
 		return new Response(body, {
 			headers: responseHeaders,
-			status: didError ? 500 : responseStatusCode,
+			status,
 		})
 	} finally {
 		clearTimeout(timeoutId)
 	}
 }
 
-export async function handleDataRequest(response: Response) {
+/**
+ * One structured log line (JSON, so the log provider reads `traceId` as a
+ * field) for a failed request. Admin has no logger package of its own, and the
+ * trace id is what the error page shows and support searches for (#385).
+ */
+export function logRequestFailure(fields: {
+	traceId: string | null
+	url: string
+	method: string
+	statusCode?: number
+	error?: unknown
+}) {
+	const { error, ...rest } = fields
+	const path = (() => {
+		try {
+			return new URL(rest.url).pathname
+		} catch {
+			return rest.url
+		}
+	})()
+	console.error(
+		JSON.stringify({
+			level: 'error',
+			service: 'admin',
+			message: 'Request failed',
+			...rest,
+			url: undefined,
+			path,
+			...(error instanceof Error
+				? { errorType: error.name, errorMessage: error.message }
+				: error !== undefined
+					? { errorType: 'UnknownError' }
+					: {}),
+		}),
+	)
+}
+
+export function logFailedRequest(
+	request: Request,
+	status: number,
+	traceId: string,
+) {
+	if (status < 500) return
+	logRequestFailure({
+		traceId,
+		url: request.url,
+		method: request.method,
+		statusCode: status,
+	})
+}
+
+export async function handleDataRequest(
+	response: Response,
+	args?: { request?: Request },
+) {
 	const { currentInstance, primaryInstance } = await getInstanceInfo()
+	const request = args?.request
+	const traceId = request
+		? parseTraceId(request.headers.get(TRACE_ID_HEADER))
+		: null
+	if (traceId) {
+		response.headers.set(TRACE_ID_HEADER, traceId)
+		logFailedRequest(request!, response.status, traceId)
+	}
 
 	// Cloudflare Workers deployment
 	response.headers.set('cf-worker', 'menuza-admin')
@@ -167,6 +247,12 @@ export function handleError(
 		return
 	}
 
+	logRequestFailure({
+		traceId: parseTraceId(request.headers.get(TRACE_ID_HEADER)),
+		url: request.url,
+		method: request.method,
+		error,
+	})
 	if (error instanceof Error) {
 		console.error(styleText('red', String(error.stack)))
 	} else {

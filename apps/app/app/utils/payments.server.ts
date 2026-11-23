@@ -9,12 +9,15 @@ import {
 	ConfigFlag,
 	count,
 	db,
+	desc,
 	eq,
 	gt,
+	inArray,
 	isNotNull,
 	isNull,
 	lte,
 	Organization as OrganizationTable,
+	OrganizationEvent,
 	OrganizationRole,
 	User,
 	UserOrganization,
@@ -28,6 +31,7 @@ import {
 	calculateManualTrialDaysRemaining,
 } from '@repo/payments'
 import { data, redirect } from 'react-router'
+import { recordOrganizationEvent } from '#app/utils/organization-events.server.ts'
 import { getDomainUrl } from '../../../../packages/common/src/misc'
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -95,6 +99,14 @@ export async function updateOrganizationSubscription(
 		subscriptionStatus: string
 	},
 ) {
+	const [before] = await db
+		.select({
+			planName: OrganizationTable.planName,
+			subscriptionStatus: OrganizationTable.subscriptionStatus,
+		})
+		.from(OrganizationTable)
+		.where(eq(OrganizationTable.id, organizationId))
+		.limit(1)
 	await db
 		.update(OrganizationTable)
 		.set({
@@ -102,6 +114,81 @@ export async function updateOrganizationSubscription(
 			updatedAt: new Date(),
 		})
 		.where(eq(OrganizationTable.id, organizationId))
+
+	// Plan and status changes are on the Admin Timeline (#279): names and states
+	// only.
+	if (
+		before &&
+		(before.planName !== subscriptionData.planName ||
+			before.subscriptionStatus !== subscriptionData.subscriptionStatus)
+	) {
+		await recordOrganizationEvent({
+			organizationId,
+			kind: 'plan_changed',
+			payload: {
+				planName: subscriptionData.planName,
+				previousPlanName: before.planName,
+				subscriptionStatus: subscriptionData.subscriptionStatus,
+				previousStatus: before.subscriptionStatus,
+			},
+		})
+	}
+}
+
+/**
+ * A billing payment failed or recovered (#279). Stripe sends a success for
+ * every paid invoice, so "recovered" is written only when the last billing event
+ * of the organization was a failure. Ids only; a retried webhook writes once.
+ */
+export async function recordBillingInvoiceEvent(invoice: {
+	id?: string | null
+	customer?: string | { id: string } | null
+	attempt_count?: number | null
+	paid?: boolean
+	status?: string | null
+	outcome: 'failed' | 'succeeded'
+}) {
+	const customerId =
+		typeof invoice.customer === 'string'
+			? invoice.customer
+			: (invoice.customer?.id ?? null)
+	if (!customerId || !invoice.id) return
+	const organization = await getOrganizationByStripeCustomerId(customerId)
+	if (!organization) return
+	if (invoice.outcome === 'failed') {
+		await recordOrganizationEvent({
+			organizationId: organization.id,
+			kind: 'billing_payment_failed',
+			payload: {
+				invoiceId: invoice.id,
+				attemptCount: invoice.attempt_count ?? null,
+			},
+			dedupeKey: `billing-failed:${invoice.id}:${invoice.attempt_count ?? 0}`,
+		})
+		return
+	}
+	const [last] = await db
+		.select({ kind: OrganizationEvent.kind })
+		.from(OrganizationEvent)
+		.where(
+			and(
+				eq(OrganizationEvent.organizationId, organization.id),
+				inArray(OrganizationEvent.kind, [
+					'billing_payment_failed',
+					'billing_payment_recovered',
+				]),
+			),
+		)
+		.orderBy(desc(OrganizationEvent.createdAt))
+		.limit(1)
+	if (last?.kind === 'billing_payment_failed') {
+		await recordOrganizationEvent({
+			organizationId: organization.id,
+			kind: 'billing_payment_recovered',
+			payload: { invoiceId: invoice.id },
+			dedupeKey: `billing-recovered:${invoice.id}`,
+		})
+	}
 }
 
 /**
@@ -529,6 +616,13 @@ export async function handleTrialEnd(subscription: {
 			})
 		}),
 	)
+	// The reminder is on the Admin Timeline (#279), once per trial end date.
+	await recordOrganizationEvent({
+		organizationId: organization.id,
+		kind: 'reminder_sent',
+		payload: { reminderKind: 'trial_ending' },
+		dedupeKey: `trial-ending:${subscription.id}`,
+	})
 }
 
 export async function getTrialStatus(userId: string, organizationSlug: string) {

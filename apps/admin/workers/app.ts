@@ -2,6 +2,7 @@
 
 // Worker entry for the admin dashboard (Cloudflare Workers).
 import './polyfill-crypto.ts'
+import { TRACE_ID_HEADER, withTraceId } from '@repo/common/trace-id'
 import {
 	createContext,
 	createRequestHandler,
@@ -81,7 +82,9 @@ async function prepareWorker(env: Env) {
 }
 
 export default {
-	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+	async fetch(incoming: Request, env: Env, ctx: ExecutionContext) {
+		// One trace id per request (#385), the same as the App's Worker.
+		const { request, traceId } = withTraceId(incoming)
 		const [handler, linguiModule] = await Promise.all([
 			prepareWorker(env),
 			import('../app/modules/lingui/lingui.server.ts'),
@@ -92,7 +95,16 @@ export default {
 		loadContext.set(cloudflareContext, { env, ctx })
 		loadContext.set(executionContext, ctx)
 
-		return handler(request, loadContext)
+		const response = await handler(request, loadContext)
+		if (response.headers.get(TRACE_ID_HEADER) === traceId) return response
+		try {
+			response.headers.set(TRACE_ID_HEADER, traceId)
+			return response
+		} catch {
+			const copy = new Response(response.body, response)
+			copy.headers.set(TRACE_ID_HEADER, traceId)
+			return copy
+		}
 	},
 
 	// Cron Trigger (`triggers.crons` in wrangler.jsonc): finishes platform

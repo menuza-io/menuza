@@ -1,5 +1,7 @@
+import { pruneSignInDeliveries } from '@repo/auth'
 import { BUSY_ALERT_MS, PAUSE_ALERT_MS } from '@repo/common/operator-alerts'
 import { and, db, eq, isNotNull, OrganizationLocation } from '@repo/database'
+import { pruneOrganizationEvents } from '#app/utils/organization-events.server.ts'
 import { releaseHeldAlerts } from './held.server.ts'
 import {
 	deliverOrderAlert,
@@ -128,6 +130,10 @@ export async function runOperatorAlertsSweep(
 	const held = await releaseHeldAlerts(now)
 	const receipts = await processOperatorPushReceipts(now)
 	await pruneAlertLog(now)
+	// The Sign-in help log keeps 7 days (#246): the same hourly sweep, no new slot.
+	await pruneSignInDeliveries(new Date(now)).catch(() => 0)
+	// Timeline events keep the organization's audit retention period (#279).
+	await pruneOrganizationEvents(new Date(now)).catch(() => 0)
 	return {
 		pauseAlerts,
 		released: held.released,

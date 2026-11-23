@@ -23,6 +23,7 @@ export {
 
 export {
 	uploadProfileImage,
+	uploadSupportScreenshot,
 	uploadOrganizationImage,
 	uploadOrganizationMediaImage,
 	uploadNoteImage,

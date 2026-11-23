@@ -415,6 +415,36 @@
       "import": "./src/location-availability.ts",
       "default": "./src/location-availability.ts"
     },
+    "./trace-id": {
+      "types": "./src/trace-id.ts",
+      "import": "./src/trace-id.ts",
+      "default": "./src/trace-id.ts"
+    },
+    "./support-requests": {
+      "types": "./src/support-requests.ts",
+      "import": "./src/support-requests.ts",
+      "default": "./src/support-requests.ts"
+    },
+    "./organization-events": {
+      "types": "./src/organization-events.ts",
+      "import": "./src/organization-events.ts",
+      "default": "./src/organization-events.ts"
+    },
+    "./support-verification": {
+      "types": "./src/support-verification.ts",
+      "import": "./src/support-verification.ts",
+      "default": "./src/support-verification.ts"
+    },
+    "./sign-in-delivery": {
+      "types": "./src/sign-in-delivery.ts",
+      "import": "./src/sign-in-delivery.ts",
+      "default": "./src/sign-in-delivery.ts"
+    },
+    "./support-assignments": {
+      "types": "./src/support-assignments.ts",
+      "import": "./src/support-assignments.ts",
+      "default": "./src/support-assignments.ts"
+    },
     "./operator-alerts": {
       "types": "./src/operator-alerts.ts",
       "import": "./src/operator-alerts.ts",

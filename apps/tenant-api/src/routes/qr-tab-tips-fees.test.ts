@@ -157,7 +157,10 @@ const withFee = (
 	settings: Record<string, unknown> = feeSettings(),
 	location: Record<string, unknown> = {},
 ) =>
-	context({ serviceFee: { version: 1, locations: { 'loc-1': settings } } }, location)
+	context(
+		{ serviceFee: { version: 1, locations: { 'loc-1': settings } } },
+		location,
+	)
 
 type PayIntent = {
 	orderRef: string
@@ -184,7 +187,11 @@ describe('table tab payment: tip choices and the service fee', () => {
 
 	async function request(
 		pathname: string,
-		init: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
+		init: {
+			method?: string
+			body?: unknown
+			headers?: Record<string, string>
+		} = {},
 	) {
 		return app.request(pathname, {
 			method: init.method ?? 'GET',
@@ -532,7 +539,11 @@ describe('table tab payment: tip choices and the service fee', () => {
 				discounts: {
 					features: { automatic: true, coupons: true },
 					discounts: [
-						makeDiscount({ id: 'disc_half', name: 'Half off', percentBp: 5000 }),
+						makeDiscount({
+							id: 'disc_half',
+							name: 'Half off',
+							percentBp: 5000,
+						}),
 					],
 					codes: [],
 				},
@@ -584,7 +595,11 @@ describe('table tab payment: tip choices and the service fee', () => {
 			const { tab: view } = await response.json()
 			expect(view.serviceFee).toMatchObject({
 				taxRatePercent: 10,
-				settings: { percentBp: 300, label: 'Online fee', explanation: 'Covers card costs.' },
+				settings: {
+					percentBp: 300,
+					label: 'Online fee',
+					explanation: 'Covers card costs.',
+				},
 			})
 			expect(view.tipChoices).toEqual({
 				enabled: true,

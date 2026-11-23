@@ -25,6 +25,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { useState, useMemo } from 'react'
 import { useNavigate, useSubmit } from 'react-router'
 import { BanUserDialog } from '#app/components/admin-ban-user-dialog.tsx'
+import {
+	AdminSupportCard,
+	type CallerVerificationView,
+} from '#app/components/admin-support-card.tsx'
 
 export interface AdminUserDetail {
 	id: string
@@ -116,12 +120,14 @@ interface UserDetailViewProps {
 	user: AdminUserDetail
 	recentActivity: RecentActivity
 	ipAddresses: Awaited<ReturnType<typeof getIpAddressesByUser>>
+	verification: CallerVerificationView
 }
 
 export function UserDetailView({
 	user,
 	recentActivity,
 	ipAddresses,
+	verification,
 }: UserDetailViewProps) {
 	const { _ } = useLingui()
 	const navigate = useNavigate()
@@ -313,6 +319,17 @@ export function UserDetailView({
 						</CardContent>
 					</Card>
 				</div>
+
+				<AdminSupportCard
+					userId={user.id}
+					verification={verification}
+					memberships={user.organizations
+						.filter((org) => org.active)
+						.map((org) => ({
+							organization: org.organization.name,
+							role: org.organizationRole.name,
+						}))}
+				/>
 
 				{/* Detailed Information */}
 				<Tabs defaultValue="overview" className="space-y-4">

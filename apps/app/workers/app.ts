@@ -2,6 +2,7 @@
 
 // Worker entry for the operator app (Cloudflare Workers).
 import './polyfill-crypto.ts'
+import { TRACE_ID_HEADER, withTraceId } from '@repo/common/trace-id'
 import {
 	createContext,
 	createRequestHandler,
@@ -44,11 +45,28 @@ async function rateLimitCredentialRoutes(request: Request) {
 
 type RequestHandler = ReturnType<typeof createRequestHandler>
 
+/** Sets the trace id on a response; an immutable one is copied first. */
+function withTraceHeader(response: Response, traceId: string): Response {
+	if (response.headers.get(TRACE_ID_HEADER) === traceId) return response
+	try {
+		response.headers.set(TRACE_ID_HEADER, traceId)
+		return response
+	} catch {
+		const copy = new Response(response.body, response)
+		copy.headers.set(TRACE_ID_HEADER, traceId)
+		return copy
+	}
+}
+
 let requestHandler: RequestHandler | undefined
 let requestHandlerPromise: Promise<RequestHandler> | undefined
 
 export default {
-	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+	async fetch(incoming: Request, env: Env, ctx: ExecutionContext) {
+		// One trace id per request (#385): the page's own when the browser sent
+		// one, else new. Everything downstream, the logger, the PostHog capture
+		// and the error page, reads it from this header.
+		const { request, traceId } = withTraceId(incoming)
 		applyWorkerEnv(env)
 		installDevS3Mock(env)
 		installDevEmailCapture(env)
@@ -118,8 +136,11 @@ export default {
 		loadContext.set(executionContext, ctx)
 
 		const response = await requestHandler(request, loadContext)
-		return privateClientCodeModule.filterRouteDiscovery(request, response, {
-			hasSession: hasActiveSession,
-		})
+		const filtered = await privateClientCodeModule.filterRouteDiscovery(
+			request,
+			response,
+			{ hasSession: hasActiveSession },
+		)
+		return withTraceHeader(filtered, traceId)
 	},
 } satisfies ExportedHandler<Env>

@@ -1,5 +1,12 @@
+import { TRACE_ID_HEADER, withTraceId } from '@repo/common/trace-id'
+import { logger } from '@repo/observability'
+import { RouterContextProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { applyContentSecurity, handleDataRequest } from './entry.server.tsx'
+import {
+	applyContentSecurity,
+	handleDataRequest,
+	handleError,
+} from './entry.server.tsx'
 
 describe('entry.server content security policy', () => {
 	it('allows OAuth form redirects only to the supported providers', () => {
@@ -110,5 +117,49 @@ describe('entry.server runtime headers', () => {
 		const result = await handleDataRequest(response)
 		expect(result.headers.get('cf-worker')).toBe('menuza-app')
 		expect(result.headers.get('cf-datacenter')).toBe('iad')
+	})
+})
+
+describe('entry.server trace id (#385)', () => {
+	afterEach(() => vi.restoreAllMocks())
+
+	it('logs a server error under the same id the error page shows', () => {
+		const error = vi.fn()
+		vi.spyOn(logger, 'child').mockReturnValue({ error } as never)
+		// The Worker puts one id on the request; the page and the log both read it.
+		const { request, traceId } = withTraceId(
+			new Request('https://app.test/acme/orders'),
+		)
+		handleError(new Error('boom'), {
+			request,
+			params: {},
+			context: new RouterContextProvider(),
+		} as never)
+
+		expect(logger.child).toHaveBeenCalledWith(
+			expect.objectContaining({ traceId }),
+		)
+		expect(error).toHaveBeenCalledTimes(1)
+		expect(request.headers.get(TRACE_ID_HEADER)).toBe(traceId)
+	})
+
+	it('answers a data request with the id it carried, and logs a 5xx under it', async () => {
+		const error = vi.spyOn(logger, 'error').mockImplementation(() => undefined)
+		const request = new Request('https://app.test/acme/orders.data', {
+			headers: { [TRACE_ID_HEADER]: 'a1b2c3d4e5f6a7b8' },
+		})
+		const result = await handleDataRequest(new Response('x', { status: 500 }), {
+			request,
+		})
+		expect(result.headers.get(TRACE_ID_HEADER)).toBe('a1b2c3d4e5f6a7b8')
+		expect(error).toHaveBeenCalledWith(
+			expect.objectContaining({
+				traceId: 'a1b2c3d4e5f6a7b8',
+				statusCode: 500,
+			}),
+			'Request failed',
+		)
+		// The path is logged, never a query string with a name in it.
+		expect(JSON.stringify(error.mock.calls)).not.toContain('?')
 	})
 })

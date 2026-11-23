@@ -39,6 +39,7 @@ import {
 	ProviderConnectionForm,
 	useConfiguredProviders,
 } from '#app/utils/connections.tsx'
+import { sendCodeEmail } from '#app/utils/sign-in-delivery.server.ts'
 import {
 	checkOperatorTurnstile,
 	getOperatorTurnstileSiteKey,
@@ -154,7 +155,9 @@ export async function action(args: Route.ActionArgs) {
 			text: 'You recently attempted to sign up for an account with this email address, but an account already exists. Please log in instead.',
 		})
 	} else {
-		response = await sendEmail({
+		response = await sendCodeEmail({
+			purpose: 'signup',
+			userId: null,
 			to: email,
 			subject: brand.email.welcome,
 			react: <SignupEmail onboardingUrl={verifyUrl.toString()} otp={otp} />,

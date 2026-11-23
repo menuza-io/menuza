@@ -183,6 +183,26 @@ export enum AuditAction {
 	ADMIN_PHONE_NUMBER_RETIRED = 'admin_phone_number_retired',
 	ADMIN_PHONE_NUMBER_FORCE_REASSIGNED = 'admin_phone_number_force_reassigned',
 
+	// Support toolkit (#385, #233, #406, #272, #279, #246, #291). Ids, names of
+	// the support member and states only: never a code, a guest or a message.
+	ADMIN_REQUEST_LOOKUP = 'admin_request_lookup',
+	SUPPORT_REQUEST_CREATED = 'support_request_created',
+	SUPPORT_REQUEST_REPLIED = 'support_request_replied',
+	SUPPORT_REQUEST_STATUS_CHANGED = 'support_request_status_changed',
+	ORG_ASSIGNMENT_CHANGED = 'org_assignment_changed',
+	SUPPORT_NOTE_ADDED = 'support_note_added',
+	SIGN_IN_HELP_LOOKUP = 'sign_in_help_lookup',
+	SIGN_IN_HELP_PHONE_CHECK = 'sign_in_help_phone_check',
+	SIGN_IN_HELP_RESEND = 'sign_in_help_resend',
+	SIGN_IN_HELP_SESSIONS_ENDED = 'sign_in_help_sessions_ended',
+	CALLER_VERIFICATION_REQUESTED = 'caller_verification_requested',
+	CALLER_VERIFICATION_CODE_SHOWN = 'caller_verification_code_shown',
+	CALLER_VERIFICATION_RESULT = 'caller_verification_result',
+	ADMIN_USER_EMAIL_CHANGED = 'admin_user_email_changed',
+	ADMIN_USER_TWO_FACTOR_RESET = 'admin_user_two_factor_reset',
+	ADMIN_OWNERSHIP_TRANSFER_STARTED = 'admin_ownership_transfer_started',
+	ADMIN_SUPPORT_ACTION_REFUSED = 'admin_support_action_refused',
+
 	// Subscription & Billing
 	SUBSCRIPTION_CREATED = 'subscription_created',
 	SUBSCRIPTION_UPDATED = 'subscription_updated',

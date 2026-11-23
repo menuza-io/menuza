@@ -2014,5 +2014,4 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 			expect(order.totalCents).toBe(2000 + 165 + 60)
 		})
 	})
-
 })

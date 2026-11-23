@@ -53,6 +53,8 @@ import { photoTestOperatorRoutes } from './routes/operator-photo-tests.ts'
 import { mailboxRoutes } from './routes/mailbox.ts'
 import { emailDomainRoutes } from './routes/email-domains.ts'
 import { alertTextRoutes } from './routes/alert-texts.ts'
+import { phoneLookupRoutes } from './routes/phone-lookup.ts'
+import { smsStatusWebhookRoutes } from './routes/sms-status.ts'
 import { provisionRoutes } from './routes/provision.ts'
 import { publicOrderRoutes } from './routes/orders.ts'
 import { publicDeliveryRoutes } from './routes/delivery.ts'
@@ -341,6 +343,10 @@ export function createTenantApiApp() {
 		'/webhooks/sms/*',
 		rateLimit('sms-webhook', { windowMs: 60 * 1000, maxRequests: 300 }),
 	)
+	app.use(
+		'/webhooks/sms-status/*',
+		rateLimit('sms-status-webhook', { windowMs: 60 * 1000, maxRequests: 300 }),
+	)
 
 	app.use(
 		'/voice/*',
@@ -421,6 +427,7 @@ export function createTenantApiApp() {
 	app.route('/api/marketing', marketingInternalRoutes)
 	app.route('/api/sms-inbound', smsInboundInternalRoutes)
 	app.route('/webhooks/sms', smsWebhookRoutes)
+	app.route('/webhooks/sms-status', smsStatusWebhookRoutes)
 	app.route('/api/staff', staffTickRoutes)
 	app.route('/api/journeys', journeySystemRoutes)
 	app.route('/api/menu', menuAvailabilityEventRoutes)
@@ -430,6 +437,7 @@ export function createTenantApiApp() {
 	app.route('/operator/photos', operatorGuestPhotoRoutes)
 	app.route('/api/voice', voiceSystemRoutes)
 	app.route('/api/alert-texts', alertTextRoutes)
+	app.route('/api/phone-lookup', phoneLookupRoutes)
 	app.route('/voice', publicVoiceRoutes)
 	app.route('/operator', operatorRoutes)
 	app.route('/operator/forms', formOperatorRoutes)
