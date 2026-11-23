@@ -1,11 +1,15 @@
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import {
+	type InventoryBaseUnit,
 	type listOrdersResultSchema,
-	type OrderSummary,
+	milliToPacks,
 	orderDetailSchema,
+	type OrderLineExplanation,
+	type OrderSummary,
 	type SuggestedOrders,
 	type SuggestedSupplierOrder,
 	type Supplier,
+	type UnitRef,
 } from '@repo/inventory'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
@@ -19,6 +23,13 @@ import {
 	DialogTitle,
 } from '@repo/ui/dialog'
 import { Icon } from '@repo/ui/icon'
+import {
+	Popover,
+	PopoverContent,
+	PopoverHeader,
+	PopoverTitle,
+	PopoverTrigger,
+} from '@repo/ui/popover'
 import { Skeleton } from '@repo/ui/skeleton'
 import { WorkspacePanel } from '@repo/ui/workspace'
 import { useRef, useState } from 'react'
@@ -26,6 +37,7 @@ import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { type z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { useQuantityFormat } from '#app/components/inventory/inventory-prefs.tsx'
 import { SelectField } from '#app/components/staff/controls.tsx'
 import {
 	useInventoryClient,
@@ -44,6 +56,7 @@ import {
 	cutoffText,
 	ORDER_STATUS_LABELS,
 	orderStatusVariant,
+	packsText,
 	shortDayText,
 	weekdayShort,
 } from '#app/utils/inventory/order-view.ts'
@@ -103,6 +116,244 @@ export function useCreateDraft({
 	return { create, pending }
 }
 
+export function OrderLineWarnings({
+	lineKey,
+	explanation,
+	canSeeCost,
+}: {
+	lineKey: string
+	explanation: OrderLineExplanation
+	canSeeCost: boolean
+}) {
+	const { warnings } = explanation
+	const showPrice = canSeeCost && warnings.priceChangedSinceLastOrder
+	const showMin = canSeeCost && warnings.belowSupplierMinimum
+	if (!warnings.notCountedIn10Days && !showPrice && !showMin) return null
+	return (
+		<div className="flex flex-wrap gap-1.5">
+			{warnings.notCountedIn10Days ? (
+				<Badge
+					variant="warning"
+					data-testid={`order-line-warn-stale-${lineKey}`}
+				>
+					<Trans>Not counted in 10 days</Trans>
+				</Badge>
+			) : null}
+			{showPrice ? (
+				<Badge
+					variant="warning"
+					data-testid={`order-line-warn-price-${lineKey}`}
+				>
+					<Trans>Price changed since the last order</Trans>
+				</Badge>
+			) : null}
+			{showMin ? (
+				<Badge variant="warning" data-testid={`order-line-warn-min-${lineKey}`}>
+					<Trans>Below the supplier's minimum</Trans>
+				</Badge>
+			) : null}
+		</div>
+	)
+}
+
+export function OrderLineExplanationPopover({
+	lineKey,
+	itemName,
+	baseUnit,
+	countUnit,
+	explanation,
+	canSeeCost,
+	money,
+}: {
+	lineKey: string
+	itemName: string
+	baseUnit: InventoryBaseUnit
+	countUnit: UnitRef | null
+	explanation: OrderLineExplanation
+	canSeeCost: boolean
+	money?: ((minor: number) => string) | null
+}) {
+	const { t, i18n } = useLingui()
+	const quantity = useQuantityFormat()
+	const unitOpts = { baseUnit, countUnit }
+	const onHandText = quantity.format(explanation.onHandQuantity, unitOpts)
+	const onOrderText = quantity.format(explanation.onOrderQuantity, unitOpts)
+	const lastCountedLabel =
+		explanation.lastCountedAt !== null
+			? new Intl.DateTimeFormat(i18n.locale, { dateStyle: 'medium' }).format(
+					new Date(explanation.lastCountedAt),
+				)
+			: null
+	const orderBelowText =
+		explanation.orderBelowQuantity !== null
+			? quantity.format(explanation.orderBelowQuantity, unitOpts)
+			: null
+	const fillUpToText =
+		explanation.fillUpToQuantity !== null
+			? quantity.format(explanation.fillUpToQuantity, unitOpts)
+			: null
+	const expectedUseText =
+		explanation.expectedUseUntilDeliveryQuantity !== null
+			? quantity.format(explanation.expectedUseUntilDeliveryQuantity, unitOpts)
+			: null
+	const packSizeText = quantity.format(explanation.packBaseQuantity, {
+		baseUnit,
+	})
+	const neededText = quantity.format(explanation.neededQuantity, unitOpts)
+	const rawPacks = milliToPacks(explanation.rawPacksMilli)
+	const roundedPacks = milliToPacks(explanation.roundedPacksMilli)
+	const rawPacksLabel = packsText(rawPacks, i18n.locale)
+	const roundedPacksLabel = packsText(roundedPacks, i18n.locale)
+	const packName = explanation.packName
+	const prevPrice =
+		canSeeCost &&
+		money &&
+		explanation.warnings.priceChangedSinceLastOrder &&
+		explanation.previousOrderPackPriceMinor != null &&
+		explanation.currentPackPriceMinor != null
+			? money(explanation.previousOrderPackPriceMinor)
+			: null
+	const currPrice =
+		prevPrice !== null && money && explanation.currentPackPriceMinor != null
+			? money(explanation.currentPackPriceMinor)
+			: null
+
+	return (
+		<Popover>
+			<PopoverTrigger
+				render={
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon-sm"
+						aria-label={t`Why ${itemName} is suggested`}
+						data-testid={`order-line-info-${lineKey}`}
+					>
+						<Icon name="info" />
+					</Button>
+				}
+			/>
+			<PopoverContent
+				align="end"
+				className="w-80"
+				data-testid={`order-line-explanation-${lineKey}`}
+			>
+				<PopoverHeader>
+					<PopoverTitle className="wrap-anywhere">{itemName}</PopoverTitle>
+				</PopoverHeader>
+				<dl className="flex flex-col gap-1.5 text-xs">
+					<div className="flex justify-between gap-3">
+						<dt className="text-muted-foreground">
+							<Trans>On hand</Trans>
+						</dt>
+						<dd className="text-end">
+							<bdi dir="ltr" className="tabular-nums">
+								{onHandText}
+							</bdi>
+							<span className="text-muted-foreground block">
+								{lastCountedLabel ? (
+									<Trans>
+										Counted <bdi dir="ltr">{lastCountedLabel}</bdi>
+									</Trans>
+								) : (
+									<Trans>Never counted</Trans>
+								)}
+							</span>
+						</dd>
+					</div>
+					<div className="flex justify-between gap-3">
+						<dt className="text-muted-foreground">
+							<Trans>Already on order</Trans>
+						</dt>
+						<dd>
+							<bdi dir="ltr" className="tabular-nums">
+								{onOrderText}
+							</bdi>
+						</dd>
+					</div>
+					{orderBelowText !== null ? (
+						<div className="flex justify-between gap-3">
+							<dt className="text-muted-foreground">
+								<Trans>Order below</Trans>
+							</dt>
+							<dd>
+								<bdi dir="ltr" className="tabular-nums">
+									{orderBelowText}
+								</bdi>
+							</dd>
+						</div>
+					) : null}
+					{fillUpToText !== null ? (
+						<div className="flex justify-between gap-3">
+							<dt className="text-muted-foreground">
+								<Trans>Fill up to</Trans>
+							</dt>
+							<dd>
+								<bdi dir="ltr" className="tabular-nums">
+									{fillUpToText}
+								</bdi>
+							</dd>
+						</div>
+					) : null}
+					<div className="flex justify-between gap-3">
+						<dt className="text-muted-foreground">
+							<Trans>Use until next delivery</Trans>
+						</dt>
+						<dd>
+							{expectedUseText !== null ? (
+								<bdi dir="ltr" className="tabular-nums">
+									{expectedUseText}
+								</bdi>
+							) : (
+								<span className="text-muted-foreground">
+									<Trans>Not enough history</Trans>
+								</span>
+							)}
+						</dd>
+					</div>
+					<div className="flex justify-between gap-3 border-t pt-1.5">
+						<dt className="text-muted-foreground">
+							<Trans>Pack size</Trans>
+						</dt>
+						<dd className="text-end wrap-anywhere">
+							{packName}
+							{' · '}
+							<bdi dir="ltr" className="tabular-nums">
+								{packSizeText}
+							</bdi>
+						</dd>
+					</div>
+					<div className="flex justify-between gap-3">
+						<dt className="text-muted-foreground">
+							<Trans>Rounding</Trans>
+						</dt>
+						<dd className="text-end">
+							<Trans>
+								Needed <bdi dir="ltr">{neededText}</bdi> (
+								<bdi dir="ltr">{rawPacksLabel}</bdi>) →{' '}
+								<bdi dir="ltr">{roundedPacksLabel}</bdi> packs
+							</Trans>
+						</dd>
+					</div>
+					{prevPrice && currPrice ? (
+						<div className="flex justify-between gap-3 border-t pt-1.5">
+							<dt className="text-muted-foreground">
+								<Trans>Pack price</Trans>
+							</dt>
+							<dd className="text-end tabular-nums">
+								<Trans>
+									Last order <bdi dir="ltr">{prevPrice}</bdi> → now{' '}
+									<bdi dir="ltr">{currPrice}</bdi>
+								</Trans>
+							</dd>
+						</div>
+					) : null}
+				</dl>
+			</PopoverContent>
+		</Popover>
+	)
+}
+
 function SuggestedCard({
 	card,
 	canSeeCost,
@@ -127,6 +378,10 @@ function SuggestedCard({
 		canSeeCost && card.totalMinor !== undefined
 			? formatMoney(card.totalMinor, card.currency ?? currency, i18n.locale)
 			: null
+	const cardMoney = canSeeCost
+		? (minor: number) =>
+				formatMoney(minor, card.currency ?? currency, i18n.locale)
+		: null
 	const minimum =
 		canSeeCost && card.belowMinimum && card.minimumOrderMinor !== undefined
 			? formatMoney(
@@ -202,6 +457,47 @@ function SuggestedCard({
 					</span>
 				) : null}
 			</div>
+			{card.lines.length > 0 ? (
+				<ul
+					className="flex flex-col gap-2 border-t pt-2 text-xs"
+					data-testid={`suggested-lines-${card.supplierId}`}
+				>
+					{card.lines.map((line) => (
+						<li key={line.itemId} className="flex flex-col gap-1">
+							<div className="flex items-center justify-between gap-2">
+								<span className="min-w-0 truncate font-medium wrap-anywhere">
+									{line.itemName}
+								</span>
+								<div className="flex shrink-0 items-center gap-1">
+									<span className="text-muted-foreground tabular-nums">
+										<bdi dir="ltr">{packsText(line.packs, i18n.locale)}</bdi>
+										{' × '}
+										<span className="wrap-anywhere">{line.packName}</span>
+									</span>
+									{line.explanation ? (
+										<OrderLineExplanationPopover
+											lineKey={line.itemId}
+											itemName={line.itemName}
+											baseUnit={line.baseUnit}
+											countUnit={line.countUnit}
+											explanation={line.explanation}
+											canSeeCost={canSeeCost}
+											money={cardMoney}
+										/>
+									) : null}
+								</div>
+							</div>
+							{line.explanation ? (
+								<OrderLineWarnings
+									lineKey={line.itemId}
+									explanation={line.explanation}
+									canSeeCost={canSeeCost}
+								/>
+							) : null}
+						</li>
+					))}
+				</ul>
+			) : null}
 			{canManage ? (
 				<div className="mt-auto flex justify-end">
 					{continueHref ? (
@@ -485,7 +781,7 @@ function OrderRow({
 					) : null}
 				</span>
 			</Link>
-			{canReceive ? (
+			{canReceive && order.status !== 'waiting_for_approval' ? (
 				<Button
 					variant="outline"
 					size="sm"

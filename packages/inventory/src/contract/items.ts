@@ -285,6 +285,20 @@ export const itemSupplierProductSchema = z.object({
 	preferred: z.boolean(),
 })
 
+/** Cheapest recent price paid for an item at an allowed location/supplier (#508). */
+export const itemOthersPaySchema = z.object({
+	locationId: z.string(),
+	supplierId: z.string().nullable(),
+	supplierName: z.string().nullable(),
+	costMicro: z.number().int(),
+	currency: z.string(),
+	currentCostMicro: z.number().int().nullable().optional(),
+	diffCostMicro: z.number().int().nullable().optional(),
+	savingBp: z.number().int().nullable().optional(),
+	lastPaidAt: z.number().int(),
+})
+export type ItemOthersPay = z.infer<typeof itemOthersPaySchema>
+
 /** `GET /items/:id?locationId=` */
 export const itemDetailSchema = stockItemSchema.extend({
 	notes: z.string().nullable(),
@@ -306,6 +320,8 @@ export const itemDetailSchema = stockItemSchema.extend({
 		})
 		.nullable()
 		.optional(),
+	/** Cheapest recent price paid at an allowed location/supplier (cost grant only, #508). */
+	othersPay: itemOthersPaySchema.nullable().optional(),
 	hasMovements: z.boolean(),
 	/** Set on a duplicate that was merged away (#493); `undone` once undone. */
 	mergedInto: mergeLinkSchema.nullable().optional(),

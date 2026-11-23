@@ -3,6 +3,7 @@ import {
 	INVENTORY_PERMISSIONS,
 	inventoryStatusQuerySchema,
 	updateInventorySettingsSchema,
+	updateLocationSpendingLimitsSchema,
 } from '@repo/inventory'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono } from 'hono'
@@ -13,14 +14,17 @@ import {
 	requireInventoryLocation,
 } from '../lib/inventory-guard.ts'
 import {
+	canSeeInventoryCost,
 	inventoryDeny,
 	inventoryErrorResponse,
 	readOptionalIdempotencyKey,
 } from '../lib/inventory-http.ts'
 import {
 	APPROVE_EXTRA_GRANT,
+	inventoryCaller,
 	parseBody,
 	parseQuery,
+	respond,
 } from '../lib/inventory-route.ts'
 import { hashInventoryRequest } from '../lib/inventory-write.ts'
 import { operatorInventoryCountsRoutes } from './operator-inventory-counts.ts'
@@ -34,12 +38,16 @@ import { operatorInventoryPlacesRoutes } from './operator-inventory-places.ts'
 import { operatorInventoryPrepRoutes } from './operator-inventory-prep.ts'
 import { operatorInventoryPurchasingRoutes } from './operator-inventory-purchasing.ts'
 import { operatorInventoryRecipesRoutes } from './operator-inventory-recipes.ts'
+import { operatorInventoryRepeatOrdersRoutes } from './operator-inventory-repeat-orders.ts'
 import { operatorInventorySetupChecksRoutes } from './operator-inventory-setup-checks.ts'
 import { operatorInventorySoldOutRoutes } from './operator-inventory-sold-out.ts'
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
 import { operatorInventoryTransfersRoutes } from './operator-inventory-transfers.ts'
 import { operatorInventoryWasteRoutes } from './operator-inventory-waste.ts'
-import { listLocationSettings } from '../services/inventory-location-settings.ts'
+import {
+	listLocationSettings,
+	updateLocationSpendingLimits,
+} from '../services/inventory-location-settings.ts'
 import {
 	getInventorySettings,
 	getInventoryStatus,
@@ -71,6 +79,7 @@ operatorInventoryRoutes.route('/', operatorInventoryWasteRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPurchasingRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryLevelsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryOrdersRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryRepeatOrdersRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryTodayRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryRecipesRoutes)
 operatorInventoryRoutes.route('/', operatorInventorySoldOutRoutes)
@@ -89,8 +98,10 @@ operatorInventoryRoutes.get(
 			const db = await getTenantDb(ctx.orgId)
 			const settings = await getInventorySettings(db, ctx.region)
 			// Read-only money and day settings of the locations the token covers.
-			const locations = await listLocationSettings(db, ctx.locationIds)
-			return json({ ...settings, locations })
+			const locations = await listLocationSettings(db, ctx.locationIds, {
+				cost: canSeeInventoryCost(ctx.grants),
+			})
+			return respond(ctx, { ...settings, locations })
 		} catch (error) {
 			return inventoryErrorResponse(error)
 		}
@@ -156,8 +167,46 @@ operatorInventoryRoutes.put(
 			const locations = await listLocationSettings(
 				await getTenantDb(ctx.orgId),
 				ctx.locationIds,
+				{ cost: canSeeInventoryCost(ctx.grants) },
 			)
-			return json({ ...settings, locations })
+			return respond(ctx, { ...settings, locations })
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryRoutes.put(
+	'/settings/locations/:locationId/limits',
+	inventoryGuard({
+		scope: 'write',
+		grant: INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING,
+		feature: 'purchasing',
+	}),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const location = requireInventoryLocation(ctx, c.req.param('locationId'))
+			if (!location.ok) return location.response
+			const body = await parseBody(c, updateLocationSpendingLimitsSchema)
+			if ('error' in body) return body.error
+			if (!ctx.canManageSettings || !canSeeInventoryCost(ctx.grants)) {
+				return inventoryDeny(403, 'forbidden', { reason: 'grant' })
+			}
+			const idem = readOptionalIdempotencyKey(c)
+			if ('error' in idem) return idem.error
+			const updated = await updateLocationSpendingLimits(inventoryCaller(ctx), {
+				locationId: location.locationId,
+				body: body.data,
+				idempotency: idem.key
+					? {
+							scope: `settings:limits:${location.locationId}:${ctx.userId}`,
+							key: idem.key,
+							requestHash: hashInventoryRequest(body.data),
+						}
+					: null,
+			})
+			return respond(ctx, updated)
 		} catch (error) {
 			return inventoryErrorResponse(error)
 		}

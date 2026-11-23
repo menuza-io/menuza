@@ -2,8 +2,10 @@ import {
 	getUserId,
 	getUserOrganizationPermissions,
 	isImpersonating,
+	ORG_PERMISSIONS,
 } from '@repo/auth'
 import { getFeatureFlag } from '@repo/common/feature-flags'
+import { and, db, eq, UserOrganization } from '@repo/database'
 import {
 	expandInventoryGrants,
 	foldInventoryFeatures,
@@ -85,6 +87,10 @@ export type InventoryAccess = {
 	/** Money figures are shown in the data region's currency. */
 	currency: 'USD' | 'SAR'
 	impersonated: boolean
+	/** Member holds `update:settings:any` (and is not impersonated). */
+	canManageSettings: boolean
+	/** Member's org role is `org_role_admin` (owner; and is not impersonated). */
+	isOwner: boolean
 }
 
 /**
@@ -107,11 +113,28 @@ export async function requireInventoryAccess(
 	const userId = await getUserId(request)
 	if (!userId) throw new Response('Unauthorized', { status: 401 })
 
-	const [grants, locationIds, impersonated] = await Promise.all([
-		getUserInventoryGrants(userId, organization.id),
+	const [rawPerms, locationIds, impersonated, membership] = await Promise.all([
+		getUserOrganizationPermissions(userId, organization.id),
 		resolveDiscountLocationIds(userId, organization.id),
 		isImpersonating(request),
+		db.query.UserOrganization.findFirst({
+			where: and(
+				eq(UserOrganization.userId, userId),
+				eq(UserOrganization.organizationId, organization.id),
+			),
+			columns: { organizationRoleId: true },
+		}),
 	])
+	const heldRaw: string[] = []
+	let hasManageSettings = false
+	for (const row of rawPerms) {
+		const perm = `${row.action}:${row.entity}:${row.access}`
+		if (perm === ORG_PERMISSIONS.UPDATE_SETTINGS_ANY) {
+			hasManageSettings = true
+		}
+		if (isInventoryPermission(perm)) heldRaw.push(perm)
+	}
+	const grants = expandInventoryGrants(heldRaw)
 
 	const held = new Set<string>(grants)
 	const anyOf =
@@ -145,6 +168,9 @@ export async function requireInventoryAccess(
 		dataRegion,
 		currency: dataRegion === 'ksa' ? 'SAR' : 'USD',
 		impersonated,
+		canManageSettings: !impersonated && hasManageSettings,
+		isOwner:
+			!impersonated && membership?.organizationRoleId === 'org_role_admin',
 	}
 }
 

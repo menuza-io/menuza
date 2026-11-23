@@ -1,4 +1,8 @@
 import {
+	getLocalizedMenuValue,
+	parseMenuVariations,
+} from '@repo/common/menu-types'
+import {
 	and,
 	count,
 	db,
@@ -7,14 +11,17 @@ import {
 	Notification,
 	Organization,
 	OrganizationLocation,
+	OrganizationMenuItem,
 } from '@repo/database'
 import { StaffingAlertEmail, sendEmail } from '@repo/email'
 import {
 	DEFAULT_INVENTORY_LOCATION_ID,
+	dishFoodCostBp,
 	type InventoryNotifyEvent,
 	inventoryNotifyEventSchema,
 	type InventoryNotifyResult,
 	inventoryNotifyResultSchema,
+	type PriceRiseDishAlertEntry,
 } from '@repo/inventory'
 import { type ActionFunctionArgs } from 'react-router'
 import { ENV } from 'varlock/env'
@@ -34,11 +41,17 @@ import {
 	inventoryAlertNotificationType,
 	inventoryAlertPath,
 	isSoldOutAlertKind,
+	type PriceRiseDishSummary,
 } from '#app/utils/inventory/manager-alerts.ts'
+import {
+	majorToMinor,
+	regionCurrency,
+} from '#app/utils/inventory/recipe-form.ts'
 import { deliverSoldOutAlert } from '#app/utils/inventory/sold-out-alerts.server.ts'
 import {
 	displayLocationName,
 	orgDefaultLocale,
+	orgSiteLocales,
 } from '#app/utils/location-name.server.ts'
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' }
@@ -61,7 +74,10 @@ function featureOn(
 	// Dishes come off the menu through recipes.
 	if (isSoldOutAlertKind(kind)) return features.recipes
 	// Orders and prices only exist with Purchasing.
-	return kind === 'inventory_delivery_due' || kind === 'inventory_price_rise'
+	return kind === 'inventory_delivery_due' ||
+		kind === 'inventory_price_rise' ||
+		kind === 'inventory_repeat_order_draft' ||
+		kind === 'inventory_order_approval'
 		? features.purchasing
 		: true
 }
@@ -82,6 +98,140 @@ function featureOn(
  * member. A flag that is off, an unknown location or nobody to tell answers 200
  * with a `skipped` reason, so the node stops retrying what cannot succeed.
  */
+type EnrichedPriceRiseDish = PriceRiseDishSummary & {
+	menuItemId: string
+	variantId: string | null
+}
+
+async function resolvePriceRiseDishes(
+	organization: { id: string; dataRegion: string },
+	entries: readonly PriceRiseDishAlertEntry[],
+): Promise<EnrichedPriceRiseDish[]> {
+	if (entries.length === 0) return []
+	const needsVariantLookup = entries.some(
+		(entry) => !entry.menuItemId && entry.variantId,
+	)
+	const menuItemIds = [
+		...new Set(
+			entries
+				.map((entry) => entry.menuItemId)
+				.filter((id): id is string => Boolean(id)),
+		),
+	]
+	if (!needsVariantLookup && menuItemIds.length === 0) return []
+	const [{ defaultLocale }, rows] = await Promise.all([
+		orgSiteLocales(organization.id),
+		needsVariantLookup
+			? db
+					.select({
+						id: OrganizationMenuItem.id,
+						displayName: OrganizationMenuItem.displayName,
+						internalName: OrganizationMenuItem.internalName,
+						price: OrganizationMenuItem.price,
+						variations: OrganizationMenuItem.variations,
+					})
+					.from(OrganizationMenuItem)
+					.where(eq(OrganizationMenuItem.organizationId, organization.id))
+					.limit(500)
+			: db
+					.select({
+						id: OrganizationMenuItem.id,
+						displayName: OrganizationMenuItem.displayName,
+						internalName: OrganizationMenuItem.internalName,
+						price: OrganizationMenuItem.price,
+						variations: OrganizationMenuItem.variations,
+					})
+					.from(OrganizationMenuItem)
+					.where(
+						and(
+							eq(OrganizationMenuItem.organizationId, organization.id),
+							inArray(OrganizationMenuItem.id, menuItemIds),
+						),
+					),
+	])
+	const byItemId = new Map<string, { name: string; price: number }>()
+	const byVariantId = new Map<
+		string,
+		{ menuItemId: string; name: string; price: number }
+	>()
+	for (const row of rows) {
+		const name =
+			getLocalizedMenuValue(row.displayName, defaultLocale, defaultLocale) ||
+			row.internalName ||
+			''
+		byItemId.set(row.id, { name, price: row.price })
+		if (entries.some((entry) => entry.variantId)) {
+			const parsed = parseMenuVariations(row.variations)
+			const valueLabels = new Map<string, string>()
+			for (const group of parsed.groups) {
+				for (const val of group.values) {
+					const label =
+						getLocalizedMenuValue(val.name, defaultLocale, defaultLocale) || ''
+					if (label) valueLabels.set(val.id, label)
+				}
+			}
+			for (const variant of parsed.variants) {
+				const variantLabel = variant.valueIds
+					.map((id) => valueLabels.get(id))
+					.filter(Boolean)
+					.join(' / ')
+				byVariantId.set(variant.id, {
+					menuItemId: row.id,
+					name: variantLabel ? `${name} (${variantLabel})` : name,
+					price: variant.price,
+				})
+			}
+		}
+	}
+	const currency = regionCurrency(organization.dataRegion)
+	const out: EnrichedPriceRiseDish[] = []
+	for (const entry of entries) {
+		const variantInfo = entry.variantId
+			? byVariantId.get(entry.variantId)
+			: undefined
+		const itemInfo = entry.menuItemId
+			? byItemId.get(entry.menuItemId)
+			: undefined
+		const menuItemId = variantInfo?.menuItemId ?? entry.menuItemId ?? null
+		const name = variantInfo?.name ?? itemInfo?.name ?? ''
+		const price = variantInfo?.price ?? itemInfo?.price ?? null
+		if (!menuItemId || !name || price === null) continue
+		const sellingPriceMinor = majorToMinor(price, currency)
+		const tax = {
+			pricesIncludeTax: entry.pricesIncludeTax ?? false,
+			taxRateBp: entry.taxRateBp ?? null,
+		}
+		const oldFoodCostBp = dishFoodCostBp(
+			sellingPriceMinor,
+			entry.previousCostMinor,
+			tax,
+		)
+		const newFoodCostBp = dishFoodCostBp(
+			sellingPriceMinor,
+			entry.costMinor,
+			tax,
+		)
+		const overTarget =
+			newFoodCostBp !== null && newFoodCostBp > entry.targetFoodCostBp
+		const crossedTarget =
+			oldFoodCostBp !== null &&
+			newFoodCostBp !== null &&
+			oldFoodCostBp <= entry.targetFoodCostBp &&
+			newFoodCostBp > entry.targetFoodCostBp
+		out.push({
+			menuItemId,
+			variantId: entry.variantId ?? null,
+			name,
+			oldFoodCostBp,
+			newFoodCostBp,
+			targetFoodCostBp: entry.targetFoodCostBp,
+			crossedTarget,
+			overTarget,
+		})
+	}
+	return out
+}
+
 export async function action({ request }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {
 		return new Response('Method Not Allowed', { status: 405 })
@@ -116,7 +266,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			eq(Organization.active, true),
 			eq(Organization.hasProvisionedDb, true),
 		),
-		columns: { id: true, slug: true },
+		columns: { id: true, slug: true, dataRegion: true },
 	})
 	if (!organization) {
 		return Response.json(
@@ -203,13 +353,36 @@ export async function action({ request }: ActionFunctionArgs) {
 	])
 	const handled = new Set(alreadyHandled.map((row) => row.userId))
 
+	const priceRiseDishes =
+		event.kind === 'inventory_price_rise' && event.priceRiseDishes?.length
+			? await resolvePriceRiseDishes(organization, event.priceRiseDishes)
+			: []
+
 	const copy = describeInventoryAlert({
 		kind: event.kind,
 		count: event.count,
 		locationName,
+		...(priceRiseDishes.length > 0 ? { priceRiseDishes } : {}),
+		...(event.repeatOrderDraft
+			? { repeatOrderDraft: event.repeatOrderDraft }
+			: {}),
+		...(event.orderApproval ? { orderApproval: event.orderApproval } : {}),
 	})
 	const baseUrl = String(ENV.BASE_URL ?? '').replace(/\/$/, '')
-	const actionUrl = `${baseUrl}/${organization.slug}${inventoryAlertPath(event.kind)}`
+	const actionPath =
+		event.kind === 'inventory_order_approval' && event.orderApproval
+			? `/inventory/purchasing/orders/${encodeURIComponent(event.orderApproval.orderId)}`
+			: inventoryAlertPath(event.kind)
+	const actionUrl = `${baseUrl}/${organization.slug}${actionPath}`
+	const inAppPayload = {
+		kind: event.kind,
+		locationId: event.locationId,
+		count: event.count,
+		orgSlug: organization.slug,
+		...(locationName ? { locationName } : {}),
+		...(priceRiseDishes.length > 0 ? { priceRiseDishes } : {}),
+		...(event.orderApproval ? { orderApproval: event.orderApproval } : {}),
+	}
 
 	let inApp = 0
 	let emailed = 0
@@ -231,17 +404,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				organizationId: organization.id,
 				type: channels.inApp ? type : INVENTORY_ALERT_MARKER_TYPE,
 				entityId: event.eventId,
-				payload: JSON.stringify(
-					channels.inApp
-						? {
-								kind: event.kind,
-								locationId: event.locationId,
-								count: event.count,
-								orgSlug: organization.slug,
-								...(locationName ? { locationName } : {}),
-							}
-						: {},
-				),
+				payload: JSON.stringify(channels.inApp ? inAppPayload : {}),
 				isRead: !channels.inApp,
 				isSeen: !channels.inApp,
 			})
@@ -256,13 +419,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				organizationId: organization.id,
 				type,
 				entityId: event.eventId,
-				payload: {
-					kind: event.kind,
-					locationId: event.locationId,
-					count: event.count,
-					orgSlug: organization.slug,
-					...(locationName ? { locationName } : {}),
-				},
+				payload: inAppPayload,
 			})
 		}
 

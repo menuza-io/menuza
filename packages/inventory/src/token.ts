@@ -83,6 +83,10 @@ export const inventoryTokenClaimsSchema = z
 		locationIds: z.array(inventoryLocationIdSchema).max(200).nullable(),
 		features: inventoryFeaturesSchema,
 		impersonated: z.boolean(),
+		/** Holder has `update:settings:any` (may set spending limits & approve orders, #500). */
+		canManageSettings: z.boolean().optional(),
+		/** Holder's org role is `org_role_admin` (owner: may approve own orders, #500). */
+		isOwner: z.boolean().optional(),
 		iat: z.number().int().positive(),
 		exp: z.number().int().positive(),
 	})

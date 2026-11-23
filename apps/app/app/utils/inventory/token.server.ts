@@ -24,6 +24,10 @@ export type MintInventoryTokenInput = {
 	locationIds: readonly string[] | null
 	features: InventoryFeatures
 	impersonated: boolean
+	/** Holder has `update:settings:any` (#500). */
+	canManageSettings?: boolean
+	/** Holder's org role is `org_role_admin` (#500). */
+	isOwner?: boolean
 	/** Injectable clock for tests (epoch seconds). */
 	nowSeconds?: number
 	secret?: string
@@ -83,6 +87,20 @@ export async function mintInventoryToken(
 		locationIds: input.locationIds ? [...input.locationIds] : null,
 		features: input.features,
 		impersonated: input.impersonated,
+		...(input.canManageSettings !== undefined
+			? {
+					canManageSettings:
+						input.scope === 'write' &&
+						!input.impersonated &&
+						input.canManageSettings,
+				}
+			: {}),
+		...(input.isOwner !== undefined
+			? {
+					isOwner:
+						input.scope === 'write' && !input.impersonated && input.isOwner,
+				}
+			: {}),
 		iat: issuedAt,
 		exp: expSeconds,
 	}

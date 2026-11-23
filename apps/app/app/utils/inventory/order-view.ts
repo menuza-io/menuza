@@ -5,7 +5,7 @@ import {
 	type OrderLine,
 	type OrderSendChannel,
 	type OrderTextLocale,
-	type OrderStatus,
+	type OrderWireStatus,
 	orderTotalMinor,
 	PRICED_BY_WEIGHT_PACK_STEP_MILLI,
 	shortOfMinimumMinor,
@@ -19,8 +19,9 @@ import {
  * price when a line is saved); the App only previews while a draft is open.
  */
 
-export const ORDER_STATUS_LABELS: Record<OrderStatus, MessageDescriptor> = {
+export const ORDER_STATUS_LABELS: Record<OrderWireStatus, MessageDescriptor> = {
 	draft: msg`Draft`,
+	waiting_for_approval: msg`Waiting for approval`,
 	sent: msg`Sent`,
 	partly_received: msg`Partly received`,
 	received: msg`Received`,
@@ -29,10 +30,12 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, MessageDescriptor> = {
 
 export type OrderBadgeVariant = 'outline' | 'secondary' | 'warning' | 'success'
 
-export function orderStatusVariant(status: OrderStatus): OrderBadgeVariant {
+export function orderStatusVariant(status: OrderWireStatus): OrderBadgeVariant {
 	switch (status) {
 		case 'draft':
 			return 'secondary'
+		case 'waiting_for_approval':
+			return 'warning'
 		case 'sent':
 			return 'outline'
 		case 'partly_received':
@@ -44,9 +47,14 @@ export function orderStatusVariant(status: OrderStatus): OrderBadgeVariant {
 	}
 }
 
-/** Statuses a delivery can still be received against (as the contract's rule). */
-export function orderIsOpen(status: OrderStatus): boolean {
-	return status === 'draft' || status === 'sent' || status === 'partly_received'
+/** Statuses a delivery can still be received against (or open in purchasing). */
+export function orderIsOpen(status: OrderWireStatus): boolean {
+	return (
+		status === 'draft' ||
+		status === 'waiting_for_approval' ||
+		status === 'sent' ||
+		status === 'partly_received'
+	)
 }
 
 /** A line the person is editing: the saved line plus what they typed. */

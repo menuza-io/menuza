@@ -37,7 +37,8 @@ export async function resolveInventoryAlertRecipients(input: {
 	now?: Date
 }): Promise<AlertRecipient[]> {
 	const now = input.now ?? new Date()
-	const grantConditions = INVENTORY_ALERT_GRANTS.map((grant) => {
+	const queryGrants = [...INVENTORY_ALERT_GRANTS, 'update:settings:any']
+	const grantConditions = queryGrants.map((grant) => {
 		const [action = '', entity = '', access = ''] = grant.split(':')
 		return and(
 			eq(Permission.action, action),

@@ -74,7 +74,10 @@ export const createSupplierSchema = supplierInputSchema
 
 export const updateSupplierSchema = supplierFieldsSchema
 	.partial()
-	.extend({ expectedVersion: expectedVersionSchema })
+	.extend({
+		expectedVersion: expectedVersionSchema,
+		paused: z.boolean().optional(),
+	})
 	.strict()
 
 export const supplierSchema = z.object({
@@ -92,6 +95,7 @@ export const supplierSchema = z.object({
 	vatNumber: z.string().nullable(),
 	notes: z.string().nullable(),
 	archived: z.boolean(),
+	pausedAt: z.number().int().nullable().optional(),
 	version: z.number().int(),
 	productCount: z.number().int(),
 	unpaidCount: z.number().int(),
@@ -662,3 +666,63 @@ export const accountantExportSchema = z.object({
 	totalsByCurrency: z.array(accountantExportCurrencyTotalSchema).optional(),
 })
 export type AccountantExport = z.infer<typeof accountantExportSchema>
+
+// ── Price comparison (#508) ─────────────────────────────────────────────────
+
+export const priceComparisonQuerySchema = z
+	.object({
+		from: isoDateSchema.optional(),
+		to: isoDateSchema.optional(),
+		itemId: inventoryIdSchema.optional(),
+	})
+	.strict()
+export type PriceComparisonQuery = z.infer<typeof priceComparisonQuerySchema>
+
+export const priceComparisonEntrySchema = z.object({
+	locationId: z.string(),
+	supplierId: z.string().nullable(),
+	supplierName: z.string().nullable(),
+	/** Weighted average cost per base unit in micro-minor units. */
+	costMicro: z.number().int(),
+	/** Latest delivery cost per base unit in micro-minor units. */
+	latestCostMicro: z.number().int(),
+	latestPaidAt: z.number().int(),
+	/** Total effective base quantity bought in base thousandths. */
+	quantity: z.number().int(),
+	/** Total paid in minor units. */
+	paidMinor: z.number().int(),
+	deliveriesCount: z.number().int(),
+	currency: z.string(),
+})
+export type PriceComparisonEntry = z.infer<typeof priceComparisonEntrySchema>
+
+export const priceComparisonItemSchema = z.object({
+	itemId: z.string(),
+	itemName: z.string(),
+	baseUnit: inventoryBaseUnitSchema,
+	currency: z.string(),
+	entries: z.array(priceComparisonEntrySchema),
+	lowestCostMicro: z.number().int(),
+	lowestLocationId: z.string(),
+	lowestSupplierId: z.string().nullable(),
+	lowestSupplierName: z.string().nullable(),
+	highestCostMicro: z.number().int(),
+	highestLocationId: z.string(),
+	highestSupplierId: z.string().nullable(),
+	highestSupplierName: z.string().nullable(),
+	spreadCostMicro: z.number().int(),
+	spreadBp: z.number().int(),
+	totalQuantity: z.number().int(),
+	totalPaidMinor: z.number().int(),
+	savingMinor: z.number().int(),
+})
+export type PriceComparisonItem = z.infer<typeof priceComparisonItemSchema>
+
+export const priceComparisonResultSchema = z.object({
+	from: isoDateSchema,
+	to: isoDateSchema,
+	currency: z.string(),
+	totalSavingMinor: z.number().int(),
+	items: z.array(priceComparisonItemSchema),
+})
+export type PriceComparisonResult = z.infer<typeof priceComparisonResultSchema>

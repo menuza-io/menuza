@@ -123,6 +123,7 @@ const ROUTE_GRANTS: Record<
 > = {
 	'GET /settings': READ,
 	'PUT /settings': UPDATE,
+	'PUT /settings/locations/:locationId/limits': PURCHASING,
 	'GET /status': READ,
 	'GET /today': READ,
 	'GET /items': READ,
@@ -190,6 +191,7 @@ const ROUTE_GRANTS: Record<
 	'POST /deliveries/:id/invoice-photo/confirm': UPDATE,
 	'POST /deliveries/:id/invoice-photo/read': PURCHASING,
 	'GET /price-alerts': COST,
+	'GET /price-comparison': COST,
 	'GET /levels': READ,
 	'GET /levels/suggestions': READ,
 	'PUT /levels/bulk': PURCHASING,
@@ -199,12 +201,18 @@ const ROUTE_GRANTS: Record<
 	'GET /orders/:id': READ,
 	'PATCH /orders/:id': PURCHASING,
 	'POST /orders/:id/send': PURCHASING,
+	'POST /orders/:id/approve': PURCHASING,
+	'POST /orders/:id/reject': PURCHASING,
 	'POST /orders/:id/cancel': PURCHASING,
 	'POST /orders/:id/confirm': PURCHASING,
 	'POST /orders/:id/receive-as-ordered': UPDATE,
 	'POST /orders/:id/not-yet': UPDATE,
 	'GET /orders/:id/text': READ,
 	'GET /orders/:id/receive-prefill': READ,
+	'GET /repeat-orders': READ,
+	'POST /repeat-orders': PURCHASING,
+	'PATCH /repeat-orders/:id': PURCHASING,
+	'POST /repeat-orders/:id/skip': PURCHASING,
 	// Phase 3: recipes (need the inventory.recipes flag).
 	'GET /recipes': READ,
 	'PUT /recipes': RECIPE,
@@ -259,6 +267,7 @@ const READ_ONLY_POSTS = new Set([
 
 /** Routes behind the `inventory.purchasing` flag (403 feature_disabled while it is off). */
 const PURCHASING_FLAG_ROUTES = new Set([
+	'PUT /settings/locations/:locationId/limits',
 	'GET /levels',
 	'GET /levels/suggestions',
 	'PUT /levels/bulk',
@@ -268,12 +277,19 @@ const PURCHASING_FLAG_ROUTES = new Set([
 	'GET /orders/:id',
 	'PATCH /orders/:id',
 	'POST /orders/:id/send',
+	'POST /orders/:id/approve',
+	'POST /orders/:id/reject',
 	'POST /orders/:id/cancel',
 	'POST /orders/:id/confirm',
 	'POST /orders/:id/receive-as-ordered',
 	'POST /orders/:id/not-yet',
 	'GET /orders/:id/text',
 	'GET /orders/:id/receive-prefill',
+	'GET /repeat-orders',
+	'POST /repeat-orders',
+	'PATCH /repeat-orders/:id',
+	'POST /repeat-orders/:id/skip',
+	'GET /price-comparison',
 	'GET /suppliers/:id/merge-preview',
 	'POST /suppliers/:id/merge',
 ])
@@ -364,6 +380,8 @@ async function mintInventoryToken(
 		locationIds?: string[] | null
 		features?: InventoryFeatures
 		impersonated?: boolean
+		canManageSettings?: boolean
+		isOwner?: boolean
 		ttlSeconds?: number
 		issuedAgoSeconds?: number
 		secret?: string
@@ -385,6 +403,11 @@ async function mintInventoryToken(
 			overrides.locationIds === undefined ? null : overrides.locationIds,
 		features: overrides.features ?? FEATURES_ON,
 		impersonated: overrides.impersonated ?? false,
+		canManageSettings:
+			overrides.canManageSettings ??
+			(!(overrides.impersonated ?? false) &&
+				(overrides.scope ?? 'write') === 'write'),
+		...(overrides.isOwner !== undefined ? { isOwner: overrides.isOwner } : {}),
 		...overrides.extra,
 	})
 		.setProtectedHeader({
@@ -906,6 +929,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		prepTask: '',
 		transfer: '',
 		setupImport: '',
+		repeatOrder: '',
 	}
 	let admin: string
 	let seedCounts = 0
@@ -920,7 +944,9 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			body,
 		})
 		const parsed = (await res.json()) as Record<string, any>
-		expect(res.status, `${method} ${path} ${JSON.stringify(parsed)}`).toBe(200)
+		expect([200, 201], `${method} ${path} ${JSON.stringify(parsed)}`).toContain(
+			res.status,
+		)
 		return parsed
 	}
 
@@ -1102,6 +1128,19 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			})
 		).id
 		await seedCall('GET', `/setup/imports/${seed.setupImport}`)
+		seed.repeatOrder = (
+			await seedCall('POST', '/repeat-orders', {
+				clientId: 'sec-repeat-0001',
+				locationId: LOC_B,
+				supplierId: seed.supplier,
+				cadenceWeeks: 1,
+				weekdays: [1],
+				mode: 'fixed_lines',
+				lines: [
+					{ itemId: seed.item, supplierProductId: seed.product, packs: 1 },
+				],
+			})
+		).id
 	})
 
 	function cases(): Case[] {
@@ -1131,6 +1170,13 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				body: { expectedVersion: 0, targetFoodCostBp: 2800 },
 				location: false,
 			}),
+			c(
+				'PUT /settings/locations/:locationId/limits',
+				`/settings/locations/${loc}/limits`,
+				{
+					body: { expectedVersion: 99, orderLimitMinor: 10_000 },
+				},
+			),
 			c('GET /status', `/status?${q}`),
 			c('GET /today', `/today?${q}`),
 			c('GET /items', `/items?${q}`),
@@ -1517,6 +1563,9 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				{ body: {}, byId: true },
 			),
 			c('GET /price-alerts', `/price-alerts?${q}`),
+			c('GET /price-comparison', `/price-comparison?${range}`, {
+				location: false,
+			}),
 			c('GET /levels', `/levels?${q}`),
 			c('GET /levels/suggestions', `/levels/suggestions?${q}`),
 			c('PUT /levels/bulk', '/levels/bulk', {
@@ -1552,6 +1601,14 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				body: { expectedVersion: 1, channel: 'copy' },
 				byId: true,
 			}),
+			c('POST /orders/:id/approve', `/orders/${seed.order}/approve`, {
+				body: { expectedVersion: 99 },
+				byId: true,
+			}),
+			c('POST /orders/:id/reject', `/orders/${seed.order}/reject`, {
+				body: { expectedVersion: 99, reason: 'Too expensive' },
+				byId: true,
+			}),
 			c('POST /orders/:id/cancel', `/orders/${seed.order}/cancel`, {
 				body: one,
 				byId: true,
@@ -1577,6 +1634,29 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				'GET /orders/:id/receive-prefill',
 				`/orders/${seed.order}/receive-prefill`,
 				{ byId: true },
+			),
+			c('GET /repeat-orders', `/repeat-orders?${q}`),
+			c('POST /repeat-orders', '/repeat-orders', {
+				body: {
+					clientId: 'sec-repeat-0002',
+					locationId: loc,
+					supplierId: seed.supplier,
+					cadenceWeeks: 1,
+					weekdays: [1],
+					mode: 'top_up',
+				},
+			}),
+			c('PATCH /repeat-orders/:id', `/repeat-orders/${seed.repeatOrder}`, {
+				body: { expectedVersion: 99, note: 'Updated' },
+				byId: true,
+			}),
+			c(
+				'POST /repeat-orders/:id/skip',
+				`/repeat-orders/${seed.repeatOrder}/skip`,
+				{
+					body: { deliveryDate: today, skipped: true },
+					byId: true,
+				},
 			),
 			c('GET /recipes', '/recipes?ownerKind=menu_item&ownerId=sec_dish', {
 				location: false,
@@ -2045,12 +2125,13 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			grants: [READ, UPDATE, PURCHASING],
 		})
 		const money =
-			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|shortOfMinimumMinor|belowMinimum|unpricedLines|previousPackPriceMinor|priceChangeBp|priceChanges|foodCost|cost|plate|costMinor|typedCostMinor|typedCostCurrency|priceForTargetMinor|foodCostBp|netSalesMinor)":/
+			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|shortOfMinimumMinor|belowMinimum|unpricedLines|previousPackPriceMinor|priceChangeBp|priceChanges|foodCost|cost|plate|costMinor|typedCostMinor|typedCostCurrency|priceForTargetMinor|foodCostBp|netSalesMinor|orderLimitMinor|monthlyLimitMinor|monthlySpentMinor|othersPay)":/
 		const failures: string[] = []
 		let reads = 0
 		// Cost-only reads are all money: they need the cost grant (below).
 		const costOnlyRoutes = new Set([
 			'GET /price-alerts',
+			'GET /price-comparison',
 			'GET /supplier-products/:id/prices',
 			'GET /items/:id/price-history',
 			'GET /purchasing/accountant-export',
@@ -2145,6 +2226,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		})
 		for (const path of [
 			`/operator/inventory/price-alerts?locationId=${LOC_B}`,
+			`/operator/inventory/price-comparison?from=${today}&to=${today}`,
 			`/operator/inventory/supplier-products/${seed.product}/prices`,
 			`/operator/inventory/items/${seed.item}/price-history`,
 			`/operator/inventory/purchasing/accountant-export?locationId=${LOC_B}&from=${today}&to=${today}`,

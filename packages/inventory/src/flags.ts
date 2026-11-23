@@ -106,6 +106,8 @@ export const inventoryContextLocationSchema = z.object({
 	taxInclusive: z.boolean().optional(),
 	/** Tax rate as a percentage (15 = 15%). */
 	taxRatePercent: z.number().min(0).max(100).optional(),
+	/** Special hours (closed dates skip repeat order runs, #499). */
+	specialHours: z.unknown().nullable().optional(),
 })
 export type InventoryContextLocation = z.infer<
 	typeof inventoryContextLocationSchema

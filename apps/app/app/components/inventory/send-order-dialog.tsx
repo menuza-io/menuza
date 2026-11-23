@@ -75,6 +75,7 @@ export function SendOrderDialog({
 		try {
 			const sent = await onSend(channel)
 			setResult(sent)
+			if (sent.waitingForApproval) return
 			if (sent.channel === 'whatsapp' && sent.waLink) {
 				window.open(sent.waLink, '_blank', 'noopener,noreferrer')
 			} else if (sent.channel === 'copy') {
@@ -99,25 +100,32 @@ export function SendOrderDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{result ? (
-							<Trans>Order sent</Trans>
+							result.waitingForApproval ? (
+								<Trans>Needs approval</Trans>
+							) : (
+								<Trans>Order sent</Trans>
+							)
 						) : (
 							<Trans>Send this order?</Trans>
 						)}
 					</DialogTitle>
 					<DialogDescription>
 						{result ? (
-							<Trans>
-								The order is marked as sent. Here is what happens next.
-							</Trans>
+							result.waitingForApproval ? (
+								<Trans>
+									This order needs approval before it can be sent to the
+									supplier.
+								</Trans>
+							) : (
+								<Trans>
+									The order is marked as sent. Here is what happens next.
+								</Trans>
+							)
 						) : (
 							<Trans>
 								<span className="wrap-anywhere">{supplier}</span> will get{' '}
-								<Plural
-									value={itemCount}
-									one="# item"
-									other="# items"
-								/>
-								. Nothing is sent until you press Send.
+								<Plural value={itemCount} one="# item" other="# items" />.
+								Nothing is sent until you press Send.
 							</Trans>
 						)}
 					</DialogDescription>
@@ -238,6 +246,18 @@ function SendResult({
 	onPrint: () => void
 }) {
 	const { i18n } = useLingui()
+	if (result.waitingForApproval) {
+		return (
+			<Alert data-testid="send-waiting-approval">
+				<AlertDescription>
+					<Trans>
+						A manager has been notified to review and approve this order.
+						Nothing was sent to the supplier yet.
+					</Trans>
+				</AlertDescription>
+			</Alert>
+		)
+	}
 	const email = result.order.supplierEmail
 	const reason = result.emailSkipped
 		? i18n._(EMAIL_SKIPPED_MESSAGES[result.emailSkipped])

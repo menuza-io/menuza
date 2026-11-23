@@ -78,6 +78,25 @@ export const MONEY_FIELDS = [
 	'linesSumMinor',
 	'previousPriceMinor',
 	'unitPriceMinor',
+	// Order planning & cost insight (#497, #500, #508, #520).
+	'othersPay',
+	'lowestCostMicro',
+	'highestCostMicro',
+	'spreadCostMicro',
+	'spreadBp',
+	'currentCostMicro',
+	'diffCostMicro',
+	'latestCostMicro',
+	'paidMinor',
+	'totalPaidMinor',
+	'savingMinor',
+	'totalSavingMinor',
+	'previousOrderPackPriceMinor',
+	'currentPackPriceMinor',
+	'previousCostMinor',
+	'orderLimitMinor',
+	'monthlyLimitMinor',
+	'monthlySpentMinor',
 ] as const
 
 export function inventoryCaller(
@@ -98,6 +117,8 @@ export function inventoryCaller(
 			INVENTORY_PERMISSIONS.UPDATE_INVENTORY_RECIPE,
 		),
 		recipesEnabled: ctx.features.recipes,
+		canManageSettings: ctx.canManageSettings,
+		isOwner: ctx.isOwner,
 	}
 }
 

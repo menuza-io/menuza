@@ -1,23 +1,35 @@
 import { randomUUID } from 'node:crypto'
 import {
 	costMicroFromPackPriceClamped,
+	createRecipeStore,
 	creditLines,
 	creditTotalMinor,
+	INVENTORY_PERMISSIONS,
 	INVOICE_PHOTO_MAX_BYTES,
+	plateCost,
 	PRICE_RISE_ALERT_BP,
+	priceForTargetMinor,
 	priceRiseAlert,
 	type CreditMessage,
 	type DeliveryDetail,
 	type InventoryBaseUnit,
 	type InvoicePhotoUpload,
+	type MenuPriceTax,
 	type PriceAlert,
+	type PriceAlertDish,
 	type PriceAlerts,
+	type PriceRiseDishAlertEntry,
+	type RecipeItemFacts,
+	type RecipeStore,
+	type RecipeVersion,
 } from '@repo/inventory'
 import {
 	getTenantDb,
 	invDeliveries,
 	invDeliveryLines,
+	invItemGroupMembers,
 	invItems,
+	invLocationSettings,
 	invOrderLines,
 	invOrders,
 	invSuppliers,
@@ -54,6 +66,14 @@ import {
 	deliveryDetail,
 	loadAllowedDelivery,
 } from './inventory-purchasing-service.ts'
+import {
+	buildRecipeStore,
+	FAR_FUTURE,
+	loadItemCosts,
+	loadVersionsAt,
+	typedCostCurrency,
+	type ItemCosts,
+} from './inventory-recipe-store.ts'
 import { getInventorySettings } from './inventory-settings-service.ts'
 
 // ── Credit ──────────────────────────────────────────────────────────────────
@@ -481,12 +501,377 @@ export async function findPriceRises(
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
+const SYNTHETIC_MADE = '__price_rise_made__'
+const NO_MENU_ITEM = '__no_menu_item__'
+
+type DishTargetOwner = { ownerKind: 'menu_item' | 'variant'; ownerId: string }
+
+type DishImpactContext = {
+	store: RecipeStore
+	madeVersions: readonly RecipeVersion[]
+	facts: readonly RecipeItemFacts[]
+	costs: ItemCosts
+	currency: string
+	targetFoodCostBp: number
+	pricesIncludeTax: boolean
+	taxRateBp: number | null
+	groupsByPrimary: Map<
+		string,
+		Array<{
+			groupItemId: string
+			memberQuantity: number
+			groupQuantity: number
+		}>
+	>
+	madeById: Map<string, RecipeVersion>
+	madeUsingItem: Map<string, Set<string>>
+	batchCountedMade: Set<string>
+	dishUsingItem: Map<string, DishTargetOwner[]>
+}
+
+async function loadDishImpactContext(
+	db: InventoryReader,
+	input: {
+		locationId: string
+		region?: 'us' | 'ksa'
+		currencyFallback?: string
+	},
+): Promise<DishImpactContext> {
+	const [
+		{ madeVersions, facts },
+		menuVersions,
+		variantVersions,
+		costs,
+		settings,
+		locationRows,
+		primaryMembers,
+	] = await Promise.all([
+		buildRecipeStore(db, { at: FAR_FUTURE }),
+		loadVersionsAt(db, 'menu_item', null, FAR_FUTURE),
+		loadVersionsAt(db, 'variant', null, FAR_FUTURE),
+		loadItemCosts(db),
+		getInventorySettings(db, input.region ?? 'us'),
+		db
+			.select({
+				locationId: invLocationSettings.locationId,
+				pricesIncludeTax: invLocationSettings.pricesIncludeTax,
+				taxRateBp: invLocationSettings.taxRateBp,
+			})
+			.from(invLocationSettings),
+		db
+			.select()
+			.from(invItemGroupMembers)
+			.where(eq(invItemGroupMembers.rank, 0)),
+	])
+
+	const store = createRecipeStore({
+		recipes: [...madeVersions, ...menuVersions, ...variantVersions],
+		items: facts,
+	})
+	const locRow =
+		locationRows.find((r) => r.locationId === input.locationId) ??
+		locationRows.find((r) => r.locationId === '*')
+	const pricesIncludeTax = locRow?.pricesIncludeTax ?? false
+	const taxRateBp = locRow?.taxRateBp ?? null
+	const currency =
+		costs.currency ?? input.currencyFallback ?? typedCostCurrency(store) ?? ''
+
+	const groupsByPrimary = new Map<
+		string,
+		Array<{
+			groupItemId: string
+			memberQuantity: number
+			groupQuantity: number
+		}>
+	>()
+	for (const primary of primaryMembers) {
+		const list = groupsByPrimary.get(primary.memberItemId)
+		const entry = {
+			groupItemId: primary.groupItemId,
+			memberQuantity: primary.memberQuantity,
+			groupQuantity: primary.groupQuantity,
+		}
+		if (list) list.push(entry)
+		else groupsByPrimary.set(primary.memberItemId, [entry])
+	}
+
+	const madeById = new Map<string, RecipeVersion>()
+	const madeUsingItem = new Map<string, Set<string>>()
+	for (const version of madeVersions) {
+		if (version.lines.length === 0 || (version.makesQuantity ?? 0) <= 0)
+			continue
+		madeById.set(version.ownerId, version)
+		for (const line of version.lines) {
+			let set = madeUsingItem.get(line.itemId)
+			if (!set) {
+				set = new Set<string>()
+				madeUsingItem.set(line.itemId, set)
+			}
+			set.add(version.ownerId)
+		}
+	}
+
+	const batchCountedMade = new Set<string>()
+	for (const fact of facts) {
+		if (fact.kind === 'made' && fact.batchCounted) batchCountedMade.add(fact.id)
+	}
+
+	const dishUsingItem = new Map<string, DishTargetOwner[]>()
+	for (const version of [...menuVersions, ...variantVersions]) {
+		if (version.ownerKind === 'variant' && version.multiplierBp !== null) {
+			continue
+		}
+		if (version.lines.length === 0) continue
+		const owner: DishTargetOwner = {
+			ownerKind: version.ownerKind as 'menu_item' | 'variant',
+			ownerId: version.ownerId,
+		}
+		for (const line of version.lines) {
+			const list = dishUsingItem.get(line.itemId)
+			if (list) list.push(owner)
+			else dishUsingItem.set(line.itemId, [owner])
+		}
+	}
+
+	return {
+		store,
+		madeVersions,
+		facts,
+		costs,
+		currency,
+		targetFoodCostBp: settings.targetFoodCostBp,
+		pricesIncludeTax,
+		taxRateBp,
+		groupsByPrimary,
+		madeById,
+		madeUsingItem,
+		batchCountedMade,
+		dishUsingItem,
+	}
+}
+
+function evaluateAffectedDishes(
+	ctx: DishImpactContext,
+	changes: readonly Pick<
+		PriceRiseRow,
+		'itemId' | 'previousCostMicro' | 'costMicro'
+	>[],
+): PriceAlertDish[] {
+	if (changes.length === 0) return []
+	const oldCostMap = new Map(ctx.costs.last)
+	const newCostMap = new Map(ctx.costs.last)
+	const affectedItems = new Set<string>()
+
+	for (const change of changes) {
+		oldCostMap.set(change.itemId, change.previousCostMicro)
+		newCostMap.set(change.itemId, change.costMicro)
+		affectedItems.add(change.itemId)
+		for (const primary of ctx.groupsByPrimary.get(change.itemId) ?? []) {
+			oldCostMap.set(
+				primary.groupItemId,
+				Math.round(
+					(change.previousCostMicro * primary.memberQuantity) /
+						primary.groupQuantity,
+				),
+			)
+			newCostMap.set(
+				primary.groupItemId,
+				Math.round(
+					(change.costMicro * primary.memberQuantity) / primary.groupQuantity,
+				),
+			)
+			affectedItems.add(primary.groupItemId)
+		}
+	}
+
+	// Collect all transitively affected made items (BFS) and topologically order
+	// them bottom-up so nested batch-counted made items propagate in order.
+	const reachableMade = new Set<string>()
+	const queue = [...affectedItems]
+	while (queue.length > 0) {
+		const current = queue.shift()!
+		for (const madeId of ctx.madeUsingItem.get(current) ?? []) {
+			if (reachableMade.has(madeId)) continue
+			reachableMade.add(madeId)
+			queue.push(madeId)
+		}
+	}
+
+	const orderedMade: string[] = []
+	const visitState = new Map<string, 'visiting' | 'done'>()
+	const visitMade = (madeId: string) => {
+		const state = visitState.get(madeId)
+		if (state === 'done' || state === 'visiting') return
+		visitState.set(madeId, 'visiting')
+		const version = ctx.madeById.get(madeId)
+		if (version) {
+			for (const line of version.lines) {
+				if (reachableMade.has(line.itemId)) visitMade(line.itemId)
+			}
+		}
+		visitState.set(madeId, 'done')
+		orderedMade.push(madeId)
+	}
+	for (const madeId of reachableMade) visitMade(madeId)
+
+	for (const madeId of orderedMade) {
+		affectedItems.add(madeId)
+		if (!ctx.batchCountedMade.has(madeId)) continue
+		const madeVersion = ctx.madeById.get(madeId)
+		if (
+			!madeVersion ||
+			madeVersion.makesQuantity === null ||
+			madeVersion.makesQuantity <= 0
+		) {
+			continue
+		}
+		const synthetic: RecipeVersion = {
+			...madeVersion,
+			ownerKind: 'menu_item',
+			ownerId: SYNTHETIC_MADE,
+			makesQuantity: null,
+		}
+		const madeStore = createRecipeStore({
+			recipes: [...ctx.madeVersions, synthetic],
+			items: ctx.facts,
+		})
+		const oldMade = plateCost({
+			store: madeStore,
+			dish: { itemId: SYNTHETIC_MADE },
+			at: FAR_FUTURE,
+			currency: ctx.currency,
+			lastCostMicro: oldCostMap,
+		})
+		const newMade = plateCost({
+			store: madeStore,
+			dish: { itemId: SYNTHETIC_MADE },
+			at: FAR_FUTURE,
+			currency: ctx.currency,
+			lastCostMicro: newCostMap,
+		})
+		if (oldMade.costMinor !== null && newMade.costMinor !== null) {
+			oldCostMap.set(
+				madeId,
+				costMicroFromPackPriceClamped(
+					oldMade.costMinor,
+					madeVersion.makesQuantity,
+				),
+			)
+			newCostMap.set(
+				madeId,
+				costMicroFromPackPriceClamped(
+					newMade.costMinor,
+					madeVersion.makesQuantity,
+				),
+			)
+		}
+	}
+
+	const candidates = new Map<string, DishTargetOwner>()
+	for (const itemId of affectedItems) {
+		for (const owner of ctx.dishUsingItem.get(itemId) ?? []) {
+			candidates.set(`${owner.ownerKind}:${owner.ownerId}`, owner)
+		}
+	}
+
+	const tax: MenuPriceTax = {
+		pricesIncludeTax: ctx.pricesIncludeTax,
+		taxRateBp: ctx.taxRateBp,
+	}
+	const dishes: PriceAlertDish[] = []
+	for (const owner of candidates.values()) {
+		const dish =
+			owner.ownerKind === 'menu_item'
+				? { itemId: owner.ownerId }
+				: { itemId: NO_MENU_ITEM, variantId: owner.ownerId }
+		const oldPlate = plateCost({
+			store: ctx.store,
+			dish,
+			at: FAR_FUTURE,
+			currency: ctx.currency,
+			lastCostMicro: oldCostMap,
+		})
+		const newPlate = plateCost({
+			store: ctx.store,
+			dish,
+			at: FAR_FUTURE,
+			currency: ctx.currency,
+			lastCostMicro: newCostMap,
+		})
+		if (
+			oldPlate.costMinor === null ||
+			newPlate.costMinor === null ||
+			newPlate.costMinor <= oldPlate.costMinor
+		) {
+			continue
+		}
+		dishes.push({
+			menuItemId: owner.ownerKind === 'menu_item' ? owner.ownerId : null,
+			variantId: owner.ownerKind === 'variant' ? owner.ownerId : null,
+			previousCostMinor: oldPlate.costMinor,
+			costMinor: newPlate.costMinor,
+			priceForTargetMinor: priceForTargetMinor(
+				newPlate.costMinor,
+				ctx.targetFoodCostBp,
+				tax,
+			),
+		})
+	}
+
+	return dishes.sort(
+		(a, b) =>
+			b.costMinor - b.previousCostMinor - (a.costMinor - a.previousCostMinor) ||
+			(a.menuItemId ?? '').localeCompare(b.menuItemId ?? '') ||
+			(a.variantId ?? '').localeCompare(b.variantId ?? ''),
+	)
+}
+
+/**
+ * Affected dish entries for a `inventory_price_rise` tick alert on one
+ * delivery (`priceRiseDishes` on `inventoryNotifyEventSchema`).
+ */
+export async function priceRiseDishesForRises(
+	db: InventoryReader,
+	input: {
+		locationId: string
+		rises: readonly PriceRiseRow[]
+		limit?: number
+	},
+): Promise<PriceRiseDishAlertEntry[]> {
+	if (input.rises.length === 0) return []
+	const ctx = await loadDishImpactContext(db, {
+		locationId: input.locationId,
+		currencyFallback: input.rises[0]?.currency,
+	})
+	const dishes = evaluateAffectedDishes(ctx, input.rises)
+	const limit = input.limit ?? dishes.length
+	return dishes.slice(0, limit).map((dish) => ({
+		menuItemId: dish.menuItemId,
+		variantId: dish.variantId,
+		previousCostMinor: dish.previousCostMinor,
+		costMinor: dish.costMinor,
+		targetFoodCostBp: ctx.targetFoodCostBp,
+		pricesIncludeTax: ctx.pricesIncludeTax,
+		taxRateBp: ctx.taxRateBp,
+		priceForTargetMinor: dish.priceForTargetMinor,
+	}))
+}
 
 /** `GET /price-alerts` (the whole answer is money: the route needs the cost grant). */
 export async function getPriceAlerts(
 	db: InventoryReader,
-	input: { query: PriceAlertsQuery; now: number },
+	input: {
+		query: PriceAlertsQuery
+		now: number
+		caller?: Pick<InventoryCaller, 'cost' | 'region'>
+	},
 ): Promise<PriceAlerts> {
+	if (input.caller && !input.caller.cost) {
+		throw new InventoryError('forbidden', 403, {
+			reason: 'grant',
+			required: INVENTORY_PERMISSIONS.READ_INVENTORY_COST,
+		})
+	}
 	const { query } = input
 	const rises = await findPriceRises(db, {
 		locationId: query.locationId,
@@ -497,31 +882,51 @@ export async function getPriceAlerts(
 			rises.map((rise) => rise.supplierId).filter((id): id is string => !!id),
 		),
 	]
-	const suppliers = await queryInChunks(supplierIds, (chunk) =>
-		db
-			.select({ id: invSuppliers.id, name: invSuppliers.name })
-			.from(invSuppliers)
-			.where(inArray(invSuppliers.id, chunk)),
-	)
+	const [suppliers, impact] = await Promise.all([
+		queryInChunks(supplierIds, (chunk) =>
+			db
+				.select({ id: invSuppliers.id, name: invSuppliers.name })
+				.from(invSuppliers)
+				.where(inArray(invSuppliers.id, chunk)),
+		),
+		rises.length > 0
+			? loadDishImpactContext(db, {
+					locationId: query.locationId,
+					region: input.caller?.region,
+					currencyFallback: rises[0]?.currency,
+				})
+			: Promise.resolve(null),
+	])
 	const supplierName = new Map(suppliers.map((row) => [row.id, row.name]))
-	const alerts: PriceAlert[] = rises.map((rise) => ({
-		itemId: rise.itemId,
-		itemName: rise.itemName,
-		supplierId: rise.supplierId,
-		supplierName: rise.supplierId
-			? (supplierName.get(rise.supplierId) ?? null)
-			: null,
-		deliveryId: rise.deliveryId,
-		deliveredAt: rise.deliveredAt,
-		previousCostMicro: rise.previousCostMicro,
-		costMicro: rise.costMicro,
-		changeBp: rise.changeBp,
-		severity: rise.severity,
-		packName: rise.packName,
-		previousPackPriceMinor: rise.previousPackPriceMinor,
-		packPriceMinor: rise.packPriceMinor,
-		affectedDishes: null,
-	}))
+	const alerts: PriceAlert[] = rises.map((rise) => {
+		const dishes = impact ? evaluateAffectedDishes(impact, [rise]) : []
+		return {
+			itemId: rise.itemId,
+			itemName: rise.itemName,
+			supplierId: rise.supplierId,
+			supplierName: rise.supplierId
+				? (supplierName.get(rise.supplierId) ?? null)
+				: null,
+			deliveryId: rise.deliveryId,
+			deliveredAt: rise.deliveredAt,
+			previousCostMicro: rise.previousCostMicro,
+			costMicro: rise.costMicro,
+			changeBp: rise.changeBp,
+			severity: rise.severity,
+			packName: rise.packName,
+			previousPackPriceMinor: rise.previousPackPriceMinor,
+			packPriceMinor: rise.packPriceMinor,
+			affectedDishes: dishes.length,
+			...(impact
+				? {
+						targetFoodCostBp: impact.targetFoodCostBp,
+						pricesIncludeTax: impact.pricesIncludeTax,
+						taxRateBp: impact.taxRateBp,
+						dishes,
+					}
+				: {}),
+		}
+	})
 	return {
 		locationId: query.locationId,
 		days: query.days,

@@ -16,6 +16,8 @@ import { currentBusinessDate } from '@repo/reservations'
 import {
 	destroyTenantDb,
 	getTenantDb,
+	invCountEntries,
+	invCounts,
 	invMovements,
 	invSupplierProductPrices,
 	provisionTenantDb,
@@ -330,11 +332,17 @@ describe('levels', () => {
 		expect(dup.status).toBe(400)
 	})
 
-	it('suggests levels from what was used (sales, waste and counted shortfalls, never deliveries)', async () => {
+	it('suggests levels from what was used over at least 14 days (sales and waste, never deliveries or counts)', async () => {
 		const item = await world.item('Levels used')
+		const shortHistory = await world.item('Levels short history')
 		const other = await world.item('Levels unused')
 		await world.levels([
 			{ itemId: item.id, orderBelowQuantity: null, fillUpToQuantity: null },
+			{
+				itemId: shortHistory.id,
+				orderBelowQuantity: null,
+				fillUpToQuantity: null,
+			},
 		])
 		const db = await getTenantDb(ORG)
 		const at = (daysAgo: number) => addDaysIso(today, -daysAgo)
@@ -350,20 +358,27 @@ describe('levels', () => {
 				quantity,
 				kind,
 				sourceType: kind,
-				sourceId: `src-${kind}-${daysAgo}-${quantity}`,
+				sourceId: `src-${itemId}-${kind}-${daysAgo}-${quantity}`,
 				businessDate: at(daysAgo),
 				actorKind: 'system',
 			})
 		await move(item.id, 'delivery', 100_000_000, 40)
 		await move(other.id, 'delivery', 10_000_000, 40)
-		await move(item.id, 'sale', -20_000_000, 10)
-		await move(item.id, 'sale', -4_000_000, 3)
-		await move(item.id, 'waste', -3_000_000, 2)
-		// A counted shortfall counts as used; a count that found more does not.
+		// 14 days of use at 1 kg/day (12 sales + 2 waste).
+		for (let d = 1; d <= 12; d++) {
+			await move(item.id, 'sale', -1_000_000, d)
+		}
+		await move(item.id, 'waste', -1_000_000, 13)
+		await move(item.id, 'waste', -1_000_000, 14)
+		// Count movements do not count as usage under #498.
 		await move(item.id, 'count', -1_000_000, 1)
 		await move(item.id, 'count', 5_000_000, 1)
 		// Outside the 28-day window: not used.
 		await move(item.id, 'sale', -50_000_000, 35)
+		// Short history item: only 5 days of use (< 14).
+		for (let d = 1; d <= 5; d++) {
+			await move(shortHistory.id, 'sale', -2_000_000, d)
+		}
 
 		const res = await call(
 			'GET',
@@ -374,33 +389,34 @@ describe('levels', () => {
 		const view = levelSuggestionsSchema.parse(res.body)
 		expect(view).toMatchObject({ days: 28, daysObserved: 28 })
 		const mine = view.suggestions.find((entry) => entry.itemId === item.id)!
-		// 28 kg used over 28 days: a kilogram a day, 7 kg a week, rounded up to whole kilograms.
+		// Unsourced: 7-day cycle (7 kg) & 14-day + 20% safety margin (16.8 kg -> 17 kg in kg count unit).
 		expect(mine).toEqual({
 			itemId: item.id,
-			usedQuantity: 28_000_000,
+			state: 'ok',
+			useDays: 14,
+			usedQuantity: 14_000_000,
+			dailyUseQuantity: 1_000_000,
 			weeklyUseQuantity: 7_000_000,
-			orderBelowQuantity: 3_000_000,
-			fillUpToQuantity: 7_000_000,
+			orderBelowQuantity: 7_000_000,
+			fillUpToQuantity: 17_000_000,
+			deliveryDays: [],
+			cycleDays: 7,
+			supplierName: null,
+			packName: null,
+			packBaseQuantity: null,
+		})
+		expect(
+			view.suggestions.find((entry) => entry.itemId === shortHistory.id),
+		).toMatchObject({
+			itemId: shortHistory.id,
+			state: 'not_enough_history',
+			useDays: 5,
+			orderBelowQuantity: 0,
+			fillUpToQuantity: 0,
 		})
 		expect(view.suggestions.some((entry) => entry.itemId === other.id)).toBe(
 			false,
 		)
-
-		const longer = levelSuggestionsSchema.parse(
-			(
-				await call(
-					'GET',
-					`${BASE}/levels/suggestions?locationId=${LOC}&days=28&coverDays=14&orderBelowDays=7`,
-					{ token: full },
-				)
-			).body,
-		)
-		expect(
-			longer.suggestions.find((entry) => entry.itemId === item.id),
-		).toMatchObject({
-			orderBelowQuantity: 7_000_000,
-			fillUpToQuantity: 14_000_000,
-		})
 	})
 
 	it('needs the purchasing flag, the right grants and a location the token may use', async () => {
@@ -1991,5 +2007,442 @@ describe('Overdue receiving (#501) and supplier confirmation (#502)', () => {
 		} finally {
 			vi.useRealTimers()
 		}
+	})
+})
+
+describe('Suggested order explanation, warnings, and edited lines (#497)', () => {
+	it('returns region explanation, 10-day stale warning, price change warning (cost-gated), and preserves suggestedPacks after edit and send', async () => {
+		const sup = await world.supplier('Explain Supplier', {
+			deliveryDays: [0, 1, 2, 3, 4, 5, 6],
+			cutoffTime: '23:59',
+			cutoffDaysBefore: 1,
+			minimumOrderMinor: 500_000,
+		})
+		const staleItem = await world.item('Explain Stale Beans')
+		const freshItem = await world.item('Explain Fresh Rice')
+		const staleProd = await world.product(sup.id, staleItem.id, {
+			packName: 'Bag 5 kg',
+			packBaseQuantity: 5_000_000,
+			priceMinor: 10_000,
+		})
+		const freshProd = await world.product(sup.id, freshItem.id, {
+			packName: 'Sack 10 kg',
+			packBaseQuantity: 10_000_000,
+			priceMinor: 20_000,
+		})
+		await world.levels([
+			{
+				itemId: staleItem.id,
+				orderBelowQuantity: 10_000_000,
+				fillUpToQuantity: 22_000_000,
+			},
+			{
+				itemId: freshItem.id,
+				orderBelowQuantity: 10_000_000,
+				fillUpToQuantity: 25_000_000,
+			},
+		])
+		await world.stock(staleItem.id, 23_000_000)
+		await world.stock(freshItem.id, 4_000_000)
+
+		// Previous sent order at lower price (10_000 vs new 12_500) for staleItem.
+		const priorOrd = await world.ok('POST', '/orders', {
+			clientId: cid('ord'),
+			locationId: LOC,
+			supplierId: sup.id,
+			expectedDate: addDaysIso(today, -5), // > 2 days overdue: does NOT count as onOrder
+			lines: [
+				{ itemId: staleItem.id, supplierProductId: staleProd.id, packs: 1 },
+			],
+		})
+		await world.ok('POST', `/orders/${priorOrd.id}/send`, {
+			expectedVersion: 1,
+			channel: 'copy',
+		})
+
+		// Update staleProd price so priceChangedSinceLastOrder triggers.
+		await world.ok('PATCH', `/supplier-products/${staleProd.id}`, {
+			expectedVersion: staleProd.version,
+			priceMinor: 12_500,
+		})
+
+		// Approved count 2 days ago for freshItem (not stale), and 12 days ago for staleItem (stale > 10 days).
+		const db = await getTenantDb(ORG)
+		const now = Date.now()
+		const recentCountId = cid('cnt')
+		const oldCountId = cid('cnt')
+		await db.insert(invCounts).values([
+			{
+				id: recentCountId,
+				locationId: LOC,
+				status: 'counting',
+				businessDate: addDaysIso(today, -2),
+				startedByKind: 'operator',
+				startedById: 'u1',
+			},
+			{
+				id: oldCountId,
+				locationId: LOC,
+				status: 'counting',
+				businessDate: addDaysIso(today, -12),
+				startedByKind: 'operator',
+				startedById: 'u1',
+			},
+		])
+		await db.insert(invCountEntries).values([
+			{
+				id: cid('ce'),
+				countId: recentCountId,
+				itemId: freshItem.id,
+				quantity: 4_000_000,
+				enteredAmount: '4',
+				enteredUnit: 'kg',
+				counterKind: 'operator',
+				counterId: 'u1',
+				clientId: cid('ce'),
+			},
+			{
+				id: cid('ce'),
+				countId: oldCountId,
+				itemId: staleItem.id,
+				quantity: 3_000_000,
+				enteredAmount: '3',
+				enteredUnit: 'kg',
+				counterKind: 'operator',
+				counterId: 'u1',
+				clientId: cid('ce'),
+			},
+		])
+		await db
+			.update(invCounts)
+			.set({
+				status: 'approved',
+				approvedAt: now - 2 * 86_400_000,
+				approvedById: 'u1',
+			})
+			.where(eq(invCounts.id, recentCountId))
+		await db
+			.update(invCounts)
+			.set({
+				status: 'approved',
+				approvedAt: now - 12 * 86_400_000,
+				approvedById: 'u1',
+			})
+			.where(eq(invCounts.id, oldCountId))
+
+		// Seed 10 days of usage for staleItem (2 kg/day) so expectedUseUntilDeliveryQuantity is computed.
+		for (let d = 1; d <= 10; d++) {
+			await db.insert(invMovements).values({
+				locationId: LOC,
+				itemId: staleItem.id,
+				quantity: -2_000_000,
+				kind: 'sale',
+				sourceType: 'sale',
+				sourceId: `exp-sale-${d}`,
+				businessDate: addDaysIso(today, -d),
+				actorKind: 'system',
+			})
+		}
+
+		// With cost grant: full explanation & price warnings.
+		const withCostRes = await call(
+			'GET',
+			`${BASE}/orders/suggested?locationId=${LOC}`,
+			{ token: full },
+		)
+		expect(withCostRes.status).toBe(200)
+		const withCost = suggestedOrdersSchema.parse(withCostRes.body)
+		const card = withCost.suppliers.find((s) => s.supplierId === sup.id)!
+		expect(card).toBeDefined()
+		expect(card.belowMinimum).toBe(true)
+
+		const staleLine = card.lines.find((l) => l.itemId === staleItem.id)!
+		// Needed: 22 - 3 = 19 kg in 5 kg bags -> rawPacksMilli = 3800, roundedPacksMilli = 4000 (4 bags).
+		expect(staleLine.explanation).toMatchObject({
+			onHandQuantity: 3_000_000,
+			onOrderQuantity: 0,
+			orderBelowQuantity: 10_000_000,
+			fillUpToQuantity: 22_000_000,
+			neededQuantity: 19_000_000,
+			packName: 'Bag 5 kg',
+			packBaseQuantity: 5_000_000,
+			rawPacksMilli: 3_800,
+			roundedPacksMilli: 4_000,
+			warnings: {
+				notCountedIn10Days: true,
+				priceChangedSinceLastOrder: true,
+				belowSupplierMinimum: true,
+			},
+			previousOrderPackPriceMinor: 10_000,
+			currentPackPriceMinor: 12_500,
+		})
+		expect(staleLine.explanation!.lastCountedAt).toEqual(expect.any(Number))
+		expect(staleLine.explanation!.expectedUseUntilDeliveryQuantity).toBe(
+			2_000_000,
+		)
+
+		const freshLine = card.lines.find((l) => l.itemId === freshItem.id)!
+		expect(freshLine.explanation).toMatchObject({
+			onHandQuantity: 4_000_000,
+			onOrderQuantity: 0,
+			neededQuantity: 21_000_000,
+			rawPacksMilli: 2_100,
+			roundedPacksMilli: 3_000,
+			expectedUseUntilDeliveryQuantity: null,
+			warnings: {
+				notCountedIn10Days: false,
+				priceChangedSinceLastOrder: false,
+				belowSupplierMinimum: true,
+			},
+			previousOrderPackPriceMinor: null,
+			currentPackPriceMinor: 20_000,
+		})
+
+		// Without cost grant: zero money fields leaked, price & minimum warnings forced false.
+		const noCostRes = await call(
+			'GET',
+			`${BASE}/orders/suggested?locationId=${LOC}`,
+			{ token: noCost },
+		)
+		expect(noCostRes.status).toBe(200)
+		expect(JSON.stringify(noCostRes.body)).not.toMatch(
+			/Minor|currency|belowMinimum|unpricedLines/,
+		)
+		const noCostParsed = suggestedOrdersSchema.parse(noCostRes.body)
+		const noCostCard = noCostParsed.suppliers.find(
+			(s) => s.supplierId === sup.id,
+		)!
+		const noCostStale = noCostCard.lines.find((l) => l.itemId === staleItem.id)!
+		expect(noCostStale.explanation!.warnings).toEqual({
+			notCountedIn10Days: true,
+			priceChangedSinceLastOrder: false,
+			belowSupplierMinimum: false,
+		})
+		expect(noCostStale.explanation!.previousOrderPackPriceMinor).toBeUndefined()
+		expect(noCostStale.explanation!.currentPackPriceMinor).toBeUndefined()
+
+		// Create draft from suggestion, edit packs, and send: suggestedPacks + explanation stay on draft and after send.
+		const created = orderDetailSchema.parse(
+			await world.ok('POST', '/orders', {
+				clientId: cid('ord'),
+				locationId: LOC,
+				supplierId: sup.id,
+				fromSuggestion: true,
+			}),
+		)
+		const draftStale = created.lines.find((l) => l.itemId === staleItem.id)!
+		expect(draftStale.suggestedPacks).toBe(4)
+		expect(draftStale.explanation).toMatchObject({
+			neededQuantity: 19_000_000,
+			rawPacksMilli: 3_800,
+			roundedPacksMilli: 4_000,
+			warnings: {
+				notCountedIn10Days: true,
+				priceChangedSinceLastOrder: true,
+				belowSupplierMinimum: true,
+			},
+		})
+
+		const patched = orderDetailSchema.parse(
+			await world.ok('PATCH', `/orders/${created.id}`, {
+				expectedVersion: created.version,
+				lines: [
+					{
+						itemId: staleItem.id,
+						supplierProductId: staleProd.id,
+						packs: 6,
+					},
+					{
+						itemId: freshItem.id,
+						supplierProductId: freshProd.id,
+						packs: 3,
+					},
+				],
+			}),
+		)
+		const editedDraftLine = patched.lines.find(
+			(l) => l.itemId === staleItem.id,
+		)!
+		expect(editedDraftLine.packs).toBe(6)
+		expect(editedDraftLine.suggestedPacks).toBe(4)
+		expect(editedDraftLine.explanation).toMatchObject({
+			neededQuantity: 19_000_000,
+			roundedPacksMilli: 4_000,
+		})
+
+		// Send and verify both numbers + explanation stay and no-cost token sees no money.
+		const sent = sendOrderResultSchema.parse(
+			await world.ok('POST', `/orders/${created.id}/send`, {
+				expectedVersion: patched.version,
+				channel: 'copy',
+			}),
+		)
+		const sentLine = sent.order.lines.find((l) => l.itemId === staleItem.id)!
+		expect(sentLine.packs).toBe(6)
+		expect(sentLine.suggestedPacks).toBe(4)
+		expect(sentLine.explanation).toMatchObject({
+			neededQuantity: 19_000_000,
+			roundedPacksMilli: 4_000,
+		})
+
+		const sentNoCost = await call('GET', `${BASE}/orders/${created.id}`, {
+			token: noCost,
+		})
+		expect(sentNoCost.status).toBe(200)
+		expect(JSON.stringify(sentNoCost.body)).not.toMatch(
+			/Minor|currency|unpricedLines|shortOfMinimum/,
+		)
+		const sentNoCostParsed = orderDetailSchema.parse(sentNoCost.body)
+		expect(
+			sentNoCostParsed.lines.find((l) => l.itemId === staleItem.id)!
+				.explanation!.warnings,
+		).toEqual({
+			notCountedIn10Days: true,
+			priceChangedSinceLastOrder: false,
+			belowSupplierMinimum: false,
+		})
+
+		// Legacy/manual line with suggestedPacks and null suggestionExplanationJson enriches in toDetail.
+		await world.ok('PATCH', `/supplier-products/${staleProd.id}`, {
+			expectedVersion: staleProd.version + 1,
+			priceMinor: 13_000,
+		})
+		const legacyDraft = orderDetailSchema.parse(
+			await world.ok('POST', '/orders', {
+				clientId: cid('ord'),
+				locationId: LOC,
+				supplierId: sup.id,
+				lines: [
+					{
+						itemId: staleItem.id,
+						supplierProductId: staleProd.id,
+						packs: 5,
+						suggestedPacks: 4,
+					},
+				],
+			}),
+		)
+		const enriched = orderDetailSchema.parse(
+			await world.ok('GET', `/orders/${legacyDraft.id}`),
+		)
+		const enrichedLine = enriched.lines[0]!
+		expect(enrichedLine.explanation).toMatchObject({
+			onHandQuantity: 3_000_000,
+			roundedPacksMilli: 4_000,
+			previousOrderPackPriceMinor: 12_500,
+			currentPackPriceMinor: 13_000,
+			warnings: {
+				notCountedIn10Days: true,
+				priceChangedSinceLastOrder: true,
+			},
+		})
+	})
+
+	it('tracks onOrderQuantity in explanation (2-day overdue cutoff), normalizes price changes across pack sizes, and accepts explicit suggestedPacks/explanation on POST /orders', async () => {
+		const sup = await world.supplier('PackSize Supplier', {
+			deliveryDays: [0, 1, 2, 3, 4, 5, 6],
+			cutoffTime: '23:59',
+		})
+		const item = await world.item('PackSize Oil', 'ml')
+		const oldPack = await world.product(sup.id, item.id, {
+			packName: 'Bottle 5 L',
+			packBaseQuantity: 5_000_000,
+			priceMinor: 10_000,
+		})
+		await world.levels([
+			{
+				itemId: item.id,
+				orderBelowQuantity: 20_000_000,
+				fillUpToQuantity: 50_000_000,
+			},
+		])
+
+		// Sent order expected yesterday (within 2-day cutoff): 10 L on order.
+		const recentOrd = await world.ok('POST', '/orders', {
+			clientId: cid('ord'),
+			locationId: LOC,
+			supplierId: sup.id,
+			expectedDate: addDaysIso(today, -1),
+			lines: [{ itemId: item.id, supplierProductId: oldPack.id, packs: 2 }],
+		})
+		await world.ok('POST', `/orders/${recentOrd.id}/send`, {
+			expectedVersion: 1,
+			channel: 'copy',
+		})
+
+		// Replace product with 10 L drum at same per-L price (20_000 for 10 L = 2_000/L): NOT a price change!
+		const sameUnitPack = await world.product(sup.id, item.id, {
+			packName: 'Drum 10 L',
+			packBaseQuantity: 10_000_000,
+			priceMinor: 20_000,
+			preferred: true,
+		})
+		const sameRes = suggestedOrdersSchema.parse(
+			await world.ok('GET', `/orders/suggested?locationId=${LOC}`),
+		)
+		const sameLine = sameRes.suppliers
+			.find((s) => s.supplierId === sup.id)!
+			.lines.find((l) => l.itemId === item.id)!
+		// 50 - (0 + 10) = 40 L needed = 4 drums.
+		expect(sameLine.explanation).toMatchObject({
+			onHandQuantity: 0,
+			onOrderQuantity: 10_000_000,
+			neededQuantity: 40_000_000,
+			rawPacksMilli: 4_000,
+			roundedPacksMilli: 4_000,
+			previousOrderPackPriceMinor: 20_000,
+			currentPackPriceMinor: 20_000,
+			warnings: {
+				priceChangedSinceLastOrder: false,
+			},
+		})
+
+		// Bump 10 L drum price to 22_000: NOW priceChangedSinceLastOrder is true!
+		await world.ok('PATCH', `/supplier-products/${sameUnitPack.id}`, {
+			expectedVersion: sameUnitPack.version,
+			priceMinor: 22_000,
+		})
+		const changedRes = suggestedOrdersSchema.parse(
+			await world.ok('GET', `/orders/suggested?locationId=${LOC}`),
+		)
+		const changedLine = changedRes.suppliers
+			.find((s) => s.supplierId === sup.id)!
+			.lines.find((l) => l.itemId === item.id)!
+		expect(changedLine.explanation).toMatchObject({
+			previousOrderPackPriceMinor: 20_000,
+			currentPackPriceMinor: 22_000,
+			warnings: {
+				priceChangedSinceLastOrder: true,
+			},
+		})
+
+		// Explicit lines with suggestedPacks + explanation on POST /orders (without cost grant strips money!).
+		const noCostDraftRes = await call('POST', `${BASE}/orders`, {
+			token: noCost,
+			body: {
+				clientId: cid('ord'),
+				locationId: LOC,
+				supplierId: sup.id,
+				lines: [
+					{
+						itemId: item.id,
+						supplierProductId: sameUnitPack.id,
+						packs: 5,
+						suggestedPacks: changedLine.packs,
+						explanation: changedLine.explanation,
+					},
+				],
+			},
+		})
+		expect(noCostDraftRes.status).toBe(200)
+		expect(JSON.stringify(noCostDraftRes.body)).not.toMatch(/Minor/)
+		const noCostDraft = orderDetailSchema.parse(noCostDraftRes.body)
+		expect(noCostDraft.lines[0]!.packs).toBe(5)
+		expect(noCostDraft.lines[0]!.suggestedPacks).toBe(4)
+		expect(noCostDraft.lines[0]!.explanation!.warnings).toEqual({
+			notCountedIn10Days: true,
+			priceChangedSinceLastOrder: false,
+			belowSupplierMinimum: false,
+		})
 	})
 })

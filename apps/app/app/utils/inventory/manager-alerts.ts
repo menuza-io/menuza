@@ -4,6 +4,8 @@ import {
 	INVENTORY_PERMISSIONS,
 	type InventoryNotifyKind,
 	type InventoryPermission,
+	type OrderApprovalAlert,
+	type RepeatOrderDraftAlert,
 } from '@repo/inventory'
 
 /**
@@ -40,6 +42,8 @@ export const INVENTORY_ALERT_WORKFLOWS = [
 	'inventory.count_review',
 	'inventory.delivery_due',
 	'inventory.price_rise',
+	'inventory.repeat_order_draft',
+	'inventory.order_approval',
 	'inventory.sold_out',
 ] as const satisfies readonly ReturnType<typeof inventoryAlertWorkflow>[]
 
@@ -99,6 +103,12 @@ export function inventoryAlertAllowedFor(
 	held: ReadonlySet<string>,
 ): boolean {
 	if (!INVENTORY_ALERT_GRANTS.some((grant) => held.has(grant))) return false
+	if (kind === 'inventory_order_approval') {
+		return (
+			held.has(INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING) &&
+			held.has('update:settings:any')
+		)
+	}
 	return (
 		!isCostBearingInventoryAlert(kind) ||
 		held.has(INVENTORY_PERMISSIONS.READ_INVENTORY_COST)
@@ -113,6 +123,8 @@ export function inventoryAlertPath(kind: InventoryNotifyKind): string {
 			return '/inventory/counts'
 		case 'inventory_delivery_due':
 		case 'inventory_price_rise':
+		case 'inventory_repeat_order_draft':
+		case 'inventory_order_approval':
 			return '/inventory/purchasing'
 		case 'inventory_sold_out':
 		case 'inventory_sold_out_back':
@@ -127,6 +139,37 @@ export type InventoryAlertCopy = {
 	headline: string
 	detail: string
 	actionLabel: string
+}
+
+export type PriceRiseDishSummary = {
+	name: string
+	oldFoodCostBp: number | null
+	newFoodCostBp: number | null
+	targetFoodCostBp: number
+	crossedTarget: boolean
+	overTarget: boolean
+}
+
+function formatBpPercent(bp: number): string {
+	return `${(Math.round(bp / 10) / 10).toFixed(1)}%`
+}
+
+function formatPriceRiseDishList(
+	dishes: readonly PriceRiseDishSummary[],
+): string {
+	const shown = dishes.slice(0, 5).map((dish) => {
+		if (dish.oldFoodCostBp !== null && dish.newFoodCostBp !== null) {
+			const targetNote = dish.crossedTarget
+				? `, crossed ${formatBpPercent(dish.targetFoodCostBp)} target`
+				: dish.overTarget
+					? `, over ${formatBpPercent(dish.targetFoodCostBp)} target`
+					: ''
+			return `${dish.name} (${formatBpPercent(dish.oldFoodCostBp)} → ${formatBpPercent(dish.newFoodCostBp)}${targetNote})`
+		}
+		return dish.name
+	})
+	const extra = dishes.length - shown.length
+	return extra > 0 ? `${shown.join(', ')} and ${extra} more` : shown.join(', ')
 }
 
 function items(count: number): string {
@@ -152,6 +195,12 @@ export function describeInventoryAlert(input: {
 	/** Sold-out kinds: the dishes and the ingredients that ran out. */
 	dishes?: readonly string[]
 	ingredients?: readonly string[]
+	/** Price-rise kind (#520): affected dishes with old/new food cost %. */
+	priceRiseDishes?: readonly PriceRiseDishSummary[]
+	/** Repeat-order draft kind (#499). */
+	repeatOrderDraft?: RepeatOrderDraftAlert
+	/** Spending-limit order approval kind (#500). */
+	orderApproval?: OrderApprovalAlert
 }): InventoryAlertCopy {
 	const { kind, count } = input
 	const place = input.locationName ? ` at ${input.locationName}` : ''
@@ -230,12 +279,52 @@ export function describeInventoryAlert(input: {
 				count === 1
 					? 'An item went up in price'
 					: `${count} items went up in price`
+			const affected = input.priceRiseDishes?.length
+				? ` Affected dishes: ${formatPriceRiseDishList(input.priceRiseDishes)}.`
+				: ''
 			return {
 				eyebrow: 'Purchasing',
 				subject: `${headline}${place}`,
 				headline,
-				detail: `${items(count)} cost more than ${count === 1 ? 'it' : 'they'} did on the delivery before${place}. Open purchasing to see which.`,
+				detail: `${items(count)} cost more than ${count === 1 ? 'it' : 'they'} did on the delivery before${place}.${affected} Open purchasing to see which.`,
 				actionLabel: 'See price changes',
+			}
+		}
+		case 'inventory_repeat_order_draft': {
+			const draft = input.repeatOrderDraft
+			const orderLabel = draft
+				? `Order #${draft.orderNumber}`
+				: count === 1
+					? 'A draft order'
+					: `${count} draft orders`
+			const verb = draft || count === 1 ? 'is' : 'are'
+			const headline = `${orderLabel} ${verb} ready for review`
+			const deliveryNote = draft?.expectedDate
+				? ` for ${draft.expectedDate}`
+				: ''
+			return {
+				eyebrow: 'Purchasing',
+				subject: `${headline}${place}`,
+				headline,
+				detail: `${orderLabel} ${draft || count === 1 ? 'was' : 'were'} drafted from your repeat schedule${place}${deliveryNote}. Review and send before cut-off.`,
+				actionLabel: 'Review draft',
+			}
+		}
+		case 'inventory_order_approval': {
+			const approval = input.orderApproval
+			const orderLabel = approval
+				? `Order #${approval.orderNumber}`
+				: count === 1
+					? 'An order'
+					: `${count} orders`
+			const verb = approval || count === 1 ? 'needs' : 'need'
+			const headline = `${orderLabel} ${verb} approval`
+			return {
+				eyebrow: 'Purchasing',
+				subject: `${headline}${place}`,
+				headline,
+				detail: `${orderLabel}${place} ${approval || count === 1 ? 'exceeded a spending limit and is' : 'exceeded a spending limit and are'} waiting for approval before sending.`,
+				actionLabel: 'Review order',
 			}
 		}
 	}

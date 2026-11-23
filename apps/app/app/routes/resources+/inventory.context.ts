@@ -1,5 +1,6 @@
 import { db, eq, and, Organization, OrganizationLocation } from '@repo/database'
 import { inventoryContextSchema } from '@repo/inventory'
+import { parseSpecialHours } from '@repo/opening-hours'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
@@ -78,6 +79,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				timezone: OrganizationLocation.timezone,
 				taxRate: OrganizationLocation.taxRate,
 				taxInclusive: OrganizationLocation.taxInclusive,
+				specialHours: OrganizationLocation.specialHours,
 			})
 			.from(OrganizationLocation)
 			.where(eq(OrganizationLocation.organizationId, org.id))
@@ -96,6 +98,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			timeZone: location.timezone,
 			taxInclusive: location.taxInclusive,
 			taxRatePercent: Math.min(100, Math.max(0, location.taxRate || 0)),
+			specialHours: parseSpecialHours(location.specialHours).value ?? null,
 		})),
 	})
 

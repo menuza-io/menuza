@@ -27,6 +27,8 @@ export type InventoryOperatorContext = {
 	locationIds: readonly string[] | null
 	features: InventoryFeatures
 	impersonated: boolean
+	canManageSettings: boolean
+	isOwner: boolean
 	region: 'us' | 'ksa'
 }
 
@@ -158,6 +160,9 @@ export async function verifyInventoryOperatorToken(
 			locationIds: claims.locationIds,
 			features: claims.features,
 			impersonated: claims.impersonated,
+			canManageSettings:
+				!claims.impersonated && Boolean(claims.canManageSettings),
+			isOwner: !claims.impersonated && Boolean(claims.isOwner),
 			region: claims.region,
 		},
 	}

@@ -45,6 +45,30 @@ export const ORDER_STATUSES = [
 export type OrderStatus = (typeof ORDER_STATUSES)[number]
 export const orderStatusSchema = z.enum(ORDER_STATUSES)
 
+/**
+ * Wire order statuses (#500): SQL `inv_orders.status` remains `ORDER_STATUSES`
+ * while a draft awaiting spending-limit approval surfaces as
+ * `'waiting_for_approval'`.
+ */
+export const ORDER_WIRE_STATUSES = [
+	'draft',
+	'waiting_for_approval',
+	'sent',
+	'partly_received',
+	'received',
+	'cancelled',
+] as const
+export type OrderWireStatus = (typeof ORDER_WIRE_STATUSES)[number]
+export const orderWireStatusSchema = z.enum(ORDER_WIRE_STATUSES)
+
+export const ORDER_APPROVAL_STATUSES = [
+	'waiting_approval',
+	'approved',
+	'rejected',
+] as const
+export type OrderApprovalStatus = (typeof ORDER_APPROVAL_STATUSES)[number]
+export const orderApprovalStatusSchema = z.enum(ORDER_APPROVAL_STATUSES)
+
 /** Statuses a delivery can still be received against. */
 export const OPEN_ORDER_STATUSES = [
 	'draft',

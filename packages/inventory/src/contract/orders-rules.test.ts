@@ -6,6 +6,8 @@ import {
 	creditLines,
 	creditTotalMinor,
 	cutoffPassed,
+	expectedUseUntilDelivery,
+	isOrderCountStale,
 	levelsOrdered,
 	MAX_ORDER_PACKS,
 	needsOrder,
@@ -20,7 +22,9 @@ import {
 	packsQuantity,
 	packsToMilli,
 	priceRiseAlert,
+	rawPacksMilli,
 	shortOfMinimumMinor,
+	suggestLevelsFromHistory,
 	suggestLevelsFromUse,
 	suggestOrderQuantity,
 	weekdayOf,
@@ -796,5 +800,236 @@ describe('supplier schedule', () => {
 				},
 			),
 		)
+	})
+})
+
+describe('suggestLevelsFromHistory', () => {
+	function steadyHistory(
+		today: string,
+		days: number,
+		perDay: number,
+	): Array<{ date: string; quantity: number }> {
+		return Array.from({ length: days }, (_, index) => ({
+			date: addDaysIso(today, -(index + 1)),
+			quantity: perDay,
+		}))
+	}
+
+	test('requires at least 14 days of use in the 28-day window', () => {
+		const res = suggestLevelsFromHistory({
+			now: { date: '2026-11-16', time: '09:00' },
+			history: steadyHistory('2026-11-16', 13, 3 * KG),
+			schedule: {
+				deliveryDays: [1, 4],
+				cutoffTime: '16:00',
+				cutoffDaysBefore: 1,
+			},
+			roundTo: KG,
+		})
+		expect(res).toEqual({
+			state: 'not_enough_history',
+			useDays: 13,
+			usedQuantity: 39 * KG,
+		})
+	})
+
+	test('uses supplier delivery days and cut-off, covering next delivery and delivery after next + 20% safety margin, rounded up to pack size', () => {
+		// 2026-11-09 is Monday 09:00. Supplier delivers Mon & Thu, cutoff 16:00 day before.
+		// Monday's delivery already passed cutoff (Sun 16:00), so next is Thu 2026-11-12 (3 days),
+		// delivery after next is Mon 2026-11-16 (7 days).
+		// 3 kg/day -> next: 9 kg -> rounded up to 5 kg pack = 10 kg.
+		// after next: 21 kg * 1.2 = 25.2 kg -> rounded up to 5 kg pack = 30 kg.
+		const res = suggestLevelsFromHistory({
+			now: { date: '2026-11-09', time: '09:00' },
+			history: steadyHistory('2026-11-09', 20, 3 * KG),
+			schedule: {
+				deliveryDays: [4, 1],
+				cutoffTime: '16:00',
+				cutoffDaysBefore: 1,
+			},
+			roundTo: 5 * KG,
+		})
+		expect(res).toEqual({
+			state: 'ok',
+			useDays: 20,
+			usedQuantity: 60 * KG,
+			dailyUseQuantity: 3 * KG,
+			weeklyUseQuantity: 21 * KG,
+			orderBelowQuantity: 10 * KG,
+			fillUpToQuantity: 30 * KG,
+			deliveryDays: [1, 4],
+			cycleDays: null,
+		})
+	})
+
+	test('pushes out next delivery when the cut-off for the upcoming delivery has passed', () => {
+		// 2026-11-11 is Wednesday 17:00, after 16:00 cutoff for Thu 2026-11-12.
+		// Next orderable delivery is Thu 2026-11-19 (8 days), after next is Thu 2026-11-26 (15 days).
+		// 2 kg/day -> next: 16 kg; after next: 30 kg * 1.2 = 36 kg.
+		const res = suggestLevelsFromHistory({
+			now: { date: '2026-11-11', time: '17:00' },
+			history: steadyHistory('2026-11-11', 14, 2 * KG),
+			schedule: { deliveryDays: [4], cutoffTime: '16:00', cutoffDaysBefore: 1 },
+			roundTo: KG,
+		})
+		expect(res).toMatchObject({
+			state: 'ok',
+			dailyUseQuantity: 2 * KG,
+			orderBelowQuantity: 16 * KG,
+			fillUpToQuantity: 36 * KG,
+			deliveryDays: [4],
+			cycleDays: null,
+		})
+	})
+
+	test('falls back to a 7-day cycle when unsourced or supplier has no delivery days', () => {
+		// 2 kg/day, 7-day cycle: next = 7 days (14 kg), after next = 14 days * 1.2 = 28 * 1.2 = 33.6 -> 34 kg.
+		const unsourced = suggestLevelsFromHistory({
+			now: { date: '2026-11-09', time: '09:00' },
+			history: steadyHistory('2026-11-09', 14, 2 * KG),
+			schedule: null,
+			roundTo: KG,
+		})
+		expect(unsourced).toMatchObject({
+			state: 'ok',
+			orderBelowQuantity: 14 * KG,
+			fillUpToQuantity: 34 * KG,
+			deliveryDays: [],
+			cycleDays: 7,
+		})
+
+		const noDays = suggestLevelsFromHistory({
+			now: { date: '2026-11-09', time: '09:00' },
+			history: steadyHistory('2026-11-09', 14, 2 * KG),
+			schedule: { deliveryDays: [], cutoffTime: null, cutoffDaysBefore: null },
+			roundTo: KG,
+		})
+		expect(noDays).toEqual(unsourced)
+	})
+
+	test('weights expected use by prep weekdayDemand (busier Fridays increase suggested levels)', () => {
+		// 2026-11-09 is Monday; Thu 2026-11-12 is 3 days (Mon, Tue, Wed), Mon 2026-11-16 is 7 days (includes Fri 2026-11-13).
+		// Make Fridays 2x busier than other days over 28 days.
+		const today = '2026-11-09'
+		const history = Array.from({ length: 28 }, (_, index) => {
+			const date = addDaysIso(today, -(index + 1))
+			const isFriday = weekdayOf(date) === 5
+			return { date, quantity: (isFriday ? 6 : 2) * KG }
+		})
+		const res = suggestLevelsFromHistory({
+			now: { date: today, time: '09:00' },
+			history,
+			schedule: {
+				deliveryDays: [1, 4],
+				cutoffTime: '16:00',
+				cutoffDaysBefore: 1,
+			},
+			roundTo: KG,
+		})
+		expect(res.state).toBe('ok')
+		if (res.state === 'ok') {
+			// Mon, Tue, Wed each have weekday factor < 1 (2 / ~2.57), while Friday has factor > 1 (6 / ~2.57, clamped at 2x).
+			expect(res.orderBelowQuantity).toBeLessThan(res.fillUpToQuantity)
+			// Compare against flat 2.57 kg/day: Friday pushes fillUpToQuantity higher than Mon-Wed-only rate.
+			expect(res.fillUpToQuantity).toBeGreaterThan(20 * KG)
+		}
+	})
+
+	test('isolates Ramadan days when suggesting during Ramadan', () => {
+		// 2026-02-20 is during Ramadan (1447 AH). Pre-Ramadan days had 10 kg/day;
+		// the 2 Ramadan days so far (2026-02-18, 2026-02-19) had 2 kg/day.
+		// With 14 total days in the 28-day window, weekdayDemand sees <7 Ramadan days
+		// so it uses neutral weekday factor rather than pre-Ramadan weekday spikes.
+		const today = '2026-02-20'
+		const history = Array.from({ length: 14 }, (_, index) => {
+			const date = addDaysIso(today, -(index + 1))
+			return { date, quantity: date >= '2026-02-18' ? 2 * KG : 10 * KG }
+		})
+		const res = suggestLevelsFromHistory({
+			now: { date: today, time: '09:00' },
+			history,
+			schedule: null,
+			roundTo: KG,
+		})
+		expect(res.state).toBe('ok')
+		if (res.state === 'ok') {
+			expect(res.useDays).toBe(14)
+			expect(res.orderBelowQuantity).toBeGreaterThan(0)
+			expect(res.fillUpToQuantity).toBeGreaterThanOrEqual(
+				res.orderBelowQuantity,
+			)
+		}
+	})
+})
+
+describe('order explanation helpers (#497)', () => {
+	test('isOrderCountStale flags null and counts older than 10 days', () => {
+		const now = Date.UTC(2026, 10, 20, 12, 0)
+		const dayMs = 86_400_000
+		expect(isOrderCountStale(null, now)).toBe(true)
+		expect(isOrderCountStale(now - 10 * dayMs, now)).toBe(false)
+		expect(isOrderCountStale(now - 10 * dayMs - 1, now)).toBe(true)
+		expect(isOrderCountStale(now - 2 * dayMs, now)).toBe(false)
+		expect(isOrderCountStale(now - 4 * dayMs, now, 3)).toBe(true)
+	})
+
+	test('rawPacksMilli and suggestOrderQuantity expose unrounded vs rounded packs', () => {
+		expect(rawPacksMilli(24 * KG, 10 * KG)).toBe(2400)
+		expect(rawPacksMilli(20 * KG, 10 * KG)).toBe(2000)
+		const whole = suggestOrderQuantity({
+			onHand: 6 * KG,
+			orderBelow: 8 * KG,
+			fillUpTo: 30 * KG,
+			packBase: 10 * KG,
+		})
+		expect(whole).toMatchObject({
+			needed: 24 * KG,
+			rawPacksMilli: 2400,
+			packsMilli: 3000,
+			packs: 3,
+		})
+		const half = suggestOrderQuantity({
+			onHand: 1 * KG,
+			orderBelow: 5 * KG,
+			fillUpTo: 12 * KG,
+			packBase: 5 * KG,
+			pricedByWeight: true,
+		})
+		expect(half).toMatchObject({
+			needed: 11 * KG,
+			rawPacksMilli: 2200,
+			packsMilli: 2500,
+			packs: 2.5,
+		})
+	})
+
+	test('expectedUseUntilDelivery computes weekday-weighted use up to expectedDate', () => {
+		const today = '2026-11-09'
+		const steady = (days: number, qty: number) =>
+			Array.from({ length: days }, (_, index) => ({
+				date: addDaysIso(today, -(index + 1)),
+				quantity: qty,
+			}))
+		expect(
+			expectedUseUntilDelivery({
+				today,
+				expectedDate: null,
+				history: steady(14, 2 * KG),
+			}),
+		).toBeNull()
+		expect(
+			expectedUseUntilDelivery({
+				today,
+				expectedDate: '2026-11-12',
+				history: steady(6, 2 * KG),
+			}),
+		).toBeNull()
+		expect(
+			expectedUseUntilDelivery({
+				today,
+				expectedDate: '2026-11-12',
+				history: steady(14, 2 * KG),
+			}),
+		).toBe(6 * KG)
 	})
 })

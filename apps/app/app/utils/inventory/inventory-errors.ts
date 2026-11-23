@@ -124,6 +124,9 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'purchasing_required') {
 			return msg`This needs the purchasing role. Ask an owner to check your role.`
 		}
+		if (error.code === 'self_approval_forbidden') {
+			return msg`You cannot approve your own order. Ask another manager or an owner to approve it.`
+		}
 		if (error.code === 'prices_confirmed') {
 			return msg`The prices on this delivery were already confirmed.`
 		}

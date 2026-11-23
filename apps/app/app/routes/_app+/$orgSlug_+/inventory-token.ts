@@ -45,6 +45,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		locationIds: access.locationIds,
 		features: access.features,
 		impersonated: access.impersonated,
+		canManageSettings: access.canManageSettings,
+		isOwner: access.isOwner,
 	})
 
 	return data(

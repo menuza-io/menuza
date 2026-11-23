@@ -7,6 +7,7 @@ import {
 	NotificationPreference,
 	Organization,
 	OrganizationLocation,
+	OrganizationMenuItem,
 	OrganizationRole,
 	UserOrganization,
 	_OrganizationPermissionToRole,
@@ -114,6 +115,7 @@ const READ_INVENTORY = 'org_perm_read_inventory_any'
 const UPDATE_INVENTORY = 'org_perm_update_inventory_any'
 const READ_COST = 'org_perm_read_inventory_cost_any'
 const UPDATE_PURCHASING = 'org_perm_update_inventory_purchasing_any'
+const UPDATE_SETTINGS = 'org_perm_update_settings_any'
 const READ_RESERVATION = 'org_perm_read_reservation_any'
 
 function eventFor(
@@ -353,6 +355,108 @@ describe('who is told', () => {
 		expect(await notificationsFor(costReader.id)).toHaveLength(1)
 		expect(await notificationsFor(reader.id)).toHaveLength(0)
 		expect(await notificationsFor(buyer.id)).toHaveLength(0)
+	})
+
+	it('tells ONLY members with both update:inventory_purchasing:any and update:settings:any about inventory_order_approval (#500)', async () => {
+		const { organization, user: admin } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const location = await createLocation(organization.id)
+		const buyerOnly = await memberWith(organization.id, [UPDATE_PURCHASING])
+		const settingsOnly = await memberWith(organization.id, [UPDATE_SETTINGS])
+		const costAndSettings = await memberWith(organization.id, [
+			READ_COST,
+			UPDATE_SETTINGS,
+		])
+		const approver = await memberWith(organization.id, [
+			UPDATE_PURCHASING,
+			UPDATE_SETTINGS,
+		])
+
+		const response = await call(
+			eventFor(organization.id, location, {
+				kind: 'inventory_order_approval',
+				count: 1,
+				orderApproval: {
+					orderId: 'ord_appr_1',
+					orderNumber: 77,
+					breachedOrderLimit: true,
+					breachedMonthlyLimit: false,
+				},
+			}),
+		)
+		expect(response.status).toBe(200)
+		expect(await response.json()).toEqual({ inApp: 2, emailed: 2 })
+		expect(await notificationsFor(admin.id)).toHaveLength(1)
+		expect(await notificationsFor(approver.id)).toHaveLength(1)
+		expect(await notificationsFor(buyerOnly.id)).toHaveLength(0)
+		expect(await notificationsFor(settingsOnly.id)).toHaveLength(0)
+		expect(await notificationsFor(costAndSettings.id)).toHaveLength(0)
+		expect(sendEmailMock.mock.calls.map(([arg]) => arg.to).sort()).toEqual(
+			[admin.email, approver.email].sort(),
+		)
+	})
+
+	it('enriches inventory_price_rise with affected dish names, food cost %, and target crossing for cost-grant recipients only (#520)', async () => {
+		const { organization, user: admin } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const location = await createLocation(organization.id)
+		const reader = await memberWith(organization.id, [READ_INVENTORY])
+		const costReader = await memberWith(organization.id, [READ_COST])
+		const [burger] = await db
+			.insert(OrganizationMenuItem)
+			.values({
+				organizationId: organization.id,
+				displayName: 'Classic Burger',
+				price: 20,
+			})
+			.returning({ id: OrganizationMenuItem.id })
+
+		const response = await call(
+			eventFor(organization.id, location, {
+				kind: 'inventory_price_rise',
+				count: 1,
+				priceRiseDishes: [
+					{
+						menuItemId: burger!.id,
+						variantId: null,
+						previousCostMinor: 560,
+						costMinor: 680,
+						targetFoodCostBp: 3000,
+						pricesIncludeTax: false,
+						taxRateBp: null,
+						priceForTargetMinor: 2267,
+					},
+				],
+			}),
+		)
+		expect(response.status).toBe(200)
+		expect(await response.json()).toEqual({ inApp: 2, emailed: 2 })
+		expect(await notificationsFor(reader.id)).toHaveLength(0)
+		const adminRows = await notificationsFor(admin.id)
+		const costRows = await notificationsFor(costReader.id)
+		expect(adminRows).toHaveLength(1)
+		expect(costRows).toHaveLength(1)
+		const payload = JSON.parse(adminRows[0]!.payload) as Record<string, unknown>
+		expect(payload.priceRiseDishes).toEqual([
+			{
+				menuItemId: burger!.id,
+				variantId: null,
+				name: 'Classic Burger',
+				oldFoodCostBp: 2800,
+				newFoodCostBp: 3400,
+				targetFoodCostBp: 3000,
+				crossedTarget: true,
+				overTarget: true,
+			},
+		])
+		expect(sendEmailMock).toHaveBeenCalledTimes(2)
+		for (const [mail] of sendEmailMock.mock.calls) {
+			expect(mail.to).not.toBe(reader.email)
+			const htmlOrProps = JSON.stringify(mail.react)
+			expect(htmlOrProps).toContain('Classic Burger')
+			expect(htmlOrProps).toContain('28.0% → 34.0%')
+			expect(htmlOrProps).toContain('crossed 30.0% target')
+		}
 	})
 
 	it('does not tell a deactivated member or one of another organization', async () => {

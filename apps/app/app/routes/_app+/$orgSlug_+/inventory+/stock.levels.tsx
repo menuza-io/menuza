@@ -8,6 +8,7 @@ import {
 } from '@repo/inventory'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Skeleton } from '@repo/ui/skeleton'
@@ -19,6 +20,7 @@ import {
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
 import { useStockContext } from '#app/components/inventory/stock-context.ts'
+import { weekdayName } from '#app/components/inventory/supplier-form.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import {
 	useInventoryClient,
@@ -31,7 +33,9 @@ import {
 } from '#app/utils/inventory/inventory-errors.ts'
 import {
 	applyLevelSuggestion,
+	applySuggestionsBulk,
 	buildPutLevels,
+	canApplySuggestion,
 	enoughHistory,
 	type LevelDraft,
 	levelDraftChanged,
@@ -58,6 +62,19 @@ const SEARCH_DELAY_MS = 250
 
 type Show = 'all' | 'unset'
 
+function formatDeliveryDays(days: readonly number[], locale: string): string {
+	const names = [...days]
+		.sort((a, b) => a - b)
+		.map((day) => weekdayName(day, locale))
+	if (typeof Intl !== 'undefined' && typeof Intl.ListFormat === 'function') {
+		return new Intl.ListFormat(locale, {
+			style: 'long',
+			type: 'conjunction',
+		}).format(names)
+	}
+	return names.join(', ')
+}
+
 /**
  * Levels for every item in one table: "Order more when below" and "Fill up
  * to", each in the unit the item is counted in. Suggested orders use them.
@@ -80,6 +97,8 @@ export default function InventoryLevelsRoute() {
 		LevelProblem[]
 	> | null>(null)
 	const [suggestionsOn, setSuggestionsOn] = useState(false)
+	const [dismissed, setDismissed] = useState<Set<string>>(() => new Set())
+	const [chosen, setChosen] = useState<Set<string>>(() => new Set())
 	const [saving, setSaving] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [refused, setRefused] = useState(0)
@@ -141,27 +160,50 @@ export default function InventoryLevelsRoute() {
 
 	function applySuggestionTo(itemId: string) {
 		const suggestion = suggestionByItem.get(itemId)
+		if (!canApplySuggestion(suggestion, dismissed)) return
 		setDrafts((current) => {
 			const draft = current[itemId]
-			return draft && suggestion
+			return draft
 				? { ...current, [itemId]: applyLevelSuggestion(draft, suggestion) }
 				: current
 		})
 	}
 
-	function applyAllSuggestions() {
-		setDrafts((current) => {
-			const next = { ...current }
-			for (const row of rows) {
-				const suggestion = suggestionByItem.get(row.itemId)
-				const draft = next[row.itemId]
-				if (suggestion && draft) {
-					next[row.itemId] = applyLevelSuggestion(draft, suggestion)
-				}
-			}
+	function dismissSuggestionFor(itemId: string) {
+		setDismissed((current) => {
+			const next = new Set(current)
+			next.add(itemId)
+			return next
+		})
+		setChosen((current) => {
+			if (!current.has(itemId)) return current
+			const next = new Set(current)
+			next.delete(itemId)
 			return next
 		})
 	}
+
+	function toggleChosen(itemId: string, nextChecked: boolean) {
+		setChosen((current) => {
+			const next = new Set(current)
+			if (nextChecked) next.add(itemId)
+			else next.delete(itemId)
+			return next
+		})
+	}
+
+	function applyAllSuggestions() {
+		setDrafts((current) =>
+			applySuggestionsBulk(current, rows, suggestionByItem, {
+				chosen,
+				dismissed,
+			}),
+		)
+	}
+
+	const hasApplicableSuggestion = rows.some((row) =>
+		canApplySuggestion(suggestionByItem.get(row.itemId), dismissed),
+	)
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
@@ -340,7 +382,7 @@ export default function InventoryLevelsRoute() {
 							variant="outline"
 							size="sm"
 							onClick={applyAllSuggestions}
-							disabled={suggestionByItem.size === 0}
+							disabled={!hasApplicableSuggestion}
 							data-testid="levels-use-all"
 						>
 							<Icon name="sparkles" />
@@ -355,7 +397,7 @@ export default function InventoryLevelsRoute() {
 							data-testid="levels-suggest"
 						>
 							<Icon name="sparkles" />
-							<Trans>Suggest from use</Trans>
+							<Trans>Suggest levels</Trans>
 						</Button>
 					)}
 				</div>
@@ -431,13 +473,27 @@ export default function InventoryLevelsRoute() {
 						const found = problems?.[row.itemId] ?? []
 						const name = row.name
 						const unitName = quantity.unitName(draft.unit, draft.units)
-						const weekly = suggestion
-							? quantity.format(suggestion.weeklyUseQuantity, {
-									baseUnit: row.baseUnit,
-									countUnit: draft.unit,
-									units: draft.units,
-								})
-							: null
+						const isDismissed = dismissed.has(row.itemId)
+						const daily =
+							suggestion && suggestion.state === 'ok'
+								? quantity.format(
+										suggestion.dailyUseQuantity > 0
+											? suggestion.dailyUseQuantity
+											: Math.round(suggestion.weeklyUseQuantity / 7),
+										{
+											baseUnit: row.baseUnit,
+											countUnit: draft.unit,
+											units: draft.units,
+										},
+									)
+								: null
+						const deliveryDaysText =
+							suggestion &&
+							suggestion.state === 'ok' &&
+							suggestion.deliveryDays.length > 0
+								? formatDeliveryDays(suggestion.deliveryDays, i18n.locale)
+								: null
+						const cycleDays = suggestion?.cycleDays ?? 7
 						return (
 							<li
 								key={row.itemId}
@@ -518,15 +574,51 @@ export default function InventoryLevelsRoute() {
 										)}
 									</p>
 								) : null}
-								{weekly ? (
+								{suggestionsOn &&
+								suggestions.data &&
+								(!suggestion || suggestion.state === 'not_enough_history')
+									? (() => {
+											const useDaysSoFar = suggestion?.useDays ?? 0
+											return (
+												<p
+													className="text-muted-foreground text-xs"
+													data-testid={`level-suggestion-${row.itemId}`}
+												>
+													<Trans>
+														Needs 14 days of use ({useDaysSoFar} so far).
+													</Trans>
+												</p>
+											)
+										})()
+									: null}
+								{suggestionsOn &&
+								suggestion?.state === 'ok' &&
+								!isDismissed &&
+								daily ? (
 									<div
 										className="flex flex-wrap items-center gap-2 text-xs"
 										data-testid={`level-suggestion-${row.itemId}`}
 									>
+										<Checkbox
+											checked={chosen.has(row.itemId)}
+											onCheckedChange={(checked) =>
+												toggleChosen(row.itemId, checked === true)
+											}
+											aria-label={t`Choose ${name} for suggested levels`}
+											data-testid={`level-choose-${row.itemId}`}
+										/>
 										<span className="text-muted-foreground">
-											<Trans>
-												You use about <bdi dir="ltr">{weekly}</bdi> a week.
-											</Trans>
+											{deliveryDaysText ? (
+												<Trans>
+													Uses <bdi dir="ltr">{daily}</bdi> a day, delivered{' '}
+													{deliveryDaysText}.
+												</Trans>
+											) : (
+												<Trans>
+													Uses <bdi dir="ltr">{daily}</bdi> a day, {cycleDays}
+													-day cycle.
+												</Trans>
+											)}
 										</span>
 										<Button
 											type="button"
@@ -536,6 +628,15 @@ export default function InventoryLevelsRoute() {
 											data-testid={`level-use-${row.itemId}`}
 										>
 											<Trans>Use suggestion</Trans>
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onClick={() => dismissSuggestionFor(row.itemId)}
+											data-testid={`level-dismiss-${row.itemId}`}
+										>
+											<Trans>Dismiss</Trans>
 										</Button>
 									</div>
 								) : null}

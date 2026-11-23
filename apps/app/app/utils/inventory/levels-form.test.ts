@@ -1,9 +1,12 @@
-import { type LevelRow } from '@repo/inventory'
+import { type LevelRow, type LevelSuggestion } from '@repo/inventory'
 import { describe, expect, it } from 'vitest'
 import {
 	applyLevelSuggestion,
+	applySuggestionsBulk,
 	buildPutLevels,
+	canApplySuggestion,
 	enoughHistory,
+	isDraftEmpty,
 	levelDraftChanged,
 	levelDraftFromRow,
 } from './levels-form.ts'
@@ -128,5 +131,95 @@ describe('levels form', () => {
 	it('needs two weeks of history before suggestions are more than a guess', () => {
 		expect(enoughHistory(13)).toBe(false)
 		expect(enoughHistory(14)).toBe(true)
+	})
+
+	it('bulk-applies only empty rows by default, or chosen rows, skipping dismissed and not_enough_history', () => {
+		const r1 = row({ itemId: 'i1' }) // already has 8 / 30
+		const r2 = row({
+			itemId: 'i2',
+			orderBelowQuantity: null,
+			fillUpToQuantity: null,
+		})
+		const r3 = row({
+			itemId: 'i3',
+			orderBelowQuantity: null,
+			fillUpToQuantity: null,
+		})
+		const r4 = row({
+			itemId: 'i4',
+			orderBelowQuantity: null,
+			fillUpToQuantity: null,
+		})
+		const drafts = {
+			i1: levelDraftFromRow(r1, 'metric'),
+			i2: levelDraftFromRow(r2, 'metric'),
+			i3: levelDraftFromRow(r3, 'metric'),
+			i4: levelDraftFromRow(r4, 'metric'),
+		}
+		expect(isDraftEmpty(drafts.i1)).toBe(false)
+		expect(isDraftEmpty(drafts.i2)).toBe(true)
+
+		const sug = (
+			itemId: string,
+			overrides: Partial<LevelSuggestion> = {},
+		): LevelSuggestion => ({
+			itemId,
+			state: 'ok',
+			useDays: 20,
+			usedQuantity: 40_000_000,
+			dailyUseQuantity: 2_000_000,
+			weeklyUseQuantity: 14_000_000,
+			orderBelowQuantity: 6_000_000,
+			fillUpToQuantity: 15_000_000,
+			deliveryDays: [1, 4],
+			cycleDays: null,
+			supplierName: 'Al Watania',
+			packName: 'Box',
+			packBaseQuantity: 5_000_000,
+			...overrides,
+		})
+
+		const map = new Map<string, LevelSuggestion>([
+			[
+				'i1',
+				sug('i1', {
+					orderBelowQuantity: 10_000_000,
+					fillUpToQuantity: 25_000_000,
+				}),
+			],
+			['i2', sug('i2')],
+			['i3', sug('i3')],
+			[
+				'i4',
+				sug('i4', {
+					state: 'not_enough_history',
+					useDays: 5,
+					orderBelowQuantity: 0,
+					fillUpToQuantity: 0,
+				}),
+			],
+		])
+
+		expect(canApplySuggestion(map.get('i2'), new Set())).toBe(true)
+		expect(canApplySuggestion(map.get('i3'), new Set(['i3']))).toBe(false)
+		expect(canApplySuggestion(map.get('i4'), new Set())).toBe(false)
+
+		// Default: fills empty non-dismissed rows only (leaves i1, i3, i4 alone)
+		const emptyOnly = applySuggestionsBulk(drafts, [r1, r2, r3, r4], map, {
+			chosen: new Set(),
+			dismissed: new Set(['i3']),
+		})
+		expect(emptyOnly.i1).toMatchObject({ belowText: '8', fillText: '30' })
+		expect(emptyOnly.i2).toMatchObject({ belowText: '6', fillText: '15' })
+		expect(emptyOnly.i3).toMatchObject({ belowText: '', fillText: '' })
+		expect(emptyOnly.i4).toMatchObject({ belowText: '', fillText: '' })
+
+		// Chosen: fills chosen non-dismissed rows even if already populated
+		const chosenOnly = applySuggestionsBulk(drafts, [r1, r2, r3, r4], map, {
+			chosen: new Set(['i1']),
+			dismissed: new Set(),
+		})
+		expect(chosenOnly.i1).toMatchObject({ belowText: '10', fillText: '25' })
+		expect(chosenOnly.i2).toMatchObject({ belowText: '', fillText: '' })
 	})
 })

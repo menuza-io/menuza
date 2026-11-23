@@ -58,6 +58,8 @@ export const INVENTORY_ERROR_CODES = [
 	'needs_recipe_grant',
 	'merge_not_undoable',
 	'merge_kind_mismatch',
+	// Order spending-limit approval (#500).
+	'self_approval_forbidden',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

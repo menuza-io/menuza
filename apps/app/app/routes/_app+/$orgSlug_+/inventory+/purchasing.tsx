@@ -1,9 +1,16 @@
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import {
+	getLocalizedMenuValue,
+	parseMenuVariations,
+} from '@repo/common/menu-types'
+import { asc, db, eq, OrganizationMenuItem } from '@repo/database'
+import {
 	type DeliverySummary,
 	deliveryDetailSchema,
+	INVENTORY_PERMISSIONS,
 	listDeliveriesResultSchema,
 	listOrdersResultSchema,
+	listRepeatOrdersResultSchema,
 	listSuppliersResultSchema,
 	priceAlertsSchema,
 	suggestedOrdersSchema,
@@ -34,10 +41,11 @@ import {
 	TableRow,
 } from '@repo/ui/table'
 import { WorkspacePanel } from '@repo/ui/workspace'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
 	Link,
 	Outlet,
+	useLoaderData,
 	useLocation,
 	useNavigate,
 	useOutlet,
@@ -59,8 +67,12 @@ import {
 	SuggestedOrdersPanel,
 	useCreateDraft,
 } from '#app/components/inventory/order-panels.tsx'
-import { PriceAlertsPanel } from '#app/components/inventory/price-alerts-panel.tsx'
+import {
+	PriceAlertsPanel,
+	type PriceAlertMenuDish,
+} from '#app/components/inventory/price-alerts-panel.tsx'
 import { type PurchasingOutletContext } from '#app/components/inventory/purchasing-context.ts'
+import { RepeatOrdersPanel } from '#app/components/inventory/repeat-orders-panel.tsx'
 import { weekdayName } from '#app/components/inventory/supplier-form.tsx'
 import { TransfersPanel } from '#app/components/inventory/transfers-panel.tsx'
 import {
@@ -74,12 +86,69 @@ import {
 	inventorySaveErrorMessage,
 } from '#app/utils/inventory/inventory-errors.ts'
 import { localDate } from '#app/utils/inventory/today-view.ts'
+import { orgSiteLocales } from '#app/utils/location-name.server.ts'
 import { type Route } from './+types/purchasing.ts'
 import { useInventoryLayoutData } from './_layout.tsx'
 
+const MENU_ITEMS_CAP = 500
+
 export async function loader({ request, params }: Route.LoaderArgs) {
-	await requireInventoryAccess(request, params.orgSlug)
-	return null
+	const access = await requireInventoryAccess(request, params.orgSlug)
+	const canSeeCost = access.grants.includes(
+		INVENTORY_PERMISSIONS.READ_INVENTORY_COST,
+	)
+	if (!canSeeCost || !access.features.purchasing) {
+		return { dishes: [] as PriceAlertMenuDish[] }
+	}
+	const [{ defaultLocale }, rows] = await Promise.all([
+		orgSiteLocales(access.organizationId),
+		db
+			.select({
+				id: OrganizationMenuItem.id,
+				displayName: OrganizationMenuItem.displayName,
+				internalName: OrganizationMenuItem.internalName,
+				price: OrganizationMenuItem.price,
+				variations: OrganizationMenuItem.variations,
+			})
+			.from(OrganizationMenuItem)
+			.where(eq(OrganizationMenuItem.organizationId, access.organizationId))
+			.orderBy(asc(OrganizationMenuItem.position))
+			.limit(MENU_ITEMS_CAP),
+	])
+	return {
+		dishes: rows.map((row): PriceAlertMenuDish => {
+			const name =
+				getLocalizedMenuValue(row.displayName, defaultLocale, defaultLocale) ||
+				row.internalName ||
+				''
+			const parsed = parseMenuVariations(row.variations)
+			const valueLabels = new Map<string, string>()
+			for (const group of parsed.groups) {
+				for (const val of group.values) {
+					const label =
+						getLocalizedMenuValue(val.name, defaultLocale, defaultLocale) || ''
+					if (label) valueLabels.set(val.id, label)
+				}
+			}
+			const variants = parsed.variants.map((variant) => {
+				const variantLabel = variant.valueIds
+					.map((id) => valueLabels.get(id))
+					.filter(Boolean)
+					.join(' / ')
+				return {
+					id: variant.id,
+					name: variantLabel ? `${name} (${variantLabel})` : name,
+					price: variant.price,
+				}
+			})
+			return {
+				id: row.id,
+				name,
+				price: row.price,
+				variants,
+			}
+		}),
+	}
 }
 
 const PAGE_SIZE = 25
@@ -87,6 +156,12 @@ const MAX_LIMIT = 200
 
 export default function InventoryPurchasingRoute() {
 	const { t, i18n } = useLingui()
+	const loaderData = useLoaderData<typeof loader>() as
+		Awaited<ReturnType<typeof loader>> | undefined
+	const menuDishes = useMemo(
+		() => loaderData?.dishes ?? [],
+		[loaderData?.dishes],
+	)
 	const layout = useInventoryLayoutData()
 	const {
 		orgSlug,
@@ -134,6 +209,10 @@ export default function InventoryPurchasingRoute() {
 		purchasingEnabled ? `/orders?${locationQuery}&status=open&limit=50` : null,
 		listOrdersResultSchema,
 	)
+	const repeatOrders = useInventoryQuery(
+		purchasingEnabled ? `/repeat-orders?${locationQuery}` : null,
+		listRepeatOrdersResultSchema,
+	)
 	const priceAlerts = useInventoryQuery(
 		purchasingEnabled && canSeeCost
 			? `/price-alerts?${locationQuery}&days=30`
@@ -144,6 +223,7 @@ export default function InventoryPurchasingRoute() {
 	const { reload: reloadSuppliers } = suppliers
 	const { reload: reloadSuggested } = suggested
 	const { reload: reloadOrders } = openOrders
+	const { reload: reloadRepeatOrders } = repeatOrders
 	const { reload: reloadAlerts } = priceAlerts
 	const reload = useCallback(() => {
 		reloadDeliveries()
@@ -151,6 +231,7 @@ export default function InventoryPurchasingRoute() {
 		if (purchasingEnabled) {
 			reloadSuggested()
 			reloadOrders()
+			reloadRepeatOrders()
 			if (canSeeCost) reloadAlerts()
 		}
 	}, [
@@ -158,6 +239,7 @@ export default function InventoryPurchasingRoute() {
 		reloadSuppliers,
 		reloadSuggested,
 		reloadOrders,
+		reloadRepeatOrders,
 		reloadAlerts,
 		purchasingEnabled,
 		canSeeCost,
@@ -298,6 +380,15 @@ export default function InventoryPurchasingRoute() {
 		<div className="flex flex-col gap-6">
 			{canEdit || canSeeCost || (purchasingEnabled && canManagePurchasing) ? (
 				<InventoryHeaderActions>
+					{purchasingEnabled && canSeeCost ? (
+						<Button
+							variant="outline"
+							render={<Link to={`${basePath}/prices${search}`} />}
+							data-testid="purchasing-compare-prices"
+						>
+							<Trans>Compare prices</Trans>
+						</Button>
+					) : null}
 					{canSeeCost ? (
 						<Button
 							type="button"
@@ -373,12 +464,25 @@ export default function InventoryPurchasingRoute() {
 						canEdit={canEdit}
 						currency={currency}
 					/>
+					<RepeatOrdersPanel
+						repeatOrders={repeatOrders.data?.repeatOrders ?? []}
+						loading={repeatOrders.loading}
+						canManagePurchasing={canManagePurchasing}
+						orderHrefPrefix={`${basePath}/orders`}
+						orderHrefSuffix={searchKept}
+						onReload={() => {
+							notifyChanged()
+							reload()
+						}}
+					/>
 					{canSeeCost ? (
 						<PriceAlertsPanel
 							query={priceAlerts}
+							orgSlug={orgSlug}
 							basePath={basePath}
 							search={search}
 							currency={currency}
+							dishes={menuDishes}
 						/>
 					) : null}
 				</>

@@ -449,6 +449,13 @@
 			"when": 1795395886650,
 			"tag": "0063_purchasing",
 			"breakpoints": true
+		},
+		{
+			"idx": 64,
+			"version": "6",
+			"when": 1795447247565,
+			"tag": "0064_order_planning_cost_insight",
+			"breakpoints": true
 		}
 	]
 }

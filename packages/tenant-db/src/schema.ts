@@ -8545,6 +8545,24 @@ export const INV_SETUP_IMPORT_FILE_STATUS_VALUES = [
 	'done',
 	'failed',
 ] as const
+// Order planning and cost insight (0064_order_planning_cost_insight).
+export const INV_REPEAT_ORDER_MODE_VALUES = ['fixed_lines', 'top_up'] as const
+export const INV_REPEAT_ORDER_STATUS_VALUES = [
+	'active',
+	'paused',
+	'cancelled',
+] as const
+export const INV_REPEAT_ORDER_RUN_STATUS_VALUES = [
+	'skipped',
+	'skipped_holiday',
+	'drafted',
+] as const
+export const INV_ALERT_DELIVERY_STATUS_VALUES = ['pending', 'sent'] as const
+export const INV_ORDER_APPROVAL_STATUS_VALUES = [
+	'waiting_approval',
+	'approved',
+	'rejected',
+] as const
 
 // Organization-wide settings: one row (`id = 'default'`), created on the first
 // save. Until then the API answers defaults (version 0).
@@ -9017,6 +9035,8 @@ export const invSuppliers = sqliteTable(
 			.default(false),
 		// Set when this duplicate supplier was merged into another (#493).
 		mergedIntoId: text('merged_into_id'),
+		// Paused supplier pauses its repeat orders (#499).
+		pausedAt: integer('paused_at'),
 		archivedAt: integer('archived_at'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
@@ -9138,6 +9158,47 @@ export const invOrders = sqliteTable(
 			enum: INV_ACTOR_KIND_VALUES,
 		}),
 		confirmedById: text('confirmed_by_id'),
+		// Repeat-order link (#499) and spending-limit approval (#500).
+		repeatOrderId: text('repeat_order_id'),
+		approvalStatus: text('approval_status', {
+			enum: INV_ORDER_APPROVAL_STATUS_VALUES,
+		}),
+		requestedSendChannel: text('requested_send_channel', {
+			enum: INV_ORDER_SEND_CHANNEL_VALUES,
+		}),
+		requestedSendLocale: text('requested_send_locale'),
+		approvalRequestedAt: integer('approval_requested_at'),
+		approvalRequestedByKind: text('approval_requested_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}),
+		approvalRequestedById: text('approval_requested_by_id'),
+		approvalBreachedOrderLimit: integer('approval_breached_order_limit', {
+			mode: 'boolean',
+		})
+			.notNull()
+			.default(false),
+		approvalBreachedMonthlyLimit: integer('approval_breached_monthly_limit', {
+			mode: 'boolean',
+		})
+			.notNull()
+			.default(false),
+		approvedAt: integer('approved_at'),
+		approvedByKind: text('approved_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}),
+		approvedById: text('approved_by_id'),
+		rejectedAt: integer('rejected_at'),
+		rejectedByKind: text('rejected_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}),
+		rejectedById: text('rejected_by_id'),
+		rejectionReason: text('rejection_reason'),
+		approvalAlertStatus: text('approval_alert_status', {
+			enum: INV_ALERT_DELIVERY_STATUS_VALUES,
+		}),
+		approvalAlertAttempts: integer('approval_alert_attempts')
+			.notNull()
+			.default(0),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
@@ -9151,6 +9212,7 @@ export const invOrders = sqliteTable(
 			table.createdAt,
 		),
 		index('idx_inv_orders_supplier').on(table.supplierId),
+		index('idx_inv_orders_approval').on(table.locationId, table.approvalStatus),
 		check(
 			'chk_inv_orders_status',
 			oneOf(table.status, INV_ORDER_STATUS_VALUES),
@@ -9200,6 +9262,8 @@ export const invOrderLines = sqliteTable(
 		priceMinor: integer('price_minor'),
 		// The packs the suggestion proposed, when the line came from one.
 		suggestedPacks: integer('suggested_packs'),
+		// Region-computed suggestion explanation snapshot (#497).
+		suggestionExplanationJson: text('suggestion_explanation_json'),
 		sortOrder: integer('sort_order').notNull().default(0),
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
@@ -9474,6 +9538,11 @@ export const invLocationSettings = sqliteTable(
 			.default(false),
 		// Tax rate in basis points (1500 = 15%); null when unknown.
 		taxRateBp: integer('tax_rate_bp'),
+		// Special hours synced from the location (closed dates skip repeat runs, #499).
+		specialHours: text('special_hours'),
+		// Per-location purchasing spending limits in org currency minor units (#500).
+		orderLimitMinor: integer('order_limit_minor'),
+		monthlyLimitMinor: integer('monthly_limit_minor'),
 		version: integer('version').notNull().default(1),
 		syncedAt: integer('synced_at'),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
@@ -10443,6 +10512,135 @@ export const invSetupImportFiles = sqliteTable(
 	],
 )
 
+// ── Order planning (#498, #497, #499, #500, #508, #520) ────────────────────
+// (tenant migration 0064_order_planning_cost_insight)
+
+export type InvRepeatOrderFixedLine = {
+	itemId: string
+	supplierProductId: string | null
+	packs: number
+}
+
+// Recurring draft schedule for a supplier at one location (#499).
+// Always produces drafts (never sends automatically); runs on the hourly tick.
+export const invRepeatOrders = sqliteTable(
+	'inv_repeat_orders',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		clientId: text('client_id').notNull(),
+		locationId: text('location_id').notNull(),
+		supplierId: text('supplier_id')
+			.notNull()
+			.references(() => invSuppliers.id),
+		sourceOrderId: text('source_order_id').references(() => invOrders.id),
+		cadenceWeeks: integer('cadence_weeks').notNull(),
+		// JSON array of weekdays (0 = Sunday … 6 = Saturday).
+		weekdays: text('weekdays', { mode: 'json' })
+			.$type<number[]>()
+			.notNull()
+			.default(sql`'[]'`),
+		mode: text('mode', { enum: INV_REPEAT_ORDER_MODE_VALUES })
+			.notNull()
+			.default('fixed_lines'),
+		// Local anchor date (`YYYY-MM-DD`) used for 2-week and 4-week cadence math.
+		anchorDate: text('anchor_date').notNull(),
+		// Snapshot of fixed lines when mode = 'fixed_lines'.
+		linesJson: text('lines_json', { mode: 'json' })
+			.$type<InvRepeatOrderFixedLine[]>()
+			.notNull()
+			.default(sql`'[]'`),
+		note: text('note'),
+		status: text('status', { enum: INV_REPEAT_ORDER_STATUS_VALUES })
+			.notNull()
+			.default('active'),
+		createdByKind: text('created_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		createdById: text('created_by_id'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_repeat_orders_client').on(table.clientId),
+		index('idx_inv_repeat_orders_location_status').on(
+			table.locationId,
+			table.status,
+		),
+		index('idx_inv_repeat_orders_supplier').on(table.supplierId),
+		check(
+			'chk_inv_repeat_orders_cadence',
+			sql`${table.cadenceWeeks} in (1, 2, 4)`,
+		),
+		check('chk_inv_repeat_orders_weekdays', sql`json_valid(${table.weekdays})`),
+		check(
+			'chk_inv_repeat_orders_mode',
+			oneOf(table.mode, INV_REPEAT_ORDER_MODE_VALUES),
+		),
+		check('chk_inv_repeat_orders_lines', sql`json_valid(${table.linesJson})`),
+		check(
+			'chk_inv_repeat_orders_status',
+			oneOf(table.status, INV_REPEAT_ORDER_STATUS_VALUES),
+		),
+		check(
+			'chk_inv_repeat_orders_actor',
+			oneOf(table.createdByKind, INV_ACTOR_KIND_VALUES),
+		),
+	],
+)
+
+// Individual occurrences of a repeat order: skipped by operator, skipped for a
+// closed holiday (special hours), or drafted before the supplier's cut-off.
+export const invRepeatOrderRuns = sqliteTable(
+	'inv_repeat_order_runs',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		repeatOrderId: text('repeat_order_id')
+			.notNull()
+			.references(() => invRepeatOrders.id, { onDelete: 'cascade' }),
+		deliveryDate: text('delivery_date').notNull(),
+		cutoffDate: text('cutoff_date').notNull(),
+		cutoffTime: text('cutoff_time').notNull(),
+		status: text('status', {
+			enum: INV_REPEAT_ORDER_RUN_STATUS_VALUES,
+		}).notNull(),
+		orderId: text('order_id').references(() => invOrders.id),
+		note: text('note'),
+		alertStatus: text('alert_status', {
+			enum: INV_ALERT_DELIVERY_STATUS_VALUES,
+		})
+			.notNull()
+			.default('sent'),
+		alertAttempts: integer('alert_attempts').notNull().default(0),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_repeat_order_runs_date').on(
+			table.repeatOrderId,
+			table.deliveryDate,
+		),
+		index('idx_inv_repeat_order_runs_alert').on(
+			table.alertStatus,
+			table.createdAt,
+		),
+		check(
+			'chk_inv_repeat_order_runs_status',
+			oneOf(table.status, INV_REPEAT_ORDER_RUN_STATUS_VALUES),
+		),
+		check(
+			'chk_inv_repeat_order_runs_alert',
+			oneOf(table.alertStatus, INV_ALERT_DELIVERY_STATUS_VALUES),
+		),
+	],
+)
+
+export type InvRepeatOrderRow = typeof invRepeatOrders.$inferSelect
+export type InvRepeatOrderRunRow = typeof invRepeatOrderRuns.$inferSelect
 export type InvSupplierProductPriceRow =
 	typeof invSupplierProductPrices.$inferSelect
 export type InvSetupImportRow = typeof invSetupImports.$inferSelect

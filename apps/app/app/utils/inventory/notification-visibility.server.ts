@@ -1,3 +1,4 @@
+import { getUserOrganizationPermissions, ORG_PERMISSIONS } from '@repo/auth'
 import { type InventoryNotifyKind } from '@repo/inventory'
 import {
 	getInventoryFeatureState,
@@ -28,6 +29,8 @@ export function isInventoryNotificationType(type: string): boolean {
 const PURCHASING_KINDS: readonly InventoryNotifyKind[] = [
 	'inventory_delivery_due',
 	'inventory_price_rise',
+	'inventory_repeat_order_draft',
+	'inventory_order_approval',
 ]
 
 /**
@@ -54,6 +57,21 @@ export async function inventoryAlertVisibleOrgIds(
 				const held = new Set<string>(
 					await getUserInventoryGrants(userId, organizationId),
 				)
+				if (kind === 'inventory_order_approval') {
+					const allPerms = await getUserOrganizationPermissions(
+						userId,
+						organizationId,
+					)
+					if (
+						allPerms.some(
+							(p) =>
+								`${p.action}:${p.entity}:${p.access}` ===
+								ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+						)
+					) {
+						held.add(ORG_PERMISSIONS.UPDATE_SETTINGS_ANY)
+					}
+				}
 				const allowed = kind
 					? inventoryAlertAllowedFor(kind, held)
 					: INVENTORY_ALERT_GRANTS.some((grant) => held.has(grant))

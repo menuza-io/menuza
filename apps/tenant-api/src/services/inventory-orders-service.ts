@@ -1,14 +1,21 @@
+import { createHash } from 'node:crypto'
 import {
 	addDaysIso,
 	costMicroFromPackPriceClamped,
+	expectedUseUntilDelivery,
 	INVENTORY_LIMITS,
+	inventoryNotifyDedupeKey,
+	type InventoryNotifyEvent,
+	isOrderCountStale,
 	MAX_ENTRY_QUANTITY,
 	milliToPacks,
+	mulDiv,
 	needsOrder,
 	nextOrderableDelivery,
 	OPEN_ORDER_STATUSES,
 	orderCutoffFor,
 	orderLineComplete,
+	orderLineExplanationSchema,
 	orderLineTotalMinor,
 	orderTotalMinor,
 	outstandingQuantity,
@@ -16,15 +23,19 @@ import {
 	packsQuantity,
 	packsToMilli,
 	PRICED_BY_WEIGHT_PACK_STEP_MILLI,
+	rawPacksMilli,
 	shortOfMinimumMinor,
 	suggestOrderQuantity,
 	type InventoryBaseUnit,
 	type OrderDetail,
 	type OrderLine,
+	type OrderLineExplanation,
+	type OrderSendChannel,
 	type OrderStatus,
 	type OrderSummary,
 	type OrderText,
 	type OrderTextLocale,
+	type OrderWireStatus,
 	type OverdueOrderWarning,
 	type ReceivePrefill,
 	type RecordDelivery,
@@ -35,21 +46,43 @@ import {
 	type SuggestedSupplierOrder,
 	type SupplierSchedule,
 } from '@repo/inventory'
+import { localParts } from '@repo/reservations'
 import {
 	getTenantDb,
+	invCountEntries,
+	invCounts,
 	invDeliveries,
 	invDeliveryLines,
 	invItemPlaces,
 	invItems,
+	invLocationSettings,
 	invOrderLines,
 	invOrders,
 	invSettings,
+	invSupplierProductPrices,
 	invSupplierProducts,
 	invSuppliers,
+	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, count, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm'
+import {
+	and,
+	count,
+	desc,
+	eq,
+	gte,
+	inArray,
+	isNotNull,
+	isNull,
+	ne,
+	or,
+	sql,
+} from 'drizzle-orm'
 import { queryInChunks, insertRowsInChunks } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
+import {
+	type InventoryNotifyOutcome,
+	postInventoryNotify,
+} from '../lib/inventory-notify.ts'
 import {
 	type InventoryIdempotency,
 	type InventoryReader,
@@ -72,18 +105,24 @@ import {
 	stateConflict,
 	wireUnit,
 } from './inventory-common.ts'
-import { getLocationCurrency } from './inventory-location-settings.ts'
+import {
+	getLocationCurrency,
+	getLocationSettings,
+} from './inventory-location-settings.ts'
 import {
 	recordDelivery,
 	replayDeliveryResult,
 	type RecordDeliveryOptions,
 } from './inventory-purchasing-service.ts'
 import {
+	type ApproveOrderInput,
 	type CreateOrderInput,
 	type ListOrdersQuery,
+	type RejectOrderInput,
 	type SendOrderInput,
 	type UpdateOrderInput,
 } from './inventory-contract-types.ts'
+import { loadUseHistory } from './inventory-days-left.ts'
 import {
 	type InventoryCaller,
 	loadLocationStock,
@@ -216,6 +255,13 @@ async function loadOrderContext(
 	}
 }
 
+function wireOrderStatus(row: OrderRow): OrderWireStatus {
+	if (row.status === 'draft' && row.approvalStatus === 'waiting_approval') {
+		return 'waiting_for_approval'
+	}
+	return row.status
+}
+
 function toSummary(
 	row: OrderRow,
 	context: OrderContext,
@@ -229,7 +275,7 @@ function toSummary(
 		locationId: row.locationId,
 		supplierId: row.supplierId,
 		supplierName: supplier.name,
-		status: row.status,
+		status: wireOrderStatus(row),
 		expectedDate: row.expectedDate,
 		cutoff: visibleCutoff(supplier, row.expectedDate),
 		note: row.note,
@@ -254,6 +300,32 @@ function toSummary(
 					id: row.confirmedById,
 				}
 			: null,
+		approvalStatus: row.approvalStatus ?? null,
+		requestedSendChannel: row.requestedSendChannel ?? null,
+		approvalRequestedAt: row.approvalRequestedAt ?? null,
+		approvalRequestedBy: row.approvalRequestedAt
+			? {
+					kind: row.approvalRequestedByKind ?? 'operator',
+					id: row.approvalRequestedById,
+				}
+			: null,
+		approvalBreachedOrderLimit: row.approvalBreachedOrderLimit,
+		approvalBreachedMonthlyLimit: row.approvalBreachedMonthlyLimit,
+		approvedAt: row.approvedAt ?? null,
+		approvedBy: row.approvedAt
+			? {
+					kind: row.approvedByKind ?? 'operator',
+					id: row.approvedById,
+				}
+			: null,
+		rejectedAt: row.rejectedAt ?? null,
+		rejectedBy: row.rejectedAt
+			? {
+					kind: row.rejectedByKind ?? 'operator',
+					id: row.rejectedById,
+				}
+			: null,
+		rejectionReason: row.rejectionReason ?? null,
 	}
 	if (cost) {
 		const money = orderTotalMinor(
@@ -287,10 +359,295 @@ export async function orderSummaries(
 	return rows.map((row) => toSummary(row, context, cost))
 }
 
+/** Strips or preserves money fields on an explanation based on `cost` grant. */
+function maskExplanationForCost(
+	explanation: OrderLineExplanation,
+	cost: boolean,
+): OrderLineExplanation {
+	if (!cost) {
+		return {
+			onHandQuantity: explanation.onHandQuantity,
+			lastCountedAt: explanation.lastCountedAt,
+			onOrderQuantity: explanation.onOrderQuantity,
+			orderBelowQuantity: explanation.orderBelowQuantity,
+			fillUpToQuantity: explanation.fillUpToQuantity,
+			expectedUseUntilDeliveryQuantity:
+				explanation.expectedUseUntilDeliveryQuantity,
+			neededQuantity: explanation.neededQuantity,
+			packName: explanation.packName,
+			packBaseQuantity: explanation.packBaseQuantity,
+			rawPacksMilli: explanation.rawPacksMilli,
+			roundedPacksMilli: explanation.roundedPacksMilli,
+			warnings: {
+				notCountedIn10Days: explanation.warnings.notCountedIn10Days,
+				priceChangedSinceLastOrder: false,
+				belowSupplierMinimum: false,
+			},
+		}
+	}
+	return {
+		...explanation,
+		previousOrderPackPriceMinor:
+			explanation.previousOrderPackPriceMinor ?? null,
+		currentPackPriceMinor: explanation.currentPackPriceMinor ?? null,
+	}
+}
+
+function adjustPackPrice(
+	priceMinor: number,
+	fromPackBase: number,
+	toPackBase: number,
+): number {
+	if (fromPackBase === toPackBase) return priceMinor
+	return mulDiv(priceMinor, toPackBase, fromPackBase, 'half_up')
+}
+
+function packPricesDiffer(
+	aPrice: number,
+	aPackBase: number,
+	bPrice: number,
+	bPackBase: number,
+): boolean {
+	if (aPackBase === bPackBase) return aPrice !== bPrice
+	return (
+		BigInt(aPrice) * BigInt(bPackBase) !== BigInt(bPrice) * BigInt(aPackBase)
+	)
+}
+
+type PreviousPriceResult = {
+	previousOrderPackPriceMinor: number | null
+	priceChangedSinceLastOrder: boolean
+}
+
+/**
+ * Compares each `(supplierId, itemId)` pair's current pack price against the
+ * most recent non-draft/non-cancelled order line for `(supplierId, itemId)`,
+ * falling back to `inv_supplier_product_prices` when no prior order exists.
+ * Pack prices are normalized per base unit when pack size changed.
+ * Only call when `caller.cost === true`.
+ */
+async function loadPreviousPackPrices(
+	db: InventoryReader,
+	pairs: ReadonlyArray<{
+		supplierId: string
+		itemId: string
+		packBaseQuantity: number
+		currentPriceMinor: number | null
+	}>,
+	options: { excludeOrderId?: string } = {},
+): Promise<Map<string, PreviousPriceResult>> {
+	const result = new Map<string, PreviousPriceResult>()
+	if (pairs.length === 0) return result
+
+	const supplierIds = [...new Set(pairs.map((p) => p.supplierId))]
+	const itemIds = [...new Set(pairs.map((p) => p.itemId))]
+
+	const priorOrderRows = await queryInChunks(itemIds, (itemChunk) =>
+		db
+			.select({
+				supplierId: invOrders.supplierId,
+				itemId: invOrderLines.itemId,
+				priceMinor: invOrderLines.priceMinor,
+				packBaseQuantity: invOrderLines.packBaseQuantity,
+			})
+			.from(invOrderLines)
+			.innerJoin(invOrders, eq(invOrders.id, invOrderLines.orderId))
+			.where(
+				and(
+					inArray(invOrders.supplierId, supplierIds),
+					inArray(invOrderLines.itemId, itemChunk),
+					inArray(invOrders.status, ['sent', 'partly_received', 'received']),
+					sql`${invOrderLines.priceMinor} is not null`,
+					options.excludeOrderId
+						? ne(invOrders.id, options.excludeOrderId)
+						: undefined,
+				),
+			)
+			.orderBy(
+				desc(sql`coalesce(${invOrders.sentAt}, ${invOrders.createdAt})`),
+				desc(invOrderLines.createdAt),
+				desc(invOrderLines.id),
+			),
+	)
+
+	const priorByPair = new Map<
+		string,
+		{ priceMinor: number; packBaseQuantity: number }
+	>()
+	for (const row of priorOrderRows) {
+		if (row.priceMinor === null) continue
+		const key = `${row.supplierId}:${row.itemId}`
+		if (!priorByPair.has(key)) {
+			priorByPair.set(key, {
+				priceMinor: row.priceMinor,
+				packBaseQuantity: row.packBaseQuantity,
+			})
+		}
+	}
+
+	const missingItemIds = [
+		...new Set(
+			pairs
+				.filter((p) => !priorByPair.has(`${p.supplierId}:${p.itemId}`))
+				.map((p) => p.itemId),
+		),
+	]
+	const historyByPair = new Map<
+		string,
+		Array<{ priceMinor: number; packBaseQuantity: number }>
+	>()
+	if (missingItemIds.length > 0) {
+		const historyRows = await queryInChunks(missingItemIds, (itemChunk) =>
+			db
+				.select({
+					supplierId: invSupplierProductPrices.supplierId,
+					itemId: invSupplierProductPrices.itemId,
+					priceMinor: invSupplierProductPrices.priceMinor,
+					packBaseQuantity: invSupplierProductPrices.packBaseQuantity,
+				})
+				.from(invSupplierProductPrices)
+				.where(
+					and(
+						inArray(invSupplierProductPrices.supplierId, supplierIds),
+						inArray(invSupplierProductPrices.itemId, itemChunk),
+					),
+				)
+				.orderBy(
+					desc(invSupplierProductPrices.effectiveAt),
+					desc(invSupplierProductPrices.createdAt),
+					desc(invSupplierProductPrices.id),
+				),
+		)
+		for (const row of historyRows) {
+			const key = `${row.supplierId}:${row.itemId}`
+			const list = historyByPair.get(key) ?? []
+			if (list.length < 2) {
+				list.push({
+					priceMinor: row.priceMinor,
+					packBaseQuantity: row.packBaseQuantity,
+				})
+				historyByPair.set(key, list)
+			}
+		}
+	}
+
+	for (const pair of pairs) {
+		const key = `${pair.supplierId}:${pair.itemId}`
+		const priorOrder = priorByPair.get(key)
+		if (priorOrder) {
+			const prevAdjusted = adjustPackPrice(
+				priorOrder.priceMinor,
+				priorOrder.packBaseQuantity,
+				pair.packBaseQuantity,
+			)
+			const changed =
+				pair.currentPriceMinor !== null &&
+				packPricesDiffer(
+					priorOrder.priceMinor,
+					priorOrder.packBaseQuantity,
+					pair.currentPriceMinor,
+					pair.packBaseQuantity,
+				)
+			result.set(key, {
+				previousOrderPackPriceMinor: prevAdjusted,
+				priceChangedSinceLastOrder: changed,
+			})
+			continue
+		}
+		const history = historyByPair.get(key) ?? []
+		const newest = history[0]
+		const earlier = history[1]
+		if (!newest) {
+			result.set(key, {
+				previousOrderPackPriceMinor: null,
+				priceChangedSinceLastOrder: false,
+			})
+			continue
+		}
+		if (pair.currentPriceMinor === null) {
+			result.set(key, {
+				previousOrderPackPriceMinor: adjustPackPrice(
+					newest.priceMinor,
+					newest.packBaseQuantity,
+					pair.packBaseQuantity,
+				),
+				priceChangedSinceLastOrder: false,
+			})
+			continue
+		}
+		if (
+			packPricesDiffer(
+				newest.priceMinor,
+				newest.packBaseQuantity,
+				pair.currentPriceMinor,
+				pair.packBaseQuantity,
+			)
+		) {
+			result.set(key, {
+				previousOrderPackPriceMinor: adjustPackPrice(
+					newest.priceMinor,
+					newest.packBaseQuantity,
+					pair.packBaseQuantity,
+				),
+				priceChangedSinceLastOrder: true,
+			})
+			continue
+		}
+		if (earlier) {
+			result.set(key, {
+				previousOrderPackPriceMinor: adjustPackPrice(
+					earlier.priceMinor,
+					earlier.packBaseQuantity,
+					pair.packBaseQuantity,
+				),
+				priceChangedSinceLastOrder: packPricesDiffer(
+					earlier.priceMinor,
+					earlier.packBaseQuantity,
+					pair.currentPriceMinor,
+					pair.packBaseQuantity,
+				),
+			})
+			continue
+		}
+		result.set(key, {
+			previousOrderPackPriceMinor: null,
+			priceChangedSinceLastOrder: false,
+		})
+	}
+	return result
+}
+
+async function lastCountedByItemIds(
+	db: InventoryReader,
+	locationId: string,
+	itemIds: readonly string[],
+): Promise<Map<string, number>> {
+	if (itemIds.length === 0) return new Map()
+	const rows = await queryInChunks(itemIds, (chunk) =>
+		db
+			.select({
+				itemId: invCountEntries.itemId,
+				at: sql<number>`max(${invCounts.approvedAt})`,
+			})
+			.from(invCountEntries)
+			.innerJoin(invCounts, eq(invCounts.id, invCountEntries.countId))
+			.where(
+				and(
+					eq(invCounts.locationId, locationId),
+					eq(invCounts.status, 'approved'),
+					inArray(invCountEntries.itemId, chunk),
+				),
+			)
+			.groupBy(invCountEntries.itemId),
+	)
+	return new Map(rows.map((row) => [row.itemId, Number(row.at)]))
+}
+
 async function toDetail(
 	db: InventoryReader,
 	row: OrderRow,
 	cost: boolean,
+	now = Date.now(),
 ): Promise<OrderDetail> {
 	const context = await loadOrderContext(db, [row])
 	const summary = toSummary(row, context, cost)
@@ -331,6 +688,96 @@ async function toDetail(
 	])
 	const itemById = new Map(items.map((item) => [item.id, item]))
 	const placeById = new Map(places.map((place) => [place.itemId, place]))
+
+	const parsedSavedExplanations = new Map<string, OrderLineExplanation>()
+	const linesNeedingFallback: OrderLineRow[] = []
+	for (const line of lines) {
+		if (line.suggestionExplanationJson) {
+			try {
+				const parsed = orderLineExplanationSchema.safeParse(
+					JSON.parse(line.suggestionExplanationJson),
+				)
+				if (parsed.success) {
+					parsedSavedExplanations.set(line.id, parsed.data)
+					continue
+				}
+			} catch {
+				// Fall through to fallback recomputation if JSON is malformed.
+			}
+		}
+		if (line.suggestedPacks !== null) {
+			linesNeedingFallback.push(line)
+		}
+	}
+
+	const fallbackClock =
+		linesNeedingFallback.length > 0
+			? await locationClock(db, row.locationId, now)
+			: null
+	const [fallbackLastCounted, fallbackOnOrder, fallbackUseHistory] =
+		linesNeedingFallback.length > 0 && fallbackClock
+			? await Promise.all([
+					lastCountedByItemIds(
+						db,
+						row.locationId,
+						linesNeedingFallback.map((line) => line.itemId),
+					),
+					onOrderByItem(db, row.locationId, {
+						todayDate: fallbackClock.local.date,
+					}),
+					loadUseHistory(db, row.locationId, fallbackClock.local.date),
+				])
+			: [
+					new Map<string, number>(),
+					new Map<string, number>(),
+					new Map<string, { date: string; quantity: number }[]>(),
+				]
+
+	const linesNeedingPriceLookup = cost
+		? lines.filter((line) => {
+				const saved = parsedSavedExplanations.get(line.id)
+				if (saved) {
+					return (
+						saved.previousOrderPackPriceMinor === undefined ||
+						saved.currentPackPriceMinor === undefined
+					)
+				}
+				return line.suggestedPacks !== null
+			})
+		: []
+	const prevPrices =
+		cost && linesNeedingPriceLookup.length > 0
+			? await loadPreviousPackPrices(
+					db,
+					linesNeedingPriceLookup.map((line) => ({
+						supplierId: row.supplierId,
+						itemId: line.itemId,
+						packBaseQuantity: line.packBaseQuantity,
+						currentPriceMinor: line.priceMinor,
+					})),
+					{ excludeOrderId: row.id },
+				)
+			: new Map<string, PreviousPriceResult>()
+	const belowMinimumNow = cost && (summary.shortOfMinimumMinor ?? 0) > 0
+	const spendingContext =
+		cost && row.status === 'draft' && row.approvalStatus === 'waiting_approval'
+			? await (async () => {
+					const [locSettings, spent] = await Promise.all([
+						getLocationSettings(db, row.locationId, { cost: true }),
+						monthlySpentMinor(db, row.locationId, now),
+					])
+					return {
+						...(locSettings.orderLimitMinor != null
+							? { orderLimitMinor: locSettings.orderLimitMinor }
+							: {}),
+						...(locSettings.monthlyLimitMinor != null
+							? { monthlyLimitMinor: locSettings.monthlyLimitMinor }
+							: {}),
+						monthlySpentMinor: spent,
+					}
+				})()
+			: null
+
 	return {
 		...summary,
 		lines: lines.map((line): OrderLine => {
@@ -363,12 +810,85 @@ async function toDetail(
 					packPriceMinor: line.priceMinor,
 				})
 			}
+
+			let explanation = parsedSavedExplanations.get(line.id) ?? null
+			if (!explanation && line.suggestedPacks !== null && fallbackClock) {
+				const onHandVal = onHand.get(line.itemId) ?? 0
+				const onOrderVal = fallbackOnOrder.get(line.itemId) ?? 0
+				const orderBelowVal = place?.orderBelowQuantity ?? null
+				const fillUpToVal = place?.fillUpToQuantity ?? null
+				const target = fillUpToVal ?? orderBelowVal
+				const have = Math.max(onHandVal, 0) + Math.max(onOrderVal, 0)
+				const neededVal =
+					target !== null
+						? Math.max(target - have, 0)
+						: packsQuantity(line.suggestedPacks, line.packBaseQuantity)
+				const lastCounted = fallbackLastCounted.get(line.itemId) ?? null
+				explanation = {
+					onHandQuantity: onHandVal,
+					lastCountedAt: lastCounted,
+					onOrderQuantity: onOrderVal,
+					orderBelowQuantity: orderBelowVal,
+					fillUpToQuantity: fillUpToVal,
+					expectedUseUntilDeliveryQuantity: expectedUseUntilDelivery({
+						today: fallbackClock.local.date,
+						expectedDate: row.expectedDate,
+						history: fallbackUseHistory.get(line.itemId) ?? [],
+					}),
+					neededQuantity: neededVal,
+					packName: line.packName,
+					packBaseQuantity: line.packBaseQuantity,
+					rawPacksMilli: rawPacksMilli(neededVal, line.packBaseQuantity),
+					roundedPacksMilli: line.suggestedPacks,
+					warnings: {
+						notCountedIn10Days: isOrderCountStale(lastCounted, now),
+						priceChangedSinceLastOrder: false,
+						belowSupplierMinimum: false,
+					},
+				}
+			}
+
+			if (explanation) {
+				if (cost) {
+					const priceInfo = prevPrices.get(`${row.supplierId}:${line.itemId}`)
+					const prevPrice =
+						explanation.previousOrderPackPriceMinor !== undefined
+							? explanation.previousOrderPackPriceMinor
+							: (priceInfo?.previousOrderPackPriceMinor ?? null)
+					const currPrice =
+						explanation.currentPackPriceMinor !== undefined
+							? explanation.currentPackPriceMinor
+							: line.priceMinor
+					const priceChanged =
+						explanation.previousOrderPackPriceMinor !== undefined &&
+						explanation.currentPackPriceMinor !== undefined
+							? explanation.warnings.priceChangedSinceLastOrder
+							: (priceInfo?.priceChangedSinceLastOrder ?? false)
+					explanation = maskExplanationForCost(
+						{
+							...explanation,
+							previousOrderPackPriceMinor: prevPrice,
+							currentPackPriceMinor: currPrice,
+							warnings: {
+								...explanation.warnings,
+								priceChangedSinceLastOrder: priceChanged,
+								belowSupplierMinimum: belowMinimumNow,
+							},
+						},
+						true,
+					)
+				} else {
+					explanation = maskExplanationForCost(explanation, false)
+				}
+				out.explanation = explanation
+			}
 			return out
 		}),
 		deliveries,
 		supplierOrderChannel: supplier.orderChannel,
 		supplierEmail: supplier.email,
 		supplierPhone: supplier.phone,
+		...spendingContext,
 	}
 }
 
@@ -386,14 +906,27 @@ export async function listOrders(
 ) {
 	const { query } = input
 	const cursor = decodeCursor(query.cursor)
-	const statuses: readonly OrderStatus[] | null =
+	const statusFilter =
 		query.status === 'all'
-			? null
+			? undefined
 			: query.status === 'open'
-				? OPEN_ORDER_STATUSES
+				? inArray(invOrders.status, [...OPEN_ORDER_STATUSES])
 				: query.status === 'closed'
-					? ['received', 'cancelled']
-					: [query.status]
+					? inArray(invOrders.status, ['received', 'cancelled'])
+					: query.status === 'waiting_for_approval'
+						? and(
+								eq(invOrders.status, 'draft'),
+								eq(invOrders.approvalStatus, 'waiting_approval'),
+							)
+						: query.status === 'draft'
+							? and(
+									eq(invOrders.status, 'draft'),
+									or(
+										isNull(invOrders.approvalStatus),
+										ne(invOrders.approvalStatus, 'waiting_approval'),
+									),
+								)
+							: eq(invOrders.status, query.status)
 	const rows = await db
 		.select()
 		.from(invOrders)
@@ -401,7 +934,7 @@ export async function listOrders(
 			and(
 				eq(invOrders.locationId, query.locationId),
 				// bounded: at most five order statuses
-				statuses ? inArray(invOrders.status, [...statuses]) : undefined,
+				statusFilter,
 				query.supplierId
 					? eq(invOrders.supplierId, query.supplierId)
 					: undefined,
@@ -611,7 +1144,14 @@ async function draftBySupplier(
 		.select({ id: invOrders.id, supplierId: invOrders.supplierId })
 		.from(invOrders)
 		.where(
-			and(eq(invOrders.locationId, locationId), eq(invOrders.status, 'draft')),
+			and(
+				eq(invOrders.locationId, locationId),
+				eq(invOrders.status, 'draft'),
+				or(
+					isNull(invOrders.approvalStatus),
+					ne(invOrders.approvalStatus, 'waiting_approval'),
+				),
+			),
 		)
 		.orderBy(desc(invOrders.createdAt), desc(invOrders.id))
 	const map = new Map<string, string>()
@@ -633,31 +1173,33 @@ export async function buildSuggestedOrders(
 	const { locationId, cost } = input
 	const clock = await locationClock(db, locationId, input.now)
 	const overdueCutoff = addDaysIso(clock.date, -2)
-	const [stock, choices, onOrder, drafts, overdueRows] = await Promise.all([
-		loadLocationStock(db, locationId),
-		loadProductChoices(db),
-		onOrderByItem(db, locationId, { todayDate: clock.date }),
-		draftBySupplier(db, locationId),
-		db
-			.select({
-				orderId: invOrders.id,
-				number: invOrders.number,
-				supplierId: invOrders.supplierId,
-				supplierName: invSuppliers.name,
-				expectedDate: invOrders.expectedDate,
-			})
-			.from(invOrders)
-			.innerJoin(invSuppliers, eq(invSuppliers.id, invOrders.supplierId))
-			.where(
-				and(
-					eq(invOrders.locationId, locationId),
-					inArray(invOrders.status, [...SUGGESTION_STATUSES]),
-					sql`${invOrders.expectedDate} is not null`,
-					sql`${invOrders.expectedDate} < ${overdueCutoff}`,
-				),
-			)
-			.orderBy(invOrders.expectedDate, invOrders.number),
-	])
+	const [stock, choices, onOrder, drafts, overdueRows, useHistory] =
+		await Promise.all([
+			loadLocationStock(db, locationId),
+			loadProductChoices(db),
+			onOrderByItem(db, locationId, { todayDate: clock.date }),
+			draftBySupplier(db, locationId),
+			db
+				.select({
+					orderId: invOrders.id,
+					number: invOrders.number,
+					supplierId: invOrders.supplierId,
+					supplierName: invSuppliers.name,
+					expectedDate: invOrders.expectedDate,
+				})
+				.from(invOrders)
+				.innerJoin(invSuppliers, eq(invSuppliers.id, invOrders.supplierId))
+				.where(
+					and(
+						eq(invOrders.locationId, locationId),
+						inArray(invOrders.status, [...SUGGESTION_STATUSES]),
+						sql`${invOrders.expectedDate} is not null`,
+						sql`${invOrders.expectedDate} < ${overdueCutoff}`,
+					),
+				)
+				.orderBy(invOrders.expectedDate, invOrders.number),
+			loadUseHistory(db, locationId, clock.local.date),
+		])
 	const overdueOrderWarnings: OverdueOrderWarning[] = overdueRows.map(
 		(row) => ({
 			orderId: row.orderId,
@@ -674,6 +1216,7 @@ export async function buildSuggestedOrders(
 	)
 	const cards = new Map<string, SuggestedSupplierOrder>()
 	const supplierById = new Map<string, SupplierRow>()
+	const priceByLineKey = new Map<string, number | null>()
 	const unsourced: SuggestedOrders['unsourced'] = []
 	for (const row of stock) {
 		const place = row.place
@@ -715,30 +1258,6 @@ export async function buildSuggestedOrders(
 			pricedByWeight: product.pricedByWeight,
 		})
 		if (!suggestion) continue
-		const line: SuggestedOrderLine = {
-			itemId: row.item.id,
-			itemName: row.item.name,
-			baseUnit: row.item.baseUnit,
-			countUnit,
-			onHand: row.onHand,
-			onOrderQuantity: pending,
-			orderBelowQuantity: orderBelow,
-			fillUpToQuantity: fillUpTo,
-			status: row.status,
-			supplierProductId: product.id,
-			packName: product.packName,
-			packBaseQuantity: product.packBaseQuantity,
-			pricedByWeight: product.pricedByWeight,
-			packs: suggestion.packs,
-			quantity: suggestion.quantity,
-		}
-		if (cost && product.priceMinor !== null) {
-			line.packPriceMinor = product.priceMinor
-			line.lineTotalMinor = orderLineTotalMinor({
-				packsMilli: suggestion.packsMilli,
-				packPriceMinor: product.priceMinor,
-			})
-		}
 		let card = cards.get(supplier.id)
 		if (!card) {
 			const next = nextOrderableDelivery(
@@ -759,27 +1278,108 @@ export async function buildSuggestedOrders(
 			cards.set(supplier.id, card)
 			supplierById.set(supplier.id, supplier)
 		}
+		const expectedUse = expectedUseUntilDelivery({
+			today: clock.local.date,
+			expectedDate: card.expectedDate,
+			history: useHistory.get(row.item.id) ?? [],
+		})
+		const explanation: OrderLineExplanation = {
+			onHandQuantity: row.onHand,
+			lastCountedAt: row.lastCountedAt,
+			onOrderQuantity: pending,
+			orderBelowQuantity: orderBelow,
+			fillUpToQuantity: fillUpTo,
+			expectedUseUntilDeliveryQuantity: expectedUse,
+			neededQuantity: suggestion.needed,
+			packName: product.packName,
+			packBaseQuantity: product.packBaseQuantity,
+			rawPacksMilli: suggestion.rawPacksMilli,
+			roundedPacksMilli: suggestion.packsMilli,
+			warnings: {
+				notCountedIn10Days: isOrderCountStale(row.lastCountedAt, input.now),
+				priceChangedSinceLastOrder: false,
+				belowSupplierMinimum: false,
+			},
+		}
+		const line: SuggestedOrderLine = {
+			itemId: row.item.id,
+			itemName: row.item.name,
+			baseUnit: row.item.baseUnit,
+			countUnit,
+			onHand: row.onHand,
+			onOrderQuantity: pending,
+			orderBelowQuantity: orderBelow,
+			fillUpToQuantity: fillUpTo,
+			status: row.status,
+			supplierProductId: product.id,
+			packName: product.packName,
+			packBaseQuantity: product.packBaseQuantity,
+			pricedByWeight: product.pricedByWeight,
+			packs: suggestion.packs,
+			quantity: suggestion.quantity,
+			explanation,
+		}
+		if (cost && product.priceMinor !== null) {
+			line.packPriceMinor = product.priceMinor
+			line.lineTotalMinor = orderLineTotalMinor({
+				packsMilli: suggestion.packsMilli,
+				packPriceMinor: product.priceMinor,
+			})
+		}
+		priceByLineKey.set(`${supplier.id}:${row.item.id}`, product.priceMinor)
 		card.lines.push(line)
 		card.lineCount += 1
 	}
 	const suppliers = [...cards.values()]
-	for (const card of suppliers) {
-		if (!cost) continue
-		const supplier = supplierById.get(card.supplierId)
-		const money = orderTotalMinor(
+	if (cost && suppliers.length > 0) {
+		const pricePairs = suppliers.flatMap((card) =>
 			card.lines.map((line) => ({
-				packs: line.packs,
-				packPriceMinor: line.packPriceMinor ?? null,
+				supplierId: card.supplierId,
+				itemId: line.itemId,
+				packBaseQuantity: line.packBaseQuantity,
+				currentPriceMinor:
+					priceByLineKey.get(`${card.supplierId}:${line.itemId}`) ?? null,
 			})),
 		)
-		card.totalMinor = money.totalMinor
-		card.unpricedLines = money.unpricedLines
-		const currency = supplier?.currency
-		if (currency) card.currency = currency
-		if (supplier?.minimumOrderMinor != null) {
-			card.minimumOrderMinor = supplier.minimumOrderMinor
-			card.belowMinimum =
-				shortOfMinimumMinor(money.totalMinor, supplier.minimumOrderMinor) > 0
+		const prevPrices = await loadPreviousPackPrices(db, pricePairs)
+		for (const card of suppliers) {
+			const supplier = supplierById.get(card.supplierId)
+			const money = orderTotalMinor(
+				card.lines.map((line) => ({
+					packs: line.packs,
+					packPriceMinor: line.packPriceMinor ?? null,
+				})),
+			)
+			card.totalMinor = money.totalMinor
+			card.unpricedLines = money.unpricedLines
+			const currency = supplier?.currency
+			if (currency) card.currency = currency
+			if (supplier?.minimumOrderMinor != null) {
+				card.minimumOrderMinor = supplier.minimumOrderMinor
+				card.belowMinimum =
+					shortOfMinimumMinor(money.totalMinor, supplier.minimumOrderMinor) > 0
+			}
+			for (const line of card.lines) {
+				if (!line.explanation) continue
+				const key = `${card.supplierId}:${line.itemId}`
+				const prev = prevPrices.get(key)
+				const currentPrice = priceByLineKey.get(key) ?? null
+				line.explanation = maskExplanationForCost(
+					{
+						...line.explanation,
+						previousOrderPackPriceMinor:
+							prev?.previousOrderPackPriceMinor ?? null,
+						currentPackPriceMinor: currentPrice,
+						warnings: {
+							...line.explanation.warnings,
+							priceChangedSinceLastOrder:
+								prev?.priceChangedSinceLastOrder ?? false,
+							belowSupplierMinimum: card.belowMinimum === true,
+						},
+					},
+					true,
+				)
+			}
 		}
 	}
 	suppliers.sort(
@@ -812,6 +1412,7 @@ type ResolvedLine = {
 	product: ProductRow
 	packsMilli: number
 	suggestedPacksMilli: number | null
+	suggestionExplanationJson: string | null
 }
 
 /** Validates typed lines against the supplier's products and snapshots them. */
@@ -823,6 +1424,7 @@ async function resolveLines(
 		supplierProductId: string
 		packs: number
 		suggestedPacksMilli?: number | null
+		suggestionExplanationJson?: string | null
 	}>,
 ): Promise<ResolvedLine[]> {
 	const productIds = [...new Set(lines.map((line) => line.supplierProductId))]
@@ -869,6 +1471,7 @@ async function resolveLines(
 			product,
 			packsMilli,
 			suggestedPacksMilli: line.suggestedPacksMilli ?? null,
+			suggestionExplanationJson: line.suggestionExplanationJson ?? null,
 		}
 	})
 }
@@ -904,6 +1507,7 @@ async function insertLines(
 		quantity: lineQuantity(line.packsMilli, line.product.packBaseQuantity),
 		priceMinor: line.product.priceMinor,
 		suggestedPacks: line.suggestedPacksMilli,
+		suggestionExplanationJson: line.suggestionExplanationJson,
 		sortOrder: index,
 		createdAt: now,
 	}))
@@ -987,11 +1591,25 @@ export async function createOrder(
 				supplierProductId: string
 				packs: number
 				suggestedPacksMilli?: number | null
-			}> = body.lines ?? []
+				suggestionExplanationJson?: string | null
+			}> = (body.lines ?? []).map((line) => ({
+				itemId: line.itemId,
+				supplierProductId: line.supplierProductId,
+				packs: line.packs,
+				suggestedPacksMilli:
+					line.suggestedPacks != null
+						? packsToMilli(line.suggestedPacks)
+						: null,
+				suggestionExplanationJson: line.explanation
+					? JSON.stringify(
+							maskExplanationForCost(line.explanation, caller.cost),
+						)
+					: null,
+			}))
 			if (body.fromSuggestion) {
 				const suggestion = await buildSuggestedOrders(tx, {
 					locationId: body.locationId,
-					cost: false,
+					cost: true,
 					now: ctx.now,
 				})
 				const card = suggestion.suppliers.find(
@@ -1002,6 +1620,9 @@ export async function createOrder(
 					supplierProductId: line.supplierProductId,
 					packs: line.packs,
 					suggestedPacksMilli: packsToMilli(line.packs),
+					suggestionExplanationJson: line.explanation
+						? JSON.stringify(line.explanation)
+						: null,
 				}))
 			}
 			const resolved = await resolveLines(tx, supplier.id, typed)
@@ -1047,7 +1668,12 @@ export async function createOrder(
 				},
 				at: ctx.now,
 			})
-			return toDetail(tx, await loadOrderRow(tx, id, caller), caller.cost)
+			return toDetail(
+				tx,
+				await loadOrderRow(tx, id, caller),
+				caller.cost,
+				ctx.now,
+			)
 		},
 	)
 }
@@ -1061,6 +1687,9 @@ export async function updateOrder(
 		const row = await loadOrderRow(tx, input.id, caller)
 		assertVersion(row.version, body.expectedVersion)
 		if (row.status === 'received' || row.status === 'cancelled') {
+			throw new InventoryError('order_not_editable', 409)
+		}
+		if (row.approvalStatus === 'waiting_approval') {
 			throw new InventoryError('order_not_editable', 409)
 		}
 		if (body.lines !== undefined && row.status !== 'draft') {
@@ -1078,20 +1707,30 @@ export async function updateOrder(
 				.select()
 				.from(invOrderLines)
 				.where(eq(invOrderLines.orderId, row.id))
-			const suggested = new Map(
-				old.map((line) => [
-					`${line.itemId}:${line.supplierProductId}`,
-					line.suggestedPacks,
-				]),
+			const oldByKey = new Map(
+				old.map((line) => [`${line.itemId}:${line.supplierProductId}`, line]),
 			)
 			const resolved = await resolveLines(
 				tx,
 				row.supplierId,
-				body.lines.map((line) => ({
-					...line,
-					suggestedPacksMilli:
-						suggested.get(`${line.itemId}:${line.supplierProductId}`) ?? null,
-				})),
+				body.lines.map((line) => {
+					const prev = oldByKey.get(`${line.itemId}:${line.supplierProductId}`)
+					return {
+						...line,
+						suggestedPacksMilli:
+							prev?.suggestedPacks ??
+							(line.suggestedPacks != null
+								? packsToMilli(line.suggestedPacks)
+								: null),
+						suggestionExplanationJson:
+							prev?.suggestionExplanationJson ??
+							(line.explanation
+								? JSON.stringify(
+										maskExplanationForCost(line.explanation, caller.cost),
+									)
+								: null),
+					}
+				}),
 			)
 			await tx.delete(invOrderLines).where(eq(invOrderLines.orderId, row.id))
 			await insertLines(tx, row.id, resolved, ctx.now)
@@ -1108,7 +1747,12 @@ export async function updateOrder(
 			detail: { lines: lineCount },
 			at: ctx.now,
 		})
-		return toDetail(tx, await loadOrderRow(tx, row.id, caller), caller.cost)
+		return toDetail(
+			tx,
+			await loadOrderRow(tx, row.id, caller),
+			caller.cost,
+			ctx.now,
+		)
 	})
 }
 
@@ -1218,44 +1862,214 @@ export async function getOrderText(
 /** How long a send in flight blocks another one (the email call may take a while). */
 export const ORDER_SEND_CLAIM_TTL_MS = 2 * 60 * 1000
 
+function monthKeyInZone(ms: number, timeZone: string): string {
+	const parts = localParts(ms, timeZone)
+	return `${parts.year}-${String(parts.month).padStart(2, '0')}`
+}
+
 /**
- * Sends an order. The text is rendered first. An email send is claimed under
- * the organization's write lock BEFORE the supplier is emailed (a second
- * send meanwhile answers 409 `send_in_progress`, so a double click or a retry
- * emails once), the email goes out with no lock held, and the order is then
- * marked sent in its own transaction. A provider failure (502
- * `email_failed`) releases the claim and leaves the order as it was, ready to
- * try again. If the email went out but the final write fails, the failure is
- * logged with the order id and the claim stays until it expires (two
- * minutes); the retry then sends again with the same message id. `whatsapp`,
- * `copy` and `pdf` are person-driven: the order is marked sent and the answer
- * carries what the App needs.
+ * Total spent at `locationId` in the current calendar month (in the location's
+ * IANA time zone), counting `sent`, `partly_received`, and `received` orders
+ * whose `sentAt` falls in that calendar month.
  */
-export async function sendOrder(
+export async function monthlySpentMinor(
+	db: InventoryReader,
+	locationId: string,
+	now: number,
+): Promise<number> {
+	const clock = await locationClock(db, locationId, now)
+	const currentMonth = monthKeyInZone(now, clock.timeZone)
+	const earliestLookback = now - 40 * 86_400_000
+	const orders = await db
+		.select({ id: invOrders.id, sentAt: invOrders.sentAt })
+		.from(invOrders)
+		.where(
+			and(
+				eq(invOrders.locationId, locationId),
+				inArray(invOrders.status, ['sent', 'partly_received', 'received']),
+				isNotNull(invOrders.sentAt),
+				gte(invOrders.sentAt, earliestLookback),
+			),
+		)
+	const matchingIds = orders
+		.filter(
+			(entry) =>
+				entry.sentAt !== null &&
+				monthKeyInZone(entry.sentAt, clock.timeZone) === currentMonth,
+		)
+		.map((entry) => entry.id)
+	if (matchingIds.length === 0) return 0
+	const linesByOrder = await loadOrderLines(db, matchingIds)
+	let total = 0
+	for (const orderId of matchingIds) {
+		const lines = linesByOrder.get(orderId) ?? []
+		total += orderTotalMinor(
+			lines.map((line) => ({
+				packs: milliToPacks(line.packs),
+				packPriceMinor: line.priceMinor,
+			})),
+		).totalMinor
+	}
+	return total
+}
+
+export function orderApprovalEventId(input: {
+	orgId: string
+	locationId: string
+	orderId: string
+	requestedAt: number
+}): string {
+	return createHash('sha256')
+		.update(
+			inventoryNotifyDedupeKey({
+				orgId: input.orgId,
+				kind: 'inventory_order_approval',
+				locationId: input.locationId,
+				key: `${input.orderId}:${input.requestedAt}`,
+			}),
+		)
+		.digest('hex')
+}
+
+export async function deliverOrderApprovalAlert(
+	db: TenantDatabase,
+	input: {
+		orgId: string
+		order: Pick<
+			OrderRow,
+			| 'id'
+			| 'number'
+			| 'locationId'
+			| 'approvalRequestedAt'
+			| 'approvalBreachedOrderLimit'
+			| 'approvalBreachedMonthlyLimit'
+			| 'approvalAlertAttempts'
+		>
+		now: number
+		post?: (event: InventoryNotifyEvent) => Promise<InventoryNotifyOutcome>
+	},
+): Promise<InventoryNotifyOutcome> {
+	const post = input.post ?? postInventoryNotify
+	const { order } = input
+	const outcome = await post({
+		orgId: input.orgId,
+		eventId: orderApprovalEventId({
+			orgId: input.orgId,
+			locationId: order.locationId,
+			orderId: order.id,
+			requestedAt: order.approvalRequestedAt ?? input.now,
+		}),
+		kind: 'inventory_order_approval',
+		locationId: order.locationId,
+		count: 1,
+		orderApproval: {
+			orderId: order.id,
+			orderNumber: order.number,
+			breachedOrderLimit: order.approvalBreachedOrderLimit,
+			breachedMonthlyLimit: order.approvalBreachedMonthlyLimit,
+		},
+	})
+	const nextAttempts = order.approvalAlertAttempts + 1
+	if (outcome.status === 'delivered' || outcome.status === 'rejected') {
+		await db
+			.update(invOrders)
+			.set({
+				approvalAlertStatus: 'sent',
+				approvalAlertAttempts: nextAttempts,
+				updatedAt: input.now,
+			})
+			.where(
+				and(
+					eq(invOrders.id, order.id),
+					eq(invOrders.approvalStatus, 'waiting_approval'),
+					eq(invOrders.approvalAlertStatus, 'pending'),
+				),
+			)
+	} else {
+		await db
+			.update(invOrders)
+			.set({
+				approvalAlertAttempts: nextAttempts,
+				updatedAt: input.now,
+			})
+			.where(
+				and(
+					eq(invOrders.id, order.id),
+					eq(invOrders.approvalStatus, 'waiting_approval'),
+					eq(invOrders.approvalAlertStatus, 'pending'),
+				),
+			)
+	}
+	return outcome
+}
+
+function isSelfApprovalForbidden(
+	row: Pick<OrderRow, 'createdById' | 'approvalRequestedById'>,
+	caller: Pick<InventoryCaller, 'actor' | 'isOwner'>,
+): boolean {
+	if (caller.isOwner) return false
+	if (caller.actor.id === null) return false
+	return (
+		row.createdById === caller.actor.id ||
+		row.approvalRequestedById === caller.actor.id
+	)
+}
+
+function assertCanApproveOrders(caller: InventoryCaller): void {
+	if (!caller.purchasing || !caller.canManageSettings) {
+		throw new InventoryError('forbidden', 403, { reason: 'grant' })
+	}
+}
+
+/**
+ * Executes the actual order delivery (email / WhatsApp / copy / PDF) and
+ * marks a draft order sent. Shared by `sendOrder` (when within limits or
+ * resending) and `approveOrder` (when approving an order waiting for approval).
+ */
+async function executeOrderSend(
 	caller: InventoryCaller,
-	input: { id: string; body: SendOrderInput },
+	input: {
+		row: OrderRow
+		rendered: Awaited<ReturnType<typeof renderFor>>
+		channel: OrderSendChannel
+		locale: OrderTextLocale
+		expectedVersion: number
+		approve: boolean
+	},
 ): Promise<SendOrderResult> {
-	const { body } = input
-	const locale = body.locale ?? 'en'
-	const db = await getTenantDb(caller.orgId)
-	const row = await loadOrderRow(db, input.id, caller)
-	assertVersion(row.version, body.expectedVersion)
-	if (row.status === 'received' || row.status === 'cancelled') {
-		throw new InventoryError('order_closed', 409)
-	}
-	const context = await loadOrderContext(db, [row])
-	if ((context.lines.get(row.id) ?? []).length === 0) {
-		throw new InventoryError('order_empty', 409)
-	}
-	const rendered = await renderFor(db, row, locale, caller.region)
+	const { row, rendered, channel, locale } = input
 	const { supplier } = rendered
 
 	const willEmail =
-		body.channel === 'email' && !!supplier.email && canSendTenantEmail()
+		channel === 'email' && !!supplier.email && canSendTenantEmail()
 	let emailSent = false
 	let emailSkipped: SendOrderResult['emailSkipped'] = null
-	if (body.channel === 'email' && !willEmail) {
+	if (channel === 'email' && !willEmail) {
 		emailSkipped = !supplier.email ? 'no_supplier_email' : 'not_configured'
+	}
+
+	const assertSendableState = (current: OrderRow) => {
+		if (input.approve) {
+			if (
+				current.status !== 'draft' ||
+				current.approvalStatus !== 'waiting_approval'
+			) {
+				throw stateConflict('not_waiting_approval')
+			}
+			if (isSelfApprovalForbidden(current, caller)) {
+				throw new InventoryError('self_approval_forbidden', 403)
+			}
+			return
+		}
+		if (current.status === 'received' || current.status === 'cancelled') {
+			throw new InventoryError('order_closed', 409)
+		}
+		if (
+			current.status === 'draft' &&
+			current.approvalStatus === 'waiting_approval'
+		) {
+			throw new InventoryError('order_not_editable', 409)
+		}
 	}
 
 	if (willEmail) {
@@ -1264,10 +2078,8 @@ export async function sendOrder(
 			{ orgId: caller.orgId, skipAutoSoldOut: true },
 			async (tx, ctx) => {
 				const current = await loadOrderRow(tx, row.id, caller)
-				assertVersion(current.version, body.expectedVersion)
-				if (current.status === 'received' || current.status === 'cancelled') {
-					throw new InventoryError('order_closed', 409)
-				}
+				assertVersion(current.version, input.expectedVersion)
+				assertSendableState(current)
 				if (
 					current.sendClaimAt !== null &&
 					ctx.now - current.sendClaimAt < ORDER_SEND_CLAIM_TTL_MS
@@ -1338,10 +2150,8 @@ export async function sendOrder(
 		withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
 			const current = await loadOrderRow(tx, row.id, caller)
 			// With an email out, the claim above is this send's own.
-			if (!willEmail) assertVersion(current.version, body.expectedVersion)
-			if (current.status === 'received' || current.status === 'cancelled') {
-				throw new InventoryError('order_closed', 409)
-			}
+			if (!willEmail) assertVersion(current.version, input.expectedVersion)
+			assertSendableState(current)
 			if (
 				!willEmail &&
 				current.sendClaimAt !== null &&
@@ -1355,8 +2165,17 @@ export async function sendOrder(
 					.set({
 						status: 'sent',
 						sentAt: ctx.now,
-						sentVia: body.channel,
+						sentVia: channel,
 						sendClaimAt: null,
+						...(input.approve
+							? {
+									approvalStatus: 'approved' as const,
+									approvedAt: ctx.now,
+									approvedByKind: caller.actor.kind,
+									approvedById: caller.actor.id,
+									approvalAlertStatus: 'sent' as const,
+								}
+							: {}),
 						version: current.version + 1,
 						updatedAt: ctx.now,
 					})
@@ -1370,17 +2189,22 @@ export async function sendOrder(
 			await recordInventoryAudit(tx, {
 				actorKind: caller.actor.kind,
 				actorId: caller.actor.id,
-				action: current.status === 'draft' ? 'order.send' : 'order.resend',
+				action: input.approve
+					? 'order.approve'
+					: current.status === 'draft'
+						? 'order.send'
+						: 'order.resend',
 				resourceType: 'order',
 				resourceId: current.id,
 				locationId: current.locationId,
-				detail: { channel: body.channel, emailSent, locale },
+				detail: { channel, emailSent, locale },
 				at: ctx.now,
 			})
 			return toDetail(
 				tx,
 				await loadOrderRow(tx, current.id, caller),
 				caller.cost,
+				ctx.now,
 			)
 		})
 	let order: Awaited<ReturnType<typeof markSent>>
@@ -1403,14 +2227,266 @@ export async function sendOrder(
 	}
 	return {
 		...rendered.text,
-		waLink: body.channel === 'whatsapp' ? rendered.text.waLink : null,
-		mailto:
-			body.channel === 'email' && !emailSent ? rendered.text.mailto : null,
+		waLink: channel === 'whatsapp' ? rendered.text.waLink : null,
+		mailto: channel === 'email' && !emailSent ? rendered.text.mailto : null,
 		order,
-		channel: body.channel,
+		channel,
 		emailSent,
 		emailSkipped,
 	}
+}
+
+/**
+ * Sends an order. When a draft exceeds the location's per-order or monthly
+ * spending limit, it moves to `waiting_for_approval` without sending anything
+ * and notifies managers who can approve it. Otherwise it delegates to
+ * `executeOrderSend`.
+ */
+export async function sendOrder(
+	caller: InventoryCaller,
+	input: {
+		id: string
+		body: SendOrderInput
+		options?: {
+			notify?: (event: InventoryNotifyEvent) => Promise<InventoryNotifyOutcome>
+		}
+	},
+): Promise<SendOrderResult> {
+	const { body } = input
+	const locale = body.locale ?? 'en'
+	const db = await getTenantDb(caller.orgId)
+	const row = await loadOrderRow(db, input.id, caller)
+	assertVersion(row.version, body.expectedVersion)
+	if (row.status === 'received' || row.status === 'cancelled') {
+		throw new InventoryError('order_closed', 409)
+	}
+	if (row.status === 'draft' && row.approvalStatus === 'waiting_approval') {
+		throw new InventoryError('order_not_editable', 409)
+	}
+	const context = await loadOrderContext(db, [row])
+	if ((context.lines.get(row.id) ?? []).length === 0) {
+		throw new InventoryError('order_empty', 409)
+	}
+	const rendered = await renderFor(db, row, locale, caller.region)
+
+	if (row.status === 'draft') {
+		const approvalHold = await withInventoryWrite(
+			{ orgId: caller.orgId },
+			async (tx, ctx) => {
+				const current = await loadOrderRow(tx, row.id, caller)
+				assertVersion(current.version, body.expectedVersion)
+				if (current.status !== 'draft') return null
+				if (current.approvalStatus === 'waiting_approval') {
+					throw new InventoryError('order_not_editable', 409)
+				}
+				const locRow = await tx
+					.select({
+						orderLimitMinor: invLocationSettings.orderLimitMinor,
+						monthlyLimitMinor: invLocationSettings.monthlyLimitMinor,
+					})
+					.from(invLocationSettings)
+					.where(eq(invLocationSettings.locationId, current.locationId))
+					.get()
+				const orderLimitMinor = locRow?.orderLimitMinor ?? null
+				const monthlyLimitMinor = locRow?.monthlyLimitMinor ?? null
+				if (orderLimitMinor === null && monthlyLimitMinor === null) {
+					return null
+				}
+				const lines =
+					(await loadOrderLines(tx, [current.id])).get(current.id) ?? []
+				if (lines.length === 0) throw new InventoryError('order_empty', 409)
+				const orderTotal = orderTotalMinor(
+					lines.map((line) => ({
+						packs: milliToPacks(line.packs),
+						packPriceMinor: line.priceMinor,
+					})),
+				).totalMinor
+				const spent =
+					monthlyLimitMinor !== null
+						? await monthlySpentMinor(tx, current.locationId, ctx.now)
+						: 0
+				const breachedOrder =
+					orderLimitMinor !== null && orderTotal > orderLimitMinor
+				const breachedMonthly =
+					monthlyLimitMinor !== null && spent + orderTotal > monthlyLimitMinor
+				if (!breachedOrder && !breachedMonthly) {
+					return null
+				}
+				await tx
+					.update(invOrders)
+					.set({
+						approvalStatus: 'waiting_approval',
+						requestedSendChannel: body.channel,
+						requestedSendLocale: locale,
+						approvalRequestedAt: ctx.now,
+						approvalRequestedByKind: caller.actor.kind,
+						approvalRequestedById: caller.actor.id,
+						approvalBreachedOrderLimit: breachedOrder,
+						approvalBreachedMonthlyLimit: breachedMonthly,
+						rejectedAt: null,
+						rejectedByKind: null,
+						rejectedById: null,
+						rejectionReason: null,
+						approvalAlertStatus: 'pending',
+						approvalAlertAttempts: 0,
+						version: current.version + 1,
+						updatedAt: ctx.now,
+					})
+					.where(eq(invOrders.id, current.id))
+				await recordInventoryAudit(tx, {
+					actorKind: caller.actor.kind,
+					actorId: caller.actor.id,
+					action: 'order.approval_requested',
+					resourceType: 'order',
+					resourceId: current.id,
+					locationId: current.locationId,
+					detail: {
+						channel: body.channel,
+						breachedOrderLimit: breachedOrder,
+						breachedMonthlyLimit: breachedMonthly,
+					},
+					at: ctx.now,
+				})
+				const updated = await loadOrderRow(tx, current.id, caller)
+				const detail = await toDetail(tx, updated, caller.cost, ctx.now)
+				return {
+					updated,
+					detail,
+					orderLimitMinor,
+					monthlyLimitMinor,
+					spent,
+					now: ctx.now,
+				}
+			},
+		)
+		if (approvalHold) {
+			await deliverOrderApprovalAlert(await getTenantDb(caller.orgId), {
+				orgId: caller.orgId,
+				order: approvalHold.updated,
+				now: approvalHold.now,
+				post: input.options?.notify,
+			}).catch((error: unknown) => {
+				console.error('Inventory order approval alert failed', {
+					orgId: caller.orgId,
+					orderId: approvalHold.updated.id,
+					reason: error instanceof Error ? error.name : 'unknown',
+				})
+			})
+			return {
+				...rendered.text,
+				waLink: null,
+				mailto: null,
+				order: approvalHold.detail,
+				channel: body.channel,
+				emailSent: false,
+				emailSkipped: null,
+				waitingForApproval: true,
+				...(caller.cost
+					? {
+							...(approvalHold.orderLimitMinor !== null
+								? { orderLimitMinor: approvalHold.orderLimitMinor }
+								: {}),
+							...(approvalHold.monthlyLimitMinor !== null
+								? { monthlyLimitMinor: approvalHold.monthlyLimitMinor }
+								: {}),
+							monthlySpentMinor: approvalHold.spent,
+						}
+					: {}),
+			}
+		}
+	}
+
+	return executeOrderSend(caller, {
+		row,
+		rendered,
+		channel: body.channel,
+		locale,
+		expectedVersion: body.expectedVersion,
+		approve: false,
+	})
+}
+
+/**
+ * Approves an order waiting for spending-limit approval and immediately sends
+ * it using the requested (or overridden) channel.
+ */
+export async function approveOrder(
+	caller: InventoryCaller,
+	input: { id: string; body: ApproveOrderInput },
+): Promise<SendOrderResult> {
+	assertCanApproveOrders(caller)
+	const db = await getTenantDb(caller.orgId)
+	const row = await loadOrderRow(db, input.id, caller)
+	assertVersion(row.version, input.body.expectedVersion)
+	if (row.status !== 'draft' || row.approvalStatus !== 'waiting_approval') {
+		throw stateConflict('not_waiting_approval')
+	}
+	if (isSelfApprovalForbidden(row, caller)) {
+		throw new InventoryError('self_approval_forbidden', 403)
+	}
+	const context = await loadOrderContext(db, [row])
+	if ((context.lines.get(row.id) ?? []).length === 0) {
+		throw new InventoryError('order_empty', 409)
+	}
+	const channel = input.body.channel ?? row.requestedSendChannel ?? 'copy'
+	const locale =
+		input.body.locale ?? (row.requestedSendLocale === 'ar' ? 'ar' : 'en')
+	const rendered = await renderFor(db, row, locale, caller.region)
+	return executeOrderSend(caller, {
+		row,
+		rendered,
+		channel,
+		locale,
+		expectedVersion: input.body.expectedVersion,
+		approve: true,
+	})
+}
+
+/**
+ * Rejects an order waiting for spending-limit approval and returns it to an
+ * editable draft with the required reason.
+ */
+export async function rejectOrder(
+	caller: InventoryCaller,
+	input: { id: string; body: RejectOrderInput },
+): Promise<OrderDetail> {
+	assertCanApproveOrders(caller)
+	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
+		const row = await loadOrderRow(tx, input.id, caller)
+		assertVersion(row.version, input.body.expectedVersion)
+		if (row.status !== 'draft' || row.approvalStatus !== 'waiting_approval') {
+			throw stateConflict('not_waiting_approval')
+		}
+		await tx
+			.update(invOrders)
+			.set({
+				approvalStatus: 'rejected',
+				rejectedAt: ctx.now,
+				rejectedByKind: caller.actor.kind,
+				rejectedById: caller.actor.id,
+				rejectionReason: input.body.reason,
+				approvalAlertStatus: null,
+				version: row.version + 1,
+				updatedAt: ctx.now,
+			})
+			.where(eq(invOrders.id, row.id))
+		await recordInventoryAudit(tx, {
+			actorKind: caller.actor.kind,
+			actorId: caller.actor.id,
+			action: 'order.reject',
+			resourceType: 'order',
+			resourceId: row.id,
+			locationId: row.locationId,
+			detail: { reason: input.body.reason },
+			at: ctx.now,
+		})
+		return toDetail(
+			tx,
+			await loadOrderRow(tx, row.id, caller),
+			caller.cost,
+			ctx.now,
+		)
+	})
 }
 
 // ── Receiving: the prefill ──────────────────────────────────────────────────
