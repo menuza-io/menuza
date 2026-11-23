@@ -483,10 +483,10 @@ describe('discount rules 273 395 392 415 390', () => {
 			expect((await quote(orderBody())).totalDiscountMinor).toBe(0)
 			// The first moment of next week (Monday) in the location's zone.
 			const nextWeek = new Date()
+			nextWeek.setUTCHours(0, 0, 0, 0)
 			nextWeek.setUTCDate(
 				nextWeek.getUTCDate() + ((8 - nextWeek.getUTCDay()) % 7 || 7),
 			)
-			nextWeek.setUTCHours(12, 0, 0, 0)
 			const later = await quote(
 				orderBody({
 					scheduledFor: nextWeek.toISOString(),
