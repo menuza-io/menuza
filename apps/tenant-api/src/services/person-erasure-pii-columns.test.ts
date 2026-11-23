@@ -251,6 +251,10 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'inv_waste.actor_id': inventoryActorId,
 	'inv_audit_log.actor_id': inventoryActorId,
 	'inv_orders.created_by_id': inventoryActorId,
+	'inv_repeat_orders.note':
+		'operator note on a scheduled repeat purchase order sent to a supplier (copied onto drafted orders), not about a customer',
+	'inv_repeat_order_runs.note':
+		'system/operator note on a repeat-order occurrence (e.g. holiday skip or dropped archived item), not about a customer',
 	'inv_transfers.note':
 		'operator note on a stock transfer or branch request between the organization\'s own places (e.g. "send before the 9am prep"), not about a customer; the form asks for a business note, and the closed-final trigger freezes it with the record',
 	'inv_transfers.created_by_id': inventoryActorId,

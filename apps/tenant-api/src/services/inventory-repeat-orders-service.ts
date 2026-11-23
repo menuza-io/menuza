@@ -29,6 +29,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, asc, desc, eq, inArray, ne } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { type InventoryNotifyOutcome } from '../lib/inventory-notify.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import { type inventoryCaller } from '../lib/inventory-route.ts'
@@ -225,11 +226,18 @@ export async function listRepeatOrders(
 	const supplierIds = [...new Set(rows.map((r) => r.supplierId))]
 	const repeatIds = rows.map((r) => r.id)
 	const [suppliers, runs, closedDates, clock] = await Promise.all([
-		db.select().from(invSuppliers).where(inArray(invSuppliers.id, supplierIds)),
-		db
-			.select()
-			.from(invRepeatOrderRuns)
-			.where(inArray(invRepeatOrderRuns.repeatOrderId, repeatIds)),
+		queryInChunks(supplierIds, (supplierChunk) =>
+			db
+				.select()
+				.from(invSuppliers)
+				.where(inArray(invSuppliers.id, supplierChunk)),
+		),
+		queryInChunks(repeatIds, (repeatChunk) =>
+			db
+				.select()
+				.from(invRepeatOrderRuns)
+				.where(inArray(invRepeatOrderRuns.repeatOrderId, repeatChunk)),
+		),
 		getLocationClosedSpecialDates(db, input.locationId),
 		locationClock(db, input.locationId, input.now),
 	])
@@ -639,9 +647,9 @@ export async function processDueRepeatOrders(
 				} else {
 					const itemIds = [...new Set(repeat.linesJson.map((l) => l.itemId))]
 					const [items, products] = await Promise.all([
-						itemIds.length > 0
-							? db.select().from(invItems).where(inArray(invItems.id, itemIds))
-							: Promise.resolve([]),
+						queryInChunks(itemIds, (chunk) =>
+							db.select().from(invItems).where(inArray(invItems.id, chunk)),
+						),
 						db
 							.select()
 							.from(invSupplierProducts)
