@@ -290,7 +290,7 @@ describe('overdue deliveries (#501)', () => {
 		expect(
 			overdueDeliveries({
 				expectedDeliveries: [
-					{ ...order, overdue: true },
+					{ ...order, overdue: true, version: undefined },
 					{ ...order, orderId: 'ord_due', overdue: true, version: 3 },
 					{ ...order, orderId: 'ord_ok', overdue: false, version: 2 },
 				],
