@@ -362,4 +362,40 @@ describe('Inventory Purchasing', () => {
 		const sheet = screen.getByTestId('supplier-new-sheet')
 		expect(within(document.body).getByTestId('supplier-new-sheet')).toBe(sheet)
 	})
+
+	it('shows Export for accountant, Cash purchase, and Credit badge when allowed (#507, #466)', async () => {
+		renderPurchasing(
+			region({
+				deliveries: [delivery('d_cred', { isCredit: true, paid: true })],
+			}),
+		)
+		expect(
+			await screen.findByTestId('purchasing-export-accountant'),
+		).toBeInTheDocument()
+		expect(screen.getByTestId('purchasing-cash-purchase')).toBeInTheDocument()
+		expect(
+			screen.getAllByTestId('delivery-credit-d_cred')[0],
+		).toHaveTextContent('Credit')
+	})
+
+	it('hides Export for accountant and Cash purchase without the cost grant', async () => {
+		renderPurchasing(
+			region({
+				unpaidMinor: undefined,
+				deliveries: [
+					delivery('d1', {
+						linesTotalMinor: undefined,
+						vatMinor: undefined,
+						totalMinor: undefined,
+						currency: undefined,
+					}),
+				],
+				suppliers: [supplier('s1', { unpaidMinor: undefined })],
+			}),
+			{ canSeeCost: false },
+		)
+		await screen.findByTestId('delivery-row-d1')
+		expect(screen.queryByTestId('purchasing-export-accountant')).toBeNull()
+		expect(screen.queryByTestId('purchasing-cash-purchase')).toBeNull()
+	})
 })

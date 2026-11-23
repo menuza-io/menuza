@@ -11,6 +11,7 @@
     "./mailbox": "./src/mailbox.ts",
     "./phone": "./src/phone.ts",
     "./ascii-digits": "./src/ascii-digits.ts",
+    "./money": "./src/money.ts",
     "./chat": "./src/chat.ts",
     "./zod-defaults": "./src/zod-defaults.ts",
     "./chat-markdown": "./src/chat-markdown.ts",
@@ -718,6 +719,21 @@
       "types": "./src/photo-test-key.ts",
       "import": "./src/photo-test-key.ts",
       "default": "./src/photo-test-key.ts"
+    },
+    "./csv": {
+      "types": "./src/csv.ts",
+      "import": "./src/csv.ts",
+      "default": "./src/csv.ts"
+    },
+    "./xlsx": {
+      "types": "./src/xlsx.ts",
+      "import": "./src/xlsx.ts",
+      "default": "./src/xlsx.ts"
+    },
+    "./pdf": {
+      "types": "./src/pdf.ts",
+      "import": "./src/pdf.ts",
+      "default": "./src/pdf.ts"
     }
   },
   "scripts": {

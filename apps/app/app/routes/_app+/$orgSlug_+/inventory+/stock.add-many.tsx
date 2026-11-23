@@ -3,13 +3,22 @@ import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import {
 	bulkCreateItemsResultSchema,
 	INVENTORY_PERMISSIONS,
+	setupImportListSchema,
 } from '@repo/inventory'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Label } from '@repo/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
-import { type FormEvent, useId, useMemo, useRef, useState } from 'react'
+import {
+	type FormEvent,
+	useEffect,
+	useId,
+	useMemo,
+	useRef,
+	useState,
+} from 'react'
+import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { type z } from 'zod'
 import { BulkReviewRows } from '#app/components/inventory/bulk-review-rows.tsx'
@@ -17,10 +26,14 @@ import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import { SetupImportFlow } from '#app/components/inventory/setup-import-flow.tsx'
 import { useStockContext } from '#app/components/inventory/stock-context.ts'
 import { SelectField, TextAreaField } from '#app/components/staff/controls.tsx'
-import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
-import { useInventoryClient } from '#app/hooks/use-inventory-client.ts'
+import { SheetForm, SheetPanel } from '#app/components/staff/sheet-frame.tsx'
+import {
+	useInventoryClient,
+	useInventoryQuery,
+} from '#app/hooks/use-inventory-client.ts'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
 import {
 	BULK_MAX_ROWS,
@@ -48,7 +61,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 type BulkResult = z.infer<typeof bulkCreateItemsResultSchema>
-type Source = 'starter' | 'paste'
+type Source = 'starter' | 'paste' | 'invoices'
 type Step = 'input' | 'review' | 'done'
 
 export default function InventoryAddManyRoute() {
@@ -58,8 +71,20 @@ export default function InventoryAddManyRoute() {
 	const notifyChanged = useNotifyInventoryChanged()
 	const { system } = useQuantityFormat()
 	const checkId = useId()
+	const [searchParams] = useSearchParams()
+
+	const importsQuery = useInventoryQuery(
+		ctx.canManagePurchasing ? '/setup/imports' : null,
+		setupImportListSchema,
+	)
+	const readerConfigured = importsQuery.data?.readerConfigured === true
 
 	const [source, setSource] = useState<Source>('starter')
+	useEffect(() => {
+		if (readerConfigured && searchParams.get('source') === 'invoices') {
+			setSource('invoices')
+		}
+	}, [readerConfigured, searchParams])
 	const [step, setStep] = useState<Step>('input')
 	const [restaurantType, setRestaurantType] =
 		useState<RestaurantType>('shawarma_grill')
@@ -238,6 +263,60 @@ export default function InventoryAddManyRoute() {
 		)
 	}
 
+	if (source === 'invoices' && readerConfigured) {
+		return (
+			<SheetPanel
+				title={<Trans>Start from your invoices</Trans>}
+				description={
+					<Trans>
+						Upload past invoices or price lists to build your stock and supplier
+						lists automatically.
+					</Trans>
+				}
+			>
+				<ToggleGroup
+					aria-label={t`Where the items come from`}
+					variant="segmented"
+					value={[source]}
+					onValueChange={(next) => {
+						if (next[0]) setSource(next[0] as Source)
+					}}
+				>
+					<ToggleGroupItem
+						value="starter"
+						className="h-11 md:h-7"
+						data-testid="add-many-source-starter"
+					>
+						<Trans>Starter list</Trans>
+					</ToggleGroupItem>
+					<ToggleGroupItem
+						value="paste"
+						className="h-11 md:h-7"
+						data-testid="add-many-source-paste"
+					>
+						<Trans>Paste from a spreadsheet</Trans>
+					</ToggleGroupItem>
+					<ToggleGroupItem
+						value="invoices"
+						className="h-11 md:h-7"
+						data-testid="add-many-source-invoices"
+					>
+						<Trans>Start from your invoices</Trans>
+					</ToggleGroupItem>
+				</ToggleGroup>
+				<SetupImportFlow
+					currency={ctx.currency}
+					canSeeCost={ctx.canSeeCost}
+					existingImports={importsQuery.data?.imports ?? []}
+					onApplied={() => {
+						ctx.reload()
+					}}
+					onCancel={ctx.close}
+				/>
+			</SheetPanel>
+		)
+	}
+
 	return (
 		<SheetForm
 			title={t`Add many items`}
@@ -300,6 +379,15 @@ export default function InventoryAddManyRoute() {
 				>
 					<Trans>Paste from a spreadsheet</Trans>
 				</ToggleGroupItem>
+				{readerConfigured ? (
+					<ToggleGroupItem
+						value="invoices"
+						className="h-11 md:h-7"
+						data-testid="add-many-source-invoices"
+					>
+						<Trans>Start from your invoices</Trans>
+					</ToggleGroupItem>
+				) : null}
 			</ToggleGroup>
 
 			{source === 'starter' ? (

@@ -46,6 +46,8 @@ import {
 import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { AccountantExportDialog } from '#app/components/inventory/accountant-export-dialog.tsx'
+import { CashPurchaseDialog } from '#app/components/inventory/cash-purchase-dialog.tsx'
 import { InventoryHeaderActions } from '#app/components/inventory/inventory-chrome.tsx'
 import {
 	useInventoryRevision,
@@ -109,6 +111,8 @@ export default function InventoryPurchasingRoute() {
 	const [limit, setLimit] = useState(PAGE_SIZE)
 	const [payingId, setPayingId] = useState<string | null>(null)
 	const [newOrderOpen, setNewOrderOpen] = useState(false)
+	const [exportOpen, setExportOpen] = useState(false)
+	const [cashOpen, setCashOpen] = useState(false)
 
 	const deliveries = useInventoryQuery(
 		`/deliveries?${new URLSearchParams({
@@ -241,6 +245,14 @@ export default function InventoryPurchasingRoute() {
 		}
 		return (
 			<>
+				{delivery.isCredit ? (
+					<Badge
+						variant="secondary"
+						data-testid={`delivery-credit-${delivery.id}`}
+					>
+						<Trans>Credit</Trans>
+					</Badge>
+				) : null}
 				{delivery.pricesPending ? (
 					<Badge
 						variant="outline"
@@ -284,8 +296,30 @@ export default function InventoryPurchasingRoute() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			{canEdit || (purchasingEnabled && canManagePurchasing) ? (
+			{canEdit || canSeeCost || (purchasingEnabled && canManagePurchasing) ? (
 				<InventoryHeaderActions>
+					{canSeeCost ? (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setExportOpen(true)}
+							data-testid="purchasing-export-accountant"
+						>
+							<Icon name="download" />
+							<Trans>Export for accountant</Trans>
+						</Button>
+					) : null}
+					{canEdit && canSeeCost ? (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setCashOpen(true)}
+							data-testid="purchasing-cash-purchase"
+						>
+							<Icon name="banknote" />
+							<Trans>Cash purchase</Trans>
+						</Button>
+					) : null}
 					{purchasingEnabled && canManagePurchasing ? (
 						<Button
 							variant="outline"
@@ -693,6 +727,26 @@ export default function InventoryPurchasingRoute() {
 					suppliers={supplierRows}
 					pending={drafts.pending !== null}
 					onCreate={(supplierId) => void drafts.create(supplierId, false)}
+				/>
+			) : null}
+
+			{canSeeCost ? (
+				<AccountantExportDialog
+					open={exportOpen}
+					onOpenChange={setExportOpen}
+					locations={layout.locations}
+					activeLocationId={activeLocationId}
+					currency={currency}
+				/>
+			) : null}
+
+			{canEdit && canSeeCost ? (
+				<CashPurchaseDialog
+					open={cashOpen}
+					onOpenChange={setCashOpen}
+					locationId={activeLocationId}
+					currency={currency}
+					onSaved={reload}
 				/>
 			) : null}
 

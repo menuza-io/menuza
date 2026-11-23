@@ -124,4 +124,23 @@ describe('inventory alert vocabulary', () => {
 			'inventory.sold_out',
 		)
 	})
+
+	it('includes optional overdueCount on inventory_delivery_due alerts (#501)', () => {
+		const singleOverdue = describeInventoryAlert({
+			kind: 'inventory_delivery_due',
+			count: 1,
+			overdueCount: 1,
+			locationName: 'Downtown',
+		})
+		expect(singleOverdue.headline).toBe('An order is overdue for delivery')
+		expect(singleOverdue.detail).toContain('1 overdue')
+
+		const mixed = describeInventoryAlert({
+			kind: 'inventory_delivery_due',
+			count: 3,
+			overdueCount: 2,
+			locationName: null,
+		})
+		expect(mixed.headline).toBe('3 orders are due for delivery (2 overdue)')
+	})
 })

@@ -2,20 +2,26 @@ import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	standardUnitsFor,
+	stationCashPurchaseSchema,
 	type StationExpectedDelivery,
 	type StationItem,
 	type UnitRef,
 } from '@repo/inventory'
 import { Icon } from '@repo/ui/icon'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { StockApiError } from './api.ts'
 import { BigStepper } from './BigStepper.tsx'
+import { CashPurchaseForm } from './CashPurchaseForm.tsx'
+import { immediateErrorText } from './messages.ts'
 import {
+	cashPurchaseLines,
 	deliveryLines,
 	deliveryPayloadSchema,
 	filterItems,
 	hasShortLines,
 	lineFromItem,
 	lineFromProduct,
+	type CashPurchaseLineDraft,
 	type StationSupplierProduct,
 	linesFromExpected,
 	mayReceive,
@@ -26,9 +32,15 @@ import {
 	type DeliveryLineDraft,
 } from './model.ts'
 import { prepareInvoicePhoto, PhotoError, type InvoicePhoto } from './photo.ts'
-import { newClientId, recordDelivery, StockQueueFullError } from './queue.ts'
+import {
+	newClientId,
+	recordDelivery,
+	recordDeliveryPhoto,
+	StockQueueFullError,
+} from './queue.ts'
 import { StockNotices } from './StockNotices.tsx'
 import { type StockState } from './useStock.ts'
+import { serverNow } from '~/lib/clock.ts'
 import {
 	Button,
 	Checkbox,
@@ -44,6 +56,7 @@ type Source =
 	| { kind: 'order'; delivery: StationExpectedDelivery }
 	/** `supplierId` null: a market or cash-and-carry purchase, no supplier on file. */
 	| { kind: 'free'; supplierId: string | null }
+	| { kind: 'cash' }
 
 /** Items offered beyond a supplier's own products; more asks for a few letters. */
 const MAX_OTHER_ITEMS = 20
@@ -62,45 +75,74 @@ export function DeliverySheet({
 	stock,
 	open,
 	onClose,
+	initialOrderId = null,
+	initialMode = null,
 }: {
 	stock: StockState
 	open: boolean
 	onClose: () => void
+	initialOrderId?: string | null
+	initialMode?: 'cash' | null
 }) {
 	const { _, i18n } = useLingui()
 	const { catalog, ctx, role } = stock
 	const [source, setSource] = useState<Source | null>(null)
 	const [lines, setLines] = useState<DeliveryLineDraft[]>([])
+	const [cashLines, setCashLines] = useState<CashPurchaseLineDraft[]>([])
 	const [invoice, setInvoice] = useState('')
 	const [closeOrder, setCloseOrder] = useState(false)
 	const [photo, setPhoto] = useState<(InvoicePhoto & { url: string }) | null>(
 		null,
 	)
 	const [photoProblem, setPhotoProblem] = useState<string | null>(null)
+	const [photoQueued, setPhotoQueued] = useState(false)
 	const [problem, setProblem] = useState<string | null>(null)
 	const [done, setDone] = useState(false)
+	const [doneMode, setDoneMode] = useState<'delivery' | 'cash'>('delivery')
 	const [query, setQuery] = useState('')
 	const [saving, setSaving] = useState(false)
 	const picker = useRef<HTMLInputElement>(null)
 	// The delivery's id is made before the tap and kept for this sheet: a double tap records it once.
 	const draftId = useRef(newClientId())
 	const submitting = useRef(false)
+	const initializedOpen = useRef(false)
 
 	useEffect(() => {
-		if (open) return
-		draftId.current = newClientId()
-		submitting.current = false
-		setSaving(false)
-		setSource(null)
-		setLines([])
-		setInvoice('')
-		setCloseOrder(false)
-		setPhoto(null)
-		setPhotoProblem(null)
-		setProblem(null)
-		setDone(false)
-		setQuery('')
-	}, [open])
+		if (!open) {
+			initializedOpen.current = false
+			draftId.current = newClientId()
+			submitting.current = false
+			setSaving(false)
+			setSource(null)
+			setLines([])
+			setCashLines([])
+			setInvoice('')
+			setCloseOrder(false)
+			setPhoto(null)
+			setPhotoProblem(null)
+			setPhotoQueued(false)
+			setProblem(null)
+			setDone(false)
+			setDoneMode('delivery')
+			setQuery('')
+			return
+		}
+		if (initializedOpen.current || !catalog) return
+		if (!mayReceive(catalog, role)) return
+		if (initialMode === 'cash') {
+			initializedOpen.current = true
+			setSource({ kind: 'cash' })
+		} else if (initialOrderId) {
+			const match = catalog.expectedDeliveries.find(
+				(entry) => entry.orderId === initialOrderId,
+			)
+			if (match) {
+				initializedOpen.current = true
+				setSource({ kind: 'order', delivery: match })
+				setLines(linesFromExpected(match))
+			}
+		}
+	}, [open, catalog, role, initialOrderId, initialMode])
 	// A photo's preview address is released when it goes.
 	useEffect(() => {
 		const url = photo?.url
@@ -120,12 +162,17 @@ export function DeliverySheet({
 			: null
 	const order = source?.kind === 'order' ? source.delivery : null
 	const ready = deliveryLines(lines).length > 0
+	const preparedCashLines =
+		source?.kind === 'cash' ? cashPurchaseLines(cashLines) : null
+	const cashReady = preparedCashLines !== null
 
 	const choose = (next: Source) => {
 		setSource(next)
 		setProblem(null)
+		setPhotoQueued(false)
 		setCloseOrder(false)
 		setLines(next.kind === 'order' ? linesFromExpected(next.delivery) : [])
+		setCashLines([])
 	}
 	const patch = (key: string, change: Partial<DeliveryLineDraft>) =>
 		setLines((before) =>
@@ -169,7 +216,7 @@ export function DeliverySheet({
 	}
 
 	const submit = async () => {
-		if (!source || !ctx || submitting.current) return
+		if (!source || source.kind === 'cash' || !ctx || submitting.current) return
 		const received = deliveryLines(lines)
 		if (received.length === 0) return
 		const payload = {
@@ -196,6 +243,7 @@ export function DeliverySheet({
 				photo ? { blob: photo.blob, contentType: photo.contentType } : null,
 				draftId.current,
 			)
+			setDoneMode('delivery')
 			setDone(true)
 			void stock.sync()
 		} catch (failure) {
@@ -211,27 +259,117 @@ export function DeliverySheet({
 		}
 	}
 
+	const submitCash = async () => {
+		if (source?.kind !== 'cash' || !ctx || submitting.current) return
+		const prepared = cashPurchaseLines(cashLines)
+		if (!prepared) return
+		const checked = stationCashPurchaseSchema.safeParse({
+			clientId: draftId.current,
+			locationId: ctx.locationId,
+			lines: prepared,
+			...(ctx.madeBy ? { madeBy: ctx.madeBy } : {}),
+			madeAt: serverNow(),
+		})
+		if (!checked.success) {
+			setProblem(_(t`Check the amounts: one of them cannot be sent.`))
+			return
+		}
+		submitting.current = true
+		setSaving(true)
+		setProblem(null)
+		try {
+			const result = await stock.api.cashPurchase(checked.data)
+			if (photo) {
+				try {
+					const upload = await stock.api.photoRequest(result.id, {
+						contentType: photo.contentType,
+						sizeBytes: photo.blob.size,
+					})
+					await stock.api.putPhoto(upload, photo.blob)
+					await stock.api.photoConfirm(result.id, { key: upload.key })
+				} catch {
+					setPhotoQueued(true)
+					await recordDeliveryPhoto(ctx, result.id, {
+						blob: photo.blob,
+						contentType: photo.contentType,
+					}).catch(() => {})
+					void stock.sync()
+				}
+			}
+			// Never retain or display entered cash amounts after submission.
+			setCashLines([])
+			setPhoto(null)
+			setDoneMode('cash')
+			setDone(true)
+			void stock.refresh()
+		} catch (failure) {
+			submitting.current = false
+			setSaving(false)
+			const code =
+				failure instanceof StockApiError ? failure.code : 'connection_lost'
+			setProblem(immediateErrorText(code, i18n))
+		}
+	}
+
 	const footer = done ? (
 		<div className="pb-3">
 			<Button variant="primary" size="lg" className="w-full" onClick={onClose}>
 				<Trans>Done</Trans>
 			</Button>
 		</div>
+	) : !catalog || !allowed ? undefined : source?.kind === 'cash' ? (
+		<div className="flex flex-col gap-2 pb-3">
+			{!cashReady ? (
+				<p className="text-muted-foreground text-sm">
+					<Trans>
+						Add at least one item with a quantity and amount paid to save.
+					</Trans>
+				</p>
+			) : null}
+			<div className="flex flex-col gap-2 sm:flex-row-reverse">
+				<Button
+					variant="primary"
+					size="lg"
+					disabled={!cashReady || saving}
+					onClick={() => void submitCash()}
+					className="sm:min-w-56"
+				>
+					<Icon name="check" className="size-5" />
+					<Trans>Save cash purchase</Trans>
+				</Button>
+				<Button
+					size="lg"
+					onClick={() => {
+						setCashLines([])
+						setSource(null)
+					}}
+				>
+					<Trans>Back</Trans>
+				</Button>
+			</div>
+		</div>
 	) : source ? (
-		<div className="flex flex-col gap-2 pb-3 sm:flex-row-reverse">
-			<Button
-				variant="primary"
-				size="lg"
-				disabled={!ready || saving}
-				onClick={() => void submit()}
-				className="sm:min-w-56"
-			>
-				<Icon name="check" className="size-5" />
-				<Trans>Save delivery</Trans>
-			</Button>
-			<Button size="lg" onClick={() => setSource(null)}>
-				<Trans>Back</Trans>
-			</Button>
+		<div className="flex flex-col gap-2 pb-3">
+			{!ready ? (
+				<p className="text-muted-foreground text-sm">
+					<Trans>Select or enter at least one received item to save.</Trans>
+				</p>
+			) : null}
+			<div className="flex flex-col gap-2 sm:flex-row-reverse">
+				<Button
+					variant="primary"
+					size="lg"
+					disabled={!ready || saving}
+					onClick={() => void submit()}
+					className="sm:min-w-56"
+				>
+					<Icon name="check" className="size-5" />
+					<Trans>Save delivery</Trans>
+				</Button>
+				<Button size="lg" onClick={() => setSource(null)}>
+					<Trans>Back</Trans>
+				</Button>
+			</div>
 		</div>
 	) : undefined
 
@@ -289,18 +427,34 @@ export function DeliverySheet({
 						<div className="flex items-center gap-3">
 							<Icon name="check-circle" className="text-success size-8" />
 							<h3 className="text-xl font-semibold">
-								<Trans>Delivery saved</Trans>
+								{doneMode === 'cash' ? (
+									<Trans>Cash purchase saved</Trans>
+								) : (
+									<Trans>Delivery saved</Trans>
+								)}
 							</h3>
 						</div>
 						<p className="text-muted-foreground">
-							{stock.reachable
-								? _(
-										t`It is being sent to the office. They will check the prices.`,
-									)
-								: _(
-										t`It is saved on this tablet and goes to the office when it is connected. They will check the prices.`,
-									)}
+							{doneMode === 'cash' ? (
+								<Trans>Stock quantities were updated.</Trans>
+							) : stock.reachable ? (
+								_(
+									t`It is being sent to the office. They will check the prices.`,
+								)
+							) : (
+								_(
+									t`It is saved on this tablet and goes to the office when it is connected. They will check the prices.`,
+								)
+							)}
 						</p>
+						{photoQueued ? (
+							<p className="text-muted-foreground text-sm">
+								<Trans>
+									The receipt photo could not upload right now. It is saved on
+									this tablet and will upload when connected.
+								</Trans>
+							</p>
+						) : null}
 					</div>
 				) : !source ? (
 					<div className="flex flex-col gap-5">
@@ -384,7 +538,33 @@ export function DeliverySheet({
 								</Chip>
 							</div>
 						</section>
+						<section className="flex flex-col gap-2">
+							<h3 className="text-base font-semibold">
+								<Trans>Cash purchase from the market</Trans>
+							</h3>
+							<div>
+								<Button
+									variant="outline"
+									onClick={() => choose({ kind: 'cash' })}
+								>
+									<Icon name="shopping-bag" className="size-4" />
+									<Trans>Cash purchase</Trans>
+								</Button>
+							</div>
+						</section>
 					</div>
+				) : source.kind === 'cash' ? (
+					<CashPurchaseForm
+						catalog={catalog}
+						lines={cashLines}
+						onChangeLines={setCashLines}
+						photo={photo}
+						photoProblem={photoProblem}
+						onPickPhoto={(file) => void pickPhoto(file)}
+						onClearPhoto={() => setPhoto(null)}
+						problem={problem}
+						locale={i18n.locale}
+					/>
 				) : (
 					<div className="flex flex-col gap-5">
 						<h3 className="text-xl font-semibold break-words">

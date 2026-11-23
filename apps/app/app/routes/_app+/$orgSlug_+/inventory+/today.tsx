@@ -9,6 +9,10 @@ import {
 } from '@repo/database'
 import {
 	type AttentionItem,
+	deliveryDetailSchema,
+	orderDetailSchema,
+	recordDeliveryResultSchema,
+	sendOrderResultSchema,
 	todaySchema,
 	type Today,
 	wasteSummarySchema,
@@ -16,6 +20,8 @@ import {
 import { Alert, AlertAction, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
+import { Input } from '@repo/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/popover'
 import { Skeleton } from '@repo/ui/skeleton'
 import {
 	WorkspaceMetric,
@@ -31,12 +37,14 @@ import {
 	useState,
 } from 'react'
 import { Link, useLoaderData, useLocation } from 'react-router'
+import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ComparePanel } from '#app/components/inventory/compare-panel.tsx'
 import { InventoryHeaderActions } from '#app/components/inventory/inventory-chrome.tsx'
 import {
 	useInventoryRevision,
+	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
 import { MissingRecipesPanel } from '#app/components/inventory/missing-recipes-panel.tsx'
@@ -44,13 +52,24 @@ import { InventorySetupChecklist } from '#app/components/inventory/setup-checkli
 import { SetupChecksPanel } from '#app/components/inventory/setup-checks-panel.tsx'
 import { SoldOutPanel } from '#app/components/inventory/sold-out-panel.tsx'
 import { WasteBars } from '#app/components/inventory/waste-bars.tsx'
-import { useInventoryQuery } from '#app/hooks/use-inventory-client.ts'
+import {
+	useInventoryClient,
+	useInventoryQuery,
+} from '#app/hooks/use-inventory-client.ts'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
 import { summarizeFoodCost } from '#app/utils/inventory/count-review.ts'
 import { formatMoney } from '#app/utils/inventory/format.ts'
-import { inventoryErrorMessage } from '#app/utils/inventory/inventory-errors.ts'
+import {
+	inventoryErrorMessage,
+	inventorySaveErrorMessage,
+} from '#app/utils/inventory/inventory-errors.ts'
 import { WASTE_REASON_LABELS } from '#app/utils/inventory/labels.ts'
-import { cutoffText, weekdayShort } from '#app/utils/inventory/order-view.ts'
+import {
+	copyToClipboard,
+	cutoffText,
+	textLocale,
+	weekdayShort,
+} from '#app/utils/inventory/order-view.ts'
 import { deriveInventorySetupSteps } from '#app/utils/inventory/setup-progress.ts'
 import {
 	attentionTarget,
@@ -58,6 +77,7 @@ import {
 	localDate,
 	percentFromBp,
 } from '#app/utils/inventory/today-view.ts'
+import { newClientId } from '#app/utils/inventory/waste-form.ts'
 import { resolveWasteRange } from '#app/utils/inventory/waste-range.ts'
 import { orgSiteLocales } from '#app/utils/location-name.server.ts'
 import { type Route } from './+types/today.ts'
@@ -340,6 +360,9 @@ export default function InventoryTodayRoute() {
 										currency={currency}
 										today={data.date}
 										dishNames={dishNames}
+										onActionDone={() => {
+											reloadToday()
+										}}
 									/>
 								))}
 							</ul>
@@ -614,6 +637,14 @@ function TodayMetrics({
 	)
 }
 
+function tomorrowIso(todayIso: string): string {
+	const d = localDate(todayIso)
+	d.setDate(d.getDate() + 1)
+	const m = String(d.getMonth() + 1).padStart(2, '0')
+	const day = String(d.getDate()).padStart(2, '0')
+	return `${d.getFullYear()}-${m}-${day}`
+}
+
 function AttentionRow({
 	item,
 	href,
@@ -623,6 +654,7 @@ function AttentionRow({
 	currency,
 	today,
 	dishNames,
+	onActionDone,
 }: {
 	item: AttentionItem
 	href: string
@@ -632,9 +664,282 @@ function AttentionRow({
 	currency: string
 	today: string
 	dishNames: ReadonlyMap<string, string>
+	onActionDone: () => void
 }) {
-	const { i18n } = useLingui()
+	const { t, i18n } = useLingui()
+	const { request } = useInventoryClient()
+	const notifyChanged = useNotifyInventoryChanged()
 	const quantity = useQuantityFormat()
+	const [busy, setBusy] = useState(false)
+	const [notYetOpen, setNotYetOpen] = useState(false)
+	const [nextDate, setNextDate] = useState(() => tomorrowIso(today))
+
+	async function undoDelivery(deliveryId: string, version: number) {
+		if (busy) return
+		setBusy(true)
+		try {
+			deliveryDetailSchema.parse(
+				await request(`/deliveries/${encodeURIComponent(deliveryId)}/undo`, {
+					method: 'POST',
+					body: JSON.stringify({ expectedVersion: version }),
+				}),
+			)
+			toast.success(t`Delivery undone.`)
+			notifyChanged()
+			onActionDone()
+		} catch (caught) {
+			toast.error(i18n._(inventorySaveErrorMessage(caught)))
+		} finally {
+			setBusy(false)
+		}
+	}
+
+	async function receiveAsOrdered(orderId: string, version: number) {
+		if (busy) return
+		setBusy(true)
+		try {
+			const res = recordDeliveryResultSchema.parse(
+				await request(
+					`/orders/${encodeURIComponent(orderId)}/receive-as-ordered`,
+					{
+						method: 'POST',
+						body: JSON.stringify({
+							expectedVersion: version,
+							clientId: newClientId('d'),
+						}),
+					},
+				),
+			)
+			notifyChanged()
+			onActionDone()
+			toast.success(t`Delivery recorded as ordered.`, {
+				action: {
+					label: t`Undo`,
+					onClick: () => {
+						void undoDelivery(res.delivery.id, res.delivery.version)
+					},
+				},
+			})
+		} catch (caught) {
+			toast.error(i18n._(inventorySaveErrorMessage(caught)))
+		} finally {
+			setBusy(false)
+		}
+	}
+
+	async function rescheduleOrder(
+		orderId: string,
+		version: number,
+		expectedDate: string,
+	) {
+		if (busy || !expectedDate || expectedDate < today) return
+		setBusy(true)
+		try {
+			orderDetailSchema.parse(
+				await request(`/orders/${encodeURIComponent(orderId)}/not-yet`, {
+					method: 'POST',
+					body: JSON.stringify({ expectedVersion: version, expectedDate }),
+				}),
+			)
+			setNotYetOpen(false)
+			toast.success(t`Delivery date updated.`)
+			notifyChanged()
+			onActionDone()
+		} catch (caught) {
+			toast.error(i18n._(inventorySaveErrorMessage(caught)))
+		} finally {
+			setBusy(false)
+		}
+	}
+
+	async function sendAgain(
+		unconfirmed: Extract<AttentionItem, { kind: 'unconfirmed_order' }>,
+	) {
+		if (busy) return
+		setBusy(true)
+		try {
+			const channel = unconfirmed.sentVia ?? 'whatsapp'
+			const sent = sendOrderResultSchema.parse(
+				await request(
+					`/orders/${encodeURIComponent(unconfirmed.orderId)}/send`,
+					{
+						method: 'POST',
+						body: JSON.stringify({
+							expectedVersion: unconfirmed.version,
+							channel,
+							locale: textLocale(i18n.locale),
+						}),
+					},
+				),
+			)
+			if (sent.channel === 'whatsapp' && sent.waLink) {
+				const popup = window.open(sent.waLink, '_blank', 'noopener,noreferrer')
+				if (!popup) {
+					await copyToClipboard(sent.text)
+					toast.success(t`Pop-up blocked; order message copied instead.`)
+				} else {
+					toast.success(t`Order sent again.`)
+				}
+			} else if (sent.channel === 'email' && !sent.emailSent && sent.mailto) {
+				const popup = window.open(sent.mailto, '_blank', 'noopener,noreferrer')
+				if (!popup) {
+					await copyToClipboard(sent.text)
+					toast.success(t`Pop-up blocked; order message copied instead.`)
+				} else {
+					toast.success(t`Order sent again.`)
+				}
+			} else if (sent.channel === 'copy') {
+				await copyToClipboard(sent.text)
+				toast.success(t`Order sent again.`)
+			} else {
+				toast.success(t`Order sent again.`)
+			}
+			notifyChanged()
+			onActionDone()
+		} catch (caught) {
+			toast.error(i18n._(inventorySaveErrorMessage(caught)))
+		} finally {
+			setBusy(false)
+		}
+	}
+
+	if (
+		item.kind === 'delivery_expected' &&
+		item.overdue &&
+		canEdit &&
+		item.version !== undefined
+	) {
+		const supplier = item.supplierName
+		const due = new Intl.DateTimeFormat(i18n.locale, {
+			dateStyle: 'medium',
+		}).format(localDate(item.expectedDate))
+		return (
+			<li
+				className="flex flex-col gap-3 p-3"
+				data-testid="today-attention-delivery_expected"
+			>
+				<p className="text-sm text-pretty">
+					<Trans>
+						Did the delivery from{' '}
+						<span className="font-medium wrap-anywhere">{supplier}</span>{' '}
+						arrive? (due <bdi dir="ltr">{due}</bdi>)
+					</Trans>
+				</p>
+				<div className="flex flex-wrap items-center gap-2">
+					<Button
+						type="button"
+						size="sm"
+						disabled={busy}
+						onClick={() => void receiveAsOrdered(item.orderId, item.version!)}
+						data-testid="today-overdue-as-ordered"
+					>
+						<Trans>Yes, as ordered</Trans>
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						render={<Link to={href} />}
+						data-testid="today-overdue-with-changes"
+					>
+						<Trans>Yes, with changes</Trans>
+					</Button>
+					<Popover open={notYetOpen} onOpenChange={setNotYetOpen}>
+						<PopoverTrigger
+							render={
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									disabled={busy}
+									data-testid="today-overdue-not-yet"
+								>
+									<Trans>Not yet</Trans>
+								</Button>
+							}
+						/>
+						<PopoverContent className="w-64" align="start">
+							<div className="flex flex-col gap-2">
+								<label
+									htmlFor={`not-yet-${item.orderId}`}
+									className="text-xs font-medium"
+								>
+									<Trans>New expected date</Trans>
+								</label>
+								<Input
+									id={`not-yet-${item.orderId}`}
+									type="date"
+									min={today}
+									value={nextDate}
+									onChange={(event) => setNextDate(event.target.value)}
+									dir="ltr"
+									data-testid="today-overdue-not-yet-date"
+								/>
+								<Button
+									type="button"
+									size="sm"
+									disabled={busy || !nextDate || nextDate < today}
+									onClick={() =>
+										void rescheduleOrder(item.orderId, item.version!, nextDate)
+									}
+									data-testid="today-overdue-not-yet-save"
+								>
+									<Trans>Save</Trans>
+								</Button>
+							</div>
+						</PopoverContent>
+					</Popover>
+				</div>
+			</li>
+		)
+	}
+
+	if (item.kind === 'unconfirmed_order') {
+		const supplier = item.supplierName
+		const orderNumber = item.number
+		const due = new Intl.DateTimeFormat(i18n.locale, {
+			dateStyle: 'medium',
+		}).format(localDate(item.expectedDate))
+		return (
+			<li
+				className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
+				data-testid="today-attention-unconfirmed_order"
+			>
+				<p className="text-sm text-pretty">
+					<Trans>
+						No reply from{' '}
+						<span className="font-medium wrap-anywhere">{supplier}</span> on
+						order <bdi dir="ltr">#{orderNumber}</bdi> (expected{' '}
+						<bdi dir="ltr">{due}</bdi>).
+					</Trans>
+				</p>
+				<div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+					{canManagePurchasing ? (
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							disabled={busy}
+							onClick={() => void sendAgain(item)}
+							data-testid="today-unconfirmed-send-again"
+						>
+							<Icon name="send" />
+							<Trans>Send again</Trans>
+						</Button>
+					) : null}
+					<Button
+						variant="outline"
+						size="sm"
+						render={<Link to={href} />}
+						data-testid="today-attention-link-unconfirmed_order"
+					>
+						<Trans>See order</Trans>
+						<Icon name="arrow-right" className="rtl:rotate-180" />
+					</Button>
+				</div>
+			</li>
+		)
+	}
+
 	let sentence: ReactNode
 	let action: ReactNode
 	switch (item.kind) {

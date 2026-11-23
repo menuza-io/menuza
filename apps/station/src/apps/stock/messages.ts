@@ -13,6 +13,10 @@ export const FAILURE_MESSAGES: Record<string, MessageDescriptor> = {
 	count_closed: msg`The count was closed before this reached the office.`,
 	wrong_location: msg`This tablet was moved to another location after this was saved.`,
 	not_found: msg`The office no longer has the thing this was for.`,
+	stale_version: msg`Someone else updated this order. Refreshing the stock list.`,
+	task_closed: msg`This delivery was already updated.`,
+	order_closed: msg`This order was already closed.`,
+	already_received: msg`This delivery was already recorded.`,
 	undo_expired: msg`It was too late to undo this waste.`,
 	already_undone: msg`This waste was already undone.`,
 	unit_mismatch: msg`The unit does not fit this item.`,
@@ -77,6 +81,25 @@ export function retryText(code: string, i18n: Pick<I18n, '_'>) {
 	return i18n._(
 		RETRY_MESSAGES[code] ?? msg`Sending failed. It will try again by itself.`,
 	)
+}
+
+const IMMEDIATE_RETRY_MESSAGES: Record<string, MessageDescriptor> = {
+	connection_lost: msg`No connection. Connect and try again.`,
+	rate_limited: msg`The server is busy. Try again in a moment.`,
+	service_unavailable: msg`The server is not answering. Try again in a moment.`,
+	internal_error: msg`The server had a problem. Try again in a moment.`,
+	invalid_response: msg`The server gave an answer this tablet could not read.`,
+}
+
+/** Plain-language error for an immediate action that is not queued on the tablet. */
+export function immediateErrorText(code: string | null, i18n: Pick<I18n, '_'>) {
+	if (code) {
+		const immediate = IMMEDIATE_RETRY_MESSAGES[code]
+		if (immediate) return i18n._(immediate)
+		const paused = PAUSE_MESSAGES[code]
+		if (paused) return i18n._(paused)
+	}
+	return failureText(code, i18n)
 }
 
 /** Whether signing in again is what clears a hold. */

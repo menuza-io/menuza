@@ -9,6 +9,7 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { InventoryChrome } from '#app/components/inventory/inventory-chrome.tsx'
@@ -866,6 +867,179 @@ describe('Inventory Today', () => {
 				'9 items to order · 2 suppliers',
 			)
 			expect(screen.queryByText(/SAR/)).toBeNull()
+		})
+
+		it('shows No reply from X with Send again for unconfirmed_order (#502)', async () => {
+			const open = vi.fn()
+			vi.stubGlobal('open', open)
+			const base = region(
+				today({
+					attention: [
+						{
+							kind: 'unconfirmed_order',
+							orderId: 'o_unconf',
+							number: 22,
+							supplierId: 's1',
+							supplierName: 'Fresh Farms',
+							expectedDate: '2026-11-10',
+							sentVia: 'whatsapp',
+							version: 2,
+						},
+					],
+				}),
+			)
+			const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+				if (path === '/orders/o_unconf/send' && init?.method === 'POST') {
+					return {
+						locale: 'en',
+						subject: 'Order 22',
+						text: 'Order 22',
+						waLink: 'https://wa.me/123?text=Order',
+						mailto: null,
+						channel: 'whatsapp',
+						emailSent: false,
+						emailSkipped: null,
+						order: {
+							id: 'o_unconf',
+							number: 22,
+							locationId: 'main',
+							supplierId: 's1',
+							supplierName: 'Fresh Farms',
+							status: 'sent',
+							expectedDate: '2026-11-10',
+							cutoff: null,
+							note: null,
+							createdBy: { kind: 'operator', id: 'u1' },
+							createdAt: 1,
+							sentAt: 2,
+							sentVia: 'whatsapp',
+							closedAt: null,
+							lineCount: 1,
+							receivedLineCount: 0,
+							version: 3,
+							lines: [],
+							deliveries: [],
+							supplierOrderChannel: 'whatsapp',
+							supplierEmail: null,
+							supplierPhone: '123',
+						},
+					}
+				}
+				return base(path, init)
+			})
+			renderToday(request, { ...ctx, canManagePurchasing: true })
+			const row = await screen.findByTestId('today-attention-unconfirmed_order')
+			expect(row).toHaveTextContent('No reply from Fresh Farms')
+			await userEvent.click(screen.getByTestId('today-unconfirmed-send-again'))
+			await waitFor(() =>
+				expect(open).toHaveBeenCalledWith(
+					'https://wa.me/123?text=Order',
+					'_blank',
+					'noopener,noreferrer',
+				),
+			)
+		})
+
+		it('shows 3-action overdue prompt (Yes as ordered + undo, Yes with changes, Not yet) (#501)', async () => {
+			const base = region(
+				today({
+					attention: [
+						{
+							kind: 'delivery_expected',
+							orderId: 'o_over',
+							number: 18,
+							supplierName: 'Fresh Farms',
+							expectedDate: '2026-11-07',
+							overdue: true,
+							version: 4,
+						},
+					],
+				}),
+			)
+			const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+				if (
+					path === '/orders/o_over/receive-as-ordered' &&
+					init?.method === 'POST'
+				) {
+					return {
+						delivery: {
+							id: 'd_new',
+							locationId: 'main',
+							supplierId: 's1',
+							supplierName: 'Fresh Farms',
+							status: 'received',
+							invoiceNumber: null,
+							invoiceDate: null,
+							businessDate: '2026-11-09',
+							source: 'operator',
+							receivedAt: 1,
+							receivedBy: { kind: 'operator', id: 'u1' },
+							lineCount: 1,
+							paid: false,
+							paidAt: null,
+							version: 1,
+							zatcaReference: null,
+							lines: [],
+						},
+					}
+				}
+				if (path === '/orders/o_over/not-yet' && init?.method === 'POST') {
+					return {
+						id: 'o_over',
+						number: 18,
+						locationId: 'main',
+						supplierId: 's1',
+						supplierName: 'Fresh Farms',
+						status: 'sent',
+						expectedDate: '2026-11-12',
+						cutoff: null,
+						note: null,
+						createdBy: { kind: 'operator', id: 'u1' },
+						createdAt: 1,
+						sentAt: 2,
+						sentVia: 'whatsapp',
+						closedAt: null,
+						lineCount: 1,
+						receivedLineCount: 0,
+						version: 5,
+						lines: [],
+						deliveries: [],
+						supplierOrderChannel: 'whatsapp',
+						supplierEmail: null,
+						supplierPhone: null,
+					}
+				}
+				return base(path, init)
+			})
+
+			renderToday(request, { ...ctx, canEdit: true })
+			const row = await screen.findByTestId('today-attention-delivery_expected')
+			expect(row).toHaveTextContent('Did the delivery from Fresh Farms arrive?')
+			expect(screen.getByTestId('today-overdue-with-changes')).toHaveAttribute(
+				'href',
+				'/acme/inventory/purchasing/deliveries/new?orderId=o_over',
+			)
+
+			// Test "Not yet" date reschedule
+			await userEvent.click(screen.getByTestId('today-overdue-not-yet'))
+			const dateInput = await screen.findByTestId('today-overdue-not-yet-date')
+			fireEvent.change(dateInput, { target: { value: '2026-11-12' } })
+			await userEvent.click(screen.getByTestId('today-overdue-not-yet-save'))
+			await waitFor(() =>
+				expect(
+					request.mock.calls.some(([p]) => p === '/orders/o_over/not-yet'),
+				).toBe(true),
+			)
+
+			// Test "Yes, as ordered"
+			await userEvent.click(screen.getByTestId('today-overdue-as-ordered'))
+			await waitFor(() =>
+				expect(
+					request.mock.calls.some(
+						([p]) => p === '/orders/o_over/receive-as-ordered',
+					),
+				).toBe(true),
+			)
 		})
 	})
 })

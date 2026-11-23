@@ -3,6 +3,7 @@ import {
 	INVENTORY_CATEGORIES,
 	listItemsResultSchema,
 	listStorageAreasResultSchema,
+	setupImportListSchema,
 } from '@repo/inventory'
 import { useDirection } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
@@ -124,6 +125,12 @@ export default function InventoryStockRoute() {
 		`/storage-areas?locationId=${encodeURIComponent(activeLocationId)}`,
 		listStorageAreasResultSchema,
 	)
+	const importsQuery = useInventoryQuery(
+		canEdit && canManagePurchasing ? '/setup/imports' : null,
+		setupImportListSchema,
+	)
+	const readerConfigured = importsQuery.data?.readerConfigured === true
+	const invoicesHref = `${basePath}/add-many${search ? `${search}&source=invoices` : '?source=invoices'}`
 	const { reload: reloadList } = list
 	const { reload: reloadAreas } = areasQuery
 	const reload = useCallback(() => {
@@ -234,6 +241,15 @@ export default function InventoryStockRoute() {
 										<Icon name="list-plus" />
 										<Trans>Add many items</Trans>
 									</DropdownMenuItem>
+									{readerConfigured ? (
+										<DropdownMenuItem
+											render={<Link to={invoicesHref} />}
+											data-testid="stock-start-from-invoices"
+										>
+											<Icon name="sparkles" />
+											<Trans>Start from your invoices</Trans>
+										</DropdownMenuItem>
+									) : null}
 									{nav.recipes ? (
 										<DropdownMenuItem
 											onClick={() => setGrouping(true)}
@@ -394,6 +410,16 @@ export default function InventoryStockRoute() {
 								>
 									<Trans>Add many items</Trans>
 								</Button>
+								{readerConfigured ? (
+									<Button
+										variant="outline"
+										render={<Link to={invoicesHref} />}
+										data-testid="stock-empty-start-from-invoices"
+									>
+										<Icon name="sparkles" />
+										<Trans>Start from your invoices</Trans>
+									</Button>
+								) : null}
 							</>
 						) : null}
 					</EmptyState>

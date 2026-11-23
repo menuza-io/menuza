@@ -1,4 +1,5 @@
 import {
+	accountantExportSchema,
 	deliveryDetailSchema,
 	listDeliveriesResultSchema,
 	listSuppliersResultSchema,
@@ -11,6 +12,7 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	invMovements,
+	invSupplierProductPrices,
 	provisionTenantDb,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
@@ -868,5 +870,467 @@ describe('deliveries', () => {
 			(await call('GET', `${BASE}/deliveries/${id}`, { token: readOnly }))
 				.status,
 		).toBe(200)
+	})
+})
+
+describe('confirmDeliveryPrices (#504), confirmationRate90d (#502), credit/accountant-export (#507), cash purchase & draft items (#466)', () => {
+	it('extends confirmDeliveryPrices with quantity/pack updates, extraLines (including createItem), and records supplier price history (#504)', async () => {
+		const sup = await supplier('Invoice Extend Sup')
+		const cheese = await item('Mozzarella')
+		const prodRes = await call('POST', `${BASE}/suppliers/${sup.id}/products`, {
+			token: full,
+			body: {
+				itemId: cheese.id,
+				packName: 'Block 2kg',
+				packBaseQuantity: 2000,
+				priceMinor: 2000,
+			},
+		})
+		expect(prodRes.status, JSON.stringify(prodRes.body)).toBe(200)
+		const prod = supplierProductSchema.parse(prodRes.body)
+
+		// Record a quantity-only delivery (e.g. from Station).
+		const qtyDel = await call('POST', `${BASE}/deliveries`, {
+			token: noPurchasing,
+			body: {
+				clientId: cid('del'),
+				locationId: LOC,
+				supplierId: sup.id,
+				quantityOnly: true,
+				lines: [
+					{
+						itemId: cheese.id,
+						supplierProductId: prod.id,
+						quantity: 2000,
+						packs: 1,
+						packName: 'Block 2kg',
+						packBaseQuantity: 2000,
+					},
+				],
+			},
+		})
+		expect(qtyDel.status, JSON.stringify(qtyDel.body)).toBe(200)
+		const lineId = qtyDel.body.delivery.lines[0].id as string
+
+		// Confirm prices with quantity adjustment (2000 -> 4000) + extraLine creating a new item.
+		const confirmed = await call(
+			'POST',
+			`${BASE}/deliveries/${qtyDel.body.delivery.id}/confirm-prices`,
+			{
+				token: full,
+				body: {
+					expectedVersion: 1,
+					currency: 'SAR',
+					invoiceNumber: 'INV-504-1',
+					invoiceDate: '2026-11-21',
+					vatMinor: 1125,
+					totalMinor: 8625,
+					paid: false,
+					lines: [
+						{
+							lineId,
+							supplierProductId: prod.id,
+							quantity: 4000,
+							packs: 2,
+							packName: 'Block 2kg',
+							packBaseQuantity: 2000,
+							packPriceMinor: 2500,
+							lineTotalMinor: 5000,
+						},
+					],
+					extraLines: [
+						{
+							createItem: {
+								name: 'Fresh Oregano',
+								baseUnit: 'g',
+								category: 'produce',
+							},
+							quantity: 500,
+							packName: 'Bunch 500g',
+							packBaseQuantity: 500,
+							packs: 1,
+							packPriceMinor: 2500,
+							lineTotalMinor: 2500,
+						},
+					],
+				},
+			},
+		)
+		expect(confirmed.status, JSON.stringify(confirmed.body)).toBe(200)
+		expect(confirmed.body.delivery.pricesPending).toBe(false)
+		expect(confirmed.body.delivery.lines).toHaveLength(2)
+		expect(confirmed.body.delivery.lines[0].quantity).toBe(4000)
+		expect(confirmed.body.delivery.lines[0].lineTotalMinor).toBe(5000)
+		expect(confirmed.body.delivery.lines[1].itemName).toBe('Fresh Oregano')
+
+		const db = await getTenantDb(ORG)
+		const deltaMove = await db
+			.select()
+			.from(invMovements)
+			.where(eq(invMovements.eventKey, `delivery-confirm-qty:${lineId}`))
+			.get()
+		expect(deltaMove?.quantity).toBe(2000)
+
+		const priceHistory = await db
+			.select()
+			.from(invSupplierProductPrices)
+			.where(eq(invSupplierProductPrices.supplierProductId, prod.id))
+		expect(
+			priceHistory.some((p) => p.source === 'invoice' && p.priceMinor === 2500),
+		).toBe(true)
+
+		// Supplier product price was updated to 2500.
+		const supDetail = supplierDetailSchema.parse(
+			(await call('GET', `${BASE}/suppliers/${sup.id}`, { token: full })).body,
+		)
+		expect(supDetail.products.find((p) => p.id === prod.id)?.priceMinor).toBe(
+			2500,
+		)
+	})
+
+	it('computes 90-day confirmationRate90d and isMarketCash on GET /suppliers/:id (#502)', async () => {
+		const sup = await supplier('Rate Supplier')
+		const herb = await item('Basil')
+		const prodRes = await call('POST', `${BASE}/suppliers/${sup.id}/products`, {
+			token: full,
+			body: {
+				itemId: herb.id,
+				packName: 'Bunch',
+				packBaseQuantity: 1000,
+				priceMinor: 500,
+			},
+		})
+		expect(prodRes.status, JSON.stringify(prodRes.body)).toBe(200)
+		const prod = supplierProductSchema.parse(prodRes.body)
+
+		// Send 2 orders; confirm 1 of them -> 5000 bp (50%).
+		for (const shouldConfirm of [true, false]) {
+			const ord = await call('POST', `${BASE}/orders`, {
+				token: full,
+				body: {
+					clientId: cid('ord'),
+					locationId: LOC,
+					supplierId: sup.id,
+					lines: [{ itemId: herb.id, supplierProductId: prod.id, packs: 1 }],
+				},
+			})
+			await call('POST', `${BASE}/orders/${ord.body.id}/send`, {
+				token: full,
+				body: { expectedVersion: 1, channel: 'copy' },
+			})
+			if (shouldConfirm) {
+				await call('POST', `${BASE}/orders/${ord.body.id}/confirm`, {
+					token: full,
+					body: { expectedVersion: 2, confirmed: true },
+				})
+			}
+		}
+		const detail = supplierDetailSchema.parse(
+			(await call('GET', `${BASE}/suppliers/${sup.id}`, { token: full })).body,
+		)
+		expect(detail.isMarketCash).toBe(false)
+		expect(detail.confirmationRate90d).toEqual({
+			confirmed: 1,
+			sent: 2,
+			rateBp: 5000,
+		})
+	})
+
+	it('supports cash market purchases with draft items and draft item promotion (#466)', async () => {
+		const cashRes = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: {
+				clientId: cid('cash'),
+				locationId: LOC,
+				supplierId: null,
+				isCashPurchase: true,
+				paid: true,
+				invoiceDate: '2026-11-22',
+				lines: [
+					{
+						draftItem: {
+							name: 'Market Truffle',
+							baseUnit: 'g',
+							category: 'produce',
+						},
+						quantity: 500,
+						lineTotalMinor: 15000,
+					},
+				],
+			},
+		})
+		expect(cashRes.status, JSON.stringify(cashRes.body)).toBe(200)
+		const detail = cashRes.body.delivery
+		expect(detail.paid).toBe(true)
+		expect(detail.isMarketCash).toBe(true)
+		expect(detail.supplierName).toBe('Market / cash')
+
+		const createdItemId = detail.lines[0].itemId as string
+		const itemRes = await call(
+			'GET',
+			`${BASE}/items/${createdItemId}?locationId=${LOC}`,
+			{ token: full },
+		)
+		expect(itemRes.status, JSON.stringify(itemRes.body)).toBe(200)
+		expect(itemRes.body.isDraft).toBe(true)
+
+		// Operator promotes draft item -> isDraft becomes false.
+		const promoted = await call('PATCH', `${BASE}/items/${createdItemId}`, {
+			token: full,
+			body: { expectedVersion: itemRes.body.version, isDraft: false },
+		})
+		expect(promoted.status).toBe(200)
+		expect(promoted.body.isDraft).toBe(false)
+	})
+
+	it('exports credit notes as negative rows and produces JSON, formula-safe CSV, and PDF for accountants (#507)', async () => {
+		const sup = await supplier('=FormulaSup', { vatNumber: '300012345600003' })
+		const spice = await item('Export Saffron')
+		const delRes = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: delivery(
+				sup.id,
+				[{ itemId: spice.id, quantity: 1000, lineTotalMinor: 10000 }],
+				{
+					invoiceNumber: '+INV-100',
+					invoiceDate: '2026-11-21',
+					vatMinor: 1500,
+					totalMinor: 11500,
+					zatcaReference: 'ZATCA-QR-1',
+					paid: false,
+				},
+			),
+		})
+		expect(delRes.status).toBe(200)
+
+		const creditRes = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: delivery(
+				sup.id,
+				[{ itemId: spice.id, quantity: 200, lineTotalMinor: 2000 }],
+				{
+					invoiceNumber: 'CR-100',
+					invoiceDate: '2026-11-21',
+					vatMinor: 300,
+					totalMinor: 2300,
+					isCredit: true,
+					creditForDeliveryId: delRes.body.delivery.id,
+					paid: false,
+				},
+			),
+		})
+		expect(creditRes.status, JSON.stringify(creditRes.body)).toBe(200)
+		expect(creditRes.body.delivery.isCredit).toBe(true)
+
+		// Accountant export JSON
+		const jsonRes = await call(
+			'GET',
+			`${BASE}/purchasing/accountant-export?from=2026-11-21&to=2026-11-21&locationId=${LOC}&format=json`,
+			{ token: full },
+		)
+		expect(jsonRes.status, JSON.stringify(jsonRes.body)).toBe(200)
+		const parsed = accountantExportSchema.parse(jsonRes.body)
+		const creditRow = parsed.rows.find(
+			(r) => r.deliveryId === creditRes.body.delivery.id,
+		)
+		expect(creditRow?.netMinor).toBe(-2000)
+		expect(creditRow?.vatMinor).toBe(-300)
+		expect(creditRow?.totalMinor).toBe(-2300)
+		const supTotal = parsed.supplierTotals.find((s) => s.supplierId === sup.id)
+		expect(supTotal?.netMinor).toBe(8000)
+		expect(supTotal?.vatMinor).toBe(1200)
+		expect(supTotal?.totalMinor).toBe(9200)
+		expect(supTotal?.unpaidMinor).toBe(9200)
+
+		// Accountant export CSV (BOM + formula neutralization)
+		const csvRes = await app.request(
+			`${BASE}/purchasing/accountant-export?from=2026-11-21&to=2026-11-21&locationId=${LOC}&format=csv`,
+			{ headers: { Authorization: `Bearer ${full}` } },
+		)
+		expect(csvRes.status).toBe(200)
+		expect(csvRes.headers.get('content-type')).toContain('text/csv')
+		const csvBytes = new Uint8Array(await csvRes.arrayBuffer())
+		expect([...csvBytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
+		const csvText = Buffer.from(csvBytes).toString('utf8')
+		expect(csvText).toContain("'=FormulaSup")
+		expect(csvText).toContain("'+INV-100")
+		expect(csvText).toContain('ZATCA-QR-1')
+		expect(csvText).toContain('Supplier totals')
+
+		// Accountant export PDF (%PDF-1.4)
+		const pdfRes = await app.request(
+			`${BASE}/purchasing/accountant-export?from=2026-11-21&to=2026-11-21&locationId=${LOC}&format=pdf`,
+			{ headers: { Authorization: `Bearer ${full}` } },
+		)
+		expect(pdfRes.status).toBe(200)
+		expect(pdfRes.headers.get('content-type')).toContain('application/pdf')
+		const pdfText = Buffer.from(await pdfRes.arrayBuffer()).toString('latin1')
+		expect(pdfText.startsWith('%PDF-1.4')).toBe(true)
+
+		// Refused without cost grant
+		const denied = await call(
+			'GET',
+			`${BASE}/purchasing/accountant-export?from=2026-11-21&to=2026-11-21&locationId=${LOC}&format=json`,
+			{ token: noCost },
+		)
+		expect(denied.status).toBe(403)
+	})
+
+	it('rejects quantityOnly credits and restores supplier product price & history when cancelling a priced delivery', async () => {
+		const sup = await supplier('Cancel Rewind Sup')
+		const herb = await item('Fresh Thyme')
+		const prodRes = await call('POST', `${BASE}/suppliers/${sup.id}/products`, {
+			token: full,
+			body: {
+				itemId: herb.id,
+				packName: 'Case 1kg',
+				packBaseQuantity: 1000,
+				priceMinor: 1500,
+			},
+		})
+		expect(prodRes.status).toBe(200)
+		const prod = supplierProductSchema.parse(prodRes.body)
+
+		// Credit + quantityOnly must be rejected.
+		const badCredit = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: {
+				clientId: cid('del'),
+				locationId: LOC,
+				supplierId: sup.id,
+				quantityOnly: true,
+				isCredit: true,
+				lines: [
+					{
+						itemId: herb.id,
+						supplierProductId: prod.id,
+						quantity: 500,
+					},
+				],
+			},
+		})
+		expect(badCredit.status).toBe(400)
+		expect(badCredit.body.reason).toBe('credit_requires_prices')
+
+		// First delivery sets price 1800, second sets typo 9900; cancelling second restores 1800 and hides cancelled entry from price history.
+		const d1 = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: {
+				clientId: cid('del'),
+				locationId: LOC,
+				supplierId: sup.id,
+				currency: 'SAR',
+				lines: [
+					{
+						itemId: herb.id,
+						supplierProductId: prod.id,
+						quantity: 1000,
+						packs: 1,
+						packName: 'Case 1kg',
+						packBaseQuantity: 1000,
+						packPriceMinor: 1800,
+						lineTotalMinor: 1800,
+					},
+				],
+			},
+		})
+		expect(d1.status).toBe(200)
+
+		const d2 = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: {
+				clientId: cid('del'),
+				locationId: LOC,
+				supplierId: sup.id,
+				currency: 'SAR',
+				lines: [
+					{
+						itemId: herb.id,
+						supplierProductId: prod.id,
+						quantity: 1000,
+						packs: 1,
+						packName: 'Case 1kg',
+						packBaseQuantity: 1000,
+						packPriceMinor: 9900,
+						lineTotalMinor: 9900,
+					},
+				],
+			},
+		})
+		expect(d2.status).toBe(200)
+
+		const cancelled = await call(
+			'POST',
+			`${BASE}/deliveries/${d2.body.delivery.id}/cancel`,
+			{
+				token: full,
+				body: { expectedVersion: d2.body.delivery.version, note: 'typo' },
+			},
+		)
+		expect(cancelled.status).toBe(200)
+
+		const supDetail = await call('GET', `${BASE}/suppliers/${sup.id}`, {
+			token: full,
+		})
+		expect(supDetail.status).toBe(200)
+		const restoredProd = supDetail.body.products.find(
+			(p: { id: string }) => p.id === prod.id,
+		)
+		expect(restoredProd?.priceMinor).toBe(1800)
+
+		const pricesRes = await call(
+			'GET',
+			`${BASE}/supplier-products/${prod.id}/prices`,
+			{ token: full },
+		)
+		expect(pricesRes.status).toBe(200)
+		expect(
+			pricesRes.body.entries.map((e: { priceMinor: number }) => e.priceMinor),
+		).toEqual([1800])
+	})
+
+	it('formats 3-decimal currencies (BHD) and groups multi-currency totals in accountant export', async () => {
+		const bhdSup = await supplier('Manama Supply', { currency: 'BHD' })
+		const spice = await item('Cardamom')
+		const locBhd = 'loc_buy_bhd'
+		const bhdToken = await mintToken(ORG)
+
+		const bhdDel = await call('POST', `${BASE}/deliveries`, {
+			token: bhdToken,
+			body: {
+				clientId: cid('del'),
+				locationId: locBhd,
+				supplierId: bhdSup.id,
+				currency: 'BHD',
+				invoiceNumber: 'BHD-1',
+				invoiceDate: '2026-11-21',
+				vatMinor: 125,
+				totalMinor: 1375,
+				paid: true,
+				lines: [{ itemId: spice.id, quantity: 1000, lineTotalMinor: 1250 }],
+			},
+		})
+		expect(bhdDel.status, JSON.stringify(bhdDel.body)).toBe(200)
+
+		const multiJson = await call(
+			'GET',
+			`${BASE}/purchasing/accountant-export?from=2026-11-21&to=2026-11-21&locationId=all&format=json`,
+			{ token: full },
+		)
+		expect(multiJson.status).toBe(200)
+		const parsed = accountantExportSchema.parse(multiJson.body)
+		expect(parsed.totalsByCurrency?.map((c) => c.currency)).toEqual([
+			'BHD',
+			'SAR',
+		])
+
+		const multiCsvRes = await app.request(
+			`${BASE}/purchasing/accountant-export?from=2026-11-21&to=2026-11-21&locationId=all&format=csv`,
+			{ headers: { Authorization: `Bearer ${full}` } },
+		)
+		expect(multiCsvRes.status).toBe(200)
+		const multiCsv = await multiCsvRes.text()
+		expect(multiCsv).toContain('Totals by currency')
+		expect(multiCsv).toContain('BHD,1,1.25,0.125,1.375')
 	})
 })

@@ -124,6 +124,8 @@ export const updateItemSchema = z
 		batchCounted: z.boolean().optional(),
 		/** "Mark dishes sold out when this runs out." */
 		autoSoldOut: z.boolean().optional(),
+		/** Clear draft status once the office has tidied a cash-purchase item (#466). */
+		isDraft: z.boolean().optional(),
 	})
 	.strict()
 
@@ -238,6 +240,8 @@ export const stockItemSchema = z.object({
 	batchCounted: z.boolean().optional(),
 	/** "Mark dishes sold out when this runs out." Phase 3; absent from older regions. */
 	autoSoldOut: z.boolean().optional(),
+	/** Created from a cash purchase without an existing catalog item (#466). */
+	isDraft: z.boolean().optional(),
 	/** On hand at the requested location, base thousandths (may be negative). */
 	onHand: z.number().int(),
 	countUnit: unitRefSchema.nullable(),

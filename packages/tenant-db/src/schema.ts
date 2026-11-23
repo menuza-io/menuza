@@ -8519,6 +8519,32 @@ export const INV_INVOICE_PHOTO_CONTENT_TYPE_VALUES = [
 	'image/png',
 	'image/webp',
 ] as const
+// Purchasing (0063_purchasing).
+export const INV_PRICE_HISTORY_SOURCE_VALUES = [
+	'price_list',
+	'setup_import',
+	'invoice',
+	'delivery',
+	'cash_purchase',
+] as const
+export const INV_SETUP_IMPORT_STATUS_VALUES = [
+	'reading',
+	'ready',
+	'applied',
+	'failed',
+] as const
+export const INV_SETUP_IMPORT_FILE_KIND_VALUES = [
+	'image',
+	'pdf',
+	'csv',
+	'xlsx',
+] as const
+export const INV_SETUP_IMPORT_FILE_STATUS_VALUES = [
+	'pending',
+	'reading',
+	'done',
+	'failed',
+] as const
 
 // Organization-wide settings: one row (`id = 'default'`), created on the first
 // save. Until then the API answers defaults (version 0).
@@ -8614,6 +8640,8 @@ export const invItems = sqliteTable(
 		autoSoldOut: integer('auto_sold_out', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// Typed on a cash purchase (#466) and queued for the office to tidy.
+		isDraft: integer('is_draft', { mode: 'boolean' }).notNull().default(false),
 		// Set when this duplicate was merged into another item (#493): history
 		// stays here, readers follow the link. Cleared by an undo.
 		mergedIntoId: text('merged_into_id'),
@@ -8983,6 +9011,10 @@ export const invSuppliers = sqliteTable(
 		paymentTerms: text('payment_terms'),
 		vatNumber: text('vat_number'),
 		notes: text('notes'),
+		// Built-in "Market / cash" supplier (#466).
+		isMarketCash: integer('is_market_cash', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		// Set when this duplicate supplier was merged into another (#493).
 		mergedIntoId: text('merged_into_id'),
 		archivedAt: integer('archived_at'),
@@ -8994,6 +9026,9 @@ export const invSuppliers = sqliteTable(
 		uniqueIndex('uniq_inv_suppliers_active_name')
 			.on(sql`lower(${table.name})`)
 			.where(sql`${table.archivedAt} is null`),
+		uniqueIndex('uniq_inv_suppliers_market_cash')
+			.on(table.isMarketCash)
+			.where(sql`${table.isMarketCash} = 1 and ${table.archivedAt} is null`),
 		check(
 			'chk_inv_suppliers_order_channel',
 			oneOf(table.orderChannel, INV_SUPPLIER_ORDER_CHANNEL_VALUES),
@@ -9097,6 +9132,12 @@ export const invOrders = sqliteTable(
 		// Set while a send is in flight (taken under the lock before the email
 		// goes out, cleared after); a second send meanwhile answers 409.
 		sendClaimAt: integer('send_claim_at'),
+		// Manual supplier confirmation (#502).
+		confirmedAt: integer('confirmed_at'),
+		confirmedByKind: text('confirmed_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}),
+		confirmedById: text('confirmed_by_id'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
@@ -9226,6 +9267,16 @@ export const invDeliveries = sqliteTable(
 		source: text('source', { enum: INV_DELIVERY_SOURCE_VALUES })
 			.notNull()
 			.default('operator'),
+		// "Yes, as ordered" 1-tap receive (#501), undoable until `undo_until` (24h).
+		asOrdered: integer('as_ordered', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		undoUntil: integer('undo_until'),
+		// Credit note / return (#507): appears as negative amounts in exports and reports.
+		isCredit: integer('is_credit', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		creditForDeliveryId: text('credit_for_delivery_id'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
@@ -10252,6 +10303,150 @@ export const invSoldOutAlerts = sqliteTable(
 	],
 )
 
+// ── Purchasing (#505, #506, #504, #502, #501, #507, #466) ───────────────────
+// (tenant migration 0063_purchasing)
+
+// Append-only price history for supplier products and market buys, with the
+// import or delivery effective date. Reused across #505 price-list imports,
+// #506 setup imports, #504 invoice confirmation and #466 cash market buys.
+export const invSupplierProductPrices = sqliteTable(
+	'inv_supplier_product_prices',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		supplierId: text('supplier_id')
+			.notNull()
+			.references(() => invSuppliers.id),
+		supplierProductId: text('supplier_product_id').references(
+			() => invSupplierProducts.id,
+		),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		packName: text('pack_name'),
+		packBaseQuantity: integer('pack_base_quantity').notNull(),
+		priceMinor: integer('price_minor').notNull(),
+		currency: text('currency').notNull(),
+		source: text('source', { enum: INV_PRICE_HISTORY_SOURCE_VALUES }).notNull(),
+		deliveryLineId: text('delivery_line_id').references(
+			() => invDeliveryLines.id,
+		),
+		effectiveAt: integer('effective_at').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_supplier_product_prices_product').on(
+			table.supplierProductId,
+			table.effectiveAt,
+		),
+		index('idx_inv_supplier_product_prices_item').on(
+			table.itemId,
+			table.effectiveAt,
+		),
+		index('idx_inv_supplier_product_prices_supplier').on(
+			table.supplierId,
+			table.itemId,
+			table.effectiveAt,
+		),
+		check(
+			'chk_inv_supplier_product_prices_source',
+			oneOf(table.source, INV_PRICE_HISTORY_SOURCE_VALUES),
+		),
+		check(
+			'chk_inv_supplier_product_prices_amounts',
+			sql`${table.priceMinor} >= 0 and ${table.packBaseQuantity} > 0`,
+		),
+	],
+)
+
+// Resumable background import session for "Start from your invoices" (#506).
+// Holds up to 50 uploaded invoices or price lists and the grouped proposal
+// while the owner reviews; nothing writes to suppliers, items or products
+// until the apply step.
+export const invSetupImports = sqliteTable(
+	'inv_setup_imports',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		status: text('status', { enum: INV_SETUP_IMPORT_STATUS_VALUES })
+			.notNull()
+			.default('reading'),
+		totalFiles: integer('total_files').notNull(),
+		completedFiles: integer('completed_files').notNull().default(0),
+		failedFiles: integer('failed_files').notNull().default(0),
+		proposalJson: text('proposal_json', { mode: 'json' }).$type<
+			Record<string, unknown>
+		>(),
+		createdByKind: text('created_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		createdById: text('created_by_id'),
+		appliedAt: integer('applied_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_setup_imports_status').on(table.status, table.createdAt),
+		check(
+			'chk_inv_setup_imports_status',
+			oneOf(table.status, INV_SETUP_IMPORT_STATUS_VALUES),
+		),
+		check(
+			'chk_inv_setup_imports_actor',
+			oneOf(table.createdByKind, INV_ACTOR_KIND_VALUES),
+		),
+		check(
+			'chk_inv_setup_imports_counts',
+			sql`${table.totalFiles} > 0 and ${table.completedFiles} >= 0 and ${table.failedFiles} >= 0`,
+		),
+	],
+)
+
+export const invSetupImportFiles = sqliteTable(
+	'inv_setup_import_files',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		importId: text('import_id')
+			.notNull()
+			.references(() => invSetupImports.id, { onDelete: 'cascade' }),
+		fileName: text('file_name').notNull(),
+		contentType: text('content_type').notNull(),
+		fileKind: text('file_kind', {
+			enum: INV_SETUP_IMPORT_FILE_KIND_VALUES,
+		}).notNull(),
+		storageKey: text('storage_key'),
+		inlineContent: text('inline_content'),
+		status: text('status', { enum: INV_SETUP_IMPORT_FILE_STATUS_VALUES })
+			.notNull()
+			.default('pending'),
+		errorCode: text('error_code'),
+		readJson: text('read_json', { mode: 'json' }).$type<
+			Record<string, unknown>
+		>(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_setup_import_files_import').on(table.importId, table.status),
+		check(
+			'chk_inv_setup_import_files_kind',
+			oneOf(table.fileKind, INV_SETUP_IMPORT_FILE_KIND_VALUES),
+		),
+		check(
+			'chk_inv_setup_import_files_status',
+			oneOf(table.status, INV_SETUP_IMPORT_FILE_STATUS_VALUES),
+		),
+	],
+)
+
+export type InvSupplierProductPriceRow =
+	typeof invSupplierProductPrices.$inferSelect
+export type InvSetupImportRow = typeof invSetupImports.$inferSelect
+export type InvSetupImportFileRow = typeof invSetupImportFiles.$inferSelect
 export type InvUnitChangeRow = typeof invUnitChanges.$inferSelect
 export type InvItemGroupMemberRow = typeof invItemGroupMembers.$inferSelect
 export type InvMergeRow = typeof invMerges.$inferSelect

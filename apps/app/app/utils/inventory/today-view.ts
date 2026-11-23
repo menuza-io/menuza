@@ -92,6 +92,11 @@ export function attentionTarget(
 						})
 					: join(inventoryOrderPath(orgSlug, item.orderId), search),
 			}
+		case 'unconfirmed_order':
+			return {
+				kind: item.kind,
+				to: join(inventoryOrderPath(orgSlug, item.orderId), search),
+			}
 		case 'sold_out_by_stock':
 			// The list of what was taken off, with its undo, sits lower on Today.
 			return {

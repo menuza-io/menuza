@@ -903,5 +903,116 @@ describe('/pos/inventory security', () => {
 			)
 			expect(seen.length).toBe(all.length)
 		})
+
+		it('enforces till-manager rule, location scope, and zero money leaks on overdue order actions and cash purchases', async () => {
+			const order = await k.world.ok('POST', '/orders', {
+				clientId: uid('ord'),
+				locationId: STOCK_LOC,
+				supplierId: k.supplier.id,
+				expectedDate: '2020-01-01',
+				lines: [
+					{
+						itemId: k.items.tomato.id,
+						supplierProductId: k.products.tomato.id,
+						packs: 1,
+					},
+				],
+			})
+			await k.world.ok('POST', `/orders/${order.id}/send`, {
+				expectedVersion: 1,
+				channel: 'copy',
+			})
+
+			const cashierAuth = {
+				secret: tablet.secret,
+				session: tablet.cashier.session,
+			}
+
+			// Non-manager cashier is refused with 403 receive_needs_manager on all 3 routes.
+			expectRefusal(
+				await kit.request('POST', `/pos/inventory/orders/${order.id}/not-yet`, {
+					...cashierAuth,
+					body: {
+						locationId: STOCK_LOC,
+						expectedVersion: 2,
+						expectedDate: '2099-01-01',
+					},
+				}),
+				'receive_needs_manager',
+				'cashier not-yet',
+			)
+			expectRefusal(
+				await kit.request(
+					'POST',
+					`/pos/inventory/orders/${order.id}/receive-as-ordered`,
+					{
+						...cashierAuth,
+						body: {
+							clientId: uid('rao'),
+							locationId: STOCK_LOC,
+							expectedVersion: 2,
+						},
+					},
+				),
+				'receive_needs_manager',
+				'cashier receive-as-ordered',
+			)
+			expectRefusal(
+				await kit.request('POST', '/pos/inventory/cash-purchase', {
+					...cashierAuth,
+					body: {
+						clientId: uid('cash'),
+						locationId: STOCK_LOC,
+						lines: [
+							{
+								itemId: k.items.tomato.id,
+								quantity: 1000,
+								amountPaidMinor: 1500,
+							},
+						],
+					},
+				}),
+				'receive_needs_manager',
+				'cashier cash-purchase',
+			)
+
+			// Another location is refused with location_forbidden.
+			expectRefusal(
+				await kit.request('POST', '/pos/inventory/cash-purchase', {
+					...full(),
+					body: {
+						clientId: uid('cash-loc'),
+						locationId: 'loc_other',
+						lines: [
+							{
+								itemId: k.items.tomato.id,
+								quantity: 1000,
+								amountPaidMinor: 1500,
+							},
+						],
+					},
+				}),
+				'wrong_location',
+				'foreign location cash-purchase',
+			)
+
+			// Manager succeeds with zero money fields in responses.
+			const cashOk = await kit.request('POST', '/pos/inventory/cash-purchase', {
+				...full(),
+				body: {
+					clientId: uid('cash-ok'),
+					locationId: STOCK_LOC,
+					lines: [
+						{
+							itemId: k.items.tomato.id,
+							quantity: 1000,
+							amountPaidMinor: 1500,
+						},
+					],
+				},
+			})
+			expect(cashOk.status).toBe(200)
+			expect(moneyKeys(cashOk.body)).toEqual([])
+		})
 	})
 })

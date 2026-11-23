@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+	cashLineFromDraft,
+	cashLineFromItem,
+	cashPurchaseLines,
 	convertAmount,
 	countProgress,
 	countTabs,
@@ -7,15 +10,19 @@ import {
 	filterItems,
 	formatAmount,
 	hasShortLines,
+	isIsoDate,
 	lineFromProduct,
 	lineQuantity,
 	linesFromExpected,
 	mayReceive,
+	overdueDeliveries,
+	parseMajorToMinor,
 	recentWasteIds,
 	rowKey,
 	tabProgress,
 	thousandthsIn,
 	toBaseThousandths,
+	tomorrowIsoDate,
 	undoRemainingMs,
 	unitChoices,
 	unitStep,
@@ -273,5 +280,66 @@ describe('invoice photos', () => {
 		expect(fitSize(3000, 4000)).toEqual({ width: 1200, height: 1600 })
 		expect(fitSize(800, 600)).toEqual({ width: 800, height: 600 })
 		expect(fitSize(0, 0)).toEqual({ width: 1, height: 1 })
+	})
+})
+
+describe('overdue deliveries (#501)', () => {
+	it('picks only deliveries marked overdue with a version', () => {
+		const order = catalog.expectedDeliveries[0]!
+		expect(overdueDeliveries(catalog)).toEqual([])
+		expect(
+			overdueDeliveries({
+				expectedDeliveries: [
+					{ ...order, overdue: true, version: undefined },
+					{ ...order, orderId: 'ord_due', overdue: true, version: 3 },
+					{ ...order, orderId: 'ord_ok', overdue: false, version: 2 },
+				],
+			}).map((entry) => entry.orderId),
+		).toEqual(['ord_due'])
+	})
+
+	it('defaults tomorrow date and validates ISO calendar dates', () => {
+		expect(tomorrowIsoDate(new Date(2026, 0, 31))).toBe('2026-02-01')
+		expect(isIsoDate('2026-02-28')).toBe(true)
+		expect(isIsoDate('2026-02-30')).toBe(false)
+		expect(isIsoDate('bad')).toBe(false)
+	})
+})
+
+describe('cash purchases (#466)', () => {
+	it('converts major currency inputs (including Arabic digits, comma decimals, and currency exponent) to integer minor units', () => {
+		expect(parseMajorToMinor('12.50')).toBe(1250)
+		expect(parseMajorToMinor('12,50')).toBe(1250)
+		expect(parseMajorToMinor('0')).toBe(0)
+		expect(parseMajorToMinor('١٥.٢٥')).toBe(1525)
+		expect(parseMajorToMinor('1.250', 'BHD')).toBe(1250)
+		expect(parseMajorToMinor('500', 'JPY')).toBe(500)
+		expect(parseMajorToMinor('')).toBeNull()
+		expect(parseMajorToMinor('-4')).toBeNull()
+		expect(parseMajorToMinor('abc')).toBeNull()
+	})
+
+	it('builds cash purchase lines for existing items and new draft items in base thousandths', () => {
+		const existing = {
+			...cashLineFromItem(item('item_tomato')),
+			amount: 2.5,
+			amountPaidText: '14.75',
+		}
+		const draft = {
+			...cashLineFromDraft('draft:1', 'Fresh mint', 'g'),
+			amount: 250,
+			amountPaidText: '5',
+		}
+		expect(cashPurchaseLines([existing, draft])).toEqual([
+			{ itemId: 'item_tomato', quantity: 2_500_000, amountPaidMinor: 1475 },
+			{
+				draftItem: { name: 'Fresh mint', baseUnit: 'g' },
+				quantity: 250_000,
+				amountPaidMinor: 500,
+			},
+		])
+		expect(cashPurchaseLines([])).toBeNull()
+		expect(cashPurchaseLines([{ ...existing, amountPaidText: '' }])).toBeNull()
+		expect(cashPurchaseLines([{ ...existing, amount: 0 }])).toBeNull()
 	})
 })

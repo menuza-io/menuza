@@ -147,6 +147,8 @@ export function describeInventoryAlert(input: {
 	kind: InventoryNotifyKind
 	count: number
 	locationName: string | null
+	/** Overdue subset of `inventory_delivery_due` (#501). */
+	overdueCount?: number
 	/** Sold-out kinds: the dishes and the ingredients that ran out. */
 	dishes?: readonly string[]
 	ingredients?: readonly string[]
@@ -200,15 +202,26 @@ export function describeInventoryAlert(input: {
 			}
 		}
 		case 'inventory_delivery_due': {
+			const overdue = Math.max(0, Math.min(count, input.overdueCount ?? 0))
 			const headline =
-				count === 1
-					? 'An order is due for delivery'
-					: `${count} orders are due for delivery`
+				overdue > 0 && overdue === count
+					? count === 1
+						? 'An order is overdue for delivery'
+						: `${count} orders are overdue for delivery`
+					: overdue > 0
+						? `${count} orders are due for delivery (${overdue} overdue)`
+						: count === 1
+							? 'An order is due for delivery'
+							: `${count} orders are due for delivery`
+			const detail =
+				overdue > 0
+					? `${count === 1 ? 'An order is' : `${count} orders are`} waiting to be received${place} (${overdue} overdue). Confirm whether ${count === 1 ? 'it' : 'they'} arrived.`
+					: `${count === 1 ? 'An order is' : `${count} orders are`} due today or overdue${place}. Receive ${count === 1 ? 'it' : 'them'} when ${count === 1 ? 'it arrives' : 'they arrive'}.`
 			return {
 				eyebrow: 'Purchasing',
 				subject: `${headline}${place}`,
 				headline,
-				detail: `${count === 1 ? 'An order is' : `${count} orders are`} due today or overdue${place}. Receive ${count === 1 ? 'it' : 'them'} when ${count === 1 ? 'it arrives' : 'they arrive'}.`,
+				detail,
 				actionLabel: 'Open purchasing',
 			}
 		}

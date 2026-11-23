@@ -2,6 +2,9 @@ import { plural } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import {
 	INVENTORY_CATEGORIES,
+	type InvoiceRead,
+	type InvoiceReadLine,
+	invoiceReadSchema,
 	itemDetailSchema,
 	listSuppliersResultSchema,
 	receivePrefillSchema,
@@ -52,6 +55,7 @@ import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import { InvoiceWarningBadges } from '#app/components/inventory/invoice-warning-badges.tsx'
 import { ItemPicker } from '#app/components/inventory/item-picker.tsx'
 import { MenuFormHeader } from '#app/components/menu/menu-form-header.tsx'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
@@ -77,10 +81,16 @@ import {
 	visiblePriceChangeBp,
 	withPack,
 } from '#app/utils/inventory/delivery-form.ts'
+import {
+	fileToBase64,
+	inferUploadContentType,
+} from '#app/utils/inventory/file-base64.ts'
 import { formatMoney } from '#app/utils/inventory/format.ts'
 import {
 	inventoryErrorMessage,
 	inventorySaveErrorMessage,
+	invoiceReadErrorMessage,
+	isInvoiceReaderMissing,
 } from '#app/utils/inventory/inventory-errors.ts'
 import {
 	InvoicePhotoError,
@@ -129,6 +139,7 @@ export function RecordDeliveryScreen({
 	canManagePurchasing,
 	purchasingEnabled = false,
 	orderId = null,
+	creditForDeliveryId = null,
 	search,
 }: {
 	orgSlug: string
@@ -142,6 +153,8 @@ export function RecordDeliveryScreen({
 	purchasingEnabled?: boolean
 	/** Receive against this order. */
 	orderId?: string | null
+	/** Record a credit / return for this delivery (#507). */
+	creditForDeliveryId?: string | null
 	search: string
 }) {
 	const { t, i18n } = useLingui()
@@ -167,6 +180,8 @@ export function RecordDeliveryScreen({
 		orderId: receiving ? orderId : null,
 		closeOrder: false,
 		quantityOnly,
+		isCredit: Boolean(creditForDeliveryId),
+		creditForDeliveryId,
 	})
 	const [meta, setMeta] = useState<Record<string, ItemMeta>>({})
 	const [attempted, setAttempted] = useState(false)
@@ -174,10 +189,23 @@ export function RecordDeliveryScreen({
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [newItemOpen, setNewItemOpen] = useState(false)
+	const [newItemForInvoiceIdx, setNewItemForInvoiceIdx] = useState<
+		number | null
+	>(null)
 	const clientIdRef = useRef(newClientId('d'))
 	const lineCounter = useRef(0)
 	const [photo, setPhoto] = useState<File | null>(null)
 	const [photoProblem, setPhotoProblem] = useState<string | null>(null)
+	const invoiceReadInputRef = useRef<HTMLInputElement>(null)
+	const [readingInvoice, setReadingInvoice] = useState(false)
+	const [readerMissing, setReaderMissing] = useState(false)
+	const [invoiceRead, setInvoiceRead] = useState<InvoiceRead | null>(null)
+	const [invoiceLineIncluded, setInvoiceLineIncluded] = useState<
+		Record<number, boolean>
+	>({})
+	const [invoiceLineMatchedItems, setInvoiceLineMatchedItems] = useState<
+		Record<number, StockItem>
+	>({})
 	const [creditFor, setCreditFor] = useState<string | null>(null)
 	const [seeded, setSeeded] = useState(false)
 	const photoUrl = useMemo(
@@ -322,6 +350,172 @@ export function RecordDeliveryScreen({
 			},
 			() => {},
 		)
+	}
+
+	async function readInvoiceFile(file: File) {
+		if (readingInvoice) return
+		setReadingInvoice(true)
+		setError(null)
+		try {
+			const contentBase64 = await fileToBase64(file)
+			const contentType = inferUploadContentType(file)
+			const read = invoiceReadSchema.parse(
+				await request('/deliveries/invoice/read', {
+					method: 'POST',
+					body: JSON.stringify({
+						...(draft.supplierId ? { supplierId: draft.supplierId } : {}),
+						fileName: file.name,
+						contentType,
+						contentBase64,
+					}),
+				}),
+			)
+			setInvoiceRead(read)
+			const included: Record<number, boolean> = {}
+			read.lines.forEach((_, index) => {
+				included[index] = true
+			})
+			setInvoiceLineIncluded(included)
+			setInvoiceLineMatchedItems({})
+			if (isAllowedInvoicePhotoType(contentType)) {
+				setPhoto(file)
+				setPhotoProblem(null)
+			}
+		} catch (caught) {
+			if (isInvoiceReaderMissing(caught)) {
+				setReaderMissing(true)
+			} else {
+				setError(i18n._(invoiceReadErrorMessage(caught)))
+			}
+		} finally {
+			setReadingInvoice(false)
+		}
+	}
+
+	function applyInvoiceLines() {
+		if (!invoiceRead) return
+		const toApply: Array<{
+			index: number
+			invLine: InvoiceReadLine
+			pickedItem: StockItem | null
+		}> = []
+		invoiceRead.lines.forEach((invLine, index) => {
+			if (!invoiceLineIncluded[index]) return
+			toApply.push({
+				index,
+				invLine,
+				pickedItem: invoiceLineMatchedItems[index] ?? null,
+			})
+		})
+
+		setDraft((current) => {
+			const nextLines = [...current.lines]
+			for (const { invLine, pickedItem } of toApply) {
+				const targetItemId = pickedItem?.id ?? invLine.itemId
+				const targetItemName =
+					pickedItem?.name ?? invLine.itemName ?? invLine.text
+				if (!targetItemId) continue
+
+				const packsStr =
+					invLine.quantity !== null && invLine.quantity > 0
+						? String(invLine.quantity)
+						: '1'
+				const priceStr =
+					invLine.unitPriceMinor !== undefined &&
+					invLine.unitPriceMinor !== null
+						? minorToMajorText(invLine.unitPriceMinor, currency)
+						: invLine.lineTotalMinor !== undefined &&
+							  invLine.quantity !== null &&
+							  invLine.quantity > 0
+							? minorToMajorText(
+									Math.round(invLine.lineTotalMinor / invLine.quantity),
+									currency,
+								)
+							: ''
+				const totalStr =
+					invLine.lineTotalMinor !== undefined
+						? minorToMajorText(invLine.lineTotalMinor, currency)
+						: ''
+
+				const existingIndex = nextLines.findIndex(
+					(line) => line.itemId === targetItemId,
+				)
+				if (existingIndex >= 0) {
+					const existing = nextLines[existingIndex]!
+					nextLines[existingIndex] = {
+						...existing,
+						packsText: packsStr,
+						...(priceStr !== '' ? { priceText: priceStr } : {}),
+						...(totalStr !== '' ? { totalText: totalStr } : {}),
+						rawInvoiceText: invLine.text,
+						warnings: invLine.warnings,
+					}
+				} else {
+					lineCounter.current += 1
+					const key = `line-${lineCounter.current}`
+					const baseUnit = pickedItem?.baseUnit ?? 'piece'
+					const units = pickedItem?.units ?? []
+					const choices = packChoicesFor({
+						baseUnit,
+						units,
+						products: products.filter((p) => p.itemId === targetItemId),
+						system: quantity.system,
+						unitLabel,
+					})
+					const matchedChoice = invLine.matchedSupplierProductId
+						? choices.find(
+								(c) => c.productId === invLine.matchedSupplierProductId,
+							)
+						: undefined
+					const pack =
+						matchedChoice ??
+						defaultPackChoice(choices, pickedItem?.countUnit ?? null)
+					if (!pack) continue
+					if (pickedItem) {
+						setMeta((m) => ({
+							...m,
+							[pickedItem.id]: {
+								countUnit: pickedItem.countUnit,
+								units: pickedItem.units,
+							},
+						}))
+					}
+					const baseDraft = newLineDraft({
+						key,
+						itemId: targetItemId,
+						itemName: targetItemName,
+						baseUnit,
+						pack,
+						currency,
+						system: quantity.system,
+						previousCostMicro: pickedItem?.costMicro ?? null,
+					})
+					nextLines.push({
+						...baseDraft,
+						packsText: packsStr,
+						...(priceStr !== '' ? { priceText: priceStr } : {}),
+						...(totalStr !== '' ? { totalText: totalStr } : {}),
+						rawInvoiceText: invLine.text,
+						warnings: invLine.warnings,
+					})
+				}
+			}
+			return {
+				...current,
+				invoiceNumber:
+					current.invoiceNumber.trim() === '' && invoiceRead.invoiceNumber
+						? invoiceRead.invoiceNumber
+						: current.invoiceNumber,
+				invoiceTotalText:
+					current.invoiceTotalText.trim() === '' &&
+					invoiceRead.totalMinor !== undefined &&
+					invoiceRead.totalMinor !== null
+						? minorToMajorText(invoiceRead.totalMinor, currency)
+						: current.invoiceTotalText,
+				lines: nextLines,
+			}
+		})
+		toast.success(t`Invoice lines applied.`)
 	}
 
 	const computed = draft.lines.map((line) =>
@@ -780,20 +974,38 @@ export function RecordDeliveryScreen({
 									/>
 								) : null}
 								{quantityOnly ? null : (
-									<div className="flex items-center gap-2">
-										<Checkbox
-											id={`${idPrefix}-paid`}
-											checked={draft.paid}
-											disabled={!canManagePurchasing}
-											onCheckedChange={(next) => patch({ paid: next })}
-											data-testid="delivery-paid"
-										/>
-										<Label
-											htmlFor={`${idPrefix}-paid`}
-											className="cursor-pointer font-normal"
-										>
-											<Trans>Already paid</Trans>
-										</Label>
+									<div className="flex flex-col gap-2">
+										<div className="flex items-center gap-2">
+											<Checkbox
+												id={`${idPrefix}-paid`}
+												checked={draft.paid}
+												disabled={!canManagePurchasing}
+												onCheckedChange={(next) => patch({ paid: next })}
+												data-testid="delivery-paid"
+											/>
+											<Label
+												htmlFor={`${idPrefix}-paid`}
+												className="cursor-pointer font-normal"
+											>
+												<Trans>Already paid</Trans>
+											</Label>
+										</div>
+										{!receiving && canManagePurchasing ? (
+											<div className="flex items-center gap-2">
+												<Checkbox
+													id={`${idPrefix}-credit`}
+													checked={draft.isCredit === true}
+													onCheckedChange={(next) => patch({ isCredit: next })}
+													data-testid="delivery-is-credit"
+												/>
+												<Label
+													htmlFor={`${idPrefix}-credit`}
+													className="cursor-pointer font-normal"
+												>
+													<Trans>Credit note / return</Trans>
+												</Label>
+											</div>
+										) : null}
 									</div>
 								)}
 								{!quantityOnly && !canManagePurchasing ? (
@@ -884,6 +1096,42 @@ export function RecordDeliveryScreen({
 											<Trans>Remove photo</Trans>
 										</Button>
 									) : null}
+									{canManagePurchasing && !quantityOnly && !readerMissing ? (
+										<>
+											<Button
+												type="button"
+												variant="outline"
+												disabled={readingInvoice}
+												onClick={() => {
+													if (photo) {
+														void readInvoiceFile(photo)
+													} else {
+														invoiceReadInputRef.current?.click()
+													}
+												}}
+												data-testid="delivery-use-invoice-lines"
+											>
+												<Icon name={readingInvoice ? 'loader' : 'sparkles'} />
+												{readingInvoice ? (
+													<Trans>Reading invoice…</Trans>
+												) : (
+													<Trans>Use invoice lines</Trans>
+												)}
+											</Button>
+											<input
+												ref={invoiceReadInputRef}
+												type="file"
+												accept="image/jpeg,image/png,image/webp,application/pdf"
+												className="sr-only"
+												onChange={(event) => {
+													const file = event.target.files?.[0]
+													event.target.value = ''
+													if (file) void readInvoiceFile(file)
+												}}
+												data-testid="delivery-invoice-read-input"
+											/>
+										</>
+									) : null}
 									<input
 										id={`${idPrefix}-photo`}
 										type="file"
@@ -905,6 +1153,157 @@ export function RecordDeliveryScreen({
 										data-testid="delivery-photo-input"
 									/>
 								</div>
+								{invoiceRead ? (
+									<div
+										className="flex flex-col gap-3 rounded-xl border p-3"
+										data-testid="delivery-invoice-read-panel"
+									>
+										<div className="flex flex-wrap items-center justify-between gap-2">
+											<span className="text-sm font-medium">
+												<Trans>Lines read from invoice</Trans>
+											</span>
+											<Button
+												type="button"
+												variant="ghost"
+												size="sm"
+												onClick={() => invoiceReadInputRef.current?.click()}
+												disabled={readingInvoice}
+											>
+												<Trans>Read another file</Trans>
+											</Button>
+										</div>
+										{invoiceRead.invoiceTotalMismatch ? (
+											<Alert
+												variant="destructive"
+												data-testid="delivery-invoice-total-mismatch"
+											>
+												<Icon name="alert-triangle" />
+												<AlertDescription>
+													<Trans>
+														The lines read from the invoice do not add up to the
+														printed invoice total.
+													</Trans>
+												</AlertDescription>
+											</Alert>
+										) : null}
+										{invoiceRead.lines.length === 0 ? (
+											<p className="text-muted-foreground text-sm">
+												<Trans>No lines could be read from this invoice.</Trans>
+											</p>
+										) : (
+											<>
+												<ul className="flex flex-col divide-y rounded-lg border">
+													{invoiceRead.lines.map((invLine, index) => {
+														const picked =
+															invoiceLineMatchedItems[index] ?? null
+														const matched = Boolean(picked || invLine.itemId)
+														const included = invoiceLineIncluded[index] ?? false
+														return (
+															<li
+																key={`${index}-${invLine.text}`}
+																className="flex flex-col gap-2 p-2.5 text-sm"
+																data-testid={`delivery-invoice-read-line-${index}`}
+															>
+																<div className="flex items-start justify-between gap-2">
+																	<div className="flex items-start gap-2">
+																		<Checkbox
+																			checked={included}
+																			onCheckedChange={(checked) =>
+																				setInvoiceLineIncluded((current) => ({
+																					...current,
+																					[index]: checked,
+																				}))
+																			}
+																			data-testid={`delivery-invoice-read-toggle-${index}`}
+																		/>
+																		<div className="flex flex-col gap-1">
+																			<span className="font-medium wrap-anywhere">
+																				{invLine.text}
+																			</span>
+																			<span className="text-muted-foreground text-xs tabular-nums">
+																				{invLine.quantity !== null ? (
+																					<bdi dir="ltr">
+																						{invLine.quantity}
+																						{invLine.unit
+																							? ` ${invLine.unit}`
+																							: ''}
+																					</bdi>
+																				) : null}
+																				{invLine.lineTotalMinor !==
+																				undefined ? (
+																					<>
+																						{' · '}
+																						<bdi dir="ltr">
+																							{money(invLine.lineTotalMinor)}
+																						</bdi>
+																					</>
+																				) : null}
+																			</span>
+																			<InvoiceWarningBadges
+																				warnings={invLine.warnings}
+																			/>
+																		</div>
+																	</div>
+																	{matched ? (
+																		<Badge
+																			variant="outline"
+																			className="wrap-anywhere"
+																		>
+																			{picked?.name ?? invLine.itemName}
+																		</Badge>
+																	) : null}
+																</div>
+																{included && !invLine.itemId ? (
+																	<div className="flex flex-col gap-2 ps-6 sm:flex-row sm:items-end">
+																		<div className="min-w-0 flex-1">
+																			<ItemPicker
+																				label={<Trans>Match item</Trans>}
+																				client={client}
+																				locationId={locationId}
+																				value={picked}
+																				onChange={(item) =>
+																					setInvoiceLineMatchedItems(
+																						(current) => ({
+																							...current,
+																							[index]: item,
+																						}),
+																					)
+																				}
+																				placeholder={t`Choose an item`}
+																			/>
+																		</div>
+																		<Button
+																			type="button"
+																			variant="outline"
+																			size="sm"
+																			onClick={() => {
+																				setNewItemForInvoiceIdx(index)
+																				setNewItemOpen(true)
+																			}}
+																		>
+																			<Icon name="plus" />
+																			<Trans>New item</Trans>
+																		</Button>
+																	</div>
+																) : null}
+															</li>
+														)
+													})}
+												</ul>
+												<div className="flex justify-end">
+													<Button
+														type="button"
+														size="sm"
+														onClick={applyInvoiceLines}
+														data-testid="delivery-apply-invoice-lines"
+													>
+														<Trans>Apply to delivery</Trans>
+													</Button>
+												</div>
+											</>
+										)}
+									</div>
+								) : null}
 							</FramePanel>
 						</Frame>
 					</div>
@@ -1081,11 +1480,23 @@ export function RecordDeliveryScreen({
 
 			<NewItemDialog
 				open={newItemOpen}
-				onOpenChange={setNewItemOpen}
+				onOpenChange={(next) => {
+					setNewItemOpen(next)
+					if (!next) setNewItemForInvoiceIdx(null)
+				}}
 				locationId={locationId}
 				onCreated={(item) => {
 					setNewItemOpen(false)
-					addItem(item)
+					if (newItemForInvoiceIdx !== null) {
+						const idx = newItemForInvoiceIdx
+						setNewItemForInvoiceIdx(null)
+						setInvoiceLineMatchedItems((current) => ({
+							...current,
+							[idx]: item,
+						}))
+					} else {
+						addItem(item)
+					}
 				}}
 			/>
 		</form>
@@ -1138,6 +1549,7 @@ function DeliveryLine({
 	const orderedPacks = order
 		? formatPacks(order.orderedPacks, i18n.locale)
 		: null
+	const rawInvoiceText = line.rawInvoiceText
 
 	return (
 		<li
@@ -1145,8 +1557,17 @@ function DeliveryLine({
 			data-testid={`delivery-line-${line.key}`}
 		>
 			<div className="flex items-start justify-between gap-2">
-				<div className="flex min-w-0 flex-col">
+				<div className="flex min-w-0 flex-col gap-1">
 					<span className="font-medium wrap-anywhere">{line.itemName}</span>
+					{rawInvoiceText ? (
+						<span
+							className="text-muted-foreground text-xs wrap-anywhere"
+							data-testid={`delivery-line-raw-${line.key}`}
+						>
+							<Trans>Invoice: {rawInvoiceText}</Trans>
+						</span>
+					) : null}
+					<InvoiceWarningBadges warnings={line.warnings} />
 					{order ? (
 						<span
 							className="text-muted-foreground text-xs"

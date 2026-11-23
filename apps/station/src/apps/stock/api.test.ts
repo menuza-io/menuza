@@ -149,6 +149,61 @@ describe('the Stock client', () => {
 				sizeBytes: 1000,
 			}),
 		).resolves.toMatchObject({ method: 'PUT' })
+		await expect(
+			api(
+				respond({
+					deliveryId: 'dlv_10',
+					orderId: 'ord_41',
+					orderStatus: 'received',
+					lineCount: 2,
+					receivedAt: 1767225600000,
+					duplicate: false,
+				}),
+			).receiveAsOrdered('ord_41', {
+				clientId: 'recv-0001-aaaa',
+				locationId: 'main',
+				expectedVersion: 1,
+			}),
+		).resolves.toMatchObject({ orderId: 'ord_41', orderStatus: 'received' })
+		await expect(
+			api(
+				respond({
+					orderId: 'ord_41',
+					status: 'sent',
+					expectedDate: '2026-01-03',
+					version: 2,
+				}),
+			).orderNotYet('ord_41', {
+				locationId: 'main',
+				expectedVersion: 1,
+				expectedDate: '2026-01-03',
+			}),
+		).resolves.toMatchObject({ expectedDate: '2026-01-03', version: 2 })
+		await expect(
+			api(
+				respond({
+					id: 'dlv_cash_1',
+					lineCount: 1,
+					receivedAt: 1767225600000,
+					lateSync: false,
+					duplicate: false,
+					draftItemIds: ['itm_draft_1'],
+				}),
+			).cashPurchase({
+				clientId: 'cash-0001-aaaa',
+				locationId: 'main',
+				lines: [
+					{
+						draftItem: { name: 'Fresh mint', baseUnit: 'g' },
+						quantity: 500_000,
+						amountPaidMinor: 1250,
+					},
+				],
+			}),
+		).resolves.toMatchObject({
+			id: 'dlv_cash_1',
+			draftItemIds: ['itm_draft_1'],
+		})
 	})
 
 	it('refuses to send a request the region would refuse, without a round trip or echoing the value', async () => {
@@ -184,6 +239,26 @@ describe('the Stock client', () => {
 				],
 			}),
 		).rejects.toMatchObject({ code: 'invalid_request' })
+		await expect(
+			api(fetchImpl).cashPurchase({
+				clientId: 'cash-0001-aaaa',
+				locationId: 'main',
+				lines: [
+					{
+						itemId: 'item_tomato',
+						quantity: 1000,
+						amountPaidMinor: -10,
+					},
+				],
+			}),
+		).rejects.toMatchObject({ code: 'invalid_request', status: 400 })
+		await expect(
+			api(fetchImpl).orderNotYet('ord_41', {
+				locationId: 'main',
+				expectedVersion: 1,
+				expectedDate: 'not-a-date',
+			}),
+		).rejects.toMatchObject({ code: 'invalid_request', status: 400 })
 		expect(fetchImpl).not.toHaveBeenCalled()
 	})
 

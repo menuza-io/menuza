@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react'
 import { type StationCountSummary } from '@repo/inventory'
 import { Icon, type IconName } from '@repo/ui/icon'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CountScreen } from './CountScreen.tsx'
 import { DeliverySheet } from './DeliverySheet.tsx'
 import {
@@ -13,6 +13,7 @@ import {
 	localCounts,
 	type LocalCount,
 } from './local.ts'
+import { OverdueDeliveries } from './OverdueDeliveries.tsx'
 import { joinCount, startCount } from './queue.ts'
 import { StockNotices } from './StockNotices.tsx'
 import { SyncSheet } from './SyncSheet.tsx'
@@ -20,6 +21,7 @@ import { useStock } from './useStock.ts'
 import { WasteSheet } from './WasteSheet.tsx'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
+import { Toast, type ToastMessage } from '~/ui/motion.tsx'
 import { Badge, Button, cn, Modal } from '~/ui/primitives.tsx'
 
 type View = { kind: 'home' } | { kind: 'count'; localId: string }
@@ -61,6 +63,14 @@ export function Stock({
 	const { catalog, ctx, stats, staffName } = stock
 	const [view, setView] = useState<View>({ kind: 'home' })
 	const [sheet, setSheet] = useState<Sheet>(null)
+	const [deliveryOrderId, setDeliveryOrderId] = useState<string | null>(null)
+	const [deliveryMode, setDeliveryMode] = useState<'cash' | null>(null)
+	const [toast, setToast] = useState<ToastMessage | null>(null)
+	const toastSeq = useRef(0)
+	const say = (messageText: string) => {
+		toastSeq.current += 1
+		setToast({ id: toastSeq.current, text: messageText })
+	}
 	const records = useLiveQuery(
 		() => localCounts(stock.origin),
 		[stock.origin],
@@ -233,7 +243,11 @@ export function Stock({
 							<button
 								key={tile.key}
 								type="button"
-								onClick={() => setSheet(tile.key)}
+								onClick={() => {
+									setDeliveryOrderId(null)
+									setDeliveryMode(null)
+									setSheet(tile.key)
+								}}
 								className="border-border bg-card hover:bg-accent flex min-h-40 flex-col items-start justify-between gap-4 rounded-(--station-panel-radius) border p-5 text-start transition-colors"
 							>
 								<span className="bg-primary text-primary-foreground flex size-12 items-center justify-center rounded-(--station-control-radius)">
@@ -250,6 +264,29 @@ export function Stock({
 							</button>
 						))}
 					</div>
+					<div>
+						<Button
+							variant="outline"
+							size="lg"
+							onClick={() => {
+								setDeliveryOrderId(null)
+								setDeliveryMode('cash')
+								setSheet('delivery')
+							}}
+						>
+							<Icon name="shopping-bag" className="size-5" aria-hidden />
+							<Trans>Cash purchase</Trans>
+						</Button>
+					</div>
+					<OverdueDeliveries
+						stock={stock}
+						onOpenWithChanges={(orderId) => {
+							setDeliveryMode(null)
+							setDeliveryOrderId(orderId)
+							setSheet('delivery')
+						}}
+						onToast={say}
+					/>
 					{cards.length > 0 ? (
 						<section
 							aria-label={_(t`In progress`)}
@@ -358,7 +395,13 @@ export function Stock({
 			<DeliverySheet
 				stock={stock}
 				open={sheet === 'delivery'}
-				onClose={() => setSheet(null)}
+				initialOrderId={deliveryOrderId}
+				initialMode={deliveryMode}
+				onClose={() => {
+					setSheet(null)
+					setDeliveryOrderId(null)
+					setDeliveryMode(null)
+				}}
 			/>
 			<SyncSheet
 				stock={stock}
@@ -366,6 +409,7 @@ export function Stock({
 				onClose={() => setSheet(null)}
 				onSignIn={onSignIn}
 			/>
+			<Toast message={toast} onDone={() => setToast(null)} />
 		</main>
 	)
 }

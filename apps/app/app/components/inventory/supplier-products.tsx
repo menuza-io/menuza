@@ -1,6 +1,10 @@
+import { type MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import {
 	type InventoryBaseUnit,
+	type PriceHistoryEntry,
+	priceHistoryResultSchema,
 	standardUnitsFor,
 	type StockItem,
 	type SupplierProduct,
@@ -11,12 +15,20 @@ import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@repo/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
+import { Skeleton } from '@repo/ui/skeleton'
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
-import { type KeyboardEvent, useId, useState } from 'react'
+import { type KeyboardEvent, useEffect, useId, useState } from 'react'
 import { toast } from 'sonner'
 import { type InventoryClient } from '#app/components/inventory/inventory-client-provider.tsx'
 import { useQuantityFormat } from '#app/components/inventory/inventory-prefs.tsx'
@@ -25,7 +37,10 @@ import { useItemBaseUnits } from '#app/components/inventory/use-item-base-units.
 import { TextField } from '#app/components/staff/controls.tsx'
 import { useInventoryClient } from '#app/hooks/use-inventory-client.ts'
 import { defaultEntryUnit, formatMoney } from '#app/utils/inventory/format.ts'
-import { inventorySaveErrorMessage } from '#app/utils/inventory/inventory-errors.ts'
+import {
+	inventoryErrorMessage,
+	inventorySaveErrorMessage,
+} from '#app/utils/inventory/inventory-errors.ts'
 import {
 	buildSupplierProductPayload,
 	buildUpdateSupplierProductPayload,
@@ -34,6 +49,17 @@ import {
 	validateSupplierProduct,
 } from '#app/utils/inventory/supplier-form.ts'
 import { minorToMajorText } from '#app/utils/money-input.ts'
+
+const PRICE_SOURCE_LABELS: Record<
+	PriceHistoryEntry['source'],
+	MessageDescriptor
+> = {
+	price_list: msg`Price list`,
+	setup_import: msg`Setup import`,
+	invoice: msg`Invoice`,
+	delivery: msg`Delivery`,
+	cash_purchase: msg`Cash purchase`,
+}
 
 type Editing =
 	{ mode: 'add' } | { mode: 'edit'; product: SupplierProduct } | null
@@ -51,6 +77,7 @@ export function SupplierProducts({
 	currency,
 	locationId,
 	onChanged,
+	headerAction,
 }: {
 	supplierId: string
 	products: readonly SupplierProduct[]
@@ -59,12 +86,14 @@ export function SupplierProducts({
 	currency: string
 	locationId: string
 	onChanged: () => void
+	headerAction?: React.ReactNode
 }) {
 	const { t, i18n } = useLingui()
 	const { request } = useInventoryClient()
 	const quantity = useQuantityFormat()
 	const [editing, setEditing] = useState<Editing>(null)
 	const [busyId, setBusyId] = useState<string | null>(null)
+	const [historyFor, setHistoryFor] = useState<SupplierProduct | null>(null)
 	const baseUnits = useItemBaseUnits(
 		products.map((product) => product.itemId),
 		locationId,
@@ -96,22 +125,25 @@ export function SupplierProducts({
 			aria-labelledby="supplier-products-title"
 			data-testid="supplier-products"
 		>
-			<div className="flex items-center justify-between gap-3">
+			<div className="flex flex-wrap items-center justify-between gap-2">
 				<h3 id="supplier-products-title" className="text-sm font-semibold">
 					<Trans>What they sell</Trans>
 				</h3>
-				{canManage && canSeeCost && editing === null ? (
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={() => setEditing({ mode: 'add' })}
-						data-testid="supplier-product-add"
-					>
-						<Icon name="plus" />
-						<Trans>Add an item</Trans>
-					</Button>
-				) : null}
+				<div className="flex flex-wrap items-center gap-2">
+					{headerAction}
+					{canManage && canSeeCost && editing === null ? (
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={() => setEditing({ mode: 'add' })}
+							data-testid="supplier-product-add"
+						>
+							<Icon name="plus" />
+							<Trans>Add an item</Trans>
+						</Button>
+					) : null}
+				</div>
 			</div>
 
 			{products.length === 0 && editing === null ? (
@@ -177,31 +209,51 @@ export function SupplierProducts({
 											) : null}
 										</span>
 									</div>
-									{canManage && editing === null ? (
+									{(canSeeCost || canManage) && editing === null ? (
 										<div className="flex shrink-0 items-center">
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon"
-												className="size-11 md:size-8"
-												aria-label={t`Edit ${itemName}`}
-												disabled={busyId !== null}
-												onClick={() => setEditing({ mode: 'edit', product })}
-											>
-												<Icon name="pencil" />
-											</Button>
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon"
-												className="size-11 md:size-8"
-												aria-label={t`Remove ${itemName}`}
-												disabled={busyId !== null}
-												onClick={() => void archive(product)}
-												data-testid={`supplier-product-remove-${product.id}`}
-											>
-												<Icon name="trash-2" />
-											</Button>
+											{canSeeCost ? (
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													className="size-11 md:size-8"
+													aria-label={t`Price history for ${itemName}`}
+													disabled={busyId !== null}
+													onClick={() => setHistoryFor(product)}
+													data-testid={`supplier-product-history-${product.id}`}
+												>
+													<Icon name="history" />
+												</Button>
+											) : null}
+											{canManage ? (
+												<>
+													<Button
+														type="button"
+														variant="ghost"
+														size="icon"
+														className="size-11 md:size-8"
+														aria-label={t`Edit ${itemName}`}
+														disabled={busyId !== null}
+														onClick={() =>
+															setEditing({ mode: 'edit', product })
+														}
+													>
+														<Icon name="pencil" />
+													</Button>
+													<Button
+														type="button"
+														variant="ghost"
+														size="icon"
+														className="size-11 md:size-8"
+														aria-label={t`Remove ${itemName}`}
+														disabled={busyId !== null}
+														onClick={() => void archive(product)}
+														data-testid={`supplier-product-remove-${product.id}`}
+													>
+														<Icon name="trash-2" />
+													</Button>
+												</>
+											) : null}
 										</div>
 									) : null}
 								</div>
@@ -238,7 +290,137 @@ export function SupplierProducts({
 					}}
 				/>
 			) : null}
+
+			{historyFor ? (
+				<PriceHistoryDialog
+					product={historyFor}
+					currency={currency}
+					onClose={() => setHistoryFor(null)}
+				/>
+			) : null}
 		</section>
+	)
+}
+
+function PriceHistoryDialog({
+	product,
+	currency,
+	onClose,
+}: {
+	product: SupplierProduct
+	currency: string
+	onClose: () => void
+}) {
+	const { i18n } = useLingui()
+	const { request } = useInventoryClient()
+	const [state, setState] = useState<
+		| { kind: 'loading' }
+		| { kind: 'error'; message: string }
+		| { kind: 'loaded'; entries: PriceHistoryEntry[] }
+	>({ kind: 'loading' })
+
+	useEffect(() => {
+		let live = true
+		setState({ kind: 'loading' })
+		request(`/supplier-products/${encodeURIComponent(product.id)}/prices`).then(
+			(body) => {
+				if (!live) return
+				const parsed = priceHistoryResultSchema.safeParse(body)
+				if (parsed.success) {
+					setState({ kind: 'loaded', entries: parsed.data.entries })
+				} else {
+					setState({
+						kind: 'error',
+						message: i18n._(inventoryErrorMessage(null)),
+					})
+				}
+			},
+			(caught) => {
+				if (!live) return
+				setState({
+					kind: 'error',
+					message: i18n._(inventoryErrorMessage(caught)),
+				})
+			},
+		)
+		return () => {
+			live = false
+		}
+	}, [product.id, request, i18n])
+
+	const itemName = product.itemName
+
+	return (
+		<Dialog open onOpenChange={(next) => !next && onClose()}>
+			<DialogContent
+				className="max-h-[85dvh] overflow-y-auto sm:max-w-md"
+				data-testid="price-history-dialog"
+			>
+				<DialogHeader>
+					<DialogTitle className="wrap-anywhere">
+						<Trans>Price history · {itemName}</Trans>
+					</DialogTitle>
+					<DialogDescription className="wrap-anywhere">
+						{product.packName}
+					</DialogDescription>
+				</DialogHeader>
+				{state.kind === 'loading' ? (
+					<div role="status" className="flex flex-col gap-2">
+						<Skeleton className="h-8 w-full" />
+						<Skeleton className="h-8 w-full" />
+					</div>
+				) : state.kind === 'error' ? (
+					<Alert variant="destructive">
+						<AlertDescription>{state.message}</AlertDescription>
+					</Alert>
+				) : state.entries.length === 0 ? (
+					<p
+						className="text-muted-foreground text-sm"
+						data-testid="price-history-empty"
+					>
+						<Trans>No price changes recorded yet.</Trans>
+					</p>
+				) : (
+					<ul
+						className="flex flex-col divide-y rounded-xl border"
+						data-testid="price-history-list"
+					>
+						{state.entries.map((entry) => (
+							<li
+								key={entry.id}
+								className="flex items-center justify-between gap-3 p-3 text-sm"
+							>
+								<div className="flex min-w-0 flex-col">
+									<span className="font-medium">
+										{i18n._(PRICE_SOURCE_LABELS[entry.source])}
+									</span>
+									<span className="text-muted-foreground text-xs">
+										<bdi dir="ltr">
+											{new Intl.DateTimeFormat(i18n.locale, {
+												dateStyle: 'medium',
+											}).format(new Date(entry.effectiveAt))}
+										</bdi>
+										{entry.packName ? (
+											<>
+												{' · '}
+												<span className="wrap-anywhere">{entry.packName}</span>
+											</>
+										) : null}
+									</span>
+								</div>
+								<bdi dir="ltr" className="font-medium tabular-nums">
+									{formatMoney(
+										entry.priceMinor,
+										entry.currency || currency,
+										i18n.locale,
+									)}
+								</bdi>
+							</li>
+						))}
+					</ul>
+				)}
+			</DialogContent>
+		</Dialog>
 	)
 }
 

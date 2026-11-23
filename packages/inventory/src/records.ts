@@ -96,3 +96,37 @@ export const SALE_SOURCE_TYPES = [
 ] as const
 export type SaleSourceType = (typeof SALE_SOURCE_TYPES)[number]
 export const saleSourceTypeSchema = z.enum(SALE_SOURCE_TYPES)
+
+// ── Purchasing (#505, #506, #504, #502, #501, #507, #466) ───────────────────
+
+export const PRICE_HISTORY_SOURCES = [
+	'price_list',
+	'setup_import',
+	'invoice',
+	'delivery',
+	'cash_purchase',
+] as const
+export type PriceHistorySource = (typeof PRICE_HISTORY_SOURCES)[number]
+export const priceHistorySourceSchema = z.enum(PRICE_HISTORY_SOURCES)
+
+export const SETUP_IMPORT_STATUSES = [
+	'reading',
+	'ready',
+	'applied',
+	'failed',
+] as const
+export type SetupImportStatus = (typeof SETUP_IMPORT_STATUSES)[number]
+export const setupImportStatusSchema = z.enum(SETUP_IMPORT_STATUSES)
+
+export const SETUP_IMPORT_FILE_KINDS = ['image', 'pdf', 'csv', 'xlsx'] as const
+export type SetupImportFileKind = (typeof SETUP_IMPORT_FILE_KINDS)[number]
+export const setupImportFileKindSchema = z.enum(SETUP_IMPORT_FILE_KINDS)
+
+export const SETUP_IMPORT_FILE_STATUSES = [
+	'pending',
+	'reading',
+	'done',
+	'failed',
+] as const
+export type SetupImportFileStatus = (typeof SETUP_IMPORT_FILE_STATUSES)[number]
+export const setupImportFileStatusSchema = z.enum(SETUP_IMPORT_FILE_STATUSES)

@@ -1,7 +1,8 @@
-import { useLocation, useParams } from 'react-router'
+import { useLoaderData, useLocation, useParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ReviewOrderScreen } from '#app/components/inventory/review-order-screen.tsx'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
+import { loadMemberNames } from '#app/utils/inventory/actors.server.ts'
 import { type Route } from './+types/purchasing_.orders.$orderId.ts'
 import { useInventoryLayoutData } from './_layout.tsx'
 
@@ -10,12 +11,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	// Orders come with the purchasing flag: with it off the page does not exist.
 	if (!access.features.purchasing)
 		throw new Response('Not Found', { status: 404 })
-	return null
+	return { memberNames: await loadMemberNames(access.organizationId) }
 }
 
 /** Review order, full page: edit a draft, then send it by email, WhatsApp, copy or PDF. */
 export default function InventoryReviewOrderRoute() {
 	const layout = useInventoryLayoutData()
+	const loaderData = useLoaderData<typeof loader>() as
+		Awaited<ReturnType<typeof loader>> | undefined
 	const { orderId = '' } = useParams()
 	const { search } = useLocation()
 	return (
@@ -26,6 +29,7 @@ export default function InventoryReviewOrderRoute() {
 			canEdit={layout.canEdit}
 			canSeeCost={layout.canSeeCost}
 			canManagePurchasing={layout.canManagePurchasing}
+			memberNames={loaderData?.memberNames}
 			search={layout.locations.length > 1 ? search : ''}
 		/>
 	)

@@ -437,6 +437,18 @@ export async function runInventoryTickForOrg(
 				result.alertsDeferred += 1
 				continue
 			}
+			let overdueCount: number | undefined
+			if (row.kind === 'inventory_delivery_due') {
+				const due = await listDueOrders(db, {
+					locationId: row.locationId,
+					date: row.dedupeKey,
+				})
+				overdueCount = Math.min(
+					due.filter((entry) => entry.order.expectedDate! < row.dedupeKey)
+						.length,
+					10_000,
+				)
+			}
 			const outcome = await post({
 				orgId,
 				eventId: inventoryAlertEventId({
@@ -448,6 +460,7 @@ export async function runInventoryTickForOrg(
 				kind: row.kind,
 				locationId: row.locationId,
 				count: Math.min(Math.max(row.count, 1), 10_000),
+				...(overdueCount !== undefined ? { overdueCount } : {}),
 			})
 			if (outcome.status === 'delivered') {
 				await db

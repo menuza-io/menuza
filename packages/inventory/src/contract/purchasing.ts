@@ -1,7 +1,9 @@
 import { z } from 'zod'
 import { inventoryMinorSchema } from '../money.ts'
-import { SUPPLIER_ORDER_CHANNELS } from '../records.ts'
+import { PRICE_HISTORY_SOURCES, SUPPLIER_ORDER_CHANNELS } from '../records.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
+import { inventoryBaseUnitSchema } from '../units.ts'
+import { inventoryCategorySchema } from '../vocabulary.ts'
 import {
 	actorSchema,
 	clientIdSchema,
@@ -95,6 +97,16 @@ export const supplierSchema = z.object({
 	unpaidCount: z.number().int(),
 	minimumOrderMinor: z.number().int().nullable().optional(),
 	unpaidMinor: minorOut,
+	/** Built-in "Market / cash" supplier (#466). */
+	isMarketCash: z.boolean().optional(),
+	/** 90-day order confirmation rate (#502). */
+	confirmationRate90d: z
+		.object({
+			confirmed: z.number().int(),
+			sent: z.number().int(),
+			rateBp: z.number().int().nullable(),
+		})
+		.optional(),
 })
 export type Supplier = z.infer<typeof supplierSchema>
 
@@ -176,9 +188,20 @@ export const updateSupplierProductSchema = supplierProductFieldsSchema
  * the screen showed as ordered (informational: the region uses its own
  * figure and only keeps the echo in the audit detail).
  */
+/** Typed item created on the fly during a cash market purchase (#466). */
+export const draftItemInputSchema = z
+	.object({
+		name: inventoryNameSchema,
+		baseUnit: inventoryBaseUnitSchema,
+		category: inventoryCategorySchema.optional(),
+	})
+	.strict()
+
 export const deliveryLineInputSchema = z
 	.object({
-		itemId: inventoryIdSchema,
+		itemId: inventoryIdSchema.nullable().optional(),
+		/** Created as a draft item (`isDraft: true`) when `itemId` is absent (#466). */
+		draftItem: draftItemInputSchema.optional(),
 		supplierProductId: inventoryIdSchema.nullable().optional(),
 		quantity: positiveQuantitySchema,
 		packs: z.number().positive().max(100_000).nullable().optional(),
@@ -227,6 +250,11 @@ export const recordDeliveryBaseSchema = z
 		 */
 		/** Absent means false. */
 		closeOrder: z.boolean().optional(),
+		/** Cash purchase from built-in "Market / cash" supplier (#466); always marked paid. */
+		isCashPurchase: z.boolean().optional(),
+		/** Supplier credit note or return (#507): appears as negative amounts in exports/reports. */
+		isCredit: z.boolean().optional(),
+		creditForDeliveryId: inventoryIdSchema.nullable().optional(),
 		lines: z.array(deliveryLineInputSchema).min(1).max(200),
 	})
 	.strict()
@@ -287,15 +315,31 @@ export const recordDeliverySchema = recordDeliveryBaseSchema.superRefine(
 			})
 			return
 		}
-		if (body.currency === undefined) {
-			ctx.addIssue({
-				code: 'custom',
-				path: ['currency'],
-				message: 'Required',
-			})
+		if (!body.isCashPurchase) {
+			if (body.currency === undefined) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['currency'],
+					message: 'Required',
+				})
+			}
 		}
 		body.lines.forEach((line, index) => {
-			if (line.lineTotalMinor === undefined) {
+			if (!line.itemId && !line.draftItem) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['lines', index, 'itemId'],
+					message: 'Required',
+				})
+			}
+			if (line.draftItem && !body.isCashPurchase) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['lines', index, 'draftItem'],
+					message: 'Draft items are only allowed on cash purchases',
+				})
+			}
+			if (!body.quantityOnly && line.lineTotalMinor === undefined) {
 				ctx.addIssue({
 					code: 'custom',
 					path: ['lines', index, 'lineTotalMinor'],
@@ -356,6 +400,14 @@ export const deliverySummarySchema = z.object({
 	hasPhoto: z.boolean().optional(),
 	/** Recorded by a Station tablet more than 48 hours after it happened. */
 	lateSync: z.boolean().optional(),
+	/** Received via 1-tap "Yes, as ordered" (#501); undoable until `undoUntil`. */
+	asOrdered: z.boolean().optional(),
+	undoUntil: z.number().int().nullable().optional(),
+	/** Supplier credit / return (#507). */
+	isCredit: z.boolean().optional(),
+	creditForDeliveryId: z.string().nullable().optional(),
+	/** Recorded against the built-in "Market / cash" supplier (#466). */
+	isMarketCash: z.boolean().optional(),
 })
 export type DeliverySummary = z.infer<typeof deliverySummarySchema>
 
@@ -404,3 +456,209 @@ export const cancelDeliverySchema = z
 		note: inventoryNoteSchema.optional(),
 	})
 	.strict()
+
+// ── Price history (#505, #506, #504, #466) ──────────────────────────────────
+
+export const priceHistoryEntrySchema = z.object({
+	id: z.string(),
+	supplierId: z.string(),
+	supplierName: z.string(),
+	supplierProductId: z.string().nullable(),
+	itemId: z.string(),
+	packName: z.string().nullable(),
+	packBaseQuantity: z.number().int(),
+	priceMinor: z.number().int(),
+	currency: z.string(),
+	source: z.enum(PRICE_HISTORY_SOURCES),
+	deliveryLineId: z.string().nullable(),
+	effectiveAt: z.number().int(),
+	createdAt: z.number().int(),
+})
+export type PriceHistoryEntry = z.infer<typeof priceHistoryEntrySchema>
+
+export const priceHistoryResultSchema = z.object({
+	entries: z.array(priceHistoryEntrySchema),
+})
+
+// ── Price-list import (#505) ────────────────────────────────────────────────
+
+export const MAX_PRICE_LIST_LINES = 500
+
+export const priceListParseSchema = z
+	.object({
+		fileName: z.string().trim().min(1).max(200),
+		contentType: z.string().trim().min(1).max(120),
+		/** Base64 file bytes (CSV, XLSX, PDF or image). */
+		contentBase64: z.string().min(1).max(10_000_000),
+	})
+	.strict()
+export type PriceListParseRequest = z.infer<typeof priceListParseSchema>
+
+export const PRICE_LIST_CHANGE_KINDS = [
+	'new',
+	'price_changed',
+	'unchanged',
+] as const
+
+export const priceListProposalLineSchema = z.object({
+	lineKey: z.string(),
+	rawText: z.string(),
+	sku: z.string().nullable(),
+	name: z.string(),
+	packName: z.string(),
+	packBaseQuantity: z.number().int(),
+	baseUnit: inventoryBaseUnitSchema,
+	category: inventoryCategorySchema,
+	priceMinor: z.number().int().nullable(),
+	pricedByWeight: z.boolean(),
+	matchKind: z.enum(['matched_product', 'matched_item', 'new_item']),
+	existingProductId: z.string().nullable(),
+	matchedItemId: z.string().nullable(),
+	matchedItemName: z.string().nullable(),
+	changeKind: z.enum(PRICE_LIST_CHANGE_KINDS),
+	previousPriceMinor: z.number().int().nullable(),
+	warnings: z.array(z.string()),
+})
+export type PriceListProposalLine = z.infer<typeof priceListProposalLineSchema>
+
+export const priceListGoneProductSchema = z.object({
+	productId: z.string(),
+	itemId: z.string(),
+	itemName: z.string(),
+	packName: z.string(),
+	sku: z.string().nullable(),
+	priceMinor: z.number().int().nullable(),
+})
+export type PriceListGoneProduct = z.infer<typeof priceListGoneProductSchema>
+
+export const priceListParseResultSchema = z.object({
+	supplierId: z.string(),
+	fileName: z.string(),
+	fileKind: z.enum(['csv', 'xlsx', 'pdf', 'image']),
+	currency: z.string(),
+	truncated: z.boolean(),
+	totalParsed: z.number().int(),
+	readerConfigured: z.boolean(),
+	lines: z.array(priceListProposalLineSchema),
+	goneProducts: z.array(priceListGoneProductSchema),
+})
+export type PriceListParseResult = z.infer<typeof priceListParseResultSchema>
+
+export const priceListApplyLineSchema = z
+	.object({
+		action: z.enum(['upsert', 'skip']),
+		existingProductId: inventoryIdSchema.nullable().optional(),
+		matchedItemId: inventoryIdSchema.nullable().optional(),
+		createItem: z
+			.object({
+				name: inventoryNameSchema,
+				baseUnit: inventoryBaseUnitSchema,
+				category: inventoryCategorySchema.optional(),
+			})
+			.strict()
+			.optional(),
+		packName: inventoryNameSchema,
+		packBaseQuantity: positiveQuantitySchema,
+		priceMinor: inventoryMinorSchema,
+		pricedByWeight: z.boolean().default(false),
+		sku: optionalText(60),
+	})
+	.strict()
+
+export const priceListApplySchema = z
+	.object({
+		effectiveDate: isoDateSchema.optional(),
+		currency: currencySchema,
+		lines: z.array(priceListApplyLineSchema).min(1).max(MAX_PRICE_LIST_LINES),
+		archiveGoneProductIds: z
+			.array(inventoryIdSchema)
+			.max(MAX_PRICE_LIST_LINES)
+			.optional(),
+	})
+	.strict()
+
+export const priceListApplyResultSchema = z.object({
+	createdItems: z.number().int(),
+	createdProducts: z.number().int(),
+	updatedProducts: z.number().int(),
+	archivedProducts: z.number().int(),
+	recordedPrices: z.number().int(),
+})
+export type PriceListApplyResult = z.infer<typeof priceListApplyResultSchema>
+
+// ── Accountant export (#507) ────────────────────────────────────────────────
+
+export const accountantExportQuerySchema = z
+	.object({
+		from: isoDateSchema,
+		to: isoDateSchema,
+		locationId: z
+			.union([z.literal('all'), inventoryLocationIdSchema])
+			.default('all'),
+		format: z.enum(['json', 'csv', 'pdf']).default('json'),
+	})
+	.strict()
+
+export const accountantExportRowSchema = z.object({
+	deliveryId: z.string(),
+	date: isoDateSchema,
+	businessDate: isoDateSchema,
+	invoiceDate: isoDateSchema.nullable(),
+	locationId: z.string(),
+	supplierId: z.string().nullable(),
+	supplierName: z.string(),
+	supplierVatNumber: z.string().nullable(),
+	invoiceNumber: z.string().nullable(),
+	zatcaReference: z.string().nullable(),
+	paid: z.boolean(),
+	isCredit: z.boolean(),
+	netMinor: z.number().int(),
+	vatMinor: z.number().int(),
+	totalMinor: z.number().int(),
+	currency: z.string(),
+	categoryBreakdown: z.record(z.string(), z.number().int()),
+})
+export type AccountantExportRow = z.infer<typeof accountantExportRowSchema>
+
+export const accountantExportSupplierTotalSchema = z.object({
+	supplierId: z.string().nullable(),
+	supplierName: z.string(),
+	supplierVatNumber: z.string().nullable(),
+	deliveryCount: z.number().int(),
+	netMinor: z.number().int(),
+	vatMinor: z.number().int(),
+	totalMinor: z.number().int(),
+	paidMinor: z.number().int(),
+	unpaidMinor: z.number().int(),
+})
+
+export const accountantExportCurrencyTotalSchema = z.object({
+	currency: z.string(),
+	count: z.number().int(),
+	netMinor: z.number().int(),
+	vatMinor: z.number().int(),
+	totalMinor: z.number().int(),
+	paidMinor: z.number().int(),
+	unpaidMinor: z.number().int(),
+})
+
+export const accountantExportSchema = z.object({
+	from: isoDateSchema,
+	to: isoDateSchema,
+	locationId: z.string(),
+	currency: z.string(),
+	categories: z.array(z.string()),
+	rows: z.array(accountantExportRowSchema),
+	supplierTotals: z.array(accountantExportSupplierTotalSchema),
+	categoryTotals: z.record(z.string(), z.number().int()),
+	totals: z.object({
+		count: z.number().int(),
+		netMinor: z.number().int(),
+		vatMinor: z.number().int(),
+		totalMinor: z.number().int(),
+		paidMinor: z.number().int(),
+		unpaidMinor: z.number().int(),
+	}),
+	totalsByCurrency: z.array(accountantExportCurrencyTotalSchema).optional(),
+})
+export type AccountantExport = z.infer<typeof accountantExportSchema>

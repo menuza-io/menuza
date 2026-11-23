@@ -318,6 +318,36 @@ export function createDemoStockApi(): StockApi {
 		},
 		async putPhoto() {},
 		async photoConfirm() {},
+		async receiveAsOrdered(orderId) {
+			return {
+				deliveryId: `demo-delivery-${++serial}`,
+				orderId,
+				orderStatus: 'received',
+				lineCount: 2,
+				receivedAt: NOW(),
+				duplicate: false,
+			}
+		},
+		async orderNotYet(orderId, body) {
+			return {
+				orderId,
+				status: 'sent',
+				expectedDate: body.expectedDate,
+				version: body.expectedVersion + 1,
+			}
+		},
+		async cashPurchase(body) {
+			return {
+				id: `demo-cash-${++serial}`,
+				lineCount: body.lines.length,
+				receivedAt: NOW(),
+				lateSync: false,
+				duplicate: false,
+				draftItemIds: body.lines
+					.filter((line) => line.draftItem)
+					.map(() => `demo-draft-${++serial}`),
+			}
+		},
 	}
 }
 

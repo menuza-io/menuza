@@ -280,7 +280,10 @@ export function SuggestedOrdersPanel({
 					</span>
 					<Skeleton className="h-24 w-full" />
 				</div>
-			) : data.suppliers.length === 0 && data.unsourced.length === 0 ? (
+			) : data.suppliers.length === 0 &&
+			  data.unsourced.length === 0 &&
+			  (!data.overdueOrderWarnings ||
+					data.overdueOrderWarnings.length === 0) ? (
 				<EmptyState
 					title={<Trans>Nothing to order right now</Trans>}
 					description={
@@ -301,6 +304,59 @@ export function SuggestedOrdersPanel({
 					}
 					aria-busy={query.refreshing}
 				>
+					{data.overdueOrderWarnings && data.overdueOrderWarnings.length > 0 ? (
+						<Alert data-testid="suggested-overdue-warnings">
+							<Icon name="alert-triangle" />
+							<AlertDescription>
+								<div className="flex flex-col gap-1">
+									<span className="font-medium">
+										<Trans>Overdue orders no longer count as on order</Trans>
+									</span>
+									<ul className="flex flex-col gap-1 text-xs">
+										{data.overdueOrderWarnings.map((warning) => {
+											const orderNum = warning.number
+											const days = warning.daysOverdue
+											const supplier = warning.supplierName
+											return (
+												<li key={warning.orderId}>
+													<Link
+														to={`${inventoryOrderPath(orgSlug, warning.orderId)}${search}`}
+														className="wrap-anywhere underline"
+														data-testid={`suggested-overdue-${warning.orderId}`}
+													>
+														<Trans>
+															Order {orderNum} from {supplier} (
+															<bdi dir="ltr">
+																<Plural
+																	value={days}
+																	one="# day late"
+																	other="# days late"
+																/>
+															</bdi>
+															)
+														</Trans>
+													</Link>
+												</li>
+											)
+										})}
+									</ul>
+								</div>
+							</AlertDescription>
+						</Alert>
+					) : null}
+					{data.suppliers.length === 0 && data.unsourced.length === 0 ? (
+						<EmptyState
+							title={<Trans>Nothing to order right now</Trans>}
+							description={
+								<Trans>
+									When an item drops below the amount you order at, it shows
+									here with what to order from each supplier. Set those amounts
+									under Stock, Set levels.
+								</Trans>
+							}
+							icons={['shopping-bag', 'check-circle', 'list']}
+						/>
+					) : null}
 					{data.suppliers.length > 0 ? (
 						<ul
 							className="grid gap-3 sm:grid-cols-2"

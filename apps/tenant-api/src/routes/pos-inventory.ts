@@ -10,6 +10,8 @@ import {
 	prepTaskSchema,
 	inventoryIdSchema,
 	stationCatalogQuerySchema,
+	stationCashPurchaseResultSchema,
+	stationCashPurchaseSchema,
 	stationCountEntriesResultSchema,
 	stationCountEntriesSchema,
 	stationCountSheetSchema,
@@ -18,9 +20,13 @@ import {
 	stationDeliverySchema,
 	stationDishWasteResultSchema,
 	stationDishWasteSchema,
+	stationOrderNotYetResultSchema,
+	stationOrderNotYetSchema,
 	stationPhotoConfirmResultSchema,
 	stationPhotoRequestSchema,
 	stationPhotoUploadSchema,
+	stationReceiveAsOrderedResultSchema,
+	stationReceiveAsOrderedSchema,
 	stationSendCountSchema,
 	stationStartCountResultSchema,
 	stationStartCountSchema,
@@ -30,8 +36,9 @@ import {
 	STATION_WASTE_UNDO_SERVER_MS,
 	undoWasteSchema,
 } from '@repo/inventory'
-import { invCounts } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { invCounts, invItems } from '@repo/tenant-db'
+import { and, eq, inArray } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import {
@@ -55,6 +62,10 @@ import {
 	loadAllowedDelivery,
 	recordDelivery,
 } from '../services/inventory-purchasing-service.ts'
+import {
+	receiveOrderAsOrdered,
+	rescheduleOrder,
+} from '../services/inventory-orders-service.ts'
 import {
 	confirmInvoicePhoto,
 	requestInvoicePhotoUpload,
@@ -575,6 +586,171 @@ posInventoryRoutes.post(
 				throw error
 			}
 			return stationJson(stationPhotoConfirmResultSchema.parse({ ok: true }))
+		},
+	),
+)
+
+/** Overdue order actions need `inventory.purchasing` on top of the Stock gate. */
+async function purchasingGate(ctx: StationCtx): Promise<Response | null> {
+	const flags = await getInventoryFlagState(ctx.pos.orgId)
+	if (flags.status === 'on' && flags.features.purchasing) return null
+	return stationError(
+		flags.status === 'on' || flags.status === 'off'
+			? 'inventory_disabled'
+			: 'inventory_unavailable',
+	)
+}
+
+posInventoryRoutes.post(
+	'/orders/:id/receive-as-ordered',
+	stationRoute(
+		{
+			body: stationReceiveAsOrderedSchema,
+			locations: (body) => [body.locationId],
+			receive: true,
+		},
+		async (ctx, body) => {
+			const refused = await purchasingGate(ctx)
+			if (refused) return refused
+			const id = idParam(ctx)
+			const { resolve } = await actorsFor(ctx, [
+				{ clientId: body.clientId, madeBy: body.madeBy },
+			])
+			const made = clampMadeAt(body.madeAt, posInventoryDeps.now())
+			const madeAt = body.madeAt === undefined ? undefined : made.at
+			let duplicate = false
+			const result = await receiveOrderAsOrdered(
+				{ ...ctx.caller, actor: resolve(body.madeBy) },
+				{
+					orderId: id,
+					expectedVersion: body.expectedVersion,
+					clientId: body.clientId,
+					idempotency: idempotency(
+						ctx,
+						'order_receive_as_ordered',
+						body.clientId,
+						{ id, ...body },
+					),
+					options: {
+						source: 'station',
+						lateSync: made.late,
+						madeAt,
+						onReplay: () => {
+							duplicate = true
+						},
+					},
+				},
+			)
+			return stationJson(
+				stationReceiveAsOrderedResultSchema.parse({
+					deliveryId: result.delivery.id,
+					orderId: id,
+					orderStatus: result.order?.status ?? 'received',
+					lineCount: result.delivery.lineCount,
+					receivedAt: result.delivery.receivedAt ?? posInventoryDeps.now(),
+					duplicate,
+				}),
+			)
+		},
+	),
+)
+
+posInventoryRoutes.post(
+	'/orders/:id/not-yet',
+	stationRoute(
+		{
+			body: stationOrderNotYetSchema,
+			locations: (body) => [body.locationId],
+			receive: true,
+		},
+		async (ctx, body) => {
+			const refused = await purchasingGate(ctx)
+			if (refused) return refused
+			const id = idParam(ctx)
+			const { resolve } = await actorsFor(ctx, [
+				{ clientId: id, madeBy: body.madeBy },
+			])
+			const updated = await rescheduleOrder(
+				{ ...ctx.caller, actor: resolve(body.madeBy) },
+				{
+					id,
+					expectedVersion: body.expectedVersion,
+					expectedDate: body.expectedDate,
+				},
+			)
+			return stationJson(
+				stationOrderNotYetResultSchema.parse({
+					orderId: updated.id,
+					status: updated.status,
+					expectedDate: updated.expectedDate!,
+					version: updated.version,
+				}),
+			)
+		},
+	),
+)
+
+posInventoryRoutes.post(
+	'/cash-purchase',
+	stationRoute(
+		{
+			body: stationCashPurchaseSchema,
+			locations: (body) => [body.locationId],
+			receive: true,
+		},
+		async (ctx, body) => {
+			const { resolve } = await actorsFor(ctx, [
+				{ clientId: body.clientId, madeBy: body.madeBy },
+			])
+			const made = clampMadeAt(body.madeAt, posInventoryDeps.now())
+			const madeAt = body.madeAt === undefined ? undefined : made.at
+			let duplicate = false
+			const result = await recordDelivery(
+				{ ...ctx.caller, actor: resolve(body.madeBy) },
+				{
+					body: {
+						clientId: body.clientId,
+						locationId: body.locationId,
+						supplierId: null,
+						isCashPurchase: true,
+						paid: true,
+						lines: body.lines.map((line) => ({
+							itemId: line.itemId ?? null,
+							draftItem: line.draftItem,
+							quantity: line.quantity,
+							lineTotalMinor: line.amountPaidMinor,
+						})),
+					},
+					idempotency: idempotency(ctx, 'cash_purchase', body.clientId, body),
+					options: {
+						source: 'station',
+						lateSync: made.late,
+						madeAt,
+						onReplay: () => {
+							duplicate = true
+						},
+					},
+				},
+			)
+			const itemIds = [
+				...new Set(result.delivery.lines.map((line) => line.itemId)),
+			]
+			const draftRows = await queryInChunks(itemIds, (chunk) =>
+				ctx.pos.db
+					.select({ id: invItems.id })
+					.from(invItems)
+					.where(and(inArray(invItems.id, chunk), eq(invItems.isDraft, true))),
+			)
+			return stationJson(
+				stationCashPurchaseResultSchema.parse({
+					id: result.delivery.id,
+					lineCount: result.delivery.lineCount,
+					receivedAt: result.delivery.receivedAt ?? posInventoryDeps.now(),
+					lateSync: result.delivery.lateSync === true,
+					duplicate,
+					draftItemIds: draftRows.map((row) => row.id),
+				}),
+			)
 		},
 	),
 )

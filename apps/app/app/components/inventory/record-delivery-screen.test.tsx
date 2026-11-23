@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type InventoryClient } from '#app/components/inventory/inventory-client-provider.tsx'
@@ -441,5 +441,90 @@ describe('RecordDeliveryScreen', () => {
 			'not accepted',
 		)
 		expect(screen.getByTestId(/^delivery-line-line-/)).toBeInTheDocument()
+	})
+
+	it('reads an invoice PDF/photo with Use invoice lines, shows warnings, and hides button when reader is missing (#504)', async () => {
+		let returnMissing = false
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path === '/suppliers') return { suppliers: [SUPPLIER] }
+			if (path === '/suppliers/s1') {
+				return { ...SUPPLIER, products: [PRODUCT] }
+			}
+			if (path === '/deliveries/invoice/read' && init?.method === 'POST') {
+				if (returnMissing) {
+					throw new OperatorRequestError(
+						'missing',
+						'reader_not_configured',
+						503,
+					)
+				}
+				return {
+					deliveryId: 'raw',
+					supplierName: 'Fresh Farms',
+					invoiceNumber: 'INV-PDF-1',
+					totalMinor: 56_000,
+					linesSumMinor: 56_000,
+					invoiceTotalMismatch: false,
+					lines: [
+						{
+							text: 'Chicken thighs 2 boxes @ 280',
+							quantity: 2,
+							unit: 'box',
+							lineTotalMinor: 56_000,
+							unitPriceMinor: 28_000,
+							itemId: 'itm_1',
+							itemName: 'Chicken thighs',
+							matchedSupplierProductId: 'sp1',
+							warnings: ['pack_diff'],
+						},
+					],
+				}
+			}
+			if (path.startsWith('/items')) {
+				return { items: [CHICKEN], total: 1, nextCursor: null }
+			}
+			throw new Error(`unexpected ${path}`)
+		})
+
+		setup(request)
+		await chooseSupplier()
+
+		const pdf = new File(['%PDF-1.4'], 'invoice.pdf', {
+			type: 'application/pdf',
+		})
+		if (!pdf.arrayBuffer) {
+			Object.defineProperty(pdf, 'arrayBuffer', {
+				value: async () => new TextEncoder().encode('%PDF-1.4').buffer,
+			})
+		}
+		await userEvent.upload(
+			screen.getByTestId('delivery-invoice-read-input'),
+			pdf,
+		)
+		expect(
+			await screen.findByTestId('delivery-invoice-read-panel'),
+		).toBeInTheDocument()
+		expect(screen.getByTestId('invoice-warning-pack_diff')).toBeInTheDocument()
+
+		await userEvent.click(screen.getByTestId('delivery-apply-invoice-lines'))
+		expect(await screen.findByTestId(/^delivery-line-raw-/)).toHaveTextContent(
+			'Chicken thighs 2 boxes @ 280',
+		)
+		expect(screen.getByTestId('delivery-invoice-number')).toHaveValue(
+			'INV-PDF-1',
+		)
+
+		// Now test 503 reader_not_configured hides the button gracefully
+		cleanup()
+		returnMissing = true
+		setup(request)
+		await screen.findByTestId('delivery-use-invoice-lines')
+		await userEvent.upload(
+			screen.getByTestId('delivery-invoice-read-input'),
+			pdf,
+		)
+		await waitFor(() =>
+			expect(screen.queryByTestId('delivery-use-invoice-lines')).toBeNull(),
+		)
 	})
 })

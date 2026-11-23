@@ -1,9 +1,12 @@
 import {
 	cancelOrderSchema,
+	confirmOrderSchema,
 	createOrderSchema,
 	INVENTORY_PERMISSIONS,
 	listOrdersQuerySchema,
 	orderTextQuerySchema,
+	receiveOrderAsOrderedSchema,
+	rescheduleOrderSchema,
 	sendOrderSchema,
 	suggestedOrdersQuerySchema,
 	updateOrderSchema,
@@ -27,11 +30,14 @@ import {
 import {
 	buildSuggestedOrders,
 	cancelOrder,
+	confirmOrder,
 	createOrder,
 	getOrder,
 	getOrderText,
 	getReceivePrefill,
 	listOrders,
+	receiveOrderAsOrdered,
+	rescheduleOrder,
 	sendOrder,
 	updateOrder,
 } from '../services/inventory-orders-service.ts'
@@ -49,6 +55,12 @@ const reads = (): ReturnType<typeof inventoryGuard> =>
 	inventoryGuard({
 		scope: ['read', 'write'],
 		grant: INVENTORY_PERMISSIONS.READ_INVENTORY,
+		feature: 'purchasing',
+	})
+const writes = (): ReturnType<typeof inventoryGuard> =>
+	inventoryGuard({
+		scope: 'write',
+		grant: INVENTORY_PERMISSIONS.UPDATE_INVENTORY,
 		feature: 'purchasing',
 	})
 const purchasing = (): ReturnType<typeof inventoryGuard> =>
@@ -226,6 +238,81 @@ operatorInventoryOrdersRoutes.get(
 				await getReceivePrefill(await getTenantDb(ctx.orgId), {
 					id,
 					caller: inventoryCaller(ctx),
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryOrdersRoutes.post(
+	'/orders/:id/confirm',
+	purchasing(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, confirmOrderSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await confirmOrder(inventoryCaller(ctx), {
+					id,
+					expectedVersion: body.data.expectedVersion,
+					confirmed: body.data.confirmed,
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryOrdersRoutes.post(
+	'/orders/:id/receive-as-ordered',
+	writes(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, receiveOrderAsOrderedSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await receiveOrderAsOrdered(inventoryCaller(ctx), {
+					orderId: id,
+					expectedVersion: body.data.expectedVersion,
+					clientId: body.data.clientId,
+					idempotency: clientIdempotency(
+						ctx,
+						'orders:receive-as-ordered',
+						body.data.clientId,
+						{ id, ...body.data },
+					),
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryOrdersRoutes.post(
+	'/orders/:id/not-yet',
+	writes(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, rescheduleOrderSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await rescheduleOrder(inventoryCaller(ctx), {
+					id,
+					expectedVersion: body.data.expectedVersion,
+					expectedDate: body.data.expectedDate,
 				}),
 			)
 		} catch (error) {
