@@ -12,6 +12,7 @@ import {
 	createStorageClient,
 	deleteFromStorage,
 	uploadProfileImage as _uploadProfileImage,
+	uploadSupportScreenshot as _uploadSupportScreenshot,
 	uploadOrganizationImage as _uploadOrganizationImage,
 	uploadOrganizationMediaImage as _uploadOrganizationMediaImage,
 	uploadNoteImage as _uploadNoteImage,
@@ -299,6 +300,14 @@ export async function uploadOrganizationMediaImage(
 		}
 		throw error
 	}
+}
+
+/** The one optional screenshot of a support request (#233): platform bucket, not the media library. */
+export async function uploadSupportScreenshot(
+	userId: string,
+	file: File | FileUpload,
+) {
+	return _uploadSupportScreenshot(userId, file, createUploadOptions())
 }
 
 export async function uploadNoteImage(

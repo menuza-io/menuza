@@ -392,12 +392,10 @@ describe('a push broadcast (#105: operators send it, with metrics)', () => {
 		const db = await getTenantDb(orgId)
 		await device(1)
 		await optIn(db, aliceId)
-		await db
-			.insert(marketingSettings)
-			.values({
-				key: 'frequency_cap',
-				value: JSON.stringify({ limit: 1, days: 7 }),
-			})
+		await db.insert(marketingSettings).values({
+			key: 'frequency_cap',
+			value: JSON.stringify({ limit: 1, days: 7 }),
+		})
 		const first = await pushCampaign(db)
 		await dispatchBroadcast(orgId, first.id, broadcastLease(first.now), {
 			now: () => first.now,
@@ -496,12 +494,10 @@ describe('a push step in an automation (#105)', () => {
 		const { db, execute } = await stepFor(config)
 		await device(1)
 		await optIn(db, aliceId)
-		await db
-			.insert(marketingSettings)
-			.values({
-				key: 'frequency_cap',
-				value: JSON.stringify({ limit: 1, days: 7 }),
-			})
+		await db.insert(marketingSettings).values({
+			key: 'frequency_cap',
+			value: JSON.stringify({ limit: 1, days: 7 }),
+		})
 		expect(await execute('one')).toMatchObject({ status: 'delivered' })
 		expect(await execute('two')).toMatchObject({
 			status: 'skipped',

@@ -360,7 +360,11 @@ describe('a 100% discount order', () => {
 				feeContext({
 					features: { automatic: true, coupons: true },
 					discounts: [
-						makeDiscount({ id: 'disc_half', name: 'Half off', percentBp: 5000 }),
+						makeDiscount({
+							id: 'disc_half',
+							name: 'Half off',
+							percentBp: 5000,
+						}),
 					],
 					codes: [],
 				}),

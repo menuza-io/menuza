@@ -1,5 +1,5 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { requireUserWithRole } from '@repo/auth'
+import { getCallerVerificationState, requireUserWithRole } from '@repo/auth'
 import { getIpAddressesByUser } from '@repo/common/ip-tracking'
 import {
 	NoteActivityLog,
@@ -10,6 +10,7 @@ import {
 	eq,
 } from '@repo/database'
 import { useLoaderData } from 'react-router'
+import { type CallerVerificationView } from '#app/components/admin-support-card.tsx'
 import {
 	UserDetailView,
 	type AdminUserDetail,
@@ -23,7 +24,7 @@ export async function loader({
 	request: Request
 	params: { userId: string }
 }) {
-	await requireUserWithRole(request, 'admin')
+	const agentId = await requireUserWithRole(request, 'admin')
 
 	const { userId } = params
 	invariantResponse(userId, 'User ID is required')
@@ -82,7 +83,10 @@ export async function loader({
 	// Get IP addresses used by this user
 	const userIpAddresses = await getIpAddressesByUser(user.id)
 
+	const verification = await getCallerVerificationState({ agentId, userId })
+
 	return Response.json({
+		verification,
 		user: {
 			...user,
 			hasPassword: !!user.password,
@@ -96,6 +100,7 @@ export async function loader({
 }
 
 type LoaderData = {
+	verification: CallerVerificationView
 	user: AdminUserDetail
 	recentActivity: RecentActivity
 	ipAddresses: Awaited<ReturnType<typeof getIpAddressesByUser>>
@@ -110,6 +115,7 @@ export default function AdminUserDetailPage() {
 				user={data.user}
 				recentActivity={data.recentActivity}
 				ipAddresses={data.ipAddresses}
+				verification={data.verification}
 			/>
 		</div>
 	)

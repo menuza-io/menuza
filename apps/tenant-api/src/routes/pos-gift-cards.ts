@@ -94,7 +94,8 @@ async function requireWork(
 	c: Context,
 	options: { new: boolean },
 ): Promise<
-	{ pos: TillPos; state: GiftCardFlagState; features: GiftCardFeatures } | { error: Response }
+	| { pos: TillPos; state: GiftCardFlagState; features: GiftCardFeatures }
+	| { error: Response }
 > {
 	const till = await requireTill(c)
 	if ('error' in till) return till
@@ -108,8 +109,7 @@ async function requireWork(
 			return { error: giftCardDeny(503, 'gift_cards_unavailable') }
 		}
 	}
-	const enabled =
-		state.status === 'stopped' ? true : state.features.enabled
+	const enabled = state.status === 'stopped' ? true : state.features.enabled
 	if (!enabled) return { error: giftCardDeny(403, 'gift_cards_disabled') }
 	if (options.new && !state.features.pos) {
 		return { error: giftCardDeny(403, 'feature_disabled', { feature: 'pos' }) }
@@ -299,4 +299,3 @@ posGiftCardRoutes.post('/refund', async (c) => {
 		return giftCardErrorResponse(error)
 	}
 })
-

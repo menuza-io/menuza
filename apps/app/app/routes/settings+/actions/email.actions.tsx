@@ -2,7 +2,7 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { verifySessionStorage } from '@repo/auth'
 import { brand } from '@repo/config/brand'
 import { db, eq, User } from '@repo/database'
-import { EmailChangeEmail, sendEmail } from '@repo/email'
+import { EmailChangeEmail } from '@repo/email'
 import { EmailSchema } from '@repo/validation'
 import { z } from 'zod'
 
@@ -19,6 +19,7 @@ import {
 	CHANGE_EMAIL_USER_RATE_LIMIT,
 	checkRateLimit,
 } from '#app/utils/rate-limit.server.ts'
+import { sendCodeEmail } from '#app/utils/sign-in-delivery.server.ts'
 
 export const ChangeEmailSchema = z.object({
 	// EmailSchema lowercases, so the uniqueness check, rate limits, cookie and
@@ -114,7 +115,9 @@ export async function changeEmailAction({
 	// The code goes only to the NEW address. Returning it to the requester
 	// would let anyone claim an address they do not control (and the
 	// invitations sent to it) without ever reading its mailbox.
-	const response = await sendEmail({
+	const response = await sendCodeEmail({
+		purpose: 'change_email',
+		userId,
 		to: newEmail,
 		subject: `Verify your new ${brand.name} email address`,
 		react: (

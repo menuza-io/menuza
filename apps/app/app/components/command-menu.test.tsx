@@ -11,6 +11,7 @@ import {
 	type StaffingNavAccess,
 } from '#app/utils/staffing/nav.ts'
 import { CommandMenu, getNavigationCommands } from './command-menu.tsx'
+import { HelpProvider } from './help/help-context.tsx'
 
 const STAFFING_NAV: StaffingNavAccess = {
 	visible: true,
@@ -71,14 +72,15 @@ afterEach(() => {
 	Element.prototype.scrollIntoView = originalScrollIntoView
 })
 
-function renderMenu() {
+function renderMenu({ withHelp = false }: { withHelp?: boolean } = {}) {
 	i18n.load('en', {})
 	i18n.activate('en')
+	const menu = <CommandMenu open onOpenChange={() => {}} />
 	const router = createMemoryRouter(
 		[
 			{
 				path: '*',
-				element: <CommandMenu open onOpenChange={() => {}} />,
+				element: withHelp ? <HelpProvider>{menu}</HelpProvider> : menu,
 			},
 			{ path: '/acme/staff/timeclock', element: <div>Time clock page</div> },
 			{ path: '/api/onboarding/complete-step', action: () => null },
@@ -126,6 +128,41 @@ describe('CommandMenu', () => {
 
 		expect(await screen.findByText('No results found.')).toBeInTheDocument()
 		expect(screen.queryByText('No notes found.')).not.toBeInTheDocument()
+	})
+})
+
+describe('Help in the command menu (#233)', () => {
+	it('offers Contact support and Report a problem, and opens the form with the page context', async () => {
+		const user = userEvent.setup()
+		renderMenu({ withHelp: true })
+
+		const listbox = await screen.findByRole('listbox')
+		expect(
+			within(listbox).getByRole('option', { name: 'Contact support' }),
+		).toBeInTheDocument()
+		await user.click(
+			within(listbox).getByRole('option', { name: 'Report a problem' }),
+		)
+
+		// The form is on screen with what will be sent, and a guest is never in it.
+		expect(
+			await screen.findByText('We will send with your message'),
+		).toBeTruthy()
+		expect(screen.getByText(/The page you are on: \/acme/)).toBeTruthy()
+		expect(
+			screen.getByText(/never attach a guest's name, phone, email or order/i),
+		).toBeTruthy()
+		expect(
+			screen.getByRole('button', { name: 'Something is broken' }),
+		).toHaveAttribute('aria-pressed', 'true')
+	})
+
+	it('has no Help group outside the signed-in layout', async () => {
+		renderMenu()
+		const listbox = await screen.findByRole('listbox')
+		expect(
+			within(listbox).queryByRole('option', { name: 'Contact support' }),
+		).toBeNull()
 	})
 })
 
@@ -250,9 +287,7 @@ describe('getNavigationCommands', () => {
 
 		await user.type(await screen.findByRole('combobox'), 'Test')
 
-		expect(
-			await screen.findByText('<img src=x> Test note'),
-		).toBeInTheDocument()
+		expect(await screen.findByText('<img src=x> Test note')).toBeInTheDocument()
 		expect(screen.queryByText('No results found.')).not.toBeInTheDocument()
 	})
 })

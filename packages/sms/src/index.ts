@@ -28,9 +28,12 @@ export function getTwilioClient() {
 export async function sendSms({
 	to,
 	message,
+	statusCallback,
 }: {
 	to: string
 	message: string
+	/** Where the provider reports delivery (sent, delivered, undelivered). */
+	statusCallback?: string
 }) {
 	const from = ENV.TWILIO_FROM_NUMBER
 	const client = getTwilioClient()
@@ -59,6 +62,7 @@ export async function sendSms({
 			body: message,
 			from,
 			to,
+			...(statusCallback ? { statusCallback } : {}),
 		})
 		return { success: true, sid: response.sid, mock: false }
 	} catch (error) {

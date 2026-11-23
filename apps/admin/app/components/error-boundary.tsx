@@ -1,4 +1,6 @@
 import { getErrorMessage } from '@repo/common'
+import { useTraceId } from '@repo/common/trace-id'
+import { ErrorReference } from '@repo/ui/error-reference'
 import { type ReactElement } from 'react'
 import {
 	type ErrorResponse,
@@ -33,14 +35,21 @@ export function GeneralErrorBoundary({
 		console.error(error)
 	}
 
+	// The reference id of this page load (#385): the same value is on the server
+	// log line, so it can be pasted into Request lookup.
+	const traceId = useTraceId()
+
 	return (
-		<div className="container flex items-center justify-center p-20 text-2xl">
-			{isResponse
-				? (statusHandlers?.[error.status] ?? defaultStatusHandler)({
-						error,
-						params,
-					})
-				: unexpectedErrorHandler(error)}
+		<div className="container flex flex-col items-center justify-center gap-6 p-20">
+			<div className="text-2xl">
+				{isResponse
+					? (statusHandlers?.[error.status] ?? defaultStatusHandler)({
+							error,
+							params,
+						})
+					: unexpectedErrorHandler(error)}
+			</div>
+			{traceId ? <ErrorReference traceId={traceId} /> : null}
 		</div>
 	)
 }

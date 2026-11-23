@@ -89,6 +89,11 @@ import {
 } from '#app/utils/reservations/manager-alerts.ts'
 import { staffingAlertCopy } from '#app/utils/staffing/alert-copy.ts'
 import {
+	SUPPORT_REPLY_COPY,
+	isSupportReplyNotificationType,
+	supportRequestPath,
+} from '#app/utils/support-alerts.ts'
+import {
 	websiteAlertCopy,
 	websiteAlertKindFromNotificationType,
 	websiteAlertPath,
@@ -218,6 +223,14 @@ function NotificationItem({
 			}
 		: null
 
+	const supportReplyKind = isSupportReplyNotificationType(notification.type)
+	const supportAlert = supportReplyKind
+		? {
+				subject: _(SUPPORT_REPLY_COPY.subject),
+				body: _(SUPPORT_REPLY_COPY.body),
+			}
+		: null
+
 	const occasionKind = occasionAlertKindFromNotificationType(notification.type)
 	const occasionAlert = occasionKind
 		? occasionAlertCopy(
@@ -309,6 +322,7 @@ function NotificationItem({
 		websiteAlert?.subject ??
 		discountAlert?.subject ??
 		campaignAlert?.subject ??
+		supportAlert?.subject ??
 		occasionAlert?.subject ??
 		printAlert?.subject ??
 		staffing?.subject ??
@@ -325,6 +339,7 @@ function NotificationItem({
 		websiteAlert?.body ??
 		discountAlert?.body ??
 		campaignAlert?.body ??
+		supportAlert?.body ??
 		occasionAlert?.body ??
 		printAlert?.body ??
 		staffing?.body ??
@@ -374,6 +389,14 @@ function NotificationItem({
 		) {
 			void navigate(
 				`/${payload.orgSlug}${campaignAlertPath(payload.campaignId)}`,
+			)
+		} else if (
+			supportReplyKind &&
+			typeof payload?.orgSlug === 'string' &&
+			typeof payload?.requestId === 'string'
+		) {
+			void navigate(
+				`/${payload.orgSlug}${supportRequestPath(payload.requestId)}`,
 			)
 		} else if (occasionKind && typeof payload?.orgSlug === 'string') {
 			void navigate(
@@ -441,6 +464,8 @@ function NotificationItem({
 							<Icon name="globe" className="h-4 w-4" />
 						) : discountKind ? (
 							<Icon name="tag" className="h-4 w-4" />
+						) : supportReplyKind ? (
+							<Icon name="message-square" className="h-4 w-4" />
 						) : campaignKind || occasionKind ? (
 							<Icon name="send" className="h-4 w-4" />
 						) : printKind ? (

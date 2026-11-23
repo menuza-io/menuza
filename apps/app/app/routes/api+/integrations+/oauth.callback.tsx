@@ -30,6 +30,7 @@ import {
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { requireOrganizationAdmin } from '#app/utils/organization/require-org-admin.server.ts'
+import { recordOrganizationEvent } from '#app/utils/organization-events.server.ts'
 
 async function clearHeaders() {
 	const headers = new Headers()
@@ -193,6 +194,27 @@ export async function loader(args: LoaderFunctionArgs) {
 				}),
 		},
 	)
+
+	// A connected integration is on the Admin Timeline (#279): the provider name
+	// only, once per connection.
+	try {
+		const connected = (
+			await integrationManager.getOrganizationIntegrations(organization.id)
+		).find(
+			(integration) =>
+				integration.isActive && integration.providerName === saved.provider,
+		)
+		if (connected) {
+			await recordOrganizationEvent({
+				organizationId: organization.id,
+				kind: 'integration_connected',
+				payload: { provider: saved.provider },
+				dedupeKey: `integration:${connected.id}:connected:${Math.floor(Date.now() / 60_000)}`,
+			})
+		}
+	} catch {
+		// The Timeline never changes what the callback answers.
+	}
 
 	return withClearedCookies(response)
 }

@@ -116,7 +116,8 @@ marketingAudienceRoutes.post('/', async (c) => {
 	if (denied) return denied
 	const read = await readBody(c)
 	if (!read.ok) return refuse('invalid_audience', c)
-	if (namesSensitiveRule(read.body)) return refuse('sensitive_rule_not_allowed', c)
+	if (namesSensitiveRule(read.body))
+		return refuse('sensitive_rule_not_allowed', c)
 	const parsed = saveAudienceSchema.safeParse(read.body)
 	if (!parsed.success) return refuse('invalid_audience', c)
 	if (audienceOutOfScope(parsed.data.definition, auth.locationIds)) {
@@ -174,7 +175,8 @@ marketingAudienceRoutes.put('/:id', async (c) => {
 	if (!id.success) return refuse('audience_not_found', c)
 	const read = await readBody(c)
 	if (!read.ok) return refuse('invalid_audience', c)
-	if (namesSensitiveRule(read.body)) return refuse('sensitive_rule_not_allowed', c)
+	if (namesSensitiveRule(read.body))
+		return refuse('sensitive_rule_not_allowed', c)
 	const parsed = saveAudienceSchema.safeParse(read.body)
 	if (!parsed.success) return refuse('invalid_audience', c)
 	if (audienceOutOfScope(parsed.data.definition, auth.locationIds)) {

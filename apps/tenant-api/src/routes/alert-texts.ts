@@ -6,6 +6,7 @@ import { isUsOrCanadaNumber } from '@repo/phone-agent'
 import { sendSms } from '@repo/sms'
 import { ENV } from 'varlock/env'
 import { rateLimit, rateLimitByKey } from '../lib/rate-limit.ts'
+import { consentBaseUrl } from '../lib/email-consent.ts'
 import { smsRouteAvailable } from '../lib/sms-route.ts'
 import {
 	getBearerToken,
@@ -104,12 +105,23 @@ alertTextRoutes.post('/', async (c) => {
 			'Retry-After': String(limited.retryAfter),
 		})
 	}
+	let sid: string | undefined
 	try {
-		await sendSms({ to, message: text })
+		// Delivery reports come back to this node's own webhook (#246), when it
+		// has a public origin; the report carries the message id and a status only.
+		const origin = consentBaseUrl()
+		const result = await sendSms({
+			to,
+			message: text,
+			...(origin
+				? { statusCallback: `${origin}/webhooks/sms-status/twilio` }
+				: {}),
+		})
+		sid = (result as { sid?: string }).sid
 	} catch {
 		// The provider's message can quote the number or the text: neither is logged.
 		console.error('Failed to send an order alert text')
 		return c.json({ error: 'send_failed' }, 502, NO_STORE)
 	}
-	return c.json({ sent: true }, 200, NO_STORE)
+	return c.json({ sent: true, ...(sid ? { sid } : {}) }, 200, NO_STORE)
 })

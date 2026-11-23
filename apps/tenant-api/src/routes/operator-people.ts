@@ -1,7 +1,4 @@
-import {
-	BIRTHDAY_ERROR,
-	birthMonthDayFieldSchema,
-} from '@repo/common/birthday'
+import { BIRTHDAY_ERROR, birthMonthDayFieldSchema } from '@repo/common/birthday'
 import { STAFF_CONSENT_METHODS } from '@repo/common/marketing-consent'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono, type Context } from 'hono'
@@ -326,7 +323,9 @@ operatorPeopleRoutes.patch('/:key', async (c) => {
 		raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
 	const parsed = patchSchema.safeParse(raw)
 	if (!parsed.success) {
-		if (parsed.error.issues.some((issue) => issue.path[0] === 'birthMonthDay')) {
+		if (
+			parsed.error.issues.some((issue) => issue.path[0] === 'birthMonthDay')
+		) {
 			return json({ error: BIRTHDAY_ERROR }, 400)
 		}
 		return json(

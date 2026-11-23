@@ -176,3 +176,21 @@ export function runWithRequestContext<T>(
 export function generateRequestId(): string {
 	return randomUUID()
 }
+
+const TRACE_ID_PATTERN = /^[a-f0-9]{16}$/
+
+/**
+ * A page-load trace id (#385): sixteen random hex characters, nothing
+ * personal. The same shape as `@repo/common/trace-id`, which the browser and
+ * the Worker use; this copy exists because this package is compiled on its own.
+ */
+export function generateTraceId(): string {
+	return randomUUID().replace(/-/g, '').slice(0, 16)
+}
+
+/** The id when `value` is exactly one, else null (never echo anything else). */
+export function parseTraceId(value: unknown): string | null {
+	if (typeof value !== 'string') return null
+	const trimmed = value.trim().toLowerCase()
+	return TRACE_ID_PATTERN.test(trimmed) ? trimmed : null
+}

@@ -111,8 +111,10 @@ marketingSettingsRoutes.put('/', async (c) => {
 			cartReminder: await readCartSettings(db),
 		})
 	} catch (error) {
-		console.error('Marketing settings could not be saved', errorLogFields(error))
+		console.error(
+			'Marketing settings could not be saved',
+			errorLogFields(error),
+		)
 		return c.json({ error: 'Internal Server Error' }, 500)
 	}
 })
-

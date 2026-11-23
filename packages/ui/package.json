@@ -86,6 +86,7 @@
     "./image-cropper": "./components/image-cropper.tsx",
     "./nav-main": "./components/nav-main.tsx",
     "./not-found-page": "./components/not-found-page.tsx",
+    "./error-reference": "./components/error-reference.tsx",
     "./client-hints": "./utils/client-hints.tsx",
     "./use-mobile": "./utils/use-mobile.ts",
     "./springs": "./lib/springs.ts",

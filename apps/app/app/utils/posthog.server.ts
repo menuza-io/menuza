@@ -1,3 +1,4 @@
+import { TRACE_ID_HEADER, parseTraceId } from '@repo/common/trace-id'
 import { PostHog } from 'posthog-node'
 import { createContext, type RouterContextProvider } from 'react-router'
 import { ENV } from 'varlock/env'
@@ -77,6 +78,8 @@ export function capturePostHogServerException(
 			),
 			method: request.method,
 			service: 'app-worker',
+			// The reference id the error page shows (#385).
+			trace_id: parseTraceId(request.headers.get(TRACE_ID_HEADER)) ?? undefined,
 		})
 	} catch {
 		// Telemetry must never replace or mask the original request error.

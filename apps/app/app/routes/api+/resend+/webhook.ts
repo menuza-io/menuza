@@ -1,3 +1,4 @@
+import { applyResendDeliveryEvent } from '@repo/auth'
 import { verifyResendWebhook } from '@repo/email'
 import { handlePlatformResendWebhook } from '@repo/marketing/server/platform-resend-webhook'
 import { type ActionFunctionArgs } from 'react-router'
@@ -32,8 +33,11 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	try {
+		// Delivered, bounced, delayed and so on for a sign-in code email (#246):
+		// updates the Sign-in help log. Ignored when the id is not one of ours.
+		const signInDelivery = await applyResendDeliveryEvent(event)
 		const result = await handlePlatformResendWebhook(event)
-		return Response.json({ ok: true, ...result })
+		return Response.json({ ok: true, ...result, signInDelivery })
 	} catch (error) {
 		console.error('Resend webhook processing failed:', error)
 		return new Response('Webhook processing failed', { status: 500 })

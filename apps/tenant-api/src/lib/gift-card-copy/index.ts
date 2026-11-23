@@ -5,8 +5,20 @@ import { type SiteContentLocale } from '@repo/common/site-locales'
  * restaurant), `{from}`, `{to}`. Transactional only: no marketing content.
  */
 export type GiftCardCopy = {
-	receipt: { subject: string; heading: string; lead: string; leadLater: string; leadHeld: string }
-	delivery: { subject: string; subjectSelf: string; heading: string; lead: string; leadSelf: string }
+	receipt: {
+		subject: string
+		heading: string
+		lead: string
+		leadLater: string
+		leadHeld: string
+	}
+	delivery: {
+		subject: string
+		subjectSelf: string
+		heading: string
+		lead: string
+		leadSelf: string
+	}
 	labels: {
 		amount: string
 		code: string
@@ -24,7 +36,14 @@ export type GiftCardCopy = {
 	}
 	/** The headline over each design. */
 	designs: Record<
-		'classic' | 'birthday' | 'holidays' | 'thank_you' | 'eid' | 'ramadan' | 'national_day' | 'custom',
+		| 'classic'
+		| 'birthday'
+		| 'holidays'
+		| 'thank_you'
+		| 'eid'
+		| 'ramadan'
+		| 'national_day'
+		| 'custom',
 		string
 	>
 }
@@ -34,8 +53,10 @@ const en: GiftCardCopy = {
 		subject: 'Your gift card purchase from {r}',
 		heading: 'Thank you for your gift card',
 		lead: 'Your payment went through and the gift card is on its way.',
-		leadLater: 'Your payment went through. We will deliver the gift card on the date you chose.',
-		leadHeld: 'Your payment went through. Your card will be delivered within 2 hours.',
+		leadLater:
+			'Your payment went through. We will deliver the gift card on the date you chose.',
+		leadHeld:
+			'Your payment went through. Your card will be delivered within 2 hours.',
 	},
 	delivery: {
 		subject: '{from} sent you a gift card for {r}',
@@ -118,8 +139,10 @@ const es: GiftCardCopy = {
 		subject: 'Tu compra de tarjeta regalo en {r}',
 		heading: 'Gracias por tu tarjeta regalo',
 		lead: 'Tu pago se completó y la tarjeta regalo está en camino.',
-		leadLater: 'Tu pago se completó. Entregaremos la tarjeta regalo en la fecha que elegiste.',
-		leadHeld: 'Tu pago se completó. Tu tarjeta se entregará en un plazo de 2 horas.',
+		leadLater:
+			'Tu pago se completó. Entregaremos la tarjeta regalo en la fecha que elegiste.',
+		leadHeld:
+			'Tu pago se completó. Tu tarjeta se entregará en un plazo de 2 horas.',
 	},
 	delivery: {
 		subject: '{from} te envió una tarjeta regalo de {r}',
@@ -141,7 +164,8 @@ const es: GiftCardCopy = {
 		total: 'Total pagado',
 		expires: 'Válida hasta',
 		to: 'Para',
-		keepSafe: 'Guarda este correo: cualquiera con el código puede usar la tarjeta.',
+		keepSafe:
+			'Guarda este correo: cualquiera con el código puede usar la tarjeta.',
 	},
 	designs: {
 		classic: 'Tarjeta regalo',
@@ -160,8 +184,10 @@ const fr: GiftCardCopy = {
 		subject: 'Votre achat de carte cadeau chez {r}',
 		heading: 'Merci pour votre carte cadeau',
 		lead: 'Votre paiement est passé et la carte cadeau est en route.',
-		leadLater: 'Votre paiement est passé. Nous enverrons la carte cadeau à la date choisie.',
-		leadHeld: 'Votre paiement est passé. Votre carte sera livrée sous 2 heures.',
+		leadLater:
+			'Votre paiement est passé. Nous enverrons la carte cadeau à la date choisie.',
+		leadHeld:
+			'Votre paiement est passé. Votre carte sera livrée sous 2 heures.',
 	},
 	delivery: {
 		subject: '{from} vous offre une carte cadeau {r}',
@@ -183,7 +209,8 @@ const fr: GiftCardCopy = {
 		total: 'Total payé',
 		expires: "Valable jusqu'au",
 		to: 'Pour',
-		keepSafe: 'Conservez cet e-mail : toute personne ayant le code peut utiliser la carte.',
+		keepSafe:
+			'Conservez cet e-mail : toute personne ayant le code peut utiliser la carte.',
 	},
 	designs: {
 		classic: 'Carte cadeau',
@@ -202,8 +229,10 @@ const de: GiftCardCopy = {
 		subject: 'Ihr Geschenkgutschein-Kauf bei {r}',
 		heading: 'Danke für Ihren Geschenkgutschein',
 		lead: 'Ihre Zahlung ist durchgegangen und der Gutschein ist unterwegs.',
-		leadLater: 'Ihre Zahlung ist durchgegangen. Wir senden den Gutschein am gewählten Datum.',
-		leadHeld: 'Ihre Zahlung ist durchgegangen. Ihr Gutschein wird innerhalb von 2 Stunden zugestellt.',
+		leadLater:
+			'Ihre Zahlung ist durchgegangen. Wir senden den Gutschein am gewählten Datum.',
+		leadHeld:
+			'Ihre Zahlung ist durchgegangen. Ihr Gutschein wird innerhalb von 2 Stunden zugestellt.',
 	},
 	delivery: {
 		subject: '{from} schenkt Ihnen einen Gutschein für {r}',
@@ -225,7 +254,8 @@ const de: GiftCardCopy = {
 		total: 'Gesamt bezahlt',
 		expires: 'Gültig bis',
 		to: 'An',
-		keepSafe: 'Bewahren Sie diese E-Mail auf: Jeder mit dem Code kann den Gutschein einlösen.',
+		keepSafe:
+			'Bewahren Sie diese E-Mail auf: Jeder mit dem Code kann den Gutschein einlösen.',
 	},
 	designs: {
 		classic: 'Geschenkgutschein',

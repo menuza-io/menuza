@@ -181,6 +181,37 @@ export const AI_REQUEST_RATE_LIMIT: RateLimitConfig = {
 	windowMs: 60 * 60 * 1000,
 }
 
+/**
+ * Support requests (#233): a member's Contact support and Report a problem
+ * sends. Per member, so one account cannot flood support, and a reply is
+ * counted separately (a conversation is not a flood).
+ */
+export const SUPPORT_REQUEST_RATE_LIMIT: RateLimitConfig = {
+	scope: 'support-request',
+	maxRequests: isDev ? 1000 : 5,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
+export const SUPPORT_REPLY_RATE_LIMIT: RateLimitConfig = {
+	scope: 'support-reply',
+	maxRequests: isDev ? 1000 : 20,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
+/** A support member's resend of a sign-in code to one operator (#246). */
+export const SIGN_IN_HELP_RESEND_RATE_LIMIT: RateLimitConfig = {
+	scope: 'sign-in-help-resend',
+	maxRequests: isDev ? 1000 : 3,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
+/** Opening the caller-verification card makes a new code each time (#291). */
+export const SUPPORT_VERIFICATION_REVEAL_RATE_LIMIT: RateLimitConfig = {
+	scope: 'support-verification-reveal',
+	maxRequests: isDev ? 1000 : 10,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
 export const PHONE_LINE_VERIFICATION_CHECK_RATE_LIMIT: RateLimitConfig = {
 	scope: 'phone-agent-line-verification-check',
 	maxRequests: isDev ? 1000 : 20,

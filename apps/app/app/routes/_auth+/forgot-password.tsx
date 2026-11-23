@@ -5,7 +5,7 @@ import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { useIsPending } from '@repo/common'
 import { brand, getPageTitle } from '@repo/config/brand'
 import { db, eq, or, User } from '@repo/database'
-import { ForgotPasswordEmail, sendEmail } from '@repo/email'
+import { ForgotPasswordEmail } from '@repo/email'
 import {
 	checkHoneypot,
 	getClientIp,
@@ -50,6 +50,7 @@ import {
 	checkRateLimit,
 	createRateLimitResponse,
 } from '#app/utils/rate-limit.server.ts'
+import { sendCodeEmail } from '#app/utils/sign-in-delivery.server.ts'
 import {
 	checkOperatorTurnstile,
 	getOperatorTurnstileSiteKey,
@@ -158,7 +159,9 @@ export async function action({ request }: Route.ActionArgs) {
 			target: usernameOrEmail,
 		})
 
-		const response = await sendEmail({
+		const response = await sendCodeEmail({
+			purpose: 'reset_password',
+			userId: user.id,
 			to: user.email,
 			subject: brand.email.passwordReset,
 			react: (

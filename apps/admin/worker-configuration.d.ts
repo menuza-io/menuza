@@ -30,4 +30,5 @@ interface Env {
 	GITHUB_CLIENT_SECRET: string
 	GITHUB_TOKEN: string
 	BETTERSTACK_API_KEY: string
+	BETTERSTACK_TELEMETRY_TOKEN: string
 }

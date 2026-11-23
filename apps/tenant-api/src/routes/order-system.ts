@@ -1,6 +1,9 @@
 import { Hono, type Context } from 'hono'
 
-import { giftCardOrderRef as giftCardOrderRefOf, parseGiftCardOrderRef } from '@repo/common/gift-cards'
+import {
+	giftCardOrderRef as giftCardOrderRefOf,
+	parseGiftCardOrderRef,
+} from '@repo/common/gift-cards'
 import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import {
 	orderDisputeStatusRequestSchema,
@@ -166,16 +169,16 @@ orderSystemRoutes.post('/quote', async (c) => {
 					parsed.data.paymentToken,
 				)
 			: tab.tabId
-			? await getTabQuote(
-					parsed.data.orgId,
-					tab.tabId,
-					parsed.data.paymentToken,
-				)
-			: await getOrderQuote(
-					parsed.data.orgId,
-					parsed.data.orderId,
-					parsed.data.paymentToken,
-				)
+				? await getTabQuote(
+						parsed.data.orgId,
+						tab.tabId,
+						parsed.data.paymentToken,
+					)
+				: await getOrderQuote(
+						parsed.data.orgId,
+						parsed.data.orderId,
+						parsed.data.paymentToken,
+					)
 		if (!result.ok) return failureResponse(c, result.failure)
 		// Only non-PII fields per contract: amounts, currency, hold, status.
 		return c.json(result.data)
@@ -223,18 +226,18 @@ orderSystemRoutes.post('/payment-session', async (c) => {
 					processor: parsed.data.processor,
 				})
 			: tab.tabId
-			? await bindTabPaymentSession({
-					orgId: parsed.data.orgId,
-					tabId: tab.tabId,
-					sessionId: parsed.data.sessionId,
-					processor: parsed.data.processor,
-				})
-			: await bindPaymentSession({
-					orgId: parsed.data.orgId,
-					orderId: parsed.data.orderId,
-					sessionId: parsed.data.sessionId,
-					processor: parsed.data.processor,
-				})
+				? await bindTabPaymentSession({
+						orgId: parsed.data.orgId,
+						tabId: tab.tabId,
+						sessionId: parsed.data.sessionId,
+						processor: parsed.data.processor,
+					})
+				: await bindPaymentSession({
+						orgId: parsed.data.orgId,
+						orderId: parsed.data.orderId,
+						sessionId: parsed.data.sessionId,
+						processor: parsed.data.processor,
+					})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json(result.data)
 	} catch (error) {
@@ -285,26 +288,26 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 					settings: (await getGiftCardFlagState(parsed.data.orgId)).settings,
 				})
 			: tabId
-			? await applyTabPaymentEvent({
-					orgId: parsed.data.orgId,
-					tabId,
-					sessionId: parsed.data.sessionId,
-					processor: parsed.data.processor,
-					status: parsed.data.status,
-					amountCents: parsed.data.amountCents,
-					currency: parsed.data.currency,
-					paymentId: parsed.data.paymentId,
-				})
-			: await applyPaymentEvent({
-					orgId: parsed.data.orgId,
-					orderId: parsed.data.orderId,
-					sessionId: parsed.data.sessionId,
-					processor: parsed.data.processor,
-					status: parsed.data.status,
-					amountCents: parsed.data.amountCents,
-					currency: parsed.data.currency,
-					paymentId: parsed.data.paymentId,
-				})
+				? await applyTabPaymentEvent({
+						orgId: parsed.data.orgId,
+						tabId,
+						sessionId: parsed.data.sessionId,
+						processor: parsed.data.processor,
+						status: parsed.data.status,
+						amountCents: parsed.data.amountCents,
+						currency: parsed.data.currency,
+						paymentId: parsed.data.paymentId,
+					})
+				: await applyPaymentEvent({
+						orgId: parsed.data.orgId,
+						orderId: parsed.data.orderId,
+						sessionId: parsed.data.sessionId,
+						processor: parsed.data.processor,
+						status: parsed.data.status,
+						amountCents: parsed.data.amountCents,
+						currency: parsed.data.currency,
+						paymentId: parsed.data.paymentId,
+					})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json({
 			orgId: result.data.orgId,

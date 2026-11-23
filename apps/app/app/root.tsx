@@ -118,6 +118,7 @@ import {
 	HIDDEN_STAFFING_NAV,
 	type StaffingNavAccess,
 } from './utils/staffing/nav.ts'
+import { countUnreadSupportRequests } from './utils/support.server.ts'
 import { type Theme, getTheme } from './utils/theme.server.ts'
 
 installRequiredMessage()
@@ -707,6 +708,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		),
 	)
 
+	// Replies waiting under Support (#406), for the badge in Help. Never blocks
+	// the page: a failed count is no badge.
+	const supportUnread = user
+		? await countUnreadSupportRequests(
+				user.id,
+				userOrganizations?.currentOrganization?.organization.id,
+			).catch(() => 0)
+		: 0
+
 	return data(
 		{
 			user,
@@ -723,6 +733,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			launchStatus: getLaunchStatus(),
 			operatorCookieDomain: operatorSharedCookieDomain(request) ?? null,
 			docsUrl: ENV.DOCS_URL?.trim() || null,
+			whatsNewUrl: ENV.WHATS_NEW_URL?.trim() || ENV.DOCS_URL?.trim() || null,
+			supportUnread,
 			configuredProviders,
 			homePageId,
 			staffingNav,

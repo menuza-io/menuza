@@ -113,6 +113,27 @@ export async function uploadProfileImage(
 }
 
 /**
+ * Upload the one optional screenshot of a support request (#233). It goes to the
+ * platform's own bucket, never the restaurant's, and never into its media
+ * library. The bytes must be a real raster image and at most 4MB.
+ */
+const MAX_SUPPORT_SCREENSHOT_BYTES = 4 * 1024 * 1024
+
+export async function uploadSupportScreenshot(
+	userId: string,
+	file: File | FileUpload,
+	options: UploadOptions,
+) {
+	if (file.size > MAX_SUPPORT_SCREENSHOT_BYTES) {
+		throw new Error('The screenshot is too large: the maximum size is 4MB')
+	}
+	const validated = await toValidatedRasterFile(file)
+	const key = `support/${userId}/${Date.now()}-${createId()}.${validated.extension}`
+	const config = await options.getConfig()
+	return uploadToStorage(validated.file, key, config)
+}
+
+/**
  * Upload an organization logo image
  */
 export async function uploadOrganizationImage(

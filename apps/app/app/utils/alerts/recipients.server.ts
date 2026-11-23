@@ -1,3 +1,4 @@
+import { recordSignInCodeDelivery } from '@repo/auth'
 import {
 	alertSmsText,
 	alertSettingsNote,
@@ -24,10 +25,11 @@ import {
 	OrderAlertRecipient,
 	sql,
 } from '@repo/database'
-import { sendEmail, StaffingAlertEmail } from '@repo/email'
+import { StaffingAlertEmail } from '@repo/email'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 import { checkRateLimit } from '#app/utils/rate-limit.server.ts'
+import { sendCodeEmail } from '#app/utils/sign-in-delivery.server.ts'
 import { alertTextsAvailable, getAlertTextProvider } from './text.server.ts'
 
 /**
@@ -313,15 +315,32 @@ export async function sendRecipientCode(input: {
 		if (!alertTextsAvailable(input.dataRegion)) {
 			return { ok: false, error: 'unavailable' }
 		}
-		const result = await getAlertTextProvider().send({
+		const provider = getAlertTextProvider()
+		const result = await provider.send({
 			orgId: input.organizationId,
 			to: row.address,
 			text: `Your ${input.organizationName} order alert code is ${code}. Reply STOP to opt out.`,
 		})
+		// The send is on the Sign-in help log (#246): the number, the provider and
+		// its message id. The text, and the code in it, are not.
+		await recordSignInCodeDelivery({
+			userId: row.createdBy,
+			organizationId: input.organizationId,
+			purpose: 'alert_recipient',
+			channel: 'sms',
+			destination: row.address,
+			provider: provider.name === 'mock' ? 'mock' : 'twilio',
+			providerMessageId: result.ok ? (result.providerMessageId ?? null) : null,
+			status: result.ok ? 'sent' : 'failed',
+			failureReason: result.ok ? null : result.code,
+		})
 		return result.ok ? { ok: true } : { ok: false, error: 'failed' }
 	}
 	try {
-		const result = await sendEmail({
+		const result = await sendCodeEmail({
+			purpose: 'alert_recipient',
+			userId: row.createdBy,
+			organizationId: input.organizationId,
 			to: row.address,
 			subject: `Your order alert code is ${code}`,
 			react: StaffingAlertEmail({

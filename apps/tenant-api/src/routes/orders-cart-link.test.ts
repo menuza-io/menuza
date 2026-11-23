@@ -123,7 +123,11 @@ function menuContext() {
 		drop: null,
 		onlinePayment: { enabled: true, processor: 'connect' },
 		// The quote endpoint answers only while discounts (or a gift card) are on.
-		discounts: { features: { automatic: true, coupons: true }, discounts: [], codes: [] },
+		discounts: {
+			features: { automatic: true, coupons: true },
+			discounts: [],
+			codes: [],
+		},
 	}
 }
 
@@ -142,7 +146,6 @@ function orderBody(overrides: Record<string, unknown> = {}) {
 	}
 }
 
-
 async function customerJwt(customerId: string) {
 	return new SignJWT({ customerId, orgId, orgSlug: 'test-org', type: 'access' })
 		.setProtectedHeader({ alg: 'HS256' })
@@ -152,7 +155,14 @@ async function customerJwt(customerId: string) {
 		.sign(new TextEncoder().encode(jwtSecret))
 }
 
-const lines = [{ itemId: 'item-burger', quantity: 2, options: [], instructions: 'no onions please' }]
+const lines = [
+	{
+		itemId: 'item-burger',
+		quantity: 2,
+		options: [],
+		instructions: 'no onions please',
+	},
+]
 
 describe('cart left behind: quote, restore link and clearing (#150)', () => {
 	let directory: string
@@ -160,7 +170,12 @@ describe('cart left behind: quote, restore link and clearing (#150)', () => {
 
 	const request = async (
 		route: string,
-		init: { method?: string; body?: unknown; token?: string | null; cartToken?: string } = {},
+		init: {
+			method?: string
+			body?: unknown
+			token?: string | null
+			cartToken?: string
+		} = {},
 	) => {
 		const headers: Record<string, string> = {
 			'content-type': 'application/json',
@@ -190,13 +205,17 @@ describe('cart left behind: quote, restore link and clearing (#150)', () => {
 			},
 		})
 
-	const carts = async () => (await getTenantDb(orgId)).select().from(customerCarts).all()
+	const carts = async () =>
+		(await getTenantDb(orgId)).select().from(customerCarts).all()
 
 	beforeEach(async () => {
 		directory = fs.mkdtempSync(path.join(os.tmpdir(), 'orders-cart-link-'))
 		vi.stubEnv('TENANT_DB_DIR', directory)
 		vi.stubEnv('DATA_REGION', 'us')
-		vi.stubEnv('INTERNAL_COMMAND_TOKEN', 'test-internal-token-very-long-and-secure-12345')
+		vi.stubEnv(
+			'INTERNAL_COMMAND_TOKEN',
+			'test-internal-token-very-long-and-secure-12345',
+		)
 		vi.stubEnv('JWT_SECRET', jwtSecret)
 		vi.stubEnv('AUTH_HMAC_SECRET', 'test-hmac-secret-123456789')
 		vi.stubEnv('APP_URL', 'https://app.test')
@@ -206,12 +225,14 @@ describe('cart left behind: quote, restore link and clearing (#150)', () => {
 			'fetch',
 			vi.fn(async (input: RequestInfo | URL) => {
 				const url = typeof input === 'string' ? input : input.toString()
-				if (url.includes('/resources/order-context')) return Response.json(menuContext())
+				if (url.includes('/resources/order-context'))
+					return Response.json(menuContext())
 				return new Response('not found', { status: 404 })
 			}),
 		)
-		vi.mocked(resolveOrganizationForBrowserAuth).mockImplementation(async (_origin, identity) =>
-			identity?.slug === 'test-org' ? (ORG as never) : null,
+		vi.mocked(resolveOrganizationForBrowserAuth).mockImplementation(
+			async (_origin, identity) =>
+				identity?.slug === 'test-org' ? (ORG as never) : null,
 		)
 		vi.mocked(findActiveOrganizationById).mockImplementation(async (id) =>
 			id === orgId ? (ORG as never) : null,
@@ -255,14 +276,18 @@ describe('cart left behind: quote, restore link and clearing (#150)', () => {
 		expect((await quote('cust_1')).status).toBe(200)
 		const [row] = await carts()
 		expect(row!.customerId).toBe('cust_1')
-		expect(row!.items).toEqual([{ itemId: 'item-burger', quantity: 2, options: [] }])
+		expect(row!.items).toEqual([
+			{ itemId: 'item-burger', quantity: 2, options: [] },
+		])
 		expect(JSON.stringify(row)).not.toMatch(/onions|Rana|rana@|\+1555/)
 	})
 
 	it('the restore link returns the cart only for a valid token, with no contact and one uniform 404', async () => {
 		await quote('cust_1')
 		const token = issueCartToken({ orgId, customerId: 'cust_1' })
-		const ok = await request(`/orders/cart-link?slug=test-org`, { cartToken: token })
+		const ok = await request(`/orders/cart-link?slug=test-org`, {
+			cartToken: token,
+		})
 		expect(ok.status).toBe(200)
 		const text = await ok.text()
 		expect(JSON.parse(text)).toEqual({
@@ -274,14 +299,20 @@ describe('cart left behind: quote, restore link and clearing (#150)', () => {
 		})
 		expect(text).not.toMatch(/Rana|rana@|\+1555|onions|customerId/)
 		// The token is never read from the query string.
-		const inQuery = await request(`/orders/cart-link?slug=test-org&token=${token}`)
+		const inQuery = await request(
+			`/orders/cart-link?slug=test-org&token=${token}`,
+		)
 		expect(inQuery.status).toBe(404)
 		const forged = await request('/orders/cart-link?slug=test-org', {
 			cartToken: token.replace(/.$/, token.endsWith('0') ? '1' : '0'),
 		})
 		expect(forged.status).toBe(404)
 		const expired = await request('/orders/cart-link?slug=test-org', {
-			cartToken: issueCartToken({ orgId, customerId: 'cust_1', now: Date.now() - 8 * 24 * 3_600_000 }),
+			cartToken: issueCartToken({
+				orgId,
+				customerId: 'cust_1',
+				now: Date.now() - 8 * 24 * 3_600_000,
+			}),
 		})
 		expect(expired.status).toBe(404)
 		expect(await expired.json()).toEqual(await inQuery.json())
@@ -290,10 +321,16 @@ describe('cart left behind: quote, restore link and clearing (#150)', () => {
 	it('emptying the cart clears it, and so does placing an order', async () => {
 		await quote('cust_1')
 		const jwt = await customerJwt('cust_1')
-		const cleared = await request('/orders/cart/clear?slug=test-org', { method: 'POST', token: jwt })
+		const cleared = await request('/orders/cart/clear?slug=test-org', {
+			method: 'POST',
+			token: jwt,
+		})
 		expect(cleared.status).toBe(200)
 		expect(await carts()).toEqual([])
-		expect((await request('/orders/cart/clear?slug=test-org', { method: 'POST' })).status).toBe(401)
+		expect(
+			(await request('/orders/cart/clear?slug=test-org', { method: 'POST' }))
+				.status,
+		).toBe(401)
 
 		await quote('cust_1')
 		expect(await carts()).toHaveLength(1)
@@ -316,4 +353,3 @@ describe('cart left behind: quote, restore link and clearing (#150)', () => {
 		expect(await carts()).toEqual([])
 	})
 })
-

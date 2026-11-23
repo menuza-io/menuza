@@ -91,14 +91,27 @@ describe('guest birthday on the profile (#151)', () => {
 		const res = await profile({ birthMonthDay: '02-29' })
 		expect(res.status).toBe(200)
 		const db = await getTenantDb(ORG)
-		const stored = await db.select().from(customers).where(eq(customers.id, customerId)).get()
+		const stored = await db
+			.select()
+			.from(customers)
+			.where(eq(customers.id, customerId))
+			.get()
 		expect(stored?.birthMonthDay).toBe('02-29')
 		expect(stored?.birthMonthDaySetAt).toBeGreaterThan(0)
-		const me = await app.request('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-		expect(((await me.json()) as { customer: { birthMonthDay: string } }).customer.birthMonthDay).toBe('02-29')
+		const me = await app.request('/auth/me', {
+			headers: { Authorization: `Bearer ${token}` },
+		})
+		expect(
+			((await me.json()) as { customer: { birthMonthDay: string } }).customer
+				.birthMonthDay,
+		).toBe('02-29')
 		const cleared = await profile({ birthMonthDay: null })
 		expect(cleared.status).toBe(200)
-		const after = await db.select().from(customers).where(eq(customers.id, customerId)).get()
+		const after = await db
+			.select()
+			.from(customers)
+			.where(eq(customers.id, customerId))
+			.get()
 		expect(after?.birthMonthDay).toBeNull()
 	})
 
@@ -110,7 +123,11 @@ describe('guest birthday on the profile (#151)', () => {
 			expect(text).toBe(JSON.stringify({ error: 'invalid_birthday' }))
 		}
 		const db = await getTenantDb(ORG)
-		const stored = await db.select().from(customers).where(eq(customers.id, customerId)).get()
+		const stored = await db
+			.select()
+			.from(customers)
+			.where(eq(customers.id, customerId))
+			.get()
 		expect(stored?.birthMonthDay).toBeNull()
 	})
 
@@ -118,7 +135,11 @@ describe('guest birthday on the profile (#151)', () => {
 		await profile({ birthMonthDay: '07-04' })
 		await profile({})
 		const db = await getTenantDb(ORG)
-		const stored = await db.select().from(customers).where(eq(customers.id, customerId)).get()
+		const stored = await db
+			.select()
+			.from(customers)
+			.where(eq(customers.id, customerId))
+			.get()
 		expect(stored?.birthMonthDay).toBe('07-04')
 	})
 })

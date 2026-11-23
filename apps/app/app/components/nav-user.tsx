@@ -1,5 +1,6 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { Badge } from '@repo/ui/badge'
 import { BuildingIcon } from '@repo/ui/building-icon'
 import {
 	DropdownMenu,
@@ -32,6 +33,7 @@ import {
 	useSubmit,
 } from 'react-router'
 
+import { useHelp } from '#app/components/help/help-context.tsx'
 import { type loader } from '#app/root.tsx'
 import { useOptimisticThemeMode } from '#app/routes/resources+/theme-switch.tsx'
 import { UserAvatar } from './user-avatar'
@@ -84,6 +86,10 @@ export function NavUser({
 	const mode = optimisticMode ?? userPreference ?? 'system'
 
 	const { _ } = useLingui()
+	const help = useHelp()
+	const contactFetcher = useFetcher<{
+		contact: { firstName: string; imageObjectKey: string | null } | null
+	}>()
 
 	const themeOptions = [
 		{ value: 'light', icon: 'sun', label: _(msg`Light mode`) },
@@ -96,6 +102,11 @@ export function NavUser({
 	const [searchParams] = useSearchParams()
 	// Extract base language code (e.g., 'ar' from 'ar-SA')
 	const currentLocale = (rootData?.locale ?? 'en').split(/[-_]/)[0] ?? 'en'
+	const helpOrgSlug =
+		rootData?.userOrganizations?.currentOrganization?.organization.slug
+	const supportUnread = rootData?.supportUnread ?? 0
+	const contact = contactFetcher.data?.contact ?? null
+	const contactFirstName = contact?.firstName
 
 	const languageOptions = [
 		{ value: 'en', label: _(msg`English`), nativeName: 'English' },
@@ -125,7 +136,16 @@ export function NavUser({
 	return (
 		<SidebarMenu>
 			<SidebarMenuItem>
-				<DropdownMenu>
+				<DropdownMenu
+					onOpenChange={(open) => {
+						// The named contact is read when the menu opens, not on every page.
+						if (open && helpOrgSlug && !contactFetcher.data) {
+							void contactFetcher.load(
+								`/resources/support-contact?orgSlug=${encodeURIComponent(helpOrgSlug)}`,
+							)
+						}
+					}}
+				>
 					<DropdownMenuTrigger
 						render={
 							<SidebarMenuButton
@@ -210,6 +230,88 @@ export function NavUser({
 							></DropdownMenuItem>
 						)}
 						<DropdownMenuSeparator />
+						<DropdownMenuSub>
+							<DropdownMenuSubTrigger className="gap-2">
+								<Icon name="help-circle" className="size-4" />
+								<Trans>Help</Trans>
+								{supportUnread > 0 ? (
+									<Badge
+										variant="default"
+										className="ms-auto"
+										aria-label={_(msg`Replies waiting`)}
+									>
+										{supportUnread}
+									</Badge>
+								) : null}
+							</DropdownMenuSubTrigger>
+							<DropdownMenuSubContent>
+								{contactFirstName ? (
+									<div className="text-muted-foreground px-2 py-1.5 text-xs">
+										<Trans>Your Menuza contact: {contactFirstName}</Trans>
+									</div>
+								) : null}
+								<DropdownMenuItem
+									className="gap-2"
+									onClick={() => help.open({ kind: 'support' })}
+								>
+									<Icon name="message-circle" className="size-4" />
+									<Trans>Contact support</Trans>
+								</DropdownMenuItem>
+								{rootData?.docsUrl ? (
+									<DropdownMenuItem
+										className="gap-2"
+										render={
+											<a
+												href={rootData.docsUrl}
+												target="_blank"
+												rel="noreferrer"
+											>
+												<Icon name="book-open" className="size-4" />
+												<Trans>Help articles</Trans>
+											</a>
+										}
+									></DropdownMenuItem>
+								) : null}
+								{rootData?.whatsNewUrl ? (
+									<DropdownMenuItem
+										className="gap-2"
+										render={
+											<a
+												href={rootData.whatsNewUrl}
+												target="_blank"
+												rel="noreferrer"
+											>
+												<Icon name="sparkles" className="size-4" />
+												<Trans>What's new</Trans>
+											</a>
+										}
+									></DropdownMenuItem>
+								) : null}
+								<DropdownMenuItem
+									className="gap-2"
+									onClick={() => help.open({ kind: 'problem' })}
+								>
+									<Icon name="alert-triangle" className="size-4" />
+									<Trans>Report a problem</Trans>
+								</DropdownMenuItem>
+								{helpOrgSlug ? (
+									<DropdownMenuItem
+										className="gap-2"
+										render={
+											<Link to={`/${helpOrgSlug}/support`}>
+												<Icon name="message-square" className="size-4" />
+												<Trans>My support requests</Trans>
+												{supportUnread > 0 ? (
+													<Badge variant="default" className="ms-auto">
+														{supportUnread}
+													</Badge>
+												) : null}
+											</Link>
+										}
+									></DropdownMenuItem>
+								) : null}
+							</DropdownMenuSubContent>
+						</DropdownMenuSub>
 						<DropdownMenuSub>
 							<DropdownMenuSubTrigger
 								className="gap-2"

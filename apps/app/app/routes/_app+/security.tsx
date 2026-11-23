@@ -6,7 +6,9 @@ import {
 	authSessionStorage,
 	requireUserId,
 	sessionKey,
+	getPendingVerificationForUser,
 	getUnusedBackupCodeCount,
+	isImpersonating,
 } from '@repo/auth'
 import { cache, cachified } from '@repo/cache'
 import {
@@ -35,6 +37,7 @@ import { DangerCard } from '#app/components/settings/cards/danger-card.tsx'
 import { PrivacyCard } from '#app/components/settings/cards/privacy-card.tsx'
 import { SecurityCard } from '#app/components/settings/cards/security-card.tsx'
 import { SessionsCard } from '#app/components/settings/cards/sessions-card.tsx'
+import { SupportVerificationCard } from '#app/components/settings/cards/support-verification-card.tsx'
 
 import {
 	getActiveErasureRequest,
@@ -167,6 +170,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const latestExportRequest =
 		results[9].status === 'fulfilled' ? results[9].value : null
 
+	// A support member's request to confirm this person (#291). Never offered
+	// to an admin who is impersonating: the agent must not see the code.
+	const pendingVerification = (await isImpersonating(request))
+		? null
+		: await getPendingVerificationForUser(userId).catch(() => null)
+
 	// Get current session ID
 	const authSession = await authSessionStorage.getSession(
 		request.headers.get('cookie'),
@@ -209,6 +218,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	}
 
 	return {
+		supportVerification: pendingVerification
+			? {
+					id: pendingVerification.id,
+					expiresAt: pendingVerification.expiresAt.toISOString(),
+					agentFirstName: pendingVerification.agentFirstName,
+				}
+			: null,
 		user,
 		hasPassword: Boolean(password),
 		isTwoFactorEnabled: Boolean(twoFactorVerification),
@@ -412,6 +428,12 @@ export default function SecuritySettings() {
 					)}
 				/>
 			</div>
+
+			{data.supportVerification ? (
+				<div className="mb-8">
+					<SupportVerificationCard pending={data.supportVerification} />
+				</div>
+			) : null}
 
 			<AnnotatedLayout>
 				{/* Credentials: password, 2FA, passkeys */}

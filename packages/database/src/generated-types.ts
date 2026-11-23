@@ -160,6 +160,36 @@ export type OrganizationNoteStatusInsert = InferInsertModel<
 >
 export type Feedback = InferSelectModel<typeof schema.Feedback>
 export type FeedbackInsert = InferInsertModel<typeof schema.Feedback>
+export type FeedbackMessage = InferSelectModel<typeof schema.FeedbackMessage>
+export type FeedbackMessageInsert = InferInsertModel<
+	typeof schema.FeedbackMessage
+>
+export type OrganizationAssignment = InferSelectModel<
+	typeof schema.OrganizationAssignment
+>
+export type OrganizationAssignmentInsert = InferInsertModel<
+	typeof schema.OrganizationAssignment
+>
+export type OrganizationEvent = InferSelectModel<
+	typeof schema.OrganizationEvent
+>
+export type OrganizationEventInsert = InferInsertModel<
+	typeof schema.OrganizationEvent
+>
+export type SupportNote = InferSelectModel<typeof schema.SupportNote>
+export type SupportNoteInsert = InferInsertModel<typeof schema.SupportNote>
+export type SignInCodeDelivery = InferSelectModel<
+	typeof schema.SignInCodeDelivery
+>
+export type SignInCodeDeliveryInsert = InferInsertModel<
+	typeof schema.SignInCodeDelivery
+>
+export type SupportVerification = InferSelectModel<
+	typeof schema.SupportVerification
+>
+export type SupportVerificationInsert = InferInsertModel<
+	typeof schema.SupportVerification
+>
 export type IpAddress = InferSelectModel<typeof schema.IpAddress>
 export type IpAddressInsert = InferInsertModel<typeof schema.IpAddress>
 export type IpAddressUser = InferSelectModel<typeof schema.IpAddressUser>

@@ -19,10 +19,7 @@ import {
 	TENANT_ORG_ID_PATTERN,
 	runTenantTransaction,
 } from '@repo/tenant-db'
-import {
-	BIRTHDAY_ERROR,
-	birthMonthDayFieldSchema,
-} from '@repo/common/birthday'
+import { BIRTHDAY_ERROR, birthMonthDayFieldSchema } from '@repo/common/birthday'
 import { clientAddress } from '../lib/client-ip.ts'
 import { reserveSmsSend } from '../services/sms-send-limits.ts'
 import {

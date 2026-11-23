@@ -112,7 +112,10 @@ async function mint(
 		impersonated: options.impersonated ?? false,
 		actorName: options.actorName ?? 'Pat Manager',
 	})
-		.setProtectedHeader({ alg: 'HS256', typ: options.typ ?? GIFT_CARD_TOKEN_TYP })
+		.setProtectedHeader({
+			alg: 'HS256',
+			typ: options.typ ?? GIFT_CARD_TOKEN_TYP,
+		})
 		.setSubject('user_owner')
 		.setIssuer(brand.shortName)
 		.setAudience(options.audience ?? GIFT_CARD_TOKEN_AUDIENCE)
@@ -124,7 +127,11 @@ async function mint(
 async function call(
 	method: string,
 	requestPath: string,
-	options: { token?: string; body?: unknown; headers?: Record<string, string> } = {},
+	options: {
+		token?: string
+		body?: unknown
+		headers?: Record<string, string>
+	} = {},
 ) {
 	const headers: Record<string, string> = { ...options.headers }
 	if (options.token) headers.Authorization = `Bearer ${options.token}`
@@ -143,10 +150,21 @@ function concrete(routePath: string, cardId: string): string {
 
 const BODIES: Record<string, unknown> = {
 	'POST /operator/gift-cards/lookup': { code: 'ZZZZZZZZZZZZZZZZ' },
-	'POST /operator/gift-cards/:id/adjust': { expectedBalanceMinor: 5000, deltaMinor: 100, reason: 'test' },
+	'POST /operator/gift-cards/:id/adjust': {
+		expectedBalanceMinor: 5000,
+		deltaMinor: 100,
+		reason: 'test',
+	},
 	'POST /operator/gift-cards/:id/void': { reason: 'test' },
-	'POST /operator/gift-cards/:id/charges': { amountMinor: 100, note: 'test', clientRequestId: 'client-req-0001' },
-	'POST /operator/gift-cards/:id/charges/:chargeId/refund': { amountMinor: 100, clientRequestId: 'client-req-0002' },
+	'POST /operator/gift-cards/:id/charges': {
+		amountMinor: 100,
+		note: 'test',
+		clientRequestId: 'client-req-0001',
+	},
+	'POST /operator/gift-cards/:id/charges/:chargeId/refund': {
+		amountMinor: 100,
+		clientRequestId: 'client-req-0002',
+	},
 	'POST /operator/gift-cards/:id/approve': {},
 	'POST /operator/gift-cards/:id/refund-purchase': {},
 }
@@ -191,7 +209,8 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-	for (const id of [ORG_A, ORG_B]) await destroyTenantDb(id).catch(() => undefined)
+	for (const id of [ORG_A, ORG_B])
+		await destroyTenantDb(id).catch(() => undefined)
 	fs.rmSync(dir, { recursive: true, force: true })
 })
 
@@ -213,11 +232,17 @@ describe('every route refuses a bad token', () => {
 			expect((await send()).status).toBe(401)
 		})
 		it(`${route}: a forged signature is 401`, async () => {
-			const token = await mint(ORG_A, { secret: 'not-the-operator-secret-0123456789abcdef' })
+			const token = await mint(ORG_A, {
+				secret: 'not-the-operator-secret-0123456789abcdef',
+			})
 			expect((await send(token)).status).toBe(401)
 		})
 		it(`${route}: another token audience is 401`, async () => {
-			for (const audience of ['tenant-api-operator', 'tenant-api-inventory-operator', 'tenant-api-loyalty-operator']) {
+			for (const audience of [
+				'tenant-api-operator',
+				'tenant-api-inventory-operator',
+				'tenant-api-loyalty-operator',
+			]) {
 				expect((await send(await mint(ORG_A, { audience }))).status).toBe(401)
 			}
 		})
@@ -225,13 +250,19 @@ describe('every route refuses a bad token', () => {
 			expect((await send(await mint(ORG_A, { typ: 'JWT' }))).status).toBe(401)
 		})
 		it(`${route}: an expired token is 401`, async () => {
-			expect((await send(await mint(ORG_A, { expiresIn: -60 }))).status).toBe(401)
+			expect((await send(await mint(ORG_A, { expiresIn: -60 }))).status).toBe(
+				401,
+			)
 		})
 		it(`${route}: a token for another region is 403`, async () => {
-			expect((await send(await mint(ORG_A, { region: 'ksa' }))).status).toBe(403)
+			expect((await send(await mint(ORG_A, { region: 'ksa' }))).status).toBe(
+				403,
+			)
 		})
 		it(`${route}: gift cards off is 403 gift_cards_disabled`, async () => {
-			const res = await send(await mint(ORG_A, { features: { ...FEATURES_ON, enabled: false } }))
+			const res = await send(
+				await mint(ORG_A, { features: { ...FEATURES_ON, enabled: false } }),
+			)
 			expect(res.status).toBe(403)
 			expect(res.body.code).toBe('gift_cards_disabled')
 		})
@@ -251,38 +282,89 @@ describe('every route refuses a bad token', () => {
 describe('scopes, impersonation and organizations', () => {
 	it('a read-scope token cannot change anything', async () => {
 		const token = await mint(ORG_A, { scope: 'read', grants: [READ] })
-		const res = await call('POST', `/operator/gift-cards/${cardA.cardId}/void`, { token, body: { reason: 'x' } })
+		const res = await call(
+			'POST',
+			`/operator/gift-cards/${cardA.cardId}/void`,
+			{ token, body: { reason: 'x' } },
+		)
 		expect(res.status).toBe(403)
-		expect((await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token })).status).toBe(200)
+		expect(
+			(await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token }))
+				.status,
+		).toBe(200)
 	})
 
 	it('an impersonated token reads but can neither adjust nor charge', async () => {
-		const token = await mint(ORG_A, { scope: 'read', grants: [READ], impersonated: true, expiresIn: 240 })
-		expect((await call('GET', '/operator/gift-cards', { token })).status).toBe(200)
+		const token = await mint(ORG_A, {
+			scope: 'read',
+			grants: [READ],
+			impersonated: true,
+			expiresIn: 240,
+		})
+		expect((await call('GET', '/operator/gift-cards', { token })).status).toBe(
+			200,
+		)
 		const writeScope = jose.decodeJwt(token)
 		expect(writeScope.impersonated).toBe(true)
 		// A write-scope token claiming an update grant while impersonated is refused outright.
-		const forged = await mint(ORG_A, { scope: 'write', grants: [UPDATE, CHARGE], impersonated: true, expiresIn: 240 })
-		expect((await call('POST', `/operator/gift-cards/${cardA.cardId}/charges`, { token: forged, body: BODIES['POST /operator/gift-cards/:id/charges'], headers: { 'Idempotency-Key': rid() } })).status).toBe(401)
+		const forged = await mint(ORG_A, {
+			scope: 'write',
+			grants: [UPDATE, CHARGE],
+			impersonated: true,
+			expiresIn: 240,
+		})
+		expect(
+			(
+				await call('POST', `/operator/gift-cards/${cardA.cardId}/charges`, {
+					token: forged,
+					body: BODIES['POST /operator/gift-cards/:id/charges'],
+					headers: { 'Idempotency-Key': rid() },
+				})
+			).status,
+		).toBe(401)
 	})
 
 	it('another organization never sees this card', async () => {
 		const token = await mint(ORG_B)
-		expect((await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token })).status).toBe(404)
-		expect((await call('GET', '/operator/gift-cards', { token })).body.cards).toEqual([])
+		expect(
+			(await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token }))
+				.status,
+		).toBe(404)
+		expect(
+			(await call('GET', '/operator/gift-cards', { token })).body.cards,
+		).toEqual([])
 	})
 
 	it('an organization on another node or unknown is refused', async () => {
-		expect((await call('GET', '/operator/gift-cards', { token: await mint(ORG_UNKNOWN) })).status).toBe(404)
-		expect((await call('GET', '/operator/gift-cards', { token: await mint(ORG_KSA) })).status).toBe(404)
+		expect(
+			(
+				await call('GET', '/operator/gift-cards', {
+					token: await mint(ORG_UNKNOWN),
+				})
+			).status,
+		).toBe(404)
+		expect(
+			(
+				await call('GET', '/operator/gift-cards', {
+					token: await mint(ORG_KSA),
+				})
+			).status,
+		).toBe(404)
 	})
 
 	it('a location-scoped token sees only its own locations', async () => {
 		const token = await mint(ORG_A, { locationIds: ['loc_other'] })
-		expect((await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token })).status).toBe(403)
-		expect((await call('GET', '/operator/gift-cards', { token })).body.cards).toEqual([])
+		expect(
+			(await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token }))
+				.status,
+		).toBe(403)
+		expect(
+			(await call('GET', '/operator/gift-cards', { token })).body.cards,
+		).toEqual([])
 		const mine = await mint(ORG_A, { locationIds: ['loc_a'] })
-		expect((await call('GET', '/operator/gift-cards', { token: mine })).body.cards).toHaveLength(1)
+		expect(
+			(await call('GET', '/operator/gift-cards', { token: mine })).body.cards,
+		).toHaveLength(1)
 	})
 })
 
@@ -290,7 +372,10 @@ describe('behaviour', () => {
 	it('adjusting needs the expected balance, a reason and a key, and a replay is safe', async () => {
 		const token = await mint(ORG_A)
 		const base = `/operator/gift-cards/${cardA.cardId}/adjust`
-		const noKey = await call('POST', base, { token, body: { expectedBalanceMinor: 5000, deltaMinor: 100, reason: 'r' } })
+		const noKey = await call('POST', base, {
+			token,
+			body: { expectedBalanceMinor: 5000, deltaMinor: 100, reason: 'r' },
+		})
 		expect(noKey.status).toBe(400)
 		const key = rid()
 		const stale = await call('POST', base, {
@@ -320,7 +405,9 @@ describe('behaviour', () => {
 		})
 		expect(conflict.status).toBe(409)
 		expect(conflict.body.code).toBe('idempotency_conflict')
-		const detail = await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token })
+		const detail = await call('GET', `/operator/gift-cards/${cardA.cardId}`, {
+			token,
+		})
 		expect(detail.body.card.balanceMinor).toBe(5100)
 		const adjust = detail.body.history.filter((h: any) => h.kind === 'adjust')
 		expect(adjust).toHaveLength(1)
@@ -329,23 +416,39 @@ describe('behaviour', () => {
 
 	it('a manager with only the charge grant can charge but not adjust', async () => {
 		const token = await mint(ORG_A, { grants: [CHARGE] })
-		const charged = await call('POST', `/operator/gift-cards/${cardA.cardId}/charges`, {
-			token,
-			headers: { 'Idempotency-Key': rid() },
-			body: { amountMinor: 100, note: 'phone order', clientRequestId: rid() },
-		})
+		const charged = await call(
+			'POST',
+			`/operator/gift-cards/${cardA.cardId}/charges`,
+			{
+				token,
+				headers: { 'Idempotency-Key': rid() },
+				body: { amountMinor: 100, note: 'phone order', clientRequestId: rid() },
+			},
+		)
 		expect(charged.status).toBe(200)
-		const adjusted = await call('POST', `/operator/gift-cards/${cardA.cardId}/adjust`, {
-			token,
-			headers: { 'Idempotency-Key': rid() },
-			body: { expectedBalanceMinor: 5000, deltaMinor: 1, reason: 'x' },
-		})
+		const adjusted = await call(
+			'POST',
+			`/operator/gift-cards/${cardA.cardId}/adjust`,
+			{
+				token,
+				headers: { 'Idempotency-Key': rid() },
+				body: { expectedBalanceMinor: 5000, deltaMinor: 1, reason: 'x' },
+			},
+		)
 		expect(adjusted.status).toBe(403)
-		const over = await call('POST', `/operator/gift-cards/${cardA.cardId}/charges`, {
-			token,
-			headers: { 'Idempotency-Key': rid() },
-			body: { amountMinor: 9_000_000, note: 'too much', clientRequestId: rid() },
-		})
+		const over = await call(
+			'POST',
+			`/operator/gift-cards/${cardA.cardId}/charges`,
+			{
+				token,
+				headers: { 'Idempotency-Key': rid() },
+				body: {
+					amountMinor: 9_000_000,
+					note: 'too much',
+					clientRequestId: rid(),
+				},
+			},
+		)
 		expect(over.status).toBe(409)
 		expect(over.body.code).toBe('gift_card_balance_low')
 	})
@@ -354,7 +457,12 @@ describe('behaviour', () => {
 		const token = await mint(ORG_A)
 		let last = 0
 		for (let i = 0; i < 22; i += 1) {
-			last = (await call('POST', '/operator/gift-cards/lookup', { token, body: { code: `WRONGCODE${i}`.padEnd(16, 'X') } })).status
+			last = (
+				await call('POST', '/operator/gift-cards/lookup', {
+					token,
+					body: { code: `WRONGCODE${i}`.padEnd(16, 'X') },
+				})
+			).status
 		}
 		expect(last).toBe(429)
 	})
@@ -363,14 +471,21 @@ describe('behaviour', () => {
 		const token = await mint(ORG_A)
 		process.env.GIFT_CARDS_ENABLED = 'false'
 		try {
-			const write = await call('POST', `/operator/gift-cards/${cardA.cardId}/charges`, {
-				token,
-				headers: { 'Idempotency-Key': rid() },
-				body: { amountMinor: 100, note: 'x', clientRequestId: rid() },
-			})
+			const write = await call(
+				'POST',
+				`/operator/gift-cards/${cardA.cardId}/charges`,
+				{
+					token,
+					headers: { 'Idempotency-Key': rid() },
+					body: { amountMinor: 100, note: 'x', clientRequestId: rid() },
+				},
+			)
 			expect(write.status).toBe(503)
 			expect(write.body.code).toBe('gift_cards_unavailable')
-			expect((await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token })).status).toBe(200)
+			expect(
+				(await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token }))
+					.status,
+			).toBe(200)
 		} finally {
 			delete process.env.GIFT_CARDS_ENABLED
 		}
@@ -382,9 +497,11 @@ describe('behaviour', () => {
 		const text = JSON.stringify(list.body)
 		expect(text).not.toContain(cardA.code!)
 		expect(text).not.toMatch(/[0-9a-f]{64}/)
-		const detail = JSON.stringify((await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token })).body)
+		const detail = JSON.stringify(
+			(await call('GET', `/operator/gift-cards/${cardA.cardId}`, { token }))
+				.body,
+		)
 		expect(detail).not.toContain(cardA.code!)
 		expect(detail).not.toMatch(/[0-9a-f]{64}/)
 	})
 })
-

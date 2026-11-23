@@ -1779,6 +1779,27 @@ people, large orders, offline tablets; #106, #366, #131, #265, #241, #300,
 - Control-plane migration `0073_operator_alerts`, tenant `0061_manager_alerts`.
   Deploy App, then jobs-cron, then tenant-api, then Station, then the phone app.
 
+**Support toolkit (error reference ids, Help, support requests, contacts,
+timeline, sign-in help, caller verification; #385, #233, #406, #272, #279, #246,
+#291):**
+
+- Control-plane only (`0074_support_toolkit`). One page-load trace id
+  (`@repo/common/trace-id`) rides on every same-origin request, the server log
+  line and the error page. A support request is a `Feedback` record with a
+  `kind`, a status and a `FeedbackMessage` thread; its context is an allowlist
+  (`@repo/common/support-requests`). Replies notify through the existing
+  `Notification` + email pattern (`resources/support/notify`, ids only).
+- `OrganizationAssignment` names Menuza contacts and gives no access.
+  `OrganizationEvent` is written only through `recordOrganizationEvent`, whose
+  per-kind strict schemas (`@repo/common/organization-events`) refuse any key
+  that could carry guest data; audit rows are read into the Timeline, not
+  copied.
+- `SignInCodeDelivery` logs that a code was sent, never the code (no column for
+  it). `SupportVerification` stores only a keyed hash; the code is shown to the
+  signed-in operator only, never while an admin impersonates them. Change email,
+  reset 2FA and start an ownership transfer in Admin call
+  `requireSensitiveSupportAction` first. Docs: `docs/support-toolkit.md`.
+
 **Gift cards (sell, redeem, fraud holds, guest wallet):**
 
 - One regional ledger per organization (`gift_cards`, append-only

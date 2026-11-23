@@ -105,6 +105,59 @@ export function verifyInboundSms(
 	}
 }
 
+export type SmsStatusEvent = {
+	/** The provider's id for the message that was sent. */
+	providerMessageId: string
+	/** The provider's own status word (`delivered`, `undelivered`, `failed`...). */
+	status: string
+	/** The carrier error code of a failure, or null. */
+	errorCode: string | null
+}
+
+export type VerifiedStatus =
+	| { ok: true; event: SmsStatusEvent }
+	| { ok: false; reason: 'unconfigured' | 'bad_signature' | 'bad_payload' }
+
+/**
+ * A delivery status callback for a text this node sent (#246). The same
+ * signature check as an inbound reply, then only the message id, the status word
+ * and the error code are read: no number and no body ever reaches this path.
+ */
+export function verifySmsStatus(
+	provider: InboundSmsProviderName,
+	input: {
+		publicUrl: string
+		rawBody: string
+		signature: string | null | undefined
+	},
+): VerifiedStatus {
+	const token = authToken()
+	if (token.length < 8) return { ok: false, reason: 'unconfigured' }
+	const presented = input.signature ?? ''
+	const params = Object.fromEntries(
+		new URLSearchParams(input.rawBody),
+	) as Record<string, string>
+	const expected =
+		provider === 'twilio'
+			? twilioSignature(token, input.publicUrl, params)
+			: mockSignature(token, input.rawBody)
+	if (!presented || !timingSafeEqualString(presented, expected)) {
+		return { ok: false, reason: 'bad_signature' }
+	}
+	const providerMessageId = params.MessageSid ?? params.SmsSid ?? ''
+	const status = params.MessageStatus ?? params.SmsStatus ?? ''
+	if (
+		!/^[A-Za-z0-9_-]{6,64}$/.test(providerMessageId) ||
+		!/^[a-z_]{3,20}$/.test(status)
+	) {
+		return { ok: false, reason: 'bad_payload' }
+	}
+	const errorCode = /^\d{3,6}$/.test(params.ErrorCode ?? '')
+		? (params.ErrorCode ?? null)
+		: null
+	return { ok: true, event: { providerMessageId, status, errorCode } }
+}
+
 function escapeXml(value: string) {
 	return value
 		.replace(/&/g, '&amp;')
