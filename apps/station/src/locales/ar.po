@@ -48,12 +48,14 @@ msgid "{0, plural, one {# guest} other {# guests}}"
 msgstr "{0, plural, zero {لا ضيوف} one {ضيف واحد} two {ضيفان} few {# ضيوف} many {# ضيفًا} other {# ضيف}}"
 
 #. placeholder {0}: progress.total
-#: src/apps/stock/CountScreen.tsx:538
+#: src/apps/stock/CountScreen.tsx:579
 msgid "{0, plural, one {# item is on this count.} other {# items are on this count.}}"
 msgstr "{0, plural, zero {لا أصناف في هذا الجرد.} one {صنف واحد في هذا الجرد.} two {صنفان في هذا الجرد.} few {# أصناف في هذا الجرد.} many {# صنفًا في هذا الجرد.} other {# صنف في هذا الجرد.}}"
 
+#. placeholder {0}: catalog.items.filter((item) => item.isKey).length
 #. placeholder {0}: catalog.items.length
-#: src/apps/stock/Stock.tsx:376
+#: src/apps/stock/Stock.tsx:420
+#: src/apps/stock/Stock.tsx:451
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, zero {لا أصناف} one {صنف واحد} two {صنفان} few {# أصناف} many {# صنفًا} other {# صنف}}"
 
@@ -73,7 +75,7 @@ msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}"
 
 #. placeholder {0}: stats.failed
-#: src/apps/stock/Stock.tsx:227
+#: src/apps/stock/Stock.tsx:247
 msgid "{0, plural, one {# needs attention} other {# need attention}}"
 msgstr "{0, plural, zero {لا شيء يحتاج انتباهًا} one {واحد يحتاج انتباهًا} two {اثنان يحتاجان انتباهًا} few {# تحتاج انتباهًا} many {# يحتاج انتباهًا} other {# يحتاج انتباهًا}}"
 
@@ -107,7 +109,7 @@ msgstr "{0, plural, zero {لا شيء محفوظ على هذا الجهاز.} on
 #~ msgstr "{0, plural, zero {لا زيارات سابقة} one {زيارة سابقة واحدة} two {زيارتان سابقتان} few {# زيارات سابقة} many {# زيارة سابقة} other {# زيارة سابقة}}"
 
 #. placeholder {0}: stats.waiting
-#: src/apps/stock/Stock.tsx:233
+#: src/apps/stock/Stock.tsx:253
 msgid "{0, plural, one {# waiting to send} other {# waiting to send}}"
 msgstr "{0, plural, zero {لا شيء بانتظار الإرسال} one {# بانتظار الإرسال} two {# بانتظار الإرسال} few {# بانتظار الإرسال} many {# بانتظار الإرسال} other {# بانتظار الإرسال}}"
 
@@ -362,7 +364,7 @@ msgstr "{elapsed} د"
 msgid "{failed, plural, one {# punch not recorded} other {# punches not recorded}}"
 msgstr "{failed, plural, one {بصمة واحدة لم تُسجَّل} other {# بصمات لم تُسجَّل}}"
 
-#: src/apps/stock/CountScreen.tsx:428
+#: src/apps/stock/CountScreen.tsx:469
 msgid "{failedCount, plural, one {# entry was not sent.} other {# entries were not sent.}}"
 msgstr "{failedCount, plural, zero {لا إدخالات غير مرسلة.} one {إدخال واحد لم يُرسل.} two {إدخالان لم يُرسلا.} few {# إدخالات لم تُرسل.} many {# إدخالًا لم تُرسل.} other {# إدخال لم تُرسل.}}"
 
@@ -538,7 +540,7 @@ msgstr "يتبقى {moreText} للحصول على {nextName}"
 msgid "{name} arrived"
 msgstr "وصل {name}"
 
-#: src/apps/stock/CountScreen.tsx:714
+#: src/apps/stock/CountScreen.tsx:780
 msgid "{name} in {unitName}"
 msgstr "{name} بالـ {unitName}"
 
@@ -561,6 +563,10 @@ msgstr "{name}، {price}"
 #: src/screens/MenuGrid.tsx:369
 msgid "{name}, {price}, {inCart} in order"
 msgstr "{name}، {price}، {inCart} في الطلب"
+
+#: src/apps/stock/CountScreen.tsx:710
+msgid "{name}, count by bottle"
+msgstr "{name}، الجرد بالزجاجات"
 
 #: src/apps/reservations/SectionsSheet.tsx:208
 msgid "{name}, on the clock"
@@ -586,7 +592,7 @@ msgstr "{name}، نفد، {inCart} في الطلب"
 msgid "{name}: {text} {unit}"
 msgstr "{name}: {text} {unit}"
 
-#: src/apps/stock/CountScreen.tsx:438
+#: src/apps/stock/CountScreen.tsx:479
 msgid "{name}: {why}"
 msgstr "{name}: {why}"
 
@@ -762,7 +768,7 @@ msgstr "{time}، {who}، مجموعة من {size}، {standing}، {where}"
 msgid "{toGo} to go"
 msgstr "يتبقى {toGo}"
 
-#: src/apps/stock/Stock.tsx:363
+#: src/apps/stock/Stock.tsx:438
 msgid "{total, plural, one {# item} other {# items}}"
 msgstr "{total, plural, zero {لا أصناف} one {صنف واحد} two {صنفان} few {# أصناف} many {# صنفًا} other {# صنف}}"
 
@@ -1026,7 +1032,7 @@ msgstr "الإقامة الأطول يحددها المدير في التطبي�
 msgid "A manager adds hosts in the app, under Settings, Terminals. Someone on the list can sign in here instead."
 msgstr "يضيف المدير المضيفين في التطبيق من الإعدادات، ثم الأجهزة. يمكن لشخص من القائمة تسجيل الدخول هنا بدلًا منك."
 
-#: src/apps/stock/CountScreen.tsx:302
+#: src/apps/stock/CountScreen.tsx:325
 msgid "A manager approved this count. Nothing more can be added."
 msgstr "اعتمد المدير هذا الجرد. لا يمكن إضافة شيء آخر."
 
@@ -1038,7 +1044,7 @@ msgstr "يوافق المدير على سحب النقد برمزه السري"
 msgid "A manager approves this with their PIN"
 msgstr "يعتمد المدير هذا برمزه السري"
 
-#: src/apps/stock/CountScreen.tsx:298
+#: src/apps/stock/CountScreen.tsx:321
 msgid "A manager cancelled this count. Nothing more can be added."
 msgstr "ألغى المدير هذا الجرد. لا يمكن إضافة شيء آخر."
 
@@ -1054,11 +1060,11 @@ msgstr "المدير يتولى هذا الحجز: عليه عربون."
 msgid "A manager has these, clear"
 msgstr "المدير لديه هذه، امسحها"
 
-#: src/apps/stock/Stock.tsx:484
+#: src/apps/stock/Stock.tsx:574
 msgid "A manager is reviewing this count"
 msgstr "المدير يراجع هذا الجرد"
 
-#: src/apps/stock/CountScreen.tsx:408
+#: src/apps/stock/CountScreen.tsx:449
 msgid "A manager is reviewing this count. You can still add late entries."
 msgstr "المدير يراجع هذا الجرد. لا يزال بإمكانك إضافة الإدخالات المتأخرة."
 
@@ -1184,7 +1190,7 @@ msgstr "هل تودّ إضافة إكرامية؟"
 msgid "Add an item"
 msgstr "أضف صنفًا"
 
-#: src/apps/stock/CountScreen.tsx:776
+#: src/apps/stock/CountScreen.tsx:842
 msgid "Add another unit"
 msgstr "إضافة وحدة أخرى"
 
@@ -1462,7 +1468,7 @@ msgstr "باعتماد {voidApprover}"
 msgid "Apps"
 msgstr "التطبيقات"
 
-#: src/apps/stock/CountScreen.tsx:459
+#: src/apps/stock/CountScreen.tsx:500
 msgid "Areas"
 msgstr "المناطق"
 
@@ -1504,6 +1510,10 @@ msgstr "جارٍ سؤال نقاط البيع الأخرى…"
 msgid "Assign servers"
 msgstr "عيّن النُّدُل"
 
+#: src/apps/stock/Stock.tsx:394
+msgid "Assigned to you"
+msgstr "مُسند إليك"
+
 #: src/apps/reservations/BookPanel.tsx:1203
 #: src/apps/reservations/labels.ts:14
 #: src/apps/reservations/sheets.tsx:17
@@ -1542,7 +1552,7 @@ msgstr "بانتظار الدفع"
 
 #: src/apps/orders/Orders.tsx:2177
 #: src/apps/reservations/TableSheet.tsx:206
-#: src/apps/stock/CountScreen.tsx:277
+#: src/apps/stock/CountScreen.tsx:300
 #: src/apps/stock/DeliverySheet.tsx:347
 #: src/apps/stock/DeliverySheet.tsx:370
 #: src/apps/timeclock/TimeClock.tsx:773
@@ -1576,9 +1586,9 @@ msgstr "إرجاع إلى جالس"
 msgid "Back to sign in"
 msgstr "العودة إلى تسجيل الدخول"
 
-#: src/apps/stock/CountScreen.tsx:317
-#: src/apps/stock/CountScreen.tsx:353
-#: src/apps/stock/CountScreen.tsx:373
+#: src/apps/stock/CountScreen.tsx:340
+#: src/apps/stock/CountScreen.tsx:376
+#: src/apps/stock/CountScreen.tsx:400
 msgid "Back to Stock"
 msgstr "العودة إلى المخزون"
 
@@ -1607,7 +1617,7 @@ msgstr "الوحدة الأساسية"
 msgid "Being prepared"
 msgstr "قيد التجهيز"
 
-#: src/apps/stock/Stock.tsx:498
+#: src/apps/stock/Stock.tsx:593
 msgid "Being reviewed"
 msgstr "قيد المراجعة"
 
@@ -1958,7 +1968,7 @@ msgstr "سحب نقدي"
 
 #: src/apps/stock/CashPurchaseForm.tsx:103
 #: src/apps/stock/DeliverySheet.tsx:551
-#: src/apps/stock/Stock.tsx:278
+#: src/apps/stock/Stock.tsx:298
 msgid "Cash purchase"
 msgstr "شراء نقدي"
 
@@ -2368,7 +2378,7 @@ msgstr "عُرضت بيانات التواصل"
 msgid "Continue"
 msgstr "متابعة"
 
-#: src/apps/stock/Stock.tsx:336
+#: src/apps/stock/Stock.tsx:356
 msgid "Continue a count"
 msgstr "متابعة جرد"
 
@@ -2441,8 +2451,8 @@ msgstr "تعذّر تحديث قائمة المخزون. نستخدم النسخ
 msgid "Couldn’t update the menu ({catalogError}). Selling from the copy saved on this device."
 msgstr "تعذّر تحديث القائمة ({catalogError}). البيع مستمر من النسخة المحفوظة على هذا الجهاز."
 
-#: src/apps/stock/Stock.tsx:186
-#: src/apps/stock/Stock.tsx:316
+#: src/apps/stock/Stock.tsx:206
+#: src/apps/stock/Stock.tsx:336
 msgid "Count"
 msgstr "جرد"
 
@@ -2450,11 +2460,19 @@ msgstr "جرد"
 msgid "Count all the cash in the drawer and enter it. You will see whether it balances after you confirm."
 msgstr "عُدّ كل النقد في الدرج وأدخله. سترى إن كان مطابقًا بعد التأكيد."
 
+#: src/apps/stock/BottleInput.tsx:127
+msgid "Count by weight"
+msgstr "الجرد بالوزن"
+
+#: src/apps/stock/BottleInput.tsx:125
+msgid "Count in tenths"
+msgstr "الجرد بالأعشار"
+
 #: src/screens/ShiftSheet.tsx:163
 msgid "Count the cash in the drawer before the first sale. Every sale until you close the shift is counted against it."
 msgstr "عُدّ النقد في الدرج قبل أول عملية بيع. تُحسب كل المبيعات حتى إغلاق الوردية مقابله."
 
-#: src/apps/stock/Stock.tsx:187
+#: src/apps/stock/Stock.tsx:207
 msgid "Count what is on the shelves"
 msgstr "عدّ ما على الرفوف"
 
@@ -2462,8 +2480,8 @@ msgstr "عدّ ما على الرفوف"
 msgid "Count what you kept in cash. Card tips are counted for you."
 msgstr "احسب ما احتفظت به نقدًا. بقشيش البطاقات يُحتسب تلقائيًا."
 
-#: src/apps/stock/CountScreen.tsx:387
-#: src/apps/stock/Stock.tsx:481
+#: src/apps/stock/CountScreen.tsx:414
+#: src/apps/stock/Stock.tsx:571
 msgid "counted"
 msgstr "تم عدّه"
 
@@ -2472,7 +2490,7 @@ msgstr "تم عدّه"
 msgid "Counted"
 msgstr "المعدود"
 
-#: src/apps/stock/CountScreen.tsx:546
+#: src/apps/stock/CountScreen.tsx:587
 msgid "counted."
 msgstr "تم عدّها."
 
@@ -2482,9 +2500,13 @@ msgstr "تم عدّها."
 msgid "Counter"
 msgstr "الكاونتر"
 
-#: src/apps/stock/CountScreen.tsx:367
+#: src/apps/stock/CountScreen.tsx:394
 msgid "Counting {title}"
 msgstr "جرد {title}"
+
+#: src/apps/stock/Stock.tsx:377
+msgid "Counts due today"
+msgstr "عمليات الجرد المستحقة اليوم"
 
 #: src/apps/reservations/Timeline.tsx:488
 msgid "Covers / cap"
@@ -2584,7 +2606,7 @@ msgstr "التوصيل إلى"
 #: src/apps/orders/Orders.tsx:1380
 #: src/apps/orders/Orders.tsx:1822
 #: src/apps/orders/Orders.tsx:2372
-#: src/apps/stock/Stock.tsx:198
+#: src/apps/stock/Stock.tsx:218
 msgid "Delivery"
 msgstr "توصيل"
 
@@ -2776,7 +2798,7 @@ msgstr "تم"
 msgid "Done · clear ticket"
 msgstr "تم · إخلاء التذكرة"
 
-#: src/apps/stock/CountScreen.tsx:516
+#: src/apps/stock/CountScreen.tsx:557
 msgid "Done counting?"
 msgstr "هل انتهيت من العدّ؟"
 
@@ -3017,9 +3039,10 @@ msgstr "إسبريسو"
 msgid "Evening"
 msgstr "المساء"
 
-#: src/apps/stock/CountScreen.tsx:363
-#: src/apps/stock/Stock.tsx:374
-#: src/apps/stock/Stock.tsx:455
+#: src/apps/stock/CountScreen.tsx:390
+#: src/apps/stock/Stock.tsx:389
+#: src/apps/stock/Stock.tsx:449
+#: src/apps/stock/Stock.tsx:545
 msgid "Everything"
 msgstr "كل شيء"
 
@@ -3170,6 +3193,11 @@ msgstr "كامل"
 #: src/screens/OrdersSheet.tsx:1015
 msgid "Full amount ({upTo})"
 msgstr "المبلغ كاملًا ({upTo})"
+
+#: src/apps/stock/BottleInput.tsx:59
+#: src/apps/stock/BottleInput.tsx:63
+msgid "Full bottles"
+msgstr "الزجاجات الممتلئة"
 
 #: src/apps/orders/Orders.tsx:2090
 msgid "Full refund ({refundableLabel})"
@@ -3434,8 +3462,8 @@ msgstr "كم حضّرت؟"
 msgid "How much now?"
 msgstr "كم المبلغ الآن؟"
 
-#: src/apps/stock/CountScreen.tsx:403
-#: src/apps/stock/CountScreen.tsx:527
+#: src/apps/stock/CountScreen.tsx:430
+#: src/apps/stock/CountScreen.tsx:568
 msgid "I am done counting"
 msgstr "انتهيت من العدّ"
 
@@ -3449,8 +3477,8 @@ msgstr "إيداع"
 
 #: src/apps/kitchen/PrepView.tsx:160
 #: src/apps/orders/Orders.tsx:1636
-#: src/apps/stock/Stock.tsx:292
-#: src/apps/stock/Stock.tsx:296
+#: src/apps/stock/Stock.tsx:312
+#: src/apps/stock/Stock.tsx:316
 msgid "In progress"
 msgstr "قيد التنفيذ"
 
@@ -3569,7 +3597,7 @@ msgstr "أصناف محذوفة"
 #~ msgid "Items you did not count stay as they were. After this, nothing more can be added from this tablet. A manager approves the count in the Menuza app."
 #~ msgstr "تبقى الأصناف التي لم تعدّها كما كانت. بعد ذلك لا يمكن إضافة شيء من هذا الجهاز. يعتمد المدير الجرد في تطبيق Menuza."
 
-#: src/apps/stock/CountScreen.tsx:549
+#: src/apps/stock/CountScreen.tsx:590
 msgid "Items you did not count stay as they were. This does not close the count: a manager reviews and finishes it in the Menuza app, and you can still add late entries until then."
 msgstr "تبقى الأصناف التي لم تعدّها كما كانت. لا يغلق هذا الجرد: يراجعه المدير وينهيه في تطبيق Menuza، ولا يزال بإمكانك إضافة الإدخالات المتأخرة حتى ذلك الحين."
 
@@ -3598,8 +3626,8 @@ msgstr "الآن"
 msgid "Keep {current}"
 msgstr "إبقاء {current}"
 
-#: src/apps/stock/CountScreen.tsx:356
-#: src/apps/stock/CountScreen.tsx:530
+#: src/apps/stock/CountScreen.tsx:379
+#: src/apps/stock/CountScreen.tsx:571
 msgid "Keep counting"
 msgstr "متابعة العدّ"
 
@@ -3646,6 +3674,14 @@ msgstr "متابعة الانتظار"
 #: src/App.tsx:1224
 msgid "Keep working"
 msgstr "متابعة العمل"
+
+#: src/apps/stock/CountScreen.tsx:681
+msgid "Key item"
+msgstr "صنف رئيسي"
+
+#: src/apps/stock/Stock.tsx:418
+msgid "Key items (quick count)"
+msgstr "الأصناف الرئيسية (جرد سريع)"
 
 #: src/ui/Keypad.tsx:87
 msgid "Keypad"
@@ -3788,6 +3824,7 @@ msgstr "أُغلقت آخر وردية عن بُعد بواسطة {0}"
 #: src/apps/kitchen/Kitchen.tsx:929
 #: src/apps/orders/Orders.tsx:625
 #: src/apps/reservations/BookPanel.tsx:234
+#: src/apps/stock/Stock.tsx:395
 msgid "Late"
 msgstr "متأخر"
 
@@ -3867,7 +3904,7 @@ msgid "Loading the order…"
 msgstr "جارٍ تحميل الطلب…"
 
 #: src/apps/stock/DeliverySheet.tsx:408
-#: src/apps/stock/Stock.tsx:323
+#: src/apps/stock/Stock.tsx:343
 #: src/apps/stock/WasteSheet.tsx:340
 msgid "Loading the stock list…"
 msgstr "جارٍ تحميل قائمة المخزون…"
@@ -3900,7 +3937,7 @@ msgstr "قفل نقطة البيع، المستخدم الحالي {staffName}"
 msgid "Locked. Enter your PIN."
 msgstr "مقفلة. أدخل رمزك السري."
 
-#: src/apps/stock/Stock.tsx:193
+#: src/apps/stock/Stock.tsx:213
 msgid "Log food thrown away"
 msgstr "سجّل الطعام الذي رُمي"
 
@@ -4545,7 +4582,7 @@ msgstr "غير متصل بالخادم: الدفتر كما كان الساعة 
 msgid "Not connected: this book may be out of date. Seating, booking and texts wait for the connection. Trying again."
 msgstr "غير متصل بالخادم: قد يكون هذا الدفتر قديمًا. الإجلاس والحجز والرسائل تنتظر عودة الاتصال. تجري المحاولة من جديد."
 
-#: src/apps/stock/CountScreen.tsx:464
+#: src/apps/stock/CountScreen.tsx:505
 msgid "Not in an area"
 msgstr "ليست في منطقة"
 
@@ -4561,11 +4598,11 @@ msgstr "ليست بجانبها"
 msgid "Not open"
 msgstr "غير متاح"
 
-#: src/apps/stock/CountScreen.tsx:790
+#: src/apps/stock/CountScreen.tsx:856
 msgid "Not sent"
 msgstr "لم يُرسل"
 
-#: src/apps/stock/Stock.tsx:493
+#: src/apps/stock/Stock.tsx:583
 msgid "Not sent yet"
 msgstr "لم يُرسل بعد"
 
@@ -4654,8 +4691,8 @@ msgstr "مناسبة"
 msgid "Occasion: {occasionLabel}"
 msgstr "مناسبة: {occasionLabel}"
 
-#: src/apps/stock/CountScreen.tsx:383
-#: src/apps/stock/Stock.tsx:477
+#: src/apps/stock/CountScreen.tsx:410
+#: src/apps/stock/Stock.tsx:567
 msgid "of"
 msgstr "من"
 
@@ -4812,6 +4849,18 @@ msgstr "فتح وردية"
 #: src/App.tsx:146
 msgid "Open a shift before taking orders."
 msgstr "افتح وردية قبل استقبال الطلبات."
+
+#: src/apps/stock/BottleInput.tsx:93
+msgid "Open bottle"
+msgstr "الزجاجة المفتوحة"
+
+#: src/apps/stock/BottleInput.tsx:76
+msgid "Open bottle weight (g)"
+msgstr "وزن الزجاجة المفتوحة (غ)"
+
+#: src/apps/stock/BottleInput.tsx:83
+msgid "Open bottle weight in grams"
+msgstr "وزن الزجاجة المفتوحة بالغرام"
 
 #: src/apps/reservations/BookingSheet.tsx:757
 msgid "Open it"
@@ -5568,6 +5617,13 @@ msgstr "كوارت"
 msgid "Quantity"
 msgstr "الكمية"
 
+#: src/apps/stock/CountScreen.tsx:389
+#: src/apps/stock/Stock.tsx:135
+#: src/apps/stock/Stock.tsx:152
+#: src/apps/stock/Stock.tsx:388
+msgid "Quick count of key items"
+msgstr "جرد سريع للأصناف الرئيسية"
+
 #: src/apps/reservations/BookingSheet.tsx:647
 msgid "Quick notes"
 msgstr "ملاحظات سريعة"
@@ -5637,7 +5693,7 @@ msgstr "ملف صورة الإيصال"
 msgid "Receive delivery"
 msgstr "استلام توريد"
 
-#: src/apps/stock/Stock.tsx:199
+#: src/apps/stock/Stock.tsx:219
 msgid "Receive what the supplier brought"
 msgstr "استلم ما أحضره المورّد"
 
@@ -5813,7 +5869,7 @@ msgstr "إزالة {0}"
 msgid "Remove {name}"
 msgstr "إزالة {name}"
 
-#: src/apps/stock/CountScreen.tsx:749
+#: src/apps/stock/CountScreen.tsx:815
 msgid "Remove {unitName} from {name}"
 msgstr "إزالة {unitName} من {name}"
 
@@ -5986,8 +6042,8 @@ msgstr "احفظ النُّدُل"
 msgid "Save tab"
 msgstr "حفظ الحساب"
 
-#: src/apps/stock/CountScreen.tsx:391
-#: src/apps/stock/CountScreen.tsx:792
+#: src/apps/stock/CountScreen.tsx:418
+#: src/apps/stock/CountScreen.tsx:858
 msgid "Saved on this tablet"
 msgstr "محفوظ على هذا الجهاز"
 
@@ -6215,17 +6271,25 @@ msgstr "تم إجلاس {size} بدون حجز على {where}."
 msgid "Seated at the host stand"
 msgstr "أُجلسوا عند الاستقبال"
 
+#: src/apps/stock/Stock.tsx:588
+msgid "Second count needed"
+msgstr "مطلوب جرد ثانٍ"
+
+#: src/apps/stock/CountScreen.tsx:435
+msgid "Second count: only the key items are listed, and the first count is hidden."
+msgstr "الجرد الثاني: تظهر الأصناف الرئيسية فقط ويُخفى الجرد الأول."
+
 #: src/apps/reservations/HostStand.tsx:2071
 msgid "Sections"
 msgstr "الأقسام"
 
-#: src/apps/stock/CountScreen.tsx:280
-#: src/apps/stock/CountScreen.tsx:321
+#: src/apps/stock/CountScreen.tsx:303
+#: src/apps/stock/CountScreen.tsx:344
 #: src/apps/stock/StockNotices.tsx:93
 msgid "See what is waiting"
 msgstr "عرض ما ينتظر"
 
-#: src/apps/stock/CountScreen.tsx:443
+#: src/apps/stock/CountScreen.tsx:484
 msgid "See why"
 msgstr "اعرف السبب"
 
@@ -6272,7 +6336,7 @@ msgstr "إرسال الرمز"
 msgid "Send the count for review"
 msgstr "إرسال الجرد للمراجعة"
 
-#: src/apps/stock/CountScreen.tsx:391
+#: src/apps/stock/CountScreen.tsx:418
 #: src/screens/TopBar.tsx:358
 msgid "Sending"
 msgstr "جارٍ الإرسال"
@@ -6285,7 +6349,7 @@ msgstr "فشل الإرسال. سيعيد المحاولة تلقائيًا."
 msgid "Sending is on hold. It will go when this is fixed."
 msgstr "الإرسال متوقف. سيُرسل عند حلّ المشكلة."
 
-#: src/apps/stock/CountScreen.tsx:793
+#: src/apps/stock/CountScreen.tsx:859
 msgid "Sent"
 msgstr "أُرسل"
 
@@ -6500,7 +6564,7 @@ msgstr "سجّل الدخول برمزك السري وأنت متصل لإرسا
 msgid "Sign-in has been switched off for this terminal."
 msgstr "تم إيقاف تسجيل الدخول لنقطة البيع هذه."
 
-#: src/apps/stock/Stock.tsx:217
+#: src/apps/stock/Stock.tsx:237
 msgid "Signed in as {staffName}"
 msgstr "تم تسجيل الدخول باسم {staffName}"
 
@@ -6555,7 +6619,7 @@ msgstr "بعضهم وصل"
 msgid "Some discounts on this tab are no longer offered; the guest keeps them."
 msgstr "بعض الخصومات على هذه الفاتورة لم تعد متاحة؛ يحتفظ الضيف بها."
 
-#: src/apps/stock/CountScreen.tsx:309
+#: src/apps/stock/CountScreen.tsx:332
 msgid "Some entries did not reach the office in time. See what is waiting."
 msgstr "لم تصل بعض الإدخالات إلى المكتب في الوقت المناسب. اعرض ما ينتظر."
 
@@ -6567,7 +6631,7 @@ msgstr "بعض هذه الإعدادات مضبوطة لهذه الطرفية ف
 msgid "Some orders are not shown on any station. Tick them on at least one station. The default station still catches an order nothing else takes, so it cannot disappear."
 msgstr "بعض الطلبات لا تظهر على أي محطة. حدّدها في محطة واحدة على الأقل. المحطة الافتراضية تلتقط ما لا تأخذه محطة أخرى، فلا يختفي الطلب."
 
-#: src/apps/stock/CountScreen.tsx:641
+#: src/apps/stock/CountScreen.tsx:691
 msgid "Someone already counted this"
 msgstr "عدّه شخص آخر بالفعل"
 
@@ -6579,7 +6643,7 @@ msgstr "غيّر أحدهم هذا قبل قليل. إليك أحدث نسخة."
 msgid "Someone else"
 msgstr "شخص آخر"
 
-#: src/apps/stock/CountScreen.tsx:647
+#: src/apps/stock/CountScreen.tsx:697
 msgid "Someone else already counted this shelf. Your count is added to theirs."
 msgstr "عدّ شخص آخر هذا الرف بالفعل. يُضاف عدّك إلى عدّه."
 
@@ -6663,7 +6727,7 @@ msgstr "قياسي"
 msgid "Start"
 msgstr "ابدأ"
 
-#: src/apps/stock/Stock.tsx:353
+#: src/apps/stock/Stock.tsx:412
 #: src/apps/stock/SyncSheet.tsx:58
 msgid "Start a count"
 msgstr "بدء جرد"
@@ -6688,7 +6752,7 @@ msgstr "بدء التحضير"
 msgid "Start training mode"
 msgstr "بدء وضع التدريب"
 
-#: src/apps/stock/Stock.tsx:486
+#: src/apps/stock/Stock.tsx:576
 msgid "Started on this tablet"
 msgstr "بدأ على هذا الجهاز"
 
@@ -6722,8 +6786,8 @@ msgstr "اسم المحطة"
 msgid "still to seat, by time"
 msgstr "بانتظار الجلوس، حسب الوقت"
 
-#: src/apps/stock/Stock.tsx:204
-#: src/apps/stock/Stock.tsx:206
+#: src/apps/stock/Stock.tsx:224
+#: src/apps/stock/Stock.tsx:226
 #: src/screens/AppLauncher.tsx:68
 msgid "Stock"
 msgstr "المخزون"
@@ -7504,7 +7568,7 @@ msgstr "تغيّرت إعدادات المطبخ من شاشة أخرى. أغل�
 msgid "The kitchen stops preparing it. It cannot be reopened."
 msgstr "يتوقف المطبخ عن تحضيره. لا يمكن إعادة فتحه."
 
-#: src/apps/stock/CountScreen.tsx:346
+#: src/apps/stock/CountScreen.tsx:369
 msgid "The last entries are still on their way to the office."
 msgstr "آخر الإدخالات لا تزال في طريقها إلى المكتب."
 
@@ -7739,7 +7803,7 @@ msgid "The server’s answer was not a pairing. Check the link and try again."
 msgstr "ردّ الخادم ليس ردّ ربط. تحقّق من الرابط وحاول مرة أخرى."
 
 #: src/apps/stock/DeliverySheet.tsx:410
-#: src/apps/stock/Stock.tsx:325
+#: src/apps/stock/Stock.tsx:345
 #: src/apps/stock/StockNotices.tsx:41
 #: src/apps/stock/WasteSheet.tsx:342
 msgid "The stock list has not loaded yet. Connect once so this tablet can get it."
@@ -7837,7 +7901,7 @@ msgstr "ثم <0>{nextWho}، مجموعة من {nextSize}</0>"
 msgid "There are more orders than this screen can show. Finish or cancel older orders in the App before relying on this list."
 msgstr "الطلبات أكثر مما تعرضه هذه الشاشة. أنهِ الطلبات الأقدم أو ألغها في التطبيق قبل الاعتماد على هذه القائمة."
 
-#: src/apps/stock/CountScreen.tsx:454
+#: src/apps/stock/CountScreen.tsx:495
 msgid "There is nothing on this count yet."
 msgstr "لا يوجد شيء في هذا الجرد بعد."
 
@@ -7944,24 +8008,28 @@ msgstr "تم إلغاء هذه البطاقة."
 msgid "This category is empty."
 msgstr "هذه الفئة فارغة."
 
-#: src/apps/stock/CountScreen.tsx:241
-#: src/apps/stock/CountScreen.tsx:258
+#: src/apps/stock/CountScreen.tsx:264
+#: src/apps/stock/CountScreen.tsx:281
 #: src/apps/stock/DeliverySheet.tsx:257
 #: src/apps/stock/WasteSheet.tsx:213
 msgid "This could not be saved on the tablet."
 msgstr "تعذّر الحفظ على الجهاز."
 
-#: src/apps/stock/CountScreen.tsx:270
+#: src/apps/stock/CountScreen.tsx:293
 msgid "This count could not be started"
 msgstr "تعذّر بدء هذا الجرد"
 
-#: src/apps/stock/CountScreen.tsx:293
+#: src/apps/stock/CountScreen.tsx:316
 msgid "This count is finished"
 msgstr "انتهى هذا الجرد"
 
-#: src/apps/stock/CountScreen.tsx:236
+#: src/apps/stock/CountScreen.tsx:259
 msgid "This count is finished, so nothing more can be added."
 msgstr "انتهى هذا الجرد، لذا لا يمكن إضافة شيء آخر."
+
+#: src/apps/stock/CountScreen.tsx:442
+msgid "This count is waiting for a different person to count the key items again."
+msgstr "ينتظر هذا الجرد شخصًا آخر ليجرد الأصناف الرئيسية مرة ثانية."
 
 #: src/apps/stock/CountScreen.tsx:187
 #~ msgid "This count was already sent for review."
@@ -8454,7 +8522,7 @@ msgstr "محاولات خاطئة كثيرة. حاول مرة أخرى بعد {s
 msgid "Too many wrong PINs. Try again in {wait} seconds."
 msgstr "محاولات خاطئة كثيرة. حاول مرة أخرى بعد {wait} ثانية."
 
-#: src/apps/stock/CountScreen.tsx:239
+#: src/apps/stock/CountScreen.tsx:262
 #: src/apps/stock/DeliverySheet.tsx:255
 #: src/apps/stock/WasteSheet.tsx:211
 msgid "Too much is waiting to send from this tablet. Connect and let it send first."
@@ -8591,12 +8659,12 @@ msgid "Unit"
 msgstr "الوحدة"
 
 #: src/apps/stock/CashPurchaseForm.tsx:157
-#: src/apps/stock/CountScreen.tsx:670
+#: src/apps/stock/CountScreen.tsx:736
 #: src/apps/stock/DeliverySheet.tsx:927
 msgid "Unit for {name}"
 msgstr "وحدة {name}"
 
-#: src/apps/stock/CountScreen.tsx:721
+#: src/apps/stock/CountScreen.tsx:787
 msgid "Unit for {name}, another unit"
 msgstr "وحدة {name}، وحدة أخرى"
 
@@ -8799,7 +8867,7 @@ msgstr "بدون حجز"
 msgid "Warn after (min)"
 msgstr "تنبيه بعد (دقيقة)"
 
-#: src/apps/stock/Stock.tsx:192
+#: src/apps/stock/Stock.tsx:212
 msgid "Waste"
 msgstr "هدر"
 
@@ -8939,11 +9007,11 @@ msgstr "أنت مسجّل الحضور."
 msgid "You are clocked out."
 msgstr "أنت مسجّل الانصراف."
 
-#: src/apps/stock/Stock.tsx:502
+#: src/apps/stock/Stock.tsx:597
 msgid "You are done"
 msgstr "انتهيت"
 
-#: src/apps/stock/CountScreen.tsx:335
+#: src/apps/stock/CountScreen.tsx:358
 msgid "You are done counting"
 msgstr "انتهيت من العدّ"
 
@@ -8999,11 +9067,11 @@ msgstr "لديك ما يكفي من كل ما تُحضّره."
 msgid "You opened a pairing link. Orders, with guest names and phone numbers, will be sent to the server below. Only continue if a manager gave you this link and you recognise the address."
 msgstr "فتحت رابط ربط. ستُرسل الطلبات، بما فيها أسماء الضيوف وأرقام هواتفهم، إلى الخادم أدناه. لا تتابع إلا إذا أعطاك مدير هذا الرابط وكنت تعرف العنوان."
 
-#: src/apps/stock/CountScreen.tsx:414
+#: src/apps/stock/CountScreen.tsx:455
 msgid "You said you are done. You can still add or change entries until a manager finishes the count."
 msgstr "قلتَ إنك انتهيت. لا يزال بإمكانك إضافة الإدخالات أو تعديلها حتى ينهي المدير الجرد."
 
-#: src/apps/stock/CountScreen.tsx:339
+#: src/apps/stock/CountScreen.tsx:362
 msgid "Your entries are saved. A manager reviews and finishes the count in the Menuza app. Until then you can still add late entries."
 msgstr "إدخالاتك محفوظة. يراجع المدير الجرد وينهيه في تطبيق Menuza. وحتى ذلك الحين لا يزال بإمكانك إضافة الإدخالات المتأخرة."
 

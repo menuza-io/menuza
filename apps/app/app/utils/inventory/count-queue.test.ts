@@ -502,7 +502,10 @@ describe('createCountEntrySync', () => {
 		expect(sync.getSnapshot().refused).toEqual([])
 		expect(sync.getSnapshot().saved.has('itm_1|area_1|kg')).toBe(true)
 
-		writeQueue(storage, KEY, [entry({ clientId: 'c' }), entry({ clientId: 'd', itemId: 'itm_2' })])
+		writeQueue(storage, KEY, [
+			entry({ clientId: 'c' }),
+			entry({ clientId: 'd', itemId: 'itm_2' }),
+		])
 		expect(pendingCountEntriesCount(storage, 'acme', 'cnt_1')).toBe(2)
 		sync.reloadFromStorage()
 		expect(sync.getSnapshot().pending).toHaveLength(2)

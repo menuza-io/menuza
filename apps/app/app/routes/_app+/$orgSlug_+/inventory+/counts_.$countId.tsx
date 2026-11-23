@@ -12,7 +12,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 /** One count, full page: counting while it is open, read-only afterwards. */
 export default function InventoryCountRoute() {
-	const { orgSlug, canEdit, canSeeCost, locations } = useInventoryLayoutData()
+	const { orgSlug, canEdit, canSeeCost, currency, locations } =
+		useInventoryLayoutData()
 	const { countId } = useParams()
 	const { search } = useLocation()
 	return (
@@ -22,6 +23,7 @@ export default function InventoryCountRoute() {
 			countId={countId ?? ''}
 			canEdit={canEdit}
 			canSeeCost={canSeeCost}
+			currency={currency}
 			search={locations.length > 1 ? search : ''}
 		/>
 	)

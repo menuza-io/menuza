@@ -24,7 +24,10 @@ import {
 } from '../lib/inventory-write.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
 import { assertLocationAllowed, assertVersion } from './inventory-common.ts'
-import { type UpdateLocationSpendingLimitsInput } from './inventory-contract-types.ts'
+import {
+	type UpdateLocationCountControlsInput,
+	type UpdateLocationSpendingLimitsInput,
+} from './inventory-contract-types.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
 
 /**
@@ -82,6 +85,7 @@ function toWire(
 		dayStartMinutes: time.dayStartMin,
 		pricesIncludeTax: row?.pricesIncludeTax ?? false,
 		taxRateBp: row?.taxRateBp ?? null,
+		secondCountRequired: row?.secondCountRequired ?? false,
 		version: row?.version ?? 0,
 	}
 	if (cost) {
@@ -250,6 +254,74 @@ export async function updateLocationSpendingLimits(
 					version: nextVersion,
 					orderLimitMinor,
 					monthlyLimitMinor,
+				},
+				at: ctx.now,
+			})
+			return getLocationSettings(tx, input.locationId, { cost: caller.cost })
+		},
+	)
+}
+
+/** The count rules a location chose (#525); a location with no settings row has none. */
+export async function getLocationCountControls(
+	db: InventoryReader,
+	locationId: string,
+): Promise<{ secondCountRequired: boolean; version: number }> {
+	const row = await readRow(db, locationId)
+	return {
+		secondCountRequired: row?.secondCountRequired ?? false,
+		version: row?.version ?? 0,
+	}
+}
+
+/**
+ * Turns the key-item second-person check on or off for one location (#525).
+ * A manager's setting (`update:settings:any`, the same as the spending limits).
+ */
+export async function updateLocationCountControls(
+	caller: InventoryCaller,
+	input: {
+		locationId: string
+		body: UpdateLocationCountControlsInput
+		idempotency?: InventoryIdempotency | null
+	},
+): Promise<InventoryLocationSettings> {
+	if (!caller.canManageSettings) {
+		throw new InventoryError('forbidden', 403, { reason: 'grant' })
+	}
+	assertLocationAllowed(caller.locationIds, input.locationId)
+	return withInventoryWrite(
+		{
+			orgId: caller.orgId,
+			idempotency: input.idempotency,
+			skipAutoSoldOut: true,
+		},
+		async (tx, ctx) => {
+			const existing = await readRow(tx, input.locationId)
+			const currentVersion = existing?.version ?? 0
+			assertVersion(currentVersion, input.body.expectedVersion)
+			const values = {
+				secondCountRequired: input.body.secondCountRequired,
+				version: currentVersion + 1,
+				updatedAt: ctx.now,
+			}
+			await tx
+				.insert(invLocationSettings)
+				.values({ locationId: input.locationId, ...values })
+				.onConflictDoUpdate({
+					target: invLocationSettings.locationId,
+					set: values,
+				})
+			await recordInventoryAudit(tx, {
+				actorKind: caller.actor.kind,
+				actorId: caller.actor.id,
+				action: 'location_settings.count_controls.update',
+				resourceType: 'location_settings',
+				resourceId: input.locationId,
+				locationId: input.locationId,
+				detail: {
+					version: values.version,
+					secondCountRequired: input.body.secondCountRequired,
 				},
 				at: ctx.now,
 			})

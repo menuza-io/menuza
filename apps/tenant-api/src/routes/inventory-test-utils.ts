@@ -57,6 +57,8 @@ export async function mintToken(
 		subject?: string
 		/** Child flags of the token's `features` claim (default: purchasing on). */
 		features?: Partial<InventoryFeatures>
+		/** The member holds `update:settings:any` (a manager's setting). */
+		canManageSettings?: boolean
 	} = {},
 ): Promise<string> {
 	const now = Math.floor(Date.now() / 1000)
@@ -76,6 +78,9 @@ export async function mintToken(
 			...options.features,
 		},
 		impersonated: options.impersonated ?? false,
+		...(options.canManageSettings !== undefined
+			? { canManageSettings: options.canManageSettings }
+			: {}),
 	})
 		.setProtectedHeader({ alg: 'HS256', typ: INVENTORY_TOKEN_TYP })
 		.setSubject(options.subject ?? 'user_owner')

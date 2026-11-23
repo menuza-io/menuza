@@ -48,7 +48,10 @@ const ALL_GRANTS = [
 ]
 
 /** An App operator's inventory token (what the office uses; the tablet never holds one). */
-export async function mintInventoryOperator(orgId: string): Promise<string> {
+export async function mintInventoryOperator(
+	orgId: string,
+	options: { canManageSettings?: boolean } = {},
+): Promise<string> {
 	const now = Math.floor(Date.now() / 1000)
 	return new SignJWT({
 		role: 'operator',
@@ -59,6 +62,7 @@ export async function mintInventoryOperator(orgId: string): Promise<string> {
 		locationIds: null,
 		features: { ...ON, recipes: false, prep: false, transfers: false },
 		impersonated: false,
+		...(options.canManageSettings ? { canManageSettings: true } : {}),
 	})
 		.setProtectedHeader({ alg: 'HS256', typ: INVENTORY_TOKEN_TYP })
 		.setSubject('user_owner')

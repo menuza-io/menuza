@@ -42,6 +42,16 @@ switch, Settings with profile and security). Shared UI kit: screen, button,
 card, inputs, OTP inputs, social button, loading and error overlays, success
 animation, toasts.
 
+Inventory (#516): an Inventory tab (counts by area with an offline queue, a
+stock list with search and key items, receive a delivery with an invoice photo,
+approve and send a suggested order) and an Alerts tab (the inventory and
+staffing notifications of the bell; push is #106). The phone calls the regional
+node directly with the same short-lived inventory token as the web
+(`GET /api/inventory/token`), limited to the member's own locations and grants;
+nothing regional passes through the US App. Deliberately no back-office screens:
+approving a count, settling the second count, recipes and prices stay on the
+web.
+
 Constraints: one shared design language across iOS and Android; per-OS
 differences are technical (keyboard avoidance, status bar), not visual. English
 and Arabic catalogs with right-to-left readiness; accessibility roles, labels,

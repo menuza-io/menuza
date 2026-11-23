@@ -4,6 +4,7 @@ import {
 	INVENTORY_PERMISSIONS,
 	type InventoryNotifyKind,
 	type InventoryPermission,
+	type CountOverdueAlert,
 	type OrderApprovalAlert,
 	type RepeatOrderDraftAlert,
 } from '@repo/inventory'
@@ -44,6 +45,7 @@ export const INVENTORY_ALERT_WORKFLOWS = [
 	'inventory.price_rise',
 	'inventory.repeat_order_draft',
 	'inventory.order_approval',
+	'inventory.count_overdue',
 	'inventory.sold_out',
 ] as const satisfies readonly ReturnType<typeof inventoryAlertWorkflow>[]
 
@@ -121,6 +123,9 @@ export function inventoryAlertPath(kind: InventoryNotifyKind): string {
 			return '/inventory/stock?low=1'
 		case 'inventory_count_review':
 			return '/inventory/counts'
+		case 'inventory_count_overdue':
+			// Today lists the scheduled count that is waiting, with who is responsible.
+			return '/inventory/today'
 		case 'inventory_delivery_due':
 		case 'inventory_price_rise':
 		case 'inventory_repeat_order_draft':
@@ -201,6 +206,8 @@ export function describeInventoryAlert(input: {
 	repeatOrderDraft?: RepeatOrderDraftAlert
 	/** Spending-limit order approval kind (#500). */
 	orderApproval?: OrderApprovalAlert
+	/** Overdue scheduled count kind (#491): a kind and a slot, never a name. */
+	countOverdue?: CountOverdueAlert
 }): InventoryAlertCopy {
 	const { kind, count } = input
 	const place = input.locationName ? ` at ${input.locationName}` : ''
@@ -248,6 +255,22 @@ export function describeInventoryAlert(input: {
 				headline,
 				detail: `${count === 1 ? 'A count needs' : `${count} counts need`} your approval${place} before stock is adjusted.`,
 				actionLabel: 'Review counts',
+			}
+		}
+		case 'inventory_count_overdue': {
+			const quick = input.countOverdue?.countKind === 'quick'
+			const headline =
+				count === 1
+					? quick
+						? 'A quick count was not started'
+						: 'A scheduled count was not started'
+					: `${count} scheduled counts were not started`
+			return {
+				eyebrow: 'Counts',
+				subject: `${headline}${place}`,
+				headline,
+				detail: `${quick ? 'A quick count' : 'A scheduled count'}${place} was due an hour ago and nobody has started it. Open Today to see who is responsible.`,
+				actionLabel: 'Open Today',
 			}
 		}
 		case 'inventory_delivery_due': {

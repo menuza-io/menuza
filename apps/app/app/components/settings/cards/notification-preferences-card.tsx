@@ -57,6 +57,7 @@ function getWorkflowLabel(
 		'reservations.message_failed_bulk': msg`Reservations: guest messages could not be delivered`,
 		'inventory.low_stock': msg`Inventory: items are below the level you order at`,
 		'inventory.count_review': msg`Inventory: a count is waiting for review`,
+		'inventory.count_overdue': msg`Inventory: a scheduled count was not started`,
 		'inventory.delivery_due': msg`Inventory: an order is due for delivery`,
 		'inventory.price_rise': msg`Inventory: an item went up in price`,
 		'inventory.sold_out': msg`Inventory: a dish went off the menu because an ingredient ran out`,

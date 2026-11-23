@@ -38,6 +38,7 @@ import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import { ItemCountingSection } from '#app/components/inventory/item-counting-section.tsx'
 import { ItemRecipeSections } from '#app/components/inventory/item-recipe-sections.tsx'
 import {
 	MergeBanners,
@@ -757,6 +758,12 @@ function ItemSheetBody({
 					</ul>
 				)}
 			</section>
+
+			<ItemCountingSection
+				item={item}
+				canEdit={canEdit && !item.archived}
+				onChanged={onChanged}
+			/>
 
 			<UsedInSection
 				itemId={item.id}

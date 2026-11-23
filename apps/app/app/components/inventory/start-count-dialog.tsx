@@ -35,6 +35,8 @@ import { inventoryCountPath } from '#app/utils/inventory/nav.ts'
 import { newClientId } from '#app/utils/inventory/waste-form.ts'
 
 const EVERYTHING = 'all'
+/** A quick count of the key items (#490): the starred items only. */
+const QUICK = 'quick'
 
 /**
  * Start a count. It asks one thing: which list. "Everything" counts every
@@ -48,6 +50,7 @@ export function StartCountDialog({
 	orgSlug,
 	locationId,
 	search,
+	initialChoice,
 }: {
 	open: boolean
 	onOpenChange: (open: boolean) => void
@@ -55,6 +58,8 @@ export function StartCountDialog({
 	locationId: string
 	/** The query string to keep on links, with its `?`. */
 	search: string
+	/** What is chosen when the dialog opens: `quick`, a count list id, or everything. */
+	initialChoice?: string
 }) {
 	const { t, i18n } = useLingui()
 	const { request } = useInventoryClient()
@@ -65,7 +70,12 @@ export function StartCountDialog({
 		open ? `/count-lists?locationId=${encodeURIComponent(locationId)}` : null,
 		listCountListsResultSchema,
 	)
-	const [choice, setChoice] = useState(EVERYTHING)
+	const [choice, setChoice] = useState(initialChoice ?? EVERYTHING)
+	const [seenInitial, setSeenInitial] = useState(initialChoice)
+	if (seenInitial !== initialChoice) {
+		setSeenInitial(initialChoice)
+		setChoice(initialChoice ?? EVERYTHING)
+	}
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [openCountId, setOpenCountId] = useState<string | null>(null)
@@ -84,7 +94,8 @@ export function StartCountDialog({
 					body: JSON.stringify({
 						clientId: clientIdRef.current,
 						locationId,
-						listId: choice === EVERYTHING ? null : choice,
+						listId: choice === EVERYTHING || choice === QUICK ? null : choice,
+						...(choice === QUICK ? { kind: 'quick' } : {}),
 					}),
 				}),
 			)
@@ -193,6 +204,24 @@ export function StartCountDialog({
 								</ChoiceCardTitle>
 								<ChoiceCardDescription>
 									<Trans>Every item you keep at this location.</Trans>
+								</ChoiceCardDescription>
+							</ChoiceCardContent>
+						</ChoiceCard>
+						<ChoiceCard htmlFor={`${groupId}-quick`}>
+							<RadioGroupItem
+								id={`${groupId}-quick`}
+								value={QUICK}
+								data-testid="start-count-quick"
+							/>
+							<ChoiceCardContent>
+								<ChoiceCardTitle>
+									<Trans>Key items (quick count)</Trans>
+								</ChoiceCardTitle>
+								<ChoiceCardDescription>
+									<Trans>
+										Only the items you starred. It corrects those items and
+										leaves the rest, and food cost keeps using full counts.
+									</Trans>
 								</ChoiceCardDescription>
 							</ChoiceCardContent>
 						</ChoiceCard>

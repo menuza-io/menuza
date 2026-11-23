@@ -13,6 +13,78 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: state.lateCount
+#: app/(dashboard)/inventory/count.tsx:225
+msgid "{0, plural, one {# entry arrived after the count was approved. A manager will see it.} other {# entries arrived after the count was approved. A manager will see them.}}"
+msgstr "{0, plural, one {# entry arrived after the count was approved. A manager will see it.} other {# entries arrived after the count was approved. A manager will see them.}}"
+
+#. placeholder {0}: state.pending.length
+#: app/(dashboard)/inventory/count.tsx:207
+msgid "{0, plural, one {# entry is on this phone, waiting to send} other {# entries are on this phone, waiting to send}}"
+msgstr "{0, plural, one {# entry is on this phone, waiting to send} other {# entries are on this phone, waiting to send}}"
+
+#. placeholder {0}: card.lineCount
+#: app/(dashboard)/inventory/orders.tsx:237
+msgid "{0, plural, one {# item to order} other {# items to order}}"
+msgstr "{0, plural, one {# item to order} other {# items to order}}"
+
+#. placeholder {0}: list.data.total - items.length
+#: app/(dashboard)/inventory/stock.tsx:120
+msgid "{0, plural, one {# more item. Search to find it.} other {# more items. Search to find them.}}"
+msgstr "{0, plural, one {# more item. Search to find it.} other {# more items. Search to find them.}}"
+
+#. placeholder {0}: count.itemsCounted
+#. placeholder {1}: count.itemTotal
+#: app/(dashboard)/inventory/index.tsx:168
+msgid "{0} of {1} counted"
+msgstr "{0} of {1} counted"
+
+#. placeholder {0}: item.name
+#. placeholder {1}: unitLabel(item)
+#: app/(dashboard)/inventory/count.tsx:347
+msgid "{0}, amount in {1}"
+msgstr "{0}, amount in {1}"
+
+#: app/(dashboard)/inventory/count.tsx:159
+msgid "{counted} of {total} counted"
+msgstr "{counted} of {total} counted"
+
+#: lib/inventory/alert-copy.ts:32
+msgid "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
+msgstr "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
+
+#: lib/inventory/alert-copy.ts:88
+msgid "{n, plural, one {# dish is back on the menu} other {# dishes are back on the menu}}"
+msgstr "{n, plural, one {# dish is back on the menu} other {# dishes are back on the menu}}"
+
+#: lib/inventory/alert-copy.ts:80
+msgid "{n, plural, one {# dish is off the menu} other {# dishes are off the menu}}"
+msgstr "{n, plural, one {# dish is off the menu} other {# dishes are off the menu}}"
+
+#: lib/inventory/alert-copy.ts:64
+msgid "{n, plural, one {# draft order is ready for review} other {# draft orders are ready for review}}"
+msgstr "{n, plural, one {# draft order is ready for review} other {# draft orders are ready for review}}"
+
+#: lib/inventory/alert-copy.ts:24
+msgid "{n, plural, one {# item is below the level you order at} other {# items are below the level you order at}}"
+msgstr "{n, plural, one {# item is below the level you order at} other {# items are below the level you order at}}"
+
+#: lib/inventory/alert-copy.ts:56
+msgid "{n, plural, one {# item went up in price} other {# items went up in price}}"
+msgstr "{n, plural, one {# item went up in price} other {# items went up in price}}"
+
+#: lib/inventory/alert-copy.ts:48
+msgid "{n, plural, one {# order is due for delivery} other {# orders are due for delivery}}"
+msgstr "{n, plural, one {# order is due for delivery} other {# orders are due for delivery}}"
+
+#: lib/inventory/alert-copy.ts:72
+msgid "{n, plural, one {# order needs approval} other {# orders need approval}}"
+msgstr "{n, plural, one {# order needs approval} other {# orders need approval}}"
+
+#: lib/inventory/alert-copy.ts:40
+msgid "{n, plural, one {# scheduled count was not started} other {# scheduled counts were not started}}"
+msgstr "{n, plural, one {# scheduled count was not started} other {# scheduled counts were not started}}"
+
 #: app/(dashboard)/organizations.tsx:43
 msgid "{orgName} is now your default organization"
 msgstr "{orgName} is now your default organization"
@@ -30,9 +102,17 @@ msgstr "+{0} more organizations"
 msgid "1 hour"
 msgstr "1 hour"
 
+#: app/(dashboard)/inventory/orders.tsx:248
+msgid "A draft is already started. It will be sent."
+msgstr "A draft is already started. It will be sent."
+
 #: app/(dashboard)/settings/notifications.tsx:47
 msgid "A kitchen tablet goes offline"
 msgstr "A kitchen tablet goes offline"
+
+#: lib/inventory/alert-copy.ts:36
+msgid "A manager approves it in the web app."
+msgstr "A manager approves it in the web app."
 
 #: app/(dashboard)/settings/notifications.tsx:45
 msgid "A payment needs review"
@@ -67,6 +147,10 @@ msgstr "Active Sessions"
 msgid "Add an extra layer of security"
 msgstr "Add an extra layer of security"
 
+#: app/(dashboard)/inventory/receive.tsx:177
+msgid "Add invoice photo"
+msgstr "Add invoice photo"
+
 #: components/organization-switcher.tsx:185
 msgid "Add organization"
 msgstr "Add organization"
@@ -74,6 +158,11 @@ msgstr "Add organization"
 #: app/(dashboard)/organizations.tsx:102
 msgid "Add Organization"
 msgstr "Add Organization"
+
+#: app/(dashboard)/_layout.tsx:67
+#: app/(dashboard)/alerts.tsx:67
+msgid "Alerts"
+msgstr "Alerts"
 
 #: components/menu-photos/photo-capture-modal.tsx:191
 msgid "Allow camera"
@@ -88,6 +177,10 @@ msgstr "Allow the camera to take a photo of this dish, or choose a photo from yo
 msgid "Already have an account?"
 msgstr "Already have an account?"
 
+#: lib/inventory/alert-copy.ts:84
+msgid "An ingredient ran out."
+msgstr "An ingredient ran out."
+
 #: app/(auth)/sign-up.tsx:257
 msgid "and"
 msgstr "and"
@@ -96,9 +189,22 @@ msgstr "and"
 msgid "App"
 msgstr "App"
 
+#: app/(dashboard)/inventory/orders.tsx:212
+#: app/(dashboard)/inventory/orders.tsx:258
+msgid "Approve and send"
+msgstr "Approve and send"
+
+#: app/(dashboard)/inventory/index.tsx:223
+msgid "Approve and send what to order"
+msgstr "Approve and send what to order"
+
 #: app/(dashboard)/settings/index.tsx:51
 msgid "Are you sure you want to sign out?"
 msgstr "Are you sure you want to sign out?"
+
+#: components/inventory/inventory-gate.tsx:52
+msgid "Ask an owner to check your role in the Menuza app on the web."
+msgstr "Ask an owner to check your role in the Menuza app on the web."
 
 #: app/(dashboard)/settings/security.tsx:67
 msgid "Authentication"
@@ -110,6 +216,8 @@ msgid "Authentication Error"
 msgstr "Authentication Error"
 
 #: app/(dashboard)/menu-photos.tsx:162
+#: components/inventory/inventory-gate.tsx:25
+#: components/inventory/screen-header.tsx:26
 msgid "Back"
 msgstr "Back"
 
@@ -129,21 +237,43 @@ msgstr "Build amazing apps ⚡"
 msgid "By signing up, you agree to our"
 msgstr "By signing up, you agree to our"
 
+#: app/(dashboard)/inventory/receive.tsx:88
+msgid "Camera access is off"
+msgstr "Camera access is off"
+
 #: components/menu-photos/photo-capture-modal.tsx:178
 msgid "Camera access is turned off. You can turn it on in your phone's settings, or choose a photo from your library."
 msgstr "Camera access is turned off. You can turn it on in your phone's settings, or choose a photo from your library."
 
 #: app/(dashboard)/create-organization.tsx:222
+#: app/(dashboard)/inventory/orders.tsx:68
+#: app/(dashboard)/inventory/orders.tsx:79
 #: app/(dashboard)/organizations.tsx:35
 #: app/(dashboard)/settings/devices.tsx:50
 #: app/(dashboard)/settings/index.tsx:52
 msgid "Cancel"
 msgstr "Cancel"
 
+#. placeholder {0}: current.name
+#: components/inventory/location-picker.tsx:28
+msgid "Change location, now {0}"
+msgstr "Change location, now {0}"
+
 #: app/(dashboard)/settings/security.tsx:39
 #: app/(dashboard)/settings/security.tsx:73
 msgid "Change Password"
 msgstr "Change Password"
+
+#: app/(dashboard)/inventory/index.tsx:86
+#: app/(dashboard)/inventory/orders.tsx:142
+#: app/(dashboard)/inventory/orders.tsx:169
+#: app/(dashboard)/inventory/receive.tsx:76
+msgid "Check your connection and try again."
+msgstr "Check your connection and try again."
+
+#: app/(dashboard)/inventory/count.tsx:109
+msgid "Check your connection and try Finish again. Nothing is lost."
+msgstr "Check your connection and try Finish again. Nothing is lost."
 
 #: app/(auth)/sign-up.tsx:80
 msgid "Check your email"
@@ -169,6 +299,10 @@ msgstr "Code Sent"
 msgid "Complete your signup to join the organization"
 msgstr "Complete your signup to join the organization"
 
+#: app/(dashboard)/inventory/index.tsx:214
+msgid "Confirm what arrived and add the invoice photo"
+msgstr "Confirm what arrived and add the invoice photo"
+
 #: app/(auth)/sign-in.tsx:182
 #: app/(auth)/sign-in.tsx:187
 #: app/(auth)/sign-in.tsx:190
@@ -183,9 +317,61 @@ msgstr "Continue with GitHub"
 msgid "Continue with Google"
 msgstr "Continue with Google"
 
+#: app/(dashboard)/inventory/orders.tsx:63
+msgid "Copy the text"
+msgstr "Copy the text"
+
+#: app/(dashboard)/inventory/orders.tsx:166
+msgid "Could not approve the order"
+msgstr "Could not approve the order"
+
+#: app/(dashboard)/inventory/count.tsx:124
+msgid "Could not finish"
+msgstr "Could not finish"
+
+#: app/(dashboard)/inventory/receive.tsx:73
+msgid "Could not receive the delivery"
+msgstr "Could not receive the delivery"
+
+#: app/(dashboard)/inventory/stock.tsx:61
+msgid "Could not save"
+msgstr "Could not save"
+
+#: app/(dashboard)/inventory/orders.tsx:139
+msgid "Could not send the order"
+msgstr "Could not send the order"
+
+#: app/(dashboard)/inventory/index.tsx:86
+msgid "Could not start the count"
+msgstr "Could not start the count"
+
 #: app/(dashboard)/menu-photos.tsx:387
 msgid "Couldn't upload"
 msgstr "Couldn't upload"
+
+#: components/inventory/bottle-row.tsx:139
+msgid "Count by weight"
+msgstr "Count by weight"
+
+#: app/(dashboard)/inventory/index.tsx:196
+msgid "Count everything"
+msgstr "Count everything"
+
+#: components/inventory/bottle-row.tsx:139
+msgid "Count in tenths"
+msgstr "Count in tenths"
+
+#: app/(dashboard)/inventory/index.tsx:185
+msgid "Count key items"
+msgstr "Count key items"
+
+#: app/(dashboard)/inventory/index.tsx:135
+msgid "Counts"
+msgstr "Counts"
+
+#: app/(dashboard)/inventory/index.tsx:120
+msgid "Counts due today"
+msgstr "Counts due today"
 
 #: app/(auth)/sign-in.tsx:335
 msgid "Create account"
@@ -216,6 +402,11 @@ msgstr "Current"
 msgid "Default"
 msgstr "Default"
 
+#. placeholder {0}: new Intl.DateTimeFormat(i18n.locale, { dateStyle: 'medium' }).format(new Date(`${card.expectedDate}T12:00:00`))
+#: app/(dashboard)/inventory/orders.tsx:243
+msgid "Delivery {0}"
+msgstr "Delivery {0}"
+
 #: app/(dashboard)/create-organization.tsx:173
 msgid "Description (optional)"
 msgstr "Description (optional)"
@@ -232,6 +423,10 @@ msgstr "Dish"
 msgid "Don't have an account?"
 msgstr "Don't have an account?"
 
+#: app/(dashboard)/inventory/index.tsx:261
+msgid "Due {time}"
+msgstr "Due {time}"
+
 #: app/(dashboard)/index.tsx:109
 #: app/(dashboard)/settings/index.tsx:103
 msgid "Edit Profile"
@@ -240,6 +435,10 @@ msgstr "Edit Profile"
 #: app/(auth)/sign-up.tsx:214
 msgid "Email"
 msgstr "Email"
+
+#: app/(dashboard)/inventory/orders.tsx:61
+msgid "Email the supplier"
+msgstr "Email the supplier"
 
 #: app/(auth)/verify-code.tsx:175
 msgid "Enter 6-character code:"
@@ -264,6 +463,10 @@ msgstr "Enter your password"
 #: app/(auth)/sign-in.tsx:231
 msgid "Enter your username"
 msgstr "Enter your username"
+
+#: app/(dashboard)/inventory/count.tsx:108
+msgid "Entries are still on this phone"
+msgstr "Entries are still on this phone"
 
 #: app/(dashboard)/settings/index.tsx:139
 msgid "Epic Stack Mobile"
@@ -314,9 +517,17 @@ msgstr "Failed to switch organization"
 msgid "Failed to update profile"
 msgstr "Failed to update profile"
 
+#: components/inventory/bottle-row.tsx:64
+msgid "Fewer bottles"
+msgstr "Fewer bottles"
+
 #: components/menu-photos/photo-capture-modal.tsx:169
 msgid "Fill the frame"
 msgstr "Fill the frame"
+
+#: app/(dashboard)/inventory/count.tsx:169
+msgid "Finish"
+msgstr "Finish"
 
 #: app/(auth)/sign-in.tsx:131
 msgid "Forgot Password"
@@ -333,6 +544,16 @@ msgstr "Forgot password?"
 #: app/(dashboard)/settings/notifications.tsx:177
 msgid "From"
 msgstr "From"
+
+#: components/inventory/bottle-row.tsx:55
+msgid "Full bottles"
+msgstr "Full bottles"
+
+#: app/(dashboard)/inventory/count.tsx:153
+#: app/(dashboard)/inventory/index.tsx:161
+#: app/(dashboard)/inventory/index.tsx:258
+msgid "Full count"
+msgstr "Full count"
 
 #: app/(auth)/landing.tsx:168
 #: app/(auth)/landing.tsx:171
@@ -352,13 +573,27 @@ msgstr "Hold alerts that can wait"
 msgid "If an account with that email exists, we've sent you a password reset link."
 msgstr "If an account with that email exists, we've sent you a password reset link."
 
+#: app/(dashboard)/_layout.tsx:53
+#: app/(dashboard)/inventory/index.tsx:113
 #: app/(dashboard)/settings/notifications.tsx:49
 msgid "Inventory"
 msgstr "Inventory"
 
+#: components/inventory/inventory-gate.tsx:37
+msgid "Inventory is not turned on for this business."
+msgstr "Inventory is not turned on for this business."
+
+#: app/(dashboard)/inventory/receive.tsx:181
+msgid "Invoice photo added."
+msgstr "Invoice photo added."
+
 #: app/(dashboard)/menu-photos.tsx:151
 msgid "It still did not go through after several tries."
 msgstr "It still did not go through after several tries."
+
+#: lib/inventory/alert-copy.ts:44
+msgid "It was due an hour ago. Open Inventory to start it."
+msgstr "It was due an hour ago. Open Inventory to start it."
 
 #: app/(dashboard)/settings/devices.tsx:48
 msgid "It will stop getting alerts for you."
@@ -368,14 +603,27 @@ msgstr "It will stop getting alerts for you."
 msgid "Join organization"
 msgstr "Join organization"
 
+#: app/(dashboard)/inventory/stock.tsx:95
+msgid "Key items"
+msgstr "Key items"
+
 #: app/(dashboard)/settings/notifications.tsx:46
 msgid "Large orders"
 msgstr "Large orders"
+
+#. placeholder {0}: new Intl.DateTimeFormat(i18n.locale, { month: 'short', day: 'numeric' }).format(new Date(item.lastCountedAt))
+#: app/(dashboard)/inventory/stock.tsx:159
+msgid "Last counted {0}"
+msgstr "Last counted {0}"
 
 #. placeholder {0}: new Date(device.lastSeenAt).toLocaleString()
 #: app/(dashboard)/settings/devices.tsx:85
 msgid "Last used {0}"
 msgstr "Last used {0}"
+
+#: app/(dashboard)/inventory/index.tsx:261
+msgid "Late, due {time}"
+msgstr "Late, due {time}"
 
 #: components/menu-photos/photo-capture-modal.tsx:166
 msgid "Light from the side"
@@ -401,6 +649,14 @@ msgstr "Loading organizations..."
 msgid "Loading..."
 msgstr "Loading..."
 
+#: components/inventory/location-picker.tsx:49
+msgid "Location"
+msgstr "Location"
+
+#: app/(dashboard)/inventory/stock.tsx:174
+msgid "Low"
+msgstr "Low"
+
 #: app/(auth)/sign-up.tsx:222
 msgid "m@example.com"
 msgstr "m@example.com"
@@ -409,15 +665,35 @@ msgstr "m@example.com"
 msgid "Manage your logged-in devices"
 msgstr "Manage your logged-in devices"
 
-#: app/(dashboard)/_layout.tsx:80
+#: app/(dashboard)/alerts.tsx:76
+msgid "Mark all as read"
+msgstr "Mark all as read"
+
+#: app/(dashboard)/inventory/stock.tsx:141
+msgid "Mark as a key item"
+msgstr "Mark as a key item"
+
+#: app/(dashboard)/_layout.tsx:108
 #: app/(dashboard)/index.tsx:100
 #: app/(dashboard)/menu-photos.tsx:169
 msgid "Menu photos"
 msgstr "Menu photos"
 
+#: components/inventory/bottle-row.tsx:80
+msgid "More bottles"
+msgstr "More bottles"
+
+#: app/(dashboard)/inventory/stock.tsx:158
+msgid "Never counted"
+msgstr "Never counted"
+
 #: app/(dashboard)/settings/notifications.tsx:42
 msgid "New orders"
 msgstr "New orders"
+
+#: app/(dashboard)/inventory/index.tsx:143
+msgid "No count is open."
+msgstr "No count is open."
 
 #: app/(dashboard)/menu-photos.tsx:289
 msgid "No dish matches your search."
@@ -431,6 +707,14 @@ msgstr "No email address provided for resending code."
 msgid "No email address provided for verification."
 msgstr "No email address provided for verification."
 
+#: app/(dashboard)/inventory/stock.tsx:113
+msgid "No items match."
+msgstr "No items match."
+
+#: app/(dashboard)/inventory/receive.tsx:148
+msgid "No orders are waiting to be received."
+msgstr "No orders are waiting to be received."
+
 #: app/(dashboard)/index.tsx:139
 #: app/(dashboard)/organizations.tsx:112
 msgid "No organizations found"
@@ -439,6 +723,10 @@ msgstr "No organizations found"
 #: app/(dashboard)/settings/devices.tsx:70
 msgid "No phone is set up for alerts yet."
 msgstr "No phone is set up for alerts yet."
+
+#: app/(dashboard)/inventory/orders.tsx:228
+msgid "Nothing needs ordering right now."
+msgstr "Nothing needs ordering right now."
 
 #: app/(dashboard)/menu-photos.tsx:291
 msgid "Nothing to photograph. Nice."
@@ -459,6 +747,30 @@ msgstr "Notifications"
 msgid "OK"
 msgstr "OK"
 
+#: components/inventory/bottle-row.tsx:90
+msgid "Open bottle weight (g)"
+msgstr "Open bottle weight (g)"
+
+#: components/inventory/bottle-row.tsx:99
+msgid "Open bottle weight in grams"
+msgstr "Open bottle weight in grams"
+
+#: lib/inventory/alert-copy.ts:76
+msgid "Open Orders to approve and send it."
+msgstr "Open Orders to approve and send it."
+
+#: lib/inventory/alert-copy.ts:52
+msgid "Open Receive a delivery when it arrives."
+msgstr "Open Receive a delivery when it arrives."
+
+#: lib/inventory/alert-copy.ts:28
+msgid "Open Stock to see what is running low."
+msgstr "Open Stock to see what is running low."
+
+#: lib/inventory/alert-copy.ts:98
+msgid "Open the web app to see what changed."
+msgstr "Open the web app to see what changed."
+
 #: components/organization-switcher.tsx:68
 msgid "Opens organization switcher"
 msgstr "Opens organization switcher"
@@ -471,9 +783,35 @@ msgstr "Or continue with email"
 msgid "Or continue with username"
 msgstr "Or continue with username"
 
+#. placeholder {0}: item.number
+#. placeholder {0}: order.number
+#: app/(dashboard)/inventory/orders.tsx:203
+#: app/(dashboard)/inventory/receive.tsx:162
+msgid "Order {0}"
+msgstr "Order {0}"
+
+#. placeholder {0}: item.number
+#. placeholder {1}: new Intl.DateTimeFormat(i18n.locale, { dateStyle: 'medium' }).format(new Date(`${item.expectedDate}T12:00:00`))
+#: app/(dashboard)/inventory/receive.tsx:161
+msgid "Order {0}, expected {1}"
+msgstr "Order {0}, expected {1}"
+
+#: app/(dashboard)/inventory/orders.tsx:98
+msgid "Order sent"
+msgstr "Order sent"
+
+#: app/(dashboard)/inventory/orders.tsx:96
+msgid "Order text"
+msgstr "Order text"
+
 #: app/(dashboard)/settings/notifications.tsx:44
 msgid "Ordering paused for too long"
 msgstr "Ordering paused for too long"
+
+#: app/(dashboard)/inventory/index.tsx:222
+#: app/(dashboard)/inventory/orders.tsx:181
+msgid "Orders"
+msgstr "Orders"
 
 #: app/(dashboard)/settings/notifications.tsx:43
 msgid "Orders waiting too long"
@@ -512,6 +850,14 @@ msgstr "organization-slug"
 #: components/organization-switcher.tsx:123
 msgid "Organizations"
 msgstr "Organizations"
+
+#: app/(dashboard)/inventory/count.tsx:269
+msgid "Other items"
+msgstr "Other items"
+
+#: app/(dashboard)/inventory/stock.tsx:174
+msgid "Out"
+msgstr "Out"
 
 #. placeholder {0}: currentIndex + 1
 #. placeholder {1}: slides.length
@@ -555,9 +901,28 @@ msgstr "Push notifications are not turned on for this organization yet."
 msgid "Quick Actions"
 msgstr "Quick Actions"
 
+#: app/(dashboard)/inventory/count.tsx:153
+#: app/(dashboard)/inventory/index.tsx:160
+#: app/(dashboard)/inventory/index.tsx:258
+msgid "Quick count of key items"
+msgstr "Quick count of key items"
+
 #: app/(dashboard)/settings/notifications.tsx:144
 msgid "Quiet hours"
 msgstr "Quiet hours"
+
+#: app/(dashboard)/inventory/index.tsx:213
+#: app/(dashboard)/inventory/receive.tsx:129
+msgid "Receive a delivery"
+msgstr "Receive a delivery"
+
+#: app/(dashboard)/inventory/receive.tsx:192
+msgid "Received as ordered"
+msgstr "Received as ordered"
+
+#: app/(dashboard)/inventory/receive.tsx:168
+msgid "Received."
+msgstr "Received."
 
 #: app/(auth)/sign-in.tsx:306
 msgid "Remember me"
@@ -568,6 +933,10 @@ msgstr "Remember me"
 #: app/(dashboard)/settings/devices.tsx:93
 msgid "Remove"
 msgstr "Remove"
+
+#: app/(dashboard)/inventory/stock.tsx:141
+msgid "Remove from key items"
+msgstr "Remove from key items"
 
 #: app/(dashboard)/settings/devices.tsx:47
 msgid "Remove this phone?"
@@ -594,6 +963,10 @@ msgstr "Reservations"
 msgid "Retake"
 msgstr "Retake"
 
+#: lib/inventory/alert-copy.ts:68
+msgid "Review and send it before the cut-off."
+msgstr "Review and send it before the cut-off."
+
 #: app/(dashboard)/settings/notifications.tsx:211
 msgid "Save"
 msgstr "Save"
@@ -606,9 +979,30 @@ msgstr "Search any dish to replace its photo"
 msgid "Search dishes"
 msgstr "Search dishes"
 
+#: app/(dashboard)/inventory/stock.tsx:73
+#: app/(dashboard)/inventory/stock.tsx:76
+msgid "Search items"
+msgstr "Search items"
+
+#: app/(dashboard)/inventory/index.tsx:206
+msgid "Search items and mark key items"
+msgstr "Search items and mark key items"
+
 #: app/(dashboard)/settings/index.tsx:109
 msgid "Security"
 msgstr "Security"
+
+#: lib/inventory/alert-copy.ts:60
+msgid "See the price changes in the web app."
+msgstr "See the price changes in the web app."
+
+#: app/(dashboard)/inventory/count.tsx:218
+msgid "Send now"
+msgstr "Send now"
+
+#: app/(dashboard)/inventory/orders.tsx:74
+msgid "Send the order"
+msgstr "Send the order"
 
 #: app/(auth)/verify-code.tsx:244
 msgid "Sending..."
@@ -707,6 +1101,18 @@ msgstr "Snooze"
 msgid "Snoozed until {0}"
 msgstr "Snoozed until {0}"
 
+#: app/(dashboard)/inventory/receive.tsx:75
+msgid "Someone changed this order. Pull to refresh and try again."
+msgstr "Someone changed this order. Pull to refresh and try again."
+
+#: lib/inventory/alert-copy.ts:101
+msgid "Something needs your attention"
+msgstr "Something needs your attention"
+
+#: lib/inventory/alert-copy.ts:97
+msgid "Something needs your attention in Staff"
+msgstr "Something needs your attention in Staff"
+
 #: app/(dashboard)/menu-photos.tsx:153
 msgid "Something went wrong."
 msgstr "Something went wrong."
@@ -714,6 +1120,19 @@ msgstr "Something went wrong."
 #: app/(dashboard)/settings/notifications.tsx:48
 msgid "Staff"
 msgstr "Staff"
+
+#: app/(dashboard)/inventory/index.tsx:265
+msgid "Start"
+msgstr "Start"
+
+#: app/(dashboard)/inventory/index.tsx:205
+#: app/(dashboard)/inventory/stock.tsx:68
+msgid "Stock"
+msgstr "Stock"
+
+#: lib/inventory/alert-copy.ts:92
+msgid "Stock is back."
+msgstr "Stock is back."
 
 #: app/(dashboard)/create-organization.tsx:89
 #: app/(dashboard)/organizations.tsx:42
@@ -725,6 +1144,10 @@ msgstr "Success"
 #: components/ui/success-animation.tsx:20
 msgid "Success!"
 msgstr "Success!"
+
+#: app/(dashboard)/inventory/orders.tsx:220
+msgid "Suggested orders"
+msgstr "Suggested orders"
 
 #: components/organization-switcher.tsx:67
 msgid "Switch organization"
@@ -752,6 +1175,14 @@ msgstr "Team chat mentions"
 msgid "Terms of Service"
 msgstr "Terms of Service"
 
+#: app/(dashboard)/inventory/receive.tsx:89
+msgid "The delivery is received. Allow the camera in Settings to add the invoice photo."
+msgstr "The delivery is received. Allow the camera in Settings to add the invoice photo."
+
+#: app/(dashboard)/inventory/receive.tsx:122
+msgid "The delivery is received. Tap Add invoice photo to try again."
+msgstr "The delivery is received. Tap Add invoice photo to try again."
+
 #: app/(dashboard)/menu-photos.tsx:247
 msgid "The dishes could not be loaded."
 msgstr "The dishes could not be loaded."
@@ -761,6 +1192,10 @@ msgstr "The dishes could not be loaded."
 #: app/(auth)/landing.tsx:47
 msgid "The easiest way to..."
 msgstr "The easiest way to..."
+
+#: app/(dashboard)/inventory/orders.tsx:141
+msgid "The email could not be sent. Try WhatsApp or copy the text."
+msgstr "The email could not be sent. Try WhatsApp or copy the text."
 
 #: components/menu-photos/photo-capture-modal.tsx:93
 msgid "The photo could not be opened. Try again."
@@ -778,13 +1213,45 @@ msgstr "The photo could not be saved. Try again."
 msgid "The photo could not be taken. Try again."
 msgstr "The photo could not be taken. Try again."
 
+#: app/(dashboard)/inventory/receive.tsx:121
+msgid "The photo did not upload"
+msgstr "The photo did not upload"
+
 #: app/(dashboard)/menu-photos.tsx:147
 msgid "The photo is too large."
 msgstr "The photo is too large."
 
+#: app/(dashboard)/inventory/count.tsx:193
+msgid "The two counts differ. A manager settles them in the web app."
+msgstr "The two counts differ. A manager settles them in the web app."
+
+#: components/inventory/inventory-gate.tsx:41
+msgid "There is no location you can see."
+msgstr "There is no location you can see."
+
+#: app/(dashboard)/inventory/count.tsx:201
+msgid "This count is finished."
+msgstr "This count is finished."
+
+#: app/(dashboard)/inventory/count.tsx:185
+msgid "This count is waiting for a different person to count the key items again."
+msgstr "This count is waiting for a different person to count the key items again."
+
+#: app/(dashboard)/inventory/count.tsx:126
+msgid "This count is waiting for a second person to count the key items."
+msgstr "This count is waiting for a second person to count the key items."
+
+#: app/(dashboard)/inventory/count.tsx:199
+msgid "This count is waiting for review."
+msgstr "This count is waiting for review."
+
 #: app/(dashboard)/menu-photos.tsx:143
 msgid "This dish is no longer on the menu."
 msgstr "This dish is no longer on the menu."
+
+#: app/(dashboard)/inventory/orders.tsx:89
+msgid "This order is over a spending limit. A manager has to approve it before it goes out."
+msgstr "This order is over a spending limit. A manager has to approve it before it goes out."
 
 #: app/(dashboard)/settings/devices.tsx:82
 msgid "This phone"
@@ -802,10 +1269,18 @@ msgstr "to"
 msgid "Track what you eat 🍎"
 msgstr "Track what you eat 🍎"
 
+#: app/(dashboard)/alerts.tsx:90
+#: app/(dashboard)/inventory/count.tsx:239
 #: app/(dashboard)/menu-photos.tsx:256
 #: app/(dashboard)/menu-photos.tsx:401
+#: components/inventory/inventory-gate.tsx:48
 msgid "Try again"
 msgstr "Try again"
+
+#: app/(dashboard)/inventory/count.tsx:127
+#: app/(dashboard)/inventory/stock.tsx:61
+msgid "Try again in a moment."
+msgstr "Try again in a moment."
 
 #: app/(dashboard)/settings/notifications.tsx:266
 msgid "Turn off"
@@ -876,9 +1351,53 @@ msgstr "Version 1.0.0"
 msgid "View All"
 msgstr "View All"
 
+#: app/(dashboard)/inventory/index.tsx:165
+msgid "Waiting for a second person"
+msgstr "Waiting for a second person"
+
+#: app/(dashboard)/inventory/orders.tsx:88
+msgid "Waiting for approval"
+msgstr "Waiting for approval"
+
+#: app/(dashboard)/inventory/index.tsx:167
+msgid "Waiting for review"
+msgstr "Waiting for review"
+
+#: app/(dashboard)/inventory/orders.tsx:191
+msgid "Waiting for your approval"
+msgstr "Waiting for your approval"
+
 #: app/(dashboard)/menu-photos.tsx:391
 msgid "Waiting to upload"
 msgstr "Waiting to upload"
+
+#: app/(dashboard)/inventory/index.tsx:139
+msgid "We could not load the counts."
+msgstr "We could not load the counts."
+
+#: app/(dashboard)/inventory/receive.tsx:136
+msgid "We could not load the open orders."
+msgstr "We could not load the open orders."
+
+#: app/(dashboard)/inventory/stock.tsx:101
+msgid "We could not load the stock list."
+msgstr "We could not load the stock list."
+
+#: app/(dashboard)/inventory/orders.tsx:224
+msgid "We could not load the suggestions."
+msgstr "We could not load the suggestions."
+
+#: app/(dashboard)/inventory/count.tsx:236
+msgid "We could not load this count."
+msgstr "We could not load this count."
+
+#: app/(dashboard)/alerts.tsx:87
+msgid "We could not load your alerts."
+msgstr "We could not load your alerts."
+
+#: components/inventory/inventory-gate.tsx:43
+msgid "We could not reach your inventory."
+msgstr "We could not reach your inventory."
 
 #: app/(auth)/verify-code.tsx:161
 msgid "We've sent a 6-character code to {email}. Enter it below to verify your account."
@@ -904,18 +1423,34 @@ msgstr "Welcome back,"
 msgid "Welcome back!"
 msgstr "Welcome back!"
 
+#: app/(dashboard)/inventory/orders.tsx:62
+msgid "WhatsApp"
+msgstr "WhatsApp"
+
 #. placeholder {0}: defaultOrg.name
 #: app/(dashboard)/index.tsx:70
 msgid "Working in {0}"
 msgstr "Working in {0}"
 
+#: app/(dashboard)/inventory/count.tsx:177
+msgid "You are counting the key items a second time. The first count is hidden."
+msgstr "You are counting the key items a second time. The first count is hidden."
+
 #: app/(dashboard)/menu-photos.tsx:141
 msgid "You can't edit the menu in this organization."
 msgstr "You can't edit the menu in this organization."
 
+#: app/(dashboard)/inventory/orders.tsx:168
+msgid "You cannot approve your own order. Ask another manager."
+msgstr "You cannot approve your own order. Ask another manager."
+
 #: app/(dashboard)/menu-photos.tsx:242
 msgid "You don't have permission to edit the menu in this organization. Ask an owner or admin for access."
 msgstr "You don't have permission to edit the menu in this organization. Ask an owner or admin for access."
+
+#: app/(dashboard)/alerts.tsx:106
+msgid "You have no alerts."
+msgstr "You have no alerts."
 
 #: app/(auth)/sign-up.tsx:179
 msgid "You've been invited to join an organization. Complete your signup to get started."
@@ -933,3 +1468,15 @@ msgstr "Your Organizations"
 #: app/(dashboard)/settings/notifications.tsx:279
 msgid "Your phones"
 msgstr "Your phones"
+
+#: app/(dashboard)/inventory/orders.tsx:184
+msgid "Your role cannot place orders."
+msgstr "Your role cannot place orders."
+
+#: app/(dashboard)/inventory/receive.tsx:132
+msgid "Your role cannot receive deliveries."
+msgstr "Your role cannot receive deliveries."
+
+#: components/inventory/inventory-gate.tsx:39
+msgid "Your role does not include inventory."
+msgstr "Your role does not include inventory."

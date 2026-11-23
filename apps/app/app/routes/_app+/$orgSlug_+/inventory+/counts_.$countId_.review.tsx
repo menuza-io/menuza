@@ -12,7 +12,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 /** The review of a sent count: what needs a look, then Approve (cost grant). */
 export default function InventoryCountReviewRoute() {
-	const { orgSlug, canEdit, canSeeCost, locations } = useInventoryLayoutData()
+	const { orgSlug, canEdit, canSeeCost, canManageSettings, locations } =
+		useInventoryLayoutData()
 	const { countId } = useParams()
 	const { search } = useLocation()
 	return (
@@ -22,6 +23,7 @@ export default function InventoryCountReviewRoute() {
 			countId={countId ?? ''}
 			canEdit={canEdit}
 			canSeeCost={canSeeCost}
+			canManageSettings={Boolean(canManageSettings)}
 			search={locations.length > 1 ? search : ''}
 		/>
 	)

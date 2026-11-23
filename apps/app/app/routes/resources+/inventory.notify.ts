@@ -367,6 +367,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			? { repeatOrderDraft: event.repeatOrderDraft }
 			: {}),
 		...(event.orderApproval ? { orderApproval: event.orderApproval } : {}),
+		...(event.countOverdue ? { countOverdue: event.countOverdue } : {}),
 	})
 	const baseUrl = String(ENV.BASE_URL ?? '').replace(/\/$/, '')
 	const actionPath =
@@ -382,6 +383,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		...(locationName ? { locationName } : {}),
 		...(priceRiseDishes.length > 0 ? { priceRiseDishes } : {}),
 		...(event.orderApproval ? { orderApproval: event.orderApproval } : {}),
+		...(event.countOverdue ? { countOverdue: event.countOverdue } : {}),
 	}
 
 	let inApp = 0

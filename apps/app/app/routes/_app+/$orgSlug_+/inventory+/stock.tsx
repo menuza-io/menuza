@@ -2,6 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import {
 	INVENTORY_CATEGORIES,
 	listItemsResultSchema,
+	type StockItem,
 	listStorageAreasResultSchema,
 	setupImportListSchema,
 } from '@repo/inventory'
@@ -37,7 +38,10 @@ import {
 	StockListSkeleton,
 } from '#app/components/inventory/stock-list.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
-import { useInventoryQuery } from '#app/hooks/use-inventory-client.ts'
+import {
+	useInventoryClient,
+	useInventoryQuery,
+} from '#app/hooks/use-inventory-client.ts'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
 import { formatMoney } from '#app/utils/inventory/format.ts'
 import { inventoryErrorMessage } from '#app/utils/inventory/inventory-errors.ts'
@@ -183,6 +187,29 @@ export default function InventoryStockRoute() {
 			...areas.map((area) => ({ value: area.id, label: area.name })),
 		],
 		[areas, t],
+	)
+
+	// The star: a key item is in every quick count and can be filtered to.
+	const { request } = useInventoryClient()
+	const [keyError, setKeyError] = useState<string | null>(null)
+	const toggleKey = useCallback(
+		async (item: StockItem) => {
+			setKeyError(null)
+			try {
+				await request(`/items/${encodeURIComponent(item.id)}`, {
+					method: 'PATCH',
+					body: JSON.stringify({
+						expectedVersion: item.version,
+						isKey: item.isKey !== true,
+					}),
+				})
+				reload()
+			} catch (caught) {
+				setKeyError(i18n._(inventoryErrorMessage(caught)))
+				reload()
+			}
+		},
+		[request, reload, i18n],
 	)
 
 	const filtering = hasActiveStockFilters(filters)
@@ -336,6 +363,27 @@ export default function InventoryStockRoute() {
 					</Button>
 					<Button
 						type="button"
+						variant={filters.keyOnly ? 'default' : 'outline'}
+						aria-pressed={filters.keyOnly}
+						className="h-11 md:h-8"
+						onClick={() => patch({ keyOnly: !filters.keyOnly })}
+						data-testid="stock-filter-key"
+					>
+						<Icon name="star" />
+						<Trans>Key items</Trans>
+					</Button>
+					<Button
+						type="button"
+						variant={filters.notCounted ? 'default' : 'outline'}
+						aria-pressed={filters.notCounted}
+						className="h-11 md:h-8"
+						onClick={() => patch({ notCounted: !filters.notCounted })}
+						data-testid="stock-filter-not-counted"
+					>
+						<Trans>Not counted in 14 days</Trans>
+					</Button>
+					<Button
+						type="button"
 						variant={filters.sort === 'daysLeft' ? 'default' : 'outline'}
 						aria-pressed={filters.sort === 'daysLeft'}
 						className="h-11 md:h-8"
@@ -348,6 +396,12 @@ export default function InventoryStockRoute() {
 					</Button>
 				</div>
 			</div>
+
+			{keyError ? (
+				<Alert variant="destructive" data-testid="stock-key-error">
+					<AlertDescription>{keyError}</AlertDescription>
+				</Alert>
+			) : null}
 
 			{list.error && !list.data ? (
 				<Alert variant="destructive" data-testid="stock-error">
@@ -439,6 +493,7 @@ export default function InventoryStockRoute() {
 						showValue={canSeeCost}
 						currency={currency}
 						showDaysLeft
+						onToggleKey={canEdit ? toggleKey : undefined}
 					/>
 					<div className="text-muted-foreground mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
 						<span aria-live="polite" data-testid="stock-count">

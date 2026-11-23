@@ -13,6 +13,10 @@ export type StockFilters = {
 	areaId: string
 	/** "Low or out": items that need ordering. */
 	lowOnly: boolean
+	/** Key items only (the star, #490). */
+	keyOnly: boolean
+	/** Items not counted in 14 days, or never, at this location (#491). */
+	notCounted: boolean
 	/** `daysLeft` puts the items that run out soonest first. */
 	sort: 'name' | 'daysLeft'
 	limit: number
@@ -31,6 +35,8 @@ export function parseStockFilters(params: URLSearchParams): StockFilters {
 		category: params.get('category') ?? NO_FILTER,
 		areaId: params.get('area') ?? NO_FILTER,
 		lowOnly: params.get('low') === '1',
+		keyOnly: params.get('key') === '1',
+		notCounted: params.get('notCounted') === '1',
 		sort: params.get('sort') === 'daysLeft' ? 'daysLeft' : 'name',
 		limit,
 	}
@@ -41,7 +47,9 @@ export function hasActiveStockFilters(filters: StockFilters): boolean {
 		filters.q.trim() !== '' ||
 		filters.category !== NO_FILTER ||
 		filters.areaId !== NO_FILTER ||
-		filters.lowOnly
+		filters.lowOnly ||
+		filters.keyOnly ||
+		filters.notCounted
 	)
 	// Sorting is not a filter: it never empties the list.
 }
@@ -56,13 +64,25 @@ export function stockListPath(
 	if (filters.category !== NO_FILTER) params.set('category', filters.category)
 	if (filters.areaId !== NO_FILTER) params.set('areaId', filters.areaId)
 	if (filters.lowOnly) params.set('status', 'attention')
+	if (filters.keyOnly) params.set('key', 'true')
+	if (filters.notCounted) params.set('notCounted', 'true')
 	if (filters.sort === 'daysLeft') params.set('sort', 'daysLeft')
 	params.set('limit', String(filters.limit))
 	return `/items?${params.toString()}`
 }
 
 export type StockFilterPatch = Partial<
-	Pick<StockFilters, 'q' | 'category' | 'areaId' | 'lowOnly' | 'sort' | 'limit'>
+	Pick<
+		StockFilters,
+		| 'q'
+		| 'category'
+		| 'areaId'
+		| 'lowOnly'
+		| 'keyOnly'
+		| 'notCounted'
+		| 'sort'
+		| 'limit'
+	>
 >
 
 /**
@@ -90,6 +110,11 @@ export function applyStockFilterPatch(
 	}
 	if (patch.lowOnly !== undefined)
 		setOrDelete('low', patch.lowOnly ? '1' : null)
+	if (patch.keyOnly !== undefined)
+		setOrDelete('key', patch.keyOnly ? '1' : null)
+	if (patch.notCounted !== undefined) {
+		setOrDelete('notCounted', patch.notCounted ? '1' : null)
+	}
 	if (patch.sort !== undefined) {
 		setOrDelete('sort', patch.sort === 'daysLeft' ? 'daysLeft' : null)
 	}
@@ -109,7 +134,16 @@ export function applyStockFilterPatch(
 /** Clears every Stock filter and keeps the rest (for example `locationId`). */
 export function clearStockFilters(current: URLSearchParams): URLSearchParams {
 	const next = new URLSearchParams(current)
-	for (const key of ['q', 'category', 'area', 'low', 'sort', 'limit']) {
+	for (const key of [
+		'q',
+		'category',
+		'area',
+		'low',
+		'key',
+		'notCounted',
+		'sort',
+		'limit',
+	]) {
 		next.delete(key)
 	}
 	return next

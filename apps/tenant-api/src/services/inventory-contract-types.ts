@@ -20,6 +20,7 @@ import {
 	type recordBatchSchema,
 	type rejectOrderSchema,
 	type sendOrderSchema,
+	type updateLocationCountControlsSchema,
 	type updateLocationSpendingLimitsSchema,
 	type updateOrderSchema,
 	type countEntriesSchema,
@@ -95,3 +96,6 @@ export type PutRecipeInput = z.infer<typeof putRecipeSchema>
 export type ClearRecipeInput = z.infer<typeof clearRecipeSchema>
 export type RecipeCostsInput = z.infer<typeof recipeCostsRequestSchema>
 export type RecordBatchInput = z.infer<typeof recordBatchSchema>
+export type UpdateLocationCountControlsInput = z.infer<
+	typeof updateLocationCountControlsSchema
+>

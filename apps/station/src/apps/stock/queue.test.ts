@@ -25,6 +25,7 @@ import {
 	MADE_AT_FUTURE_MS,
 	MADE_AT_PAST_MS,
 	newClientId,
+	pendingCountEntries,
 } from './queue.ts'
 import { ctx, ORIGIN, resetStock } from './testing.ts'
 import { useClock } from '~/lib/clock.ts'
@@ -267,6 +268,50 @@ describe('the Stock outbox', () => {
 		expect(await stockRows(ORIGIN)).toHaveLength(1)
 		await wipeStock()
 		expect(await db.stockQueue.count()).toBe(0)
+	})
+})
+
+describe('quick counts of the key items (#490)', () => {
+	it('starts a quick count apart from a full count of everything, and continues the same kind only', async () => {
+		const full = await startCount(ctx, { id: null, name: null })
+		const quick = await startCount(ctx, { id: null, name: null, kind: 'quick' })
+		expect(quick.localId).not.toBe(full.localId)
+		expect(quick.kind).toBe('quick')
+		expect(full.kind).toBeUndefined()
+		// Tapping again continues the open one of its own kind.
+		expect(
+			(await startCount(ctx, { id: null, name: null, kind: 'quick' })).localId,
+		).toBe(quick.localId)
+		expect((await startCount(ctx, { id: null, name: null })).localId).toBe(
+			full.localId,
+		)
+		const starts = (await stockRows(ORIGIN)).filter(
+			(row) => row.kind === 'count_start',
+		)
+		expect(starts.map((row) => row.payload)).toEqual([
+			{ listId: null },
+			{ listId: null, kind: 'quick' },
+		])
+	})
+
+	it('counts the entries still waiting on this tablet, to tell the office it is still counting (#474)', async () => {
+		const first = await startCount(ctx, { id: null, name: null })
+		const second = await startCount(ctx, { id: 'list_weekly', name: 'Weekly' })
+		for (const [record, items] of [
+			[first, ['a', 'b']],
+			[second, ['c']],
+		] as const) {
+			for (const item of items) {
+				await saveCountEntry(ctx, record.localId, {
+					itemId: item,
+					areaId: null,
+					amount: 1,
+					unit: 'kg',
+				})
+			}
+		}
+		expect(await pendingCountEntries(ORIGIN)).toBe(3)
+		expect(await pendingCountEntries('another-restaurant')).toBe(0)
 	})
 })
 

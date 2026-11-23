@@ -25,6 +25,11 @@ function join(path: string, search: string, extra?: Record<string, string>) {
 	return query === '' ? path : `${path}?${query}`
 }
 
+/** The Stock list filtered to items not counted in 14 days (#491). */
+export function notCountedStockHref(orgSlug: string, search: string): string {
+	return join(`/${orgSlug}/inventory/stock`, search, { notCounted: '1' })
+}
+
 export function attentionTarget(
 	item: AttentionItem,
 	{
@@ -52,6 +57,22 @@ export function attentionTarget(
 					`${base}/counts`,
 					search,
 					canEdit ? { start: '1' } : undefined,
+				),
+			}
+		case 'scheduled_count_due':
+			// Opens the start dialog on the kind (and list) that is due.
+			return {
+				kind: item.kind,
+				to: join(
+					`${base}/counts`,
+					search,
+					canEdit
+						? {
+								start: '1',
+								kind: item.countKind,
+								...(item.listId ? { list: item.listId } : {}),
+							}
+						: undefined,
 				),
 			}
 		case 'count_in_progress':

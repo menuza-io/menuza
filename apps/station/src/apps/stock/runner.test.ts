@@ -42,6 +42,28 @@ const entry = (itemId: string, amount: number | null = 1) => ({
 
 beforeEach(resetStock)
 
+describe('count requests (#474, #490)', () => {
+	it('sends the kind of a quick count and how many entries the tablet still holds after each batch', async () => {
+		const quick = await startCount(ctx, { id: null, name: null, kind: 'quick' })
+		const other = await startCount(ctx, { id: 'list_weekly', name: 'Weekly' })
+		await saveCountEntry(ctx, quick.localId, entry('item_saffron', 1))
+		await saveCountEntry(ctx, quick.localId, entry('item_steak', 2))
+		await saveCountEntry(ctx, other.localId, entry('item_oil', 3))
+		const api = fakeApi()
+		await flushStock(deps({ api }))
+		const starts = api.calls.filter((call) => call.name === 'startCount')
+		expect(starts[0]!.args[0]).toMatchObject({ listId: null, kind: 'quick' })
+		expect(starts[1]!.args[0]).not.toHaveProperty('kind')
+		const entries = api.calls.filter((call) => call.name === 'countEntries')
+		const unsent = entries.map(
+			(call) => (call.args[1] as { unsent: number }).unsent,
+		)
+		// The first batch left the other count's entry behind; the last left nothing.
+		expect(unsent[0]).toBe(1)
+		expect(unsent.at(-1)).toBe(0)
+	})
+})
+
 describe('sending the Stock outbox', () => {
 	it('sends a count started offline in order, resolving the start’s clientId to the server id', async () => {
 		const record = await startCount(ctx, { id: 'list_weekly', name: 'Weekly' })

@@ -1,5 +1,6 @@
 import {
 	inventoryValueMinorClamped,
+	isNotCountedLately,
 	runsOutBeforeDelivery,
 	type AttentionItem,
 	type Today,
@@ -37,6 +38,10 @@ import {
 	loadLocationStock,
 	stockValueMinor,
 } from './inventory-items-service.ts'
+import {
+	listCountRuns,
+	listCountSchedules,
+} from './inventory-count-schedules-service.ts'
 import { listCounts } from './inventory-counts-service.ts'
 import {
 	buildSuggestedOrders,
@@ -68,6 +73,7 @@ const KIND_PRIORITY: Record<AttentionItem['kind'], number> = {
 	unconfirmed_order: 2.5,
 	delivery_expected: 3,
 	count_due: 4,
+	scheduled_count_due: 3.5,
 	count_in_progress: 5,
 	prices_pending: 6,
 	price_rise: 7,
@@ -244,6 +250,13 @@ export async function getToday(
 		wasteWeekCount: waste.count,
 		lowItems: low.length,
 		outItems: out.length,
+		// Items this location keeps that were not counted in 14 days (#491).
+		notCountedItems: stock.filter(
+			(row) =>
+				!row.group.isGroup &&
+				row.place !== null &&
+				isNotCountedLately(row.lastCountedAt, now),
+		).length,
 	}
 	if (cost) {
 		metrics.stockValueMinor = stockValue
@@ -548,12 +561,32 @@ export async function getToday(
 					eq(invCounts.locationId, locationId),
 					eq(invCounts.businessDate, date),
 					isNull(invCounts.listId),
+					eq(invCounts.kind, 'full'),
 					ne(invCounts.status, 'cancelled'),
 				),
 			)
 			.limit(1)
 			.get()
 		if (!today) push({ kind: 'count_due', date })
+	}
+	// Scheduled counts (#490, #491): a quick count at close, a full count, a
+	// list, from the minute they are due, with the person responsible.
+	const runs = await listCountRuns(db, { locationId, date, now })
+	const dueRuns = runs.filter((run) => run.status === 'due' && now >= run.dueAt)
+	if (dueRuns.length > 0) {
+		const first = dueRuns[0]!
+		push({
+			kind: 'scheduled_count_due',
+			runId: first.id,
+			countKind: first.kind,
+			slot: first.slot,
+			listId: first.listId,
+			listName: first.listName,
+			dueAt: first.dueAt,
+			assignee: first.assignee,
+			late: first.late,
+			more: dueRuns.length - 1,
+		})
 	}
 	if (cost) {
 		for (const rise of await recentPriceRises(db, locationId, now)) {
@@ -589,9 +622,25 @@ export async function getToday(
 		? await listOpenOrdersForWeek(db, locationId)
 		: []
 	const week: Today['week'] = []
+	const schedules = await listCountSchedules(db, locationId)
 	for (let offset = 0; offset < 7; offset++) {
 		const day = addDays(date, offset)
 		const weekday = dayOfWeek(day)
+		for (const schedule of schedules) {
+			if (
+				schedule.effectiveFrom <= day &&
+				schedule.weekdays.includes(weekday)
+			) {
+				week.push({
+					date: day,
+					kind: 'count',
+					countKind: schedule.kind,
+					timeLocal: schedule.timeLocal,
+					supplierId: null,
+					supplierName: null,
+				})
+			}
+		}
 		if (settings.countDayOfWeek === weekday) {
 			week.push({
 				date: day,

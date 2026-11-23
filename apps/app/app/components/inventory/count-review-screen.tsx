@@ -34,6 +34,10 @@ import { WorkspacePanel } from '@repo/ui/workspace'
 import { useId, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import {
+	DevicesPanel,
+	SecondCheckPanel,
+} from '#app/components/inventory/count-controls-panels.tsx'
 import { CountStatusBadge } from '#app/components/inventory/count-status-badge.tsx'
 import {
 	useNotifyInventoryChanged,
@@ -76,12 +80,15 @@ export function CountReviewScreen({
 	countId,
 	canEdit,
 	canSeeCost,
+	canManageSettings = false,
 	search,
 }: {
 	orgSlug: string
 	countId: string
 	canEdit: boolean
 	canSeeCost: boolean
+	/** A manager (`update:settings:any`) may skip the second count with a reason (#525). */
+	canManageSettings?: boolean
 	search: string
 }) {
 	const { t, i18n } = useLingui()
@@ -103,6 +110,8 @@ export function CountReviewScreen({
 	const [busy, setBusy] = useState<'approve' | 'reopen' | 'cancel' | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [confirmApprove, setConfirmApprove] = useState(false)
+	// Devices that have not said they are done (#474): the manager decides.
+	const [confirmDevices, setConfirmDevices] = useState(false)
 	const [confirmCancel, setConfirmCancel] = useState(false)
 	const [result, setResult] = useState<ApproveCountResult | null>(null)
 
@@ -176,7 +185,9 @@ export function CountReviewScreen({
 		grouped.bigDifferences.find((line) => line.itemId === selectedId) ??
 		grouped.bigDifferences[0] ??
 		null
-	const title = count.listName ?? t`Full count`
+	const title =
+		count.listName ??
+		(count.kind === 'quick' ? t`Quick count of key items` : t`Full count`)
 	const money = (minor: number, code?: string) =>
 		formatMoney(Math.abs(minor), code ?? currency, i18n.locale)
 
@@ -211,16 +222,21 @@ export function CountReviewScreen({
 		}
 	}
 
-	async function approve() {
+	async function approve(approveAnyway = false) {
 		setConfirmApprove(false)
+		setConfirmDevices(false)
 		const answer = await post(
 			'approve',
 			`/counts/${encodeURIComponent(countId)}/approve`,
-			buildApprovePayload(data, { uncounted, notes }),
+			buildApprovePayload(data, { uncounted, notes }, { approveAnyway }),
 			(value) => approveCountResultSchema.parse(value),
 		)
 		if (answer) setResult(answer)
 	}
+
+	const stillCounting = (data.devices ?? []).filter(
+		(device) => device.state !== 'done',
+	)
 
 	async function reopen() {
 		const answer = await post(
@@ -249,6 +265,10 @@ export function CountReviewScreen({
 	const needLook = grouped.notCounted.length + grouped.bigDifferences.length
 	const net = data.differenceValueMinor
 	const netText = net === undefined ? '' : money(net)
+	const keyGapText =
+		data.keyDifferenceValueMinor === undefined
+			? ''
+			: money(data.keyDifferenceValueMinor)
 
 	return (
 		<div className="flex flex-1 flex-col" data-testid="count-review">
@@ -309,7 +329,11 @@ export function CountReviewScreen({
 							<Button
 								type="button"
 								disabled={blocked !== null}
-								onClick={() => setConfirmApprove(true)}
+								onClick={() =>
+									stillCounting.length > 0
+										? setConfirmDevices(true)
+										: setConfirmApprove(true)
+								}
 								data-testid="review-approve"
 							>
 								{busy === 'approve' ? (
@@ -327,6 +351,24 @@ export function CountReviewScreen({
 					<Alert variant="destructive" data-testid="review-save-error">
 						<AlertDescription>{error}</AlertDescription>
 					</Alert>
+				) : null}
+
+				{data.second && data.second.state !== null ? (
+					<SecondCheckPanel
+						countId={countId}
+						countVersion={count.version}
+						second={data.second}
+						canEdit={canEdit}
+						canSkip={canManageSettings}
+						onChanged={() => {
+							notifyChanged()
+							review.reload()
+						}}
+					/>
+				) : null}
+
+				{count.status === 'in_review' && canEdit && stillCounting.length > 0 ? (
+					<DevicesPanel devices={data.devices ?? []} now={Date.now()} />
 				) : null}
 
 				{count.status === 'counting' ? (
@@ -351,6 +393,24 @@ export function CountReviewScreen({
 							</Trans>
 						</AlertDescription>
 					</Alert>
+				) : null}
+
+				{showMoney &&
+				data.keyDifferenceValueMinor !== undefined &&
+				data.keyDifferenceValueMinor !== 0 ? (
+					<p className="text-sm" data-testid="review-key-gap">
+						{data.keyDifferenceValueMinor < 0 ? (
+							<Trans>
+								Key items: about <bdi dir="ltr">{keyGapText}</bdi> less than
+								expected since the last count.
+							</Trans>
+						) : (
+							<Trans>
+								Key items: about <bdi dir="ltr">{keyGapText}</bdi> more than
+								expected since the last count.
+							</Trans>
+						)}
+					</p>
 				) : null}
 
 				<div className="flex flex-col gap-1" data-testid="review-summary">
@@ -640,10 +700,59 @@ export function CountReviewScreen({
 							<Trans>Not yet</Trans>
 						</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => void approve()}
+							onClick={() => void approve(stillCounting.length > 0)}
 							data-testid="review-approve-confirm"
 						>
 							<Trans>Approve count</Trans>
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			<AlertDialog open={confirmDevices} onOpenChange={setConfirmDevices}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							<Plural
+								value={stillCounting.length}
+								one="# device is still counting"
+								other="# devices are still counting"
+							/>
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							<Trans>
+								Entries still on those devices are not in this count yet. If you
+								approve now they are kept as late entries, and you can add them
+								to a correction afterwards.
+							</Trans>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<ul className="text-sm">
+						{stillCounting.map((device) => (
+							<li key={device.deviceId} className="wrap-anywhere">
+								{device.name ?? <Trans>A device</Trans>}
+								{device.unsentCount !== null && device.unsentCount > 0 ? (
+									<>
+										{' · '}
+										<Plural
+											value={device.unsentCount}
+											one="# entry not sent yet"
+											other="# entries not sent yet"
+										/>
+									</>
+								) : null}
+							</li>
+						))}
+					</ul>
+					<AlertDialogFooter>
+						<AlertDialogCancel data-testid="review-devices-wait">
+							<Trans>Wait</Trans>
+						</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={() => setConfirmApprove(true)}
+							data-testid="review-approve-anyway"
+						>
+							<Trans>Approve anyway</Trans>
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

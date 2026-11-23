@@ -32,6 +32,8 @@ import {
 } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { BottleCountInput } from '#app/components/inventory/bottle-count-input.tsx'
+import { LateEntriesPanel } from '#app/components/inventory/count-controls-panels.tsx'
 import { CountStatusBadge } from '#app/components/inventory/count-status-badge.tsx'
 import {
 	useNotifyInventoryChanged,
@@ -101,6 +103,7 @@ export function CountingScreen({
 	countId,
 	canEdit,
 	canSeeCost,
+	currency = '',
 	search,
 }: {
 	orgSlug: string
@@ -108,6 +111,8 @@ export function CountingScreen({
 	/** `update:inventory:any`, and not impersonating. */
 	canEdit: boolean
 	canSeeCost: boolean
+	/** The currency of this location's money, for late-entry values. */
+	currency?: string
 	/** The query string to keep on links (`?locationId=…`), with its `?`. */
 	search: string
 }) {
@@ -125,7 +130,18 @@ export function CountingScreen({
 	const { reload } = sheet
 	const count = sheet.data?.count ?? null
 	const status = count?.status ?? null
-	const counting = status === 'counting' && canEdit
+	// The key-item second-person check (#525): while a count waits for its second
+	// person, only someone who did not make the first count takes entries, and
+	// only the key items, blind. While differences are settled nobody counts.
+	const secondState = count?.secondState ?? null
+	const secondWaiting = secondState === 'waiting'
+	const secondSettling = secondState === 'settling'
+	const secondPass = sheet.data?.pass === 2
+	const counting =
+		status === 'counting' &&
+		canEdit &&
+		!secondSettling &&
+		(!secondWaiting || secondPass)
 
 	const { sync, snapshot } = useCountEntrySync({
 		orgSlug,
@@ -312,6 +328,30 @@ export function CountingScreen({
 		}
 	}
 
+	/** The second person is done with the key items: the two counts are compared. */
+	async function finishSecond() {
+		if (!count) return
+		setSending(true)
+		setFinishError(null)
+		try {
+			await request(`/counts/${encodeURIComponent(countId)}/second/finish`, {
+				method: 'POST',
+				body: JSON.stringify({ expectedVersion: count.version }),
+			})
+			notifyChanged()
+			if (manager) void navigate(reviewHref)
+			else {
+				toast.success(t`Thanks. Your count of the key items is in.`)
+				void navigate(backHref)
+			}
+		} catch (caught) {
+			setFinishError(i18n._(inventorySaveErrorMessage(caught)))
+			reload()
+		} finally {
+			setSending(false)
+		}
+	}
+
 	async function finish() {
 		if (sending) return
 		setFinishError(null)
@@ -323,6 +363,10 @@ export function CountingScreen({
 			setFinishError(
 				t`Some entries have not reached the server yet. Check your connection and try Finish again; nothing is lost.`,
 			)
+			return
+		}
+		if (secondPass) {
+			await finishSecond()
 			return
 		}
 		if (progress.counted < progress.total) {
@@ -366,7 +410,9 @@ export function CountingScreen({
 		)
 	}
 
-	const title = count.listName ?? t`Full count`
+	const title =
+		count.listName ??
+		(count.kind === 'quick' ? t`Quick count of key items` : t`Full count`)
 	const closed = snapshot.closed || (status !== null && status !== 'counting')
 
 	return (
@@ -422,7 +468,8 @@ export function CountingScreen({
 								) : null}
 								<Trans>Finish</Trans>
 							</Button>
-						) : status === 'in_review' ? (
+						) : status === 'in_review' ||
+						  ((secondWaiting || secondSettling) && manager) ? (
 							<Button
 								render={<Link to={reviewHref} />}
 								data-testid="count-open-review"
@@ -435,6 +482,47 @@ export function CountingScreen({
 			</header>
 
 			<div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-4">
+				{status === 'approved' ? (
+					<LateEntriesPanel
+						countId={countId}
+						canEdit={canEdit}
+						canSeeCost={canSeeCost}
+						currency={currency}
+					/>
+				) : null}
+				{secondPass && counting ? (
+					<Alert data-testid="count-second-pass">
+						<Icon name="users" />
+						<AlertDescription>
+							<Trans>
+								You are counting the key items a second time. Only key items are
+								listed and the first count is hidden.
+							</Trans>
+						</AlertDescription>
+					</Alert>
+				) : null}
+				{secondWaiting && !secondPass ? (
+					<Alert data-testid="count-second-waiting">
+						<Icon name="users" />
+						<AlertDescription>
+							<Trans>
+								This count is waiting for a different person to count the key
+								items again. Ask them to sign in with their own PIN or login.
+							</Trans>
+						</AlertDescription>
+					</Alert>
+				) : null}
+				{secondSettling ? (
+					<Alert data-testid="count-second-settling">
+						<Icon name="alert-triangle" />
+						<AlertDescription>
+							<Trans>
+								The two counts of the key items differ. A manager settles them
+								in the review.
+							</Trans>
+						</AlertDescription>
+					</Alert>
+				) : null}
 				{!online && counting ? (
 					<Alert data-testid="count-offline">
 						<Icon name="cloud-off" />
@@ -594,6 +682,10 @@ export function CountingScreen({
 								})}
 								onChange={(unit, value) => change(row, unit, value)}
 								onCommit={(unit) => commit(row.key, unit)}
+								onBottleValue={(ml) => {
+									change(row, 'ml', ml)
+									// The slider and the stepper have no blur: queue it after a pause.
+								}}
 								onRetry={() => void sync.flush()}
 								quantity={quantity}
 							/>
@@ -698,6 +790,7 @@ function CountRowView({
 	saveState,
 	onChange,
 	onCommit,
+	onBottleValue,
 	onRetry,
 	quantity,
 }: {
@@ -709,6 +802,8 @@ function CountRowView({
 	saveState: RowSaveState
 	onChange: (unit: UnitRef, value: number | null) => void
 	onCommit: (unit: UnitRef) => void
+	/** A bottle row: the open and full bottles as millilitres. */
+	onBottleValue: (ml: number | null) => void
 	onRetry: () => void
 	quantity: ReturnType<typeof useQuantityFormat>
 }) {
@@ -743,7 +838,16 @@ function CountRowView({
 			data-counted={counted}
 		>
 			<div className="flex min-w-0 flex-col gap-1">
-				<span className="font-medium wrap-anywhere">{row.name}</span>
+				<span className="flex items-center gap-1.5 font-medium wrap-anywhere">
+					{row.isKey ? (
+						<Icon
+							name="star"
+							className="text-warning size-3.5 shrink-0"
+							aria-label={t`Key item`}
+						/>
+					) : null}
+					{row.name}
+				</span>
 				<span className="text-muted-foreground text-xs">
 					<Trans>
 						Count in <bdi dir="ltr">{unitName}</bdi>
@@ -762,7 +866,14 @@ function CountRowView({
 				<SaveStatus state={saveState} onRetry={onRetry} />
 			</div>
 
-			{editable ? (
+			{editable && row.bottle ? (
+				<BottleCountInput
+					bottle={row.bottle}
+					valueMl={amounts[row.key]?.ml ?? null}
+					onValueMl={onBottleValue}
+					label={t`${name}, count by bottle`}
+				/>
+			) : editable ? (
 				<div className="flex flex-col gap-2 md:items-end">
 					{choices.length > 1 ? (
 						<ToggleGroup

@@ -27,8 +27,11 @@ import {
 	locationBusinessDate,
 	wireUnit,
 } from './inventory-common.ts'
+import { listCountRuns } from './inventory-count-schedules-service.ts'
 import { listCounts } from './inventory-counts-service.ts'
+import { getLocationCountControls } from './inventory-location-settings.ts'
 import {
+	itemBottleOf,
 	type InventoryCaller,
 	loadLocationStock,
 	toItemUnit,
@@ -186,6 +189,10 @@ export async function buildStationCatalog(
 		locationBusinessDate(db, locationId, input.now),
 	])
 
+	const [countControls, dueCounts] = await Promise.all([
+		getLocationCountControls(db, locationId),
+		listCountRuns(db, { locationId, date: businessDate, now: input.now }),
+	])
 	const activeAreas = new Set(areaList.areas.map((area) => area.id))
 	const stockById = new Map(stock.map((row) => [row.item.id, row]))
 
@@ -239,6 +246,8 @@ export async function buildStationCatalog(
 			: defaultCountUnit(row.item.baseUnit, settings.unitSystem),
 		units: row.units.filter((unit) => unit.archivedAt === null).map(toItemUnit),
 		areaIds: row.areaIds.filter((id) => activeAreas.has(id)),
+		isKey: row.item.isKey,
+		bottle: itemBottleOf(row.item),
 	}))
 
 	const areas = areaList.areas.map((area) => ({
@@ -297,6 +306,7 @@ export async function buildStationCatalog(
 			receiveRequiresManager: !input.anyStaffCanReceive,
 			photoMaxBytes: STATION_PHOTO_MAX_BYTES,
 			ordersEnabled: input.ordersEnabled,
+			secondCountRequired: countControls.secondCountRequired,
 		},
 		items,
 		areas,
@@ -309,6 +319,7 @@ export async function buildStationCatalog(
 		}),
 		suppliers: supplierList,
 		expectedDeliveries: expected,
+		dueCounts,
 	}
 	return stationCatalogSchema.parse({
 		...body,

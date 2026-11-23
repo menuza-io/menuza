@@ -12,6 +12,7 @@ import {
 	linkError,
 	type ScheduleLinkAuth,
 } from '../lib/schedule-link-auth.ts'
+import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import { rateLimitByKey } from '../lib/rate-limit.ts'
 import { json, readJsonBody, validationResponse } from '../lib/staff-http.ts'
 import {
@@ -27,6 +28,7 @@ import {
 	loadMyTimeCards,
 	type SelfContext,
 } from '../services/schedule-self-service.ts'
+import { listCountRunsForStaff } from '../services/inventory-count-schedules-service.ts'
 import { type ScheduleResult } from '../services/schedule-shared.ts'
 import { describeStaffError } from '../services/staff-audit.ts'
 
@@ -118,6 +120,25 @@ function param(c: Context, name: string): string {
 // ---------------------------------------------------------------------------
 // Reads
 // ---------------------------------------------------------------------------
+
+/**
+ * The counts assigned to this person on the weekly count plan (#491): stock
+ * counts to do in the next days. Ids, times and kinds only. Empty while the
+ * organization's inventory is off.
+ */
+scheduleLinkRoutes.get(
+	'/me/counts',
+	guarded(async (ctx) => {
+		const flags = await getInventoryFlagState(ctx.orgId)
+		if (flags.status !== 'on') return json({ counts: [] })
+		const counts = await listCountRunsForStaff(ctx.db, {
+			staffId: ctx.staff.id,
+			userId: ctx.staff.userId ?? null,
+			now: ctx.now,
+		})
+		return json({ counts })
+	}),
+)
 
 scheduleLinkRoutes.get(
 	'/me',

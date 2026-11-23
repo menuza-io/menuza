@@ -15,8 +15,14 @@
 		"approvedBy": null,
 		"cancelledAt": null,
 		"createdAt": 1767222000000,
-		"version": 2
+		"version": 2,
+		"kind": "full",
+		"scheduleRunId": null,
+		"secondState": null,
+		"devicesCounting": 0,
+		"lateEntries": 0
 	},
+	"pass": 1,
 	"areas": [
 		{
 			"areaId": "area_walkin",
@@ -29,7 +35,9 @@
 					"countUnit": "kg",
 					"units": [],
 					"quantity": 4500000,
-					"mine": { "amount": 4.5, "unit": "kg" }
+					"mine": { "amount": 4.5, "unit": "kg" },
+					"isKey": false,
+					"bottle": null
 				},
 				{
 					"itemId": "item_tomato",
@@ -38,7 +46,9 @@
 					"countUnit": "kg",
 					"units": [],
 					"quantity": null,
-					"mine": null
+					"mine": null,
+					"isKey": false,
+					"bottle": null
 				}
 			]
 		},
@@ -53,7 +63,9 @@
 					"countUnit": "piece",
 					"units": [],
 					"quantity": 30000,
-					"mine": null
+					"mine": null,
+					"isKey": false,
+					"bottle": null
 				}
 			]
 		}

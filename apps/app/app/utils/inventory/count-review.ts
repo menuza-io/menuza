@@ -65,10 +65,12 @@ export function uncountedChoice(
 export function buildApprovePayload(
 	review: CountReview,
 	decisions: ReviewDecisions,
+	options: { approveAnyway?: boolean } = {},
 ): {
 	expectedVersion: number
 	uncounted: Record<string, UncountedChoice>
 	notes: Record<string, string>
+	approveAnyway?: boolean
 } {
 	const grouped = groupReviewLines(review)
 	const uncounted: Record<string, UncountedChoice> = {}
@@ -80,7 +82,13 @@ export function buildApprovePayload(
 		const note = (decisions.notes[line.itemId] ?? '').trim()
 		if (note !== '') notes[line.itemId] = note.slice(0, 500)
 	}
-	return { expectedVersion: review.count.version, uncounted, notes }
+	return {
+		expectedVersion: review.count.version,
+		uncounted,
+		notes,
+		// "Approve anyway" (#474): only sent once the manager confirmed it.
+		...(options.approveAnyway ? { approveAnyway: true } : {}),
+	}
 }
 
 export type CountAccess = {

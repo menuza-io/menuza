@@ -49,6 +49,8 @@ export const INVENTORY_ALL_NOTIFY_KINDS = [
 	...INVENTORY_SOLD_OUT_KINDS,
 	'inventory_repeat_order_draft',
 	'inventory_order_approval',
+	/** #491: a scheduled count was not started an hour after it was due. */
+	'inventory_count_overdue',
 ] as const
 export type InventoryNotifyKind = (typeof INVENTORY_ALL_NOTIFY_KINDS)[number]
 export const inventoryNotifyKindSchema = z.enum(INVENTORY_ALL_NOTIFY_KINDS)
@@ -126,6 +128,20 @@ export const orderApprovalAlertSchema = z
 	.strict()
 export type OrderApprovalAlert = z.infer<typeof orderApprovalAlertSchema>
 
+/** Details for an overdue scheduled count (#491; ids and a time only, never a name). */
+export const countOverdueAlertSchema = z
+	.object({
+		runId: z.string().min(1).max(64),
+		countKind: z.enum(['full', 'quick']),
+		slot: z.enum(['opening', 'close', 'custom']),
+		dueAt: z.number().int().positive(),
+		/** Responsible person: a staff id or a member id (the App joins the name). */
+		assigneeKind: z.enum(['staff', 'member']).nullable().optional(),
+		assigneeId: z.string().min(1).max(64).nullable().optional(),
+	})
+	.strict()
+export type CountOverdueAlert = z.infer<typeof countOverdueAlertSchema>
+
 export const inventoryNotifyEventSchema = z
 	.object({
 		orgId: z.string().min(1).max(64),
@@ -151,6 +167,8 @@ export const inventoryNotifyEventSchema = z
 		repeatOrderDraft: repeatOrderDraftAlertSchema.optional(),
 		/** Order waiting for approval details on `inventory_order_approval` (#500). */
 		orderApproval: orderApprovalAlertSchema.optional(),
+		/** Overdue scheduled count details on `inventory_count_overdue` (#491). */
+		countOverdue: countOverdueAlertSchema.optional(),
 	})
 	.strict()
 export type InventoryNotifyEvent = z.infer<typeof inventoryNotifyEventSchema>
@@ -213,6 +231,10 @@ export const inventoryTickResultSchema = z.object({
 	countReviewAlerts: z.number().int().nonnegative(),
 	deliveryDueAlerts: z.number().int().nonnegative(),
 	priceRiseAlerts: z.number().int().nonnegative(),
+	/** Overdue scheduled counts told to a manager (#491; absent from older nodes). */
+	countOverdueAlerts: z.number().int().nonnegative().optional(),
+	/** Quick counts closed as not finished (#490; absent from older nodes). */
+	countsNotFinished: z.number().int().nonnegative().optional(),
 	/** Phase 3: sale-usage outbox rows settled (0 before). */
 	salesSettled: z.number().int().nonnegative(),
 	errors: z.number().int().nonnegative(),

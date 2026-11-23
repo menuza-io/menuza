@@ -48,6 +48,34 @@ export default function DashboardLayout() {
 					}}
 				/>
 				<Tabs.Screen
+					name="inventory"
+					options={{
+						title: t`Inventory`,
+						headerShown: false,
+						tabBarIcon: ({ color, size }) => (
+							<Ionicons
+								name="cube-outline"
+								size={size}
+								color={color as string}
+							/>
+						),
+					}}
+				/>
+				<Tabs.Screen
+					name="alerts"
+					options={{
+						title: t`Alerts`,
+						headerShown: false,
+						tabBarIcon: ({ color, size }) => (
+							<Ionicons
+								name="notifications-outline"
+								size={size}
+								color={color as string}
+							/>
+						),
+					}}
+				/>
+				<Tabs.Screen
 					name="organizations"
 					options={{
 						title: 'Organizations',

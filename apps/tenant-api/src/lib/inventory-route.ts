@@ -33,6 +33,8 @@ export const MONEY_FIELDS = [
 	'valueMinor',
 	'totalValueMinor',
 	'differenceValueMinor',
+	'keyDifferenceValueMinor',
+	'adjustmentValueMinor',
 	'costMicro',
 	'previousCostMicro',
 	'lastCostMicro',

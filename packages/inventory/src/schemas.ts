@@ -38,6 +38,8 @@ export const inventoryLocationSettingsSchema = z.object({
 	orderLimitMinor: z.number().int().min(0).nullable().optional(),
 	/** Monthly spending limit in location currency minor units (#500, cost grant only). */
 	monthlyLimitMinor: z.number().int().min(0).nullable().optional(),
+	/** Key items need a second person's count at this location (#525). */
+	secondCountRequired: z.boolean().optional(),
 	/** Location settings optimistic version (#500). */
 	version: z.number().int().min(0).optional(),
 })

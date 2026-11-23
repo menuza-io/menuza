@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { type InventoryClient } from '#app/components/inventory/inventory-client-provider.tsx'
@@ -100,11 +100,21 @@ function region(
 		withMoney?: boolean
 		status?: string
 		approve?: () => unknown
+		extra?: Record<string, unknown>
 	} = {},
 ) {
 	return vi.fn<InventoryClient['request']>(async (path) => {
 		if (path === '/counts/cnt_1/review') {
-			return review(options.withMoney ?? true, options.status)
+			return {
+				...review(options.withMoney ?? true, options.status),
+				...options.extra,
+			}
+		}
+		if (
+			path === '/counts/cnt_1/second/settle' ||
+			path === '/counts/cnt_1/second/skip'
+		) {
+			return { ...COUNT, secondState: 'done', status: 'in_review', version: 6 }
 		}
 		if (path === '/counts/cnt_1/approve') {
 			return options.approve?.() ?? APPROVED
@@ -345,5 +355,192 @@ describe('CountReviewScreen', () => {
 		expect(screen.getByTestId('review-matching')).toHaveTextContent(
 			'50 items match and need no review.',
 		)
+	})
+
+	it('warns about devices still counting and approves anyway only after the manager confirms (#474)', async () => {
+		const request = region({
+			extra: {
+				devices: [
+					{
+						deviceId: 'tablet-1',
+						name: 'Kitchen iPad',
+						kind: 'station',
+						person: { kind: 'staff', id: 's1' },
+						joinedAt: 1,
+						lastSyncAt: Date.now(),
+						unsentCount: 3,
+						state: 'counting',
+					},
+					{
+						deviceId: 'tablet-2',
+						name: 'Bar tablet',
+						kind: 'station',
+						person: { kind: 'staff', id: 's2' },
+						joinedAt: 1,
+						lastSyncAt: 1,
+						unsentCount: null,
+						state: 'not_responding',
+					},
+					{
+						deviceId: 'tablet-3',
+						name: 'Done tablet',
+						kind: 'station',
+						person: { kind: 'staff', id: 's3' },
+						joinedAt: 1,
+						lastSyncAt: 1,
+						unsentCount: 0,
+						state: 'done',
+					},
+				],
+			},
+		})
+		setup(request)
+		const panel = await screen.findByTestId('review-devices')
+		expect(panel).toHaveTextContent('2 devices are still counting')
+		expect(
+			within(panel).getByTestId('review-device-tablet-1'),
+		).toHaveTextContent('Kitchen iPad')
+		expect(within(panel).getByTestId('review-device-unsent')).toHaveTextContent(
+			'3 entries not sent yet',
+		)
+		expect(
+			within(panel).getByTestId('review-device-tablet-2'),
+		).toHaveTextContent('Not responding')
+		expect(screen.queryByTestId('review-device-tablet-3')).toBeNull()
+
+		await userEvent.click(screen.getByTestId('review-approve'))
+		await userEvent.click(await screen.findByTestId('review-approve-anyway'))
+		await userEvent.click(await screen.findByTestId('review-approve-confirm'))
+		await waitFor(() =>
+			expect(calls(request, '/counts/cnt_1/approve')).toHaveLength(1),
+		)
+		expect(
+			sentJson(request, calls(request, '/counts/cnt_1/approve')[0]!.index),
+		).toMatchObject({ expectedVersion: 4, approveAnyway: true })
+	})
+
+	it('approves without the warning when every device said it is done', async () => {
+		const request = region({
+			extra: {
+				devices: [
+					{
+						deviceId: 'tablet-3',
+						name: 'Done tablet',
+						kind: 'station',
+						person: { kind: 'staff', id: 's3' },
+						joinedAt: 1,
+						lastSyncAt: 1,
+						unsentCount: 0,
+						state: 'done',
+					},
+				],
+			},
+		})
+		setup(request)
+		await screen.findByTestId('count-review')
+		expect(screen.queryByTestId('review-devices')).toBeNull()
+		await userEvent.click(screen.getByTestId('review-approve'))
+		await userEvent.click(await screen.findByTestId('review-approve-confirm'))
+		await waitFor(() =>
+			expect(calls(request, '/counts/cnt_1/approve')).toHaveLength(1),
+		)
+		expect(
+			sentJson(request, calls(request, '/counts/cnt_1/approve')[0]!.index),
+		).not.toHaveProperty('approveAnyway')
+	})
+
+	it('shows the key items money gap since the last count (#490)', async () => {
+		setup(region({ extra: { keyDifferenceValueMinor: -2_500 } }))
+		expect(await screen.findByTestId('review-key-gap')).toHaveTextContent(
+			'Key items',
+		)
+		expect(screen.getByTestId('review-key-gap')).toHaveTextContent('less')
+	})
+
+	it('settles the differences between the two key-item counts side by side before review (#525)', async () => {
+		const request = region({
+			status: 'counting',
+			extra: {
+				second: {
+					state: 'settling',
+					keyItemCount: 1,
+					secondCounters: [{ kind: 'operator', id: 'u2' }],
+					lines: [
+						{
+							itemId: 'k1',
+							name: 'Saffron',
+							baseUnit: 'g',
+							firstQuantity: 8_000,
+							secondQuantity: 7_000,
+							matches: false,
+							resolution: null,
+						},
+					],
+					skipReason: null,
+				},
+			},
+		})
+		setup(request)
+		const panel = await screen.findByTestId('second-check')
+		expect(within(panel).getByTestId('second-line-k1')).toHaveTextContent(
+			'Saffron',
+		)
+		const settle = within(panel).getByTestId('second-settle')
+		expect(settle).toBeDisabled()
+		await userEvent.click(within(panel).getByTestId('second-pick-second-k1'))
+		expect(settle).toBeEnabled()
+		await userEvent.click(settle)
+		await waitFor(() =>
+			expect(calls(request, '/counts/cnt_1/second/settle')).toHaveLength(1),
+		)
+		expect(
+			sentJson(
+				request,
+				calls(request, '/counts/cnt_1/second/settle')[0]!.index,
+			),
+		).toEqual({ expectedVersion: 4, resolutions: { k1: 'second' } })
+	})
+
+	it('lets only a manager skip the second count, with a reason (#525)', async () => {
+		const extra = {
+			second: {
+				state: 'waiting',
+				keyItemCount: 2,
+				secondCounters: [],
+				lines: [],
+				skipReason: null,
+			},
+		}
+		setup(region({ status: 'counting', extra }), { canSeeCost: true })
+		await screen.findByTestId('second-waiting')
+		expect(screen.queryByTestId('second-skip-open')).toBeNull()
+		cleanup()
+
+		const request = region({ status: 'counting', extra })
+		renderInventory(
+			<CountReviewScreen
+				orgSlug="acme"
+				countId="cnt_1"
+				canEdit
+				canSeeCost
+				canManageSettings
+				search=""
+			/>,
+			{ request },
+		)
+		await userEvent.click(await screen.findByTestId('second-skip-open'))
+		const confirm = screen.getByTestId('second-skip-confirm')
+		expect(confirm).toBeDisabled()
+		await userEvent.type(
+			screen.getByTestId('second-skip-reason'),
+			'Nobody else is in',
+		)
+		await userEvent.click(confirm)
+		await waitFor(() =>
+			expect(calls(request, '/counts/cnt_1/second/skip')).toHaveLength(1),
+		)
+		expect(
+			sentJson(request, calls(request, '/counts/cnt_1/second/skip')[0]!.index),
+		).toEqual({ expectedVersion: 4, reason: 'Nobody else is in' })
 	})
 })

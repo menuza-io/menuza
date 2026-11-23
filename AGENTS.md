@@ -1760,6 +1760,27 @@ left, sold-out alerts; tenant `0062_inventory_setup`):**
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.
 
+**Count controls (key items, quick counts, schedules, second person, devices,
+late entries, bottles, phone; #490, #491, #525, #474, #470, #516):**
+
+- Extends the one count model (`inv_counts`, `inv_count_entries`); there is no
+  second count, schedule, queue or alert engine. Details: `docs/inventory.md`
+  ("Count controls" and "Multi-Tablet Counting & Approval"). Tenant migration
+  `0065_count_controls` (control plane: none).
+- A key item is `inv_items.is_key`; a quick count is a count of `kind: 'quick'`
+  and never sets a food-cost period (`computeFoodCost` reads full counts only).
+  Schedules and their per-day runs live in `inv_count_schedules` and
+  `inv_count_schedule_runs` (shared logic in
+  `inventory-count-schedules-service.ts`, the count rules in
+  `inventory-count-core.ts`); a change applies from tomorrow.
+- The overdue alert is the `inventory_count_overdue` kind of the existing notify
+  route. The second-person check keeps `second_state` on the count and the
+  second figures in `pass = 2` entries that are never summed. An entry after
+  approval is a late entry, never refused.
+- The phone app reads a token from `GET /api/inventory/token` (bearer login) and
+  calls the region directly; its Alerts tab is `GET /api/alerts`. Keep the phone
+  thin: no new back-office screens.
+
 **Manager alerts (operator push, quiet hours, stuck orders, Orders chime, chosen
 people, large orders, offline tablets; #106, #366, #131, #265, #241, #300,
 #190):**

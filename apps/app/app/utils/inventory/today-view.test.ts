@@ -34,6 +34,18 @@ const KINDS: Record<AttentionItem['kind'], AttentionItem> = {
 		more: 0,
 	},
 	count_due: { kind: 'count_due', date: '2026-11-09' },
+	scheduled_count_due: {
+		kind: 'scheduled_count_due',
+		runId: 'run1',
+		countKind: 'quick',
+		slot: 'close',
+		listId: null,
+		listName: null,
+		dueAt: 1_700_000_000_000,
+		assignee: null,
+		late: false,
+		more: 0,
+	},
 	count_in_progress: {
 		kind: 'count_in_progress',
 		countId: 'c1',
@@ -109,6 +121,7 @@ describe('attentionTarget', () => {
 		expect(targets).toEqual({
 			low_stock: '/acme/inventory/stock?low=1',
 			count_due: '/acme/inventory/counts?start=1',
+			scheduled_count_due: '/acme/inventory/counts?start=1&kind=quick',
 			count_in_progress: '/acme/inventory/counts/c1',
 			count_in_review: '/acme/inventory/counts/c2/review',
 			price_rise: '/acme/inventory/purchasing/deliveries/d1',

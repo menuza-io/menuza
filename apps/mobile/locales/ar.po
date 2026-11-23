@@ -13,6 +13,78 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: state.lateCount
+#: app/(dashboard)/inventory/count.tsx:225
+msgid "{0, plural, one {# entry arrived after the count was approved. A manager will see it.} other {# entries arrived after the count was approved. A manager will see them.}}"
+msgstr "{0, plural, one {وصل إدخال واحد بعد اعتماد الجرد. سيراه المدير.} two {وصل إدخالان بعد اعتماد الجرد. سيراهما المدير.} few {وصلت # إدخالات بعد اعتماد الجرد. سيراها المدير.} many {وصل # إدخالًا بعد اعتماد الجرد. سيراها المدير.} other {وصل # إدخال بعد اعتماد الجرد. سيراها المدير.}}"
+
+#. placeholder {0}: state.pending.length
+#: app/(dashboard)/inventory/count.tsx:207
+msgid "{0, plural, one {# entry is on this phone, waiting to send} other {# entries are on this phone, waiting to send}}"
+msgstr "{0, plural, one {إدخال واحد على هذا الهاتف بانتظار الإرسال} two {إدخالان على هذا الهاتف بانتظار الإرسال} few {# إدخالات على هذا الهاتف بانتظار الإرسال} many {# إدخالًا على هذا الهاتف بانتظار الإرسال} other {# إدخال على هذا الهاتف بانتظار الإرسال}}"
+
+#. placeholder {0}: card.lineCount
+#: app/(dashboard)/inventory/orders.tsx:237
+msgid "{0, plural, one {# item to order} other {# items to order}}"
+msgstr "{0, plural, one {صنف واحد للطلب} two {صنفان للطلب} few {# أصناف للطلب} many {# صنفًا للطلب} other {# صنف للطلب}}"
+
+#. placeholder {0}: list.data.total - items.length
+#: app/(dashboard)/inventory/stock.tsx:120
+msgid "{0, plural, one {# more item. Search to find it.} other {# more items. Search to find them.}}"
+msgstr "{0, plural, one {صنف آخر. ابحث للعثور عليه.} two {صنفان آخران. ابحث للعثور عليهما.} few {# أصناف أخرى. ابحث للعثور عليها.} many {# صنفًا آخر. ابحث للعثور عليها.} other {# صنف آخر. ابحث للعثور عليها.}}"
+
+#. placeholder {0}: count.itemsCounted
+#. placeholder {1}: count.itemTotal
+#: app/(dashboard)/inventory/index.tsx:168
+msgid "{0} of {1} counted"
+msgstr "تم جرد {0} من {1}"
+
+#. placeholder {0}: item.name
+#. placeholder {1}: unitLabel(item)
+#: app/(dashboard)/inventory/count.tsx:347
+msgid "{0}, amount in {1}"
+msgstr "{0}، الكمية بوحدة {1}"
+
+#: app/(dashboard)/inventory/count.tsx:159
+msgid "{counted} of {total} counted"
+msgstr "تم جرد {counted} من {total}"
+
+#: lib/inventory/alert-copy.ts:32
+msgid "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
+msgstr "{n, plural, one {جرد واحد بانتظار المراجعة} two {جردان بانتظار المراجعة} few {# عمليات جرد بانتظار المراجعة} many {# عملية جرد بانتظار المراجعة} other {# عملية جرد بانتظار المراجعة}}"
+
+#: lib/inventory/alert-copy.ts:88
+msgid "{n, plural, one {# dish is back on the menu} other {# dishes are back on the menu}}"
+msgstr "{n, plural, one {عاد طبق واحد إلى القائمة} two {عاد طبقان إلى القائمة} few {عادت # أطباق إلى القائمة} many {عاد # طبقًا إلى القائمة} other {عاد # طبق إلى القائمة}}"
+
+#: lib/inventory/alert-copy.ts:80
+msgid "{n, plural, one {# dish is off the menu} other {# dishes are off the menu}}"
+msgstr "{n, plural, one {طبق واحد خارج القائمة} two {طبقان خارج القائمة} few {# أطباق خارج القائمة} many {# طبقًا خارج القائمة} other {# طبق خارج القائمة}}"
+
+#: lib/inventory/alert-copy.ts:64
+msgid "{n, plural, one {# draft order is ready for review} other {# draft orders are ready for review}}"
+msgstr "{n, plural, one {مسودة طلب واحدة جاهزة للمراجعة} two {مسودتا طلب جاهزتان للمراجعة} few {# مسودات طلب جاهزة للمراجعة} many {# مسودة طلب جاهزة للمراجعة} other {# مسودة طلب جاهزة للمراجعة}}"
+
+#: lib/inventory/alert-copy.ts:24
+msgid "{n, plural, one {# item is below the level you order at} other {# items are below the level you order at}}"
+msgstr "{n, plural, one {صنف واحد أقل من المستوى الذي تطلب عنده} two {صنفان أقل من المستوى الذي تطلب عنده} few {# أصناف أقل من المستوى الذي تطلب عنده} many {# صنفًا أقل من المستوى الذي تطلب عنده} other {# صنف أقل من المستوى الذي تطلب عنده}}"
+
+#: lib/inventory/alert-copy.ts:56
+msgid "{n, plural, one {# item went up in price} other {# items went up in price}}"
+msgstr "{n, plural, one {ارتفع سعر صنف واحد} two {ارتفع سعر صنفين} few {ارتفعت أسعار # أصناف} many {ارتفعت أسعار # صنفًا} other {ارتفعت أسعار # صنف}}"
+
+#: lib/inventory/alert-copy.ts:48
+msgid "{n, plural, one {# order is due for delivery} other {# orders are due for delivery}}"
+msgstr "{n, plural, one {طلب واحد مستحق التسليم} two {طلبان مستحقان التسليم} few {# طلبات مستحقة التسليم} many {# طلبًا مستحقًا للتسليم} other {# طلب مستحق للتسليم}}"
+
+#: lib/inventory/alert-copy.ts:72
+msgid "{n, plural, one {# order needs approval} other {# orders need approval}}"
+msgstr "{n, plural, one {طلب واحد يحتاج إلى موافقة} two {طلبان يحتاجان إلى موافقة} few {# طلبات تحتاج إلى موافقة} many {# طلبًا يحتاج إلى موافقة} other {# طلب يحتاج إلى موافقة}}"
+
+#: lib/inventory/alert-copy.ts:40
+msgid "{n, plural, one {# scheduled count was not started} other {# scheduled counts were not started}}"
+msgstr "{n, plural, one {لم يبدأ جرد مجدول واحد} two {لم يبدأ جردان مجدولان} few {لم تبدأ # عمليات جرد مجدولة} many {لم تبدأ # عملية جرد مجدولة} other {لم تبدأ # عملية جرد مجدولة}}"
+
 #: app/(dashboard)/organizations.tsx:43
 msgid "{orgName} is now your default organization"
 msgstr "{orgName} هي الآن مؤسستك الافتراضية"
@@ -30,9 +102,17 @@ msgstr "+{0} مؤسسات أخرى"
 msgid "1 hour"
 msgstr "ساعة واحدة"
 
+#: app/(dashboard)/inventory/orders.tsx:248
+msgid "A draft is already started. It will be sent."
+msgstr "هناك مسودة بدأت بالفعل. ستُرسل."
+
 #: app/(dashboard)/settings/notifications.tsx:47
 msgid "A kitchen tablet goes offline"
 msgstr "انقطع اتصال جهاز لوحي في المطبخ"
+
+#: lib/inventory/alert-copy.ts:36
+msgid "A manager approves it in the web app."
+msgstr "يعتمده المدير في تطبيق الويب."
 
 #: app/(dashboard)/settings/notifications.tsx:45
 msgid "A payment needs review"
@@ -67,6 +147,10 @@ msgstr "الجلسات النشطة"
 msgid "Add an extra layer of security"
 msgstr "أضف طبقة إضافية من الأمان"
 
+#: app/(dashboard)/inventory/receive.tsx:177
+msgid "Add invoice photo"
+msgstr "إضافة صورة الفاتورة"
+
 #: components/organization-switcher.tsx:185
 msgid "Add organization"
 msgstr "إضافة مؤسسة"
@@ -74,6 +158,11 @@ msgstr "إضافة مؤسسة"
 #: app/(dashboard)/organizations.tsx:102
 msgid "Add Organization"
 msgstr "إضافة مؤسسة"
+
+#: app/(dashboard)/_layout.tsx:67
+#: app/(dashboard)/alerts.tsx:67
+msgid "Alerts"
+msgstr "التنبيهات"
 
 #: components/menu-photos/photo-capture-modal.tsx:191
 msgid "Allow camera"
@@ -88,6 +177,10 @@ msgstr "اسمح للكاميرا بالتقاط صورة لهذا الطبق، 
 msgid "Already have an account?"
 msgstr "لديك حساب بالفعل؟"
 
+#: lib/inventory/alert-copy.ts:84
+msgid "An ingredient ran out."
+msgstr "نفد أحد المكونات."
+
 #: app/(auth)/sign-up.tsx:257
 msgid "and"
 msgstr "و"
@@ -96,9 +189,22 @@ msgstr "و"
 msgid "App"
 msgstr "التطبيق"
 
+#: app/(dashboard)/inventory/orders.tsx:212
+#: app/(dashboard)/inventory/orders.tsx:258
+msgid "Approve and send"
+msgstr "الموافقة والإرسال"
+
+#: app/(dashboard)/inventory/index.tsx:223
+msgid "Approve and send what to order"
+msgstr "وافق وأرسل ما يجب طلبه"
+
 #: app/(dashboard)/settings/index.tsx:51
 msgid "Are you sure you want to sign out?"
 msgstr "هل أنت متأكد من تسجيل الخروج؟"
+
+#: components/inventory/inventory-gate.tsx:52
+msgid "Ask an owner to check your role in the Menuza app on the web."
+msgstr "اطلب من المالك مراجعة دورك في تطبيق Menuza على الويب."
 
 #: app/(dashboard)/settings/security.tsx:67
 msgid "Authentication"
@@ -110,6 +216,8 @@ msgid "Authentication Error"
 msgstr "خطأ في المصادقة"
 
 #: app/(dashboard)/menu-photos.tsx:162
+#: components/inventory/inventory-gate.tsx:25
+#: components/inventory/screen-header.tsx:26
 msgid "Back"
 msgstr "رجوع"
 
@@ -129,21 +237,43 @@ msgstr "بناء تطبيقات رائعة ⚡"
 msgid "By signing up, you agree to our"
 msgstr "بالتسجيل، أنت توافق على"
 
+#: app/(dashboard)/inventory/receive.tsx:88
+msgid "Camera access is off"
+msgstr "الوصول إلى الكاميرا متوقف"
+
 #: components/menu-photos/photo-capture-modal.tsx:178
 msgid "Camera access is turned off. You can turn it on in your phone's settings, or choose a photo from your library."
 msgstr "الوصول إلى الكاميرا متوقف. يمكنك تشغيله من إعدادات هاتفك، أو اختيار صورة من مكتبتك."
 
 #: app/(dashboard)/create-organization.tsx:222
+#: app/(dashboard)/inventory/orders.tsx:68
+#: app/(dashboard)/inventory/orders.tsx:79
 #: app/(dashboard)/organizations.tsx:35
 #: app/(dashboard)/settings/devices.tsx:50
 #: app/(dashboard)/settings/index.tsx:52
 msgid "Cancel"
 msgstr "إلغاء"
 
+#. placeholder {0}: current.name
+#: components/inventory/location-picker.tsx:28
+msgid "Change location, now {0}"
+msgstr "تغيير الموقع، الحالي {0}"
+
 #: app/(dashboard)/settings/security.tsx:39
 #: app/(dashboard)/settings/security.tsx:73
 msgid "Change Password"
 msgstr "تغيير كلمة المرور"
+
+#: app/(dashboard)/inventory/index.tsx:86
+#: app/(dashboard)/inventory/orders.tsx:142
+#: app/(dashboard)/inventory/orders.tsx:169
+#: app/(dashboard)/inventory/receive.tsx:76
+msgid "Check your connection and try again."
+msgstr "تحقق من اتصالك وحاول مرة أخرى."
+
+#: app/(dashboard)/inventory/count.tsx:109
+msgid "Check your connection and try Finish again. Nothing is lost."
+msgstr "تحقق من اتصالك وحاول الإنهاء مرة أخرى. لم يضع شيء."
 
 #: app/(auth)/sign-up.tsx:80
 msgid "Check your email"
@@ -169,6 +299,10 @@ msgstr "تم إرسال الرمز"
 msgid "Complete your signup to join the organization"
 msgstr "أكمل تسجيلك للانضمام إلى المؤسسة"
 
+#: app/(dashboard)/inventory/index.tsx:214
+msgid "Confirm what arrived and add the invoice photo"
+msgstr "أكّد ما وصل وأضف صورة الفاتورة"
+
 #: app/(auth)/sign-in.tsx:182
 #: app/(auth)/sign-in.tsx:187
 #: app/(auth)/sign-in.tsx:190
@@ -183,9 +317,61 @@ msgstr "المتابعة باستخدام GitHub"
 msgid "Continue with Google"
 msgstr "المتابعة باستخدام Google"
 
+#: app/(dashboard)/inventory/orders.tsx:63
+msgid "Copy the text"
+msgstr "نسخ النص"
+
+#: app/(dashboard)/inventory/orders.tsx:166
+msgid "Could not approve the order"
+msgstr "تعذرت الموافقة على الطلب"
+
+#: app/(dashboard)/inventory/count.tsx:124
+msgid "Could not finish"
+msgstr "تعذر الإنهاء"
+
+#: app/(dashboard)/inventory/receive.tsx:73
+msgid "Could not receive the delivery"
+msgstr "تعذر استلام التسليم"
+
+#: app/(dashboard)/inventory/stock.tsx:61
+msgid "Could not save"
+msgstr "تعذر الحفظ"
+
+#: app/(dashboard)/inventory/orders.tsx:139
+msgid "Could not send the order"
+msgstr "تعذر إرسال الطلب"
+
+#: app/(dashboard)/inventory/index.tsx:86
+msgid "Could not start the count"
+msgstr "تعذر بدء الجرد"
+
 #: app/(dashboard)/menu-photos.tsx:387
 msgid "Couldn't upload"
 msgstr "تعذّر الرفع"
+
+#: components/inventory/bottle-row.tsx:139
+msgid "Count by weight"
+msgstr "الجرد بالوزن"
+
+#: app/(dashboard)/inventory/index.tsx:196
+msgid "Count everything"
+msgstr "جرد كل شيء"
+
+#: components/inventory/bottle-row.tsx:139
+msgid "Count in tenths"
+msgstr "الجرد بالأعشار"
+
+#: app/(dashboard)/inventory/index.tsx:185
+msgid "Count key items"
+msgstr "جرد الأصناف الرئيسية"
+
+#: app/(dashboard)/inventory/index.tsx:135
+msgid "Counts"
+msgstr "عمليات الجرد"
+
+#: app/(dashboard)/inventory/index.tsx:120
+msgid "Counts due today"
+msgstr "عمليات الجرد المستحقة اليوم"
 
 #: app/(auth)/sign-in.tsx:335
 msgid "Create account"
@@ -216,6 +402,11 @@ msgstr "الحالي"
 msgid "Default"
 msgstr "افتراضي"
 
+#. placeholder {0}: new Intl.DateTimeFormat(i18n.locale, { dateStyle: 'medium' }).format(new Date(`${card.expectedDate}T12:00:00`))
+#: app/(dashboard)/inventory/orders.tsx:243
+msgid "Delivery {0}"
+msgstr "التسليم {0}"
+
 #: app/(dashboard)/create-organization.tsx:173
 msgid "Description (optional)"
 msgstr "الوصف (اختياري)"
@@ -232,6 +423,10 @@ msgstr "طبق"
 msgid "Don't have an account?"
 msgstr "ليس لديك حساب؟"
 
+#: app/(dashboard)/inventory/index.tsx:261
+msgid "Due {time}"
+msgstr "مستحق {time}"
+
 #: app/(dashboard)/index.tsx:109
 #: app/(dashboard)/settings/index.tsx:103
 msgid "Edit Profile"
@@ -240,6 +435,10 @@ msgstr "تعديل الملف الشخصي"
 #: app/(auth)/sign-up.tsx:214
 msgid "Email"
 msgstr "البريد الإلكتروني"
+
+#: app/(dashboard)/inventory/orders.tsx:61
+msgid "Email the supplier"
+msgstr "إرسال بريد إلى المورد"
 
 #: app/(auth)/verify-code.tsx:175
 msgid "Enter 6-character code:"
@@ -264,6 +463,10 @@ msgstr "أدخل كلمة المرور"
 #: app/(auth)/sign-in.tsx:231
 msgid "Enter your username"
 msgstr "أدخل اسم المستخدم"
+
+#: app/(dashboard)/inventory/count.tsx:108
+msgid "Entries are still on this phone"
+msgstr "لا تزال إدخالات على هذا الهاتف"
 
 #: app/(dashboard)/settings/index.tsx:139
 msgid "Epic Stack Mobile"
@@ -314,9 +517,17 @@ msgstr "فشل في تبديل المؤسسة"
 msgid "Failed to update profile"
 msgstr "فشل في تحديث الملف الشخصي"
 
+#: components/inventory/bottle-row.tsx:64
+msgid "Fewer bottles"
+msgstr "زجاجات أقل"
+
 #: components/menu-photos/photo-capture-modal.tsx:169
 msgid "Fill the frame"
 msgstr "املأ الإطار"
+
+#: app/(dashboard)/inventory/count.tsx:169
+msgid "Finish"
+msgstr "إنهاء"
 
 #: app/(auth)/sign-in.tsx:131
 msgid "Forgot Password"
@@ -333,6 +544,16 @@ msgstr "نسيت كلمة المرور؟"
 #: app/(dashboard)/settings/notifications.tsx:177
 msgid "From"
 msgstr "من"
+
+#: components/inventory/bottle-row.tsx:55
+msgid "Full bottles"
+msgstr "الزجاجات الممتلئة"
+
+#: app/(dashboard)/inventory/count.tsx:153
+#: app/(dashboard)/inventory/index.tsx:161
+#: app/(dashboard)/inventory/index.tsx:258
+msgid "Full count"
+msgstr "جرد كامل"
 
 #: app/(auth)/landing.tsx:168
 #: app/(auth)/landing.tsx:171
@@ -352,13 +573,27 @@ msgstr "احتجز التنبيهات التي تحتمل الانتظار"
 msgid "If an account with that email exists, we've sent you a password reset link."
 msgstr "إذا كان هناك حساب بهذا البريد الإلكتروني، فقد أرسلنا لك رابط إعادة تعيين كلمة المرور."
 
+#: app/(dashboard)/_layout.tsx:53
+#: app/(dashboard)/inventory/index.tsx:113
 #: app/(dashboard)/settings/notifications.tsx:49
 msgid "Inventory"
 msgstr "المخزون"
 
+#: components/inventory/inventory-gate.tsx:37
+msgid "Inventory is not turned on for this business."
+msgstr "المخزون غير مفعّل لهذا النشاط."
+
+#: app/(dashboard)/inventory/receive.tsx:181
+msgid "Invoice photo added."
+msgstr "تمت إضافة صورة الفاتورة."
+
 #: app/(dashboard)/menu-photos.tsx:151
 msgid "It still did not go through after several tries."
 msgstr "لم ينجح الرفع بعد عدة محاولات."
+
+#: lib/inventory/alert-copy.ts:44
+msgid "It was due an hour ago. Open Inventory to start it."
+msgstr "كان مستحقًا قبل ساعة. افتح المخزون لبدئه."
 
 #: app/(dashboard)/settings/devices.tsx:48
 msgid "It will stop getting alerts for you."
@@ -368,14 +603,27 @@ msgstr "سيتوقف عن تلقي التنبيهات الخاصة بك."
 msgid "Join organization"
 msgstr "الانضمام إلى المؤسسة"
 
+#: app/(dashboard)/inventory/stock.tsx:95
+msgid "Key items"
+msgstr "الأصناف الرئيسية"
+
 #: app/(dashboard)/settings/notifications.tsx:46
 msgid "Large orders"
 msgstr "الطلبات الكبيرة"
+
+#. placeholder {0}: new Intl.DateTimeFormat(i18n.locale, { month: 'short', day: 'numeric' }).format(new Date(item.lastCountedAt))
+#: app/(dashboard)/inventory/stock.tsx:159
+msgid "Last counted {0}"
+msgstr "آخر جرد {0}"
 
 #. placeholder {0}: new Date(device.lastSeenAt).toLocaleString()
 #: app/(dashboard)/settings/devices.tsx:85
 msgid "Last used {0}"
 msgstr "آخر استخدام {0}"
+
+#: app/(dashboard)/inventory/index.tsx:261
+msgid "Late, due {time}"
+msgstr "متأخر، كان مستحقًا {time}"
 
 #: components/menu-photos/photo-capture-modal.tsx:166
 msgid "Light from the side"
@@ -401,6 +649,14 @@ msgstr "جاري تحميل المؤسسات..."
 msgid "Loading..."
 msgstr "جاري التحميل..."
 
+#: components/inventory/location-picker.tsx:49
+msgid "Location"
+msgstr "الموقع"
+
+#: app/(dashboard)/inventory/stock.tsx:174
+msgid "Low"
+msgstr "منخفض"
+
 #: app/(auth)/sign-up.tsx:222
 msgid "m@example.com"
 msgstr "m@example.com"
@@ -409,15 +665,35 @@ msgstr "m@example.com"
 msgid "Manage your logged-in devices"
 msgstr "إدارة الأجهزة المسجلة"
 
-#: app/(dashboard)/_layout.tsx:80
+#: app/(dashboard)/alerts.tsx:76
+msgid "Mark all as read"
+msgstr "تحديد الكل كمقروء"
+
+#: app/(dashboard)/inventory/stock.tsx:141
+msgid "Mark as a key item"
+msgstr "تحديد كصنف رئيسي"
+
+#: app/(dashboard)/_layout.tsx:108
 #: app/(dashboard)/index.tsx:100
 #: app/(dashboard)/menu-photos.tsx:169
 msgid "Menu photos"
 msgstr "صور القائمة"
 
+#: components/inventory/bottle-row.tsx:80
+msgid "More bottles"
+msgstr "زجاجات أكثر"
+
+#: app/(dashboard)/inventory/stock.tsx:158
+msgid "Never counted"
+msgstr "لم يُجرد أبدًا"
+
 #: app/(dashboard)/settings/notifications.tsx:42
 msgid "New orders"
 msgstr "الطلبات الجديدة"
+
+#: app/(dashboard)/inventory/index.tsx:143
+msgid "No count is open."
+msgstr "لا يوجد جرد مفتوح."
 
 #: app/(dashboard)/menu-photos.tsx:289
 msgid "No dish matches your search."
@@ -431,6 +707,14 @@ msgstr "لم يتم توفير عنوان بريد إلكتروني لإعادة
 msgid "No email address provided for verification."
 msgstr "لم يتم توفير عنوان بريد إلكتروني للتحقق."
 
+#: app/(dashboard)/inventory/stock.tsx:113
+msgid "No items match."
+msgstr "لا توجد أصناف مطابقة."
+
+#: app/(dashboard)/inventory/receive.tsx:148
+msgid "No orders are waiting to be received."
+msgstr "لا توجد طلبات بانتظار الاستلام."
+
 #: app/(dashboard)/index.tsx:139
 #: app/(dashboard)/organizations.tsx:112
 msgid "No organizations found"
@@ -439,6 +723,10 @@ msgstr "لم يتم العثور على مؤسسات"
 #: app/(dashboard)/settings/devices.tsx:70
 msgid "No phone is set up for alerts yet."
 msgstr "لا يوجد هاتف مُعدّ للتنبيهات بعد."
+
+#: app/(dashboard)/inventory/orders.tsx:228
+msgid "Nothing needs ordering right now."
+msgstr "لا شيء يحتاج إلى طلب الآن."
 
 #: app/(dashboard)/menu-photos.tsx:291
 msgid "Nothing to photograph. Nice."
@@ -459,6 +747,30 @@ msgstr "الإشعارات"
 msgid "OK"
 msgstr "موافق"
 
+#: components/inventory/bottle-row.tsx:90
+msgid "Open bottle weight (g)"
+msgstr "وزن الزجاجة المفتوحة (غ)"
+
+#: components/inventory/bottle-row.tsx:99
+msgid "Open bottle weight in grams"
+msgstr "وزن الزجاجة المفتوحة بالغرام"
+
+#: lib/inventory/alert-copy.ts:76
+msgid "Open Orders to approve and send it."
+msgstr "افتح الطلبات للموافقة عليه وإرساله."
+
+#: lib/inventory/alert-copy.ts:52
+msgid "Open Receive a delivery when it arrives."
+msgstr "افتح «استلام تسليم» عند وصوله."
+
+#: lib/inventory/alert-copy.ts:28
+msgid "Open Stock to see what is running low."
+msgstr "افتح المخزون لمعرفة ما يوشك على النفاد."
+
+#: lib/inventory/alert-copy.ts:98
+msgid "Open the web app to see what changed."
+msgstr "افتح تطبيق الويب لمعرفة ما تغيّر."
+
 #: components/organization-switcher.tsx:68
 msgid "Opens organization switcher"
 msgstr "فتح محوّل المؤسسات"
@@ -471,9 +783,35 @@ msgstr "أو المتابعة بالبريد الإلكتروني"
 msgid "Or continue with username"
 msgstr "أو المتابعة باسم المستخدم"
 
+#. placeholder {0}: item.number
+#. placeholder {0}: order.number
+#: app/(dashboard)/inventory/orders.tsx:203
+#: app/(dashboard)/inventory/receive.tsx:162
+msgid "Order {0}"
+msgstr "الطلب {0}"
+
+#. placeholder {0}: item.number
+#. placeholder {1}: new Intl.DateTimeFormat(i18n.locale, { dateStyle: 'medium' }).format(new Date(`${item.expectedDate}T12:00:00`))
+#: app/(dashboard)/inventory/receive.tsx:161
+msgid "Order {0}, expected {1}"
+msgstr "الطلب {0}، المتوقع {1}"
+
+#: app/(dashboard)/inventory/orders.tsx:98
+msgid "Order sent"
+msgstr "تم إرسال الطلب"
+
+#: app/(dashboard)/inventory/orders.tsx:96
+msgid "Order text"
+msgstr "نص الطلب"
+
 #: app/(dashboard)/settings/notifications.tsx:44
 msgid "Ordering paused for too long"
 msgstr "الطلب متوقف لفترة طويلة"
+
+#: app/(dashboard)/inventory/index.tsx:222
+#: app/(dashboard)/inventory/orders.tsx:181
+msgid "Orders"
+msgstr "الطلبات"
 
 #: app/(dashboard)/settings/notifications.tsx:43
 msgid "Orders waiting too long"
@@ -512,6 +850,14 @@ msgstr "معرّف-المؤسسة"
 #: components/organization-switcher.tsx:123
 msgid "Organizations"
 msgstr "المؤسسات"
+
+#: app/(dashboard)/inventory/count.tsx:269
+msgid "Other items"
+msgstr "أصناف أخرى"
+
+#: app/(dashboard)/inventory/stock.tsx:174
+msgid "Out"
+msgstr "نفد"
 
 #. placeholder {0}: currentIndex + 1
 #. placeholder {1}: slides.length
@@ -555,9 +901,28 @@ msgstr "الإشعارات الفورية غير مفعلة لهذه المؤس�
 msgid "Quick Actions"
 msgstr "إجراءات سريعة"
 
+#: app/(dashboard)/inventory/count.tsx:153
+#: app/(dashboard)/inventory/index.tsx:160
+#: app/(dashboard)/inventory/index.tsx:258
+msgid "Quick count of key items"
+msgstr "جرد سريع للأصناف الرئيسية"
+
 #: app/(dashboard)/settings/notifications.tsx:144
 msgid "Quiet hours"
 msgstr "ساعات الهدوء"
+
+#: app/(dashboard)/inventory/index.tsx:213
+#: app/(dashboard)/inventory/receive.tsx:129
+msgid "Receive a delivery"
+msgstr "استلام تسليم"
+
+#: app/(dashboard)/inventory/receive.tsx:192
+msgid "Received as ordered"
+msgstr "تم الاستلام كما طُلب"
+
+#: app/(dashboard)/inventory/receive.tsx:168
+msgid "Received."
+msgstr "تم الاستلام."
 
 #: app/(auth)/sign-in.tsx:306
 msgid "Remember me"
@@ -568,6 +933,10 @@ msgstr "تذكرني"
 #: app/(dashboard)/settings/devices.tsx:93
 msgid "Remove"
 msgstr "إزالة"
+
+#: app/(dashboard)/inventory/stock.tsx:141
+msgid "Remove from key items"
+msgstr "إزالة من الأصناف الرئيسية"
 
 #: app/(dashboard)/settings/devices.tsx:47
 msgid "Remove this phone?"
@@ -594,6 +963,10 @@ msgstr "الحجوزات"
 msgid "Retake"
 msgstr "إعادة الالتقاط"
 
+#: lib/inventory/alert-copy.ts:68
+msgid "Review and send it before the cut-off."
+msgstr "راجعه وأرسله قبل الموعد النهائي."
+
 #: app/(dashboard)/settings/notifications.tsx:211
 msgid "Save"
 msgstr "حفظ"
@@ -606,9 +979,30 @@ msgstr "ابحث عن أي طبق لاستبدال صورته"
 msgid "Search dishes"
 msgstr "البحث عن الأطباق"
 
+#: app/(dashboard)/inventory/stock.tsx:73
+#: app/(dashboard)/inventory/stock.tsx:76
+msgid "Search items"
+msgstr "البحث في الأصناف"
+
+#: app/(dashboard)/inventory/index.tsx:206
+msgid "Search items and mark key items"
+msgstr "ابحث في الأصناف وحدد الأصناف الرئيسية"
+
 #: app/(dashboard)/settings/index.tsx:109
 msgid "Security"
 msgstr "الأمان"
+
+#: lib/inventory/alert-copy.ts:60
+msgid "See the price changes in the web app."
+msgstr "اطّلع على تغيّر الأسعار في تطبيق الويب."
+
+#: app/(dashboard)/inventory/count.tsx:218
+msgid "Send now"
+msgstr "أرسل الآن"
+
+#: app/(dashboard)/inventory/orders.tsx:74
+msgid "Send the order"
+msgstr "إرسال الطلب"
 
 #: app/(auth)/verify-code.tsx:244
 msgid "Sending..."
@@ -707,6 +1101,18 @@ msgstr "تأجيل"
 msgid "Snoozed until {0}"
 msgstr "مؤجّل حتى {0}"
 
+#: app/(dashboard)/inventory/receive.tsx:75
+msgid "Someone changed this order. Pull to refresh and try again."
+msgstr "غيّر شخص ما هذا الطلب. اسحب للتحديث ثم حاول مرة أخرى."
+
+#: lib/inventory/alert-copy.ts:101
+msgid "Something needs your attention"
+msgstr "هناك ما يحتاج إلى انتباهك"
+
+#: lib/inventory/alert-copy.ts:97
+msgid "Something needs your attention in Staff"
+msgstr "هناك ما يحتاج إلى انتباهك في الموظفين"
+
 #: app/(dashboard)/menu-photos.tsx:153
 msgid "Something went wrong."
 msgstr "حدث خطأ ما."
@@ -714,6 +1120,19 @@ msgstr "حدث خطأ ما."
 #: app/(dashboard)/settings/notifications.tsx:48
 msgid "Staff"
 msgstr "الموظفون"
+
+#: app/(dashboard)/inventory/index.tsx:265
+msgid "Start"
+msgstr "ابدأ"
+
+#: app/(dashboard)/inventory/index.tsx:205
+#: app/(dashboard)/inventory/stock.tsx:68
+msgid "Stock"
+msgstr "المخزون"
+
+#: lib/inventory/alert-copy.ts:92
+msgid "Stock is back."
+msgstr "عاد المخزون."
 
 #: app/(dashboard)/create-organization.tsx:89
 #: app/(dashboard)/organizations.tsx:42
@@ -725,6 +1144,10 @@ msgstr "نجاح"
 #: components/ui/success-animation.tsx:20
 msgid "Success!"
 msgstr "نجاح!"
+
+#: app/(dashboard)/inventory/orders.tsx:220
+msgid "Suggested orders"
+msgstr "طلبات مقترحة"
 
 #: components/organization-switcher.tsx:67
 msgid "Switch organization"
@@ -752,6 +1175,14 @@ msgstr "الإشارات في محادثة الفريق"
 msgid "Terms of Service"
 msgstr "شروط الخدمة"
 
+#: app/(dashboard)/inventory/receive.tsx:89
+msgid "The delivery is received. Allow the camera in Settings to add the invoice photo."
+msgstr "تم استلام التسليم. اسمح بالكاميرا من الإعدادات لإضافة صورة الفاتورة."
+
+#: app/(dashboard)/inventory/receive.tsx:122
+msgid "The delivery is received. Tap Add invoice photo to try again."
+msgstr "تم استلام التسليم. اضغط «إضافة صورة الفاتورة» للمحاولة مرة أخرى."
+
 #: app/(dashboard)/menu-photos.tsx:247
 msgid "The dishes could not be loaded."
 msgstr "تعذّر تحميل الأطباق."
@@ -761,6 +1192,10 @@ msgstr "تعذّر تحميل الأطباق."
 #: app/(auth)/landing.tsx:47
 msgid "The easiest way to..."
 msgstr "أسهل طريقة لـ..."
+
+#: app/(dashboard)/inventory/orders.tsx:141
+msgid "The email could not be sent. Try WhatsApp or copy the text."
+msgstr "تعذر إرسال البريد. جرّب واتساب أو انسخ النص."
 
 #: components/menu-photos/photo-capture-modal.tsx:93
 msgid "The photo could not be opened. Try again."
@@ -778,13 +1213,45 @@ msgstr "تعذّر حفظ الصورة. حاول مرة أخرى."
 msgid "The photo could not be taken. Try again."
 msgstr "تعذّر التقاط الصورة. حاول مرة أخرى."
 
+#: app/(dashboard)/inventory/receive.tsx:121
+msgid "The photo did not upload"
+msgstr "لم تُرفع الصورة"
+
 #: app/(dashboard)/menu-photos.tsx:147
 msgid "The photo is too large."
 msgstr "الصورة كبيرة جدًا."
 
+#: app/(dashboard)/inventory/count.tsx:193
+msgid "The two counts differ. A manager settles them in the web app."
+msgstr "يختلف الجردان. يسوّيهما المدير في تطبيق الويب."
+
+#: components/inventory/inventory-gate.tsx:41
+msgid "There is no location you can see."
+msgstr "لا يوجد موقع يمكنك رؤيته."
+
+#: app/(dashboard)/inventory/count.tsx:201
+msgid "This count is finished."
+msgstr "انتهى هذا الجرد."
+
+#: app/(dashboard)/inventory/count.tsx:185
+msgid "This count is waiting for a different person to count the key items again."
+msgstr "ينتظر هذا الجرد شخصًا آخر ليجرد الأصناف الرئيسية مرة ثانية."
+
+#: app/(dashboard)/inventory/count.tsx:126
+msgid "This count is waiting for a second person to count the key items."
+msgstr "ينتظر هذا الجرد شخصًا ثانيًا ليجرد الأصناف الرئيسية."
+
+#: app/(dashboard)/inventory/count.tsx:199
+msgid "This count is waiting for review."
+msgstr "ينتظر هذا الجرد المراجعة."
+
 #: app/(dashboard)/menu-photos.tsx:143
 msgid "This dish is no longer on the menu."
 msgstr "هذا الطبق لم يعد في القائمة."
+
+#: app/(dashboard)/inventory/orders.tsx:89
+msgid "This order is over a spending limit. A manager has to approve it before it goes out."
+msgstr "يتجاوز هذا الطلب حد الإنفاق. يجب أن يوافق عليه المدير قبل إرساله."
 
 #: app/(dashboard)/settings/devices.tsx:82
 msgid "This phone"
@@ -802,10 +1269,18 @@ msgstr "إلى"
 msgid "Track what you eat 🍎"
 msgstr "تتبع ما تأكله 🍎"
 
+#: app/(dashboard)/alerts.tsx:90
+#: app/(dashboard)/inventory/count.tsx:239
 #: app/(dashboard)/menu-photos.tsx:256
 #: app/(dashboard)/menu-photos.tsx:401
+#: components/inventory/inventory-gate.tsx:48
 msgid "Try again"
 msgstr "حاول مرة أخرى"
+
+#: app/(dashboard)/inventory/count.tsx:127
+#: app/(dashboard)/inventory/stock.tsx:61
+msgid "Try again in a moment."
+msgstr "حاول مرة أخرى بعد قليل."
 
 #: app/(dashboard)/settings/notifications.tsx:266
 msgid "Turn off"
@@ -876,9 +1351,53 @@ msgstr "الإصدار 1.0.0"
 msgid "View All"
 msgstr "عرض الكل"
 
+#: app/(dashboard)/inventory/index.tsx:165
+msgid "Waiting for a second person"
+msgstr "بانتظار شخص ثانٍ"
+
+#: app/(dashboard)/inventory/orders.tsx:88
+msgid "Waiting for approval"
+msgstr "بانتظار الموافقة"
+
+#: app/(dashboard)/inventory/index.tsx:167
+msgid "Waiting for review"
+msgstr "بانتظار المراجعة"
+
+#: app/(dashboard)/inventory/orders.tsx:191
+msgid "Waiting for your approval"
+msgstr "بانتظار موافقتك"
+
 #: app/(dashboard)/menu-photos.tsx:391
 msgid "Waiting to upload"
 msgstr "في انتظار الرفع"
+
+#: app/(dashboard)/inventory/index.tsx:139
+msgid "We could not load the counts."
+msgstr "تعذر تحميل عمليات الجرد."
+
+#: app/(dashboard)/inventory/receive.tsx:136
+msgid "We could not load the open orders."
+msgstr "تعذر تحميل الطلبات المفتوحة."
+
+#: app/(dashboard)/inventory/stock.tsx:101
+msgid "We could not load the stock list."
+msgstr "تعذر تحميل قائمة المخزون."
+
+#: app/(dashboard)/inventory/orders.tsx:224
+msgid "We could not load the suggestions."
+msgstr "تعذر تحميل المقترحات."
+
+#: app/(dashboard)/inventory/count.tsx:236
+msgid "We could not load this count."
+msgstr "تعذر تحميل هذا الجرد."
+
+#: app/(dashboard)/alerts.tsx:87
+msgid "We could not load your alerts."
+msgstr "تعذر تحميل تنبيهاتك."
+
+#: components/inventory/inventory-gate.tsx:43
+msgid "We could not reach your inventory."
+msgstr "تعذر الوصول إلى مخزونك."
 
 #: app/(auth)/verify-code.tsx:161
 msgid "We've sent a 6-character code to {email}. Enter it below to verify your account."
@@ -904,18 +1423,34 @@ msgstr "مرحباً بعودتك،"
 msgid "Welcome back!"
 msgstr "مرحباً بعودتك!"
 
+#: app/(dashboard)/inventory/orders.tsx:62
+msgid "WhatsApp"
+msgstr "واتساب"
+
 #. placeholder {0}: defaultOrg.name
 #: app/(dashboard)/index.tsx:70
 msgid "Working in {0}"
 msgstr "تعمل في {0}"
 
+#: app/(dashboard)/inventory/count.tsx:177
+msgid "You are counting the key items a second time. The first count is hidden."
+msgstr "أنت تجرد الأصناف الرئيسية للمرة الثانية. الجرد الأول مخفي."
+
 #: app/(dashboard)/menu-photos.tsx:141
 msgid "You can't edit the menu in this organization."
 msgstr "لا يمكنك تعديل القائمة في هذه المؤسسة."
 
+#: app/(dashboard)/inventory/orders.tsx:168
+msgid "You cannot approve your own order. Ask another manager."
+msgstr "لا يمكنك الموافقة على طلبك. اطلب من مدير آخر."
+
 #: app/(dashboard)/menu-photos.tsx:242
 msgid "You don't have permission to edit the menu in this organization. Ask an owner or admin for access."
 msgstr "ليس لديك إذن لتعديل القائمة في هذه المؤسسة. اطلب الوصول من المالك أو المسؤول."
+
+#: app/(dashboard)/alerts.tsx:106
+msgid "You have no alerts."
+msgstr "ليست لديك تنبيهات."
 
 #: app/(auth)/sign-up.tsx:179
 msgid "You've been invited to join an organization. Complete your signup to get started."
@@ -933,3 +1468,15 @@ msgstr "مؤسساتك"
 #: app/(dashboard)/settings/notifications.tsx:279
 msgid "Your phones"
 msgstr "هواتفك"
+
+#: app/(dashboard)/inventory/orders.tsx:184
+msgid "Your role cannot place orders."
+msgstr "لا يتيح دورك إنشاء الطلبات."
+
+#: app/(dashboard)/inventory/receive.tsx:132
+msgid "Your role cannot receive deliveries."
+msgstr "لا يتيح دورك استلام التسليمات."
+
+#: components/inventory/inventory-gate.tsx:39
+msgid "Your role does not include inventory."
+msgstr "لا يتضمن دورك المخزون."

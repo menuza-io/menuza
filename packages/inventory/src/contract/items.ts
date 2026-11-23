@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { inventoryCostMicroSchema, inventoryMinorSchema } from '../money.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
+import { itemBottleSchema } from '../bottles.ts'
 import { inventoryBaseUnitSchema, namedUnitSchema } from '../units.ts'
 import { mergeLinkSchema } from './setup.ts'
 import {
@@ -92,6 +93,10 @@ export const createItemSchema = z
 		kind: inventoryItemKindSchema,
 		baseUnit: inventoryBaseUnitSchema,
 		notes: inventoryNoteSchema.optional(),
+		/** A key item (#490). */
+		isKey: z.boolean().optional(),
+		/** Counted by bottle (#470): millilitre items only (`invalid_request` otherwise). */
+		bottle: itemBottleSchema.optional(),
 		units: z.array(namedUnitSchema).max(12).optional(),
 		/**
 		 * Where it is kept and how it is counted at one location. `countUnit`
@@ -126,6 +131,13 @@ export const updateItemSchema = z
 		autoSoldOut: z.boolean().optional(),
 		/** Clear draft status once the office has tidied a cash-purchase item (#466). */
 		isDraft: z.boolean().optional(),
+		/** Star the item: a key item is in every quick count (#490). */
+		isKey: z.boolean().optional(),
+		/**
+		 * Counted by bottle (#470): the bottle size and optional weights, or
+		 * `null` to stop. Millilitre items only (`invalid_request` otherwise).
+		 */
+		bottle: itemBottleSchema.nullable().optional(),
 	})
 	.strict()
 
@@ -198,6 +210,10 @@ export const listItemsQuerySchema = listQuerySchema
 		category: z.string().max(60).optional(),
 		areaId: inventoryIdSchema.optional(),
 		status: z.enum(['all', 'low', 'out', 'attention']).default('all'),
+		/** Key items only (#490). */
+		key: z.stringbool().default(false),
+		/** Items not counted in 14 days, or never, at this location (#491). */
+		notCounted: z.stringbool().default(false),
 		includeArchived: z.stringbool().default(false),
 		/** `daysLeft` puts the soonest to run out first; items without a number go last. */
 		sort: z.enum(['name', 'daysLeft']).default('name'),
@@ -242,6 +258,10 @@ export const stockItemSchema = z.object({
 	autoSoldOut: z.boolean().optional(),
 	/** Created from a cash purchase without an existing catalog item (#466). */
 	isDraft: z.boolean().optional(),
+	/** A key item, in every quick count (#490). Absent from older regions. */
+	isKey: z.boolean().optional(),
+	/** Counted by bottle (#470); null when not. Absent from older regions. */
+	bottle: itemBottleSchema.nullable().optional(),
 	/** On hand at the requested location, base thousandths (may be negative). */
 	onHand: z.number().int(),
 	countUnit: unitRefSchema.nullable(),

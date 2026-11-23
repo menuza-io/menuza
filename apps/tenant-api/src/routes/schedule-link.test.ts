@@ -6,6 +6,7 @@ import {
 	type ManagerAlertEvent,
 } from '@repo/staffing'
 import {
+	invCountSchedules,
 	scheduleLinks,
 	shiftRequests,
 	staffAuditLog,
@@ -35,6 +36,10 @@ import {
 	mintStaffToken,
 	type TestOrg,
 } from '../../tests/staff-harness.ts'
+import {
+	invalidateInventoryContext,
+	seedInventoryContextForTest,
+} from '../lib/inventory-context.ts'
 import { resetRateLimits } from '../lib/rate-limit.ts'
 import { scheduleLinkDeps } from './schedule-link.ts'
 import {
@@ -187,6 +192,69 @@ describe('my schedule link', () => {
 		const response = await s.publish(scopeId, WEEK, { notifyMode: 'nobody' })
 		expect(response.status).toBe(200)
 	}
+
+	describe('counts assigned to me (#491)', () => {
+		const plan = async (staffId: string | null) => {
+			await (await db()).insert(invCountSchedules).values({
+				locationId: LOC_1,
+				kind: 'quick',
+				listId: null,
+				slot: 'close',
+				timeLocal: '22:00',
+				weekdays: [0, 1, 2, 3, 4, 5, 6],
+				assigneeKind: staffId ? 'staff' : null,
+				assigneeId: staffId,
+				effectiveFrom: '2026-03-02',
+			})
+		}
+		afterEach(() => invalidateInventoryContext())
+
+		it('lists only my assigned counts, as ids, times and kinds, while stock is on', async () => {
+			seedInventoryContextForTest(ORG_A, {
+				enabled: true,
+				purchasing: false,
+				recipes: false,
+				prep: false,
+				transfers: false,
+			})
+			const ana = await person()
+			const ben = await person()
+			await plan(ana.staffId)
+			const mine = await call('GET', '/me/counts', {
+				token: await token(ana.staffId),
+			})
+			expect(mine.status, mine.raw).toBe(200)
+			expect(mine.body.counts.length).toBeGreaterThan(0)
+			expect(mine.body.counts[0]).toMatchObject({
+				kind: 'quick',
+				locationId: LOC_1,
+				assignee: { kind: 'staff', id: ana.staffId },
+			})
+			// Someone else's count never shows on my page.
+			const other = await call('GET', '/me/counts', {
+				token: await token(ben.staffId),
+			})
+			expect(other.body).toEqual({ counts: [] })
+			// No link, no answer.
+			expect((await call('GET', '/me/counts')).status).toBe(401)
+		})
+
+		it('answers an empty list while the organization has stock switched off', async () => {
+			seedInventoryContextForTest(ORG_A, {
+				enabled: false,
+				purchasing: false,
+				recipes: false,
+				prep: false,
+				transfers: false,
+			})
+			const ana = await person()
+			await plan(ana.staffId)
+			const response = await call('GET', '/me/counts', {
+				token: await token(ana.staffId),
+			})
+			expect(response.body).toEqual({ counts: [] })
+		})
+	})
 
 	describe('who is let in', () => {
 		it('refuses a request with no token, a malformed one or someone else credential', async () => {

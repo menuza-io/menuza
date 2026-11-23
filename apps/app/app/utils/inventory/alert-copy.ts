@@ -94,6 +94,18 @@ function describe(
 				),
 				step: _(msg`Open Counts to review and approve.` as Message),
 			}
+		case 'inventory_count_overdue':
+			return {
+				subject: _(
+					plural(n, {
+						one: '# scheduled count was not started',
+						other: '# scheduled counts were not started',
+					}),
+				),
+				step: _(
+					msg`It was due an hour ago. Open Today to see who is responsible.` as Message,
+				),
+			}
 		case 'inventory_delivery_due':
 			return {
 				subject: _(

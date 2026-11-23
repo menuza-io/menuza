@@ -676,7 +676,9 @@ describe('counts: review and approve', () => {
 				},
 			},
 		)
-		expect(entries.body.refused[0].code).toBe('count_closed')
+		// An entry that reaches an approved count is kept as a late entry (#474).
+		expect(entries.body.refused).toEqual([])
+		expect(entries.body.late).toHaveLength(1)
 		expect(entries.status).toBe(200)
 		// The movements stay append-only.
 		const movements = await db
@@ -1145,7 +1147,7 @@ describe('counts: semantics', () => {
 		expect(await w.onHand(rice)).toBe(12_000_000)
 	})
 
-	it('takes entries while in review and refuses per entry once closed, never refusing a replay', async () => {
+	it('takes entries while in review, keeps late entries once approved and refuses per entry once cancelled, never refusing a replay', async () => {
 		at(60)
 		const w = await place('loc_cnt_late')
 		const rice = await w.item('Late rice')
@@ -1175,8 +1177,9 @@ describe('counts: semantics', () => {
 		at(65)
 		await w.approve(count, 2)
 
-		// Closed: a new entry is refused per entry, with 200; a replay keeps its
-		// first result, even in the same request.
+		// Approved: a new entry is kept as a late entry (never merged, never
+		// dropped), with 200; a replay keeps its first result, even in the same
+		// request.
 		at(66)
 		const fresh = cid('e')
 		const closed = await call('POST', `${BASE}/counts/${count}/entries`, {
@@ -1196,17 +1199,43 @@ describe('counts: semantics', () => {
 		})
 		expect(closed.status).toBe(200)
 		expect(closed.body).toEqual({
-			accepted: [],
+			accepted: [{ clientId: fresh, quantity: 1_000_000 }],
 			duplicates: [late],
-			refused: [{ clientId: fresh, code: 'count_closed' }],
+			refused: [],
+			late: [fresh],
 		})
 		const db = await getTenantDb(ORG)
+		// Not among the count's entries: kept apart, for a manager to decide.
 		expect(
 			await db
 				.select()
 				.from(invCountEntries)
 				.where(eq(invCountEntries.clientId, fresh)),
 		).toEqual([])
+
+		// Cancelled: the count was voided, so a new entry is refused per entry.
+		at(67)
+		const voided = await w.start()
+		at(68)
+		await ok('POST', `/counts/${voided}/cancel`, sara, { expectedVersion: 1 })
+		const refused = await call('POST', `${BASE}/counts/${voided}/entries`, {
+			token: sara,
+			body: {
+				entries: [
+					{
+						clientId: cid('e'),
+						itemId: rice,
+						areaId: null,
+						amount: 1,
+						unit: 'kg',
+					},
+				],
+			},
+		})
+		expect(refused.status).toBe(200)
+		expect(refused.body.refused).toEqual([
+			{ clientId: expect.any(String), code: 'count_closed' },
+		])
 	})
 
 	it('answers a clientId repeated inside one request as a duplicate and keeps one entry', async () => {

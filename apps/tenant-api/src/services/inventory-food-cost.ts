@@ -96,6 +96,9 @@ export async function computeFoodCost(
 				eq(invCounts.locationId, input.locationId),
 				eq(invCounts.status, 'approved'),
 				isNull(invCounts.listId),
+				// A quick count of the key items has no list either, but it only
+				// corrects the stock it counted: food cost uses full counts (#490).
+				eq(invCounts.kind, 'full'),
 			),
 		)
 		.orderBy(desc(invCounts.approvedAt), desc(invCounts.id))

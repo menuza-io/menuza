@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import {
+	COUNT_OVERDUE_ALERT_AFTER_MS,
 	inventoryNotifyDedupeKey,
 	type InventoryNotifyEvent,
 	type InventoryTickNotifyKind,
@@ -10,6 +11,7 @@ import {
 import {
 	getTenantDb,
 	invAlertLog,
+	invCountSchedules,
 	invCounts,
 	invDeliveries,
 	invItemPlaces,
@@ -22,11 +24,20 @@ import { and, asc, eq, inArray } from 'drizzle-orm'
 import { forEachWithBudget } from '../lib/concurrency.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
-import { pruneInventoryIdempotencyKeys } from '../lib/inventory-write.ts'
+import {
+	pruneInventoryIdempotencyKeys,
+	withInventoryWrite,
+} from '../lib/inventory-write.ts'
 import {
 	type InventoryNotifyOutcome,
 	postInventoryNotify,
 } from '../lib/inventory-notify.ts'
+import {
+	closeStaleQuickCounts,
+	materializeRuns,
+	markOverdueAlerted,
+	overdueRunsToAlert,
+} from './inventory-count-schedules-service.ts'
 import { locationClock } from './inventory-common.ts'
 import { syncAutoSoldOut } from './inventory-auto-sold-out.ts'
 import { generatePrep, getPrepPlan } from './inventory-prep-service.ts'
@@ -81,7 +92,10 @@ const POST_BATCH = 100
 const DEFAULT_BUDGET_MS = 50_000
 
 export type InventoryTickOutcome = Required<
-	Pick<InventoryTickResult, 'needsFollowUp' | 'nextDueAt'>
+	Pick<
+		InventoryTickResult,
+		'needsFollowUp' | 'nextDueAt' | 'countOverdueAlerts' | 'countsNotFinished'
+	>
 > &
 	InventoryTickResult
 
@@ -94,6 +108,8 @@ function emptyResult(): InventoryTickOutcome {
 		countReviewAlerts: 0,
 		deliveryDueAlerts: 0,
 		priceRiseAlerts: 0,
+		countOverdueAlerts: 0,
+		countsNotFinished: 0,
 		salesSettled: 0,
 		errors: 0,
 		needsFollowUp: false,
@@ -127,6 +143,9 @@ async function inventoryLocationIds(db: TenantDatabase): Promise<string[]> {
 		db.selectDistinct({ id: invOrders.locationId }).from(invOrders),
 		db.selectDistinct({ id: invDeliveries.locationId }).from(invDeliveries),
 		db.selectDistinct({ id: invPrepLevels.locationId }).from(invPrepLevels),
+		db
+			.selectDistinct({ id: invCountSchedules.locationId })
+			.from(invCountSchedules),
 	])
 	return [...new Set(lists.flat().map((row) => row.id))].sort()
 }
@@ -387,6 +406,87 @@ export async function runInventoryTickForOrg(
 						)
 					) {
 						result.countReviewAlerts += 1
+					}
+				}
+			})
+
+			// Scheduled counts (#490, #491): the day's runs are stored, a quick count
+			// left open past its next time is closed as not finished, and a run still
+			// not started an hour after it was due tells the manager once.
+			await step('count_schedules', locationId, async () => {
+				const runs = await withInventoryWrite(
+					{ orgId, now, skipAutoSoldOut: true },
+					async (tx) => {
+						const stored = await materializeRuns(
+							tx,
+							locationId,
+							clock.date,
+							now,
+						)
+						result.countsNotFinished += await closeStaleQuickCounts(tx, {
+							locationId,
+							now,
+						})
+						return stored
+					},
+				)
+				for (const run of await overdueRunsToAlert(db, { locationId, now })) {
+					if (Date.now() >= deadline) {
+						result.alertsDeferred += 1
+						continue
+					}
+					const outcome = await post({
+						orgId,
+						eventId: createHash('sha256')
+							.update(
+								inventoryNotifyDedupeKey({
+									orgId,
+									kind: 'inventory_count_overdue',
+									locationId,
+									key: run.id,
+								}),
+							)
+							.digest('hex'),
+						kind: 'inventory_count_overdue',
+						locationId,
+						count: 1,
+						countOverdue: {
+							runId: run.id,
+							countKind: run.kind,
+							slot:
+								run.slot === 'opening' || run.slot === 'close'
+									? run.slot
+									: 'custom',
+							dueAt: run.dueAt,
+							assigneeKind:
+								run.assigneeKind === 'staff' || run.assigneeKind === 'member'
+									? run.assigneeKind
+									: null,
+							assigneeId: run.assigneeId,
+						},
+					})
+					if (outcome.status === 'retry') {
+						result.alertsDeferred += 1
+						continue
+					}
+					// Sent, or refused for good: the run never alerts twice.
+					await markOverdueAlerted(db, run.id, now)
+					if (outcome.status === 'delivered') {
+						result.alertsSent += 1
+						result.countOverdueAlerts += 1
+					} else {
+						result.errors += 1
+					}
+				}
+				// Wake again when the next unstarted run turns overdue.
+				for (const run of runs) {
+					if (run.status !== 'due' || run.overdueAlertedAt !== null) continue
+					const at = run.dueAt + COUNT_OVERDUE_ALERT_AFTER_MS
+					if (at > now) {
+						salesFollowUp = Math.min(
+							salesFollowUp ?? Number.MAX_SAFE_INTEGER,
+							at,
+						)
 					}
 				}
 			})

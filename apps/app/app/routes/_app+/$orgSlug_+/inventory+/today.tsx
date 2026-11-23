@@ -73,6 +73,7 @@ import {
 import { deriveInventorySetupSteps } from '#app/utils/inventory/setup-progress.ts'
 import {
 	attentionTarget,
+	notCountedStockHref,
 	daysSince,
 	localDate,
 	percentFromBp,
@@ -314,6 +315,23 @@ export default function InventoryTodayRoute() {
 					currency={currency}
 					nowMs={nowMs}
 				/>
+			) : null}
+
+			{(data.metrics.notCountedItems ?? 0) > 0 ? (
+				<p className="text-sm" data-testid="today-not-counted">
+					<Plural
+						value={data.metrics.notCountedItems ?? 0}
+						one="# item has not been counted in 14 days."
+						other="# items have not been counted in 14 days."
+					/>{' '}
+					<Link
+						to={notCountedStockHref(orgSlug, linkSearch)}
+						className="underline underline-offset-2"
+						data-testid="today-not-counted-link"
+					>
+						<Trans>See them</Trans>
+					</Link>
+				</p>
 			) : null}
 
 			{hasItems || setupDone ? (
@@ -992,6 +1010,48 @@ function AttentionRow({
 				<Trans>
 					A count was due on <bdi dir="ltr">{due}</bdi>.
 				</Trans>
+			)
+			action = canEdit ? <Trans>Start count</Trans> : <Trans>See counts</Trans>
+			break
+		}
+		case 'scheduled_count_due': {
+			const listName = item.listName ?? ''
+			sentence = (
+				<>
+					{item.listId !== null ? (
+						<Trans>
+							The count of{' '}
+							<span className="font-medium wrap-anywhere">{listName}</span> is
+							due.
+						</Trans>
+					) : item.countKind === 'quick' ? (
+						<Trans>The quick count of your key items is due.</Trans>
+					) : (
+						<Trans>A scheduled count is due.</Trans>
+					)}
+					{item.late ? (
+						<>
+							{' '}
+							<Trans>It was due an hour ago and nobody has started it.</Trans>
+						</>
+					) : null}
+					{item.assignee ? (
+						<>
+							{' '}
+							<Trans>Someone is responsible for it.</Trans>
+						</>
+					) : null}
+					{item.more > 0 ? (
+						<>
+							{' '}
+							<Plural
+								value={item.more}
+								one="And # more count is due."
+								other="And # more counts are due."
+							/>
+						</>
+					) : null}
+				</>
 			)
 			action = canEdit ? <Trans>Start count</Trans> : <Trans>See counts</Trans>
 			break

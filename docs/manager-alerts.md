@@ -231,3 +231,14 @@ tenant-api (tenant migration `0061_manager_alerts`, ticks, heartbeat, order
 events, text route), then Station (the kitchen badge), then the operator phone
 app. The flags default off, so nothing changes until an organization is switched
 on.
+
+## Overdue scheduled counts (#491)
+
+`inventory_count_overdue` is one more kind of the inventory notify route and the
+same `Notification` engine: a scheduled count (`inv_count_schedule_runs`) that
+nobody started an hour after it was due. The regional inventory tick posts it
+once per run (`overdue_alerted_at` is the claim); the event carries a run id, a
+kind, a slot and the due time, never a name. Recipients and the email follow the
+other inventory kinds (members who may see inventory at the location, the
+member's own preferences under `inventory.count_overdue`). The phone app lists
+the same rows in its Alerts tab (`GET /api/alerts`).

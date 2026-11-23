@@ -14,6 +14,31 @@ import {
 /** How often a count with unsent entries tries again on its own. */
 export const COUNT_RETRY_MS = 15_000
 
+const DEVICE_KEY = 'inventory-device-id'
+
+/**
+ * A stable id for this browser, so the region can tell which devices joined a
+ * count and how many entries each still holds unsent (#474). Made once and kept
+ * in `localStorage`; a blocked store just means a new id each page load.
+ */
+export function countDeviceId(
+	storage: Pick<Storage, 'getItem' | 'setItem'> | null,
+): string {
+	try {
+		const existing = storage?.getItem(DEVICE_KEY)
+		if (existing && /^[A-Za-z0-9_-]{8,64}$/.test(existing)) return existing
+	} catch {
+		// Fall through to a new id.
+	}
+	const id = `d${Math.random().toString(36).slice(2, 12)}${Date.now().toString(36)}`
+	try {
+		storage?.setItem(DEVICE_KEY, id)
+	} catch {
+		// Not persisted: the id lives as long as this page.
+	}
+	return id.slice(0, 64)
+}
+
 function browserStorage(): Storage | null {
 	try {
 		return typeof window === 'undefined' ? null : window.localStorage
@@ -78,15 +103,22 @@ export function useCountEntrySync({
 	const requestRef = useRef(request)
 	requestRef.current = request
 
+	const syncRef = useRef<CountEntrySync | null>(null)
 	const sync = useMemo(
 		() =>
-			createCountEntrySync({
+			(syncRef.current = createCountEntrySync({
 				storage: browserStorage(),
 				key: queueStorageKey(orgSlug, countId),
 				send: (entries) =>
 					sendCountEntries(async (batch) => {
+						// What this device still holds after this batch (#474).
+						const held = syncRef.current?.getSnapshot().pending.length ?? 0
 						const body = {
 							entries: batch.map(({ queuedAt: _queuedAt, ...entry }) => entry),
+							device: {
+								id: countDeviceId(browserStorage()),
+								unsent: Math.max(0, held - batch.length),
+							},
 						}
 						return countEntriesResultSchema.parse(
 							await requestRef.current(
@@ -95,7 +127,7 @@ export function useCountEntrySync({
 							),
 						)
 					}, entries),
-			}),
+			})),
 		[orgSlug, countId],
 	)
 	const snapshot = useSyncExternalStore(

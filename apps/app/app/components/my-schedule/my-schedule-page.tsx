@@ -32,6 +32,7 @@ import {
 	takeLink,
 	type StoredLink,
 } from '#app/utils/my-schedule/my-schedule-session.ts'
+import { CountsView } from './counts-view.tsx'
 import { RequestsView } from './requests-view.tsx'
 import { ShiftsView } from './shifts-view.tsx'
 import { TimeCardsView } from './time-cards-view.tsx'
@@ -87,6 +88,11 @@ export function MySchedulePage({ urls }: { urls: TenantApiUrls }) {
 	const requests = useMyScheduleData(
 		api && seen.has('requests') ? () => api.requests() : null,
 		`requests:${link?.token.slice(-8) ?? ''}`,
+	)
+	// Counts on the weekly count plan that are this person's to do (#491).
+	const myCounts = useMyScheduleData(
+		api ? () => api.counts() : null,
+		`counts:${link?.token.slice(-8) ?? ''}`,
 	)
 
 	const data = schedule.data
@@ -194,6 +200,9 @@ export function MySchedulePage({ urls }: { urls: TenantApiUrls }) {
 					</TabsTrigger>
 				</TabsList>
 				<TabsContent value="schedule" className="pt-3">
+					<div className="mb-4">
+						<CountsView counts={myCounts.data} locale={locale} />
+					</div>
 					<ShiftsView
 						api={api}
 						schedule={data}

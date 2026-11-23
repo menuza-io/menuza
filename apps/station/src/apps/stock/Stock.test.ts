@@ -111,6 +111,78 @@ const countSheetReady = () =>
 		{ timeout: 10_000 },
 	)
 
+describe('Stock home: scheduled and key-item counts (#490, #491)', () => {
+	const fixture = catalogFixture as unknown as {
+		items: Array<Record<string, unknown>>
+		dueCounts?: unknown[]
+	}
+	afterEach(() => {
+		delete fixture.dueCounts
+		for (const item of fixture.items) delete item.isKey
+	})
+
+	it('offers a quick count of the key items and starts it as a quick count', async () => {
+		fixture.items[0]!.isKey = true
+		region().install()
+		await openStock()
+		await loaded()
+		await click(button(page.host, /^Count/))
+		const dialog = page.host.querySelector('dialog[open]')!
+		await click(buttons(dialog, /^Key items \(quick count\)/)[0]!)
+		const rows = await queuedRows(1)
+		expect(rows[0]).toMatchObject({
+			kind: 'count_start',
+			payload: { listId: null, kind: 'quick' },
+		})
+		await vi.waitFor(() =>
+			expect(text(page.host)).toContain('Quick count of key items'),
+		)
+	})
+
+	it('shows the counts due today at their time, the ones assigned to the signed-in person first', async () => {
+		const now = Date.now()
+		const run = (id: string, extra: Record<string, unknown>) => ({
+			id,
+			scheduleId: `sch_${id}`,
+			locationId: 'main',
+			date: '2026-11-24',
+			dueAt: now - 60_000,
+			kind: 'quick',
+			listId: null,
+			listName: null,
+			slot: 'close',
+			assignee: null,
+			countId: null,
+			status: 'due',
+			late: false,
+			...extra,
+		})
+		fixture.dueCounts = [
+			run('run_full', { kind: 'full', slot: 'opening' }),
+			run('run_mine', { assignee: { kind: 'staff', id: 'stf_ana' } }),
+			run('run_later', { dueAt: now + 3_600_000 }),
+			run('run_started', { status: 'started', countId: 'cnt_1' }),
+		]
+		region().install()
+		await openStock()
+		await loaded()
+		await click(button(page.host, /^Count/))
+		const section = page.host.querySelector(
+			'[data-testid="stock-due-counts"]',
+		) as HTMLElement
+		expect(text(section)).toContain('Counts due today')
+		const names = [...section.querySelectorAll('li')].map(
+			(row) => row.textContent ?? '',
+		)
+		// Only the two due now, the one for this person first; not the later or the started one.
+		expect(names).toHaveLength(2)
+		expect(names[0]).toContain('Quick count of key items')
+		expect(names[0]).toContain('Assigned to you')
+		expect(names[1]).toContain('Everything')
+		expect(names[1]).not.toContain('Assigned to you')
+	})
+})
+
 describe('Stock home', () => {
 	it('shows Count, Waste and Delivery, and the counts already in progress at the location', async () => {
 		const api = region()
