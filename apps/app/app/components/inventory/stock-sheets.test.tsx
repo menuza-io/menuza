@@ -49,6 +49,7 @@ const CONTEXT: StockOutletContext = {
 function renderSheet(
 	element: React.ReactElement,
 	request: InventoryClient['request'],
+	context: Partial<StockOutletContext> = {},
 ) {
 	i18n.load('en', {})
 	i18n.activate('en')
@@ -59,7 +60,7 @@ function renderSheet(
 				element: (
 					<Sheet open>
 						<SheetContent>
-							<Outlet context={CONTEXT} />
+							<Outlet context={{ ...CONTEXT, ...context }} />
 						</SheetContent>
 					</Sheet>
 				),
@@ -301,5 +302,30 @@ describe('Storage areas', () => {
 		expect(await screen.findByTestId('areas-error')).toBeInTheDocument()
 		// The typed name stays for a retry.
 		expect(screen.getByTestId('areas-new-name')).toHaveValue('Freezer')
+	})
+})
+
+describe('Start from your invoices visibility (#506)', () => {
+	it('hides Start from your invoices when readerConfigured is false and shows it when true', async () => {
+		let configured = false
+		const request = vi.fn<InventoryClient['request']>(async (path) => {
+			if (path === '/setup/imports') {
+				return { imports: [], readerConfigured: configured }
+			}
+			throw new Error(`unexpected ${path}`)
+		})
+
+		const first = renderSheet(<AddManyRoute />, request, {
+			canManagePurchasing: true,
+		})
+		await waitFor(() => expect(request).toHaveBeenCalledWith('/setup/imports'))
+		expect(screen.queryByTestId('add-many-source-invoices')).toBeNull()
+		first.unmount()
+
+		configured = true
+		renderSheet(<AddManyRoute />, request, { canManagePurchasing: true })
+		expect(
+			await screen.findByTestId('add-many-source-invoices'),
+		).toBeInTheDocument()
 	})
 })

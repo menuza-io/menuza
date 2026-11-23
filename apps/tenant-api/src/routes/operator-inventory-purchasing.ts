@@ -1,4 +1,5 @@
 import {
+	accountantExportQuerySchema,
 	cancelDeliverySchema,
 	confirmDeliveryPricesSchema,
 	confirmInvoicePhotoSchema,
@@ -13,13 +14,17 @@ import {
 	priceAlertsQuerySchema,
 	recordDeliverySchema,
 	supplierProductInputSchema,
+	undoDeliveryAsOrderedSchema,
 	updateSupplierProductSchema,
 	updateSupplierSchema,
 	versionOnlySchema,
 } from '@repo/inventory'
+import { toCsv, type CsvCell } from '@repo/common/csv'
+import { buildTextLinesPdf, type PdfLine } from '@repo/common/pdf'
 import { getTenantDb } from '@repo/tenant-db'
 import { readDeliveryInvoice } from '../services/inventory-invoice-read-service.ts'
 import { Hono } from 'hono'
+import { NO_STORE } from '../lib/http.ts'
 import {
 	getInventoryAuth,
 	inventoryGuard,
@@ -51,9 +56,11 @@ import {
 	listSuppliers,
 	markDeliveryPaid,
 	recordDelivery,
+	undoDeliveryAsOrdered,
 	updateSupplier,
 	updateSupplierProduct,
 } from '../services/inventory-purchasing-service.ts'
+import { queryDeliveriesReport } from '../services/inventory-deliveries-report.ts'
 import {
 	confirmInvoicePhoto,
 	getCreditMessage,
@@ -365,6 +372,29 @@ operatorInventoryPurchasingRoutes.post(
 )
 
 operatorInventoryPurchasingRoutes.post(
+	'/deliveries/:id/undo',
+	writes(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, undoDeliveryAsOrderedSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await undoDeliveryAsOrdered(inventoryCaller(ctx), {
+					id,
+					expectedVersion: body.data.expectedVersion,
+					note: body.data.note,
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryPurchasingRoutes.post(
 	'/deliveries/:id/confirm-prices',
 	purchasing(),
 	async (c) => {
@@ -493,6 +523,204 @@ operatorInventoryPurchasingRoutes.get(
 					now: Date.now(),
 				}),
 			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+function minorToMajor(minor: number): number {
+	return Number((minor / 100).toFixed(2))
+}
+
+function formatMoneyText(minor: number): string {
+	return (minor / 100).toFixed(2)
+}
+
+operatorInventoryPurchasingRoutes.get(
+	'/purchasing/accountant-export',
+	costReads(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const query = parseQuery(c, accountantExportQuerySchema)
+			if ('error' in query) return query.error
+			const { from, to, locationId, format } = query.data
+			if (from > to) {
+				throw new InventoryError('invalid_request', 400, {
+					message: 'from date must be on or before to date',
+				})
+			}
+			if (locationId !== 'all') {
+				const location = requireInventoryLocation(ctx, locationId)
+				if (!location.ok) return location.response
+			}
+			const report = await queryDeliveriesReport(await getTenantDb(ctx.orgId), {
+				from,
+				to,
+				locationId,
+				locationIds: ctx.locationIds,
+			})
+			const { internalRows: _internalRows, ...accountantExport } = report
+
+			if (format === 'csv') {
+				const headers = [
+					'Date',
+					'Business date',
+					'Invoice date',
+					'Location',
+					'Supplier',
+					'Supplier VAT',
+					'Invoice #',
+					'ZATCA Ref',
+					'Type',
+					'Paid',
+					'Net',
+					'VAT',
+					'Total',
+					'Currency',
+					...accountantExport.categories.map((cat) => `Category: ${cat}`),
+				]
+				const csvRows: CsvCell[][] = accountantExport.rows.map((row) => [
+					row.date,
+					row.businessDate,
+					row.invoiceDate ?? '',
+					row.locationId,
+					row.supplierName,
+					row.supplierVatNumber ?? '',
+					row.invoiceNumber ?? '',
+					row.zatcaReference ?? '',
+					row.isCredit ? 'Credit' : 'Delivery',
+					row.paid ? 'Paid' : 'Unpaid',
+					minorToMajor(row.netMinor),
+					minorToMajor(row.vatMinor),
+					minorToMajor(row.totalMinor),
+					row.currency,
+					...accountantExport.categories.map((cat) =>
+						minorToMajor(row.categoryBreakdown[cat] ?? 0),
+					),
+				])
+				csvRows.push([])
+				csvRows.push(['Supplier totals'])
+				csvRows.push([
+					'Supplier',
+					'Supplier VAT',
+					'Deliveries',
+					'Net',
+					'VAT',
+					'Total',
+					'Paid',
+					'Unpaid',
+				])
+				for (const sup of accountantExport.supplierTotals) {
+					csvRows.push([
+						sup.supplierName,
+						sup.supplierVatNumber ?? '',
+						sup.deliveryCount,
+						minorToMajor(sup.netMinor),
+						minorToMajor(sup.vatMinor),
+						minorToMajor(sup.totalMinor),
+						minorToMajor(sup.paidMinor),
+						minorToMajor(sup.unpaidMinor),
+					])
+				}
+				csvRows.push([])
+				csvRows.push(['Category totals'])
+				for (const cat of accountantExport.categories) {
+					csvRows.push([
+						cat,
+						minorToMajor(accountantExport.categoryTotals[cat] ?? 0),
+					])
+				}
+				csvRows.push([])
+				csvRows.push([
+					'Grand totals',
+					`Count: ${accountantExport.totals.count}`,
+					`Net: ${formatMoneyText(accountantExport.totals.netMinor)}`,
+					`VAT: ${formatMoneyText(accountantExport.totals.vatMinor)}`,
+					`Total: ${formatMoneyText(accountantExport.totals.totalMinor)}`,
+					`Paid: ${formatMoneyText(accountantExport.totals.paidMinor)}`,
+					`Unpaid: ${formatMoneyText(accountantExport.totals.unpaidMinor)}`,
+				])
+				const csv = toCsv(headers, csvRows, { bom: true })
+				return new Response(csv, {
+					status: 200,
+					headers: {
+						'Content-Type': 'text/csv; charset=utf-8',
+						'Content-Disposition': `attachment; filename="accountant-export-${from}-to-${to}.csv"`,
+						...NO_STORE,
+					},
+				})
+			}
+
+			if (format === 'pdf') {
+				const lines: PdfLine[] = [
+					{
+						text: `Deliveries Accountant Export (${from} to ${to})`,
+						bold: true,
+						size: 13,
+					},
+					{
+						text: `Location: ${locationId}   Currency: ${accountantExport.currency}   Deliveries: ${accountantExport.totals.count}`,
+						size: 9,
+					},
+					{ text: '' },
+					{
+						text: 'Date | Supplier | VAT # | Invoice # | ZATCA | Net | VAT | Total | Status',
+						bold: true,
+						size: 9,
+					},
+				]
+				for (const row of accountantExport.rows) {
+					const catText = accountantExport.categories
+						.filter((cat) => (row.categoryBreakdown[cat] ?? 0) !== 0)
+						.map(
+							(cat) => `${cat}=${formatMoneyText(row.categoryBreakdown[cat]!)}`,
+						)
+						.join(', ')
+					lines.push({
+						text: `${row.date} | ${row.supplierName}${row.isCredit ? ' (Credit)' : ''} | ${row.supplierVatNumber ?? '-'} | ${row.invoiceNumber ?? '-'} | ${row.zatcaReference ?? '-'} | ${formatMoneyText(row.netMinor)} | ${formatMoneyText(row.vatMinor)} | ${formatMoneyText(row.totalMinor)} | ${row.paid ? 'Paid' : 'Unpaid'}`,
+						size: 8,
+					})
+					if (catText) {
+						lines.push({ text: `   Categories: ${catText}`, size: 8 })
+					}
+				}
+				lines.push({ text: '' })
+				lines.push({ text: 'Supplier Totals', bold: true, size: 10 })
+				for (const sup of accountantExport.supplierTotals) {
+					lines.push({
+						text: `${sup.supplierName} (${sup.supplierVatNumber ?? 'No VAT'}) | ${sup.deliveryCount}x | Net ${formatMoneyText(sup.netMinor)} | VAT ${formatMoneyText(sup.vatMinor)} | Total ${formatMoneyText(sup.totalMinor)} | Paid ${formatMoneyText(sup.paidMinor)} | Unpaid ${formatMoneyText(sup.unpaidMinor)}`,
+						size: 8,
+					})
+				}
+				lines.push({ text: '' })
+				lines.push({ text: 'Category Totals', bold: true, size: 10 })
+				for (const cat of accountantExport.categories) {
+					lines.push({
+						text: `${cat}: ${formatMoneyText(accountantExport.categoryTotals[cat] ?? 0)}`,
+						size: 8,
+					})
+				}
+				lines.push({ text: '' })
+				lines.push({
+					text: `Grand Total: Net ${formatMoneyText(accountantExport.totals.netMinor)} | VAT ${formatMoneyText(accountantExport.totals.vatMinor)} | Total ${formatMoneyText(accountantExport.totals.totalMinor)} | Paid ${formatMoneyText(accountantExport.totals.paidMinor)} | Unpaid ${formatMoneyText(accountantExport.totals.unpaidMinor)}`,
+					bold: true,
+					size: 10,
+				})
+				const pdfBytes = buildTextLinesPdf(lines)
+				const pdfBody = new Uint8Array(pdfBytes)
+				return new Response(pdfBody, {
+					status: 200,
+					headers: {
+						'Content-Type': 'application/pdf',
+						'Content-Disposition': `attachment; filename="accountant-export-${from}-to-${to}.pdf"`,
+						...NO_STORE,
+					},
+				})
+			}
+
+			return respond(ctx, accountantExport)
 		} catch (error) {
 			return inventoryErrorResponse(error)
 		}

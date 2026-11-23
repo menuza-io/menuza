@@ -3,13 +3,16 @@ import {
 	STATION_LATE_SYNC_MS,
 	STATION_WASTE_UNDO_SERVER_MS,
 	stationCatalogSchema,
+	stationCashPurchaseResultSchema,
 	stationCountEntriesResultSchema,
 	stationCountSheetSchema,
 	stationDeliveryResultSchema,
 	prepPlanSchema,
 	prepTaskSchema,
 	stationDishWasteResultSchema,
+	stationOrderNotYetResultSchema,
 	stationPhotoUploadSchema,
+	stationReceiveAsOrderedResultSchema,
 	stationStartCountResultSchema,
 	stationUndoWasteResultSchema,
 	stationWasteResultSchema,
@@ -1875,6 +1878,171 @@ describe('/pos/inventory', () => {
 				expect((await requestPhoto(office.delivery.id)).status).toBe(404)
 				expect((await requestPhoto('no-such-delivery')).status).toBe(404)
 				expect((await requestPhoto('bad%20id')).status).toBe(404)
+			})
+		})
+
+		describe('overdue order actions (#501) and cash market purchases (#466)', () => {
+			it('exposes overdue & version on expectedDeliveries and handles receive-as-ordered and not-yet with zero money fields', async () => {
+				const overdueOrder = await k.world.ok('POST', '/orders', {
+					clientId: uid('ord'),
+					locationId: STOCK_LOC,
+					supplierId: k.supplier.id,
+					expectedDate: '2020-01-01',
+					lines: [
+						{
+							itemId: k.items.tomato.id,
+							supplierProductId: k.products.tomato.id,
+							packs: 2,
+						},
+					],
+				})
+				await k.world.ok('POST', `/orders/${overdueOrder.id}/send`, {
+					expectedVersion: 1,
+					channel: 'copy',
+				})
+
+				const cat = await manager(
+					'GET',
+					`/pos/inventory/catalog?locationId=${STOCK_LOC}`,
+				)
+				expect(cat.status).toBe(200)
+				const expected = stationCatalogSchema
+					.parse(cat.body)
+					.expectedDeliveries.find((d) => d.orderId === overdueOrder.id)
+				expect(expected).toBeDefined()
+				expect(expected!.overdue).toBe(true)
+				expect(expected!.version).toBe(2)
+
+				// "Not yet" reschedules and bumps version.
+				const notYet = await manager(
+					'POST',
+					`/pos/inventory/orders/${overdueOrder.id}/not-yet`,
+					{
+						body: {
+							locationId: STOCK_LOC,
+							expectedVersion: expected!.version,
+							expectedDate: '2099-01-01',
+						},
+					},
+				)
+				expect(notYet.status, notYet.raw).toBe(200)
+				const parsedNotYet = stationOrderNotYetResultSchema.parse(notYet.body)
+				expect(parsedNotYet.expectedDate).toBe('2099-01-01')
+				expect(parsedNotYet.version).toBe(3)
+
+				// "Yes, as ordered" receives remaining outstanding quantities with zero money fields.
+				const clientId = uid('srao')
+				const rao = await manager(
+					'POST',
+					`/pos/inventory/orders/${overdueOrder.id}/receive-as-ordered`,
+					{
+						body: {
+							clientId,
+							locationId: STOCK_LOC,
+							expectedVersion: parsedNotYet.version,
+						},
+					},
+				)
+				expect(rao.status, rao.raw).toBe(200)
+				const parsedRao = stationReceiveAsOrderedResultSchema.parse(rao.body)
+				expect(parsedRao.orderStatus).toBe('received')
+				expect(parsedRao.duplicate).toBe(false)
+				expect(JSON.stringify(rao.body)).not.toMatch(/Minor|price|cost|total/i)
+
+				// Replay returns duplicate: true.
+				const replay = await manager(
+					'POST',
+					`/pos/inventory/orders/${overdueOrder.id}/receive-as-ordered`,
+					{
+						body: {
+							clientId,
+							locationId: STOCK_LOC,
+							expectedVersion: parsedNotYet.version,
+						},
+					},
+				)
+				expect(replay.status).toBe(200)
+				expect(
+					stationReceiveAsOrderedResultSchema.parse(replay.body).duplicate,
+				).toBe(true)
+			})
+
+			it('records a Station cash market purchase with draft items, stores money internally, and returns zero money fields (#466)', async () => {
+				const clientId = uid('cash')
+				const res = await manager('POST', '/pos/inventory/cash-purchase', {
+					body: {
+						clientId,
+						locationId: STOCK_LOC,
+						lines: [
+							{
+								itemId: k.items.tomato.id,
+								quantity: 2000,
+								amountPaidMinor: 3500,
+							},
+							{
+								draftItem: {
+									name: 'Station Market Mint',
+									baseUnit: 'g',
+									category: 'produce',
+								},
+								quantity: 500,
+								amountPaidMinor: 1200,
+							},
+						],
+					},
+				})
+				expect(res.status, res.raw).toBe(200)
+				const parsed = stationCashPurchaseResultSchema.parse(res.body)
+				expect(parsed.lineCount).toBe(2)
+				expect(parsed.duplicate).toBe(false)
+				expect(parsed.draftItemIds).toHaveLength(1)
+				expect(JSON.stringify(res.body)).not.toMatch(/Minor|price|cost|amount/i)
+
+				// Operator side sees paid=true, Market / cash supplier, and draft item isDraft=true.
+				const opDel = await operatorDelivery(parsed.id)
+				expect(opDel.paid).toBe(true)
+				expect(opDel.isMarketCash).toBe(true)
+				const draftLine = opDel.lines.find(
+					(line) => line.itemId === parsed.draftItemIds[0],
+				)
+				expect(draftLine?.lineTotalMinor).toBe(1200)
+
+				const db = await h.db(ORG_A)
+				const draftRow = await db
+					.select()
+					.from(invItems)
+					.where(eq(invItems.id, parsed.draftItemIds[0]!))
+					.get()
+				expect(draftRow?.isDraft).toBe(true)
+				expect(draftRow?.name).toBe('Station Market Mint')
+
+				// Replay returns duplicate=true and same draftItemIds.
+				const replay = await manager('POST', '/pos/inventory/cash-purchase', {
+					body: {
+						clientId,
+						locationId: STOCK_LOC,
+						lines: [
+							{
+								itemId: k.items.tomato.id,
+								quantity: 2000,
+								amountPaidMinor: 3500,
+							},
+							{
+								draftItem: {
+									name: 'Station Market Mint',
+									baseUnit: 'g',
+									category: 'produce',
+								},
+								quantity: 500,
+								amountPaidMinor: 1200,
+							},
+						],
+					},
+				})
+				expect(replay.status).toBe(200)
+				expect(
+					stationCashPurchaseResultSchema.parse(replay.body).duplicate,
+				).toBe(true)
 			})
 		})
 	})

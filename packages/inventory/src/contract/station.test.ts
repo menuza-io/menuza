@@ -15,11 +15,14 @@ import {
 	STATION_MADE_AT_MAX_AGE_MS,
 	stationBackoffMs,
 	stationCatalogSchema,
+	stationCashPurchaseResultSchema,
 	stationCountEntriesSchema,
 	stationCountSheetSchema,
 	stationDeliveryResultSchema,
 	stationDeliverySchema,
+	stationOrderNotYetResultSchema,
 	stationOutboxItemSchema,
+	stationReceiveAsOrderedResultSchema,
 	stationStartCountResultSchema,
 	stationStartCountSchema,
 	stationUndoWasteResultSchema,
@@ -74,6 +77,9 @@ describe('Station responses carry no money', () => {
 		['count sheet', stationCountSheetSchema],
 		['waste result', stationWasteResultSchema],
 		['delivery result', stationDeliveryResultSchema],
+		['receive as ordered result', stationReceiveAsOrderedResultSchema],
+		['order not yet result', stationOrderNotYetResultSchema],
+		['cash purchase result', stationCashPurchaseResultSchema],
 	])('%s', (_name, schema) => {
 		const keys = keysOf(schema)
 		expect(keys.length).toBeGreaterThan(3)

@@ -1,6 +1,13 @@
 import { z } from 'zod'
+import { inventoryMinorSchema } from '../money.ts'
+import {
+	SETUP_IMPORT_FILE_KINDS,
+	SETUP_IMPORT_FILE_STATUSES,
+	SETUP_IMPORT_STATUSES,
+} from '../records.ts'
 import { inventoryBaseUnitSchema } from '../units.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
+import { inventoryCategorySchema } from '../vocabulary.ts'
 import {
 	clientIdSchema,
 	currencyOut,
@@ -9,6 +16,7 @@ import {
 	inventoryNameSchema,
 	minorOut,
 	locationQuerySchema,
+	positiveQuantitySchema,
 } from './common.ts'
 
 /**
@@ -502,3 +510,128 @@ export const setupFindingRefSchema = z
 	})
 	.strict()
 export const setupFixResultSchema = z.object({ fixed: z.boolean() })
+
+// ── Start from past invoices & price lists (#506) ───────────────────────────
+
+export const MAX_SETUP_IMPORT_FILES = 50
+
+export const setupImportFileInputSchema = z
+	.object({
+		fileName: z.string().trim().min(1).max(200),
+		contentType: z.string().trim().min(1).max(120),
+		contentBase64: z.string().min(1).max(10_000_000),
+	})
+	.strict()
+
+export const startSetupImportSchema = z
+	.object({
+		files: z
+			.array(setupImportFileInputSchema)
+			.min(1)
+			.max(MAX_SETUP_IMPORT_FILES),
+	})
+	.strict()
+
+export const setupImportFileStateSchema = z.object({
+	id: z.string(),
+	fileName: z.string(),
+	fileKind: z.enum(SETUP_IMPORT_FILE_KINDS),
+	status: z.enum(SETUP_IMPORT_FILE_STATUSES),
+	errorCode: z.string().nullable(),
+})
+
+export const setupImportProposedLineSchema = z.object({
+	tempKey: z.string(),
+	itemName: z.string(),
+	category: inventoryCategorySchema,
+	baseUnit: inventoryBaseUnitSchema,
+	packName: z.string(),
+	packBaseQuantity: z.number().int(),
+	/** Cost grant only. */
+	priceMinor: minorOut,
+	sku: z.string().nullable(),
+	existingItemId: z.string().nullable(),
+	existingProductId: z.string().nullable(),
+	sourceFiles: z.array(z.string()),
+	mergedAliases: z.array(z.string()),
+})
+export type SetupImportProposedLine = z.infer<
+	typeof setupImportProposedLineSchema
+>
+
+export const setupImportProposedSupplierSchema = z.object({
+	tempKey: z.string(),
+	name: z.string(),
+	existingSupplierId: z.string().nullable(),
+	sourceFiles: z.array(z.string()),
+	items: z.array(setupImportProposedLineSchema),
+})
+export type SetupImportProposedSupplier = z.infer<
+	typeof setupImportProposedSupplierSchema
+>
+
+export const setupImportDetailSchema = z.object({
+	id: z.string(),
+	status: z.enum(SETUP_IMPORT_STATUSES),
+	totalFiles: z.number().int(),
+	completedFiles: z.number().int(),
+	failedFiles: z.number().int(),
+	currency: z.string(),
+	readerConfigured: z.boolean(),
+	appliedAt: z.number().int().nullable(),
+	createdAt: z.number().int(),
+	files: z.array(setupImportFileStateSchema),
+	suppliers: z.array(setupImportProposedSupplierSchema),
+})
+export type SetupImportDetail = z.infer<typeof setupImportDetailSchema>
+
+export const setupImportListSchema = z.object({
+	imports: z.array(setupImportDetailSchema),
+	readerConfigured: z.boolean(),
+})
+
+export const applySetupImportSchema = z
+	.object({
+		currency: z.string().regex(/^[A-Z]{3}$/),
+		suppliers: z
+			.array(
+				z
+					.object({
+						include: z.boolean().default(true),
+						existingSupplierId: inventoryIdSchema.nullable().optional(),
+						name: inventoryNameSchema,
+						items: z
+							.array(
+								z
+									.object({
+										include: z.boolean().default(true),
+										existingItemId: inventoryIdSchema.nullable().optional(),
+										itemName: inventoryNameSchema,
+										category: inventoryCategorySchema,
+										baseUnit: inventoryBaseUnitSchema,
+										packName: inventoryNameSchema,
+										packBaseQuantity: positiveQuantitySchema,
+										priceMinor: inventoryMinorSchema.nullable().optional(),
+										sku: z.string().trim().max(60).nullable().optional(),
+									})
+									.strict(),
+							)
+							.max(500),
+					})
+					.strict(),
+			)
+			.min(1)
+			.max(100),
+	})
+	.strict()
+
+export const applySetupImportResultSchema = z.object({
+	importId: z.string(),
+	suppliersCreated: z.number().int(),
+	itemsCreated: z.number().int(),
+	productsUpserted: z.number().int(),
+	pricesRecorded: z.number().int(),
+})
+export type ApplySetupImportResult = z.infer<
+	typeof applySetupImportResultSchema
+>

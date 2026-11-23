@@ -292,4 +292,31 @@ describe('Inventory item sheet', () => {
 		await screen.findByTestId('item-sheet-on-hand')
 		expect(screen.queryByTestId('item-sheet-actions')).toBeNull()
 	})
+
+	it('shows Draft badge and lets an editor mark a draft item as ready (#466)', async () => {
+		const base = region({ ...DETAIL, isDraft: true, version: 3 })
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path === '/items/itm_1' && init?.method === 'PATCH') {
+				return { ...DETAIL, isDraft: false, version: 4 }
+			}
+			return base(path, init)
+		})
+		renderSheet(request)
+		expect(await screen.findByTestId('item-sheet-draft')).toHaveTextContent(
+			'Draft',
+		)
+		await userEvent.click(screen.getByTestId('item-clear-draft'))
+		await waitFor(() =>
+			expect(toast.success).toHaveBeenCalledWith(
+				'Chicken thighs marked as ready.',
+			),
+		)
+		const index = request.mock.calls.findIndex(
+			([path, init]) => path === '/items/itm_1' && init?.method === 'PATCH',
+		)
+		expect(sentJson(request, index)).toEqual({
+			expectedVersion: 3,
+			isDraft: false,
+		})
+	})
 })

@@ -125,6 +125,16 @@ export const unsourcedItemSchema = z.object({
 	fillUpToQuantity: z.number().int().nullable(),
 })
 
+export const overdueOrderWarningSchema = z.object({
+	orderId: z.string(),
+	number: z.number().int(),
+	supplierId: z.string(),
+	supplierName: z.string(),
+	expectedDate: isoDateSchema,
+	daysOverdue: z.number().int(),
+})
+export type OverdueOrderWarning = z.infer<typeof overdueOrderWarningSchema>
+
 export const suggestedOrdersSchema = z.object({
 	locationId: z.string(),
 	generatedAt: z.number().int(),
@@ -133,6 +143,8 @@ export const suggestedOrdersSchema = z.object({
 	unsourced: z.array(unsourcedItemSchema),
 	/** "9 items to order from 2 suppliers" (items on cards, not counting unsourced). */
 	toOrderItems: z.number().int(),
+	/** Sent/partly received orders more than 2 days overdue that no longer count as "on order" (#501). */
+	overdueOrderWarnings: z.array(overdueOrderWarningSchema).optional(),
 })
 export type SuggestedOrders = z.infer<typeof suggestedOrdersSchema>
 
@@ -306,6 +318,9 @@ export const orderSummarySchema = z.object({
 	/** Cost grant only: how far under the supplier minimum (0 when met). */
 	shortOfMinimumMinor: minorOut,
 	unpricedLines: z.number().int().optional(),
+	/** Manual supplier confirmation (#502). */
+	confirmedAt: z.number().int().nullable().optional(),
+	confirmedBy: actorSchema.nullable().optional(),
 })
 export type OrderSummary = z.infer<typeof orderSummarySchema>
 
@@ -367,3 +382,35 @@ export const sendOrderResultSchema = orderTextSchema.extend({
 	emailSkipped: orderEmailSkippedSchema.nullable(),
 })
 export type SendOrderResult = z.infer<typeof sendOrderResultSchema>
+
+/** `POST /orders/:id/confirm` (`update:inventory_purchasing:any`, #502). */
+export const confirmOrderSchema = z
+	.object({
+		expectedVersion: expectedVersionSchema,
+		confirmed: z.boolean(),
+	})
+	.strict()
+
+/** `POST /orders/:id/receive-as-ordered` (`update:inventory:any`, #501). */
+export const receiveOrderAsOrderedSchema = z
+	.object({
+		expectedVersion: expectedVersionSchema,
+		clientId: clientIdSchema,
+	})
+	.strict()
+
+/** `POST /orders/:id/not-yet` (`update:inventory:any`, #501). */
+export const rescheduleOrderSchema = z
+	.object({
+		expectedVersion: expectedVersionSchema,
+		expectedDate: isoDateSchema,
+	})
+	.strict()
+
+/** `POST /deliveries/:id/undo` (`update:inventory:any`, #501, 24h window for as-ordered deliveries). */
+export const undoDeliveryAsOrderedSchema = z
+	.object({
+		expectedVersion: expectedVersionSchema,
+		note: inventoryNoteSchema.optional(),
+	})
+	.strict()

@@ -17,6 +17,7 @@ import {
 	vi,
 } from 'vitest'
 import { type PublishedOrganization } from '../lib/origin.ts'
+import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { resetInvoiceReadLimits } from '../services/inventory-invoice-read-service.ts'
 import { makeWorld } from './inventory-orders-fixture.ts'
 import {
@@ -30,7 +31,7 @@ import {
 } from './inventory-test-utils.ts'
 import { operatorInventoryRoutes } from './operator-inventory.ts'
 
-/** Reading a photographed invoice into lines to check (phase 5). */
+/** Reading a photographed or PDF invoice into lines & warnings (#504). */
 
 const ORG = 'org_inv_read_a'
 const LOC = 'loc_read'
@@ -69,9 +70,13 @@ let env: ReturnType<typeof setupTenantEnv>
 let full: string
 let noPurchasing: string
 let world: ReturnType<typeof makeWorld>
+let supplier: { id: string }
 let delivery: { id: string }
 let withoutPhoto: { id: string }
 let tomatoes: { id: string }
+let oliveOil: { id: string }
+let tomatoProduct: { id: string }
+let oilProduct: { id: string }
 let fetchSpy: ReturnType<typeof vi.spyOn>
 let readerBodies: any[]
 let answer: () => Response
@@ -96,8 +101,19 @@ beforeAll(async () => {
 	full = await mintToken(ORG)
 	noPurchasing = await mintToken(ORG, { grants: [READ, UPDATE] })
 	world = makeWorld(call, full, LOC)
-	const supplier = await world.supplier('Reader Supplier')
+	supplier = await world.supplier('Reader Supplier')
 	tomatoes = await world.item('Tomatoes')
+	oliveOil = await world.item('Olive Oil', 'ml')
+	tomatoProduct = await world.product(supplier.id, tomatoes.id, {
+		packName: 'Box 10 kg',
+		packBaseQuantity: 10_000_000,
+		priceMinor: 2000,
+	})
+	oilProduct = await world.product(supplier.id, oliveOil.id, {
+		packName: 'Tin 5 L',
+		packBaseQuantity: 5_000_000,
+		priceMinor: 5000,
+	})
 	const make = async () =>
 		(
 			await world.ok('POST', '/deliveries', {
@@ -129,6 +145,7 @@ afterEach(() => {
 	for (const key of [...Object.keys(storageEnv), ...Object.keys(readerEnv)]) {
 		process.env[key] = ''
 	}
+	syncEnvFromProcess()
 	fetchSpy?.mockRestore()
 	resetInvoiceReadLimits()
 })
@@ -150,6 +167,7 @@ function withReader(
 		),
 ) {
 	Object.assign(process.env, storageEnv, readerEnv)
+	syncEnvFromProcess()
 	readerBodies = []
 	answer = reply
 	fetchSpy = vi
@@ -175,18 +193,33 @@ const read = (id = delivery.id, token = full) =>
 		body: {},
 	})
 
-describe('reading an invoice photo', () => {
+describe('reading an invoice photo or PDF (#504)', () => {
 	it('answers 503 reader_not_configured without a reader, and for a reader in another region', async () => {
 		Object.assign(process.env, storageEnv)
+		syncEnvFromProcess()
 		fetchSpy = vi.spyOn(globalThis, 'fetch')
 		const none = await read()
 		expect(none.status).toBe(503)
 		expect(none.body.code).toBe('reader_not_configured')
 		Object.assign(process.env, readerEnv, { INVOICE_READER_DATA_REGION: 'ksa' })
+		syncEnvFromProcess()
 		const abroad = await read()
 		expect(abroad.status).toBe(503)
 		expect(abroad.body.code).toBe('reader_not_configured')
 		expect(fetchSpy).not.toHaveBeenCalled()
+
+		// Raw invoice read also enforces region check
+		const rawAbroad = await call('POST', `${BASE}/deliveries/invoice/read`, {
+			token: full,
+			body: {
+				supplierId: supplier.id,
+				fileName: 'inv.pdf',
+				contentType: 'application/pdf',
+				contentBase64: btoa('%PDF-1.4\n%%EOF'),
+			},
+		})
+		expect(rawAbroad.status).toBe(503)
+		expect(rawAbroad.body.code).toBe('reader_not_configured')
 	})
 
 	it('needs a stored photo', async () => {
@@ -207,6 +240,8 @@ describe('reading an invoice photo', () => {
 			supplierName: 'Fresh Farms',
 			invoiceNumber: 'INV-77',
 			totalMinor: 2350,
+			linesSumMinor: 1250,
+			invoiceTotalMismatch: true,
 		})
 		expect(result.lines).toEqual([
 			{
@@ -216,6 +251,10 @@ describe('reading an invoice photo', () => {
 				lineTotalMinor: 1250,
 				itemId: tomatoes.id,
 				itemName: 'Tomatoes',
+				matchedSupplierProductId: tomatoProduct.id,
+				expectedPackBaseQuantity: 10_000_000,
+				previousPriceMinor: 2000,
+				warnings: ['price_change_gt_5pct'],
 			},
 			{
 				text: 'Mystery crate',
@@ -223,6 +262,7 @@ describe('reading an invoice photo', () => {
 				unit: null,
 				itemId: null,
 				itemName: null,
+				warnings: ['unmatched'],
 			},
 		])
 		// The model got the photo as a data URL and an instruction to ignore text on it.
@@ -236,16 +276,121 @@ describe('reading an invoice photo', () => {
 		expect(detail.body.lines).toHaveLength(1)
 	})
 
+	it('reads a raw PDF invoice via POST /deliveries/invoice/read and flags pack_diff, price_change_gt_5pct, line_total_mismatch, unmatched, and invoiceTotalMismatch', async () => {
+		withReader(() =>
+			completion(
+				JSON.stringify({
+					supplier: 'Reader Supplier',
+					invoiceNumber: 'INV-900',
+					total: 200.0,
+					lines: [
+						// Tomatoes: packSize 6kg vs expected 10kg (pack_diff); unitPrice 25.00 vs prev 20.00 (price_change_gt_5pct); 2 * 2500 = 5000 vs lineTotal 5500 (line_total_mismatch)
+						{
+							name: 'Tomatoes',
+							quantity: 2,
+							unit: 'box',
+							packSize: '6 kg',
+							unitPrice: 25.0,
+							lineTotal: 55.0,
+						},
+						// Olive Oil: matching 5 L pack (5_000_000), unitPrice 51.00 (2% change, NOT >5%), 2 * 5100 = 10200 vs 10201 (1 minor tolerance -> NO mismatch)
+						{
+							name: 'Olive Oil',
+							quantity: 2,
+							unit: 'tin',
+							packSize: '5 L',
+							unitPrice: 51.0,
+							lineTotal: 102.01,
+						},
+						// Unmatched line
+						{
+							name: 'Truffle Salt',
+							quantity: 1,
+							unit: 'jar',
+							unitPrice: 10.0,
+							lineTotal: 10.0,
+						},
+					],
+				}),
+			),
+		)
+
+		const res = await call('POST', `${BASE}/deliveries/invoice/read`, {
+			token: full,
+			body: {
+				supplierId: supplier.id,
+				fileName: 'invoice-900.pdf',
+				contentType: 'application/pdf',
+				contentBase64: btoa('%PDF-1.4\nBT (Reader Supplier) Tj ET'),
+			},
+		})
+		expect(res.status).toBe(200)
+		const parsed = invoiceReadSchema.parse(res.body)
+		expect(parsed.deliveryId).toBe('')
+		expect(parsed.totalMinor).toBe(20000)
+		expect(parsed.linesSumMinor).toBe(16701)
+		expect(parsed.invoiceTotalMismatch).toBe(true)
+
+		expect(parsed.lines[0]).toMatchObject({
+			text: 'Tomatoes',
+			itemId: tomatoes.id,
+			matchedSupplierProductId: tomatoProduct.id,
+			packSizeText: '6 kg',
+			packBaseQuantity: 6_000_000,
+			expectedPackBaseQuantity: 10_000_000,
+			unitPriceMinor: 2500,
+			lineTotalMinor: 5500,
+			previousPriceMinor: 2000,
+			warnings: ['pack_diff', 'line_total_mismatch', 'price_change_gt_5pct'],
+		})
+		expect(parsed.lines[1]).toMatchObject({
+			text: 'Olive Oil',
+			itemId: oliveOil.id,
+			matchedSupplierProductId: oilProduct.id,
+			packBaseQuantity: 5_000_000,
+			expectedPackBaseQuantity: 5_000_000,
+			unitPriceMinor: 5100,
+			lineTotalMinor: 10201,
+			previousPriceMinor: 5000,
+		})
+		expect(parsed.lines[1]?.warnings).toBeUndefined()
+		expect(parsed.lines[2]).toMatchObject({
+			text: 'Truffle Salt',
+			itemId: null,
+			warnings: ['unmatched'],
+		})
+		expect(JSON.stringify(readerBodies[0])).toContain(
+			'data:application/pdf;base64,',
+		)
+	})
+
 	it('leaves money out without the cost grant, and refuses a person who cannot price', async () => {
 		withReader()
 		expect((await read(delivery.id, noPurchasing)).status).toBe(403)
+		expect(
+			(
+				await call('POST', `${BASE}/deliveries/invoice/read`, {
+					token: noPurchasing,
+					body: {
+						fileName: 'inv.png',
+						contentType: 'image/png',
+						contentBase64: btoa('png'),
+					},
+				})
+			).status,
+		).toBe(403)
+
 		const token = await mintToken(ORG, {
 			grants: [READ, UPDATE, 'update:inventory_purchasing:any'],
 		})
 		const res = await read(delivery.id, token)
 		expect(res.status).toBe(200)
 		expect(res.body).not.toHaveProperty('totalMinor')
+		expect(res.body).not.toHaveProperty('linesSumMinor')
+		expect(res.body).not.toHaveProperty('invoiceTotalMismatch')
 		expect(res.body.lines[0]).not.toHaveProperty('lineTotalMinor')
+		expect(res.body.lines[0]).not.toHaveProperty('unitPriceMinor')
+		expect(res.body.lines[0]).not.toHaveProperty('previousPriceMinor')
 	})
 
 	it('answers 502 reader_failed on a bad or unavailable answer, without echoing it', async () => {

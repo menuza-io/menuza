@@ -4,7 +4,7 @@ import {
 	itemDetailSchema,
 	listMovementsResultSchema,
 } from '@repo/inventory'
-import { Alert, AlertDescription } from '@repo/ui/alert'
+import { Alert, AlertAction, AlertDescription } from '@repo/ui/alert'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -273,6 +273,7 @@ function ItemSheetBody({
 	const [archiveError, setArchiveError] = useState<string | null>(null)
 	const [changingUnit, setChangingUnit] = useState(false)
 	const [merging, setMerging] = useState(false)
+	const [clearingDraft, setClearingDraft] = useState(false)
 	// Archiving shows where the item is used before it asks to confirm.
 	const archiveUsedIn = useUsedIn(item.id, recipesEnabled && archiving)
 
@@ -293,6 +294,27 @@ function ItemSheetBody({
 		item.units,
 	)
 	const ratio = fillRatio(item.onHand, item.fillUpToQuantity)
+
+	async function clearDraft() {
+		if (clearingDraft) return
+		setClearingDraft(true)
+		try {
+			await request(`/items/${encodeURIComponent(item.id)}`, {
+				method: 'PATCH',
+				body: JSON.stringify({
+					expectedVersion: item.version,
+					isDraft: false,
+				}),
+			})
+			toast.success(t`${itemName} marked as ready.`)
+			notifyChanged()
+			onChanged()
+		} catch (caught) {
+			toast.error(i18n._(inventorySaveErrorMessage(caught)))
+		} finally {
+			setClearingDraft(false)
+		}
+	}
 
 	async function archive() {
 		setArchivePending(true)
@@ -347,21 +369,51 @@ function ItemSheetBody({
 				</>
 			}
 			headerExtra={
-				item.archived ? (
-					<Badge variant="secondary">
-						<Trans>Archived</Trans>
-					</Badge>
-				) : item.status === 'low' ? (
-					<Badge variant="warning">
-						<Trans context="inventory stock status">Low</Trans>
-					</Badge>
-				) : item.status === 'out' ? (
-					<Badge variant="destructive">
-						<Trans context="inventory stock status">Out</Trans>
-					</Badge>
-				) : null
+				<div className="flex flex-wrap items-center gap-1">
+					{item.isDraft ? (
+						<Badge variant="outline" data-testid="item-sheet-draft">
+							<Trans>Draft</Trans>
+						</Badge>
+					) : null}
+					{item.archived ? (
+						<Badge variant="secondary">
+							<Trans>Archived</Trans>
+						</Badge>
+					) : item.status === 'low' ? (
+						<Badge variant="warning">
+							<Trans context="inventory stock status">Low</Trans>
+						</Badge>
+					) : item.status === 'out' ? (
+						<Badge variant="destructive">
+							<Trans context="inventory stock status">Out</Trans>
+						</Badge>
+					) : null}
+				</div>
 			}
 		>
+			{item.isDraft ? (
+				<Alert data-testid="item-draft-banner">
+					<AlertDescription>
+						<Trans>
+							Created from a cash purchase. Review its name, category and unit,
+							then mark it ready.
+						</Trans>
+					</AlertDescription>
+					{canEdit ? (
+						<AlertAction>
+							<Button
+								type="button"
+								size="sm"
+								disabled={clearingDraft}
+								onClick={() => void clearDraft()}
+								data-testid="item-clear-draft"
+							>
+								<Trans>Mark as ready</Trans>
+							</Button>
+						</AlertAction>
+					) : null}
+				</Alert>
+			) : null}
 			{canEdit ? (
 				<div className="flex flex-wrap gap-2" data-testid="item-sheet-actions">
 					<Button

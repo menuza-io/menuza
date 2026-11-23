@@ -1,8 +1,10 @@
 import { INVENTORY_PERMISSIONS } from '@repo/inventory'
-import { useLocation, useSearchParams } from 'react-router'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { CashPurchaseDialog } from '#app/components/inventory/cash-purchase-dialog.tsx'
 import { RecordDeliveryScreen } from '#app/components/inventory/record-delivery-screen.tsx'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
+import { inventoryTabPath } from '#app/utils/inventory/nav.ts'
 import { type Route } from './+types/purchasing_.deliveries.new.ts'
 import { useInventoryLayoutData } from './_layout.tsx'
 
@@ -15,18 +17,41 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 /**
  * Record a delivery, full page. With `?orderId=` it receives against that
- * order. Without the cost grant it records quantities only; a person with the
- * purchasing role confirms the prices later.
+ * order. With `?creditFor=` it records a credit note / return. With `?cash=1`
+ * it opens Cash purchase mode. Without the cost grant it records quantities
+ * only; a person with the purchasing role confirms the prices later.
  */
 export default function InventoryRecordDeliveryRoute() {
 	const layout = useInventoryLayoutData()
+	const navigate = useNavigate()
 	const { search } = useLocation()
 	const [searchParams] = useSearchParams()
 	const orderId = searchParams.get('orderId')
-	// The order id is a one-off pointer, not a filter to carry on every link.
+	const creditForDeliveryId = searchParams.get('creditFor')
+	const isCashMode = searchParams.get('cash') === '1'
+	// One-off pointers are not filters to carry on every link.
 	const kept = new URLSearchParams(search)
 	kept.delete('orderId')
+	kept.delete('creditFor')
+	kept.delete('cash')
 	const keptSearch = kept.toString() === '' ? '' : `?${kept.toString()}`
+	const cleanSearch = layout.locations.length > 1 ? keptSearch : ''
+
+	if (isCashMode && layout.canSeeCost) {
+		const backHref = `${inventoryTabPath(layout.orgSlug, 'purchasing')}${cleanSearch}`
+		return (
+			<CashPurchaseDialog
+				open
+				onOpenChange={(next) => {
+					if (!next) void navigate(backHref)
+				}}
+				locationId={layout.activeLocationId}
+				currency={layout.currency}
+				onSaved={() => void navigate(backHref)}
+			/>
+		)
+	}
+
 	return (
 		<RecordDeliveryScreen
 			orgSlug={layout.orgSlug}
@@ -38,7 +63,8 @@ export default function InventoryRecordDeliveryRoute() {
 			canManagePurchasing={layout.canManagePurchasing}
 			purchasingEnabled={layout.purchasingEnabled}
 			orderId={orderId}
-			search={layout.locations.length > 1 ? keptSearch : ''}
+			creditForDeliveryId={creditForDeliveryId}
+			search={cleanSearch}
 		/>
 	)
 }

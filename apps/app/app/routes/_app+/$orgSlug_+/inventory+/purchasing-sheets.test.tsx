@@ -336,11 +336,20 @@ describe('Supplier sheet', () => {
 		products: [],
 	}
 
-	function supplierRegion() {
+	function supplierRegion(overrides?: {
+		supplier?: Partial<typeof SUPPLIER> & {
+			confirmationRate90d?: {
+				confirmed: number
+				sent: number
+				rateBp: number | null
+			}
+		}
+	}) {
+		const supplierData = { ...SUPPLIER, ...overrides?.supplier }
 		return vi.fn<InventoryClient['request']>(async (path, init) => {
-			if (path === '/suppliers/s1' && !init?.method) return SUPPLIER
+			if (path === '/suppliers/s1' && !init?.method) return supplierData
 			if (path === '/suppliers/s1/archive')
-				return { ...SUPPLIER, archived: true }
+				return { ...supplierData, archived: true }
 			throw new Error(`unexpected request ${path}`)
 		})
 	}
@@ -389,5 +398,23 @@ describe('Supplier sheet', () => {
 			}),
 		)
 		expect(await screen.findByTestId('supplier-error')).toBeInTheDocument()
+	})
+
+	it('displays 90-day confirmation rate (#502) and Import price list button (#505)', async () => {
+		renderSheet(
+			'/acme/inventory/purchasing/suppliers/s1',
+			supplierRegion({
+				supplier: {
+					confirmationRate90d: { confirmed: 17, sent: 20, rateBp: 8500 },
+				},
+			}),
+		)
+		expect(
+			await screen.findByTestId('supplier-confirmation-rate'),
+		).toHaveTextContent('85%')
+		expect(screen.getByTestId('supplier-confirmation-rate')).toHaveTextContent(
+			'17/20',
+		)
+		expect(screen.getByTestId('supplier-import-price-list')).toBeInTheDocument()
 	})
 })

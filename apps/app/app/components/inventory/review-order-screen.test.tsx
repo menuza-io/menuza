@@ -217,6 +217,7 @@ function setup(
 		canEdit?: boolean
 		canSeeCost?: boolean
 		canManagePurchasing?: boolean
+		memberNames?: Record<string, string>
 	} = {},
 ) {
 	return renderInventory(
@@ -227,6 +228,7 @@ function setup(
 			canEdit={props.canEdit ?? true}
 			canSeeCost={props.canSeeCost ?? true}
 			canManagePurchasing={props.canManagePurchasing ?? true}
+			memberNames={props.memberNames}
 			search=""
 		/>,
 		{ request },
@@ -612,6 +614,42 @@ describe('ReviewOrderScreen: a sent order', () => {
 		expect(screen.queryByTestId('order-receive')).toBeNull()
 		expect(screen.queryByTestId('order-cancel')).toBeNull()
 		expect(screen.getByTestId('order-note')).toBeDisabled()
+	})
+
+	it('toggles Confirmed by supplier on a sent order and shows who confirmed and when (#502)', async () => {
+		let currentOrder: Record<string, unknown> = {
+			...sent,
+			confirmedAt: null,
+			confirmedBy: null,
+		}
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path === '/orders/o1') return orderDetail(currentOrder)
+			if (path === '/orders/o1/confirm' && init?.method === 'POST') {
+				currentOrder = {
+					...sent,
+					version: 4,
+					confirmedAt: Date.UTC(2026, 10, 11, 12, 0),
+					confirmedBy: { kind: 'operator', id: 'u1' },
+				}
+				return orderDetail(currentOrder)
+			}
+			throw new Error(`unexpected ${path}`)
+		})
+		setup(request, { memberNames: { u1: 'Amina' } })
+		const toggle = await screen.findByTestId('order-confirmed-toggle')
+		await userEvent.click(toggle)
+		await waitFor(() =>
+			expect(toast.success).toHaveBeenCalledWith('Marked as confirmed.'),
+		)
+		const idx = request.mock.calls.findIndex(
+			([p]) => p === '/orders/o1/confirm',
+		)
+		expect(sentJson(request, idx)).toEqual({
+			expectedVersion: 3,
+			confirmed: true,
+		})
+		const info = await screen.findByTestId('order-confirmed-info')
+		expect(info).toHaveTextContent('Amina')
 	})
 })
 

@@ -130,6 +130,9 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'upload_not_configured') {
 			return msg`Invoice photos are not set up for your business yet.`
 		}
+		if (error.code === 'reader_not_configured') {
+			return msg`Reading invoices and price lists is not set up for your business.`
+		}
 		if (error.code === 'email_failed') {
 			return msg`The email could not be sent. Send it by WhatsApp or copy the text instead.`
 		}

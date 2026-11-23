@@ -17,8 +17,10 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	invMovements,
+	invSupplierProductPrices,
 	provisionTenantDb,
 } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import {
 	afterAll,
@@ -1668,6 +1670,8 @@ describe('Today with purchasing', () => {
 				supplierName: 'Today Supplier',
 				expectedDate: addDaysIso(date, -2),
 				overdue: true,
+				number: overdue.number,
+				version: 2,
 			},
 		])
 		const dayAfterTomorrow = today.week.find(
@@ -1686,5 +1690,306 @@ describe('Today with purchasing', () => {
 		expect(tomorrow?.orderId).toBeNull()
 		// What is on its way is no longer suggested; the sent orders cover the item.
 		expect((await view()).metrics.toOrderItems).toBe(0)
+	})
+
+	it('emits unconfirmed_order the day before delivery and clears it once confirmed (#502)', async () => {
+		const date = (await view()).date
+		const tomorrow = addDaysIso(date, 1)
+		const order = await todayWorld.ok('POST', '/orders', {
+			clientId: cid('ord'),
+			locationId: TODAY_LOC,
+			supplierId: supplier.id,
+			expectedDate: tomorrow,
+			lines: [{ itemId: item.id, supplierProductId: product.id, packs: 1 }],
+		})
+		await todayWorld.ok('POST', `/orders/${order.id}/send`, {
+			expectedVersion: 1,
+			channel: 'whatsapp',
+		})
+
+		const before = await view()
+		const unconfirmed = before.attention.find(
+			(entry) =>
+				entry.kind === 'unconfirmed_order' && entry.orderId === order.id,
+		)
+		expect(unconfirmed).toEqual({
+			kind: 'unconfirmed_order',
+			orderId: order.id,
+			number: order.number,
+			supplierId: supplier.id,
+			supplierName: 'Today Supplier',
+			expectedDate: tomorrow,
+			sentVia: 'whatsapp',
+			version: 2,
+		})
+
+		const confirmed = await todayWorld.ok(
+			'POST',
+			`/orders/${order.id}/confirm`,
+			{
+				expectedVersion: 2,
+				confirmed: true,
+			},
+		)
+		expect(confirmed.confirmedAt).toEqual(expect.any(Number))
+		expect(confirmed.confirmedBy).toEqual({
+			kind: 'operator',
+			id: expect.any(String),
+		})
+
+		const after = await view()
+		expect(
+			after.attention.some(
+				(entry) =>
+					entry.kind === 'unconfirmed_order' && entry.orderId === order.id,
+			),
+		).toBe(false)
+	})
+})
+
+describe('Overdue receiving (#501) and supplier confirmation (#502)', () => {
+	it('toggles confirmation on sent/partly_received orders and rejects draft/closed or missing purchasing grant', async () => {
+		const sup = await world.supplier('Confirm Supplier')
+		const tom = await world.item('Confirm Tomato')
+		const prod = await world.product(sup.id, tom.id, { priceMinor: 1200 })
+
+		const draft = await world.ok('POST', '/orders', {
+			clientId: cid('ord'),
+			locationId: LOC,
+			supplierId: sup.id,
+			expectedDate: '2026-11-25',
+			lines: [{ itemId: tom.id, supplierProductId: prod.id, packs: 1 }],
+		})
+		const draftConfirm = await call(
+			'POST',
+			`${BASE}/orders/${draft.id}/confirm`,
+			{
+				token: full,
+				body: { expectedVersion: 1, confirmed: true },
+			},
+		)
+		expect(draftConfirm.status).toBe(409)
+
+		const sent = await world.ok('POST', `/orders/${draft.id}/send`, {
+			expectedVersion: 1,
+			channel: 'email',
+		})
+		expect(sent.order.confirmedAt).toBeNull()
+
+		const nonPurchasing = await call(
+			'POST',
+			`${BASE}/orders/${draft.id}/confirm`,
+			{
+				token: noPurchasing,
+				body: { expectedVersion: 2, confirmed: true },
+			},
+		)
+		expect(nonPurchasing.status).toBe(403)
+
+		const yes = await world.ok('POST', `/orders/${draft.id}/confirm`, {
+			expectedVersion: 2,
+			confirmed: true,
+		})
+		expect(yes.confirmedAt).toEqual(expect.any(Number))
+		expect(yes.version).toBe(3)
+
+		const no = await world.ok('POST', `/orders/${draft.id}/confirm`, {
+			expectedVersion: 3,
+			confirmed: false,
+		})
+		expect(no.confirmedAt).toBeNull()
+		expect(no.confirmedBy).toBeNull()
+	})
+
+	it('caps onOrder at 2 days overdue and exposes overdueOrderWarnings in suggested orders (#501)', async () => {
+		const todayDate = currentBusinessDate(Date.now(), 'UTC', 240)
+		const sup = await sugWorld.supplier('Overdue Suggest Sup', {
+			deliveryDays: [0, 1, 2, 3, 4, 5, 6],
+			cutoffTime: '23:59',
+		})
+		const pepper = await sugWorld.item('Overdue Pepper')
+		const prod = await sugWorld.product(sup.id, pepper.id, {
+			packName: 'Box',
+			packBaseQuantity: 1000,
+			priceMinor: 1000,
+		})
+		await sugWorld.ok('PUT', '/levels/bulk', {
+			clientId: cid('lvl'),
+			locationId: SUG_LOC,
+			levels: [
+				{
+					itemId: pepper.id,
+					orderBelowQuantity: 5_000,
+					fillUpToQuantity: 10_000,
+					expectedVersion: 0,
+				},
+			],
+		})
+
+		// Order overdue by 4 days (> 2-day cap) should NOT reduce suggested qty and SHOULD warn.
+		const oldOrder = await sugWorld.ok('POST', '/orders', {
+			clientId: cid('ord'),
+			locationId: SUG_LOC,
+			supplierId: sup.id,
+			expectedDate: addDaysIso(todayDate, -4),
+			lines: [{ itemId: pepper.id, supplierProductId: prod.id, packs: 10 }],
+		})
+		await sugWorld.ok('POST', `/orders/${oldOrder.id}/send`, {
+			expectedVersion: 1,
+			channel: 'copy',
+		})
+
+		const sugWithOld = suggestedOrdersSchema.parse(
+			await sugWorld.ok('GET', `/orders/suggested?locationId=${SUG_LOC}`),
+		)
+		const supCard = sugWithOld.suppliers.find((s) => s.supplierId === sup.id)
+		expect(supCard).toBeDefined()
+		const pepperLine = supCard!.lines.find((l) => l.itemId === pepper.id)
+		expect(pepperLine!.onOrderQuantity).toBe(0)
+		expect(pepperLine!.quantity).toBe(10_000)
+		expect(sugWithOld.overdueOrderWarnings).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					orderId: oldOrder.id,
+					number: oldOrder.number,
+					supplierId: sup.id,
+					expectedDate: addDaysIso(todayDate, -4),
+				}),
+			]),
+		)
+
+		// Cancelling the stale order and sending one overdue by 2 days DOES count as onOrder.
+		await sugWorld.ok('POST', `/orders/${oldOrder.id}/cancel`, {
+			expectedVersion: 2,
+		})
+		const withinTwo = await sugWorld.ok('POST', '/orders', {
+			clientId: cid('ord'),
+			locationId: SUG_LOC,
+			supplierId: sup.id,
+			expectedDate: addDaysIso(todayDate, -2),
+			lines: [{ itemId: pepper.id, supplierProductId: prod.id, packs: 10 }],
+		})
+		await sugWorld.ok('POST', `/orders/${withinTwo.id}/send`, {
+			expectedVersion: 1,
+			channel: 'copy',
+		})
+		const sugWithRecent = suggestedOrdersSchema.parse(
+			await sugWorld.ok('GET', `/orders/suggested?locationId=${SUG_LOC}`),
+		)
+		expect(
+			sugWithRecent.overdueOrderWarnings.some(
+				(o) => o.orderId === withinTwo.id,
+			),
+		).toBe(false)
+		expect(
+			sugWithRecent.suppliers.find((s) => s.supplierId === sup.id),
+		).toBeUndefined()
+	})
+
+	it('receives an order in 1 tap as-ordered (with undo window, stock, costs & price history), reschedules via not-yet, and supports 24h undo', async () => {
+		const sup = await world.supplier('OneTap Supplier')
+		const flour = await world.item('OneTap Flour')
+		const prod = await world.product(sup.id, flour.id, {
+			packName: 'Sack 5kg',
+			packBaseQuantity: 5000,
+			priceMinor: 2500,
+		})
+		const ord = await world.ok('POST', '/orders', {
+			clientId: cid('ord'),
+			locationId: LOC,
+			supplierId: sup.id,
+			expectedDate: '2026-11-20',
+			lines: [{ itemId: flour.id, supplierProductId: prod.id, packs: 3 }],
+		})
+		await world.ok('POST', `/orders/${ord.id}/send`, {
+			expectedVersion: 1,
+			channel: 'copy',
+		})
+
+		// Reschedule ("Not yet") updates expectedDate & bumps version.
+		const rescheduled = await world.ok('POST', `/orders/${ord.id}/not-yet`, {
+			expectedVersion: 2,
+			expectedDate: '2026-11-22',
+		})
+		expect(rescheduled.expectedDate).toBe('2026-11-22')
+		expect(rescheduled.version).toBe(3)
+
+		// 1-tap receive as ordered.
+		const recKey = cid('rao')
+		const received = await world.ok(
+			'POST',
+			`/orders/${ord.id}/receive-as-ordered`,
+			{
+				expectedVersion: 3,
+				clientId: recKey,
+			},
+		)
+		expect(received.order.status).toBe('received')
+		expect(received.delivery.asOrdered).toBe(true)
+		expect(received.delivery.undoUntil).toEqual(expect.any(Number))
+		expect(received.delivery.lines[0]!.quantity).toBe(15_000)
+		expect(received.delivery.lines[0]!.lineTotalMinor).toBe(7500)
+
+		// Idempotent replay returns same delivery.
+		const replay = await world.ok(
+			'POST',
+			`/orders/${ord.id}/receive-as-ordered`,
+			{
+				expectedVersion: 3,
+				clientId: recKey,
+			},
+		)
+		expect(replay.delivery.id).toBe(received.delivery.id)
+
+		const db = await getTenantDb(ORG)
+		const priceRows = await db
+			.select()
+			.from(invSupplierProductPrices)
+			.where(eq(invSupplierProductPrices.supplierProductId, prod.id))
+		expect(
+			priceRows.some((p) => p.source === 'delivery' && p.priceMinor === 2500),
+		).toBe(true)
+
+		// Undo within 24h cancels delivery and reopens the order to sent.
+		const undone = await world.ok(
+			'POST',
+			`/deliveries/${received.delivery.id}/undo`,
+			{
+				expectedVersion: received.delivery.version,
+				note: 'Clicked by mistake',
+			},
+		)
+		expect(undone.status).toBe('cancelled')
+
+		const reopenedOrder = await world.ok('GET', `/orders/${ord.id}`)
+		expect(reopenedOrder.status).toBe('sent')
+		expect(reopenedOrder.closedAt).toBeNull()
+
+		// Simulate undo_expired after 24h window passes.
+		const ord2 = await world.ok(
+			'POST',
+			`/orders/${ord.id}/receive-as-ordered`,
+			{
+				expectedVersion: reopenedOrder.version,
+				clientId: cid('rao2'),
+			},
+		)
+		const futureNow = Date.now() + 25 * 60 * 60 * 1000
+		vi.useFakeTimers({ now: futureNow, toFake: ['Date'] })
+		try {
+			const expiredToken = await mintToken(ORG)
+			const expiredRes = await call(
+				'POST',
+				`${BASE}/deliveries/${ord2.delivery.id}/undo`,
+				{
+					token: expiredToken,
+					body: { expectedVersion: ord2.delivery.version },
+				},
+			)
+			expect(expiredRes.status).toBe(409)
+			expect(expiredRes.body.code).toBe('undo_expired')
+		} finally {
+			vi.useRealTimers()
+		}
 	})
 })

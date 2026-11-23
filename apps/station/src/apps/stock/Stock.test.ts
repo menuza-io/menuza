@@ -2,6 +2,9 @@
 import 'fake-indexeddb/auto'
 import { createElement as h } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import catalogFixture from './fixtures/catalog.json'
+import countSheetFixture from './fixtures/count-sheet.json'
+import { tomorrowIsoDate } from './model.ts'
 import { stockRows } from './queue.ts'
 import { Stock } from './Stock.tsx'
 import { ORIGIN, resetStock, session, settings } from './testing.ts'
@@ -18,8 +21,6 @@ import {
 	type,
 	type Page,
 } from './ui-testing.ts'
-import catalogFixture from './fixtures/catalog.json'
-import countSheetFixture from './fixtures/count-sheet.json'
 import { db } from '~/lib/db.ts'
 import { type Session } from '~/lib/signin.ts'
 
@@ -871,5 +872,270 @@ describe('Delivery', () => {
 			'delivery',
 		])
 		expect(await db.stockQueue.count()).toBe(1)
+	})
+})
+
+describe('Overdue delivery prompt (#501)', () => {
+	const manager = () =>
+		session({ role: 'manager', staff: { id: 'stf_mo', name: 'Mo A.' } })
+
+	function overdueRegion() {
+		const api = region()
+		let catalogState = {
+			...catalogJson(),
+			version: 'cat-overdue-1',
+			expectedDeliveries: [
+				{
+					...catalogJson().expectedDeliveries[0]!,
+					overdue: true,
+					version: 2,
+				},
+			],
+		}
+		const original = api.fetchImpl.getMockImplementation()!
+		api.fetchImpl.mockImplementation(async (input, init) => {
+			const url = new URL(String(input))
+			if (url.pathname === '/pos/inventory/catalog') {
+				if (
+					new Headers(init?.headers).get('If-None-Match') ===
+					`"${catalogState.version}"`
+				)
+					return new Response(null, { status: 304 })
+				return Response.json(catalogState)
+			}
+			if (
+				url.pathname.endsWith('/receive-as-ordered') ||
+				url.pathname.endsWith('/not-yet')
+			) {
+				const answer = await original(input, init)
+				catalogState = {
+					...catalogState,
+					version: 'cat-overdue-2',
+					expectedDeliveries: [],
+				}
+				return answer
+			}
+			return original(input, init)
+		})
+		api.install()
+		return api
+	}
+
+	it('shows the overdue question with 3 answers and enforces the till-manager rule', async () => {
+		const api = overdueRegion()
+		await openStock({ session: session() })
+		await loaded()
+		expect(text(page.host)).toContain(
+			'Did the delivery from Fresh Produce Co arrive?',
+		)
+		expect(text(page.host)).toContain(
+			'A manager must sign in to receive a delivery',
+		)
+		const yesOrdered = button(page.host, 'Yes, as ordered') as HTMLButtonElement
+		const yesChanges = button(
+			page.host,
+			'Yes, with changes',
+		) as HTMLButtonElement
+		const notYet = button(page.host, 'Not yet') as HTMLButtonElement
+		expect(yesOrdered.disabled).toBe(true)
+		expect(yesChanges.disabled).toBe(true)
+		expect(notYet.disabled).toBe(true)
+		await click(yesOrdered)
+		expect(api.writes(/receive-as-ordered/)).toEqual([])
+	})
+
+	it('"Yes, as ordered" posts receive-as-ordered, refreshes catalog, and shows a confirmation toast', async () => {
+		const api = overdueRegion()
+		await openStock({ session: manager() })
+		await loaded()
+		await click(button(page.host, 'Yes, as ordered'))
+		await vi.waitFor(() =>
+			expect(
+				api.writes('/pos/inventory/orders/ord_41/receive-as-ordered'),
+			).toHaveLength(1),
+		)
+		const [request] = api.writes(
+			'/pos/inventory/orders/ord_41/receive-as-ordered',
+		)
+		expect(request!.body).toMatchObject({
+			locationId: 'main',
+			expectedVersion: 2,
+			madeBy: 'stf_mo',
+		})
+		await vi.waitFor(() =>
+			expect(text(page.host)).toContain(
+				'Delivery from Fresh Produce Co recorded as ordered.',
+			),
+		)
+		expect(text(page.host)).not.toContain(
+			'Did the delivery from Fresh Produce Co arrive?',
+		)
+	})
+
+	it('"Yes, with changes" opens DeliverySheet preselected to the overdue order', async () => {
+		overdueRegion()
+		await openStock({ session: manager() })
+		await loaded()
+		await click(button(page.host, 'Yes, with changes'))
+		const dialog = () => page.host.querySelector('dialog[open]')!
+		await vi.waitFor(() => expect(text(dialog())).toContain('Fresh Produce Co'))
+		expect(text(dialog())).toContain('Tomatoes')
+		expect(text(dialog())).toContain('Crate 6 kg')
+	})
+
+	it('"Not yet" opens a date picker defaulting to tomorrow and submits orderNotYet', async () => {
+		const api = overdueRegion()
+		await openStock({ session: manager() })
+		await loaded()
+		await click(button(page.host, 'Not yet'))
+		const dateInput =
+			page.host.querySelector<HTMLInputElement>('input[type="date"]')!
+		expect(dateInput).toBeTruthy()
+		expect(dateInput.value).toBe(tomorrowIsoDate())
+		await type(dateInput, '2026-12-30')
+		await click(button(page.host, 'Save date'))
+		await vi.waitFor(() =>
+			expect(api.writes('/pos/inventory/orders/ord_41/not-yet')).toHaveLength(
+				1,
+			),
+		)
+		expect(
+			api.writes('/pos/inventory/orders/ord_41/not-yet')[0]!.body,
+		).toMatchObject({
+			locationId: 'main',
+			expectedVersion: 2,
+			expectedDate: '2026-12-30',
+			madeBy: 'stf_mo',
+		})
+		await vi.waitFor(() =>
+			expect(text(page.host)).toContain(
+				'Expected date for Fresh Produce Co updated to 2026-12-30.',
+			),
+		)
+	})
+})
+
+describe('Cash purchase (#466)', () => {
+	const manager = () =>
+		session({ role: 'manager', staff: { id: 'stf_mo', name: 'Mo A.' } })
+
+	it('enforces the till-manager rule before showing the cash purchase form', async () => {
+		region().install()
+		await openStock({ session: session() })
+		await loaded()
+		await click(button(page.host, 'Cash purchase'))
+		const dialog = page.host.querySelector('dialog[open]')!
+		expect(text(dialog)).toContain(
+			'A manager must sign in to receive a delivery',
+		)
+		expect(text(dialog)).not.toContain('Save cash purchase')
+	})
+
+	it('picks existing items or adds a new draft item, attaches a receipt photo, submits to /pos/inventory/cash-purchase, and never displays amounts afterwards', async () => {
+		const api = region()
+		api.install()
+		await openStock({ session: manager() })
+		await loaded()
+		await click(button(page.host, 'Cash purchase'))
+		const dialog = () => page.host.querySelector('dialog[open]')!
+		await vi.waitFor(() => expect(text(dialog())).toContain('Pick an item'))
+
+		// Pick an existing item
+		await click(button(dialog(), 'Tomatoes'))
+		await click(button(dialog(), 'One more Tomatoes'))
+		await click(button(dialog(), 'One more Tomatoes'))
+		const tomatoAmount = dialog().querySelector<HTMLInputElement>(
+			'input[aria-label="Amount paid for Tomatoes"]',
+		)!
+		await type(tomatoAmount, '14.50')
+
+		// Type a new draft item + pick base unit + quantity + amount paid
+		const draftName = dialog().querySelector<HTMLInputElement>(
+			'input[aria-label="New item name"]',
+		)!
+		await type(draftName, 'Fresh mint')
+		const baseUnit = dialog().querySelector<HTMLSelectElement>(
+			'select[aria-label="New item base unit"]',
+		)!
+		await act(baseUnit, 'g')
+		await click(button(dialog(), 'Add new item'))
+		const mintQty = dialog().querySelector<HTMLInputElement>(
+			'input[aria-label="Fresh mint"]',
+		)!
+		await type(mintQty, '500')
+		const mintAmount = dialog().querySelector<HTMLInputElement>(
+			'input[aria-label="Amount paid for Fresh mint"]',
+		)!
+		await type(mintAmount, '7.25')
+
+		// Attach optional receipt photo
+		const fileInput =
+			dialog().querySelector<HTMLInputElement>('input[type="file"]')!
+		const file = new File(['jpeg-bytes'], 'receipt.jpg', {
+			type: 'image/jpeg',
+		})
+		await (async () => {
+			const { act: reactAct } = await import('react')
+			await reactAct(async () => {
+				Object.defineProperty(fileInput, 'files', {
+					value: [file],
+					configurable: true,
+				})
+				fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+			})
+		})()
+		await vi.waitFor(() => expect(text(dialog())).toContain('Take it again'))
+
+		// Submit cash purchase
+		await click(button(dialog(), 'Save cash purchase'))
+		await vi.waitFor(() =>
+			expect(api.writes('/pos/inventory/cash-purchase')).toHaveLength(1),
+		)
+		const [cashReq] = api.writes('/pos/inventory/cash-purchase')
+		expect(cashReq!.body).toMatchObject({
+			locationId: 'main',
+			madeBy: 'stf_mo',
+			lines: [
+				{
+					itemId: 'item_tomato',
+					quantity: 2_000_000,
+					amountPaidMinor: 1450,
+				},
+				{
+					draftItem: { name: 'Fresh mint', baseUnit: 'g' },
+					quantity: 500_000,
+					amountPaidMinor: 725,
+				},
+			],
+		})
+
+		// Receipt photo uploads against the returned deliveryId
+		await vi.waitFor(
+			() =>
+				expect(
+					api.writes(/\/pos\/inventory\/deliveries\/dlv_\d+\/photo\/confirm$/),
+				).toHaveLength(1),
+			{ timeout: 5_000 },
+		)
+
+		// Done screen never displays any money amounts, totals, or prices
+		await vi.waitFor(() =>
+			expect(text(dialog())).toContain('Cash purchase saved'),
+		)
+		expect(text(dialog())).not.toMatch(
+			/14\.50|1450|7\.25|725|21\.75|[$€£]|price|total/i,
+		)
+		expect(await db.stockQueue.count()).toBe(0)
+
+		// Close and check Stock home + reopening Cash purchase leaves zero amounts behind
+		await click(button(dialog(), 'Done'))
+		expect(text(page.host)).not.toMatch(
+			/14\.50|1450|7\.25|725|21\.75|[$€£]|price|total/i,
+		)
+		await click(button(page.host, 'Cash purchase'))
+		expect(text(dialog())).not.toMatch(/14\.50|7\.25|Tomatoes.*Fresh mint/)
+		expect(
+			dialog().querySelector('input[aria-label="Amount paid for Tomatoes"]'),
+		).toBeNull()
 	})
 })

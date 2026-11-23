@@ -26,6 +26,7 @@ import {
 	type ReportRecord,
 } from '@repo/reports'
 import {
+	isInventoryReportSubject,
 	isReservationsReportSubject,
 	isStaffingReportSubject,
 	operatorTokenAllowsSubject,
@@ -96,6 +97,10 @@ import {
 	MENU_INSIGHTS_MAX_ROWS,
 } from '../services/menu-insights-records.ts'
 import { loadSoldOutHistoryRecords } from '../services/sold-out-report-records.ts'
+import {
+	INVENTORY_DELIVERIES_REPORT_MAX_ROWS,
+	loadInventoryDeliveryRecords,
+} from '../services/inventory-deliveries-report.ts'
 import { loadFinancialPeriodSummary } from '../services/financial-summary-records.ts'
 import { loadLocationScorecard } from '../services/location-scorecard-records.ts'
 
@@ -134,6 +139,7 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'item_pairs',
 	'modifier_sales',
 	'sold_out_history',
+	'inventory_deliveries',
 ])
 
 const REPEAT_CALLER_WINDOW_MS = 30 * 86_400_000
@@ -640,6 +646,28 @@ analyticsRoutes.post('/query', async (c) => {
 		records = loaded.records
 		sourceTruncated = loaded.truncated
 		sourceRowLimit = ORDER_REPORT_MAX_ROWS
+	} else if (isInventoryReportSubject(definition.subject)) {
+		const names = new Map<string, string>()
+		try {
+			const context = await getReservationsContext(claims.orgId)
+			for (const location of context?.locations ?? []) {
+				names.set(location.id, location.name)
+			}
+		} catch {
+			// Names are a courtesy: the id stands in.
+		}
+		const loaded = await loadInventoryDeliveryRecords(
+			{
+				db,
+				locationIds: claims.scopeIds,
+				locationNames: names,
+				now: now.getTime(),
+			},
+			loading,
+		)
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = INVENTORY_DELIVERIES_REPORT_MAX_ROWS
 	} else if (definition.subject === 'phone_calls') {
 		const loaded = await loadPhoneCallRecords(db, loading, now)
 		records = loaded.records

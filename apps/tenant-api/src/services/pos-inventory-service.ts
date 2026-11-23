@@ -24,6 +24,7 @@ import { queryInChunks } from '../lib/chunked-in.ts'
 import {
 	type InventoryActor,
 	defaultCountUnit,
+	locationBusinessDate,
 	wireUnit,
 } from './inventory-common.ts'
 import { listCounts } from './inventory-counts-service.ts'
@@ -130,53 +131,60 @@ export async function buildStationCatalog(
 		cost: false,
 		purchasing: false,
 	}
-	const [stock, settings, areaList, lists, open, suppliers, products, orders] =
-		await Promise.all([
-			loadLocationStock(db, locationId),
-			getInventorySettings(db, input.region),
-			listStorageAreas(db, locationId),
-			listCountLists(db, locationId),
-			listCounts(db, {
-				query: { locationId, status: 'open', limit: 200 },
-				caller,
-			}),
-			db
-				.select({ id: invSuppliers.id, name: invSuppliers.name })
-				.from(invSuppliers)
-				.where(isNull(invSuppliers.archivedAt)),
-			db
-				.select({
-					id: invSupplierProducts.id,
-					supplierId: invSupplierProducts.supplierId,
-					itemId: invSupplierProducts.itemId,
-					packName: invSupplierProducts.packName,
-					packBaseQuantity: invSupplierProducts.packBaseQuantity,
-					pricedByWeight: invSupplierProducts.pricedByWeight,
-				})
-				.from(invSupplierProducts)
-				.where(isNull(invSupplierProducts.archivedAt))
-				.orderBy(
-					asc(invSupplierProducts.packName),
-					asc(invSupplierProducts.id),
-				),
-			input.ordersEnabled
-				? db
-						.select({ id: invOrders.id })
-						.from(invOrders)
-						.where(
-							and(
-								eq(invOrders.locationId, locationId),
-								inArray(invOrders.status, [...OPEN_ORDER_STATUSES_FOR_STATION]),
-							),
-						)
-						.orderBy(
-							sql`${invOrders.expectedDate} is null`,
-							asc(invOrders.expectedDate),
-							asc(invOrders.number),
-						)
-						.limit(INVENTORY_LIMITS.openOrdersPerLocation)
-				: Promise.resolve([] as Array<{ id: string }>),
-		])
+	const [
+		stock,
+		settings,
+		areaList,
+		lists,
+		open,
+		suppliers,
+		products,
+		orders,
+		businessDate,
+	] = await Promise.all([
+		loadLocationStock(db, locationId),
+		getInventorySettings(db, input.region),
+		listStorageAreas(db, locationId),
+		listCountLists(db, locationId),
+		listCounts(db, {
+			query: { locationId, status: 'open', limit: 200 },
+			caller,
+		}),
+		db
+			.select({ id: invSuppliers.id, name: invSuppliers.name })
+			.from(invSuppliers)
+			.where(isNull(invSuppliers.archivedAt)),
+		db
+			.select({
+				id: invSupplierProducts.id,
+				supplierId: invSupplierProducts.supplierId,
+				itemId: invSupplierProducts.itemId,
+				packName: invSupplierProducts.packName,
+				packBaseQuantity: invSupplierProducts.packBaseQuantity,
+				pricedByWeight: invSupplierProducts.pricedByWeight,
+			})
+			.from(invSupplierProducts)
+			.where(isNull(invSupplierProducts.archivedAt))
+			.orderBy(asc(invSupplierProducts.packName), asc(invSupplierProducts.id)),
+		input.ordersEnabled
+			? db
+					.select({ id: invOrders.id, version: invOrders.version })
+					.from(invOrders)
+					.where(
+						and(
+							eq(invOrders.locationId, locationId),
+							inArray(invOrders.status, [...OPEN_ORDER_STATUSES_FOR_STATION]),
+						),
+					)
+					.orderBy(
+						sql`${invOrders.expectedDate} is null`,
+						asc(invOrders.expectedDate),
+						asc(invOrders.number),
+					)
+					.limit(INVENTORY_LIMITS.openOrdersPerLocation)
+			: Promise.resolve([] as Array<{ id: string; version: number }>),
+		locationBusinessDate(db, locationId, input.now),
+	])
 
 	const activeAreas = new Set(areaList.areas.map((area) => area.id))
 	const stockById = new Map(stock.map((row) => [row.item.id, row]))
@@ -192,6 +200,9 @@ export async function buildStationCatalog(
 				supplierName: prefill.supplierName,
 				status: prefill.status,
 				expectedDate: prefill.expectedDate,
+				overdue:
+					prefill.expectedDate !== null && prefill.expectedDate < businessDate,
+				version: order.version,
 				lines: prefill.lines,
 			}),
 		)

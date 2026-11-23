@@ -6,6 +6,7 @@ import {
 	retryFailed,
 	logWaste,
 	recordDelivery,
+	recordDeliveryPhoto,
 	saveCountEntry,
 	sendCount,
 	startCount,
@@ -434,6 +435,33 @@ describe('sending the Stock outbox', () => {
 			'dlv_1',
 			{ key: 'inventory-invoices/org/dlv/abc.jpg' },
 		])
+		expect(await db.stockBlobs.count()).toBe(0)
+	})
+
+	it('uploads a standalone receipt photo for a cash purchase delivery id without storing money', async () => {
+		await recordDeliveryPhoto(ctx, 'dlv_cash_42', {
+			blob: new Blob(['receipt-bytes'], { type: 'image/jpeg' }),
+			contentType: 'image/jpeg',
+		})
+		expect(JSON.stringify(await stockRows(ORIGIN))).not.toMatch(
+			/amountPaid|Minor|price|cost/i,
+		)
+		const api = fakeApi()
+		await flushStock(deps({ api }))
+		expect(api.calls.map((call) => call.name)).toEqual([
+			'photoRequest',
+			'putPhoto',
+			'photoConfirm',
+		])
+		expect(api.calls[0]!.args).toEqual([
+			'dlv_cash_42',
+			{ contentType: 'image/jpeg', sizeBytes: 13 },
+		])
+		expect(api.calls[2]!.args).toEqual([
+			'dlv_cash_42',
+			{ key: 'inventory-invoices/org/dlv/abc.jpg' },
+		])
+		expect(await stockRows(ORIGIN)).toEqual([])
 		expect(await db.stockBlobs.count()).toBe(0)
 	})
 

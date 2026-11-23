@@ -1,4 +1,7 @@
+import { parseDelimited } from '@repo/common/csv'
 import { normalizePhone } from './staff-format.ts'
+
+export { parseDelimited }
 
 /**
  * Parsing and row validation for "Bulk add" (paste or CSV). Nothing here talks
@@ -28,55 +31,6 @@ export type ImportRow = {
 	problems: ImportProblem[]
 	/** Row number this one repeats, when `problems` includes `duplicate`. */
 	duplicateOf?: number
-}
-
-/** RFC 4180 style split that also handles tab and semicolon separated paste. */
-export function parseDelimited(text: string): string[][] {
-	const input = text.replace(/^﻿/, '')
-	const firstLine = input.split(/\r?\n/, 1)[0] ?? ''
-	const delimiter = detectDelimiter(firstLine)
-	const rows: string[][] = []
-	let row: string[] = []
-	let cell = ''
-	let quoted = false
-	for (let i = 0; i < input.length; i++) {
-		const char = input[i]!
-		if (quoted) {
-			if (char === '"') {
-				if (input[i + 1] === '"') {
-					cell += '"'
-					i++
-				} else quoted = false
-			} else cell += char
-			continue
-		}
-		if (char === '"' && cell === '') quoted = true
-		else if (char === delimiter) {
-			row.push(cell)
-			cell = ''
-		} else if (char === '\n' || char === '\r') {
-			if (char === '\r' && input[i + 1] === '\n') i++
-			row.push(cell)
-			cell = ''
-			rows.push(row)
-			row = []
-		} else cell += char
-	}
-	row.push(cell)
-	rows.push(row)
-	return rows
-		.map((cells) => cells.map((value) => value.trim()))
-		.filter((cells) => cells.some((value) => value !== ''))
-}
-
-function detectDelimiter(line: string): string {
-	const counts: Array<[string, number]> = [
-		['\t', line.split('\t').length],
-		[';', line.split(';').length],
-		[',', line.split(',').length],
-	]
-	counts.sort((a, b) => b[1] - a[1])
-	return counts[0]![1] > 1 ? counts[0]![0] : ','
 }
 
 type Column = 'name' | 'firstName' | 'lastName' | 'email' | 'phone'

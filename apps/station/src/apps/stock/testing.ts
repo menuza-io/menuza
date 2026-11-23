@@ -266,6 +266,40 @@ export function fakeApi(over: Partial<StockApi> = {}): Recorded {
 		async photoConfirm(...args) {
 			record('photoConfirm', args, null)
 		},
+		async receiveAsOrdered(...args) {
+			const orderId = String(args[0])
+			return record('receiveAsOrdered', args, {
+				deliveryId: `dlv_${++serial}`,
+				orderId,
+				orderStatus: 'received' as const,
+				lineCount: 2,
+				receivedAt: 1,
+				duplicate: false,
+			})
+		},
+		async orderNotYet(...args) {
+			const orderId = String(args[0])
+			const body = args[1] as { expectedDate: string; expectedVersion: number }
+			return record('orderNotYet', args, {
+				orderId,
+				status: 'sent' as const,
+				expectedDate: body.expectedDate,
+				version: body.expectedVersion + 1,
+			})
+		},
+		async cashPurchase(...args) {
+			const body = args[0] as { lines: Array<{ draftItem?: unknown }> }
+			return record('cashPurchase', args, {
+				id: `dlv_${++serial}`,
+				lineCount: body.lines.length,
+				receivedAt: 1,
+				lateSync: false,
+				duplicate: false,
+				draftItemIds: body.lines
+					.filter((line) => line.draftItem)
+					.map(() => `itm_draft_${++serial}`),
+			})
+		},
 	}
 	return Object.assign({ ...base, ...over }, { calls }) as Recorded
 }

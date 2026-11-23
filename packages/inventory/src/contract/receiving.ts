@@ -3,13 +3,16 @@ import { inventoryMinorSchema } from '../money.ts'
 import { orderStatusSchema, orderTextLocaleSchema } from '../records.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
 import { inventoryBaseUnitSchema } from '../units.ts'
+import { inventoryCategorySchema } from '../vocabulary.ts'
 import {
 	currencyOut,
 	expectedVersionSchema,
 	inventoryIdSchema,
+	inventoryNameSchema,
 	inventoryNoteSchema,
 	isoDateSchema,
 	minorOut,
+	positiveQuantitySchema,
 	unitRefSchema,
 } from './common.ts'
 import { recordDeliveryResultSchema } from './results.ts'
@@ -153,11 +156,46 @@ export const confirmDeliveryPricesSchema = z
 						lineId: inventoryIdSchema,
 						lineTotalMinor: inventoryMinorSchema,
 						packPriceMinor: inventoryMinorSchema.nullable().optional(),
+						/** #504: updated quantity/pack from "Use invoice lines". */
+						quantity: positiveQuantitySchema.optional(),
+						packs: z.number().positive().max(100_000).nullable().optional(),
+						packName: inventoryNameSchema.nullable().optional(),
+						packBaseQuantity: positiveQuantitySchema.nullable().optional(),
+						supplierProductId: inventoryIdSchema.nullable().optional(),
 					})
 					.strict(),
 			)
 			.min(1)
 			.max(200),
+		/** #504: lines on the invoice not originally on the delivery. */
+		extraLines: z
+			.array(
+				z
+					.object({
+						itemId: inventoryIdSchema.nullable().optional(),
+						createItem: z
+							.object({
+								name: inventoryNameSchema,
+								baseUnit: inventoryBaseUnitSchema,
+								category: inventoryCategorySchema.optional(),
+							})
+							.strict()
+							.optional(),
+						supplierProductId: inventoryIdSchema.nullable().optional(),
+						quantity: positiveQuantitySchema,
+						packs: z.number().positive().max(100_000).nullable().optional(),
+						packName: inventoryNameSchema.nullable().optional(),
+						packBaseQuantity: positiveQuantitySchema.nullable().optional(),
+						packPriceMinor: inventoryMinorSchema.nullable().optional(),
+						lineTotalMinor: inventoryMinorSchema,
+					})
+					.strict()
+					.refine((line) => Boolean(line.itemId || line.createItem), {
+						message: 'Required',
+					}),
+			)
+			.max(200)
+			.optional(),
 	})
 	.strict()
 export type ConfirmDeliveryPrices = z.infer<typeof confirmDeliveryPricesSchema>
@@ -277,13 +315,43 @@ export type PriceAlerts = z.infer<typeof priceAlertsSchema>
  */
 export const readInvoiceSchema = z.object({}).strict()
 
+/**
+ * `POST /deliveries/invoice/read` (`update:inventory_purchasing:any`):
+ * reads a newly selected invoice image or PDF before the delivery is saved (#504).
+ */
+export const readRawInvoiceSchema = z
+	.object({
+		supplierId: inventoryIdSchema.nullable().optional(),
+		fileName: z.string().trim().min(1).max(200),
+		contentType: z.string().trim().min(1).max(120),
+		contentBase64: z.string().min(1).max(10_000_000),
+	})
+	.strict()
+
+export const INVOICE_LINE_WARNINGS = [
+	'pack_diff',
+	'price_change_gt_5pct',
+	'line_total_mismatch',
+	'unmatched',
+] as const
+export type InvoiceLineWarning = (typeof INVOICE_LINE_WARNINGS)[number]
+
 export const invoiceReadLineSchema = z.object({
 	text: z.string(),
 	quantity: z.number().nullable(),
 	unit: z.string().nullable(),
 	lineTotalMinor: minorOut,
+	/** Unit / pack price parsed strictly from the invoice (#504). */
+	unitPriceMinor: minorOut,
+	/** Raw pack size text / parsed base thousandths when stated on the invoice (#504). */
+	packSizeText: z.string().nullable().optional(),
+	packBaseQuantity: z.number().int().nullable().optional(),
 	itemId: z.string().nullable(),
 	itemName: z.string().nullable(),
+	matchedSupplierProductId: z.string().nullable().optional(),
+	expectedPackBaseQuantity: z.number().int().nullable().optional(),
+	previousPriceMinor: minorOut,
+	warnings: z.array(z.enum(INVOICE_LINE_WARNINGS)).optional(),
 })
 export type InvoiceReadLine = z.infer<typeof invoiceReadLineSchema>
 
@@ -292,6 +360,8 @@ export const invoiceReadSchema = z.object({
 	supplierName: z.string().nullable(),
 	invoiceNumber: z.string().nullable(),
 	totalMinor: minorOut,
+	linesSumMinor: minorOut,
+	invoiceTotalMismatch: z.boolean().optional(),
 	lines: z.array(invoiceReadLineSchema),
 })
 export type InvoiceRead = z.infer<typeof invoiceReadSchema>

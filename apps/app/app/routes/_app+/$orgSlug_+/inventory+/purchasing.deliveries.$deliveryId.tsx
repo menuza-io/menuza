@@ -83,7 +83,7 @@ export default function InventoryDeliveryRoute() {
 	const [error, setError] = useState<string | null>(null)
 
 	async function post(
-		action: 'paid' | 'cancel',
+		action: 'paid' | 'cancel' | 'undo',
 		target: DeliveryDetail,
 		body: Record<string, unknown>,
 		done: string,
@@ -183,6 +183,13 @@ export default function InventoryDeliveryRoute() {
 		: delivery.businessDate
 	const showMoney = ctx.canSeeCost && delivery.totalMinor !== undefined
 	const cancelled = delivery.status === 'cancelled'
+	const canUndoAsOrdered =
+		!cancelled &&
+		delivery.asOrdered === true &&
+		delivery.undoUntil !== null &&
+		delivery.undoUntil !== undefined &&
+		Date.now() <= delivery.undoUntil &&
+		ctx.canEdit
 	const supplierName = delivery.supplierName ?? t`No supplier`
 	const orderNumber = delivery.orderNumber ?? 0
 	const lineText = (line: DeliveryDetail['lines'][number]) => {
@@ -205,6 +212,11 @@ export default function InventoryDeliveryRoute() {
 			description={<bdi dir="auto">{when}</bdi>}
 			headerExtra={
 				<div className="flex flex-wrap items-center gap-1">
+					{delivery.isCredit ? (
+						<Badge variant="secondary" data-testid="delivery-credit-badge">
+							<Trans>Credit</Trans>
+						</Badge>
+					) : null}
 					{delivery.pricesPending && !cancelled ? (
 						<Badge variant="outline" data-testid="delivery-prices-pending">
 							<Trans>Prices to confirm</Trans>
@@ -482,6 +494,20 @@ export default function InventoryDeliveryRoute() {
 
 			{!cancelled ? (
 				<div className="flex flex-wrap gap-2 border-t pt-4">
+					{canUndoAsOrdered ? (
+						<Button
+							type="button"
+							variant="outline"
+							disabled={busy}
+							onClick={() =>
+								void post('undo', delivery, {}, t`Delivery undone.`)
+							}
+							data-testid="delivery-undo-as-ordered"
+						>
+							<Icon name="undo-2" />
+							<Trans>Undo</Trans>
+						</Button>
+					) : null}
 					{delivery.orderId ? (
 						<Button
 							type="button"
@@ -490,6 +516,20 @@ export default function InventoryDeliveryRoute() {
 							data-testid="delivery-ask-credit"
 						>
 							<Trans>Ask for credit</Trans>
+						</Button>
+					) : null}
+					{!delivery.isCredit && ctx.canEdit && ctx.canSeeCost ? (
+						<Button
+							type="button"
+							variant="outline"
+							render={
+								<Link
+									to={`${ctx.basePath}/deliveries/new${ctx.search ? `${ctx.search}&creditFor=${encodeURIComponent(delivery.id)}` : `?creditFor=${encodeURIComponent(delivery.id)}`}`}
+								/>
+							}
+							data-testid="delivery-record-credit"
+						>
+							<Trans>Record credit</Trans>
 						</Button>
 					) : null}
 					{ctx.canManagePurchasing && !delivery.pricesPending ? (

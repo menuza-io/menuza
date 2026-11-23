@@ -1,11 +1,14 @@
 import 'fake-indexeddb/auto'
 import {
+	stationCashPurchaseResultSchema,
 	stationCatalogSchema,
 	stationCountEntriesResultSchema,
 	stationCountSheetSchema,
 	stationDeliveryResultSchema,
+	stationOrderNotYetResultSchema,
 	stationOutboxItemSchema,
 	stationPhotoUploadSchema,
+	stationReceiveAsOrderedResultSchema,
 	stationStartCountResultSchema,
 	stationWasteResultSchema,
 } from '@repo/inventory'
@@ -21,6 +24,7 @@ import waste from './fixtures/waste.json'
 import {
 	logWaste,
 	recordDelivery,
+	recordDeliveryPhoto,
 	saveCountEntry,
 	sendCount,
 	startCount as begin,
@@ -108,6 +112,10 @@ describe('every row the tablet queues is a row of the contract’s outbox', () =
 			},
 			{ blob: new Blob(['x']), contentType: 'image/jpeg' },
 		)
+		await recordDeliveryPhoto(ctx, 'dlv_cash_1', {
+			blob: new Blob(['receipt']),
+			contentType: 'image/jpeg',
+		})
 		const rows = await stockRows(ORIGIN)
 		expect(rows.map((row) => row.kind)).toEqual([
 			'count_start',
@@ -116,6 +124,7 @@ describe('every row the tablet queues is a row of the contract’s outbox', () =
 			'waste',
 			'waste_undo',
 			'delivery',
+			'delivery_photo',
 			'delivery_photo',
 		])
 		for (const row of rows) {
@@ -192,5 +201,32 @@ describe('demo mode answers in the contract’s shapes', () => {
 			lines: [{ itemId: 'demo_tomato', quantity: 6_000_000 }],
 		})
 		expect(stationDeliveryResultSchema.safeParse(received).success).toBe(true)
+		const asOrdered = await api.receiveAsOrdered('demo_order', {
+			clientId: 'recv-0001-aaaa',
+			locationId: 'demo',
+			expectedVersion: 1,
+		})
+		expect(
+			stationReceiveAsOrderedResultSchema.safeParse(asOrdered).success,
+		).toBe(true)
+		const notYet = await api.orderNotYet('demo_order', {
+			locationId: 'demo',
+			expectedVersion: 1,
+			expectedDate: '2026-01-03',
+		})
+		expect(stationOrderNotYetResultSchema.safeParse(notYet).success).toBe(true)
+		const cash = await api.cashPurchase({
+			clientId: 'cash-0001-aaaa',
+			locationId: 'demo',
+			lines: [
+				{
+					draftItem: { name: 'Fresh mint', baseUnit: 'g' },
+					quantity: 200_000,
+					amountPaidMinor: 750,
+				},
+			],
+		})
+		expect(stationCashPurchaseResultSchema.safeParse(cash).success).toBe(true)
+		expect(JSON.stringify(cash)).not.toMatch(/Minor|amountPaid|price|cost/i)
 	})
 })

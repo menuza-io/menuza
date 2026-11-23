@@ -1,10 +1,12 @@
 import { plural, t } from '@lingui/macro'
 import {
+	INVENTORY_MAX_MINOR,
 	parseUnitRef,
 	QUANTITY_SCALE,
 	STANDARD_UNIT_SPECS,
 	standardUnitsFor,
 	type InventoryBaseUnit,
+	stationCashPurchaseLineSchema,
 	stationDeliverySchema,
 	type StationCatalog,
 	type StationItem,
@@ -13,6 +15,7 @@ import {
 	STATION_WASTE_UNDO_UI_MS,
 	MAX_ENTRY_QUANTITY,
 } from '@repo/inventory'
+import { type z } from 'zod'
 
 /**
  * The Stock app's rules that need no screen: units and steps, the counting
@@ -485,4 +488,172 @@ export function mayReceive(
 	role: 'cashier' | 'manager' | null,
 ): boolean {
 	return !catalog.settings.receiveRequiresManager || role === 'manager'
+}
+
+// ── Overdue expected deliveries (#501) ──────────────────────────────────────
+
+export type OverdueDelivery = StationExpectedDelivery & { version: number }
+
+/** Expected deliveries that are overdue and carry a version for optimistic locking. */
+export function overdueDeliveries(
+	catalog: Pick<StationCatalog, 'expectedDeliveries'>,
+): OverdueDelivery[] {
+	return catalog.expectedDeliveries.filter(
+		(delivery): delivery is OverdueDelivery =>
+			delivery.overdue === true && typeof delivery.version === 'number',
+	)
+}
+
+/** Tomorrow's local calendar date in `YYYY-MM-DD`, used as the default for "Not yet". */
+export function tomorrowIsoDate(now = new Date()): string {
+	const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+	const y = next.getFullYear()
+	const m = String(next.getMonth() + 1).padStart(2, '0')
+	const d = String(next.getDate()).padStart(2, '0')
+	return `${y}-${m}-${d}`
+}
+
+/** Whether `value` is a valid `YYYY-MM-DD` calendar date. */
+export function isIsoDate(value: string): boolean {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+	const [y, m, d] = value.split('-').map(Number)
+	const parsed = new Date(Date.UTC(y!, m! - 1, d!))
+	return (
+		parsed.getUTCFullYear() === y &&
+		parsed.getUTCMonth() === m! - 1 &&
+		parsed.getUTCDate() === d
+	)
+}
+
+// ── Cash purchase (#466) ────────────────────────────────────────────────────
+
+const ARABIC_DIGITS: Record<string, string> = {
+	'٠': '0',
+	'١': '1',
+	'٢': '2',
+	'٣': '3',
+	'٤': '4',
+	'٥': '5',
+	'٦': '6',
+	'٧': '7',
+	'٨': '8',
+	'٩': '9',
+	'۰': '0',
+	'۱': '1',
+	'۲': '2',
+	'۳': '3',
+	'۴': '4',
+	'۵': '5',
+	'۶': '6',
+	'۷': '7',
+	'۸': '8',
+	'۹': '9',
+}
+
+/**
+ * Converts a major-currency amount string (e.g. `"12.50"`, `"١٢.٥"`) to minor
+ * integer units (e.g. `1250`), or null when blank or invalid.
+ */
+export function parseMajorToMinor(text: string): number | null {
+	const normalized = text
+		.trim()
+		.replace(/[٠-٩۰-۹]/g, (digit) => ARABIC_DIGITS[digit] ?? digit)
+		.replace(/٫/g, '.')
+	if (!normalized) return null
+	if (!/^\d+(\.\d+)?$/.test(normalized)) return null
+	const amount = Number(normalized)
+	if (!Number.isFinite(amount) || amount < 0) return null
+	const minor = Math.round(amount * 100)
+	if (
+		!Number.isSafeInteger(minor) ||
+		minor < 0 ||
+		minor > INVENTORY_MAX_MINOR
+	) {
+		return null
+	}
+	return minor
+}
+
+export type CashPurchaseLineDraft = {
+	key: string
+	itemId: string | null
+	draftItem: { name: string; baseUnit: InventoryBaseUnit } | null
+	itemName: string
+	baseUnit: InventoryBaseUnit
+	amount: number | null
+	unit: UnitRef
+	units: StationItem['units']
+	countUnit: UnitRef
+	/** Ephemeral form text only; cleared immediately after submission and never stored or displayed as history. */
+	amountPaidText: string
+}
+
+export function cashLineFromItem(item: StationItem): CashPurchaseLineDraft {
+	return {
+		key: `item:${item.id}`,
+		itemId: item.id,
+		draftItem: null,
+		itemName: item.name,
+		baseUnit: item.baseUnit,
+		amount: null,
+		unit: item.countUnit,
+		units: item.units,
+		countUnit: item.countUnit,
+		amountPaidText: '',
+	}
+}
+
+export function cashLineFromDraft(
+	key: string,
+	name: string,
+	baseUnit: InventoryBaseUnit,
+): CashPurchaseLineDraft {
+	return {
+		key,
+		itemId: null,
+		draftItem: { name: name.trim(), baseUnit },
+		itemName: name.trim(),
+		baseUnit,
+		amount: null,
+		unit: baseUnit,
+		units: [],
+		countUnit: baseUnit,
+		amountPaidText: '',
+	}
+}
+
+export type CashPurchaseLinePayload = z.input<
+	typeof stationCashPurchaseLineSchema
+>
+
+/**
+ * Converts draft cash-purchase lines to contract payload lines. Returns null if
+ * there are no lines or any line lacks a positive quantity or valid amount paid.
+ */
+export function cashPurchaseLines(
+	lines: readonly CashPurchaseLineDraft[],
+): CashPurchaseLinePayload[] | null {
+	if (lines.length === 0) return null
+	const out: CashPurchaseLinePayload[] = []
+	for (const line of lines) {
+		if (line.amount === null || !(line.amount > 0)) return null
+		const quantity = toBaseThousandths(line.amount, line.unit, {
+			baseUnit: line.baseUnit,
+			units: line.units,
+			countUnit: line.countUnit,
+		})
+		if (quantity === null || quantity < 1) return null
+		const amountPaidMinor = parseMajorToMinor(line.amountPaidText)
+		if (amountPaidMinor === null) return null
+		const candidate: CashPurchaseLinePayload = line.itemId
+			? { itemId: line.itemId, quantity, amountPaidMinor }
+			: {
+					draftItem: line.draftItem!,
+					quantity,
+					amountPaidMinor,
+				}
+		if (!stationCashPurchaseLineSchema.safeParse(candidate).success) return null
+		out.push(candidate)
+	}
+	return out
 }

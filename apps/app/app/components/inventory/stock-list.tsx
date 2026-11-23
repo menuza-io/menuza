@@ -158,6 +158,14 @@ export function StockList({
 														<Trans>Group</Trans>
 													</Badge>
 												) : null}
+												{item.isDraft ? (
+													<Badge
+														variant="outline"
+														data-testid={`stock-draft-${item.id}`}
+													>
+														<Trans>Draft</Trans>
+													</Badge>
+												) : null}
 											</div>
 											<span className="text-muted-foreground truncate text-xs">
 												{itemSubtitle(item, areaNames, i18n)}
@@ -222,7 +230,14 @@ export function StockList({
 							data-testid={`stock-card-${item.id}`}
 						>
 							<ItemContent>
-								<ItemTitle className="wrap-anywhere">{item.name}</ItemTitle>
+								<ItemTitle className="flex flex-wrap items-center gap-1.5 wrap-anywhere">
+									<span>{item.name}</span>
+									{item.isDraft ? (
+										<Badge variant="outline">
+											<Trans>Draft</Trans>
+										</Badge>
+									) : null}
+								</ItemTitle>
 								<ItemDescription className="truncate">
 									{itemSubtitle(item, areaNames, i18n)}
 								</ItemDescription>

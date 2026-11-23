@@ -294,6 +294,7 @@ export function toStockItem(row: StockRow, cost: boolean): StockItem {
 		version: row.item.version,
 		batchCounted: row.item.batchCounted,
 		autoSoldOut: row.item.autoSoldOut,
+		isDraft: row.item.isDraft,
 		onHand: row.onHand,
 		countUnit: row.place?.countUnit ? wireUnit(row.place.countUnit) : null,
 		units: row.units.map(toItemUnit),
@@ -895,6 +896,10 @@ export async function updateItem(
 		if (body.notes !== undefined) {
 			set.notes = body.notes?.length ? body.notes : null
 			changed.push('notes')
+		}
+		if (body.isDraft !== undefined && body.isDraft !== item.isDraft) {
+			set.isDraft = body.isDraft
+			changed.push('isDraft')
 		}
 		if (body.baseUnit !== undefined && body.baseUnit !== item.baseUnit) {
 			const used = await tx

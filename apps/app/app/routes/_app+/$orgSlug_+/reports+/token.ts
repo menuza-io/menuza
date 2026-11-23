@@ -16,6 +16,7 @@ import { isInsecureSecret, isProductionLike } from '@repo/security'
 import { data } from 'react-router'
 import { ENV } from 'varlock/env'
 import { resolveGiftCardReportAccess } from '#app/utils/gift-cards/report-access.server.ts'
+import { resolveInventoryReportAccess } from '#app/utils/inventory/report-access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { resolveReservationsLocationIds } from '#app/utils/reservations/access.server.ts'
@@ -90,17 +91,23 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		userId,
 		organizationId: organization.id,
 	})
+	const inventory = await resolveInventoryReportAccess({
+		request,
+		userId,
+		organizationId: organization.id,
+	})
 	if (
 		!hasAdminAccess &&
 		staff.subjects.length === 0 &&
 		reservations.subjects.length === 0 &&
-		giftCards.subjects.length === 0
+		giftCards.subjects.length === 0 &&
+		inventory.subjects.length === 0
 	) {
 		throw createForbiddenResponse(REPORT_ADMIN_PERMISSIONS.join(' or '))
 	}
 	// Each module that grants subjects limits the token to its own scopes; the
 	// token carries the narrowest of them. With none granted, staff's (empty).
-	const scoped = [staff, reservations, giftCards].filter(
+	const scoped = [staff, reservations, giftCards, inventory].filter(
 		(module) => module.subjects.length > 0,
 	)
 	const scopeIds =
@@ -122,6 +129,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		...staff.subjects,
 		...reservations.subjects,
 		...giftCards.subjects,
+		...inventory.subjects,
 	]
 
 	// A production build on localhost (E2E, build + preview) may keep the schema

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { orderSendChannelSchema } from '../records.ts'
 import {
 	currencyOut,
 	isoDateSchema,
@@ -79,6 +80,20 @@ export const attentionItemSchema = z.discriminatedUnion('kind', [
 		supplierName: z.string(),
 		expectedDate: isoDateSchema,
 		overdue: z.boolean(),
+		/** Additive for 1-tap "Yes, as ordered" and "Not yet" on Today (#501). */
+		number: z.number().int().optional(),
+		version: z.number().int().optional(),
+	}),
+	/** Phase 2 (#502): a sent order is still unconfirmed the day before delivery. */
+	z.object({
+		kind: z.literal('unconfirmed_order'),
+		orderId: z.string(),
+		number: z.number().int(),
+		supplierId: z.string(),
+		supplierName: z.string(),
+		expectedDate: isoDateSchema,
+		sentVia: orderSendChannelSchema.nullable(),
+		version: z.number().int(),
 	}),
 	/** Phase 2: a delivery was received without prices (Station) and waits for confirmation. */
 	z.object({

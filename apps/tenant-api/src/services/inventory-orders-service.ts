@@ -1,4 +1,5 @@
 import {
+	addDaysIso,
 	costMicroFromPackPriceClamped,
 	INVENTORY_LIMITS,
 	MAX_ENTRY_QUANTITY,
@@ -24,7 +25,10 @@ import {
 	type OrderSummary,
 	type OrderText,
 	type OrderTextLocale,
+	type OverdueOrderWarning,
 	type ReceivePrefill,
+	type RecordDelivery,
+	type RecordDeliveryResult,
 	type SendOrderResult,
 	type SuggestedOrderLine,
 	type SuggestedOrders,
@@ -60,12 +64,20 @@ import {
 	badRequest,
 	decodeCursor,
 	encodeCursor,
+	locationBusinessDate,
 	locationClock,
 	newId,
 	notFound,
 	onHandByItem,
+	stateConflict,
 	wireUnit,
 } from './inventory-common.ts'
+import { getLocationCurrency } from './inventory-location-settings.ts'
+import {
+	recordDelivery,
+	replayDeliveryResult,
+	type RecordDeliveryOptions,
+} from './inventory-purchasing-service.ts'
 import {
 	type CreateOrderInput,
 	type ListOrdersQuery,
@@ -235,6 +247,13 @@ function toSummary(
 			}),
 		).length,
 		version: row.version,
+		confirmedAt: row.confirmedAt ?? null,
+		confirmedBy: row.confirmedAt
+			? {
+					kind: row.confirmedByKind ?? 'operator',
+					id: row.confirmedById,
+				}
+			: null,
 	}
 	if (cost) {
 		const money = orderTotalMinor(
@@ -494,7 +513,12 @@ export function chooseSupplierProduct(
 export async function onOrderByItem(
 	db: InventoryReader,
 	locationId: string,
+	options: { todayDate?: string } = {},
 ): Promise<Map<string, number>> {
+	const todayDate =
+		options.todayDate ??
+		(await locationBusinessDate(db, locationId, Date.now()))
+	const cutoffDate = addDaysIso(todayDate, -2)
 	const lines = await db
 		.select({
 			line: invOrderLines,
@@ -508,6 +532,10 @@ export async function onOrderByItem(
 			and(
 				eq(invOrders.locationId, locationId),
 				inArray(invOrders.status, [...SUGGESTION_STATUSES]),
+				or(
+					isNull(invOrders.expectedDate),
+					sql`${invOrders.expectedDate} >= ${cutoffDate}`,
+				),
 			),
 		)
 	const received = await receivedByOrderLine(
@@ -603,13 +631,47 @@ export async function buildSuggestedOrders(
 	input: { locationId: string; cost: boolean; now: number },
 ): Promise<SuggestedOrders> {
 	const { locationId, cost } = input
-	const [stock, choices, onOrder, drafts, clock] = await Promise.all([
+	const clock = await locationClock(db, locationId, input.now)
+	const overdueCutoff = addDaysIso(clock.date, -2)
+	const [stock, choices, onOrder, drafts, overdueRows] = await Promise.all([
 		loadLocationStock(db, locationId),
 		loadProductChoices(db),
-		onOrderByItem(db, locationId),
+		onOrderByItem(db, locationId, { todayDate: clock.date }),
 		draftBySupplier(db, locationId),
-		locationClock(db, locationId, input.now),
+		db
+			.select({
+				orderId: invOrders.id,
+				number: invOrders.number,
+				supplierId: invOrders.supplierId,
+				supplierName: invSuppliers.name,
+				expectedDate: invOrders.expectedDate,
+			})
+			.from(invOrders)
+			.innerJoin(invSuppliers, eq(invSuppliers.id, invOrders.supplierId))
+			.where(
+				and(
+					eq(invOrders.locationId, locationId),
+					inArray(invOrders.status, [...SUGGESTION_STATUSES]),
+					sql`${invOrders.expectedDate} is not null`,
+					sql`${invOrders.expectedDate} < ${overdueCutoff}`,
+				),
+			)
+			.orderBy(invOrders.expectedDate, invOrders.number),
 	])
+	const overdueOrderWarnings: OverdueOrderWarning[] = overdueRows.map(
+		(row) => ({
+			orderId: row.orderId,
+			number: row.number,
+			supplierId: row.supplierId,
+			supplierName: row.supplierName,
+			expectedDate: row.expectedDate!,
+			daysOverdue: Math.round(
+				(Date.parse(`${clock.date}T00:00:00Z`) -
+					Date.parse(`${row.expectedDate!}T00:00:00Z`)) /
+					86_400_000,
+			),
+		}),
+	)
 	const cards = new Map<string, SuggestedSupplierOrder>()
 	const supplierById = new Map<string, SupplierRow>()
 	const unsourced: SuggestedOrders['unsourced'] = []
@@ -739,6 +801,7 @@ export async function buildSuggestedOrders(
 		suppliers,
 		unsourced,
 		toOrderItems: suppliers.reduce((sum, card) => sum + card.lineCount, 0),
+		overdueOrderWarnings,
 	}
 }
 
@@ -1471,6 +1534,237 @@ export async function listDueOrders(
 		)
 		.orderBy(invOrders.expectedDate, invOrders.number)
 	return rows
+}
+
+/** Open (sent or partly received) orders unconfirmed on `expectedDate` (day before delivery, #502). */
+export async function listUnconfirmedOrdersForDate(
+	db: InventoryReader,
+	input: { locationId: string; expectedDate: string },
+): Promise<Array<{ order: OrderRow; supplierName: string }>> {
+	return db
+		.select({ order: invOrders, supplierName: invSuppliers.name })
+		.from(invOrders)
+		.innerJoin(invSuppliers, eq(invSuppliers.id, invOrders.supplierId))
+		.where(
+			and(
+				eq(invOrders.locationId, input.locationId),
+				inArray(invOrders.status, [...SUGGESTION_STATUSES]),
+				isNull(invOrders.confirmedAt),
+				eq(invOrders.expectedDate, input.expectedDate),
+			),
+		)
+		.orderBy(invOrders.number)
+}
+
+/** Toggles manual supplier confirmation on a sent or partly-received order (#502). */
+export async function confirmOrder(
+	caller: InventoryCaller,
+	input: { id: string; expectedVersion: number; confirmed: boolean },
+): Promise<OrderDetail> {
+	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
+		const row = await loadOrderRow(tx, input.id, caller)
+		assertVersion(row.version, input.expectedVersion)
+		if (row.status === 'received' || row.status === 'cancelled') {
+			throw new InventoryError('order_closed', 409)
+		}
+		if (row.status === 'draft') {
+			throw new InventoryError('order_not_editable', 409)
+		}
+		await tx
+			.update(invOrders)
+			.set({
+				confirmedAt: input.confirmed ? ctx.now : null,
+				confirmedByKind: input.confirmed ? caller.actor.kind : null,
+				confirmedById: input.confirmed ? caller.actor.id : null,
+				version: row.version + 1,
+				updatedAt: ctx.now,
+			})
+			.where(eq(invOrders.id, row.id))
+		await recordInventoryAudit(tx, {
+			actorKind: caller.actor.kind,
+			actorId: caller.actor.id,
+			action: input.confirmed ? 'order.confirm' : 'order.unconfirm',
+			resourceType: 'order',
+			resourceId: row.id,
+			locationId: row.locationId,
+			detail: { confirmed: input.confirmed },
+			at: ctx.now,
+		})
+		return toDetail(tx, await loadOrderRow(tx, row.id, caller), caller.cost)
+	})
+}
+
+/** Updates `expectedDate` on an open sent or partly-received order ("Not yet", #501). */
+export async function rescheduleOrder(
+	caller: InventoryCaller,
+	input: { id: string; expectedVersion: number; expectedDate: string },
+): Promise<OrderDetail> {
+	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
+		const row = await loadOrderRow(tx, input.id, caller)
+		assertVersion(row.version, input.expectedVersion)
+		if (row.status === 'received' || row.status === 'cancelled') {
+			throw new InventoryError('order_closed', 409)
+		}
+		if (row.status === 'draft') {
+			throw new InventoryError('order_not_editable', 409)
+		}
+		await tx
+			.update(invOrders)
+			.set({
+				expectedDate: input.expectedDate,
+				version: row.version + 1,
+				updatedAt: ctx.now,
+			})
+			.where(eq(invOrders.id, row.id))
+		await recordInventoryAudit(tx, {
+			actorKind: caller.actor.kind,
+			actorId: caller.actor.id,
+			action: 'order.reschedule',
+			resourceType: 'order',
+			resourceId: row.id,
+			locationId: row.locationId,
+			detail: { expectedDate: input.expectedDate },
+			at: ctx.now,
+		})
+		return toDetail(tx, await loadOrderRow(tx, row.id, caller), caller.cost)
+	})
+}
+
+/**
+ * 1-tap "Yes, as ordered" receive (#501): receives all remaining outstanding
+ * quantities on a sent or partly-received order through `recordDelivery`,
+ * setting `asOrdered: true` and a 24h `undoUntil` window.
+ */
+export async function receiveOrderAsOrdered(
+	caller: InventoryCaller,
+	input: {
+		orderId: string
+		expectedVersion: number
+		clientId: string
+		idempotency: InventoryIdempotency
+		options?: RecordDeliveryOptions
+	},
+): Promise<RecordDeliveryResult> {
+	return withInventoryWrite(
+		{
+			orgId: caller.orgId,
+			idempotency: input.idempotency,
+			onReplay: input.options?.onReplay,
+		},
+		async (tx, ctx) => {
+			const order = await loadOrderRow(tx, input.orderId, caller)
+			const earlier = await tx
+				.select()
+				.from(invDeliveries)
+				.where(
+					and(
+						eq(invDeliveries.locationId, order.locationId),
+						eq(invDeliveries.clientId, input.clientId),
+					),
+				)
+				.get()
+			if (earlier) {
+				input.options?.onReplay?.()
+				return replayDeliveryResult(tx, earlier, caller)
+			}
+			assertVersion(order.version, input.expectedVersion)
+			if (order.status === 'received' || order.status === 'cancelled') {
+				throw new InventoryError('order_closed', 409)
+			}
+			if (order.status === 'draft') {
+				throw new InventoryError('order_not_editable', 409)
+			}
+			const orderLines = await tx
+				.select()
+				.from(invOrderLines)
+				.where(eq(invOrderLines.orderId, order.id))
+				.orderBy(invOrderLines.sortOrder, invOrderLines.id)
+			if (orderLines.length === 0) {
+				throw new InventoryError('order_empty', 409)
+			}
+			const received = await receivedByOrderLine(
+				tx,
+				orderLines.map((line) => line.id),
+			)
+			const outstandingLines = orderLines
+				.map((line) => ({
+					line,
+					outstanding: outstandingQuantity(
+						line.quantity,
+						received.get(line.id) ?? 0,
+					),
+				}))
+				.filter((entry) => entry.outstanding > 0)
+			if (outstandingLines.length === 0) {
+				throw stateConflict('nothing_outstanding')
+			}
+			const supplier = await loadSupplierRow(tx, order.supplierId)
+			const hasUnpriced = outstandingLines.some(
+				(entry) => entry.line.priceMinor === null,
+			)
+			const currency =
+				order.currency ??
+				supplier.currency ??
+				(await getLocationCurrency(tx, order.locationId))
+			const quantityOnly = hasUnpriced || !caller.cost || !currency
+			const lines: RecordDelivery['lines'] = outstandingLines.map(
+				({ line, outstanding }) => {
+					const outstandingMilli = Math.round(
+						(outstanding * PACK_SCALE) / line.packBaseQuantity,
+					)
+					const packs = milliToPacks(outstandingMilli)
+					if (quantityOnly) {
+						return {
+							itemId: line.itemId,
+							supplierProductId: line.supplierProductId,
+							quantity: outstanding,
+							packs: packs > 0 ? packs : null,
+							packName: line.packName,
+							packBaseQuantity: line.packBaseQuantity,
+							orderLineId: line.id,
+							orderedQuantity: line.quantity,
+						}
+					}
+					const lineTotalMinor = orderLineTotalMinor({
+						packsMilli: outstandingMilli,
+						packPriceMinor: line.priceMinor!,
+					})
+					return {
+						itemId: line.itemId,
+						supplierProductId: line.supplierProductId,
+						quantity: outstanding,
+						packs: packs > 0 ? packs : null,
+						packName: line.packName,
+						packBaseQuantity: line.packBaseQuantity,
+						packPriceMinor: line.priceMinor!,
+						lineTotalMinor,
+						orderLineId: line.id,
+						orderedQuantity: line.quantity,
+					}
+				},
+			)
+			const body: RecordDelivery = {
+				clientId: input.clientId,
+				locationId: order.locationId,
+				supplierId: order.supplierId,
+				orderId: order.id,
+				paid: false,
+				...(quantityOnly
+					? { quantityOnly: true }
+					: { currency: currency!, quantityOnly: false }),
+				lines,
+			}
+			return recordDelivery(caller, {
+				body,
+				idempotency: null,
+				options: {
+					...input.options,
+					asOrdered: true,
+					undoUntil: ctx.now + 24 * 60 * 60 * 1000,
+				},
+			})
+		},
+	)
 }
 
 /** Open orders at a location, by supplier and expected date (the Today week strip). */

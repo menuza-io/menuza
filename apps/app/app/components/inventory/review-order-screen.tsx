@@ -37,8 +37,10 @@ import {
 	FrameTitle,
 } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
+import { Label } from '@repo/ui/label'
 import { QuantityStepper } from '@repo/ui/quantity-stepper'
 import { Skeleton } from '@repo/ui/skeleton'
+import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -95,6 +97,7 @@ export function ReviewOrderScreen({
 	canEdit,
 	canSeeCost,
 	canManagePurchasing,
+	memberNames,
 	search,
 }: {
 	orgSlug: string
@@ -103,6 +106,7 @@ export function ReviewOrderScreen({
 	canEdit: boolean
 	canSeeCost: boolean
 	canManagePurchasing: boolean
+	memberNames?: Record<string, string>
 	search: string
 }) {
 	const { t, i18n } = useLingui()
@@ -127,6 +131,7 @@ export function ReviewOrderScreen({
 	const [cancelOpen, setCancelOpen] = useState(false)
 	const [cancelNote, setCancelNote] = useState('')
 	const [cancelling, setCancelling] = useState(false)
+	const [confirming, setConfirming] = useState(false)
 	const [printing, setPrinting] = useState<string | null>(null)
 	const [localKey, setLocalKey] = useState(0)
 
@@ -278,6 +283,33 @@ export function ReviewOrderScreen({
 		return result
 	}
 
+	async function toggleConfirmed(confirmed: boolean) {
+		if (!order || confirming) return
+		setConfirming(true)
+		setError(null)
+		try {
+			orderDetailSchema.parse(
+				await request(`/orders/${encodeURIComponent(order.id)}/confirm`, {
+					method: 'POST',
+					body: JSON.stringify({
+						expectedVersion: order.version,
+						confirmed,
+					}),
+				}),
+			)
+			toast.success(
+				confirmed ? t`Marked as confirmed.` : t`Confirmation cleared.`,
+			)
+			notifyChanged()
+			query.reload()
+		} catch (caught) {
+			setError(i18n._(inventorySaveErrorMessage(caught)))
+			query.reload()
+		} finally {
+			setConfirming(false)
+		}
+	}
+
 	async function cancelOrder() {
 		if (!order || cancelling) return
 		setCancelling(true)
@@ -379,6 +411,21 @@ export function ReviewOrderScreen({
 				timeStyle: 'short',
 			}).format(new Date(order.sentAt))
 		: null
+	const confirmedLabel = order.confirmedAt
+		? new Intl.DateTimeFormat(i18n.locale, {
+				dateStyle: 'medium',
+				timeStyle: 'short',
+			}).format(new Date(order.confirmedAt))
+		: null
+	const confirmedByName = order.confirmedBy
+		? ((order.confirmedBy.id ? memberNames?.[order.confirmedBy.id] : null) ??
+			(order.confirmedBy.kind === 'operator'
+				? t`Operator`
+				: order.confirmedBy.id))
+		: null
+	const canToggleConfirmed =
+		canManagePurchasing &&
+		(order.status === 'sent' || order.status === 'partly_received')
 
 	const sendMenu =
 		canManagePurchasing && open ? (
@@ -665,7 +712,42 @@ export function ReviewOrderScreen({
 												</dd>
 											</div>
 										) : null}
+										{confirmedLabel ? (
+											<div
+												className="flex justify-between gap-3"
+												data-testid="order-confirmed-info"
+											>
+												<dt className="text-muted-foreground">
+													<Trans>Confirmed</Trans>
+												</dt>
+												<dd className="text-end">
+													<bdi dir="ltr">{confirmedLabel}</bdi>
+													{confirmedByName ? (
+														<span className="text-muted-foreground block text-xs wrap-anywhere">
+															<Trans>by {confirmedByName}</Trans>
+														</span>
+													) : null}
+												</dd>
+											</div>
+										) : null}
 									</dl>
+									{canToggleConfirmed ? (
+										<div className="flex items-center justify-between gap-3 border-t pt-3">
+											<Label
+												htmlFor="order-confirmed-toggle"
+												className="cursor-pointer text-sm font-medium"
+											>
+												<Trans>Confirmed by supplier</Trans>
+											</Label>
+											<Switch
+												id="order-confirmed-toggle"
+												checked={Boolean(order.confirmedAt)}
+												disabled={confirming}
+												onCheckedChange={(next) => void toggleConfirmed(next)}
+												data-testid="order-confirmed-toggle"
+											/>
+										</div>
+									) : null}
 									{totals.totalMinor !== null && totals.unpricedLines > 0 ? (
 										<p className="text-muted-foreground text-sm">
 											<Plural

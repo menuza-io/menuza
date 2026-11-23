@@ -164,14 +164,25 @@ const ROUTE_GRANTS: Record<
 	'GET /suppliers/:id': READ,
 	'PATCH /suppliers/:id': PURCHASING,
 	'POST /suppliers/:id/archive': PURCHASING,
+	'POST /suppliers/:id/price-list/parse': PURCHASING,
+	'POST /suppliers/:id/price-list/apply': PURCHASING,
 	'POST /suppliers/:id/products': PURCHASING,
 	'PATCH /supplier-products/:id': PURCHASING,
 	'POST /supplier-products/:id/archive': PURCHASING,
+	'GET /supplier-products/:id/prices': COST,
+	'GET /items/:id/price-history': COST,
+	'GET /purchasing/accountant-export': COST,
+	'GET /setup/imports': READ,
+	'POST /setup/imports': PURCHASING,
+	'GET /setup/imports/:id': READ,
+	'POST /setup/imports/:id/apply': PURCHASING,
 	'GET /deliveries': READ,
 	'POST /deliveries': UPDATE,
+	'POST /deliveries/invoice/read': PURCHASING,
 	'GET /deliveries/:id': READ,
 	'POST /deliveries/:id/paid': PURCHASING,
 	'POST /deliveries/:id/cancel': UPDATE,
+	'POST /deliveries/:id/undo': UPDATE,
 	// Phase 2.
 	'POST /deliveries/:id/confirm-prices': PURCHASING,
 	'POST /deliveries/:id/credit-message': READ,
@@ -189,6 +200,9 @@ const ROUTE_GRANTS: Record<
 	'PATCH /orders/:id': PURCHASING,
 	'POST /orders/:id/send': PURCHASING,
 	'POST /orders/:id/cancel': PURCHASING,
+	'POST /orders/:id/confirm': PURCHASING,
+	'POST /orders/:id/receive-as-ordered': UPDATE,
+	'POST /orders/:id/not-yet': UPDATE,
 	'GET /orders/:id/text': READ,
 	'GET /orders/:id/receive-prefill': READ,
 	// Phase 3: recipes (need the inventory.recipes flag).
@@ -255,6 +269,9 @@ const PURCHASING_FLAG_ROUTES = new Set([
 	'PATCH /orders/:id',
 	'POST /orders/:id/send',
 	'POST /orders/:id/cancel',
+	'POST /orders/:id/confirm',
+	'POST /orders/:id/receive-as-ordered',
+	'POST /orders/:id/not-yet',
 	'GET /orders/:id/text',
 	'GET /orders/:id/receive-prefill',
 	'GET /suppliers/:id/merge-preview',
@@ -888,6 +905,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		soldOut: '',
 		prepTask: '',
 		transfer: '',
+		setupImport: '',
 	}
 	let admin: string
 	let seedCounts = 0
@@ -1070,6 +1088,20 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		).id
 		seedCounts = (await seedCall('GET', `/counts?locationId=${LOC_B}`)).counts
 			.length
+		seed.setupImport = (
+			await seedCall('POST', '/setup/imports', {
+				files: [
+					{
+						fileName: 'setup.csv',
+						contentType: 'text/csv',
+						contentBase64: Buffer.from(
+							'Supplier,Item,Unit,Price\nSec sup,Security flour,kg,12',
+						).toString('base64'),
+					},
+				],
+			})
+		).id
+		await seedCall('GET', `/setup/imports/${seed.setupImport}`)
 	})
 
 	function cases(): Case[] {
@@ -1294,6 +1326,41 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				byId: true,
 			}),
 			c(
+				'POST /suppliers/:id/price-list/parse',
+				`/suppliers/${seed.supplier}/price-list/parse`,
+				{
+					body: {
+						fileName: 'prices.csv',
+						contentType: 'text/csv',
+						contentBase64: Buffer.from('Item,Price\nFlour,10').toString(
+							'base64',
+						),
+					},
+					location: false,
+					byId: true,
+				},
+			),
+			c(
+				'POST /suppliers/:id/price-list/apply',
+				`/suppliers/${seed.supplier}/price-list/apply`,
+				{
+					body: {
+						currency: 'SAR',
+						lines: [
+							{
+								action: 'upsert',
+								matchedItemId: seed.item,
+								packName: 'Bag',
+								packBaseQuantity: 1_000_000,
+								priceMinor: 500,
+							},
+						],
+					},
+					location: false,
+					byId: true,
+				},
+			),
+			c(
 				'POST /suppliers/:id/products',
 				`/suppliers/${seed.supplier}/products`,
 				{
@@ -1317,6 +1384,68 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				`/supplier-products/${seed.product}/archive`,
 				{ body: one, location: false, byId: true },
 			),
+			c(
+				'GET /supplier-products/:id/prices',
+				`/supplier-products/${seed.product}/prices`,
+				{ location: false, byId: true },
+			),
+			c('GET /items/:id/price-history', `/items/${seed.item}/price-history`, {
+				location: false,
+				byId: true,
+			}),
+			c(
+				'GET /purchasing/accountant-export',
+				`/purchasing/accountant-export?${q}&${range}`,
+			),
+			c('GET /setup/imports', '/setup/imports', { location: false }),
+			c('POST /setup/imports', '/setup/imports', {
+				body: {
+					files: [
+						{
+							fileName: 'sec-case.csv',
+							contentType: 'text/csv',
+							contentBase64: Buffer.from('Supplier,Item,Price\nS,I,5').toString(
+								'base64',
+							),
+						},
+					],
+				},
+				location: false,
+			}),
+			c('GET /setup/imports/:id', `/setup/imports/${seed.setupImport}`, {
+				location: false,
+				byId: true,
+			}),
+			c(
+				'POST /setup/imports/:id/apply',
+				`/setup/imports/${seed.setupImport}/apply`,
+				{
+					body: {
+						currency: 'SAR',
+						suppliers: [
+							{
+								include: true,
+								existingSupplierId: seed.supplier,
+								name: 'Sec supplier',
+								items: [
+									{
+										include: true,
+										existingItemId: seed.item,
+										itemName: 'Security flour',
+										category: 'dry_goods',
+										baseUnit: 'g',
+										packName: 'Bag',
+										packBaseQuantity: 1_000_000,
+										priceMinor: 500,
+									},
+								],
+							},
+						],
+					},
+					location: false,
+					byId: true,
+				},
+			),
 			c('GET /deliveries', `/deliveries?${q}`),
 			c('POST /deliveries', '/deliveries', {
 				body: {
@@ -1327,6 +1456,15 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 					lines: [{ itemId: seed.item, quantity: 1000, lineTotalMinor: 10 }],
 				},
 			}),
+			c('POST /deliveries/invoice/read', '/deliveries/invoice/read', {
+				body: {
+					supplierId: seed.supplier,
+					fileName: 'inv.pdf',
+					contentType: 'application/pdf',
+					contentBase64: Buffer.from('%PDF-1.4').toString('base64'),
+				},
+				location: false,
+			}),
 			c('GET /deliveries/:id', `/deliveries/${seed.delivery}`, { byId: true }),
 			c('POST /deliveries/:id/paid', `/deliveries/${seed.delivery}/paid`, {
 				body: { expectedVersion: 1, paid: true },
@@ -1334,6 +1472,10 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				byId: true,
 			}),
 			c('POST /deliveries/:id/cancel', `/deliveries/${seed.delivery}/cancel`, {
+				body: one,
+				byId: true,
+			}),
+			c('POST /deliveries/:id/undo', `/deliveries/${seed.delivery}/undo`, {
 				body: one,
 				byId: true,
 			}),
@@ -1412,6 +1554,22 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			}),
 			c('POST /orders/:id/cancel', `/orders/${seed.order}/cancel`, {
 				body: one,
+				byId: true,
+			}),
+			c('POST /orders/:id/confirm', `/orders/${seed.order}/confirm`, {
+				body: { expectedVersion: 1, confirmed: true },
+				byId: true,
+			}),
+			c(
+				'POST /orders/:id/receive-as-ordered',
+				`/orders/${seed.order}/receive-as-ordered`,
+				{
+					body: { expectedVersion: 1, clientId: 'sec-rao-00001' },
+					byId: true,
+				},
+			),
+			c('POST /orders/:id/not-yet', `/orders/${seed.order}/not-yet`, {
+				body: { expectedVersion: 1, expectedDate: today },
 				byId: true,
 			}),
 			c('GET /orders/:id/text', `/orders/${seed.order}/text`, { byId: true }),
@@ -1890,9 +2048,15 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|shortOfMinimumMinor|belowMinimum|unpricedLines|previousPackPriceMinor|priceChangeBp|priceChanges|foodCost|cost|plate|costMinor|typedCostMinor|typedCostCurrency|priceForTargetMinor|foodCostBp|netSalesMinor)":/
 		const failures: string[] = []
 		let reads = 0
-		// The price alerts are all money: they need the cost grant (below).
+		// Cost-only reads are all money: they need the cost grant (below).
+		const costOnlyRoutes = new Set([
+			'GET /price-alerts',
+			'GET /supplier-products/:id/prices',
+			'GET /items/:id/price-history',
+			'GET /purchasing/accountant-export',
+		])
 		for (const entry of cases().filter(
-			(item) => isRead(item) && item.key !== 'GET /price-alerts',
+			(item) => isRead(item) && !costOnlyRoutes.has(item.key),
 		)) {
 			const res = await run(entry, token)
 			const text = await res.text()
@@ -1971,31 +2135,30 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		expect(plainBody.toOrderItems).toBe(1)
 	})
 
-	it('the price alerts need the cost grant (403 forbidden, not an empty list)', async () => {
+	it('cost-only read routes need the cost grant (403 forbidden, not empty)', async () => {
 		const noCost = await mintInventoryToken({
 			grants: [READ, UPDATE, PURCHASING],
-		})
-		const res = await call(
-			'GET',
-			`/operator/inventory/price-alerts?locationId=${LOC_B}`,
-			{ token: noCost },
-		)
-		expect(res.status).toBe(403)
-		expect(await res.json()).toMatchObject({
-			code: 'forbidden',
-			reason: 'grant',
-			required: COST,
 		})
 		const costOnly = await mintInventoryToken({
 			scope: 'read',
 			grants: [COST],
 		})
-		const ok = await call(
-			'GET',
+		for (const path of [
 			`/operator/inventory/price-alerts?locationId=${LOC_B}`,
-			{ token: costOnly },
-		)
-		expect(ok.status).toBe(200)
+			`/operator/inventory/supplier-products/${seed.product}/prices`,
+			`/operator/inventory/items/${seed.item}/price-history`,
+			`/operator/inventory/purchasing/accountant-export?locationId=${LOC_B}&from=${today}&to=${today}`,
+		]) {
+			const res = await call('GET', path, { token: noCost })
+			expect(res.status, path).toBe(403)
+			expect(await res.json()).toMatchObject({
+				code: 'forbidden',
+				reason: 'grant',
+				required: COST,
+			})
+			const ok = await call('GET', path, { token: costOnly })
+			expect(ok.status, path).toBe(200)
+		}
 	})
 
 	it('receiving against an order needs the purchasing flag; a delivery without an order does not', async () => {

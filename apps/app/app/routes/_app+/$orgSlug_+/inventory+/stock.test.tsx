@@ -367,4 +367,20 @@ describe('Inventory Stock', () => {
 		await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
 		expect(await screen.findByTestId('stock-row-itm_1')).toBeInTheDocument()
 	})
+
+	it('shows a Draft badge on cash-purchase draft items (#466)', async () => {
+		renderStock(
+			region(() => ({
+				items: [
+					stockItem({ id: 'itm_draft', name: 'Fresh Mint', isDraft: true }),
+				],
+				total: 1,
+				nextCursor: null,
+			})),
+		)
+		const row = await screen.findByTestId('stock-row-itm_draft')
+		expect(within(row).getByTestId('stock-draft-itm_draft')).toHaveTextContent(
+			'Draft',
+		)
+	})
 })

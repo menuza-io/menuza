@@ -20,6 +20,7 @@ import {
 	invMovements,
 	invOrderLines,
 	invOrders,
+	invSupplierProductPrices,
 	invSupplierProducts,
 	invSuppliers,
 } from '@repo/tenant-db'
@@ -28,6 +29,7 @@ import {
 	count,
 	desc,
 	eq,
+	gte,
 	inArray,
 	isNotNull,
 	isNull,
@@ -165,7 +167,8 @@ export async function supplierStats(
 	}
 	for (const row of unpaid) {
 		const supplierId = row.supplierId!
-		const amount = invoiceAmount(row, totals.get(row.id))
+		const sign = row.isCredit ? -1 : 1
+		const amount = sign * invoiceAmount(row, totals.get(row.id))
 		stats.unpaidCount.set(
 			supplierId,
 			(stats.unpaidCount.get(supplierId) ?? 0) + 1,
@@ -216,6 +219,7 @@ function toSupplier(
 		version: row.version,
 		productCount: stats.products.get(row.id) ?? 0,
 		unpaidCount: stats.unpaidCount.get(row.id) ?? 0,
+		isMarketCash: row.isMarketCash,
 	}
 	if (cost) {
 		supplier.minimumOrderMinor = row.minimumOrderMinor
@@ -299,7 +303,8 @@ export async function getSupplier(
 	input: { id: string; caller: Pick<InventoryCaller, 'cost' | 'locationIds'> },
 ) {
 	const row = await loadSupplier(db, input.id, { archived: true })
-	const [stats, products] = await Promise.all([
+	const since90d = Date.now() - 90 * 24 * 60 * 60 * 1000
+	const [stats, products, sentOrders] = await Promise.all([
 		supplierStats(db, input.caller.locationIds),
 		db
 			.select({ product: invSupplierProducts, itemName: invItems.name })
@@ -312,9 +317,25 @@ export async function getSupplier(
 				),
 			)
 			.orderBy(invItems.name, invSupplierProducts.id),
+		db
+			.select({ confirmedAt: invOrders.confirmedAt })
+			.from(invOrders)
+			.where(
+				and(
+					eq(invOrders.supplierId, row.id),
+					isNotNull(invOrders.sentAt),
+					gte(invOrders.sentAt, since90d),
+				),
+			),
 	])
+	const sent = sentOrders.length
+	const confirmed = sentOrders.filter(
+		(entry) => entry.confirmedAt !== null,
+	).length
+	const rateBp = sent > 0 ? Math.round((confirmed * 10_000) / sent) : null
 	return {
 		...toSupplier(row, stats, input.caller.cost),
+		confirmationRate90d: { confirmed, sent, rateBp },
 		products: products.map((entry) =>
 			toProduct(entry.product, entry.itemName, input.caller.cost),
 		),
@@ -667,7 +688,11 @@ async function toSummaries(
 	const [suppliers, totals, orders] = await Promise.all([
 		queryInChunks(supplierIds, (chunk) =>
 			db
-				.select({ id: invSuppliers.id, name: invSuppliers.name })
+				.select({
+					id: invSuppliers.id,
+					name: invSuppliers.name,
+					isMarketCash: invSuppliers.isMarketCash,
+				})
 				.from(invSuppliers)
 				.where(inArray(invSuppliers.id, chunk)),
 		),
@@ -684,6 +709,9 @@ async function toSummaries(
 		),
 	])
 	const names = new Map(suppliers.map((row) => [row.id, row.name]))
+	const marketCashById = new Map(
+		suppliers.map((row) => [row.id, row.isMarketCash]),
+	)
 	const numbers = new Map(orders.map((row) => [row.id, row.number]))
 	return rows.map((row) => {
 		const money = totals.get(row.id)
@@ -708,6 +736,13 @@ async function toSummaries(
 			orderNumber: row.orderId ? (numbers.get(row.orderId) ?? null) : null,
 			hasPhoto: row.photoKey !== null,
 			lateSync: row.lateSync,
+			asOrdered: row.asOrdered,
+			undoUntil: row.undoUntil,
+			isCredit: row.isCredit,
+			creditForDeliveryId: row.creditForDeliveryId,
+			isMarketCash: row.supplierId
+				? (marketCashById.get(row.supplierId) ?? false)
+				: false,
 		}
 		if (cost) {
 			summary.linesTotalMinor = money?.linesTotal ?? 0
@@ -804,6 +839,7 @@ async function previousCosts(
 				and(
 					inArray(invDeliveryLines.itemId, chunk),
 					eq(invDeliveries.status, 'received'),
+					eq(invDeliveries.isCredit, false),
 					ne(invDeliveries.id, delivery.id),
 					sql`${invDeliveryLines.pricedAt} is not null`,
 					sql`${invDeliveryLines.createdAt} <= ${delivery.createdAt}`,
@@ -954,6 +990,216 @@ export async function resolveInventoryCurrency(
 	return requireLocationCurrency(db, input.locationId)
 }
 
+/**
+ * Finds or creates the built-in "Market / cash" supplier (#466).
+ * Matches an active `is_market_cash` supplier first, else promotes an active
+ * supplier named "Market / cash" (case-insensitive), else creates it.
+ */
+export async function ensureMarketCashSupplier(
+	tx: InventoryTx,
+	currency: string | null,
+	now: number,
+): Promise<SupplierRow> {
+	const existingFlagged = await tx
+		.select()
+		.from(invSuppliers)
+		.where(
+			and(eq(invSuppliers.isMarketCash, true), isNull(invSuppliers.archivedAt)),
+		)
+		.limit(1)
+		.get()
+	if (existingFlagged) {
+		if (currency && !existingFlagged.currency) {
+			await tx
+				.update(invSuppliers)
+				.set({ currency, version: existingFlagged.version + 1, updatedAt: now })
+				.where(eq(invSuppliers.id, existingFlagged.id))
+			return {
+				...existingFlagged,
+				currency,
+				version: existingFlagged.version + 1,
+				updatedAt: now,
+			}
+		}
+		return existingFlagged
+	}
+	const named = await tx
+		.select()
+		.from(invSuppliers)
+		.where(
+			and(
+				sql`lower(${invSuppliers.name}) = 'market / cash'`,
+				isNull(invSuppliers.archivedAt),
+			),
+		)
+		.limit(1)
+		.get()
+	if (named) {
+		const nextCurrency = named.currency ?? currency
+		await tx
+			.update(invSuppliers)
+			.set({
+				isMarketCash: true,
+				currency: nextCurrency,
+				version: named.version + 1,
+				updatedAt: now,
+			})
+			.where(eq(invSuppliers.id, named.id))
+		return {
+			...named,
+			isMarketCash: true,
+			currency: nextCurrency,
+			version: named.version + 1,
+			updatedAt: now,
+		}
+	}
+	const id = newId()
+	await tx.insert(invSuppliers).values({
+		id,
+		name: 'Market / cash',
+		orderChannel: 'other',
+		isMarketCash: true,
+		currency,
+		createdAt: now,
+		updatedAt: now,
+	})
+	return (await tx
+		.select()
+		.from(invSuppliers)
+		.where(eq(invSuppliers.id, id))
+		.get())!
+}
+
+/** Finds an active item by exact lowercase name or creates a new one (optionally marked draft). */
+async function resolveOrCreateNamedItem(
+	tx: InventoryTx,
+	input: {
+		name: string
+		baseUnit: typeof invItems.$inferInsert.baseUnit
+		category?: string
+		isDraft: boolean
+		now: number
+		createdByName: Map<string, typeof invItems.$inferSelect>
+	},
+): Promise<typeof invItems.$inferSelect> {
+	const trimmed = input.name.trim()
+	const key = trimmed.toLowerCase()
+	const fromBatch = input.createdByName.get(key)
+	if (fromBatch) return fromBatch
+	const existing = await tx
+		.select()
+		.from(invItems)
+		.where(
+			and(sql`lower(${invItems.name}) = ${key}`, isNull(invItems.archivedAt)),
+		)
+		.limit(1)
+		.get()
+	if (existing) {
+		input.createdByName.set(key, existing)
+		return existing
+	}
+	const total = await tx
+		.select({ n: count() })
+		.from(invItems)
+		.where(isNull(invItems.archivedAt))
+		.get()
+	if (Number(total?.n ?? 0) >= INVENTORY_LIMITS.items) {
+		throw new InventoryError('limit_reached', 409)
+	}
+	const id = newId()
+	await tx.insert(invItems).values({
+		id,
+		name: trimmed,
+		category: input.category ?? 'other',
+		kind: 'bought',
+		baseUnit: input.baseUnit,
+		isDraft: input.isDraft,
+		createdAt: input.now,
+		updatedAt: input.now,
+	})
+	const created = (await tx
+		.select()
+		.from(invItems)
+		.where(eq(invItems.id, id))
+		.get())!
+	input.createdByName.set(key, created)
+	return created
+}
+
+/** Updates a linked supplier product's latest price and appends a price-history row. */
+async function recordProductPriceUpdate(
+	tx: InventoryTx,
+	input: {
+		supplierId: string | null
+		product: ProductRow | undefined
+		itemId: string
+		packName: string | null
+		packBaseQuantity: number | null
+		packPriceMinor: number | null | undefined
+		lineTotalMinor: number
+		quantity: number
+		currency: string
+		source: 'invoice' | 'delivery' | 'cash_purchase'
+		deliveryLineId: string
+		effectiveAt: number
+		now: number
+		allowProductPriceUpdate: boolean
+		productById: Map<string, ProductRow>
+	},
+): Promise<void> {
+	if (
+		input.allowProductPriceUpdate &&
+		input.product &&
+		input.product.archivedAt === null &&
+		input.packPriceMinor != null &&
+		input.packPriceMinor !== input.product.priceMinor
+	) {
+		await tx
+			.update(invSupplierProducts)
+			.set({
+				priceMinor: input.packPriceMinor,
+				currency: input.currency,
+				version: input.product.version + 1,
+				updatedAt: input.now,
+			})
+			.where(eq(invSupplierProducts.id, input.product.id))
+		input.productById.set(input.product.id, {
+			...input.product,
+			priceMinor: input.packPriceMinor,
+			version: input.product.version + 1,
+		})
+	}
+	const effectiveSupplierId = input.product?.supplierId ?? input.supplierId
+	if (!effectiveSupplierId) return
+	const shouldRecord =
+		input.source === 'cash_purchase' ||
+		input.source === 'invoice' ||
+		input.product !== undefined ||
+		input.packPriceMinor != null
+	if (!shouldRecord) return
+	const priceMinor = input.packPriceMinor ?? input.lineTotalMinor
+	const packBaseQuantity =
+		input.packPriceMinor != null
+			? (input.packBaseQuantity ??
+				input.product?.packBaseQuantity ??
+				input.quantity)
+			: input.quantity
+	await tx.insert(invSupplierProductPrices).values({
+		id: newId(),
+		supplierId: effectiveSupplierId,
+		supplierProductId: input.product?.id ?? null,
+		itemId: input.itemId,
+		packName: input.packName ?? input.product?.packName ?? null,
+		packBaseQuantity,
+		priceMinor,
+		currency: input.currency,
+		source: input.source,
+		deliveryLineId: input.deliveryLineId,
+		effectiveAt: input.effectiveAt,
+		createdAt: input.now,
+	})
+}
+
 export type RecordDeliveryOptions = {
 	/** Where it was recorded (default the App). */
 	source?: 'operator' | 'station'
@@ -967,6 +1213,9 @@ export type RecordDeliveryOptions = {
 	 * and `orderLinkIgnored` says why.
 	 */
 	lenientOrder?: boolean
+	/** 1-tap "Yes, as ordered" delivery (#501), undoable until `undoUntil`. */
+	asOrdered?: boolean
+	undoUntil?: number | null
 	/** Called when the `clientId` was already stored and the first result is returned. */
 	onReplay?: () => void
 }
@@ -991,20 +1240,27 @@ export async function recordDelivery(
 	caller: InventoryCaller,
 	input: {
 		body: RecordDeliveryInput
-		idempotency: InventoryIdempotency
+		idempotency: InventoryIdempotency | null
 		options?: RecordDeliveryOptions
 	},
 ): Promise<RecordDeliveryResult> {
 	const { body } = input
 	const options = input.options ?? {}
 	assertLocationAllowed(caller.locationIds, body.locationId)
-	const quantityOnly = body.quantityOnly === true
-	// Marking a delivery paid is a purchasing decision.
-	if (body.paid && !caller.purchasing) {
+	const isCashPurchase = body.isCashPurchase === true
+	const isCredit = body.isCredit === true
+	const quantityOnly = isCashPurchase ? false : body.quantityOnly === true
+	// Marking a delivery paid is a purchasing decision (Station cash purchases
+	// are gated by the till-manager rule on the Station route).
+	if (
+		body.paid &&
+		!caller.purchasing &&
+		!(isCashPurchase && options.source === 'station')
+	) {
 		throw new InventoryError('purchasing_required', 403)
 	}
 	if (quantityOnly && body.paid) throw badRequest('quantity_only_unpaid')
-	if (!quantityOnly && body.currency === undefined) {
+	if (!quantityOnly && !isCashPurchase && body.currency === undefined) {
 		throw badRequest('priced_delivery_required')
 	}
 	for (const line of body.lines) {
@@ -1013,6 +1269,12 @@ export async function recordDelivery(
 		}
 		if (!quantityOnly && line.lineTotalMinor === undefined) {
 			throw badRequest('priced_delivery_required')
+		}
+		if (!line.itemId && !line.draftItem) {
+			throw badRequest('item')
+		}
+		if (line.draftItem && !isCashPurchase) {
+			throw badRequest('draft_item_cash_only')
 		}
 	}
 	return withInventoryWrite(
@@ -1039,6 +1301,18 @@ export async function recordDelivery(
 			if (earlier) {
 				options.onReplay?.()
 				return replayDeliveryResult(tx, earlier, caller)
+			}
+
+			if (body.creditForDeliveryId) {
+				const target = await tx
+					.select({
+						id: invDeliveries.id,
+						locationId: invDeliveries.locationId,
+					})
+					.from(invDeliveries)
+					.where(eq(invDeliveries.id, body.creditForDeliveryId))
+					.get()
+				if (!target || target.locationId !== body.locationId) throw notFound()
 			}
 
 			// ── The order this delivery is against ──────────────────────────────
@@ -1073,8 +1347,59 @@ export async function recordDelivery(
 					order = found
 				}
 			}
-			const supplierId = body.supplierId ?? order?.supplierId ?? null
-			const supplier = supplierId ? await loadSupplier(tx, supplierId) : null
+			const rawSupplierId = isCashPurchase
+				? null
+				: (body.supplierId ?? order?.supplierId ?? null)
+			const rawSupplier = rawSupplierId
+				? await loadSupplier(tx, rawSupplierId)
+				: null
+			let currency: string
+			if (body.currency !== undefined) {
+				currency = body.currency
+			} else if (isCashPurchase) {
+				const own = await getLocationCurrency(tx, body.locationId)
+				if (own) {
+					currency = own
+				} else {
+					const marketSup = await tx
+						.select({ currency: invSuppliers.currency })
+						.from(invSuppliers)
+						.where(
+							and(
+								eq(invSuppliers.isMarketCash, true),
+								isNull(invSuppliers.archivedAt),
+								isNotNull(invSuppliers.currency),
+							),
+						)
+						.get()
+					const anySup = marketSup?.currency
+						? marketSup
+						: await tx
+								.select({ currency: invSuppliers.currency })
+								.from(invSuppliers)
+								.where(
+									and(
+										isNull(invSuppliers.archivedAt),
+										isNotNull(invSuppliers.currency),
+									),
+								)
+								.limit(1)
+								.get()
+					currency =
+						anySup?.currency ?? (caller.region === 'ksa' ? 'SAR' : 'USD')
+				}
+			} else {
+				currency = await resolveInventoryCurrency(tx, {
+					locationId: body.locationId,
+					order,
+					supplier: rawSupplier,
+				})
+			}
+			const supplier = isCashPurchase
+				? await ensureMarketCashSupplier(tx, currency, ctx.now)
+				: rawSupplier
+			const supplierId = supplier?.id ?? null
+
 			const orderLines = order
 				? await tx
 						.select()
@@ -1082,15 +1407,35 @@ export async function recordDelivery(
 						.where(eq(invOrderLines.orderId, order.id))
 				: []
 			const orderLineById = new Map(orderLines.map((line) => [line.id, line]))
+			const createdByName = new Map<string, typeof invItems.$inferSelect>()
+			const resolvedItemIds: string[] = []
+			for (const line of body.lines) {
+				if (line.itemId) {
+					resolvedItemIds.push(line.itemId)
+				} else if (line.draftItem) {
+					const created = await resolveOrCreateNamedItem(tx, {
+						name: line.draftItem.name,
+						baseUnit: line.draftItem.baseUnit,
+						category: line.draftItem.category,
+						isDraft: true,
+						now: ctx.now,
+						createdByName,
+					})
+					resolvedItemIds.push(created.id)
+				} else {
+					throw badRequest('item')
+				}
+			}
 			// A line's `orderLineId` must be a line of the linked order for the same item.
-			const lines = body.lines.map((line) => {
-				if (!line.orderLineId) return { ...line, orderLineId: null }
+			const lines = body.lines.map((line, idx) => {
+				const itemId = resolvedItemIds[idx]!
+				if (!line.orderLineId) return { ...line, itemId, orderLineId: null }
 				const target = orderLineById.get(line.orderLineId)
-				if (target && target.itemId === line.itemId) {
-					return { ...line, orderLineId: target.id }
+				if (target && target.itemId === itemId) {
+					return { ...line, itemId, orderLineId: target.id }
 				}
 				if (!options.lenientOrder) throw badRequest('order_line')
-				return { ...line, orderLineId: null }
+				return { ...line, itemId, orderLineId: null }
 			})
 
 			const itemIds = [...new Set(lines.map((line) => line.itemId))]
@@ -1112,13 +1457,6 @@ export async function recordDelivery(
 				throw notFound()
 			}
 			const costById = new Map(costs.map((row) => [row.itemId, row]))
-			const currency = quantityOnly
-				? await resolveInventoryCurrency(tx, {
-						locationId: body.locationId,
-						order,
-						supplier,
-					})
-				: body.currency!
 			if (!quantityOnly) {
 				// One currency per location: a priced delivery states it, the
 				// location's own wins (400 on a difference) and a location with none
@@ -1178,13 +1516,17 @@ export async function recordDelivery(
 				orderId: order?.id ?? null,
 				quantityOnly,
 				lateSync: options.lateSync === true,
-				paidAt: body.paid ? ctx.now : null,
+				paidAt: body.paid || isCashPurchase ? ctx.now : null,
 				receivedByKind: caller.actor.kind,
 				receivedById: caller.actor.id,
 				receivedAt,
 				businessDate,
 				clientId: body.clientId,
 				source: options.source ?? 'operator',
+				asOrdered: options.asOrdered === true,
+				undoUntil: options.undoUntil ?? null,
+				isCredit,
+				creditForDeliveryId: body.creditForDeliveryId ?? null,
 				createdAt: ctx.now,
 				updatedAt: ctx.now,
 			})
@@ -1222,7 +1564,7 @@ export async function recordDelivery(
 					await tx.insert(invMovements).values({
 						locationId: body.locationId,
 						itemId: item.id,
-						quantity: line.quantity,
+						quantity: isCredit ? -line.quantity : line.quantity,
 						valueMinor: null,
 						currency: null,
 						kind: 'delivery',
@@ -1237,6 +1579,40 @@ export async function recordDelivery(
 					continue
 				}
 				const lineTotalMinor = line.lineTotalMinor!
+				if (isCredit) {
+					await tx.insert(invDeliveryLines).values({
+						id: lineId,
+						deliveryId,
+						itemId: item.id,
+						supplierProductId: line.supplierProductId ?? null,
+						quantity: line.quantity,
+						packName: line.packName ?? null,
+						packBaseQuantity: line.packBaseQuantity ?? null,
+						packs: line.packs == null ? null : Math.round(line.packs * 1000),
+						priceMinor: line.packPriceMinor ?? null,
+						lineTotalMinor,
+						realWeightQuantity: line.realWeightQuantity ?? null,
+						orderLineId: line.orderLineId,
+						pricedAt: ctx.now,
+						createdAt: ctx.now,
+					})
+					await tx.insert(invMovements).values({
+						locationId: body.locationId,
+						itemId: item.id,
+						quantity: -line.quantity,
+						valueMinor: -lineTotalMinor,
+						currency,
+						kind: 'delivery',
+						sourceType: 'delivery',
+						sourceId: deliveryId,
+						eventKey: `delivery:${lineId}`,
+						businessDate,
+						actorKind: caller.actor.kind,
+						actorId: caller.actor.id,
+						createdAt: receivedAt,
+					})
+					continue
+				}
 				const costMicro = costMicroForWrite(lineTotalMinor, line.quantity)
 				const existing = costById.get(item.id) ?? null
 				const onHand = await onHandTotal(tx, item.id)
@@ -1320,27 +1696,23 @@ export async function recordDelivery(
 				const product = line.supplierProductId
 					? productById.get(line.supplierProductId)
 					: undefined
-				if (
-					product &&
-					caller.purchasing &&
-					line.packPriceMinor != null &&
-					line.packPriceMinor !== product.priceMinor
-				) {
-					await tx
-						.update(invSupplierProducts)
-						.set({
-							priceMinor: line.packPriceMinor,
-							currency,
-							version: product.version + 1,
-							updatedAt: ctx.now,
-						})
-						.where(eq(invSupplierProducts.id, product.id))
-					productById.set(product.id, {
-						...product,
-						priceMinor: line.packPriceMinor,
-						version: product.version + 1,
-					})
-				}
+				await recordProductPriceUpdate(tx, {
+					supplierId,
+					product,
+					itemId: item.id,
+					packName: line.packName ?? null,
+					packBaseQuantity: line.packBaseQuantity ?? null,
+					packPriceMinor: line.packPriceMinor,
+					lineTotalMinor,
+					quantity: line.quantity,
+					currency,
+					source: isCashPurchase ? 'cash_purchase' : 'delivery',
+					deliveryLineId: lineId,
+					effectiveAt: receivedAt,
+					now: ctx.now,
+					allowProductPriceUpdate: caller.purchasing,
+					productById,
+				})
 			}
 
 			// ── The order after this delivery ──────────────────────────────────
@@ -1421,7 +1793,7 @@ function currencyMismatch(): InventoryError {
 }
 
 /** The first result of a delivery whose `clientId` was already recorded. */
-async function replayDeliveryResult(
+export async function replayDeliveryResult(
 	tx: InventoryTx,
 	row: DeliveryRow,
 	caller: InventoryCaller,
@@ -1561,7 +1933,33 @@ export async function confirmDeliveryPrices(
 			currency,
 			now: ctx.now,
 		})
-		const itemIds = [...new Set(unpriced.map((line) => line.itemId))]
+		const extraLines = body.extraLines ?? []
+		const createdByName = new Map<string, typeof invItems.$inferSelect>()
+		const resolvedExtraItemIds: string[] = []
+		for (const extra of extraLines) {
+			if (extra.itemId) {
+				resolvedExtraItemIds.push(extra.itemId)
+			} else if (extra.createItem) {
+				const created = await resolveOrCreateNamedItem(tx, {
+					name: extra.createItem.name,
+					baseUnit: extra.createItem.baseUnit,
+					category: extra.createItem.category,
+					isDraft: false,
+					now: ctx.now,
+					createdByName,
+				})
+				resolvedExtraItemIds.push(created.id)
+			} else {
+				throw badRequest('item')
+			}
+		}
+
+		const itemIds = [
+			...new Set([
+				...unpriced.map((line) => line.itemId),
+				...resolvedExtraItemIds,
+			]),
+		]
 		const [items, costs] = await Promise.all([
 			queryInChunks(itemIds, (chunk) =>
 				tx.select().from(invItems).where(inArray(invItems.id, chunk)),
@@ -1575,15 +1973,24 @@ export async function confirmDeliveryPrices(
 			),
 		])
 		const itemById = new Map(items.map((item) => [item.id, item]))
+		if (
+			resolvedExtraItemIds.some(
+				(id) => !itemById.has(id) || itemById.get(id)!.archivedAt !== null,
+			)
+		) {
+			throw notFound()
+		}
 		const costById = new Map(costs.map((cost) => [cost.itemId, cost]))
 		for (const cost of costs) {
 			if (cost.currency !== currency) throw currencyMismatch()
 		}
 		const productIds = [
 			...new Set(
-				unpriced
-					.map((line) => line.supplierProductId)
-					.filter((id): id is string => !!id),
+				[
+					...unpriced.map((line) => line.supplierProductId),
+					...body.lines.map((line) => line.supplierProductId ?? null),
+					...extraLines.map((line) => line.supplierProductId ?? null),
+				].filter((id): id is string => !!id),
 			),
 		]
 		const products = await queryInChunks(productIds, (chunk) =>
@@ -1595,13 +2002,44 @@ export async function confirmDeliveryPrices(
 		const productById = new Map(
 			products.map((product) => [product.id, product]),
 		)
+		for (const line of unpriced) {
+			const entry = sent.get(line.id)!
+			if (entry.supplierProductId) {
+				const product = productById.get(entry.supplierProductId)
+				if (
+					!product ||
+					product.archivedAt !== null ||
+					product.itemId !== line.itemId
+				) {
+					throw notFound()
+				}
+			}
+		}
+		for (let i = 0; i < extraLines.length; i++) {
+			const extra = extraLines[i]!
+			if (extra.supplierProductId) {
+				const product = productById.get(extra.supplierProductId)
+				if (
+					!product ||
+					product.archivedAt !== null ||
+					product.itemId !== resolvedExtraItemIds[i]!
+				) {
+					throw notFound()
+				}
+			}
+		}
 
 		// Stock before this delivery, per item, from the ledger as it stood when
 		// the goods arrived (not today's on hand, which sales since have
 		// changed), so the average weighs what was on the shelf before it.
 		const stockBefore = new Map<string, number>()
-		for (const itemId of itemIds) {
-			stockBefore.set(itemId, await onHandBeforeDelivery(tx, row.id, itemId))
+		for (const line of unpriced) {
+			if (!stockBefore.has(line.itemId)) {
+				stockBefore.set(
+					line.itemId,
+					await onHandBeforeDelivery(tx, row.id, line.itemId),
+				)
+			}
 		}
 
 		const businessDate = await locationBusinessDate(tx, row.locationId, ctx.now)
@@ -1618,16 +2056,35 @@ export async function confirmDeliveryPrices(
 			const item = itemById.get(line.itemId)
 			if (!item) throw notFound()
 			const entry = sent.get(line.id)!
-			const costMicro = costMicroForWrite(entry.lineTotalMinor, line.quantity)
+			const finalQuantity = entry.quantity ?? line.quantity
+			const delta = finalQuantity - line.quantity
+			if (delta !== 0) {
+				await tx.insert(invMovements).values({
+					locationId: row.locationId,
+					itemId: item.id,
+					quantity: delta,
+					valueMinor: null,
+					currency: null,
+					kind: 'delivery',
+					sourceType: 'delivery',
+					sourceId: row.id,
+					eventKey: `delivery-confirm-qty:${line.id}`,
+					businessDate,
+					actorKind: caller.actor.kind,
+					actorId: caller.actor.id,
+					createdAt: ctx.now,
+				})
+			}
+			const costMicro = costMicroForWrite(entry.lineTotalMinor, finalQuantity)
 			const existing = costById.get(item.id) ?? null
 			const before = stockBefore.get(item.id) ?? 0
 			const average = weightedAverageCostMicro({
 				onHandQuantity: before,
 				averageCostMicro: existing?.avgCostMicro ?? null,
-				receivedQuantity: line.quantity,
+				receivedQuantity: finalQuantity,
 				receivedCostMicro: costMicro,
 			})
-			stockBefore.set(item.id, before + line.quantity)
+			stockBefore.set(item.id, before + finalQuantity)
 			const change = priceChangeBp(existing?.lastCostMicro ?? null, costMicro)
 			if (change !== null && change > 0 && existing?.lastCostMicro != null) {
 				rises.set(item.id, {
@@ -1651,9 +2108,30 @@ export async function confirmDeliveryPrices(
 				.onConflictDoUpdate({ target: invItemCosts.itemId, set: next })
 			costById.set(item.id, { itemId: item.id, ...next })
 
+			const nextSupplierProductId =
+				entry.supplierProductId !== undefined
+					? entry.supplierProductId
+					: line.supplierProductId
+			const nextPackName =
+				entry.packName !== undefined ? entry.packName : line.packName
+			const nextPackBaseQuantity =
+				entry.packBaseQuantity !== undefined
+					? entry.packBaseQuantity
+					: line.packBaseQuantity
+			const nextPacks =
+				entry.packs !== undefined
+					? entry.packs === null
+						? null
+						: Math.round(entry.packs * 1000)
+					: line.packs
 			await tx
 				.update(invDeliveryLines)
 				.set({
+					supplierProductId: nextSupplierProductId,
+					quantity: finalQuantity,
+					packName: nextPackName,
+					packBaseQuantity: nextPackBaseQuantity,
+					packs: nextPacks,
 					priceMinor: entry.packPriceMinor ?? null,
 					lineTotalMinor: entry.lineTotalMinor,
 					pricedAt: ctx.now,
@@ -1664,7 +2142,7 @@ export async function confirmDeliveryPrices(
 				kind: 'confirm',
 				deliveryLineId: line.id,
 				locationId: row.locationId,
-				quantity: line.quantity,
+				quantity: finalQuantity,
 				costMicro,
 				onHandBefore: before,
 				avgBeforeMicro: existing?.avgCostMicro ?? null,
@@ -1687,30 +2165,127 @@ export async function confirmDeliveryPrices(
 				actorId: caller.actor.id,
 				createdAt: ctx.now,
 			})
-			const product = line.supplierProductId
-				? productById.get(line.supplierProductId)
+			const product = nextSupplierProductId
+				? productById.get(nextSupplierProductId)
 				: undefined
-			if (
-				product &&
-				product.archivedAt === null &&
-				entry.packPriceMinor != null &&
-				entry.packPriceMinor !== product.priceMinor
-			) {
-				await tx
-					.update(invSupplierProducts)
-					.set({
-						priceMinor: entry.packPriceMinor,
-						currency,
-						version: product.version + 1,
-						updatedAt: ctx.now,
-					})
-					.where(eq(invSupplierProducts.id, product.id))
-				productById.set(product.id, {
-					...product,
-					priceMinor: entry.packPriceMinor,
-					version: product.version + 1,
+			await recordProductPriceUpdate(tx, {
+				supplierId: row.supplierId,
+				product,
+				itemId: item.id,
+				packName: nextPackName,
+				packBaseQuantity: nextPackBaseQuantity,
+				packPriceMinor: entry.packPriceMinor,
+				lineTotalMinor: entry.lineTotalMinor,
+				quantity: finalQuantity,
+				currency,
+				source: 'invoice',
+				deliveryLineId: line.id,
+				effectiveAt: ctx.now,
+				now: ctx.now,
+				allowProductPriceUpdate: true,
+				productById,
+			})
+		}
+
+		for (let i = 0; i < extraLines.length; i++) {
+			const extra = extraLines[i]!
+			const item = itemById.get(resolvedExtraItemIds[i]!)!
+			const extraLineId = newId()
+			const onHand = await onHandTotal(tx, item.id)
+			const costMicro = costMicroForWrite(extra.lineTotalMinor, extra.quantity)
+			const existing = costById.get(item.id) ?? null
+			const average = weightedAverageCostMicro({
+				onHandQuantity: onHand,
+				averageCostMicro: existing?.avgCostMicro ?? null,
+				receivedQuantity: extra.quantity,
+				receivedCostMicro: costMicro,
+			})
+			const change = priceChangeBp(existing?.lastCostMicro ?? null, costMicro)
+			if (change !== null && change > 0 && existing?.lastCostMicro != null) {
+				rises.set(item.id, {
+					itemName: item.name,
+					previous: existing.lastCostMicro,
+					costMicro,
+					changeBp: change,
 				})
 			}
+			const next = {
+				currency,
+				lastCostMicro: costMicro,
+				lastPricedAt: ctx.now,
+				avgCostMicro: average,
+				version: (existing?.version ?? 0) + 1,
+				updatedAt: ctx.now,
+			}
+			await tx
+				.insert(invItemCosts)
+				.values({ itemId: item.id, ...next })
+				.onConflictDoUpdate({ target: invItemCosts.itemId, set: next })
+			costById.set(item.id, { itemId: item.id, ...next })
+
+			await tx.insert(invDeliveryLines).values({
+				id: extraLineId,
+				deliveryId: row.id,
+				itemId: item.id,
+				supplierProductId: extra.supplierProductId ?? null,
+				quantity: extra.quantity,
+				packName: extra.packName ?? null,
+				packBaseQuantity: extra.packBaseQuantity ?? null,
+				packs: extra.packs == null ? null : Math.round(extra.packs * 1000),
+				priceMinor: extra.packPriceMinor ?? null,
+				lineTotalMinor: extra.lineTotalMinor,
+				realWeightQuantity: null,
+				orderLineId: null,
+				pricedAt: ctx.now,
+				createdAt: ctx.now,
+			})
+			await tx.insert(invCostEvents).values({
+				itemId: item.id,
+				kind: 'confirm',
+				deliveryLineId: extraLineId,
+				locationId: row.locationId,
+				quantity: extra.quantity,
+				costMicro,
+				onHandBefore: onHand,
+				avgBeforeMicro: existing?.avgCostMicro ?? null,
+				avgAfterMicro: average,
+				createdAt: ctx.now,
+			})
+			await tx.insert(invMovements).values({
+				locationId: row.locationId,
+				itemId: item.id,
+				quantity: extra.quantity,
+				valueMinor: extra.lineTotalMinor,
+				currency,
+				kind: 'delivery',
+				sourceType: 'delivery',
+				sourceId: row.id,
+				eventKey: `delivery:${extraLineId}`,
+				businessDate,
+				actorKind: caller.actor.kind,
+				actorId: caller.actor.id,
+				createdAt: ctx.now,
+			})
+			const product = extra.supplierProductId
+				? productById.get(extra.supplierProductId)
+				: undefined
+			await recordProductPriceUpdate(tx, {
+				supplierId: row.supplierId,
+				product,
+				itemId: item.id,
+				packName: extra.packName ?? null,
+				packBaseQuantity: extra.packBaseQuantity ?? null,
+				packPriceMinor: extra.packPriceMinor,
+				lineTotalMinor: extra.lineTotalMinor,
+				quantity: extra.quantity,
+				currency,
+				source: 'invoice',
+				deliveryLineId: extraLineId,
+				effectiveAt: ctx.now,
+				now: ctx.now,
+				allowProductPriceUpdate: true,
+				productById,
+			})
 		}
 
 		const set: Partial<typeof invDeliveries.$inferInsert> = {
@@ -1737,7 +2312,11 @@ export async function confirmDeliveryPrices(
 			resourceType: 'delivery',
 			resourceId: row.id,
 			locationId: row.locationId,
-			detail: { lines: unpriced.length, paid: body.paid },
+			detail: {
+				lines: unpriced.length,
+				extraLines: extraLines.length,
+				paid: body.paid,
+			},
 			at: ctx.now,
 		})
 		const next = await loadAllowedDelivery(tx, row.id, caller)
@@ -1860,47 +2439,51 @@ async function rewoundAverage(
  * order it was received against keeps its status (it only moves forward) but
  * the lines read as less received.
  */
-export async function cancelDelivery(
+async function cancelDeliveryInTx(
+	tx: InventoryTx,
+	now: number,
 	caller: InventoryCaller,
-	input: { id: string; expectedVersion: number; note?: string },
-): Promise<DeliveryDetail> {
-	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
-		const row = await loadAllowedDelivery(tx, input.id, caller)
-		assertVersion(row.version, input.expectedVersion)
-		if (row.status !== 'received') throw stateConflict('not_received')
-		const lines: LineRow[] = await tx
-			.select()
-			.from(invDeliveryLines)
-			.where(eq(invDeliveryLines.deliveryId, row.id))
-			.orderBy(invDeliveryLines.createdAt, invDeliveryLines.id)
-		const businessDate = await locationBusinessDate(tx, row.locationId, ctx.now)
-		for (const line of lines) {
-			const priced = line.pricedAt !== null
-			await tx.insert(invMovements).values({
-				locationId: row.locationId,
-				itemId: line.itemId,
-				quantity: -line.quantity,
-				valueMinor: priced ? -line.lineTotalMinor : null,
-				currency: priced ? row.currency : null,
-				kind: 'delivery',
-				sourceType: 'delivery',
-				sourceId: row.id,
-				eventKey: `delivery-cancel:${line.id}`,
-				businessDate,
-				actorKind: caller.actor.kind,
-				actorId: caller.actor.id,
-				note: input.note?.length ? input.note : null,
-				createdAt: ctx.now,
-			})
-		}
-		await tx
-			.update(invDeliveries)
-			.set({
-				status: 'cancelled',
-				version: row.version + 1,
-				updatedAt: ctx.now,
-			})
-			.where(eq(invDeliveries.id, row.id))
+	row: DeliveryRow,
+	note?: string,
+): Promise<LineRow[]> {
+	const lines: LineRow[] = await tx
+		.select()
+		.from(invDeliveryLines)
+		.where(eq(invDeliveryLines.deliveryId, row.id))
+		.orderBy(invDeliveryLines.createdAt, invDeliveryLines.id)
+	const businessDate = await locationBusinessDate(tx, row.locationId, now)
+	for (const line of lines) {
+		const priced = line.pricedAt !== null
+		await tx.insert(invMovements).values({
+			locationId: row.locationId,
+			itemId: line.itemId,
+			quantity: row.isCredit ? line.quantity : -line.quantity,
+			valueMinor: priced
+				? row.isCredit
+					? line.lineTotalMinor
+					: -line.lineTotalMinor
+				: null,
+			currency: priced ? row.currency : null,
+			kind: 'delivery',
+			sourceType: 'delivery',
+			sourceId: row.id,
+			eventKey: `delivery-cancel:${line.id}`,
+			businessDate,
+			actorKind: caller.actor.kind,
+			actorId: caller.actor.id,
+			note: note?.length ? note : null,
+			createdAt: now,
+		})
+	}
+	await tx
+		.update(invDeliveries)
+		.set({
+			status: 'cancelled',
+			version: row.version + 1,
+			updatedAt: now,
+		})
+		.where(eq(invDeliveries.id, row.id))
+	if (!row.isCredit) {
 		for (const itemId of new Set(
 			lines.filter((line) => line.pricedAt !== null).map((line) => line.itemId),
 		)) {
@@ -1919,6 +2502,7 @@ export async function cancelDelivery(
 					and(
 						eq(invDeliveryLines.itemId, itemId),
 						eq(invDeliveries.status, 'received'),
+						eq(invDeliveries.isCredit, false),
 						sql`${invDeliveryLines.pricedAt} is not null`,
 					),
 				)
@@ -1945,10 +2529,23 @@ export async function cancelDelivery(
 							: null,
 					lastPricedAt: remaining?.at ?? null,
 					version: cost.version + 1,
-					updatedAt: ctx.now,
+					updatedAt: now,
 				})
 				.where(eq(invItemCosts.itemId, itemId))
 		}
+	}
+	return lines
+}
+
+export async function cancelDelivery(
+	caller: InventoryCaller,
+	input: { id: string; expectedVersion: number; note?: string },
+): Promise<DeliveryDetail> {
+	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
+		const row = await loadAllowedDelivery(tx, input.id, caller)
+		assertVersion(row.version, input.expectedVersion)
+		if (row.status !== 'received') throw stateConflict('not_received')
+		const lines = await cancelDeliveryInTx(tx, ctx.now, caller, row, input.note)
 		await recordInventoryAudit(tx, {
 			actorKind: caller.actor.kind,
 			actorId: caller.actor.id,
@@ -1957,6 +2554,78 @@ export async function cancelDelivery(
 			resourceId: row.id,
 			locationId: row.locationId,
 			detail: { lines: lines.length },
+			at: ctx.now,
+		})
+		const next = await loadAllowedDelivery(tx, row.id, caller)
+		return deliveryDetail(tx, next, caller.cost)
+	})
+}
+
+/**
+ * Undoes a 1-tap "Yes, as ordered" delivery within its 24h window (#501):
+ * reverses its movements and costs like `cancelDelivery`, and reopens the
+ * linked `received` order back to `sent` or `partly_received`.
+ */
+export async function undoDeliveryAsOrdered(
+	caller: InventoryCaller,
+	input: { id: string; expectedVersion: number; note?: string },
+): Promise<DeliveryDetail> {
+	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
+		const row = await loadAllowedDelivery(tx, input.id, caller)
+		assertVersion(row.version, input.expectedVersion)
+		if (row.status !== 'received') throw stateConflict('not_received')
+		if (!row.asOrdered || row.undoUntil === null || ctx.now > row.undoUntil) {
+			throw new InventoryError('undo_expired', 409)
+		}
+		const lines = await cancelDeliveryInTx(tx, ctx.now, caller, row, input.note)
+		let reopenedStatus: string | null = null
+		if (row.orderId) {
+			const order = await tx
+				.select()
+				.from(invOrders)
+				.where(eq(invOrders.id, row.orderId))
+				.get()
+			if (order && order.status === 'received') {
+				const orderLines = await tx
+					.select()
+					.from(invOrderLines)
+					.where(eq(invOrderLines.orderId, order.id))
+				const received = await receivedByOrderLine(
+					tx,
+					orderLines.map((line) => line.id),
+				)
+				const nextStatus = orderStatusAfterReceipt({
+					status: 'sent',
+					lines: orderLines.map((line) => ({
+						orderedQuantity: line.quantity,
+						receivedQuantity: received.get(line.id) ?? 0,
+						pricedByWeight: line.pricedByWeight,
+					})),
+				})
+				await tx
+					.update(invOrders)
+					.set({
+						status: nextStatus,
+						closedAt: null,
+						version: order.version + 1,
+						updatedAt: ctx.now,
+					})
+					.where(eq(invOrders.id, order.id))
+				reopenedStatus = nextStatus
+			}
+		}
+		await recordInventoryAudit(tx, {
+			actorKind: caller.actor.kind,
+			actorId: caller.actor.id,
+			action: 'delivery.undo',
+			resourceType: 'delivery',
+			resourceId: row.id,
+			locationId: row.locationId,
+			detail: {
+				lines: lines.length,
+				orderId: row.orderId,
+				reopenedStatus,
+			},
 			at: ctx.now,
 		})
 		const next = await loadAllowedDelivery(tx, row.id, caller)

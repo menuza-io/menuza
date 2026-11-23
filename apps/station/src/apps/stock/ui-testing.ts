@@ -4,8 +4,9 @@ import { act, createElement as h, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { vi } from 'vitest'
 import catalogFixture from './fixtures/catalog.json'
-import { preparedPlan, preparedTask } from './testing.ts'
 import countSheet from './fixtures/count-sheet.json'
+import photoUpload from './fixtures/photo-upload.json'
+import { preparedPlan, preparedTask } from './testing.ts'
 
 /** Shared set-up for the Stock screen tests (jsdom): a page to draw in, DOM stand-ins, and a recording region behind `fetch`. */
 
@@ -43,6 +44,12 @@ export function installDom() {
 	HTMLElement.prototype.scrollIntoView = vi.fn()
 	HTMLElement.prototype.showPopover = function showPopover() {}
 	HTMLElement.prototype.hidePopover = function hidePopover() {}
+	if (!URL.createObjectURL) {
+		URL.createObjectURL = () => 'blob:test-preview'
+	}
+	if (!URL.revokeObjectURL) {
+		URL.revokeObjectURL = () => {}
+	}
 }
 
 export function mount(): Page {
@@ -225,6 +232,8 @@ export function region(options: { online?: boolean } = {}) {
 				})
 			if (/\/waste\/[^/]+\/undo$/.test(path))
 				return Response.json({ id: 'rev_1' })
+			if (url.hostname === 'storage.example.test' && method === 'PUT')
+				return new Response(null, { status: 200 })
 			if (path === '/pos/inventory/deliveries')
 				return Response.json({
 					id: `dlv_${++state.serial}`,
@@ -235,6 +244,43 @@ export function region(options: { online?: boolean } = {}) {
 					duplicate: false,
 					order: null,
 					orderLinkIgnored: null,
+				})
+			match = /^\/pos\/inventory\/deliveries\/([^/]+)\/photo$/.exec(path)
+			if (match) return Response.json(photoUpload)
+			match = /^\/pos\/inventory\/deliveries\/([^/]+)\/photo\/confirm$/.exec(
+				path,
+			)
+			if (match) return Response.json({ ok: true })
+			match = /^\/pos\/inventory\/orders\/([^/]+)\/receive-as-ordered$/.exec(
+				path,
+			)
+			if (match)
+				return Response.json({
+					deliveryId: `dlv_${++state.serial}`,
+					orderId: match[1],
+					orderStatus: 'received',
+					lineCount: 2,
+					receivedAt: Date.now(),
+					duplicate: false,
+				})
+			match = /^\/pos\/inventory\/orders\/([^/]+)\/not-yet$/.exec(path)
+			if (match)
+				return Response.json({
+					orderId: match[1],
+					status: 'sent',
+					expectedDate: body.expectedDate,
+					version: body.expectedVersion + 1,
+				})
+			if (path === '/pos/inventory/cash-purchase')
+				return Response.json({
+					id: `dlv_${++state.serial}`,
+					lineCount: body.lines.length,
+					receivedAt: Date.now(),
+					lateSync: false,
+					duplicate: false,
+					draftItemIds: body.lines
+						.filter((line: { draftItem?: unknown }) => Boolean(line.draftItem))
+						.map((_line: unknown, index: number) => `itm_draft_${index + 1}`),
 				})
 			return Response.json({ error: 'not_found' }, { status: 404 })
 		},

@@ -236,15 +236,16 @@ describe('what a tick records and sends', () => {
 			'inventory_price_rise',
 		])
 		for (const event of events) {
-			expect(Object.keys(event).sort()).toEqual([
-				'count',
-				'eventId',
-				'kind',
-				'locationId',
-				'orgId',
-			])
+			const expectedKeys =
+				event.kind === 'inventory_delivery_due'
+					? ['count', 'eventId', 'kind', 'locationId', 'orgId', 'overdueCount']
+					: ['count', 'eventId', 'kind', 'locationId', 'orgId']
+			expect(Object.keys(event).sort()).toEqual(expectedKeys)
 			expect(inventoryNotifyEventSchema.safeParse(event).success).toBe(true)
 			expect(event).toMatchObject({ orgId: ORG, locationId: LOC, count: 1 })
+			if (event.kind === 'inventory_delivery_due') {
+				expect(event.overdueCount).toBe(1)
+			}
 		}
 		// The event id is the SHA-256 of the dedupe key (a date, a count id or a delivery id).
 		const rows = await log()

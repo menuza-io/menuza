@@ -578,6 +578,43 @@ export async function recordDelivery(
 	)
 }
 
+/**
+ * Queues a receipt/invoice photo for a delivery that already has a server id
+ * (such as a cash purchase). No money values are stored in the outbox.
+ */
+export async function recordDeliveryPhoto(
+	ctx: StockContext,
+	deliveryId: string,
+	photo: {
+		blob: Blob
+		contentType: 'image/jpeg' | 'image/png' | 'image/webp'
+	},
+	clientId?: string,
+): Promise<string> {
+	return db.transaction('rw', db.stockQueue, db.stockBlobs, async () => {
+		if (clientId && (await db.stockQueue.get(clientId))) return clientId
+		const photoId = clientId ?? newId()
+		const blobKey = `photo:${photoId}`
+		await db.stockBlobs.put({
+			key: blobKey,
+			blob: photo.blob,
+			savedAt: Date.now(),
+		})
+		await addRow(
+			ctx,
+			'delivery_photo',
+			{
+				delivery: { id: deliveryId },
+				contentType: photo.contentType,
+				sizeBytes: photo.blob.size,
+				blobKey,
+			},
+			photoId,
+		)
+		return photoId
+	})
+}
+
 // ── Reading ─────────────────────────────────────────────────────────────────
 
 /** Every row of this restaurant, oldest first. */

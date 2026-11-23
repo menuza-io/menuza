@@ -57,9 +57,12 @@ const INVENTORY_TABLES = [
 	'inv_sale_usage',
 	'inv_settings',
 	'inv_setup_dismissals',
+	'inv_setup_import_files',
+	'inv_setup_imports',
 	'inv_sold_out',
 	'inv_sold_out_alerts',
 	'inv_storage_areas',
+	'inv_supplier_product_prices',
 	'inv_supplier_products',
 	'inv_suppliers',
 	'inv_transfer_lines',
@@ -94,6 +97,7 @@ const INVENTORY_TRIGGERS = [
 	'inv_order_lines_draft_insert',
 	'inv_order_lines_draft_update',
 	'inv_orders_closed_final',
+	'inv_orders_confirmed_kind_valid',
 	'inv_orders_identity_fixed',
 	'inv_orders_no_delete',
 	'inv_orders_status_forward',
@@ -107,6 +111,8 @@ const INVENTORY_TRIGGERS = [
 	'inv_recipes_facts_fixed',
 	'inv_recipes_made_item_owner',
 	'inv_recipes_no_delete',
+	'inv_supplier_product_prices_no_delete',
+	'inv_supplier_product_prices_no_update',
 	'inv_transfer_lines_frozen',
 	'inv_transfer_lines_no_delete',
 	'inv_transfer_lines_no_insert',
@@ -1439,6 +1445,60 @@ describe('inventory tenant schema (0033_inventory, 0034_inventory_orders, 0035_i
 				'inventory group has no stock',
 			)
 			await insertMovement(client, 'mv_member', 'm1')
+		})
+	})
+
+	describe('0063_purchasing', () => {
+		it('enforces single active Market / cash supplier, append-only price history, order confirmation and as-ordered reopen rules', async () => {
+			const { client } = await openMigratedDb()
+			await insertItem(client, 'it_p1')
+			await client.execute(
+				"INSERT INTO inv_suppliers (id, name, is_market_cash) VALUES ('sup_cash', 'Market / cash', 1)",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_suppliers (id, name, is_market_cash) VALUES ('sup_cash_2', 'Market 2', 1)",
+				),
+				'inv_suppliers.is_market_cash',
+			)
+			await client.execute(
+				"INSERT INTO inv_supplier_product_prices (id, supplier_id, item_id, pack_base_quantity, price_minor, currency, source, effective_at) VALUES ('pp1', 'sup_cash', 'it_p1', 1000, 600, 'SAR', 'cash_purchase', 1000)",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_supplier_product_prices SET price_minor = 700 WHERE id = 'pp1'",
+				),
+				'inv_supplier_product_prices is append-only',
+			)
+			await expectRejectsWith(
+				client.execute(
+					"DELETE FROM inv_supplier_product_prices WHERE id = 'pp1'",
+				),
+				'inv_supplier_product_prices is append-only',
+			)
+			await client.execute(
+				"INSERT INTO inv_suppliers (id, name) VALUES ('sup_1', 'Fresh Farms')",
+			)
+			await client.execute(
+				"INSERT INTO inv_orders (id, number, client_id, location_id, supplier_id, status, created_by_kind, closed_at) VALUES ('ord_1', 1, 'c_ord_1', 'main', 'sup_1', 'received', 'operator', 1000)",
+			)
+			// Normal closed order cannot reopen.
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_orders SET status = 'sent', closed_at = NULL WHERE id = 'ord_1'",
+				),
+				'inventory order is closed',
+			)
+			// Only after cancelling an `as_ordered` delivery against the order can it reopen.
+			await client.execute(
+				"INSERT INTO inv_deliveries (id, location_id, supplier_id, status, currency, received_by_kind, business_date, order_id, as_ordered, undo_until) VALUES ('del_1', 'main', 'sup_1', 'received', 'SAR', 'operator', '2026-11-22', 'ord_1', 1, 9999999999999)",
+			)
+			await client.execute(
+				"UPDATE inv_deliveries SET status = 'cancelled' WHERE id = 'del_1'",
+			)
+			await client.execute(
+				"UPDATE inv_orders SET status = 'sent', closed_at = NULL WHERE id = 'ord_1'",
+			)
 		})
 	})
 })

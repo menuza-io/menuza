@@ -10,6 +10,8 @@ import {
 	prepTaskSchema,
 	generatePrepSchema,
 	stationCatalogSchema,
+	stationCashPurchaseResultSchema,
+	stationCashPurchaseSchema,
 	stationCountEntriesResultSchema,
 	stationCountEntriesSchema,
 	stationCountSheetSchema,
@@ -18,9 +20,13 @@ import {
 	stationDeliverySchema,
 	stationDishWasteResultSchema,
 	stationDishWasteSchema,
+	stationOrderNotYetResultSchema,
+	stationOrderNotYetSchema,
 	stationPhotoConfirmResultSchema,
 	stationPhotoRequestSchema,
 	stationPhotoUploadSchema,
+	stationReceiveAsOrderedResultSchema,
+	stationReceiveAsOrderedSchema,
 	stationSendCountSchema,
 	stationStartCountResultSchema,
 	stationStartCountSchema,
@@ -146,6 +152,17 @@ export type StockApi = {
 		id: string,
 		body: Body<typeof confirmInvoicePhotoSchema>,
 	): Promise<void>
+	receiveAsOrdered(
+		orderId: string,
+		body: Body<typeof stationReceiveAsOrderedSchema>,
+	): Promise<z.infer<typeof stationReceiveAsOrderedResultSchema>>
+	orderNotYet(
+		orderId: string,
+		body: Body<typeof stationOrderNotYetSchema>,
+	): Promise<z.infer<typeof stationOrderNotYetResultSchema>>
+	cashPurchase(
+		body: Body<typeof stationCashPurchaseSchema>,
+	): Promise<z.infer<typeof stationCashPurchaseResultSchema>>
 }
 
 const TIMEOUT_MS = 15_000
@@ -388,5 +405,26 @@ export function createStockApi(
 				{ schema: confirmInvoicePhotoSchema, body },
 			)
 		},
+		receiveAsOrdered: (orderId, body) =>
+			call(
+				'POST',
+				INVENTORY_POS_PATHS.receiveAsOrdered(encodeURIComponent(orderId)),
+				stationReceiveAsOrderedResultSchema,
+				{ schema: stationReceiveAsOrderedSchema, body },
+			),
+		orderNotYet: (orderId, body) =>
+			call(
+				'POST',
+				INVENTORY_POS_PATHS.orderNotYet(encodeURIComponent(orderId)),
+				stationOrderNotYetResultSchema,
+				{ schema: stationOrderNotYetSchema, body },
+			),
+		cashPurchase: (body) =>
+			call(
+				'POST',
+				INVENTORY_POS_PATHS.cashPurchase,
+				stationCashPurchaseResultSchema,
+				{ schema: stationCashPurchaseSchema, body },
+			),
 	}
 }

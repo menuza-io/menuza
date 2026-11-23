@@ -372,4 +372,66 @@ describe('Supplier products', () => {
 		)
 		expect(sentJson(request, index)).toEqual({ expectedVersion: 2 })
 	})
+
+	it('loads and displays supplier product price history (#505)', async () => {
+		const request = vi.fn<InventoryClient['request']>(async (path) => {
+			if (path === '/supplier-products/sp_1/prices') {
+				return {
+					entries: [
+						{
+							id: 'ph1',
+							supplierId: 's1',
+							supplierName: 'Fresh Farms',
+							supplierProductId: 'sp_1',
+							itemId: 'itm_1',
+							packName: 'Box',
+							packBaseQuantity: 10_000_000,
+							priceMinor: 28_000,
+							currency: 'SAR',
+							source: 'price_list',
+							deliveryLineId: null,
+							effectiveAt: Date.UTC(2026, 10, 15),
+							createdAt: Date.UTC(2026, 10, 15),
+						},
+					],
+				}
+			}
+			if (path.startsWith('/items'))
+				return { items: [], total: 0, nextCursor: null }
+			throw new Error(`unexpected request ${path}`)
+		})
+		renderInventory(
+			<SupplierProducts
+				supplierId="s1"
+				products={[
+					{
+						id: 'sp_1',
+						supplierId: 's1',
+						itemId: 'itm_1',
+						itemName: 'Chicken thighs',
+						packName: 'Box',
+						packBaseQuantity: 10_000_000,
+						pricedByWeight: true,
+						sku: null,
+						preferred: true,
+						version: 2,
+						priceMinor: 28_000,
+						currency: 'SAR',
+					},
+				]}
+				canManage
+				canSeeCost
+				currency="SAR"
+				locationId="main"
+				onChanged={vi.fn()}
+			/>,
+			{ request },
+		)
+		await userEvent.click(
+			await screen.findByTestId('supplier-product-history-sp_1'),
+		)
+		const list = await screen.findByTestId('price-history-list')
+		expect(list).toHaveTextContent('Price list')
+		expect(list).toHaveTextContent('280')
+	})
 })

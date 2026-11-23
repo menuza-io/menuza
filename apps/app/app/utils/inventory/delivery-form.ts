@@ -4,6 +4,7 @@ import {
 	type CreditLine,
 	creditLines,
 	type InventoryBaseUnit,
+	type InvoiceLineWarning,
 	MAX_ENTRY_QUANTITY,
 	priceChangeBp,
 	type ReceivePrefill,
@@ -85,6 +86,10 @@ export type DeliveryLineDraft = {
 	previousCostMicro: number | null
 	/** Set when the line receives a line of an order. */
 	order?: OrderLineInfo
+	/** Raw text from the invoice reader (#504). */
+	rawInvoiceText?: string | null
+	/** Warnings from the invoice reader (#504). */
+	warnings?: InvoiceLineWarning[]
 }
 
 export type LineProblem = 'packs' | 'price' | 'weight' | 'total'
@@ -273,6 +278,9 @@ export type DeliveryDraft = {
 	closeOrder?: boolean
 	/** Record received quantities only (a role without the cost grant). */
 	quantityOnly?: boolean
+	/** Supplier credit note or return (#507). */
+	isCredit?: boolean
+	creditForDeliveryId?: string | null
 }
 
 export type DeliveryHeaderField =
@@ -383,6 +391,10 @@ export function buildRecordDelivery(
 		...(totalMinor !== null ? { totalMinor } : {}),
 		...(zatca !== '' ? { zatcaReference: zatca } : {}),
 		paid: quantityOnly ? false : draft.paid,
+		...(draft.isCredit ? { isCredit: true } : {}),
+		...(draft.creditForDeliveryId
+			? { creditForDeliveryId: draft.creditForDeliveryId }
+			: {}),
 		...(orderId !== null
 			? {
 					orderId,

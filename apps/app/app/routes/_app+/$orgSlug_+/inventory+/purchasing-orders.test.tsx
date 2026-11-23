@@ -418,6 +418,30 @@ describe('Purchasing: open orders and price rises', () => {
 		expect(await screen.findByTestId('orders-empty')).toBeInTheDocument()
 	})
 
+	it('shows overdue order warnings on Suggested orders when an order is >2 days late (#501)', async () => {
+		renderPurchasing(
+			region({
+				suggested: {
+					suppliers: [],
+					unsourced: [],
+					overdueOrderWarnings: [
+						{
+							orderId: 'o_late',
+							number: 19,
+							supplierId: 's1',
+							supplierName: 'Fresh Farms',
+							expectedDate: '2026-11-01',
+							daysOverdue: 4,
+						},
+					],
+				},
+			}),
+		)
+		const warn = await screen.findByTestId('suggested-overdue-warnings')
+		expect(warn).toHaveTextContent('Order 19 from Fresh Farms')
+		expect(warn).toHaveTextContent('4 days late')
+	})
+
 	it('shows the prices that went up with the delivery to look at', async () => {
 		renderPurchasing(region())
 		const row = await screen.findByTestId('price-alert-i1')

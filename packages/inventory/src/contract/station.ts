@@ -1,11 +1,18 @@
 import { z } from 'zod'
-import { inventoryItemKindSchema, wasteReasonSchema } from '../vocabulary.ts'
+import {
+	inventoryCategorySchema,
+	inventoryItemKindSchema,
+	wasteReasonSchema,
+} from '../vocabulary.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
 import { inventoryBaseUnitSchema } from '../units.ts'
+import { inventoryMinorSchema } from '../money.ts'
 import {
 	clientIdSchema,
 	inventoryIdSchema,
+	inventoryNameSchema,
 	isoDateSchema,
+	positiveQuantitySchema,
 	unitRefSchema,
 } from './common.ts'
 import {
@@ -150,6 +157,10 @@ export const INVENTORY_POS_PATHS = {
 	deliveryPhoto: (id: string) => `/pos/inventory/deliveries/${id}/photo`,
 	deliveryPhotoConfirm: (id: string) =>
 		`/pos/inventory/deliveries/${id}/photo/confirm`,
+	receiveAsOrdered: (id: string) =>
+		`/pos/inventory/orders/${id}/receive-as-ordered`,
+	orderNotYet: (id: string) => `/pos/inventory/orders/${id}/not-yet`,
+	cashPurchase: '/pos/inventory/cash-purchase',
 } as const
 
 // ── Error codes ─────────────────────────────────────────────────────────────
@@ -413,6 +424,10 @@ export const stationExpectedDeliverySchema = z.object({
 	supplierName: z.string(),
 	status: orderStatusSchema,
 	expectedDate: isoDateSchema.nullable(),
+	/** Overdue relative to location business date (#501). */
+	overdue: z.boolean().optional(),
+	/** Order optimistic version for "Yes, as ordered" and "Not yet" (#501). */
+	version: z.number().int().optional(),
 	lines: z.array(
 		receivePrefillLineSchema.omit({
 			packPriceMinor: true,
@@ -680,6 +695,97 @@ export type StationDeliveryResult = z.infer<typeof stationDeliveryResultSchema>
 export const stationPhotoRequestSchema = invoicePhotoRequestSchema
 export const stationPhotoUploadSchema = invoicePhotoUploadSchema
 export const stationPhotoConfirmResultSchema = z.object({ ok: z.literal(true) })
+
+// ── Overdue order actions (#501) and Cash market purchases (#466) ───────────
+
+/** `POST /pos/inventory/orders/:id/receive-as-ordered` (#501, manager rule applies). */
+export const stationReceiveAsOrderedSchema = z
+	.object({
+		clientId: clientIdSchema,
+		locationId: inventoryLocationIdSchema,
+		expectedVersion: z.number().int().min(1),
+		...madeShape,
+	})
+	.strict()
+
+export const stationReceiveAsOrderedResultSchema = z.object({
+	deliveryId: z.string(),
+	orderId: z.string(),
+	orderStatus: orderStatusSchema,
+	lineCount: z.number().int(),
+	receivedAt: z.number().int(),
+	duplicate: z.boolean(),
+})
+export type StationReceiveAsOrderedResult = z.infer<
+	typeof stationReceiveAsOrderedResultSchema
+>
+
+/** `POST /pos/inventory/orders/:id/not-yet` (#501, manager rule applies). */
+export const stationOrderNotYetSchema = z
+	.object({
+		locationId: inventoryLocationIdSchema,
+		expectedVersion: z.number().int().min(1),
+		expectedDate: isoDateSchema,
+		...madeShape,
+	})
+	.strict()
+
+export const stationOrderNotYetResultSchema = z.object({
+	orderId: z.string(),
+	status: orderStatusSchema,
+	expectedDate: isoDateSchema,
+	version: z.number().int(),
+})
+export type StationOrderNotYetResult = z.infer<
+	typeof stationOrderNotYetResultSchema
+>
+
+/**
+ * `POST /pos/inventory/cash-purchase` (#466): cash purchase from the market
+ * on Station. Amounts are entered once here (`amountPaidMinor`) and NEVER
+ * returned or shown anywhere on Station afterwards. Enforces the till manager
+ * rule (`receiveRequiresManager`).
+ */
+export const stationCashPurchaseLineSchema = z
+	.object({
+		itemId: inventoryIdSchema.nullable().optional(),
+		draftItem: z
+			.object({
+				name: inventoryNameSchema,
+				baseUnit: inventoryBaseUnitSchema,
+				category: inventoryCategorySchema.optional(),
+			})
+			.strict()
+			.optional(),
+		quantity: positiveQuantitySchema,
+		amountPaidMinor: inventoryMinorSchema,
+	})
+	.strict()
+	.refine((line) => Boolean(line.itemId || line.draftItem), {
+		message: 'Required',
+	})
+
+export const stationCashPurchaseSchema = z
+	.object({
+		clientId: clientIdSchema,
+		locationId: inventoryLocationIdSchema,
+		lines: z.array(stationCashPurchaseLineSchema).min(1).max(200),
+		...madeShape,
+	})
+	.strict()
+
+/** Zero money fields returned to Station (#466). */
+export const stationCashPurchaseResultSchema = z.object({
+	id: z.string(),
+	lineCount: z.number().int(),
+	receivedAt: z.number().int(),
+	lateSync: z.boolean(),
+	duplicate: z.boolean(),
+	draftItemIds: z.array(z.string()),
+})
+export type StationCashPurchaseResult = z.infer<
+	typeof stationCashPurchaseResultSchema
+>
 
 // ── The tablet's outbox (Dexie `stockQueue`, version 7) ─────────────────────
 

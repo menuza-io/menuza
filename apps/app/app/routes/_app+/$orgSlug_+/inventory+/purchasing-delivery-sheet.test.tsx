@@ -416,4 +416,132 @@ describe('Delivery sheet: credit and the invoice photo', () => {
 		await screen.findByTestId('delivery-photo-image')
 		expect(screen.queryByTestId('delivery-photo-button')).toBeNull()
 	})
+
+	it('shows Undo button on an as-ordered delivery within 24h and calls /undo (#501)', async () => {
+		const future = Date.now() + 3_600_000
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path === '/deliveries/d1') {
+				return pendingDelivery({
+					pricesPending: false,
+					paid: false,
+					asOrdered: true,
+					undoUntil: future,
+				})
+			}
+			if (path === '/deliveries/d1/undo' && init?.method === 'POST') {
+				return pendingDelivery({ status: 'cancelled', version: 5 })
+			}
+			throw new Error(`unexpected ${path}`)
+		})
+		renderSheet(request)
+		const undoBtn = await screen.findByTestId('delivery-undo-as-ordered')
+		await userEvent.click(undoBtn)
+		await waitFor(() =>
+			expect(toast.success).toHaveBeenCalledWith('Delivery undone.'),
+		)
+		const idx = request.mock.calls.findIndex(
+			([p]) => p === '/deliveries/d1/undo',
+		)
+		expect(sentJson(request, idx)).toEqual({ expectedVersion: 4 })
+	})
+
+	it('uses invoice lines inside ConfirmPricesDialog with warnings and extra lines (#504)', async () => {
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path === '/deliveries/d1') {
+				return pendingDelivery({
+					hasPhoto: true,
+					lines: [
+						{
+							id: 'l1',
+							itemId: 'itm_1',
+							itemName: 'Tomatoes',
+							quantity: 20_000_000,
+							packs: 2,
+							packName: 'Crate',
+							realWeightQuantity: null,
+							priced: false,
+						},
+					],
+					lineCount: 1,
+				})
+			}
+			if (
+				path === '/deliveries/d1/invoice-photo/read' &&
+				init?.method === 'POST'
+			) {
+				return {
+					deliveryId: 'd1',
+					supplierName: 'Fresh Farms',
+					invoiceNumber: 'INV-504',
+					totalMinor: 25_000,
+					linesSumMinor: 24_000,
+					invoiceTotalMismatch: true,
+					lines: [
+						{
+							text: 'Tomatoes 2 crates @ 100',
+							quantity: 2,
+							unit: 'crate',
+							lineTotalMinor: 20_000,
+							unitPriceMinor: 10_000,
+							itemId: 'itm_1',
+							itemName: 'Tomatoes',
+							warnings: ['price_change_gt_5pct'],
+						},
+						{
+							text: 'Fresh Mint 1 bunch @ 40',
+							quantity: 1,
+							unit: 'piece',
+							lineTotalMinor: 4_000,
+							unitPriceMinor: 4_000,
+							itemId: null,
+							itemName: null,
+							warnings: ['unmatched'],
+						},
+					],
+				}
+			}
+			if (path === '/deliveries/d1/confirm-prices' && init?.method === 'POST') {
+				return {
+					delivery: pendingDelivery({ pricesPending: false }),
+					priceChanges: [],
+				}
+			}
+			throw new Error(`unexpected ${path}`)
+		})
+
+		renderSheet(request)
+		await userEvent.click(await screen.findByTestId('delivery-confirm-prices'))
+		await userEvent.click(
+			await screen.findByTestId('confirm-use-invoice-lines'),
+		)
+
+		expect(
+			await screen.findByTestId('confirm-invoice-total-mismatch'),
+		).toBeInTheDocument()
+		expect(screen.getByTestId('confirm-line-raw-l1')).toHaveTextContent(
+			'Tomatoes 2 crates @ 100',
+		)
+		expect(screen.getByTestId('confirm-extra-extra-1')).toBeInTheDocument()
+
+		await userEvent.click(screen.getByTestId('confirm-prices-submit'))
+		await waitFor(() =>
+			expect(toast.success).toHaveBeenCalledWith(
+				'Prices confirmed.',
+				expect.anything(),
+			),
+		)
+		const idx = request.mock.calls.findIndex(
+			([p]) => p === '/deliveries/d1/confirm-prices',
+		)
+		expect(sentJson(request, idx)).toMatchObject({
+			invoiceNumber: 'INV-504',
+			lines: [{ lineId: 'l1', lineTotalMinor: 20_000, packPriceMinor: 10_000 }],
+			extraLines: [
+				{
+					createItem: { name: 'Fresh Mint 1 bunch @ 40', baseUnit: 'piece' },
+					lineTotalMinor: 4_000,
+				},
+			],
+		})
+	})
 })

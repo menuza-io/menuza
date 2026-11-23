@@ -23,6 +23,7 @@ import { useParams } from 'react-router'
 import { toast } from 'sonner'
 import { useNotifyInventoryChanged } from '#app/components/inventory/inventory-prefs.tsx'
 import { MergeSupplierDialog } from '#app/components/inventory/merge-dialog.tsx'
+import { PriceListImportDialog } from '#app/components/inventory/price-list-import-dialog.tsx'
 import { usePurchasingContext } from '#app/components/inventory/purchasing-context.ts'
 import {
 	SupplierForm,
@@ -63,6 +64,7 @@ export default function InventorySupplierRoute() {
 		listSuppliersResultSchema,
 	)
 	const [mergeOpen, setMergeOpen] = useState(false)
+	const [importOpen, setImportOpen] = useState(false)
 	const [archiveOpen, setArchiveOpen] = useState(false)
 	const [busy, setBusy] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -149,6 +151,42 @@ export default function InventorySupplierRoute() {
 				</p>
 			) : null}
 
+			{supplier.confirmationRate90d
+				? (() => {
+						const ratePercent =
+							supplier.confirmationRate90d.rateBp !== null
+								? Math.round(supplier.confirmationRate90d.rateBp / 100)
+								: null
+						const confirmedCount = supplier.confirmationRate90d.confirmed
+						const sentCount = supplier.confirmationRate90d.sent
+						return (
+							<p
+								className="text-muted-foreground text-sm"
+								data-testid="supplier-confirmation-rate"
+							>
+								{sentCount === 0 || ratePercent === null ? (
+									<Trans>90-day confirmation rate: no sent orders yet.</Trans>
+								) : (
+									<Trans>
+										90-day confirmation rate:{' '}
+										<bdi
+											dir="ltr"
+											className="text-foreground font-medium tabular-nums"
+										>
+											{ratePercent}%
+										</bdi>{' '}
+										(
+										<bdi dir="ltr" className="tabular-nums">
+											{confirmedCount}/{sentCount}
+										</bdi>
+										)
+									</Trans>
+								)}
+							</p>
+						)
+					})()
+				: null}
+
 			{error ? (
 				<Alert variant="destructive">
 					<AlertDescription>{error}</AlertDescription>
@@ -178,6 +216,20 @@ export default function InventorySupplierRoute() {
 				canSeeCost={ctx.canSeeCost}
 				currency={supplier.currency}
 				locationId={ctx.activeLocationId}
+				headerAction={
+					ctx.canManagePurchasing && ctx.canSeeCost ? (
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={() => setImportOpen(true)}
+							data-testid="supplier-import-price-list"
+						>
+							<Icon name="arrow-up-from-line" />
+							<Trans>Import price list</Trans>
+						</Button>
+					) : null
+				}
 				onChanged={() => {
 					query.reload()
 					ctx.reload()
@@ -208,6 +260,18 @@ export default function InventorySupplierRoute() {
 				</div>
 			) : null}
 
+			<PriceListImportDialog
+				open={importOpen}
+				onOpenChange={setImportOpen}
+				supplierId={supplier.id}
+				supplierName={supplier.name}
+				currency={supplier.currency}
+				locationId={ctx.activeLocationId}
+				onImported={() => {
+					query.reload()
+					ctx.reload()
+				}}
+			/>
 			<MergeSupplierDialog
 				supplierId={supplier.id}
 				supplierName={supplier.name}

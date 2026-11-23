@@ -31,6 +31,11 @@
       "types": "./src/catalog-menu-insights.ts",
       "import": "./src/catalog-menu-insights.ts",
       "default": "./src/catalog-menu-insights.ts"
+    },
+    "./catalog-inventory": {
+      "types": "./src/catalog-inventory.ts",
+      "import": "./src/catalog-inventory.ts",
+      "default": "./src/catalog-inventory.ts"
     }
   },
   "scripts": {

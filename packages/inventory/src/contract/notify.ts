@@ -84,6 +84,8 @@ export const inventoryNotifyEventSchema = z
 		kind: inventoryNotifyKindSchema,
 		locationId: inventoryLocationIdSchema,
 		count: z.number().int().min(1).max(10_000),
+		/** Overdue subset of `inventory_delivery_due` (#501, counts only). */
+		overdueCount: z.number().int().min(0).max(10_000).optional(),
 		/** Sold-out kinds only. */
 		soldOut: z
 			.array(soldOutAlertEntrySchema)

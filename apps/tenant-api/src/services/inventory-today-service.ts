@@ -42,6 +42,7 @@ import {
 	buildSuggestedOrders,
 	listDueOrders,
 	listOpenOrdersForWeek,
+	listUnconfirmedOrdersForDate,
 } from './inventory-orders-service.ts'
 import { findPriceRises } from './inventory-receiving-service.ts'
 import {
@@ -64,6 +65,7 @@ const KIND_PRIORITY: Record<AttentionItem['kind'], number> = {
 	runs_out_soon: 1.5,
 	// Phase 2 kinds are produced by the region work that follows the contract.
 	order_cutoff: 2,
+	unconfirmed_order: 2.5,
 	delivery_expected: 3,
 	count_due: 4,
 	count_in_progress: 5,
@@ -303,6 +305,27 @@ export async function getToday(
 				supplierName: due.supplierName,
 				expectedDate: due.order.expectedDate!,
 				overdue: due.order.expectedDate! < date,
+				number: due.order.number,
+				version: due.order.version,
+			})
+		}
+		// Sent/partly-received orders due tomorrow whose supplier hasn't confirmed yet (#502).
+		const tomorrow = addDays(date, 1)
+		for (const unconfirmed of (
+			await listUnconfirmedOrdersForDate(db, {
+				locationId,
+				expectedDate: tomorrow,
+			})
+		).slice(0, 3)) {
+			push({
+				kind: 'unconfirmed_order',
+				orderId: unconfirmed.order.id,
+				number: unconfirmed.order.number,
+				supplierId: unconfirmed.order.supplierId,
+				supplierName: unconfirmed.supplierName,
+				expectedDate: unconfirmed.order.expectedDate!,
+				sentVia: unconfirmed.order.sentVia,
+				version: unconfirmed.order.version,
 			})
 		}
 	}
