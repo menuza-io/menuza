@@ -54,6 +54,8 @@ const INVENTORY_TABLES = [
 	'inv_prep_tasks',
 	'inv_recipe_lines',
 	'inv_recipes',
+	'inv_repeat_order_runs',
+	'inv_repeat_orders',
 	'inv_sale_usage',
 	'inv_settings',
 	'inv_setup_dismissals',
@@ -1498,6 +1500,43 @@ describe('inventory tenant schema (0033_inventory, 0034_inventory_orders, 0035_i
 			)
 			await client.execute(
 				"UPDATE inv_orders SET status = 'sent', closed_at = NULL WHERE id = 'ord_1'",
+			)
+		})
+	})
+
+	describe('0064_order_planning_cost_insight', () => {
+		it('adds repeat orders, runs, supplier pause, location limits/special hours, and order approval columns', async () => {
+			const { client } = await openMigratedDb()
+			await client.execute(
+				"INSERT INTO inv_suppliers (id, name, paused_at) VALUES ('sup_r1', 'Repeat Sup', 1700000000000)",
+			)
+			await client.execute(
+				"INSERT INTO inv_location_settings (location_id, order_limit_minor, monthly_limit_minor, special_hours) VALUES ('main', 50000, 200000, '[]')",
+			)
+			await client.execute(
+				"INSERT INTO inv_repeat_orders (id, client_id, location_id, supplier_id, cadence_weeks, weekdays, mode, anchor_date, lines_json, created_by_kind) VALUES ('rep_1', 'c_rep_1', 'main', 'sup_r1', 2, '[1,4]', 'top_up', '2026-11-23', '[]', 'operator')",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_repeat_orders (id, client_id, location_id, supplier_id, cadence_weeks, weekdays, mode, anchor_date, lines_json, created_by_kind) VALUES ('rep_bad', 'c_rep_bad', 'main', 'sup_r1', 3, '[1]', 'fixed_lines', '2026-11-23', '[]', 'operator')",
+				),
+				'chk_inv_repeat_orders_cadence',
+			)
+			await client.execute(
+				"INSERT INTO inv_repeat_order_runs (id, repeat_order_id, delivery_date, cutoff_date, cutoff_time, status, note) VALUES ('run_1', 'rep_1', '2026-11-26', '2026-11-25', '16:00', 'skipped_holiday', 'Closed for holiday')",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_repeat_order_runs (id, repeat_order_id, delivery_date, cutoff_date, cutoff_time, status) VALUES ('run_dup', 'rep_1', '2026-11-26', '2026-11-25', '16:00', 'skipped')",
+				),
+				'UNIQUE constraint failed',
+			)
+			await client.execute(
+				"INSERT INTO inv_orders (id, number, client_id, location_id, supplier_id, status, created_by_kind, repeat_order_id, approval_status, requested_send_channel, approval_breached_order_limit) VALUES ('ord_ap1', 10, 'c_ord_ap1', 'main', 'sup_r1', 'draft', 'operator', 'rep_1', 'waiting_approval', 'email', 1)",
+			)
+			// Reject keeps SQL status = 'draft' and records reason without triggering inv_orders_status_forward.
+			await client.execute(
+				"UPDATE inv_orders SET approval_status = 'rejected', rejection_reason = 'Too high' WHERE id = 'ord_ap1'",
 			)
 		})
 	})

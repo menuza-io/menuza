@@ -215,10 +215,29 @@ describe('Inventory item sheet', () => {
 	})
 
 	it('shows cost and the price history only with the cost grant', async () => {
-		const withCost = renderSheet(region())
+		const withOthersPay = {
+			...DETAIL,
+			othersPay: {
+				locationId: 'jed',
+				supplierId: 's2',
+				supplierName: 'Fresh Farms',
+				costMicro: 2_200_000,
+				currency: 'SAR',
+				currentCostMicro: 2_800_000,
+				diffCostMicro: 600_000,
+				savingBp: 2143,
+				lastPaidAt: Date.UTC(2026, 10, 2),
+			},
+		}
+		const withCost = renderSheet(region(withOthersPay))
 		const cost = await screen.findByTestId('item-sheet-cost')
 		expect(cost).toHaveTextContent('28.00')
 		expect(within(cost).getByTestId('price-chart')).toBeInTheDocument()
+		const othersPay = within(cost).getByTestId('item-sheet-others-pay')
+		expect(othersPay).toHaveTextContent('22.00')
+		expect(othersPay).toHaveTextContent('6.00')
+		expect(othersPay).toHaveTextContent('Acme Jeddah')
+		expect(othersPay).toHaveTextContent('Fresh Farms')
 		withCost.unmount()
 
 		const { cost: ignoredCost, valueMinor, currency, ...withoutCost } = DETAIL

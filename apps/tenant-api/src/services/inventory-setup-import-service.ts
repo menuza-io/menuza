@@ -833,6 +833,7 @@ export async function applySetupImport(
 						notes: null,
 						isMarketCash: false,
 						mergedIntoId: null,
+						pausedAt: null,
 						archivedAt: null,
 						version: 1,
 						createdAt: ctx.now,

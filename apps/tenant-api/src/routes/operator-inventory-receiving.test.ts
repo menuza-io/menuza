@@ -10,7 +10,14 @@ import {
 	getTenantDb,
 	invDeliveries,
 	invItemCosts,
+	invItemGroupMembers,
+	invItemGroups,
+	invItems,
+	invLocationSettings,
 	invMovements,
+	invRecipeLines,
+	invRecipes,
+	invSettings,
 	invWaste,
 	provisionTenantDb,
 } from '@repo/tenant-db'
@@ -28,6 +35,7 @@ import {
 import { type PublishedOrganization } from '../lib/origin.ts'
 import { type InventoryCaller } from '../services/inventory-items-service.ts'
 import { recordDelivery } from '../services/inventory-purchasing-service.ts'
+import { getPriceAlerts } from '../services/inventory-receiving-service.ts'
 import { logWaste } from '../services/inventory-waste-service.ts'
 import { makeWorld } from './inventory-orders-fixture.ts'
 import {
@@ -567,7 +575,8 @@ describe('price alerts', () => {
 			packName: 'Box',
 			previousPackPriceMinor: 10_000,
 			packPriceMinor: 13_000,
-			affectedDishes: null,
+			affectedDishes: 0,
+			dishes: [],
 		})
 		// Another location has none.
 		const other = await call('GET', `${BASE}/price-alerts?locationId=${LOC}`, {
@@ -583,6 +592,13 @@ describe('price alerts', () => {
 			{ token: staff },
 		)
 		expect(denied.status).toBe(403)
+		await expect(
+			getPriceAlerts(await getTenantDb(ORG), {
+				query: { locationId: LOC_ALERT, days: 30 },
+				now: Date.now(),
+				caller: { cost: false, region: 'us' },
+			}),
+		).rejects.toMatchObject({ status: 403, code: 'forbidden' })
 		for (const days of ['0', '181', 'x']) {
 			const bad = await call(
 				'GET',
@@ -591,6 +607,237 @@ describe('price alerts', () => {
 			)
 			expect(bad.status, days).toBe(400)
 		}
+	})
+
+	it('computes affected dishes directly, through groups, and through both standard and batch-counted made items (#520)', async () => {
+		const db = await getTenantDb(ORG)
+		const locImpact = 'loc_rcv_dish_impact'
+		const impactWorld = makeWorld(call, full, locImpact)
+		const impactSup = await impactWorld.supplier('Impact Supplier')
+		const flour = await impactWorld.item('Impact flour')
+		// 10 kg box: 10_000 minor (1.00/kg = 1_000_000 micro/g) -> 13_000 minor (1.30/kg = 1_300_000 micro/g)
+		const deliverFlour = (totalMinor: number) =>
+			impactWorld.ok('POST', '/deliveries', {
+				clientId: cid('del'),
+				locationId: locImpact,
+				supplierId: impactSup.id,
+				currency: 'SAR',
+				lines: [
+					{
+						itemId: flour.id,
+						quantity: 10_000_000,
+						lineTotalMinor: totalMinor,
+						packName: 'Bag 10 kg',
+						packPriceMinor: totalMinor,
+					},
+				],
+			})
+		await deliverFlour(10_000)
+		await deliverFlour(13_000)
+
+		// Settings: target 30% (3000 bp) and tax-inclusive 15% (1500 bp) at this location.
+		await db
+			.insert(invSettings)
+			.values({
+				id: 'default',
+				targetFoodCostBp: 3000,
+				unitSystem: 'metric',
+				updatedAt: Date.now(),
+			})
+			.onConflictDoUpdate({
+				target: invSettings.id,
+				set: { targetFoodCostBp: 3000 },
+			})
+		await db
+			.insert(invLocationSettings)
+			.values({
+				locationId: locImpact,
+				currency: 'SAR',
+				pricesIncludeTax: true,
+				taxRateBp: 1500,
+				updatedAt: Date.now(),
+			})
+			.onConflictDoUpdate({
+				target: invLocationSettings.locationId,
+				set: { pricesIncludeTax: true, taxRateBp: 1500 },
+			})
+
+		const now = Date.now()
+		// 1) Direct dish: 500 g of flour -> old 500 minor, new 650 minor.
+		await db.insert(invRecipes).values({
+			id: 'rec_direct_bread',
+			ownerKind: 'menu_item',
+			ownerId: 'dish_direct_bread',
+			version: 1,
+			effectiveFrom: now - 1000,
+			createdByKind: 'system',
+		})
+		await db.insert(invRecipeLines).values({
+			recipeId: 'rec_direct_bread',
+			itemId: flour.id,
+			quantity: 500_000,
+		})
+
+		// 2) Standard (non-batch-counted) made item: dough makes 1 kg from 1 kg flour; dish uses 400 g dough -> old 400 minor, new 520 minor.
+		await db.insert(invItems).values({
+			id: 'made_std_dough',
+			name: 'Std dough',
+			kind: 'made',
+			baseUnit: 'g',
+			batchCounted: false,
+		})
+		await db.insert(invRecipes).values([
+			{
+				id: 'rec_made_std_dough',
+				ownerKind: 'made_item',
+				ownerId: 'made_std_dough',
+				version: 1,
+				makesQuantity: 1_000_000,
+				effectiveFrom: now - 1000,
+				createdByKind: 'system',
+			},
+			{
+				id: 'rec_std_pizza',
+				ownerKind: 'menu_item',
+				ownerId: 'dish_std_pizza',
+				version: 1,
+				effectiveFrom: now - 1000,
+				createdByKind: 'system',
+			},
+		])
+		await db.insert(invRecipeLines).values([
+			{
+				recipeId: 'rec_made_std_dough',
+				itemId: flour.id,
+				quantity: 1_000_000,
+			},
+			{
+				recipeId: 'rec_std_pizza',
+				itemId: 'made_std_dough',
+				quantity: 400_000,
+			},
+		])
+
+		// 3) Batch-counted made item: batch sauce makes 1 kg from 500 g flour; dish uses 200 g -> old 100 minor, new 130 minor.
+		await db.insert(invItems).values({
+			id: 'made_batch_roux',
+			name: 'Batch roux',
+			kind: 'made',
+			baseUnit: 'g',
+			batchCounted: true,
+		})
+		await db.insert(invItemCosts).values({
+			itemId: 'made_batch_roux',
+			currency: 'SAR',
+			lastCostMicro: 500_000,
+			avgCostMicro: 500_000,
+			lastPricedAt: now - 5000,
+		})
+		await db.insert(invRecipes).values([
+			{
+				id: 'rec_made_batch_roux',
+				ownerKind: 'made_item',
+				ownerId: 'made_batch_roux',
+				version: 1,
+				makesQuantity: 1_000_000,
+				effectiveFrom: now - 1000,
+				createdByKind: 'system',
+			},
+			{
+				id: 'rec_batch_pasta',
+				ownerKind: 'menu_item',
+				ownerId: 'dish_batch_pasta',
+				version: 1,
+				effectiveFrom: now - 1000,
+				createdByKind: 'system',
+			},
+		])
+		await db.insert(invRecipeLines).values([
+			{
+				recipeId: 'rec_made_batch_roux',
+				itemId: flour.id,
+				quantity: 500_000,
+			},
+			{
+				recipeId: 'rec_batch_pasta',
+				itemId: 'made_batch_roux',
+				quantity: 200_000,
+			},
+		])
+
+		// 4) Item group pass-through: flour is primary of group; dish uses 300 g group -> old 300 minor, new 390 minor.
+		await db.insert(invItems).values({
+			id: 'grp_all_flour',
+			name: 'All flour group',
+			kind: 'bought',
+			baseUnit: 'g',
+		})
+		await db.insert(invItemGroups).values({ itemId: 'grp_all_flour' })
+		await db.insert(invItemGroupMembers).values({
+			groupItemId: 'grp_all_flour',
+			memberItemId: flour.id,
+			rank: 0,
+			memberQuantity: 1,
+			groupQuantity: 1,
+		})
+		await db.insert(invRecipes).values({
+			id: 'rec_group_cake',
+			ownerKind: 'menu_item',
+			ownerId: 'dish_group_cake',
+			version: 1,
+			effectiveFrom: now - 1000,
+			createdByKind: 'system',
+		})
+		await db.insert(invRecipeLines).values({
+			recipeId: 'rec_group_cake',
+			itemId: 'grp_all_flour',
+			quantity: 300_000,
+		})
+
+		const res = await call(
+			'GET',
+			`${BASE}/price-alerts?locationId=${locImpact}&days=30`,
+			{ token: costOnly },
+		)
+		expect(res.status, JSON.stringify(res.body)).toBe(200)
+		const parsed = priceAlertsSchema.parse(res.body)
+		expect(parsed.alerts).toHaveLength(1)
+		const alert = parsed.alerts[0]!
+		expect(alert).toMatchObject({
+			itemId: flour.id,
+			affectedDishes: 4,
+			targetFoodCostBp: 3000,
+			pricesIncludeTax: true,
+			taxRateBp: 1500,
+		})
+		const byDish = new Map(alert.dishes!.map((d) => [d.menuItemId, d]))
+		// priceForTargetMinor(650, 3000, { pricesIncludeTax: true, taxRateBp: 1500 })
+		// net = round(650 * 10000 / 3000) = 2167; gross = round(2167 * 11500 / 10000) = 2492
+		expect(byDish.get('dish_direct_bread')).toEqual({
+			menuItemId: 'dish_direct_bread',
+			variantId: null,
+			previousCostMinor: 500,
+			costMinor: 650,
+			priceForTargetMinor: 2492,
+		})
+		expect(byDish.get('dish_std_pizza')).toMatchObject({
+			menuItemId: 'dish_std_pizza',
+			variantId: null,
+			previousCostMinor: 400,
+			costMinor: 520,
+		})
+		expect(byDish.get('dish_batch_pasta')).toMatchObject({
+			menuItemId: 'dish_batch_pasta',
+			variantId: null,
+			previousCostMinor: 100,
+			costMinor: 130,
+		})
+		expect(byDish.get('dish_group_cake')).toMatchObject({
+			menuItemId: 'dish_group_cake',
+			variantId: null,
+			previousCostMinor: 300,
+			costMinor: 390,
+		})
 	})
 })
 

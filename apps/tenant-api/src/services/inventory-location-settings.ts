@@ -1,4 +1,5 @@
 import {
+	parseClosedSpecialDates,
 	type InventoryLocationSettings,
 	type InventoryContextLocation,
 } from '@repo/inventory'
@@ -16,7 +17,15 @@ import {
 	type InventoryPlaceContext,
 } from '../lib/inventory-context.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
-import { type InventoryReader } from '../lib/inventory-write.ts'
+import {
+	type InventoryIdempotency,
+	type InventoryReader,
+	withInventoryWrite,
+} from '../lib/inventory-write.ts'
+import { recordInventoryAudit } from './inventory-audit.ts'
+import { assertLocationAllowed, assertVersion } from './inventory-common.ts'
+import { type UpdateLocationSpendingLimitsInput } from './inventory-contract-types.ts'
+import { type InventoryCaller } from './inventory-items-service.ts'
 
 /**
  * Where a location's inventory money and days come from.
@@ -63,8 +72,9 @@ function toWire(
 	locationId: string,
 	row: SettingsRow | undefined,
 	time: LocationTime,
+	cost = true,
 ): InventoryLocationSettings {
-	return {
+	const out: InventoryLocationSettings = {
 		locationId,
 		currency: row?.currency ?? null,
 		currencySource: row?.currencySource ?? null,
@@ -72,7 +82,13 @@ function toWire(
 		dayStartMinutes: time.dayStartMin,
 		pricesIncludeTax: row?.pricesIncludeTax ?? false,
 		taxRateBp: row?.taxRateBp ?? null,
+		version: row?.version ?? 0,
 	}
+	if (cost) {
+		out.orderLimitMinor = row?.orderLimitMinor ?? null
+		out.monthlyLimitMinor = row?.monthlyLimitMinor ?? null
+	}
+	return out
 }
 
 async function readRow(
@@ -132,19 +148,35 @@ export async function resolveLocationTime(
 export async function getLocationSettings(
 	db: InventoryReader,
 	locationId: string,
+	options: { cost?: boolean } = {},
 ): Promise<InventoryLocationSettings> {
 	const [row, time] = await Promise.all([
 		readRow(db, locationId),
 		resolveLocationTime(db, locationId),
 	])
-	return toWire(locationId, row, time)
+	return toWire(locationId, row, time, options.cost ?? true)
+}
+
+/**
+ * Closed special dates (`YYYY-MM-DD` → optional reason/note) for `locationId`,
+ * read from `inv_location_settings.special_hours` (synced from
+ * `OrganizationLocation.specialHours`).
+ */
+export async function getLocationClosedSpecialDates(
+	db: InventoryReader,
+	locationId: string,
+): Promise<Map<string, string | null>> {
+	const inv = await readRow(db, locationId)
+	return parseClosedSpecialDates(inv?.specialHours ?? null)
 }
 
 /** The settings of every location the token covers that the region knows. */
 export async function listLocationSettings(
 	db: InventoryReader,
 	scope: readonly string[] | null,
+	options: { cost?: boolean } = {},
 ): Promise<InventoryLocationSettings[]> {
+	const cost = options.cost ?? true
 	const rows = await db.select().from(invLocationSettings)
 	const out: InventoryLocationSettings[] = []
 	for (const row of rows) {
@@ -155,10 +187,75 @@ export async function listLocationSettings(
 				row.locationId,
 				row,
 				await resolveLocationTime(db, row.locationId),
+				cost,
 			),
 		)
 	}
 	return out.sort((a, b) => (a.locationId < b.locationId ? -1 : 1))
+}
+
+/**
+ * Updates per-location purchasing spending limits (`orderLimitMinor`,
+ * `monthlyLimitMinor`). Requires `update:inventory_purchasing:any`,
+ * `update:settings:any` (`canManageSettings`), and `read:inventory_cost:any`.
+ */
+export async function updateLocationSpendingLimits(
+	caller: InventoryCaller,
+	input: {
+		locationId: string
+		body: UpdateLocationSpendingLimitsInput
+		idempotency?: InventoryIdempotency | null
+	},
+): Promise<InventoryLocationSettings> {
+	if (!caller.purchasing || !caller.canManageSettings || !caller.cost) {
+		throw new InventoryError('forbidden', 403, { reason: 'grant' })
+	}
+	assertLocationAllowed(caller.locationIds, input.locationId)
+	return withInventoryWrite(
+		{ orgId: caller.orgId, idempotency: input.idempotency },
+		async (tx, ctx) => {
+			const existing = await readRow(tx, input.locationId)
+			const currentVersion = existing?.version ?? 0
+			assertVersion(currentVersion, input.body.expectedVersion)
+			const orderLimitMinor =
+				input.body.orderLimitMinor === undefined
+					? (existing?.orderLimitMinor ?? null)
+					: input.body.orderLimitMinor
+			const monthlyLimitMinor =
+				input.body.monthlyLimitMinor === undefined
+					? (existing?.monthlyLimitMinor ?? null)
+					: input.body.monthlyLimitMinor
+			const nextVersion = currentVersion + 1
+			const values = {
+				orderLimitMinor,
+				monthlyLimitMinor,
+				version: nextVersion,
+				updatedAt: ctx.now,
+			}
+			await tx
+				.insert(invLocationSettings)
+				.values({ locationId: input.locationId, ...values })
+				.onConflictDoUpdate({
+					target: invLocationSettings.locationId,
+					set: values,
+				})
+			await recordInventoryAudit(tx, {
+				actorKind: caller.actor.kind,
+				actorId: caller.actor.id,
+				action: 'location_settings.limits.update',
+				resourceType: 'location_settings',
+				resourceId: input.locationId,
+				locationId: input.locationId,
+				detail: {
+					version: nextVersion,
+					orderLimitMinor,
+					monthlyLimitMinor,
+				},
+				at: ctx.now,
+			})
+			return getLocationSettings(tx, input.locationId, { cost: caller.cost })
+		},
+	)
 }
 
 /** The location's currency, or null while unknown. */
@@ -257,6 +354,15 @@ function taxBp(location: InventoryContextLocation): number | null {
 		: Math.min(10_000, Math.max(0, Math.round(location.taxRatePercent * 100)))
 }
 
+function serializeSpecialHours(raw: unknown): string | null {
+	if (raw === null || raw === undefined) return null
+	if (typeof raw === 'string') {
+		const trimmed = raw.trim()
+		return trimmed.length > 0 ? trimmed : null
+	}
+	return JSON.stringify(raw)
+}
+
 async function applyLocation(
 	db: TenantDatabase,
 	orgId: string,
@@ -284,13 +390,18 @@ async function applyLocation(
 	const pricesIncludeTax =
 		location.taxInclusive ?? existing?.pricesIncludeTax ?? false
 	const taxRateBp = taxBp(location) ?? existing?.taxRateBp ?? null
+	const specialHours =
+		location.specialHours !== undefined
+			? serializeSpecialHours(location.specialHours)
+			: (existing?.specialHours ?? null)
 	if (
 		existing &&
 		existing.currency === currency &&
 		existing.currencySource === currencySource &&
 		existing.timeZone === zone &&
 		existing.pricesIncludeTax === pricesIncludeTax &&
-		existing.taxRateBp === taxRateBp
+		existing.taxRateBp === taxRateBp &&
+		existing.specialHours === specialHours
 	) {
 		await db
 			.update(invLocationSettings)
@@ -314,6 +425,7 @@ async function applyLocation(
 		dayStartMinutes: dayStart,
 		pricesIncludeTax,
 		taxRateBp,
+		specialHours,
 		version: (existing?.version ?? 0) + 1,
 		syncedAt: now,
 		updatedAt: now,

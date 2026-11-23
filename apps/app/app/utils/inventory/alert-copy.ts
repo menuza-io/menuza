@@ -114,5 +114,29 @@ function describe(
 				),
 				step: _(msg`Open Purchasing to see the price changes.` as Message),
 			}
+		case 'inventory_repeat_order_draft':
+			return {
+				subject: _(
+					plural(n, {
+						one: '# draft order is ready for review',
+						other: '# draft orders are ready for review',
+					}),
+				),
+				step: _(
+					msg`Open Purchasing to review and send before cut-off.` as Message,
+				),
+			}
+		case 'inventory_order_approval':
+			return {
+				subject: _(
+					plural(n, {
+						one: '# order needs approval',
+						other: '# orders need approval',
+					}),
+				),
+				step: _(
+					msg`Open Purchasing to approve or reject the order.` as Message,
+				),
+			}
 	}
 }

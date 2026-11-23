@@ -3,6 +3,7 @@ import {
 	MAX_ORDER_PACKS,
 	type OrderDetail,
 	orderDetailSchema,
+	type OrderLineExplanation,
 	type OrderSendChannel,
 	orderTextSchema,
 	type SendOrderResult,
@@ -23,6 +24,14 @@ import {
 } from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@repo/ui/dialog'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -49,6 +58,11 @@ import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import {
+	OrderLineExplanationPopover,
+	OrderLineWarnings,
+} from '#app/components/inventory/order-panels.tsx'
+import { RepeatOrderDialog } from '#app/components/inventory/repeat-order-dialog.tsx'
 import { SendOrderDialog } from '#app/components/inventory/send-order-dialog.tsx'
 import { MenuFormHeader } from '#app/components/menu/menu-form-header.tsx'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
@@ -66,6 +80,7 @@ import {
 	inventoryTabPath,
 } from '#app/utils/inventory/nav.ts'
 import {
+	copyToClipboard,
 	cutoffText,
 	defaultSendChannel,
 	type DraftOrderLine,
@@ -73,7 +88,6 @@ import {
 	draftTotals,
 	linesChanged,
 	ORDER_STATUS_LABELS,
-	orderIsOpen,
 	orderLinesPayload,
 	orderStatusVariant,
 	packStep,
@@ -97,6 +111,9 @@ export function ReviewOrderScreen({
 	canEdit,
 	canSeeCost,
 	canManagePurchasing,
+	canManageSettings = false,
+	isOwner = false,
+	currentUserId,
 	memberNames,
 	search,
 }: {
@@ -106,6 +123,9 @@ export function ReviewOrderScreen({
 	canEdit: boolean
 	canSeeCost: boolean
 	canManagePurchasing: boolean
+	canManageSettings?: boolean
+	isOwner?: boolean
+	currentUserId?: string
 	memberNames?: Record<string, string>
 	search: string
 }) {
@@ -134,6 +154,15 @@ export function ReviewOrderScreen({
 	const [confirming, setConfirming] = useState(false)
 	const [printing, setPrinting] = useState<string | null>(null)
 	const [localKey, setLocalKey] = useState(0)
+	const [repeatOpen, setRepeatOpen] = useState(false)
+	const [approving, setApproving] = useState(false)
+	const [approveChannel, setApproveChannel] = useState<OrderSendChannel | null>(
+		null,
+	)
+	const [rejectOpen, setRejectOpen] = useState(false)
+	const [rejectReason, setRejectReason] = useState('')
+	const [rejectError, setRejectError] = useState<string | null>(null)
+	const [rejecting, setRejecting] = useState(false)
 
 	// The editor starts from what the region has, and starts over whenever a
 	// save changes the version.
@@ -143,14 +172,20 @@ export function ReviewOrderScreen({
 		setLines(draftLinesFromOrder(order))
 		setNote(order.note ?? '')
 		setExpectedDate(order.expectedDate ?? '')
+		setApproveChannel(order.requestedSendChannel ?? null)
 		setSeededFor(seedKey)
 	}, [order, seedKey, seededFor])
 
 	const editable = order?.status === 'draft' && canManagePurchasing
+	const waitingApproval = order?.status === 'waiting_for_approval'
 	const detailsEditable =
-		order !== null && orderIsOpen(order.status) && canManagePurchasing
+		order !== null &&
+		(order.status === 'draft' ||
+			order.status === 'sent' ||
+			order.status === 'partly_received') &&
+		canManagePurchasing
 	const supplier = useInventoryQuery(
-		order && editable
+		order && (editable || repeatOpen)
 			? `/suppliers/${encodeURIComponent(order.supplierId)}`
 			: null,
 		supplierDetailSchema,
@@ -350,6 +385,72 @@ export function ReviewOrderScreen({
 		}
 	}
 
+	async function approveOrder(channel: OrderSendChannel) {
+		if (!order || approving) return
+		setApproving(true)
+		setError(null)
+		try {
+			const sent = sendOrderResultSchema.parse(
+				await request(`/orders/${encodeURIComponent(order.id)}/approve`, {
+					method: 'POST',
+					body: JSON.stringify({
+						expectedVersion: order.version,
+						channel,
+						locale: textLocale(i18n.locale),
+					}),
+				}),
+			)
+			if (sent.channel === 'whatsapp' && sent.waLink) {
+				window.open(sent.waLink, '_blank', 'noopener,noreferrer')
+			} else if (sent.channel === 'copy') {
+				await copyToClipboard(sent.text)
+			} else if (sent.channel === 'pdf') {
+				setPrinting(sent.text)
+			}
+			toast.success(t`Order approved and sent.`)
+			notifyChanged()
+			query.reload()
+		} catch (caught) {
+			setError(i18n._(inventorySaveErrorMessage(caught)))
+			query.reload()
+		} finally {
+			setApproving(false)
+		}
+	}
+
+	async function submitReject() {
+		if (!order || rejecting) return
+		const trimmed = rejectReason.trim()
+		if (trimmed === '') {
+			setRejectError(t`Enter a reason for rejecting this order.`)
+			return
+		}
+		setRejecting(true)
+		setRejectError(null)
+		setError(null)
+		try {
+			orderDetailSchema.parse(
+				await request(`/orders/${encodeURIComponent(order.id)}/reject`, {
+					method: 'POST',
+					body: JSON.stringify({
+						expectedVersion: order.version,
+						reason: trimmed,
+					}),
+				}),
+			)
+			toast.success(t`Order returned to draft.`)
+			setRejectOpen(false)
+			setRejectReason('')
+			notifyChanged()
+			query.reload()
+		} catch (caught) {
+			setRejectError(i18n._(inventorySaveErrorMessage(caught)))
+			query.reload()
+		} finally {
+			setRejecting(false)
+		}
+	}
+
 	if (query.error && !order) {
 		return (
 			<div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
@@ -387,7 +488,10 @@ export function ReviewOrderScreen({
 
 	const number = order.number
 	const supplierName = order.supplierName
-	const open = orderIsOpen(order.status)
+	const openForReceive =
+		order.status === 'draft' ||
+		order.status === 'sent' ||
+		order.status === 'partly_received'
 	const itemCount = orderLinesPayload(lines).length
 	const productsLeft = (supplier.data?.products ?? []).filter(
 		(product) => !lines.some((line) => line.supplierProductId === product.id),
@@ -400,11 +504,42 @@ export function ReviewOrderScreen({
 		email: email !== null && email !== '',
 		phone: phone !== null && phone !== '',
 	})
+	const effectiveApproveChannel =
+		approveChannel ?? order.requestedSendChannel ?? defaultChannel
 	const cutoff =
 		order.cutoff && order.status === 'draft'
 			? cutoffText(order.cutoff, i18n.locale)
 			: null
-	const canSend = canManagePurchasing && open && itemCount > 0
+	const canSend =
+		canManagePurchasing && !waitingApproval && openForReceive && itemCount > 0
+	const canApproveOrReject =
+		waitingApproval && canManagePurchasing && canManageSettings
+	const isOrderMaker = Boolean(
+		currentUserId &&
+		(order.createdBy.id === currentUserId ||
+			order.approvalRequestedBy?.id === currentUserId),
+	)
+	const blockedSelfApproval = isOrderMaker && !isOwner
+	const requestedByName = order.approvalRequestedBy?.id
+		? (memberNames?.[order.approvalRequestedBy.id] ?? null)
+		: null
+	const rejectedByName = order.rejectedBy?.id
+		? (memberNames?.[order.rejectedBy.id] ?? null)
+		: null
+	const rejectionReasonText = order.rejectionReason ?? ''
+	const orderLimitText =
+		order.orderLimitMinor !== undefined ? money(order.orderLimitMinor) : null
+	const monthlyLimitText =
+		order.monthlyLimitMinor !== undefined
+			? money(order.monthlyLimitMinor)
+			: null
+	const monthlySpentText =
+		order.monthlySpentMinor !== undefined
+			? money(order.monthlySpentMinor)
+			: null
+	const requestedChannelLabel = order.requestedSendChannel
+		? i18n._(SEND_CHANNEL_LABELS[order.requestedSendChannel])
+		: null
 	const sentLabel = order.sentAt
 		? new Intl.DateTimeFormat(i18n.locale, {
 				dateStyle: 'medium',
@@ -428,7 +563,7 @@ export function ReviewOrderScreen({
 		(order.status === 'sent' || order.status === 'partly_received')
 
 	const sendMenu =
-		canManagePurchasing && open ? (
+		canManagePurchasing && openForReceive && !waitingApproval ? (
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					render={
@@ -526,6 +661,185 @@ export function ReviewOrderScreen({
 							</Alert>
 						) : null}
 
+						{waitingApproval ? (
+							<Alert data-testid="order-waiting-approval-banner">
+								<Icon name="clock" />
+								<div className="flex flex-col gap-3">
+									<div className="flex flex-col gap-1">
+										<p className="font-medium">
+											{canSeeCost ? (
+												<Trans>Waiting for approval</Trans>
+											) : (
+												<Trans>Needs approval</Trans>
+											)}
+										</p>
+										<AlertDescription>
+											{canSeeCost ? (
+												order.approvalBreachedOrderLimit &&
+												order.approvalBreachedMonthlyLimit ? (
+													<Trans>
+														This order exceeds the per-order spending limit and
+														the monthly spending limit.
+													</Trans>
+												) : order.approvalBreachedOrderLimit ? (
+													<Trans>
+														This order exceeds the per-order spending limit.
+													</Trans>
+												) : order.approvalBreachedMonthlyLimit ? (
+													<Trans>
+														This order pushes spending above the monthly limit.
+													</Trans>
+												) : (
+													<Trans>
+														This order needs manager approval before it can be
+														sent.
+													</Trans>
+												)
+											) : (
+												<Trans>
+													This order needs approval from a manager before it can
+													be sent.
+												</Trans>
+											)}
+										</AlertDescription>
+										{canSeeCost &&
+										(orderLimitText !== null || monthlyLimitText !== null) ? (
+											<p
+												className="text-muted-foreground text-xs"
+												data-testid="order-approval-limits-detail"
+											>
+												{orderLimitText !== null ? (
+													<span>
+														<Trans>
+															Order limit: <bdi dir="ltr">{orderLimitText}</bdi>
+														</Trans>
+													</span>
+												) : null}
+												{orderLimitText !== null && monthlyLimitText !== null
+													? ' · '
+													: null}
+												{monthlyLimitText !== null ? (
+													<span>
+														<Trans>
+															Monthly limit:{' '}
+															<bdi dir="ltr">{monthlyLimitText}</bdi>
+														</Trans>
+														{monthlySpentText !== null ? (
+															<>
+																{' '}
+																<Trans>
+																	(spent <bdi dir="ltr">{monthlySpentText}</bdi>
+																	)
+																</Trans>
+															</>
+														) : null}
+													</span>
+												) : null}
+											</p>
+										) : null}
+										{requestedByName || requestedChannelLabel ? (
+											<p className="text-muted-foreground text-xs">
+												{requestedByName ? (
+													<Trans>Requested by {requestedByName}</Trans>
+												) : null}
+												{requestedByName && requestedChannelLabel
+													? ' · '
+													: null}
+												{requestedChannelLabel ? (
+													<Trans>Channel: {requestedChannelLabel}</Trans>
+												) : null}
+											</p>
+										) : null}
+									</div>
+
+									{canApproveOrReject ? (
+										<div className="flex flex-col gap-3 border-t pt-3">
+											{blockedSelfApproval ? (
+												<p
+													className="text-muted-foreground text-xs font-medium"
+													data-testid="order-self-approval-note"
+												>
+													<Trans>
+														You cannot approve an order you made. Ask another
+														manager or an owner to approve it.
+													</Trans>
+												</p>
+											) : null}
+											<div className="flex flex-wrap items-end gap-3">
+												<div className="min-w-44">
+													<SelectField
+														label={<Trans>Send via</Trans>}
+														testId="order-approve-channel"
+														options={(
+															['email', 'whatsapp', 'copy', 'pdf'] as const
+														).map((channel) => ({
+															value: channel,
+															label: i18n._(SEND_CHANNEL_LABELS[channel]),
+														}))}
+														value={effectiveApproveChannel}
+														onValueChange={(value) =>
+															setApproveChannel(value as OrderSendChannel)
+														}
+														disabled={approving || blockedSelfApproval}
+													/>
+												</div>
+												<Button
+													type="button"
+													onClick={() =>
+														void approveOrder(effectiveApproveChannel)
+													}
+													disabled={approving || blockedSelfApproval}
+													data-testid="order-approve-button"
+												>
+													{approving ? (
+														<Icon name="loader" className="animate-spin" />
+													) : (
+														<Icon name="check" />
+													)}
+													<Trans>Approve & send</Trans>
+												</Button>
+												<Button
+													type="button"
+													variant="outline"
+													onClick={() => {
+														setRejectError(null)
+														setRejectOpen(true)
+													}}
+													disabled={approving}
+													data-testid="order-reject-button"
+												>
+													<Icon name="x" />
+													<Trans>Reject</Trans>
+												</Button>
+											</div>
+										</div>
+									) : null}
+								</div>
+							</Alert>
+						) : null}
+
+						{order.status === 'draft' &&
+						order.approvalStatus === 'rejected' &&
+						order.rejectionReason ? (
+							<Alert variant="destructive" data-testid="order-rejected-banner">
+								<Icon name="alert-triangle" />
+								<div className="flex flex-col gap-1">
+									<p className="font-medium">
+										<Trans>Approval rejected — returned to draft</Trans>
+									</p>
+									<AlertDescription>
+										{rejectedByName ? (
+											<Trans>
+												{rejectedByName}: {rejectionReasonText}
+											</Trans>
+										) : (
+											rejectionReasonText
+										)}
+									</AlertDescription>
+								</div>
+							</Alert>
+						) : null}
+
 						<Frame>
 							<FrameHeader>
 								<FrameTitle className="text-base">
@@ -562,6 +876,7 @@ export function ReviewOrderScreen({
 												<OrderLine
 													key={line.key}
 													line={line}
+													explanation={saved?.explanation ?? null}
 													received={saved?.receivedQuantity ?? null}
 													editable={editable}
 													showStatus={!editable && order.status !== 'draft'}
@@ -823,7 +1138,7 @@ export function ReviewOrderScreen({
 							) : null}
 
 							<div className="flex flex-col gap-2">
-								{canEdit && open ? (
+								{canEdit && openForReceive && !waitingApproval ? (
 									<Button
 										type="button"
 										variant="outline"
@@ -837,6 +1152,17 @@ export function ReviewOrderScreen({
 										<Trans>Receive delivery</Trans>
 									</Button>
 								) : null}
+								{canManagePurchasing && order.lines.length > 0 ? (
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => setRepeatOpen(true)}
+										data-testid="order-repeat-button"
+									>
+										<Icon name="refresh-cw" />
+										<Trans>Repeat this order</Trans>
+									</Button>
+								) : null}
 								<Button
 									type="button"
 									variant="outline"
@@ -846,7 +1172,7 @@ export function ReviewOrderScreen({
 									<Icon name="printer" />
 									<Trans>Print</Trans>
 								</Button>
-								{canManagePurchasing && open ? (
+								{canManagePurchasing && openForReceive ? (
 									<Button
 										type="button"
 										variant="ghost"
@@ -878,6 +1204,93 @@ export function ReviewOrderScreen({
 					onPrint={setPrinting}
 				/>
 			) : null}
+
+			<RepeatOrderDialog
+				order={order}
+				supplier={
+					supplier.data ?? {
+						id: order.supplierId,
+						name: order.supplierName,
+						deliveryDays: [],
+					}
+				}
+				open={repeatOpen}
+				onOpenChange={setRepeatOpen}
+				onCreated={notifyChanged}
+			/>
+
+			<Dialog
+				open={rejectOpen}
+				onOpenChange={(next) => {
+					if (!rejecting) {
+						setRejectOpen(next)
+						if (!next) setRejectError(null)
+					}
+				}}
+			>
+				<DialogContent
+					className="sm:max-w-md"
+					data-testid="order-reject-dialog"
+				>
+					<DialogHeader>
+						<DialogTitle>
+							<Trans>Reject this order?</Trans>
+						</DialogTitle>
+						<DialogDescription>
+							<Trans>
+								Explain why so the person who made the order can adjust it and
+								send again.
+							</Trans>
+						</DialogDescription>
+					</DialogHeader>
+					{rejectError ? (
+						<Alert variant="destructive" data-testid="order-reject-error">
+							<AlertDescription>{rejectError}</AlertDescription>
+						</Alert>
+					) : null}
+					<div className="flex flex-col gap-1.5">
+						<Label htmlFor="order-reject-reason">
+							<Trans>Reason</Trans>
+						</Label>
+						<Textarea
+							id="order-reject-reason"
+							value={rejectReason}
+							onChange={(event) => {
+								setRejectReason(event.target.value)
+								if (rejectError && event.target.value.trim() !== '') {
+									setRejectError(null)
+								}
+							}}
+							rows={3}
+							maxLength={500}
+							placeholder={t`e.g. Split across two weeks to stay under budget`}
+							data-testid="order-reject-reason"
+						/>
+					</div>
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setRejectOpen(false)}
+							disabled={rejecting}
+						>
+							<Trans>Cancel</Trans>
+						</Button>
+						<Button
+							type="button"
+							variant="destructive"
+							disabled={rejecting}
+							onClick={() => void submitReject()}
+							data-testid="order-reject-confirm"
+						>
+							{rejecting ? (
+								<Icon name="loader" className="animate-spin" />
+							) : null}
+							<Trans>Return to draft</Trans>
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 			<AlertDialog
 				open={cancelOpen}
@@ -948,6 +1361,7 @@ export function ReviewOrderScreen({
 
 function OrderLine({
 	line,
+	explanation,
 	received,
 	editable,
 	showStatus,
@@ -956,6 +1370,7 @@ function OrderLine({
 	onRemove,
 }: {
 	line: DraftOrderLine
+	explanation: OrderLineExplanation | null
 	/** Base thousandths received so far (a saved line of a sent order). */
 	received: number | null
 	editable: boolean
@@ -1023,20 +1438,41 @@ function OrderLine({
 						) : null}
 					</span>
 				</div>
-				{editable ? (
-					<Button
-						type="button"
-						variant="ghost"
-						size="icon"
-						className="size-11 shrink-0 md:size-8"
-						aria-label={t`Remove ${itemName}`}
-						onClick={onRemove}
-						data-testid={`order-line-remove-${line.key}`}
-					>
-						<Icon name="x" />
-					</Button>
-				) : null}
+				<div className="flex shrink-0 items-center gap-1">
+					{explanation ? (
+						<OrderLineExplanationPopover
+							lineKey={line.key}
+							itemName={itemName}
+							baseUnit={baseUnit ?? 'piece'}
+							countUnit={line.countUnit}
+							explanation={explanation}
+							canSeeCost={money !== null}
+							money={money}
+						/>
+					) : null}
+					{editable ? (
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="size-11 shrink-0 md:size-8"
+							aria-label={t`Remove ${itemName}`}
+							onClick={onRemove}
+							data-testid={`order-line-remove-${line.key}`}
+						>
+							<Icon name="x" />
+						</Button>
+					) : null}
+				</div>
 			</div>
+
+			{explanation ? (
+				<OrderLineWarnings
+					lineKey={line.key}
+					explanation={explanation}
+					canSeeCost={money !== null}
+				/>
+			) : null}
 
 			{editable ? (
 				<div className="flex flex-wrap items-center gap-3">
@@ -1106,7 +1542,7 @@ function OrderLine({
 						</Trans>
 					</span>
 				) : null}
-				{editable && changed && suggested !== null ? (
+				{changed && suggested !== null ? (
 					<span data-testid={`order-line-suggested-${line.key}`}>
 						<Trans>
 							Suggested <bdi dir="ltr">{suggestedText}</bdi>

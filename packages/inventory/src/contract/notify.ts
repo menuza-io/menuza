@@ -47,6 +47,8 @@ export type InventorySoldOutKind = (typeof INVENTORY_SOLD_OUT_KINDS)[number]
 export const INVENTORY_ALL_NOTIFY_KINDS = [
 	...INVENTORY_NOTIFY_KINDS,
 	...INVENTORY_SOLD_OUT_KINDS,
+	'inventory_repeat_order_draft',
+	'inventory_order_approval',
 ] as const
 export type InventoryNotifyKind = (typeof INVENTORY_ALL_NOTIFY_KINDS)[number]
 export const inventoryNotifyKindSchema = z.enum(INVENTORY_ALL_NOTIFY_KINDS)
@@ -77,6 +79,53 @@ export type SoldOutAlertEntry = z.infer<typeof soldOutAlertEntrySchema>
 /** Entries shown in one alert; `count` still says how many in all. */
 export const MAX_SOLD_OUT_ALERT_ENTRIES = 20
 
+/** One affected dish in a price-rise alert (#520). */
+export const priceRiseDishAlertEntrySchema = z
+	.object({
+		menuItemId: z.string().min(1).max(100).nullable().optional(),
+		variantId: z.string().min(1).max(100).nullable().optional(),
+		previousCostMinor: z.number().int().nonnegative(),
+		costMinor: z.number().int().nonnegative(),
+		targetFoodCostBp: z.number().int().min(0).max(10_000),
+		pricesIncludeTax: z.boolean().optional(),
+		taxRateBp: z.number().int().min(0).max(10_000).nullable().optional(),
+		priceForTargetMinor: z.number().int().nonnegative().nullable().optional(),
+	})
+	.strict()
+export type PriceRiseDishAlertEntry = z.infer<
+	typeof priceRiseDishAlertEntrySchema
+>
+
+/** Affected dishes shown in one price-rise alert. */
+export const MAX_PRICE_RISE_DISH_ENTRIES = 20
+
+/** Details for a drafted repeat order alert (#499). */
+export const repeatOrderDraftAlertSchema = z
+	.object({
+		orderId: z.string().min(1).max(64),
+		orderNumber: z.number().int().positive(),
+		repeatOrderId: z.string().min(1).max(64),
+		expectedDate: z
+			.string()
+			.regex(/^\d{4}-\d{2}-\d{2}$/)
+			.nullable()
+			.optional(),
+		droppedArchivedCount: z.number().int().nonnegative().optional(),
+	})
+	.strict()
+export type RepeatOrderDraftAlert = z.infer<typeof repeatOrderDraftAlertSchema>
+
+/** Details for an order waiting for spending-limit approval (#500; ids and flags only). */
+export const orderApprovalAlertSchema = z
+	.object({
+		orderId: z.string().min(1).max(64),
+		orderNumber: z.number().int().positive(),
+		breachedOrderLimit: z.boolean().optional(),
+		breachedMonthlyLimit: z.boolean().optional(),
+	})
+	.strict()
+export type OrderApprovalAlert = z.infer<typeof orderApprovalAlertSchema>
+
 export const inventoryNotifyEventSchema = z
 	.object({
 		orgId: z.string().min(1).max(64),
@@ -92,6 +141,16 @@ export const inventoryNotifyEventSchema = z
 			.min(1)
 			.max(MAX_SOLD_OUT_ALERT_ENTRIES)
 			.optional(),
+		/** Affected dishes on `inventory_price_rise` (#520). */
+		priceRiseDishes: z
+			.array(priceRiseDishAlertEntrySchema)
+			.min(1)
+			.max(MAX_PRICE_RISE_DISH_ENTRIES)
+			.optional(),
+		/** Drafted repeat order details on `inventory_repeat_order_draft` (#499). */
+		repeatOrderDraft: repeatOrderDraftAlertSchema.optional(),
+		/** Order waiting for approval details on `inventory_order_approval` (#500). */
+		orderApproval: orderApprovalAlertSchema.optional(),
 	})
 	.strict()
 export type InventoryNotifyEvent = z.infer<typeof inventoryNotifyEventSchema>

@@ -1,6 +1,7 @@
 import {
 	type adjustStockSchema,
 	type approveCountSchema,
+	type approveOrderSchema,
 	type bulkCreateItemsSchema,
 	type cancelOrderSchema,
 	type clearRecipeSchema,
@@ -17,7 +18,9 @@ import {
 	type recipeCostsRequestSchema,
 	type recipeOwnerSchema,
 	type recordBatchSchema,
+	type rejectOrderSchema,
 	type sendOrderSchema,
+	type updateLocationSpendingLimitsSchema,
 	type updateOrderSchema,
 	type countEntriesSchema,
 	type createCountListSchema,
@@ -69,7 +72,12 @@ export type ListDeliveriesQuery = z.infer<typeof listDeliveriesQuerySchema>
 export type CreateOrderInput = z.infer<typeof createOrderSchema>
 export type UpdateOrderInput = z.infer<typeof updateOrderSchema>
 export type SendOrderInput = z.infer<typeof sendOrderSchema>
+export type ApproveOrderInput = z.infer<typeof approveOrderSchema>
+export type RejectOrderInput = z.infer<typeof rejectOrderSchema>
 export type CancelOrderInput = z.infer<typeof cancelOrderSchema>
+export type UpdateLocationSpendingLimitsInput = z.infer<
+	typeof updateLocationSpendingLimitsSchema
+>
 export type ListOrdersQuery = z.infer<typeof listOrdersQuerySchema>
 export type ListLevelsQuery = z.infer<typeof listLevelsQuerySchema>
 export type PutLevelsInput = z.infer<typeof putLevelsSchema>

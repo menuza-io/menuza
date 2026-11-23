@@ -1,5 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import {
+	inventoryLocationSettingsSchema,
 	inventorySettingsSchema,
 	type UnitSystem,
 } from '@repo/inventory'
@@ -34,6 +35,7 @@ import {
 	inventorySaveErrorMessage,
 } from '#app/utils/inventory/inventory-errors.ts'
 import { inventoryTabPath } from '#app/utils/inventory/nav.ts'
+import { minorToMajorText, parseMoneyToMinor } from '#app/utils/money-input.ts'
 import { type Route } from './+types/settings.ts'
 import { useInventoryLayoutData } from './_layout.tsx'
 
@@ -55,8 +57,17 @@ function formatDayStartTime(minutes: number, locale: string): string {
 
 export default function InventorySettingsRoute() {
 	const { t, i18n } = useLingui()
-	const { orgSlug, activeLocationId, canEdit, locations } =
-		useInventoryLayoutData()
+	const {
+		orgSlug,
+		activeLocationId,
+		canEdit,
+		canSeeCost,
+		canManagePurchasing,
+		canManageSettings,
+		purchasingEnabled,
+		currency,
+		locations,
+	} = useInventoryLayoutData()
 	const location = useLocation()
 	const { request } = useInventoryClient()
 	const notifyChanged = useNotifyInventoryChanged()
@@ -77,6 +88,10 @@ export default function InventorySettingsRoute() {
 	const [anyStaffCanReceive, setAnyStaffCanReceive] = useState(true)
 	const [saving, setSaving] = useState(false)
 	const [saveError, setSaveError] = useState<string | null>(null)
+	const [orderLimitText, setOrderLimitText] = useState('')
+	const [monthlyLimitText, setMonthlyLimitText] = useState('')
+	const [limitsSaving, setLimitsSaving] = useState(false)
+	const [limitsError, setLimitsError] = useState<string | null>(null)
 
 	useEffect(() => {
 		if (!settings.data) return
@@ -110,9 +125,42 @@ export default function InventorySettingsRoute() {
 	const countTimeId = useId()
 	const receiveToggleId = useId()
 
+	const orderLimitId = useId()
+	const monthlyLimitId = useId()
+
 	const activeLocationSettings = settings.data?.locations?.find(
 		(loc) => loc.locationId === activeLocationId,
 	)
+	const limitCurrency = activeLocationSettings?.currency ?? currency
+	const canEditLimits = Boolean(
+		canManagePurchasing && canManageSettings && canSeeCost,
+	)
+
+	useEffect(() => {
+		if (!settings.data || !canSeeCost) return
+		setOrderLimitText(
+			activeLocationSettings?.orderLimitMinor != null
+				? minorToMajorText(
+						activeLocationSettings.orderLimitMinor,
+						limitCurrency,
+					)
+				: '',
+		)
+		setMonthlyLimitText(
+			activeLocationSettings?.monthlyLimitMinor != null
+				? minorToMajorText(
+						activeLocationSettings.monthlyLimitMinor,
+						limitCurrency,
+					)
+				: '',
+		)
+	}, [
+		settings.data,
+		canSeeCost,
+		activeLocationSettings?.orderLimitMinor,
+		activeLocationSettings?.monthlyLimitMinor,
+		limitCurrency,
+	])
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
@@ -128,14 +176,15 @@ export default function InventorySettingsRoute() {
 			return
 		}
 		const targetFoodCostBp = Math.round(parsedPct * 100)
-		const countDayOfWeek =
-			countDay === NO_COUNT_DAY ? null : Number(countDay)
+		const countDayOfWeek = countDay === NO_COUNT_DAY ? null : Number(countDay)
 		const normalizedTime = countTime.trim()
 		if (
 			countDayOfWeek !== null &&
 			!/^([01]\d|2[0-3]):[0-5]\d$/.test(normalizedTime)
 		) {
-			setSaveError(t`Enter a valid time in 24-hour format (for example, 22:00).`)
+			setSaveError(
+				t`Enter a valid time in 24-hour format (for example, 22:00).`,
+			)
 			return
 		}
 
@@ -161,6 +210,54 @@ export default function InventorySettingsRoute() {
 			reload()
 		} finally {
 			setSaving(false)
+		}
+	}
+
+	async function handleLimitsSubmit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault()
+		if (!settings.data || !canEditLimits || limitsSaving) return
+		const rawOrder = orderLimitText.trim()
+		const rawMonthly = monthlyLimitText.trim()
+		const orderLimitMinor =
+			rawOrder === ''
+				? null
+				: parseMoneyToMinor(rawOrder, { currency: limitCurrency, min: 0 })
+		if (rawOrder !== '' && orderLimitMinor === null) {
+			setLimitsError(t`Enter a valid non-negative per-order limit.`)
+			return
+		}
+		const monthlyLimitMinor =
+			rawMonthly === ''
+				? null
+				: parseMoneyToMinor(rawMonthly, { currency: limitCurrency, min: 0 })
+		if (rawMonthly !== '' && monthlyLimitMinor === null) {
+			setLimitsError(t`Enter a valid non-negative monthly limit.`)
+			return
+		}
+		setLimitsSaving(true)
+		setLimitsError(null)
+		try {
+			inventoryLocationSettingsSchema.parse(
+				await request(
+					`/settings/locations/${encodeURIComponent(activeLocationId)}/limits`,
+					{
+						method: 'PUT',
+						body: JSON.stringify({
+							expectedVersion: activeLocationSettings?.version ?? 0,
+							orderLimitMinor,
+							monthlyLimitMinor,
+						}),
+					},
+				),
+			)
+			toast.success(t`Spending limits saved.`)
+			notifyChanged()
+			reload()
+		} catch (caught) {
+			setLimitsError(i18n._(inventorySaveErrorMessage(caught)))
+			reload()
+		} finally {
+			setLimitsSaving(false)
 		}
 	}
 
@@ -218,7 +315,10 @@ export default function InventorySettingsRoute() {
 			) : null}
 
 			{saveError ? (
-				<Alert variant="destructive" data-testid="inventory-settings-save-error">
+				<Alert
+					variant="destructive"
+					data-testid="inventory-settings-save-error"
+				>
 					<AlertDescription>{saveError}</AlertDescription>
 				</Alert>
 			) : null}
@@ -305,10 +405,7 @@ export default function InventorySettingsRoute() {
 								}}
 								disabled={!canEdit}
 							>
-								<SelectTrigger
-									id={countDayId}
-									data-testid="settings-count-day"
-								>
+								<SelectTrigger id={countDayId} data-testid="settings-count-day">
 									<SelectValue>{activeDayLabel}</SelectValue>
 								</SelectTrigger>
 								<SelectContent>
@@ -381,6 +478,89 @@ export default function InventorySettingsRoute() {
 					) : null}
 				</form>
 			</WorkspacePanel>
+
+			{purchasingEnabled && canSeeCost ? (
+				<WorkspacePanel
+					title={<Trans>Purchasing spending limits</Trans>}
+					description={
+						<Trans>
+							Orders over a limit wait for approval from a manager before
+							sending. Leave blank for no limit.
+						</Trans>
+					}
+				>
+					<form
+						onSubmit={(event) => void handleLimitsSubmit(event)}
+						className="flex flex-col gap-4"
+						data-testid="settings-limits-form"
+					>
+						{limitsError ? (
+							<Alert variant="destructive" data-testid="settings-limits-error">
+								<AlertDescription>{limitsError}</AlertDescription>
+							</Alert>
+						) : null}
+						{!canEditLimits ? (
+							<p
+								className="text-muted-foreground text-xs"
+								data-testid="settings-limits-readonly"
+							>
+								<Trans>
+									Only someone with purchasing and organization settings access
+									can change spending limits.
+								</Trans>
+							</p>
+						) : null}
+						<div className="grid max-w-lg grid-cols-1 gap-4 sm:grid-cols-2">
+							<div className="flex flex-col gap-1.5">
+								<Label htmlFor={orderLimitId}>
+									<Trans>Limit per order ({limitCurrency})</Trans>
+								</Label>
+								<Input
+									id={orderLimitId}
+									type="text"
+									inputMode="decimal"
+									dir="ltr"
+									placeholder={t`No limit`}
+									value={orderLimitText}
+									onChange={(event) => setOrderLimitText(event.target.value)}
+									disabled={!canEditLimits}
+									data-testid="settings-order-limit"
+								/>
+							</div>
+							<div className="flex flex-col gap-1.5">
+								<Label htmlFor={monthlyLimitId}>
+									<Trans>Monthly limit ({limitCurrency})</Trans>
+								</Label>
+								<Input
+									id={monthlyLimitId}
+									type="text"
+									inputMode="decimal"
+									dir="ltr"
+									placeholder={t`No limit`}
+									value={monthlyLimitText}
+									onChange={(event) => setMonthlyLimitText(event.target.value)}
+									disabled={!canEditLimits}
+									data-testid="settings-monthly-limit"
+								/>
+							</div>
+						</div>
+						{canEditLimits ? (
+							<div className="flex items-center gap-2">
+								<Button
+									type="submit"
+									disabled={limitsSaving}
+									data-testid="settings-limits-save"
+								>
+									{limitsSaving ? (
+										<Icon name="loader" className="animate-spin" />
+									) : null}
+									<Trans>Save spending limits</Trans>
+								</Button>
+							</div>
+						) : null}
+					</form>
+				</WorkspacePanel>
+			) : null}
 
 			<WorkspacePanel
 				title={<Trans>Storage areas & count lists</Trans>}

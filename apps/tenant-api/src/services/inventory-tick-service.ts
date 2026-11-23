@@ -4,6 +4,8 @@ import {
 	type InventoryNotifyEvent,
 	type InventoryTickNotifyKind,
 	type InventoryTickResult,
+	MAX_PRICE_RISE_DISH_ENTRIES,
+	type PriceRiseDishAlertEntry,
 } from '@repo/inventory'
 import {
 	getTenantDb,
@@ -34,8 +36,16 @@ import {
 	pruneInventoryOutbox,
 } from './inventory-sales-service.ts'
 import { loadLocationStock } from './inventory-items-service.ts'
-import { listDueOrders } from './inventory-orders-service.ts'
-import { findPriceRises } from './inventory-receiving-service.ts'
+import {
+	deliverOrderApprovalAlert,
+	listDueOrders,
+} from './inventory-orders-service.ts'
+import {
+	findPriceRises,
+	priceRiseDishesForRises,
+	type PriceRiseRow,
+} from './inventory-receiving-service.ts'
+import { processDueRepeatOrders } from './inventory-repeat-orders-service.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
 
 /**
@@ -280,6 +290,7 @@ export async function runInventoryTickForOrg(
 				...errorLogFields(error),
 			})
 		}
+		const risesByDeliveryKey = new Map<string, PriceRiseRow[]>()
 		for (const locationId of locations) {
 			let clock: Awaited<ReturnType<typeof locationClock>>
 			try {
@@ -391,6 +402,10 @@ export async function runInventoryTickForOrg(
 						rise.deliveryId,
 						(byDelivery.get(rise.deliveryId) ?? 0) + 1,
 					)
+					const key = `${locationId}\0${rise.deliveryId}`
+					const list = risesByDeliveryKey.get(key)
+					if (list) list.push(rise)
+					else risesByDeliveryKey.set(key, [rise])
 				}
 				for (const [deliveryId, items] of byDelivery) {
 					if (
@@ -405,6 +420,80 @@ export async function runInventoryTickForOrg(
 					}
 				}
 			})
+		}
+
+		// ── Repeat orders: draft due schedules before supplier cut-off (#499) ─
+		if (features.purchasing) {
+			try {
+				const repeatOutcome = await processDueRepeatOrders(db, {
+					orgId,
+					region: getNodeRegion(),
+					now,
+					post,
+					deadline,
+				})
+				result.alertsSent += repeatOutcome.alertsSent
+				result.alertsDeferred += repeatOutcome.alertsDeferred
+				result.errors += repeatOutcome.errors
+			} catch (error) {
+				result.errors += 1
+				console.error('Inventory repeat orders step failed', {
+					orgId,
+					...errorLogFields(error),
+				})
+			}
+			// Retry pending order approval alerts (#500)
+			try {
+				const pendingApprovals = await db
+					.select()
+					.from(invOrders)
+					.where(
+						and(
+							eq(invOrders.status, 'draft'),
+							eq(invOrders.approvalStatus, 'waiting_approval'),
+							eq(invOrders.approvalAlertStatus, 'pending'),
+						),
+					)
+					.orderBy(asc(invOrders.approvalRequestedAt), asc(invOrders.id))
+					.limit(POST_BATCH)
+				for (const order of pendingApprovals) {
+					const createdAt = order.approvalRequestedAt ?? order.updatedAt
+					if (
+						now - createdAt > INVENTORY_ALERT_GIVE_UP_MS ||
+						order.approvalAlertAttempts >= INVENTORY_ALERT_MAX_ATTEMPTS
+					) {
+						await db
+							.update(invOrders)
+							.set({ approvalAlertStatus: 'sent', updatedAt: now })
+							.where(eq(invOrders.id, order.id))
+						result.errors += 1
+						continue
+					}
+					if (Date.now() >= deadline) {
+						result.alertsDeferred += 1
+						continue
+					}
+					const outcome = await deliverOrderApprovalAlert(db, {
+						orgId,
+						order,
+						now,
+						post,
+					})
+					if (outcome.status === 'delivered') {
+						result.alertsSent += 1
+					} else if (outcome.status === 'retry') {
+						result.alertsDeferred += 1
+					} else {
+						result.errors += 1
+					}
+				}
+			} catch (error) {
+				result.errors += 1
+				console.error('Inventory order approval alerts step failed', {
+					orgId,
+					...errorLogFields(error),
+				})
+			}
 		}
 
 		// ── Hand the pending alerts to the App ────────────────────────────────
@@ -449,6 +538,26 @@ export async function runInventoryTickForOrg(
 					10_000,
 				)
 			}
+			let priceRiseDishes: PriceRiseDishAlertEntry[] | undefined
+			if (row.kind === 'inventory_price_rise') {
+				const key = `${row.locationId}\0${row.dedupeKey}`
+				const risesForDelivery =
+					risesByDeliveryKey.get(key) ??
+					(
+						await findPriceRises(db, {
+							locationId: row.locationId,
+							sinceMs: row.createdAt - PRICE_RISE_WINDOW_MS,
+						})
+					).filter((rise) => rise.deliveryId === row.dedupeKey)
+				if (risesForDelivery.length > 0) {
+					const evaluated = await priceRiseDishesForRises(db, {
+						locationId: row.locationId,
+						rises: risesForDelivery,
+						limit: MAX_PRICE_RISE_DISH_ENTRIES,
+					})
+					if (evaluated.length > 0) priceRiseDishes = evaluated
+				}
+			}
 			const outcome = await post({
 				orgId,
 				eventId: inventoryAlertEventId({
@@ -461,6 +570,7 @@ export async function runInventoryTickForOrg(
 				locationId: row.locationId,
 				count: Math.min(Math.max(row.count, 1), 10_000),
 				...(overdueCount !== undefined ? { overdueCount } : {}),
+				...(priceRiseDishes ? { priceRiseDishes } : {}),
 			})
 			if (outcome.status === 'delivered') {
 				await db

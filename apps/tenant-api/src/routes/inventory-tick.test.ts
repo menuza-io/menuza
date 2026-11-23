@@ -9,6 +9,8 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	invAlertLog,
+	invRecipeLines,
+	invRecipes,
 	provisionTenantDb,
 } from '@repo/tenant-db'
 import { Hono } from 'hono'
@@ -277,6 +279,80 @@ describe('what a tick records and sends', () => {
 					row.status === 'sent' && row.sentAt === at(9) && row.attempts === 1,
 			),
 		).toBe(true)
+	})
+
+	it('attaches affected priceRiseDishes on inventory_price_rise when recipes use the item (#520)', async () => {
+		const orgRecipes = 'org_inv_tick_price_dishes'
+		orgs.set(orgRecipes, {
+			id: orgRecipes,
+			slug: orgRecipes,
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'us',
+			name: orgRecipes,
+		})
+		await provisionTenantDb(orgRecipes)
+		try {
+			seedInventoryContextForTest(orgRecipes, { ...FEATURES, recipes: true })
+			const token = await mintToken(orgRecipes)
+			const w = makeWorld(call, token, LOC)
+			const sup = await w.supplier('Tick Dish Sup')
+			const flour = await w.item('Tick Dish Flour')
+			await w.ok('POST', '/deliveries', {
+				clientId: cid('del'),
+				locationId: LOC,
+				supplierId: sup.id,
+				currency: 'SAR',
+				lines: [
+					{ itemId: flour.id, quantity: 10_000_000, lineTotalMinor: 10_000 },
+				],
+			})
+			await w.ok('POST', '/deliveries', {
+				clientId: cid('del'),
+				locationId: LOC,
+				supplierId: sup.id,
+				currency: 'SAR',
+				lines: [
+					{ itemId: flour.id, quantity: 10_000_000, lineTotalMinor: 13_000 },
+				],
+			})
+			const db = await getTenantDb(orgRecipes)
+			await db.insert(invRecipes).values({
+				id: 'rec_tick_bread',
+				ownerKind: 'menu_item',
+				ownerId: 'menu_tick_bread',
+				version: 1,
+				effectiveFrom: at(8),
+				createdByKind: 'system',
+			})
+			await db.insert(invRecipeLines).values({
+				recipeId: 'rec_tick_bread',
+				itemId: flour.id,
+				quantity: 500_000,
+			})
+
+			const { events, post } = recorder()
+			await runInventoryTickForOrg(orgRecipes, { now: at(9), post })
+			const priceRise = events.find(
+				(event) => event.kind === 'inventory_price_rise',
+			)
+			expect(priceRise).toBeDefined()
+			expect(inventoryNotifyEventSchema.safeParse(priceRise).success).toBe(true)
+			expect(priceRise!.priceRiseDishes).toEqual([
+				{
+					menuItemId: 'menu_tick_bread',
+					variantId: null,
+					previousCostMinor: 500,
+					costMinor: 650,
+					targetFoodCostBp: 3000,
+					pricesIncludeTax: false,
+					taxRateBp: null,
+					priceForTargetMinor: 2167,
+				},
+			])
+		} finally {
+			await destroyTenantDb(orgRecipes)
+		}
 	})
 
 	it('does not resend what was sent: a later tick the same day skips every alert', async () => {

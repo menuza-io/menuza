@@ -134,19 +134,28 @@ export const levelSuggestionsQuerySchema = z
 	})
 	.strict()
 
+export const levelSuggestionSchema = z.object({
+	itemId: z.string(),
+	state: z.enum(['ok', 'not_enough_history']).default('ok'),
+	useDays: z.number().int().min(0).default(0),
+	/** Used over `useDays` (or `daysObserved`), base thousandths. */
+	usedQuantity: z.number().int(),
+	dailyUseQuantity: z.number().int().default(0),
+	weeklyUseQuantity: z.number().int(),
+	orderBelowQuantity: z.number().int(),
+	fillUpToQuantity: z.number().int(),
+	deliveryDays: z.array(z.number().int().min(0).max(6)).default([]),
+	cycleDays: z.number().int().positive().nullable().default(null),
+	supplierName: z.string().nullable().default(null),
+	packName: z.string().nullable().default(null),
+	packBaseQuantity: z.number().int().positive().nullable().default(null),
+})
+export type LevelSuggestion = z.infer<typeof levelSuggestionSchema>
+
 export const levelSuggestionsSchema = z.object({
 	locationId: z.string(),
 	days: z.number().int(),
 	daysObserved: z.number().int(),
-	suggestions: z.array(
-		z.object({
-			itemId: z.string(),
-			/** Used over `daysObserved`, base thousandths. */
-			usedQuantity: z.number().int(),
-			weeklyUseQuantity: z.number().int(),
-			orderBelowQuantity: z.number().int(),
-			fillUpToQuantity: z.number().int(),
-		}),
-	),
+	suggestions: z.array(levelSuggestionSchema),
 })
 export type LevelSuggestions = z.infer<typeof levelSuggestionsSchema>

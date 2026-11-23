@@ -1,4 +1,5 @@
 import {
+	approveOrderSchema,
 	cancelOrderSchema,
 	confirmOrderSchema,
 	createOrderSchema,
@@ -6,6 +7,7 @@ import {
 	listOrdersQuerySchema,
 	orderTextQuerySchema,
 	receiveOrderAsOrderedSchema,
+	rejectOrderSchema,
 	rescheduleOrderSchema,
 	sendOrderSchema,
 	suggestedOrdersQuerySchema,
@@ -28,6 +30,7 @@ import {
 	respond,
 } from '../lib/inventory-route.ts'
 import {
+	approveOrder,
 	buildSuggestedOrders,
 	cancelOrder,
 	confirmOrder,
@@ -37,6 +40,7 @@ import {
 	getReceivePrefill,
 	listOrders,
 	receiveOrderAsOrdered,
+	rejectOrder,
 	rescheduleOrder,
 	sendOrder,
 	updateOrder,
@@ -177,6 +181,44 @@ operatorInventoryOrdersRoutes.post(
 			return respond(
 				ctx,
 				await sendOrder(inventoryCaller(ctx), { id, body: body.data }),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryOrdersRoutes.post(
+	'/orders/:id/approve',
+	purchasing(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, approveOrderSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await approveOrder(inventoryCaller(ctx), { id, body: body.data }),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryOrdersRoutes.post(
+	'/orders/:id/reject',
+	purchasing(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, rejectOrderSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await rejectOrder(inventoryCaller(ctx), { id, body: body.data }),
 			)
 		} catch (error) {
 			return inventoryErrorResponse(error)

@@ -293,6 +293,20 @@ function ItemSheetBody({
 		item.baseUnit,
 		item.units,
 	)
+	const displayUnitRef =
+		item.baseUnit === 'piece' ? 'piece' : item.baseUnit === 'g' ? 'kg' : 'l'
+	const displayPerUnit =
+		thousandthsInUnit(displayUnitRef, item.baseUnit, item.units) ?? 1_000
+	const displayUnitLabel = quantity.unitName(displayUnitRef, item.units)
+	const othersDiffText =
+		item.othersPay?.diffCostMicro && item.othersPay.diffCostMicro > 0
+			? formatCostPerUnit(
+					item.othersPay.diffCostMicro,
+					displayPerUnit,
+					item.othersPay.currency,
+					i18n.locale,
+				)
+			: null
 	const ratio = fillRatio(item.onHand, item.fillUpToQuantity)
 
 	async function clearDraft() {
@@ -575,7 +589,7 @@ function ItemSheetBody({
 				) : null}
 			</section>
 
-			{canSeeCost && item.cost ? (
+			{canSeeCost && (item.cost || item.othersPay) ? (
 				<section
 					className="flex flex-col gap-3"
 					aria-labelledby="item-cost"
@@ -585,7 +599,9 @@ function ItemSheetBody({
 						<Trans>Cost</Trans>
 					</h3>
 					<dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
-						{item.cost.lastCostMicro !== null && countPerUnit !== null ? (
+						{item.cost?.lastCostMicro !== null &&
+						item.cost?.lastCostMicro !== undefined &&
+						countPerUnit !== null ? (
 							<>
 								<dt className="text-muted-foreground">
 									<Trans>Last paid, per unit</Trans>
@@ -622,6 +638,48 @@ function ItemSheetBody({
 											i18n.locale,
 										)}
 									</bdi>
+								</dd>
+							</>
+						) : null}
+						{item.othersPay ? (
+							<>
+								<dt className="text-muted-foreground">
+									<Trans>Others pay</Trans>
+								</dt>
+								<dd
+									className="flex flex-col gap-0.5 tabular-nums"
+									data-testid="item-sheet-others-pay"
+								>
+									<span>
+										<bdi dir="ltr">
+											{formatCostPerUnit(
+												item.othersPay.costMicro,
+												displayPerUnit,
+												item.othersPay.currency,
+												i18n.locale,
+											)}
+										</bdi>{' '}
+										<span className="text-muted-foreground">
+											/ <bdi dir="ltr">{displayUnitLabel}</bdi>
+										</span>
+										{othersDiffText ? (
+											<span className="text-muted-foreground">
+												{' · '}
+												<Trans>
+													<bdi dir="ltr">{othersDiffText}</bdi> less
+												</Trans>
+											</span>
+										) : null}
+									</span>
+									<span className="text-muted-foreground text-xs wrap-anywhere">
+										{[
+											locationNames.get(item.othersPay.locationId) ??
+												item.othersPay.locationId,
+											item.othersPay.supplierName,
+										]
+											.filter(Boolean)
+											.join(' · ')}
+									</span>
 								</dd>
 							</>
 						) : null}

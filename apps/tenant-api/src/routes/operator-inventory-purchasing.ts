@@ -12,6 +12,7 @@ import {
 	listSuppliersQuerySchema,
 	markDeliveryPaidSchema,
 	priceAlertsQuerySchema,
+	priceComparisonQuerySchema,
 	recordDeliverySchema,
 	supplierProductInputSchema,
 	undoDeliveryAsOrderedSchema,
@@ -62,6 +63,7 @@ import {
 	updateSupplierProduct,
 } from '../services/inventory-purchasing-service.ts'
 import { queryDeliveriesReport } from '../services/inventory-deliveries-report.ts'
+import { getPriceComparison } from '../services/inventory-price-comparison.ts'
 import {
 	confirmInvoicePhoto,
 	getCreditMessage,
@@ -91,6 +93,12 @@ const costReads = (): ReturnType<typeof inventoryGuard> =>
 	inventoryGuard({
 		scope: ['read', 'write'],
 		grant: INVENTORY_PERMISSIONS.READ_INVENTORY_COST,
+	})
+const purchasingCostReads = (): ReturnType<typeof inventoryGuard> =>
+	inventoryGuard({
+		scope: ['read', 'write'],
+		grant: INVENTORY_PERMISSIONS.READ_INVENTORY_COST,
+		feature: 'purchasing',
 	})
 
 // ── Suppliers ───────────────────────────────────────────────────────────────
@@ -521,6 +529,29 @@ operatorInventoryPurchasingRoutes.get(
 				ctx,
 				await getPriceAlerts(await getTenantDb(ctx.orgId), {
 					query: query.data,
+					now: Date.now(),
+					caller: inventoryCaller(ctx),
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryPurchasingRoutes.get(
+	'/price-comparison',
+	purchasingCostReads(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const query = parseQuery(c, priceComparisonQuerySchema)
+			if ('error' in query) return query.error
+			return respond(
+				ctx,
+				await getPriceComparison(await getTenantDb(ctx.orgId), {
+					query: query.data,
+					caller: inventoryCaller(ctx),
 					now: Date.now(),
 				}),
 			)

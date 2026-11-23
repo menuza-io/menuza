@@ -1,5 +1,12 @@
 import { inventoryValueMinor } from '../cost.ts'
+import { type DailyUse } from '../days-left.ts'
 import { mulDiv } from '../money.ts'
+import {
+	MIN_HISTORY_DAYS,
+	NEUTRAL_DEMAND_BP,
+	PREP_HISTORY_DAYS,
+	weekdayDemand,
+} from '../prep.ts'
 import { OPEN_ORDER_STATUSES, type OrderStatus } from '../records.ts'
 import { priceChangeBp, PRICE_RISE_ALERT_BP } from './rules.ts'
 
@@ -91,6 +98,8 @@ export type SuggestOrderInput = {
 export type SuggestedQuantity = {
 	/** Thousandths of a pack, a multiple of the step (1000 whole, 500 for weight packs). */
 	packsMilli: number
+	/** Unrounded packs needed in thousandths before rounding up (`needed / packBase * 1000`). */
+	rawPacksMilli: number
 	packs: number
 	/** Base thousandths that will arrive (packs × pack size). */
 	quantity: number
@@ -98,6 +107,28 @@ export type SuggestedQuantity = {
 	needed: number
 	/** True when the pack count hit `MAX_ORDER_PACKS`. */
 	capped: boolean
+}
+
+/** Exact unrounded packs needed in thousandths before rounding up to whole/half packs. */
+export function rawPacksMilli(
+	neededQuantity: number,
+	packBaseQuantity: number,
+): number {
+	assertInt(neededQuantity, 'neededQuantity')
+	assertInt(packBaseQuantity, 'packBaseQuantity', 1)
+	return Math.round((neededQuantity * PACK_SCALE) / packBaseQuantity)
+}
+
+export const ORDER_STALE_COUNT_DAYS = 10
+
+/** Whether an item has not been counted within `days` (default 10) or was never counted. */
+export function isOrderCountStale(
+	lastCountedAt: number | null,
+	now: number,
+	days = ORDER_STALE_COUNT_DAYS,
+): boolean {
+	assertInt(days, 'days', 1)
+	return lastCountedAt === null || now - lastCountedAt > days * 86_400_000
 }
 
 /**
@@ -166,6 +197,7 @@ export function suggestOrderQuantity(
 	}
 	return {
 		packsMilli,
+		rawPacksMilli: rawPacksMilli(needed, input.packBase),
 		packs: milliToPacks(packsMilli),
 		quantity: packsQuantity(packsMilli, input.packBase),
 		needed,
@@ -410,6 +442,201 @@ export function suggestLevelsFromUse(input: {
 		orderBelowQuantity: Math.min(covering(orderBelowDays), fillUpToQuantity),
 		fillUpToQuantity,
 	}
+}
+
+/** Minimum days of positive use in the 28-day window before suggesting levels. */
+export const MIN_LEVEL_SUGGESTION_DAYS = 14
+/** Safety margin added on top of expected use until the delivery after next (20%). */
+export const LEVEL_SAFETY_MARGIN_BP = 2000
+/** Fallback delivery cycle in days when an item has no supplier delivery schedule. */
+export const DEFAULT_DELIVERY_CYCLE_DAYS = 7
+
+export type SuggestedLevelsFromHistory =
+	| {
+			state: 'ok'
+			useDays: number
+			usedQuantity: number
+			dailyUseQuantity: number
+			weeklyUseQuantity: number
+			orderBelowQuantity: number
+			fillUpToQuantity: number
+			deliveryDays: number[]
+			cycleDays: number | null
+	  }
+	| {
+			state: 'not_enough_history'
+			useDays: number
+			usedQuantity: number
+	  }
+
+function daysBetweenIso(from: string, to: string): number {
+	return Math.round((parseIso(to) - parseIso(from)) / 86_400_000)
+}
+
+function nextDeliveryDayAfter(
+	afterDate: string,
+	deliveryDays: readonly number[],
+	lookaheadDays = 14,
+): string | null {
+	const days = new Set(deliveryDays)
+	for (let offset = 1; offset <= lookaheadDays; offset++) {
+		const date = addDaysIso(afterDate, offset)
+		if (days.has(weekdayOf(date))) return date
+	}
+	return null
+}
+
+/**
+ * Suggests "order more when below" and "fill up to" from the last 28 days of
+ * daily use, shaped by prep's weekday & Ramadan demand factor (`weekdayDemand`).
+ *
+ * - Requires at least `minUseDays` (14) days of positive use; otherwise returns
+ *   `state: 'not_enough_history'` with `useDays`.
+ * - "Order more when below" covers expected use until the next orderable
+ *   delivery (`nextOrderableDelivery`), or 7 days when unsourced / no delivery days.
+ * - "Fill up to" covers expected use until the delivery after next plus a
+ *   safety margin (`safetyMarginBp`, default 20%), or 14 days + safety margin
+ *   under the 7-day fallback cycle.
+ * - Both levels are rounded UP to `roundTo` (supplier pack size or count unit),
+ *   and `orderBelowQuantity` never exceeds `fillUpToQuantity`.
+ */
+export function suggestLevelsFromHistory(input: {
+	now: LocalMoment
+	history: readonly DailyUse[]
+	schedule: SupplierSchedule | null
+	roundTo: number
+	minUseDays?: number
+	safetyMarginBp?: number
+	fallbackCycleDays?: number
+}): SuggestedLevelsFromHistory {
+	assertInt(input.roundTo, 'roundTo', 1)
+	const minUseDays = input.minUseDays ?? MIN_LEVEL_SUGGESTION_DAYS
+	const safetyMarginBp = input.safetyMarginBp ?? LEVEL_SAFETY_MARGIN_BP
+	const fallbackCycleDays =
+		input.fallbackCycleDays ?? DEFAULT_DELIVERY_CYCLE_DAYS
+	assertInt(minUseDays, 'minUseDays', 1)
+	assertInt(safetyMarginBp, 'safetyMarginBp', 0)
+	assertInt(fallbackCycleDays, 'fallbackCycleDays', 1)
+
+	const from = addDaysIso(input.now.date, -PREP_HISTORY_DAYS)
+	const days = input.history.filter(
+		(day) => day.date >= from && day.date < input.now.date && day.quantity > 0,
+	)
+	const usedQuantity = days.reduce((sum, day) => sum + day.quantity, 0)
+	if (days.length < minUseDays || usedQuantity <= 0) {
+		return {
+			state: 'not_enough_history',
+			useDays: days.length,
+			usedQuantity,
+		}
+	}
+
+	const perDay = usedQuantity / days.length
+	const dailyUseQuantity = Math.round(perDay)
+	const weeklyUseQuantity = Math.round((usedQuantity * 7) / days.length)
+	const units = days.map((day) => ({ date: day.date, units: day.quantity }))
+
+	const normalizedDeliveryDays =
+		input.schedule && input.schedule.deliveryDays.length > 0
+			? [...new Set(input.schedule.deliveryDays)].sort((a, b) => a - b)
+			: []
+
+	let daysUntilNext = fallbackCycleDays
+	let daysUntilAfterNext = fallbackCycleDays * 2
+	let cycleDays: number | null = fallbackCycleDays
+	let usedDeliveryDays: number[] = []
+
+	if (normalizedDeliveryDays.length > 0 && input.schedule) {
+		const first = nextOrderableDelivery(input.schedule, input.now)
+		if (first) {
+			const second = nextDeliveryDayAfter(
+				first.expectedDate,
+				normalizedDeliveryDays,
+			)
+			daysUntilNext = Math.max(
+				1,
+				daysBetweenIso(input.now.date, first.expectedDate),
+			)
+			daysUntilAfterNext = second
+				? Math.max(daysUntilNext + 1, daysBetweenIso(input.now.date, second))
+				: daysUntilNext + fallbackCycleDays
+			cycleDays = null
+			usedDeliveryDays = normalizedDeliveryDays
+		}
+	}
+
+	const expectedUseForDays = (numDays: number): number => {
+		let total = 0
+		for (let offset = 0; offset < numDays; offset++) {
+			const date = addDaysIso(input.now.date, offset)
+			const factor = weekdayDemand({ date, history: units })
+			total += (perDay * factor.bp) / NEUTRAL_DEMAND_BP
+		}
+		return total
+	}
+
+	const roundUpToPack = (qty: number): number =>
+		Math.max(
+			input.roundTo,
+			ceilDiv(Math.ceil(qty), input.roundTo) * input.roundTo,
+		)
+
+	const fillWithMargin =
+		(expectedUseForDays(daysUntilAfterNext) *
+			(NEUTRAL_DEMAND_BP + safetyMarginBp)) /
+		NEUTRAL_DEMAND_BP
+	const fillUpToQuantity = roundUpToPack(fillWithMargin)
+	const orderBelowQuantity = Math.min(
+		roundUpToPack(expectedUseForDays(daysUntilNext)),
+		fillUpToQuantity,
+	)
+
+	return {
+		state: 'ok',
+		useDays: days.length,
+		usedQuantity,
+		dailyUseQuantity,
+		weeklyUseQuantity,
+		orderBelowQuantity,
+		fillUpToQuantity,
+		deliveryDays: usedDeliveryDays,
+		cycleDays,
+	}
+}
+
+/**
+ * Expected use from `today` up to `expectedDate` (base thousandths), using the
+ * last 28 days of usage (`loadUseHistory`) and prep's `weekdayDemand` factor.
+ * Returns null when `expectedDate` is null or there are fewer than
+ * `MIN_HISTORY_DAYS` (7) days of positive use.
+ */
+export function expectedUseUntilDelivery(input: {
+	today: string
+	expectedDate: string | null
+	history: readonly DailyUse[]
+	minUseDays?: number
+}): number | null {
+	if (!input.expectedDate) return null
+	const minUseDays = input.minUseDays ?? MIN_HISTORY_DAYS
+	assertInt(minUseDays, 'minUseDays', 1)
+	const from = addDaysIso(input.today, -PREP_HISTORY_DAYS)
+	const days = input.history.filter(
+		(day) => day.date >= from && day.date < input.today && day.quantity > 0,
+	)
+	if (days.length < minUseDays) return null
+	const usedQuantity = days.reduce((sum, day) => sum + day.quantity, 0)
+	if (usedQuantity <= 0) return null
+	const numDays = Math.max(0, daysBetweenIso(input.today, input.expectedDate))
+	if (numDays === 0) return 0
+	const perDay = usedQuantity / days.length
+	const units = days.map((day) => ({ date: day.date, units: day.quantity }))
+	let total = 0
+	for (let offset = 0; offset < numDays; offset++) {
+		const date = addDaysIso(input.today, offset)
+		const factor = weekdayDemand({ date, history: units })
+		total += (perDay * factor.bp) / NEUTRAL_DEMAND_BP
+	}
+	return Math.round(total)
 }
 
 /** "Order more when below" must not exceed "fill up to" when both are set. */

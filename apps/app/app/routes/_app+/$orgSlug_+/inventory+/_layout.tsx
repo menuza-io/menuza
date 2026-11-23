@@ -45,6 +45,12 @@ export type InventoryLayoutContext = {
 	canEdit: boolean
 	/** Whether the member may also set prices and suppliers. */
 	canManagePurchasing: boolean
+	/** Whether the member holds `update:settings:any` (approve orders & set limits, #500). */
+	canManageSettings?: boolean
+	/** Whether the member is the organization owner (`org_role_admin`, #500). */
+	isOwner?: boolean
+	/** Signed-in user's id (for self-approval check, #500). */
+	currentUserId?: string
 	/** The `inventory.purchasing` flag: levels, suggested orders and sending orders. */
 	purchasingEnabled: boolean
 	/** The `inventory.transfers` flag: moving stock between places, branch requests, comparison. */
@@ -117,6 +123,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		canManagePurchasing:
 			!access.impersonated &&
 			access.grants.includes(INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING),
+		canManageSettings: access.canManageSettings,
+		isOwner: access.isOwner,
+		currentUserId: access.userId,
 		purchasingEnabled: access.features.purchasing,
 		transfersEnabled: access.features.transfers,
 		transferPlaces: access.features.transfers
@@ -139,6 +148,9 @@ export default function InventoryLayout() {
 		canSeeCost,
 		canEdit,
 		canManagePurchasing,
+		canManageSettings,
+		isOwner,
+		currentUserId,
 		purchasingEnabled,
 		transfersEnabled,
 		transferPlaces,
@@ -170,6 +182,9 @@ export default function InventoryLayout() {
 		canSeeCost,
 		canEdit,
 		canManagePurchasing,
+		canManageSettings,
+		isOwner,
+		currentUserId,
 		purchasingEnabled,
 		transfersEnabled,
 		transferPlaces,

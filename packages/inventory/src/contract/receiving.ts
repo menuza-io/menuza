@@ -270,6 +270,15 @@ export const priceAlertsQuerySchema = z
 	})
 	.strict()
 
+export const priceAlertDishSchema = z.object({
+	menuItemId: z.string().nullable(),
+	variantId: z.string().nullable(),
+	previousCostMinor: z.number().int().nonnegative(),
+	costMinor: z.number().int().nonnegative(),
+	priceForTargetMinor: z.number().int().nonnegative().nullable(),
+})
+export type PriceAlertDish = z.infer<typeof priceAlertDishSchema>
+
 export const priceAlertSchema = z.object({
 	itemId: z.string(),
 	itemName: z.string(),
@@ -288,6 +297,14 @@ export const priceAlertSchema = z.object({
 	packPriceMinor: z.number().int().nullable(),
 	/** Dishes whose cost this moves (phase 3, needs recipes); null before. */
 	affectedDishes: z.number().int().nullable(),
+	/** Target food cost in basis points (e.g. 3000 = 30%). */
+	targetFoodCostBp: z.number().int().min(0).max(10_000).optional(),
+	/** Whether menu prices at this location include tax. */
+	pricesIncludeTax: z.boolean().optional(),
+	/** Location tax rate in basis points, when set. */
+	taxRateBp: z.number().int().min(0).max(10_000).nullable().optional(),
+	/** Dishes affected by this ingredient's price rise (#520). */
+	dishes: z.array(priceAlertDishSchema).optional(),
 })
 export type PriceAlert = z.infer<typeof priceAlertSchema>
 

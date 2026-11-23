@@ -1,6 +1,7 @@
 import {
 	levelsOrdered,
 	type LevelRow,
+	type LevelSuggestion,
 	type LevelSuggestions,
 	type PutLevels,
 	type UnitRef,
@@ -145,6 +146,54 @@ export function applyLevelSuggestion(
 			draft.units,
 		),
 	}
+}
+
+/** Whether both level fields for a row are currently empty. */
+export function isDraftEmpty(draft: LevelDraft): boolean {
+	return draft.belowText.trim() === '' && draft.fillText.trim() === ''
+}
+
+/** Whether a suggestion can be accepted (valid history and not dismissed). */
+export function canApplySuggestion(
+	suggestion: LevelSuggestion | undefined,
+	dismissed: ReadonlySet<string>,
+): suggestion is LevelSuggestion {
+	return Boolean(
+		suggestion &&
+		suggestion.state === 'ok' &&
+		!dismissed.has(suggestion.itemId),
+	)
+}
+
+/**
+ * Applies valid, non-dismissed suggestions to either the explicitly chosen
+ * rows (when any are checked) or all currently empty rows.
+ */
+export function applySuggestionsBulk(
+	drafts: Record<string, LevelDraft>,
+	rows: readonly LevelRow[],
+	suggestionByItem: ReadonlyMap<string, LevelSuggestion>,
+	options: {
+		chosen: ReadonlySet<string>
+		dismissed: ReadonlySet<string>
+	},
+): Record<string, LevelDraft> {
+	const hasChosen = options.chosen.size > 0
+	let next = drafts
+	for (const row of rows) {
+		const draft = next[row.itemId]
+		if (!draft) continue
+		const suggestion = suggestionByItem.get(row.itemId)
+		if (!canApplySuggestion(suggestion, options.dismissed)) continue
+		if (hasChosen) {
+			if (!options.chosen.has(row.itemId)) continue
+		} else if (!isDraftEmpty(draft)) {
+			continue
+		}
+		if (next === drafts) next = { ...drafts }
+		next[row.itemId] = applyLevelSuggestion(draft, suggestion)
+	}
+	return next
 }
 
 /** Under this many days of history a suggestion is a guess: the sheet says so. */

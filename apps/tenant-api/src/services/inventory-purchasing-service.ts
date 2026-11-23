@@ -216,6 +216,7 @@ function toSupplier(
 		vatNumber: row.vatNumber,
 		notes: row.notes,
 		archived: row.archivedAt !== null,
+		pausedAt: row.pausedAt,
 		version: row.version,
 		productCount: stats.products.get(row.id) ?? 0,
 		unpaidCount: stats.unpaidCount.get(row.id) ?? 0,
@@ -424,6 +425,9 @@ export async function updateSupplier(
 		const row = await loadSupplier(tx, input.id)
 		assertVersion(row.version, input.body.expectedVersion)
 		const values = supplierValues(input.body)
+		if (input.body.paused !== undefined) {
+			values.pausedAt = input.body.paused ? ctx.now : null
+		}
 		const merged = { ...row, ...values }
 		if (merged.minimumOrderMinor !== null && !merged.currency) {
 			throw badRequest('currency')

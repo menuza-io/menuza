@@ -217,6 +217,9 @@ function setup(
 		canEdit?: boolean
 		canSeeCost?: boolean
 		canManagePurchasing?: boolean
+		canManageSettings?: boolean
+		isOwner?: boolean
+		currentUserId?: string
 		memberNames?: Record<string, string>
 	} = {},
 ) {
@@ -228,6 +231,9 @@ function setup(
 			canEdit={props.canEdit ?? true}
 			canSeeCost={props.canSeeCost ?? true}
 			canManagePurchasing={props.canManagePurchasing ?? true}
+			canManageSettings={props.canManageSettings}
+			isOwner={props.isOwner}
+			currentUserId={props.currentUserId}
 			memberNames={props.memberNames}
 			search=""
 		/>,
@@ -664,5 +670,305 @@ describe('ReviewOrderScreen: loading', () => {
 		expect(
 			screen.getByRole('button', { name: 'Back to purchasing' }),
 		).toHaveAttribute('href', '/acme/inventory/purchasing')
+	})
+})
+
+describe('ReviewOrderScreen: explanation, warnings, and edited sent lines (#497)', () => {
+	const explanationFixture = {
+		onHandQuantity: 6_000_000,
+		lastCountedAt: null,
+		onOrderQuantity: 2_000_000,
+		orderBelowQuantity: 10_000_000,
+		fillUpToQuantity: 30_000_000,
+		expectedUseUntilDeliveryQuantity: 4_500_000,
+		neededQuantity: 22_000_000,
+		packName: 'Box',
+		packBaseQuantity: 10_000_000,
+		rawPacksMilli: 2_200,
+		roundedPacksMilli: 3_000,
+		warnings: {
+			notCountedIn10Days: true,
+			priceChangedSinceLastOrder: true,
+			belowSupplierMinimum: true,
+		},
+		previousOrderPackPriceMinor: 25_000,
+		currentPackPriceMinor: 28_000,
+	}
+
+	it('opens the explanation popover and renders line warnings on a draft', async () => {
+		setup(
+			region({
+				order: {
+					lines: [
+						line('l1', {
+							packs: 3,
+							suggestedPacks: 3,
+							explanation: explanationFixture,
+						}),
+					],
+				},
+			}),
+		)
+		await screen.findByTestId('order-lines')
+		expect(screen.getByTestId('order-line-warn-stale-l1')).toHaveTextContent(
+			'Not counted in 10 days',
+		)
+		expect(screen.getByTestId('order-line-warn-price-l1')).toHaveTextContent(
+			'Price changed since the last order',
+		)
+		expect(screen.getByTestId('order-line-warn-min-l1')).toHaveTextContent(
+			"Below the supplier's minimum",
+		)
+
+		await userEvent.click(screen.getByTestId('order-line-info-l1'))
+		const pop = await screen.findByTestId('order-line-explanation-l1')
+		expect(pop).toHaveTextContent('6 kg')
+		expect(pop).toHaveTextContent('Never counted')
+		expect(pop).toHaveTextContent('2 kg')
+		expect(pop).toHaveTextContent('10 kg')
+		expect(pop).toHaveTextContent('30 kg')
+		expect(pop).toHaveTextContent('4.5 kg')
+		expect(pop).toHaveTextContent('22 kg')
+		expect(pop).toHaveTextContent('2.2')
+		expect(pop).toHaveTextContent('3 packs')
+		expect(pop).toHaveTextContent('250')
+		expect(pop).toHaveTextContent('280')
+	})
+
+	it('shows Suggested alongside ordered quantity on a sent order when edited', async () => {
+		setup(
+			region({
+				order: {
+					status: 'sent',
+					sentAt: Date.UTC(2026, 10, 10, 9),
+					sentVia: 'email',
+					cutoff: null,
+					lines: [
+						line('l1', {
+							packs: 5,
+							suggestedPacks: 3,
+							explanation: explanationFixture,
+						}),
+					],
+				},
+			}),
+		)
+		await screen.findByTestId('order-lines')
+		expect(screen.getByTestId('order-line-l1')).toHaveTextContent('5 × Box')
+		expect(screen.getByTestId('order-line-suggested-l1')).toHaveTextContent(
+			'Suggested 3',
+		)
+	})
+
+	it('hides money warnings and prices inside explanation when canSeeCost is false', async () => {
+		setup(
+			region({
+				order: {
+					totalMinor: undefined,
+					minimumOrderMinor: undefined,
+					currency: undefined,
+					lines: [
+						line('l1', {
+							packs: 3,
+							suggestedPacks: 3,
+							packPriceMinor: undefined,
+							lineTotalMinor: undefined,
+							explanation: {
+								...explanationFixture,
+								previousOrderPackPriceMinor: undefined,
+								currentPackPriceMinor: undefined,
+								warnings: {
+									notCountedIn10Days: true,
+									priceChangedSinceLastOrder: true,
+									belowSupplierMinimum: true,
+								},
+							},
+						}),
+					],
+				},
+			}),
+			{ canSeeCost: false },
+		)
+		await screen.findByTestId('order-lines')
+		expect(screen.getByTestId('order-line-warn-stale-l1')).toHaveTextContent(
+			'Not counted in 10 days',
+		)
+		expect(screen.queryByTestId('order-line-warn-price-l1')).toBeNull()
+		expect(screen.queryByTestId('order-line-warn-min-l1')).toBeNull()
+
+		await userEvent.click(screen.getByTestId('order-line-info-l1'))
+		const pop = await screen.findByTestId('order-line-explanation-l1')
+		expect(pop).toHaveTextContent('6 kg')
+		expect(pop).not.toHaveTextContent('Last order')
+		expect(pop).not.toHaveTextContent('250')
+		expect(pop).not.toHaveTextContent('280')
+	})
+})
+
+describe('ReviewOrderScreen: spending-limit approval (#500) and Repeat this order (#499)', () => {
+	const waitingOrder = {
+		status: 'waiting_for_approval',
+		approvalStatus: 'waiting_approval',
+		requestedSendChannel: 'email',
+		approvalRequestedAt: Date.UTC(2026, 10, 11, 10),
+		approvalRequestedBy: { kind: 'operator', id: 'u1' },
+		approvalBreachedOrderLimit: true,
+		approvalBreachedMonthlyLimit: false,
+		orderLimitMinor: 50_000,
+	}
+
+	it('shows Waiting for approval banner with limits for cost users, and Needs approval with zero amounts when !canSeeCost', async () => {
+		const first = setup(async (path) => {
+			if (path === '/orders/o1') return orderDetail(waitingOrder)
+			throw new Error(`unexpected ${path}`)
+		})
+		const banner = await screen.findByTestId('order-waiting-approval-banner')
+		expect(banner).toHaveTextContent('Waiting for approval')
+		expect(
+			screen.getByTestId('order-approval-limits-detail'),
+		).toHaveTextContent('500')
+		expect(screen.queryByTestId('order-send-menu')).toBeNull()
+		expect(screen.queryByTestId('order-line-packs-l1')).toBeNull()
+		first.unmount()
+
+		setup(
+			async (path) => {
+				if (path === '/orders/o1') {
+					return orderDetail({
+						...waitingOrder,
+						totalMinor: undefined,
+						minimumOrderMinor: undefined,
+						shortOfMinimumMinor: undefined,
+						orderLimitMinor: undefined,
+						currency: undefined,
+						lines: [
+							line('l1', {
+								packPriceMinor: undefined,
+								lineTotalMinor: undefined,
+							}),
+						],
+					})
+				}
+				throw new Error(`unexpected ${path}`)
+			},
+			{ canSeeCost: false },
+		)
+		const noCostBanner = await screen.findByTestId(
+			'order-waiting-approval-banner',
+		)
+		expect(noCostBanner).toHaveTextContent('Needs approval')
+		expect(screen.queryByTestId('order-approval-limits-detail')).toBeNull()
+		expect(screen.queryByTestId('order-total')).toBeNull()
+		expect(noCostBanner.textContent).not.toMatch(/500|SAR/)
+	})
+
+	it('blocks self-approval for non-owner, allows owner self-approval and other manager approval, and requires reject reason', async () => {
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path === '/orders/o1') return orderDetail(waitingOrder)
+			if (path === '/orders/o1/approve' && init?.method === 'POST') {
+				return sendAnswer({
+					order: orderDetail({ status: 'sent', version: 4 }),
+				})
+			}
+			if (path === '/orders/o1/reject' && init?.method === 'POST') {
+				return orderDetail({
+					status: 'draft',
+					approvalStatus: 'rejected',
+					rejectionReason: 'Too expensive',
+					version: 4,
+				})
+			}
+			throw new Error(`unexpected ${path}`)
+		})
+
+		// Non-owner maker (u1) cannot approve own order
+		const selfView = setup(request, {
+			canManageSettings: true,
+			isOwner: false,
+			currentUserId: 'u1',
+		})
+		expect(await screen.findByTestId('order-self-approval-note')).toBeTruthy()
+		expect(screen.getByTestId('order-approve-button')).toBeDisabled()
+		selfView.unmount()
+
+		// Another manager (u2) CAN approve and send
+		const mgrView = setup(request, {
+			canManageSettings: true,
+			isOwner: false,
+			currentUserId: 'u2',
+		})
+		const approveBtn = await screen.findByTestId('order-approve-button')
+		expect(approveBtn).toBeEnabled()
+
+		// Reject requires non-empty reason
+		await userEvent.click(screen.getByTestId('order-reject-button'))
+		await screen.findByTestId('order-reject-dialog')
+		await userEvent.click(screen.getByTestId('order-reject-confirm'))
+		expect(await screen.findByTestId('order-reject-error')).toBeTruthy()
+		expect(request.mock.calls.some(([p]) => p === '/orders/o1/reject')).toBe(
+			false,
+		)
+
+		await userEvent.type(
+			screen.getByTestId('order-reject-reason'),
+			'Too expensive',
+		)
+		await userEvent.click(screen.getByTestId('order-reject-confirm'))
+		await waitFor(() =>
+			expect(toast.success).toHaveBeenCalledWith('Order returned to draft.'),
+		)
+		const rejectIdx = request.mock.calls.findIndex(
+			([p]) => p === '/orders/o1/reject',
+		)
+		expect(sentJson(request, rejectIdx)).toEqual({
+			expectedVersion: 3,
+			reason: 'Too expensive',
+		})
+		mgrView.unmount()
+
+		// Owner (u1) CAN self-approve and send
+		setup(request, {
+			canManageSettings: true,
+			isOwner: true,
+			currentUserId: 'u1',
+		})
+		const ownerApprove = await screen.findByTestId('order-approve-button')
+		expect(ownerApprove).toBeEnabled()
+		await userEvent.click(ownerApprove)
+		await waitFor(() =>
+			expect(toast.success).toHaveBeenCalledWith('Order approved and sent.'),
+		)
+		const approveIdx = request.mock.calls.findIndex(
+			([p]) => p === '/orders/o1/approve',
+		)
+		expect(sentJson(request, approveIdx)).toEqual({
+			expectedVersion: 3,
+			channel: 'email',
+			locale: 'en',
+		})
+	})
+
+	it('shows rejection reason banner on returned draft and opens RepeatOrderDialog from Repeat this order button (#499)', async () => {
+		const request = vi.fn<InventoryClient['request']>(async (path) => {
+			if (path === '/orders/o1') {
+				return orderDetail({
+					status: 'draft',
+					approvalStatus: 'rejected',
+					rejectionReason: 'Split order into two deliveries',
+					rejectedBy: { kind: 'operator', id: 'u2' },
+				})
+			}
+			if (path === '/suppliers/s1') return SUPPLIER
+			throw new Error(`unexpected ${path}`)
+		})
+
+		setup(request, { memberNames: { u2: 'Sara' } })
+
+		const rejectedBanner = await screen.findByTestId('order-rejected-banner')
+		expect(rejectedBanner).toHaveTextContent('Split order into two deliveries')
+		expect(rejectedBanner).toHaveTextContent('Sara')
+
+		await userEvent.click(screen.getByTestId('order-repeat-button'))
+		expect(await screen.findByTestId('repeat-order-dialog')).toBeTruthy()
 	})
 })

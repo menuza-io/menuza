@@ -90,10 +90,18 @@ function region(
 				suggestions: [
 					{
 						itemId: 'i2',
-						usedQuantity: 44_000_000,
-						weeklyUseQuantity: 11_000_000,
+						state: 'ok',
+						useDays: 28,
+						usedQuantity: 84_000_000,
+						dailyUseQuantity: 3_000_000,
+						weeklyUseQuantity: 21_000_000,
 						orderBelowQuantity: 5_000_000,
 						fillUpToQuantity: 11_000_000,
+						deliveryDays: [1, 4],
+						cycleDays: null,
+						supplierName: 'Al Watania',
+						packName: 'Box',
+						packBaseQuantity: 10_000_000,
 					},
 				],
 				...options.suggestions,
@@ -233,12 +241,15 @@ describe('Levels sheet', () => {
 		)
 	})
 
-	it('fills a row from "suggest from use", and saves only when asked', async () => {
+	it('fills a row from "suggest levels" with its reason, and saves only when asked', async () => {
 		const request = region()
 		renderLevels(request)
 		await userEvent.click(await screen.findByTestId('levels-suggest'))
 		const hint = await screen.findByTestId('level-suggestion-i2')
-		expect(hint).toHaveTextContent('You use about 11 kg a week.')
+		expect(hint).toHaveTextContent('Uses 3 kg a day, delivered Mon and Thu.')
+		expect(screen.getByTestId('level-suggestion-i1')).toHaveTextContent(
+			'Needs 14 days of use (0 so far).',
+		)
 		expect(screen.queryByTestId('levels-history-note')).toBeNull()
 		await userEvent.click(screen.getByTestId('level-use-i2'))
 		expect(screen.getByTestId('level-below-i2')).toHaveValue('5')
@@ -247,6 +258,132 @@ describe('Levels sheet', () => {
 			false,
 		)
 		expect(screen.getByTestId('levels-save')).toHaveTextContent('Save 1 change')
+	})
+
+	it('shows 7-day cycle reason, <14 days notice, and supports dismiss and bulk apply for empty or chosen rows', async () => {
+		const request = region({
+			levels: [
+				row('i1'), // already has 8 / 30
+				row('i2', {
+					orderBelowQuantity: null,
+					fillUpToQuantity: null,
+					placeVersion: 0,
+				}),
+				row('i3', {
+					name: 'Olive oil',
+					orderBelowQuantity: null,
+					fillUpToQuantity: null,
+					placeVersion: 0,
+				}),
+				row('i4', {
+					name: 'Fresh basil',
+					orderBelowQuantity: null,
+					fillUpToQuantity: null,
+					placeVersion: 0,
+				}),
+			],
+			suggestions: {
+				suggestions: [
+					{
+						itemId: 'i1',
+						state: 'ok',
+						useDays: 20,
+						usedQuantity: 40_000_000,
+						dailyUseQuantity: 2_000_000,
+						weeklyUseQuantity: 14_000_000,
+						orderBelowQuantity: 6_000_000,
+						fillUpToQuantity: 20_000_000,
+						deliveryDays: [1, 4],
+						cycleDays: null,
+						supplierName: 'Al Watania',
+						packName: 'Box',
+						packBaseQuantity: 10_000_000,
+					},
+					{
+						itemId: 'i2',
+						state: 'ok',
+						useDays: 14,
+						usedQuantity: 28_000_000,
+						dailyUseQuantity: 2_000_000,
+						weeklyUseQuantity: 14_000_000,
+						orderBelowQuantity: 14_000_000,
+						fillUpToQuantity: 34_000_000,
+						deliveryDays: [],
+						cycleDays: 7,
+						supplierName: null,
+						packName: null,
+						packBaseQuantity: null,
+					},
+					{
+						itemId: 'i3',
+						state: 'ok',
+						useDays: 20,
+						usedQuantity: 20_000_000,
+						dailyUseQuantity: 1_000_000,
+						weeklyUseQuantity: 7_000_000,
+						orderBelowQuantity: 7_000_000,
+						fillUpToQuantity: 17_000_000,
+						deliveryDays: [],
+						cycleDays: 7,
+						supplierName: null,
+						packName: null,
+						packBaseQuantity: null,
+					},
+					{
+						itemId: 'i4',
+						state: 'not_enough_history',
+						useDays: 6,
+						usedQuantity: 6_000_000,
+						dailyUseQuantity: 0,
+						weeklyUseQuantity: 0,
+						orderBelowQuantity: 0,
+						fillUpToQuantity: 0,
+						deliveryDays: [],
+						cycleDays: null,
+						supplierName: null,
+						packName: null,
+						packBaseQuantity: null,
+					},
+				],
+			},
+		})
+		renderLevels(request)
+		await userEvent.click(await screen.findByTestId('levels-suggest'))
+
+		expect(await screen.findByTestId('level-suggestion-i2')).toHaveTextContent(
+			'Uses 2 kg a day, 7-day cycle.',
+		)
+		// i1 had no entry in suggestions (in the first test) or i4 had 6 days; also test 0 days when omitted from suggestions
+		expect(screen.getByTestId('level-suggestion-i4')).toHaveTextContent(
+			'Needs 14 days of use (6 so far).',
+		)
+		expect(screen.queryByTestId('level-use-i4')).toBeNull()
+
+		// Dismiss i3: suggestion disappears, inputs remain empty
+		await userEvent.click(screen.getByTestId('level-dismiss-i3'))
+		expect(screen.queryByTestId('level-suggestion-i3')).toBeNull()
+		expect(screen.getByTestId('level-below-i3')).toHaveValue('')
+		expect(screen.getByTestId('level-fill-i3')).toHaveValue('')
+
+		// Use all suggestions (none chosen -> fills empty non-dismissed i2, skips i1 & i3 & i4)
+		await userEvent.click(screen.getByTestId('levels-use-all'))
+		expect(screen.getByTestId('level-below-i2')).toHaveValue('14')
+		expect(screen.getByTestId('level-fill-i2')).toHaveValue('34')
+		expect(screen.getByTestId('level-below-i1')).toHaveValue('8')
+		expect(screen.getByTestId('level-fill-i1')).toHaveValue('30')
+		expect(screen.getByTestId('level-below-i3')).toHaveValue('')
+		expect(screen.getByTestId('level-below-i4')).toHaveValue('')
+
+		// Choosing i1 and clicking Use all suggestions updates i1 too
+		await userEvent.click(screen.getByTestId('level-choose-i1'))
+		await userEvent.click(screen.getByTestId('levels-use-all'))
+		expect(screen.getByTestId('level-below-i1')).toHaveValue('6')
+		expect(screen.getByTestId('level-fill-i1')).toHaveValue('20')
+
+		// Nothing sent to server until Save
+		expect(request.mock.calls.some(([path]) => path === '/levels/bulk')).toBe(
+			false,
+		)
 	})
 
 	it('says when there is not enough history to suggest from', async () => {

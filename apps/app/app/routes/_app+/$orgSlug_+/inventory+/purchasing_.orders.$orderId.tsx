@@ -29,6 +29,9 @@ export default function InventoryReviewOrderRoute() {
 			canEdit={layout.canEdit}
 			canSeeCost={layout.canSeeCost}
 			canManagePurchasing={layout.canManagePurchasing}
+			canManageSettings={layout.canManageSettings ?? false}
+			isOwner={layout.isOwner ?? false}
+			currentUserId={layout.currentUserId}
 			memberNames={loaderData?.memberNames}
 			search={layout.locations.length > 1 ? search : ''}
 		/>

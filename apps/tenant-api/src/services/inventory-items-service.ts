@@ -52,6 +52,7 @@ import { recordInventoryAudit } from './inventory-audit.ts'
 import { loadDaysLeft } from './inventory-days-left.ts'
 import { loadUnitChanges } from './inventory-history.ts'
 import { mergeLinksFor } from './inventory-merge-service.ts'
+import { getItemOthersPay } from './inventory-price-comparison.ts'
 import {
 	assertLocationAllowed,
 	assertVersion,
@@ -97,6 +98,10 @@ export type InventoryCaller = {
 	recipe?: boolean
 	/** The `inventory.recipes` flag is on in the token (absent: off). */
 	recipesEnabled?: boolean
+	/** The member holds `update:settings:any` (absent: no). */
+	canManageSettings?: boolean
+	/** The member's org role is `org_role_admin` (owner; absent: no). */
+	isOwner?: boolean
 }
 
 // ── Stock rows (one item at one location) ───────────────────────────────────
@@ -548,6 +553,14 @@ export async function getItemDetail(
 					history: await costHistory(db, itemId),
 				}
 			: null
+		const othersPay = await getItemOthersPay(db, {
+			itemId,
+			locationId,
+			caller,
+			costRow: costRow ?? null,
+			now: Date.now(),
+		})
+		if (othersPay !== undefined) detail.othersPay = othersPay
 	}
 	return detail
 }

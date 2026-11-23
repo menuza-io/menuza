@@ -30,11 +30,15 @@ const mocks = vi.hoisted(() => ({
 	locations: vi.fn(),
 }))
 
-vi.mock('@repo/auth', () => ({
-	getUserId: mocks.userId,
-	getUserOrganizationPermissions: mocks.permissions,
-	isImpersonating: mocks.impersonating,
-}))
+vi.mock('@repo/auth', async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>()
+	return {
+		...actual,
+		getUserId: mocks.userId,
+		getUserOrganizationPermissions: mocks.permissions,
+		isImpersonating: mocks.impersonating,
+	}
+})
 vi.mock('@repo/common/feature-flags', () => ({
 	getFeatureFlag: vi.fn(async (key: string) => mocks.flags.get(key) ?? false),
 }))

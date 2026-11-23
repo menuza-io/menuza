@@ -180,6 +180,7 @@ describe('GET /resources/inventory/context', () => {
 			timeZone: 'Asia/Riyadh',
 			taxInclusive: true,
 			taxRatePercent: 15,
+			specialHours: null,
 		})
 	})
 })

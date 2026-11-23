@@ -1,13 +1,13 @@
 import {
 	parseUnitRef,
-	suggestLevelsFromUse,
+	suggestLevelsFromHistory,
 	thousandthsPerUnit,
 	type LevelRow,
 	type LevelSuggestions,
 } from '@repo/inventory'
-import { addDays, daysBetween } from '@repo/reservations'
+import { daysBetween } from '@repo/reservations'
 import { invItemPlaces, invItems, invMovements } from '@repo/tenant-db'
-import { and, eq, gte, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { InventoryError } from '../lib/inventory-http.ts'
 import {
 	type InventoryIdempotency,
@@ -19,7 +19,7 @@ import {
 	assertLocationAllowed,
 	decodeOffsetCursor,
 	defaultCountUnit,
-	locationBusinessDate,
+	locationClock,
 	wireUnit,
 } from './inventory-common.ts'
 import {
@@ -27,6 +27,7 @@ import {
 	type ListLevelsQuery,
 	type PutLevelsInput,
 } from './inventory-contract-types.ts'
+import { loadUseHistory } from './inventory-days-left.ts'
 import {
 	type InventoryCaller,
 	itemStatus,
@@ -36,6 +37,7 @@ import {
 import {
 	chooseSupplierProduct,
 	loadProductChoices,
+	supplierSchedule,
 } from './inventory-orders-service.ts'
 import { getInventorySettings } from './inventory-settings-service.ts'
 
@@ -234,68 +236,85 @@ function roundingFor(
 }
 
 /**
- * "You use about 22 kg a week": what left stock (sales, waste and counted
- * shortfalls, never deliveries or transfers) over the window, per item, with
- * `suggestLevelsFromUse`. Suggestions are never applied here.
+ * Suggests "order more when below" and "fill up to" from the last 28 days of
+ * usage (`loadUseHistory`) and the chosen supplier's delivery schedule & pack
+ * size (falling back to a 7-day cycle and count-unit rounding when unsourced).
+ * Suggestions are never applied here.
  */
 export async function suggestLevels(
 	db: InventoryReader,
 	input: { query: LevelSuggestionsQuery; now: number },
 ): Promise<LevelSuggestions> {
 	const { query } = input
-	const today = await locationBusinessDate(db, query.locationId, input.now)
-	const windowStart = addDays(today, -(query.days - 1))
-	const [first, used, stock] = await Promise.all([
+	const clock = await locationClock(db, query.locationId, input.now)
+	const today = clock.local.date
+	const [first, historyByItem, stock, choices] = await Promise.all([
 		db
 			.select({ at: sql<string | null>`min(${invMovements.businessDate})` })
 			.from(invMovements)
 			.where(eq(invMovements.locationId, query.locationId))
 			.get(),
-		db
-			.select({
-				itemId: invMovements.itemId,
-				used: sql<number>`coalesce(sum(case
-					when ${invMovements.kind} in ('sale', 'waste', 'batch_used') then -${invMovements.quantity}
-					when ${invMovements.kind} = 'count' and ${invMovements.quantity} < 0 then -${invMovements.quantity}
-					else 0 end), 0)`,
-			})
-			.from(invMovements)
-			.where(
-				and(
-					eq(invMovements.locationId, query.locationId),
-					gte(invMovements.businessDate, windowStart),
-				),
-			)
-			.groupBy(invMovements.itemId),
+		loadUseHistory(db, query.locationId, today),
 		loadLocationStock(db, query.locationId),
+		loadProductChoices(db),
 	])
 	const daysObserved = first?.at
 		? Math.max(1, Math.min(query.days, daysBetween(first.at, today) + 1))
 		: 0
-	const stockById = new Map(stock.map((row) => [row.item.id, row]))
 	const suggestions: LevelSuggestions['suggestions'] = []
-	for (const row of used) {
-		const total = Number(row.used)
-		const entry = stockById.get(row.itemId)
-		if (!entry || total <= 0 || daysObserved === 0) continue
-		const levels = suggestLevelsFromUse({
-			usedQuantity: total,
-			days: daysObserved,
-			coverDays: query.coverDays,
-			orderBelowDays: query.orderBelowDays,
-			roundTo: roundingFor(
-				entry.place?.countUnit ?? null,
-				entry.units,
-				entry.item.baseUnit,
-			),
+	for (const entry of stock) {
+		if (entry.item.archivedAt !== null) continue
+		const history = historyByItem.get(entry.item.id) ?? []
+		if (history.length === 0) continue
+		const choice = chooseSupplierProduct(choices.get(entry.item.id) ?? [])
+		const roundTo = choice
+			? choice.product.packBaseQuantity
+			: roundingFor(
+					entry.place?.countUnit ?? null,
+					entry.units,
+					entry.item.baseUnit,
+				)
+		const result = suggestLevelsFromHistory({
+			now: clock.local,
+			history,
+			schedule: choice ? supplierSchedule(choice.supplier) : null,
+			roundTo,
 		})
-		if (!levels) continue
+		const supplierName = choice?.supplier.name ?? null
+		const packName = choice?.product.packName ?? null
+		const packBaseQuantity = choice?.product.packBaseQuantity ?? null
+		if (result.state === 'not_enough_history') {
+			suggestions.push({
+				itemId: entry.item.id,
+				state: 'not_enough_history',
+				useDays: result.useDays,
+				usedQuantity: result.usedQuantity,
+				dailyUseQuantity: 0,
+				weeklyUseQuantity: 0,
+				orderBelowQuantity: 0,
+				fillUpToQuantity: 0,
+				deliveryDays: [],
+				cycleDays: null,
+				supplierName,
+				packName,
+				packBaseQuantity,
+			})
+			continue
+		}
 		suggestions.push({
-			itemId: row.itemId,
-			usedQuantity: total,
-			weeklyUseQuantity: levels.weeklyUseQuantity,
-			orderBelowQuantity: levels.orderBelowQuantity,
-			fillUpToQuantity: levels.fillUpToQuantity,
+			itemId: entry.item.id,
+			state: 'ok',
+			useDays: result.useDays,
+			usedQuantity: result.usedQuantity,
+			dailyUseQuantity: result.dailyUseQuantity,
+			weeklyUseQuantity: result.weeklyUseQuantity,
+			orderBelowQuantity: result.orderBelowQuantity,
+			fillUpToQuantity: result.fillUpToQuantity,
+			deliveryDays: result.deliveryDays,
+			cycleDays: result.cycleDays,
+			supplierName,
+			packName,
+			packBaseQuantity,
 		})
 	}
 	suggestions.sort((a, b) => (a.itemId < b.itemId ? -1 : 1))

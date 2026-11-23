@@ -1,8 +1,9 @@
 import { z } from 'zod'
 import {
+	orderApprovalStatusSchema,
 	orderSendChannelSchema,
-	orderStatusSchema,
 	orderTextLocaleSchema,
+	orderWireStatusSchema,
 	supplierOrderChannelSchema,
 } from '../records.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
@@ -55,6 +56,38 @@ export const packsSchema = z
 
 // ── Suggested orders ────────────────────────────────────────────────────────
 
+/**
+ * Region-computed explanation for why a line is suggested and how many packs
+ * were rounded up. Money fields are omitted whenever the caller lacks
+ * `read:inventory_cost:any`.
+ */
+export const orderLineExplanationWarningsSchema = z.object({
+	notCountedIn10Days: z.boolean(),
+	priceChangedSinceLastOrder: z.boolean(),
+	belowSupplierMinimum: z.boolean(),
+})
+export type OrderLineExplanationWarnings = z.infer<
+	typeof orderLineExplanationWarningsSchema
+>
+
+export const orderLineExplanationSchema = z.object({
+	onHandQuantity: z.number().int(),
+	lastCountedAt: z.number().int().nullable(),
+	onOrderQuantity: z.number().int(),
+	orderBelowQuantity: z.number().int().nullable(),
+	fillUpToQuantity: z.number().int().nullable(),
+	expectedUseUntilDeliveryQuantity: z.number().int().nullable(),
+	neededQuantity: z.number().int(),
+	packName: z.string(),
+	packBaseQuantity: z.number().int(),
+	rawPacksMilli: z.number().int(),
+	roundedPacksMilli: z.number().int(),
+	warnings: orderLineExplanationWarningsSchema,
+	previousOrderPackPriceMinor: z.number().int().nullable().optional(),
+	currentPackPriceMinor: z.number().int().nullable().optional(),
+})
+export type OrderLineExplanation = z.infer<typeof orderLineExplanationSchema>
+
 /** `GET /orders/suggested?locationId=` (read). */
 export const suggestedOrdersQuerySchema = z
 	.object({ locationId: inventoryLocationIdSchema })
@@ -83,6 +116,8 @@ export const suggestedOrderLineSchema = z.object({
 	packPriceMinor: minorOut,
 	/** Estimated for a priced-by-weight pack. */
 	lineTotalMinor: minorOut,
+	/** Region-computed explanation for why this quantity was suggested (#497). */
+	explanation: orderLineExplanationSchema.nullable().optional(),
 })
 export type SuggestedOrderLine = z.infer<typeof suggestedOrderLineSchema>
 
@@ -156,6 +191,8 @@ export const orderLineInputSchema = z
 		itemId: inventoryIdSchema,
 		supplierProductId: inventoryIdSchema,
 		packs: packsSchema,
+		suggestedPacks: packsSchema.nullable().optional(),
+		explanation: orderLineExplanationSchema.nullable().optional(),
 	})
 	.strict()
 
@@ -287,6 +324,8 @@ export const orderLineSchema = z.object({
 	fillUpToQuantity: z.number().int().nullable().optional(),
 	packPriceMinor: minorOut,
 	lineTotalMinor: minorOut,
+	/** Region-computed suggestion explanation (#497). */
+	explanation: orderLineExplanationSchema.nullable().optional(),
 })
 export type OrderLine = z.infer<typeof orderLineSchema>
 
@@ -297,7 +336,7 @@ export const orderSummarySchema = z.object({
 	locationId: z.string(),
 	supplierId: z.string(),
 	supplierName: z.string(),
-	status: orderStatusSchema,
+	status: orderWireStatusSchema,
 	expectedDate: isoDateSchema.nullable(),
 	cutoff: localMomentSchema.nullable(),
 	note: z.string().nullable(),
@@ -321,6 +360,18 @@ export const orderSummarySchema = z.object({
 	/** Manual supplier confirmation (#502). */
 	confirmedAt: z.number().int().nullable().optional(),
 	confirmedBy: actorSchema.nullable().optional(),
+	/** Spending-limit approval (#500). */
+	approvalStatus: orderApprovalStatusSchema.nullable().optional(),
+	requestedSendChannel: orderSendChannelSchema.nullable().optional(),
+	approvalRequestedAt: z.number().int().nullable().optional(),
+	approvalRequestedBy: actorSchema.nullable().optional(),
+	approvalBreachedOrderLimit: z.boolean().optional(),
+	approvalBreachedMonthlyLimit: z.boolean().optional(),
+	approvedAt: z.number().int().nullable().optional(),
+	approvedBy: actorSchema.nullable().optional(),
+	rejectedAt: z.number().int().nullable().optional(),
+	rejectedBy: actorSchema.nullable().optional(),
+	rejectionReason: z.string().nullable().optional(),
 })
 export type OrderSummary = z.infer<typeof orderSummarySchema>
 
@@ -338,6 +389,10 @@ export const orderDetailSchema = orderSummarySchema.extend({
 	supplierOrderChannel: supplierOrderChannelSchema,
 	supplierEmail: z.string().nullable(),
 	supplierPhone: z.string().nullable(),
+	/** Spending-limit context when waiting for approval (#500, cost grant only). */
+	orderLimitMinor: minorOut,
+	monthlyLimitMinor: minorOut,
+	monthlySpentMinor: minorOut,
 })
 export type OrderDetail = z.infer<typeof orderDetailSchema>
 
@@ -350,7 +405,7 @@ export const listOrdersQuerySchema = listQuerySchema
 	.extend({
 		locationId: inventoryLocationIdSchema,
 		status: z
-			.union([z.enum(['open', 'closed', 'all']), orderStatusSchema])
+			.union([z.enum(['open', 'closed', 'all']), orderWireStatusSchema])
 			.default('open'),
 		supplierId: inventoryIdSchema.optional(),
 	})
@@ -380,8 +435,32 @@ export const sendOrderResultSchema = orderTextSchema.extend({
 	channel: orderSendChannelSchema,
 	emailSent: z.boolean(),
 	emailSkipped: orderEmailSkippedSchema.nullable(),
+	/** True when sending exceeded a spending limit and moved to waiting_for_approval (#500). */
+	waitingForApproval: z.boolean().optional(),
+	orderLimitMinor: minorOut,
+	monthlyLimitMinor: minorOut,
+	monthlySpentMinor: minorOut,
 })
 export type SendOrderResult = z.infer<typeof sendOrderResultSchema>
+
+/** `POST /orders/:id/approve` (`update:inventory_purchasing:any` + `update:settings:any`, #500). */
+export const approveOrderSchema = z
+	.object({
+		expectedVersion: expectedVersionSchema,
+		channel: orderSendChannelSchema.optional(),
+		locale: orderTextLocaleSchema.optional(),
+	})
+	.strict()
+export type ApproveOrder = z.infer<typeof approveOrderSchema>
+
+/** `POST /orders/:id/reject` (`update:inventory_purchasing:any` + `update:settings:any`, #500). */
+export const rejectOrderSchema = z
+	.object({
+		expectedVersion: expectedVersionSchema,
+		reason: z.string().trim().min(1).max(500),
+	})
+	.strict()
+export type RejectOrder = z.infer<typeof rejectOrderSchema>
 
 /** `POST /orders/:id/confirm` (`update:inventory_purchasing:any`, #502). */
 export const confirmOrderSchema = z

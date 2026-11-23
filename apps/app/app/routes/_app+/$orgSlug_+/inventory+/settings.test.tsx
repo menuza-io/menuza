@@ -182,4 +182,120 @@ describe('InventorySettingsRoute', () => {
 			anyStaffCanReceive: true,
 		})
 	})
+
+	it('saves per-location purchasing spending limits when user has purchasing, settings, and cost grants (#500)', async () => {
+		const user = userEvent.setup()
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path === '/settings' && !init?.method) {
+				return {
+					targetFoodCostBp: 3000,
+					unitSystem: 'metric',
+					countDayOfWeek: null,
+					countTime: null,
+					anyStaffCanReceive: false,
+					version: 1,
+					updatedAt: 1_700_000_000_000,
+					locations: [
+						{
+							locationId: 'main',
+							timeZone: 'Asia/Riyadh',
+							dayStartMinutes: 240,
+							currency: 'SAR',
+							currencySource: 'app',
+							pricesIncludeTax: true,
+							taxRateBp: 1500,
+							orderLimitMinor: 50_000,
+							monthlyLimitMinor: null,
+							version: 4,
+						},
+					],
+				}
+			}
+			if (
+				path === '/settings/locations/main/limits' &&
+				init?.method === 'PUT'
+			) {
+				const body = JSON.parse(String(init.body)) as Record<string, unknown>
+				return {
+					locationId: 'main',
+					timeZone: 'Asia/Riyadh',
+					dayStartMinutes: 240,
+					currency: 'SAR',
+					currencySource: 'app',
+					pricesIncludeTax: true,
+					taxRateBp: 1500,
+					orderLimitMinor: body.orderLimitMinor,
+					monthlyLimitMinor: body.monthlyLimitMinor,
+					version: 5,
+				}
+			}
+			throw new Error(`unexpected request ${path}`)
+		})
+
+		renderSettings(request, { canManageSettings: true })
+
+		const orderInput = await screen.findByTestId<HTMLInputElement>(
+			'settings-order-limit',
+		)
+		const monthlyInput = screen.getByTestId<HTMLInputElement>(
+			'settings-monthly-limit',
+		)
+		expect(orderInput.value).toBe('500.00')
+		expect(monthlyInput.value).toBe('')
+
+		await user.clear(orderInput)
+		await user.type(orderInput, '750')
+		await user.type(monthlyInput, '3000.50')
+		await user.click(screen.getByTestId('settings-limits-save'))
+
+		await waitFor(() => {
+			expect(request).toHaveBeenCalledWith(
+				'/settings/locations/main/limits',
+				expect.objectContaining({ method: 'PUT' }),
+			)
+		})
+		const putCall = request.mock.calls.find(
+			([path, init]) =>
+				path === '/settings/locations/main/limits' && init?.method === 'PUT',
+		)
+		expect(JSON.parse(String(putCall?.[1]?.body))).toEqual({
+			expectedVersion: 4,
+			orderLimitMinor: 75_000,
+			monthlyLimitMinor: 300_050,
+		})
+	})
+
+	it('hides spending limits without cost grant and makes them read-only without settings grant (#500)', async () => {
+		const request = vi.fn<InventoryClient['request']>(async (path) => {
+			if (path === '/settings') {
+				return {
+					targetFoodCostBp: 3000,
+					unitSystem: 'metric',
+					countDayOfWeek: null,
+					countTime: null,
+					anyStaffCanReceive: false,
+					version: 1,
+					updatedAt: null,
+					locations: [],
+				}
+			}
+			throw new Error(`unexpected request ${path}`)
+		})
+
+		const first = renderSettings(request, {
+			canSeeCost: false,
+			canManageSettings: true,
+		})
+		await screen.findByTestId('settings-target-food-cost')
+		expect(screen.queryByTestId('settings-limits-form')).toBeNull()
+		first.unmount()
+
+		renderSettings(request, {
+			canSeeCost: true,
+			canManageSettings: false,
+		})
+		expect(await screen.findByTestId('settings-order-limit')).toBeDisabled()
+		expect(screen.getByTestId('settings-limits-readonly')).toBeTruthy()
+		expect(screen.queryByTestId('settings-limits-save')).toBeNull()
+	})
 })

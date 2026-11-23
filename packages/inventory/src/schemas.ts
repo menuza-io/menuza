@@ -34,6 +34,12 @@ export const inventoryLocationSettingsSchema = z.object({
 	pricesIncludeTax: z.boolean(),
 	/** Tax rate in basis points (1500 = 15%), or null when unknown. */
 	taxRateBp: z.number().int().min(0).max(10_000).nullable(),
+	/** Per-order spending limit in location currency minor units (#500, cost grant only). */
+	orderLimitMinor: z.number().int().min(0).nullable().optional(),
+	/** Monthly spending limit in location currency minor units (#500, cost grant only). */
+	monthlyLimitMinor: z.number().int().min(0).nullable().optional(),
+	/** Location settings optimistic version (#500). */
+	version: z.number().int().min(0).optional(),
 })
 export type InventoryLocationSettings = z.infer<
 	typeof inventoryLocationSettingsSchema
@@ -88,6 +94,40 @@ export const updateInventorySettingsSchema = z
 	)
 export type UpdateInventorySettings = z.infer<
 	typeof updateInventorySettingsSchema
+>
+
+/**
+ * `PUT /operator/inventory/settings/locations/:locationId/limits` (#500):
+ * requires `update:inventory_purchasing:any` + `update:settings:any` +
+ * `read:inventory_cost:any`.
+ */
+export const updateLocationSpendingLimitsSchema = z
+	.object({
+		expectedVersion: z.number().int().min(0),
+		orderLimitMinor: z
+			.number()
+			.int()
+			.min(0)
+			.max(1_000_000_000_000)
+			.nullable()
+			.optional(),
+		monthlyLimitMinor: z
+			.number()
+			.int()
+			.min(0)
+			.max(1_000_000_000_000)
+			.nullable()
+			.optional(),
+	})
+	.strict()
+	.refine(
+		(body) =>
+			body.orderLimitMinor !== undefined ||
+			body.monthlyLimitMinor !== undefined,
+		{ message: 'Nothing to change' },
+	)
+export type UpdateLocationSpendingLimits = z.infer<
+	typeof updateLocationSpendingLimitsSchema
 >
 
 /** `GET /operator/inventory/status?locationId=`: setup checklist facts. */

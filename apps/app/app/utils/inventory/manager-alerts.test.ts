@@ -42,6 +42,20 @@ describe('inventory alert vocabulary', () => {
 		).toBeNull()
 		expect(inventoryAlertKindFromNotificationType('staffing-x')).toBeNull()
 		expect(isInventoryAlertWorkflow('inventory.other')).toBe(false)
+
+		const repeatCopy = describeInventoryAlert({
+			kind: 'inventory_repeat_order_draft',
+			count: 1,
+			locationName: 'Main Kitchen',
+			repeatOrderDraft: {
+				orderId: 'ord_1',
+				orderNumber: 42,
+				repeatOrderId: 'rep_1',
+				expectedDate: '2026-11-26',
+			},
+		})
+		expect(repeatCopy.headline).toContain('Order #42')
+		expect(repeatCopy.detail).toContain('2026-11-26')
 	})
 
 	it('accepts the contract event and refuses an item name', () => {
@@ -142,5 +156,63 @@ describe('inventory alert vocabulary', () => {
 			locationName: null,
 		})
 		expect(mixed.headline).toBe('3 orders are due for delivery (2 overdue)')
+	})
+
+	it('includes affected dishes, food cost %, and target crossing on inventory_price_rise (#520)', () => {
+		const copy = describeInventoryAlert({
+			kind: 'inventory_price_rise',
+			count: 1,
+			locationName: 'Downtown',
+			priceRiseDishes: [
+				{
+					name: 'Classic Burger',
+					oldFoodCostBp: 2800,
+					newFoodCostBp: 3400,
+					targetFoodCostBp: 3000,
+					crossedTarget: true,
+					overTarget: true,
+				},
+				{
+					name: 'Wrap',
+					oldFoodCostBp: 2200,
+					newFoodCostBp: 2500,
+					targetFoodCostBp: 3000,
+					crossedTarget: false,
+					overTarget: false,
+				},
+			],
+		})
+		expect(copy.detail).toContain('Affected dishes:')
+		expect(copy.detail).toContain(
+			'Classic Burger (28.0% → 34.0%, crossed 30.0% target)',
+		)
+		expect(copy.detail).toContain('Wrap (22.0% → 25.0%)')
+	})
+
+	it('gates inventory_order_approval strictly on update:inventory_purchasing:any + update:settings:any (#500)', () => {
+		expect(
+			inventoryAlertAllowedFor(
+				'inventory_order_approval',
+				new Set(['update:inventory_purchasing:any']),
+			),
+		).toBe(false)
+		expect(
+			inventoryAlertAllowedFor(
+				'inventory_order_approval',
+				new Set(['update:settings:any']),
+			),
+		).toBe(false)
+		expect(
+			inventoryAlertAllowedFor(
+				'inventory_order_approval',
+				new Set(['read:inventory_cost:any', 'update:settings:any']),
+			),
+		).toBe(false)
+		expect(
+			inventoryAlertAllowedFor(
+				'inventory_order_approval',
+				new Set(['update:inventory_purchasing:any', 'update:settings:any']),
+			),
+		).toBe(true)
 	})
 })
