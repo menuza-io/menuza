@@ -632,6 +632,16 @@ export const accountantExportSupplierTotalSchema = z.object({
 	unpaidMinor: z.number().int(),
 })
 
+export const accountantExportCurrencyTotalSchema = z.object({
+	currency: z.string(),
+	count: z.number().int(),
+	netMinor: z.number().int(),
+	vatMinor: z.number().int(),
+	totalMinor: z.number().int(),
+	paidMinor: z.number().int(),
+	unpaidMinor: z.number().int(),
+})
+
 export const accountantExportSchema = z.object({
 	from: isoDateSchema,
 	to: isoDateSchema,
@@ -649,5 +659,6 @@ export const accountantExportSchema = z.object({
 		paidMinor: z.number().int(),
 		unpaidMinor: z.number().int(),
 	}),
+	totalsByCurrency: z.array(accountantExportCurrencyTotalSchema).optional(),
 })
 export type AccountantExport = z.infer<typeof accountantExportSchema>

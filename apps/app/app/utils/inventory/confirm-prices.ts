@@ -1,4 +1,6 @@
 import {
+	STANDARD_UNIT_SPECS,
+	toBaseQuantity,
 	type ConfirmDeliveryPrices,
 	type DeliveryDetail,
 	type InventoryBaseUnit,
@@ -6,6 +8,7 @@ import {
 	type InvoiceLineWarning,
 	type InvoiceRead,
 	type InvoiceReadLine,
+	type StandardUnit,
 } from '@repo/inventory'
 import { minorToMajorText, parseMoneyToMinor } from '#app/utils/money-input.ts'
 
@@ -22,6 +25,7 @@ export type ConfirmLineDraft = {
 	lineId: string
 	itemId?: string
 	itemName: string
+	baseUnit?: InventoryBaseUnit
 	/** Packs that arrived, when the line was counted in packs. */
 	packs: number | null
 	packName: string | null
@@ -123,27 +127,69 @@ export function confirmLineHint(
 	return total === null ? '' : minorToMajorText(total, currency)
 }
 
+const UNIT_ALIASES: Record<string, StandardUnit> = {
+	g: 'g',
+	gr: 'g',
+	gm: 'g',
+	gram: 'g',
+	grams: 'g',
+	kg: 'kg',
+	kgs: 'kg',
+	kilo: 'kg',
+	kilos: 'kg',
+	kilogram: 'kg',
+	kilograms: 'kg',
+	ml: 'ml',
+	milliliter: 'ml',
+	milliliters: 'ml',
+	millilitre: 'ml',
+	millilitres: 'ml',
+	l: 'l',
+	lt: 'l',
+	ltr: 'l',
+	liter: 'l',
+	liters: 'l',
+	litre: 'l',
+	litres: 'l',
+	oz: 'oz',
+	lb: 'lb',
+	lbs: 'lb',
+	floz: 'fl_oz',
+	'fl oz': 'fl_oz',
+	fl_oz: 'fl_oz',
+	'fl-oz': 'fl_oz',
+	qt: 'qt',
+	gal: 'gal',
+	pc: 'piece',
+	pcs: 'piece',
+	piece: 'piece',
+	pieces: 'piece',
+	ea: 'piece',
+	each: 'piece',
+}
+
 /** Converts an invoice-read line's quantity + unit into base thousandths when possible. */
-export function invoiceLineBaseQuantity(line: InvoiceReadLine): number | null {
+export function invoiceLineBaseQuantity(
+	line: InvoiceReadLine,
+	targetBaseUnit?: InventoryBaseUnit,
+): number | null {
 	if (line.quantity === null || line.quantity <= 0) return null
-	const unit = (line.unit ?? '').trim().toLowerCase()
 	if (line.packBaseQuantity && line.packBaseQuantity > 0) {
 		return Math.round(line.quantity * line.packBaseQuantity)
 	}
-	if (unit === 'kg' || unit === 'l' || unit === 'liter' || unit === 'litre') {
-		return Math.round(line.quantity * 1_000_000)
+	const unit = (line.unit ?? '').trim().toLowerCase()
+	const standardUnit = UNIT_ALIASES[unit]
+	if (!standardUnit) return null
+	const spec = STANDARD_UNIT_SPECS[standardUnit]
+	if (targetBaseUnit && spec.base !== targetBaseUnit) {
+		return null
 	}
-	if (
-		unit === 'g' ||
-		unit === 'ml' ||
-		unit === 'piece' ||
-		unit === 'pcs' ||
-		unit === 'pc' ||
-		unit === 'each'
-	) {
-		return Math.round(line.quantity * 1_000)
-	}
-	return Math.round(line.quantity * 1_000)
+	const converted = toBaseQuantity(
+		line.quantity,
+		{ kind: 'standard', unit: standardUnit },
+		spec.base,
+	)
+	return converted > 0 ? converted : null
 }
 
 /**
@@ -192,7 +238,7 @@ export function matchInvoiceReadToConfirm(
 				invLine.quantity !== null && invLine.quantity > 0
 					? invLine.quantity
 					: target.packs
-			const nextBaseQty = invoiceLineBaseQuantity(invLine)
+			const nextBaseQty = invoiceLineBaseQuantity(invLine, target.baseUnit)
 
 			target.rawInvoiceText = invLine.text
 			target.warnings = invLine.warnings ?? []

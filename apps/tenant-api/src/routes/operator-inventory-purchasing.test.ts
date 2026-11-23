@@ -1175,4 +1175,162 @@ describe('confirmDeliveryPrices (#504), confirmationRate90d (#502), credit/accou
 		)
 		expect(denied.status).toBe(403)
 	})
+
+	it('rejects quantityOnly credits and restores supplier product price & history when cancelling a priced delivery', async () => {
+		const sup = await supplier('Cancel Rewind Sup')
+		const herb = await item('Fresh Thyme')
+		const prodRes = await call('POST', `${BASE}/suppliers/${sup.id}/products`, {
+			token: full,
+			body: {
+				itemId: herb.id,
+				packName: 'Case 1kg',
+				packBaseQuantity: 1000,
+				priceMinor: 1500,
+			},
+		})
+		expect(prodRes.status).toBe(200)
+		const prod = supplierProductSchema.parse(prodRes.body)
+
+		// Credit + quantityOnly must be rejected.
+		const badCredit = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: {
+				clientId: cid('del'),
+				locationId: LOC,
+				supplierId: sup.id,
+				quantityOnly: true,
+				isCredit: true,
+				lines: [
+					{
+						itemId: herb.id,
+						supplierProductId: prod.id,
+						quantity: 500,
+					},
+				],
+			},
+		})
+		expect(badCredit.status).toBe(400)
+		expect(badCredit.body.reason).toBe('credit_requires_prices')
+
+		// First delivery sets price 1800, second sets typo 9900; cancelling second restores 1800 and hides cancelled entry from price history.
+		const d1 = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: {
+				clientId: cid('del'),
+				locationId: LOC,
+				supplierId: sup.id,
+				currency: 'SAR',
+				lines: [
+					{
+						itemId: herb.id,
+						supplierProductId: prod.id,
+						quantity: 1000,
+						packs: 1,
+						packName: 'Case 1kg',
+						packBaseQuantity: 1000,
+						packPriceMinor: 1800,
+						lineTotalMinor: 1800,
+					},
+				],
+			},
+		})
+		expect(d1.status).toBe(200)
+
+		const d2 = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: {
+				clientId: cid('del'),
+				locationId: LOC,
+				supplierId: sup.id,
+				currency: 'SAR',
+				lines: [
+					{
+						itemId: herb.id,
+						supplierProductId: prod.id,
+						quantity: 1000,
+						packs: 1,
+						packName: 'Case 1kg',
+						packBaseQuantity: 1000,
+						packPriceMinor: 9900,
+						lineTotalMinor: 9900,
+					},
+				],
+			},
+		})
+		expect(d2.status).toBe(200)
+
+		const cancelled = await call(
+			'POST',
+			`${BASE}/deliveries/${d2.body.delivery.id}/cancel`,
+			{
+				token: full,
+				body: { expectedVersion: d2.body.delivery.version, note: 'typo' },
+			},
+		)
+		expect(cancelled.status).toBe(200)
+
+		const supDetail = await call('GET', `${BASE}/suppliers/${sup.id}`, {
+			token: full,
+		})
+		expect(supDetail.status).toBe(200)
+		const restoredProd = supDetail.body.products.find(
+			(p: { id: string }) => p.id === prod.id,
+		)
+		expect(restoredProd?.priceMinor).toBe(1800)
+
+		const pricesRes = await call(
+			'GET',
+			`${BASE}/supplier-products/${prod.id}/prices`,
+			{ token: full },
+		)
+		expect(pricesRes.status).toBe(200)
+		expect(
+			pricesRes.body.entries.map((e: { priceMinor: number }) => e.priceMinor),
+		).toEqual([1800])
+	})
+
+	it('formats 3-decimal currencies (BHD) and groups multi-currency totals in accountant export', async () => {
+		const bhdSup = await supplier('Manama Supply', { currency: 'BHD' })
+		const spice = await item('Cardamom')
+		const locBhd = 'loc_buy_bhd'
+		const bhdToken = await mintToken(ORG)
+
+		const bhdDel = await call('POST', `${BASE}/deliveries`, {
+			token: bhdToken,
+			body: {
+				clientId: cid('del'),
+				locationId: locBhd,
+				supplierId: bhdSup.id,
+				currency: 'BHD',
+				invoiceNumber: 'BHD-1',
+				invoiceDate: '2026-11-21',
+				vatMinor: 125,
+				totalMinor: 1375,
+				paid: true,
+				lines: [{ itemId: spice.id, quantity: 1000, lineTotalMinor: 1250 }],
+			},
+		})
+		expect(bhdDel.status, JSON.stringify(bhdDel.body)).toBe(200)
+
+		const multiJson = await call(
+			'GET',
+			`${BASE}/purchasing/accountant-export?from=2026-11-21&to=2026-11-21&locationId=all&format=json`,
+			{ token: full },
+		)
+		expect(multiJson.status).toBe(200)
+		const parsed = accountantExportSchema.parse(multiJson.body)
+		expect(parsed.totalsByCurrency?.map((c) => c.currency)).toEqual([
+			'BHD',
+			'SAR',
+		])
+
+		const multiCsvRes = await app.request(
+			`${BASE}/purchasing/accountant-export?from=2026-11-21&to=2026-11-21&locationId=all&format=csv`,
+			{ headers: { Authorization: `Bearer ${full}` } },
+		)
+		expect(multiCsvRes.status).toBe(200)
+		const multiCsv = await multiCsvRes.text()
+		expect(multiCsv).toContain('Totals by currency')
+		expect(multiCsv).toContain('BHD,1,1.25,0.125,1.375')
+	})
 })

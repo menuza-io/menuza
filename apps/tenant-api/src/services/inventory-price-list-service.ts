@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { parseDelimited } from '@repo/common/csv'
 import { parseXlsxToRows } from '@repo/common/xlsx'
 import {
@@ -18,13 +19,15 @@ import {
 	type StandardUnit,
 } from '@repo/inventory'
 import {
+	invDeliveries,
+	invDeliveryLines,
 	invItems,
 	invLocationSettings,
 	invSupplierProductPrices,
 	invSupplierProducts,
 	invSuppliers,
 } from '@repo/tenant-db'
-import { and, count, desc, eq, isNull } from 'drizzle-orm'
+import { and, count, desc, eq, isNull, ne, or } from 'drizzle-orm'
 import { InventoryError } from '../lib/inventory-http.ts'
 import {
 	type InventoryReader,
@@ -35,6 +38,11 @@ import {
 	parseInvoiceNumber,
 	readPriceListDocument,
 } from '../lib/invoice-reader.ts'
+import {
+	getCachedVisionRead,
+	setCachedVisionRead,
+	takeVisionReadSlot,
+} from '../lib/vision-read-limit.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
 import { badRequest, newId, notFound } from './inventory-common.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
@@ -760,27 +768,41 @@ export async function parseSupplierPriceList(
 		if (!readerConfigured) {
 			throw new InventoryError('reader_not_configured', 503)
 		}
-		try {
-			const doc = await readPriceListDocument({
-				bytes,
-				contentType: input.body.contentType,
-				fileName: input.body.fileName,
-			})
-			rawLines = doc.lines.map((line) => ({
-				name: line.name,
-				sku: line.sku,
-				packSizeText: line.packSizeText,
-				unit: line.unit,
-				price: line.price,
-				quantity: null,
-				lineTotal: null,
-				category: null,
-				supplierName: doc.supplierName,
-				pricedByWeight: line.pricedByWeight,
-			}))
-		} catch {
-			throw new InventoryError('reader_failed', 502)
+		const now = Date.now()
+		const digest = createHash('sha256').update(bytes).digest('hex')
+		const cacheKey = `pricelist:${caller.orgId}:${input.body.contentType}:${digest}`
+		let doc = getCachedVisionRead<
+			Awaited<ReturnType<typeof readPriceListDocument>>
+		>(cacheKey, now)
+		if (!doc) {
+			if (!takeVisionReadSlot(caller.orgId, now)) {
+				throw new InventoryError('invalid_request', 429, {
+					reason: 'reader_rate_limited',
+				})
+			}
+			try {
+				doc = await readPriceListDocument({
+					bytes,
+					contentType: input.body.contentType,
+					fileName: input.body.fileName,
+				})
+			} catch {
+				throw new InventoryError('reader_failed', 502)
+			}
+			setCachedVisionRead(cacheKey, doc, now)
 		}
+		rawLines = doc.lines.map((line) => ({
+			name: line.name,
+			sku: line.sku,
+			packSizeText: line.packSizeText,
+			unit: line.unit,
+			price: line.price,
+			quantity: null,
+			lineTotal: null,
+			category: null,
+			supplierName: doc.supplierName,
+			pricedByWeight: line.pricedByWeight,
+		}))
 	}
 
 	const truncated = rawLines.length > MAX_PRICE_LIST_LINES
@@ -1115,10 +1137,10 @@ export async function applySupplierPriceList(
 					const skuNorm = line.sku?.trim().toLowerCase()
 					product = [...productById.values()].find(
 						(p) =>
-							(skuNorm && p.sku?.trim().toLowerCase() === skuNorm) ||
-							(p.itemId === itemId &&
-								p.packName.toLowerCase() === line.packName.toLowerCase() &&
-								p.packBaseQuantity === line.packBaseQuantity),
+							p.itemId === itemId &&
+							((skuNorm && p.sku?.trim().toLowerCase() === skuNorm) ||
+								(p.packName.toLowerCase() === line.packName.toLowerCase() &&
+									p.packBaseQuantity === line.packBaseQuantity)),
 					)
 				}
 
@@ -1247,7 +1269,17 @@ async function queryPriceHistory(
 			invSuppliers,
 			eq(invSuppliers.id, invSupplierProductPrices.supplierId),
 		)
-		.where(whereClause)
+		.leftJoin(
+			invDeliveryLines,
+			eq(invDeliveryLines.id, invSupplierProductPrices.deliveryLineId),
+		)
+		.leftJoin(invDeliveries, eq(invDeliveries.id, invDeliveryLines.deliveryId))
+		.where(
+			and(
+				whereClause,
+				or(isNull(invDeliveries.id), ne(invDeliveries.status, 'cancelled')),
+			),
+		)
 		.orderBy(
 			desc(invSupplierProductPrices.effectiveAt),
 			desc(invSupplierProductPrices.createdAt),

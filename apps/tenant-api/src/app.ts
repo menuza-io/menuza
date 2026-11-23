@@ -158,13 +158,29 @@ export function createTenantApiApp() {
 		maxSize: 10 * 1024 * 1024 + 256 * 1024,
 		onError: (c) => c.json({ error: 'Payload too large' }, 413),
 	})
-	app.use('*', (c, next) =>
-		c.req.path === '/photos/upload'
-			? photoUploadBodyLimit(c, next)
-			: c.req.path.startsWith('/api/')
-				? serviceBodyLimit(c, next)
-				: publicBodyLimit(c, next),
-	)
+	const singleDocumentBodyLimit = bodyLimit({
+		maxSize: 12 * 1024 * 1024,
+		onError: (c) => c.json({ error: 'Payload too large' }, 413),
+	})
+	const setupImportBodyLimit = bodyLimit({
+		maxSize: 25 * 1024 * 1024,
+		onError: (c) => c.json({ error: 'Payload too large' }, 413),
+	})
+	app.use('*', (c, next) => {
+		const path = c.req.path
+		if (path === '/photos/upload') return photoUploadBodyLimit(c, next)
+		if (path.startsWith('/api/')) return serviceBodyLimit(c, next)
+		if (path === '/operator/inventory/setup/imports') {
+			return setupImportBodyLimit(c, next)
+		}
+		if (
+			path === '/operator/inventory/deliveries/invoice/read' ||
+			/^\/operator\/inventory\/suppliers\/[^/]+\/price-list\/parse$/.test(path)
+		) {
+			return singleDocumentBodyLimit(c, next)
+		}
+		return publicBodyLimit(c, next)
+	})
 
 	app.use('*', async (c, next) => {
 		await next()

@@ -1,4 +1,5 @@
 import { plural, t } from '@lingui/macro'
+import { currencyExponent } from '@repo/common/money'
 import {
 	INVENTORY_MAX_MINOR,
 	parseUnitRef,
@@ -504,13 +505,18 @@ export function overdueDeliveries(
 	)
 }
 
+/** Local calendar date in `YYYY-MM-DD`. */
+export function localIsoDate(now = new Date()): string {
+	const y = now.getFullYear()
+	const m = String(now.getMonth() + 1).padStart(2, '0')
+	const d = String(now.getDate()).padStart(2, '0')
+	return `${y}-${m}-${d}`
+}
+
 /** Tomorrow's local calendar date in `YYYY-MM-DD`, used as the default for "Not yet". */
 export function tomorrowIsoDate(now = new Date()): string {
 	const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
-	const y = next.getFullYear()
-	const m = String(next.getMonth() + 1).padStart(2, '0')
-	const d = String(next.getDate()).padStart(2, '0')
-	return `${y}-${m}-${d}`
+	return localIsoDate(next)
 }
 
 /** Whether `value` is a valid `YYYY-MM-DD` calendar date. */
@@ -551,19 +557,23 @@ const ARABIC_DIGITS: Record<string, string> = {
 }
 
 /**
- * Converts a major-currency amount string (e.g. `"12.50"`, `"١٢.٥"`) to minor
- * integer units (e.g. `1250`), or null when blank or invalid.
+ * Converts a major-currency amount string (e.g. `"12.50"`, `"12,50"`, `"١٢.٥"`) to
+ * minor integer units for `currency`, or null when blank or invalid.
  */
-export function parseMajorToMinor(text: string): number | null {
+export function parseMajorToMinor(
+	text: string,
+	currency = 'SAR',
+): number | null {
 	const normalized = text
 		.trim()
 		.replace(/[٠-٩۰-۹]/g, (digit) => ARABIC_DIGITS[digit] ?? digit)
-		.replace(/٫/g, '.')
+		.replace(/[٫,]/g, '.')
 	if (!normalized) return null
 	if (!/^\d+(\.\d+)?$/.test(normalized)) return null
 	const amount = Number(normalized)
 	if (!Number.isFinite(amount) || amount < 0) return null
-	const minor = Math.round(amount * 100)
+	const factor = 10 ** currencyExponent(currency)
+	const minor = Math.round(amount * factor)
 	if (
 		!Number.isSafeInteger(minor) ||
 		minor < 0 ||
@@ -632,6 +642,7 @@ export type CashPurchaseLinePayload = z.input<
  */
 export function cashPurchaseLines(
 	lines: readonly CashPurchaseLineDraft[],
+	currency = 'SAR',
 ): CashPurchaseLinePayload[] | null {
 	if (lines.length === 0) return null
 	const out: CashPurchaseLinePayload[] = []
@@ -643,7 +654,7 @@ export function cashPurchaseLines(
 			countUnit: line.countUnit,
 		})
 		if (quantity === null || quantity < 1) return null
-		const amountPaidMinor = parseMajorToMinor(line.amountPaidText)
+		const amountPaidMinor = parseMajorToMinor(line.amountPaidText, currency)
 		if (amountPaidMinor === null) return null
 		const candidate: CashPurchaseLinePayload = line.itemId
 			? { itemId: line.itemId, quantity, amountPaidMinor }

@@ -3,6 +3,25 @@
  * batches (#506), and invoice line reading (#504).
  */
 
+export const MAX_DOCUMENT_UPLOAD_BYTES = 7_500_000
+export const MAX_SETUP_BATCH_BYTES = 18 * 1024 * 1024
+
+const ALLOWED_DOCUMENT_TYPES = new Set([
+	'text/csv',
+	'application/csv',
+	'text/tab-separated-values',
+	'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+	'application/pdf',
+	'image/png',
+	'image/jpeg',
+	'image/webp',
+])
+
+export function isSupportedDocumentUpload(file: File): boolean {
+	const ct = inferUploadContentType(file).toLowerCase().split(';')[0]!.trim()
+	return ALLOWED_DOCUMENT_TYPES.has(ct)
+}
+
 export function inferUploadContentType(file: File): string {
 	if (file.type && file.type.trim() !== '') return file.type
 	const lower = file.name.toLowerCase()

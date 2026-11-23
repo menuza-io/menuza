@@ -45,6 +45,8 @@ import { useInventoryClient } from '#app/hooks/use-inventory-client.ts'
 import {
 	fileToBase64,
 	inferUploadContentType,
+	isSupportedDocumentUpload,
+	MAX_DOCUMENT_UPLOAD_BYTES,
 } from '#app/utils/inventory/file-base64.ts'
 import {
 	defaultEntryUnit,
@@ -175,6 +177,7 @@ export function PriceListImportDialog({
 	const [parsing, setParsing] = useState(false)
 	const [applying, setApplying] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [confirmDiscard, setConfirmDiscard] = useState(false)
 	const [parsed, setParsed] = useState<PriceListParseResult | null>(null)
 	const [lines, setLines] = useState<EditablePriceLine[]>([])
 	const [effectiveDate, setEffectiveDate] = useState(todayIso)
@@ -188,6 +191,7 @@ export function PriceListImportDialog({
 		setParsing(false)
 		setApplying(false)
 		setError(null)
+		setConfirmDiscard(false)
 		setParsed(null)
 		setLines([])
 		setEffectiveDate(todayIso())
@@ -198,8 +202,19 @@ export function PriceListImportDialog({
 
 	async function handleFile(file: File | undefined) {
 		if (!file || parsing) return
+		if (!isSupportedDocumentUpload(file)) {
+			setError(
+				t`Only CSV, TSV, Excel (XLSX), PDF, or image files are supported.`,
+			)
+			return
+		}
+		if (file.size > MAX_DOCUMENT_UPLOAD_BYTES) {
+			setError(t`File must be 7.5 MB or smaller.`)
+			return
+		}
 		setParsing(true)
 		setError(null)
+		setConfirmDiscard(false)
 		try {
 			const contentBase64 = await fileToBase64(file)
 			const contentType = inferUploadContentType(file)
@@ -406,8 +421,18 @@ export function PriceListImportDialog({
 	return (
 		<Dialog
 			open={open}
-			onOpenChange={(next) => {
+			disablePointerDismissal={Boolean(parsed)}
+			onOpenChange={(next, details) => {
 				if (parsing || applying) return
+				if (
+					!next &&
+					parsed &&
+					details?.reason === 'escape-key' &&
+					!confirmDiscard
+				) {
+					setConfirmDiscard(true)
+					return
+				}
 				if (!next) reset()
 				onOpenChange(next)
 			}}
@@ -646,6 +671,8 @@ export function PriceListImportDialog({
 								<ul className="flex flex-col divide-y">
 									{parsed.goneProducts.map((product) => {
 										const checked = archiveGoneIds.has(product.productId)
+										const itemName = product.itemName
+										const packName = product.packName
 										return (
 											<li
 												key={product.productId}
@@ -654,6 +681,7 @@ export function PriceListImportDialog({
 												<div className="flex items-center gap-2">
 													<Checkbox
 														checked={checked}
+														aria-label={t`Archive ${itemName} (${packName})`}
 														onCheckedChange={(next) =>
 															setArchiveGoneIds((current) => {
 																const copy = new Set(current)
@@ -684,6 +712,17 @@ export function PriceListImportDialog({
 						) : null}
 					</div>
 				)}
+
+				{confirmDiscard ? (
+					<Alert variant="destructive" data-testid="price-list-discard-warning">
+						<AlertDescription>
+							<Trans>
+								Discard unsaved price list review? Click Cancel or press Esc
+								again to close.
+							</Trans>
+						</AlertDescription>
+					</Alert>
+				) : null}
 
 				<DialogFooter>
 					<Button

@@ -95,6 +95,7 @@ export function DeliverySheet({
 		null,
 	)
 	const [photoProblem, setPhotoProblem] = useState<string | null>(null)
+	const [photoQueued, setPhotoQueued] = useState(false)
 	const [problem, setProblem] = useState<string | null>(null)
 	const [done, setDone] = useState(false)
 	const [doneMode, setDoneMode] = useState<'delivery' | 'cash'>('delivery')
@@ -119,6 +120,7 @@ export function DeliverySheet({
 			setCloseOrder(false)
 			setPhoto(null)
 			setPhotoProblem(null)
+			setPhotoQueued(false)
 			setProblem(null)
 			setDone(false)
 			setDoneMode('delivery')
@@ -167,6 +169,7 @@ export function DeliverySheet({
 	const choose = (next: Source) => {
 		setSource(next)
 		setProblem(null)
+		setPhotoQueued(false)
 		setCloseOrder(false)
 		setLines(next.kind === 'order' ? linesFromExpected(next.delivery) : [])
 		setCashLines([])
@@ -285,6 +288,7 @@ export function DeliverySheet({
 					await stock.api.putPhoto(upload, photo.blob)
 					await stock.api.photoConfirm(result.id, { key: upload.key })
 				} catch {
+					setPhotoQueued(true)
 					await recordDeliveryPhoto(ctx, result.id, {
 						blob: photo.blob,
 						contentType: photo.contentType,
@@ -314,42 +318,58 @@ export function DeliverySheet({
 			</Button>
 		</div>
 	) : !catalog || !allowed ? undefined : source?.kind === 'cash' ? (
-		<div className="flex flex-col gap-2 pb-3 sm:flex-row-reverse">
-			<Button
-				variant="primary"
-				size="lg"
-				disabled={!cashReady || saving}
-				onClick={() => void submitCash()}
-				className="sm:min-w-56"
-			>
-				<Icon name="check" className="size-5" />
-				<Trans>Save cash purchase</Trans>
-			</Button>
-			<Button
-				size="lg"
-				onClick={() => {
-					setCashLines([])
-					setSource(null)
-				}}
-			>
-				<Trans>Back</Trans>
-			</Button>
+		<div className="flex flex-col gap-2 pb-3">
+			{!cashReady ? (
+				<p className="text-muted-foreground text-sm">
+					<Trans>
+						Add at least one item with a quantity and amount paid to save.
+					</Trans>
+				</p>
+			) : null}
+			<div className="flex flex-col gap-2 sm:flex-row-reverse">
+				<Button
+					variant="primary"
+					size="lg"
+					disabled={!cashReady || saving}
+					onClick={() => void submitCash()}
+					className="sm:min-w-56"
+				>
+					<Icon name="check" className="size-5" />
+					<Trans>Save cash purchase</Trans>
+				</Button>
+				<Button
+					size="lg"
+					onClick={() => {
+						setCashLines([])
+						setSource(null)
+					}}
+				>
+					<Trans>Back</Trans>
+				</Button>
+			</div>
 		</div>
 	) : source ? (
-		<div className="flex flex-col gap-2 pb-3 sm:flex-row-reverse">
-			<Button
-				variant="primary"
-				size="lg"
-				disabled={!ready || saving}
-				onClick={() => void submit()}
-				className="sm:min-w-56"
-			>
-				<Icon name="check" className="size-5" />
-				<Trans>Save delivery</Trans>
-			</Button>
-			<Button size="lg" onClick={() => setSource(null)}>
-				<Trans>Back</Trans>
-			</Button>
+		<div className="flex flex-col gap-2 pb-3">
+			{!ready ? (
+				<p className="text-muted-foreground text-sm">
+					<Trans>Select or enter at least one received item to save.</Trans>
+				</p>
+			) : null}
+			<div className="flex flex-col gap-2 sm:flex-row-reverse">
+				<Button
+					variant="primary"
+					size="lg"
+					disabled={!ready || saving}
+					onClick={() => void submit()}
+					className="sm:min-w-56"
+				>
+					<Icon name="check" className="size-5" />
+					<Trans>Save delivery</Trans>
+				</Button>
+				<Button size="lg" onClick={() => setSource(null)}>
+					<Trans>Back</Trans>
+				</Button>
+			</div>
 		</div>
 	) : undefined
 
@@ -427,6 +447,14 @@ export function DeliverySheet({
 								)
 							)}
 						</p>
+						{photoQueued ? (
+							<p className="text-muted-foreground text-sm">
+								<Trans>
+									The receipt photo could not upload right now. It is saved on
+									this tablet and will upload when connected.
+								</Trans>
+							</p>
+						) : null}
 					</div>
 				) : !source ? (
 					<div className="flex flex-col gap-5">

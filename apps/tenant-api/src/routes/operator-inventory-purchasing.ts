@@ -20,6 +20,7 @@ import {
 	versionOnlySchema,
 } from '@repo/inventory'
 import { toCsv, type CsvCell } from '@repo/common/csv'
+import { minorToMajor, minorToMajorText } from '@repo/common/money'
 import { buildTextLinesPdf, type PdfLine } from '@repo/common/pdf'
 import { getTenantDb } from '@repo/tenant-db'
 import { readDeliveryInvoice } from '../services/inventory-invoice-read-service.ts'
@@ -529,14 +530,6 @@ operatorInventoryPurchasingRoutes.get(
 	},
 )
 
-function minorToMajor(minor: number): number {
-	return Number((minor / 100).toFixed(2))
-}
-
-function formatMoneyText(minor: number): string {
-	return (minor / 100).toFixed(2)
-}
-
 operatorInventoryPurchasingRoutes.get(
 	'/purchasing/accountant-export',
 	costReads(),
@@ -562,6 +555,8 @@ operatorInventoryPurchasingRoutes.get(
 				locationIds: ctx.locationIds,
 			})
 			const { internalRows: _internalRows, ...accountantExport } = report
+			const multiCurrency = (accountantExport.totalsByCurrency?.length ?? 0) > 1
+			const summaryCurrency = accountantExport.currency
 
 			if (format === 'csv') {
 				const headers = [
@@ -592,56 +587,84 @@ operatorInventoryPurchasingRoutes.get(
 					row.zatcaReference ?? '',
 					row.isCredit ? 'Credit' : 'Delivery',
 					row.paid ? 'Paid' : 'Unpaid',
-					minorToMajor(row.netMinor),
-					minorToMajor(row.vatMinor),
-					minorToMajor(row.totalMinor),
+					minorToMajor(row.netMinor, row.currency),
+					minorToMajor(row.vatMinor, row.currency),
+					minorToMajor(row.totalMinor, row.currency),
 					row.currency,
 					...accountantExport.categories.map((cat) =>
-						minorToMajor(row.categoryBreakdown[cat] ?? 0),
+						minorToMajor(row.categoryBreakdown[cat] ?? 0, row.currency),
 					),
 				])
-				csvRows.push([])
-				csvRows.push(['Supplier totals'])
-				csvRows.push([
-					'Supplier',
-					'Supplier VAT',
-					'Deliveries',
-					'Net',
-					'VAT',
-					'Total',
-					'Paid',
-					'Unpaid',
-				])
-				for (const sup of accountantExport.supplierTotals) {
+				if (!multiCurrency) {
+					csvRows.push([])
+					csvRows.push(['Supplier totals'])
 					csvRows.push([
-						sup.supplierName,
-						sup.supplierVatNumber ?? '',
-						sup.deliveryCount,
-						minorToMajor(sup.netMinor),
-						minorToMajor(sup.vatMinor),
-						minorToMajor(sup.totalMinor),
-						minorToMajor(sup.paidMinor),
-						minorToMajor(sup.unpaidMinor),
+						'Supplier',
+						'Supplier VAT',
+						'Deliveries',
+						'Net',
+						'VAT',
+						'Total',
+						'Paid',
+						'Unpaid',
 					])
-				}
-				csvRows.push([])
-				csvRows.push(['Category totals'])
-				for (const cat of accountantExport.categories) {
+					for (const sup of accountantExport.supplierTotals) {
+						csvRows.push([
+							sup.supplierName,
+							sup.supplierVatNumber ?? '',
+							sup.deliveryCount,
+							minorToMajor(sup.netMinor, summaryCurrency),
+							minorToMajor(sup.vatMinor, summaryCurrency),
+							minorToMajor(sup.totalMinor, summaryCurrency),
+							minorToMajor(sup.paidMinor, summaryCurrency),
+							minorToMajor(sup.unpaidMinor, summaryCurrency),
+						])
+					}
+					csvRows.push([])
+					csvRows.push(['Category totals'])
+					for (const cat of accountantExport.categories) {
+						csvRows.push([
+							cat,
+							minorToMajor(
+								accountantExport.categoryTotals[cat] ?? 0,
+								summaryCurrency,
+							),
+						])
+					}
+					csvRows.push([])
 					csvRows.push([
-						cat,
-						minorToMajor(accountantExport.categoryTotals[cat] ?? 0),
+						'Grand totals',
+						`Count: ${accountantExport.totals.count}`,
+						`Net: ${minorToMajorText(accountantExport.totals.netMinor, summaryCurrency)}`,
+						`VAT: ${minorToMajorText(accountantExport.totals.vatMinor, summaryCurrency)}`,
+						`Total: ${minorToMajorText(accountantExport.totals.totalMinor, summaryCurrency)}`,
+						`Paid: ${minorToMajorText(accountantExport.totals.paidMinor, summaryCurrency)}`,
+						`Unpaid: ${minorToMajorText(accountantExport.totals.unpaidMinor, summaryCurrency)}`,
 					])
+				} else {
+					csvRows.push([])
+					csvRows.push(['Totals by currency'])
+					csvRows.push([
+						'Currency',
+						'Deliveries',
+						'Net',
+						'VAT',
+						'Total',
+						'Paid',
+						'Unpaid',
+					])
+					for (const cur of accountantExport.totalsByCurrency!) {
+						csvRows.push([
+							cur.currency,
+							cur.count,
+							minorToMajor(cur.netMinor, cur.currency),
+							minorToMajor(cur.vatMinor, cur.currency),
+							minorToMajor(cur.totalMinor, cur.currency),
+							minorToMajor(cur.paidMinor, cur.currency),
+							minorToMajor(cur.unpaidMinor, cur.currency),
+						])
+					}
 				}
-				csvRows.push([])
-				csvRows.push([
-					'Grand totals',
-					`Count: ${accountantExport.totals.count}`,
-					`Net: ${formatMoneyText(accountantExport.totals.netMinor)}`,
-					`VAT: ${formatMoneyText(accountantExport.totals.vatMinor)}`,
-					`Total: ${formatMoneyText(accountantExport.totals.totalMinor)}`,
-					`Paid: ${formatMoneyText(accountantExport.totals.paidMinor)}`,
-					`Unpaid: ${formatMoneyText(accountantExport.totals.unpaidMinor)}`,
-				])
 				const csv = toCsv(headers, csvRows, { bom: true })
 				return new Response(csv, {
 					status: 200,
@@ -661,12 +684,14 @@ operatorInventoryPurchasingRoutes.get(
 						size: 13,
 					},
 					{
-						text: `Location: ${locationId}   Currency: ${accountantExport.currency}   Deliveries: ${accountantExport.totals.count}`,
+						text: multiCurrency
+							? `Location: ${locationId}   Currencies: ${accountantExport.totalsByCurrency!.map((c) => c.currency).join(', ')}   Deliveries: ${accountantExport.totals.count}`
+							: `Location: ${locationId}   Currency: ${summaryCurrency}   Deliveries: ${accountantExport.totals.count}`,
 						size: 9,
 					},
 					{ text: '' },
 					{
-						text: 'Date | Supplier | VAT # | Invoice # | ZATCA | Net | VAT | Total | Status',
+						text: 'Date | Supplier | VAT # | Invoice # | ZATCA | Net | VAT | Total | Currency | Status',
 						bold: true,
 						size: 9,
 					},
@@ -675,11 +700,12 @@ operatorInventoryPurchasingRoutes.get(
 					const catText = accountantExport.categories
 						.filter((cat) => (row.categoryBreakdown[cat] ?? 0) !== 0)
 						.map(
-							(cat) => `${cat}=${formatMoneyText(row.categoryBreakdown[cat]!)}`,
+							(cat) =>
+								`${cat}=${minorToMajorText(row.categoryBreakdown[cat]!, row.currency)}`,
 						)
 						.join(', ')
 					lines.push({
-						text: `${row.date} | ${row.supplierName}${row.isCredit ? ' (Credit)' : ''} | ${row.supplierVatNumber ?? '-'} | ${row.invoiceNumber ?? '-'} | ${row.zatcaReference ?? '-'} | ${formatMoneyText(row.netMinor)} | ${formatMoneyText(row.vatMinor)} | ${formatMoneyText(row.totalMinor)} | ${row.paid ? 'Paid' : 'Unpaid'}`,
+						text: `${row.date} | ${row.supplierName}${row.isCredit ? ' (Credit)' : ''} | ${row.supplierVatNumber ?? '-'} | ${row.invoiceNumber ?? '-'} | ${row.zatcaReference ?? '-'} | ${minorToMajorText(row.netMinor, row.currency)} | ${minorToMajorText(row.vatMinor, row.currency)} | ${minorToMajorText(row.totalMinor, row.currency)} | ${row.currency} | ${row.paid ? 'Paid' : 'Unpaid'}`,
 						size: 8,
 					})
 					if (catText) {
@@ -687,27 +713,38 @@ operatorInventoryPurchasingRoutes.get(
 					}
 				}
 				lines.push({ text: '' })
-				lines.push({ text: 'Supplier Totals', bold: true, size: 10 })
-				for (const sup of accountantExport.supplierTotals) {
+				if (!multiCurrency) {
+					lines.push({ text: 'Supplier Totals', bold: true, size: 10 })
+					for (const sup of accountantExport.supplierTotals) {
+						lines.push({
+							text: `${sup.supplierName} (${sup.supplierVatNumber ?? 'No VAT'}) | ${sup.deliveryCount}x | Net ${minorToMajorText(sup.netMinor, summaryCurrency)} | VAT ${minorToMajorText(sup.vatMinor, summaryCurrency)} | Total ${minorToMajorText(sup.totalMinor, summaryCurrency)} | Paid ${minorToMajorText(sup.paidMinor, summaryCurrency)} | Unpaid ${minorToMajorText(sup.unpaidMinor, summaryCurrency)}`,
+							size: 8,
+						})
+					}
+					lines.push({ text: '' })
+					lines.push({ text: 'Category Totals', bold: true, size: 10 })
+					for (const cat of accountantExport.categories) {
+						lines.push({
+							text: `${cat}: ${minorToMajorText(accountantExport.categoryTotals[cat] ?? 0, summaryCurrency)}`,
+							size: 8,
+						})
+					}
+					lines.push({ text: '' })
 					lines.push({
-						text: `${sup.supplierName} (${sup.supplierVatNumber ?? 'No VAT'}) | ${sup.deliveryCount}x | Net ${formatMoneyText(sup.netMinor)} | VAT ${formatMoneyText(sup.vatMinor)} | Total ${formatMoneyText(sup.totalMinor)} | Paid ${formatMoneyText(sup.paidMinor)} | Unpaid ${formatMoneyText(sup.unpaidMinor)}`,
-						size: 8,
+						text: `Grand Total (${summaryCurrency}): Net ${minorToMajorText(accountantExport.totals.netMinor, summaryCurrency)} | VAT ${minorToMajorText(accountantExport.totals.vatMinor, summaryCurrency)} | Total ${minorToMajorText(accountantExport.totals.totalMinor, summaryCurrency)} | Paid ${minorToMajorText(accountantExport.totals.paidMinor, summaryCurrency)} | Unpaid ${minorToMajorText(accountantExport.totals.unpaidMinor, summaryCurrency)}`,
+						bold: true,
+						size: 10,
 					})
+				} else {
+					lines.push({ text: 'Totals by Currency', bold: true, size: 10 })
+					for (const cur of accountantExport.totalsByCurrency!) {
+						lines.push({
+							text: `${cur.currency} (${cur.count}x): Net ${minorToMajorText(cur.netMinor, cur.currency)} | VAT ${minorToMajorText(cur.vatMinor, cur.currency)} | Total ${minorToMajorText(cur.totalMinor, cur.currency)} | Paid ${minorToMajorText(cur.paidMinor, cur.currency)} | Unpaid ${minorToMajorText(cur.unpaidMinor, cur.currency)}`,
+							bold: true,
+							size: 9,
+						})
+					}
 				}
-				lines.push({ text: '' })
-				lines.push({ text: 'Category Totals', bold: true, size: 10 })
-				for (const cat of accountantExport.categories) {
-					lines.push({
-						text: `${cat}: ${formatMoneyText(accountantExport.categoryTotals[cat] ?? 0)}`,
-						size: 8,
-					})
-				}
-				lines.push({ text: '' })
-				lines.push({
-					text: `Grand Total: Net ${formatMoneyText(accountantExport.totals.netMinor)} | VAT ${formatMoneyText(accountantExport.totals.vatMinor)} | Total ${formatMoneyText(accountantExport.totals.totalMinor)} | Paid ${formatMoneyText(accountantExport.totals.paidMinor)} | Unpaid ${formatMoneyText(accountantExport.totals.unpaidMinor)}`,
-					bold: true,
-					size: 10,
-				})
 				const pdfBytes = buildTextLinesPdf(lines)
 				const pdfBody = new Uint8Array(pdfBytes)
 				return new Response(pdfBody, {

@@ -8,11 +8,13 @@ import {
 	getTenantDb,
 	invItems,
 	invSetupImportFiles,
+	invSetupImports,
 	invSupplierProductPrices,
 	invSupplierProducts,
 	invSuppliers,
 	provisionTenantDb,
 } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import {
 	afterAll,
@@ -25,6 +27,7 @@ import {
 } from 'vitest'
 import { type PublishedOrganization } from '../lib/origin.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
+import { resetInvoiceReadLimits } from '../lib/vision-read-limit.ts'
 import {
 	BASE,
 	makeClient,
@@ -103,6 +106,7 @@ afterEach(() => {
 		process.env[key] = ''
 	}
 	syncEnvFromProcess()
+	resetInvoiceReadLimits()
 	vi.restoreAllMocks()
 })
 
@@ -449,5 +453,81 @@ describe('inventory setup import service (#506)', () => {
 				})
 			).status,
 		).toBe(403)
+	})
+
+	it('keeps GET /setup/imports/:id side-effect free and rejects oversized decoded batches', async () => {
+		Object.assign(process.env, READER_ENV)
+		syncEnvFromProcess()
+		const fetchSpy = vi.spyOn(globalThis, 'fetch')
+
+		const db = await getTenantDb(ORG)
+		const staleImportId = 'imp_stale_reading_no_work'
+		await db.insert(invSetupImports).values({
+			id: staleImportId,
+			status: 'reading',
+			totalFiles: 1,
+			completedFiles: 0,
+			failedFiles: 0,
+			proposalJson: { suppliers: [] },
+			createdByKind: 'operator',
+			createdById: 'user_1',
+			appliedAt: null,
+			createdAt: Date.now(),
+			updatedAt: Date.now(),
+		})
+		await db.insert(invSetupImportFiles).values({
+			id: 'impf_stale_1',
+			importId: staleImportId,
+			fileName: 'stale.pdf',
+			contentType: 'application/pdf',
+			fileKind: 'pdf',
+			storageKey: null,
+			inlineContent: textBase64('%PDF-1.4\n%%EOF'),
+			status: 'pending',
+			errorCode: null,
+			readJson: null,
+			createdAt: Date.now(),
+			updatedAt: Date.now(),
+		})
+
+		const getRes = await call('GET', `${BASE}/setup/imports/${staleImportId}`, {
+			token: readOnly,
+		})
+		expect(getRes.status).toBe(200)
+		expect(getRes.body.status).toBe('reading')
+		expect(fetchSpy).not.toHaveBeenCalled()
+
+		const refreshed = await db
+			.select()
+			.from(invSetupImportFiles)
+			.where(eq(invSetupImportFiles.importId, staleImportId))
+		expect(refreshed[0]?.status).toBe('pending')
+
+		// Exceeding 18 MiB across decoded files returns 400 batch_too_large.
+		const sevenMbBase64 = Buffer.alloc(7 * 1024 * 1024, 65).toString('base64')
+		const tooBig = await call('POST', `${BASE}/setup/imports`, {
+			token: full,
+			body: {
+				files: [
+					{
+						fileName: 'a.csv',
+						contentType: 'text/csv',
+						contentBase64: sevenMbBase64,
+					},
+					{
+						fileName: 'b.csv',
+						contentType: 'text/csv',
+						contentBase64: sevenMbBase64,
+					},
+					{
+						fileName: 'c.csv',
+						contentType: 'text/csv',
+						contentBase64: sevenMbBase64,
+					},
+				],
+			},
+		})
+		expect(tooBig.status).toBe(400)
+		expect(tooBig.body.reason).toBe('batch_too_large')
 	})
 })

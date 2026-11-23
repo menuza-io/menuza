@@ -52,18 +52,45 @@ export function parseInvoiceNumber(value: number | string): number | null {
 	let normalized: string
 	if (lastDot === -1 && lastComma === -1) {
 		normalized = unsigned
+	} else if (lastComma !== -1 && lastDot === -1) {
+		const commaParts = unsigned.split(',')
+		const intPart = commaParts[0] ?? ''
+		const nonZeroInt = intPart.length > 0 && !/^0+$/.test(intPart)
+		if (
+			commaParts.length > 2 &&
+			nonZeroInt &&
+			intPart.length <= 3 &&
+			commaParts.slice(1).every((part) => part.length === 3)
+		) {
+			normalized = unsigned.replace(/,/g, '')
+		} else {
+			const digitsAfter = unsigned.length - lastComma - 1
+			const onlyThisComma = commaParts.length === 2
+			const thousands =
+				onlyThisComma && digitsAfter === 3 && nonZeroInt && intPart.length <= 3
+			normalized = thousands
+				? unsigned.replace(/,/g, '')
+				: `${intPart.replace(/,/g, '')}.${unsigned.slice(lastComma + 1)}`
+		}
+	} else if (lastDot !== -1 && lastComma === -1) {
+		const dotParts = unsigned.split('.')
+		const intPart = dotParts[0] ?? ''
+		const nonZeroInt = intPart.length > 0 && !/^0+$/.test(intPart)
+		if (
+			dotParts.length > 2 &&
+			nonZeroInt &&
+			intPart.length <= 3 &&
+			dotParts.slice(1).every((part) => part.length === 3)
+		) {
+			normalized = unsigned.replace(/\./g, '')
+		} else {
+			// A lone dot (e.g. "0.125", "4.125") is treated as a decimal separator
+			// so 3-decimal weights/currencies are never inflated 1000x.
+			normalized = `${unsigned.slice(0, lastDot).replace(/\./g, '')}.${unsigned.slice(lastDot + 1)}`
+		}
 	} else {
 		const decimalAt = Math.max(lastDot, lastComma)
-		const digitsAfter = unsigned.length - decimalAt - 1
-		const separator = unsigned[decimalAt]!
-		const onlyThisSeparator =
-			unsigned.split(separator).length - 1 === 1 &&
-			!unsigned.includes(separator === '.' ? ',' : '.')
-		// "1,234" or "1.234" alone: thousands, not decimals.
-		const thousands = onlyThisSeparator && digitsAfter === 3 && decimalAt > 0
-		normalized = thousands
-			? unsigned.replace(/[.,]/g, '')
-			: `${unsigned.slice(0, decimalAt).replace(/[.,]/g, '')}.${unsigned.slice(decimalAt + 1)}`
+		normalized = `${unsigned.slice(0, decimalAt).replace(/[.,]/g, '')}.${unsigned.slice(decimalAt + 1)}`
 	}
 	const parsed = Number(negative ? `-${normalized}` : normalized)
 	return Number.isFinite(parsed) ? parsed : null

@@ -1250,6 +1250,9 @@ export async function recordDelivery(
 	const isCashPurchase = body.isCashPurchase === true
 	const isCredit = body.isCredit === true
 	const quantityOnly = isCashPurchase ? false : body.quantityOnly === true
+	if (isCredit && quantityOnly) {
+		throw badRequest('credit_requires_prices')
+	}
 	// Marking a delivery paid is a purchasing decision (Station cash purchases
 	// are gated by the till-manager rule on the Station route).
 	if (
@@ -1908,6 +1911,7 @@ export async function confirmDeliveryPrices(
 		const row = await loadAllowedDelivery(tx, input.id, caller)
 		assertVersion(row.version, body.expectedVersion)
 		if (row.status !== 'received') throw stateConflict('not_received')
+		if (row.isCredit) throw badRequest('credit_not_confirmable')
 		if (!row.quantityOnly || row.pricesConfirmedAt !== null) {
 			throw new InventoryError('prices_confirmed', 409)
 		}
@@ -2532,6 +2536,67 @@ async function cancelDeliveryInTx(
 					updatedAt: now,
 				})
 				.where(eq(invItemCosts.itemId, itemId))
+		}
+		for (const supplierProductId of new Set(
+			lines
+				.filter(
+					(line) => line.pricedAt !== null && line.supplierProductId !== null,
+				)
+				.map((line) => line.supplierProductId!),
+		)) {
+			const remainingPrice = await tx
+				.select({
+					priceMinor: invSupplierProductPrices.priceMinor,
+					currency: invSupplierProductPrices.currency,
+				})
+				.from(invSupplierProductPrices)
+				.leftJoin(
+					invDeliveryLines,
+					eq(invDeliveryLines.id, invSupplierProductPrices.deliveryLineId),
+				)
+				.leftJoin(
+					invDeliveries,
+					eq(invDeliveries.id, invDeliveryLines.deliveryId),
+				)
+				.where(
+					and(
+						eq(invSupplierProductPrices.supplierProductId, supplierProductId),
+						or(isNull(invDeliveries.id), ne(invDeliveries.status, 'cancelled')),
+					),
+				)
+				.orderBy(
+					desc(invSupplierProductPrices.effectiveAt),
+					desc(invSupplierProductPrices.createdAt),
+					desc(invSupplierProductPrices.id),
+				)
+				.limit(1)
+				.get()
+			if (!remainingPrice) continue
+			const currentProduct = await tx
+				.select({
+					id: invSupplierProducts.id,
+					priceMinor: invSupplierProducts.priceMinor,
+					currency: invSupplierProducts.currency,
+					version: invSupplierProducts.version,
+				})
+				.from(invSupplierProducts)
+				.where(eq(invSupplierProducts.id, supplierProductId))
+				.get()
+			if (
+				currentProduct &&
+				(currentProduct.priceMinor !== remainingPrice.priceMinor ||
+					currentProduct.currency !== remainingPrice.currency)
+			) {
+				await tx
+					.update(invSupplierProducts)
+					.set({
+						priceMinor: remainingPrice.priceMinor,
+						currency: remainingPrice.currency,
+						version: currentProduct.version + 1,
+						updatedAt: now,
+					})
+					.where(eq(invSupplierProducts.id, currentProduct.id))
+			}
 		}
 	}
 	return lines

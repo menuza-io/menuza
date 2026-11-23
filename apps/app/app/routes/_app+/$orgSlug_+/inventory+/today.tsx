@@ -675,6 +675,8 @@ function AttentionRow({
 	const [nextDate, setNextDate] = useState(() => tomorrowIso(today))
 
 	async function undoDelivery(deliveryId: string, version: number) {
+		if (busy) return
+		setBusy(true)
 		try {
 			deliveryDetailSchema.parse(
 				await request(`/deliveries/${encodeURIComponent(deliveryId)}/undo`, {
@@ -687,6 +689,8 @@ function AttentionRow({
 			onActionDone()
 		} catch (caught) {
 			toast.error(i18n._(inventorySaveErrorMessage(caught)))
+		} finally {
+			setBusy(false)
 		}
 	}
 
@@ -728,7 +732,7 @@ function AttentionRow({
 		version: number,
 		expectedDate: string,
 	) {
-		if (busy || !expectedDate) return
+		if (busy || !expectedDate || expectedDate < today) return
 		setBusy(true)
 		try {
 			orderDetailSchema.parse(
@@ -769,13 +773,27 @@ function AttentionRow({
 				),
 			)
 			if (sent.channel === 'whatsapp' && sent.waLink) {
-				window.open(sent.waLink, '_blank', 'noopener,noreferrer')
+				const popup = window.open(sent.waLink, '_blank', 'noopener,noreferrer')
+				if (!popup) {
+					await copyToClipboard(sent.text)
+					toast.success(t`Pop-up blocked; order message copied instead.`)
+				} else {
+					toast.success(t`Order sent again.`)
+				}
 			} else if (sent.channel === 'email' && !sent.emailSent && sent.mailto) {
-				window.open(sent.mailto, '_blank', 'noopener,noreferrer')
+				const popup = window.open(sent.mailto, '_blank', 'noopener,noreferrer')
+				if (!popup) {
+					await copyToClipboard(sent.text)
+					toast.success(t`Pop-up blocked; order message copied instead.`)
+				} else {
+					toast.success(t`Order sent again.`)
+				}
 			} else if (sent.channel === 'copy') {
 				await copyToClipboard(sent.text)
+				toast.success(t`Order sent again.`)
+			} else {
+				toast.success(t`Order sent again.`)
 			}
-			toast.success(t`Order sent again.`)
 			notifyChanged()
 			onActionDone()
 		} catch (caught) {
@@ -850,6 +868,7 @@ function AttentionRow({
 								<Input
 									id={`not-yet-${item.orderId}`}
 									type="date"
+									min={today}
 									value={nextDate}
 									onChange={(event) => setNextDate(event.target.value)}
 									dir="ltr"
@@ -858,7 +877,7 @@ function AttentionRow({
 								<Button
 									type="button"
 									size="sm"
-									disabled={busy || !nextDate}
+									disabled={busy || !nextDate || nextDate < today}
 									onClick={() =>
 										void rescheduleOrder(item.orderId, item.version!, nextDate)
 									}

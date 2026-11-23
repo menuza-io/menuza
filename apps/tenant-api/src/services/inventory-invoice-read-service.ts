@@ -30,6 +30,12 @@ import {
 	type ReadInvoice,
 } from '../lib/invoice-reader.ts'
 import { presignObjectRead } from '../lib/recording-storage.ts'
+import {
+	getCachedVisionRead,
+	INVOICE_READS_PER_HOUR,
+	setCachedVisionRead,
+	takeVisionReadSlot,
+} from '../lib/vision-read-limit.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
 import { badRequest } from './inventory-common.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
@@ -97,27 +103,18 @@ const STANDARD_UNIT_ALIASES: Record<string, StandardUnit> = {
  * cost nothing) and each organization may start only a few new reads an
  * hour. In-process memory: per node, per Durable Object.
  */
-export const INVOICE_READ_CACHE_TTL_MS = 60 * 60 * 1000
-export const INVOICE_READS_PER_HOUR = 10
-const readCache = new Map<string, { at: number; read: ReadInvoice }>()
-const readStarts = new Map<string, number[]>()
-
-export function resetInvoiceReadLimits(): void {
-	readCache.clear()
-	readStarts.clear()
-}
+export {
+	getCachedVisionRead,
+	INVOICE_READ_CACHE_TTL_MS,
+	INVOICE_READS_PER_HOUR,
+	resetInvoiceReadLimits,
+	setCachedVisionRead,
+	takeVisionReadSlot,
+	VISION_BATCH_READS_PER_HOUR,
+} from '../lib/vision-read-limit.ts'
 
 function takeReadSlot(orgId: string, now: number): boolean {
-	const recent = (readStarts.get(orgId) ?? []).filter(
-		(at) => now - at < INVOICE_READ_CACHE_TTL_MS,
-	)
-	if (recent.length >= INVOICE_READS_PER_HOUR) {
-		readStarts.set(orgId, recent)
-		return false
-	}
-	recent.push(now)
-	readStarts.set(orgId, recent)
-	return true
+	return takeVisionReadSlot(orgId, now, INVOICE_READS_PER_HOUR)
 }
 
 function assertRawInvoiceContentType(contentType: string): string {
@@ -399,11 +396,7 @@ export async function readDeliveryInvoice(
 	}
 	const now = Date.now()
 	const cacheKey = `${caller.orgId}:${delivery.photoKey}`
-	const cached = readCache.get(cacheKey)
-	let read: ReadInvoice | undefined =
-		cached && now - cached.at < INVOICE_READ_CACHE_TTL_MS
-			? cached.read
-			: undefined
+	let read = getCachedVisionRead<ReadInvoice>(cacheKey, now)
 	if (!read && !takeReadSlot(caller.orgId, now)) {
 		throw new InventoryError('invalid_request', 429, {
 			reason: 'reader_rate_limited',
@@ -433,7 +426,7 @@ export async function readDeliveryInvoice(
 			console.error('Inventory invoice reader failed', errorLogFields(error))
 			throw new InventoryError('reader_failed', 502)
 		}
-		readCache.set(cacheKey, { at: now, read })
+		setCachedVisionRead(cacheKey, read, now)
 	}
 
 	await withInventoryWrite(
@@ -478,11 +471,7 @@ export async function readRawInvoice(
 	const digest = createHash('sha256').update(bytes).digest('hex')
 	const now = Date.now()
 	const cacheKey = `${caller.orgId}:raw:${digest}`
-	const cached = readCache.get(cacheKey)
-	let read: ReadInvoice | undefined =
-		cached && now - cached.at < INVOICE_READ_CACHE_TTL_MS
-			? cached.read
-			: undefined
+	let read = getCachedVisionRead<ReadInvoice>(cacheKey, now)
 	if (!read && !takeReadSlot(caller.orgId, now)) {
 		throw new InventoryError('invalid_request', 429, {
 			reason: 'reader_rate_limited',
@@ -500,7 +489,7 @@ export async function readRawInvoice(
 			console.error('Inventory invoice reader failed', errorLogFields(error))
 			throw new InventoryError('reader_failed', 502)
 		}
-		readCache.set(cacheKey, { at: now, read })
+		setCachedVisionRead(cacheKey, read, now)
 	}
 
 	const db = await getTenantDb(caller.orgId)

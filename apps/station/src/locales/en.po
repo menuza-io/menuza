@@ -255,7 +255,7 @@ msgstr "{0} to {1}"
 msgid "{ago} ago"
 msgstr "{ago} ago"
 
-#: src/apps/stock/model.ts:128
+#: src/apps/stock/model.ts:129
 msgid "{amount, plural, one {piece} other {pieces}}"
 msgstr "{amount, plural, one {piece} other {pieces}}"
 
@@ -498,7 +498,7 @@ msgstr "{leftText}m"
 msgid "{length, plural, one {# digit entered} other {# digits entered}}"
 msgstr "{length, plural, one {# digit entered} other {# digits entered}}"
 
-#: src/apps/stock/DeliverySheet.tsx:458
+#: src/apps/stock/DeliverySheet.tsx:486
 msgid "{lineCount, plural, one {# item} other {# items}}"
 msgstr "{lineCount, plural, one {# item} other {# items}}"
 
@@ -534,7 +534,7 @@ msgstr "{more, plural, one {and # more} other {and # more}}"
 msgid "{moreText} more to {nextName}"
 msgstr "{moreText} more to {nextName}"
 
-#: src/apps/stock/DeliverySheet.tsx:774
+#: src/apps/stock/DeliverySheet.tsx:802
 msgid "{name} arrived"
 msgstr "{name} arrived"
 
@@ -619,7 +619,7 @@ msgstr "{openTabs, plural, one {Orders, # open tab} other {Orders, # open tabs}}
 msgid "{overMin}m over"
 msgstr "{overMin}m over"
 
-#: src/apps/stock/DeliverySheet.tsx:816
+#: src/apps/stock/DeliverySheet.tsx:844
 msgid "{pack} of {name}"
 msgstr "{pack} of {name}"
 
@@ -1066,8 +1066,8 @@ msgstr "A manager is reviewing this count. You can still add late entries."
 msgid "A manager must sign in to change the kitchen setup."
 msgstr "A manager must sign in to change the kitchen setup."
 
-#: src/apps/stock/DeliverySheet.tsx:399
-#: src/apps/stock/OverdueDeliveries.tsx:162
+#: src/apps/stock/DeliverySheet.tsx:419
+#: src/apps/stock/OverdueDeliveries.tsx:161
 msgid "A manager must sign in to receive a delivery."
 msgstr "A manager must sign in to receive a delivery."
 
@@ -1180,13 +1180,17 @@ msgstr "Add a party to the waitlist"
 msgid "Add a tip?"
 msgstr "Add a tip?"
 
-#: src/apps/stock/DeliverySheet.tsx:570
+#: src/apps/stock/DeliverySheet.tsx:598
 msgid "Add an item"
 msgstr "Add an item"
 
 #: src/apps/stock/CountScreen.tsx:776
 msgid "Add another unit"
 msgstr "Add another unit"
+
+#: src/apps/stock/DeliverySheet.tsx:324
+msgid "Add at least one item with a quantity and amount paid to save."
+msgstr "Add at least one item with a quantity and amount paid to save."
 
 #: src/screens/Cart.tsx:226
 msgid "Add guest details"
@@ -1216,7 +1220,7 @@ msgstr "Add member"
 msgid "Add name"
 msgstr "Add name"
 
-#: src/apps/stock/CashPurchaseForm.tsx:284
+#: src/apps/stock/CashPurchaseForm.tsx:278
 msgid "Add new item"
 msgstr "Add new item"
 
@@ -1366,11 +1370,11 @@ msgstr "Amount"
 msgid "Amount left: {0}"
 msgstr "Amount left: {0}"
 
-#: src/apps/stock/CashPurchaseForm.tsx:183
+#: src/apps/stock/CashPurchaseForm.tsx:177
 msgid "Amount paid"
 msgstr "Amount paid"
 
-#: src/apps/stock/CashPurchaseForm.tsx:191
+#: src/apps/stock/CashPurchaseForm.tsx:185
 msgid "Amount paid for {name}"
 msgstr "Amount paid for {name}"
 
@@ -1539,8 +1543,8 @@ msgstr "Awaiting payment"
 #: src/apps/orders/Orders.tsx:2177
 #: src/apps/reservations/TableSheet.tsx:206
 #: src/apps/stock/CountScreen.tsx:277
-#: src/apps/stock/DeliverySheet.tsx:335
-#: src/apps/stock/DeliverySheet.tsx:351
+#: src/apps/stock/DeliverySheet.tsx:347
+#: src/apps/stock/DeliverySheet.tsx:370
 #: src/apps/timeclock/TimeClock.tsx:773
 #: src/screens/AuditSheet.tsx:115
 msgid "Back"
@@ -1582,7 +1586,7 @@ msgstr "Back to Stock"
 msgid "Bagel"
 msgstr "Bagel"
 
-#: src/apps/stock/messages.ts:131
+#: src/apps/stock/messages.ts:128
 msgid "Bakery"
 msgstr "Bakery"
 
@@ -1595,7 +1599,7 @@ msgstr "Balance"
 msgid "Balance due"
 msgstr "Balance due"
 
-#: src/apps/stock/CashPurchaseForm.tsx:265
+#: src/apps/stock/CashPurchaseForm.tsx:259
 msgid "Base unit"
 msgstr "Base unit"
 
@@ -1787,7 +1791,7 @@ msgstr "Can’t load the menu yet"
 #: src/apps/reservations/PickBar.tsx:166
 #: src/apps/reservations/PickBar.tsx:171
 #: src/apps/reservations/SectionsSheet.tsx:130
-#: src/apps/stock/OverdueDeliveries.tsx:215
+#: src/apps/stock/OverdueDeliveries.tsx:214
 #: src/screens/GuestDisplay.tsx:352
 #: src/screens/GuestDisplay.tsx:397
 #: src/screens/PairingLinkDialog.tsx:85
@@ -1850,7 +1854,7 @@ msgstr "Cancelled · items taken off"
 msgid "Cancelled · stop preparing"
 msgstr "Cancelled · stop preparing"
 
-#: src/apps/stock/messages.ts:119
+#: src/apps/stock/messages.ts:116
 msgid "Cancelled after cooking"
 msgstr "Cancelled after cooking"
 
@@ -1952,17 +1956,17 @@ msgstr "Cash in the drawer"
 msgid "Cash out"
 msgstr "Cash out"
 
-#: src/apps/stock/CashPurchaseForm.tsx:109
-#: src/apps/stock/DeliverySheet.tsx:523
+#: src/apps/stock/CashPurchaseForm.tsx:103
+#: src/apps/stock/DeliverySheet.tsx:551
 #: src/apps/stock/Stock.tsx:278
 msgid "Cash purchase"
 msgstr "Cash purchase"
 
-#: src/apps/stock/DeliverySheet.tsx:515
+#: src/apps/stock/DeliverySheet.tsx:543
 msgid "Cash purchase from the market"
 msgstr "Cash purchase from the market"
 
-#: src/apps/stock/DeliverySheet.tsx:411
+#: src/apps/stock/DeliverySheet.tsx:431
 msgid "Cash purchase saved"
 msgstr "Cash purchase saved"
 
@@ -2044,8 +2048,8 @@ msgstr "Check balance"
 msgid "Check station names, unique item routes, and timing. The late threshold must be greater than the warning threshold."
 msgstr "Check station names, unique item routes, and timing. The late threshold must be greater than the warning threshold."
 
-#: src/apps/stock/DeliverySheet.tsx:231
-#: src/apps/stock/DeliverySheet.tsx:271
+#: src/apps/stock/DeliverySheet.tsx:234
+#: src/apps/stock/DeliverySheet.tsx:274
 msgid "Check the amounts: one of them cannot be sent."
 msgstr "Check the amounts: one of them cannot be sent."
 
@@ -2154,7 +2158,7 @@ msgstr "Chosen"
 msgid "Chosen tables"
 msgstr "Chosen tables"
 
-#: src/apps/stock/messages.ts:135
+#: src/apps/stock/messages.ts:132
 msgid "Cleaning"
 msgstr "Cleaning"
 
@@ -2215,7 +2219,7 @@ msgstr "Clocked out"
 
 #: src/App.tsx:1258
 #: src/apps/reservations/discard.tsx:76
-#: src/apps/stock/DeliverySheet.tsx:402
+#: src/apps/stock/DeliverySheet.tsx:422
 #: src/apps/stock/SyncSheet.tsx:123
 #: src/apps/stock/WasteSheet.tsx:256
 #: src/apps/timeclock/TimeClock.tsx:1269
@@ -2533,7 +2537,7 @@ msgstr "Customer name"
 msgid "Daily limits"
 msgstr "Daily limits"
 
-#: src/apps/stock/messages.ts:129
+#: src/apps/stock/messages.ts:126
 msgid "Dairy"
 msgstr "Dairy"
 
@@ -2589,15 +2593,15 @@ msgid "Delivery fee"
 msgstr "Delivery fee"
 
 #. placeholder {0}: delivery.supplierName
-#: src/apps/stock/OverdueDeliveries.tsx:69
+#: src/apps/stock/OverdueDeliveries.tsx:70
 msgid "Delivery from {0} recorded as ordered."
 msgstr "Delivery from {0} recorded as ordered."
 
-#: src/apps/stock/DeliverySheet.tsx:413
+#: src/apps/stock/DeliverySheet.tsx:433
 msgid "Delivery saved"
 msgstr "Delivery saved"
 
-#: src/apps/stock/DeliverySheet.tsx:479
+#: src/apps/stock/DeliverySheet.tsx:507
 msgid "Delivery without an order"
 msgstr "Delivery without an order"
 
@@ -2657,8 +2661,7 @@ msgstr "Details for {who}"
 msgid "Did not respond"
 msgstr "Did not respond"
 
-#: src/apps/stock/OverdueDeliveries.tsx:141
-#: src/apps/stock/OverdueDeliveries.tsx:152
+#: src/apps/stock/OverdueDeliveries.tsx:151
 msgid "Did the delivery from {supplierName} arrive?"
 msgstr "Did the delivery from {supplierName} arrive?"
 
@@ -2758,7 +2761,7 @@ msgstr "Disputed"
 #: src/apps/kitchen/PrepView.tsx:183
 #: src/apps/orders/Orders.tsx:302
 #: src/apps/reservations/BookingSheet.tsx:314
-#: src/apps/stock/DeliverySheet.tsx:313
+#: src/apps/stock/DeliverySheet.tsx:317
 #: src/apps/stock/WasteSheet.tsx:256
 #: src/apps/timeclock/TimeClock.tsx:1376
 #: src/screens/Cart.tsx:678
@@ -2777,7 +2780,7 @@ msgstr "Done · clear ticket"
 msgid "Done counting?"
 msgstr "Done counting?"
 
-#: src/apps/stock/messages.ts:133
+#: src/apps/stock/messages.ts:130
 msgid "Drinks"
 msgstr "Drinks"
 
@@ -2791,11 +2794,11 @@ msgstr "Drinks"
 msgid "Drive-through"
 msgstr "Drive-through"
 
-#: src/apps/stock/messages.ts:116
+#: src/apps/stock/messages.ts:113
 msgid "Dropped"
 msgstr "Dropped"
 
-#: src/apps/stock/messages.ts:130
+#: src/apps/stock/messages.ts:127
 msgid "Dry goods"
 msgstr "Dry goods"
 
@@ -2838,7 +2841,7 @@ msgstr "e.g. 12 or Patio 3"
 msgid "e.g. Corkage fee or Special request"
 msgstr "e.g. Corkage fee or Special request"
 
-#: src/apps/stock/CashPurchaseForm.tsx:259
+#: src/apps/stock/CashPurchaseForm.tsx:253
 msgid "e.g. Fresh mint"
 msgstr "e.g. Fresh mint"
 
@@ -3037,11 +3040,11 @@ msgid "Exit full screen"
 msgstr "Exit full screen"
 
 #. placeholder {0}: delivery.supplierName
-#: src/apps/stock/OverdueDeliveries.tsx:108
+#: src/apps/stock/OverdueDeliveries.tsx:109
 msgid "Expected date for {0} updated to {notYetDate}."
 msgstr "Expected date for {0} updated to {notYetDate}."
 
-#: src/apps/stock/DeliverySheet.tsx:437
+#: src/apps/stock/DeliverySheet.tsx:465
 msgid "Expected deliveries"
 msgstr "Expected deliveries"
 
@@ -3050,7 +3053,7 @@ msgstr "Expected deliveries"
 msgid "Expected in drawer"
 msgstr "Expected in drawer"
 
-#: src/apps/stock/messages.ts:113
+#: src/apps/stock/messages.ts:110
 msgid "Expired"
 msgstr "Expired"
 
@@ -3235,7 +3238,7 @@ msgstr "Go to the next party due"
 #~ msgid "Got it, clear"
 #~ msgstr "Got it, clear"
 
-#: src/apps/stock/CashPurchaseForm.tsx:98
+#: src/apps/stock/CashPurchaseForm.tsx:92
 msgid "Grams (g)"
 msgstr "Grams (g)"
 
@@ -3419,7 +3422,7 @@ msgstr "How many?"
 msgid "How much"
 msgstr "How much"
 
-#: src/apps/stock/DeliverySheet.tsx:888
+#: src/apps/stock/DeliverySheet.tsx:916
 msgid "How much came"
 msgstr "How much came"
 
@@ -3481,7 +3484,7 @@ msgstr "Individual items"
 msgid "Invoice {invoiceNumber}"
 msgstr "Invoice {invoiceNumber}"
 
-#: src/apps/stock/DeliverySheet.tsx:659
+#: src/apps/stock/DeliverySheet.tsx:687
 msgid "Invoice number (optional)"
 msgstr "Invoice number (optional)"
 
@@ -3489,7 +3492,7 @@ msgstr "Invoice number (optional)"
 msgid "Invoice photo"
 msgstr "Invoice photo"
 
-#: src/apps/stock/DeliverySheet.tsx:678
+#: src/apps/stock/DeliverySheet.tsx:706
 msgid "Invoice photo file"
 msgstr "Invoice photo file"
 
@@ -3505,11 +3508,11 @@ msgstr "It could not be sent because what it belongs to was refused."
 msgid "It has been a while. Connect to the internet to sign in again."
 msgstr "It has been a while. Connect to the internet to sign in again."
 
-#: src/apps/stock/DeliverySheet.tsx:422
+#: src/apps/stock/DeliverySheet.tsx:442
 msgid "It is being sent to the office. They will check the prices."
 msgstr "It is being sent to the office. They will check the prices."
 
-#: src/apps/stock/DeliverySheet.tsx:426
+#: src/apps/stock/DeliverySheet.tsx:446
 msgid "It is saved on this tablet and goes to the office when it is connected. They will check the prices."
 msgstr "It is saved on this tablet and goes to the office when it is connected. They will check the prices."
 
@@ -3537,7 +3540,7 @@ msgstr "It was paid online. The kitchen stops preparing it and it cannot be reop
 msgid "It was too late to undo this waste."
 msgstr "It was too late to undo this waste."
 
-#: src/apps/stock/CashPurchaseForm.tsx:253
+#: src/apps/stock/CashPurchaseForm.tsx:247
 msgid "Item name"
 msgstr "Item name"
 
@@ -3863,7 +3866,7 @@ msgstr "Loading prep…"
 msgid "Loading the order…"
 msgstr "Loading the order…"
 
-#: src/apps/stock/DeliverySheet.tsx:388
+#: src/apps/stock/DeliverySheet.tsx:408
 #: src/apps/stock/Stock.tsx:323
 #: src/apps/stock/WasteSheet.tsx:340
 msgid "Loading the stock list…"
@@ -3992,8 +3995,8 @@ msgstr "Marked ready. No text was sent, call {who}."
 msgid "Marked ready. No text was sent, call {who}. Holds until {holdsUntil}."
 msgstr "Marked ready. No text was sent, call {who}. Holds until {holdsUntil}."
 
-#: src/apps/stock/DeliverySheet.tsx:509
-#: src/apps/stock/DeliverySheet.tsx:547
+#: src/apps/stock/DeliverySheet.tsx:537
+#: src/apps/stock/DeliverySheet.tsx:575
 msgid "Market or other supplier"
 msgstr "Market or other supplier"
 
@@ -4009,7 +4012,7 @@ msgstr "Matcha"
 msgid "Meal break"
 msgstr "Meal break"
 
-#: src/apps/stock/messages.ts:126
+#: src/apps/stock/messages.ts:123
 msgid "Meat"
 msgstr "Meat"
 
@@ -4059,7 +4062,7 @@ msgstr "Menu layout"
 msgid "Milk from the shop"
 msgstr "Milk from the shop"
 
-#: src/apps/stock/CashPurchaseForm.tsx:100
+#: src/apps/stock/CashPurchaseForm.tsx:94
 msgid "Millilitres (ml)"
 msgstr "Millilitres (ml)"
 
@@ -4168,19 +4171,19 @@ msgid "New booking"
 msgstr "New booking"
 
 #. placeholder {0}: delivery.supplierName
-#: src/apps/stock/OverdueDeliveries.tsx:195
+#: src/apps/stock/OverdueDeliveries.tsx:194
 msgid "New expected date for {0}"
 msgstr "New expected date for {0}"
 
-#: src/apps/stock/CashPurchaseForm.tsx:133
+#: src/apps/stock/CashPurchaseForm.tsx:127
 msgid "New item"
 msgstr "New item"
 
-#: src/apps/stock/CashPurchaseForm.tsx:268
+#: src/apps/stock/CashPurchaseForm.tsx:262
 msgid "New item base unit"
 msgstr "New item base unit"
 
-#: src/apps/stock/CashPurchaseForm.tsx:258
+#: src/apps/stock/CashPurchaseForm.tsx:252
 msgid "New item name"
 msgstr "New item name"
 
@@ -4412,7 +4415,7 @@ msgstr "No SMS consent: no text will be sent. Call them."
 #~ msgid "No supplier is set up yet. A manager adds suppliers in the Menuza app."
 #~ msgstr "No supplier is set up yet. A manager adds suppliers in the Menuza app."
 
-#: src/apps/stock/DeliverySheet.tsx:483
+#: src/apps/stock/DeliverySheet.tsx:511
 msgid "No supplier is set up yet. A manager adds suppliers in the Menuza app. You can still receive what came from the market."
 msgstr "No supplier is set up yet. A manager adds suppliers in the Menuza app. You can still receive what came from the market."
 
@@ -4575,7 +4578,7 @@ msgstr "Not them"
 msgid "Not up to date"
 msgstr "Not up to date"
 
-#: src/apps/stock/OverdueDeliveries.tsx:183
+#: src/apps/stock/OverdueDeliveries.tsx:182
 msgid "Not yet"
 msgstr "Not yet"
 
@@ -4596,7 +4599,7 @@ msgstr "Nothing found"
 msgid "Nothing matches these filters."
 msgstr "Nothing matches these filters."
 
-#: src/apps/stock/DeliverySheet.tsx:729
+#: src/apps/stock/DeliverySheet.tsx:757
 msgid "Nothing more is coming for this order"
 msgstr "Nothing more is coming for this order"
 
@@ -4881,7 +4884,7 @@ msgstr "Optional note"
 msgid "or"
 msgstr "or"
 
-#: src/apps/stock/CashPurchaseForm.tsx:248
+#: src/apps/stock/CashPurchaseForm.tsx:242
 msgid "Or add a new item"
 msgstr "Or add a new item"
 
@@ -4906,11 +4909,11 @@ msgstr "Order {0}"
 msgid "Order {0} is waiting for you · accept or reject it"
 msgstr "Order {0} is waiting for you · accept or reject it"
 
-#: src/apps/stock/DeliverySheet.tsx:455
+#: src/apps/stock/DeliverySheet.tsx:483
 msgid "Order {number}"
 msgstr "Order {number}"
 
-#: src/apps/stock/OverdueDeliveries.tsx:155
+#: src/apps/stock/OverdueDeliveries.tsx:154
 msgid "Order {orderNumber}"
 msgstr "Order {orderNumber}"
 
@@ -4951,7 +4954,7 @@ msgstr "Order summary"
 msgid "Order type"
 msgstr "Order type"
 
-#: src/apps/stock/DeliverySheet.tsx:787
+#: src/apps/stock/DeliverySheet.tsx:815
 msgid "Ordered"
 msgstr "Ordered"
 
@@ -4987,8 +4990,8 @@ msgstr "Orders waiting for you"
 msgid "Orders will be sent to <0>{pastedHost}</0>."
 msgstr "Orders will be sent to <0>{pastedHost}</0>."
 
-#: src/apps/stock/messages.ts:121
-#: src/apps/stock/messages.ts:136
+#: src/apps/stock/messages.ts:118
+#: src/apps/stock/messages.ts:133
 #: src/screens/AuditSheet.tsx:18
 #: src/screens/Checkout.tsx:53
 #: src/screens/GiftCardSheet.tsx:225
@@ -4999,7 +5002,7 @@ msgstr "Orders will be sent to <0>{pastedHost}</0>."
 msgid "Other"
 msgstr "Other"
 
-#: src/apps/stock/DeliverySheet.tsx:624
+#: src/apps/stock/DeliverySheet.tsx:652
 msgid "Other items, by quantity"
 msgstr "Other items, by quantity"
 
@@ -5031,15 +5034,15 @@ msgstr "Out of stock: {0} ran out"
 msgid "Over"
 msgstr "Over"
 
-#: src/apps/stock/messages.ts:115
+#: src/apps/stock/messages.ts:112
 msgid "Over-prepped"
 msgstr "Over-prepped"
 
-#: src/apps/stock/OverdueDeliveries.tsx:127
+#: src/apps/stock/OverdueDeliveries.tsx:128
 msgid "Overdue deliveries"
 msgstr "Overdue deliveries"
 
-#: src/apps/stock/messages.ts:134
+#: src/apps/stock/messages.ts:131
 msgid "Packaging"
 msgstr "Packaging"
 
@@ -5051,7 +5054,7 @@ msgstr "Packaging fee"
 msgid "Packing"
 msgstr "Packing"
 
-#: src/apps/stock/DeliverySheet.tsx:812
+#: src/apps/stock/DeliverySheet.tsx:840
 msgid "Packs that came"
 msgstr "Packs that came"
 
@@ -5355,15 +5358,15 @@ msgstr "Phone orders awaiting pickup"
 msgid "Phone required"
 msgstr "Phone required"
 
-#: src/apps/stock/DeliverySheet.tsx:669
+#: src/apps/stock/DeliverySheet.tsx:697
 msgid "Photo of the invoice (optional)"
 msgstr "Photo of the invoice (optional)"
 
-#: src/apps/stock/CashPurchaseForm.tsx:290
+#: src/apps/stock/CashPurchaseForm.tsx:284
 msgid "Photo of the receipt (optional)"
 msgstr "Photo of the receipt (optional)"
 
-#: src/apps/stock/CashPurchaseForm.tsx:209
+#: src/apps/stock/CashPurchaseForm.tsx:203
 msgid "Pick an item"
 msgstr "Pick an item"
 
@@ -5418,11 +5421,11 @@ msgstr "Pickup time"
 msgid "Pickup: {pickup}"
 msgstr "Pickup: {pickup}"
 
-#: src/apps/stock/model.ts:127
+#: src/apps/stock/model.ts:128
 msgid "pieces"
 msgstr "pieces"
 
-#: src/apps/stock/CashPurchaseForm.tsx:102
+#: src/apps/stock/CashPurchaseForm.tsx:96
 msgid "Pieces"
 msgstr "Pieces"
 
@@ -5512,7 +5515,7 @@ msgstr "Print Z report"
 msgid "Problem with the food"
 msgstr "Problem with the food"
 
-#: src/apps/stock/messages.ts:128
+#: src/apps/stock/messages.ts:125
 msgid "Produce"
 msgstr "Produce"
 
@@ -5557,11 +5560,11 @@ msgstr "QR"
 msgid "QR table"
 msgstr "QR table"
 
-#: src/apps/stock/model.ts:130
+#: src/apps/stock/model.ts:131
 msgid "qt"
 msgstr "qt"
 
-#: src/apps/stock/CashPurchaseForm.tsx:152
+#: src/apps/stock/CashPurchaseForm.tsx:146
 msgid "Quantity"
 msgstr "Quantity"
 
@@ -5609,7 +5612,7 @@ msgstr "Ready for the pass"
 msgid "Real orders still waiting to send stay safe on this device and go out when training ends."
 msgstr "Real orders still waiting to send stay safe on this device and go out when training ends."
 
-#: src/apps/stock/DeliverySheet.tsx:829
+#: src/apps/stock/DeliverySheet.tsx:857
 msgid "Real weight from the scale"
 msgstr "Real weight from the scale"
 
@@ -5626,11 +5629,11 @@ msgstr "Recall ticket"
 msgid "Receipt"
 msgstr "Receipt"
 
-#: src/apps/stock/CashPurchaseForm.tsx:299
+#: src/apps/stock/CashPurchaseForm.tsx:293
 msgid "Receipt photo file"
 msgstr "Receipt photo file"
 
-#: src/apps/stock/DeliverySheet.tsx:379
+#: src/apps/stock/DeliverySheet.tsx:399
 msgid "Receive delivery"
 msgstr "Receive delivery"
 
@@ -5788,12 +5791,12 @@ msgstr "Rejected"
 msgid "Rejected: {0}"
 msgstr "Rejected: {0}"
 
-#: src/apps/stock/messages.ts:120
+#: src/apps/stock/messages.ts:117
 msgid "Remade at the till"
 msgstr "Remade at the till"
 
-#: src/apps/stock/CashPurchaseForm.tsx:323
-#: src/apps/stock/DeliverySheet.tsx:702
+#: src/apps/stock/CashPurchaseForm.tsx:313
+#: src/apps/stock/DeliverySheet.tsx:730
 #: src/apps/stock/SyncSheet.tsx:271
 #: src/screens/Cart.tsx:823
 #: src/screens/LoyaltySheet.tsx:515
@@ -5805,8 +5808,8 @@ msgstr "Remove"
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
-#: src/apps/stock/CashPurchaseForm.tsx:139
-#: src/apps/stock/DeliverySheet.tsx:799
+#: src/apps/stock/CashPurchaseForm.tsx:133
+#: src/apps/stock/DeliverySheet.tsx:827
 msgid "Remove {name}"
 msgstr "Remove {name}"
 
@@ -5895,7 +5898,7 @@ msgstr "Restaurant time: {zone}"
 msgid "Resume online ordering"
 msgstr "Resume online ordering"
 
-#: src/apps/stock/messages.ts:117
+#: src/apps/stock/messages.ts:114
 msgid "Returned plate"
 msgstr "Returned plate"
 
@@ -5949,7 +5952,7 @@ msgstr "Running late"
 msgid "Sales"
 msgstr "Sales"
 
-#: src/apps/stock/messages.ts:132
+#: src/apps/stock/messages.ts:129
 msgid "Sauces"
 msgstr "Sauces"
 
@@ -5959,15 +5962,15 @@ msgstr "Sauces"
 msgid "Save"
 msgstr "Save"
 
-#: src/apps/stock/DeliverySheet.tsx:326
+#: src/apps/stock/DeliverySheet.tsx:338
 msgid "Save cash purchase"
 msgstr "Save cash purchase"
 
-#: src/apps/stock/OverdueDeliveries.tsx:208
+#: src/apps/stock/OverdueDeliveries.tsx:207
 msgid "Save date"
 msgstr "Save date"
 
-#: src/apps/stock/DeliverySheet.tsx:348
+#: src/apps/stock/DeliverySheet.tsx:367
 msgid "Save delivery"
 msgstr "Save delivery"
 
@@ -6022,7 +6025,7 @@ msgstr "Scheduled food waits in Scheduled until its preparation window. Its time
 msgid "Scheduled tickets move to Live when their preparation window begins."
 msgstr "Scheduled tickets move to Live when their preparation window begins."
 
-#: src/apps/stock/messages.ts:127
+#: src/apps/stock/messages.ts:124
 msgid "Seafood"
 msgstr "Seafood"
 
@@ -6034,8 +6037,8 @@ msgstr "Search"
 msgid "Search by"
 msgstr "Search by"
 
-#: src/apps/stock/CashPurchaseForm.tsx:215
-#: src/apps/stock/DeliverySheet.tsx:576
+#: src/apps/stock/CashPurchaseForm.tsx:209
+#: src/apps/stock/DeliverySheet.tsx:604
 #: src/apps/stock/WasteSheet.tsx:435
 msgid "Search items"
 msgstr "Search items"
@@ -6226,6 +6229,10 @@ msgstr "See what is waiting"
 msgid "See why"
 msgstr "See why"
 
+#: src/apps/stock/DeliverySheet.tsx:355
+msgid "Select or enter at least one received item to save."
+msgstr "Select or enter at least one received item to save."
+
 #: src/screens/GiftCardSheet.tsx:142
 msgid "Sell a card"
 msgstr "Sell a card"
@@ -6400,7 +6407,7 @@ msgstr "Shift (open)"
 msgid "Shift closed"
 msgstr "Shift closed"
 
-#: src/apps/stock/DeliverySheet.tsx:822
+#: src/apps/stock/DeliverySheet.tsx:850
 #: src/screens/ShiftSheet.tsx:124
 #: src/screens/ShiftSheet.tsx:701
 msgid "Short"
@@ -6628,7 +6635,7 @@ msgstr "Spicy"
 msgid "Split {n}"
 msgstr "Split {n}"
 
-#: src/apps/stock/messages.ts:114
+#: src/apps/stock/messages.ts:111
 msgid "Spoiled"
 msgstr "Spoiled"
 
@@ -6636,7 +6643,7 @@ msgstr "Spoiled"
 msgid "Staff"
 msgstr "Staff"
 
-#: src/apps/stock/messages.ts:118
+#: src/apps/stock/messages.ts:115
 msgid "Staff meal"
 msgstr "Staff meal"
 
@@ -6741,7 +6748,7 @@ msgstr "Stock is switched off for this tablet. What you saved stays here and goe
 msgid "Stock is switched off right now, so a dish it took off cannot be brought back here. Use the App."
 msgstr "Stock is switched off right now, so a dish it took off cannot be brought back here. Use the App."
 
-#: src/apps/stock/DeliverySheet.tsx:419
+#: src/apps/stock/DeliverySheet.tsx:439
 msgid "Stock quantities were updated."
 msgstr "Stock quantities were updated."
 
@@ -6978,8 +6985,8 @@ msgstr "Tabs left open"
 msgid "Take {appliedText} · {leftAfter} left"
 msgstr "Take {appliedText} · {leftAfter} left"
 
-#: src/apps/stock/CashPurchaseForm.tsx:311
-#: src/apps/stock/DeliverySheet.tsx:690
+#: src/apps/stock/CashPurchaseForm.tsx:302
+#: src/apps/stock/DeliverySheet.tsx:718
 msgid "Take a photo"
 msgstr "Take a photo"
 
@@ -6987,8 +6994,8 @@ msgstr "Take a photo"
 msgid "Take cash out"
 msgstr "Take cash out"
 
-#: src/apps/stock/CashPurchaseForm.tsx:309
-#: src/apps/stock/DeliverySheet.tsx:688
+#: src/apps/stock/CashPurchaseForm.tsx:302
+#: src/apps/stock/DeliverySheet.tsx:716
 msgid "Take it again"
 msgstr "Take it again"
 
@@ -7322,11 +7329,11 @@ msgstr "That may not have gone through. Check what is shown below before trying 
 msgid "That needs guest details, which this sign-in does not have."
 msgstr "That needs guest details, which this sign-in does not have."
 
-#: src/apps/stock/DeliverySheet.tsx:210
+#: src/apps/stock/DeliverySheet.tsx:213
 msgid "That photo could not be read."
 msgstr "That photo could not be read."
 
-#: src/apps/stock/DeliverySheet.tsx:208
+#: src/apps/stock/DeliverySheet.tsx:211
 msgid "That photo is too large. Take it again from a little further away."
 msgstr "That photo is too large. Take it again from a little further away."
 
@@ -7453,7 +7460,7 @@ msgstr "The guest disputed this payment. It cannot be refunded here until the di
 msgid "The guest only sees \"out of stock\" or \"kitchen closed\". Other reasons stay with you."
 msgstr "The guest only sees \"out of stock\" or \"kitchen closed\". Other reasons stay with you."
 
-#: src/apps/stock/DeliverySheet.tsx:697
+#: src/apps/stock/DeliverySheet.tsx:725
 msgid "The invoice photo"
 msgstr "The invoice photo"
 
@@ -7613,13 +7620,17 @@ msgstr "The order you are ringing up has not been saved. Opening tab #{replaceNu
 msgid "The photo could not be uploaded. It will try again by itself. The delivery itself was recorded."
 msgstr "The photo could not be uploaded. It will try again by itself. The delivery itself was recorded."
 
-#: src/apps/stock/DeliverySheet.tsx:709
+#: src/apps/stock/DeliverySheet.tsx:737
 msgid "The photo is sent after the delivery. If it cannot be uploaded it tries again by itself; the delivery is never held up."
 msgstr "The photo is sent after the delivery. If it cannot be uploaded it tries again by itself; the delivery is never held up."
 
-#: src/apps/stock/CashPurchaseForm.tsx:318
+#: src/apps/stock/CashPurchaseForm.tsx:308
 msgid "The receipt photo"
 msgstr "The receipt photo"
+
+#: src/apps/stock/DeliverySheet.tsx:452
+msgid "The receipt photo could not upload right now. It is saved on this tablet and will upload when connected."
+msgstr "The receipt photo could not upload right now. It is saved on this tablet and will upload when connected."
 
 #: src/screens/LoyaltySheet.tsx:160
 msgid "The request expired. Ask again."
@@ -7727,7 +7738,7 @@ msgstr "The server refused this order:"
 msgid "The server’s answer was not a pairing. Check the link and try again."
 msgstr "The server’s answer was not a pairing. Check the link and try again."
 
-#: src/apps/stock/DeliverySheet.tsx:390
+#: src/apps/stock/DeliverySheet.tsx:410
 #: src/apps/stock/Stock.tsx:325
 #: src/apps/stock/StockNotices.tsx:41
 #: src/apps/stock/WasteSheet.tsx:342
@@ -7935,7 +7946,7 @@ msgstr "This category is empty."
 
 #: src/apps/stock/CountScreen.tsx:241
 #: src/apps/stock/CountScreen.tsx:258
-#: src/apps/stock/DeliverySheet.tsx:254
+#: src/apps/stock/DeliverySheet.tsx:257
 #: src/apps/stock/WasteSheet.tsx:213
 msgid "This could not be saved on the tablet."
 msgstr "This could not be saved on the tablet."
@@ -8151,7 +8162,7 @@ msgstr "This shift is closed."
 #~ msgid "This supplier has no items set up yet."
 #~ msgstr "This supplier has no items set up yet."
 
-#: src/apps/stock/DeliverySheet.tsx:582
+#: src/apps/stock/DeliverySheet.tsx:610
 msgid "This supplier has no items set up yet. Search for any item below."
 msgstr "This supplier has no items set up yet. Search for any item below."
 
@@ -8444,7 +8455,7 @@ msgid "Too many wrong PINs. Try again in {wait} seconds."
 msgstr "Too many wrong PINs. Try again in {wait} seconds."
 
 #: src/apps/stock/CountScreen.tsx:239
-#: src/apps/stock/DeliverySheet.tsx:252
+#: src/apps/stock/DeliverySheet.tsx:255
 #: src/apps/stock/WasteSheet.tsx:211
 msgid "Too much is waiting to send from this tablet. Connect and let it send first."
 msgstr "Too much is waiting to send from this tablet. Connect and let it send first."
@@ -8579,9 +8590,9 @@ msgstr "Undone."
 msgid "Unit"
 msgstr "Unit"
 
-#: src/apps/stock/CashPurchaseForm.tsx:163
+#: src/apps/stock/CashPurchaseForm.tsx:157
 #: src/apps/stock/CountScreen.tsx:670
-#: src/apps/stock/DeliverySheet.tsx:899
+#: src/apps/stock/DeliverySheet.tsx:927
 msgid "Unit for {name}"
 msgstr "Unit for {name}"
 
@@ -8816,11 +8827,11 @@ msgstr "We’ll text this number once, about this order only."
 msgid "Web"
 msgstr "Web"
 
-#: src/apps/stock/DeliverySheet.tsx:834
+#: src/apps/stock/DeliverySheet.tsx:862
 msgid "Weight of {name}"
 msgstr "Weight of {name}"
 
-#: src/apps/stock/DeliverySheet.tsx:844
+#: src/apps/stock/DeliverySheet.tsx:872
 msgid "Weight unit for {name}"
 msgstr "Weight unit for {name}"
 
@@ -8862,7 +8873,7 @@ msgstr "What was wasted?"
 msgid "Wheelchair"
 msgstr "Wheelchair"
 
-#: src/apps/stock/OverdueDeliveries.tsx:190
+#: src/apps/stock/OverdueDeliveries.tsx:189
 msgid "When is it expected?"
 msgstr "When is it expected?"
 
@@ -8900,11 +8911,11 @@ msgstr "Will retry automatically. Last problem:"
 msgid "Window"
 msgstr "Window"
 
-#: src/apps/stock/OverdueDeliveries.tsx:171
+#: src/apps/stock/OverdueDeliveries.tsx:170
 msgid "Yes, as ordered"
 msgstr "Yes, as ordered"
 
-#: src/apps/stock/OverdueDeliveries.tsx:177
+#: src/apps/stock/OverdueDeliveries.tsx:176
 msgid "Yes, with changes"
 msgstr "Yes, with changes"
 

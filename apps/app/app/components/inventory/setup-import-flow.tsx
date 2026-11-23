@@ -33,6 +33,9 @@ import { useInventoryClient } from '#app/hooks/use-inventory-client.ts'
 import {
 	fileToBase64,
 	inferUploadContentType,
+	isSupportedDocumentUpload,
+	MAX_DOCUMENT_UPLOAD_BYTES,
+	MAX_SETUP_BATCH_BYTES,
 } from '#app/utils/inventory/file-base64.ts'
 import {
 	defaultEntryUnit,
@@ -169,39 +172,101 @@ export function SetupImportFlow({
 		setSeededForId(activeImport.id)
 	}, [activeImport, seededForId, currency, quantity.system])
 
+	const activeImportId = activeImport?.id
+	const activeImportStatus = activeImport?.status
+
 	// Poll background progress while status is `reading`.
 	useEffect(() => {
-		if (!activeImport || activeImport.status !== 'reading') return
+		if (!activeImportId || activeImportStatus !== 'reading') return
 		let live = true
+		let consecutiveErrors = 0
 		const timer = setInterval(() => {
-			request(`/setup/imports/${encodeURIComponent(activeImport.id)}`).then(
+			request(`/setup/imports/${encodeURIComponent(activeImportId)}`).then(
 				(body) => {
 					if (!live) return
 					const parsed = setupImportDetailSchema.safeParse(body)
-					if (parsed.success) setActiveImport(parsed.data)
+					if (parsed.success) {
+						consecutiveErrors = 0
+						setActiveImport(parsed.data)
+					} else {
+						consecutiveErrors += 1
+						if (consecutiveErrors >= 5) {
+							clearInterval(timer)
+							setError(
+								t`Unable to check reading progress. Leave and resume later.`,
+							)
+						}
+					}
 				},
-				() => {},
+				() => {
+					if (!live) return
+					consecutiveErrors += 1
+					if (consecutiveErrors >= 5) {
+						clearInterval(timer)
+						setError(
+							t`Unable to check reading progress. Leave and resume later.`,
+						)
+					}
+				},
 			)
 		}, POLL_MS)
 		return () => {
 			live = false
 			clearInterval(timer)
 		}
-	}, [activeImport, request])
+	}, [activeImportId, activeImportStatus, request, t])
 
 	function addFiles(fileList: FileList | null) {
 		if (!fileList || fileList.length === 0) return
-		setError(null)
-		setSelectedFiles((current) => {
-			const combined = [...current, ...Array.from(fileList)]
-			if (combined.length > MAX_SETUP_IMPORT_FILES) {
-				setError(
-					t`You can upload up to ${MAX_SETUP_IMPORT_FILES} files in one batch.`,
-				)
-				return combined.slice(0, MAX_SETUP_IMPORT_FILES)
+		const incoming = Array.from(fileList)
+		let rejectedType = false
+		let rejectedSingleSize = false
+		const valid: File[] = []
+		for (const file of incoming) {
+			if (!isSupportedDocumentUpload(file)) {
+				rejectedType = true
+				continue
 			}
-			return combined
-		})
+			if (file.size > MAX_DOCUMENT_UPLOAD_BYTES) {
+				rejectedSingleSize = true
+				continue
+			}
+			valid.push(file)
+		}
+
+		const next: File[] = [...selectedFiles]
+		let totalBytes = next.reduce((sum, f) => sum + f.size, 0)
+		let rejectedBatchSize = false
+		let rejectedCount = false
+		for (const file of valid) {
+			if (next.length >= MAX_SETUP_IMPORT_FILES) {
+				rejectedCount = true
+				break
+			}
+			if (totalBytes + file.size > MAX_SETUP_BATCH_BYTES) {
+				rejectedBatchSize = true
+				continue
+			}
+			totalBytes += file.size
+			next.push(file)
+		}
+
+		setSelectedFiles(next)
+		if (rejectedType) {
+			setError(
+				t`Only CSV, TSV, Excel (XLSX), PDF, or image files are supported.`,
+			)
+		} else if (rejectedSingleSize) {
+			setError(t`Each file must be 7.5 MB or smaller.`)
+		} else if (rejectedBatchSize) {
+			setError(t`Total batch size cannot exceed 18 MB.`)
+		} else if (rejectedCount) {
+			setError(
+				t`You can upload up to ${MAX_SETUP_IMPORT_FILES} files in one batch.`,
+			)
+		} else {
+			setError(null)
+		}
 	}
 
 	async function startImport() {
@@ -566,7 +631,17 @@ export function SetupImportFlow({
 					)
 				: 0
 		return (
-			<div className="flex flex-col gap-4" data-testid="setup-import-progress">
+			<div
+				className="flex flex-col gap-4"
+				role="status"
+				aria-live="polite"
+				data-testid="setup-import-progress"
+			>
+				{error ? (
+					<Alert variant="destructive" data-testid="setup-import-error">
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
+				) : null}
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between text-sm">
 						<span className="font-medium">
@@ -602,7 +677,15 @@ export function SetupImportFlow({
 											: 'outline'
 								}
 							>
-								{file.status}
+								{file.status === 'done' ? (
+									<Trans>Done</Trans>
+								) : file.status === 'failed' ? (
+									<Trans>Failed</Trans>
+								) : file.status === 'reading' ? (
+									<Trans>Reading…</Trans>
+								) : (
+									<Trans>Pending</Trans>
+								)}
 							</Badge>
 						</li>
 					))}
@@ -660,253 +743,260 @@ export function SetupImportFlow({
 				</Trans>
 			</p>
 			<div className="flex flex-col gap-4">
-				{suppliers.map((supplier) => (
-					<div
-						key={supplier.tempKey}
-						className="flex flex-col gap-3 rounded-xl border p-3"
-						data-testid={`setup-import-supplier-${supplier.tempKey}`}
-					>
-						<div className="flex flex-wrap items-center justify-between gap-2">
-							<div className="flex min-w-0 flex-1 items-center gap-2">
-								<Checkbox
-									id={`${idPrefix}-s-${supplier.tempKey}`}
-									checked={supplier.include}
-									onCheckedChange={(checked) =>
-										patchSupplier(supplier.tempKey, (current) => ({
-											...current,
-											include: checked,
-										}))
-									}
-									data-testid={`setup-import-supplier-include-${supplier.tempKey}`}
-								/>
-								<Input
-									value={supplier.name}
-									disabled={!supplier.include}
-									onChange={(event) =>
-										patchSupplier(supplier.tempKey, (current) => ({
-											...current,
-											name: event.target.value,
-										}))
-									}
-									aria-label={t`Supplier name`}
-									dir="auto"
-									className="h-9 max-w-xs font-medium"
-								/>
-								<Badge variant="outline">
-									{supplier.existingSupplierId ? (
-										<Trans>Existing supplier</Trans>
-									) : (
-										<Trans>New supplier</Trans>
-									)}
-								</Badge>
+				{suppliers.map((supplier) => {
+					const supplierName = supplier.name
+					return (
+						<div
+							key={supplier.tempKey}
+							className="flex flex-col gap-3 rounded-xl border p-3"
+							data-testid={`setup-import-supplier-${supplier.tempKey}`}
+						>
+							<div className="flex flex-wrap items-center justify-between gap-2">
+								<div className="flex min-w-0 flex-1 items-center gap-2">
+									<Checkbox
+										id={`${idPrefix}-s-${supplier.tempKey}`}
+										checked={supplier.include}
+										aria-label={t`Include supplier ${supplierName}`}
+										onCheckedChange={(checked) =>
+											patchSupplier(supplier.tempKey, (current) => ({
+												...current,
+												include: checked,
+											}))
+										}
+										data-testid={`setup-import-supplier-include-${supplier.tempKey}`}
+									/>
+									<Input
+										value={supplier.name}
+										disabled={!supplier.include}
+										onChange={(event) =>
+											patchSupplier(supplier.tempKey, (current) => ({
+												...current,
+												name: event.target.value,
+											}))
+										}
+										aria-label={t`Supplier name for ${supplierName}`}
+										dir="auto"
+										className="h-9 max-w-xs font-medium"
+									/>
+									<Badge variant="outline">
+										{supplier.existingSupplierId ? (
+											<Trans>Existing supplier</Trans>
+										) : (
+											<Trans>New supplier</Trans>
+										)}
+									</Badge>
+								</div>
+								<span className="text-muted-foreground text-xs">
+									<Plural
+										value={supplier.items.length}
+										one="# item"
+										other="# items"
+									/>
+								</span>
 							</div>
-							<span className="text-muted-foreground text-xs">
-								<Plural
-									value={supplier.items.length}
-									one="# item"
-									other="# items"
-								/>
-							</span>
-						</div>
 
-						{supplier.include ? (
-							<ul className="flex flex-col gap-2">
-								{supplier.items.map((item) => {
-									const units = standardUnitsFor(item.baseUnit, quantity.system)
-									const itemName = item.itemName
-									const mergedText = item.mergedAliases.join(', ')
-									return (
-										<li
-											key={item.tempKey}
-											className="bg-muted/20 flex flex-col gap-2 rounded-lg border p-2.5"
-											data-testid={`setup-import-item-${item.tempKey}`}
-										>
-											<div className="flex flex-wrap items-center justify-between gap-2">
-												<div className="flex items-center gap-2">
-													<Checkbox
-														checked={item.include}
-														onCheckedChange={(checked) =>
-															patchItem(
-																supplier.tempKey,
-																item.tempKey,
-																(current) => ({
-																	...current,
-																	include: checked,
-																}),
-															)
-														}
-														aria-label={t`Include ${itemName}`}
-														data-testid={`setup-import-item-include-${item.tempKey}`}
-													/>
-													<Label className="font-medium wrap-anywhere">
-														{itemName}
-													</Label>
-												</div>
-												{item.mergedAliases.length > 0 ? (
-													<Badge
-														variant="secondary"
-														data-testid={`setup-import-merged-${item.tempKey}`}
-													>
-														<Trans>
-															Merged:{' '}
-															<span className="wrap-anywhere">
-																{mergedText}
-															</span>
-														</Trans>
-													</Badge>
-												) : null}
-											</div>
-											{item.include ? (
-												<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-													<TextField
-														label={<Trans>Name</Trans>}
-														value={item.itemName}
-														onChange={(event) =>
-															patchItem(
-																supplier.tempKey,
-																item.tempKey,
-																(current) => ({
-																	...current,
-																	itemName: event.target.value,
-																}),
-															)
-														}
-														dir="auto"
-													/>
-													<SelectField
-														label={<Trans>Category</Trans>}
-														options={INVENTORY_CATEGORIES.map((category) => ({
-															value: category,
-															label: categoryLabel(category, i18n),
-														}))}
-														value={item.category}
-														onValueChange={(next) =>
-															patchItem(
-																supplier.tempKey,
-																item.tempKey,
-																(current) => ({
-																	...current,
-																	category: next as InventoryCategory,
-																}),
-															)
-														}
-													/>
-													<div className="grid grid-cols-2 gap-1.5">
-														<SelectField
-															label={<Trans>Base unit</Trans>}
-															options={INVENTORY_BASE_UNITS.map((unit) => ({
-																value: unit,
-																label: unit,
-															}))}
-															value={item.baseUnit}
-															onValueChange={(next) => {
-																const base = next as InventoryBaseUnit
+							{supplier.include ? (
+								<ul className="flex flex-col gap-2">
+									{supplier.items.map((item) => {
+										const units = standardUnitsFor(
+											item.baseUnit,
+											quantity.system,
+										)
+										const itemName = item.itemName
+										const mergedText = item.mergedAliases.join(', ')
+										return (
+											<li
+												key={item.tempKey}
+												className="bg-muted/20 flex flex-col gap-2 rounded-lg border p-2.5"
+												data-testid={`setup-import-item-${item.tempKey}`}
+											>
+												<div className="flex flex-wrap items-center justify-between gap-2">
+													<div className="flex items-center gap-2">
+														<Checkbox
+															checked={item.include}
+															onCheckedChange={(checked) =>
 																patchItem(
 																	supplier.tempKey,
 																	item.tempKey,
 																	(current) => ({
 																		...current,
-																		baseUnit: base,
-																		packAmountUnit: defaultEntryUnit(
-																			base,
-																			null,
-																			[],
-																			quantity.system,
-																		),
+																		include: checked,
 																	}),
 																)
-															}}
+															}
+															aria-label={t`Include ${itemName}`}
+															data-testid={`setup-import-item-include-${item.tempKey}`}
 														/>
+														<Label className="font-medium wrap-anywhere">
+															{itemName}
+														</Label>
+													</div>
+													{item.mergedAliases.length > 0 ? (
+														<Badge
+															variant="secondary"
+															data-testid={`setup-import-merged-${item.tempKey}`}
+														>
+															<Trans>
+																Merged:{' '}
+																<span className="wrap-anywhere">
+																	{mergedText}
+																</span>
+															</Trans>
+														</Badge>
+													) : null}
+												</div>
+												{item.include ? (
+													<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
 														<TextField
-															label={<Trans>Pack</Trans>}
-															value={item.packName}
+															label={<Trans>Name</Trans>}
+															value={item.itemName}
 															onChange={(event) =>
 																patchItem(
 																	supplier.tempKey,
 																	item.tempKey,
 																	(current) => ({
 																		...current,
-																		packName: event.target.value,
+																		itemName: event.target.value,
 																	}),
 																)
 															}
 															dir="auto"
 														/>
-													</div>
-													<div className="grid grid-cols-2 gap-1.5">
-														<div className="flex flex-col gap-1.5">
-															<Label className="text-sm font-medium">
-																<Trans>Pack size</Trans>
-															</Label>
-															<div className="flex gap-1">
-																<Input
-																	value={item.packAmountText}
-																	onChange={(event) =>
-																		patchItem(
-																			supplier.tempKey,
-																			item.tempKey,
-																			(current) => ({
-																				...current,
-																				packAmountText: event.target.value,
-																			}),
-																		)
-																	}
-																	inputMode="decimal"
-																	dir="ltr"
-																	className="h-11 w-16 tabular-nums md:h-8"
-																/>
-																<SelectField
-																	label={
-																		<span className="sr-only">
-																			<Trans>Unit</Trans>
-																		</span>
-																	}
-																	options={units.map((u) => ({
-																		value: u,
-																		label: quantity.unitName(u, []),
-																	}))}
-																	value={item.packAmountUnit}
-																	onValueChange={(next) =>
-																		patchItem(
-																			supplier.tempKey,
-																			item.tempKey,
-																			(current) => ({
-																				...current,
-																				packAmountUnit: next as UnitRef,
-																			}),
-																		)
-																	}
-																/>
-															</div>
-														</div>
-														{canSeeCost ? (
+														<SelectField
+															label={<Trans>Category</Trans>}
+															options={INVENTORY_CATEGORIES.map((category) => ({
+																value: category,
+																label: categoryLabel(category, i18n),
+															}))}
+															value={item.category}
+															onValueChange={(next) =>
+																patchItem(
+																	supplier.tempKey,
+																	item.tempKey,
+																	(current) => ({
+																		...current,
+																		category: next as InventoryCategory,
+																	}),
+																)
+															}
+														/>
+														<div className="grid grid-cols-2 gap-1.5">
+															<SelectField
+																label={<Trans>Base unit</Trans>}
+																options={INVENTORY_BASE_UNITS.map((unit) => ({
+																	value: unit,
+																	label: unit,
+																}))}
+																value={item.baseUnit}
+																onValueChange={(next) => {
+																	const base = next as InventoryBaseUnit
+																	patchItem(
+																		supplier.tempKey,
+																		item.tempKey,
+																		(current) => ({
+																			...current,
+																			baseUnit: base,
+																			packAmountUnit: defaultEntryUnit(
+																				base,
+																				null,
+																				[],
+																				quantity.system,
+																			),
+																		}),
+																	)
+																}}
+															/>
 															<TextField
-																label={<Trans>Latest price</Trans>}
-																value={item.priceText}
+																label={<Trans>Pack</Trans>}
+																value={item.packName}
 																onChange={(event) =>
 																	patchItem(
 																		supplier.tempKey,
 																		item.tempKey,
 																		(current) => ({
 																			...current,
-																			priceText: event.target.value,
+																			packName: event.target.value,
 																		}),
 																	)
 																}
-																inputMode="decimal"
-																dir="ltr"
+																dir="auto"
 															/>
-														) : null}
+														</div>
+														<div className="grid grid-cols-2 gap-1.5">
+															<div className="flex flex-col gap-1.5">
+																<Label className="text-sm font-medium">
+																	<Trans>Pack size</Trans>
+																</Label>
+																<div className="flex gap-1">
+																	<Input
+																		value={item.packAmountText}
+																		onChange={(event) =>
+																			patchItem(
+																				supplier.tempKey,
+																				item.tempKey,
+																				(current) => ({
+																					...current,
+																					packAmountText: event.target.value,
+																				}),
+																			)
+																		}
+																		inputMode="decimal"
+																		dir="ltr"
+																		className="h-11 w-16 tabular-nums md:h-8"
+																	/>
+																	<SelectField
+																		label={
+																			<span className="sr-only">
+																				<Trans>Unit</Trans>
+																			</span>
+																		}
+																		options={units.map((u) => ({
+																			value: u,
+																			label: quantity.unitName(u, []),
+																		}))}
+																		value={item.packAmountUnit}
+																		onValueChange={(next) =>
+																			patchItem(
+																				supplier.tempKey,
+																				item.tempKey,
+																				(current) => ({
+																					...current,
+																					packAmountUnit: next as UnitRef,
+																				}),
+																			)
+																		}
+																	/>
+																</div>
+															</div>
+															{canSeeCost ? (
+																<TextField
+																	label={<Trans>Latest price</Trans>}
+																	value={item.priceText}
+																	onChange={(event) =>
+																		patchItem(
+																			supplier.tempKey,
+																			item.tempKey,
+																			(current) => ({
+																				...current,
+																				priceText: event.target.value,
+																			}),
+																		)
+																	}
+																	inputMode="decimal"
+																	dir="ltr"
+																/>
+															) : null}
+														</div>
 													</div>
-												</div>
-											) : null}
-										</li>
-									)
-								})}
-							</ul>
-						) : null}
-					</div>
-				))}
+												) : null}
+											</li>
+										)
+									})}
+								</ul>
+							) : null}
+						</div>
+					)
+				})}
 			</div>
 
 			<div className="flex justify-end gap-2 pt-2">

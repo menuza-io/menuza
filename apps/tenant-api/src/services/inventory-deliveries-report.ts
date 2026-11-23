@@ -152,6 +152,18 @@ export async function queryDeliveriesReport(
 	let totalGrand = 0
 	let totalPaid = 0
 	let totalUnpaid = 0
+	const currencyMap = new Map<
+		string,
+		{
+			currency: string
+			count: number
+			netMinor: number
+			vatMinor: number
+			totalMinor: number
+			paidMinor: number
+			unpaidMinor: number
+		}
+	>()
 
 	for (const entry of deliveries) {
 		const row = entry.delivery
@@ -209,6 +221,29 @@ export async function queryDeliveriesReport(
 			totalUnpaid += totalMinor
 		}
 
+		let curEntry = currencyMap.get(row.currency)
+		if (!curEntry) {
+			curEntry = {
+				currency: row.currency,
+				count: 0,
+				netMinor: 0,
+				vatMinor: 0,
+				totalMinor: 0,
+				paidMinor: 0,
+				unpaidMinor: 0,
+			}
+			currencyMap.set(row.currency, curEntry)
+		}
+		curEntry.count += 1
+		curEntry.netMinor += netMinor
+		curEntry.vatMinor += vatMinor
+		curEntry.totalMinor += totalMinor
+		if (paid) {
+			curEntry.paidMinor += totalMinor
+		} else {
+			curEntry.unpaidMinor += totalMinor
+		}
+
 		const supKey = row.supplierId ?? `__none__:${supplierName}`
 		let sup = supplierMap.get(supKey)
 		if (!sup) {
@@ -258,6 +293,10 @@ export async function queryDeliveriesReport(
 		currency = locSetting?.currency ?? 'USD'
 	}
 
+	const totalsByCurrency = [...currencyMap.values()].sort((a, b) =>
+		a.currency.localeCompare(b.currency),
+	)
+
 	return {
 		from: query.from ?? '',
 		to: query.to ?? '',
@@ -275,6 +314,7 @@ export async function queryDeliveriesReport(
 			paidMinor: totalPaid,
 			unpaidMinor: totalUnpaid,
 		},
+		...(totalsByCurrency.length > 1 ? { totalsByCurrency } : {}),
 		internalRows,
 	}
 }

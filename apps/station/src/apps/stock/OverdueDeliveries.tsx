@@ -6,6 +6,7 @@ import { StockApiError } from './api.ts'
 import { immediateErrorText } from './messages.ts'
 import {
 	isIsoDate,
+	localIsoDate,
 	mayReceive,
 	overdueDeliveries,
 	tomorrowIsoDate,
@@ -48,7 +49,7 @@ export function OverdueDeliveries({
 	if (list.length === 0) return null
 
 	const allowed = mayReceive(catalog, role)
-	const todayIso = new Date().toISOString().slice(0, 10)
+	const todayIso = localIsoDate()
 
 	const answerAsOrdered = async (delivery: OverdueDelivery) => {
 		if (!allowed || !ctx || busyOrderId) return
@@ -137,8 +138,6 @@ export function OverdueDeliveries({
 				return (
 					<div
 						key={delivery.orderId}
-						role="region"
-						aria-label={_(t`Did the delivery from ${supplierName} arrive?`)}
 						className="border-border bg-card flex flex-col gap-3 rounded-(--station-panel-radius) border p-4"
 					>
 						<div className="flex items-start gap-3">

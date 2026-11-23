@@ -307,10 +307,13 @@ describe('overdue deliveries (#501)', () => {
 })
 
 describe('cash purchases (#466)', () => {
-	it('converts major currency inputs (including Arabic digits) to integer minor units', () => {
+	it('converts major currency inputs (including Arabic digits, comma decimals, and currency exponent) to integer minor units', () => {
 		expect(parseMajorToMinor('12.50')).toBe(1250)
+		expect(parseMajorToMinor('12,50')).toBe(1250)
 		expect(parseMajorToMinor('0')).toBe(0)
 		expect(parseMajorToMinor('١٥.٢٥')).toBe(1525)
+		expect(parseMajorToMinor('1.250', 'BHD')).toBe(1250)
+		expect(parseMajorToMinor('500', 'JPY')).toBe(500)
 		expect(parseMajorToMinor('')).toBeNull()
 		expect(parseMajorToMinor('-4')).toBeNull()
 		expect(parseMajorToMinor('abc')).toBeNull()

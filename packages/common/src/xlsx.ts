@@ -8,6 +8,7 @@
 
 const MAX_ZIP_ENTRIES = 100
 const MAX_UNCOMPRESSED_BYTES = 10 * 1024 * 1024
+const MAX_XLSX_XML_BYTES = 2 * 1024 * 1024
 const MAX_XLSX_ROWS = 2000
 const MAX_XLSX_COLS = 40
 
@@ -117,6 +118,7 @@ function parseCentralDirectory(
 async function readZipEntryText(
 	bytes: Uint8Array,
 	entry: ZipCentralEntry,
+	maxBytes = MAX_UNCOMPRESSED_BYTES,
 ): Promise<string> {
 	const lh = entry.localHeaderOffset
 	if (lh + 30 > bytes.length || readUint32LE(bytes, lh) !== 0x04034b50) {
@@ -132,7 +134,7 @@ async function readZipEntryText(
 	const compressed = bytes.subarray(dataStart, dataEnd)
 
 	if (entry.compressionMethod === 0) {
-		if (compressed.byteLength > MAX_UNCOMPRESSED_BYTES) {
+		if (compressed.byteLength > maxBytes) {
 			throw new Error('XLSX entry exceeds size limit')
 		}
 		return new TextDecoder('utf-8').decode(compressed)
@@ -158,7 +160,7 @@ async function readZipEntryText(
 			if (done) break
 			if (!value) continue
 			total += value.byteLength
-			if (total > MAX_UNCOMPRESSED_BYTES) {
+			if (total > maxBytes) {
 				await reader.cancel().catch(() => {})
 				throw new Error('XLSX decompressed entry exceeds size limit')
 			}
@@ -198,18 +200,84 @@ function decodeXmlEntities(input: string): string {
 		})
 }
 
+function findTagClose(xml: string, from: number): number {
+	let quote: string | null = null
+	for (let i = from; i < xml.length; i += 1) {
+		const ch = xml[i]!
+		if (quote) {
+			if (ch === quote) quote = null
+			continue
+		}
+		if (ch === '"' || ch === "'") {
+			quote = ch
+		} else if (ch === '>') {
+			return i
+		}
+	}
+	return -1
+}
+
+/**
+ * Linear O(n) XML element scanner. Stops immediately at the first unclosed
+ * opener so malformed input cannot degrade into quadratic backtracking.
+ */
+function scanXmlElements(
+	xml: string,
+	tagName: string,
+	onElement: (attrs: string, body: string) => boolean | void,
+): void {
+	const openToken = `<${tagName}`
+	const closeToken = `</${tagName}>`
+	let pos = 0
+
+	while (pos < xml.length) {
+		const openAt = xml.indexOf(openToken, pos)
+		if (openAt < 0) break
+
+		const afterName = openAt + openToken.length
+		const nextChar = xml[afterName]
+		if (
+			nextChar !== undefined &&
+			nextChar !== '>' &&
+			nextChar !== '/' &&
+			nextChar !== ' ' &&
+			nextChar !== '\t' &&
+			nextChar !== '\r' &&
+			nextChar !== '\n'
+		) {
+			pos = afterName
+			continue
+		}
+
+		const tagEnd = findTagClose(xml, afterName)
+		if (tagEnd < 0) break
+
+		if (tagEnd > afterName && xml[tagEnd - 1] === '/') {
+			const attrs = xml.slice(afterName, tagEnd - 1)
+			pos = tagEnd + 1
+			if (onElement(attrs, '') === false) break
+			continue
+		}
+
+		const closeAt = xml.indexOf(closeToken, tagEnd + 1)
+		if (closeAt < 0) break
+
+		const attrs = xml.slice(afterName, tagEnd)
+		const body = xml.slice(tagEnd + 1, closeAt)
+		pos = closeAt + closeToken.length
+		if (onElement(attrs, body) === false) break
+	}
+}
+
 function parseSharedStrings(xml: string): string[] {
 	const strings: string[] = []
-	const siRegex = /<si\b[^>]*>([\s\S]*?)<\/si>/g
-	const tRegex = /<t\b[^>]*>([\s\S]*?)<\/t>/g
-	for (const siMatch of xml.matchAll(siRegex)) {
-		const inner = siMatch[1] ?? ''
+	scanXmlElements(xml, 'si', (_attrs, inner) => {
 		let text = ''
-		for (const tMatch of inner.matchAll(tRegex)) {
-			text += decodeXmlEntities(tMatch[1] ?? '')
-		}
+		scanXmlElements(inner, 't', (_tAttrs, tBody) => {
+			text += decodeXmlEntities(tBody)
+		})
 		strings.push(text)
-	}
+	})
 	return strings
 }
 
@@ -225,7 +293,7 @@ function colRefToIndex(ref: string): number {
 }
 
 function parseXmlAttr(attrs: string, name: string): string | null {
-	const match = attrs.match(new RegExp(`\\b${name}\\s*=\\s*"([^"]*)"`))
+	const match = attrs.match(new RegExp(`(?:^|\\s)${name}\\s*=\\s*"([^"]*)"`))
 	return match?.[1] ?? null
 }
 
@@ -234,34 +302,32 @@ function parseWorksheetXml(
 	sharedStrings: readonly string[],
 ): string[][] {
 	const rows: string[][] = []
-	const rowRegex = /<row\b[^>]*>([\s\S]*?)<\/row>/g
-	const cellRegex = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g
 
-	for (const rowMatch of xml.matchAll(rowRegex)) {
-		if (rows.length >= MAX_XLSX_ROWS) break
-		const rowInner = rowMatch[1] ?? ''
+	scanXmlElements(xml, 'row', (_rowAttrs, rowInner) => {
+		if (rows.length >= MAX_XLSX_ROWS) return false
 		const cells: string[] = []
 		let fallbackCol = 0
 
-		for (const cellMatch of rowInner.matchAll(cellRegex)) {
-			const attrs = cellMatch[1] ?? ''
-			const body = cellMatch[2] ?? ''
+		scanXmlElements(rowInner, 'c', (attrs, body) => {
 			const ref = parseXmlAttr(attrs, 'r')
 			const colIndex = ref ? colRefToIndex(ref) : fallbackCol
 			fallbackCol = (colIndex >= 0 ? colIndex : fallbackCol) + 1
-			if (colIndex < 0 || colIndex >= MAX_XLSX_COLS) continue
+			if (colIndex < 0 || colIndex >= MAX_XLSX_COLS) return
 
 			const cellType = parseXmlAttr(attrs, 't') ?? ''
 			let value = ''
 			if (cellType === 'inlineStr') {
 				const parts: string[] = []
-				for (const tMatch of body.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)) {
-					parts.push(decodeXmlEntities(tMatch[1] ?? ''))
-				}
+				scanXmlElements(body, 't', (_tAttrs, tBody) => {
+					parts.push(decodeXmlEntities(tBody))
+				})
 				value = parts.join('')
 			} else {
-				const vMatch = body.match(/<v\b[^>]*>([\s\S]*?)<\/v>/)
-				const rawV = vMatch?.[1] ? decodeXmlEntities(vMatch[1]) : ''
+				let rawV = ''
+				scanXmlElements(body, 'v', (_vAttrs, vBody) => {
+					rawV = decodeXmlEntities(vBody)
+					return false
+				})
 				if (cellType === 's') {
 					const idx = Number(rawV)
 					value =
@@ -275,12 +341,13 @@ function parseWorksheetXml(
 
 			while (cells.length <= colIndex) cells.push('')
 			cells[colIndex] = value.trim()
-		}
+		})
 
 		if (cells.some((cell) => cell !== '')) {
 			rows.push(cells)
 		}
-	}
+		if (rows.length >= MAX_XLSX_ROWS) return false
+	})
 
 	return rows
 }
@@ -315,9 +382,15 @@ export async function parseXlsxToRows(bytes: Uint8Array): Promise<string[][]> {
 
 	const sharedStringsEntry = entries.get('xl/sharedStrings.xml')
 	const sharedStrings = sharedStringsEntry
-		? parseSharedStrings(await readZipEntryText(bytes, sharedStringsEntry))
+		? parseSharedStrings(
+				await readZipEntryText(bytes, sharedStringsEntry, MAX_XLSX_XML_BYTES),
+			)
 		: []
 
-	const sheetXml = await readZipEntryText(bytes, entries.get(sheetName)!)
+	const sheetXml = await readZipEntryText(
+		bytes,
+		entries.get(sheetName)!,
+		MAX_XLSX_XML_BYTES,
+	)
 	return parseWorksheetXml(sheetXml, sharedStrings)
 }

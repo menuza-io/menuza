@@ -9,9 +9,19 @@ export type PdfLine = {
 	size?: number
 }
 
+function normalizePdfText(text: string): string {
+	return text
+		.replace(/\u00a0/g, ' ')
+		.replace(/[—–]/g, '-')
+		.replace(/•/g, '*')
+		.replace(/×/g, 'x')
+		.replace(/≠/g, '!=')
+}
+
 function pdfLiteral(text: string): string {
+	const normalized = normalizePdfText(text)
 	let out = ''
-	for (const ch of text) {
+	for (const ch of normalized) {
 		const code = ch.codePointAt(0) ?? 32
 		if (ch === '\\' || ch === '(' || ch === ')') {
 			out += `\\${ch}`
@@ -24,6 +34,42 @@ function pdfLiteral(text: string): string {
 		}
 	}
 	return `(${out})`
+}
+
+function wrapPdfLines(
+	lines: readonly PdfLine[],
+	contentWidthPt: number,
+): PdfLine[] {
+	const out: PdfLine[] = []
+	for (const line of lines) {
+		const size = line.size ?? 9
+		if (!line.text) {
+			out.push(line)
+			continue
+		}
+		const maxChars = Math.max(40, Math.floor(contentWidthPt / (size * 0.52)))
+		if (line.text.length <= maxChars) {
+			out.push(line)
+			continue
+		}
+		let remaining = line.text
+		while (remaining.length > maxChars) {
+			let splitAt = remaining.lastIndexOf(' | ', maxChars)
+			if (splitAt > Math.floor(maxChars * 0.35)) {
+				splitAt += 2
+			} else {
+				const spaceAt = remaining.lastIndexOf(' ', maxChars)
+				splitAt = spaceAt > Math.floor(maxChars * 0.35) ? spaceAt : maxChars
+			}
+			const head = remaining.slice(0, splitAt).trimEnd()
+			out.push({ ...line, text: head })
+			remaining = `  ${remaining.slice(splitAt).trimStart()}`
+		}
+		if (remaining.trim()) {
+			out.push({ ...line, text: remaining })
+		}
+	}
+	return out
 }
 
 function concatBytes(chunks: Uint8Array[]): Uint8Array {
@@ -39,18 +85,22 @@ function concatBytes(chunks: Uint8Array[]): Uint8Array {
 
 /**
  * Renders an ordered list of text lines onto one or more landscape A4 PDF pages.
+ * Wraps long lines to fit the page width. Type1 Helvetica encodes WinAnsi
+ * characters directly and replaces unsupported glyphs (e.g. non-Latin scripts) with `?`.
  */
 export function buildTextLinesPdf(lines: readonly PdfLine[]): Uint8Array {
 	const pageWidth = 842
 	const pageHeight = 595
 	const marginLeft = 36
+	const contentWidth = pageWidth - marginLeft * 2
 	const startY = pageHeight - 44
 	const bottomY = 36
 	const defaultSize = 9
+	const wrappedLines = wrapPdfLines(lines, contentWidth)
 
 	const pages: PdfLine[][] = [[]]
 	let y = startY
-	for (const line of lines) {
+	for (const line of wrappedLines) {
 		const size = line.size ?? defaultSize
 		const step = Math.round(size * 1.45)
 		if (y - step < bottomY && pages[pages.length - 1]!.length > 0) {

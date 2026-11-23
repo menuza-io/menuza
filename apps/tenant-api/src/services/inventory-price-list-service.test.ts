@@ -37,6 +37,7 @@ import {
 	UPDATE,
 } from '../routes/inventory-test-utils.ts'
 import { operatorInventoryRoutes } from '../routes/operator-inventory.ts'
+import { resetInvoiceReadLimits } from '../lib/vision-read-limit.ts'
 import { parsePackSpec } from './inventory-price-list-service.ts'
 
 const ORG = 'org_price_list_a'
@@ -225,6 +226,7 @@ afterEach(() => {
 		process.env[key] = ''
 	}
 	syncEnvFromProcess()
+	resetInvoiceReadLimits()
 	vi.restoreAllMocks()
 })
 
@@ -629,5 +631,77 @@ describe('inventory price-list service (#505)', () => {
 			baseUnit: 'piece',
 			priceMinor: 1800,
 		})
+
+		// Second identical parse reuses bounded vision cache without another fetch.
+		const fetchSpy = vi.mocked(globalThis.fetch)
+		const cachedRes = await call(
+			'POST',
+			`${BASE}/suppliers/${supplier.id}/price-list/parse`,
+			{
+				token: full,
+				body: {
+					fileName: 'bakery.pdf',
+					contentType: 'application/pdf',
+					contentBase64: textBase64('%PDF-1.4\nBT (Burger Buns) Tj ET'),
+				},
+			},
+		)
+		expect(cachedRes.status).toBe(200)
+		expect(fetchSpy).toHaveBeenCalledTimes(1)
+	})
+
+	it('scopes SKU fallback matching on apply to the matched itemId', async () => {
+		const supplier = await world.supplier('SKU Scope Supplier')
+		const itemA = await world.item('Paprika', 'g')
+		const itemB = await world.item('Sumac', 'g')
+		const prodA = await world.product(supplier.id, itemA.id, {
+			packName: '1 kg',
+			packBaseQuantity: 1_000_000,
+			priceMinor: 1500,
+			sku: 'SHARED-SKU',
+		})
+
+		const res = await call(
+			'POST',
+			`${BASE}/suppliers/${supplier.id}/price-list/apply`,
+			{
+				token: full,
+				body: {
+					effectiveDate: '2026-10-25',
+					currency: 'SAR',
+					lines: [
+						{
+							action: 'upsert',
+							matchedItemId: itemB.id,
+							packName: '500 g',
+							packBaseQuantity: 500_000,
+							priceMinor: 2200,
+							pricedByWeight: false,
+							sku: 'SHARED-SKU',
+						},
+					],
+				},
+			},
+		)
+		expect(res.status, JSON.stringify(res.body)).toBe(200)
+		expect(res.body).toEqual({
+			createdItems: 0,
+			createdProducts: 1,
+			updatedProducts: 0,
+			archivedProducts: 0,
+			recordedPrices: 1,
+		})
+
+		const db = await getTenantDb(ORG)
+		const products = await db
+			.select()
+			.from(invSupplierProducts)
+			.where(isNull(invSupplierProducts.archivedAt))
+		const keptA = products.find((p) => p.id === prodA.id)
+		const createdB = products.find(
+			(p) => p.supplierId === supplier.id && p.itemId === itemB.id,
+		)
+		expect(keptA?.priceMinor).toBe(1500)
+		expect(createdB?.priceMinor).toBe(2200)
 	})
 })

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { parseDelimited } from '@repo/common/csv'
 import { parseXlsxToRows } from '@repo/common/xlsx'
 import {
@@ -19,7 +20,7 @@ import {
 	invSuppliers,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { desc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { runInBackground } from '../lib/background.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import { withInventoryWrite } from '../lib/inventory-write.ts'
@@ -27,8 +28,19 @@ import {
 	isInvoiceReaderConfigured,
 	readInvoiceDocument,
 } from '../lib/invoice-reader.ts'
+import {
+	getCachedVisionRead,
+	setCachedVisionRead,
+	takeVisionReadSlot,
+	VISION_BATCH_READS_PER_HOUR,
+} from '../lib/vision-read-limit.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
-import { newId, notFound, stateConflict } from './inventory-common.ts'
+import {
+	badRequest,
+	newId,
+	notFound,
+	stateConflict,
+} from './inventory-common.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
 import {
 	canonicalItemKey,
@@ -65,6 +77,8 @@ type StoredFileRead = {
 	lines: ExtractedLine[]
 }
 
+const MAX_SETUP_IMPORT_BYTES = 18 * 1024 * 1024
+
 const inFlightImports = new Map<string, Promise<void>>()
 
 function supplierNameFromFileName(fileName: string): string {
@@ -73,12 +87,15 @@ function supplierNameFromFileName(fileName: string): string {
 	return cleaned || 'Imported Supplier'
 }
 
-async function readSingleImportFile(file: {
-	fileName: string
-	contentType: string
-	fileKind: 'image' | 'pdf' | 'csv' | 'xlsx'
-	inlineContent: string
-}): Promise<StoredFileRead> {
+async function readSingleImportFile(
+	orgId: string,
+	file: {
+		fileName: string
+		contentType: string
+		fileKind: 'image' | 'pdf' | 'csv' | 'xlsx'
+		inlineContent: string
+	},
+): Promise<StoredFileRead> {
 	const bytes = decodeBase64Bytes(file.inlineContent)
 	if (file.fileKind === 'csv') {
 		const text = new TextDecoder('utf-8').decode(bytes)
@@ -121,11 +138,25 @@ async function readSingleImportFile(file: {
 			})),
 		}
 	}
-	const read = await readInvoiceDocument({
-		bytes,
-		contentType: file.contentType,
-		fileName: file.fileName,
-	})
+	const digest = createHash('sha256').update(bytes).digest('hex')
+	const cacheKey = `setup:${orgId}:${file.contentType}:${digest}`
+	const now = Date.now()
+	let read = getCachedVisionRead<
+		Awaited<ReturnType<typeof readInvoiceDocument>>
+	>(cacheKey, now)
+	if (!read) {
+		if (!takeVisionReadSlot(orgId, now, VISION_BATCH_READS_PER_HOUR)) {
+			throw new InventoryError('invalid_request', 429, {
+				reason: 'reader_rate_limited',
+			})
+		}
+		read = await readInvoiceDocument({
+			bytes,
+			contentType: file.contentType,
+			fileName: file.fileName,
+		})
+		setCachedVisionRead(cacheKey, read, now)
+	}
 	return {
 		supplierName: read.supplierName,
 		lines: read.lines.map((line) => {
@@ -404,10 +435,17 @@ export async function processSetupImport(
 
 		for (const file of files) {
 			if (file.status === 'done' || file.status === 'failed') continue
-			await db
+			const claimed = await db
 				.update(invSetupImportFiles)
 				.set({ status: 'reading', updatedAt: Date.now() })
-				.where(eq(invSetupImportFiles.id, file.id))
+				.where(
+					and(
+						eq(invSetupImportFiles.id, file.id),
+						eq(invSetupImportFiles.status, 'pending'),
+					),
+				)
+				.returning({ id: invSetupImportFiles.id })
+			if (claimed.length === 0) continue
 
 			if (!file.inlineContent) {
 				failedFiles++
@@ -427,7 +465,7 @@ export async function processSetupImport(
 			}
 
 			try {
-				const read = await readSingleImportFile({
+				const read = await readSingleImportFile(orgId, {
 					fileName: file.fileName,
 					contentType: file.contentType,
 					fileKind: file.fileKind,
@@ -448,13 +486,17 @@ export async function processSetupImport(
 					.update(invSetupImports)
 					.set({ completedFiles, updatedAt: Date.now() })
 					.where(eq(invSetupImports.id, importId))
-			} catch {
+			} catch (error) {
 				failedFiles++
+				const errorCode =
+					error instanceof InventoryError && error.status === 429
+						? 'rate_limited'
+						: 'read_failed'
 				await db
 					.update(invSetupImportFiles)
 					.set({
 						status: 'failed',
-						errorCode: 'read_failed',
+						errorCode,
 						inlineContent: null,
 						updatedAt: Date.now(),
 					})
@@ -472,6 +514,13 @@ export async function processSetupImport(
 			.where(eq(invSetupImportFiles.importId, importId))
 			.orderBy(invSetupImportFiles.createdAt, invSetupImportFiles.id)
 
+		const finalCompleted = refreshedFiles.filter(
+			(f) => f.status === 'done',
+		).length
+		const finalFailed = refreshedFiles.filter(
+			(f) => f.status === 'failed',
+		).length
+
 		const doneReads = refreshedFiles
 			.filter((f) => f.status === 'done' && f.readJson)
 			.map((f) => ({
@@ -481,14 +530,14 @@ export async function processSetupImport(
 
 		const suppliers = await buildGroupedSuppliersProposal(db, doneReads)
 		const finalStatus =
-			doneReads.length === 0 && failedFiles > 0 ? 'failed' : 'ready'
+			doneReads.length === 0 && finalFailed > 0 ? 'failed' : 'ready'
 
 		await db
 			.update(invSetupImports)
 			.set({
 				status: finalStatus,
-				completedFiles,
-				failedFiles,
+				completedFiles: finalCompleted,
+				failedFiles: finalFailed,
 				proposalJson: { suppliers },
 				updatedAt: Date.now(),
 			})
@@ -554,9 +603,14 @@ export async function startSetupImport(
 		}>
 	},
 ): Promise<SetupImportDetail> {
+	let totalBytes = 0
 	const parsedFiles = body.files.map((file) => {
 		const fileKind = detectImportFileKind(file.fileName, file.contentType)
-		decodeBase64Bytes(file.contentBase64)
+		const bytes = decodeBase64Bytes(file.contentBase64)
+		totalBytes += bytes.byteLength
+		if (totalBytes > MAX_SETUP_IMPORT_BYTES) {
+			throw badRequest('batch_too_large')
+		}
 		return { ...file, fileKind }
 	})
 
@@ -567,61 +621,71 @@ export async function startSetupImport(
 		throw new InventoryError('reader_not_configured', 503)
 	}
 
-	const db = await getTenantDb(caller.orgId)
-	const now = Date.now()
-	const importId = newId()
-	const importRow: typeof invSetupImports.$inferInsert = {
-		id: importId,
-		status: 'reading',
-		totalFiles: parsedFiles.length,
-		completedFiles: 0,
-		failedFiles: 0,
-		proposalJson: { suppliers: [] },
-		createdByKind: caller.actor.kind,
-		createdById: caller.actor.id,
-		appliedAt: null,
-		createdAt: now,
-		updatedAt: now,
-	}
-	await db.insert(invSetupImports).values(importRow)
+	const { importRow, fileRows, currency } = await withInventoryWrite(
+		{ orgId: caller.orgId, skipAutoSoldOut: true },
+		async (tx, ctx) => {
+			const now = ctx.now
+			const importId = newId()
+			const row: typeof invSetupImports.$inferInsert = {
+				id: importId,
+				status: 'reading',
+				totalFiles: parsedFiles.length,
+				completedFiles: 0,
+				failedFiles: 0,
+				proposalJson: { suppliers: [] },
+				createdByKind: caller.actor.kind,
+				createdById: caller.actor.id,
+				appliedAt: null,
+				createdAt: now,
+				updatedAt: now,
+			}
+			await tx.insert(invSetupImports).values(row)
 
-	const fileRows: Array<typeof invSetupImportFiles.$inferSelect> = []
-	for (let i = 0; i < parsedFiles.length; i++) {
-		const file = parsedFiles[i]!
-		const fileRow: typeof invSetupImportFiles.$inferSelect = {
-			id: newId(),
-			importId,
-			fileName: file.fileName,
-			contentType: file.contentType,
-			fileKind: file.fileKind,
-			storageKey: null,
-			inlineContent: file.contentBase64,
-			status: 'pending',
-			errorCode: null,
-			readJson: null,
-			createdAt: now + i,
-			updatedAt: now + i,
-		}
-		await db.insert(invSetupImportFiles).values(fileRow)
-		fileRows.push(fileRow)
-	}
+			const createdFiles: Array<typeof invSetupImportFiles.$inferSelect> = []
+			for (let i = 0; i < parsedFiles.length; i++) {
+				const file = parsedFiles[i]!
+				const fileRow: typeof invSetupImportFiles.$inferSelect = {
+					id: newId(),
+					importId,
+					fileName: file.fileName,
+					contentType: file.contentType,
+					fileKind: file.fileKind,
+					storageKey: null,
+					inlineContent: file.contentBase64,
+					status: 'pending',
+					errorCode: null,
+					readJson: null,
+					createdAt: now + i,
+					updatedAt: now + i,
+				}
+				await tx.insert(invSetupImportFiles).values(fileRow)
+				createdFiles.push(fileRow)
+			}
 
-	const currency = await getOrgDefaultCurrency(db)
-	runInBackground(processSetupImport(caller.orgId, importId))
+			const orgCurrency = await getOrgDefaultCurrency(tx)
+			return {
+				importRow: row,
+				fileRows: createdFiles,
+				currency: orgCurrency,
+			}
+		},
+	)
+
+	runInBackground(processSetupImport(caller.orgId, importRow.id))
 
 	return toDetail(
 		{
-			id: importId,
-			status: 'reading',
-			totalFiles: parsedFiles.length,
-			completedFiles: 0,
-			failedFiles: 0,
+			id: importRow.id,
+			status: importRow.status,
+			totalFiles: importRow.totalFiles,
+			completedFiles: importRow.completedFiles,
+			failedFiles: importRow.failedFiles,
 			proposalJson: { suppliers: [] },
-			createdByKind: caller.actor.kind,
-			createdById: caller.actor.id,
+			createdByKind: importRow.createdByKind,
+			createdById: importRow.createdById,
 			appliedAt: null,
-			createdAt: now,
-			updatedAt: now,
+			createdAt: importRow.createdAt,
+			updatedAt: importRow.updatedAt,
 		},
 		fileRows,
 		currency,
@@ -642,8 +706,11 @@ export async function getSetupImport(
 		.get()
 	if (!row) throw notFound()
 
-	if (row.status === 'reading') {
-		await processSetupImport(orgId, importId)
+	// Never start new vision model work from a GET read; only wait on an
+	// already-running in-process background task so immediate polls stay fresh.
+	const running = inFlightImports.get(`${orgId}:${importId}`)
+	if (row.status === 'reading' && running) {
+		await running
 		row = await db
 			.select()
 			.from(invSetupImports)

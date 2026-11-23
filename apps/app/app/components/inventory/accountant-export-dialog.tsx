@@ -99,8 +99,16 @@ export function AccountantExportDialog({
 	const [downloading, setDownloading] = useState<'csv' | 'pdf' | null>(null)
 	const [error, setError] = useState<string | null>(null)
 
+	const dateRangeInvalid = Boolean(from && to && from > to)
+
 	useEffect(() => {
 		if (!open || !from || !to) return
+		if (dateRangeInvalid) {
+			setPreview(null)
+			setLoadingPreview(false)
+			setError(t`Start date must be on or before end date.`)
+			return
+		}
 		let live = true
 		setLoadingPreview(true)
 		setError(null)
@@ -118,6 +126,7 @@ export function AccountantExportDialog({
 					setPreview(parsed.data)
 				} else {
 					setPreview(null)
+					setError(t`Could not load export summary.`)
 				}
 				setLoadingPreview(false)
 			},
@@ -131,10 +140,10 @@ export function AccountantExportDialog({
 		return () => {
 			live = false
 		}
-	}, [open, from, to, locationId, request, i18n])
+	}, [open, from, to, dateRangeInvalid, locationId, request, i18n, t])
 
 	async function download(format: 'csv' | 'pdf') {
-		if (downloading || !from || !to) return
+		if (downloading || !from || !to || dateRangeInvalid) return
 		setDownloading(format)
 		setError(null)
 		try {
@@ -222,55 +231,57 @@ export function AccountantExportDialog({
 					/>
 				) : null}
 
-				{loadingPreview ? (
-					<div role="status" className="flex flex-col gap-2">
-						<Skeleton className="h-16 w-full rounded-xl" />
-					</div>
-				) : preview ? (
-					<dl
-						className="grid grid-cols-2 gap-3 rounded-xl border p-3 text-sm"
-						data-testid="accountant-export-summary"
-					>
-						<div className="flex flex-col">
-							<dt className="text-muted-foreground text-xs">
-								<Trans>Deliveries</Trans>
-							</dt>
-							<dd className="font-medium tabular-nums">
-								<bdi dir="ltr">
-									<Plural
-										value={preview.totals.count}
-										one="# delivery"
-										other="# deliveries"
-									/>
-								</bdi>
-							</dd>
+				<div role="status" aria-live="polite">
+					{loadingPreview ? (
+						<div className="flex flex-col gap-2">
+							<Skeleton className="h-16 w-full rounded-xl" />
 						</div>
-						<div className="flex flex-col">
-							<dt className="text-muted-foreground text-xs">
-								<Trans>Net</Trans>
-							</dt>
-							<dd className="font-medium tabular-nums">
-								<bdi dir="ltr">{money(preview.totals.netMinor)}</bdi>
-							</dd>
-						</div>
-						<div className="flex flex-col">
-							<dt className="text-muted-foreground text-xs">
-								<Trans>VAT</Trans>
-							</dt>
-							<dd className="font-medium tabular-nums">
-								<bdi dir="ltr">{money(preview.totals.vatMinor)}</bdi>
-							</dd>
-						</div>
-						<div className="flex flex-col">
-							<dt className="text-muted-foreground text-xs">
-								<Trans>Total</Trans>
-							</dt>
-							<dd className="font-semibold tabular-nums">
-								<bdi dir="ltr">{money(preview.totals.totalMinor)}</bdi>
-							</dd>
-						</div>
-					</dl>
-				) : null}
+					) : preview ? (
+						<dl
+							className="grid grid-cols-2 gap-3 rounded-xl border p-3 text-sm"
+							data-testid="accountant-export-summary"
+						>
+							<div className="flex flex-col">
+								<dt className="text-muted-foreground text-xs">
+									<Trans>Deliveries</Trans>
+								</dt>
+								<dd className="font-medium tabular-nums">
+									<bdi dir="ltr">
+										<Plural
+											value={preview.totals.count}
+											one="# delivery"
+											other="# deliveries"
+										/>
+									</bdi>
+								</dd>
+							</div>
+							<div className="flex flex-col">
+								<dt className="text-muted-foreground text-xs">
+									<Trans>Net</Trans>
+								</dt>
+								<dd className="font-medium tabular-nums">
+									<bdi dir="ltr">{money(preview.totals.netMinor)}</bdi>
+								</dd>
+							</div>
+							<div className="flex flex-col">
+								<dt className="text-muted-foreground text-xs">
+									<Trans>VAT</Trans>
+								</dt>
+								<dd className="font-medium tabular-nums">
+									<bdi dir="ltr">{money(preview.totals.vatMinor)}</bdi>
+								</dd>
+							</div>
+							<div className="flex flex-col">
+								<dt className="text-muted-foreground text-xs">
+									<Trans>Total</Trans>
+								</dt>
+								<dd className="font-semibold tabular-nums">
+									<bdi dir="ltr">{money(preview.totals.totalMinor)}</bdi>
+								</dd>
+							</div>
+						</dl>
+					) : null}
+				</div>
 
 				<DialogFooter>
 					<Button
@@ -284,7 +295,7 @@ export function AccountantExportDialog({
 					<Button
 						type="button"
 						variant="outline"
-						disabled={downloading !== null || !from || !to}
+						disabled={downloading !== null || !from || !to || dateRangeInvalid}
 						onClick={() => void download('csv')}
 						data-testid="accountant-export-csv"
 					>
@@ -293,7 +304,7 @@ export function AccountantExportDialog({
 					</Button>
 					<Button
 						type="button"
-						disabled={downloading !== null || !from || !to}
+						disabled={downloading !== null || !from || !to || dateRangeInvalid}
 						onClick={() => void download('pdf')}
 						data-testid="accountant-export-pdf"
 					>

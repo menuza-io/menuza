@@ -4,6 +4,7 @@ import {
 	buildConfirmPrices,
 	confirmLineDrafts,
 	confirmLineHint,
+	invoiceLineBaseQuantity,
 	matchInvoiceReadToConfirm,
 	unpricedLines,
 } from './confirm-prices.ts'
@@ -180,5 +181,24 @@ describe('confirm prices', () => {
 				lineTotalMinor: 1000,
 			})
 		}
+	})
+
+	it('converts standard invoice units accurately and returns null for unknown or mismatched units', () => {
+		const baseLine = {
+			text: 'Item',
+			quantity: 2,
+			unit: 'kg',
+			itemId: 'i1',
+			itemName: 'Flour',
+		}
+		expect(invoiceLineBaseQuantity(baseLine, 'g')).toBe(2_000_000)
+		expect(invoiceLineBaseQuantity({ ...baseLine, unit: 'lb' }, 'g')).toBe(
+			Math.round(2 * 453.59237 * 1000),
+		)
+		expect(invoiceLineBaseQuantity({ ...baseLine, unit: 'l' }, 'ml')).toBe(
+			2_000_000,
+		)
+		expect(invoiceLineBaseQuantity({ ...baseLine, unit: 'box' })).toBeNull()
+		expect(invoiceLineBaseQuantity({ ...baseLine, unit: 'ml' }, 'g')).toBeNull()
 	})
 })

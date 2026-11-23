@@ -326,7 +326,14 @@ export function SuggestedOrdersPanel({
 													>
 														<Trans>
 															Order {orderNum} from {supplier} (
-															<bdi dir="ltr">{days}</bdi> days late)
+															<bdi dir="ltr">
+																<Plural
+																	value={days}
+																	one="# day late"
+																	other="# days late"
+																/>
+															</bdi>
+															)
 														</Trans>
 													</Link>
 												</li>
