@@ -572,6 +572,7 @@ export async function listSetupImports(
 			? await db
 					.select()
 					.from(invSetupImportFiles)
+					// bounded: rows is limited to 20 setup imports above
 					.where(inArray(invSetupImportFiles.importId, importIds))
 					.orderBy(invSetupImportFiles.createdAt, invSetupImportFiles.id)
 			: []

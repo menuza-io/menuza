@@ -180,6 +180,8 @@
 			"supplierName": "Fresh Produce Co",
 			"status": "sent",
 			"expectedDate": "2026-01-01",
+			"overdue": false,
+			"version": 1,
 			"lines": [
 				{
 					"orderLineId": "ol_1",

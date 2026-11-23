@@ -38,6 +38,7 @@ import {
 } from '@repo/inventory'
 import { invCounts, invItems } from '@repo/tenant-db'
 import { and, eq, inArray } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import {
@@ -734,15 +735,12 @@ posInventoryRoutes.post(
 			const itemIds = [
 				...new Set(result.delivery.lines.map((line) => line.itemId)),
 			]
-			const draftRows =
-				itemIds.length > 0
-					? await ctx.pos.db
-							.select({ id: invItems.id })
-							.from(invItems)
-							.where(
-								and(inArray(invItems.id, itemIds), eq(invItems.isDraft, true)),
-							)
-					: []
+			const draftRows = await queryInChunks(itemIds, (chunk) =>
+				ctx.pos.db
+					.select({ id: invItems.id })
+					.from(invItems)
+					.where(and(inArray(invItems.id, chunk), eq(invItems.isDraft, true))),
+			)
 			return stationJson(
 				stationCashPurchaseResultSchema.parse({
 					id: result.delivery.id,

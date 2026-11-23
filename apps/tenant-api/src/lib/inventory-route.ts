@@ -74,6 +74,10 @@ export const MONEY_FIELDS = [
 	// Setup: a line's share of a plate cost and a suggested price are money.
 	'shareBp',
 	'suggestedPriceMinor',
+	// Invoice reading (#504) and supplier price-list import (#505).
+	'linesSumMinor',
+	'previousPriceMinor',
+	'unitPriceMinor',
 ] as const
 
 export function inventoryCaller(

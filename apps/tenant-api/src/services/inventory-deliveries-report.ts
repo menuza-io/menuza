@@ -16,7 +16,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, asc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm'
-import { queryInChunks } from '../lib/chunked-in.ts'
+import { inJsonList, queryInChunks } from '../lib/chunked-in.ts'
 import { type InventoryReader } from '../lib/inventory-write.ts'
 
 export type DeliveriesReportRowInternal = AccountantExportRow & {
@@ -75,7 +75,7 @@ export async function queryDeliveriesReport(
 		conditions.push(eq(invDeliveries.locationId, query.locationId))
 	}
 	if (query.locationIds && query.locationIds.length > 0) {
-		conditions.push(inArray(invDeliveries.locationId, [...query.locationIds]))
+		conditions.push(inJsonList(invDeliveries.locationId, query.locationIds))
 	}
 
 	const deliveries = await db
