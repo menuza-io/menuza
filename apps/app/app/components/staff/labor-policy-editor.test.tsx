@@ -209,6 +209,104 @@ describe('LaborPolicyEditor', () => {
 		await waitForSaveReload(calls)
 	})
 
+	describe('hour limits (#527)', () => {
+		it('are off until switched on, then save the 8 and 48 hour limits', async () => {
+			const calls = stubApi()
+			view()
+			const toggle = await screen.findByRole('switch', {
+				name: 'Hour limits for the schedule',
+			})
+			expect(screen.queryByLabelText('Most hours in a day')).toBeNull()
+			fireEvent.click(toggle)
+			const daily = (await screen.findByLabelText(
+				'Most hours in a day',
+			)) as HTMLInputElement
+			expect(daily.value).toBe('8')
+			expect(
+				(screen.getByLabelText('Most hours in a week') as HTMLInputElement)
+					.value,
+			).toBe('48')
+			// No Ramadan limits outside KSA until they were set.
+			expect(
+				screen.queryByLabelText('Most hours in a day in Ramadan'),
+			).toBeNull()
+			fireEvent.change(daily, { target: { value: '10' } })
+			fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+			await waitFor(() =>
+				expect(calls.some((c) => c.method === 'PUT')).toBe(true),
+			)
+			expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
+				hourCaps: {
+					dailyMinutes: 600,
+					weeklyMinutes: 2880,
+					ramadanDailyMinutes: null,
+					ramadanWeeklyMinutes: null,
+				},
+			})
+			await waitForSaveReload(calls)
+		})
+
+		it('offer the Ramadan limits in KSA, and switching off clears every limit', async () => {
+			const calls = stubApi({
+				view: {
+					source: 'scope',
+					version: 2,
+					id: 'p1',
+					hourCaps: {
+						dailyMinutes: 480,
+						weeklyMinutes: 2880,
+						ramadanDailyMinutes: 360,
+						ramadanWeeklyMinutes: 2160,
+					},
+				},
+			})
+			view({ dataRegion: 'ksa' })
+			expect(
+				(
+					(await screen.findByLabelText(
+						'Most hours in a week in Ramadan',
+					)) as HTMLInputElement
+				).value,
+			).toBe('36')
+			fireEvent.click(
+				screen.getByRole('switch', { name: 'Hour limits for the schedule' }),
+			)
+			fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+			await waitFor(() =>
+				expect(calls.some((c) => c.method === 'PUT')).toBe(true),
+			)
+			expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
+				hourCaps: {
+					dailyMinutes: null,
+					weeklyMinutes: null,
+					ramadanDailyMinutes: null,
+					ramadanWeeklyMinutes: null,
+				},
+				expectedVersion: 2,
+			})
+			await waitForSaveReload(calls)
+		})
+
+		it('are part of the KSA starter', async () => {
+			stubApi()
+			view({ dataRegion: 'ksa' })
+			fireEvent.click(
+				await screen.findByRole('radio', { name: /Standard starter/ }),
+			)
+			const daily = (await screen.findByLabelText(
+				'Most hours in a day',
+			)) as HTMLInputElement
+			expect(daily.value).toBe('8')
+			expect(
+				(
+					screen.getByLabelText(
+						'Most hours in a day in Ramadan',
+					) as HTMLInputElement
+				).value,
+			).toBe('6')
+		})
+	})
+
 	it('sends the version it saw when changing an existing policy', async () => {
 		const calls = stubApi({
 			view: { source: 'scope', version: 3, id: 'p1' },

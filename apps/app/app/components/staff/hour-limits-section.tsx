@@ -11,7 +11,7 @@ import {
 	FramePanel,
 	FrameTitle,
 } from '@repo/ui/frame'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { TextField } from '#app/components/staff/controls.tsx'
@@ -68,12 +68,16 @@ export function HourLimitsSection({
 	const [weekly, setWeekly] = useState('')
 	const [ramadan, setRamadan] = useState(false)
 	const limits = query.data?.limits ?? null
-	useEffect(() => {
-		if (!limits) return
+	// Fill the boxes from what the server holds, in the same render the answer
+	// arrives (not in an effect that could overwrite a first touch), and again
+	// after a save reloads it.
+	const [syncedFrom, setSyncedFrom] = useState<typeof limits>(null)
+	if (limits && syncedFrom !== limits) {
+		setSyncedFrom(limits)
 		setDaily(toHoursText(limits.dailyMinutes))
 		setWeekly(toHoursText(limits.weeklyMinutes))
 		setRamadan(limits.followsRamadan ?? false)
-	}, [limits])
+	}
 	if (!canRead || !limits) return null
 
 	const dailyMinutes = toMinutes(daily)

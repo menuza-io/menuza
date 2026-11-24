@@ -121,7 +121,7 @@ describe('a person’s hour limits (#527)', () => {
 		const daily = (await screen.findByLabelText(
 			'Most hours in a day',
 		)) as HTMLInputElement
-		expect(daily.disabled).toBe(true)
+		expect(daily).toBeDisabled()
 		expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
 	})
 })

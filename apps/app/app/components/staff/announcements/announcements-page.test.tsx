@@ -163,7 +163,7 @@ describe('announcements for managers (#486)', () => {
 		const send = within(dialog).getByRole('button', {
 			name: 'Send',
 		}) as HTMLButtonElement
-		expect(send.disabled).toBe(true)
+		expect(send).toBeDisabled()
 		fireEvent.change(within(dialog).getByLabelText('Title'), {
 			target: { value: 'Health inspection Friday' },
 		})
@@ -173,7 +173,7 @@ describe('announcements for managers (#486)', () => {
 		fireEvent.change(within(dialog).getByLabelText('Stops showing after'), {
 			target: { value: '2999-01-01' },
 		})
-		expect(send.disabled).toBe(false)
+		expect(send).toBeEnabled()
 		fireEvent.click(send)
 		await waitFor(() =>
 			expect(

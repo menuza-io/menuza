@@ -387,11 +387,11 @@ describe('publishing, with a summary first', () => {
 				name: 'Publish anyway',
 			}) as HTMLButtonElement
 			// Not without a reason.
-			expect(anyway.disabled).toBe(true)
+			expect(anyway).toBeDisabled()
 			fireEvent.change(within(dialog).getByLabelText('Why go ahead?'), {
 				target: { value: 'Covering a sick call' },
 			})
-			expect(anyway.disabled).toBe(false)
+			expect(anyway).toBeEnabled()
 			fireEvent.click(anyway)
 			await within(dialog).findByText('Published')
 			const sent = calls.filter(
