@@ -28,7 +28,7 @@ function stub(options: { grants?: string[]; on?: boolean }) {
 					expiresAt: Date.now() + 600_000,
 				})
 			}
-			const body = init?.body ? JSON.parse(String(init.body)) : undefined
+			const body: any = init?.body ? JSON.parse(String(init.body)) : undefined
 			calls.push({ method, url, body })
 			if (method === 'PUT') on = body.showStaffPayEstimate
 			return Response.json({
