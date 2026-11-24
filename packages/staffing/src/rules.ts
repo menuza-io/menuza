@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { type HourCaps, hourCapsSchema, NO_HOUR_CAPS } from './hour-caps.ts'
 import { basisPointsSchema, localDateSchema } from './schemas.ts'
 
 export const ROUNDING_MODES = ['none', 'nearest', 'up', 'down'] as const
@@ -114,6 +115,8 @@ export const rulePackSchema = z.object({
 	label: z.string().min(1).max(80),
 	disclaimer: z.string().min(1).max(500),
 	rules: laborRulesSchema,
+	/** Hour caps a scope starts with when it follows this pack (#527). */
+	hourCaps: hourCapsSchema,
 })
 export type RulePack = z.infer<typeof rulePackSchema>
 
@@ -125,10 +128,38 @@ export const GENERIC_RULE_PACK: RulePack = {
 	disclaimer:
 		'Estimates only. These settings are not legal advice and are not payroll. Check your local requirements before relying on them.',
 	rules: NEUTRAL_LABOR_RULES,
+	hourCaps: NO_HOUR_CAPS,
 }
 
-/** Packs available today. US and KSA packs are added after legal review. */
-export const RULE_PACKS: readonly RulePack[] = [GENERIC_RULE_PACK]
+/**
+ * Hour caps of the KSA pack: 8 hours a day and 48 a week, and 6 a day and 36 a
+ * week in Ramadan for people who follow the Ramadan limit. Data a scope can
+ * change, not a legal claim.
+ */
+export const KSA_HOUR_CAPS: HourCaps = {
+	dailyMinutes: 8 * 60,
+	weeklyMinutes: 48 * 60,
+	ramadanDailyMinutes: 6 * 60,
+	ramadanWeeklyMinutes: 36 * 60,
+}
+
+/**
+ * Hour limits for Saudi Arabia. It sets hour caps only: overtime, breaks and
+ * every other rule stay neutral until they are reviewed.
+ */
+export const KSA_RULE_PACK: RulePack = {
+	id: 'ksa',
+	version: 1,
+	region: 'ksa',
+	label: 'Saudi Arabia (hour limits)',
+	disclaimer:
+		'Estimates only. These hour limits are a starting point, not legal advice and not payroll. Check your local requirements before relying on them.',
+	rules: NEUTRAL_LABOR_RULES,
+	hourCaps: KSA_HOUR_CAPS,
+}
+
+/** Packs available today. A US pack is added after legal review. */
+export const RULE_PACKS: readonly RulePack[] = [GENERIC_RULE_PACK, KSA_RULE_PACK]
 
 export function getRulePack(id: string): RulePack | undefined {
 	return RULE_PACKS.find((pack) => pack.id === id)

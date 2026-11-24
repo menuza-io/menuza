@@ -21,8 +21,11 @@ import {
 	type LaborPolicyView,
 	laborPolicyToRules,
 	type LaborRules,
+	NO_PERSON_HOUR_LIMITS,
 	paidMinutesOf,
 	type PersonConflictContext,
+	type PersonHourLimits,
+	type PublishHourCapBreach,
 	type PersonJob,
 	type ScheduleConflict,
 	type ScheduleShiftView,
@@ -37,6 +40,7 @@ import {
 	scheduleSettings,
 	shifts,
 	staffAvailability,
+	staffHourLimits,
 	staffJobs,
 	staffScopeAssignments,
 	staffMembers,
@@ -126,6 +130,7 @@ export async function loadScheduleSettings(db: StaffDb) {
 	return {
 		minRestMinutes: row?.minRestMinutes ?? DEFAULT_MIN_REST_MINUTES,
 		timeOffMinNoticeDays: row?.timeOffMinNoticeDays ?? 0,
+		showStaffPayEstimate: row?.showStaffPayEstimate ?? false,
 		updatedAt: row?.updatedAt ?? null,
 	}
 }
@@ -504,6 +509,32 @@ export async function loadApprovedTimeOff(
 	return out
 }
 
+/**
+ * Each person's own hour limits (#527). A person with no row follows the
+ * scope's caps. Read for the schedule's warnings and the publish check only:
+ * the Ramadan flag never reaches a response (see `staff-hour-limits-service`).
+ */
+export async function loadHourLimits(
+	db: StaffDb,
+	staffIds: readonly string[],
+): Promise<Map<string, PersonHourLimits>> {
+	const out = new Map<string, PersonHourLimits>()
+	for (const part of chunk([...new Set(staffIds)], ID_CHUNK)) {
+		const rows = await db
+			.select()
+			.from(staffHourLimits)
+			.where(inArray(staffHourLimits.staffId, part))
+		for (const row of rows) {
+			out.set(row.staffId, {
+				dailyMinutes: row.dailyCapMinutes,
+				weeklyMinutes: row.weeklyCapMinutes,
+				followsRamadan: row.followsRamadan,
+			})
+		}
+	}
+	return out
+}
+
 export async function loadApprovedAvailability(
 	db: StaffDb,
 	staffIds: readonly string[],
@@ -766,6 +797,7 @@ export async function analyzePeople(
 	)
 	const timeOff = await loadApprovedTimeOff(ctx.db, staffIds, fromDate, toDate)
 	const availability = await loadApprovedAvailability(ctx.db, staffIds)
+	const hourLimits = await loadHourLimits(ctx.db, staffIds)
 
 	const targetIds = new Set(assigned.map((s) => s.id))
 	for (const staffId of staffIds) {
@@ -798,6 +830,10 @@ export async function analyzePeople(
 			rules: frame.rules,
 			minRestMinutes: frame.minRestMinutes,
 			only,
+			hourCaps: {
+				caps: frame.policy.hourCaps,
+				person: hourLimits.get(staffId) ?? NO_PERSON_HOUR_LIMITS,
+			},
 		})
 		analyses.set(staffId, {
 			staffId,
@@ -808,6 +844,46 @@ export async function analyzePeople(
 		})
 	}
 	return analyses
+}
+
+/** Most breaches named in a refusal; the total is always given. */
+export const MAX_BREACHES_LISTED = 200
+
+/**
+ * Who a week's live shifts take over an hour cap, by the same conflict check
+ * the schedule shows inline (ids and numbers only).
+ */
+export async function hourCapBreachesFor(
+	ctx: ScheduleContext,
+	frame: ScopeFrame,
+	targets: Parameters<typeof analyzePeople>[2],
+): Promise<PublishHourCapBreach[]> {
+	const analyses = await analyzePeople(ctx, frame, targets)
+	const out: PublishHourCapBreach[] = []
+	for (const analysis of analyses.values()) {
+		for (const conflict of analysis.conflicts) {
+			if (
+				conflict.code !== 'daily_hours_cap' &&
+				conflict.code !== 'weekly_hours_cap'
+			) {
+				continue
+			}
+			out.push({
+				staffId: analysis.staffId,
+				shiftId: conflict.shiftId,
+				kind: conflict.code === 'daily_hours_cap' ? 'daily' : 'weekly',
+				date: conflict.date ?? '',
+				capMinutes: conflict.detail?.capMinutes ?? 0,
+				scheduledMinutes: conflict.detail?.scheduledMinutes ?? 0,
+			})
+		}
+	}
+	return out.sort(
+		(a, b) =>
+			a.date.localeCompare(b.date) ||
+			a.staffId.localeCompare(b.staffId) ||
+			a.shiftId.localeCompare(b.shiftId),
+	)
 }
 
 // ---------------------------------------------------------------------------

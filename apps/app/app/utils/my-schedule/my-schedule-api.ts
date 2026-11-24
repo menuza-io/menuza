@@ -76,10 +76,66 @@ const timeCardSchema = z.object({
 	status: z.string(),
 	paidMinutes: z.number(),
 	unpaidBreakMinutes: z.number(),
+	// A node that predates breaks and corrections omits both.
+	breaks: z
+		.array(
+			z.object({
+				startAt: z.number(),
+				endAt: z.number().nullable(),
+				paid: z.boolean(),
+			}),
+		)
+		.default([]),
 	edited: z.boolean(),
 	edits: z.array(editSchema),
+	correctionRequested: z.boolean().default(false),
 })
 export type MyTimeCard = z.infer<typeof timeCardSchema>
+
+const payEstimateSchema = z.object({
+	label: z.literal('estimate_before_tax'),
+	periodStart: z.string(),
+	periodEnd: z.string(),
+	estimateMinor: z.number().nullable(),
+	currency: z.string().nullable(),
+	regularMinutes: z.number(),
+	overtimeMinutes: z.number(),
+	unpricedMinutes: z.number(),
+})
+export type MyPayEstimate = z.infer<typeof payEstimateSchema>
+
+/** This week's hours, the next shift and, only when turned on, a pay estimate. */
+const weekSchema = z.object({
+	serverNow: z.number(),
+	weekStart: z.string(),
+	weekEnd: z.string(),
+	timeZone: z.string(),
+	workedMinutes: z.number(),
+	scheduledMinutes: z.number(),
+	nextShift: shiftSchema.nullable(),
+	pay: payEstimateSchema.optional(),
+})
+export type MyWeek = z.infer<typeof weekSchema>
+
+const announcementSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	body: z.string(),
+	expiresAt: z.number(),
+	createdAt: z.number(),
+	readAt: z.number().nullable(),
+})
+export type MyAnnouncement = z.infer<typeof announcementSchema>
+
+const announcementsSchema = z.object({
+	serverNow: z.number(),
+	announcements: z.array(announcementSchema),
+})
+export type MyAnnouncements = z.infer<typeof announcementsSchema>
+
+const correctionSchema = z.object({
+	correction: z.object({ id: z.string(), status: z.literal('open') }),
+})
 
 const timeCardsSchema = z.object({
 	serverNow: z.number(),
@@ -348,6 +404,20 @@ export function createMyScheduleApi(options: MyScheduleApiOptions) {
 			call(`/me/time-cards${query(range)}`, timeCardsSchema),
 		requests: () => call('/me/requests', requestsSchema),
 		counts: () => call('/me/counts', myCountsSchema),
+		week: () => call('/me/week', weekSchema),
+		announcements: () => call('/me/announcements', announcementsSchema),
+		/** "Got it": records that the person read the announcement. */
+		readAnnouncement: (announcementId: string) =>
+			post('/me/announcements/read', z.object({ readAt: z.number() }), {
+				announcementId,
+			}),
+		/** "Something's wrong" on a time card: sends it to the manager. */
+		requestCorrection: (cardId: string, note: string | null) =>
+			post(
+				`/me/time-cards/${encodeURIComponent(cardId)}/correction`,
+				correctionSchema,
+				note ? { note } : {},
+			),
 		teammates: (shiftId: string) =>
 			call(`/me/teammates${query({ shiftId })}`, teammatesSchema),
 		requestTimeOff: (body: TimeOffBody) =>

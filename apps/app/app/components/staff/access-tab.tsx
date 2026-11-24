@@ -30,6 +30,7 @@ import {
 	type StaffAssignmentRow,
 	type StaffDetail,
 } from '#app/utils/staffing/staff-types.ts'
+import { HourLimitsSection } from './hour-limits-section.tsx'
 import { PinPanel } from './pin-panel.tsx'
 import { ScheduleLinkSection } from './schedule-link-section.tsx'
 import { useTeamContext } from './team-context.ts'
@@ -208,6 +209,10 @@ export function AccessTab({
 				) : null}
 			</Frame>
 			<ScheduleLinkSection
+				staffId={detail.staff.id}
+				terminated={detail.staff.status === 'terminated'}
+			/>
+			<HourLimitsSection
 				staffId={detail.staff.id}
 				terminated={detail.staff.status === 'terminated'}
 			/>

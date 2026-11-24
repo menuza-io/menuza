@@ -943,6 +943,9 @@ export type PosCustomItemsMode = (typeof POS_CUSTOM_ITEMS_MODES)[number]
 
 export const DEFAULT_POS_CUSTOM_ITEM_MAX_CENTS = 50_000
 
+/** The longest a till may sit idle before it signs the person out. */
+export const POS_IDLE_SIGN_OUT_MAX_MINUTES = 60
+
 export const posLocationStationSettingsSchema = z.object({
 	guestDetails: z.enum(POS_GUEST_DETAILS_MODES).default('none'),
 	dishNotes: z.boolean().default(true),
@@ -976,6 +979,21 @@ export const posLocationStationSettingsSchema = z.object({
 		.default(null)
 		.catch(null),
 	/**
+	 * Sign people out of this location's tills after this many idle minutes
+	 * (#364). Null is off, the default. While on it replaces each till's own
+	 * lock timeout at this location. A payment in progress and a kitchen display
+	 * are never signed out, and unsent work stays in the till's queue. A value
+	 * out of range reads as off.
+	 */
+	idleSignOutMinutes: z
+		.number()
+		.int()
+		.min(1)
+		.max(POS_IDLE_SIGN_OUT_MAX_MINUTES)
+		.nullable()
+		.default(null)
+		.catch(null),
+	/**
 	 * What prints on each ticket type, and when (#363). Empty means what Station
 	 * printed before it existed. Edited at Settings, Terminals, Tickets.
 	 */
@@ -994,6 +1012,7 @@ export const DEFAULT_POS_LOCATION_STATION_SETTINGS: PosLocationStationSettings =
 		customItemMaxCents: DEFAULT_POS_CUSTOM_ITEM_MAX_CENTS,
 		cashVarianceFlagCents: null,
 		cashDiscountBp: null,
+		idleSignOutMinutes: null,
 		tickets: {},
 	}
 

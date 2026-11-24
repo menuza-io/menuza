@@ -120,6 +120,7 @@ const CORE_POLICY_PATHS = [
 	'breakRules.autoDeduction',
 	'weeklyOvertime',
 	'timeTrackingEnabled',
+	'hourCaps',
 ]
 
 /**
@@ -548,6 +549,7 @@ function PolicyForm({
 							policy={policy}
 							update={update}
 							fieldError={fieldError}
+							dataRegion={dataRegion}
 						/>
 						<Collapsible
 							open={advancedOpen || advancedForcedOpen}

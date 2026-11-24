@@ -12,6 +12,8 @@ import {
 	or,
 	Organization,
 	OrganizationInvitation,
+	OrganizationInvitationLocation,
+	OrganizationLocation,
 	OrganizationInviteLink,
 	OrganizationRole,
 	User,
@@ -25,7 +27,13 @@ import {
 	enqueueStaffingOutbox,
 	flushStaffingOutboxFor,
 } from '#app/utils/staffing/outbox.server.ts'
+import { setMemberLocationScope } from '#app/utils/staffing/restaurant/location-scope.server.ts'
 import { MAX_ORGANIZATION_INVITES_PER_REQUEST } from './invitation.ts'
+import {
+	assertCanManageMember,
+	loadMemberActor,
+	memberCheckResponse,
+} from './member-management.server.ts'
 import {
 	auditInvitationAccepted,
 	auditInvitationSent,
@@ -76,36 +84,83 @@ async function getAssignableOrganizationRole({
 	return role
 }
 
-async function requireBuiltInAdminMembership(
+export type InvitationLocations = {
+	/** 'all' (every location, the default) or 'selected' (only `locationIds`). */
+	locationScope?: 'all' | 'selected'
+	locationIds?: readonly string[]
+}
+
+/** Locations of this organization among the ids; a crafted id is refused. */
+async function requireOrganizationLocations(
 	organizationId: string,
-	userId: string,
+	locationIds: readonly string[],
 ) {
-	const [membership] = await db
-		.select({ userId: UserOrganization.userId })
-		.from(UserOrganization)
-		.where(
-			and(
-				eq(UserOrganization.userId, userId),
-				eq(UserOrganization.organizationId, organizationId),
-				eq(UserOrganization.organizationRoleId, 'org_role_admin'),
-				eq(UserOrganization.active, true),
-			),
-		)
-		.limit(1)
-	invariantResponse(
-		membership,
-		'Only organization admins can invite as Admin',
-		{
-			status: 403,
-		},
+	const owned = new Set(
+		(
+			await db
+				.select({ id: OrganizationLocation.id })
+				.from(OrganizationLocation)
+				.where(eq(OrganizationLocation.organizationId, organizationId))
+		).map((row) => row.id),
 	)
+	invariantResponse(
+		locationIds.every((id) => owned.has(id)),
+		'One or more locations were not found',
+		{ status: 400 },
+	)
+}
+
+function normalizeLocations(input: InvitationLocations) {
+	const locationScope = input.locationScope ?? 'all'
+	const locationIds = [...new Set(input.locationIds ?? [])]
+	invariantResponse(
+		locationScope === 'all' || locationIds.length > 0,
+		'Choose at least one location',
+		{ status: 400 },
+	)
+	return {
+		locationScope,
+		locationIds: locationScope === 'all' ? [] : locationIds,
+	}
+}
+
+/**
+ * Refuses an invitation the inviter may not send (#126): Admin or any role with
+ * a permission they lack, and any location outside their own scope. An
+ * organization admin is unrestricted.
+ */
+async function requireInviteAllowed({
+	organizationId,
+	inviterId,
+	roleId,
+	locations,
+}: {
+	organizationId: string
+	inviterId: string
+	roleId: string
+	locations: ReturnType<typeof normalizeLocations>
+}) {
+	const actor = await loadMemberActor(inviterId, organizationId)
+	invariantResponse(actor, 'You are not a member of this organization', {
+		status: 403,
+	})
+	const check = await assertCanManageMember(actor, {
+		action: 'invite',
+		roleId,
+		scope: locations.locationScope,
+		locationIds: locations.locationIds,
+	})
+	if (!check.ok) throw memberCheckResponse(check)
 }
 
 export async function validateOrganizationInviteRoles(
 	organizationId: string,
 	invites: Array<{ roleId?: string; role?: OrganizationRoleName }>,
 	inviterId: string,
+	inviteLocations: InvitationLocations = {},
 ) {
+	const locations = normalizeLocations(inviteLocations)
+	await requireOrganizationLocations(organizationId, locations.locationIds)
 	const organizationRoles = await Promise.all(
 		invites.map((invite) =>
 			getAssignableOrganizationRole({
@@ -115,12 +170,13 @@ export async function validateOrganizationInviteRoles(
 			}),
 		),
 	)
-
-	const requiresBuiltInAdmin = organizationRoles.some(
-		(role) => role.id === 'org_role_admin' || role.organizationId !== null,
-	)
-	if (requiresBuiltInAdmin) {
-		await requireBuiltInAdminMembership(organizationId, inviterId)
+	for (const role of organizationRoles) {
+		await requireInviteAllowed({
+			organizationId,
+			inviterId,
+			roleId: role.id,
+			locations,
+		})
 	}
 }
 
@@ -132,7 +188,9 @@ export async function createOrganizationInvitation({
 	inviterId,
 	staffMemberId,
 	request,
-}: {
+	locationScope: requestedScope,
+	locationIds: requestedLocationIds,
+}: InvitationLocations & {
 	organizationId: string
 	email: string
 	role?: OrganizationRoleName
@@ -160,12 +218,17 @@ export async function createOrganizationInvitation({
 		roleId,
 		roleName: role,
 	})
-	if (
-		organizationRole.id === 'org_role_admin' ||
-		organizationRole.organizationId !== null
-	) {
-		await requireBuiltInAdminMembership(organizationId, inviterId)
-	}
+	const locations = normalizeLocations({
+		locationScope: requestedScope,
+		locationIds: requestedLocationIds,
+	})
+	await requireOrganizationLocations(organizationId, locations.locationIds)
+	await requireInviteAllowed({
+		organizationId,
+		inviterId,
+		roleId: organizationRole.id,
+		locations,
+	})
 	const organizationRoleId = organizationRole.id
 	const [existing] = await db
 		.select({ id: OrganizationInvitation.id })
@@ -186,6 +249,7 @@ export async function createOrganizationInvitation({
 			organizationRoleId,
 			expiresAt,
 			inviterId,
+			locationScope: locations.locationScope,
 			...(staffMemberId ? { staffMemberId } : {}),
 		})
 		.onConflictDoUpdate({
@@ -198,11 +262,25 @@ export async function createOrganizationInvitation({
 				organizationRoleId,
 				expiresAt,
 				inviterId,
+				locationScope: locations.locationScope,
 				...(staffMemberId ? { staffMemberId } : {}),
 			},
 		})
 	const invitation = await getInvitationByToken(token)
 	if (!invitation) throw new Error('Failed to create invitation')
+	// A re-invite replaces the locations of the earlier one.
+	await db
+		.delete(OrganizationInvitationLocation)
+		.where(eq(OrganizationInvitationLocation.invitationId, invitation.id))
+	// 3 bound values per row on D1, which allows 100 per statement.
+	for (let i = 0; i < locations.locationIds.length; i += 30) {
+		await db.insert(OrganizationInvitationLocation).values(
+			locations.locationIds.slice(i, i + 30).map((locationId) => ({
+				invitationId: invitation.id,
+				locationId,
+			})),
+		)
+	}
 	if (!existing) {
 		await markStepCompleted(inviterId, organizationId, 'invite_members', {
 			completedVia: 'member_invitation',
@@ -217,6 +295,8 @@ export async function createOrganizationInvitation({
 		invitedEmail: email,
 		roleId: organizationRoleId,
 		isResend: !!existing,
+		locationScope: locations.locationScope,
+		locationIds: locations.locationIds,
 		request,
 	})
 	return { invitation, isNewInvitation: !existing }
@@ -264,11 +344,39 @@ export async function getOrganizationInvitations(organizationId: string) {
 			),
 		)
 		.orderBy(desc(OrganizationInvitation.createdAt))
-	return rows.map((row) => ({
-		...row.invitation,
-		organizationRole: row.organizationRole,
-		inviter: row.inviter,
-	}))
+	const locationRows = await db
+		.select({
+			invitationId: OrganizationInvitationLocation.invitationId,
+			locationId: OrganizationInvitationLocation.locationId,
+		})
+		.from(OrganizationInvitationLocation)
+		.innerJoin(
+			OrganizationInvitation,
+			eq(
+				OrganizationInvitation.id,
+				OrganizationInvitationLocation.invitationId,
+			),
+		)
+		.where(eq(OrganizationInvitation.organizationId, organizationId))
+	const byInvitation = new Map<string, string[]>()
+	for (const row of locationRows) {
+		byInvitation.set(row.invitationId, [
+			...(byInvitation.get(row.invitationId) ?? []),
+			row.locationId,
+		])
+	}
+	return rows.map((row) => {
+		const locationIds = (byInvitation.get(row.invitation.id) ?? []).sort()
+		return {
+			...row.invitation,
+			organizationRole: row.organizationRole,
+			inviter: row.inviter,
+			locationIds,
+			// Chosen locations that were all deleted: the invitation is void.
+			hasNoLocations:
+				row.invitation.locationScope !== 'all' && locationIds.length === 0,
+		}
+	})
 }
 
 export async function deleteOrganizationInvitation(
@@ -344,10 +452,30 @@ async function acceptInvitation(
 		| 'organization'
 		| 'inviterId'
 		| 'staffMemberId'
+		| 'locationScope'
 	>,
 	userId: string,
 ) {
 	await assertInvitationOwnedByUser(invitation, userId)
+	// The locations the invitation grants, read now: a location deleted since
+	// the invitation was sent is gone from it, and one with none left is void.
+	const grantedLocations =
+		invitation.locationScope === 'all'
+			? null
+			: (
+					await db
+						.select({ locationId: OrganizationInvitationLocation.locationId })
+						.from(OrganizationInvitationLocation)
+						.where(
+							eq(OrganizationInvitationLocation.invitationId, invitation.id),
+						)
+				).map((row) => row.locationId)
+	if (grantedLocations !== null && grantedLocations.length === 0) {
+		throw new Response('invitation_has_no_locations', {
+			status: 409,
+			statusText: 'invitation_has_no_locations',
+		})
+	}
 	const [member] = await db
 		.select({
 			userId: UserOrganization.userId,
@@ -361,7 +489,7 @@ async function acceptInvitation(
 			),
 		)
 		.limit(1)
-	if (!member)
+	if (!member) {
 		await db
 			.insert(UserOrganization)
 			.values({
@@ -369,8 +497,23 @@ async function acceptInvitation(
 				organizationId: invitation.organizationId,
 				organizationRoleId: invitation.organizationRoleId,
 				active: true,
+				// An invitation for chosen locations starts closed (a selected scope
+				// with no grants reaches nothing) and opens to exactly those.
+				...(grantedLocations ? { locationScope: 'selected' } : {}),
 			})
 			.onConflictDoNothing()
+		if (grantedLocations) {
+			const granted = await setMemberLocationScope({
+				organizationId: invitation.organizationId,
+				userId,
+				value: { scope: 'selected', locationIds: grantedLocations },
+			})
+			if (!granted.ok) {
+				// Fail closed: the member exists with no locations, never with all.
+				console.error('Failed to apply invitation locations:', granted.reason)
+			}
+		}
+	}
 	await db
 		.delete(OrganizationInvitation)
 		.where(eq(OrganizationInvitation.id, invitation.id))
@@ -423,11 +566,27 @@ async function acceptInvitation(
 	return { organization: invitation.organization, alreadyMember: !!member }
 }
 
+function isVoidInvitation(error: unknown) {
+	return (
+		error instanceof Response &&
+		error.status === 409 &&
+		error.statusText === 'invitation_has_no_locations'
+	)
+}
+
 export async function acceptInvitationByEmail(email: string, userId: string) {
 	const invitations = await getPendingInvitationsByEmail(email)
 	const results = []
-	for (const invitation of invitations)
-		results.push(await acceptInvitation(invitation, userId))
+	for (const invitation of invitations) {
+		try {
+			results.push(await acceptInvitation(invitation, userId))
+		} catch (error) {
+			// An invitation whose locations were all deleted is void; it must not
+			// stop the person's other invitations from being accepted.
+			if (isVoidInvitation(error)) continue
+			throw error
+		}
+	}
 	return results
 }
 

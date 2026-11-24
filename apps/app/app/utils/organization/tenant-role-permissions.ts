@@ -14,6 +14,7 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_read_member_any',
 	'org_perm_create_member_any',
 	'org_perm_delete_member_any',
+	'org_perm_update_member_own_locations',
 	'org_perm_read_settings_any',
 	'org_perm_read_analytics_any',
 	'org_perm_update_media_any',
@@ -182,7 +183,17 @@ export const GIFT_CARD_IMPLIED_PERMISSION_IDS: Record<
 	org_perm_update_gift_card_charge_any: ['org_perm_read_gift_card_any'],
 }
 
+/**
+ * Managing the team at your own locations (#126) needs to see the team:
+ * `update:member:own_locations` implies `read:member:any`.
+ */
+export const MEMBER_IMPLIED_PERMISSION_IDS: Record<string, readonly string[]> =
+	{
+		org_perm_update_member_own_locations: ['org_perm_read_member_any'],
+	}
+
 export const IMPLIED_PERMISSION_IDS: Record<string, readonly string[]> = {
+	...MEMBER_IMPLIED_PERMISSION_IDS,
 	...STAFFING_IMPLIED_PERMISSION_IDS,
 	...RESERVATIONS_IMPLIED_PERMISSION_IDS,
 	...LOYALTY_IMPLIED_PERMISSION_IDS,
@@ -273,13 +284,28 @@ export function withImpliedInventoryPermissions(
 export function withImpliedTenantRolePermissions(
 	permissionIds: readonly string[],
 ): string[] {
-	return withImpliedInventoryPermissions(
-		withImpliedDiscountPermissions(
-			withImpliedLoyaltyPermissions(
-				withImpliedReservationsPermissions(
-					withImpliedStaffingPermissions(permissionIds),
+	return withImpliedMemberPermissions(
+		withImpliedInventoryPermissions(
+			withImpliedDiscountPermissions(
+				withImpliedLoyaltyPermissions(
+					withImpliedReservationsPermissions(
+						withImpliedStaffingPermissions(permissionIds),
+					),
 				),
 			),
 		),
 	)
+}
+
+/** Add the member read grant implied by managing the team at your locations. */
+export function withImpliedMemberPermissions(
+	permissionIds: readonly string[],
+): string[] {
+	const result = new Set(permissionIds)
+	for (const id of permissionIds) {
+		for (const implied of MEMBER_IMPLIED_PERMISSION_IDS[id] ?? []) {
+			result.add(implied)
+		}
+	}
+	return [...result]
 }

@@ -77,24 +77,21 @@ interface OrganizationMember {
 function OrganizationMemberRoleEditor({
 	member,
 	currentUserId,
-	members,
+	canChange,
 	availableRoles,
 }: {
 	member: OrganizationMember
 	currentUserId: string
-	members: OrganizationMember[]
+	/** The viewer may change this member's role (an admin, or a location manager). */
+	canChange: boolean
 	availableRoles?: OrganizationRoleOption[]
 }) {
 	const { roleName, roleDescription } = useRoleLabels()
 	availableRoles ??= []
-	const currentMember = members.find((m) => m.userId === currentUserId)
-	const isAdmin =
-		currentMember?.organizationRole.id === 'org_role_admin' &&
-		currentMember.active
 	const isSelf = member.userId === currentUserId
 	const [roleId, setRoleId] = useState(member.organizationRole.id)
 
-	if (!isAdmin || isSelf) {
+	if (!canChange || isSelf) {
 		return (
 			<Badge
 				variant={
@@ -160,6 +157,10 @@ export function OrganizationMembers({
 	organizationSlug,
 	canManageRoles = false,
 	staffingLocations = null,
+	locationNames = {},
+	memberScopes = {},
+	manageableUserIds,
+	removableUserIds,
 }: {
 	members?: OrganizationMember[]
 	currentUserId: string
@@ -167,7 +168,18 @@ export function OrganizationMembers({
 	organizationSlug?: string
 	canManageRoles?: boolean
 	staffingLocations?: StaffingLocationControl | null
+	/** Location id to name, for the Locations line of each member. */
+	locationNames?: Record<string, string>
+	/** Each member's resolved locations; `null` is every location. */
+	memberScopes?: Record<string, string[] | null>
+	/** Members the viewer may change (role, locations); defaults to admin only. */
+	manageableUserIds?: string[]
+	/** Members the viewer may remove; defaults to everyone but the viewer. */
+	removableUserIds?: string[]
 }) {
+	const manageable = manageableUserIds ? new Set(manageableUserIds) : null
+	const removable = removableUserIds ? new Set(removableUserIds) : null
+	const hasLocations = Object.keys(locationNames).length > 0
 	if (members.length === 0) {
 		return (
 			<Card>
@@ -232,9 +244,19 @@ export function OrganizationMembers({
 								{member.user.name && (
 									<ItemDescription>{member.user.email}</ItemDescription>
 								)}
+								{hasLocations ? (
+									<ItemDescription>
+										<MemberLocationsLine
+											scope={memberScopes[member.userId]}
+											names={locationNames}
+										/>
+									</ItemDescription>
+								) : null}
 							</ItemContent>
 							<ItemActions>
-								{staffingLocations && member.userId !== currentUserId ? (
+								{staffingLocations &&
+								member.userId !== currentUserId &&
+								(manageable === null || manageable.has(member.userId)) ? (
 									<MemberLocationScopeEditor
 										userId={member.userId}
 										memberName={member.user.name || member.user.email}
@@ -252,10 +274,20 @@ export function OrganizationMembers({
 								<OrganizationMemberRoleEditor
 									member={member}
 									currentUserId={currentUserId}
-									members={members}
+									canChange={
+										manageable === null
+											? members.some(
+													(m) =>
+														m.userId === currentUserId &&
+														m.active &&
+														m.organizationRole.id === 'org_role_admin',
+												)
+											: manageable.has(member.userId)
+									}
 									availableRoles={availableRoles}
 								/>
-								{member.userId !== currentUserId && (
+								{member.userId !== currentUserId &&
+									(removable === null || removable.has(member.userId)) && (
 									<Form method="POST">
 										<input type="hidden" name="intent" value="remove-member" />
 										<input type="hidden" name="userId" value={member.userId} />
@@ -277,4 +309,20 @@ export function OrganizationMembers({
 			</CardContent>
 		</Card>
 	)
+}
+
+/** "All locations" or the names of the member's locations. */
+function MemberLocationsLine({
+	scope,
+	names,
+}: {
+	scope: string[] | null | undefined
+	names: Record<string, string>
+}) {
+	if (scope === null) {
+		return <Trans>All locations</Trans>
+	}
+	const list = (scope ?? []).map((id) => names[id]).filter(Boolean)
+	if (list.length === 0) return <Trans>No locations</Trans>
+	return <bdi>{list.join(', ')}</bdi>
 }

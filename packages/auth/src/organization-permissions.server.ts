@@ -170,6 +170,8 @@ export const ORG_PERMISSIONS = {
 	CREATE_MEMBER_ANY: 'create:member:any' as const,
 	UPDATE_MEMBER_ANY: 'update:member:any' as const,
 	DELETE_MEMBER_ANY: 'delete:member:any' as const,
+	// Location managers (#126): team changes within their own locations only.
+	UPDATE_MEMBER_OWN_LOCATIONS: 'update:member:own_locations' as const,
 
 	// Settings permissions
 	READ_SETTINGS_ANY: 'read:settings:any' as const,

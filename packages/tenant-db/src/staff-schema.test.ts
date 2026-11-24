@@ -100,9 +100,12 @@ describe('staff schema', () => {
 			sql`SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'staff%' ORDER BY name`,
 		)
 		expect(tables.map((t) => t.name)).toEqual([
+			'staff_announcement_reads',
+			'staff_announcements',
 			'staff_audit_log',
 			'staff_availability',
 			'staff_certificates',
+			'staff_hour_limits',
 			'staff_jobs',
 			'staff_members',
 			'staff_notes',

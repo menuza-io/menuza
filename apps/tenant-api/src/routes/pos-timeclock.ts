@@ -1,9 +1,11 @@
 import { type Context, Hono } from 'hono'
 import {
+	announcementReadSchema,
 	kioskIdentifySchema,
 	kioskPunchSchema,
 	type KioskIdentifyResult,
 } from '@repo/staffing'
+import { z } from 'zod'
 import {
 	authenticatePosDevice,
 	isPosHashUnavailable,
@@ -24,8 +26,17 @@ import {
 	replayRecordedPunch,
 	type PunchDeps,
 } from '../services/punch-service.ts'
+import { loadMyWeek } from '../services/schedule-self-service.ts'
 import { scheduleSeam } from '../services/schedule-seam.ts'
-import { describeStaffError, hashClientIp } from '../services/staff-audit.ts'
+import {
+	loadMyAnnouncements,
+	markAnnouncementRead,
+} from '../services/staff-announcements-service.ts'
+import {
+	describeStaffError,
+	hashClientIp,
+	writeDeviceAudit,
+} from '../services/staff-audit.ts'
 
 /**
  * `/pos/timeclock`: the time clock on a paired Station terminal. The same punch
@@ -233,6 +244,117 @@ posTimeclockRoutes.post(
 			)
 			if (outcome.ok) return json(outcome.result)
 			return posError(outcome.status, outcome.code, outcome.extra ?? {})
+		})
+	}),
+)
+
+// ---------------------------------------------------------------------------
+// After a punch (#514, #486): the person's own week and the announcements meant
+// for them. Each call names the person by PIN again (the till holds the PIN
+// only while the after-punch screen is open), so a session left on the screen
+// never opens someone's pay or their notices. The answer is first name, hours,
+// the next shift and, only when the organization turned it on, an estimate of
+// pay: nothing about anyone else.
+// ---------------------------------------------------------------------------
+
+const afterPunchSchema = z
+	.object({ pin: kioskIdentifySchema.shape.pin })
+	.strict()
+const readAnnouncementSchema = z
+	.object({
+		pin: kioskIdentifySchema.shape.pin,
+		announcementId: announcementReadSchema.shape.announcementId,
+	})
+	.strict()
+
+/** The person this PIN names at this terminal, or the PIN refusal to send. */
+async function personByPin(pos: PosAuth, pin: string) {
+	const verified = await verifyPosPin(
+		pos.db,
+		{ orgId: pos.orgId, device: pos.device, pin },
+		posTimeclockDeps.punch.now(),
+	)
+	return verified.ok
+		? ({ ok: true, member: verified.member } as const)
+		: ({
+				ok: false,
+				response: pinRefused(verified.code, verified.retryAfterSeconds),
+			} as const)
+}
+
+posTimeclockRoutes.post(
+	'/my-week',
+	guarded(async (pos, c) => {
+		const body = await readJsonBody(c, afterPunchSchema)
+		if ('error' in body) return body.error
+		return runExclusive(pos.orgId, async () => {
+			const who = await personByPin(pos, body.data.pin)
+			if (!who.ok) return who.response
+			const now = posTimeclockDeps.punch.now()
+			const week = await loadMyWeek({
+				db: pos.db,
+				orgId: pos.orgId,
+				staff: who.member,
+				now,
+			})
+			if (!week.ok) return posError(week.status, week.error)
+			return json({
+				firstName: who.member.firstName,
+				week: week.value,
+				...(await loadMyAnnouncements({
+					db: pos.db,
+					staffId: who.member.id,
+					now,
+				})),
+			})
+		})
+	}),
+)
+
+posTimeclockRoutes.post(
+	'/announcements',
+	guarded(async (pos, c) => {
+		const body = await readJsonBody(c, afterPunchSchema)
+		if ('error' in body) return body.error
+		return runExclusive(pos.orgId, async () => {
+			const who = await personByPin(pos, body.data.pin)
+			if (!who.ok) return who.response
+			return json(
+				await loadMyAnnouncements(
+					{
+						db: pos.db,
+						staffId: who.member.id,
+						now: posTimeclockDeps.punch.now(),
+					},
+					{ unreadOnly: true },
+				),
+			)
+		})
+	}),
+)
+
+posTimeclockRoutes.post(
+	'/announcements/read',
+	guarded(async (pos, c) => {
+		const body = await readJsonBody(c, readAnnouncementSchema)
+		if ('error' in body) return body.error
+		const ipHash = hashClientIp(c)
+		return runExclusive(pos.orgId, async () => {
+			const who = await personByPin(pos, body.data.pin)
+			if (!who.ok) return who.response
+			const result = await markAnnouncementRead(
+				{
+					db: pos.db,
+					staffId: who.member.id,
+					now: posTimeclockDeps.punch.now(),
+					audit: (tx, event) =>
+						writeDeviceAudit(tx, 'pos', pos.device, ipHash, event),
+				},
+				body.data.announcementId,
+				'station',
+			)
+			if (!result.ok) return posError(result.status, result.error)
+			return json(result.value)
 		})
 	}),
 )

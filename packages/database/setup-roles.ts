@@ -125,6 +125,17 @@ const ORG_PERMISSIONS = [
 		context: 'organization',
 		description: 'Remove organization members',
 	},
+	// Location managers (#126): invite, change and remove members whose
+	// locations lie inside the manager's own. Keep in sync with migration 0075.
+	{
+		id: 'org_perm_update_member_own_locations',
+		action: 'update',
+		entity: 'member',
+		access: 'own_locations',
+		context: 'organization',
+		description:
+			'Invite, change and remove team members at your own locations only',
+	},
 	{
 		id: 'org_perm_update_settings_any',
 		action: 'update',

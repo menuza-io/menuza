@@ -337,6 +337,12 @@ export default function StaffTeamRoute() {
 									</>
 								) : null}
 								<DropdownMenuItem
+									render={<Link to={`/${orgSlug}/staff/announcements`} />}
+								>
+									<Icon name="bell" />
+									<Trans>Announcements</Trans>
+								</DropdownMenuItem>
+								<DropdownMenuItem
 									disabled={exporting || rows.length === 0}
 									onClick={() => void exportCsv()}
 								>

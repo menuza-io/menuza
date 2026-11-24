@@ -31,6 +31,10 @@ export function MembersCard({
 	organizationSlug,
 	canManageRoles,
 	staffingLocations,
+	locationNames,
+	memberScopes,
+	manageableUserIds,
+	removableUserIds,
 }: {
 	members: OrganizationMember[]
 	currentUserId: string
@@ -38,6 +42,10 @@ export function MembersCard({
 	organizationSlug?: string
 	canManageRoles?: boolean
 	staffingLocations?: StaffingLocationControl | null
+	locationNames?: Record<string, string>
+	memberScopes?: Record<string, string[] | null>
+	manageableUserIds?: string[]
+	removableUserIds?: string[]
 }) {
 	return (
 		<OrganizationMembers
@@ -47,6 +55,10 @@ export function MembersCard({
 			organizationSlug={organizationSlug}
 			canManageRoles={canManageRoles}
 			staffingLocations={staffingLocations}
+			locationNames={locationNames}
+			memberScopes={memberScopes}
+			manageableUserIds={manageableUserIds}
+			removableUserIds={removableUserIds}
 		/>
 	)
 }

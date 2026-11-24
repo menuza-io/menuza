@@ -28,12 +28,14 @@ const MESSAGES: Record<string, MessageDescriptor> = {
 	position_not_found: msg`We could not find that position.`,
 	time_zone_unknown: msg`We could not find this workplace's time zone. Set it in the time clock settings.`,
 	request_pending: msg`There is already a request waiting on this shift.`,
-	request_stale: msg`This shift changed after the request was made. Ask the person to request again.`,
+	request_stale: msg`This shift changed after the request was made, so nothing was moved. Review the shift, then reject this request or make the change yourself.`,
 	already_decided: msg`This request was already decided.`,
 	not_your_shift: msg`That shift does not belong to this person.`,
 	superseded: msg`A newer version of this week was published since. Resend from the latest one.`,
 	email_disabled: msg`Staff email is switched off, so nothing can be sent right now.`,
 	resend_too_soon: msg`This was just sent. Wait a few minutes before sending it again.`,
+	hour_caps_exceeded: msg`This takes someone over an hour limit. Say why you are going ahead to continue.`,
+	card_finalized: msg`This time card was already approved. Ask your manager.`,
 }
 
 export function describeScheduleError(
@@ -68,6 +70,8 @@ export const CONFLICT_COPY: Record<string, MessageDescriptor> = {
 	position_mismatch: msg`Not set up for this position here`,
 	not_at_scope: msg`Does not work at this workplace`,
 	staff_on_leave: msg`On leave`,
+	daily_hours_cap: msg`Over the daily hour limit`,
+	weekly_hours_cap: msg`Over the weekly hour limit`,
 }
 
 const CONFLICT_FALLBACK = msg`Needs a look`

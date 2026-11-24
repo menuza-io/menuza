@@ -20,6 +20,7 @@ import {
 	useRef,
 	useState,
 } from 'react'
+import { AfterPunch } from './AfterPunch.tsx'
 import {
 	expirePunches,
 	flushPunches,
@@ -116,6 +117,14 @@ export function TimeClock({
 	const [offlineStep, setOfflineStep] = useState('actions')
 	/** Bumped by any touch, so a person still typing is not sent back to the pad. */
 	const [touched, setTouched] = useState(0)
+	/**
+	 * The PIN of a punch the server recorded, kept only while the finished-punch
+	 * screen is open so "My week" and "Got it" can name the person. Dropped the
+	 * moment the screen goes. A punch saved for later never sets it.
+	 */
+	const [afterPin, setAfterPin] = useState<string | null>(null)
+	/** The after-punch part wants the finished screen to stay (something to read). */
+	const [holdDone, setHoldDone] = useState(false)
 	const api = useMemo(() => stationClockApi(settings), [settings])
 	const reset = useCallback(() => {
 		setOfflineWho(null)
@@ -174,6 +183,14 @@ export function TimeClock({
 		if (flow.screen !== 'actions') setPickingBreak(false)
 	}, [flow.screen])
 
+	// The PIN does not outlive the finished-punch screen.
+	useEffect(() => {
+		if (flow.screen !== 'done') {
+			setAfterPin(null)
+			setHoldDone(false)
+		}
+	}, [flow.screen])
+
 	// A screen nobody touches goes back to the pad; a half-typed PIN is forgotten.
 	// Over the lock, a finished punch or an untouched pad goes back to signing
 	// in, so a cashier's sign-in PIN is never typed into the clock by habit.
@@ -187,13 +204,16 @@ export function TimeClock({
 						: null
 				: IDLE_SECONDS[flow.screen]
 		if (idle === null) return
+		// Something to read (announcements, My week) holds the finished screen;
+		// that part ends it itself.
+		if (flow.screen === 'done' && holdDone) return
 		const leave =
 			onClose && (flow.screen === 'done' || flow.screen === 'pin')
 				? onClose
 				: reset
 		const timer = window.setTimeout(leave, idle * 1000)
 		return () => window.clearTimeout(timer)
-	}, [flow, touched, reset, onClose])
+	}, [flow, touched, reset, onClose, holdDone])
 
 	// A wrong-PIN wait counts down here; the server enforces it regardless.
 	const pausedUntil = flow.screen === 'pin' ? flow.pausedUntil : null
@@ -350,6 +370,7 @@ export function TimeClock({
 					deviceNowAt: tappedAt,
 					offline: false,
 				})
+				setAfterPin(pin)
 				dispatch({
 					type: 'done',
 					done: {
@@ -534,7 +555,18 @@ export function TimeClock({
 										done={flow.done}
 										timeZone={timeZone}
 										onFinish={onClose ?? reset}
-									/>
+									>
+										{afterPin && !flow.done.queued ? (
+											<AfterPunch
+												api={api}
+												pin={afterPin}
+												timeZone={timeZone}
+												touched={touched}
+												onHold={setHoldDone}
+												onFinish={onClose ?? reset}
+											/>
+										) : null}
+									</Done>
 								) : null}
 							</Stagger>
 						) : null}
@@ -1330,10 +1362,13 @@ function Done({
 	done,
 	timeZone,
 	onFinish,
+	children,
 }: {
 	done: Extract<Flow, { screen: 'done' }>['done']
 	timeZone?: string
 	onFinish: () => void
+	/** What follows the punch: announcements and "My week". */
+	children?: React.ReactNode
 }) {
 	const { _, i18n } = useLingui()
 	const at =
@@ -1366,6 +1401,7 @@ function Done({
 					<Trans>Recorded at {at}.</Trans>
 				) : null}
 			</p>
+			{children}
 			<Button
 				variant="outline"
 				size="lg"

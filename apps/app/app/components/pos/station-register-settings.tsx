@@ -4,6 +4,7 @@ import { CASH_DISCOUNT_MAX_BP } from '@repo/common/cash-discount'
 import {
 	POS_CUSTOM_ITEMS_MODES,
 	POS_GUEST_DETAILS_MODES,
+	POS_IDLE_SIGN_OUT_MAX_MINUTES,
 	type PosCustomItemsMode,
 	type PosGuestDetailsMode,
 	type PosLocationStationSettings,
@@ -137,6 +138,9 @@ function LocationRegisterForm({
 	const [cashDiscountText, setCashDiscountText] = useState<string>(() =>
 		bpToPercentInput(saved.cashDiscountBp),
 	)
+	const [idleSignOutText, setIdleSignOutText] = useState<string>(
+		saved.idleSignOutMinutes === null ? '' : String(saved.idleSignOutMinutes),
+	)
 	const [validationError, setValidationError] = useState<string | null>(null)
 
 	const guestLabels: Record<PosGuestDetailsMode, string> = {
@@ -198,10 +202,24 @@ function LocationRegisterForm({
 			}
 			cashDiscountPercent = cashDiscountText.trim()
 		}
+		const idleText = idleSignOutText.trim()
+		if (
+			idleText !== '' &&
+			(!/^\d{1,2}$/.test(idleText) ||
+				Number(idleText) < 1 ||
+				Number(idleText) > POS_IDLE_SIGN_OUT_MAX_MINUTES)
+		) {
+			const most = POS_IDLE_SIGN_OUT_MAX_MINUTES
+			setValidationError(
+				_(t`Enter a number of minutes from 1 to ${most}, or leave it blank.`),
+			)
+			return
+		}
 		setValidationError(null)
 		void fetcher.submit(
 			{
 				locationId: location.id,
+				idleSignOutMinutes: idleText,
 				guestDetails,
 				dishNotes: dishNotes ? 'true' : 'false',
 				customItems,
@@ -221,6 +239,7 @@ function LocationRegisterForm({
 	const maxPriceId = `custom-max-${location.id}`
 	const varianceId = `variance-flag-${location.id}`
 	const cashDiscountId = `cash-discount-${location.id}`
+	const idleSignOutId = `idle-sign-out-${location.id}`
 	const locationCurrency = location.currency
 
 	return (
@@ -314,6 +333,35 @@ function LocationRegisterForm({
 						disabled={!canWrite}
 						className="h-11 md:h-9"
 					/>
+				</div>
+
+				<div className="flex flex-col gap-1.5">
+					<FieldLabel htmlFor={idleSignOutId}>
+						<Trans>Sign people out after (minutes)</Trans>
+					</FieldLabel>
+					<Input
+						id={idleSignOutId}
+						type="text"
+						inputMode="numeric"
+						dir="ltr"
+						placeholder={_(t`Off`)}
+						aria-describedby={`${idleSignOutId}-hint`}
+						value={idleSignOutText}
+						onChange={(e) => setIdleSignOutText(e.target.value)}
+						disabled={!canWrite}
+						className="h-11 md:h-9"
+					/>
+					<p
+						id={`${idleSignOutId}-hint`}
+						className="text-muted-foreground text-xs"
+					>
+						<Trans>
+							A till nobody touches for this long signs the person out and shows
+							the PIN screen. A warning shows for the last 10 seconds. It never
+							interrupts a payment, kitchen screens are left alone, and unsent
+							orders stay on the till. Off by default.
+						</Trans>
+					</p>
 				</div>
 
 				{cashDiscountAllowed ? (

@@ -10,6 +10,9 @@ interface OrganizationInvitation {
 	}
 	createdAt: Date
 	inviter?: { name: string | null; email: string } | null
+	locationScope?: string
+	locationIds?: string[]
+	hasNoLocations?: boolean
 }
 
 interface OrganizationInviteLink {
@@ -30,6 +33,8 @@ export function InvitationsCard({
 	availableRoles,
 	organizationSlug,
 	canManageRoles,
+	locationNames,
+	invitableLocationIds,
 }: {
 	pendingInvitations: OrganizationInvitation[]
 	inviteLink?: OrganizationInviteLink | null
@@ -37,6 +42,8 @@ export function InvitationsCard({
 	availableRoles?: OrganizationRoleOption[]
 	organizationSlug?: string
 	canManageRoles?: boolean
+	locationNames?: Record<string, string>
+	invitableLocationIds?: string[] | null
 }) {
 	return (
 		<OrganizationInvitations
@@ -46,6 +53,8 @@ export function InvitationsCard({
 			availableRoles={availableRoles}
 			organizationSlug={organizationSlug}
 			canManageRoles={canManageRoles}
+			locationNames={locationNames}
+			invitableLocationIds={invitableLocationIds}
 		/>
 	)
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { type LaborRules, NEUTRAL_LABOR_RULES } from './rules.ts'
+import { NO_PERSON_HOUR_LIMITS } from './hour-caps.ts'
+import { KSA_HOUR_CAPS, type LaborRules, NEUTRAL_LABOR_RULES } from './rules.ts'
 import {
 	type AvailabilityWindow,
 	availabilityFor,
@@ -97,6 +98,8 @@ describe('stable codes', () => {
 			'position_mismatch',
 			'not_at_scope',
 			'staff_on_leave',
+			'daily_hours_cap',
+			'weekly_hours_cap',
 		])
 	})
 })
@@ -823,5 +826,78 @@ describe('determinism and shape', () => {
 		])
 		expect(grouped.get('a')).toHaveLength(2)
 		expect(grouped.get('b')).toHaveLength(1)
+	})
+})
+
+describe('hour caps (#527)', () => {
+	const caps = { caps: KSA_HOUR_CAPS, person: NO_PERSON_HOUR_LIMITS }
+	const only = (list: ConflictShift[]) =>
+		detectPersonConflicts({
+			shifts: list,
+			person: person(),
+			rules: NEUTRAL_LABOR_RULES,
+			minRestMinutes: 0,
+			hourCaps: caps,
+		})
+
+	it('warns on the shift that gives a KSA location a 9th hour in a day', () => {
+		const morning = shift('a', '2026-06-02', '08:00', '16:00', {
+			timeZone: RIYADH,
+		})
+		const evening = shift('b', '2026-06-02', '17:00', '18:00', {
+			timeZone: RIYADH,
+		})
+		expect(only([morning])).toEqual([])
+		const conflicts = only([morning, evening])
+		expect(codes(conflicts)).toEqual(['daily_hours_cap'])
+		expect(conflicts[0]).toMatchObject({
+			shiftId: 'b',
+			date: '2026-06-02',
+			detail: { capMinutes: 480, scheduledMinutes: 540 },
+		})
+	})
+
+	it('says nothing about why a cap is what it is', () => {
+		const flagged = detectPersonConflicts({
+			shifts: [
+				shift('a', '2026-03-02', '09:00', '16:00', { timeZone: RIYADH }),
+			],
+			person: person(),
+			rules: NEUTRAL_LABOR_RULES,
+			minRestMinutes: 0,
+			hourCaps: {
+				caps: KSA_HOUR_CAPS,
+				person: { ...NO_PERSON_HOUR_LIMITS, followsRamadan: true },
+			},
+		})
+		expect(codes(flagged)).toEqual(['daily_hours_cap'])
+		expect(Object.keys(flagged[0]!.detail ?? {}).sort()).toEqual([
+			'capMinutes',
+			'scheduledMinutes',
+		])
+	})
+
+	it('is skippable and absent without caps', () => {
+		const long = shift('a', '2026-06-02', '06:00', '18:00', {
+			timeZone: RIYADH,
+		})
+		expect(
+			detectPersonConflicts({
+				shifts: [long],
+				person: person(),
+				rules: NEUTRAL_LABOR_RULES,
+				minRestMinutes: 0,
+			}),
+		).toEqual([])
+		expect(
+			detectPersonConflicts({
+				shifts: [long],
+				person: person(),
+				rules: NEUTRAL_LABOR_RULES,
+				minRestMinutes: 0,
+				hourCaps: caps,
+				skip: new Set(['daily_hours_cap', 'weekly_hours_cap']),
+			}),
+		).toEqual([])
 	})
 })

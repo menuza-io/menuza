@@ -32,6 +32,10 @@ import { MembersCard } from '#app/components/settings/cards/organization/members
 
 import { notifyChat } from '#app/utils/chat/namespace.server.ts'
 import { hasPendingErasure } from '#app/utils/gdpr.server.ts'
+import {
+	resolveAllMemberLocationIds,
+	scopesShareALocation,
+} from '#app/utils/location/member-scope.server.ts'
 import { listLocationTags } from '#app/utils/location/tags.server.ts'
 import {
 	createOrganizationInvitation,
@@ -46,12 +50,20 @@ import {
 import { MAX_ORGANIZATION_INVITES_PER_REQUEST } from '#app/utils/organization/invitation.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
+	assertCanManageMember,
+	loadMemberActor,
+	manageableMemberIds,
+	memberCheckResponse,
+	type MemberActor,
+} from '#app/utils/organization/member-management.server.ts'
+import {
 	auditInvitationRevoked,
 	auditInviteLinkDisabled,
 	auditMemberLocationsChanged,
 	auditMemberRemoved,
 } from '#app/utils/organization/membership-audit.server.ts'
 import {
+	requireAnyUserWithOrganizationPermission,
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 	getUserOrganizationPermissionsForClient,
@@ -63,7 +75,6 @@ import {
 	createRateLimitResponse,
 	ORGANIZATION_INVITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
-import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	enqueueStaffingOutbox,
 	flushStaffingOutboxFor,
@@ -89,12 +100,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_MEMBER_ANY,
 	)
 
+	const actor = await loadMemberActor(userId, organization.id)
 	const [
 		pendingInvitations,
-		members,
+		allMembers,
 		inviteLink,
 		availableRoles,
 		userPermissions,
+		memberScopes,
+		locations,
 	] = await Promise.all([
 		getOrganizationInvitations(organization.id),
 		db.query.UserOrganization.findMany({
@@ -123,53 +137,133 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		getOrganizationInviteLink(organization.id, userId),
 		getAvailableRoles(organization.id),
 		getUserOrganizationPermissionsForClient(userId, organization.id),
+		resolveAllMemberLocationIds(organization.id),
+		listScopableLocations(organization.id),
 	])
-	const canManageRoles = members.some(
+	const canManageRoles = allMembers.some(
 		(member) =>
 			member.userId === userId &&
 			member.active &&
 			member.organizationRole.id === 'org_role_admin',
 	)
+	const canManageTeam = Boolean(
+		actor && (actor.isAdmin || actor.manageOwnLocations),
+	)
+	// A location manager sees only the members who share one of their
+	// locations (#126); everyone else sees the whole team as before.
+	const restricted = Boolean(actor && !actor.isAdmin && actor.scope !== null)
+	// `null` is every location; a member with no entry reaches none.
+	const scopeOf = (id: string) =>
+		memberScopes.has(id) ? memberScopes.get(id)! : []
+	const members = restricted
+		? allMembers.filter(
+				(member) =>
+					member.userId === userId ||
+					scopesShareALocation(actor!.scope, scopeOf(member.userId)),
+			)
+		: allMembers
+	const visibleInvitations =
+		restricted && actor
+			? pendingInvitations.filter(
+					(invitation) =>
+						invitation.inviterId === userId ||
+						(invitation.locationScope !== 'all' &&
+							scopesShareALocation(actor.scope, invitation.locationIds)),
+				)
+			: pendingInvitations
+	const manageable = actor
+		? await manageableMemberIds(
+				actor,
+				members.map((member) => ({
+					userId: member.userId,
+					roleId: member.organizationRole.id,
+				})),
+				memberScopes,
+			)
+		: new Set<string>()
 
-	// The Locations control exists only while the Staff module is on, only for
-	// built-in admins (the same people who can change roles), and only for
-	// organizations that have restaurant locations.
-	// It also exists once the organization has location tags (#374): a tag is a
-	// way to give a person a group of locations.
-	const staffingLocations =
-		canManageRoles && (await locationAccessControlEnabled(organization.id))
-			? await loadStaffingLocationControl(organization.id)
+	// Removing needs delete:member:any (any member, as before) or a location
+	// manager's authority over this member.
+	const removable = new Set(manageable)
+	if (
+		actor &&
+		!restricted &&
+		actor.permissions.has('delete:member:any')
+	) {
+		for (const member of members) {
+			if (member.userId !== userId) removable.add(member.userId)
+		}
+	}
+
+	// The Locations control exists for admins and location managers of an
+	// organization that has locations. A location manager picks only from their
+	// own locations and never assigns tags.
+	const locationControl =
+		canManageTeam && locations.length > 0
+			? await loadLocationControl(organization.id, actor!, locations)
 			: null
+	const roleOptions =
+		canManageRoles || !actor
+			? availableRoles
+			: await assignableRoles(actor, availableRoles)
 
 	return {
 		organization,
-		pendingInvitations,
+		pendingInvitations: visibleInvitations,
 		members,
 		inviteLink,
-		staffingLocations,
-		availableRoles: canManageRoles
-			? availableRoles
-			: availableRoles.filter((role) => role.id !== 'org_role_admin'),
+		staffingLocations: locationControl,
+		memberLocationNames: Object.fromEntries(
+			locations.map((location) => [location.id, location.name]),
+		),
+		memberScopes: Object.fromEntries(
+			members.map((member) => [member.userId, scopeOf(member.userId)]),
+		),
+		manageableUserIds: [...manageable],
+		removableUserIds: [...removable],
+		availableRoles: roleOptions,
 		currentUserId: userId,
 		userPermissions,
 		canManageRoles,
+		canManageTeam,
+		// null means every location: the invite form then offers all of them.
+		invitableLocationIds: actor && !actor.isAdmin ? actor.scope : null,
 	}
 }
 
-async function locationAccessControlEnabled(organizationId: string) {
-	if (await isStaffingFeatureEnabled(organizationId)) return true
-	return (await listLocationTags(organizationId)).length > 0
+async function assignableRoles<T extends { id: string }>(
+	actor: MemberActor,
+	roles: T[],
+): Promise<T[]> {
+	const out: T[] = []
+	for (const role of roles) {
+		const check = await assertCanManageMember(actor, {
+			action: 'invite',
+			roleId: role.id,
+			scope: actor.scope === null ? 'all' : 'selected',
+			locationIds: actor.scope ?? [],
+		})
+		if (check.ok) out.push(role)
+	}
+	return out
 }
 
-async function loadStaffingLocationControl(organizationId: string) {
-	const [locations, access, tags] = await Promise.all([
-		listScopableLocations(organizationId),
+async function loadLocationControl(
+	organizationId: string,
+	actor: MemberActor,
+	locations: Array<{ id: string; name: string }>,
+) {
+	const [access, tags] = await Promise.all([
 		listMemberLocationAccess(organizationId),
-		listLocationTags(organizationId),
+		actor.isAdmin ? listLocationTags(organizationId) : Promise.resolve([]),
 	])
-	if (locations.length === 0) return null
+	const scopable =
+		actor.isAdmin || actor.scope === null
+			? locations
+			: locations.filter((location) => actor.scope!.includes(location.id))
+	if (scopable.length === 0) return null
 	return {
-		locations,
+		locations: scopable,
 		access: Object.fromEntries(access),
 		tags: tags.map((tag) => ({
 			id: tag.id,
@@ -256,6 +350,63 @@ function otherActiveAdminsExist(organizationId: string, excludeUserId: string) {
 	)
 }
 
+/** The refusal `Response` for a team change the actor may not make, or null. */
+async function refuseMemberChange(
+	actorId: string,
+	organizationId: string,
+	input: Parameters<typeof assertCanManageMember>[1],
+) {
+	const actor = await loadMemberActor(actorId, organizationId)
+	if (!actor) {
+		return Response.json({ error: 'Not found' }, { status: 404 })
+	}
+	const check = await assertCanManageMember(actor, input)
+	return check.ok ? null : memberCheckResponse(check)
+}
+
+/**
+ * A shared invite link joins as Member with every location, so someone limited
+ * to some locations cannot make one (#126).
+ */
+async function refuseScopedInviteLink(actorId: string, organizationId: string) {
+	const actor = await loadMemberActor(actorId, organizationId)
+	if (!actor || actor.isAdmin || actor.scope === null) return null
+	return memberCheckResponse({
+		ok: false,
+		code: 'location_not_in_your_scope',
+		status: 403,
+		error: 'An invite link gives access to every location.',
+	})
+}
+
+/**
+ * Whoever is not an admin may only revoke an invitation they sent, or one whose
+ * locations lie inside their own.
+ */
+async function refuseInvitationOutsideScope(
+	actorId: string,
+	organizationId: string,
+	invitationId: string,
+) {
+	const actor = await loadMemberActor(actorId, organizationId)
+	if (!actor || actor.isAdmin || actor.scope === null) return null
+	const invitations = await getOrganizationInvitations(organizationId)
+	const invitation = invitations.find((row) => row.id === invitationId)
+	if (!invitation || invitation.inviterId === actorId) return null
+	const inside =
+		invitation.locationScope !== 'all' &&
+		invitation.locationIds.every((id) => actor.scope!.includes(id))
+	return inside
+		? null
+		: memberCheckResponse({
+				ok: false,
+				code: 'member_outside_your_scope',
+				status: 403,
+				error:
+					'This invitation is for locations outside yours, so you cannot change it.',
+			})
+}
+
 export async function action({ request, params }: ActionFunctionArgs) {
 	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
@@ -268,12 +419,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const intent = formData.get('intent')
 
 	if (intent === 'send-invitations') {
-		// Check if user has permission to invite members
-		await requireUserWithOrganizationPermission(
-			request,
-			organization.id,
+		// Check if user has permission to invite members. A location manager may
+		// invite too, within their own locations (#126).
+		await requireAnyUserWithOrganizationPermission(request, organization.id, [
 			ORG_PERMISSIONS.CREATE_MEMBER_ANY,
-		)
+			ORG_PERMISSIONS.UPDATE_MEMBER_OWN_LOCATIONS,
+		])
 
 		const rateLimitCheck = await checkRateLimit(
 			{ type: 'user', value: `${userId}:${organization.id}` },
@@ -290,9 +441,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		const { invites } = submission.value
+		const inviteLocations = {
+			locationScope:
+				formData.get('locationScope') === 'selected'
+					? ('selected' as const)
+					: ('all' as const),
+			locationIds: formData.getAll('locationIds').map(String),
+		}
 
 		try {
-			await validateOrganizationInviteRoles(organization.id, invites, userId)
+			await validateOrganizationInviteRoles(
+				organization.id,
+				invites,
+				userId,
+				inviteLocations,
+			)
 
 			const [currentUser] = await db
 				.select({ name: User.name, email: User.email })
@@ -307,6 +470,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					roleId: invite.roleId,
 					role: invite.role,
 					inviterId: userId,
+					locationScope: inviteLocations.locationScope,
+					locationIds: inviteLocations.locationIds,
 					request,
 				})
 
@@ -319,8 +484,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 			return Response.json({ result: submission.reply({ resetForm: true }) })
 		} catch (error) {
-			console.error('Error sending invitations:', error)
+			// A refused grant (location or role outside the inviter's own) is a
+			// normal answer, not a fault.
 			if (error instanceof Response) return error
+			console.error('Error sending invitations:', error)
 			if (
 				error instanceof Error &&
 				error.message.includes('not assignable to this organization')
@@ -343,13 +510,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	if (intent === 'remove-invitation') {
 		// Check if user has permission to manage members
-		await requireUserWithOrganizationPermission(
-			request,
-			organization.id,
+		await requireAnyUserWithOrganizationPermission(request, organization.id, [
 			ORG_PERMISSIONS.DELETE_MEMBER_ANY,
-		)
+			ORG_PERMISSIONS.UPDATE_MEMBER_OWN_LOCATIONS,
+		])
 
 		const invitationId = formData.get('invitationId') as string
+		const refusedInvitation = await refuseInvitationOutsideScope(
+			userId,
+			organization.id,
+			invitationId,
+		)
+		if (refusedInvitation) return refusedInvitation
 
 		try {
 			const revoked = await deleteOrganizationInvitation(
@@ -376,11 +548,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	if (intent === 'remove-member') {
 		// Check if user has permission to remove members
-		await requireUserWithOrganizationPermission(
-			request,
-			organization.id,
+		await requireAnyUserWithOrganizationPermission(request, organization.id, [
 			ORG_PERMISSIONS.DELETE_MEMBER_ANY,
-		)
+			ORG_PERMISSIONS.UPDATE_MEMBER_OWN_LOCATIONS,
+		])
 
 		const memberUserId = formData.get('userId') as string
 
@@ -405,6 +576,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					),
 				)
 				.limit(1)
+			// Anyone who is not an admin may only remove members inside their own
+			// locations (#126). An admin target is handled by the check below.
+			if (targetMembership && targetMembership.roleId !== 'org_role_admin') {
+				const refused = await refuseMemberChange(userId, organization.id, {
+					action: 'remove',
+					targetUserId: memberUserId,
+				})
+				if (refused) return refused
+			}
 			if (targetMembership?.roleId === 'org_role_admin') {
 				const [actorAdmin] = await db
 					.select({ userId: UserOrganization.userId })
@@ -565,22 +745,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	// --- update-member-role intent ---
 	if (intent === 'update-member-role') {
-		// Role reassignment is intentionally restricted to the shared built-in
-		// admin role. A tenant role with UPDATE_MEMBER_ANY must not be able to
-		// grant itself more authority.
-		const [currentMembership] = await db
-			.select({ userId: UserOrganization.userId })
-			.from(UserOrganization)
-			.where(
-				and(
-					eq(UserOrganization.userId, userId),
-					eq(UserOrganization.organizationId, organization.id),
-					eq(UserOrganization.organizationRoleId, 'org_role_admin'),
-					eq(UserOrganization.active, true),
-				),
-			)
-			.limit(1)
-		if (!currentMembership) {
+		// Role reassignment is limited to the built-in admin role and to location
+		// managers (#126), who can only give a role with no permission they lack,
+		// to members inside their own locations. A tenant role with
+		// UPDATE_MEMBER_ANY must not be able to grant itself more authority.
+		const actor = await loadMemberActor(userId, organization.id)
+		if (!actor || !(actor.isAdmin || actor.manageOwnLocations)) {
 			return Response.json(
 				{ error: 'Only organization admins can update member roles' },
 				{ status: 403 },
@@ -628,6 +798,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		if (!organizationRole) {
 			return Response.json({ error: 'Role not found' }, { status: 400 })
 		}
+		const roleRefusal = await refuseMemberChange(userId, organization.id, {
+			action: 'change_role',
+			targetUserId: memberUserId,
+			roleId: organizationRole.id,
+		})
+		if (roleRefusal) return roleRefusal
 
 		try {
 			const lastAdminGuard =
@@ -716,29 +892,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	// --- update-member-locations intent ---
 	if (intent === 'update-member-locations') {
-		// Narrowing someone's staffing access is as sensitive as changing their
-		// role, so it is limited to the same built-in admins.
-		const [adminMembership] = await db
-			.select({ userId: UserOrganization.userId })
-			.from(UserOrganization)
-			.where(
-				and(
-					eq(UserOrganization.userId, userId),
-					eq(UserOrganization.organizationId, organization.id),
-					eq(UserOrganization.organizationRoleId, 'org_role_admin'),
-					eq(UserOrganization.active, true),
-				),
-			)
-			.limit(1)
-		if (!adminMembership) {
+		// Narrowing someone's access is as sensitive as changing their role, so it
+		// is limited to admins and to location managers (#126), who can only work
+		// inside their own locations. It no longer depends on the Staff module.
+		const actor = await loadMemberActor(userId, organization.id)
+		if (!actor || !(actor.isAdmin || actor.manageOwnLocations)) {
 			return Response.json(
 				{ error: 'Only organization admins can change staff locations' },
 				{ status: 403 },
 			)
-		}
-		// A module that is off should look like it does not exist.
-		if (!(await locationAccessControlEnabled(organization.id))) {
-			return Response.json({ error: 'Not found' }, { status: 404 })
 		}
 
 		const memberUserId = formData.get('userId')
@@ -762,6 +924,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				{ status: 400 },
 			)
 		}
+
+		if (!actor.isAdmin && parsed.data.tagIds.length > 0) {
+			// A tag reaches locations added to it later: only admins hand it out.
+			return memberCheckResponse({
+				ok: false,
+				code: 'location_not_in_your_scope',
+				status: 403,
+				error: 'Only organization admins can give access by tag.',
+			})
+		}
+		const locationRefusal = await refuseMemberChange(userId, organization.id, {
+			action: 'change_locations',
+			targetUserId: memberUserId,
+			scope: parsed.data.scope,
+			locationIds: parsed.data.locationIds,
+		})
+		if (locationRefusal) return locationRefusal
 
 		try {
 			const result = await setMemberLocationScope({
@@ -809,6 +988,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			organization.id,
 			ORG_PERMISSIONS.CREATE_MEMBER_ANY,
 		)
+		const linkRefusal = await refuseScopedInviteLink(userId, organization.id)
+		if (linkRefusal) return linkRefusal
 
 		try {
 			const inviteLink = await createOrganizationInviteLink({
@@ -833,6 +1014,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			organization.id,
 			ORG_PERMISSIONS.CREATE_MEMBER_ANY,
 		)
+		const linkRefusal = await refuseScopedInviteLink(userId, organization.id)
+		if (linkRefusal) return linkRefusal
 
 		try {
 			const inviteLink = await createOrganizationInviteLink({
@@ -893,6 +1076,11 @@ export default function MembersSettings() {
 		currentUserId,
 		canManageRoles,
 		staffingLocations,
+		memberLocationNames,
+		memberScopes,
+		manageableUserIds,
+		removableUserIds,
+		invitableLocationIds,
 	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 
@@ -906,6 +1094,10 @@ export default function MembersSettings() {
 					organizationSlug={organization.slug}
 					canManageRoles={canManageRoles}
 					staffingLocations={staffingLocations}
+					locationNames={memberLocationNames}
+					memberScopes={memberScopes}
+					manageableUserIds={manageableUserIds}
+					removableUserIds={removableUserIds}
 				/>
 			</AnnotatedSection>
 
@@ -917,6 +1109,8 @@ export default function MembersSettings() {
 					availableRoles={availableRoles}
 					organizationSlug={organization.slug}
 					canManageRoles={canManageRoles}
+					locationNames={memberLocationNames}
+					invitableLocationIds={invitableLocationIds}
 				/>
 			</AnnotatedSection>
 		</AnnotatedLayout>

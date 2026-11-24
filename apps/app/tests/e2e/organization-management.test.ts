@@ -230,17 +230,19 @@ test.describe('Organization Management', () => {
 			submit(),
 		])
 
-		await expect.poll(
-			async () => {
-				const [updatedOrg] = await db
-					.select({ name: Organization.name })
-					.from(Organization)
-					.where(eq(Organization.id, org.id))
-					.limit(1)
-				return updatedOrg?.name ?? null
-			},
-			{ timeout: 30_000 },
-		).toBe(newName)
+		await expect
+			.poll(
+				async () => {
+					const [updatedOrg] = await db
+						.select({ name: Organization.name })
+						.from(Organization)
+						.where(eq(Organization.id, org.id))
+						.limit(1)
+					return updatedOrg?.name ?? null
+				},
+				{ timeout: 30_000 },
+			)
+			.toBe(newName)
 	})
 
 	test('Users can view organization members', async ({
@@ -478,15 +480,14 @@ test.describe('Organization Management', () => {
 		const currentUserName = user.name || user.username
 		await expect(page.getByText(currentUserName).first()).toBeVisible()
 
-		// Check the actual behavior - there seems to be 1 remove button visible
+		// A plain member may not remove anyone, and cannot remove themselves, so no
+		// Remove button is shown (the server refuses it as well). Only people who
+		// may remove members see one (#126).
 		// eslint-disable-next-line playwright/no-raw-locators -- form has no accessible name
 		const removeButtons = page.locator('form').filter({
 			has: page.getByRole('button', { name: /remove/i }),
 		})
-
-		// Based on the test results, there is 1 remove button visible
-		// This could be for removing the other member (owner) or for leaving themselves
-		await expect(removeButtons).toHaveCount(1)
+		await expect(removeButtons).toHaveCount(0)
 
 		// Verify user is still a member in database
 		const [membership] = await db

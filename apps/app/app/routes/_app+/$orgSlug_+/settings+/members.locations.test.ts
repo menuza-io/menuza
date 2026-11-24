@@ -168,7 +168,7 @@ describe('members: staff location access', () => {
 		spy.mockRestore()
 	})
 
-	it('is a 404 while the Staff module is off (the default)', async () => {
+	it('no longer depends on the Staff module (#126)', async () => {
 		const { organization, cookie } = await setupTestOrgWithUser('admin')
 		const a = await createLocation(organization.id)
 		const target = await createTestUser()
@@ -178,8 +178,10 @@ describe('members: staff location access', () => {
 			cookie,
 			locationsForm(target.id, 'selected', [a]),
 		)
-		expect(getResponseStatus(response)).toBe(404)
-		expect(await resolveStaffingScopeIds(target.id, organization.id)).toBeNull()
+		expect(getResponseStatus(response)).toBe(200)
+		expect(await resolveStaffingScopeIds(target.id, organization.id)).toEqual([
+			a,
+		])
 	})
 
 	it('refuses anyone who is not a built-in admin', async () => {
@@ -291,10 +293,13 @@ describe('members loader: staff location control', () => {
 		}
 	}
 
-	it('exposes nothing while the Staff module is off', async () => {
+	it('is offered to admins without the Staff module, only when there are locations (#126)', async () => {
 		const { organization, cookie } = await setupTestOrgWithUser('admin')
-		await createLocation(organization.id)
 		expect((await load(organization.slug, cookie)).staffingLocations).toBeNull()
+		await createLocation(organization.id)
+		expect(
+			(await load(organization.slug, cookie)).staffingLocations?.locations,
+		).toHaveLength(1)
 	})
 
 	it('gives an admin the locations and each member’s current access once it is on', async () => {

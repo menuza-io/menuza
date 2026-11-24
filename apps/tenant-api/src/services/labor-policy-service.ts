@@ -1,7 +1,7 @@
 import { and, eq, ne, sql } from 'drizzle-orm'
 import {
 	applyLaborPolicyPatch,
-	BUILTIN_LABOR_POLICY,
+	builtinLaborPolicyFor,
 	getRulePack,
 	type LaborPolicyFields,
 	type LaborPolicyPatch,
@@ -17,6 +17,7 @@ import {
 	type TenantDatabase,
 	runTenantTransaction,
 } from '@repo/tenant-db'
+import { getNodeRegion } from '../lib/region.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { type ScopeAccess, type StaffAuth } from '../lib/staff-auth.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
@@ -121,6 +122,12 @@ export function policyRowToFields(row: LaborPolicyRow): LaborPolicyFields {
 		aggregateOvertimeAcrossScopes: row.aggregateOvertimeAcrossScopes,
 		rulePack: row.rulePack,
 		rulePackVersion: row.rulePackVersion,
+		hourCaps: {
+			dailyMinutes: row.hourCapDailyMinutes,
+			weeklyMinutes: row.hourCapWeeklyMinutes,
+			ramadanDailyMinutes: row.hourCapRamadanDailyMinutes,
+			ramadanWeeklyMinutes: row.hourCapRamadanWeeklyMinutes,
+		},
 	}
 }
 
@@ -162,6 +169,21 @@ export function policyFieldsToColumns(fields: LaborPolicyFields) {
 		aggregateOvertimeAcrossScopes: fields.aggregateOvertimeAcrossScopes,
 		rulePack: fields.rulePack,
 		rulePackVersion: fields.rulePackVersion,
+		hourCapDailyMinutes: fields.hourCaps.dailyMinutes,
+		hourCapWeeklyMinutes: fields.hourCaps.weeklyMinutes,
+		hourCapRamadanDailyMinutes: fields.hourCaps.ramadanDailyMinutes,
+		hourCapRamadanWeeklyMinutes: fields.hourCaps.ramadanWeeklyMinutes,
+	}
+}
+
+/** The policy nothing was saved for: neutral, or the KSA limits on a KSA node. */
+function builtinFields(): LaborPolicyFields {
+	try {
+		return builtinLaborPolicyFor(getNodeRegion())
+	} catch {
+		// A node without a valid region (tests, a half-configured dev setup)
+		// gets the neutral policy; production refuses to start without one.
+		return builtinLaborPolicyFor(null)
 	}
 }
 
@@ -171,7 +193,7 @@ function toView(
 	scopeId: string | null,
 	aggregateDecisionRequired: boolean,
 ): LaborPolicyView {
-	const fields = row ? policyRowToFields(row) : BUILTIN_LABOR_POLICY
+	const fields = row ? policyRowToFields(row) : builtinFields()
 	return {
 		...fields,
 		id: row?.id ?? null,
@@ -321,7 +343,7 @@ export async function savePolicy(
 					(scopeId === null
 						? null
 						: await findPolicyRow(tx, DEFAULT_POLICY_SCOPE))
-				const base = seed ? policyRowToFields(seed) : BUILTIN_LABOR_POLICY
+				const base = seed ? policyRowToFields(seed) : builtinFields()
 
 				let merged: LaborPolicyFields
 				try {

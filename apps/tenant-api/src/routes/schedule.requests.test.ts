@@ -566,7 +566,7 @@ describe('time off, availability and shift requests', () => {
 			return { ana, ben, anaShift, benShift }
 		}
 
-		it('turns an approved drop into a pending change that publishing applies', async () => {
+		it('puts an approved drop on the live schedule at once (#528)', async () => {
 			const { ana, anaShift } = await twoPublished()
 			const created = await s.send('POST', '/requests', {
 				kind: 'drop',
@@ -597,25 +597,20 @@ describe('time off, availability and shift requests', () => {
 			)
 			expect(decided.status).toBe(200)
 			expect(decided.body.request.status).toBe('approved')
+			// Approving applies it: no pending change, no second publish by hand.
 			expect(decided.body.shifts[0]).toMatchObject({
 				id: anaShift.id,
 				staffId: null,
-				state: 'changed',
-				published: { staffId: ana.staffId },
+				state: 'published',
+				published: null,
 			})
-			// Staff still see the published version until the week is published.
 			const db = await h.db(ORG_A)
 			const [row] = await db
 				.select()
 				.from(shifts)
 				.where(eq(shifts.id, anaShift.id))
-			expect(row!.staffId).toBe(ana.staffId)
-			await s.publish(LOC_1, WEEK)
-			const [after] = await db
-				.select()
-				.from(shifts)
-				.where(eq(shifts.id, anaShift.id))
-			expect(after!.staffId).toBeNull()
+			expect(row!.staffId).toBeNull()
+			expect(row!.draftPatch).toBeNull()
 		})
 
 		it('hands a covered shift to the person taking it, with their warnings', async () => {
@@ -640,7 +635,7 @@ describe('time off, availability and shift requests', () => {
 			)
 			expect(decided.body.shifts[0]).toMatchObject({
 				staffId: ben.staffId,
-				state: 'changed',
+				state: 'published',
 			})
 			expect(decided.body.shifts[0].conflicts.map((c: any) => c.code)).toEqual([
 				'time_off',

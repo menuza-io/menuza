@@ -94,6 +94,8 @@ export async function updateScheduleSettings(
 			minRestMinutes: input.minRestMinutes ?? before.minRestMinutes,
 			timeOffMinNoticeDays:
 				input.timeOffMinNoticeDays ?? before.timeOffMinNoticeDays,
+			showStaffPayEstimate:
+				input.showStaffPayEstimate ?? before.showStaffPayEstimate,
 		}
 		await tx
 			.insert(scheduleSettings)
@@ -119,6 +121,10 @@ export async function updateScheduleSettings(
 				timeOffMinNoticeDays: {
 					before: before.timeOffMinNoticeDays,
 					after: next.timeOffMinNoticeDays,
+				},
+				showStaffPayEstimate: {
+					before: before.showStaffPayEstimate,
+					after: next.showStaffPayEstimate,
 				},
 			},
 		})

@@ -1,3 +1,8 @@
+import {
+	detectHourCapBreaches,
+	type HourCaps,
+	type PersonHourLimits,
+} from './hour-caps.ts'
 import { type LaborRules } from './rules.ts'
 import {
 	SCHEDULE_CONFLICT_CODES,
@@ -193,6 +198,8 @@ export type DetectInput = {
 	only?: ReadonlySet<string>
 	/** Checks to leave out, for callers that only need the cheap ones. */
 	skip?: ReadonlySet<ScheduleConflictCode>
+	/** The scope's hour caps and the person's own limits (#527); absent is no check. */
+	hourCaps?: { caps: HourCaps; person: PersonHourLimits }
 }
 
 export function detectPersonConflicts(input: DetectInput): ScheduleConflict[] {
@@ -327,6 +334,38 @@ export function detectPersonConflicts(input: DetectInput): ScheduleConflict[] {
 				shiftId,
 				date: shift?.localDate,
 				detail: { overtimeMinutes },
+			})
+		}
+	}
+
+	if (
+		input.hourCaps &&
+		sorted.length > 0 &&
+		(check('daily_hours_cap') || check('weekly_hours_cap'))
+	) {
+		const breaches = detectHourCapBreaches({
+			shifts: sorted,
+			caps: input.hourCaps.caps,
+			person: input.hourCaps.person,
+			timeZone: sorted[0]!.timeZone,
+			weekStartsOn: rules.weekStartsOn,
+			workdayStartMinute: rules.workdayStartMinute,
+			only: input.only,
+		})
+		for (const breach of breaches) {
+			const code =
+				breach.kind === 'daily' ? 'daily_hours_cap' : 'weekly_hours_cap'
+			if (!check(code)) continue
+			// Numbers only: the cap in force and what is scheduled. It never says
+			// why the cap is what it is (a Ramadan limit is private).
+			out.push({
+				code,
+				shiftId: breach.shiftId,
+				date: breach.date,
+				detail: {
+					capMinutes: breach.capMinutes,
+					scheduledMinutes: breach.scheduledMinutes,
+				},
 			})
 		}
 	}

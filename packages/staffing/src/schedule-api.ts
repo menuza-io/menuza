@@ -52,6 +52,10 @@ export const SCHEDULE_CONFLICT_CODES = [
 	'not_at_scope',
 	/** The person's roster status is on leave. */
 	'staff_on_leave',
+	/** Paid time in the day passes the daily hour cap (#527). */
+	'daily_hours_cap',
+	/** Paid time in the workweek passes the weekly hour cap (#527). */
+	'weekly_hours_cap',
 ] as const
 export type ScheduleConflictCode = (typeof SCHEDULE_CONFLICT_CODES)[number]
 
@@ -259,9 +263,26 @@ export const publishSchema = z
 		notifyMode: scheduleNotifyModeSchema.default('changed'),
 		/** Week version the manager was looking at (stale publishes are refused). */
 		expectedVersion: z.number().int().min(0).optional(),
+		/**
+		 * Why the week is published although it takes someone past an hour cap
+		 * (#527). Without it such a publish is refused with the list of breaches;
+		 * with it the week goes live and the reason is audited.
+		 */
+		capReason: z.string().trim().min(1).max(500).optional(),
 	})
 	.strict()
 export type Publish = z.infer<typeof publishSchema>
+
+/** A shift that takes a person over an hour cap, as listed when publishing. */
+export type PublishHourCapBreach = {
+	staffId: string
+	shiftId: string
+	kind: 'daily' | 'weekly'
+	/** Business date (daily) or the workweek's first date (weekly). */
+	date: string
+	capMinutes: number
+	scheduledMinutes: number
+}
 
 export const publicationsQuerySchema = z.object({
 	scopeId: idSchema,
@@ -278,12 +299,15 @@ export const scheduleSettingsUpdateSchema = z
 		/** Zero switches the minimum rest warning off. */
 		minRestMinutes: z.number().int().min(0).max(1440).optional(),
 		timeOffMinNoticeDays: z.number().int().min(0).max(120).optional(),
+		/** Whether staff see an estimate of their pay (#514). Off by default. */
+		showStaffPayEstimate: z.boolean().optional(),
 	})
 	.strict()
 	.refine(
 		(body) =>
 			body.minRestMinutes !== undefined ||
-			body.timeOffMinNoticeDays !== undefined,
+			body.timeOffMinNoticeDays !== undefined ||
+			body.showStaffPayEstimate !== undefined,
 		{ message: 'Nothing to change' },
 	)
 export type ScheduleSettingsUpdate = z.infer<
@@ -401,6 +425,11 @@ export const scheduleDecisionSchema = z
 	.object({
 		decision: z.enum(['approve', 'reject']),
 		note: noteSchema.optional(),
+		/**
+		 * Why an approval is made although it takes someone past an hour cap
+		 * (#527): without it such an approval is refused with the breaches.
+		 */
+		capReason: z.string().trim().min(1).max(500).optional(),
 	})
 	.strict()
 export type ScheduleDecision = z.infer<typeof scheduleDecisionSchema>
@@ -555,6 +584,8 @@ export const shiftRequestCreateSchema = z
 		targetShiftId: idSchema.optional(),
 		note: noteSchema.nullable().optional(),
 		submission: scheduleSubmissionSchema.default('staff_request'),
+		/** For a manager-entered request that takes someone past an hour cap (#527). */
+		capReason: z.string().trim().min(1).max(500).optional(),
 	})
 	.strict()
 	.superRefine((body, ctx) => {
@@ -812,6 +843,8 @@ export type SchedulePublicationView = {
 export type ScheduleSettingsView = {
 	minRestMinutes: number
 	timeOffMinNoticeDays: number
+	/** Whether staff see an estimate of their pay on My schedule and Station (#514). */
+	showStaffPayEstimate: boolean
 	updatedAt: number | null
 }
 

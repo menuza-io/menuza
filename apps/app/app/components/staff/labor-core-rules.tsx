@@ -1,6 +1,10 @@
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { type LaborPolicyFields } from '@repo/staffing'
+import {
+	KSA_HOUR_CAPS,
+	NO_HOUR_CAPS,
+	type LaborPolicyFields,
+} from '@repo/staffing'
 import { Badge } from '@repo/ui/badge'
 import { Card } from '@repo/ui/card'
 import {
@@ -223,10 +227,13 @@ export function CoreRules({
 	policy,
 	update,
 	fieldError,
+	dataRegion,
 }: {
 	policy: LaborPolicyFields
 	update: Update
 	fieldError: (path: string, exact?: boolean) => string | null
+	/** Where this organization's customer data lives; offers the Ramadan limits in KSA. */
+	dataRegion?: string | null
 }) {
 	const { _ } = useLingui()
 	const auto = policy.breakRules.autoDeduction
@@ -253,6 +260,23 @@ export function CoreRules({
 		fieldError('breakRules.autoDeduction', true)
 	const autoAfterError = fieldError('breakRules.autoDeduction.afterMinutes')
 	const weeklyThresholdError = fieldError('weeklyOvertime.thresholdMinutes')
+	// Hour limits (#527): the schedule warns when a person is scheduled above
+	// them. The Ramadan figures are for people who follow that limit and are
+	// offered in KSA or wherever they were already set.
+	const caps = policy.hourCaps
+	const capsOn = caps.dailyMinutes !== null || caps.weeklyMinutes !== null
+	const ramadanOffered =
+		dataRegion?.toLowerCase() === 'ksa' ||
+		caps.ramadanDailyMinutes !== null ||
+		caps.ramadanWeeklyMinutes !== null
+	const setCaps = (next: Partial<typeof caps>) =>
+		update({ hourCaps: { ...caps, ...next } })
+	const capsErrors = [
+		fieldError('hourCaps.dailyMinutes'),
+		fieldError('hourCaps.weeklyMinutes'),
+		fieldError('hourCaps.ramadanDailyMinutes'),
+		fieldError('hourCaps.ramadanWeeklyMinutes'),
+	]
 	const problems = [
 		...new Set(
 			[
@@ -262,6 +286,7 @@ export function CoreRules({
 				fieldError('breakRules.autoDeduction'),
 				weeklyThresholdError,
 				fieldError('weeklyOvertime'),
+				...capsErrors,
 			].filter((message): message is string => message !== null),
 		),
 	]
@@ -418,6 +443,104 @@ export function CoreRules({
 								disabled={weekly === null}
 							/>
 						</RuleNumber>
+					</RuleRow>
+					<ItemSeparator className="my-0" />
+					<RuleRow
+						icon="alert-triangle"
+						title={<Trans>Warn when someone is scheduled too many hours</Trans>}
+						switchLabel={_(t`Hour limits for the schedule`)}
+						checked={capsOn}
+						onCheckedChange={(on) =>
+							update({
+								hourCaps: on
+									? {
+											...(ramadanOffered ? KSA_HOUR_CAPS : NO_HOUR_CAPS),
+											dailyMinutes: KSA_HOUR_CAPS.dailyMinutes,
+											weeklyMinutes: KSA_HOUR_CAPS.weeklyMinutes,
+										}
+									: NO_HOUR_CAPS,
+							})
+						}
+						hint={
+							<Trans>
+								The schedule warns when a shift takes someone over a limit, and
+								publishing lists every one. You can still publish if you say
+								why. Each person can have their own limit on their profile.
+							</Trans>
+						}
+					>
+						{capsOn ? (
+							<>
+								<RuleNumber
+									label={<Trans>At most</Trans>}
+									unit={<Trans>hours in a day</Trans>}
+								>
+									<InlineNumber
+										label={_(t`Most hours in a day`)}
+										value={caps.dailyMinutes ?? KSA_HOUR_CAPS.dailyMinutes!}
+										onValueChange={(dailyMinutes) => setCaps({ dailyMinutes })}
+										toText={minutesToHoursText}
+										fromText={hoursTextToMinutes}
+										error={capsErrors[0]}
+									/>
+								</RuleNumber>
+								<RuleNumber
+									label={<Trans>At most</Trans>}
+									unit={<Trans>hours in a week</Trans>}
+								>
+									<InlineNumber
+										label={_(t`Most hours in a week`)}
+										value={caps.weeklyMinutes ?? KSA_HOUR_CAPS.weeklyMinutes!}
+										onValueChange={(weeklyMinutes) =>
+											setCaps({ weeklyMinutes })
+										}
+										toText={minutesToHoursText}
+										fromText={hoursTextToMinutes}
+										error={capsErrors[1]}
+									/>
+								</RuleNumber>
+								{ramadanOffered ? (
+									<>
+										<RuleNumber
+											label={<Trans>In Ramadan, at most</Trans>}
+											unit={<Trans>hours in a day</Trans>}
+										>
+											<InlineNumber
+												label={_(t`Most hours in a day in Ramadan`)}
+												value={
+													caps.ramadanDailyMinutes ??
+													KSA_HOUR_CAPS.ramadanDailyMinutes!
+												}
+												onValueChange={(ramadanDailyMinutes) =>
+													setCaps({ ramadanDailyMinutes })
+												}
+												toText={minutesToHoursText}
+												fromText={hoursTextToMinutes}
+												error={capsErrors[2]}
+											/>
+										</RuleNumber>
+										<RuleNumber
+											label={<Trans>In Ramadan, at most</Trans>}
+											unit={<Trans>hours in a week</Trans>}
+										>
+											<InlineNumber
+												label={_(t`Most hours in a week in Ramadan`)}
+												value={
+													caps.ramadanWeeklyMinutes ??
+													KSA_HOUR_CAPS.ramadanWeeklyMinutes!
+												}
+												onValueChange={(ramadanWeeklyMinutes) =>
+													setCaps({ ramadanWeeklyMinutes })
+												}
+												toText={minutesToHoursText}
+												fromText={hoursTextToMinutes}
+												error={capsErrors[3]}
+											/>
+										</RuleNumber>
+									</>
+								) : null}
+							</>
+						) : null}
 					</RuleRow>
 				</ItemGroup>
 			</Card>

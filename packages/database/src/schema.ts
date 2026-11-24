@@ -1570,6 +1570,11 @@ export const OrganizationInvitation = sqliteTable(
 		// accepted. Deliberately no foreign key: staff records live in the
 		// regional tenant database, never in the control plane.
 		staffMemberId: text(),
+		// Which locations the invitee gets on acceptance (#126): 'all' (every
+		// location, the default) or 'selected' (only the
+		// OrganizationInvitationLocation rows; none left means the invitation is
+		// no longer valid).
+		locationScope: text().default('all').notNull(),
 	},
 	(table) => [
 		uniqueIndex('OrganizationInvitation_email_organizationId_key').on(
@@ -1581,6 +1586,39 @@ export const OrganizationInvitation = sqliteTable(
 		),
 		index('OrganizationInvitation_organizationId_idx').on(table.organizationId),
 		uniqueIndex('OrganizationInvitation_token_key').on(table.token),
+	],
+)
+
+/**
+ * Locations a pending invitation grants (#126) while its `locationScope` is
+ * 'selected'. Deleting the invitation or a location removes the row, so an
+ * invitation whose only locations were deleted is left with none.
+ */
+export const OrganizationInvitationLocation = sqliteTable(
+	'OrganizationInvitationLocation',
+	{
+		invitationId: text()
+			.notNull()
+			.references(() => OrganizationInvitation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		locationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.invitationId, table.locationId],
+			name: 'OrganizationInvitationLocation_invitationId_locationId_pk',
+		}),
+		index('OrganizationInvitationLocation_locationId_idx').on(table.locationId),
 	],
 )
 

@@ -7,6 +7,7 @@ import {
 	resolveLocalCardTimes,
 	STAFFING_PERMISSIONS as P,
 	statusAfterClose,
+	type EntryIssueCode,
 	type LaborPolicyView,
 	type TimeCardBreakInput,
 	type TimeCardCreate,
@@ -22,6 +23,7 @@ import {
 	staffScopeAssignments,
 	staffMembers,
 	timeBreaks,
+	timeCorrectionRequests,
 	timeEntries,
 	timeEntryEdits,
 	type TenantDatabase,
@@ -314,17 +316,44 @@ function payGrantFailure(): TimesheetFailure {
 // ---------------------------------------------------------------------------
 
 /** Re-judges a card after a change and refreshes cached figures around it. */
+function withoutCorrectionFlag(issues: EntryIssueCode[]): EntryIssueCode[] {
+	return issues.filter((issue) => issue !== 'correction_requested')
+}
+
+/** Marks the card's open correction request (if any) as answered. */
+async function resolveCorrectionRequests(
+	tx: StaffDb,
+	entryId: string,
+	actorId: string | null,
+	now: number,
+) {
+	await tx
+		.update(timeCorrectionRequests)
+		.set({ status: 'resolved', resolvedBy: actorId, resolvedAt: now })
+		.where(
+			and(
+				eq(timeCorrectionRequests.entryId, entryId),
+				eq(timeCorrectionRequests.status, 'open'),
+			),
+		)
+}
+
 async function settleCard(
 	tx: StaffDb,
 	id: string,
 	policy: LaborPolicyView,
 	now: number,
 	extraFlags: readonly string[] = [],
+	actorId: string | null = null,
 ) {
 	const current = await readEntry(tx, id)
 	if (!current) throw new Error('Card vanished inside its own transaction')
 	const { entry, breaks } = current
-	const issues = issuesForEntry(entry, breaks, policy, extraFlags, now)
+	// A manager changing the card answers the person's "Something's wrong"
+	// (#514): the flag is cleared and the request resolved with the change.
+	const issues = withoutCorrectionFlag(
+		issuesForEntry(entry, breaks, policy, extraFlags, now),
+	)
 	const closed = entry.clockOutAt !== null
 	await tx
 		.update(timeEntries)
@@ -334,6 +363,7 @@ async function settleCard(
 			updatedAt: now,
 		})
 		.where(eq(timeEntries.id, id))
+	await resolveCorrectionRequests(tx, id, actorId, now)
 	if (closed) {
 		await refreshStaffCaches(
 			tx,
@@ -797,7 +827,14 @@ export async function updateCard(
 			}
 		}
 
-		const settled = await settleCard(tx, entry.id, policy, ctx.now, ['edited'])
+		const settled = await settleCard(
+			tx,
+			entry.id,
+			policy,
+			ctx.now,
+			['edited'],
+			ctx.auth.userId,
+		)
 		const after = snapshotCard(settled.entry, settled.breaks)
 		// An open card measured nothing before; the change is what it now holds.
 		const delta = settled.entry.paidMinutes - entry.paidMinutes
@@ -923,10 +960,13 @@ export async function reviewCard(
 			return fail(409, 'stale_version', { currentVersion: entry.version })
 		}
 		if (entry.clockOutAt === null) return fail(409, 'open_card')
-		const issues = issuesForEntry(entry, breaks, policy, [], ctx.now)
+		const issues = withoutCorrectionFlag(
+			issuesForEntry(entry, breaks, policy, [], ctx.now),
+		)
 		if (hasBlockingIssue(issues)) return fail(409, 'needs_fix')
 
 		const before = snapshotCard(entry, breaks)
+		await resolveCorrectionRequests(tx, entry.id, ctx.auth.userId, ctx.now)
 		await tx
 			.update(timeEntries)
 			.set({

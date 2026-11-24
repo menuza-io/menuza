@@ -36,13 +36,17 @@ import {
 	timeOffWhen,
 } from '#app/utils/staffing/schedule-requests.ts'
 import {
+	hourCapRefusalSchema,
+	type HourCapBreachRow,
 	shiftRequestListSchema,
 	timeOffListSchema,
 	type ShiftRequestRow,
-	type TimeOffRow,
+	type TimeOffRow
 } from '#app/utils/staffing/schedule-types.ts'
+import { StaffApiError } from '#app/utils/staffing/staff-client.ts'
 import { todayLocalDate } from '#app/utils/staffing/staff-format.ts'
 import { formatDateLabel } from '#app/utils/staffing/timesheet-view.ts'
+import { HourCapBreaches } from './hour-cap-breaches.tsx'
 import { TimeOffSheet, useCategoryLabels } from './time-off-sheet.tsx'
 
 type StatusFilter = 'pending' | 'approved' | 'rejected' | 'all'
@@ -123,6 +127,13 @@ export function TimeOffPage({ scopes: rawScopes }: Props) {
 	>(null)
 	const [cancelling, setCancelling] = useState<string | null>(null)
 	const [note, setNote] = useState('')
+	// A swap, cover or drop that would take someone over an hour cap (#527).
+	const [overCap, setOverCap] = useState<{
+		row: ShiftRequestRow
+		breaches: HourCapBreachRow[]
+		total: number
+		reason: string
+	} | null>(null)
 
 	async function decideOff(
 		row: TimeOffRow,
@@ -150,16 +161,36 @@ export function TimeOffPage({ scopes: rawScopes }: Props) {
 		decision: 'approve' | 'reject',
 		text?: string,
 	) {
-		const result = await action.run(() =>
-			decideShiftRequest(client, row.id, {
-				decision,
-				...(text ? { note: text } : {}),
-			}),
-		)
+		const result = await action.run(async () => {
+			try {
+				return await decideShiftRequest(client, row.id, {
+					decision,
+					...(text ? { note: text } : {}),
+					...(overCap?.row.id === row.id
+						? { capReason: overCap.reason.trim() }
+						: {}),
+				})
+			} catch (error) {
+				if (
+					error instanceof StaffApiError &&
+					error.code === 'hour_caps_exceeded'
+				) {
+					const parsed = hourCapRefusalSchema.safeParse(error.details)
+					if (parsed.success) {
+						setOverCap({ row, ...parsed.data, reason: '' })
+						return null
+					}
+				}
+				throw error
+			}
+		})
 		if (!result.ok) return false
+		if (result.value === null) return false
+		setOverCap(null)
+		// Approving applies the change to the live schedule and emails both people.
 		toast.success(
 			decision === 'approve'
-				? _(t`Request approved.`)
+				? _(t`Request approved. The schedule is updated and both people were told.`)
 				: _(t`Request declined.`),
 		)
 		shiftRequests.reload()
@@ -453,6 +484,54 @@ export function TimeOffPage({ scopes: rawScopes }: Props) {
 				locale={locale}
 				onSaved={requests.reload}
 			/>
+
+			<Dialog
+				open={overCap !== null}
+				onOpenChange={(open) => !open && setOverCap(null)}
+			>
+				<DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle>
+							<Trans>This goes over an hour limit</Trans>
+						</DialogTitle>
+						<DialogDescription>
+							<Trans>
+								Nothing was changed. You can approve it anyway if you say why.
+							</Trans>
+						</DialogDescription>
+					</DialogHeader>
+					{overCap ? (
+						<HourCapBreaches
+							breaches={overCap.breaches}
+							total={overCap.total}
+							nameOf={nameOf}
+							reason={overCap.reason}
+							onReason={(reason) =>
+								setOverCap((current) =>
+									current ? { ...current, reason } : current,
+								)
+							}
+						/>
+					) : null}
+					<DialogFooter>
+						<Button type="button" variant="ghost" onClick={() => setOverCap(null)}>
+							<Trans>Cancel</Trans>
+						</Button>
+						<Button
+							type="button"
+							disabled={
+								action.pending || !overCap || overCap.reason.trim().length === 0
+							}
+							onClick={async () => {
+								if (!overCap) return
+								await decideShift(overCap.row, 'approve')
+							}}
+						>
+							<Trans>Approve anyway</Trans>
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 			<Dialog
 				open={declining !== null}

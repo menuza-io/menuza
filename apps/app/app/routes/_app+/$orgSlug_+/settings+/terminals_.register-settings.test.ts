@@ -70,6 +70,7 @@ describe('Station register settings route (#372, #171, #380)', () => {
 			customItemMaxCents: 50_000,
 			cashVarianceFlagCents: null,
 			cashDiscountBp: null,
+			idleSignOutMinutes: null,
 			tickets: {},
 		})
 
@@ -92,6 +93,7 @@ describe('Station register settings route (#372, #171, #380)', () => {
 			customItemMaxCents: 75_000,
 			cashVarianceFlagCents: 500,
 			cashDiscountBp: null,
+			idleSignOutMinutes: null,
 			tickets: {},
 		})
 		const [row] = await db
@@ -238,5 +240,63 @@ describe('the cash-payment discount setting (#375)', () => {
 		expect(
 			(await published(organization))[0]?.stationSettings?.cashDiscountBp,
 		).toBeNull()
+	})
+})
+
+describe('the idle sign-out setting (#364)', () => {
+	const base = (locationId: string) => ({
+		locationId,
+		guestDetails: 'none',
+		dishNotes: 'true',
+		customItems: 'off',
+		customItemMaxCents: '50000',
+		cashVarianceFlagCents: '',
+	})
+	const saved = async (
+		organization: Awaited<ReturnType<typeof setup>>['organization'],
+	) => (await published(organization))[0]?.stationSettings?.idleSignOutMinutes
+
+	it('is off by default, set in minutes per location, and cleared by a blank', async () => {
+		const { organization, location, cookie } = await setup('admin')
+		expect(await saved(organization)).toBeNull()
+
+		const five = await post(organization.slug, cookie, {
+			...base(location.id),
+			idleSignOutMinutes: '5',
+		})
+		expect(getResponseStatus(five)).toBe(200)
+		expect(await saved(organization)).toBe(5)
+
+		// A form open before the field existed posts none: the saved value stays.
+		const other = await post(organization.slug, cookie, base(location.id))
+		expect(getResponseStatus(other)).toBe(200)
+		expect(await saved(organization)).toBe(5)
+
+		const off = await post(organization.slug, cookie, {
+			...base(location.id),
+			idleSignOutMinutes: '',
+		})
+		expect(getResponseStatus(off)).toBe(200)
+		expect(await saved(organization)).toBeNull()
+	})
+
+	it('refuses what is not minutes from 1 to 60, and a member who may not write', async () => {
+		const { organization, location, cookie } = await setup('admin')
+		for (const bad of ['0', '61', '-3', '1.5', 'abc', '100']) {
+			const response = await post(organization.slug, cookie, {
+				...base(location.id),
+				idleSignOutMinutes: bad,
+			})
+			expect(getResponseStatus(response)).toBe(400)
+		}
+		expect(await saved(organization)).toBeNull()
+
+		const viewer = await setup('viewer')
+		await expect(
+			post(viewer.organization.slug, viewer.cookie, {
+				...base(viewer.location.id),
+				idleSignOutMinutes: '5',
+			}),
+		).rejects.toThrow()
 	})
 })

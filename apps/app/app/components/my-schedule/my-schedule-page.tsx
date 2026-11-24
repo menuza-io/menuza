@@ -32,10 +32,12 @@ import {
 	takeLink,
 	type StoredLink,
 } from '#app/utils/my-schedule/my-schedule-session.ts'
+import { AnnouncementsView } from './announcements-view.tsx'
 import { CountsView } from './counts-view.tsx'
 import { RequestsView } from './requests-view.tsx'
 import { ShiftsView } from './shifts-view.tsx'
 import { TimeCardsView } from './time-cards-view.tsx'
+import { WeekView } from './week-view.tsx'
 
 const WINDOW_DAYS = 35
 const STEP_DAYS = 28
@@ -93,6 +95,17 @@ export function MySchedulePage({ urls }: { urls: TenantApiUrls }) {
 	const myCounts = useMyScheduleData(
 		api ? () => api.counts() : null,
 		`counts:${link?.token.slice(-8) ?? ''}`,
+	)
+
+	// This week's hours, the next shift and (when turned on) a pay estimate (#514),
+	// and the announcements meant for this person (#486).
+	const week = useMyScheduleData(
+		api ? () => api.week() : null,
+		`week:${link?.token.slice(-8) ?? ''}`,
+	)
+	const announcements = useMyScheduleData(
+		api ? () => api.announcements() : null,
+		`announcements:${link?.token.slice(-8) ?? ''}`,
 	)
 
 	const data = schedule.data
@@ -180,6 +193,16 @@ export function MySchedulePage({ urls }: { urls: TenantApiUrls }) {
 				) : null}
 			</header>
 
+			{api && announcements.data ? (
+				<AnnouncementsView
+					api={api}
+					announcements={announcements.data.announcements}
+					locale={locale}
+					onChanged={announcements.reload}
+				/>
+			) : null}
+			<WeekView week={week.data} locale={locale} showNext={false} />
+
 			<Tabs
 				value={tab}
 				onValueChange={(next) => {
@@ -228,6 +251,8 @@ export function MySchedulePage({ urls }: { urls: TenantApiUrls }) {
 						error={timeCards.error}
 						loading={timeCards.loading}
 						locale={locale}
+						api={api}
+						onChanged={timeCards.reload}
 					/>
 				</TabsContent>
 				<TabsContent value="requests" className="pt-3">

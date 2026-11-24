@@ -63,6 +63,17 @@ const schedule = (overrides: Record<string, unknown> = {}) => ({
 	...overrides,
 })
 
+const week = (overrides: Record<string, unknown> = {}) => ({
+	serverNow: NOW,
+	weekStart: '2026-03-02',
+	weekEnd: '2026-03-08',
+	timeZone: 'America/Chicago',
+	workedMinutes: 14 * 60,
+	scheduledMinutes: 32 * 60 + 30,
+	nextShift: shift('s2', 4, 15, 23),
+	...overrides,
+})
+
 type Call = {
 	path: string
 	search: string
@@ -98,6 +109,12 @@ function stub(handler: Handler = () => undefined) {
 			}
 			if (call.path === '/schedule-link/me/counts') {
 				return Response.json({ counts: [] })
+			}
+			if (call.path === '/schedule-link/me/week') {
+				return Response.json(week())
+			}
+			if (call.path === '/schedule-link/me/announcements') {
+				return Response.json({ serverNow: NOW, announcements: [] })
 			}
 			if (call.path === '/schedule-link/me/time-cards') {
 				return Response.json({
@@ -349,8 +366,190 @@ describe('time cards', () => {
 		expect(screen.getByText('Reason: Forgot to clock out')).toBeTruthy()
 		expect(screen.getByText(/Clock out – to 5:00\sPM/)).toBeTruthy()
 		expect(screen.getByText('-0:30')).toBeTruthy()
-		expect(screen.getByText(/talk to your manager/)).toBeTruthy()
+		expect(screen.getByText(/Something's wrong on that card/)).toBeTruthy()
 		expect(document.body.textContent).not.toMatch(/rate|wage|tips|\$/i)
+	})
+
+	const cardWith = (patch: Record<string, unknown> = {}) => ({
+		id: 'c1',
+		scopeId: 'loc-1',
+		positionName: 'Cook',
+		positionNameAr: null,
+		timeZone: 'America/Chicago',
+		localDate: '2026-03-02',
+		clockInAt: at(2, 9),
+		clockOutAt: at(2, 17),
+		status: 'closed',
+		paidMinutes: 450,
+		unpaidBreakMinutes: 30,
+		breaks: [{ startAt: at(2, 13), endAt: at(2, 13) + 30 * 60_000, paid: false }],
+		edited: false,
+		edits: [],
+		correctionRequested: false,
+		...patch,
+	})
+	const cardsOf = (cards: unknown[]) => (call: Call) =>
+		call.path === '/schedule-link/me/time-cards'
+			? Response.json({
+					serverNow: NOW,
+					from: '2026-02-05',
+					to: '2026-03-04',
+					cards,
+				})
+			: undefined
+
+	it('lists the breaks on a card', async () => {
+		stub(cardsOf([cardWith()]))
+		open()
+		await screen.findByRole('heading', { name: 'Hi Ana' })
+		fireEvent.click(screen.getByRole('tab', { name: 'Time cards' }))
+		fireEvent.click(await screen.findByRole('button', { name: /Show changes/ }))
+		const breaks = screen.getByRole('list', { name: 'Breaks' })
+		expect(within(breaks).getByText(/1:00\sPM\s–\s1:30\sPM/)).toBeTruthy()
+		expect(within(breaks).getByText('Unpaid break')).toBeTruthy()
+	})
+
+	it('sends "Something\'s wrong" to the manager, once', async () => {
+		let sent = false
+		const calls = stub((call) => {
+			if (call.path === '/schedule-link/me/time-cards/c1/correction') {
+				sent = true
+				return Response.json(
+					{ correction: { id: 'r1', status: 'open' } },
+					{ status: 201 },
+				)
+			}
+			return cardsOf([cardWith({ correctionRequested: sent })])(call)
+		})
+		open()
+		await screen.findByRole('heading', { name: 'Hi Ana' })
+		fireEvent.click(screen.getByRole('tab', { name: 'Time cards' }))
+		fireEvent.click(await screen.findByRole('button', { name: "Something's wrong" }))
+		fireEvent.change(screen.getByLabelText('What is wrong'), {
+			target: { value: 'I left at 4' },
+		})
+		fireEvent.click(screen.getByRole('button', { name: 'Send to my manager' }))
+		await screen.findByText('You told your manager. They will look at it.')
+		const post = calls.find((c) => c.method === 'POST')!
+		expect(post.path).toBe('/schedule-link/me/time-cards/c1/correction')
+		expect(post.body).toEqual({ note: 'I left at 4' })
+		expect(screen.queryByRole('button', { name: "Something's wrong" })).toBeNull()
+	})
+
+	it('offers no correction on an approved card', async () => {
+		stub(cardsOf([cardWith({ status: 'approved' })]))
+		open()
+		await screen.findByRole('heading', { name: 'Hi Ana' })
+		fireEvent.click(screen.getByRole('tab', { name: 'Time cards' }))
+		await screen.findAllByText('7 h 30 min')
+		expect(screen.queryByRole('button', { name: "Something's wrong" })).toBeNull()
+	})
+})
+
+describe('this week (#514)', () => {
+	it('shows hours worked and scheduled and the next shift, and no pay by default', async () => {
+		stub()
+		open()
+		const card = await screen.findByTestId('my-week')
+		expect(within(card).getByText(/Worked so far/)).toBeTruthy()
+		expect(within(card).getByText('14 h')).toBeTruthy()
+		expect(within(card).getByText('32 h 30 min')).toBeTruthy()
+		expect(screen.queryByTestId('my-pay-estimate')).toBeNull()
+		expect(card.textContent).not.toMatch(/estimate|\$/i)
+	})
+
+	it('shows an estimate before tax only when the node sends one', async () => {
+		stub((call) =>
+			call.path === '/schedule-link/me/week'
+				? Response.json(
+						week({
+							pay: {
+								label: 'estimate_before_tax',
+								periodStart: '2026-03-02',
+								periodEnd: '2026-03-15',
+								estimateMinor: 28000,
+								currency: 'USD',
+								regularMinutes: 840,
+								overtimeMinutes: 0,
+								unpricedMinutes: 0,
+							},
+						}),
+					)
+				: undefined,
+		)
+		open()
+		const pay = await screen.findByTestId('my-pay-estimate')
+		expect(within(pay).getByText('$280.00')).toBeTruthy()
+		expect(within(pay).getByText(/Estimate before tax/)).toBeTruthy()
+	})
+})
+
+describe('announcements (#486)', () => {
+	it('shows what is unread and records "Got it"', async () => {
+		let read = false
+		const calls = stub((call) => {
+			if (call.path === '/schedule-link/me/announcements') {
+				return Response.json({
+					serverNow: NOW,
+					announcements: [
+						{
+							id: 'a1',
+							title: 'New menu tomorrow',
+							body: 'Read the specials card.',
+							expiresAt: NOW + 2 * 24 * HOUR,
+							createdAt: NOW - HOUR,
+							readAt: read ? NOW : null,
+						},
+					],
+				})
+			}
+			if (call.path === '/schedule-link/me/announcements/read') {
+				read = true
+				return Response.json({ readAt: NOW })
+			}
+			return undefined
+		})
+		open()
+		const box = await screen.findByTestId('my-announcements')
+		expect(within(box).getByText('New menu tomorrow')).toBeTruthy()
+		expect(within(box).getByText('Read the specials card.')).toBeTruthy()
+		fireEvent.click(within(box).getByRole('button', { name: 'Got it' }))
+		await waitFor(() => expect(screen.queryByTestId('my-announcements')).toBeNull())
+		const post = calls.find((c) => c.path.endsWith('/announcements/read'))!
+		expect(post.method).toBe('POST')
+		expect(post.body).toEqual({ announcementId: 'a1' })
+	})
+
+	it('shows nothing when there is nothing unread', async () => {
+		stub()
+		open()
+		await screen.findByRole('heading', { name: 'Hi Ana' })
+		expect(screen.queryByTestId('my-announcements')).toBeNull()
+	})
+
+	it('renders the words as text, never as HTML', async () => {
+		stub((call) =>
+			call.path === '/schedule-link/me/announcements'
+				? Response.json({
+						serverNow: NOW,
+						announcements: [
+							{
+								id: 'a2',
+								title: '<img src=x onerror=alert(1)>',
+								body: '<b>bold</b>',
+								expiresAt: NOW + HOUR,
+								createdAt: NOW,
+								readAt: null,
+							},
+						],
+					})
+				: undefined,
+		)
+		open()
+		const box = await screen.findByTestId('my-announcements')
+		expect(box.querySelector('img')).toBeNull()
+		expect(box.querySelector('b')).toBeNull()
+		expect(within(box).getByText('<b>bold</b>')).toBeTruthy()
 	})
 })
 

@@ -29,6 +29,7 @@ import {
 	requireSchedulablePerson,
 	transact,
 } from './schedule-shift-service.ts'
+import { publishRequestChanges } from './schedule-swap-apply.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { fail, moneyAccess, ok } from './timesheet-shared.ts'
 
@@ -348,12 +349,21 @@ export async function createShiftRequest(
 				})
 				if (!applied.ok) return applied
 				ids = applied.value
+				// A swap entered by a manager has already happened: it goes live now.
+				const live = await publishRequestChanges(tx, ctx, {
+					requestId: request!.id,
+					kind: input.kind,
+					shiftIds: ids,
+					capReason: input.capReason,
+				})
+				if (!live.ok) return live
 				const [approvedRow] = await tx
 					.update(shiftRequests)
 					.set({
 						status: 'approved',
 						decidedBy: ctx.auth.userId,
 						decidedAt: ctx.now,
+						appliedPublicationId: live.value.publicationIds[0] ?? null,
 						updatedAt: ctx.now,
 					})
 					.where(eq(shiftRequests.id, request!.id))
@@ -391,10 +401,23 @@ export async function decideShiftRequest(
 		const { request, shift } = loaded.value
 		if (request.status !== 'pending') return fail(409, 'already_decided')
 		let ids: string[] = []
+		let appliedPublicationId: string | null = null
 		if (input.decision === 'approve') {
 			const applied = await applyRequest(tx, ctx, request, shift)
 			if (!applied.ok) return applied
 			ids = applied.value
+			// Approving changes whose shift it is, on the live schedule, and tells
+			// both people (#528). A shift that moved since the request was made
+			// never gets here: `applyRequest` refuses it as stale, so the manager
+			// reviews it instead.
+			const live = await publishRequestChanges(tx, ctx, {
+				requestId: request.id,
+				kind: request.kind,
+				shiftIds: ids,
+				capReason: input.capReason,
+			})
+			if (!live.ok) return live
+			appliedPublicationId = live.value.publicationIds[0] ?? null
 		}
 		const status = input.decision === 'approve' ? 'approved' : 'rejected'
 		const [updated] = await tx
@@ -404,6 +427,7 @@ export async function decideShiftRequest(
 				decidedBy: ctx.auth.userId,
 				decidedAt: ctx.now,
 				decisionNote: input.note ?? null,
+				appliedPublicationId,
 				updatedAt: ctx.now,
 			})
 			.where(and(eq(shiftRequests.id, id), eq(shiftRequests.status, 'pending')))
@@ -415,7 +439,7 @@ export async function decideShiftRequest(
 			entityId: id,
 			staffId: request.requesterStaffId,
 			scopeId: shift.scopeId,
-			changes: { kind: request.kind },
+			changes: { kind: request.kind, applied: appliedPublicationId !== null },
 		})
 		return ok({ request: updated, shift, ids })
 	})

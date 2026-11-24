@@ -195,6 +195,8 @@ export async function publishWeek(
 		weekStart: string
 		notifyMode: ScheduleNotifyMode
 		expectedVersion?: number
+		/** Why the week goes live although it takes someone over an hour cap. */
+		capReason?: string
 	},
 ) {
 	return publishResultSchema.parse(
@@ -344,7 +346,12 @@ export async function cancelAvailability(
 export async function decideShiftRequest(
 	client: StaffClient,
 	requestId: string,
-	body: { decision: 'approve' | 'reject'; note?: string },
+	body: {
+		decision: 'approve' | 'reject'
+		note?: string
+		/** Why an approval goes ahead although it takes someone over an hour cap. */
+		capReason?: string
+	},
 ) {
 	return shiftRequestResultSchema.parse(
 		await client.request(`/requests/${id(requestId)}/decision`, {

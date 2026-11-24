@@ -78,6 +78,8 @@ export async function auditInvitationSent({
 	invitedEmail,
 	roleId,
 	isResend,
+	locationScope,
+	locationIds,
 	request,
 }: {
 	organizationId: string
@@ -86,6 +88,9 @@ export async function auditInvitationSent({
 	invitedEmail: string
 	roleId: string
 	isResend: boolean
+	/** Which locations the invitee gets on acceptance (#126). */
+	locationScope?: 'all' | 'selected'
+	locationIds?: readonly string[]
 	request?: Request
 }) {
 	await safeLog({
@@ -95,7 +100,14 @@ export async function auditInvitationSent({
 		resourceType: 'organization_invitation',
 		resourceId: invitationId,
 		details: 'Organization invitation sent',
-		metadata: { invitedEmail, roleId, isResend },
+		metadata: {
+			invitedEmail,
+			roleId,
+			isResend,
+			locationScope,
+			// Ids only, as one string: the audit writer cannot store a list.
+			locationIds: locationIds?.length ? locationIds.join(',') : undefined,
+		},
 		request,
 	})
 }
