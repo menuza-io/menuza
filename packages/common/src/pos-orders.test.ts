@@ -859,6 +859,8 @@ describe('contract v10: custom items, counter guest phone & location config (#17
 			customItemMaxCents: 50_000,
 			cashVarianceFlagCents: null,
 			cashDiscountBp: null,
+			// Idle sign-out is off until a location sets minutes (#364).
+			idleSignOutMinutes: null,
 			tickets: {},
 		})
 		expect(parseOrderNumberFormat(null)).toEqual({
@@ -885,5 +887,21 @@ describe('contract v10: custom items, counter guest phone & location config (#17
 		expect(
 			businessDayStartUtc(afterReset, 'Asia/Riyadh', '04:00').toISOString(),
 		).toBe('2026-11-17T01:00:00.000Z')
+	})
+})
+
+describe('idle sign-out minutes (#364)', () => {
+	it('is off by default, and a value out of range reads as off', () => {
+		expect(parsePosLocationStationSettings({}).idleSignOutMinutes).toBeNull()
+		expect(
+			parsePosLocationStationSettings({ idleSignOutMinutes: 5 })
+				.idleSignOutMinutes,
+		).toBe(5)
+		for (const bad of [0, -1, 61, 1.5, '5', Number.NaN]) {
+			expect(
+				parsePosLocationStationSettings({ idleSignOutMinutes: bad })
+					.idleSignOutMinutes,
+			).toBeNull()
+		}
 	})
 })

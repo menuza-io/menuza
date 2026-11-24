@@ -1,6 +1,8 @@
 import { Hono, type Context } from 'hono'
 import { type ZodTypeAny, z } from 'zod'
 import {
+	announcementCreateSchema,
+	announcementListQuerySchema,
 	localDateSchema,
 	STAFF_BULK_MAX_ROWS,
 	staffAssignmentInputSchema,
@@ -18,6 +20,7 @@ import {
 	staffRateChangeSchema,
 	staffRehireSchema,
 	staffExportQuerySchema,
+	staffHourLimitsUpdateSchema,
 	staffTerminateSchema,
 	staffUpdateSchema,
 	staffingSettingsUpdateSchema,
@@ -41,6 +44,7 @@ import {
 	createJob,
 	createPosition,
 	createStaff,
+	getHourLimits,
 	getSettings,
 	getStaffDetail,
 	listAssignments,
@@ -52,6 +56,7 @@ import {
 	removeAssignment,
 	removeNote,
 	serializeSettings,
+	setHourLimits,
 	setPin,
 	terminateStaff,
 	updateAssignment,
@@ -62,6 +67,13 @@ import {
 	type Result,
 	type StaffContext,
 } from '../services/staff-service.ts'
+import { kioskDeps } from './kiosk.ts'
+import {
+	createAnnouncement,
+	getAnnouncement,
+	listAnnouncements,
+	withdrawAnnouncement,
+} from '../services/staff-announcements-service.ts'
 import { describeStaffError, hashClientIp } from '../services/staff-audit.ts'
 import { exportForOperator } from '../services/staff-internal-service.ts'
 
@@ -426,6 +438,84 @@ staffOperatorRoutes.put(
 			return respond(await updatePrivate(ctx, param(c, 'id'), body.data))
 		},
 	),
+)
+
+// ---------------------------------------------------------------------------
+// Announcements to staff (#486). Declared before `/:id` so the static segment
+// wins. Writing needs the roster grant; the list and who read each one need
+// only the read grant. A token limited to some scopes sees and writes only for
+// those scopes.
+// ---------------------------------------------------------------------------
+
+staffOperatorRoutes.get(
+	'/announcements',
+	guarded({ all: READ_STAFF }, async (ctx, c) => {
+		const query = announcementListQuerySchema.safeParse(
+			Object.fromEntries(new URL(c.req.url).searchParams),
+		)
+		if (!query.success) return validationError(query.error)
+		return respond(
+			await listAnnouncements(
+				{ ...ctx, now: kioskDeps.punch.now() },
+				{ includeExpired: query.data.includeExpired },
+			),
+		)
+	}),
+)
+
+staffOperatorRoutes.post(
+	'/announcements',
+	guarded(WRITE_STAFF, async (ctx, c) => {
+		const body = await readBody(c, announcementCreateSchema)
+		if ('error' in body) return body.error
+		return respond(
+			await createAnnouncement(
+				{ ...ctx, now: kioskDeps.punch.now() },
+				body.data,
+			),
+			201,
+		)
+	}),
+)
+
+staffOperatorRoutes.get(
+	'/announcements/:id',
+	guarded({ all: READ_STAFF }, async (ctx, c) =>
+		respond(
+			await getAnnouncement(
+				{ ...ctx, now: kioskDeps.punch.now() },
+				param(c, 'id'),
+			),
+		),
+	),
+)
+
+staffOperatorRoutes.post(
+	'/announcements/:id/withdraw',
+	guarded(WRITE_STAFF, async (ctx, c) =>
+		respond(
+			await withdrawAnnouncement(
+				{ ...ctx, now: kioskDeps.punch.now() },
+				param(c, 'id'),
+			),
+		),
+	),
+)
+
+staffOperatorRoutes.get(
+	'/:id/hour-limits',
+	guarded({ all: READ_STAFF }, async (ctx, c) =>
+		respond(await getHourLimits(ctx, param(c, 'id'))),
+	),
+)
+
+staffOperatorRoutes.put(
+	'/:id/hour-limits',
+	guarded(WRITE_STAFF, async (ctx, c) => {
+		const body = await readBody(c, staffHourLimitsUpdateSchema)
+		if ('error' in body) return body.error
+		return respond(await setHourLimits(ctx, param(c, 'id'), body.data))
+	}),
 )
 
 staffOperatorRoutes.get(

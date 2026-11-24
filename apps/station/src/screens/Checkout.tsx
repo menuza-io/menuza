@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { giftCardErrorMessage, LabeledInput } from './GiftCardSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
+import { blockLock } from '~/lib/activity.ts'
 import {
 	cashDiscountAdjustment,
 	cashDiscountPercentText,
@@ -97,6 +98,9 @@ export function Checkout({
 	onClose: (result: { order: PosOrder | null; finished: boolean }) => void
 }) {
 	const { _ } = useLingui()
+	// A payment is open while this sheet is: the till is never signed out
+	// underneath it (#364), a card reader's prompt included.
+	useEffect(() => blockLock(), [])
 	const [current, setCurrent] = useState<PosOrder | null>(existing)
 	const [tipPercent, setTipPercent] = useState(0)
 	const [method, setMethod] = useState<TenderMethod>('cash')

@@ -1,6 +1,8 @@
 import {
+	KSA_HOUR_CAPS,
 	laborPolicyBaseSchema,
 	laborPolicyProblems,
+	NO_HOUR_CAPS,
 	type LaborPolicyFields,
 	type LaborPolicyProblem,
 } from '@repo/staffing'
@@ -36,6 +38,7 @@ export const EDITABLE_POLICY_KEYS = [
 	'longShiftMinutes',
 	'timesheetApprovalMode',
 	'aggregateOvertimeAcrossScopes',
+	'hourCaps',
 ] as const satisfies ReadonlyArray<keyof LaborPolicyFields>
 export type EditablePolicyKey = (typeof EDITABLE_POLICY_KEYS)[number]
 
@@ -84,6 +87,9 @@ export function starterPolicy(
 		longShiftMinutes: 12 * 60,
 		timesheetApprovalMode: 'approve',
 		aggregateOvertimeAcrossScopes: null,
+		// The KSA starter carries its hour limits; other regions start without.
+		hourCaps:
+			dataRegion?.toLowerCase() === 'ksa' ? { ...KSA_HOUR_CAPS } : NO_HOUR_CAPS,
 	}
 }
 
@@ -171,6 +177,10 @@ export function problemFor(
  */
 const SENTENCE_FIELD_UNITS: Record<string, 'hours' | 'minutes'> = {
 	longShiftMinutes: 'hours',
+	'hourCaps.dailyMinutes': 'hours',
+	'hourCaps.weeklyMinutes': 'hours',
+	'hourCaps.ramadanDailyMinutes': 'hours',
+	'hourCaps.ramadanWeeklyMinutes': 'hours',
 	'breakRules.autoDeduction.afterMinutes': 'hours',
 	'breakRules.autoDeduction.deductMinutes': 'minutes',
 	'weeklyOvertime.thresholdMinutes': 'hours',

@@ -25,6 +25,24 @@ Everything here is control-plane business data: no guest data, no regional call.
   grant tables. Tags and chain defaults are head office only (a member with
   every location): a scoped member who could tag locations could widen their own
   access.
+- **Location managers (#126).** The permission `update:member:own_locations`
+  (migration `0075`; the "General manager" role preset holds it) lets a member
+  invite, change and remove team members at their own locations, through one
+  guard (`utils/organization/member-management.server.ts`,
+  `assertCanManageMember`). Nobody grants a location outside their own scope
+  (`location_not_in_your_scope`) or a role with a permission they lack, Admin
+  included (`role_above_yours`); a location manager cannot change an admin
+  (`cannot_manage_admin`), themselves (`cannot_change_self`), or a member whose
+  scope reaches outside theirs (`member_outside_your_scope`, still listed so the
+  team is visible), and cannot hand out a tag or make an all-locations invite
+  link. An invitation carries `locationScope` (`all`, the default, or
+  `selected`) and `OrganizationInvitationLocation` rows; accepting it creates
+  the member with exactly those locations. A deleted location leaves pending
+  invitations, and one left with none is void (`invitation_has_no_locations`). A
+  manager sees only members who share one of their locations. The scope change
+  reaches regional tokens at the next mint (existing ones expire within 15
+  minutes). Every change is audited with before and after; the locations control
+  no longer depends on the Staff module.
 - **Bulk writes** go through `commitLocationPatches`: one `db.batch`, so every
   location changes or none. (`db.transaction` on D1 does not wrap in a
   transaction.) D1 allows 100 bound parameters per statement: load by

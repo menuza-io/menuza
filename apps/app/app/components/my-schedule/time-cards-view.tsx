@@ -8,11 +8,21 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from '@repo/ui/collapsible'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@repo/ui/dialog'
 import { Icon } from '@repo/ui/icon'
 import { Item, ItemGroup } from '@repo/ui/item'
 import { Skeleton } from '@repo/ui/skeleton'
+import { Textarea } from '@repo/ui/textarea'
 import { useId, useState } from 'react'
 import {
+	type MyScheduleApi,
 	type MyTimeCard,
 	type MyTimeCardEdit,
 	type MyTimeCards,
@@ -38,11 +48,16 @@ export function TimeCardsView({
 	error,
 	loading,
 	locale,
+	api,
+	onChanged,
 }: {
 	cards: MyTimeCards | null
 	error: unknown
 	loading: boolean
 	locale: string
+	/** Sends "Something's wrong" to the manager; without it the button is not shown. */
+	api?: MyScheduleApi
+	onChanged?: () => void
 }) {
 	const { _ } = useLingui()
 	if (!cards) {
@@ -79,18 +94,37 @@ export function TimeCardsView({
 			) : (
 				<ItemGroup className="gap-2">
 					{cards.cards.map((card) => (
-						<CardRow key={card.id} card={card} locale={locale} />
+						<CardRow
+							key={card.id}
+							card={card}
+							locale={locale}
+							api={api}
+							onChanged={onChanged}
+						/>
 					))}
 				</ItemGroup>
 			)}
 			<p className="text-muted-foreground text-sm text-balance">
-				<Trans>If something looks wrong, talk to your manager.</Trans>
+				<Trans>
+					If something looks wrong, tap Something's wrong on that card. Your
+					manager gets it.
+				</Trans>
 			</p>
 		</div>
 	)
 }
 
-function CardRow({ card, locale }: { card: MyTimeCard; locale: string }) {
+function CardRow({
+	card,
+	locale,
+	api,
+	onChanged,
+}: {
+	card: MyTimeCard
+	locale: string
+	api?: MyScheduleApi
+	onChanged?: () => void
+}) {
 	const { _ } = useLingui()
 	const [open, setOpen] = useState(false)
 	const panel = useId()
@@ -102,7 +136,7 @@ function CardRow({ card, locale }: { card: MyTimeCard; locale: string }) {
 				: card.status === 'locked'
 					? _(t`Locked`)
 					: null
-	const expandable = card.edits.length > 0
+	const expandable = card.edits.length > 0 || card.breaks.length > 0
 	const paid = formatPaid(card.paidMinutes, locale)
 	const content = (
 		<>
@@ -170,6 +204,30 @@ function CardRow({ card, locale }: { card: MyTimeCard; locale: string }) {
 							{content}
 						</CollapsibleTrigger>
 						<CollapsibleContent>
+							{card.breaks.length > 0 ? (
+								<ul
+									aria-label={_(t`Breaks`)}
+									className="border-border mt-3 flex flex-col gap-1 border-t pt-3 text-sm"
+								>
+									{card.breaks.map((b) => (
+										<li key={b.startAt} className="tabular-nums">
+											<bdi>
+												{b.endAt === null
+													? formatTime(b.startAt, card.timeZone, locale)
+													: formatRange(
+															b.startAt,
+															b.endAt,
+															card.timeZone,
+															locale,
+														)}
+											</bdi>{' '}
+											<span className="text-muted-foreground">
+												{b.paid ? <Trans>Paid break</Trans> : <Trans>Unpaid break</Trans>}
+											</span>
+										</li>
+									))}
+								</ul>
+							) : null}
 							<ol
 								id={panel}
 								className="border-border mt-3 flex flex-col gap-3 border-t pt-3"
@@ -190,8 +248,101 @@ function CardRow({ card, locale }: { card: MyTimeCard; locale: string }) {
 						{content}
 					</div>
 				)}
+				{api && card.clockOutAt !== null ? (
+					<WrongButton card={card} api={api} onChanged={onChanged} />
+				) : null}
 			</div>
 		</Item>
+	)
+}
+
+/** "Something's wrong": a short note to the manager, who fixes the card with a reason. */
+function WrongButton({
+	card,
+	api,
+	onChanged,
+}: {
+	card: MyTimeCard
+	api: MyScheduleApi
+	onChanged?: () => void
+}) {
+	const { _ } = useLingui()
+	const [open, setOpen] = useState(false)
+	const [note, setNote] = useState('')
+	const [busy, setBusy] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+	const final = card.status === 'approved' || card.status === 'locked'
+	if (card.correctionRequested) {
+		return (
+			<p className="text-muted-foreground mt-2 text-sm" role="status">
+				<Trans>You told your manager. They will look at it.</Trans>
+			</p>
+		)
+	}
+	if (final) return null
+
+	async function send() {
+		setBusy(true)
+		setError(null)
+		try {
+			await api.requestCorrection(card.id, note.trim() || null)
+			setOpen(false)
+			setNote('')
+			onChanged?.()
+		} catch (failure) {
+			setError(describeMyScheduleError(failure, _))
+		} finally {
+			setBusy(false)
+		}
+	}
+
+	return (
+		<>
+			<Button
+				type="button"
+				variant="outline"
+				size="sm"
+				className="mt-2 h-11 px-4"
+				onClick={() => setOpen(true)}
+			>
+				<Trans>Something's wrong</Trans>
+			</Button>
+			<Dialog open={open} onOpenChange={setOpen}>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle>
+							<Trans>Tell your manager what is wrong</Trans>
+						</DialogTitle>
+						<DialogDescription>
+							<Trans>
+								Say what looks wrong, for example the time you left. Your manager
+								checks it and fixes the card if it needs it.
+							</Trans>
+						</DialogDescription>
+					</DialogHeader>
+					<Textarea
+						aria-label={_(t`What is wrong`)}
+						rows={3}
+						maxLength={300}
+						value={note}
+						onChange={(event) => setNote(event.target.value)}
+					/>
+					{error ? (
+						<p role="alert" className="text-destructive text-sm">
+							{error}
+						</p>
+					) : null}
+					<DialogFooter>
+						<Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+							<Trans>Cancel</Trans>
+						</Button>
+						<Button type="button" disabled={busy} onClick={() => void send()}>
+							<Trans>Send to my manager</Trans>
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</>
 	)
 }
 

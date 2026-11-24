@@ -20,6 +20,8 @@ import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { publishWeek } from '#app/utils/staffing/schedule-api.ts'
 import { describeScheduleError } from '#app/utils/staffing/schedule-errors.ts'
 import {
+	hourCapRefusalSchema,
+	type HourCapBreachRow,
 	type PublishResultRow,
 	type ScheduleWeek,
 } from '#app/utils/staffing/schedule-types.ts'
@@ -28,10 +30,11 @@ import {
 	formatDuration,
 	summarizePublish,
 } from '#app/utils/staffing/schedule-view.ts'
-import { type StaffClient } from '#app/utils/staffing/staff-client.ts'
+import { StaffApiError, type StaffClient  } from '#app/utils/staffing/staff-client.ts'
 import { formatMoneyMinor } from '#app/utils/staffing/staff-format.ts'
 import { formatPeriodLabel } from '#app/utils/staffing/timesheet-view.ts'
-import { NotReachedList } from './notice-lists.tsx'
+import { HourCapBreaches } from './hour-cap-breaches.tsx'
+import { NotReachedList, usePersonName } from './notice-lists.tsx'
 
 /**
  * Publish the week: everything unpublished (new drafts, edits, removals) goes
@@ -66,30 +69,53 @@ export function PublishDialog({
 	const action = useStaffAction(describeScheduleError)
 	const [mode, setMode] = useState<ScheduleNotifyMode>('changed')
 	const [result, setResult] = useState<PublishResultRow | null>(null)
+	// Set when the server refuses to publish without a reason (#527).
+	const [caps, setCaps] = useState<{
+		breaches: HourCapBreachRow[]
+		total: number
+	} | null>(null)
+	const [reason, setReason] = useState('')
+	const nameOf = usePersonName(week.people, locale)
 	const summary = summarizePublish(week)
 	const range = formatPeriodLabel(week.weekStart, week.weekEnd, locale)
 	const estimate = estimateRecipients(week, mode).people
 
 	async function publish() {
-		const outcome = await action.run(() =>
-			publishWeek(client, {
-				scopeId,
-				weekStart: week.weekStart,
-				notifyMode: mode,
-				expectedVersion: week.version,
-			}),
-		)
+		const outcome = await action.run(async () => {
+			try {
+				return await publishWeek(client, {
+					scopeId,
+					weekStart: week.weekStart,
+					notifyMode: mode,
+					expectedVersion: week.version,
+					...(caps ? { capReason: reason.trim() } : {}),
+				})
+			} catch (error) {
+				// Over an hour cap: nothing was published. Show who, and ask why.
+				if (error instanceof StaffApiError && error.code === 'hour_caps_exceeded') {
+					const parsed = hourCapRefusalSchema.safeParse(error.details)
+					if (parsed.success) {
+						setCaps(parsed.data)
+						return null
+					}
+				}
+				throw error
+			}
+		})
 		if (!outcome.ok) {
 			// Re-read after any refusal: the week may have moved on.
 			onStale()
 			return
 		}
+		if (outcome.value === null) return
 		setResult(outcome.value)
 		onDone()
 	}
 
 	function close() {
 		setResult(null)
+		setCaps(null)
+		setReason('')
 		action.reset()
 		onClose()
 	}
@@ -208,6 +234,16 @@ export function PublishDialog({
 							</p>
 						) : null}
 
+						{caps ? (
+							<HourCapBreaches
+								breaches={caps.breaches}
+								total={caps.total}
+								nameOf={nameOf}
+								reason={reason}
+								onReason={setReason}
+							/>
+						) : null}
+
 						<FieldSet>
 							<FieldLegend variant="label">
 								<Trans>Tell your team</Trans>
@@ -264,11 +300,17 @@ export function PublishDialog({
 							</Button>
 							<Button
 								type="button"
-								disabled={action.pending || summary.total === 0}
+								disabled={
+									action.pending ||
+									summary.total === 0 ||
+									(caps !== null && reason.trim().length === 0)
+								}
 								onClick={() => void publish()}
 							>
 								{action.pending ? (
 									<Trans>Publishing…</Trans>
+								) : caps ? (
+									<Trans>Publish anyway</Trans>
 								) : (
 									<Trans>Publish</Trans>
 								)}

@@ -5,6 +5,7 @@ import { STAFFING_PERMISSIONS } from '@repo/staffing'
 import { data, useLoaderData } from 'react-router'
 import { z } from 'zod'
 import { LaborPolicyEditor } from '#app/components/staff/labor-policy-editor.tsx'
+import { PayEstimateCard } from '#app/components/staff/pay-estimate-card.tsx'
 import { TimeZoneCard } from '#app/components/staff/time-zone-card.tsx'
 import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import { requireStaffingAccess } from '#app/utils/staffing/access.server.ts'
@@ -127,6 +128,7 @@ export default function StaffTimeclockRulesRoute() {
 				timeZone={timeZone}
 				canEdit={canEditTimeZone}
 			/>
+			<PayEstimateCard canEdit={canEditDefault} />
 			<LaborPolicyEditor
 				scopes={scopes}
 				canEditDefault={canEditDefault}

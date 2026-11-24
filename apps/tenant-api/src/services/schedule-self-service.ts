@@ -1,7 +1,20 @@
-import { and, asc, between, count, desc, eq, gte, ne } from 'drizzle-orm'
+import {
+	and,
+	asc,
+	between,
+	count,
+	desc,
+	eq,
+	gte,
+	isNull,
+	ne,
+} from 'drizzle-orm'
 import {
 	addDays,
+	costUnitsToMinor,
 	localDateOf,
+	payPeriodFor,
+	weekStartFor,
 	SELF_DEFAULT_DAYS_BACK,
 	SELF_DEFAULT_DAYS_FORWARD,
 	SELF_MAX_PENDING_REQUESTS,
@@ -18,6 +31,8 @@ import {
 	type MyTimeCardEdit,
 	type MyTimeCardsView,
 	type MyTimeOffView,
+	type MyWeekView,
+	type SelfCorrection,
 	type SelfRangeQuery,
 	type ShiftRequestCreate,
 	type TimeOffCreate,
@@ -29,6 +44,7 @@ import {
 	staffScopeAssignments,
 	staffMembers,
 	staffPositions,
+	timeCorrectionRequests,
 	timeEntries,
 	timeEntryEdits,
 	timeOffRequests,
@@ -54,13 +70,20 @@ import {
 	cancelShiftRequest,
 	createShiftRequest,
 } from './schedule-shift-request-service.ts'
+import { transact } from './schedule-shift-service.ts'
 import {
 	isOpaqueId,
 	type ScheduleContext,
 	type ScheduleResult,
 	type SelfWriteGuard,
 } from './schedule-shared.ts'
-import { type StaffDb } from './staff-audit.ts'
+import {
+	loadMyAnnouncements,
+	markAnnouncementRead,
+} from './staff-announcements-service.ts'
+import { payPeriodConfig } from './timesheet-view-service.ts'
+import { loadScheduleSettings } from './schedule-shared.ts'
+import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { buildLiveCards, fail, ok, selectCardRows } from './timesheet-shared.ts'
 import { inJsonList } from '../lib/chunked-in.ts'
 
@@ -140,7 +163,7 @@ type ScopeInfo = {
 }
 
 async function scopeInfo(
-	ctx: SelfContext,
+	ctx: Pick<SelfContext, 'db' | 'orgId' | 'now'>,
 	scopeId: string,
 ): Promise<ScopeInfo> {
 	const facts = await getScopeFacts(ctx.orgId, scopeId, ctx.now).catch(
@@ -375,6 +398,25 @@ export async function loadMyTimeCards(
 		list.push(edit)
 		byEntry.set(edit.entryId, list)
 	}
+	const openCorrections = live.length
+		? new Set(
+				(
+					await ctx.db
+						.select({ entryId: timeCorrectionRequests.entryId })
+						.from(timeCorrectionRequests)
+						.where(
+							and(
+								inJsonList(
+									timeCorrectionRequests.entryId,
+									live.map((card) => card.entry.id),
+								),
+								eq(timeCorrectionRequests.staffId, ctx.staff.id),
+								eq(timeCorrectionRequests.status, 'open'),
+							),
+						)
+				).map((row) => row.entryId),
+			)
+		: new Set<string>()
 	const cards: MyTimeCard[] = live
 		.map((card) => ({
 			id: card.entry.id,
@@ -388,11 +430,312 @@ export async function loadMyTimeCards(
 			status: STAFF_STATUS[card.status] ?? 'closed',
 			paidMinutes: card.figures.paidMinutes,
 			unpaidBreakMinutes: card.figures.unpaidBreakMinutes,
+			// Times and whether paid only: never a note.
+			breaks: card.breaks.map((b) => ({
+				startAt: b.startAt,
+				endAt: b.endAt,
+				paid: b.paid,
+			})),
 			edited: card.issues.includes('edited') || byEntry.has(card.entry.id),
 			edits: (byEntry.get(card.entry.id) ?? []).map(toMyEdit),
+			correctionRequested: openCorrections.has(card.entry.id),
 		}))
 		.sort((a, b) => b.clockInAt - a.clockInAt)
 	return ok({ serverNow: ctx.now, from, to, cards })
+}
+
+// ---------------------------------------------------------------------------
+// My week: hours, the next shift and (when turned on) an estimate of pay
+// ---------------------------------------------------------------------------
+
+/** What the week view needs of the caller: the person and the clock. */
+export type WeekContext = Pick<SelfContext, 'db' | 'orgId' | 'staff' | 'now'>
+
+export async function loadMyWeek(
+	ctx: WeekContext,
+): Promise<ScheduleResult<MyWeekView>> {
+	const { scopeIds } = await assignedScopes(ctx.db, ctx.staff.id)
+	const primaryScope = scopeIds[0] ?? null
+	const info = primaryScope ? await scopeInfo(ctx, primaryScope) : null
+	const timeZone = info?.timeZone ?? 'UTC'
+	const policy = primaryScope ? await resolvePolicy(ctx.db, primaryScope) : null
+	const today = localDateOf(ctx.now, timeZone)
+	const weekStart = weekStartFor(today, policy?.weekStartsOn ?? 1)
+	const weekEnd = addDays(weekStart, 6)
+
+	// The person's own published shifts: this week's, and the next to come.
+	const weekShifts = await ctx.db
+		.select()
+		.from(shifts)
+		.where(
+			and(
+				eq(shifts.staffId, ctx.staff.id),
+				eq(shifts.status, 'published'),
+				between(shifts.localDate, weekStart, weekEnd),
+			),
+		)
+	const scheduledMinutes = weekShifts.reduce(
+		(sum, row) =>
+			sum +
+			Math.max(
+				0,
+				Math.round((row.endsAt - row.startsAt) / 60_000) -
+					Math.max(0, row.unpaidBreakMinutes),
+			),
+		0,
+	)
+	const [next] = await ctx.db
+		.select({
+			shift: shifts,
+			positionName: staffPositions.name,
+			positionNameAr: staffPositions.nameAr,
+		})
+		.from(shifts)
+		.leftJoin(staffPositions, eq(staffPositions.id, shifts.positionId))
+		.where(
+			and(
+				eq(shifts.staffId, ctx.staff.id),
+				eq(shifts.status, 'published'),
+				gte(shifts.endsAt, ctx.now),
+			),
+		)
+		.orderBy(asc(shifts.startsAt), asc(shifts.id))
+		.limit(1)
+
+	// Hours worked so far, by the shared time math (an open card counts to now).
+	const weekRows = await selectCardRows(
+		ctx.db,
+		and(
+			eq(timeEntries.staffId, ctx.staff.id),
+			between(timeEntries.localDate, weekStart, weekEnd),
+		),
+		MAX_SHIFTS,
+	)
+	const weekCards = await buildLiveCards(ctx, weekRows, {
+		fromDate: weekStart,
+		toDate: weekEnd,
+	})
+	const workedMinutes = weekCards.reduce(
+		(sum, card) => sum + card.figures.paidMinutes,
+		0,
+	)
+
+	const view: MyWeekView = {
+		serverNow: ctx.now,
+		weekStart,
+		weekEnd,
+		timeZone,
+		workedMinutes,
+		scheduledMinutes,
+		nextShift: next
+			? toMyShift(next.shift, {
+					name: next.positionName,
+					nameAr: next.positionNameAr,
+				})
+			: null,
+	}
+
+	// Pay is shown only when the organization turned it on, and only as an
+	// estimate: hours times the rate on each card, with the labor policy's
+	// overtime rules, for the current pay period.
+	const settings = await loadScheduleSettings(ctx.db)
+	if (settings.showStaffPayEstimate) {
+		const config = await payPeriodConfig(ctx.db, primaryScope)
+		const period = payPeriodFor(today, config)
+		const rows = await selectCardRows(
+			ctx.db,
+			and(
+				eq(timeEntries.staffId, ctx.staff.id),
+				between(timeEntries.localDate, period.start, period.end),
+			),
+			MAX_SHIFTS,
+		)
+		const cards = await buildLiveCards(ctx, rows, {
+			fromDate: period.start,
+			toDate: period.end,
+		})
+		const currencies = new Set(
+			cards.flatMap((card) =>
+				card.entry.currency ? [card.entry.currency] : [],
+			),
+		)
+		const costUnits = cards.reduce(
+			(sum, card) => sum + card.figures.costUnits,
+			0,
+		)
+		view.pay = {
+			label: 'estimate_before_tax',
+			periodStart: period.start,
+			periodEnd: period.end,
+			// One currency is a figure; several or none is no honest total.
+			estimateMinor:
+				currencies.size === 1 && costUnits > 0
+					? costUnitsToMinor(costUnits)
+					: null,
+			currency: currencies.size === 1 ? [...currencies][0]! : null,
+			regularMinutes: cards.reduce(
+				(sum, card) => sum + card.figures.regularMinutes,
+				0,
+			),
+			overtimeMinutes: cards.reduce(
+				(sum, card) =>
+					sum + card.figures.overtimeMinutes + card.figures.doubleTimeMinutes,
+				0,
+			),
+			unpricedMinutes: cards.reduce(
+				(sum, card) => sum + card.figures.unpricedMinutes,
+				0,
+			),
+		}
+	}
+	return ok(view)
+}
+
+// ---------------------------------------------------------------------------
+// Announcements (#486)
+// ---------------------------------------------------------------------------
+
+export async function listMyAnnouncements(ctx: SelfContext) {
+	return loadMyAnnouncements({
+		db: ctx.db,
+		staffId: ctx.staff.id,
+		now: ctx.now,
+	})
+}
+
+/** "Got it" on My schedule. */
+export async function readMyAnnouncement(
+	ctx: SelfContext,
+	announcementId: string,
+) {
+	if (!isOpaqueId(announcementId)) return fail(404, 'not_found')
+	return markAnnouncementRead(
+		{
+			db: ctx.db,
+			staffId: ctx.staff.id,
+			now: ctx.now,
+			audit: (tx, event) =>
+				writeStaffAudit(
+					tx,
+					{
+						orgId: ctx.orgId,
+						userId: `staff:${ctx.staff.id}`,
+						scope: 'schedule',
+						grants: [],
+						scopeIds: null,
+						impersonated: false,
+						actorKind: 'staff_link',
+					},
+					ctx.ipHash,
+					event,
+				),
+		},
+		announcementId,
+		'schedule',
+	)
+}
+
+// ---------------------------------------------------------------------------
+// "Something's wrong" on a time card
+// ---------------------------------------------------------------------------
+
+export type CorrectionRequestResult = {
+	correction: { id: string; status: 'open' }
+}
+
+/**
+ * Sends a correction request for one of the person's own closed time cards to
+ * their manager (#514). The card is flagged `correction_requested`, which puts
+ * it on the manager's Needs review list; the manager fixes it with a reason as
+ * for any edit, and that resolves the request. A repeat is not a second
+ * request. An approved or locked card is final: the person is told to ask.
+ */
+export async function createMyCorrection(
+	ctx: SelfContext,
+	entryId: string,
+	input: SelfCorrection,
+): Promise<ScheduleResult<CorrectionRequestResult>> {
+	if (!isOpaqueId(entryId)) return fail(404, 'not_found')
+	return transact(ctx.db, async (tx) => {
+		const [entry] = await tx
+			.select()
+			.from(timeEntries)
+			.where(
+				and(
+					eq(timeEntries.id, entryId),
+					eq(timeEntries.staffId, ctx.staff.id),
+					isNull(timeEntries.voidedAt),
+				),
+			)
+			.limit(1)
+		// Someone else's card looks the same as a card that does not exist.
+		if (!entry) return fail(404, 'not_found')
+		if (entry.clockOutAt === null) return fail(409, 'open_card')
+		if (entry.status === 'approved' || entry.status === 'locked') {
+			return fail(409, 'card_finalized')
+		}
+		const [existing] = await tx
+			.select()
+			.from(timeCorrectionRequests)
+			.where(
+				and(
+					eq(timeCorrectionRequests.entryId, entry.id),
+					eq(timeCorrectionRequests.status, 'open'),
+				),
+			)
+			.limit(1)
+		if (existing) {
+			return ok({ correction: { id: existing.id, status: 'open' as const } })
+		}
+		const [created] = await tx
+			.insert(timeCorrectionRequests)
+			.values({
+				entryId: entry.id,
+				staffId: ctx.staff.id,
+				scopeId: entry.scopeId,
+				note: input.note ?? null,
+				createdAt: ctx.now,
+			})
+			.returning()
+		const issues = entry.issues.includes('correction_requested')
+			? entry.issues
+			: [...entry.issues, 'correction_requested']
+		await tx
+			.update(timeEntries)
+			.set({
+				issues,
+				// Back to the manager's queue, even if they had looked at it before.
+				status: 'needs_review',
+				reviewedAt: null,
+				reviewedBy: null,
+				version: entry.version + 1,
+				updatedAt: ctx.now,
+			})
+			.where(eq(timeEntries.id, entry.id))
+		await writeStaffAudit(
+			tx,
+			{
+				orgId: ctx.orgId,
+				userId: `staff:${ctx.staff.id}`,
+				scope: 'schedule',
+				grants: [],
+				scopeIds: [entry.scopeId],
+				impersonated: false,
+				actorKind: 'staff_link',
+			},
+			ctx.ipHash,
+			{
+				action: 'timesheet.correction.requested',
+				entityType: 'time_entry',
+				entityId: entry.id,
+				staffId: ctx.staff.id,
+				scopeId: entry.scopeId,
+				// Ids only: the person's note stays in the request row.
+				changes: { requestId: created!.id, hasNote: input.note != null },
+			},
+		)
+		return ok({ correction: { id: created!.id, status: 'open' as const } })
+	})
 }
 
 // ---------------------------------------------------------------------------

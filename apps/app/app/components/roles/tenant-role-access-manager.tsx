@@ -139,6 +139,11 @@ export function getPermissionGroups(): PermissionGroup[] {
 					description: t`Revoke workspace access and remove non-admin members.`,
 					warning: t`High impact`,
 				},
+				{
+					id: 'org_perm_update_member_own_locations',
+					label: t`Manage the team at their own locations`,
+					description: t`Invite, change and remove members whose locations are all among their own, and give only locations and roles they hold themselves. Never changes admins.`,
+				},
 			],
 		},
 		{

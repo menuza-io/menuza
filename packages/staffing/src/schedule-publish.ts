@@ -343,6 +343,14 @@ export const selfShiftRequestSchema = z.preprocess(
 	shiftRequestCreateSchema,
 )
 
+/** "Something's wrong" on a time card: a short note, optional. */
+export const selfCorrectionSchema = z
+	.object({
+		note: z.string().trim().min(1).max(300).nullable().optional(),
+	})
+	.strict()
+export type SelfCorrection = z.infer<typeof selfCorrectionSchema>
+
 export const selfRangeQuerySchema = z
 	.object({
 		from: localDateSchema.optional(),
@@ -412,6 +420,13 @@ export type MyTimeCardEdit = {
 	createdAt: number
 }
 
+/** One break on the person's own time card. Never a note or a pay figure. */
+export type MyTimeCardBreak = {
+	startAt: number
+	endAt: number | null
+	paid: boolean
+}
+
 export type MyTimeCard = {
 	id: string
 	scopeId: string
@@ -424,8 +439,44 @@ export type MyTimeCard = {
 	status: string
 	paidMinutes: number
 	unpaidBreakMinutes: number
+	breaks: MyTimeCardBreak[]
 	edited: boolean
 	edits: MyTimeCardEdit[]
+	/** The person already asked for a correction and a manager has not answered yet. */
+	correctionRequested: boolean
+}
+
+/**
+ * The person's own week (#514): hours so far and scheduled, the next shift and,
+ * only when the organization turned it on, an estimate of pay for the pay
+ * period. Never anyone else's data. `pay` is absent (not null-valued fields)
+ * while the organization keeps it off.
+ */
+export type MyWeekView = {
+	serverNow: number
+	weekStart: string
+	weekEnd: string
+	timeZone: string
+	/** Paid minutes worked this week so far (an open card is counted to now). */
+	workedMinutes: number
+	/** Paid minutes on the person's published shifts this week. */
+	scheduledMinutes: number
+	nextShift: MyShift | null
+	pay?: MyPayEstimate
+}
+
+export type MyPayEstimate = {
+	/** Always an estimate, before tax: the page says so. */
+	label: 'estimate_before_tax'
+	periodStart: string
+	periodEnd: string
+	/** Hours times the rate on each card, with the labor policy's overtime rules. */
+	estimateMinor: number | null
+	currency: string | null
+	regularMinutes: number
+	overtimeMinutes: number
+	/** Worked minutes with no rate on file, left out of the estimate. */
+	unpricedMinutes: number
 }
 
 export type MyTimeCardsView = {

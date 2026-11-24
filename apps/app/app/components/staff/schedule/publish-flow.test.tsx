@@ -67,8 +67,11 @@ function stub(options: {
 	notices?: unknown
 	resendResult?: unknown
 	resendFails?: string
+	/** Answers a publish itself (the hour-cap refusal), by attempt number. */
+	publish?: (body: any, attempt: number) => Response | undefined
 }) {
 	const calls: Call[] = []
+	let publishAttempts = 0
 	vi.stubGlobal(
 		'fetch',
 		vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -95,6 +98,12 @@ function stub(options: {
 				return Response.json(demand())
 			}
 			if (url.includes('/operator/schedule/publish') && method === 'POST') {
+				publishAttempts += 1
+				const custom = options.publish?.(
+					init?.body ? JSON.parse(String(init.body)) : undefined,
+					publishAttempts,
+				)
+				if (custom) return custom
 				return Response.json(options.publishResult)
 			}
 			if (url.includes('/operator/schedule/publications/pub2/notices')) {
@@ -333,6 +342,80 @@ describe('publishing, with a summary first', () => {
 		fireEvent.click(within(dialog).getByRole('button', { name: 'Publish' }))
 		expect(await within(dialog).findByText('A former team member')).toBeTruthy()
 		expect(within(dialog).getByText('No longer on the team')).toBeTruthy()
+	})
+
+	describe('over an hour cap (#527)', () => {
+		const breach = {
+			staffId: 's1',
+			shiftId: 'a',
+			kind: 'daily',
+			date: '2026-03-03',
+			capMinutes: 480,
+			scheduledMinutes: 540,
+		}
+		const refusal = () =>
+			Response.json(
+				{ error: 'hour_caps_exceeded', breaches: [breach], total: 1 },
+				{ status: 409 },
+			)
+
+		it('lists who goes over, asks why, and publishes with the reason', async () => {
+			const calls = stub({
+				week: populated(),
+				publishResult: {
+					publication: publication(),
+					week: { version: 2, unpublishedCount: 0 },
+				},
+				publish: (body) => (body?.capReason ? undefined : refusal()),
+			})
+			view()
+			const dialog = await openDialog()
+			fireEvent.click(within(dialog).getByRole('button', { name: 'Publish' }))
+			// Nothing was published: the dialog names the breach and asks for a reason.
+			expect(
+				await within(dialog).findByText('1 person would go over an hour limit'),
+			).toBeTruthy()
+			expect(within(dialog).getByText(/Rana Khalid/)).toBeTruthy()
+			expect(
+				within(dialog).getByText(
+					(_, element) =>
+						element?.tagName === 'LI' &&
+						/9h in a day, limit 8h/.test(element.textContent ?? ''),
+				),
+			).toBeTruthy()
+			const anyway = within(dialog).getByRole('button', {
+				name: 'Publish anyway',
+			}) as HTMLButtonElement
+			// Not without a reason.
+			expect(anyway.disabled).toBe(true)
+			fireEvent.change(within(dialog).getByLabelText('Why go ahead?'), {
+				target: { value: 'Covering a sick call' },
+			})
+			expect(anyway.disabled).toBe(false)
+			fireEvent.click(anyway)
+			await within(dialog).findByText('Published')
+			const sent = calls.filter(
+				(c) => c.url.includes('/publish') && c.method === 'POST',
+			)
+			expect(sent).toHaveLength(2)
+			expect(sent[0]!.body.capReason).toBeUndefined()
+			expect(sent[1]!.body.capReason).toBe('Covering a sick call')
+		})
+
+		it('does not ask for a reason when nobody goes over', async () => {
+			stub({
+				week: populated(),
+				publishResult: {
+					publication: publication(),
+					week: { version: 2, unpublishedCount: 0 },
+				},
+			})
+			view()
+			const dialog = await openDialog()
+			expect(within(dialog).queryByLabelText('Why go ahead?')).toBeNull()
+			fireEvent.click(within(dialog).getByRole('button', { name: 'Publish' }))
+			await within(dialog).findByText('Published')
+		})
 	})
 
 	it('reloads the week after a refusal instead of leaving a stale dialog', async () => {

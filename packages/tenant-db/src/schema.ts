@@ -2428,6 +2428,13 @@ export const laborPolicies = sqliteTable(
 		}),
 		rulePack: text('rule_pack').notNull().default('generic'),
 		rulePackVersion: integer('rule_pack_version').notNull().default(1),
+		// Hour caps (#527): most paid minutes scheduled per person in a day and a
+		// week, and the Ramadan figures for people who follow that limit. Null is
+		// no cap. The schedule warns above them; nothing refuses a shift.
+		hourCapDailyMinutes: integer('hour_cap_daily_minutes'),
+		hourCapWeeklyMinutes: integer('hour_cap_weekly_minutes'),
+		hourCapRamadanDailyMinutes: integer('hour_cap_ramadan_daily_minutes'),
+		hourCapRamadanWeeklyMinutes: integer('hour_cap_ramadan_weekly_minutes'),
 		version: integer('version').notNull().default(1),
 		updatedBy: text('updated_by'),
 		createdAt: integer('created_at').notNull().default(nowMs),
@@ -3701,6 +3708,28 @@ export const scheduleSettings = sqliteTable('schedule_settings', {
 	timeOffMinNoticeDays: integer('time_off_min_notice_days')
 		.notNull()
 		.default(0),
+	// Whether staff see an estimate of their pay on My schedule and the Station
+	// "My week" view (#514). Off until the organization turns it on.
+	showStaffPayEstimate: integer('show_staff_pay_estimate', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	updatedBy: text('updated_by'),
+	updatedAt: integer('updated_at').notNull().default(nowMs),
+})
+
+// A person's own hour limits (#527): replace the scope's daily and weekly caps
+// (part-time, minors) and say whether the person follows the Ramadan limit. The
+// Ramadan flag is optional and private to managers who may see private staff
+// details; no staff-facing route returns it.
+export const staffHourLimits = sqliteTable('staff_hour_limits', {
+	staffId: text('staff_id')
+		.primaryKey()
+		.references(() => staffMembers.id),
+	dailyCapMinutes: integer('daily_cap_minutes'),
+	weeklyCapMinutes: integer('weekly_cap_minutes'),
+	followsRamadan: integer('follows_ramadan', { mode: 'boolean' })
+		.notNull()
+		.default(false),
 	updatedBy: text('updated_by'),
 	updatedAt: integer('updated_at').notNull().default(nowMs),
 })
@@ -4004,6 +4033,10 @@ export const shiftRequests = sqliteTable(
 		shiftTimes: text('shift_times', {
 			mode: 'json',
 		}).$type<ShiftRequestShiftTimes>(),
+		// The publication that put an approved request on the live schedule
+		// (#528). Null for a request that was rejected, cancelled or approved
+		// before approval applied the change itself.
+		appliedPublicationId: text('applied_publication_id'),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
 	},
@@ -4014,6 +4047,108 @@ export const shiftRequests = sqliteTable(
 			.where(sql`${table.status} = 'pending'`),
 		index('idx_shift_requests_status').on(table.status, table.createdAt),
 		index('idx_shift_requests_requester').on(table.requesterStaffId),
+	],
+)
+
+// A person's "Something's wrong" on one of their own time cards (#514). It
+// flags the card for the manager's Needs review list (the `correction_requested`
+// issue) and says nothing else: the manager fixes the card with a reason, as for
+// any edit, and that resolves the request. The note is the person's own words
+// about their own hours and stays in the regional database.
+export const TIME_CORRECTION_STATUS_VALUES = ['open', 'resolved'] as const
+
+export const timeCorrectionRequests = sqliteTable(
+	'time_correction_requests',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		entryId: text('entry_id')
+			.notNull()
+			.references(() => timeEntries.id),
+		staffId: text('staff_id')
+			.notNull()
+			.references(() => staffMembers.id),
+		scopeId: text('scope_id').notNull(),
+		note: text('note'),
+		status: text('status', { enum: [...TIME_CORRECTION_STATUS_VALUES] })
+			.notNull()
+			.default('open'),
+		resolvedBy: text('resolved_by'),
+		resolvedAt: integer('resolved_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		// One open request per card: a second tap is a repeat, not a new request.
+		uniqueIndex('uniq_time_correction_open_entry')
+			.on(table.entryId)
+			.where(sql`${table.status} = 'open'`),
+		index('idx_time_correction_staff').on(table.staffId, table.createdAt),
+	],
+)
+
+// Announcements to staff (#486): a short notice for everyone, one position or
+// one scope, shown on My schedule and on Station after the next punch, with a
+// "Got it" that is recorded. Not a chat: there are no replies. An announcement
+// stops showing at `expires_at`; it is never deleted, so the record of who read
+// it stays. Staff data: it never leaves the regional database.
+export const ANNOUNCEMENT_AUDIENCE_VALUES = [
+	'everyone',
+	'position',
+	'scope',
+] as const
+export const ANNOUNCEMENT_READ_SOURCE_VALUES = ['schedule', 'station'] as const
+
+export const staffAnnouncements = sqliteTable(
+	'staff_announcements',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		title: text('title').notNull(),
+		body: text('body').notNull(),
+		audience: text('audience', { enum: [...ANNOUNCEMENT_AUDIENCE_VALUES] })
+			.notNull()
+			.default('everyone'),
+		// A position id or a scope id, by `audience`; null for everyone.
+		audienceId: text('audience_id'),
+		startsAt: integer('starts_at').notNull(),
+		expiresAt: integer('expires_at').notNull(),
+		createdBy: text('created_by').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		// A manager can take it down early; the reads stay.
+		withdrawnAt: integer('withdrawn_at'),
+		withdrawnBy: text('withdrawn_by'),
+	},
+	(table) => [
+		index('idx_staff_announcements_expires').on(table.expiresAt),
+		index('idx_staff_announcements_audience').on(
+			table.audience,
+			table.audienceId,
+		),
+	],
+)
+
+export const staffAnnouncementReads = sqliteTable(
+	'staff_announcement_reads',
+	{
+		announcementId: text('announcement_id')
+			.notNull()
+			.references(() => staffAnnouncements.id),
+		staffId: text('staff_id')
+			.notNull()
+			.references(() => staffMembers.id),
+		source: text('source', { enum: [...ANNOUNCEMENT_READ_SOURCE_VALUES] })
+			.notNull()
+			.default('schedule'),
+		readAt: integer('read_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.announcementId, table.staffId],
+			name: 'staff_announcement_reads_pk',
+		}),
+		index('idx_staff_announcement_reads_staff').on(table.staffId),
 	],
 )
 
@@ -7744,6 +7879,10 @@ export type VoiceRecordingDeletion = typeof voiceRecordingDeletions.$inferSelect
 export type VoiceLineVerification = typeof voiceLineVerifications.$inferSelect
 
 export type StaffMember = typeof staffMembers.$inferSelect
+export type StaffAnnouncement = typeof staffAnnouncements.$inferSelect
+export type StaffAnnouncementRead = typeof staffAnnouncementReads.$inferSelect
+export type TimeCorrectionRequest = typeof timeCorrectionRequests.$inferSelect
+export type StaffHourLimitsRow = typeof staffHourLimits.$inferSelect
 export type NewStaffMember = typeof staffMembers.$inferInsert
 export type StaffPrivate = typeof staffPrivate.$inferSelect
 export type StaffPosition = typeof staffPositions.$inferSelect

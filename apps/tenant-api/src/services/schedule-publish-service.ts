@@ -19,7 +19,10 @@ import {
 } from '@repo/tenant-db'
 import {
 	chunk,
+	hourCapBreachesFor,
 	effectiveShift,
+	isLive,
+	MAX_BREACHES_LISTED,
 	FrameCache,
 	isOpaqueId,
 	loadScopeShifts,
@@ -57,7 +60,6 @@ export type PublishContext = Omit<ScheduleContext, 'db'> & {
 }
 
 const BULK_CHUNK = 90
-
 function toPublicationView(
 	row: SchedulePublicationRow,
 ): SchedulePublicationView {
@@ -173,6 +175,21 @@ export async function publishWeek(
 			if (input.notifyMode !== 'everyone' || publishedAlready === 0) {
 				return fail(409, 'nothing_to_publish')
 			}
+		}
+
+		// Hour caps (#527): publishing makes every live shift of the week real, so
+		// list who it takes over a daily or weekly cap. A publish with breaches
+		// needs a reason, which is audited; nothing else about it is refused.
+		const capBreaches = await hourCapBreachesFor(
+			{ ...ctx, db: tx },
+			frame,
+			rows.map(effectiveShift).filter((shift) => isLive(shift)),
+		)
+		if (capBreaches.length > 0 && input.capReason === undefined) {
+			return fail(409, 'hour_caps_exceeded', {
+				breaches: capBreaches.slice(0, MAX_BREACHES_LISTED),
+				total: capBreaches.length,
+			})
 		}
 
 		const changes: SchedulePublicationChange[] = []
@@ -359,6 +376,13 @@ export async function publishWeek(
 				notified: notification.queued,
 				notReached: notification.notReached.length,
 				...summary,
+				...(capBreaches.length > 0
+					? {
+							capBreaches: capBreaches.length,
+							// A manager's own words about their schedule, no guest data.
+							capReason: input.capReason,
+						}
+					: {}),
 			},
 		})
 		return ok({

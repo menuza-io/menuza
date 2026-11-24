@@ -90,6 +90,8 @@ export function OrganizationInvitations({
 	availableRoles = [],
 	organizationSlug,
 	canManageRoles = false,
+	locationNames = {},
+	invitableLocationIds = null,
 }: {
 	pendingInvitations?: Array<{
 		id: string
@@ -100,6 +102,9 @@ export function OrganizationInvitations({
 		}
 		createdAt: Date
 		inviter?: { name: string | null; email: string } | null
+		locationScope?: string
+		locationIds?: string[]
+		hasNoLocations?: boolean
 	}>
 	inviteLink?: {
 		id: string
@@ -115,9 +120,19 @@ export function OrganizationInvitations({
 	availableRoles?: OrganizationRoleOption[]
 	organizationSlug?: string
 	canManageRoles?: boolean
+	/** Location id to name; empty when the organization has no locations. */
+	locationNames?: Record<string, string>
+	/** The locations the inviter may hand out; `null` means every location. */
+	invitableLocationIds?: string[] | null
 }) {
 	const { _ } = useLingui()
 	const { roleName, roleDescription } = useRoleLabels()
+	const inviteLocations = Object.entries(locationNames)
+		.filter(
+			([id]) => invitableLocationIds === null || invitableLocationIds.includes(id),
+		)
+		.map(([id, name]) => ({ id, name }))
+	const canChooseAll = invitableLocationIds === null
 	// Create dynamic schema and roles based on available roles
 	const InviteSchema = createInviteSchema(_)
 	const roles = availableRoles.map((role) => ({
@@ -318,6 +333,13 @@ export function OrganizationInvitations({
 								</Button>
 							</div>
 
+							{inviteLocations.length > 0 ? (
+								<InviteLocations
+									locations={inviteLocations}
+									canChooseAll={canChooseAll}
+								/>
+							) : null}
+
 							<div className="mt-6 space-y-2">
 								<ErrorList id={form.errorId} errors={form.errors} />
 								<Button
@@ -361,6 +383,23 @@ export function OrganizationInvitations({
 															<Trans>Invited by {inviterName}</Trans>
 														</ItemDescription>
 													)}
+													{invitation.hasNoLocations ? (
+														<ItemDescription>
+															<Trans>
+																Its locations were deleted, so it can no longer
+																be accepted.
+															</Trans>
+														</ItemDescription>
+													) : invitation.locationScope !== 'all' ? (
+														<ItemDescription>
+															<bdi>
+																{(invitation.locationIds ?? [])
+																	.map((id) => locationNames[id])
+																	.filter(Boolean)
+																	.join(', ')}
+															</bdi>
+														</ItemDescription>
+													) : null}
 												</ItemContent>
 												<ItemActions>
 													<Form method="POST">
@@ -527,5 +566,67 @@ function InviteFieldset({
 				<ErrorList id={meta.errorId} errors={meta.errors} />
 			</fieldset>
 		</div>
+	)
+}
+
+/**
+ * Which locations the new members get: every location, or a chosen list. The
+ * choice applies to every invitation sent with the form, and takes effect when
+ * each is accepted. A location manager can only choose from their own.
+ */
+function InviteLocations({
+	locations,
+	canChooseAll,
+}: {
+	locations: Array<{ id: string; name: string }>
+	canChooseAll: boolean
+}) {
+	const [scope, setScope] = useState<'all' | 'selected'>(
+		canChooseAll ? 'all' : 'selected',
+	)
+	return (
+		<fieldset className="mt-6 space-y-3">
+			<legend className="text-sm font-medium">
+				<Trans>Locations they can access</Trans>
+			</legend>
+			<input type="hidden" name="locationScope" value={scope} />
+			{canChooseAll ? (
+				<div className="flex flex-col gap-2 text-sm">
+					<label className="flex items-center gap-2">
+						<input
+							type="radio"
+							name="locationScopeChoice"
+							checked={scope === 'all'}
+							onChange={() => setScope('all')}
+						/>
+						<Trans>All locations</Trans>
+					</label>
+					<label className="flex items-center gap-2">
+						<input
+							type="radio"
+							name="locationScopeChoice"
+							checked={scope === 'selected'}
+							onChange={() => setScope('selected')}
+						/>
+						<Trans>Only the locations I choose</Trans>
+					</label>
+				</div>
+			) : null}
+			{scope === 'selected' ? (
+				<div className="flex flex-col gap-2 text-sm">
+					{locations.map((location) => (
+						<label key={location.id} className="flex items-center gap-2">
+							<input
+								type="checkbox"
+								name="locationIds"
+								value={location.id}
+								defaultChecked={locations.length === 1}
+							/>
+							<bdi>{location.name}</bdi>
+						</label>
+					))}
+				</div>
+			) : null}
+		</fieldset>
 	)
 }

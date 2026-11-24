@@ -1,4 +1,4 @@
-import { t, Trans } from '@lingui/macro'
+import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { NO_POS_DEVICE_APPS, resetTimeMinutes } from '@repo/common/pos-orders'
 import {
@@ -18,7 +18,13 @@ import { HostStand } from './apps/reservations/HostStand.tsx'
 import { Stock } from './apps/stock/Stock.tsx'
 import { TimeClock } from './apps/timeclock/TimeClock.tsx'
 import { applyLocale, effectiveLocale } from './i18n.ts'
-import { idleMs, lockHeld, shouldLock, touch } from '~/lib/activity.ts'
+import {
+	idleDecision,
+	idleMs,
+	lockBlocked,
+	lockHeld,
+	touch,
+} from '~/lib/activity.ts'
 import { cashDiscountRate } from '~/lib/cash-discount.ts'
 import { categoryItems, isSoldOut } from '~/lib/catalog.ts'
 import { clockIsOff, skewMinutes, useClock } from '~/lib/clock.ts'
@@ -148,6 +154,11 @@ export function App() {
 		return true
 	}
 
+	// The screen shown now, for the sign-out check (a kitchen display never signs out).
+	const shownAppRef = useRef<string>('pos')
+	/** Seconds left in the sign-out warning (#364), or null before the last 10. */
+	const [signOutLeft, setSignOutLeft] = useState<number | null>(null)
+
 	useEffect(() => {
 		// Any touch, tap or key counts as activity; the till locks when there is none.
 		const bump = () => touch()
@@ -156,15 +167,25 @@ export function App() {
 			window.addEventListener(name, bump, { capture: true, passive: true })
 		const check = () => {
 			const st = usePos.getState()
-			if (
-				shouldLock({
-					signInRequired: st.settings.signInRequired,
-					signedIn: st.session !== null,
-					idleLockSeconds: st.settings.idleLockSeconds,
-					idleMs: idleMs(),
-					held: lockHeld(),
-				})
-			) {
+			const { lock, warning } = idleDecision({
+				signInRequired: st.settings.signInRequired,
+				signedIn: st.session !== null,
+				// The location's idle minutes (#364) replace the till's own timeout
+				// while they are on.
+				terminalSeconds: st.settings.idleLockSeconds,
+				locationMinutes: st.location?.stationSettings?.idleSignOutMinutes,
+				idleMs: idleMs(),
+				held: lockHeld(),
+				// A payment in progress is never interrupted, and a kitchen display
+				// stays signed in.
+				blocked: lockBlocked(),
+				exempt: shownAppRef.current === 'kitchen',
+			})
+			setSignOutLeft((current) => (current === warning ? current : warning))
+			if (lock) {
+				// Signing out drops only the session: unsent orders stay in the
+				// till's outbox and upload on their own.
+				setSignOutLeft(null)
 				st.lock()
 			}
 		}
@@ -287,6 +308,7 @@ export function App() {
 	const hideStorageNotice = () => setStorageNoticeHidden(true)
 	const businessName = s.snapshot?.organization.name ?? _(t`Station`)
 	const app = shownApp(s.settings)
+	shownAppRef.current = app
 	const previousApp = useRef(app)
 	useLayoutEffect(() => {
 		if (previousApp.current === app) return
@@ -750,6 +772,22 @@ export function App() {
 						</Trans>
 					)}
 				</button>
+			</Reveal>
+			<Reveal open={signOutLeft !== null}>
+				<div
+					role="alert"
+					data-testid="sign-out-warning"
+					className="notice-warning flex items-center gap-2 px-4 py-2 text-sm"
+				>
+					<Icon name="lock" className="size-4 shrink-0" />{' '}
+					<span>
+						{plural(signOutLeft ?? 0, {
+							one: 'Signing out in # second. Touch the screen to stay signed in.',
+							other:
+								'Signing out in # seconds. Touch the screen to stay signed in.',
+						})}
+					</span>
+				</div>
 			</Reveal>
 			<Reveal open={clockOff}>
 				<div

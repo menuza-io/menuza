@@ -10,6 +10,7 @@ import {
 } from '@repo/staffing/clock-flow'
 import { createClockQueue, type ClockQueue } from '@repo/staffing/clock-queue'
 import { syncQueue, type SyncOutcome } from '@repo/staffing/clock-sync'
+import { z } from 'zod'
 import { serverNow } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 
@@ -29,6 +30,52 @@ function options(settings: PosSettings): ClockRequestOptions {
 	}
 }
 
+const announcementSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	body: z.string(),
+	expiresAt: z.number(),
+	createdAt: z.number(),
+	readAt: z.number().nullable(),
+})
+export type StationAnnouncement = z.infer<typeof announcementSchema>
+
+const announcementsSchema = z.object({
+	serverNow: z.number(),
+	announcements: z.array(announcementSchema),
+})
+
+const myWeekSchema = z.object({
+	firstName: z.string(),
+	week: z.object({
+		serverNow: z.number(),
+		weekStart: z.string(),
+		weekEnd: z.string(),
+		timeZone: z.string(),
+		workedMinutes: z.number(),
+		scheduledMinutes: z.number(),
+		nextShift: z
+			.object({
+				startsAt: z.number(),
+				endsAt: z.number(),
+				timeZone: z.string(),
+			})
+			.nullable(),
+		/** Only when the organization turned it on. Never on the lock screen. */
+		pay: z
+			.object({
+				label: z.literal('estimate_before_tax'),
+				periodStart: z.string(),
+				periodEnd: z.string(),
+				estimateMinor: z.number().nullable(),
+				currency: z.string().nullable(),
+				overtimeMinutes: z.number(),
+			})
+			.optional(),
+	}),
+})
+export type StationMyWeek = z.infer<typeof myWeekSchema>['week']
+
 export function stationClockApi(settings: PosSettings) {
 	return {
 		identify: (pin: string) =>
@@ -45,6 +92,28 @@ export function stationClockApi(settings: PosSettings) {
 			clockRequest(options(settings), '/punch', clockPunchResponseSchema, {
 				method: 'POST',
 				json: body,
+			}),
+		/**
+		 * After a punch: the announcements this person has not read, and their own
+		 * week. Each call names the person by PIN again; the till holds the PIN
+		 * only while the after-punch screen is open.
+		 */
+		announcements: (pin: string) =>
+			clockRequest(options(settings), '/announcements', announcementsSchema, {
+				method: 'POST',
+				json: { pin },
+			}),
+		readAnnouncement: (pin: string, announcementId: string) =>
+			clockRequest(
+				options(settings),
+				'/announcements/read',
+				z.object({ readAt: z.number() }),
+				{ method: 'POST', json: { pin, announcementId } },
+			),
+		myWeek: (pin: string) =>
+			clockRequest(options(settings), '/my-week', myWeekSchema, {
+				method: 'POST',
+				json: { pin },
 			}),
 	}
 }

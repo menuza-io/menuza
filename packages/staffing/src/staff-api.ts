@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { personHourLimitsSchema } from './hour-caps.ts'
 import {
 	currencySchema,
 	localDateSchema,
@@ -124,6 +125,22 @@ export const staffPrivateUpdateSchema = z
 	.strict()
 	.refine((value) => Object.keys(value).length > 0, 'Nothing to update')
 export type StaffPrivateUpdate = z.infer<typeof staffPrivateUpdateSchema>
+
+/**
+ * A person's own hour limits (#527). Each field is optional so a manager can
+ * change one without sending the others; `null` clears a limit back to the
+ * scope's cap. Changing `followsRamadan` also needs the private-details grant.
+ */
+export const staffHourLimitsUpdateSchema = z
+	.object({
+		dailyMinutes: personHourLimitsSchema.shape.dailyMinutes,
+		weeklyMinutes: personHourLimitsSchema.shape.weeklyMinutes,
+		followsRamadan: personHourLimitsSchema.shape.followsRamadan,
+	})
+	.partial()
+	.strict()
+	.refine((value) => Object.keys(value).length > 0, 'Nothing to update')
+export type StaffHourLimitsUpdate = z.infer<typeof staffHourLimitsUpdateSchema>
 
 export const staffTerminateSchema = z
 	.object({

@@ -42,6 +42,8 @@ export const ENTRY_ISSUE_CODES = [
 	'auto_break_deducted',
 	'late_sync',
 	'offline_override',
+	/** The person tapped "Something's wrong" on this card (#514). */
+	'correction_requested',
 ] as const
 export type EntryIssueCode = (typeof ENTRY_ISSUE_CODES)[number]
 
@@ -60,6 +62,7 @@ export const PUNCH_FLAG_ISSUES = [
 	'offline_override',
 	'auto_clock_out',
 	'edited',
+	'correction_requested',
 ] as const satisfies readonly EntryIssueCode[]
 export type PunchFlagIssue = (typeof PUNCH_FLAG_ISSUES)[number]
 
@@ -80,6 +83,7 @@ export const REVIEW_ISSUES = [
 	'negative_duration',
 	'break_outside_entry',
 	'overlapping_breaks',
+	'correction_requested',
 ] as const satisfies readonly EntryIssueCode[]
 
 export function isEntryIssueCode(value: unknown): value is EntryIssueCode {

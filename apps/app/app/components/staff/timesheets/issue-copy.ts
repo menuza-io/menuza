@@ -27,6 +27,7 @@ export const ISSUE_LABELS: Record<string, MessageDescriptor> = {
 	late_sync: msg`Sent late`,
 	offline_override: msg`Check the rules`,
 	auto_break_deducted: msg`Break deducted`,
+	correction_requested: msg`Correction requested`,
 }
 
 export const ISSUE_HELP: Record<string, MessageDescriptor> = {
@@ -48,6 +49,7 @@ export const ISSUE_HELP: Record<string, MessageDescriptor> = {
 	edited: msg`A manager changed this card.`,
 	offline_punch: msg`Punched while the tablet was offline and sent later.`,
 	auto_break_deducted: msg`A break was deducted automatically by your rules.`,
+	correction_requested: msg`The person says something is wrong with this card. Fix it with a reason, or mark it reviewed if it is right.`,
 }
 
 export const STATUS_LABELS: Record<TimesheetStatus, MessageDescriptor> = {

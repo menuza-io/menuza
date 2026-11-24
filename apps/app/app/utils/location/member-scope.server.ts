@@ -146,3 +146,101 @@ export function partitionByScope(
 	}
 	return { allowed, denied }
 }
+
+/**
+ * Every active member's resolved location ids in one pass (`null` is every
+ * location, `[]` none), by the same rules as `resolveMemberLocationIds`: a
+ * `selected` member's locations are the explicit grants plus every location
+ * carrying a tag they were granted. Used to show a location manager only the
+ * members who share one of their locations (#126).
+ */
+export async function resolveAllMemberLocationIds(
+	organizationId: string,
+): Promise<Map<string, string[] | null>> {
+	const [members, explicit, tagged] = await Promise.all([
+		db
+			.select({
+				userId: UserOrganization.userId,
+				locationScope: UserOrganization.locationScope,
+			})
+			.from(UserOrganization)
+			.where(
+				and(
+					eq(UserOrganization.organizationId, organizationId),
+					eq(UserOrganization.active, true),
+				),
+			),
+		db
+			.select({
+				userId: UserOrganizationLocation.userId,
+				locationId: UserOrganizationLocation.locationId,
+			})
+			.from(UserOrganizationLocation)
+			.innerJoin(
+				OrganizationLocation,
+				and(
+					eq(OrganizationLocation.id, UserOrganizationLocation.locationId),
+					eq(OrganizationLocation.organizationId, organizationId),
+				),
+			)
+			.where(eq(UserOrganizationLocation.organizationId, organizationId)),
+		db
+			.select({
+				userId: UserOrganizationLocationTag.userId,
+				locationId: OrganizationLocationTagLink.locationId,
+			})
+			.from(UserOrganizationLocationTag)
+			.innerJoin(
+				OrganizationLocationTag,
+				and(
+					eq(OrganizationLocationTag.id, UserOrganizationLocationTag.tagId),
+					eq(OrganizationLocationTag.organizationId, organizationId),
+				),
+			)
+			.innerJoin(
+				OrganizationLocationTagLink,
+				eq(OrganizationLocationTagLink.tagId, OrganizationLocationTag.id),
+			)
+			.innerJoin(
+				OrganizationLocation,
+				and(
+					eq(OrganizationLocation.id, OrganizationLocationTagLink.locationId),
+					eq(OrganizationLocation.organizationId, organizationId),
+				),
+			)
+			.where(eq(UserOrganizationLocationTag.organizationId, organizationId)),
+	])
+	const byUser = new Map<string, Set<string>>()
+	for (const row of [...explicit, ...tagged]) {
+		const set = byUser.get(row.userId) ?? new Set<string>()
+		set.add(row.locationId)
+		byUser.set(row.userId, set)
+	}
+	const out = new Map<string, string[] | null>()
+	for (const member of members) {
+		if (member.locationScope === 'all') out.set(member.userId, null)
+		else if (member.locationScope !== 'selected') out.set(member.userId, [])
+		else out.set(member.userId, [...(byUser.get(member.userId) ?? [])].sort())
+	}
+	return out
+}
+
+/** Whether a member's scope reaches at least one of the manager's locations. */
+export function scopesShareALocation(
+	actorScope: readonly string[] | null,
+	memberScope: readonly string[] | null,
+): boolean {
+	if (actorScope === null) return true
+	if (memberScope === null) return actorScope.length > 0
+	return memberScope.some((id) => actorScope.includes(id))
+}
+
+/** Whether every location of `inner` lies inside `outer` (`null` is all). */
+export function scopeIsInside(
+	inner: readonly string[] | null,
+	outer: readonly string[] | null,
+): boolean {
+	if (outer === null) return true
+	if (inner === null) return false
+	return inner.length > 0 && inner.every((id) => outer.includes(id))
+}

@@ -806,6 +806,287 @@ describe('Station apps on a POS terminal', () => {
 	// Apps on /pos/me
 	// -----------------------------------------------------------------------
 
+	describe('after the punch: my week and announcements (#514, #486)', () => {
+		const staffToken = async (grants: string[]) =>
+			(await import('../../tests/staff-harness.ts')).mintStaffToken({
+				orgId: ORG_A,
+				scope: 'staff',
+				grants: grants as never,
+				scopeIds: null,
+			})
+
+		async function announce(
+			body: Record<string, unknown>,
+			grants = ['read:staff:any', 'update:staff:any'],
+		) {
+			const response = await h.app.request('/operator/staff/announcements', {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json',
+					Authorization: `Bearer ${await staffToken(grants)}`,
+				},
+				body: JSON.stringify(body),
+			})
+			return { status: response.status, body: (await response.json()) as any }
+		}
+
+		async function detail(id: string) {
+			const response = await h.app.request(
+				`/operator/staff/announcements/${id}`,
+				{
+					headers: {
+						Authorization: `Bearer ${await staffToken(['read:staff:any'])}`,
+					},
+				},
+			)
+			return (await response.json()) as any
+		}
+
+		const DAY = 24 * 60 * 60 * 1000
+
+		it('shows an announcement after the next punch and records "Got it"', async () => {
+			const { pin, staffId } = await h.seedStaff(ORG_A, {
+				firstName: 'Rana',
+				lastName: 'Saleh',
+			})
+			const other = await h.seedStaff(ORG_A, {
+				firstName: 'Omar',
+				lastName: 'Haddad',
+			})
+			const { secret } = await pairTerminal()
+			const created = await announce({
+				title: 'New menu tomorrow',
+				body: 'Read the new specials card before service.',
+				audience: 'everyone',
+				expiresAt: h.clock.now + 3 * DAY,
+			})
+			expect(created.status).toBe(201)
+			const id = created.body.announcement.id as string
+
+			// The person punches in, then the till asks what is waiting for them.
+			expect((await punch(secret, pin, 'clock_in')).status).toBe(200)
+			const waiting = await request('POST', '/pos/timeclock/announcements', {
+				secret,
+				body: { pin },
+			})
+			expect(waiting.status).toBe(200)
+			expect(waiting.body.announcements).toEqual([
+				expect.objectContaining({
+					id,
+					title: 'New menu tomorrow',
+					body: 'Read the new specials card before service.',
+					readAt: null,
+				}),
+			])
+			// Only the words: nobody else's data, no last name.
+			expect(waiting.raw).not.toContain('Saleh')
+			expect(waiting.raw).not.toContain('Haddad')
+
+			const got = await request('POST', '/pos/timeclock/announcements/read', {
+				secret,
+				body: { pin, announcementId: id },
+			})
+			expect(got.status).toBe(200)
+			expect(got.body.readAt).toBe(h.clock.now)
+
+			// It is recorded, and no longer waits for this person.
+			const view = await detail(id)
+			expect(view.announcement).toMatchObject({ recipients: 2, read: 1 })
+			expect(
+				view.recipients.find((r: any) => r.staffId === staffId),
+			).toMatchObject({ readAt: h.clock.now, source: 'station' })
+			expect(
+				view.recipients.find((r: any) => r.staffId === other.staffId).readAt,
+			).toBeNull()
+			const again = await request('POST', '/pos/timeclock/announcements', {
+				secret,
+				body: { pin },
+			})
+			expect(again.body.announcements).toEqual([])
+			// Tapping again keeps the first time.
+			h.advance(60_000)
+			const twice = await request('POST', '/pos/timeclock/announcements/read', {
+				secret,
+				body: { pin, announcementId: id },
+			})
+			expect(twice.body.readAt).toBe(h.clock.now - 60_000)
+			// The other person still has it waiting.
+			const theirs = await request('POST', '/pos/timeclock/announcements', {
+				secret,
+				body: { pin: other.pin },
+			})
+			expect(theirs.body.announcements).toHaveLength(1)
+		})
+
+		it('needs the right PIN, and an announcement that has expired is gone', async () => {
+			const { pin } = await h.seedStaff(ORG_A, {})
+			const { secret } = await pairTerminal()
+			const created = await announce({
+				title: 'Health inspection Friday',
+				body: 'Everything labelled and dated.',
+				audience: 'everyone',
+				expiresAt: h.clock.now + DAY,
+			})
+			const id = created.body.announcement.id as string
+			expect(
+				(
+					await request('POST', '/pos/timeclock/announcements', {
+						secret,
+						body: { pin: '0000' },
+					})
+				).status,
+			).toBe(401)
+			h.advance(2 * DAY)
+			expect(
+				(
+					await request('POST', '/pos/timeclock/announcements', {
+						secret,
+						body: { pin },
+					})
+				).body.announcements,
+			).toEqual([])
+			const late = await request('POST', '/pos/timeclock/announcements/read', {
+				secret,
+				body: { pin, announcementId: id },
+			})
+			expect(late.status).toBe(404)
+		})
+
+		it('reaches only the position or scope it was written for', async () => {
+			const cook = await h.seedStaff(ORG_A, {
+				positions: [{ name: 'Cook', rateMinor: 2000 }],
+			})
+			const server = await h.seedStaff(ORG_A, {
+				positions: [{ name: 'Server', rateMinor: 1500 }],
+			})
+			const { secret } = await pairTerminal()
+			const db = await h.db(ORG_A)
+			const { staffJobs } = await import('@repo/tenant-db')
+			const [cookPosition] = await db
+				.select({ id: staffJobs.positionId })
+				.from(staffJobs)
+				.where(eq(staffJobs.staffId, cook.staffId))
+			const created = await announce({
+				title: 'Kitchen only',
+				body: 'New walk-in rules.',
+				audience: 'position',
+				audienceId: cookPosition.id,
+				expiresAt: h.clock.now + DAY,
+			})
+			expect(created.status).toBe(201)
+			expect(
+				(
+					await request('POST', '/pos/timeclock/announcements', {
+						secret,
+						body: { pin: cook.pin },
+					})
+				).body.announcements,
+			).toHaveLength(1)
+			expect(
+				(
+					await request('POST', '/pos/timeclock/announcements', {
+						secret,
+						body: { pin: server.pin },
+					})
+				).body.announcements,
+			).toEqual([])
+			// Not theirs: "Got it" looks like it does not exist.
+			expect(
+				(
+					await request('POST', '/pos/timeclock/announcements/read', {
+						secret,
+						body: {
+							pin: server.pin,
+							announcementId: created.body.announcement.id,
+						},
+					})
+				).status,
+			).toBe(404)
+			const view = await detail(created.body.announcement.id)
+			expect(view.announcement.recipients).toBe(1)
+			// An unknown position and a past expiry are refused.
+			expect(
+				(
+					await announce({
+						title: 'x1',
+						body: 'x1',
+						audience: 'position',
+						audienceId: 'nope',
+						expiresAt: h.clock.now + DAY,
+					})
+				).body.error,
+			).toBe('unknown_position')
+			expect(
+				(
+					await announce({
+						title: 'x1',
+						body: 'x1',
+						audience: 'everyone',
+						expiresAt: h.clock.now - 1,
+					})
+				).body.error,
+			).toBe('expiry_in_the_past')
+		})
+
+		it('shows hours and the next shift, and pay only when the organization turned it on', async () => {
+			const { pin } = await h.seedStaff(ORG_A, {
+				firstName: 'Rana',
+				positions: [{ name: 'Cook', rateMinor: 2000 }],
+			})
+			const { secret } = await pairTerminal()
+			expect((await punch(secret, pin, 'clock_in')).status).toBe(200)
+			h.advance(4 * 60 * 60 * 1000)
+			expect((await punch(secret, pin, 'clock_out')).status).toBe(200)
+			const off = await request('POST', '/pos/timeclock/my-week', {
+				secret,
+				body: { pin },
+			})
+			expect(off.status).toBe(200)
+			expect(off.body.firstName).toBe('Rana')
+			expect(off.body.week.workedMinutes).toBe(240)
+			expect(off.body.week).not.toHaveProperty('pay')
+			expect(off.raw).not.toMatch(/rate|currency|USD/)
+
+			const on = await h.app.request('/operator/schedule/settings', {
+				method: 'PUT',
+				headers: {
+					'content-type': 'application/json',
+					Authorization: `Bearer ${await (
+						await import('../../tests/staff-harness.ts')
+					).mintStaffToken({
+						orgId: ORG_A,
+						scope: 'schedule',
+						grants: [
+							'read:staff:any',
+							'update:schedule:any',
+							'read:schedule:any',
+						] as never,
+						scopeIds: null,
+					})}`,
+				},
+				body: JSON.stringify({ showStaffPayEstimate: true }),
+			})
+			expect(on.status).toBe(200)
+			const shown = await request('POST', '/pos/timeclock/my-week', {
+				secret,
+				body: { pin },
+			})
+			expect(shown.body.week.pay).toMatchObject({
+				label: 'estimate_before_tax',
+				estimateMinor: 4 * 2000,
+			})
+			// A wrong PIN never opens it, and the answer carries no one else.
+			expect(
+				(
+					await request('POST', '/pos/timeclock/my-week', {
+						secret,
+						body: { pin: '0000' },
+					})
+				).status,
+			).toBe(401)
+		})
+	})
+
 	describe('/pos/me apps', () => {
 		it('reports each app as the terminal setting and the organization flag together', async () => {
 			await h.seedStaff(ORG_A, {})

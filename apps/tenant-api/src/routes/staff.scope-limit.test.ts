@@ -415,6 +415,42 @@ route('PUT /:id/private', async (f) => {
 	)
 })
 
+route('GET /:id/hour-limits', async (f) => {
+	expectStatus(
+		await call(f, { method: 'GET', path: `/${f.c.id}/hour-limits` }),
+		404,
+		'hour limits C',
+	)
+	const shared = await call(f, {
+		method: 'GET',
+		path: `/${f.b.id}/hour-limits`,
+	})
+	expect(shared.status).toBe(200)
+})
+
+route('PUT /:id/hour-limits', async (f) => {
+	expectStatus(
+		await call(f, {
+			method: 'PUT',
+			path: `/${f.c.id}/hour-limits`,
+			body: { dailyMinutes: 240 },
+		}),
+		404,
+		'hour limits C',
+	)
+	// B also works at LOC_2, which the token cannot see: their limits follow
+	// them everywhere, so this scoped manager may not change them.
+	expectStatus(
+		await call(f, {
+			method: 'PUT',
+			path: `/${f.b.id}/hour-limits`,
+			body: { dailyMinutes: 240 },
+		}),
+		403,
+		'hour limits B',
+	)
+})
+
 route('GET /:id/jobs', async (f) => {
 	expectStatus(
 		await call(f, { method: 'GET', path: `/${f.c.id}/jobs` }),

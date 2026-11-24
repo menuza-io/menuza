@@ -63,6 +63,22 @@ export const shiftSchema = z.object({
 })
 export type ScheduleShiftRow = z.infer<typeof shiftSchema>
 
+/** A shift that takes someone over an hour cap, as the server lists it (#527). */
+export const hourCapBreachSchema = z.object({
+	staffId: z.string(),
+	shiftId: z.string(),
+	kind: z.enum(['daily', 'weekly']),
+	date: z.string(),
+	capMinutes: z.number(),
+	scheduledMinutes: z.number(),
+})
+export type HourCapBreachRow = z.infer<typeof hourCapBreachSchema>
+
+export const hourCapRefusalSchema = z.object({
+	breaches: z.array(hourCapBreachSchema),
+	total: z.number(),
+})
+
 export const personSchema = z.object({
 	id: z.string(),
 	firstName: z.string(),
@@ -407,6 +423,8 @@ export const shiftRequestResultSchema = z.object({
 export const scheduleSettingsSchema = z.object({
 	minRestMinutes: z.number(),
 	timeOffMinNoticeDays: z.number(),
+	/** Staff see an estimate of their pay (#514). A node that predates it omits it. */
+	showStaffPayEstimate: z.boolean().default(false),
 	updatedAt: z.number().nullable(),
 })
 

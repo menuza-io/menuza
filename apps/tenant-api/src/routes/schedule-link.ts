@@ -1,7 +1,9 @@
 import { Hono, type Context } from 'hono'
 import { type ZodTypeAny, type z } from 'zod'
 import {
+	announcementReadSchema,
 	selfAvailabilitySchema,
+	selfCorrectionSchema,
 	selfRangeQuerySchema,
 	selfShiftRequestSchema,
 	selfTeammatesQuerySchema,
@@ -20,12 +22,16 @@ import {
 	cancelMyShiftRequest,
 	cancelMyTimeOff,
 	createMyAvailability,
+	createMyCorrection,
 	createMyShiftRequest,
 	createMyTimeOff,
+	listMyAnnouncements,
 	listMyRequests,
 	loadMySchedule,
 	loadMyTeammates,
 	loadMyTimeCards,
+	loadMyWeek,
+	readMyAnnouncement,
 	type SelfContext,
 } from '../services/schedule-self-service.ts'
 import { listCountRunsForStaff } from '../services/inventory-count-schedules-service.ts'
@@ -158,6 +164,21 @@ scheduleLinkRoutes.get(
 	}),
 )
 
+/**
+ * This week's hours and the next shift, and, only when the organization turned
+ * it on, an estimate of pay for the pay period (#514).
+ */
+scheduleLinkRoutes.get(
+	'/me/week',
+	guarded(async (ctx) => respond(await loadMyWeek(ctx))),
+)
+
+/** The announcements meant for this person that are live now (#486). */
+scheduleLinkRoutes.get(
+	'/me/announcements',
+	guarded(async (ctx) => json(await listMyAnnouncements(ctx))),
+)
+
 scheduleLinkRoutes.get(
 	'/me/requests',
 	guarded(async (ctx) => respond(await listMyRequests(ctx))),
@@ -195,6 +216,35 @@ scheduleLinkRoutes.post(
 		{
 			write: true,
 		},
+	),
+)
+
+/** "Something's wrong" on one of the person's own time cards (#514). */
+scheduleLinkRoutes.post(
+	'/me/time-cards/:id/correction',
+	guarded(
+		async (ctx, c) => {
+			const body = await readJsonBody(c, selfCorrectionSchema)
+			if ('error' in body) return body.error
+			return respond(
+				await createMyCorrection(ctx, param(c, 'id'), body.data),
+				201,
+			)
+		},
+		{ write: true },
+	),
+)
+
+/** "Got it" on an announcement. */
+scheduleLinkRoutes.post(
+	'/me/announcements/read',
+	guarded(
+		async (ctx, c) => {
+			const body = await readJsonBody(c, announcementReadSchema)
+			if ('error' in body) return body.error
+			return respond(await readMyAnnouncement(ctx, body.data.announcementId))
+		},
+		{ write: true },
 	),
 )
 

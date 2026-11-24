@@ -1109,6 +1109,15 @@ edit, chain defaults and locks):**
   atomic). Locks are enforced on the server for every write path to a registry
   setting. Docs: `docs/multi-location.md`.
 
+**Location managers and idle sign-out (#126, #364):** team changes go through
+`assertCanManageMember`
+(`apps/app/app/utils/organization/member-management.server.ts`); an invitation
+can carry locations (control-plane `0075_staff_controls`), and the permission
+`update:member:own_locations` limits a manager to their own locations. Station
+idle sign-out is `idleDecision` in `apps/station/src/lib/activity.ts`, set per
+location in `stationSettings.idleSignOutMinutes`; a payment in progress is never
+interrupted. See `docs/multi-location.md` and `docs/pos.md`.
+
 **Key Apps:**
 
 - `apps/app` - Operators; publishes sites; routes provision by `dataRegion`;
@@ -1202,6 +1211,15 @@ edit, chain defaults and locks):**
   registers an order source.
 - Demo data: `npm run seed:staffing -w tenant-api -- <org-slug>` (local only;
   idempotent; goes through the same services as the API).
+- Hour caps, apply-on-approval swaps, My week and pay, correction requests and
+  announcements (#527, #528, #514, #486; tenant `0066_staff_controls`, no new
+  flag): hour caps are data on the labor policy and the KSA pack
+  (`@repo/staffing` `hour-caps.ts`), warnings only, with a `capReason` to
+  publish or approve over a cap; a person's Ramadan flag is private to the
+  private-details grants; approving a swap publishes just that change and emails
+  both people; staff pay estimates are off until `show_staff_pay_estimate` is on
+  and never appear on a lock screen; announcements are regional and plain-text.
+  See `docs/staffing.md` ("Staff controls").
 - Security gates in CI: `apps/tenant-api/src/routes/staffing-security.test.ts`
   (every staffing route refuses a missing, forged or grantless token and has
   cross-organization and cross-scope tests) and

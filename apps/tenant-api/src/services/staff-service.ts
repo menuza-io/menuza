@@ -19,6 +19,7 @@ import {
 	pinLookupMessage,
 	type StaffAssignmentInput,
 	type StaffCreateInput,
+	type StaffHourLimitsUpdate,
 	type StaffJobCreate,
 	type StaffListQuery,
 	type StaffPositionCreate,
@@ -38,6 +39,7 @@ import {
 	staffJobs,
 	staffScopeAssignments,
 	staffMembers,
+	staffHourLimits,
 	staffNotes,
 	staffPositions,
 	staffPrivate,
@@ -924,6 +926,134 @@ export async function updatePrivate(
 			.where(eq(staffPrivate.staffId, staffId))
 			.limit(1)
 		return ok({ private: after ? serializePrivate(after) : emptyPrivate() })
+	})
+}
+
+// ---------------------------------------------------------------------------
+// Hour limits (#527): a person's own daily and weekly caps, and whether they
+// follow the Ramadan limit. The Ramadan flag is private: it is returned and
+// changed only with the private-details grants, never to other staff.
+// ---------------------------------------------------------------------------
+
+export type StaffHourLimitsView = {
+	dailyMinutes: number | null
+	weeklyMinutes: number | null
+	/** Present only with `read:staff_private:any`. */
+	followsRamadan?: boolean
+}
+
+function hourLimitsView(
+	auth: StaffAuth,
+	row: typeof staffHourLimits.$inferSelect | undefined,
+): StaffHourLimitsView {
+	return {
+		dailyMinutes: row?.dailyCapMinutes ?? null,
+		weeklyMinutes: row?.weeklyCapMinutes ?? null,
+		...(canSeePrivate(auth)
+			? { followsRamadan: row?.followsRamadan ?? false }
+			: {}),
+	}
+}
+
+export async function getHourLimits(
+	ctx: StaffContext,
+	staffId: string,
+): Promise<Result<{ limits: StaffHourLimitsView }>> {
+	const access = await loadVisible(ctx.db, ctx.scope, staffId)
+	if (!access.ok) return access
+	const [row] = await ctx.db
+		.select()
+		.from(staffHourLimits)
+		.where(eq(staffHourLimits.staffId, staffId))
+		.limit(1)
+	return ok({ limits: hourLimitsView(ctx.auth, row) })
+}
+
+export async function setHourLimits(
+	ctx: StaffContext,
+	staffId: string,
+	patch: StaffHourLimitsUpdate,
+): Promise<Result<{ limits: StaffHourLimitsView }>> {
+	const { db, auth, scope } = ctx
+	// The Ramadan flag is a private detail: it needs the private-details write
+	// grant on top of the roster grant the route already required.
+	if (
+		patch.followsRamadan !== undefined &&
+		!hasGrant(auth, 'update:staff_private:any')
+	) {
+		return fail(403, 'forbidden')
+	}
+	return write(db, async (tx) => {
+		const access = await loadVisible(tx, scope, staffId)
+		if (!access.ok) return access
+		// A person's limits follow them to every place they work, so (like their
+		// private details) a scoped manager changes them only when every place the
+		// person works at is theirs. Reading stays available wherever they are seen.
+		if (!access.value.coversAll) return fail(403, 'scope_out_of_scope')
+		const [before] = await tx
+			.select()
+			.from(staffHourLimits)
+			.where(eq(staffHourLimits.staffId, staffId))
+			.limit(1)
+		const next = {
+			dailyCapMinutes:
+				patch.dailyMinutes !== undefined
+					? patch.dailyMinutes
+					: (before?.dailyCapMinutes ?? null),
+			weeklyCapMinutes:
+				patch.weeklyMinutes !== undefined
+					? patch.weeklyMinutes
+					: (before?.weeklyCapMinutes ?? null),
+			followsRamadan:
+				patch.followsRamadan !== undefined
+					? patch.followsRamadan
+					: (before?.followsRamadan ?? false),
+		}
+		const changes: Record<string, unknown> = {}
+		if (next.dailyCapMinutes !== (before?.dailyCapMinutes ?? null)) {
+			changes.dailyMinutes = {
+				before: before?.dailyCapMinutes ?? null,
+				after: next.dailyCapMinutes,
+			}
+		}
+		if (next.weeklyCapMinutes !== (before?.weeklyCapMinutes ?? null)) {
+			changes.weeklyMinutes = {
+				before: before?.weeklyCapMinutes ?? null,
+				after: next.weeklyCapMinutes,
+			}
+		}
+		const ramadanChanged =
+			next.followsRamadan !== (before?.followsRamadan ?? false)
+		if (ramadanChanged) {
+			changes.followsRamadan = {
+				before: before?.followsRamadan ?? false,
+				after: next.followsRamadan,
+			}
+		}
+		if (Object.keys(changes).length > 0) {
+			await tx
+				.insert(staffHourLimits)
+				.values({ staffId, ...next, updatedBy: auth.userId })
+				.onConflictDoUpdate({
+					target: staffHourLimits.staffId,
+					set: { ...next, updatedBy: auth.userId, updatedAt: Date.now() },
+				})
+			await writeStaffAudit(tx, auth, ctx.ipHash, {
+				action: 'staff.hour_limits.updated',
+				entityType: 'staff',
+				entityId: staffId,
+				staffId,
+				// A Ramadan change is private: only readers of private details see it.
+				sensitivity: ramadanChanged ? 'private' : 'standard',
+				changes,
+			})
+		}
+		const [after] = await tx
+			.select()
+			.from(staffHourLimits)
+			.where(eq(staffHourLimits.staffId, staffId))
+			.limit(1)
+		return ok({ limits: hourLimitsView(auth, after) })
 	})
 }
 

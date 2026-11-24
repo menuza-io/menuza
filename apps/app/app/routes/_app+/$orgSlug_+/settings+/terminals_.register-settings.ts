@@ -11,6 +11,7 @@ import {
 import {
 	POS_CUSTOM_ITEMS_MODES,
 	POS_GUEST_DETAILS_MODES,
+	POS_IDLE_SIGN_OUT_MAX_MINUTES,
 	parsePosLocationStationSettings,
 	posLocationStationSettingsSchema,
 } from '@repo/common/pos-orders'
@@ -66,7 +67,21 @@ const formSchema = z.object({
 	cashVarianceFlagCents: optionalThresholdSchema,
 	// A form open before the field existed posts none: the saved rate stays.
 	cashDiscountPercent: z.string().max(16).optional(),
+	// Idle minutes before a till signs the person out (#364): blank is off, and a
+	// form open before the field existed posts none, so the saved value stays.
+	idleSignOutMinutes: z.string().max(3).optional(),
 })
+
+/** Idle minutes as typed: blank is off (null), 1 to the maximum, else undefined. */
+function readIdleSignOutMinutes(value: string): number | null | undefined {
+	const trimmed = value.trim()
+	if (!trimmed) return null
+	if (!/^\d{1,2}$/.test(trimmed)) return undefined
+	const minutes = Number(trimmed)
+	return minutes >= 1 && minutes <= POS_IDLE_SIGN_OUT_MAX_MINUTES
+		? minutes
+		: undefined
+}
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(
@@ -113,6 +128,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 		cashDiscountBp = bp
 	}
+	let idleSignOutMinutes: number | null = savedSettings.idleSignOutMinutes
+	if (parsed.data.idleSignOutMinutes !== undefined) {
+		const minutes = readIdleSignOutMinutes(parsed.data.idleSignOutMinutes)
+		if (minutes === undefined) {
+			return data(
+				{ ok: false, error: 'invalid_idle_sign_out', stationSettings: null },
+				{ status: 400 },
+			)
+		}
+		idleSignOutMinutes = minutes
+	}
 	const stationSettings = posLocationStationSettingsSchema.parse({
 		guestDetails: parsed.data.guestDetails,
 		dishNotes: parsed.data.dishNotes === 'true',
@@ -120,6 +146,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		customItemMaxCents: parsed.data.customItemMaxCents,
 		cashVarianceFlagCents: parsed.data.cashVarianceFlagCents,
 		cashDiscountBp,
+		idleSignOutMinutes,
 		tickets: savedSettings.tickets,
 	})
 	const updated = await db

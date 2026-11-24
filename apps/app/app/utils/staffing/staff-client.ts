@@ -44,18 +44,22 @@ export class StaffApiError extends Error {
 	readonly status: number
 	readonly code: string
 	readonly issues: StaffApiIssue[]
+	/** Any other fields of the error body, for answers that carry data (hour caps). */
+	readonly details: Record<string, unknown>
 
 	constructor(
 		status: number,
 		code: string,
 		message?: string,
 		issues: StaffApiIssue[] = [],
+		details: Record<string, unknown> = {},
 	) {
 		super(message || code)
 		this.name = 'StaffApiError'
 		this.status = status
 		this.code = code
 		this.issues = issues
+		this.details = details
 	}
 }
 
@@ -203,11 +207,20 @@ export function createStaffClient(options: StaffClientOptions): StaffClient {
 		}
 		if (!response.ok) {
 			const body = errorBodySchema.safeParse(parsed)
+			const {
+				error: ignoredError,
+				message: ignoredMessage,
+				issues: ignoredIssues,
+				problems: ignoredProblems,
+				...details
+			} = body.success ? body.data : ({} as Record<string, unknown>)
+			void [ignoredError, ignoredMessage, ignoredIssues, ignoredProblems]
 			throw new StaffApiError(
 				response.status,
 				(body.success && body.data.error) || 'request_failed',
 				body.success ? body.data.message : undefined,
 				body.success ? (body.data.issues ?? body.data.problems ?? []) : [],
+				details,
 			)
 		}
 		return parsed

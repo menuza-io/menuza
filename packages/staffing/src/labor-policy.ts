@@ -1,5 +1,8 @@
 import { z } from 'zod'
+import { hourCapsSchema, NO_HOUR_CAPS } from './hour-caps.ts'
 import {
+	getRulePack,
+	KSA_RULE_PACK,
 	type LaborRules,
 	NEUTRAL_LABOR_RULES,
 	ROUNDING_MODES,
@@ -185,6 +188,11 @@ export const laborPolicyBaseSchema = z.object({
 	aggregateOvertimeAcrossScopes: z.boolean().nullable(),
 	rulePack: z.string().regex(/^[a-z][a-z0-9_-]{1,31}$/),
 	rulePackVersion: z.number().int().min(1),
+	/**
+	 * Most paid time a person may be scheduled in a day and a week, with the
+	 * Ramadan figures (#527). The schedule warns above them; null is no cap.
+	 */
+	hourCaps: hourCapsSchema,
 })
 
 export type LaborPolicyFields = z.infer<typeof laborPolicyBaseSchema>
@@ -293,6 +301,24 @@ export const BUILTIN_LABOR_POLICY: LaborPolicyFields = {
 	aggregateOvertimeAcrossScopes: null,
 	rulePack: 'generic',
 	rulePackVersion: 1,
+	hourCaps: NO_HOUR_CAPS,
+}
+
+/**
+ * The policy a scope follows when nothing was saved for it, on a node of the
+ * given data region: the KSA node starts every scope on the KSA hour limits,
+ * any other node on the neutral policy. A saved policy always wins.
+ */
+export function builtinLaborPolicyFor(
+	region: string | null | undefined,
+): LaborPolicyFields {
+	if (region?.toLowerCase() !== 'ksa') return BUILTIN_LABOR_POLICY
+	return {
+		...BUILTIN_LABOR_POLICY,
+		rulePack: KSA_RULE_PACK.id,
+		rulePackVersion: KSA_RULE_PACK.version,
+		hourCaps: { ...KSA_RULE_PACK.hourCaps },
+	}
 }
 
 /**
@@ -318,6 +344,19 @@ export function applyLaborPolicyPatch(
 	const merged: Record<string, unknown> = { ...base }
 	for (const [key, value] of Object.entries(fields)) {
 		if (value !== undefined) merged[key] = value
+	}
+	// Choosing another rule pack brings its hour caps unless the patch names
+	// caps of its own.
+	if (
+		fields.rulePack !== undefined &&
+		fields.rulePack !== base.rulePack &&
+		fields.hourCaps === undefined
+	) {
+		const pack = getRulePack(fields.rulePack)
+		if (pack) {
+			merged.hourCaps = { ...pack.hourCaps }
+			merged.rulePackVersion = fields.rulePackVersion ?? pack.version
+		}
 	}
 	return laborPolicyBaseSchema.parse(merged)
 }

@@ -31,7 +31,34 @@ export type StaffingRolePreset = {
 	name: string
 	description: string
 	permissions: readonly StaffingPermission[]
+	/**
+	 * Organization permissions that are not staffing ones, as stored ids
+	 * (for example seeing the team and managing it at the person's locations).
+	 */
+	orgPermissionIds?: readonly string[]
 }
+
+/**
+ * Everything the built-in Member role holds (`MEMBER_PERMISSION_IDS` in
+ * `packages/database/setup-roles.ts`). A role may only hand out roles whose
+ * permissions it holds itself (#126), so a general manager carries these to be
+ * able to invite ordinary members.
+ */
+const MEMBER_ROLE_PERMISSION_IDS = [
+	'org_perm_create_note_own',
+	'org_perm_read_note_own',
+	'org_perm_read_note_org',
+	'org_perm_update_note_own',
+	'org_perm_delete_note_own',
+	'org_perm_read_member_any',
+	'org_perm_read_campaign_any',
+	'org_perm_read_automation_any',
+	'org_perm_read_menu_any',
+	'org_perm_update_media_any',
+	'org_perm_create_media_studio_any',
+	'org_perm_read_schedule_own',
+	'org_perm_create_timeclock_own',
+] as const
 
 const SHIFT_MANAGER: readonly StaffingPermission[] = [
 	P.READ_STAFF,
@@ -53,7 +80,7 @@ export const STAFFING_ROLE_PRESETS: readonly StaffingRolePreset[] = [
 		key: 'general_manager',
 		name: 'General manager',
 		description:
-			'Everything a shift manager can do, plus managing the team, pay rates, labor cost, time card approval, and hiring.',
+			'Everything a shift manager can do, plus managing the team, pay rates, labor cost, time card approval, and hiring. Can invite and manage members at their own locations only.',
 		permissions: [
 			...SHIFT_MANAGER,
 			P.UPDATE_STAFF,
@@ -63,6 +90,11 @@ export const STAFFING_ROLE_PRESETS: readonly StaffingRolePreset[] = [
 			P.APPROVE_TIMESHEET,
 			P.READ_HIRING,
 			P.UPDATE_HIRING,
+		],
+		// A general manager runs their own location's team (#126).
+		orgPermissionIds: [
+			...MEMBER_ROLE_PERMISSION_IDS,
+			'org_perm_update_member_own_locations',
 		],
 	},
 	{
@@ -87,9 +119,10 @@ export function permissionIdFor(permission: StaffingPermission): string {
  * admin's browser.
  */
 export function presetPermissionIds(preset: StaffingRolePreset): string[] {
-	const ids = withImpliedStaffingPermissions(
-		preset.permissions.map(permissionIdFor),
-	)
+	const ids = withImpliedStaffingPermissions([
+		...preset.permissions.map(permissionIdFor),
+		...(preset.orgPermissionIds ?? []),
+	])
 	const allowed = new Set<string>(TENANT_ROLE_PERMISSION_IDS)
 	for (const id of ids) {
 		if (!allowed.has(id)) {
