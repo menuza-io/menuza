@@ -17,6 +17,22 @@ import { type InventoryLayoutContext } from './_layout.tsx'
 import InventorySettingsRoute from './settings.tsx'
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+// The count plan reads the roster in the browser; it is stood in here.
+vi.mock('#app/hooks/use-staff-client.ts', () => ({
+	useStaffClient: () => ({ client: {}, ready: true }),
+	StaffClientContext: { Provider: ({ children }: any) => children },
+}))
+vi.mock('#app/components/staff/staff-client-provider.tsx', () => ({
+	StaffClientProvider: ({ children }: any) => children,
+}))
+vi.mock('#app/hooks/use-staff-directory.ts', () => ({
+	useStaffDirectory: () => ({
+		people: [],
+		failed: false,
+		byId: new Map(),
+		nameOf: (id: string) => id,
+	}),
+}))
 
 beforeAll(() => {
 	i18n.load('en', {})
