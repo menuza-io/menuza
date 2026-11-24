@@ -145,6 +145,22 @@ const requestsSchema = z.object({
 })
 export type MyRequests = z.infer<typeof requestsSchema>
 
+/** A stock count on the weekly count plan that is this person's to do (#491). Ids, times and kinds only. */
+const countRunSchema = z.object({
+	id: z.string(),
+	date: z.string(),
+	dueAt: z.number(),
+	kind: z.enum(['full', 'quick']),
+	listName: z.string().nullable(),
+	slot: z.enum(['opening', 'close', 'custom']),
+	status: z.enum(['due', 'started', 'not_finished']),
+	late: z.boolean(),
+})
+export type MyCountRun = z.infer<typeof countRunSchema>
+
+const myCountsSchema = z.object({ counts: z.array(countRunSchema) })
+export type MyCounts = z.infer<typeof myCountsSchema>
+
 const teammatesSchema = z.object({
 	teammates: z.array(z.object({ id: z.string(), name: z.string() })),
 	swapCandidates: z.array(
@@ -331,6 +347,7 @@ export function createMyScheduleApi(options: MyScheduleApiOptions) {
 		timeCards: (range: { from?: string; to?: string } = {}) =>
 			call(`/me/time-cards${query(range)}`, timeCardsSchema),
 		requests: () => call('/me/requests', requestsSchema),
+		counts: () => call('/me/counts', myCountsSchema),
 		teammates: (shiftId: string) =>
 			call(`/me/teammates${query({ shiftId })}`, teammatesSchema),
 		requestTimeOff: (body: TimeOffBody) =>

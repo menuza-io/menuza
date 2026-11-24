@@ -73,14 +73,27 @@ export default function InventoryCountsRoute() {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const linkSearch = locations.length > 1 ? search : ''
 	const [startOpen, setStartOpen] = useState(false)
+	// What the start dialog opens on: Today's "quick count due" asks for the key
+	// items (`?kind=quick`) or a count list (`?list=<id>`).
+	const [startChoice, setStartChoice] = useState<string | undefined>(undefined)
 	const [pastLimit, setPastLimit] = useState(PAST_PAGE_SIZE)
 
 	// `?start=1` (from Today) opens the dialog once, then leaves the URL clean.
 	useEffect(() => {
 		if (searchParams.get('start') !== '1') return
-		if (canEdit) setStartOpen(true)
+		if (canEdit) {
+			const list = searchParams.get('list')
+			setStartChoice(
+				list
+					? list
+					: searchParams.get('kind') === 'quick'
+						? 'quick'
+						: undefined,
+			)
+			setStartOpen(true)
+		}
 		const next = new URLSearchParams(searchParams)
-		next.delete('start')
+		for (const key of ['start', 'kind', 'list']) next.delete(key)
 		setSearchParams(next, { replace: true })
 	}, [canEdit, searchParams, setSearchParams])
 
@@ -125,7 +138,9 @@ export default function InventoryCountsRoute() {
 			dateStyle: 'medium',
 		}).format(new Date(year, month - 1, dayOfMonth))
 	}
-	const name = (count: CountSummary) => count.listName ?? t`Full count`
+	const name = (count: CountSummary) =>
+		count.listName ??
+		(count.kind === 'quick' ? t`Quick count of key items` : t`Full count`)
 	const hrefFor = (count: CountSummary) =>
 		`${
 			count.status === 'in_review'
@@ -450,6 +465,7 @@ export default function InventoryCountsRoute() {
 					orgSlug={orgSlug}
 					locationId={activeLocationId}
 					search={linkSearch}
+					initialChoice={startChoice}
 				/>
 			) : null}
 		</div>

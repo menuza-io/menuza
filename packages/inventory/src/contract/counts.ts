@@ -15,6 +15,13 @@ import {
 	typedAmountSchema,
 	unitRefSchema,
 } from './common.ts'
+import {
+	countDeviceReportSchema,
+	countDeviceSchema,
+	countKindSchema,
+	countSecondCheckSchema,
+	countSecondStateSchema,
+} from './count-controls.ts'
 import { itemUnitSchema } from './items.ts'
 
 export const countStatusSchema = z.enum(COUNT_STATUSES)
@@ -33,6 +40,12 @@ export const startCountSchema = z
 		clientId: clientIdSchema,
 		locationId: inventoryLocationIdSchema,
 		listId: inventoryIdSchema.nullable(),
+		/**
+		 * `quick` (#490) counts only the key items, or the chosen list; it
+		 * corrects the stock of the items it includes and never changes a
+		 * food-cost period. Absent: a full count, as before.
+		 */
+		kind: countKindSchema.optional(),
 	})
 	.strict()
 
@@ -57,6 +70,16 @@ export const countSummarySchema = z.object({
 	cancelledAt: z.number().int().nullable(),
 	createdAt: z.number().int(),
 	version: z.number().int(),
+	/** `full` or `quick` (#490); absent from older regions (read as full). */
+	kind: countKindSchema.optional(),
+	/** The scheduled run this count answers, when it was started for one (#491). */
+	scheduleRunId: z.string().nullable().optional(),
+	/** The key-item second-person check (#525): null or absent when not required. */
+	secondState: countSecondStateSchema.nullable().optional(),
+	/** Devices that joined and have not said they are done (#474). */
+	devicesCounting: z.number().int().optional(),
+	/** Entries that arrived after approval and wait for a decision (#474). */
+	lateEntries: z.number().int().optional(),
 })
 export type CountSummary = z.infer<typeof countSummarySchema>
 
@@ -88,10 +111,27 @@ export const countSheetItemSchema = z.object({
 	quantity: z.number().int().nullable(),
 	/** What this caller last typed here, to show back in their field. */
 	mine: z.object({ amount: z.number(), unit: unitRefSchema }).nullable(),
+	/** A key item (#490). */
+	isKey: z.boolean().optional(),
+	/** Counted by bottle (#470): the bottle size and optional weights. */
+	bottle: z
+		.object({
+			sizeMl: z.number().int(),
+			fullWeightG: z.number().int().nullable(),
+			emptyWeightG: z.number().int().nullable(),
+		})
+		.nullable()
+		.optional(),
 })
 
 export const countSheetSchema = z.object({
 	count: countSummarySchema,
+	/**
+	 * 2 when the caller is counting key items for the second-person check
+	 * (#525): the sheet lists only key items and `quantity` is always null
+	 * (blind). Absent or 1: the ordinary count.
+	 */
+	pass: z.union([z.literal(1), z.literal(2)]).optional(),
 	areas: z.array(
 		z.object({
 			areaId: z.string().nullable(),
@@ -126,6 +166,12 @@ export const COUNT_ENTRY_REFUSAL_CODES = [
 	'area_unknown',
 	'unit_mismatch',
 	'quantity_invalid',
+	/** #525: the second person counted this count's first pass, or the count is waiting for someone else. */
+	'second_count_same_person',
+	/** #525: the second count takes key items only. */
+	'second_count_not_key_item',
+	/** #525: the count is waiting for the second person; first-count entries are closed. */
+	'second_count_locked',
 ] as const
 export type CountEntryRefusalCode = (typeof COUNT_ENTRY_REFUSAL_CODES)[number]
 
@@ -155,7 +201,11 @@ export const countEntrySchema = z
 	.strict()
 
 export const countEntriesSchema = z
-	.object({ entries: z.array(countEntrySchema).min(1).max(200) })
+	.object({
+		entries: z.array(countEntrySchema).min(1).max(200),
+		/** The device sending these, with the entries it still holds (#474). */
+		device: countDeviceReportSchema.optional(),
+	})
 	.strict()
 
 export const countEntriesResultSchema = z.object({
@@ -165,6 +215,12 @@ export const countEntriesResultSchema = z.object({
 	duplicates: z.array(z.string()),
 	/** `code` is one of `COUNT_ENTRY_REFUSAL_CODES` (a plain string on the wire). */
 	refused: z.array(z.object({ clientId: z.string(), code: z.string() })),
+	/**
+	 * Accepted entries (client ids) that reached a count already approved
+	 * (#474): they are kept as late entries for a manager, never dropped. They
+	 * are also listed in `accepted`, so a device settles them like any other.
+	 */
+	late: z.array(z.string()).optional(),
 })
 
 /** `POST /counts/:id/send` (counting → in review), `/reopen` (in review → counting), `/cancel`: `versionOnlySchema`. */
@@ -214,6 +270,8 @@ export const countReviewLineSchema = z.object({
 	movements: countReviewMovementsSchema.optional(),
 	differenceValueMinor: minorOut,
 	currency: currencyOut,
+	/** A key item (#490). */
+	isKey: z.boolean().optional(),
 })
 
 export const countReviewSchema = z.object({
@@ -224,6 +282,12 @@ export const countReviewSchema = z.object({
 	/** Net money difference if approved now, uncounted kept as before. */
 	differenceValueMinor: minorOut,
 	currency: currencyOut,
+	/** The money gap of the key items alone since the last count (#490, cost grant only). */
+	keyDifferenceValueMinor: minorOut,
+	/** Every device and person that joined (#474), with last sync and unsent entries. */
+	devices: z.array(countDeviceSchema).optional(),
+	/** The second-person check beside the first count (#525). */
+	second: countSecondCheckSchema.optional(),
 })
 export type CountReview = z.infer<typeof countReviewSchema>
 
@@ -246,5 +310,12 @@ export const approveCountSchema = z
 			.record(inventoryIdSchema, z.enum(['keep', 'zero']))
 			.default({}),
 		notes: z.record(inventoryIdSchema, inventoryNoteSchema).default({}),
+		/**
+		 * #474: devices that joined and have not said they are done make the
+		 * approval answer 409 `devices_still_counting` (with the list); the
+		 * manager's "Approve anyway" sends `true`. Entries that arrive later are
+		 * kept as late entries.
+		 */
+		approveAnyway: z.boolean().default(false),
 	})
 	.strict()

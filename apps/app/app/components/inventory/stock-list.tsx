@@ -1,7 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro'
-import { type StockItem } from '@repo/inventory'
+import { isNotCountedLately, type StockItem } from '@repo/inventory'
 import { Badge } from '@repo/ui/badge'
+import { Button } from '@repo/ui/button'
 import { Frame } from '@repo/ui/frame'
+import { Icon } from '@repo/ui/icon'
 import {
 	Item,
 	ItemActions,
@@ -39,6 +41,79 @@ type StockListProps = {
 	currency: string
 	/** Show the Days left column (Stock sorted by it, or always on wide screens). */
 	showDaysLeft?: boolean
+	/** Stars or unstars an item (a key item is in every quick count). Absent: the star is only shown. */
+	onToggleKey?: (item: StockItem) => void
+}
+
+/** When an item was last counted at this location, greyed and flagged when over 14 days (#491). */
+export function LastCountedText({
+	lastCountedAt,
+	now = Date.now(),
+}: {
+	lastCountedAt: number | null
+	now?: number
+}) {
+	const { i18n } = useLingui()
+	if (lastCountedAt === null) {
+		return (
+			<span className="text-warning" data-testid="last-counted-never">
+				<Trans>Never counted</Trans>
+			</span>
+		)
+	}
+	const stale = isNotCountedLately(lastCountedAt, now)
+	return (
+		<span
+			className={stale ? 'text-warning' : 'text-muted-foreground'}
+			data-testid={stale ? 'last-counted-stale' : 'last-counted'}
+		>
+			<bdi dir="ltr">
+				{new Intl.DateTimeFormat(i18n.locale, {
+					month: 'short',
+					day: 'numeric',
+				}).format(new Date(lastCountedAt))}
+			</bdi>
+		</span>
+	)
+}
+
+function KeyStar({
+	item,
+	onToggleKey,
+}: {
+	item: StockItem
+	onToggleKey?: (item: StockItem) => void
+}) {
+	const { t } = useLingui()
+	const on = item.isKey === true
+	if (!onToggleKey) {
+		return on ? (
+			<Icon
+				name="star"
+				className="text-warning size-4"
+				aria-label={t`Key item`}
+			/>
+		) : null
+	}
+	return (
+		<Button
+			type="button"
+			variant="ghost"
+			size="icon-sm"
+			aria-pressed={on}
+			aria-label={on ? t`Remove from key items` : t`Mark as a key item`}
+			onClick={(event) => {
+				event.stopPropagation()
+				onToggleKey(item)
+			}}
+			data-testid={`stock-key-${item.id}`}
+		>
+			<Icon
+				name="star"
+				className={on ? 'text-warning' : 'text-muted-foreground'}
+			/>
+		</Button>
+	)
 }
 
 function StatusBadge({ status }: { status: StockItem['status'] }) {
@@ -84,6 +159,7 @@ export function StockList({
 	showValue,
 	currency,
 	showDaysLeft = true,
+	onToggleKey,
 }: StockListProps) {
 	const { t, i18n } = useLingui()
 	const navigate = useNavigate()
@@ -107,6 +183,9 @@ export function StockList({
 							</TableHead>
 							<TableHead>
 								<Trans>On hand</Trans>
+							</TableHead>
+							<TableHead>
+								<Trans>Last counted</Trans>
 							</TableHead>
 							{showDaysLeft ? (
 								<TableHead>
@@ -138,6 +217,7 @@ export function StockList({
 									<TableCell>
 										<div className="flex min-w-0 flex-col">
 											<div className="flex items-center gap-2">
+												<KeyStar item={item} onToggleKey={onToggleKey} />
 												<Link
 													to={hrefFor(item)}
 													className="focus-visible:ring-ring/50 truncate rounded-sm font-medium wrap-anywhere outline-none focus-visible:ring-3"
@@ -186,6 +266,11 @@ export function StockList({
 											) : null}
 										</div>
 									</TableCell>
+									<TableCell data-testid={`stock-last-counted-${item.id}`}>
+										{item.isGroup ? null : (
+											<LastCountedText lastCountedAt={item.lastCountedAt} />
+										)}
+									</TableCell>
 									{showDaysLeft ? (
 										<TableCell data-testid={`stock-days-left-${item.id}`}>
 											<DaysLeftText
@@ -231,6 +316,13 @@ export function StockList({
 						>
 							<ItemContent>
 								<ItemTitle className="flex flex-wrap items-center gap-1.5 wrap-anywhere">
+									{item.isKey ? (
+										<Icon
+											name="star"
+											className="text-warning size-3.5"
+											aria-label={t`Key item`}
+										/>
+									) : null}
 									<span>{item.name}</span>
 									{item.isDraft ? (
 										<Badge variant="outline">
@@ -241,6 +333,14 @@ export function StockList({
 								<ItemDescription className="truncate">
 									{itemSubtitle(item, areaNames, i18n)}
 								</ItemDescription>
+								{item.isGroup ? null : (
+									<span className="text-xs">
+										<Trans>
+											Last counted{' '}
+											<LastCountedText lastCountedAt={item.lastCountedAt} />
+										</Trans>
+									</span>
+								)}
 								{showDaysLeft && item.daysLeft ? (
 									<span className="text-xs">
 										<DaysLeftText

@@ -21,6 +21,9 @@ import {
 	type StockStatus,
 	type UnitSystem,
 	quantityInCurrentUnit,
+	bottleSpecProblem,
+	isNotCountedLately,
+	type ItemBottle,
 } from '@repo/inventory'
 import {
 	invCounts,
@@ -287,6 +290,53 @@ export function toItemUnit(unit: ItemUnitRow) {
 	}
 }
 
+/** The bottle spec an item is counted by, or null when it is not counted by bottle (#470). */
+export function itemBottleOf(item: ItemRow): ItemBottle | null {
+	if (!item.countedByBottle || item.bottleSizeMl === null) return null
+	return {
+		sizeMl: item.bottleSizeMl,
+		fullWeightG: item.fullBottleWeightG,
+		emptyWeightG: item.emptyBottleWeightG,
+	}
+}
+
+/** Bottle columns for a write: only millilitre items, with a valid spec (400 otherwise). */
+function bottleColumns(
+	baseUnit: string,
+	bottle: ItemBottle | null,
+): Pick<
+	typeof invItems.$inferInsert,
+	| 'countedByBottle'
+	| 'bottleSizeMl'
+	| 'fullBottleWeightG'
+	| 'emptyBottleWeightG'
+> {
+	if (bottle === null) {
+		return {
+			countedByBottle: false,
+			bottleSizeMl: null,
+			fullBottleWeightG: null,
+			emptyBottleWeightG: null,
+		}
+	}
+	if (baseUnit !== 'ml') throw badRequest('bottle_needs_ml')
+	if (
+		bottleSpecProblem({
+			sizeMl: bottle.sizeMl,
+			fullWeightG: bottle.fullWeightG,
+			emptyWeightG: bottle.emptyWeightG,
+		})
+	) {
+		throw badRequest('bottle_spec')
+	}
+	return {
+		countedByBottle: true,
+		bottleSizeMl: bottle.sizeMl,
+		fullBottleWeightG: bottle.fullWeightG,
+		emptyBottleWeightG: bottle.emptyWeightG,
+	}
+}
+
 export function toStockItem(row: StockRow, cost: boolean): StockItem {
 	const value = stockValueMinor(row.onHand, row.cost)
 	const base: StockItem = {
@@ -300,6 +350,8 @@ export function toStockItem(row: StockRow, cost: boolean): StockItem {
 		batchCounted: row.item.batchCounted,
 		autoSoldOut: row.item.autoSoldOut,
 		isDraft: row.item.isDraft,
+		isKey: row.item.isKey,
+		bottle: itemBottleOf(row.item),
 		onHand: row.onHand,
 		countUnit: row.place?.countUnit ? wireUnit(row.place.countUnit) : null,
 		units: row.units.map(toItemUnit),
@@ -335,6 +387,17 @@ export async function listItems(
 		if (needle && !row.item.name.toLowerCase().includes(needle)) return false
 		if (query.category && row.item.category !== query.category) return false
 		if (query.areaId && !row.areaIds.includes(query.areaId)) return false
+		if (query.key && !row.item.isKey) return false
+		// Not counted lately is per location (the stock row is this location's);
+		// groups have no count of their own.
+		if (
+			query.notCounted &&
+			(row.group.isGroup ||
+				row.place === null ||
+				!isNotCountedLately(row.lastCountedAt, now))
+		) {
+			return false
+		}
 		if (query.status === 'low') return row.status === 'low'
 		if (query.status === 'out') return row.status === 'out'
 		if (query.status === 'attention') return row.status !== 'ok'
@@ -794,6 +857,8 @@ export async function createItem(
 				kind: body.kind,
 				baseUnit: body.baseUnit,
 				notes: body.notes?.length ? body.notes : null,
+				isKey: body.isKey === true,
+				...bottleColumns(body.baseUnit, body.bottle ?? null),
 				createdAt: ctx.now,
 				updatedAt: ctx.now,
 			})
@@ -914,6 +979,10 @@ export async function updateItem(
 			set.isDraft = body.isDraft
 			changed.push('isDraft')
 		}
+		if (body.isKey !== undefined && body.isKey !== item.isKey) {
+			set.isKey = body.isKey
+			changed.push('isKey')
+		}
 		if (body.baseUnit !== undefined && body.baseUnit !== item.baseUnit) {
 			const used = await tx
 				.select({ id: invMovements.id })
@@ -939,6 +1008,16 @@ export async function updateItem(
 			}
 			set.baseUnit = body.baseUnit
 			changed.push('baseUnit')
+		}
+		// Counted by bottle (#470): the spec follows the item's final base unit,
+		// and changing the base unit away from ml drops it.
+		const finalBase = set.baseUnit ?? item.baseUnit
+		if (body.bottle !== undefined) {
+			Object.assign(set, bottleColumns(finalBase, body.bottle))
+			changed.push('bottle')
+		} else if (finalBase !== 'ml' && item.countedByBottle) {
+			Object.assign(set, bottleColumns(finalBase, null))
+			changed.push('bottle')
 		}
 		// Recipe flags: only a change counts, so a form that resends the
 		// current values never needs the recipe grant or the recipes flag.

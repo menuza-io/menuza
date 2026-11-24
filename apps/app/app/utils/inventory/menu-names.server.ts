@@ -21,7 +21,9 @@ export type MenuNames = {
  * from the menu it owns. Used where a screen lists recipes (where an item is
  * used, setup checks).
  */
-export async function loadMenuNames(organizationId: string): Promise<MenuNames> {
+export async function loadMenuNames(
+	organizationId: string,
+): Promise<MenuNames> {
 	const [{ defaultLocale }, items, options] = await Promise.all([
 		orgSiteLocales(organizationId),
 		db

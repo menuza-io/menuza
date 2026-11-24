@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { orderSendChannelSchema } from '../records.ts'
+import { assigneeSchema, countKindSchema } from './count-controls.ts'
 import {
 	currencyOut,
 	isoDateSchema,
@@ -45,6 +46,24 @@ export const attentionItemSchema = z.discriminatedUnion('kind', [
 		valueAtStakeMinor: minorOut,
 	}),
 	z.object({ kind: z.literal('count_due'), date: isoDateSchema }),
+	/**
+	 * #490, #491: a scheduled count (a quick count of key items at close, a
+	 * full count, a count list) is due today at its time, with the person
+	 * responsible. `late` an hour after the due time with no count started.
+	 */
+	z.object({
+		kind: z.literal('scheduled_count_due'),
+		runId: z.string(),
+		countKind: countKindSchema,
+		slot: z.enum(['opening', 'close', 'custom']),
+		listId: z.string().nullable(),
+		listName: z.string().nullable(),
+		dueAt: z.number().int(),
+		assignee: assigneeSchema.nullable(),
+		late: z.boolean(),
+		/** More scheduled counts due today beyond this one. */
+		more: z.number().int(),
+	}),
 	z.object({
 		kind: z.literal('count_in_progress'),
 		countId: z.string(),
@@ -157,6 +176,8 @@ export const todaySchema = z.object({
 		wasteWeekShareBp: z.number().int().nullable().optional(),
 		lowItems: z.number().int(),
 		outItems: z.number().int(),
+		/** Items not counted in 14 days, or never, at this location (#491). Absent from older regions. */
+		notCountedItems: z.number().int().optional(),
 		currency: currencyOut,
 		/** Phase 2 ("To order: 9 items, 2 suppliers"); omitted while `inventory.purchasing` is off. */
 		toOrderItems: z.number().int().optional(),
@@ -169,6 +190,9 @@ export const todaySchema = z.object({
 		z.object({
 			date: isoDateSchema,
 			kind: z.enum(['count', 'delivery']),
+			/** A scheduled count (#490): quick or full, and its time of day. */
+			countKind: countKindSchema.optional(),
+			timeLocal: z.string().optional(),
 			supplierId: z.string().nullable(),
 			supplierName: z.string().nullable(),
 			/** Phase 2: the open order this delivery is expected for. */

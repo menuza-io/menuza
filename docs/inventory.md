@@ -97,9 +97,85 @@ Seeded by `0040_inventory.sql` and granted by default to `org_role_admin` only:
   - Sales, deliveries, waste, and batch movements that happened after an item
     was counted are not part of its `expected` and survive approval on top of
     the counted baseline.
-- **Unsynced tablets**: Unsent Station entries live in the tablet outbox until
-  they sync. A manager can approve from the App before every tablet has synced;
-  treat that as an operational risk until participant tracking ships.
+- **Devices still counting (#474)**: every device and person that joins a count
+  is a row in `inv_count_devices` with the last sync and the number of entries
+  it said it still holds (`unsent`): Station sends it with each entries request
+  (and `0` with "I'm done"), the App and the phone send
+  `device: { id, unsent }`. A device that has not synced for 2 hours is "not
+  responding". The review lists every device that has not said it is done, and
+  approving answers 409 `devices_still_counting` (with the list) until the
+  manager sends `approveAnyway: true` ("Approve anyway").
+- **Late entries (#474)**: an entry that reaches a count after it was approved
+  is not refused: it is kept in `inv_count_late_entries` (the response lists its
+  `clientId` in `late`, and it still counts as accepted so a device settles it).
+  A manager sees them on the approved count and adds one to a correction (one
+  `adjustment` movement, reason `correction`, source `count_late`; for an item
+  that was counted it is one more shelf on top, for one nobody counted it is the
+  entry against the ledger as of the moment it was counted) or dismisses it.
+  Needs the cost grant to apply. Entries to a cancelled count are still refused
+  per entry.
+
+---
+
+## Count controls: key items, quick counts, schedules, second person (#490, #491, #525)
+
+- **Key item (#490)**: a star on the item (`inv_items.is_key`). Stock filters to
+  key items (`GET /items?key=true`); Station marks them.
+- **Quick count (#490)**: an ordinary count of `kind: 'quick'`
+  (`inv_counts.kind`) whose scope is the key items, or a chosen count list. It
+  posts adjustments for the items it counted only (uncounted items default to
+  keep) and is never a food-cost period: `computeFoodCost` reads full counts
+  only (`kind = 'full'` and no list). One count being counted per location, kind
+  and list. The review shows the money gap of the key items
+  (`keyDifferenceValueMinor`).
+- **Schedules (#490, #491)**: `inv_count_schedules` (per location: kind,
+  optional list, slot opening/close/custom, local `HH:MM`, weekdays, assignee)
+  beside the older single weekly count day (`inv_settings.countDayOfWeek`),
+  which keeps working. A time before the day start belongs after midnight of
+  that business day. A schedule or an edit applies from tomorrow: the edit
+  stores today's runs first (`inv_count_schedule_runs`, one per schedule and
+  day, with the assignee frozen), so a count already started or a day already
+  planned never changes. Runs are projected on read (Today, the Station catalog
+  `dueCounts`, my schedule) and stored by the hourly tick, an edit and a count
+  start (the first count of the same kind and list started that day claims the
+  run).
+- **Not finished (#490)**: the tick cancels a quick count still being counted
+  when its next scheduled time arrives (`count.not_finished` in the audit
+  trail); nothing is merged into stock. A count in review is left to the
+  manager.
+- **Assignment and the overdue alert (#491)**: the assignee is a staff member of
+  the roster or a member with a login
+  (`assignee: { kind: 'staff' | 'member', id }`). The assigned person sees the
+  run on Station after their PIN (`dueCounts`, `assigneeStaffId` links a member
+  to the staff member sharing the login) and on "my schedule"
+  (`GET /schedule-link/me/counts`). A run not started one hour after it was due
+  posts `inventory_count_overdue` through the existing notify route and engine
+  (ids, a kind and a slot only), once per run (`overdue_alerted_at`). Stock has
+  "Last counted" and the filter "Not counted in 14 days" (`notCounted=true`, per
+  location, items the location keeps); Today shows the number
+  (`metrics.notCountedItems`) and the due run (`scheduled_count_due`).
+- **Second person (#525)**: the location setting
+  `inv_location_settings.second_count_required` (a manager's setting,
+  `PUT /settings/locations/:id/count-controls`). When on, Finish ("send") of a
+  count that includes key items does not move it to review: `second_state` is
+  `waiting`. Entries in that phase are the second person's blind count of key
+  items (`pass = 2`, never summed into the count): a person who made the first
+  count is refused (`second_count_same_person`, a staff member who shares a
+  login with an operator is the same person), non-key items are refused
+  (`second_count_not_key_item`), and a first counter's tablet syncing late (made
+  before the wait began) still lands in the first count. `second/finish`
+  compares: no difference goes straight to review, differences are `settling`
+  and shown side by side until each is settled with the first or the second
+  figure (`second/settle`); a manager can skip with a recorded reason
+  (`second/skip`, `update:settings:any`). The sheet the second person gets lists
+  key items only and no figures.
+- **Counting by bottle (#470)**: millilitre items store `counted_by_bottle`, the
+  bottle size and optional full and empty weights. The screens count whole
+  bottles plus the open bottle in tenths or by typed weight and send an ordinary
+  entry in millilitres (`@repo/inventory` `bottles.ts`: `bottlesToMl`,
+  `openBottleMlFromWeight`). Weight is typed; there is no scale connection.
+
+---
 
 ---
 

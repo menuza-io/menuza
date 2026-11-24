@@ -216,6 +216,7 @@ posInventoryRoutes.post(
 					clientId: body.clientId,
 					locationId: body.locationId,
 					listId: body.listId,
+					kind: body.kind,
 					idempotency: idempotency(ctx, 'count_start', body.clientId, body),
 					syncedBy: ctx.session.staffId,
 				},
@@ -281,6 +282,14 @@ posInventoryRoutes.post(
 					syncedBy: ctx.session.staffId,
 					madeAt: (clientId) => made.get(clientId)?.at,
 				},
+				// This terminal and what it still holds unsent (#474); the id and
+				// name come from the pairing, never from the body.
+				device: {
+					id: ctx.pos.device.id,
+					name: ctx.pos.device.label,
+					kind: 'station',
+					unsent: body.unsent ?? null,
+				},
 			},
 		)
 		return stationJson(stationCountEntriesResultSchema.parse(result))
@@ -300,6 +309,7 @@ posInventoryRoutes.post(
 			{
 				id,
 				deviceId: ctx.pos.device.id,
+				deviceName: ctx.pos.device.label,
 				syncedBy: ctx.session.staffId,
 				idempotency: idempotency(ctx, 'count_send', body.clientId, {
 					id,

@@ -5,7 +5,7 @@ import {
 	ORG_PERMISSIONS,
 } from '@repo/auth'
 import { getFeatureFlag } from '@repo/common/feature-flags'
-import { and, db, eq, UserOrganization } from '@repo/database'
+import { and, db, eq, Organization, UserOrganization } from '@repo/database'
 import {
 	expandInventoryGrants,
 	foldInventoryFeatures,
@@ -93,30 +93,33 @@ export type InventoryAccess = {
 	isOwner: boolean
 }
 
+type AccessOrganization = {
+	id: string
+	slug: string
+	name: string
+	dataRegion: string | null
+}
+
 /**
- * Every inventory loader and action awaits this first.
+ * The shared half of access: flags, grants, location scope and the manager
+ * facts of one member in one organization. Cookie sessions
+ * (`requireInventoryAccess`) and the phone app's bearer login
+ * (`requireInventoryAccessForUser`) both end here, so a screen on the web and
+ * on the phone check the same rules.
  */
-export async function requireInventoryAccess(
-	request: Request,
-	orgSlug: string | undefined,
-	options: InventoryAccessOptions = {},
-): Promise<InventoryAccess> {
-	const organization = await requireUserOrganization(request, orgSlug, {
-		id: true,
-		slug: true,
-		name: true,
-		dataRegion: true,
-	})
+async function resolveInventoryAccess(input: {
+	userId: string
+	organization: AccessOrganization
+	impersonated: boolean
+	options: InventoryAccessOptions
+}): Promise<InventoryAccess> {
+	const { userId, organization, impersonated, options } = input
 	const features = await getInventoryFeatureState(organization.id)
 	if (!features.enabled) throw new Response('Not Found', { status: 404 })
 
-	const userId = await getUserId(request)
-	if (!userId) throw new Response('Unauthorized', { status: 401 })
-
-	const [rawPerms, locationIds, impersonated, membership] = await Promise.all([
+	const [rawPerms, locationIds, membership] = await Promise.all([
 		getUserOrganizationPermissions(userId, organization.id),
 		resolveDiscountLocationIds(userId, organization.id),
-		isImpersonating(request),
 		db.query.UserOrganization.findFirst({
 			where: and(
 				eq(UserOrganization.userId, userId),
@@ -172,6 +175,75 @@ export async function requireInventoryAccess(
 		isOwner:
 			!impersonated && membership?.organizationRoleId === 'org_role_admin',
 	}
+}
+
+/**
+ * Every inventory loader and action awaits this first.
+ */
+export async function requireInventoryAccess(
+	request: Request,
+	orgSlug: string | undefined,
+	options: InventoryAccessOptions = {},
+): Promise<InventoryAccess> {
+	const organization = (await requireUserOrganization(request, orgSlug, {
+		id: true,
+		slug: true,
+		name: true,
+		dataRegion: true,
+	})) as AccessOrganization
+	// A disabled organization gets a 404 before any permission is checked.
+	if (!(await getInventoryFeatureState(organization.id)).enabled) {
+		throw new Response('Not Found', { status: 404 })
+	}
+
+	const userId = await getUserId(request)
+	if (!userId) throw new Response('Unauthorized', { status: 401 })
+	return resolveInventoryAccess({
+		userId,
+		organization,
+		impersonated: await isImpersonating(request),
+		options,
+	})
+}
+
+/**
+ * The phone app's version (`/api/inventory/token`): the member is already known
+ * from the bearer login, the organization is named by id. Not a member, an
+ * inactive organization and a disabled module all answer 404, so nothing leaks
+ * about organizations the member is not in. A phone is never an impersonation.
+ */
+export async function requireInventoryAccessForUser(
+	userId: string,
+	organizationId: string,
+	options: InventoryAccessOptions = {},
+): Promise<InventoryAccess> {
+	const [row] = await db
+		.select({
+			id: Organization.id,
+			slug: Organization.slug,
+			name: Organization.name,
+			dataRegion: Organization.dataRegion,
+		})
+		.from(Organization)
+		.innerJoin(
+			UserOrganization,
+			and(
+				eq(UserOrganization.organizationId, Organization.id),
+				eq(UserOrganization.userId, userId),
+				eq(UserOrganization.active, true),
+			),
+		)
+		.where(
+			and(eq(Organization.id, organizationId), eq(Organization.active, true)),
+		)
+		.limit(1)
+	if (!row) throw new Response('Not Found', { status: 404 })
+	return resolveInventoryAccess({
+		userId,
+		organization: row,
+		impersonated: false,
+		options,
+	})
 }
 
 /** Sidebar access; never throws for a missing flag or grant. */

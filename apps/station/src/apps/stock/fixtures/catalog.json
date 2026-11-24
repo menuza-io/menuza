@@ -6,7 +6,8 @@
 	"settings": {
 		"receiveRequiresManager": true,
 		"photoMaxBytes": 5242880,
-		"ordersEnabled": true
+		"ordersEnabled": true,
+		"secondCountRequired": false
 	},
 	"items": [
 		{
@@ -17,7 +18,9 @@
 			"baseUnit": "g",
 			"countUnit": "kg",
 			"units": [],
-			"areaIds": ["area_walkin"]
+			"areaIds": ["area_walkin"],
+			"isKey": false,
+			"bottle": null
 		},
 		{
 			"id": "item_chicken",
@@ -35,7 +38,9 @@
 					"archived": false
 				}
 			],
-			"areaIds": ["area_walkin"]
+			"areaIds": ["area_walkin"],
+			"isKey": false,
+			"bottle": null
 		},
 		{
 			"id": "item_oil",
@@ -45,7 +50,9 @@
 			"baseUnit": "ml",
 			"countUnit": "l",
 			"units": [],
-			"areaIds": ["area_dry"]
+			"areaIds": ["area_dry"],
+			"isKey": false,
+			"bottle": null
 		},
 		{
 			"id": "item_pita",
@@ -63,7 +70,9 @@
 					"archived": false
 				}
 			],
-			"areaIds": ["area_dry"]
+			"areaIds": ["area_dry"],
+			"isKey": false,
+			"bottle": null
 		},
 		{
 			"id": "item_lemon",
@@ -73,7 +82,9 @@
 			"baseUnit": "piece",
 			"countUnit": "piece",
 			"units": [],
-			"areaIds": []
+			"areaIds": [],
+			"isKey": false,
+			"bottle": null
 		},
 		{
 			"id": "item_garlic_sauce",
@@ -83,7 +94,9 @@
 			"baseUnit": "ml",
 			"countUnit": "l",
 			"units": [],
-			"areaIds": ["area_walkin"]
+			"areaIds": ["area_walkin"],
+			"isKey": false,
+			"bottle": null
 		}
 	],
 	"areas": [
@@ -130,7 +143,12 @@
 			"approvedBy": null,
 			"cancelledAt": null,
 			"createdAt": 1767222000000,
-			"version": 2
+			"version": 2,
+			"kind": "full",
+			"scheduleRunId": null,
+			"secondState": null,
+			"devicesCounting": 0,
+			"lateEntries": 0
 		}
 	],
 	"wasteReasons": [
@@ -217,5 +235,6 @@
 				}
 			]
 		}
-	]
+	],
+	"dueCounts": []
 }

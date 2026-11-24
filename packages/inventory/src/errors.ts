@@ -60,6 +60,12 @@ export const INVENTORY_ERROR_CODES = [
 	'merge_kind_mismatch',
 	// Order spending-limit approval (#500).
 	'self_approval_forbidden',
+	// Count controls (additive): devices still counting (#474), the key-item
+	// second-person check (#525), count schedules (#490, #491).
+	'devices_still_counting',
+	'second_count_pending',
+	'second_count_same_person',
+	'schedule_invalid',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

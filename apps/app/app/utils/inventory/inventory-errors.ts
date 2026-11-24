@@ -85,6 +85,18 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'count_closed') {
 			return msg`This count is already closed.`
 		}
+		if (error.code === 'devices_still_counting') {
+			return msg`Some devices are still counting. Check them, or approve anyway.`
+		}
+		if (error.code === 'second_count_pending') {
+			return msg`This count is waiting for a second person to count the key items.`
+		}
+		if (error.code === 'second_count_same_person') {
+			return msg`A different person has to count the key items the second time.`
+		}
+		if (error.code === 'schedule_invalid') {
+			return msg`That schedule cannot be saved. Pick someone from the staff list.`
+		}
 		if (error.code === 'task_closed') {
 			return msg`This prep task was already finished or skipped.`
 		}

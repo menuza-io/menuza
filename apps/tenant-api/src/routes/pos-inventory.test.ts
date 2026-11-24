@@ -41,6 +41,7 @@ import {
 	type ClockHarness,
 } from '../../tests/timeclock-harness.ts'
 import { makeOrg, type TestOrg } from '../../tests/staff-harness.ts'
+import { BASE, makeClient } from './inventory-test-utils.ts'
 import {
 	invalidateInventoryContext,
 	seedInventoryContextForTest,
@@ -52,6 +53,7 @@ import {
 	STOCK_LOC,
 	type Kitchen,
 	type StationKit,
+	mintInventoryOperator,
 } from './pos-inventory-fixture.ts'
 
 /**
@@ -180,6 +182,7 @@ describe('/pos/inventory', () => {
 				receiveRequiresManager: true,
 				photoMaxBytes: 5 * 1024 * 1024,
 				ordersEnabled: true,
+				secondCountRequired: false,
 			})
 
 			// Items the location keeps, plus the one only the weekly list names.
@@ -260,6 +263,7 @@ describe('/pos/inventory', () => {
 					'contractVersion',
 					'countLists',
 					'counts',
+					'dueCounts',
 					'expectedDeliveries',
 					'generatedAt',
 					'items',
@@ -715,6 +719,153 @@ describe('/pos/inventory', () => {
 			expect(more.body.accepted).toHaveLength(1)
 		})
 
+		it('records each tablet that joined with what it still holds, and a tablet that says it is done stops being a warning (#474)', async () => {
+			const id = (await startCount()).body.count.id as string
+			const url = `/pos/inventory/counts/${id}/entries`
+			const sent = await cashier('POST', url, {
+				body: { entries: [entry(k.items.tomato.id, 2)], unsent: 4 },
+			})
+			expect(sent.status, sent.raw).toBe(200)
+			const review = await k.world.ok('GET', `/counts/${id}/review`)
+			expect(review.devices).toEqual([
+				expect.objectContaining({
+					deviceId: tablet.deviceId,
+					kind: 'station',
+					unsentCount: 4,
+					state: 'counting',
+					person: { kind: 'staff', id: tablet.cashier.staffId },
+				}),
+			])
+			// "I'm done" is this device's note: nothing left, no warning.
+			await cashier('POST', `/pos/inventory/counts/${id}/send`, {
+				body: { clientId: uid('send') },
+			})
+			const after = await k.world.ok('GET', `/counts/${id}/review`)
+			expect(after.devices[0]).toMatchObject({ state: 'done', unsentCount: 0 })
+			expect(moneyKeys(sent.body)).toEqual([])
+		})
+
+		it('starts and joins a quick count of the key items apart from a full count (#490)', async () => {
+			const star = await k.world.ok(
+				'PATCH',
+				`/items/${k.items.tomato.id}?locationId=${STOCK_LOC}`,
+				{
+					expectedVersion: (
+						await k.world.ok(
+							'GET',
+							`/items/${k.items.tomato.id}?locationId=${STOCK_LOC}`,
+						)
+					).version,
+					isKey: true,
+				},
+			)
+			expect(star.isKey).toBe(true)
+			const quick = await as('cashier')('POST', '/pos/inventory/counts', {
+				body: {
+					clientId: uid('start'),
+					locationId: STOCK_LOC,
+					listId: null,
+					kind: 'quick',
+				},
+			})
+			expect(quick.status, quick.raw).toBe(200)
+			expect(quick.body.count).toMatchObject({ kind: 'quick', itemTotal: 1 })
+			const full = await as('manager')('POST', '/pos/inventory/counts', {
+				body: {
+					clientId: uid('start'),
+					locationId: STOCK_LOC,
+					listId: null,
+				},
+			})
+			expect(full.body.joined).toBe(false)
+			expect(full.body.count.kind).toBe('full')
+			expect(full.body.count.id).not.toBe(quick.body.count.id)
+			// The catalogue marks the key item so the tablet can offer the quick count.
+			const catalog = await cashier(
+				'GET',
+				`/pos/inventory/catalog?locationId=${STOCK_LOC}`,
+			)
+			expect(
+				catalog.body.items.find(
+					(item: { id: string }) => item.id === k.items.tomato.id,
+				).isKey,
+			).toBe(true)
+		})
+
+		it('lets a different person count the key items blind while the count waits for a second person (#525)', async () => {
+			await k.world.ok(
+				'PATCH',
+				`/items/${k.items.tomato.id}?locationId=${STOCK_LOC}`,
+				{
+					expectedVersion: (
+						await k.world.ok(
+							'GET',
+							`/items/${k.items.tomato.id}?locationId=${STOCK_LOC}`,
+						)
+					).version,
+					isKey: true,
+				},
+			)
+			const settings = await k.world.ok('GET', '/settings')
+			const location = settings.locations.find(
+				(entry: { locationId: string }) => entry.locationId === STOCK_LOC,
+			)
+			const office = await mintInventoryOperator(ORG_A, {
+				canManageSettings: true,
+			})
+			const configure = await makeClient(h.app)(
+				'PUT',
+				`${BASE}/settings/locations/${STOCK_LOC}/count-controls`,
+				{
+					token: office,
+					body: {
+						expectedVersion: location?.version ?? 0,
+						secondCountRequired: true,
+					},
+				},
+			)
+			expect(configure.status, JSON.stringify(configure.body)).toBe(200)
+			const id = (await startCount({ listId: null })).body.count.id as string
+			const url = `/pos/inventory/counts/${id}/entries`
+			await cashier('POST', url, {
+				body: {
+					entries: [entry(k.items.tomato.id, 5), entry(k.items.chicken.id, 3)],
+				},
+			})
+			const waiting = await k.world.ok('POST', `/counts/${id}/send`, {
+				expectedVersion: 1,
+			})
+			expect(waiting).toMatchObject({
+				status: 'counting',
+				secondState: 'waiting',
+			})
+
+			// The cashier counted first: refused as the second person. The manager may.
+			const same = await cashier('POST', url, {
+				body: { entries: [entry(k.items.tomato.id, 5)] },
+			})
+			expect(same.body.refused).toEqual([
+				{ clientId: expect.any(String), code: 'second_count_same_person' },
+			])
+			const sheet = await manager('GET', `/pos/inventory/counts/${id}`)
+			expect(sheet.body.pass).toBe(2)
+			expect(
+				sheet.body.areas.flatMap(
+					(area: { items: Array<{ itemId: string; quantity: unknown }> }) =>
+						area.items.map((item) => [item.itemId, item.quantity]),
+				),
+			).toEqual([[k.items.tomato.id, null]])
+			const second = await manager('POST', url, {
+				body: {
+					entries: [entry(k.items.tomato.id, 4), entry(k.items.chicken.id, 3)],
+				},
+			})
+			expect(second.body.accepted).toHaveLength(1)
+			expect(second.body.refused).toEqual([
+				{ clientId: expect.any(String), code: 'second_count_not_key_item' },
+			])
+		})
+
 		it('only the office sends a count for review: entries keep landing while it waits, a new start is its own count, and a closed count refuses per entry', async () => {
 			const first = await startCount()
 			const id = first.body.count.id as string
@@ -765,18 +916,29 @@ describe('/pos/inventory', () => {
 				fresh.body.count.id,
 			])
 
-			// Approved: a new entry is refused for that entry only (status 200, the
-			// whole request is not failed) and a replay keeps its first result.
-			await k.world.ok('POST', `/counts/${id}/approve`, { expectedVersion: 2 })
+			// The tablet that counted never said it is done: the office is warned and
+			// approves anyway (#474).
+			const warned = await k.world.call('POST', `/counts/${id}/approve`, {
+				expectedVersion: 2,
+			})
+			expect(warned.status).toBe(409)
+			expect(warned.body).toMatchObject({ code: 'devices_still_counting' })
+			// Approved: a new entry is kept as a late entry (status 200, the whole
+			// request is not failed) and a replay keeps its first result.
+			await k.world.ok('POST', `/counts/${id}/approve`, {
+				expectedVersion: 2,
+				approveAnyway: true,
+			})
 			const nextEntry = entry(k.items.tomato.id, 9)
 			const closed = await cashier('POST', url, {
 				body: { entries: [early, nextEntry] },
 			})
 			expect(closed.status, closed.raw).toBe(200)
 			expect(closed.body).toEqual({
-				accepted: [],
+				accepted: [{ clientId: nextEntry.clientId, quantity: 9_000_000 }],
 				duplicates: [early.clientId],
-				refused: [{ clientId: nextEntry.clientId, code: 'count_closed' }],
+				refused: [],
+				late: [nextEntry.clientId],
 			})
 			const db = await h.db(ORG_A)
 			expect(

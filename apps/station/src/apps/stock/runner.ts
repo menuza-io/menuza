@@ -13,6 +13,7 @@ import {
 	releaseRows,
 	stockRows,
 	type Resolved,
+	pendingCountEntries,
 } from './queue.ts'
 import { noteCountStatus, refreshCountStatus } from './reconcile.ts'
 import { db, type StockRow } from '~/lib/db.ts'
@@ -124,6 +125,7 @@ async function sendBatch(
 				clientId: head.id,
 				locationId: head.locationId,
 				listId: head.payload.listId,
+				...(head.payload.kind ? { kind: head.payload.kind } : {}),
 				...envelope(head),
 			})
 			await noteCountStatus(
@@ -142,12 +144,15 @@ async function sendBatch(
 		case 'count_entry': {
 			const id = countId(head)
 			if (!id) return batch.map((row) => failed(row, 'dependency_failed'))
+			// What this tablet still holds after this batch (#474).
+			const held = await pendingCountEntries(origin)
 			const result = await api.countEntries(id, {
 				entries: batch.flatMap((row) =>
 					row.kind === 'count_entry'
 						? [{ ...row.payload.entry, ...envelope(row) }]
 						: [],
 				),
+				unsent: Math.max(0, held - batch.length),
 			})
 			const accepted = new Set([
 				...result.accepted.map((entry) => entry.clientId),

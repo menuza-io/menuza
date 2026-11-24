@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type InventoryClient } from '#app/components/inventory/inventory-client-provider.tsx'
@@ -523,5 +523,238 @@ describe('CountingScreen', () => {
 		expect(
 			window.localStorage.getItem(queueStorageKey('acme', 'cnt_1')),
 		).toBeNull()
+	})
+
+	it('tells the region which device sent the entries and how many it still holds (#474)', async () => {
+		const request = region()
+		setup(request)
+		await screen.findByTestId('counting-screen')
+		await typeAndLeave('count-input-i1|a1', '3')
+		await waitFor(() => expect(entryCalls(request)).toHaveLength(1))
+		const body = sentJson(request, entryCalls(request)[0]!.index) as {
+			device: { id: string; unsent: number }
+		}
+		expect(body.device.id).toMatch(/^[A-Za-z0-9_-]{8,64}$/)
+		expect(body.device.unsent).toBe(0)
+		// The same browser keeps the same device id.
+		await typeAndLeave('count-input-i2|a1', '1')
+		await waitFor(() => expect(entryCalls(request)).toHaveLength(2))
+		const next = sentJson(request, entryCalls(request)[1]!.index) as {
+			device: { id: string }
+		}
+		expect(next.device.id).toBe(body.device.id)
+	})
+
+	it('marks key items with a star and names a quick count (#490)', async () => {
+		const request = region({
+			sheet: () => ({
+				count: { ...COUNT, listName: null, kind: 'quick' },
+				areas: [
+					{
+						areaId: 'a1',
+						name: 'Walk-in',
+						items: [sheetItem('i1', 'Saffron', { isKey: true })],
+					},
+				],
+			}),
+		})
+		setup(request)
+		await screen.findByTestId('counting-screen')
+		expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+			'Quick count of key items',
+		)
+		expect(
+			within(screen.getByTestId('count-row-i1|a1')).getByLabelText('Key item'),
+		).toBeInTheDocument()
+	})
+
+	it('counts an open bottle by tenths: 3 full bottles and one at 0.4 is entered as 3.4 bottles in millilitres (#470)', async () => {
+		const request = region({
+			sheet: () => ({
+				count: COUNT,
+				areas: [
+					{
+						areaId: 'a1',
+						name: 'Bar',
+						items: [
+							sheetItem('i1', 'Vodka', {
+								baseUnit: 'ml',
+								countUnit: 'ml',
+								bottle: { sizeMl: 700, fullWeightG: 1300, emptyWeightG: 500 },
+							}),
+						],
+					},
+				],
+			}),
+		})
+		setup(request)
+		await screen.findByTestId('counting-screen')
+		expect(screen.getByTestId('bottle-count')).toBeInTheDocument()
+		const more = within(screen.getByTestId('bottle-count')).getByLabelText(
+			'More bottles',
+		)
+		await userEvent.click(more)
+		await userEvent.click(more)
+		await userEvent.click(more)
+		fireEvent.change(screen.getByTestId('bottle-tenths'), {
+			target: { value: '4' },
+		})
+		await waitFor(() => expect(entryCalls(request).length).toBeGreaterThan(0), {
+			timeout: 3000,
+		})
+		const last = entryCalls(request).at(-1)!
+		const body = sentJson(request, last.index) as {
+			entries: Array<{ amount: number; unit: string }>
+		}
+		expect(body.entries.at(-1)).toMatchObject({ amount: 2380, unit: 'ml' })
+		expect(screen.getByTestId('bottle-total')).toHaveTextContent('3.4 bottles')
+	})
+
+	it('counts an open bottle by typed weight from the stored full and empty weights (#470)', async () => {
+		const request = region({
+			sheet: () => ({
+				count: COUNT,
+				areas: [
+					{
+						areaId: 'a1',
+						name: 'Bar',
+						items: [
+							sheetItem('i1', 'Vodka', {
+								baseUnit: 'ml',
+								countUnit: 'ml',
+								bottle: { sizeMl: 700, fullWeightG: 1300, emptyWeightG: 500 },
+							}),
+						],
+					},
+				],
+			}),
+		})
+		setup(request)
+		await screen.findByTestId('counting-screen')
+		await userEvent.click(screen.getByTestId('bottle-mode-weight'))
+		const more = within(screen.getByTestId('bottle-count')).getByLabelText(
+			'More bottles',
+		)
+		await userEvent.click(more)
+		await userEvent.click(more)
+		await userEvent.click(more)
+		await userEvent.type(screen.getByTestId('bottle-weight'), '700')
+		await waitFor(
+			() => {
+				const last = entryCalls(request).at(-1)
+				expect(last).toBeTruthy()
+				const body = sentJson(request, last!.index) as {
+					entries: Array<{ amount: number }>
+				}
+				// 3 whole bottles (2100 ml) + a quarter of a bottle (700 g is 200 of 800 g).
+				expect(body.entries.at(-1)!.amount).toBe(2275)
+			},
+			{ timeout: 3000 },
+		)
+	})
+
+	it('shows only key items, blind, to the second person and finishes the second count (#525)', async () => {
+		const request = vi.fn<InventoryClient['request']>(async (path) => {
+			if (path === '/counts/cnt_1') {
+				return {
+					count: { ...COUNT, secondState: 'waiting' },
+					pass: 2,
+					areas: [
+						{
+							areaId: 'a1',
+							name: 'Walk-in',
+							items: [sheetItem('i1', 'Saffron', { isKey: true })],
+						},
+					],
+				}
+			}
+			if (path === '/counts/cnt_1/second/finish') {
+				return {
+					...COUNT,
+					secondState: 'done',
+					status: 'in_review',
+					version: 4,
+				}
+			}
+			throw new Error(`unexpected request ${path}`)
+		})
+		setup(request, { canSeeCost: false })
+		expect(await screen.findByTestId('count-second-pass')).toBeInTheDocument()
+		expect(screen.getByTestId('count-input-i1|a1')).toBeInTheDocument()
+		expect(screen.queryByTestId('count-row-readonly-quantity')).toBeNull()
+	})
+
+	it('waits for a different person while the key items are counted a second time (#525)', async () => {
+		const request = vi.fn<InventoryClient['request']>(async (path) => {
+			if (path === '/counts/cnt_1') {
+				return {
+					count: { ...COUNT, secondState: 'waiting' },
+					pass: 1,
+					areas: [
+						{
+							areaId: 'a1',
+							name: 'Walk-in',
+							items: [sheetItem('i1', 'Saffron')],
+						},
+					],
+				}
+			}
+			throw new Error(`unexpected request ${path}`)
+		})
+		setup(request)
+		expect(
+			await screen.findByTestId('count-second-waiting'),
+		).toBeInTheDocument()
+		expect(screen.queryByTestId('count-input-i1|a1')).toBeNull()
+		expect(screen.queryByTestId('count-finish')).toBeNull()
+	})
+
+	it('lists entries that arrived after approval and adds one to a correction in a tap (#474)', async () => {
+		let resolved = false
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path === '/counts/cnt_1') {
+				return {
+					...sheet({ status: 'approved' }),
+					count: { ...COUNT, status: 'approved', lateEntries: 1 },
+				}
+			}
+			if (path === '/counts/cnt_1/late-entries') {
+				return {
+					entries: [
+						{
+							id: 'late_1',
+							countId: 'cnt_1',
+							itemId: 'i1',
+							itemName: 'Chicken thighs',
+							areaId: 'a1',
+							quantity: 3_000_000,
+							counter: { kind: 'staff', id: 's1' },
+							countedAt: 5,
+							receivedAt: 6,
+							status: resolved ? 'applied' : 'open',
+							adjustment: -1_000_000,
+							adjustmentValueMinor: -2800,
+							currency: 'SAR',
+						},
+					],
+				}
+			}
+			if (path === '/counts/cnt_1/late-entries/late_1/apply') {
+				resolved = true
+				expect(JSON.parse(String(init?.body))).toMatchObject({
+					clientId: expect.any(String),
+				})
+				return { adjustment: -1_000_000, entry: {} }
+			}
+			throw new Error(`unexpected request ${path}`)
+		})
+		setup(request, { canSeeCost: true })
+		const panel = await screen.findByTestId('late-entries')
+		expect(panel).toHaveTextContent('1 late entry arrived after approval')
+		expect(within(panel).getByTestId('late-entry-late_1')).toHaveTextContent(
+			'Chicken thighs',
+		)
+		await userEvent.click(within(panel).getByTestId('late-apply-late_1'))
+		await waitFor(() => expect(screen.queryByTestId('late-entries')).toBeNull())
 	})
 })

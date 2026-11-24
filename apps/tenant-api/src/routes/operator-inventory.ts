@@ -3,6 +3,7 @@ import {
 	INVENTORY_PERMISSIONS,
 	inventoryStatusQuerySchema,
 	updateInventorySettingsSchema,
+	updateLocationCountControlsSchema,
 	updateLocationSpendingLimitsSchema,
 } from '@repo/inventory'
 import { getTenantDb } from '@repo/tenant-db'
@@ -46,6 +47,7 @@ import { operatorInventoryTransfersRoutes } from './operator-inventory-transfers
 import { operatorInventoryWasteRoutes } from './operator-inventory-waste.ts'
 import {
 	listLocationSettings,
+	updateLocationCountControls,
 	updateLocationSpendingLimits,
 } from '../services/inventory-location-settings.ts'
 import {
@@ -201,6 +203,40 @@ operatorInventoryRoutes.put(
 				idempotency: idem.key
 					? {
 							scope: `settings:limits:${location.locationId}:${ctx.userId}`,
+							key: idem.key,
+							requestHash: hashInventoryRequest(body.data),
+						}
+					: null,
+			})
+			return respond(ctx, updated)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+/** The location's count rules (#525): key items need a second person's count. */
+operatorInventoryRoutes.put(
+	'/settings/locations/:locationId/count-controls',
+	inventoryGuard({
+		scope: 'write',
+		grant: INVENTORY_PERMISSIONS.UPDATE_INVENTORY,
+	}),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const location = requireInventoryLocation(ctx, c.req.param('locationId'))
+			if (!location.ok) return location.response
+			const body = await parseBody(c, updateLocationCountControlsSchema)
+			if ('error' in body) return body.error
+			const idem = readOptionalIdempotencyKey(c)
+			if ('error' in idem) return idem.error
+			const updated = await updateLocationCountControls(inventoryCaller(ctx), {
+				locationId: location.locationId,
+				body: body.data,
+				idempotency: idem.key
+					? {
+							scope: `settings:count-controls:${location.locationId}:${ctx.userId}`,
 							key: idem.key,
 							requestHash: hashInventoryRequest(body.data),
 						}

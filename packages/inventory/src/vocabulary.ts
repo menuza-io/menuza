@@ -91,6 +91,14 @@ export const COUNT_STATUSES = [
 export type CountStatus = (typeof COUNT_STATUSES)[number]
 
 /**
+ * `full` counts everything (or a chosen list) and sets food-cost periods; a
+ * `quick` count is key items (or a chosen list) and only corrects the stock of
+ * the items it includes (#490).
+ */
+export const COUNT_KINDS = ['full', 'quick'] as const
+export type CountKind = (typeof COUNT_KINDS)[number]
+
+/**
  * Inventory is per location. An organization without locations uses this
  * implicit one, the same fallback as staffing's `DEFAULT_SCOPE_ID`.
  */

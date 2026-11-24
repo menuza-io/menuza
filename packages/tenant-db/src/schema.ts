@@ -8456,6 +8456,26 @@ export const INV_COUNT_STATUS_VALUES = [
 	'approved',
 	'cancelled',
 ] as const
+// Count controls (0065_count_controls): a quick count is an ordinary count of
+// kind `quick` (key items or a chosen list); only full counts set food-cost
+// periods. `second_state` is the key-item second-person check (#525).
+export const INV_COUNT_KIND_VALUES = ['full', 'quick'] as const
+export const INV_COUNT_SECOND_STATE_VALUES = [
+	'waiting',
+	'settling',
+	'done',
+	'skipped',
+] as const
+export const INV_COUNT_RUN_STATUS_VALUES = [
+	'due',
+	'started',
+	'not_finished',
+] as const
+export const INV_COUNT_LATE_STATUS_VALUES = [
+	'open',
+	'applied',
+	'dismissed',
+] as const
 export const INV_WASTE_REASON_VALUES = [
 	'expired',
 	'spoiled',
@@ -8660,6 +8680,18 @@ export const invItems = sqliteTable(
 			.default(false),
 		// Typed on a cash purchase (#466) and queued for the office to tidy.
 		isDraft: integer('is_draft', { mode: 'boolean' }).notNull().default(false),
+		// A key item (a star, #490): in every quick count, filterable in Stock.
+		isKey: integer('is_key', { mode: 'boolean' }).notNull().default(false),
+		// "Counted by bottle" (#470): millilitre items only (checked in the
+		// service). Whole bottles plus the open bottle in tenths or by weight.
+		countedByBottle: integer('counted_by_bottle', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// Millilitres in one full bottle.
+		bottleSizeMl: integer('bottle_size_ml'),
+		// Grams of a full and of an empty bottle, for counting by weight.
+		fullBottleWeightG: integer('full_bottle_weight_g'),
+		emptyBottleWeightG: integer('empty_bottle_weight_g'),
 		// Set when this duplicate was merged into another item (#493): history
 		// stays here, readers follow the link. Cleared by an undo.
 		mergedIntoId: text('merged_into_id'),
@@ -8922,6 +8954,20 @@ export const invCounts = sqliteTable(
 		approvedById: text('approved_by_id'),
 		approvedAt: integer('approved_at'),
 		cancelledAt: integer('cancelled_at'),
+		// `full` (the default) or `quick` (#490): a quick count with no list is
+		// the location's key items; it never sets a food-cost period.
+		kind: text('kind', { enum: INV_COUNT_KIND_VALUES })
+			.notNull()
+			.default('full'),
+		// The scheduled run this count answers, when it was started for one.
+		scheduleRunId: text('schedule_run_id'),
+		// The second-person check of key items (#525); null = not required.
+		secondState: text('second_state', { enum: INV_COUNT_SECOND_STATE_VALUES }),
+		// When the count began waiting for the second person; entries made by the
+		// first counters before it still belong to the first pass.
+		secondStartedAt: integer('second_started_at'),
+		secondSkipReason: text('second_skip_reason'),
+		secondSkippedBy: text('second_skipped_by'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
@@ -8977,6 +9023,9 @@ export const invCountEntries = sqliteTable(
 		}).notNull(),
 		counterId: text('counter_id'),
 		clientId: text('client_id').notNull(),
+		// 1 = the count; 2 = the second person's blind count of key items (#525),
+		// never summed into the counted quantity.
+		pass: integer('pass').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
@@ -8994,6 +9043,206 @@ export const invCountEntries = sqliteTable(
 		check(
 			'chk_inv_count_entries_counter_kind',
 			oneOf(table.counterKind, INV_ACTOR_KIND_VALUES),
+		),
+	],
+)
+
+// Count schedules (#490, #491): "daily at opening", "daily at close", chosen
+// weekdays, per location, for a full count, a quick count (key items) or a
+// count list, with the person responsible. The older single weekly count day in
+// `inv_settings` keeps working beside these. A change applies from
+// `effective_from` (tomorrow), never to a day already materialized as a run.
+export const invCountSchedules = sqliteTable(
+	'inv_count_schedules',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		kind: text('kind', { enum: INV_COUNT_KIND_VALUES }).notNull(),
+		// A saved count list; null = everything (full) or key items (quick).
+		listId: text('list_id').references(() => invCountLists.id),
+		// `opening`, `close` or `custom` (a label only; the time is `time_local`).
+		slot: text('slot').notNull().default('custom'),
+		// Local `HH:MM` at the location.
+		timeLocal: text('time_local').notNull(),
+		// JSON array of weekdays, 0 (Sunday) to 6.
+		weekdays: text('weekdays', { mode: 'json' })
+			.$type<number[]>()
+			.notNull()
+			.default(sql`'[0,1,2,3,4,5,6]'`),
+		// Who is responsible: a staff member of the roster or a member with a login.
+		assigneeKind: text('assignee_kind'),
+		assigneeId: text('assignee_id'),
+		effectiveFrom: text('effective_from').notNull(),
+		archivedAt: integer('archived_at'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_count_schedules_location').on(
+			table.locationId,
+			table.archivedAt,
+		),
+		check(
+			'chk_inv_count_schedules_kind',
+			oneOf(table.kind, INV_COUNT_KIND_VALUES),
+		),
+		check(
+			'chk_inv_count_schedules_weekdays',
+			sql`json_valid(${table.weekdays})`,
+		),
+	],
+)
+
+// One scheduled occurrence on one business day: the assignee frozen when the
+// day was materialized, the count started for it, and the overdue alert claim
+// (once per count). Unique per schedule and day.
+export const invCountScheduleRuns = sqliteTable(
+	'inv_count_schedule_runs',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		scheduleId: text('schedule_id')
+			.notNull()
+			.references(() => invCountSchedules.id),
+		locationId: text('location_id').notNull(),
+		runDate: text('run_date').notNull(),
+		dueAt: integer('due_at').notNull(),
+		kind: text('kind', { enum: INV_COUNT_KIND_VALUES }).notNull(),
+		listId: text('list_id'),
+		slot: text('slot').notNull().default('custom'),
+		assigneeKind: text('assignee_kind'),
+		assigneeId: text('assignee_id'),
+		countId: text('count_id'),
+		status: text('status', { enum: INV_COUNT_RUN_STATUS_VALUES })
+			.notNull()
+			.default('due'),
+		// Set once the overdue alert reached the App (or was given up on).
+		overdueAlertedAt: integer('overdue_alerted_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_count_schedule_runs_day').on(
+			table.scheduleId,
+			table.runDate,
+		),
+		index('idx_inv_count_schedule_runs_location').on(
+			table.locationId,
+			table.runDate,
+		),
+		check(
+			'chk_inv_count_schedule_runs_status',
+			oneOf(table.status, INV_COUNT_RUN_STATUS_VALUES),
+		),
+	],
+)
+
+// Each device and person that joined a count (#474), with the last sync and the
+// number of entries the device said it still holds unsent. A device is "not
+// responding" after two hours without a sync (read, not stored).
+export const invCountDevices = sqliteTable(
+	'inv_count_devices',
+	{
+		countId: text('count_id')
+			.notNull()
+			.references(() => invCounts.id),
+		// A Station terminal id, or a browser / phone id the app generated.
+		deviceId: text('device_id').notNull(),
+		deviceKind: text('device_kind').notNull().default('station'),
+		// A label the device sent (a terminal name); no guest data.
+		deviceName: text('device_name'),
+		personKind: text('person_kind', { enum: INV_ACTOR_KIND_VALUES }).notNull(),
+		personId: text('person_id'),
+		joinedAt: integer('joined_at').notNull().default(nowMs),
+		lastSyncAt: integer('last_sync_at').notNull().default(nowMs),
+		// Entries the device reported still waiting to be sent; null = unknown.
+		unsentCount: integer('unsent_count'),
+		// The device said it is done counting.
+		doneAt: integer('done_at'),
+	},
+	(table) => [
+		primaryKey({ columns: [table.countId, table.deviceId] }),
+		index('idx_inv_count_devices_count').on(table.countId),
+	],
+)
+
+// Entries that reached a count after it was approved (#474): kept and listed,
+// never merged or dropped. A manager adds one to a correction in one tap (a
+// stock adjustment), or dismisses it.
+export const invCountLateEntries = sqliteTable(
+	'inv_count_late_entries',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		countId: text('count_id')
+			.notNull()
+			.references(() => invCounts.id),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		areaId: text('area_id'),
+		// Base thousandths.
+		quantity: integer('quantity').notNull(),
+		enteredAmount: text('entered_amount').notNull(),
+		enteredUnit: text('entered_unit').notNull(),
+		counterKind: text('counter_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		counterId: text('counter_id'),
+		deviceId: text('device_id'),
+		clientId: text('client_id').notNull(),
+		// When the person counted it (device clock, bounded) and when it arrived.
+		countedAt: integer('counted_at').notNull(),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+		status: text('status', { enum: INV_COUNT_LATE_STATUS_VALUES })
+			.notNull()
+			.default('open'),
+		resolvedAt: integer('resolved_at'),
+		resolvedById: text('resolved_by_id'),
+		// The adjustment movement an applied entry posted.
+		movementId: text('movement_id'),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_count_late_entries_client').on(table.clientId),
+		index('idx_inv_count_late_entries_count').on(table.countId, table.status),
+		check(
+			'chk_inv_count_late_entries_status',
+			oneOf(table.status, INV_COUNT_LATE_STATUS_VALUES),
+		),
+		check('chk_inv_count_late_entries_quantity', sql`${table.quantity} >= 0`),
+	],
+)
+
+// The second person's count of a key item beside the first (#525): shown side
+// by side and settled (the first or the second figure stands) before review.
+export const invCountSecondChecks = sqliteTable(
+	'inv_count_second_checks',
+	{
+		countId: text('count_id')
+			.notNull()
+			.references(() => invCounts.id),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		firstQuantity: integer('first_quantity'),
+		secondQuantity: integer('second_quantity'),
+		// When the second person counted it (as-of instant if their figure stands).
+		secondCountedAt: integer('second_counted_at'),
+		resolution: text('resolution'),
+		resolvedById: text('resolved_by_id'),
+		resolvedAt: integer('resolved_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({ columns: [table.countId, table.itemId] }),
+		check(
+			'chk_inv_count_second_checks_resolution',
+			sql`${table.resolution} is null or ${table.resolution} in ('first', 'second')`,
 		),
 	],
 )
@@ -9543,6 +9792,12 @@ export const invLocationSettings = sqliteTable(
 		// Per-location purchasing spending limits in org currency minor units (#500).
 		orderLimitMinor: integer('order_limit_minor'),
 		monthlyLimitMinor: integer('monthly_limit_minor'),
+		// Key items need a second person's count (#525).
+		secondCountRequired: integer('second_count_required', {
+			mode: 'boolean',
+		})
+			.notNull()
+			.default(false),
 		version: integer('version').notNull().default(1),
 		syncedAt: integer('synced_at'),
 		updatedAt: integer('updated_at').notNull().default(nowMs),

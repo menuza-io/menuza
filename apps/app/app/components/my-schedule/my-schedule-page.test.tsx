@@ -96,6 +96,9 @@ function stub(handler: Handler = () => undefined) {
 					shiftRequests: [],
 				})
 			}
+			if (call.path === '/schedule-link/me/counts') {
+				return Response.json({ counts: [] })
+			}
 			if (call.path === '/schedule-link/me/time-cards') {
 				return Response.json({
 					serverNow: NOW,
@@ -156,7 +159,44 @@ describe('opening the link', () => {
 			expect.stringContaining('https://ksa.tenant.test/schedule-link/me'),
 			expect.anything(),
 		)
-		expect(calls).toHaveLength(1)
+		expect(
+			calls.filter((call) => call.path === '/schedule-link/me'),
+		).toHaveLength(1)
+	})
+
+	it('shows the stock counts assigned to the person on the weekly count plan', async () => {
+		stub((call) =>
+			call.path === '/schedule-link/me/counts'
+				? Response.json({
+						counts: [
+							{
+								id: 'run-1',
+								date: '2026-03-04',
+								dueAt: NOW + 3 * HOUR,
+								kind: 'quick',
+								listName: null,
+								slot: 'close',
+								status: 'due',
+								late: false,
+							},
+							{
+								id: 'run-2',
+								date: '2026-03-05',
+								dueAt: NOW + 27 * HOUR,
+								kind: 'full',
+								listName: 'Proteins',
+								slot: 'opening',
+								status: 'due',
+								late: false,
+							},
+						],
+					})
+				: undefined,
+		)
+		open()
+		expect(await screen.findByText('Counts for you')).toBeTruthy()
+		expect(screen.getByText('Quick count of key items')).toBeTruthy()
+		expect(screen.getByText('Count of Proteins')).toBeTruthy()
 	})
 
 	it('marks today and keeps the past quiet', async () => {

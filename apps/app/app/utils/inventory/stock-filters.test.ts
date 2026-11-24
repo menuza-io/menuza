@@ -15,18 +15,24 @@ describe('stock filters', () => {
 			category: 'all',
 			areaId: 'all',
 			lowOnly: false,
+			keyOnly: false,
+			notCounted: false,
 			sort: 'name',
 			limit: 50,
 		})
 		expect(
 			parseStockFilters(
-				new URLSearchParams('q=chick&category=meat&area=a1&low=1&limit=100'),
+				new URLSearchParams(
+					'q=chick&category=meat&area=a1&low=1&key=1&notCounted=1&limit=100',
+				),
 			),
 		).toEqual({
 			q: 'chick',
 			category: 'meat',
 			areaId: 'a1',
 			lowOnly: true,
+			keyOnly: true,
+			notCounted: true,
 			sort: 'name',
 			limit: 100,
 		})
@@ -47,6 +53,8 @@ describe('stock filters', () => {
 				category: 'meat',
 				areaId: 'a1',
 				lowOnly: true,
+				keyOnly: true,
+				notCounted: true,
 				sort: 'name',
 				limit: 100,
 			},
@@ -60,6 +68,8 @@ describe('stock filters', () => {
 			category: 'meat',
 			areaId: 'a1',
 			status: 'attention',
+			key: 'true',
+			notCounted: 'true',
 			limit: '100',
 		})
 		const plain = new URLSearchParams(
@@ -95,12 +105,16 @@ describe('stock filters', () => {
 	})
 
 	it('removes a filter set back to its default', () => {
-		const current = new URLSearchParams('q=a&category=meat&area=a1&low=1')
+		const current = new URLSearchParams(
+			'q=a&category=meat&area=a1&low=1&key=1&notCounted=1',
+		)
 		const next = applyStockFilterPatch(current, {
 			q: '',
 			category: 'all',
 			areaId: 'all',
 			lowOnly: false,
+			keyOnly: false,
+			notCounted: false,
 		})
 		expect(next.toString()).toBe('')
 	})

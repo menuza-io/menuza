@@ -181,8 +181,9 @@ async function addRow<K extends StationOutboxKind>(
  */
 export async function startCount(
 	ctx: StockContext,
-	list: { id: string | null; name: string | null },
+	list: { id: string | null; name: string | null; kind?: 'full' | 'quick' },
 ): Promise<LocalCount> {
+	const kind = list.kind ?? 'full'
 	return db.transaction(
 		'rw',
 		db.stockQueue,
@@ -194,15 +195,23 @@ export async function startCount(
 					count.status === 'counting' &&
 					(count.serverStatus ?? 'counting') === 'counting' &&
 					count.listId === list.id &&
+					(count.kind ?? 'full') === kind &&
 					!count.startFailed,
 			)
 			if (open) return open
-			const row = await addRow(ctx, 'count_start', { listId: list.id })
+			const row = await addRow(
+				ctx,
+				'count_start',
+				kind === 'quick'
+					? { listId: list.id, kind: 'quick' }
+					: { listId: list.id },
+			)
 			const record: LocalCount = {
 				localId: row.id,
 				ref: { clientId: row.id },
 				listId: list.id,
 				listName: list.name,
+				...(kind === 'quick' ? { kind } : {}),
 				status: 'counting',
 				startedAt: row.createdAt,
 			}
@@ -215,7 +224,12 @@ export async function startCount(
 /** Joins a count the server lists as in progress (started on a phone, another tablet or in the App). */
 export async function joinCount(
 	ctx: StockContext,
-	count: { id: string; listId: string | null; listName: string | null },
+	count: {
+		id: string
+		listId: string | null
+		listName: string | null
+		kind?: 'full' | 'quick'
+	},
 ): Promise<LocalCount> {
 	return db.transaction(
 		'rw',
@@ -231,6 +245,7 @@ export async function joinCount(
 				ref: { id: count.id },
 				listId: count.listId,
 				listName: count.listName,
+				...(count.kind === 'quick' ? { kind: 'quick' as const } : {}),
 				status: 'counting',
 				startedAt: Date.now(),
 				joined: true,
@@ -242,6 +257,21 @@ export async function joinCount(
 			return record
 		},
 	)
+}
+
+/**
+ * Entries this tablet still holds unsent (#474): what is waiting in the outbox
+ * for counts, so the office can see "this tablet is still counting".
+ */
+export async function pendingCountEntries(origin: string): Promise<number> {
+	return db.stockQueue
+		.filter(
+			(row) =>
+				row.origin === origin &&
+				row.kind === 'count_entry' &&
+				row.status !== 'failed',
+		)
+		.count()
 }
 
 export class CountClosedError extends Error {

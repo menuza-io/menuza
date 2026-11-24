@@ -1,4 +1,4 @@
-import { type CountSheet, type UnitRef } from '@repo/inventory'
+import { type CountSheet, type ItemBottle, type UnitRef } from '@repo/inventory'
 import { type CountSyncSnapshot, type QueuedEntry } from './count-queue.ts'
 import { thousandthsInUnit } from './format.ts'
 
@@ -37,6 +37,10 @@ export type CountRow = {
 	quantity: number | null
 	/** What this person last typed here (one unit), from the region. */
 	mine: SheetItem['mine']
+	/** A key item (#490). */
+	isKey: boolean
+	/** Counted by bottle (#470): the size and weights, else `null`. */
+	bottle: ItemBottle | null
 }
 
 export type CountTab = {
@@ -63,6 +67,8 @@ export function sheetTabs(sheet: CountSheet): CountTab[] {
 				units: item.units,
 				quantity: item.quantity,
 				mine: item.mine,
+				isKey: item.isKey === true,
+				bottle: item.bottle ?? null,
 			})),
 		}))
 		.filter((tab) => tab.rows.length > 0)

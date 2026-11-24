@@ -570,6 +570,8 @@ describe('the fan-out', () => {
 			countReviewAlerts: 0,
 			deliveryDueAlerts: 2,
 			priceRiseAlerts: 0,
+			countOverdueAlerts: 0,
+			countsNotFinished: 0,
 			salesSettled: 0,
 			errors: 1,
 		})

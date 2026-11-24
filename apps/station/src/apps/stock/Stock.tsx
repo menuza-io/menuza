@@ -130,7 +130,9 @@ export function Stock({
 			key: entry.localId,
 			record: entry,
 			summary: catalog?.counts.find((count) => count.id === serverId) ?? null,
-			title: entry.listName,
+			title:
+				entry.listName ??
+				(entry.kind === 'quick' ? _(t`Quick count of key items`) : null),
 			pending: serverId === null,
 			inReview: entry.serverStatus === 'in_review',
 			done: isDone(entry),
@@ -145,7 +147,9 @@ export function Stock({
 			key: count.id,
 			record: null,
 			summary: count,
-			title: count.listName,
+			title:
+				count.listName ??
+				(count.kind === 'quick' ? _(t`Quick count of key items`) : null),
 			pending: false,
 			inReview: false,
 			done: false,
@@ -162,17 +166,33 @@ export function Stock({
 						id: card.summary.id,
 						listId: card.summary.listId,
 						listName: card.summary.listName,
+						kind: card.summary.kind,
 					})
 				: null)
 		if (local) setView({ kind: 'count', localId: local.localId })
 	}
-	const begin = async (list: { id: string | null; name: string | null }) => {
+	const begin = async (list: {
+		id: string | null
+		name: string | null
+		kind?: 'full' | 'quick'
+	}) => {
 		if (!ctx) return
 		const local = await startCount(ctx, list)
 		setSheet(null)
 		setView({ kind: 'count', localId: local.localId })
 		void stock.sync()
 	}
+
+	// Scheduled counts due now (#490, #491): the close count appears at its
+	// time, and the ones assigned to the signed-in person come first.
+	const now = Date.now()
+	const dueNow = (catalog?.dueCounts ?? [])
+		.filter((run) => run.status === 'due' && run.dueAt <= now)
+		.sort(
+			(a, b) =>
+				Number(isForMe(b, ctx?.madeBy ?? null)) -
+					Number(isForMe(a, ctx?.madeBy ?? null)) || a.dueAt - b.dueAt,
+		)
 
 	const tiles: Array<{
 		key: Exclude<Sheet, 'sync' | null>
@@ -348,11 +368,66 @@ export function Stock({
 									</ul>
 								</section>
 							) : null}
+							{dueNow.length > 0 ? (
+								<section
+									className="flex flex-col gap-2"
+									data-testid="stock-due-counts"
+								>
+									<h3 className="text-base font-semibold">
+										<Trans>Counts due today</Trans>
+									</h3>
+									<ul className="flex flex-col gap-2">
+										{dueNow.map((run) => {
+											const mine = isForMe(run, ctx.madeBy)
+											return (
+												<li key={run.id}>
+													<StartButton
+														title={
+															run.listName ??
+															(run.kind === 'quick'
+																? _(t`Quick count of key items`)
+																: _(t`Everything`))
+														}
+														hint={`${new Intl.DateTimeFormat(i18n.locale, {
+															timeStyle: 'short',
+														}).format(new Date(run.dueAt))}${
+															mine ? ` · ${_(t`Assigned to you`)}` : ''
+														}${run.late ? ` · ${_(t`Late`)}` : ''}`}
+														onClick={() =>
+															void begin({
+																id: run.listId,
+																name: run.listName,
+																kind: run.kind,
+															})
+														}
+													/>
+												</li>
+											)
+										})}
+									</ul>
+								</section>
+							) : null}
 							<section className="flex flex-col gap-2">
 								<h3 className="text-base font-semibold">
 									<Trans>Start a count</Trans>
 								</h3>
 								<ul className="flex flex-col gap-2">
+									{catalog.items.some((item) => item.isKey) ? (
+										<li>
+											<StartButton
+												title={_(t`Key items (quick count)`)}
+												hint={_(
+													plural(
+														catalog.items.filter((item) => item.isKey).length,
+														{ one: '# item', other: '# items' },
+													),
+												)}
+												onClick={() =>
+													void begin({ id: null, name: null, kind: 'quick' })
+												}
+											/>
+										</li>
+									) : null}
 									{catalog.countLists.map((list) => {
 										const total = list.itemIds.length
 										return (
@@ -411,6 +486,21 @@ export function Stock({
 			/>
 			<Toast message={toast} onDone={() => setToast(null)} />
 		</main>
+	)
+}
+
+/** A scheduled count is this person's when it names their staff id, or the login they share with it. */
+function isForMe(
+	run: {
+		assignee: { kind: string; id: string } | null
+		assigneeStaffId?: string | null
+	},
+	staffId: string | null,
+): boolean {
+	if (!staffId || !run.assignee) return false
+	return (
+		(run.assignee.kind === 'staff' && run.assignee.id === staffId) ||
+		run.assigneeStaffId === staffId
 	)
 }
 
@@ -491,6 +581,11 @@ function CountCard({
 				{card.pending ? (
 					<Badge tone="warning">
 						<Trans>Not sent yet</Trans>
+					</Badge>
+				) : null}
+				{card.summary?.secondState === 'waiting' ? (
+					<Badge tone="warning">
+						<Trans>Second count needed</Trans>
 					</Badge>
 				) : null}
 				{card.inReview ? (

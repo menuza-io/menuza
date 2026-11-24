@@ -15,6 +15,8 @@ import {
 	positiveQuantitySchema,
 	unitRefSchema,
 } from './common.ts'
+import { itemBottleSchema } from '../bottles.ts'
+import { countKindSchema, countRunSchema } from './count-controls.ts'
 import {
 	countEntriesResultSchema,
 	countEntrySchema,
@@ -384,6 +386,10 @@ export const stationItemSchema = z.object({
 	units: z.array(itemUnitSchema),
 	/** Storage areas at this location (empty: "Not in an area"). */
 	areaIds: z.array(z.string()),
+	/** A key item (#490): starred, in every quick count. Absent from older regions. */
+	isKey: z.boolean().optional(),
+	/** Counted by bottle (#470): size and weights, so the till converts offline. */
+	bottle: itemBottleSchema.nullable().optional(),
 })
 export type StationItem = z.infer<typeof stationItemSchema>
 
@@ -452,6 +458,8 @@ export const stationCatalogSchema = z.object({
 		photoMaxBytes: z.number().int(),
 		/** The order feature is on (`inventory.purchasing`): expected deliveries are listed. */
 		ordersEnabled: z.boolean(),
+		/** Key items need a second person's count at this location (#525). */
+		secondCountRequired: z.boolean().optional(),
 	}),
 	items: z.array(stationItemSchema),
 	areas: z.array(stationAreaSchema),
@@ -465,6 +473,12 @@ export const stationCatalogSchema = z.object({
 	suppliers: z.array(stationSupplierSchema),
 	/** Open orders for this location (sent and partly received, and drafts the office has not sent are left out). */
 	expectedDeliveries: z.array(stationExpectedDeliverySchema),
+	/**
+	 * Today's scheduled counts at this location (#490, #491), with who is
+	 * responsible: the till shows the signed-in person theirs, and a quick
+	 * count or the close count appears at its time. Absent from older regions.
+	 */
+	dueCounts: z.array(countRunSchema).optional(),
 })
 export type StationCatalog = z.infer<typeof stationCatalogSchema>
 
@@ -483,6 +497,8 @@ export const stationStartCountSchema = z
 		clientId: clientIdSchema,
 		locationId: inventoryLocationIdSchema,
 		listId: inventoryIdSchema.nullable(),
+		/** `quick` starts or joins the key-item count (#490); absent: a full count. */
+		kind: countKindSchema.optional(),
 		...madeShape,
 	})
 	.strict()
@@ -519,7 +535,15 @@ export const stationCountEntrySchema = z
 	.strict()
 
 export const stationCountEntriesSchema = z
-	.object({ entries: z.array(stationCountEntrySchema).min(1).max(200) })
+	.object({
+		entries: z.array(stationCountEntrySchema).min(1).max(200),
+		/**
+		 * Entries this tablet still holds unsent after this request (#474), so
+		 * the review can say "this device is still counting". The device id and
+		 * name come from the pairing, never from the body.
+		 */
+		unsent: z.number().int().min(0).max(100_000).optional(),
+	})
 	.strict()
 
 export const stationCountEntriesResultSchema = countEntriesResultSchema
@@ -846,7 +870,12 @@ export const stationOutboxItemSchema = z.discriminatedUnion('kind', [
 	z.object({
 		...outboxBase,
 		kind: z.literal('count_start'),
-		payload: z.object({ listId: inventoryIdSchema.nullable() }).strict(),
+		payload: z
+			.object({
+				listId: inventoryIdSchema.nullable(),
+				kind: countKindSchema.optional(),
+			})
+			.strict(),
 	}),
 	z.object({
 		...outboxBase,

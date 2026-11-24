@@ -29,9 +29,14 @@ const INVENTORY_TABLES = [
 	'inv_alert_log',
 	'inv_audit_log',
 	'inv_cost_events',
+	'inv_count_devices',
 	'inv_count_entries',
+	'inv_count_late_entries',
 	'inv_count_list_items',
 	'inv_count_lists',
+	'inv_count_schedule_runs',
+	'inv_count_schedules',
+	'inv_count_second_checks',
 	'inv_counts',
 	'inv_deliveries',
 	'inv_delivery_lines',
@@ -1537,6 +1542,108 @@ describe('inventory tenant schema (0033_inventory, 0034_inventory_orders, 0035_i
 			// Reject keeps SQL status = 'draft' and records reason without triggering inv_orders_status_forward.
 			await client.execute(
 				"UPDATE inv_orders SET approval_status = 'rejected', rejection_reason = 'Too high' WHERE id = 'ord_ap1'",
+			)
+		})
+	})
+
+	describe('0065_count_controls', () => {
+		it('adds key items, bottle counting, quick counts, schedules with one run per day, devices, late entries and the second check', async () => {
+			const { client } = await openMigratedDb()
+			// Existing rows read as before: not a key item, not counted by bottle, a full count.
+			await insertItem(client, 'it_key', { baseUnit: 'ml' })
+			await client.execute(
+				"INSERT INTO inv_counts (id, location_id, status, business_date, started_by_kind) VALUES ('cnt_1', 'main', 'counting', '2026-11-23', 'operator')",
+			)
+			const item = await client.execute(
+				"SELECT is_key, counted_by_bottle, bottle_size_ml FROM inv_items WHERE id = 'it_key'",
+			)
+			expect(item.rows[0]).toMatchObject({
+				is_key: 0,
+				counted_by_bottle: 0,
+				bottle_size_ml: null,
+			})
+			const count = await client.execute(
+				"SELECT kind, second_state, schedule_run_id FROM inv_counts WHERE id = 'cnt_1'",
+			)
+			expect(count.rows[0]).toMatchObject({
+				kind: 'full',
+				second_state: null,
+				schedule_run_id: null,
+			})
+			await client.execute(
+				"INSERT INTO inv_location_settings (location_id) VALUES ('main')",
+			)
+			expect(
+				(
+					await client.execute(
+						"SELECT second_count_required FROM inv_location_settings WHERE location_id = 'main'",
+					)
+				).rows[0],
+			).toMatchObject({ second_count_required: 0 })
+
+			// A schedule, and one run per schedule and business day.
+			await client.execute(
+				"INSERT INTO inv_count_schedules (id, location_id, kind, slot, time_local, effective_from) VALUES ('sch_1', 'main', 'quick', 'close', '22:00', '2026-11-24')",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_count_schedules (id, location_id, kind, slot, time_local, effective_from) VALUES ('sch_bad', 'main', 'weekly', 'close', '22:00', '2026-11-24')",
+				),
+				'chk_inv_count_schedules_kind',
+			)
+			await client.execute(
+				"INSERT INTO inv_count_schedule_runs (id, schedule_id, location_id, run_date, due_at, kind) VALUES ('run_1', 'sch_1', 'main', '2026-11-24', 1795557600000, 'quick')",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_count_schedule_runs (id, schedule_id, location_id, run_date, due_at, kind) VALUES ('run_2', 'sch_1', 'main', '2026-11-24', 1795557600000, 'quick')",
+				),
+				'UNIQUE constraint failed',
+			)
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_count_schedule_runs SET status = 'late' WHERE id = 'run_1'",
+				),
+				'chk_inv_count_schedule_runs_status',
+			)
+
+			// Devices: one row per count and device.
+			await client.execute(
+				"INSERT INTO inv_count_devices (count_id, device_id, person_kind, unsent_count) VALUES ('cnt_1', 'tablet-1', 'staff', 3)",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_count_devices (count_id, device_id, person_kind) VALUES ('cnt_1', 'tablet-1', 'staff')",
+				),
+				'UNIQUE constraint failed',
+			)
+
+			// Late entries: a client id is stored once; a status outside the set is refused.
+			await client.execute(
+				"INSERT INTO inv_count_late_entries (id, count_id, item_id, quantity, entered_amount, entered_unit, counter_kind, client_id, counted_at) VALUES ('late_1', 'cnt_1', 'it_key', 700000, '700', 'ml', 'staff', 'late-client-1', 1795557600000)",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"INSERT INTO inv_count_late_entries (id, count_id, item_id, quantity, entered_amount, entered_unit, counter_kind, client_id, counted_at) VALUES ('late_2', 'cnt_1', 'it_key', 1, '1', 'ml', 'staff', 'late-client-1', 1795557600000)",
+				),
+				'UNIQUE constraint failed',
+			)
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_count_late_entries SET status = 'lost' WHERE id = 'late_1'",
+				),
+				'chk_inv_count_late_entries_status',
+			)
+
+			// The second check settles an item with the first or the second figure only.
+			await client.execute(
+				"INSERT INTO inv_count_second_checks (count_id, item_id, first_quantity, second_quantity) VALUES ('cnt_1', 'it_key', 8000000, 7000000)",
+			)
+			await expectRejectsWith(
+				client.execute(
+					"UPDATE inv_count_second_checks SET resolution = 'both' WHERE item_id = 'it_key'",
+				),
+				'chk_inv_count_second_checks_resolution',
 			)
 		})
 	})

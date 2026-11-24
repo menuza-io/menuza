@@ -23,6 +23,9 @@ export function makeWorld(call: Call, token: string, locationId: string) {
 
 	return {
 		ok,
+		/** The raw reply (status and body), for a request that is meant to fail. */
+		call: (method: string, path: string, body?: unknown) =>
+			call(method, `${BASE}${path}`, { token, body }),
 		async supplier(name: string, extra: Record<string, unknown> = {}) {
 			return ok('POST', '/suppliers', {
 				clientId: cid('sup'),

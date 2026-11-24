@@ -21,15 +21,17 @@ import { Skeleton } from '@repo/ui/skeleton'
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { WorkspacePanel } from '@repo/ui/workspace'
 import { type FormEvent, useEffect, useId, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { Link, useLoaderData, useLocation } from 'react-router'
 import { toast } from 'sonner'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { CountPlanPanel } from '#app/components/inventory/count-plan-panel.tsx'
 import { useNotifyInventoryChanged } from '#app/components/inventory/inventory-prefs.tsx'
 import {
 	useInventoryClient,
 	useInventoryQuery,
 } from '#app/hooks/use-inventory-client.ts'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
+import { listCountAssigneeMembers } from '#app/utils/inventory/count-assignees.server.ts'
 import {
 	inventoryErrorMessage,
 	inventorySaveErrorMessage,
@@ -40,8 +42,15 @@ import { type Route } from './+types/settings.ts'
 import { useInventoryLayoutData } from './_layout.tsx'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-	await requireInventoryAccess(request, params.orgSlug)
-	return null
+	const access = await requireInventoryAccess(request, params.orgSlug)
+	// Members with a login who can be made responsible for a scheduled count
+	// (#491). Staff on the roster are read in the browser, from the region.
+	return {
+		members: await listCountAssigneeMembers({
+			organizationId: access.organizationId,
+			locationId: null,
+		}),
+	}
 }
 
 const NO_COUNT_DAY = 'none'
@@ -69,6 +78,9 @@ export default function InventorySettingsRoute() {
 		locations,
 	} = useInventoryLayoutData()
 	const location = useLocation()
+	// Undefined when the route renders without its loader (tests, previews).
+	const loaderData = useLoaderData<typeof loader>() as
+		Awaited<ReturnType<typeof loader>> | undefined
 	const { request } = useInventoryClient()
 	const notifyChanged = useNotifyInventoryChanged()
 	const settings = useInventoryQuery('/settings', inventorySettingsSchema)
@@ -561,6 +573,29 @@ export default function InventorySettingsRoute() {
 					</form>
 				</WorkspacePanel>
 			) : null}
+
+			<WorkspacePanel
+				title={<Trans>Count schedule & plan</Trans>}
+				description={
+					<Trans>
+						Schedule quick counts of your key items and full counts, and choose
+						who is responsible for each one.
+					</Trans>
+				}
+			>
+				<CountPlanPanel
+					orgSlug={orgSlug}
+					locationId={activeLocationId}
+					canEdit={canEdit}
+					members={loaderData?.members ?? []}
+					secondCountRequired={
+						activeLocationSettings?.secondCountRequired === true
+					}
+					locationVersion={activeLocationSettings?.version ?? 0}
+					canManageSettings={Boolean(canManageSettings)}
+					onSettingsChanged={reload}
+				/>
+			</WorkspacePanel>
 
 			<WorkspacePanel
 				title={<Trans>Storage areas & count lists</Trans>}

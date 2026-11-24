@@ -150,7 +150,10 @@ export type InventoryNonTabRoute = 'transfers' | 'settings'
 
 export type InventoryRoute = InventoryTab | InventoryNonTabRoute
 
-export function inventoryRouteFromPath(pathname: string, orgSlug: string): InventoryRoute | null {
+export function inventoryRouteFromPath(
+	pathname: string,
+	orgSlug: string,
+): InventoryRoute | null {
 	const base = `/${orgSlug}/inventory/`
 	if (!pathname.startsWith(base)) return null
 	const match = /\/inventory\/([^/?#]+)/.exec(pathname)

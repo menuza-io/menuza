@@ -64,6 +64,8 @@ export type LocalCount = {
 	ref: StationRef
 	listId: string | null
 	listName: string | null
+	/** `quick` counts the key items (#490); absent is a full count. */
+	kind?: 'full' | 'quick'
 	/**
 	 * Always `counting` now. `sent` only appears on a record made by an older
 	 * build, which closed the count on this tablet when Send was tapped; it is

@@ -9,6 +9,7 @@ import { Icon } from '@repo/ui/icon'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BigStepper } from './BigStepper.tsx'
+import { BottleInput } from './BottleInput.tsx'
 import {
 	isDone,
 	isFinished,
@@ -78,6 +79,11 @@ export function CountScreen({
 	// Shown right after "I'm done counting", until the person goes back or keeps counting.
 	const [justDone, setJustDone] = useState(false)
 	const [problem, setProblem] = useState<string | null>(null)
+	// The key-item second-person check (#525): the region tells this person
+	// whether they count the key items a second time (blind), and whether the
+	// count is waiting for someone else.
+	const [pass, setPass] = useState<1 | 2>(1)
+	const [secondState, setSecondState] = useState<string | null>(null)
 	const serverId = 'id' in record.ref ? record.ref.id : null
 	const finished = isFinished(record)
 	const inReview = record.serverStatus === 'in_review'
@@ -122,6 +128,8 @@ export function CountScreen({
 							unit: item.mine.unit,
 						}
 				}
+			setPass(sheet.pass === 2 ? 2 : 1)
+			setSecondState(sheet.count.secondState ?? null)
 			setElsewhere(counted)
 			setOthers(byOthers)
 			setValues((current) => ({ ...typed, ...current }))
@@ -132,10 +140,25 @@ export function CountScreen({
 	}, [origin, record.localId, serverId, api, reachable, stock.hasSession])
 
 	const scope = useMemo(() => {
-		if (!catalog || !record.listId) return null
-		const list = catalog.countLists.find((entry) => entry.id === record.listId)
-		return list ? new Set(list.itemIds) : null
-	}, [catalog, record.listId])
+		if (!catalog) return null
+		const keyIds = new Set(
+			catalog.items.filter((item) => item.isKey).map((item) => item.id),
+		)
+		let base: Set<string> | null = null
+		if (record.listId) {
+			const list = catalog.countLists.find(
+				(entry) => entry.id === record.listId,
+			)
+			base = list ? new Set(list.itemIds) : null
+		} else if (record.kind === 'quick') {
+			// A quick count with no list is the key items (#490).
+			base = keyIds
+		}
+		if (pass === 2) {
+			return base ? new Set([...base].filter((id) => keyIds.has(id))) : keyIds
+		}
+		return base
+	}, [catalog, record.listId, record.kind, pass])
 	const tabs = useMemo(
 		() => (catalog ? countTabs(catalog, scope) : []),
 		[catalog, scope],
@@ -360,7 +383,11 @@ export function CountScreen({
 		)
 	}
 
-	const title = record.listName ?? _(t`Everything`)
+	const title =
+		record.listName ??
+		(record.kind === 'quick'
+			? _(t`Quick count of key items`)
+			: _(t`Everything`))
 	return (
 		<section
 			className="flex min-h-0 flex-1 flex-col"
@@ -403,7 +430,21 @@ export function CountScreen({
 					<Trans>I am done counting</Trans>
 				</Button>
 			</div>
-			{inReview ? (
+			{pass === 2 ? (
+				<p role="status" className="notice-warning px-4 py-2 text-sm">
+					<Trans>
+						Second count: only the key items are listed, and the first count is
+						hidden.
+					</Trans>
+				</p>
+			) : secondState === 'waiting' ? (
+				<p role="status" className="notice-warning px-4 py-2 text-sm">
+					<Trans>
+						This count is waiting for a different person to count the key items
+						again.
+					</Trans>
+				</p>
+			) : inReview ? (
 				<p role="status" className="notice-warning px-4 py-2 text-sm">
 					<Trans>
 						A manager is reviewing this count. You can still add late entries.
@@ -632,7 +673,16 @@ const CountRow = memo(function CountRow({
 		>
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0">
-					<p className="text-base font-semibold break-words">{item.name}</p>
+					<p className="text-base font-semibold break-words">
+						{item.isKey ? (
+							<Icon
+								name="star"
+								className="text-warning me-1 inline size-4 align-text-top"
+								aria-label={_(t`Key item`)}
+							/>
+						) : null}
+						{item.name}
+					</p>
 					<p className="text-muted-foreground text-sm break-words">
 						{category}
 						{countedElsewhere && !counted ? (
@@ -653,7 +703,23 @@ const CountRow = memo(function CountRow({
 				</div>
 				<SaveMark state={state} counted={counted} />
 			</div>
-			<div className="flex flex-wrap items-start gap-3">
+			{item.bottle ? (
+				<BottleInput
+					bottle={item.bottle}
+					valueMl={unit === 'ml' ? amount : null}
+					label={_(t`${name}, count by bottle`)}
+					onChange={(ml) => {
+						const primary: CountLine = { amount: ml, unit: 'ml' }
+						commitRow(primary, [], primary)
+					}}
+				/>
+			) : null}
+			<div
+				className={cn(
+					'flex flex-wrap items-start gap-3',
+					item.bottle && 'hidden',
+				)}
+			>
 				<BigStepper
 					value={amount}
 					label={name}
