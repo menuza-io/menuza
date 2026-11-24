@@ -7,6 +7,7 @@ import {
 	staffMembers,
 	staffNotes,
 	staffPositions,
+	staffAnnouncements,
 	staffPrivate,
 	staffingSettings,
 } from '@repo/tenant-db'
@@ -413,6 +414,108 @@ route('PUT /:id/private', async (f) => {
 		403,
 		'private B',
 	)
+})
+
+/**
+ * Announcements are listed by audience: a token limited to LOC_1 sees only
+ * announcements written for that scope. Rows are inserted directly (an audited
+ * write would change the digest); every call below is a refusal or a read.
+ */
+async function seedAnnouncements() {
+	const db = await getTenantDb(ORG_A)
+	const now = Date.now()
+	const row = (
+		id: string,
+		audience: 'everyone' | 'scope',
+		audienceId: string | null,
+	) => ({
+		id,
+		title: `Title ${id}`,
+		body: `Body ${id}`,
+		audience,
+		audienceId,
+		startsAt: now - 1000,
+		expiresAt: now + 86_400_000,
+		createdBy: 'operator-1',
+	})
+	await db
+		.insert(staffAnnouncements)
+		.values([
+			row('ann-all', 'everyone', null),
+			row('ann-loc1', 'scope', LOC_1),
+			row('ann-loc2', 'scope', LOC_2),
+		])
+		.onConflictDoNothing()
+}
+
+route('GET /announcements', async (f) => {
+	await seedAnnouncements()
+	const list = await call(f, { method: 'GET', path: '/announcements' })
+	expect(list.status).toBe(200)
+	expect(list.body.announcements.map((a: any) => a.id)).toEqual(['ann-loc1'])
+	expectNoLeak(list.raw, 'announcements', 'ann-all', 'ann-loc2', LOC_2)
+})
+
+route('POST /announcements', async (f) => {
+	const base = {
+		title: 'Hello',
+		body: 'Hello team',
+		expiresAt: Date.now() + 86_400_000,
+	}
+	// Everyone and a position reach across workplaces; another scope is not theirs.
+	expectStatus(
+		await call(f, {
+			method: 'POST',
+			path: '/announcements',
+			body: { ...base, audience: 'everyone' },
+		}),
+		403,
+		'announce everyone',
+	)
+	expectStatus(
+		await call(f, {
+			method: 'POST',
+			path: '/announcements',
+			body: { ...base, audience: 'position', audienceId: f.positions.p1 },
+		}),
+		403,
+		'announce position',
+	)
+	expectStatus(
+		await call(f, {
+			method: 'POST',
+			path: '/announcements',
+			body: { ...base, audience: 'scope', audienceId: LOC_2 },
+		}),
+		403,
+		'announce LOC_2',
+	)
+})
+
+route('GET /announcements/:id', async (f) => {
+	await seedAnnouncements()
+	for (const id of ['ann-all', 'ann-loc2']) {
+		expectStatus(
+			await call(f, { method: 'GET', path: `/announcements/${id}` }),
+			404,
+			`read ${id}`,
+		)
+	}
+	const mine = await call(f, { method: 'GET', path: '/announcements/ann-loc1' })
+	expect(mine.status).toBe(200)
+	// Who read it is only the people at this scope.
+	expectNoLeak(mine.raw, 'announcement', 'Carim', f.c.id)
+})
+
+route('POST /announcements/:id/withdraw', async (f) => {
+	await seedAnnouncements()
+	for (const id of ['ann-all', 'ann-loc2']) {
+		expectStatus(
+			await call(f, { method: 'POST', path: `/announcements/${id}/withdraw` }),
+			404,
+			`withdraw ${id}`,
+		)
+	}
 })
 
 route('GET /:id/hour-limits', async (f) => {

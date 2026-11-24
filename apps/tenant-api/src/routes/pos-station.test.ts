@@ -889,6 +889,21 @@ describe('Station apps on a POS terminal', () => {
 			expect(got.status).toBe(200)
 			expect(got.body.readAt).toBe(h.clock.now)
 
+			// The manager's list shows it, with how many read it.
+			const listed = await h.app.request('/operator/staff/announcements', {
+				headers: {
+					Authorization: `Bearer ${await staffToken(['read:staff:any'])}`,
+				},
+			})
+			expect(listed.status).toBe(200)
+			expect(
+				((await listed.json()) as any).announcements.map((a: any) => [
+					a.id,
+					a.read,
+					a.recipients,
+				]),
+			).toEqual([[id, 1, 2]])
+
 			// It is recorded, and no longer waits for this person.
 			const view = await detail(id)
 			expect(view.announcement).toMatchObject({ recipients: 2, read: 1 })
