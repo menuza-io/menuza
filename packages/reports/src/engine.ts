@@ -24,6 +24,7 @@ import {
 	isFilterGroup,
 	isListReport,
 	isRatioMeasure,
+	isShareMeasure,
 	measuresAValueField,
 } from './dsl.ts'
 import {
@@ -1018,7 +1019,7 @@ export function validateReportDefinition(
 			: null
 		const usable =
 			field !== null &&
-			valueMeasureLabel(measure as ValueMeasure | 'ratio', field) !== null &&
+			valueMeasureLabel(measure as ValueMeasure | 'ratio' | 'share', field) !== null &&
 			(!isRatioMeasure(measure) || ratioParts(subject, field) !== null)
 		if (!usable) {
 			return {
@@ -1028,6 +1029,13 @@ export function validateReportDefinition(
 					: measure === 'sum'
 						? 'Choose a number to add up.'
 						: 'Choose a number to average.',
+			}
+		}
+		if (isShareMeasure(measure) && definition.compare !== 'none') {
+			return {
+				error: 'invalid_definition',
+				message:
+					'A share is of the period it is run for, so it can’t be compared with an earlier period.',
 			}
 		}
 		if (
@@ -1115,7 +1123,15 @@ function listResult(
 		definition,
 		definition.timeframe.field,
 	)
+	const order = subject.listOrder
 	const sorted = [...matched].sort((a, b) => {
+		if (order) {
+			const left = asNumber(a[order.field]) ?? Number.POSITIVE_INFINITY
+			const right = asNumber(b[order.field]) ?? Number.POSITIVE_INFINITY
+			if (left !== right) {
+				return order.direction === 'asc' ? left - right : right - left
+			}
+		}
 		const left = asDate(a[timeField])?.getTime() ?? 0
 		const right = asDate(b[timeField])?.getTime() ?? 0
 		return right - left
@@ -1143,6 +1159,35 @@ function listResult(
 		refreshedAt: now.toISOString(),
 		timeZone: zones.reportZone,
 		...(subject.timeBasisFields ? { timeBasis: definition.timeBasis } : {}),
+	}
+}
+
+/**
+ * Splits off the top-level conditions a subject's loader applies itself (see
+ * `ReportSubject.loaderFilterFields`). Returns them for the loader and the
+ * definition without them for the engine. Conditions inside an OR group or a
+ * negated group stay where they are.
+ */
+export function splitLoaderFilters(
+	catalog: ReportCatalog,
+	definition: ReportDefinition,
+): { loader: FilterCondition[]; definition: ReportDefinition } {
+	const subject = getSubject(catalog, definition.subject)
+	const fieldIds = subject?.loaderFilterFields ?? []
+	const group = definition.filters
+	if (fieldIds.length === 0 || group.combinator !== 'and' || group.not) {
+		return { loader: [], definition }
+	}
+	const loader: FilterCondition[] = []
+	const rest = group.conditions.filter((item) => {
+		if (isFilterGroup(item) || !fieldIds.includes(item.field)) return true
+		loader.push(item)
+		return false
+	})
+	if (loader.length === 0) return { loader, definition }
+	return {
+		loader,
+		definition: { ...definition, filters: { ...group, conditions: rest } },
 	}
 }
 
@@ -1372,9 +1417,20 @@ export function runReport(
 		: {}
 
 	if (ungrouped) {
+		// The whole is the only group: its share is all of it.
+		const whole =
+			valued?.info.measure === 'share'
+				? overallValue === undefined || overallValue === 0
+					? undefined
+					: 100
+				: overallValue
+		const amount =
+			valued?.info.measure === 'share' && overallValue !== undefined
+				? { amount: overallValue }
+				: {}
 		return {
 			total,
-			...(valued ? { value: overallValue } : {}),
+			...(valued ? { value: whole, ...amount } : {}),
 			...overallChange,
 			segments: [
 				{
@@ -1382,7 +1438,7 @@ export function runReport(
 					label: subject.label,
 					count: total,
 					percent: 100,
-					...(valued ? { value: overallValue } : {}),
+					...(valued ? { value: whole, ...amount } : {}),
 					...overallChange,
 				},
 			],
@@ -1499,6 +1555,7 @@ export function runReport(
 			}
 		},
 	)
+	if (valued?.info.measure === 'share') applyShares(all)
 	const hidden = definition.settings.hidePartial
 		? all.filter((segment) => segment.partial).length
 		: 0
@@ -1511,11 +1568,42 @@ export function runReport(
 
 	return {
 		total,
-		...(valued && !splitCurrencies ? { value: overallValue } : {}),
+		...(valued && !splitCurrencies
+			? {
+					value:
+						valued.info.measure === 'share'
+							? overallValue === undefined || overallValue === 0
+								? undefined
+								: 100
+							: overallValue,
+				}
+			: {}),
 		...overallChange,
 		segments,
 		...(hidden > 0 ? { partialHidden: hidden } : {}),
 		...shared,
+	}
+}
+
+/**
+ * Turns each segment's sum (`value`) into its share of the total of every
+ * segment in the same currency (#227), keeping the sum as `amount`. Money is
+ * never pooled across currencies: each currency's segments add up to 100. A
+ * group whose currency total is zero has no share rather than a made-up one.
+ */
+function applyShares(segments: ReportSegment[]) {
+	const totals = new Map<string, number>()
+	for (const segment of segments) {
+		if (segment.value === undefined) continue
+		const key = segment.currency ?? ''
+		totals.set(key, (totals.get(key) ?? 0) + segment.value)
+	}
+	for (const segment of segments) {
+		if (segment.value === undefined) continue
+		const total = totals.get(segment.currency ?? '') ?? 0
+		segment.amount = segment.value
+		if (total > 0) segment.value = (segment.value / total) * 100
+		else delete segment.value
 	}
 }
 
@@ -1695,16 +1783,22 @@ function measuredValue(
 
 	const label = valueMeasureLabel(measure, field)
 	if (label === null) return null
+	const sharing = isShareMeasure(measure)
 	const info: ReportValueInfo = {
 		measure,
 		field: field.id,
 		label,
-		type:
-			field.type === 'currency'
+		// A share shows a percentage; `amountType` says what the sums are.
+		type: sharing
+			? 'percent'
+			: field.type === 'currency'
 				? 'currency'
 				: field.type === 'duration'
 					? 'duration'
 					: 'number',
+		...(sharing
+			? { amountType: field.type === 'currency' ? 'currency' : 'number' }
+			: {}),
 	}
 	if (field.type === 'currency') {
 		const currency = currencyOf(
@@ -1717,7 +1811,8 @@ function measuredValue(
 	}
 	return {
 		kind: 'value',
-		measure,
+		// A share is worked out from the groups' sums once they are all known.
+		measure: sharing ? 'sum' : measure,
 		field,
 		info,
 		...(basis && valueField === basis.field

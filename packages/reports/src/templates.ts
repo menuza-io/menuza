@@ -752,6 +752,147 @@ function menuTemplates(): ReportTemplate[] {
 	]
 }
 
+/**
+ * Sales and service insight: category sales and product mix (#227), slow
+ * sellers (#261), order step timings (#243) and missed online sales (#176).
+ */
+function salesInsightTemplates(): ReportTemplate[] {
+	return [
+		template('organization', {
+			id: 'category-sales',
+			category: 'Menu',
+			title: 'Sales by category',
+			description:
+				'Net sales and share of sales for each menu category, as the dishes were categorised when sold. Lines sold before categories were recorded read Earlier sales.',
+			subject: 'product_mix',
+			groupBy: ['category'],
+			chartStyle: 'table',
+			measure: 'share',
+			valueField: 'sales',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'category-quantity',
+			category: 'Menu',
+			title: 'Dishes sold by category',
+			description: 'How many dishes were sold in each menu category.',
+			subject: 'product_mix',
+			groupBy: ['category'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'quantity',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'menu-sales',
+			category: 'Menu',
+			title: 'Sales by menu',
+			description: 'Net sales and share of sales for each menu.',
+			subject: 'product_mix',
+			groupBy: ['menu'],
+			chartStyle: 'pie',
+			measure: 'share',
+			valueField: 'sales',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'slow-sellers',
+			category: 'Menu',
+			title: 'Slow sellers',
+			description:
+				'Dishes from the fewest sold, with the ones that did not sell at all first. A dish added during the period is marked New and listed after the others.',
+			subject: 'slow_sellers',
+			groupBy: [],
+			chartStyle: 'table',
+			timeframePreset: 'last_30_days',
+			timeframeField: 'periodEnd',
+			sortBy: 'none',
+		}),
+		template('organization', {
+			id: 'order-time-to-ready-by-location',
+			category: 'Orders',
+			title: 'Minutes from placed to ready, by location',
+			description:
+				'Average minutes from an order being placed to it being ready, for each location.',
+			subject: 'order_timings',
+			groupBy: ['location'],
+			chartStyle: 'bar',
+			measure: 'average',
+			valueField: 'minutesToReady',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'order-time-to-accept-by-location',
+			category: 'Orders',
+			title: 'Minutes to accept an order, by location',
+			description:
+				'Average minutes from placed to accepted, for orders a person had to accept.',
+			subject: 'order_timings',
+			groupBy: ['location'],
+			chartStyle: 'bar',
+			measure: 'average',
+			valueField: 'minutesToAccept',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'order-time-to-ready-by-hour',
+			category: 'Orders',
+			title: 'Minutes to ready, by hour of the day',
+			description: 'Which hours orders take longest to get ready.',
+			subject: 'order_timings',
+			groupBy: ['placedAt'],
+			timeBucket: 'hour_of_day',
+			chartStyle: 'bar',
+			measure: 'average',
+			valueField: 'minutesToReady',
+			timeframePreset: 'last_30_days',
+			sortBy: 'label',
+		}),
+		template('organization', {
+			id: 'order-time-to-ready-by-weekday',
+			category: 'Orders',
+			title: 'Minutes to ready, by weekday',
+			description: 'Which days orders take longest to get ready.',
+			subject: 'order_timings',
+			groupBy: ['placedAt'],
+			timeBucket: 'day_of_week',
+			chartStyle: 'bar',
+			measure: 'average',
+			valueField: 'minutesToReady',
+			timeframePreset: 'last_30_days',
+			sortBy: 'label',
+		}),
+		template('organization', {
+			id: 'order-late-against-promised',
+			category: 'Orders',
+			title: 'Late against promised time, by location',
+			description:
+				'Share of orders that were ready after the time promised to the guest.',
+			subject: 'order_timings',
+			groupBy: ['location'],
+			chartStyle: 'table',
+			measure: 'ratio',
+			valueField: 'lateRate',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'missed-online-sales-weekly',
+			category: 'Sales',
+			title: 'Estimated missed online sales',
+			description:
+				'An estimate of web and QR sales missed while online ordering was paused, per week. Based on the same weekday and hours over the previous weeks; never added to real sales.',
+			subject: 'missed_online_sales',
+			groupBy: ['startedAt'],
+			timeBucket: 'week',
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'estimatedSales',
+			timeframePreset: 'last_3_months',
+			sortBy: 'label',
+		}),
+	]
+}
+
 function customerTemplates(): ReportTemplate[] {
 	const customers = { category: 'Customers', subject: 'customers' } as const
 	return [
@@ -1565,6 +1706,7 @@ export function organizationTemplates(): ReportTemplate[] {
 		...unifiedSalesTemplates(),
 		...orderTemplates(),
 		...menuTemplates(),
+		...salesInsightTemplates(),
 		...customerTemplates(),
 		...marketingTemplates(),
 		...reviewTemplates(),

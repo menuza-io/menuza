@@ -95,6 +95,17 @@ export type ReportSubject = {
 	/** Longest range one run may cover, in days. A run past it is refused. */
 	maxRangeDays?: number
 	/**
+	 * List reports of this subject are ordered by a number field the loader
+	 * sets (slow sellers: fewest sold first) instead of newest first.
+	 */
+	listOrder?: { field: string; direction: 'asc' | 'desc' }
+	/**
+	 * Filters on these fields are applied by the subject's loader, which reads
+	 * them to decide what to count (a channel narrows the sales a dish is
+	 * ranked on), so the engine does not apply them to the records again.
+	 */
+	loaderFilterFields?: string[]
+	/**
 	 * Order subjects (#310): the datetime field orders are dated by when the
 	 * report counts them by placed time, and the one that stands in for it when
 	 * the report counts by fulfilment time.
@@ -1507,11 +1518,17 @@ export function isValueFieldType(type: ReportFieldType) {
  * doesn't apply to it.
  */
 export function valueMeasureLabel(
-	measure: ValueMeasure | 'ratio',
+	measure: ValueMeasure | 'ratio' | 'share',
 	field: ReportField,
 ): string | null {
 	if (measure === 'ratio') return field.type === 'ratio' ? field.label : null
 	if (!isValueFieldType(field.type)) return null
+	if (measure === 'share') {
+		const name = valueMeasureLabel('sum', field)
+		return name === null
+			? null
+			: `Share of ${name.charAt(0).toLowerCase()}${name.slice(1)}`
+	}
 	const custom = measure === 'sum' ? field.sumLabel : field.averageLabel
 	if (custom === false) return null
 	if (custom) return custom
@@ -1527,7 +1544,7 @@ export function valueFields(subject: ReportSubject, measure?: Measure) {
 	return subject.fields.filter((field) => {
 		if (measure && isRatioMeasure(measure)) return field.type === 'ratio'
 		if (!isValueFieldType(field.type)) return false
-		if (measure === 'sum' || measure === 'average') {
+		if (measure === 'sum' || measure === 'average' || measure === 'share') {
 			return valueMeasureLabel(measure, field) !== null
 		}
 		return true

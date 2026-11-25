@@ -620,6 +620,16 @@
       "import": "./src/sales-report-facts.ts",
       "default": "./src/sales-report-facts.ts"
     },
+    "./item-placement": {
+      "types": "./src/item-placement.ts",
+      "import": "./src/item-placement.ts",
+      "default": "./src/item-placement.ts"
+    },
+    "./order-steps": {
+      "types": "./src/order-steps.ts",
+      "import": "./src/order-steps.ts",
+      "default": "./src/order-steps.ts"
+    },
     "./item-pairs": {
       "types": "./src/item-pairs.ts",
       "import": "./src/item-pairs.ts",

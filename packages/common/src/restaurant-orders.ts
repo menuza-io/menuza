@@ -29,6 +29,7 @@ import {
 import { parsePrepSchedule } from './location-settings.ts'
 import { isSoldOn, type MenuChannel } from './menu-channels.ts'
 import { prepMinutesAt } from './prep-schedule.ts'
+import { type ItemPlacement } from './item-placement.ts'
 import { parseUtensilsSettings } from './checkout-utensils.ts'
 import {
 	type DailyDishAvailability,
@@ -1740,6 +1741,14 @@ export type PricedOrderLine = {
 	 */
 	baseUnitCents: number
 	categoryIds: string[]
+	/**
+	 * The menu and category the dish was sold under (#227), as the menu named
+	 * them at placement. Missing on a line placed before this was recorded.
+	 */
+	categoryId?: string
+	categoryName?: string
+	menuId?: string
+	menuName?: string
 	/** Set (true) only when the item or variant never receives a discount. */
 	excludeFromDiscounts?: boolean
 	/**
@@ -2241,6 +2250,8 @@ function optionDisabled(
 type CatalogEntry = {
 	item: PublicMenuItemContext
 	categoryIds: string[]
+	/** Where the dish first sits on the menu (#227), stamped on its sale line. */
+	placement?: ItemPlacement
 	/** The location's override price for the dish (wins when above zero). */
 	overridePrice?: number | null
 	/** Drops keep their own published prices: no order-type price, no rule. */
@@ -3043,6 +3054,12 @@ export function priceRestaurantOrder(
 				catalog.set(item.id, {
 					item,
 					categoryIds: [...categoryIds],
+					placement: existing?.placement ?? {
+						categoryId: category.id,
+						categoryName: category.displayName,
+						menuId: dropData.drop.menu.id,
+						menuName: dropData.drop.menu.displayName ?? '',
+					},
 					specialInstructions: dropData.drop.menu.specialInstructions ?? true,
 					plainPricing: true,
 				})
@@ -3119,6 +3136,12 @@ export function priceRestaurantOrder(
 							item,
 							overridePrice: itemOverride?.price ?? null,
 							categoryIds: [...categoryIds],
+							placement: existing?.placement ?? {
+								categoryId: category.id,
+								categoryName: category.displayName,
+								menuId: menu.id,
+								menuName: menu.displayName,
+							},
 							specialInstructions:
 								menu.specialInstructions ||
 								(existing?.specialInstructions ?? false),
@@ -3285,6 +3308,7 @@ export function priceRestaurantOrder(
 			options: modifierResult.options,
 			baseUnitCents: baseCents,
 			categoryIds: [...entry.categoryIds],
+			...(entry.placement ? entry.placement : {}),
 			...(variant
 				? {
 						variantNames: (entry.item.variations?.groups ?? []).flatMap(

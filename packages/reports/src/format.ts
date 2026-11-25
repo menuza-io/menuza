@@ -139,7 +139,10 @@ export function segmentPercent(
 	segment: ReportSegment,
 	result: Pick<ReportResult, 'value' | 'valueInfo'>,
 ) {
-	if (shownValueInfo(result)?.measure !== 'sum') return segment.percent
+	const measure = shownValueInfo(result)?.measure
+	// A share's value is already the percentage.
+	if (measure === 'share') return segment.value ?? 0
+	if (measure !== 'sum') return segment.percent
 	if (!result.value || segment.value === undefined) return 0
 	return (segment.value / result.value) * 100
 }
@@ -159,7 +162,10 @@ export function segmentTableColumns(
 		count: !hideCounts,
 		value: info,
 		percent:
-			!comparing && info?.measure !== 'average' && info?.measure !== 'ratio',
+			!comparing &&
+			info?.measure !== 'average' &&
+			info?.measure !== 'ratio' &&
+			info?.measure !== 'share',
 		previous: comparing,
 		change: comparing,
 	}

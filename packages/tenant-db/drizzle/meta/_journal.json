@@ -477,6 +477,13 @@
 			"when": 1795573349057,
 			"tag": "0067_waste_transfers",
 			"breakpoints": true
+		},
+		{
+			"idx": 68,
+			"version": "6",
+			"when": 1795589111972,
+			"tag": "0068_sales_insights",
+			"breakpoints": true
 		}
 	]
 }

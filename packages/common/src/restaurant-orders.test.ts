@@ -679,6 +679,63 @@ describe('priceRestaurantOrder: repricing', () => {
 // Adversarial validation: unknown/unavailable items, variants, modifiers
 // ---------------------------------------------------------------------------
 
+describe('priceRestaurantOrder: menu and category stamped on the line (#227)', () => {
+	it('stamps the menu and category the dish was sold under, as the menu named them', () => {
+		const result = priceRestaurantOrder(
+			makeContext(),
+			makeRequest({
+				lines: [
+					{
+						itemId: 'item-burger',
+						quantity: 1,
+						options: [{ groupId: 'grp-size', optionId: 'opt-reg' }],
+					},
+				],
+			}),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.result.lines[0]).toMatchObject({
+			categoryId: 'cat-food',
+			categoryName: 'Food',
+			menuId: 'menu-1',
+			menuName: 'Main Menu',
+		})
+	})
+
+	it('stamps the first category when a dish is in two, and names are copies, not links', () => {
+		const menu = makeMenu()
+		menu.menus[0]!.categories.push({
+			id: 'cat-popular',
+			displayName: 'Popular',
+			availabilityStatus: 'available',
+			items: [burger],
+		})
+		const context = makeContext({ menu })
+		const result = priceRestaurantOrder(
+			context,
+			makeRequest({
+				lines: [
+					{
+						itemId: 'item-burger',
+						quantity: 1,
+						options: [{ groupId: 'grp-size', optionId: 'opt-reg' }],
+					},
+				],
+			}),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.result.lines[0]?.categoryId).toBe('cat-food')
+		expect(result.result.lines[0]?.categoryIds).toEqual(['cat-food', 'cat-popular'])
+		// Renaming the category afterwards cannot reach the priced line.
+		menu.menus[0]!.categories[0]!.displayName = 'Renamed'
+		expect(result.result.lines[0]?.categoryName).toBe('Food')
+	})
+})
+
 describe('priceRestaurantOrder: adversarial validation', () => {
 	it('rejects unknown items', () => {
 		const result = priceRestaurantOrder(

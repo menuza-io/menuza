@@ -27,6 +27,11 @@
       "import": "./src/control-plane.server.ts",
       "default": "./src/control-plane.server.ts"
     },
+    "./product-mix": {
+      "types": "./src/product-mix.ts",
+      "import": "./src/product-mix.ts",
+      "default": "./src/product-mix.ts"
+    },
     "./catalog-menu-insights": {
       "types": "./src/catalog-menu-insights.ts",
       "import": "./src/catalog-menu-insights.ts",

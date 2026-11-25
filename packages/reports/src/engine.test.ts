@@ -12,6 +12,7 @@ import {
 	isReportRunError,
 	referencedFieldIds,
 	runReport,
+	splitLoaderFilters,
 	validateReportDefinition,
 } from './engine.ts'
 
@@ -734,5 +735,146 @@ describe('sortBy label', () => {
 			'Plan 10',
 			'Plan 20',
 		])
+	})
+})
+
+describe('share of total measure (#227)', () => {
+	const range = {
+		field: 'occurredAt',
+		preset: 'custom' as const,
+		start: '2026-08-01T00:00:00.000Z',
+		end: '2026-08-31T00:00:00.000Z',
+	}
+	function mixDefinition(extra: Partial<ReportDefinition> = {}) {
+		return createReportDefinition({
+			subject: 'product_mix',
+			timeframe: range,
+			groupBy: ['category'],
+			visualization: {
+				chartStyle: 'table',
+				measure: 'share',
+				valueField: 'sales',
+				sortBy: 'value_desc',
+				hideCounts: false,
+			},
+			settings: { title: 'Sales by category', notes: '', timezone: 'UTC' },
+			...extra,
+		})
+	}
+	const at = new Date('2026-08-10T12:00:00.000Z')
+	function record(category: string, sales: number, currency = 'USD') {
+		return { occurredAt: at, category, sales, quantity: 1, currency }
+	}
+
+	it('gives each group its share of the total and keeps the sum as the amount', () => {
+		const result = runReport(
+			organizationCatalog,
+			mixDefinition(),
+			[
+				record('Mains', 60),
+				record('Mains', 20),
+				record('Drinks', 15),
+				record('Desserts', 5),
+			],
+			now,
+		)
+		if (isReportRunError(result)) throw new Error(result.message)
+		const byLabel = Object.fromEntries(
+			result.segments.map((segment) => [segment.label, segment]),
+		)
+		expect(byLabel.Mains?.value).toBeCloseTo(80)
+		expect(byLabel.Mains?.amount).toBeCloseTo(80)
+		expect(byLabel.Drinks?.value).toBeCloseTo(15)
+		expect(result.segments.reduce((sum, s) => sum + (s.value ?? 0), 0)).toBeCloseTo(100)
+		expect(result.value).toBe(100)
+		expect(result.valueInfo).toMatchObject({
+			measure: 'share',
+			type: 'percent',
+			amountType: 'currency',
+		})
+	})
+
+	it('adds up to 100 within each currency and never across them', () => {
+		const result = runReport(
+			organizationCatalog,
+			mixDefinition(),
+			[
+				record('Mains', 30, 'USD'),
+				record('Drinks', 10, 'USD'),
+				record('Mains', 600, 'SAR'),
+				record('Drinks', 400, 'SAR'),
+			],
+			now,
+		)
+		if (isReportRunError(result)) throw new Error(result.message)
+		for (const currency of ['USD', 'SAR']) {
+			const total = result.segments
+				.filter((segment) => segment.currency === currency)
+				.reduce((sum, segment) => sum + (segment.value ?? 0), 0)
+			expect(total).toBeCloseTo(100)
+		}
+		const sarMains = result.segments.find(
+			(segment) => segment.currency === 'SAR' && segment.label === 'Mains / SAR',
+		)
+		expect(sarMains?.value).toBeCloseTo(60)
+	})
+
+	it('is not offered with a comparison, which would share two different totals', () => {
+		const error = validateReportDefinition(
+			organizationCatalog,
+			mixDefinition({ compare: 'previous_period' }),
+			now,
+		)
+		expect(error?.error).toBe('invalid_definition')
+	})
+})
+
+describe('slow sellers list order and loader filters (#261)', () => {
+	const definition = createReportDefinition({
+		subject: 'slow_sellers',
+		timeframe: { field: 'periodEnd', preset: 'last_30_days' },
+		visualization: {
+			chartStyle: 'table',
+			measure: 'count',
+			sortBy: 'none',
+			hideCounts: false,
+		},
+		filters: {
+			combinator: 'and',
+			conditions: [
+				{ field: 'channel', operator: 'eq', value: 'qr_table' },
+				{ field: 'category', operator: 'eq', value: 'Mains' },
+			],
+		},
+		settings: { title: 'Slow sellers', notes: '', timezone: 'UTC' },
+	})
+
+	it('orders the list by the loader rank, fewest first, then by time', () => {
+		const periodEnd = now
+		const result = runReport(
+			organizationCatalog,
+			{ ...definition, filters: { combinator: 'and', conditions: [] } },
+			[
+				{ periodEnd, item: 'Seller', sortKey: 40 },
+				{ periodEnd, item: 'Unsold', sortKey: 0 },
+				{ periodEnd, item: 'New', sortKey: 1_000_000_001 },
+			],
+			now,
+		)
+		if (isReportRunError(result)) throw new Error(result.message)
+		expect(result.rows?.map((row) => row.item)).toEqual([
+			'Unsold',
+			'Seller',
+			'New',
+		])
+	})
+
+	it('hands channel, location and nothing else to the loader', () => {
+		const split = splitLoaderFilters(organizationCatalog, definition)
+		expect(split.loader.map((condition) => condition.field)).toEqual(['channel'])
+		expect(split.definition.filters.conditions).toHaveLength(1)
+		// Nothing handled: the definition is returned as it came.
+		const plain = { ...definition, filters: { combinator: 'and' as const, conditions: [] } }
+		expect(splitLoaderFilters(organizationCatalog, plain).definition).toBe(plain)
 	})
 })

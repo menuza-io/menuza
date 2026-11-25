@@ -11,6 +11,7 @@ export const measureSchema = z.enum([
 	'sum',
 	'average',
 	'ratio',
+	'share',
 ])
 export type Measure = z.infer<typeof measureSchema>
 export type ValueMeasure = Extract<Measure, 'sum' | 'average'>
@@ -29,9 +30,21 @@ export function isRatioMeasure(measure: Measure): measure is 'ratio' {
 	return measure === 'ratio'
 }
 
+/**
+ * A share is a group's sum over the sum of every group in the same currency
+ * (#227: a category's share of sales). It reads a number or currency field,
+ * like a sum, and shows a percentage; the sum itself rides on the segment as
+ * `amount`.
+ */
+export function isShareMeasure(measure: Measure): measure is 'share' {
+	return measure === 'share'
+}
+
 /** Measures that read `visualization.valueField` instead of counting. */
 export function measuresAValueField(measure: Measure) {
-	return isValueMeasure(measure) || isRatioMeasure(measure)
+	return (
+		isValueMeasure(measure) || isRatioMeasure(measure) || isShareMeasure(measure)
+	)
 }
 
 export const sortBySchema = z.enum(['none', 'label', 'value_asc', 'value_desc'])
@@ -246,6 +259,8 @@ export type ReportSegment = {
 	percent: number
 	/** Sum or average of the value field, set when the report measures one. */
 	value?: number
+	/** Share measure: the group's own sum (the percentage is `value`). */
+	amount?: number
 	/**
 	 * Comparison runs: the same figure (the measured value, else the count) in
 	 * the earlier period. Left out when that period has no such bucket.
@@ -272,7 +287,9 @@ export type ReportColumn = {
 }
 
 export type ReportValueInfo = {
-	measure: ValueMeasure | 'ratio'
+	measure: ValueMeasure | 'ratio' | 'share'
+	/** Share measure: what each group's `amount` is (money or a count). */
+	amountType?: 'number' | 'currency'
 	field: string
 	/** Display name for the measured value, for example "Average sales". */
 	label: string

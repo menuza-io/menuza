@@ -21,6 +21,7 @@ import {
 	definitionForLoading,
 	referencedFieldIds,
 	resolveReportTimeZone,
+	resolveTimeframeRange,
 	timeframeLoadWindow,
 	runReport,
 	type ReportRecord,
@@ -98,6 +99,11 @@ import {
 } from '../services/menu-insights-records.ts'
 import { loadSoldOutHistoryRecords } from '../services/sold-out-report-records.ts'
 import {
+	loadProductMixRecords,
+	loadProductMixRows,
+	PRODUCT_MIX_MAX_RECORDS,
+} from '../services/product-mix-records.ts'
+import {
 	INVENTORY_DELIVERIES_REPORT_MAX_ROWS,
 	loadInventoryDeliveryRecords,
 } from '../services/inventory-deliveries-report.ts'
@@ -139,6 +145,8 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'item_pairs',
 	'modifier_sales',
 	'sold_out_history',
+	'product_mix',
+	'product_mix_options',
 	'inventory_deliveries',
 ])
 
@@ -609,6 +617,18 @@ analyticsRoutes.post('/query', async (c) => {
 		records = await loadCustomerRecords(db, claims.orgId, subject, loading)
 	} else if (definition.subject === 'text_subscribers') {
 		records = await loadTextSubscriberRecords(db)
+	} else if (
+		definition.subject === 'product_mix' ||
+		definition.subject === 'product_mix_options'
+	) {
+		const loaded = await loadProductMixRecords(
+			{ db, locationIds: claims.locationIds, now },
+			loading,
+			definition.subject === 'product_mix' ? 'dish' : 'option',
+		)
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = PRODUCT_MIX_MAX_RECORDS
 	} else if (isMenuInsightsReportSubject(definition.subject)) {
 		const salesCtx: SalesReportContext = {
 			db,
@@ -1000,5 +1020,78 @@ analyticsRoutes.get('/month-sales', async (c) => {
 	return c.json({
 		byLocation: Object.fromEntries(byLocation),
 		salesBasis: parsed.data.salesBasis,
+	})
+})
+
+const productMixQuerySchema = z.object({
+	preset: timeframePresetSchema.default('last_30_days'),
+	start: z.string().datetime().optional(),
+	end: z.string().datetime().optional(),
+	timeZone: z.string().max(64).optional(),
+	/** Comma-separated location ids; narrowed to the token's own. */
+	locationIds: z.string().max(4000).optional(),
+	/** Comma-separated channels (`online_menu`, `qr_table`, `station_counter`, ...). */
+	channels: z.string().max(400).optional(),
+})
+
+/**
+ * The product mix tree's rows (#227): finest-grain dish and option rows with
+ * the menu and category each dish was sold under at the time of sale. The
+ * browser folds them into whichever levels are switched on, so a level toggle
+ * is not another request. Needs the order report grants; limited to the
+ * token's locations.
+ */
+analyticsRoutes.get('/product-mix', async (c) => {
+	const auth = await requireSalesAnalytics(c)
+	if ('error' in auth) return auth.error
+	if (!operatorTokenAllowsSubject(auth.claims, 'product_mix')) {
+		return c.json(
+			{
+				error: 'forbidden_subject',
+				message: 'You do not have permission to report on this data.',
+			},
+			403,
+		)
+	}
+	const parsed = productMixQuerySchema.safeParse(c.req.query())
+	if (!parsed.success) {
+		return c.json(
+			{ error: 'invalid_request', message: 'Invalid timeframe or filters.' },
+			400,
+		)
+	}
+	const zone = resolveReportTimeZone('user', parsed.data.timeZone)
+	const range = resolveTimeframeRange(
+		parsed.data.preset,
+		auth.now,
+		{ start: parsed.data.start, end: parsed.data.end },
+		zone,
+	)
+	const asked = parsed.data.locationIds
+		? parsed.data.locationIds.split(',').filter(Boolean)
+		: null
+	// Never wider than the token: a person limited to some locations asks within them.
+	const locationIds =
+		auth.claims.locationIds === null
+			? asked
+			: asked === null
+				? auth.claims.locationIds
+				: asked.filter((id) => auth.claims.locationIds!.includes(id))
+	const channels = parsed.data.channels
+		? parsed.data.channels.split(',').filter(Boolean)
+		: null
+	const { rows, truncated } = await loadProductMixRows(
+		{ db: auth.db, locationIds, now: auth.now },
+		{ fromMs: range.start ? range.start.getTime() : null, toMs: range.end.getTime() },
+		{ channels },
+	)
+	return c.json({
+		rows,
+		truncated,
+		period: {
+			start: range.start ? range.start.toISOString() : null,
+			end: range.end.toISOString(),
+		},
+		refreshedAt: auth.now.toISOString(),
 	})
 })

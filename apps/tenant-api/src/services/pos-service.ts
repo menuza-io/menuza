@@ -26,6 +26,7 @@ import {
 	cashDiscountAllowedIn,
 	cashDiscountCeilingCents,
 } from '@repo/common/cash-discount'
+import { type LineCatalog } from '@repo/common/item-placement'
 import { menuOrderTypeFor } from '@repo/common/menu-pricing'
 import {
 	explicitTerminalJsonSettings,
@@ -2520,6 +2521,11 @@ export async function upsertPosOrder(
 	now = Date.now(),
 	options: {
 		/**
+		 * The menu and category of each dish on the bill (#227), stamped by the
+		 * route from the live menu. Null or missing: the stored map stays as it is.
+		 */
+		lineCatalog?: LineCatalog | null
+		/**
 		 * Runs in the upload's transaction once a new revision is stored (never
 		 * for a replay), for work that must commit with the sale. It must not
 		 * throw: nothing it does may refuse the sale.
@@ -2820,6 +2826,7 @@ export async function upsertPosOrder(
 							review.serverTotalCents ?? existing?.serverTotalCents ?? null,
 						reviewReason,
 						lines: order.lines,
+						...(options.lineCatalog ? { lineCatalog: options.lineCatalog } : {}),
 						lineVoids: order.lineVoids,
 						adjustments: order.adjustments,
 						catalogFetchedAt: order.catalogFetchedAt
