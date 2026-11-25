@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "6c7cf97a-9b96-44c3-b0c6-8b184f0e40d4",
+	"id": "f8ac392c-5167-4e45-b7be-2c891545fb1e",
 	"prevId": "d296b372-78fe-4e86-8ee8-c26189bc2279",
 	"tables": {
 		"catering_payments": {
@@ -20573,6 +20573,13 @@
 					"notNull": true,
 					"autoincrement": false,
 					"default": 0
+				},
+				"payment_id": {
+					"name": "payment_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
 				}
 			},
 			"indexes": {
@@ -21608,6 +21615,13 @@
 				},
 				"event_alert_sent_at": {
 					"name": "event_alert_sent_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"catering_confirmed_at": {
+					"name": "catering_confirmed_at",
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": false,

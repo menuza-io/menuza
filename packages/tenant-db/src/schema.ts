@@ -1347,6 +1347,11 @@ export const restaurantOrders = sqliteTable(
 			mode: 'timestamp',
 		}),
 		eventAlertSentAt: integer('event_alert_sent_at', { mode: 'timestamp' }),
+		// The deposit (or the whole total) cleared and the guest and the alert
+		// members were told, once: claimed by a compare-and-set on this column.
+		cateringConfirmedAt: integer('catering_confirmed_at', {
+			mode: 'timestamp',
+		}),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),
@@ -1497,6 +1502,10 @@ export const restaurantOrderRefunds = sqliteTable(
 		// operator ticked "include service fee". Lets the next refund see how much
 		// of the fee is already back. Zero for every row from before 0045.
 		serviceFeeCents: integer('service_fee_cents').notNull().default(0),
+		// The provider's id of the payment this refund returns, when it is not the
+		// order's own (a catering balance paid through its own session, 0071).
+		// Null means `restaurant_orders.payment_id`.
+		paymentId: text('payment_id'),
 	},
 	(table) => [
 		uniqueIndex('restaurant_order_refunds_idempotency_unique').on(

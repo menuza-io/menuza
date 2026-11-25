@@ -66,6 +66,7 @@ CREATE UNIQUE INDEX `catering_quotes_idempotency_unique` ON `catering_quotes` (`
 CREATE UNIQUE INDEX `catering_quotes_payment_session_unique` ON `catering_quotes` (`payment_session_id`) WHERE "catering_quotes"."payment_session_id" is not null;--> statement-breakpoint
 CREATE INDEX `idx_catering_quotes_status` ON `catering_quotes` (`status`,`updated_at`);--> statement-breakpoint
 CREATE INDEX `idx_catering_quotes_location` ON `catering_quotes` (`location_id`,`created_at`);--> statement-breakpoint
+ALTER TABLE `restaurant_order_refunds` ADD `payment_id` text;--> statement-breakpoint
 ALTER TABLE `restaurant_orders` ADD `is_catering` integer DEFAULT false NOT NULL;--> statement-breakpoint
 ALTER TABLE `restaurant_orders` ADD `catering_event_at` integer;--> statement-breakpoint
 ALTER TABLE `restaurant_orders` ADD `guest_count` integer;--> statement-breakpoint
@@ -81,4 +82,5 @@ ALTER TABLE `restaurant_orders` ADD `balance_version` integer DEFAULT 1 NOT NULL
 ALTER TABLE `restaurant_orders` ADD `balance_before_due_sent_at` integer;--> statement-breakpoint
 ALTER TABLE `restaurant_orders` ADD `balance_overdue_sent_at` integer;--> statement-breakpoint
 ALTER TABLE `restaurant_orders` ADD `event_alert_sent_at` integer;--> statement-breakpoint
+ALTER TABLE `restaurant_orders` ADD `catering_confirmed_at` integer;--> statement-breakpoint
 CREATE INDEX `idx_restaurant_orders_catering_event` ON `restaurant_orders` (`catering_event_at`) WHERE "restaurant_orders"."is_catering" = 1;
