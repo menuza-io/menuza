@@ -30,6 +30,7 @@ import { Button } from '@repo/ui/button'
 import { Card, CardContent } from '@repo/ui/card'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
+import { ReprintButtons } from './reprint-buttons.tsx'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Separator } from '@repo/ui/separator'
 import { Fragment, type ReactNode, useEffect, useRef, useState } from 'react'
@@ -182,9 +183,12 @@ export function OrderDetail({
 	backHref,
 	steps,
 	memberNames,
+	reprint = false,
 }: {
 	/** The order's recorded steps (#243), shown in the Activity list with who did each. */
 	steps?: readonly OrderTimelineEntry[]
+	/** Cloud printers are on and the member may change them: show Reprint (#117). */
+	reprint?: boolean
 	/** Member user id to display name, for who did each step. */
 	memberNames?: Readonly<Record<string, string>>
 	order: Order
@@ -850,6 +854,13 @@ export function OrderDetail({
 									>
 										{order.pickupInstructions}
 									</p>
+								) : null}
+								{reprint ? (
+									<ReprintButtons
+										orgSlug={orgSlug}
+										orderId={order.id}
+										locationId={order.location.id}
+									/>
 								) : null}
 								{canPushBack ? (
 									<div

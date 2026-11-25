@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import {
 	and,
 	asc,
@@ -49,6 +49,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { queryInChunks } from '../lib/chunked-in.ts'
+import { queueOrderPrint } from './print-service.ts'
 import { maskPhone } from '../lib/reservations-station.ts'
 import { createProviderRefundIntent } from './order-provider-refund-service.ts'
 import {
@@ -646,6 +647,8 @@ const STATION_CANCEL_REASON: Record<
 /** What a cancel asking for a refund answers (absent otherwise). */
 export type OnlineOrderCommandResult = {
 	refundOutcome?: { started: boolean; code: string | null }
+	/** A cloud printer at the location took a reprint (#117). */
+	cloudPrinted?: boolean
 }
 
 /**
@@ -681,7 +684,20 @@ export async function onlineOrderCommand(
 	}
 	if (command.action === 'reprint') {
 		await record(db, actor, order.id, 'reprinted', { reason: command.ticket })
-		return { ok: true, data: {} }
+		// Cloud printers at the location print it (#117); one press prints once.
+		// With none, the tablet prints through its own dialog as it always did.
+		const queued = await queueOrderPrint(db, {
+			orgId: actor.orgId,
+			locationId: order.locationId,
+			source: 'online',
+			orderId: order.id,
+			trigger: {
+				kind: command.ticket === 'guest' ? 'receipt' : 'kitchen',
+				dedupeKey: `reprint:${randomUUID()}`,
+				reprint: true,
+			},
+		}).catch(() => ({ queued: 0 }))
+		return { ok: true, data: queued.queued > 0 ? { cloudPrinted: true } : {} }
 	}
 
 	let failure: OrderServiceFailure | null = null

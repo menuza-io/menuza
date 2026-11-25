@@ -1,3 +1,5 @@
+import { getFeatureFlag } from '@repo/common/feature-flags'
+import { PRINTING_FLAG_KEY } from '@repo/common/print-devices'
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
@@ -86,6 +88,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			canWrite,
 			canRefund,
 			canViewCustomers: link.linkCustomers || link.linkGuests,
+			// Cloud printers (#117): Reprint is offered where they are on.
+			printersEnabled:
+				canWrite &&
+				(await getFeatureFlag(PRINTING_FLAG_KEY, {
+					organizationId: organization.id,
+				})) === true,
 		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)
@@ -94,8 +102,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 type State = 'loading' | 'ready' | 'missing' | 'failed'
 
 export default function OrderPage() {
-	const { orgSlug, orderId, canWrite, canRefund, canViewCustomers, memberNames } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		orderId,
+		canWrite,
+		canRefund,
+		canViewCustomers,
+		memberNames,
+		printersEnabled,
+	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const request = useOrdersClient(orgSlug)
 	const [order, setOrder] = useState<Order | null>(null)
@@ -331,6 +346,7 @@ export default function OrderPage() {
 				canWrite={canWrite}
 				canViewCustomers={canViewCustomers}
 				canRefund={canRefund}
+				reprint={printersEnabled}
 				busy={busy}
 				notice={notice}
 				onUpdate={(status, markPaid, cancel) =>

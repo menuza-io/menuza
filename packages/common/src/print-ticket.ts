@@ -493,6 +493,8 @@ export type ReceiptInput = {
 	lines: ReceiptLineInput[]
 	subtotalCents: number
 	adjustments?: Array<{ label: string; cents: number }>
+	/** Charges on top of the items (delivery, service, packaging), shown as they were charged. */
+	fees?: Array<{ label: string; cents: number }>
 	taxCents: number
 	taxInclusive?: boolean
 	taxRatePercent?: number | null
@@ -651,6 +653,9 @@ export function buildReceipt(input: {
 		for (const adjustment of receipt.adjustments ?? []) {
 			doc.row(clean(adjustment.label, 40), money(-adjustment.cents))
 		}
+	}
+	for (const fee of receipt.fees ?? []) {
+		doc.row(clean(fee.label, 40), money(fee.cents))
 	}
 	doc.row(
 		`${receipt.taxInclusive ? words.vatIncluded : words.tax}${

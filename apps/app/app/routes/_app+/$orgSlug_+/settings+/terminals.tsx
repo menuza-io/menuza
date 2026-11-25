@@ -9,12 +9,15 @@ import { and, asc, db, eq, OrganizationLocation } from '@repo/database'
 import { data, type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { ENV } from 'varlock/env'
 import { PosDayReport } from '#app/components/pos/pos-day-report.tsx'
+import { PrintersManager } from '#app/components/pos/printers-manager.tsx'
 import { ReadyTextSettings } from '#app/components/pos/ready-text-settings.tsx'
 import { StationRegisterSettings } from '#app/components/pos/station-register-settings.tsx'
 import { TerminalsManager } from '#app/components/pos/terminals-manager.tsx'
 import { TicketSettings } from '#app/components/pos/ticket-settings.tsx'
 import { ZatcaSettings } from '#app/components/pos/zatca-settings.tsx'
 import { getInventoryFeatureState } from '#app/utils/inventory/access.server.ts'
+import { PRINTING_FLAG_KEY } from '@repo/common/print-devices'
+import { getFeatureFlag } from '@repo/common/feature-flags'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { buildReceiptTargets } from '#app/utils/menu/receipt-targets.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -45,6 +48,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reservations,
 		inventory,
 		deviceHealthOn,
+		printersOn,
 		locationRows,
 	] = await Promise.all([
 		userHasOrganizationPermission(
@@ -63,6 +67,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		getReservationsFeatureState(organization.id),
 		getInventoryFeatureState(organization.id),
 		isDeviceHealthOn(organization.id),
+		getFeatureFlag(PRINTING_FLAG_KEY, { organizationId: organization.id }),
 		db
 			.select({
 				id: OrganizationLocation.id,
@@ -155,6 +160,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				locations: readyText,
 			},
 			registerLocations,
+			// Cloud printers (#117): only a literal `true` shows them.
+			printersEnabled: printersOn === true,
 			// The cash-payment discount (#375) is offered only where the
 			// organization's data region allows it.
 			cashDiscountAllowed: cashDiscountAllowedIn(organization.dataRegion),
@@ -182,6 +189,7 @@ export default function TerminalsPage() {
 		stationGrants,
 		readyText,
 		registerLocations,
+		printersEnabled,
 		cashDiscountAllowed,
 		healthWindows,
 	} = useLoaderData<typeof loader>()
@@ -212,6 +220,15 @@ export default function TerminalsPage() {
 					tickets: location.settings.tickets,
 					targets: location.targets,
 					logoUrl: location.logoUrl,
+				}))}
+			/>
+			<PrintersManager
+				orgSlug={orgSlug}
+				canWrite={canWrite}
+				enabled={printersEnabled}
+				locations={registerLocations.map((location) => ({
+					id: location.id,
+					name: location.name,
 				}))}
 			/>
 			<ReadyTextSettings

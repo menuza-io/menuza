@@ -15,6 +15,7 @@ import {
 	parseScheduleLinkToken,
 	STAFFING_TOKEN_AUDIENCE,
 } from '@repo/staffing'
+import { parsePrintRef } from '@repo/common/print-devices'
 import { verifyOperatorAnalyticsToken } from '@repo/reports/token'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { brand } from '@repo/config/brand'
@@ -560,6 +561,13 @@ export async function resolveOrgId(
 		return orgIdFromPosRequest(request, pathname)
 	}
 
+	// Cloud printers (#117): the URL a printer polls names its organization in a
+	// public ref (`/print/<orgId>.<printerId>/...`); the handler checks the
+	// password. A malformed ref routes nowhere.
+	if (pathname.startsWith('/print/')) {
+		return parsePrintRef(pathname.split('/')[2])?.orgId ?? null
+	}
+
 	// The public application form: the organization is the one the browser's
 	// Origin names, never a client-supplied orgId (the generic body and query
 	// routing below must not apply to it).
@@ -854,7 +862,9 @@ export async function assertKioskOrgOnUsNode(
 	const error =
 		pathname === '/kiosk/pair' || pathname === '/pos/pair'
 			? 'invalid_pairing_code'
-			: 'invalid_device'
+			: pathname.startsWith('/print/')
+				? 'invalid_printer'
+				: 'invalid_device'
 	let organization
 	if (pathname.startsWith('/pos/')) {
 		// A terminal signs itself out when told it was removed, so a control-plane

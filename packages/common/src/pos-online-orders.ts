@@ -385,6 +385,11 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 			code: z.string().max(40).nullable(),
 		})
 		.optional(),
+	/**
+	 * Answer of a reprint (#117): a cloud printer at the location took the job, so
+	 * the tablet does not open its own print dialog. Absent otherwise.
+	 */
+	cloudPrinted: z.boolean().optional(),
 })
 export type PosOnlineOrderDetail = z.infer<
 	typeof posOnlineOrderDetailSchema

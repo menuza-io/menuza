@@ -1,3 +1,4 @@
+import { printDueScheduledOrders } from './print-hooks.ts'
 import { processPushReceipts } from './push-service.ts'
 import { and, asc, eq, lte, min } from 'drizzle-orm'
 import {
@@ -222,10 +223,19 @@ export async function runOrdersTickForOrg(
 	await processPushReceipts(db, now).catch((error: unknown) => {
 		console.error('Push receipts sweep failed', orgId, errorLogFields(error))
 	})
+	// Scheduled orders whose kitchen ticket was held for their fire time go to
+	// the cloud printers now (#117); the next fire time wakes this tick again.
+	const prints = await printDueScheduledOrders(db, orgId, now).catch(
+		(error: unknown) => {
+			console.error('Scheduled printing failed', orgId, errorLogFields(error))
+			return { printed: 0, nextDueAt: null as number | null }
+		},
+	)
 	const due = [
 		messages.nextDueAt,
 		acceptance.nextDeadlineAt,
 		alerts?.nextDueAt ?? null,
+		prints.nextDueAt,
 	].filter((at): at is number => at !== null)
 	const nextDueAt = due.length > 0 ? Math.min(...due) : null
 	return {

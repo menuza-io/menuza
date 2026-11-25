@@ -18,6 +18,10 @@ import {
 	type KdsSource,
 	type KdsTicket,
 } from '@repo/common/kds'
+import {
+	lineCatalogHasAlcohol,
+	parseLineCatalog,
+} from '@repo/common/item-placement'
 import { effectiveHighlight } from '@repo/common/kitchen-ticket'
 import {
 	kdsEvents,
@@ -178,6 +182,14 @@ async function settings(db: KitchenDb, locationId: string) {
 	}
 }
 
+/** The kitchen setup of a location (stations, fire-ahead time): what routes a ticket. */
+export async function loadKitchenConfig(
+	db: KitchenDb,
+	locationId: string,
+): Promise<KdsConfig> {
+	return (await settings(db, locationId)).config
+}
+
 export async function listKdsStations(
 	db: KitchenDb,
 	locationId: string,
@@ -187,6 +199,53 @@ export async function listKdsStations(
 		id: station.id,
 		name: station.name,
 	}))
+}
+
+/**
+ * The ticket the Kitchen shows for one order, with no stored progress: the one
+ * feed a cloud printer prints from (#117), never a second one. Unlike the
+ * feed it also answers for an order that is already finished, so a reprint
+ * works. Null when the order is not at this location.
+ */
+export async function projectTicketForPrint(
+	db: KitchenDb,
+	orgId: string,
+	locationId: string,
+	source: KdsSource,
+	orderId: string,
+): Promise<{ ticket: KdsTicket; stationNames: Map<string, string> } | null> {
+	let order: SourceOrder | null = null
+	if (source === 'pos') {
+		const [row] = await db
+			.select()
+			.from(posOrders)
+			.where(
+				and(eq(posOrders.id, orderId), eq(posOrders.locationId, locationId)),
+			)
+			.limit(1)
+		if (row) order = posSource(row)
+	} else {
+		const [row] = await db
+			.select()
+			.from(restaurantOrders)
+			.where(
+				and(
+					eq(restaurantOrders.id, orderId),
+					eq(restaurantOrders.orgId, orgId),
+					eq(restaurantOrders.locationId, locationId),
+				),
+			)
+			.limit(1)
+		if (row) order = onlineSource(row)
+	}
+	if (!order) return null
+	const { config, version } = await settings(db, locationId)
+	return {
+		ticket: project(order, null, config, version),
+		stationNames: new Map(
+			config.stations.map((station) => [station.id, station.name]),
+		),
+	}
 }
 
 /** Fingerprints ignore money and guest details, but include every preparation instruction.
@@ -405,6 +464,10 @@ function posSource(row: typeof posOrders.$inferSelect): SourceOrder {
 		lines: row.lines,
 		initialStage: 'new',
 		cancelled: row.status === 'void' || row.status === 'refunded',
+		// The region stamps alcohol on a till sale's dishes from the live menu (#167).
+		...(lineCatalogHasAlcohol(parseLineCatalog(row.lineCatalog))
+			? { checkId: true }
+			: {}),
 	}
 }
 function onlineSource(row: typeof restaurantOrders.$inferSelect): SourceOrder {

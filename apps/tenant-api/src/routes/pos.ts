@@ -36,6 +36,7 @@ import {
 	fetchTillDiscountRules,
 } from '../services/order-service.ts'
 import { inventorySaleQueue } from '../services/inventory-sales-service.ts'
+import { printTillSale } from '../services/print-hooks.ts'
 import { listKdsStations } from '../services/kds-service.ts'
 import { scheduleOrderJourneys } from '../services/order-journeys.ts'
 import { deviceApps } from '../services/pos-apps-service.ts'
@@ -620,6 +621,13 @@ posRoutes.post('/orders', async (c) => {
 		await touchDevice(pos.db, pos.device)
 		await loyalty.settle()
 		await inventory.settle(pos.orgId)
+		// Cloud printers (#117): a kitchen ticket when a round is sent, a receipt on payment.
+		printTillSale(pos.orgId, {
+			id: order.id,
+			locationId: order.locationId,
+			status: order.status,
+			lines: order.lines,
+		})
 		// A paid Station sale linked to a guest counts as an order (#99).
 		if (order.status === 'paid') scheduleOrderJourneys(pos.orgId)
 		if (order.discountApplications.length > 0) {

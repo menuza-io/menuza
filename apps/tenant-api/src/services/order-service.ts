@@ -153,6 +153,8 @@ import {
 	type MemberRow,
 } from './loyalty-member-service.ts'
 import { inventorySaleQueue } from './inventory-sales-service.ts'
+import { runInBackground } from '../lib/background.ts'
+import { printQueue } from './print-hooks.ts'
 import {
 	orderMessageBatch,
 	queueOrderMessage,
@@ -2076,6 +2078,13 @@ export async function placeOrder(input: {
 		await loyalty.settle(orgId)
 		await inventory.settle(orgId)
 		messages.deliver(orgId)
+		// A pay-at-pickup order goes to the printers at once (#117); an online one
+		// when its payment lands. Background: the guest never waits for it.
+		if (placed.ok) {
+			const printing = printQueue()
+			printing.add(placed.data.order)
+			printing.settle(orgId)
+		}
 		// A pay-at-pickup order counts at once; an online one counts when its
 		// payment lands (below). Background: the guest never waits for it.
 		scheduleOrderJourneys(orgId)
@@ -2709,6 +2718,24 @@ export async function applyPaymentEvent(input: {
 	await loyalty.settle(orgId)
 	await inventory.settle(orgId)
 	messages.deliver(orgId)
+	// An online order whose payment just landed goes to the printers (#117).
+	if (result.ok && result.data.paymentStatus === 'paid') {
+		const printing = printQueue()
+		const orderId = result.data.orderId
+		runInBackground(
+			getTenantDb(orgId).then(async (tenantDb) => {
+				const [row] = await tenantDb
+					.select()
+					.from(restaurantOrders)
+					.where(eq(restaurantOrders.id, orderId))
+					.limit(1)
+				if (row) {
+					printing.add(row)
+					printing.settle(orgId)
+				}
+			}),
+		)
+	}
 	return result
 }
 
@@ -2917,6 +2944,8 @@ export type OrderWriteQueues = {
 	loyalty: LoyaltySettleQueue
 	inventory: ReturnType<typeof inventorySaleQueue>
 	messages: ReturnType<typeof orderMessageBatch>
+	/** Orders accepted in the write, for the cloud printers (#117). */
+	print: ReturnType<typeof printQueue>
 }
 
 export function orderWriteQueues(): OrderWriteQueues {
@@ -2924,6 +2953,7 @@ export function orderWriteQueues(): OrderWriteQueues {
 		loyalty: loyaltySettleQueue(),
 		inventory: inventorySaleQueue(),
 		messages: orderMessageBatch(),
+		print: printQueue(),
 	}
 }
 
@@ -2935,6 +2965,7 @@ export async function settleOrderWriteQueues(
 	await queues.loyalty.settle(orgId)
 	await queues.inventory.settle(orgId)
 	queues.messages.deliver(orgId)
+	queues.print.settle(orgId)
 	// A status change (accepted, completed) may make an order count or finish.
 	scheduleOrderJourneys(orgId)
 }
@@ -3371,6 +3402,8 @@ export async function applyOrderStatusPatchInTx(
 	// Only a person accepting a waiting order says "accepted" (#107); an
 	// order accepted automatically at placement never does.
 	if (fromPending && patch.status === 'accepted') {
+		// A person accepted a waiting order: it goes to the printers (#117).
+		queues.print.add(updated ?? { ...order, ...patch })
 		await queueOrderMessage(
 			tx,
 			updated ?? { ...order, ...patch },

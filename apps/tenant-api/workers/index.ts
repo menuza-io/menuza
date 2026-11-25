@@ -523,14 +523,18 @@ async function handle(
 
 	const orgId = await resolveOrgId(request, env)
 	const isTerminalPath =
-		url.pathname.startsWith('/kiosk/') || url.pathname.startsWith('/pos/')
+		url.pathname.startsWith('/kiosk/') ||
+		url.pathname.startsWith('/pos/') ||
+		url.pathname.startsWith('/print/')
 	if (!orgId && isTerminalPath) {
 		return Response.json(
 			{
 				error:
 					url.pathname === '/kiosk/pair' || url.pathname === '/pos/pair'
 						? 'invalid_pairing_code'
-						: 'invalid_device',
+						: url.pathname.startsWith('/print/')
+							? 'invalid_printer'
+							: 'invalid_device',
 			},
 			{ status: 401 },
 		)
