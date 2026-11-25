@@ -2,6 +2,7 @@ import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { courseSettingsJson } from '@repo/common/kitchen-ticket'
 import { getLocationCurrency } from '@repo/common/location-currency'
+import { planHoursClosures } from '@repo/common/ordering-hours'
 import {
 	type DeliveryProvider,
 	type DeliveryZone,
@@ -61,6 +62,7 @@ import { isStoreSettingsEnabled } from '#app/utils/integrations/flags.server.ts'
 import { loadLocationPolicyView } from '#app/utils/location/chain-defaults.server.ts'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
 import { lockedSettingsChangedByFormSave } from '#app/utils/location/location-settings.server.ts'
+import { recordClosures } from '#app/utils/location/ordering-pause-history.server.ts'
 import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
 import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import {
@@ -667,6 +669,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		.select({
 			slug: OrganizationLocation.slug,
 			specialHours: OrganizationLocation.specialHours,
+			timezone: OrganizationLocation.timezone,
+			isActive: OrganizationLocation.isActive,
+			storeHours: OrganizationLocation.storeHours,
+			onlineHours: OrganizationLocation.onlineHours,
 		})
 		.from(OrganizationLocation)
 		.where(
@@ -695,6 +701,45 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				),
 			)
 	})
+
+	// Scheduled online hours this edit took away at short notice (#405): the
+	// next 36 hours the old hours had open and the new ones do not, kept as
+	// closures so the uptime report shows them as lost time, not as hours the
+	// location was never meant to be open.
+	if (before) {
+		const asHours = (
+			value: {
+				timezone: string | null
+				isActive: boolean
+				storeHours: string | null
+				onlineHours: string | null
+				specialHours: string | null
+			},
+		) => ({
+			timeZone: value.timezone || 'UTC',
+			isActive: value.isActive,
+			storeHours: parseHoursJson(value.storeHours),
+			onlineHours: parseHoursJson(value.onlineHours),
+			specialHours: parseHoursJson(value.specialHours),
+		})
+		const windows = planHoursClosures({
+			before: asHours(before),
+			after: asHours({
+				timezone: updateSet.timezone,
+				isActive: updateSet.isActive,
+				storeHours: updateSet.storeHours,
+				onlineHours: updateSet.onlineHours,
+				specialHours: updateSet.specialHours,
+			}),
+			now: Date.now(),
+		})
+		await recordClosures({
+			organizationId: organization.id,
+			locationId,
+			windows,
+			startedBy: userId,
+		})
+	}
 
 	// #137: the location's website page moved; keep its old address working.
 	if (before && before.slug !== data.slug) {
@@ -725,6 +770,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		title: 'Location updated',
 		description: 'Restaurant location details have been saved.',
 	})
+}
+
+/** Hours are stored as JSON text; a value that does not parse reads as not set. */
+function parseHoursJson(value: string | null): unknown {
+	if (!value) return undefined
+	try {
+		return JSON.parse(value) as unknown
+	} catch {
+		return undefined
+	}
 }
 
 export default function EditLocationRoute() {

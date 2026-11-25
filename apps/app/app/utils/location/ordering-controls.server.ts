@@ -8,6 +8,12 @@ import { prepRowInForce } from '@repo/common/prep-schedule'
 import { and, asc, db, desc, eq, OrganizationLocation } from '@repo/database'
 import { onOrderingControlChangedGbp } from '#app/utils/gbp/sweep.server.ts'
 import {
+	backfillOpenPause,
+	closeExpiredPauses,
+	closePauseRow,
+	openPauseRow,
+} from './ordering-pause-history.server.ts'
+import {
 	loadLocationDeliveryPauseStatus,
 	pauseDeliveryStores,
 	resumeDeliveryStores,
@@ -64,6 +70,21 @@ export async function loadOrderingControls(
 			isDeliveryPauseEnabled(organizationId),
 			loadLocationDeliveryPauseStatus(organizationId),
 		])
+	// The pause history (#176, #405): pauses that ran out by themselves are
+	// closed at their own end, and one already running when the history began
+	// gets its row, on the next read.
+	await closeExpiredPauses(organizationId, now)
+	await Promise.all(
+		rows.map((row) =>
+			backfillOpenPause({
+				organizationId,
+				locationId: row.id,
+				pausedAt: row.orderingPausedAt,
+				pausedUntil: row.orderingPausedUntil,
+				now,
+			}),
+		),
+	)
 	return rows.map((row) => {
 		const { orderingPause, busyMode } = publicOrderingControls(row, now)
 		const timeZone = row.timezone || 'UTC'
@@ -215,6 +236,25 @@ export async function applyOrderingControl(input: {
 				eq(OrganizationLocation.id, location.id),
 			),
 		)
+	// The one pause history (#176, #405): a pause opens a row (closing the one
+	// it replaces), a resume closes it. Busy mode writes nothing: orders still
+	// arrive while the kitchen is busy.
+	if (control.intent === 'pause') {
+		await openPauseRow({
+			organizationId: organization.id,
+			locationId: location.id,
+			startedAt: now,
+			plannedUntil: resolvedPauseUntil,
+			startedBy: input.userId,
+			source: input.source ? 'station' : input.bulk ? 'bulk' : 'app',
+		})
+	} else if (control.intent === 'resume') {
+		await closePauseRow({
+			locationId: location.id,
+			now,
+			endedBy: input.source ? 'station' : 'member',
+		})
+	}
 	if (!input.skipPurge) {
 		await purgeOrganizationSiteCache(organization.id, organization.slug)
 	}

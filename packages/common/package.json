@@ -650,6 +650,16 @@
       "import": "./src/ordering-uptime.ts",
       "default": "./src/ordering-uptime.ts"
     },
+    "./ordering-hours": {
+      "types": "./src/ordering-hours.ts",
+      "import": "./src/ordering-hours.ts",
+      "default": "./src/ordering-hours.ts"
+    },
+    "./ordering-history": {
+      "types": "./src/ordering-history.ts",
+      "import": "./src/ordering-history.ts",
+      "default": "./src/ordering-history.ts"
+    },
     "./item-pairs": {
       "types": "./src/item-pairs.ts",
       "import": "./src/item-pairs.ts",
