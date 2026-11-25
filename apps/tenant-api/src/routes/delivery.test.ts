@@ -349,6 +349,7 @@ describe('Delivery address quotes (public browser surface)', () => {
 		const body = await response.json()
 		expect(body).toEqual({
 			status: 'out_of_range',
+			reason: 'out_of_range',
 			address: expect.objectContaining({ city: 'Evanston', lat: 42.0473 }),
 		})
 		expect(body.quote).toBeUndefined()

@@ -79,3 +79,39 @@ export type FetchLike = (
 	input: string | URL | Request,
 	init?: RequestInit,
 ) => Promise<Response>
+
+/**
+ * Driving distance between two points (#421). Server-only like the geocoder:
+ * the customer's coordinates go browser to regional tenant-api to the routing
+ * provider, and the result is never logged or stored beyond the signed quote.
+ */
+export type DrivingRoute = {
+	/** Road distance in meters. */
+	meters: number
+	/** Estimated drive time, when the provider says. */
+	seconds: number | null
+}
+
+export interface Router {
+	/** Provider name for logs ("google" | "dev"). */
+	readonly name: string
+	/**
+	 * The road route between two points, or `null` when the provider found no
+	 * route. Throws `RouterError` when the provider itself fails; callers fall
+	 * back to the straight-line distance.
+	 */
+	drivingDistance(
+		from: { lat: number; lng: number },
+		to: { lat: number; lng: number },
+	): Promise<DrivingRoute | null>
+}
+
+/** The routing provider failed (network, quota, auth, malformed response). */
+export class RouterError extends Error {
+	readonly status: number | null
+	constructor(message: string, options: { status?: number | null } = {}) {
+		super(message)
+		this.name = 'RouterError'
+		this.status = options.status ?? null
+	}
+}

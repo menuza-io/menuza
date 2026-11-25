@@ -14,8 +14,10 @@ export {
 	type CoveragePoint,
 	type CoverageZone,
 	type LatLng,
+	type ZonePriority,
 	type ZoneResolution,
 } from './coverage.ts'
+export { zoneOverlaps, zonesOverlap } from './overlap.ts'
 export {
 	createDevGeocoder,
 	DEV_GEOCODER_FIXTURES,
@@ -23,7 +25,16 @@ export {
 } from './dev.ts'
 export { createGoogleGeocoder, normalizeAddressComponents } from './google.ts'
 export {
+	createDevRouter,
+	createGoogleRouter,
+	DEV_ROUTE_DETOUR_FACTOR,
+	selectRouter,
+} from './router.ts'
+export {
 	GeocoderError,
+	RouterError,
+	type DrivingRoute,
+	type Router,
 	type AutocompleteOptions,
 	type FetchLike,
 	type GeoAddress,

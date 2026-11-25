@@ -739,9 +739,24 @@ export const LOCATION_SETTINGS_REGISTRY: {
 					: DEFAULT_DELIVERY_CONFIG.estimatedDeliveryTimeMax,
 			}
 		},
-		write: (_row, value: DeliveryConfig) => ({
-			deliveryConfig: JSON.stringify(value),
-		}),
+		write: (row, value: DeliveryConfig) => {
+			// The zone order belongs to the zones, which a copy does not carry: the
+			// target keeps how its own zones were ordered.
+			const { zonePriority: ignoredCopied, ...rest } = value
+			const stored = parseStored(row.deliveryConfig) as {
+				zonePriority?: unknown
+			} | null
+			const zonePriority =
+				stored?.zonePriority === 'order' || stored?.zonePriority === 'cheapest'
+					? stored.zonePriority
+					: undefined
+			return {
+				deliveryConfig: JSON.stringify({
+					...rest,
+					...(zonePriority ? { zonePriority } : {}),
+				}),
+			}
+		},
 		summarize: (value: DeliveryConfig) =>
 			`${value.providers.join(', ')}; ${value.estimatedDeliveryTimeMin}-${value.estimatedDeliveryTimeMax} min`,
 	} satisfies LocationSettingDefinition<DeliveryConfig>,

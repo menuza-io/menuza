@@ -1,6 +1,8 @@
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 
+import { type VerifiedDeliveryQuote } from '@repo/common/restaurant-orders'
+
 import { syncEnvFromProcess } from './secrets.ts'
 
 /**
@@ -33,6 +35,11 @@ const payloadSchema = z.strictObject({
 	postalCode: z.string().max(20).nullable(),
 	country: z.string().max(2).nullable(),
 	unit: z.string().max(50).nullable(),
+	/**
+	 * Road distance from the store in meters, when the routing service answered
+	 * (#421). Absent on tokens signed before distance fees existed.
+	 */
+	drivingMeters: z.number().int().min(0).max(5_000_000).nullable().optional(),
 	/** Expiry, epoch milliseconds. */
 	exp: z.number().int().positive(),
 })
@@ -97,6 +104,22 @@ function signingKey(): Promise<CryptoKey> {
 		keyCache.set(secret, cached)
 	}
 	return cached
+}
+
+/** The verified quote the pricing engine takes, from a verified token's payload. */
+export function toVerifiedDeliveryQuote(
+	payload: DeliveryQuotePayload,
+): VerifiedDeliveryQuote {
+	return {
+		lat: payload.lat,
+		lng: payload.lng,
+		formatted: payload.formatted,
+		line1: payload.line1,
+		city: payload.city,
+		postalCode: payload.postalCode,
+		unit: payload.unit,
+		drivingMeters: payload.drivingMeters ?? null,
+	}
 }
 
 export async function signDeliveryQuote(

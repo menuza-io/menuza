@@ -19,9 +19,19 @@ export type CoverageZone = {
 	enabled: boolean
 }
 
+/**
+ * Which zone wins when several cover a point (#266).
+ * - `cheapest` (the default, and what every location did before zones could be
+ *   ordered): the lowest fee, then the lowest minimum.
+ * - `order`: the first zone in the location's list that covers the point.
+ */
+export type ZonePriority = 'cheapest' | 'order'
+
 export type CoverageLocation<Z extends CoverageZone = CoverageZone> = {
 	address?: { lat?: number | null; lng?: number | null } | null
 	deliveryZones?: Z[] | null
+	/** Missing reads as `cheapest`, so an untouched location never changes. */
+	zonePriority?: ZonePriority | null
 }
 
 export type CoveragePoint = LatLng & { postalCode?: string | null }
@@ -30,7 +40,9 @@ export type CoverageFailureReason =
 	'out_of_range' | 'excluded' | 'no_zones' | 'store_location_missing'
 
 export type ZoneResolution<Z extends CoverageZone = CoverageZone> =
-	{ ok: true; zone: Z } | { ok: false; reason: CoverageFailureReason }
+	| { ok: true; zone: Z }
+	/** `zone` is the Not allowed zone that excluded the point, when `excluded`. */
+	| { ok: false; reason: CoverageFailureReason; zone?: Z }
 
 const EARTH_RADIUS_METERS = 6_371_008.8
 const METERS_PER_MILE = 1609.344
@@ -167,12 +179,18 @@ function cheaper(a: CoverageZone, b: CoverageZone): boolean {
  * - Radius zones are centred on the store (`location.address`); a missing or
  *   0,0 store coordinate makes them unverifiable (`store_location_missing`
  *   when nothing else matched).
- * - When several allowed zones match, the cheapest (fee, then minimum) wins.
+ * - When several allowed zones match, `zonePriority` decides (#266): the
+ *   cheapest (fee, then minimum) when it is `cheapest` or missing, the first
+ *   one in the list when it is `order`. Disallowed zones exclude either way and
+ *   disabled zones are skipped either way.
  */
 export function resolveZoneForPoint<Z extends CoverageZone>(
 	location: CoverageLocation<Z>,
 	point: CoveragePoint,
+	options: { priority?: ZonePriority | null } = {},
 ): ZoneResolution<Z> {
+	const priority: ZonePriority =
+		options.priority ?? location.zonePriority ?? 'cheapest'
 	const zones = (location.deliveryZones ?? []).filter((zone) => zone.enabled)
 	const allowed = zones.filter((zone) => zone.restriction === 'allowed')
 	if (allowed.length === 0) return { ok: false, reason: 'no_zones' }
@@ -185,7 +203,7 @@ export function resolveZoneForPoint<Z extends CoverageZone>(
 	for (const zone of zones) {
 		if (zone.restriction !== 'disallowed') continue
 		if (matchZone(zone, point, store) === 'match') {
-			return { ok: false, reason: 'excluded' }
+			return { ok: false, reason: 'excluded', zone }
 		}
 	}
 
@@ -200,7 +218,13 @@ export function resolveZoneForPoint<Z extends CoverageZone>(
 			continue
 		}
 		evaluable = true
-		if (result === 'match' && (!best || cheaper(zone, best))) best = zone
+		if (result !== 'match') continue
+		if (priority === 'order') {
+			// The list is the priority: the first zone that covers the point wins.
+			best = zone
+			break
+		}
+		if (!best || cheaper(zone, best)) best = zone
 	}
 
 	if (best) return { ok: true, zone: best }

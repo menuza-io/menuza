@@ -2160,6 +2160,235 @@ describe('priceRestaurantOrder: geocoded delivery quotes', () => {
 	})
 })
 
+describe('priceRestaurantOrder: zone priority, fee tables and distance (#266, #244, #421)', () => {
+	const burger = (quantity: number) => [
+		{
+			itemId: 'item-burger',
+			quantity,
+			options: [{ groupId: 'grp-size', optionId: 'opt-reg' }],
+		},
+	]
+	const quoted = (quantity: number) =>
+		makeRequest({
+			fulfillment: 'delivery',
+			delivery: { quoteToken: 'signed-token-placeholder-123' },
+			lines: burger(quantity),
+		})
+	const price = (
+		context: RestaurantOrderContext,
+		quantity: number,
+		quote: Record<string, unknown> = NEAR_QUOTE,
+	) =>
+		priceRestaurantOrder(context, quoted(quantity), {
+			now: NOW,
+			deliveryQuote: quote as never,
+		})
+	// What one burger costs, so the tables below can be set around whole orders.
+	const unit = (() => {
+		const result = price(
+			radiusContext({ deliveryZones: [radiusZone({ minimumOrder: 0 })] }),
+			1,
+		)
+		if (!result.ok) throw new Error('probe failed')
+		return result.result.subtotalCents / 100
+	})()
+
+	describe('zone priority (#266)', () => {
+		const orderedConfig = {
+			providers: ['in_house'],
+			estimatedDeliveryTimeMin: 25,
+			estimatedDeliveryTimeMax: 45,
+			zonePriority: 'order',
+		}
+		const ring = radiusZone({
+			id: 'ring',
+			name: 'Free ring',
+			radius: { value: 3, unit: 'miles' },
+			deliveryFee: 0,
+			minimumOrder: unit * 4,
+		})
+		const wide = radiusZone({
+			id: 'wide',
+			name: 'Wide area',
+			radius: { value: 20, unit: 'miles' },
+			deliveryFee: 6,
+			minimumOrder: unit,
+		})
+
+		it('keeps the cheapest zone for a location that never reordered', () => {
+			for (const zones of [[wide, ring], [ring, wide]]) {
+				const result = price(radiusContext({ deliveryZones: zones }), 5)
+				expect(result.ok && result.result.delivery?.zoneId).toBe('ring')
+				expect(result.ok && result.result.deliveryFeeCents).toBe(0)
+			}
+		})
+
+		it('gives the fee and minimum of the higher zone once the list is ordered', () => {
+			const ordered = { deliveryConfig: orderedConfig }
+			const wideFirst = radiusContext({
+				...ordered,
+				deliveryZones: [wide, ring],
+			})
+			const result = price(wideFirst, 5)
+			expect(result.ok && result.result.delivery?.zoneId).toBe('wide')
+			expect(result.ok && result.result.deliveryFeeCents).toBe(600)
+			// The wide zone's lower minimum applies: one burger is enough.
+			expect(price(wideFirst, 1).ok).toBe(true)
+			// Reorder: the ring wins, with its own (higher) minimum.
+			const ringFirst = radiusContext({
+				...ordered,
+				deliveryZones: [ring, wide],
+			})
+			const second = price(ringFirst, 5)
+			expect(second.ok && second.result.delivery?.zoneId).toBe('ring')
+			const tooSmall = price(ringFirst, 1)
+			expect(tooSmall.ok).toBe(false)
+			if (!tooSmall.ok) expect(tooSmall.error.code).toBe('minimum_order')
+		})
+
+		it('resolves a zip-code order without a quote by the same order', () => {
+			const zip = (overrides: Record<string, unknown>) =>
+				radiusZone({
+					type: 'zip_code',
+					radius: undefined,
+					zipCodes: ['60606'],
+					minimumOrder: 0,
+					...overrides,
+				})
+			const request = makeRequest({
+				fulfillment: 'delivery',
+				delivery: { address: '233 S Wacker Dr 60606', city: 'Chicago' },
+			})
+			const zones = [zip({ id: 'z-pricey', deliveryFee: 9 }), zip({ id: 'z-cheap', deliveryFee: 1 })]
+			const cheapest = priceRestaurantOrder(
+				radiusContext({ deliveryZones: zones }),
+				request,
+				{ now: NOW },
+			)
+			expect(cheapest.ok && cheapest.result.delivery?.zoneId).toBe('z-cheap')
+			const ordered = priceRestaurantOrder(
+				radiusContext({
+					deliveryZones: zones,
+					deliveryConfig: orderedConfig,
+				}),
+				request,
+				{ now: NOW },
+			)
+			expect(ordered.ok && ordered.result.delivery?.zoneId).toBe('z-pricey')
+		})
+	})
+
+	describe('fee by order size (#244)', () => {
+		const steps = [
+			{ from: unit * 1, fee: 5 },
+			{ from: unit * 2, fee: 3 },
+			{ from: unit * 3, fee: 0 },
+		]
+		const context = radiusContext({
+			deliveryZones: [
+				radiusZone({ minimumOrder: unit, deliveryFee: 5, feeSteps: steps }),
+			],
+		})
+
+		it('charges the step the items subtotal has reached', () => {
+			const fee = (quantity: number) => {
+				const result = price(context, quantity)
+				if (!result.ok) throw new Error(result.error.code)
+				return result.result.deliveryFeeCents
+			}
+			expect(fee(1)).toBe(500)
+			expect(fee(2)).toBe(300)
+			expect(fee(3)).toBe(0)
+			// Above the last step: free.
+			expect(fee(9)).toBe(0)
+		})
+
+		it('keeps the single fee when the zone has no table', () => {
+			const plain = radiusContext({
+				deliveryZones: [radiusZone({ minimumOrder: 0, deliveryFee: 4.25 })],
+			})
+			for (const quantity of [1, 5]) {
+				const result = price(plain, quantity)
+				expect(result.ok && result.result.deliveryFeeCents).toBe(425)
+			}
+		})
+	})
+
+	describe('fee by distance (#421)', () => {
+		const bands = (mode: 'driving' | 'straight_line') => ({
+			mode,
+			unit: 'km' as const,
+			bands: [
+				{ from: 0, fee: 3 },
+				{ from: 1, fee: 4 },
+				{ from: 5, fee: 5 },
+				{ from: 8, fee: 7 },
+			],
+		})
+		const contextFor = (mode: 'driving' | 'straight_line') =>
+			radiusContext({
+				deliveryZones: [
+					radiusZone({
+						radius: { value: 25, unit: 'km' },
+						minimumOrder: 0,
+						deliveryFee: 9,
+						distanceFees: bands(mode),
+					}),
+				],
+			})
+
+		it('uses the signed road distance: 6 km by road is the 5-8 km band', () => {
+			// NEAR_QUOTE is about 1.3 km away in a straight line.
+			const result = price(contextFor('driving'), 2, {
+				...NEAR_QUOTE,
+				drivingMeters: 6_000,
+			})
+			expect(result.ok && result.result.deliveryFeeCents).toBe(500)
+		})
+
+		it('falls back to the straight-line distance when routing gave none', () => {
+			const result = price(contextFor('driving'), 2, {
+				...NEAR_QUOTE,
+				drivingMeters: null,
+			})
+			// ~1.3 km straight: the 1-5 km band.
+			expect(result.ok && result.result.deliveryFeeCents).toBe(400)
+			expect(price(contextFor('driving'), 2).ok).toBe(true)
+		})
+
+		it('ignores a road distance for a zone measured in a straight line', () => {
+			const result = price(contextFor('straight_line'), 2, {
+				...NEAR_QUOTE,
+				drivingMeters: 9_000,
+			})
+			expect(result.ok && result.result.deliveryFeeCents).toBe(400)
+		})
+
+		it('uses the zone fee when the store has no coordinates to measure from', () => {
+			const polygon = radiusContext({
+				address: { country: 'US', lat: 0, lng: 0 },
+				deliveryZones: [
+					radiusZone({
+						type: 'polygon',
+						radius: undefined,
+						polygon: [
+							{ lat: 41.9, lng: -87.7 },
+							{ lat: 41.9, lng: -87.55 },
+							{ lat: 41.85, lng: -87.55 },
+							{ lat: 41.85, lng: -87.7 },
+						],
+						minimumOrder: 0,
+						deliveryFee: 9,
+						distanceFees: bands('straight_line'),
+					}),
+				],
+			})
+			const result = price(polygon, 2)
+			expect(result.ok && result.result.deliveryFeeCents).toBe(900)
+		})
+	})
+})
+
 describe('resolveDeliveryZoneForPoint', () => {
 	it('ignores allowed zones from third-party providers', () => {
 		const location = radiusContext({

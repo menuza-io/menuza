@@ -530,6 +530,11 @@
       "import": "./src/pickup-instructions.ts",
       "default": "./src/pickup-instructions.ts"
     },
+    "./delivery-fees": {
+      "types": "./src/delivery-fees.ts",
+      "import": "./src/delivery-fees.ts",
+      "default": "./src/delivery-fees.ts"
+    },
     "./service-fee": {
       "types": "./src/service-fee.ts",
       "import": "./src/service-fee.ts",
