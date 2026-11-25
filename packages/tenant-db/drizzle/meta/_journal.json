@@ -498,6 +498,13 @@
 			"when": 1795634465631,
 			"tag": "0070_delivery_drivers",
 			"breakpoints": true
+		},
+		{
+			"idx": 71,
+			"version": "6",
+			"when": 1795800000000,
+			"tag": "0071_catering",
+			"breakpoints": true
 		}
 	]
 }
