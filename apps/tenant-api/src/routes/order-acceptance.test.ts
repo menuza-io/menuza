@@ -47,6 +47,16 @@ import {
 	receiptOrder,
 } from '../services/order-service.ts'
 import { countedOrderCondition } from '../services/report-records.ts'
+import { standingSteps } from '@repo/common/order-steps'
+import { createReportDefinition, runReport } from '@repo/reports'
+import { sql } from 'drizzle-orm'
+import { activeReportCatalog } from '../restaurant/staffing-report-catalog.ts'
+import { loadOrderTimingRecords } from '../services/order-timing-records.ts'
+import {
+	loadOrderSteps,
+	recordOrderStep,
+	syncKitchenSteps,
+} from '../services/order-steps.ts'
 import { operatorOrderRoutes } from './operator-orders.ts'
 import { publicOrderRoutes } from './orders.ts'
 
@@ -1106,6 +1116,267 @@ describe('manual order acceptance (#107)', () => {
 			expect((await row(await place(dropOrder))).status).toBe(
 				'pending_acceptance',
 			)
+		})
+	})
+
+	describe('order steps (#243)', () => {
+		async function stepRows(orderId: string) {
+			const db = await getTenantDb(ORG)
+			return loadOrderSteps(db, orderId)
+		}
+
+		async function timeline(orderId: string) {
+			const res = await app.request(`/operator/orders/${orderId}`, {
+				headers: {
+					Authorization: `Bearer ${await operatorToken({ scope: 'orders:read' })}`,
+				},
+			})
+			expect(res.status).toBe(200)
+			return ((await res.json()) as { timeline: Array<Record<string, unknown>> })
+				.timeline
+		}
+
+		it('records placed and an automatic accept for an order that stands at once, by the guest and by Menuza', async () => {
+			acceptance = undefined
+			const id = await place()
+			const rows = await stepRows(id)
+			expect(rows.map((r) => [r.step, r.actorKind, r.source])).toEqual([
+				['placed', 'guest', 'guest'],
+				['accepted', 'system', 'system'],
+			])
+			// Only ids and times: no guest name, phone or address anywhere in a row.
+			expect(JSON.stringify(rows)).not.toMatch(/Rana|rana@|555/)
+		})
+
+		it('shows when each step happened and who did it on the order detail', async () => {
+			const id = await place()
+			expect((await stepRows(id)).map((r) => r.step)).toEqual(['placed'])
+			expect((await patch(id, { status: 'accepted' })).status).toBe(200)
+			expect((await patch(id, { status: 'preparing' })).status).toBe(200)
+			expect((await patch(id, { status: 'ready' })).status).toBe(200)
+			expect((await patch(id, { status: 'completed', markPaid: true })).status).toBe(200)
+			const entries = await timeline(id)
+			expect(entries.map((e) => e.step)).toEqual([
+				'placed',
+				'accepted',
+				'started',
+				'ready',
+				'handed_over',
+			])
+			// Who: the member's id and the screen, never a name.
+			expect(entries[1]).toMatchObject({
+				actorKind: 'operator',
+				actorId: 'usr_1',
+				source: 'app',
+				offline: false,
+			})
+			expect(entries[0]).toMatchObject({ actorKind: 'guest', source: 'guest' })
+			expect(typeof entries[3]!.minutesSincePlaced).toBe('number')
+			expect(JSON.stringify(entries)).not.toMatch(/Rana|rana@|555/)
+		})
+
+		it('records declined when a waiting order is turned down, by the member or by the timeout', async () => {
+			const byMember = await place()
+			expect(
+				(await patch(byMember, { status: 'cancelled', rejectReason: 'too_busy' }))
+					.status,
+			).toBe(200)
+			expect((await stepRows(byMember)).map((r) => [r.step, r.actorKind])).toEqual([
+				['placed', 'guest'],
+				['declined', 'operator'],
+			])
+			const lapsed = await place()
+			vi.setSystemTime(at(30))
+			await processOrderAcceptance(ORG)
+			const rows = await stepRows(lapsed)
+			expect(rows.at(-1)).toMatchObject({
+				step: 'declined',
+				actorKind: 'system',
+				source: 'system',
+			})
+		})
+
+		it('says out for delivery when a delivery order is ready and delivered when it is completed', async () => {
+			const id = await insertOrder(ORG, {
+				status: 'accepted',
+				fulfillment: 'delivery',
+				paymentMethod: 'handoff',
+				paymentStatus: 'unpaid',
+				locationId: 'loc-1',
+				completedAt: null,
+			})
+			expect((await patch(id, { status: 'ready' })).status).toBe(200)
+			expect((await patch(id, { status: 'completed', markPaid: true })).status).toBe(200)
+			expect((await stepRows(id)).map((r) => r.step)).toEqual([
+				'ready',
+				'out_for_delivery',
+				'delivered',
+			])
+		})
+
+		it('keeps both rows when a ticket is sent back and done again, and the latest counts', async () => {
+			const id = await insertOrder(ORG, {
+				status: 'accepted',
+				paymentMethod: 'handoff',
+				paymentStatus: 'unpaid',
+				locationId: 'loc-1',
+				completedAt: null,
+			})
+			const db = await getTenantDb(ORG)
+			const order = { id, fulfillment: 'pickup' }
+			const kitchen = {
+				actorKind: 'station' as const,
+				actorId: 'staff:s1',
+				source: 'station_kitchen' as const,
+			}
+			await syncKitchenSteps(db, order, 'ready', kitchen, { now: 1_000, at: 1_000 })
+			await syncKitchenSteps(db, order, 'preparing', kitchen, { now: 2_000, at: 2_000 })
+			await syncKitchenSteps(db, order, 'ready', kitchen, { now: 3_000, at: 3_000 })
+			const rows = await stepRows(id)
+			expect(
+				rows.filter((r) => r.step === 'ready').map((r) => [r.event, r.at]),
+			).toEqual([
+				['done', 1_000],
+				['undone', 2_000],
+				['done', 3_000],
+			])
+			const standing = standingSteps(rows)
+			expect(standing.get('ready')?.at).toBe(3_000)
+			expect(standing.get('started')?.at).toBe(1_000)
+		})
+
+		it('never takes back a step another screen recorded', async () => {
+			const id = await insertOrder(ORG, {
+				status: 'accepted',
+				paymentMethod: 'handoff',
+				paymentStatus: 'unpaid',
+				locationId: 'loc-1',
+				completedAt: null,
+			})
+			expect((await patch(id, { status: 'ready' })).status).toBe(200)
+			const db = await getTenantDb(ORG)
+			await syncKitchenSteps(
+				db,
+				{ id, fulfillment: 'pickup' },
+				'preparing',
+				{ actorKind: 'station', actorId: 'staff:s1', source: 'station_kitchen' },
+				{ now: Date.now() },
+			)
+			expect(standingSteps(await stepRows(id)).has('ready')).toBe(true)
+		})
+
+		it('refuses to edit or delete a step row', async () => {
+			const id = await place()
+			const db = await getTenantDb(ORG)
+			const refusal = async (statement: ReturnType<typeof sql>) => {
+				try {
+					await db.run(statement)
+				} catch (error) {
+					// The driver wraps the trigger's message in the failed query.
+					const cause = (error as { cause?: unknown }).cause
+					return `${(error as Error).message} ${cause instanceof Error ? cause.message : ''}`
+				}
+				return ''
+			}
+			expect(
+				await refusal(
+					sql`update restaurant_order_steps set step = 'ready' where order_id = ${id}`,
+				),
+			).toMatch(/append-only/)
+			expect(
+				await refusal(
+					sql`delete from restaurant_order_steps where order_id = ${id}`,
+				),
+			).toMatch(/append-only/)
+			expect((await stepRows(id)).length).toBeGreaterThan(0)
+		})
+
+		it('reports the average minutes from placed to ready per location', async () => {
+			const db = await getTenantDb(ORG)
+			const placedAt = NOW.getTime() - 60 * MIN
+			const a1 = await insertOrder(ORG, {
+				status: 'completed',
+				paymentMethod: 'handoff',
+				paymentStatus: 'unpaid',
+				locationId: 'loc-1',
+				locationName: 'Olaya',
+				createdAt: new Date(placedAt),
+				promisedAt: new Date(placedAt + 15 * MIN),
+			})
+			const a2 = await insertOrder(ORG, {
+				status: 'completed',
+				paymentMethod: 'handoff',
+				paymentStatus: 'unpaid',
+				locationId: 'loc-1',
+				locationName: 'Olaya',
+				createdAt: new Date(placedAt),
+				promisedAt: new Date(placedAt + 30 * MIN),
+			})
+			const b1 = await insertOrder(ORG, {
+				status: 'completed',
+				paymentMethod: 'handoff',
+				paymentStatus: 'unpaid',
+				locationId: 'loc-2',
+				locationName: 'Malaz',
+				createdAt: new Date(placedAt),
+			})
+			const actor = {
+				actorKind: 'operator' as const,
+				actorId: 'usr_1',
+				source: 'app' as const,
+			}
+			for (const [id, minutes] of [
+				[a1, 20],
+				[a2, 30],
+				[b1, 40],
+			] as const) {
+				await recordOrderStep(db, id, { ...actor, step: 'placed', at: placedAt })
+				await recordOrderStep(db, id, {
+					...actor,
+					step: 'ready',
+					at: placedAt + minutes * MIN,
+				})
+			}
+			const definition = createReportDefinition({
+				subject: 'order_timings',
+				timeframe: { field: 'placedAt', preset: 'last_7_days' },
+				groupBy: ['location'],
+				visualization: {
+					chartStyle: 'bar',
+					measure: 'average',
+					valueField: 'minutesToReady',
+					sortBy: 'label',
+					hideCounts: false,
+				},
+				settings: { title: 'Time to ready', notes: '', timezone: 'UTC' },
+			})
+			const { records } = await loadOrderTimingRecords(
+				{ db, orgId: ORG, locationIds: null, now: NOW },
+				definition,
+			)
+			const result = runReport(activeReportCatalog(), definition, records, NOW)
+			if ('error' in result) throw new Error(result.message)
+			const byLocation = Object.fromEntries(
+				result.segments.map((segment) => [segment.label, segment.value]),
+			)
+			// Olaya: (20 + 30) / 2. Malaz: 40.
+			expect(byLocation).toEqual({ Malaz: 40, Olaya: 25 })
+
+			// Late against promised: a1 promised +15, ready +20 (late); a2 promised +30, ready +30 (on time).
+			const lateDefinition = createReportDefinition({
+				...definition,
+				groupBy: ['location'],
+				visualization: {
+					chartStyle: 'table',
+					measure: 'ratio',
+					valueField: 'lateRate',
+					sortBy: 'label',
+					hideCounts: false,
+				},
+			})
+			const late = runReport(activeReportCatalog(), lateDefinition, records, NOW)
+			if ('error' in late) throw new Error(late.message)
+			expect(late.segments.find((s) => s.label === 'Olaya')?.value).toBe(50)
 		})
 	})
 })

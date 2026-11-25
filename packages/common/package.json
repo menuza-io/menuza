@@ -635,6 +635,21 @@
       "import": "./src/slow-sellers.ts",
       "default": "./src/slow-sellers.ts"
     },
+    "./ordering-windows": {
+      "types": "./src/ordering-windows.ts",
+      "import": "./src/ordering-windows.ts",
+      "default": "./src/ordering-windows.ts"
+    },
+    "./missed-sales": {
+      "types": "./src/missed-sales.ts",
+      "import": "./src/missed-sales.ts",
+      "default": "./src/missed-sales.ts"
+    },
+    "./ordering-uptime": {
+      "types": "./src/ordering-uptime.ts",
+      "import": "./src/ordering-uptime.ts",
+      "default": "./src/ordering-uptime.ts"
+    },
     "./item-pairs": {
       "types": "./src/item-pairs.ts",
       "import": "./src/item-pairs.ts",

@@ -40,6 +40,8 @@ import {
 	type OrderMessageTx,
 } from './order-messages.ts'
 import { applyPromisedDelay } from './order-promised-time.ts'
+import { syncKitchenSteps } from './order-steps.ts'
+import { resolveStepTime } from '@repo/common/order-steps'
 
 const hash = (value: unknown) =>
 	createHash('sha256').update(JSON.stringify(value)).digest('hex')
@@ -784,6 +786,40 @@ function kitchenCommandInTx(
 								stage,
 								messages.context(now),
 							)
+					}
+					// Order steps (#243): started and ready as the screen shows them.
+					const [stepOrder] = await tx
+						.select({
+							id: restaurantOrders.id,
+							fulfillment: restaurantOrders.fulfillment,
+						})
+						.from(restaurantOrders)
+						.where(
+							and(
+								eq(restaurantOrders.id, command.orderId),
+								eq(restaurantOrders.orgId, actor.orgId),
+								eq(restaurantOrders.locationId, actor.locationId),
+							),
+						)
+						.limit(1)
+					if (stepOrder) {
+						const time = resolveStepTime({
+							clientAt: command.clientAt,
+							now,
+						})
+						await syncKitchenSteps(
+							tx,
+							stepOrder,
+							stage,
+							{
+								actorKind: 'station',
+								actorId: actor.staffId
+									? `staff:${actor.staffId}`
+									: `device:${actor.deviceId}`,
+								source: 'station_kitchen',
+							},
+							{ now, at: time.at, offline: time.offline },
+						)
 					}
 				}
 				await tx.insert(kdsEvents).values({

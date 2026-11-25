@@ -129,6 +129,12 @@ export const kdsCommandSchema = z
 		stage: kdsStageSchema.optional(),
 		minutes: promisedDelayMinutesSchema.optional(),
 		expectedPromisedVersion: z.number().int().nonnegative().optional(),
+		/**
+		 * When the person tapped, for a command that sat in a queue (#243): the
+		 * region records the step at that time and marks it offline, when it is a
+		 * believable one. Omitted: the server's time.
+		 */
+		clientAt: z.string().datetime().optional(),
 	})
 	.superRefine((command, ctx) => {
 		if (command.action === 'stage' && !command.stage)

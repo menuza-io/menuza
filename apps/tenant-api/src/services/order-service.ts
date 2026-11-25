@@ -161,6 +161,8 @@ import {
 	queueOrderPlacedMessages,
 	queueOrderStatusMessages,
 } from './order-messages.ts'
+import { recordOrderStep, recordStatusSteps } from './order-steps.ts'
+import { stepActorFor } from '@repo/common/order-steps'
 import {
 	assertDailyDishCapacity,
 	readDailyDishAvailability,
@@ -1861,6 +1863,35 @@ export async function placeOrder(input: {
 					}
 
 					await recordDailyDishClaims({ tx, context, order: inserted, now })
+					// Order steps (#243): the order was placed by the guest, and an order
+					// that stands at once was accepted by Menuza (an order waiting for a
+					// person is accepted when one does it).
+					await recordOrderStep(
+						tx,
+						inserted.id,
+						{
+							step: 'placed',
+							actorKind: 'guest',
+							actorId: null,
+							source: 'guest',
+							at: now.getTime(),
+						},
+						now.getTime(),
+					)
+					if (inserted.status === 'accepted') {
+						await recordOrderStep(
+							tx,
+							inserted.id,
+							{
+								step: 'accepted',
+								actorKind: 'system',
+								actorId: null,
+								source: 'system',
+								at: now.getTime(),
+							},
+							now.getTime(),
+						)
+					}
 					// Which photo each dish in a photo test showed this guest (#192):
 					// ids only, in the order's own transaction, not part of the
 					// idempotency hash.
@@ -3286,6 +3317,26 @@ export async function applyOrderStatusPatchInTx(
 				eligibleMinor: Math.max(0, order.subtotalCents - order.discountCents),
 				totalPaidMinor: order.totalCents,
 				paymentStatus: effectivePaymentStatus,
+				now: now.getTime(),
+			})
+		}
+	}
+	// Order steps (#243), written in the same transaction as the status: who
+	// did it comes from the caller (the Orders page, Station, the guest, the
+	// acceptance timeout), never from a name.
+	if (patch.status) {
+		const stepActor = stepActorFor(cancel.origin, cancel.actorId)
+		if (patch.status === 'cancelled') {
+			if (isReject) {
+				await recordOrderStep(
+					tx,
+					order.id,
+					{ ...stepActor, step: 'declined' },
+					now.getTime(),
+				)
+			}
+		} else {
+			await recordStatusSteps(tx, order, patch.status, stepActor, {
 				now: now.getTime(),
 			})
 		}

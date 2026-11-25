@@ -8576,3 +8576,72 @@ export const MarketingOccasionChoice = sqliteTable(
 		),
 	],
 )
+
+/**
+ * Online ordering pause history (#176, #405): one row per pause or unplanned
+ * closure of one location, so a pause that has ended is still known. The ONE
+ * pause history: the estimate of sales missed while paused and the uptime
+ * report both read it; the location row still holds only the pause in force.
+ *
+ * `kind`:
+ * - `pause`: staff paused web and QR ordering (the Orders page, Station, a
+ *   bulk pause). Written only by `applyOrderingControl`: opened when the pause
+ *   starts, closed when someone resumes or it replaces another, and closed
+ *   with `endedBy: 'auto_expiry'` at its own planned end when it ran out by
+ *   itself (filled on the next read, so no timer is needed).
+ * - `closure`: scheduled online hours taken away at short notice (an edit of
+ *   the hours that removes time in the next 36 hours). Written closed, with
+ *   `endedAt` the end of the lost window. It counts as scheduled time that
+ *   was lost, never as hours the location was not meant to be open.
+ *
+ * Busy mode never writes a row: orders still arrive. Times only: no guest
+ * data, no names (`startedBy` is the member's user id).
+ */
+export const LocationOrderingPause = sqliteTable(
+	'LocationOrderingPause',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		locationId: text()
+			.notNull()
+			.references(() => OrganizationLocation.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** 'pause' | 'closure' */
+		kind: text().default('pause').notNull(),
+		startedAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		/** The end the pause was set with; null: until someone resumes. */
+		plannedUntil: integer({ mode: 'timestamp_ms' }),
+		/** Null while the pause is in force. */
+		endedAt: integer({ mode: 'timestamp_ms' }),
+		/** 'member' | 'station' | 'auto_expiry' | 'replaced' | 'window' */
+		endedBy: text(),
+		/** The member who started it; null for a Station terminal or a closure. */
+		startedBy: text(),
+		/** 'app' | 'station' | 'bulk' | 'hours_edit' */
+		source: text().default('app').notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('LocationOrderingPause_org_location_started_idx').on(
+			table.organizationId,
+			table.locationId,
+			table.startedAt,
+		),
+		// At most one pause in force per location.
+		uniqueIndex('LocationOrderingPause_open_pause_key')
+			.on(table.locationId)
+			.where(sql`${table.endedAt} is null and ${table.kind} = 'pause'`),
+	],
+)

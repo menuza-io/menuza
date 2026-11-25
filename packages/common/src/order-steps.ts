@@ -212,3 +212,47 @@ export function orderTimings(
 		late: lateMinutes === null ? null : lateMinutes > 0 ? 1 : 0,
 	}
 }
+
+/**
+ * A step reported with the time the person tapped (`clientAt`, a Station
+ * command that sat in a queue) is recorded at that time and marked offline,
+ * when it is a believable one: not in the future (beyond clock drift) and not
+ * older than a day. Anything else is recorded at the server's time, so a wrong
+ * tablet clock can never put a step in the future or last week.
+ */
+export const OFFLINE_STEP_MIN_AGE_MS = 60_000
+export const OFFLINE_STEP_MAX_AGE_MS = 24 * 60 * 60 * 1000
+export const OFFLINE_STEP_CLOCK_DRIFT_MS = 5 * 60_000
+
+export function resolveStepTime(input: {
+	clientAt?: string | null
+	now: number
+}): { at: number; offline: boolean } {
+	const parsed = input.clientAt ? Date.parse(input.clientAt) : Number.NaN
+	if (!Number.isFinite(parsed)) return { at: input.now, offline: false }
+	const age = input.now - parsed
+	if (age < -OFFLINE_STEP_CLOCK_DRIFT_MS || age > OFFLINE_STEP_MAX_AGE_MS) {
+		return { at: input.now, offline: false }
+	}
+	// Close to now: the command went straight through, so it is the server's time.
+	if (age < OFFLINE_STEP_MIN_AGE_MS) return { at: input.now, offline: false }
+	return { at: parsed, offline: true }
+}
+
+/** What a status change's step is recorded as, derived from who made the change. */
+export function stepActorFor(origin: string, actorId: string | null): {
+	actorKind: OrderStepActorKind
+	actorId: string | null
+	source: OrderStepSource
+} {
+	switch (origin) {
+		case 'station':
+			return { actorKind: 'station', actorId, source: 'station_orders' }
+		case 'guest':
+			return { actorKind: 'guest', actorId: null, source: 'guest' }
+		case 'system':
+			return { actorKind: 'system', actorId: null, source: 'system' }
+		default:
+			return { actorKind: 'operator', actorId, source: 'app' }
+	}
+}

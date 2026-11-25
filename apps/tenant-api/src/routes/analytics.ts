@@ -100,6 +100,10 @@ import {
 } from '../services/menu-insights-records.ts'
 import { loadSoldOutHistoryRecords } from '../services/sold-out-report-records.ts'
 import {
+	loadOrderTimingRecords,
+	ORDER_TIMING_MAX_ROWS,
+} from '../services/order-timing-records.ts'
+import {
 	loadSlowSellerRecords,
 	MenuRosterUnavailableError,
 } from '../services/slow-sellers-records.ts'
@@ -153,6 +157,7 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'product_mix',
 	'product_mix_options',
 	'slow_sellers',
+	'order_timings',
 	'inventory_deliveries',
 ])
 
@@ -658,6 +663,14 @@ analyticsRoutes.post('/query', async (c) => {
 			}
 			throw error
 		}
+	} else if (definition.subject === 'order_timings') {
+		const loaded = await loadOrderTimingRecords(
+			{ db, orgId: claims.orgId, locationIds: claims.locationIds, now },
+			loading,
+		)
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = ORDER_TIMING_MAX_ROWS
 	} else if (
 		definition.subject === 'product_mix' ||
 		definition.subject === 'product_mix_options'
