@@ -568,6 +568,8 @@ export async function onlineOrderDetail(
 		pickupInstructions: clip(order.pickupInstructions, 400),
 		largeOrderExtraMinutes: order.largeOrderExtraMinutes,
 		largeOrder: order.largeOrder,
+		...(order.guestAllergy ? { guestAllergy: true } : {}),
+		...(order.hasAlcohol ? { checkId: true } : {}),
 		discountCents: order.discountCents + order.deliveryDiscountCents,
 		loyaltyDiscountCents: order.loyaltyDiscountCents,
 		paidAt: ms(order.paidAt),

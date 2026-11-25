@@ -334,6 +334,10 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 		largeOrderExtraMinutes: z.number().int().nonnegative().optional(),
 		/** Over the location's large-order alert threshold at placement (#300). */
 		largeOrder: z.boolean().optional(),
+	/** The guest stated an allergy at checkout (#294). */
+	guestAllergy: z.boolean().optional(),
+	/** The order has alcohol: "Check ID" (#167). */
+	checkId: z.boolean().optional(),
 		discountCents: z.number().int(),
 		loyaltyDiscountCents: z.number().int(),
 		paidAt: z.number().int().nullable(),

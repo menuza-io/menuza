@@ -12,6 +12,12 @@ export type ItemPlacement = {
 	categoryName: string
 	menuId: string
 	menuName: string
+	/**
+	 * The dish is flagged alcohol on the menu (#167). Present only when true, so
+	 * a stamp without it reads as it did. Station sales have no other record of
+	 * it: the till sends only the item id.
+	 */
+	alcohol?: true
 }
 
 /** What a line sold before this was recorded is grouped under. */
@@ -20,7 +26,7 @@ export const EARLIER_SALES_LABEL = 'Earlier sales'
 /** Longest id or name kept on a line. */
 const MAX_PLACEMENT_TEXT = 300
 
-type PlacementItem = { id: string }
+type PlacementItem = { id: string; isAlcohol?: boolean }
 type PlacementCategory = {
 	id: string
 	displayName?: string
@@ -51,6 +57,7 @@ function walk(
 				categoryName: clip(category.displayName),
 				menuId: clip(menu.id),
 				menuName: clip(menu.displayName),
+				...(item.isAlcohol === true ? { alcohol: true as const } : {}),
 			})
 		}
 		walk(menu, category.subcategories, index)
@@ -85,7 +92,13 @@ export function readStampedPlacement(line: unknown): ItemPlacement | null {
 	const menuId = clip(value.menuId)
 	const menuName = clip(value.menuName)
 	if (!categoryId && !categoryName && !menuId && !menuName) return null
-	return { categoryId, categoryName, menuId, menuName }
+	return {
+		categoryId,
+		categoryName,
+		menuId,
+		menuName,
+		...(value.alcohol === true ? { alcohol: true as const } : {}),
+	}
 }
 
 /** The `{ [itemId]: placement }` map stored on a Station sale. */
@@ -121,4 +134,9 @@ export function parseLineCatalog(raw: unknown): LineCatalog {
 		if (placement) catalog[itemId] = placement
 	}
 	return catalog
+}
+
+/** Whether any dish of a Station sale is flagged alcohol (#167): its ticket says "Check ID". */
+export function lineCatalogHasAlcohol(catalog: LineCatalog | null | undefined): boolean {
+	return Object.values(catalog ?? {}).some((entry) => entry.alcohol === true)
 }

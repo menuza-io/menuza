@@ -330,3 +330,61 @@ describe('sanity', () => {
 		expect(vi.isMockFunction(Date.prototype.toLocaleString)).toBe(true)
 	})
 })
+
+describe('Check ID and a stated allergy on printed tickets (#167, #294)', () => {
+	const printed = (
+		kind: 'guest' | 'kitchen',
+		over: Record<string, unknown> = {},
+	) =>
+		draw(
+			h(PrintedTicket, {
+				kind,
+				detail: detail(over),
+				businessName: 'Cafe Bloom',
+				time,
+				kitchenSwitches: switches(),
+			}),
+		)
+
+	it('boxes the allergy as words and an icon on the kitchen ticket, not on the guest ticket', () => {
+		const kitchen = printed('kitchen', { guestAllergy: true })
+		expect(kitchen).toContain('data-guest-allergy')
+		expect(kitchen).toContain('Allergy stated by guest')
+		expect(kitchen).toContain('border-2')
+		expect(printed('guest', { guestAllergy: true })).not.toContain(
+			'data-guest-allergy',
+		)
+	})
+
+	it('says Check ID on the kitchen ticket and the guest ticket of an alcohol order', () => {
+		for (const kind of ['kitchen', 'guest'] as const) {
+			expect(printed(kind, { checkId: true })).toContain('Check ID')
+		}
+	})
+
+	it('prints nothing extra for an ordinary order', () => {
+		const html = printed('kitchen')
+		expect(html).not.toContain('Check ID')
+		expect(html).not.toContain('data-guest-allergy')
+	})
+
+	it('says Check ID on the till receipt when the sale holds alcohol', async () => {
+		const { usePos } = await import('~/lib/store.ts')
+		const before = usePos.getState().recordItems
+		usePos.setState({
+			recordItems: new Map([
+				['burger', { id: 'burger', isAlcohol: true } as never],
+			]),
+		})
+		try {
+			expect(
+				draw(h(Receipt, { order: order(), businessName: 'Cafe Bloom' })),
+			).toContain('Check ID')
+		} finally {
+			usePos.setState({ recordItems: before })
+		}
+		expect(
+			draw(h(Receipt, { order: order(), businessName: 'Cafe Bloom' })),
+		).not.toContain('Check ID')
+	})
+})

@@ -2378,6 +2378,27 @@ export function PrintedTicket({
 					{detail.dueAt ? ` · ${time.format(detail.dueAt)}` : ''}
 				</div>
 			) : null}
+			{kind === 'kitchen' && detail.guestAllergy ? (
+				// The guest stated an allergy (#294): the whole header, as a bordered
+				// box with an icon and the words, readable on black and white paper.
+				<div
+					className="my-1 flex items-center justify-center gap-1 border-2 px-1.5 text-center font-semibold"
+					data-highlight="allergy"
+					data-guest-allergy
+				>
+					<Icon name="alert-triangle" className="size-4" aria-hidden />
+					<Trans>Allergy stated by guest</Trans>
+				</div>
+			) : null}
+			{detail.checkId ? (
+				<div
+					className="my-1 flex items-center justify-center gap-1 border-2 px-1.5 text-center font-semibold"
+					data-check-id
+				>
+					<Icon name="shield-check" className="size-4" aria-hidden />
+					<Trans>Check ID</Trans>
+				</div>
+			) : null}
 			{kind === 'guest' && f('guestContact').show ? (
 				<div className={cn('text-center', f('guestContact').cls)}>
 					<bdi>{detail.guestName}</bdi> ·{' '}

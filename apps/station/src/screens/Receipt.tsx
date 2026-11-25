@@ -6,10 +6,11 @@ import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
+import { orderHasAlcohol } from '~/lib/alcohol.ts'
 import { type PosOrder, type TenderMethod } from '~/lib/db.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
-import { saleLine } from '~/lib/store.ts'
+import { saleLine, usePos } from '~/lib/store.ts'
 import { fieldOf, useTickets } from '~/lib/tickets.ts'
 import { isTrainingMode } from '~/lib/training-flag.ts'
 import { cn } from '~/ui/primitives.tsx'
@@ -37,6 +38,8 @@ export function Receipt({
 }) {
 	const { _, i18n } = useLingui()
 	const tickets = useTickets()
+	const items = usePos((state) => state.recordItems)
+	const checkId = orderHasAlcohol(order.lines, items)
 	/** How one field of the guest receipt prints (#363). */
 	const f = (key: string) => fieldOf(tickets, 'receipt', key)
 	// A training receipt is never a tax invoice (#383).
@@ -160,6 +163,14 @@ export function Receipt({
 			{servedBy && f('servedBy').show ? (
 				<div className={cn('text-center', f('servedBy').cls)}>
 					<Trans>Served by {servedBy}</Trans>
+				</div>
+			) : null}
+			{checkId ? (
+				<div
+					className="my-1 border-2 px-1.5 text-center font-semibold"
+					data-check-id
+				>
+					<Trans>Check ID</Trans>
 				</div>
 			) : null}
 			<hr />

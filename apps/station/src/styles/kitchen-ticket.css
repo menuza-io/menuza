@@ -34,8 +34,21 @@
 	color: var(--foreground);
 }
 
+/* A bar beside the line, always with the icon and word of the mark (#294). */
 [data-highlight='allergy'] {
 	border-inline-start: 0.25rem solid var(--destructive);
+}
+[data-highlight='attention'] {
+	border-inline-start: 0.25rem solid var(--warning);
+}
+[data-highlight='long_prep'] {
+	border-inline-start: 0.25rem solid var(--primary);
+}
+
+/* A guest who stated an allergy at checkout: the whole header (#294). */
+.kitchen-ticket-head[data-guest-allergy] {
+	background: color-mix(in oklab, var(--destructive) 16%, var(--card));
+	border-inline-start: 0.5rem solid var(--destructive);
 }
 
 [data-kitchen-ticket] [data-held] {
@@ -44,7 +57,8 @@
 
 @media print {
 	.kitchen-mark,
-	[data-highlight] {
+	[data-highlight],
+	.kitchen-ticket-head[data-guest-allergy] {
 		border: 2px solid var(--foreground);
 		background: var(--card);
 		color: var(--foreground);

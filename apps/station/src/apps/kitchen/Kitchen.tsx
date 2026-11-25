@@ -878,6 +878,7 @@ function Ticket({
 					'kitchen-ticket-head flex flex-wrap items-start justify-between gap-3 px-3 pt-3 pb-2',
 					ticket.completedAt && 'bg-muted',
 				)}
+				data-guest-allergy={ticket.guestAllergy || undefined}
 			>
 				<div className="min-w-0 flex-1 basis-28">
 					<h4 className="tnum text-xl font-semibold break-words">
@@ -902,6 +903,24 @@ function Ticket({
 					{ticket.tableLabel ? (
 						<p className="mt-1 text-base font-semibold break-words">
 							<Trans>Table {ticket.tableLabel}</Trans>
+						</p>
+					) : null}
+					{ticket.guestAllergy ? (
+						// The guest said someone in the party has an allergy (#294): icon
+						// and words, never colour alone.
+						<p
+							data-kitchen-guest-allergy
+							className="kitchen-mark mt-1 ms-0 text-sm"
+							data-highlight="allergy"
+						>
+							<Icon name="alert-triangle" className="size-4" aria-hidden />
+							<Trans>Allergy stated by guest</Trans>
+						</p>
+					) : null}
+					{ticket.checkId ? (
+						<p data-kitchen-check-id className="kitchen-mark mt-1 ms-0 text-sm">
+							<Icon name="shield-check" className="size-4" aria-hidden />
+							<Trans>Check ID</Trans>
 						</p>
 					) : null}
 				</div>
