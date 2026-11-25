@@ -431,6 +431,10 @@ function LocationFormBody({
 				raw.estimatedDeliveryTimeMax ??
 				raw.estimatedTimeMax ??
 				DEFAULT_DELIVERY_CONFIG.estimatedDeliveryTimeMax,
+			// Which zone wins an overlap (#266): kept as saved, `cheapest` until reordered.
+			...(raw.zonePriority === 'order' || raw.zonePriority === 'cheapest'
+				? { zonePriority: raw.zonePriority as 'order' | 'cheapest' }
+				: {}),
 		}
 	})
 	const storedCourses = readStoredCourses(initialData?.courseSettings)
@@ -1510,6 +1514,12 @@ function LocationFormBody({
 											onChange={setDeliveryZones}
 											centerLat={address.lat}
 											centerLng={address.lng}
+											priority={deliveryConfig.zonePriority ?? 'cheapest'}
+											onPriorityChange={(zonePriority) =>
+												setDeliveryConfig({ ...deliveryConfig, zonePriority })
+											}
+											orgSlug={orgSlug}
+											locationId={initialData?.id}
 										/>
 									</CardContent>
 								</Card>

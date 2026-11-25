@@ -15,6 +15,11 @@ import {
 import { z } from 'zod'
 import { LocationForm } from '#app/components/locations/location-form.tsx'
 import { applyChainDefaultsToNewLocation } from '#app/utils/location/chain-defaults.server.ts'
+import {
+	firstZoneTableProblem,
+	parseZonesJson,
+	zoneTableProblemMessage,
+} from '#app/utils/location/delivery-zones.ts'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
 import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
 import {
@@ -136,6 +141,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+
+	// A fee table the region would misread is never stored (#244, #421).
+	const zoneTableProblem = firstZoneTableProblem(
+		parseZonesJson(data.deliveryZones) ?? [],
+	)
+	if (zoneTableProblem) {
+		return { error: zoneTableProblemMessage(zoneTableProblem) }
+	}
 
 	// Check unique slug within organization
 	const [existing] = await db

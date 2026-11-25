@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
 	ORDER_DETAILS_CHANGE_EVENT,
+	deliveryFromQuote,
 	type OrderDetails,
 	hasValidDeliveryQuote,
 	legacyModeKey,
@@ -41,6 +42,56 @@ const details: OrderDetails = {
 	delivery,
 	scheduledFor: '2026-10-08T23:30:00Z',
 }
+
+describe('delivery pricing kept with the details (#244, #421)', () => {
+	const pricing = {
+		baseFee: 5,
+		steps: [
+			{ from: 10, fee: 5 },
+			{ from: 40, fee: 0 },
+		],
+		byDistance: true,
+	}
+
+	it('round-trips the pricing a quote carried', () => {
+		const withPricing = { ...details, delivery: { ...delivery, pricing } }
+		expect(parseOrderDetails(JSON.stringify(withPricing), now)).toEqual(withPricing)
+	})
+
+	it('drops malformed pricing and keeps the single fee', () => {
+		const broken = { ...details, delivery: { ...delivery, pricing: { baseFee: 'x', steps: [] } } }
+		const parsed = parseOrderDetails(JSON.stringify(broken), now)
+		expect(parsed?.delivery?.pricing).toBeUndefined()
+		expect(parsed?.delivery?.deliveryFee).toBe(3.5)
+	})
+
+	it('builds the details from a verified quote, with the typed unit when the quote has none', () => {
+		const quote = {
+			token: 'tok',
+			expiresAt: '2026-10-08T19:00:00Z',
+			address: { formatted: 'F', line1: 'L', city: 'C', postalCode: '1' },
+			deliveryFee: 4,
+			minimumOrder: 8,
+			zoneName: 'Z',
+			eta: { min: 20, max: 30 },
+			pricing,
+		}
+		expect(deliveryFromQuote(quote, 'Apt 2')).toEqual({
+			quoteToken: 'tok',
+			expiresAt: '2026-10-08T19:00:00Z',
+			formatted: 'F',
+			line1: 'L',
+			unit: 'Apt 2',
+			city: 'C',
+			postalCode: '1',
+			deliveryFee: 4,
+			minimumOrder: 8,
+			zoneName: 'Z',
+			eta: { min: 20, max: 30 },
+			pricing,
+		})
+	})
+})
 
 describe('parseOrderDetails', () => {
 	it('round-trips valid details', () => {

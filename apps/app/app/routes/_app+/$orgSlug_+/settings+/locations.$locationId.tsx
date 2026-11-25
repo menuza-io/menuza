@@ -65,6 +65,11 @@ import { gbpFlags } from '#app/utils/gbp/context.server.ts'
 import { enqueueGbpPush } from '#app/utils/gbp/sync.server.ts'
 import { isStoreSettingsEnabled } from '#app/utils/integrations/flags.server.ts'
 import { loadLocationPolicyView } from '#app/utils/location/chain-defaults.server.ts'
+import {
+	firstZoneTableProblem,
+	parseZonesJson,
+	zoneTableProblemMessage,
+} from '#app/utils/location/delivery-zones.ts'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
 import { lockedSettingsChangedByFormSave } from '#app/utils/location/location-settings.server.ts'
 import { recordClosures } from '#app/utils/location/ordering-pause-history.server.ts'
@@ -246,6 +251,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					parsed.estimatedDeliveryTimeMax ??
 					parsed.estimatedTimeMax ??
 					DEFAULT_DELIVERY_CONFIG.estimatedDeliveryTimeMax,
+				...(parsed.zonePriority === 'order' ||
+				parsed.zonePriority === 'cheapest'
+					? { zonePriority: parsed.zonePriority as 'order' | 'cheapest' }
+					: {}),
 			}
 		})(),
 		courseSettings: record.courseSettings,
@@ -515,6 +524,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const data = parsed.data
+
+	// A fee table the region would misread is never stored (#244, #421).
+	const zoneTableProblem = firstZoneTableProblem(
+		parseZonesJson(data.deliveryZones) ?? [],
+	)
+	if (zoneTableProblem) {
+		return { error: zoneTableProblemMessage(zoneTableProblem) }
+	}
 
 	// Guest cancel and acceptance: a group whose flag is off is never written.
 	const policy = parseOrderPolicyFields(rawData, {

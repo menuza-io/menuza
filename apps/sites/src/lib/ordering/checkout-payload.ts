@@ -34,6 +34,12 @@ export function checkoutOrderPayload(
 		 */
 		expectedPackagingFeeMinor?: number
 		/**
+		 * The delivery fee (#244, #421) the page showed, minor units, before any free
+		 * delivery discount; sent only on a delivery order. The region prices the
+		 * fee itself and refuses a different one with 409 `delivery_fee_changed`.
+		 */
+		expectedDeliveryFeeMinor?: number
+		/**
 		 * The utensils and napkins checkbox (#257): `null` when the question was
 		 * not shown (the key is left out and the region ignores it anyway), else
 		 * what the guest chose.
@@ -70,6 +76,11 @@ export function checkoutOrderPayload(
 		...(wantsSmsUpdates(priced, extra) ? { smsUpdates: true } : {}),
 		...(extra.expectedServiceFeeMinor && extra.expectedServiceFeeMinor > 0
 			? { expectedServiceFeeMinor: extra.expectedServiceFeeMinor }
+			: {}),
+		...(priced.fulfillment === 'delivery' &&
+		typeof extra.expectedDeliveryFeeMinor === 'number' &&
+		extra.expectedDeliveryFeeMinor >= 0
+			? { expectedDeliveryFeeMinor: extra.expectedDeliveryFeeMinor }
 			: {}),
 		...(extra.expectedPackagingFeeMinor && extra.expectedPackagingFeeMinor > 0
 			? { expectedPackagingFeeMinor: extra.expectedPackagingFeeMinor }

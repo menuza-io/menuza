@@ -31,8 +31,19 @@ export type CartUiOptions = {
 		 * contained in the subtotal and the total does not add it.
 		 */
 		taxInclusive?: boolean
-		/** A number, or a getter when the fee comes from a live delivery quote. */
-		deliveryFee: number | (() => number)
+		/**
+		 * A number, or a getter when the fee comes from a live delivery quote. The
+		 * getter gets the items subtotal, so a fee table by order size (#244) prices
+		 * the cart on screen.
+		 */
+		deliveryFee: number | ((subtotal: number) => number)
+		/**
+		 * How far the next cheaper step is (#244): "Add 6.00 more for free delivery".
+		 * Asked with the items subtotal in delivery mode; null shows nothing.
+		 */
+		deliveryHint?: (
+			subtotal: number,
+		) => { remaining: number; fee: number } | null
 		mode: () => FulfillmentMode
 	}
 	/** Decides whether the checkout button is usable right now. */
@@ -138,6 +149,7 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	const taxRow = q<HTMLElement>('drawer-tax-row')
 	const deliveryRow = q<HTMLElement>('drawer-delivery-row')
 	const deliveryFeeEl = q<HTMLElement>('drawer-delivery-fee')
+	const deliveryHintEl = q<HTMLElement>('drawer-delivery-hint')
 	const discountRow = q<HTMLElement>('drawer-discount-row')
 	const discountNamesEl = q<HTMLElement>('drawer-discount-names')
 	const discountEl = q<HTMLElement>('drawer-discount')
@@ -315,12 +327,16 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	function refresh() {
 		const lines = store.lines()
 		const taxInclusive = options.totals.taxInclusive === true
+		const itemsSubtotal = lines.reduce(
+			(acc, line) => acc + line.unitPrice * line.quantity,
+			0,
+		)
 		const estimate = computeTotals(lines, {
 			taxRate: options.totals.taxRate,
 			taxInclusive,
 			deliveryFee:
 				typeof options.totals.deliveryFee === 'function'
-					? options.totals.deliveryFee()
+					? options.totals.deliveryFee(itemsSubtotal)
 					: options.totals.deliveryFee,
 			mode: options.totals.mode(),
 		})
@@ -393,6 +409,24 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 			deliveryRow.classList.toggle('hidden', totals.deliveryFee <= 0)
 		if (deliveryFeeEl)
 			deliveryFeeEl.textContent = formatMoney(totals.deliveryFee)
+		if (deliveryHintEl) {
+			const hint =
+				options.totals.mode() === 'delivery' && itemsSubtotal > 0
+					? (options.totals.deliveryHint?.(itemsSubtotal) ?? null)
+					: null
+			const text = hint
+				? hint.fee > 0
+					? fillTemplate(labels.deliveryHintLower ?? '', {
+							amount: formatMoney(hint.remaining),
+							fee: formatMoney(hint.fee),
+						})
+					: fillTemplate(labels.deliveryHintFree ?? '', {
+							amount: formatMoney(hint.remaining),
+						})
+				: ''
+			deliveryHintEl.textContent = text
+			deliveryHintEl.classList.toggle('hidden', !text)
+		}
 		if (discountRow)
 			discountRow.classList.toggle('hidden', totals.discount <= 0)
 		if (discountEl) {

@@ -125,6 +125,17 @@ export function buildOrderingLabels(i18n: I18n): OrderingLabels {
 		upsellHeading: i18n._(msg`Goes well with`),
 		upsellAdd: i18n._(msg`Add`),
 		upsellAddNamed: keep(i18n, msg`Add {name}`, 'name'),
+		deliveryHintFree: keep(
+			i18n,
+			msg`Add {amount} more for free delivery`,
+			'amount',
+		),
+		deliveryHintLower: keep(
+			i18n,
+			msg`Add {amount} more and delivery is {fee}`,
+			'amount',
+			'fee',
+		),
 	}
 }
 
@@ -223,6 +234,20 @@ export function buildOrderDetailsLabels(i18n: I18n) {
 		quoteExpired: i18n._(
 			msg`Your delivery check expired. Confirm your address again.`,
 		),
+		deliveredFrom: keep(i18n, msg`Delivered from {location}`, 'location'),
+		otherStoresDeliver: i18n._(msg`Other stores that deliver here`),
+		noStoreTitle: i18n._(msg`No store delivers here yet`),
+		noStoreBody: i18n._(
+			msg`None of our stores delivers to this address yet. You can still order for pickup.`,
+		),
+		feeDropsNote: i18n._(msg`The fee goes down as your order grows.`),
+		nearestToYou: i18n._(msg`Nearest to you`),
+		useMyLocation: i18n._(msg`Use my location`),
+		locationDenied: i18n._(
+			msg`We couldn't get your location. Enter an address to sort by distance.`,
+		),
+		distanceAway: keep(i18n, msg`{distance} away`, 'distance'),
+		scheduledOnly: i18n._(msg`Scheduled orders only`),
 	}
 }
 

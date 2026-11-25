@@ -245,6 +245,38 @@ describe('location settings registry', () => {
 		})
 	})
 
+	it('copying delivery settings never carries the zone order, and keeps the target\'s own (#266)', () => {
+		const delivery = getLocationSetting('delivery')
+		const source = row({
+			deliveryConfig: JSON.stringify({
+				providers: ['in_house'],
+				estimatedDeliveryTimeMin: 20,
+				estimatedDeliveryTimeMax: 40,
+				zonePriority: 'order',
+			}),
+		})
+		const value = delivery.read(source, ctx)
+		expect(value).not.toHaveProperty('zonePriority')
+		const untouched = delivery.write(row({ deliveryConfig: null }), value, ctx)
+		expect(JSON.parse(untouched.deliveryConfig!)).not.toHaveProperty('zonePriority')
+		const reordered = delivery.write(
+			row({
+				deliveryConfig: JSON.stringify({
+					providers: ['in_house'],
+					estimatedDeliveryTimeMin: 25,
+					estimatedDeliveryTimeMax: 45,
+					zonePriority: 'order',
+				}),
+			}),
+			value,
+			ctx,
+		)
+		expect(JSON.parse(reordered.deliveryConfig!)).toMatchObject({
+			estimatedDeliveryTimeMin: 20,
+			zonePriority: 'order',
+		})
+	})
+
 	it('a large-order write keeps buffers and utensils of the target', () => {
 		const target = row({
 			onlineOrderingSettings: JSON.stringify({

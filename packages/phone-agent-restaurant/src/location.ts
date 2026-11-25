@@ -16,6 +16,26 @@ import {
 } from '@repo/phone-agent'
 
 /** Structural subset of the published Sites location. */
+/** A delivery zone as the phone agent reads it. */
+export type PhoneAgentLocationZone = {
+	name: string
+	enabled: boolean
+	restriction: string
+	type: string
+	minimumOrder: number
+	deliveryFee: number
+	zipCodes: string[]
+	radius: { value: number; unit: string }
+	/** Fee by order size (#244): from this subtotal, charge this fee. */
+	feeSteps?: Array<{ from: number; fee: number }>
+	/** Fee by distance (#421): from this distance, charge this fee. */
+	distanceFees?: {
+		mode: string
+		unit: string
+		bands: Array<{ from: number; fee: number }>
+	} | null
+}
+
 export interface AgentLocation {
 	id: string
 	name: string
@@ -37,16 +57,7 @@ export interface AgentLocation {
 		estimatedDeliveryTimeMin: number
 		estimatedDeliveryTimeMax: number
 	}
-	deliveryZones: Array<{
-		name: string
-		enabled: boolean
-		restriction: string
-		type: string
-		minimumOrder: number
-		deliveryFee: number
-		zipCodes: string[]
-		radius: { value: number; unit: string }
-	}>
+	deliveryZones: PhoneAgentLocationZone[]
 	/**
 	 * Operator pause of online ordering (null `until`: until resumed). Absent
 	 * on configs published before it existed.
@@ -54,6 +65,38 @@ export interface AgentLocation {
 	orderingPause?: { until: string | null } | null
 	/** Busy mode: extra prep minutes while it lasts. */
 	busyMode?: { extraPrepMinutes: number; until: string | null } | null
+}
+
+type FeeZone = PhoneAgentLocationZone
+
+/**
+ * The fee as the agent says it (#244, #421): the single fee, or the table by
+ * order size and the bands by distance, in the same words the guest reads. The
+ * agent never works a fee out itself; this is only what it may tell a caller.
+ */
+function deliveryFeeText(zone: FeeZone, formatPrice: PriceFormatter): string {
+	const parts: string[] = []
+	const steps = [...(zone.feeSteps ?? [])].sort((a, b) => a.from - b.from)
+	const bands = [...(zone.distanceFees?.bands ?? [])].sort(
+		(a, b) => a.from - b.from,
+	)
+	if (steps.length > 0) {
+		const fee = (value: number) => (value > 0 ? formatPrice(value) : 'free')
+		parts.push(
+			`fee by order size: ${steps
+				.map((step) => `${fee(step.fee)} from ${formatPrice(step.from)}`)
+				.join(', ')}`,
+		)
+	}
+	if (bands.length > 0 && zone.distanceFees) {
+		const unit = zone.distanceFees.unit === 'miles' ? 'miles' : 'km'
+		parts.push(
+			`fee by distance (${zone.distanceFees.mode === 'driving' ? 'by road' : 'straight line'}): ${bands
+				.map((band) => `${formatPrice(band.fee)} from ${band.from} ${unit}`)
+				.join(', ')}`,
+		)
+	}
+	return parts.length > 0 ? parts.join('; ') : `fee ${formatPrice(zone.deliveryFee)}`
 }
 
 function lastsAt(until: string | null, now: Date): boolean {
@@ -220,7 +263,7 @@ export function describeRestaurantLocation(
 						? `within ${zone.radius.value} ${zone.radius.unit}`
 						: 'a mapped area'
 			lines.push(
-				`Delivery zone "${zone.name}": ${area}, fee ${formatPrice(zone.deliveryFee)}${
+				`Delivery zone "${zone.name}": ${area}, ${deliveryFeeText(zone, formatPrice)}${
 					zone.minimumOrder > 0
 						? `, minimum order ${formatPrice(zone.minimumOrder)}`
 						: ''

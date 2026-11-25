@@ -245,4 +245,8 @@ export type OrderingLabels = {
 	upsellAdd?: string
 	/** "Add {name}": that button's accessible name. */
 	upsellAddNamed?: string
+	/** "Add {amount} more for free delivery" (#244). */
+	deliveryHintFree?: string
+	/** "Add {amount} more and delivery is {fee}" (#244). */
+	deliveryHintLower?: string
 }

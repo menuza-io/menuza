@@ -1,3 +1,4 @@
+import { type DeliveryFeePricing } from '@repo/common/delivery-fees'
 import { type FulfillmentMode } from './types.ts'
 
 /**
@@ -21,6 +22,11 @@ export type OrderDetailsDelivery = {
 	minimumOrder: number
 	zoneName: string
 	eta: { min: number; max: number }
+	/**
+	 * What prices delivery as the cart changes (#244, #421). Absent for details
+	 * saved before fee tables existed: `deliveryFee` then stands.
+	 */
+	pricing?: DeliveryFeePricing
 }
 
 export type OrderDetails = {
@@ -59,6 +65,20 @@ const isString = (value: unknown): value is string => typeof value === 'string'
 const isAmount = (value: unknown): value is number =>
 	typeof value === 'number' && Number.isFinite(value) && value >= 0
 
+function parsePricing(value: unknown): DeliveryFeePricing | undefined {
+	if (!value || typeof value !== 'object') return undefined
+	const p = value as Record<string, unknown>
+	if (!isAmount(p.baseFee) || !Array.isArray(p.steps)) return undefined
+	const steps: DeliveryFeePricing['steps'] = []
+	for (const step of p.steps) {
+		if (!step || typeof step !== 'object') return undefined
+		const s = step as Record<string, unknown>
+		if (!isAmount(s.from) || !isAmount(s.fee)) return undefined
+		steps.push({ from: s.from, fee: s.fee })
+	}
+	return { baseFee: p.baseFee, steps, byDistance: p.byDistance === true }
+}
+
 function parseDelivery(value: unknown): OrderDetailsDelivery | undefined {
 	if (!value || typeof value !== 'object') return undefined
 	const v = value as Record<string, unknown>
@@ -93,6 +113,46 @@ function parseDelivery(value: unknown): OrderDetailsDelivery | undefined {
 		minimumOrder: v.minimumOrder,
 		zoneName: v.zoneName,
 		eta: { min: eta.min, max: eta.max },
+		...(parsePricing(v.pricing) ? { pricing: parsePricing(v.pricing) } : {}),
+	}
+}
+
+/** The delivery details to keep from a verified quote (`quotedUnit` when the quote has none). */
+export function deliveryFromQuote(
+	quote: {
+		token: string
+		expiresAt: string
+		address: {
+			formatted: string
+			line1: string
+			unit?: string
+			city: string
+			postalCode?: string
+		}
+		deliveryFee: number
+		minimumOrder: number
+		zoneName: string
+		eta: { min: number; max: number }
+		pricing?: DeliveryFeePricing
+	},
+	quotedUnit = '',
+): OrderDetailsDelivery {
+	const unit = quote.address.unit || quotedUnit
+	return {
+		quoteToken: quote.token,
+		expiresAt: quote.expiresAt,
+		formatted: quote.address.formatted,
+		line1: quote.address.line1,
+		...(unit ? { unit } : {}),
+		city: quote.address.city,
+		...(quote.address.postalCode
+			? { postalCode: quote.address.postalCode }
+			: {}),
+		deliveryFee: quote.deliveryFee,
+		minimumOrder: quote.minimumOrder,
+		zoneName: quote.zoneName,
+		eta: quote.eta,
+		...(quote.pricing ? { pricing: quote.pricing } : {}),
 	}
 }
 

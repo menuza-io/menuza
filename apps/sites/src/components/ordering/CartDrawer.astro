@@ -120,6 +120,11 @@ const valueClass = 'price font-medium text-foreground'
 					<dt>{labels.deliveryFee}</dt>
 					<dd id="drawer-delivery-fee" class={valueClass}>{initialTotal}</dd>
 				</div>
+				<p
+					id="drawer-delivery-hint"
+					class="hidden text-xs text-muted-foreground"
+					aria-live="polite"
+				></p>
 				<div id="drawer-discount-row" class:list={[rowClass, 'hidden']}>
 					<dt>
 						{labels.discounts ?? ''}

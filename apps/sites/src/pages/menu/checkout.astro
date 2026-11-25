@@ -350,6 +350,14 @@ const checkoutLabels = {
 	},
 	serviceFee: serviceFeeDefaultLabel,
 	packagingFee: packagingFeeDefaultLabel,
+	// How far the next cheaper delivery fee step is (#244).
+	deliveryHint: {
+		free: translate(i18n, msg`Add {amount} more for free delivery`, { amount: '{amount}' }),
+		lower: translate(i18n, msg`Add {amount} more and delivery is {fee}`, {
+			amount: '{amount}',
+			fee: '{fee}',
+		}),
+	},
 	// A cart line the restaurant can no longer make today (#409).
 	dailyLine: {
 		soldOut: i18n._(msg`Sold out for today`),
@@ -383,6 +391,9 @@ const checkoutLabels = {
 		deliveryAddressRequired: i18n._(msg`Please enter your delivery address.`),
 		tipsDisabled: i18n._(msg`Tips are not available for this order.`),
 		tipTooLarge: i18n._(msg`That tip is too large. Please enter a smaller amount.`),
+		deliveryFeeChanged: i18n._(
+			msg`The delivery fee changed. Please review your total and place your order again.`,
+		),
 		serviceFeeChanged: i18n._(
 			msg`The service fee changed. Please review your total and place your order again.`,
 		),
@@ -896,6 +907,7 @@ const inputClass =
 							<dt>{deliveryFeeText}</dt>
 							<dd id="co-delivery-fee" class={valueClass}>{price(0)}</dd>
 						</div>
+						<p id="co-delivery-hint" class="hidden text-xs text-muted-foreground" aria-live="polite"></p>
 						<div id="co-fee-row" class:list={[rowClass, 'hidden flex-wrap']}>
 							<dt class="min-w-0">
 								<button type="button" id="co-fee-label" class="focus-ring text-start underline decoration-dotted underline-offset-4" aria-expanded="false" aria-controls="co-fee-explanation" disabled>{serviceFeeDefaultLabel}</button>
@@ -1170,7 +1182,10 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 		} from '~/lib/ordering/pickup'
 		import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
 		import { posterSource } from '~/lib/ordering/table-session'
+		import { deliveryFeeForCart, deliveryFeeHint } from '~/lib/ordering/delivery-fee'
+		import { requestDeliveryQuote } from '~/lib/ordering/delivery-client'
 		import {
+			deliveryFromQuote,
 			hasValidDeliveryQuote,
 			isQuoteValid,
 			loadOrderDetails,
@@ -1240,6 +1255,7 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			tip: { custom: string; noTip: string; invalid: string; tooLarge: string }
 			serviceFee: string
 			packagingFee: string
+			deliveryHint: { free: string; lower: string }
 			dailyLine: { soldOut: string; onlyLeft: string; notEnough: string }
 			upsell: { heading: string; add: string; addNamed: string }
 			validation: { name: string; phone: string; email: string; address: string }
@@ -1524,7 +1540,9 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 				taxRate(),
 				taxInclusive(),
 			)
-			const fee = mode === 'delivery' ? (validDelivery()?.deliveryFee ?? 0) : 0
+			// The verified address prices the cart by order size and distance (#244,
+			// #421) with the rule the region uses, so the estimate matches its fee.
+			const fee = mode === 'delivery' ? deliveryFeeForCart(validDelivery(), subtotal) : 0
 			const deliveryDiscount = Math.min(fee, (carried?.deliveryDiscountMinor ?? 0) / 100)
 			// The tip is a share of the subtotal before discounts, or an exact amount.
 			const tip = tipSelectionMinor(tipSelection, Math.round(subtotal * 100)) / 100
@@ -1655,10 +1673,12 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 							? formatCurrency(deliveryFee)
 							: odLabels.free
 						: odLabels.feeAfterAddress
+					renderDeliveryHint(subtotal)
 					// A free-delivery discount keeps the fee on its line and shows
 					// the saving as its own row above.
 				} else {
 					coDeliveryRow.classList.add('hidden')
+					renderDeliveryHint(0)
 				}
 			}
 			if (coTip) coTip.textContent = formatCurrency(tip)
@@ -1768,6 +1788,54 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 				? fillTemplate(odLabels.minutes, { count: eta.min })
 				: fillTemplate(odLabels.minutesRange, { min: `\u2066${eta.min}`, max: `${eta.max}\u2069` })
 
+		/** "Add 6.00 more for free delivery" (#244): how far the next cheaper step is. */
+		function renderDeliveryHint(subtotal: number) {
+			const hintEl = document.getElementById('co-delivery-hint')
+			if (!hintEl) return
+			const hint = mode === 'delivery' ? deliveryFeeHint(validDelivery(), subtotal) : null
+			const text = hint
+				? hint.fee > 0
+					? fillTemplate(labels.deliveryHint.lower, {
+							amount: formatCurrency(hint.remaining),
+							fee: formatCurrency(hint.fee),
+						})
+					: fillTemplate(labels.deliveryHint.free, {
+							amount: formatCurrency(hint.remaining),
+						})
+				: ''
+			hintEl.textContent = text
+			hintEl.classList.toggle('hidden', !text)
+		}
+
+		/**
+		 * Asks the region about the saved address again, so a zone whose fee table
+		 * changed since the guest looked is priced by what it is now (#244). Keeps
+		 * the old details when the check cannot run: the next attempt then tells
+		 * the guest again.
+		 */
+		async function refreshDeliveryQuote() {
+			const current = validDelivery()
+			if (!current) return
+			try {
+				const result = await requestDeliveryQuote({
+					locationId: activeLocation?.id ?? '',
+					address: current.formatted,
+					unit: current.unit,
+					locale: meta.locale || 'en',
+					subtotal: cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0),
+				})
+				if (result.status === 'deliverable') {
+					details = updateOrderDetails(orgId, details, {
+						delivery: deliveryFromQuote(result.quote, current.unit ?? ''),
+					})
+				} else {
+					details = updateOrderDetails(orgId, details, { delivery: undefined })
+				}
+			} catch {
+				// Keep what we have.
+			}
+		}
+
 		function renderDeliveryDetails() {
 			const delivery = validDelivery()
 			document.getElementById('delivery-verified')?.classList.toggle('hidden', !delivery)
@@ -1776,8 +1844,11 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			if (badge) {
 				badge.classList.toggle('hidden', !delivery)
 				if (delivery) {
-					badge.textContent =
-						delivery.deliveryFee > 0 ? `+${formatCurrency(delivery.deliveryFee)}` : odLabels.free
+					const badgeFee = deliveryFeeForCart(
+						delivery,
+						cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0),
+					)
+					badge.textContent = badgeFee > 0 ? `+${formatCurrency(badgeFee)}` : odLabels.free
 				}
 			}
 			if (!delivery) return
@@ -3105,6 +3176,10 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 					},
 					// The fee on screen; the region prices it and refuses another.
 					expectedServiceFeeMinor: Math.round(computeTotals().serviceFee * 100),
+					// Likewise the delivery fee (#244, #421), before any free-delivery discount.
+					...(mode === 'delivery' && !isDrop
+						? { expectedDeliveryFeeMinor: Math.round(computeTotals().deliveryFee * 100) }
+						: {}),
 					// Likewise the packaging fee (#408) and the utensils answer (#257).
 					expectedPackagingFeeMinor: Math.round(computeTotals().packagingFee * 100),
 					utensilsRequested: utensilsAnswer(),
@@ -3199,6 +3274,15 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 					renderCheckout()
 					showCheckoutError(odLabels.quoteExpired)
 					openOrderDetails('delivery')
+				} else if (code === 'delivery_fee_changed') {
+					// The zone's fees were set again since the guest looked (#244, #421):
+					// check the address again, price the order again, then ask the guest
+					// to look at the new total.
+					await refreshDeliveryQuote()
+					await loadOrderingOptions()
+					discounts?.refresh()
+					renderCheckout()
+					showCheckoutError(labels.errors.deliveryFeeChanged)
 				} else if (code === 'service_fee_changed') {
 					// The fee was set again since the page loaded: read the options
 					// and the quote again, then ask the guest to look at the new total.

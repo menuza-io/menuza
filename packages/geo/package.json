@@ -9,6 +9,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./overlap": {
+      "types": "./src/overlap.ts",
+      "import": "./src/overlap.ts",
+      "default": "./src/overlap.ts"
     }
   },
   "scripts": {
