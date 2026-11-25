@@ -231,6 +231,8 @@ import {
 import { isCateringPublicDisabled } from '../lib/catering-switches.ts'
 import { onCateringOrderPaid } from './catering-messages.ts'
 import {
+	cateringBalanceCents,
+	cateringBalanceOwedCents,
 	cateringCollectionColumns,
 	cateringPaidColumns,
 	orderChargeCents,
@@ -3928,6 +3930,30 @@ export function operatorOrder(
 		hasAlcohol: order.hasAlcohol === true,
 		/** The guest stated an allergy at checkout (#294). Operators only. */
 		guestAllergy: order.guestAllergy === true,
+		/**
+		 * A catering order (#124, #361): the event, the head count, the guest's
+		 * notes and how the total is collected. Operators only, never the guest's
+		 * receipt; null for every other order.
+		 */
+		catering: order.isCatering
+			? {
+					eventAt: order.cateringEventAt
+						? order.cateringEventAt.toISOString()
+						: null,
+					guestCount: order.guestCount,
+					notes: order.cateringNotes,
+					quoteId: order.cateringQuoteId,
+					depositPercent: order.depositPercent,
+					depositCents: order.depositCents,
+					paidCents: order.paidCents,
+					balanceCents: cateringBalanceCents(order),
+					balanceOwedCents: cateringBalanceOwedCents(order),
+					balanceState: order.balanceState,
+					balanceDueAt: order.balanceDueAt
+						? order.balanceDueAt.toISOString()
+						: null,
+				}
+			: null,
 		/**
 		 * Why a `payment_review` order waits, when the region knows: the sale was
 		 * paid late and a discount's limit had been used up since. Null otherwise.

@@ -38,6 +38,27 @@ export const orderSchema = z.object({
 	/** The time the guest asked for (ISO); null for as soon as possible. */
 	scheduledFor: z.string().nullable().optional().catch(undefined),
 	pickupInstructions: z.string().nullable().optional().catch(undefined),
+	/**
+	 * A catering order (#124, #361): the event, head count, the guest's notes and
+	 * how the total is collected. Null or missing for every other order.
+	 */
+	catering: z
+		.object({
+			eventAt: z.string().nullable(),
+			guestCount: z.number().int().nullable(),
+			notes: z.string().nullable(),
+			quoteId: z.string().nullable(),
+			depositPercent: z.number().int().nullable(),
+			depositCents: z.number().int().nullable(),
+			paidCents: z.number().int().nullable(),
+			balanceCents: z.number().int(),
+			balanceOwedCents: z.number().int(),
+			balanceState: z.enum(['due', 'paid', 'void']).nullable(),
+			balanceDueAt: z.string().nullable(),
+		})
+		.nullable()
+		.optional()
+		.catch(undefined),
 	/** A loyalty reward's discount, taken off the subtotal before tax. */
 	loyaltyDiscountCents: z.number().int(),
 	/** Non-loyalty discounts on the lines, in cents (missing means none). */

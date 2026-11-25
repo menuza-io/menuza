@@ -55,6 +55,7 @@ import {
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
+import { isCateringEnabled } from '#app/utils/catering/catering-context.server.ts'
 import { getQrOrderingFeatures } from '#app/utils/qr/access.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -99,6 +100,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const loyaltyEnabled = qr.enabled
 		? await isLoyaltyFeatureEnabled(organization.id)
 		: false
+	// Catering (#124): the Catering tab shows only while the flag is on.
+	const showCatering = await isCateringEnabled(organization.id)
 	return data(
 		{
 			orgSlug,
@@ -109,6 +112,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			// so tabs still open (and payments to check) can be settled. The
 			// list renders nothing when there is nothing to show.
 			showTabs: qr.enabled,
+			showCatering,
 			// Customers links show only to members who can open Customers.
 			canViewCustomers: link.linkCustomers || link.linkGuests,
 			orderingControls,
@@ -131,6 +135,7 @@ export default function OrdersInbox() {
 		canViewCustomers,
 		canWrite,
 		showTabs,
+		showCatering,
 		loyaltyEnabled,
 		orderingControls,
 		slotLimitLocations,
@@ -211,6 +216,17 @@ export default function OrdersInbox() {
 					)}
 				/>
 				<div className="flex flex-col items-end gap-2">
+					{showCatering ? (
+						<Button
+							variant="outline"
+							nativeButton={false}
+							render={<Link to={`/${orgSlug}/orders/catering`} />}
+							data-testid="orders-catering-link"
+						>
+							<Icon name="building" className="size-4" />
+							<Trans>Catering</Trans>
+						</Button>
+					) : null}
 					<Button
 						variant="outline"
 						onClick={() => {

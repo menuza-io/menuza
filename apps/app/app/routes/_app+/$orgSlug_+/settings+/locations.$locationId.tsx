@@ -57,6 +57,7 @@ import {
 	type InitialLocationData,
 	LocationForm,
 } from '#app/components/locations/location-form.tsx'
+import { LocationCateringCard } from '#app/components/locations/location-catering-card.tsx'
 import { LocationOrderAlertsCard } from '#app/components/locations/location-order-alerts-card.tsx'
 import { LocationWebsiteCard } from '#app/components/locations/location-website-card.tsx'
 import { type OrderPolicyValues } from '#app/components/locations/order-policies-card.tsx'
@@ -1016,6 +1017,14 @@ export default function EditLocationRoute() {
 						<LocationOrderAlertsCard
 							orgSlug={organization.slug}
 							locationId={location.id}
+						/>
+					) : null}
+
+					{location.id ? (
+						<LocationCateringCard
+							orgSlug={organization.slug}
+							locationId={location.id}
+							currency={checkoutRules?.currency ?? 'USD'}
 						/>
 					) : null}
 

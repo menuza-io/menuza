@@ -69,6 +69,7 @@ import {
 	ProviderRefundDialog,
 	type ProviderRefundOutcome,
 } from './provider-refund-dialog.tsx'
+import { CateringDetails } from './catering-details.tsx'
 import { RecordOrderRefundDialog } from './record-order-refund-dialog.tsx'
 import {
 	CANCEL_REASON_LABELS,
@@ -223,6 +224,11 @@ export function OrderDetail({
 	const [rejectOpen, setRejectOpen] = useState(false)
 	const [refundOpen, setRefundOpen] = useState(false)
 	const [providerRefundOpen, setProviderRefundOpen] = useState(false)
+	// A catering refund that picked lines: the dialog opens with their amount.
+	const [refundPrefill, setRefundPrefill] = useState<{
+		amountCents: number
+		note: string
+	} | null>(null)
 	const [refundNotice, setRefundNotice] = useState<string | null>(null)
 	const [cancelReason, setCancelReason] = useState('')
 	const [cancelRefund, setCancelRefund] = useState<'none' | 'full'>('full')
@@ -833,7 +839,11 @@ export function OrderDetail({
 										className="text-destructive flex items-center gap-1.5 font-semibold"
 										data-testid="order-guest-allergy"
 									>
-										<Icon name="alert-triangle" className="size-4" aria-hidden />
+										<Icon
+											name="alert-triangle"
+											className="size-4"
+											aria-hidden
+										/>
 										<Trans>Guest stated an allergy</Trans>
 									</p>
 								) : null}
@@ -854,6 +864,20 @@ export function OrderDetail({
 									>
 										{order.pickupInstructions}
 									</p>
+								) : null}
+								{order.catering ? (
+									<CateringDetails
+										order={order}
+										catering={order.catering}
+										orgSlug={orgSlug}
+										canWrite={canWrite}
+										canRefundLines={canWrite && canRefund}
+										onReload={onReload}
+										onRefundLines={(amountCents, note) => {
+											setRefundPrefill({ amountCents, note })
+											setProviderRefundOpen(true)
+										}}
+									/>
 								) : null}
 								{reprint ? (
 									<ReprintButtons
@@ -1222,6 +1246,7 @@ export function OrderDetail({
 										size="sm"
 										onClick={() => {
 											setRefundNotice(null)
+											setRefundPrefill(null)
 											setProviderRefundOpen(true)
 										}}
 										data-testid="order-provider-refund-open"
@@ -1457,10 +1482,14 @@ export function OrderDetail({
 
 			{canWrite && canRefund && providerRefundOpen ? (
 				<ProviderRefundDialog
-					order={order}
+					order={{ ...order, paidCents: order.catering?.paidCents ?? null }}
 					orgSlug={orgSlug}
+					prefill={refundPrefill ?? undefined}
 					open
-					onOpenChange={setProviderRefundOpen}
+					onOpenChange={(next) => {
+						if (!next) setRefundPrefill(null)
+						setProviderRefundOpen(next)
+					}}
 					onRefresh={() => onReload?.()}
 					finalFocus={refundFocus.finalFocus}
 					onDone={(outcome: ProviderRefundOutcome) => {
