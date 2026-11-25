@@ -111,14 +111,28 @@ function estimateLostSales(
 	return Math.round(ratePerMinuteMinor * durationMinutes)
 }
 
-export async function loadSoldOutHistoryRecords(
+/**
+ * The sold-out windows (stock-driven and manual) at the token's locations.
+ * By default the ones that started inside the window, as the history report
+ * lists them. With `overlapping`, every one that was on at any time in it,
+ * including one that began earlier (the slow sellers and uptime reports ask
+ * how long a dish could not be ordered, not when it ran out). That read goes
+ * back `OVERLAP_LOOKBACK_MS` before the window so a long sold-out is still
+ * paired with its start.
+ */
+export const OVERLAP_LOOKBACK_MS = 90 * 86_400_000
+
+export async function loadSoldOutOccurrences(
 	ctx: SalesReportContext,
-	subject: ReportSubject,
-	definition: ReportDefinition,
-	includeCost: boolean,
-): Promise<{ records: ReportRecord[]; truncated: boolean }> {
-	const fields = referencedFieldIds(subject, definition)
-	const window = windowOf(definition, ctx.now)
+	window: { startMs: number | null; endMs: number },
+	options: { overlapping?: boolean } = {},
+): Promise<SoldOutOccurrence[]> {
+	const readFrom =
+		window.startMs === null
+			? null
+			: options.overlapping
+				? window.startMs - OVERLAP_LOOKBACK_MS
+				: window.startMs
 	const occurrences: SoldOutOccurrence[] = []
 
 	const invRows = await ctx.db
@@ -128,9 +142,7 @@ export async function loadSoldOutHistoryRecords(
 			and(
 				...locationFilter(ctx.locationIds, invSoldOut.locationId),
 				lte(invSoldOut.soldAt, window.endMs),
-				window.startMs !== null
-					? gte(invSoldOut.soldAt, window.startMs)
-					: undefined,
+				readFrom !== null ? gte(invSoldOut.soldAt, readFrom) : undefined,
 			),
 		)
 
@@ -159,8 +171,8 @@ export async function loadSoldOutHistoryRecords(
 			and(
 				...locationFilter(ctx.locationIds, menuAvailabilityEvents.locationId),
 				lte(menuAvailabilityEvents.occurredAt, new Date(window.endMs)),
-				window.startMs !== null
-					? gte(menuAvailabilityEvents.occurredAt, new Date(window.startMs))
+				readFrom !== null
+					? gte(menuAvailabilityEvents.occurredAt, new Date(readFrom))
 					: undefined,
 			),
 		)
@@ -177,6 +189,22 @@ export async function loadSoldOutHistoryRecords(
 			})),
 		),
 	)
+	if (!options.overlapping || window.startMs === null) return occurrences
+	return occurrences.filter(
+		(occurrence) =>
+			occurrence.endedAt === null || occurrence.endedAt.getTime() >= window.startMs!,
+	)
+}
+
+export async function loadSoldOutHistoryRecords(
+	ctx: SalesReportContext,
+	subject: ReportSubject,
+	definition: ReportDefinition,
+	includeCost: boolean,
+): Promise<{ records: ReportRecord[]; truncated: boolean }> {
+	const fields = referencedFieldIds(subject, definition)
+	const window = windowOf(definition, ctx.now)
+	const occurrences = await loadSoldOutOccurrences(ctx, window)
 
 	const lookbackEnd = new Date(window.endMs).toISOString().slice(0, 10)
 	const lookbackStart = new Date(

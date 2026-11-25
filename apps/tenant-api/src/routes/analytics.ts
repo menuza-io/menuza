@@ -24,6 +24,7 @@ import {
 	resolveTimeframeRange,
 	timeframeLoadWindow,
 	runReport,
+	splitLoaderFilters,
 	type ReportRecord,
 } from '@repo/reports'
 import {
@@ -99,6 +100,10 @@ import {
 } from '../services/menu-insights-records.ts'
 import { loadSoldOutHistoryRecords } from '../services/sold-out-report-records.ts'
 import {
+	loadSlowSellerRecords,
+	MenuRosterUnavailableError,
+} from '../services/slow-sellers-records.ts'
+import {
 	loadProductMixRecords,
 	loadProductMixRows,
 	PRODUCT_MIX_MAX_RECORDS,
@@ -147,6 +152,7 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'sold_out_history',
 	'product_mix',
 	'product_mix_options',
+	'slow_sellers',
 	'inventory_deliveries',
 ])
 
@@ -472,6 +478,9 @@ analyticsRoutes.post('/query', async (c) => {
 	let records: ReportRecord[]
 	let sourceTruncated = false
 	let sourceRowLimit = 0
+	// What the engine runs: a loader that applies some filters itself (slow
+	// sellers: location and channel) hands the engine the definition without them.
+	let runDefinition = definition
 	if (isStaffingReportSubject(definition.subject)) {
 		const staffCtx: StaffReportContext = {
 			db,
@@ -617,6 +626,38 @@ analyticsRoutes.post('/query', async (c) => {
 		records = await loadCustomerRecords(db, claims.orgId, subject, loading)
 	} else if (definition.subject === 'text_subscribers') {
 		records = await loadTextSubscriberRecords(db)
+	} else if (definition.subject === 'slow_sellers') {
+		const split = splitLoaderFilters(activeReportCatalog(), definition)
+		try {
+			const loaded = await loadSlowSellerRecords(
+				{
+					db,
+					orgId: claims.orgId,
+					locationIds: claims.locationIds,
+					now,
+					costAllowed: operatorTokenAllowsSubject(claims, 'inventory_cost'),
+					userId: claims.userId,
+				},
+				loading,
+				split.loader,
+			)
+			records = loaded.records
+			sourceTruncated = loaded.truncated
+			sourceRowLimit = records.length
+			runDefinition = split.definition
+		} catch (error) {
+			if (error instanceof MenuRosterUnavailableError) {
+				return c.json(
+					{
+						error: 'menu_unavailable',
+						message:
+							'The menu could not be read just now, so dishes that did not sell cannot be listed. Try again in a moment.',
+					},
+					503,
+				)
+			}
+			throw error
+		}
 	} else if (
 		definition.subject === 'product_mix' ||
 		definition.subject === 'product_mix_options'
@@ -711,7 +752,7 @@ analyticsRoutes.post('/query', async (c) => {
 		records = rows.map(mapShopOrder)
 	}
 
-	const result = runReport(activeReportCatalog(), definition, records, now, {
+	const result = runReport(activeReportCatalog(), runDefinition, records, now, {
 		timeZone,
 	})
 	if (isReportRunError(result)) {

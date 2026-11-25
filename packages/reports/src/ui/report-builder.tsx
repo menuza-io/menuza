@@ -55,6 +55,7 @@ const MEASURE_LABELS: Record<Measure, string> = {
 	sum: 'Sum',
 	average: 'Average',
 	ratio: 'Ratio',
+	share: 'Share of total',
 }
 
 /**
@@ -286,6 +287,7 @@ export function ReportBuilder({
 		? valueFields(subject, 'average').length > 0
 		: false
 	const canRatio = subject ? valueFields(subject, 'ratio').length > 0 : false
+	const canShare = subject ? valueFields(subject, 'share').length > 0 : false
 	const measuredField = definition.visualization.valueField
 		? measureFields.find(
 				(field) => field.id === definition.visualization.valueField,
@@ -735,7 +737,7 @@ export function ReportBuilder({
 														Measure
 														<HelpTip
 															label="Measure help"
-															text="Count records, show each segment's percent of them, add up or average a number such as order totals, or divide one total by another, such as wages by sales."
+															text="Count records, show each segment's percent of them, add up or average a number such as order totals, divide one total by another, such as wages by sales, or show each group's share of the whole, such as a category's share of sales."
 														/>
 													</Label>
 													<Select
@@ -778,6 +780,11 @@ export function ReportBuilder({
 																	{MEASURE_LABELS.ratio}
 																</SelectItem>
 															) : null}
+															{canShare || measure === 'share' ? (
+																<SelectItem value="share">
+																	{MEASURE_LABELS.share}
+																</SelectItem>
+															) : null}
 														</SelectContent>
 													</Select>
 												</div>
@@ -788,7 +795,9 @@ export function ReportBuilder({
 																? 'Add up'
 																: valueMeasure === 'ratio'
 																	? 'Ratio of'
-																	: 'Average of'}
+																	: valueMeasure === 'share'
+																		? 'Share of'
+																		: 'Average of'}
 														</Label>
 														<Select
 															value={

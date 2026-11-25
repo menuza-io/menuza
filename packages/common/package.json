@@ -630,6 +630,11 @@
       "import": "./src/order-steps.ts",
       "default": "./src/order-steps.ts"
     },
+    "./slow-sellers": {
+      "types": "./src/slow-sellers.ts",
+      "import": "./src/slow-sellers.ts",
+      "default": "./src/slow-sellers.ts"
+    },
     "./item-pairs": {
       "types": "./src/item-pairs.ts",
       "import": "./src/item-pairs.ts",
