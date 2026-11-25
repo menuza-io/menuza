@@ -222,3 +222,123 @@ describe('LogWasteDialog', () => {
 		)
 	})
 })
+
+describe('LogWasteDialog: dishes (#517)', () => {
+	const DISHES = [
+		{
+			id: 'dish_shawarma',
+			name: 'Chicken shawarma',
+			variants: [{ id: 'var_large', label: 'Large' }],
+			groups: [
+				{
+					id: 'grp_extras',
+					name: 'Extras',
+					options: [{ id: 'opt_cheese', name: 'Extra cheese' }],
+				},
+			],
+		},
+		{ id: 'dish_falafel', name: 'Falafel wrap', variants: [], groups: [] },
+	]
+
+	function setupDishes(
+		request: InventoryClient['request'],
+		props: { dishesEnabled?: boolean } = {},
+	) {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => Response.json({ dishes: DISHES })),
+		)
+		const onOpenChange = vi.fn()
+		renderInventory(
+			<LogWasteDialog
+				open
+				onOpenChange={onOpenChange}
+				orgSlug="acme"
+				locationId="main"
+				dishesEnabled={props.dishesEnabled ?? true}
+				canSeeCost
+				currency="SAR"
+				userName="Sara"
+			/>,
+			{ request },
+		)
+		return { onOpenChange }
+	}
+
+	it('has no Dishes filter without recipes', () => {
+		setupDishes(region(), { dishesEnabled: false })
+		expect(screen.queryByTestId('log-waste-mode-dishes')).toBeNull()
+	})
+
+	it('logs a dish with its size and options as one grouped waste and offers Undo for the whole group', async () => {
+		const request = vi.fn<InventoryClient['request']>(async (path, init) => {
+			if (path === '/waste/dishes' && init?.method === 'POST') {
+				return {
+					id: 'grp1',
+					entries: 3,
+					basis: 'recipe',
+					duplicate: false,
+					valueMinor: 2460,
+					currency: 'SAR',
+				}
+			}
+			if (path === '/waste/dishes/grp1/undo') return { id: 'grp1', entries: 3 }
+			throw new Error(`unexpected request ${path}`)
+		})
+		const { onOpenChange } = setupDishes(request)
+		await userEvent.click(screen.getByTestId('log-waste-mode-dishes'))
+		await userEvent.type(await screen.findByTestId('log-dish-search'), 'shaw')
+		// Only dishes that match are offered.
+		expect(screen.queryByTestId('log-dish-option-dish_falafel')).toBeNull()
+		await userEvent.click(
+			await screen.findByTestId('log-dish-option-dish_shawarma'),
+		)
+		await userEvent.click(screen.getByTestId('log-dish-variant-var_large'))
+		await userEvent.click(screen.getByTestId('log-dish-extra-opt_cheese'))
+		const quantity = screen.getByTestId('log-dish-quantity')
+		await userEvent.clear(quantity)
+		await userEvent.type(quantity, '2')
+		await userEvent.click(screen.getByTestId('log-dish-reason-dropped'))
+		await userEvent.click(screen.getByTestId('log-dish-submit'))
+		await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+
+		const index = request.mock.calls.findIndex(([p]) => p === '/waste/dishes')
+		expect(sentJson(request, index)).toEqual({
+			clientId: expect.stringMatching(/^wd-/),
+			locationId: 'main',
+			menuItemId: 'dish_shawarma',
+			variantId: 'var_large',
+			options: [{ optionId: 'opt_cheese' }],
+			quantity: 2,
+			reason: 'dropped',
+		})
+		// The toast reads "2 x Chicken shawarma" and its Undo takes the whole group back.
+		const toastArgs = showUndoToast.mock.calls[0]![0] as {
+			message: string
+			onUndo: () => Promise<void>
+		}
+		expect(toastArgs.message).toContain('2 x Chicken shawarma')
+		await toastArgs.onUndo()
+		expect(request).toHaveBeenCalledWith('/waste/dishes/grp1/undo', {
+			method: 'POST',
+			body: expect.stringContaining('"clientId"'),
+		})
+	})
+
+	it('says to add a recipe first when the dish has none, and keeps the form', async () => {
+		const request = vi.fn<InventoryClient['request']>(async () => {
+			throw new OperatorRequestError('nope', 'recipe_missing', 409)
+		})
+		const { onOpenChange } = setupDishes(request)
+		await userEvent.click(screen.getByTestId('log-waste-mode-dishes'))
+		await userEvent.click(
+			await screen.findByTestId('log-dish-option-dish_falafel'),
+		)
+		await userEvent.click(screen.getByTestId('log-dish-reason-spoiled'))
+		await userEvent.click(screen.getByTestId('log-dish-submit'))
+		expect(await screen.findByTestId('log-dish-error')).toHaveTextContent(
+			'Add a recipe first',
+		)
+		expect(onOpenChange).not.toHaveBeenCalledWith(false)
+	})
+})

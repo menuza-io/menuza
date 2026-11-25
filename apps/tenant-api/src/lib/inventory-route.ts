@@ -31,6 +31,16 @@ import { operatorActor } from '../services/inventory-common.ts'
 /** Every response field that carries money (or a figure derived from it). */
 export const MONEY_FIELDS = [
 	'valueMinor',
+	// Transfer prices, waste corrections and the use-against-recipes report (#526, #522, #509).
+	'unitPriceMicro',
+	'fixedPriceMicro',
+	'effectivePriceMicro',
+	'owedMinor',
+	'currentValueMinor',
+	'valueDeltaMinor',
+	'actualUseMinor',
+	'expectedUseMinor',
+	'gapMinor',
 	'totalValueMinor',
 	'differenceValueMinor',
 	'keyDifferenceValueMinor',

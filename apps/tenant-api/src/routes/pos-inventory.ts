@@ -20,6 +20,8 @@ import {
 	stationDeliverySchema,
 	stationDishWasteResultSchema,
 	stationDishWasteSchema,
+	stationLogDishWasteResultSchema,
+	stationLogDishWasteSchema,
 	stationOrderNotYetResultSchema,
 	stationOrderNotYetSchema,
 	stationPhotoConfirmResultSchema,
@@ -30,6 +32,9 @@ import {
 	stationSendCountSchema,
 	stationStartCountResultSchema,
 	stationStartCountSchema,
+	stationTransferActionSchema,
+	stationTransferRequestSchema,
+	stationTransferResultSchema,
 	stationUndoWasteResultSchema,
 	stationWasteResultSchema,
 	stationWasteSchema,
@@ -71,7 +76,11 @@ import {
 	requestInvoicePhotoUpload,
 } from '../services/inventory-receiving-service.ts'
 import { getInventorySettings } from '../services/inventory-settings-service.ts'
-import { logDishWaste } from '../services/inventory-dish-waste-service.ts'
+import {
+	logDishWaste,
+	logWasteDish,
+	undoWasteDish,
+} from '../services/inventory-dish-waste-service.ts'
 import {
 	donePrepTask,
 	generatePrep,
@@ -79,6 +88,11 @@ import {
 	skipPrepTask,
 	startPrepTask,
 } from '../services/inventory-prep-service.ts'
+import {
+	createTransfer,
+	receiveTransfer,
+	sendTransfer,
+} from '../services/inventory-transfers-service.ts'
 import { logWaste, undoWaste } from '../services/inventory-waste-service.ts'
 import {
 	activeRosterIds,
@@ -182,6 +196,8 @@ posInventoryRoutes.get(
 				locationId: ctx.locationId,
 				deviceId: ctx.pos.device.id,
 				ordersEnabled: flags.features.purchasing,
+				transfersEnabled: flags.features.transfers,
+				recipesEnabled: flags.features.recipes,
 				anyStaffCanReceive: settings.anyStaffCanReceive === true,
 				now: posInventoryDeps.now(),
 			})
@@ -398,6 +414,74 @@ posInventoryRoutes.post(
 	),
 )
 
+/** The general Log waste picker (#517): one dish with a reason, grouped ingredient rows. */
+async function recipesGate(ctx: StationCtx): Promise<Response | null> {
+	const flags = await getInventoryFlagState(ctx.pos.orgId)
+	if (flags.status === 'on' && flags.features.recipes) return null
+	return stationError(
+		flags.status === 'on' || flags.status === 'off'
+			? 'inventory_disabled'
+			: 'inventory_unavailable',
+	)
+}
+
+posInventoryRoutes.post(
+	'/waste/dish',
+	stationRoute(
+		{
+			body: stationLogDishWasteSchema,
+			locations: (body) => [body.locationId],
+		},
+		async (ctx, body) => {
+			const refused = await recipesGate(ctx)
+			if (refused) return refused
+			const now = posInventoryDeps.now()
+			const { resolve } = await actorsFor(ctx, [
+				{ clientId: body.clientId, madeBy: body.madeBy },
+			])
+			const { madeBy, madeAt: deviceMadeAt, ...entry } = body
+			const made = clampMadeAt(deviceMadeAt, now)
+			const result = await logWasteDish(ctx.caller, {
+				body: entry,
+				idempotency: idempotency(ctx, 'waste_dish', body.clientId, body),
+				station: {
+					deviceId: ctx.pos.device.id,
+					madeAt: made.at,
+					actor: resolve(madeBy),
+					syncedBy: ctx.session.staffId,
+				},
+			})
+			return stationJson(
+				stationLogDishWasteResultSchema.parse({
+					id: result.id,
+					entries: result.entries,
+					basis: result.basis,
+					duplicate: result.duplicate,
+				}),
+			)
+		},
+	),
+)
+
+posInventoryRoutes.post(
+	'/waste/dishes/:id/undo',
+	stationRoute({ body: undoWasteSchema }, async (ctx, body) => {
+		const refused = await recipesGate(ctx)
+		if (refused) return refused
+		const result = await undoWasteDish(
+			ctx.caller,
+			{ id: idParam(ctx), clientId: body.clientId },
+			{
+				station: {
+					deviceId: ctx.pos.device.id,
+					windowMs: STATION_WASTE_UNDO_SERVER_MS,
+				},
+			},
+		)
+		return stationJson(stationUndoWasteResultSchema.parse({ id: result.id }))
+	}),
+)
+
 posInventoryRoutes.post(
 	'/waste/:id/undo',
 	stationRoute({ body: undoWasteSchema }, async (ctx, body) => {
@@ -497,6 +581,113 @@ posInventoryRoutes.post(
 		const task = await donePrepTask(ctx.caller, { id: idParam(ctx), body })
 		return stationJson(prepTaskSchema.parse(task))
 	}),
+)
+
+// ── Transfers (#515) ────────────────────────────────────────────────────────
+
+/** Transfers need `inventory.transfers` on top of the Stock gate. */
+async function transfersGate(ctx: StationCtx): Promise<Response | null> {
+	const flags = await getInventoryFlagState(ctx.pos.orgId)
+	if (flags.status === 'on' && flags.features.transfers) return null
+	return stationError(
+		flags.status === 'on' || flags.status === 'off'
+			? 'inventory_disabled'
+			: 'inventory_unavailable',
+	)
+}
+
+/** What a tablet is told about a transfer after an action: ids and counts, never a price. */
+function transferResult(
+	detail: Awaited<ReturnType<typeof sendTransfer>>,
+	duplicate: boolean,
+) {
+	return stationTransferResultSchema.parse({
+		id: detail.id,
+		number: detail.number,
+		status: detail.status,
+		version: detail.version,
+		missingLines: detail.missingLines,
+		duplicate,
+	})
+}
+
+for (const step of ['send', 'receive'] as const) {
+	posInventoryRoutes.post(
+		`/transfers/:id/${step}`,
+		stationRoute(
+			{
+				body: stationTransferActionSchema,
+				locations: (body) => [body.locationId],
+				receive: true,
+			},
+			async (ctx, body) => {
+				const refused = await transfersGate(ctx)
+				if (refused) return refused
+				const id = idParam(ctx)
+				const { resolve } = await actorsFor(ctx, [
+					{ clientId: body.clientId, madeBy: body.madeBy },
+				])
+				let duplicate = false
+				const act = step === 'send' ? sendTransfer : receiveTransfer
+				const detail = await act(
+					{ ...ctx.caller, actor: resolve(body.madeBy) },
+					{
+						id,
+						expectedVersion: body.expectedVersion,
+						lines: body.lines,
+						idempotency: idempotency(ctx, `transfer_${step}`, body.clientId, {
+							id,
+							...body,
+						}),
+						onReplay: () => {
+							duplicate = true
+						},
+					},
+				)
+				return stationJson(transferResult(detail, duplicate))
+			},
+		),
+	)
+}
+
+posInventoryRoutes.post(
+	'/transfers',
+	stationRoute(
+		{
+			body: stationTransferRequestSchema,
+			locations: (body) => [body.locationId],
+			receive: true,
+		},
+		async (ctx, body) => {
+			const refused = await transfersGate(ctx)
+			if (refused) return refused
+			const { resolve } = await actorsFor(ctx, [
+				{ clientId: body.clientId, madeBy: body.madeBy },
+			])
+			// This terminal's place asks `fromLocationId`: a request is made by the
+			// place that needs stock (it is the receiver), items and amounts only.
+			const detail = await createTransfer(
+				{ ...ctx.caller, actor: resolve(body.madeBy) },
+				{
+					body: {
+						clientId: body.clientId,
+						kind: 'request',
+						fromLocationId: body.fromLocationId,
+						toLocationId: body.locationId,
+						lines: body.lines,
+						...(body.note ? { note: body.note } : {}),
+					},
+					idempotency: idempotency(
+						ctx,
+						'transfer_request',
+						body.clientId,
+						body,
+					),
+				},
+			)
+			return stationJson(transferResult(detail, false), 201)
+		},
+	),
 )
 
 // ── Deliveries ──────────────────────────────────────────────────────────────

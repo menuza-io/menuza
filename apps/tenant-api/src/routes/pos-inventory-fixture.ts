@@ -50,7 +50,11 @@ const ALL_GRANTS = [
 /** An App operator's inventory token (what the office uses; the tablet never holds one). */
 export async function mintInventoryOperator(
 	orgId: string,
-	options: { canManageSettings?: boolean } = {},
+	options: {
+		canManageSettings?: boolean
+		/** Child flags of the token's `features` claim (default: transfers, recipes and prep off). */
+		features?: Partial<typeof ON>
+	} = {},
 ): Promise<string> {
 	const now = Math.floor(Date.now() / 1000)
 	return new SignJWT({
@@ -60,7 +64,13 @@ export async function mintInventoryOperator(
 		scope: 'write',
 		grants: ALL_GRANTS,
 		locationIds: null,
-		features: { ...ON, recipes: false, prep: false, transfers: false },
+		features: {
+			...ON,
+			recipes: false,
+			prep: false,
+			transfers: false,
+			...options.features,
+		},
 		impersonated: false,
 		...(options.canManageSettings ? { canManageSettings: true } : {}),
 	})

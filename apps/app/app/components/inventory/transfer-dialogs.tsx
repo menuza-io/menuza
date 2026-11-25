@@ -3,6 +3,7 @@ import {
 	type TransferDetail,
 	type TransferKind,
 	transferDetailSchema,
+	transfersNotOfferedSchema,
 	type UnitRef,
 	MAX_TRANSFER_LINES,
 } from '@repo/inventory'
@@ -21,7 +22,7 @@ import { Icon } from '@repo/ui/icon'
 import { QuantityStepper } from '@repo/ui/quantity-stepper'
 import { Textarea } from '@repo/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
-import { useId, useRef, useState } from 'react'
+import { type ReactNode, useId, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
 	useNotifyInventoryChanged,
@@ -29,7 +30,10 @@ import {
 } from '#app/components/inventory/inventory-prefs.tsx'
 import { ItemPicker } from '#app/components/inventory/item-picker.tsx'
 import { SelectField } from '#app/components/staff/controls.tsx'
-import { useInventoryClient } from '#app/hooks/use-inventory-client.ts'
+import {
+	useInventoryClient,
+	useInventoryQuery,
+} from '#app/hooks/use-inventory-client.ts'
 import {
 	defaultEntryUnit,
 	entryStep,
@@ -39,6 +43,7 @@ import {
 import {
 	buildTransferLines,
 	confirmStartQuantity,
+	draftFromTransfer,
 	emptyTransferDraft,
 	emptyTransferLine,
 	type TransferDraft,
@@ -145,6 +150,17 @@ function CreateTransferForm({
 	const clientIdRef = useRef(newClientId('t'))
 	const problems = attempted ? transferProblems(draft) : []
 	const others = places.filter((place) => place.id !== locationId)
+	// A request only offers what the asked place gives to branches (#526).
+	const notOffered = useInventoryQuery(
+		kind === 'request' && draft.otherLocationId
+			? `/transfers/not-offered?${new URLSearchParams({ fromLocationId: draft.otherLocationId })}`
+			: null,
+		transfersNotOfferedSchema,
+	)
+	const excludeIds = useMemo(
+		() => new Set(notOffered.data?.itemIds ?? []),
+		[notOffered.data],
+	)
 
 	function setLine(key: string, next: Partial<TransferLineDraft>) {
 		setDraft((current) => ({
@@ -231,6 +247,7 @@ function CreateTransferForm({
 						index={index}
 						locationId={locationId}
 						submitting={submitting}
+						excludeIds={excludeIds}
 						invalid={
 							attempted &&
 							(line.item === null || !(line.amount && line.amount > 0)) &&
@@ -333,6 +350,8 @@ function TransferLineRow({
 	invalid,
 	onChange,
 	onRemove,
+	excludeIds,
+	hint,
 }: {
 	line: TransferLineDraft
 	index: number
@@ -341,6 +360,9 @@ function TransferLineRow({
 	invalid: boolean
 	onChange: (next: Partial<TransferLineDraft>) => void
 	onRemove?: () => void
+	excludeIds?: ReadonlySet<string>
+	/** What this line asked for before the other place changed it (#477). */
+	hint?: ReactNode
 }) {
 	const { t } = useLingui()
 	const client = useInventoryClient()
@@ -362,6 +384,7 @@ function TransferLineRow({
 				value={item}
 				placeholder={t`Choose an item`}
 				disabled={submitting}
+				excludeIds={excludeIds}
 				testId={`transfer-line-${index}-item`}
 				onChange={(picked) =>
 					onChange({
@@ -375,6 +398,14 @@ function TransferLineRow({
 					})
 				}
 			/>
+			{hint ? (
+				<p
+					className="text-muted-foreground text-xs"
+					data-testid={`transfer-line-${index}-hint`}
+				>
+					{hint}
+				</p>
+			) : null}
 			{item ? (
 				<div className="flex flex-wrap items-start gap-3">
 					<QuantityStepper
@@ -424,6 +455,286 @@ function TransferLineRow({
 				</Button>
 			) : null}
 		</li>
+	)
+}
+
+/**
+ * Change a planned transfer or request before it is sent (#477): add, remove
+ * and change lines, with the version the screen read (`expectedVersion`), so a
+ * change somebody else made meanwhile is refused with a clear message. The
+ * place that made the record edits it and may change the note; the place a
+ * request was made to may change the lines too, and the branch then sees the
+ * request as changed. Nothing moves until it is sent.
+ */
+export function EditTransferDialog({
+	transfer,
+	locationId,
+	open,
+	onOpenChange,
+	onSaved,
+}: {
+	transfer: TransferDetail | null
+	locationId: string
+	open: boolean
+	onOpenChange: (open: boolean) => void
+	onSaved: () => void
+}) {
+	const [submitting, setSubmitting] = useState(false)
+	return (
+		<Dialog
+			open={open}
+			onOpenChange={(next) => {
+				if (!submitting) onOpenChange(next)
+			}}
+		>
+			<DialogContent
+				className="max-h-dvh overflow-y-auto sm:max-w-lg"
+				data-testid="edit-transfer-dialog"
+			>
+				<DialogHeader>
+					<DialogTitle>
+						<Trans>Change the items</Trans>
+					</DialogTitle>
+					<DialogDescription>
+						<Trans>
+							Add, remove or change amounts until it is sent. Nothing moves
+							until then.
+						</Trans>
+					</DialogDescription>
+				</DialogHeader>
+				{transfer ? (
+					<EditTransferForm
+						key={`${transfer.id}-${transfer.version}`}
+						transfer={transfer}
+						locationId={locationId}
+						submitting={submitting}
+						onSubmittingChange={setSubmitting}
+						onClose={() => onOpenChange(false)}
+						onSaved={onSaved}
+					/>
+				) : null}
+			</DialogContent>
+		</Dialog>
+	)
+}
+
+function EditTransferForm({
+	transfer,
+	locationId,
+	submitting,
+	onSubmittingChange,
+	onClose,
+	onSaved,
+}: {
+	transfer: TransferDetail
+	locationId: string
+	submitting: boolean
+	onSubmittingChange: (submitting: boolean) => void
+	onClose: () => void
+	onSaved: () => void
+}) {
+	const { t, i18n } = useLingui()
+	const client = useInventoryClient()
+	const quantity = useQuantityFormat()
+	const notifyChanged = useNotifyInventoryChanged()
+	const noteId = useId()
+	const [draft, setDraft] = useState<TransferDraft>(() =>
+		draftFromTransfer(transfer, quantity.system),
+	)
+	const [attempted, setAttempted] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+	const madeHere =
+		(transfer.kind === 'request'
+			? transfer.toLocationId
+			: transfer.fromLocationId) === locationId
+	const toAsk = transfer.kind === 'request' ? transfer.fromLocationId : null
+	const notOffered = useInventoryQuery(
+		toAsk && madeHere
+			? `/transfers/not-offered?${new URLSearchParams({ fromLocationId: toAsk })}`
+			: null,
+		transfersNotOfferedSchema,
+	)
+	const excludeIds = useMemo(
+		() => new Set(notOffered.data?.itemIds ?? []),
+		[notOffered.data],
+	)
+	const asked = new Map(
+		transfer.lines.map((line) => [line.itemId, line.askedQuantity ?? null]),
+	)
+	const problems = attempted
+		? transferProblems({ ...draft, otherLocationId: 'x' })
+		: []
+
+	function setLine(key: string, next: Partial<TransferLineDraft>) {
+		setDraft((current) => ({
+			...current,
+			lines: current.lines.map((line) =>
+				line.key === key ? { ...line, ...next } : line,
+			),
+		}))
+	}
+
+	async function submit(event: React.FormEvent<HTMLFormElement>) {
+		event.preventDefault()
+		if (submitting) return
+		setAttempted(true)
+		const lines = buildTransferLines({ ...draft, otherLocationId: 'x' })
+		if (!lines) return
+		onSubmittingChange(true)
+		setError(null)
+		try {
+			transferDetailSchema.parse(
+				await client.request(`/transfers/${encodeURIComponent(transfer.id)}`, {
+					method: 'PATCH',
+					body: JSON.stringify({
+						expectedVersion: transfer.version,
+						locationId,
+						lines,
+						...(madeHere ? { note: draft.note.trim() || null } : {}),
+					}),
+				}),
+			)
+			toast.success(t`Changes saved.`)
+			notifyChanged()
+			onSaved()
+			onClose()
+		} catch (caught) {
+			setError(i18n._(transferErrorMessage(caught)))
+		} finally {
+			onSubmittingChange(false)
+		}
+	}
+
+	return (
+		<form
+			onSubmit={(event) => void submit(event)}
+			noValidate
+			className="flex flex-col gap-4"
+			data-testid="edit-transfer-form"
+		>
+			{error ? (
+				<Alert variant="destructive" data-testid="edit-transfer-error">
+					<Icon name="alert-triangle" />
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			) : null}
+			<ul className="flex flex-col gap-3" data-testid="edit-transfer-lines">
+				{draft.lines.map((line, index) => {
+					const before = line.item ? (asked.get(line.item.id) ?? null) : null
+					const was = line.item
+						? quantity.format(before ?? 0, {
+								baseUnit: line.item.baseUnit,
+								countUnit: line.item.countUnit,
+								units: line.item.units,
+							})
+						: ''
+					return (
+						<TransferLineRow
+							key={line.key}
+							line={line}
+							index={index}
+							locationId={locationId}
+							submitting={submitting}
+							excludeIds={excludeIds}
+							hint={
+								line.item && before !== null ? (
+									before === 0 ? (
+										<Trans>Added by the other place.</Trans>
+									) : (
+										<Trans>
+											Asked for <bdi dir="ltr">{was}</bdi>.
+										</Trans>
+									)
+								) : undefined
+							}
+							invalid={
+								attempted &&
+								(line.item === null || !(line.amount && line.amount > 0)) &&
+								!(line.item === null && !line.amount && draft.lines.length > 1)
+							}
+							onChange={(next) => setLine(line.key, next)}
+							onRemove={
+								draft.lines.length > 1
+									? () =>
+											setDraft((current) => ({
+												...current,
+												lines: current.lines.filter(
+													(entry) => entry.key !== line.key,
+												),
+											}))
+									: undefined
+							}
+						/>
+					)
+				})}
+			</ul>
+			{draft.lines.length < MAX_TRANSFER_LINES ? (
+				<Button
+					type="button"
+					variant="outline"
+					className="justify-self-start"
+					disabled={submitting}
+					onClick={() =>
+						setDraft((current) => ({
+							...current,
+							lines: [...current.lines, emptyTransferLine()],
+						}))
+					}
+					data-testid="edit-transfer-add-line"
+				>
+					<Icon name="plus" />
+					<Trans>Add item</Trans>
+				</Button>
+			) : null}
+			{problems.includes('no_lines') ? (
+				<FieldError>
+					<Trans>Add at least one item with an amount.</Trans>
+				</FieldError>
+			) : null}
+			{problems.includes('duplicate_item') ? (
+				<FieldError>
+					<Trans>Each item can be on the list once.</Trans>
+				</FieldError>
+			) : null}
+			{madeHere ? (
+				<Field>
+					<FieldLabel htmlFor={noteId}>
+						<Trans>Note</Trans>{' '}
+						<span className="text-muted-foreground font-normal">
+							<Trans>(optional)</Trans>
+						</span>
+					</FieldLabel>
+					<Textarea
+						id={noteId}
+						value={draft.note}
+						onChange={(event) =>
+							setDraft({ ...draft, note: event.target.value })
+						}
+						rows={2}
+						maxLength={500}
+						disabled={submitting}
+						data-testid="edit-transfer-note"
+					/>
+				</Field>
+			) : null}
+			<DialogFooter>
+				<Button
+					type="button"
+					variant="outline"
+					onClick={onClose}
+					disabled={submitting}
+				>
+					<Trans>Cancel</Trans>
+				</Button>
+				<Button
+					type="submit"
+					disabled={submitting}
+					data-testid="edit-transfer-submit"
+				>
+					{submitting ? <Trans>Saving…</Trans> : <Trans>Save changes</Trans>}
+				</Button>
+			</DialogFooter>
+		</form>
 	)
 }
 

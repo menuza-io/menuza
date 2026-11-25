@@ -7,7 +7,8 @@
 		"receiveRequiresManager": true,
 		"photoMaxBytes": 5242880,
 		"ordersEnabled": true,
-		"secondCountRequired": false
+		"secondCountRequired": false,
+		"dishWasteEnabled": true
 	},
 	"items": [
 		{
@@ -134,10 +135,18 @@
 			"listName": "Weekly count",
 			"status": "counting",
 			"businessDate": "2026-01-01",
-			"startedBy": { "kind": "operator", "id": "usr_owner" },
+			"startedBy": {
+				"kind": "operator",
+				"id": "usr_owner"
+			},
 			"itemTotal": 5,
 			"itemsCounted": 2,
-			"counters": [{ "kind": "staff", "id": "stf_omar" }],
+			"counters": [
+				{
+					"kind": "staff",
+					"id": "stf_omar"
+				}
+			],
 			"sentForReviewAt": null,
 			"approvedAt": null,
 			"approvedBy": null,

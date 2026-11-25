@@ -25,6 +25,9 @@ import {
 	stationReceiveAsOrderedResultSchema,
 	stationStartCountResultSchema,
 	stationStartCountSchema,
+	stationTransferResultSchema,
+	stationTransferSchema,
+	stationLogDishWasteResultSchema,
 	stationUndoWasteResultSchema,
 	stationWasteResultSchema,
 	stationWasteSchema,
@@ -80,6 +83,10 @@ describe('Station responses carry no money', () => {
 		['receive as ordered result', stationReceiveAsOrderedResultSchema],
 		['order not yet result', stationOrderNotYetResultSchema],
 		['cash purchase result', stationCashPurchaseResultSchema],
+		// Transfers (#515) and a whole dish as waste (#517): quantities only.
+		['transfer', stationTransferSchema],
+		['transfer result', stationTransferResultSchema],
+		['dish waste result', stationLogDishWasteResultSchema],
 	])('%s', (_name, schema) => {
 		const keys = keysOf(schema)
 		expect(keys.length).toBeGreaterThan(3)

@@ -3,6 +3,7 @@ import { msg } from '@lingui/core/macro'
 import {
 	type StockItem,
 	type TransferDetail,
+	type UnitSystem,
 	type TransferLineInput,
 	type TransferStatus,
 	type TransferSummary,
@@ -10,6 +11,7 @@ import {
 	MAX_TRANSFER_LINES,
 } from '@repo/inventory'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
+import { defaultEntryUnit, thousandthsInUnit } from './format.ts'
 import { inventorySaveErrorMessage } from './inventory-errors.ts'
 
 /** What is typed for one line of a new transfer or request. */
@@ -92,6 +94,8 @@ export type TransferActions = {
 	send: boolean
 	receive: boolean
 	cancel: boolean
+	/** Change the lines before it is sent: the maker, or the place a request was made to (#477). */
+	edit: boolean
 }
 
 export function transferActions(
@@ -110,6 +114,43 @@ export function transferActions(
 		send: open && transfer.fromLocationId === locationId,
 		receive: transfer.status === 'sent' && transfer.toLocationId === locationId,
 		cancel: open && creator === locationId,
+		edit:
+			open &&
+			(creator === locationId ||
+				(transfer.kind === 'request' &&
+					transfer.fromLocationId === locationId)),
+	}
+}
+
+/** What the edit form starts from: the transfer's lines, each in the unit it is usually counted in. */
+export function draftFromTransfer(
+	transfer: TransferDetail,
+	system: UnitSystem,
+): TransferDraft {
+	return {
+		otherLocationId: '',
+		note: transfer.note ?? '',
+		lines: transfer.lines.map((line) => {
+			const unit = defaultEntryUnit(
+				line.baseUnit,
+				line.countUnit,
+				line.units,
+				system,
+			)
+			const perUnit = thousandthsInUnit(unit, line.baseUnit, line.units) ?? 1000
+			return {
+				...emptyTransferLine(),
+				item: {
+					id: line.itemId,
+					name: line.itemName,
+					baseUnit: line.baseUnit,
+					units: line.units,
+					countUnit: line.countUnit,
+				},
+				amount: Math.round((line.requestedQuantity / perUnit) * 1000) / 1000,
+				unit,
+			}
+		}),
 	}
 }
 
@@ -155,6 +196,12 @@ export function transferErrorMessage(error: unknown): MessageDescriptor {
 		}
 		if (error.code === 'feature_disabled') {
 			return msg`Transfers are not turned on for your business.`
+		}
+		if (error.code === 'stale_version') {
+			return msg`Someone changed this transfer while you had it open. Close it and open it again.`
+		}
+		if (error.code === 'item_not_requestable') {
+			return msg`That place does not offer one of these items to branches. Remove it, or ask them directly.`
 		}
 	}
 	return inventorySaveErrorMessage(error)

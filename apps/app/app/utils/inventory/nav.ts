@@ -121,6 +121,8 @@ export function isInventoryFullPage(
 		.split('/')
 		.filter((part) => part !== '')
 	if (parts[0] === 'counts' && parts.length >= 2 && parts.length <= 3) {
+		// `/counts/variance` is the use-against-recipes report, with the tab bar.
+		if (parts[1] === 'variance') return false
 		return parts.length === 2 || parts[2] === 'review'
 	}
 	return (
@@ -128,6 +130,11 @@ export function isInventoryFullPage(
 		parts.length === 3 &&
 		((parts[1] === 'deliveries' && parts[2] === 'new') || parts[1] === 'orders')
 	)
+}
+
+/** Expected versus actual use between two approved counts (#509). */
+export function inventoryVariancePath(orgSlug: string): string {
+	return `/${orgSlug}/inventory/counts/variance`
 }
 
 export function inventoryCountPath(orgSlug: string, countId: string): string {

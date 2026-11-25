@@ -17,6 +17,7 @@ import { OverdueDeliveries } from './OverdueDeliveries.tsx'
 import { joinCount, startCount } from './queue.ts'
 import { StockNotices } from './StockNotices.tsx'
 import { SyncSheet } from './SyncSheet.tsx'
+import { TransfersSheet } from './TransfersSheet.tsx'
 import { useStock } from './useStock.ts'
 import { WasteSheet } from './WasteSheet.tsx'
 import { type PosSettings } from '~/lib/config.ts'
@@ -25,7 +26,7 @@ import { Toast, type ToastMessage } from '~/ui/motion.tsx'
 import { Badge, Button, cn, Modal } from '~/ui/primitives.tsx'
 
 type View = { kind: 'home' } | { kind: 'count'; localId: string }
-type Sheet = 'count' | 'waste' | 'delivery' | 'sync' | null
+type Sheet = 'count' | 'waste' | 'delivery' | 'transfers' | 'sync' | null
 
 /** An "In progress" card: a count this tablet is working on, or one another device started. */
 type Card = {
@@ -218,6 +219,17 @@ export function Stock({
 			title: _(t`Delivery`),
 			hint: _(t`Receive what the supplier brought`),
 		},
+		// Send and receive stock between places, and ask for more (#515).
+		...(catalog?.settings.transfersEnabled
+			? [
+					{
+						key: 'transfers' as const,
+						icon: 'arrow-right-left' as IconName,
+						title: _(t`Transfers`),
+						hint: _(t`Send, receive and ask for stock`),
+					},
+				]
+			: []),
 	]
 
 	return (
@@ -258,7 +270,7 @@ export function Stock({
 							</Button>
 						) : null}
 					</div>
-					<div className="grid gap-4 sm:grid-cols-3">
+					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 						{tiles.map((tile) => (
 							<button
 								key={tile.key}
@@ -477,6 +489,12 @@ export function Stock({
 					setDeliveryOrderId(null)
 					setDeliveryMode(null)
 				}}
+			/>
+			<TransfersSheet
+				stock={stock}
+				open={sheet === 'transfers'}
+				onClose={() => setSheet(null)}
+				onToast={say}
 			/>
 			<SyncSheet
 				stock={stock}

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+	amountInUnit,
+	requestableItems,
+	transferLinesBody,
+	transferLists,
+	transferSendable,
+	transferStartAmount,
 	cashLineFromDraft,
 	cashLineFromItem,
 	cashPurchaseLines,
@@ -341,5 +347,136 @@ describe('cash purchases (#466)', () => {
 		expect(cashPurchaseLines([])).toBeNull()
 		expect(cashPurchaseLines([{ ...existing, amountPaidText: '' }])).toBeNull()
 		expect(cashPurchaseLines([{ ...existing, amount: 0 }])).toBeNull()
+	})
+})
+
+describe('transfers (#515)', () => {
+	const line = (over: Record<string, unknown> = {}) => ({
+		itemId: 'tomato',
+		itemName: 'Tomatoes',
+		baseUnit: 'g' as const,
+		countUnit: 'kg' as const,
+		units: [],
+		requestedQuantity: 2_000_000,
+		sentQuantity: null,
+		receivedQuantity: null,
+		missingQuantity: null,
+		...over,
+	})
+	const transfer = (over: Record<string, unknown> = {}) =>
+		({
+			id: 't1',
+			number: 1,
+			kind: 'transfer',
+			status: 'draft',
+			fromLocationId: 'main',
+			toLocationId: 'branch',
+			lineCount: 1,
+			note: null,
+			createdAt: 1,
+			sentAt: null,
+			receivedAt: null,
+			missingLines: 0,
+			version: 1,
+			lines: [line()],
+			...over,
+		}) as never
+
+	it('sorts what this place sends, receives, asked for and finished', () => {
+		const lists = transferLists(
+			{
+				transfers: [
+					transfer({ id: 'send', number: 1 }),
+					transfer({
+						id: 'asked-of-me',
+						number: 2,
+						kind: 'request',
+						status: 'requested',
+					}),
+					transfer({
+						id: 'incoming',
+						number: 3,
+						status: 'sent',
+						fromLocationId: 'central',
+						toLocationId: 'main',
+					}),
+					transfer({
+						id: 'mine',
+						number: 4,
+						kind: 'request',
+						status: 'requested',
+						fromLocationId: 'central',
+						toLocationId: 'main',
+					}),
+					transfer({
+						id: 'done',
+						number: 5,
+						status: 'received',
+						fromLocationId: 'central',
+						toLocationId: 'main',
+					}),
+					transfer({
+						id: 'others',
+						number: 6,
+						fromLocationId: 'x',
+						toLocationId: 'y',
+					}),
+				],
+			},
+			'main',
+		)
+		expect(lists.toSend.map((entry) => entry.id)).toEqual([
+			'asked-of-me',
+			'send',
+		])
+		expect(lists.toReceive.map((entry) => entry.id)).toEqual(['incoming'])
+		expect(lists.asked.map((entry) => entry.id)).toEqual(['mine'])
+		expect(lists.recent.map((entry) => entry.id)).toEqual(['done'])
+	})
+
+	it('offers a branch only what the asked place gives out', () => {
+		const items = [
+			{ id: 'tomato', name: 'Tomatoes' },
+			{ id: 'secret', name: 'Secret spice' },
+		] as never[]
+		const catalog = {
+			transferItems: items,
+			transferBlocked: [{ fromLocationId: 'central', itemIds: ['secret'] }],
+		}
+		expect(requestableItems(catalog, 'central').map((item) => item.id)).toEqual(
+			['tomato'],
+		)
+		// Another place offers everything it does not list.
+		expect(requestableItems(catalog, 'elsewhere')).toHaveLength(2)
+		expect(requestableItems({}, 'central')).toEqual([])
+	})
+
+	it('sends the amounts only when they differ from the plan, and sends nothing for an unticked line', () => {
+		const plan = transfer()
+		const same = [
+			{ itemId: 'tomato', included: true, amount: 2, unit: 'kg' as const },
+		]
+		// Untouched: the office uses its own exact figures.
+		expect(transferLinesBody(plan, 'send', same)).toBeUndefined()
+		expect(
+			transferLinesBody(plan, 'send', [{ ...same[0]!, amount: 1.5 }]),
+		).toEqual([{ itemId: 'tomato', amount: 1.5, unit: 'kg' }])
+		expect(
+			transferLinesBody(plan, 'send', [{ ...same[0]!, included: false }]),
+		).toEqual([{ itemId: 'tomato', amount: 0, unit: 'kg' }])
+		expect(transferSendable([{ amount: 0 }], 'send')).toBe(false)
+		expect(transferSendable([{ amount: 0 }], 'receive')).toBe(true)
+		expect(transferSendable(undefined, 'send')).toBe(true)
+	})
+
+	it('starts a receipt at what was sent', () => {
+		expect(
+			transferStartAmount(
+				line({ sentQuantity: 1_500_000 }) as never,
+				'receive',
+			),
+		).toBe(1.5)
+		expect(transferStartAmount(line() as never, 'send')).toBe(2)
+		expect(amountInUnit(500_000, 'kg', line() as never)).toBe(0.5)
 	})
 })

@@ -1,12 +1,14 @@
 import { z } from 'zod'
 import { inventoryLocationIdSchema } from '../token.ts'
 import { inventoryBaseUnitSchema } from '../units.ts'
+import { inventoryCurrencySchema, inventoryMinorSchema } from '../money.ts'
 import {
 	clientIdSchema,
 	currencyOut,
 	expectedVersionSchema,
 	inventoryIdSchema,
 	inventoryNoteSchema,
+	isoDateSchema,
 	minorOut,
 	typedAmountSchema,
 	unitRefSchema,
@@ -110,6 +112,11 @@ export const patchTransferSchema = z
 		expectedVersion: expectedVersionSchema,
 		lines: linesSchema.optional(),
 		note: inventoryNoteSchema.nullable().optional(),
+		/**
+		 * The place editing, when the token covers both ends (the place that made
+		 * the record, or for a request the place it was made to).
+		 */
+		locationId: inventoryLocationIdSchema.optional(),
 	})
 	.strict()
 	.refine((body) => body.lines !== undefined || body.note !== undefined, {
@@ -147,6 +154,11 @@ export const cancelTransferSchema = z
 	.object({ expectedVersion: expectedVersionSchema })
 	.strict()
 
+/** Where a sent line's price came from (#526): the item's fixed price, its cost plus a percentage, or its cost. */
+export const TRANSFER_PRICE_SOURCES = ['fixed', 'cost_plus', 'cost'] as const
+export const transferPriceSourceSchema = z.enum(TRANSFER_PRICE_SOURCES)
+export type TransferPriceSource = z.infer<typeof transferPriceSourceSchema>
+
 export const transferLineSchema = z.object({
 	itemId: z.string(),
 	itemName: z.string(),
@@ -161,6 +173,15 @@ export const transferLineSchema = z.object({
 	missingQuantity: z.number().int().nullable(),
 	/** What is on hand at the sending place now, to help fill the send. */
 	onHandAtSender: z.number().int(),
+	/**
+	 * What this line asked for before the other place changed it (#477):
+	 * present only on a line that was changed or added since (0: added).
+	 */
+	askedQuantity: z.number().int().nullable().optional(),
+	/** The price per base unit (micro-minor) fixed when it was sent (#526). Cost grant. */
+	unitPriceMicro: z.number().int().optional(),
+	/** Where that price came from (#526). Cost grant. */
+	priceSource: transferPriceSourceSchema.optional(),
 	valueMinor: minorOut,
 })
 export type TransferLine = z.infer<typeof transferLineSchema>
@@ -179,6 +200,11 @@ export const transferSummarySchema = z.object({
 	receivedAt: z.number().int().nullable(),
 	/** Sent and not received, over every line (only once received). */
 	missingLines: z.number().int(),
+	/** When an open transfer's lines were last edited (#477), or null. */
+	editedAt: z.number().int().nullable().optional(),
+	/** A request whose lines the sending place changed: the branch sees it as changed (#477). */
+	changedBySender: z.boolean().optional(),
+	/** The value moved: at the transfer price where one was fixed, else at cost. Cost grant. */
 	valueMinor: minorOut,
 	currency: currencyOut,
 	version: z.number().int(),
@@ -269,3 +295,145 @@ export const compareSchema = z.object({
 	rows: z.array(compareRowSchema),
 })
 export type Compare = z.infer<typeof compareSchema>
+
+// ── Transfer prices and what branches can request (#526) ────────────────────
+
+/**
+ * Per item at the SENDING location: the transfer price a branch is charged
+ * (`fixed` per unit, or the item's cost plus `markupBp`, or `none`: the
+ * receiver is charged cost) and whether branches may ask for it
+ * (`branchRequestable`, on unless an owner turns it off).
+ *
+ * The price in force is read when a transfer is SENT and copied onto its lines
+ * (`unitPriceMicro`); a later change never touches a sent transfer. Prices are
+ * money and need `read:inventory_cost:any` to read and to set; the
+ * requestable switch needs only `update:inventory:any`. Station never gets
+ * either (its catalogue lists only which items are NOT requestable).
+ */
+export const TRANSFER_PRICE_MODES = ['none', 'fixed', 'cost_plus'] as const
+export const transferPriceModeSchema = z.enum(TRANSFER_PRICE_MODES)
+export type TransferPriceMode = z.infer<typeof transferPriceModeSchema>
+
+/** Highest markup: cost + 1000% (basis points). */
+export const MAX_TRANSFER_MARKUP_BP = 100_000
+
+/** `GET /transfer-terms?locationId=` (the sending place; read grant). */
+export const transferTermsQuerySchema = z
+	.object({
+		locationId: inventoryLocationIdSchema,
+		/** Only items a branch cannot request or that have a price. */
+		onlySet: z.enum(['true', 'false']).default('false'),
+		search: z.string().trim().max(100).optional(),
+	})
+	.strict()
+
+export const transferTermSchema = z.object({
+	itemId: z.string(),
+	itemName: z.string(),
+	baseUnit: inventoryBaseUnitSchema,
+	branchRequestable: z.boolean(),
+	/** Money fields below need the cost grant and are left out without it. */
+	priceMode: transferPriceModeSchema.optional(),
+	fixedPriceMicro: z.number().int().nullable().optional(),
+	markupBp: z.number().int().nullable().optional(),
+	currency: currencyOut,
+	/** The item's cost per base unit now. */
+	costMicro: z.number().int().nullable().optional(),
+	/** What a send would charge per base unit now (null: cost is unknown). */
+	effectivePriceMicro: z.number().int().nullable().optional(),
+	/** 0 when nothing was ever set. */
+	version: z.number().int(),
+})
+export type TransferTerm = z.infer<typeof transferTermSchema>
+
+export const transferTermsResultSchema = z.object({
+	terms: z.array(transferTermSchema),
+})
+
+/**
+ * `PUT /transfer-terms/:itemId`. `fixedPrice` is a price per ONE `per` unit
+ * ("12.00 per kg"); setting any price needs the cost grant (403 otherwise),
+ * `branchRequestable` alone does not. `expectedVersion` is the version read
+ * (0 when never set): another value is 409 `stale_version`.
+ */
+export const putTransferTermsSchema = z
+	.object({
+		locationId: inventoryLocationIdSchema,
+		expectedVersion: expectedVersionSchema,
+		branchRequestable: z.boolean().optional(),
+		priceMode: transferPriceModeSchema.optional(),
+		fixedPrice: z
+			.object({
+				priceMinor: inventoryMinorSchema,
+				per: unitRefSchema,
+				currency: inventoryCurrencySchema,
+			})
+			.strict()
+			.optional(),
+		markupBp: z.number().int().min(0).max(MAX_TRANSFER_MARKUP_BP).optional(),
+	})
+	.strict()
+	.superRefine((body, ctx) => {
+		if (body.priceMode === 'fixed' && !body.fixedPrice) {
+			ctx.addIssue({ code: 'custom', path: ['fixedPrice'], message: 'Required' })
+		}
+		if (body.priceMode === 'cost_plus' && body.markupBp === undefined) {
+			ctx.addIssue({ code: 'custom', path: ['markupBp'], message: 'Required' })
+		}
+		if (
+			body.branchRequestable === undefined &&
+			body.priceMode === undefined
+		) {
+			ctx.addIssue({ code: 'custom', message: 'Nothing to change' })
+		}
+	})
+export type PutTransferTerms = z.infer<typeof putTransferTermsSchema>
+
+/**
+ * `GET /transfers/owed?locationId=&from=&to=`: what each branch owes the
+ * sending place for transfers SENT in the period (business dates), at the
+ * price fixed on each line, with the cost it left at. Cost grant: without it
+ * only counts are returned.
+ */
+export const transfersOwedQuerySchema = z
+	.object({
+		locationId: inventoryLocationIdSchema,
+		from: isoDateSchema,
+		to: isoDateSchema,
+	})
+	.strict()
+
+export const transferOwedRowSchema = z.object({
+	toLocationId: z.string(),
+	transfers: z.number().int(),
+	lines: z.number().int(),
+	/** Value at the transfer price (cost where no price was set). */
+	owedMinor: minorOut,
+	/** The same stock at cost, so the place sees its margin. */
+	costMinor: minorOut,
+	currency: currencyOut,
+})
+
+export const transfersOwedSchema = z.object({
+	from: isoDateSchema,
+	to: isoDateSchema,
+	rows: z.array(transferOwedRowSchema),
+	owedMinor: minorOut,
+	costMinor: minorOut,
+	currency: currencyOut,
+})
+export type TransfersOwed = z.infer<typeof transfersOwedSchema>
+
+/**
+ * `GET /transfers/not-offered?fromLocationId=`: the items a place does NOT
+ * offer to branches, as ids only, so a branch's request form leaves them out.
+ * Any token that may read inventory may ask (it names no price and no stock);
+ * the region refuses such a request anyway (409 `item_not_requestable`).
+ */
+export const transfersNotOfferedQuerySchema = z
+	.object({ fromLocationId: inventoryLocationIdSchema })
+	.strict()
+export const transfersNotOfferedSchema = z.object({
+	itemIds: z.array(z.string()),
+})
+export type TransfersNotOffered = z.infer<typeof transfersNotOfferedSchema>

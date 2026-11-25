@@ -59,7 +59,26 @@ export function SyncSheet({
 			case 'count_send':
 				return _(t`Send the count for review`)
 			case 'waste_undo':
+			case 'waste_dish_undo':
 				return _(t`Undo waste`)
+			case 'waste_dish': {
+				const count = row.payload.dish.quantity
+				const reason = _(WASTE_REASON_LABELS[row.payload.dish.reason])
+				return _(t`Waste: ${count} dishes, ${reason}`)
+			}
+			case 'transfer_request': {
+				const count = row.payload.lines.length
+				return _(
+					plural(count, {
+						one: 'Request for # item',
+						other: 'Request for # items',
+					}),
+				)
+			}
+			case 'transfer_send':
+				return _(t`Send a transfer`)
+			case 'transfer_receive':
+				return _(t`Receive a transfer`)
 			case 'delivery_photo':
 				return _(t`Invoice photo`)
 			case 'delivery': {

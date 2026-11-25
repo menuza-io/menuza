@@ -12,6 +12,9 @@ import {
 	type StationCatalog,
 	type StationItem,
 	type StationExpectedDelivery,
+	type StationTransfer,
+	type StationTransferItem,
+	type StationTransferLine,
 	type UnitRef,
 	STATION_WASTE_UNDO_UI_MS,
 	MAX_ENTRY_QUANTITY,
@@ -667,4 +670,133 @@ export function cashPurchaseLines(
 		out.push(candidate)
 	}
 	return out
+}
+
+// ── Transfers (#515) ────────────────────────────────────────────────────────
+
+export type TransferLists = {
+	/** This place has the stock: planned, or asked for by a branch. */
+	toSend: StationTransfer[]
+	/** On their way to this place. */
+	toReceive: StationTransfer[]
+	/** Requests this place made and is waiting on. */
+	asked: StationTransfer[]
+	/** Received or cancelled in the last two days (a short line shows as missing). */
+	recent: StationTransfer[]
+}
+
+/** The catalogue's transfers sorted into what this place can do about each. Newest first. */
+export function transferLists(
+	catalog: Pick<StationCatalog, 'transfers'>,
+	locationId: string,
+): TransferLists {
+	const lists: TransferLists = {
+		toSend: [],
+		toReceive: [],
+		asked: [],
+		recent: [],
+	}
+	const all = [...(catalog.transfers ?? [])].sort((a, b) => b.number - a.number)
+	for (const transfer of all) {
+		const open = transfer.status === 'requested' || transfer.status === 'draft'
+		if (open && transfer.fromLocationId === locationId) {
+			lists.toSend.push(transfer)
+		} else if (
+			transfer.status === 'sent' &&
+			transfer.toLocationId === locationId
+		) {
+			lists.toReceive.push(transfer)
+		} else if (
+			open &&
+			transfer.kind === 'request' &&
+			transfer.toLocationId === locationId
+		) {
+			lists.asked.push(transfer)
+		} else if (!open && transfer.status !== 'sent') {
+			lists.recent.push(transfer)
+		}
+	}
+	return lists
+}
+
+/** What a branch may ask `fromLocationId` for: every item that place does not keep off the list. */
+export function requestableItems(
+	catalog: Pick<StationCatalog, 'transferItems' | 'transferBlocked'>,
+	fromLocationId: string,
+): StationTransferItem[] {
+	const blocked = new Set(
+		catalog.transferBlocked?.find(
+			(entry) => entry.fromLocationId === fromLocationId,
+		)?.itemIds ?? [],
+	)
+	return (catalog.transferItems ?? []).filter((item) => !blocked.has(item.id))
+}
+
+/** A stored quantity as an amount in `unit`, rounded to a thousandth. */
+export function amountInUnit(
+	quantity: number,
+	unit: UnitRef,
+	line: ItemUnits,
+): number {
+	const per = thousandthsIn(unit, line.baseUnit, line.units) ?? QUANTITY_SCALE
+	return Math.round((quantity / per) * 1000) / 1000
+}
+
+/** What a line starts at: what was asked or planned (send), or what was sent (receive). */
+export function transferStartAmount(
+	line: StationTransferLine,
+	step: 'send' | 'receive',
+): number {
+	const quantity =
+		step === 'send'
+			? line.requestedQuantity
+			: (line.sentQuantity ?? line.requestedQuantity)
+	return amountInUnit(quantity, line.countUnit, line)
+}
+
+export type TransferLineEdit = {
+	itemId: string
+	/** Unticked: none of it. */
+	included: boolean
+	amount: number | null
+	unit: UnitRef
+}
+
+/**
+ * The `lines` a send or receive carries: the ticked lines with their amounts,
+ * the unticked ones as zero. Left out entirely when nothing was changed from
+ * what the office planned (or sent), so the region uses its own exact figures.
+ */
+export function transferLinesBody(
+	transfer: StationTransfer,
+	step: 'send' | 'receive',
+	edits: readonly TransferLineEdit[],
+): Array<{ itemId: string; amount: number; unit: UnitRef }> | undefined {
+	const byItem = new Map(edits.map((edit) => [edit.itemId, edit]))
+	let changed = false
+	const lines = transfer.lines.map((line) => {
+		const edit = byItem.get(line.itemId)
+		const start = transferStartAmount(line, step)
+		const amount = edit && edit.included ? (edit.amount ?? 0) : 0
+		const unit = edit?.unit ?? line.countUnit
+		if (
+			!edit ||
+			!edit.included ||
+			unit !== line.countUnit ||
+			amount !== start
+		) {
+			changed = true
+		}
+		return { itemId: line.itemId, amount, unit }
+	})
+	return changed ? lines : undefined
+}
+
+/** A send needs something above zero; a receipt may be all zero (nothing arrived). */
+export function transferSendable(
+	lines: Array<{ amount: number }> | undefined,
+	step: 'send' | 'receive',
+): boolean {
+	if (lines === undefined) return true
+	return step === 'receive' || lines.some((line) => line.amount > 0)
 }

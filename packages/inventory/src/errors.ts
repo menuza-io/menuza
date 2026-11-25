@@ -66,6 +66,13 @@ export const INVENTORY_ERROR_CODES = [
 	'second_count_pending',
 	'second_count_same_person',
 	'schedule_invalid',
+	// Transfers, dish waste, corrections (additive): a branch asked for an item
+	// the sender does not offer (#526), a dish with no recipe to waste (#517),
+	// a waste entry already corrected or reversed (#522).
+	'item_not_requestable',
+	'recipe_missing',
+	'already_corrected',
+	'already_reversed',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

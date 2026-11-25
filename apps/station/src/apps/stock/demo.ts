@@ -294,6 +294,47 @@ export function createDemoStockApi(): StockApi {
 		async undoWaste() {
 			return { id: `demo-undo-${++serial}` }
 		},
+		async wasteDish() {
+			return {
+				id: `demo-dish-${++serial}`,
+				entries: 1,
+				basis: 'recipe' as const,
+				duplicate: false,
+			}
+		},
+		async undoDishWaste() {
+			return { id: `demo-undo-${++serial}` }
+		},
+		async transferSend(id) {
+			return {
+				id,
+				number: 1,
+				status: 'sent' as const,
+				version: 2,
+				missingLines: 0,
+				duplicate: false,
+			}
+		},
+		async transferReceive(id) {
+			return {
+				id,
+				number: 1,
+				status: 'received' as const,
+				version: 3,
+				missingLines: 0,
+				duplicate: false,
+			}
+		},
+		async transferRequest() {
+			return {
+				id: `demo-transfer-${++serial}`,
+				number: serial,
+				status: 'requested' as const,
+				version: 1,
+				missingLines: 0,
+				duplicate: false,
+			}
+		},
 		async delivery(body) {
 			return {
 				id: `demo-delivery-${++serial}`,

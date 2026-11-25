@@ -36,7 +36,7 @@ msgstr "{0, plural, one {# cover} other {# covers}}"
 #~ msgstr "{0, plural, one {# digit entered} other {# digits entered}}"
 
 #. placeholder {0}: closed.length
-#: src/apps/stock/SyncSheet.tsx:316
+#: src/apps/stock/SyncSheet.tsx:335
 msgid "{0, plural, one {# entry will be deleted from this tablet.} other {# entries will be deleted from this tablet.}}"
 msgstr "{0, plural, one {# entry will be deleted from this tablet.} other {# entries will be deleted from this tablet.}}"
 
@@ -54,8 +54,8 @@ msgstr "{0, plural, one {# item is on this count.} other {# items are on this co
 
 #. placeholder {0}: catalog.items.filter((item) => item.isKey).length
 #. placeholder {0}: catalog.items.length
-#: src/apps/stock/Stock.tsx:420
-#: src/apps/stock/Stock.tsx:451
+#: src/apps/stock/Stock.tsx:432
+#: src/apps/stock/Stock.tsx:463
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
 
@@ -75,7 +75,7 @@ msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, one {# minute} other {# minutes}}"
 
 #. placeholder {0}: stats.failed
-#: src/apps/stock/Stock.tsx:247
+#: src/apps/stock/Stock.tsx:259
 msgid "{0, plural, one {# needs attention} other {# need attention}}"
 msgstr "{0, plural, one {# needs attention} other {# need attention}}"
 
@@ -100,7 +100,7 @@ msgid "{0, plural, one {# party} other {# parties}}"
 msgstr "{0, plural, one {# party} other {# parties}}"
 
 #. placeholder {0}: waiting.length
-#: src/apps/stock/SyncSheet.tsx:161
+#: src/apps/stock/SyncSheet.tsx:180
 msgid "{0, plural, one {# thing is saved on this tablet and will be sent when it can.} other {# things are saved on this tablet and will be sent when it can.}}"
 msgstr "{0, plural, one {# thing is saved on this tablet and will be sent when it can.} other {# things are saved on this tablet and will be sent when it can.}}"
 
@@ -109,7 +109,7 @@ msgstr "{0, plural, one {# thing is saved on this tablet and will be sent when i
 #~ msgstr "{0, plural, one {# visit before} other {# visits before}}"
 
 #. placeholder {0}: stats.waiting
-#: src/apps/stock/Stock.tsx:253
+#: src/apps/stock/Stock.tsx:265
 msgid "{0, plural, one {# waiting to send} other {# waiting to send}}"
 msgstr "{0, plural, one {# waiting to send} other {# waiting to send}}"
 
@@ -118,7 +118,7 @@ msgstr "{0, plural, one {# waiting to send} other {# waiting to send}}"
 #~ msgstr "{0, plural, one {# waiting} other {# waiting}}"
 
 #. placeholder {0}: waiting.length - 12
-#: src/apps/stock/SyncSheet.tsx:200
+#: src/apps/stock/SyncSheet.tsx:219
 msgid "{0, plural, one {and # more} other {and # more}}"
 msgstr "{0, plural, one {and # more} other {and # more}}"
 
@@ -133,7 +133,7 @@ msgid "{0, plural, one {Longest wait # min} other {Longest wait # min}}"
 msgstr "{0, plural, one {Longest wait # min} other {Longest wait # min}}"
 
 #. placeholder {0}: closed.length
-#: src/apps/stock/SyncSheet.tsx:214
+#: src/apps/stock/SyncSheet.tsx:233
 msgid "{0, plural, one {Not accepted, the count was already finished: # entry} other {Not accepted, the count was already finished: # entries}}"
 msgstr "{0, plural, one {Not accepted, the count was already finished: # entry} other {Not accepted, the count was already finished: # entries}}"
 
@@ -262,7 +262,7 @@ msgstr "{0} to {1}"
 msgid "{ago} ago"
 msgstr "{ago} ago"
 
-#: src/apps/stock/model.ts:129
+#: src/apps/stock/model.ts:132
 msgid "{amount, plural, one {piece} other {pieces}}"
 msgstr "{amount, plural, one {piece} other {pieces}}"
 
@@ -318,9 +318,13 @@ msgstr "{count, plural, one {# star} other {# stars}}"
 #~ msgid "{count, plural, one {# update at the stand} other {# updates at the stand}}"
 #~ msgstr "{count, plural, one {# update at the stand} other {# updates at the stand}}"
 
-#: src/apps/stock/SyncSheet.tsx:68
+#: src/apps/stock/SyncSheet.tsx:87
 msgid "{count, plural, one {Delivery of # item} other {Delivery of # items}}"
 msgstr "{count, plural, one {Delivery of # item} other {Delivery of # items}}"
+
+#: src/apps/stock/SyncSheet.tsx:72
+msgid "{count, plural, one {Request for # item} other {Request for # items}}"
+msgstr "{count, plural, one {Request for # item} other {Request for # items}}"
 
 #: src/screens/Cart.tsx:441
 msgid "{count, plural, one {Subtotal · # item} other {Subtotal · # items}}"
@@ -388,6 +392,10 @@ msgstr "{found, plural, one {# result} other {# results}}"
 #: src/apps/reservations/Floor.tsx:735
 msgid "{free} of {total} free"
 msgstr "{free} of {total} free"
+
+#: src/apps/stock/TransfersSheet.tsx:280
+msgid "{from} to {to}"
+msgstr "{from} to {to}"
 
 #: src/apps/reservations/BookPanel.tsx:1559
 msgid "{heldFor, plural, one {Text on its way, holds # min} other {Text on its way, holds # min}}"
@@ -545,6 +553,10 @@ msgstr "{moreText} more to {nextName}"
 msgid "{name} arrived"
 msgstr "{name} arrived"
 
+#: src/apps/stock/TransfersSheet.tsx:208
+msgid "{name} asked for"
+msgstr "{name} asked for"
+
 #: src/apps/stock/CountScreen.tsx:780
 msgid "{name} in {unitName}"
 msgstr "{name} in {unitName}"
@@ -593,7 +605,7 @@ msgstr "{name}, sold out"
 msgid "{name}, sold out, {inCart} in order"
 msgstr "{name}, sold out, {inCart} in order"
 
-#: src/apps/stock/SyncSheet.tsx:86
+#: src/apps/stock/SyncSheet.tsx:105
 msgid "{name}: {text} {unit}"
 msgstr "{name}: {text} {unit}"
 
@@ -609,7 +621,7 @@ msgstr "{name}: choose at least {min}"
 msgid "{name}: choose at most {max}"
 msgstr "{name}: choose at most {max}"
 
-#: src/apps/stock/SyncSheet.tsx:78
+#: src/apps/stock/SyncSheet.tsx:97
 msgid "{name}: cleared"
 msgstr "{name}: cleared"
 
@@ -773,7 +785,7 @@ msgstr "{time}, {who}, party of {size}, {standing}, {where}"
 msgid "{toGo} to go"
 msgstr "{toGo} to go"
 
-#: src/apps/stock/Stock.tsx:438
+#: src/apps/stock/Stock.tsx:450
 msgid "{total, plural, one {# item} other {# items}}"
 msgstr "{total, plural, one {# item} other {# items}}"
 
@@ -829,6 +841,10 @@ msgstr "{waiting, plural, one {# to seat} other {# to seat}}"
 #: src/screens/SettingsSheet.tsx:370
 msgid "{waitingOrders, plural, one {# order has not been sent yet. They stay on this device and send once it is paired again.} other {# orders have not been sent yet. They stay on this device and send once it is paired again.}}"
 msgstr "{waitingOrders, plural, one {# order has not been sent yet. They stay on this device and send once it is paired again.} other {# orders have not been sent yet. They stay on this device and send once it is paired again.}}"
+
+#: src/apps/stock/TransfersSheet.tsx:262
+msgid "{waitingRequests, plural, one {# request is saved and waiting to send.} other {# requests are saved and waiting to send.}}"
+msgstr "{waitingRequests, plural, one {# request is saved and waiting to send.} other {# requests are saved and waiting to send.}}"
 
 #: src/apps/reservations/BookingSheet.tsx:515
 msgid "{wantedGone} is not open for {size}. Choose another time."
@@ -1057,7 +1073,7 @@ msgstr "A manager approves this with their PIN"
 msgid "A manager cancelled this count. Nothing more can be added."
 msgstr "A manager cancelled this count. Nothing more can be added."
 
-#: src/apps/stock/SyncSheet.tsx:222
+#: src/apps/stock/SyncSheet.tsx:241
 msgid "A manager finished the count before these reached the office, so the office did not keep them and cannot see them. They are saved only on this tablet. Write them down, or count them again in a new count, before you clear them."
 msgstr "A manager finished the count before these reached the office, so the office did not keep them and cannot see them. They are saved only on this tablet. Write them down, or count them again in a new count, before you clear them."
 
@@ -1069,7 +1085,7 @@ msgstr "A manager handles this booking: it has a deposit."
 msgid "A manager has these, clear"
 msgstr "A manager has these, clear"
 
-#: src/apps/stock/Stock.tsx:574
+#: src/apps/stock/Stock.tsx:592
 msgid "A manager is reviewing this count"
 msgstr "A manager is reviewing this count"
 
@@ -1086,9 +1102,13 @@ msgstr "A manager must sign in to change the kitchen setup."
 msgid "A manager must sign in to receive a delivery."
 msgstr "A manager must sign in to receive a delivery."
 
-#: src/apps/stock/messages.ts:51
+#: src/apps/stock/messages.ts:59
 msgid "A manager must sign in to send deliveries."
 msgstr "A manager must sign in to send deliveries."
+
+#: src/apps/stock/TransfersSheet.tsx:194
+msgid "A manager must sign in to send or receive stock."
+msgstr "A manager must sign in to send or receive stock."
 
 #: src/apps/kitchen/Kitchen.tsx:307
 msgid "A manager needs to sign in to change the time."
@@ -1196,6 +1216,7 @@ msgid "Add a tip?"
 msgstr "Add a tip?"
 
 #: src/apps/stock/DeliverySheet.tsx:598
+#: src/apps/stock/TransfersSheet.tsx:764
 msgid "Add an item"
 msgstr "Add an item"
 
@@ -1417,6 +1438,10 @@ msgstr "Android app"
 msgid "Anniversary"
 msgstr "Anniversary"
 
+#: src/apps/stock/TransfersSheet.tsx:84
+msgid "Another place"
+msgstr "Another place"
+
 #: src/screens/OrdersSheet.tsx:69
 msgid "another terminal had already taken this tab over"
 msgstr "another terminal had already taken this tab over"
@@ -1481,6 +1506,10 @@ msgstr "Apps"
 msgid "Areas"
 msgstr "Areas"
 
+#: src/apps/stock/TransfersSheet.tsx:531
+msgid "Arrived"
+msgstr "Arrived"
+
 #: src/apps/reservations/Dock.tsx:101
 #~ msgid "Arriving"
 #~ msgstr "Arriving"
@@ -1507,9 +1536,30 @@ msgstr "ASAP"
 msgid "Ask a manager for a pairing link in the Menuza app. Open it on this device, or paste it (or just the code) here."
 msgstr "Ask a manager for a pairing link in the Menuza app. Open it on this device, or paste it (or just the code) here."
 
+#: src/apps/stock/TransfersSheet.tsx:125
+#: src/apps/stock/TransfersSheet.tsx:294
+msgid "Ask for stock"
+msgstr "Ask for stock"
+
 #: src/screens/LoyaltySheet.tsx:526
 msgid "Ask them to open their wallet and approve it, or text them a code."
 msgstr "Ask them to open their wallet and approve it, or text them a code."
+
+#: src/apps/stock/TransfersSheet.tsx:673
+msgid "Ask which place?"
+msgstr "Ask which place?"
+
+#: src/apps/stock/TransfersSheet.tsx:254
+msgid "Asked {name}"
+msgstr "Asked {name}"
+
+#: src/apps/stock/TransfersSheet.tsx:246
+msgid "Asked for"
+msgstr "Asked for"
+
+#: src/apps/stock/TransfersSheet.tsx:536
+msgid "Asked for {was}"
+msgstr "Asked for {was}"
 
 #: src/screens/OrdersSheet.tsx:1068
 msgid "Asking the other terminals…"
@@ -1519,7 +1569,7 @@ msgstr "Asking the other terminals…"
 msgid "Assign servers"
 msgstr "Assign servers"
 
-#: src/apps/stock/Stock.tsx:394
+#: src/apps/stock/Stock.tsx:406
 msgid "Assigned to you"
 msgstr "Assigned to you"
 
@@ -1564,6 +1614,8 @@ msgstr "Awaiting payment"
 #: src/apps/stock/CountScreen.tsx:300
 #: src/apps/stock/DeliverySheet.tsx:347
 #: src/apps/stock/DeliverySheet.tsx:370
+#: src/apps/stock/TransfersSheet.tsx:590
+#: src/apps/stock/TransfersSheet.tsx:823
 #: src/apps/timeclock/TimeClock.tsx:805
 #: src/screens/AuditSheet.tsx:115
 msgid "Back"
@@ -1605,7 +1657,7 @@ msgstr "Back to Stock"
 msgid "Bagel"
 msgstr "Bagel"
 
-#: src/apps/stock/messages.ts:128
+#: src/apps/stock/messages.ts:136
 msgid "Bakery"
 msgstr "Bakery"
 
@@ -1626,7 +1678,7 @@ msgstr "Base unit"
 msgid "Being prepared"
 msgstr "Being prepared"
 
-#: src/apps/stock/Stock.tsx:593
+#: src/apps/stock/Stock.tsx:611
 msgid "Being reviewed"
 msgstr "Being reviewed"
 
@@ -1873,7 +1925,7 @@ msgstr "Cancelled · items taken off"
 msgid "Cancelled · stop preparing"
 msgstr "Cancelled · stop preparing"
 
-#: src/apps/stock/messages.ts:116
+#: src/apps/stock/messages.ts:124
 msgid "Cancelled after cooking"
 msgstr "Cancelled after cooking"
 
@@ -1977,7 +2029,7 @@ msgstr "Cash out"
 
 #: src/apps/stock/CashPurchaseForm.tsx:103
 #: src/apps/stock/DeliverySheet.tsx:551
-#: src/apps/stock/Stock.tsx:298
+#: src/apps/stock/Stock.tsx:310
 msgid "Cash purchase"
 msgstr "Cash purchase"
 
@@ -2017,6 +2069,10 @@ msgstr "Change"
 msgid "Change {changeText}"
 msgstr "Change {changeText}"
 
+#: src/apps/stock/DishWaste.tsx:155
+msgid "Change dish"
+msgstr "Change dish"
+
 #: src/screens/Checkout.tsx:377
 msgid "Change due"
 msgstr "Change due"
@@ -2025,7 +2081,7 @@ msgstr "Change due"
 msgid "Change from the bank"
 msgstr "Change from the bank"
 
-#: src/apps/stock/WasteSheet.tsx:358
+#: src/apps/stock/WasteSheet.tsx:487
 msgid "Change item"
 msgstr "Change item"
 
@@ -2044,6 +2100,10 @@ msgstr "Change size or time"
 #: src/apps/reservations/BookPanel.tsx:1305
 msgid "Changed"
 msgstr "Changed"
+
+#: src/apps/stock/TransfersSheet.tsx:364
+msgid "Changed in the app"
+msgstr "Changed in the app"
 
 #: src/apps/orders/Controls.tsx:411
 msgid "Changes reach the website and QR menus within seconds and are recorded in the activity log."
@@ -2177,7 +2237,7 @@ msgstr "Chosen"
 msgid "Chosen tables"
 msgstr "Chosen tables"
 
-#: src/apps/stock/messages.ts:132
+#: src/apps/stock/messages.ts:140
 msgid "Cleaning"
 msgstr "Cleaning"
 
@@ -2202,12 +2262,12 @@ msgstr "Clear order"
 msgid "Clear search"
 msgstr "Clear search"
 
-#: src/apps/stock/SyncSheet.tsx:241
-#: src/apps/stock/SyncSheet.tsx:305
+#: src/apps/stock/SyncSheet.tsx:260
+#: src/apps/stock/SyncSheet.tsx:324
 msgid "Clear these"
 msgstr "Clear these"
 
-#: src/apps/stock/SyncSheet.tsx:294
+#: src/apps/stock/SyncSheet.tsx:313
 msgid "Clear these entries?"
 msgstr "Clear these entries?"
 
@@ -2239,8 +2299,9 @@ msgstr "Clocked out"
 #: src/App.tsx:1296
 #: src/apps/reservations/discard.tsx:76
 #: src/apps/stock/DeliverySheet.tsx:422
-#: src/apps/stock/SyncSheet.tsx:123
-#: src/apps/stock/WasteSheet.tsx:256
+#: src/apps/stock/SyncSheet.tsx:142
+#: src/apps/stock/TransfersSheet.tsx:147
+#: src/apps/stock/WasteSheet.tsx:354
 #: src/apps/timeclock/AfterPunch.tsx:238
 #: src/apps/timeclock/TimeClock.tsx:1301
 #: src/ui/primitives.tsx:394
@@ -2342,6 +2403,14 @@ msgstr "Confirm {appliedText}"
 msgid "Confirm once this amount has been collected another way."
 msgstr "Confirm once this amount has been collected another way."
 
+#: src/apps/stock/TransfersSheet.tsx:586
+msgid "Confirm received"
+msgstr "Confirm received"
+
+#: src/apps/stock/TransfersSheet.tsx:584
+msgid "Confirm sent"
+msgstr "Confirm sent"
+
 #: src/apps/reservations/BookingSheet.tsx:808
 msgid "Confirmation code"
 msgstr "Confirmation code"
@@ -2388,7 +2457,7 @@ msgstr "Contact shown"
 msgid "Continue"
 msgstr "Continue"
 
-#: src/apps/stock/Stock.tsx:356
+#: src/apps/stock/Stock.tsx:368
 msgid "Continue a count"
 msgstr "Continue a count"
 
@@ -2465,8 +2534,8 @@ msgstr "Could not update the stock list. Using the copy saved on this tablet."
 msgid "Couldn’t update the menu ({catalogError}). Selling from the copy saved on this device."
 msgstr "Couldn’t update the menu ({catalogError}). Selling from the copy saved on this device."
 
-#: src/apps/stock/Stock.tsx:206
-#: src/apps/stock/Stock.tsx:336
+#: src/apps/stock/Stock.tsx:207
+#: src/apps/stock/Stock.tsx:348
 msgid "Count"
 msgstr "Count"
 
@@ -2486,7 +2555,7 @@ msgstr "Count in tenths"
 msgid "Count the cash in the drawer before the first sale. Every sale until you close the shift is counted against it."
 msgstr "Count the cash in the drawer before the first sale. Every sale until you close the shift is counted against it."
 
-#: src/apps/stock/Stock.tsx:207
+#: src/apps/stock/Stock.tsx:208
 msgid "Count what is on the shelves"
 msgstr "Count what is on the shelves"
 
@@ -2495,7 +2564,7 @@ msgid "Count what you kept in cash. Card tips are counted for you."
 msgstr "Count what you kept in cash. Card tips are counted for you."
 
 #: src/apps/stock/CountScreen.tsx:414
-#: src/apps/stock/Stock.tsx:571
+#: src/apps/stock/Stock.tsx:589
 msgid "counted"
 msgstr "counted"
 
@@ -2518,7 +2587,7 @@ msgstr "Counter"
 msgid "Counting {title}"
 msgstr "Counting {title}"
 
-#: src/apps/stock/Stock.tsx:377
+#: src/apps/stock/Stock.tsx:389
 msgid "Counts due today"
 msgstr "Counts due today"
 
@@ -2573,7 +2642,7 @@ msgstr "Customer name"
 msgid "Daily limits"
 msgstr "Daily limits"
 
-#: src/apps/stock/messages.ts:126
+#: src/apps/stock/messages.ts:134
 msgid "Dairy"
 msgstr "Dairy"
 
@@ -2620,7 +2689,7 @@ msgstr "Deliver to"
 #: src/apps/orders/Orders.tsx:1380
 #: src/apps/orders/Orders.tsx:1822
 #: src/apps/orders/Orders.tsx:2372
-#: src/apps/stock/Stock.tsx:218
+#: src/apps/stock/Stock.tsx:219
 msgid "Delivery"
 msgstr "Delivery"
 
@@ -2782,6 +2851,10 @@ msgstr "Discounts are off: this till’s clock moved back since it got its disco
 msgid "Discounts with a use limit do not apply at the till by themselves, because it cannot count uses offline."
 msgstr "Discounts with a use limit do not apply at the till by themselves, because it cannot count uses offline."
 
+#: src/apps/stock/WasteSheet.tsx:662
+msgid "Dishes"
+msgstr "Dishes"
+
 #: src/apps/reservations/FreeTableBanner.tsx:58
 #: src/screens/ManualDiscount.tsx:467
 #: src/ui/motion.tsx:222
@@ -2798,7 +2871,7 @@ msgstr "Disputed"
 #: src/apps/orders/Orders.tsx:302
 #: src/apps/reservations/BookingSheet.tsx:314
 #: src/apps/stock/DeliverySheet.tsx:317
-#: src/apps/stock/WasteSheet.tsx:256
+#: src/apps/stock/WasteSheet.tsx:354
 #: src/apps/timeclock/TimeClock.tsx:1412
 #: src/screens/Cart.tsx:678
 #: src/screens/GiftCardSheet.tsx:160
@@ -2816,7 +2889,7 @@ msgstr "Done · clear ticket"
 msgid "Done counting?"
 msgstr "Done counting?"
 
-#: src/apps/stock/messages.ts:130
+#: src/apps/stock/messages.ts:138
 msgid "Drinks"
 msgstr "Drinks"
 
@@ -2830,11 +2903,11 @@ msgstr "Drinks"
 msgid "Drive-through"
 msgstr "Drive-through"
 
-#: src/apps/stock/messages.ts:113
+#: src/apps/stock/messages.ts:121
 msgid "Dropped"
 msgstr "Dropped"
 
-#: src/apps/stock/messages.ts:127
+#: src/apps/stock/messages.ts:135
 msgid "Dry goods"
 msgstr "Dry goods"
 
@@ -2996,6 +3069,10 @@ msgstr "Enter a whole number, 0 or more."
 msgid "Enter an amount"
 msgstr "Enter an amount"
 
+#: src/apps/stock/TransfersSheet.tsx:463
+msgid "Enter an amount above zero for at least one item."
+msgstr "Enter an amount above zero for at least one item."
+
 #: src/screens/GiftCardSheet.tsx:175
 msgid "Enter an amount above zero."
 msgstr "Enter an amount above zero."
@@ -3058,13 +3135,13 @@ msgid "Evening"
 msgstr "Evening"
 
 #: src/apps/stock/CountScreen.tsx:390
-#: src/apps/stock/Stock.tsx:389
-#: src/apps/stock/Stock.tsx:449
-#: src/apps/stock/Stock.tsx:545
+#: src/apps/stock/Stock.tsx:401
+#: src/apps/stock/Stock.tsx:461
+#: src/apps/stock/Stock.tsx:563
 msgid "Everything"
 msgstr "Everything"
 
-#: src/apps/stock/SyncSheet.tsx:155
+#: src/apps/stock/SyncSheet.tsx:174
 msgid "Everything has been sent."
 msgstr "Everything has been sent."
 
@@ -3094,7 +3171,7 @@ msgstr "Expected deliveries"
 msgid "Expected in drawer"
 msgstr "Expected in drawer"
 
-#: src/apps/stock/messages.ts:110
+#: src/apps/stock/messages.ts:118
 msgid "Expired"
 msgstr "Expired"
 
@@ -3137,6 +3214,7 @@ msgstr "Finding times…"
 #: src/apps/reservations/BookPanel.tsx:1248
 #: src/apps/reservations/labels.ts:30
 #: src/apps/reservations/sheets.tsx:20
+#: src/apps/stock/TransfersSheet.tsx:271
 msgid "Finished"
 msgstr "Finished"
 
@@ -3189,6 +3267,10 @@ msgstr "Free for the rest of the day"
 #: src/apps/reservations/TableSheet.tsx:386
 msgid "Free until {untilText}"
 msgstr "Free until {untilText}"
+
+#: src/apps/stock/TransfersSheet.tsx:230
+msgid "From {name}"
+msgstr "From {name}"
 
 #: src/screens/MenuGrid.tsx:458
 msgid "From {price}"
@@ -3279,6 +3361,10 @@ msgstr "Gluten free"
 #: src/apps/reservations/BookPanel.tsx:487
 msgid "Go to the next party due"
 msgstr "Go to the next party due"
+
+#: src/apps/stock/TransfersSheet.tsx:209
+msgid "Going to {name}"
+msgstr "Going to {name}"
 
 #: src/apps/timeclock/AfterPunch.tsx:264
 msgid "Got it"
@@ -3459,6 +3545,10 @@ msgstr "Holds until {holdsUntil}, then they leave the line"
 msgid "Host stand"
 msgstr "Host stand"
 
+#: src/apps/stock/DishWaste.tsx:160
+msgid "How many"
+msgstr "How many"
+
 #: src/apps/orders/DailyLimits.tsx:124
 msgid "How many of each limited dish can still be sold today. Add more when the kitchen makes another batch, or set the number left after a count. The count starts again with the next business day."
 msgstr "How many of each limited dish can still be sold today. Add more when the kitchen makes another batch, or set the number left after a count. The count starts again with the next business day."
@@ -3468,7 +3558,7 @@ msgid "How many?"
 msgstr "How many?"
 
 #: src/apps/orders/Orders.tsx:2224
-#: src/apps/stock/WasteSheet.tsx:363
+#: src/apps/stock/WasteSheet.tsx:492
 msgid "How much"
 msgstr "How much"
 
@@ -3499,8 +3589,8 @@ msgstr "In"
 
 #: src/apps/kitchen/PrepView.tsx:160
 #: src/apps/orders/Orders.tsx:1636
-#: src/apps/stock/Stock.tsx:312
-#: src/apps/stock/Stock.tsx:316
+#: src/apps/stock/Stock.tsx:324
+#: src/apps/stock/Stock.tsx:328
 msgid "In progress"
 msgstr "In progress"
 
@@ -3538,7 +3628,7 @@ msgstr "Invoice {invoiceNumber}"
 msgid "Invoice number (optional)"
 msgstr "Invoice number (optional)"
 
-#: src/apps/stock/SyncSheet.tsx:64
+#: src/apps/stock/SyncSheet.tsx:83
 msgid "Invoice photo"
 msgstr "Invoice photo"
 
@@ -3550,7 +3640,7 @@ msgstr "Invoice photo file"
 msgid "iOS app"
 msgstr "iOS app"
 
-#: src/apps/stock/messages.ts:26
+#: src/apps/stock/messages.ts:34
 msgid "It could not be sent because what it belongs to was refused."
 msgstr "It could not be sent because what it belongs to was refused."
 
@@ -3636,7 +3726,7 @@ msgstr "Joined online"
 msgid "Just changed"
 msgstr "Just changed"
 
-#: src/apps/stock/WasteSheet.tsx:274
+#: src/apps/stock/WasteSheet.tsx:372
 msgid "Just logged"
 msgstr "Just logged"
 
@@ -3677,7 +3767,7 @@ msgstr "Keep paired"
 msgid "Keep the order"
 msgstr "Keep the order"
 
-#: src/apps/stock/SyncSheet.tsx:308
+#: src/apps/stock/SyncSheet.tsx:327
 msgid "Keep them"
 msgstr "Keep them"
 
@@ -3685,7 +3775,7 @@ msgstr "Keep them"
 msgid "Keep training"
 msgstr "Keep training"
 
-#: src/apps/stock/WasteSheet.tsx:486
+#: src/apps/stock/WasteSheet.tsx:616
 msgid "Keep typing to narrow the list."
 msgstr "Keep typing to narrow the list."
 
@@ -3701,7 +3791,7 @@ msgstr "Keep working"
 msgid "Key item"
 msgstr "Key item"
 
-#: src/apps/stock/Stock.tsx:418
+#: src/apps/stock/Stock.tsx:430
 msgid "Key items (quick count)"
 msgstr "Key items (quick count)"
 
@@ -3846,7 +3936,7 @@ msgstr "Last shift closed remotely by {0}"
 #: src/apps/kitchen/Kitchen.tsx:929
 #: src/apps/orders/Orders.tsx:625
 #: src/apps/reservations/BookPanel.tsx:234
-#: src/apps/stock/Stock.tsx:395
+#: src/apps/stock/Stock.tsx:407
 msgid "Late"
 msgstr "Late"
 
@@ -3926,8 +4016,8 @@ msgid "Loading the order…"
 msgstr "Loading the order…"
 
 #: src/apps/stock/DeliverySheet.tsx:408
-#: src/apps/stock/Stock.tsx:343
-#: src/apps/stock/WasteSheet.tsx:340
+#: src/apps/stock/Stock.tsx:355
+#: src/apps/stock/WasteSheet.tsx:446
 msgid "Loading the stock list…"
 msgstr "Loading the stock list…"
 
@@ -3959,7 +4049,7 @@ msgstr "Lock the till, signed in as {staffName}"
 msgid "Locked. Enter your PIN."
 msgstr "Locked. Enter your PIN."
 
-#: src/apps/stock/Stock.tsx:213
+#: src/apps/stock/Stock.tsx:214
 msgid "Log food thrown away"
 msgstr "Log food thrown away"
 
@@ -3968,8 +4058,8 @@ msgid "Log it as waste?"
 msgstr "Log it as waste?"
 
 #: src/apps/kitchen/Kitchen.tsx:512
-#: src/apps/stock/WasteSheet.tsx:253
-#: src/apps/stock/WasteSheet.tsx:266
+#: src/apps/stock/WasteSheet.tsx:351
+#: src/apps/stock/WasteSheet.tsx:364
 msgid "Log waste"
 msgstr "Log waste"
 
@@ -3977,7 +4067,7 @@ msgstr "Log waste"
 msgid "Logged as waste."
 msgstr "Logged as waste."
 
-#: src/apps/stock/WasteSheet.tsx:241
+#: src/apps/stock/WasteSheet.tsx:339
 msgid "Logging as {staffName}"
 msgstr "Logging as {staffName}"
 
@@ -4071,7 +4161,7 @@ msgstr "Matcha"
 msgid "Meal break"
 msgstr "Meal break"
 
-#: src/apps/stock/messages.ts:123
+#: src/apps/stock/messages.ts:131
 msgid "Meat"
 msgstr "Meat"
 
@@ -4130,6 +4220,10 @@ msgstr "Millilitres (ml)"
 msgid "Mine · {0}"
 msgstr "Mine · {0}"
 
+#: src/apps/stock/TransfersSheet.tsx:397
+msgid "Missing in transit:"
+msgstr "Missing in transit:"
+
 #: src/screens/OrdersSheet.tsx:973
 msgid "Money goes back the way it was paid ({tenders}). Card refunds are made on the card terminal first; this records them."
 msgstr "Money goes back the way it was paid ({tenders}). Card refunds are made on the card terminal first; this records them."
@@ -4142,6 +4236,10 @@ msgstr "More"
 #: src/screens/Cart.tsx:812
 msgid "More {0}"
 msgstr "More {0}"
+
+#: src/apps/stock/messages.ts:27
+msgid "More arrived than was sent."
+msgstr "More arrived than was sent."
 
 #: src/apps/reservations/sheets.tsx:440
 msgid "Morning"
@@ -4206,7 +4304,7 @@ msgstr "Name: {detail}"
 msgid "Needs a bigger table"
 msgstr "Needs a bigger table"
 
-#: src/apps/stock/SyncSheet.tsx:249
+#: src/apps/stock/SyncSheet.tsx:268
 msgid "Needs attention"
 msgstr "Needs attention"
 
@@ -4324,11 +4422,11 @@ msgstr "No connection"
 msgid "No connection, and this terminal has not seen this PIN before, so it cannot check it now. Make sure it is yours: the punch is sent, and checked, when the connection is back."
 msgstr "No connection, and this terminal has not seen this PIN before, so it cannot check it now. Make sure it is yours: the punch is sent, and checked, when the connection is back."
 
-#: src/apps/stock/messages.ts:87
+#: src/apps/stock/messages.ts:95
 msgid "No connection. Connect and try again."
 msgstr "No connection. Connect and try again."
 
-#: src/apps/stock/messages.ts:58
+#: src/apps/stock/messages.ts:66
 msgid "No connection. It will try again by itself."
 msgstr "No connection. It will try again by itself."
 
@@ -4356,6 +4454,10 @@ msgstr "No connection. Try again in a moment."
 msgid "No connection. Your punch is saved on this terminal and sent when it is back; your PIN is checked then."
 msgstr "No connection. Your punch is saved on this terminal and sent when it is back; your PIN is checked then."
 
+#: src/apps/stock/DishWaste.tsx:119
+msgid "No dish matches that."
+msgstr "No dish matches that."
+
 #: src/apps/reservations/PickBar.tsx:230
 msgid "No free tables to combine"
 msgstr "No free tables to combine"
@@ -4364,7 +4466,7 @@ msgstr "No free tables to combine"
 msgid "No gift card matches that number."
 msgstr "No gift card matches that number."
 
-#: src/apps/stock/WasteSheet.tsx:462
+#: src/apps/stock/WasteSheet.tsx:592
 msgid "No item matches that."
 msgstr "No item matches that."
 
@@ -4641,7 +4743,7 @@ msgstr "Not open"
 msgid "Not sent"
 msgstr "Not sent"
 
-#: src/apps/stock/Stock.tsx:583
+#: src/apps/stock/Stock.tsx:601
 msgid "Not sent yet"
 msgstr "Not sent yet"
 
@@ -4659,7 +4761,9 @@ msgstr "Not up to date"
 msgid "Not yet"
 msgstr "Not yet"
 
-#: src/apps/stock/WasteSheet.tsx:411
+#: src/apps/stock/DishWaste.tsx:241
+#: src/apps/stock/TransfersSheet.tsx:798
+#: src/apps/stock/WasteSheet.tsx:540
 #: src/screens/CustomItemSheet.tsx:258
 msgid "Note (optional)"
 msgstr "Note (optional)"
@@ -4671,6 +4775,10 @@ msgstr "Note for the team"
 #: src/screens/MenuGrid.tsx:296
 msgid "Nothing found"
 msgstr "Nothing found"
+
+#: src/apps/stock/TransfersSheet.tsx:223
+msgid "Nothing is on its way."
+msgstr "Nothing is on its way."
 
 #: src/apps/reservations/BookPanel.tsx:505
 msgid "Nothing matches these filters."
@@ -4695,6 +4803,10 @@ msgstr "Nothing to make right now."
 #: src/apps/orders/Orders.tsx:646
 msgid "Nothing to pay"
 msgstr "Nothing to pay"
+
+#: src/apps/stock/TransfersSheet.tsx:199
+msgid "Nothing to send."
+msgstr "Nothing to send."
 
 #: src/apps/reservations/BookPanel.tsx:490
 #: src/apps/reservations/BookPanel.tsx:921
@@ -4732,7 +4844,7 @@ msgid "Occasion: {occasionLabel}"
 msgstr "Occasion: {occasionLabel}"
 
 #: src/apps/stock/CountScreen.tsx:410
-#: src/apps/stock/Stock.tsx:567
+#: src/apps/stock/Stock.tsx:585
 msgid "of"
 msgstr "of"
 
@@ -4776,7 +4888,7 @@ msgstr "Offline: this waits for the connection."
 msgid "Offline: your punch is saved and sent later."
 msgstr "Offline: your punch is saved and sent later."
 
-#: src/apps/stock/SyncSheet.tsx:333
+#: src/apps/stock/SyncSheet.tsx:352
 msgid "On hold"
 msgstr "On hold"
 
@@ -4789,6 +4901,10 @@ msgstr "On Station"
 #: src/apps/orders/Orders.tsx:2498
 msgid "On the tab"
 msgstr "On the tab"
+
+#: src/apps/stock/TransfersSheet.tsx:222
+msgid "On the way in"
+msgstr "On the way in"
 
 #: src/apps/reservations/PartySheet.tsx:724
 msgid "On time"
@@ -5079,8 +5195,8 @@ msgstr "Orders waiting for you"
 msgid "Orders will be sent to <0>{pastedHost}</0>."
 msgstr "Orders will be sent to <0>{pastedHost}</0>."
 
-#: src/apps/stock/messages.ts:118
-#: src/apps/stock/messages.ts:133
+#: src/apps/stock/messages.ts:126
+#: src/apps/stock/messages.ts:141
 #: src/screens/AuditSheet.tsx:18
 #: src/screens/Checkout.tsx:54
 #: src/screens/GiftCardSheet.tsx:225
@@ -5123,7 +5239,7 @@ msgstr "Out of stock: {0} ran out"
 msgid "Over"
 msgstr "Over"
 
-#: src/apps/stock/messages.ts:112
+#: src/apps/stock/messages.ts:120
 msgid "Over-prepped"
 msgstr "Over-prepped"
 
@@ -5131,7 +5247,7 @@ msgstr "Over-prepped"
 msgid "Overdue deliveries"
 msgstr "Overdue deliveries"
 
-#: src/apps/stock/messages.ts:131
+#: src/apps/stock/messages.ts:139
 msgid "Packaging"
 msgstr "Packaging"
 
@@ -5510,7 +5626,7 @@ msgstr "Pickup time"
 msgid "Pickup: {pickup}"
 msgstr "Pickup: {pickup}"
 
-#: src/apps/stock/model.ts:128
+#: src/apps/stock/model.ts:131
 msgid "pieces"
 msgstr "pieces"
 
@@ -5604,7 +5720,7 @@ msgstr "Print Z report"
 msgid "Problem with the food"
 msgstr "Problem with the food"
 
-#: src/apps/stock/messages.ts:125
+#: src/apps/stock/messages.ts:133
 msgid "Produce"
 msgstr "Produce"
 
@@ -5649,7 +5765,7 @@ msgstr "QR"
 msgid "QR table"
 msgstr "QR table"
 
-#: src/apps/stock/model.ts:131
+#: src/apps/stock/model.ts:134
 msgid "qt"
 msgstr "qt"
 
@@ -5658,9 +5774,9 @@ msgid "Quantity"
 msgstr "Quantity"
 
 #: src/apps/stock/CountScreen.tsx:389
-#: src/apps/stock/Stock.tsx:135
-#: src/apps/stock/Stock.tsx:152
-#: src/apps/stock/Stock.tsx:388
+#: src/apps/stock/Stock.tsx:136
+#: src/apps/stock/Stock.tsx:153
+#: src/apps/stock/Stock.tsx:400
 msgid "Quick count of key items"
 msgstr "Quick count of key items"
 
@@ -5729,15 +5845,35 @@ msgstr "Receipt"
 msgid "Receipt photo file"
 msgstr "Receipt photo file"
 
+#: src/apps/stock/TransfersSheet.tsx:186
+msgid "Receipt saved. It goes when the tablet is connected."
+msgstr "Receipt saved. It goes when the tablet is connected."
+
+#: src/apps/stock/TransfersSheet.tsx:232
+msgid "Receive"
+msgstr "Receive"
+
+#: src/apps/stock/SyncSheet.tsx:81
+msgid "Receive a transfer"
+msgstr "Receive a transfer"
+
 #: src/apps/stock/DeliverySheet.tsx:399
 msgid "Receive delivery"
 msgstr "Receive delivery"
 
-#: src/apps/stock/Stock.tsx:219
+#: src/apps/stock/TransfersSheet.tsx:496
+msgid "Receive from {otherName}"
+msgstr "Receive from {otherName}"
+
+#: src/apps/stock/TransfersSheet.tsx:129
+msgid "Receive stock"
+msgstr "Receive stock"
+
+#: src/apps/stock/Stock.tsx:220
 msgid "Receive what the supplier brought"
 msgstr "Receive what the supplier brought"
 
-#: src/apps/stock/WasteSheet.tsx:443
+#: src/apps/stock/WasteSheet.tsx:573
 msgid "Recent"
 msgstr "Recent"
 
@@ -5887,13 +6023,14 @@ msgstr "Rejected"
 msgid "Rejected: {0}"
 msgstr "Rejected: {0}"
 
-#: src/apps/stock/messages.ts:117
+#: src/apps/stock/messages.ts:125
 msgid "Remade at the till"
 msgstr "Remade at the till"
 
 #: src/apps/stock/CashPurchaseForm.tsx:313
 #: src/apps/stock/DeliverySheet.tsx:730
-#: src/apps/stock/SyncSheet.tsx:271
+#: src/apps/stock/SyncSheet.tsx:290
+#: src/apps/stock/TransfersSheet.tsx:715
 #: src/screens/Cart.tsx:823
 #: src/screens/LoyaltySheet.tsx:515
 msgid "Remove"
@@ -5913,7 +6050,7 @@ msgstr "Remove {name}"
 msgid "Remove {unitName} from {name}"
 msgstr "Remove {unitName} from {name}"
 
-#: src/apps/stock/SyncSheet.tsx:283
+#: src/apps/stock/SyncSheet.tsx:302
 msgid "Remove all"
 msgstr "Remove all"
 
@@ -5944,6 +6081,10 @@ msgstr "Reprinted"
 #: src/apps/reservations/sheets.tsx:23
 msgid "Request"
 msgstr "Request"
+
+#: src/apps/stock/TransfersSheet.tsx:167
+msgid "Request saved. It goes when the tablet is connected."
+msgstr "Request saved. It goes when the tablet is connected."
 
 #: src/screens/ItemSheet.tsx:227
 msgid "Required"
@@ -5994,7 +6135,7 @@ msgstr "Restaurant time: {zone}"
 msgid "Resume online ordering"
 msgstr "Resume online ordering"
 
-#: src/apps/stock/messages.ts:114
+#: src/apps/stock/messages.ts:122
 msgid "Returned plate"
 msgstr "Returned plate"
 
@@ -6048,7 +6189,7 @@ msgstr "Running late"
 msgid "Sales"
 msgstr "Sales"
 
-#: src/apps/stock/messages.ts:129
+#: src/apps/stock/messages.ts:137
 msgid "Sauces"
 msgstr "Sauces"
 
@@ -6086,6 +6227,10 @@ msgstr "Save tab"
 #: src/apps/stock/CountScreen.tsx:858
 msgid "Saved on this tablet"
 msgstr "Saved on this tablet"
+
+#: src/apps/stock/TransfersSheet.tsx:411
+msgid "Saved on this tablet. Waiting to send."
+msgstr "Saved on this tablet. Waiting to send."
 
 #: src/apps/timeclock/TimeClock.tsx:1397
 msgid "Saved on this terminal. It is sent as soon as it can be."
@@ -6125,7 +6270,7 @@ msgstr "Scheduled this week"
 msgid "Scheduled tickets move to Live when their preparation window begins."
 msgstr "Scheduled tickets move to Live when their preparation window begins."
 
-#: src/apps/stock/messages.ts:124
+#: src/apps/stock/messages.ts:132
 msgid "Seafood"
 msgstr "Seafood"
 
@@ -6137,9 +6282,14 @@ msgstr "Search"
 msgid "Search by"
 msgstr "Search by"
 
+#: src/apps/stock/DishWaste.tsx:112
+msgid "Search dishes"
+msgstr "Search dishes"
+
 #: src/apps/stock/CashPurchaseForm.tsx:209
 #: src/apps/stock/DeliverySheet.tsx:604
-#: src/apps/stock/WasteSheet.tsx:435
+#: src/apps/stock/TransfersSheet.tsx:770
+#: src/apps/stock/WasteSheet.tsx:565
 msgid "Search items"
 msgstr "Search items"
 
@@ -6315,7 +6465,7 @@ msgstr "Seated a walk-in of {size} at {where}."
 msgid "Seated at the host stand"
 msgstr "Seated at the host stand"
 
-#: src/apps/stock/Stock.tsx:588
+#: src/apps/stock/Stock.tsx:606
 msgid "Second count needed"
 msgstr "Second count needed"
 
@@ -6349,6 +6499,14 @@ msgstr "Sell a card"
 msgid "Sell card"
 msgstr "Sell card"
 
+#: src/apps/stock/TransfersSheet.tsx:212
+msgid "Send"
+msgstr "Send"
+
+#: src/apps/stock/SyncSheet.tsx:79
+msgid "Send a transfer"
+msgstr "Send a transfer"
+
 #: src/screens/LoyaltySheet.tsx:443
 #: src/screens/ShiftSheet.tsx:465
 msgid "Send again"
@@ -6376,20 +6534,41 @@ msgstr "Send code"
 #~ msgid "Send now"
 #~ msgstr "Send now"
 
+#: src/apps/stock/TransfersSheet.tsx:820
+msgid "Send request"
+msgstr "Send request"
+
+#: src/apps/stock/TransfersSheet.tsx:185
+msgid "Send saved. It goes when the tablet is connected."
+msgstr "Send saved. It goes when the tablet is connected."
+
+#: src/apps/stock/TransfersSheet.tsx:128
+msgid "Send stock"
+msgstr "Send stock"
+
 #: src/apps/stock/SyncSheet.tsx:60
 msgid "Send the count for review"
 msgstr "Send the count for review"
 
+#: src/apps/stock/TransfersSheet.tsx:495
+msgid "Send to {otherName}"
+msgstr "Send to {otherName}"
+
+#: src/apps/stock/Stock.tsx:229
+msgid "Send, receive and ask for stock"
+msgstr "Send, receive and ask for stock"
+
 #: src/apps/stock/CountScreen.tsx:418
+#: src/apps/stock/TransfersSheet.tsx:531
 #: src/screens/TopBar.tsx:358
 msgid "Sending"
 msgstr "Sending"
 
-#: src/apps/stock/messages.ts:82
+#: src/apps/stock/messages.ts:90
 msgid "Sending failed. It will try again by itself."
 msgstr "Sending failed. It will try again by itself."
 
-#: src/apps/stock/messages.ts:76
+#: src/apps/stock/messages.ts:84
 msgid "Sending is on hold. It will go when this is fixed."
 msgstr "Sending is on hold. It will go when this is fixed."
 
@@ -6576,7 +6755,7 @@ msgstr "Sign in"
 #: src/apps/orders/Orders.tsx:479
 #: src/apps/stock/StockNotices.tsx:89
 #: src/apps/stock/StockNotices.tsx:104
-#: src/apps/stock/SyncSheet.tsx:137
+#: src/apps/stock/SyncSheet.tsx:156
 msgid "Sign in again"
 msgstr "Sign in again"
 
@@ -6600,7 +6779,7 @@ msgstr "Sign in online to use the kitchen display."
 msgid "Sign in to open reservations"
 msgstr "Sign in to open reservations"
 
-#: src/apps/stock/messages.ts:41
+#: src/apps/stock/messages.ts:49
 msgid "Sign in with your PIN while connected to send what is saved on this tablet."
 msgstr "Sign in with your PIN while connected to send what is saved on this tablet."
 
@@ -6608,13 +6787,17 @@ msgstr "Sign in with your PIN while connected to send what is saved on this tabl
 msgid "Sign-in has been switched off for this terminal."
 msgstr "Sign-in has been switched off for this terminal."
 
-#: src/apps/stock/Stock.tsx:237
+#: src/apps/stock/Stock.tsx:249
 msgid "Signed in as {staffName}"
 msgstr "Signed in as {staffName}"
 
 #: src/screens/Receipt.tsx:100
 msgid "Simplified tax invoice"
 msgstr "Simplified tax invoice"
+
+#: src/apps/stock/DishWaste.tsx:174
+msgid "Size"
+msgstr "Size"
 
 #: src/apps/reservations/PartySheet.tsx:360
 msgid "Size or time"
@@ -6697,8 +6880,8 @@ msgid "Someone else already decided on this order. It was read again."
 msgstr "Someone else already decided on this order. It was read again."
 
 #: src/apps/stock/messages.ts:16
-msgid "Someone else updated this order. Refreshing the stock list."
-msgstr "Someone else updated this order. Refreshing the stock list."
+#~ msgid "Someone else updated this order. Refreshing the stock list."
+#~ msgstr "Someone else updated this order. Refreshing the stock list."
 
 #: src/apps/reservations/HostStand.tsx:911
 msgid "Someone is booked on that table before this party would be done."
@@ -6743,7 +6926,7 @@ msgstr "Spicy"
 msgid "Split {n}"
 msgstr "Split {n}"
 
-#: src/apps/stock/messages.ts:111
+#: src/apps/stock/messages.ts:119
 msgid "Spoiled"
 msgstr "Spoiled"
 
@@ -6751,7 +6934,7 @@ msgstr "Spoiled"
 msgid "Staff"
 msgstr "Staff"
 
-#: src/apps/stock/messages.ts:115
+#: src/apps/stock/messages.ts:123
 msgid "Staff meal"
 msgstr "Staff meal"
 
@@ -6771,7 +6954,7 @@ msgstr "Standard"
 msgid "Start"
 msgstr "Start"
 
-#: src/apps/stock/Stock.tsx:412
+#: src/apps/stock/Stock.tsx:424
 #: src/apps/stock/SyncSheet.tsx:58
 msgid "Start a count"
 msgstr "Start a count"
@@ -6796,7 +6979,7 @@ msgstr "Start preparing"
 msgid "Start training mode"
 msgstr "Start training mode"
 
-#: src/apps/stock/Stock.tsx:576
+#: src/apps/stock/Stock.tsx:594
 msgid "Started on this tablet"
 msgstr "Started on this tablet"
 
@@ -6830,31 +7013,35 @@ msgstr "Station name"
 msgid "still to seat, by time"
 msgstr "still to seat, by time"
 
-#: src/apps/stock/Stock.tsx:224
-#: src/apps/stock/Stock.tsx:226
+#: src/apps/stock/Stock.tsx:236
+#: src/apps/stock/Stock.tsx:238
 #: src/screens/AppLauncher.tsx:68
 msgid "Stock"
 msgstr "Stock"
 
-#: src/apps/stock/Stock.tsx:97
+#: src/apps/stock/Stock.tsx:98
 msgid "Stock counts one location. Ask a manager to bind this terminal to a location in the Menuza app, under Settings, Terminals."
 msgstr "Stock counts one location. Ask a manager to bind this terminal to a location in the Menuza app, under Settings, Terminals."
 
-#: src/apps/stock/messages.ts:45
+#: src/apps/stock/messages.ts:53
 msgid "Stock is paused for now. What you saved stays here and goes when it is back on."
 msgstr "Stock is paused for now. What you saved stays here and goes when it is back on."
 
-#: src/apps/stock/messages.ts:44
+#: src/apps/stock/messages.ts:52
 msgid "Stock is switched off for this restaurant. What you saved stays here and goes when it is back on."
 msgstr "Stock is switched off for this restaurant. What you saved stays here and goes when it is back on."
 
-#: src/apps/stock/messages.ts:43
+#: src/apps/stock/messages.ts:51
 msgid "Stock is switched off for this tablet. What you saved stays here and goes when it is back on."
 msgstr "Stock is switched off for this tablet. What you saved stays here and goes when it is back on."
 
 #: src/apps/orders/Controls.tsx:87
 msgid "Stock is switched off right now, so a dish it took off cannot be brought back here. Use the App."
 msgstr "Stock is switched off right now, so a dish it took off cannot be brought back here. Use the App."
+
+#: src/apps/stock/WasteSheet.tsx:653
+msgid "Stock items"
+msgstr "Stock items"
 
 #: src/apps/stock/DeliverySheet.tsx:439
 msgid "Stock quantities were updated."
@@ -7081,7 +7268,7 @@ msgstr "Table: {detail}"
 msgid "Tables {tables}"
 msgstr "Tables {tables}"
 
-#: src/apps/stock/messages.ts:46
+#: src/apps/stock/messages.ts:54
 msgid "Tablets are paused for now. What you saved stays here and goes when they are back on."
 msgstr "Tablets are paused for now. What you saved stays here and goes when they are back on."
 
@@ -7476,6 +7663,10 @@ msgid "That PIN is not right. Try again in {wait} seconds."
 msgstr "That PIN is not right. Try again in {wait} seconds."
 
 #: src/apps/stock/messages.ts:23
+msgid "That place does not give one of these items to branches."
+msgstr "That place does not give one of these items to branches."
+
+#: src/apps/stock/messages.ts:31
 msgid "That reason cannot be picked from a tablet."
 msgstr "That reason cannot be picked from a tablet."
 
@@ -7528,6 +7719,10 @@ msgstr "That time overlaps another shift. Ask a manager to fix it."
 msgid "The {stoppedName} discount was taken off this order."
 msgstr "The {stoppedName} discount was taken off this order."
 
+#: src/apps/stock/TransfersSheet.tsx:500
+msgid "The app changed what was asked for. Check the amounts."
+msgstr "The app changed what was asked for. Check the amounts."
+
 #: src/apps/reservations/PickBar.tsx:217
 msgid "The biggest seats {biggest}."
 msgstr "The biggest seats {biggest}."
@@ -7576,11 +7771,11 @@ msgstr "The guest only sees \"out of stock\" or \"kitchen closed\". Other reason
 msgid "The invoice photo"
 msgstr "The invoice photo"
 
-#: src/apps/stock/messages.ts:28
+#: src/apps/stock/messages.ts:36
 msgid "The invoice photo could not be saved. The delivery itself was recorded."
 msgstr "The invoice photo could not be saved. The delivery itself was recorded."
 
-#: src/apps/stock/messages.ts:29
+#: src/apps/stock/messages.ts:37
 msgid "The invoice photo could not be uploaded. The delivery itself was recorded."
 msgstr "The invoice photo could not be uploaded. The delivery itself was recorded."
 
@@ -7648,31 +7843,39 @@ msgstr "The next party is due at this table. Choose another table or ask a manag
 msgid "The note is full ({NOTE_MAX} characters). Shorten it to add more."
 msgstr "The note is full ({NOTE_MAX} characters). Shorten it to add more."
 
-#: src/apps/stock/messages.ts:24
+#: src/apps/stock/messages.ts:25
+msgid "The office already corrected this, so it cannot be undone here."
+msgstr "The office already corrected this, so it cannot be undone here."
+
+#: src/apps/stock/messages.ts:32
 msgid "The office already has a different entry with this number."
 msgstr "The office already has a different entry with this number."
 
-#: src/apps/stock/messages.ts:25
+#: src/apps/stock/messages.ts:16
+msgid "The office changed this since you opened it. The list has been refreshed: open it again and redo it."
+msgstr "The office changed this since you opened it. The list has been refreshed: open it again and redo it."
+
+#: src/apps/stock/messages.ts:33
 msgid "The office could not read this entry."
 msgstr "The office could not read this entry."
 
-#: src/apps/stock/messages.ts:33
+#: src/apps/stock/messages.ts:41
 msgid "The office could not use this amount."
 msgstr "The office could not use this amount."
 
-#: src/apps/stock/SyncSheet.tsx:323
+#: src/apps/stock/SyncSheet.tsx:342
 msgid "The office does not have them, so they are gone for good."
 msgstr "The office does not have them, so they are gone for good."
 
-#: src/apps/stock/messages.ts:31
+#: src/apps/stock/messages.ts:39
 msgid "The office does not know this item."
 msgstr "The office does not know this item."
 
-#: src/apps/stock/messages.ts:32
+#: src/apps/stock/messages.ts:40
 msgid "The office does not know this storage area."
 msgstr "The office does not know this storage area."
 
-#: src/apps/stock/messages.ts:35
+#: src/apps/stock/messages.ts:43
 msgid "The office keeps answering with an error. Try again later, or remove it and tell a manager."
 msgstr "The office keeps answering with an error. Try again later, or remove it and tell a manager."
 
@@ -7680,7 +7883,7 @@ msgstr "The office keeps answering with an error. Try again later, or remove it 
 msgid "The office no longer has the thing this was for."
 msgstr "The office no longer has the thing this was for."
 
-#: src/apps/stock/messages.ts:66
+#: src/apps/stock/messages.ts:74
 msgid "The office refused this."
 msgstr "The office refused this."
 
@@ -7728,7 +7931,7 @@ msgstr "The order is rejected. It was already refunded."
 msgid "The order you are ringing up has not been saved. Opening tab #{replaceNumber} here will discard it. Save it with “Pay later” first if you want to keep it."
 msgstr "The order you are ringing up has not been saved. Opening tab #{replaceNumber} here will discard it. Save it with “Pay later” first if you want to keep it."
 
-#: src/apps/stock/messages.ts:63
+#: src/apps/stock/messages.ts:71
 msgid "The photo could not be uploaded. It will try again by itself. The delivery itself was recorded."
 msgstr "The photo could not be uploaded. It will try again by itself. The delivery itself was recorded."
 
@@ -7794,7 +7997,7 @@ msgstr "the server could not read it (this till may need updating)"
 msgid "The server could not record this punch. Ask a manager to add it."
 msgstr "The server could not record this punch. Ask a manager to add it."
 
-#: src/apps/stock/messages.ts:52
+#: src/apps/stock/messages.ts:60
 msgid "The server did not recognise this tablet. It will try again."
 msgstr "The server did not recognise this tablet. It will try again."
 
@@ -7802,35 +8005,35 @@ msgstr "The server did not recognise this tablet. It will try again."
 msgid "The server did not recognise this terminal. It will try again."
 msgstr "The server did not recognise this terminal. It will try again."
 
-#: src/apps/stock/messages.ts:91
+#: src/apps/stock/messages.ts:99
 msgid "The server gave an answer this tablet could not read."
 msgstr "The server gave an answer this tablet could not read."
 
-#: src/apps/stock/messages.ts:62
+#: src/apps/stock/messages.ts:70
 msgid "The server gave an answer this tablet could not read. It will try again by itself."
 msgstr "The server gave an answer this tablet could not read. It will try again by itself."
 
-#: src/apps/stock/messages.ts:61
+#: src/apps/stock/messages.ts:69
 msgid "The server had a problem. It will try again by itself."
 msgstr "The server had a problem. It will try again by itself."
 
-#: src/apps/stock/messages.ts:90
+#: src/apps/stock/messages.ts:98
 msgid "The server had a problem. Try again in a moment."
 msgstr "The server had a problem. Try again in a moment."
 
-#: src/apps/stock/messages.ts:59
+#: src/apps/stock/messages.ts:67
 msgid "The server is busy. It will try again by itself."
 msgstr "The server is busy. It will try again by itself."
 
-#: src/apps/stock/messages.ts:88
+#: src/apps/stock/messages.ts:96
 msgid "The server is busy. Try again in a moment."
 msgstr "The server is busy. Try again in a moment."
 
-#: src/apps/stock/messages.ts:60
+#: src/apps/stock/messages.ts:68
 msgid "The server is not answering. It will try again by itself."
 msgstr "The server is not answering. It will try again by itself."
 
-#: src/apps/stock/messages.ts:89
+#: src/apps/stock/messages.ts:97
 msgid "The server is not answering. Try again in a moment."
 msgstr "The server is not answering. Try again in a moment."
 
@@ -7851,9 +8054,10 @@ msgid "The server’s answer was not a pairing. Check the link and try again."
 msgstr "The server’s answer was not a pairing. Check the link and try again."
 
 #: src/apps/stock/DeliverySheet.tsx:410
-#: src/apps/stock/Stock.tsx:345
+#: src/apps/stock/Stock.tsx:357
 #: src/apps/stock/StockNotices.tsx:41
-#: src/apps/stock/WasteSheet.tsx:342
+#: src/apps/stock/TransfersSheet.tsx:156
+#: src/apps/stock/WasteSheet.tsx:448
 msgid "The stock list has not loaded yet. Connect once so this tablet can get it."
 msgstr "The stock list has not loaded yet. Connect once so this tablet can get it."
 
@@ -7909,7 +8113,7 @@ msgstr "The time to answer has passed. If nobody accepts it, the order is turned
 msgid "The time was already changed. Check it and try again."
 msgstr "The time was already changed. Check it and try again."
 
-#: src/apps/stock/messages.ts:22
+#: src/apps/stock/messages.ts:30
 msgid "The unit does not fit this item."
 msgstr "The unit does not fit this item."
 
@@ -7949,6 +8153,10 @@ msgstr "Then <0>{nextWho}, party of {nextSize}</0>"
 msgid "There are more orders than this screen can show. Finish or cancel older orders in the App before relying on this list."
 msgstr "There are more orders than this screen can show. Finish or cancel older orders in the App before relying on this list."
 
+#: src/apps/stock/messages.ts:29
+msgid "There are too many open transfers."
+msgstr "There are too many open transfers."
+
 #: src/apps/stock/CountScreen.tsx:495
 msgid "There is nothing on this count yet."
 msgstr "There is nothing on this count yet."
@@ -7961,9 +8169,17 @@ msgstr "There is nothing to punch right now. Ask a manager."
 msgid "There is nothing to refund on this order."
 msgstr "There is nothing to refund on this order."
 
+#: src/apps/stock/messages.ts:26
+msgid "There was nothing above zero to send."
+msgstr "There was nothing above zero to send."
+
 #: src/apps/reservations/HostStand.tsx:1288
 msgid "These tables seat {seats}. This party is {size}."
 msgstr "These tables seat {seats}. This party is {size}."
+
+#: src/apps/stock/messages.ts:28
+msgid "These two places keep their money in different currencies."
+msgstr "These two places keep their money in different currencies."
 
 #: src/apps/timeclock/TimeClock.tsx:1326
 msgid "These were saved while offline, and the server did not accept them. Tell a manager so they can add the right times."
@@ -8059,7 +8275,10 @@ msgstr "This category is empty."
 #: src/apps/stock/CountScreen.tsx:264
 #: src/apps/stock/CountScreen.tsx:281
 #: src/apps/stock/DeliverySheet.tsx:257
-#: src/apps/stock/WasteSheet.tsx:213
+#: src/apps/stock/TransfersSheet.tsx:485
+#: src/apps/stock/TransfersSheet.tsx:663
+#: src/apps/stock/WasteSheet.tsx:253
+#: src/apps/stock/WasteSheet.tsx:309
 msgid "This could not be saved on the tablet."
 msgstr "This could not be saved on the tablet."
 
@@ -8128,7 +8347,11 @@ msgstr "This device will stop sending orders until it is paired again."
 msgid "This discount is limited to {most} at most."
 msgstr "This discount is limited to {most} at most."
 
-#: src/apps/stock/messages.ts:34
+#: src/apps/stock/messages.ts:24
+msgid "This dish has no recipe yet, so nothing could be taken out of stock. Ask a manager to add one."
+msgstr "This dish has no recipe yet, so nothing could be taken out of stock. Ask a manager to add one."
+
+#: src/apps/stock/messages.ts:42
 msgid "This entry was sent twice, so the office kept only one."
 msgstr "This entry was sent twice, so the office kept only one."
 
@@ -8136,7 +8359,7 @@ msgstr "This entry was sent twice, so the office kept only one."
 msgid "This item has no recipe yet, so it cannot be recorded."
 msgstr "This item has no recipe yet, so it cannot be recorded."
 
-#: src/apps/stock/messages.ts:30
+#: src/apps/stock/messages.ts:38
 msgid "This item was removed from the stock list."
 msgstr "This item was removed from the stock list."
 
@@ -8318,23 +8541,23 @@ msgstr "This table seats {0}."
 msgid "This table seats {seats}: a party of {size} leaves it mostly empty."
 msgstr "This table seats {seats}: a party of {size} leaves it mostly empty."
 
-#: src/apps/stock/messages.ts:36
+#: src/apps/stock/messages.ts:44
 msgid "This tablet cannot read the office's answer. Update Station, then try again."
 msgstr "This tablet cannot read the office's answer. Update Station, then try again."
 
-#: src/apps/stock/Stock.tsx:94
+#: src/apps/stock/Stock.tsx:95
 msgid "This tablet needs a location"
 msgstr "This tablet needs a location"
 
-#: src/apps/stock/messages.ts:47
+#: src/apps/stock/messages.ts:55
 msgid "This tablet needs a location before it can send stock. Ask a manager to set one in the Menuza app."
 msgstr "This tablet needs a location before it can send stock. Ask a manager to set one in the Menuza app."
 
-#: src/apps/stock/messages.ts:49
+#: src/apps/stock/messages.ts:57
 msgid "This tablet needs an update before it can send stock. Reload the app."
 msgstr "This tablet needs an update before it can send stock. Reload the app."
 
-#: src/apps/stock/messages.ts:48
+#: src/apps/stock/messages.ts:56
 msgid "This tablet needs staff sign-in switched on before it can send stock. Ask a manager."
 msgstr "This tablet needs staff sign-in switched on before it can send stock. Ask a manager."
 
@@ -8342,7 +8565,7 @@ msgstr "This tablet needs staff sign-in switched on before it can send stock. As
 msgid "This tablet was moved to another location after this was saved."
 msgstr "This tablet was moved to another location after this was saved."
 
-#: src/apps/stock/messages.ts:53
+#: src/apps/stock/messages.ts:61
 msgid "This tablet was removed. Pair it again to send what is saved."
 msgstr "This tablet was removed. Pair it again to send what is saved."
 
@@ -8399,7 +8622,11 @@ msgstr "This terminal’s location isn’t on the menu"
 msgid "This ticket or setup changed on another screen. Review the latest version, then try again."
 msgstr "This ticket or setup changed on another screen. Review the latest version, then try again."
 
-#: src/apps/stock/messages.ts:27
+#: src/apps/stock/messages.ts:22
+msgid "This transfer was already sent, received or cancelled."
+msgstr "This transfer was already sent, received or cancelled."
+
+#: src/apps/stock/messages.ts:35
 msgid "This was too large to send."
 msgstr "This was too large to send."
 
@@ -8480,6 +8707,10 @@ msgstr "To do"
 msgid "To seat"
 msgstr "To seat"
 
+#: src/apps/stock/TransfersSheet.tsx:198
+msgid "To send"
+msgstr "To send"
+
 #: src/apps/reservations/BookingSheet.tsx:428
 #: src/apps/reservations/StandHeader.tsx:360
 #: src/apps/reservations/StandHeader.tsx:405
@@ -8540,7 +8771,7 @@ msgstr "Tomorrow"
 msgid "Too busy to make it"
 msgstr "Too busy to make it"
 
-#: src/apps/stock/WasteSheet.tsx:319
+#: src/apps/stock/WasteSheet.tsx:425
 msgid "Too late to undo here"
 msgstr "Too late to undo here"
 
@@ -8572,7 +8803,10 @@ msgstr "Too many wrong PINs. Try again in {wait} seconds."
 
 #: src/apps/stock/CountScreen.tsx:262
 #: src/apps/stock/DeliverySheet.tsx:255
-#: src/apps/stock/WasteSheet.tsx:211
+#: src/apps/stock/TransfersSheet.tsx:483
+#: src/apps/stock/TransfersSheet.tsx:661
+#: src/apps/stock/WasteSheet.tsx:251
+#: src/apps/stock/WasteSheet.tsx:307
 msgid "Too much is waiting to send from this tablet. Connect and let it send first."
 msgstr "Too much is waiting to send from this tablet. Connect and let it send first."
 
@@ -8619,6 +8853,11 @@ msgstr "TRAINING MODE. Nothing here is a real sale: no order is sent, counted or
 msgid "TRAINING: NOT A REAL RECEIPT"
 msgstr "TRAINING: NOT A REAL RECEIPT"
 
+#: src/apps/stock/Stock.tsx:228
+#: src/apps/stock/TransfersSheet.tsx:130
+msgid "Transfers"
+msgstr "Transfers"
+
 #: src/apps/reservations/guest.ts:33
 msgid "tree nuts"
 msgstr "tree nuts"
@@ -8629,7 +8868,7 @@ msgstr "tree nuts"
 #: src/apps/reservations/HostStand.tsx:2160
 #: src/apps/reservations/HostStand.tsx:2643
 #: src/apps/reservations/HostStand.tsx:2681
-#: src/apps/stock/SyncSheet.tsx:264
+#: src/apps/stock/SyncSheet.tsx:283
 #: src/screens/OrdersSheet.tsx:863
 msgid "Try again"
 msgstr "Try again"
@@ -8639,7 +8878,7 @@ msgid "Try again in a moment."
 msgstr "Try again in a moment."
 
 #: src/apps/stock/StockNotices.tsx:115
-#: src/apps/stock/SyncSheet.tsx:120
+#: src/apps/stock/SyncSheet.tsx:139
 msgid "Try now"
 msgstr "Try now"
 
@@ -8673,11 +8912,11 @@ msgstr "Type each server’s name. With the time clock or schedules on in Staff,
 
 #: src/apps/reservations/HostStand.tsx:852
 #: src/apps/reservations/TableSheet.tsx:334
-#: src/apps/stock/WasteSheet.tsx:326
+#: src/apps/stock/WasteSheet.tsx:432
 msgid "Undo"
 msgstr "Undo"
 
-#: src/apps/stock/WasteSheet.tsx:492
+#: src/apps/stock/WasteSheet.tsx:622
 msgid "Undo is possible for {undoSeconds} seconds after you log something."
 msgstr "Undo is possible for {undoSeconds} seconds after you log something."
 
@@ -8685,11 +8924,11 @@ msgstr "Undo is possible for {undoSeconds} seconds after you log something."
 msgid "Undo seating"
 msgstr "Undo seating"
 
-#: src/apps/stock/SyncSheet.tsx:62
+#: src/apps/stock/SyncSheet.tsx:63
 msgid "Undo waste"
 msgstr "Undo waste"
 
-#: src/apps/stock/WasteSheet.tsx:313
+#: src/apps/stock/WasteSheet.tsx:419
 msgid "Undone"
 msgstr "Undone"
 
@@ -8702,7 +8941,9 @@ msgstr "Undone for {who}."
 msgid "Undone."
 msgstr "Undone."
 
-#: src/apps/stock/WasteSheet.tsx:374
+#: src/apps/stock/TransfersSheet.tsx:549
+#: src/apps/stock/TransfersSheet.tsx:735
+#: src/apps/stock/WasteSheet.tsx:503
 msgid "Unit"
 msgstr "Unit"
 
@@ -8762,7 +9003,7 @@ msgstr "Update"
 msgid "Update item"
 msgstr "Update item"
 
-#: src/apps/stock/messages.ts:50
+#: src/apps/stock/messages.ts:58
 msgid "Update Station: this tablet and the office no longer speak the same version. What you saved stays here."
 msgstr "Update Station: this tablet and the office no longer speak the same version. What you saved stays here."
 
@@ -8881,8 +9122,8 @@ msgstr "Waiting for you"
 msgid "Waiting for you {waitingCount}"
 msgstr "Waiting for you {waitingCount}"
 
-#: src/apps/stock/SyncSheet.tsx:109
-#: src/apps/stock/SyncSheet.tsx:151
+#: src/apps/stock/SyncSheet.tsx:128
+#: src/apps/stock/SyncSheet.tsx:170
 msgid "Waiting to send"
 msgstr "Waiting to send"
 
@@ -8915,11 +9156,15 @@ msgstr "Walk-in"
 msgid "Warn after (min)"
 msgstr "Warn after (min)"
 
-#: src/apps/stock/Stock.tsx:212
+#: src/apps/stock/Stock.tsx:213
 msgid "Waste"
 msgstr "Waste"
 
-#: src/apps/stock/SyncSheet.tsx:99
+#: src/apps/stock/SyncSheet.tsx:67
+msgid "Waste: {count} dishes, {reason}"
+msgstr "Waste: {count} dishes, {reason}"
+
+#: src/apps/stock/SyncSheet.tsx:118
 msgid "Waste: {name}, {text} {unit}, {reason}"
 msgstr "Waste: {name}, {text} {unit}, {reason}"
 
@@ -8981,7 +9226,11 @@ msgstr "What are you working today?"
 msgid "What is it for?"
 msgstr "What is it for?"
 
-#: src/apps/stock/WasteSheet.tsx:429
+#: src/apps/stock/WasteSheet.tsx:644
+msgid "What was wasted"
+msgstr "What was wasted"
+
+#: src/apps/stock/WasteSheet.tsx:559
 msgid "What was wasted?"
 msgstr "What was wasted?"
 
@@ -9001,11 +9250,16 @@ msgstr "Where your Menuza app runs."
 msgid "Which break are you taking?"
 msgstr "Which break are you taking?"
 
+#: src/apps/stock/DishWaste.tsx:106
+msgid "Which dish?"
+msgstr "Which dish?"
+
 #: src/apps/kitchen/KitchenSettings.tsx:126
 msgid "Whole tickets"
 msgstr "Whole tickets"
 
-#: src/apps/stock/WasteSheet.tsx:392
+#: src/apps/stock/DishWaste.tsx:222
+#: src/apps/stock/WasteSheet.tsx:521
 msgid "Why"
 msgstr "Why"
 
@@ -9015,7 +9269,7 @@ msgstr "Why"
 msgid "Why?"
 msgstr "Why?"
 
-#: src/apps/stock/SyncSheet.tsx:333
+#: src/apps/stock/SyncSheet.tsx:352
 msgid "Will retry"
 msgstr "Will retry"
 
@@ -9059,7 +9313,7 @@ msgstr "You are clocked in."
 msgid "You are clocked out."
 msgstr "You are clocked out."
 
-#: src/apps/stock/Stock.tsx:597
+#: src/apps/stock/Stock.tsx:615
 msgid "You are done"
 msgstr "You are done"
 
@@ -9115,6 +9369,10 @@ msgstr "You have {unit}."
 msgid "You have enough of everything you make."
 msgstr "You have enough of everything you make."
 
+#: src/apps/stock/TransfersSheet.tsx:247
+msgid "You have not asked for anything."
+msgstr "You have not asked for anything."
+
 #: src/screens/PairingLinkDialog.tsx:129
 msgid "You opened a pairing link. Orders, with guest names and phone numbers, will be sent to the server below. Only continue if a manager gave you this link and you recognise the address."
 msgstr "You opened a pairing link. Orders, with guest names and phone numbers, will be sent to the server below. Only continue if a manager gave you this link and you recognise the address."
@@ -9143,7 +9401,7 @@ msgstr "Your order"
 #~ msgid "Your part of the count is done. A manager reviews and approves it in the Menuza app. Nothing more can be added from this tablet."
 #~ msgstr "Your part of the count is done. A manager reviews and approves it in the Menuza app. Nothing more can be added from this tablet."
 
-#: src/apps/stock/messages.ts:42
+#: src/apps/stock/messages.ts:50
 msgid "Your sign-in ran out. Sign in again while connected to send what is saved on this tablet."
 msgstr "Your sign-in ran out. Sign in again while connected to send what is saved on this tablet."
 

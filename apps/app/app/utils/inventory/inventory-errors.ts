@@ -103,6 +103,18 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'transfer_closed') {
 			return msg`This transfer is already closed.`
 		}
+		if (error.code === 'item_not_requestable') {
+			return msg`That place does not offer one of these items to branches. Remove it, or ask them directly.`
+		}
+		if (error.code === 'recipe_missing') {
+			return msg`Add a recipe first. This dish has no ingredients to take out of stock.`
+		}
+		if (error.code === 'already_corrected') {
+			return msg`This entry was already corrected, so it cannot be undone.`
+		}
+		if (error.code === 'already_reversed') {
+			return msg`This entry was already reversed.`
+		}
 		if (error.code === 'send_in_progress') {
 			return msg`This order is being sent right now. Wait a moment and refresh.`
 		}

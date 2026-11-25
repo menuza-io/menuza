@@ -8653,6 +8653,12 @@ export const INV_ORDER_SEND_CHANNEL_VALUES = [
 	'pdf',
 ] as const
 export const INV_WASTE_SOURCE_VALUES = ['operator', 'station'] as const
+export const INV_WASTE_CORRECTION_KIND_VALUES = ['reverse', 'quantity'] as const
+export const INV_WASTE_CORRECTION_STOCK_VALUES = [
+	'applied',
+	'covered_by_count',
+	'none',
+] as const
 export const INV_ALERT_KIND_VALUES = [
 	'inventory_low_stock',
 	'inventory_count_review',
@@ -9855,10 +9861,15 @@ export const invWaste = sqliteTable(
 		lateSync: integer('late_sync', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// A whole dish logged as waste (#517): every ingredient row of the dish
+		// shares the id of its `inv_waste_dishes` header, so the log shows one
+		// grouped line and an undo takes the whole group back.
+		groupId: text('group_id'),
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
 		uniqueIndex('uniq_inv_waste_client').on(table.clientId),
+		index('idx_inv_waste_group').on(table.groupId),
 		uniqueIndex('uniq_inv_waste_reverses')
 			.on(table.reversesId)
 			.where(sql`${table.reversesId} is not null`),
@@ -9881,6 +9892,98 @@ export const invWaste = sqliteTable(
 		check(
 			'chk_inv_waste_value',
 			sql`${table.valueMinor} is null or (${table.valueMinor} >= 0 and ${table.currency} is not null)`,
+		),
+	],
+)
+
+// The header of a whole dish logged as waste (#517). The region keeps ids
+// only (never menu names): the App and Station join the dish name. Rows of
+// `inv_waste` with this `group_id` are its ingredients. Append-only (triggers).
+export const invWasteDishes = sqliteTable(
+	'inv_waste_dishes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		clientId: text('client_id').notNull(),
+		locationId: text('location_id').notNull(),
+		// Menu item id, size (variant) id and chosen option ids with quantities.
+		menuItemId: text('menu_item_id').notNull(),
+		variantId: text('variant_id'),
+		options: text('options'),
+		// How many dishes were thrown away.
+		quantity: integer('quantity').notNull(),
+		// 'typed': no recipe, the dish's typed cost was used and there are no ingredient rows.
+		basis: text('basis', { enum: ['recipe', 'typed'] }).notNull(),
+		reason: text('reason', { enum: INV_WASTE_REASON_VALUES }).notNull(),
+		note: text('note'),
+		actorKind: text('actor_kind', { enum: INV_ACTOR_KIND_VALUES }).notNull(),
+		actorId: text('actor_id'),
+		businessDate: text('business_date').notNull(),
+		source: text('source', { enum: INV_WASTE_SOURCE_VALUES })
+			.notNull()
+			.default('operator'),
+		deviceId: text('device_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_waste_dishes_client').on(table.clientId),
+		index('idx_inv_waste_dishes_location_date').on(
+			table.locationId,
+			table.businessDate,
+		),
+		check('chk_inv_waste_dishes_quantity', sql`${table.quantity} > 0`),
+		check(
+			'chk_inv_waste_dishes_reason',
+			oneOf(table.reason, INV_WASTE_REASON_VALUES),
+		),
+	],
+)
+
+// A later correction of a waste entry (#522). The original row never changes:
+// a correction says "this entry is now worth `new_quantity`" (0 reverses it)
+// with a reason, and readers show the latest correction's figure. Stock is
+// moved by a `waste` movement for the difference, unless an approved count
+// already covers the entry (`covered_by_count`): then only the waste figures
+// change. Append-only (triggers).
+export const invWasteCorrections = sqliteTable(
+	'inv_waste_corrections',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		clientId: text('client_id').notNull(),
+		wasteId: text('waste_id')
+			.notNull()
+			.references(() => invWaste.id),
+		// The dish group it belongs to, when the whole dish was corrected.
+		groupId: text('group_id'),
+		kind: text('kind', { enum: INV_WASTE_CORRECTION_KIND_VALUES }).notNull(),
+		previousQuantity: integer('previous_quantity').notNull(),
+		newQuantity: integer('new_quantity').notNull(),
+		// Money change of the entry (negative: the waste figure went down).
+		valueDeltaMinor: integer('value_delta_minor'),
+		currency: text('currency'),
+		stockEffect: text('stock_effect', {
+			enum: INV_WASTE_CORRECTION_STOCK_VALUES,
+		}).notNull(),
+		reason: text('reason').notNull(),
+		actorKind: text('actor_kind', { enum: INV_ACTOR_KIND_VALUES }).notNull(),
+		actorId: text('actor_id'),
+		businessDate: text('business_date').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_waste_corrections_client').on(table.clientId),
+		index('idx_inv_waste_corrections_waste').on(table.wasteId, table.createdAt),
+		index('idx_inv_waste_corrections_group').on(table.groupId),
+		check(
+			'chk_inv_waste_corrections_kind',
+			oneOf(table.kind, INV_WASTE_CORRECTION_KIND_VALUES),
+		),
+		check(
+			'chk_inv_waste_corrections_quantity',
+			sql`${table.previousQuantity} > 0 and ${table.newQuantity} >= 0`,
 		),
 	],
 )
@@ -10496,6 +10599,18 @@ export const invPrepTasks = sqliteTable(
 // ── Phase 5: transfers ──────────────────────────────────────────────────────
 
 export const INV_TRANSFER_KIND_VALUES = ['transfer', 'request'] as const
+// Where a sent line's transfer price came from (#526): the item's fixed price,
+// its cost plus a percentage, or none (valued at cost).
+export const INV_TRANSFER_PRICE_SOURCE_VALUES = [
+	'fixed',
+	'cost_plus',
+	'cost',
+] as const
+export const INV_TRANSFER_PRICE_MODE_VALUES = [
+	'none',
+	'fixed',
+	'cost_plus',
+] as const
 export const INV_TRANSFER_STATUS_VALUES = [
 	'requested',
 	'draft',
@@ -10534,6 +10649,11 @@ export const invTransfers = sqliteTable(
 		receivedByKind: text('received_by_kind', { enum: INV_ACTOR_KIND_VALUES }),
 		receivedById: text('received_by_id'),
 		cancelledAt: integer('cancelled_at'),
+		// The last edit of the lines while the transfer was still open (#477),
+		// and the place that made it, so a request the sender changed shows as
+		// changed to the branch that asked.
+		editedAt: integer('edited_at'),
+		editedByLocationId: text('edited_by_location_id'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
@@ -10581,6 +10701,14 @@ export const invTransferLines = sqliteTable(
 		// arrives is valued at what left. Null when the item had no cost.
 		unitCostMicro: integer('unit_cost_micro'),
 		costCurrency: text('cost_currency'),
+		// What the line asked for before the other place changed it (#477);
+		// null until it was.
+		askedQuantity: integer('asked_quantity'),
+		// The transfer price per base unit (micro-minor), fixed when the
+		// transfer was sent (#526) and never changed after. Null: no price was
+		// set for the item, so the receiver is charged the cost above.
+		priceMicro: integer('price_micro'),
+		priceSource: text('price_source', { enum: INV_TRANSFER_PRICE_SOURCE_VALUES }),
 		sortOrder: integer('sort_order').notNull().default(0),
 	},
 	(table) => [
@@ -10592,6 +10720,46 @@ export const invTransferLines = sqliteTable(
 		check(
 			'chk_inv_transfer_lines_quantities',
 			sql`${table.requestedQuantity} >= 0 and (${table.sentQuantity} is null or ${table.sentQuantity} >= 0) and (${table.receivedQuantity} is null or ${table.receivedQuantity} >= 0)`,
+		),
+	],
+)
+
+// Per item at the SENDING location (#526): the transfer price a branch is
+// charged and whether branches may ask for it. A row is only made when an
+// owner sets something; no row means "no price, branches may request it".
+// The price in force is read when a transfer is sent and copied onto its lines.
+export const invTransferTerms = sqliteTable(
+	'inv_transfer_terms',
+	{
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		locationId: text('location_id').notNull(),
+		branchRequestable: integer('branch_requestable', { mode: 'boolean' })
+			.notNull()
+			.default(true),
+		priceMode: text('price_mode', { enum: INV_TRANSFER_PRICE_MODE_VALUES })
+			.notNull()
+			.default('none'),
+		// Per base unit, micro-minor (as costs), with the currency it is in.
+		fixedPriceMicro: integer('fixed_price_micro'),
+		currency: text('currency'),
+		// Cost plus this many basis points (1000 = cost + 10%).
+		markupBp: integer('markup_bp'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({ columns: [table.itemId, table.locationId] }),
+		index('idx_inv_transfer_terms_location').on(table.locationId),
+		check(
+			'chk_inv_transfer_terms_mode',
+			oneOf(table.priceMode, INV_TRANSFER_PRICE_MODE_VALUES),
+		),
+		check(
+			'chk_inv_transfer_terms_price',
+			sql`(${table.fixedPriceMicro} is null or ${table.fixedPriceMicro} >= 0) and (${table.markupBp} is null or (${table.markupBp} >= 0 and ${table.markupBp} <= 100000)) and (${table.priceMode} <> 'fixed' or (${table.fixedPriceMicro} is not null and ${table.currency} is not null)) and (${table.priceMode} <> 'cost_plus' or ${table.markupBp} is not null)`,
 		),
 	],
 )

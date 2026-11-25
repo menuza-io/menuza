@@ -116,6 +116,7 @@ export function InventoryChrome({
 	selectedLocationId,
 	onLocationChange,
 	canLogWaste = false,
+	dishesEnabled = false,
 	canSeeCost = false,
 	currency = 'USD',
 	userName = '',
@@ -128,6 +129,8 @@ export function InventoryChrome({
 	onLocationChange: (locationId: string) => void
 	/** Shows "Log waste" in every tab's header (needs `update:inventory:any`). */
 	canLogWaste?: boolean
+	/** Dishes can be picked in Log waste (the recipes flag, #517). */
+	dishesEnabled?: boolean
 	canSeeCost?: boolean
 	currency?: string
 	/** The signed-in member, for "Logged as". */
@@ -210,6 +213,7 @@ export function InventoryChrome({
 						onOpenChange={setWasteOpen}
 						orgSlug={orgSlug}
 						locationId={selectedLocationId}
+						dishesEnabled={dishesEnabled}
 						canSeeCost={canSeeCost}
 						currency={currency}
 						userName={userName}

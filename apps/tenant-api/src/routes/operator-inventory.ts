@@ -44,6 +44,7 @@ import { operatorInventorySetupChecksRoutes } from './operator-inventory-setup-c
 import { operatorInventorySoldOutRoutes } from './operator-inventory-sold-out.ts'
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
 import { operatorInventoryTransfersRoutes } from './operator-inventory-transfers.ts'
+import { operatorInventoryVarianceRoutes } from './operator-inventory-variance.ts'
 import { operatorInventoryWasteRoutes } from './operator-inventory-waste.ts'
 import {
 	listLocationSettings,
@@ -87,6 +88,7 @@ operatorInventoryRoutes.route('/', operatorInventoryRecipesRoutes)
 operatorInventoryRoutes.route('/', operatorInventorySoldOutRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPrepRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryTransfersRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryVarianceRoutes)
 
 const READ = INVENTORY_PERMISSIONS.READ_INVENTORY
 const UPDATE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY

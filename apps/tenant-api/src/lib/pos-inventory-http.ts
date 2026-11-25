@@ -77,6 +77,12 @@ const POS_CODE_OF: Partial<Record<InventoryErrorCode, InventoryPosErrorCode>> =
 		recipe_empty: 'recipe_empty',
 		undo_expired: 'undo_expired',
 		already_undone: 'already_undone',
+		transfer_closed: 'transfer_closed',
+		item_not_requestable: 'item_not_requestable',
+		currency_mismatch: 'currency_mismatch',
+		limit_reached: 'limit_reached',
+		recipe_missing: 'recipe_missing',
+		already_corrected: 'already_corrected',
 		reason_not_allowed: 'reason_not_allowed',
 		unit_mismatch: 'unit_mismatch',
 		upload_not_configured: 'upload_not_configured',
@@ -91,8 +97,19 @@ const POS_CODE_OF: Partial<Record<InventoryErrorCode, InventoryPosErrorCode>> =
 		order_not_editable: 'invalid_request',
 	}
 
+/** A bad request the tablet can tell the person about: the region's machine reason names it. */
+const POS_CODE_OF_REASON: Record<string, InventoryPosErrorCode> = {
+	nothing_sent: 'nothing_sent',
+	over_received: 'over_received',
+}
+
 export function stationErrorFrom(error: unknown): Response | null {
 	if (!(error instanceof InventoryError)) return null
+	const reason = error.details.reason
+	if (error.code === 'invalid_request' && typeof reason === 'string') {
+		const named = POS_CODE_OF_REASON[reason]
+		if (named) return stationError(named)
+	}
 	const code = POS_CODE_OF[error.code]
 	return code ? stationError(code) : null
 }
