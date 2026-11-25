@@ -79,6 +79,15 @@ export function AppLauncher({
 					},
 				]
 			: []),
+		...(apps?.deliveries
+			? [
+					{
+						value: 'deliveries' as const,
+						label: _(t`Deliveries`),
+						icon: 'route' as const,
+					},
+				]
+			: []),
 	]
 	const current = options.find((option) => option.value === app) ?? options[0]!
 	const dismiss = useCallback((restoreFocus = false) => {

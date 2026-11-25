@@ -5,6 +5,7 @@ import { type PosDevice } from '@repo/tenant-db'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import { isKioskEnabled } from '../lib/kiosk-auth.ts'
 import { getReservationsContext } from '../lib/reservations-context.ts'
+import { inHouseDeliveryEnabled } from '../lib/delivery-switches.ts'
 import { getStaffingFeatures } from '../lib/scope-context.ts'
 
 /**
@@ -201,5 +202,13 @@ export async function deviceApps(
 			apps.inventory = false
 	}
 	apps.orders = ordersGate(device).ok
+	// Own-driver deliveries (#287): a terminal with a location and sign-in, while
+	// the organization's flag is on. A flag the App cannot be asked about reads
+	// as off (the regional flag cache fails closed).
+	if (!device.locationId || !device.signInRequired) apps.deliveries = false
+	else {
+		const on = await inHouseDeliveryEnabled(orgId)
+		apps.deliveries = on
+	}
 	return apps
 }

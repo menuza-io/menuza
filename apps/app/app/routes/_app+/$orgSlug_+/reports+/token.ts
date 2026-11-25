@@ -5,6 +5,7 @@ import {
 	userHasOrganizationPermission,
 } from '@repo/auth'
 import {
+	DELIVERY_REPORT_SUBJECTS,
 	mintOperatorAnalyticsToken,
 	ORDER_REPORT_SUBJECTS,
 	ORG_WIDE_REPORT_SUBJECTS,
@@ -17,6 +18,7 @@ import { data } from 'react-router'
 import { ENV } from 'varlock/env'
 import { resolveGiftCardReportAccess } from '#app/utils/gift-cards/report-access.server.ts'
 import { resolveInventoryReportAccess } from '#app/utils/inventory/report-access.server.ts'
+import { isInHouseDeliveryEnabled } from '#app/utils/orders/deliveries.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { resolveReservationsLocationIds } from '#app/utils/reservations/access.server.ts'
@@ -120,11 +122,16 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 							index === 0 ? next : intersectScopeIds(narrow, next),
 						null,
 					)
+	// Own-driver delivery reports (#324): only with `delivery.in_house` on, and
+	// for members who may read orders. The driver's name rides on the staff grant.
+	const canReadDeliveries =
+		canReadOrders && (await isInHouseDeliveryEnabled(organization.id))
 	const subjects: RestrictedReportSubject[] = [
 		// A module-only grant never lists the organization-wide subjects.
 		...(hasAdminAccess ? ORG_WIDE_REPORT_SUBJECTS : []),
 		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
+		...(canReadDeliveries ? DELIVERY_REPORT_SUBJECTS : []),
 		...(canReadSalesStaff ? [SALES_STAFF_FIELD_PERMISSION] : []),
 		...staff.subjects,
 		...reservations.subjects,

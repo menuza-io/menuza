@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
+import { type ReportDefinition } from '@repo/reports'
 import { ReportRowActionsContext, ReportWorkspace } from '@repo/reports/ui'
 import { cn } from '@repo/ui'
 import { type ComponentProps, useCallback } from 'react'
@@ -26,8 +27,35 @@ export function AppReportWorkspace(props: ReportWorkspaceProps) {
 	// (its availability is set in the dish's editor) and start a promotion. Links
 	// only: nothing changes until the person does it on the page they open.
 	const rowActions = useCallback(
-		({ subject, ref }: { subject: string; ref: string }) =>
-			orgSlug && subject === 'slow_sellers'
+		({
+			subject,
+			ref,
+			definition,
+		}: {
+			subject: string
+			ref: string
+			definition?: ReportDefinition
+		}) => {
+			// A Deliveries by driver row opens that driver's deliveries for the same
+			// period (#324): a link to the Deliveries list filtered by the row's driver.
+			if (orgSlug && subject === 'driver_deliveries') {
+				const query = new URLSearchParams({
+					template: 'driver-deliveries-list',
+					driver: ref,
+				})
+				if (definition) {
+					query.set('preset', definition.timeframe.preset)
+					if (definition.timeframe.start) query.set('start', definition.timeframe.start)
+					if (definition.timeframe.end) query.set('end', definition.timeframe.end)
+				}
+				return [
+					{
+						label: t`Open deliveries`,
+						href: `/${orgSlug}/reports/new?${query.toString()}`,
+					},
+				]
+			}
+			return orgSlug && subject === 'slow_sellers'
 				? [
 						{
 							label: t`Open dish`,
@@ -42,7 +70,8 @@ export function AppReportWorkspace(props: ReportWorkspaceProps) {
 							href: `/${orgSlug}/discounts/new`,
 						},
 					]
-				: [],
+				: []
+		},
 		[orgSlug, t],
 	)
 

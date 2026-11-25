@@ -123,6 +123,8 @@ export const positionSchema = z.object({
 	area: nullableText,
 	colorKey: positionColorKeySchema.catch('neutral'),
 	tipEligible: z.boolean(),
+	/** "Delivers orders" (#287); absent from a node that predates it. */
+	deliversOrders: z.boolean().optional(),
 	archivedAt: z.number().nullable(),
 	defaultRateMinor: z.number().nullable().optional(),
 	currency: currencySchema.nullable().optional(),

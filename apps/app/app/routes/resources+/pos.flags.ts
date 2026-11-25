@@ -1,3 +1,4 @@
+import { DELIVERY_IN_HOUSE_FLAG_KEY } from '@repo/common/delivery-runs'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import { PRINTING_FLAG_KEY } from '@repo/common/print-devices'
 import { and, db, eq, Organization } from '@repo/database'
@@ -13,7 +14,7 @@ const querySchema = z.object({
 
 /**
  * Internal machine-to-machine endpoint: `GET /resources/pos/flags?orgId=`.
- * The organization's Station flags (connection history and cloud printers; flags only, no data), for the regional
+ * The organization's Station flags (connection history, cloud printers and own-driver deliveries; flags only, no data), for the regional
  * tenant-api, which has no control-plane database. Authenticated with
  * `INTERNAL_COMMAND_TOKEN`.
  */
@@ -43,8 +44,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const printers =
 		(await getFeatureFlag(PRINTING_FLAG_KEY, { organizationId: org.id })) ===
 		true
+	// Own-driver deliveries (#287): only a literal `true` turns them on.
+	const inHouseDelivery =
+		(await getFeatureFlag(DELIVERY_IN_HOUSE_FLAG_KEY, {
+			organizationId: org.id,
+		})) === true
 	return Response.json(
-		{ deviceHealth, printers },
+		{ deviceHealth, printers, inHouseDelivery },
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)
 }

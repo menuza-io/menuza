@@ -229,7 +229,12 @@ async function sendForOrder(input: {
 	const timeZone = setting.timeZoneFor(order.locationId, order)
 	const locale = normalizeReservationLocale(order.locale)
 	if (channel === 'sms') {
-		if (kind !== 'ready' && kind !== 'eta_changed') {
+		if (
+			kind !== 'ready' &&
+			kind !== 'eta_changed' &&
+			kind !== 'out_for_delivery' &&
+			kind !== 'delivered'
+		) {
 			throw new SendFailure('sms_kind')
 		}
 		// Second line of defense behind the queue rule: only the US node texts.

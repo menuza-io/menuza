@@ -218,6 +218,7 @@ export function serializePosition(row: StaffPosition, includePay: boolean) {
 		area: row.area,
 		colorKey: row.colorKey,
 		tipEligible: row.tipEligible,
+		deliversOrders: row.deliversOrders,
 		archivedAt: row.archivedAt,
 		createdAt: row.createdAt,
 		...(includePay
@@ -1111,6 +1112,7 @@ export async function createPosition(
 					defaultRateMinor: input.defaultRateMinor ?? null,
 					currency: input.currency ?? null,
 					tipEligible: input.tipEligible,
+					deliversOrders: input.deliversOrders,
 					createdBy: auth.userId,
 				})
 				.returning()

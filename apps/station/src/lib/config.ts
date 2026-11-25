@@ -67,7 +67,13 @@ export type PosSettings = {
 
 /** The apps a Station tablet can show: the till, the time clock, the host stand, the kitchen, Stock, Orders. */
 export type StationApp =
-	'pos' | 'timeclock' | 'reservations' | 'kitchen' | 'stock' | 'orders'
+	| 'pos'
+	| 'timeclock'
+	| 'reservations'
+	| 'kitchen'
+	| 'stock'
+	| 'orders'
+	| 'deliveries'
 
 /**
  * The active app if the terminal still offers it, else the till. A till where
@@ -87,6 +93,8 @@ export function shownApp(
 	// Stock is offered by the terminal's `inventory` setting (and the organization's flag).
 	if (s.activeApp === 'stock' && s.apps.inventory) return 'stock'
 	if (s.activeApp === 'orders' && s.apps.orders) return 'orders'
+	// Deliveries (#287): offered while the region says so (a location, sign-in and the flag).
+	if (s.activeApp === 'deliveries' && s.apps.deliveries) return 'deliveries'
 	return 'pos'
 }
 

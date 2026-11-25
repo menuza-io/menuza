@@ -2766,11 +2766,11 @@ msgstr "{pointsCount} نقطة"
 msgid "{pooledCount} pooled"
 msgstr "{pooledCount} مجمّعة"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:98
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:102
 msgid "{positionName} archived."
 msgstr "تمت أرشفة {positionName}."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:99
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:103
 msgid "{positionName} restored."
 msgstr "تمت استعادة {positionName}."
 
@@ -4435,7 +4435,7 @@ msgstr "سيوافق عليه أحد المديرين أو يرفضه."
 msgid "A menu is on sale here."
 msgstr "هناك قائمة معروضة للبيع هنا."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:381
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:397
 msgid "A name and a color are enough. The rest is optional."
 msgstr "يكفي اسم ولون. الباقي اختياري."
 
@@ -6177,9 +6177,9 @@ msgid "Add Pickup Window"
 msgstr "إضافة نافذة استلام"
 
 #: app/components/staff/positions-tab.tsx:598
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:118
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:183
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:377
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:122
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:187
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:393
 msgid "Add position"
 msgstr "إضافة منصب"
 
@@ -7889,6 +7889,10 @@ msgstr "خصم آخر يستخدم هذا الرمز."
 msgid "Another discount gives the customer more."
 msgstr "خصم آخر يوفّر للعميل أكثر."
 
+#: app/components/orders/deliveries-panel.tsx:106
+msgid "Another driver already has one of these orders."
+msgstr "لدى سائق آخر أحد هذه الطلبات بالفعل."
+
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:270
 msgid "Another event already uses this web address."
 msgstr "فعالية أخرى تستخدم عنوان الويب هذا."
@@ -8375,7 +8379,7 @@ msgstr "العربية"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1132
 #: app/routes/_app+/$orgSlug_+/media.tsx:1607
 #: app/routes/_app+/$orgSlug_+/media.tsx:2738
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:262
 msgid "Archive"
 msgstr "أرشفة"
 
@@ -8464,7 +8468,7 @@ msgstr "مؤرشف"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:73
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/media.tsx:1569
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:208
 #: app/utils/discounts/labels.ts:28
 #: app/utils/discounts/labels.ts:49
 #: app/utils/loyalty/loyalty-labels.ts:67
@@ -8517,7 +8521,7 @@ msgstr "هل أنت متأكد؟"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:938
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:938
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1267
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:395
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:411
 msgid "Area"
 msgstr "القسم"
 
@@ -8722,6 +8726,10 @@ msgstr "تعيين وقفل"
 msgid "Assign a tag"
 msgstr "تعيين وسم"
 
+#: app/components/orders/deliveries-panel.tsx:314
+msgid "Assign as one run"
+msgstr "إسناد كرحلة واحدة"
+
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:482
 msgid "Assign categories to this menu or create a new category to begin."
 msgstr "أسنِد التصنيفات إلى هذه القائمة أو أنشئ تصنيفًا جديدًا للبدء."
@@ -8854,7 +8862,7 @@ msgid "At slot time"
 msgstr "عند وقت الموعد"
 
 #: app/components/orders/order-detail.tsx:770
-#: app/routes/_app+/$orgSlug_+/orders.tsx:376
+#: app/routes/_app+/$orgSlug_+/orders.tsx:393
 msgid "At the table"
 msgstr "على الطاولة"
 
@@ -11011,7 +11019,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1244
 #: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:1073
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:614
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:455
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:484
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:130
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:153
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:250
@@ -11212,6 +11220,10 @@ msgstr "جارٍ الإلغاء"
 #: app/components/roles/tenant-role-access-manager.tsx:311
 msgid "Cannot be undone"
 msgstr "لا يمكن التراجع عن ذلك"
+
+#: app/components/orders/deliveries-panel.tsx:44
+msgid "Cannot reach the guest"
+msgstr "تعذّر الوصول إلى الضيف"
 
 #: app/components/dashboard/blocks/use-report-state-messages.ts:29
 msgid "Cannot run this report"
@@ -11457,6 +11469,14 @@ msgstr "الإكراميات النقدية بلا رسوم بطاقة. حتى 1
 #: app/components/staff/timesheets/card-history.tsx:98
 msgid "Cash tips: {from} to {to}"
 msgstr "الإكراميات النقدية: من {from} إلى {to}"
+
+#: app/components/orders/deliveries-panel.tsx:161
+#~ msgid "Cash to collect: {0}"
+#~ msgstr "النقد المطلوب تحصيله: {0}"
+
+#: app/components/orders/deliveries-panel.tsx:164
+msgid "Cash to collect: {cash}"
+msgstr "النقد المطلوب تحصيله: {cash}"
 
 #: app/components/pos/pos-day-report.tsx:489
 msgid "Cashier left without closing the drawer"
@@ -12525,6 +12545,10 @@ msgstr "اختر طبقًا"
 #: app/components/inventory/log-dish-waste-form.tsx:262
 msgid "Choose a dish."
 msgstr "اختر طبقاً."
+
+#: app/components/orders/deliveries-panel.tsx:293
+msgid "Choose a driver"
+msgstr "اختر سائقًا"
 
 #: app/components/staff/labor/sales-import-dialog.tsx:147
 msgid "Choose a file"
@@ -13847,7 +13871,7 @@ msgstr "اجمع الشارع والمدينة والرمز البريدي."
 msgid "Collect a valid email address."
 msgstr "اجمع بريدًا إلكترونيًا صالحًا."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:403
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:419
 msgid "Color"
 msgstr "اللون"
 
@@ -16493,7 +16517,7 @@ msgstr "استلام عند الرصيف"
 #: app/components/staff/timesheets/payroll-summary.tsx:176
 #: app/routes/_app+/$orgSlug_+/inventory+/settings.tsx:645
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:304
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:432
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:461
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:246
 msgid "Currency"
 msgstr "العملة"
@@ -16665,7 +16689,7 @@ msgstr "عميل"
 #: app/components/orders/order-detail.tsx:673
 #: app/components/orders/order-detail.tsx:697
 #: app/components/workspace-breadcrumb.tsx:110
-#: app/routes/_app+/$orgSlug_+/orders.tsx:352
+#: app/routes/_app+/$orgSlug_+/orders.tsx:369
 msgid "Customer"
 msgstr "عميل"
 
@@ -17267,7 +17291,7 @@ msgstr "مدد الجلوس الافتراضية متداخلة لبعض أحج�
 msgid "Default dining times skip some party sizes."
 msgstr "مدد الجلوس الافتراضية تتخطى بعض أحجام المجموعات."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:422
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:451
 msgid "Default hourly rate"
 msgstr "الأجر الافتراضي بالساعة"
 
@@ -17766,6 +17790,7 @@ msgid "Deliver queued events"
 msgstr "تسليم الأحداث المنتظرة"
 
 #: app/components/inventory/variance-screen.tsx:215
+#: app/components/orders/deliveries-panel.tsx:187
 #: app/components/orders/order-steps-activity.ts:14
 #: app/components/print/print-order-labels.ts:17
 #: app/utils/inventory/labels.ts:83
@@ -17778,6 +17803,8 @@ msgstr "تم التسليم ({lastStatus})"
 
 #: app/components/inventory/accountant-export-dialog.tsx:246
 #: app/components/inventory/review-order-screen.tsx:1103
+#: app/components/orders/deliveries-panel.tsx:224
+#: app/components/orders/deliveries-panel.tsx:229
 #: app/components/workspace-breadcrumb.tsx:101
 msgid "Deliveries"
 msgstr "الشحنات"
@@ -17793,6 +17820,11 @@ msgstr "Deliveroo"
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:336
 msgid "Delivers on"
 msgstr "يسلّم في"
+
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:216
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:431
+msgid "Delivers orders"
+msgstr "يوصّل الطلبات"
 
 #: app/components/customers/person-orders-panel.tsx:221
 #: app/components/dashboard/blocks/attention-block.tsx:201
@@ -17812,7 +17844,7 @@ msgstr "يسلّم في"
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:145
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:164
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:1374
-#: app/routes/_app+/$orgSlug_+/orders.tsx:369
+#: app/routes/_app+/$orgSlug_+/orders.tsx:386
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1064
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:448
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:533
@@ -18785,7 +18817,7 @@ msgstr "معروض"
 #: app/components/orders/order-detail.tsx:540
 #: app/components/reservations/status-style.tsx:148
 #: app/components/settings/cards/organization/shop-card.tsx:53
-#: app/routes/_app+/$orgSlug_+/orders.tsx:391
+#: app/routes/_app+/$orgSlug_+/orders.tsx:408
 #: app/utils/reservations/payments-view.ts:49
 #: app/utils/reservations/payments-view.ts:79
 msgid "Disputed"
@@ -19252,6 +19284,14 @@ msgstr "رسم مضلع"
 #: app/utils/inventory/labels.ts:25
 msgid "Drinks"
 msgstr "مشروبات"
+
+#: app/components/orders/deliveries-panel.tsx:283
+msgid "Driver"
+msgstr "السائق"
+
+#: app/components/orders/deliveries-panel.tsx:389
+msgid "Drivers"
+msgstr "السائقون"
 
 #: app/components/staff/schedule/time-off-page.tsx:222
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:251
@@ -19776,7 +19816,7 @@ msgstr "ربحه جيد لكنه يُباع ببطء. اعرضه بشكل ممي
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:850
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1003
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:248
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:579
 #: app/routes/_app+/$orgSlug_+/website+/legal.tsx:500
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:686
@@ -19955,7 +19995,7 @@ msgstr "تعديل نافذة الاستلام"
 msgid "Edit policy"
 msgstr "تعديل السياسة"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:375
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:391
 msgid "Edit position"
 msgstr "تعديل المنصب"
 
@@ -23709,7 +23749,7 @@ msgstr "من تقويمك {sourceLabel}. غيّر عنوانها ووقتها ف
 msgid "Front counter"
 msgstr "الكاونتر الأمامي"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:399
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:415
 msgid "Front of house, Warehouse…"
 msgstr "صالة الطعام، المستودع…"
 
@@ -24057,6 +24097,10 @@ msgstr "اذكر الوقت المعتاد للاستلام أو التوصيل.
 #: app/components/menu/dish-page-card.tsx:60
 msgid "Give this dish its own page"
 msgstr "إنشاء صفحة خاصة لهذا الطبق"
+
+#: app/components/orders/deliveries-panel.tsx:364
+msgid "Give this run to another driver"
+msgstr "أعطِ هذه الرحلة لسائق آخر"
 
 #: app/utils/website/form-templates.ts:54
 msgid "Give visitors room to share thoughtful feedback."
@@ -24434,7 +24478,7 @@ msgstr "مجموعات من كمية"
 #: app/components/reservations/today-party-card.tsx:77
 #: app/components/reservations/waitlist/today-waitlist-card.tsx:70
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:690
-#: app/routes/_app+/$orgSlug_+/orders.tsx:343
+#: app/routes/_app+/$orgSlug_+/orders.tsx:360
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:478
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:284
@@ -24449,7 +24493,7 @@ msgstr "طلب الضيف"
 
 #: app/components/orders/order-detail.tsx:698
 #: app/components/settings/cards/organization/shop-card.tsx:465
-#: app/routes/_app+/$orgSlug_+/orders.tsx:353
+#: app/routes/_app+/$orgSlug_+/orders.tsx:370
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
 
@@ -24561,6 +24605,10 @@ msgstr "صور الضيوف"
 #: app/components/pos/ticket-settings.tsx:797
 msgid "Guest receipt"
 msgstr "إيصال الضيف"
+
+#: app/components/orders/deliveries-panel.tsx:42
+msgid "Guest refused"
+msgstr "رفض الضيف الاستلام"
 
 #: app/components/roles/tenant-role-access-manager.tsx:744
 msgid "Guest relations"
@@ -26313,7 +26361,7 @@ msgstr "مشمولة"
 msgid "Included ({taxRatePct}%)"
 msgstr "شاملة الضريبة ({taxRatePct}%)"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:409
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:425
 msgid "Included when tips are divided."
 msgstr "يُشمل عند تقسيم الإكراميات."
 
@@ -27852,7 +27900,7 @@ msgid "Large"
 msgstr "كبير"
 
 #: app/components/settings/cards/alert-settings-card.tsx:57
-#: app/routes/_app+/$orgSlug_+/orders.tsx:315
+#: app/routes/_app+/$orgSlug_+/orders.tsx:332
 msgid "Large order"
 msgstr "طلب كبير"
 
@@ -29142,7 +29190,7 @@ msgstr "جارٍ تحميل التهيئة"
 msgid "Loading order…"
 msgstr "جارٍ تحميل الطلب…"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:267
+#: app/routes/_app+/$orgSlug_+/orders.tsx:284
 msgid "Loading orders…"
 msgstr "جارٍ تحميل الطلبات…"
 
@@ -29158,7 +29206,7 @@ msgstr "جارٍ تحميل الأجور"
 msgid "Loading personal details"
 msgstr "جارٍ تحميل البيانات الشخصية"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:143
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:147
 msgid "Loading positions"
 msgstr "جارٍ تحميل المناصب"
 
@@ -29398,6 +29446,7 @@ msgstr "كلمات البحث المحلي"
 #: app/components/launch/launch-checklist.tsx:342
 #: app/components/menu/drop-wizard/drop-drawers.tsx:249
 #: app/components/orders/daily-limits-panel.tsx:128
+#: app/components/orders/deliveries-panel.tsx:237
 #: app/components/orders/slot-limits-panel.tsx:140
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
@@ -30444,6 +30493,10 @@ msgstr "وضع علامة مكتمل"
 msgid "Mark complete automatically"
 msgstr "وضع علامة مكتمل تلقائيًا"
 
+#: app/components/orders/deliveries-panel.tsx:205
+msgid "Mark delivered"
+msgstr "تحديد كمُسلَّم"
+
 #: app/components/dashboard/blocks/attention-block.tsx:643
 msgid "Mark dishes available"
 msgstr "اجعل الأطباق متاحة"
@@ -30522,7 +30575,7 @@ msgstr "تمت التسوية"
 msgid "Mark this location as temporarily closed until a reopen date or until you reopen it. Syncs to Google when enabled."
 msgstr "تحديد هذا الفرع كمغلق مؤقتاً حتى تاريخ إعادة الفتح أو حتى تقوم بإعادة فتحه. تتم المزامنة مع Google عند التفعيل."
 
-#: app/components/reports/report-workspace.tsx:37
+#: app/components/reports/report-workspace.tsx:65
 msgid "Mark unavailable"
 msgstr "حدّده كغير متاح"
 
@@ -32074,7 +32127,7 @@ msgstr "طلبات الدعم الخاصة بي"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:767
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1351
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:277
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:387
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:403
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:235
 #: app/routes/_app+/$orgSlug_+/website+/experiments.tsx:268
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:211
@@ -33333,6 +33386,10 @@ msgstr "لا توجد شحنات هذا الأسبوع للمقارنة بها."
 msgid "No deliveries yet"
 msgstr "لا توجد توريدات بعد"
 
+#: app/components/orders/deliveries-panel.tsx:262
+msgid "No delivery orders are waiting for a driver."
+msgstr "لا توجد طلبات توصيل بانتظار سائق."
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:267
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
@@ -33432,6 +33489,10 @@ msgstr "لا توجد أطباق مطابقة."
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:314
 msgid "No drafts."
 msgstr "لا توجد مسودات."
+
+#: app/components/orders/deliveries-panel.tsx:326
+msgid "No driver is out right now."
+msgstr "لا يوجد سائق في الخارج الآن."
 
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:237
 msgid "No drops match these filters"
@@ -33934,6 +33995,10 @@ msgstr "لا يوجد أحد آخر للإضافة."
 msgid "No one found at this workplace."
 msgstr "لم يتم العثور على أحد في مكان العمل هذا."
 
+#: app/components/orders/deliveries-panel.tsx:393
+msgid "No one has a job marked “Delivers orders” at this location yet."
+msgstr "لا يوجد أحد في هذا الفرع لديه وظيفة مُعلَّمة «يوصّل الطلبات» حتى الآن."
+
 #: app/components/hiring/applicant-board.tsx:235
 msgid "No one here"
 msgstr "لا أحد هنا"
@@ -34011,7 +34076,7 @@ msgstr "لا توجد خيارات بعد."
 msgid "No orders usually expected"
 msgstr "لا يُتوقع عادة وجود طلبات"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:272
+#: app/routes/_app+/$orgSlug_+/orders.tsx:289
 msgid "No orders yet"
 msgstr "لا توجد طلبات بعد"
 
@@ -34193,7 +34258,7 @@ msgstr "لا يوجد منصب هنا بعد."
 msgid "No position yet"
 msgstr "بلا منصب بعد"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:166
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:170
 msgid "No positions yet"
 msgstr "لا توجد مناصب بعد"
 
@@ -34814,6 +34879,10 @@ msgstr "لا أحد آخر يشغل هذا المنصب هنا."
 #: app/components/staff/timesheets/card-history.tsx:137
 msgid "Nobody has changed this card. It is exactly as it was punched."
 msgstr "لم يعدّل أحد هذه البطاقة. هي كما سُجّلت تمامًا."
+
+#: app/components/orders/deliveries-panel.tsx:38
+msgid "Nobody home"
+msgstr "لا أحد في المنزل"
 
 #: app/components/staff/timeclock-today.tsx:190
 msgid "Nobody is clocked in right now."
@@ -36156,6 +36225,10 @@ msgstr "في ذلك التاريخ"
 msgid "On the Orders page"
 msgstr "في صفحة الطلبات"
 
+#: app/components/orders/deliveries-panel.tsx:185
+msgid "On the road"
+msgstr "في الطريق"
+
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:784
 msgid "On the same date"
 msgstr "في التاريخ نفسه"
@@ -36317,6 +36390,10 @@ msgstr "أحدهما مشترى والآخر يُحضَّر في المطبخ، 
 #: app/utils/inventory/inventory-errors.ts:71
 msgid "One of these items is already in a group."
 msgstr "أحد هذه الأصناف موجود بالفعل في مجموعة."
+
+#: app/components/orders/deliveries-panel.tsx:110
+msgid "One of these orders is no longer ready."
+msgstr "أحد هذه الطلبات لم يعد جاهزًا."
 
 #: app/components/loyalty/reward-dialog.tsx:655
 msgid "One of this item, free. The customer picks the size or variant; paid extras are still charged."
@@ -36962,6 +37039,10 @@ msgstr "افتح إعدادات Cursor (Cmd/Ctrl + ,)"
 msgid "Open customer profile"
 msgstr "فتح ملف العميل"
 
+#: app/components/reports/report-workspace.tsx:53
+msgid "Open deliveries"
+msgstr "فتح التوصيلات"
+
 #: app/components/reservations/today-party-card.tsx:175
 msgid "Open details"
 msgstr "فتح التفاصيل"
@@ -36970,7 +37051,7 @@ msgstr "فتح التفاصيل"
 msgid "Open details for {name}"
 msgstr "فتح تفاصيل {name}"
 
-#: app/components/reports/report-workspace.tsx:33
+#: app/components/reports/report-workspace.tsx:61
 msgid "Open dish"
 msgstr "افتح الطبق"
 
@@ -38007,7 +38088,7 @@ msgstr "طلبات"
 #: app/components/orders/order-detail.tsx:512
 #: app/components/roles/tenant-role-access-manager.tsx:167
 #: app/components/workspace-breadcrumb.tsx:12
-#: app/routes/_app+/$orgSlug_+/orders.tsx:198
+#: app/routes/_app+/$orgSlug_+/orders.tsx:208
 msgid "Orders"
 msgstr "الطلبات"
 
@@ -38271,6 +38352,10 @@ msgstr "تكاملات أخرى"
 #: app/routes/_app+/$orgSlug_+/website+/popups.$popupId.tsx:409
 msgid "Other pages"
 msgstr "صفحات أخرى"
+
+#: app/components/orders/deliveries-panel.tsx:46
+msgid "Other problem"
+msgstr "مشكلة أخرى"
 
 #: app/components/reservations/booking-sheet.tsx:770
 #: app/components/reservations/booking-sheet.tsx:774
@@ -39556,6 +39641,10 @@ msgstr "من تغيّرت ورديّاتهم"
 msgid "People with access"
 msgstr "الأشخاص الذين لديهم صلاحية الوصول"
 
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:433
+msgid "People with this job can sign in to Station's driver view and be given deliveries."
+msgstr "يمكن لمن لديه هذه الوظيفة تسجيل الدخول إلى واجهة السائق في Station وتلقّي التوصيلات."
+
 #: app/components/dashboard/share-dashboard-dialog.tsx:390
 msgid "People you share with find this dashboard under “Shared with me”. View access lets them look at it. Edit access also lets them change its blocks and layout for everyone."
 msgstr "يجد الأشخاص الذين تشاركها معهم لوحة التحكم هذه ضمن “تمت مشاركتها معي”. تتيح لهم صلاحية العرض الاطلاع عليها، وتتيح لهم صلاحية التعديل أيضًا تغيير كتلها وتخطيطها للجميع."
@@ -40191,7 +40280,7 @@ msgstr "مخللات"
 #: app/components/locations/checkout-settings-cards.tsx:357
 #: app/components/orders/order-detail.tsx:771
 #: app/components/orders/slot-limits-panel.tsx:164
-#: app/routes/_app+/$orgSlug_+/orders.tsx:377
+#: app/routes/_app+/$orgSlug_+/orders.tsx:394
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1059
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:446
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:531
@@ -40766,7 +40855,7 @@ msgid "Position {position} of {total}"
 msgstr "الترتيب {position} من {total}"
 
 #: app/components/staff/positions-tab.tsx:494
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:354
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:370
 msgid "Position added."
 msgstr "تمت إضافة المنصب."
 
@@ -40778,7 +40867,7 @@ msgstr "الموضع والحجم"
 msgid "Position filled"
 msgstr "تم شغل الوظيفة"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:354
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:370
 msgid "Position saved."
 msgstr "تم حفظ المنصب."
 
@@ -40788,7 +40877,7 @@ msgstr "المنصب: من {from} إلى {to}"
 
 #: app/components/staff/staff-roster.tsx:137
 #: app/components/workspace-breadcrumb.tsx:27
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:109
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:113
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:241
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:301
 msgid "Positions"
@@ -40798,7 +40887,7 @@ msgstr "المناصب"
 msgid "Positions and pay"
 msgstr "المناصب والأجر"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:171
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:175
 msgid "Positions such as Server or Line cook let you say what each person does and where."
 msgstr "تتيح لك المناصب مثل النادل أو الطاهي تحديد ما يقوم به كل شخص وأين."
 
@@ -41564,6 +41653,7 @@ msgstr "احترافي"
 msgid "problem"
 msgstr "مشكلة"
 
+#: app/components/orders/deliveries-panel.tsx:189
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:321
 msgid "Problem"
 msgstr "المشكلة"
@@ -42587,6 +42677,10 @@ msgstr "جاهز"
 msgid "Ready around {promisedFrom}"
 msgstr "جاهز تقريبًا في {promisedFrom}"
 
+#: app/components/orders/deliveries-panel.tsx:258
+msgid "Ready for a driver"
+msgstr "جاهزة لسائق"
+
 #: app/components/reservations/settings/setup-diagnostics.tsx:122
 msgid "Ready for guests. A few things could be better"
 msgstr "جاهز للضيوف. يمكن تحسين بعض الأمور"
@@ -42668,6 +42762,10 @@ msgstr "السبب المعروض للمواقع:"
 msgid "Reason: {reason}"
 msgstr "السبب: {reason}"
 
+#: app/components/orders/deliveries-panel.tsx:366
+msgid "Reassign"
+msgstr "إعادة الإسناد"
+
 #: app/components/reservations/conflict-panel.tsx:208
 msgid "Reassign to {suggestedLabels}"
 msgstr "إعادة التخصيص إلى {suggestedLabels}"
@@ -42706,7 +42804,7 @@ msgstr "يمكن للإيصالات طباعة رمز يفتح هذه الصفح
 msgid "Receive"
 msgstr "استلام"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:200
+#: app/routes/_app+/$orgSlug_+/orders.tsx:210
 msgid "Receive and manage menu and drop orders. Updates refresh every 15 seconds."
 msgstr "استلم طلبات القائمة والطروحات وأدرها. تُحدَّث البيانات كل 15 ثانية."
 
@@ -42732,7 +42830,7 @@ msgstr "استُلم <0>{receivedText}</0>"
 msgid "Received against the order below. Change how many arrived."
 msgstr "تُستلم على الطلب أدناه. عدّل عدد ما وصل."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:408
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:424
 msgid "Receives tips"
 msgstr "يتلقى الإكراميات"
 
@@ -43169,7 +43267,7 @@ msgstr "إعادة توزيع الحجوزات اللاحقة"
 #: app/components/staff/timeclock-today.tsx:172
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:401
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:247
-#: app/routes/_app+/$orgSlug_+/orders.tsx:211
+#: app/routes/_app+/$orgSlug_+/orders.tsx:221
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:347
 #: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:94
 msgid "Refresh"
@@ -43223,7 +43321,7 @@ msgstr "تحديث. {updated}"
 msgid "Refund"
 msgstr "استرداد"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:400
+#: app/routes/_app+/$orgSlug_+/orders.tsx:417
 msgid "Refund failed"
 msgstr "فشل الاسترداد"
 
@@ -43248,7 +43346,7 @@ msgstr "تم إرسال استرداد بقيمة {0} إلى مزوّد الدف
 msgid "Refund online orders"
 msgstr "استرداد مبالغ الطلبات عبر الإنترنت"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:396
+#: app/routes/_app+/$orgSlug_+/orders.tsx:413
 #: app/utils/reservations/payments-view.ts:35
 msgid "Refund pending"
 msgstr "استرداد قيد الانتظار"
@@ -44917,7 +45015,7 @@ msgstr "تُستخدم المطاعم لإدارة فروعك وقوائمك و�
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:397
 #: app/routes/_app+/$orgSlug_+/media.tsx:1607
 #: app/routes/_app+/$orgSlug_+/media.tsx:2736
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:260
 msgid "Restore"
 msgstr "استعادة"
 
@@ -45607,6 +45705,7 @@ msgstr "متأخر: إضافة 15 دقيقة"
 msgid "Running low"
 msgstr "يوشك على النفاد"
 
+#: app/components/orders/deliveries-panel.tsx:322
 #: app/components/workspace-breadcrumb.tsx:72
 msgid "Runs"
 msgstr "عمليات التشغيل"
@@ -45984,7 +46083,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/routes/_app+/$orgSlug_+/media.tsx:2768
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
 #: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:203
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:487
 #: app/routes/_app+/$orgSlug_+/website+/area-pages.tsx:340
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:354
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:524
@@ -46538,7 +46637,7 @@ msgstr "جارٍ الحفظ..."
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:616
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1468
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:487
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:625
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
@@ -47788,6 +47887,14 @@ msgstr "اختر اللغات"
 msgid "Select operator"
 msgstr "اختر العامل"
 
+#: app/components/orders/deliveries-panel.tsx:270
+#~ msgid "Select order {0}"
+#~ msgstr "اختيار الطلب {0}"
+
+#: app/components/orders/deliveries-panel.tsx:101
+msgid "Select order {number}"
+msgstr "اختيار الطلب {number}"
+
 #: app/routes/mcp+/authorize.tsx:395
 msgid "Select Organization"
 msgstr "اختر المنظمة"
@@ -48608,6 +48715,10 @@ msgstr "حدّد المنطقة الزمنية لمكان العمل هذا قب
 msgid "Set to"
 msgstr "تعيين إلى"
 
+#: app/components/orders/deliveries-panel.tsx:423
+msgid "Set unavailable"
+msgstr "تعيين كغير متاح"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:207
 msgid "Set up"
 msgstr "إعداد"
@@ -49094,7 +49205,7 @@ msgstr "عرض الكل"
 msgid "Show all deliveries"
 msgstr "عرض كل الشحنات"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:131
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:135
 msgid "Show archived"
 msgstr "إظهار المؤرشفة"
 
@@ -50612,7 +50723,7 @@ msgstr "ابدأ بمسودة. تضيف الجداول وتنشرها في ال�
 msgid "Start a new import"
 msgstr "بدء استيراد جديد"
 
-#: app/components/reports/report-workspace.tsx:41
+#: app/components/reports/report-workspace.tsx:69
 msgid "Start a promotion"
 msgstr "ابدأ عرضًا ترويجيًا"
 
@@ -51410,7 +51521,7 @@ msgstr "إرسال مع وجود متطلبات مستحقة"
 msgid "Submitted"
 msgstr "تاريخ الإرسال"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:275
+#: app/routes/_app+/$orgSlug_+/orders.tsx:292
 msgid "Submitted orders will appear here."
 msgstr "ستظهر الطلبات المُرسلة هنا."
 
@@ -51848,8 +51959,8 @@ msgstr "تم إنشاء الطاولة {createdTableLabel}."
 #: app/components/qr/open-tabs.tsx:369
 #: app/components/qr/open-tabs.tsx:1059
 #: app/components/qr/open-tabs.tsx:1147
-#: app/routes/_app+/$orgSlug_+/orders.tsx:341
-#: app/routes/_app+/$orgSlug_+/orders.tsx:374
+#: app/routes/_app+/$orgSlug_+/orders.tsx:358
+#: app/routes/_app+/$orgSlug_+/orders.tsx:391
 msgid "Table {label}"
 msgstr "طاولة {label}"
 
@@ -52152,6 +52263,10 @@ msgstr "تلقي بريد صوتي"
 msgid "Take away"
 msgstr "سحب"
 
+#: app/components/orders/deliveries-panel.tsx:213
+msgid "Take back"
+msgstr "استرجاع"
+
 #: app/components/launch/launch-checklist.tsx:39
 msgid "Take card payments online with Stripe or Checkout.com, or let guests pay when they collect."
 msgstr "اقبل الدفع بالبطاقة عبر الإنترنت مع Stripe أو Checkout.com، أو دع الضيوف يدفعون عند الاستلام."
@@ -52183,6 +52298,10 @@ msgstr "خذ القيمة من"
 #: app/utils/inventory/starter-lists.ts:309
 msgid "Takeaway boxes"
 msgstr "علب الطلبات الخارجية"
+
+#: app/components/orders/deliveries-panel.tsx:191
+msgid "Taken back"
+msgstr "تم استرجاعه"
 
 #: app/components/staff/announcements/announcements-page.tsx:83
 msgid "Taken down"
@@ -52350,7 +52469,7 @@ msgstr "فيروزي"
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:363
 #: app/components/workspace-breadcrumb.tsx:26
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:107
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:111
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:207
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:281
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:291
@@ -53008,6 +53127,7 @@ msgid "That did not work"
 msgstr "لم ينجح ذلك"
 
 #: app/components/locations/location-order-alerts-card.tsx:128
+#: app/components/orders/deliveries-panel.tsx:114
 #: app/components/print/artwork-labels.ts:21
 #: app/components/print/print-order-labels.ts:56
 #: app/components/qr/open-tabs.tsx:211
@@ -53045,6 +53165,10 @@ msgstr "تم حجز هذا النطاق للتو. لم يتم خصم أي مبل
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:138
 msgid "That draft could not be used. Please try again."
 msgstr "تعذر استخدام هذه المسودة. يرجى المحاولة مرة أخرى."
+
+#: app/components/orders/deliveries-panel.tsx:108
+msgid "That driver is unavailable right now."
+msgstr "هذا السائق غير متاح الآن."
 
 #: app/components/staff/review-rows.tsx:18
 msgid "That email does not look right."
@@ -53198,6 +53322,10 @@ msgstr "هذا الشخص لا يشغل ذلك المنصب في مكان الع
 #: app/utils/my-schedule/my-schedule-messages.ts:22
 msgid "That person is not available for this shift."
 msgstr "هذا الشخص غير متاح لهذه الوردية."
+
+#: app/components/orders/deliveries-panel.tsx:112
+msgid "That person is not on the driver list."
+msgstr "هذا الشخص ليس في قائمة السائقين."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:119
 msgid "That phone number is not valid."
@@ -54337,7 +54465,7 @@ msgstr "تم شغل الوظيفة"
 msgid "The job is live."
 msgstr "تم نشر الوظيفة."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:111
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:115
 msgid "The jobs people do here. Assign them from a person's profile."
 msgstr "الوظائف التي يؤديها الناس هنا. عيّنها من الملف الشخصي للشخص."
 
@@ -57943,7 +58071,7 @@ msgstr "نصيحة: خصّص للبطاقات المطبوعة رمزًا خاص
 #: app/components/pos/pos-day-report.tsx:257
 #: app/components/staff/labor/labor-page.tsx:198
 #: app/components/staff/timesheets/card-fields.tsx:184
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:209
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:215
 msgid "Tips"
 msgstr "الإكراميات"
 
@@ -58736,7 +58864,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:313
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:793
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:424
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:159
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:163
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:227
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:421
 #: app/routes/_app+/$orgSlug_+/website+/generate.tsx:177
@@ -59173,6 +59301,10 @@ msgstr "تعذّر التصدير. حاول مرة أخرى."
 msgid "Unable to load calls. Try again."
 msgstr "تعذّر تحميل المكالمات. حاول مرة أخرى."
 
+#: app/components/orders/deliveries-panel.tsx:87
+msgid "Unable to load deliveries. Try again."
+msgstr "تعذّر تحميل التوصيلات. حاول مرة أخرى."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:191
 msgid "Unable to load floor plan data."
 msgstr "تعذر تحميل بيانات مخطط الصالة."
@@ -59182,7 +59314,7 @@ msgstr "تعذر تحميل بيانات مخطط الصالة."
 msgid "Unable to load more calls. Try again."
 msgstr "تعذّر تحميل المزيد من المكالمات. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:152
+#: app/routes/_app+/$orgSlug_+/orders.tsx:162
 msgid "Unable to load orders. Try again."
 msgstr "تعذّر تحميل الطلبات. حاول مرة أخرى."
 
@@ -59254,6 +59386,7 @@ msgstr "غير مخصصة: اسحبها إلى صف طاولة أدناه"
 #: app/components/menu/menu-availability-card.tsx:289
 #: app/components/menu/menu-bulk-edit-sheet.tsx:619
 #: app/components/menu/menu-status-badge.tsx:65
+#: app/components/orders/deliveries-panel.tsx:428
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:1447
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:1450
 #: app/components/staff/schedule/availability-page.tsx:258
@@ -59263,6 +59396,10 @@ msgstr "غير مخصصة: اسحبها إلى صف طاولة أدناه"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1323
 msgid "Unavailable"
 msgstr "غير متوفر"
+
+#: app/components/orders/deliveries-panel.tsx:421
+msgid "Unavailable · set available"
+msgstr "غير متاح · تعيين كمتاح"
 
 #: app/components/my-schedule/availability-sheet.tsx:70
 #: app/components/staff/schedule/availability-sheet.tsx:40
@@ -61429,6 +61566,7 @@ msgstr "الانتظار حتى أول طلب مدفوع"
 
 #: app/components/media-library/bulk-file-list.tsx:45
 #: app/components/media-library/restyle-item-card.tsx:100
+#: app/components/orders/deliveries-panel.tsx:183
 #: app/components/reservations/floor-table.tsx:102
 #: app/components/reservations/status-style.tsx:207
 #: app/components/social/social-labels.ts:42
@@ -63025,6 +63163,10 @@ msgstr "مصدر العناصر"
 msgid "Where the job is"
 msgstr "مكان الوظيفة"
 
+#: app/components/orders/deliveries-panel.tsx:344
+msgid "Where they are"
+msgstr "مكان وجوده"
+
 #: app/components/hiring/interview-dialog.tsx:239
 msgid "Where to go, who to ask for, or the call-in details or meeting link."
 msgstr "أين يذهب، وعمّن يسأل، أو تفاصيل الاتصال أو رابط الاجتماع."
@@ -63681,6 +63823,10 @@ msgstr "كتبه الذكاء الاصطناعي، راجعه قبل النشر"
 #: app/components/menu/menu-review-stack.tsx:1282
 msgid "Written from the dish name, category and options."
 msgstr "مكتوب من اسم الطبق وفئته وخياراته."
+
+#: app/components/orders/deliveries-panel.tsx:40
+msgid "Wrong address"
+msgstr "عنوان خاطئ"
 
 #: app/components/phone-agent/phrase-fields.tsx:51
 msgid "Wrong key"

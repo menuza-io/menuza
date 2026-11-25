@@ -18,6 +18,7 @@ import {
 } from '@repo/tenant-db'
 import { chunkIds } from '../lib/chunked-in.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { loadDeliveryCash } from './delivery-run-service.ts'
 import { type PosResult } from './pos-service.ts'
 
 /**
@@ -246,11 +247,30 @@ async function ordersByIds(db: TenantDatabase, ids: string[]) {
 	return new Map(rows.map((r) => [r.id, r]))
 }
 
+/**
+ * Cash the restaurant's own drivers collected on delivery (#287) while this shift
+ * was open, at the terminal's location, by driver. Cash on deliveries is money
+ * the shift's drawer never saw: it is reported next to the drawer, not in it, so
+ * the over or short figure keeps meaning what the till counted.
+ */
+export type ShiftDeliveryCash = {
+	drivers: Array<{
+		driverStaffId: string
+		driverName: string
+		deliveries: number
+		cashDueCents: number
+		cashCollectedCents: number
+	}>
+	totalDueCents: number
+	totalCollectedCents: number
+}
+
 export type ShiftReport = {
 	shift: ReturnType<typeof serializeShift>
 	summary: PosShiftSalesSummary
 	/** Counted cash minus what the server expects; null while the shift is open. */
 	overShortCents: number | null
+	deliveryCash: ShiftDeliveryCash
 }
 
 export const serializeShift = (
@@ -322,6 +342,16 @@ export async function shiftReport(
 		openingFloatCents: shift.openingFloatCents,
 		movements,
 	})
+	const [device] = await db
+		.select({ locationId: posDevices.locationId })
+		.from(posDevices)
+		.where(eq(posDevices.id, shift.deviceId))
+		.limit(1)
+	const drivers = await loadDeliveryCash(db, {
+		fromMs: shift.openedAt,
+		toMs: shift.closedAt ?? Date.now(),
+		locationId: device?.locationId ?? null,
+	})
 	return {
 		shift: serializeShift(shift, movements),
 		summary,
@@ -329,6 +359,11 @@ export async function shiftReport(
 			shift.countedCashCents === null
 				? null
 				: shift.countedCashCents - summary.cash.expectedCents,
+		deliveryCash: {
+			drivers,
+			totalDueCents: drivers.reduce((sum, d) => sum + d.cashDueCents, 0),
+			totalCollectedCents: drivers.reduce((sum, d) => sum + d.cashCollectedCents, 0),
+		},
 	}
 }
 

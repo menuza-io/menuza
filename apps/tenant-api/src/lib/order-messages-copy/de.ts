@@ -33,10 +33,17 @@ export const DE: OrderMessageCopy = {
 			heading: 'Deine Bestellung hat eine neue Zeit',
 			lead: '{r} hat die Zeit für deine Bestellung {number} geändert.',
 		},
+		delivered: {
+			subject: 'Deine Bestellung {number} wurde geliefert',
+			heading: 'Deine Bestellung wurde geliefert',
+			lead: 'Deine Bestellung {number} von {r} wurde geliefert. Guten Appetit!',
+		},
 	},
 	sms: {
 		ready: 'Deine Bestellung {number} bei {r} ist fertig.',
 		eta_changed: 'Neue Zeit für deine Bestellung {number} bei {r}: {time}.',
+		out_for_delivery: 'Deine Bestellung {number} von {r} ist unterwegs.',
+		delivered: 'Deine Bestellung {number} von {r} wurde geliefert.',
 	},
 	labels: {
 		order: 'Bestellung',

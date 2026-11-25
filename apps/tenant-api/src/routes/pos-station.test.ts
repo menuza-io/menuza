@@ -1,3 +1,7 @@
+import {
+	clearInHouseDeliveryFlagCache,
+	seedInHouseDeliveryFlagForTest,
+} from '../lib/delivery-switches.ts'
 import crypto from 'node:crypto'
 import { brand } from '@repo/config/brand'
 import { POS_STAFF_SESSION_HEADER } from '@repo/common/pos-orders'
@@ -1112,6 +1116,7 @@ describe('Station apps on a POS terminal', () => {
 				reservations: true,
 				inventory: false,
 				orders: false,
+				deliveries: false,
 			})
 
 			rsvContexts.set(ORG_A, publicContext(ORG_A, { enabled: false }))
@@ -1127,6 +1132,7 @@ describe('Station apps on a POS terminal', () => {
 				reservations: false,
 				inventory: false,
 				orders: false,
+				deliveries: false,
 			})
 		})
 
@@ -1168,7 +1174,18 @@ describe('Station apps on a POS terminal', () => {
 				reservations: false,
 				inventory: false,
 				orders: false,
+				deliveries: false,
 			})
+		})
+
+		it('reports Deliveries (#287) only for a terminal with a location and sign-in while delivery.in_house is on', async () => {
+			await h.seedStaff(ORG_A, {})
+			const { secret } = await pairTerminal()
+			seedInHouseDeliveryFlagForTest(ORG_A, true)
+			expect((await request('GET', '/pos/me', { secret })).body.apps.deliveries).toBe(true)
+			seedInHouseDeliveryFlagForTest(ORG_A, false)
+			expect((await request('GET', '/pos/me', { secret })).body.apps.deliveries).toBe(false)
+			clearInHouseDeliveryFlagCache()
 		})
 
 		it('reports Orders once a manager switches it on for a signed-in terminal at a location', async () => {

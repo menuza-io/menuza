@@ -1,5 +1,6 @@
 import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
 import {
+	DELIVERY_REPORT_SUBJECTS,
 	GBP_REPORT_SUBJECTS,
 	ORDER_REPORT_SUBJECTS,
 	ORG_WIDE_REPORT_SUBJECTS,
@@ -7,6 +8,7 @@ import {
 	SALES_STAFF_FIELD_PERMISSION,
 } from '@repo/reports/token'
 import { gbpFlags } from '#app/utils/gbp/context.server.ts'
+import { isInHouseDeliveryEnabled } from '#app/utils/orders/deliveries.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { resolveReservationsReportAccess } from '#app/utils/reservations/report-access.server.ts'
 import { resolveStaffReportAccessForRequest } from './report-access.server.ts'
@@ -86,6 +88,7 @@ export async function resolveReportGrantsForRequest(
 		impersonated,
 		pageSubjects,
 		gbp,
+		deliveriesOn,
 	] = await Promise.all([
 		resolveStaffReportAccessForRequest(request, userId, organizationId),
 		resolveReservationsReportAccess({ request, userId, organizationId }),
@@ -103,6 +106,7 @@ export async function resolveReportGrantsForRequest(
 		isImpersonating(request),
 		permissionGatedReportSubjects(userId, organizationId),
 		gbpFlags(organizationId),
+		isInHouseDeliveryEnabled(organizationId),
 	])
 	const canReadOrders = admin && canReadMenu
 	const canReadSalesStaff =
@@ -112,6 +116,8 @@ export async function resolveReportGrantsForRequest(
 	return [
 		...(admin ? ORG_WIDE_REPORT_SUBJECTS : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
+		// Own-driver deliveries (#324): the flag and order access.
+		...(canReadOrders && deliveriesOn ? DELIVERY_REPORT_SUBJECTS : []),
 		...(canReadSalesStaff ? [SALES_STAFF_FIELD_PERMISSION] : []),
 		...(canReadGbpInsights ? GBP_REPORT_SUBJECTS : []),
 		...pageSubjects,

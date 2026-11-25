@@ -17,6 +17,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { DailyLimitsPanel } from '#app/components/orders/daily-limits-panel.tsx'
+import { DeliveriesPanel } from '#app/components/orders/deliveries-panel.tsx'
 import { NewOrderBanner } from '#app/components/orders/new-order-banner.tsx'
 import {
 	OrderStatusLabel,
@@ -36,6 +37,7 @@ import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
 import { loadDailyLimitLocations } from '#app/utils/orders/daily-dish-limits.server.ts'
+import { loadDeliveryLocations } from '#app/utils/orders/deliveries.server.ts'
 import {
 	formatMoney,
 	type Order,
@@ -82,12 +84,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		))
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
 	const qr = await getQrOrderingFeatures(organization.id)
-	const [orderingControls, slotLimitLocations, dailyLimitLocations] =
-		await Promise.all([
-			loadOrderingControls(organization.id),
-			loadSlotLimitLocations(organization.id),
-			loadDailyLimitLocations(organization.id),
-		])
+	const [
+		orderingControls,
+		slotLimitLocations,
+		dailyLimitLocations,
+		deliveryLocations,
+	] = await Promise.all([
+		loadOrderingControls(organization.id),
+		loadSlotLimitLocations(organization.id),
+		loadDailyLimitLocations(organization.id),
+		// Own-driver deliveries (#287): empty while `delivery.in_house` is off.
+		loadDeliveryLocations(organization.id),
+	])
 	const loyaltyEnabled = qr.enabled
 		? await isLoyaltyFeatureEnabled(organization.id)
 		: false
@@ -106,6 +114,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			orderingControls,
 			slotLimitLocations,
 			dailyLimitLocations,
+			deliveryLocations,
 			// The region the estimate of what a pause missed is asked of (#176).
 			tenantApiUrl: resolveRegionalTenantApiUrls(organization.dataRegion)
 				.tenantApiUrl,
@@ -126,6 +135,7 @@ export default function OrdersInbox() {
 		orderingControls,
 		slotLimitLocations,
 		dailyLimitLocations,
+		deliveryLocations,
 		tenantApiUrl,
 	} = useLoaderData<typeof loader>()
 	const [refreshKey, setRefreshKey] = useState(0)
@@ -244,6 +254,13 @@ export default function OrdersInbox() {
 					locations={slotLimitLocations}
 					canWrite={canWrite}
 					request={request}
+				/>
+			) : null}
+			{deliveryLocations.length > 0 ? (
+				<DeliveriesPanel
+					orgSlug={orgSlug}
+					locations={deliveryLocations}
+					canWrite={canWrite}
 				/>
 			) : null}
 			{dailyLimitLocations.length > 0 ? (

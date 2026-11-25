@@ -94,6 +94,11 @@ export type OperatorOrderAuth = {
 	 */
 	refundProvider: boolean
 	closeShifts: boolean
+	/**
+	 * Own-driver deliveries (#287): App signs it only while `delivery.in_house` is
+	 * on and the member may write orders. Absent reads as false (fail closed).
+	 */
+	deliveries: boolean
 	operatorName: string | null
 	impersonated: boolean
 }
@@ -195,6 +200,7 @@ export async function authenticateOrdersOperator(
 		refundLoyalty?: boolean
 		refundProvider?: boolean
 		closeShifts?: boolean
+		deliveries?: boolean
 		operatorName?: unknown
 		impersonated?: boolean
 	}
@@ -253,6 +259,7 @@ export async function authenticateOrdersOperator(
 				decoded.refundProvider === true && decoded.impersonated !== true,
 			closeShifts:
 				decoded.closeShifts === true && decoded.impersonated !== true,
+			deliveries: decoded.deliveries === true,
 			operatorName:
 				typeof decoded.operatorName === 'string' &&
 				decoded.operatorName.trim().length > 0

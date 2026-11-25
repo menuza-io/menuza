@@ -174,6 +174,8 @@ export const staffPositionCreateSchema = z
 		defaultRateMinor: moneyMinorSchema.optional(),
 		currency: currencySchema.optional(),
 		tipEligible: z.boolean().default(false),
+		/** "Delivers orders" (#287): people with this job can drive deliveries. */
+		deliversOrders: z.boolean().default(false),
 	})
 	.strict()
 	.refine((value) => value.defaultRateMinor === undefined || value.currency, {
@@ -191,6 +193,7 @@ export const staffPositionUpdateSchema = z
 		defaultRateMinor: moneyMinorSchema.nullable(),
 		currency: currencySchema.nullable(),
 		tipEligible: z.boolean(),
+		deliversOrders: z.boolean(),
 		archived: z.boolean(),
 	})
 	.partial()
