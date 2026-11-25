@@ -2,6 +2,7 @@ import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -12,8 +13,10 @@ import {
 	DropdownMenuTrigger,
 } from '@repo/ui/dropdown-menu'
 import { Icon } from '@repo/ui/icon'
+import { useState } from 'react'
 import { useFetcher } from 'react-router'
 import {
+	type DeliveryPauseFailure,
 	type LocationOrderingControl,
 	type OrderingPauseDuration,
 } from '#app/utils/location/ordering-pause.ts'
@@ -96,12 +99,39 @@ function LocationRow({
 	showName: boolean
 }) {
 	const { _, i18n } = useLingui()
-	const fetcher = useFetcher<{ ok: boolean; error: string | null }>()
+	const fetcher = useFetcher<{
+		ok: boolean
+		error: string | null
+		deliveryPauseError?: string | null
+		failedDeliveryStores?: DeliveryPauseFailure[]
+	}>()
+	const retryFetcher = useFetcher<{
+		ok: boolean
+		error: string | null
+		deliveryPauseError?: string | null
+		failedDeliveryStores?: DeliveryPauseFailure[]
+	}>()
+	const [alsoPauseDelivery, setAlsoPauseDelivery] = useState(true)
+	const [lastRetriedId, setLastRetriedId] = useState<string | null>(null)
 	const pending = fetcher.state !== 'idle'
+	const retryingIntegrationId =
+		retryFetcher.state !== 'idle' ? lastRetriedId : null
 	const action = `/${orgSlug}/orders/ordering-controls`
 	const submit = (values: Record<string, string>) => {
+		setLastRetriedId(null)
 		void fetcher.submit(
 			{ locationId: location.id, ...values },
+			{ method: 'POST', action },
+		)
+	}
+	const retryDeliveryStore = (integrationId: string) => {
+		setLastRetriedId(integrationId)
+		void retryFetcher.submit(
+			{
+				intent: 'retry-delivery-pause',
+				locationId: location.id,
+				integrationId,
+			},
 			{ method: 'POST', action },
 		)
 	}
@@ -110,6 +140,26 @@ function LocationRow({
 	const paused = location.pausedAt !== null
 	const busy = location.busyExtraPrepMinutes > 0
 	const failed = fetcher.state === 'idle' && fetcher.data?.ok === false
+	const baseFailures =
+		fetcher.data?.deliveryPauseError === 'platform_pause_failed' &&
+		fetcher.data.failedDeliveryStores
+			? fetcher.data.failedDeliveryStores
+			: (location.deliveryPauseFailures ?? [])
+	const retriedOkId =
+		retryFetcher.state === 'idle' && retryFetcher.data?.ok === true
+			? lastRetriedId
+			: null
+	const deliveryFailures = baseFailures
+		.filter((store) => store.integrationId !== retriedOkId)
+		.map((store) => {
+			const updated =
+				retryFetcher.state === 'idle' && retryFetcher.data?.ok === false
+					? retryFetcher.data.failedDeliveryStores?.find(
+							(item) => item.integrationId === store.integrationId,
+						)
+					: undefined
+			return updated ?? store
+		})
 
 	const pauseChoices: { duration: OrderingPauseDuration; label: string }[] = [
 		{ duration: '15m', label: _(msg`15 minutes`) },
@@ -161,9 +211,61 @@ function LocationRow({
 						<Trans>That did not save. Try again.</Trans>
 					</p>
 				) : null}
+				{deliveryFailures.length > 0 ? (
+					<div className="space-y-1.5 pt-1">
+						{deliveryFailures.map((store) => {
+							const storeName = store.displayName
+							const storeError = store.error
+							return (
+								<div
+									key={store.integrationId}
+									role="alert"
+									data-error-code="platform_pause_failed"
+									data-testid={`delivery-pause-error-${store.integrationId}`}
+									className="border-destructive/30 bg-destructive/5 text-destructive flex flex-wrap items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs"
+								>
+									<span>
+										<Trans>
+											Could not update {storeName}: {storeError}
+										</Trans>
+									</span>
+									{canWrite ? (
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											disabled={retryingIntegrationId === store.integrationId}
+											onClick={() => retryDeliveryStore(store.integrationId)}
+											data-testid={`retry-delivery-pause-${store.integrationId}`}
+										>
+											<Trans>Retry</Trans>
+										</Button>
+									) : null}
+								</div>
+							)
+						})}
+					</div>
+				) : null}
 			</div>
 			{canWrite ? (
 				<div className="flex flex-wrap items-center gap-2">
+					{!paused && location.hasDeliveryConnections ? (
+						<label
+							htmlFor={`also-pause-delivery-${location.id}`}
+							className="text-muted-foreground flex cursor-pointer items-center gap-2 text-xs select-none"
+						>
+							<Checkbox
+								id={`also-pause-delivery-${location.id}`}
+								checked={alsoPauseDelivery}
+								onCheckedChange={(checked) =>
+									setAlsoPauseDelivery(Boolean(checked))
+								}
+							/>
+							<span>
+								<Trans>Also pause delivery apps</Trans>
+							</span>
+						</label>
+					) : null}
 					<DropdownMenu>
 						<DropdownMenuTrigger
 							render={
@@ -248,7 +350,13 @@ function LocationRow({
 										<DropdownMenuItem
 											key={choice.duration}
 											onClick={() =>
-												submit({ intent: 'pause', duration: choice.duration })
+												submit({
+													intent: 'pause',
+													duration: choice.duration,
+													...(location.hasDeliveryConnections
+														? { alsoPauseDelivery: String(alsoPauseDelivery) }
+														: {}),
+												})
 											}
 											data-testid={`pause-${choice.duration}`}
 										>

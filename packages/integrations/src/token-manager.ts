@@ -5,6 +5,7 @@
 
 import { type Integration } from './database-types'
 import { ENV } from './package-env.js'
+import { toSafeSyncErrorMessage } from './redact.ts'
 import {
 	Integration as IntegrationTable,
 	IntegrationLog as IntegrationLogTable,
@@ -583,7 +584,9 @@ export class TokenManager {
 				integrationId,
 				action,
 				status,
-				errorMessage,
+				errorMessage: errorMessage
+					? toSafeSyncErrorMessage(errorMessage)
+					: undefined,
 				requestData: null,
 				responseData: null,
 			})

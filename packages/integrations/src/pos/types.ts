@@ -84,6 +84,12 @@ export type RemoteRead = {
 	version: number
 	currency: string
 }
+export type RemoteHolidayHour = {
+	date: string
+	isOpen: boolean
+	intervals: Array<{ start: string; end: string }>
+	timezone: string
+}
 
 /* ---------- Provider metadata ---------- */
 export const providerNames: Record<PosProvider, string> = {
@@ -106,6 +112,31 @@ export const providerWriteMode: Record<PosProvider, WriteMode> = {
 	toast: 'none',
 	ubereats: 'menu',
 	doordash: 'menu',
+}
+
+export type DeliveryPausePolicy = {
+	supportsOpenEnded: boolean
+	maxPauseMinutes: number | null
+}
+
+/**
+ * Per-provider store-pause capabilities (#95).
+ * Uber Eats supports open-ended (`null`) pauses; DoorDash caps pause duration
+ * at 24 hours (1440m), so open-ended pauses are renewed before expiry.
+ */
+export const deliveryPausePolicy: Partial<
+	Record<PosProvider, DeliveryPausePolicy>
+> = {
+	ubereats: { supportsOpenEnded: true, maxPauseMinutes: null },
+	doordash: { supportsOpenEnded: false, maxPauseMinutes: 24 * 60 },
+}
+
+/**
+ * Maximum number of menus a delivery platform accepts per store (#96).
+ */
+export const deliveryMenuLimits: Partial<Record<PosProvider, number>> = {
+	ubereats: 5,
+	doordash: 5,
 }
 // Deterministic sandbox store ids, used when connecting in sandbox mode.
 export const merchantIds: Record<PosProvider, string> = {

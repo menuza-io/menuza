@@ -92,6 +92,13 @@ interface IntegrationsCardProps {
 	selectedLocationId?: string
 	menus?: PosMenuOption[]
 	doorDashLiveConfigured?: boolean
+	posOwnershipEnabled?: boolean
+	deliveryPauseEnabled?: boolean
+	storeSettingsEnabled?: boolean
+	menuCheckEnabled?: boolean
+	locationTimezone?: string
+	canManageIntegrations?: boolean
+	orgSlug?: string
 }
 
 type CatalogProvider =
@@ -127,6 +134,13 @@ export function IntegrationsCard({
 	selectedLocationId = '',
 	menus = [],
 	doorDashLiveConfigured = false,
+	posOwnershipEnabled = false,
+	deliveryPauseEnabled = false,
+	storeSettingsEnabled = false,
+	menuCheckEnabled = false,
+	locationTimezone = 'UTC',
+	canManageIntegrations = true,
+	orgSlug = '',
 }: IntegrationsCardProps) {
 	const fetcher = useFetcher()
 
@@ -211,6 +225,13 @@ export function IntegrationsCard({
 										selectedLocationId={selectedLocationId}
 										menus={menus}
 										doorDashLiveConfigured={doorDashLiveConfigured}
+										posOwnershipEnabled={posOwnershipEnabled}
+										deliveryPauseEnabled={deliveryPauseEnabled}
+										storeSettingsEnabled={storeSettingsEnabled}
+										menuCheckEnabled={menuCheckEnabled}
+										locationTimezone={locationTimezone}
+										canManageIntegrations={canManageIntegrations}
+										orgSlug={orgSlug}
 									/>
 								) : (
 									<IntegrationCard

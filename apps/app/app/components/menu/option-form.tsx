@@ -36,7 +36,7 @@ import {
 } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Form, useNavigation, useRevalidator } from 'react-router'
 import { OptionRecipePanel } from '#app/components/inventory/recipe-panel.tsx'
 import {
@@ -58,6 +58,7 @@ import {
 	dailyLimitFormToJson,
 	type DailyLimitFormState,
 } from '#app/utils/menu/daily-limit-form.ts'
+import { type PosEntityLockInfo } from '#app/utils/menu/pos-ownership.server.ts'
 import { DailyLimitCard } from './daily-limit-fields.tsx'
 import { DietaryTagSwitches } from './dietary-tag-switches.tsx'
 import {
@@ -73,6 +74,7 @@ import {
 	orderTypePriceDraft,
 	orderTypePricesFromDraft,
 } from './order-type-price-fields.tsx'
+import { PosFieldControl, PosManagedBadge } from './pos-field-controls.tsx'
 import {
 	QuickModifierGroupSheet,
 	useCanCreateModifierGroup,
@@ -139,6 +141,8 @@ interface OptionFormProps {
 	modifierGraph?: ModifierGraph
 	/** Org flag `ordering.daily_dish_limits`; hides the daily limit card when off. */
 	dailyLimitsEnabled?: boolean
+	/** POS field ownership & override state (#93). */
+	posLock?: PosEntityLockInfo
 }
 
 /** Stand-in id for an option that is not saved yet, as the server uses. */
@@ -147,7 +151,26 @@ const NEW_OPTION_ID = 'new-option'
 export function OptionForm(props: OptionFormProps) {
 	// Discard remounts the form with the values it opened with.
 	const { discardKey, discard } = useDiscardKey()
-	return <OptionFormBody key={discardKey} {...props} onDiscard={discard} />
+	const [restoreEpoch, setRestoreEpoch] = useState(0)
+	const prevOverriddenRef = useRef<string[]>(
+		props.posLock?.overriddenFields ?? [],
+	)
+	useEffect(() => {
+		const next = props.posLock?.overriddenFields ?? []
+		const restored = prevOverriddenRef.current.some(
+			(field) => !next.includes(field),
+		)
+		prevOverriddenRef.current = next
+		if (restored) setRestoreEpoch((n) => n + 1)
+	}, [props.posLock?.overriddenFields])
+
+	return (
+		<OptionFormBody
+			key={`${discardKey}:${restoreEpoch}`}
+			{...props}
+			onDiscard={discard}
+		/>
+	)
 }
 
 function OptionFormBody({
@@ -164,6 +187,7 @@ function OptionFormBody({
 	actionError,
 	modifierGraph,
 	dailyLimitsEnabled = false,
+	posLock,
 	onDiscard,
 }: OptionFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
@@ -379,6 +403,20 @@ function OptionFormBody({
 		setIsMediaPickerOpen(false)
 	}
 
+	const isNameLocked = Boolean(posLock?.lockedFields.includes('name'))
+	const isPriceLocked = Boolean(posLock?.lockedFields.includes('price'))
+	const isAvailableLocked = Boolean(posLock?.lockedFields.includes('available'))
+	const lockedPriceLocations = useMemo(() => {
+		if (!posLock?.locationLocks) return undefined
+		const out: Record<string, string> = {}
+		for (const [locId, locLock] of Object.entries(posLock.locationLocks)) {
+			if (locLock.lockedFields.includes('price')) {
+				out[locId] = locLock.providerLabel
+			}
+		}
+		return Object.keys(out).length > 0 ? out : undefined
+	}, [posLock?.locationLocks])
+
 	return (
 		<LocaleContext.Provider
 			value={{
@@ -396,6 +434,9 @@ function OptionFormBody({
 					{/* Hidden inputs to submit complex values */}
 					<input type="hidden" name="displayName" value={displayName} />
 					<input type="hidden" name="description" value={description} />
+					{isPriceLocked ? (
+						<input type="hidden" name="price" value={price} />
+					) : null}
 					<input type="hidden" name="imageKey" value={imageKey || ''} />
 					<input type="hidden" name="imageUrl" value={imageUrl || ''} />
 					<input
@@ -466,6 +507,7 @@ function OptionFormBody({
 					{/* Minimal Sticky Full-Width Header */}
 					<MenuFormHeader
 						pageTitle={pageTitle}
+						titleAccessory={<PosManagedBadge lock={posLock} />}
 						backHref={`/${orgSlug}/menu/options`}
 						backLabel={t`Back to options`}
 						saveButtonText={t`Save Option`}
@@ -587,8 +629,14 @@ function OptionFormBody({
 											<LocalizedInput
 												value={displayName}
 												onChange={setDisplayName}
+												disabled={isNameLocked}
 												placeholder="e.g. Extra Cheese, Ranch Dressing, Oat Milk"
 												required
+											/>
+											<PosFieldControl
+												lock={posLock}
+												field="name"
+												orgSlug={orgSlug}
 											/>
 										</div>
 
@@ -696,9 +744,10 @@ function OptionFormBody({
 												<Input
 													id="option-base-price"
 													type="number"
-													name="price"
+													name={isPriceLocked ? undefined : 'price'}
 													step="0.01"
 													min="0"
+													disabled={isPriceLocked}
 													value={price || ''}
 													onChange={(e) => {
 														const next = parseFloat(e.target.value) || 0
@@ -708,6 +757,11 @@ function OptionFormBody({
 														}
 													}}
 													placeholder="0.00"
+												/>
+												<PosFieldControl
+													lock={posLock}
+													field="price"
+													orgSlug={orgSlug}
 												/>
 												<p className="text-muted-foreground text-[11px]">
 													{isTopping ? (
@@ -751,6 +805,7 @@ function OptionFormBody({
 														type="number"
 														step="0.01"
 														min="0"
+														disabled={isPriceLocked}
 														value={priceLeft ?? priceRight ?? ''}
 														onChange={(e) =>
 															setHalfPrice(
@@ -1143,6 +1198,14 @@ function OptionFormBody({
 									unavailableUntil={unavailableUntil}
 									onUnavailableUntilChange={setUnavailableUntil}
 									locations={locations}
+									disabled={isAvailableLocked}
+									headerControl={
+										<PosFieldControl
+											lock={posLock}
+											field="available"
+											orgSlug={orgSlug}
+										/>
+									}
 								/>
 
 								{/* Location Overrides Card */}
@@ -1152,6 +1215,7 @@ function OptionFormBody({
 									onChange={setLocationOverrides}
 									allowPriceOverride={true}
 									basePrice={price}
+									lockedPriceLocations={lockedPriceLocations}
 								/>
 							</div>
 						</div>

@@ -17,6 +17,7 @@ import {
 	OrganizationMenuLocationOverride,
 	OrganizationMenuOption,
 } from '@repo/database'
+import { type PosOwnershipField } from '@repo/integrations'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { effectiveIsPopularForMode } from './auto-popular.server.ts'
 import {
@@ -25,6 +26,8 @@ import {
 	type BulkItemOperation,
 	type BulkOptionOperation,
 } from './bulk-edit.ts'
+import { deleteMenuEntityReferences } from './cleanup.server.ts'
+import { safeEnqueueMenuSync } from './menu-sync.server.ts'
 import { narrowOverrideChannels } from './menu-write-columns.ts'
 import { checkModifierGraphChange } from './modifier-graph.server.ts'
 import {
@@ -33,7 +36,47 @@ import {
 	assertModifierGroupIdsInOrganization,
 	assertOptionIdsInOrganization,
 } from './ownership.server.ts'
+import {
+	assertCanDeleteMenuItem,
+	assertNoLockedFieldWrites,
+	lockedFieldsFor,
+	PosFieldLockedError,
+} from './pos-ownership.server.ts'
 import { createMenuSnapshot } from './snapshot.server.ts'
+
+function bulkItemPosField(
+	operation: BulkItemOperation,
+): PosOwnershipField | null {
+	switch (operation.type) {
+		case 'price':
+			return 'price'
+		case 'availability':
+			return 'available'
+		case 'apply_sales_tax':
+			return 'tax'
+		case 'add_category':
+		case 'remove_category':
+			return 'category'
+		case 'add_modifier_group':
+		case 'remove_modifier_group':
+			return 'modifiers'
+		default:
+			return null
+	}
+}
+
+function bulkOptionPosField(
+	operation: BulkOptionOperation,
+): PosOwnershipField | null {
+	switch (operation.type) {
+		case 'price':
+			return 'price'
+		case 'availability':
+			return 'available'
+		default:
+			return null
+	}
+}
 
 export function currencyExponentFor(currency: string) {
 	const zero = new Set(['JPY', 'KRW', 'VND', 'CLP', 'XAF', 'XOF'])
@@ -105,6 +148,21 @@ export async function applyBulkItemEdit({
 			},
 			{ status: 409 },
 		)
+	}
+
+	const itemPosField = bulkItemPosField(operation)
+	if (itemPosField) {
+		const posLocks = await lockedFieldsFor(organizationId, 'item', itemIds)
+		try {
+			for (const id of itemIds) {
+				const lock = posLocks.get(id)
+				if (!lock) continue
+				assertNoLockedFieldWrites(lock, [itemPosField], { locationId })
+			}
+		} catch (error) {
+			if (error instanceof PosFieldLockedError) return error.toResponse()
+			throw error
+		}
 	}
 
 	const categoryLinks = await db
@@ -362,6 +420,27 @@ export async function applyBulkItemEdit({
 	})
 	await purgeOrganizationSiteCache(organizationId, organizationSlug)
 
+	if (applied > 0) {
+		const targetLocations = locationId ? [locationId] : null
+		if (operation.type === 'availability') {
+			for (const plan of plans) {
+				if (plan.skipped) continue
+				await safeEnqueueMenuSync(organizationId, {
+					locationIds: targetLocations,
+					kind: 'availability',
+					entityType: 'item',
+					entityId: plan.after.id,
+				})
+			}
+		} else {
+			await safeEnqueueMenuSync(organizationId, {
+				locationIds: targetLocations,
+				kind: 'menu',
+				entityType: 'all',
+			})
+		}
+	}
+
 	return Response.json({
 		ok: true,
 		applied,
@@ -409,6 +488,25 @@ export async function applyBulkOptionEdit({
 			{ error: 'stale_rows', staleIds: stale.map((row) => row.id) },
 			{ status: 409 },
 		)
+	}
+
+	const optionPosField = bulkOptionPosField(operation)
+	if (optionPosField) {
+		const posLocks = await lockedFieldsFor(
+			organizationId,
+			'modifier_option',
+			optionIds,
+		)
+		try {
+			for (const id of optionIds) {
+				const lock = posLocks.get(id)
+				if (!lock) continue
+				assertNoLockedFieldWrites(lock, [optionPosField], { locationId })
+			}
+		} catch (error) {
+			if (error instanceof PosFieldLockedError) return error.toResponse()
+			throw error
+		}
 	}
 
 	const org = await db.query.Organization.findFirst({
@@ -524,5 +622,92 @@ export async function applyBulkOptionEdit({
 	})
 
 	await purgeOrganizationSiteCache(organizationId, organizationSlug)
+	if (applied > 0) {
+		const targetLocations = locationId ? [locationId] : null
+		if (operation.type === 'availability') {
+			for (const plan of plans) {
+				if (plan.skipped) continue
+				await safeEnqueueMenuSync(organizationId, {
+					locationIds: targetLocations,
+					kind: 'availability',
+					entityType: 'modifier_option',
+					entityId: plan.after.id,
+				})
+			}
+		} else {
+			await safeEnqueueMenuSync(organizationId, {
+				locationIds: targetLocations,
+				kind: 'menu',
+				entityType: 'all',
+			})
+		}
+	}
 	return Response.json({ ok: true, applied, snapshotId, plans })
+}
+
+export async function applyBulkItemDelete({
+	organizationId,
+	organizationSlug,
+	userId,
+	request,
+	itemIds,
+}: {
+	organizationId: string
+	organizationSlug: string
+	userId: string
+	request?: Request
+	itemIds: string[]
+}) {
+	await assertItemIdsInOrganization(organizationId, itemIds)
+	try {
+		for (const itemId of itemIds) {
+			await assertCanDeleteMenuItem(organizationId, itemId)
+		}
+	} catch (error) {
+		if (error instanceof PosFieldLockedError) return error.toResponse()
+		throw error
+	}
+
+	const snapshotId = await createMenuSnapshot({
+		organizationId,
+		reason: 'before_bulk_edit',
+		userId,
+	})
+
+	await db.transaction(async (tx) => {
+		for (const itemId of itemIds) {
+			await tx
+				.delete(OrganizationMenuItem)
+				.where(
+					and(
+						eq(OrganizationMenuItem.id, itemId),
+						eq(OrganizationMenuItem.organizationId, organizationId),
+					),
+				)
+			await deleteMenuEntityReferences(organizationId, 'item', itemId, tx)
+		}
+	})
+
+	await auditService.log({
+		action: AuditAction.MENU_ITEM_UPDATED,
+		userId,
+		organizationId,
+		resourceType: 'menu_bulk_edit',
+		resourceId: snapshotId,
+		details: `Bulk deleted ${itemIds.length} menu items`,
+		metadata: {
+			itemIds,
+			operation: 'delete',
+			undoSnapshotId: snapshotId,
+		},
+		request,
+	})
+	await purgeOrganizationSiteCache(organizationId, organizationSlug)
+	if (itemIds.length > 0) {
+		await safeEnqueueMenuSync(organizationId, {
+			kind: 'menu',
+			entityType: 'all',
+		})
+	}
+	return Response.json({ ok: true, deleted: itemIds.length, snapshotId })
 }

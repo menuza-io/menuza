@@ -41,6 +41,7 @@ import {
 	setMenuItemAvailability,
 	updateMenuItemText,
 } from '#app/utils/menu/menu-updates.server.ts'
+import { PosFieldLockedError } from '#app/utils/menu/pos-ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 
 /**
@@ -147,7 +148,8 @@ function fail(error: string, status: number) {
 
 /** HTTP status for a card refusal. */
 function cardStatus(error: MenuCardError): number {
-	if (error === 'stale_suggestion' || error === 'restore_in_progress') return 409
+	if (error === 'stale_suggestion' || error === 'restore_in_progress')
+		return 409
 	if (error === 'feature_off' || error === 'snapshot_gone') return 404
 	if (error === 'write_failed') return 500
 	if (error === 'plan_too_large') return 422
@@ -344,7 +346,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				const loaded = cards.some((card) => card.reason === 'not_a_problem')
 					? await loadMenuCardContext(organization)
 					: null
-				const results: Array<{ id: string; ok: boolean; stored?: boolean; error?: string }> = []
+				const results: Array<{
+					id: string
+					ok: boolean
+					stored?: boolean
+					error?: string
+				}> = []
 				for (const card of cards) {
 					try {
 						const { stored } = loaded
@@ -382,6 +389,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			}
 		}
 	} catch (error) {
+		if (error instanceof PosFieldLockedError) {
+			return error.toResponse()
+		}
 		if (error instanceof MenuUpdateError) {
 			return fail(error.code, error.code === 'not_found' ? 404 : 400)
 		}

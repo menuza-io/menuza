@@ -32,6 +32,7 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { dailyLimitLocationIds } from '#app/utils/menu/daily-limit-save.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import {
 	dietaryAndOrderTypeColumns,
 	MENU_JSON_FORM_KEYS,
@@ -324,6 +325,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	// Purge site KV cache
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
+	})
 
 	return redirect(`/${organization.slug}/menu/options`)
 }

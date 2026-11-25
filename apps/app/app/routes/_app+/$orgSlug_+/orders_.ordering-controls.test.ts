@@ -1,7 +1,16 @@
-import { db, eq, OrganizationLocation } from '@repo/database'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { db, eq, Integration, OrganizationLocation } from '@repo/database'
+import { merchantIds, sandboxUrls } from '@repo/integrations'
+import {
+	getSandboxPauseState,
+	posSandboxHandlers,
+	resetPosSandbox,
+} from '@repo/integrations/pos/sandbox'
+import { http, HttpResponse } from 'msw'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { INTEGRATION_FLAG_KEYS } from '#app/utils/integrations/flags.server.ts'
 import { buildPublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
+import { server } from '#tests/mocks/index.ts'
 import {
 	addOrganizationMember,
 	createAuthenticatedRequest,
@@ -11,6 +20,11 @@ import {
 	setupTestOrgWithUser,
 } from '#tests/test-utils.ts'
 import { action } from './orders_.ordering-controls.ts'
+
+const flags = vi.hoisted(() => ({ on: new Set<string>() }))
+vi.mock('@repo/common/feature-flags', () => ({
+	getFeatureFlag: vi.fn(async (key: string) => flags.on.has(key)),
+}))
 
 // The site cache is the external boundary; permissions and the database are real.
 vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
@@ -50,7 +64,13 @@ async function readLocation(id: string) {
 
 describe('ordering controls action', () => {
 	beforeEach(() => {
+		flags.on.clear()
+		resetPosSandbox()
 		vi.mocked(purgeOrganizationSiteCache).mockClear()
+	})
+
+	afterEach(() => {
+		server.resetHandlers()
 	})
 
 	it('pauses for a while, publishes it, and resumes', async () => {
@@ -166,5 +186,102 @@ describe('ordering controls action', () => {
 		})
 		expect(getResponseStatus(result)).toBe(404)
 		expect((await readLocation(location.id)).orderingPausedAt).toBeNull()
+	})
+
+	it('pauses delivery stores unless alsoPauseDelivery=false and handles retry-delivery-pause (#95)', async () => {
+		flags.on.add(INTEGRATION_FLAG_KEYS.deliveryPause)
+		server.use(
+			...posSandboxHandlers,
+			http.post('http://localhost:8787/workflows/menu-sync/start', () =>
+				HttpResponse.json({ success: true }),
+			),
+		)
+
+		const { organization, location, cookie } = await setup()
+		const [uber] = await db
+			.insert(Integration)
+			.values({
+				organizationId: organization.id,
+				organizationLocationId: location.id,
+				providerName: 'ubereats',
+				providerType: 'delivery',
+				isActive: true,
+				config: JSON.stringify({
+					environment: 'sandbox',
+					merchantId: merchantIds.ubereats,
+				}),
+			})
+			.returning()
+
+		// When alsoPauseDelivery=false, location pauses but Uber Eats stays unpaused.
+		const skipRes = await post(organization.slug, cookie, {
+			intent: 'pause',
+			locationId: location.id,
+			duration: '30m',
+			alsoPauseDelivery: 'false',
+		})
+		expect(getResponseStatus(skipRes)).toBe(200)
+		expect((await readLocation(location.id)).orderingPausedAt).not.toBeNull()
+		expect(getSandboxPauseState(uber!.id)).toBeNull()
+
+		// Resume, then pause with default alsoPauseDelivery while Uber Eats fails -> keeps location paused and returns platform_pause_failed.
+		await post(organization.slug, cookie, {
+			intent: 'resume',
+			locationId: location.id,
+			alsoPauseDelivery: 'false',
+		})
+
+		let uberDown = true
+		server.use(
+			http.post(
+				`${sandboxUrls.ubereats}/v2/eats/stores/${merchantIds.ubereats}/pause`,
+				() => {
+					if (uberDown) {
+						return HttpResponse.json(
+							{ message: 'Upstream error' },
+							{ status: 503, headers: { 'x-pos-sandbox': 'true' } },
+						)
+					}
+					return HttpResponse.json(
+						{ pausedUntil: null },
+						{ status: 200, headers: { 'x-pos-sandbox': 'true' } },
+					)
+				},
+			),
+		)
+
+		const failRes = (await post(organization.slug, cookie, {
+			intent: 'pause',
+			locationId: location.id,
+			duration: '30m',
+		})) as {
+			data: {
+				ok: boolean
+				deliveryPauseError?: string
+				failedDeliveryStores?: unknown[]
+			}
+		}
+		expect(getResponseStatus(failRes)).toBe(200)
+		expect(failRes.data).toMatchObject({
+			ok: true,
+			deliveryPauseError: 'platform_pause_failed',
+			failedDeliveryStores: [
+				{
+					integrationId: uber!.id,
+					providerName: 'ubereats',
+					displayName: 'Uber Eats',
+				},
+			],
+		})
+		expect((await readLocation(location.id)).orderingPausedAt).not.toBeNull()
+
+		// Recover and retry via retry-delivery-pause intent.
+		uberDown = false
+		const retryRes = await post(organization.slug, cookie, {
+			intent: 'retry-delivery-pause',
+			integrationId: uber!.id,
+		})
+		expect(getResponseStatus(retryRes)).toBe(200)
+		expect((retryRes as { data: { ok: boolean } }).data.ok).toBe(true)
 	})
 })

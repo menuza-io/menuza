@@ -36,6 +36,33 @@ const busyMinutesSchema = z.coerce
 		(BUSY_EXTRA_PREP_CHOICES as readonly number[]).includes(value),
 	)
 
+const optionalBooleanDefaultTrue = z
+	.preprocess((value) => {
+		if (value === undefined || value === null || value === '') return true
+		if (typeof value === 'boolean') return value
+		if (typeof value === 'string') {
+			const normalized = value.trim().toLowerCase()
+			if (
+				normalized === 'false' ||
+				normalized === '0' ||
+				normalized === 'off' ||
+				normalized === 'no'
+			) {
+				return false
+			}
+			if (
+				normalized === 'true' ||
+				normalized === '1' ||
+				normalized === 'on' ||
+				normalized === 'yes'
+			) {
+				return true
+			}
+		}
+		return value
+	}, z.boolean())
+	.optional()
+
 export const orderingControlSchema = z.discriminatedUnion('intent', [
 	z.object({
 		intent: z.literal('pause'),
@@ -43,10 +70,14 @@ export const orderingControlSchema = z.discriminatedUnion('intent', [
 		duration: z.enum(ORDERING_PAUSE_DURATIONS),
 		/** Why ordering was paused; kept in the activity log only (#365). */
 		reason: z.string().trim().max(PAUSE_REASON_MAX_LENGTH).optional(),
+		/** Also pause connected delivery apps for this location (#95). */
+		alsoPauseDelivery: optionalBooleanDefaultTrue,
 	}),
 	z.object({
 		intent: z.literal('resume'),
 		locationId: z.string().min(1).max(64),
+		/** Also resume connected delivery apps for this location (#95). */
+		alsoPauseDelivery: optionalBooleanDefaultTrue,
 	}),
 	z.object({
 		intent: z.literal('busy'),
@@ -60,6 +91,13 @@ export const orderingControlSchema = z.discriminatedUnion('intent', [
 	}),
 ])
 export type OrderingControlInput = z.infer<typeof orderingControlSchema>
+
+export type DeliveryPauseFailure = {
+	integrationId: string
+	providerName: string
+	displayName: string
+	error: string
+}
 
 /** One location's pause and busy mode, as shown on the Orders page. */
 export type LocationOrderingControl = {
@@ -77,6 +115,10 @@ export type LocationOrderingControl = {
 	variablePrepMinutes: number | null
 	/** When the current prep row ends (location TZ), or null. */
 	variablePrepUntil: string | null
+	/** Whether the location has active delivery integrations (#95). */
+	hasDeliveryConnections?: boolean
+	/** Delivery store pause/resume errors awaiting retry (#95). */
+	deliveryPauseFailures?: DeliveryPauseFailure[]
 }
 
 type HoursRow = {

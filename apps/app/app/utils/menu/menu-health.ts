@@ -38,6 +38,7 @@ export const MENU_HEALTH_CHECK_KEYS = [
 	'empty_option_group',
 	'impossible_minimum',
 	'duplicate_item',
+	'delivery_menu_differs',
 ] as const
 
 export type MenuHealthCheckKey = (typeof MENU_HEALTH_CHECK_KEYS)[number]
@@ -69,6 +70,7 @@ export const MENU_HEALTH_WEIGHTS: Record<MenuHealthCheckKey, number> = {
 	duplicate_item: 5,
 	name_all_caps: 5,
 	name_too_long: 5,
+	delivery_menu_differs: 10,
 }
 
 /** Checks that only deduct; see `MENU_HEALTH_WEIGHTS`. */
@@ -80,6 +82,7 @@ export const MENU_HEALTH_DEDUCTION_CHECKS: ReadonlySet<MenuHealthCheckKey> =
 		'duplicate_item',
 		'name_all_caps',
 		'name_too_long',
+		'delivery_menu_differs',
 	])
 
 const SEVERITY: Record<MenuHealthCheckKey, MenuHealthSeverity> = {
@@ -92,6 +95,7 @@ const SEVERITY: Record<MenuHealthCheckKey, MenuHealthSeverity> = {
 	empty_category: 'warning',
 	empty_option_group: 'warning',
 	duplicate_item: 'warning',
+	delivery_menu_differs: 'warning',
 	long_unavailable: 'info',
 	no_allergens_or_calories: 'info',
 	name_all_caps: 'info',
@@ -106,12 +110,14 @@ export const MENU_HEALTH_CATEGORY_CHECKS: ReadonlySet<MenuHealthCheckKey> =
 export const MENU_HEALTH_GROUP_CHECKS: ReadonlySet<MenuHealthCheckKey> =
 	new Set<MenuHealthCheckKey>(['empty_option_group', 'impossible_minimum'])
 
-export type MenuHealthEntityType = 'item' | 'category' | 'modifier_group'
+export type MenuHealthEntityType =
+	'item' | 'category' | 'modifier_group' | 'integration'
 
 /** What kind of record a check lists; every other check lists dishes. */
 export function menuHealthEntityType(
 	key: MenuHealthCheckKey,
 ): MenuHealthEntityType {
+	if (key === 'delivery_menu_differs') return 'integration'
 	if (MENU_HEALTH_CATEGORY_CHECKS.has(key)) return 'category'
 	if (MENU_HEALTH_GROUP_CHECKS.has(key)) return 'modifier_group'
 	return 'item'
@@ -200,6 +206,14 @@ export type MenuHealthDismissal = {
 	fingerprint: string
 }
 
+export type DeliveryMenuDiffSummary = {
+	integrationId: string
+	providerName: string
+	providerLabel: string
+	diffCount: number
+	locationId?: string | null
+}
+
 export type MenuHealthInput = {
 	items: MenuHealthItem[]
 	categories: MenuHealthCategory[]
@@ -226,6 +240,8 @@ export type MenuHealthInput = {
 	}>
 	/** Run the Weak dish photo check (#145): `media.photo_quality` is on. */
 	photoQuality?: boolean
+	/** Delivery platform menu check diffs (#144): `integrations.menu_check` is on. */
+	deliveryMenuDiffs?: readonly DeliveryMenuDiffSummary[]
 	/** Health dismissals of this organization (`card:` rows are ignored). */
 	dismissals?: readonly MenuHealthDismissal[]
 	/** Fill `fingerprints` on every check (server use, e.g. to dismiss). */
@@ -243,6 +259,7 @@ export type MenuHealthCheck = {
 	itemIds?: string[]
 	categoryIds?: string[]
 	modifierGroupIds?: string[]
+	integrationIds?: string[]
 	/**
 	 * Failing records hidden by a dismissal whose fingerprint still matches.
 	 * Always set by `computeMenuHealth`.
@@ -493,6 +510,10 @@ export type MenuHealthFingerprintSource =
 			maxSelections: number | null
 			visibleOptionCount: number
 	  }
+	| {
+			key: 'delivery_menu_differs'
+			diffCount: number
+	  }
 
 /**
  * A short string standing for the field value(s) a check reads for one
@@ -543,6 +564,8 @@ export function menuHealthFingerprint(
 			return shortHash(
 				`${source.selectionType}:${source.minSelections}:${source.maxSelections ?? ''}:${source.visibleOptionCount}`,
 			)
+		case 'delivery_menu_differs':
+			return shortHash(String(source.diffCount))
 	}
 }
 
@@ -610,11 +633,12 @@ type ItemFacts = {
 
 const ID_FIELD: Record<
 	MenuHealthEntityType,
-	'itemIds' | 'categoryIds' | 'modifierGroupIds'
+	'itemIds' | 'categoryIds' | 'modifierGroupIds' | 'integrationIds'
 > = {
 	item: 'itemIds',
 	category: 'categoryIds',
 	modifier_group: 'modifierGroupIds',
+	integration: 'integrationIds',
 }
 
 function isHealthKey(value: string): value is MenuHealthCheckKey {
@@ -969,6 +993,23 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 		}
 	}
 
+	if (input.deliveryMenuDiffs && input.deliveryMenuDiffs.length > 0) {
+		addCheck(
+			'delivery_menu_differs',
+			input.deliveryMenuDiffs.length,
+			input.deliveryMenuDiffs
+				.filter((entry) => entry.diffCount > 0)
+				.map((entry) => ({
+					id: entry.integrationId,
+					fingerprint: () =>
+						menuHealthFingerprint({
+							key: 'delivery_menu_differs',
+							diffCount: entry.diffCount,
+						}),
+				})),
+		)
+	}
+
 	let totalWeight = 0
 	let lost = 0
 	for (const check of checks) {
@@ -996,6 +1037,9 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 			(input.modifierGroups ?? [])
 				.filter((group) => group.availabilityStatus !== 'hidden')
 				.map((group) => group.id),
+		),
+		integration: new Set(
+			(input.deliveryMenuDiffs ?? []).map((entry) => entry.integrationId),
 		),
 	}
 	const staleDismissals: MenuHealth['staleDismissals'] = []

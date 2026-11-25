@@ -20,6 +20,10 @@
     "./pos/types": {
       "types": "./src/pos/types.ts",
       "import": "./src/pos/types.ts"
+    },
+    "./pos/ownership": {
+      "types": "./src/pos/ownership.ts",
+      "import": "./src/pos/ownership.ts"
     }
   },
   "scripts": {

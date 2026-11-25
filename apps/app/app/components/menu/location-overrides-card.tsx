@@ -41,6 +41,8 @@ export interface LocationOverridesCardProps {
 	allowPriceOverride?: boolean
 	basePrice?: number
 	baseChannels?: readonly MenuChannel[]
+	/** Per-location provider display name when POS locks price at that location (`"*"` locks all). */
+	lockedPriceLocations?: Record<string, string>
 }
 
 export function LocationOverridesCard({
@@ -50,6 +52,7 @@ export function LocationOverridesCard({
 	allowPriceOverride = false,
 	basePrice = 0,
 	baseChannels,
+	lockedPriceLocations,
 }: LocationOverridesCardProps) {
 	if (locations.length === 0) {
 		return null
@@ -188,6 +191,16 @@ export function LocationOverridesCard({
 													min="0"
 													placeholder={basePrice.toFixed(2)}
 													value={price}
+													disabled={Boolean(
+														lockedPriceLocations?.[loc.id] ||
+														lockedPriceLocations?.['*'],
+													)}
+													title={
+														lockedPriceLocations?.[loc.id] ||
+														lockedPriceLocations?.['*']
+															? `Managed in ${lockedPriceLocations[loc.id] ?? lockedPriceLocations['*']}`
+															: undefined
+													}
 													onChange={(e) =>
 														handlePriceChange(loc.id, e.target.value)
 													}

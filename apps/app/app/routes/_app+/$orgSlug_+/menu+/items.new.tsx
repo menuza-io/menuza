@@ -38,6 +38,7 @@ import {
 	dailyLimitLocationIds,
 } from '#app/utils/menu/daily-limit-save.ts'
 import { autoTranslateNewItem } from '#app/utils/menu/menu-auto-translate.server.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import {
 	dietaryAndOrderTypeColumns,
 	MENU_JSON_FORM_KEYS,
@@ -364,6 +365,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		itemId: newItemId,
 		displayName: data.displayName,
 		description: data.description || null,
+	})
+
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
 	})
 
 	return redirect(`/${organization.slug}/menu/items`)

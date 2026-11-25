@@ -152,7 +152,7 @@ export function LocalizedInput({
 					activeLocale !== defaultLocale ? 'pr-8' : '',
 				)}
 			/>
-			{activeLocale !== defaultLocale && (
+			{activeLocale !== defaultLocale && !props.disabled && (
 				<TranslateButton
 					textToTranslate={defaultLocaleValue}
 					allowHtml={allowHtml}
@@ -215,7 +215,7 @@ export function LocalizedTextarea({
 					activeLocale !== defaultLocale ? 'pr-8' : '',
 				)}
 			/>
-			{activeLocale !== defaultLocale && (
+			{activeLocale !== defaultLocale && !props.disabled && (
 				<TranslateButton
 					textToTranslate={defaultLocaleValue}
 					allowHtml={allowHtml}

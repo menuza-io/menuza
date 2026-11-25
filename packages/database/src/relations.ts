@@ -81,6 +81,7 @@ import {
 	OrganizationMenuOptionNestedModifierGroupAssignment,
 	OrganizationMenuLocationOverride,
 	OrganizationMenuPosLink,
+	MenuSyncOutbox,
 	MenuSchedule,
 	MenuImport,
 	OrganizationDrop,
@@ -1186,6 +1187,17 @@ export const OrganizationMenuPosLinkRelations = relations(
 		}),
 	}),
 )
+
+export const MenuSyncOutboxRelations = relations(MenuSyncOutbox, ({ one }) => ({
+	organization: one(Organization, {
+		fields: [MenuSyncOutbox.organizationId],
+		references: [Organization.id],
+	}),
+	integration: one(Integration, {
+		fields: [MenuSyncOutbox.integrationId],
+		references: [Integration.id],
+	}),
+}))
 
 export const OrganizationMenuOptionNestedModifierGroupAssignmentRelations =
 	relations(OrganizationMenuOptionNestedModifierGroupAssignment, ({ one }) => ({

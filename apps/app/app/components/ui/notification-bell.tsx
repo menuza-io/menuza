@@ -61,6 +61,11 @@ import {
 	plainMarkdown,
 } from '#app/utils/forms/form-alerts.ts'
 import {
+	isMenuSyncFailingNotificationType,
+	menuSyncAlertCopy,
+	menuSyncAlertPath,
+} from '#app/utils/integrations/sync-alerts.ts'
+import {
 	inventoryAlertCopy,
 	type SoldOutDetails,
 } from '#app/utils/inventory/alert-copy.ts'
@@ -289,6 +294,17 @@ function NotificationItem({
 		? customerAppAlertCopy(customerAppKind, _)
 		: null
 
+	const menuSyncFailing = isMenuSyncFailingNotificationType(notification.type)
+	const menuSyncAlert = menuSyncFailing
+		? menuSyncAlertCopy(
+				typeof payload?.providerLabel === 'string'
+					? payload.providerLabel
+					: null,
+				typeof payload?.locationName === 'string' ? payload.locationName : null,
+				_,
+			)
+		: null
+
 	// Order and tablet alerts (#131, #241, #300, #190): worded from the stored
 	// facts (an order number, a place, a total), in this member's language.
 	const orderAlertKind = orderAlertKindFromNotificationType(notification.type)
@@ -316,6 +332,7 @@ function NotificationItem({
 
 	const subject =
 		orderAlert?.subject ??
+		menuSyncAlert?.subject ??
 		customerAppAlert?.subject ??
 		formAlert?.subject ??
 		domainAlert?.subject ??
@@ -333,6 +350,7 @@ function NotificationItem({
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
 	const body =
 		orderAlert?.body ??
+		menuSyncAlert?.body ??
 		customerAppAlert?.body ??
 		formAlert?.body ??
 		domainAlert?.body ??
@@ -364,6 +382,12 @@ function NotificationItem({
 			typeof payload?.orgSlug === 'string'
 		) {
 			void navigate(`/${payload.orgSlug}${alertPath(orderAlertKind)}`)
+		} else if (menuSyncFailing && typeof payload?.orgSlug === 'string') {
+			void navigate(
+				`/${payload.orgSlug}${menuSyncAlertPath(
+					typeof payload.locationId === 'string' ? payload.locationId : null,
+				)}`,
+			)
 		} else if (customerAppKind && typeof payload?.orgSlug === 'string') {
 			void navigate(`/${payload.orgSlug}${customerAppAlertPath()}`)
 		} else if (domainKind && typeof payload?.orgSlug === 'string') {
@@ -460,6 +484,8 @@ function NotificationItem({
 							<Icon name="shopping-bag" className="h-4 w-4" />
 						) : formKind ? (
 							<Icon name="mail" className="h-4 w-4" />
+						) : menuSyncFailing ? (
+							<Icon name="refresh-cw" className="h-4 w-4" />
 						) : websiteKind || domainKind ? (
 							<Icon name="globe" className="h-4 w-4" />
 						) : discountKind ? (

@@ -27,6 +27,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import {
 	narrowOverrideChannels,
 	parseChannelsFormData,
@@ -38,8 +39,8 @@ import {
 	assertMenuInOrganization,
 	assertValidParentCategoryInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
-import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -279,6 +280,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
+	})
 
 	return redirect(`/${organization.slug}/menu/categories`)
 }

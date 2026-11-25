@@ -31,6 +31,7 @@ import {
 	providerWriteMode,
 	type PosProvider,
 	type ProviderKind,
+	type RemoteHolidayHour,
 	type RemoteItem,
 	type RemoteMenu,
 	type RemoteRead,
@@ -59,6 +60,10 @@ export interface PosIntegrationProvider extends BaseIntegrationProvider {
 		available: boolean,
 	): Promise<void>
 	pause(integration: Integration, until: string | null): Promise<void>
+	submitHolidayHours(
+		integration: Integration,
+		hours: RemoteHolidayHour[],
+	): Promise<void>
 }
 
 export abstract class BasePosProvider
@@ -185,6 +190,19 @@ export abstract class BasePosProvider
 
 	async pause(integration: Integration, until: string | null): Promise<void> {
 		await (await this.adapter(integration)).pause(until)
+	}
+
+	async submitHolidayHours(
+		integration: Integration,
+		hours: RemoteHolidayHour[],
+	): Promise<void> {
+		if (this.kind !== 'delivery') {
+			throw new PosError(
+				`${providerNames[this.provider]} does not accept holiday hours submissions.`,
+				400,
+			)
+		}
+		await (await this.adapter(integration)).submitHolidayHours(hours)
 	}
 
 	async validateConnection(

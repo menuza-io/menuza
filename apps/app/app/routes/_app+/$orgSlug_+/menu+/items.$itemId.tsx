@@ -44,10 +44,12 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { effectiveIsPopularForMode } from '#app/utils/menu/auto-popular.server.ts'
+import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
 import {
 	dailyLimitColumn,
 	dailyLimitLocationIds,
 } from '#app/utils/menu/daily-limit-save.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import { recordMenuChange } from '#app/utils/menu/menu-updates.server.ts'
 import {
 	dietaryAndOrderTypeColumns,
@@ -70,10 +72,19 @@ import {
 	photoTestImageUrls,
 	stopPhotoTestsForChangedDish,
 } from '#app/utils/menu/photo-tests.server.ts'
+import {
+	assertCanDeleteMenuItem,
+	assertNoLockedFieldWrites,
+	detectChangedItemPosFields,
+	handlePosFieldOverrideIntent,
+	lockedFieldsForOne,
+	PosFieldLockedError,
+} from '#app/utils/menu/pos-ownership.server.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { getLandingFeatures } from '#app/utils/seo/landing-pages.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -205,6 +216,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	const slotLimits = await buildSlotLimitsContext(organization.id)
 	const dailyLimitsEnabled = await isDailyDishLimitsEnabled(organization.id)
+	const posLock = await lockedFieldsForOne(organization.id, 'item', item.id)
 	// #137: "Give this dish its own page", offered while dish pages are on.
 	const dishPage = (await getLandingFeatures(organization.id)).dishPages
 		? { enabled: item.sitePageEnabled, slug: item.siteSlug }
@@ -239,6 +251,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		supportedLocales,
 		slotLimitsEnabled: slotLimits.enabled,
 		dailyLimitsEnabled,
+		posLock,
 		item: {
 			id: item.id,
 			displayName: item.displayName,
@@ -316,6 +329,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		siteDefaultLocale: true,
 	})
 
 	const userId = await requireMenuWrite(request, organization.id)
@@ -328,6 +342,45 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await assertItemInOrganization(organization.id, itemId)
 
 	const formData = await request.formData()
+	const defaultLocale = organization.siteDefaultLocale ?? 'en'
+
+	const overrideResponse = await handlePosFieldOverrideIntent({
+		organization,
+		userId,
+		request,
+		formData,
+		entityType: 'item',
+		entityId: itemId,
+		defaultLocale,
+	})
+	if (overrideResponse) return overrideResponse
+
+	if (formData.get('intent') === 'delete-item') {
+		try {
+			await assertCanDeleteMenuItem(organization.id, itemId)
+		} catch (error) {
+			if (error instanceof PosFieldLockedError) return error.toResponse()
+			throw error
+		}
+		await db.transaction(async (tx) => {
+			await tx
+				.delete(OrganizationMenuItem)
+				.where(
+					and(
+						eq(OrganizationMenuItem.id, itemId),
+						eq(OrganizationMenuItem.organizationId, organization.id),
+					),
+				)
+			await deleteMenuEntityReferences(organization.id, 'item', itemId, tx)
+		})
+		await purgeOrganizationSiteCache(organization.id, organization.slug)
+		await safeEnqueueMenuSync(organization.id, {
+			kind: 'menu',
+			entityType: 'all',
+		})
+		return redirect(`/${organization.slug}/menu/items`)
+	}
+
 	const rawData: Record<string, unknown> = {}
 
 	for (const [key, value] of formData.entries()) {
@@ -408,6 +461,154 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		data.imageKey ?? null,
 	)
 	const primaryImageKey = imageKeys[0] ?? null
+	const nextPrice = data.variations.variants.length
+		? Math.min(...data.variations.variants.map((variant) => variant.price))
+		: data.price
+	const nextUnavailableUntil =
+		(data.availabilityStatus === 'unavailable_until' ||
+			data.availabilityStatus === 'unavailable_until_tomorrow') &&
+		data.unavailableUntil
+			? data.unavailableUntil
+			: null
+
+	const posLock = await lockedFieldsForOne(organization.id, 'item', itemId)
+	if (posLock.isLinked) {
+		const [currentRow, currentCats, currentGroups, currentLocOverrides] =
+			await Promise.all([
+				db
+					.select()
+					.from(OrganizationMenuItem)
+					.where(
+						and(
+							eq(OrganizationMenuItem.id, itemId),
+							eq(OrganizationMenuItem.organizationId, organization.id),
+						),
+					)
+					.limit(1)
+					.then((r) => r[0]),
+				db
+					.select({
+						categoryId: OrganizationMenuItemCategoryAssignment.categoryId,
+					})
+					.from(OrganizationMenuItemCategoryAssignment)
+					.where(eq(OrganizationMenuItemCategoryAssignment.itemId, itemId))
+					.orderBy(asc(OrganizationMenuItemCategoryAssignment.position)),
+				db
+					.select({
+						modifierGroupId:
+							OrganizationMenuItemModifierGroupAssignment.modifierGroupId,
+					})
+					.from(OrganizationMenuItemModifierGroupAssignment)
+					.where(eq(OrganizationMenuItemModifierGroupAssignment.itemId, itemId))
+					.orderBy(asc(OrganizationMenuItemModifierGroupAssignment.position)),
+				db
+					.select()
+					.from(OrganizationMenuLocationOverride)
+					.where(
+						and(
+							eq(
+								OrganizationMenuLocationOverride.organizationId,
+								organization.id,
+							),
+							eq(OrganizationMenuLocationOverride.entityType, 'item'),
+							eq(OrganizationMenuLocationOverride.entityId, itemId),
+						),
+					),
+			])
+
+		if (currentRow) {
+			try {
+				const changedPosFields = detectChangedItemPosFields({
+					current: {
+						displayName: currentRow.displayName,
+						description: currentRow.description,
+						price: currentRow.price,
+						variations: currentRow.variations,
+						imageKey: currentRow.imageKey,
+						imageUrl: currentRow.imageUrl,
+						imageKeys: currentRow.imageKeys,
+						applySalesTax: currentRow.applySalesTax,
+						availabilityStatus: currentRow.availabilityStatus,
+						unavailableUntil: currentRow.unavailableUntil,
+						categoryIds: currentCats.map((c) => c.categoryId),
+						modifierGroupIds: currentGroups.map((g) => g.modifierGroupId),
+					},
+					next: {
+						displayName: data.displayName,
+						description: data.description || null,
+						price: nextPrice,
+						variations: data.variations,
+						imageKeys,
+						imageUrl: formData.has('imageUrl')
+							? data.imageUrl || null
+							: currentRow.imageUrl,
+						applySalesTax: data.applySalesTax,
+						availabilityStatus: data.availabilityStatus,
+						unavailableUntil: nextUnavailableUntil,
+						categoryIds: data.assignedCategoryIds,
+						modifierGroupIds: data.assignedModifierGroupIds,
+					},
+					defaultLocale,
+				})
+				assertNoLockedFieldWrites(posLock, changedPosFields)
+
+				const prevPriceByLoc = new Map(
+					currentLocOverrides.map((ov) => [ov.locationId, ov.price ?? null]),
+				)
+				const incomingOverrides = data.locationOverrides ?? {}
+				const allLocIds = new Set([
+					...prevPriceByLoc.keys(),
+					...Object.keys(incomingOverrides),
+				])
+				for (const locId of allLocIds) {
+					const prevLocPrice = prevPriceByLoc.get(locId) ?? null
+					const nextLocPrice = data.variations.groups.length
+						? null
+						: (incomingOverrides[locId]?.price ?? null)
+					const priceDiffers =
+						prevLocPrice === null || nextLocPrice === null
+							? prevLocPrice !== nextLocPrice
+							: Math.abs(prevLocPrice - nextLocPrice) > 1e-6
+					if (priceDiffers) {
+						assertNoLockedFieldWrites(posLock, ['price'], { locationId: locId })
+					}
+				}
+			} catch (error) {
+				if (error instanceof PosFieldLockedError) return error.toResponse()
+				throw error
+			}
+		}
+	}
+
+	const [priorItemRow, priorLocOverrides] = await Promise.all([
+		db
+			.select({
+				availabilityStatus: OrganizationMenuItem.availabilityStatus,
+				unavailableUntil: OrganizationMenuItem.unavailableUntil,
+			})
+			.from(OrganizationMenuItem)
+			.where(
+				and(
+					eq(OrganizationMenuItem.id, itemId),
+					eq(OrganizationMenuItem.organizationId, organization.id),
+				),
+			)
+			.limit(1)
+			.then((r) => r[0]),
+		db
+			.select({
+				locationId: OrganizationMenuLocationOverride.locationId,
+				availabilityStatus: OrganizationMenuLocationOverride.availabilityStatus,
+			})
+			.from(OrganizationMenuLocationOverride)
+			.where(
+				and(
+					eq(OrganizationMenuLocationOverride.organizationId, organization.id),
+					eq(OrganizationMenuLocationOverride.entityType, 'item'),
+					eq(OrganizationMenuLocationOverride.entityId, itemId),
+				),
+			),
+	])
 
 	await db.transaction(async (tx) => {
 		await assertMediaKeysInOrganization(
@@ -484,14 +685,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				kitchenName: storedKitchenName(data.kitchenName),
 				kitchenHighlight: storedKitchenHighlight(data.kitchenHighlight),
 				description: data.description || null,
-				price: data.variations.variants.length
-					? Math.min(
-							...data.variations.variants.map((variant) => variant.price),
-						)
-					: data.price,
+				price: nextPrice,
 				variations: JSON.stringify(data.variations),
 				imageKey: primaryImageKey,
-				imageUrl: primaryImageKey ? data.imageUrl || null : null,
+				imageUrl: primaryImageKey
+					? data.imageUrl || null
+					: data.imageUrl || null,
 				imageKeys: JSON.stringify(imageKeys),
 				isAlcohol: data.isAlcohol,
 				...(await dietaryAndOrderTypeColumns(data, async () => {
@@ -612,6 +811,45 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		newMainKey: primaryImageKey,
 	})
 
+	const globalAvailabilityChanged =
+		priorItemRow !== undefined &&
+		(priorItemRow.availabilityStatus !== data.availabilityStatus ||
+			(priorItemRow.unavailableUntil?.getTime() ?? null) !==
+				(nextUnavailableUntil?.getTime() ?? null))
+	const priorAvailByLoc = new Map(
+		priorLocOverrides.map((ov) => [
+			ov.locationId,
+			ov.availabilityStatus ?? null,
+		]),
+	)
+	const nextOverridesObj = data.locationOverrides ?? {}
+	const changedOverrideLocations = [
+		...new Set([...priorAvailByLoc.keys(), ...Object.keys(nextOverridesObj)]),
+	].filter(
+		(locId) =>
+			(priorAvailByLoc.get(locId) ?? null) !==
+			(nextOverridesObj[locId]?.availabilityStatus ?? null),
+	)
+
+	if (globalAvailabilityChanged) {
+		await safeEnqueueMenuSync(organization.id, {
+			kind: 'availability',
+			entityType: 'item',
+			entityId: itemId,
+		})
+	} else if (changedOverrideLocations.length > 0) {
+		await safeEnqueueMenuSync(organization.id, {
+			locationIds: changedOverrideLocations,
+			kind: 'availability',
+			entityType: 'item',
+			entityId: itemId,
+		})
+	}
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
+	})
+
 	return redirect(`/${organization.slug}/menu/items`)
 }
 
@@ -626,6 +864,7 @@ export default function EditItemRoute() {
 		allLocations,
 		slotLimitsEnabled,
 		dailyLimitsEnabled,
+		posLock,
 		dishPage,
 		photoTests,
 	} = useLoaderData<typeof loader>()
@@ -647,6 +886,7 @@ export default function EditItemRoute() {
 				allLocations={allLocations}
 				slotLimitsEnabled={slotLimitsEnabled}
 				dailyLimitsEnabled={dailyLimitsEnabled}
+				posLock={posLock}
 				isSubmitting={isSubmitting}
 			/>
 			{photoTests && item.imageKey ? (

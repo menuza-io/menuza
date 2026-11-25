@@ -6,10 +6,13 @@
  */
 
 export * from './types.ts'
+export * from './hours.ts'
+export * from './ownership.ts'
 export * from './credentials.ts'
 export * from './errors.ts'
 export * from './adapter.ts'
 export * from './transport.ts'
+export * from './compare.ts'
 export * from './snapshot.ts'
 export * from './project.ts'
 export * from './service.ts'

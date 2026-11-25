@@ -29,6 +29,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import { recordMenuChange } from '#app/utils/menu/menu-updates.server.ts'
 import {
 	narrowOverrideChannels,
@@ -42,8 +43,8 @@ import {
 	assertMenuInOrganization,
 	assertValidParentCategoryInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
-import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { buildSlotLimitsContext } from '#app/utils/orders/slot-limits.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -403,6 +404,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		resourceType: 'menu_category',
 		resourceId: categoryId,
 		details: 'Menu category edited.',
+	})
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
 	})
 
 	return redirect(`/${organization.slug}/menu/categories`)

@@ -13,6 +13,7 @@ import {
 	db,
 	eq,
 	inArray,
+	Integration,
 	sql,
 	MenuCheckDismissal,
 	not,
@@ -27,11 +28,19 @@ import {
 	OrganizationMenuModifierGroupOptionAssignment,
 	OrganizationMenuOption,
 } from '@repo/database'
+import {
+	isPosProvider,
+	parsePosConfig,
+	providerKind,
+	providerNames,
+} from '@repo/integrations'
+import { isMenuCheckEnabled } from '#app/utils/integrations/flags.server.ts'
 import { isMediaFlagOn, MEDIA_FLAG_KEYS } from '#app/utils/media/media-flags.ts'
 import {
 	computeMenuHealth,
 	menuHealthCheckIds,
 	summarizeMenuHealth,
+	type DeliveryMenuDiffSummary,
 	type MenuHealth,
 	type MenuHealthCategory,
 	type MenuHealthCheckKey,
@@ -80,6 +89,8 @@ export type MenuHealthData = {
 	dismissals: MenuHealthDismissal[]
 	/** `media.photo_quality` is on: the Weak dish photo check runs (#145). */
 	photoQuality?: boolean
+	/** `integrations.menu_check` is on: delivery platform menu differences (#144). */
+	deliveryMenuDiffs?: DeliveryMenuDiffSummary[]
 }
 
 /** Health dismissals of an organization; review-stack `card:` rows excluded. */
@@ -184,10 +195,46 @@ export async function loadMenuHealthData(
 			.from(MenuCheckDismissal)
 			.where(healthDismissalRows(organizationId)),
 	])
-	const photoQuality = isMediaFlagOn(
-		await getFeatureFlag(MEDIA_FLAG_KEYS.photoQuality, { organizationId }),
-	)
+	const [photoQualityFlag, menuCheckEnabled] = await Promise.all([
+		getFeatureFlag(MEDIA_FLAG_KEYS.photoQuality, { organizationId }),
+		isMenuCheckEnabled(organizationId),
+	])
+	const photoQuality = isMediaFlagOn(photoQualityFlag)
 	if (photoQuality) await attachPrimaryPhotoQuality(organizationId, items)
+
+	let deliveryMenuDiffs: DeliveryMenuDiffSummary[] | undefined
+	if (menuCheckEnabled) {
+		const activeIntegrations = await db
+			.select({
+				id: Integration.id,
+				providerName: Integration.providerName,
+				organizationLocationId: Integration.organizationLocationId,
+				config: Integration.config,
+			})
+			.from(Integration)
+			.where(
+				and(
+					eq(Integration.organizationId, organizationId),
+					eq(Integration.isActive, true),
+				),
+			)
+		deliveryMenuDiffs = activeIntegrations.flatMap((row) => {
+			if (!isPosProvider(row.providerName)) return []
+			if (providerKind[row.providerName] !== 'delivery') return []
+			const menuCheck = parsePosConfig(row.config).menuCheck
+			if (!menuCheck?.lastCheckedAt) return []
+			return [
+				{
+					integrationId: row.id,
+					providerName: row.providerName,
+					providerLabel: providerNames[row.providerName] ?? row.providerName,
+					diffCount: menuCheck.diffCount,
+					locationId: row.organizationLocationId,
+				},
+			]
+		})
+	}
+
 	return {
 		items,
 		categories,
@@ -197,6 +244,7 @@ export async function loadMenuHealthData(
 		modifierGroupOptions,
 		dismissals,
 		photoQuality,
+		...(deliveryMenuDiffs ? { deliveryMenuDiffs } : {}),
 	}
 }
 
@@ -357,6 +405,12 @@ export async function loadMenuHealthSummary(
 		modifier_group: new Map(
 			data.modifierGroups.map((row) => [row.id, row.name]),
 		),
+		integration: new Map(
+			(data.deliveryMenuDiffs ?? []).map((row) => [
+				row.integrationId,
+				`${row.providerLabel} (${row.diffCount})`,
+			]),
+		),
 	}
 	const photos = new Map(
 		data.items.flatMap((item) =>
@@ -366,11 +420,13 @@ export async function loadMenuHealthSummary(
 	return summarizeMenuHealth(
 		health,
 		(entityType, id) =>
-			pickLocalized(
-				names[entityType].get(id) ?? '',
-				defaultLocale,
-				defaultLocale,
-			),
+			entityType === 'integration'
+				? (names.integration.get(id) ?? id)
+				: pickLocalized(
+						names[entityType].get(id) ?? '',
+						defaultLocale,
+						defaultLocale,
+					),
 		(itemId) => photos.get(itemId) ?? null,
 	)
 }
@@ -403,6 +459,7 @@ export function computeMenuHealthFor(
 		| 'modifierGroupOptions'
 		| 'dismissals'
 		| 'photoQuality'
+		| 'deliveryMenuDiffs'
 	>,
 	options: { includeFingerprints?: boolean; now?: Date } = {},
 ): MenuHealth {

@@ -17,7 +17,9 @@ vi.mock('@repo/database', () => {
 		desc: operator,
 		eq: operator,
 		gte: operator,
+		inArray: operator,
 		isNull: operator,
+		lt: operator,
 	}
 })
 

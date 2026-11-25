@@ -10,6 +10,16 @@ import {
 	type DietaryTag,
 	type MenuVariations,
 } from '@repo/common/menu-types'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@repo/ui/alert-dialog'
 import { Button } from '@repo/ui/button'
 import {
 	Frame,
@@ -22,10 +32,13 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
 	Form,
+	Link,
 	useActionData,
+	useFetcher,
+	useFormAction,
 	useNavigation,
 	useRevalidator,
 } from 'react-router'
@@ -54,6 +67,7 @@ import {
 	dailyLimitFormToJson,
 	type DailyLimitFormState,
 } from '#app/utils/menu/daily-limit-form.ts'
+import { type PosEntityLockInfo } from '#app/utils/menu/pos-ownership.server.ts'
 import { AssignedSortableList } from './assigned-sortable-list.tsx'
 import { ChannelSwitches } from './channel-switches.tsx'
 import { DailyLimitCard } from './daily-limit-fields.tsx'
@@ -74,6 +88,7 @@ import {
 	orderTypePricesFromDraft,
 } from './order-type-price-fields.tsx'
 import { PopularModeSelect } from './popular-mode-select.tsx'
+import { PosFieldControl, PosManagedBadge } from './pos-field-controls.tsx'
 import {
 	QuickModifierGroupSheet,
 	useCanCreateModifierGroup,
@@ -152,6 +167,8 @@ interface ItemFormProps {
 	slotLimitsEnabled?: boolean
 	/** Org flag `ordering.daily_dish_limits`; hides the daily limit card when off. */
 	dailyLimitsEnabled?: boolean
+	/** POS field ownership & override state (#93). */
+	posLock?: PosEntityLockInfo
 	isSubmitting: boolean
 	pageTitle: string
 }
@@ -163,13 +180,30 @@ interface ItemFormProps {
 export function ItemForm(props: ItemFormProps) {
 	// Discard remounts the form with the values it opened with.
 	const { discardKey, discard } = useDiscardKey()
+	const [restoreEpoch, setRestoreEpoch] = useState(0)
+	const prevOverriddenRef = useRef<string[]>(
+		props.posLock?.overriddenFields ?? [],
+	)
+	useEffect(() => {
+		const next = props.posLock?.overriddenFields ?? []
+		const restored = prevOverriddenRef.current.some(
+			(field) => !next.includes(field),
+		)
+		prevOverriddenRef.current = next
+		if (restored) setRestoreEpoch((n) => n + 1)
+	}, [props.posLock?.overriddenFields])
+
 	return (
 		<RecipeScope
 			orgSlug={props.orgSlug}
 			dataRegion={props.dataRegion}
 			active={Boolean(props.itemId)}
 		>
-			<ItemFormBody key={discardKey} {...props} onDiscard={discard} />
+			<ItemFormBody
+				key={`${discardKey}:${restoreEpoch}`}
+				{...props}
+				onDiscard={discard}
+			/>
 		</RecipeScope>
 	)
 }
@@ -186,6 +220,7 @@ function ItemFormBody({
 	allLocations,
 	slotLimitsEnabled = false,
 	dailyLimitsEnabled = false,
+	posLock,
 	isSubmitting,
 	pageTitle,
 	onDiscard,
@@ -249,7 +284,39 @@ function ItemFormBody({
 				? [{ key: initialData.imageKey, url: initialData.imageUrl }]
 				: []),
 	)
+	const [externalImageUrl, setExternalImageUrl] = useState<string | null>(
+		!initialData?.images?.length &&
+			!initialData?.imageKey &&
+			initialData?.imageUrl
+			? initialData.imageUrl
+			: null,
+	)
 	const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+	const deleteFetcher = useFetcher()
+	const formActionUrl = useFormAction('.')
+
+	const isPhotoLocked = Boolean(posLock?.lockedFields.includes('photo'))
+	const isNameLocked = Boolean(posLock?.lockedFields.includes('name'))
+	const isDescriptionLocked = Boolean(
+		posLock?.lockedFields.includes('description'),
+	)
+	const isPriceLocked = Boolean(posLock?.lockedFields.includes('price'))
+	const isTaxLocked = Boolean(posLock?.lockedFields.includes('tax'))
+	const isModifiersLocked = Boolean(posLock?.lockedFields.includes('modifiers'))
+	const isCategoryLocked = Boolean(posLock?.lockedFields.includes('category'))
+	const isAvailableLocked = Boolean(posLock?.lockedFields.includes('available'))
+	const deleteLockedProvider = posLock?.deleteLockedProvider ?? 'POS'
+	const lockedPriceLocations = useMemo(() => {
+		if (!posLock?.locationLocks) return undefined
+		const out: Record<string, string> = {}
+		for (const [locId, locLock] of Object.entries(posLock.locationLocks)) {
+			if (locLock.lockedFields.includes('price')) {
+				out[locId] = locLock.providerLabel
+			}
+		}
+		return Object.keys(out).length > 0 ? out : undefined
+	}, [posLock?.locationLocks])
 
 	const [isAlcohol, setIsAlcohol] = useState(initialData?.isAlcohol ?? false)
 	const [dietaryTags, setDietaryTags] = useState<DietaryTag[]>(() =>
@@ -409,7 +476,7 @@ function ItemFormBody({
 					<input
 						type="hidden"
 						name="imageUrl"
-						value={primaryImage?.url ?? ''}
+						value={primaryImage?.url ?? externalImageUrl ?? ''}
 					/>
 					<input
 						type="hidden"
@@ -421,7 +488,7 @@ function ItemFormBody({
 						name="variations"
 						value={JSON.stringify(variations)}
 					/>
-					{variations.groups.length > 0 && (
+					{(variations.groups.length > 0 || isPriceLocked) && (
 						<input type="hidden" name="price" value={price} />
 					)}
 					<input type="hidden" name="isAlcohol" value={String(isAlcohol)} />
@@ -512,6 +579,7 @@ function ItemFormBody({
 					{/* Minimal Sticky Full-Width Header */}
 					<MenuFormHeader
 						pageTitle={pageTitle}
+						titleAccessory={<PosManagedBadge lock={posLock} />}
 						backHref={`/${orgSlug}/menu/items`}
 						backLabel="Back to items"
 						saveButtonText="Save Item"
@@ -545,6 +613,11 @@ function ItemFormBody({
 												organization's Media Library.
 											</Trans>
 										</FrameDescription>
+										<PosFieldControl
+											lock={posLock}
+											field="photo"
+											orgSlug={orgSlug}
+										/>
 									</FrameHeader>
 									<FramePanel>
 										<div className="space-y-4">
@@ -574,6 +647,7 @@ function ItemFormBody({
 																variant="secondary"
 																size="icon-xs"
 																className="absolute top-1 right-1"
+																disabled={isPhotoLocked}
 																onClick={() => removeImage(image.key)}
 																aria-label={_(t`Remove photo`)}
 															>
@@ -581,6 +655,26 @@ function ItemFormBody({
 															</Button>
 														</div>
 													))}
+												</div>
+											) : externalImageUrl ? (
+												<div className="bg-muted relative size-24 overflow-hidden rounded-xl border">
+													<img
+														src={externalImageUrl}
+														alt="Primary item photo"
+														className="size-full object-cover"
+													/>
+													{!isPhotoLocked ? (
+														<Button
+															type="button"
+															variant="secondary"
+															size="icon-xs"
+															className="absolute top-1 right-1"
+															onClick={() => setExternalImageUrl(null)}
+															aria-label={_(t`Remove photo`)}
+														>
+															<Icon name="trash-2" className="size-3" />
+														</Button>
+													) : null}
 												</div>
 											) : (
 												<div className="bg-muted flex size-24 items-center justify-center rounded-xl border">
@@ -595,7 +689,7 @@ function ItemFormBody({
 													type="button"
 													variant="outline"
 													size="sm"
-													disabled={photoCount >= 5}
+													disabled={isPhotoLocked || photoCount >= 5}
 													onClick={() => setMediaPickerOpen(true)}
 												>
 													<Icon name="image" className="size-4" />
@@ -639,8 +733,14 @@ function ItemFormBody({
 											<LocalizedInput
 												value={displayName}
 												onChange={setDisplayName}
+												disabled={isNameLocked}
 												placeholder="e.g. Truffle Mushroom Risotto, Aperol Spritz"
 												required
+											/>
+											<PosFieldControl
+												lock={posLock}
+												field="name"
+												orgSlug={orgSlug}
 											/>
 										</div>
 
@@ -705,8 +805,14 @@ function ItemFormBody({
 											<LocalizedTextarea
 												value={description}
 												onChange={setDescription}
+												disabled={isDescriptionLocked}
 												placeholder="e.g. Creamy Carnaroli rice with wild chanterelles, black truffle shavings, aged Parmigiano Reggiano."
 												rows={3}
+											/>
+											<PosFieldControl
+												lock={posLock}
+												field="description"
+												orgSlug={orgSlug}
 											/>
 										</div>
 									</FramePanel>
@@ -730,6 +836,13 @@ function ItemFormBody({
 												</Trans>
 											)}
 										</FrameDescription>
+										{variations.groups.length > 0 ? (
+											<PosFieldControl
+												lock={posLock}
+												field="price"
+												orgSlug={orgSlug}
+											/>
+										) : null}
 									</FrameHeader>
 									{variations.groups.length === 0 && (
 										<FramePanel className="p-5">
@@ -740,15 +853,21 @@ function ItemFormBody({
 												<Input
 													id="price-input"
 													type="number"
-													name="price"
+													name={isPriceLocked ? undefined : 'price'}
 													step="0.01"
 													min="0"
+													disabled={isPriceLocked}
 													value={price || ''}
 													onChange={(e) =>
 														setPrice(parseFloat(e.target.value) || 0)
 													}
 													placeholder="0.00"
 													required
+												/>
+												<PosFieldControl
+													lock={posLock}
+													field="price"
+													orgSlug={orgSlug}
 												/>
 											</div>
 										</FramePanel>
@@ -763,22 +882,30 @@ function ItemFormBody({
 											/>
 										</FramePanel>
 									)}
-									<FramePanel className="flex items-center justify-between px-5 py-3.5">
-										<Label
-											htmlFor="tax-switch"
-											className="block min-w-0 cursor-pointer space-y-0.5 pr-4 font-normal"
-										>
-											<div className="text-foreground text-sm">
-												<Trans>Apply Sales Tax</Trans>
-											</div>
-											<p className="text-muted-foreground text-xs">
-												<Trans>Charge tax at checkout.</Trans>
-											</p>
-										</Label>
-										<Switch
-											id="tax-switch"
-											checked={applySalesTax}
-											onCheckedChange={setApplySalesTax}
+									<FramePanel className="space-y-2 px-5 py-3.5">
+										<div className="flex items-center justify-between">
+											<Label
+												htmlFor="tax-switch"
+												className="block min-w-0 cursor-pointer space-y-0.5 pr-4 font-normal"
+											>
+												<div className="text-foreground text-sm">
+													<Trans>Apply Sales Tax</Trans>
+												</div>
+												<p className="text-muted-foreground text-xs">
+													<Trans>Charge tax at checkout.</Trans>
+												</p>
+											</Label>
+											<Switch
+												id="tax-switch"
+												checked={applySalesTax}
+												disabled={isTaxLocked}
+												onCheckedChange={setApplySalesTax}
+											/>
+										</div>
+										<PosFieldControl
+											lock={posLock}
+											field="tax"
+											orgSlug={orgSlug}
 										/>
 									</FramePanel>
 								</Frame>
@@ -791,6 +918,7 @@ function ItemFormBody({
 									orgSlug={orgSlug}
 									locations={allLocations}
 									initialImageUrls={initialData?.variationImageUrls}
+									disabled={isPriceLocked}
 								/>
 
 								<RecipePanel
@@ -810,6 +938,14 @@ function ItemFormBody({
 											this item.
 										</Trans>
 									}
+									headerControl={
+										<PosFieldControl
+											lock={posLock}
+											field="modifiers"
+											orgSlug={orgSlug}
+										/>
+									}
+									disabled={isModifiersLocked}
 									addLabel={<Trans>Add group</Trans>}
 									selectionTitle={<Trans>Add a modifier group</Trans>}
 									selectionDescription={
@@ -838,7 +974,7 @@ function ItemFormBody({
 									selectedIds={selectedModifierGroupIds}
 									onChange={setSelectedModifierGroupIds}
 									onCreate={
-										canCreateGroup
+										canCreateGroup && !isModifiersLocked
 											? () => setIsCreateGroupOpen(true)
 											: undefined
 									}
@@ -908,6 +1044,14 @@ function ItemFormBody({
 											Categories that display this item on the menu.
 										</Trans>
 									}
+									headerControl={
+										<PosFieldControl
+											lock={posLock}
+											field="category"
+											orgSlug={orgSlug}
+										/>
+									}
+									disabled={isCategoryLocked}
 									addLabel={<Trans>Add category</Trans>}
 									selectionTitle={<Trans>Add a category</Trans>}
 									selectionDescription={
@@ -944,6 +1088,14 @@ function ItemFormBody({
 									unavailableUntil={unavailableUntil}
 									onUnavailableUntilChange={setUnavailableUntil}
 									locations={allLocations}
+									disabled={isAvailableLocked}
+									headerControl={
+										<PosFieldControl
+											lock={posLock}
+											field="available"
+											orgSlug={orgSlug}
+										/>
+									}
 								/>
 
 								{/* Channels Frame */}
@@ -1113,11 +1265,108 @@ function ItemFormBody({
 									allowPriceOverride={variations.groups.length === 0}
 									basePrice={price}
 									baseChannels={channels}
+									lockedPriceLocations={lockedPriceLocations}
 								/>
+
+								{itemId ? (
+									<Frame className="w-full">
+										<FrameHeader>
+											<FrameTitle className="text-base">
+												<Trans>Delete Item</Trans>
+											</FrameTitle>
+											<FrameDescription>
+												{posLock?.deleteLocked ? (
+													<Trans>
+														Managed in {deleteLockedProvider}. Remove it in the
+														POS or{' '}
+														<Link
+															to={`/${orgSlug}/settings/integrations`}
+															className="text-primary underline underline-offset-4"
+														>
+															change ownership
+														</Link>{' '}
+														before deleting here.
+													</Trans>
+												) : (
+													<Trans>
+														Permanently remove this dish from your menu.
+													</Trans>
+												)}
+											</FrameDescription>
+										</FrameHeader>
+										<FramePanel>
+											<Button
+												type="button"
+												variant="destructive"
+												size="sm"
+												className="w-full"
+												onClick={() => setDeleteDialogOpen(true)}
+											>
+												<Icon name="trash-2" className="size-4" />
+												<Trans>Delete Item</Trans>
+											</Button>
+										</FramePanel>
+									</Frame>
+								) : null}
 							</div>
 						</div>
 					</div>
 				</Form>
+				{itemId ? (
+					<AlertDialog
+						open={deleteDialogOpen}
+						onOpenChange={setDeleteDialogOpen}
+					>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>
+									<Trans>Delete item?</Trans>
+								</AlertDialogTitle>
+								<AlertDialogDescription>
+									{posLock?.deleteLocked ? (
+										<Trans>
+											This dish cannot be deleted while {deleteLockedProvider}{' '}
+											owns its name or price. Remove it in{' '}
+											{deleteLockedProvider} or{' '}
+											<Link
+												to={`/${orgSlug}/settings/integrations`}
+												className="text-primary underline underline-offset-4"
+											>
+												change ownership
+											</Link>
+											.
+										</Trans>
+									) : (
+										<Trans>
+											This item will be permanently deleted from your menu.
+										</Trans>
+									)}
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel>
+									<Trans>Cancel</Trans>
+								</AlertDialogCancel>
+								<AlertDialogAction
+									disabled={
+										Boolean(posLock?.deleteLocked) ||
+										deleteFetcher.state !== 'idle'
+									}
+									onClick={() => {
+										if (posLock?.deleteLocked) return
+										void deleteFetcher.submit(
+											{ intent: 'delete-item' },
+											{ method: 'POST', action: formActionUrl },
+										)
+										setDeleteDialogOpen(false)
+									}}
+								>
+									<Trans>Delete</Trans>
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
+				) : null}
 				{canCreateGroup ? (
 					<QuickModifierGroupSheet
 						orgSlug={orgSlug}
