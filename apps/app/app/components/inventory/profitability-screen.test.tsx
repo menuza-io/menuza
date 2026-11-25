@@ -118,7 +118,9 @@ describe('ProfitabilityScreen (#519)', () => {
 
 	it('says why, and shows no figures, when the region refuses (no cost grant)', async () => {
 		const request = vi.fn<InventoryClient['request']>(async () => {
-			throw new OperatorRequestError('forbidden', 403, { code: 'forbidden' })
+			throw new OperatorRequestError('forbidden', 'forbidden', 403, {
+				code: 'forbidden',
+			})
 		})
 		renderInventory(
 			<ProfitabilityScreen locationId="loc_1" currency="USD" dishes={DISHES} />,
