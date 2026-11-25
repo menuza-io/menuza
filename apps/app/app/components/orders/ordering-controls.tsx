@@ -15,6 +15,12 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { useState } from 'react'
 import { useFetcher } from 'react-router'
+import { MissedSalesNote } from '#app/components/orders/missed-sales-note.tsx'
+import { useMissedEstimates } from '#app/hooks/use-missed-estimates.ts'
+import {
+	type EntryEstimate,
+	type MissedPlanEntry,
+} from '#app/utils/location/missed-estimate.ts'
 import {
 	type DeliveryPauseFailure,
 	type LocationOrderingControl,
@@ -49,11 +55,21 @@ export function OrderingControls({
 	orgSlug,
 	locations,
 	canWrite,
+	tenantApiUrl = null,
 }: {
 	orgSlug: string
 	locations: LocationOrderingControl[]
 	canWrite: boolean
+	/** The region, for the estimate of what a pause missed (#176); none: no estimate. */
+	tenantApiUrl?: string | null
 }) {
+	const missed = useMissedEstimates({
+		orgSlug,
+		tokenUrl: `/${orgSlug}/reports/token`,
+		tenantApiUrl,
+		mode: 'latest',
+		enabled: locations.length > 0,
+	})
 	if (locations.length === 0) return null
 	return (
 		<section
@@ -80,6 +96,14 @@ export function OrderingControls({
 						location={location}
 						canWrite={canWrite}
 						showName={locations.length > 1}
+						missed={(() => {
+							const entry = missed.entries.find(
+								(item) => item.locationId === location.id,
+							)
+							return entry
+								? { entry, estimate: missed.estimates.get(entry.id) }
+								: null
+						})()}
 					/>
 				))}
 			</ul>
@@ -92,11 +116,14 @@ function LocationRow({
 	location,
 	canWrite,
 	showName,
+	missed,
 }: {
 	orgSlug: string
 	location: LocationOrderingControl
 	canWrite: boolean
 	showName: boolean
+	/** The current or last pause and what it missed (an estimate), when known. */
+	missed: { entry: MissedPlanEntry; estimate: EntryEstimate | undefined } | null
 }) {
 	const { _, i18n } = useLingui()
 	const fetcher = useFetcher<{
@@ -206,6 +233,9 @@ function LocationRow({
 						</Badge>
 					) : null}
 				</div>
+				{missed ? (
+					<MissedSalesNote entry={missed.entry} estimate={missed.estimate} />
+				) : null}
 				{failed ? (
 					<p role="alert" className="text-destructive text-sm">
 						<Trans>That did not save. Try again.</Trans>

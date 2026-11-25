@@ -183,6 +183,39 @@ export const orderSchema = z.object({
 })
 export type Order = z.infer<typeof orderSchema>
 
+/**
+ * One step of an order's timeline (#243), from `GET /operator/orders/:id`:
+ * when it happened and who or which screen did it. `actorId` is an opaque
+ * member, device or staff id (the page names a member from its own list), and
+ * the row holds no guest data. Mirrors `orderTimeline` in `@repo/common`.
+ */
+export const orderTimelineEntrySchema = z.object({
+	step: z.enum([
+		'placed',
+		'accepted',
+		'declined',
+		'started',
+		'ready',
+		'handed_over',
+		'out_for_delivery',
+		'delivered',
+	]),
+	at: z.number(),
+	actorKind: z.enum(['guest', 'operator', 'station', 'system']),
+	actorId: z.string().nullable(),
+	source: z.enum([
+		'app',
+		'station_orders',
+		'station_kitchen',
+		'guest',
+		'payment',
+		'system',
+	]),
+	offline: z.boolean(),
+	minutesSincePlaced: z.number().nullable(),
+})
+export type OrderTimelineEntry = z.infer<typeof orderTimelineEntrySchema>
+
 export type AppliedOrderDiscount = {
 	discountId: string
 	name: string

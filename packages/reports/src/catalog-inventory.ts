@@ -7,6 +7,14 @@ import { type ReportField, type ReportSubject } from './catalog.ts'
  * "Export for accountant" endpoint so totals match identically.
  */
 export const INVENTORY_REPORT_SUBJECTS = ['inventory_deliveries'] as const
+
+/**
+ * Not a subject: a permission on the reports token (like the staff name on a
+ * sale). Present only for a member who may read inventory costs with
+ * inventory on; the slow sellers report shows a dish's food cost for them and
+ * leaves the column out for everyone else (#261).
+ */
+export const INVENTORY_COST_REPORT_PERMISSION = 'inventory_cost' as const
 export type InventoryReportSubject = (typeof INVENTORY_REPORT_SUBJECTS)[number]
 
 export function isInventoryReportSubject(

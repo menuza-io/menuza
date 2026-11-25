@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { recipeCostsRequestSchema } from '@repo/inventory'
 import { Table, TableBody, TableHeader, TableRow } from '@repo/ui/table'
-import { screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { type InventoryClient } from '#app/components/inventory/inventory-client-provider.tsx'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
@@ -12,6 +12,7 @@ import {
 	FoodCostFooterCell,
 	FoodCostHead,
 	FoodCostProvider,
+	FoodCostSortControl,
 } from './food-cost-column.tsx'
 
 const access = vi.hoisted(() => ({
@@ -200,5 +201,27 @@ describe('Food cost column', () => {
 					(JSON.parse(String(init?.body)) as { refs: unknown[] }).refs.length,
 			)
 		expect(sizes).toEqual([200, 50])
+	})
+})
+
+describe('Sort control on the menu list (#519)', () => {
+	it('renders nothing, and needs no regional client, while the Food cost column is off', () => {
+		access.current = { ...access.current, enabled: false }
+		// Rendered with no InventoryClientProvider at all, as the menu list does
+		// when recipes are off: it must not throw.
+		expect(() =>
+			render(
+				<FoodCostProvider orgSlug="acme" dataRegion="ksa" items={ITEMS}>
+					<FoodCostSortControl
+						sort="default"
+						onSortChange={() => {}}
+						locations={[]}
+						items={[]}
+						onPeriodMargins={() => {}}
+					/>
+				</FoodCostProvider>,
+			),
+		).not.toThrow()
+		expect(screen.queryByTestId('food-cost-sort')).toBeNull()
 	})
 })

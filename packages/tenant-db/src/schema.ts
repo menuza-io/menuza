@@ -38,6 +38,12 @@ import {
 	GIFT_CARD_STATUSES,
 } from '@repo/common/gift-cards'
 import { STAFF_CONSENT_METHODS } from '@repo/common/marketing-consent'
+import {
+	ORDER_STEP_ACTOR_KIND_VALUES,
+	ORDER_STEP_EVENT_VALUES,
+	ORDER_STEP_SOURCE_VALUES,
+	ORDER_STEP_VALUES,
+} from '@repo/common/order-steps'
 import { SITE_CONTENT_LOCALES } from '@repo/common/site-locales'
 
 // ==========================================
@@ -2920,6 +2926,12 @@ export const posOrders = sqliteTable(
 		// revision's own verdict is kept on `pos_order_revisions`.
 		reviewReason: text('review_reason'),
 		lines: text('lines', { mode: 'json' }).notNull(),
+		// The menu and category each dish sat under when it was sold (#227),
+		// `{ [itemId]: { categoryId, categoryName, menuId, menuName } }`, stamped
+		// by the region from the live menu at upload (the till sends none, so
+		// the POS contract is unchanged). Null: a sale before this, or a menu
+		// that could not be reached ("Earlier sales"). Names only, no guest data.
+		lineCatalog: text('line_catalog', { mode: 'json' }),
 		// Items taken off after the order was saved (append-only, see the contract).
 		lineVoids: text('line_voids', { mode: 'json' })
 			.notNull()
@@ -11626,3 +11638,49 @@ export const shortLinkClicksDaily = sqliteTable(
 	},
 	(table) => [primaryKey({ columns: [table.linkId, table.day] })],
 )
+
+// ==========================================
+// Order steps (#243)
+// ==========================================
+// When an online order was placed, accepted (or declined), started, ready,
+// handed over or sent out, and delivered, written inside the existing status
+// changes. Append-only (triggers in migration 0068): a step taken back is a
+// new `undone` row and a step done again a new `done` row, so both stay and
+// the latest counts. `at` is when it happened (the till's time for a Station
+// step taken offline, with `offline` set); `recorded_at` is the server's.
+// `actor_id` is an opaque member, device or staff id: never a name, and the
+// row holds no guest data.
+export const restaurantOrderSteps = sqliteTable(
+	'restaurant_order_steps',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		// Deleted with its order (the order's own deletion), never on its own.
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
+		step: text('step', { enum: [...ORDER_STEP_VALUES] }).notNull(),
+		event: text('event', { enum: [...ORDER_STEP_EVENT_VALUES] })
+			.notNull()
+			.default('done'),
+		at: integer('at').notNull(),
+		recordedAt: integer('recorded_at').notNull().default(nowMs),
+		actorKind: text('actor_kind', {
+			enum: [...ORDER_STEP_ACTOR_KIND_VALUES],
+		}).notNull(),
+		actorId: text('actor_id'),
+		source: text('source', { enum: [...ORDER_STEP_SOURCE_VALUES] }).notNull(),
+		offline: integer('offline', { mode: 'boolean' }).notNull().default(false),
+	},
+	(table) => [
+		index('idx_restaurant_order_steps_order').on(table.orderId, table.recordedAt),
+		index('idx_restaurant_order_steps_step_at').on(table.step, table.at),
+		check('chk_restaurant_order_steps_step', oneOf(table.step, ORDER_STEP_VALUES)),
+		check(
+			'chk_restaurant_order_steps_event',
+			oneOf(table.event, ORDER_STEP_EVENT_VALUES),
+		),
+	],
+)
+export type RestaurantOrderStepRecord = typeof restaurantOrderSteps.$inferSelect

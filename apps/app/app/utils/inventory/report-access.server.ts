@@ -1,6 +1,7 @@
 import { isImpersonating } from '@repo/auth'
 import { INVENTORY_PERMISSIONS } from '@repo/inventory'
 import {
+	INVENTORY_COST_REPORT_PERMISSION,
 	INVENTORY_REPORT_SUBJECTS,
 	type InventoryReportSubject,
 } from '@repo/reports/token'
@@ -11,7 +12,9 @@ import {
 } from './access.server.ts'
 
 export type InventoryReportAccess = {
-	subjects: InventoryReportSubject[]
+	subjects: Array<
+		InventoryReportSubject | typeof INVENTORY_COST_REPORT_PERMISSION
+	>
 	scopeIds: string[] | null
 }
 
@@ -38,7 +41,9 @@ export async function resolveInventoryReportAccess(input: {
 	}
 	if (locationIds !== null && locationIds.length === 0) return NONE
 	return {
-		subjects: [...INVENTORY_REPORT_SUBJECTS],
+		// The cost permission is held whenever the cost grant is (checked above):
+		// it lets the slow sellers report show a dish's food cost (#261).
+		subjects: [...INVENTORY_REPORT_SUBJECTS, INVENTORY_COST_REPORT_PERMISSION],
 		scopeIds: locationIds,
 	}
 }

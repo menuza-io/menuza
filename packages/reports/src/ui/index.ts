@@ -11,3 +11,8 @@ export {
 } from './report-chart.tsx'
 export { ReportWorkspace } from './report-workspace.tsx'
 export { useReportRunner } from './use-report-runner.ts'
+export {
+	ReportRowActionsContext,
+	type ReportRowAction,
+	type ReportRowActions,
+} from './row-actions.tsx'

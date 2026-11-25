@@ -21,8 +21,10 @@ import {
 	definitionForLoading,
 	referencedFieldIds,
 	resolveReportTimeZone,
+	resolveTimeframeRange,
 	timeframeLoadWindow,
 	runReport,
+	splitLoaderFilters,
 	type ReportRecord,
 } from '@repo/reports'
 import {
@@ -97,6 +99,28 @@ import {
 	MENU_INSIGHTS_MAX_ROWS,
 } from '../services/menu-insights-records.ts'
 import { loadSoldOutHistoryRecords } from '../services/sold-out-report-records.ts'
+import { loadOnlineUptime } from '../services/online-uptime-service.ts'
+import {
+	loadMissedSalesRecords,
+	OrderingHistoryUnavailableError,
+} from '../services/missed-sales-records.ts'
+import {
+	estimateMissedSales,
+	type MissedWindowRequest,
+} from '../services/missed-sales-service.ts'
+import {
+	loadOrderTimingRecords,
+	ORDER_TIMING_MAX_ROWS,
+} from '../services/order-timing-records.ts'
+import {
+	loadSlowSellerRecords,
+	MenuRosterUnavailableError,
+} from '../services/slow-sellers-records.ts'
+import {
+	loadProductMixRecords,
+	loadProductMixRows,
+	PRODUCT_MIX_MAX_RECORDS,
+} from '../services/product-mix-records.ts'
 import {
 	INVENTORY_DELIVERIES_REPORT_MAX_ROWS,
 	loadInventoryDeliveryRecords,
@@ -139,6 +163,11 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'item_pairs',
 	'modifier_sales',
 	'sold_out_history',
+	'product_mix',
+	'product_mix_options',
+	'slow_sellers',
+	'order_timings',
+	'missed_online_sales',
 	'inventory_deliveries',
 ])
 
@@ -464,6 +493,9 @@ analyticsRoutes.post('/query', async (c) => {
 	let records: ReportRecord[]
 	let sourceTruncated = false
 	let sourceRowLimit = 0
+	// What the engine runs: a loader that applies some filters itself (slow
+	// sellers: location and channel) hands the engine the definition without them.
+	let runDefinition = definition
 	if (isStaffingReportSubject(definition.subject)) {
 		const staffCtx: StaffReportContext = {
 			db,
@@ -609,6 +641,80 @@ analyticsRoutes.post('/query', async (c) => {
 		records = await loadCustomerRecords(db, claims.orgId, subject, loading)
 	} else if (definition.subject === 'text_subscribers') {
 		records = await loadTextSubscriberRecords(db)
+	} else if (definition.subject === 'slow_sellers') {
+		const split = splitLoaderFilters(activeReportCatalog(), definition)
+		try {
+			const loaded = await loadSlowSellerRecords(
+				{
+					db,
+					orgId: claims.orgId,
+					locationIds: claims.locationIds,
+					now,
+					costAllowed: operatorTokenAllowsSubject(claims, 'inventory_cost'),
+					userId: claims.userId,
+				},
+				loading,
+				split.loader,
+			)
+			records = loaded.records
+			sourceTruncated = loaded.truncated
+			sourceRowLimit = records.length
+			runDefinition = split.definition
+		} catch (error) {
+			if (error instanceof MenuRosterUnavailableError) {
+				return c.json(
+					{
+						error: 'menu_unavailable',
+						message:
+							'The menu could not be read just now, so dishes that did not sell cannot be listed. Try again in a moment.',
+					},
+					503,
+				)
+			}
+			throw error
+		}
+	} else if (definition.subject === 'missed_online_sales') {
+		try {
+			const loaded = await loadMissedSalesRecords(
+				{ db, orgId: claims.orgId, locationIds: claims.locationIds, now },
+				loading,
+			)
+			records = loaded.records
+			sourceTruncated = loaded.truncated
+			sourceRowLimit = records.length
+		} catch (error) {
+			if (error instanceof OrderingHistoryUnavailableError) {
+				return c.json(
+					{
+						error: 'history_unavailable',
+						message:
+							'The pause history could not be read just now. Try again in a moment.',
+					},
+					503,
+				)
+			}
+			throw error
+		}
+	} else if (definition.subject === 'order_timings') {
+		const loaded = await loadOrderTimingRecords(
+			{ db, orgId: claims.orgId, locationIds: claims.locationIds, now },
+			loading,
+		)
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = ORDER_TIMING_MAX_ROWS
+	} else if (
+		definition.subject === 'product_mix' ||
+		definition.subject === 'product_mix_options'
+	) {
+		const loaded = await loadProductMixRecords(
+			{ db, locationIds: claims.locationIds, now },
+			loading,
+			definition.subject === 'product_mix' ? 'dish' : 'option',
+		)
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = PRODUCT_MIX_MAX_RECORDS
 	} else if (isMenuInsightsReportSubject(definition.subject)) {
 		const salesCtx: SalesReportContext = {
 			db,
@@ -691,7 +797,7 @@ analyticsRoutes.post('/query', async (c) => {
 		records = rows.map(mapShopOrder)
 	}
 
-	const result = runReport(activeReportCatalog(), definition, records, now, {
+	const result = runReport(activeReportCatalog(), runDefinition, records, now, {
 		timeZone,
 	})
 	if (isReportRunError(result)) {
@@ -1001,4 +1107,238 @@ analyticsRoutes.get('/month-sales', async (c) => {
 		byLocation: Object.fromEntries(byLocation),
 		salesBasis: parsed.data.salesBasis,
 	})
+})
+
+const productMixQuerySchema = z.object({
+	preset: timeframePresetSchema.default('last_30_days'),
+	start: z.string().datetime().optional(),
+	end: z.string().datetime().optional(),
+	timeZone: z.string().max(64).optional(),
+	/** Comma-separated location ids; narrowed to the token's own. */
+	locationIds: z.string().max(4000).optional(),
+	/** Comma-separated channels (`online_menu`, `qr_table`, `station_counter`, ...). */
+	channels: z.string().max(400).optional(),
+})
+
+/**
+ * The product mix tree's rows (#227): finest-grain dish and option rows with
+ * the menu and category each dish was sold under at the time of sale. The
+ * browser folds them into whichever levels are switched on, so a level toggle
+ * is not another request. Needs the order report grants; limited to the
+ * token's locations.
+ */
+analyticsRoutes.get('/product-mix', async (c) => {
+	const auth = await requireSalesAnalytics(c)
+	if ('error' in auth) return auth.error
+	if (!operatorTokenAllowsSubject(auth.claims, 'product_mix')) {
+		return c.json(
+			{
+				error: 'forbidden_subject',
+				message: 'You do not have permission to report on this data.',
+			},
+			403,
+		)
+	}
+	const parsed = productMixQuerySchema.safeParse(c.req.query())
+	if (!parsed.success) {
+		return c.json(
+			{ error: 'invalid_request', message: 'Invalid timeframe or filters.' },
+			400,
+		)
+	}
+	const zone = resolveReportTimeZone('user', parsed.data.timeZone)
+	const range = resolveTimeframeRange(
+		parsed.data.preset,
+		auth.now,
+		{ start: parsed.data.start, end: parsed.data.end },
+		zone,
+	)
+	const asked = parsed.data.locationIds
+		? parsed.data.locationIds.split(',').filter(Boolean)
+		: null
+	// Never wider than the token: a person limited to some locations asks within them.
+	const locationIds =
+		auth.claims.locationIds === null
+			? asked
+			: asked === null
+				? auth.claims.locationIds
+				: asked.filter((id) => auth.claims.locationIds!.includes(id))
+	const channels = parsed.data.channels
+		? parsed.data.channels.split(',').filter(Boolean)
+		: null
+	const { rows, truncated } = await loadProductMixRows(
+		{ db: auth.db, locationIds, now: auth.now },
+		{ fromMs: range.start ? range.start.getTime() : null, toMs: range.end.getTime() },
+		{ channels },
+	)
+	return c.json({
+		rows,
+		truncated,
+		period: {
+			start: range.start ? range.start.toISOString() : null,
+			end: range.end.toISOString(),
+		},
+		refreshedAt: auth.now.toISOString(),
+	})
+})
+
+const missedEstimateSchema = z.object({
+	locationId: z.string().min(1).max(100),
+	/** The location's currency; orders in another one are never added. */
+	currency: z.string().min(3).max(8),
+	windows: z
+		.array(
+			z.object({
+				id: z.string().min(1).max(100),
+				from: z.number().int().positive(),
+				to: z.number().int().positive(),
+				/** The earlier weeks the App chose to average over. */
+				weeks: z
+					.array(
+						z.object({
+							from: z.number().int().positive(),
+							to: z.number().int().positive(),
+						}),
+					)
+					.max(8),
+			}),
+		)
+		.min(1)
+		.max(50),
+})
+
+/**
+ * The estimate of web and QR sales missed while online ordering was paused
+ * (#176). The browser sends only windows (the pause and the earlier weeks the
+ * App chose) and gets back only totals per window, labelled an estimate by the
+ * App. Never real sales; never across currencies; limited to the token's
+ * locations. Needs the same grant as the sales reports.
+ */
+analyticsRoutes.post('/missed-estimate', async (c) => {
+	const auth = await requireSalesAnalytics(c)
+	if ('error' in auth) return auth.error
+	if (!operatorTokenAllowsSubject(auth.claims, 'missed_online_sales')) {
+		return c.json(
+			{
+				error: 'forbidden_subject',
+				message: 'You do not have permission to report on this data.',
+			},
+			403,
+		)
+	}
+	const parsed = missedEstimateSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) {
+		return c.json(
+			{ error: 'invalid_request', message: 'Invalid estimate request.' },
+			400,
+		)
+	}
+	const { locationId, currency, windows } = parsed.data
+	if (
+		auth.claims.locationIds !== null &&
+		!auth.claims.locationIds.includes(locationId)
+	) {
+		return c.json({ error: 'location_forbidden', message: 'Not allowed.' }, 403)
+	}
+	// A week is a short window in the past: refuse anything that is not.
+	const horizon = auth.now.getTime() + 60_000
+	const longest = 24 * 3_600_000
+	const sane = windows.every((window) =>
+		[window, ...window.weeks].every(
+			(item) =>
+				item.to > item.from &&
+				item.to - item.from <= longest &&
+				item.to <= horizon &&
+				item.from >= horizon - 400 * 86_400_000,
+		),
+	)
+	if (!sane) {
+		return c.json(
+			{ error: 'invalid_request', message: 'Invalid estimate windows.' },
+			400,
+		)
+	}
+	const estimates = await estimateMissedSales(
+		auth.db,
+		{ orgId: auth.claims.orgId, locationId, currency },
+		windows as MissedWindowRequest[],
+	)
+	return c.json({
+		estimates,
+		currency,
+		/** Always an estimate: the App labels it and never adds it to real sales. */
+		estimate: true,
+		refreshedAt: auth.now.toISOString(),
+	})
+})
+
+const onlineUptimeQuerySchema = z.object({
+	preset: timeframePresetSchema.default('last_30_days'),
+	start: z.string().datetime().optional(),
+	end: z.string().datetime().optional(),
+	timeZone: z.string().max(64).optional(),
+	locationIds: z.string().max(4000).optional(),
+})
+
+/**
+ * Online ordering uptime per location and why ordering was off (#405): only
+ * scheduled open hours count, split into paused by staff, dishes unavailable
+ * and closed unexpectedly. Windows from the control plane, sold-out history
+ * from the region; totals and per-day figures come back, never a guest.
+ */
+analyticsRoutes.get('/online-uptime', async (c) => {
+	const auth = await requireSalesAnalytics(c)
+	if ('error' in auth) return auth.error
+	if (!operatorTokenAllowsSubject(auth.claims, 'missed_online_sales')) {
+		return c.json(
+			{
+				error: 'forbidden_subject',
+				message: 'You do not have permission to report on this data.',
+			},
+			403,
+		)
+	}
+	const parsed = onlineUptimeQuerySchema.safeParse(c.req.query())
+	if (!parsed.success) {
+		return c.json(
+			{ error: 'invalid_request', message: 'Invalid timeframe or filters.' },
+			400,
+		)
+	}
+	const zone = resolveReportTimeZone('user', parsed.data.timeZone)
+	const range = resolveTimeframeRange(
+		parsed.data.preset,
+		auth.now,
+		{ start: parsed.data.start, end: parsed.data.end },
+		zone,
+	)
+	const from = range.start
+		? range.start.getTime()
+		: auth.now.getTime() - 90 * 86_400_000
+	const asked = parsed.data.locationIds
+		? parsed.data.locationIds.split(',').filter(Boolean)
+		: null
+	const uptime = await loadOnlineUptime(
+		{
+			db: auth.db,
+			orgId: auth.claims.orgId,
+			locationIds: auth.claims.locationIds,
+			now: auth.now,
+		},
+		{ from, to: range.end.getTime() },
+		asked,
+	)
+	if (!uptime) {
+		return c.json(
+			{
+				error: 'history_unavailable',
+				message:
+					'The pause history could not be read just now. Try again in a moment.',
+			},
+			503,
+		)
+	}
+	return c.json({ ...uptime, refreshedAt: auth.now.toISOString() })
 })

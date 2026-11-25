@@ -1,6 +1,7 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
+import { db, eq, User, UserOrganization } from '@repo/database'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -30,6 +31,8 @@ import {
 	type Order,
 	type OrderRefundBody,
 	orderSchema,
+	orderTimelineEntrySchema,
+	type OrderTimelineEntry,
 	type PushBackMinutes,
 } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
@@ -63,8 +66,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY,
 		))
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
+	// Who did each step (#243): the region keeps an opaque member id, so the
+	// names come from the organization's own members, here.
+	const members = await db
+		.select({ id: User.id, name: User.name, username: User.username })
+		.from(UserOrganization)
+		.innerJoin(User, eq(User.id, UserOrganization.userId))
+		.where(eq(UserOrganization.organizationId, organization.id))
+		.limit(500)
+	const memberNames: Record<string, string> = {}
+	for (const member of members) {
+		memberNames[member.id] = member.name ?? member.username
+	}
 	return data(
 		{
+			memberNames,
 			orgSlug,
 			orderId: params.orderId || '',
 			canWrite,
@@ -78,11 +94,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 type State = 'loading' | 'ready' | 'missing' | 'failed'
 
 export default function OrderPage() {
-	const { orgSlug, orderId, canWrite, canRefund, canViewCustomers } =
+	const { orgSlug, orderId, canWrite, canRefund, canViewCustomers, memberNames } =
 		useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const request = useOrdersClient(orgSlug)
 	const [order, setOrder] = useState<Order | null>(null)
+	const [timeline, setTimeline] = useState<OrderTimelineEntry[]>([])
 	const [state, setState] = useState<State>('loading')
 	const [busy, setBusy] = useState(false)
 	const [actionError, setActionError] = useState<string | null>(null)
@@ -92,10 +109,14 @@ export default function OrderPage() {
 		async (signal?: AbortSignal) => {
 			try {
 				const payload = z
-					.object({ order: orderSchema })
+					.object({
+						order: orderSchema,
+						timeline: z.array(orderTimelineEntrySchema).default([]),
+					})
 					.parse(await request(`/${encodeURIComponent(orderId)}`, { signal }))
 				if (signal?.aborted) return
 				setOrder(payload.order)
+				setTimeline(payload.timeline)
 				setState('ready')
 			} catch (error) {
 				if (signal?.aborted) return
@@ -304,6 +325,8 @@ export default function OrderPage() {
 			) : null}
 			<OrderDetail
 				order={order}
+				steps={timeline}
+				memberNames={memberNames}
 				orgSlug={orgSlug}
 				canWrite={canWrite}
 				canViewCustomers={canViewCustomers}

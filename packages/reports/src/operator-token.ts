@@ -13,6 +13,7 @@ import {
 	isGiftCardReportSubject,
 } from './catalog-gift-cards.ts'
 import {
+	INVENTORY_COST_REPORT_PERMISSION,
 	INVENTORY_REPORT_SUBJECTS,
 	isInventoryReportSubject,
 } from './catalog-inventory.ts'
@@ -45,6 +46,7 @@ export {
 } from './catalog-gift-cards.ts'
 
 export {
+	INVENTORY_COST_REPORT_PERMISSION,
 	INVENTORY_REPORT_SUBJECTS,
 	isInventoryReportSubject,
 	type InventoryReportSubject,
@@ -104,6 +106,8 @@ export const RESTRICTED_REPORT_SUBJECTS = [
 	...RESERVATIONS_REPORT_SUBJECTS,
 	...GIFT_CARD_REPORT_SUBJECTS,
 	...INVENTORY_REPORT_SUBJECTS,
+	// Not a subject: lets the slow sellers report show a dish's food cost.
+	INVENTORY_COST_REPORT_PERMISSION,
 	'staff_pay',
 	...MENU_INSIGHTS_REPORT_SUBJECTS,
 ] as const
@@ -113,9 +117,7 @@ export const ORDER_REPORT_SUBJECTS = [
 	'orders',
 	'order_items',
 	'order_options',
-	'item_pairs',
-	'modifier_sales',
-	'sold_out_history',
+	...MENU_INSIGHTS_REPORT_SUBJECTS,
 	...SALES_REPORT_SUBJECTS,
 ] as const satisfies readonly RestrictedReportSubject[]
 export type RestrictedReportSubject =
@@ -231,6 +233,7 @@ export async function mintOperatorAnalyticsToken(options: {
 			isReservationsReportSubject(subject) ||
 			isGiftCardReportSubject(subject) ||
 			isInventoryReportSubject(subject) ||
+			subject === INVENTORY_COST_REPORT_PERMISSION ||
 			subject === STAFF_PAY_REPORT_PERMISSION,
 	)
 	if (staffGranted && options.scopeIds === undefined) {

@@ -4,6 +4,8 @@ import os from 'node:os'
 import path from 'node:path'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { standingSteps } from '@repo/common/order-steps'
+import { loadOrderSteps } from '../services/order-steps.ts'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_KDS_CONFIG, type KdsFeed } from '@repo/common/kds'
 import {
@@ -575,6 +577,85 @@ describe('Station kitchen API', () => {
 			paymentStatus: 'unpaid',
 			completedAt: null,
 		})
+	})
+
+	it('records started and ready on the order as the screen shows them, takes ready back when a dish is set back, and keeps both rows (#243)', async () => {
+		const db = await getTenantDb(ORG_A)
+		const onlineId = crypto.randomUUID()
+		await db.insert(restaurantOrders).values({
+			id: onlineId,
+			orgId: ORG_A,
+			number: 'WEB-STEPS',
+			status: 'accepted',
+			paymentMethod: 'handoff',
+			paymentStatus: 'unpaid',
+			fulfillment: 'delivery',
+			locationId: 'loc-1',
+			locationName: 'Main',
+			contactName: 'Private online guest',
+			contactPhone: '+15550000000',
+			currency: 'USD',
+			subtotalCents: 1000,
+			taxCents: 0,
+			totalCents: 1000,
+			lines: [
+				{
+					itemId: 'coffee',
+					itemName: 'Coffee',
+					quantity: 1,
+					instructions: '',
+					options: [],
+				},
+			],
+			idempotencyKey: crypto.randomUUID(),
+			requestHash: 'x',
+			receiptTokenHash: 'y',
+			pickupDate: '2026-11-15',
+			pickupTime: '14:30',
+			pickupTimezone: 'Asia/Riyadh',
+		})
+		const send = async (stageName: string, dish = false) => {
+			const data = await feed()
+			const ticket = data.tickets.find((entry) => entry.source === 'online')!
+			return request('POST', '/command', {
+				source: 'online',
+				orderId: onlineId,
+				expectedVersion: ticket.version,
+				action: 'stage',
+				stage: stageName,
+				// A dish sent back to preparing names its line; a ticket-wide
+				// "preparing" leaves dishes already made ready.
+				...(dish ? { lineId: ticket.lines[0]!.id } : {}),
+			})
+		}
+		expect((await send('preparing')).status).toBe(200)
+		expect((await send('ready')).status).toBe(200)
+		expect((await send('preparing', true)).status).toBe(200)
+		expect((await send('ready')).status).toBe(200)
+		const rows = await loadOrderSteps(db, onlineId)
+		const readyLog = rows
+			.filter((entry) => entry.step === 'ready')
+			.map((entry) => entry.event)
+		expect(readyLog).toEqual(['done', 'undone', 'done'])
+		// A delivery order that is ready is also out for delivery, taken back and
+		// done again with it.
+		expect(
+			rows
+				.filter((entry) => entry.step === 'out_for_delivery')
+				.map((entry) => entry.event),
+		).toEqual(['done', 'undone', 'done'])
+		for (const entry of rows) {
+			expect(entry).toMatchObject({
+				actorKind: 'station',
+				source: 'station_kitchen',
+				offline: false,
+			})
+		}
+		const standing = standingSteps(rows)
+		expect(standing.has('started')).toBe(true)
+		expect(standing.has('ready')).toBe(true)
+		// No guest data in any row.
+		expect(JSON.stringify(rows)).not.toMatch(/Private|15550000000/)
 	})
 
 	it('never shows an order waiting for acceptance, nor one turned down while it waited (#107)', async () => {

@@ -88,6 +88,8 @@ describe('orders routes', () => {
 			data: { orderId: string; canWrite: boolean; canViewCustomers: boolean }
 		}
 		expect(result.data).toEqual({
+			// Names for the order's step timeline (#243): from the members list.
+			memberNames: expect.any(Object),
 			orgSlug: 'acme',
 			orderId: 'o1',
 			canWrite: true,

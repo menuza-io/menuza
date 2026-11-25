@@ -73,6 +73,10 @@ already took money for.
   (`priceAs`). The wire is unchanged, so the contract stays 11: an older till
   that ignores these prices keeps selling and its sale is flagged
   `price_mismatch`. See `docs/menu-pricing.md`.
+- **Menu and category on a sale (#227): no contract change.** The till sends
+  only item ids. The region stamps the menu and category each dish sat under
+  from the live menu it already reads at upload (`pos_orders.line_catalog`), so
+  `POS_CONTRACT_VERSION` stays 11. See `docs/sales-insights.md`.
 - **Contract 11.** `POS_CONTRACT_VERSION` is 11. An adjustment may be
   `kind: 'cash_discount'` (#375): the percentage a location takes off a bill
   paid entirely in cash, as its own line. An older node cannot read the kind and

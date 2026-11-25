@@ -10,7 +10,11 @@ import {
 	posRefundTaxCents,
 } from '@repo/common/pos-fiscal'
 import { DEFAULT_KDS_CONFIG } from '@repo/common/kds'
-import { formatPosPairingCode, randomPosToken } from '@repo/common/pos-orders'
+import {
+	formatPosPairingCode,
+	POS_CONTRACT_VERSION,
+	randomPosToken,
+} from '@repo/common/pos-orders'
 import { makeDiscount } from '../../../../packages/discounts/src/test-fixtures.ts'
 import { brand } from '@repo/config/brand'
 import {
@@ -2048,6 +2052,86 @@ describe('POS terminals: pairing, upload and sync', () => {
 				[1, 'price_mismatch'],
 				[2, null],
 			])
+		})
+	})
+
+	// -----------------------------------------------------------------------
+	// Menu and category stamped on the sale (#227)
+	// -----------------------------------------------------------------------
+
+	describe('category and menu stamped at upload (#227)', () => {
+		it('stamps the menu and category each dish sat under from the live menu, with the contract unchanged', async () => {
+			expect(POS_CONTRACT_VERSION).toBe(11)
+			const { deviceSecret } = await pair()
+			const id = crypto.randomUUID()
+			expect(
+				(
+					await upload(
+						deviceSecret,
+						wireOrder({ id, lines: [BURGER, FRIES] }),
+					)
+				).status,
+			).toBe(201)
+			const db = await getTenantDb(ORG_A)
+			const [row] = await db.select().from(posOrders)
+			expect(row?.lineCatalog).toEqual({
+				'item-burger': {
+					categoryId: 'cat-food',
+					categoryName: 'Food',
+					menuId: 'menu-1',
+					menuName: 'Main',
+				},
+				'item-fries': {
+					categoryId: 'cat-food',
+					categoryName: 'Food',
+					menuId: 'menu-1',
+					menuName: 'Main',
+				},
+			})
+		})
+
+		it('leaves a sale unstamped (Earlier sales) when the menu cannot be reached, and never holds it back', async () => {
+			contextStatus = 503
+			const { deviceSecret } = await pair()
+			const response = await upload(
+				deviceSecret,
+				wireOrder({ lines: [BURGER] }),
+			)
+			expect(response.status).toBe(201)
+			const db = await getTenantDb(ORG_A)
+			const [row] = await db.select().from(posOrders)
+			expect(row?.lineCatalog).toBeNull()
+		})
+
+		it('keeps the stamp a later payment on the same bill does not rewrite', async () => {
+			const { deviceSecret } = await pair()
+			const id = crypto.randomUUID()
+			const order = wireOrder({ id, lines: [BURGER] })
+			await upload(deviceSecret, order)
+			// The menu changes before the guest pays; the bill, and what it was
+			// sold under, do not.
+			contextFor = (orgId) => {
+				const context = menuContext(orgId)
+				context.menu.menus[0]!.categories[0]!.displayName = 'Renamed'
+				return context
+			}
+			clearPosMenuCache()
+			const paid = {
+				...order,
+				revision: 2,
+				status: 'paid',
+				payments: wireOrder({
+					payments: [{ amountCents: order.totals.totalCents }],
+				}).payments,
+			}
+			expect((await upload(deviceSecret, paid)).status).toBe(200)
+			const db = await getTenantDb(ORG_A)
+			const [row] = await db.select().from(posOrders)
+			expect(
+				(row?.lineCatalog as Record<string, { categoryName: string }>)[
+					'item-burger'
+				]?.categoryName,
+			).toBe('Food')
 		})
 	})
 

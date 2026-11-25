@@ -620,6 +620,46 @@
       "import": "./src/sales-report-facts.ts",
       "default": "./src/sales-report-facts.ts"
     },
+    "./item-placement": {
+      "types": "./src/item-placement.ts",
+      "import": "./src/item-placement.ts",
+      "default": "./src/item-placement.ts"
+    },
+    "./order-steps": {
+      "types": "./src/order-steps.ts",
+      "import": "./src/order-steps.ts",
+      "default": "./src/order-steps.ts"
+    },
+    "./slow-sellers": {
+      "types": "./src/slow-sellers.ts",
+      "import": "./src/slow-sellers.ts",
+      "default": "./src/slow-sellers.ts"
+    },
+    "./ordering-windows": {
+      "types": "./src/ordering-windows.ts",
+      "import": "./src/ordering-windows.ts",
+      "default": "./src/ordering-windows.ts"
+    },
+    "./missed-sales": {
+      "types": "./src/missed-sales.ts",
+      "import": "./src/missed-sales.ts",
+      "default": "./src/missed-sales.ts"
+    },
+    "./ordering-uptime": {
+      "types": "./src/ordering-uptime.ts",
+      "import": "./src/ordering-uptime.ts",
+      "default": "./src/ordering-uptime.ts"
+    },
+    "./ordering-hours": {
+      "types": "./src/ordering-hours.ts",
+      "import": "./src/ordering-hours.ts",
+      "default": "./src/ordering-hours.ts"
+    },
+    "./ordering-history": {
+      "types": "./src/ordering-history.ts",
+      "import": "./src/ordering-history.ts",
+      "default": "./src/ordering-history.ts"
+    },
     "./item-pairs": {
       "types": "./src/item-pairs.ts",
       "import": "./src/item-pairs.ts",

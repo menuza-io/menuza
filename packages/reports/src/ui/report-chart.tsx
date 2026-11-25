@@ -10,6 +10,7 @@ import { useLingui } from '@lingui/react'
 import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
 import { type Ref } from 'react'
+import { useReportRowActions } from './row-actions.tsx'
 import {
 	Table,
 	TableBody,
@@ -478,6 +479,7 @@ export function ReportVisualization({
 	/** Replaces the default texts of the states without a result. */
 	messages?: Partial<ReportStateMessages>
 }) {
+	const rowActions = useReportRowActions()
 	const text = messages
 		? { ...DEFAULT_STATE_MESSAGES, ...messages }
 		: DEFAULT_STATE_MESSAGES
@@ -599,6 +601,14 @@ export function ReportVisualization({
 		const columns = result.columns ?? []
 		const rows = result.rows ?? []
 		if (rows.length === 0) return noMatches
+		// Links from a row, when the screen offers some for this subject.
+		const showActions =
+			rowActions !== null &&
+			rows.some(
+				(row) =>
+					row.__ref &&
+					rowActions({ subject: definition.subject, ref: row.__ref }).length > 0,
+			)
 		return (
 			<div
 				ref={containerRef}
@@ -630,6 +640,7 @@ export function ReportVisualization({
 								{columns.map((column) => (
 									<TableHead key={column.id}>{column.label}</TableHead>
 								))}
+								{showActions ? <TableHead>Actions</TableHead> : null}
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -642,6 +653,27 @@ export function ReportVisualization({
 											{row[column.id] ?? '—'}
 										</TableCell>
 									))}
+									{showActions ? (
+										<TableCell>
+											<div className="flex flex-wrap gap-x-3 gap-y-1">
+												{(row.__ref && rowActions
+													? rowActions({
+															subject: definition.subject,
+															ref: row.__ref,
+														})
+													: []
+												).map((action) => (
+													<a
+														key={action.href}
+														href={action.href}
+														className="text-primary text-xs underline underline-offset-4"
+													>
+														{action.label}
+													</a>
+												))}
+											</div>
+										</TableCell>
+									) : null}
 								</TableRow>
 							))}
 						</TableBody>

@@ -199,8 +199,23 @@ export function dishFoodCostBp(
 	costMinor: number,
 	tax?: MenuPriceTax,
 ): number | null {
-	if (!Number.isSafeInteger(priceMinor) || priceMinor <= 0) return null
 	if (!Number.isSafeInteger(costMinor) || costMinor < 0) return null
+	const netPriceMinor = netMenuPriceMinor(priceMinor, tax)
+	if (netPriceMinor === null) return null
+	return mulDiv(costMinor, 10_000, netPriceMinor, 'half_up')
+}
+
+/**
+ * The menu price without tax, in minor units: when menu prices include tax
+ * (`pricesIncludeTax: true` and `taxRateBp > 0`) the tax is stripped, else the
+ * price is returned as it is. `null` without a positive price. The one place
+ * this is worked out, for the food cost percentage and the margin report.
+ */
+export function netMenuPriceMinor(
+	priceMinor: number,
+	tax?: MenuPriceTax,
+): number | null {
+	if (!Number.isSafeInteger(priceMinor) || priceMinor <= 0) return null
 	const rateBp =
 		tax?.pricesIncludeTax &&
 		tax.taxRateBp !== null &&
@@ -213,8 +228,7 @@ export function dishFoodCostBp(
 		rateBp > 0
 			? mulDiv(priceMinor, 10_000, 10_000 + rateBp, 'half_up')
 			: priceMinor
-	if (netPriceMinor <= 0) return null
-	return mulDiv(costMinor, 10_000, netPriceMinor, 'half_up')
+	return netPriceMinor > 0 ? netPriceMinor : null
 }
 
 /**

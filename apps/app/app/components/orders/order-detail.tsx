@@ -55,6 +55,7 @@ import {
 	type AppliedOrderDiscount,
 	type Order,
 	type OrderRefundBody,
+	type OrderTimelineEntry,
 	paymentDisplayStatus,
 	providerRefundableCents,
 	refundableCents,
@@ -63,6 +64,7 @@ import {
 import { customersHref } from '#app/utils/people/customers-link.ts'
 import { AcceptanceCountdown, RejectOrderDialog } from './acceptance.tsx'
 import { OrderStatusLabel, PaymentStatusLabel } from './order-status.tsx'
+import { stepActivityEvents } from './order-steps-activity.ts'
 import {
 	ProviderRefundDialog,
 	type ProviderRefundOutcome,
@@ -178,7 +180,13 @@ export function OrderDetail({
 	onReload,
 	onPushBack,
 	backHref,
+	steps,
+	memberNames,
 }: {
+	/** The order's recorded steps (#243), shown in the Activity list with who did each. */
+	steps?: readonly OrderTimelineEntry[]
+	/** Member user id to display name, for who did each step. */
+	memberNames?: Readonly<Record<string, string>>
 	order: Order
 	orgSlug: string
 	canWrite: boolean
@@ -401,19 +409,29 @@ export function OrderDetail({
 				)
 			: null
 
+	// With recorded steps (#243) the Activity list shows them, with who did each
+	// one; an order from before they were recorded keeps the placed and
+	// completed times it always had.
+	const recorded = steps && steps.length > 0
 	const timeline: Array<{
 		key: string
 		label: string
 		at: string | null
 		detail?: string | null
 	}> = [
-		{ key: 'placed', label: _(msg`Placed`), at: order.createdAt },
+		...(recorded
+			? stepActivityEvents(steps, memberNames ?? {}, (message) => _(message))
+			: [{ key: 'placed', label: _(msg`Placed`), at: order.createdAt }]),
 		{ key: 'paid', label: _(msg`Payment received`), at: order.paidAt ?? null },
-		{
-			key: 'completed',
-			label: _(msg`Completed`),
-			at: order.completedAt ?? null,
-		},
+		...(recorded
+			? []
+			: [
+					{
+						key: 'completed',
+						label: _(msg`Completed`),
+						at: order.completedAt ?? null,
+					},
+				]),
 		{
 			key: 'cancelled',
 			label: _(msg`Cancelled`),

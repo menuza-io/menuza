@@ -14,6 +14,7 @@ import {
 	operatorSlotLimitsTodayQuerySchema,
 } from '@repo/common/restaurant-orders'
 import { parseStoredAttribution } from '@repo/common/order-attribution'
+import { orderTimeline } from '@repo/common/order-steps'
 import { brand } from '@repo/config/brand'
 import {
 	getTenantDb,
@@ -34,6 +35,7 @@ import {
 	recordOrderRefund,
 } from '../services/order-refund-service.ts'
 import { campaignNamesById } from '../services/marketing-attribution.ts'
+import { loadOrderSteps } from '../services/order-steps.ts'
 import {
 	fetchOrderContext,
 	getOperatorOrder,
@@ -692,7 +694,16 @@ operatorOrderRoutes.get('/:id', async (c) => {
 			return c.json(ORDER_NOT_FOUND, 404, noStoreHeaders())
 		}
 		const [order] = await withCustomerKeys(auth.auth, [result.data])
-		return c.json({ order, serverNow: Date.now() }, 200, noStoreHeaders())
+		// Order steps (#243): when each step happened and who or which screen did
+		// it (an opaque id and a screen, never a name), with the promised time.
+		const timeline = orderTimeline(
+			await loadOrderSteps(await getTenantDb(auth.auth.orgId), result.data.id),
+		)
+		return c.json(
+			{ order, timeline, serverNow: Date.now() },
+			200,
+			noStoreHeaders(),
+		)
 	} catch (error) {
 		console.error(
 			`Failed to load order for org ${auth.auth.orgId}:`,

@@ -2,13 +2,19 @@ import {
 	checkMadeRecipeGraph,
 	createRecipeStore,
 	dishFoodCostBp,
+	engineerMenu,
 	foodCostStatus,
 	INVENTORY_PERMISSIONS,
 	isEmptyRecipe,
 	plateCost,
 	priceForTargetMinor,
+	MAX_RECIPE_COST_REFS,
+	netMenuPriceMinor,
 	rankDishesWithoutRecipe,
 	STATION_LATE_SYNC_MS,
+	type DishProfitabilityRequest,
+	type DishProfitabilityResult,
+	type EngineeringInput,
 	type FoodCostStatus,
 	type MenuPriceTax,
 	type PlateCostState,
@@ -675,6 +681,7 @@ type CostRowOut = {
 	foodCostBp?: number
 	status?: FoodCostStatus
 	priceForTargetMinor?: number
+	unitMarginMinor?: number
 }
 
 /**
@@ -690,6 +697,20 @@ export async function recipeCosts(
 	caller: RecipeCaller,
 	body: RecipeCostsInput,
 ): Promise<{ rows: CostRowOut[]; targetBp: number }> {
+	const { rows, targetBp } = await recipeCostRows(db, caller, body)
+	return { rows, targetBp }
+}
+
+/**
+ * `recipeCosts` with the tax rule it applied, for callers that need the same
+ * net price (the dish profitability report, #519): one cost engine, one tax
+ * rule.
+ */
+export async function recipeCostRows(
+	db: InventoryReader,
+	caller: RecipeCaller,
+	body: RecipeCostsInput,
+): Promise<{ rows: CostRowOut[]; targetBp: number; tax: MenuPriceTax }> {
 	const at = body.at ?? Date.now()
 	const optionIds = body.refs.flatMap((ref) => ref.optionIds ?? [])
 	const [{ store }, costs, settings, locationRows] = await Promise.all([
@@ -768,11 +789,94 @@ export async function recipeCosts(
 			if (bp !== null) {
 				row.foodCostBp = bp
 				row.status = foodCostStatus(bp, settings.targetFoodCostBp)
+				const net = netMenuPriceMinor(ref.priceMinor, tax)
+				if (net !== null) row.unitMarginMinor = net - result.costMinor
 			}
 		}
 		return row
 	})
-	return { rows, targetBp: settings.targetFoodCostBp }
+	return { rows, targetBp: settings.targetFoodCostBp, tax }
+}
+
+// ── Dish profitability (#519) ───────────────────────────────────────────────
+
+/**
+ * Sold, price, cost, margin and a label for each dish the browser sends (by id,
+ * with the menu price and the category it is compared within) at one location
+ * over a period (#519). Sales come from the one items-sold reader, costs from
+ * the plate cost the menu list shows (`recipeCostRows`), the classification
+ * from `engineerMenu`. Money is the cost grant's: a caller without it is
+ * refused, since the whole answer is margin and cost.
+ */
+export async function dishProfitability(
+	db: InventoryReader,
+	caller: RecipeCaller,
+	body: DishProfitabilityRequest,
+): Promise<DishProfitabilityResult> {
+	if (!caller.cost) {
+		throw new InventoryError('forbidden', 403, {
+			reason: 'grant',
+			required: INVENTORY_PERMISSIONS.READ_INVENTORY_COST,
+		})
+	}
+	const sales = await readItemSales(db, {
+		locationId: body.locationId,
+		fromDate: body.fromDate,
+		toDate: body.toDate,
+	})
+	const currency = body.currency.toUpperCase()
+	const sold = new Map<string, { quantity: number; salesMinor: number }>()
+	for (const row of sales.items) {
+		if (row.currency !== currency) continue
+		const entry = sold.get(row.itemId) ?? { quantity: 0, salesMinor: 0 }
+		entry.quantity += row.quantity
+		entry.salesMinor += row.netSalesMinor
+		sold.set(row.itemId, entry)
+	}
+	const inputs: EngineeringInput[] = []
+	let targetBp = 0
+	let tax: MenuPriceTax = {}
+	for (let index = 0; index < body.dishes.length; index += MAX_RECIPE_COST_REFS) {
+		const part = body.dishes.slice(index, index + MAX_RECIPE_COST_REFS)
+		const costs = await recipeCostRows(db, caller, {
+			refs: part.map((dish) => ({
+				key: dish.itemId,
+				itemId: dish.itemId,
+				priceMinor: dish.priceMinor,
+			})),
+			currency,
+			locationId: body.locationId,
+			...(body.pricesIncludeTax !== undefined
+				? { pricesIncludeTax: body.pricesIncludeTax }
+				: {}),
+			...(body.taxRateBp !== undefined ? { taxRateBp: body.taxRateBp } : {}),
+		})
+		targetBp = costs.targetBp
+		tax = costs.tax
+		const rowByKey = new Map(costs.rows.map((row) => [row.key, row]))
+		for (const dish of part) {
+			const row = rowByKey.get(dish.itemId)
+			const soldRow = sold.get(dish.itemId)
+			inputs.push({
+				itemId: dish.itemId,
+				categoryKey: dish.categoryKey,
+				quantity: soldRow?.quantity ?? 0,
+				salesMinor: soldRow?.salesMinor ?? 0,
+				priceMinor: dish.priceMinor,
+				costMinor: row?.costMinor ?? null,
+				costState: row?.state ?? 'none',
+			})
+		}
+	}
+	const result = engineerMenu(inputs, { targetBp, tax })
+	return {
+		currency,
+		targetBp,
+		fromDate: body.fromDate,
+		toDate: body.toDate,
+		...result,
+		truncated: sales.truncated,
+	}
 }
 
 // ── Dishes without a recipe ─────────────────────────────────────────────────

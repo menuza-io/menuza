@@ -352,6 +352,11 @@ export const recipeCostRowSchema = z.object({
 	status: foodCostStatusSchema.optional(),
 	/** Price that would hit the target food cost, minor units. */
 	priceForTargetMinor: minorOut,
+	/**
+	 * The price sent without tax minus the plate cost (#519): the margin per
+	 * dish, in minor units. Omitted with `foodCostBp`, and without the cost grant.
+	 */
+	unitMarginMinor: z.number().int().optional(),
 })
 
 export const recipeCostsResultSchema = z.object({

@@ -76,6 +76,61 @@ function show(
 	return onUpdate
 }
 
+describe('OrderDetail: recorded steps in the Activity list (#243)', () => {
+	const at = Date.UTC(2026, 9, 19, 10, 0)
+	const steps = [
+		{
+			step: 'placed' as const,
+			at,
+			actorKind: 'guest' as const,
+			actorId: null,
+			source: 'guest' as const,
+			offline: false,
+			minutesSincePlaced: 0,
+		},
+		{
+			step: 'accepted' as const,
+			at: at + 2 * 60_000,
+			actorKind: 'operator' as const,
+			actorId: 'usr_1',
+			source: 'app' as const,
+			offline: false,
+			minutesSincePlaced: 2,
+		},
+		{
+			step: 'ready' as const,
+			at: at + 20 * 60_000,
+			actorKind: 'station' as const,
+			actorId: 'staff:s1',
+			source: 'station_kitchen' as const,
+			offline: true,
+			minutesSincePlaced: 20,
+		},
+	]
+
+	it('shows when each step happened and who or which screen did it', () => {
+		show(order(), { steps, memberNames: { usr_1: 'Rana K.' } })
+		const activity = screen.getByTestId('order-timeline')
+		expect(activity).toHaveTextContent('Placed')
+		expect(activity).toHaveTextContent('By the guest')
+		expect(activity).toHaveTextContent('Accepted')
+		expect(activity).toHaveTextContent('By Rana K. on the Orders page')
+		expect(activity).toHaveTextContent('Ready')
+		expect(activity).toHaveTextContent('On the Station kitchen screen')
+		// A step taken offline says whose clock it is.
+		expect(activity).toHaveTextContent("taken offline, at the till's time")
+		// The recorded steps replace the older placed and completed rows.
+		expect(screen.queryByText('Completed')).toBeNull()
+	})
+
+	it('keeps the placed and completed times it always showed for an order with no steps', () => {
+		show(order({ completedAt: '2026-10-19T11:00:00.000Z' }), { steps: [] })
+		const activity = screen.getByTestId('order-timeline')
+		expect(activity).toHaveTextContent('Placed')
+		expect(activity).toHaveTextContent('Completed')
+	})
+})
+
 describe('OrderDetail', () => {
 	it('links the customer name to the profile only with a customerKey', () => {
 		show(order())

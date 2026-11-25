@@ -34,6 +34,7 @@ import { formatMoney } from '#app/utils/orders/order-model.ts'
 import { fetchBookingsToday } from '#app/utils/reservations/bookings-today-api.ts'
 import { useHomeLocation } from '../use-home-location.ts'
 import { sharedReservationsPool } from './bookings-today-block.tsx'
+import { MissedWhilePausedLine } from './missed-while-paused-line.tsx'
 
 export const TODAY_REFRESH_MS = 60_000
 
@@ -261,6 +262,14 @@ export function TodayBlock({
 				) : (
 					<TodayFigures figures={state.figures} access={access} />
 				)}
+				{access.orders && access.tenantApiUrl ? (
+					<MissedWhilePausedLine
+						orgSlug={orgSlug}
+						tokenUrl={access.tokenUrl}
+						tenantApiUrl={access.tenantApiUrl}
+						locationIds={locations.map((location) => location.id)}
+					/>
+				) : null}
 			</CardContent>
 		</Card>
 	)

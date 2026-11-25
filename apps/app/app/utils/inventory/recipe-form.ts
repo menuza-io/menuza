@@ -550,20 +550,29 @@ export function costRowView(
 				currency?: string
 				foodCostBp?: number
 				status?: FoodCostStatus
+				unitMarginMinor?: number
 		  }
 		| undefined,
 ): {
 	hasRecipe: boolean
 	foodCostBp: number | null
 	status: FoodCostStatus | null
+	/** Menu price without tax minus the plate cost; null without a whole cost or the cost grant. */
+	unitMarginMinor: number | null
 } {
 	if (!row || !row.hasRecipe) {
-		return { hasRecipe: false, foodCostBp: null, status: null }
+		return {
+			hasRecipe: false,
+			foodCostBp: null,
+			status: null,
+			unitMarginMinor: null,
+		}
 	}
 	return {
 		hasRecipe: true,
 		foodCostBp: row.foodCostBp ?? null,
 		status: row.status ?? null,
+		unitMarginMinor: row.unitMarginMinor ?? null,
 	}
 }
 

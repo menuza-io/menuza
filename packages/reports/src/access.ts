@@ -1,6 +1,7 @@
 import { type ReportCatalog, type ReportSubject, getField } from './catalog.ts'
 import { isGbpReportSubject } from './catalog-gbp.ts'
 import { isGiftCardReportSubject } from './catalog-gift-cards.ts'
+import { INVENTORY_COST_REPORT_PERMISSION } from './catalog-inventory.ts'
 import {
 	isSalesReportSubject,
 	SALES_STAFF_FIELD_PERMISSION,
@@ -62,6 +63,7 @@ function fieldAvailable(
 	return !(
 		requires === STAFF_PAY_REPORT_PERMISSION ||
 		requires === SALES_STAFF_FIELD_PERMISSION ||
+		requires === INVENTORY_COST_REPORT_PERMISSION ||
 		isSalesReportSubject(subjectId)
 	)
 }

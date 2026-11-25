@@ -7,6 +7,11 @@ import {
 	posShiftRequestSchema,
 	posSignInRequestSchema,
 } from '@repo/common/pos-orders'
+import {
+	buildItemPlacementIndex,
+	lineCatalogFor,
+	type LineCatalog,
+} from '@repo/common/item-placement'
 import { type RestaurantOrderContext } from '@repo/common/restaurant-orders'
 import { discountRecordSchema, type DiscountRecord } from '@repo/discounts'
 import { getTenantDb, type TenantDatabase } from '@repo/tenant-db'
@@ -482,6 +487,7 @@ posRoutes.post('/orders', async (c) => {
 	// held back on the tablet, where a wipe would lose it.
 	const prior = await peekOrder(pos.db, order.id)
 	let review: PosReview
+	let lineCatalog: LineCatalog | null = null
 	// Checks of the bill itself run once per bill: a replay, a cancellation or a
 	// payment on the same bill reuses what the first upload found, so a rule
 	// edited since the sale never flags it afterwards.
@@ -501,6 +507,15 @@ posRoutes.post('/orders', async (c) => {
 		review = context
 			? reviewAgainstMenu(context, order, new Date())
 			: unverifiedReview()
+		// The menu and category each dish sat under now (#227). The till sends
+		// only the item id, so the region stamps them from the same live menu;
+		// without the menu nothing is stamped ("Earlier sales").
+		if (context) {
+			lineCatalog = lineCatalogFor(
+				buildItemPlacementIndex(context.menu.menus),
+				order.lines.map((line) => line.itemId),
+			)
+		}
 	}
 	// Each check runs on its own so one flag cannot mask another (a large
 	// discount must not hide a wrong clock); the stored reason is the most
@@ -581,6 +596,7 @@ posRoutes.post('/orders', async (c) => {
 			review,
 			undefined,
 			{
+				lineCatalog,
 				onStored: async (tx, sale) => {
 					await loyalty.inTx(tx, sale)
 					await inventory.queue(

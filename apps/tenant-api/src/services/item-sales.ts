@@ -1,7 +1,16 @@
 import {
+	type LineCatalog,
+	type ItemPlacement,
+	parseLineCatalog,
+	readStampedPlacement,
+} from '@repo/common/item-placement'
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import {
 	POS_SALE_STATUSES,
 	posOrderNetMinor,
+	posSalesChannel,
 	restaurantOrderNetMinor,
+	restaurantSalesChannel,
 } from '@repo/common/sales-report-facts'
 import { allocateProportionally } from '@repo/inventory'
 import { currentBusinessDate, isValidTimeZone } from '@repo/reservations'
@@ -227,6 +236,29 @@ function utcMidnightMs(date: string): number {
 	return Date.UTC(y, m - 1, d)
 }
 
+/**
+ * One counted sale as the walkers below hand it over: where and when it was
+ * rung up, its channel, its net, and its raw line JSON. The accumulator
+ * (items and options per day) and the line reader (`readSaleLines`) are both
+ * visitors of this one walk, so every channel and net rule is stated once.
+ */
+export type VisitedSale = {
+	kind: 'restaurant' | 'pos'
+	locationId: string
+	locationName: string
+	businessDate: string
+	/** Epoch ms the sale was placed (web, QR) or rung up (Station). */
+	occurredAtMs: number
+	channel: string
+	currency: string
+	rawLines: unknown
+	/** Station only: the menu and category stamped at upload (#227). */
+	lineCatalog: LineCatalog
+	netMinor: number
+}
+
+type SaleVisitor = (sale: VisitedSale) => void
+
 class SalesAccumulator {
 	private readonly items = new Map<string, ItemSalesRow>()
 	private readonly options = new Map<string, OptionSalesRow>()
@@ -327,7 +359,7 @@ async function loadLocationClocks(
 async function addRestaurantOrders(
 	db: Reader,
 	query: ItemSalesQuery,
-	sales: SalesAccumulator,
+	visit: SaleVisitor,
 ): Promise<boolean> {
 	// Any time zone (UTC-12 to UTC+14) and any day start (up to 24 hours)
 	// puts an order's business date within these instants; the exact date is
@@ -347,6 +379,9 @@ async function addRestaurantOrders(
 	const rows = await db
 		.select({
 			locationId: restaurantOrders.locationId,
+			locationName: restaurantOrders.locationName,
+			source: restaurantOrders.source,
+			dropId: restaurantOrders.dropId,
 			currency: restaurantOrders.currency,
 			subtotalCents: restaurantOrders.subtotalCents,
 			discountCents: restaurantOrders.discountCents,
@@ -393,18 +428,22 @@ async function addRestaurantOrders(
 			clock.dayStartMin,
 		)
 		if (businessDate < query.fromDate || businessDate > query.toDate) continue
-		const lines = parseSoldLines(row.lines, 'restaurant')
-		if (lines.length === 0) continue
-		sales.add(
-			{
-				locationId: row.locationId,
-				businessDate,
-				// Orders store lower-case codes; everything else is upper case.
-				currency: row.currency.toUpperCase(),
-			},
-			lines,
-			restaurantOrderNetMinor(row),
-		)
+		visit({
+			kind: 'restaurant',
+			locationId: row.locationId,
+			locationName: getLocalizedMenuValue(row.locationName),
+			businessDate,
+			occurredAtMs: row.createdAt.getTime(),
+			channel: restaurantSalesChannel({
+				source: row.source,
+				dropId: row.dropId,
+			}),
+			// Orders store lower-case codes; everything else is upper case.
+			currency: row.currency.toUpperCase(),
+			rawLines: row.lines,
+			lineCatalog: {},
+			netMinor: restaurantOrderNetMinor(row),
+		})
 	}
 	return truncated
 }
@@ -412,7 +451,7 @@ async function addRestaurantOrders(
 async function addPosOrders(
 	db: Reader,
 	query: ItemSalesQuery,
-	sales: SalesAccumulator,
+	visit: SaleVisitor,
 ): Promise<boolean> {
 	const conditions: SQL[] = [
 		inArray(posOrders.status, [...POS_SALE_STATUSES]),
@@ -425,30 +464,35 @@ async function addPosOrders(
 	const rows = await db
 		.select({
 			locationId: posOrders.locationId,
+			locationName: posOrders.locationName,
+			orderSource: posOrders.orderSource,
 			businessDate: posOrders.businessDate,
+			rungUpAt: posOrders.rungUpAt,
 			currency: posOrders.currency,
 			subtotalCents: posOrders.subtotalCents,
 			adjustmentCents: posOrders.adjustmentCents,
 			taxCents: posOrders.taxCents,
 			taxInclusive: posOrders.taxInclusive,
 			lines: posOrders.lines,
+			lineCatalog: posOrders.lineCatalog,
 		})
 		.from(posOrders)
 		.where(and(...conditions))
 		.limit(ITEM_SALES_MAX_ORDERS + 1)
 	const truncated = rows.length > ITEM_SALES_MAX_ORDERS
 	for (const row of truncated ? rows.slice(0, ITEM_SALES_MAX_ORDERS) : rows) {
-		const lines = parseSoldLines(row.lines, 'pos')
-		if (lines.length === 0) continue
-		sales.add(
-			{
-				locationId: row.locationId,
-				businessDate: row.businessDate,
-				currency: row.currency.toUpperCase(),
-			},
-			lines,
-			posOrderNetMinor(row),
-		)
+		visit({
+			kind: 'pos',
+			locationId: row.locationId,
+			locationName: getLocalizedMenuValue(row.locationName),
+			businessDate: row.businessDate,
+			occurredAtMs: row.rungUpAt,
+			channel: posSalesChannel(row.orderSource),
+			currency: row.currency.toUpperCase(),
+			rawLines: row.lines,
+			lineCatalog: parseLineCatalog(row.lineCatalog),
+			netMinor: posOrderNetMinor(row),
+		})
 	}
 	return truncated
 }
@@ -469,7 +513,173 @@ export async function readItemSales(
 	}
 	const sales = new SalesAccumulator()
 	if (query.fromDate > query.toDate) return sales.result(false)
-	const restaurantTruncated = await addRestaurantOrders(db, query, sales)
-	const posTruncated = await addPosOrders(db, query, sales)
+	const accumulate: SaleVisitor = (sale) => {
+		const lines = parseSoldLines(sale.rawLines, sale.kind)
+		if (lines.length === 0) return
+		sales.add(
+			{
+				locationId: sale.locationId,
+				businessDate: sale.businessDate,
+				currency: sale.currency,
+			},
+			lines,
+			sale.netMinor,
+		)
+	}
+	const restaurantTruncated = await addRestaurantOrders(db, query, accumulate)
+	const posTruncated = await addPosOrders(db, query, accumulate)
 	return sales.result(restaurantTruncated || posTruncated)
+}
+
+// ---------------------------------------------------------------------------
+// Line detail (#227, #261, #519): the same walk, one record per sale line
+// ---------------------------------------------------------------------------
+
+export type SaleOptionDetail = {
+	groupId: string
+	groupName: string
+	optionId: string
+	optionName: string
+	/** Times the option was sold (option quantity x line quantity). */
+	quantity: number
+	/** Net sales share of the line's net, in minor units. */
+	netMinor: number
+	/** The option's charge before discounts, in minor units. */
+	grossMinor: number
+}
+
+export type SaleLineDetail = {
+	itemId: string
+	itemName: string
+	variantId: string | null
+	quantity: number
+	/** Price x quantity including option charges, before discounts. */
+	grossMinor: number
+	/** The line's share of the sale's net (the module note's rule). */
+	netMinor: number
+	/** Where the dish sat on the menu when sold; null for an earlier sale. */
+	placement: ItemPlacement | null
+	options: SaleOptionDetail[]
+}
+
+export type SaleWithLines = {
+	locationId: string
+	locationName: string
+	businessDate: string
+	occurredAtMs: number
+	channel: string
+	currency: string
+	netMinor: number
+	lines: SaleLineDetail[]
+}
+
+function text(value: unknown): string {
+	return typeof value === 'string' ? value : ''
+}
+
+/**
+ * The lines of one sale with what the line reports need: names, the menu and
+ * category stamped at placement (#227), each option's charge, and the net
+ * spread over the lines (`allocateSaleNet`) and then over a line's base price
+ * and options in proportion to their charges, so a sale's lines, and a line's
+ * options plus base, add up to the net exactly.
+ */
+export function parseSaleLineDetails(
+	sale: Pick<VisitedSale, 'kind' | 'rawLines' | 'lineCatalog' | 'netMinor'>,
+): SaleLineDetail[] {
+	const sold = parseSoldLines(sale.rawLines, sale.kind)
+	const shares = allocateSaleNet(sale.netMinor, sold)
+	// `parseSoldLines` skips lines without an item id or quantity, so walk the
+	// raw JSON with the same skip rule to keep both lists aligned.
+	const raws = parseJsonArray(sale.rawLines).filter((entry): entry is Record<
+		string,
+		unknown
+	> => {
+		if (!entry || typeof entry !== 'object') return false
+		const line = entry as Record<string, unknown>
+		return Boolean(idOrNull(line.itemId)) && nonNegativeInt(line.quantity) > 0
+	})
+	return sold.map((line, index) => {
+		const raw = raws[index] ?? {}
+		const rawOptions = (Array.isArray(raw.options) ? raw.options : []).filter(
+			(option): option is Record<string, unknown> =>
+				Boolean(option) &&
+				typeof option === 'object' &&
+				Boolean(idOrNull((option as Record<string, unknown>).optionId)) &&
+				nonNegativeInt((option as Record<string, unknown>).quantity) > 0,
+		)
+		const optionGross = rawOptions.map((option) => {
+			const perUnit =
+				sale.kind === 'pos'
+					? nonNegativeInt(option.unitCents) * nonNegativeInt(option.quantity)
+					: nonNegativeInt(option.totalCents)
+			return perUnit * line.quantity
+		})
+		const lineNet = shares[index] ?? 0
+		const optionsGrossTotal = optionGross.reduce((sum, value) => sum + value, 0)
+		const baseGross = Math.max(0, line.totalMinor - optionsGrossTotal)
+		// [base, ...options] share the line's net by charge.
+		const parts = allocateProportionally(lineNet, [baseGross, ...optionGross])
+		const itemId = line.itemId
+		const placement =
+			readStampedPlacement(raw) ?? sale.lineCatalog[itemId] ?? null
+		return {
+			itemId,
+			itemName: getLocalizedMenuValue(
+				text(sale.kind === 'pos' ? raw.name : raw.itemName),
+			),
+			variantId: line.variantId,
+			quantity: line.quantity,
+			grossMinor: line.totalMinor,
+			netMinor: lineNet,
+			placement,
+			options: rawOptions.map((option, optionIndex) => ({
+				groupId: text(option.groupId),
+				groupName: getLocalizedMenuValue(text(option.groupName)),
+				optionId: text(option.optionId),
+				optionName: getLocalizedMenuValue(text(option.optionName)),
+				quantity: nonNegativeInt(option.quantity) * line.quantity,
+				netMinor: parts[optionIndex + 1] ?? 0,
+				grossMinor: optionGross[optionIndex] ?? 0,
+			})),
+		}
+	})
+}
+
+/**
+ * Every counted sale of web, QR and Station in the window with its lines
+ * (see `parseSaleLineDetails`). Same sales, same business dates and same net
+ * as `readItemSales`; this only keeps the line detail instead of summing it.
+ */
+export async function readSaleLines(
+	db: Reader,
+	query: ItemSalesQuery & { locationIds?: readonly string[] | null },
+): Promise<{ sales: SaleWithLines[]; truncated: boolean }> {
+	if (
+		!BUSINESS_DATE.test(query.fromDate) ||
+		!BUSINESS_DATE.test(query.toDate)
+	) {
+		throw new RangeError('fromDate and toDate must be YYYY-MM-DD')
+	}
+	const sales: SaleWithLines[] = []
+	if (query.fromDate > query.toDate) return { sales, truncated: false }
+	const allowed = query.locationIds ? new Set(query.locationIds) : null
+	const collect: SaleVisitor = (sale) => {
+		if (allowed && !allowed.has(sale.locationId)) return
+		const lines = parseSaleLineDetails(sale)
+		if (lines.length === 0) return
+		sales.push({
+			locationId: sale.locationId,
+			locationName: sale.locationName,
+			businessDate: sale.businessDate,
+			occurredAtMs: sale.occurredAtMs,
+			channel: sale.channel,
+			currency: sale.currency,
+			netMinor: sale.netMinor,
+			lines,
+		})
+	}
+	const restaurantTruncated = await addRestaurantOrders(db, query, collect)
+	const posTruncated = await addPosOrders(db, query, collect)
+	return { sales, truncated: restaurantTruncated || posTruncated }
 }
