@@ -78,7 +78,7 @@ msgstr "{count} 件商品"
 msgid "{count} items are no longer available and were left out."
 msgstr "有 {count} 件商品已不可用，已被略过。"
 
-#: src/lib/ordering-labels.ts:161
+#: src/lib/ordering-labels.ts:172
 msgid "{count} min"
 msgstr "{count} 分钟"
 
@@ -94,6 +94,10 @@ msgstr "已完成 {credited}，待处理 {pending}，已获 {points}"
 msgid "{date} at {time}"
 msgstr "{date} {time}"
 
+#: src/lib/ordering-labels.ts:249
+msgid "{distance} away"
+msgstr "距离 {distance}"
+
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "{h}h {m}m"
@@ -108,7 +112,7 @@ msgstr "{min} 至 {max} 位客人"
 msgid "{min}–{max} Cal"
 msgstr "{min}–{max} 卡"
 
-#: src/lib/ordering-labels.ts:160
+#: src/lib/ordering-labels.ts:171
 #: src/pages/menu.astro.ts:3
 msgid "{min}–{max} min"
 msgstr "{min}–{max} 分钟"
@@ -326,7 +330,17 @@ msgstr "账户设置"
 msgid "Add"
 msgstr "添加"
 
-#: src/lib/ordering-labels.ts:214
+#: src/lib/ordering-labels.ts:135
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Add {amount} more and delivery is {fee}"
+msgstr "再添加 {amount}，配送费降为 {fee}"
+
+#: src/lib/ordering-labels.ts:130
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Add {amount} more for free delivery"
+msgstr "再添加 {amount} 即可免配送费"
+
+#: src/lib/ordering-labels.ts:225
 msgid "Add {amount} more to reach the {minimum} delivery minimum."
 msgstr "再添加 {amount} 即可达到 {minimum} 的配送起送额。"
 
@@ -343,7 +357,7 @@ msgstr "添加卡片"
 msgid "Add a coupon code"
 msgstr "添加优惠码"
 
-#: src/lib/ordering-labels.ts:210
+#: src/lib/ordering-labels.ts:221
 msgid "Add a delivery address we deliver to before placing your order."
 msgstr "请先添加我们可配送的地址，再提交订单。"
 
@@ -363,7 +377,7 @@ msgstr "请先添加电子邮件地址"
 msgid "Add card"
 msgstr "添加卡片"
 
-#: src/lib/ordering-labels.ts:204
+#: src/lib/ordering-labels.ts:215
 msgid "Add delivery address"
 msgstr "添加配送地址"
 
@@ -394,7 +408,7 @@ msgstr "添加到日历"
 msgid "Add to order"
 msgstr "加入订单"
 
-#: src/lib/ordering-labels.ts:142
+#: src/lib/ordering-labels.ts:153
 msgid "Address suggestions"
 msgstr "地址建议"
 
@@ -406,7 +420,7 @@ msgstr "已调整"
 msgid "Adjusted by staff"
 msgstr "工作人员调整"
 
-#: src/lib/ordering-labels.ts:218
+#: src/lib/ordering-labels.ts:229
 msgid "After address"
 msgstr "填写地址后计算"
 
@@ -520,7 +534,7 @@ msgstr "同意使用 {reward}"
 msgid "Approved: {reward}."
 msgstr "已同意：{reward}。"
 
-#: src/lib/ordering-labels.ts:151
+#: src/lib/ordering-labels.ts:162
 msgid "Apt, suite or floor"
 msgstr "公寓、单元或楼层"
 
@@ -528,7 +542,7 @@ msgstr "公寓、单元或楼层"
 msgid "Arrived"
 msgstr "已到达"
 
-#: src/lib/ordering-labels.ts:189
+#: src/lib/ordering-labels.ts:200
 msgid "Arrives in {min}–{max} min"
 msgstr "{min}–{max} 分钟送达"
 
@@ -540,7 +554,7 @@ msgstr "预计送达 {range}"
 msgid "Arriving around {time}"
 msgstr "预计 {time} 左右送达"
 
-#: src/lib/ordering-labels.ts:186
+#: src/lib/ordering-labels.ts:197
 msgid "ASAP"
 msgstr "尽快"
 
@@ -769,7 +783,7 @@ msgstr "此账户在商店过往购买中使用的银行卡。"
 msgid "Careers"
 msgstr "招聘"
 
-#: src/lib/ordering-labels.ts:203
+#: src/lib/ordering-labels.ts:214
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Change"
@@ -818,15 +832,15 @@ msgstr "查看请求"
 msgid "Check the menu for what we are serving today."
 msgstr "查看菜单，了解我们今天供应的菜品。"
 
-#: src/lib/ordering-labels.ts:146
+#: src/lib/ordering-labels.ts:157
 msgid "Check the spelling, or try just the street number and name."
 msgstr "请检查拼写，或只输入门牌号和街道名。"
 
-#: src/lib/ordering-labels.ts:172
+#: src/lib/ordering-labels.ts:183
 msgid "Check the street number and spelling, or choose a suggestion from the list."
 msgstr "请检查门牌号和拼写，或从列表中选择一个建议地址。"
 
-#: src/lib/ordering-labels.ts:177
+#: src/lib/ordering-labels.ts:188
 msgid "Check your connection and try again."
 msgstr "请检查网络连接后重试。"
 
@@ -843,7 +857,7 @@ msgstr "请查看收件箱以确认"
 msgid "Check your phone"
 msgstr "请查看手机"
 
-#: src/lib/ordering-labels.ts:153
+#: src/lib/ordering-labels.ts:164
 msgid "Checking delivery to this address…"
 msgstr "正在确认是否可配送至此地址…"
 
@@ -885,7 +899,7 @@ msgid "Choose 1"
 msgstr "选择 1 项"
 
 #: src/components/drops/PickupPicker.astro.ts:3
-#: src/lib/ordering-labels.ts:196
+#: src/lib/ordering-labels.ts:207
 msgid "Choose a day"
 msgstr "选择日期"
 
@@ -917,12 +931,12 @@ msgid "Choose a real month and day."
 msgstr "请选择有效的月份和日期。"
 
 #: src/components/drops/PickupPicker.astro.ts:3
-#: src/lib/ordering-labels.ts:197
+#: src/lib/ordering-labels.ts:208
 #: src/lib/reservations/labels.ts:33
 msgid "Choose a time"
 msgstr "选择时间"
 
-#: src/lib/ordering-labels.ts:202
+#: src/lib/ordering-labels.ts:213
 msgid "Choose a time to continue."
 msgstr "请选择时间以继续。"
 
@@ -966,7 +980,7 @@ msgstr "城市"
 msgid "Classic"
 msgstr "经典"
 
-#: src/lib/ordering-labels.ts:141
+#: src/lib/ordering-labels.ts:152
 msgid "Clear address"
 msgstr "清除地址"
 
@@ -977,12 +991,12 @@ msgstr "清除搜索"
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/components/SitePopup.astro.ts:3
 #: src/lib/ordering-labels.ts:106
-#: src/lib/ordering-labels.ts:135
+#: src/lib/ordering-labels.ts:146
 msgid "Close"
 msgstr "关闭"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
-#: src/lib/ordering-labels.ts:181
+#: src/lib/ordering-labels.ts:192
 #: src/pages/locations/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Closed"
@@ -992,7 +1006,7 @@ msgstr "已关闭"
 msgid "Closed · opens {time}"
 msgstr "已关闭 · {time}开放"
 
-#: src/lib/ordering-labels.ts:190
+#: src/lib/ordering-labels.ts:201
 msgid "Closed now. Schedule your order for later."
 msgstr "当前已打烊，请预约稍后的时间。"
 
@@ -1196,7 +1210,7 @@ msgstr "已拒绝：{reward}。"
 msgid "Decrease quantity"
 msgstr "减少数量"
 
-#: src/lib/ordering-labels.ts:200
+#: src/lib/ordering-labels.ts:211
 msgid "Deliver here"
 msgstr "配送到这里"
 
@@ -1216,17 +1230,18 @@ msgstr "配送至"
 msgid "Deliver to: {address}"
 msgstr "配送至：{address}"
 
+#: src/lib/ordering-labels.ts:237
 #: src/pages/delivery/[area].astro.ts:3
 msgid "Delivered from {location}"
 msgstr "由{location}配送"
 
-#: src/lib/ordering-labels.ts:138
+#: src/lib/ordering-labels.ts:149
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery"
 msgstr "配送"
 
-#: src/lib/ordering-labels.ts:139
+#: src/lib/ordering-labels.ts:150
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery address"
 msgstr "配送地址"
@@ -1235,7 +1250,7 @@ msgstr "配送地址"
 msgid "Delivery discount"
 msgstr "配送优惠"
 
-#: src/lib/ordering-labels.ts:155
+#: src/lib/ordering-labels.ts:166
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
@@ -1262,7 +1277,7 @@ msgstr "配送说明"
 msgid "Delivery is not available for this order."
 msgstr "此订单不支持配送。"
 
-#: src/lib/ordering-labels.ts:174
+#: src/lib/ordering-labels.ts:185
 msgid "Delivery isn't available right now"
 msgstr "目前暂不提供配送"
 
@@ -1414,7 +1429,7 @@ msgstr "祝您用餐愉快。"
 msgid "Enter a coupon code."
 msgstr "请输入优惠码。"
 
-#: src/lib/ordering-labels.ts:201
+#: src/lib/ordering-labels.ts:212
 msgid "Enter a delivery address to continue."
 msgstr "请输入配送地址以继续。"
 
@@ -1482,7 +1497,7 @@ msgstr "预估税费"
 msgid "Estimated Tax"
 msgstr "预估税费"
 
-#: src/lib/ordering-labels.ts:159
+#: src/lib/ordering-labels.ts:170
 #: src/pages/menu/success.astro.ts:3
 msgid "Estimated time"
 msgstr "预计时间"
@@ -1592,7 +1607,7 @@ msgstr "名"
 msgid "For a larger party, please contact the restaurant directly."
 msgstr "人数较多时，请直接联系餐厅。"
 
-#: src/lib/ordering-labels.ts:158
+#: src/lib/ordering-labels.ts:169
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Free"
 msgstr "免费"
@@ -1873,7 +1888,7 @@ msgstr "已过在线取消时限，请致电餐厅。"
 msgid "It is too late to change this online. Please call the restaurant."
 msgstr "已过在线修改时限，请致电餐厅。"
 
-#: src/lib/ordering-labels.ts:165
+#: src/lib/ordering-labels.ts:176
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "该地址不在 {location} 的配送范围内。您仍可下单自取。"
 
@@ -1936,7 +1951,7 @@ msgstr "请保持此页面打开。页面会自动更新，餐位准备好时我
 msgid "Keep this page's link. Anyone who has it can see your place in line and remove you from it."
 msgstr "请保存此页面的链接。任何拥有该链接的人都可以查看您的排队位置并将您移出队列。"
 
-#: src/lib/ordering-labels.ts:143
+#: src/lib/ordering-labels.ts:154
 msgid "Keep typing to see matching addresses."
 msgstr "继续输入以查看匹配的地址。"
 
@@ -2102,7 +2117,7 @@ msgstr "菜单即将上线"
 msgid "Messages from {org}"
 msgstr "来自 {org} 的消息"
 
-#: src/lib/ordering-labels.ts:156
+#: src/lib/ordering-labels.ts:167
 msgid "Minimum order"
 msgstr "起送金额"
 
@@ -2156,6 +2171,10 @@ msgstr "name@example.com"
 msgid "National Day"
 msgstr "国庆日"
 
+#: src/lib/ordering-labels.ts:244
+msgid "Nearest to you"
+msgstr "离您最近"
+
 #: src/lib/loyalty/labels.ts:329
 msgid "Network error. Check your connection and try again."
 msgstr "网络错误。请检查网络连接后重试。"
@@ -2208,11 +2227,11 @@ msgstr "暂无体验"
 msgid "No longer available"
 msgstr "不再可用"
 
-#: src/lib/ordering-labels.ts:144
+#: src/lib/ordering-labels.ts:155
 msgid "No matching addresses"
 msgstr "没有匹配的地址"
 
-#: src/lib/ordering-labels.ts:157
+#: src/lib/ordering-labels.ts:168
 msgid "No minimum"
 msgstr "无起送金额"
 
@@ -2262,13 +2281,17 @@ msgstr "暂无可用奖励。"
 msgid "No saved payment methods yet."
 msgstr "暂无已保存的支付方式。"
 
-#: src/lib/ordering-labels.ts:198
+#: src/lib/ordering-labels.ts:209
 msgid "No scheduled times are available right now."
 msgstr "目前没有可预约的时间。"
 
 #: src/lib/reservations/labels.ts:473
 msgid "No seatings are available on this date."
 msgstr "该日期没有可订场次。"
+
+#: src/lib/ordering-labels.ts:239
+msgid "No store delivers here yet"
+msgstr "目前没有门店配送到这里"
 
 #: src/lib/reservations/labels.ts:53
 msgid "No tables available for that search"
@@ -2303,11 +2326,15 @@ msgstr "未到场费用：{amount}。"
 msgid "None"
 msgstr "无"
 
+#: src/lib/ordering-labels.ts:241
+msgid "None of our stores delivers to this address yet. You can still order for pickup."
+msgstr "我们的门店暂时都不配送到这个地址。您仍可以选择自取下单。"
+
 #: src/lib/loyalty/labels.ts:168
 msgid "Not available for this order"
 msgstr "不适用于此订单"
 
-#: src/lib/ordering-labels.ts:222
+#: src/lib/ordering-labels.ts:233
 msgid "Not available right now"
 msgstr "目前不可用"
 
@@ -2411,7 +2438,7 @@ msgstr "在线点餐目前已暂停。"
 msgid "Online ordering is paused right now. Please try again a little later."
 msgstr "在线点餐目前已暂停。请稍后再试。"
 
-#: src/lib/ordering-labels.ts:192
+#: src/lib/ordering-labels.ts:203
 msgid "Online ordering is paused right now. Schedule your order for later."
 msgstr "在线点餐目前已暂停。请预约稍后的时间下单。"
 
@@ -2454,7 +2481,7 @@ msgid "Open in a new tab"
 msgstr "在新标签页中打开"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
-#: src/lib/ordering-labels.ts:179
+#: src/lib/ordering-labels.ts:190
 msgid "Open now"
 msgstr "营业中"
 
@@ -2466,7 +2493,7 @@ msgstr "{name} 的在招职位"
 msgid "Open the link from your confirmation to manage a reservation."
 msgstr "请打开确认信息中的链接来管理预订。"
 
-#: src/lib/ordering-labels.ts:180
+#: src/lib/ordering-labels.ts:191
 #: src/pages/menu.astro.ts:3
 msgid "Open until {time}"
 msgstr "营业至 {time}"
@@ -2479,7 +2506,7 @@ msgstr "正在打开安全支付…"
 msgid "Opens"
 msgstr "开始营业"
 
-#: src/lib/ordering-labels.ts:183
+#: src/lib/ordering-labels.ts:194
 msgid "Opens {time}"
 msgstr "{time} 开始营业"
 
@@ -2489,7 +2516,7 @@ msgstr "{when}开放"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/ordering-labels.ts:71
-#: src/lib/ordering-labels.ts:152
+#: src/lib/ordering-labels.ts:163
 msgid "Optional"
 msgstr "可选"
 
@@ -2512,7 +2539,7 @@ msgstr "订单已确认"
 msgid "Order delivery"
 msgstr "订外卖"
 
-#: src/lib/ordering-labels.ts:134
+#: src/lib/ordering-labels.ts:145
 msgid "Order details"
 msgstr "订单详情"
 
@@ -2550,7 +2577,7 @@ msgstr "已收到订单"
 msgid "Order summary"
 msgstr "订单摘要"
 
-#: src/lib/ordering-labels.ts:136
+#: src/lib/ordering-labels.ts:147
 msgid "Order type"
 msgstr "订单类型"
 
@@ -2579,7 +2606,7 @@ msgstr "点餐已暂停"
 msgid "Ordering now"
 msgstr "正在接受订单"
 
-#: src/lib/ordering-labels.ts:182
+#: src/lib/ordering-labels.ts:193
 #: src/pages/menu.astro.ts:3
 msgid "Ordering paused"
 msgstr "点餐已暂停"
@@ -2636,6 +2663,10 @@ msgstr "其他有餐位的日期"
 #: src/lib/reservations/labels.ts:98
 msgid "Other dietary needs"
 msgstr "其他饮食需求"
+
+#: src/lib/ordering-labels.ts:238
+msgid "Other stores that deliver here"
+msgstr "其他配送到这里的门店"
 
 #: src/lib/reservations/labels.ts:62
 msgid "Other times that day"
@@ -2806,11 +2837,11 @@ msgstr "{name} 的照片"
 msgid "Photos can only be shared for dishes you ordered within 14 days."
 msgstr "仅可为您在 14 天内点过的菜品分享照片。"
 
-#: src/lib/ordering-labels.ts:178
+#: src/lib/ordering-labels.ts:189
 msgid "Pick up from"
 msgstr "自取门店"
 
-#: src/lib/ordering-labels.ts:137
+#: src/lib/ordering-labels.ts:148
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -3065,8 +3096,8 @@ msgstr "已备好"
 msgid "Ready around {time}"
 msgstr "预计 {time} 左右备好"
 
-#: src/lib/ordering-labels.ts:184
-#: src/lib/ordering-labels.ts:188
+#: src/lib/ordering-labels.ts:195
+#: src/lib/ordering-labels.ts:199
 msgid "Ready in about {count} min"
 msgstr "约 {count} 分钟后可取"
 
@@ -3245,7 +3276,7 @@ msgstr "第 {number} 轮"
 msgid "Sale price"
 msgstr "优惠价"
 
-#: src/lib/ordering-labels.ts:199
+#: src/lib/ordering-labels.ts:210
 msgid "Save"
 msgstr "保存"
 
@@ -3274,11 +3305,15 @@ msgstr "扫码下载应用"
 msgid "Scan to open this job on your phone."
 msgstr "扫码在手机上查看此职位。"
 
-#: src/lib/ordering-labels.ts:187
+#: src/lib/ordering-labels.ts:198
 msgid "Schedule"
 msgstr "预约"
 
-#: src/lib/ordering-labels.ts:140
+#: src/lib/ordering-labels.ts:250
+msgid "Scheduled orders only"
+msgstr "仅限预约订单"
+
+#: src/lib/ordering-labels.ts:151
 msgid "Search street address"
 msgstr "搜索街道地址"
 
@@ -3596,7 +3631,7 @@ msgstr "正在提交..."
 msgid "Subtotal"
 msgstr "小计"
 
-#: src/lib/ordering-labels.ts:168
+#: src/lib/ordering-labels.ts:179
 msgid "Switch to pickup"
 msgstr "改为自取"
 
@@ -3795,6 +3830,14 @@ msgstr "小费金额过大，请输入较小的金额。"
 #: src/lib/gift-cards/labels.ts:93
 msgid "The card does not have enough balance."
 msgstr "卡内余额不足。"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "The delivery fee changed. Please review your total and place your order again."
+msgstr "配送费已变化。请核对总额后重新下单。"
+
+#: src/lib/ordering-labels.ts:243
+msgid "The fee goes down as your order grows."
+msgstr "订单越大，费用越低。"
 
 #: src/lib/gift-cards/labels.ts:95
 msgid "The gift card amount changed. Review the new total."
@@ -4237,12 +4280,12 @@ msgstr "收卡人（姓名）"
 msgid "To your door"
 msgstr "送货上门"
 
-#: src/lib/ordering-labels.ts:194
+#: src/lib/ordering-labels.ts:205
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Today"
 msgstr "今天"
 
-#: src/lib/ordering-labels.ts:195
+#: src/lib/ordering-labels.ts:206
 msgid "Tomorrow"
 msgstr "明天"
 
@@ -4299,7 +4342,7 @@ msgstr "在应用中跟踪此订单"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/loyalty/labels.ts:75
-#: src/lib/ordering-labels.ts:150
+#: src/lib/ordering-labels.ts:161
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
@@ -4307,7 +4350,7 @@ msgstr "在应用中跟踪此订单"
 msgid "Try again"
 msgstr "重试"
 
-#: src/lib/ordering-labels.ts:169
+#: src/lib/ordering-labels.ts:180
 msgid "Try another address"
 msgstr "换一个地址"
 
@@ -4374,7 +4417,7 @@ msgstr "正在更新合计…"
 msgid "Uploading…"
 msgstr "正在上传…"
 
-#: src/lib/ordering-labels.ts:148
+#: src/lib/ordering-labels.ts:159
 msgid "Use “{query}”"
 msgstr "使用“{query}”"
 
@@ -4397,6 +4440,10 @@ msgstr "使用已保存的卡片"
 #: src/pages/menu.astro.ts:3
 msgid "Use code {code}"
 msgstr "使用优惠码 {code}"
+
+#: src/lib/ordering-labels.ts:245
+msgid "Use my location"
+msgstr "使用我的位置"
 
 #: src/lib/loyalty/labels.ts:166
 msgid "Used on {items}"
@@ -4615,7 +4662,7 @@ msgstr "无法使用您的优惠码。请核对后重试。"
 msgid "We couldn't cancel the order. Please try again."
 msgstr "无法取消订单,请重试。"
 
-#: src/lib/ordering-labels.ts:176
+#: src/lib/ordering-labels.ts:187
 msgid "We couldn't check this address"
 msgstr "无法核实此地址"
 
@@ -4627,7 +4674,7 @@ msgstr "刚才无法核对您的优惠码。请重试。"
 msgid "We couldn't confirm your total. Please try again."
 msgstr "无法确认合计。请重试。"
 
-#: src/lib/ordering-labels.ts:170
+#: src/lib/ordering-labels.ts:181
 msgid "We couldn't find that address"
 msgstr "找不到该地址"
 
@@ -4635,7 +4682,11 @@ msgstr "找不到该地址"
 msgid "We couldn't find this order"
 msgstr "找不到此订单"
 
-#: src/lib/ordering-labels.ts:149
+#: src/lib/ordering-labels.ts:247
+msgid "We couldn't get your location. Enter an address to sort by distance."
+msgstr "无法获取您的位置。请输入地址以按距离排序。"
+
+#: src/lib/ordering-labels.ts:160
 msgid "We couldn't load address suggestions."
 msgstr "无法加载地址建议。"
 
@@ -4675,7 +4726,7 @@ msgstr "我们无法自动发送您的退款。请致电餐厅。"
 msgid "We couldn't start payment. Please try again."
 msgstr "无法发起支付。请重试。"
 
-#: src/lib/ordering-labels.ts:154
+#: src/lib/ordering-labels.ts:165
 msgid "We deliver here"
 msgstr "此地址可配送"
 
@@ -4683,7 +4734,7 @@ msgstr "此地址可配送"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "我们未能及时收到您的回复。您可以重新加入候位名单。"
 
-#: src/lib/ordering-labels.ts:162
+#: src/lib/ordering-labels.ts:173
 msgid "We don't deliver to this address yet"
 msgstr "暂不支持配送至此地址"
 
@@ -4747,7 +4798,7 @@ msgstr "我们使用必要存储来运行本网站。经您同意，我们还会
 msgid "We will let you know"
 msgstr "我们会通知您"
 
-#: src/lib/ordering-labels.ts:207
+#: src/lib/ordering-labels.ts:218
 msgid "We'll check that your address is in our delivery area before you order."
 msgstr "下单前，我们会确认您的地址是否在配送范围内。"
 
@@ -4818,7 +4869,7 @@ msgstr "{name}近期活动"
 msgid "What's your name?"
 msgstr "您叫什么名字？"
 
-#: src/lib/ordering-labels.ts:185
+#: src/lib/ordering-labels.ts:196
 #: src/lib/reservations/labels.ts:158
 msgid "When"
 msgstr "时间"
@@ -4840,7 +4891,7 @@ msgstr "当您在商店购买商品时，您的收据将显示在这里。"
 msgid "Where"
 msgstr "地点"
 
-#: src/lib/ordering-labels.ts:205
+#: src/lib/ordering-labels.ts:216
 msgid "Where should we deliver?"
 msgstr "配送到哪里？"
 
@@ -4900,7 +4951,7 @@ msgstr "您可在 {time} 前取消。"
 msgid "You can join again at any time."
 msgstr "您可以随时重新加入。"
 
-#: src/lib/ordering-labels.ts:175
+#: src/lib/ordering-labels.ts:186
 msgid "You can still order for pickup."
 msgstr "您仍可下单自取。"
 
@@ -5026,7 +5077,7 @@ msgstr "您的购物车是空的"
 msgid "Your code"
 msgstr "您的专属码"
 
-#: src/lib/ordering-labels.ts:224
+#: src/lib/ordering-labels.ts:235
 msgid "Your delivery check expired. Confirm your address again."
 msgstr "配送核验已过期，请重新确认地址。"
 
@@ -5179,7 +5230,7 @@ msgstr "您的奖励账户已暂停。如需帮助，请联系商家。"
 msgid "Your savings cover the whole order."
 msgstr "优惠已抵扣整笔订单。"
 
-#: src/lib/ordering-labels.ts:220
+#: src/lib/ordering-labels.ts:231
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "您预约的时间已不可用，请重新选择。"
 

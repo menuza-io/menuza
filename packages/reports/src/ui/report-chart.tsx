@@ -607,7 +607,11 @@ export function ReportVisualization({
 			rows.some(
 				(row) =>
 					row.__ref &&
-					rowActions({ subject: definition.subject, ref: row.__ref }).length > 0,
+					rowActions({
+						subject: definition.subject,
+						ref: row.__ref,
+						definition,
+					}).length > 0,
 			)
 		return (
 			<div
@@ -660,6 +664,7 @@ export function ReportVisualization({
 													? rowActions({
 															subject: definition.subject,
 															ref: row.__ref,
+															definition,
 														})
 													: []
 												).map((action) => (

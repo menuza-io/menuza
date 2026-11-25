@@ -11,6 +11,7 @@ import {
 } from './catalog-gift-cards.ts'
 import { staffingSubjects, withScopeWording } from './catalog-staffing.ts'
 import { referencedFieldIds, validateReportDefinition } from './engine.ts'
+import { isDeliveryReportSubject } from './catalog-deliveries.ts'
 import { isMenuInsightsReportSubject } from './catalog-menu-insights.ts'
 import { isSalesReportSubject } from './catalog-sales.ts'
 import {
@@ -222,7 +223,8 @@ describe('what a person is offered', () => {
 					template.category !== 'Reservations' &&
 					template.category !== 'Gift cards' &&
 					!isSalesReportSubject(template.definition.subject) &&
-					!isMenuInsightsReportSubject(template.definition.subject),
+					!isMenuInsightsReportSubject(template.definition.subject) &&
+					!isDeliveryReportSubject(template.definition.subject),
 			).length,
 		)
 	})

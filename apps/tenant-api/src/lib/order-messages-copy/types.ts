@@ -67,6 +67,10 @@ export type OrderMessageCopy = {
 		ready: string
 		/** `{number}`, `{r}`, `{time}`. */
 		eta_changed: string
+		/** The restaurant's driver picked the order up (#287): `{number}`, `{r}`. */
+		out_for_delivery: string
+		/** The driver delivered it (#287): `{number}`, `{r}`. */
+		delivered: string
 	}
 	labels: OrderCopyLabels
 }

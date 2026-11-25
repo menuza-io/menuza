@@ -76,7 +76,13 @@ type OrderForMessages = Pick<
 > & { promisedVersion?: number }
 
 /** Kinds that may go out as a text as well as an email. */
-const SMS_KINDS = new Set<OrderMessageKind>(['ready', 'eta_changed'])
+const SMS_KINDS = new Set<OrderMessageKind>([
+	'ready',
+	'eta_changed',
+	// The restaurant's own driver (#287): on its way, and delivered.
+	'out_for_delivery',
+	'delivered',
+])
 
 /** Order statuses that send a status message, and which. */
 const STATUS_MESSAGE_KIND: Partial<Record<string, OrderMessageKind>> = {

@@ -1,13 +1,37 @@
 'use client'
 
+import {
+	closestCenter,
+	DndContext,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+	type DragEndEvent,
+} from '@dnd-kit/core'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import {
+	SortableContext,
+	sortableKeyboardCoordinates,
+	useSortable,
+	verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import {
+	validateDistanceBands,
+	validateFeeSteps,
+	type DeliveryDistanceFees,
+	type DeliveryFeeStep,
+} from '@repo/common/delivery-fees'
 import {
 	type DeliveryPoint,
 	type DeliveryProvider,
 	type DeliveryRestriction,
 	type DeliveryZone,
 	type DeliveryZoneType,
+	type ZonePriorityMode,
 } from '@repo/common/location-types'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
@@ -34,7 +58,16 @@ import { Slider } from '@repo/ui/slider'
 import { Switch } from '@repo/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { Textarea } from '@repo/ui/textarea'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
+import { moveZone, zoneOverlapNotes } from '#app/utils/location/delivery-zones.ts'
+import { DeliveryAddressCheck } from './delivery-address-check'
+import {
+	DistanceBandsEditor,
+	FeeStepsEditor,
+	normalizeDistanceBands,
+	normalizeFeeSteps,
+	useTableProblemText,
+} from './delivery-fee-tables'
 import { DeliveryZoneMap } from './delivery-zone-map'
 
 interface DeliveryZonesManagerProps {
@@ -42,7 +75,67 @@ interface DeliveryZonesManagerProps {
 	onChange: (zones: DeliveryZone[]) => void
 	centerLat: number
 	centerLng: number
+	/**
+	 * Which zone wins where zones overlap (#266). Missing is `cheapest`, what a
+	 * location that never reordered does; dragging a zone switches to `order`.
+	 */
+	priority?: ZonePriorityMode
+	onPriorityChange?: (priority: ZonePriorityMode) => void
+	/** For the Address check; absent while the location is new. */
+	orgSlug?: string
+	locationId?: string
 	className?: string
+}
+
+const DEFAULT_BANDS: DeliveryDistanceFees = {
+	mode: 'driving',
+	unit: 'km',
+	bands: [
+		{ from: 0, fee: 3 },
+		{ from: 3, fee: 4 },
+		{ from: 5, fee: 5 },
+	],
+}
+
+function SortableZoneRow({
+	id,
+	disabled,
+	children,
+}: {
+	id: string
+	disabled: boolean
+	children: (handle: React.ReactNode) => React.ReactNode
+}) {
+	const { _ } = useLingui()
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		setActivatorNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id, disabled })
+	return (
+		<div
+			ref={setNodeRef}
+			style={{ transform: CSS.Transform.toString(transform), transition }}
+			className={cn(isDragging && 'bg-background relative z-10 shadow-md')}
+		>
+			{children(
+				<button
+					type="button"
+					ref={setActivatorNodeRef}
+					className="text-muted-foreground hover:text-foreground flex size-7 shrink-0 cursor-grab items-center justify-center rounded-md active:cursor-grabbing"
+					aria-label={_(msg`Drag to reorder`)}
+					{...attributes}
+					{...listeners}
+				>
+					<Icon name="grip-vertical" className="size-4" />
+				</button>,
+			)}
+		</div>
+	)
 }
 
 export function DeliveryZonesManager({
@@ -50,9 +143,38 @@ export function DeliveryZonesManager({
 	onChange,
 	centerLat,
 	centerLng,
+	priority = 'cheapest',
+	onPriorityChange,
+	orgSlug,
+	locationId,
 	className,
 }: DeliveryZonesManagerProps) {
 	const { _ } = useLingui()
+	const tableProblemText = useTableProblemText()
+	const sensors = useSensors(
+		useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	)
+	const store =
+		Number.isFinite(centerLat) &&
+		Number.isFinite(centerLng) &&
+		!(centerLat === 0 && centerLng === 0)
+			? { lat: centerLat, lng: centerLng }
+			: null
+	const overlapNotes = useMemo(
+		() => zoneOverlapNotes(zones, store, priority),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[zones, store?.lat, store?.lng, priority],
+	)
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event
+		if (!over || active.id === over.id) return
+		onChange(moveZone(zones, String(active.id), String(over.id)))
+		// Dragging is the operator choosing the order: from here the list decides.
+		onPriorityChange?.('order')
+	}
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [editingZoneId, setEditingZoneId] = useState<string | null>(null)
 
@@ -68,6 +190,11 @@ export function DeliveryZonesManager({
 	const [minimumOrder, setMinimumOrder] = useState(15)
 	const [deliveryFee, setDeliveryFee] = useState(3.99)
 	const [enabled, setEnabled] = useState(true)
+	const [feeByAmount, setFeeByAmount] = useState(false)
+	const [feeSteps, setFeeSteps] = useState<DeliveryFeeStep[]>([])
+	const [feeByDistance, setFeeByDistance] = useState(false)
+	const [distanceFees, setDistanceFees] =
+		useState<DeliveryDistanceFees>(DEFAULT_BANDS)
 
 	const handleOpenAdd = () => {
 		setEditingZoneId(null)
@@ -82,6 +209,10 @@ export function DeliveryZonesManager({
 		setMinimumOrder(15)
 		setDeliveryFee(3.99)
 		setEnabled(true)
+		setFeeByAmount(false)
+		setFeeSteps([])
+		setFeeByDistance(false)
+		setDistanceFees(DEFAULT_BANDS)
 		setIsModalOpen(true)
 	}
 
@@ -98,11 +229,30 @@ export function DeliveryZonesManager({
 		setMinimumOrder(zone.minimumOrder ?? 15)
 		setDeliveryFee(zone.deliveryFee ?? 3.99)
 		setEnabled(zone.enabled ?? true)
+		setFeeByAmount(Boolean(zone.feeSteps && zone.feeSteps.length > 0))
+		setFeeSteps(zone.feeSteps ?? [])
+		setFeeByDistance(Boolean(zone.distanceFees?.bands.length))
+		setDistanceFees(zone.distanceFees ?? DEFAULT_BANDS)
 		setIsModalOpen(true)
 	}
 
+	// The tables as they will be saved, and what is wrong with them.
+	const savedSteps = feeByAmount
+		? normalizeFeeSteps(
+				feeSteps.length > 0
+					? feeSteps
+					: [{ from: minimumOrder, fee: deliveryFee }],
+				minimumOrder,
+			)
+		: []
+	const savedBands = feeByDistance ? normalizeDistanceBands(distanceFees) : null
+	const stepsProblem = feeByAmount
+		? validateFeeSteps(savedSteps, minimumOrder)
+		: null
+	const bandsProblem = savedBands ? validateDistanceBands(savedBands) : null
+
 	const handleSaveZone = () => {
-		if (!zoneName.trim()) return
+		if (!zoneName.trim() || stepsProblem || bandsProblem) return
 
 		const parsedZipCodes = zipCodesText
 			.split(/[,\s\n]+/)
@@ -123,6 +273,9 @@ export function DeliveryZonesManager({
 			polygon: polygonPoints,
 			minimumOrder,
 			deliveryFee,
+			// Left out when off, so a zone without a table is saved as it always was.
+			...(feeByAmount ? { feeSteps: savedSteps } : {}),
+			...(savedBands ? { distanceFees: savedBands } : {}),
 			enabled,
 		}
 
@@ -196,103 +349,212 @@ export function DeliveryZonesManager({
 					</p>
 				</div>
 			) : (
-				<div className="divide-border divide-y rounded-md border">
-					{zones.map((zone) => (
-						<div
-							key={zone.id}
-							className={cn(
-								'flex flex-col gap-3 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between',
-								!zone.enabled && 'bg-muted/30 opacity-70',
-							)}
+				<div className="space-y-2">
+					<p className="text-muted-foreground text-xs" data-testid="zone-priority-note">
+						{priority === 'order' ? (
+							<Trans>
+								Where zones overlap, the first zone in the list that covers the
+								address applies. Drag zones to change the order. Zones where
+								delivery is not allowed always exclude an address, whatever their
+								place.
+							</Trans>
+						) : (
+							<Trans>
+								Where zones overlap, the cheapest zone applies. Drag a zone to
+								choose the winner yourself instead: the first one in the list
+								will apply.
+							</Trans>
+						)}
+					</p>
+					{priority === 'order' && onPriorityChange ? (
+						<Button
+							type="button"
+							size="sm"
+							variant="ghost"
+							onClick={() => onPriorityChange('cheapest')}
 						>
-							<div className="space-y-1.5">
-								<div className="flex flex-wrap items-center gap-2">
-									<span className="text-sm">{zone.name}</span>
-
-									<Badge
-										variant={
-											zone.restriction === 'disallowed'
-												? 'destructive'
-												: 'outline'
-										}
-										className="text-[11px]"
-									>
-										{zone.restriction === 'disallowed'
-											? _(msg`Restricted (No Delivery)`)
-											: _(msg`Allowed`)}
-									</Badge>
-
-									<Badge variant="secondary" className="text-[11px]">
-										{getProviderLabel(zone.provider)}
-									</Badge>
-
-									<Badge variant="outline" className="text-[11px]">
-										{zone.type === 'radius' &&
-											`${zone.radius.value} ${zone.radius.unit} radius`}
-										{zone.type === 'zip_code' &&
-											`${zone.zipCodes.length} zip codes`}
-										{zone.type === 'polygon' &&
-											`Polygon (${zone.polygon.length} points)`}
-									</Badge>
-								</div>
-
-								{(() => {
-									const minOrder = zone.minimumOrder.toFixed(2)
-									const deliveryFee = zone.deliveryFee.toFixed(2)
+							<Trans>Use the cheapest zone instead</Trans>
+						</Button>
+					) : null}
+					<DndContext
+						sensors={sensors}
+						collisionDetection={closestCenter}
+						modifiers={[restrictToVerticalAxis]}
+						onDragEnd={handleDragEnd}
+					>
+						<SortableContext
+							items={zones.map((zone) => zone.id)}
+							strategy={verticalListSortingStrategy}
+						>
+							<div className="divide-border divide-y rounded-md border">
+								{zones.map((zone, index) => {
+									const note = overlapNotes.get(zone.id)
+									const position = index + 1
 									return (
-										<div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
-											<span>
-												<Trans>Min Order: ${minOrder}</Trans>
-											</span>
-											<span>·</span>
-											<span>
-												<Trans>Fee: ${deliveryFee}</Trans>
-											</span>
-											{zone.type === 'zip_code' && zone.zipCodes.length > 0 && (
-												<>
-													<span>·</span>
-													<span className="max-w-xs truncate">
-														Zips: {zone.zipCodes.slice(0, 5).join(', ')}
-														{zone.zipCodes.length > 5 ? '...' : ''}
-													</span>
-												</>
-											)}
-										</div>
-									)
-								})()}
-							</div>
+										<SortableZoneRow
+											key={zone.id}
+											id={zone.id}
+											disabled={zones.length < 2}
+										>
+											{(handle) => (
+												<div
+													className={cn(
+														'flex flex-col gap-3 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between',
+														!zone.enabled && 'bg-muted/30 opacity-70',
+													)}
+												>
+													<div className="flex items-start gap-2">
+														{zones.length > 1 ? handle : null}
+														<div className="space-y-1.5">
+															<div className="flex flex-wrap items-center gap-2">
+																{priority === 'order' && zones.length > 1 ? (
+																	<Badge
+																		variant="secondary"
+																		className="text-[11px]"
+																		aria-label={_(msg`Priority ${position}`)}
+																	>
+																		{position}
+																	</Badge>
+																) : null}
+																<span className="text-sm">{zone.name}</span>
 
-							<div className="flex items-center gap-2 self-end sm:self-center">
-								<Switch
-									checked={zone.enabled}
-									onCheckedChange={(checked) =>
-										handleToggleZoneEnabled(zone.id, checked)
-									}
-									title="Enable/Disable Zone"
-									aria-label={`Toggle ${zone.name}`}
-								/>
-								<Button
-									size="icon-sm"
-									variant="ghost"
-									onClick={() => handleOpenEdit(zone)}
-									title="Edit Zone"
-								>
-									<Icon name="pencil" className="size-3.5" />
-								</Button>
-								<Button
-									size="icon-sm"
-									variant="ghost"
-									className="text-muted-foreground hover:text-destructive"
-									onClick={() => handleDeleteZone(zone.id)}
-									title="Delete Zone"
-								>
-									<Icon name="trash-2" className="size-3.5" />
-								</Button>
+																<Badge
+																	variant={
+																		zone.restriction === 'disallowed'
+																			? 'destructive'
+																			: 'outline'
+																	}
+																	className="text-[11px]"
+																>
+																	{zone.restriction === 'disallowed'
+																		? _(msg`Restricted (No Delivery)`)
+																		: _(msg`Allowed`)}
+																</Badge>
+
+																<Badge variant="secondary" className="text-[11px]">
+																	{getProviderLabel(zone.provider)}
+																</Badge>
+
+																<Badge variant="outline" className="text-[11px]">
+																	{zone.type === 'radius' &&
+																		`${zone.radius.value} ${zone.radius.unit} radius`}
+																	{zone.type === 'zip_code' &&
+																		`${zone.zipCodes.length} zip codes`}
+																	{zone.type === 'polygon' &&
+																		`Polygon (${zone.polygon.length} points)`}
+																</Badge>
+															</div>
+
+															{(() => {
+																const minOrder = zone.minimumOrder.toFixed(2)
+																const deliveryFee = zone.deliveryFee.toFixed(2)
+																const stepCount = zone.feeSteps?.length ?? 0
+																const bandCount = zone.distanceFees?.bands.length ?? 0
+																return (
+																	<div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
+																		<span>
+																			<Trans>Min Order: ${minOrder}</Trans>
+																		</span>
+																		<span>·</span>
+																		<span>
+																			{stepCount > 0 ? (
+																				<Trans>
+																					Fee by order size ({stepCount} steps)
+																				</Trans>
+																			) : bandCount > 0 ? (
+																				<Trans>
+																					Fee by distance ({bandCount} bands)
+																				</Trans>
+																			) : (
+																				<Trans>Fee: ${deliveryFee}</Trans>
+																			)}
+																		</span>
+																		{zone.type === 'zip_code' &&
+																			zone.zipCodes.length > 0 && (
+																				<>
+																					<span>·</span>
+																					<span className="max-w-xs truncate">
+																						Zips: {zone.zipCodes.slice(0, 5).join(', ')}
+																						{zone.zipCodes.length > 5 ? '...' : ''}
+																					</span>
+																				</>
+																			)}
+																	</div>
+																)
+															})()}
+
+															{note
+																? note.overlaps.map((other) => {
+																		const otherName = other.name
+																		return (
+																			<p
+																				key={other.id}
+																				data-testid="zone-overlap-note"
+																				className="text-xs text-amber-700 dark:text-amber-400"
+																			>
+																				{other.thisWins ? (
+																					<Trans>
+																						Overlaps {otherName}; this one wins.
+																					</Trans>
+																				) : priority === 'order' ? (
+																					<Trans>
+																						Overlaps {otherName}; that one wins because
+																						it is higher.
+																					</Trans>
+																				) : (
+																					<Trans>
+																						Overlaps {otherName}; that one wins because
+																						it is cheaper.
+																					</Trans>
+																				)}
+																			</p>
+																		)
+																	})
+																: null}
+														</div>
+													</div>
+
+													<div className="flex items-center gap-2 self-end sm:self-center">
+														<Switch
+															checked={zone.enabled}
+															onCheckedChange={(checked) =>
+																handleToggleZoneEnabled(zone.id, checked)
+															}
+															title="Enable/Disable Zone"
+															aria-label={`Toggle ${zone.name}`}
+														/>
+														<Button
+															size="icon-sm"
+															variant="ghost"
+															onClick={() => handleOpenEdit(zone)}
+															title="Edit Zone"
+														>
+															<Icon name="pencil" className="size-3.5" />
+														</Button>
+														<Button
+															size="icon-sm"
+															variant="ghost"
+															className="text-muted-foreground hover:text-destructive"
+															onClick={() => handleDeleteZone(zone.id)}
+															title="Delete Zone"
+														>
+															<Icon name="trash-2" className="size-3.5" />
+														</Button>
+													</div>
+												</div>
+											)}
+										</SortableZoneRow>
+									)
+								})}
 							</div>
-						</div>
-					))}
+						</SortableContext>
+					</DndContext>
 				</div>
 			)}
+
+			{orgSlug ? (
+				<DeliveryAddressCheck orgSlug={orgSlug} locationId={locationId} />
+			) : null}
 
 			{/* Add / Edit Delivery Zone Modal */}
 			<Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -557,13 +819,86 @@ export function DeliveryZonesManager({
 								/>
 							</div>
 						</div>
+
+						{restriction === 'allowed' ? (
+							<div className="space-y-3">
+								<div className="border-border flex items-center justify-between rounded-md border p-3">
+									<div className="space-y-0.5">
+										<Label htmlFor="zone-fee-steps">
+											<Trans>Fee by order size</Trans>
+										</Label>
+										<p className="text-muted-foreground text-xs">
+											<Trans>
+												Charge less, or nothing, as the order grows. Without it the
+												single fee above applies.
+											</Trans>
+										</p>
+									</div>
+									<Switch
+										id="zone-fee-steps"
+										checked={feeByAmount}
+										onCheckedChange={(checked) => {
+											setFeeByAmount(checked)
+											if (checked && feeSteps.length === 0) {
+												setFeeSteps([{ from: minimumOrder, fee: deliveryFee }])
+											}
+										}}
+									/>
+								</div>
+								{feeByAmount ? (
+									<FeeStepsEditor
+										steps={savedSteps}
+										minimumOrder={minimumOrder}
+										onChange={setFeeSteps}
+										error={tableProblemText(stepsProblem)}
+									/>
+								) : null}
+
+								<div className="border-border flex items-center justify-between rounded-md border p-3">
+									<div className="space-y-0.5">
+										<Label htmlFor="zone-fee-distance">
+											<Trans>Fee by distance</Trans>
+										</Label>
+										<p className="text-muted-foreground text-xs">
+											<Trans>
+												Charge by how far the address is from the store, in a
+												straight line or by road.
+											</Trans>
+										</p>
+									</div>
+									<Switch
+										id="zone-fee-distance"
+										checked={feeByDistance}
+										onCheckedChange={setFeeByDistance}
+									/>
+								</div>
+								{feeByDistance ? (
+									<DistanceBandsEditor
+										fees={distanceFees}
+										onChange={setDistanceFees}
+										error={tableProblemText(bandsProblem)}
+									/>
+								) : null}
+								{feeByAmount && feeByDistance ? (
+									<p className="text-muted-foreground text-xs">
+										<Trans>
+											With both, the order size can only lower the distance fee,
+											never raise it.
+										</Trans>
+									</p>
+								) : null}
+							</div>
+						) : null}
 					</div>
 
 					<DialogFooter>
 						<Button variant="outline" onClick={() => setIsModalOpen(false)}>
 							<Trans>Cancel</Trans>
 						</Button>
-						<Button onClick={handleSaveZone} disabled={!zoneName.trim()}>
+						<Button
+							onClick={handleSaveZone}
+							disabled={!zoneName.trim() || Boolean(stepsProblem || bandsProblem)}
+						>
 							<Trans>Save zone</Trans>
 						</Button>
 					</DialogFooter>

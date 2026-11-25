@@ -1,5 +1,12 @@
 import { z } from 'zod'
 
+import {
+	DeliveryDistanceFeesSchema,
+	DeliveryFeeStepSchema,
+	type DeliveryDistanceFees,
+	type DeliveryFeeStep,
+} from './delivery-fees.ts'
+
 export const DAYS_OF_WEEK = [
 	'monday',
 	'tuesday',
@@ -108,13 +115,33 @@ export interface DeliveryZone {
 	polygon: DeliveryPoint[]
 	minimumOrder: number // In dollars / main currency units
 	deliveryFee: number // In dollars / main currency units
+	/**
+	 * Fee by order size (#244): from this subtotal, charge this fee. Absent or
+	 * empty keeps the single `deliveryFee`. The first step starts at the
+	 * zone's minimum order.
+	 */
+	feeSteps?: DeliveryFeeStep[]
+	/**
+	 * Fee by distance (#421): bands measured in straight line or by road. Absent
+	 * or empty keeps the single `deliveryFee`.
+	 */
+	distanceFees?: DeliveryDistanceFees | null
 	enabled: boolean
 }
+
+/**
+ * Which zone wins when zones overlap (#266): `cheapest` (a location nobody has
+ * reordered) or `order` (the first zone in the list that covers the address).
+ */
+export const ZONE_PRIORITY_VALUES = ['cheapest', 'order'] as const
+export type ZonePriorityMode = (typeof ZONE_PRIORITY_VALUES)[number]
 
 export interface DeliveryConfig {
 	providers: DeliveryProvider[]
 	estimatedDeliveryTimeMin: number
 	estimatedDeliveryTimeMax: number
+	/** Missing is `cheapest`, so a location that was never reordered is unchanged. */
+	zonePriority?: ZonePriorityMode
 }
 
 export const DEFAULT_WEEKLY_SCHEDULE: WeeklySchedule = [
@@ -256,6 +283,8 @@ export const DeliveryZoneSchema = z.object({
 	polygon: z.array(DeliveryPointSchema),
 	minimumOrder: z.number().min(0),
 	deliveryFee: z.number().min(0),
+	feeSteps: z.array(DeliveryFeeStepSchema).max(10).optional(),
+	distanceFees: DeliveryDistanceFeesSchema.nullable().optional(),
 	enabled: z.boolean(),
 })
 
@@ -420,6 +449,7 @@ export const DeliveryConfigSchema = z.object({
 	),
 	estimatedDeliveryTimeMin: z.number().min(5),
 	estimatedDeliveryTimeMax: z.number().min(5),
+	zonePriority: z.enum(ZONE_PRIORITY_VALUES).optional(),
 })
 
 // ---------------------------------------------------------------------------

@@ -33,10 +33,17 @@ export const AR: OrderMessageCopy = {
 			heading: 'لطلبك موعد جديد',
 			lead: 'حدّث {r} موعد طلبك {number}.',
 		},
+		delivered: {
+			subject: 'تم توصيل طلبك {number}',
+			heading: 'تم توصيل طلبك',
+			lead: 'تم توصيل طلبك {number} من {r}. بالهناء والشفاء!',
+		},
 	},
 	sms: {
 		ready: 'طلبك {number} من {r} جاهز.',
 		eta_changed: 'موعد جديد لطلبك {number} من {r}: {time}.',
+		out_for_delivery: 'طلبك {number} من {r} في الطريق إليك.',
+		delivered: 'تم توصيل طلبك {number} من {r}.',
 	},
 	labels: {
 		order: 'الطلب',

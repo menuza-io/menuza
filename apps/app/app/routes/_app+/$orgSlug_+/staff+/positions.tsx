@@ -36,6 +36,7 @@ import { PayCell } from '#app/components/staff/staff-roster.tsx'
 import { SwitchField } from '#app/components/staff/switch-field.tsx'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { useStaffClient, useStaffQuery } from '#app/hooks/use-staff-client.ts'
+import { isInHouseDeliveryEnabled } from '#app/utils/orders/deliveries.server.ts'
 import { requireStaffingAccess } from '#app/utils/staffing/access.server.ts'
 import { STAFF_SECTION_REQUIREMENTS } from '#app/utils/staffing/sections.ts'
 import { describeStaffError } from '#app/utils/staffing/staff-errors.ts'
@@ -65,11 +66,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	return {
 		orgSlug: params.orgSlug,
 		currencies: [...new Set(scopes.map((scope) => scope.currency))],
+		// "Delivers orders" is offered only while own-driver deliveries are on (#287).
+		deliveriesEnabled: await isInHouseDeliveryEnabled(access.organizationId),
 	}
 }
 
 export default function StaffPositionsRoute() {
-	const { orgSlug, currencies } = useLoaderData<typeof loader>()
+	const { orgSlug, currencies, deliveriesEnabled } =
+		useLoaderData<typeof loader>()
 	const { _, i18n } = useLingui()
 	const { client, can, ready } = useStaffClient('staff')
 	const canWrite = can(P.UPDATE_STAFF)
@@ -206,7 +210,11 @@ export default function StaffPositionsRoute() {
 									) : null}
 								</ItemTitle>
 								<ItemDescription>
-									{[position.area, position.tipEligible ? _(t`Tips`) : null]
+									{[
+										position.area,
+										position.tipEligible ? _(t`Tips`) : null,
+										position.deliversOrders ? _(t`Delivers orders`) : null,
+									]
 										.filter(Boolean)
 										.join(' · ')}
 								</ItemDescription>
@@ -268,6 +276,7 @@ export default function StaffPositionsRoute() {
 					position={editing === 'new' ? null : editing}
 					currencies={currencies}
 					canSetRate={can(P.UPDATE_STAFF_PAY)}
+					deliveriesEnabled={deliveriesEnabled}
 					onClose={() => setEditing(null)}
 					onSaved={() => {
 						setEditing(null)
@@ -283,12 +292,14 @@ function PositionDialog({
 	position,
 	currencies,
 	canSetRate,
+	deliveriesEnabled,
 	onClose,
 	onSaved,
 }: {
 	position: StaffPositionRow | null
 	currencies: Array<'USD' | 'CAD' | 'SAR'>
 	canSetRate: boolean
+	deliveriesEnabled: boolean
 	onClose: () => void
 	onSaved: () => void
 }) {
@@ -301,6 +312,9 @@ function PositionDialog({
 		(position?.colorKey as PositionColorKey | undefined) ?? 'neutral',
 	)
 	const [tipEligible, setTipEligible] = useState(position?.tipEligible ?? false)
+	const [deliversOrders, setDeliversOrders] = useState(
+		position?.deliversOrders ?? false,
+	)
 	const [rate, setRate] = useState(minorToInput(position?.defaultRateMinor))
 	const [currency, setCurrency] = useState<string>(
 		position?.currency ?? currencies[0] ?? 'USD',
@@ -327,6 +341,8 @@ function PositionDialog({
 			area: area.trim() || null,
 			colorKey,
 			tipEligible,
+			// Only sent while the setting is offered, so a node without it never sees it.
+			...(deliveriesEnabled ? { deliversOrders } : {}),
 			...(defaultRateMinor !== undefined
 				? {
 						defaultRateMinor,
@@ -410,6 +426,19 @@ function PositionDialog({
 						checked={tipEligible}
 						onCheckedChange={setTipEligible}
 					/>
+					{deliveriesEnabled ? (
+						<SwitchField
+							label={<Trans>Delivers orders</Trans>}
+							description={
+								<Trans>
+									People with this job can sign in to Station's driver view and be
+									given deliveries.
+								</Trans>
+							}
+							checked={deliversOrders}
+							onCheckedChange={setDeliversOrders}
+						/>
+					) : null}
 					{canSetRate ? (
 						<div
 							className={

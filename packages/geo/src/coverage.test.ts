@@ -219,9 +219,10 @@ describe('resolveZoneForPoint', () => {
 				}),
 			],
 		}
-		expect(resolveZoneForPoint(location, NEAR)).toEqual({
+		expect(resolveZoneForPoint(location, NEAR)).toMatchObject({
 			ok: false,
 			reason: 'excluded',
+			zone: { id: 'zone-no-go' },
 		})
 		expect(resolveZoneForPoint(location, STORE).ok).toBe(true)
 	})
@@ -316,5 +317,123 @@ describe('resolveZoneForPoint', () => {
 				{ lat: 0, lng: 0 },
 			),
 		).toEqual({ ok: false, reason: 'out_of_range' })
+	})
+})
+
+describe('resolveZoneForPoint: zone priority (#266)', () => {
+	// A small free ring inside a wider paid ring: radius zones are both centred
+	// on the store, so NEAR is in both.
+	const ring = zone({
+		id: 'ring',
+		name: 'Free ring',
+		radius: { value: 3, unit: 'km' },
+		deliveryFee: 0,
+		minimumOrder: 25,
+	})
+	const wide = zone({
+		id: 'wide',
+		name: 'Wide area',
+		radius: { value: 20, unit: 'km' },
+		deliveryFee: 6,
+		minimumOrder: 10,
+	})
+	const district = zone({
+		id: 'district',
+		name: 'Premium district',
+		type: 'polygon',
+		polygon: LOOP_POLYGON,
+		deliveryFee: 9,
+		minimumOrder: 40,
+	})
+
+	it('keeps the cheapest zone when the location never set a priority', () => {
+		const location = { address: STORE, deliveryZones: [district, wide, ring] }
+		expect(resolveZoneForPoint(location, NEAR)).toEqual({ ok: true, zone: ring })
+		expect(
+			resolveZoneForPoint({ ...location, zonePriority: 'cheapest' }, NEAR),
+		).toEqual({ ok: true, zone: ring })
+	})
+
+	it('takes the first zone in the list that covers the point in order mode', () => {
+		const location = {
+			address: STORE,
+			deliveryZones: [district, wide, ring],
+			zonePriority: 'order' as const,
+		}
+		// NEAR is in the polygon (listed first) and in both rings.
+		expect(resolveZoneForPoint(location, NEAR)).toEqual({
+			ok: true,
+			zone: district,
+		})
+		// Reordered: the free ring first.
+		expect(
+			resolveZoneForPoint({ ...location, deliveryZones: [ring, wide, district] }, NEAR),
+		).toEqual({ ok: true, zone: ring })
+		// EDGE_IN is outside the ring and the polygon: only the wide zone covers it.
+		expect(resolveZoneForPoint(location, EDGE_IN)).toEqual({
+			ok: true,
+			zone: wide,
+		})
+	})
+
+	it('lets an explicit option override the location mode', () => {
+		const location = {
+			address: STORE,
+			deliveryZones: [district, ring],
+			zonePriority: 'order' as const,
+		}
+		expect(resolveZoneForPoint(location, NEAR, { priority: 'cheapest' })).toEqual({
+			ok: true,
+			zone: ring,
+		})
+	})
+
+	it('skips disabled zones and still excludes through Not allowed zones in either mode', () => {
+		const blocked = zone({
+			id: 'blocked',
+			name: 'Campus',
+			restriction: 'disallowed',
+			type: 'polygon',
+			polygon: LOOP_POLYGON,
+		})
+		const order = { address: STORE, zonePriority: 'order' as const }
+		expect(
+			resolveZoneForPoint(
+				{ ...order, deliveryZones: [{ ...ring, enabled: false }, wide] },
+				NEAR,
+			),
+		).toEqual({ ok: true, zone: wide })
+		// Not allowed wins whatever its position, and names itself.
+		for (const zones of [
+			[blocked, ring, wide],
+			[ring, wide, blocked],
+		]) {
+			expect(
+				resolveZoneForPoint({ ...order, deliveryZones: zones }, NEAR),
+			).toEqual({ ok: false, reason: 'excluded', zone: blocked })
+		}
+	})
+
+	it('orders zip-code zones with the others', () => {
+		const zip = zone({
+			id: 'zip',
+			type: 'zip_code',
+			zipCodes: ['60601'],
+			deliveryFee: 1,
+		})
+		const location = {
+			address: STORE,
+			deliveryZones: [wide, zip],
+			zonePriority: 'order' as const,
+		}
+		expect(
+			resolveZoneForPoint(location, { ...NEAR, postalCode: '60601' }),
+		).toEqual({ ok: true, zone: wide })
+		expect(
+			resolveZoneForPoint(
+				{ ...location, deliveryZones: [zip, wide] },
+				{ ...NEAR, postalCode: '60601' },
+			),
+		).toEqual({ ok: true, zone: zip })
 	})
 })

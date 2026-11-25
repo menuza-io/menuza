@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import { type ReportDefinition } from '../dsl.ts'
 
 /** A link offered from one row of a list report (#261: open a dish, mark it unavailable). */
 export type ReportRowAction = { label: string; href: string }
@@ -11,6 +12,8 @@ export type ReportRowAction = { label: string; href: string }
 export type ReportRowActions = (input: {
 	subject: string
 	ref: string
+	/** The report the row is in: its period, for a link that keeps it (#324). */
+	definition?: ReportDefinition
 }) => ReportRowAction[]
 
 export const ReportRowActionsContext = createContext<ReportRowActions | null>(

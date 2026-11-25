@@ -1,3 +1,4 @@
+import { type DeliveryFeePricing } from '@repo/common/delivery-fees'
 import { getOrgBinding } from '~/lib/client-auth'
 
 /**
@@ -33,6 +34,12 @@ export type DeliveryQuote = {
 	deliveryFee: number
 	minimumOrder: number
 	eta: { min: number; max: number }
+	/**
+	 * What the cart needs to price delivery as it changes (#244, #421): the fee
+	 * for this address and the table by order size. Absent from an older node,
+	 * which then prices by `deliveryFee` alone.
+	 */
+	pricing?: DeliveryFeePricing
 }
 
 export type DeliveryUnavailableReason =
@@ -43,7 +50,12 @@ export type DeliveryUnavailableReason =
 
 export type DeliveryQuoteResult =
 	| { status: 'deliverable'; quote: DeliveryQuote }
-	| { status: 'out_of_range'; address: QuoteAddress | null }
+	| {
+			status: 'out_of_range'
+			address: QuoteAddress | null
+			/** True when no store of a brand delivers to the address (#161). */
+			noStore?: boolean
+	  }
 	| { status: 'not_found' }
 	| { status: 'unavailable'; reason: DeliveryUnavailableReason | string }
 
@@ -141,6 +153,54 @@ function parseAddress(value: unknown): QuoteAddress | null {
 	}
 }
 
+function parsePricing(value: unknown): DeliveryFeePricing | undefined {
+	if (!value || typeof value !== 'object') return undefined
+	const p = value as Record<string, unknown>
+	if (!isNumber(p.baseFee) || p.baseFee < 0 || !Array.isArray(p.steps)) {
+		return undefined
+	}
+	const steps: DeliveryFeePricing['steps'] = []
+	for (const step of p.steps) {
+		if (!step || typeof step !== 'object') return undefined
+		const s = step as Record<string, unknown>
+		if (!isNumber(s.from) || !isNumber(s.fee) || s.from < 0 || s.fee < 0) {
+			return undefined
+		}
+		steps.push({ from: s.from, fee: s.fee })
+	}
+	return { baseFee: p.baseFee, steps, byDistance: p.byDistance === true }
+}
+
+function parseQuote(q: Record<string, unknown> | undefined): DeliveryQuote {
+	const address = parseAddress(q?.address)
+	const eta = q?.eta as Record<string, unknown> | undefined
+	if (
+		!q ||
+		!address ||
+		!isString(q.token) ||
+		!isString(q.expiresAt) ||
+		!isNumber(q.deliveryFee) ||
+		!isNumber(q.minimumOrder) ||
+		!eta ||
+		!isNumber(eta.min) ||
+		!isNumber(eta.max)
+	) {
+		throw new DeliveryRequestError('invalid_quote_response', 502)
+	}
+	const pricing = parsePricing(q.pricing)
+	return {
+		token: q.token,
+		expiresAt: q.expiresAt,
+		address,
+		zoneId: isString(q.zoneId) ? q.zoneId : '',
+		zoneName: isString(q.zoneName) ? q.zoneName : '',
+		deliveryFee: q.deliveryFee,
+		minimumOrder: q.minimumOrder,
+		eta: { min: eta.min, max: eta.max },
+		...(pricing ? { pricing } : {}),
+	}
+}
+
 /** Narrows the quote response; anything malformed is a request error. */
 export function parseQuoteResult(value: unknown): DeliveryQuoteResult {
 	if (!value || typeof value !== 'object') {
@@ -148,37 +208,11 @@ export function parseQuoteResult(value: unknown): DeliveryQuoteResult {
 	}
 	const v = value as Record<string, unknown>
 	switch (v.status) {
-		case 'deliverable': {
-			const q = v.quote as Record<string, unknown> | undefined
-			const address = parseAddress(q?.address)
-			const eta = q?.eta as Record<string, unknown> | undefined
-			if (
-				!q ||
-				!address ||
-				!isString(q.token) ||
-				!isString(q.expiresAt) ||
-				!isNumber(q.deliveryFee) ||
-				!isNumber(q.minimumOrder) ||
-				!eta ||
-				!isNumber(eta.min) ||
-				!isNumber(eta.max)
-			) {
-				throw new DeliveryRequestError('invalid_quote_response', 502)
-			}
+		case 'deliverable':
 			return {
 				status: 'deliverable',
-				quote: {
-					token: q.token,
-					expiresAt: q.expiresAt,
-					address,
-					zoneId: isString(q.zoneId) ? q.zoneId : '',
-					zoneName: isString(q.zoneName) ? q.zoneName : '',
-					deliveryFee: q.deliveryFee,
-					minimumOrder: q.minimumOrder,
-					eta: { min: eta.min, max: eta.max },
-				},
+				quote: parseQuote(v.quote as Record<string, unknown> | undefined),
 			}
-		}
 		case 'out_of_range':
 			return { status: 'out_of_range', address: parseAddress(v.address) }
 		case 'not_found':
@@ -221,12 +255,17 @@ export async function requestDeliveryQuote(input: {
 	unit?: string
 	sessionToken?: string
 	locale: string
+	/** The items subtotal in major units, so the fee shown fits the cart. */
+	subtotal?: number
 	signal?: AbortSignal
 }): Promise<DeliveryQuoteResult> {
-	const body: Record<string, string> = {
+	const body: Record<string, string | number> = {
 		...binding(),
 		locationId: input.locationId,
 		locale: input.locale,
+	}
+	if (input.subtotal !== undefined && input.subtotal > 0) {
+		body.subtotal = input.subtotal
 	}
 	if (input.placeId) body.placeId = input.placeId
 	if (input.address?.trim()) body.address = input.address.trim()
@@ -239,6 +278,102 @@ export async function requestDeliveryQuote(input: {
 		signal: input.signal,
 	})
 	return parseQuoteResult(await readJson(response))
+}
+
+/** One store of the picker (#161): how to reach it and, for delivery, its quote. */
+export type DeliveryLocationChoice = {
+	locationId: string
+	name: string
+	formattedAddress: string | null
+	/** Straight-line distance from the address to the store, meters. */
+	distanceMeters: number | null
+	/** False when the store is closed now but takes scheduled orders. */
+	open: boolean
+	/** Prep, busy and delivery minutes now (delivery only). */
+	etaMinutes: { min: number; max: number } | null
+	quote: DeliveryQuote | null
+}
+
+export type DeliveryLocationsResult =
+	| { status: 'ok'; locations: DeliveryLocationChoice[] }
+	| { status: 'not_found' }
+	| { status: 'unavailable'; reason: DeliveryUnavailableReason | string }
+
+export function parseLocationsResult(value: unknown): DeliveryLocationsResult {
+	if (!value || typeof value !== 'object') {
+		throw new DeliveryRequestError('invalid_locations_response', 502)
+	}
+	const v = value as Record<string, unknown>
+	if (v.status === 'not_found') return { status: 'not_found' }
+	if (v.status === 'unavailable') {
+		return {
+			status: 'unavailable',
+			reason: isString(v.reason) ? v.reason : 'delivery_disabled',
+		}
+	}
+	if (v.status !== 'ok' || !Array.isArray(v.locations)) {
+		throw new DeliveryRequestError('invalid_locations_response', 502)
+	}
+	const locations = v.locations.map((entry): DeliveryLocationChoice => {
+		const e = (entry ?? {}) as Record<string, unknown>
+		if (!isString(e.locationId) || !e.locationId || !isString(e.name)) {
+			throw new DeliveryRequestError('invalid_locations_response', 502)
+		}
+		const eta = e.etaMinutes as Record<string, unknown> | null | undefined
+		return {
+			locationId: e.locationId,
+			name: e.name,
+			formattedAddress: isString(e.formattedAddress) ? e.formattedAddress : null,
+			distanceMeters: isNumber(e.distanceMeters) ? e.distanceMeters : null,
+			open: e.open !== false,
+			etaMinutes:
+				eta && isNumber(eta.min) && isNumber(eta.max)
+					? { min: eta.min, max: eta.max }
+					: null,
+			quote: e.quote ? parseQuote(e.quote as Record<string, unknown>) : null,
+		}
+	})
+	return { status: 'ok', locations }
+}
+
+/**
+ * Which store serves an address, or which is nearest (#161): one geocode on the
+ * regional node for the whole brand. `purpose: 'delivery'` returns the stores
+ * that deliver there, best first, each with a signed quote; `pickup` returns the
+ * open stores by distance. A browser location (`point`) is sent only on a
+ * guest's tap, goes to the region and is never stored.
+ */
+export async function requestDeliveryLocations(input: {
+	purpose: 'delivery' | 'pickup'
+	placeId?: string
+	address?: string
+	point?: { lat: number; lng: number }
+	unit?: string
+	sessionToken?: string
+	locale: string
+	subtotal?: number
+	signal?: AbortSignal
+}): Promise<DeliveryLocationsResult> {
+	const body: Record<string, unknown> = {
+		...binding(),
+		purpose: input.purpose,
+		locale: input.locale,
+	}
+	if (input.placeId) body.placeId = input.placeId
+	if (input.address?.trim()) body.address = input.address.trim()
+	if (input.point) body.point = input.point
+	if (input.unit?.trim()) body.unit = input.unit.trim()
+	if (input.sessionToken) body.sessionToken = input.sessionToken
+	if (input.subtotal !== undefined && input.subtotal > 0) {
+		body.subtotal = input.subtotal
+	}
+	const response = await fetch(`${regionalUrl()}/delivery/locations`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(body),
+		signal: input.signal,
+	})
+	return parseLocationsResult(await readJson(response))
 }
 
 export type PlacesSearchState =

@@ -12,6 +12,7 @@ import {
 import { Icon, type IconName } from '@repo/ui/icon'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Deliveries } from './apps/deliveries/Deliveries.tsx'
 import { Kitchen } from './apps/kitchen/Kitchen.tsx'
 import { Orders } from './apps/orders/Orders.tsx'
 import { HostStand } from './apps/reservations/HostStand.tsx'
@@ -894,7 +895,10 @@ export function App() {
 	return (
 		<>
 			<div className="flex h-full flex-col" inert={locked}>
-				{app !== 'reservations' && app !== 'kitchen' && app !== 'orders'
+				{app !== 'reservations' &&
+				app !== 'kitchen' &&
+				app !== 'orders' &&
+				app !== 'deliveries'
 					? renderHeader()
 					: null}
 				{app === 'kitchen' ? (
@@ -918,6 +922,16 @@ export function App() {
 						online={s.online}
 						timeZone={s.location?.timezone}
 						businessName={businessName}
+						onSignIn={s.lock}
+					/>
+				) : app === 'deliveries' ? (
+					<Deliveries
+						renderHeader={renderHeader}
+						// Someone new at the till starts with nothing open: a run never carries over.
+						key={`${s.settings.tenantApiUrl}:${s.settings.deviceToken}:${s.settings.locationId}:${s.session?.serverSession?.token ?? ''}`}
+						settings={s.settings}
+						session={s.session}
+						online={s.online}
 						onSignIn={s.lock}
 					/>
 				) : app === 'timeclock' ? (

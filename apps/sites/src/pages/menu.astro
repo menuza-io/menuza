@@ -1093,6 +1093,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			type OfferMode,
 			worksForMode,
 		} from '~/lib/ordering/offers'
+		import { deliveryFeeForCart, deliveryFeeHint } from '~/lib/ordering/delivery-fee'
 		import { formatScheduledFor } from '~/lib/ordering/schedule'
 		import { mountScrollSpy } from '~/lib/ordering/scroll-spy'
 		import { posterSource } from '~/lib/ordering/table-session'
@@ -1407,7 +1408,14 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			totals: {
 				taxRate: data.taxRate || 0,
 				taxInclusive: data.taxInclusive === true,
-				deliveryFee: () => details.delivery?.deliveryFee ?? (data.deliveryFee || 0),
+				// The verified address prices the cart with the zone's table by order
+				// size (#244); before an address the first zone's fee is the estimate.
+				deliveryFee: (subtotal) =>
+					details.delivery
+						? deliveryFeeForCart(details.delivery, subtotal)
+						: data.deliveryFee || 0,
+				deliveryHint: (subtotal) =>
+					hasValidDeliveryQuote(details) ? deliveryFeeHint(details.delivery, subtotal) : null,
 				// At a table nothing is delivered: no delivery fee in the cart.
 				mode: () =>
 					document.documentElement.dataset.tableMode === 'true' ? 'pickup' : details.mode,

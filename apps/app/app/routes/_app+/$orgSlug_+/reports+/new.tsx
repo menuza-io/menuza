@@ -6,6 +6,7 @@ import {
 	definitionAllowed,
 	definitionForNewReport,
 	getCatalog,
+	withDriverDeliveries,
 	withLocationFilter,
 	withLocationsFilter,
 } from '@repo/reports'
@@ -81,10 +82,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					await resolveMemberLocationIds(userId, organization.id),
 				)
 			: null
+	// "Open deliveries" on a Deliveries by driver row (#324): that driver, that period.
+	const withDriver = withDriverDeliveries(requested, {
+		driverKey: url.searchParams.get('driver'),
+		preset: url.searchParams.get('preset'),
+		start: url.searchParams.get('start'),
+		end: url.searchParams.get('end'),
+	})
 	const definition = allowed
 		? withLocationsFilter(
 				'organization',
-				withLocationFilter('organization', requested, locationName),
+				withLocationFilter('organization', withDriver, locationName),
 				tagLocationNames,
 			)
 		: blankReportDefinition('organization')

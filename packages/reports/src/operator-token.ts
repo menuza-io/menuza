@@ -22,6 +22,7 @@ import {
 	SALES_STAFF_FIELD_PERMISSION,
 	isSalesReportSubject,
 } from './catalog-sales.ts'
+import { DELIVERY_REPORT_SUBJECTS } from './catalog-deliveries.ts'
 import { MENU_INSIGHTS_REPORT_SUBJECTS } from './catalog-menu-insights.ts'
 import { ENV } from './package-env.js'
 
@@ -58,6 +59,13 @@ export {
 	SALES_STAFF_FIELD_PERMISSION,
 	type SalesReportSubject,
 } from './catalog-sales.ts'
+
+export {
+	anonymousDriverLabel,
+	DELIVERY_REPORT_SUBJECTS,
+	isDeliveryReportSubject,
+	type DeliveryReportSubject,
+} from './catalog-deliveries.ts'
 
 export {
 	isReservationsReportSubject,
@@ -110,6 +118,8 @@ export const RESTRICTED_REPORT_SUBJECTS = [
 	INVENTORY_COST_REPORT_PERMISSION,
 	'staff_pay',
 	...MENU_INSIGHTS_REPORT_SUBJECTS,
+	// Own-driver deliveries (#324): only with `delivery.in_house` on, granted by the App.
+	...DELIVERY_REPORT_SUBJECTS,
 ] as const
 
 /** Restricted subjects that menu access (which covers orders) grants. */

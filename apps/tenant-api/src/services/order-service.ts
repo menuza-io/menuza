@@ -93,7 +93,10 @@ import {
 	type RestaurantOrder,
 } from '@repo/tenant-db'
 
-import { verifyDeliveryQuote } from '../lib/delivery-quote-token.ts'
+import {
+	toVerifiedDeliveryQuote,
+	verifyDeliveryQuote,
+} from '../lib/delivery-quote-token.ts'
 import { isGeocodingAvailable } from '../lib/geocoder.ts'
 import type { PublishedOrganization } from '../lib/origin.ts'
 import { getNodeRegion } from '../lib/region.ts'
@@ -500,7 +503,8 @@ export async function fetchTillDiscountRules(
 
 export async function fetchOrderContext(
 	orgId: string,
-	locationId: string,
+	/** Null reads the context for every location (it picks no price overrides). */
+	locationId: string | null,
 	dropSlug: string | null,
 ): Promise<OrderServiceResult<RestaurantOrderContext>> {
 	const appUrl = appOrderContextUrl()
@@ -512,7 +516,8 @@ export async function fetchOrderContext(
 			'Ordering is temporarily unavailable. Please try again shortly.',
 		)
 	}
-	const params = new URLSearchParams({ orgId, locationId })
+	const params = new URLSearchParams({ orgId })
+	if (locationId) params.set('locationId', locationId)
 	if (dropSlug) params.set('drop', dropSlug)
 
 	try {
@@ -1095,15 +1100,7 @@ export async function placeOrder(input: {
 				'Your delivery address check has expired. Please confirm your address again.',
 			)
 		}
-		deliveryQuote = {
-			lat: verified.payload.lat,
-			lng: verified.payload.lng,
-			formatted: verified.payload.formatted,
-			line1: verified.payload.line1,
-			city: verified.payload.city,
-			postalCode: verified.payload.postalCode,
-			unit: verified.payload.unit,
-		}
+		deliveryQuote = toVerifiedDeliveryQuote(verified.payload)
 	}
 
 	const channel = derivePublicOrderChannel({
@@ -1121,6 +1118,21 @@ export async function placeOrder(input: {
 		return { ok: false, failure: fromEngineError(priced.error) }
 	}
 	const result: PricedRestaurantOrder = priced.result
+	// The delivery fee (#244, #421): the region prices it from the zone, the
+	// distance and the subtotal; the browser sends what it showed. A different
+	// amount is refused so the guest is told before paying.
+	if (
+		request.fulfillment === 'delivery' &&
+		request.expectedDeliveryFeeMinor !== undefined &&
+		request.expectedDeliveryFeeMinor !== result.deliveryFeeCents
+	) {
+		return orderFailure(
+			409,
+			'delivery_fee_changed',
+			'The delivery fee changed. Review the new total and place the order again.',
+			{ details: { deliveryFeeMinor: result.deliveryFeeCents } },
+		)
+	}
 	// A cart with alcohol needs the guest's yes to "I am 21 or older and will
 	// show ID" (#167). Only the yes is kept, never a birth date. A table round
 	// is served by the team, who check ID at the table: its ticket says so.

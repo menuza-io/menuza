@@ -19,7 +19,10 @@ import {
 import { getTenantDb, qrTabs, type TenantDatabase } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 
-import { verifyDeliveryQuote } from '../lib/delivery-quote-token.ts'
+import {
+	toVerifiedDeliveryQuote,
+	verifyDeliveryQuote,
+} from '../lib/delivery-quote-token.ts'
 import { readTabToken } from '../lib/qr-tokens.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import { isDiscountsKillSwitchOn } from '../lib/discount-switches.ts'
@@ -201,15 +204,7 @@ export async function quoteCheckout(input: {
 				'Your delivery address check has expired. Please confirm your address again.',
 			)
 		}
-		deliveryQuote = {
-			lat: verified.payload.lat,
-			lng: verified.payload.lng,
-			formatted: verified.payload.formatted,
-			line1: verified.payload.line1,
-			city: verified.payload.city,
-			postalCode: verified.payload.postalCode,
-			unit: verified.payload.unit,
-		}
+		deliveryQuote = toVerifiedDeliveryQuote(verified.payload)
 	}
 
 	const channel = derivePublicOrderChannel({

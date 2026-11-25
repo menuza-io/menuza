@@ -1562,6 +1562,8 @@ export const ORDER_MESSAGE_KINDS = [
 	'out_for_delivery',
 	'cancelled',
 	'eta_changed',
+	// The restaurant's own driver marked the order delivered (#287).
+	'delivered',
 ] as const
 export type OrderMessageKind = (typeof ORDER_MESSAGE_KINDS)[number]
 export const ORDER_MESSAGE_CHANNELS = ['email', 'sms'] as const
@@ -1613,7 +1615,7 @@ export const orderMessages = sqliteTable(
 		index('idx_order_messages_due').on(table.status, table.nextAttemptAt),
 		check(
 			'chk_order_messages_kind',
-			sql`${table.kind} in ('receipt', 'accepted', 'ready', 'out_for_delivery', 'cancelled', 'eta_changed')`,
+			sql`${table.kind} in ('receipt', 'accepted', 'ready', 'out_for_delivery', 'cancelled', 'eta_changed', 'delivered')`,
 		),
 		check(
 			'chk_order_messages_channel',
@@ -2107,6 +2109,11 @@ export const staffPositions = sqliteTable(
 		defaultRateMinor: integer('default_rate_minor'),
 		currency: text('currency'),
 		tipEligible: integer('tip_eligible', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// "Delivers orders" (#287): people with this job can sign in to the Station
+		// driver view and be assigned deliveries. A fact about the job, not a person.
+		deliversOrders: integer('delivers_orders', { mode: 'boolean' })
 			.notNull()
 			.default(false),
 		archivedAt: integer('archived_at'),
@@ -11814,3 +11821,199 @@ export const printJobs = sqliteTable(
 
 export type PrintDevice = typeof printDevices.$inferSelect
 export type PrintJob = typeof printJobs.$inferSelect
+
+
+// ---------------------------------------------------------------------------
+// Own-driver deliveries (#287, #324). The restaurant's own drivers take ready
+// delivery orders as a run. Regional data only: a run names a driver (a staff
+// member) and orders; guest names, phones and addresses are read from the order
+// while a run is open and are never copied here. Reports read these tables with
+// the order step rows and show zones, never an address.
+// ---------------------------------------------------------------------------
+
+export const DELIVERY_RUN_STATUS_VALUES = [
+	'assigned',
+	'on_the_road',
+	'completed',
+	'cancelled',
+] as const
+export type DeliveryRunStatus = (typeof DELIVERY_RUN_STATUS_VALUES)[number]
+
+export const DELIVERY_STOP_STATUS_VALUES = [
+	'pending',
+	'picked_up',
+	'delivered',
+	'problem',
+	'released',
+] as const
+export type DeliveryStopStatus = (typeof DELIVERY_STOP_STATUS_VALUES)[number]
+
+/** A stop that still holds its order: one active stop per order, so no order has two drivers. */
+export const DELIVERY_ACTIVE_STOP_STATUSES = [
+	'pending',
+	'picked_up',
+	'problem',
+] as const
+
+export const DELIVERY_PROBLEM_KIND_VALUES = [
+	'not_home',
+	'wrong_address',
+	'refused',
+	'cannot_reach',
+	'other',
+] as const
+export type DeliveryProblemKind = (typeof DELIVERY_PROBLEM_KIND_VALUES)[number]
+
+export const DELIVERY_ACTOR_KIND_VALUES = ['manager', 'driver'] as const
+export type DeliveryActorKind = (typeof DELIVERY_ACTOR_KIND_VALUES)[number]
+
+// A driver who is unavailable gets no new assignments; current ones finish.
+// No row means available.
+export const deliveryDriverStatus = sqliteTable('delivery_driver_status', {
+	staffId: text('staff_id')
+		.primaryKey()
+		.references(() => staffMembers.id, { onDelete: 'cascade' }),
+	unavailable: integer('unavailable', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	updatedBy: text('updated_by'),
+	updatedAt: integer('updated_at').notNull().default(nowMs),
+})
+
+export const deliveryRuns = sqliteTable(
+	'delivery_runs',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		driverStaffId: text('driver_staff_id')
+			.notNull()
+			.references(() => staffMembers.id),
+		status: text('status', { enum: [...DELIVERY_RUN_STATUS_VALUES] })
+			.notNull()
+			.default('assigned'),
+		// Who made the run: a manager assigned it, or the driver claimed it. An
+		// opaque member id or `staff:<id>`, never a name.
+		createdByKind: text('created_by_kind', {
+			enum: [...DELIVERY_ACTOR_KIND_VALUES],
+		}).notNull(),
+		createdById: text('created_by_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		pickedUpAt: integer('picked_up_at'),
+		completedAt: integer('completed_at'),
+		cancelledAt: integer('cancelled_at'),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_delivery_runs_driver').on(table.driverStaffId, table.status),
+		index('idx_delivery_runs_location').on(
+			table.locationId,
+			table.status,
+			table.createdAt,
+		),
+		check('chk_delivery_runs_status', oneOf(table.status, DELIVERY_RUN_STATUS_VALUES)),
+		check(
+			'chk_delivery_runs_actor',
+			oneOf(table.createdByKind, DELIVERY_ACTOR_KIND_VALUES),
+		),
+	],
+)
+
+export const deliveryRunStops = sqliteTable(
+	'delivery_run_stops',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		runId: text('run_id')
+			.notNull()
+			.references(() => deliveryRuns.id, { onDelete: 'cascade' }),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id),
+		stopNo: integer('stop_no').notNull(),
+		status: text('status', { enum: [...DELIVERY_STOP_STATUS_VALUES] })
+			.notNull()
+			.default('pending'),
+		// What the driver collects in cash on delivery (pay at handoff, unpaid),
+		// worked out when the order is assigned; and what they say they collected.
+		cashDueCents: integer('cash_due_cents').notNull().default(0),
+		cashCollectedCents: integer('cash_collected_cents').notNull().default(0),
+		// The order's delivery zone, copied for reports (a zone, never an address).
+		zoneId: text('zone_id'),
+		problemKind: text('problem_kind', {
+			enum: [...DELIVERY_PROBLEM_KIND_VALUES],
+		}),
+		deliveredByKind: text('delivered_by_kind', {
+			enum: [...DELIVERY_ACTOR_KIND_VALUES],
+		}),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		pickedUpAt: integer('picked_up_at'),
+		deliveredAt: integer('delivered_at'),
+		problemAt: integer('problem_at'),
+		releasedAt: integer('released_at'),
+	},
+	(table) => [
+		// An order cannot be held by two drivers: one active stop per order.
+		uniqueIndex('uniq_delivery_stops_active_order')
+			.on(table.orderId)
+			.where(sql`${table.status} in ('pending', 'picked_up', 'problem')`),
+		uniqueIndex('uniq_delivery_stops_run_no').on(table.runId, table.stopNo),
+		index('idx_delivery_stops_run').on(table.runId),
+		index('idx_delivery_stops_order').on(table.orderId),
+		check('chk_delivery_stops_status', oneOf(table.status, DELIVERY_STOP_STATUS_VALUES)),
+		check(
+			'chk_delivery_stops_problem',
+			sql`${table.problemKind} is null or ${table.problemKind} in ('not_home', 'wrong_address', 'refused', 'cannot_reach', 'other')`,
+		),
+	],
+)
+
+// The driver's last shared position while a run is open (#287). Optional: only
+// a driver who taps "Share my location" has one. Deleted when the run ends, so
+// no coordinate outlives the run it was for.
+export const deliveryRunPositions = sqliteTable('delivery_run_positions', {
+	runId: text('run_id')
+		.primaryKey()
+		.references(() => deliveryRuns.id, { onDelete: 'cascade' }),
+	lat: real('lat').notNull(),
+	lng: real('lng').notNull(),
+	updatedAt: integer('updated_at').notNull().default(nowMs),
+})
+
+// What a driver is told when a manager changes their deliveries (#287): given a
+// run, had one taken away or handed to someone else, or had a stop taken back.
+// The order number only: no guest name, phone or address. Read once by the
+// driver's device, then kept a day for the audit.
+export const DELIVERY_NOTICE_KIND_VALUES = [
+	'assigned',
+	'taken_away',
+	'stop_released',
+] as const
+export type DeliveryNoticeKind = (typeof DELIVERY_NOTICE_KIND_VALUES)[number]
+
+export const deliveryDriverNotices = sqliteTable(
+	'delivery_driver_notices',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		staffId: text('staff_id')
+			.notNull()
+			.references(() => staffMembers.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: [...DELIVERY_NOTICE_KIND_VALUES] }).notNull(),
+		runId: text('run_id'),
+		// The order numbers the notice is about (a short list), never a guest.
+		orderNumbers: text('order_numbers').notNull().default(''),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		readAt: integer('read_at'),
+	},
+	(table) => [
+		index('idx_delivery_notices_staff').on(table.staffId, table.readAt),
+		check('chk_delivery_notices_kind', oneOf(table.kind, DELIVERY_NOTICE_KIND_VALUES)),
+	],
+)
+
+export type DeliveryRun = typeof deliveryRuns.$inferSelect
+export type DeliveryRunStop = typeof deliveryRunStops.$inferSelect

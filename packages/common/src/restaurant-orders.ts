@@ -1,4 +1,5 @@
 import {
+	haversineMeters,
 	hasRealCoordinates,
 	normalizePostalCode,
 	resolveZoneForPoint,
@@ -10,6 +11,12 @@ import {
 	orderDiscountsRequestSchema,
 } from '@repo/discounts'
 import { z } from 'zod'
+import {
+	DeliveryDistanceFeesSchema,
+	DeliveryFeeStepSchema,
+	deliveryFeeCentsFor,
+	distanceForZone,
+} from './delivery-fees.ts'
 import { giftCardCheckoutInputSchema } from './gift-card-contract.ts'
 import { PHOTO_TEST_KEY_PATTERN } from './photo-test-key.ts'
 import { orderAttributionInputSchema } from './order-attribution.ts'
@@ -454,6 +461,18 @@ const restaurantOrderObjectSchema = z.strictObject({
 		.max(1_000_000_000)
 		.optional(),
 	expectedPackagingFeeMinor: z
+		.number()
+		.int()
+		.min(0)
+		.max(1_000_000_000)
+		.optional(),
+	/**
+	 * The delivery fee (#244, #421) the guest was shown, minor units, before any
+	 * free-delivery discount. The region prices the fee itself and refuses a
+	 * different amount with 409 `delivery_fee_changed`. Checked only when sent,
+	 * so a Sites build that predates fee tables keeps placing orders.
+	 */
+	expectedDeliveryFeeMinor: z
 		.number()
 		.int()
 		.min(0)
@@ -927,6 +946,9 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		...(request.expectedPackagingFeeMinor !== undefined
 			? { expectedPackagingFeeMinor: request.expectedPackagingFeeMinor }
 			: {}),
+		...(request.expectedDeliveryFeeMinor !== undefined
+			? { expectedDeliveryFeeMinor: request.expectedDeliveryFeeMinor }
+			: {}),
 		...(request.utensilsRequested !== undefined
 			? { utensilsRequested: request.utensilsRequested }
 			: {}),
@@ -1229,6 +1251,10 @@ const deliveryZoneContextSchema = z.object({
 	polygon: z.array(z.object({ lat: z.number(), lng: z.number() })).default([]),
 	minimumOrder: z.number().min(0).default(0),
 	deliveryFee: z.number().min(0).default(0),
+	/** Fee by order size (#244). */
+	feeSteps: z.array(DeliveryFeeStepSchema).max(10).optional(),
+	/** Fee by distance (#421). */
+	distanceFees: DeliveryDistanceFeesSchema.nullable().optional(),
 	enabled: z.boolean().default(true),
 })
 
@@ -1297,6 +1323,8 @@ export const publicLocationContextSchema = z
 					.default([]),
 				estimatedDeliveryTimeMin: z.number().min(0),
 				estimatedDeliveryTimeMax: z.number().min(0),
+				/** Which zone wins an overlap (#266); missing is `cheapest`. */
+				zonePriority: z.enum(['cheapest', 'order']).optional().catch(undefined),
 			})
 			.loose()
 			.optional(),
@@ -1913,6 +1941,12 @@ export type VerifiedDeliveryQuote = {
 	city: string
 	postalCode: string | null
 	unit: string | null
+	/**
+	 * The road distance from the store, in meters, when the routing service
+	 * answered at quote time (#421). Signed with the rest, so it cannot be
+	 * changed; absent or null means the straight-line distance is used.
+	 */
+	drivingMeters?: number | null
 }
 
 const US_ZIP_REGEX = /\b(\d{5})(?:-\d{4})?\b/g
@@ -2023,20 +2057,35 @@ export function deliveryCoverageVerifiable(
 
 export type DeliveryZoneForPointResult =
 	| { ok: true; zone: DeliveryZoneContext }
-	| { ok: false; reason: CoverageFailureReason }
+	| { ok: false; reason: CoverageFailureReason; zone?: DeliveryZoneContext }
+
+type DeliveryCoverageLocation = Pick<
+	PublicLocationContext,
+	'deliveryZones' | 'address'
+> &
+	Partial<Pick<PublicLocationContext, 'deliveryConfig'>>
+
+/** How the location's overlapping zones are ranked (#266); `cheapest` unless reordered. */
+export function locationZonePriority(
+	location: Partial<Pick<PublicLocationContext, 'deliveryConfig'>>,
+): 'cheapest' | 'order' {
+	return location.deliveryConfig?.zonePriority === 'order' ? 'order' : 'cheapest'
+}
 
 /**
  * Resolves the in-house zone covering a geocoded point (radius from the store
- * address, polygon, zip; disallowed zones exclude; cheapest match wins).
+ * address, polygon, zip; disallowed zones exclude; the location's zone
+ * priority picks among the matches: cheapest, or the first in the list).
  */
 export function resolveDeliveryZoneForPoint(
-	location: Pick<PublicLocationContext, 'deliveryZones' | 'address'>,
+	location: DeliveryCoverageLocation,
 	point: { lat: number; lng: number; postalCode?: string | null },
 ): DeliveryZoneForPointResult {
 	return resolveZoneForPoint(
 		{
 			address: location.address ?? null,
 			deliveryZones: coverageZones(location),
+			zonePriority: locationZonePriority(location),
 		},
 		point,
 	)
@@ -2137,8 +2186,14 @@ export function resolveDeliveryCoverage(
 		return coverageFailure('excluded')
 	}
 	let best: DeliveryZoneContext | null = null
+	const byOrder = locationZonePriority(location) === 'order'
 	for (const zone of zipZones) {
 		if (zone.restriction !== 'allowed' || !inZip(zone)) continue
+		if (byOrder) {
+			// The list is the priority: the first zone that covers the code wins.
+			best = zone
+			break
+		}
 		if (
 			!best ||
 			zone.deliveryFee < best.deliveryFee ||
@@ -3469,6 +3524,10 @@ export function priceRestaurantOrder(
 	// ---- Delivery coverage + fee -------------------------------------------
 	let deliveryInfo: PricedRestaurantOrder['delivery'] = null
 	let deliveryFeeCents = 0
+	// The zone that serves a delivery order and how far the address is from the
+	// store (#421): the fee itself is set below, once the subtotal is known.
+	let deliveryZoneForFee: DeliveryZoneLike | null = null
+	let deliveryDistanceMeters: number | null = null
 	// A zone served by a delivery app, not the restaurant's own drivers (#167).
 	let courierDelivery = false
 	if (request.fulfillment === 'delivery' && request.delivery) {
@@ -3492,7 +3551,20 @@ export function priceRestaurantOrder(
 		courierDelivery =
 			typeof (zone as { provider?: unknown }).provider === 'string' &&
 			(zone as { provider?: string }).provider !== 'in_house'
-		deliveryFeeCents = dollarsToCents(zone.deliveryFee)
+		deliveryZoneForFee = zone
+		if (deliveryQuote) {
+			const store = hasRealCoordinates(location.address) ? location.address : null
+			deliveryDistanceMeters =
+				distanceForZone(zone, {
+					straightMeters: store
+						? haversineMeters(
+								{ lat: store.lat, lng: store.lng },
+								{ lat: deliveryQuote.lat, lng: deliveryQuote.lng },
+							)
+						: null,
+					drivingMeters: deliveryQuote.drivingMeters ?? null,
+				})?.meters ?? null
+		}
 		// With a quote, the persisted address comes from the signed payload,
 		// never from client text.
 		deliveryInfo = deliveryQuote
@@ -3566,6 +3638,15 @@ export function priceRestaurantOrder(
 		(sum, line) => sum + line.totalCents,
 		0,
 	)
+	// The delivery fee (#244, #421): by distance and by order size, on the items
+	// subtotal before discounts, the same base the zone's minimum uses.
+	if (deliveryZoneForFee) {
+		deliveryFeeCents = deliveryFeeCentsFor(
+			deliveryZoneForFee,
+			subtotalCents,
+			deliveryDistanceMeters,
+		)
+	}
 	const capSettings = readOrderCapsForLocation(context.orderCaps, location.id)
 	const capViolation = checkOrderCaps({
 		settings: capSettings,

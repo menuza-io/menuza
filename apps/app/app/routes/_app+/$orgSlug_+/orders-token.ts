@@ -15,6 +15,7 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
+import { isInHouseDeliveryEnabled } from '#app/utils/orders/deliveries.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { getStationAppGrants } from '#app/utils/pos/station-apps.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
@@ -79,6 +80,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (shiftCloseOnly && !closeShifts) {
 		throw new Response('Forbidden', { status: 403 })
 	}
+	// Own-driver deliveries (#287): the board's routes need this claim, which is
+	// signed only while the organization's `delivery.in_house` flag is on.
+	const deliveries = await isInHouseDeliveryEnabled(organization.id)
 	let operatorName: string | undefined
 	if (closeShifts) {
 		const [operator] = await db
@@ -99,6 +103,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		...(refundLoyalty ? { refundLoyalty: true } : {}),
 		...(refundProvider ? { refundProvider: true } : {}),
 		...(closeShifts ? { closeShifts: true, operatorName } : {}),
+		...(deliveries ? { deliveries: true } : {}),
 	}
 	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
 		request,

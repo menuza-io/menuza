@@ -499,7 +499,7 @@ ${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}${codesHtml}
  * appended. Short: the order number and the restaurant, nothing else.
  */
 export function renderOrderSms(input: {
-	kind: 'ready' | 'eta_changed'
+	kind: 'ready' | 'eta_changed' | 'out_for_delivery' | 'delivered'
 	locale: string
 	restaurantName: string
 	order: OrderEmailOrder

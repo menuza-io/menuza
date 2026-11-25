@@ -780,6 +780,7 @@ function readApps(raw: unknown): Partial<PosDeviceApps> {
 			reservations: false,
 			inventory: false,
 			orders: false,
+			deliveries: false,
 		}
 	const apps: Partial<PosDeviceApps> = {}
 	const body = raw as Record<string, unknown>
@@ -789,6 +790,8 @@ function readApps(raw: unknown): Partial<PosDeviceApps> {
 	if (typeof body.inventory === 'boolean') apps.inventory = body.inventory
 	// A node that predates the Orders app does not offer it.
 	apps.orders = body.orders === true
+	// A node that predates own-driver deliveries does not offer it.
+	apps.deliveries = body.deliveries === true
 	return apps
 }
 

@@ -336,16 +336,20 @@ const truckIcon =
 		createPlacesSearch,
 		createSessionToken,
 		fetchPlacePredictions,
+		requestDeliveryLocations,
 		requestDeliveryQuote,
+		type DeliveryLocationChoice,
 		type DeliveryQuoteResult,
 		type PlacePrediction,
 		type PlacesSearchState,
 	} from '~/lib/ordering/delivery-client'
+	import { readCartSubtotal } from '~/lib/ordering/delivery-fee'
 	import { el, isComposingKey, lockScroll } from '~/lib/ordering/dom'
 	import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
 	import { fetchOrderingOptions } from '~/lib/ordering/order-client'
 	import {
 		OPEN_ORDER_DETAILS_EVENT,
+		deliveryFromQuote,
 		isQuoteValid,
 		loadOrderDetails,
 		saveOrderDetails,
@@ -448,6 +452,17 @@ const truckIcon =
 		let searchState: PlacesSearchState = { status: 'idle', query: '' }
 		let activeIndex = -1
 		let quoteController: AbortController | null = null
+		// The stores that deliver to the typed address, best first (#161), and
+		// whether the guest picked one themselves (their pick stays through a re-check).
+		let storeChoices: DeliveryLocationChoice[] = []
+		let pinnedStore = false
+		// Distance from the address or the browser's location to each store (#161),
+		// for "Nearest to you" on pickup.
+		let pickupDistances = new Map<string, number>()
+		let pickupDistanceKey = ''
+		let locating = false
+		let locationDenied = false
+		const multiLocation = data.locations.length > 1
 		let deliveryAvailable = true
 		let optionsLoadedFor: string | null = null
 		let saving = false
@@ -551,8 +566,84 @@ const truckIcon =
 			q('[data-od-panel="pickup"]')!.classList.toggle('hidden', mode !== 'pickup')
 		}
 
+		/** "1.4 km away" / "0.9 mi away", in the page language (miles for dollar menus). */
+		function distanceText(meters: number) {
+			const miles = data.currency === 'USD'
+			const value = meters / (miles ? 1609.344 : 1000)
+			try {
+				const formatted = new Intl.NumberFormat(data.locale, {
+					style: 'unit',
+					unit: miles ? 'mile' : 'kilometer',
+					unitDisplay: 'short',
+					maximumFractionDigits: value < 10 ? 1 : 0,
+				}).format(value)
+				return fillTemplate(L.distanceAway, { distance: formatted })
+			} catch {
+				return fillTemplate(L.distanceAway, { distance: `${value.toFixed(1)} ${miles ? 'mi' : 'km'}` })
+			}
+		}
+
+		/** Stores nearest first once distances are known; the rest keep their order. */
+		function sortedLocations() {
+			if (!pickupDistances.size) return data.locations
+			const far = Number.POSITIVE_INFINITY
+			return data.locations
+				.map((loc, index) => ({ loc, index }))
+				.sort((a, b) => {
+					const diff = (pickupDistances.get(a.loc.id) ?? far) - (pickupDistances.get(b.loc.id) ?? far)
+					return Number.isFinite(diff) && diff !== 0 ? diff : a.index - b.index
+				})
+				.map((entry) => entry.loc)
+		}
+
+		/** Asks the region how far each store is (one geocode, or the browser's point). */
+		async function loadPickupDistances(input: { address?: string; point?: { lat: number; lng: number } }) {
+			const key = input.point ? 'point' : `address:${input.address ?? ''}`
+			if (!input.point && !input.address) return
+			if (key === pickupDistanceKey && pickupDistances.size) return
+			try {
+				const result = await requestDeliveryLocations({
+					purpose: 'pickup',
+					address: input.address,
+					point: input.point,
+					locale: data.locale,
+				})
+				if (result.status !== 'ok') return
+				pickupDistances = new Map(
+					result.locations.flatMap((choice) =>
+						choice.distanceMeters == null ? [] : [[choice.locationId, choice.distanceMeters] as [string, number]],
+					),
+				)
+				pickupDistanceKey = key
+			} catch {
+				// Sorting by distance is a courtesy: the list stays as it was.
+			}
+			renderLocations()
+		}
+
+		function useMyLocation() {
+			if (!navigator.geolocation || locating) return
+			locating = true
+			locationDenied = false
+			renderLocations()
+			navigator.geolocation.getCurrentPosition(
+				(position) => {
+					locating = false
+					void loadPickupDistances({ point: { lat: position.coords.latitude, lng: position.coords.longitude } })
+				},
+				() => {
+					locating = false
+					locationDenied = true
+					renderLocations()
+				},
+				{ maximumAge: 60_000, timeout: 10_000 },
+			)
+		}
+
 		function renderLocations() {
-			const nodes = data.locations.map((loc) => {
+			const ordered = sortedLocations()
+			const nearestId = pickupDistances.size ? ordered.find((l) => pickupDistances.has(l.id))?.id : undefined
+			const nodes = ordered.map((loc) => {
 				const label = el('label', 'choice-card items-start')
 				const input = el('input')
 				input.type = 'radio'
@@ -572,6 +663,7 @@ const truckIcon =
 				const body = el('span', 'min-w-0 flex-1')
 				const head = el('span', 'flex flex-wrap items-center justify-between gap-x-3 gap-y-1')
 				head.append(el('span', 'text-sm font-semibold text-foreground', loc.name))
+				if (loc.id === nearestId) head.append(el('span', 'badge tone-success', L.nearestToYou))
 				const availability = isLocationOpenForOrdering(loc as any, new Date())
 				const hours = summarizeHours(loc, availability, data.locale)
 				const status = availability.paused
@@ -589,10 +681,24 @@ const truckIcon =
 				body.append(
 					el('span', 'bidi-isolate mt-1 block text-xs text-muted-foreground', fillTemplate(L.readyIn, { count: prepMinutes(loc) })),
 				)
+				const away = pickupDistances.get(loc.id)
+				if (away !== undefined) {
+					body.append(el('span', 'bidi-isolate mt-0.5 block text-xs text-muted-foreground', distanceText(away)))
+				}
 				label.append(input, body)
 				return label
 			})
-			locationsEl.replaceChildren(...nodes)
+			const extras: HTMLElement[] = []
+			if (multiLocation && 'geolocation' in navigator) {
+				const row = el('div', 'flex flex-col gap-1')
+				row.append(
+					button('btn-secondary min-h-10 self-start', L.useMyLocation, useMyLocation, ICON.pin),
+				)
+				if (locationDenied) row.append(el('p', 'text-xs text-muted-foreground', L.locationDenied))
+				row.querySelector('button')?.toggleAttribute('disabled', locating)
+				extras.push(row)
+			}
+			locationsEl.replaceChildren(...extras, ...nodes)
 		}
 
 		function card(tone: 'success' | 'warning' | 'danger' | 'neutral', icon: string, title: string, body?: string) {
@@ -643,7 +749,11 @@ const truckIcon =
 				}
 				case 'deliverable': {
 					const { quote: dq } = quote
-					const { wrap, text } = card('success', ICON.check, L.deliverableTitle)
+					const title =
+						multiLocation && location()
+							? fillTemplate(L.deliveredFrom, { location: location()!.name })
+							: L.deliverableTitle
+					const { wrap, text } = card('success', ICON.check, title)
 					const unit = dq.address.unit || unitInput.value.trim()
 					text.append(autoDir(el('p', 'mt-1 text-sm text-muted-foreground', [dq.address.formatted, unit].filter(Boolean).join(' · '))))
 					const dl = el('dl', 'grid grid-cols-3 divide-x divide-border border-t border-border rtl:divide-x-reverse')
@@ -658,17 +768,45 @@ const truckIcon =
 						stat(L.estimatedTime, minutesRange(deliveryWindow().min, deliveryWindow().max)),
 					)
 					wrap.append(dl)
+					// A fee table by order size (#244): the fee shown is for the cart in hand.
+					if ((dq.pricing?.steps.length ?? 0) > 1) {
+						wrap.append(el('p', 'border-t border-border px-4 py-2 text-xs text-muted-foreground', L.feeDropsNote))
+					}
 					node = wrap
+					const others = storeChoices.filter((choice) => choice.locationId !== locationId && choice.quote)
+					if (multiLocation && others.length) {
+						const box = el('div', 'space-y-2')
+						box.append(wrap, el('h3', 'pt-2 text-sm font-semibold text-foreground', L.otherStoresDeliver))
+						for (const choice of others) {
+							const row = el('button', 'choice-card focus-ring w-full items-start text-start')
+							row.type = 'button'
+							const body = el('span', 'min-w-0 flex-1')
+							const head = el('span', 'flex flex-wrap items-center justify-between gap-x-3 gap-y-1')
+							head.append(el('span', 'text-sm font-semibold text-foreground', choice.name))
+							const fee = choice.quote!.deliveryFee
+							head.append(el('span', 'price text-sm text-foreground', fee > 0 ? money(fee) : L.free))
+							body.append(head)
+							const window = choice.etaMinutes ?? choice.quote!.eta
+							body.append(el('span', 'bidi-isolate mt-0.5 block text-xs text-muted-foreground', minutesRange(window.min, window.max)))
+							if (!choice.open) body.append(el('span', 'badge tone-neutral mt-1', L.scheduledOnly))
+							row.append(body)
+							row.addEventListener('click', () => chooseStore(choice))
+							box.append(row)
+						}
+						node = box
+					}
 					break
 				}
 				case 'out_of_range': {
-					const { wrap, text } = card(
-						'warning',
-						ICON.mapOff,
-						L.outOfRangeTitle,
-						fillTemplate(L.outOfRangeBody, { location: location()?.name ?? '' }),
-					)
-					if (quote.address?.formatted) text.insertBefore(autoDir(el('p', 'mt-1 text-sm font-medium text-foreground', quote.address.formatted)), text.lastChild)
+					const { wrap, text } = quote.noStore
+						? card('warning', ICON.mapOff, L.noStoreTitle, L.noStoreBody)
+						: card(
+								'warning',
+								ICON.mapOff,
+								L.outOfRangeTitle,
+								fillTemplate(L.outOfRangeBody, { location: location()?.name ?? '' }),
+							)
+					if (!quote.noStore && quote.address?.formatted) text.insertBefore(autoDir(el('p', 'mt-1 text-sm font-medium text-foreground', quote.address.formatted)), text.lastChild)
 					wrap.append(actions(...pickupActions(), button('btn-secondary w-full sm:w-auto', L.tryAnotherAddress, tryAnother)))
 					node = wrap
 					break
@@ -947,6 +1085,8 @@ const truckIcon =
 		}
 
 		function tryAnother() {
+			storeChoices = []
+			pinnedStore = false
 			addressInput.value = ''
 			lastPlaceId = null
 			lastAddressText = ''
@@ -955,6 +1095,49 @@ const truckIcon =
 			sessionToken = createSessionToken()
 			render()
 			addressInput.focus()
+		}
+
+		/**
+		 * With several stores the guest enters the address first and we choose the
+		 * store (#161): one regional call geocodes once and quotes every store that
+		 * delivers there, best first (lowest fee, shortest wait, nearest). The guest's
+		 * own pick stays while it still delivers.
+		 */
+		async function quoteAcrossStores(unit: string, signal: AbortSignal): Promise<DeliveryQuoteResult> {
+			const result = await requestDeliveryLocations({
+				purpose: 'delivery',
+				placeId: lastPlaceId ?? undefined,
+				address: lastPlaceId ? undefined : lastAddressText,
+				unit,
+				sessionToken,
+				locale: data.locale,
+				subtotal: readCartSubtotal(data.orgId),
+				signal,
+			})
+			if (result.status === 'not_found') return { status: 'not_found' }
+			if (result.status === 'unavailable') return { status: 'unavailable', reason: result.reason }
+			storeChoices = result.locations.filter((choice) => choice.quote)
+			const chosen =
+				(pinnedStore ? storeChoices.find((choice) => choice.locationId === locationId) : undefined) ??
+				storeChoices[0]
+			if (!chosen?.quote) return { status: 'out_of_range', address: null, noStore: true }
+			if (chosen.locationId !== locationId) {
+				locationId = chosen.locationId
+				optionsLoadedFor = null
+				void loadOptions()
+			}
+			return { status: 'deliverable', quote: chosen.quote }
+		}
+
+		function chooseStore(choice: DeliveryLocationChoice) {
+			if (!choice.quote) return
+			pinnedStore = true
+			locationId = choice.locationId
+			optionsLoadedFor = null
+			quote = { status: 'deliverable', quote: choice.quote }
+			quotedUnit = unitInput.value.trim()
+			void loadOptions()
+			render()
 		}
 
 		async function runQuote(): Promise<DeliveryQuoteResult | null> {
@@ -967,15 +1150,18 @@ const truckIcon =
 			updateFooter()
 			const unit = unitInput.value.trim()
 			try {
-				const result = await requestDeliveryQuote({
-					locationId,
-					placeId: lastPlaceId ?? undefined,
-					address: lastPlaceId ? undefined : lastAddressText,
-					unit,
-					sessionToken,
-					locale: data.locale,
-					signal: controller.signal,
-				})
+				const result = multiLocation
+					? await quoteAcrossStores(unit, controller.signal)
+					: await requestDeliveryQuote({
+							locationId,
+							placeId: lastPlaceId ?? undefined,
+							address: lastPlaceId ? undefined : lastAddressText,
+							unit,
+							sessionToken,
+							locale: data.locale,
+							subtotal: readCartSubtotal(data.orgId),
+							signal: controller.signal,
+						})
 				if (controller.signal.aborted) return null
 				// The details call ends the Places session; start a fresh one.
 				sessionToken = createSessionToken()
@@ -1008,6 +1194,9 @@ const truckIcon =
 			}
 			lastPlaceId = null
 			lastAddressText = ''
+			// A new address is a new search: the best store wins again.
+			storeChoices = []
+			pinnedStore = false
 			search.search(addressInput.value)
 		})
 
@@ -1049,10 +1238,17 @@ const truckIcon =
 		clearBtn.addEventListener('click', () => tryAnother())
 
 		// ---------- mode / time controls ----------
+		/** With an address already verified, "Nearest to you" sorts the stores by it (#161). */
+		function sortPickupByAddress() {
+			if (!multiLocation || quote.status !== 'deliverable') return
+			void loadPickupDistances({ address: quote.quote.address.formatted })
+		}
+
 		function setMode(next: FulfillmentMode) {
 			if (!data.allowedModes.includes(next)) return
 			mode = next
 			if (next === 'delivery') void loadOptions()
+			if (next === 'pickup') sortPickupByAddress()
 			render()
 		}
 
@@ -1091,21 +1287,7 @@ const truckIcon =
 
 		// ---------- save ----------
 		function toDelivery(result: Extract<DeliveryQuoteResult, { status: 'deliverable' }>): OrderDetailsDelivery {
-			const { quote: dq } = result
-			const unit = dq.address.unit || quotedUnit
-			return {
-				quoteToken: dq.token,
-				expiresAt: dq.expiresAt,
-				formatted: dq.address.formatted,
-				line1: dq.address.line1,
-				...(unit ? { unit } : {}),
-				city: dq.address.city,
-				...(dq.address.postalCode ? { postalCode: dq.address.postalCode } : {}),
-				deliveryFee: dq.deliveryFee,
-				minimumOrder: dq.minimumOrder,
-				zoneName: dq.zoneName,
-				eta: dq.eta,
-			}
+			return deliveryFromQuote(result.quote, quotedUnit)
 		}
 
 		function setSaving(value: boolean) {
@@ -1168,6 +1350,8 @@ const truckIcon =
 			searchState = { status: 'idle', query: '' }
 			lastPlaceId = null
 			lastAddressText = ''
+			storeChoices = []
+			pinnedStore = false
 			if (saved.delivery) {
 				const d = saved.delivery
 				quote = {
@@ -1181,6 +1365,7 @@ const truckIcon =
 						deliveryFee: d.deliveryFee,
 						minimumOrder: d.minimumOrder,
 						eta: d.eta,
+						...(d.pricing ? { pricing: d.pricing } : {}),
 					},
 				}
 				quotedUnit = d.unit ?? ''
@@ -1205,6 +1390,7 @@ const truckIcon =
 				if (data.allowedModes.includes(tab)) mode = tab
 			}
 			if (mode === 'delivery') void loadOptions()
+			if (mode === 'pickup') sortPickupByAddress()
 			render()
 			dialog.showModal()
 			releaseScroll = lockScroll()

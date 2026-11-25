@@ -29,6 +29,8 @@ export type OrderErrorLabels = {
 	tipsDisabled: string
 	/** tip_too_large: a custom tip above the cap */
 	tipTooLarge: string
+	/** delivery_fee_changed: the page shows its own message once it has the new fee */
+	deliveryFeeChanged: string
 	/** service_fee_changed: the page shows its own message once it has the new fee */
 	serviceFeeChanged: string
 	/** service_fee_unavailable: the node cannot read the location's fee */
@@ -103,6 +105,7 @@ const CODE_TO_LABEL: Record<string, OrderErrorLabelKey> = {
 	delivery_address_required: 'deliveryAddressRequired',
 	tips_disabled: 'tipsDisabled',
 	tip_too_large: 'tipTooLarge',
+	delivery_fee_changed: 'deliveryFeeChanged',
 	service_fee_changed: 'serviceFeeChanged',
 	service_fee_unavailable: 'serviceFeeUnavailable',
 	packaging_fee_changed: 'packagingFeeChanged',

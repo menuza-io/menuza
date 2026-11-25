@@ -5,6 +5,7 @@ import {
 	type ReportDefinition,
 	createReportDefinition,
 	emptyFilterGroup,
+	timeframePresetSchema,
 } from './dsl.ts'
 
 export type ReportTemplate = {
@@ -870,6 +871,102 @@ function salesInsightTemplates(): ReportTemplate[] {
 				'Share of orders that were ready after the time promised to the guest.',
 			subject: 'order_timings',
 			groupBy: ['location'],
+			chartStyle: 'table',
+			measure: 'ratio',
+			valueField: 'lateRate',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'deliveries-by-driver',
+			category: 'Deliveries',
+			title: 'Deliveries by driver',
+			description:
+				'For each of your own drivers: deliveries, average minutes from ready to picked up and from picked up to delivered, late deliveries, cash collected, tips and problems. A row opens that driver’s deliveries.',
+			subject: 'driver_deliveries',
+			groupBy: [],
+			chartStyle: 'table',
+			timeframePreset: 'last_30_days',
+			timeframeField: 'periodEnd',
+			sortBy: 'none',
+		}),
+		template('organization', {
+			id: 'driver-deliveries-list',
+			category: 'Deliveries',
+			title: 'Deliveries',
+			description:
+				'Each delivery by your own drivers, newest first, with its zone, times, cash, tip and any problem. Filter by driver to open one driver’s deliveries.',
+			subject: 'deliveries',
+			groupBy: [],
+			chartStyle: 'table',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			id: 'delivery-time-by-hour',
+			category: 'Deliveries',
+			title: 'Delivery times by hour: actual',
+			description:
+				'Average minutes from placed to delivered for each hour of the day. Compare with the promised minutes.',
+			subject: 'deliveries',
+			groupBy: ['deliveredAt'],
+			timeBucket: 'hour_of_day',
+			chartStyle: 'bar',
+			measure: 'average',
+			valueField: 'minutesActual',
+			timeframePreset: 'last_30_days',
+			sortBy: 'label',
+			filters: [{ field: 'outcome', operator: 'eq', value: 'delivered' }],
+		}),
+		template('organization', {
+			id: 'delivery-promised-by-hour',
+			category: 'Deliveries',
+			title: 'Delivery times by hour: promised',
+			description:
+				'Average minutes promised to the guest for each hour of the day.',
+			subject: 'deliveries',
+			groupBy: ['deliveredAt'],
+			timeBucket: 'hour_of_day',
+			chartStyle: 'bar',
+			measure: 'average',
+			valueField: 'minutesPromised',
+			timeframePreset: 'last_30_days',
+			sortBy: 'label',
+			filters: [{ field: 'outcome', operator: 'eq', value: 'delivered' }],
+		}),
+		template('organization', {
+			id: 'delivery-time-by-zone',
+			category: 'Deliveries',
+			title: 'Delivery times by zone: actual',
+			description:
+				'Average minutes from placed to delivered for each delivery zone.',
+			subject: 'deliveries',
+			groupBy: ['zone'],
+			chartStyle: 'bar',
+			measure: 'average',
+			valueField: 'minutesActual',
+			timeframePreset: 'last_30_days',
+			filters: [{ field: 'outcome', operator: 'eq', value: 'delivered' }],
+		}),
+		template('organization', {
+			id: 'delivery-promised-by-zone',
+			category: 'Deliveries',
+			title: 'Delivery times by zone: promised',
+			description: 'Average minutes promised to the guest for each delivery zone.',
+			subject: 'deliveries',
+			groupBy: ['zone'],
+			chartStyle: 'bar',
+			measure: 'average',
+			valueField: 'minutesPromised',
+			timeframePreset: 'last_30_days',
+			filters: [{ field: 'outcome', operator: 'eq', value: 'delivered' }],
+		}),
+		template('organization', {
+			id: 'delivery-late-by-zone',
+			category: 'Deliveries',
+			title: 'Late deliveries by zone',
+			description:
+				'Share of deliveries with a promised time that were handed over late, for each zone.',
+			subject: 'deliveries',
+			groupBy: ['zone'],
 			chartStyle: 'table',
 			measure: 'ratio',
 			valueField: 'lateRate',
@@ -2108,6 +2205,51 @@ export function withLocationFilter(
 	const filters = definition.filters
 	return {
 		...definition,
+		advancedFilters:
+			filters.combinator === 'and' ? definition.advancedFilters : true,
+		filters:
+			filters.combinator === 'and' && !filters.not
+				? { ...filters, conditions: [...filters.conditions, condition] }
+				: { combinator: 'and', conditions: [filters, condition] },
+	}
+}
+
+/**
+ * "Open deliveries" from a Deliveries by driver row (#324): the Deliveries list
+ * limited to one driver (by the row's driver id) for the period the row was in.
+ * Only the Deliveries subject takes it; any other definition comes back as it
+ * was, and an unknown preset keeps the template's own period.
+ */
+export function withDriverDeliveries(
+	definition: ReportDefinition,
+	input: {
+		driverKey: string | null | undefined
+		preset?: string | null
+		start?: string | null
+		end?: string | null
+	},
+): ReportDefinition {
+	if (definition.subject !== 'deliveries' || !input.driverKey) return definition
+	const parsed = timeframePresetSchema.safeParse(input.preset)
+	const timeframe = !parsed.success
+		? definition.timeframe
+		: parsed.data === 'custom'
+			? {
+					...definition.timeframe,
+					preset: 'custom' as const,
+					start: input.start ?? undefined,
+					end: input.end ?? undefined,
+				}
+			: { ...definition.timeframe, preset: parsed.data, start: undefined, end: undefined }
+	const condition: FilterCondition = {
+		field: 'driverKey',
+		operator: 'eq',
+		value: input.driverKey.slice(0, 100),
+	}
+	const filters = definition.filters
+	return {
+		...definition,
+		timeframe,
 		advancedFilters:
 			filters.combinator === 'and' ? definition.advancedFilters : true,
 		filters:

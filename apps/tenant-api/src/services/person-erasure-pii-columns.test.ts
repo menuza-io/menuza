@@ -155,6 +155,10 @@ const inventoryActorId =
 const ALLOWED_COLUMNS: Record<string, string> = {
 	'loyalty_rewards.name': 'reward title written by the operator',
 	'print_devices.name': 'printer title written by the operator (#117)',
+	'delivery_run_positions.lat':
+		'the driver’s own shared position (staff, not a customer), one row per open run, deleted when the run ends (#287)',
+	'delivery_run_positions.lng':
+		'the driver’s own shared position (staff, not a customer), one row per open run, deleted when the run ends (#287)',
 	'restaurant_orders.guest_allergy':
 		'a yes the guest ticked (#294): a flag for the kitchen ticket header, never their words, which stay in the line and order notes',
 	'restaurant_orders.gift_card_cents':

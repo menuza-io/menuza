@@ -868,6 +868,12 @@ export type PosDeviceApps = {
 	inventory: boolean
 	/** The Orders app: the location's online orders, from arrival to handed over. */
 	orders: boolean
+	/**
+	 * The Deliveries app (#287): own-driver deliveries. No per-terminal switch: a
+	 * terminal with a location and sign-in gets it while the organization's
+	 * `delivery.in_house` flag is on; who signs in decides what they see.
+	 */
+	deliveries?: boolean
 }
 
 export const NO_POS_DEVICE_APPS: PosDeviceApps = {
@@ -875,6 +881,7 @@ export const NO_POS_DEVICE_APPS: PosDeviceApps = {
 	reservations: false,
 	inventory: false,
 	orders: false,
+	deliveries: false,
 }
 
 /**

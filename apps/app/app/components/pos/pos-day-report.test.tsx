@@ -97,6 +97,61 @@ describe('PosDayReport', () => {
 		).toBe(true)
 	})
 
+	it('shows the cash each driver collected on deliveries beside the shift (#287)', async () => {
+		stubApi({
+			businessDate: '2026-10-21',
+			currency: 'USD',
+			summary: summary(),
+			byTerminal: [],
+			shifts: [
+				{
+					shift: {
+						id: 's1',
+						status: 'closed',
+						openedAt: 1,
+						closedAt: 2,
+						openedBy: { name: 'Lina M.' },
+						closedBy: null,
+						countedCashCents: 6100,
+					},
+					summary: summary(),
+					overShortCents: 0,
+					deliveryCash: {
+						drivers: [
+							{ driverStaffId: 'a', driverName: 'Ana D.', deliveries: 2, cashDueCents: 4500, cashCollectedCents: 4500 },
+							{ driverStaffId: 'b', driverName: 'Ben D.', deliveries: 1, cashDueCents: 3500, cashCollectedCents: 3000 },
+						],
+						totalDueCents: 8000,
+						totalCollectedCents: 7500,
+					},
+					terminal: { code: 'T1', label: 'Front counter' },
+				},
+				{
+					shift: {
+						id: 's2',
+						status: 'closed',
+						openedAt: 3,
+						closedAt: 4,
+						openedBy: null,
+						closedBy: null,
+						countedCashCents: 0,
+					},
+					summary: summary(),
+					overShortCents: 0,
+					deliveryCash: { drivers: [], totalDueCents: 0, totalCollectedCents: 0 },
+					terminal: { code: 'T2', label: 'Back counter' },
+				},
+			],
+		})
+		renderStaff(<PosDayReport orgSlug="joes" />)
+		const cash = await screen.findByTestId('shift-delivery-cash')
+		expect(within(cash).getByText('Cash collected on deliveries')).toBeTruthy()
+		expect(within(cash).getByText('Ana D.: $45.00')).toBeTruthy()
+		expect(within(cash).getByText('Ben D.: $30.00')).toBeTruthy()
+		// A shift with no delivery cash shows no such block.
+		expect(screen.getAllByTestId('shift-delivery-cash')).toHaveLength(1)
+	})
+
 	it('says so when nothing was sold', async () => {
 		stubApi({
 			businessDate: '2026-10-21',

@@ -3,6 +3,7 @@ import { type ScheduleDay, withCurrentAvailability } from '@repo/phone-agent'
 import {
 	type AgentLocation,
 	currentPrepMinutes,
+	describeRestaurantLocation,
 	restaurantAvailability,
 } from './location.ts'
 import { restaurantVertical } from './vertical.ts'
@@ -169,5 +170,84 @@ describe('currentPrepMinutes', () => {
 		expect(currentPrepMinutes(busy, at('12:00'))).toBe(35)
 		expect(currentPrepMinutes(busy, at('13:30'))).toBe(15)
 		expect(currentPrepMinutes({ prepTime: 15 }, at('12:00'))).toBe(15)
+	})
+})
+
+describe('describeRestaurantLocation: delivery fee tables (#244, #421)', () => {
+	const base = {
+		name: 'Loop',
+		phone: null,
+		timezone: 'America/New_York',
+		taxRate: 0,
+		address: null,
+		storeHours: week([{ start: '09:00', end: '17:00' }]),
+		onlineHours: week([{ start: '09:00', end: '17:00' }]),
+		specialHours: [],
+		prepTime: 15,
+		fulfillmentOptions: {
+			pickup: true,
+			delivery: true,
+			dineIn: false,
+			curbside: false,
+		},
+		deliveryConfig: {
+			estimatedDeliveryTimeMin: 25,
+			estimatedDeliveryTimeMax: 45,
+		},
+	}
+	const zone = {
+		name: 'Downtown',
+		enabled: true,
+		restriction: 'allowed',
+		type: 'radius',
+		minimumOrder: 10,
+		deliveryFee: 5,
+		zipCodes: [],
+		radius: { value: 5, unit: 'km' },
+	}
+	const describe_ = (zones: AgentLocation['deliveryZones']) =>
+		describeRestaurantLocation(
+			{ ...base, deliveryZones: zones } as unknown as AgentLocation,
+			at('12:00'),
+		)
+
+	it('keeps the single fee for a zone without tables', () => {
+		expect(describe_([zone])).toContain('fee $5.00, minimum order $10.00')
+	})
+
+	it('says the fee by order size, with free from the last step', () => {
+		const text = describe_([
+			{
+				...zone,
+				feeSteps: [
+					{ from: 40, fee: 0 },
+					{ from: 10, fee: 5 },
+					{ from: 20, fee: 3 },
+				],
+			},
+		])
+		expect(text).toContain(
+			'fee by order size: $5.00 from $10.00, $3.00 from $20.00, free from $40.00',
+		)
+		expect(text).not.toContain('fee $5.00,')
+	})
+
+	it('says the fee by distance and how the distance is measured', () => {
+		const text = describe_([
+			{
+				...zone,
+				distanceFees: {
+					mode: 'driving',
+					unit: 'km',
+					bands: [
+						{ from: 5, fee: 5 },
+						{ from: 0, fee: 3 },
+					],
+				},
+			},
+		])
+		expect(text).toContain(
+			'fee by distance (by road): $3.00 from 0 km, $5.00 from 5 km',
+		)
 	})
 })

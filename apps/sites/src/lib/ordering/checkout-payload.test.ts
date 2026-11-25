@@ -7,6 +7,26 @@ import { checkoutAttemptKey } from './order-client.ts'
 
 const contact = { name: 'Ada', phone: '+15550100', email: 'a@x.test' }
 
+describe('checkoutOrderPayload: the delivery fee shown (#244, #421)', () => {
+	it('sends the fee on screen only for a delivery order', () => {
+		const delivery = { fulfillment: 'delivery', tipPercent: 0, delivery: { quoteToken: 'q' } }
+		expect(
+			checkoutOrderPayload(delivery, { contact, reward: null, expectedDeliveryFeeMinor: 300 }),
+		).toMatchObject({ expectedDeliveryFeeMinor: 300 })
+		// A free fee is still a fee the guest was shown.
+		expect(
+			checkoutOrderPayload(delivery, { contact, reward: null, expectedDeliveryFeeMinor: 0 }),
+		).toMatchObject({ expectedDeliveryFeeMinor: 0 })
+		const pickup = { fulfillment: 'pickup', tipPercent: 0 }
+		expect(
+			checkoutOrderPayload(pickup, { contact, reward: null, expectedDeliveryFeeMinor: 300 }),
+		).not.toHaveProperty('expectedDeliveryFeeMinor')
+		expect(checkoutOrderPayload(delivery, { contact, reward: null })).not.toHaveProperty(
+			'expectedDeliveryFeeMinor',
+		)
+	})
+})
+
 describe('checkoutOrderPayload', () => {
 	it('places exactly the order the reward was priced against', () => {
 		const priced = {

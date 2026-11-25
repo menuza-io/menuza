@@ -33,10 +33,17 @@ export const ZH: OrderMessageCopy = {
 			heading: '您的订单时间已更新',
 			lead: '{r}更新了您的订单 {number} 的时间。',
 		},
+		delivered: {
+			subject: '您的订单 {number} 已送达',
+			heading: '您的订单已送达',
+			lead: '您在{r}的订单 {number} 已送达。祝您用餐愉快！',
+		},
 	},
 	sms: {
 		ready: '您在{r}的订单 {number} 已备好。',
 		eta_changed: '您在{r}的订单 {number} 新时间：{time}。',
+		out_for_delivery: '您在{r}的订单 {number} 正在配送途中。',
+		delivered: '您在{r}的订单 {number} 已送达。',
 	},
 	labels: {
 		order: '订单',

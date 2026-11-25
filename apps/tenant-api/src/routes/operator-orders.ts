@@ -24,6 +24,7 @@ import {
 } from '@repo/tenant-db'
 
 import { errorLogFields } from '../lib/error-log.ts'
+import { checkDeliveryAddress } from './delivery.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
 import { readIdempotencyKey } from '../lib/reservations-public-auth.ts'
@@ -93,6 +94,11 @@ export type OperatorOrderAuth = {
 	 */
 	refundProvider: boolean
 	closeShifts: boolean
+	/**
+	 * Own-driver deliveries (#287): App signs it only while `delivery.in_house` is
+	 * on and the member may write orders. Absent reads as false (fail closed).
+	 */
+	deliveries: boolean
 	operatorName: string | null
 	impersonated: boolean
 }
@@ -194,6 +200,7 @@ export async function authenticateOrdersOperator(
 		refundLoyalty?: boolean
 		refundProvider?: boolean
 		closeShifts?: boolean
+		deliveries?: boolean
 		operatorName?: unknown
 		impersonated?: boolean
 	}
@@ -252,6 +259,7 @@ export async function authenticateOrdersOperator(
 				decoded.refundProvider === true && decoded.impersonated !== true,
 			closeShifts:
 				decoded.closeShifts === true && decoded.impersonated !== true,
+			deliveries: decoded.deliveries === true,
 			operatorName:
 				typeof decoded.operatorName === 'string' &&
 				decoded.operatorName.trim().length > 0
@@ -412,6 +420,51 @@ operatorOrderRoutes.get('/', async (c) => {
 			noStoreHeaders(),
 		)
 	}
+})
+
+const deliveryCheckBodySchema = z
+	.strictObject({
+		locationId: z.string().trim().min(1).max(100),
+		address: z.string().trim().min(3).max(300),
+		/** An items subtotal in major units, to see the fee for that cart. */
+		subtotal: z.number().min(0).max(1_000_000).optional(),
+		locale: z.string().max(20).optional(),
+	})
+
+/**
+ * The operator's Address check on the delivery zones screen (#266): which zone
+ * applies to a typed address, with its fee and minimum, or why delivery is not
+ * available. It runs the guest quote's own coverage code, signs nothing, stores
+ * nothing and logs nothing; the address goes from the operator's browser to this
+ * node and no further than the geocoder. Registered before `/:id`.
+ */
+operatorOrderRoutes.post('/delivery-check', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:read')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	const parsed = deliveryCheckBodySchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	if (!orderVisible(auth.auth, parsed.data.locationId)) {
+		return c.json({ error: 'location_not_found' }, 404, noStoreHeaders())
+	}
+	const checked = await checkDeliveryAddress(
+		auth.auth.orgId,
+		parsed.data.locationId,
+		parsed.data,
+	)
+	if (!checked.ok) {
+		return c.json(
+			{ error: checked.failure.code, message: checked.failure.message },
+			checked.failure.status as 404 | 503,
+			noStoreHeaders(),
+		)
+	}
+	return c.json(checked.body, 200, noStoreHeaders())
 })
 
 /**

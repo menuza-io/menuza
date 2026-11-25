@@ -90,9 +90,15 @@ import {
 } from '../services/sales-report-records.ts'
 import { isMenuInsightsReportSubject } from '@repo/reports/catalog-menu-insights'
 import {
+	isDeliveryReportSubject,
 	isSalesReportSubject,
 	SALES_STAFF_FIELD_PERMISSION,
 } from '@repo/reports/token'
+import {
+	DELIVERY_REPORT_MAX_ROWS,
+	loadDeliveryRecords,
+	loadDriverSummaryRecords,
+} from '../services/delivery-report-records.ts'
 import {
 	loadItemPairRecords,
 	loadModifierSalesRecords,
@@ -169,6 +175,8 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'order_timings',
 	'missed_online_sales',
 	'inventory_deliveries',
+	'deliveries',
+	'driver_deliveries',
 ])
 
 const REPEAT_CALLER_WINDOW_MS = 30 * 86_400_000
@@ -637,6 +645,42 @@ analyticsRoutes.post('/query', async (c) => {
 		records = loaded.records
 		sourceTruncated = loaded.truncated
 		sourceRowLimit = SALES_REPORT_MAX_ROWS
+	} else if (isDeliveryReportSubject(definition.subject)) {
+		// Own-driver deliveries (#324): zones, minutes and money, never an address;
+		// the driver's name only with the staff grant. Limited to the token's locations.
+		const deliveryCtx = {
+			db,
+			orgId: claims.orgId,
+			locationIds: claims.locationIds,
+			now,
+			includeStaffNames: operatorTokenAllowsSubject(
+				claims,
+				SALES_STAFF_FIELD_PERMISSION,
+			),
+		}
+		let loaded
+		try {
+			if (definition.subject === 'deliveries') {
+				loaded = await loadDeliveryRecords(deliveryCtx, loading)
+			} else {
+				const split = splitLoaderFilters(activeReportCatalog(), definition)
+				loaded = await loadDriverSummaryRecords(deliveryCtx, definition, {
+					timeZone,
+					loaderFilters: split.loader,
+				})
+				runDefinition = split.definition
+			}
+		} catch (error) {
+			// A Drizzle error message quotes every bound value: never log it.
+			console.error('Delivery report failed', describeStaffError(error))
+			return c.json(
+				{ error: 'report_failed', message: 'The report could not be run.' },
+				500,
+			)
+		}
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = DELIVERY_REPORT_MAX_ROWS
 	} else if (definition.subject === 'customers') {
 		records = await loadCustomerRecords(db, claims.orgId, subject, loading)
 	} else if (definition.subject === 'text_subscribers') {

@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 	impersonating: vi.fn(),
 	permission: vi.fn(),
 	operatorName: vi.fn(),
+	deliveries: vi.fn(),
 }))
 vi.mock('@repo/auth', () => ({
 	isImpersonating: mocks.impersonating,
@@ -43,6 +44,9 @@ vi.mock('#app/utils/loyalty/access.server.ts', () => ({
 	getUserLoyaltyGrants: mocks.grants,
 	resolveLoyaltyLocationIds: mocks.locations,
 }))
+vi.mock('#app/utils/orders/deliveries.server.ts', () => ({
+	isInHouseDeliveryEnabled: mocks.deliveries,
+}))
 vi.mock('#app/utils/pos/station-apps.server.ts', () => ({
 	getStationAppGrants: mocks.station,
 }))
@@ -71,6 +75,7 @@ describe('order credentials', () => {
 		mocks.locations.mockResolvedValue(null)
 		mocks.grants.mockResolvedValue([])
 		mocks.impersonating.mockResolvedValue(false)
+		mocks.deliveries.mockResolvedValue(false)
 		mocks.permission.mockResolvedValue(false)
 		mocks.operatorName.mockResolvedValue([{ name: 'Manager Maya' }])
 		mocks.client.mockResolvedValue({
@@ -100,6 +105,22 @@ describe('order credentials', () => {
 		expect(result.data).toEqual({
 			jwt: 'scoped-credential',
 			tenantApiUrl: 'https://regional.example',
+		})
+	})
+
+	it('signs the deliveries claim only while delivery.in_house is on (#287)', async () => {
+		mocks.deliveries.mockResolvedValue(true)
+		await run()
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:read',
+			claims: { locationIds: null, deliveries: true },
+		})
+		mocks.client.mockClear()
+		mocks.deliveries.mockResolvedValue(false)
+		await run('?write=1')
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:write',
+			claims: { locationIds: null },
 		})
 	})
 

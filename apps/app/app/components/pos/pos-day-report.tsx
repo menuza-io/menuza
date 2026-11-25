@@ -63,6 +63,25 @@ const shiftSchema = z.object({
 	}),
 	summary: summarySchema,
 	overShortCents: z.number().nullable(),
+	/**
+	 * Cash the restaurant's own drivers collected on delivery while the shift was
+	 * open (#287), beside the drawer's own figures. Absent from a node that predates it.
+	 */
+	deliveryCash: z
+		.object({
+			drivers: z.array(
+				z.object({
+					driverStaffId: z.string(),
+					driverName: z.string(),
+					deliveries: z.number(),
+					cashDueCents: z.number(),
+					cashCollectedCents: z.number(),
+				}),
+			),
+			totalDueCents: z.number(),
+			totalCollectedCents: z.number(),
+		})
+		.optional(),
 	terminal: z.object({
 		code: z.string().nullable(),
 		label: z.string().nullable(),
@@ -313,7 +332,7 @@ function DayBody({
 					className="flex flex-col gap-2"
 					aria-label={_(t`Cash drawer shifts`)}
 				>
-					{day.shifts.map(({ shift, summary, overShortCents, terminal }) => {
+					{day.shifts.map(({ shift, summary, overShortCents, terminal, deliveryCash }) => {
 						const difference = money(Math.abs(overShortCents ?? 0))
 						return (
 							<li
@@ -335,6 +354,29 @@ function DayBody({
 											}
 										/>
 									</p>
+									{deliveryCash && deliveryCash.drivers.length > 0 ? (
+										<div
+											className="text-muted-foreground mt-1 text-xs"
+											data-testid="shift-delivery-cash"
+										>
+											<p className="font-medium">
+												<Trans>Cash collected on deliveries</Trans>
+											</p>
+											<ul>
+												{deliveryCash.drivers.map((driver) => {
+													const driverName = driver.driverName
+													const collected = money(driver.cashCollectedCents)
+													return (
+														<li key={driver.driverStaffId}>
+															<Trans>
+																{driverName}: {collected}
+															</Trans>
+														</li>
+													)
+												})}
+											</ul>
+										</div>
+									) : null}
 									{(() => {
 										const remoteCloserName = shift.closedRemotelyBy?.name
 										return remoteCloserName ? (

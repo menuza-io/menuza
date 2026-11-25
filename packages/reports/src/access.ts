@@ -1,5 +1,6 @@
 import { type ReportCatalog, type ReportSubject, getField } from './catalog.ts'
 import { isGbpReportSubject } from './catalog-gbp.ts'
+import { isDeliveryReportSubject } from './catalog-deliveries.ts'
 import { isGiftCardReportSubject } from './catalog-gift-cards.ts'
 import { INVENTORY_COST_REPORT_PERMISSION } from './catalog-inventory.ts'
 import {
@@ -42,6 +43,7 @@ function isGatedSubject(subject: string) {
 		isGbpReportSubject(subject) ||
 		isSalesReportSubject(subject) ||
 		isMenuInsightsReportSubject(subject) ||
+		isDeliveryReportSubject(subject) ||
 		isOrgWideReportSubject(subject) ||
 		isPermissionGatedReportSubject(subject)
 	)
