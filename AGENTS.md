@@ -646,10 +646,10 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   panel as off; stored history is kept. Collection also needs the organization
   flag `pos.device_health` (default off). See `docs/pos.md`.
 - `PRINTING_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
-  switch for cloud printers (#117): `false` (also `0`, `off`, `no`,
-  `disabled`) queues nothing and answers every printer's poll with "no job";
-  removing a printer always works. Needs the organization flag
-  `kitchen.printers` (default off). See `docs/pos.md` ("Cloud printers").
+  switch for cloud printers (#117): `false` (also `0`, `off`, `no`, `disabled`)
+  queues nothing and answers every printer's poll with "no job"; removing a
+  printer always works. Needs the organization flag `kitchen.printers` (default
+  off). See `docs/pos.md` ("Cloud printers").
 - `POS_ENABLED` / `POS_ORIGINS` - Tenant-api only. Kill switch for the walk-in
   POS (`false` answers 503 on `/pos/*`; revoking a terminal always works) and
   the comma-separated POS web origins allowed to call `/pos/*` from a browser.
@@ -1102,8 +1102,35 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   Neutral vocabulary: workplaces are opaque **scopes** (`DEFAULT_SCOPE_ID`),
   never "locations" (see `docs/staffing-plan.md`)
 
-**Cloud printers, test print, receipt codes, kitchen highlights and alcohol rules
-(#117, #426, #263, #294, #167):**
+**Delivery routing, zone priority, fees and own drivers (#161, #266, #244, #421,
+#287, #324):**
+
+- Extends the one quote pipeline (`POST /delivery/quote`, `resolveZoneForPoint`,
+  `resolveDeliveryCoverage` in `@repo/geo`) and the one fee function
+  (`deliveryFeeCentsFor` in `@repo/common/delivery-fees`); never build a second
+  quote, zone model or fee calculation. Zone order is
+  `deliveryConfig.zonePriority` (`cheapest` default, or `order`); fee tables
+  (`feeSteps`, `distanceFees`) are per zone; the fee base is the items subtotal
+  before discounts. Driving distance goes through the Router adapter
+  (`@repo/geo` `router.ts`, Google Routes API, dev router in development and
+  test); a routing failure falls back to the straight-line distance and nothing
+  about an address, coordinate or distance is ever logged.
+  `POST /delivery/locations` picks the store for an address;
+  `expectedDeliveryFeeMinor` guards the fee (409 `delivery_fee_changed`). Docs:
+  `docs/delivery-coverage.md`.
+- Own drivers live in the region (tenant-db `0070`; no control-plane migration)
+  behind the flag `delivery.in_house` (default off). A driver is a staff member
+  whose job position has `delivers_orders`; Station's device secret plus staff
+  PIN session authenticate (no second driver login). Runs write
+  `out_for_delivery` / `delivered` through `applyOrderStatusPatchInTx`. A run's
+  live position and the driver's addresses are removed when the run ends; the
+  driver never receives the guest's number (masked call, US only). Reports
+  (`deliveries`, `driver_deliveries`) carry zones only; driver names need the
+  staff grant. `POS_CONTRACT_VERSION` stays 11. Deploy App, then tenant-api,
+  then Station, then Sites. Docs: `docs/delivery-drivers.md`.
+
+**Cloud printers, test print, receipt codes, kitchen highlights and alcohol
+rules (#117, #426, #263, #294, #167):**
 
 - One print path: `@repo/common/print-ticket` (ticket document and builders),
   `print-protocols` (Star CloudPRNT and Epson Server Direct Print encoders),
@@ -1112,8 +1139,8 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `print-hooks.ts` (accepted orders, till sales, scheduled orders),
   `routes/print.ts` (printer-facing, `/print/<orgId>.<printerId>/...`) and
   `routes/operator-print.ts` (`/operator/pos/printers`). Tables `print_devices`
-  and `print_jobs` (tenant `0069`). Printers are not terminals: they poll with
-  a short password, never a staff session. Never build a second Kitchen feed,
+  and `print_jobs` (tenant `0069`). Printers are not terminals: they poll with a
+  short password, never a staff session. Never build a second Kitchen feed,
   receipt layout or device table.
 - Highlights (#294) already existed (PR #549); only the guest-stated allergy
   header was added. Alcohol (#167) lives in `priceRestaurantOrder`

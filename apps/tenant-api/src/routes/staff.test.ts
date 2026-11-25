@@ -289,6 +289,32 @@ describe('/operator/staff', () => {
 			).toHaveLength(1)
 		})
 
+		it('marks a job as "Delivers orders" (#287), defaulting to off', async () => {
+			const plain = await h.request('POST', '/positions', { body: { name: 'Server' } })
+			expect(plain.body.position.deliversOrders).toBe(false)
+			const driver = await h.request('POST', '/positions', {
+				body: { name: 'Driver', deliversOrders: true },
+			})
+			expect(driver.status).toBe(201)
+			expect(driver.body.position.deliversOrders).toBe(true)
+			const off = await h.request('PATCH', `/positions/${driver.body.position.id}`, {
+				body: { deliversOrders: false },
+			})
+			expect(off.body.position.deliversOrders).toBe(false)
+			const list = await h.request('GET', '/positions')
+			expect(
+				list.body.positions.map((p: { name: string; deliversOrders: boolean }) => [p.name, p.deliversOrders]).sort(),
+			).toEqual([
+				['Driver', false],
+				['Server', false],
+			])
+			// A fresh PATCH to turn it back on.
+			const on = await h.request('PATCH', `/positions/${driver.body.position.id}`, {
+				body: { deliversOrders: true },
+			})
+			expect(on.body.position.deliversOrders).toBe(true)
+		})
+
 		it('rejects duplicate active names and unknown colors', async () => {
 			await createPosition('Server')
 			const dup = await h.request('POST', '/positions', {

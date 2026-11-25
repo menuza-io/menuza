@@ -1849,6 +1849,10 @@ msgstr "{doneCount} of {totalCount} paused"
 msgid "{doneCount} of {totalCount} resumed"
 msgstr "{doneCount} of {totalCount} resumed"
 
+#: app/components/pos/pos-day-report.tsx:371
+msgid "{driverName}: {collected}"
+msgstr "{driverName}: {collected}"
+
 #: app/components/phone-agent/training-rules-section.tsx:154
 msgid "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 msgstr "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
@@ -9460,7 +9464,7 @@ msgstr "Balance due"
 msgid "Balance removed"
 msgstr "Balance removed"
 
-#: app/components/pos/pos-day-report.tsx:375
+#: app/components/pos/pos-day-report.tsx:417
 msgid "Balanced"
 msgstr "Balanced"
 
@@ -10274,7 +10278,7 @@ msgstr "Business costs"
 msgid "Business date"
 msgstr "Business date"
 
-#: app/components/pos/pos-day-report.tsx:161
+#: app/components/pos/pos-day-report.tsx:180
 #: app/components/pos/terminal-profiles.tsx:68
 #: app/components/pos/terminals-manager.tsx:683
 #: app/components/pos/terminals-manager.tsx:1761
@@ -10908,7 +10912,7 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
 #: app/components/phone-agent/training-rules-section.tsx:639
 #: app/components/phone-agent/training-rules-section.tsx:691
-#: app/components/pos/pos-day-report.tsx:507
+#: app/components/pos/pos-day-report.tsx:549
 #: app/components/pos/printers-manager.tsx:785
 #: app/components/pos/terminal-profiles.tsx:647
 #: app/components/pos/terminals-manager.tsx:822
@@ -11203,7 +11207,7 @@ msgstr "Cancelled by the restaurant"
 msgid "Cancelled moving {cancelledGuestName}."
 msgstr "Cancelled moving {cancelledGuestName}."
 
-#: app/components/pos/pos-day-report.tsx:262
+#: app/components/pos/pos-day-report.tsx:281
 msgid "Cancelled orders"
 msgstr "Cancelled orders"
 
@@ -11306,7 +11310,7 @@ msgid "Caption"
 msgstr ""
 
 #: app/components/media-library/focal-point-editor.tsx:216
-#: app/components/pos/pos-day-report.tsx:259
+#: app/components/pos/pos-day-report.tsx:278
 #: app/routes/_app+/$orgSlug_+/gift-cards+/_index.tsx:146
 msgid "Card"
 msgstr "Card"
@@ -11411,9 +11415,13 @@ msgstr "Cart reminder"
 msgid "Cartesia voice ID. Leave empty for the default voice."
 msgstr "Cartesia voice ID. Leave empty for the default voice."
 
-#: app/components/pos/pos-day-report.tsx:258
+#: app/components/pos/pos-day-report.tsx:277
 msgid "Cash"
 msgstr "Cash"
+
+#: app/components/pos/pos-day-report.tsx:363
+msgid "Cash collected on deliveries"
+msgstr "Cash collected on deliveries"
 
 #: app/components/pos/station-register-settings.tsx:370
 msgid "Cash discount (%)"
@@ -11427,7 +11435,7 @@ msgstr "Cash drawer last opened"
 msgid "Cash drawer log"
 msgstr "Cash drawer log"
 
-#: app/components/pos/pos-day-report.tsx:314
+#: app/components/pos/pos-day-report.tsx:333
 #: app/components/pos/terminal-profiles.tsx:67
 #: app/components/pos/terminals-manager.tsx:640
 msgid "Cash drawer shifts"
@@ -11480,7 +11488,7 @@ msgstr "Cash tips: {from} to {to}"
 msgid "Cash to collect: {cash}"
 msgstr "Cash to collect: {cash}"
 
-#: app/components/pos/pos-day-report.tsx:489
+#: app/components/pos/pos-day-report.tsx:531
 msgid "Cashier left without closing the drawer"
 msgstr "Cashier left without closing the drawer"
 
@@ -13623,11 +13631,11 @@ msgstr "Close email design"
 msgid "Close it once the guest has paid the total below."
 msgstr "Close it once the guest has paid the total below."
 
-#: app/components/pos/pos-day-report.tsx:369
+#: app/components/pos/pos-day-report.tsx:411
 msgid "Close shift"
 msgstr "Close shift"
 
-#: app/components/pos/pos-day-report.tsx:426
+#: app/components/pos/pos-day-report.tsx:468
 msgid "Close shift remotely"
 msgstr "Close shift remotely"
 
@@ -13734,7 +13742,7 @@ msgstr "Closed or short day"
 msgid "Closed or short days such as holidays."
 msgstr "Closed or short days such as holidays."
 
-#: app/components/pos/pos-day-report.tsx:342
+#: app/components/pos/pos-day-report.tsx:384
 msgid "Closed remotely by {remoteCloserName}"
 msgstr "Closed remotely by {remoteCloserName}"
 
@@ -14196,7 +14204,7 @@ msgstr "Confirm accepting all translations"
 msgid "Confirm cancellation"
 msgstr "Confirm cancellation"
 
-#: app/components/pos/pos-day-report.tsx:510
+#: app/components/pos/pos-day-report.tsx:552
 msgid "Confirm close"
 msgstr "Confirm close"
 
@@ -15185,7 +15193,7 @@ msgstr "Could not check where this is used."
 msgid "Could not check which messages use this discount."
 msgstr "Could not check which messages use this discount."
 
-#: app/components/pos/pos-day-report.tsx:468
+#: app/components/pos/pos-day-report.tsx:510
 msgid "Could not close the shift."
 msgstr "Could not close the shift."
 
@@ -15319,7 +15327,7 @@ msgstr "Could not load the pre-service overview."
 msgid "Could not load the product mix from your region."
 msgstr "Could not load the product mix from your region."
 
-#: app/components/pos/pos-day-report.tsx:130
+#: app/components/pos/pos-day-report.tsx:149
 msgid "Could not load the report."
 msgstr "Could not load the report."
 
@@ -15736,7 +15744,7 @@ msgstr "Counted <0>{countedText}</0>"
 msgid "Counted <0>{lastCountedLabel}</0>"
 msgstr "Counted <0>{lastCountedLabel}</0>"
 
-#: app/components/pos/pos-day-report.tsx:475
+#: app/components/pos/pos-day-report.tsx:517
 msgid "Counted cash"
 msgstr "Counted cash"
 
@@ -17036,8 +17044,8 @@ msgstr "Day controls"
 msgid "Day ends {time}"
 msgstr "Day ends {time}"
 
-#: app/components/pos/pos-day-report.tsx:151
-#: app/components/pos/pos-day-report.tsx:157
+#: app/components/pos/pos-day-report.tsx:170
+#: app/components/pos/pos-day-report.tsx:176
 msgid "Day report"
 msgstr "Day report"
 
@@ -20833,7 +20841,7 @@ msgstr "Enter a quantity above zero."
 msgid "Enter a real date and time."
 msgstr "Enter a real date and time."
 
-#: app/components/pos/pos-day-report.tsx:457
+#: app/components/pos/pos-day-report.tsx:499
 msgid "Enter a reason for closing this shift remotely."
 msgstr "Enter a reason for closing this shift remotely."
 
@@ -20919,7 +20927,7 @@ msgstr "Enter a valid amount."
 msgid "Enter a valid cash variance threshold or leave it blank."
 msgstr "Enter a valid cash variance threshold or leave it blank."
 
-#: app/components/pos/pos-day-report.tsx:452
+#: app/components/pos/pos-day-report.tsx:494
 msgid "Enter a valid counted cash amount."
 msgstr "Enter a valid counted cash amount."
 
@@ -22006,11 +22014,11 @@ msgstr "Expand service notes"
 msgid "Expected"
 msgstr "Expected"
 
-#: app/components/pos/pos-day-report.tsx:218
+#: app/components/pos/pos-day-report.tsx:237
 msgid "Expected {expected}"
 msgstr "Expected {expected}"
 
-#: app/components/pos/pos-day-report.tsx:220
+#: app/components/pos/pos-day-report.tsx:239
 msgid "Expected {expected}, counted {counted}"
 msgstr "Expected {expected}, counted {counted}"
 
@@ -22030,7 +22038,7 @@ msgstr "Expected <0>{expectedText}</0>"
 msgid "Expected against counted cash for every closed and open till shift over the last 30 days."
 msgstr "Expected against counted cash for every closed and open till shift over the last 30 days."
 
-#: app/components/pos/pos-day-report.tsx:435
+#: app/components/pos/pos-day-report.tsx:477
 msgid "Expected cash in drawer: {expectedCashText}. Closing cannot be undone."
 msgstr "Expected cash in drawer: {expectedCashText}. Closing cannot be undone."
 
@@ -27181,7 +27189,7 @@ msgstr "Items running low, counts that are due and deliveries to pay will show h
 msgid "Items sold together, such as a pizza, a side and a drink."
 msgstr "Items sold together, such as a pizza, a side and a drink."
 
-#: app/components/pos/pos-day-report.tsx:266
+#: app/components/pos/pos-day-report.tsx:285
 msgid "Items taken off tabs"
 msgstr "Items taken off tabs"
 
@@ -32442,7 +32450,7 @@ msgstr "Nested under:"
 msgid "Net"
 msgstr "Net"
 
-#: app/components/pos/pos-day-report.tsx:253
+#: app/components/pos/pos-day-report.tsx:272
 #: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:116
 msgid "Net sales"
 msgstr "Net sales"
@@ -34778,7 +34786,7 @@ msgstr "No voices match"
 msgid "No wait estimate is available yet. They would be number {position} in line."
 msgstr "No wait estimate is available yet. They would be number {position} in line."
 
-#: app/components/pos/pos-day-report.tsx:246
+#: app/components/pos/pos-day-report.tsx:265
 msgid "No walk-in sales on this day."
 msgstr "No walk-in sales on this day."
 
@@ -36961,7 +36969,7 @@ msgstr "Only your team sees notes. The applicant never does."
 #: app/components/marketing/programs-section.tsx:157
 #: app/components/orders/new-order-banner.tsx:65
 #: app/components/phone-agent/flow-editor/flow-meta.ts:97
-#: app/components/pos/pos-day-report.tsx:353
+#: app/components/pos/pos-day-report.tsx:395
 #: app/components/staff/timesheets/issue-copy.ts:56
 #: app/components/staff/timesheets/timesheet-table.tsx:325
 #: app/components/staff/timesheets/timesheet-table.tsx:529
@@ -38337,7 +38345,7 @@ msgstr "OT {hours}"
 #: app/components/hiring/job-labels.ts:46
 #: app/components/orders/refund-labels.ts:23
 #: app/components/phone-agent/vertical-labels.ts:18
-#: app/components/pos/pos-day-report.tsx:260
+#: app/components/pos/pos-day-report.tsx:279
 #: app/components/staff/onboarding/onboarding-labels.ts:52
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:119
 #: app/utils/inventory/labels.ts:28
@@ -38455,7 +38463,7 @@ msgstr "Outside these times the agent takes a message instead."
 msgid "Over"
 msgstr "Over"
 
-#: app/components/pos/pos-day-report.tsx:379
+#: app/components/pos/pos-day-report.tsx:421
 msgid "Over {difference}"
 msgstr "Over {difference}"
 
@@ -42724,7 +42732,7 @@ msgstr "Real weight on the invoice"
 #: app/components/inventory/log-waste-dialog.tsx:410
 #: app/components/inventory/review-order-screen.tsx:1253
 #: app/components/loyalty/adjust-dialog.tsx:243
-#: app/components/pos/pos-day-report.tsx:486
+#: app/components/pos/pos-day-report.tsx:528
 #: app/components/qr/open-tabs.tsx:948
 #: app/components/reservations/detail-sheet.tsx:1502
 #: app/components/reservations/payment-panel.tsx:690
@@ -43460,7 +43468,7 @@ msgstr "Refunded to card: {amount}"
 msgid "Refunding…"
 msgstr "Refunding…"
 
-#: app/components/pos/pos-day-report.tsx:252
+#: app/components/pos/pos-day-report.tsx:271
 #: app/components/pos/ticket-settings.tsx:91
 #: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:132
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:168
@@ -45825,7 +45833,7 @@ msgstr "Sale upload missing"
 #: app/components/dashboard/blocks/today-block.tsx:368
 #: app/components/discounts/discount-performance.tsx:252
 #: app/components/inventory/variance-screen.tsx:433
-#: app/components/pos/pos-day-report.tsx:251
+#: app/components/pos/pos-day-report.tsx:270
 #: app/components/reports/product-mix-table.tsx:79
 #: app/components/staff/labor/labor-overview.tsx:160
 #: app/components/staff/labor/labor-overview.tsx:393
@@ -45854,7 +45862,7 @@ msgstr "Sales basis"
 msgid "Sales by category"
 msgstr "Sales by category"
 
-#: app/components/pos/pos-day-report.tsx:297
+#: app/components/pos/pos-day-report.tsx:316
 msgid "Sales by terminal"
 msgstr "Sales by terminal"
 
@@ -49097,7 +49105,7 @@ msgctxt "delivery line"
 msgid "Short"
 msgstr "Short"
 
-#: app/components/pos/pos-day-report.tsx:383
+#: app/components/pos/pos-day-report.tsx:425
 msgid "Short {difference}"
 msgstr "Short {difference}"
 
@@ -52185,7 +52193,7 @@ msgstr "Tablets"
 msgid "Tablets accept clock-ins"
 msgstr "Tablets accept clock-ins"
 
-#: app/components/pos/pos-day-report.tsx:269
+#: app/components/pos/pos-day-report.tsx:288
 msgid "Tabs still open"
 msgstr "Tabs still open"
 
@@ -52433,7 +52441,7 @@ msgid "Tasks to finish when someone joins."
 msgstr "Tasks to finish when someone joins."
 
 #: app/components/orders/order-detail.tsx:1089
-#: app/components/pos/pos-day-report.tsx:256
+#: app/components/pos/pos-day-report.tsx:275
 #: app/components/pos/ticket-settings.tsx:86
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:384
 #: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:124
@@ -52677,7 +52685,7 @@ msgstr "Temporary (302) keeps original search indexing. Best for short-term prom
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
-#: app/components/pos/pos-day-report.tsx:430
+#: app/components/pos/pos-day-report.tsx:472
 msgid "Terminal {terminalLabel}. Expected cash in drawer: {expectedCashText}. Closing cannot be undone."
 msgstr "Terminal {terminalLabel}. Expected cash in drawer: {expectedCashText}. Closing cannot be undone."
 
@@ -58070,7 +58078,7 @@ msgid "Tip: give printed cards a code of their own (for example FLYER10) to see 
 msgstr "Tip: give printed cards a code of their own (for example FLYER10) to see how many orders they bring in."
 
 #: app/components/locations/location-setting-labels.ts:17
-#: app/components/pos/pos-day-report.tsx:257
+#: app/components/pos/pos-day-report.tsx:276
 #: app/components/staff/labor/labor-page.tsx:198
 #: app/components/staff/timesheets/card-fields.tsx:184
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:215
