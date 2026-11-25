@@ -45,14 +45,14 @@ describe('GET /resources/pos/flags', () => {
 	it('says whether cloud printers are on (kitchen.printers), only for a literal true', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		const auth = `Bearer ${ENV.INTERNAL_COMMAND_TOKEN}`
-		flag.mockImplementation(async (key: string) =>
+		flag.mockImplementation(async (key?: string) =>
 			key === 'kitchen.printers' ? true : false,
 		)
 		expect(await (await call(get(organization.id, auth))).json()).toEqual({
 			deviceHealth: false,
 			printers: true,
 		})
-		flag.mockImplementation(async (key: string) =>
+		flag.mockImplementation(async (key?: string) =>
 			key === 'kitchen.printers' ? ('true' as unknown) : false,
 		)
 		expect(await (await call(get(organization.id, auth))).json()).toEqual({

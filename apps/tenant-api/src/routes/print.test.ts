@@ -778,6 +778,19 @@ describe('cloud printers (#117, #426)', () => {
 			expect(Date.now() - started).toBeLessThan(10_000)
 		})
 
+		it('prints a table round\'s kitchen ticket only: its receipt comes with the tab', async () => {
+			await addPrinter({ routes: { kitchen: 'all', receipts: true } })
+			const orderId = await insertOrder({
+				fulfillment: 'dine_in',
+				tableLabel: '9',
+				source: 'qr_table',
+			})
+			const db = await getTenantDb(ORG)
+			const [order] = await db.select().from(restaurantOrders).where(eq(restaurantOrders.id, orderId))
+			await printAcceptedOrder(db, ORG, order!)
+			expect((await db.select().from(printJobs)).map((job) => job.kind)).toEqual(['kitchen'])
+		})
+
 		it('holds a scheduled order\'s ticket until its fire time', async () => {
 			const { printer } = await addPrinter()
 			const now = Date.now()

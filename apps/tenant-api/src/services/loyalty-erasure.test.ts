@@ -75,8 +75,13 @@ async function tablesContaining(db: TenantDatabase, needles: string[]) {
 	)) as Array<{ name: string }>
 	const found: string[] = []
 	for (const { name } of tables) {
+		// Values only: a column's own name (`guest_allergy`) is not a person's data.
 		const rows = JSON.stringify(
-			await db.all(sql.raw(`select * from "${name}"`)),
+			(
+				(await db.all(sql.raw(`select * from "${name}"`))) as Array<
+					Record<string, unknown>
+				>
+			).map((row) => Object.values(row)),
 		).toLowerCase()
 		if (needles.some((needle) => rows.includes(needle.toLowerCase()))) {
 			found.push(name)

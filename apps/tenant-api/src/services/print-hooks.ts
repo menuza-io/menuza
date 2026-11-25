@@ -27,6 +27,7 @@ type PrintableOrder = Pick<
 	| 'paymentStatus'
 	| 'scheduledFor'
 	| 'createdAt'
+	| 'fulfillment'
 >
 
 /** An online order the kitchen works on: accepted and paid, free, or paid at handoff. */
@@ -60,7 +61,10 @@ export async function printAcceptedOrder(
 		)
 		if (fireAt > now) return
 	}
-	for (const kind of ['kitchen', 'receipt'] as const) {
+	// A table round is not a sale of its own: the tab's receipt comes when it is
+	// paid, so a round prints only its kitchen ticket.
+	const kinds = order.fulfillment === 'dine_in' ? (['kitchen'] as const) : (['kitchen', 'receipt'] as const)
+	for (const kind of kinds) {
 		await queueOrderPrint(db, {
 			orgId,
 			locationId: order.locationId,
