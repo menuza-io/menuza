@@ -1213,6 +1213,24 @@ export const restaurantOrders = sqliteTable(
 		largeOrder: integer('large_order', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		/**
+		 * The guest said yes to "I am 21 or older and will show ID" (#167). Null
+		 * when alcohol was not in the cart and nothing was asked. Never a birth
+		 * date: a yes on the order is all that is kept.
+		 */
+		ageConfirmed: integer('age_confirmed', { mode: 'boolean' }),
+		/** The order has an item or option flagged alcohol: tickets say "Check ID" (#167). */
+		hasAlcohol: integer('has_alcohol', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		/**
+		 * The guest ticked "Someone in my party has an allergy" at checkout (#294).
+		 * A flag only: the guest's words stay in the line and order notes. It
+		 * highlights the whole kitchen ticket header.
+		 */
+		guestAllergy: integer('guest_allergy', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		totalCents: integer('total_cents').notNull(),
 		// A loyalty reward's discount, taken off the subtotal before tax. The
 		// redemption (`loyalty_redemptions`, source `restaurant_order`) holds how
@@ -11684,3 +11702,115 @@ export const restaurantOrderSteps = sqliteTable(
 	],
 )
 export type RestaurantOrderStepRecord = typeof restaurantOrderSteps.$inferSelect
+
+
+// ---------------------------------------------------------------------------
+// Cloud printers (#117, #426)
+// ---------------------------------------------------------------------------
+
+export const PRINT_PROTOCOLS = ['star_cloudprnt', 'epson_sdp'] as const
+export type PrintProtocol = (typeof PRINT_PROTOCOLS)[number]
+export const PRINT_JOB_KINDS = ['kitchen', 'receipt', 'test', 'drawer'] as const
+export type PrintJobKind = (typeof PRINT_JOB_KINDS)[number]
+export const PRINT_JOB_STATUSES = [
+	'queued',
+	'offered',
+	'printed',
+	'failed',
+	'flagged',
+	'cancelled',
+] as const
+export type PrintJobStatus = (typeof PRINT_JOB_STATUSES)[number]
+
+/**
+ * A cloud-connected receipt or kitchen printer at one location. It polls this
+ * node with a credential only it holds: the secret is shown to the operator
+ * once and only a keyed hash is stored. A printer is not a tablet: no staff
+ * session, no heartbeat; it may only poll for, fetch and acknowledge its own
+ * jobs.
+ */
+export const printDevices = sqliteTable(
+	'print_devices',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		secretHash: text('secret_hash').notNull(),
+		protocol: text('protocol', { enum: [...PRINT_PROTOCOLS] }).notNull(),
+		widthMm: integer('width_mm').notNull().default(80),
+		copies: integer('copies').notNull().default(1),
+		// What it prints: `{ kitchen, receipts, stationIds, isDefault,
+		// deliveryAddress, arabicFont }` (see `@repo/common/print-devices`).
+		routes: text('routes', { mode: 'json' }).notNull().default({}),
+		lastSeenAt: integer('last_seen_at'),
+		// The latest status the printer reported: `ok`, `out_of_paper`,
+		// `cover_open`, `offline` or `error`. Technical only.
+		status: text('status').notNull().default('unknown'),
+		statusAt: integer('status_at'),
+		lastTestAt: integer('last_test_at'),
+		lastTestResult: text('last_test_result'),
+		revokedAt: integer('revoked_at'),
+		revokedBy: text('revoked_by'),
+		createdBy: text('created_by').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_print_devices_secret_hash').on(table.secretHash),
+		index('idx_print_devices_location').on(table.locationId, table.revokedAt),
+	],
+)
+
+/**
+ * One thing for one printer to print. `payload` is the ticket document
+ * (`@repo/common/print-ticket`) the node built when the job was queued: it
+ * never holds a guest phone number or payment details. A job is offered,
+ * acknowledged and finished once; an unacknowledged one is offered again after
+ * 30 seconds, at most 5 times, then flagged.
+ */
+export const printJobs = sqliteTable(
+	'print_jobs',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		deviceId: text('device_id')
+			.notNull()
+			.references(() => printDevices.id, { onDelete: 'cascade' }),
+		locationId: text('location_id').notNull(),
+		sourceType: text('source_type').notNull(),
+		sourceId: text('source_id').notNull(),
+		kind: text('kind', { enum: [...PRINT_JOB_KINDS] }).notNull(),
+		// What made this job: `accepted`, `sent:<round>`, `paid`, `reprint:<id>`.
+		// Unique with the source, so a hook that runs twice queues one job.
+		dedupeKey: text('dedupe_key').notNull(),
+		payload: text('payload', { mode: 'json' }).notNull(),
+		status: text('status', { enum: [...PRINT_JOB_STATUSES] })
+			.notNull()
+			.default('queued'),
+		attempts: integer('attempts').notNull().default(0),
+		offeredAt: integer('offered_at'),
+		printedAt: integer('printed_at'),
+		failedReason: text('failed_reason'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_print_jobs_dedupe').on(
+			table.deviceId,
+			table.sourceType,
+			table.sourceId,
+			table.kind,
+			table.dedupeKey,
+		),
+		index('idx_print_jobs_device_status').on(
+			table.deviceId,
+			table.status,
+			table.createdAt,
+		),
+		index('idx_print_jobs_source').on(table.sourceType, table.sourceId),
+	],
+)
+
+export type PrintDevice = typeof printDevices.$inferSelect
+export type PrintJob = typeof printJobs.$inferSelect

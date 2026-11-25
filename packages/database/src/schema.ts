@@ -4363,6 +4363,18 @@ export const OrganizationLocation = sqliteTable(
 		 */
 		packagingFee: text(),
 		/**
+		 * Where alcohol may be ordered online (#167): `pickup_and_delivery`,
+		 * `pickup`, `delivery` or `none`. Null is "not reviewed yet": it behaves as
+		 * `pickup_and_delivery` (what happened before the setting existed) and the
+		 * location page shows a banner asking for a review.
+		 */
+		alcoholOnline: text(),
+		/**
+		 * The location's Google review link (#263), https only. Null means no review
+		 * code is printed on receipts for this location.
+		 */
+		googleReviewUrl: text(),
+		/**
 		 * Table-service courses (#290). JSON `{ enabled, autoFireMinutes, courses }`.
 		 * Null is off. Course names are operator text, not guest data.
 		 */

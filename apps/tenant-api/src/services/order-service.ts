@@ -1119,6 +1119,19 @@ export async function placeOrder(input: {
 		return { ok: false, failure: fromEngineError(priced.error) }
 	}
 	const result: PricedRestaurantOrder = priced.result
+	// A cart with alcohol needs the guest's yes to "I am 21 or older and will
+	// show ID" (#167). Only the yes is kept, never a birth date.
+	if (result.hasAlcohol && request.ageConfirmed !== true) {
+		return {
+			ok: false,
+			failure: fromEngineError({
+				status: 422,
+				code: 'age_confirmation_required',
+				message:
+					'Confirm that you are 21 or older and will show ID to order alcohol.',
+			}),
+		}
+	}
 
 	const requestHash = sha256Hex(canonicalOrderRequest(request))
 	const db = await getTenantDb(orgId)
@@ -1828,6 +1841,9 @@ export async function placeOrder(input: {
 									utensilsRequested,
 									largeOrderExtraMinutes: largeOrderExtra,
 									largeOrder: isLargeAlertOrder,
+									ageConfirmed: result.hasAlcohol ? true : null,
+									hasAlcohol: result.hasAlcohol,
+									guestAllergy: request.guestAllergy === true,
 									totalCents: totals.totalCents,
 									giftCardCents: gift?.appliedMinor ?? 0,
 									loyaltyDiscountCents: totals.loyaltyDiscountCents,
@@ -3807,6 +3823,10 @@ export function operatorOrder(
 		 * Orders list badges it. Operators only, never the guest's receipt.
 		 */
 		largeOrder: order.largeOrder === true,
+		/** The order has alcohol: staff "Check ID" at handoff (#167). Operators only. */
+		hasAlcohol: order.hasAlcohol === true,
+		/** The guest stated an allergy at checkout (#294). Operators only. */
+		guestAllergy: order.guestAllergy === true,
 		/**
 		 * Why a `payment_review` order waits, when the region knows: the sale was
 		 * paid late and a discount's limit had been used up since. Null otherwise.
