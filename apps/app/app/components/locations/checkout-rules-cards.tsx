@@ -3,11 +3,16 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
+	ALCOHOL_MINIMUM_AGE,
+	type AlcoholOnline,
+} from '@repo/common/alcohol-rules'
+import {
 	PACKAGING_FEE_FULFILLMENTS,
 	PACKAGING_FEE_LABEL_MAX_LENGTH,
 	DEFAULT_PACKAGING_FEE_LABEL,
 } from '@repo/common/packaging-fee'
 import { PICKUP_INSTRUCTIONS_MAX_LENGTH } from '@repo/common/pickup-instructions'
+import { Alert, AlertDescription } from '@repo/ui/alert'
 import {
 	Card,
 	CardContent,
@@ -397,5 +402,109 @@ export function LargeOrderFields({
 				/>
 			</div>
 		</div>
+	)
+}
+
+/**
+ * Where alcohol may be ordered online (#167). Hidden in KSA, where alcohol is
+ * always refused online. `reviewed` is false until the owner has saved a
+ * choice: until then the location behaves as before and a banner asks for a
+ * review.
+ */
+export function AlcoholCard({
+	value,
+	reviewed,
+	onChange,
+}: {
+	value: AlcoholOnline
+	reviewed: boolean
+	onChange: (next: AlcoholOnline) => void
+}) {
+	const { _ } = useLingui()
+	const options = [
+		{
+			value: 'pickup_and_delivery',
+			label: _(msg`Allow for pickup and delivery`),
+		},
+		{ value: 'pickup', label: _(msg`Allow for pickup only`) },
+		{ value: 'delivery', label: _(msg`Allow for delivery only`) },
+		{ value: 'none', label: _(msg`Not online`) },
+	]
+	return (
+		<Card data-testid="alcohol-card">
+			<CardHeader>
+				<CardTitle>
+					<Trans>Alcohol</Trans>
+				</CardTitle>
+				<CardDescription>
+					<Trans>
+						Items marked as alcohol are refused for order types you do not
+						allow. When alcohol is in the cart the guest confirms they are{' '}
+						{ALCOHOL_MINIMUM_AGE} or older and will show ID, and tickets say
+						Check ID. Delivery apps and couriers never carry alcohol.
+					</Trans>
+				</CardDescription>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				{reviewed ? null : (
+					<Alert data-testid="alcohol-review-banner">
+						<AlertDescription>
+							<Trans>
+								Alcohol is allowed for pickup and delivery here, as it was
+								before this setting existed. Please review it and save your
+								choice.
+							</Trans>
+						</AlertDescription>
+					</Alert>
+				)}
+				<SelectField
+					id="alcohol-online"
+					label={<Trans>Alcohol online</Trans>}
+					options={options}
+					value={value}
+					onValueChange={(v) => v && onChange(v as AlcoholOnline)}
+				/>
+			</CardContent>
+		</Card>
+	)
+}
+
+/** The location's Google review link, printed as a code on receipts (#263). */
+export function GoogleReviewCard({
+	value,
+	onChange,
+	error,
+}: {
+	value: string
+	onChange: (next: string) => void
+	error?: string | null
+}) {
+	return (
+		<Card data-testid="google-review-card">
+			<CardHeader>
+				<CardTitle>
+					<Trans>Google review link</Trans>
+				</CardTitle>
+				<CardDescription>
+					<Trans>
+						Receipts can print a code that opens this page ("Enjoyed it? Tell
+						us"). Without a link, no review code is printed for this location.
+					</Trans>
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<TextField
+					id="google-review-url"
+					label={<Trans>Review link</Trans>}
+					optional
+					type="url"
+					dir="ltr"
+					placeholder="https://g.page/r/…/review"
+					value={value}
+					onChange={(e) => onChange(e.target.value)}
+					error={error ?? undefined}
+				/>
+			</CardContent>
+		</Card>
 	)
 }

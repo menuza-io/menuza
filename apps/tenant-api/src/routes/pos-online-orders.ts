@@ -224,7 +224,10 @@ async function detailResponse(
 	},
 	orderId: string,
 	status: 200 | 201 = 200,
-	extra: { refundOutcome?: { started: boolean; code: string | null } } = {},
+	extra: {
+		refundOutcome?: { started: boolean; code: string | null }
+		cloudPrinted?: boolean
+	} = {},
 ) {
 	const order = await onlineOrderDetail(auth.db, auth.actor, orderId)
 	if (!order) return posError(404, 'order_not_found')

@@ -10,6 +10,7 @@ import { DishStatusBadge, RoundHeading } from './KitchenRounds.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { PrintedKitchenTicket } from './PrintedKitchenTicket.tsx'
 import { Receipt } from './Receipt.tsx'
+import { reprintToCloud } from '~/lib/cloud-print.ts'
 import { db, type PosOrder, type TenderMethod } from '~/lib/db.ts'
 import { shortDuration } from '~/lib/duration.ts'
 import {
@@ -823,7 +824,19 @@ export function OrdersSheet({
 											<Trans>Refund</Trans>
 										</Button>
 									) : null}
-									<Button variant="outline" onClick={() => window.print()}>
+									<Button
+										variant="outline"
+										onClick={() =>
+											// A cloud printer at the location prints it (#117); with none,
+											// the tablet's own dialog does, as it always did.
+											void reprintToCloud(settings, {
+												orderId: selected.id,
+												kind: 'receipt',
+											}).then((cloud) => {
+												if (!cloud) window.print()
+											})
+										}
+									>
 										<Icon name="printer" className="size-4" />{' '}
 										{selected.status === 'open' ? (
 											<Trans>Print bill</Trans>

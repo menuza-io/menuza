@@ -87,3 +87,41 @@ describe('"Track this order in the app" in the receipt email (#196)', () => {
 		expect(email.html).not.toContain('Track this order in the app')
 	})
 })
+
+describe('review and app codes in the receipt email (#263)', () => {
+	const codes = [
+		{ kind: 'review' as const, url: 'https://g.page/r/abc/review', caption: 'Enjoyed it? Tell us' },
+		{ kind: 'app' as const, url: 'https://acme.menuza.io/get-app?p=print', caption: 'Order ahead next time' },
+	]
+	const withCodes = (kind: 'receipt' | 'ready', receiptCodes = codes) =>
+		renderOrderEmail({
+			kind,
+			locale: 'en',
+			theme: null,
+			restaurantName: 'Acme',
+			order: ORDER,
+			timeZone: 'UTC',
+			linkUrl: null,
+			receiptCodes,
+		} as never)
+
+	it('shows what the owner switched on, as links with their captions', () => {
+		const email = withCodes('receipt')
+		expect(email.html).toContain('href="https://g.page/r/abc/review"')
+		expect(email.html).toContain('Enjoyed it? Tell us')
+		expect(email.html).toContain('Order ahead next time')
+		expect(email.text).toContain('Enjoyed it? Tell us: https://g.page/r/abc/review')
+	})
+
+	it('shows nothing when nothing is switched on, and only on the receipt', () => {
+		expect(withCodes('receipt', []).html).not.toContain('Tell us')
+		expect(withCodes('ready').html).not.toContain('Tell us')
+	})
+
+	it('refuses an address that is not http(s)', () => {
+		const email = withCodes('receipt', [
+			{ kind: 'review', url: 'javascript:alert(1)', caption: 'Tell us' },
+		])
+		expect(email.html).not.toContain('javascript:')
+	})
+})

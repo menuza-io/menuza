@@ -9,13 +9,17 @@ import { and, asc, db, eq, OrganizationLocation } from '@repo/database'
 import { data, type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { ENV } from 'varlock/env'
 import { PosDayReport } from '#app/components/pos/pos-day-report.tsx'
+import { PrintersManager } from '#app/components/pos/printers-manager.tsx'
 import { ReadyTextSettings } from '#app/components/pos/ready-text-settings.tsx'
 import { StationRegisterSettings } from '#app/components/pos/station-register-settings.tsx'
 import { TerminalsManager } from '#app/components/pos/terminals-manager.tsx'
 import { TicketSettings } from '#app/components/pos/ticket-settings.tsx'
 import { ZatcaSettings } from '#app/components/pos/zatca-settings.tsx'
 import { getInventoryFeatureState } from '#app/utils/inventory/access.server.ts'
+import { PRINTING_FLAG_KEY } from '@repo/common/print-devices'
+import { getFeatureFlag } from '@repo/common/feature-flags'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
+import { buildReceiptTargets } from '#app/utils/menu/receipt-targets.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import {
@@ -32,7 +36,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(
 		request,
 		params.orgSlug || '',
-		{ id: true, dataRegion: true },
+		{ id: true, dataRegion: true, slug: true, customDomain: true, siteIconKey: true },
 	)
 	const userId = await requireMenuRead(request, organization.id)
 	const [
@@ -44,6 +48,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reservations,
 		inventory,
 		deviceHealthOn,
+		printersOn,
 		locationRows,
 	] = await Promise.all([
 		userHasOrganizationPermission(
@@ -62,10 +67,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		getReservationsFeatureState(organization.id),
 		getInventoryFeatureState(organization.id),
 		isDeviceHealthOn(organization.id),
+		getFeatureFlag(PRINTING_FLAG_KEY, { organizationId: organization.id }),
 		db
 			.select({
 				id: OrganizationLocation.id,
 				name: OrganizationLocation.name,
+				googleReviewUrl: OrganizationLocation.googleReviewUrl,
 				address: OrganizationLocation.address,
 				enabled: OrganizationLocation.readyTextEnabled,
 				stationSettings: OrganizationLocation.stationSettings,
@@ -90,6 +97,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		name: row.name,
 		enabled: row.enabled,
 	}))
+	const receiptTargets = await buildReceiptTargets(
+		{
+			id: organization.id,
+			slug: organization.slug,
+			customDomain: organization.customDomain ?? null,
+		},
+		locationRows,
+	)
+	const logoUrl = organization.siteIconKey
+		? `/resources/images?objectKey=${encodeURIComponent(`org/${organization.slug}/site-icon/apple-touch-icon.png`)}`
+		: null
 	const registerLocations = locationRows.map((row) => {
 		let parsedAddress: LocationAddress | null = null
 		if (row.address) {
@@ -107,6 +125,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					? 'SAR'
 					: getLocationCurrency(parsedAddress),
 			settings: parsePosLocationStationSettings(row.stationSettings),
+			targets: receiptTargets.get(row.id) ?? { reviewUrl: null, appUrl: null },
+			logoUrl,
 		}
 	})
 	// Connection history (#356): the days the Health panel draws and when each
@@ -140,6 +160,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				locations: readyText,
 			},
 			registerLocations,
+			// Cloud printers (#117): only a literal `true` shows them.
+			printersEnabled: printersOn === true,
 			// The cash-payment discount (#375) is offered only where the
 			// organization's data region allows it.
 			cashDiscountAllowed: cashDiscountAllowedIn(organization.dataRegion),
@@ -167,6 +189,7 @@ export default function TerminalsPage() {
 		stationGrants,
 		readyText,
 		registerLocations,
+		printersEnabled,
 		cashDiscountAllowed,
 		healthWindows,
 	} = useLoaderData<typeof loader>()
@@ -195,6 +218,17 @@ export default function TerminalsPage() {
 					id: location.id,
 					name: location.name,
 					tickets: location.settings.tickets,
+					targets: location.targets,
+					logoUrl: location.logoUrl,
+				}))}
+			/>
+			<PrintersManager
+				orgSlug={orgSlug}
+				canWrite={canWrite}
+				enabled={printersEnabled}
+				locations={registerLocations.map((location) => ({
+					id: location.id,
+					name: location.name,
 				}))}
 			/>
 			<ReadyTextSettings

@@ -153,6 +153,8 @@ import {
 	type MemberRow,
 } from './loyalty-member-service.ts'
 import { inventorySaleQueue } from './inventory-sales-service.ts'
+import { runInBackground } from '../lib/background.ts'
+import { printQueue } from './print-hooks.ts'
 import {
 	orderMessageBatch,
 	queueOrderMessage,
@@ -1119,6 +1121,22 @@ export async function placeOrder(input: {
 		return { ok: false, failure: fromEngineError(priced.error) }
 	}
 	const result: PricedRestaurantOrder = priced.result
+	// A cart with alcohol needs the guest's yes to "I am 21 or older and will
+	// show ID" (#167). Only the yes is kept, never a birth date. A table round
+	// is served by the team, who check ID at the table: its ticket says so.
+	const needsAgeConfirmation =
+		result.hasAlcohol && request.fulfillment !== 'dine_in'
+	if (needsAgeConfirmation && request.ageConfirmed !== true) {
+		return {
+			ok: false,
+			failure: fromEngineError({
+				status: 422,
+				code: 'age_confirmation_required',
+				message:
+					'Confirm that you are 21 or older and will show ID to order alcohol.',
+			}),
+		}
+	}
 
 	const requestHash = sha256Hex(canonicalOrderRequest(request))
 	const db = await getTenantDb(orgId)
@@ -1828,6 +1846,9 @@ export async function placeOrder(input: {
 									utensilsRequested,
 									largeOrderExtraMinutes: largeOrderExtra,
 									largeOrder: isLargeAlertOrder,
+									ageConfirmed: needsAgeConfirmation ? true : null,
+									hasAlcohol: result.hasAlcohol,
+									guestAllergy: request.guestAllergy === true,
 									totalCents: totals.totalCents,
 									giftCardCents: gift?.appliedMinor ?? 0,
 									loyaltyDiscountCents: totals.loyaltyDiscountCents,
@@ -2057,6 +2078,13 @@ export async function placeOrder(input: {
 		await loyalty.settle(orgId)
 		await inventory.settle(orgId)
 		messages.deliver(orgId)
+		// A pay-at-pickup order goes to the printers at once (#117); an online one
+		// when its payment lands. Background: the guest never waits for it.
+		if (placed.ok) {
+			const printing = printQueue()
+			printing.add(placed.data.order)
+			printing.settle(orgId)
+		}
 		// A pay-at-pickup order counts at once; an online one counts when its
 		// payment lands (below). Background: the guest never waits for it.
 		scheduleOrderJourneys(orgId)
@@ -2690,6 +2718,24 @@ export async function applyPaymentEvent(input: {
 	await loyalty.settle(orgId)
 	await inventory.settle(orgId)
 	messages.deliver(orgId)
+	// An online order whose payment just landed goes to the printers (#117).
+	if (result.ok && result.data.paymentStatus === 'paid') {
+		const printing = printQueue()
+		const orderId = result.data.orderId
+		runInBackground(
+			getTenantDb(orgId).then(async (tenantDb) => {
+				const [row] = await tenantDb
+					.select()
+					.from(restaurantOrders)
+					.where(eq(restaurantOrders.id, orderId))
+					.limit(1)
+				if (row) {
+					printing.add(row)
+					printing.settle(orgId)
+				}
+			}),
+		)
+	}
 	return result
 }
 
@@ -2898,6 +2944,8 @@ export type OrderWriteQueues = {
 	loyalty: LoyaltySettleQueue
 	inventory: ReturnType<typeof inventorySaleQueue>
 	messages: ReturnType<typeof orderMessageBatch>
+	/** Orders accepted in the write, for the cloud printers (#117). */
+	print: ReturnType<typeof printQueue>
 }
 
 export function orderWriteQueues(): OrderWriteQueues {
@@ -2905,6 +2953,7 @@ export function orderWriteQueues(): OrderWriteQueues {
 		loyalty: loyaltySettleQueue(),
 		inventory: inventorySaleQueue(),
 		messages: orderMessageBatch(),
+		print: printQueue(),
 	}
 }
 
@@ -2916,6 +2965,7 @@ export async function settleOrderWriteQueues(
 	await queues.loyalty.settle(orgId)
 	await queues.inventory.settle(orgId)
 	queues.messages.deliver(orgId)
+	queues.print.settle(orgId)
 	// A status change (accepted, completed) may make an order count or finish.
 	scheduleOrderJourneys(orgId)
 }
@@ -3352,6 +3402,8 @@ export async function applyOrderStatusPatchInTx(
 	// Only a person accepting a waiting order says "accepted" (#107); an
 	// order accepted automatically at placement never does.
 	if (fromPending && patch.status === 'accepted') {
+		// A person accepted a waiting order: it goes to the printers (#117).
+		queues.print.add(updated ?? { ...order, ...patch })
 		await queueOrderMessage(
 			tx,
 			updated ?? { ...order, ...patch },
@@ -3807,6 +3859,10 @@ export function operatorOrder(
 		 * Orders list badges it. Operators only, never the guest's receipt.
 		 */
 		largeOrder: order.largeOrder === true,
+		/** The order has alcohol: staff "Check ID" at handoff (#167). Operators only. */
+		hasAlcohol: order.hasAlcohol === true,
+		/** The guest stated an allergy at checkout (#294). Operators only. */
+		guestAllergy: order.guestAllergy === true,
 		/**
 		 * Why a `payment_review` order waits, when the region knows: the sale was
 		 * paid late and a discount's limit had been used up since. Null otherwise.

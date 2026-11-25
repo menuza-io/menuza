@@ -2,15 +2,22 @@ import { type MessageDescriptor } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { zatcaQrPayload } from '@repo/common/pos-fiscal'
+import { planReceiptExtras } from '@repo/common/receipt-extras'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
+import { orderHasAlcohol } from '~/lib/alcohol.ts'
 import { type PosOrder, type TenderMethod } from '~/lib/db.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
-import { saleLine } from '~/lib/store.ts'
-import { fieldOf, useTickets } from '~/lib/tickets.ts'
+import { saleLine, usePos } from '~/lib/store.ts'
+import {
+	fieldOf,
+	useReceiptLogoUrl,
+	useReceiptTargets,
+	useTickets,
+} from '~/lib/tickets.ts'
 import { isTrainingMode } from '~/lib/training-flag.ts'
 import { cn } from '~/ui/primitives.tsx'
 
@@ -37,6 +44,8 @@ export function Receipt({
 }) {
 	const { _, i18n } = useLingui()
 	const tickets = useTickets()
+	const items = usePos((state) => state.recordItems)
+	const checkId = orderHasAlcohol(order.lines, items)
 	/** How one field of the guest receipt prints (#363). */
 	const f = (key: string) => fieldOf(tickets, 'receipt', key)
 	// A training receipt is never a tax invoice (#383).
@@ -72,6 +81,25 @@ export function Receipt({
 				: null,
 	)
 	const invoiceNumber = signed ? signed.invoiceNumber : String(invoiceCounter)
+	// The logo and the review and app codes (#263). One decision shared with the
+	// cloud printers and the settings preview; the fiscal code above is never
+	// touched, and a narrow roll drops these, not it.
+	const targets = useReceiptTargets()
+	const logoSrc = useReceiptLogoUrl()
+	const extras = planReceiptExtras({
+		config: tickets.extras,
+		targets,
+		logoUrl: logoSrc,
+		width: 72,
+		fiscalQr: Boolean(qr),
+		kind:
+			order.status === 'void'
+				? 'void'
+				: order.status === 'refunded'
+					? 'refund'
+					: 'sale',
+	})
+	const codeImages = useCodeQrs(extras.codes.map((code) => code.url))
 	// Portalled to <body>: a <dialog> clips and offsets anything printed inside it.
 	return createPortal(
 		<div id="receipt" className="hidden print:block" aria-hidden>
@@ -79,6 +107,14 @@ export function Receipt({
 				<div className="text-center font-semibold">
 					<Trans>TRAINING: NOT A REAL RECEIPT</Trans>
 				</div>
+			) : null}
+			{extras.logo && logoSrc ? (
+				<img
+					src={logoSrc}
+					alt=""
+					data-receipt-logo=""
+					className="mx-auto mb-1"
+				/>
 			) : null}
 			{f('businessName').show ? (
 				<div
@@ -160,6 +196,14 @@ export function Receipt({
 			{servedBy && f('servedBy').show ? (
 				<div className={cn('text-center', f('servedBy').cls)}>
 					<Trans>Served by {servedBy}</Trans>
+				</div>
+			) : null}
+			{checkId ? (
+				<div
+					className="my-1 border-2 px-1.5 text-center font-semibold"
+					data-check-id
+				>
+					<Trans>Check ID</Trans>
 				</div>
 			) : null}
 			<hr />
@@ -278,6 +322,22 @@ export function Receipt({
 				</Row>
 			) : null}
 			{qr ? <img src={qr} alt="" className="mx-auto mt-2 size-32" /> : null}
+			{extras.codes.map((code, index) => (
+				<div
+					key={code.kind}
+					data-receipt-code={code.kind}
+					className="mt-2 text-center"
+				>
+					{codeImages[index] ? (
+						<img
+							src={codeImages[index]!}
+							alt=""
+							className="mx-auto size-20"
+						/>
+					) : null}
+					<div className="text-xs">{code.caption}</div>
+				</div>
+			))}
 			{f('thankYou').show ? (
 				<div className={cn('mt-2.5 text-center', f('thankYou').cls)}>
 					<Trans>Thank you!</Trans>
@@ -309,6 +369,33 @@ function useInvoiceQr(payload: string | null) {
 		}
 	}, [payload])
 	return url
+}
+
+/** Small QR codes for the marketing links, once they are ready. */
+function useCodeQrs(urls: string[]): Array<string | null> {
+	const key = urls.join('\n')
+	const [images, setImages] = useState<Array<string | null>>([])
+	useEffect(() => {
+		let live = true
+		const list = key ? key.split('\n') : []
+		if (list.length === 0) {
+			setImages([])
+			return
+		}
+		void Promise.all(
+			list.map((url) =>
+				QRCode.toDataURL(url, {
+					margin: 0,
+					width: 160,
+					errorCorrectionLevel: 'M',
+				}).catch(() => null),
+			),
+		).then((data) => live && setImages(data))
+		return () => {
+			live = false
+		}
+	}, [key])
+	return images
 }
 
 function Row({

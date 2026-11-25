@@ -334,6 +334,15 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 		largeOrderExtraMinutes: z.number().int().nonnegative().optional(),
 		/** Over the location's large-order alert threshold at placement (#300). */
 		largeOrder: z.boolean().optional(),
+	/** The guest stated an allergy at checkout (#294). */
+	guestAllergy: z.boolean().optional(),
+	/** The order has alcohol: "Check ID" (#167). */
+	checkId: z.boolean().optional(),
+	/**
+	 * A cloud printer at the location prints this order's tickets (#117): the
+	 * tablet leaves automatic printing to it and sends a reprint to it.
+	 */
+	cloudPrinters: z.boolean().optional(),
 		discountCents: z.number().int(),
 		loyaltyDiscountCents: z.number().int(),
 		paidAt: z.number().int().nullable(),
@@ -381,6 +390,11 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 			code: z.string().max(40).nullable(),
 		})
 		.optional(),
+	/**
+	 * Answer of a reprint (#117): a cloud printer at the location took the job, so
+	 * the tablet does not open its own print dialog. Absent otherwise.
+	 */
+	cloudPrinted: z.boolean().optional(),
 })
 export type PosOnlineOrderDetail = z.infer<
 	typeof posOnlineOrderDetailSchema

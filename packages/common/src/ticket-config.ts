@@ -1,4 +1,9 @@
 import { z } from 'zod'
+import {
+	compactReceiptExtras,
+	readReceiptExtras,
+	type ReceiptExtrasConfig,
+} from './receipt-extras.ts'
 
 /**
  * What prints on each ticket type, and when (#363). Per location, an owner
@@ -145,6 +150,8 @@ export const ticketsConfigSchema = z.object({
 	strikeCompleted: z.boolean().catch(false).optional(),
 	/** A cancelled order prints a cancellation slip. */
 	cancellationSlip: z.boolean().catch(false).optional(),
+	/** The logo and the review and app codes on the guest receipt (#263). */
+	extras: z.unknown().optional(),
 })
 
 export type TicketsConfig = z.infer<typeof ticketsConfigSchema>
@@ -158,6 +165,8 @@ export type ResolvedTickets = {
 	changesOnly: boolean
 	strikeCompleted: boolean
 	cancellationSlip: boolean
+	/** What the guest receipt carries besides the sale (#263). */
+	extras: ReceiptExtrasConfig
 }
 
 /** Reads a stored value (a JSON string, an object or nothing) as a config; bad parts read as the defaults. */
@@ -184,6 +193,7 @@ export function resolveTickets(raw: unknown): ResolvedTickets {
 		changesOnly: config.changesOnly === true,
 		strikeCompleted: config.strikeCompleted === true,
 		cancellationSlip: config.cancellationSlip === true,
+		extras: readReceiptExtras(config.extras),
 	}
 }
 
@@ -259,5 +269,7 @@ export function compactTickets(config: TicketsConfig): TicketsConfig {
 	if (config.changesOnly) out.changesOnly = true
 	if (config.strikeCompleted) out.strikeCompleted = true
 	if (config.cancellationSlip) out.cancellationSlip = true
+	const extras = compactReceiptExtras(readReceiptExtras(config.extras))
+	if (extras) out.extras = extras
 	return out
 }

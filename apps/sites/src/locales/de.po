@@ -420,6 +420,10 @@ msgstr "Nach Ihrer Bestellung reservieren wir Ihre Artikel für {duration}, dami
 msgid "Alcohol"
 msgstr "Alkohol"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Alcohol cannot be ordered this way: {names}. Remove it from your order or choose another way to order."
+msgstr "Alkohol kann auf diesem Weg nicht bestellt werden: {names}. Entfernen Sie ihn aus Ihrer Bestellung oder wählen Sie eine andere Bestellart."
+
 #: src/pages/drop/[slug].astro.ts:3
 msgid "All drops"
 msgstr "Alle Aktionen"
@@ -1797,6 +1801,10 @@ msgstr "Ich akzeptiere diese Bedingungen sowie die oben beschriebene Zahlung ode
 msgid "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
 msgstr "Ich bin damit einverstanden, dass {organization} meine Angaben und Antworten speichert, um meine Bewerbung zu prüfen und mich dazu zu kontaktieren. Auf Wunsch werden sie gelöscht."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "I am 21 or older and will show ID"
+msgstr "Ich bin 21 oder älter und zeige meinen Ausweis vor"
+
 #: src/lib/reservations/labels.ts:273
 msgid "I am on my way"
 msgstr "Ich bin unterwegs"
@@ -2889,6 +2897,10 @@ msgstr "Bitte prüfen Sie Ihre Angaben und versuchen Sie es erneut."
 msgid "Please choose a JPG, PNG, WebP, or HEIC image."
 msgstr "Bitte wähle ein JPG-, PNG-, WebP- oder HEIC-Bild."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Please confirm that you are 21 or older and will show ID."
+msgstr "Bitte bestätigen Sie, dass Sie 21 oder älter sind und Ihren Ausweis vorzeigen."
+
 #: src/lib/reservations/labels.ts:267
 msgid "Please contact the restaurant if you think this is a mistake."
 msgstr "Bitte kontaktieren Sie das Restaurant, falls Sie einen Irrtum vermuten."
@@ -3489,6 +3501,10 @@ msgstr "Einige Preise haben sich seit Ihrem Anruf geändert. Ihr Warenkorb zeigt
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed. Your cart shows the current prices."
 msgstr "Einige Preise haben sich geändert. Dein Warenkorb zeigt die aktuellen Preise."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Someone in my party has an allergy (add details in the notes)"
+msgstr "Jemand in meiner Gruppe hat eine Allergie (Details in den Hinweisen angeben)"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3

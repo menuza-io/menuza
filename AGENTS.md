@@ -645,6 +645,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   `off`, `no`, `disabled`) drops terminal heartbeats and answers the Health
   panel as off; stored history is kept. Collection also needs the organization
   flag `pos.device_health` (default off). See `docs/pos.md`.
+- `PRINTING_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
+  switch for cloud printers (#117): `false` (also `0`, `off`, `no`,
+  `disabled`) queues nothing and answers every printer's poll with "no job";
+  removing a printer always works. Needs the organization flag
+  `kitchen.printers` (default off). See `docs/pos.md` ("Cloud printers").
 - `POS_ENABLED` / `POS_ORIGINS` - Tenant-api only. Kill switch for the walk-in
   POS (`false` answers 503 on `/pos/*`; revoking a terminal always works) and
   the comma-separated POS web origins allowed to call `/pos/*` from a browser.
@@ -1096,6 +1101,23 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   and IndexedDB for the kiosk and the Station time clock) are the exception.
   Neutral vocabulary: workplaces are opaque **scopes** (`DEFAULT_SCOPE_ID`),
   never "locations" (see `docs/staffing-plan.md`)
+
+**Cloud printers, test print, receipt codes, kitchen highlights and alcohol rules
+(#117, #426, #263, #294, #167):**
+
+- One print path: `@repo/common/print-ticket` (ticket document and builders),
+  `print-protocols` (Star CloudPRNT and Epson Server Direct Print encoders),
+  `print-devices` (setup, routing, status), `receipt-extras` (logo and codes).
+  Tenant-api: `services/print-service.ts` (queue, offer, acknowledge),
+  `print-hooks.ts` (accepted orders, till sales, scheduled orders),
+  `routes/print.ts` (printer-facing, `/print/<orgId>.<printerId>/...`) and
+  `routes/operator-print.ts` (`/operator/pos/printers`). Tables `print_devices`
+  and `print_jobs` (tenant `0069`). Printers are not terminals: they poll with
+  a short password, never a staff session. Never build a second Kitchen feed,
+  receipt layout or device table.
+- Highlights (#294) already existed (PR #549); only the guest-stated allergy
+  header was added. Alcohol (#167) lives in `priceRestaurantOrder`
+  (`@repo/common/alcohol-rules`); do not add a second flag.
 
 **Multi-location control (copy settings, bulk pause, Status, tags, compare and
 edit, chain defaults and locks):**

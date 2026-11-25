@@ -88,6 +88,12 @@ export type OrderEmailInput = {
 	 * shows nothing.
 	 */
 	appInvite?: Array<{ store: 'app_store' | 'play_store'; url: string }>
+	/**
+	 * Receipt only (#263): the review and app codes the owner switched on, as
+	 * links with their captions (an email cannot print a scannable code, but a
+	 * guest can tap one). Absent or empty shows nothing.
+	 */
+	receiptCodes?: Array<{ kind: 'review' | 'app'; url: string; caption: string }>
 }
 
 export type RenderedOrderEmail = { subject: string; html: string; text: string }
@@ -405,6 +411,23 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 				)
 				.join('')}</div>`
 		: ''
+	const codeLinks =
+		input.kind === 'receipt'
+			? (input.receiptCodes ?? []).flatMap((code) => {
+					const url = safeUrl(code.url)
+					return url && code.caption.trim()
+						? [{ url, caption: code.caption.trim() }]
+						: []
+				})
+			: []
+	const codesHtml = codeLinks.length
+		? `<div style="margin-top:20px;padding-top:16px;border-top:1px solid ${border};text-align:${align}">${codeLinks
+				.map(
+					(link) =>
+						`<p style="margin:0 0 8px;font-size:14px" dir="auto"><a href="${escapeHtml(link.url)}" style="color:${foreground};text-decoration:underline">${escapeHtml(link.caption)}</a></p>`,
+				)
+				.join('')}</div>`
+		: ''
 	const welcomeLine =
 		input.kind === 'receipt' &&
 		input.welcomeBonus &&
@@ -437,7 +460,7 @@ ${logoHtml}
 <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:${foreground}">${escapeHtml(copy.lead)}</p>
 ${welcomeHtml}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${border}">${detailRows}</table>
-${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}
+${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}${codesHtml}
 <p style="margin:28px 0 0;font-size:12px;color:${muted}">${escapeHtml(labels.footer)}</p>
 </td></tr></table>
 </td></tr></table>
@@ -465,6 +488,7 @@ ${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}
 		textLines.push('', `${labels.trackInApp}:`)
 		for (const link of inviteLinks) textLines.push(`${link.label}: ${link.url}`)
 	}
+	for (const link of codeLinks) textLines.push('', `${link.caption}: ${link.url}`)
 	textLines.push('', labels.footer)
 
 	return { subject: copy.subject, html, text: textLines.join('\n') }

@@ -420,6 +420,10 @@ msgstr "After you place your order, we'll hold your items for {duration} while y
 msgid "Alcohol"
 msgstr "Alcohol"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Alcohol cannot be ordered this way: {names}. Remove it from your order or choose another way to order."
+msgstr "Alcohol cannot be ordered this way: {names}. Remove it from your order or choose another way to order."
+
 #: src/pages/drop/[slug].astro.ts:3
 msgid "All drops"
 msgstr "All drops"
@@ -1797,6 +1801,10 @@ msgstr "I accept these terms and the payment or card hold described above."
 msgid "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
 msgstr "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "I am 21 or older and will show ID"
+msgstr "I am 21 or older and will show ID"
+
 #: src/lib/reservations/labels.ts:273
 msgid "I am on my way"
 msgstr "I am on my way"
@@ -2889,6 +2897,10 @@ msgstr "Please check your details and try again."
 msgid "Please choose a JPG, PNG, WebP, or HEIC image."
 msgstr "Please choose a JPG, PNG, WebP, or HEIC image."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Please confirm that you are 21 or older and will show ID."
+msgstr "Please confirm that you are 21 or older and will show ID."
+
 #: src/lib/reservations/labels.ts:267
 msgid "Please contact the restaurant if you think this is a mistake."
 msgstr "Please contact the restaurant if you think this is a mistake."
@@ -3489,6 +3501,10 @@ msgstr "Some prices changed since your call. Your cart shows the current prices.
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed. Your cart shows the current prices."
 msgstr "Some prices changed. Your cart shows the current prices."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Someone in my party has an allergy (add details in the notes)"
+msgstr "Someone in my party has an allergy (add details in the notes)"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3

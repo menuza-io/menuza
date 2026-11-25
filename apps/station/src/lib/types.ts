@@ -20,6 +20,8 @@ export type MenuOption = {
 	/** Localized kitchen name. Absent on a menu published before it. */
 	kitchenName?: string | null
 	kitchenHighlight?: string | null
+	/** Flagged alcohol (#167); absent on an older menu. */
+	isAlcohol?: boolean
 	price: number
 	/**
 	 * What the whole topping costs on a pizza when it differs from `price`. The
@@ -133,6 +135,8 @@ export type MenuLocation = {
 	stationSettings?: PosLocationStationSettings
 	/** Per-location order number format and daily reset (#371). */
 	orderNumberFormat?: OrderNumberFormat
+	/** What the receipt codes open (#263); absent on an older menu: no codes. */
+	receiptCodes?: { reviewUrl: string | null; appUrl: string | null }
 }
 
 export type MenuPayload = {

@@ -580,6 +580,31 @@
       "import": "./src/device-health.ts",
       "default": "./src/device-health.ts"
     },
+    "./alcohol-rules": {
+      "types": "./src/alcohol-rules.ts",
+      "import": "./src/alcohol-rules.ts",
+      "default": "./src/alcohol-rules.ts"
+    },
+    "./print-ticket": {
+      "types": "./src/print-ticket.ts",
+      "import": "./src/print-ticket.ts",
+      "default": "./src/print-ticket.ts"
+    },
+    "./print-devices": {
+      "types": "./src/print-devices.ts",
+      "import": "./src/print-devices.ts",
+      "default": "./src/print-devices.ts"
+    },
+    "./print-protocols": {
+      "types": "./src/print-protocols.ts",
+      "import": "./src/print-protocols.ts",
+      "default": "./src/print-protocols.ts"
+    },
+    "./receipt-extras": {
+      "types": "./src/receipt-extras.ts",
+      "import": "./src/receipt-extras.ts",
+      "default": "./src/receipt-extras.ts"
+    },
     "./ticket-config": {
       "types": "./src/ticket-config.ts",
       "import": "./src/ticket-config.ts",

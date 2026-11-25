@@ -1017,6 +1017,20 @@ describe('OrderDetail checkout rules (#251, #257, #355, #408)', () => {
 		)
 	})
 
+	it('says Check ID on an order with alcohol and flags a stated allergy (#167, #294)', () => {
+		show(order({ hasAlcohol: true, guestAllergy: true }))
+		expect(screen.getByTestId('order-check-id')).toHaveTextContent('Check ID')
+		expect(screen.getByTestId('order-guest-allergy')).toHaveTextContent(
+			'Guest stated an allergy',
+		)
+	})
+
+	it('shows neither on an ordinary order', () => {
+		show(order())
+		expect(screen.queryByTestId('order-check-id')).toBeNull()
+		expect(screen.queryByTestId('order-guest-allergy')).toBeNull()
+	})
+
 	it('badges custom open-price items on order lines (#171)', () => {
 		show(
 			order({

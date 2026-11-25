@@ -1,3 +1,5 @@
+import { getFeatureFlag } from '@repo/common/feature-flags'
+import { PRINTING_FLAG_KEY } from '@repo/common/print-devices'
 import { and, db, eq, Organization } from '@repo/database'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { type LoaderFunctionArgs } from 'react-router'
@@ -11,7 +13,7 @@ const querySchema = z.object({
 
 /**
  * Internal machine-to-machine endpoint: `GET /resources/pos/flags?orgId=`.
- * The organization's Station flags (flags only, no data), for the regional
+ * The organization's Station flags (connection history and cloud printers; flags only, no data), for the regional
  * tenant-api, which has no control-plane database. Authenticated with
  * `INTERNAL_COMMAND_TOKEN`.
  */
@@ -36,8 +38,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		columns: { id: true },
 	})
 	if (!org) return new Response('Not Found', { status: 404 })
+	const deviceHealth = await isDeviceHealthOn(org.id)
+	// Cloud printers (#117): only a literal `true` turns them on.
+	const printers =
+		(await getFeatureFlag(PRINTING_FLAG_KEY, { organizationId: org.id })) ===
+		true
 	return Response.json(
-		{ deviceHealth: await isDeviceHealthOn(org.id) },
+		{ deviceHealth, printers },
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)
 }

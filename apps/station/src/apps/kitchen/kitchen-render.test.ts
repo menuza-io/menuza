@@ -420,3 +420,93 @@ describe('the kitchen station a terminal profile sets (#373)', () => {
 		expect(select().value).toBe('')
 	})
 })
+
+describe('kitchen highlights and Check ID (#294, #167)', () => {
+	const withLines = (over: Partial<KdsTicket> = {}): KdsTicket => ({
+		...ticket,
+		lines: [
+			{
+				...ticket.lines[0]!,
+				id: 'plain',
+				name: 'Plain dish',
+				instructions: '',
+			},
+			{
+				...ticket.lines[0]!,
+				id: 'burger',
+				name: 'Burger',
+				instructions: '',
+				options: [
+					{
+						name: 'No onions',
+						quantity: 1,
+						half: null,
+						highlight: 'attention',
+					},
+					{ name: 'Extra cheese', quantity: 1, half: null },
+				],
+			},
+			{
+				...ticket.lines[0]!,
+				id: 'nuts',
+				name: 'Satay',
+				instructions: '',
+				highlight: 'allergy',
+			},
+		],
+		...over,
+	})
+	const feedOf = (tickets: KdsTicket[]): KdsFeed => ({
+		config: DEFAULT_KDS_CONFIG,
+		configVersion: 1,
+		tickets,
+		serverNow: NOW,
+		truncated: false,
+	})
+
+	it('highlights a "No onions" option with an icon and a word, never colour alone', () => {
+		draw({ feed: feedOf([withLines()]) })
+		const mark = host.querySelector(
+			'li [data-highlight="attention"].kitchen-mark',
+		)!
+		expect(mark.textContent).toBe('Attention')
+		expect(mark.querySelector('svg')).not.toBeNull()
+		// The line itself carries the bar, and the sibling option has no mark.
+		expect(host.textContent).toContain('Extra cheese')
+		const marks = [...host.querySelectorAll('li .kitchen-mark')].map(
+			(el) => el.textContent,
+		)
+		expect(marks).toEqual(['Attention', 'Allergy'])
+	})
+
+	it('leaves a dish with no highlight as it was', () => {
+		draw({ feed: feedOf([withLines()]) })
+		const plain = [...host.querySelectorAll('li')].find((li) =>
+			li.textContent?.includes('Plain dish'),
+		)!
+		expect(plain.getAttribute('data-highlight')).toBeNull()
+		expect(plain.querySelector('.kitchen-mark')).toBeNull()
+	})
+
+	it('highlights the whole header of a guest who stated an allergy, with words', () => {
+		draw({ feed: feedOf([withLines({ guestAllergy: true })]) })
+		const head = host.querySelector('header.kitchen-ticket-head')!
+		expect(head.getAttribute('data-guest-allergy')).toBe('true')
+		const note = head.querySelector('[data-kitchen-guest-allergy]')!
+		expect(note.textContent).toBe('Allergy stated by guest')
+		expect(note.querySelector('svg')).not.toBeNull()
+	})
+
+	it('shows no allergy header and no Check ID on an ordinary ticket', () => {
+		draw({ feed: feedOf([withLines()]) })
+		expect(host.querySelector('[data-guest-allergy]')).toBeNull()
+		expect(host.querySelector('[data-kitchen-check-id]')).toBeNull()
+	})
+
+	it('says Check ID on an order with alcohol', () => {
+		draw({ feed: feedOf([withLines({ checkId: true })]) })
+		const badge = host.querySelector('[data-kitchen-check-id]')!
+		expect(badge.textContent).toBe('Check ID')
+		expect(badge.querySelector('svg')).not.toBeNull()
+	})
+})

@@ -75,6 +75,10 @@ export type OrderErrorLabels = {
 	couponRefused: string
 	/** discounts_disabled, discounts_on_tab */
 	discountsUnavailable: string
+	/** alcohol_not_allowed (#167): `{names}` are the lines the order type does not allow */
+	alcoholNotAllowed: string
+	/** age_confirmation_required (#167): the "I am 21 or older" box was not ticked */
+	ageConfirmationRequired: string
 	/** anything else */
 	generic: string
 }
@@ -134,6 +138,8 @@ const CODE_TO_LABEL: Record<string, OrderErrorLabelKey> = {
 	coupon_refused: 'couponRefused',
 	discounts_disabled: 'discountsUnavailable',
 	discounts_on_tab: 'discountsUnavailable',
+	alcohol_not_allowed: 'alcoholNotAllowed',
+	age_confirmation_required: 'ageConfirmationRequired',
 }
 
 export function orderErrorLabelKey(
@@ -275,5 +281,27 @@ export function orderErrorMessageFor(
 	if (code === 'daily_dish_sold_out') {
 		return dailySoldOutMessage(body, context.nameOf ?? (() => null), labels)
 	}
+	if (code === 'alcohol_not_allowed') {
+		return fillTemplate(labels.alcoholNotAllowed, {
+			names: alcoholLineNames(body).join(', '),
+		})
+	}
 	return orderErrorMessage(code, labels)
+}
+
+/** The lines `alcohol_not_allowed` names (#167), as the region sent them. */
+export function alcoholLineNames(body: unknown): string[] {
+	const lines = detailsOf(body)?.lines
+	if (!Array.isArray(lines)) return []
+	const names: string[] = []
+	for (const entry of lines) {
+		const name =
+			entry && typeof entry === 'object'
+				? (entry as { name?: unknown }).name
+				: undefined
+		if (typeof name === 'string' && name.trim() && !names.includes(name)) {
+			names.push(name.trim().slice(0, 120))
+		}
+	}
+	return names
 }

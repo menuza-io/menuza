@@ -12,6 +12,7 @@
  * refuse orders against it.
  */
 
+import { type AlcoholContext } from '@repo/common/alcohol-rules'
 import { type DailyDishLimitsContext } from '@repo/common/daily-dish-limits'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import { type LargeOrderAlertRule } from '@repo/common/operator-alerts'
@@ -52,6 +53,7 @@ import {
 	buildPickupInstructionsContext,
 	buildUtensilsContext,
 } from '#app/utils/orders/checkout-extras.server.ts'
+import { buildAlcoholContext } from '#app/utils/orders/alcohol-context.server.ts'
 import { buildDailyDishLimitsContext } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { buildOrderCapsContext } from '#app/utils/orders/order-caps.server.ts'
 import { buildOrderPolicyContext } from '#app/utils/orders/order-policies.server.ts'
@@ -126,6 +128,8 @@ export type OrderContextResponse = {
 	serviceFee: ServiceFeeContext
 	packagingFee: PackagingFeeContext
 	orderCaps: { locations: Record<string, unknown> }
+	/** Where alcohol may be ordered online (#167). */
+	alcohol: AlcoholContext
 	pickupInstructions: Record<string, string>
 	utensils: Awaited<ReturnType<typeof buildUtensilsContext>>
 	slotLimits: SlotLimitsContext
@@ -176,6 +180,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			siteDefaultLocale: true,
 			siteLocales: true,
 			customDomain: true,
+			siteIconKey: true,
 			shopPaymentProvider: true,
 			stripeConnectAccountId: true,
 			stripeConnectChargesEnabled: true,
@@ -202,6 +207,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			siteDefaultLocale: org.siteDefaultLocale,
 			siteLocales: org.siteLocales,
 			customDomain: org.customDomain,
+			siteIconKey: org.siteIconKey,
 		},
 		parsed.data.locationId ?? null,
 	)
@@ -253,6 +259,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		),
 		orderCaps: await buildOrderCapsContext(
 			org.id,
+			parsed.data.locationId ?? null,
+		),
+		alcohol: await buildAlcoholContext(
+			org.id,
+			dataRegion,
 			parsed.data.locationId ?? null,
 		),
 		pickupInstructions: await buildPickupInstructionsContext(

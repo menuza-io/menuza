@@ -547,6 +547,13 @@
 			"when": 1795742400000,
 			"tag": "0077_ordering_pause_history",
 			"breakpoints": true
+		},
+		{
+			"idx": 78,
+			"version": "6",
+			"when": 1795750000000,
+			"tag": "0078_alcohol_review_link",
+			"breakpoints": true
 		}
 	]
 }

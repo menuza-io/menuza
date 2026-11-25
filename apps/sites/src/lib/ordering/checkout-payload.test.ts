@@ -23,6 +23,26 @@ describe('checkoutOrderPayload', () => {
 		})
 	})
 
+	it('sends the age confirmation and the allergy flag only as a yes', () => {
+		const priced = { fulfillment: 'pickup', tipPercent: 0 }
+		expect(
+			checkoutOrderPayload(priced, {
+				contact,
+				reward: null,
+				ageConfirmed: true,
+				guestAllergy: true,
+			}),
+		).toMatchObject({ ageConfirmed: true, guestAllergy: true })
+		const none = checkoutOrderPayload(priced, {
+			contact,
+			reward: null,
+			ageConfirmed: false,
+			guestAllergy: false,
+		})
+		expect(none).not.toHaveProperty('ageConfirmed')
+		expect(none).not.toHaveProperty('guestAllergy')
+	})
+
 	it('sends the service fee the page showed, only when there is one', () => {
 		const priced = { fulfillment: 'pickup', tipPercent: 0 }
 		expect(

@@ -1,8 +1,10 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { createPortal } from 'react-dom'
+import { orderHasAlcohol } from '~/lib/alcohol.ts'
 import { type PosOrder } from '~/lib/db.ts'
 import { menuText } from '~/lib/menu-text.ts'
+import { usePos } from '~/lib/store.ts'
 import { fieldOf, useTickets, type KitchenTicketPlan } from '~/lib/tickets.ts'
 import { cn } from '~/ui/primitives.tsx'
 
@@ -21,6 +23,8 @@ export function PrintedKitchenTicket({
 }) {
 	const { _, i18n } = useLingui()
 	const tickets = useTickets()
+	const items = usePos((state) => state.recordItems)
+	const checkId = orderHasAlcohol(order.lines, items)
 	const f = (key: string) => fieldOf(tickets, 'kitchen', key)
 	const when = new Date(plan.at).toLocaleString(i18n.locale)
 	const table = order.tableLabel ? <bdi>{order.tableLabel}</bdi> : null
@@ -82,6 +86,14 @@ export function PrintedKitchenTicket({
 							) : null}
 						</>
 					)}
+				</div>
+			) : null}
+			{checkId ? (
+				<div
+					className="my-1 border-2 px-1.5 text-center font-semibold"
+					data-check-id
+				>
+					<Trans>Check ID</Trans>
 				</div>
 			) : null}
 			<hr className="my-1.5 border-dashed border-black" />

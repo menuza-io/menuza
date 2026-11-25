@@ -94,6 +94,12 @@ export interface PublicLocationData {
 	stationSettings?: PosLocationStationSettings
 	/** Per-location order number format and daily reset (#371). */
 	orderNumberFormat?: OrderNumberFormat
+	/**
+	 * What the receipt codes open (#263): the location's Google review link and the
+	 * app or rewards link. Public static links; each is null when its target does
+	 * not exist.
+	 */
+	receiptCodes?: { reviewUrl: string | null; appUrl: string | null }
 }
 
 export interface PublicMenuOptionData {

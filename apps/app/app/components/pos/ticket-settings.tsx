@@ -2,6 +2,14 @@ import { type I18n } from '@lingui/core'
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
+	DEFAULT_APP_CAPTION,
+	DEFAULT_REVIEW_CAPTION,
+	planReceiptExtras,
+	RECEIPT_CAPTION_MAX_LENGTH,
+	type ReceiptExtrasConfig,
+	type ReceiptTargets,
+} from '@repo/common/receipt-extras'
+import {
 	compactTickets,
 	fieldClasses,
 	fieldStyle,
@@ -24,6 +32,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@repo/ui/card'
+import { Input } from '@repo/ui/input'
 import {
 	Select,
 	SelectContent,
@@ -39,6 +48,10 @@ export type TicketSettingsLocation = {
 	id: string
 	name: string
 	tickets: TicketsConfig
+	/** What the receipt codes open at this location (#263); null where there is no target. */
+	targets?: ReceiptTargets
+	/** The organization logo's address, or null when none is set. */
+	logoUrl?: string | null
 }
 
 export function ticketTypeLabel(_: I18n['_'], type: TicketType) {
@@ -114,10 +127,14 @@ export function TicketPreview({
 	type,
 	config,
 	kind = 'order',
+	targets,
+	logoUrl,
 }: {
 	type: TicketType
 	config: TicketsConfig
 	kind?: PreviewKind
+	targets?: ReceiptTargets
+	logoUrl?: string | null
 }) {
 	const { _ } = useLingui()
 	const typeName = ticketTypeLabel(_, type)
@@ -161,6 +178,17 @@ export function TicketPreview({
 				]
 			: lines
 	const slip = type === 'kitchen' && kind === 'cancelled'
+	// The same decision the till and a cloud printer make (#263).
+	const extras =
+		type === 'receipt'
+			? planReceiptExtras({
+					config: tickets.extras,
+					targets: targets ?? { reviewUrl: null, appUrl: null },
+					logoUrl: logoUrl ?? null,
+					width: 80,
+					fiscalQr: true,
+				})
+			: null
 	const body = TICKET_FIELDS[type].map((field) => {
 		const s = style(field.key)
 		if (!s.show) return null
@@ -308,7 +336,27 @@ export function TicketPreview({
 			data-ticket-preview={type}
 			className="bg-card text-foreground mx-auto w-full max-w-[18rem] space-y-0.5 rounded-sm border p-3 font-mono text-[11px] leading-snug shadow-sm"
 		>
+			{extras?.logo ? (
+				<div
+					data-preview-logo
+					className="border-foreground mx-auto mb-1 flex h-8 w-20 items-center justify-center border text-[10px]"
+				>
+					{_(t`Logo`)}
+				</div>
+			) : null}
 			{body}
+			{extras?.codes.map((code) => (
+				<div
+					key={code.kind}
+					data-preview-code={code.kind}
+					className="mt-2 text-center"
+				>
+					<div className="border-foreground mx-auto flex size-10 items-center justify-center border text-2xs">
+						QR
+					</div>
+					<div className="text-[10px]">{code.caption}</div>
+				</div>
+			))}
 		</div>
 	)
 }
@@ -318,6 +366,147 @@ function row(key: string, label: string, value: string, cls: string) {
 		<div key={key} className={cn('flex justify-between gap-2', cls)}>
 			<span>{label}</span>
 			<span>{value}</span>
+		</div>
+	)
+}
+
+/**
+ * Logo, review code and app code on the guest receipt (#263). A code is
+ * offered only when its target exists, and the screen says why when it does not.
+ */
+function ReceiptExtrasControls({
+	extras,
+	targets,
+	hasLogo,
+	disabled,
+	onChange,
+}: {
+	extras: ReceiptExtrasConfig
+	targets?: ReceiptTargets
+	hasLogo: boolean
+	disabled: boolean
+	onChange: (patch: Partial<ReceiptExtrasConfig>) => void
+}) {
+	const { _ } = useLingui()
+	return (
+		<div className="space-y-1" data-testid="receipt-extras">
+			<h5 className="text-sm font-semibold">
+				<Trans>Logo and codes on the receipt</Trans>
+			</h5>
+			<p className="text-muted-foreground text-xs leading-relaxed">
+				<Trans>
+					Codes print small below the tax invoice code, with a caption. On a
+					narrow roll that has no room for both, they are left off and the tax
+					invoice code is kept. Refund and void slips never carry them.
+				</Trans>
+			</p>
+			<div className="divide-y">
+				<Option
+					label={_(t`Logo at the top`)}
+					hint={
+						hasLogo ? (
+							<Trans>
+								Printed in one colour and kept short so it suits thermal paper.
+							</Trans>
+						) : (
+							<Trans>Add a site icon in Website settings to use this.</Trans>
+						)
+					}
+					checked={extras.logo}
+					disabled={disabled || !hasLogo}
+					onChange={(on) => onChange({ logo: on })}
+				/>
+				<CodeOption
+					label={_(t`Review code`)}
+					hint={
+						targets?.reviewUrl ? (
+							<Trans>Opens this location’s Google review page.</Trans>
+						) : (
+							<Trans>
+								Add the location’s Google review link in Settings, Locations to
+								use this.
+							</Trans>
+						)
+					}
+					available={Boolean(targets?.reviewUrl)}
+					setting={extras.review}
+					fallback={DEFAULT_REVIEW_CAPTION}
+					captionLabel={_(t`Review code caption`)}
+					disabled={disabled}
+					onChange={(review) => onChange({ review })}
+				/>
+				<CodeOption
+					label={_(t`App or rewards code`)}
+					hint={
+						targets?.appUrl ? (
+							<Trans>
+								Opens your app, or your rewards page when the app is not
+								installed.
+							</Trans>
+						) : (
+							<Trans>
+								Needs a live app or the rewards program to have somewhere to
+								send guests.
+							</Trans>
+						)
+					}
+					available={Boolean(targets?.appUrl)}
+					setting={extras.app}
+					fallback={DEFAULT_APP_CAPTION}
+					captionLabel={_(t`App code caption`)}
+					disabled={disabled}
+					onChange={(app) => onChange({ app })}
+				/>
+			</div>
+		</div>
+	)
+}
+
+function CodeOption({
+	label,
+	hint,
+	available,
+	setting,
+	fallback,
+	captionLabel,
+	disabled,
+	onChange,
+}: {
+	label: string
+	hint: React.ReactNode
+	available: boolean
+	setting: ReceiptExtrasConfig['review']
+	fallback: string
+	captionLabel: string
+	disabled: boolean
+	onChange: (next: ReceiptExtrasConfig['review']) => void
+}) {
+	// What is typed stays as typed (a trailing space included); the stored value
+	// is cleaned when it is read back.
+	const [typed, setTyped] = useState(setting.caption ?? '')
+	return (
+		<div>
+			<Option
+				label={label}
+				hint={hint}
+				checked={setting.show && available}
+				disabled={disabled || !available}
+				onChange={(on) => onChange({ ...setting, show: on })}
+			/>
+			{setting.show && available ? (
+				<Input
+					aria-label={captionLabel}
+					value={typed}
+					placeholder={fallback}
+					maxLength={RECEIPT_CAPTION_MAX_LENGTH}
+					disabled={disabled}
+					className="mb-2 h-11 md:h-8"
+					onChange={(event) => {
+						setTyped(event.target.value)
+						onChange({ ...setting, caption: event.target.value || null })
+					}}
+				/>
+			) : null}
 		</div>
 	)
 }
@@ -447,6 +636,11 @@ function LocationTickets({
 		}))
 	const setOption = (patch: Partial<TicketsConfig>) =>
 		setDraft((current) => ({ ...current, ...patch }))
+	const setExtras = (patch: Partial<ReceiptExtrasConfig>) =>
+		setDraft((current) => ({
+			...current,
+			extras: { ...resolveTickets(current).extras, ...patch },
+		}))
 	const previewKinds: PreviewKind[] = [
 		'order',
 		...(resolved.changesOnly ? (['changes'] as const) : []),
@@ -585,6 +779,15 @@ function LocationTickets({
 						})}
 					</tbody>
 				</table>
+				{type === 'receipt' ? (
+					<ReceiptExtrasControls
+						extras={resolved.extras}
+						targets={location.targets}
+						hasLogo={Boolean(location.logoUrl)}
+						disabled={!canWrite}
+						onChange={setExtras}
+					/>
+				) : null}
 				<div className="space-y-1">
 					<h5 className="text-sm font-semibold">
 						<Trans>When tickets print</Trans>
@@ -764,7 +967,13 @@ function LocationTickets({
 						))}
 					</div>
 				) : null}
-				<TicketPreview type={type} config={draft} kind={previewKind} />
+				<TicketPreview
+					type={type}
+					config={draft}
+					kind={previewKind}
+					targets={location.targets}
+					logoUrl={location.logoUrl}
+				/>
 			</div>
 		</section>
 	)

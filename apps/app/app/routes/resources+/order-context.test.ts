@@ -195,6 +195,8 @@ describe('internal restaurant order context', () => {
 			// The service fee flag defaults off too: no location is listed.
 			serviceFee: { version: 1, locations: {} },
 			slotLimits: { enabled: false },
+			// Alcohol (#167): no location has reviewed the setting, and not KSA.
+			alcohol: { ksa: false, locations: {} },
 			// Checkout rules (#251, #257, #408, #409, #422): nothing is set up, so the
 			// region reads every location as having none, and daily limits are off.
 			packagingFee: { version: 1, locations: {} },

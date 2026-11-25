@@ -77,6 +77,7 @@ import {
 	REFUND_FAILURE_FALLBACK,
 	REFUND_FAILURE_LABELS,
 } from './refund-labels.ts'
+import { ReprintButtons } from './reprint-buttons.tsx'
 
 /** What the cancel dialog sends with the cancellation. */
 export type CancelOptions = {
@@ -182,9 +183,12 @@ export function OrderDetail({
 	backHref,
 	steps,
 	memberNames,
+	reprint = false,
 }: {
 	/** The order's recorded steps (#243), shown in the Activity list with who did each. */
 	steps?: readonly OrderTimelineEntry[]
+	/** Cloud printers are on and the member may change them: show Reprint (#117). */
+	reprint?: boolean
 	/** Member user id to display name, for who did each step. */
 	memberNames?: Readonly<Record<string, string>>
 	order: Order
@@ -815,6 +819,24 @@ export function OrderDetail({
 										<Trans>Large order +{largeOrderExtraMinutes} min</Trans>
 									</p>
 								) : null}
+								{order.hasAlcohol ? (
+									<p
+										className="flex items-center gap-1.5 font-semibold"
+										data-testid="order-check-id"
+									>
+										<Icon name="shield-check" className="size-4" aria-hidden />
+										<Trans>Check ID</Trans>
+									</p>
+								) : null}
+								{order.guestAllergy ? (
+									<p
+										className="text-destructive flex items-center gap-1.5 font-semibold"
+										data-testid="order-guest-allergy"
+									>
+										<Icon name="alert-triangle" className="size-4" aria-hidden />
+										<Trans>Guest stated an allergy</Trans>
+									</p>
+								) : null}
 								{order.utensilsRequested === true ? (
 									<p data-testid="order-utensils">
 										<Trans>Utensils: yes</Trans>
@@ -832,6 +854,13 @@ export function OrderDetail({
 									>
 										{order.pickupInstructions}
 									</p>
+								) : null}
+								{reprint ? (
+									<ReprintButtons
+										orgSlug={orgSlug}
+										orderId={order.id}
+										locationId={order.location.id}
+									/>
 								) : null}
 								{canPushBack ? (
 									<div

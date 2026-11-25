@@ -70,6 +70,8 @@ import { operatorOrderRoutes } from './routes/operator-orders.ts'
 import { operatorQrRoutes } from './routes/operator-qr.ts'
 import { operatorPeopleRoutes } from './routes/operator-people.ts'
 import { operatorPosRoutes } from './routes/operator-pos.ts'
+import { operatorPrintRoutes } from './routes/operator-print.ts'
+import { printRoutes } from './routes/print.ts'
 import { posRoutes } from './routes/pos.ts'
 import { posInventoryRoutes } from './routes/pos-inventory.ts'
 import { posKdsRoutes } from './routes/pos-kds.ts'
@@ -320,6 +322,8 @@ export function createTenantApiApp() {
 		rateLimit('pos-pair', { windowMs: 60 * 1000, maxRequests: 20 }),
 	)
 	app.use('/pos/*', rateLimit('pos', { windowMs: 60 * 1000, maxRequests: 600 }))
+	// Printers poll every few seconds; a wrong password is refused before any work.
+	app.use('/print/*', rateLimit('print', { windowMs: 60 * 1000, maxRequests: 600 }))
 
 	// The public application form: a person applies a few times at most. The
 	// organization also enforces durable per-address and per-organization limits
@@ -452,6 +456,7 @@ export function createTenantApiApp() {
 	app.route('/operator/orders', operatorOrderRoutes)
 	app.route('/operator/qr', operatorQrRoutes)
 	app.route('/operator/people', operatorPeopleRoutes)
+	app.route('/operator/pos/printers', operatorPrintRoutes)
 	app.route('/operator/pos', operatorPosRoutes)
 	app.route('/operator/calls', voiceOperatorRoutes)
 	app.route('/operator/staff', staffOperatorRoutes)
@@ -463,6 +468,7 @@ export function createTenantApiApp() {
 	app.route('/internal/staff', staffInternalRoutes)
 	app.route('/internal/home', homeInternalRoutes)
 	app.route('/kiosk', kioskRoutes)
+	app.route('/print', printRoutes)
 	app.route('/pos/timeclock', posTimeclockRoutes)
 	app.route('/pos/inventory', posInventoryRoutes)
 	app.route('/pos/reservations', posReservationsRoutes)

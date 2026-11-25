@@ -36,6 +36,8 @@ import {
 	fetchTillDiscountRules,
 } from '../services/order-service.ts'
 import { inventorySaleQueue } from '../services/inventory-sales-service.ts'
+import { printTillSale } from '../services/print-hooks.ts'
+import { queueOrderPrint } from '../services/print-service.ts'
 import { listKdsStations } from '../services/kds-service.ts'
 import { scheduleOrderJourneys } from '../services/order-journeys.ts'
 import { deviceApps } from '../services/pos-apps-service.ts'
@@ -620,6 +622,13 @@ posRoutes.post('/orders', async (c) => {
 		await touchDevice(pos.db, pos.device)
 		await loyalty.settle()
 		await inventory.settle(pos.orgId)
+		// Cloud printers (#117): a kitchen ticket when a round is sent, a receipt on payment.
+		printTillSale(pos.orgId, {
+			id: order.id,
+			locationId: order.locationId,
+			status: order.status,
+			lines: order.lines,
+		})
 		// A paid Station sale linked to a guest counts as an order (#99).
 		if (order.status === 'paid') scheduleOrderJourneys(pos.orgId)
 		if (order.discountApplications.length > 0) {
@@ -668,6 +677,45 @@ posRoutes.post('/orders', async (c) => {
 		)
 		return posError(500, 'internal_error')
 	}
+})
+
+const reprintSchema = z.strictObject({
+	orderId: z.string().uuid(),
+	kind: z.enum(['kitchen', 'receipt']),
+	/** One per press, so a retry of the same press never prints twice. */
+	requestId: z.string().min(8).max(64),
+})
+
+/**
+ * "Reprint" on a till order (#117): the location's cloud printers print it
+ * again. Only an order at this terminal's own location. `cloudPrinted: false`
+ * means no printer took it and the tablet prints through its own dialog.
+ */
+posRoutes.post('/print/reprint', async (c) => {
+	const auth = await authenticatePosDevice(c)
+	if ('error' in auth) return auth.error
+	const body = await readBody(c)
+	if ('error' in body) return body.error
+	const parsed = reprintSchema.safeParse(body.raw)
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const locationId = auth.pos.device.locationId
+	if (!locationId) {
+		return c.json({ cloudPrinted: false }, 200, { 'Cache-Control': 'private, no-store' })
+	}
+	const result = await queueOrderPrint(auth.pos.db, {
+		orgId: auth.pos.orgId,
+		locationId,
+		source: 'pos',
+		orderId: parsed.data.orderId,
+		trigger: {
+			kind: parsed.data.kind,
+			dedupeKey: `reprint:${parsed.data.requestId}`,
+			reprint: true,
+		},
+	}).catch(() => ({ queued: 0 }))
+	return c.json({ cloudPrinted: result.queued > 0 }, 200, {
+		'Cache-Control': 'private, no-store',
+	})
 })
 
 /** Open tabs on this location's other terminals, so one can be taken over here. */

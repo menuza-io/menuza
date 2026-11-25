@@ -256,11 +256,12 @@ export const kdsTicketSchema = z.object({
 	 */
 	service: z.enum(['qr']).optional(),
 	/**
-	 * Reserved for a guest who states an allergy at checkout. There is no such
-	 * field at checkout today, so the feed never sets this. A later checkout
-	 * can set it without changing the ticket shape.
+	 * The guest ticked "someone in my party has an allergy" at checkout (#294).
+	 * Highlights the whole ticket header. Left out unless set.
 	 */
 	guestAllergy: z.boolean().optional(),
+	/** The order has alcohol: the ticket says "Check ID" (#167). Left out unless set. */
+	checkId: z.boolean().optional(),
 })
 export type KdsTicket = z.infer<typeof kdsTicketSchema>
 export const kdsFeedSchema = z.object({

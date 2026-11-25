@@ -977,6 +977,8 @@ function OrderSheet({
 	const ticketSettings = useTickets()
 	/** Prints the kitchen ticket by itself when the owner chose this moment for it. */
 	const autoPrint = (moment: 'on_acceptance' | 'when_ready') => {
+		// A cloud printer at the location prints it by itself (#117).
+		if (detail?.cloudPrinters) return
 		if (
 			detail &&
 			ticketSettings.when.kitchen === moment &&
@@ -986,6 +988,7 @@ function OrderSheet({
 	}
 	/** A cancelled or rejected order prints its slip at once when the owner asked. */
 	const autoPrintSlip = () => {
+		if (detail?.cloudPrinters) return
 		if (
 			detail &&
 			ticketSettings.cancellationSlip &&
@@ -1004,12 +1007,28 @@ function OrderSheet({
 	recordReprint.current = orders.recordReprint
 	useEffect(() => {
 		if (!printing) return
-		const frame = window.requestAnimationFrame(() => {
-			window.print()
-			recordReprint.current(printing === 'cancelled' ? 'kitchen' : printing)
-			setPrinting(null)
+		let cancelled = false
+		let frame = 0
+		// The reprint is recorded first: a cloud printer at the location takes it
+		// (#117) and the tablet opens no print dialog; otherwise it prints as it
+		// always did.
+		void Promise.resolve(
+			recordReprint.current(printing === 'cancelled' ? 'kitchen' : printing),
+		).then((cloud) => {
+			if (cancelled) return
+			if (cloud === true) {
+				setPrinting(null)
+				return
+			}
+			frame = window.requestAnimationFrame(() => {
+				window.print()
+				setPrinting(null)
+			})
 		})
-		return () => window.cancelAnimationFrame(frame)
+		return () => {
+			cancelled = true
+			window.cancelAnimationFrame(frame)
+		}
 	}, [printing])
 
 	const money = moneyFormatter(detail?.currency ?? 'USD')
@@ -2376,6 +2395,27 @@ export function PrintedTicket({
 								: _(t`Dine in`)
 							: _(t`Pickup`)}
 					{detail.dueAt ? ` · ${time.format(detail.dueAt)}` : ''}
+				</div>
+			) : null}
+			{kind === 'kitchen' && detail.guestAllergy ? (
+				// The guest stated an allergy (#294): the whole header, as a bordered
+				// box with an icon and the words, readable on black and white paper.
+				<div
+					className="my-1 flex items-center justify-center gap-1 border-2 px-1.5 text-center font-semibold"
+					data-highlight="allergy"
+					data-guest-allergy
+				>
+					<Icon name="alert-triangle" className="size-4" aria-hidden />
+					<Trans>Allergy stated by guest</Trans>
+				</div>
+			) : null}
+			{detail.checkId ? (
+				<div
+					className="my-1 flex items-center justify-center gap-1 border-2 px-1.5 text-center font-semibold"
+					data-check-id
+				>
+					<Icon name="shield-check" className="size-4" aria-hidden />
+					<Trans>Check ID</Trans>
 				</div>
 			) : null}
 			{kind === 'guest' && f('guestContact').show ? (

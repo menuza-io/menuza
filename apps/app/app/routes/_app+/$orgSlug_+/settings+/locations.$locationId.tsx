@@ -1,6 +1,11 @@
 import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
+import { ALCOHOL_ONLINE_VALUES } from '@repo/common/alcohol-rules'
 import { courseSettingsJson } from '@repo/common/kitchen-ticket'
+import {
+	cleanGoogleReviewUrl,
+	REVIEW_URL_MAX_LENGTH,
+} from '@repo/common/receipt-extras'
 import { getLocationCurrency } from '@repo/common/location-currency'
 import { planHoursClosures } from '@repo/common/ordering-hours'
 import {
@@ -150,6 +155,8 @@ const LocationInputSchema = z.object({
 	deliveryConfig: z.string().optional(),
 	deliveryZones: z.string().optional(),
 	courseSettings: z.string().optional(),
+	alcoholOnline: z.enum(ALCOHOL_ONLINE_VALUES).optional(),
+	googleReviewUrl: z.string().max(REVIEW_URL_MAX_LENGTH).optional(),
 	orderNumberFormat: z.string().optional(),
 	orderingSettings: z.string().optional(),
 })
@@ -242,6 +249,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			}
 		})(),
 		courseSettings: record.courseSettings,
+		alcoholOnline: record.alcoholOnline,
+		googleReviewUrl: record.googleReviewUrl,
 		orderNumberFormat: record.orderNumberFormat,
 		deliveryZones: (() => {
 			const parsed = parseJson<DeliveryZone[]>(record.deliveryZones)
@@ -629,6 +638,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		...(data.courseSettings !== undefined
 			? { courseSettings: courseSettingsJson(data.courseSettings) }
 			: {}),
+		// Alcohol rules are not offered in KSA: the value is never stored there.
+		...(data.alcoholOnline !== undefined && organization.dataRegion !== 'ksa'
+			? { alcoholOnline: data.alcoholOnline }
+			: {}),
+		...(data.googleReviewUrl !== undefined
+			? { googleReviewUrl: cleanGoogleReviewUrl(data.googleReviewUrl) }
+			: {}),
 		...(data.orderNumberFormat !== undefined
 			? {
 					orderNumberFormat: orderNumberFormatResult.value
@@ -1006,6 +1022,7 @@ export default function EditLocationRoute() {
 						orderingSettings={orderingSettings}
 						checkoutRules={checkoutRules}
 						policy={policy}
+						ksa={organization.dataRegion === 'ksa'}
 					/>
 				</>
 			)}

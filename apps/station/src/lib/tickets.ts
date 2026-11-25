@@ -81,3 +81,26 @@ export function kitchenTicketPlan(
 	}
 	return { kind: 'full', lines: order.lines, removed: [], at: order.createdAt }
 }
+
+/** The links the receipt codes open at this terminal's location, from the menu it already has (#263). */
+export function useReceiptTargets() {
+	const codes = usePos((s) => s.location?.receiptCodes)
+	return useMemo(
+		() => ({
+			reviewUrl: codes?.reviewUrl ?? null,
+			appUrl: codes?.appUrl ?? null,
+		}),
+		[codes?.reviewUrl, codes?.appUrl],
+	)
+}
+
+/** The organization logo's address, resolved against the App, or null. */
+export function useReceiptLogoUrl(): string | null {
+	const icon = usePos((s) => s.snapshot?.organization.siteIcon?.appleTouchIcon)
+	const appUrl = usePos((s) => s.settings.appUrl)
+	if (!icon) return null
+	if (/^(https?:|data:|blob:)/.test(icon)) return icon
+	return appUrl
+		? `${appUrl.replace(/\/+$/, '')}${icon.startsWith('/') ? '' : '/'}${icon}`
+		: null
+}

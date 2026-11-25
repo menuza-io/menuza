@@ -153,7 +153,8 @@ describe('demo online orders', () => {
 		expect(byName.results.map((o) => o.number)).toContain('W-0988')
 		const byPhone = await demo.search({ phone: '0177' })
 		expect(byPhone.results.map((o) => o.number)).toEqual(['W-0951'])
-		expect(JSON.stringify(byPhone)).not.toContain('555')
+		// A phone number, not any run of digits (timestamps may contain 555).
+		expect(JSON.stringify(byPhone)).not.toMatch(/555[\s-]\d{3}/)
 		const delivery = await demo.search({
 			q: 'W-',
 			fulfillment: 'delivery',

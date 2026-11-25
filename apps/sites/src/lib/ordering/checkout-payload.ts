@@ -39,6 +39,10 @@ export function checkoutOrderPayload(
 		 * what the guest chose.
 		 */
 		utensilsRequested?: boolean | null
+		/** "I am 21 or older and will show ID" (#167): sent only as a yes, with alcohol in the cart. */
+		ageConfirmed?: boolean
+		/** "Someone in my party has an allergy" (#294): sent only as a yes. */
+		guestAllergy?: boolean
 		/** A gift card applied after discounts and loyalty (#110): `{code | savedCardId, expectedAmountMinor}`. */
 		giftCard?: Record<string, unknown> | null
 		/**
@@ -70,6 +74,8 @@ export function checkoutOrderPayload(
 		...(extra.expectedPackagingFeeMinor && extra.expectedPackagingFeeMinor > 0
 			? { expectedPackagingFeeMinor: extra.expectedPackagingFeeMinor }
 			: {}),
+		...(extra.ageConfirmed === true ? { ageConfirmed: true } : {}),
+		...(extra.guestAllergy === true ? { guestAllergy: true } : {}),
 		// Only an order the box was shown for (pickup or delivery, never a table).
 		...(typeof extra.utensilsRequested === 'boolean' &&
 		priced.fulfillment !== 'dine_in'

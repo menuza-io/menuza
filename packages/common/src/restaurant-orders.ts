@@ -85,6 +85,11 @@ import {
 	readOrderCapsForLocation,
 } from './order-caps.ts'
 import {
+	alcoholAllowedFor,
+	ALCOHOL_NOT_ALLOWED_CODE,
+	readAlcoholContext,
+} from './alcohol-rules.ts'
+import {
 	computePackagingFee,
 	readPackagingFeePolicy,
 	PACKAGING_FEE_UNAVAILABLE_CODE,
@@ -262,6 +267,8 @@ export type RestaurantOrderErrorCode =
 	| 'service_fee_unavailable'
 	| 'order_too_large'
 	| 'packaging_fee_unavailable'
+	| 'alcohol_not_allowed'
+	| 'age_confirmation_required'
 
 export type RestaurantOrderError = {
 	status: 400 | 403 | 404 | 409 | 422 | 503
@@ -456,6 +463,13 @@ const restaurantOrderObjectSchema = z.strictObject({
 	utensilsRequested: z.boolean().optional(),
 	/** Dine-in cap by head count (#422). */
 	guestCount: z.number().int().min(1).max(500).optional(),
+	/**
+	 * "I am 21 or older and will show ID" (#167): a yes, never a birth date.
+	 * Sent only when the cart has alcohol.
+	 */
+	ageConfirmed: z.boolean().optional(),
+	/** "Someone in my party has an allergy" (#294): a flag for the kitchen ticket. */
+	guestAllergy: z.boolean().optional(),
 	lines: z.array(restaurantOrderLineSchema).min(1).max(RESTAURANT_MAX_LINES),
 	turnstileToken: z.string().min(1).max(2048).optional(),
 	/** Opaque client device identifier used for referral abuse prevention. */
@@ -919,6 +933,11 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		...(request.guestCount !== undefined
 			? { guestCount: request.guestCount }
 			: {}),
+		// #167 and #294: only when sent, so older requests hash as before.
+		...(request.ageConfirmed !== undefined
+			? { ageConfirmed: request.ageConfirmed }
+			: {}),
+		...(request.guestAllergy ? { guestAllergy: true } : {}),
 		delivery: request.delivery
 			? {
 					address: request.delivery.address ?? null,
@@ -1323,6 +1342,13 @@ export const publicLocationContextSchema = z
 		stationSettings: posLocationStationSettingsSchema.optional(),
 		/** Per-location order number format and daily reset (#371). */
 		orderNumberFormat: orderNumberFormatSchema.optional(),
+		/** What the receipt codes open (#263); each null when its target does not exist. */
+		receiptCodes: z
+			.object({
+				reviewUrl: z.string().max(600).nullable().optional(),
+				appUrl: z.string().max(600).nullable().optional(),
+			})
+			.optional(),
 	})
 	.loose()
 
@@ -1492,6 +1518,12 @@ export const restaurantOrderContextSchema = z
 		serviceFee: z.unknown().optional(),
 		packagingFee: z.unknown().optional(),
 		orderCaps: z.unknown().optional(),
+		/**
+		 * Where alcohol may be ordered online per location id, and whether the
+		 * organization is in KSA (#167). Read with `readAlcoholContext`: missing
+		 * is what happened before the setting (pickup and delivery).
+		 */
+		alcohol: z.unknown().optional(),
 		/** Pickup instructions per location id (#251). Localized JSON string. */
 		pickupInstructions: z.record(z.string(), z.string()).optional(),
 		/** Utensils question per location id (#257). */
@@ -1714,6 +1746,8 @@ export type PricedOptionLine = {
 	/** Localized kitchen name. Guest views keep `optionName`. */
 	kitchenName?: string
 	kitchenHighlight?: string
+	/** Flagged alcohol on the menu when it was placed (#167). */
+	alcohol?: true
 	half: 'whole' | 'left' | 'right' | null
 	quantity: number
 	priceCents: number
@@ -1726,6 +1760,8 @@ export type PricedOrderLine = {
 	/** Localized kitchen name. Guest views keep `itemName`. */
 	kitchenName?: string
 	kitchenHighlight?: string
+	/** Flagged alcohol on the menu when it was placed (#167). */
+	alcohol?: true
 	variantId: string | null
 	quantity: number
 	unitPriceCents: number
@@ -1823,6 +1859,8 @@ export type PricedRestaurantOrder = {
 		itemUnits: number
 	} | null
 	totalCents: number
+	/** An item or option in the cart is flagged alcohol (#167): "Check ID". */
+	hasAlcohol: boolean
 	location: { id: string; name: string; timezone: string }
 	pickup: {
 		windowId: string
@@ -2331,10 +2369,12 @@ type ModifierResult =
 function kitchenFields(entity: object): {
 	kitchenName?: string
 	kitchenHighlight?: string
+	alcohol?: true
 } {
 	const record = entity as {
 		kitchenName?: unknown
 		kitchenHighlight?: unknown
+		isAlcohol?: unknown
 	}
 	const kitchenName =
 		typeof record.kitchenName === 'string' && record.kitchenName
@@ -2350,6 +2390,7 @@ function kitchenFields(entity: object): {
 	return {
 		...(kitchenName ? { kitchenName } : {}),
 		...(kitchenHighlight ? { kitchenHighlight } : {}),
+		...(record.isAlcohol === true ? { alcohol: true as const } : {}),
 	}
 }
 
@@ -3428,6 +3469,8 @@ export function priceRestaurantOrder(
 	// ---- Delivery coverage + fee -------------------------------------------
 	let deliveryInfo: PricedRestaurantOrder['delivery'] = null
 	let deliveryFeeCents = 0
+	// A zone served by a delivery app, not the restaurant's own drivers (#167).
+	let courierDelivery = false
 	if (request.fulfillment === 'delivery' && request.delivery) {
 		if (request.delivery.quoteToken && !deliveryQuote) {
 			return {
@@ -3446,6 +3489,9 @@ export function priceRestaurantOrder(
 		)
 		if (!coverage.ok) return { ok: false, error: coverage.error }
 		const zone = coverage.zone
+		courierDelivery =
+			typeof (zone as { provider?: unknown }).provider === 'string' &&
+			(zone as { provider?: string }).provider !== 'in_house'
 		deliveryFeeCents = dollarsToCents(zone.deliveryFee)
 		// With a quote, the persisted address comes from the signed payload,
 		// never from client text.
@@ -3470,6 +3516,49 @@ export function priceRestaurantOrder(
 					lat: null,
 					lng: null,
 				}
+	}
+
+	// ---- Alcohol (#167) ------------------------------------------------------
+	// Refused for order types the location does not allow, naming the lines. A
+	// till sale is rung up by staff, who check ID themselves: the ticket says so.
+	const alcoholLines = pricedLines.flatMap((line, index) => {
+		const hits = [
+			...(line.alcohol ? [line.itemName] : []),
+			...line.options.filter((option) => option.alcohol).map((o) => o.optionName),
+		]
+		return hits.length
+			? [{ line: index, itemId: line.itemId, name: line.itemName, flagged: hits }]
+			: []
+	})
+	const hasAlcohol = alcoholLines.length > 0
+	if (hasAlcohol && !walkIn) {
+		const setting = readAlcoholContext(
+			context.alcohol,
+			location.id,
+			location.currency,
+		)
+		if (
+			!alcoholAllowedFor(setting, request.fulfillment, {
+				courier: courierDelivery,
+			})
+		) {
+			return {
+				ok: false,
+				error: orderError(
+					422,
+					ALCOHOL_NOT_ALLOWED_CODE,
+					'Alcohol cannot be ordered this way. Remove the items listed or choose another way to order.',
+					{
+						fulfillment: request.fulfillment,
+						lines: alcoholLines.map((entry) => ({
+							line: entry.line,
+							itemId: entry.itemId,
+							name: entry.name,
+						})),
+					},
+				),
+			}
+		}
 	}
 
 	// ---- Totals --------------------------------------------------------------
@@ -3658,6 +3747,7 @@ export function priceRestaurantOrder(
 				: null,
 			packagingFeeRule,
 			totalCents,
+			hasAlcohol,
 			location: {
 				id: location.id,
 				name: location.name,

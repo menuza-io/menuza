@@ -154,6 +154,9 @@ const inventoryActorId =
 /** Single columns that look like PII but are not a customer's data. */
 const ALLOWED_COLUMNS: Record<string, string> = {
 	'loyalty_rewards.name': 'reward title written by the operator',
+	'print_devices.name': 'printer title written by the operator (#117)',
+	'restaurant_orders.guest_allergy':
+		'a yes the guest ticked (#294): a flag for the kitchen ticket header, never their words, which stay in the line and order notes',
 	'restaurant_orders.gift_card_cents':
 		'amount in cents paid with a gift card; no person data',
 	'gift_cards.last4':

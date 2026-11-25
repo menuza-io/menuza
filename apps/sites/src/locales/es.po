@@ -420,6 +420,10 @@ msgstr "Después de hacer tu pedido, reservaremos tus artículos durante {durati
 msgid "Alcohol"
 msgstr "Alcohol"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Alcohol cannot be ordered this way: {names}. Remove it from your order or choose another way to order."
+msgstr "El alcohol no se puede pedir de esta forma: {names}. Quítalo de tu pedido o elige otra forma de pedir."
+
 #: src/pages/drop/[slug].astro.ts:3
 msgid "All drops"
 msgstr "Todos los lanzamientos"
@@ -1797,6 +1801,10 @@ msgstr "Acepto estas condiciones y el pago o la retención en la tarjeta descrit
 msgid "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
 msgstr "Acepto que {organization} conserve mis datos y respuestas para valorar mi solicitud y ponerse en contacto conmigo. Los eliminará si se lo pido."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "I am 21 or older and will show ID"
+msgstr "Tengo 21 años o más y mostraré mi identificación"
+
 #: src/lib/reservations/labels.ts:273
 msgid "I am on my way"
 msgstr "Voy en camino"
@@ -2889,6 +2897,10 @@ msgstr "Revisa tus datos e inténtalo de nuevo."
 msgid "Please choose a JPG, PNG, WebP, or HEIC image."
 msgstr "Por favor elige una imagen JPG, PNG, WebP o HEIC."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Please confirm that you are 21 or older and will show ID."
+msgstr "Confirma que tienes 21 años o más y que mostrarás tu identificación."
+
 #: src/lib/reservations/labels.ts:267
 msgid "Please contact the restaurant if you think this is a mistake."
 msgstr "Ponte en contacto con el restaurante si crees que es un error."
@@ -3489,6 +3501,10 @@ msgstr "Algunos precios cambiaron desde su llamada. Su carrito muestra los preci
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed. Your cart shows the current prices."
 msgstr "Algunos precios cambiaron. Tu carrito muestra los precios actuales."
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Someone in my party has an allergy (add details in the notes)"
+msgstr "Alguien de mi grupo tiene una alergia (añade los detalles en las notas)"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3

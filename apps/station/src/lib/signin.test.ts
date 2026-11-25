@@ -68,7 +68,10 @@ describe('online sign-in', () => {
 		expect(JSON.parse(init.body)).toEqual({ pin: '4321' })
 		const remembered = await db.staff.toArray()
 		expect(remembered).toHaveLength(1)
-		expect(JSON.stringify(remembered)).not.toContain('4321')
+		// The PIN itself is never stored. The timestamp is left out of the check: a
+		// time such as 1795619924321 can contain the digits by coincidence.
+		const withoutTimes = remembered.map(({ cachedAt: ignoredCachedAt, ...row }) => row)
+		expect(JSON.stringify(withoutTimes)).not.toContain('4321')
 	})
 
 	it('a wrong PIN is refused, and a remembered person whose PIN changed is forgotten', async () => {
