@@ -115,7 +115,7 @@ const EN: Copy = {
 	cta: {
 		quote: 'View and pay your quote',
 		quote_updated: 'View the new quote',
-		confirmed: '',
+		confirmed: 'Pay the balance',
 		balance_link: 'Pay the balance',
 		balance_reminder: 'Pay the balance',
 		balance_overdue: 'Pay the balance',
@@ -167,7 +167,7 @@ const AR: Copy = {
 	cta: {
 		quote: 'عرض السعر والدفع',
 		quote_updated: 'عرض السعر الجديد',
-		confirmed: '',
+		confirmed: 'ادفع الرصيد',
 		balance_link: 'ادفع الرصيد',
 		balance_reminder: 'ادفع الرصيد',
 		balance_overdue: 'ادفع الرصيد',
