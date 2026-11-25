@@ -23,6 +23,7 @@ import {
 	type RestaurantOrderRefund,
 } from '@repo/tenant-db'
 
+import { pickCateringRefundPayment } from './catering-refunds.ts'
 import { type OrderTx } from './order-service.ts'
 import { refundGiftShareInTx } from './gift-card-orders.ts'
 
@@ -77,9 +78,11 @@ export async function orderCarriesLoyalty(
 export function orderPaidCents(
 	order: Pick<RestaurantOrder, 'paymentStatus' | 'totalCents'> & {
 		giftCardCents?: number
+		/** What a catering order captured so far (deposit plus balance); null is the total. */
+		paidCents?: number | null
 	},
 ): number {
-	if (order.paymentStatus === 'paid') return order.totalCents
+	if (order.paymentStatus === 'paid') return order.paidCents ?? order.totalCents
 	// An order a gift card paid in full took nothing from the provider, but the
 	// card's part is real money to give back.
 	if (order.paymentStatus === 'not_required') return order.giftCardCents ?? 0
@@ -102,7 +105,7 @@ export function orderRefundableCents(
 	order: Pick<
 		RestaurantOrder,
 		'paymentStatus' | 'totalCents' | 'refundedCents' | 'refundReversedCents'
-	> & { giftCardCents?: number },
+	> & { giftCardCents?: number; paidCents?: number | null },
 	pendingCents: number,
 ): number {
 	return refundableAmountCents({
@@ -118,7 +121,7 @@ export function orderRefundSummary(
 	order: Pick<
 		RestaurantOrder,
 		'paymentStatus' | 'totalCents' | 'refundedCents' | 'refundReversedCents'
-	>,
+	> & { paidCents?: number | null },
 	refunds: readonly Pick<
 		RestaurantOrderRefund,
 		| 'amountCents'
@@ -394,12 +397,14 @@ export async function bookOrderProviderRefundInTx(
 			'This order is already fully refunded.',
 		)
 	}
-	const { amountCents, serviceFeeCents } = refundAmountWithServiceFee({
-		amount: input.amount,
-		refundableCents,
-		feeChargeCents: orderServiceFeeChargeCents(order),
-		feeRefundedCents: await serviceFeeRefundedCentsInTx(tx, order.id),
-	})
+	const { amountCents: requestedCents, serviceFeeCents } =
+		refundAmountWithServiceFee({
+			amount: input.amount,
+			refundableCents,
+			feeChargeCents: orderServiceFeeChargeCents(order),
+			feeRefundedCents: await serviceFeeRefundedCentsInTx(tx, order.id),
+		})
+	let amountCents = requestedCents
 	if (amountCents > refundableCents) {
 		// `serviceFeeCents` says how much of the amount asked for was the fee the
 		// tick added, so the dialog can explain a refusal the typed amount alone
@@ -410,6 +415,42 @@ export async function bookOrderProviderRefundInTx(
 			'That is more than is left to refund.',
 			{ refundableCents, serviceFeeCents },
 		)
+	}
+	// A catering order was paid through up to two payments (the deposit and the
+	// balance): the refund is booked against the one that can cover it, never
+	// more than that payment took (#361). A cancel's full refund that spans both
+	// pays the first back now and leaves the rest owed.
+	let paymentRef: {
+		processor: 'connect' | 'checkout'
+		sessionId: string
+		paymentId: string | null
+	} | null = null
+	if (order.isCatering) {
+		const pick = await pickCateringRefundPayment(tx, order, {
+			amountCents,
+			full: 'full' in input.amount,
+			refundableCents,
+		})
+		if (!pick.ok) {
+			return bookFailure(
+				422,
+				'refund_exceeds_payment',
+				'That is more than the payment it would come back on. Refund the balance and the deposit separately.',
+				{ refundableCents: pick.largestCents, serviceFeeCents },
+			)
+		}
+		amountCents = pick.amountCents
+		paymentRef = {
+			processor: pick.processor,
+			sessionId: pick.sessionId,
+			paymentId: pick.paymentId,
+		}
+		if (pick.remainderOwed) {
+			await tx
+				.update(restaurantOrders)
+				.set({ cancelRefundDueAt: new Date(input.now) })
+				.where(eq(restaurantOrders.id, order.id))
+		}
 	}
 
 	// Gift card first: whatever the card paid of this order goes back to the
@@ -472,7 +513,7 @@ export async function bookOrderProviderRefundInTx(
 			currency: order.currency,
 			full:
 				orderRefundedNetCents(order) + giftBackCents + providerCents >=
-				order.totalCents,
+				(order.isCatering ? orderPaidCents(order) : order.totalCents),
 			note: input.note,
 			actorId: input.actorId,
 			idempotencyKey: input.idempotencyKey,
@@ -481,8 +522,9 @@ export async function bookOrderProviderRefundInTx(
 			kind: 'provider',
 			status: 'pending',
 			origin: input.origin,
-			processor: order.paymentProcessor,
-			sessionId: order.paymentSessionId,
+			processor: paymentRef?.processor ?? order.paymentProcessor,
+			sessionId: paymentRef?.sessionId ?? order.paymentSessionId,
+			...(paymentRef?.paymentId ? { paymentId: paymentRef.paymentId } : {}),
 			updatedAt: input.now,
 		})
 		.returning()
@@ -852,7 +894,8 @@ export function orderProviderRefundView(
 		processor: (refund.processor ??
 			'connect') as OrderProviderRefund['processor'],
 		sessionId: refund.sessionId ?? '',
-		paymentId: order.paymentId ?? null,
+		// A catering balance refund names the balance payment, not the deposit's.
+		paymentId: refund.paymentId ?? order.paymentId ?? null,
 		// A refund the provider reversed after it succeeded reads failed.
 		status: refund.reversedAt != null ? 'failed' : refund.status,
 		providerRefundId: refund.providerRefundId ?? null,

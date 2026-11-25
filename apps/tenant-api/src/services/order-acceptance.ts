@@ -18,6 +18,7 @@ import {
 	runOrderMessagesTickForOrg,
 	type OrderMessagesTickResult,
 } from './order-message-send.ts'
+import { runCateringTickForOrg } from './catering-tick.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
 import { processOwedCancelRefunds } from './order-provider-refund-service.ts'
 import {
@@ -231,11 +232,20 @@ export async function runOrdersTickForOrg(
 			return { printed: 0, nextDueAt: null as number | null }
 		},
 	)
+	// Catering (#124, #361): balance reminders, the day-before alert and quotes
+	// nobody paid. Counts only; a failure never stops the rest of the tick.
+	const catering = await runCateringTickForOrg(orgId, { now, db }).catch(
+		(error: unknown) => {
+			console.error('Catering tick failed', orgId, errorLogFields(error))
+			return null
+		},
+	)
 	const due = [
 		messages.nextDueAt,
 		acceptance.nextDeadlineAt,
 		alerts?.nextDueAt ?? null,
 		prints.nextDueAt,
+		catering?.nextDueAt ?? null,
 	].filter((at): at is number => at !== null)
 	const nextDueAt = due.length > 0 ? Math.min(...due) : null
 	return {

@@ -21,6 +21,7 @@ import {
 	foldUtensilsRequested,
 	parseUtensilsSettings,
 } from '@repo/common/checkout-utensils'
+import { readCateringPolicy } from '@repo/common/catering'
 import { parseStoredAttribution } from '@repo/common/order-attribution'
 import { resolvePickupInstructions } from '@repo/common/pickup-instructions'
 import {
@@ -227,6 +228,13 @@ import {
 	tableRoundsInLastHour,
 	type DineInCapability,
 } from './qr-dine-in.ts'
+import { isCateringPublicDisabled } from '../lib/catering-switches.ts'
+import { onCateringOrderPaid } from './catering-messages.ts'
+import {
+	cateringCollectionColumns,
+	cateringPaidColumns,
+	orderChargeCents,
+} from './catering-orders.ts'
 
 /** Tenant database + transaction handle types. */
 type TenantDatabase = Awaited<ReturnType<typeof getTenantDb>>
@@ -771,7 +779,7 @@ function dayKeyOf(now: Date): string {
 	return `${year}${month}${day}`
 }
 
-async function nextOrderNumber(
+export async function nextOrderNumber(
 	tx: OrderTx,
 	now: Date,
 	usedKeys: Set<string>,
@@ -1044,6 +1052,26 @@ export async function placeOrder(input: {
 			'ordering_unavailable',
 			'Ordering is temporarily unavailable. Please try again shortly.',
 		)
+	}
+
+	// Catering (#124): the kill switch stops new catering orders on this node,
+	// and a gift card cannot be mixed in (the deposit and the balance are paid
+	// by card). The location's own settings are read by the pricing engine.
+	if (request.catering) {
+		if (isCateringPublicDisabled()) {
+			return orderFailure(
+				503,
+				'catering_unavailable',
+				'Catering is temporarily unavailable. Please try again shortly.',
+			)
+		}
+		if (request.giftCard) {
+			return orderFailure(
+				422,
+				'catering_gift_card',
+				'A gift card cannot be used for a catering order.',
+			)
+		}
 	}
 
 	// The App folds the org's QR flags into the context; anything missing or
@@ -1761,6 +1789,24 @@ export async function placeOrder(input: {
 						acceptance.deadline !== null &&
 						(request.paymentMethod !== 'online' || freeOrder)
 
+					// Catering (#124, #361): the deposit taken now, the balance owed later
+					// and when it falls due. The pricing engine already refused a location
+					// without catering settings.
+					const cateringPolicy = request.catering
+						? readCateringPolicy(context.catering, request.locationId)
+						: null
+					const cateringColumns =
+						request.catering && cateringPolicy && result.scheduledFor
+							? cateringCollectionColumns({
+									policy: cateringPolicy,
+									totalCents: totals.totalCents,
+									eventAt: new Date(result.scheduledFor),
+									timeZone: result.location.timezone,
+									guestCount: request.guestCount ?? null,
+									notes: request.catering.notes ?? null,
+								})
+							: null
+
 					const numberFormat = promiseLocation?.orderNumberFormat
 						? parseOrderNumberFormat(promiseLocation.orderNumberFormat)
 						: null
@@ -1877,6 +1923,7 @@ export async function placeOrder(input: {
 										? sha256Hex(paymentToken)
 										: null,
 									holdExpiresAt,
+									...(cateringColumns ?? {}),
 									createdAt: now,
 									updatedAt: now,
 								})
@@ -2221,8 +2268,9 @@ export async function getOrderQuote(
 		data: {
 			orgId,
 			orderId: order.id,
-			// What the provider is asked for: the card paid its part already.
-			totalCents: order.totalCents - order.giftCardCents,
+			// What the provider is asked for: the card paid its part already, and
+			// a catering order with a deposit asks for the deposit only.
+			totalCents: orderChargeCents(order),
 			currency: order.currency,
 			holdExpiresAt: order.holdExpiresAt
 				? order.holdExpiresAt.toISOString()
@@ -2450,7 +2498,7 @@ export async function applyPaymentEvent(input: {
 							'This payment event does not match the bound payment processor.',
 						)
 					}
-					if (order.totalCents - order.giftCardCents !== amountCents) {
+					if (orderChargeCents(order) !== amountCents) {
 						return orderFailure(
 							422,
 							'amount_mismatch',
@@ -2521,6 +2569,8 @@ export async function applyPaymentEvent(input: {
 									paidAt: now,
 									paymentEventAt: now,
 									paymentId: storedPaymentId,
+									// A catering order captured its deposit (#361).
+									...cateringPaidColumns(order),
 									...(waits
 										? {
 												acceptanceDeadlineAt: paidAcceptanceDeadline(
@@ -2589,6 +2639,7 @@ export async function applyPaymentEvent(input: {
 									paidAt: now,
 									paymentEventAt: now,
 									paymentId: storedPaymentId,
+									...cateringPaidColumns(order),
 									// An operator decides a late payment from review: it
 									// never also waits for acceptance.
 									acceptanceDeadlineAt: null,
@@ -2732,6 +2783,8 @@ export async function applyPaymentEvent(input: {
 	messages.deliver(orgId)
 	// An online order whose payment just landed goes to the printers (#117).
 	if (result.ok && result.data.paymentStatus === 'paid') {
+		// A catering order tells the guest and the alert members once (#124, #361).
+		runInBackground(onCateringOrderPaid(orgId, result.data.orderId))
 		const printing = printQueue()
 		const orderId = result.data.orderId
 		runInBackground(

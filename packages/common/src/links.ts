@@ -221,6 +221,28 @@ export const GUEST_LINK_TYPES = {
 		since: 1,
 		appRoute: null,
 	},
+	// Catering (#124, #361): a quote the guest pays and the balance of a deposit
+	// order. The token is `{id}.{version}.{mac}` and rides in the fragment only;
+	// editing the quote or voiding the balance burns it. Web only: the customer
+	// app has no catering screen.
+	catering_quote: {
+		audience: 'guest',
+		path: '/catering/quote',
+		params: { quote: f('q', true) },
+		platforms: ['web'],
+		needs: 'capability_token',
+		since: 1,
+		appRoute: null,
+	},
+	catering_balance: {
+		audience: 'guest',
+		path: '/catering/balance',
+		params: { balance: f('b', true) },
+		platforms: ['web'],
+		needs: 'capability_token',
+		since: 1,
+		appRoute: null,
+	},
 	get_app: {
 		audience: 'guest',
 		// The site's own store redirect (#196): it counts the tap per placement and

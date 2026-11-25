@@ -1051,6 +1051,8 @@ export type OperatorBalanceAction = z.infer<typeof operatorBalanceActionSchema>
 // Alerts (ids and counts only; the App turns them into notifications)
 // ---------------------------------------------------------------------------
 
+export const CATERING_NOTIFY_PATH = '/resources/catering/notify'
+
 export const CATERING_ALERT_KINDS = [
 	'quote_request',
 	'order_placed',
