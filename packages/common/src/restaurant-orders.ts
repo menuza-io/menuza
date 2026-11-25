@@ -17,6 +17,13 @@ import {
 	deliveryFeeCentsFor,
 	distanceForZone,
 } from './delivery-fees.ts'
+import {
+	cateringOrderInputSchema,
+	checkCateringLimits,
+	readCateringPolicy,
+	validateCateringEvent,
+	type CateringErrorCode,
+} from './catering.ts'
 import { giftCardCheckoutInputSchema } from './gift-card-contract.ts'
 import { PHOTO_TEST_KEY_PATTERN } from './photo-test-key.ts'
 import { orderAttributionInputSchema } from './order-attribution.ts'
@@ -276,6 +283,7 @@ export type RestaurantOrderErrorCode =
 	| 'packaging_fee_unavailable'
 	| 'alcohol_not_allowed'
 	| 'age_confirmation_required'
+	| CateringErrorCode
 
 export type RestaurantOrderError = {
 	status: 400 | 403 | 404 | 409 | 422 | 503
@@ -489,6 +497,13 @@ const restaurantOrderObjectSchema = z.strictObject({
 	ageConfirmed: z.boolean().optional(),
 	/** "Someone in my party has an allergy" (#294): a flag for the kitchen ticket. */
 	guestAllergy: z.boolean().optional(),
+	/**
+	 * A catering order (#124): `scheduledFor` is the event time, `guestCount`
+	 * the head count, and the region checks the location's catering settings
+	 * (notice, window, hours, amounts, guests, cutoffs). Sent only when set
+	 * (the body is strict), so deploy App, then tenant-api, then Sites.
+	 */
+	catering: cateringOrderInputSchema.optional(),
 	lines: z.array(restaurantOrderLineSchema).min(1).max(RESTAURANT_MAX_LINES),
 	turnstileToken: z.string().min(1).max(2048).optional(),
 	/** Opaque client device identifier used for referral abuse prevention. */
@@ -508,6 +523,8 @@ type OrderRefinementValue = {
 	scheduledFor?: string | null
 	source?: 'qr_poster' | null
 	smsUpdates?: boolean
+	catering?: unknown
+	guestCount?: number
 	lines: Array<{ quantity: number }>
 }
 
@@ -577,6 +594,21 @@ function refineOrderRequest(
 			path: ['scheduledFor'],
 			message: 'Drops use pickup windows instead of scheduled times',
 		})
+	}
+	if (value.catering) {
+		const reject = (path: string, message: string) =>
+			context.addIssue({ code: z.ZodIssueCode.custom, path: [path], message })
+		if (value.fulfillment === 'dine_in') {
+			reject('catering', 'Catering is for pickup or delivery')
+		}
+		if (value.dropSlug) reject('dropSlug', 'Drops are not catering')
+		if (!value.scheduledFor) {
+			reject('scheduledFor', 'Choose the event date and time')
+		}
+		if (!value.guestCount) reject('guestCount', 'Enter the number of guests')
+		if (value.paymentMethod !== 'online') {
+			reject('paymentMethod', 'Catering orders are paid online')
+		}
 	}
 	if (value.fulfillment === 'pickup' && value.delivery) {
 		context.addIssue({
@@ -960,6 +992,10 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 			? { ageConfirmed: request.ageConfirmed }
 			: {}),
 		...(request.guestAllergy ? { guestAllergy: true } : {}),
+		// A catering order (#124), only when sent: the notes are part of what was ordered.
+		...(request.catering
+			? { catering: { notes: request.catering.notes ?? null } }
+			: {}),
 		delivery: request.delivery
 			? {
 					address: request.delivery.address ?? null,
@@ -1568,12 +1604,25 @@ export const restaurantOrderContextSchema = z
 		slotLimits: z.object({ enabled: z.boolean().default(false) }).optional(),
 		/** Daily dish quantity caps (`ordering.daily_dish_limits`, #409). */
 		dailyDishLimits: dailyDishLimitsContextSchema.optional(),
+		/**
+		 * Catering settings per location id (`catering.enabled`, #124): only
+		 * locations that turned it on, only while the flag is on. Read with
+		 * `readCateringPolicy`, never parsed here: missing or bad is off.
+		 */
+		catering: z.unknown().optional(),
 	})
 	.loose()
 
 export type RestaurantOrderContext = z.infer<
 	typeof restaurantOrderContextSchema
 >
+
+export {
+	activeCateringCutoffs,
+	cateringDateStatus,
+	isCateringDateOrderable,
+	type CateringDateStatus,
+} from './catering.ts'
 
 export {
 	canonicalTip,
@@ -2882,6 +2931,22 @@ export function priceRestaurantOrder(
 		}
 	}
 
+	// Catering (#124): the location's own settings decide notice, window, hours
+	// and limits. Missing or unreadable settings fail closed.
+	const cateringPolicy = request.catering
+		? readCateringPolicy(context.catering, location.id)
+		: null
+	if (request.catering && (!cateringPolicy || walkIn || request.dropSlug)) {
+		return {
+			ok: false,
+			error: orderError(
+				403,
+				'catering_disabled',
+				'Catering is not available at this location.',
+			),
+		}
+	}
+
 	// Tab and QR table rounds are dine-in; the till passes its own type.
 	const priceContext = {
 		orderType: options.priceAs ?? menuOrderTypeFor(request.fulfillment),
@@ -3163,7 +3228,37 @@ export function priceRestaurantOrder(
 		}
 		currency = dropData.organization.currency || currency
 	} else {
-		if (request.scheduledFor) {
+		if (cateringPolicy) {
+			// The event time: notice, how far ahead, cutoffs and hours. The
+			// ordering pause and busy mode never block a catering order for a
+			// future day, so they are stripped before the hours check.
+			const eventAt = new Date(request.scheduledFor ?? '')
+			const checked = validateCateringEvent({
+				settings: cateringPolicy.settings,
+				timeZone: location.timezone || 'UTC',
+				eventAt,
+				now,
+				isOpenAt: (when) => {
+					const open = isLocationOpenForOrdering(
+						{ ...location, orderingPause: null, busyMode: null },
+						when,
+					)
+					return { isOpen: open.isOpen, reason: open.reason }
+				},
+			})
+			if (!checked.ok) {
+				return {
+					ok: false,
+					error: orderError(
+						422,
+						checked.failure.code,
+						checked.failure.message,
+						checked.failure.details,
+					),
+				}
+			}
+			scheduledFor = eventAt.toISOString()
+		} else if (request.scheduledFor) {
 			// Scheduled orders may be placed while closed; the chosen time must
 			// fall inside online hours (validated in the location timezone).
 			const schedule = validateScheduledFor(location, request.scheduledFor, now)
@@ -3196,6 +3291,8 @@ export function priceRestaurantOrder(
 			if (menu.menuType === 'drop' || menu.availabilityStatus !== 'available') {
 				continue
 			}
+			// A catering order is made from the catering menus only.
+			if (cateringPolicy && menu.menuType !== 'catering') continue
 			const rawMenuOverride = channel
 				? overrideFor(locationOverrides, menu.id)
 				: undefined
@@ -3647,6 +3744,25 @@ export function priceRestaurantOrder(
 			deliveryDistanceMeters,
 		)
 	}
+	if (cateringPolicy) {
+		const limits = checkCateringLimits({
+			settings: cateringPolicy.settings,
+			subtotalCents,
+			guestCount: request.guestCount,
+			fulfillment: request.fulfillment === 'delivery' ? 'delivery' : 'pickup',
+		})
+		if (!limits.ok) {
+			return {
+				ok: false,
+				error: orderError(
+					422,
+					limits.failure.code,
+					limits.failure.message,
+					limits.failure.details,
+				),
+			}
+		}
+	}
 	const capSettings = readOrderCapsForLocation(context.orderCaps, location.id)
 	const capViolation = checkOrderCaps({
 		settings: capSettings,
@@ -3654,7 +3770,7 @@ export function priceRestaurantOrder(
 		subtotalCents,
 		guestCount: request.guestCount,
 	})
-	if (capViolation && !walkIn) {
+	if (capViolation && !walkIn && !cateringPolicy) {
 		return {
 			ok: false,
 			// Says which limit was hit so the page can point to catering or the phone

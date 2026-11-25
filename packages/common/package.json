@@ -165,6 +165,11 @@
       "import": "./src/customer-app.ts",
       "default": "./src/customer-app.ts"
     },
+    "./catering": {
+      "types": "./src/catering.ts",
+      "import": "./src/catering.ts",
+      "default": "./src/catering.ts"
+    },
     "./gift-cards": {
       "types": "./src/gift-cards.ts",
       "import": "./src/gift-cards.ts",
