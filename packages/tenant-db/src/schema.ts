@@ -11656,9 +11656,10 @@ export const restaurantOrderSteps = sqliteTable(
 		id: text('id')
 			.primaryKey()
 			.$defaultFn(() => randomUUID()),
+		// Deleted with its order (the order's own deletion), never on its own.
 		orderId: text('order_id')
 			.notNull()
-			.references(() => restaurantOrders.id),
+			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
 		step: text('step', { enum: [...ORDER_STEP_VALUES] }).notNull(),
 		event: text('event', { enum: [...ORDER_STEP_EVENT_VALUES] })
 			.notNull()

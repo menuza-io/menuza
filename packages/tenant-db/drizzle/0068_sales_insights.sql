@@ -9,7 +9,7 @@ CREATE TABLE `restaurant_order_steps` (
 	`actor_id` text,
 	`source` text NOT NULL,
 	`offline` integer DEFAULT false NOT NULL,
-	FOREIGN KEY (`order_id`) REFERENCES `restaurant_orders`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`order_id`) REFERENCES `restaurant_orders`(`id`) ON UPDATE no action ON DELETE cascade,
 	CONSTRAINT "chk_restaurant_order_steps_step" CHECK("restaurant_order_steps"."step" in ('placed', 'accepted', 'declined', 'started', 'ready', 'handed_over', 'out_for_delivery', 'delivered')),
 	CONSTRAINT "chk_restaurant_order_steps_event" CHECK("restaurant_order_steps"."event" in ('done', 'undone'))
 );
@@ -20,9 +20,11 @@ ALTER TABLE `pos_orders` ADD `line_catalog` text;
 --> statement-breakpoint
 -- Hand-written (drizzle-kit does not model triggers; regenerating loses them).
 -- Order steps (#243) are append-only: a step taken back is a new row, never an
--- edit, and a row is never deleted.
+-- edit. A row can only go with its order (the cascade of the order's own
+-- deletion, when the order is already gone), never on its own.
 CREATE TRIGGER `restaurant_order_steps_no_update` BEFORE UPDATE ON `restaurant_order_steps`
 BEGIN SELECT RAISE(ABORT, 'restaurant_order_steps is append-only'); END;
 --> statement-breakpoint
 CREATE TRIGGER `restaurant_order_steps_no_delete` BEFORE DELETE ON `restaurant_order_steps`
+WHEN EXISTS (SELECT 1 FROM `restaurant_orders` WHERE `id` = OLD.`order_id`)
 BEGIN SELECT RAISE(ABORT, 'restaurant_order_steps is append-only'); END;

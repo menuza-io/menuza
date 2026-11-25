@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "e8abe960-dfba-44ef-a3b8-d3867ffde7e0",
+	"id": "f5344baa-c23e-40d9-afe2-158af4c1850c",
 	"prevId": "28572ad7-3ec9-454e-b90c-aa06829bda46",
 	"tables": {
 		"customer_carts": {
@@ -19591,7 +19591,7 @@
 					"tableTo": "restaurant_orders",
 					"columnsFrom": ["order_id"],
 					"columnsTo": ["id"],
-					"onDelete": "no action",
+					"onDelete": "cascade",
 					"onUpdate": "no action"
 				}
 			},
