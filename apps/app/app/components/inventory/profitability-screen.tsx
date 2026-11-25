@@ -343,7 +343,10 @@ export function ProfitabilityScreen({
 											{dish.popularityPercent}%
 										</TableCell>
 										<TableCell>
-											<Badge variant="outline" data-testid={`profit-group-${dish.itemId}`}>
+											<Badge
+												variant="outline"
+												data-testid={`profit-group-${dish.itemId}`}
+											>
 												{groupLabel[dish.group]}
 											</Badge>
 										</TableCell>
@@ -359,29 +362,28 @@ export function ProfitabilityScreen({
 			</WorkspacePanel>
 
 			{result.unlisted.length > 0 ? (
-				<WorkspacePanel
-					title={<Trans>Without a recipe or a whole cost</Trans>}
-					data-testid="profit-unlisted"
-				>
-					<p className="text-muted-foreground mb-3 text-sm">
-						<Trans>
-							These dishes have no recipe or typed cost, or only part of a
-							cost, so they are not labelled.
-						</Trans>
-					</p>
-					<ul className="flex flex-col gap-1 text-sm">
-						{result.unlisted.map((dish) => {
-							const quantity = dish.quantity
-							return (
-								<li key={dish.itemId} className="flex justify-between gap-3">
-									<span>{byId.get(dish.itemId)?.name ?? dish.itemId}</span>
-									<span className="text-muted-foreground tabular-nums">
-										<Trans>{quantity} sold</Trans>
-									</span>
-								</li>
-							)
-						})}
-					</ul>
+				<WorkspacePanel title={<Trans>Without a recipe or a whole cost</Trans>}>
+					<div data-testid="profit-unlisted">
+						<p className="text-muted-foreground mb-3 text-sm">
+							<Trans>
+								These dishes have no recipe or typed cost, or only part of a
+								cost, so they are not labelled.
+							</Trans>
+						</p>
+						<ul className="flex flex-col gap-1 text-sm">
+							{result.unlisted.map((dish) => {
+								const quantity = dish.quantity
+								return (
+									<li key={dish.itemId} className="flex justify-between gap-3">
+										<span>{byId.get(dish.itemId)?.name ?? dish.itemId}</span>
+										<span className="text-muted-foreground tabular-nums">
+											<Trans>{quantity} sold</Trans>
+										</span>
+									</li>
+								)
+							})}
+						</ul>
+					</div>
 				</WorkspacePanel>
 			) : null}
 		</div>
