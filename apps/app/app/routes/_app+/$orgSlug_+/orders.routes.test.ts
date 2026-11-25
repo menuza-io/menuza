@@ -95,6 +95,8 @@ describe('orders routes', () => {
 			canWrite: true,
 			canRefund: true,
 			canViewCustomers: true,
+			// Cloud printers (#117) are off unless the organization has the flag.
+			printersEnabled: false,
 		})
 	})
 

@@ -425,9 +425,17 @@ describe('logo and codes on the till receipt (#263)', () => {
 		const act2 = draw(
 			h(Receipt, { order: order(over), businessName: 'Cafe Bloom', vatNumber }),
 		)
-		// The QR images resolve asynchronously.
-		await new Promise((r) => setTimeout(r, 30))
-		return { html: act2, dom: document.getElementById('receipt')! }
+		// The QR images resolve asynchronously: wait for them (a slow machine takes longer).
+		const dom = document.getElementById('receipt')!
+		const imagesReady = () =>
+			dom.querySelectorAll('[data-receipt-code]').length ===
+				dom.querySelectorAll('[data-receipt-code] img').length &&
+			(!vatNumber ||
+				dom.querySelectorAll('img:not([data-receipt-logo])').length > 0)
+		for (let i = 0; i < 100 && !imagesReady(); i++) {
+			await new Promise((r) => setTimeout(r, 20))
+		}
+		return { html: act2, dom }
 	}
 
 	it('shows the logo and both codes with their captions when switched on', async () => {
