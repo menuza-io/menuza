@@ -758,6 +758,9 @@ export const menuInsightsReportSubjects: ReportSubject[] = [
 		// Fewest sold first, new dishes after; location and channel decide
 		// which sales a dish is ranked on, so the loader reads them.
 		listOrder: { field: 'sortKey', direction: 'asc' },
+		// Rows name their dish, so a row can link to it (open, mark unavailable,
+		// start a promotion).
+		rowRefField: 'itemId',
 		loaderFilterFields: ['location', 'locationId', 'channel'],
 		defaultColumns: [
 			'item',

@@ -461,6 +461,7 @@ describe('costRowView', () => {
 			hasRecipe: false,
 			foodCostBp: null,
 			status: null,
+			unitMarginMinor: null,
 		})
 		expect(costRowView({ hasRecipe: false, state: 'none' })).toMatchObject({
 			hasRecipe: false,
@@ -475,12 +476,19 @@ describe('costRowView', () => {
 				costMinor: 655,
 				foodCostBp: 2977,
 				status: 'good',
+				unitMarginMinor: 1545,
 			}),
-		).toEqual({ hasRecipe: true, foodCostBp: 2977, status: 'good' })
+		).toEqual({
+			hasRecipe: true,
+			foodCostBp: 2977,
+			status: 'good',
+			unitMarginMinor: 1545,
+		})
 		expect(costRowView({ hasRecipe: true, state: 'complete' })).toEqual({
 			hasRecipe: true,
 			foodCostBp: null,
 			status: null,
+			unitMarginMinor: null,
 		})
 	})
 })

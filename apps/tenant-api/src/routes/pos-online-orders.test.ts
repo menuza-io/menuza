@@ -35,6 +35,7 @@ import {
 	setOrderRefundKickForTest,
 } from '../lib/order-refund-kick.ts'
 import { hashPosSecret } from '../lib/pos-auth.ts'
+import { loadOrderSteps } from '../services/order-steps.ts'
 import { mintPosStaffSession } from '../lib/pos-staff-session.ts'
 import { reconcileLoyaltySource } from '../services/loyalty-purchase-service.ts'
 import { applyProviderRefundStatus } from '../services/order-provider-refund-service.ts'
@@ -370,6 +371,15 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			'ready',
 		])
 		expect(history[0]!.staffName).toBe('Sam S.')
+		// The order's steps (#243): which screen did each, and which Station
+		// person (an opaque id, never a name).
+		const steps = await loadOrderSteps(db, id)
+		expect(steps.map((entry) => [entry.step, entry.actorKind, entry.source])).toEqual([
+			['ready', 'station', 'station_orders'],
+			['handed_over', 'station', 'station_orders'],
+		])
+		expect(steps[0]!.actorId).toMatch(/^staff:/)
+		expect(JSON.stringify(steps)).not.toContain('Sam')
 	})
 
 	it('refuses a stale version with 409 and changes nothing', async () => {

@@ -869,6 +869,21 @@ describe('slow sellers list order and loader filters (#261)', () => {
 		])
 	})
 
+	it('names each row\'s dish so a screen can link from it, without making it a column', () => {
+		const result = runReport(
+			organizationCatalog,
+			{ ...definition, filters: { combinator: 'and', conditions: [] } },
+			[
+				{ periodEnd: now, item: 'Seller', itemId: 'd1', sortKey: 4 },
+				{ periodEnd: now, item: 'Unsold', itemId: 'd2', sortKey: 0 },
+			],
+			now,
+		)
+		if (isReportRunError(result)) throw new Error(result.message)
+		expect(result.rows?.map((row) => row.__ref)).toEqual(['d2', 'd1'])
+		expect(result.columns?.map((column) => column.id)).not.toContain('__ref')
+	})
+
 	it('hands channel, location and nothing else to the loader', () => {
 		const split = splitLoaderFilters(organizationCatalog, definition)
 		expect(split.loader.map((condition) => condition.field)).toEqual(['channel'])

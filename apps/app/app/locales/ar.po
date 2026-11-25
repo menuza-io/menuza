@@ -377,7 +377,7 @@ msgid "{0, plural, one {# image} other {# images}}"
 msgstr "{0, plural, zero {لا توجد صور} one {صورة واحدة} two {صورتان} few {# صور} many {# صورة} other {# صورة}}"
 
 #. placeholder {0}: result.partialHidden!
-#: ../../packages/reports/src/ui/report-chart.tsx:179
+#: ../../packages/reports/src/ui/report-chart.tsx:180
 msgid "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
 msgstr "{0, plural, one {فترة واحدة غير مكتملة (#) مستبعدة من هذا الرسم لأنها ما زالت جارية.} other {فترات غير مكتملة (#) مستبعدة من هذا الرسم لأنها ما زالت جارية.}}"
 
@@ -1875,7 +1875,7 @@ msgstr "{estimate, plural, one {سيصل بريد إلى نحو شخص واحد.
 msgid "{examples, plural, one {Same style as your other description} other {Same style as your other # descriptions}}"
 msgstr "{examples, plural, one {بنفس أسلوب وصفك الآخر} two {بنفس أسلوب وصفيك الآخرين} few {بنفس أسلوب أوصافك الـ# الأخرى} many {بنفس أسلوب أوصافك الـ# الأخرى} other {بنفس أسلوب أوصافك الـ# الأخرى}}"
 
-#: ../../packages/reports/src/ui/report-chart.tsx:156
+#: ../../packages/reports/src/ui/report-chart.tsx:157
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, zero {لا سجلات مستبعدة} one {تم استبعاد سجل واحد من هذه النسبة لأنه لا يوجد ما يقارن به، مثل يوم فيه أجور ولم تُدخل له مبيعات، أو أجور بعملة مختلفة عن المبيعات.} two {تم استبعاد سجلين من هذه النسبة لأنه لا يوجد ما يقارن بهما، مثل يومين فيهما أجور ولم تُدخل لهما مبيعات، أو أجور بعملة مختلفة عن المبيعات.} few {تم استبعاد # سجلات من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} many {تم استبعاد # سجلًا من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} other {تم استبعاد # سجل من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.}}"
 
@@ -30223,6 +30223,10 @@ msgstr "تمت التسوية"
 msgid "Mark this location as temporarily closed until a reopen date or until you reopen it. Syncs to Google when enabled."
 msgstr "تحديد هذا الفرع كمغلق مؤقتاً حتى تاريخ إعادة الفتح أو حتى تقوم بإعادة فتحه. تتم المزامنة مع Google عند التفعيل."
 
+#: app/components/reports/report-workspace.tsx:37
+msgid "Mark unavailable"
+msgstr "حدّده كغير متاح"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:551
 msgid "Mark unpaid"
 msgstr "تحديد كغير مدفوعة"
@@ -36610,6 +36614,10 @@ msgstr "فتح التفاصيل"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1649
 msgid "Open details for {name}"
 msgstr "فتح تفاصيل {name}"
+
+#: app/components/reports/report-workspace.tsx:33
+msgid "Open dish"
+msgstr "افتح الطبق"
 
 #: app/components/inventory/credit-message-dialog.tsx:65
 msgid "Open email"
@@ -50119,6 +50127,10 @@ msgstr "ابدأ بمسودة. تضيف الجداول وتنشرها في ال�
 msgid "Start a new import"
 msgstr "بدء استيراد جديد"
 
+#: app/components/reports/report-workspace.tsx:41
+msgid "Start a promotion"
+msgstr "ابدأ عرضًا ترويجيًا"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:346
 msgid "Start a test call"
 msgstr "بدء مكالمة تجريبية"
@@ -60802,7 +60814,7 @@ msgstr "الأجور والمبيعات بعملات مختلفة، لذا تُ�
 msgid "Wages are estimates from each card's rate and your overtime rules, not payroll. The share is wages divided by sales over the days that have sales, not an average of daily shares."
 msgstr "الأجور تقديرات من أجر كل بطاقة وقواعد الوقت الإضافي لديك، وليست كشف رواتب. النسبة هي الأجور مقسومة على المبيعات خلال الأيام التي فيها مبيعات، وليست متوسط النسب اليومية."
 
-#: ../../packages/reports/src/ui/report-chart.tsx:168
+#: ../../packages/reports/src/ui/report-chart.tsx:169
 msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 msgstr "الأجور تقديرات مبنية على معدلات الأجر وليست كشف رواتب. المبيعات هي الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، أو المبيعات التي أدخلها فريقك، بحسب مصدر المبيعات في كل مكان عمل. مكان العمل الذي يحتسب الطلبات عبر الإنترنت فقط ستظهر نسبته أعلى من حصة العمالة الفعلية."
 

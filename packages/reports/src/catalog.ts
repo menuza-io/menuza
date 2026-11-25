@@ -95,6 +95,12 @@ export type ReportSubject = {
 	/** Longest range one run may cover, in days. A run past it is refused. */
 	maxRangeDays?: number
 	/**
+	 * List reports of this subject name each row's record by this field (a dish
+	 * id), so the screen can offer links from a row ("open the dish"). The
+	 * value rides on the row as `__ref`; it is never a column.
+	 */
+	rowRefField?: string
+	/**
 	 * List reports of this subject are ordered by a number field the loader
 	 * sets (slow sellers: fewest sold first) instead of newest first.
 	 */

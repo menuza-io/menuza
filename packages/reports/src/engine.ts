@@ -1141,6 +1141,10 @@ function listResult(
 	const rows = visible.map((record) => {
 		const row: Record<string, string> = {}
 		const zone = zoneOf(record, zones)
+		if (subject.rowRefField) {
+			const ref = record[subject.rowRefField]
+			if (typeof ref === 'string' && ref) row.__ref = ref
+		}
 		for (const column of columns) {
 			const field = getField(subject, column.id)
 			row[column.id] = field

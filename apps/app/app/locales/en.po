@@ -379,7 +379,7 @@ msgid "{0, plural, one {# image} other {# images}}"
 msgstr "{0, plural, one {# image} other {# images}}"
 
 #. placeholder {0}: result.partialHidden!
-#: ../../packages/reports/src/ui/report-chart.tsx:179
+#: ../../packages/reports/src/ui/report-chart.tsx:180
 msgid "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
 msgstr "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
 
@@ -1877,7 +1877,7 @@ msgstr "{estimate, plural, one {About # person will be emailed.} other {About # 
 msgid "{examples, plural, one {Same style as your other description} other {Same style as your other # descriptions}}"
 msgstr "{examples, plural, one {Same style as your other description} other {Same style as your other # descriptions}}"
 
-#: ../../packages/reports/src/ui/report-chart.tsx:156
+#: ../../packages/reports/src/ui/report-chart.tsx:157
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 
@@ -30225,6 +30225,10 @@ msgstr "Mark settled"
 msgid "Mark this location as temporarily closed until a reopen date or until you reopen it. Syncs to Google when enabled."
 msgstr "Mark this location as temporarily closed until a reopen date or until you reopen it. Syncs to Google when enabled."
 
+#: app/components/reports/report-workspace.tsx:37
+msgid "Mark unavailable"
+msgstr "Mark unavailable"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:551
 msgid "Mark unpaid"
 msgstr "Mark unpaid"
@@ -36612,6 +36616,10 @@ msgstr "Open details"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1649
 msgid "Open details for {name}"
 msgstr "Open details for {name}"
+
+#: app/components/reports/report-workspace.tsx:33
+msgid "Open dish"
+msgstr "Open dish"
 
 #: app/components/inventory/credit-message-dialog.tsx:65
 msgid "Open email"
@@ -50121,6 +50129,10 @@ msgstr "Start a draft. You add schedules and publish it on the next screen."
 msgid "Start a new import"
 msgstr "Start a new import"
 
+#: app/components/reports/report-workspace.tsx:41
+msgid "Start a promotion"
+msgstr "Start a promotion"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:346
 msgid "Start a test call"
 msgstr "Start a test call"
@@ -60804,7 +60816,7 @@ msgstr "Wages and sales are in different currencies, so they are shown separatel
 msgid "Wages are estimates from each card's rate and your overtime rules, not payroll. The share is wages divided by sales over the days that have sales, not an average of daily shares."
 msgstr "Wages are estimates from each card's rate and your overtime rules, not payroll. The share is wages divided by sales over the days that have sales, not an average of daily shares."
 
-#: ../../packages/reports/src/ui/report-chart.tsx:168
+#: ../../packages/reports/src/ui/report-chart.tsx:169
 msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 msgstr "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 
