@@ -181,3 +181,85 @@ describe('every ticket type draws a preview from its field list', () => {
 		vi.clearAllMocks()
 	})
 })
+
+describe('logo and codes on the receipt (#263)', () => {
+	const withTargets = (
+		targets: { reviewUrl: string | null; appUrl: string | null },
+		logoUrl: string | null = '/resources/images?objectKey=x',
+	) => ({ ...location(), targets, logoUrl })
+	const both = {
+		reviewUrl: 'https://g.page/r/abc/review',
+		appUrl: 'https://site.test/get-app?p=print',
+	}
+
+	it('shows the logo and both codes with captions in the preview once switched on', async () => {
+		const user = userEvent.setup()
+		renderStaff(
+			<TicketSettings
+				orgSlug="acme"
+				canWrite
+				locations={[withTargets(both)]}
+			/>,
+		)
+		expect(preview().querySelector('[data-preview-logo]')).toBeNull()
+		expect(preview().querySelector('[data-preview-code]')).toBeNull()
+		await user.click(screen.getByRole('switch', { name: 'Logo at the top' }))
+		await user.click(screen.getByRole('switch', { name: 'Review code' }))
+		await user.click(screen.getByRole('switch', { name: 'App or rewards code' }))
+		expect(preview().querySelector('[data-preview-logo]')).not.toBeNull()
+		expect(
+			preview().querySelector('[data-preview-code="review"]')!.textContent,
+		).toContain('Enjoyed it? Tell us')
+		expect(
+			preview().querySelector('[data-preview-code="app"]')!.textContent,
+		).toContain('Order ahead next time')
+	})
+
+	it('lets the owner reword a caption and shows it in the preview', async () => {
+		const user = userEvent.setup()
+		renderStaff(
+			<TicketSettings
+				orgSlug="acme"
+				canWrite
+				locations={[withTargets(both)]}
+			/>,
+		)
+		await user.click(screen.getByRole('switch', { name: 'Review code' }))
+		await user.type(
+			screen.getByRole('textbox', { name: 'Review code caption' }),
+			'Rate us',
+		)
+		expect(
+			preview().querySelector('[data-preview-code="review"]')!.textContent,
+		).toContain('Rate us')
+	})
+
+	it('offers no review code for a location without a review link, and says why', () => {
+		renderStaff(
+			<TicketSettings
+				orgSlug="acme"
+				canWrite
+				locations={[withTargets({ reviewUrl: null, appUrl: both.appUrl })]}
+			/>,
+		)
+		expect(isOff(screen.getByRole('switch', { name: 'Review code' }))).toBe(
+			true,
+		)
+		expect(
+			screen.getByText(/Add the location’s Google review link/),
+		).toBeTruthy()
+		expect(preview().querySelector('[data-preview-code="review"]')).toBeNull()
+	})
+
+	it('shows nothing extra for a location that has switched nothing on', () => {
+		renderStaff(
+			<TicketSettings
+				orgSlug="acme"
+				canWrite
+				locations={[withTargets(both)]}
+			/>,
+		)
+		expect(preview().querySelector('[data-preview-code]')).toBeNull()
+		expect(preview().querySelector('[data-preview-logo]')).toBeNull()
+	})
+})

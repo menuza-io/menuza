@@ -135,6 +135,8 @@ export type MenuLocation = {
 	stationSettings?: PosLocationStationSettings
 	/** Per-location order number format and daily reset (#371). */
 	orderNumberFormat?: OrderNumberFormat
+	/** What the receipt codes open (#263); absent on an older menu: no codes. */
+	receiptCodes?: { reviewUrl: string | null; appUrl: string | null }
 }
 
 export type MenuPayload = {

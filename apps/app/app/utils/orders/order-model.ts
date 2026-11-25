@@ -31,6 +31,10 @@ export const orderSchema = z.object({
 	largeOrderExtraMinutes: z.number().int().optional().catch(undefined),
 	/** Over the location's large-order alert threshold when placed (#300). */
 	largeOrder: z.boolean().optional().catch(undefined),
+	/** The order has alcohol: staff "Check ID" at handoff (#167). */
+	hasAlcohol: z.boolean().optional().catch(undefined),
+	/** The guest stated an allergy at checkout (#294). */
+	guestAllergy: z.boolean().optional().catch(undefined),
 	/** The time the guest asked for (ISO); null for as soon as possible. */
 	scheduledFor: z.string().nullable().optional().catch(undefined),
 	pickupInstructions: z.string().nullable().optional().catch(undefined),

@@ -388,3 +388,112 @@ describe('Check ID and a stated allergy on printed tickets (#167, #294)', () => 
 		).not.toContain('Check ID')
 	})
 })
+
+describe('logo and codes on the till receipt (#263)', () => {
+	const extrasOn = {
+		extras: {
+			logo: true,
+			review: { show: true, caption: 'Tell us how we did' },
+			app: { show: true },
+		},
+	}
+	const prepare = async (opts: {
+		tickets?: unknown
+		codes?: { reviewUrl: string | null; appUrl: string | null }
+		logo?: string | null
+	}) => {
+		const { usePos } = await import('~/lib/store.ts')
+		const before = usePos.getState()
+		usePos.setState({
+			location: {
+				stationSettings: { tickets: opts.tickets ?? extrasOn },
+				receiptCodes: opts.codes ?? {
+					reviewUrl: 'https://g.page/r/abc/review',
+					appUrl: 'https://site.test/get-app?p=print',
+				},
+			} as never,
+			snapshot: {
+				organization: {
+					siteIcon: opts.logo === null ? null : { appleTouchIcon: 'https://app.test/logo.png' },
+				},
+			} as never,
+		})
+		return () =>
+			usePos.setState({ location: before.location, snapshot: before.snapshot })
+	}
+	const html = async (over: Partial<PosOrder> = {}, vatNumber?: string) => {
+		const act2 = draw(
+			h(Receipt, { order: order(over), businessName: 'Cafe Bloom', vatNumber }),
+		)
+		// The QR images resolve asynchronously.
+		await new Promise((r) => setTimeout(r, 30))
+		return { html: act2, dom: document.getElementById('receipt')! }
+	}
+
+	it('shows the logo and both codes with their captions when switched on', async () => {
+		const restore = await prepare({})
+		try {
+			const { dom } = await html()
+			expect(dom.querySelector('[data-receipt-logo]')).not.toBeNull()
+			const codes = [...dom.querySelectorAll('[data-receipt-code]')]
+			expect(codes.map((c) => c.getAttribute('data-receipt-code'))).toEqual([
+				'review',
+				'app',
+			])
+			expect(codes[0]!.textContent).toContain('Tell us how we did')
+			expect(codes[1]!.textContent).toContain('Order ahead next time')
+		} finally {
+			restore()
+		}
+	})
+
+	it('shows no review code for a location without a review link', async () => {
+		const restore = await prepare({
+			codes: { reviewUrl: null, appUrl: 'https://site.test/get-app?p=print' },
+		})
+		try {
+			const { dom } = await html()
+			expect(dom.querySelector('[data-receipt-code="review"]')).toBeNull()
+			expect(dom.querySelector('[data-receipt-code="app"]')).not.toBeNull()
+		} finally {
+			restore()
+		}
+	})
+
+	it('keeps the ZATCA code first and unchanged on a KSA receipt, with the codes after it', async () => {
+		const restore = await prepare({})
+		try {
+			const withoutCodes = await prepare({ tickets: {} })
+			const { dom: plain } = await html({}, '300000000000003')
+			const fiscalPlain = plain.querySelector('img:not([data-receipt-logo])')!
+			const plainSrc = fiscalPlain.getAttribute('src')
+			withoutCodes()
+			// Back to the codes-on state.
+			await prepare({})
+			const { dom } = await html({}, '300000000000003')
+			const images = [...dom.querySelectorAll('img')].filter(
+				(img) => !img.hasAttribute('data-receipt-logo'),
+			)
+			// First is the fiscal code, byte for byte what it was; the codes follow.
+			expect(images[0]!.getAttribute('src')).toBe(plainSrc)
+			const fiscalIndex = [...dom.querySelectorAll('*')].indexOf(images[0]!)
+			const codeIndex = [...dom.querySelectorAll('*')].indexOf(
+				dom.querySelector('[data-receipt-code]')!,
+			)
+			expect(fiscalIndex).toBeLessThan(codeIndex)
+		} finally {
+			restore()
+		}
+	})
+
+	it('never puts marketing on a voided sale', async () => {
+		const restore = await prepare({})
+		try {
+			const { dom } = await html({ status: 'void' })
+			expect(dom.querySelector('[data-receipt-logo]')).toBeNull()
+			expect(dom.querySelector('[data-receipt-code]')).toBeNull()
+		} finally {
+			restore()
+		}
+	})
+})

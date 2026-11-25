@@ -815,6 +815,24 @@ export function OrderDetail({
 										<Trans>Large order +{largeOrderExtraMinutes} min</Trans>
 									</p>
 								) : null}
+								{order.hasAlcohol ? (
+									<p
+										className="flex items-center gap-1.5 font-semibold"
+										data-testid="order-check-id"
+									>
+										<Icon name="shield-check" className="size-4" aria-hidden />
+										<Trans>Check ID</Trans>
+									</p>
+								) : null}
+								{order.guestAllergy ? (
+									<p
+										className="text-destructive flex items-center gap-1.5 font-semibold"
+										data-testid="order-guest-allergy"
+									>
+										<Icon name="alert-triangle" className="size-4" aria-hidden />
+										<Trans>Guest stated an allergy</Trans>
+									</p>
+								) : null}
 								{order.utensilsRequested === true ? (
 									<p data-testid="order-utensils">
 										<Trans>Utensils: yes</Trans>

@@ -84,6 +84,7 @@ import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { isSlotLimitsEnabled } from '#app/utils/orders/slot-limits.server.ts'
 import { isUpsellEnabled } from '#app/utils/orders/upsell-flag.server.ts'
+import { buildReceiptTargets } from './receipt-targets.server.ts'
 import { loadPublicPhotoTests } from './photo-tests.server.ts'
 import { loadPublishedPricingRules } from './pricing-rules.server.ts'
 import { secondsUntilNextRuleChange } from './pricing-rules.ts'
@@ -242,6 +243,13 @@ export async function buildPublicSiteMenuPayload(
 	const textsGuests =
 		rawLocations.some((loc) => loc.readyTextEnabled) && dataRegion === 'us'
 
+	const receiptTargets = await buildReceiptTargets(
+		{ id: org.id, slug: org.slug, customDomain: org.customDomain },
+		rawLocations.map((loc) => ({
+			id: loc.id,
+			googleReviewUrl: loc.googleReviewUrl,
+		})),
+	)
 	const locations: PublicLocationData[] = rawLocations.map((loc) => {
 		const parsedAddress = safeJsonParse<LocationAddress | null>(
 			loc.address,
@@ -297,6 +305,10 @@ export async function buildPublicSiteMenuPayload(
 			prayerPauseSettings: safeJsonParse(loc.prayerPauseSettings, null),
 			prayerPauseRegion: dataRegion === 'ksa',
 			stationSettings: tillStationSettings(loc.stationSettings, dataRegion),
+			receiptCodes: receiptTargets.get(loc.id) ?? {
+				reviewUrl: null,
+				appUrl: null,
+			},
 			...(loc.orderNumberFormat
 				? { orderNumberFormat: parseOrderNumberFormat(loc.orderNumberFormat) }
 				: {}),
