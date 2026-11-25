@@ -32,6 +32,9 @@ function formatPercent(value: number | null, locale: string) {
 
 type FlatRow = { node: ProductMixNode; depth: number }
 
+/** Indent per tree level (menu, category, dish, option group, option). */
+const INDENT = ['ps-0', 'ps-4', 'ps-8', 'ps-12', 'ps-16'] as const
+
 function flatten(nodes: readonly ProductMixNode[], depth = 0): FlatRow[] {
 	return nodes.flatMap((node) => [
 		{ node, depth },
@@ -95,8 +98,7 @@ export function ProductMixTable({
 						<TableRow key={node.key} data-testid="product-mix-row">
 							<TableCell>
 								<span
-									className="flex items-baseline gap-2"
-									style={{ paddingInlineStart: `${depth * 1.25}rem` }}
+									className={`flex items-baseline gap-2 ${INDENT[Math.min(depth, INDENT.length - 1)]}`}
 								>
 									<span className="text-muted-foreground text-xs">
 										{levelLabel(node.level)}
@@ -127,30 +129,43 @@ export function ProductMixTable({
 							</TableCell>
 						</TableRow>
 					))}
-					<TableRow className="font-semibold" data-testid="product-mix-total">
+					<TableRow data-testid="product-mix-total">
 						<TableCell>
-							<Trans>Total</Trans>
+							<strong>
+								<Trans>Total</Trans>
+							</strong>
 						</TableCell>
 						<TableCell className="text-end tabular-nums">
-							{tree.total.quantity}
+							<strong>{tree.total.quantity}</strong>
 						</TableCell>
 						<TableCell className="text-end tabular-nums">
-							{formatMinor(tree.total.salesMinor, tree.currency, locale)}
+							<strong>
+								{formatMinor(tree.total.salesMinor, tree.currency, locale)}
+							</strong>
 						</TableCell>
 						{showPercentages ? (
 							<>
 								<TableCell className="text-end tabular-nums">
-									{formatPercent(tree.total.quantity > 0 ? 100 : null, locale)}
+									<strong>
+										{formatPercent(tree.total.quantity > 0 ? 100 : null, locale)}
+									</strong>
 								</TableCell>
 								<TableCell className="text-end tabular-nums">
-									{formatPercent(tree.total.salesMinor > 0 ? 100 : null, locale)}
+									<strong>
+										{formatPercent(
+											tree.total.salesMinor > 0 ? 100 : null,
+											locale,
+										)}
+									</strong>
 								</TableCell>
 							</>
 						) : null}
 						<TableCell className="text-end tabular-nums">
-							{averageOfTotal === null
-								? '—'
-								: formatMinor(averageOfTotal, tree.currency, locale)}
+							<strong>
+								{averageOfTotal === null
+									? '—'
+									: formatMinor(averageOfTotal, tree.currency, locale)}
+							</strong>
 						</TableCell>
 					</TableRow>
 				</TableBody>

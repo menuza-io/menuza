@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { stepActivityEvents } from './order-steps-activity.ts'
 import { type OrderTimelineEntry } from '#app/utils/orders/order-model.ts'
+import { stepActivityEvents } from './order-steps-activity.ts'
 
 // A translator that returns the message text with its values filled in, as the
 // `msg` macro describes them.

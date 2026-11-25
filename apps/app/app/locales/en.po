@@ -1125,10 +1125,9 @@ msgstr "{0} of {1} text sends used this month"
 #~ msgid "{0} pushed"
 #~ msgstr "{0} pushed"
 
-#. placeholder {0}: dish.quantity
 #: app/components/inventory/profitability-screen.tsx:377
-msgid "{0} sold"
-msgstr "{0} sold"
+#~ msgid "{0} sold"
+#~ msgstr "{0} sold"
 
 #. placeholder {0}: formatRating(store.ratingX100)
 #. placeholder {1}: store.ratingCount
@@ -2812,6 +2811,10 @@ msgstr "{pushedCount} pushed"
 #: ../../packages/marketing/src/components/campaign-detail.tsx:244
 msgid "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
 msgstr "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
+
+#: app/components/inventory/profitability-screen.tsx:379
+msgid "{quantity} sold"
+msgstr "{quantity} sold"
 
 #: app/components/hiring/job-summary.tsx:68
 msgid "{questionCount} ({dealbreakers} dealbreaker)"
@@ -9105,7 +9108,7 @@ msgstr "Average order value"
 msgid "Average position"
 msgstr "Average position"
 
-#: app/components/reports/product-mix-table.tsx:89
+#: app/components/reports/product-mix-table.tsx:92
 msgid "Average price"
 msgstr "Average price"
 
@@ -11431,7 +11434,7 @@ msgstr "category"
 #: app/components/menu/menu-bulk-edit-sheet.tsx:698
 #: app/components/menu/menu-sortable-category.tsx:132
 #: app/components/phone-agent/training-rules-section.tsx:491
-#: app/components/reports/product-mix-table.tsx:170
+#: app/components/reports/product-mix-table.tsx:185
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:378
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:341
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:779
@@ -18450,7 +18453,7 @@ msgid "Discounts, coupon codes and how often they were used. Only applies when D
 msgstr "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 
 #: app/components/inventory/profitability-screen.tsx:287
-#: app/components/reports/product-mix-table.tsx:172
+#: app/components/reports/product-mix-table.tsx:187
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:651
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:173
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:349
@@ -30568,7 +30571,7 @@ msgstr "Membership tiers"
 #: app/components/menu/drop-wizard/drop-form.tsx:744
 #: app/components/menu/drop-wizard/drop-form.tsx:760
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:38
-#: app/components/reports/product-mix-table.tsx:168
+#: app/components/reports/product-mix-table.tsx:183
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:188
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:724
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:334
@@ -31725,7 +31728,7 @@ msgstr "My support requests"
 #: app/components/marketing/short-links-screen.tsx:185
 #: app/components/menu/menu-bulk-edit-sheet.tsx:808
 #: app/components/pos/terminals-manager.tsx:1652
-#: app/components/reports/product-mix-table.tsx:70
+#: app/components/reports/product-mix-table.tsx:73
 #: app/components/reservations/policies/policy-sheet.tsx:217
 #: app/components/reservations/waitlist/party-fields.tsx:62
 #: app/components/reservations/walk-in-dialog.tsx:239
@@ -37018,7 +37021,7 @@ msgstr "Opted out by text reply on {when}"
 
 #: app/components/inventory/sold-out-panel.tsx:105
 #: app/components/orders/daily-limits-panel.tsx:212
-#: app/components/reports/product-mix-table.tsx:176
+#: app/components/reports/product-mix-table.tsx:191
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:447
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:127
 msgid "Option"
@@ -37045,7 +37048,7 @@ msgstr "Option actions"
 msgid "Option Display Name (Guest-Facing)"
 msgstr "Option Display Name (Guest-Facing)"
 
-#: app/components/reports/product-mix-table.tsx:174
+#: app/components/reports/product-mix-table.tsx:189
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:128
 msgid "Option group"
 msgstr "Option group"
@@ -41791,7 +41794,7 @@ msgstr "Quantities are in packs, the way the supplier sells them."
 #: app/components/inventory/cash-purchase-dialog.tsx:437
 #: app/components/inventory/confirm-prices-dialog.tsx:575
 #: app/components/menu/option-form.tsx:1035
-#: app/components/reports/product-mix-table.tsx:73
+#: app/components/reports/product-mix-table.tsx:76
 #: app/utils/discounts/summary.ts:292
 msgid "Quantity"
 msgstr "Quantity"
@@ -45256,7 +45259,7 @@ msgstr "Sale upload missing"
 #: app/components/discounts/discount-performance.tsx:252
 #: app/components/inventory/variance-screen.tsx:433
 #: app/components/pos/pos-day-report.tsx:251
-#: app/components/reports/product-mix-table.tsx:76
+#: app/components/reports/product-mix-table.tsx:79
 #: app/components/staff/labor/labor-overview.tsx:160
 #: app/components/staff/labor/labor-overview.tsx:393
 #: app/components/staff/labor/labor-overview.tsx:562
@@ -48313,11 +48316,11 @@ msgstr ""
 msgid "Share of its category"
 msgstr "Share of its category"
 
-#: app/components/reports/product-mix-table.tsx:81
+#: app/components/reports/product-mix-table.tsx:84
 msgid "Share of quantity"
 msgstr "Share of quantity"
 
-#: app/components/reports/product-mix-table.tsx:84
+#: app/components/reports/product-mix-table.tsx:87
 msgid "Share of sales"
 msgstr "Share of sales"
 
@@ -57718,7 +57721,7 @@ msgstr "Toppings, sauces and other choices on an item."
 #: app/components/orders/order-detail.tsx:1088
 #: app/components/pos/ticket-settings.tsx:75
 #: app/components/pos/ticket-settings.tsx:271
-#: app/components/reports/product-mix-table.tsx:132
+#: app/components/reports/product-mix-table.tsx:135
 #: app/components/staff/labor/labor-overview.tsx:219
 #: app/components/staff/labor/labor-tips.tsx:276
 #: app/components/staff/timesheets/payroll-summary.tsx:443

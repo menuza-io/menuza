@@ -5,13 +5,9 @@ import {
 	referencedFieldIds,
 	resolveTimeframeRange,
 } from '@repo/reports'
-import {
-	invSoldOut,
-	menuAvailabilityEvents,
-	type TenantDatabase,
-} from '@repo/tenant-db'
+import { invSoldOut, menuAvailabilityEvents } from '@repo/tenant-db'
 import { and, gte, inArray, lte, sql, type SQL } from 'drizzle-orm'
-import { readItemSales, type ItemSalesQuery } from './item-sales.ts'
+import { readItemSales } from './item-sales.ts'
 import { type SalesReportContext } from './sales-report-records.ts'
 
 /** Minimum sold units in the lookback window before showing a lost-sales estimate. */

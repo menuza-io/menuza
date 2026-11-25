@@ -63,8 +63,8 @@ import {
 } from '#app/utils/orders/order-model.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
 import { AcceptanceCountdown, RejectOrderDialog } from './acceptance.tsx'
-import { stepActivityEvents } from './order-steps-activity.ts'
 import { OrderStatusLabel, PaymentStatusLabel } from './order-status.tsx'
+import { stepActivityEvents } from './order-steps-activity.ts'
 import {
 	ProviderRefundDialog,
 	type ProviderRefundOutcome,

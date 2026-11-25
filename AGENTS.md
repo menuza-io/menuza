@@ -1853,6 +1853,32 @@ timeline, sign-in help, caller verification; #385, #233, #406, #272, #279, #246,
   reset 2FA and start an ownership transfer in Admin call
   `requireSensitiveSupportAction` first. Docs: `docs/support-toolkit.md`.
 
+**Sales and service insight (category sales and product mix, slow sellers, dish
+profitability, order steps, missed sales while paused, online uptime; #227,
+#261, #519, #243, #176, #405):**
+
+- Extends what exists: the report engine (`packages/reports`, new `share`
+  measure, `ReportSubject.listOrder` and `loaderFilterFields`), the ONE
+  items-sold walk (`item-sales.ts`: `readItemSales` and `readSaleLines` are
+  visitors of the same walker), plate cost (`recipeCostRows`), the order status
+  changes and the ordering pause controls. Never add a second reader, status
+  writer, food cost engine or pause store.
+- Menu and category are stamped on every sale line at placement (web and QR in
+  `restaurant_orders.lines`, Station in `pos_orders.line_catalog`, written by
+  the region from the live menu, so `POS_CONTRACT_VERSION` stays 11). A line
+  without a stamp is "Earlier sales". Names are copies: renaming a category
+  changes no past sale.
+- Order steps (`restaurant_order_steps`, tenant `0068`) are append-only and
+  written inside the existing status changes; a step undone and done again keeps
+  both rows. They hold ids and screens, never a name or guest data.
+- The pause history is `LocationOrderingPause` (control plane `0077`), written
+  only by `applyOrderingControl` (busy mode never writes). The missed sales
+  estimate is always labelled an estimate and never enters a sales total; only
+  windows go to the region and only totals come back.
+- Cost and margin need the cost grant (`inventory_cost` report permission, the
+  `read:inventory_cost:any` grant on the inventory token). Docs:
+  `docs/sales-insights.md`.
+
 **Gift cards (sell, redeem, fraud holds, guest wallet):**
 
 - One regional ledger per organization (`gift_cards`, append-only

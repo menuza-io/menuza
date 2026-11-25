@@ -370,14 +370,17 @@ export function ProfitabilityScreen({
 						</Trans>
 					</p>
 					<ul className="flex flex-col gap-1 text-sm">
-						{result.unlisted.map((dish) => (
-							<li key={dish.itemId} className="flex justify-between gap-3">
-								<span>{byId.get(dish.itemId)?.name ?? dish.itemId}</span>
-								<span className="text-muted-foreground tabular-nums">
-									<Trans>{dish.quantity} sold</Trans>
-								</span>
-							</li>
-						))}
+						{result.unlisted.map((dish) => {
+							const quantity = dish.quantity
+							return (
+								<li key={dish.itemId} className="flex justify-between gap-3">
+									<span>{byId.get(dish.itemId)?.name ?? dish.itemId}</span>
+									<span className="text-muted-foreground tabular-nums">
+										<Trans>{quantity} sold</Trans>
+									</span>
+								</li>
+							)
+						})}
 					</ul>
 				</WorkspacePanel>
 			) : null}
