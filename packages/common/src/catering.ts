@@ -1325,3 +1325,42 @@ export function describeCutoffMoment(
 		return new Date(cutoff.orderByAtMs).toISOString()
 	}
 }
+
+/**
+ * An event's wall clock (`YYYY-MM-DD` and `HH:MM`) in the location's zone as an
+ * instant, for the catering page's date and time pickers. Null for a value that
+ * is not a real date and time.
+ */
+export function cateringEventInstantMs(
+	date: string,
+	time: string,
+	timeZone: string,
+): number | null {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
+		return null
+	}
+	const { year, month, day } = parseDate(date)
+	const [hour, minute] = time.split(':').map(Number) as [number, number]
+	if (
+		month < 1 ||
+		month > 12 ||
+		day < 1 ||
+		day > 31 ||
+		hour > 23 ||
+		minute > 59
+	) {
+		return null
+	}
+	const zone = isValidTimeZone(timeZone) ? timeZone : 'UTC'
+	return zonedLocalToUtc(year, month, day, hour, minute, zone)
+}
+
+/** The local calendar date of `ms` in a zone plus `days`: the picker's first and last day. */
+export function cateringDateIn(
+	ms: number,
+	timeZone: string,
+	addDaysCount = 0,
+): string {
+	const zone = isValidTimeZone(timeZone) ? timeZone : 'UTC'
+	return addDays(localDateOf(ms, zone), addDaysCount)
+}

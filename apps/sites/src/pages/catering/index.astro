@@ -1,0 +1,189 @@
+---
+import {
+	buildCateringQnA,
+	cateringFaqJsonLd,
+	parseCateringSettings,
+} from '@repo/common/catering'
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { msg } from '@lingui/core/macro'
+import CateringLabels from '~/components/catering/CateringLabels.astro'
+import SitePage from '~/components/SitePage.astro'
+import { cateringPhrases, cateringQuestionLabels } from '~/lib/catering/labels'
+import { siteContainer, siteSection } from '~/lib/media'
+import { fetchPublishedSiteMenu } from '~/lib/org'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+const locale =
+	Astro.locals.requestedLocale || organization?.locale || organization?.defaultLocale || 'en'
+const defaultLocale = organization?.defaultLocale || 'en'
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const payload = await fetchPublishedSiteMenu({
+	slug: orgSlug,
+	host: customHost,
+	lng: locale,
+	locationId: Astro.url.searchParams.get('location'),
+})
+const catering = payload?.catering
+const cateringLocations = (payload?.locations ?? []).filter((l) => catering?.locations[l.id])
+// Without the flag, or with no location that takes catering, there is no page.
+if (!catering || cateringLocations.length === 0) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+const wanted = Astro.url.searchParams.get('location')
+const active = cateringLocations.find((l) => l.id === wanted) ?? cateringLocations[0]!
+const entry = catering.locations[active.id]!
+const settings = parseCateringSettings(entry.settings)
+if (!settings) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const title = i18n._(msg`Catering`)
+const intro = i18n._(
+	msg`Order food for an office lunch, a party or an event. Choose the date and we check the notice and our hours.`,
+)
+const goodToKnow = i18n._(msg`Good to know`)
+const qna = buildCateringQnA(settings, {
+	locale,
+	defaultLocale,
+	facts: entry.facts,
+	phrases: cateringPhrases(i18n),
+	questionLabels: cateringQuestionLabels(i18n),
+	moneyLocale: locale,
+})
+const faqJsonLd = cateringFaqJsonLd(qna)
+
+// The catering menus only: a dish with a choice the page cannot show is left to a quote.
+type Group = { id: string; name: string; min: number; max: number | null; single: boolean; options: Array<{ id: string; name: string; priceCents: number }> }
+const items: Array<Record<string, unknown>> = []
+const visit = (categories: any[], categoryName: string) => {
+	for (const category of categories) {
+		const name = getLocalizedMenuValue(category.displayName, locale, defaultLocale) || categoryName
+		for (const item of category.items ?? []) {
+			if (item.availabilityStatus !== 'available') continue
+			const groups: Group[] = []
+			let unsupported = false
+			for (const group of item.modifierGroups ?? []) {
+				if (group.availabilityStatus !== 'available') continue
+				if (group.selectionType !== 'single' && group.selectionType !== 'multiple') unsupported = true
+				const options = (group.options ?? []).filter((o: any) => o.availabilityStatus === 'available')
+				if (options.some((o: any) => (o.nestedModifierGroups ?? []).length > 0)) unsupported = true
+				groups.push({
+					id: group.id,
+					name: getLocalizedMenuValue(group.name, locale, defaultLocale),
+					min: group.minSelections ?? 0,
+					max: group.maxSelections ?? null,
+					single: group.selectionType === 'single',
+					options: options.map((o: any) => ({
+						id: o.id,
+						name: getLocalizedMenuValue(o.displayName, locale, defaultLocale),
+						priceCents: Math.round((o.price ?? 0) * 100),
+					})),
+				})
+			}
+			const variants = (item.variations?.variants ?? [])
+				.filter((v: any) => v.availabilityStatus === 'available')
+				.map((v: any) => ({
+					id: v.id,
+					label: (item.variations.groups ?? [])
+						.flatMap((g: any) => (g.values ?? []).filter((val: any) => v.valueIds.includes(val.id)).map((val: any) => getLocalizedMenuValue(val.name, locale, defaultLocale)))
+						.join(' / '),
+					priceCents: Math.round(v.price * 100),
+				}))
+			items.push({
+				id: item.id,
+				category: name,
+				name: getLocalizedMenuValue(item.displayName, locale, defaultLocale),
+				description: getLocalizedMenuValue(item.description, locale, defaultLocale),
+				priceCents: Math.round((item.price ?? 0) * 100),
+				variants,
+				groups,
+				unsupported,
+			})
+		}
+		if (category.subcategories?.length) visit(category.subcategories, name)
+	}
+}
+for (const menu of payload?.menus ?? []) {
+	if (menu.menuType !== 'catering' || menu.availabilityStatus !== 'available') continue
+	visit(menu.categories ?? [], '')
+}
+
+const config = {
+	locationId: active.id,
+	locations: cateringLocations.map((l) => ({ id: l.id, name: l.name })),
+	timeZone: active.timezone || 'UTC',
+	currency: entry.facts.currency,
+	quotes: catering.quotes && settings.quoteMode !== 'off',
+	quoteRequired: catering.quotes && settings.quoteMode === 'required',
+	settings: {
+		noticeHours: settings.noticeHours,
+		maxDaysAhead: settings.maxDaysAhead,
+		fulfillments: settings.fulfillments,
+		depositPercent: settings.deposit.percent,
+		cutoffs: settings.cutoffs,
+		maxGuests: settings.maxGuests,
+	},
+	items,
+}
+const tenantApiUrl = getTenantApiUrl(organization.dataRegion)
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'catering', title, slug: 'catering', isHomePage: false, sections: [] }}
+	title={`${title} - ${organization.name}`}
+>
+	{
+		turnstileSiteKey && tenantApiUrl ? (
+			<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+		) : null
+	}
+	{faqJsonLd ? <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd).replace(/</g, '\\u003c')} /> : null}
+	<section class={siteSection}>
+		<div class={`${siteContainer} flex max-w-3xl flex-col gap-8`}>
+			<header class="flex flex-col gap-2">
+				<h1 class="text-3xl font-semibold">{title}</h1>
+				<p class="text-muted-foreground">{intro}</p>
+			</header>
+			<CateringLabels />
+			<script
+				id="catering-config"
+				type="application/json"
+				is:inline
+				set:html={JSON.stringify(config).replace(/</g, '\\u003c')}
+			/>
+			<div id="catering-root" data-turnstile-site-key={turnstileSiteKey || undefined}>
+				<p role="status" data-ct-status class="text-sm text-muted-foreground"></p>
+				<div data-ct-form></div>
+			</div>
+			{
+				qna.length > 0 ? (
+					<section aria-labelledby="catering-good-to-know" class="flex flex-col gap-3" data-testid="catering-good-to-know">
+						<h2 id="catering-good-to-know" class="text-2xl font-semibold">{goodToKnow}</h2>
+						<dl class="flex flex-col gap-4">
+							{qna.map((entry) => (
+								<div class="flex flex-col gap-1">
+									<dt class="font-medium" dir="auto">{entry.question}</dt>
+									<dd class="text-muted-foreground whitespace-pre-line" dir="auto">{entry.answer}</dd>
+								</div>
+							))}
+						</dl>
+					</section>
+				) : null
+			}
+		</div>
+	</section>
+
+	<script>
+		import '../../scripts/catering-page.ts'
+	</script>
+</SitePage>

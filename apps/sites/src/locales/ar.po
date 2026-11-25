@@ -283,6 +283,10 @@ msgstr "ضيف واحد"
 msgid "1 item is no longer available and was left out."
 msgstr "صنف واحد لم يعد متاحًا وتم استبعاده."
 
+#: src/lib/catering/labels.ts:50
+msgid "A {percent}% deposit is due now. You pay the balance later."
+msgstr "يُستحق عربون بنسبة {percent}% الآن. وتدفع الرصيد لاحقًا."
+
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "A few messages a month. You can opt out anytime."
@@ -291,6 +295,10 @@ msgstr "بضع رسائل في الشهر. يمكنك إلغاء الاشترا�
 #: src/lib/loyalty/labels.ts:151
 msgid "A free item"
 msgstr "منتج مجاني"
+
+#: src/lib/catering/labels.ts:93
+msgid "A note from the restaurant"
+msgstr "ملاحظة من المطعم"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "A payment for this tab is already on its way. Wait a moment, then check your tab."
@@ -307,6 +315,10 @@ msgstr "حوالي {count} دقيقة"
 #: src/components/ConsentBanner.astro.ts:3
 msgid "Accept all"
 msgstr "قبول الكل"
+
+#: src/lib/catering/labels.ts:94
+msgid "Accept and pay"
+msgstr "اقبل وادفع"
 
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
@@ -467,6 +479,10 @@ msgstr "المبلغ"
 msgid "Amount due now"
 msgstr "المبلغ المستحق الآن"
 
+#: src/lib/catering/labels.ts:114
+msgid "Amount due: {amount}"
+msgstr "المبلغ المستحق: {amount}"
+
 #: src/components/ConsentBanner.astro.ts:3
 msgid "Analytics: help us count visits and see what works"
 msgstr "التحليلات: تساعدنا على عدّ الزيارات ومعرفة ما ينجح"
@@ -558,6 +574,10 @@ msgstr "الوصول حوالي {time}"
 msgid "ASAP"
 msgstr "في أقرب وقت"
 
+#: src/lib/catering/labels.ts:28
+msgid "Ask us about this dish"
+msgstr "اسألنا عن هذا الطبق"
+
 #: src/lib/reservations/labels.ts:467
 msgid "At {name}"
 msgstr "في {name}"
@@ -595,6 +615,10 @@ msgstr "العودة إلى القائمة"
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
 msgstr "العودة إلى المتجر"
+
+#: src/lib/catering/labels.ts:91
+msgid "Balance later: {amount}"
+msgstr "الرصيد لاحقًا: {amount}"
 
 #: src/lib/gift-cards/labels.ts:60
 msgid "Balance: {amount}"
@@ -783,6 +807,19 @@ msgstr "البطاقات المستخدمة في مشتريات المتجر ا�
 msgid "Careers"
 msgstr "الوظائف"
 
+#: src/lib/catering/labels.ts:18
+#: src/pages/catering/index.astro.ts:3
+msgid "Catering"
+msgstr "التموين"
+
+#: src/lib/catering/labels.ts:162
+msgid "Catering is for pickup only."
+msgstr "التموين متاح للاستلام فقط."
+
+#: src/lib/catering/labels.ts:22
+msgid "Catering orders are not available right now."
+msgstr "طلبات التموين غير متاحة حاليًا."
+
 #: src/lib/ordering-labels.ts:214
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -827,6 +864,10 @@ msgstr "تحقق من الرصيد"
 #: src/lib/loyalty/labels.ts:216
 msgid "Check for requests"
 msgstr "التحقق من وجود طلبات"
+
+#: src/lib/catering/labels.ts:65
+msgid "Check the choices for your dishes."
+msgstr "تحقق من اختيارات الأطباق."
 
 #: src/pages/drops.astro.ts:3
 msgid "Check the menu for what we are serving today."
@@ -881,6 +922,10 @@ msgstr "إتمام الطلب"
 #: src/lib/gift-cards/labels.ts:43
 msgid "Checkout was cancelled. No card was sent."
 msgstr "تم إلغاء الدفع. لم يتم إرسال أي بطاقة."
+
+#: src/lib/catering/labels.ts:109
+msgid "Checkout was cancelled. You have not been charged."
+msgstr "تم إلغاء الدفع. لم يتم خصم أي مبلغ منك."
 
 #: src/components/ConsentBanner.astro.ts:3
 msgid "Choose"
@@ -944,6 +989,10 @@ msgstr "اختر وقتًا للمتابعة."
 msgid "Choose an amount between {min} and {max}."
 msgstr "اختر مبلغًا بين {min} و{max}."
 
+#: src/lib/catering/labels.ts:25
+msgid "Choose an option"
+msgstr "اختر خيارًا"
+
 #: src/lib/ordering-labels.ts:75
 msgid "Choose at least {count}"
 msgstr "اختر {count} على الأقل"
@@ -956,6 +1005,10 @@ msgstr "اختر {count} خيارات على الأقل"
 msgid "Choose at least 1 option"
 msgstr "اختر خيارًا واحدًا على الأقل"
 
+#: src/lib/catering/labels.ts:61
+msgid "Choose at least one dish."
+msgstr "اختر طبقًا واحدًا على الأقل."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Choose at least one location."
 msgstr "اختر فرعًا واحدًا على الأقل."
@@ -964,15 +1017,28 @@ msgstr "اختر فرعًا واحدًا على الأقل."
 msgid "Choose every location that suits you."
 msgstr "اختر كل فرع يناسبك."
 
+#: src/lib/catering/labels.ts:62
+msgid "Choose the event date and time."
+msgstr "اختر تاريخ المناسبة ووقتها."
+
+#: src/lib/catering/labels.ts:26
+msgid "Choose up to {max}"
+msgstr "اختر حتى {max}"
+
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Choose what you hear from us, and how."
 msgstr "اختر ما تتلقاه منا وكيف."
+
+#: src/lib/catering/labels.ts:23
+msgid "Choose your dishes"
+msgstr "اختر أطباقك"
 
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose your pickup"
 msgstr "اختر موعد الاستلام"
 
 #: src/components/blocks/FormBlock.astro.ts:3
+#: src/lib/catering/labels.ts:39
 msgid "City"
 msgstr "المدينة"
 
@@ -1235,12 +1301,14 @@ msgstr "التوصيل إلى: {address}"
 msgid "Delivered from {location}"
 msgstr "يُوصَّل من {location}"
 
+#: src/lib/catering/labels.ts:36
 #: src/lib/ordering-labels.ts:149
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery"
 msgstr "توصيل"
 
+#: src/lib/catering/labels.ts:38
 #: src/lib/ordering-labels.ts:150
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery address"
@@ -1268,6 +1336,10 @@ msgstr "رسوم التوصيل {amount}"
 #: src/lib/ordering-labels.ts:111
 msgid "Delivery fee and discounts at checkout"
 msgstr "رسوم التوصيل والخصومات عند إتمام الطلب"
+
+#: src/lib/catering/labels.ts:169
+msgid "Delivery from {feeText}."
+msgstr "التوصيل بدءًا من {feeText}."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery instructions"
@@ -1340,6 +1412,10 @@ msgstr "الخصومات غير متاحة الآن، لذلك أزلنا رمز
 msgid "Discounts aren't available right now. Please review your total and place your order again."
 msgstr "الخصومات غير متاحة الآن. راجع الإجمالي ثم أعد تقديم الطلب."
 
+#: src/lib/catering/labels.ts:48
+msgid "Dishes: {amount} before tax"
+msgstr "الأطباق: {amount} قبل الضريبة"
+
 #: src/components/AppInviteBanner.astro.ts:3
 msgid "Dismiss"
 msgstr "إخفاء"
@@ -1347,6 +1423,18 @@ msgstr "إخفاء"
 #: src/lib/reservations/labels.ts:441
 msgid "Disputed"
 msgstr "قيد النزاع"
+
+#: src/lib/catering/labels.ts:138
+msgid "Do you deliver, and what does it cost?"
+msgstr "هل توصلون الطلبات وكم تبلغ التكلفة؟"
+
+#: src/lib/catering/labels.ts:135
+msgid "Do you offer set-up and serving staff?"
+msgstr "هل توفرون طاقم إعداد وتقديم؟"
+
+#: src/lib/catering/labels.ts:133
+msgid "Do you provide plates, napkins and cutlery?"
+msgstr "هل توفرون الأطباق والمناديل وأدوات المائدة؟"
 
 #: src/lib/ordering-labels.ts:72
 msgid "Done"
@@ -1372,6 +1460,18 @@ msgstr "تنبيهات الطروحات مفعّلة"
 msgid "Drops"
 msgstr "الطروحات"
 
+#: src/lib/catering/labels.ts:115
+msgid "Due by {date}"
+msgstr "تاريخ الاستحقاق {date}"
+
+#: src/lib/catering/labels.ts:90
+msgid "Due now: {amount}"
+msgstr "المستحق الآن: {amount}"
+
+#: src/lib/catering/labels.ts:44
+msgid "Earliest date: {date}"
+msgstr "أقرب تاريخ: {date}"
+
 #: src/lib/reservations/labels.ts:292
 msgid "Earliest time"
 msgstr "أبكر وقت"
@@ -1390,6 +1490,7 @@ msgstr "العيد"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/marketing/MessagesSection.astro.ts:3
+#: src/lib/catering/labels.ts:43
 #: src/lib/reservations/labels.ts:92
 #: src/pages/profile.astro.ts:3
 msgid "Email"
@@ -1464,6 +1565,10 @@ msgstr "أدخل مبلغًا، مثل 4.50."
 msgid "Enter how many people are at your table."
 msgstr "أدخل عدد الأشخاص على طاولتك."
 
+#: src/lib/catering/labels.ts:64
+msgid "Enter the number of guests."
+msgstr "أدخل عدد الضيوف."
+
 #: src/lib/gift-cards/labels.ts:57
 #: src/pages/gift-cards/balance.astro.ts:3
 msgid "Enter the number on your card. Dashes and spaces do not matter."
@@ -1476,6 +1581,10 @@ msgstr "أدخل لمن البطاقة، أو اختر «إرسال إلى نف�
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Enter your name and phone number."
 msgstr "أدخل اسمك ورقم هاتفك."
+
+#: src/lib/catering/labels.ts:63
+msgid "Enter your name, phone number and email."
+msgstr "أدخل اسمك ورقم هاتفك وبريدك الإلكتروني."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Enter your name."
@@ -1509,6 +1618,14 @@ msgstr "إجمالي تقديري. تعذر تحديثه الآن، وقد يخ�
 #: src/lib/reservations/labels.ts:242
 msgid "Estimated wait"
 msgstr "وقت الانتظار المتوقع"
+
+#: src/lib/catering/labels.ts:86
+msgid "Event"
+msgstr "المناسبة"
+
+#: src/lib/catering/labels.ts:31
+msgid "Event date"
+msgstr "تاريخ المناسبة"
 
 #: src/pages/events/index.astro.ts:3
 msgid "Events"
@@ -1757,6 +1874,11 @@ msgstr "الذهاب إلى الصفحة الرئيسية"
 msgid "Goes well with"
 msgstr "يتماشى معه جيدًا"
 
+#: src/lib/catering/labels.ts:59
+#: src/pages/catering/index.astro.ts:3
+msgid "Good to know"
+msgstr "معلومات مفيدة"
+
 #: src/lib/reservations/labels.ts:469
 msgid "Guests"
 msgstr "الضيوف"
@@ -1803,6 +1925,10 @@ msgstr "ساعات العمل"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "How many are at your table?"
 msgstr "كم عدد الأشخاص على طاولتك؟"
+
+#: src/lib/catering/labels.ts:136
+msgid "How much notice do you need?"
+msgstr "ما المدة المسبقة التي تحتاجونها؟"
 
 #: src/lib/loyalty/labels.ts:100
 msgid "How you earn"
@@ -1880,6 +2006,14 @@ msgstr "تدريب"
 msgid "Invalid verification code."
 msgstr "رمز التحقق غير صالح."
 
+#: src/lib/catering/labels.ts:140
+msgid "Is a deposit required, and what is the cancellation policy?"
+msgstr "هل يلزم عربون وما سياسة الإلغاء؟"
+
+#: src/lib/catering/labels.ts:137
+msgid "Is there a minimum order?"
+msgstr "هل يوجد حد أدنى للطلب؟"
+
 #: src/lib/reservations/labels.ts:509
 msgid "It is too late to cancel online. Please call the restaurant."
 msgstr "فات الأوان للإلغاء عبر الإنترنت. يرجى الاتصال بالمطعم."
@@ -1892,6 +2026,7 @@ msgstr "فات الأوان لتعديل الحجز عبر الإنترنت. ي�
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "هذا العنوان خارج منطقة التوصيل لدى {location}. لا يزال بإمكانك الطلب للاستلام."
 
+#: src/lib/catering/labels.ts:87
 #: src/pages/profile/orders.astro.ts:3
 msgid "Items"
 msgstr "الأصناف"
@@ -2050,6 +2185,7 @@ msgstr "جارٍ تحميل مكافآتك…"
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
 
+#: src/lib/catering/labels.ts:30
 #: src/lib/gift-cards/labels.ts:37
 #: src/lib/reservations/labels.ts:35
 msgid "Location"
@@ -2346,9 +2482,17 @@ msgstr "الكمية المتبقية اليوم غير كافية"
 msgid "Not set"
 msgstr "غير محدد"
 
+#: src/lib/catering/labels.ts:34
+msgid "Notes for the kitchen"
+msgstr "ملاحظات للمطبخ"
+
 #: src/lib/reservations/labels.ts:379
 msgid "Nothing is charged now"
 msgstr "لن يتم تحصيل أي مبلغ الآن"
+
+#: src/lib/catering/labels.ts:117
+msgid "Nothing is due on this order."
+msgstr "لا يوجد مبلغ مستحق على هذا الطلب."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Nothing on your tab yet. Add dishes and send them to the kitchen."
@@ -2357,6 +2501,10 @@ msgstr "لا شيء في حسابك بعد. أضف أطباقًا وأرسلها
 #: src/lib/reservations/labels.ts:295
 msgid "Notify me"
 msgstr "أخبرني"
+
+#: src/lib/catering/labels.ts:33
+msgid "Number of guests"
+msgstr "عدد الضيوف"
 
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/[dish].astro.ts:3
@@ -2385,7 +2533,10 @@ msgstr "بعد تأكيد المطعم"
 msgid "One item. Paid extras are still charged."
 msgstr "منتج واحد. تُحتسب الإضافات المدفوعة كالمعتاد."
 
+#: src/lib/catering/labels.ts:55
 #: src/lib/gift-cards/labels.ts:41
+#: src/pages/catering/balance.astro.ts:3
+#: src/pages/catering/quote.astro.ts:3
 #: src/pages/gift-cards/index.astro.ts:3
 #: src/pages/profile/gift-cards.astro.ts:3
 msgid "One moment…"
@@ -2526,9 +2677,17 @@ msgstr "اختياري"
 msgid "Order"
 msgstr "اطلب"
 
+#: src/lib/catering/labels.ts:113
+msgid "Order {number}"
+msgstr "الطلب {number}"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Order again"
 msgstr "اطلب مجددًا"
+
+#: src/lib/catering/labels.ts:45
+msgid "Order by {when}"
+msgstr "اطلب قبل {when}"
 
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/shop/success.astro.ts:3
@@ -2550,6 +2709,11 @@ msgstr "اطلب أسرع واحتفظ بطلباتك ومكافآتك في مك
 #: src/components/AppInviteBanner.astro.ts:3
 msgid "Order faster in our app"
 msgstr "اطلب أسرع عبر تطبيقنا"
+
+#: src/lib/catering/labels.ts:20
+#: src/pages/catering/index.astro.ts:3
+msgid "Order food for an office lunch, a party or an event. Choose the date and we check the notice and our hours."
+msgstr "اطلب طعامًا لغداء مكتبي أو حفلة أو مناسبة. اختر التاريخ ونتحقق من المهلة المطلوبة ومن ساعات عملنا."
 
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
@@ -2626,6 +2790,18 @@ msgstr "الطلبات"
 msgid "Orders close {when}"
 msgstr "تُغلق الطلبات {when}"
 
+#: src/lib/catering/labels.ts:47
+msgid "Orders for {from} closed on {when}."
+msgstr "أُغلقت الطلبات ليوم {from} في {when}."
+
+#: src/lib/catering/labels.ts:46
+msgid "Orders for {from} to {to} closed on {when}."
+msgstr "أُغلقت الطلبات للفترة من {from} إلى {to} في {when}."
+
+#: src/lib/catering/labels.ts:72
+msgid "Orders for that date have closed. Please choose another date."
+msgstr "أُغلقت الطلبات لهذا التاريخ. يرجى اختيار تاريخ آخر."
+
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Orders have closed for this drop and every pickup has gone out. Thanks for the support — see what's next below."
 msgstr "أُغلقت طلبات هذا الطرح وتم تسليم جميع الطلبات. شكرًا لدعمكم — اطّلع أدناه على ما هو قادم."
@@ -2693,6 +2869,10 @@ msgstr "الصفحة غير موجودة"
 msgid "Paid"
 msgstr "مدفوع"
 
+#: src/lib/catering/labels.ts:116
+msgid "Paid in full. Thank you."
+msgstr "تم الدفع بالكامل. شكرًا لك."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Paid. Thank you!"
 msgstr "تم الدفع. شكرًا لك!"
@@ -2742,6 +2922,7 @@ msgid "Pay at pickup"
 msgstr "ادفع عند الاستلام"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/catering/labels.ts:52
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
 msgstr "ادفع الآن"
@@ -2758,6 +2939,14 @@ msgstr "ادفع عبر الإنترنت"
 msgid "Pay securely now"
 msgstr "ادفع الآن بأمان"
 
+#: src/lib/catering/labels.ts:121
+msgid "Pay the balance"
+msgstr "ادفع الرصيد"
+
+#: src/lib/catering/labels.ts:53
+msgid "Pay the deposit"
+msgstr "ادفع العربون"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pay when you receive your order"
 msgstr "ادفع عند استلام طلبك"
@@ -2765,6 +2954,11 @@ msgstr "ادفع عند استلام طلبك"
 #: src/lib/reservations/labels.ts:426
 msgid "Pay within {time}"
 msgstr "ادفع خلال {time}"
+
+#: src/lib/catering/labels.ts:112
+#: src/pages/catering/balance.astro.ts:3
+msgid "Pay your catering balance"
+msgstr "ادفع رصيد طلب التموين"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Pay your tab"
@@ -2799,6 +2993,10 @@ msgstr "طرق الدفع"
 msgid "Payment received"
 msgstr "تم استلام الدفعة"
 
+#: src/lib/catering/labels.ts:106
+msgid "Payment received. Thank you: your catering order is confirmed."
+msgstr "تم استلام الدفعة. شكرًا لك: تم تأكيد طلب التموين."
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Payment under review"
 msgstr "الدفع قيد المراجعة"
@@ -2808,6 +3006,7 @@ msgid "Payment was not finished. Nothing was charged."
 msgstr "لم يكتمل الدفع. لم يُحصَّل أي مبلغ."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/lib/catering/labels.ts:42
 #: src/lib/reservations/labels.ts:86
 msgid "Phone"
 msgstr "الهاتف"
@@ -2841,6 +3040,7 @@ msgstr "يمكن مشاركة الصور فقط للأطباق التي طلبت
 msgid "Pick up from"
 msgstr "الاستلام من"
 
+#: src/lib/catering/labels.ts:35
 #: src/lib/ordering-labels.ts:148
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
@@ -2857,9 +3057,17 @@ msgstr "استلام {when}"
 msgid "Pickup instructions"
 msgstr "تعليمات الاستلام"
 
+#: src/lib/catering/labels.ts:170
+msgid "Pickup is available too."
+msgstr "الاستلام متاح أيضًا."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pickup is not available for this order."
 msgstr "الاستلام غير متاح لهذا الطلب."
+
+#: src/lib/catering/labels.ts:37
+msgid "Pickup or delivery"
+msgstr "استلام أو توصيل"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Pickup order"
@@ -3070,6 +3278,7 @@ msgstr "تُحتسب المشتريات التي لا تقل عن {amount}."
 msgid "QR code for {title}"
 msgstr "رمز QR لوظيفة {title}"
 
+#: src/lib/catering/labels.ts:24
 #: src/lib/ordering-labels.ts:91
 msgid "Quantity"
 msgstr "الكمية"
@@ -3178,6 +3387,10 @@ msgstr "حذف"
 msgid "Remove code {code}"
 msgstr "إزالة الرمز {code}"
 
+#: src/lib/catering/labels.ts:54
+msgid "Request a quote"
+msgstr "اطلب عرض سعر"
+
 #: src/lib/reservations/labels.ts:133
 msgid "Request a table for more than {count} guests"
 msgstr "اطلب طاولة لأكثر من {count} ضيفًا"
@@ -3190,6 +3403,7 @@ msgstr "تم استلام الطلب"
 msgid "Requests to use your rewards"
 msgstr "طلبات استخدام مكافآتك"
 
+#: src/lib/catering/labels.ts:27
 #: src/lib/ordering-labels.ts:70
 msgid "Required"
 msgstr "مطلوب"
@@ -3553,6 +3767,7 @@ msgstr "بعض عناصر طلبك غير متوفرة بهذه الكمية ا�
 msgid "Something went wrong."
 msgstr "حدث خطأ ما."
 
+#: src/lib/catering/labels.ts:83
 #: src/lib/gift-cards/labels.ts:54
 #: src/lib/loyalty/labels.ts:345
 #: src/lib/reservations/labels.ts:550
@@ -3664,6 +3879,7 @@ msgid "Tasting menus, chef's tables and special events at {name}."
 msgstr "قوائم تذوق وطاولات الشيف وفعاليات خاصة في {name}."
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/catering/labels.ts:89
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
@@ -3746,6 +3962,10 @@ msgstr "شكراً لك."
 msgid "Thank you. The restaurant has your payment."
 msgstr "شكرًا لك. استلم المطعم دفعتك."
 
+#: src/lib/catering/labels.ts:57
+msgid "Thank you. We received your request and will send you a quote by email."
+msgstr "شكرًا لك. استلمنا طلبك وسنرسل لك عرض سعر بالبريد الإلكتروني."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
 msgstr "شكرًا لك. تم إرسال طلبك. إذا بدا مناسبًا فسيتواصلون معك."
@@ -3779,6 +3999,22 @@ msgstr "تعذّر تطبيق رمز القسيمة."
 #: src/lib/reservations/labels.ts:61
 msgid "That date is too far ahead to book online."
 msgstr "هذا التاريخ بعيد جدًا للحجز عبر الإنترنت."
+
+#: src/lib/catering/labels.ts:77
+msgid "That is more guests than we can cater online. Please call us."
+msgstr "هذا العدد من الضيوف أكبر مما نستطيع تلبيته عبر الإنترنت. يرجى الاتصال بنا."
+
+#: src/lib/catering/labels.ts:80
+msgid "That is not available here. Choose pickup or delivery."
+msgstr "هذا غير متاح هنا. اختر الاستلام أو التوصيل."
+
+#: src/lib/catering/labels.ts:67
+msgid "That is too far ahead. Please choose an earlier date."
+msgstr "هذا التاريخ بعيد جدًا. يرجى اختيار تاريخ أقرب."
+
+#: src/lib/catering/labels.ts:66
+msgid "That is too soon. Please choose a later date."
+msgstr "هذا قريب جدًا. يرجى اختيار تاريخ لاحق."
 
 #: src/lib/reservations/labels.ts:523
 msgid "That party size is not available online."
@@ -3871,6 +4107,10 @@ msgstr "أوقف المطبخ الطلبات الجديدة مؤقتًا. يُر
 msgid "The kitchen is closed right now."
 msgstr "المطبخ مغلق حاليًا."
 
+#: src/lib/catering/labels.ts:157
+msgid "The largest order we take online is {maxText}."
+msgstr "أكبر طلب نقبله عبر الإنترنت هو {maxText}."
+
 #: src/lib/reservations/labels.ts:301
 msgid "The latest time must be after the earliest time."
 msgstr "يجب أن يكون أقصى وقت بعد أبكر وقت."
@@ -3882,6 +4122,18 @@ msgstr "قد يكون الرابط غير مكتمل أو منتهي الصلا�
 #: src/pages/menu/success.astro.ts:3
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "قد يكون الرابط غير مكتمل. يمكنك بدء طلب جديد من القائمة."
+
+#: src/lib/catering/labels.ts:155
+msgid "The minimum catering order is {minText}."
+msgstr "الحد الأدنى لطلب التموين هو {minText}."
+
+#: src/lib/catering/labels.ts:75
+msgid "The order is above what we take online. Please call us."
+msgstr "الطلب أكبر مما نقبله عبر الإنترنت. يرجى الاتصال بنا."
+
+#: src/lib/catering/labels.ts:74
+msgid "The order is below our catering minimum."
+msgstr "الطلب أقل من الحد الأدنى لطلبات التموين."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "The packaging fee changed. Please review your total and place your order again."
@@ -3989,6 +4241,10 @@ msgstr "لا تتوفر كمية كافية من {name} اليوم. يرجى ا�
 #: src/pages/menu/checkout.astro.ts:3
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "لا تتوفر كمية كافية اليوم من: {names}. يرجى العودة إلى القائمة لتعديل طلبك."
+
+#: src/lib/catering/labels.ts:119
+msgid "This balance was cancelled. Contact the restaurant if you have a question."
+msgstr "تم إلغاء هذا الرصيد. تواصل مع المطعم إذا كان لديك سؤال."
 
 #: src/lib/reservations/labels.ts:515
 msgid "This booking includes a payment, so the party size cannot be changed online. Please call the restaurant."
@@ -4144,6 +4400,10 @@ msgstr "انتهت صلاحية هذا الرابط أو أنه غير صالح.
 msgid "This link has expired."
 msgstr "انتهت صلاحية هذا الرابط."
 
+#: src/lib/catering/labels.ts:99
+msgid "This link is no longer valid. Ask the restaurant for the latest quote."
+msgstr "لم يعد هذا الرابط صالحًا. اطلب من المطعم أحدث عرض سعر."
+
 #: src/pages/l/[code].astro.ts:3
 msgid "This link is not available any more"
 msgstr "هذا الرابط لم يعد متاحًا"
@@ -4207,6 +4467,22 @@ msgstr "رقم الهاتف هذا موجود بالفعل في قائمة ال�
 msgid "This photo is larger than 10 MB."
 msgstr "حجم هذه الصورة أكبر من 10 ميجابايت."
 
+#: src/lib/catering/labels.ts:96
+msgid "This quote has expired. Please contact the restaurant."
+msgstr "انتهت صلاحية عرض السعر هذا. يرجى التواصل مع المطعم."
+
+#: src/lib/catering/labels.ts:104
+msgid "This quote is already paid."
+msgstr "تم دفع عرض السعر هذا بالفعل."
+
+#: src/lib/catering/labels.ts:102
+msgid "This quote is not ready yet. The restaurant will email you when it is."
+msgstr "عرض السعر هذا ليس جاهزًا بعد. سيراسلك المطعم عندما يكون جاهزًا."
+
+#: src/lib/catering/labels.ts:92
+msgid "This quote is valid until {date}."
+msgstr "عرض السعر هذا ساري حتى {date}."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
 msgstr "هذا الإيصال متاح فقط على الجهاز الذي أُنشئ منه الطلب."
@@ -4248,6 +4524,7 @@ msgstr "أرسلت هذه الطاولة طلبات كثيرة. يُرجى طل�
 msgid "Tier reviewed on {date}"
 msgstr "تتم مراجعة المستوى في {date}"
 
+#: src/lib/catering/labels.ts:32
 #: src/lib/gift-cards/labels.ts:36
 #: src/lib/reservations/labels.ts:38
 msgid "Time"
@@ -4319,6 +4596,7 @@ msgid "Topped up"
 msgstr "تم الشحن"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/catering/labels.ts:88
 #: src/lib/gift-cards/labels.ts:39
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
@@ -4484,6 +4762,7 @@ msgstr "رمز التحقق"
 msgid "Verification Code"
 msgstr "رمز التحقق"
 
+#: src/lib/catering/labels.ts:82
 #: src/lib/gift-cards/labels.ts:51
 msgid "Verification failed. Please try again."
 msgstr "فشل التحقق. حاول مرة أخرى."
@@ -4579,6 +4858,10 @@ msgstr "تريد تناول الطعام اليوم؟ انضم إلى قائمة
 msgid "We applied a better discount instead of this code."
 msgstr "طبّقنا خصمًا أفضل بدل هذا الرمز."
 
+#: src/lib/catering/labels.ts:69
+msgid "We are not taking orders at that time. Please choose another time."
+msgstr "لا نستقبل طلبات في هذا الوقت. يرجى اختيار وقت آخر."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "We are still confirming your payment. Check your tab again in a minute."
 msgstr "ما زلنا نؤكد دفعتك. تحقق من حسابك مجددًا بعد دقيقة."
@@ -4586,6 +4869,10 @@ msgstr "ما زلنا نؤكد دفعتك. تحقق من حسابك مجددًا
 #: src/lib/gift-cards/labels.ts:52
 msgid "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
 msgstr "لا يمكننا إتمام هذه العملية. جرّب مبلغًا أصغر أو تواصل مع المطعم."
+
+#: src/lib/catering/labels.ts:158
+msgid "We cater for up to {maxGuests} guests."
+msgstr "نقدم خدمة التموين لما يصل إلى {maxGuests} ضيفًا."
 
 #: src/lib/reservations/labels.ts:389
 msgid "We could not check your payment. Trying again…"
@@ -4726,6 +5013,14 @@ msgstr "تعذّر إرسال المبلغ المسترد تلقائيًا. ير
 msgid "We couldn't start payment. Please try again."
 msgstr "تعذّر بدء الدفع. حاول مرة أخرى."
 
+#: src/lib/catering/labels.ts:166
+msgid "We deliver catering orders to {where}."
+msgstr "نوصّل طلبات التموين إلى {where}."
+
+#: src/lib/catering/labels.ts:167
+msgid "We deliver catering orders."
+msgstr "نوصّل طلبات التموين."
+
 #: src/lib/ordering-labels.ts:165
 msgid "We deliver here"
 msgstr "نوصّل إلى هنا"
@@ -4758,6 +5053,10 @@ msgstr "نعلم أنك في الطريق"
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "حمّلنا طلبك من مكالمتك. راجعه ثم أكمل الدفع."
 
+#: src/lib/catering/labels.ts:152
+msgid "We need at least {hours} hours of notice."
+msgstr "نحتاج إلى مهلة لا تقل عن {hours} ساعة."
+
 #: src/pages/menu.astro.ts:3
 msgid "We rebuilt your cart from this order. Review it and check out."
 msgstr "أعدنا بناء سلتك من هذا الطلب. راجعها وأتمم الدفع."
@@ -4777,6 +5076,10 @@ msgstr "أرسلنا تأكيدًا إلى بريدك الإلكتروني أو 
 #: src/pages/menu/success.astro.ts:3
 msgid "We sent a link to confirm your email"
 msgstr "أرسلنا رابطاً لتأكيد بريدك الإلكتروني"
+
+#: src/lib/catering/labels.ts:176
+msgid "We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event."
+msgstr "نأخذ عربونًا بنسبة {percent}% عند الطلب. يُستحق الرصيد قبل المناسبة بـ {balanceDueDays} أيام."
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "We texted a 6-digit code to {phone}."
@@ -4898,6 +5201,10 @@ msgstr "إلى أين نوصّل طلبك؟"
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Where would you like to work?"
 msgstr "أين تود أن تعمل؟"
+
+#: src/lib/catering/labels.ts:134
+msgid "Which dietary needs can you meet?"
+msgstr "ما الاحتياجات الغذائية التي يمكنكم تلبيتها؟"
 
 #: src/lib/ordering-labels.ts:87
 msgid "Whole"
@@ -5072,6 +5379,11 @@ msgstr "تم رفض بطاقتك أو تطلبت تحققًا إضافيًا. ح
 msgid "Your cart is empty"
 msgstr "سلة طلباتك فارغة"
 
+#: src/lib/catering/labels.ts:85
+#: src/pages/catering/quote.astro.ts:3
+msgid "Your catering quote"
+msgstr "عرض سعر التموين الخاص بك"
+
 #: src/lib/loyalty/labels.ts:195
 #: src/lib/loyalty/labels.ts:205
 msgid "Your code"
@@ -5081,6 +5393,7 @@ msgstr "رمزك"
 msgid "Your delivery check expired. Confirm your address again."
 msgstr "انتهت صلاحية التحقق من التوصيل. أكّد عنوانك مرة أخرى."
 
+#: src/lib/catering/labels.ts:40
 #: src/lib/reservations/labels.ts:34
 #: src/lib/reservations/labels.ts:83
 msgid "Your details"
@@ -5102,6 +5415,10 @@ msgstr "تغيّر خصمك. راجع الإجمالي ثم أعد تقديم ا
 msgid "Your email (for the receipt)"
 msgstr "بريدك الإلكتروني (للإيصال)"
 
+#: src/lib/catering/labels.ts:29
+msgid "Your event"
+msgstr "مناسبتك"
+
 #: src/lib/reservations/labels.ts:78
 msgid "Your hold expired"
 msgstr "انتهت مدة حجز الطاولة"
@@ -5111,6 +5428,7 @@ msgid "Your hold expired. Please choose a time again."
 msgstr "انتهت مدة حجز الطاولة. يرجى اختيار وقت مرة أخرى."
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/catering/labels.ts:41
 #: src/lib/gift-cards/labels.ts:30
 msgid "Your name"
 msgstr "اسمك"

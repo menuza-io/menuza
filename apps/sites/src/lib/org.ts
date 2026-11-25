@@ -707,6 +707,25 @@ export type PublicSiteMenuPayload = {
 	>
 	/** Live pricing rules (#388); read with `parseMenuPricingRules`. */
 	pricingRules?: unknown
+	/**
+	 * Catering (#124, #325): per location that turned it on, the public settings
+	 * (read with `parseCateringSettings`) and the facts its answers read. Absent
+	 * while the organization's `catering.enabled` flag is off: no catering page.
+	 */
+	catering?: {
+		quotes: boolean
+		locations: Record<
+			string,
+			{
+				settings: unknown
+				facts: {
+					currency: string
+					deliveryZoneNames?: string[]
+					deliveryFeeMinor?: number | null
+				}
+			}
+		>
+	}
 	promotions?: PublicMenuPromotion[]
 	/**
 	 * Site features the menu page reads: `upsell` is the `ordering.upsell` flag
