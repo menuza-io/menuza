@@ -1216,7 +1216,10 @@ about a guest crosses to the US control plane.
   receipt, the preview and cloud printers: the ZATCA code stays first and
   unchanged, marketing codes print below it, smaller, with their caption; a 58
   mm roll with a fiscal code drops them; refund and void slips never carry
-  them. The logo is converted to one colour and capped at about 15 mm. Scans
+  them. The logo is converted to one colour and capped at about 15 mm. The
+  emailed receipt (#79) shows the same switched-on review and app codes as
+  tappable links with their captions (an email cannot print a scannable code).
+  Scans
   are not counted through short links: those serve own-site paths only, and the
   store redirect already counts its own.
 

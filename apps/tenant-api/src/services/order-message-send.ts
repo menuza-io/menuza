@@ -33,6 +33,9 @@ import { getReservationsContext } from '../lib/reservations-context.ts'
 import { normalizeReservationLocale } from '../lib/reservations-email.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
+import { planReceiptExtras } from '@repo/common/receipt-extras'
+import { resolveTickets } from '@repo/common/ticket-config'
+import { loadPrintContext } from './print-source.ts'
 import { welcomeBonusForOrderReceipt } from './loyalty-welcome-service.ts'
 import { orderPaidCents, orderRefundedNetCents } from './order-refund-book.ts'
 import {
@@ -187,6 +190,27 @@ async function appInviteFor(
 	return out
 }
 
+/**
+ * The codes the owner switched on for the guest receipt (#263), the same
+ * decision the till and the printers make; none when the location has no
+ * target for them or the settings cannot be read.
+ */
+async function receiptCodesFor(orgId: string, locationId: string) {
+	try {
+		const context = await loadPrintContext(orgId, locationId)
+		if (!context) return []
+		return planReceiptExtras({
+			config: resolveTickets(context.tickets).extras,
+			targets: context.targets,
+			logoUrl: context.logoUrl,
+			width: 80,
+			fiscalQr: false,
+		}).codes
+	} catch {
+		return []
+	}
+}
+
 /** Sends one message for `order` right now, rendering it from the order as it is. */
 async function sendForOrder(input: {
 	orgId: string
@@ -238,10 +262,14 @@ async function sendForOrder(input: {
 	// "Track this order in the app" on the receipt, only for a live store (#196).
 	const appInvite =
 		kind === 'receipt' ? await appInviteFor(orgId, setting, locale) : []
+	// The review and app codes the owner switched on for receipts (#263), as links.
+	const receiptCodes =
+		kind === 'receipt' ? await receiptCodesFor(orgId, order.locationId) : []
 	const rendered = renderOrderEmail({
 		kind,
 		locale,
 		appInvite,
+		receiptCodes,
 		theme: setting.theme,
 		restaurantName: setting.restaurantName,
 		defaultLocale: setting.defaultLocale,
