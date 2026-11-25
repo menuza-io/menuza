@@ -123,6 +123,9 @@ function region(
 			}
 		}
 		if (path.endsWith('/undo') && init?.method === 'POST') return {}
+		if (path.endsWith('/correct') && init?.method === 'POST') {
+			return entry({ currentQuantity: 0, currentValueMinor: 0 })
+		}
 		throw new Error(`unexpected request ${path}`)
 	})
 }
@@ -139,7 +142,10 @@ function renderWaste(
 				children: [
 					{
 						path: 'waste',
-						loader: () => ({ memberNames: { usr_1: 'Sara Ahmed' } }),
+						loader: () => ({
+							memberNames: { usr_1: 'Sara Ahmed' },
+							dishNames: [{ id: 'dish_shawarma', name: 'Chicken shawarma' }],
+						}),
 						HydrateFallback: () => null,
 						element: <InventoryWasteRoute />,
 					},
@@ -294,5 +300,160 @@ describe('Inventory Waste', () => {
 		expect(
 			screen.getByRole('button', { name: 'Try again' }),
 		).toBeInTheDocument()
+	})
+
+	describe('a whole dish and later corrections', () => {
+		const dishEntry = (overrides: Record<string, unknown> = {}) =>
+			entry({
+				id: 'g1',
+				itemId: null,
+				itemName: null,
+				category: null,
+				baseUnit: null,
+				quantity: 2,
+				note: null,
+				reason: 'dropped',
+				valueMinor: 1_230,
+				dish: {
+					groupId: 'g1',
+					menuItemId: 'dish_shawarma',
+					variantId: null,
+					options: [],
+					dishes: 2,
+					basis: 'recipe',
+					ingredients: 3,
+				},
+				...overrides,
+			})
+
+		it('reads a dish as one grouped line and undoes the whole group', async () => {
+			const request = region({ entries: [dishEntry()] })
+			renderWaste(request)
+			const row = await screen.findByTestId('waste-row-g1')
+			expect(row).toHaveTextContent('2 × Chicken shawarma')
+			expect(row).toHaveTextContent('3 ingredients')
+			await userEvent.click(within(row).getByTestId('waste-undo-g1'))
+			await waitFor(() =>
+				expect(request).toHaveBeenCalledWith('/waste/dishes/g1/undo', {
+					method: 'POST',
+					body: expect.stringContaining('"clientId"'),
+				}),
+			)
+		})
+
+		it('shows the original and its correction, and offers no undo or second correction on a reversed entry', async () => {
+			renderWaste(
+				region({
+					entries: [
+						entry({
+							currentQuantity: 0,
+							currentValueMinor: 0,
+							corrections: [
+								{
+									id: 'c1',
+									kind: 'reverse',
+									previousQuantity: 2_300_000,
+									newQuantity: 0,
+									stockEffect: 'applied',
+									reason: 'Logged twice',
+									actor: { kind: 'operator', id: 'usr_1' },
+									createdAt: Date.now() - 1000,
+								},
+							],
+						}),
+					],
+				}),
+			)
+			const row = await screen.findByTestId('waste-row-w1')
+			// Both are on the log: the original figure stays beside what it is now.
+			expect(row).toHaveTextContent('2.3 kg')
+			expect(row).toHaveTextContent('64.40')
+			expect(within(row).getByTestId('waste-reversed-w1')).toBeVisible()
+			expect(within(row).getByTestId('waste-corrections-w1')).toHaveTextContent(
+				'Reversed: Logged twice',
+			)
+			expect(within(row).queryByTestId('waste-undo-w1')).toBeNull()
+			expect(within(row).queryByTestId('waste-correct-w1')).toBeNull()
+		})
+
+		it('reverses an entry later with a reason, and says first that stock is unchanged when a later count covers it', async () => {
+			const request = region({
+				entries: [
+					entry({
+						createdAt: Date.now() - 3 * 24 * 3_600_000,
+						countedSince: true,
+					}),
+				],
+			})
+			renderWaste(request)
+			const row = await screen.findByTestId('waste-row-w1')
+			// Older than the undo window: only a correction is offered.
+			expect(within(row).queryByTestId('waste-undo-w1')).toBeNull()
+			await userEvent.click(within(row).getByTestId('waste-correct-w1'))
+			const dialog = await screen.findByTestId('correct-waste-dialog')
+			expect(
+				within(dialog).getByTestId('correct-waste-covered-note'),
+			).toHaveTextContent('your stock will not change')
+			// A reason is needed before anything is sent.
+			await userEvent.click(within(dialog).getByTestId('correct-waste-submit'))
+			expect(request.mock.calls.some(([p]) => p === '/waste/w1/correct')).toBe(
+				false,
+			)
+			await userEvent.type(
+				within(dialog).getByTestId('correct-waste-reason'),
+				'Weighed wrong',
+			)
+			await userEvent.click(within(dialog).getByTestId('correct-waste-submit'))
+			await waitFor(() =>
+				expect(
+					request.mock.calls.some(([p]) => p === '/waste/w1/correct'),
+				).toBe(true),
+			)
+			const index = request.mock.calls.findIndex(
+				([p]) => p === '/waste/w1/correct',
+			)
+			expect(sentJson(request, index)).toEqual({
+				clientId: expect.stringMatching(/^c-/),
+				kind: 'reverse',
+				reason: 'Weighed wrong',
+			})
+		})
+
+		it('says stock changes by the difference when no count covers the entry, and changes a quantity', async () => {
+			const request = region({
+				entries: [entry({ createdAt: Date.now() - 3 * 24 * 3_600_000 })],
+			})
+			renderWaste(request)
+			await userEvent.click(await screen.findByTestId('waste-correct-w1'))
+			const dialog = await screen.findByTestId('correct-waste-dialog')
+			expect(
+				within(dialog).getByTestId('correct-waste-stock-note'),
+			).toHaveTextContent('Your stock changes by the difference')
+			await userEvent.click(
+				within(dialog).getByTestId('correct-waste-kind-quantity'),
+			)
+			await userEvent.type(
+				within(dialog).getByTestId('correct-waste-amount'),
+				'5',
+			)
+			await userEvent.type(
+				within(dialog).getByTestId('correct-waste-reason'),
+				'It was 5 g',
+			)
+			await userEvent.click(within(dialog).getByTestId('correct-waste-submit'))
+			await waitFor(() =>
+				expect(
+					request.mock.calls.some(([p]) => p === '/waste/w1/correct'),
+				).toBe(true),
+			)
+			const index = request.mock.calls.findIndex(
+				([p]) => p === '/waste/w1/correct',
+			)
+			expect(sentJson(request, index)).toMatchObject({
+				kind: 'quantity',
+				amount: 5,
+				reason: 'It was 5 g',
+			})
+		})
 	})
 })

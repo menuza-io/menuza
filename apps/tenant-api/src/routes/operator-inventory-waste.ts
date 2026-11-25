@@ -1,6 +1,8 @@
 import {
+	correctWasteSchema,
 	INVENTORY_PERMISSIONS,
 	listWasteQuerySchema,
+	logWasteDishSchema,
 	logWasteSchema,
 	undoWasteSchema,
 	wasteSummaryQuerySchema,
@@ -14,6 +16,7 @@ import {
 } from '../lib/inventory-guard.ts'
 import { inventoryErrorResponse } from '../lib/inventory-http.ts'
 import {
+	clientIdempotency,
 	idParam,
 	inventoryCaller,
 	respond,
@@ -21,6 +24,11 @@ import {
 	parseQuery,
 } from '../lib/inventory-route.ts'
 import {
+	logWasteDish,
+	undoWasteDish,
+} from '../services/inventory-dish-waste-service.ts'
+import {
+	correctWaste,
 	listWaste,
 	logWaste,
 	undoWaste,
@@ -119,6 +127,77 @@ operatorInventoryWasteRoutes.post(
 					id,
 					clientId: body.data.clientId,
 				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+// A whole dish as waste (#517): behind `inventory.recipes`, like the Kitchen path.
+operatorInventoryWasteRoutes.post(
+	'/waste/dishes',
+	inventoryGuard({ scope: 'write', grant: UPDATE, feature: 'recipes' }),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const body = await parseBody(c, logWasteDishSchema)
+			if ('error' in body) return body.error
+			const location = requireInventoryLocation(ctx, body.data.locationId)
+			if (!location.ok) return location.response
+			return respond(
+				ctx,
+				await logWasteDish(inventoryCaller(ctx), {
+					body: body.data,
+					idempotency: clientIdempotency(
+						ctx,
+						'waste:dish',
+						body.data.clientId,
+						body.data,
+					),
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryWasteRoutes.post(
+	'/waste/dishes/:id/undo',
+	inventoryGuard({ scope: 'write', grant: UPDATE, feature: 'recipes' }),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, undoWasteSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await undoWasteDish(inventoryCaller(ctx), {
+					id,
+					clientId: body.data.clientId,
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+// A later correction of an entry or a dish, with a reason (#522). Never from Station.
+operatorInventoryWasteRoutes.post(
+	'/waste/:id/correct',
+	inventoryGuard({ scope: 'write', grant: UPDATE }),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, correctWasteSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await correctWaste(inventoryCaller(ctx), { id, body: body.data }),
 			)
 		} catch (error) {
 			return inventoryErrorResponse(error)

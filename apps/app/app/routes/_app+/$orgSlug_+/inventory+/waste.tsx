@@ -40,6 +40,7 @@ import { useLoaderData, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { CorrectWasteDialog } from '#app/components/inventory/correct-waste-dialog.tsx'
 import {
 	useInventoryRevision,
 	useNotifyInventoryChanged,
@@ -62,6 +63,7 @@ import {
 	categoryLabel,
 	WASTE_REASON_LABELS,
 } from '#app/utils/inventory/labels.ts'
+import { loadMenuNames } from '#app/utils/inventory/menu-names.server.ts'
 import { newClientId } from '#app/utils/inventory/waste-form.ts'
 import {
 	resolveWasteRange,
@@ -77,19 +79,31 @@ import { useInventoryLayoutData } from './_layout.tsx'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const access = await requireInventoryAccess(request, params.orgSlug)
-	return { memberNames: await loadMemberNames(access.organizationId) }
+	const [memberNames, menu] = await Promise.all([
+		loadMemberNames(access.organizationId),
+		// A dish is logged by id; the App joins its name from the menu (#517).
+		access.features.recipes
+			? loadMenuNames(access.organizationId)
+			: Promise.resolve({ dishes: [], options: [] }),
+	])
+	return { memberNames, dishNames: menu.dishes }
 }
 
 const ALL = 'all'
 
 export default function InventoryWasteRoute() {
 	const { t, i18n } = useLingui()
-	const { memberNames } = useLoaderData<typeof loader>()
+	const { memberNames, dishNames = [] } = useLoaderData<typeof loader>()
 	const { activeLocationId, canSeeCost, canEdit, currency } =
 		useInventoryLayoutData()
 	const { request } = useInventoryClient()
 	const quantity = useQuantityFormat()
 	const notifyChanged = useNotifyInventoryChanged()
+	const dishNameOf = useMemo(
+		() => new Map(dishNames.map((dish) => [dish.id, dish.name])),
+		[dishNames],
+	)
+	const [correcting, setCorrecting] = useState<WasteEntry | null>(null)
 	const [searchParams, setSearchParams] = useSearchParams()
 
 	// The period is the viewer's calendar, so it is worked out after mount.
@@ -371,16 +385,21 @@ export default function InventoryWasteRoute() {
 							canSeeCost={canSeeCost}
 							canUndo={canEdit}
 							currency={currency}
-							quantityText={(entry) =>
+							dishName={(id) => dishNameOf.get(id) ?? ''}
+							onCorrect={setCorrecting}
+							quantityText={(entry, amount = entry.quantity) =>
 								entry.baseUnit
-									? quantity.format(entry.quantity, {
+									? quantity.format(amount, {
 											baseUnit: entry.baseUnit,
 										})
 									: '—'
 							}
 							onUndo={async (entry) => {
 								try {
-									await request(`/waste/${encodeURIComponent(entry.id)}/undo`, {
+									const path = entry.dish
+										? `/waste/dishes/${encodeURIComponent(entry.id)}/undo`
+										: `/waste/${encodeURIComponent(entry.id)}/undo`
+									await request(path, {
 										method: 'POST',
 										body: JSON.stringify({ clientId: newClientId('u') }),
 									})
@@ -429,6 +448,24 @@ export default function InventoryWasteRoute() {
 					</div>
 				)}
 			</WorkspacePanel>
+			<CorrectWasteDialog
+				entry={correcting}
+				name={
+					correcting
+						? correcting.dish
+							? `${correcting.dish.dishes} × ${dishNameOf.get(correcting.dish.menuItemId) ?? ''}`
+							: (correcting.itemName ?? '')
+						: ''
+				}
+				open={correcting !== null}
+				onOpenChange={(open) => {
+					if (!open) setCorrecting(null)
+				}}
+				onCorrected={() => {
+					reloadLog()
+					reloadSummary()
+				}}
+			/>
 		</div>
 	)
 }
@@ -540,16 +577,20 @@ function WasteLog({
 	canSeeCost,
 	canUndo,
 	currency,
+	dishName,
 	quantityText,
 	onUndo,
+	onCorrect,
 }: {
 	entries: readonly WasteEntry[]
 	memberNames: Record<string, string>
 	canSeeCost: boolean
 	canUndo: boolean
 	currency: string
-	quantityText: (entry: WasteEntry) => string
+	dishName: (menuItemId: string) => string
+	quantityText: (entry: WasteEntry, amount?: number) => string
 	onUndo: (entry: WasteEntry) => Promise<void>
+	onCorrect: (entry: WasteEntry) => void
 }) {
 	const { t, i18n } = useLingui()
 	const [undoing, setUndoing] = useState<string | null>(null)
@@ -570,11 +611,29 @@ function WasteLog({
 				: entry.actor.kind === 'system'
 					? t`Automatic`
 					: ''
-	const name = (entry: WasteEntry) => entry.itemName ?? t`Removed item`
+	// A dish is one line: "2 x Chicken shawarma" (#517).
+	const name = (entry: WasteEntry) => {
+		if (!entry.dish) return entry.itemName ?? t`Removed item`
+		const dishes = entry.dish.dishes
+		const dish = dishName(entry.dish.menuItemId) || t`Removed dish`
+		return t`${dishes} × ${dish}`
+	}
+	const amount = (entry: WasteEntry) => {
+		if (entry.dish) {
+			const n = entry.dish.ingredients
+			return entry.dish.basis === 'typed' ? t`Typed cost` : t`${n} ingredients`
+		}
+		return quantityText(entry)
+	}
+	const reversed = (entry: WasteEntry) => entry.currentQuantity === 0
+	const corrected = (entry: WasteEntry) => (entry.corrections?.length ?? 0) > 0
 	const canUndoEntry = (entry: WasteEntry) =>
 		canUndo &&
 		entry.undoneAt === null &&
+		!corrected(entry) &&
 		now - entry.createdAt < WASTE_UNDO_WINDOW_MS
+	const canCorrectEntry = (entry: WasteEntry) =>
+		canUndo && entry.undoneAt === null && !reversed(entry)
 
 	async function undo(entry: WasteEntry) {
 		setUndoing(entry.id)
@@ -596,6 +655,91 @@ function WasteLog({
 			>
 				<Trans>Undo</Trans>
 			</Button>
+		) : null
+	const correctButton = (entry: WasteEntry, testId: string) =>
+		canCorrectEntry(entry) ? (
+			<Button
+				type="button"
+				variant="ghost"
+				size="sm"
+				onClick={() => onCorrect(entry)}
+				data-testid={`${testId}-${entry.id}`}
+			>
+				<Trans>Correct</Trans>
+			</Button>
+		) : null
+	// What was corrected, under the entry: the log shows the original and the changes.
+	const corrections = (entry: WasteEntry) =>
+		corrected(entry) ? (
+			<ul
+				className="text-muted-foreground flex flex-col gap-0.5 text-xs"
+				data-testid={`waste-corrections-${entry.id}`}
+			>
+				{entry.corrections!.map((correction) => {
+					const to = entry.dish
+						? `${correction.newQuantity} × ${dishName(entry.dish.menuItemId)}`
+						: quantityText(entry, correction.newQuantity)
+					const reason = correction.reason
+					return (
+						<li key={correction.id} className="wrap-anywhere">
+							{correction.kind === 'reverse' ? (
+								<Trans>Reversed: {reason}</Trans>
+							) : (
+								<Trans>
+									Corrected to <bdi dir="ltr">{to}</bdi>: {reason}
+								</Trans>
+							)}
+							{correction.stockEffect === 'covered_by_count' ? (
+								<>
+									{' '}
+									<Trans>(stock unchanged: a later count covers it)</Trans>
+								</>
+							) : null}
+						</li>
+					)
+				})}
+			</ul>
+		) : null
+	const struck = (entry: WasteEntry) =>
+		entry.undoneAt !== null || reversed(entry)
+	const costOf = (entry: WasteEntry) => {
+		if (entry.valueMinor === undefined) return null
+		const original = formatMoney(
+			entry.valueMinor,
+			entry.currency ?? currency,
+			i18n.locale,
+		)
+		if (entry.currentValueMinor === undefined) {
+			return <bdi dir="ltr">{original}</bdi>
+		}
+		return (
+			<span className="flex flex-col items-end">
+				<bdi dir="ltr">
+					{formatMoney(
+						entry.currentValueMinor,
+						entry.currency ?? currency,
+						i18n.locale,
+					)}
+				</bdi>
+				<bdi dir="ltr" className="text-muted-foreground text-xs line-through">
+					{original}
+				</bdi>
+			</span>
+		)
+	}
+	const statusBadge = (entry: WasteEntry) =>
+		entry.undoneAt !== null ? (
+			<Badge variant="secondary">
+				<Trans>Undone</Trans>
+			</Badge>
+		) : reversed(entry) ? (
+			<Badge variant="secondary" data-testid={`waste-reversed-${entry.id}`}>
+				<Trans>Reversed</Trans>
+			</Badge>
+		) : corrected(entry) ? (
+			<Badge variant="outline" data-testid={`waste-corrected-${entry.id}`}>
+				<Trans>Corrected</Trans>
+			</Badge>
 		) : null
 
 	return (
@@ -624,7 +768,7 @@ function WasteLog({
 									<Trans>Cost</Trans>
 								</TableHead>
 							) : null}
-							<TableHead className="w-20">
+							<TableHead className="w-32">
 								<span className="sr-only">
 									<Trans>Actions</Trans>
 								</span>
@@ -641,7 +785,7 @@ function WasteLog({
 									<div className="flex min-w-0 flex-col">
 										<span
 											className={
-												entry.undoneAt !== null
+												struck(entry)
 													? 'text-muted-foreground font-medium wrap-anywhere line-through'
 													: 'font-medium wrap-anywhere'
 											}
@@ -653,19 +797,16 @@ function WasteLog({
 												{entry.note}
 											</span>
 										) : null}
+										{corrections(entry)}
 									</div>
 								</TableCell>
 								<TableCell className="tabular-nums">
-									<bdi dir="ltr">{quantityText(entry)}</bdi>
+									<bdi dir="ltr">{amount(entry)}</bdi>
 								</TableCell>
 								<TableCell>
 									<div className="flex items-center gap-2">
 										{i18n._(WASTE_REASON_LABELS[entry.reason])}
-										{entry.undoneAt !== null ? (
-											<Badge variant="secondary">
-												<Trans>Undone</Trans>
-											</Badge>
-										) : null}
+										{statusBadge(entry)}
 									</div>
 								</TableCell>
 								<TableCell className="text-muted-foreground wrap-anywhere">
@@ -673,21 +814,16 @@ function WasteLog({
 								</TableCell>
 								{showCost ? (
 									<TableCell className="text-end tabular-nums">
-										{entry.valueMinor === undefined ? (
+										{costOf(entry) ?? (
 											<span className="text-muted-foreground">—</span>
-										) : (
-											<bdi dir="ltr">
-												{formatMoney(
-													entry.valueMinor,
-													entry.currency ?? currency,
-													i18n.locale,
-												)}
-											</bdi>
 										)}
 									</TableCell>
 								) : null}
 								<TableCell className="text-end">
-									{undoButton(entry, 'waste-undo')}
+									<div className="flex justify-end">
+										{correctButton(entry, 'waste-correct')}
+										{undoButton(entry, 'waste-undo')}
+									</div>
 								</TableCell>
 							</TableRow>
 						))}
@@ -706,29 +842,20 @@ function WasteLog({
 								{when(entry)}
 								{who(entry) ? ` · ${who(entry)}` : ''}
 							</ItemDescription>
-							{entry.undoneAt !== null ? (
-								<Badge variant="secondary" className="self-start">
-									<Trans>Undone</Trans>
-								</Badge>
-							) : null}
+							{statusBadge(entry)}
+							{corrections(entry)}
 						</ItemContent>
 						<ItemActions>
 							<div className="flex flex-col items-end gap-1">
 								<bdi dir="ltr" className="text-sm tabular-nums">
-									{quantityText(entry)}
+									{amount(entry)}
 								</bdi>
-								{showCost && entry.valueMinor !== undefined ? (
-									<bdi
-										dir="ltr"
-										className="text-muted-foreground text-xs tabular-nums"
-									>
-										{formatMoney(
-											entry.valueMinor,
-											entry.currency ?? currency,
-											i18n.locale,
-										)}
-									</bdi>
+								{showCost && costOf(entry) ? (
+									<span className="text-muted-foreground text-xs tabular-nums">
+										{costOf(entry)}
+									</span>
 								) : null}
+								{correctButton(entry, 'waste-correct-card')}
 								{undoButton(entry, 'waste-undo-card')}
 							</div>
 						</ItemActions>

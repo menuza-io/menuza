@@ -37,6 +37,7 @@ export function ItemPicker({
 	placeholder,
 	disabled = false,
 	testId,
+	excludeIds,
 }: {
 	id?: string
 	label: ReactNode
@@ -49,6 +50,8 @@ export function ItemPicker({
 	placeholder: string
 	disabled?: boolean
 	testId?: string
+	/** Items left out of the list (what a place does not offer to branches, #526). */
+	excludeIds?: ReadonlySet<string>
 }) {
 	const { t, i18n } = useLingui()
 	const generated = useId()
@@ -161,27 +164,29 @@ export function ItemPicker({
 								</CommandEmpty>
 							)}
 							<CommandGroup>
-								{state.items.map((item) => (
-									<CommandItem
-										key={item.id}
-										value={item.id}
-										onSelect={() => {
-											onChange(item)
-											setOpen(false)
-											setQuery('')
-										}}
-										data-testid={
-											testId ? `${testId}-option-${item.id}` : undefined
-										}
-									>
-										<span className="flex min-w-0 flex-col">
-											<span className="truncate">{item.name}</span>
-											<span className="text-muted-foreground truncate text-xs">
-												{categoryLabel(item.category, i18n)}
+								{state.items
+									.filter((item) => !excludeIds?.has(item.id))
+									.map((item) => (
+										<CommandItem
+											key={item.id}
+											value={item.id}
+											onSelect={() => {
+												onChange(item)
+												setOpen(false)
+												setQuery('')
+											}}
+											data-testid={
+												testId ? `${testId}-option-${item.id}` : undefined
+											}
+										>
+											<span className="flex min-w-0 flex-col">
+												<span className="truncate">{item.name}</span>
+												<span className="text-muted-foreground truncate text-xs">
+													{categoryLabel(item.category, i18n)}
+												</span>
 											</span>
-										</span>
-									</CommandItem>
-								))}
+										</CommandItem>
+									))}
 							</CommandGroup>
 						</CommandList>
 					</Command>

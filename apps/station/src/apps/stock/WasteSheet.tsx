@@ -10,6 +10,11 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BigStepper } from './BigStepper.tsx'
+import {
+	DishWasteBody,
+	pickableDishes,
+	type PickableDish,
+} from './DishWaste.tsx'
 import { recentWaste } from './local.ts'
 import { categoryText, WASTE_REASON_LABELS } from './messages.ts'
 import {
@@ -23,13 +28,16 @@ import {
 	unitTakesFractions,
 } from './model.ts'
 import {
+	logDishWaste,
 	logWaste,
 	newClientId,
 	StockQueueFullError,
+	undoDishWaste,
 	undoWaste,
 } from './queue.ts'
 import { StockNotices } from './StockNotices.tsx'
 import { type StockState } from './useStock.ts'
+import { usePos } from '~/lib/store.ts'
 import { useNow } from '~/ui/hooks.ts'
 import {
 	Button,
@@ -51,6 +59,8 @@ type Logged = {
 	reason: WasteReason
 	at: number
 	state: 'logged' | 'undone' | 'too_late'
+	/** A whole dish (#517): `amount` is how many dishes. */
+	dish?: boolean
 }
 
 /** Waste is sent a few seconds after it is logged, so a slip undone at once never leaves the tablet. */
@@ -84,6 +94,18 @@ export function WasteSheet({
 	const [note, setNote] = useState('')
 	const [problem, setProblem] = useState<string | null>(null)
 	const [logged, setLogged] = useState<Logged[]>([])
+	// Dishes next to stock items (#517): needs the recipes flag.
+	const [mode, setMode] = useState<'items' | 'dishes'>('items')
+	const [dish, setDish] = useState<PickableDish | null>(null)
+	const [variantId, setVariantId] = useState<string | null>(null)
+	const [optionIds, setOptionIds] = useState<string[]>([])
+	const [dishQuantity, setDishQuantity] = useState<number | null>(1)
+	const shownItems = usePos((state) => state.shownItems)
+	const dishes = useMemo(
+		() => pickableDishes(shownItems.values()),
+		[shownItems],
+	)
+	const dishesOn = catalog?.settings.dishWasteEnabled === true
 	const [local, setLocal] = useState<string[]>([])
 	const now = useNow(logged.length > 0 ? 1_000 : 60_000)
 	const sendTimer = useRef<number | undefined>(undefined)
@@ -93,8 +115,8 @@ export function WasteSheet({
 	const saving = useRef(false)
 	const [busy, setBusy] = useState(false)
 	useEffect(() => {
-		if (itemId === null) draftId.current = newClientId()
-	}, [itemId])
+		if (itemId === null && dish === null) draftId.current = newClientId()
+	}, [itemId, dish])
 
 	useEffect(() => {
 		if (!open) return
@@ -117,6 +139,11 @@ export function WasteSheet({
 		setNote('')
 		setProblem(null)
 		setLogged([])
+		setMode('items')
+		setDish(null)
+		setVariantId(null)
+		setOptionIds([])
+		setDishQuantity(1)
 	}, [open])
 
 	const items = useMemo(
@@ -158,9 +185,78 @@ export function WasteSheet({
 			SEND_AFTER_MS,
 		)
 	}
-	const ready = Boolean(
+	const readyItem = Boolean(
 		item && unit && amount !== null && amount > 0 && reason && ctx,
 	)
+	const readyDish = Boolean(
+		mode === 'dishes' &&
+		dish &&
+		dishQuantity !== null &&
+		dishQuantity >= 1 &&
+		reason &&
+		ctx &&
+		(dish.variants.length === 0 || variantId !== null),
+	)
+	const ready = mode === 'dishes' ? readyDish : readyItem
+	const submitDish = async () => {
+		if (!dish || !ctx || !reason || dishQuantity === null || saving.current)
+			return
+		saving.current = true
+		setBusy(true)
+		try {
+			const clientId = await logDishWaste(
+				ctx,
+				{
+					menuItemId: dish.id,
+					...(variantId ? { variantId } : {}),
+					...(optionIds.length > 0
+						? { options: optionIds.map((optionId) => ({ optionId })) }
+						: {}),
+					quantity: dishQuantity,
+					reason,
+					...(note.trim() ? { note: note.trim() } : {}),
+				},
+				draftId.current,
+			)
+			setLogged((before) =>
+				before.some((entry) => entry.clientId === clientId)
+					? before
+					: [
+							{
+								clientId,
+								name: dish.name,
+								amount: dishQuantity,
+								unit: 'piece',
+								units: [],
+								reason,
+								at: Date.now(),
+								state: 'logged',
+								dish: true,
+							},
+							...before,
+						],
+			)
+			setDish(null)
+			setVariantId(null)
+			setOptionIds([])
+			setDishQuantity(1)
+			setReason(null)
+			setNote('')
+			setProblem(null)
+			scheduleSend()
+		} catch (failure) {
+			setProblem(
+				failure instanceof StockQueueFullError
+					? _(
+							t`Too much is waiting to send from this tablet. Connect and let it send first.`,
+						)
+					: _(t`This could not be saved on the tablet.`),
+			)
+		} finally {
+			saving.current = false
+			setBusy(false)
+		}
+	}
 	const submit = async () => {
 		if (!item || !unit || amount === null || amount <= 0 || !reason || !ctx)
 			return
@@ -219,9 +315,11 @@ export function WasteSheet({
 	}
 	const undo = async (entry: Logged) => {
 		if (!ctx) return
-		const outcome = await undoWaste(ctx, entry.clientId).catch(
-			() => 'unknown' as const,
-		)
+		const outcome = await (
+			entry.dish
+				? undoDishWaste(ctx, entry.clientId)
+				: undoWaste(ctx, entry.clientId)
+		).catch(() => 'unknown' as const)
 		setLogged((before) =>
 			before.map((row) =>
 				row.clientId === entry.clientId
@@ -246,7 +344,7 @@ export function WasteSheet({
 					variant="primary"
 					size="lg"
 					disabled={!ready || busy}
-					onClick={() => void submit()}
+					onClick={() => void (mode === 'dishes' ? submitDish() : submit())}
 					className="sm:min-w-56"
 				>
 					<Icon name="trash-2" className="size-5" />
@@ -300,11 +398,19 @@ export function WasteSheet({
 										aria-hidden
 									/>
 									<span className="min-w-0 flex-1 break-words">
-										<span className="font-medium">{entry.name}</span>
-										{' · '}
-										<bdi dir="ltr" className="tnum">
-											{amountText} {unitText}
-										</bdi>
+										<span className="font-medium">
+											{entry.dish
+												? `${amountText} × ${entry.name}`
+												: entry.name}
+										</span>
+										{entry.dish ? null : (
+											<>
+												{' · '}
+												<bdi dir="ltr" className="tnum">
+													{amountText} {unitText}
+												</bdi>
+											</>
+										)}
 										{' · '}
 										{reasonText}
 										{entry.state === 'undone' ? (
@@ -345,6 +451,29 @@ export function WasteSheet({
 							</Trans>
 						)}
 					</p>
+				) : mode === 'dishes' && dishesOn ? (
+					<>
+						<WasteModeChips mode={mode} onMode={setMode} />
+						<DishWasteBody
+							dishes={dishes}
+							dish={dish}
+							onDish={setDish}
+							query={query}
+							onQuery={setQuery}
+							variantId={variantId}
+							onVariant={setVariantId}
+							optionIds={optionIds}
+							onOptions={setOptionIds}
+							quantity={dishQuantity}
+							onQuantity={setDishQuantity}
+							reasons={reasons}
+							reason={reason}
+							onReason={setReason}
+							note={note}
+							onNote={setNote}
+							problem={problem}
+						/>
+					</>
 				) : item && unit ? (
 					<div className="flex flex-col gap-5">
 						<div className="border-border bg-card flex items-start justify-between gap-3 rounded-(--station-panel-radius) border p-4">
@@ -424,6 +553,7 @@ export function WasteSheet({
 					</div>
 				) : (
 					<div className="flex flex-col gap-4">
+						{dishesOn ? <WasteModeChips mode={mode} onMode={setMode} /> : null}
 						<label className="flex flex-col gap-2">
 							<span className="text-base font-semibold">
 								<Trans>What was wasted?</Trans>
@@ -495,5 +625,42 @@ export function WasteSheet({
 				</p>
 			</div>
 		</Modal>
+	)
+}
+
+/** Stock items or dishes: the "Dishes" filter of the picker (#517). */
+function WasteModeChips({
+	mode,
+	onMode,
+}: {
+	mode: 'items' | 'dishes'
+	onMode: (mode: 'items' | 'dishes') => void
+}) {
+	const { _ } = useLingui()
+	return (
+		<div
+			className="flex flex-wrap gap-2"
+			role="group"
+			aria-label={_(t`What was wasted`)}
+		>
+			<Chip
+				size="lg"
+				look="outlined"
+				selected={mode === 'items'}
+				aria-pressed={mode === 'items'}
+				onClick={() => onMode('items')}
+			>
+				<Trans>Stock items</Trans>
+			</Chip>
+			<Chip
+				size="lg"
+				look="outlined"
+				selected={mode === 'dishes'}
+				aria-pressed={mode === 'dishes'}
+				onClick={() => onMode('dishes')}
+			>
+				<Trans>Dishes</Trans>
+			</Chip>
+		</div>
 	)
 }

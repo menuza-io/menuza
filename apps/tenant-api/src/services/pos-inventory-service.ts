@@ -13,6 +13,7 @@ import {
 import {
 	invOrders,
 	invSupplierProducts,
+	invTransferTerms,
 	invSuppliers,
 	invWaste,
 	staffMembers,
@@ -39,6 +40,7 @@ import {
 import { getReceivePrefill } from './inventory-orders-service.ts'
 import { listCountLists, listStorageAreas } from './inventory-places-service.ts'
 import { getInventorySettings } from './inventory-settings-service.ts'
+import { listStationTransfers } from './inventory-transfers-service.ts'
 
 /**
  * What the Station Stock app needs from the region that is not a plain call
@@ -102,6 +104,10 @@ export type CatalogInput = {
 	deviceId: string
 	/** The organization's `inventory.purchasing` flag. */
 	ordersEnabled: boolean
+	/** The organization's `inventory.transfers` flag (#515). */
+	transfersEnabled?: boolean
+	/** The organization's `inventory.recipes` flag (dishes as waste, #517). */
+	recipesEnabled?: boolean
 	anyStaffCanReceive: boolean
 	now: number
 }
@@ -299,6 +305,18 @@ export async function buildStationCatalog(
 			})),
 		}))
 
+	// Transfers (#515): the lists, what can be asked for, and what a sender
+	// does NOT offer (#526). Names, units and quantities only.
+	const transferParts = input.transfersEnabled
+		? await stationTransferParts(db, {
+				locationId,
+				region: input.region,
+				now: input.now,
+				stock,
+				unitSystem: settings.unitSystem,
+			})
+		: null
+
 	const body = {
 		contractVersion: INVENTORY_POS_CONTRACT_VERSION,
 		locationId,
@@ -307,6 +325,8 @@ export async function buildStationCatalog(
 			photoMaxBytes: STATION_PHOTO_MAX_BYTES,
 			ordersEnabled: input.ordersEnabled,
 			secondCountRequired: countControls.secondCountRequired,
+			...(input.transfersEnabled ? { transfersEnabled: true } : {}),
+			...(input.recipesEnabled ? { dishWasteEnabled: true } : {}),
 		},
 		items,
 		areas,
@@ -320,6 +340,7 @@ export async function buildStationCatalog(
 		suppliers: supplierList,
 		expectedDeliveries: expected,
 		dueCounts,
+		...(transferParts ?? {}),
 	}
 	return stationCatalogSchema.parse({
 		...body,
@@ -364,4 +385,72 @@ async function recentWasteItemIds(
 		if (recent.length >= STATION_RECENT_WASTE_ITEMS) break
 	}
 	return recent
+}
+
+const MAX_TRANSFER_ITEMS = 500
+
+/** The Station catalogue's transfer lists and the items a request may name. */
+async function stationTransferParts(
+	db: TenantDatabase,
+	input: {
+		locationId: string
+		region: 'us' | 'ksa'
+		now: number
+		stock: Awaited<ReturnType<typeof loadLocationStock>>
+		unitSystem: Parameters<typeof defaultCountUnit>[1]
+	},
+): Promise<
+	Pick<StationCatalog, 'transfers' | 'transferItems' | 'transferBlocked'>
+> {
+	const [transfers, blockedRows] = await Promise.all([
+		listStationTransfers(db, {
+			locationId: input.locationId,
+			region: input.region,
+			now: input.now,
+		}),
+		db
+			.select({
+				locationId: invTransferTerms.locationId,
+				itemId: invTransferTerms.itemId,
+			})
+			.from(invTransferTerms)
+			.where(eq(invTransferTerms.branchRequestable, false)),
+	])
+	const transferItems = input.stock
+		.filter((row) => !row.item.isDraft && row.item.archivedAt === null)
+		.sort(
+			(a, b) =>
+				a.item.name.toLowerCase().localeCompare(b.item.name.toLowerCase()) ||
+				(a.item.id < b.item.id ? -1 : 1),
+		)
+		.slice(0, MAX_TRANSFER_ITEMS)
+		.map((row) => ({
+			id: row.item.id,
+			name: row.item.name,
+			kind: row.item.kind,
+			baseUnit: row.item.baseUnit,
+			countUnit: row.place?.countUnit
+				? wireUnit(row.place.countUnit)
+				: defaultCountUnit(row.item.baseUnit, input.unitSystem),
+			units: row.units
+				.filter((unit) => unit.archivedAt === null)
+				.map(toItemUnit),
+		}))
+	const blocked = new Map<string, string[]>()
+	for (const row of blockedRows) {
+		if (row.locationId === input.locationId) continue
+		const list = blocked.get(row.locationId)
+		if (list) list.push(row.itemId)
+		else blocked.set(row.locationId, [row.itemId])
+	}
+	return {
+		transfers,
+		transferItems,
+		transferBlocked: [...blocked.entries()]
+			.sort(([a], [b]) => (a < b ? -1 : 1))
+			.map(([fromLocationId, itemIds]) => ({
+				fromLocationId,
+				itemIds: itemIds.sort(),
+			})),
+	}
 }

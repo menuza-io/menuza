@@ -82,11 +82,14 @@ describe('transferActions', () => {
 			send: true,
 			receive: false,
 			cancel: false,
+			// The asked place may change what it will send (#477).
+			edit: true,
 		})
 		expect(transferActions(base, 'branch')).toEqual({
 			send: false,
 			receive: false,
 			cancel: true,
+			edit: true,
 		})
 	})
 
@@ -100,11 +103,14 @@ describe('transferActions', () => {
 			send: true,
 			receive: false,
 			cancel: true,
+			edit: true,
 		})
+		// The receiving place cannot edit a transfer it did not make.
 		expect(transferActions(transfer, 'branch')).toEqual({
 			send: false,
 			receive: false,
 			cancel: false,
+			edit: false,
 		})
 	})
 
@@ -114,11 +120,13 @@ describe('transferActions', () => {
 			send: false,
 			receive: true,
 			cancel: false,
+			edit: false,
 		})
 		expect(transferActions(sent, 'kitchen')).toEqual({
 			send: false,
 			receive: false,
 			cancel: false,
+			edit: false,
 		})
 		for (const status of ['received', 'cancelled'] as const) {
 			for (const place of ['kitchen', 'branch']) {
@@ -126,6 +134,7 @@ describe('transferActions', () => {
 					send: false,
 					receive: false,
 					cancel: false,
+					edit: false,
 				})
 			}
 		}

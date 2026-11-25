@@ -963,6 +963,27 @@ home and the sync screen show what waits.
   office sees "Received at the tablet by Omar, check prices" and confirms prices
   in the App. A delivery made offline is flagged late by the region when it
   arrives after 48 hours.
+- **Dishes in Log waste (#517).** With `inventory.recipes` on, the waste sheet
+  has a **Dishes** filter next to stock items: search the menu's dishes (the
+  till's own cached menu), say how many, pick a size and extras and a reason. It
+  is queued as one `waste_dish` row and sent to
+  `POST /pos/inventory/waste/dish`; the region writes one grouped waste row per
+  ingredient by the recipe in force now ("2 x Chicken shawarma" in the App's
+  log) and Undo (`waste_dish_undo`) takes the whole group back, or removes the
+  row if it never left the tablet. A dish with no recipe is refused ("Add a
+  recipe first"). No cost is shown.
+- **Transfers (#515).** With `inventory.transfers` on, Stock has a **Transfers**
+  tile: what this location must send, what is on its way in, what it asked for,
+  and what finished in the last two days (a line received short shows as
+  **missing in transit**). The lists are the catalogue's `transfers`, so they
+  work offline. **Send** (tick lines, change amounts) and **Receive** (tick what
+  arrived) are queued as `transfer_send` / `transfer_receive` rows in their own
+  lane, with the `expectedVersion` the tablet read; if the App edited the
+  transfer since, the region answers 409 `stale_version`, the row is refused for
+  good with a plain sentence on the sync screen and the lists are read again. A
+  branch can **ask for stock** (`transfer_request`): items and amounts only, and
+  only items the asked place gives to branches (`transferBlocked`, #526). Same
+  till-manager rule as deliveries; **no price or value is shown or sent**.
 - **Kitchen** has a **Log waste** button on its header (on a terminal with
   Stock) that opens the same sheet and the same queue.
 

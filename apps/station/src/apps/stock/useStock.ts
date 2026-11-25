@@ -7,8 +7,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type StockApi } from './api.ts'
 import { isStale, refreshCatalog } from './catalog.ts'
 import { loadCachedCatalog, stockOrigin, type CachedCatalog } from './local.ts'
+import {
+	stockRows,
+	stockStats,
+	type StockContext,
+	type StockQueueStats,
+} from './queue.ts'
 import { reconcileCounts } from './reconcile.ts'
-import { stockStats, type StockContext, type StockQueueStats } from './queue.ts'
 import { useStockSync, type StockSyncState } from './runner.ts'
 import { stockApiFor, syncStock } from './sync.ts'
 import { clockSkewMs } from '~/lib/clock.ts'
@@ -95,6 +100,7 @@ export function useStock(
 	}, [origin, locationId])
 
 	const refreshing = useRef(false)
+	const refreshRef = useRef<() => Promise<void>>(async () => {})
 	// The latest refresh, so the first send can wait for the server's clock (learned from its answers) before stamping times.
 	const lastRefresh = useRef<Promise<void> | null>(null)
 	const refresh = useCallback(async () => {
@@ -120,6 +126,7 @@ export function useStock(
 		await run
 	}, [api, origin, locationId, reachable, hasSession])
 
+	refreshRef.current = refresh
 	useEffect(() => {
 		void refresh()
 		const timer = window.setInterval(() => {
@@ -150,8 +157,14 @@ export function useStock(
 			await syncStock(settings, sessionRef.current, online, { force }).catch(
 				() => null,
 			)
+			// A transfer the office changed since the tablet read it is refused as
+			// stale: read the lists again so the person sees the change (#515).
+			const stale = (await stockRows(origin).catch(() => [])).some(
+				(row) => row.status === 'failed' && row.failure === 'stale_version',
+			)
+			if (stale) void refreshRef.current()
 		},
-		[settings, online],
+		[settings, online, origin],
 	)
 	useEffect(() => {
 		void sync()

@@ -13,6 +13,7 @@ import {
 	inventoryNameSchema,
 	isoDateSchema,
 	positiveQuantitySchema,
+	typedAmountSchema,
 	unitRefSchema,
 } from './common.ts'
 import { itemBottleSchema } from '../bottles.ts'
@@ -35,7 +36,17 @@ import {
 	invoicePhotoUploadSchema,
 	receivePrefillLineSchema,
 } from './receiving.ts'
-import { undoWasteSchema, wasteEntryInputSchema } from './waste.ts'
+import {
+	transferLineInputSchema,
+	transferLineSchema,
+	transferSummarySchema,
+} from './transfers.ts'
+import {
+	logWasteDishSchema,
+	undoWasteSchema,
+	wasteDishOptionSchema,
+	wasteEntryInputSchema,
+} from './waste.ts'
 
 /**
  * Phase 2, the Station "Stock" app: the wire contract of `/pos/inventory/*`.
@@ -163,6 +174,14 @@ export const INVENTORY_POS_PATHS = {
 		`/pos/inventory/orders/${id}/receive-as-ordered`,
 	orderNotYet: (id: string) => `/pos/inventory/orders/${id}/not-yet`,
 	cashPurchase: '/pos/inventory/cash-purchase',
+	/** `POST`: a branch request (#515). */
+	transfers: '/pos/inventory/transfers',
+	transferSend: (id: string) => `/pos/inventory/transfers/${id}/send`,
+	transferReceive: (id: string) => `/pos/inventory/transfers/${id}/receive`,
+	/** `POST`: a whole dish as waste with a reason (#517, online or queued). */
+	dishWasteLog: '/pos/inventory/waste/dish',
+	/** `POST`: take a dish group back (#517). */
+	undoDishWaste: (id: string) => `/pos/inventory/waste/dishes/${id}/undo`,
 } as const
 
 // ── Error codes ─────────────────────────────────────────────────────────────
@@ -216,6 +235,18 @@ export const STATION_ERROR_HANDLING = {
 	recipe_empty: { status: 409, action: 'permanent' },
 	undo_expired: { status: 409, action: 'permanent' },
 	already_undone: { status: 409, action: 'permanent' },
+	/** Transfers (#515): another place or the App already sent, received or cancelled it. */
+	transfer_closed: { status: 409, action: 'permanent' },
+	/** A send or receive with nothing above zero. */
+	nothing_sent: { status: 400, action: 'permanent' },
+	over_received: { status: 400, action: 'permanent' },
+	/** A branch asked for an item the sending place does not offer (#526). */
+	item_not_requestable: { status: 409, action: 'permanent' },
+	currency_mismatch: { status: 409, action: 'permanent' },
+	limit_reached: { status: 409, action: 'permanent' },
+	/** A dish with no recipe cannot be logged as waste: add a recipe first (#517). */
+	recipe_missing: { status: 409, action: 'permanent' },
+	already_corrected: { status: 409, action: 'permanent' },
 	/** At request level; per-entry refusals come back in `refused` with 200. */
 	reason_not_allowed: { status: 400, action: 'permanent' },
 	unit_mismatch: { status: 400, action: 'permanent' },
@@ -445,6 +476,30 @@ export type StationExpectedDelivery = z.infer<
 	typeof stationExpectedDeliverySchema
 >
 
+/** A transfer line as the tablet sees it: quantities only. */
+export const stationTransferLineSchema = transferLineSchema.omit({
+	valueMinor: true,
+	unitPriceMicro: true,
+	priceSource: true,
+	onHandAtSender: true,
+})
+export type StationTransferLine = z.infer<typeof stationTransferLineSchema>
+
+export const stationTransferSchema = transferSummarySchema
+	.omit({ valueMinor: true, currency: true })
+	.extend({ lines: z.array(stationTransferLineSchema) })
+export type StationTransfer = z.infer<typeof stationTransferSchema>
+
+export const stationTransferItemSchema = stationItemSchema.pick({
+	id: true,
+	name: true,
+	kind: true,
+	baseUnit: true,
+	countUnit: true,
+	units: true,
+})
+export type StationTransferItem = z.infer<typeof stationTransferItemSchema>
+
 export const stationCatalogSchema = z.object({
 	contractVersion: z.number().int(),
 	/** Opaque; equals the ETag. Changes when anything below changes. */
@@ -460,6 +515,10 @@ export const stationCatalogSchema = z.object({
 		ordersEnabled: z.boolean(),
 		/** Key items need a second person's count at this location (#525). */
 		secondCountRequired: z.boolean().optional(),
+		/** `inventory.transfers` is on: the Transfers tile and its lists (#515). */
+		transfersEnabled: z.boolean().optional(),
+		/** `inventory.recipes` is on: dishes can be picked for waste (#517). */
+		dishWasteEnabled: z.boolean().optional(),
 	}),
 	items: z.array(stationItemSchema),
 	areas: z.array(stationAreaSchema),
@@ -479,6 +538,20 @@ export const stationCatalogSchema = z.object({
 	 * count or the close count appears at its time. Absent from older regions.
 	 */
 	dueCounts: z.array(countRunSchema).optional(),
+	/**
+	 * Open transfers and requests touching this location (#515), plus those
+	 * finished in the last two days: what it must send, what is on its way in,
+	 * what it asked for. Quantities only: no price, value or on-hand figure.
+	 */
+	transfers: z.array(stationTransferSchema).optional(),
+	/** Items that can be asked for from another place (names and units only). */
+	transferItems: z.array(stationTransferItemSchema).optional(),
+	/** Per sending place, the items a branch may NOT request (#526). Absent or empty: everything may be asked for. */
+	transferBlocked: z
+		.array(
+			z.object({ fromLocationId: z.string(), itemIds: z.array(z.string()) }),
+		)
+		.optional(),
 })
 export type StationCatalog = z.infer<typeof stationCatalogSchema>
 
@@ -619,6 +692,8 @@ export const stationDishWasteLineSchema = z
 		itemId: z.string().min(1).max(100),
 		variantId: z.string().min(1).max(100).nullable().optional(),
 		quantity: z.number().int().min(1).max(50),
+		/** Options chosen on the dish (#517); change the ingredients like a sale. */
+		options: z.array(wasteDishOptionSchema).max(30).optional(),
 	})
 	.strict()
 export const stationDishWasteSchema = z
@@ -811,6 +886,103 @@ export type StationCashPurchaseResult = z.infer<
 	typeof stationCashPurchaseResultSchema
 >
 
+// ── Transfers (#515) ────────────────────────────────────────────────────────
+
+/**
+ * Transfers on the Stock app. The list comes in the catalogue (`transfers`),
+ * so it works offline; the three actions go through the outbox like counts
+ * and waste, and each is idempotent by its `clientId`.
+ *
+ * Every transfer route needs `inventory.transfers` on (403 `inventory_disabled`
+ * otherwise) and a till manager, unless the location lets any staff receive:
+ * the same rule as deliveries (403 `receive_needs_manager`). Quantities only:
+ * no response carries a price or value.
+ *
+ * - `POST /transfers/:id/send` (this location is the sender) and
+ *   `.../receive` (this location is the receiver): `lines` are the amounts
+ *   really sent or that arrived (as the operator route: left out, the planned
+ *   or sent amounts; an item left out of `lines` counts as none). The send
+ *   fixes the transfer price in the region; the tablet never sees it.
+ *   `expectedVersion` is the version the tablet read: if the App edited the
+ *   transfer since, the answer is 409 `stale_version` and the row is refused
+ *   with a clear message so the person reads the transfer again.
+ * - `POST /transfers`: a branch asks `fromLocationId` for items and
+ *   quantities (no prices). An item the sender does not offer is refused
+ *   (409 `item_not_requestable`).
+ */
+/** An amount confirmed on one line (zero: none of it). */
+export const stationTransferAmountSchema = z
+	.object({
+		itemId: inventoryIdSchema,
+		amount: typedAmountSchema,
+		unit: unitRefSchema,
+	})
+	.strict()
+
+export const stationTransferActionSchema = z
+	.object({
+		clientId: clientIdSchema,
+		locationId: inventoryLocationIdSchema,
+		expectedVersion: z.number().int().min(1),
+		lines: z.array(stationTransferAmountSchema).max(100).optional(),
+		...madeShape,
+	})
+	.strict()
+
+export const stationTransferRequestBaseSchema = z
+	.object({
+		clientId: clientIdSchema,
+		locationId: inventoryLocationIdSchema,
+		fromLocationId: inventoryLocationIdSchema,
+		lines: z.array(transferLineInputSchema).min(1).max(100),
+		note: z.string().trim().max(500).optional(),
+		...madeShape,
+	})
+	.strict()
+export const stationTransferRequestSchema =
+	stationTransferRequestBaseSchema.refine(
+		(body) => body.fromLocationId !== body.locationId,
+		{
+			message: 'A request needs two different places',
+			path: ['fromLocationId'],
+		},
+	)
+
+export const stationTransferResultSchema = z.object({
+	id: z.string(),
+	number: z.number().int(),
+	status: z.enum(['requested', 'draft', 'sent', 'received', 'cancelled']),
+	version: z.number().int(),
+	/** Lines sent and not received (once received). */
+	missingLines: z.number().int(),
+	duplicate: z.boolean(),
+})
+export type StationTransferResult = z.infer<typeof stationTransferResultSchema>
+
+// ── A whole dish as waste (#517) ────────────────────────────────────────────
+
+/**
+ * `POST /pos/inventory/waste/dish`: one dish with a quantity, size and options
+ * and a pickable reason, written as grouped ingredient rows by the recipe in
+ * force now (`logWasteDishSchema` without `locationId` trust: it must be the
+ * terminal's). Needs `inventory.recipes`. A dish with no recipe and no typed
+ * cost is 409 `recipe_missing`. `madeAt` follows `clampMadeAt`; the row is
+ * attributed to the signed-in person.
+ */
+export const stationLogDishWasteSchema = logWasteDishSchema
+	.extend({ ...madeShape })
+	.strict()
+export const stationLogDishWasteResultSchema = z.object({
+	/** The group id. */
+	id: z.string(),
+	entries: z.number().int(),
+	basis: z.enum(['recipe', 'typed']),
+	duplicate: z.boolean(),
+})
+export type StationLogDishWasteResult = z.infer<
+	typeof stationLogDishWasteResultSchema
+>
+
 // ── The tablet's outbox (Dexie `stockQueue`, version 7) ─────────────────────
 
 export const STATION_OUTBOX_KINDS = [
@@ -821,6 +993,11 @@ export const STATION_OUTBOX_KINDS = [
 	'waste_undo',
 	'delivery',
 	'delivery_photo',
+	'waste_dish',
+	'waste_dish_undo',
+	'transfer_request',
+	'transfer_send',
+	'transfer_receive',
 ] as const
 export type StationOutboxKind = (typeof STATION_OUTBOX_KINDS)[number]
 
@@ -908,6 +1085,57 @@ export const stationOutboxItemSchema = z.discriminatedUnion('kind', [
 		kind: z.literal('delivery'),
 		payload: stationDeliverySchema
 			.omit({ clientId: true, locationId: true, madeBy: true, madeAt: true })
+			.strict(),
+	}),
+	z.object({
+		...outboxBase,
+		kind: z.literal('waste_dish'),
+		payload: z
+			.object({
+				dish: stationLogDishWasteSchema.omit({
+					clientId: true,
+					locationId: true,
+					madeBy: true,
+					madeAt: true,
+				}),
+			})
+			.strict(),
+	}),
+	z.object({
+		...outboxBase,
+		kind: z.literal('waste_dish_undo'),
+		payload: z.object({ waste: stationRefSchema }).strict(),
+	}),
+	z.object({
+		...outboxBase,
+		kind: z.literal('transfer_request'),
+		payload: stationTransferRequestBaseSchema.omit({
+			clientId: true,
+			locationId: true,
+			madeBy: true,
+			madeAt: true,
+		}),
+	}),
+	z.object({
+		...outboxBase,
+		kind: z.literal('transfer_send'),
+		payload: z
+			.object({
+				transferId: inventoryIdSchema,
+				expectedVersion: z.number().int().min(1),
+				lines: stationTransferActionSchema.shape.lines,
+			})
+			.strict(),
+	}),
+	z.object({
+		...outboxBase,
+		kind: z.literal('transfer_receive'),
+		payload: z
+			.object({
+				transferId: inventoryIdSchema,
+				expectedVersion: z.number().int().min(1),
+				lines: stationTransferActionSchema.shape.lines,
+			})
 			.strict(),
 	}),
 	z.object({

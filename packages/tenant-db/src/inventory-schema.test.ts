@@ -73,9 +73,12 @@ const INVENTORY_TABLES = [
 	'inv_supplier_products',
 	'inv_suppliers',
 	'inv_transfer_lines',
+	'inv_transfer_terms',
 	'inv_transfers',
 	'inv_unit_changes',
 	'inv_waste',
+	'inv_waste_corrections',
+	'inv_waste_dishes',
 ]
 
 const INVENTORY_TRIGGERS = [
@@ -127,6 +130,11 @@ const INVENTORY_TRIGGERS = [
 	'inv_transfers_forward_only',
 	'inv_unit_changes_closed_final',
 	'inv_unit_changes_no_delete',
+	'inv_waste_corrections_matches',
+	'inv_waste_corrections_no_delete',
+	'inv_waste_corrections_no_update',
+	'inv_waste_dishes_no_delete',
+	'inv_waste_dishes_no_update',
 	'inv_waste_no_delete',
 	'inv_waste_no_update',
 	'inv_waste_reversal_matches',
@@ -479,6 +487,103 @@ describe('inventory tenant schema (0033_inventory, 0034_inventory_orders, 0035_i
 				"INSERT INTO inv_waste (id, location_id, quantity, reason, actor_kind, client_id, business_date) VALUES ('w5', 'main', 1, 'expired', 'staff', 'c5', '2026-11-08')",
 			),
 			'chk_inv_waste_what',
+		)
+	})
+
+	it('keeps a waste correction append-only, matched to a real entry and its running quantity (0067)', async () => {
+		const { client } = await openMigratedDb()
+		await insertItem(client, 'i1')
+		await insertWaste(client, 'w1', 'i1', { quantity: 5_000 })
+		const correction = (
+			id: string,
+			wasteId: string,
+			previous: number,
+			next: number,
+		) =>
+			client.execute({
+				sql: `INSERT INTO inv_waste_corrections (id, client_id, waste_id, kind, previous_quantity, new_quantity, stock_effect, reason, actor_kind, business_date)
+					VALUES (?, ?, ?, ?, ?, ?, 'applied', 'Weighed again', 'operator', '2026-11-09')`,
+				args: [
+					id,
+					`cc_${id}`,
+					wasteId,
+					next === 0 ? 'reverse' : 'quantity',
+					previous,
+					next,
+				],
+			})
+		await correction('c1', 'w1', 5_000, 3_000)
+		// A correction starts from the entry's current figure, not from the first one.
+		await expectRejectsWith(
+			correction('c2', 'w1', 5_000, 1_000),
+			'correction does not match',
+		)
+		await correction('c3', 'w1', 3_000, 0)
+		// A reversed entry has nothing left to correct (and zero cannot be a previous figure).
+		await expectRejectsWith(
+			correction('c4', 'w1', 0, 1_000),
+			'chk_inv_waste_corrections_quantity',
+		)
+		// Only a real entry is corrected, never a reversing row.
+		await expectRejectsWith(
+			correction('c5', 'nope', 5_000, 1_000),
+			'correction does not match',
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_waste_corrections SET reason = 'x' WHERE id = 'c1'",
+			),
+			'append-only',
+		)
+		await expectRejectsWith(
+			client.execute("DELETE FROM inv_waste_corrections WHERE id = 'c1'"),
+			'append-only',
+		)
+		// The original entry is untouched by all of it.
+		const original = await client.execute(
+			"SELECT quantity FROM inv_waste WHERE id = 'w1'",
+		)
+		expect(Number(original.rows[0]!.quantity)).toBe(5_000)
+	})
+
+	it('keeps a dish group header append-only and freezes the price fixed at send (0067)', async () => {
+		const { client } = await openMigratedDb()
+		await client.execute(
+			"INSERT INTO inv_waste_dishes (id, client_id, location_id, menu_item_id, quantity, basis, reason, actor_kind, business_date) VALUES ('g1', 'cg1', 'main', 'dish_1', 2, 'recipe', 'dropped', 'operator', '2026-11-08')",
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_waste_dishes SET quantity = 3 WHERE id = 'g1'",
+			),
+			'append-only',
+		)
+		await expectRejectsWith(
+			client.execute("DELETE FROM inv_waste_dishes WHERE id = 'g1'"),
+			'append-only',
+		)
+		await insertItem(client, 'i1')
+		await client.execute(
+			"INSERT INTO inv_transfers (id, number, kind, status, from_location_id, to_location_id, client_id, created_by_kind) VALUES ('t1', 1, 'transfer', 'draft', 'central', 'branch', 'ct1', 'operator')",
+		)
+		await client.execute(
+			"INSERT INTO inv_transfer_lines (id, transfer_id, item_id, requested_quantity) VALUES ('l1', 't1', 'i1', 2000)",
+		)
+		// Setting the price is part of sending (the transfer is still a draft).
+		await client.execute(
+			"UPDATE inv_transfer_lines SET sent_quantity = 2000, price_micro = 500000, price_source = 'fixed' WHERE id = 'l1'",
+		)
+		await client.execute(
+			"UPDATE inv_transfers SET status = 'sent', sent_at = 1, version = 2 WHERE id = 't1'",
+		)
+		// Once sent it never changes, but what arrived can still be written.
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_transfer_lines SET price_micro = 900000 WHERE id = 'l1'",
+			),
+			'lines are frozen',
+		)
+		await client.execute(
+			"UPDATE inv_transfer_lines SET received_quantity = 1500 WHERE id = 'l1'",
 		)
 	})
 

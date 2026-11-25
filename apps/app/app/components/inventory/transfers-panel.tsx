@@ -19,8 +19,10 @@ import {
 import {
 	ConfirmTransferDialog,
 	CreateTransferDialog,
+	EditTransferDialog,
 	type TransferPlace,
 } from '#app/components/inventory/transfer-dialogs.tsx'
+import { TransferTermsDialog } from '#app/components/inventory/transfer-terms-dialog.tsx'
 import {
 	useInventoryClient,
 	useInventoryQuery,
@@ -73,6 +75,8 @@ export function TransfersPanel({
 		step: 'send' | 'receive'
 		transfer: TransferDetail
 	} | null>(null)
+	const [editing, setEditing] = useState<TransferDetail | null>(null)
+	const [pricing, setPricing] = useState(false)
 	const [busyId, setBusyId] = useState<string | null>(null)
 
 	const name = (id: string) =>
@@ -90,6 +94,21 @@ export function TransfersPanel({
 				await request(`/transfers/${encodeURIComponent(summary.id)}`),
 			)
 			setConfirm({ step, transfer })
+		} catch (caught) {
+			toast.error(i18n._(inventoryErrorMessage(caught)))
+		} finally {
+			setBusyId(null)
+		}
+	}
+
+	async function openEdit(summary: TransferSummary) {
+		setBusyId(summary.id)
+		try {
+			setEditing(
+				transferDetailSchema.parse(
+					await request(`/transfers/${encodeURIComponent(summary.id)}`),
+				),
+			)
 		} catch (caught) {
 			toast.error(i18n._(inventoryErrorMessage(caught)))
 		} finally {
@@ -173,7 +192,7 @@ export function TransfersPanel({
 					{rows.map((transfer) => {
 						const can = canEdit
 							? transferActions(transfer, locationId)
-							: { send: false, receive: false, cancel: false }
+							: { send: false, receive: false, cancel: false, edit: false }
 						const incoming = transfer.toLocationId === locationId
 						const other = name(
 							incoming ? transfer.fromLocationId : transfer.toLocationId,
@@ -232,6 +251,25 @@ export function TransfersPanel({
 									>
 										{i18n._(transferStatusLabel(transfer.status))}
 									</Badge>
+									{transfer.changedBySender ? (
+										<Badge
+											variant="warning"
+											data-testid={`transfer-changed-${transfer.id}`}
+										>
+											<Trans>Changed by {other}</Trans>
+										</Badge>
+									) : null}
+									{can.edit ? (
+										<Button
+											size="sm"
+											variant="outline"
+											disabled={busyId !== null}
+											onClick={() => void openEdit(transfer)}
+											data-testid={`transfer-edit-${transfer.id}`}
+										>
+											<Trans>Change items</Trans>
+										</Button>
+									) : null}
 									{can.send ? (
 										<Button
 											size="sm"
@@ -282,6 +320,23 @@ export function TransfersPanel({
 					onCreated={reload}
 				/>
 			) : null}
+			<EditTransferDialog
+				transfer={editing}
+				locationId={locationId}
+				open={editing !== null}
+				onOpenChange={(open) => {
+					if (!open) setEditing(null)
+				}}
+				onSaved={reload}
+			/>
+			<TransferTermsDialog
+				locationId={locationId}
+				places={places}
+				canSeeCost={canSeeCost}
+				currency={currency}
+				open={pricing}
+				onOpenChange={setPricing}
+			/>
 			<ConfirmTransferDialog
 				step={confirm?.step ?? 'send'}
 				transfer={confirm?.transfer ?? null}

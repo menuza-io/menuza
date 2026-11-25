@@ -1778,6 +1778,20 @@ left, sold-out alerts; tenant `0062_inventory_setup`):**
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.
 
+**Transfers, dish waste, corrections and use against recipes (#477, #515, #526,
+#517, #522, #509):**
+
+- Extends the one transfer record, the one waste log (append-only) and the one
+  ledger; tenant `0067_waste_transfers`, no control-plane migration. Details:
+  `docs/inventory.md` ("Transfers, waste and use against recipes").
+- Station Transfers go through the existing Stock outbox (own lane), quantities
+  only; the transfer price is fixed on a line when it is sent
+  (`inv_transfer_lines.price_micro`) and is what the receiver's `transfer_in`
+  movement is valued at. A waste correction never changes stock when an approved
+  count after the entry already covers its item
+  (`stockEffect: covered_by_count`). The variance report ties out to
+  `computeFoodCost` exactly. Station never shows a price or a money gap.
+
 **Count controls (key items, quick counts, schedules, second person, devices,
 late entries, bottles, phone; #490, #491, #525, #474, #470, #516):**
 

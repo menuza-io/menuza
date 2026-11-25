@@ -20,6 +20,8 @@ import {
 	stationDeliverySchema,
 	stationDishWasteResultSchema,
 	stationDishWasteSchema,
+	stationLogDishWasteResultSchema,
+	stationLogDishWasteSchema,
 	stationOrderNotYetResultSchema,
 	stationOrderNotYetSchema,
 	stationPhotoConfirmResultSchema,
@@ -30,6 +32,9 @@ import {
 	stationSendCountSchema,
 	stationStartCountResultSchema,
 	stationStartCountSchema,
+	stationTransferActionSchema,
+	stationTransferRequestSchema,
+	stationTransferResultSchema,
 	stationUndoWasteResultSchema,
 	stationWasteResultSchema,
 	stationWasteSchema,
@@ -136,6 +141,27 @@ export type StockApi = {
 		id: string,
 		body: Body<typeof undoWasteSchema>,
 	): Promise<z.infer<typeof stationUndoWasteResultSchema>>
+	/** A whole dish as waste from the picker (#517). */
+	wasteDish(
+		body: Body<typeof stationLogDishWasteSchema>,
+	): Promise<z.infer<typeof stationLogDishWasteResultSchema>>
+	/** Takes a whole dish group back (#517). */
+	undoDishWaste(
+		id: string,
+		body: Body<typeof undoWasteSchema>,
+	): Promise<z.infer<typeof stationUndoWasteResultSchema>>
+	/** Transfers (#515): send, receive and a branch request. No money either way. */
+	transferSend(
+		id: string,
+		body: Body<typeof stationTransferActionSchema>,
+	): Promise<z.infer<typeof stationTransferResultSchema>>
+	transferReceive(
+		id: string,
+		body: Body<typeof stationTransferActionSchema>,
+	): Promise<z.infer<typeof stationTransferResultSchema>>
+	transferRequest(
+		body: Body<typeof stationTransferRequestSchema>,
+	): Promise<z.infer<typeof stationTransferResultSchema>>
 	delivery(
 		body: Body<typeof stationDeliverySchema>,
 	): Promise<z.infer<typeof stationDeliveryResultSchema>>
@@ -358,6 +384,39 @@ export function createStockApi(
 				stationUndoWasteResultSchema,
 				{ schema: undoWasteSchema, body },
 			),
+		wasteDish: (body) =>
+			call(
+				'POST',
+				INVENTORY_POS_PATHS.dishWasteLog,
+				stationLogDishWasteResultSchema,
+				{ schema: stationLogDishWasteSchema, body },
+			),
+		undoDishWaste: (id, body) =>
+			call(
+				'POST',
+				INVENTORY_POS_PATHS.undoDishWaste(encodeURIComponent(id)),
+				stationUndoWasteResultSchema,
+				{ schema: undoWasteSchema, body },
+			),
+		transferSend: (id, body) =>
+			call(
+				'POST',
+				INVENTORY_POS_PATHS.transferSend(encodeURIComponent(id)),
+				stationTransferResultSchema,
+				{ schema: stationTransferActionSchema, body },
+			),
+		transferReceive: (id, body) =>
+			call(
+				'POST',
+				INVENTORY_POS_PATHS.transferReceive(encodeURIComponent(id)),
+				stationTransferResultSchema,
+				{ schema: stationTransferActionSchema, body },
+			),
+		transferRequest: (body) =>
+			call('POST', INVENTORY_POS_PATHS.transfers, stationTransferResultSchema, {
+				schema: stationTransferRequestSchema,
+				body,
+			}),
 		delivery: (body) =>
 			call(
 				'POST',

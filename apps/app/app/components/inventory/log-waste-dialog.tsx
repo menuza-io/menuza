@@ -29,6 +29,7 @@ import {
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
 import { ItemPicker } from '#app/components/inventory/item-picker.tsx'
+import { LogDishWasteForm } from '#app/components/inventory/log-dish-waste-form.tsx'
 import { showUndoToast } from '#app/components/undo-toast.ts'
 import { useInventoryClient } from '#app/hooks/use-inventory-client.ts'
 import {
@@ -61,6 +62,7 @@ export function LogWasteDialog({
 	onOpenChange,
 	orgSlug,
 	locationId,
+	dishesEnabled = false,
 	canSeeCost,
 	currency,
 	userName,
@@ -69,11 +71,15 @@ export function LogWasteDialog({
 	onOpenChange: (open: boolean) => void
 	orgSlug: string
 	locationId: string
+	/** Dishes can be picked next to stock items (the recipes flag, #517). */
+	dishesEnabled?: boolean
 	canSeeCost: boolean
 	currency: string
 	userName: string
 }) {
+	const { t } = useLingui()
 	const [submitting, setSubmitting] = useState(false)
+	const [mode, setMode] = useState<'items' | 'dishes'>('items')
 	return (
 		<Dialog
 			open={open}
@@ -96,17 +102,56 @@ export function LogWasteDialog({
 						</Trans>
 					</DialogDescription>
 				</DialogHeader>
+				{dishesEnabled ? (
+					<ToggleGroup
+						aria-label={t`What was wasted`}
+						variant="segmented"
+						value={[mode]}
+						disabled={submitting}
+						onValueChange={(next) => {
+							if (next[0]) setMode(next[0] as 'items' | 'dishes')
+						}}
+					>
+						<ToggleGroupItem
+							value="items"
+							className="h-11 md:h-7"
+							data-testid="log-waste-mode-items"
+						>
+							<Trans>Stock items</Trans>
+						</ToggleGroupItem>
+						<ToggleGroupItem
+							value="dishes"
+							className="h-11 md:h-7"
+							data-testid="log-waste-mode-dishes"
+						>
+							<Trans>Dishes</Trans>
+						</ToggleGroupItem>
+					</ToggleGroup>
+				) : null}
 				{/* The popup unmounts on close: a reopened dialog starts clean. */}
-				<LogWasteForm
-					orgSlug={orgSlug}
-					locationId={locationId}
-					canSeeCost={canSeeCost}
-					currency={currency}
-					userName={userName}
-					submitting={submitting}
-					onSubmittingChange={setSubmitting}
-					onClose={() => onOpenChange(false)}
-				/>
+				{mode === 'dishes' && dishesEnabled ? (
+					<LogDishWasteForm
+						orgSlug={orgSlug}
+						locationId={locationId}
+						canSeeCost={canSeeCost}
+						currency={currency}
+						userName={userName}
+						submitting={submitting}
+						onSubmittingChange={setSubmitting}
+						onClose={() => onOpenChange(false)}
+					/>
+				) : (
+					<LogWasteForm
+						orgSlug={orgSlug}
+						locationId={locationId}
+						canSeeCost={canSeeCost}
+						currency={currency}
+						userName={userName}
+						submitting={submitting}
+						onSubmittingChange={setSubmitting}
+						onClose={() => onOpenChange(false)}
+					/>
+				)}
 			</DialogContent>
 		</Dialog>
 	)

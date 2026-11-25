@@ -211,6 +211,46 @@ async function sendBatch(
 			await api.undoWaste(id, { clientId: head.id })
 			return [{ row: head, kind: 'done', resolved: null }]
 		}
+		case 'waste_dish': {
+			const result = await api.wasteDish({
+				...head.payload.dish,
+				clientId: head.id,
+				locationId: head.locationId,
+				...envelope(head),
+			})
+			return [{ row: head, kind: 'done', resolved: { id: result.id } }]
+		}
+		case 'waste_dish_undo': {
+			const id = countId(head)
+			if (!id) return [failed(head, 'dependency_failed')]
+			await api.undoDishWaste(id, { clientId: head.id })
+			return [{ row: head, kind: 'done', resolved: null }]
+		}
+		case 'transfer_send':
+		case 'transfer_receive': {
+			const body = {
+				clientId: head.id,
+				locationId: head.locationId,
+				expectedVersion: head.payload.expectedVersion,
+				...(head.payload.lines ? { lines: head.payload.lines } : {}),
+				...envelope(head),
+			}
+			if (head.kind === 'transfer_send') {
+				await api.transferSend(head.payload.transferId, body)
+			} else {
+				await api.transferReceive(head.payload.transferId, body)
+			}
+			return [{ row: head, kind: 'done', resolved: null }]
+		}
+		case 'transfer_request': {
+			await api.transferRequest({
+				...head.payload,
+				clientId: head.id,
+				locationId: head.locationId,
+				...envelope(head),
+			})
+			return [{ row: head, kind: 'done', resolved: null }]
+		}
 		case 'delivery': {
 			const result = await api.delivery({
 				...head.payload,
@@ -342,6 +382,8 @@ export async function flushStock(deps: FlushDeps): Promise<FlushResult> {
 					if (code === 'receive_needs_manager') {
 						skip.add('delivery')
 						skip.add('delivery_photo')
+						// Transfers follow the same till manager rule (#515).
+						for (const kind of LANE_KINDS.transfers) skip.add(kind)
 						await releaseRows(batch, code)
 						continue
 					}

@@ -45,6 +45,7 @@ import { inventoryErrorMessage } from '#app/utils/inventory/inventory-errors.ts'
 import {
 	inventoryCountPath,
 	inventoryCountReviewPath,
+	inventoryVariancePath,
 } from '#app/utils/inventory/nav.ts'
 import { type Route } from './+types/counts.ts'
 import { useInventoryLayoutData } from './_layout.tsx'
@@ -67,6 +68,7 @@ export default function InventoryCountsRoute() {
 		canSeeCost,
 		currency,
 		locations,
+		recipesEnabled,
 	} = useInventoryLayoutData()
 	const { search } = useLocation()
 	const navigate = useNavigate()
@@ -170,10 +172,27 @@ export default function InventoryCountsRoute() {
 		</Button>
 	) : null
 
+	// Use against recipes between two approved counts (#509): needs recipes.
+	const varianceButton = recipesEnabled ? (
+		<Button
+			variant="outline"
+			render={<Link to={`${inventoryVariancePath(orgSlug)}${linkSearch}`} />}
+			data-testid="counts-variance"
+		>
+			<Icon name="chef-hat" />
+			<Trans>Use vs recipes</Trans>
+		</Button>
+	) : null
+
 	return (
 		<div className="flex flex-col gap-6">
-			{startButton ? (
-				<InventoryHeaderActions>{startButton}</InventoryHeaderActions>
+			{startButton || varianceButton ? (
+				<InventoryHeaderActions>
+					<div className="flex flex-wrap items-center gap-2">
+						{varianceButton}
+						{startButton}
+					</div>
+				</InventoryHeaderActions>
 			) : null}
 
 			<WorkspacePanel title={<Trans>In progress</Trans>}>

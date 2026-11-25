@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StockApiError } from './api.ts'
 import { dropFinishedCounts, localCounts } from './local.ts'
 import {
+	logDishWaste,
+	queueTransferRequest,
+	queueTransferStep,
+	undoDishWaste,
 	retryFailed,
 	logWaste,
 	recordDelivery,
@@ -804,9 +808,8 @@ describe('counts the manager owns', () => {
 		expect(await dropFinishedCounts(ORIGIN)).toBe(1)
 		expect(await localCounts(ORIGIN)).toEqual([])
 		expect(await stockRows(ORIGIN)).toHaveLength(2)
-		expect(await db.stockCatalog.get(`mine:${ORIGIN}:${record.localId}`)).toBe(
-			undefined,
-		)
+		expect(await db.stockCatalog.get(`mine:${ORIGIN}:${record.localId}`)).toBeUndefined(
+			)
 	})
 
 	it('a finished count is not dropped while its screen is open', async () => {
@@ -839,5 +842,165 @@ describe('counts the manager owns', () => {
 		const late = fakeApi()
 		await flushStock(deps({ api: late }))
 		expect(late.calls.map((call) => call.name)).toEqual(['countEntries'])
+	})
+})
+
+describe('transfers and dishes on the outbox (#515, #517)', () => {
+	it('sends a receipt saved offline with its amounts and the version it read, once however often it is tapped', async () => {
+		const lines = [{ itemId: 'item_tomato', amount: 1.5, unit: 'kg' }]
+		const first = await queueTransferStep(ctx, 'receive', {
+			transferId: 'trf_1',
+			expectedVersion: 2,
+			lines,
+		})
+		// A second tap queues nothing more.
+		const second = await queueTransferStep(ctx, 'receive', {
+			transferId: 'trf_1',
+			expectedVersion: 2,
+			lines,
+		})
+		expect(second).toBe(first)
+		expect(await stockRows(ORIGIN)).toHaveLength(1)
+		const api = fakeApi()
+		const result = await flushStock(deps({ api }))
+		expect(result).toEqual({ sent: 1, paused: null })
+		expect(api.calls).toHaveLength(1)
+		expect(api.calls[0]).toMatchObject({ name: 'transferReceive' })
+		expect(api.calls[0]!.args[0]).toBe('trf_1')
+		expect(api.calls[0]!.args[1]).toMatchObject({
+			clientId: first,
+			locationId: 'main',
+			expectedVersion: 2,
+			lines,
+		})
+		// No price or value anywhere in what leaves the tablet.
+		expect(JSON.stringify(api.calls[0]!.args)).not.toMatch(
+			/price|cost|value|minor|micro/i,
+		)
+		expect(await stockRows(ORIGIN)).toEqual([])
+	})
+
+	it('refuses a send the app changed in between, for good, and says why; the rest still goes', async () => {
+		const id = await queueTransferStep(ctx, 'send', {
+			transferId: 'trf_2',
+			expectedVersion: 1,
+		})
+		await logWaste(ctx, {
+			itemId: 'a',
+			amount: 1,
+			unit: 'kg',
+			reason: 'spoiled',
+		})
+		const api = fakeApi({
+			async transferSend() {
+				throw new StockApiError('stale_version', 409)
+			},
+		})
+		const result = await flushStock(deps({ api }))
+		expect(result).toMatchObject({ sent: 1, paused: null })
+		const rows = await stockRows(ORIGIN)
+		expect(rows).toHaveLength(1)
+		expect(rows[0]).toMatchObject({
+			id,
+			kind: 'transfer_send',
+			status: 'failed',
+			failure: 'stale_version',
+		})
+	})
+
+	it('holds transfers for a till manager like deliveries, while counts and waste still go', async () => {
+		await queueTransferStep(ctx, 'send', {
+			transferId: 'trf_3',
+			expectedVersion: 1,
+		})
+		await queueTransferRequest(ctx, {
+			fromLocationId: 'central',
+			lines: [{ itemId: 'item_tomato', amount: 3, unit: 'kg' }],
+		})
+		await logWaste(ctx, {
+			itemId: 'a',
+			amount: 1,
+			unit: 'kg',
+			reason: 'spoiled',
+		})
+		const api = fakeApi({
+			async transferSend() {
+				throw new StockApiError('receive_needs_manager', 403)
+			},
+			async transferRequest() {
+				throw new StockApiError('receive_needs_manager', 403)
+			},
+		})
+		const result = await flushStock(deps({ api }))
+		expect(result).toEqual({ sent: 1, paused: null })
+		expect((await stockRows(ORIGIN)).map((row) => row.kind)).toEqual([
+			'transfer_send',
+			'transfer_request',
+		])
+		// The manager signs in.
+		const manager = fakeApi()
+		await flushStock(deps({ api: manager }))
+		expect(manager.calls.map((call) => call.name)).toEqual([
+			'transferSend',
+			'transferRequest',
+		])
+		expect(manager.calls[1]!.args[0]).toMatchObject({
+			fromLocationId: 'central',
+			locationId: 'main',
+		})
+		expect(await stockRows(ORIGIN)).toEqual([])
+	})
+
+	it('sends a whole dish as waste and takes the group back with the server id', async () => {
+		const id = await logDishWaste(ctx, {
+			menuItemId: 'dish_shawarma',
+			variantId: 'var_large',
+			options: [{ optionId: 'opt_cheese' }],
+			quantity: 2,
+			reason: 'dropped',
+		})
+		const api = fakeApi()
+		await flushStock(deps({ api }))
+		expect(api.calls[0]).toMatchObject({ name: 'wasteDish' })
+		expect(api.calls[0]!.args[0]).toMatchObject({
+			clientId: id,
+			menuItemId: 'dish_shawarma',
+			quantity: 2,
+			reason: 'dropped',
+		})
+		expect(await undoDishWaste(ctx, id)).toBe('queued')
+		const undo = fakeApi()
+		await flushStock(deps({ api: undo }))
+		expect(undo.calls[0]).toMatchObject({ name: 'undoDishWaste' })
+		expect(undo.calls[0]!.args[0]).toMatch(/^dsh_/)
+	})
+
+	it('removes a dish still waiting here instead of queueing an undo', async () => {
+		const id = await logDishWaste(ctx, {
+			menuItemId: 'dish_shawarma',
+			quantity: 1,
+			reason: 'spoiled',
+		})
+		expect(await undoDishWaste(ctx, id)).toBe('removed')
+		expect(await stockRows(ORIGIN)).toEqual([])
+	})
+
+	it('refuses a dish with no recipe for good and tells the person to ask for one', async () => {
+		const id = await logDishWaste(ctx, {
+			menuItemId: 'dish_nothing',
+			quantity: 1,
+			reason: 'spoiled',
+		})
+		const api = fakeApi({
+			async wasteDish() {
+				throw new StockApiError('recipe_missing', 409)
+			},
+		})
+		await flushStock(deps({ api }))
+		expect((await stockRows(ORIGIN))[0]).toMatchObject({
+			id,
+			status: 'failed',
+			failure: 'recipe_missing',
+		})
 	})
 })

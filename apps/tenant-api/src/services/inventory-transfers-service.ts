@@ -1,6 +1,9 @@
 import {
 	EDITABLE_TRANSFER_STATUSES,
 	inventoryValueMinor,
+	stationTransferSchema,
+	type StationTransfer,
+	type TransferPriceSource,
 	type CreateTransfer,
 	type ListTransfersResult,
 	type TransferDetail,
@@ -14,9 +17,10 @@ import {
 	invItems,
 	invMovements,
 	invTransferLines,
+	invTransferTerms,
 	invTransfers,
 } from '@repo/tenant-db'
-import { and, desc, eq, inArray, max, or } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, max, or } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import {
@@ -57,6 +61,98 @@ import { getInventorySettings } from './inventory-settings-service.ts'
 
 type TransferRow = typeof invTransfers.$inferSelect
 type LineRow = typeof invTransferLines.$inferSelect
+
+/**
+ * The open transfers of a location, plus those received or cancelled in the
+ * last two days, for the Station catalogue (#515): quantities only, no price,
+ * value or on-hand figure. What it must send, what is on the way in, and what
+ * it asked for. Built in bulk (a handful of queries, whatever the count).
+ */
+export async function listStationTransfers(
+	db: InventoryReader,
+	input: {
+		locationId: string
+		region: 'us' | 'ksa'
+		now: number
+		limit?: number
+	},
+): Promise<StationTransfer[]> {
+	const since = input.now - 2 * 24 * 60 * 60_000
+	const rows = await db
+		.select()
+		.from(invTransfers)
+		.where(
+			and(
+				or(
+					eq(invTransfers.toLocationId, input.locationId),
+					eq(invTransfers.fromLocationId, input.locationId),
+				),
+				or(
+					inArray(invTransfers.status, ['requested', 'draft', 'sent']),
+					gte(invTransfers.updatedAt, since),
+				),
+			),
+		)
+		.orderBy(desc(invTransfers.number))
+		.limit(input.limit ?? 60)
+	if (rows.length === 0) return []
+	const lines = await loadLines(
+		db,
+		rows.map((row) => row.id),
+	)
+	const itemIds = [
+		...new Set([...lines.values()].flat().map((line) => line.itemId)),
+	]
+	const [items, units, places, settings] = await Promise.all([
+		queryInChunks(itemIds, (chunk) =>
+			db.select().from(invItems).where(inArray(invItems.id, chunk)),
+		),
+		loadItemUnits(db, itemIds),
+		queryInChunks(itemIds, (chunk) =>
+			db
+				.select()
+				.from(invItemPlaces)
+				.where(
+					and(
+						eq(invItemPlaces.locationId, input.locationId),
+						inArray(invItemPlaces.itemId, chunk),
+					),
+				),
+		),
+		getInventorySettings(db, input.region),
+	])
+	const itemById = new Map(items.map((item) => [item.id, item]))
+	const placeOf = new Map(places.map((place) => [place.itemId, place]))
+	return rows.map((row) => {
+		const list = lines.get(row.id) ?? []
+		const summary = summaryOf(row, list, false)
+		return stationTransferSchema.parse({
+			...summary,
+			lines: list.map((line) => {
+				const item = itemById.get(line.itemId)
+				const baseUnit = item?.baseUnit ?? 'g'
+				const place = placeOf.get(line.itemId)
+				return {
+					itemId: line.itemId,
+					itemName: item?.name ?? '',
+					baseUnit,
+					countUnit: place?.countUnit
+						? wireUnit(place.countUnit)
+						: wireUnit(defaultCountUnit(baseUnit, settings.unitSystem)),
+					units: (units.get(line.itemId) ?? []).map(toItemUnit),
+					requestedQuantity: line.requestedQuantity,
+					sentQuantity: line.sentQuantity,
+					receivedQuantity: line.receivedQuantity,
+					missingQuantity:
+						row.status === 'received' && line.sentQuantity !== null
+							? Math.max(0, line.sentQuantity - (line.receivedQuantity ?? 0))
+							: null,
+					askedQuantity: line.askedQuantity ?? undefined,
+				}
+			}),
+		})
+	})
+}
 
 /** Whether the token may act at either end. */
 function allowedAt(
@@ -139,9 +235,102 @@ async function loadLines(
 	return byTransfer
 }
 
+/** What a line is charged per base unit: the price fixed at send (#526), else the cost it left at. */
+export function lineUnitValueMicro(
+	line: Pick<LineRow, 'priceMicro' | 'unitCostMicro'>,
+): number | null {
+	return line.priceMicro ?? line.unitCostMicro
+}
+
 function lineValue(line: LineRow, quantity: number | null): number | null {
-	if (quantity === null || line.unitCostMicro === null) return null
-	return inventoryValueMinor(quantity, line.unitCostMicro)
+	const micro = lineUnitValueMicro(line)
+	if (quantity === null || micro === null) return null
+	return inventoryValueMinor(quantity, micro)
+}
+
+/**
+ * A branch may only ask for what the sending place offers (#526). An item the
+ * sender switched off is 409 `item_not_requestable`; an item with no terms row
+ * is on offer. Items already on the record are left alone (a request made
+ * before the switch can still be sent).
+ */
+async function assertRequestable(
+	tx: InventoryTx,
+	fromLocationId: string,
+	itemIds: readonly string[],
+): Promise<void> {
+	if (itemIds.length === 0) return
+	const blocked = await queryInChunks([...new Set(itemIds)], (chunk) =>
+		tx
+			.select({ itemId: invTransferTerms.itemId })
+			.from(invTransferTerms)
+			.where(
+				and(
+					eq(invTransferTerms.locationId, fromLocationId),
+					eq(invTransferTerms.branchRequestable, false),
+					inArray(invTransferTerms.itemId, chunk),
+				),
+			),
+	)
+	if (blocked.length > 0) {
+		throw new InventoryError('item_not_requestable', 409, {
+			reason: 'item_not_requestable',
+		})
+	}
+}
+
+type TermsRow = typeof invTransferTerms.$inferSelect
+
+/**
+ * The transfer price to fix on a line being sent: the item's fixed price, or
+ * its cost plus the markup, in the sender's currency. None when the item has
+ * no price set or the price cannot be worked out (the receiver is then charged
+ * the cost, as before).
+ */
+export function transferPriceFor(
+	term: Pick<
+		TermsRow,
+		'priceMode' | 'fixedPriceMicro' | 'currency' | 'markupBp'
+	> | null,
+	input: {
+		averageMicro: number | null
+		itemCurrency: string | null
+		sendCurrency: string | null
+	},
+): {
+	micro: number
+	source: Exclude<TransferPriceSource, 'cost'>
+	currency: string | null
+} | null {
+	if (!term || term.priceMode === 'none') return null
+	if (term.priceMode === 'fixed') {
+		if (term.fixedPriceMicro === null) return null
+		if (
+			input.sendCurrency !== null &&
+			term.currency !== null &&
+			term.currency !== input.sendCurrency
+		) {
+			return null
+		}
+		return {
+			micro: term.fixedPriceMicro,
+			source: 'fixed',
+			currency: term.currency,
+		}
+	}
+	if (term.markupBp === null || input.averageMicro === null) return null
+	if (input.itemCurrency === null) return null
+	if (
+		input.sendCurrency !== null &&
+		input.sendCurrency !== input.itemCurrency
+	) {
+		return null
+	}
+	return {
+		micro: Math.round((input.averageMicro * (10_000 + term.markupBp)) / 10_000),
+		source: 'cost_plus',
+		currency: input.itemCurrency,
+	}
 }
 
 function summaryOf(
@@ -181,6 +370,11 @@ function summaryOf(
 		sentAt: row.sentAt,
 		receivedAt: row.receivedAt,
 		missingLines,
+		editedAt: row.editedAt,
+		changedBySender:
+			row.kind === 'request' &&
+			row.editedByLocationId !== null &&
+			row.editedByLocationId === row.fromLocationId,
 		version: row.version,
 	}
 	if (cost && priced) {
@@ -241,7 +435,14 @@ async function detailOf(
 					: null,
 			onHandAtSender: onHand.get(line.itemId) ?? 0,
 		}
-		if (caller.cost && value !== null) out.valueMinor = value
+		if (line.askedQuantity !== null) out.askedQuantity = line.askedQuantity
+		if (caller.cost) {
+			if (value !== null) out.valueMinor = value
+			if (line.priceMicro !== null) {
+				out.unitPriceMicro = line.priceMicro
+				if (line.priceSource) out.priceSource = line.priceSource
+			}
+		}
 		return out
 	})
 	return { ...summaryOf(row, lines, caller.cost), lines: detailLines }
@@ -407,6 +608,13 @@ export async function createTransfer(
 				.limit(101)
 			if (open.length > 100) throw new InventoryError('limit_reached', 409)
 			const lines = await linesToBase(tx, body.lines, ctx.now)
+			if (body.kind === 'request') {
+				await assertRequestable(
+					tx,
+					body.fromLocationId,
+					lines.map((line) => line.itemId),
+				)
+			}
 			const transferId = newId()
 			await tx.insert(invTransfers).values({
 				id: transferId,
@@ -447,6 +655,42 @@ export async function createTransfer(
 	return viewOf(caller, id)
 }
 
+/**
+ * Who is editing: the place that made the record, or (for a request) the place
+ * that was asked, which may change what it will send until it sends. A token
+ * that covers both ends names the place with `locationId`.
+ */
+function editingLocation(
+	caller: InventoryCaller,
+	row: Pick<TransferRow, 'kind' | 'fromLocationId' | 'toLocationId'>,
+	chosen: string | undefined,
+): string {
+	const creator = creatingLocation(row)
+	const candidates =
+		row.kind === 'request' ? [creator, row.fromLocationId] : [creator]
+	if (chosen !== undefined) {
+		if (!candidates.includes(chosen)) {
+			throw new InventoryError('location_forbidden', 403)
+		}
+		assertLocationAllowed(caller.locationIds, chosen)
+		return chosen
+	}
+	const covered = candidates.find(
+		(id) => caller.locationIds === null || caller.locationIds.includes(id),
+	)
+	if (covered === undefined) assertLocationAllowed(caller.locationIds, creator)
+	return covered ?? creator
+}
+
+/**
+ * Change the lines or note of a transfer that is still `requested` or a
+ * `draft` (#477): add, remove and change lines, versioned with
+ * `expectedVersion` (409 `stale_version`). Once sent it is closed (409
+ * `transfer_closed`, checked first so the answer says why). The place that made
+ * the record edits it; the place a request was made to may change the lines
+ * too, and the branch then sees the request as changed
+ * (`changedBySender`, and each changed line's `askedQuantity`).
+ */
 export async function patchTransfer(
 	caller: InventoryCaller,
 	input: {
@@ -454,26 +698,54 @@ export async function patchTransfer(
 		expectedVersion: number
 		lines?: readonly TransferLineInput[]
 		note?: string | null
+		locationId?: string
 	},
 ): Promise<TransferDetail> {
 	await withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
-		const { row } = await loadTransfer(tx, input.id, caller)
-		assertLocationAllowed(caller.locationIds, creatingLocation(row))
-		assertVersion(row.version, input.expectedVersion)
+		const { row, lines: current } = await loadTransfer(tx, input.id, caller)
+		const editor = editingLocation(caller, row, input.locationId)
 		if (!editable(row.status)) throw new InventoryError('transfer_closed', 409)
+		assertVersion(row.version, input.expectedVersion)
+		const byCreator = editor === creatingLocation(row)
+		if (!byCreator && input.note !== undefined) throw badRequest('note')
+		let lineCount = current.length
 		if (input.lines) {
 			const lines = await linesToBase(tx, input.lines, ctx.now)
+			if (row.kind === 'request') {
+				const onRecord = new Set(current.map((line) => line.itemId))
+				await assertRequestable(
+					tx,
+					row.fromLocationId,
+					lines
+						.filter((line) => !onRecord.has(line.itemId))
+						.map((line) => line.itemId),
+				)
+			}
+			const before = new Map(current.map((line) => [line.itemId, line]))
 			await tx
 				.delete(invTransferLines)
 				.where(eq(invTransferLines.transferId, row.id))
 			for (const [index, line] of lines.entries()) {
+				const old = before.get(line.itemId)
+				// The maker's own edit settles what was asked; the other place's edit
+				// remembers what the maker first asked for, line by line.
+				let asked: number | null = null
+				if (!byCreator) {
+					if (!old) asked = 0
+					else if (old.askedQuantity !== null) asked = old.askedQuantity
+					else if (old.requestedQuantity !== line.quantity) {
+						asked = old.requestedQuantity
+					}
+				}
 				await tx.insert(invTransferLines).values({
 					transferId: row.id,
 					itemId: line.itemId,
 					requestedQuantity: line.quantity,
+					askedQuantity: asked === line.quantity ? null : asked,
 					sortOrder: index,
 				})
 			}
+			lineCount = lines.length
 		}
 		await tx
 			.update(invTransfers)
@@ -481,10 +753,27 @@ export async function patchTransfer(
 				...(input.note !== undefined
 					? { note: input.note?.length ? input.note : null }
 					: {}),
+				...(input.lines
+					? { editedAt: ctx.now, editedByLocationId: editor }
+					: {}),
 				version: row.version + 1,
 				updatedAt: ctx.now,
 			})
 			.where(eq(invTransfers.id, row.id))
+		await recordInventoryAudit(tx, {
+			actorKind: caller.actor.kind,
+			actorId: caller.actor.id,
+			action: 'transfer.edit',
+			resourceType: 'transfer',
+			resourceId: row.id,
+			locationId: editor,
+			detail: {
+				lines: lineCount,
+				linesChanged: input.lines !== undefined,
+				bySender: !byCreator,
+			},
+			at: ctx.now,
+		})
 	})
 	return viewOf(caller, input.id)
 }
@@ -520,100 +809,137 @@ export async function sendTransfer(
 		id: string
 		expectedVersion: number
 		lines?: readonly TransferLineInput[]
+		/** A Station tablet's retry after a lost answer replays the first result. */
+		idempotency?: InventoryIdempotency
+		onReplay?: () => void
 	},
 ): Promise<TransferDetail> {
-	await withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
-		const { row, lines } = await loadTransfer(tx, input.id, caller)
-		assertLocationAllowed(caller.locationIds, row.fromLocationId)
-		assertVersion(row.version, input.expectedVersion)
-		if (!editable(row.status)) throw new InventoryError('transfer_closed', 409)
-		const sent = await confirmedQuantities(
-			tx,
-			lines,
-			input.lines,
-			(line) => line.requestedQuantity,
-			ctx.now,
-		)
-		if (![...sent.values()].some((quantity) => quantity > 0)) {
-			throw badRequest('nothing_sent')
-		}
-		await assertSameCurrency(tx, row.fromLocationId, row.toLocationId)
-		const costs = await loadItemCosts(tx)
-		const businessDate = await locationBusinessDate(
-			tx,
-			row.fromLocationId,
-			ctx.now,
-		)
-		const sendCurrency = await getLocationCurrency(tx, row.fromLocationId)
-		for (const line of lines) {
-			const quantity = sent.get(line.itemId) ?? 0
-			const average = costs.average.get(line.itemId) ?? null
-			const itemCurrency = costs.currencyByItem.get(line.itemId) ?? null
-			// Valued in the item's own currency, and only when that is the sending
-			// location's (never a mixed-currency figure).
-			const priced =
-				average !== null &&
-				itemCurrency !== null &&
-				(sendCurrency === null || sendCurrency === itemCurrency)
-			await tx
-				.update(invTransferLines)
-				.set({
-					sentQuantity: quantity,
-					unitCostMicro: priced ? average : null,
-					costCurrency: priced ? itemCurrency : null,
+	await withInventoryWrite(
+		{
+			orgId: caller.orgId,
+			idempotency: input.idempotency,
+			onReplay: input.onReplay,
+		},
+		async (tx, ctx) => {
+			const { row, lines } = await loadTransfer(tx, input.id, caller)
+			assertLocationAllowed(caller.locationIds, row.fromLocationId)
+			assertVersion(row.version, input.expectedVersion)
+			if (!editable(row.status))
+				throw new InventoryError('transfer_closed', 409)
+			const sent = await confirmedQuantities(
+				tx,
+				lines,
+				input.lines,
+				(line) => line.requestedQuantity,
+				ctx.now,
+			)
+			if (![...sent.values()].some((quantity) => quantity > 0)) {
+				throw badRequest('nothing_sent')
+			}
+			await assertSameCurrency(tx, row.fromLocationId, row.toLocationId)
+			const costs = await loadItemCosts(tx)
+			const businessDate = await locationBusinessDate(
+				tx,
+				row.fromLocationId,
+				ctx.now,
+			)
+			const sendCurrency = await getLocationCurrency(tx, row.fromLocationId)
+			// The price in force NOW is fixed on each line (#526): a later change of
+			// the item's terms never reaches a sent transfer.
+			const terms = new Map(
+				(
+					await queryInChunks(
+						lines.map((line) => line.itemId),
+						(chunk) =>
+							tx
+								.select()
+								.from(invTransferTerms)
+								.where(
+									and(
+										eq(invTransferTerms.locationId, row.fromLocationId),
+										inArray(invTransferTerms.itemId, chunk),
+									),
+								),
+					)
+				).map((term) => [term.itemId, term]),
+			)
+			for (const line of lines) {
+				const quantity = sent.get(line.itemId) ?? 0
+				const average = costs.average.get(line.itemId) ?? null
+				const itemCurrency = costs.currencyByItem.get(line.itemId) ?? null
+				// Valued in the item's own currency, and only when that is the sending
+				// location's (never a mixed-currency figure).
+				const priced =
+					average !== null &&
+					itemCurrency !== null &&
+					(sendCurrency === null || sendCurrency === itemCurrency)
+				const price = transferPriceFor(terms.get(line.itemId) ?? null, {
+					averageMicro: average,
+					itemCurrency,
+					sendCurrency,
 				})
-				.where(
-					and(
-						eq(invTransferLines.transferId, row.id),
-						eq(invTransferLines.itemId, line.itemId),
-					),
-				)
-			if (quantity <= 0) continue
-			const value = priced ? inventoryValueMinor(quantity, average) : null
-			await tx.insert(invMovements).values({
-				id: newId(),
-				locationId: row.fromLocationId,
-				itemId: line.itemId,
-				quantity: -quantity,
-				valueMinor: value === null ? null : -value,
-				currency: value === null ? null : itemCurrency,
-				kind: 'transfer_out',
-				sourceType: 'transfer',
-				sourceId: row.id,
-				eventKey: `transfer:${row.id}:out:${line.itemId}`,
-				businessDate,
+				await tx
+					.update(invTransferLines)
+					.set({
+						sentQuantity: quantity,
+						unitCostMicro: priced ? average : null,
+						costCurrency: priced ? itemCurrency : (price?.currency ?? null),
+						priceMicro: price?.micro ?? null,
+						priceSource: price?.source ?? (priced ? 'cost' : null),
+					})
+					.where(
+						and(
+							eq(invTransferLines.transferId, row.id),
+							eq(invTransferLines.itemId, line.itemId),
+						),
+					)
+				if (quantity <= 0) continue
+				const value = priced ? inventoryValueMinor(quantity, average) : null
+				await tx.insert(invMovements).values({
+					id: newId(),
+					locationId: row.fromLocationId,
+					itemId: line.itemId,
+					quantity: -quantity,
+					valueMinor: value === null ? null : -value,
+					currency: value === null ? null : itemCurrency,
+					kind: 'transfer_out',
+					sourceType: 'transfer',
+					sourceId: row.id,
+					eventKey: `transfer:${row.id}:out:${line.itemId}`,
+					businessDate,
+					actorKind: caller.actor.kind,
+					actorId: caller.actor.id,
+					createdAt: ctx.now,
+				})
+			}
+			await tx
+				.update(invTransfers)
+				.set({
+					status: 'sent',
+					sentAt: ctx.now,
+					sentByKind: caller.actor.kind,
+					sentById: caller.actor.id,
+					version: row.version + 1,
+					updatedAt: ctx.now,
+				})
+				.where(eq(invTransfers.id, row.id))
+			await recordInventoryAudit(tx, {
 				actorKind: caller.actor.kind,
 				actorId: caller.actor.id,
-				createdAt: ctx.now,
+				action: 'transfer.send',
+				resourceType: 'transfer',
+				resourceId: row.id,
+				locationId: row.fromLocationId,
+				detail: {
+					lines: lines.length,
+					short: lines.filter(
+						(line) => (sent.get(line.itemId) ?? 0) < line.requestedQuantity,
+					).length,
+				},
+				at: ctx.now,
 			})
-		}
-		await tx
-			.update(invTransfers)
-			.set({
-				status: 'sent',
-				sentAt: ctx.now,
-				sentByKind: caller.actor.kind,
-				sentById: caller.actor.id,
-				version: row.version + 1,
-				updatedAt: ctx.now,
-			})
-			.where(eq(invTransfers.id, row.id))
-		await recordInventoryAudit(tx, {
-			actorKind: caller.actor.kind,
-			actorId: caller.actor.id,
-			action: 'transfer.send',
-			resourceType: 'transfer',
-			resourceId: row.id,
-			locationId: row.fromLocationId,
-			detail: {
-				lines: lines.length,
-				short: lines.filter(
-					(line) => (sent.get(line.itemId) ?? 0) < line.requestedQuantity,
-				).length,
-			},
-			at: ctx.now,
-		})
-	})
+		},
+	)
 	return viewOf(caller, input.id)
 }
 
@@ -623,90 +949,102 @@ export async function receiveTransfer(
 		id: string
 		expectedVersion: number
 		lines?: readonly TransferLineInput[]
+		idempotency?: InventoryIdempotency
+		onReplay?: () => void
 	},
 ): Promise<TransferDetail> {
-	await withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
-		const { row, lines } = await loadTransfer(tx, input.id, caller)
-		assertLocationAllowed(caller.locationIds, row.toLocationId)
-		assertVersion(row.version, input.expectedVersion)
-		if (row.status !== 'sent') throw new InventoryError('transfer_closed', 409)
-		const received = await confirmedQuantities(
-			tx,
-			lines,
-			input.lines,
-			(line) => line.sentQuantity ?? 0,
-			ctx.now,
-		)
-		for (const line of lines) {
-			if ((received.get(line.itemId) ?? 0) > (line.sentQuantity ?? 0)) {
-				throw badRequest('over_received')
+	await withInventoryWrite(
+		{
+			orgId: caller.orgId,
+			idempotency: input.idempotency,
+			onReplay: input.onReplay,
+		},
+		async (tx, ctx) => {
+			const { row, lines } = await loadTransfer(tx, input.id, caller)
+			assertLocationAllowed(caller.locationIds, row.toLocationId)
+			assertVersion(row.version, input.expectedVersion)
+			if (row.status !== 'sent')
+				throw new InventoryError('transfer_closed', 409)
+			const received = await confirmedQuantities(
+				tx,
+				lines,
+				input.lines,
+				(line) => line.sentQuantity ?? 0,
+				ctx.now,
+			)
+			for (const line of lines) {
+				if ((received.get(line.itemId) ?? 0) > (line.sentQuantity ?? 0)) {
+					throw badRequest('over_received')
+				}
 			}
-		}
-		const businessDate = await locationBusinessDate(
-			tx,
-			row.toLocationId,
-			ctx.now,
-		)
-		for (const line of lines) {
-			const quantity = received.get(line.itemId) ?? 0
+			const businessDate = await locationBusinessDate(
+				tx,
+				row.toLocationId,
+				ctx.now,
+			)
+			for (const line of lines) {
+				const quantity = received.get(line.itemId) ?? 0
+				await tx
+					.update(invTransferLines)
+					.set({ receivedQuantity: quantity })
+					.where(
+						and(
+							eq(invTransferLines.transferId, row.id),
+							eq(invTransferLines.itemId, line.itemId),
+						),
+					)
+				if (quantity <= 0) continue
+				// What the receiver is charged: the transfer price fixed at send (#526),
+				// else what the stock cost when it left.
+				const unitMicro = lineUnitValueMicro(line)
+				const value =
+					unitMicro !== null ? inventoryValueMinor(quantity, unitMicro) : null
+				await tx.insert(invMovements).values({
+					id: newId(),
+					locationId: row.toLocationId,
+					itemId: line.itemId,
+					quantity,
+					valueMinor: value,
+					currency: value === null ? null : line.costCurrency,
+					kind: 'transfer_in',
+					sourceType: 'transfer',
+					sourceId: row.id,
+					eventKey: `transfer:${row.id}:in:${line.itemId}`,
+					businessDate,
+					actorKind: caller.actor.kind,
+					actorId: caller.actor.id,
+					createdAt: ctx.now,
+				})
+			}
 			await tx
-				.update(invTransferLines)
-				.set({ receivedQuantity: quantity })
-				.where(
-					and(
-						eq(invTransferLines.transferId, row.id),
-						eq(invTransferLines.itemId, line.itemId),
-					),
-				)
-			if (quantity <= 0) continue
-			const value =
-				line.unitCostMicro !== null
-					? inventoryValueMinor(quantity, line.unitCostMicro)
-					: null
-			await tx.insert(invMovements).values({
-				id: newId(),
-				locationId: row.toLocationId,
-				itemId: line.itemId,
-				quantity,
-				valueMinor: value,
-				currency: value === null ? null : line.costCurrency,
-				kind: 'transfer_in',
-				sourceType: 'transfer',
-				sourceId: row.id,
-				eventKey: `transfer:${row.id}:in:${line.itemId}`,
-				businessDate,
+				.update(invTransfers)
+				.set({
+					status: 'received',
+					receivedAt: ctx.now,
+					receivedByKind: caller.actor.kind,
+					receivedById: caller.actor.id,
+					version: row.version + 1,
+					updatedAt: ctx.now,
+				})
+				.where(eq(invTransfers.id, row.id))
+			await recordInventoryAudit(tx, {
 				actorKind: caller.actor.kind,
 				actorId: caller.actor.id,
-				createdAt: ctx.now,
+				action: 'transfer.receive',
+				resourceType: 'transfer',
+				resourceId: row.id,
+				locationId: row.toLocationId,
+				detail: {
+					lines: lines.length,
+					missing: lines.filter(
+						(line) =>
+							(received.get(line.itemId) ?? 0) < (line.sentQuantity ?? 0),
+					).length,
+				},
+				at: ctx.now,
 			})
-		}
-		await tx
-			.update(invTransfers)
-			.set({
-				status: 'received',
-				receivedAt: ctx.now,
-				receivedByKind: caller.actor.kind,
-				receivedById: caller.actor.id,
-				version: row.version + 1,
-				updatedAt: ctx.now,
-			})
-			.where(eq(invTransfers.id, row.id))
-		await recordInventoryAudit(tx, {
-			actorKind: caller.actor.kind,
-			actorId: caller.actor.id,
-			action: 'transfer.receive',
-			resourceType: 'transfer',
-			resourceId: row.id,
-			locationId: row.toLocationId,
-			detail: {
-				lines: lines.length,
-				missing: lines.filter(
-					(line) => (received.get(line.itemId) ?? 0) < (line.sentQuantity ?? 0),
-				).length,
-			},
-			at: ctx.now,
-		})
-	})
+		},
+	)
 	return viewOf(caller, input.id)
 }
 

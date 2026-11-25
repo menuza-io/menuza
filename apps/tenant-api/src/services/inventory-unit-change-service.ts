@@ -22,6 +22,7 @@ import {
 	invRecipeLines,
 	invRecipes,
 	invSaleUsage,
+	invTransferTerms,
 	invSupplierProducts,
 	invUnitChanges,
 } from '@repo/tenant-db'
@@ -77,6 +78,7 @@ type Plan = {
 	prepLevelRows: (typeof invPrepLevels.$inferSelect)[]
 	prepTaskRows: (typeof invPrepTasks.$inferSelect)[]
 	usageRows: (typeof invSaleUsage.$inferSelect)[]
+	termRows: (typeof invTransferTerms.$inferSelect)[]
 	recipes: {
 		row: typeof invRecipes.$inferSelect
 		lines: (typeof invRecipeLines.$inferSelect)[]
@@ -184,6 +186,7 @@ async function buildPlan(
 		prepLevelRows,
 		prepTaskRows,
 		usageRows,
+		termRows,
 	] = await Promise.all([
 		onHandByLocation(db, item.id),
 		db
@@ -208,6 +211,10 @@ async function buildPlan(
 				),
 			),
 		db.select().from(invSaleUsage).where(eq(invSaleUsage.itemId, item.id)),
+		db
+			.select()
+			.from(invTransferTerms)
+			.where(eq(invTransferTerms.itemId, item.id)),
 	])
 
 	let tooSmall = false
@@ -397,6 +404,9 @@ async function buildPlan(
 		check(row.onHandQuantity, convert(row.onHandQuantity))
 	}
 	for (const row of usageRows) check(row.quantity, convert(row.quantity))
+	for (const row of termRows) {
+		if (row.fixedPriceMicro !== null) convertCost(row.fixedPriceMicro)
+	}
 	view.tooSmall = tooSmall
 	// Rewriting recipes (new versions) needs the recipe grant.
 	view.needsRecipeGrant = recipes.length > 0 && !input.recipeGrant
@@ -413,6 +423,7 @@ async function buildPlan(
 		prepLevelRows,
 		prepTaskRows,
 		usageRows,
+		termRows,
 		recipes,
 	}
 }
@@ -614,6 +625,23 @@ export async function applyUnitChange(
 						eq(invSaleUsage.sourceId, row.sourceId),
 						eq(invSaleUsage.itemId, row.itemId),
 						eq(invSaleUsage.locationId, row.locationId),
+					),
+				)
+		}
+		// The transfer price per base unit follows the unit like a cost does (#526).
+		for (const term of plan.termRows) {
+			if (term.fixedPriceMicro === null) continue
+			await tx
+				.update(invTransferTerms)
+				.set({
+					fixedPriceMicro: convertCostMicro(term.fixedPriceMicro, factor),
+					version: term.version + 1,
+					updatedAt: ctx.now,
+				})
+				.where(
+					and(
+						eq(invTransferTerms.itemId, term.itemId),
+						eq(invTransferTerms.locationId, term.locationId),
 					),
 				)
 		}

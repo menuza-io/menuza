@@ -88,6 +88,7 @@ export function refOf(row: StockRow): StationRef | null {
 		case 'count_send':
 			return row.payload.count
 		case 'waste_undo':
+		case 'waste_dish_undo':
 			return row.payload.waste
 		case 'delivery_photo':
 			return row.payload.delivery
@@ -103,6 +104,8 @@ function withRef(row: StockRow, ref: StationRef): StockRow {
 		case 'count_send':
 			return { ...row, payload: { ...row.payload, count: ref } }
 		case 'waste_undo':
+			return { ...row, payload: { ...row.payload, waste: ref } }
+		case 'waste_dish_undo':
 			return { ...row, payload: { ...row.payload, waste: ref } }
 		case 'delivery_photo':
 			return { ...row, payload: { ...row.payload, delivery: ref } }
@@ -560,6 +563,122 @@ export async function undoWaste(
 	)
 }
 
+// ── A whole dish as waste (#517) ────────────────────────────────────────────
+
+export type DishWasteInput = Payload<'waste_dish'>['dish']
+
+/**
+ * Queues a whole dish as waste (the Dishes filter of the waste sheet). The
+ * `clientId` made before the tap keeps a double tap to one entry; the region
+ * writes one grouped waste row per ingredient and the group can be undone.
+ * Returns the `clientId`, for an undo.
+ */
+export async function logDishWaste(
+	ctx: StockContext,
+	input: DishWasteInput,
+	clientId?: string,
+): Promise<string> {
+	return db.transaction('rw', db.stockQueue, db.stockCatalog, async () => {
+		const id = clientId ?? newId()
+		if (clientId && (await db.stockQueue.get(clientId))) return id
+		await addRow(ctx, 'waste_dish', { dish: input }, id)
+		return id
+	})
+}
+
+/**
+ * Takes a dish back: still waiting here, it is just removed; sent, an undo of
+ * the whole group is queued naming it by `clientId` until the server's id is
+ * known. `unknown` means this tablet no longer knows the entry.
+ */
+export async function undoDishWaste(
+	ctx: StockContext,
+	dishClientId: string,
+): Promise<UndoOutcome> {
+	return db.transaction(
+		'rw',
+		db.stockQueue,
+		db.stockCatalog,
+		async (): Promise<UndoOutcome> => {
+			const row = await db.stockQueue.get(dishClientId)
+			if (row && row.kind === 'waste_dish' && row.origin === ctx.origin) {
+				if (
+					row.status === 'failed' ||
+					(row.status === 'queued' && row.attempts === 0)
+				) {
+					await db.stockQueue.delete(row.id)
+					return 'removed'
+				}
+				await addRow(ctx, 'waste_dish_undo', {
+					waste: { clientId: dishClientId },
+				})
+				return 'queued'
+			}
+			const settled = (
+				await db.stockCatalog.get(wasteKey(ctx.origin, dishClientId))
+			)?.value as { id: string } | undefined
+			if (!settled) return 'unknown'
+			await addRow(ctx, 'waste_dish_undo', { waste: { id: settled.id } })
+			return 'queued'
+		},
+	)
+}
+
+// ── Transfers (#515) ────────────────────────────────────────────────────────
+
+export type TransferRequestInput = Payload<'transfer_request'>
+export type TransferActionInput = Payload<'transfer_send'>
+
+/** Queues a branch request: items and amounts only, no prices. The `clientId` made before the tap keeps a double tap to one request. */
+export async function queueTransferRequest(
+	ctx: StockContext,
+	input: TransferRequestInput,
+	clientId?: string,
+): Promise<string> {
+	return db.transaction('rw', db.stockQueue, db.stockCatalog, async () => {
+		const id = clientId ?? newId()
+		if (clientId && (await db.stockQueue.get(clientId))) return id
+		await addRow(ctx, 'transfer_request', input, id)
+		return id
+	})
+}
+
+/**
+ * Queues the send (this place has the stock) or the receipt (this place gets
+ * it) of a transfer, with the version the tablet read: if the App changed it
+ * since, the region refuses with `stale_version` and the row waits, marked,
+ * for the person. One row per transfer and step: a second tap queues nothing.
+ */
+export async function queueTransferStep(
+	ctx: StockContext,
+	step: 'send' | 'receive',
+	input: TransferActionInput,
+	clientId?: string,
+): Promise<string> {
+	return db.transaction('rw', db.stockQueue, db.stockCatalog, async () => {
+		const id = clientId ?? newId()
+		if (clientId && (await db.stockQueue.get(clientId))) return id
+		const waiting = await db.stockQueue
+			.filter(
+				(row) =>
+					row.origin === ctx.origin &&
+					row.kind ===
+						(step === 'send' ? 'transfer_send' : 'transfer_receive') &&
+					row.payload.transferId === input.transferId &&
+					row.status !== 'failed',
+			)
+			.first()
+		if (waiting) return waiting.id
+		await addRow(
+			ctx,
+			step === 'send' ? 'transfer_send' : 'transfer_receive',
+			input,
+			id,
+		)
+		return id
+	})
+}
+
 // ── Deliveries ──────────────────────────────────────────────────────────────
 
 export type DeliveryInput = Payload<'delivery'>
@@ -685,12 +804,13 @@ export const MAX_WASTE_BATCH = 50
  * photo that cannot upload, or a delivery the region keeps answering 500 to,
  * must not stop a cook's counts and waste from going out.
  */
-export type Lane = 'counts' | 'waste' | 'delivery' | 'photo'
+export type Lane = 'counts' | 'waste' | 'delivery' | 'photo' | 'transfers'
 
 export const LANE_KINDS: Record<Lane, readonly StationOutboxKind[]> = {
 	counts: ['count_start', 'count_entry', 'count_send'],
-	waste: ['waste', 'waste_undo'],
+	waste: ['waste', 'waste_undo', 'waste_dish', 'waste_dish_undo'],
 	delivery: ['delivery'],
+	transfers: ['transfer_request', 'transfer_send', 'transfer_receive'],
 	photo: ['delivery_photo'],
 }
 
@@ -814,7 +934,7 @@ export async function completeRow(
 					if (!dependsOn(other, row.id)) continue
 					await db.stockQueue.put(withRef(other, { id: resolved.id }))
 				}
-				if (row.kind === 'waste')
+				if (row.kind === 'waste' || row.kind === 'waste_dish')
 					await writeKey(wasteKey(row.origin, row.id), {
 						id: resolved.id,
 						at: Date.now(),
@@ -918,6 +1038,14 @@ export async function deferRows(
 
 /** Failures a second try cannot help (the count closed, the entry is gone, the time to undo passed). */
 const NO_RETRY = new Set([
+	'transfer_closed',
+	'item_not_requestable',
+	'recipe_missing',
+	'already_corrected',
+	'nothing_sent',
+	'over_received',
+	'currency_mismatch',
+	'limit_reached',
 	'count_closed',
 	'wrong_location',
 	'not_found',

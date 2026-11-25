@@ -5,8 +5,12 @@ import {
 	INVENTORY_PERMISSIONS,
 	listTransfersQuerySchema,
 	patchTransferSchema,
+	putTransferTermsSchema,
 	receiveTransferSchema,
 	sendTransferSchema,
+	transferTermsQuerySchema,
+	transfersNotOfferedQuerySchema,
+	transfersOwedQuerySchema,
 } from '@repo/inventory'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono } from 'hono'
@@ -25,6 +29,12 @@ import {
 	respond,
 } from '../lib/inventory-route.ts'
 import { compareLocations } from '../services/inventory-compare-service.ts'
+import {
+	listNotOffered,
+	listTransferTerms,
+	putTransferTerms,
+	transfersOwed,
+} from '../services/inventory-transfer-terms-service.ts'
 import {
 	cancelTransfer,
 	createTransfer,
@@ -68,6 +78,95 @@ operatorInventoryTransfersRoutes.get('/compare', reads(), async (c) => {
 				caller: inventoryCaller(ctx),
 				locationIds: query.data.locationIds,
 				now: Date.now(),
+			}),
+		)
+	} catch (error) {
+		return inventoryErrorResponse(error)
+	}
+})
+
+// Transfer prices and what branches may request (#526), at the sending place.
+operatorInventoryTransfersRoutes.get('/transfer-terms', reads(), async (c) => {
+	try {
+		const ctx = getInventoryAuth(c)
+		const query = parseQuery(c, transferTermsQuerySchema)
+		if ('error' in query) return query.error
+		const location = requireInventoryLocation(ctx, query.data.locationId)
+		if (!location.ok) return location.response
+		return respond(
+			ctx,
+			await listTransferTerms(await getTenantDb(ctx.orgId), {
+				caller: inventoryCaller(ctx),
+				locationId: location.locationId,
+				onlySet: query.data.onlySet === 'true',
+				search: query.data.search,
+			}),
+		)
+	} catch (error) {
+		return inventoryErrorResponse(error)
+	}
+})
+
+operatorInventoryTransfersRoutes.put(
+	'/transfer-terms/:itemId',
+	writes(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const itemId = idParam(c, 'itemId')
+			const body = await parseBody(c, putTransferTermsSchema)
+			if ('error' in body) return body.error
+			const location = requireInventoryLocation(ctx, body.data.locationId)
+			if (!location.ok) return location.response
+			return respond(
+				ctx,
+				await putTransferTerms(inventoryCaller(ctx), {
+					itemId,
+					body: body.data,
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+// What a place does not offer to branches, as ids (a branch's request form, #526).
+operatorInventoryTransfersRoutes.get(
+	'/transfers/not-offered',
+	reads(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const query = parseQuery(c, transfersNotOfferedQuerySchema)
+			if ('error' in query) return query.error
+			return respond(
+				ctx,
+				await listNotOffered(await getTenantDb(ctx.orgId), {
+					fromLocationId: query.data.fromLocationId,
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+// What each branch owes the sending place for what it sent in a period (#526).
+operatorInventoryTransfersRoutes.get('/transfers/owed', reads(), async (c) => {
+	try {
+		const ctx = getInventoryAuth(c)
+		const query = parseQuery(c, transfersOwedQuerySchema)
+		if ('error' in query) return query.error
+		const location = requireInventoryLocation(ctx, query.data.locationId)
+		if (!location.ok) return location.response
+		return respond(
+			ctx,
+			await transfersOwed(await getTenantDb(ctx.orgId), {
+				caller: inventoryCaller(ctx),
+				locationId: location.locationId,
+				from: query.data.from,
+				to: query.data.to,
 			}),
 		)
 	} catch (error) {

@@ -55,6 +55,8 @@ export type InventoryLayoutContext = {
 	purchasingEnabled: boolean
 	/** The `inventory.transfers` flag: moving stock between places, branch requests, comparison. */
 	transfersEnabled: boolean
+	/** The `inventory.recipes` flag: dishes in the Log waste picker, use against recipes. */
+	recipesEnabled?: boolean
 	/**
 	 * Every place of the organization (names only), for the "other place" of a
 	 * transfer: a member may see fewer places than they can move stock to or from.
@@ -128,6 +130,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		currentUserId: access.userId,
 		purchasingEnabled: access.features.purchasing,
 		transfersEnabled: access.features.transfers,
+		recipesEnabled: access.features.recipes,
 		transferPlaces: access.features.transfers
 			? locationRows.map((loc) => ({
 					id: loc.id,
@@ -153,6 +156,7 @@ export default function InventoryLayout() {
 		currentUserId,
 		purchasingEnabled,
 		transfersEnabled,
+		recipesEnabled,
 		transferPlaces,
 		dataRegion,
 		currency,
@@ -187,6 +191,7 @@ export default function InventoryLayout() {
 		currentUserId,
 		purchasingEnabled,
 		transfersEnabled,
+		recipesEnabled,
 		transferPlaces,
 		dataRegion,
 		currency,
@@ -207,6 +212,7 @@ export default function InventoryLayout() {
 							selectedLocationId={activeLocationId}
 							onLocationChange={onLocationChange}
 							canLogWaste={canEdit}
+							dishesEnabled={recipesEnabled}
 							canSeeCost={canSeeCost}
 							currency={currency}
 							userName={userName}

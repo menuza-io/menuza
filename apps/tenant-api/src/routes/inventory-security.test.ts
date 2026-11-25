@@ -253,6 +253,17 @@ const ROUTE_GRANTS: Record<
 	'POST /transfers/:id/send': UPDATE,
 	'POST /transfers/:id/receive': UPDATE,
 	'POST /transfers/:id/cancel': UPDATE,
+	// Transfer prices, what branches may request, what each owes (#526).
+	'GET /transfer-terms': READ,
+	'PUT /transfer-terms/:itemId': UPDATE,
+	'GET /transfers/owed': READ,
+	'GET /transfers/not-offered': READ,
+	// A whole dish as waste (#517), a later correction (#522), use against recipes (#509).
+	'POST /waste/dishes': UPDATE,
+	'POST /waste/dishes/:id/undo': UPDATE,
+	'POST /waste/:id/correct': UPDATE,
+	'GET /variance': READ,
+	'GET /variance/movements': READ,
 	// Setup: used in, unit change, groups, merge, setup checks.
 	'GET /items/:id/used-in': READ,
 	'POST /items/:id/unit-change/preview': READ,
@@ -318,6 +329,10 @@ const TRANSFERS_FLAG_ROUTES = new Set([
 	'POST /transfers/:id/send',
 	'POST /transfers/:id/receive',
 	'POST /transfers/:id/cancel',
+	'GET /transfer-terms',
+	'PUT /transfer-terms/:itemId',
+	'GET /transfers/owed',
+	'GET /transfers/not-offered',
 ])
 
 /** Routes behind the `inventory.prep` flag (403 feature_disabled while it is off). */
@@ -346,6 +361,10 @@ const RECIPES_FLAG_ROUTES = new Set([
 	'POST /groups',
 	'PATCH /groups/:id',
 	'POST /groups/:id/dissolve',
+	'POST /waste/dishes',
+	'POST /waste/dishes/:id/undo',
+	'GET /variance',
+	'GET /variance/movements',
 ])
 
 function routeKey(route: { method: string; path: string }): string {
@@ -936,6 +955,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		product: '',
 		delivery: '',
 		waste: '',
+		wasteDish: '',
 		order: '',
 		draftOrder: '',
 		made: '',
@@ -1045,6 +1065,22 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				],
 			})
 		).accepted[0].id
+		// A whole dish thrown away at the other location, to undo and correct by id (#517, #522).
+		await seedCall('PUT', '/recipes', {
+			ownerKind: 'menu_item',
+			ownerId: 'dish_security',
+			expectedVersion: 0,
+			lines: [{ itemId: seed.item, amount: 10, unit: 'g' }],
+		})
+		seed.wasteDish = (
+			await seedCall('POST', '/waste/dishes', {
+				clientId: 'sec-wdish-seed1',
+				locationId: LOC_B,
+				menuItemId: 'dish_security',
+				quantity: 1,
+				reason: 'dropped',
+			})
+		).id
 		// A level the item is below, so the suggestion has a line (money included).
 		const level = await seedCall('PUT', '/levels/bulk', {
 			clientId: 'sec-levels-0001',
@@ -1429,6 +1465,32 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				body: { clientId: 'sec-undo-00001' },
 				byId: true,
 			}),
+			c('POST /waste/:id/correct', `/waste/${seed.waste}/correct`, {
+				body: {
+					clientId: 'sec-correct-0001',
+					kind: 'reverse',
+					reason: 'Security check',
+				},
+				byId: true,
+			}),
+			c('POST /waste/dishes', '/waste/dishes', {
+				body: {
+					clientId: 'sec-wdish-00001',
+					locationId: loc,
+					menuItemId: 'dish_security',
+					quantity: 1,
+					reason: 'dropped',
+				},
+			}),
+			c('POST /waste/dishes/:id/undo', `/waste/dishes/${seed.wasteDish}/undo`, {
+				body: { clientId: 'sec-wdundo-0001' },
+				byId: true,
+			}),
+			c('GET /variance', `/variance?${q}`),
+			c(
+				'GET /variance/movements',
+				`/variance/movements?${q}&itemId=${seed.item}`,
+			),
 			c('GET /suppliers', '/suppliers', { location: false }),
 			c('POST /suppliers', '/suppliers', {
 				body: {
@@ -1877,6 +1939,24 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				location: false,
 			}),
 			c('GET /transfers', `/transfers?${q}`),
+			c('GET /transfer-terms', `/transfer-terms?${q}`),
+			c('PUT /transfer-terms/:itemId', `/transfer-terms/${seed.item}`, {
+				body: {
+					locationId: loc,
+					expectedVersion: 0,
+					branchRequestable: false,
+				},
+				byId: true,
+			}),
+			c('GET /transfers/owed', `/transfers/owed?${q}&${range}`),
+			// Ids of what a place does not offer; no price, no stock: any location may be asked.
+			c(
+				'GET /transfers/not-offered',
+				`/transfers/not-offered?fromLocationId=${loc}`,
+				{
+					location: false,
+				},
+			),
 			c('POST /transfers', '/transfers', {
 				body: {
 					clientId: 'sec-transfer-0002',

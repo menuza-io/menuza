@@ -237,6 +237,47 @@ export function fakeApi(over: Partial<StockApi> = {}): Recorded {
 		async undoWaste(...args) {
 			return record('undoWaste', args, { id: `rev_${++serial}` })
 		},
+		async wasteDish(...args) {
+			return record('wasteDish', args, {
+				id: `dsh_${++serial}`,
+				entries: 2,
+				basis: 'recipe' as const,
+				duplicate: false,
+			})
+		},
+		async undoDishWaste(...args) {
+			return record('undoDishWaste', args, { id: `rev_${++serial}` })
+		},
+		async transferSend(...args) {
+			return record('transferSend', args, {
+				id: String(args[0]),
+				number: 1,
+				status: 'sent' as const,
+				version: 2,
+				missingLines: 0,
+				duplicate: false,
+			})
+		},
+		async transferReceive(...args) {
+			return record('transferReceive', args, {
+				id: String(args[0]),
+				number: 1,
+				status: 'received' as const,
+				version: 3,
+				missingLines: 1,
+				duplicate: false,
+			})
+		},
+		async transferRequest(...args) {
+			return record('transferRequest', args, {
+				id: `trq_${++serial}`,
+				number: serial,
+				status: 'requested' as const,
+				version: 1,
+				missingLines: 0,
+				duplicate: false,
+			})
+		},
 		async delivery(...args) {
 			const body = args[0] as { lines: unknown[] }
 			return record('delivery', args, {

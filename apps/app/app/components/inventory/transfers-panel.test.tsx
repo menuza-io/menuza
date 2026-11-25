@@ -70,6 +70,11 @@ const detail = (over: Partial<TransferDetail> = {}): TransferDetail => ({
 	...over,
 })
 
+let notOffered: string[] = []
+beforeEach(() => {
+	notOffered = []
+})
+
 function region(
 	rows: TransferSummary[],
 	extra: Partial<Record<string, () => unknown>> = {},
@@ -79,6 +84,9 @@ function region(
 		if (path.startsWith('/items?')) {
 			return { items: [stockItem()], total: 1, nextCursor: null }
 		}
+		if (path.startsWith('/transfers/not-offered')) {
+			return { itemIds: notOffered }
+		}
 		for (const [key, answer] of Object.entries(extra)) {
 			if (path === key) return answer?.()
 		}
@@ -87,6 +95,9 @@ function region(
 		if (path === '/transfers/tr1/send') return detail({ status: 'sent' })
 		if (path === '/transfers/tr1/receive') return detail({ status: 'received' })
 		if (path === '/transfers/tr1/cancel') return detail({ status: 'cancelled' })
+		if (path === '/transfers/tr1' && init?.method === 'PATCH') {
+			return detail({ version: 2 })
+		}
 		throw new Error(`unexpected request ${path}`)
 	})
 }
@@ -258,5 +269,121 @@ describe('TransfersPanel', () => {
 		})
 		draw(request)
 		expect(await screen.findByTestId('transfers-error')).toBeVisible()
+	})
+
+	it('changes the quantities of a planned transfer before it is sent, with the version it read', async () => {
+		const planned = summary({
+			kind: 'transfer',
+			status: 'draft',
+			fromLocationId: 'main',
+			toLocationId: 'kitchen',
+		})
+		const request = region([planned])
+		draw(request)
+		await userEvent.click(await screen.findByTestId('transfer-edit-tr1'))
+		const dialog = await screen.findByTestId('edit-transfer-dialog')
+		const amount = within(dialog).getByTestId('transfer-line-0-amount')
+		await userEvent.clear(amount)
+		await userEvent.type(amount, '3')
+		await userEvent.click(within(dialog).getByTestId('edit-transfer-submit'))
+		await waitFor(() =>
+			expect(
+				request.mock.calls.some(
+					([p, init]) => p === '/transfers/tr1' && init?.method === 'PATCH',
+				),
+			).toBe(true),
+		)
+		const index = request.mock.calls.findIndex(
+			([p, init]) => p === '/transfers/tr1' && init?.method === 'PATCH',
+		)
+		expect(sentJson(request, index)).toEqual({
+			expectedVersion: 1,
+			locationId: 'main',
+			lines: [{ itemId: 'itm_1', amount: 3, unit: 'kg' }],
+			note: null,
+		})
+	})
+
+	it('offers no edit once it is sent, and to a place that made nothing of it', async () => {
+		draw(
+			region([
+				summary({
+					kind: 'transfer',
+					status: 'sent',
+					fromLocationId: 'main',
+					toLocationId: 'kitchen',
+				}),
+				summary({
+					id: 'tr2',
+					number: 2,
+					kind: 'transfer',
+					status: 'draft',
+					fromLocationId: 'kitchen',
+					toLocationId: 'main',
+				}),
+			]),
+		)
+		await screen.findByTestId('transfer-tr1')
+		expect(screen.queryByTestId('transfer-edit-tr1')).toBeNull()
+		expect(screen.queryByTestId('transfer-edit-tr2')).toBeNull()
+	})
+
+	it('shows a request the sender changed as changed, with what it first asked for, and says when the version is stale', async () => {
+		const request = region([summary({ changedBySender: true })], {})
+		const original = request.getMockImplementation()!
+		request.mockImplementation(async (path, init) => {
+			if (path === '/transfers/tr1' && init?.method === 'PATCH') {
+				throw new OperatorRequestError('stale', 'stale_version', 409)
+			}
+			if (path === '/transfers/tr1' && !init?.method) {
+				return detail({
+					changedBySender: true,
+					lines: [
+						{
+							...detail().lines[0]!,
+							requestedQuantity: 2_000_000,
+							askedQuantity: 5_000_000,
+						},
+					],
+				})
+			}
+			return original(path, init)
+		})
+		draw(request)
+		const row = await screen.findByTestId('transfer-tr1')
+		expect(within(row).getByTestId('transfer-changed-tr1')).toHaveTextContent(
+			'Changed by Central kitchen',
+		)
+		await userEvent.click(within(row).getByTestId('transfer-edit-tr1'))
+		const dialog = await screen.findByTestId('edit-transfer-dialog')
+		expect(
+			within(dialog).getByTestId('transfer-line-0-hint'),
+		).toHaveTextContent('Asked for 5 kg.')
+		await userEvent.click(within(dialog).getByTestId('edit-transfer-submit'))
+		expect(
+			await within(dialog).findByTestId('edit-transfer-error'),
+		).toHaveTextContent('Someone changed this transfer')
+	})
+
+	it('leaves out of a request what the asked place does not offer to branches', async () => {
+		notOffered = ['itm_1']
+		const request = region([])
+		draw(request)
+		await userEvent.click(await screen.findByTestId('transfers-ask'))
+		const dialog = await screen.findByTestId('create-transfer-dialog')
+		await userEvent.click(within(dialog).getByTestId('transfer-place'))
+		await userEvent.click(
+			await screen.findByRole('option', { name: 'Central kitchen' }),
+		)
+		await waitFor(() =>
+			expect(
+				request.mock.calls.some(([p]) =>
+					p.startsWith('/transfers/not-offered'),
+				),
+			).toBe(true),
+		)
+		await userEvent.click(within(dialog).getByTestId('transfer-line-0-item'))
+		await screen.findByTestId('transfer-line-0-item')
+		expect(screen.queryByTestId('transfer-line-0-item-option-itm_1')).toBeNull()
 	})
 })

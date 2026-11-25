@@ -224,6 +224,39 @@ export function region(options: { online?: boolean } = {}) {
 					version: 2,
 				})
 			}
+			match = /^\/pos\/inventory\/transfers\/([^/]+)\/(send|receive)$/.exec(
+				path,
+			)
+			if (match)
+				return Response.json({
+					id: match[1],
+					number: 1,
+					status: match[2] === 'send' ? 'sent' : 'received',
+					version: body.expectedVersion + 1,
+					missingLines: 0,
+					duplicate: false,
+				})
+			if (path === '/pos/inventory/transfers' && method === 'POST')
+				return Response.json(
+					{
+						id: `trq_${++state.serial}`,
+						number: 9,
+						status: 'requested',
+						version: 1,
+						missingLines: 0,
+						duplicate: false,
+					},
+					{ status: 201 },
+				)
+			if (path === '/pos/inventory/waste/dish')
+				return Response.json({
+					id: `dsh_${++state.serial}`,
+					entries: 2,
+					basis: 'recipe',
+					duplicate: false,
+				})
+			if (/\/waste\/dishes\/[^/]+\/undo$/.test(path))
+				return Response.json({ id: 'rev_1' })
 			if (path === '/pos/inventory/waste/dishes')
 				return Response.json({
 					logged: body.lines.length,

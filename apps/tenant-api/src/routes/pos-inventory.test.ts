@@ -183,7 +183,11 @@ describe('/pos/inventory', () => {
 				photoMaxBytes: 5 * 1024 * 1024,
 				ordersEnabled: true,
 				secondCountRequired: false,
+				// Recipes are on in this suite: dishes can be picked for waste (#517).
+				dishWasteEnabled: true,
 			})
+			// Transfers are off here: no lists, no request items (#515).
+			expect(parsed.transfers).toBeUndefined()
 
 			// Items the location keeps, plus the one only the weekly list names.
 			expect(parsed.items.map((item) => item.name)).toEqual([

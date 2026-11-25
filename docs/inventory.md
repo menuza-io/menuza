@@ -285,6 +285,89 @@ sold-out alert also need `inventory.recipes`. Deploy tenant-api, then the App.
   that comes back before its alert went out cancels both. The App delivers them
   on the manager alert engine (see `docs/manager-alerts.md`).
 
+## Transfers, waste and use against recipes (#477, #515, #526, #517, #522, #509)
+
+One migration, tenant `0067_waste_transfers` (no control-plane migration, no new
+flag or permission). Everything extends what was there: the same transfer
+record, the same waste log, the same ledger and the same food-cost periods.
+
+- **Editing a planned transfer (#477).** `PATCH /transfers/:id` changes lines
+  and the note while a transfer is `requested` or `draft`, with
+  `expectedVersion` (409 `stale_version`); once sent it is 409 `transfer_closed`
+  (checked first). The place that made the record edits it; for a **request**
+  the asked place may change the lines too, and the branch then sees
+  `changedBySender` and, per changed line, `askedQuantity` (what it first asked
+  for; 0 = added). The maker's own edit settles it again. A token covering both
+  ends names the editing place with `locationId`.
+- **Station transfers (#515).** The catalogue carries `transfers` (open ones and
+  those finished in the last two days: what this place must send, what is on its
+  way in, what it asked for), `transferItems` and `transferBlocked`; quantities
+  only, never a price, value or on-hand figure (a test walks the schemas). Send,
+  receive and request go through the existing outbox (new row kinds
+  `transfer_send` / `transfer_receive` / `transfer_request`, their own lane) to
+  `POST /pos/inventory/transfers/:id/send|receive` and
+  `POST /pos/inventory/transfers`, each idempotent by `clientId`, behind
+  `inventory.transfers` and the same till-manager rule as deliveries. A send or
+  receipt carries the `expectedVersion` the tablet read: if the App changed the
+  transfer meanwhile the row is refused for good with `stale_version` and the
+  sync screen says so (the lists are read again). A line received short stays as
+  **missing in transit** (`missingQuantity`). Nothing leaves a place or arrives
+  at one without a person confirming Send or Receive.
+- **Transfer prices (#526).** Per item at the **sending** location,
+  `inv_transfer_terms`: a fixed price per unit or cost plus a percentage, and
+  `branchRequestable` (on unless switched off). The price in force is copied
+  onto each line when the transfer is **sent** (`price_micro`, `price_source`)
+  and never changes after. What a branch is charged is what its `transfer_in`
+  movement is valued at, so the existing food-cost period (`computeFoodCost`:
+  deliveries and transfers in, less transfers out) includes received transfers
+  at the transfer price; the sender's `transfer_out` leaves at cost.
+  `GET /transfers/owed` lists what each branch owes for what was sent in a
+  period. Prices need the cost grant; the switch alone needs only
+  `update:inventory:any`. A request for an item the sender does not offer is 409
+  `item_not_requestable`; `GET /transfers/not-offered` gives ids only for a
+  branch's form. A unit change converts the fixed price like a cost.
+- **A whole dish as waste (#517).** `POST /waste/dishes` (App, behind
+  `inventory.recipes`) and `POST /pos/inventory/waste/dish` (Station) expand the
+  dish with the recipe in force now, with its size and options, into one
+  `inv_waste` row (and `waste` movement) per ingredient, grouped under an
+  `inv_waste_dishes` header (`group_id`). The log reads "2 x Dish"; the region
+  stores ids only and the App/Station join names from the menu. A dish with only
+  a typed cost is logged at that cost; one with neither is 409 `recipe_missing`.
+  Undo (`POST .../waste/dishes/:id/undo`) reverses every row in one transaction.
+  Kitchen's "Log it as waste?" now writes the same groups.
+- **Later corrections (#522).** `POST /waste/:id/correct` (App only,
+  `update:inventory:any`) reverses an entry or changes its quantity (or a dish's
+  count) with a reason, at any age, without touching the original row:
+  `inv_waste_corrections` is append-only and the log shows both. Stock moves by
+  the difference with a `waste` movement (`source_type` `waste_correction`)
+  **unless an approved count after the entry already covers its item**: then
+  `stockEffect` is `covered_by_count`, stock is left alone and only the waste
+  figures change (the list says `countedSince` before the dialog asks anything).
+  The waste summary counts the corrected figure, a reversed entry not at all,
+  and a dish once. A corrected entry cannot be undone (409 `already_corrected`),
+  a reversed or undone one cannot be corrected again. Audited with ids and
+  counts only; the reason lives on the correction row.
+- **Use against recipes (#509).** `GET /variance` (behind `inventory.recipes`)
+  is a report between two approved **full** counts, per item: opening,
+  delivered, transfers, waste, closing, actual use (opening + purchases -
+  closing) and expected use (what sale and batch movements, i.e. the recipes,
+  used), and the gap = actual - expected = waste + adjustments + what the
+  closing count found. The totals are exactly the period's actual food cost
+  minus its expected food cost (the same instants and movements as
+  `computeFoodCost`). An item no recipe uses shows actual use only ("No
+  recipe"); its actual use stays in the totals. Sorted by money gap, with a
+  trend over the last 6 periods; `GET /variance/movements` lists what moved an
+  item in the period. Money columns need the cost grant. The screen is under
+  Counts ("Use vs recipes").
+
+Deploy order for this change: **tenant-api first** (migration `0067`), then App,
+then Station (Station sends nothing new to an older region: its new routes need
+this tenant-api). The Station inventory contract stays at version 2 (new
+catalogue fields and routes are optional/additive); `POS_CONTRACT_VERSION` is
+unchanged at 11.
+
+---
+
 ## Scheduled Jobs, Alarms & Data Retention
 
 - **Hourly fan-out (`apps/jobs-cron`)**: Calls `POST /api/inventory/tick` on

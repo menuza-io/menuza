@@ -470,6 +470,13 @@
 			"when": 1795560000000,
 			"tag": "0066_staff_controls",
 			"breakpoints": true
+		},
+		{
+			"idx": 67,
+			"version": "6",
+			"when": 1795573349057,
+			"tag": "0067_waste_transfers",
+			"breakpoints": true
 		}
 	]
 }
