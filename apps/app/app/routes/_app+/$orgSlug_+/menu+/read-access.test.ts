@@ -102,6 +102,9 @@ vi.mock('#app/utils/menu/auto-popular.server.ts', () => ({
 	}),
 	getMenuAutoPopularEnabled: vi.fn().mockResolvedValue(false),
 }))
+vi.mock('#app/utils/integrations/flags.server.ts', () => ({
+	isPosOwnershipEnabled: vi.fn().mockResolvedValue(false),
+}))
 vi.mock('#app/components/menu/category-form.tsx', () => ({
 	CategoryForm: () => null,
 }))
