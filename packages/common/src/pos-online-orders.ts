@@ -338,6 +338,11 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 	guestAllergy: z.boolean().optional(),
 	/** The order has alcohol: "Check ID" (#167). */
 	checkId: z.boolean().optional(),
+	/**
+	 * A cloud printer at the location prints this order's tickets (#117): the
+	 * tablet leaves automatic printing to it and sends a reprint to it.
+	 */
+	cloudPrinters: z.boolean().optional(),
 		discountCents: z.number().int(),
 		loyaltyDiscountCents: z.number().int(),
 		paidAt: z.number().int().nullable(),

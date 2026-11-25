@@ -393,11 +393,19 @@ export function useOrders(
 				setRevealing(false)
 			}
 		},
-		/** Records a reprint after the tablet printed the ticket. */
-		recordReprint: (ticket: 'guest' | 'kitchen') => {
+		/**
+		 * Records a reprint on the order. Answers true when a cloud printer at the
+		 * location took it (#117): the tablet then opens no print dialog of its own.
+		 */
+		recordReprint: async (ticket: 'guest' | 'kitchen'): Promise<boolean> => {
 			const id = selected
-			if (!id || !online) return
-			void api.command(id, { action: 'reprint', ticket }).catch(() => {})
+			if (!id || !online) return false
+			try {
+				const answer = await api.command(id, { action: 'reprint', ticket })
+				return answer.cloudPrinted === true
+			} catch {
+				return false
+			}
 		},
 	}
 }

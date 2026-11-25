@@ -49,7 +49,8 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { queryInChunks } from '../lib/chunked-in.ts'
-import { queueOrderPrint } from './print-service.ts'
+import { printingEnabled } from '../lib/print-switches.ts'
+import { locationHasPrinter, queueOrderPrint } from './print-service.ts'
 import { maskPhone } from '../lib/reservations-station.ts'
 import { createProviderRefundIntent } from './order-provider-refund-service.ts'
 import {
@@ -493,6 +494,9 @@ export async function onlineOrderDetail(
 			},
 			now,
 		)
+	const cloudPrinters =
+		(await printingEnabled(actor.orgId)) &&
+		(await locationHasPrinter(db, order.locationId))
 	const [opened, refunds, history] = await Promise.all([
 		firstOpened(db, [order.id]),
 		listOrderRefunds(actor.orgId, order.id),
@@ -571,6 +575,7 @@ export async function onlineOrderDetail(
 		largeOrder: order.largeOrder,
 		...(order.guestAllergy ? { guestAllergy: true } : {}),
 		...(order.hasAlcohol ? { checkId: true } : {}),
+		...(cloudPrinters ? { cloudPrinters: true } : {}),
 		discountCents: order.discountCents + order.deliveryDiscountCents,
 		loyaltyDiscountCents: order.loyaltyDiscountCents,
 		paidAt: ms(order.paidAt),

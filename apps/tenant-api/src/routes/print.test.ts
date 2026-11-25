@@ -12,6 +12,10 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	kdsLocationSettings,
+	posDevices,
+	posFiscalDocuments,
+	posOrders,
+	posPayments,
 	printDevices,
 	printJobs,
 	provisionTenantDb,
@@ -36,7 +40,9 @@ import {
 	queueOrderPrint,
 	revokePrinter,
 } from '../services/print-service.ts'
-import { printAcceptedOrder } from '../services/print-hooks.ts'
+import { printAcceptedOrder, printTillSale } from '../services/print-hooks.ts'
+import { hashPosSecret } from '../lib/pos-auth.ts'
+import { formatPosDeviceSecret } from '@repo/common/pos-orders'
 import { operatorPrintRoutes } from './operator-print.ts'
 import { publicOrderRoutes } from './orders.ts'
 import { printRoutes } from './print.ts'
@@ -972,6 +978,175 @@ describe('cloud printers (#117, #426)', () => {
 			expect(
 				(await app.request('/operator/pos/printers', { headers: { authorization: `Bearer ${other}` } })).status,
 			).toBe(401)
+		})
+	})
+
+	describe('Station sales (#117)', () => {
+		async function addTillSale(over: Partial<typeof posOrders.$inferInsert> = {}) {
+			const db = await getTenantDb(ORG)
+			const deviceId = crypto.randomUUID()
+			await db.insert(posDevices).values({
+				id: deviceId,
+				label: 'Till',
+				terminalCode: 'T1',
+				locationId: LOC,
+				secretHash: hashPosSecret(formatPosDeviceSecret(ORG, deviceId, 'x'.repeat(43))),
+				pairedBy: 'operator',
+			})
+			const id = crypto.randomUUID()
+			await db.insert(posOrders).values({
+				id,
+				deviceId,
+				number: 'T1-0042',
+				businessDate: '2026-11-18',
+				revision: 2,
+				status: 'paid',
+				orderType: 'dine_in',
+				tableLabel: '4',
+				guestName: 'Dana',
+				customerPhone: '+15559990000',
+				locationId: LOC,
+				currency: 'USD',
+				subtotalCents: 2000,
+				taxCents: 200,
+				totalCents: 2200,
+				taxRatePercent: 10,
+				staffName: 'Sam L.',
+				lines: [
+					{
+						id: 'l1',
+						itemId: 'mojito',
+						name: 'Mojito',
+						variantId: null,
+						variantLabel: null,
+						quantity: 2,
+						baseCents: 1000,
+						instructions: '',
+						options: [],
+						sentAt: new Date(1_800_000_000_000).toISOString(),
+					},
+				],
+				lineCatalog: {
+					mojito: { categoryId: 'c', categoryName: 'Bar', menuId: 'm', menuName: 'Main', alcohol: true },
+				},
+				adjustments: [],
+				rungUpAt: 1_800_000_000_000,
+				...over,
+			})
+			await db.insert(posPayments).values({
+				id: crypto.randomUUID(),
+				orderId: id,
+				deviceId,
+				kind: 'payment',
+				method: 'cash',
+				amountCents: 2200,
+				tenderedCents: 2500,
+				changeCents: 300,
+				paidAt: 1_800_000_000_000,
+			} as never)
+			return { id, deviceId }
+		}
+
+		it('prints a kitchen ticket when a round is sent and a receipt on payment, each once', async () => {
+			const printer = await addPrinter({ routes: { kitchen: 'all', receipts: true } })
+			const sale = await addTillSale()
+			printTillSale(ORG, {
+				id: sale.id,
+				locationId: LOC,
+				status: 'paid',
+				lines: [{ sentAt: new Date(1_800_000_000_000).toISOString() }],
+			})
+			const db = await getTenantDb(ORG)
+			for (let i = 0; i < 40 && (await db.select().from(printJobs)).length < 2; i++) {
+				await new Promise((r) => setTimeout(r, 50))
+			}
+			const jobs = await db.select().from(printJobs)
+			expect(jobs.map((j) => j.kind).sort()).toEqual(['kitchen', 'receipt'])
+			// The same upload again queues nothing more.
+			printTillSale(ORG, {
+				id: sale.id,
+				locationId: LOC,
+				status: 'paid',
+				lines: [{ sentAt: new Date(1_800_000_000_000).toISOString() }],
+			})
+			await new Promise((r) => setTimeout(r, 200))
+			expect(await db.select().from(printJobs)).toHaveLength(2)
+			const kitchen = JSON.stringify(jobs.find((j) => j.kind === 'kitchen')!.payload)
+			expect(kitchen).toContain('CHECK ID')
+			expect(kitchen).toContain('2x Mojito')
+			expect(kitchen).not.toMatch(/5559990000/)
+			void printer
+		})
+
+		it('keeps the ZATCA code first and unchanged, the codes after it, and drops them on a 58 mm roll', async () => {
+			activeContext = context()
+			const location = (activeContext as { menu: { locations: Array<Record<string, unknown>> } }).menu.locations[0]!
+			location.vatNumber = '300000000000003'
+			clearPrintContextCache()
+			const wide = await addPrinter({ name: 'Wide', routes: { kitchen: 'off', receipts: true }, widthMm: 80 })
+			const narrow = await addPrinter({ name: 'Narrow', routes: { kitchen: 'off', receipts: true }, widthMm: 58 })
+			const sale = await addTillSale()
+			const db = await getTenantDb(ORG)
+			await db.insert(posFiscalDocuments).values({
+				docId: crypto.randomUUID(),
+				chainId: 'chain',
+				counter: 7,
+				kind: 'invoice',
+				orderId: sale.id,
+				deviceId: sale.deviceId,
+				issuedAt: 1_800_000_000_000,
+				currency: 'USD',
+				totalCents: 2200,
+				taxCents: 200,
+				previousHash: 'a',
+				hash: 'b',
+			})
+			await queueOrderPrint(db, {
+				orgId: ORG,
+				locationId: LOC,
+				source: 'pos',
+				orderId: sale.id,
+				trigger: { kind: 'receipt', dedupeKey: 'paid' },
+			})
+			const jobs = await db.select().from(printJobs)
+			const docOf = (deviceId: string) =>
+				jobs.find((j) => j.deviceId === deviceId)!.payload as {
+					blocks: Array<{ t: string; size?: string; data?: string; caption?: string }>
+				}
+			const wideQrs = docOf(wide.id).blocks.filter((b) => b.t === 'qr')
+			expect(wideQrs[0]).toMatchObject({ size: 'fiscal' })
+			expect(wideQrs.slice(1).map((b) => b.caption)).toEqual([
+				'Enjoyed it? Tell us',
+				'Order ahead next time',
+			])
+			// The fiscal code is the same on the narrow roll, with nothing after it.
+			const narrowQrs = docOf(narrow.id).blocks.filter((b) => b.t === 'qr')
+			expect(narrowQrs).toEqual([wideQrs[0]])
+			expect(docOf(wide.id).blocks.filter((b) => b.t === 'qr')[0]!.data).toBeTruthy()
+		})
+
+		it('reprints a till order for its own location only', async () => {
+			const printer = await addPrinter({ routes: { kitchen: 'all', receipts: true } })
+			const sale = await addTillSale()
+			const db = await getTenantDb(ORG)
+			const here = await queueOrderPrint(db, {
+				orgId: ORG,
+				locationId: LOC,
+				source: 'pos',
+				orderId: sale.id,
+				trigger: { kind: 'receipt', dedupeKey: 'reprint:aaaa1111', reprint: true },
+			})
+			expect(here.queued).toBe(1)
+			// The same order asked for at another location is not found: nothing prints.
+			const elsewhere = await queueOrderPrint(db, {
+				orgId: ORG,
+				locationId: LOC_B,
+				source: 'pos',
+				orderId: sale.id,
+				trigger: { kind: 'receipt', dedupeKey: 'reprint:bbbb2222', reprint: true },
+			})
+			expect(elsewhere.queued).toBe(0)
+			void printer
 		})
 	})
 })

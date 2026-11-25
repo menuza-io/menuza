@@ -23,6 +23,7 @@ import {
 	posManagers,
 	posOnlineOrderEvents,
 	posOrders,
+	printJobs,
 	provisionTenantDb,
 	restaurantOrderRefunds,
 	restaurantOrders,
@@ -35,6 +36,8 @@ import {
 	setOrderRefundKickForTest,
 } from '../lib/order-refund-kick.ts'
 import { hashPosSecret } from '../lib/pos-auth.ts'
+import { seedPrintingFlagForTest } from '../lib/print-switches.ts'
+import { createPrinter } from '../services/print-service.ts'
 import { loadOrderSteps } from '../services/order-steps.ts'
 import { mintPosStaffSession } from '../lib/pos-staff-session.ts'
 import { reconcileLoyaltySource } from '../services/loyalty-purchase-service.ts'
@@ -1243,6 +1246,39 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			action: 'reprinted',
 			reason: 'kitchen',
 		})
+	})
+
+	it('sends a reprint to a cloud printer at the location, and tells the tablet not to print itself (#117)', async () => {
+		// The order context is not reachable here: nothing may leave the process.
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response('no', { status: 404 })),
+		)
+		const db = await getTenantDb(ORG_A)
+		const id = await insertOrder()
+		// No printer: the tablet prints, as it always did.
+		const plain = (await (await command(id, { action: 'reprint', ticket: 'guest' })).json()) as PosOnlineOrderDetailResponse
+		expect(plain.cloudPrinted).toBeUndefined()
+		expect(plain.order.cloudPrinters).toBeUndefined()
+		seedPrintingFlagForTest(ORG_A, true)
+		await createPrinter(
+			db,
+			ORG_A,
+			{
+				locationId: LOCATION,
+				name: 'Pass',
+				protocol: 'star_cloudprnt',
+				widthMm: 80,
+				copies: 1,
+				routes: { kitchen: 'all', stationIds: [], receipts: true, isDefault: false, deliveryAddress: false, arabicFont: false },
+			},
+			'operator',
+		)
+		const printed = (await (await command(id, { action: 'reprint', ticket: 'kitchen' })).json()) as PosOnlineOrderDetailResponse
+		expect(printed.cloudPrinted).toBe(true)
+		expect(printed.order.cloudPrinters).toBe(true)
+		expect(await db.select().from(printJobs)).toHaveLength(1)
+		vi.unstubAllGlobals()
 	})
 
 	describe('security', () => {

@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { giftCardErrorMessage, LabeledInput } from './GiftCardSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
+import { reprintToCloud } from '~/lib/cloud-print.ts'
 import { blockLock } from '~/lib/activity.ts'
 import {
 	cashDiscountAdjustment,
@@ -115,6 +116,7 @@ export function Checkout({
 	/** One request id per attempt: a retry after a failed save replays the same redemption. */
 	const giftRequestId = useRef(crypto.randomUUID())
 	const online = usePos((s) => s.online)
+	const settings = usePos((s) => s.settings)
 	const [saving, setSaving] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [done, setDone] = useState<PosOrder | null>(null)
@@ -382,7 +384,19 @@ export function Checkout({
 						</div>
 					) : null}
 					<div className="mt-4 grid w-full grid-cols-2 gap-3">
-						<Button variant="outline" size="lg" onClick={() => window.print()}>
+						<Button
+							variant="outline"
+							size="lg"
+							onClick={() =>
+								// A cloud printer prints the receipt (#117); with none, the dialog does.
+								void reprintToCloud(settings, {
+									orderId: done.id,
+									kind: 'receipt',
+								}).then((cloud) => {
+									if (!cloud) window.print()
+								})
+							}
+						>
 							<Icon name="printer" className="size-5" /> <Trans>Receipt</Trans>
 						</Button>
 						<Button
