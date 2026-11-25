@@ -9,7 +9,8 @@ import {
 } from '@repo/reports'
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
 import { ReportStart } from '@repo/reports/ui'
-import { useLoaderData, useNavigate } from 'react-router'
+import { Button } from '@repo/ui/button'
+import { Link, useLoaderData, useNavigate } from 'react-router'
 import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
 import { listLocationTags } from '#app/utils/location/tags.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -120,6 +121,26 @@ export default function ReportsIndex() {
 					</span>
 				</div>
 			) : null}
+			<nav
+				aria-label={t`Sales and service reports`}
+				className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-2 px-4 pt-4"
+				data-testid="insight-report-links"
+			>
+				<Button
+					variant="outline"
+					size="sm"
+					render={<Link to={`${basePath}/product-mix`} />}
+				>
+					<Trans>Product mix and sales by category</Trans>
+				</Button>
+				<Button
+					variant="outline"
+					size="sm"
+					render={<Link to={`${basePath}/online-uptime`} />}
+				>
+					<Trans>Online ordering uptime</Trans>
+				</Button>
+			</nav>
 			<ReportStart
 				heading="Analytics & Reports"
 				description={`Track sales, orders, customers, marketing, and reviews for ${data.organizationName}. Order and customer reports run in your data region, straight from the browser, and never pass through the US control plane.`}

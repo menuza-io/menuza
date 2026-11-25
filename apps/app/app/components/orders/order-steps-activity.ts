@@ -31,7 +31,7 @@ export type ActivityEvent = {
 export function stepActivityEvents(
 	entries: readonly OrderTimelineEntry[],
 	memberNames: Readonly<Record<string, string>>,
-	translate: (message: MessageDescriptor, values?: Record<string, string>) => string,
+	translate: (message: MessageDescriptor) => string,
 ): ActivityEvent[] {
 	return entries.map((entry) => {
 		let who: string
@@ -54,7 +54,7 @@ export function stepActivityEvents(
 			case 'app': {
 				const name = entry.actorId ? memberNames[entry.actorId] : undefined
 				who = name
-					? translate(msg`By ${name} on the Orders page`, { name })
+					? translate(msg`By ${name} on the Orders page`)
 					: translate(msg`On the Orders page`)
 				break
 			}

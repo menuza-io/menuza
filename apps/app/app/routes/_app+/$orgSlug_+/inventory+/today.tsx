@@ -471,6 +471,25 @@ export default function InventoryTodayRoute() {
 				/>
 			) : null}
 
+			{nav.recipes && canSeeCost && (hasItems || setupDone) ? (
+				<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-4">
+					<p className="text-sm">
+						<Trans>
+							Which dishes make money? See each dish's margin and whether to
+							keep it, re-price it, promote it or rethink it.
+						</Trans>
+					</p>
+					<Button
+						variant="outline"
+						size="sm"
+						render={<Link to={`/${orgSlug}/inventory/profitability`} />}
+						data-testid="today-profitability-link"
+					>
+						<Trans>Dish profitability</Trans>
+					</Button>
+				</div>
+			) : null}
+
 			{nav.recipes && (hasItems || setupDone) ? (
 				<MissingRecipesPanel
 					orgSlug={orgSlug}

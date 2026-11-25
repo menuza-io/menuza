@@ -420,9 +420,7 @@ export function OrderDetail({
 		detail?: string | null
 	}> = [
 		...(recorded
-			? stepActivityEvents(steps, memberNames ?? {}, (message, values) =>
-					_(message, values),
-				)
+			? stepActivityEvents(steps, memberNames ?? {}, (message) => _(message))
 			: [{ key: 'placed', label: _(msg`Placed`), at: order.createdAt }]),
 		{ key: 'paid', label: _(msg`Payment received`), at: order.paidAt ?? null },
 		...(recorded

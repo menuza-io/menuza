@@ -31,6 +31,7 @@ import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
 import { useNewOrderAlerts } from '#app/hooks/use-new-order-alerts.ts'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { loadOrderingControls } from '#app/utils/location/ordering-controls.server.ts'
+import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
@@ -61,6 +62,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (legacyId) throw redirect(ordersHref(orgSlug, { orderId: legacyId }))
 	const organization = await requireUserOrganization(request, orgSlug, {
 		id: true,
+		dataRegion: true,
 	})
 	const userId = await requireMenuRead(request, organization.id)
 	const canWrite = await userHasOrganizationPermission(
@@ -104,6 +106,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			orderingControls,
 			slotLimitLocations,
 			dailyLimitLocations,
+			// The region the estimate of what a pause missed is asked of (#176).
+			tenantApiUrl: resolveRegionalTenantApiUrls(organization.dataRegion)
+				.tenantApiUrl,
 		},
 		{
 			headers: { 'Cache-Control': 'private, no-store' },
@@ -121,6 +126,7 @@ export default function OrdersInbox() {
 		orderingControls,
 		slotLimitLocations,
 		dailyLimitLocations,
+		tenantApiUrl,
 	} = useLoaderData<typeof loader>()
 	const [refreshKey, setRefreshKey] = useState(0)
 	const navigate = useNavigate()
@@ -230,6 +236,7 @@ export default function OrdersInbox() {
 				orgSlug={orgSlug}
 				locations={orderingControls}
 				canWrite={canWrite}
+				tenantApiUrl={tenantApiUrl}
 			/>
 			{slotLimitLocations.length > 0 ? (
 				<SlotLimitsPanel
