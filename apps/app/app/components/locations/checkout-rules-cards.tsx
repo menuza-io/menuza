@@ -12,6 +12,7 @@ import {
 	DEFAULT_PACKAGING_FEE_LABEL,
 } from '@repo/common/packaging-fee'
 import { PICKUP_INSTRUCTIONS_MAX_LENGTH } from '@repo/common/pickup-instructions'
+import { Alert, AlertDescription } from '@repo/ui/alert'
 import {
 	Card,
 	CardContent,
@@ -446,16 +447,15 @@ export function AlcoholCard({
 			</CardHeader>
 			<CardContent className="space-y-4">
 				{reviewed ? null : (
-					<p
-						role="note"
-						className="notice-warning rounded-md px-3 py-2 text-sm"
-						data-testid="alcohol-review-banner"
-					>
-						<Trans>
-							Alcohol is allowed for pickup and delivery here, as it was before
-							this setting existed. Please review it and save your choice.
-						</Trans>
-					</p>
+					<Alert data-testid="alcohol-review-banner">
+						<AlertDescription>
+							<Trans>
+								Alcohol is allowed for pickup and delivery here, as it was
+								before this setting existed. Please review it and save your
+								choice.
+							</Trans>
+						</AlertDescription>
+					</Alert>
 				)}
 				<SelectField
 					id="alcohol-online"

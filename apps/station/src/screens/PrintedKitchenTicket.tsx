@@ -4,8 +4,8 @@ import { createPortal } from 'react-dom'
 import { orderHasAlcohol } from '~/lib/alcohol.ts'
 import { type PosOrder } from '~/lib/db.ts'
 import { menuText } from '~/lib/menu-text.ts'
-import { fieldOf, useTickets, type KitchenTicketPlan } from '~/lib/tickets.ts'
 import { usePos } from '~/lib/store.ts'
+import { fieldOf, useTickets, type KitchenTicketPlan } from '~/lib/tickets.ts'
 import { cn } from '~/ui/primitives.tsx'
 
 /**

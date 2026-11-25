@@ -32,6 +32,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@repo/ui/card'
+import { Input } from '@repo/ui/input'
 import {
 	Select,
 	SelectContent,
@@ -39,7 +40,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
-import { Input } from '@repo/ui/input'
 import { Switch } from '@repo/ui/switch'
 import { useState } from 'react'
 import { useFetcher } from 'react-router'
@@ -351,7 +351,7 @@ export function TicketPreview({
 					data-preview-code={code.kind}
 					className="mt-2 text-center"
 				>
-					<div className="border-foreground mx-auto flex size-10 items-center justify-center border text-[8px]">
+					<div className="border-foreground mx-auto flex size-10 items-center justify-center border text-2xs">
 						QR
 					</div>
 					<div className="text-[10px]">{code.caption}</div>

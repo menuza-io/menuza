@@ -30,7 +30,6 @@ import { Button } from '@repo/ui/button'
 import { Card, CardContent } from '@repo/ui/card'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
-import { ReprintButtons } from './reprint-buttons.tsx'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Separator } from '@repo/ui/separator'
 import { Fragment, type ReactNode, useEffect, useRef, useState } from 'react'
@@ -78,6 +77,7 @@ import {
 	REFUND_FAILURE_FALLBACK,
 	REFUND_FAILURE_LABELS,
 } from './refund-labels.ts'
+import { ReprintButtons } from './reprint-buttons.tsx'
 
 /** What the cancel dialog sends with the cancellation. */
 export type CancelOptions = {

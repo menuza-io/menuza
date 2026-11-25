@@ -117,6 +117,17 @@ function reasonText(_: I18n['_'], health: PrinterHealth): string | null {
 	}
 }
 
+function seenText(_: I18n['_'], at: number | null) {
+	if (at === null) return _(t`Never seen`)
+	const when = new Date(at).toLocaleString()
+	return _(t`Last seen ${when}`)
+}
+
+function testText(_: I18n['_'], at: number) {
+	const when = new Date(at).toLocaleString()
+	return _(t`Last test ${when}`)
+}
+
 export function printerSummary(_: I18n['_'], routes: PrinterRoutes) {
 	const parts: string[] = []
 	if (routes.kitchen === 'all') parts.push(_(t`All kitchen tickets`))
@@ -147,11 +158,12 @@ export function PrintersManager({
 	enabled: boolean
 }) {
 	const { _ } = useLingui()
-	const printerClient = useOperatorClient(orgSlug, '/operator/pos/printers')
-	const posClient = useOperatorClient(orgSlug, '/operator/pos')
+	const { request: printerRequest, tenantApiUrl: printerApiUrl } =
+		useOperatorClient(orgSlug, '/operator/pos/printers')
+	const { request: posRequest } = useOperatorClient(orgSlug, '/operator/pos')
 	// Stable handles: `load` must not change on every render.
-	const printers = { request: printerClient.request, tenantApiUrl: printerClient.tenantApiUrl }
-	const pos = { request: posClient.request }
+	const printers = { request: printerRequest, tenantApiUrl: printerApiUrl }
+	const pos = { request: posRequest }
 	const [state, setState] = useState<
 		| { status: 'loading' }
 		| { status: 'error'; message: string }
@@ -173,7 +185,7 @@ export function PrintersManager({
 	const load = useCallback(async () => {
 		try {
 			const body = listSchema.parse(
-				await printerClient.request('', { readOnly: true }),
+				await printerRequest('', { readOnly: true }),
 			)
 			setState({ status: 'ready', data: body })
 		} catch (error) {
@@ -183,7 +195,7 @@ export function PrintersManager({
 					error instanceof Error ? error.message : _(t`Could not load printers.`),
 			})
 		}
-	}, [printerClient.request, _])
+	}, [printerRequest, _])
 
 	useEffect(() => {
 		if (enabled) void load()
@@ -306,6 +318,7 @@ export function PrintersManager({
 	}
 
 	const ready = state.status === 'ready' ? state.data : null
+	const connectName = shown?.printer.name ?? ''
 	return (
 		<Card
 			role="region"
@@ -350,6 +363,7 @@ export function PrintersManager({
 				<ul className="divide-y">
 					{(ready?.printers ?? []).map((printer) => {
 						const reason = reasonText(_, printer.health)
+						const flagged = printer.flaggedJobs
 						return (
 							<li
 								key={printer.id}
@@ -382,13 +396,9 @@ export function PrintersManager({
 									{printerSummary(_, printer.routes)}
 								</p>
 								<p className="text-muted-foreground text-sm">
-									{printer.lastSeenAt
-										? _(
-												t`Last seen ${new Date(printer.lastSeenAt).toLocaleString()}`,
-											)
-										: _(t`Never seen`)}
+									{seenText(_, printer.lastSeenAt)}
 									{printer.lastTestAt
-										? ` · ${_(t`Last test ${new Date(printer.lastTestAt).toLocaleString()}`)}`
+										? ` · ${testText(_, printer.lastTestAt)}`
 										: ''}
 								</p>
 								{reason && printer.health !== 'online' ? (
@@ -407,8 +417,8 @@ export function PrintersManager({
 										data-testid="printer-flagged"
 									>
 										<Trans>
-											{printer.flaggedJobs} ticket(s) did not print. The
-											printer never confirmed them.
+											{flagged} ticket(s) did not print. The printer never
+											confirmed them.
 										</Trans>
 									</p>
 								) : null}
@@ -510,7 +520,7 @@ export function PrintersManager({
 					<DialogContent>
 						<DialogHeader>
 							<DialogTitle>
-								<Trans>Connect {shown.printer.name}</Trans>
+								<Trans>Connect {connectName}</Trans>
 							</DialogTitle>
 							<DialogDescription>
 								<Trans>

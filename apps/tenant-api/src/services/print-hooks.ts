@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm'
+import { and, gte, inArray, isNotNull, lte } from 'drizzle-orm'
 import {
 	getTenantDb,
 	restaurantOrders,

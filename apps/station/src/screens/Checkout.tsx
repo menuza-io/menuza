@@ -7,7 +7,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { giftCardErrorMessage, LabeledInput } from './GiftCardSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
-import { reprintToCloud } from '~/lib/cloud-print.ts'
 import { blockLock } from '~/lib/activity.ts'
 import {
 	cashDiscountAdjustment,
@@ -15,6 +14,7 @@ import {
 	withoutCashDiscount,
 } from '~/lib/cash-discount.ts'
 import { quickCashAmounts } from '~/lib/cash.ts'
+import { reprintToCloud } from '~/lib/cloud-print.ts'
 import { type PosOrder, type StaffRef, type TenderMethod } from '~/lib/db.ts'
 import { createGiftCardApi, GiftCardApiError } from '~/lib/gift-cards.ts'
 import {

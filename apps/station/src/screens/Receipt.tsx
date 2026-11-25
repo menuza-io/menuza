@@ -113,7 +113,7 @@ export function Receipt({
 					src={logoSrc}
 					alt=""
 					data-receipt-logo=""
-					className="receipt-logo mx-auto mb-1"
+					className="mx-auto mb-1"
 				/>
 			) : null}
 			{f('businessName').show ? (
@@ -382,7 +382,7 @@ function useCodeQrs(urls: string[]): Array<string | null> {
 			setImages([])
 			return
 		}
-		Promise.all(
+		void Promise.all(
 			list.map((url) =>
 				QRCode.toDataURL(url, {
 					margin: 0,

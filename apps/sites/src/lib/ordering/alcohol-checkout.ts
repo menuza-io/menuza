@@ -4,8 +4,6 @@
  * is allowed; this only decides when to ask. A yes is all that is sent, never a
  * birth date.
  */
-import { type CartItem } from './types.ts'
-
 export type AlcoholIds = { items: string[]; options: string[] }
 
 type MenuLike = {
@@ -49,7 +47,10 @@ export function alcoholIdsFromMenu(menu: MenuLike | null | undefined): AlcoholId
 
 /** Whether any line in the cart is, or has an option that is, alcohol. */
 export function cartHasAlcohol(
-	cart: readonly Pick<CartItem, 'itemId' | 'options'>[],
+	cart: ReadonlyArray<{
+		itemId: string
+		options?: ReadonlyArray<{ optionId: string }>
+	}>,
 	ids: AlcoholIds | null | undefined,
 ): boolean {
 	if (!ids) return false

@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { setupTestOrgWithUser } from '#tests/test-utils.ts'
 import { loader } from './pos.flags.ts'
 
-const flag = vi.hoisted(() => vi.fn(async (): Promise<unknown> => true))
+const flag = vi.hoisted(() =>
+	vi.fn(async (_key?: string): Promise<unknown> => true),
+)
 vi.mock('@repo/common/feature-flags', () => ({ getFeatureFlag: flag }))
 
 function get(orgId: string, authorization?: string) {

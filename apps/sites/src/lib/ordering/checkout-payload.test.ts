@@ -28,12 +28,14 @@ describe('checkoutOrderPayload', () => {
 		expect(
 			checkoutOrderPayload(priced, {
 				contact,
+				reward: null,
 				ageConfirmed: true,
 				guestAllergy: true,
 			}),
 		).toMatchObject({ ageConfirmed: true, guestAllergy: true })
 		const none = checkoutOrderPayload(priced, {
 			contact,
+			reward: null,
 			ageConfirmed: false,
 			guestAllergy: false,
 		})

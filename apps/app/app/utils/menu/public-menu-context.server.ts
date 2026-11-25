@@ -85,7 +85,6 @@ import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { isSlotLimitsEnabled } from '#app/utils/orders/slot-limits.server.ts'
 import { isUpsellEnabled } from '#app/utils/orders/upsell-flag.server.ts'
-import { buildReceiptTargets } from './receipt-targets.server.ts'
 import { loadPublicPhotoTests } from './photo-tests.server.ts'
 import { loadPublishedPricingRules } from './pricing-rules.server.ts'
 import { secondsUntilNextRuleChange } from './pricing-rules.ts'
@@ -105,6 +104,7 @@ import {
 	type PublicMenuOptionData,
 	type PublicModifierGroupData,
 } from './public-serializers.server.ts'
+import { buildReceiptTargets } from './receipt-targets.server.ts'
 
 /** The organization logo as a receipt prints it: the site icon, as an absolute address. */
 export function receiptLogoUrl(slug: string, baseUrl: string | undefined) {
