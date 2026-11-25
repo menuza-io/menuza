@@ -83,7 +83,9 @@ export function createDeliveriesApi(
 					credentials: 'omit',
 					headers: {
 						Authorization: `Bearer ${settings.deviceToken}`,
-						...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+						...(body !== undefined
+							? { 'Content-Type': 'application/json' }
+							: {}),
 						...(session?.serverSession
 							? { [POS_STAFF_SESSION_HEADER]: session.serverSession.token }
 							: {}),
@@ -126,9 +128,11 @@ export function createDeliveriesApi(
 		pickUp: (runId) => done(call('POST', `/runs/${one(runId)}/pickup`)),
 		delivered: (stopId, cashCollectedCents) =>
 			done(
-				call('POST', `/stops/${one(stopId)}/delivered`, {
-					...(cashCollectedCents !== undefined ? { cashCollectedCents } : {}),
-				}),
+				call(
+					'POST',
+					`/stops/${one(stopId)}/delivered`,
+					cashCollectedCents !== undefined ? { cashCollectedCents } : {},
+				),
 			),
 		problem: (stopId, kind) =>
 			done(call('POST', `/stops/${one(stopId)}/problem`, { kind })),

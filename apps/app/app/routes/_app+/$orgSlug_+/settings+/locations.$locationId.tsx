@@ -2,12 +2,7 @@ import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { ALCOHOL_ONLINE_VALUES } from '@repo/common/alcohol-rules'
 import { courseSettingsJson } from '@repo/common/kitchen-ticket'
-import {
-	cleanGoogleReviewUrl,
-	REVIEW_URL_MAX_LENGTH,
-} from '@repo/common/receipt-extras'
 import { getLocationCurrency } from '@repo/common/location-currency'
-import { planHoursClosures } from '@repo/common/ordering-hours'
 import {
 	type DeliveryProvider,
 	type DeliveryZone,
@@ -15,7 +10,12 @@ import {
 	DEFAULT_DELIVERY_ZONE,
 	resolveTipSettings,
 } from '@repo/common/location-types'
+import { planHoursClosures } from '@repo/common/ordering-hours'
 import { parseStrictOrderNumberFormat } from '@repo/common/pos-orders'
+import {
+	cleanGoogleReviewUrl,
+	REVIEW_URL_MAX_LENGTH,
+} from '@repo/common/receipt-extras'
 import {
 	defaultServiceFeeSettings,
 	serviceFeeSettingsSchema,

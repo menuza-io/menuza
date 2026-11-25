@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createCartStore } from './cart-store.ts'
-import { deliveryFeeForCart, deliveryFeeHint } from './delivery-fee.ts'
 import { mountCartUi } from './cart-ui.ts'
+import { deliveryFeeForCart, deliveryFeeHint } from './delivery-fee.ts'
 import { type OrderingLabels } from './types.ts'
 
 const pricing = {

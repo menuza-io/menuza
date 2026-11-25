@@ -71,7 +71,12 @@ export type DeliveryActor = {
 
 export type DeliveryResult<T> =
 	| { ok: true; value: T }
-	| { ok: false; status: 403 | 404 | 409 | 422 | 503; code: string; message?: string }
+	| {
+			ok: false
+			status: 403 | 404 | 409 | 422 | 503
+			code: string
+			message?: string
+	  }
 
 const ok = <T>(value: T): DeliveryResult<T> => ({ ok: true, value })
 const fail = (
@@ -136,6 +141,7 @@ export async function loadDriverRoster(
 		)
 		.where(
 			and(
+				// bounded: one or two staffing scopes of the location
 				inArray(staffJobs.scopeId, scopes),
 				isNull(staffJobs.effectiveTo),
 				eq(staffPositions.deliversOrders, true),
@@ -179,7 +185,10 @@ export async function listDrivers(
 		loadDriverRoster(db, locationId),
 		unavailableIds(db),
 		db
-			.select({ driver: deliveryRuns.driverStaffId, runs: sql<number>`count(*)` })
+			.select({
+				driver: deliveryRuns.driverStaffId,
+				runs: sql<number>`count(*)`,
+			})
 			.from(deliveryRuns)
 			.where(
 				and(
@@ -238,7 +247,10 @@ function firstName(name: string): string {
 	return (name.trim().split(/\s+/)[0] ?? '').slice(0, 40)
 }
 
-function boardOrder(order: RestaurantOrder, readyAt: number | null): DeliveryBoardOrder {
+function boardOrder(
+	order: RestaurantOrder,
+	readyAt: number | null,
+): DeliveryBoardOrder {
 	return {
 		id: order.id,
 		number: order.number,
@@ -278,7 +290,9 @@ async function loadUnassigned(
 	const held = db
 		.select({ orderId: deliveryRunStops.orderId })
 		.from(deliveryRunStops)
-		.where(inArray(deliveryRunStops.status, ['pending', 'picked_up', 'problem']))
+		.where(
+			inArray(deliveryRunStops.status, ['pending', 'picked_up', 'problem']),
+		)
 	const orders = await db
 		.select()
 		.from(restaurantOrders)
@@ -311,7 +325,10 @@ type RunBundle = {
 	driver: DriverRow | null
 }
 
-async function bundleRuns(db: Writer, runs: DeliveryRun[]): Promise<RunBundle[]> {
+async function bundleRuns(
+	db: Writer,
+	runs: DeliveryRun[],
+): Promise<RunBundle[]> {
 	if (runs.length === 0) return []
 	const runIds = runs.map((run) => run.id)
 	const stops = await queryInChunks(runIds, (chunk) =>
@@ -323,7 +340,10 @@ async function bundleRuns(db: Writer, runs: DeliveryRun[]): Promise<RunBundle[]>
 	)
 	const orderIds = [...new Set(stops.map((stop) => stop.orderId))]
 	const orders = await queryInChunks(orderIds, (chunk) =>
-		db.select().from(restaurantOrders).where(inArray(restaurantOrders.id, chunk)),
+		db
+			.select()
+			.from(restaurantOrders)
+			.where(inArray(restaurantOrders.id, chunk)),
 	)
 	const positions = await queryInChunks(runIds, (chunk) =>
 		db
@@ -353,7 +373,11 @@ async function bundleRuns(db: Writer, runs: DeliveryRun[]): Promise<RunBundle[]>
 			stops: stops.filter((stop) => stop.runId === run.id),
 			orders: orderById,
 			position: position
-				? { lat: position.lat, lng: position.lng, updatedAt: position.updatedAt }
+				? {
+						lat: position.lat,
+						lng: position.lng,
+						updatedAt: position.updatedAt,
+					}
 				: null,
 			driver: driverById.get(run.driverStaffId) ?? null,
 		}
@@ -381,7 +405,10 @@ function stopView(
 		address: order?.deliveryAddress ?? '',
 		unit: order?.deliveryUnit ?? null,
 		notes: order?.deliveryNotes ?? null,
-		mapUrl: mapUrlForAddress(order?.deliveryAddress ?? '', order?.deliveryUnit ?? null),
+		mapUrl: mapUrlForAddress(
+			order?.deliveryAddress ?? '',
+			order?.deliveryUnit ?? null,
+		),
 		cashDueCents: stop.cashDueCents,
 		cashCollectedCents: stop.cashCollectedCents,
 		tipCents: order?.tipCents ?? 0,
@@ -417,7 +444,14 @@ function runView(
 			)
 			return options.includeAddresses
 				? view
-				: { ...view, address: '', unit: null, notes: null, firstName: '', mapUrl: '' }
+				: {
+						...view,
+						address: '',
+						unit: null,
+						notes: null,
+						firstName: '',
+						mapUrl: '',
+					}
 		}),
 		position: isOpenRunStatus(run.status) ? bundle.position : null,
 	}
@@ -571,6 +605,7 @@ export async function takeDriverNotices(
 			.update(deliveryDriverNotices)
 			.set({ readAt: now })
 			.where(
+				// bounded: at most the 20 notices just read
 				inArray(
 					deliveryDriverNotices.id,
 					rows.map((row) => row.id),
@@ -632,7 +667,9 @@ export async function createRun(
 	const now = Date.now()
 	try {
 		return await transact(db, input.orgId, async (tx) => {
-			if (!(await isDeliveryDriver(tx, input.driverStaffId, input.locationId))) {
+			if (
+				!(await isDeliveryDriver(tx, input.driverStaffId, input.locationId))
+			) {
 				return fail(404, 'driver_not_found')
 			}
 			if ((await unavailableIds(tx)).has(input.driverStaffId)) {
@@ -643,6 +680,7 @@ export async function createRun(
 				.from(restaurantOrders)
 				.where(
 					and(
+						// bounded: at most MAX_STOPS_PER_RUN (12) orders, checked by the request schema
 						inArray(restaurantOrders.id, orderIds),
 						eq(restaurantOrders.orgId, input.orgId),
 					),
@@ -662,8 +700,13 @@ export async function createRun(
 				.from(deliveryRunStops)
 				.where(
 					and(
+						// bounded: at most MAX_STOPS_PER_RUN (12) orders, checked by the request schema
 						inArray(deliveryRunStops.orderId, orderIds),
-						inArray(deliveryRunStops.status, ['pending', 'picked_up', 'problem']),
+						inArray(deliveryRunStops.status, [
+							'pending',
+							'picked_up',
+							'problem',
+						]),
 					),
 				)
 			if (held.length > 0) return fail(409, 'order_already_assigned')
@@ -679,7 +722,9 @@ export async function createRun(
 					updatedAt: now,
 				})
 				.returning()
-			const ordered = orderIds.map((id) => orders.find((order) => order.id === id)!)
+			const ordered = orderIds.map((id) =>
+				orders.find((order) => order.id === id)!,
+			)
 			await tx.insert(deliveryRunStops).values(
 				ordered.map((order, index) => ({
 					runId: run!.id,
@@ -724,7 +769,11 @@ export async function reassignRun(
 	const now = Date.now()
 	return transact(db, input.orgId, async (tx) => {
 		const run = await openRunForUpdate(tx, input.runId)
-		if (!run || !isOpenRunStatus(run.status) || !inScope(input.scope, run.locationId)) {
+		if (
+			!run ||
+			!isOpenRunStatus(run.status) ||
+			!inScope(input.scope, run.locationId)
+		) {
 			return fail(404, 'run_not_found')
 		}
 		if (run.driverStaffId === input.driverStaffId) return ok({ runId: run.id })
@@ -737,7 +786,10 @@ export async function reassignRun(
 		const stops = await tx
 			.select({ number: restaurantOrders.number })
 			.from(deliveryRunStops)
-			.innerJoin(restaurantOrders, eq(restaurantOrders.id, deliveryRunStops.orderId))
+			.innerJoin(
+				restaurantOrders,
+				eq(restaurantOrders.id, deliveryRunStops.orderId),
+			)
 			.where(
 				and(
 					eq(deliveryRunStops.runId, run.id),
@@ -805,10 +857,16 @@ async function finishRunIfDone(tx: Writer, runId: string, now: number) {
 			),
 		)
 	// No coordinate outlives the run it was for.
-	await tx.delete(deliveryRunPositions).where(eq(deliveryRunPositions.runId, runId))
+	await tx
+		.delete(deliveryRunPositions)
+		.where(eq(deliveryRunPositions.runId, runId))
 }
 
-type StopAccess = { run: DeliveryRun; stop: DeliveryRunStop; order: RestaurantOrder }
+type StopAccess = {
+	run: DeliveryRun
+	stop: DeliveryRunStop
+	order: RestaurantOrder
+}
 
 async function loadStopFor(
 	tx: Writer,
@@ -868,16 +926,27 @@ export async function pickUpRun(
 	const result = await transact(db, input.orgId, async (tx) => {
 		const run = await openRunForUpdate(tx, input.runId)
 		if (!run || !isOpenRunStatus(run.status)) return fail(404, 'run_not_found')
-		if (input.actor.kind === 'driver' && run.driverStaffId !== input.driverStaffId) {
+		if (
+			input.actor.kind === 'driver' &&
+			run.driverStaffId !== input.driverStaffId
+		) {
 			return fail(404, 'run_not_found')
 		}
-		if (input.actor.kind === 'manager' && !inScope(input.scope, run.locationId)) {
+		if (
+			input.actor.kind === 'manager' &&
+			!inScope(input.scope, run.locationId)
+		) {
 			return fail(404, 'run_not_found')
 		}
 		const stops = await tx
 			.select()
 			.from(deliveryRunStops)
-			.where(and(eq(deliveryRunStops.runId, run.id), eq(deliveryRunStops.status, 'pending')))
+			.where(
+				and(
+					eq(deliveryRunStops.runId, run.id),
+					eq(deliveryRunStops.status, 'pending'),
+				),
+			)
 			.orderBy(asc(deliveryRunStops.stopNo))
 		let pickedUp = 0
 		for (const stop of stops) {
@@ -983,7 +1052,11 @@ export async function markStopDelivered(
 				},
 			)
 			if (!applied.result.ok) {
-				return fail(409, applied.result.failure.code, applied.result.failure.message)
+				return fail(
+					409,
+					applied.result.failure.code,
+					applied.result.failure.message,
+				)
 			}
 			completed = applied.result.data
 		} else if (order.status !== 'completed') {
@@ -999,7 +1072,12 @@ export async function markStopDelivered(
 				pickedUpAt: stop.pickedUpAt ?? now,
 			})
 			.where(eq(deliveryRunStops.id, stop.id))
-		await queueOrderMessage(tx, completed, 'delivered', queues.messages.context(now))
+		await queueOrderMessage(
+			tx,
+			completed,
+			'delivered',
+			queues.messages.context(now),
+		)
 		if (run.status === 'assigned') {
 			await tx
 				.update(deliveryRuns)
@@ -1011,7 +1089,10 @@ export async function markStopDelivered(
 			.select({ status: deliveryRuns.status })
 			.from(deliveryRuns)
 			.where(eq(deliveryRuns.id, run.id))
-		return ok({ orderId: order.id, runDone: !isOpenRunStatus(after?.status ?? 'completed') })
+		return ok({
+			orderId: order.id,
+			runDone: !isOpenRunStatus(after?.status ?? 'completed'),
+		})
 	})
 	await settleOrderWriteQueues(input.orgId, queues)
 	return result
@@ -1068,7 +1149,13 @@ export async function releaseStop(
 ): Promise<DeliveryResult<{ orderId: string }>> {
 	const now = Date.now()
 	return transact(db, input.orgId, async (tx) => {
-		const access = await loadStopFor(tx, input.stopId, input.actor, null, input.scope)
+		const access = await loadStopFor(
+			tx,
+			input.stopId,
+			input.actor,
+			null,
+			input.scope,
+		)
 		if (!access.ok) return access
 		const { run, stop, order } = access.value
 		if (stop.status === 'delivered') return fail(409, 'stop_delivered')
@@ -1132,6 +1219,7 @@ export async function clearDriverPosition(
 	driverStaffId: string,
 ): Promise<void> {
 	await db.delete(deliveryRunPositions).where(
+		// bounded: a subquery, no bound ids
 		inArray(
 			deliveryRunPositions.runId,
 			db
@@ -1150,7 +1238,11 @@ export async function loadStopCallParties(
 	db: TenantDatabase,
 	input: { stopId: string; driverStaffId: string },
 ): Promise<
-	DeliveryResult<{ guestPhone: string | null; driverPhone: string | null; orderId: string }>
+	DeliveryResult<{
+		guestPhone: string | null
+		driverPhone: string | null
+		orderId: string
+	}>
 > {
 	const [row] = await db
 		.select({
@@ -1161,7 +1253,10 @@ export async function loadStopCallParties(
 		})
 		.from(deliveryRunStops)
 		.innerJoin(deliveryRuns, eq(deliveryRuns.id, deliveryRunStops.runId))
-		.innerJoin(restaurantOrders, eq(restaurantOrders.id, deliveryRunStops.orderId))
+		.innerJoin(
+			restaurantOrders,
+			eq(restaurantOrders.id, deliveryRunStops.orderId),
+		)
 		.innerJoin(staffMembers, eq(staffMembers.id, deliveryRuns.driverStaffId))
 		.where(eq(deliveryRunStops.id, input.stopId))
 		.limit(1)
@@ -1211,7 +1306,9 @@ export async function loadDeliveryCash(
 				eq(deliveryRunStops.status, 'delivered'),
 				sql`${deliveryRunStops.deliveredAt} >= ${input.fromMs}`,
 				sql`${deliveryRunStops.deliveredAt} <= ${input.toMs}`,
-				input.locationId ? eq(deliveryRuns.locationId, input.locationId) : undefined,
+				input.locationId
+					? eq(deliveryRuns.locationId, input.locationId)
+					: undefined,
 				sql`${deliveryRunStops.cashDueCents} > 0`,
 			),
 		)

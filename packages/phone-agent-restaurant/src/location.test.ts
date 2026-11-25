@@ -173,7 +173,6 @@ describe('currentPrepMinutes', () => {
 	})
 })
 
-
 describe('describeRestaurantLocation: delivery fee tables (#244, #421)', () => {
 	const base = {
 		name: 'Loop',
@@ -185,8 +184,16 @@ describe('describeRestaurantLocation: delivery fee tables (#244, #421)', () => {
 		onlineHours: week([{ start: '09:00', end: '17:00' }]),
 		specialHours: [],
 		prepTime: 15,
-		fulfillmentOptions: { pickup: true, delivery: true, dineIn: false, curbside: false },
-		deliveryConfig: { estimatedDeliveryTimeMin: 25, estimatedDeliveryTimeMax: 45 },
+		fulfillmentOptions: {
+			pickup: true,
+			delivery: true,
+			dineIn: false,
+			curbside: false,
+		},
+		deliveryConfig: {
+			estimatedDeliveryTimeMin: 25,
+			estimatedDeliveryTimeMax: 45,
+		},
 	}
 	const zone = {
 		name: 'Downtown',
@@ -199,7 +206,10 @@ describe('describeRestaurantLocation: delivery fee tables (#244, #421)', () => {
 		radius: { value: 5, unit: 'km' },
 	}
 	const describe_ = (zones: AgentLocation['deliveryZones']) =>
-		describeRestaurantLocation({ ...base, deliveryZones: zones } as AgentLocation, at('12:00'))
+		describeRestaurantLocation(
+			{ ...base, deliveryZones: zones } as unknown as AgentLocation,
+			at('12:00'),
+		)
 
 	it('keeps the single fee for a zone without tables', () => {
 		expect(describe_([zone])).toContain('fee $5.00, minimum order $10.00')

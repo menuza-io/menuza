@@ -7,7 +7,12 @@ import { type StaffCreateInput, type StaffPositionCreate } from './staff-api.ts'
  * production code never imports this file.
  */
 
-export type DemoPosition = Omit<StaffPositionCreate, 'currency'> & {
+export type DemoPosition = Omit<
+	StaffPositionCreate,
+	'currency' | 'deliversOrders'
+> & {
+	/** Marks a job that delivers orders (#287); off when missing. */
+	deliversOrders?: boolean
 	/** Hourly rate in minor units (cents). */
 	defaultRateMinor: number
 }

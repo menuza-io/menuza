@@ -36,6 +36,7 @@ import { PayCell } from '#app/components/staff/staff-roster.tsx'
 import { SwitchField } from '#app/components/staff/switch-field.tsx'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { useStaffClient, useStaffQuery } from '#app/hooks/use-staff-client.ts'
+import { isInHouseDeliveryEnabled } from '#app/utils/orders/deliveries.server.ts'
 import { requireStaffingAccess } from '#app/utils/staffing/access.server.ts'
 import { STAFF_SECTION_REQUIREMENTS } from '#app/utils/staffing/sections.ts'
 import { describeStaffError } from '#app/utils/staffing/staff-errors.ts'
@@ -52,7 +53,6 @@ import {
 	hasErrors,
 	validatePositionForm,
 } from '#app/utils/staffing/staff-validation.ts'
-import { isInHouseDeliveryEnabled } from '#app/utils/orders/deliveries.server.ts'
 import { loadStaffScopes } from '#app/utils/staffing/team-context.server.ts'
 import { type Route } from './+types/positions.ts'
 

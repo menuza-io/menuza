@@ -1,9 +1,9 @@
+import { DELIVERY_IN_HOUSE_FLAG_KEY } from '@repo/common/delivery-runs'
 import {
 	_OrganizationPermissionToRole,
 	ConfigFlag,
 	db,
 	inArray,
-	OrganizationLocation,
 	OrganizationRole,
 } from '@repo/database'
 import {
@@ -11,7 +11,6 @@ import {
 	SALES_STAFF_FIELD_PERMISSION,
 	verifyOperatorAnalyticsToken,
 } from '@repo/reports/token'
-import { DELIVERY_IN_HOUSE_FLAG_KEY } from '@repo/common/delivery-runs'
 import { ENV } from 'varlock/env'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -65,15 +64,6 @@ afterEach(async () => {
 		flagIds.length = 0
 	}
 })
-
-async function createLocation(organizationId: string) {
-	const slug = `loc-${crypto.randomUUID().slice(0, 8)}`
-	const [row] = await db
-		.insert(OrganizationLocation)
-		.values({ organizationId, name: `Location ${slug}`, slug })
-		.returning({ id: OrganizationLocation.id })
-	return row!.id
-}
 
 async function member(organizationId: string, permissions: string[]) {
 	const [role] = await db

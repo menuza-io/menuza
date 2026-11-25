@@ -33,7 +33,9 @@ describe('GET /resources/pos/flags', () => {
 		expect(await on.json()).toMatchObject({ deviceHealth: true })
 		for (const value of ['true', 1, null, undefined]) {
 			flag.mockResolvedValueOnce(value)
-			expect(await (await call(get(organization.id, auth))).json()).toMatchObject({
+			expect(
+				await (await call(get(organization.id, auth))).json(),
+			).toMatchObject({
 				deviceHealth: false,
 			})
 		}
@@ -51,6 +53,7 @@ describe('GET /resources/pos/flags', () => {
 		expect(await (await call(get(organization.id, auth))).json()).toEqual({
 			deviceHealth: false,
 			printers: true,
+			inHouseDelivery: false,
 		})
 		flag.mockImplementation(async (key?: string) =>
 			key === 'kitchen.printers' ? ('true' as unknown) : false,
@@ -58,7 +61,30 @@ describe('GET /resources/pos/flags', () => {
 		expect(await (await call(get(organization.id, auth))).json()).toEqual({
 			deviceHealth: false,
 			printers: false,
+			inHouseDelivery: false,
 		})
+		flag.mockImplementation(async () => true)
+	})
+
+	it('says whether own-driver deliveries are on (delivery.in_house), only for a literal true (#287)', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const auth = `Bearer ${ENV.INTERNAL_COMMAND_TOKEN}`
+		flag.mockImplementation(async (key?: string) =>
+			key === 'delivery.in_house' ? true : false,
+		)
+		expect(await (await call(get(organization.id, auth))).json()).toMatchObject(
+			{
+				inHouseDelivery: true,
+			},
+		)
+		flag.mockImplementation(async (key?: string) =>
+			key === 'delivery.in_house' ? ('true' as unknown) : false,
+		)
+		expect(await (await call(get(organization.id, auth))).json()).toMatchObject(
+			{
+				inHouseDelivery: false,
+			},
+		)
 		flag.mockImplementation(async () => true)
 	})
 

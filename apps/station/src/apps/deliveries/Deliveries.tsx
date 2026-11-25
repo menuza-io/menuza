@@ -14,7 +14,7 @@ import { useDeliveries, type DeliveriesState } from './useDeliveries.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { formatMoney, parseDecimal, toCents } from '~/lib/money.ts'
 import { type Session } from '~/lib/signin.ts'
-import { Badge, Button, cn, Input } from '~/ui/primitives.tsx'
+import { Badge, Button, cn, Input, Select } from '~/ui/primitives.tsx'
 
 /** Words for what the region answers; the codes are machine values. */
 function useErrorText() {
@@ -127,13 +127,14 @@ export function Deliveries({
 			) : (
 				<div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
 					{error ? (
-						<p role="alert" className="notice-warning rounded-lg px-4 py-3 text-sm">
+						<p
+							role="alert"
+							className="notice-warning rounded-lg px-4 py-3 text-sm"
+						>
 							{errorText(error)}
 						</p>
 					) : null}
-					{state.notices.length > 0 ? (
-						<Notices state={state} />
-					) : null}
+					{state.notices.length > 0 ? <Notices state={state} /> : null}
 					{!me ? (
 						<p className="text-muted-foreground p-6 text-center">
 							{error ? null : <Trans>Loading deliveries…</Trans>}
@@ -141,8 +142,8 @@ export function Deliveries({
 					) : me.role === 'none' ? (
 						<p className="text-muted-foreground p-6 text-center" role="status">
 							<Trans>
-								Deliveries are for managers and drivers. Ask a manager if you should
-								be set up as a driver.
+								Deliveries are for managers and drivers. Ask a manager if you
+								should be set up as a driver.
 							</Trans>
 						</p>
 					) : (
@@ -150,7 +151,9 @@ export function Deliveries({
 							{me.role === 'manager' && board ? (
 								<ManagerBoard state={state} api={state.api} />
 							) : null}
-							{me.isDriver ? <DriverView state={state} api={state.api} /> : null}
+							{me.isDriver ? (
+								<DriverView state={state} api={state.api} />
+							) : null}
 						</>
 					)}
 				</div>
@@ -216,7 +219,7 @@ function ManagerBoard({
 	return (
 		<section className="space-y-5" aria-label={_(t`Deliveries board`)}>
 			<div className="space-y-2">
-				<h2 className="text-lg font-semibold">
+				<h2 className="text-xl font-semibold">
 					<Trans>Ready for a driver</Trans>
 				</h2>
 				{board.unassigned.length === 0 ? (
@@ -245,8 +248,8 @@ function ManagerBoard({
 							<span className="block">
 								<Trans>Driver</Trans>
 							</span>
-							<select
-								className="border-input bg-card h-12 rounded-lg border px-3"
+							<Select
+								containerClassName="w-auto min-w-48"
 								value={driverId}
 								onChange={(event) => setDriverId(event.target.value)}
 							>
@@ -256,7 +259,7 @@ function ManagerBoard({
 										{driver.name}
 									</option>
 								))}
-							</select>
+							</Select>
 						</label>
 						<Button
 							variant="primary"
@@ -274,7 +277,7 @@ function ManagerBoard({
 			</div>
 
 			<div className="space-y-3">
-				<h2 className="text-lg font-semibold">
+				<h2 className="text-xl font-semibold">
 					<Trans>Runs</Trans>
 				</h2>
 				{board.runs.length === 0 ? (
@@ -283,17 +286,22 @@ function ManagerBoard({
 					</p>
 				) : null}
 				{board.runs.map((run) => (
-					<div key={run.id} className="border-border space-y-2 rounded-lg border p-3">
+					<div
+						key={run.id}
+						className="border-border space-y-2 rounded-lg border p-3"
+					>
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<p className="font-medium">{run.driver.name}</p>
 							{run.status !== 'completed' ? (
-								<select
-									className="border-input bg-card h-11 rounded-lg border px-3 text-sm"
+								<Select
+									containerClassName="w-auto min-w-40"
 									value=""
 									aria-label={_(t`Give this run to another driver`)}
 									onChange={(event) =>
 										event.target.value &&
-										void state.act(() => api.reassign(run.id, event.target.value))
+										void state.act(() =>
+											api.reassign(run.id, event.target.value),
+										)
 									}
 								>
 									<option value="">{_(t`Reassign`)}</option>
@@ -304,7 +312,7 @@ function ManagerBoard({
 												{driver.name}
 											</option>
 										))}
-								</select>
+								</Select>
 							) : null}
 						</div>
 						<ul className="space-y-1 text-sm">
@@ -315,7 +323,9 @@ function ManagerBoard({
 								>
 									<span className="min-w-0 wrap-anywhere">
 										{stop.number} · {stop.firstName}
-										{stop.problemKind ? ` · ${problemText(stop.problemKind)}` : ''}
+										{stop.problemKind
+											? ` · ${problemText(stop.problemKind)}`
+											: ''}
 									</span>
 									<span className="flex items-center gap-2">
 										<StopBadge status={stop.status} />
@@ -335,7 +345,9 @@ function ManagerBoard({
 												<Button
 													variant="ghost"
 													disabled={state.busy}
-													onClick={() => void state.act(() => api.release(stop.id))}
+													onClick={() =>
+														void state.act(() => api.release(stop.id))
+													}
 												>
 													<Trans>Take back</Trans>
 												</Button>
@@ -350,7 +362,7 @@ function ManagerBoard({
 			</div>
 
 			<div className="space-y-2">
-				<h2 className="text-lg font-semibold">
+				<h2 className="text-xl font-semibold">
 					<Trans>Drivers</Trans>
 				</h2>
 				{board.drivers.length === 0 ? (
@@ -362,7 +374,10 @@ function ManagerBoard({
 				) : null}
 				<ul className="space-y-1">
 					{board.drivers.map((driver) => (
-						<li key={driver.staffId} className="flex items-center justify-between gap-2">
+						<li
+							key={driver.staffId}
+							className="flex items-center justify-between gap-2"
+						>
 							<span>
 								{driver.name}
 								{driver.openRuns > 0 ? ` · ${driver.openRuns}` : ''}
@@ -453,15 +468,21 @@ function DriverView({
 	const run = me.run
 	const [picked, setPicked] = useState<Set<string>>(new Set())
 	return (
-		<section className="space-y-4" aria-label={_(t`My deliveries`)} data-testid="driver-view">
+		<section
+			className="space-y-4"
+			aria-label={_(t`My deliveries`)}
+			data-testid="driver-view"
+		>
 			<div className="flex flex-wrap items-center justify-between gap-2">
-				<h2 className="text-lg font-semibold">
+				<h2 className="text-xl font-semibold">
 					<Trans>My deliveries</Trans>
 				</h2>
 				<Button
 					variant={me.unavailable ? 'secondary' : 'outline'}
 					disabled={state.busy}
-					onClick={() => void state.act(() => api.myAvailability(!me.unavailable))}
+					onClick={() =>
+						void state.act(() => api.myAvailability(!me.unavailable))
+					}
 				>
 					{me.unavailable ? (
 						<Trans>I am unavailable · set available</Trans>
@@ -557,7 +578,8 @@ function RunCard({
 			{ maximumAge: 15_000, timeout: 20_000 },
 		)
 		return () => {
-			if (watch.current !== null) navigator.geolocation.clearWatch(watch.current)
+			if (watch.current !== null)
+				navigator.geolocation.clearWatch(watch.current)
 			watch.current = null
 			void api.stopSharing().catch(() => undefined)
 		}
@@ -581,7 +603,11 @@ function RunCard({
 				))}
 			</ul>
 			<div className="space-y-1">
-				<Button variant="outline" onClick={() => setSharing((value) => !value)} aria-pressed={sharing}>
+				<Button
+					variant="outline"
+					onClick={() => setSharing((value) => !value)}
+					aria-pressed={sharing}
+				>
 					<Icon name="route" className="size-4" />
 					{sharing ? (
 						<Trans>Stop sharing my location</Trans>
@@ -615,10 +641,16 @@ function StopCard({
 	const [asking, setAsking] = useState<null | 'cash' | 'problem'>(null)
 	const due = formatMoney(stop.cashDueCents, stop.currency)
 	const tip = formatMoney(stop.tipCents, stop.currency)
-	const closed = stop.status === 'delivered' || stop.status === 'problem' || stop.status === 'released'
+	const closed =
+		stop.status === 'delivered' ||
+		stop.status === 'problem' ||
+		stop.status === 'released'
 	return (
 		<li
-			className={cn('border-border space-y-2 rounded-lg border p-3', closed && 'opacity-60')}
+			className={cn(
+				'border-border space-y-2 rounded-lg border p-3',
+				closed && 'opacity-60',
+			)}
 			data-testid="driver-stop"
 		>
 			<div className="flex flex-wrap items-center justify-between gap-2">
@@ -659,7 +691,11 @@ function StopCard({
 					<Trans>Map</Trans>
 				</a>
 				{stop.canCall && !closed ? (
-					<Button variant="outline" disabled={state.busy} onClick={() => void state.act(() => api.callGuest(stop.id))}>
+					<Button
+						variant="outline"
+						disabled={state.busy}
+						onClick={() => void state.act(() => api.callGuest(stop.id))}
+					>
 						<Icon name="phone" className="size-4" />
 						<Trans>Call guest</Trans>
 					</Button>
@@ -677,7 +713,11 @@ function StopCard({
 						>
 							<Trans>Delivered</Trans>
 						</Button>
-						<Button variant="outline" disabled={state.busy} onClick={() => setAsking('problem')}>
+						<Button
+							variant="outline"
+							disabled={state.busy}
+							onClick={() => setAsking('problem')}
+						>
 							<Trans>Problem</Trans>
 						</Button>
 					</>
@@ -700,7 +740,10 @@ function StopCard({
 						variant="primary"
 						disabled={state.busy}
 						onClick={() => {
-							const parsed = cash.trim() === '' ? stop.cashDueCents / 100 : parseDecimal(cash)
+							const parsed =
+								cash.trim() === ''
+									? stop.cashDueCents / 100
+									: parseDecimal(cash)
 							if (parsed === null) return
 							void state
 								.act(() => api.delivered(stop.id, toCents(parsed)))
@@ -712,14 +755,20 @@ function StopCard({
 				</div>
 			) : null}
 			{asking === 'problem' ? (
-				<div className="flex flex-wrap gap-2" role="group" aria-label={_(t`What went wrong?`)}>
+				<div
+					className="flex flex-wrap gap-2"
+					role="group"
+					aria-label={_(t`What went wrong?`)}
+				>
 					{DELIVERY_PROBLEM_KINDS.map((kind) => (
 						<Button
 							key={kind}
 							variant="outline"
 							disabled={state.busy}
 							onClick={() =>
-								void state.act(() => api.problem(stop.id, kind)).then((ok) => ok && setAsking(null))
+								void state
+									.act(() => api.problem(stop.id, kind))
+									.then((ok) => ok && setAsking(null))
 							}
 						>
 							{problemText(kind)}
