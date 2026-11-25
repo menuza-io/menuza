@@ -19,6 +19,7 @@ import {
 	type SiteMenuChannel,
 } from '~/lib/ordering/menu-channel'
 import { formatMoney } from '~/lib/ordering/money'
+import { alcoholIdsFromMenu } from '~/lib/ordering/alcohol-checkout'
 import { buildPriceBook, EMPTY_PRICE_BOOK } from '~/lib/ordering/price-book'
 import { orderLimitMetaFromMenus } from '~/lib/ordering/order-limits'
 import { type FulfillmentMode } from '~/lib/ordering/types'
@@ -189,6 +190,8 @@ const serviceFeeDefaultLabel = i18n._(msg`Service fee`)
 const packagingFeeDefaultLabel = i18n._(msg`Packaging fee`)
 const pickupInstructionsTitle = i18n._(msg`Pickup instructions`)
 const utensilsLabel = i18n._(msg`Include utensils and napkins`)
+const ageLabel = i18n._(msg`I am 21 or older and will show ID`)
+const allergyLabel = i18n._(msg`Someone in my party has an allergy (add details in the notes)`)
 const paymentTitle = i18n._(msg`Payment`)
 const payOnlineLabel = i18n._(msg`Pay online`)
 const payOnlineHint = i18n._(msg`Pay securely now`)
@@ -447,6 +450,14 @@ const checkoutLabels = {
 		discountsUnavailable: i18n._(
 			msg`Discounts aren't available right now. Please review your total and place your order again.`,
 		),
+		alcoholNotAllowed: translate(
+			i18n,
+			msg`Alcohol cannot be ordered this way: {names}. Remove it from your order or choose another way to order.`,
+			{ names: '{names}' },
+		),
+		ageConfirmationRequired: i18n._(
+			msg`Please confirm that you are 21 or older and will show ID.`,
+		),
 		generic: i18n._(msg`We could not place your order. Please try again.`),
 	},
 }
@@ -589,6 +600,15 @@ const inputClass =
 								<input type="checkbox" id="utensils" autocomplete="off" class="size-5 shrink-0 accent-primary" />
 								<span class="min-w-0 flex-1">{utensilsLabel}</span>
 							</label>
+							{/* Alcohol in the cart (#167) and an allergy in the party (#294). */}
+							<label id="age-row" class="mt-4 hidden min-h-11 items-center gap-3 border-t border-border pt-4 text-sm font-medium text-foreground [&:not(.hidden)]:flex">
+								<input type="checkbox" id="age-confirm" autocomplete="off" class="size-5 shrink-0 accent-primary" />
+								<span class="min-w-0 flex-1">{ageLabel}</span>
+							</label>
+							<label id="allergy-row" class="mt-4 flex min-h-11 items-center gap-3 border-t border-border pt-4 text-sm font-medium text-foreground">
+								<input type="checkbox" id="guest-allergy" autocomplete="off" class="size-5 shrink-0 accent-primary" />
+								<span class="min-w-0 flex-1">{allergyLabel}</span>
+							</label>
 						</section>
 					) : (
 						/* Fulfillment */
@@ -645,6 +665,15 @@ const inputClass =
 						<label id="utensils-row" class="mt-4 hidden min-h-11 items-center gap-3 border-t border-border pt-4 text-sm font-medium text-foreground [&:not(.hidden)]:flex">
 							<input type="checkbox" id="utensils" autocomplete="off" class="size-5 shrink-0 accent-primary" />
 							<span class="min-w-0 flex-1">{utensilsLabel}</span>
+						</label>
+							{/* Alcohol in the cart (#167) and an allergy in the party (#294). */}
+						<label id="age-row" class="mt-4 hidden min-h-11 items-center gap-3 border-t border-border pt-4 text-sm font-medium text-foreground [&:not(.hidden)]:flex">
+							<input type="checkbox" id="age-confirm" autocomplete="off" class="size-5 shrink-0 accent-primary" />
+							<span class="min-w-0 flex-1">{ageLabel}</span>
+						</label>
+						<label id="allergy-row" class="mt-4 flex min-h-11 items-center gap-3 border-t border-border pt-4 text-sm font-medium text-foreground">
+							<input type="checkbox" id="guest-allergy" autocomplete="off" class="size-5 shrink-0 accent-primary" />
+							<span class="min-w-0 flex-1">{allergyLabel}</span>
 						</label>
 					</section>
 					)}
@@ -981,6 +1010,7 @@ const inputClass =
 			priceBook: dropMode ? EMPTY_PRICE_BOOK : buildPriceBook(menuPayload ?? { menus: [] }, activeLocation?.id ?? null),
 			taxRate,
 			taxInclusive,
+			alcoholIds: alcoholIdsFromMenu(menuPayload ?? { menus: [] }),
 			allowedModes,
 			orderDetailsLabels: odLabels,
 			unavailableVariantIds: [...unavailableVariantIds],
@@ -1112,6 +1142,7 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			utensilsView,
 			type TipSelection,
 		} from '~/lib/ordering/checkout-extras'
+		import { ageConfirmation, cartHasAlcohol } from '~/lib/ordering/alcohol-checkout'
 		import { countedDishUnits, type OrderLimitMeta } from '~/lib/ordering/order-limits'
 		import {
 			cartNameOf,
@@ -2405,6 +2436,11 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			const utensils = utensilsView(orderingOptions, fulfillmentNow())
 			utensilsRow?.classList.toggle('hidden', !utensils)
 			if (utensils && utensilsBox && !utensilsTouched) utensilsBox.checked = utensils.defaultRequested
+			// "I am 21 or older and will show ID" is asked when alcohol is in the cart (#167).
+			const alcohol = cartHasAlcohol(cart, meta.alcoholIds)
+			document.getElementById('age-row')?.classList.toggle('hidden', !alcohol)
+			const ageBox = document.getElementById('age-confirm') as HTMLInputElement | null
+			if (ageBox && !alcohol) ageBox.checked = false
 		}
 
 		/** The guest's answer, or null when the question is not shown (the region ignores it then). */
@@ -2987,6 +3023,15 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			}
 
 			if (!readPricedOrder()) return
+			// Alcohol needs a yes before the order goes anywhere (#167).
+			if (
+				cartHasAlcohol(cart, meta.alcoholIds) &&
+				(document.getElementById('age-confirm') as HTMLInputElement | null)?.checked !== true
+			) {
+				showCheckoutError(labels.errors.ageConfirmationRequired)
+				document.getElementById('age-confirm')?.focus()
+				return
+			}
 
 			const successUrl = `${meta.successUrl || '/menu/success'}?order=`
 
@@ -3063,6 +3108,11 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 					// Likewise the packaging fee (#408) and the utensils answer (#257).
 					expectedPackagingFeeMinor: Math.round(computeTotals().packagingFee * 100),
 					utensilsRequested: utensilsAnswer(),
+					...ageConfirmation(
+						cartHasAlcohol(cart, meta.alcoholIds),
+						(document.getElementById('age-confirm') as HTMLInputElement | null)?.checked === true,
+					),
+					guestAllergy: (document.getElementById('guest-allergy') as HTMLInputElement | null)?.checked === true,
 					giftCard: giftCardCheckout?.payload() ?? null,
 					referralDeviceId: referralDeviceId(window.localStorage),
 				})

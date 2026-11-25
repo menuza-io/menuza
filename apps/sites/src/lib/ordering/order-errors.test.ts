@@ -6,6 +6,7 @@ import {
 	orderErrorMessageFor,
 	orderTooLargeKind,
 	orderTooLargeMessage,
+	alcoholLineNames,
 	soldOutDishes,
 	type OrderErrorLabels,
 } from './order-errors.ts'
@@ -45,6 +46,8 @@ const labels: OrderErrorLabels = {
 	discountChanged: 'discountChanged',
 	couponRefused: 'couponRefused',
 	discountsUnavailable: 'discountsUnavailable',
+	alcoholNotAllowed: 'alcoholNotAllowed:{names}',
+	ageConfirmationRequired: 'ageConfirmationRequired',
 	generic: 'generic',
 }
 
@@ -266,5 +269,36 @@ describe('orderErrorMessageFor', () => {
 		expect(
 			orderErrorMessageFor('packaging_fee_unavailable', null, labels),
 		).toBe('packagingFeeUnavailable')
+	})
+})
+
+describe('alcohol refusals (#167)', () => {
+	it('names the lines the region refused', () => {
+		const body = {
+			code: 'alcohol_not_allowed',
+			details: {
+				lines: [
+					{ line: 0, itemId: 'a', name: 'House wine' },
+					{ line: 2, itemId: 'b', name: 'IPA' },
+					{ line: 3, itemId: 'c', name: 'House wine' },
+				],
+			},
+		}
+		expect(alcoholLineNames(body)).toEqual(['House wine', 'IPA'])
+		expect(orderErrorMessageFor('alcohol_not_allowed', body, labels)).toBe(
+			'alcoholNotAllowed:House wine, IPA',
+		)
+	})
+
+	it('maps both codes to their own message', () => {
+		expect(orderErrorLabelKey('alcohol_not_allowed')).toBe('alcoholNotAllowed')
+		expect(orderErrorLabelKey('age_confirmation_required')).toBe(
+			'ageConfirmationRequired',
+		)
+	})
+
+	it('reads a malformed body as no names', () => {
+		expect(alcoholLineNames(null)).toEqual([])
+		expect(alcoholLineNames({ details: { lines: 'x' } })).toEqual([])
 	})
 })

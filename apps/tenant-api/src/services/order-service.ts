@@ -1120,8 +1120,11 @@ export async function placeOrder(input: {
 	}
 	const result: PricedRestaurantOrder = priced.result
 	// A cart with alcohol needs the guest's yes to "I am 21 or older and will
-	// show ID" (#167). Only the yes is kept, never a birth date.
-	if (result.hasAlcohol && request.ageConfirmed !== true) {
+	// show ID" (#167). Only the yes is kept, never a birth date. A table round
+	// is served by the team, who check ID at the table: its ticket says so.
+	const needsAgeConfirmation =
+		result.hasAlcohol && request.fulfillment !== 'dine_in'
+	if (needsAgeConfirmation && request.ageConfirmed !== true) {
 		return {
 			ok: false,
 			failure: fromEngineError({
@@ -1841,7 +1844,7 @@ export async function placeOrder(input: {
 									utensilsRequested,
 									largeOrderExtraMinutes: largeOrderExtra,
 									largeOrder: isLargeAlertOrder,
-									ageConfirmed: result.hasAlcohol ? true : null,
+									ageConfirmed: needsAgeConfirmation ? true : null,
 									hasAlcohol: result.hasAlcohol,
 									guestAllergy: request.guestAllergy === true,
 									totalCents: totals.totalCents,

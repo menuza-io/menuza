@@ -3,6 +3,11 @@
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
+	type AlcoholOnline,
+	DEFAULT_ALCOHOL_ONLINE,
+	readAlcoholOnline,
+} from '@repo/common/alcohol-rules'
+import {
 	courseSettingsSchema,
 	DEFAULT_COURSES,
 } from '@repo/common/kitchen-ticket'
@@ -80,6 +85,8 @@ import {
 import { AddressAutocomplete } from './address-autocomplete'
 import { LocationHoursSection } from './availability-picker'
 import {
+	AlcoholCard,
+	GoogleReviewCard,
 	LargeOrderFields,
 	OrderCapsCard,
 	PackagingFeeCard,
@@ -178,6 +185,10 @@ export interface InitialLocationData {
 	deliveryZones?: DeliveryZone[] | null
 	courseSettings?: string | null
 	orderNumberFormat?: string | null
+	/** Where alcohol may be ordered online (#167); null until reviewed. */
+	alcoholOnline?: string | null
+	/** The location's Google review link (#263). */
+	googleReviewUrl?: string | null
 	isActive?: boolean
 	isDefault?: boolean
 	temporarilyClosed?: boolean
@@ -186,6 +197,8 @@ export interface InitialLocationData {
 
 interface LocationFormProps {
 	orgSlug: string
+	/** KSA: alcohol settings are hidden (alcohol is always refused online). */
+	ksa?: boolean
 	initialData?: InitialLocationData
 	siteLocalesRaw?: string | null
 	siteDefaultLocaleRaw?: string | null
@@ -239,6 +252,7 @@ function LocationFormBody({
 	checkoutSettings,
 	orderingSettings,
 	checkoutRules,
+	ksa = false,
 	policy,
 	onDiscard,
 }: LocationFormProps & { onDiscard: () => void }) {
@@ -291,6 +305,14 @@ function LocationFormBody({
 	const [packagingFee, setPackagingFee] = useState(
 		checkoutRules?.initial.packagingFee ??
 			packagingFeeFormFromRecord(null, checkoutRules?.currency ?? 'USD'),
+	)
+
+	const [alcoholOnline, setAlcoholOnline] = useState<AlcoholOnline>(
+		readAlcoholOnline(initialData?.alcoholOnline) ?? DEFAULT_ALCOHOL_ONLINE,
+	)
+	const alcoholReviewed = readAlcoholOnline(initialData?.alcoholOnline) !== null
+	const [googleReviewUrl, setGoogleReviewUrl] = useState(
+		initialData?.googleReviewUrl ?? '',
 	)
 
 	// State
@@ -507,6 +529,9 @@ function LocationFormBody({
 				resetTime: orderResetTime || '04:00',
 			}),
 		),
+		// Hidden in KSA: the setting is never sent from there.
+		...(!ksa ? { alcoholOnline } : {}),
+		googleReviewUrl: googleReviewUrl.trim(),
 		...(orderPolicies && policyValues ? policyValues : {}),
 		// Typed text as JSON; the action reads it into the shared settings.
 		...(checkoutSettings && tipValues
@@ -1324,6 +1349,19 @@ function LocationFormBody({
 										/>
 									</LockableSection>
 								) : null}
+
+								{ksa ? null : (
+									<AlcoholCard
+										value={alcoholOnline}
+										reviewed={alcoholReviewed}
+										onChange={setAlcoholOnline}
+									/>
+								)}
+
+								<GoogleReviewCard
+									value={googleReviewUrl}
+									onChange={setGoogleReviewUrl}
+								/>
 							</TabsContent>
 
 							{/* TAB 4: DELIVERY & ZONES */}
