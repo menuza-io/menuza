@@ -180,6 +180,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			siteDefaultLocale: true,
 			siteLocales: true,
 			customDomain: true,
+			siteIconKey: true,
 			shopPaymentProvider: true,
 			stripeConnectAccountId: true,
 			stripeConnectChargesEnabled: true,
@@ -206,6 +207,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			siteDefaultLocale: org.siteDefaultLocale,
 			siteLocales: org.siteLocales,
 			customDomain: org.customDomain,
+			siteIconKey: org.siteIconKey,
 		},
 		parsed.data.locationId ?? null,
 	)

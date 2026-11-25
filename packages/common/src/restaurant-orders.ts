@@ -1342,6 +1342,13 @@ export const publicLocationContextSchema = z
 		stationSettings: posLocationStationSettingsSchema.optional(),
 		/** Per-location order number format and daily reset (#371). */
 		orderNumberFormat: orderNumberFormatSchema.optional(),
+		/** What the receipt codes open (#263); each null when its target does not exist. */
+		receiptCodes: z
+			.object({
+				reviewUrl: z.string().max(600).nullable().optional(),
+				appUrl: z.string().max(600).nullable().optional(),
+			})
+			.optional(),
 	})
 	.loose()
 

@@ -76,6 +76,7 @@ import {
 } from '@repo/database'
 import { type OrderContextDiscounts } from '@repo/discounts'
 import { type AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
+import { ENV } from 'varlock/env'
 import {
 	buildPublicMenuDiscounts,
 	type PublicMenuPromotion,
@@ -104,6 +105,16 @@ import {
 	type PublicMenuOptionData,
 	type PublicModifierGroupData,
 } from './public-serializers.server.ts'
+
+/** The organization logo as a receipt prints it: the site icon, as an absolute address. */
+export function receiptLogoUrl(slug: string, baseUrl: string | undefined) {
+	const path = `/resources/images?objectKey=${encodeURIComponent(`org/${slug}/site-icon/apple-touch-icon.png`)}`
+	try {
+		return new URL(path, baseUrl).toString()
+	} catch {
+		return path
+	}
+}
 
 /**
  * A location's Station settings as the till reads them. The cash-payment
@@ -139,6 +150,8 @@ export interface PublicSiteMenuPayload {
 		currency: string
 		defaultLocale: string
 		locales: string[]
+		/** Absolute address of the organization logo for receipts (#263), when set. */
+		logoUrl?: string | null
 	}
 	locations: PublicLocationData[]
 	menus: PublicMenuData[]
@@ -195,6 +208,8 @@ export interface PublicSiteMenuOrgContext {
 	siteDefaultLocale: string | null
 	siteLocales: string | null
 	customDomain: string | null
+	/** The site icon's object key; the receipt logo (#263) is built from it. */
+	siteIconKey?: string | null
 }
 
 /**
@@ -779,6 +794,9 @@ export async function buildPublicSiteMenuPayload(
 			currency: activeLocation?.currency || org.currency || 'USD',
 			defaultLocale: org.siteDefaultLocale || 'en',
 			locales: safeJsonParse<string[]>(org.siteLocales, ['en']),
+			...(org.siteIconKey
+				? { logoUrl: receiptLogoUrl(org.slug, ENV.BASE_URL) }
+				: {}),
 		},
 		locations,
 		menus: structuredMenus,
