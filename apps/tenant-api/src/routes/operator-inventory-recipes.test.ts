@@ -1777,3 +1777,131 @@ describe('access', () => {
 		expect(read.status).toBe(200)
 	})
 })
+
+// ── Dish profitability (#519) ───────────────────────────────────────────────
+
+describe('dish profitability', () => {
+	let sequence = 0
+	async function sellAt(itemId: string, quantity: number) {
+		sequence += 1
+		const db = await getTenantDb(ORG)
+		const total = 1000 * quantity
+		await db.insert(restaurantOrders).values({
+			orgId: ORG,
+			number: `PROFIT-${sequence}`,
+			status: 'completed',
+			paymentMethod: 'handoff',
+			paymentStatus: 'unpaid',
+			fulfillment: 'pickup',
+			locationId: LOC,
+			locationName: 'Olaya',
+			contactName: 'Guest',
+			contactPhone: '+966500000000',
+			currency: 'sar',
+			subtotalCents: total,
+			taxCents: 0,
+			totalCents: total,
+			lines: [
+				{
+					itemId,
+					itemName: '{"en":"Dish"}',
+					variantId: null,
+					quantity,
+					unitPriceCents: 1000,
+					taxableUnitCents: 1000,
+					totalCents: total,
+					taxableCents: total,
+					instructions: null,
+					baseUnitCents: 0,
+					categoryIds: [],
+					options: [],
+				},
+			],
+			idempotencyKey: `idem-profit-${sequence}`,
+			requestHash: 'hash',
+			receiptTokenHash: `receipt-profit-${sequence}`,
+			createdAt: new Date(),
+		})
+	}
+
+	const request = (extra: Record<string, unknown> = {}) => ({
+		locationId: LOC,
+		fromDate: new Date(Date.now() - 2 * 86_400_000).toISOString().slice(0, 10),
+		toDate: new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10),
+		currency: 'SAR',
+		dishes: [
+			{ itemId: 'dish_idem', priceMinor: 400, categoryKey: 'mains' },
+			{ itemId: 'dish_can', priceMinor: 1000, categoryKey: 'mains' },
+			{ itemId: 'dish_without', priceMinor: 500, categoryKey: 'mains' },
+		],
+		...extra,
+	})
+
+	it('labels each dish with a recipe into one of four groups and lists the rest apart', async () => {
+		await sellAt('dish_idem', 30)
+		await sellAt('dish_can', 2)
+		await sellAt('dish_without', 9)
+		const res = await call('POST', `${BASE}/recipes/profitability`, {
+			token: full,
+			body: request(),
+		})
+		expect(res.status, JSON.stringify(res.body)).toBe(200)
+		const dishes = Object.fromEntries(
+			res.body.dishes.map((d: { itemId: string }) => [d.itemId, d]),
+		)
+		// Pitas cost 0.80 on a 4.00 price: popular, but a unit margin of 3.20 is
+		// below the category's 3.34 average. The typed dish earns 5.50 a dish.
+		expect(dishes.dish_idem).toMatchObject({
+			group: 'reprice',
+			quantity: 30,
+			unitMarginMinor: 320,
+			marginMinor: 9600,
+			popular: true,
+		})
+		expect(dishes.dish_can).toMatchObject({
+			group: 'promote',
+			costMinor: 450,
+			unitMarginMinor: 550,
+			popular: false,
+		})
+		expect(res.body.unlisted).toEqual([
+			expect.objectContaining({
+				itemId: 'dish_without',
+				reason: 'no_recipe',
+				quantity: 9,
+			}),
+		])
+		expect(res.body.totals.marginMinor).toBe(9600 + 1100)
+		expect(res.body.targetBp).toBe(3000)
+	})
+
+	it('needs the cost grant and the location grant', async () => {
+		const withoutCost = await call('POST', `${BASE}/recipes/profitability`, {
+			token: noCost,
+			body: request(),
+		})
+		expect(withoutCost.status).toBe(403)
+		const wrongLocation = await call('POST', `${BASE}/recipes/profitability`, {
+			token: scoped,
+			body: request({ locationId: LOC_OTHER }),
+		})
+		expect(wrongLocation.status).toBe(403)
+		const flag = await call('POST', `${BASE}/recipes/profitability`, {
+			token: flagOff,
+			body: request(),
+		})
+		expect(flag.status).toBeGreaterThanOrEqual(400)
+		const otherOrg = await call('POST', `${BASE}/recipes/profitability`, {
+			token: tokenB,
+			body: request(),
+		})
+		// Another organization's token sees only its own (empty) sales and recipes.
+		expect(otherOrg.status).toBe(200)
+		expect(otherOrg.body.dishes).toEqual([])
+		const bad = await call('POST', `${BASE}/recipes/profitability`, {
+			token: full,
+			body: { ...request(), dishes: [] },
+		})
+		expect(bad.status).toBe(400)
+	})
+})

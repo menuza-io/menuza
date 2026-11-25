@@ -232,6 +232,7 @@ const ROUTE_GRANTS: Record<
 	'PUT /recipes': RECIPE,
 	'POST /recipes/clear': RECIPE,
 	'POST /recipes/costs': READ,
+	'POST /recipes/profitability': READ,
 	'GET /recipes/missing': READ,
 	'POST /items/:id/batch': UPDATE,
 	'GET /sold-out': READ,
@@ -287,6 +288,7 @@ const ROUTE_GRANTS: Record<
 const READ_ONLY_POSTS = new Set([
 	'POST /deliveries/:id/credit-message',
 	'POST /recipes/costs',
+	'POST /recipes/profitability',
 	'POST /items/:id/unit-change/preview',
 ])
 
@@ -352,6 +354,7 @@ const RECIPES_FLAG_ROUTES = new Set([
 	'PUT /recipes',
 	'POST /recipes/clear',
 	'POST /recipes/costs',
+	'POST /recipes/profitability',
 	'GET /recipes/missing',
 	'POST /items/:id/batch',
 	'GET /sold-out',
@@ -1828,6 +1831,15 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				},
 				location: false,
 			}),
+			c('POST /recipes/profitability', '/recipes/profitability', {
+				body: {
+					locationId: loc,
+					fromDate: '2026-11-01',
+					toDate: '2026-11-30',
+					currency: 'SAR',
+					dishes: [{ itemId: 'sec_dish', priceMinor: 500, categoryKey: 'x' }],
+				},
+			}),
 			c('GET /recipes/missing', `/recipes/missing?${q}`),
 			// Setup: used in, unit change, groups, merge, setup checks.
 			c('GET /items/:id/used-in', `/items/${seed.item}/used-in`, {
@@ -2286,7 +2298,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			grants: [READ, UPDATE, PURCHASING],
 		})
 		const money =
-			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|shortOfMinimumMinor|belowMinimum|unpricedLines|previousPackPriceMinor|priceChangeBp|priceChanges|foodCost|cost|plate|costMinor|typedCostMinor|typedCostCurrency|priceForTargetMinor|foodCostBp|netSalesMinor|orderLimitMinor|monthlyLimitMinor|monthlySpentMinor|othersPay)":/
+			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|shortOfMinimumMinor|belowMinimum|unpricedLines|previousPackPriceMinor|priceChangeBp|priceChanges|foodCost|cost|plate|costMinor|typedCostMinor|typedCostCurrency|priceForTargetMinor|foodCostBp|unitMarginMinor|marginMinor|netSalesMinor|orderLimitMinor|monthlyLimitMinor|monthlySpentMinor|othersPay)":/
 		const failures: string[] = []
 		let reads = 0
 		// Cost-only reads are all money: they need the cost grant (below).
@@ -2296,6 +2308,8 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			'GET /supplier-products/:id/prices',
 			'GET /items/:id/price-history',
 			'GET /purchasing/accountant-export',
+			// All margin and cost: refused without the grant (checked below).
+			'POST /recipes/profitability',
 		])
 		for (const entry of cases().filter(
 			(item) => isRead(item) && !costOnlyRoutes.has(item.key),
@@ -2402,6 +2416,32 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			const ok = await call('GET', path, { token: costOnly })
 			expect(ok.status, path).toBe(200)
 		}
+		// The dish profitability report is all margin and cost (#519): a POST that
+		// only carries its dish list, refused without the grant, answered with it.
+		const profitability = {
+			locationId: LOC_B,
+			fromDate: today,
+			toDate: today,
+			currency: 'SAR',
+			dishes: [{ itemId: seed.item, priceMinor: 500, categoryKey: 'x' }],
+		}
+		const refused = await call(
+			'POST',
+			'/operator/inventory/recipes/profitability',
+			{ token: noCost, body: profitability },
+		)
+		expect(refused.status).toBe(403)
+		expect(await refused.json()).toMatchObject({
+			code: 'forbidden',
+			reason: 'grant',
+			required: COST,
+		})
+		const granted = await call(
+			'POST',
+			'/operator/inventory/recipes/profitability',
+			{ token: costOnly, body: profitability },
+		)
+		expect(granted.status).toBe(200)
 	})
 
 	it('receiving against an order needs the purchasing flag; a delivery without an order does not', async () => {

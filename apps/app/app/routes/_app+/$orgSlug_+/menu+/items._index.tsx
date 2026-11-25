@@ -71,6 +71,10 @@ import {
 	FoodCostFooterCell,
 	FoodCostHead,
 	FoodCostProvider,
+	FoodCostSortControl,
+	sortItemsByFoodCost,
+	useFoodCostRows,
+	type FoodCostSort,
 } from '#app/components/inventory/food-cost-column.tsx'
 import { AutoPopularSettings } from '#app/components/menu/auto-popular-settings.tsx'
 import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
@@ -541,6 +545,24 @@ function ItemsIndexContent() {
 		setFilterQuery,
 	} = useMenuListFilters(items, ITEM_FILTER_FIELDS, getFieldValue)
 
+	// Sorting by food cost, margin per dish or margin over a period (#519).
+	const foodCost = useFoodCostRows()
+	const [foodCostSort, setFoodCostSort] = useState<FoodCostSort>('default')
+	const [periodMargins, setPeriodMargins] = useState<ReadonlyMap<
+		string,
+		number
+	> | null>(null)
+	const sortedItems = useMemo(
+		() =>
+			sortItemsByFoodCost(
+				filteredItems,
+				foodCost.visible ? foodCostSort : 'default',
+				foodCost.rowFor,
+				periodMargins,
+			),
+		[filteredItems, foodCost.visible, foodCost.rowFor, foodCostSort, periodMargins],
+	)
+
 	const {
 		selectedIds,
 		toggle,
@@ -548,7 +570,7 @@ function ItemsIndexContent() {
 		clearSelection,
 		allFilteredSelected,
 		hasSelection,
-	} = useMenuListSelection(filteredItems)
+	} = useMenuListSelection(sortedItems)
 
 	const undoBulkSnapshot = useCallback(
 		async (snapshotId: string) => {
@@ -618,6 +640,13 @@ function ItemsIndexContent() {
 								showClear
 							/>
 						</div>
+						<FoodCostSortControl
+							sort={foodCostSort}
+							onSortChange={setFoodCostSort}
+							locations={bulkLocations}
+							items={allItems.map((item) => ({ id: item.id, price: item.price }))}
+							onPeriodMargins={setPeriodMargins}
+						/>
 						{posOwnershipEnabled &&
 						(overriddenItemsCount > 0 || overridesFilter) ? (
 							<Button
@@ -638,7 +667,7 @@ function ItemsIndexContent() {
 						) : null}
 					</div>
 
-					{filteredItems.length === 0 ? (
+					{sortedItems.length === 0 ? (
 						<EmptyState
 							title={_(t`No items match these filters`)}
 							description={_(
@@ -684,7 +713,7 @@ function ItemsIndexContent() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{filteredItems.map((item) => {
+									{sortedItems.map((item) => {
 										const itemTitle =
 											getLocalizedMenuValue(
 												item.displayName,

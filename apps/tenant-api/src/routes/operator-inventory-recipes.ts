@@ -1,6 +1,7 @@
 import {
 	clearRecipeSchema,
 	dishesWithoutRecipeQuerySchema,
+	dishProfitabilityRequestSchema,
 	getRecipeQuerySchema,
 	INVENTORY_PERMISSIONS,
 	putRecipeSchema,
@@ -35,6 +36,7 @@ import { recordBatch } from '../services/inventory-batch-service.ts'
 import {
 	clearRecipe,
 	dishesWithoutRecipe,
+	dishProfitability,
 	getRecipe,
 	listItemUsedIn,
 	putRecipe,
@@ -160,6 +162,29 @@ operatorInventoryRecipesRoutes.post('/recipes/costs', reads(), async (c) => {
 				await getTenantDb(ctx.orgId),
 				inventoryCaller(ctx),
 				body.data,
+			),
+		)
+	} catch (error) {
+		return inventoryErrorResponse(error)
+	}
+})
+
+// A POST for the dish list it carries; it changes nothing, so a read-scope
+// token may call it. The whole answer is cost and margin, so it needs the cost
+// grant (403 `forbidden` without it).
+operatorInventoryRecipesRoutes.post('/recipes/profitability', reads(), async (c) => {
+	try {
+		const ctx = getInventoryAuth(c)
+		const body = await parseBody(c, dishProfitabilityRequestSchema)
+		if ('error' in body) return body.error
+		const location = requireInventoryLocation(ctx, body.data.locationId)
+		if (!location.ok) return location.response
+		return respond(
+			ctx,
+			await dishProfitability(
+				await getTenantDb(ctx.orgId),
+				inventoryCaller(ctx),
+				{ ...body.data, locationId: location.locationId },
 			),
 		)
 	} catch (error) {
