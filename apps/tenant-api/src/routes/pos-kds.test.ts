@@ -404,6 +404,54 @@ describe('Station kitchen API', () => {
 		])
 	})
 
+	it('carries a stated allergy and Check ID to the Kitchen, and nothing extra on an ordinary order (#294, #167)', async () => {
+		const db = await getTenantDb(ORG_A)
+		expect((await feed()).tickets[0]).not.toHaveProperty('guestAllergy')
+		expect((await feed()).tickets[0]).not.toHaveProperty('checkId')
+		await db.insert(restaurantOrders).values({
+			orgId: ORG_A,
+			number: 'W-77',
+			status: 'accepted',
+			paymentMethod: 'handoff',
+			paymentStatus: 'unpaid',
+			fulfillment: 'pickup',
+			locationId: 'loc-1',
+			locationName: 'Main',
+			contactName: 'Rana Guest',
+			contactPhone: '+15551234567',
+			currency: 'USD',
+			subtotalCents: 900,
+			taxCents: 0,
+			totalCents: 900,
+			hasAlcohol: true,
+			ageConfirmed: true,
+			guestAllergy: true,
+			lines: [
+				{
+					itemId: 'mojito',
+					itemName: 'Mojito',
+					quantity: 1,
+					totalCents: 900,
+					options: [
+						{ optionName: 'No sugar', quantity: 1 },
+						{ optionName: 'Extra mint', quantity: 1 },
+					],
+				},
+			],
+			idempotencyKey: crypto.randomUUID(),
+			requestHash: 'h',
+			receiptTokenHash: 'r',
+		})
+		const online = (await feed()).tickets.find((ticket) => ticket.number === 'W-77')!
+		expect(online).toMatchObject({ guestAllergy: true, checkId: true })
+		// A removal option reads as Attention without anyone setting it (#294).
+		expect(online.lines[0]!.options.map((o) => [o.name, o.highlight])).toEqual([
+			['No sugar', 'attention'],
+			['Extra mint', undefined],
+		])
+		expect(JSON.stringify(online)).not.toMatch(/15551234567|Rana Guest/)
+	})
+
 	it('shows an unreadable order without dishes instead of failing the kitchen', async () => {
 		const db = await getTenantDb(ORG_A)
 		const broken = crypto.randomUUID()

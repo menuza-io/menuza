@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	buildItemPlacementIndex,
 	lineCatalogFor,
+	lineCatalogHasAlcohol,
 	parseLineCatalog,
 	readStampedPlacement,
 } from './item-placement.ts'
@@ -70,5 +71,40 @@ describe('item placement', () => {
 		expect(readStampedPlacement({ categoryName: 'Mains' })?.categoryName).toBe(
 			'Mains',
 		)
+	})
+})
+
+describe('alcohol on the stamp (#167)', () => {
+	const menus = [
+		{
+			id: 'm',
+			displayName: 'Main',
+			categories: [
+				{
+					id: 'bar',
+					displayName: 'Bar',
+					items: [
+						{ id: 'wine', isAlcohol: true },
+						{ id: 'water' },
+					],
+				},
+			],
+		},
+	]
+
+	it('stamps a flagged dish and leaves an ordinary one exactly as before', () => {
+		const index = buildItemPlacementIndex(menus)
+		expect(index.get('wine')).toMatchObject({ alcohol: true })
+		expect(index.get('water')).not.toHaveProperty('alcohol')
+		const catalog = lineCatalogFor(index, ['wine', 'water'])!
+		expect(lineCatalogHasAlcohol(catalog)).toBe(true)
+		expect(lineCatalogHasAlcohol(lineCatalogFor(index, ['water']))).toBe(false)
+		expect(lineCatalogHasAlcohol(null)).toBe(false)
+	})
+
+	it('survives a round trip through storage', () => {
+		const index = buildItemPlacementIndex(menus)
+		const stored = JSON.stringify(lineCatalogFor(index, ['wine']))
+		expect(lineCatalogHasAlcohol(parseLineCatalog(stored))).toBe(true)
 	})
 })

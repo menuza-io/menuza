@@ -252,6 +252,33 @@ and Station sales, are not counted; a manager corrects the day with a top-up.
   `POST .../controls/daily-limits/top-up` (`{ key, addUnits | amountLeft }`),
   manager only like the other controls.
 
+### Alcohol and a stated allergy (#167, #294)
+
+Per location, `OrganizationLocation.alcoholOnline` (control plane `0078`) says
+where alcohol may be ordered online: `pickup_and_delivery`, `pickup`,
+`delivery` or `none`. Null is "not reviewed": it behaves as pickup and
+delivery (what happened before the setting) and the location page shows a
+banner asking for a review. KSA never offers the setting and refuses alcohol
+online whatever is stored. It reaches the region in the order context
+(`alcohol: { ksa, locations }`, read with `readAlcoholContext`).
+
+`priceRestaurantOrder` is the one place that refuses: a cart with an item or
+option flagged alcohol for an order type the location does not allow answers
+422 `alcohol_not_allowed` with `details.lines` (`line`, `itemId`, `name`).
+Courier delivery never carries alcohol (`alcoholAllowedFor(..., { courier })`;
+only in-house zones can be priced online today, so no courier cart reaches it).
+A table round is served by the team and is refused only by `none`. A till sale
+is never refused: its ticket says Check ID.
+
+`POST /orders` takes `ageConfirmed` (a yes, never a birth date) and
+`guestAllergy` (the guest ticked "someone in my party has an allergy"). A cart
+with alcohol (not a table round) without `ageConfirmed: true` answers 422
+`age_confirmation_required`. Stored on the order: `age_confirmed`,
+`has_alcohol`, `guest_allergy` (tenant `0069`). Both keys are sent only when
+set, so deploy App, then tenant-api, then Sites. Kitchen tickets, the App order
+detail, Station's Orders app and receipts show "Check ID", and the Kitchen
+header and printed tickets highlight a stated allergy.
+
 ### Order link ("View your order")
 
 Guest order emails link to

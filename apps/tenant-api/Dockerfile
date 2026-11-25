@@ -6,7 +6,8 @@ FROM node:22-bookworm-slim AS base
 
 ENV NODE_ENV=production
 
-RUN apt-get update && apt-get install -y openssl sqlite3 ca-certificates \
+# fonts-noto-core: Arabic lines are drawn as pictures for cloud printers with no Arabic font (#117).
+RUN apt-get update && apt-get install -y openssl sqlite3 ca-certificates fonts-noto-core \
 	&& rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
